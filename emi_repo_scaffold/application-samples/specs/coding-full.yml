@@ -1,0 +1,4 @@
+output: application-samples/output/RishavRoy_CodingSample.pdf
+cover_note: application-samples/cover-notes/coding/full.qmd
+mode: full
+source: paper/report.qmd

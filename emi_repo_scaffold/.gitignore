@@ -1,0 +1,51 @@
+# R session files
+.RData
+.RDataTmp
+.Rhistory
+.Rproj.user/
+*.Rproj
+
+# renv local files
+renv/library/
+renv/staging/
+renv/python/
+renv/sandbox/
+
+# targets cache
+_targets/
+_targets.Rout
+
+# raw, future, and intermediate data
+data/raw/
+data/raw_future/
+data/interim/
+
+# locally stored papers
+papers/
+
+# generated caches and render byproducts
+*_cache/
+*_files/
+*.nb.html
+*.log
+*.aux
+*.out
+*.toc
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+*.bbl
+*.blg
+*.tex
+
+# keep deliberate TeX source templates if any remain
+!application-samples/templates/*.tex
+!application-samples/cover-notes/**/*.tex
+
+# operating-system metadata
+.DS_Store
+__MACOSX/
+
+# survey-download executables and autorun files
+*.exe
+autorun.inf

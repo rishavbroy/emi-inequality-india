@@ -1,0 +1,10 @@
+output: application-samples/output/RishavRoy_WritingSample5pg.pdf
+cover_note: application-samples/cover-notes/writing/5pg.qmd
+source: paper/report.qmd
+mode: excerpts
+excerpts:
+  - ws-intro-question-contribution
+  - ws-iv-relevance-exclusion-problem
+  - ws-second-stage-results
+  - ws-2sls-interpretation-spillovers-bad-controls
+  - ws-district-harmonization-method

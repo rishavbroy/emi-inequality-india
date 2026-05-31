@@ -1,0 +1,12 @@
+project:
+  type: default
+
+format:
+  pdf:
+    documentclass: article
+    toc: false
+    number-sections: true
+    colorlinks: true
+  html:
+    toc: true
+    code-fold: true

@@ -1,0 +1,37 @@
+output: application-samples/output/RishavRoy_CodingSample47pg.pdf
+cover_note: application-samples/cover-notes/coding/47pg.qmd
+mode: excerpts
+excerpts:
+  - file: R/io/read_inputs.R
+    id: code-census-geospatial-import
+    title: Scalable import, cleaning, and merging of Census/geospatial data
+  - file: R/districts/build_district_tracker.R
+    id: code-district-crosswalk-qa
+    title: QA and identifier-disambiguation checks
+  - file: R/selection/diagnose_missingness.R
+    id: code-missingness-logit-parallel
+    title: Parallelized missingness diagnostics with BH correction
+  - file: R/selection/estimate_selection_probit.R
+    id: code-survey-probit-imr
+    title: Survey-weighted probit and IMR setup
+  - file: R/selection/compute_average_marginal_effects.R
+    id: code-ame-autodiff
+    title: Average marginal effects via automatic differentiation
+  - file: R/districts/fuzzy_join_districts.R
+    id: code-fuzzy-record-linkage
+    title: Cascading fuzzy district record linkage
+  - file: R/diagnostics/diagnose_spatial_weights.R
+    id: code-spatial-weights
+    title: Contiguity-based spatial weights
+  - file: R/iv/build_iv_formulas.R
+    id: code-iv-formula-estimation
+    title: Reusable IV specification and estimation
+  - file: R/diagnostics/diagnose_multicollinearity.R
+    id: code-multicollinearity-spatial-autocorrelation
+    title: Multicollinearity and spatial autocorrelation diagnostics
+  - file: R/output/make_figures.R
+    id: code-output-generation
+    title: Automated figure generation
+  - file: R/output/make_tables.R
+    id: code-table-generation
+    title: Publication-quality regression and summary tables
