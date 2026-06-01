@@ -1,2 +1,0 @@
-correction_id,source_year,source_dataset,state_raw,district_raw,state_corrected,district_corrected,correction_type,reason,evidence_source,applied,notes
-example_001,2007,nss_2007_education,,,,,placeholder,Replace this row with migrated manual corrections from legacy chunk 18,,false,This file should become the auditable source of manual district corrections.

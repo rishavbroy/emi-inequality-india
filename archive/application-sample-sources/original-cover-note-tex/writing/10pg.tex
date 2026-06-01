@@ -1,0 +1,81 @@
+\documentclass[letterpaper,12pt]{article}
+\usepackage{graphicx} % Required for inserting images
+
+\usepackage[
+  left=1in,
+  right=1in,
+  top=1in,
+  bottom=1in,
+  footskip=30pt
+]{geometry}
+
+\usepackage{csquotes}
+\MakeOuterQuote{"}
+\usepackage{comment}
+
+\title{Escaping Inequality in India: \\ The Role of English-Medium Instruction \\ \large{(Selected Excerpts)}}
+
+\author{Rishav Roy}
+\date{}
+
+\begin{document}
+
+\maketitle
+\vspace{-6mm}
+\noindent What follows are excerpts from my 49-page independent research paper, "Escaping Inequality in India: The Role of English-Medium Instruction." The paper's key points are below.
+
+\begin{enumerate}
+
+\item \textbf{Question}: Does increasing baseline district-level EMI exposure (percentage of schoolgoing children enrolled in EMI) affect consumption growth over the next decade? 
+
+\item \textbf{Data sources}: 2007-08/2017-18 microdata and metadata from the National Sample Survey, 35 datasets from the 2001 Census, and 2019-20 GIS shapefiles.
+\begin{comment}
+\vspace{-3mm}
+\begin{itemize}
+\item \textbf{Key variables}: Baseline EMI exposure (2007-08), consumption outcomes (2017-18), and linguistic distance instrument (2001).
+\end{itemize}
+\vspace{-2mm}
+\end{comment}
+
+\item \textbf{Identification}: District-level 2SLS (pop.-weighted linguistic distance from Hindi IV, state-clustered SEs). Individual-level probit of  education selection, design-based SEs. 
+\vspace{-3mm}
+\begin{itemize}
+\item \textbf{Key clarification}: State FEs, essential for 2SLS exclusion restriction, trigger extreme multicollinearity. District matching \& possible FD-2SLS redesign needed.
+\end{itemize}
+\vspace{-2mm}
+
+\item \textbf{Main result}: Strong first-stage ($F=39.2$), null second-stage estimate ($0.2$ pp, $p=0.78$). \underline{Estimates are provisional} pending district matching that enables state FEs.
+
+\item \textbf{Next steps}: 
+\vspace{-3mm}
+\begin{itemize}
+\item Repair 2SLS exclusion restriction with district harmonization changes, FD-2SLS.
+
+\vspace{-1mm}
+
+\item Redesign models for spatial spillovers, migration, `bad controls,' heterogeneity. 
+
+\vspace{-1mm}
+
+\item Make response variable robust to local variation in inflation and shocks.
+\end{itemize}
+\vspace{1mm}
+
+
+\end{enumerate}
+
+
+\noindent The next ten pages include the following details: 
+
+\begin{enumerate}
+\item[6:] \textbf{Research question}, contribution to literature, and summary/outline of paper.
+\item[10-11:] \textbf{EMI exposure, probit model}, data wrangling, variable construction, missingness.
+\item[23:] \textbf{Instrumental variable}, relevance, issues with exclusion restriction ($\kappa=28730.84$).
+\item[25:] \textbf{Interpretation of 2SLS}, key limits to interpretation, planned remedies.
+\item[26-27:] \textbf{2SLS results}, both first- and second-stage.
+\item[28:] \textbf{Interpretation of 2SLS}, small \& noisy estimate, `bad controls,' spillover attenuation. 
+\item[32-33:] \textbf{District harmonization}  methods, assumptions. Some next steps (planned regressors, interactions, potential Bartik instrument).
+
+\end{enumerate}
+
+\end{document}

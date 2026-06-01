@@ -1,5 +1,0 @@
-variable,label,description,unit,level,source,constructed_by,valid_min,valid_max,used_in_main_model,notes
-EMIE,EMI exposure,Percentage of enrolled school-going children in English-medium instruction,percent,district,NSS 2007-08,compute_emie_2007,0,100,true,Main endogenous regressor.
-wavg_ling_degrees,Linguistic distance,Population-weighted linguistic distance from Hindi using 2001 mother tongue data,degrees,district,Census 2001,build_linguistic_distance_iv,, ,true,Main excluded instrument.
-consumption_pct_change,Consumption growth,Percent change in district average consumption from 2007-08 to 2017-18,percent,district,NSS 2007-08 and 2017-18,build_district_panel,, ,true,Legacy outcome; planned replacement/robustness is log consumption difference.
-log_consumption_diff,Log consumption difference,Log difference in district average consumption from 2007-08 to 2017-18,log points,district,NSS 2007-08 and 2017-18,compute_log_consumption_difference,, ,false,Planned FD-2SLS outcome.

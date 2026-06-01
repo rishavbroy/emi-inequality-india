@@ -1,0 +1,41 @@
+chunk,line,header,file,n_lines
+1,42,"Summary of the code, include=FALSE",archive/legacy-rmd-chunks/01-summary-of-the-code.R,83
+2,130,"Introduction, include=FALSE",archive/legacy-rmd-chunks/02-introduction.R,70
+3,204,Define functions to read in short 8.3 filenames,archive/legacy-rmd-chunks/03-define-functions-to-read-in-short-8-3-filenames.R,159
+4,368,"Import key data files, message=FALSE, warning=FALSE, include=FALSE",archive/legacy-rmd-chunks/04-import-key-data-files.R,183
+5,556,"Match districts: Extract district info from key datasets, message=FALSE, warning=FALSE",archive/legacy-rmd-chunks/05-match-districts-extract-district-info-from-key-datasets.R,109
+6,670,"Match districts: Construct district tracking dfs, message=FALSE, warning=FALSE",archive/legacy-rmd-chunks/06-match-districts-construct-district-tracking-dfs.R,248
+7,922,"Participation model: Cleaning and prep, message=FALSE, warning=FALSE",archive/legacy-rmd-chunks/07-participation-model-cleaning-and-prep.R,296
+8,1221,"Participation model: Are NAs randomly distributed, message=FALSE, warning=FALSE",archive/legacy-rmd-chunks/08-participation-model-are-nas-randomly-distributed.R,318
+9,1544,"Participation model: Estimation and IMR, message=FALSE, warning=FALSE",archive/legacy-rmd-chunks/09-participation-model-estimation-and-imr.R,77
+10,1626,"Participation model: Derive AME, message=FALSE, warning=FALSE",archive/legacy-rmd-chunks/10-participation-model-derive-ame.R,108
+11,1738,"Participation model: Set up results table, message=FALSE, warning=FALSE",archive/legacy-rmd-chunks/11-participation-model-set-up-results-table.R,125
+12,1866,Participation model: Make summary tables,archive/legacy-rmd-chunks/12-participation-model-make-summary-tables.R,105
+13,1975,Construct 2007-08 measures,archive/legacy-rmd-chunks/13-construct-2007-08-measures.R,176
+14,2155,Construct 2017-18 measures,archive/legacy-rmd-chunks/14-construct-2017-18-measures.R,47
+15,2206,"Construct 2001 measure (IV), warning=FALSE",archive/legacy-rmd-chunks/15-construct-2001-measure-iv.R,50
+16,2261,"Match districts: Test joining methods, message=FALSE, warning=FALSE",archive/legacy-rmd-chunks/16-match-districts-test-joining-methods.R,115
+17,2380,"Match districts: Define joining functions, message=FALSE, warning=FALSE",archive/legacy-rmd-chunks/17-match-districts-define-joining-functions.R,190
+18,2575,"Match districts: Manually fix errors, message=FALSE, warning=FALSE",archive/legacy-rmd-chunks/18-match-districts-manually-fix-errors.R,154
+19,2733,"Match districts: Run the joining functions, message=FALSE, warning=FALSE",archive/legacy-rmd-chunks/19-match-districts-run-the-joining-functions.R,32
+20,2769,"Match districts: Diagnose errors, eval=FALSE, message=FALSE, warning=FALSE",archive/legacy-rmd-chunks/20-match-districts-diagnose-errors.R,110
+21,2882,"Match districts: Join with geometry data, message=FALSE, warning=FALSE",archive/legacy-rmd-chunks/21-match-districts-join-with-geometry-data.R,44
+22,2930,"Geospatial: Make maps, message=FALSE, warning=FALSE",archive/legacy-rmd-chunks/22-geospatial-make-maps.R,73
+23,3006,"Geospatial: Make map collages, message=FALSE, warning=FALSE",archive/legacy-rmd-chunks/23-geospatial-make-map-collages.R,48
+24,3059,"Geospatial: Neighbor list construction, message=FALSE, warning=FALSE",archive/legacy-rmd-chunks/24-geospatial-neighbor-list-construction.R,25
+25,3089,"2SLS: Controls and 2SLS formula, message=FALSE, warning=FALSE",archive/legacy-rmd-chunks/25-2sls-controls-and-2sls-formula.R,27
+26,3120,2SLS: Baseline 2SLS models,archive/legacy-rmd-chunks/26-2sls-baseline-2sls-models.R,83
+27,3207,2SLS: Make summary tables,archive/legacy-rmd-chunks/27-2sls-make-summary-tables.R,94
+28,3305,"Multicollinearity check, include=FALSE",archive/legacy-rmd-chunks/28-multicollinearity-check.R,28
+29,3338,Geospatial: Spatial autocorrelation tests,archive/legacy-rmd-chunks/29-geospatial-spatial-autocorrelation-tests.R,70
+30,3413,"Spatial-2SLS model attempts, eval=FALSE",archive/legacy-rmd-chunks/30-spatial-2sls-model-attempts.R,64
+31,3484,"ILO-fig, fig.cap=""Trends in earnings, labor‐force participation, and unemployment (ILO, 2024)."", fig.align=""center"", out.height='0.9\\textheight', dev='png', dpi=300, fig.pos='p'",archive/legacy-rmd-chunks/31-ilo-fig.R,18
+32,3626,"sum-tbl-probit-quant, results='asis'",archive/legacy-rmd-chunks/32-sum-tbl-probit-quant.R,38
+33,3667,"sum-tbl-probit-cat, results='asis'",archive/legacy-rmd-chunks/33-sum-tbl-probit-cat.R,38
+34,3714,"probit-mfx, results='asis'",archive/legacy-rmd-chunks/34-probit-mfx.R,21
+35,3770,"map1-fig, fig.cap=""(Clockwise from top left) EMI exposure, consumption growth, pucca (permanent) housing, and household heads with secondary education or more. Data from the 64th round of the NSS 2007-08, ``Participation and Expenditure in Education'' and ``Household Consumer Expenditure.''"", out.width=""\\textwidth""",archive/legacy-rmd-chunks/35-map1-fig.R,1
+36,3776,"sum-tbl-iv, results='asis'",archive/legacy-rmd-chunks/36-sum-tbl-iv.R,43
+37,3843,"map2-fig, fig.cap=""From left to right: regions of India and linguistic distance from Hindi. District-level data, from the 2001 Census of India."", out.width=""\\textwidth""",archive/legacy-rmd-chunks/37-map2-fig.R,1
+38,3853,"fs-cons, tab.cap=""First-Stage Regression, Linguistic Distance on EMI Exposure"", tab.id=""fs-cons""",archive/legacy-rmd-chunks/38-fs-cons.R,89
+39,3948,"cons-iv, results='asis', tab.cap='Second-Stage Regression: Consumption Growth on EMI Exposure', tab.id='cons-iv'",archive/legacy-rmd-chunks/39-cons-iv.R,27
+40,4037,"districtcarveoutsshifts-fig, fig.cap=""Number of 2001 districts which absorbed a percentage of a 1991 district's population via name change, clean merger, carve-out, or border shift. Data from Kumar \\& Somanathan (2016)."", out.width=""0.8\\textwidth"", fig.align='center'",archive/legacy-rmd-chunks/40-districtcarveoutsshifts-fig.R,1

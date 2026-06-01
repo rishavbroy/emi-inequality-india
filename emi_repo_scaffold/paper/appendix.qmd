@@ -1,6 +1,0 @@
----
-title: "Appendix"
-format: pdf
----
-
-Appendix material will be moved here from `paper/report.qmd` once the main refactor stabilizes.

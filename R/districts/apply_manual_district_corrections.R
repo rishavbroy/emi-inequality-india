@@ -1,0 +1,45 @@
+# This file is part of the EMI inequality research pipeline.
+# Functions are intentionally small enough to be tested and called by _targets.R.
+
+
+#' apply manual district corrections
+#'
+#' @return A tibble, model object, list, or file path depending on context.
+apply_manual_district_corrections <- function(tracker, corrections_path = "data/metadata/manual_district_corrections.csv") {
+  if (!file.exists(corrections_path)) return(tracker)
+  corrections <- readr::read_csv(corrections_path, show_col_types = FALSE)
+  validate_manual_corrections(corrections, tracker)
+  tracker
+}
+
+#' validate manual corrections
+#'
+#' @return A tibble, model object, list, or file path depending on context.
+validate_manual_corrections <- function(corrections, tracker) {
+  required <- c("correction_id", "source_year", "source_dataset", "state_raw", "district_raw", "correction_type", "reason")
+  missing <- setdiff(required, names(corrections))
+  if (length(missing)) stop("Manual corrections missing columns: ", paste(missing, collapse = ", "))
+  invisible(TRUE)
+}
+
+#' apply rename corrections
+#'
+#' @return A tibble, model object, list, or file path depending on context.
+apply_rename_corrections <- function(tracker, corrections) {
+  tracker
+}
+
+#' apply split merge corrections
+#'
+#' @return A tibble, model object, list, or file path depending on context.
+apply_split_merge_corrections <- function(tracker, corrections) {
+  tracker
+}
+
+#' apply typo corrections
+#'
+#' @return A tibble, model object, list, or file path depending on context.
+apply_typo_corrections <- function(tracker, corrections) {
+  tracker
+}
+
