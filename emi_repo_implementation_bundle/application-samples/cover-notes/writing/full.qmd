@@ -1,0 +1,9 @@
+---
+title: "Escaping Inequality in India: The Role of English-Medium Instruction"
+author: "Rishav Roy"
+format: pdf
+---
+
+What follows is my independent research paper, *Escaping Inequality in India: The Role of English-Medium Instruction*. The paper studies whether baseline district-level exposure to English-medium instruction in 2007-08 affects local consumption growth over the next decade, using National Sample Survey microdata, 2001 Census mother-tongue data, district-boundary data, and district-change sources.
+
+The estimates remain provisional pending improved district harmonization, geography controls, state fixed effects or state-demeaned IV specifications, spatial diagnostics, and a first-difference 2SLS redesign.

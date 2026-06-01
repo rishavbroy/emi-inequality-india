@@ -1,6 +1,0 @@
----
-title: "Coding Sample Cover Note"
-format: pdf
----
-
-This cover note should be replaced with the corresponding migrated cover note from the legacy application materials.

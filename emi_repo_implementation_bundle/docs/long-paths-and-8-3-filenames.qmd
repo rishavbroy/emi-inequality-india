@@ -1,0 +1,10 @@
+---
+title: "Long Paths and 8.3 Filename Fallbacks"
+format:
+  html: default
+  pdf: default
+---
+
+This note preserves the troubleshooting logic from the legacy R Markdown file. The original project used long source-like folder names so paths would remain transparent. That decision made the data provenance legible, but it also made path handling brittle on some systems.
+
+The reusable readers now live in `R/io/read_long_paths.R`. The new repo structure keeps raw data local and uses `data/metadata/file_manifest.csv` to make the source-path mapping auditable without forcing every path into the analysis code.

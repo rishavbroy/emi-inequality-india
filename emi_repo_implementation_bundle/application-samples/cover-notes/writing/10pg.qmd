@@ -1,0 +1,16 @@
+---
+title: "Escaping Inequality in India: The Role of English-Medium Instruction"
+subtitle: "Selected Excerpts"
+author: "Rishav Roy"
+format: pdf
+---
+
+What follows are excerpts from my 49-page independent research paper, *Escaping Inequality in India: The Role of English-Medium Instruction*. The paper's key points are below.
+
+1. **Question:** Does increasing baseline district-level EMI exposure affect consumption growth over the next decade?
+2. **Data sources:** 2007-08/2017-18 microdata and metadata from the National Sample Survey, 35 datasets from the 2001 Census, and 2019-20 GIS shapefiles.
+3. **Identification:** District-level 2SLS (pop.-weighted linguistic distance from Hindi IV, state-clustered SEs). Individual-level probit of education selection, design-based SEs. **Key clarification:** state FEs, essential for the 2SLS exclusion restriction, trigger extreme multicollinearity. District matching and possible FD-2SLS redesign are needed.
+4. **Main result:** Strong first stage ($F=39.2$), null second-stage estimate ($0.2$ pp, $p=0.78$). Estimates are provisional pending district matching that enables state FEs.
+5. **Next steps:** repair the exclusion restriction with district-harmonization changes and FD-2SLS; redesign models for spatial spillovers, migration, bad controls, and heterogeneity; make the response variable robust to local variation in inflation and shocks.
+
+The next ten pages include the research question, EMI exposure/probit model, IV relevance and exclusion-restriction issues, 2SLS limitations/remedies, first- and second-stage results, interpretation, and district harmonization.

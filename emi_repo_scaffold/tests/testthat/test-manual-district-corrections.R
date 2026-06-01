@@ -1,1 +1,0 @@
-test_that("manual corrections include reasons", { corrections <- readr::read_csv("data/metadata/manual_district_corrections.csv", show_col_types = FALSE); expect_true("reason" %in% names(corrections)) })
