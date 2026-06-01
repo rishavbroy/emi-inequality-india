@@ -21,7 +21,7 @@ data/raw_future/
 data/interim/
 
 # locally stored papers
-papers/
+relevant-literature/
 
 # generated caches and render byproducts
 *_cache/
