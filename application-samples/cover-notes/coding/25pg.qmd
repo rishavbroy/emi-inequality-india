@@ -1,0 +1,10 @@
+---
+title: "Coding Sample: Escaping Inequality in India"
+subtitle: "Selected Excerpts"
+author: "Rishav Roy"
+format: pdf
+---
+
+What follows are excerpts from the code appendix to my independent paper and writing sample, *Escaping Inequality in India: The Role of English-Medium Instruction*.
+
+The next 25 pages illustrate data ingestion and harmonization, complex survey econometrics, IV estimation, and careful diagnostics: scalable Census/geospatial import, district-crosswalk QA, systematic missingness tests, survey-weighted probit estimation, AME derivation, cascading fuzzy record linkage, IV specification, and spatial diagnostics.

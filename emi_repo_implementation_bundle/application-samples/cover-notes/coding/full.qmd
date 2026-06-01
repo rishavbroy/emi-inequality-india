@@ -1,7 +1,0 @@
----
-title: "Coding Sample: Escaping Inequality in India"
-author: "Rishav Roy"
-format: pdf
----
-
-What follows is a coding sample drawn from the refactored research pipeline for *Escaping Inequality in India: The Role of English-Medium Instruction*.

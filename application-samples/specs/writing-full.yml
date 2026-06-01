@@ -1,0 +1,4 @@
+output: application-samples/output/RishavRoy_WritingSample.pdf
+cover_note: application-samples/cover-notes/writing/full.qmd
+source: paper/report.qmd
+mode: full
