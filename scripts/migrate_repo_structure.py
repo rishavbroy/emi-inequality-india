@@ -35,13 +35,13 @@ DIRS = [
     "archive/623-version", "archive/application-sample-sources", "archive/application-sample-legacy-pdfs",
     "archive/legacy-paper-drafts", "archive/legacy-rendered-artifacts", "archive/legacy-rmd-chunks",
     "archive/implementation-bundles",
-    "papers",
+    "relevant-literature",
 ]
 
 ALLOWLIST_TOP_LEVEL = {
     ".git", ".gitignore", ".Rprofile", "README.md", "LICENSE", "Makefile", "_quarto.yml", "_targets.R", "renv.lock",
     "renv", "config", "R", "scripts", "data", "assets", "paper", "docs", "analysis", "outputs",
-    "application-samples", "presentations", "tests", "archive", "papers",
+    "application-samples", "presentations", "tests", "archive", "relevant-literature",
 }
 
 # Exact top-level moves.
@@ -325,8 +325,8 @@ def merge_directory_contents(root: Path, src_dir: str | Path, dst_dir: str | Pat
 
 def move_top_level_pdfs_to_papers(root: Path, execute: bool) -> None:
     for name in LITERATURE_PDFS:
-        move_if_exists(root, name, "papers", execute)
-    merge_directory_contents(root, "Papers", "papers", execute)
+        move_if_exists(root, name, "relevant-literature", execute)
+    merge_directory_contents(root, "Papers", "relevant-literature", execute)
 
 
 def report_remaining_top_level(root: Path) -> None:
