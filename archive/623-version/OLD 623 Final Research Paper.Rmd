@@ -1,0 +1,163 @@
+---
+title: "Economic Returns to English-Medium Instruction in India"
+author: "Rishav Roy"
+date: "2024-04-22"
+header-includes: \usepackage{setspace}\doublespacing
+output:
+  pdf_document: default
+  html_notebook: default
+  bookdown::pdf_document2: default
+  tufte::tufte_handout: default
+subtitle: "A District-Level Analysis of Human Capital Investments and Economic Growth"
+abstract: Despite the country's economic growth, many Indias
+bibliography: English Education Economic Returns.bib
+citation_package: biblatex
+link-citations: yes
+csl: https://www.zotero.org/styles/apa
+editor_options:
+  canonical: yes
+  chunk_output_type: inline
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	fig.align = "center",
+	fig.height = 5,
+	fig.width = 8,
+	message = FALSE,
+	warning = FALSE,
+	cache = TRUE,
+	include = FALSE
+)
+library(tidyverse)
+library(bookdown)
+library(here)
+library(haven)
+library(janitor)
+library(equatiomatic)
+#Despite these warnings, my code wouldn't work unless I explicitly imported in this library. 
+#The coding gods disagreed with RStudio.
+
+```
+
+
+
+
+
+```{r import data, include=FALSE}
+
+nss07block1.2 <- read_sav(
+  here("NSS 2007-08 Participation and Expenditure in Education 64th Round","Block-1 & 2 Identification of sample household.sav")
+  ) %>% 
+  mutate(SAMPLE = SAMPLE %>% as.numeric()) %>% 
+  select(-LEVEL, -CENTRE_ROUND_SHIFT)
+
+nss07block3 <- read_sav(
+  here("NSS 2007-08 Participation and Expenditure in Education 64th Round","Block-3  Household  characteristics.sav")
+  ) %>% 
+  mutate(SAMPLE = SAMPLE %>% as.numeric()) %>% 
+  select(-LEVEL, -CENTRE_ROUND_SHIFT)
+
+nss07block4 <- read_sav(
+  here("NSS 2007-08 Participation and Expenditure in Education 64th Round","Block-4  Demographic and other particulars of household members.sav")
+  ) %>% 
+  mutate(SAMPLE = SAMPLE %>% as.character()) %>% 
+  mutate(SAMPLE = SAMPLE %>% as.numeric()) %>% 
+  select(-LEVEL, -CENTRE_ROUND_SHIFT)
+
+nss07block5 <- read_dta(
+  here("NSS 2007-08 Participation and Expenditure in Education 64th Round","Block 5.dta")
+  ) %>% 
+  mutate(SAMPLE = SAMPLE %>% as.numeric()) %>% 
+  select(-LEVEL, -CENTRE_ROUND_SHIFT)
+
+nss07block7 <- read_sav(
+  here("NSS 2007-08 Participation and Expenditure in Education 64th Round","Block-7  Particulars of currently not attending persons aged 5-29 years.sav")
+  ) %>% 
+  mutate(SAMPLE = SAMPLE %>% as.numeric()) %>% 
+  select(-LEVEL, -CENTRE_ROUND_SHIFT)
+
+HHnss0708 <- nss07block1.2 %>% 
+  full_join(nss07block3)
+
+# get_dupes(nss0708,HHID) #Used to check for rows which are duplicated 
+
+Pnss0708 <- HHnss0708 %>% 
+  full_join(nss07block4) %>% 
+  full_join(nss07block5) %>% 
+  full_join(nss07block7)
+
+# get_dupes(nss0708,PID)
+
+Pnss0708 <- clean_names(Pnss0708)
+HHnss0708 <- clean_names(HHnss0708)
+
+# remove(nss07block1.2, nss07block3, nss07block4, nss07block5, nss07block7)
+
+```
+
+```{r}
+
+Pnss0708 <- Pnss0708 %>% 
+  unite(state_district, c(state, district),sep="")
+
+datasetf <- Pnss0708 %>% 
+  drop_na(lvl_curr_attendence) %>% 
+  group_by(state_district) %>%
+  summarize(
+    n_students=n(),
+    EMI_I = sum(medium_instruction=="02")/n_students,
+    avg_consumption_0708 =
+          mean(total,na.rm=T)
+    )
+
+```
+
+```{r}
+
+plfs1819 <- read_dta(here("PLFS 2018-19 Periodic Labour Force Survey July 2018 - June 2019","HHRV-2018-19.dta"))
+
+plfs1819 <- plfs1819 %>% 
+  rename(total_consumption_1819 = b3q5_hh_fv) %>%
+  filter(visit_hh_fv == "V2") %>% 
+  unite(state_district, c(B0q1state_hh_fv, B1q4dist_code_hh_fv),sep="")
+
+datasetf <- datasetf %>% 
+  full_join(
+    plfs1819 %>% 
+      mutate(total_consumption_1819 =
+               as.numeric(total_consumption_1819)) %>% 
+      group_by(state_district) %>% 
+      summarize(
+        n_homes_final=n(),
+        avg_consumption_1819 =
+          mean(total_consumption_1819,na.rm=T))
+  ) %>% 
+  mutate(consumption_growth = 
+           avg_consumption_1819 -
+           avg_consumption_0708
+         )
+
+
+summary(lm(log(consumption_growth)~EMI_I, data=datasetf))
+
+
+```
+
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+
+\begin{equation} 
+  f\left(k\right) = \binom{n}{k} p^k\left(1-p\right)^{n-k}
+  (\#eq:binom)
+\end{equation}
+
+See \@ref(eq:binom)
+
+\newpage
+# References
