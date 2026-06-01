@@ -1,0 +1,1 @@
+knitr::include_graphics("collage2_map.png")
