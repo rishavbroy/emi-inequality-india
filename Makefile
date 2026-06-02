@@ -1,4 +1,4 @@
-.PHONY: init-renv restore snapshot pipeline-draft pipeline-final diagnostics report samples tests clean-targets clean-renders
+.PHONY: init-renv restore snapshot pipeline-draft pipeline-final diagnostics report samples test tests clean-targets clean-renders
 
 init-renv:
 	Rscript scripts/init_renv.R
@@ -24,8 +24,10 @@ report:
 samples:
 	Rscript scripts/render_application_samples.R
 
+test: tests
+
 tests:
-	Rscript -e 'testthat::test_dir("tests/testthat")'
+	Rscript tests/testthat.R
 
 clean-targets:
 	Rscript -e 'targets::tar_destroy(destroy = "all")'

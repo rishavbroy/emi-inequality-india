@@ -30,15 +30,22 @@ The project is under active revision. The main methodological priorities are dis
 
 ```bash
 make init-renv   # first local setup; creates/updates renv.lock
+make test        # smoke tests and input/output contracts
 make pipeline-draft
 make report
 make samples
 ```
 
-Raw data are not tracked. Place raw files according to `data/metadata/file_manifest.csv`. The two public processed data products are:
+Raw data are not tracked. Place raw files according to `data/metadata/file_manifest.csv`. See `REPLICATION.md` for the current replication data contract and expected behavior on a fresh clone without local-only raw data.
+
+The two public processed data products are:
 
 - `data/processed/district_tracker_2001_2007_2017_2020.csv`
 - `data/processed/district_panel_emi_consumption_2001_2007_2017_2020.csv`
+
+## Missing-data behavior
+
+The pipeline should fail gracefully when required raw data are absent: it reads `data/metadata/file_manifest.csv`, checks the listed paths, and reports the exact missing files before attempting to call readers like `read_sav()`, `read_excel()`, or `sf::st_read()`. A cryptic raw-reader path error should be treated as a bug.
 
 ## Current limitations
 
