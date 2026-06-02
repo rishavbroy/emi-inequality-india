@@ -54,3 +54,4 @@ __MACOSX/
 autorun.inf
 /.quarto/
 **/*.quarto_ipynb
+x
