@@ -25,7 +25,7 @@ samples:
 	Rscript scripts/render_application_samples.R
 
 tests:
-	Rscript -e 'testthat::test_dir("tests/testthat")'
+	Rscript tests/testthat.R
 
 clean-targets:
 	Rscript -e 'targets::tar_destroy(destroy = "all")'
