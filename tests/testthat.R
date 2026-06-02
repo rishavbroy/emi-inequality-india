@@ -1,5 +1,8 @@
 library(testthat)
 
+project_root <- normalizePath(getwd(), mustWork = TRUE)
+Sys.setenv(EMI_PROJECT_ROOT = project_root)
+
 source("R/packages.R")
 source("R/config.R")
 source("R/paths.R")
