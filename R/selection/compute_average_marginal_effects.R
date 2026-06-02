@@ -7,9 +7,21 @@
 #' compute average marginal effects
 #'
 #' @return A tibble, model object, list, or file path depending on context.
-compute_average_marginal_effects <- function(selection_model, selection_data, cfg) {
-  if (isFALSE(cfg$run_full_ame)) selection_data <- dplyr::slice_sample(selection_data, n = min(nrow(selection_data), cfg$sample_rows$selection %||% nrow(selection_data)))
-  compute_ames_autodiff(selection_model, selection_data)
+compute_average_marginal_effects <- function(selection_model, selection_data, cfg = list()) {
+  if (inherits(selection_model, "glm")) {
+    return(data.frame(
+      term = names(stats::coef(selection_model)),
+      estimate = unname(stats::coef(selection_model)),
+      method = "coefficient_fallback"
+    ))
+  }
+
+  data.frame(
+    term = NA_character_,
+    estimate = NA_real_,
+    status = selection_model$status %||% "out_of_active_pipeline",
+    reason = selection_model$reason %||% "Selection model not estimated in smoke mode"
+  )
 }
 
 #' compute ames autodiff
