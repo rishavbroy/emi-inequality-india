@@ -52,3 +52,5 @@ __MACOSX/
 # survey-download executables and autorun files
 *.exe
 autorun.inf
+/.quarto/
+**/*.quarto_ipynb
