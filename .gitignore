@@ -20,9 +20,8 @@ data/raw/
 data/raw_future/
 data/interim/
 
-# locally stored papers
+# locally stored literature PDFs
 relevant-literature/
-docs/plan/THOROUGH NOTES Research Paper ECON 623.docx
 
 # generated caches and render byproducts
 *_cache/
@@ -54,4 +53,3 @@ __MACOSX/
 autorun.inf
 /.quarto/
 **/*.quarto_ipynb
-x
