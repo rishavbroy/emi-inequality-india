@@ -42,11 +42,15 @@ render_qmd_to_pdf <- function(input_qmd, output_file) {
   output_dir <- dirname(normalizePath(output_file, mustWork = FALSE))
   output_name <- basename(output_file)
 
-  if (requireNamespace("quarto", quietly = TRUE)) {
-    quarto::quarto_render(input = input_qmd, output_format = "pdf", output_file = output_name, output_dir = output_dir, quiet = TRUE)
-  } else {
-    status <- system2("quarto", c("render", shQuote(input_qmd), "--to", "pdf", "--output", shQuote(output_name), "--output-dir", shQuote(output_dir)))
-    if (!identical(status, 0L)) stop("quarto render failed for ", input_qmd, call. = FALSE)
+  if (!nzchar(Sys.which("quarto"))) {
+    stop("Quarto CLI was not found on PATH; cannot render ", input_qmd, call. = FALSE)
   }
+
+  status <- system2(
+    "quarto",
+    c("render", input_qmd, "--to", "pdf", "--output", output_name, "--output-dir", output_dir)
+  )
+
+  if (!identical(status, 0L)) stop("quarto render failed for ", input_qmd, call. = FALSE)
   invisible(output_file)
 }
