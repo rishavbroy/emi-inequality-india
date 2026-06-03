@@ -6,7 +6,10 @@
 #'
 #' @return A tibble, model object, list, or file path depending on context.
 diagnose_district_matching <- function(district_panel, district_join_map, cfg) {
-  list(panel = district_panel, join_map = district_join_map)
+  data.frame(
+    n_panel_rows = nrow(as.data.frame(district_panel)),
+    n_join_rows = nrow(as.data.frame(district_join_map))
+  )
 }
 
 #' extract unmatched districts
@@ -43,4 +46,3 @@ compare_tracker_to_matched_panel <- function(...) {
 save_district_matching_diagnostics <- function(diagnostics) {
   diagnostics
 }
-

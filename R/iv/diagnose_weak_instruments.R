@@ -6,7 +6,7 @@
 #'
 #' @return A tibble, model object, list, or file path depending on context.
 diagnose_weak_instruments <- function(iv_models, district_panel, cfg) {
-  tibble::tibble(metric = character(), value = numeric())
+  estimate_first_stage(iv_models, district_panel, cfg)
 }
 
 #' jackknife first stage by state
@@ -29,4 +29,3 @@ jackknife_first_stage_by_region <- function(...) {
 summarize_weak_iv_metrics <- function(...) {
   stop("TODO")
 }
-

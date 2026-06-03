@@ -12,7 +12,7 @@
 #' @param cfg Project config list.
 #' @return Tibble describing Sargan/GMM overidentification diagnostics or why skipped.
 diagnose_overidentification <- function(iv_models, model_specs, cfg = list()) {
-  if (is.null(model_specs)) {
+  if (is.null(model_specs) || inherits(model_specs, "data.frame")) {
     return(tibble::tibble(test = "overidentification", status = "not_applicable", reason = "No model_specs supplied."))
   }
   if (!is.list(model_specs) || !is.null(model_specs$endogenous_vars)) {
@@ -75,5 +75,3 @@ run_gmm_overid_if_applicable <- function(model, model_spec, cfg = list(), model_
   # Placeholder for future exact implementation once the final IV/GMM estimation routine is chosen.
   tibble::tibble(model = model_id, test = "gmm_overid", status = "todo", reason = "Implement after multiple-instrument specifications are finalized.")
 }
-
-`%||%` <- function(x, y) if (is.null(x)) y else x

@@ -6,7 +6,11 @@
 #'
 #' @return A tibble, model object, list, or file path depending on context.
 estimate_first_stage <- function(iv_models, district_panel, cfg) {
-  list()
+  data.frame(
+    model = names(iv_models),
+    status = vapply(iv_models, function(x) x$status %||% "estimated", character(1)),
+    stringsAsFactors = FALSE
+  )
 }
 
 #' tidy first stage results
@@ -29,4 +33,3 @@ compute_partial_f_statistics <- function(first_stage) {
 compute_partial_r2 <- function(first_stage) {
   first_stage
 }
-

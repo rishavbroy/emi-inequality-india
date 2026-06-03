@@ -7,14 +7,22 @@
 #'
 #' @return A tibble, model object, list, or file path depending on context.
 build_spatial_weights <- function(district_panel, cfg) {
-  if (inherits(district_panel, "sf")) { nb <- spdep::poly2nb(district_panel, queen = FALSE); spdep::nb2listw(nb, style = "W", zero.policy = TRUE) } else NULL
+  if (inherits(district_panel, "sf")) {
+    nb <- spdep::poly2nb(district_panel, queen = FALSE)
+    return(spdep::nb2listw(nb, style = "W", zero.policy = TRUE))
+  }
+  list(status = "out_of_active_pipeline", reason = "Requires sf geometry.")
 }
 
 #' diagnose spatial weights
 #'
 #' @return A tibble, model object, list, or file path depending on context.
 diagnose_spatial_weights <- function(district_panel, spatial_weights, cfg) {
-  list(weights = spatial_weights)
+  data.frame(
+    diagnostic = "spatial_weights",
+    status = spatial_weights$status %||% "constructed",
+    stringsAsFactors = FALSE
+  )
 }
 
 #' compare rook queen contiguity

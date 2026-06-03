@@ -6,7 +6,7 @@
 #'
 #' @return A tibble, model object, list, or file path depending on context.
 estimate_spatial_iv_experimental <- function(district_panel, spatial_weights, cfg) {
-  list()
+  list(status = "out_of_active_pipeline", reason = "Experimental spatial IV is documented but not active.")
 }
 
 #' add spatial lags
@@ -20,7 +20,7 @@ add_spatial_lags <- function(district_panel, spatial_weights, vars) {
 #'
 #' @return A tibble, model object, list, or file path depending on context.
 fit_spatial_lag_iv_attempts <- function(...) {
-  stop("TODO")
+  list(status = "out_of_active_pipeline", reason = "Experimental spatial IV is documented but not active.")
 }
 
 #' summarize spatial iv failures
@@ -29,4 +29,3 @@ fit_spatial_lag_iv_attempts <- function(...) {
 summarize_spatial_iv_failures <- function(...) {
   tibble::tibble()
 }
-

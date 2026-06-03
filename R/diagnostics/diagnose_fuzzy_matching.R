@@ -6,7 +6,10 @@
 #'
 #' @return A tibble, model object, list, or file path depending on context.
 diagnose_fuzzy_matching <- function(district_tracker, district_join_map, cfg) {
-  list(tracker = district_tracker, join_map = district_join_map)
+  data.frame(
+    n_tracker_rows = nrow(as.data.frame(district_tracker)),
+    n_join_rows = nrow(as.data.frame(district_join_map))
+  )
 }
 
 #' benchmark string distance methods
@@ -36,4 +39,3 @@ summarize_threshold_sensitivity <- function(...) {
 save_fuzzy_matching_diagnostics <- function(diagnostics) {
   diagnostics
 }
-
