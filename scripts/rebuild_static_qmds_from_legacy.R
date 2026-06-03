@@ -120,11 +120,7 @@ report_setup_chunk <- function() {
 
   c(
     "```{r report-target-values, include=FALSE}",
-    "safe_tar_read <- function(name) {",
-    "  if (!requireNamespace(\"targets\", quietly = TRUE)) return(NULL)",
-    "  tryCatch(targets::tar_read_raw(name), error = function(e) NULL)",
-    "}",
-    "report_values <- safe_tar_read(\"report_values\")",
+    "report_values <- tryCatch(targets::tar_read(report_values), error = function(e) list())",
     "if (is.null(report_values) || !is.list(report_values)) report_values <- list()",
     expr_lines,
     "report_value <- function(key) {",
@@ -220,7 +216,9 @@ district_yaml <- c(
   "---"
 )
 district <- extract_lines(body, "## District Matching and Spatial Autocorrelation {#distma-spa}", "# Technical Note for Replication")
-write_qmd("docs/district-matching.qmd", district_yaml, convert_legacy_math(district))
+district <- convert_legacy_math(district)
+district <- replace_inline_r_with_target_values(district)
+write_qmd("docs/district-matching.qmd", district_yaml, c(report_setup_chunk(), "", district))
 
 long_yaml <- c(
   "---",
