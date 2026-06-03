@@ -56,6 +56,45 @@ extract_marked_divs <- function(text) {
   blocks
 }
 
+strip_qmd_yaml <- function(lines) {
+  if (length(lines) >= 2L && identical(lines[[1]], "---")) {
+    close <- which(lines[-1L] == "---")
+    if (length(close)) return(lines[-seq_len(close[[1]] + 1L)])
+  }
+  lines
+}
+
+ensure_yaml_field <- function(lines, field, value) {
+  if (!length(lines) || !identical(lines[[1]], "---")) return(lines)
+  close <- which(lines[-1L] == "---")
+  if (!length(close)) return(lines)
+  end <- close[[1]] + 1L
+  field_re <- paste0("^", field, ":")
+  if (any(grepl(field_re, lines[seq_len(end)], perl = TRUE))) return(lines)
+  append(lines, paste0(field, ": ", value), after = end - 1L)
+}
+
+rewrite_yaml_field <- function(lines, field, value) {
+  if (!length(lines) || !identical(lines[[1]], "---")) return(lines)
+  close <- which(lines[-1L] == "---")
+  if (!length(close)) return(lines)
+  end <- close[[1]] + 1L
+  field_re <- paste0("^", field, ":")
+  idx <- grep(field_re, lines[seq_len(end)], perl = TRUE)
+  if (length(idx)) {
+    lines[idx[[1]]] <- paste0(field, ": ", value)
+  } else {
+    lines <- append(lines, paste0(field, ": ", value), after = end - 1L)
+  }
+  lines
+}
+
+normalize_sample_yaml <- function(lines, bibliography = "../../paper/references.bib") {
+  lines <- rewrite_yaml_field(lines, "bibliography", bibliography)
+  lines <- ensure_yaml_field(lines, "link-citations", "true")
+  lines
+}
+
 #' Assemble a temporary writing-sample QMD
 #'
 #' @param cover_note Path to cover-note QMD.
@@ -64,6 +103,7 @@ extract_marked_divs <- function(text) {
 #' @return `output_qmd` invisibly.
 assemble_writing_sample_qmd <- function(cover_note, excerpts, output_qmd) {
   cover <- if (!is.null(cover_note) && file.exists(cover_note)) readLines(cover_note, warn = FALSE) else character()
+  cover <- normalize_sample_yaml(cover)
   body <- c(cover, "", "\\newpage", "", excerpts)
   dir.create(dirname(output_qmd), recursive = TRUE, showWarnings = FALSE)
   writeLines(body, output_qmd)
