@@ -50,8 +50,17 @@ extract_lines <- function(lines, start, end = NULL) {
   lines[i:(j - 1L)]
 }
 
+convert_legacy_math <- function(lines) {
+  lines <- gsub("\\\\\\[", "$$", lines)
+  lines <- gsub("\\\\\\]", "$$", lines)
+  lines <- gsub("\\\\\\(", "$", lines)
+  lines <- gsub("\\\\\\)", "$", lines)
+  lines <- gsub("`r ", "` r ", lines, fixed = TRUE)
+  lines
+}
+
 body <- strip_code_chunks(strip_yaml(legacy_lines))
 out <- extract_lines(body, "## District Matching and Spatial Autocorrelation {#distma-spa}", "# Technical Note for Replication")
-out <- gsub("`r ", "` r ", out, fixed = TRUE)
+out <- convert_legacy_math(out)
 cat(paste(out, collapse = "\n"))
 ```
