@@ -39,18 +39,29 @@ render_one_writing_sample <- function(spec_path) {
 #' @return Output PDF path invisibly.
 render_qmd_to_pdf <- function(input_qmd, output_file) {
   dir.create(dirname(output_file), recursive = TRUE, showWarnings = FALSE)
-  output_dir <- dirname(normalizePath(output_file, mustWork = FALSE))
-  output_name <- basename(output_file)
+
+  input_qmd <- normalizePath(input_qmd, mustWork = TRUE)
+  output_file <- normalizePath(output_file, mustWork = FALSE)
+  rendered_name <- basename(output_file)
 
   if (!nzchar(Sys.which("quarto"))) {
     stop("Quarto CLI was not found on PATH; cannot render ", input_qmd, call. = FALSE)
   }
 
+  old_wd <- getwd()
+  on.exit(setwd(old_wd), add = TRUE)
+  setwd(dirname(input_qmd))
+
   status <- system2(
     "quarto",
-    c("render", input_qmd, "--to", "pdf", "--output", output_name, "--output-dir", output_dir)
+    c("render", basename(input_qmd), "--to", "pdf", "--output", rendered_name)
   )
 
   if (!identical(status, 0L)) stop("quarto render failed for ", input_qmd, call. = FALSE)
+
+  rendered_path <- normalizePath(file.path(dirname(input_qmd), rendered_name), mustWork = FALSE)
+  if (!file.exists(rendered_path)) stop("Expected rendered PDF was not created: ", rendered_path, call. = FALSE)
+  if (!identical(rendered_path, output_file)) file.copy(rendered_path, output_file, overwrite = TRUE)
+
   invisible(output_file)
 }
