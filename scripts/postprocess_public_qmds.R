@@ -69,6 +69,7 @@ normalize_yaml <- function(lines, path) {
   }
   if (!identical(path, "docs/long-paths-and-8-3-filenames.qmd")) {
     lines <- ensure_yaml_field(lines, "link-citations", "true")
+    lines <- ensure_yaml_field(lines, "cite-method", "citeproc")
   }
   lines
 }
@@ -92,8 +93,39 @@ convert_legacy_crossrefs <- function(lines) {
   lines
 }
 
+fix_equation_labels <- function(lines) {
+  label_idx <- grep("^\\{#eq-[A-Za-z0-9_-]+\\}\\s*$", lines)
+  if (!length(label_idx)) return(lines)
+
+  for (idx in rev(label_idx)) {
+    label <- trimws(lines[[idx]])
+    starts <- grep("^\\\\begin\\{align\\}", lines[seq_len(idx)], perl = TRUE)
+    ends_rel <- grep("^\\\\end\\{align\\}", lines[idx:length(lines)], perl = TRUE)
+    if (!length(starts) || !length(ends_rel)) next
+
+    start <- max(starts)
+    end <- idx + min(ends_rel) - 1L
+    if (start >= idx || end <= idx) next
+
+    block <- lines[start:end]
+    block <- block[trimws(block) != label]
+    block[grepl("^\\\\begin\\{align\\}\\s*$", block, perl = TRUE)] <- "$$"
+    block[grepl("^\\\\begin\\{split\\}\\s*$", block, perl = TRUE)] <- "\\begin{aligned}"
+    block[grepl("^\\\\end\\{split\\}\\s*$", block, perl = TRUE)] <- "\\end{aligned}"
+    block[grepl("^\\\\end\\{align\\}\\s*$", block, perl = TRUE)] <- paste0("$$ ", label)
+
+    lines <- c(
+      if (start > 1L) lines[seq_len(start - 1L)] else character(),
+      block,
+      if (end < length(lines)) lines[(end + 1L):length(lines)] else character()
+    )
+  }
+  lines
+}
+
 cleanup_public_placeholders <- function(lines) {
-  lines <- gsub("not yet available", "not run in current draft pipeline", lines, fixed = TRUE)
+  lines <- gsub("not yet available", "—", lines, fixed = TRUE)
+  lines <- gsub("not run in current draft pipeline", "—", lines, fixed = TRUE)
   lines
 }
 
@@ -102,6 +134,7 @@ postprocess_one <- function(path) {
   lines <- normalize_yaml(lines, path)
   lines <- normalize_heading_labels(lines)
   lines <- convert_legacy_crossrefs(lines)
+  lines <- fix_equation_labels(lines)
   lines <- cleanup_public_placeholders(lines)
   writeLines(lines, path)
   message("Postprocessed ", path)
