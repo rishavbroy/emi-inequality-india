@@ -14,10 +14,17 @@ execute:
 ```{r}
 #| results: asis
 legacy_path <- "../archive/legacy-paper-drafts/580-Draft-ECON-580.Rmd"
-legacy <- readLines(legacy_path, warn = FALSE)
-legacy <- paste(legacy, collapse = "\n")
-strip_code_chunks <- function(x) {
-  lines <- strsplit(x, "\n", fixed = TRUE)[[1]]
+legacy_lines <- readLines(legacy_path, warn = FALSE)
+
+strip_yaml <- function(lines) {
+  if (length(lines) >= 2L && identical(lines[[1]], "---")) {
+    close <- which(lines[-1L] == "---")
+    if (length(close)) return(lines[-seq_len(close[[1]] + 1L)])
+  }
+  lines
+}
+
+strip_code_chunks <- function(lines) {
   out <- character()
   in_chunk <- FALSE
   for (line in lines) {
@@ -27,20 +34,25 @@ strip_code_chunks <- function(x) {
     }
     if (!in_chunk) out <- c(out, line)
   }
-  paste(out, collapse = "\n")
+  out
 }
-extract_between <- function(x, start, end = NULL) {
-  start_pos <- regexpr(start, x, perl = TRUE)
-  if (start_pos < 0) stop("Could not find: ", start, call. = FALSE)
-  if (is.null(end)) return(substr(x, start_pos, nchar(x)))
-  rest <- substr(x, start_pos + attr(start_pos, "match.length"), nchar(x))
-  end_pos <- regexpr(end, rest, perl = TRUE)
-  if (end_pos < 0) return(substr(x, start_pos, nchar(x)))
-  substr(x, start_pos, start_pos + attr(start_pos, "match.length") + end_pos - 2)
+
+find_line <- function(lines, pattern) {
+  hit <- grep(pattern, lines, fixed = TRUE)
+  if (!length(hit)) stop("Could not find: ", pattern, call. = FALSE)
+  hit[[1]]
 }
-body <- strip_code_chunks(legacy)
-body <- sub("^---.*?---", "", body, perl = TRUE)
-cat(extract_between(body, "^# Technical Note for Replication", "^# References"))
+
+extract_lines <- function(lines, start, end = NULL) {
+  i <- find_line(lines, start)
+  j <- if (is.null(end)) length(lines) + 1L else find_line(lines, end)
+  lines[i:(j - 1L)]
+}
+
+body <- strip_code_chunks(strip_yaml(legacy_lines))
+out <- extract_lines(body, "# Technical Note for Replication", "# References")
+out <- gsub("`r ", "` r ", out, fixed = TRUE)
+cat(paste(out, collapse = "\n"))
 ```
 
 ```{r}
