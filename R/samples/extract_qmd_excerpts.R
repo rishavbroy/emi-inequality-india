@@ -64,6 +64,25 @@ strip_qmd_yaml <- function(lines) {
   lines
 }
 
+extract_yaml_field <- function(lines, field) {
+  if (!length(lines) || !identical(lines[[1]], "---")) return(NULL)
+  close <- which(lines[-1L] == "---")
+  if (!length(close)) return(NULL)
+  end <- close[[1]] + 1L
+  field_re <- paste0("^", field, ":\\s*")
+  idx <- grep(field_re, lines[seq_len(end)], perl = TRUE)
+  if (!length(idx)) return(NULL)
+  value <- sub(field_re, "", lines[idx[[1]]], perl = TRUE)
+  value <- sub('^"', "", sub('"$', "", value))
+  value
+}
+
+report_abstract_block <- function(source_lines) {
+  abstract <- extract_yaml_field(source_lines, "abstract")
+  if (is.null(abstract) || !nzchar(abstract)) return(character())
+  c("", "## Abstract", "", abstract, "")
+}
+
 ensure_yaml_field <- function(lines, field, value) {
   if (!length(lines) || !identical(lines[[1]], "---")) return(lines)
   close <- which(lines[-1L] == "---")
