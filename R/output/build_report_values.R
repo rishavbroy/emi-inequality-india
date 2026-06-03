@@ -12,6 +12,15 @@ first_available_number <- function(x, candidates) {
   suppressWarnings(as.numeric(x[[hit[[1]]]][[1]]))
 }
 
+first_available_text <- function(x, candidates, default = "not run in current draft pipeline") {
+  if (is.null(x)) return(default)
+  x <- tryCatch(as.data.frame(x), error = function(e) data.frame())
+  hit <- intersect(candidates, names(x))
+  if (!length(hit) || !nrow(x)) return(default)
+  out <- as.character(x[[hit[[1]]]][[1]])
+  if (!length(out) || is.na(out) || !nzchar(out)) default else out
+}
+
 coefficient_value <- function(model, term, column = c("Estimate", "estimate"), digits = NULL) {
   out <- tryCatch({
     sm <- summary(model)
@@ -52,13 +61,33 @@ lookup_ame <- function(ame_results, term_pattern, value_col = "estimate", multip
 
 add_inline_value <- function(values, expr, value) {
   values[[inline_expression_key(expr)]] <- value
+  values[[expr]] <- value
   values
+}
+
+format_value <- function(x, fallback = "not run in current draft pipeline") {
+  if (length(x) == 0L || all(is.na(x))) return(fallback)
+  x
+}
+
+spatial_p_value <- function(diag, pattern = NULL) {
+  x <- tryCatch(as.data.frame(diag), error = function(e) data.frame())
+  if (!nrow(x)) return(first_available_text(diag, c("status", "reason")))
+  if (!is.null(pattern)) {
+    text_cols <- intersect(c("estimand", "model", "target", "outcome", "name", "test"), names(x))
+    if (length(text_cols)) {
+      keep <- Reduce(`|`, lapply(text_cols, function(col) grepl(pattern, x[[col]], ignore.case = TRUE)))
+      if (any(keep)) x <- x[keep, , drop = FALSE]
+    }
+  }
+  out <- first_available_number(x, c("p.value", "p_value", "p", "pval"))
+  if (is.finite(out)) signif(out, 3) else first_available_text(x, c("status", "reason"))
 }
 
 #' Build report values from current targets
 #'
 #' @return Named list of values used by paper/report.qmd.
-build_report_values <- function(ame_results, first_stage_tests, iv_models, selection_data, district_panel, cfg = list()) {
+build_report_values <- function(ame_results, first_stage_tests, iv_models, selection_data, district_panel, diag_spatial_autocorrelation = NULL, cfg = list()) {
   values <- list()
 
   values$partial_f <- first_available_number(first_stage_tests, c("partial_f", "statistic", "f_stat", "F"))
@@ -79,8 +108,14 @@ build_report_values <- function(ame_results, first_stage_tests, iv_models, selec
   values$ame_muslim_pct <- lookup_ame(ame_results, "RELIGION", contrast_pattern = "Muslim", multiply = 100, digits = 3)
   values$ame_st_pct <- lookup_ame(ame_results, "SOCIAL_GROUP", contrast_pattern = "Tribe", multiply = 100, digits = 3)
 
+  values$spatial_residual_p <- spatial_p_value(diag_spatial_autocorrelation, "resid")
+  values$spatial_consumption_p <- spatial_p_value(diag_spatial_autocorrelation, "consumption|growth")
+
   values <- add_inline_value(values, "partial_f %>% round(digits = 2)", if (is.finite(values$partial_f)) round(values$partial_f, 2) else NA_real_)
   values <- add_inline_value(values, "partial_p %>% signif(digits = 2)", if (is.finite(values$partial_p)) signif(values$partial_p, 2) else NA_real_)
+  values <- add_inline_value(values, "m_cons_resid$p.value %>% signif(3)", values$spatial_residual_p)
+  values <- add_inline_value(values, "m_cons$p.value %>% signif(3)", values$spatial_consumption_p)
+
   values <- add_inline_value(values, "mfx_df %>% filter(term==\"AGE\") %>% pull(estimate) %>% round(3)", values$ame_age)
   values <- add_inline_value(values, "mfx_df %>% filter(term==\"AGE\") %>% pull(estimate) %>% round(3) %>% abs()*100", abs(values$ame_age_pct))
   values <- add_inline_value(values, "mfx_df %>% filter(term==\"AGE\") %>% pull(estimate) %>% round(3)*100", values$ame_age_pct)
