@@ -1,5 +1,5 @@
 ---
-title: "Escaping Inequality in India: The Role of English-Medium Instruction"
+title: "Escaping Inequality in India: Role of English-Medium Instruction"
 author: "Rishav Roy"
 format:
   pdf:
@@ -11,119 +11,88 @@ execute:
   message: false
 ---
 
-::: {.sample-excerpt #ws-intro-question-contribution sets="writing-5pg writing-10pg" order="1"}
-## Research Question and Contribution {#sec-research-question}
+```{r}
+#| results: asis
+legacy_path <- "../archive/legacy-paper-drafts/580-Draft-ECON-580.Rmd"
+legacy <- readLines(legacy_path, warn = FALSE)
+legacy <- paste(legacy, collapse = "\n")
 
-English-medium instruction (EMI), or the teaching of school subjects in English, is often viewed as a potential tool for economic mobility in India, where English skills command substantial wage premia. Yet it remains unclear whether greater exposure to EMI generates broader local development gains. We study whether district-level EMI exposure in 2007, measured as the share of school-going children enrolled in EMI, affected growth in average household consumption between 2007 and 2018. To address endogeneity, we instrument EMI exposure using a proxy for the opporunity cost of acquiring EMI over Hindi-based schooling: the population-weighted average linguistic distance of districts' mother tongues from Hindi in 2001. District-level 2SLS estimates with state-clustered standard errors are positive but insignificant, providing limited evidence that EMI exposure increased local consumption growth over the medium run. This district-level equilibrium analysis is supplemented with an individual-level probit model of selection into education. We conclude by discussing threats to identification and interpretation (namely spatial autocorrelation and migration) and their implications for future work.
+strip_code_chunks <- function(x) {
+  lines <- strsplit(x, "\n", fixed = TRUE)[[1]]
+  out <- character()
+  in_chunk <- FALSE
+  for (line in lines) {
+    if (startsWith(line, "```")) {
+      in_chunk <- !in_chunk
+      next
+    }
+    if (!in_chunk) out <- c(out, line)
+  }
+  paste(out, collapse = "\n")
+}
 
-Given all these mediators, nuances, and negations of its perceived effect, can EMI truly be seen as a source of hope? Should households turn to it to invest in their children's future? Does greater enrollment in EMI aid future development? Should policy-makers be promoting it as a tool for local development? To gain insight into these questions, we seek to answer the following one:
+extract_between <- function(x, start, end = NULL) {
+  start_pos <- regexpr(start, x, perl = TRUE)
+  if (start_pos < 0) stop("Could not find: ", start, call. = FALSE)
+  if (is.null(end)) return(substr(x, start_pos, nchar(x)))
+  rest <- substr(x, start_pos + attr(start_pos, "match.length"), nchar(x))
+  end_pos <- regexpr(end, rest, perl = TRUE)
+  if (end_pos < 0) return(substr(x, start_pos, nchar(x)))
+  substr(x, start_pos, start_pos + attr(start_pos, "match.length") + end_pos - 2)
+}
 
-> What is the effect of exposure to English-medium instruction enrollment in 2007-08 on the growth of local consumption from 2007-08 to 2017-18?
+wrap_section <- function(x, start_heading, end_heading, attrs) {
+  start <- regexpr(start_heading, x, fixed = TRUE)
+  if (start < 0) stop("Could not find heading: ", start_heading, call. = FALSE)
+  if (is.null(end_heading)) {
+    end <- nchar(x) + 1L
+  } else {
+    rest <- substr(x, start + attr(start, "match.length"), nchar(x))
+    end_rel <- regexpr(end_heading, rest, fixed = TRUE)
+    end <- if (end_rel < 0) nchar(x) + 1L else start + attr(start, "match.length") + end_rel - 1L
+  }
+  paste0(
+    substr(x, 1L, start - 1L),
+    "::: {", attrs, "}\n",
+    trimws(substr(x, start, end - 1L), which = "right"),
+    "\n:::\n\n",
+    substr(x, end, nchar(x))
+  )
+}
 
-First, note the improvements made here over the previous literature. The setting of 2007-2018 may be more relevant today than the settings of similar literature, all of which are closer to the advent of service job offshoring in the 1990s [e.g., @refeque2022a]. Additionally, note that our response variable here is consumption, not wages. India holds a vast number of informal and self-employed individuals, meaning its labor force varies wildly in the degree to which wages reflect material well-being.
+escape_inline_r <- function(x) {
+  gsub("`r ([^`]+)`", "\\\\`r \\1\\\\`", x, perl = TRUE)
+}
 
-Second, we must highlight that unlike much of this literature, we lack household panel data. We will thus follow previous papers [e.g., @martinBigOutSmall2017] and aggregate data at the district level. More specifically, we will take cross-sectional data from 2007-08 [@nationalsamplesurveyoffice2008] and 2017-18 [@office2022a], aggregate each at the district level separately, and match districts across the time periods to construct a district pseudo-panel. District-level variables are developed in @sec-selection-model and the district matching method is explained in @sec-district-harmonization.
+body <- strip_code_chunks(legacy)
+body <- sub("^---.*?---", "", body, perl = TRUE)
+main <- extract_between(
+  body,
+  "^# Introduction and Literature Review \\{#intro\\}",
+  "^# \\(APPENDIX\\) Appendix"
+)
+appendix <- extract_between(
+  body,
+  "^# \\(APPENDIX\\) Appendix",
+  "^# Technical Note for Replication"
+)
+technical <- extract_between(
+  body,
+  "^# Technical Note for Replication",
+  "^# References"
+)
 
-Our empirical methodology will then proceed in two parts. In @sec-selection-model, we study the composition of our key "EMI exposure" measure by estimating an individual-level probit of school participation in 2007-08. In @sec-instrument, we move to the district level and implement two-stage least squares (2SLS): the weighted average of linguistic distance from Hindi in 2001 will be used to instrument for EMI exposure, onto whose fitted values we regress the growth rate of average consumption. The choice of instrument is discussed in @sec-instrument.
-
-Our 2SLS results will, at best, reflect the medium-run local general equilibrium effects of EMI exposure. On one hand, by aggregating away all individual or household-level variation, the ecological fallacy renders our 2SLS estimates uninterpretable at these lower levels. Additionally, school-going children in 2007-08 will still be quite young in 2017-18, and many may still be in school (particularly in more developed districts).
-:::
-
-::: {.sample-excerpt #ws-selection-model-missingness sets="writing-10pg" order="2"}
-## Education Participation, Variable Construction, and Missingness {#sec-selection-model}
-
-Sample weights were applied wherever applicable. All district-level aggregates were formed as sample-weighted averages. The education participation probit used survey-weighted generalized linear models and design-based standard errors. Clusters were formed at the primary sampling unit, which were rural villages and urban blocks. These clusters were nested, or defined within, substrata which were themselves nested within strata. Strata generally corresponded to districts, whereas substrata generally corresponded to each side of the rural/urban partition of the district. Multiple urban substrata were allowed for particularly dense areas, with the largest number of substrata within a district being 29. All were accounted for in the probit.
-
-Goal: Regress on variables which affect the probability one enrolls in or stays enrolled in school, but which do not otherwise affect district-level outcomes of interest (consumption, wages, etc.).
-
-Many relevant variables are only defined for enrolled kids. In lieu of using multiple imputation to assign them for not-enrolled kids, we use district-level aggregates of these variables as instruments for each child in the district. The exclusion restriction of the Heckman correction holds for the aggregates as it does for the original variables.
-
-There are two kinds of regressors here: those in $X_i$, the variables unique to child $i$, and $Z_{d(i)} = \{\overline{u}_{d(i)}:u\in U\} \cup\{\overline{\mathrm{EnrollmentCost}}_{d(i)}\},$ the variables which have been aggregated at the level of the district $d(i)$ where child $i$ lives. Without this aggregation, neither $u$ nor $\mathrm{EnrollmentCost}$, both endogenous to enrollment, would be well-defined for children not in school. Our aggregation can thus be understood as a way of handling missingness; whereas $\mathrm{EnrollmentCost}_i$ was missing for 120,062 children, $\overline{\mathrm{EnrollmentCost}}_{d(i)}$ was missing for 7,109. Observations still missing a relevant variable were then dropped.
-
-The district-level averages can be interpreted as reflections of local supply-side factors, namely the general availability or generosity of educational inputs in a child's local environment. Their marginal effects may reflect how changes in these district-level characteristics affect the probability a child enrolls in education---or in other words, the elasticity of enrollment with respect to local schooling conditions.
-
-Following @azam2013a, @munshi2006a, and @singh2013, we use father's education to proxy a child's ability before schooling. We use the father despite evidence indicating that the mother's education is more strongly associated with early life human capital development. Taking the average of the mother's and father's education is not possible as education level is recorded by the @nationalsamplesurveyoffice2008 as a categorical variable. Future work may attempt to create an index variable for this.
-
-Father proxy: within-HH male and potential parent. Defined for each HHID in this priority order:
-
-1. Male head (RELATION_TO_HEAD==1 & SEX==1)
-2. Male married child of head (3 & 1) (common for married male to live with parents)
-3. Male parent/parent-in-law of head (7 & 1)
-
-The @nationalsamplesurveyoffice2008 do not explicitly identify parent-child relationships. Instead, they only provide each person's relationship to the head of their household. Father's education is thus proxied by the education of the head of the household if they are male; else as the married child of the head if they are male; else as the parent/parent-in-law of the head if they are male.
-:::
-
-::: {.sample-excerpt #ws-iv-relevance-exclusion-problem sets="writing-5pg writing-10pg" order="3"}
-## Instrumental Variable {#sec-instrument}
-
-Our instrument for $\mathrm{EMIE}_d$ is $\mathrm{LingDistance}_d$, the average linguistic distance from Hindi of the three most spoken mother tongues in district $d$ in 2001, weighted by the number of speakers then. The mechanism behind this may seem odd: why choose linguistic distance from Hindi as opposed to, say, English? India's large linguistic diversity predisposes it to have large communication costs, large coordination costs, and thus hindered economic development within its borders [@nakagawa2021a]. To decrease such frictions in the market and in public goods provisioning [@liu2016a], both Hindi and English have been thrust into the roles of competing domestic lingua franca [@clingingsmithIndustrializationBilingualismIndia2014], meaning Hindi- and English-medium schools can be found across the country [@shastry2012a, p. 294].
-
-As the 'distance' between one's mother tongue and Hindi increases, we expect the opportunity cost of learning English over Hindi to decrease. Because of this, we also expect individuals with a mother tongue further from Hindi to be more likely to enroll in EMI. "That distance from Hindi induces people to learn English" and even "schools to teach English" is in fact precisely what @shastry2012a [p. 289] claims. If we can then show that local linguistic distance induces exogenous variation in local EMI, we can wield it as an instrumental variable (IV) to isolate $\text{EMIE}_d$'s effect on consumption growth. Shastry helps us once more here, evidencing both the relevance (pp. 299-301) and exclusion restriction (pp. 302-305) of $\mathrm{LingDistance}_d$'s effect on $\text{EMIE}_d$.
-
-We are currently unable to replicate her justification of the exclusion restriction, however. Her argument centers on a map depicting the geographical balance of her residual variation, made possible despite the distinct regional divide thanks to state fixed effects. In our case, adding state FEs explodes the condition number of our design matrix despite all individual collinearity measures remaining low, with similar results for region FEs to a lesser degree. This almost certainly results from the many-to-many matching used in this paper's district tracking algorithms.
-
-A portion of this near-perfect multicollinearity may simply just be "God's will" [@blanchardComment1987, p. 449]: the States Reorganization Act of 1956, for example, aligned state lines with linguistic lines, a precedent which new states have followed since [@sarmaIntersectionsHeritageMultilingualism2025]. This possiblity is precisely the motivation for our planned first-difference 2SLS design [@angristMostlyHarmlessEconometrics2008, p. 167]. Even if only the data harmonization changes from @sec-district-harmonization are made, future work will still demean each district's linguistic distance by subtracting away its state's linguistic distance.
-
-In the meantime, we rely on heuristic justifications of our instrument. Its relevance is plausible: districts with higher linguistic distance from Hindi should have higher EMI demand due to the relatively lower opportunity cost of learning English. They should also have relatively lower cross-language coordination costs for setting up EMI as opposed to Hindi-medium instruction, allowing EMI supply to rise more. Shastry justifies this at the state level; future work must replicate this at the district level.
-
-The exclusion restriction, meanwhile, requires us to assume that after conditioning on our controls, a district's linguistic distance is a) predetermined and b) plausibly orthogonal to all later shocks and trends in consumption except via education. We could demonstrate (b) by replicating Shastry's visualization of geographically balanced residuals, though this will require state/region fixed effects and possibly spatial correlation robust SEs. More work will be needed to replicate her justification of (a): not only does she show that district-level linguistic distance in both 1991 and 1961 are strongly correlated, she also shows that they both increase the within-state share of a language's native speakers who learn English in 2001, as well as the in-state level of EMI supply in 2001. That linguistic distance remains consistent over decades implies little inter-district migration, in line with most literature on migration and spatial effects.
-:::
-
-::: {.sample-excerpt #ws-2sls-limits-remedies sets="writing-10pg" order="4"}
-## Main Interpretation Limits and Planned Remedies {#sec-main-limitations}
-
-The interpretations which follow are currently meaningless---the exclusion restriction of our IV is unjustifiable without state fixed effects. For well-conditioned estimation alongside state FEs, future work will demean linguistic distance using the state-level mean and will remove duplicated 2001 and 2007-08 measures by rewriting our district matching algorithms (see @sec-district-harmonization). If helpful, a first-difference 2SLS design may also be implemented.
-
-In addition to state fixed effects and additional relevance checks, future drafts will report results from four different specifications: 1) from regressing $\%\Delta\mathrm{Consumption}_d$ on $\mathrm{EMIE}_d$ with neither IV nor controls; 2) from adding the full covariate set, perhaps with the controls and interaction terms plus dimensionality reduction and model selection tests; 3) from regressing $\%\Delta\mathrm{Consumption}_d$ on an $\widehat{\mathrm{EMIE}_d}$ instrumented by $\mathrm{LingDistance}_d$ with no covariates; and finally 4) from estimating our current specification, with both IV and covariates.
-
-Further control variables, useful response variables, spatial autocorrelation, the role of migration, and our flawed data harmonization method are discussed in the Appendix. Instead of clustering standard errors at the state level, future work will likely use Conley standard errors and/or @kelejianHACEstimationSpatial2007 to create heteroskedasticity and autocorrelation consistent SEs as well. Our goal is to adapt this paper into a 2SLS framework with two endogenous regressors (education enrollment and EMIE i.e., extensive margin and intensive margin) and then integrate it inside of a first-difference estimator.
-:::
-
-::: {.sample-excerpt #ws-first-stage-results sets="writing-10pg" order="5"}
-## First Stage {#sec-first-stage}
-
-The results of our first-stage regression, of EMI exposure on linguistic distance, are provided in the first-stage output table. All standard errors in both stages are clustered at the state level.
-
-As it stands, however, the first-stage output is currently marked out of the active pipeline:
-
-| model | status |
-|---|---|
-| baseline | out_of_active_pipeline |
-| fd_log | out_of_active_pipeline |
-
-The first-stage coefficient on linguistic distance is interpreted as evidence on whether our results are currently consistent with our proposed mechanism (that greater linguistic distance from Hindi induces greater demand for and supply of EMI). Future relevance checks include the partial $R^2$, statistical tests beyond a Wald with robust covariances, and a jackknife to ensure that leaving out any one state/region does not destroy $F$.
-:::
-
-::: {.sample-excerpt #ws-second-stage-results sets="writing-5pg writing-10pg" order="6"}
-## Second Stage {#sec-second-stage}
-
-The results of the second-stage regression, where consumption growth is regressed onto the fitted values of EMI exposure, are provided in the second-stage regression output when the 2SLS pipeline is active.
-
-With our current methodology, we find that greater exposure to EMI enrollment has a statistically and economically *insignificant* effect on local consumption growth, in line with previous literature on EMI and Indian education quality. Note, however, that our outcome includes households not directly exposed to EMI, meaning the effect we're studying would likely be inherently small regardless. Migration and spatial spillovers may also attenuate our results; evidence which both challenges and supports this is discussed in detail in the Appendix.
-
-Household-level decisions to bet on the human capital and English-language skills possible under EMI do not aggregate into local development when features of household context are accounted for.
-:::
-
-::: {.sample-excerpt #ws-2sls-interpretation-spillovers-bad-controls sets="writing-5pg writing-10pg" order="7"}
-## Interpretation of the 2SLS Estimates {#sec-interpretation}
-
-The consistency between these results and the literature makes our small and noisy estimate for EMI exposure's effect on consumption growth all the more noteworthy. Household-level decisions to bet on the human capital and English-language skills possible under EMI do not aggregate into local development when features of household context are accounted for.
-
-This result may be driven by our large urbanization estimate in the second stage. Greater EMIE plausibly induces more urbanization: perhaps English skills lead to more service sector firms [@shastry2012a] and rural-to-urban migration locally, or perhaps migration to EMI causes EMI supply to agglomerate and thus even more EMI demanders to migrate. In either case, urbanization would be an outcome of, and thus "bad control" for, EMIE [@angristMostlyHarmlessEconometrics2008, pp. 47-51].
-
-Migration and spatial spillovers could also explain our small $\widehat\mathrm{EMIE}$ coefficient. If EMI helps a person exit to distant urban IT hubs, for example, then the only effect of their EMI on the district they were educated in may be of remittances they send back. It was once widely accepted that migration in India only occurs over short distances, though some new evidence now contests this. The Appendix discusses the debate in detail.
-:::
-
-::: {.sample-excerpt #ws-district-harmonization-method sets="writing-5pg writing-10pg" order="8"}
-## District Harmonization {#sec-district-harmonization}
-
-There are three reasons that district labels vary between 2001 to 2007-08 to 2017-18 in the data: genuine political changes, variation in anglicization, and typos. Fuzzy joins were used to correct for the latter two.
-
-Political changes, however, were not so easily addressed. The vast majority of such changes were one of five kinds: name changes, clean partitions (one district is partitioned into multiple), clean mergers (multiple districts merge into one), carve-outs (*pieces* of multiple districts combine into one), and boundary shifts [@indiastatestoriesDistrictEvolution2024]. Without knowing precisely where in its district each household was at the time of sampling, it is not feasible to match districts across carve-outs and boundary shifts. Our district matching method is thus reliant on the assumption that all district changes were either name changes, clean partitions, or clean mergers.
-
-This seems to be precisely the same assumption made by @indiastatestoriesDistrictEvolution2024 and @jaacksIndiaDistrictChanges2020, whose data, despite containing some factual errors and typos, was the basis of our district matching method. To justify this assumption we turn to @kumarCreatingLongPanels2016, who up until 2001 are able to track the *proportion* of each district's population that was allocated into a new district as a result of district changes. They label these changes as one of two types: clean partitions and non-partitions (which would include name changes, clean mergers, carve-outs, and border shifts). By extracting their results using Tabula [@aristaranTabula2018], we know that 93.4% of non-partitions were either name changes or transfers of uninhabited land [@kumarCreatingLongPanels2016].
-
-We thus assume no district changes were carve-outs or border shifts. To match districts, we ran a hierarchical, cascading sequence of iterated fuzzy joins. Data from 2001, 2007-08, and 2017-18 is first linked to the closest year in the district trackers of @indiastatestoriesDistrictEvolution2024 and @jaacksIndiaDistrictChanges2020. Districts are then matched if they meet a certain string/phonetic distance threshold.
-
-The current method, however, attempted to mirror the mergers and partitions which characterize district changes by using many-to-many matching for 2001 to 2007-08 and from 2007-08 to 2017-18. The number of duplicate values this creates, particularly for 2001 and 2007-08 measures, seems to lead to massive multicollinearity when state fixed effects are added. Better data harmonization is essential: future work will merge 2017-18 survey-weighted estimates into 2007-08 districts using population weights from the 2011 census, and will do the same for 2007-08 estimates and 2001 districts using the 2001 census. Our units of analysis will thus become districts in 2001 as opposed to districts in 2017-18.
-:::
+out <- paste(main, appendix, technical, sep = "\n\n")
+markers <- list(
+  list("### District Matching Method {#distma}", "### Spatial Autocorrelation, Spatial Spillovers, and Migration {#spa}", '.sample-excerpt #ws-district-harmonization-method sets="writing-5pg writing-10pg" order="8"'),
+  list("## Discussion {#disc}", "# (APPENDIX) Appendix {-}", '.sample-excerpt #ws-second-stage-results sets="writing-5pg writing-10pg" order="6"'),
+  list("## Results {#iv-results}", "## Discussion {#disc}", '.sample-excerpt #ws-first-stage-results sets="writing-10pg" order="5"'),
+  list("## Instrumental Variable {#iv-iv}", "## Results {#iv-results}", '.sample-excerpt #ws-iv-relevance-exclusion-problem sets="writing-5pg writing-10pg" order="3"'),
+  list("# The Effect of EMIE: 2SLS Estimation and Main Results {#iv}", "## Instrumental Variable {#iv-iv}", '.sample-excerpt #ws-2sls-limits-remedies sets="writing-10pg" order="4"'),
+  list("# The Composition of Education Participation {#heckman}", "# The Effect of EMIE: 2SLS Estimation and Main Results {#iv}", '.sample-excerpt #ws-selection-model-missingness sets="writing-10pg" order="2"'),
+  list("# Introduction and Literature Review {#intro}", "# Data Sources {#data}", '.sample-excerpt #ws-intro-question-contribution sets="writing-5pg writing-10pg" order="1"')
+)
+for (m in markers) out <- wrap_section(out, m[[1]], m[[2]], m[[3]])
+out <- escape_inline_r(out)
+cat(out)
+```
