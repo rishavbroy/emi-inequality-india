@@ -16,30 +16,9 @@ safe_tar_read <- function(name) {
   if (!requireNamespace("targets", quietly = TRUE)) return(NULL)
   tryCatch(targets::tar_read_raw(name), error = function(e) NULL)
 }
-target_objects <- list(
-  ame_results = safe_tar_read("ame_results"),
-  first_stage_tests = safe_tar_read("first_stage_tests"),
-  iv_models = safe_tar_read("iv_models"),
-  selection_data = safe_tar_read("selection_data")
-)
-target_column_value <- function(x, candidates) {
-  if (is.null(x)) return(NA_real_)
-  x <- tryCatch(as.data.frame(x), error = function(e) data.frame())
-  hit <- intersect(candidates, names(x))
-  if (!length(hit) || !nrow(x)) return(NA_real_)
-  suppressWarnings(as.numeric(x[[hit[[1]]]][[1]]))
-}
-target_env <- new.env(parent = globalenv())
-target_env$mfx_df <- target_objects$ame_results
-target_env$first_stage_tests <- target_objects$first_stage_tests
-target_env$iv_models <- target_objects$iv_models
-target_env$model_consumption_iv <- if (is.list(target_objects$iv_models)) target_objects$iv_models[[1]] else NULL
-target_env$first_stage_consumption <- target_objects$first_stage_tests
-target_env$partial_f <- target_column_value(target_objects$first_stage_tests, c("partial_f", "statistic", "f_stat", "F"))
-target_env$partial_p <- target_column_value(target_objects$first_stage_tests, c("partial_p", "p.value", "p_value", "p"))
-target_env$vcov_first_stage_consumption <- NULL
-target_env$vcov_model_consumption_iv <- NULL
-report_inline_expressions <- list(
+report_values <- safe_tar_read("report_values")
+if (is.null(report_values) || !is.list(report_values)) report_values <- list()
+legacy_inline_expressions <- list(
   inline_391c516e = "edu0708b4 %>% filter(RELATION_TO_HEAD==1 & SEX==1) %>% summarise(round(mean(AGE),1)) %>% .[[1]]",
   inline_502254b6 = "edu0708b4 %>% filter(RELATION_TO_HEAD==3 & SEX==1) %>% summarise(round(mean(AGE),1)) %>% .[[1]]",
   inline_101aa68e = "edu0708b4 %>% filter(RELATION_TO_HEAD==7 & SEX==1) %>% summarise(round(mean(AGE),1)) %>% .[[1]]",
@@ -79,10 +58,9 @@ report_inline_expressions <- list(
   inline_7e66a3fd = "m_cons$p.value %>% signif(3)"
 )
 report_value <- function(key) {
-  expr <- report_inline_expressions[[key]]
-  if (is.null(expr) || is.na(expr)) return("not yet available")
-  if (grepl("^format\\(Sys.time", expr)) return(format(Sys.time(), "%B %d, %Y"))
-  value <- tryCatch(eval(parse(text = expr), envir = target_env), error = function(e) NA)
+  value <- report_values[[key]]
+  if (is.null(value)) value <- report_values[[legacy_inline_expressions[[key]]]]
+  if (is.null(value)) value <- NA
   if (length(value) == 0L || all(is.na(value))) return("not yet available")
   paste(value, collapse = ", ")
 }
