@@ -7,7 +7,7 @@ format:
     pdf-engine: xelatex
 execute:
   echo: false
-  warning: false
+ warning: false
   message: false
 ---
 
