@@ -1,4 +1,4 @@
-.PHONY: init-renv restore snapshot pipeline-draft pipeline-final diagnostics report samples test tests clean-targets clean-renders
+.PHONY: init-renv restore snapshot pipeline-draft pipeline-final diagnostics report samples check-public test tests clean-targets clean-renders
 
 init-renv:
 	Rscript scripts/init_renv.R
@@ -23,6 +23,13 @@ report:
 
 samples:
 	Rscript scripts/render_application_samples.R
+
+check-public:
+	quarto render paper/report.qmd
+	quarto render docs/district-matching.qmd
+	quarto render docs/long-paths-and-8-3-filenames.qmd
+	Rscript scripts/render_application_samples.R
+	Rscript scripts/check_public_text.R
 
 test: tests
 
