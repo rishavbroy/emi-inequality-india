@@ -1,4 +1,4 @@
-.PHONY: init-renv restore snapshot pipeline-draft pipeline-final diagnostics report samples check-public check-public-text check-sample-specs test tests clean-targets clean-renders
+.PHONY: init-renv restore snapshot rebuild-qmds pipeline-draft pipeline-final diagnostics report samples check-public check-public-text check-sample-specs test tests clean-targets clean-renders
 
 init-renv:
 	Rscript scripts/init_renv.R
@@ -8,6 +8,10 @@ restore:
 
 snapshot:
 	Rscript -e 'renv::settings$$snapshot.type("explicit"); renv::snapshot(prompt = FALSE)'
+
+rebuild-qmds:
+	Rscript scripts/rebuild_static_qmds_from_legacy.R
+	Rscript scripts/postprocess_public_qmds.R
 
 pipeline-draft:
 	EMI_CONFIG=config/draft.yml Rscript -e 'targets::tar_make()'
