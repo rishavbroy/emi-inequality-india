@@ -11,49 +11,12 @@ execute:
   message: false
 ---
 
-```{r}
-#| results: asis
-legacy_path <- "../archive/legacy-paper-drafts/580-Draft-ECON-580.Rmd"
-legacy_lines <- readLines(legacy_path, warn = FALSE)
+# Technical Note for Replication
 
-strip_yaml <- function(lines) {
-  if (length(lines) >= 2L && identical(lines[[1]], "---")) {
-    close <- which(lines[-1L] == "---")
-    if (length(close)) return(lines[-seq_len(close[[1]] + 1L)])
-  }
-  lines
-}
+Those replicating the code for this paper are encouraged to skim the code chunk titled ` Define functions to read in short 8.3 filenames`. There the functions `read_sav_short()`, `read_csv_short()`, and `read_excel_short()` are defined; if the replicator runs into issues while reading in files, troubleshooting methods are explained there.
 
-strip_code_chunks <- function(lines) {
-  out <- character()
-  in_chunk <- FALSE
-  for (line in lines) {
-    if (startsWith(line, "```")) {
-      in_chunk <- !in_chunk
-      next
-    }
-    if (!in_chunk) out <- c(out, line)
-  }
-  out
-}
+\newpage
 
-find_line <- function(lines, pattern) {
-  hit <- grep(pattern, lines, fixed = TRUE)
-  if (!length(hit)) stop("Could not find: ", pattern, call. = FALSE)
-  hit[[1]]
-}
-
-extract_lines <- function(lines, start, end = NULL) {
-  i <- find_line(lines, start)
-  j <- if (is.null(end)) length(lines) + 1L else find_line(lines, end)
-  lines[i:(j - 1L)]
-}
-
-body <- strip_code_chunks(strip_yaml(legacy_lines))
-out <- extract_lines(body, "# Technical Note for Replication", "# References")
-out <- gsub("`r ", "` r ", out, fixed = TRUE)
-cat(paste(out, collapse = "\n"))
-```
 
 ```{r}
 #| echo: true
@@ -77,4 +40,7 @@ cat(paste(out, collapse = "\n"))
 # In my Registry Editor, under Computer\HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FileSystem, I had set the LongPathsEnabled value to 1 (which enables Windows to use long file paths) and the NtfsDisable8dot3NameCreation value to 2. I had also changed Group Policy to "Enable Win32 long paths".
 # But none of that mattered! Windows File Explorer lacks a longPathAware entry in its .exe file's manifest--so despite LongPathsEnabled=1, my file paths were still capped at 260 characters. Ergo this code chunk.
 # It's possible that setting NtfsDisable8dot3NameCreation=0 would've prevented all of this code from being necessary. But I'd rather not force replicators to change their registry settings.
+
+# ---
+
 ```
