@@ -49,17 +49,12 @@ insert_sample_markers <- function(lines, markers) {
   })
 
   starts <- vapply(locations, `[[`, integer(1), "start")
-  ends <- vapply(locations, `[[`, integer(1), "end")
   ord <- order(starts)
   locations <- locations[ord]
 
   for (i in seq_len(length(locations) - 1L)) {
     if (locations[[i]]$end > locations[[i + 1L]]$start) {
-      stop(
-        "Overlapping sample excerpts: ", locations[[i]]$id,
-        " and ", locations[[i + 1L]]$id,
-        call. = FALSE
-      )
+      stop("Overlapping sample excerpts: ", locations[[i]]$id, " and ", locations[[i + 1L]]$id, call. = FALSE)
     }
   }
 
@@ -67,13 +62,7 @@ insert_sample_markers <- function(lines, markers) {
   cursor <- 1L
   for (location in locations) {
     if (location$start > cursor) out <- c(out, lines[cursor:(location$start - 1L)])
-    out <- c(
-      out,
-      paste0("::: {", location$attrs, "}"),
-      lines[location$start:(location$end - 1L)],
-      ":::",
-      ""
-    )
+    out <- c(out, paste0("::: {", location$attrs, "}"), lines[location$start:(location$end - 1L)], ":::", "")
     cursor <- location$end
   }
   if (cursor <= length(lines)) out <- c(out, lines[cursor:length(lines)])
@@ -112,16 +101,22 @@ replace_inline_r_with_target_values <- function(lines) {
   vapply(lines, replace_one, character(1))
 }
 
+quote_string <- function(x) paste(deparse(x, control = "all"), collapse = "")
+
 report_setup_chunk <- function() {
   expr_lines <- if (length(inline_expression_order)) {
     values <- vapply(inline_expression_order, function(key) get(key, inline_expression_keys), character(1))
     c(
-      "report_inline_expressions <- c(",
-      paste0("  ", inline_expression_order, " = ", deparse(values), collapse = ",\n"),
+      "report_inline_expressions <- list(",
+      paste0(
+        "  ", inline_expression_order, " = ",
+        vapply(values, quote_string, character(1)),
+        collapse = ",\n"
+      ),
       ")"
     )
   } else {
-    "report_inline_expressions <- character()"
+    "report_inline_expressions <- list()"
   }
 
   c(
@@ -251,7 +246,7 @@ long_yaml <- c(
   "    pdf-engine: xelatex",
   "execute:",
   "  echo: false",
-  "  warning: false",
+  " warning: false",
   "  message: false",
   "---"
 )
