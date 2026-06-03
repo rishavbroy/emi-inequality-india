@@ -57,6 +57,15 @@ wrap_section_lines <- function(lines, start, end, attrs) {
   c(before, paste0("::: {", attrs, "}"), lines[i:(j - 1L)], ":::", "", after)
 }
 
+convert_legacy_math <- function(lines) {
+  lines <- gsub("\\\\\\[", "$$", lines)
+  lines <- gsub("\\\\\\]", "$$", lines)
+  lines <- gsub("\\\\\\(", "$", lines)
+  lines <- gsub("\\\\\\)", "$", lines)
+  lines <- gsub("`r ", "` r ", lines, fixed = TRUE)
+  lines
+}
+
 body <- strip_code_chunks(strip_yaml(legacy_lines))
 main <- extract_lines(body, "# Introduction and Literature Review {#intro}", "# (APPENDIX) Appendix {-}")
 appendix <- extract_lines(body, "# (APPENDIX) Appendix {-}", "# Technical Note for Replication")
@@ -70,6 +79,6 @@ out <- wrap_section_lines(out, "## Instrumental Variable {#iv-iv}", "## Results 
 out <- wrap_section_lines(out, "# The Effect of EMIE: 2SLS Estimation and Main Results {#iv}", "## Instrumental Variable {#iv-iv}", '.sample-excerpt #ws-2sls-limits-remedies sets="writing-10pg" order="4"')
 out <- wrap_section_lines(out, "# The Composition of Education Participation {#heckman}", "# The Effect of EMIE: 2SLS Estimation and Main Results {#iv}", '.sample-excerpt #ws-selection-model-missingness sets="writing-10pg" order="2"')
 out <- wrap_section_lines(out, "# Introduction and Literature Review {#intro}", "# Data Sources {#data}", '.sample-excerpt #ws-intro-question-contribution sets="writing-5pg writing-10pg" order="1"')
-out <- gsub("`r ", "` r ", out, fixed = TRUE)
+out <- convert_legacy_math(out)
 cat(paste(out, collapse = "\n"))
 ```
