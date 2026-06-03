@@ -14,7 +14,19 @@ extract_code_excerpts <- function(spec) {
     id <- x$id
     title <- x$title %||% id
     code <- extract_between_sample_markers(file, id)
-    c("", paste0("## ", title), "", paste0("Source: `", file, "`"), "", "```r", code, "```", "")
+    c(
+      "",
+      paste0("## ", title),
+      "",
+      paste0("Source: `", file, "`"),
+      "",
+      "```{r}",
+      "#| eval: false",
+      "#| echo: true",
+      code,
+      "```",
+      ""
+    )
   })
   unlist(pieces, use.names = FALSE)
 }
@@ -45,10 +57,37 @@ extract_between_sample_markers <- function(file, id) {
 #' @return `output_qmd` invisibly.
 assemble_coding_sample_qmd <- function(cover_note, body, output_qmd) {
   cover <- if (!is.null(cover_note) && file.exists(cover_note)) readLines(cover_note, warn = FALSE) else character()
+  cover <- normalize_coding_sample_yaml(cover)
   lines <- c(cover, "", "\\newpage", "", body)
   dir.create(dirname(output_qmd), recursive = TRUE, showWarnings = FALSE)
   writeLines(lines, output_qmd)
   invisible(output_qmd)
+}
+
+normalize_coding_sample_yaml <- function(lines) {
+  if (!length(lines) || !identical(lines[[1]], "---")) return(lines)
+  close <- which(lines[-1L] == "---")
+  if (!length(close)) return(lines)
+  end <- close[[1]] + 1L
+  yaml <- lines[seq_len(end)]
+  rest <- lines[-seq_len(end)]
+
+  if (!any(grepl("^format:", yaml))) {
+    yaml <- append(yaml, c("format:", "  pdf:", "    pdf-engine: lualatex"), after = end - 1L)
+    end <- end + 3L
+  }
+  if (!any(grepl("^include-in-header:", yaml))) {
+    yaml <- append(yaml, c(
+      "include-in-header:",
+      "  text: |",
+      "    \\usepackage{fvextra}",
+      "    \\DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,breakanywhere,commandchars=\\\\\\{\\}}"
+    ), after = length(yaml) - 1L)
+  }
+  if (!any(grepl("^highlight-style:", yaml))) {
+    yaml <- append(yaml, "highlight-style: default", after = length(yaml) - 1L)
+  }
+  c(yaml, rest)
 }
 
 #' Validate code excerpt markers listed in a spec
