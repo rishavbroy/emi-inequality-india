@@ -21,7 +21,8 @@ render_one_writing_sample <- function(spec_path) {
   output_qmd <- file.path(work_dir, paste0(tools::file_path_sans_ext(basename(output)), ".qmd"))
 
   if (identical(spec$mode, "full")) {
-    source_lines <- strip_qmd_yaml(readLines(spec$source, warn = FALSE))
+    raw_source_lines <- readLines(spec$source, warn = FALSE)
+    source_lines <- c(report_abstract_block(raw_source_lines), strip_qmd_yaml(raw_source_lines))
     assemble_writing_sample_qmd(spec$cover_note, source_lines, output_qmd)
   } else {
     excerpts <- extract_qmd_excerpts(spec$source, unlist(spec$excerpts, use.names = FALSE))
