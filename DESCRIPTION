@@ -31,4 +31,3 @@ Imports:
     car,
     digest,
     testthat
-Suggests:
