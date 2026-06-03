@@ -1,70 +1,49 @@
 ---
-title: "District Matching and Harmonization"
+title: "District Matching and Spatial Autocorrelation"
+author: "Rishav Roy"
 format:
   html: default
   pdf:
     pdf-engine: xelatex
 bibliography: ../paper/references.bib
+execute:
+  echo: false
+  warning: false
+  message: false
 ---
 
-## Purpose {#sec-doc-district-purpose}
-
-The districts listed in 2007-08 vs. 2017-18 vary for two reasons: legitimate political changes (districts may have been created, destroyed, or renamed) and typos. I address both here.
-
-There are three reasons that district labels vary between 2001 to 2007-08 to 2017-18 in the data: genuine political changes, variation in anglicization, and typos. Fuzzy joins were used to correct for the latter two.
-
-## Source Disagreement {#sec-doc-district-source-disagreement}
-
-Though its extensive time range is informative, there seem to be some typos and factual errors here (e.g., the 2019 merger of Dadra and Nagar Haveli with Daman and Diu is not reflected here, and "Dadra" is twice misspelled as "Dadara").
-
-Two changes, both from 2019, both first reflected in the 2019 data: the union territory (UT) of Ladakh split from Jammu and Kashmir, and the UT Dadra and Nagar Haveli and Daman and Diu formed from the merger of Dadra and Nagar Haveli with Daman and Diu. This means four changes were not recorded in the database: renaming Pondicherry (both the district and its UT) to Puducherry in 2006, renaming Uttaranchal to Uttarakhand in 2007, renaming Orissa to Odisha in 2011, and cleaving Telangana out of Andhra Pradesh in 2014.
-
-## Matching Assumption {#sec-doc-district-assumption}
-
-We want to make it so that for each 2017-18 district, either it can be directly matched to a single 2007-08 district, or a single 2007-08 district can be matched to it. To do so, all district changes must have been either clean partitions or name changes of old districts--new districts being carved out of multiple old districts and/or new borders being drawn between old districts make it far harder to equate or claim equality between units of analysis across time.
-
-Up to 2001, @kumarCreatingLongPanels2016 are able to measure the *proportion* of each district's population that was allocated into a new district as a result of district changes, specifically those which are not clean partitions: so carve-outs (of new districts from old districts), mergers, renamings, and border shifts. Carve-outs from multiple districts at once and border shifts are the most troublesome for us, as they prevent us from directly matching new districts to a single old district. There does not seem to be any data on how such district carve-outs or border shifts have allocated populations between districts since 2001.
-
-From 1991 to 2001, it's evident that district changes which did not involve clean partitions were rarely associated with changes in district populations. In other words, most of these changes were approximately equal to name changes.
-
-(Set c = 40) 86% of allocations from a parent district to a child district upon an "other" type of district change involved a transfer of more than 97.5% or less than 2.5% of the population. Meaning 86% of the time, the new district almost precisely matched the old district--the change was effectively a name change.
-
-We use this as justification to assume away other types of district changes (namely district carve-outs and border shifts), allowing us to match each new district to a single old district or vice versa.
-
-This is equivalent to what @jaacksIndiaDistrictChanges2020 did in their tracking of district changes from 2001 to 2020, with the children of district carve-outs only matched with the one parent who contributed the most to their land area; likewise for districts following border shifts. We thus use their data below.
-
-## Fuzzy Join Sequence {#sec-doc-district-fuzzy-join}
-
-Fuzzy-join sequence:
-
-1. Loop over methods/thresholds.
-2. Each time full-joining only the as-yet-unmatched rows.
-3. At the end, return joined (all the matches), unmatched_df1, unmatched_df2.
-
-Number of rows from fuzzy full joining district_tracker (734 rows) and mother_tongues_01 (593 rows) with different metrics:
-
-| metric | rows |
-|---|---:|
-| osa | 859 |
-| lv | 859 |
-| dl | 859 |
-| hamming | 872 |
-| lcs | 825 |
-| qgram | 829 |
-| cosine | 435,262 |
-| jaccard | 435,262 |
-| jw | 435,262 |
-
-Helper vectors:
-
-| method | threshold | note |
-|---|---:|---|
-| soundex | 0 | Phonetic variants in anglicization allowed |
-| qgram | 0 | Rearrangements of words allowed |
-| jw | 0.15 | Respellings + vowel swaps with 0.85 similarity allowed |
-| dl | 2 | <=2 insertions + deletions + substitutions + transpositions allowed |
-| osa | 1 | 1 typo allowed |
-
-## Research Implication {#sec-doc-district-research-implication}
-
-The current method, however, attempted to mirror the mergers and partitions which characterize district changes by using many-to-many matching for 2001 to 2007-08 and from 2007-08 to 2017-18. The number of duplicate values this creates, particularly for 2001 and 2007-08 measures, seems to lead to massive multicollinearity when state fixed effects are added. Better data harmonization is essential: future work will merge 2017-18 survey-weighted estimates into 2007-08 districts using population weights from the 2011 census, and will do the same for 2007-08 estimates and 2001 districts using the 2001 census. Our units of analysis will thus become districts in 2001 as opposed to districts in 2017-18.
+```{r}
+#| results: asis
+legacy_path <- "../archive/legacy-paper-drafts/580-Draft-ECON-580.Rmd"
+legacy <- readLines(legacy_path, warn = FALSE)
+legacy <- paste(legacy, collapse = "\n")
+strip_code_chunks <- function(x) {
+  lines <- strsplit(x, "\n", fixed = TRUE)[[1]]
+  out <- character()
+  in_chunk <- FALSE
+  for (line in lines) {
+    if (startsWith(line, "```")) {
+      in_chunk <- !in_chunk
+      next
+    }
+    if (!in_chunk) out <- c(out, line)
+  }
+  paste(out, collapse = "\n")
+}
+extract_between <- function(x, start, end = NULL) {
+  start_pos <- regexpr(start, x, perl = TRUE)
+  if (start_pos < 0) stop("Could not find: ", start, call. = FALSE)
+  if (is.null(end)) return(substr(x, start_pos, nchar(x)))
+  rest <- substr(x, start_pos + attr(start_pos, "match.length"), nchar(x))
+  end_pos <- regexpr(end, rest, perl = TRUE)
+  if (end_pos < 0) return(substr(x, start_pos, nchar(x)))
+  substr(x, start_pos, start_pos + attr(start_pos, "match.length") + end_pos - 2)
+}
+body <- strip_code_chunks(legacy)
+body <- sub("^---.*?---", "", body, perl = TRUE)
+cat(extract_between(
+  body,
+  "^## District Matching and Spatial Autocorrelation \\{#distma-spa\\}",
+  "^# Technical Note for Replication"
+))
+```
