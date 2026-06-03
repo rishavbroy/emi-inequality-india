@@ -16,6 +16,12 @@ The active manifest currently covers:
 - district-change tracker and validation sources;
 - static ILO image assets used in the paper.
 
+## System dependencies
+
+The R package dependencies are declared in `DESCRIPTION`, and `renv.lock` records exact package versions. Spatial packages such as `sf` and `spdep` may also require GDAL, GEOS, PROJ, and `pkg-config` system libraries. On macOS, these are commonly available through Homebrew as `gdal`, `geos`, `proj`, and `pkg-config`.
+
+The setup script checks for `gdal-config`, `geos-config`, and `pkg-config` and prints this reminder if they are missing. Existing local installations may still work if binary R packages are already installed, but a fresh machine may need these system libraries before `make init-renv` can install spatial dependencies.
+
 ## Public processed outputs
 
 The only processed data products intended to be tracked at this stage are:
