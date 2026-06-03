@@ -6,7 +6,9 @@
 #'
 #' @return A tibble, model object, list, or file path depending on context.
 clean_nss_2017_education <- function(raw) {
-  raw
+  out <- lapply(raw, std, year = 2017L)
+  class(out) <- c("nss_2017_education_clean", class(out))
+  out
 }
 
 #' standardize edu1718 hhid
@@ -20,7 +22,7 @@ standardize_edu1718_hhid <- function(df) {
 #'
 #' @return A tibble, model object, list, or file path depending on context.
 standardize_edu1718_district_codes <- function(df) {
-  df
+  std(df, 2017L)
 }
 
 #' standardize edu1718 weights
@@ -36,4 +38,3 @@ standardize_edu1718_weights <- function(df) {
 join_2017_state_district_labels <- function(df, districts, state_codes) {
   df
 }
-

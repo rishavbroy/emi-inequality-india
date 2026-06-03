@@ -6,7 +6,9 @@
 #'
 #' @return A tibble, model object, list, or file path depending on context.
 clean_nss_2007_education <- function(raw) {
-  raw # TODO: migrate cleaning from legacy chunk 7.
+  out <- lapply(raw, std, year = 2007L)
+  class(out) <- c("nss_2007_education_clean", class(out))
+  out
 }
 
 #' clean edu0708 households
@@ -48,6 +50,5 @@ standardize_edu0708_weights <- function(df) {
 #'
 #' @return A tibble, model object, list, or file path depending on context.
 standardize_edu0708_district_codes <- function(df) {
-  df
+  std(df, 2007L)
 }
-

@@ -7,8 +7,9 @@
 #' @return A tibble, model object, list, or file path depending on context.
 apply_manual_district_corrections <- function(tracker, corrections_path = "data/metadata/manual_district_corrections.csv") {
   if (!file.exists(corrections_path)) return(tracker)
-  corrections <- readr::read_csv(corrections_path, show_col_types = FALSE)
+  corrections <- utils::read.csv(corrections_path, stringsAsFactors = FALSE)
   validate_manual_corrections(corrections, tracker)
+  attr(tracker, "manual_corrections") <- corrections
   tracker
 }
 
@@ -42,4 +43,3 @@ apply_split_merge_corrections <- function(tracker, corrections) {
 apply_typo_corrections <- function(tracker, corrections) {
   tracker
 }
-

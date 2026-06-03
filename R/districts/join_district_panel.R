@@ -5,8 +5,8 @@
 #' join district panel
 #'
 #' @return A tibble, model object, list, or file path depending on context.
-join_district_panel <- function(...) {
-  stop("TODO")
+join_district_panel <- function(district_tracker, district_join_map, measures_2007, measures_2017, linguistic_distance_iv, boundaries_2020, cfg = list()) {
+  build_district_panel(district_tracker, district_join_map, measures_2007, measures_2017, linguistic_distance_iv, boundaries_2020, cfg)
 }
 
 #' join panel to geometry
@@ -36,4 +36,3 @@ assert_unique_panel_rows <- function(panel) {
 attach_spatial_ids <- function(panel) {
   panel
 }
-

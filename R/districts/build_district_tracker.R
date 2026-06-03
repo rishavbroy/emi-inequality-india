@@ -56,7 +56,13 @@ parse_district_splits <- function(x) {
 #'
 #' @return A tibble, model object, list, or file path depending on context.
 combine_district_tracker_sources <- function(raw_district_changes) {
-  raw_district_changes
+  out <- safe_bind_rows(lapply(names(raw_district_changes), function(name) {
+    x <- safe_df(raw_district_changes[[name]])
+    x$source_file_id <- name
+    x
+  }))
+  if (nrow(out)) out$.row_in_source <- ave(seq_len(nrow(out)), out$source_file_id, FUN = seq_along)
+  out
 }
 
 #' standardize tracker years

@@ -6,7 +6,26 @@
 #'
 #' @return A tibble, model object, list, or file path depending on context.
 clean_census_2001_languages <- function(raw) {
-  purrr::imap_dfr(raw, ~{ temp <- .x; colnames(temp) <- c("table", "state_code", "district_code", "tehsil_code", "area_name", "mother_tongue_code", "mother_tongue", "spkr_tot", "m_spkr_tot", "f_spkr_tot", "spkr_urban", "m_spkr_urban", "f_spkr_urban", "spkr_rural", "m_spkr_rural", "f_spkr_rural"); temp })
+  out <- safe_bind_rows(lapply(raw, function(x) {
+    x <- safe_df(x)
+    if (!"district" %in% names(x)) {
+      area <- first_col(x, c("area_name", "Area Name", "Name", "Table Name", "...1"))
+      if (!is.null(area)) {
+        x$district <- gsub("[^[:alpha:] ]+$", "", gsub("\\s*\\d{4}$", "", gsub("^District -\\s*", "", as.character(x[[area]]))))
+      }
+    }
+    if (!"state" %in% names(x)) {
+      area <- first_col(x, c("area_name", "Area Name", "Name", "...1"))
+      if (!is.null(area)) x$state <- NA_character_
+    }
+    mother_tongue <- first_col(x, c("mother_tongue", "Mother Tongue", "Language", "...2"))
+    if (!is.null(mother_tongue)) {
+      # Create the ling_distance column based on the mother_tongue values and @shastry2012a's 0-5 measure of degrees of linguistic distance
+      x$mother_tongue <- tools::toTitleCase(gsub("^\\d{1,3}\\s+", "", as.character(x[[mother_tongue]])))
+    }
+    std(x, 2001L)
+  }))
+  out
 }
 
 #' standardize census state names
@@ -27,6 +46,10 @@ standardize_census_district_names <- function(df) {
 #'
 #' @return A tibble, model object, list, or file path depending on context.
 clean_mother_tongue_names <- function(df) {
+  mother_tongue <- first_col(df, c("mother_tongue", "Mother Tongue", "Language", "...2"))
+  if (!is.null(mother_tongue)) {
+    df$mother_tongue <- tools::toTitleCase(gsub("^\\d{1,3}\\s+", "", as.character(df[[mother_tongue]])))
+  }
   df
 }
 
@@ -36,4 +59,3 @@ clean_mother_tongue_names <- function(df) {
 compute_mother_tongue_population_shares <- function(df) {
   df
 }
-

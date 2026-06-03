@@ -6,7 +6,9 @@
 #'
 #' @return A tibble, model object, list, or file path depending on context.
 clean_nss_2007_consumption <- function(raw) {
-  raw
+  out <- lapply(raw, std, year = 2007L)
+  class(out) <- c("nss_2007_consumption_clean", class(out))
+  out
 }
 
 #' standardize cons0708 hhid
@@ -20,7 +22,7 @@ standardize_cons0708_hhid <- function(df) {
 #'
 #' @return A tibble, model object, list, or file path depending on context.
 standardize_cons0708_district_codes <- function(df) {
-  df
+  std(df, 2007L)
 }
 
 #' standardize cons0708 weights
@@ -29,4 +31,3 @@ standardize_cons0708_district_codes <- function(df) {
 standardize_cons0708_weights <- function(df) {
   df
 }
-

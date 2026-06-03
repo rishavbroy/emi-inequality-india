@@ -6,21 +6,26 @@
 #'
 #' @return A tibble, model object, list, or file path depending on context.
 clean_district_boundaries <- function(raw_sf) {
-  raw_sf |> dplyr::rename(district_20 = dtname, state_20 = stname) |> dplyr::mutate(state_20 = stringr::str_to_title(state_20))
+  df <- safe_df(raw_sf)
+  if ("dtname" %in% names(df)) df$district_20 <- df$dtname
+  if ("stname" %in% names(df)) df$state_20 <- df$stname
+  if ("DT_NM" %in% names(df)) df$district_20 <- df$DT_NM
+  if ("ST_NM" %in% names(df)) df$state_20 <- df$ST_NM
+  std(df, 2020L)
 }
 
 #' standardize boundary state names
 #'
 #' @return A tibble, model object, list, or file path depending on context.
 standardize_boundary_state_names <- function(df) {
-  df
+  std(df, 2020L)
 }
 
 #' standardize boundary district names
 #'
 #' @return A tibble, model object, list, or file path depending on context.
 standardize_boundary_district_names <- function(df) {
-  df
+  std(df, 2020L)
 }
 
 #' repair invalid geometries
@@ -36,4 +41,3 @@ repair_invalid_geometries <- function(sf_df) {
 add_boundary_join_ids <- function(df) {
   df
 }
-
