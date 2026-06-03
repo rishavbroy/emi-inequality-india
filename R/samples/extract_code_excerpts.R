@@ -59,5 +59,3 @@ validate_code_excerpt_markers <- function(spec) {
   invisible(lapply(spec$excerpts, function(x) extract_between_sample_markers(x$file, x$id)))
   invisible(TRUE)
 }
-
-`%||%` <- function(x, y) if (is.null(x)) y else x
