@@ -49,8 +49,7 @@ insert_sample_markers <- function(lines, markers) {
   })
 
   starts <- vapply(locations, `[[`, integer(1), "start")
-  ord <- order(starts)
-  locations <- locations[ord]
+  locations <- locations[order(starts)]
 
   for (i in seq_len(length(locations) - 1L)) {
     if (locations[[i]]$end > locations[[i + 1L]]$start) {
@@ -107,7 +106,7 @@ report_setup_chunk <- function() {
   expr_lines <- if (length(inline_expression_order)) {
     values <- vapply(inline_expression_order, function(key) get(key, inline_expression_keys), character(1))
     c(
-      "report_inline_expressions <- list(",
+      "legacy_inline_expressions <- list(",
       paste0(
         "  ", inline_expression_order, " = ",
         vapply(values, quote_string, character(1)),
@@ -116,7 +115,7 @@ report_setup_chunk <- function() {
       ")"
     )
   } else {
-    "report_inline_expressions <- list()"
+    "legacy_inline_expressions <- list()"
   }
 
   c(
@@ -125,35 +124,13 @@ report_setup_chunk <- function() {
     "  if (!requireNamespace(\"targets\", quietly = TRUE)) return(NULL)",
     "  tryCatch(targets::tar_read_raw(name), error = function(e) NULL)",
     "}",
-    "target_objects <- list(",
-    "  ame_results = safe_tar_read(\"ame_results\"),",
-    "  first_stage_tests = safe_tar_read(\"first_stage_tests\"),",
-    "  iv_models = safe_tar_read(\"iv_models\"),",
-    "  selection_data = safe_tar_read(\"selection_data\")",
-    ")",
-    "target_column_value <- function(x, candidates) {",
-    "  if (is.null(x)) return(NA_real_)",
-    "  x <- tryCatch(as.data.frame(x), error = function(e) data.frame())",
-    "  hit <- intersect(candidates, names(x))",
-    "  if (!length(hit) || !nrow(x)) return(NA_real_)",
-    "  suppressWarnings(as.numeric(x[[hit[[1]]]][[1]]))",
-    "}",
-    "target_env <- new.env(parent = globalenv())",
-    "target_env$mfx_df <- target_objects$ame_results",
-    "target_env$first_stage_tests <- target_objects$first_stage_tests",
-    "target_env$iv_models <- target_objects$iv_models",
-    "target_env$model_consumption_iv <- if (is.list(target_objects$iv_models)) target_objects$iv_models[[1]] else NULL",
-    "target_env$first_stage_consumption <- target_objects$first_stage_tests",
-    "target_env$partial_f <- target_column_value(target_objects$first_stage_tests, c(\"partial_f\", \"statistic\", \"f_stat\", \"F\"))",
-    "target_env$partial_p <- target_column_value(target_objects$first_stage_tests, c(\"partial_p\", \"p.value\", \"p_value\", \"p\"))",
-    "target_env$vcov_first_stage_consumption <- NULL",
-    "target_env$vcov_model_consumption_iv <- NULL",
+    "report_values <- safe_tar_read(\"report_values\")",
+    "if (is.null(report_values) || !is.list(report_values)) report_values <- list()",
     expr_lines,
     "report_value <- function(key) {",
-    "  expr <- report_inline_expressions[[key]]",
-    "  if (is.null(expr) || is.na(expr)) return(\"not yet available\")",
-    "  if (grepl(\"^format\\\\(Sys.time\", expr)) return(format(Sys.time(), \"%B %d, %Y\"))",
-    "  value <- tryCatch(eval(parse(text = expr), envir = target_env), error = function(e) NA)",
+    "  value <- report_values[[key]]",
+    "  if (is.null(value)) value <- report_values[[legacy_inline_expressions[[key]]]]",
+    "  if (is.null(value)) value <- NA",
     "  if (length(value) == 0L || all(is.na(value))) return(\"not yet available\")",
     "  paste(value, collapse = \", \")",
     "}",
@@ -164,6 +141,15 @@ report_setup_chunk <- function() {
 write_qmd <- function(path, yaml, lines) {
   writeLines(c(yaml, "", lines), path)
   message("Wrote ", path)
+}
+
+validate_yaml_indentation <- function(paths) {
+  bad <- unlist(lapply(paths, function(path) {
+    lines <- readLines(path, warn = FALSE)
+    hit <- grep("^ warning:", lines)
+    if (length(hit)) paste0(path, ":", hit, ":", lines[hit]) else character()
+  }), use.names = FALSE)
+  if (length(bad)) stop("Malformed YAML indentation detected:\n", paste(bad, collapse = "\n"), call. = FALSE)
 }
 
 body <- strip_code_chunks(strip_yaml(legacy_lines))
@@ -246,7 +232,7 @@ long_yaml <- c(
   "    pdf-engine: xelatex",
   "execute:",
   "  echo: false",
-  " warning: false",
+  "  warning: false",
   "  message: false",
   "---"
 )
@@ -255,5 +241,12 @@ comment_start <- find_line(legacy_lines, "# ---TROUBLESHOOTING---")
 comment_end <- find_line(legacy_lines, "# Goal: Make an alternative read_sav() which accepts 8.3 filenames")
 comment_block <- c("```{r}", "#| echo: true", "#| eval: false", legacy_lines[comment_start:(comment_end - 1L)], "```")
 write_qmd("docs/long-paths-and-8-3-filenames.qmd", long_yaml, c(tech, "", comment_block))
+
+validate_yaml_indentation(c(
+  "paper/report.qmd",
+  "paper/appendix.qmd",
+  "docs/district-matching.qmd",
+  "docs/long-paths-and-8-3-filenames.qmd"
+))
 
 message("Static QMD rebuild complete.")
