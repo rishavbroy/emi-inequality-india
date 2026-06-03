@@ -38,6 +38,9 @@ relevant-literature/
 *.blg
 *.tex
 
+# temporary application sample assembly files
+application-samples/.work/
+
 # keep deliberate TeX source templates if any remain
 !application-samples/templates/*.tex
 !application-samples/cover-notes/**/*.tex
