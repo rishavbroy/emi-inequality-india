@@ -7,7 +7,10 @@
 #'
 #' @return A tibble, model object, list, or file path depending on context.
 diagnose_missingness <- function(selection_data, cfg) {
-  selection_data
+  data.frame(
+    missing_var = names(selection_data)[vapply(selection_data, function(x) any(is.na(x)), logical(1))],
+    stringsAsFactors = FALSE
+  )
 }
 
 #' check missing logit parallel
@@ -24,7 +27,11 @@ check_missing_logit_parallel <- function(df, miss_vars, covars, method_p = "BH")
 #'
 #' @return A tibble, model object, list, or file path depending on context.
 summarize_missingness_by_variable <- function(df) {
-  df
+  data.frame(
+    missing_var = names(df),
+    n_missing = vapply(df, function(x) sum(is.na(x)), integer(1)),
+    stringsAsFactors = FALSE
+  )
 }
 
 #' run missingness logits

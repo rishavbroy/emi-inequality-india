@@ -6,7 +6,18 @@
 #'
 #' @return A tibble, model object, list, or file path depending on context.
 build_district_panel <- function(district_tracker, district_join_map, measures_2007, measures_2017, linguistic_distance_iv, boundaries_2020, cfg) {
-  list(tracker = district_tracker, join_map = district_join_map, measures_2007 = measures_2007, measures_2017 = measures_2017, iv = linguistic_distance_iv, geometry = boundaries_2020)
+  out <- safe_df(measures_2007)
+  if (!nrow(out)) return(empty_panel())
+  if (all(c("state_std", "district_std") %in% names(measures_2017))) {
+    out <- merge(out, measures_2017, by = c("state_std", "district_std"), all.x = TRUE, suffixes = c("_2007", "_2017"))
+  }
+  if (all(c("state_std", "district_std") %in% names(linguistic_distance_iv))) {
+    out <- merge(out, linguistic_distance_iv, by = c("state_std", "district_std"), all.x = TRUE)
+  }
+  if (!"district_panel_id" %in% names(out)) {
+    out$district_panel_id <- make_district_key(out$state_std, out$district_std, 2007L)
+  }
+  out
 }
 
 #' compute consumption growth pct
@@ -48,7 +59,8 @@ attach_iv_measures <- function(df) {
 #'
 #' @return A tibble, model object, list, or file path depending on context.
 save_processed_district_panel <- function(district_panel, path = "data/processed/district_panel_emi_consumption_2001_2007_2017_2020.csv") {
-  readr::write_csv(tibble::as_tibble(district_panel), path)
+  dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
+  utils::write.csv(as.data.frame(district_panel), path, row.names = FALSE)
   path
 }
 
@@ -56,7 +68,7 @@ save_processed_district_panel <- function(district_panel, path = "data/processed
 #'
 #' @return A tibble, model object, list, or file path depending on context.
 save_processed_district_tracker <- function(district_tracker, path = "data/processed/district_tracker_2001_2007_2017_2020.csv") {
-  readr::write_csv(tibble::as_tibble(district_tracker), path)
+  dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
+  utils::write.csv(as.data.frame(district_tracker), path, row.names = FALSE)
   path
 }
-

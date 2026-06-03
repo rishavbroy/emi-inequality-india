@@ -6,7 +6,9 @@
 #'
 #' @return A tibble, model object, list, or file path depending on context.
 build_selection_data <- function(nss_2007_education, district_keys_2007, cfg) {
-  nss_2007_education
+  df <- std(safe_bind_rows(lapply(as_input_list(nss_2007_education), safe_df)), 2007L)
+  if (!"enrolled" %in% names(df)) df$enrolled <- NA_real_
+  df
 }
 
 #' construct child level selection sample
@@ -34,6 +36,7 @@ construct_district_level_context <- function(df) {
 #'
 #' @return A tibble, model object, list, or file path depending on context.
 define_probit_variables <- function(df) {
+  if (!"enrolled" %in% names(df)) df$enrolled <- NA_real_
   df
 }
 
@@ -43,4 +46,3 @@ define_probit_variables <- function(df) {
 apply_selection_sample_restrictions <- function(df) {
   df
 }
-

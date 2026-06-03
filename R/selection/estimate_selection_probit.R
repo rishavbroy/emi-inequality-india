@@ -7,7 +7,19 @@
 #'
 #' @return A tibble, model object, list, or file path depending on context.
 estimate_selection_probit <- function(selection_data, cfg) {
-  stop("TODO: migrate survey-weighted probit from legacy chunk 9")
+  if (!"enrolled" %in% names(selection_data) || all(is.na(selection_data$enrolled))) {
+    return(list(status = "out_of_active_pipeline", reason = "No enrolled variable."))
+  }
+  covars <- intersect(c("AGE", "age", "SEX", "sex", "state_std"), names(selection_data))
+  if (!length(covars)) {
+    return(list(status = "out_of_active_pipeline", reason = "No probit covariates."))
+  }
+  # Keep the probit descriptive if it is not currently part of the causal design.
+  stats::glm(
+    stats::as.formula(paste("enrolled ~", paste(covars, collapse = "+"))),
+    data = selection_data,
+    family = stats::binomial(link = "probit")
+  )
 }
 
 #' build survey design selection

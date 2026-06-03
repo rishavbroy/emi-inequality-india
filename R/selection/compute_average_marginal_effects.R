@@ -8,19 +8,50 @@
 #'
 #' @return A tibble, model object, list, or file path depending on context.
 compute_average_marginal_effects <- function(selection_model, selection_data, cfg = list()) {
-  if (inherits(selection_model, "glm")) {
-    return(data.frame(
-      term = names(stats::coef(selection_model)),
-      estimate = unname(stats::coef(selection_model)),
-      method = "coefficient_fallback"
+  if (!inherits(selection_model, "glm")) {
+    return(ame_out_of_pipeline(
+      selection_model$status %||% "out_of_active_pipeline",
+      selection_model$reason %||% "Selection model not estimated in smoke mode"
     ))
   }
 
+  if (!isTRUE(cfg$run_full_ame)) {
+    return(format_ame_results(data.frame(
+      term = names(stats::coef(selection_model)),
+      estimate = unname(stats::coef(selection_model)),
+      std.error = NA_real_,
+      statistic = NA_real_,
+      p.value = NA_real_,
+      conf.low = NA_real_,
+      conf.high = NA_real_,
+      method = "coefficient_fallback",
+      status = "estimated",
+      reason = "Draft config uses coefficient fallback instead of full AME computation"
+    )))
+  }
+
+  if (!requireNamespace("marginaleffects", quietly = TRUE)) {
+    return(ame_out_of_pipeline(
+      "out_of_active_pipeline",
+      "Package marginaleffects is required for full AME computation"
+    ))
+  }
+
+  format_ame_results(compute_ames_autodiff(selection_model, selection_data))
+}
+
+ame_out_of_pipeline <- function(status, reason) {
   data.frame(
     term = NA_character_,
     estimate = NA_real_,
-    status = selection_model$status %||% "out_of_active_pipeline",
-    reason = selection_model$reason %||% "Selection model not estimated in smoke mode"
+    std.error = NA_real_,
+    statistic = NA_real_,
+    p.value = NA_real_,
+    conf.low = NA_real_,
+    conf.high = NA_real_,
+    method = "not_run",
+    status = status,
+    reason = reason
   )
 }
 
@@ -42,7 +73,18 @@ compute_ames_fast_draft <- function(model, newdata, n = 200) {
 #'
 #' @return A tibble, model object, list, or file path depending on context.
 format_ame_results <- function(ame_results) {
-  ame_results
+  out <- tibble::as_tibble(ame_results)
+  if (!"term" %in% names(out) && "variable" %in% names(out)) out$term <- out$variable
+  if (!"method" %in% names(out)) out$method <- "autodiff"
+  if (!"status" %in% names(out)) out$status <- "estimated"
+  if (!"reason" %in% names(out)) out$reason <- NA_character_
+
+  required <- c(
+    "term", "estimate", "std.error", "statistic", "p.value",
+    "conf.low", "conf.high", "method", "status", "reason"
+  )
+  for (nm in setdiff(required, names(out))) out[[nm]] <- NA
+  out[, required, drop = FALSE]
 }
 
 #' save ame results
