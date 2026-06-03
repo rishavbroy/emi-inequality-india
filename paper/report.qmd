@@ -14,11 +14,17 @@ execute:
 ```{r}
 #| results: asis
 legacy_path <- "../archive/legacy-paper-drafts/580-Draft-ECON-580.Rmd"
-legacy <- readLines(legacy_path, warn = FALSE)
-legacy <- paste(legacy, collapse = "\n")
+legacy_lines <- readLines(legacy_path, warn = FALSE)
 
-strip_code_chunks <- function(x) {
-  lines <- strsplit(x, "\n", fixed = TRUE)[[1]]
+strip_yaml <- function(lines) {
+  if (length(lines) >= 2L && identical(lines[[1]], "---")) {
+    close <- which(lines[-1L] == "---")
+    if (length(close)) return(lines[-seq_len(close[[1]] + 1L)])
+  }
+  lines
+}
+
+strip_code_chunks <- function(lines) {
   out <- character()
   in_chunk <- FALSE
   for (line in lines) {
@@ -28,71 +34,42 @@ strip_code_chunks <- function(x) {
     }
     if (!in_chunk) out <- c(out, line)
   }
-  paste(out, collapse = "\n")
+  out
 }
 
-extract_between <- function(x, start, end = NULL) {
-  start_pos <- regexpr(start, x, perl = TRUE)
-  if (start_pos < 0) stop("Could not find: ", start, call. = FALSE)
-  if (is.null(end)) return(substr(x, start_pos, nchar(x)))
-  rest <- substr(x, start_pos + attr(start_pos, "match.length"), nchar(x))
-  end_pos <- regexpr(end, rest, perl = TRUE)
-  if (end_pos < 0) return(substr(x, start_pos, nchar(x)))
-  substr(x, start_pos, start_pos + attr(start_pos, "match.length") + end_pos - 2)
+find_line <- function(lines, pattern) {
+  hit <- grep(pattern, lines, fixed = TRUE)
+  if (!length(hit)) stop("Could not find: ", pattern, call. = FALSE)
+  hit[[1]]
 }
 
-wrap_section <- function(x, start_heading, end_heading, attrs) {
-  start <- regexpr(start_heading, x, fixed = TRUE)
-  if (start < 0) stop("Could not find heading: ", start_heading, call. = FALSE)
-  if (is.null(end_heading)) {
-    end <- nchar(x) + 1L
-  } else {
-    rest <- substr(x, start + attr(start, "match.length"), nchar(x))
-    end_rel <- regexpr(end_heading, rest, fixed = TRUE)
-    end <- if (end_rel < 0) nchar(x) + 1L else start + attr(start, "match.length") + end_rel - 1L
-  }
-  paste0(
-    substr(x, 1L, start - 1L),
-    "::: {", attrs, "}\n",
-    trimws(substr(x, start, end - 1L), which = "right"),
-    "\n:::\n\n",
-    substr(x, end, nchar(x))
-  )
+extract_lines <- function(lines, start, end = NULL) {
+  i <- find_line(lines, start)
+  j <- if (is.null(end)) length(lines) + 1L else find_line(lines, end)
+  lines[i:(j - 1L)]
 }
 
-escape_inline_r <- function(x) {
-  gsub("`r ([^`]+)`", "\\\\`r \\1\\\\`", x, perl = TRUE)
+wrap_section_lines <- function(lines, start, end, attrs) {
+  i <- find_line(lines, start)
+  j <- if (is.null(end)) length(lines) + 1L else find_line(lines, end)
+  before <- if (i > 1L) lines[seq_len(i - 1L)] else character()
+  after <- if (j <= length(lines)) lines[j:length(lines)] else character()
+  c(before, paste0("::: {", attrs, "}"), lines[i:(j - 1L)], ":::", "", after)
 }
 
-body <- strip_code_chunks(legacy)
-body <- sub("^---.*?---", "", body, perl = TRUE)
-main <- extract_between(
-  body,
-  "^# Introduction and Literature Review \\{#intro\\}",
-  "^# \\(APPENDIX\\) Appendix"
-)
-appendix <- extract_between(
-  body,
-  "^# \\(APPENDIX\\) Appendix",
-  "^# Technical Note for Replication"
-)
-technical <- extract_between(
-  body,
-  "^# Technical Note for Replication",
-  "^# References"
-)
+body <- strip_code_chunks(strip_yaml(legacy_lines))
+main <- extract_lines(body, "# Introduction and Literature Review {#intro}", "# (APPENDIX) Appendix {-}")
+appendix <- extract_lines(body, "# (APPENDIX) Appendix {-}", "# Technical Note for Replication")
+technical <- extract_lines(body, "# Technical Note for Replication", "# References")
 
-out <- paste(main, appendix, technical, sep = "\n\n")
-markers <- list(
-  list("### District Matching Method {#distma}", "### Spatial Autocorrelation, Spatial Spillovers, and Migration {#spa}", '.sample-excerpt #ws-district-harmonization-method sets="writing-5pg writing-10pg" order="8"'),
-  list("## Discussion {#disc}", "# (APPENDIX) Appendix {-}", '.sample-excerpt #ws-second-stage-results sets="writing-5pg writing-10pg" order="6"'),
-  list("## Results {#iv-results}", "## Discussion {#disc}", '.sample-excerpt #ws-first-stage-results sets="writing-10pg" order="5"'),
-  list("## Instrumental Variable {#iv-iv}", "## Results {#iv-results}", '.sample-excerpt #ws-iv-relevance-exclusion-problem sets="writing-5pg writing-10pg" order="3"'),
-  list("# The Effect of EMIE: 2SLS Estimation and Main Results {#iv}", "## Instrumental Variable {#iv-iv}", '.sample-excerpt #ws-2sls-limits-remedies sets="writing-10pg" order="4"'),
-  list("# The Composition of Education Participation {#heckman}", "# The Effect of EMIE: 2SLS Estimation and Main Results {#iv}", '.sample-excerpt #ws-selection-model-missingness sets="writing-10pg" order="2"'),
-  list("# Introduction and Literature Review {#intro}", "# Data Sources {#data}", '.sample-excerpt #ws-intro-question-contribution sets="writing-5pg writing-10pg" order="1"')
-)
-for (m in markers) out <- wrap_section(out, m[[1]], m[[2]], m[[3]])
-out <- escape_inline_r(out)
-cat(out)
+out <- c(main, "", appendix, "", technical)
+out <- wrap_section_lines(out, "### District Matching Method {#distma}", "### Spatial Autocorrelation, Spatial Spillovers, and Migration {#spa}", '.sample-excerpt #ws-district-harmonization-method sets="writing-5pg writing-10pg" order="8"')
+out <- wrap_section_lines(out, "## Discussion {#disc}", "# (APPENDIX) Appendix {-}", '.sample-excerpt #ws-second-stage-results sets="writing-5pg writing-10pg" order="6"')
+out <- wrap_section_lines(out, "## Results {#iv-results}", "## Discussion {#disc}", '.sample-excerpt #ws-first-stage-results sets="writing-10pg" order="5"')
+out <- wrap_section_lines(out, "## Instrumental Variable {#iv-iv}", "## Results {#iv-results}", '.sample-excerpt #ws-iv-relevance-exclusion-problem sets="writing-5pg writing-10pg" order="3"')
+out <- wrap_section_lines(out, "# The Effect of EMIE: 2SLS Estimation and Main Results {#iv}", "## Instrumental Variable {#iv-iv}", '.sample-excerpt #ws-2sls-limits-remedies sets="writing-10pg" order="4"')
+out <- wrap_section_lines(out, "# The Composition of Education Participation {#heckman}", "# The Effect of EMIE: 2SLS Estimation and Main Results {#iv}", '.sample-excerpt #ws-selection-model-missingness sets="writing-10pg" order="2"')
+out <- wrap_section_lines(out, "# Introduction and Literature Review {#intro}", "# Data Sources {#data}", '.sample-excerpt #ws-intro-question-contribution sets="writing-5pg writing-10pg" order="1"')
+out <- gsub("`r ", "` r ", out, fixed = TRUE)
+cat(paste(out, collapse = "\n"))
 ```
