@@ -104,6 +104,7 @@ list(
   tar_target(figure_files, save_figures(figures, cfg), format = "file"),
   tar_target(tables, make_tables(selection_data, ame_results, district_panel, iv_models, first_stage_tests, cfg)),
   tar_target(table_files, save_tables(tables, cfg), format = "file"),
+  tar_target(report_values, build_report_values(ame_results, first_stage_tests, iv_models, selection_data, district_panel, cfg)),
 
   # Rendered notes, report, and samples ----------------------------------------
   tar_render(district_matching_note, "docs/district-matching.qmd"),
