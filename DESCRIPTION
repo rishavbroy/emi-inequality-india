@@ -29,6 +29,6 @@ Imports:
     quarto,
     readODS,
     car,
-    digest
-Suggests:
+    digest,
     testthat
+Suggests:
