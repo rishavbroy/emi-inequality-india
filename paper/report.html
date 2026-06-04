@@ -12,7 +12,7 @@
 <meta name="author" content="Rishav Roy" />
 
 
-<title>Escaping Inequality in India: The Role of English-Medium Instruction</title>
+<title>Escaping Inequality in India: Role of English-Medium Instruction</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -250,8 +250,40 @@ if (window.hljs) {
 
 
 
+<style type="text/css">
+p.abstract{
+text-align: center;
+font-weight: bold;
+}
+div.abstract{
+margin: auto;
+width: 90%;
+}
+</style>
 
 
+<style type="text/css">
+
+div.csl-bib-body { }
+div.csl-entry {
+clear: both;
+}
+.hanging div.csl-entry {
+margin-left:2em;
+text-indent:-2em;
+}
+div.csl-left-margin {
+min-width:2em;
+float:left;
+}
+div.csl-right-inline {
+margin-left:2em;
+padding-left:1em;
+}
+div.csl-indent {
+margin-left: 2em;
+}
+</style>
 
 
 
@@ -349,79 +381,2363 @@ display: none;
 
 
 
-<h1 class="title toc-ignore">Escaping Inequality in India: The Role of
+<h1 class="title toc-ignore">Escaping Inequality in India: Role of
 English-Medium Instruction</h1>
 <h4 class="author">Rishav Roy</h4>
+<div class="abstract">
+<p class="abstract">Abstract</p>
+English-medium instruction (EMI), or the teaching of school subjects in
+English, is often viewed as a potential tool for economic mobility in
+India, where English skills command substantial wage premia. Yet it
+remains unclear whether greater exposure to EMI generates broader local
+development gains. We study whether district-level EMI exposure in 2007,
+measured as the share of school-going children enrolled in EMI, affected
+growth in average household consumption between 2007 and 2018. To
+address endogeneity, we instrument EMI exposure using a proxy for the
+opporunity cost of acquiring EMI over Hindi-based schooling: the
+population-weighted average linguistic distance of districts’ mother
+tongues from Hindi in 2001. District-level 2SLS estimates with
+state-clustered standard errors are positive but insignificant,
+providing limited evidence that EMI exposure increased local consumption
+growth over the medium run. This district-level equilibrium analysis is
+supplemented with an individual-level probit model of selection into
+education. We conclude by discussing threats to identification and
+interpretation (namely spatial autocorrelation and migration) and their
+implications for future work.
+</div>
 
 </div>
 
 
-<pre class="r"><code>library(targets)</code></pre>
 <div id="ws-intro-question-contribution" class="sample-excerpt" sets="writing-5pg writing-10pg" order="1">
-<div id="research-question-and-contribution" class="section level2">
-<h2>Research question and contribution</h2>
-<p>What is the effect of exposure to English-medium instruction
-enrollment in 2007–08 on the growth of local consumption from 2007–08 to
-2017–18?</p>
-<p>This section should preserve the corresponding prose from the legacy
-Rmd/PDF: the contribution relative to previous literature, the use of
-consumption rather than wages, the district pseudo-panel, and the
-two-part empirical methodology.</p>
+<div id="sec-intro" class="section level1">
+<h1>Introduction and Literature Review</h1>
+<p>The Indian economy presents a series of paradoxes. The same economy
+whose GDP has grown at 6% annually on average for decades <span class="citation">(<a href="#ref-organization2024a">International Labour
+Organization 2024, 2</a>)</span> has also seen stagnation if not losses
+in wages, employment, and labor force participation (see Figure <span class="citation">(<a href="#ref-fig-ILO-fig"><strong>fig-ILO-fig?</strong></a>)</span>), all
+while higher education has continued to develop an extremely strong,
+positive correlation with higher youth <em>unemployment</em>.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> And though
+the International Labour Organization (ILO) traces this back to a labor
+supply which lacks the skills needed to fill available job openings
+(p. 174), high unemployment rates can be found for skilled laborers of
+all backgrounds, including those who received vocational education and
+training <span class="citation">(<a href="#ref-agrawal.agrawal2017">Agrawal and Agrawal
+2017</a>)</span>.</p>
+<p>Appreciating this broader view helps reveal the degree to which
+unemployment, underemployment, and “jobless growth” <span class="citation">(<a href="#ref-graddol2010a">Graddol 2010</a>)</span>
+have, alongside wealth inequality, combined to undermine the degree to
+which many benefit from India’s recent economic growth <span class="citation">(<a href="#ref-bharti.etal2024">Bharti et al.
+2024</a>)</span>. From here we adopt a bottom-up perspective—what can
+members of this “many” do to improve their lives in such a context?—and
+in doing so, our motivating question reveals itself to be two-fold: 1)
+If I am a household, what can I do to best ensure my children’s future
+success in this context? And 2) if I am a local policy-maker, what can I
+do to best ensure my constituents’ future welfare in this context?</p>
+<p>The history of economics highlights <em>education</em> as one rich
+answer to these questions <span class="citation">(<a href="#ref-mincer1974">Mincer 1974</a>; <a href="#ref-card1999">Card
+1999</a>; <a href="#ref-bjorklund.kjellstrom2002">Björklund and
+Kjellström 2002</a>; <a href="#ref-bhandari.bordoloi2006">Bhandari and
+Bordoloi 2006</a>)</span>. The history of India, however, highlights
+another: <em>English</em>. In its capacity as global lingua franca <span class="citation">(<a href="#ref-melitz2016">Melitz 2016</a>)</span>,
+English is perceived as expanding mobility <span class="citation">(<a href="#ref-itaniMeaningLanguageSkills2015">Itani et al. 2015</a>)</span>
+and opening pathways to education at prestigious universities and jobs
+at wealthy multinational corporations across the world <span class="citation">(<a href="#ref-ramanathanTeacherKnowledgeBase2014">Ramanathan
+2014</a>)</span>, particularly in the US <span class="citation">(<a href="#ref-bediEnglishLanguageIndia2019">Bedi 2019, 32–33</a>)</span>.
+But combine this with its role as domestic lingua franca <span class="citation">(<a href="#ref-clingingsmithIndustrializationBilingualismIndia2014">Clingingsmith
+2014</a>)</span>, and we see the number of intranational pathways
+English opens up as well: the mass off-shoring of millions of service
+jobs in the 1990s and the rise of information technology (IT) since have
+not only driven a rapid rise in India’s GDP, but also a flurry of jobs
+whose higher socioeconomic returns <span class="citation">(<a href="#ref-chamarbagwala.sharma2011">Chamarbagwala and Sharma 2011</a>;
+<a href="#ref-smokotin2014a">Smokotin et al. 2014</a>)</span> are in
+large part only accessible to those who speak English <span class="citation">(<a href="#ref-mankiw.swagel2006">Mankiw and Swagel
+2006</a>; <a href="#ref-shastry2012a">Shastry 2012</a>)</span>.</p>
+<p>Empirical study reveals the combined effect of these mechanisms.
+Using nationally-representative, household-level panel data, <span class="citation">Azam et al. (<a href="#ref-azam2013a">2013</a>)</span>
+find that English fluency was, at least up until 2005, associated with a
+34% hourly wage premium for men and a 22% premium for women; even for
+men and women with little English proficiency, the premia were still 13%
+and 10%. <span class="citation">Refeque and Azad (<a href="#ref-refeque2022a">2022</a>)</span> would later replicate this
+finding and extend it out to 2011-12. The strongest evidence for a
+causal effect of English skills on wages, however, comes from <span class="citation">Chakraborty and Bakshi (<a href="#ref-chakraborty2016a">2016</a>)</span>, for whom West Bengal’s
+1983-2004 ban on English teaching in public primary schools constituted
+a natural experiment whose treatment group (those with increased
+“exposure” to the ban) faced a 26% decrease in future weekly wages
+relative to the control group (those less “exposed” to the ban)<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a>.</p>
+<p>It is thus by combining our two answers—education and English—that we
+can begin to understand the demand for <em>English-medium instruction
+(EMI)</em>, or for the teaching of all school subjects in English,
+currently seen in India <span class="citation">(<a href="#ref-gooptu2023a">Gooptu and Mukherjee 2023</a>; <a href="#ref-lahoti2019a">Lahoti and Mukhopadhyay 2019</a>; <a href="#ref-chattopadhayLowFeePrivateSchools2017">Chattopadhay and Roy
+2017</a>)</span>. “Language skills are human capital,” after all <span class="citation">(<a href="#ref-chiswick1995a">Chiswick and Miller 1995,
+4</a>)</span>, and “English-language skills [specifically] are a form of
+human capital” <span class="citation">(<a href="#ref-azam2013a">Azam et
+al. 2013, 344</a>)</span>; if the main mechanism by which education
+affects wages is human capital, then synthesizing education with English
+like this seems natural. Perhaps this is why EMI, as both a tool for
+social development <span class="citation">(<a href="#ref-commission2009a">National Knowledge Commission
+2009</a>)</span> and even as a tool for individual liberation,<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a> is so
+often seen as a source of hope.</p>
+<p>But the truth of EMI remains unclear and understudied. On one hand,
+there are limitations unique to EMI: instruction in one’s mother tongue
+is associated with better academic participation and outcomes, both
+within India <span class="citation">(<a href="#ref-mohanty2022a">Mohanty
+2022</a>; <a href="#ref-nair2015a">Nair 2015</a>)</span> and beyond
+<span class="citation">(<a href="#ref-buehmann2009a">Bühmann and Trudell
+2008</a>)</span>, particularly when schooling quality and parents’
+socioeconomic status are controlled for.<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a></p>
+<p>On the other hand, there are limitations unique to the many flaws of
+the Indian education system: low-effort <span class="citation">(<a href="#ref-singh2013">Singh 2013</a>)</span>, even abusive <span class="citation">(<a href="#ref-centreforbudgetandpolicystudies2020">Centre for Budget and
+Policy Studies 2020, 218–22</a>)</span> teachers whose annual
+absenteeism rates have remained near 25% for decades <span class="citation">(<a href="#ref-muralidharan.etal2017">Muralidharan et
+al. 2017</a>; <a href="#ref-chaudhury.etal2006">Chaudhury et al.
+2006</a>, who also find that only 45% of teachers at any one point in
+time were engaged in any kind of teaching-related activity)</span><a href="#fn5" class="footnote-ref" id="fnref5"><sup>5</sup></a> coupled
+with inefficient resource allocation <span class="citation">(<a href="#ref-muralidharanContractTeachersExperimental2013">Muralidharan
+and Sundararaman 2013</a>; <a href="#ref-gooptu2023a">Gooptu and
+Mukherjee 2023</a>)</span> and poor commuting infrastructure <span class="citation">(<a href="#ref-kremer.etal2005">Kremer et al.
+2005</a>)</span>, all alongside schools which actively lie about their
+medium of instruction <span class="citation">(<a href="#ref-mathew2011a">Mathew and Srivastava 2011</a>; <a href="#ref-lahoti2019a">Lahoti and Mukhopadhyay 2019</a>)</span>, all of
+which is more commonly found in government schools than private. And yet
+the mismatch between expectation and reality can be so great that, even
+among the rural <em>private</em> schools surveyed by <span class="citation">Lahoti and Mukhopadhyay (<a href="#ref-lahoti2019a">2019</a>)</span>, “more than half (57%) of the
+children who [were] supposed to be [in EMI were] actually studying in
+the dominant regional language” (p. 55). Navigating such an environment
+requires parents to have enough information and social capital with
+which to identify higher-quality schooling/tutoring<a href="#fn6" class="footnote-ref" id="fnref6"><sup>6</sup></a>—often the product of
+being well-educated themselves <span class="citation">(<a href="#ref-lahoti2019a">Lahoti and Mukhopadhyay 2019</a>; <a href="#ref-blimpo.etal2015">Blimpo et al. 2015</a>)</span>—but also to
+have a high enough income to afford this higher-quality<a href="#fn7" class="footnote-ref" id="fnref7"><sup>7</sup></a> education <span class="citation">(<a href="#ref-muralidharan2008a">Muralidharan and
+Kremer 2008</a>; <a href="#ref-singh2013">Singh 2013</a>)</span>.</p>
+<p>The demand for both higher-quality education in general and EMI in
+particular has, since at least the 2000s, been increasingly met by a
+supply of ‘low-cost’<a href="#fn8" class="footnote-ref" id="fnref8"><sup>8</sup></a> private schools <span class="citation">(<a href="#ref-jamesChoosingChangingSchools2014">James and Woodhead
+2014</a>; <a href="#ref-srivastavaLowFeePrivateSchooling2013">Srivastava
+2013</a>; <a href="#ref-ramanathan2016a">Ramanathan 2016</a>; <a href="#ref-chattopadhayLowFeePrivateSchools2017">Chattopadhay and Roy
+2017</a>)</span>.<a href="#fn9" class="footnote-ref" id="fnref9"><sup>9</sup></a> Such schools lack the reputation typically
+afforded to higher-end private schools, meaning their students lack the
+social capital of other private school students <span class="citation">(<a href="#ref-ramanathan2016a">Ramanathan
+2016</a>)</span>. Conversely, more disadvantaged students are priced out
+of all schools except the free <span class="citation">(if not negatively
+priced, see <a href="#ref-muralidharan2019a">Muralidharan
+2019</a>)</span> government schools. Note that these schools are not
+only associated with a lower quality of education <span class="citation">(<a href="#ref-muralidharan2008a">Muralidharan and
+Kremer 2008</a>; <a href="#ref-srivastavaLowFeePrivateSchooling2013">Srivastava 2013</a>; <a href="#ref-muralidharan2015a">Muralidharan and Sundararaman 2015</a>; <a href="#ref-rajuPrivateSchoolingIndia2023">Raju 2023</a>)</span>, they
+are also associated with the most obvious signals of education quality,
+visible even to low-information parents, being worse-off e.g., worse
+facilities <span class="citation">(<a href="#ref-srivastavaLowFeePrivateSchooling2013">Srivastava 2013</a>; <a href="#ref-foundation2020a">Central Square Foundation 2020,
+54</a>)</span>. Here we have evidence that school search ends with an
+inequality-amplifying positive assortative matching <span class="citation">(<a href="#ref-muralidharan2019a">Muralidharan
+2019</a>)</span>. Yet even amongst this new ‘middle class’ of schools,
+issues with EMI persist: the survey of <span class="citation">Lahoti and
+Mukhopadhyay (<a href="#ref-lahoti2019a">2019</a>)</span> and the
+ethnographic study of <span class="citation">Bhattacharya (<a href="#ref-bhattacharyaMediatingInequalitiesExploring2013">2013</a>)</span>
+find children in low-cost private schools failing to learn both English
+as well as the subjects taught in it, further corroboration of the
+findings of <span class="citation">Bühmann and Trudell (<a href="#ref-buehmann2009a">2008</a>)</span>, <span class="citation">Nair
+(<a href="#ref-nair2015a">2015</a>)</span>, and <span class="citation">Mohanty (<a href="#ref-mohanty2022a">2022</a>)</span>.
+The reasons for this are likely two-fold: compared to parents who enroll
+their children in high-end private schools, those who select into
+low-cost private schools are typically 1) lacking in information and
+social capital, thus “[making] misguided evaluations of school quality
+based on visible factors” <span class="citation">(<a href="#ref-muralidharan2015a">Muralidharan and Sundararaman 2015,
+1061–62</a>)</span>; and 2) do not provide their children with as much
+community and out-of-classroom support for English (particularly when
+compared to “elite families” who often use English as a second language
+even within the family <span class="citation">(<a href="#ref-guptaColonisationMigrationFunctions1997">Gupta 1997,
+54–55</a>)</span>), preventing their oral skills from developing to the
+point where they can engage in class beyond rote memorization of the
+teacher’s answers <span class="citation">(<a href="#ref-bhattacharyaMediatingInequalitiesExploring2013">Bhattacharya
+2013</a>; <a href="#ref-treffers2022a">Treffers-Daller et al.
+2022</a>)</span>, to the extent such engagement is allowed <span class="citation">(<a href="#ref-brinkmannLearnercentredEducationReforms2015">Brinkmann
+2015</a>)</span>.<a href="#fn10" class="footnote-ref" id="fnref10"><sup>10</sup></a></p>
+Given all these mediators, nuances, and negations of its perceived
+effect, can EMI truly be seen as a source of hope? Should households
+turn to it to invest in their children’s future? Does greater enrollment
+in EMI aid future development? Should policy-makers be promoting it as a
+tool for local development? To gain insight into these questions, we
+seek to answer the following one:
+<p>First, note the improvements made here over the previous literature.
+The setting of 2007-2018 may be more relevant today than the settings of
+similar literature, all of which are closer to the advent of service job
+offshoring in the 1990s <span class="citation">(e.g., <a href="#ref-refeque2022a">Refeque and Azad 2022</a>)</span>.
+Additionally, note that our response variable here is consumption, not
+wages. India holds a vast number of informal and self-employed
+individuals, meaning its labor force varies wildly in the degree to
+which wages reflect material well-being.<a href="#fn11" class="footnote-ref" id="fnref11"><sup>11</sup></a></p>
+<p>Second, we must highlight that unlike much of this literature, we
+lack household panel data. We will thus follow previous papers <span class="citation">(e.g., <a href="#ref-martinBigOutSmall2017">Martin et
+al. 2017</a>)</span> and aggregate data at the district level.<a href="#fn12" class="footnote-ref" id="fnref12"><sup>12</sup></a> More
+specifically, we will take cross-sectional data from 2007-08 <span class="citation">(<a href="#ref-nationalsamplesurveyoffice2008">National
+Sample Survey Office 2011</a>)</span> and 2017-18 <span class="citation">(<a href="#ref-office2022a">National Sample Survey
+Office 2022</a>)</span>, aggregate each at the district level
+separately, and match districts across the time periods to construct a
+district pseudo-panel. District-level variables are developed in Sec.
+<span class="citation">(<a href="#ref-sec-iv-model"><strong>sec-iv-model?</strong></a>)</span> and
+the district matching method is explained in Sec. <span class="citation">(<a href="#ref-sec-distma-spa"><strong>sec-distma-spa?</strong></a>)</span>
+.</p>
+<p>Our empirical methodology will then proceed in two parts. In Sec.
+<span class="citation">(<a href="#ref-sec-heckman"><strong>sec-heckman?</strong></a>)</span>, we
+study the composition of our key “EMI exposure” measure by estimating an
+individual-level probit of school participation in 2007-08. In Sec.
+<span class="citation">(<a href="#ref-sec-iv"><strong>sec-iv?</strong></a>)</span>, we move to the
+district level and implement two-stage least squares (2SLS): the
+weighted average of linguistic distance from Hindi in 2001 will be used
+to instrument for EMI exposure, onto whose fitted values we regress the
+growth rate of average consumption.<a href="#fn13" class="footnote-ref" id="fnref13"><sup>13</sup></a> The choice of instrument is discussed in
+Sec. <span class="citation">(<a href="#ref-sec-iv-iv"><strong>sec-iv-iv?</strong></a>)</span>.</p>
+<p>Our 2SLS results will, at best, reflect the medium-run local general
+equilibrium effects of EMI exposure. On one hand, by aggregating away
+all individual or household-level variation, the ecological fallacy
+renders our 2SLS estimates uninterpretable at these lower levels.
+Additionally, school-going children in 2007-08 will still be quite young
+in 2017-18, and many may still be in school (particularly in more
+developed districts).<a href="#fn14" class="footnote-ref" id="fnref14"><sup>14</sup></a></p>
+<p>With our current methodology, we find that greater exposure to EMI
+enrollment has a statistically and economically <em>insignificant</em>
+effect on local consumption growth (Sec. <span class="citation">(<a href="#ref-sec-disc"><strong>sec-disc?</strong></a>)</span>), in line
+with previous literature on EMI and Indian education quality. Note,
+however, that our outcome includes households not directly exposed to
+EMI, meaning the effect we’re studying would likely be inherently small
+regardless. Migration and spatial spillovers may also attenuate our
+results; evidence which both challenges and supports this is discussed
+in detail in Sec. <span class="citation">(<a href="#ref-sec-spa"><strong>sec-spa?</strong></a>)</span>).</p>
+</div>
+</div>
+<div id="sec-data" class="section level1">
+<h1>Data Sources</h1>
+<p>The sole 2001 variable, linguistic distance from Hindi, comes from
+the 2001 Census of India <span class="citation">(<a href="#ref-officeoftheregistrargeneralandcensuscommissionerofindiaCensusIndia20012001">Office
+of the Registrar General and Census Commissioner of India
+2001</a>)</span>.</p>
+<p>Geospatial data used to construct the maps in this paper as well as
+all spatial autocorrelation measures is sourced from <span class="citation">Bhatia (<a href="#ref-bhatiaMergingUpdatedDistrictlevel2020">2020</a>)</span>,
+which is itself an adaptation of <span class="citation">Meyers (<a href="#ref-meyersIndiaOfficialBoundaries2020">2020</a>)</span>. Our
+methods for tracking districts across time (see Sec. <span class="citation">(<a href="#ref-sec-distma"><strong>sec-distma?</strong></a>)</span>) begin
+with data from <span class="citation">India State Stories (<a href="#ref-indiastatestoriesDistrictEvolution2024">2024</a>)</span> and
+<span class="citation">Jaacks et al. (<a href="#ref-jaacksIndiaDistrictChanges2020">2020</a>)</span>.</p>
+<p>All variables reflecting 2017-18 data come from the 75th Round of the
+National Sample Survey (NSS), titled “Household Social Consumption:
+Education” <span class="citation">(<a href="#ref-office2022a">National
+Sample Survey Office 2022</a>)</span>. All 2007-08 variables but one
+come from the 64th round of the NSS, on “Participation and Expenditure
+in Education” <span class="citation">(<a href="#ref-nationalsamplesurveyoffice2008">National Sample Survey Office
+2011</a>)</span>; the sole exception to this is the percentage of homes
+which are pucca (i.e., permanent), which is instead sourced from a
+separate schedule of the 64th NSS, “Household Consumer Expenditure”
+<span class="citation">(<a href="#ref-nationalstatisticalofficeIndiaHouseholdConsumer2011">National
+Statistical Office 2011</a>)</span>. Response rates in all of the
+surveys were above 96%.</p>
+<p>Sample weights were applied wherever applicable. All district-level
+aggregates were formed as sample-weighted averages. The education
+participation probit of Sec. <span class="citation">(<a href="#ref-sec-heckman"><strong>sec-heckman?</strong></a>)</span> used
+survey-weighted generalized linear models and design-based standard
+errors.<a href="#fn15" class="footnote-ref" id="fnref15"><sup>15</sup></a>. Summary statistics for variables used in
+the probit are given in Tables <span class="citation">(<a href="#ref-tbl-sum-tbl-probit-quant"><strong>tbl-sum-tbl-probit-quant?</strong></a>)</span>
+and <span class="citation">(<a href="#ref-tbl-sum-tbl-probit-cat"><strong>tbl-sum-tbl-probit-cat?</strong></a>)</span>,
+whereas Table <span class="citation">(<a href="#ref-tbl-sum-tbl-iv"><strong>tbl-sum-tbl-iv?</strong></a>)</span>
+contains summary statistics for variables used in the 2SLS
+estimation.</p>
+<p>Except for certain individual-level variables in the education
+probit, we will be aggregating variables at the district level. As will
+be shown in Table <span class="citation">(<a href="#ref-tbl-sum-tbl-iv"><strong>tbl-sum-tbl-iv?</strong></a>)</span>,
+the average population of a district in either sample period (2007-08
+and 2017-18) is 2 million. In the survey samples, however, most
+districts have between 400 and 1200 people represented in the data, with
+the exact number varying in line with a district’s population.</p>
+<div id="data-issues-representativeness-and-quality" class="section level2">
+<h2>Data Issues: Representativeness and Quality</h2>
+<p>Despite the complicated methodology and rigor underlying each NSS
+round <span class="citation">(see, e.g., <a href="#ref-mahalanobisNationalSampleSurvey1954">Mahalanobis
+1954</a>)</span>, three key issues with NSS data still exist. We address
+them in increasing order of severity.</p>
+<p>The first issue is the observation from <span class="citation">Deolalikar and Dubey (<a href="#ref-deolalikarNationalSampleSurvey2008">2008</a>)</span> that
+“the NSS has sometimes changed its data collection methodology
+midstream, and this has affected the comparability of NSS estimates over
+time” (p. 410). The examples they and the <span class="citation">Ministry of Statistics and Program Implementation (<a href="#ref-ministryofstatisticsandprogramimplementationRecentRounds2024">2024</a>)</span>
+mention predate all of our data, whereas the change described by the
+<span class="citation">Ministry of Statistics and Program Implementation
+(<a href="#ref-ministryofstatisticsandprogramimplementationRecentRounds2024">2024</a>)</span>
+(that the base year for calculating national accounts has shifted from
+2004-05 to 2011-12) should be mostly irrelevant for us. More relevant,
+however, is the politicization of the NSS documented by <span class="citation">Bhattacharya (<a href="#ref-bhattacharyaIndiasStatisticalSystem2023">2023</a>)</span>,
+which may affect our 2017-18 measures: Bhattacharya begins this period
+of NSS history by describing a major revision to GDP figures in 2014-15
+which was generally misaligned with most other economic indicators.
+Making this even more suspicious, however, was the state’s unwillingness
+to reveal any information on the reasons or methodology behind this
+change. Revelations of ghost firms in the NSS database used to calculate
+the new GDP series, plus a leak of poor unemployment data in 2017-18
+which was not officially released until after the Lok Sabha election in
+2019, hurt the trustworthiness of our data; <span class="citation">Subramanian (<a href="#ref-subramanianIndiasGDPMisestimation2019">2019</a>)</span>
+ultimately finds that, driven by an improper use of value-added
+vs. volume metrics, informal activity proxies, and deflators within
+industries, the NSS Office had overestimated GDP growth rates by 2.5
+percentage points.</p>
+<p>More worrying is the observation by <span class="citation">Lucas (<a href="#ref-lucasImpermanenceMovesReturn2021">2021b</a>)</span> that “the
+NSS is not representative at the district level” (p. 329). While Lucas
+does not provide a citation for this, it still may be true. <span class="citation">Samrat (<a href="#ref-samratInformingPolicyInspiring">n.d.</a>)</span> writes about
+a conference on Oct. 9th, 2025 where the National Statistics Office had
+touted its ability to, among other things, provide district-level
+estimates; the language is unclear on whether this means district-level
+estimates will now be provided in NSS reports or that district-level
+estimates can now be meaningfully calculated from NSS data.
+Documentation from the <span class="citation">National Sample Survey
+Organisation (<a href="#ref-nationalsamplesurveyorganisationConceptsDefinitionsUsed2001">2001</a>)</span>
+states that NSS sampling is built “in order to ensure proportionate
+representation or pre-fixed numbers of sample households from each group
+/ stratum,” which we henceforth use synonymously (p. 15). Defining
+proportionate representation at the stratum level has been an NSS
+tradition since <span class="citation">Mahalanobis (<a href="#ref-mahalanobisNationalSampleSurvey1954">1954,
+274–76</a>)</span>, but the benefit of the NSS rounds that we use is
+that strata are now defined within sectors, or the rural and urban areas
+of each district (with multiple urban sectors if population density is
+high).</p>
+<p>Consider <span class="citation">National Sample Survey Office (<a href="#ref-nationalsamplesurveyoffice2008">2011</a>)</span>, the source
+of most of our 2007-08 measures. Its sampling begins at the national
+level, where the total number of first-stage units (FSUs) is set, each
+FSU corresponding to a village or Panchayat ward in rural areas, or a
+block or a town/outgrowth (OG) in urban areas. These FSUs are then
+allocated in proportion to population in the following order: first,
+between the rural vs. urban sectors of the state, with a slight weight
+to urban; then to strata; then sub-stratum; and from there, FSUs are
+selected. In rural areas, selection was done using Probability
+Proportional to Size With Replacement (PPSWR), with the size being the
+population in the 2001 census. Simple Random Sampling Without
+Replacement (SRSWOR) was used for urban areas where FSUs were blocks,
+and PPSWR (with weights from the 2001 census) was used where FSUs were
+towns/OGs. The documentation for <span class="citation">National Sample
+Survey Office (<a href="#ref-office2022a">2022</a>)</span>, the source
+of our 2017-18 measures, makes it clear that FSUs are allocated first to
+state, then to within-state region (a more recent addition), then to
+districts, strata, sub-strata, sub-rounds, sub-samples, and FOD
+sub-regions.</p>
+<p>Even then, if each district gets rural and urban sectors, and if
+sample FSUs are selected from within each, it’s possible to make the
+claim that district-level estimates are representative; if samples
+within strict subsets of the district are representative, why should
+districts not be able to inherit that?</p>
+<p>Where representativeness at the district-level could fall apart,
+however, is in FSU selection. Four FSUs are selected from each
+sub-stratum, so if a district has only one sub‐stratum, then only four
+FSUs may be selected in that district. Additionally, the use of PPSWR
+(with replacement) in rural strata or for town/OG FSUs means that the
+same FSU might theoretically be selected more than once <span class="citation">(<a href="#ref-brusChapter7Twostage2023">Brus
+2023</a>)</span>. The design may thus be sufficient for producing
+reliable state-level estimates, and perhaps even for major districts;
+but it may be weak for smaller districts with low sample sizes.</p>
+<p>Finally we have the most difficult issue to address: general data
+quality issues. The response rate to NSS surveys systematically
+decreases in a household’s wealth and income, helping ensure endogeneity
+and bias behind what was reported and what was not <span class="citation">(<a href="#ref-raviOurNationalSurveys2023">Ravi
+2023</a>)</span>. For surveys which use the 2011 census as their
+sampling frame (which includes our 2017-18 data), meanwhile, all of the
+rural, working age (15-29), and SC (Scheduled Caste) populations were
+found to have been overestimated significantly. Contrasting 2011-12
+econometric values with nation-wide shares from the 2011 Census, <span class="citation">Ravi et al. (<a href="#ref-raviAssessingNationalSurveys2023">2023</a>)</span> find that
+a sample size of 464,960 becomes a bias-adjusted sample size<a href="#fn16" class="footnote-ref" id="fnref16"><sup>16</sup></a> of 324,
+240, or 536 given rural, SC, and working age overestimation
+respectively. This is a 99.9% reduction in statistical efficiency across
+the board <span class="citation">(<a href="#ref-raviAssessingNationalSurveys2023">Ravi et al. 2023,
+11</a>)</span>.</p>
 </div>
 </div>
 <div id="ws-selection-model-missingness" class="sample-excerpt" sets="writing-10pg" order="2">
-<div id="education-participation-variable-construction-and-missingness" class="section level2">
-<h2>Education participation, variable construction, and missingness</h2>
-<p>Insert the current Section 3 material here, including the EMIE
-definition, the probit model, district-level supply-side aggregates, the
-father-education proxy discussion, and the MCAR/missingness
-discussion.</p>
+<div id="sec-heckman" class="section level1">
+<h1>The Composition of Education Participation</h1>
+<div id="sec-heckman-model" class="section level2">
+<h2>Model and Variables</h2>
+<p>We are interested in how consumption growth is affected by EMI
+exposure (EMIE), which akin to previous literature <span class="citation">(<a href="#ref-chakraborty2016a">Chakraborty and Bakshi
+2016</a>)</span> we define like so: <span class="math display">\[\text{EMIE}_d =
+100\times\frac{\text{Num.  children enrolled in EMI}}{\text{Num.
+children enrolled in school}}\,\,\, \text{in district }d\]</span> This
+measure is effectively a district-level reflection of an intensive
+margin. To complement our understanding of EMIE in later sections, we
+would like to understand the extensive margin—enrollment into school—and
+the variables which affect the probability that any one child <span class="math inline">\(i\)</span> (aged 5-19) appears in our EMIE
+measure. We thus estimate the following probit model: <span class="math display">\[\begin{align} \Pr\bigl(\mathrm{Enrolled}_i = 1
+\mid X_i,\,Z_{d(i)}\bigr)
+= \Phi\Bigl(
+   \beta_0
+&amp;+ \beta_1\,\mathrm{Age}_i
++ \beta_2\,\mathrm{Female}_i
++ \beta_3\,\mathrm{HH Size}_i
++ \beta_4\,\mathrm{Urban}_i
+\notag\\[-0.0em]
+&amp;
++ \sum_{r\in R}\gamma_r\,\mathrm{Religion}_{ir}
++ \sum_{s\in S}\delta_s\,\mathrm{Social Group}_{is}
++ \sum_{d\in D}\theta_d\,\mathrm{SchoolDist}_{id}
+\notag\\[-0.0em]
+&amp;
++ \sum_{f\in F}\psi_f,\mathrm{FatherEduc}_{if}
++ \sum_{u\in U}\eta_u\,\overline{u}_{d(i)}
++ \phi\,\overline{\mathrm{EnrollmentCost}}_{d(i)}
+\Bigr)
+\end{align}\]</span></p>
+<p>where <span class="math display">\[
+\begin{aligned}
+R &amp;= \{\text{Muslim, Christian, Sikh, Jain, Buddhist, Zoroastrian,
+None}\},\\
+S &amp;= \{\text{Scheduled Tribe, Scheduled Caste, OBC}\},\\
+D &amp;= \{\text{1–2km, 2–3km, 3–5km, $\ge5$km}\},\\
+F &amp;= \{\text{Illiterate; Literate, no school; Literate, school &lt;
+primary;}\,\\
+  &amp;\quad\;\;\;\text{Primary, Upper primary, Secondary, Higher
+secondary, Postsecondary+}\},\\
+U &amp;= \{\text{Educ.\ free available},\,\text{Tuition
+waived},\,\text{Scholarship/Stipend},\,\\
+  &amp;\quad\;\;\;\text{Textbooks received},\,\text{Stationery
+received},\,\text{Mid-day meal, etc.}\}
+\end{aligned}
+\]</span></p>
+<p>and <span class="math display">\[\begin{align*} \overline{u}_{d(i)}
+&amp;= \text{Average value of } u \in U  \text{ in district } d \text{
+amongst enrolled children, }\\
+    \overline{\mathrm{Enrollment Cost}}_{d(i)} &amp;= \text{Average
+value of } \mathrm{EnrollmentCost}  \text{ in } d \text{ amongst
+enrolled children.}
+\end{align*}\]</span></p>
+<p>There are two kinds of regressors here: those in <span class="math inline">\(X_i\)</span>, the variables unique to child <span class="math inline">\(i\)</span>, and <span class="math inline">\(Z_{d(i)} = \{\overline{u}_{d(i)}:u\in U\}
+\cup\{\overline{\mathrm{EnrollmentCost}}_{d(i)}\},\)</span> the
+variables which have been aggregated at the level of the district <span class="math inline">\(d(i)\)</span> where child <span class="math inline">\(i\)</span> lives. Without this aggregation,
+neither <span class="math inline">\(u\)</span> nor <span class="math inline">\(\mathrm{EnrollmentCost}\)</span>, both endogenous
+to enrollment, would be well-defined for children not in school. Our
+aggregation can thus be understood as a way of handling missingness;
+whereas <span class="math inline">\(\mathrm{EnrollmentCost}_i\)</span>
+was missing for 120,062 children (as reflected in Table <span class="citation">(<a href="#ref-tbl-sum-tbl-probit-quant"><strong>tbl-sum-tbl-probit-quant?</strong></a>)</span>),
+<span class="math inline">\(\overline{\mathrm{EnrollmentCost}}_{d(i)}\)</span>
+was missing for 7,109. Observations still missing a relevant variable
+were then dropped.<a href="#fn17" class="footnote-ref" id="fnref17"><sup>17</sup></a></p>
+<p>The district-level averages can be interpreted as reflections of
+local supply-side factors, namely the general availability or generosity
+of educational inputs in a child’s local environment. Their marginal
+effects (see Table <span class="citation">(<a href="#ref-tbl-probit-mfx"><strong>tbl-probit-mfx?</strong></a>)</span>)
+may reflect how changes in these district-level characteristics affect
+the probability a child enrolls in education—or in other words, the
+elasticity of enrollment with respect to local schooling conditions.<a href="#fn18" class="footnote-ref" id="fnref18"><sup>18</sup></a></p>
+<p>Following <span class="citation">Azam et al. (<a href="#ref-azam2013a">2013</a>)</span>, <span class="citation">Munshi
+and Rosenzweig (<a href="#ref-munshi2006a">2006</a>)</span>, and <span class="citation">Singh (<a href="#ref-singh2013">2013</a>)</span>, we
+use father’s education to proxy a child’s ability before schooling. We
+use the father despite evidence indicating that the mother’s education
+is more strongly associated with early life human capital development.<a href="#fn19" class="footnote-ref" id="fnref19"><sup>19</sup></a> Taking
+the average of the mother’s and father’s education is not possible as
+education level is recorded by the <span class="citation">National
+Sample Survey Office (<a href="#ref-nationalsamplesurveyoffice2008">2011</a>)</span> as a
+categorical variable. Future work may attempt to create an index
+variable for this.</p>
+<p>The <span class="citation">National Sample Survey Office (<a href="#ref-nationalsamplesurveyoffice2008">2011</a>)</span> do not
+explicitly identify parent-child relationships. Instead, they only
+provide each person’s relationship to the head of their household.
+Father’s education is thus proxied by the education of the head of the
+household if they are male (average age here is 47.7); else as the
+married child of the head if they are male (married men often live with
+their elderly parents; average age of 40); else as the
+parent/parent-in-law of the head if they are male (average age of 63.8).
+We do not include male spouses of the head, whose average age is 11.5
+and share of children (aged &lt;18) is 0.858 in our data.<a href="#fn20" class="footnote-ref" id="fnref20"><sup>20</sup></a></p>
+<p>Summary statistics for numeric variables are given in Table <span class="citation">(<a href="#ref-tbl-sum-tbl-probit-quant"><strong>tbl-sum-tbl-probit-quant?</strong></a>)</span>,
+and for categorical variables in Table <span class="citation">(<a href="#ref-tbl-sum-tbl-probit-cat"><strong>tbl-sum-tbl-probit-cat?</strong></a>)</span>.</p>
 </div>
+<div id="sec-heckman-results" class="section level2">
+<h2>Results and Discussion</h2>
+<p>Average marginal effects for numeric variables and counterfactual
+comparisons (relative to the reference level) for categorical variables
+(both referred to as AME henceforth) are reported in Table <span class="citation">(<a href="#ref-tbl-probit-mfx"><strong>tbl-probit-mfx?</strong></a>)</span>,
+which has been derived using the work of <span class="citation">Arel-Bundock et al. (<a href="#ref-arel-bundockHowInterpretStatistical2024">2024</a>)</span> In
+line with advice from <span class="citation">Nowosad and Tennekes (<a href="#ref-nowosadElegantInformativeMaps2021">2021</a>)</span>, we
+report the AME instead of marginal effects at the mean.</p>
+<p>Table <span class="citation">(<a href="#ref-tbl-probit-mfx"><strong>tbl-probit-mfx?</strong></a>)</span>
+has been calculated over all observations, with standard errors
+clustered at the rural village and urban block level (no district
+clustering) derived using the delta method and automatic
+differentiation.<a href="#fn21" class="footnote-ref" id="fnref21"><sup>21</sup></a> All reported values are probabilities:
+that <span class="math inline">\(\mathrm{AME}_{\text{Age}} =\)</span> —
+in the table below thus means that, on average, a one-year increase in
+age is associated with a — percentage point decrease in the probability
+of being enrolled by, holding all else constant <span class="citation">(<a href="#ref-hansenEconometrics2022">Hansen
+2022</a>)</span>. The counterfactual comparison <span class="math inline">\(\mathrm{AME}_{\text{Muslim}} =\)</span> —,
+meanwhile, where ‘Hindu’ is the reference category to ‘Muslim’, means
+that the average change in the probability of a Hindu child being
+enrolled if they were hypothetically made Muslim is —, keeping all else
+fixed at observed values.<a href="#fn22" class="footnote-ref" id="fnref22"><sup>22</sup></a></p>
+<p>The goal of this paper is to study how well household optimization
+(through education participation and EMI enrollment) and local policy
+changes (aimed at shifting education supply or EMI enrollment) can lead
+to upward mobility given the context they exist in: one of inequality
+and jobless growth. In our results we do indeed find supply and social
+structure to be meaningful predictors of how households optimize via
+education enrollment.</p>
+<p>We first look at household-level determinants of who gets to stay in
+school. Our data is of children aged 5-19, so as a 5-18 year old child
+grows one year older, the probability they stay enrolled in school
+decreases by — percentage points on average, indicative of either
+economic necessity, the opportunity cost of school, or even
+disillusionment with school quality growing in age.<a href="#fn23" class="footnote-ref" id="fnref23"><sup>23</sup></a> We also see that
+each additional household member lowers enrollment probability by —
+percent. A negative value is expected—household resources should dilute
+as size increases—but the slight value and high significance are notable
+given the quantity-quality tradeoff of e.g., <span class="citation">Becker (<a href="#ref-beckerEconomicAnalysisFertility1969">1969</a>)</span>, plus
+empirical tests of it in India. <span class="citation">Kumar and Kugler
+(<a href="#ref-kumarTestingChildrenQuantityQuality2011">2011</a>)</span>
+find that, by using children’s educational attainment as a proxy for
+quality, cross-sectional dataset from 2007-08 indicates the tradeoff is
+heterogeneous in India, stronger given rural areas, low-caste children,
+illiterate mothers, and poor children. Conversely, by instrumenting
+family size <span class="citation">Onur and Velamuri (<a href="#ref-onurBirthOrderSibling2021">2021</a>)</span> remove the
+quantity-quality tradeoff entirely from their panel data, whether
+quality is proxied by educational expenditures on a child or test
+scores. Enrollment is such a relatively low-cost, extensive-margin
+measure for quality, however, that it makes sense that neither the
+heterogeneity nor non-existence of these previous studies shows up here.
+The significance of our coefficient is understandable given the many
+correlates of fertility and schooling amongst our regressors, whereas
+the small magnitude of our estimate may arise from a non-linearity in
+enrollment (e.g., if household size only begins to constrain at a high
+enough level), from economies of scale in enrollment costs, and from the
+aforementioned low quality threshold that is enrollment. This last
+factor also colors our interpretation of the relatively high probability
+of female enrollment (— percent more than male enrollment): while it
+likely reflects the success of programs such as the Sarva Shiksha
+Abhiyan and the Kasturba Gandhi Balika Vidyalayas girls’ schools <span class="citation">(<a href="#ref-pressinformationbureauInitiativesHumanResource2008">Press
+Information Bureau 2008</a>)</span>, it also tells us nothing about the
+quality of education beyond enrollment.</p>
+<p>While both Muslims and Christians are less likely to be enrolled than
+Hindus (whereas Buddhists and Zoroastrians are more likely), the sharp
+Muslim penalty of — percent echoes <span class="citation">Borooah and
+Sabharwal (<a href="#ref-borooah2021a">2021</a>)</span>, who find that
+even upper-class Muslims enroll at lower rates. Even greater statistical
+significance can be found among Scheduled Tribe, Scheduled Caste, and
+Other Backward Class members, all of whom have negative coefficients,
+with Scheduled Tribes faring the worst at — percent. While we should be
+suspicious of causal interpretations, it is likely these coefficients
+reflect the way structural factors i.e., those which cannot be changed
+through individual actions alone, constrain the choice set over which
+households optimize over. For example, if we use chronic teacher
+absenteeism to reflect school quality, then we can use <span class="citation">Kremer et al. (<a href="#ref-kremer.etal2005">2005</a>)</span> to see that better
+infrastructure and proximity to a paved road correlate with increased
+school quality, as does more frequent school monitoring per both Kremer
+et al. and <span class="citation">Muralidharan et al. (<a href="#ref-muralidharan.etal2017">2017</a>)</span>. If we assume that
+the physical and political infrastructure needed to do this is
+decreasing in the share of ST/SC/OBC members in the area, then this only
+decreases the opportunity cost of labor for children in these
+groups.</p>
+<p>Looking deeper into the supply side of education, it seems that all
+variation which could potentially be explained by enrollment cost has,
+at best, been consumed by other variables, implying direct costs matter
+less than social barriers and other correlates of supply-side factors.
+While one would expect the causal effect of an exogenous shock in
+scholarships/stipends, stationery, or textbooks to match the sign of
+their positive coefficient estimates, only textbooks show up as
+statistically significant. Instead, our other significant result is the
+— percent change in enrollment associated with a marginal change in the
+share of students within one’s district who attend a school which
+charges no tuition fees (i.e., where ‘Educ. freely available’). <span class="citation">National Sample Survey Office (<a href="#ref-nationalsamplesurveyoffice2008">2011</a>)</span>
+documentation indicates that such schools include most if not all
+government schools, as well as private schools in some states up to a
+certain level of education. Building off observations in Sec. <span class="citation">(<a href="#ref-sec-intro"><strong>sec-intro?</strong></a>)</span> that
+government schools tend to have worse facilities, chronic teacher
+absenteeism, and so on, this coefficient seems to imply that when the
+modal inside option is poor-quality schooling, the marginal child is
+more likely to have taken the outside option not be enrolled. If this
+interpretation is correct, then comparing the variables’ <span class="math inline">\(s\)</span>-values<a href="#fn24" class="footnote-ref" id="fnref24"><sup>24</sup></a> using <span class="citation">Mansournia et al. (<a href="#ref-mansourniaPvalueCompatibilitySvalue2022">2022</a>)</span>
+reveals just how much evidence we find for government schools being a
+negatively-priced deterrent <span class="citation">(a la <a href="#ref-muralidharan2019a">Muralidharan 2019</a>)</span>: while both
+‘Textbook(s) received’ and ‘Educ. free available’ have similar effect
+sizes and standard errors, the former has an <span class="math inline">\(s\)</span>-value of —, meaning that the data
+provided — bits of information against the null hypothesis (a
+coefficient of zero), whereas the ‘Educ. free available’ result
+communicated a far higher — bits against its null.</p>
+<p>Finally we have the most economically and statistically significant
+terms: the father’s (or father proxy’s) education level. We can
+interpret this in multiple ways: as a proxy for financial ability (via
+the relationship between a father’s education and the household’s
+permanent income), for heritable cognitive ability, for a child’s
+valuation of education (via intergenerational transmission of tastes and
+values), and even for access to educational and labor market information
+(via social capital). It’s possible that these variables, insofar as
+they correlate with fertility and schooling choices, absorbed some of
+the variation which otherwise would’ve been explained by, say, household
+size. But the size and significance of these coefficients may imply
+something further: that a household’s financial/cognitive ability,
+tastes/preferences, and social capital/information networks affect both
+household optimization and the choice set available for them to optimize
+over.</p>
 </div>
-<div id="ws-iv-relevance-exclusion-problem" class="sample-excerpt" sets="writing-5pg writing-10pg" order="3">
-<div id="instrumental-variable" class="section level2">
-<h2>Instrumental variable</h2>
-<p>Insert the current Section 4.2 material here, including
-population-weighted linguistic distance from Hindi, relevance, Shastry’s
-argument, the inability to replicate the exclusion-restriction
-justification yet, and the condition-number/state-FE problem.</p>
 </div>
 </div>
 <div id="ws-2sls-limits-remedies" class="sample-excerpt" sets="writing-10pg" order="4">
-<div id="main-interpretation-limits-and-planned-remedies" class="section level2">
-<h2>Main interpretation limits and planned remedies</h2>
-<p>Insert current text on current methodological limitations, state
-fixed effects, district matching, first-difference 2SLS, migration,
-spatial spillovers, and local inflation/shocks.</p>
+<div id="sec-iv" class="section level1">
+<h1>The Effect of EMIE: 2SLS Estimation and Main Results</h1>
+<div id="sec-iv-model" class="section level2">
+<h2>Model and Variables</h2>
+<p>Inspired by the measures of public school exposure in <span class="citation">Chakraborty and Bakshi (<a href="#ref-chakraborty2016a">2016</a>)</span>, we construct our primary
+explanatory variable, EMI exposure (EMIE) in district <span class="math inline">\(d\)</span>, like so: <span class="math display">\[\text{EMIE}_d =
+100\times\frac{\text{Num.  children enrolled in EMI}}{\text{Num.
+children enrolled in school}}\,\,\, \text{in district }d.\]</span></p>
+<p>We are interested in how changes in this intensive margin,<a href="#fn25" class="footnote-ref" id="fnref25"><sup>25</sup></a> affects
+changes in <span class="math inline">\(\%\Delta\mathrm{Consumption}_d\)</span>,<a href="#fn26" class="footnote-ref" id="fnref26"><sup>26</sup></a> the
+growth rate of average household consumption expenditures from 2007-08
+to 2017-18. To ensure an exogenous error term, we will be using <span class="math inline">\(\mathrm{LingDistance}_d\)</span> as an instrument
+for <span class="math inline">\(\mathrm{EMIE}_d\)</span> (see Sec. <span class="citation">(<a href="#ref-sec-iv-iv"><strong>sec-iv-iv?</strong></a>)</span> for more
+information). To identify this effect, two-stage least squares (2SLS)
+estimation will be performed on the following model: <span class="math display">\[
+\begin{aligned}
+\mathrm{EMIE}_d
+&amp;= \gamma_0 + \gamma_1\,\mathrm{LingDistance}_d +
+\sum_{k=1}^{K}\gamma_{k+1}\,X_{kd}
+\\
+\%\Delta\mathrm{Consumption}_d
+&amp;= \beta_0 + \beta_1\,\widehat{\mathrm{EMIE}}_d +
+\sum_{k=1}^{K}\beta_{k+1}\,X_{kd}.
+\end{aligned}
+\]</span> {#eq-iv-eq} Summary statistics for all of the variables in
+this model, including the controls <span class="math inline">\(k\)</span> in the vector <span class="math inline">\(X_{kd}\)</span>, are provided in Table <span class="citation">(<a href="#ref-tbl-sum-tbl-iv"><strong>tbl-sum-tbl-iv?</strong></a>)</span>.
+Maps of these variables are presented in Figures <span class="citation">(<a href="#ref-fig-map1-fig"><strong>fig-map1-fig?</strong></a>)</span> and
+<span class="citation">(<a href="#ref-fig-map2-fig"><strong>fig-map2-fig?</strong></a>)</span>; the
+number of missing districts in them, as discussed in Sec. <span class="citation">(<a href="#ref-sec-distma-spa"><strong>sec-distma-spa?</strong></a>)</span>,
+is the product of a data harmonization method which performed
+many-to-many matching from 2001 to 2007-08 to 2017-18 to 2019-20, the
+years our shapefiles data was collected <span class="citation">(<a href="#ref-bhatiaMergingUpdatedDistrictlevel2020">Bhatia
+2020</a>)</span>. Issues of and improvements to this method are also
+discussed in Sec. <span class="citation">(<a href="#ref-sec-distma-spa"><strong>sec-distma-spa?</strong></a>)</span>.</p>
+</div>
+</div>
+</div>
+<div id="ws-iv-relevance-exclusion-problem" class="sample-excerpt" sets="writing-5pg writing-10pg" order="3">
+<div id="sec-iv-iv" class="section level2">
+<h2>Instrumental Variable</h2>
+<p>Our instrument for <span class="math inline">\(\mathrm{EMIE}_d\)</span> is <span class="math inline">\(\mathrm{LingDistance}_d\)</span>, the average
+linguistic distance from Hindi of the three most spoken mother tongues
+in district <span class="math inline">\(d\)</span> in 2001, weighted by
+the number of speakers then. The mechanism behind this may seem odd: why
+choose linguistic distance from Hindi as opposed to, say, English?
+India’s large linguistic diversity<a href="#fn27" class="footnote-ref" id="fnref27"><sup>27</sup></a> predisposes it to have large
+communication costs, large coordination costs, and thus hindered
+economic development within its borders <span class="citation">(<a href="#ref-nakagawa2021a">Nakagawa and Sugasawa 2021</a>)</span>. To
+decrease such frictions in the market and in public goods provisioning
+<span class="citation">(<a href="#ref-liu2016a">Liu and Pizzi
+2016</a>)</span>, both Hindi and English have been thrust into the roles
+of competing domestic lingua franca <span class="citation">(<a href="#ref-clingingsmithIndustrializationBilingualismIndia2014">Clingingsmith
+2014</a>)</span>, meaning Hindi- and English-medium schools can be found
+across the country <span class="citation">(<a href="#ref-shastry2012a">Shastry 2012, 294</a>)</span>.</p>
+<p>As the ‘distance’ between one’s mother tongue and Hindi increases, we
+expect the opportunity cost of learning English over Hindi to decrease.
+Because of this, we also expect individuals with a mother tongue further
+from Hindi to be more likely to enroll in EMI. “That distance from Hindi
+induces people to learn English” and even “schools to teach English” is
+in fact precisely what <span class="citation">Shastry (<a href="#ref-shastry2012a">2012, 289</a>)</span> claims. If we can then
+show that local linguistic distance induces exogenous variation in local
+EMI, we can wield it as an instrumental variable (IV) to isolate <span class="math inline">\(\text{EMIE}_d\)</span>’s effect on consumption
+growth. Shastry helps us once more here, evidencing both the relevance
+(pp. 299-301) and exclusion restriction (pp. 302-305) of <span class="math inline">\(\mathrm{LingDistance}_d\)</span>’s effect on <span class="math inline">\(\text{EMIE}_d\)</span>.</p>
+<p>We are currently unable to replicate her justification of the
+exclusion restriction, however. Her argument centers on a map depicting
+the geographical balance of her residual variation, made possible
+despite the distinct regional divide in Figure <span class="citation">(<a href="#ref-fig-map2-fig"><strong>fig-map2-fig?</strong></a>)</span>
+thanks to state fixed effects. In our case, adding state FEs explodes
+the condition number of our design matrix to <span class="math inline">\(\kappa =\)</span> — despite all individual
+collinearity measures remaining low (every scaled generalized variance
+inflation factor (GVIF) was below 6.05), with similar results for region
+FEs to a lesser degree. This almost certainly results from the
+many-to-many matching used in this paper’s district tracking
+algorithms.<a href="#fn28" class="footnote-ref" id="fnref28"><sup>28</sup></a> Our plan to repair it moving forward is
+discussed in Sec. <span class="citation">(<a href="#ref-sec-distma"><strong>sec-distma?</strong></a>)</span>.</p>
+<p>A portion of this near-perfect multicollinearity may simply just be
+“God’s will” <span class="citation">(<a href="#ref-blanchardComment1987">Blanchard 1987, 449</a>)</span>: the
+States Reorganization Act of 1956, for example, aligned state lines with
+linguistic lines, a precedent which new states have followed since <span class="citation">(<a href="#ref-sarmaIntersectionsHeritageMultilingualism2025">Sarma
+2025</a>)</span>. This possiblity is precisely the motivation for our
+planned first-difference 2SLS design <span class="citation">(<a href="#ref-angristMostlyHarmlessEconometrics2008">Angrist and Pischke
+2008, 167</a>)</span>. Even if only the data harmonization changes from
+Sec. <span class="citation">(<a href="#ref-sec-distma"><strong>sec-distma?</strong></a>)</span> are
+made, future work will still demean each district’s linguistic distance
+by subtracting away its state’s linguistic distance.<a href="#fn29" class="footnote-ref" id="fnref29"><sup>29</sup></a></p>
+<p>In the meantime, we rely on heuristic justifications of our
+instrument. Its relevance is plausible: districts with higher linguistic
+distance from Hindi should have higher EMI demand due to the relatively
+lower opportunity cost of learning English. They should also have
+relatively lower cross-language coordination costs for setting up EMI as
+opposed to Hindi-medium instruction, allowing EMI supply to rise more.
+Shastry justifies this at the state level; future work must replicate
+this at the district level.</p>
+<p>The exclusion restriction, meanwhile, requires us to assume that
+after conditioning on our controls, a district’s linguistic distance is
+a) predetermined and b) plausibly orthogonal to all later shocks and
+trends in consumption except via education. We could demonstrate (b) by
+replicating Shastry’s visualization of geographically balanced
+residuals, though this will require state/region fixed effects (and
+possibly spatial correlation robust SEs; see Sec. <span class="citation">(<a href="#ref-sec-spa"><strong>sec-spa?</strong></a>)</span>). More work
+will be needed to replicate her justification of (a): not only does she
+show that district-level linguistic distance in both 1991 and 1961 are
+strongly correlated, she also shows that they both increase the
+within-state share of a language’s native speakers who learn English in
+2001, as well as the in-state level of EMI supply in 2001. That
+linguistic distance remains consistent over decades implies little
+inter-district migration, in line with most literature in Section <span class="citation">(<a href="#ref-sec-spa"><strong>sec-spa?</strong></a>)</span>.<a href="#fn30" class="footnote-ref" id="fnref30"><sup>30</sup></a> Our
+exclusion restriction may still fail, however, if districts further from
+Hindi benefit differently from pre-existing human capital, access to
+non-Hindi media, trade relations, NGO/government funding, and so on
+compared to districts closer to Hindi. Further work will be needed to
+address this.</p>
+<p><span class="math inline">\(\mathrm{LingDistance}_d\)</span> is
+defined as the population-weighted average of Shastry’s simplest and
+most frequently-used measure: a 0-5 integer scale reflecting the
+“degrees” of separation between one’s mother tongue and Hindi, made in
+collaboration with Harvard linguist Jay Jasanoff.<a href="#fn31" class="footnote-ref" id="fnref31"><sup>31</sup></a> She provides this
+measure for 14 Indo-European languages. To ensure we only consider such
+languages, we only take the weighted average of the top three spoken
+languages in each district. This cutoff is otherwise arbitrary and
+recent data from <span class="citation">Anderson et al. (<a href="#ref-andersonIndoEuropeanCognateRelationships2025">2025</a>)</span>
+may let us supplement this with a cognate-based measure under which
+Shastry’s results are also robust. Additionally, even though “the
+complexity of languages” had, until recently, rendered “the quest among
+linguists for a scalar measure of linguistic distance… in vain” <span class="citation">(<a href="#ref-chiswickLinguisticDistanceQuantitative2005">Chiswick and
+Miller 2005, 3</a>)</span>, it may be possible to construct our own
+measure of linguistic distance using the perplexity of corpus-based
+<span class="math inline">\(n\)</span>-gram models <span class="citation">(<a href="#ref-gamalloLanguageIdentificationLanguage2017">Gamallo et al.
+2017</a>)</span> via the many lengthy corpora provided by <span class="citation">Choudhary (<a href="#ref-choudharyLDCILIndianRepository2021">2021</a>)</span>.</p>
 </div>
 </div>
 <div id="ws-first-stage-results" class="sample-excerpt" sets="writing-10pg" order="5">
-<div id="first-stage" class="section level2">
-<h2>First stage</h2>
-<p>Insert the current first-stage results table and interpretation.</p>
+<div id="sec-iv-results" class="section level2">
+<h2>Results</h2>
+<p>The results of our first-stage regression, of EMI exposure on
+linguistic distance, are provided in Table <span class="citation">(<a href="#ref-tbl-fs-cons"><strong>tbl-fs-cons?</strong></a>)</span>. The
+results of the second-stage regression, where consumption growth is
+regressed onto the fitted values of EMI exposure, are provided in Table
+<span class="citation">(<a href="#ref-tbl-cons-iv"><strong>tbl-cons-iv?</strong></a>)</span>. All
+standard errors in both stages are clustered at the state level.</p>
 </div>
 </div>
 <div id="ws-second-stage-results" class="sample-excerpt" sets="writing-5pg writing-10pg" order="6">
-<div id="second-stage" class="section level2">
-<h2>Second stage</h2>
-<p>Insert the current second-stage results table and interpretation.</p>
+<div id="sec-disc" class="section level2">
+<h2>Discussion</h2>
+<p>The interpretations which follow are currently meaningless—the
+exclusion restriction of our IV is unjustifiable without state fixed
+effects. For well-conditioned estimation alongside state FEs, future
+work will demean linguistic distance using the state-level mean and will
+remove duplicated 2001 and 2007-08 measures by rewriting our district
+matching algorithms (see Sec. <span class="citation">(<a href="#ref-sec-distma"><strong>sec-distma?</strong></a>)</span>). If
+helpful, a first-difference 2SLS design may also be implemented.</p>
+<p>As it stands, however, the <span class="math inline">\(F\)</span>-statistic of our instrument is —,
+significant at the level of —, and thus consistent with our
+identification strategy.<a href="#fn32" class="footnote-ref" id="fnref32"><sup>32</sup></a> The first-stage coefficient on linguistic
+distance is —, meaning our results are currently consistent with our
+proposed mechanism (that greater linguistic distance from Hindi induces
+greater demand for and supply of EMI).</p>
+<p>In addition to state fixed effects and additional relevance checks,
+future drafts will report results from four different specifications: 1)
+from regressing <span class="math inline">\(\%\Delta\mathrm{Consumption}_d\)</span> on <span class="math inline">\(\mathrm{EMIE}_d\)</span> with neither IV nor
+controls; 2) from adding the full covariate set, perhaps with the
+controls and interaction terms discussed in Sec. <span class="citation">(<a href="#ref-sec-alty"><strong>sec-alty?</strong></a>)</span> plus
+dimensionality reduction and model selection tests; 3) from regressing
+<span class="math inline">\(\%\Delta\mathrm{Consumption}_d\)</span> on
+an <span class="math inline">\(\widehat{\mathrm{EMIE}_d}\)</span>
+instrumented by <span class="math inline">\(\mathrm{LingDistance}_d\)</span> with no
+covariates;<a href="#fn33" class="footnote-ref" id="fnref33"><sup>33</sup></a> and finally 4) from estimating our
+current specification, with both IV and covariates.<a href="#fn34" class="footnote-ref" id="fnref34"><sup>34</sup></a></p>
+<p>In the meantime, as would be expected in our first stage, greater
+consumption expenditures and urbanization associate with greater EMIE.
+After controlling for urban/rural settings, it seems that owning at
+least a small amount of land is associated with greater EMIE too. Also
+note the — estimate (<span class="math inline">\(p=\)</span> 0.043) on
+the Gini coefficient: EMIE is lower in more unequal districts. At first,
+this seems to contradict our literature review in Sec. <span class="citation">(<a href="#ref-sec-intro"><strong>sec-intro?</strong></a>)</span> and its
+implication that EMI exists within an inequality-amplifying positive
+assortative matching between households and schools <span class="citation">(e.g., <a href="#ref-muralidharan2019a">Muralidharan
+2019</a>)</span>. Larger Gini coefficients, however, often imply longer
+right tails in income/wealth distributions <span class="citation">(<a href="#ref-benhabibSkewedWealthDistributions2018">Benhabib and Bisin
+2018</a>)</span>. We’d thus expect unequal districts to be characterized
+by a large proportion of poor and a small number of rich households—that
+is, by a large proportion of students in mother tongue-instruction and a
+small proportion in EMI. Also reassuring is the small but significant
+negative result on baseline consumption in the second stage, implying
+conditional beta-convergence <span class="citation">(as described by <a href="#ref-vuNoteInterpretingBetaconvergence2013">Vu 2013</a>)</span>
+between poorer and richer districts.</p>
+<p>The consistency between these results and the literature makes our
+small and noisy estimate for EMI exposure’s effect on consumption growth
+all the more noteworthy. We find that an ostensibly exogenous percentage
+point increase in EMIE (i.e., in the percent of a district’s
+school-going children who are enrolled in EMI) associates, at the
+insignificant <span class="math inline">\(p\)</span>-value of —, with a
+— percentage point change in the growth rate of average household
+consumption expenditures from 2007-08 to 2017-18. Household-level
+decisions to bet on the human capital and English-language skills
+possible under EMI do not aggregate into local development when features
+of household context are accounted for.</p>
 </div>
 </div>
 <div id="ws-2sls-interpretation-spillovers-bad-controls" class="sample-excerpt" sets="writing-5pg writing-10pg" order="7">
-<div id="interpretation-of-the-2sls-estimates" class="section level2">
-<h2>Interpretation of the 2SLS estimates</h2>
-<p>Insert the current discussion of the small/noisy estimate, bad
-controls, spillover attenuation, and why the null result should be
-interpreted cautiously.</p>
+<p>This result may be driven by our large urbanization estimate in the
+second stage (— at <span class="math inline">\(p =\)</span> —). Greater
+EMIE plausibly induces more urbanization: perhaps English skills lead to
+more service sector firms <span class="citation">(<a href="#ref-shastry2012a">Shastry 2012</a>)</span> and rural-to-urban
+migration locally (see Sec. <span class="citation">(<a href="#ref-sec-spa"><strong>sec-spa?</strong></a>)</span>), or perhaps
+migration to EMI causes EMI supply to agglomerate and thus even more EMI
+demanders to migrate. In either case, urbanization would be an outcome
+of, and thus “bad control” for, EMIE <span class="citation">(<a href="#ref-angristMostlyHarmlessEconometrics2008">Angrist and Pischke
+2008, 47–51</a>)</span>. Lagged urbanization (see Table <span class="citation">(<a href="#ref-tbl-sum-tbl-iv"><strong>tbl-sum-tbl-iv?</strong></a>)</span>
+for the measure currently used) and the interaction effects of Sec.
+<span class="citation">(<a href="#ref-sec-alty"><strong>sec-alty?</strong></a>)</span> should
+address this.<a href="#fn35" class="footnote-ref" id="fnref35"><sup>35</sup></a></p>
+<p>Migration and spatial spillovers could also explain our small <span class="math inline">\(\widehat\mathrm{EMIE}\)</span> coefficient. If EMI
+helps a person exit to distant urban IT hubs, for example, then the only
+effect of their EMI on the district they were educated in may be of
+remittances they send back. It was once widely accepted that migration
+in India only occurs over short distances, though some new evidence now
+contests this. Sec. <span class="citation">(<a href="#ref-sec-spa"><strong>sec-spa?</strong></a>)</span> discusses the
+debate in detail.</p>
+<p>Also noteworthy is the negative result for household heads with
+education levels of secondary or more (— at <span class="math inline">\(p =\)</span> —). The reference level here is of
+illiterate heads, however, and Figure <span class="citation">(<a href="#ref-fig-ILO-fig"><strong>fig-ILO-fig?</strong></a>)</span> does
+imply that the wallets of casual workers (which illiterate workers are
+presumably more likely to be) benefited from the 2010s more than those
+of formal workers. If education expanded faster than local
+high-productivity jobs, then educated students may have either migrated
+out (meaning the effect of the education variables left the district) or
+shifted into queueing for scarce formal jobs (meaning the education
+variables raised unemployment durations, not consumption growth) after
+graduation.<a href="#fn36" class="footnote-ref" id="fnref36"><sup>36</sup></a></p>
+<p>And yet, despite the national context of jobless growth, and despite
+this industry having neither the quantity nor quality of its jobs keep
+pace with its share of the Indian GDP <span class="citation">(<a href="#ref-mukherjee2013a">Mukherjee 2013</a>)</span>, IT and services
+remain the fields where skilled jobs have risen the most. As discussed
+in Sec. <span class="citation">(<a href="#ref-sec-intro"><strong>sec-intro?</strong></a>)</span>, such jobs
+do require an education and English skills. By conditioning on
+urbanization, however, the education coefficients imply that, if all
+districts were equally urbanized (and thus had ostensibly equal amounts
+of IT services), a more well-educated district would see less growth.
+Why would we not, say, expect IT/services to move to and grow within
+said district? Factors of production <em>can</em> be very immobile in
+India, yes, as <span class="citation">Topalova (<a href="#ref-topalovaFactorImmobilityRegional2010">2010</a>)</span> finds.
+But she also claims this immobility is centered in states which impose
+frictions such as inflexible labor laws, traits that seemingly do not
+apply to IT-heavy states such as Kerala <span class="citation">(<a href="#ref-topalovaFactorImmobilityRegional2010">Topalova 2010,
+30</a>)</span>.</p>
+<p>It is possible that this negative household head coefficient reflects
+job oversaturation and absorption after controlling for urbanization. It
+is also possible that this result is driven by 1) attenuation under
+multicollinearity and aggregation removing within-district variation in
+explanatory variables; 2) the household head’s education being a poor
+proxy for the financial resources, informational networks, and social
+capital reflected by the father’s education proxy in Sec <span class="citation">(<a href="#ref-sec-heckman-model"><strong>sec-heckman-model?</strong></a>)</span>;
+and 3) places with higher baseline schooling having already reaped the
+benefits before our periods of interest. While (1) and (2) are certainly
+plausible given our methodology, (3) may also be plausible given
+diminishing marginal returns to schooling and our use of baselines
+instead of changes in our design matrix. Under (3), the negative
+coefficients on the education variables could also be a potential
+indicator for conditional beta-convergence occurring within districts.
+Meanwhile, the statistically significant and negative coefficients on
+the Muslim (—), ST (—), and OBC (—) percentages may reflect constraints
+that EMI alone does not overcome and that none of urbanization, baseline
+consumption, or any other regressor of ours alone can explain.</p>
+<p>Urbanization may still be responsible for our insignificant estimates
+on the land-owner variables,<a href="#fn37" class="footnote-ref" id="fnref37"><sup>37</sup></a> whereas both urbanization and baseline
+consumption may have captured whatever heterogeneity our small and noisy
+second-stage results on the baseline Gini of consumption (<span class="math inline">\(p =\)</span> —) would otherwise explain. But
+recall Table <span class="citation">(<a href="#ref-tbl-sum-tbl-iv"><strong>tbl-sum-tbl-iv?</strong></a>)</span>:
+the standard deviation of Gini coefficients in our data is quite low
+(perhaps because inequality is determined by structural factors which
+are shared across districts). The comparatively small variation in the
+percent of female heads of households may also explain its insignificant
+result (<span class="math inline">\(p =\)</span> —). Future work may
+include interactions, model selection tests (e.g., AIC or BIC), and
+dimensionality reduction to better understand how and if these
+variable’s potential causal pathways are reflected in our data.</p>
+<p>Further control variables, useful response variables, spatial
+autocorrelation, the role of migration, and our flawed data
+harmonization method are discussed in the Appendix. Instead of
+clustering standard errors at the state level, future work will likely
+use Conley standard errors and/or <span class="citation">Kelejian and
+Prucha (<a href="#ref-kelejianHACEstimationSpatial2007">2007</a>)</span>
+to create heteroskedasticity and autocorrelation consistent SEs as well.
+Our goal is to adapt this paper into a 2SLS framework with two
+endogenous regressors (education enrollment and EMIE i.e., extensive
+margin and intensive margin) and then integrate it inside of a
+first-difference estimator.</p>
 </div>
+<div id="appendix-appendix" class="section level1 unnumbered">
+<h1 class="unnumbered">(APPENDIX) Appendix</h1>
 </div>
+<div id="sec-appendix" class="section level1">
+<h1>Appendix</h1>
+<div id="sec-alty" class="section level2">
+<h2>Alternative Response and Further Control Variables</h2>
+<p>Though this paper only uses <span class="math inline">\(\%\Delta\text{Consumption}_{d}\)</span> as a
+response variable,<a href="#fn38" class="footnote-ref" id="fnref38"><sup>38</sup></a> it is vulnerable to regional variations
+in inflation and economic shocks. While the former can be partially
+controlled for using state-specific CPI data from the Central Statistics
+Office, possible impacts of and controls for the latter still need to be
+researched.</p>
+<p>In the meantime, other response variable such as <span class="math inline">\(\%\Delta\text{Wages}_{d}\)</span>, the percent
+change in district <span class="math inline">\(d\)</span>’s average
+household wages from 2007-08 to 2017-18, sourced from the “Employment,
+Unemployment, and Migration” survey of 2007-08, another part of the 64th
+Round of the NSS <span class="citation">(<a href="#ref-nationalsamplesurveyofficeIndiaEmploymentUnemployment2010">National
+Sample Survey Office 2010</a>)</span>, as well as from the Periodic
+Labor Force Survey (PLFS) of 2017-18 <span class="citation">(<a href="#ref-nationalstatisticalofficeINDIAPeriodicLabour2019">National
+Statistical Office 2019</a>)</span>, may be informative. On one hand,
+the stickiness of wages may control for potential volatility in <span class="math inline">\(\%\Delta\text{Consumption}_{d}\)</span>. On the
+other hand, wages may not be affected by the lifelong consumption
+smoothing underlying <span class="math inline">\(\%\Delta\text{Consumption}_{d}\)</span>—in other
+words, wages be less responsive to unobserved shocks while still being
+<em>more</em> responsive to any effect of <span class="math inline">\(\text{EMIE}_d\)</span> which may manifest in the
+decade-long window we study. None of this diminishes the fact that
+informal, self-employed, and otherwise non-wage laborers are very common
+in India. Individuals vary in the degree to which wages reflect their
+true income, and this variation may not be exogenous to our model.
+Numerous papers studying similar contexts in India have still used wages
+as their primary response variable <span class="citation">(<a href="#ref-shastry2012a">Shastry 2012</a>; <a href="#ref-azam2013a">Azam
+et al. 2013</a>; <a href="#ref-madheswaran.singhari2016">Madheswaran and
+Singhari 2016</a>; <a href="#ref-refeque2022a">Refeque and Azad
+2022</a>)</span>. <span class="math inline">\(\%\Delta\text{Employment}_d\)</span>, the percent
+change in district <span class="math inline">\(d\)</span>’s employment,
+sourced from <span class="citation">National Sample Survey Office (<a href="#ref-nationalsamplesurveyofficeIndiaEmploymentUnemployment2010">2010</a>)</span>
+and <span class="citation">National Statistical Office (<a href="#ref-nationalstatisticalofficeINDIAPeriodicLabour2019">2019</a>)</span>,
+may provide additional insights as well.</p>
+<p><span class="math inline">\(\Delta\text{Gini}^\text{Consumption}_d\)</span>
+and <span class="math inline">\(\Delta\text{Gini}^\text{Wages}_d\)</span>, the
+change in the Gini coefficient of district <span class="math inline">\(d\)</span>’s consumption and wages respectively
+from 2007-08 to 2017-18, would share the same sources as their non-Gini
+counterparts above. The models of Equation <span class="citation">(<a href="#ref-eq-iv-eq"><strong>eq-iv-eq?</strong></a>)</span> were
+actually estimated using <span class="math inline">\(\Delta\text{Gini}^\text{Consumption}_d\)</span> as
+the response variable; this returned a near-zero <span class="math inline">\(R^2\)</span> and adjusted <span class="math inline">\(R^2\)</span>, meaning the model did no better than
+the sample mean. Within-district distributional effects of EMIE, if they
+exist, almost certainly need more than 10 years to manifest.</p>
+<p><span class="math inline">\(\%\Delta\text{HDI}_d\)</span>, the
+percent change in district <span class="math inline">\(d\)</span>’s
+Human Development Index (HDI), sourced from the National Family Health
+Surveys of 2005-06 (NFHS-III) and 2019-21 (NFHS-V), would provide a more
+holistic, shock-resistant measure of development, even if the
+developmental effects of EMI may need more than 15 years to reveal
+themselves and even if better alternatives <span class="citation">(e.g.,
+the <span class="math inline">\(\text{HDI}_a\)</span> of <a href="#ref-chaurasia2023a">Chaurasia 2023</a>)</span> exist. But NFHS
+data has unfortunately been unavailable since the USAID funding cuts of
+2025.</p>
+<p>To further control for omitted variables and to further reveal the
+mechanisms behind EMIE’s effect on consumption, future work may include
+<span class="math inline">\(\mathrm{TechFirms}_d\)</span>, a measure of
+the number of IT firms from the 2005 Economic Census <span class="citation">(<a href="#ref-centralstatisticsofficeIndiaFifthEconomic2008">Central
+Statistics Office 2008</a>)</span>;<a href="#fn39" class="footnote-ref" id="fnref39"><sup>39</sup></a> infrastructure measures beyond the
+proportion of pucca (i.e., permanent) housing; and proxies for
+corruption, chronic teacher absenteeism, etc., all of which are assumed
+to be similar across districts. <span class="citation">Shastry (<a href="#ref-shastry2012a">2012</a>)</span> incorporates corruption by
+including a “Hindi Belt” indicator for states such as Bihar, Delhi,
+Uttar Pradesh, and Rajasthan, all majority Hindi-speaking states known
+for their “high levels of corruption and government inefficiency”
+(p. 299). Note that a desire for EMI <em>and</em> a desire for better
+teacher quality among poorer households is what drove a 30% increase in
+the number of private schools from 2012 to 2020, most of them low-cost
+private schools <span class="citation">(<a href="#ref-gooptu2023a">Gooptu and Mukherjee 2023, 2</a>)</span>. This
+did not seem to change the fact that private schools attract richer
+households than government schools on average <span class="citation">(<a href="#ref-muralidharan2015a">Muralidharan and Sundararaman
+2015</a>)</span>, but it does imply a relationship between cost, private
+vs. government schools, and teacher quality which may inform future
+proxies of teacher quality. Adding in a control for migration flows will
+be key as well, to ensure that the effect of EMIE does not dissipate
+above a certain threshold due to all the out-migration to urban hubs it
+has facilitated. See Sec. <span class="citation">(<a href="#ref-sec-spa"><strong>sec-spa?</strong></a>)</span> for more on
+migration and spatial effects.</p>
+<p>Interaction terms such as <span class="math inline">\(\mathrm{EMIE}_d\times\mathrm{Urban}_d\)</span> and
+<span class="math inline">\(\mathrm{EMIE}_d\times\mathrm{TechFirms}_d\)</span>
+may also be key in identifying the mechanisms by which EMIE can affect a
+district’s growth. Even if households have identical underlying
+preferences for how to educate their children, the menu of choices
+available to them (that is, the feasible set over which they optimize)
+may still be affected by factors far larger than their own
+education-related decision-making—whether that be by the presence of IT
+firms nearby, or by the parents’ familiarity with and ability to learn
+more about the Indian education system. To better understand the meaning
+of the highly significant coefficient on urbanization in Table <span class="citation">(<a href="#ref-tbl-cons-iv"><strong>tbl-cons-iv?</strong></a>)</span>, the
+urbanization and EMI interaction may be complemented with an
+urbanization and parental/household head education interaction. The low
+Muslim/ST/OBC estimates, too, can be studied further by interacting them
+baseline consumption shares, urbanization, and EMIE itself. And finally,
+to understand the small coefficients and relative insignificance of the
+household head’s education estimates, we could interact these education
+levels with urbanization and baseline consumption, or we could even try
+replacing our baselines with changes, as with a first-difference
+estimator.</p>
+<p>Notice how all actual and proposed regressors in this model reflect
+baseline exposures. Replacing these with changes and time-varying
+instruments instead may allow us to use a Bartik-style methodology <span class="citation">(e.g., <a href="#ref-goldsmith-pinkhamBartikInstrumentsWhat2020">Goldsmith-Pinkham
+et al. 2020</a>)</span>. Linguistic distance, for example, could be
+turned into a time-varying instrument if interacted by a nation or
+state-wide shock in EMI supply or demand between 2007-08 and 2017-18. We
+have yet to identify shocks which have both a plausible effect on EMIE
+(e.g., changing curricular standards or waves of English training for
+teachers) and which vary across time alone, not district.</p>
+</div>
+<div id="sec-distma-spa" class="section level2">
+<h2>District Matching and Spatial Autocorrelation</h2>
 <div id="ws-district-harmonization-method" class="sample-excerpt" sets="writing-5pg writing-10pg" order="8">
-<div id="district-harmonization" class="section level2">
-<h2>District harmonization</h2>
-<p>Insert the current appendix material on district harmonization
-assumptions, algorithm, source errors, many-to-many matching, and
-planned redesign.</p>
+<div id="sec-distma" class="section level3">
+<h3>District Matching Method</h3>
+<p>There are three reasons that district labels vary between 2001 to
+2007-08 to 2017-18 in the data: genuine political changes, variation in
+anglicization, and typos. Fuzzy joins (described below) were used to
+correct for the latter two.</p>
+<p>Political changes, however, were not so easily addressed. The vast
+majority of such changes were one of five kinds: name changes, clean
+partitions (one district is partitioned into multiple), clean mergers
+(multiple districts merge into one), carve-outs (<em>pieces</em> of
+multiple districts combine into one), and boundary shifts <span class="citation">(<a href="#ref-indiastatestoriesDistrictEvolution2024">India State Stories
+2024</a>)</span>. Without knowing precisely where in its district each
+household was at the time of sampling, it is not feasible to match
+districts across carve-outs and boundary shifts. Our district matching
+method is thus reliant on the assumption that all district changes were
+either name changes, clean partitions, or clean mergers.</p>
+<p>This seems to be precisely the same assumption made by <span class="citation">India State Stories (<a href="#ref-indiastatestoriesDistrictEvolution2024">2024</a>)</span> and
+<span class="citation">Jaacks et al. (<a href="#ref-jaacksIndiaDistrictChanges2020">2020</a>)</span>, whose data,
+despite containing some factual errors and typos, was the basis of our
+district matching method. To justify this assumption we turn to <span class="citation">Kumar and Somanathan (<a href="#ref-kumarCreatingLongPanels2016">2016</a>)</span>, who up until
+2001 are able to track the <em>proportion</em> of each district’s
+population that was allocated into a new district as a result of
+district changes. They label these changes as one of two types: clean
+partitions and non-partitions (which would include name changes, clean
+mergers, carve-outs, and border shifts). By extracting their results
+using Tabula <span class="citation">(<a href="#ref-aristaranTabula2018">Aristarán et al. 2018</a>)</span>, we
+know that 93.4% of non-partitions were either name changes or transfers
+of uninhabited land <span class="citation">(<a href="#ref-kumarCreatingLongPanels2016">Kumar and Somanathan
+2016</a>)</span>. These district changes are plotted in Figure <span class="citation">(<a href="#ref-fig-districtcarveoutsshifts-fig"><strong>fig-districtcarveoutsshifts-fig?</strong></a>)</span>.</p>
+We thus assume no district changes were carve-outs or border shifts. To
+match districts, we ran a hierarchical, cascading sequence of iterated
+fuzzy joins. Data from 2001, 2007-08, and 2017-18 is first linked to the
+closest year in the district trackers of <span class="citation">India
+State Stories (<a href="#ref-indiastatestoriesDistrictEvolution2024">2024</a>)</span> and
+<span class="citation">Jaacks et al. (<a href="#ref-jaacksIndiaDistrictChanges2020">2020</a>)</span>. Districts
+are then matched if they meet a certain string/phonetic distance
+threshold. Matches were made in the following order:
+<p>Any district from the 2001, 2007-08, or 2017-18 data which remains
+unmatched after this process is then matched with the next closest year
+in the district tracker. This process repeats until all years in the
+tracker had been exhausted. 80 still-unmatched districts were then
+manually matched.</p>
+<p>The current method, however, attempted to mirror the mergers and
+partitions which characterize district changes by using many-to-many
+matching for 2001 to 2007-08 and from 2007-08 to 2017-18. The number of
+duplicate values this creates, particularly for 2001 and 2007-08
+measures, seems to lead to massive multicollinearity when state fixed
+effects are added (see Sec. <span class="citation">(<a href="#ref-sec-iv-iv"><strong>sec-iv-iv?</strong></a>)</span>). Better
+data harmonization is essential: future work will merge 2017-18
+survey-weighted estimates into 2007-08 districts using population
+weights from the 2011 census, and will do the same for 2007-08 estimates
+and 2001 districts using the 2001 census. Our units of analysis will
+thus become districts in 2001 as opposed to districts in 2017-18. If
+this solves the rank wreckage likely created by the current district
+tracking method, then we will be able to include the state fixed effects
+so important for our instrument in Sec. <span class="citation">(<a href="#ref-sec-iv-iv"><strong>sec-iv-iv?</strong></a>)</span>.</p>
 </div>
+</div>
+<div id="sec-spa" class="section level3">
+<h3>Spatial Autocorrelation, Spatial Spillovers, and Migration</h3>
+<p>As was evident from the maps of Figures <span class="citation">(<a href="#ref-fig-map1-fig"><strong>fig-map1-fig?</strong></a>)</span> and
+<span class="citation">(<a href="#ref-fig-map2-fig"><strong>fig-map2-fig?</strong></a>)</span>,
+numerous districts are still missing from the data. Perhaps the
+assumption of no carveouts and border shifts was a false one to make.
+And yet, even if all districts were perfectly matched, problems would
+arise. The aforementioned figures were constructed using 2019-20
+shapefiles from <span class="citation">Bhatia (<a href="#ref-bhatiaMergingUpdatedDistrictlevel2020">2020</a>)</span>,
+despite our “treatment” year being 2007-08. The splintering of districts
+into multiple neighbors over time allocates the same value of the
+2007-08 treatment across neighbors, a rank wreckage equivalent to
+spatial autocorrelation in treatment when using 2019-20 geometry.</p>
+<p>The presence of true spatial autocorrelation in this environment is
+plausible. The spatial spillovers of development and the agglomeration
+of tech firms are key forms of autocorrelation which render the
+assumption of identical and independent distributions false, and thus
+many of the results of OLS meaningless. But special attention must be
+paid to the role of migration here. Note that, if part of EMI’s effect
+is in enabling children to migrate across the country (e.g., to
+districts which have more tech firms), then the true structural
+parameter <span class="math inline">\(\text{EMIE}_d\)</span> in our
+model would only reflect the EMI-induced benefits which they send back
+e.g., as remittances. In other words, even in a world of perfect
+shapefiles, our results could show that EMIE is a substandard tool for
+local area’s development even if it is actually a great tool for a local
+population’s development. How, then, could the effect of EMI ever be
+identified without being dissipated away by between-district
+migration?</p>
+<p><span class="citation">Chakraborty and Bakshi (<a href="#ref-chakraborty2016a">2016</a>)</span> find a 4% decadal rate of
+inter-district migration in their states of interest (West Bengal,
+Haryana, and Punjab) up until 2001, a migration rate<a href="#fn40" class="footnote-ref" id="fnref40"><sup>40</sup></a> so low that they
+assume migration away almost entirely, effectively equating the district
+where one’s education occurred with the district most affected by their
+education.<a href="#fn41" class="footnote-ref" id="fnref41"><sup>41</sup></a> <span class="citation">Topalova (<a href="#ref-topalovaTradeLiberalizationPoverty2005">2005</a>)</span> find
+decadal inter-district migration rates to be around 3.2% and 13.1% of
+rural and urban areas respectively, or around 0.5% and 4.0% when only
+considering migration related to employment, trends which were
+“remarkably constant” across her years of study (1983, 1987, and 1999),
+including “no visible increase after the economic reforms of 1991”
+(p. 24), which preceded to the IT growth and service job offshoring
+described in Sec. <span class="citation">(<a href="#ref-sec-intro"><strong>sec-intro?</strong></a>)</span>; <span class="citation">National Statistical Office (<a href="#ref-office2021a">2021</a>)</span> imply not much has changed
+since either, albeit using 2020-21 data. It seems to be a structural,
+secular trend in India that migration only occurs over short
+distances.<a href="#fn42" class="footnote-ref" id="fnref42"><sup>42</sup></a></p>
+<p>Why could this be the case? <span class="citation">Topalova (<a href="#ref-topalovaTradeLiberalizationPoverty2005">2005</a>)</span>
+identifies marriage as the largest factor behind migration writ large,
+but this effect is driven entirely by women:<a href="#fn43" class="footnote-ref" id="fnref43"><sup>43</sup></a> using 2020-21 data,
+the <span class="citation">National Statistical Office (<a href="#ref-office2021a">2021</a>)</span> demonstrate that male migration
+is instead driven almost entirely by economic factors. For example,
+<span class="citation">Kochar (<a href="#ref-kocharSmoothingConsumptionSmoothing1999">1999</a>)</span>
+finds that after negative farm income shocks, any consumption loss
+households would face is offset by men taking on more off-farm work,
+implying that local labor markets in rural India are sufficiently
+diversified, local social capital is sufficiently anchoring, and other
+markets are sufficiently segmented off for households to consumption
+smooth using at most short-distance, temporary migration. “Households
+use migration as an ex post income-smoothing mechanism,” states <span class="citation">Morten (<a href="#ref-mortenTemporaryMigrationEndogenous2019">2019, 3</a>)</span>,
+whose structural model on the interplay of risk sharing and migration
+(particularly rural-urban migration) corroborates the role of risk in
+limiting such migration just as <span class="citation">Munshi and
+Rosenzweig (<a href="#ref-munshiNetworksMisallocationInsurance2016">2016</a>)</span>
+corroborate the roles of risk and social capital; the latter authors
+find caste-based networks of rural insurance significantly constrain
+rural males’ ability to migrate, and structural estimation indicates a
+large effect on migration from marginal improvements in formal
+insurance, particularly on rural-urban migration. Administrative
+differences may also play a factor, though <span class="citation">Kone
+et al. (<a href="#ref-koneInternalBordersMigration2018">2018</a>)</span>
+imply that such differences matter far more across states’ borders than
+districts’; by using 2001 census data, in fact, they find rates of
+long-distance inter-<em>state</em> migration to be far lower than those
+of Brazil and China, which they posit is the product of non-portable
+state-level welfare schemes plus states’ preference to hire their own
+residents in the public sector.</p>
+<p>Newer findings, however, repudiate many of these low migration rates
+wholesale. <span class="citation">Lucas (<a href="#ref-lucasCountrySpecificMagnitudesMigration2021">2021a</a>)</span>
+finds that, using 2007-08 data from the <span class="citation">National
+Sample Survey Office (<a href="#ref-nationalsamplesurveyofficeIndiaEmploymentUnemployment2010">2010</a>)</span>,
+the 4.7% net flow of migrants from rural to urban areas in 2003-08 was
+among the highest of all countries studied.<a href="#fn44" class="footnote-ref" id="fnref44"><sup>44</sup></a> More novel methods,
+however, were used by the <span class="citation">Economic Division (<a href="#ref-divison2015a">2017</a>)</span>. Their cohort-based migration
+metric<a href="#fn45" class="footnote-ref" id="fnref45"><sup>45</sup></a> finds the inter-district migrant share
+alone to be 6.6% when applied to 2001 and 2011 census data. Railway
+passenger data is then used to proxy for labor-related migration flows
+which are found to extend well beyond even state boundaries, almost
+entirely between large urban hubs. The final finding relevant to us,
+shared by both the <span class="citation">Economic Division (<a href="#ref-divison2015a">2017</a>)</span> and the more standard analysis
+of <span class="citation">Mahapatro (<a href="#ref-mahapatroInternalMigrationEmerging2020">2020</a>)</span>, is
+that the stagnant migration rates of the late 20th century, as observed
+by <span class="citation">Topalova (<a href="#ref-topalovaTradeLiberalizationPoverty2005">2005</a>)</span>,
+have increased since 2001, perhaps the product of economic growth which
+has raised the benefits of migration increasingly above and beyond its
+costs <span class="citation">(<a href="#ref-divison2015a">Economic
+Division 2017</a>)</span>.</p>
+<p>The significance of this new literature for us is two-fold: one, it
+means the mechanism behind part of <span class="citation">Shastry (<a href="#ref-shastry2012a">2012</a>)</span>’s exclusion restriction
+demonstration in Sec. <span class="citation">(<a href="#ref-sec-iv-iv"><strong>sec-iv-iv?</strong></a>)</span> may not
+apply as much to our period of interest; and two, it means that EMIE’s
+effect dissipating away with migration is a genuine possibility. If we
+tentatively assume that regressors such as urbanization adequately
+capture the effect of longer-distance migration <span class="citation">(which accords with the <a href="#ref-divison2015a">Economic Division 2017</a>’s finding that it is
+“rich metropolises [attracting] large inward flows of labour,”
+p. 277)</span> then the most relevant kind of dissipation for us will be
+over neighboring district lines <span class="citation">(which also
+accords with <a href="#ref-divison2015a">Economic Division 2017,
+276</a>)</span>.<a href="#fn46" class="footnote-ref" id="fnref46"><sup>46</sup></a></p>
+<p>We can control for this spatial autocorrelation by incorporating
+spatial lags into our model. To test for spatial autocorrelation we
+would follow p. 323 of <span class="citation">Anselin (<a href="#ref-anselin2001">2001</a>)</span> and construct a Moran’s I
+statistic; but proper estimation of it would depend on us having proper
+shapefiles for the year of interest with which to build contiguity
+neighbor lists. If our unit of analysis ends up being 2001 districts,
+then this would require 2001 shapefiles. As it stands however, using
+2019-20 shapefiles, the <span class="math inline">\(p\)</span>-value for
+spatial autocorrelation in the residuals of our 2SLS model is — and for
+consumption growth —.<a href="#fn47" class="footnote-ref" id="fnref47"><sup>47</sup></a> Future work will combine shapefiles from
+the 2011 and 2001 censuses with the data harmonization changes described
+in <span class="citation">(<a href="#ref-sec-distma"><strong>sec-distma?</strong></a>)</span> to
+ensure these reflect genuine spatial autocorrelation as opposed to the
+flaws of our current district tracking methodology.</p>
+<p>If spatial autocorrelation is ultimately found to be significant,
+then the methods of <span class="citation">Murgante and Borruso (<a href="#ref-murgante.borruso2012">2012</a>)</span>, <span class="citation">Pebesma and Bivand (<a href="#ref-pebesmaSpatialDataScience2025">2025</a>)</span>, <span class="citation">Xu and Wooldridge (<a href="#ref-xu2022a">2022</a>)</span>, and <span class="citation">Zhang
+et al. (<a href="#ref-zhang.etal2024">2024</a>)</span> would be used to
+develop a spatial Durbin-type model (a spatial error model, a spatial
+lag model, a spatial Durbin model, a general nested model, etc.,
+depending on the results of LM tests on the common factor specifications
+which distinguish these kinds of models), a class of model which
+incorporates spatial lags of spatially autocorrelated variables as
+further regressors or in the error. Conley standard errors and/or <span class="citation">Kelejian and Prucha (<a href="#ref-kelejianHACEstimationSpatial2007">2007</a>)</span> could also
+be used to create heteroskedasticity and autocorrelation consistent
+SEs.</p>
+</div>
+</div>
+</div>
+<div id="technical-note-for-replication" class="section level1">
+<h1>Technical Note for Replication</h1>
+<p>Those replicating the code for this paper are encouraged to skim the
+code chunk titled
+<code>Define functions to read in short 8.3 filenames</code>. There the
+functions <code>read_sav_short()</code>, <code>read_csv_short()</code>,
+and <code>read_excel_short()</code> are defined; if the replicator runs
+into issues while reading in files, troubleshooting methods are
+explained there.</p>
+<div style="page-break-after: always;"></div>
+<div id="refs" class="references csl-bib-body hanging-indent">
+<div id="ref-afridiImprovingLearningOutcomes2020" class="csl-entry">
+Afridi, Farzana, Bidisha Barooah, and Rohini Somanathan. 2020.
+<span>“Improving Learning Outcomes Through Information Provision:
+<span>Experimental</span> Evidence from <span>Indian</span>
+Villages.”</span> <em>Journal of Development Economics</em> 146
+(September): 102276. <a href="https://doi.org/10.1016/j.jdeveco.2018.08.002">https://doi.org/10.1016/j.jdeveco.2018.08.002</a>.
+</div>
+<div id="ref-agrawal.agrawal2017" class="csl-entry">
+Agrawal, Tushar, and Ankush Agrawal. 2017. <span>“Vocational Education
+and Training in <span>India</span>: A Labour Market Perspective.”</span>
+<em>Journal of Vocational Education &amp; Training</em> 69 (2): 246–65.
+<a href="https://doi.org/10.1080/13636820.2017.1303785">https://doi.org/10.1080/13636820.2017.1303785</a>.
+</div>
+<div id="ref-andersonIndoEuropeanCognateRelationships2025" class="csl-entry">
+Anderson, Cormac, Matthew Scarborough, Lechosław Jocz, et al. 2025.
+<span>“The <span>Indo-European Cognate Relationships</span>
+Dataset.”</span> <em>Scientific Data</em> 12 (1): 1541. <a href="https://doi.org/10.1038/s41597-025-05445-3">https://doi.org/10.1038/s41597-025-05445-3</a>.
+</div>
+<div id="ref-andrabiReportCardsImpact2017" class="csl-entry">
+Andrabi, Tahir, Jishnu Das, and Asim Ijaz Khwaja. 2017. <span>“Report
+<span>Cards</span>: <span>The Impact</span> of <span>Providing
+School</span> and <span>Child Test Scores</span> on <span>Educational
+Markets</span>.”</span> <em>American Economic Review</em> 107 (6):
+1535–63. <a href="https://doi.org/10.1257/aer.20140774">https://doi.org/10.1257/aer.20140774</a>.
+</div>
+<div id="ref-angristMostlyHarmlessEconometrics2008" class="csl-entry">
+Angrist, Joshua D., and Jörn-Steffen Pischke. 2008. <em>Mostly
+<span>Harmless Econometrics</span>: <span>An Empiricist</span>’s
+<span>Companion</span></em>. Princeton University Press. <a href="https://doi.org/10.1515/9781400829828">https://doi.org/10.1515/9781400829828</a>.
+</div>
+<div id="ref-anselin2001" class="csl-entry">
+Anselin, Luc. 2001. <span>“Spatial <span>Econometrics</span>.”</span> In
+<em>A <span>Companion</span> to <span>Theoretical
+Econometrics</span></em>, edited by Badi H. Baltagi. John Wiley &amp;
+Sons, Incorporated. <a href="https://web.pdx.edu/~crkl/WISE/SEAUG/papers/anselin01_CTE14.pdf">https://web.pdx.edu/~crkl/WISE/SEAUG/papers/anselin01_CTE14.pdf</a>.
+</div>
+<div id="ref-arel-bundockHowInterpretStatistical2024" class="csl-entry">
+Arel-Bundock, Vincent, Noah Greifer, and Andrew Heiss. 2024. <span>“How
+to <span>Interpret Statistical Models Using</span> Marginaleffects for
+<span>R</span> and <span>Python</span>.”</span> <em>Journal of
+Statistical Software</em> 111 (9). <a href="https://doi.org/10.18637/jss.v111.i09">https://doi.org/10.18637/jss.v111.i09</a>.
+</div>
+<div id="ref-aristaranTabula2018" class="csl-entry">
+Aristarán, Manuel, Mike Tigas, and Jeremy B. Merrill. 2018.
+<em>Tabula</em>. V. 1.2.1.18052200. Released. <a href="https://tabula.technology/">https://tabula.technology/</a>.
+</div>
+<div id="ref-azam2013a" class="csl-entry">
+Azam, M., A. Chin, and N. Prakash. 2013. <span>“The <span>Returns</span>
+to <span>English-Language Skills</span> in <span>India</span>.”</span>
+<em>Economic Development and Cultural Change</em> 61 (2): 335–67. <a href="https://doi.org/10.1086/668277">https://doi.org/10.1086/668277</a>.
+</div>
+<div id="ref-bahlInformalityEducationoccupationMismatch2024" class="csl-entry">
+Bahl, Shweta, and Ajay Sharma. 2024. <span>“Informality,
+Education-Occupation Mismatch, and Wages: Evidence from
+<span>India</span>.”</span> <em>Applied Economics</em> 56 (19): 2260–94.
+<a href="https://doi.org/10.1080/00036846.2023.2186364">https://doi.org/10.1080/00036846.2023.2186364</a>.
+</div>
+<div id="ref-basu2006" class="csl-entry">
+Basu, Kaushik. 2006. <span>“Teacher <span>Truancy</span> in
+<span>India</span>: <span>The Role</span> of <span>Culture</span>,
+<span>Norms</span> and <span>Economic Incentives</span>.”</span> No.
+956057. Pre-published January. <a href="https://doi.org/10.2139/ssrn.956057">https://doi.org/10.2139/ssrn.956057</a>.
+</div>
+<div id="ref-beckerEconomicAnalysisFertility1969" class="csl-entry">
+Becker, Gary S. 1969. <span>“An <span>Economic Analysis</span> of
+<span>Fertility</span>.”</span> In <em>Demographic and <span>Economic
+Change</span> in <span>Developed Countries</span></em>, edited by
+Universities-National Bureau Committee for Economic Research. Columbia
+University Press. <a href="http://www.nber.org/chapters/c2387">http://www.nber.org/chapters/c2387</a>.
+</div>
+<div id="ref-bediEnglishLanguageIndia2019" class="csl-entry">
+Bedi, Jaskiran. 2019. <em>English <span>Language</span> in
+<span>India</span>: <span>A Dichotomy</span> Between <span>Economic
+Growth</span> and <span>Inclusive Growth</span></em>. Routledge India.
+<a href="https://doi.org/10.4324/9780429328329">https://doi.org/10.4324/9780429328329</a>.
+</div>
+<div id="ref-benhabibSkewedWealthDistributions2018" class="csl-entry">
+Benhabib, Jess, and Alberto Bisin. 2018. <span>“Skewed <span>Wealth
+Distributions</span>: <span>Theory</span> and
+<span>Empirics</span>.”</span> <em>Journal of Economic Literature</em>
+56 (4): 1261–91. <a href="https://doi.org/10.1257/jel.20161390">https://doi.org/10.1257/jel.20161390</a>.
+</div>
+<div id="ref-benjaminiControllingFalseDiscovery1995" class="csl-entry">
+Benjamini, Yoav, and Yosef Hochberg. 1995. <span>“Controlling the
+<span>False Discovery Rate</span>: <span>A Practical</span> and
+<span>Powerful Approach</span> to <span>Multiple Testing</span>.”</span>
+<em>Journal of the Royal Statistical Society: Series B
+(Methodological)</em> 57 (1): 289–300. <a href="https://doi.org/10.1111/j.2517-6161.1995.tb02031.x">https://doi.org/10.1111/j.2517-6161.1995.tb02031.x</a>.
+</div>
+<div id="ref-besleyCanLaborRegulation2004" class="csl-entry">
+Besley, Timothy, and Robin Burgess. 2004. <span>“Can <span>Labor
+Regulation Hinder Economic Performance</span>? <span>Evidence</span>
+from <span>India</span>.”</span> <em>The Quarterly Journal of
+Economics</em> 119 (1): 91–134. <a href="https://www.jstor.org/stable/25098678">https://www.jstor.org/stable/25098678</a>.
+</div>
+<div id="ref-bhandari.bordoloi2006" class="csl-entry">
+Bhandari, Laveesh, and Mridusmita Bordoloi. 2006. <span>“Income
+<span>Differentials</span> and <span>Returns</span> to
+<span>Education</span>.”</span> <em>Economic and Political Weekly</em>
+41 (36): 3893–900. <a href="https://www.jstor.org/stable/4418680">https://www.jstor.org/stable/4418680</a>.
+</div>
+<div id="ref-bharti.etal2024" class="csl-entry">
+Bharti, Nitin Kumar, Lucas Chancel, Thomas Piketty, and Anmol Somanchi.
+2024. <span>“Income and <span>Wealth Inequality</span> in
+<span>India</span>, 1922-2023: <span>The Rise</span> of the
+<span>Billionaire Raj</span>.”</span> Working Paper, March. <a href="https://wid.world/www-site/uploads/2024/03/WorldInequalityLab_WP2024_09_Income-and-Wealth-Inequality-in-India-1922-2023_Final.pdf">https://wid.world/www-site/uploads/2024/03/WorldInequalityLab_WP2024_09_Income-and-Wealth-Inequality-in-India-1922-2023_Final.pdf</a>.
+</div>
+<div id="ref-bhatiaMergingUpdatedDistrictlevel2020" class="csl-entry">
+Bhatia, Abhishek. 2020. <span>“Merging Updated District-Level Shapefiles
+for <span>India</span> (2020).”</span> India_shp_2020, June 18. <a href="https://github.com/abhatia08/india_shp_2020">https://github.com/abhatia08/india_shp_2020</a>.
+</div>
+<div id="ref-bhattacharyaIndiasStatisticalSystem2023" class="csl-entry">
+Bhattacharya, Pramit. 2023. <span>“India’s <span>Statistical
+System</span>: <span>Past</span>, <span>Present</span>,
+<span>Future</span>.”</span> Carnegie Endowment for International Peace,
+June 28. <a href="https://carnegieendowment.org/research/2023/06/indias-statistical-system-past-present-future?lang=en">https://carnegieendowment.org/research/2023/06/indias-statistical-system-past-present-future?lang=en</a>.
+</div>
+<div id="ref-bhattacharyaMediatingInequalitiesExploring2013" class="csl-entry">
+Bhattacharya, Usree. 2013. <span>“Mediating Inequalities: Exploring
+<span class="nocase">English-medium</span> Instruction in a Suburban
+<span>Indian</span> Village School.”</span> <em>Current Issues in
+Language Planning</em> 14 (1): 164–84. <a href="https://doi.org/10.1080/14664208.2013.791236">https://doi.org/10.1080/14664208.2013.791236</a>.
+</div>
+<div id="ref-bialystokBilingualismConsequencesMind2012" class="csl-entry">
+Bialystok, Ellen, Fergus I. M. Craik, and Gigi Luk. 2012.
+<span>“Bilingualism: <span>Consequences</span> for <span>Mind</span> and
+<span>Brain</span>.”</span> <em>Trends in Cognitive Sciences</em> 16
+(4): 240–50. <a href="https://doi.org/10.1016/j.tics.2012.03.001">https://doi.org/10.1016/j.tics.2012.03.001</a>.
+</div>
+<div id="ref-bjorklund.kjellstrom2002" class="csl-entry">
+Björklund, Anders, and Christian Kjellström. 2002. <span>“Estimating the
+Return to Investments in Education: <span>How</span> Useful Is the
+Standard <span>Mincer</span> Equation?”</span> <em>Economics of
+Education Review</em> 21 (3): 195–210. <a href="https://doi.org/10.1016/S0272-7757(01)00003-6">https://doi.org/10.1016/S0272-7757(01)00003-6</a>.
+</div>
+<div id="ref-blanchardComment1987" class="csl-entry">
+Blanchard, Olivier Jean. 1987. <span>“Comment.”</span> <em>Journal of
+Business &amp; Economic Statistics</em> 5 (4): 449–51. <a href="https://doi.org/10.1080/07350015.1987.10509611">https://doi.org/10.1080/07350015.1987.10509611</a>.
+</div>
+<div id="ref-blandholWhenTSLSActually2022" class="csl-entry">
+Blandhol, Christine, John Bonney, Magne Mogstad, and Alexander
+Torgovitsky. 2022. <em>When Is <span>TSLS Actually LATE</span>?</em> No.
+w29709. National Bureau of Economic Research. <a href="https://doi.org/10.3386/w29709">https://doi.org/10.3386/w29709</a>.
+</div>
+<div id="ref-blimpo.etal2015" class="csl-entry">
+Blimpo, Moussa P., David K. Evans, and Nathalie Lahire. 2015.
+<em>Parental <span>Human Capital</span> and <span>Effective School
+Management</span>: <span>Evidence</span> from the
+<span>Gambia</span></em>. Policy Research Working Papers. The World
+Bank. <a href="https://doi.org/10.1596/1813-9450-7238">https://doi.org/10.1596/1813-9450-7238</a>.
+</div>
+<div id="ref-borooah2021a" class="csl-entry">
+Borooah, V., and N. S. Sabharwal. 2021. <span>“Chapter
+<span>Eleven</span> - <span>English</span> as a <span>Medium</span> of
+<span>Instruction</span> in <span>Indian Education</span>:
+<span>Inequality</span> of <span>Access</span> to <span>Educational
+Opportunities</span>.”</span> In <em>Reclaiming Development
+Studies</em>. Anthem Press Print. <a href="https://mpra.ub.uni-muenchen.de/112984/1/MPRA_paper_112984.pdf">https://mpra.ub.uni-muenchen.de/112984/1/MPRA_paper_112984.pdf</a>.
+</div>
+<div id="ref-brinkmannLearnercentredEducationReforms2015" class="csl-entry">
+Brinkmann, Suzana. 2015. <span>“Learner-Centred Education Reforms in
+<span>India</span>: <span>The</span> Missing Piece of Teachers’
+Beliefs.”</span> <em>Policy Futures in Education</em> 13 (3): 342–59. <a href="https://doi.org/10.1177/1478210315569038">https://doi.org/10.1177/1478210315569038</a>.
+</div>
+<div id="ref-brusChapter7Twostage2023" class="csl-entry">
+Brus, Dick J. 2023. <span>“Chapter 7 <span class="nocase">Two-stage</span> Cluster Random Sampling.”</span> In
+<em>Spatial Sampling with <span>R</span></em>. <a href="https://dickbrus.github.io/SpatialSamplingwithR/Twostage.html">https://dickbrus.github.io/SpatialSamplingwithR/Twostage.html</a>.
+</div>
+<div id="ref-buehmann2009a" class="csl-entry">
+Bühmann, D., and B. Trudell. 2008. <span>“Mother Tongue Matters:
+<span>Local</span> Language as a Key to Effective Learning.”</span> In
+<em><span>UNESDOC</span> Digital Library</em>. <a href="https://unesdoc.unesco.org/ark:/48223/pf0000161121">https://unesdoc.unesco.org/ark:/48223/pf0000161121</a>.
+</div>
+<div id="ref-card1999" class="csl-entry">
+Card, David. 1999. <span>“Chapter 30 - <span>The Causal Effect</span> of
+<span>Education</span> on <span>Earnings</span>.”</span> In <em>Handbook
+of <span>Labor Economics</span></em>, edited by Orley C. Ashenfelter and
+David Card, vol. 3. Elsevier. <a href="https://doi.org/10.1016/S1573-4463(99)03011-4">https://doi.org/10.1016/S1573-4463(99)03011-4</a>.
+</div>
+<div id="ref-foundation2020a" class="csl-entry">
+Central Square Foundation. 2020. <em>State of the Sector Report on
+Private Schools in India</em>.
+</div>
+<div id="ref-centralstatisticsofficeIndiaFifthEconomic2008" class="csl-entry">
+Central Statistics Office. 2008. <span>“India - <span>Fifth Economic
+Census</span> 2005.”</span> <span>Ministry of Statistics and Programme
+Implementation</span>. <a href="https://microdata.gov.in/NADA/index.php/catalog/46">https://microdata.gov.in/NADA/index.php/catalog/46</a>.
+</div>
+<div id="ref-centreforbudgetandpolicystudies2020" class="csl-entry">
+Centre for Budget and Policy Studies. 2020. <em>Quality and
+<span>Systemic Functioning</span> in <span>Secondary Education</span> in
+<span>India</span>: <span>A</span> Study in <span>Andhra Pradesh</span>
+and <span>Rajasthan</span></em>.
+</div>
+<div id="ref-chakraborty2016a" class="csl-entry">
+Chakraborty, T., and S. K. Bakshi. 2016. <span>“English Language
+Premium: <span>Evidence</span> from a Policy Experiment in
+<span>India</span>.”</span> <em>Economics of Education Review</em> 50:
+1–16. <a href="https://doi.org/10.1016/j.econedurev.2015.10.004">https://doi.org/10.1016/j.econedurev.2015.10.004</a>.
+</div>
+<div id="ref-chamarbagwala.sharma2011" class="csl-entry">
+Chamarbagwala, Rubiana, and Gunjan Sharma. 2011. <span>“Industrial
+de-Licensing, Trade Liberalization, and Skill Upgrading in
+<span>India</span>.”</span> <em>Journal of Development Economics</em> 96
+(2): 314–36. <a href="https://doi.org/10.1016/j.jdeveco.2010.10.001">https://doi.org/10.1016/j.jdeveco.2010.10.001</a>.
+</div>
+<div id="ref-chattopadhayLowFeePrivateSchools2017" class="csl-entry">
+Chattopadhay, Tamo, and Maya Roy. 2017. <span>“Low-<span>Fee Private
+Schools</span> in <span>India</span>: <span>The Emerging Fault
+Lines</span>.”</span> Working Paper 233. Teachers College, Columbia
+University, Pre-published May 18. <a href="https://ncspe.tc.columbia.edu/working-papers/files/WP233.pdf">https://ncspe.tc.columbia.edu/working-papers/files/WP233.pdf</a>.
+</div>
+<div id="ref-chaudhury.etal2006" class="csl-entry">
+Chaudhury, Nazmul, Jeffrey Hammer, Michael Kremer, Karthik Muralidharan,
+and F. Halsey Rogers. 2006. <span>“Missing in <span>Action</span>:
+<span>Teacher</span> and <span>Health Worker Absence</span> in
+<span>Developing Countries</span>.”</span> <em>Journal of Economic
+Perspectives</em> 20 (1): 91–116. <a href="https://doi.org/10.1257/089533006776526058">https://doi.org/10.1257/089533006776526058</a>.
+</div>
+<div id="ref-chaurasia2023a" class="csl-entry">
+Chaurasia, A. R. 2023. <span>“Human Development in Districts of India,
+2019–2021.”</span> <em>Indian Journal of Human Development</em> 17 (2):
+219–52. <a href="https://doi.org/10.1177/09737030231178362">https://doi.org/10.1177/09737030231178362</a>.
+</div>
+<div id="ref-chenNoteInstrumentalVariable2022" class="csl-entry">
+Chen, Yen-Chi. 2022. <em>A Note on the Instrumental Variable and Local
+Average Treatment Effect</em>. University of Washington. <a href="https://faculty.washington.edu/yenchic/short_note/note_IV.pdf">https://faculty.washington.edu/yenchic/short_note/note_IV.pdf</a>.
+</div>
+<div id="ref-chiswick1995a" class="csl-entry">
+Chiswick, B. R., and P. W. Miller. 1995. <span>“The Endogeneity Between
+Language and Earnings: <span>International</span> Analyses.”</span>
+<em>Journal of Labor Economics</em> 13 (2): 246–88. <a href="https://doi.org/10.1086/298374">https://doi.org/10.1086/298374</a>.
+</div>
+<div id="ref-chiswickLinguisticDistanceQuantitative2005" class="csl-entry">
+Chiswick, Barry R., and Paul W. Miller. 2005. <span>“Linguistic
+<span>Distance</span>: <span>A Quantitative Measure</span> of the
+<span>Distance Between English</span> and <span>Other
+Languages</span>.”</span> <em>Journal of Multilingual and Multicultural
+Development</em>, ahead of print, January 15. <a href="https://doi.org/10.1080/14790710508668395">https://doi.org/10.1080/14790710508668395</a>.
+</div>
+<div id="ref-choudharyLDCILIndianRepository2021" class="csl-entry">
+Choudhary, Narayan. 2021. <span>“<span>LDC-IL</span>: <span>The
+Indian</span> Repository of Resources for Language Technology.”</span>
+<em>Language Resources and Evaluation</em> 55 (3): 855–67. <a href="https://www.jstor.org/stable/48756705">https://www.jstor.org/stable/48756705</a>.
+</div>
+<div id="ref-clingingsmithIndustrializationBilingualismIndia2014" class="csl-entry">
+Clingingsmith, David. 2014. <span>“Industrialization and
+<span>Bilingualism</span> in <span>India</span>.”</span> <em>Journal of
+Human Resources</em> 49 (1): 73–109. <a href="https://doi.org/10.3368/jhr.49.1.73">https://doi.org/10.3368/jhr.49.1.73</a>.
+</div>
+<div id="ref-dawoodAutomaticDifferentiationUncertainties2023" class="csl-entry">
+Dawood, Hend, and Nefertiti Megahed. 2023. <span>“Automatic
+Differentiation of Uncertainties: An Interval Computational
+Differentiation for First and Higher Derivatives with
+Implementation.”</span> <em>PeerJ Computer Science</em> 9 (March):
+e1301. <a href="https://doi.org/10.7717/peerj-cs.1301">https://doi.org/10.7717/peerj-cs.1301</a>.
+</div>
+<div id="ref-deolalikarNationalSampleSurvey2008" class="csl-entry">
+Deolalikar, Anil B., and Amaresh Dubey. 2008. <span>“National
+<span>Sample Survey</span> (<span>India</span>).”</span> In
+<em>International <span>Encyclopedia</span> of the <span>Social
+Sciences</span></em>, 2nd ed., edited by William A. Darity Jr., vol. 5.
+Macmillan Reference USA. <a href="https://link.gale.com/apps/doc/CX3045301697/GVRL?u=wisc_madison&amp;sid=bookmark-GVRL&amp;xid=96b17762">link.gale.com/apps/doc/CX3045301697/GVRL?u=wisc_madison&amp;sid=bookmark-GVRL&amp;xid=96b17762</a>.
+</div>
+<div id="ref-departmentofhighereducationProvisionsConstitutionIndia2010" class="csl-entry">
+Department of Higher Education. 2010. <span>“Provisions of the
+<span>Constitution</span> of <span>India</span> Having a Bearing on
+<span>Education</span>.”</span> Ministry of Human Resource Development,
+February 1. <a href="https://web.archive.org/web/20100201181216/http://www.education.nic.in/constitutional.asp">https://web.archive.org/web/20100201181216/http://www.education.nic.in/constitutional.asp</a>.
+</div>
+<div id="ref-dwivediABCRTE2018" class="csl-entry">
+Dwivedi, Maninder Kaur. 2018. <span>“The <span>ABC</span> of the
+<span>RTE</span>.”</span> <em>The Hindu: Comment</em>, January 11. <a href="https://www.thehindu.com/opinion/op-ed/the-abc-of-the-rte/article22422870.ece">https://www.thehindu.com/opinion/op-ed/the-abc-of-the-rte/article22422870.ece</a>.
+</div>
+<div id="ref-divison2015a" class="csl-entry">
+Economic Division. 2017. <span>“India on the Move and Churning:
+<span>New</span> Evidence.”</span> In <em>Economic <span>Survey</span>
+2016-17</em>. Economic Division, Department of Economic Affairs,
+Ministry of Finance. <a href="https://www.indiabudget.gov.in/budget2017-2018/es2016-17/echap12.pdf">https://www.indiabudget.gov.in/budget2017-2018/es2016-17/echap12.pdf</a>.
+</div>
+<div id="ref-endow2019a" class="csl-entry">
+Endow, T. 2019. <span>“Low Cost Private Schools: <span>How</span> Low
+Cost Really Are These?”</span> <em>Indian Journal of Human
+Development</em> 13 (1): 102–8. <a href="https://doi.org/10.1177/0973703019838704">https://doi.org/10.1177/0973703019838704</a>.
+</div>
+<div id="ref-erlingMediumInstructionPolicies2016" class="csl-entry">
+Erling, Elizabeth J., Lina Adinolfi, Anna Kristina Hultgren, Alison
+Buckler, and Mark Mukorera. 2016. <span>“Medium of Instruction Policies
+in <span>Ghanaian</span> and <span>Indian</span> Primary Schools: An
+Overview of Key Issues and Recommendations.”</span> <em>Comparative
+Education</em> 52 (3): 294–310. <a href="https://doi.org/10.1080/03050068.2016.1185254">https://doi.org/10.1080/03050068.2016.1185254</a>.
+</div>
+<div id="ref-gamalloLanguageIdentificationLanguage2017" class="csl-entry">
+Gamallo, Pablo, José Ramom Pichel, and Iñaki Alegria. 2017. <span>“From
+Language Identification to Language Distance.”</span> <em>Physica A:
+Statistical Mechanics and Its Applications</em> 484 (October): 152–62.
+<a href="https://doi.org/10.1016/j.physa.2017.05.011">https://doi.org/10.1016/j.physa.2017.05.011</a>.
+</div>
+<div id="ref-goldsmith-pinkhamBartikInstrumentsWhat2020" class="csl-entry">
+Goldsmith-Pinkham, Paul, Isaac Sorkin, and Henry Swift. 2020.
+<span>“Bartik <span>Instruments</span>: <span>What</span>,
+<span>When</span>, <span>Why</span>, and <span>How</span>.”</span>
+<em>American Economic Review</em> 110 (8): 2586–624. <a href="https://doi.org/10.1257/aer.20181047">https://doi.org/10.1257/aer.20181047</a>.
+</div>
+<div id="ref-gooptu2023a" class="csl-entry">
+Gooptu, S., and V. Mukherjee. 2023. <span>“Does Private Tuition Crowd
+Out Private Schooling? <span>Evidence</span> from
+<span>India</span>.”</span> <em>International Journal of Educational
+Development</em> 103: 102885. <a href="https://doi.org/10.1016/j.ijedudev.2023.102885">https://doi.org/10.1016/j.ijedudev.2023.102885</a>.
+</div>
+<div id="ref-graddol2010a" class="csl-entry">
+Graddol, D. 2010. <span>“English Next India: <span>The</span> Future of
+English in India [<span>Book</span>.”</span> <em>British Council</em>.
+<a href="https://www.britishcouncil.in/sites/default/files/english_next_india_-_david_graddol.pdf">https://www.britishcouncil.in/sites/default/files/english_next_india_-_david_graddol.pdf</a>.
+</div>
+<div id="ref-guptaColonisationMigrationFunctions1997" class="csl-entry">
+Gupta, Anthea Fraser. 1997. <span>“Colonisation, <span>Migration</span>,
+and <span>Functions</span> of <span>English</span>.”</span> In
+<em>Englishes <span>Around</span> the <span>World</span>:
+<span>Studies</span> in <span>Honour</span> of <span>Manfred
+Görlach</span></em>, edited by Edgar W. Schneider, Volume 1: General
+Studies, British Isles, North America. General <span>Series</span> 18.
+John Benjamins Publishing Company. <a href="http://ebookcentral.proquest.com/lib/wisc/detail.action?docID=811284">http://ebookcentral.proquest.com/lib/wisc/detail.action?docID=811284</a>.
+</div>
+<div id="ref-gurevichDatasetLinguisticConnectivity2025" class="csl-entry">
+Gurevich, Tamara, Peter R. Herman, Farid Toubal, and Yoto V. Yotov.
+2025. <span>“A <span>Dataset</span> on <span>Linguistic Connectivity
+Across</span> and <span>Within Countries</span>.”</span> <em>Scientific
+Data</em> 12 (1): 542. <a href="https://doi.org/10.1038/s41597-025-04692-8">https://doi.org/10.1038/s41597-025-04692-8</a>.
+</div>
+<div id="ref-hakutaChapter2Bilingualism1986" class="csl-entry">
+Hakuta, Kenji. 1986. <span>“Chapter 2: <span>Bilingualism</span> and
+<span>Intelligence</span>.”</span> In <em>Mirror of
+<span>Language</span>: <span>The Debate</span> on
+<span>Bilingualism</span></em>. Basic Books. <a href="https://web.stanford.edu/~hakuta/Publications/(1986)%20-%20MIRROR%20OF%20LANGUAGE%20THE%20DEBATE%20ON%20BILINGUALISM.pdf">https://web.stanford.edu/~hakuta/Publications/(1986)%20-%20MIRROR%20OF%20LANGUAGE%20THE%20DEBATE%20ON%20BILINGUALISM.pdf</a>.
+</div>
+<div id="ref-hansenEconometrics2022" class="csl-entry">
+Hansen, Bruce. 2022. <em>Econometrics</em>. Princeton University Press.
+<a href="https://users.ssc.wisc.edu/~bhansen/econometrics/">https://users.ssc.wisc.edu/~bhansen/econometrics/</a>.
+</div>
+<div id="ref-imbertShorttermMigrationRural2020" class="csl-entry">
+Imbert, Clément, and John Papp. 2020. <span>“Short-Term
+<span>Migration</span>, <span>Rural Public Works</span>, and <span>Urban
+Labor Markets</span>: <span>Evidence</span> from
+<span>India</span>.”</span> <em>Journal of the European Economic
+Association</em> 18 (2): 927–63. <a href="https://doi.org/10.1093/jeea/jvz009">https://doi.org/10.1093/jeea/jvz009</a>.
+</div>
+<div id="ref-indiastatestoriesDistrictEvolution2024" class="csl-entry">
+India State Stories. 2024. <span>“District
+<span>Evolution</span>.”</span> FLAME University. <a href="https://www.indiastatestory.in/datadownloads">https://www.indiastatestory.in/datadownloads</a>.
+</div>
+<div id="ref-organization2024a" class="csl-entry">
+International Labour Organization. 2024. <em>India <span>Employment
+Report</span> 2024: <span>Youth</span> Employment, Education and
+Skills</em>. <a href="https://www.ilo.org/publications/india-employment-report-2024-youth-employment-education-and-skills">https://www.ilo.org/publications/india-employment-report-2024-youth-employment-education-and-skills</a>.
+</div>
+<div id="ref-itaniMeaningLanguageSkills2015" class="csl-entry">
+Itani, Sami, Maria Järlström, and Rebecca Piekkari. 2015. <span>“The
+Meaning of Language Skills for Career Mobility in the New Career
+Landscape.”</span> <em>Journal of World Business</em> 50 (2): 368–78. <a href="https://doi.org/10.1016/j.jwb.2014.08.003">https://doi.org/10.1016/j.jwb.2014.08.003</a>.
+</div>
+<div id="ref-jaacksIndiaDistrictChanges2020" class="csl-entry">
+Jaacks, Lindsay, Anjali Shandilya, Aayush Malik, and Divya Venkata
+Veluguri. 2020. <span>“India <span>District Changes
+Tracker</span>.”</span> Jaacks Research Group, November 12. <a href="https://github.com/Jaacks-Research-Group/india-district-changes-tracker.git">https://github.com/Jaacks-Research-Group/india-district-changes-tracker.git</a>.
+</div>
+<div id="ref-jamesChoosingChangingSchools2014" class="csl-entry">
+James, Zoe, and Martin Woodhead. 2014. <span>“Choosing and Changing
+Schools in <span>India</span>’s Private and Government Sectors:
+<span>Young Lives</span> Evidence from <span>Andhra
+Pradesh</span>.”</span> <em>Oxford Review of Education</em> 40 (1):
+73–90. <a href="https://doi.org/10.1080/03054985.2013.873527">https://doi.org/10.1080/03054985.2013.873527</a>.
+</div>
+<div id="ref-joshiUnderstandingConsumerDemographics2017" class="csl-entry">
+Joshi, Rohan, and Srishti Kumar. 2017. <span>“Understanding Consumer
+Demographics for Primary Unaided Private Schools.”</span> In <em>Report
+on <span>Budget Private Schools</span> in <span>India</span> 2017</em>.
+Centre for Civil Society. <a href="https://ccs.in/sites/default/files/2022-08/bps-report-2017.pdf">https://ccs.in/sites/default/files/2022-08/bps-report-2017.pdf</a>.
+</div>
+<div id="ref-kelejianHACEstimationSpatial2007" class="csl-entry">
+Kelejian, Harry H., and Ingmar R. Prucha. 2007. <span>“<span>HAC</span>
+Estimation in a Spatial Framework.”</span> <em>Journal of
+Econometrics</em> 140 (1): 131–54. <a href="https://doi.org/10.1016/j.jeconom.2006.09.005">https://doi.org/10.1016/j.jeconom.2006.09.005</a>.
+</div>
+<div id="ref-keshriSocioeconomicDeterminantsTemporary2013" class="csl-entry">
+Keshri, Kunal, and Ram B. Bhagat. 2013. <span>“Socioeconomic
+<span>Determinants</span> of <span>Temporary Labour Migration</span> in
+<span>India</span>: <span>A</span> Regional Analysis.”</span> <em>Asian
+Population Studies</em> 9 (2): 175–95. <a href="https://doi.org/10.1080/17441730.2013.797294">https://doi.org/10.1080/17441730.2013.797294</a>.
+</div>
+<div id="ref-kocharSmoothingConsumptionSmoothing1999" class="csl-entry">
+Kochar, Anjini. 1999. <span>“Smoothing <span>Consumption</span> by
+<span>Smoothing Income</span>: <span class="nocase">Hours-of-Work
+Responses</span> to <span>Idiosyncratic Agricultural Shocks</span> in
+<span>Rural India</span>.”</span> <em>The Review of Economics and
+Statistics</em> 81 (1): 50–61. <a href="https://doi.org/10.1162/003465399767923818">https://doi.org/10.1162/003465399767923818</a>.
+</div>
+<div id="ref-koneInternalBordersMigration2018" class="csl-entry">
+Kone, Zovanga L, Maggie Y Liu, Aaditya Mattoo, Caglar Ozden, and
+Siddharth Sharma. 2018. <span>“Internal Borders and Migration in
+<span>India</span>*.”</span> <em>Journal of Economic Geography</em> 18
+(4): 729–59. <a href="https://doi.org/10.1093/jeg/lbx045">https://doi.org/10.1093/jeg/lbx045</a>.
+</div>
+<div id="ref-kremer.etal2005" class="csl-entry">
+Kremer, Michael, Nazmul Chaudhury, F. Halsey Rogers, Karthik
+Muralidharan, and Jeffrey Hammer. 2005. <span>“Teacher
+<span>Absence</span> in <span>India</span>: <span>A
+Snapshot</span>.”</span> <em>Journal of the European Economic
+Association</em> 3 (2–3): 658–67. <a href="https://doi.org/10.1162/jeea.2005.3.2-3.658">https://doi.org/10.1162/jeea.2005.3.2-3.658</a>.
+</div>
+<div id="ref-kronmalSpuriousCorrelationFallacy1993" class="csl-entry">
+Kronmal, Richard A. 1993. <span>“Spurious <span>Correlation</span> and
+the <span>Fallacy</span> of the <span>Ratio Standard
+Revisited</span>.”</span> <em>Journal of the Royal Statistical Society.
+Series A (Statistics in Society)</em> 156 (3): 379. <a href="https://doi.org/10.2307/2983064">https://doi.org/10.2307/2983064</a>.
+</div>
+<div id="ref-kumarCreatingLongPanels2016" class="csl-entry">
+Kumar, Hemanshu, and Rohini Somanathan. 2016. <span>“Creating <span>Long
+Panels Using Census Data</span>: 1961-2001.”</span> Working Paper No.
+248, November. <a href="http://www.cdedse.org/pdf/work248.pdf">http://www.cdedse.org/pdf/work248.pdf</a>.
+</div>
+<div id="ref-kumarTestingChildrenQuantityQuality2011" class="csl-entry">
+Kumar, Santosh, and Adriana Kugler. 2011. <span>“Testing the
+<span>Children Quantity-Quality Trade-Off</span> in
+<span>India</span>.”</span> MPRA Paper. Pre-published September 1. <a href="https://mpra.ub.uni-muenchen.de/42487/">https://mpra.ub.uni-muenchen.de/42487/</a>.
+</div>
+<div id="ref-lahoti2019a" class="csl-entry">
+Lahoti, R., and R. Mukhopadhyay. 2019. <span>“School Choice in Rural
+<span>India</span>.”</span> <em>Economic and Political Weekly</em>. <a href="https://publications.azimpremjiuniversity.edu.in/2150/1/School%20Choice%20in%20Rural%20India_Perceptions%20and%20Realities%20in%20Four%20States.pdf">https://publications.azimpremjiuniversity.edu.in/2150/1/School
+Choice in Rural India_Perceptions and Realities in Four States.pdf</a>.
+</div>
+<div id="ref-laitin2022a" class="csl-entry">
+Laitin, D. D., and R. Ramachandran. 2022. <span>“Linguistic Diversity,
+Official Language Choice and Human Capital.”</span> <em>Journal of
+Development Economics</em> 156: 102811. <a href="https://doi.org/10.1016/j.jdeveco.2021.102811">https://doi.org/10.1016/j.jdeveco.2021.102811</a>.
+</div>
+<div id="ref-liu2016a" class="csl-entry">
+Liu, A. H., and E. Pizzi. 2016. <span>“The <span>Language</span> of
+<span>Economic Growth</span>: <span>A New Measure</span> of
+<span>Linguistic Heterogeneity</span>.”</span> <em>British Journal of
+Political Science</em> 48 (4): 953–80. <a href="https://doi.org/10.1017/s0007123416000260">https://doi.org/10.1017/s0007123416000260</a>.
+</div>
+<div id="ref-lucasCountrySpecificMagnitudesMigration2021" class="csl-entry">
+Lucas, Robert E. B. 2021a. <span>“Country-<span>Specific
+Magnitudes</span> of <span>Migration</span> Between <span>Rural</span>
+and <span>Urban Sectors</span>.”</span> In <em>Crossing the
+<span>Divide</span>: <span>Rural</span> to <span>Urban Migration</span>
+in <span>Developing Countries</span></em>, edited by Robert E. B. Lucas.
+Oxford University Press. <a href="https://doi.org/10.1093/oso/9780197602157.003.0003">https://doi.org/10.1093/oso/9780197602157.003.0003</a>.
+</div>
+<div id="ref-lucasImpermanenceMovesReturn2021" class="csl-entry">
+Lucas, Robert E. B. 2021b. <span>“The <span>Impermanence</span> of
+<span>Moves</span>: <span>Return</span> and <span>Onward
+Migration</span>.”</span> In <em>Crossing the <span>Divide</span>:
+<span>Rural</span> to <span>Urban Migration</span> in <span>Developing
+Countries</span></em>, edited by Robert E. B. Lucas. Oxford University
+Press. <a href="https://doi.org/10.1093/oso/9780197602157.003.0007">https://doi.org/10.1093/oso/9780197602157.003.0007</a>.
+</div>
+<div id="ref-madheswaran.singhari2016" class="csl-entry">
+Madheswaran, S., and Smrutirekha Singhari. 2016. <span>“Social Exclusion
+and Caste Discrimination in Public and Private Sectors in
+<span>India</span>: <span>A</span> Decomposition Analysis.”</span>
+<em>The Indian Journal of Labour Economics</em> 59 (2): 175–201. <a href="https://doi.org/10.1007/s41027-017-0053-8">https://doi.org/10.1007/s41027-017-0053-8</a>.
+</div>
+<div id="ref-mahalanobisNationalSampleSurvey1954" class="csl-entry">
+Mahalanobis, P. C. 1954. <span>“The <span>National Sample Survey</span>.
+<span>Number</span> 5. <span>Technical Paper</span> on <span>Some
+Aspects</span> of the <span>Development</span> of the <span>Sample
+Design</span>.”</span> <em>Sankhya: The Indian Journal of Statistics
+(1933-1960)</em> 14 (3): 264–316. <a href="https://www.jstor.org/stable/25048215">https://www.jstor.org/stable/25048215</a>.
+</div>
+<div id="ref-mahapatroInternalMigrationEmerging2020" class="csl-entry">
+Mahapatro, Sandhya R. 2020. <span>“Internal <span>Migration</span>:
+<span>Emerging Patterns</span>.”</span> In <em>Handbook of
+<span>Internal Migration</span> in <span>India</span></em>, by S.
+Irudaya Rajan and Sumeetha M. SAGE Publications Pvt Ltd. <a href="https://doi.org/10.4135/9789353287788.n5">https://doi.org/10.4135/9789353287788.n5</a>.
+</div>
+<div id="ref-mankiw.swagel2006" class="csl-entry">
+Mankiw, N. Gregory, and Phillip Swagel. 2006. <span>“The Politics and
+Economics of Offshore Outsourcing.”</span> <em>Journal of Monetary
+Economics</em> 53 (5): 1027–56. <a href="https://doi.org/10.1016/j.jmoneco.2006.05.009">https://doi.org/10.1016/j.jmoneco.2006.05.009</a>.
+</div>
+<div id="ref-mansourniaPvalueCompatibilitySvalue2022" class="csl-entry">
+Mansournia, Mohammad Ali, Maryam Nazemipour, and Mahyar Etminan. 2022.
+<span>“P-Value, Compatibility, and <span class="nocase">S-value</span>.”</span> <em>Global Epidemiology</em> 4
+(December): 100085. <a href="https://doi.org/10.1016/j.gloepi.2022.100085">https://doi.org/10.1016/j.gloepi.2022.100085</a>.
+</div>
+<div id="ref-martinBigOutSmall2017" class="csl-entry">
+Martin, Leslie A., Shanthi Nataraj, and Ann E. Harrison. 2017. <span>“In
+with the <span>Big</span>, <span>Out</span> with the <span>Small</span>:
+<span>Removing Small-Scale Reservations</span> in
+<span>India</span>.”</span> <em>American Economic Review</em> 107 (2):
+354–86. <a href="https://doi.org/10.1257/aer.20141335">https://doi.org/10.1257/aer.20141335</a>.
+</div>
+<div id="ref-mathew2011a" class="csl-entry">
+Mathew, R., and S. Srivastava. 2011. <span>“English <span>Next
+India</span>: <span>The</span> Future of <span>English</span> in
+<span>India</span>.”</span> <em>ELT Journal</em> 65 (3): 356–59. <a href="https://doi.org/10.1093/elt/ccr034">https://doi.org/10.1093/elt/ccr034</a>.
+</div>
+<div id="ref-mathur2013a" class="csl-entry">
+Mathur, S. 2013. <span>“Kancha <span>Ilaiah</span>: <span>Even</span> If
+10% Dalit Children Got <span>English</span> Education,
+<span>India</span> Would Change.”</span> <em>The Times of India</em>,
+February.
+</div>
+<div id="ref-melitz2016" class="csl-entry">
+Melitz, Jacques. 2016. <span>“English as a <span>Global
+Language</span>.”</span> In <em>The <span>Palgrave Handbook</span> of
+<span>Economics</span> and <span>Language</span></em>, edited by Victor
+Ginsburgh and Shlomo Weber. Palgrave Macmillan UK. <a href="https://doi.org/10.1007/978-1-137-32505-1_21">https://doi.org/10.1007/978-1-137-32505-1_21</a>.
+</div>
+<div id="ref-meyersIndiaOfficialBoundaries2020" class="csl-entry">
+Meyers, Justin. 2020. <span>“India <span>Official Boundaries</span>
+2019.”</span> India_Official_Boundaries_2019, March 28. <a href="https://github.com/justinelliotmeyers/India_Official_Boundaries_2019">https://github.com/justinelliotmeyers/India_Official_Boundaries_2019</a>.
+</div>
+<div id="ref-mincer1974" class="csl-entry">
+Mincer, Jacob. 1974. <span>“The <span>Human Capital Earnings
+Function</span>.”</span> In <em>Schooling, <span>Experience</span>, and
+<span>Earnings</span></em>. National Bureau of Economic Research, Inc.
+</div>
+<div id="ref-ministryofstatisticsandprogramimplementationRecentRounds2024" class="csl-entry">
+Ministry of Statistics and Program Implementation. 2024. <em>Recent
+<span>Rounds</span></em>. Government Of India. <a href="https://mospi.gov.in/recent-rounds-0">https://mospi.gov.in/recent-rounds-0</a>.
+</div>
+<div id="ref-mohanty2022a" class="csl-entry">
+Mohanty, A. K. 2022. <span>“Multilingualism as a Resource:
+<span>Implications</span> for Education.”</span> In <em>Towards an
+Integrative Psychological Science</em>. Springer. <a href="https://doi.org/10.1007/978-981-16-9565-0_9">https://doi.org/10.1007/978-981-16-9565-0_9</a>.
+</div>
+<div id="ref-mortenTemporaryMigrationEndogenous2019" class="csl-entry">
+Morten, Melanie. 2019. <span>“Temporary <span>Migration</span> and
+<span>Endogenous Risk Sharing</span> in <span>Village
+India</span>.”</span> <em>Journal of Political Economy</em> 127 (1):
+1–46. <a href="https://doi.org/10.1086/700763">https://doi.org/10.1086/700763</a>.
+</div>
+<div id="ref-mukherjee2013a" class="csl-entry">
+Mukherjee, A. 2013. <span>“The <span>Service Sector</span> in
+<span>India</span>.”</span> 352. Pre-published. <a href="https://doi.org/10.2139/ssrn.2282311">https://doi.org/10.2139/ssrn.2282311</a>.
+</div>
+<div id="ref-munshiNetworksMisallocationInsurance2016" class="csl-entry">
+Munshi, Kaivan, and Mark Rosenzweig. 2016. <span>“Networks and
+<span>Misallocation</span>: <span>Insurance</span>,
+<span>Migration</span>, and the <span>Rural-Urban Wage
+Gap</span>.”</span> <em>American Economic Review</em> 106 (1): 46–98. <a href="https://doi.org/10.1257/aer.20131365">https://doi.org/10.1257/aer.20131365</a>.
+</div>
+<div id="ref-munshi2006a" class="csl-entry">
+Munshi, K., and M. R. Rosenzweig. 2006. <span>“Traditional Institutions
+Meet the Modern World: <span>Caste</span>, Gender, and Schooling Choice
+in a Globalizing Economy.”</span> <em>The American Economic Review</em>
+96 (4): 1225–52. <a href="https://doi.org/10.1257/aer.96.4.1225">https://doi.org/10.1257/aer.96.4.1225</a>.
+</div>
+<div id="ref-muralidharan2019a" class="csl-entry">
+Muralidharan, Karthik. 2019. <span>“The <span>State</span> and the
+<span>Market</span> in <span>Education Provision</span>:
+<span>Evidence</span> and the <span>Way Ahead</span>.”</span> [Working
+Paper]. Pre-published October 30. <a href="https://econweb.ucsd.edu/~kamurali/papers/Working%20Papers/State_and_Market_in_Education%20(Current%20WP).pdf">https://econweb.ucsd.edu/~kamurali/papers/Working%20Papers/State_and_Market_in_Education%20(Current%20WP).pdf</a>.
+</div>
+<div id="ref-muralidharan.etal2017" class="csl-entry">
+Muralidharan, Karthik, Jishnu Das, Alaka Holla, and Aakash Mohpal. 2017.
+<span>“The Fiscal Cost of Weak Governance: <span>Evidence</span> from
+Teacher Absence in <span>India</span>.”</span> <em>Journal of Public
+Economics</em> 145 (January): 116–35. <a href="https://doi.org/10.1016/j.jpubeco.2016.11.005">https://doi.org/10.1016/j.jpubeco.2016.11.005</a>.
+</div>
+<div id="ref-muralidharan2008a" class="csl-entry">
+Muralidharan, Karthik, and Michael Kremer. 2008.
+<span>“Public-<span>Private Schools</span> in <span>Rural
+India</span>.”</span> In <em>School <span>Choice International</span>:
+<span>Exploring Public-Private Partnerships</span></em>, edited by
+Rajashri Chakrabarti and Paul E. Peterson. MIT Press Books. <a href="https://doi.org/10.7551/mitpress/7767.003.0008">https://doi.org/10.7551/mitpress/7767.003.0008</a>.
+</div>
+<div id="ref-muralidharanContractTeachersExperimental2013" class="csl-entry">
+Muralidharan, Karthik, and Venkatesh Sundararaman. 2013. <em>Contract
+<span>Teachers</span>: <span>Experimental Evidence</span> from
+<span>India</span></em>. No. w19440. National Bureau of Economic
+Research. <a href="https://doi.org/10.3386/w19440">https://doi.org/10.3386/w19440</a>.
+</div>
+<div id="ref-muralidharan2015a" class="csl-entry">
+Muralidharan, K., and V. Sundararaman. 2015. <span>“The <span>Aggregate
+Effect</span> of <span>School Choice</span>: <span>Evidence</span> from
+a <span>Two-Stage Experiment</span> in <span>India</span>.”</span>
+<em>The Quarterly Journal of Economics</em> 130 (3): 1011–66. <a href="https://doi.org/10.1093/qje/qjv013">https://doi.org/10.1093/qje/qjv013</a>.
+</div>
+<div id="ref-murgante.borruso2012" class="csl-entry">
+Murgante, Beniamino, and Giuseppe Borruso. 2012. <span>“Analyzing
+<span>Migration Phenomena</span> with <span>Spatial Autocorrelation
+Techniques</span>.”</span> In <em>Computational <span>Science</span> and
+<span>Its Applications</span> – <span>ICCSA</span> 2012</em>, edited by
+Beniamino Murgante, Osvaldo Gervasi, Sanjay Misra, et al. Springer. <a href="https://doi.org/10.1007/978-3-642-31075-1_50">https://doi.org/10.1007/978-3-642-31075-1_50</a>.
+</div>
+<div id="ref-nair2015a" class="csl-entry">
+Nair, P. S. K. 2015. <span>“Does Medium of Instruction Affect Learning
+<span>Outcomes</span>?—<span>Evidence</span> Using Young Lives
+Longitudinal Data of Andhra Pradesh, India.”</span> In
+<em><span>ESP</span> Working Paper Series</em>.
+</div>
+<div id="ref-nakagawa2021a" class="csl-entry">
+Nakagawa, M., and S. Sugasawa. 2021. <span>“Linguistic Distance and
+Economic Development: <span>A</span> Cross-Country Analysis.”</span>
+<em>Review of Development Economics</em> 26 (2): 793–834. <a href="https://doi.org/10.1111/rode.12850">https://doi.org/10.1111/rode.12850</a>.
+</div>
+<div id="ref-commission2009a" class="csl-entry">
+National Knowledge Commission. 2009. <span>“Report to the
+Nation.”</span> <em>National Knowledge Commission</em>.
+</div>
+<div id="ref-nationalsamplesurveyofficeIndiaEmploymentUnemployment2010" class="csl-entry">
+National Sample Survey Office. 2010. <span>“India -
+<span>Employment</span>, <span>Unemployment</span> and <span>Migration
+Survey</span>, <span>July</span> 2007 - <span>June</span> 2008,
+<span>NSS</span> 64th <span>Round</span>.”</span> IND-NSSO-EUMS-2007-v1.
+<a href="https://microdata.gov.in/NADA/index.php/catalog/117/">https://microdata.gov.in/NADA/index.php/catalog/117/</a>.
+</div>
+<div id="ref-nationalsamplesurveyoffice2008" class="csl-entry">
+National Sample Survey Office. 2011. <span>“India -
+<span>Participation</span> and <span>Expenditure</span> in
+<span>Education</span>, 2007-08, 64th <span>Round</span>.”</span>
+Schedule 25.2. National Data Archive. <a href="https://microdata.gov.in/NADA/index.php/catalog/118/">https://microdata.gov.in/NADA/index.php/catalog/118/</a>.
+</div>
+<div id="ref-office2022a" class="csl-entry">
+National Sample Survey Office. 2022. <span>“Household <span>Social
+Consumption</span>: <span>Education</span>, <span>NSS</span> 75th
+<span>Round Schedule-25</span>.2: <span>July</span>
+2017-<span>June</span> 2018.”</span> <span>Ministry of Statistics and
+Programme Implementation</span>. <a href="https://microdata.gov.in/NADA/index.php/catalog/151/">https://microdata.gov.in/NADA/index.php/catalog/151/</a>.
+</div>
+<div id="ref-nationalsamplesurveyorganisationConceptsDefinitionsUsed2001" class="csl-entry">
+National Sample Survey Organisation. 2001. <em>Concepts and
+<span>Definitions</span> Used in <span>NSS</span></em>. Government Of
+India. <a href="https://www.mospi.gov.in/sites/default/files/publication_reports/concepts_golden.pdf">https://www.mospi.gov.in/sites/default/files/publication_reports/concepts_golden.pdf</a>.
+</div>
+<div id="ref-nationalstatisticalofficeIndiaHouseholdConsumer2011" class="csl-entry">
+National Statistical Office. 2011. <span>“India - <span>Household
+Consumer Expenditure Survey</span>, <span>July</span>
+2007-<span>June</span> 2008, 64th <span>Round</span>.”</span>
+IND-NSSO-HCES-2007-v1. National Data Archive. <a href="https://microdata.gov.in/NADA/index.php/catalog/116">https://microdata.gov.in/NADA/index.php/catalog/116</a>.
+</div>
+<div id="ref-nationalstatisticalofficeINDIAPeriodicLabour2019" class="csl-entry">
+National Statistical Office. 2019. <span>“<span>INDIA</span> -
+<span>Periodic Labour Force Survey</span> (<span>PLFS</span>),
+<span>July</span> 2017-<span>June</span> 2018.”</span>
+DDI-IND-CSO-PLFS-2017-18. National Data Archive, May. <a href="https://microdata.gov.in/NADA/index.php/catalog/204">https://microdata.gov.in/NADA/index.php/catalog/204</a>.
+</div>
+<div id="ref-office2021a" class="csl-entry">
+National Statistical Office. 2021. <span>“Migration in India
+(<span>JULY</span> 2020 - <span>JUNE</span> 2021): <span>Periodic</span>
+Labour Force Survey (<span>PLFS</span>.”</span> <em>Ministry of
+Statistics and Programme Implementation</em>. <a href="https://ruralindiaonline.org/en/library/resource/migration-in-india-2020-2021/">https://ruralindiaonline.org/en/library/resource/migration-in-india-2020-2021/</a>.
+</div>
+<div id="ref-neethaMakingFemaleBreadwinners2004" class="csl-entry">
+Neetha, N. 2004. <span>“Making of <span>Female Breadwinners</span>:
+<span>Migration</span> and <span>Social Networking</span> of <span>Women
+Domestics</span> in <span>Delhi</span>.”</span> <em>Economic and
+Political Weekly</em> 39 (17): 1681–88. <a href="https://www.jstor.org/stable/4414927">https://www.jstor.org/stable/4414927</a>.
+</div>
+<div id="ref-nguyenGuideDataAnalysis2020" class="csl-entry">
+Nguyen, Mike. 2020. <em>A <span>Guide</span> on <span>Data
+Analysis</span></em>. Bookdown. <a href="https://bookdown.org/mike/data_analysis/">https://bookdown.org/mike/data_analysis/</a>.
+</div>
+<div id="ref-nowosadElegantInformativeMaps2021" class="csl-entry">
+Nowosad, Martijn, and Jakub Tennekes. 2021. <em>Elegant and Informative
+Maps with Tmap</em>. Bookdown. <a href="https://r-tmap.github.io/tmap-book/">https://r-tmap.github.io/tmap-book/</a>.
+</div>
+<div id="ref-officeoftheregistrargeneralandcensuscommissionerofindiaCensusIndia20012001" class="csl-entry">
+Office of the Registrar General and Census Commissioner of India. 2001.
+<span>“Census of <span>India</span> 2001.”</span> Ministry of Home
+Affairs. <a href="https://censusindia.gov.in/census.website/data/census-tables">https://censusindia.gov.in/census.website/data/census-tables</a>.
+</div>
+<div id="ref-onurBirthOrderSibling2021" class="csl-entry">
+Onur, Ilke, and Malathi Velamuri. 2021. <span>“Birth <span>Order</span>,
+<span>Sibling Sex Composition</span>, and <span>Quantity</span>–<span class="nocase">Quality Trade-offs</span> – <span>Evidence</span> from
+<span>India</span>.”</span> ERIA Discussion Paper Series No. 362.
+Pre-published February. <a href="https://www.eria.org/uploads/media/discussion-papers/Birth-Order%2C-Sibling-Sex-Composition%2C-and-Quantity%E2%80%93Quality-Trade-offs_India.pdf">https://www.eria.org/uploads/media/discussion-papers/Birth-Order%2C-Sibling-Sex-Composition%2C-and-Quantity–Quality-Trade-offs_India.pdf</a>.
+</div>
+<div id="ref-pebesmaSpatialDataScience2025" class="csl-entry">
+Pebesma, Edzer, and Roger Bivand. 2025. <em>Spatial <span>Data Science
+With Applications</span> in <span>R</span></em>. 1st ed. The <span>R
+Series</span>. CRC Press. <a href="https://r-spatial.org/book/">https://r-spatial.org/book/</a>.
+</div>
+<div id="ref-pressinformationbureauInitiativesHumanResource2008" class="csl-entry">
+Press Information Bureau. 2008. <em>Initiatives of <span>Human Resource
+Development Ministry During</span> 2008</em>. No. 45901. <span>Ministry
+of Information and Broadcasting</span>. <a href="https://www.pib.gov.in/newsite/erelcontent.aspx?relid=45901">https://www.pib.gov.in/newsite/erelcontent.aspx?relid=45901</a>.
+</div>
+<div id="ref-rajanCOVID19PandemicInternal2020" class="csl-entry">
+Rajan, S. Irudaya, P. Sivakumar, and Aditya Srinivasan. 2020. <span>“The
+<span>COVID-19 Pandemic</span> and <span>Internal Labour
+Migration</span> in <span>India</span>: <span>A</span>
+<span>‘<span>Crisis</span> of <span>Mobility</span>’</span>.”</span>
+<em>The Indian Journal of Labour Economics</em> 63 (4): 1021–39. <a href="https://doi.org/10.1007/s41027-020-00293-8">https://doi.org/10.1007/s41027-020-00293-8</a>.
+</div>
+<div id="ref-rajuPrivateSchoolingIndia2023" class="csl-entry">
+Raju, Della. 2023. <span>“Private <span>Schooling</span> in
+<span>India</span>: <span>What Really Matters</span>?”</span>
+<em>International Journal of Research and Analytical Reviews</em> 10
+(2). <a href="https://ijrar.org/papers/IJRAR23B4169.pdf">https://ijrar.org/papers/IJRAR23B4169.pdf</a>.
+</div>
+<div id="ref-ramanathan2016a" class="csl-entry">
+Ramanathan, H. 2016. <span>“English <span>Education Policy</span> in
+<span>India</span>.”</span> In <em>English <span>Language Policy</span>
+in <span>Asia</span></em>, vol. 11. Springer. <a href="https://doi.org/10.1007/978-3-319-22464-0_5">https://doi.org/10.1007/978-3-319-22464-0_5</a>.
+</div>
+<div id="ref-ramanathanTeacherKnowledgeBase2014" class="csl-entry">
+Ramanathan, Hema. 2014. <span>“Teacher <span>Knowledge Base</span> and
+<span>English Language Teaching</span>: <span>Lessons</span> from
+<span>Nagaland</span>.”</span> <em>Languaging</em> 5 (October): 21–37.
+<a href="https://www.efluniversity.ac.in/Journal-Languaging/Journal-Languaging/ArticleArchives/Languaging_Volume%205%20October%202014.pdf#page=29">https://www.efluniversity.ac.in/Journal-Languaging/Journal-Languaging/ArticleArchives/Languaging_Volume%205%20October%202014.pdf#page=29</a>.
+</div>
+<div id="ref-raviOurNationalSurveys2023" class="csl-entry">
+Ravi, Shamika. 2023. <span>“Our National Surveys Are Based on Faulty
+Sampling.”</span> The Indian Express, September 12. <a href="https://indianexpress.com/article/opinion/columns/shamika-ravi-writes-our-national-surveys-are-based-on-faulty-sampling-8799300/">https://indianexpress.com/article/opinion/columns/shamika-ravi-writes-our-national-surveys-are-based-on-faulty-sampling-8799300/</a>.
+</div>
+<div id="ref-raviAssessingNationalSurveys2023" class="csl-entry">
+Ravi, Shamika, Mudit Kapoor, and S V Subramanian. 2023. <span>“Assessing
+the <span>National Surveys</span> for Its
+<span>Representativeness</span>: <span>An Analysis</span> of the
+<span>Data Quality</span> of the <span>National Sample Survey</span>
+(<span>NSS</span>).”</span> EAC-PM/WP/21/2023. Pre-published July. <a href="https://eacpm.gov.in/wp-content/uploads/2023/07/Quantifying-Data-Quality-of-India.pdf">https://eacpm.gov.in/wp-content/uploads/2023/07/Quantifying-Data-Quality-of-India.pdf</a>.
+</div>
+<div id="ref-refeque2022a" class="csl-entry">
+Refeque, E. M., and P. Azad. 2022. <span>“How Do Linguistic and
+Technical Skills Affect Earnings in <span>India</span>?”</span>
+<em>Indian Economic Review</em> 57 (1): 23–57. <a href="https://doi.org/10.1007/s41775-022-00132-1">https://doi.org/10.1007/s41775-022-00132-1</a>.
+</div>
+<div id="ref-samratInformingPolicyInspiring" class="csl-entry">
+Samrat, Allen. n.d. <em>Informing <span>Policy</span>, <span>Inspiring
+Change</span>: <span>National Symposium</span> on <span>“<span>How NSS
+Surveys Have Influenced Public Policy</span>”</span></em>. No. 2176215.
+Press Information Bureau. Accessed October 24, 2025. <a href="https://www.pib.gov.in/PressReleasePage.aspx?PRID=2176215">https://www.pib.gov.in/PressReleasePage.aspx?PRID=2176215</a>.
+</div>
+<div id="ref-sarmaIntersectionsHeritageMultilingualism2025" class="csl-entry">
+Sarma, Vaijayanthi M. 2025. <span>“Intersections Between Heritage,
+Multilingualism, and Education: Language Acquisition in
+<span>India</span>.”</span> <em>Frontiers in Human Neuroscience</em> 19
+(October): 1538482. <a href="https://doi.org/10.3389/fnhum.2025.1538482">https://doi.org/10.3389/fnhum.2025.1538482</a>.
+</div>
+<div id="ref-schneiderColliderBiasEconomic2020" class="csl-entry">
+Schneider, Eric B. 2020. <span>“Collider Bias in Economic History
+Research.”</span> <em>Explorations in Economic History</em> 78 (August):
+101356. <a href="https://doi.org/10.1016/j.eeh.2020.101356">https://doi.org/10.1016/j.eeh.2020.101356</a>.
+</div>
+<div id="ref-scholbeckMarginalEffectsNonlinear2024" class="csl-entry">
+Scholbeck, Christian A., Giuseppe Casalicchio, Christoph Molnar, Bernd
+Bischl, and Christian Heumann. 2024. <span>“Marginal Effects for
+Non-Linear Prediction Functions.”</span> <em>Data Mining and Knowledge
+Discovery</em> 38 (5): 2997–3042. <a href="https://doi.org/10.1007/s10618-023-00993-x">https://doi.org/10.1007/s10618-023-00993-x</a>.
+</div>
+<div id="ref-shastry2012a" class="csl-entry">
+Shastry, G. K. 2012. <span>“Human Capital Response to
+Globalization.”</span> <em>Journal of Human Resources</em> 47 (2):
+287–330. <a href="https://doi.org/10.3368/jhr.47.2.287">https://doi.org/10.3368/jhr.47.2.287</a>.
+</div>
+<div id="ref-shrivastavInformalityIndianLabour2026a" class="csl-entry">
+Shrivastav, Puneet Kumar, and Tareef Husain. 2026. <span>“Informality in
+the <span>Indian Labour Market</span>: <span>Recent
+Evidences</span>.”</span> In <em>India’s <span>Political Economy</span>
+@75</em>, edited by Praveen Jha, Puja Pal, and Bhaskar Majumder.
+Springer Nature Singapore. <a href="https://doi.org/10.1007/978-981-96-7882-2_13">https://doi.org/10.1007/978-981-96-7882-2_13</a>.
+</div>
+<div id="ref-singh2013" class="csl-entry">
+Singh, Abhijeet. 2013. <span>“Size and <span>Sources</span> of the
+<span>Private School Premium</span> in <span>Test Scores</span> in
+<span>India</span>.”</span> Working Paper. <a href="https://ora.ox.ac.uk/objects/uuid:4edff2cf-5534-473f-b01d-f21e10f1a34d">https://ora.ox.ac.uk/objects/uuid:4edff2cf-5534-473f-b01d-f21e10f1a34d</a>.
+</div>
+<div id="ref-smokotin2014a" class="csl-entry">
+Smokotin, Vladimir M., Anna S. Alekseyenko, and Galina I. Petrova. 2014.
+<span>“The <span>Phenomenon</span> of <span>Linguistic
+Globalization</span>: <span>English</span> as the <span>Global Lingua
+Franca</span> (<span>EGLF</span>).”</span> <em>Procedia - Social and
+Behavioral Sciences</em> 154: 509–13. <a href="https://doi.org/10.1016/j.sbspro.2014.10.177">https://doi.org/10.1016/j.sbspro.2014.10.177</a>.
+</div>
+<div id="ref-srivastavaLowFeePrivateSchooling2013" class="csl-entry">
+Srivastava, Prachi. 2013. <span>“Low-<span>Fee Private Schooling</span>:
+<span>Issues</span> and <span>Evidence</span>.”</span> In <em>Oxford
+<span>Studies</span> in <span>Comparative Education Series</span></em>.
+<a href="https://www.prachisrivastava.com/uploads/1/9/5/1/19518861/srivastava_2013_low_fee_private_schooling_review_chapter.pdf">https://www.prachisrivastava.com/uploads/1/9/5/1/19518861/srivastava_2013_low_fee_private_schooling_review_chapter.pdf</a>.
+</div>
+<div id="ref-subramanianIndiasGDPMisestimation2019" class="csl-entry">
+Subramanian, Arvind. 2019. <span>“India’s <span class="nocase">GDP
+Mis-estimation</span>: <span>Likelihood</span>, <span>Magnitudes</span>,
+<span>Mechanisms</span>, and <span>Implications</span>.”</span> No. 354.
+Pre-published June. <a href="https://www.hks.harvard.edu/centers/cid/publications/faculty-working-papers/india-gdp-overestimate">https://www.hks.harvard.edu/centers/cid/publications/faculty-working-papers/india-gdp-overestimate</a>.
+</div>
+<div id="ref-jainConstitutionEightysixthAmendment2002" class="csl-entry">
+The <span>Constitution</span> (<span class="nocase">Eighty-sixth
+Amendment</span>) <span>Act</span>, 2002 (2002). <a href="https://www.india.gov.in/my-government/constitution-india/amendments/constitution-india-eighty-sixth-amendment-act-2002">https://www.india.gov.in/my-government/constitution-india/amendments/constitution-india-eighty-sixth-amendment-act-2002</a>.
+</div>
+<div id="ref-tooleyExtendingAccessLowcost2016" class="csl-entry">
+Tooley, James. 2016. <span>“Extending Access to Low-Cost Private Schools
+Through Vouchers: An Alternative Interpretation of a Two-Stage
+<span>‘<span>School Choice</span>’</span> Experiment in
+<span>India</span>.”</span> <em>Oxford Review of Education</em> 42 (5):
+579–93. <a href="https://doi.org/10.1080/03054985.2016.1217689">https://doi.org/10.1080/03054985.2016.1217689</a>.
+</div>
+<div id="ref-tooleySchoolChoiceAcademic2011" class="csl-entry">
+Tooley, James, Yong Bao, Pauline Dixon, and John Merrifield. 2011.
+<span>“School <span>Choice</span> and <span>Academic Performance</span>:
+<span>Some Evidence From Developing Countries</span>.”</span>
+<em>Journal of School Choice</em> 5 (1): 1–39. <a href="https://doi.org/10.1080/15582159.2011.548234">https://doi.org/10.1080/15582159.2011.548234</a>.
+</div>
+<div id="ref-topalovaTradeLiberalizationPoverty2005" class="csl-entry">
+Topalova, Petia. 2005. <em>Trade <span>Liberalization</span>,
+<span>Poverty</span>, and <span>Inequality</span>: <span>Evidence</span>
+from <span>Indian Districts</span></em>. No. w11614. National Bureau of
+Economic Research. <a href="https://doi.org/10.3386/w11614">https://doi.org/10.3386/w11614</a>.
+</div>
+<div id="ref-topalovaFactorImmobilityRegional2010" class="csl-entry">
+Topalova, Petia. 2010. <span>“Factor <span>Immobility</span> and
+<span>Regional Impacts</span> of <span>Trade Liberalization</span>:
+<span>Evidence</span> on <span>Poverty</span> from
+<span>India</span>.”</span> <em>American Economic Journal: Applied
+Economics</em> 2 (4): 1–41. <a href="https://doi.org/10.1257/app.2.4.1">https://doi.org/10.1257/app.2.4.1</a>.
+</div>
+<div id="ref-treffers2022a" class="csl-entry">
+Treffers-Daller, J., L. Mukhopadhyay, A. Balasubramanian, V. Tamboli,
+and I. M. Tsimpli. 2022. <span>“How Ready Are Indian Primary School
+Children for English Medium Instruction? <span>An</span> Analysis of the
+Relationship Between the Reading Skills of Low-<span>SES</span>
+Children, Their Oral Vocabulary and <span>English</span> Input in the
+Classroom in Government Schools in <span>India</span>.”</span>
+<em>Applied Linguistics</em> 43 (4): 746–75. <a href="https://doi.org/10.1093/applin/amac003">https://doi.org/10.1093/applin/amac003</a>.
+</div>
+<div id="ref-vij2020a" class="csl-entry">
+Vij, Shivam. 2020. <span>“The Mother Tongue Fanatics Are Keeping
+<span>India</span> a Poor, Backward Country.”</span> <em>ThePrint</em>
+(New Delhi), July 31. <a href="https://theprint.in/opinion/the-mother-tongue-fanatics-are-keeping-india-a-poor-backward-country/471997/">https://theprint.in/opinion/the-mother-tongue-fanatics-are-keeping-india-a-poor-backward-country/471997/</a>.
+</div>
+<div id="ref-vuNoteInterpretingBetaconvergence2013" class="csl-entry">
+Vu, K. M. 2013. <span>“A Note on Interpreting the Beta-Convergence
+Effect.”</span> <em>Economics Letters</em> 118 (1): 46–49. <a href="https://doi.org/10.1016/j.econlet.2012.09.008">https://doi.org/10.1016/j.econlet.2012.09.008</a>.
+</div>
+<div id="ref-wheeboxIndiaSkillsReport2024" class="csl-entry">
+Wheebox. 2024. <em>India <span>Skills Report</span> 2024</em>. Wheebox
+(An ETS Company). <a href="https://wheebox.com/assets/pdf/ISR_Report_2024.pdf">https://wheebox.com/assets/pdf/ISR_Report_2024.pdf</a>.
+</div>
+<div id="ref-xu2022a" class="csl-entry">
+Xu, R., and J. M. Wooldridge. 2022. <em>A <span>Design-Based</span>
+Approach to Spatial Correlation</em>. <a href="https://doi.org/10.48550/arxiv.2211.14354">https://doi.org/10.48550/arxiv.2211.14354</a>.
+</div>
+<div id="ref-zhang.etal2024" class="csl-entry">
+Zhang, Wenyu, Xue Han, Qi Ding, and Dawei Zhang. 2024. <span>“Analysis
+of Spatial Spillover Effects and Influencing Factors of Transportation
+Carbon Emission Efficiency from a Provincial Perspective in
+<span>China</span>.”</span> <em>Environmental Science and Pollution
+Research</em> 31 (8): 12174–93. <a href="https://doi.org/10.1007/s11356-024-31840-1">https://doi.org/10.1007/s11356-024-31840-1</a>.
+</div>
+</div>
+</div>
+<div class="footnotes footnotes-end-of-document">
+<hr />
+<ol>
+<li id="fn1"><p>Note that lower levels of education are instead strongly
+correlated with youth <em>under</em>employment <span class="citation">(<a href="#ref-organization2024a">International Labour
+Organization 2024, 130</a>)</span>. There are no winners here.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>We will return to “exposure” again in Sec. <span class="citation">(<a href="#ref-sec-iv-model"><strong>sec-iv-model?</strong></a>)</span><a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p>Particularly from caste and the
+intergenerationally-rigid distributions of wage, employment, and
+occupation it enforces, as studied by <span class="citation">Madheswaran
+and Singhari (<a href="#ref-madheswaran.singhari2016">2016</a>)</span>
+and <span class="citation">Munshi and Rosenzweig (<a href="#ref-munshi2006a">2006</a>)</span>. See <span class="citation">Mathur (<a href="#ref-mathur2013a">2013</a>)</span> and
+<span class="citation">Mathew and Srivastava (<a href="#ref-mathew2011a">2011</a>)</span> for their advocation of, as
+well as <span class="citation">Vij (<a href="#ref-vij2020a">2020</a>)</span> for their polemic for, EMI as a
+means of upwards growth.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+<li id="fn4"><p> The key mechanism here appears to be the effect of
+exposure to a language at home on a child’s ability to learn the
+language <span class="citation">(<a href="#ref-nair2015a">Nair 2015</a>;
+<a href="#ref-erlingMediumInstructionPolicies2016">Erling et al.
+2016</a>)</span>. The dissimilarity between the languages spoken at home
+and the colonial languages chosen as lingua franca and media of
+instruction across the extremely linguistically diverse sub-Saharan
+Africa helps explain, per <span class="citation">Laitin and Ramachandran
+(<a href="#ref-laitin2022a">2022</a>)</span>, the low rates of absolute
+learning and thus low rates of development in the region. Another
+potential mechanism, once hotly debated, is that childhood bilingualism
+generally confuses children, and that they most effectively learn with
+only one language while young <span class="citation">(<a href="#ref-hakutaChapter2Bilingualism1986">Hakuta 1986</a>)</span>. The
+true effects of such bilingualism, however, seem to be much more
+nuanced; see <span class="citation">Bialystok et al. (<a href="#ref-bialystokBilingualismConsequencesMind2012">2012</a>)</span>
+for a review and for the effects of bilingualism into adulthood and old
+age.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
+<li id="fn5"><p>The long-term consistency of this trend reflects the
+longevity of the civil service protections which produce it: limits on
+teacher hiring/firing power in government schools enable qualified
+teachers to extract such rents <span class="citation">(<a href="#ref-chaudhury.etal2006">Chaudhury et al. 2006</a>)</span>. Even
+when rarely-absent teachers rationally advocate for such protections,
+they end up further deepening the culture of absence which <span class="citation">Basu (<a href="#ref-basu2006">2006</a>)</span> finds to
+explain the significant state-by-state heterogeneity in teacher
+absenteeism rates. The simple act of increasing the frequency of teacher
+monitoring, however, is enough to drastically reduce absenteeism <span class="citation">(<a href="#ref-kremer.etal2005">Kremer et al. 2005</a>;
+<a href="#ref-muralidharan.etal2017">Muralidharan et al.
+2017</a>)</span>.<a href="#fnref5" class="footnote-back">↩︎</a></p></li>
+<li id="fn6"><p>The best evidence for this comes from <span class="citation">Andrabi et al. (<a href="#ref-andrabiReportCardsImpact2017">2017</a>)</span> and <span class="citation">Afridi et al. (<a href="#ref-afridiImprovingLearningOutcomes2020">2020</a>)</span>, whose
+experimental treatments of education information provisioned to parents
+led to a more efficient market and improved student outcomes,
+particularly in the private schools nudged to improve quality by the
+treatment.<a href="#fnref6" class="footnote-back">↩︎</a></p></li>
+<li id="fn7"><p>Which in practice often equals private schooling; see
+<span class="citation">Tooley et al. (<a href="#ref-tooleySchoolChoiceAcademic2011">2011</a>)</span>.<a href="#fnref7" class="footnote-back">↩︎</a></p></li>
+<li id="fn8"><p>‘Low cost’ may be a misnomer: poor households in the
+Delhi National Capital who sent their children to private school did so
+at the expense of 7-20% of their monthly incomes <span class="citation">(<a href="#ref-endow2019a">Endow 2019</a>)</span>.<a href="#fnref8" class="footnote-back">↩︎</a></p></li>
+<li id="fn9"><p>The demand for higher quality education almost always
+takes precedence over the demand for EMI, however. In 2014, for example,
+<span class="citation">Joshi and Kumar (<a href="#ref-joshiUnderstandingConsumerDemographics2017">2017</a>)</span>
+show that 76% of households who chose private education did so for
+either a “better environment of learning” or to get a better education
+than a government school. Only 15.4%, however, listed EMI. Still, aside
+from private schooling, EMI seems to be the most frequently used proxy
+for high quality education<a href="#fnref9" class="footnote-back">↩︎</a></p></li>
+<li id="fn10"><p>It’s worth noting our exclusion of the results from
+<span class="citation">Muralidharan and Sundararaman (<a href="#ref-muralidharan2015a">2015</a>)</span>, despite it being a
+particularly noteworthy paper on the limitations of private schooling.
+By studying a randomized controlled trial of a private EMI voucher
+experiment, they discover that private schools did <em>not</em> lead to
+improvements in educational outcomes (although they did significantly
+lower cost). <span class="citation">Tooley (<a href="#ref-tooleyExtendingAccessLowcost2016">2016</a>)</span>, however,
+points out that this result may be driven by the fact that instructions
+for non-language subject exams were given in Telugu for government
+schools and English for private schools. He then finds “suggestive”
+evidence of what results would look like if all children took the same
+test (p. 580), and from there demonstrates a large, statistically
+significant advantage for private education.<a href="#fnref10" class="footnote-back">↩︎</a></p></li>
+<li id="fn11"><p>See <span class="citation">Shrivastav and Husain (<a href="#ref-shrivastavInformalityIndianLabour2026a">2026</a>)</span> and
+<span class="citation">Bahl and Sharma (<a href="#ref-bahlInformalityEducationoccupationMismatch2024">2024</a>)</span>
+for the frequency and wage effects of informality respectively. Wages
+may still be more responsive to EMI in the medium-run window we study,
+however. See Sec. <span class="citation">(<a href="#ref-sec-alty"><strong>sec-alty?</strong></a>)</span> for more.<a href="#fnref11" class="footnote-back">↩︎</a></p></li>
+<li id="fn12"><p>A district in India is akin to a county in the United
+States, but with an average population of 2 million. Table <span class="citation">(<a href="#ref-tbl-sum-tbl-iv"><strong>tbl-sum-tbl-iv?</strong></a>)</span>
+contains more information on district populations.<a href="#fnref12" class="footnote-back">↩︎</a></p></li>
+<li id="fn13"><p>Future work may incorporate both education selection
+and EMI exposure as endogenous regressors in a first-difference (FD)
+2SLS design. The district-level aggregates of Table <span class="citation">(<a href="#ref-tbl-sum-tbl-probit-quant"><strong>tbl-sum-tbl-probit-quant?</strong></a>)</span>
+may be able to function as education supply-shifting instruments.<a href="#fnref13" class="footnote-back">↩︎</a></p></li>
+<li id="fn14"><p>Cohort-specific measures of EMI exposure may thus be
+incorporated into future drafts, as may robustness checks that use
+school-reported data on medium of instruction to construct EMI
+exposure—with the aforementioned caveat that schools may lie about
+having EMI <span class="citation">(<a href="#ref-mathew2011a">Mathew and
+Srivastava 2011</a>; <a href="#ref-lahoti2019a">Lahoti and Mukhopadhyay
+2019</a>)</span>. Such surveys may also reveal whether EMI exposure is
+rigid over time. If so, this could allow us to expand the window of time
+over which we can interpret our results. Rigidity could also rule out
+the agglomeration of EMI discussed in Sec. <span class="citation">(<a href="#ref-sec-disc"><strong>sec-disc?</strong></a>)</span> as a
+potential attenuating force behind our results.<a href="#fnref14" class="footnote-back">↩︎</a></p></li>
+<li id="fn15"><p>Clusters were formed at the primary sampling unit,
+which were rural villages and urban blocks. These clusters were nested,
+or defined within, substrata which were themselves nested within strata.
+(Strata generally corresponded to districts, whereas substrata generally
+corresponded to each side of the rural/urban partition of the district.
+Multiple urban substrata were allowed for particularly dense areas, with
+the largest number of substrata within a district being 29.) All were
+accounted for in the probit.<a href="#fnref15" class="footnote-back">↩︎</a></p></li>
+<li id="fn16"><p>“Intuitively, the bias-adjusted sample size is the size
+of the simple random sample that would have generated the same mean
+squared error” <span class="citation">(<a href="#ref-raviAssessingNationalSurveys2023">Ravi et al. 2023,
+3</a>)</span><a href="#fnref16" class="footnote-back">↩︎</a></p></li>
+<li id="fn17"><p>Three such variables had missing values before
+dropping: the district-average <span class="math inline">\(\overline{\mathrm{EnrollmentCost}}_{d(i)}\)</span>
+(7109 missing values), the distance from the nearest primary class
+(312), and the father’s education proxy (67). We find that none of these
+variables are MCAR (missing completely at random) under logistic
+regressions with missingness indiciators and adjusted <span class="math inline">\(p\)</span>-values <span class="citation">(per <a href="#ref-benjaminiControllingFalseDiscovery1995">Benjamini and
+Hochberg 1995</a>)</span>. The lowest McFadden pseudo <span class="math inline">\(R^2\)</span> among the three was a 0.246 on
+father’s education, which had three predictors significant at a level of
+0.05 (that is, three variables in the data could predict its missingness
+with adjusted <span class="math inline">\(p\)</span>-values below the
+0.05 threshold). The highest pseudo <span class="math inline">\(R^2\)</span> was a 0.31 for <span class="math inline">\(\overline{\mathrm{EnrollmentCost}}_{d(i)}\)</span>,
+which had nine significant predictors. Note that prior to this, many
+other NAs in <span class="math inline">\(\overline{\mathrm{EnrollmentCost}}_{d(i)}\)</span>
+were handled using codebook-informed aggregations and redefinitions of
+the variables summed to derive <span class="math inline">\(\mathrm{EnrollmentCost}_i\)</span>.<a href="#fnref17" class="footnote-back">↩︎</a></p></li>
+<li id="fn18"><p>Future work will likely use these district-level
+averages as instruments for enrollment, an endogenous variable to be
+included alongside EMIE in a first-difference (FD) 2SLS framework. It
+may be possible to use this probit as a control function or in a
+two-stage residual inclusion (2SRI) estimation.<a href="#fnref18" class="footnote-back">↩︎</a></p></li>
+<li id="fn19"><p><span class="citation">Card (<a href="#ref-card1999">1999</a>)</span> shows that in the US, among people
+born from before 1920 to 1964, mother’s education better predicts school
+completion among Black people, whereas father’s education better
+predicts for cohorts born 1955-1964. In general, however, he finds
+mother’s education to be the the slightly better predictor of school
+completion. It’s interesting to note that this is a quantitative
+outcome: one might also expect mother’s education to better predict the
+<em>quality</em> of early childhood investment too, with father’s
+education relating more to the quantity of early childhood investment.<a href="#fnref19" class="footnote-back">↩︎</a></p></li>
+<li id="fn20"><p>This is a clear indication of severe, systematic
+misclassification error. Further checks on the presence of
+misclassification imply that the codes for unmarried children and
+spouses of heads were simply flipped; the average age of male “unmarried
+children,” for example, is 26.9 in the data. Future work will either
+incorporate the mislabeled “unmarried children” into this proxy chain
+for father’s education, or use the household head’s education alone as
+proxy.<a href="#fnref20" class="footnote-back">↩︎</a></p></li>
+<li id="fn21"><p><span class="citation">Dawood and Megahed (<a href="#ref-dawoodAutomaticDifferentiationUncertainties2023">2023</a>)</span>
+provide a good treatment of automatic differentiation, describing it as
+a process which is “neither numeric nor symbolic, nor is it a
+combination of both…. In contrast to the more traditional numerical
+methods based on finite differences, auto-differentiation is ‘in theory’
+exact, and in comparison to symbolic algorithms, it is computationally
+inexpensive.” The <code>marginaleffects</code> package itself claims
+automatic differentiation is both faster and more accurate for some
+models <span class="citation">(<a href="#ref-arel-bundockHowInterpretStatistical2024">Arel-Bundock et al.
+2024</a>)</span>.<a href="#fnref21" class="footnote-back">↩︎</a></p></li>
+<li id="fn22"><p>Such interpretations are possible because AME is
+averaged across all observations, making them more generalizable than
+metrics like marginal effects at the mean <span class="citation">(<a href="#ref-nguyenGuideDataAnalysis2020">Nguyen 2020</a>)</span>. But
+their interpretability is still also dependent on a linearity assumption
+which may not be valid. Future work may thus abide by the argument of
+<span class="citation">Scholbeck et al. (<a href="#ref-scholbeckMarginalEffectsNonlinear2024">2024</a>)</span>, that
+no one single metric can be used to summarize a non-linear prediction
+function’s feature effects, and may instead report conditional feature
+effect estimates by applying their concept of forward marginal effects
+within population subgroups.<a href="#fnref22" class="footnote-back">↩︎</a></p></li>
+<li id="fn23"><p>In 2002, the right to free and compulsory education for
+all children aged 6-14 was enshrined by <span class="citation">(<a href="#ref-jainConstitutionEightysixthAmendment2002">The
+<span>Constitution</span> (<span class="nocase">Eighty-sixth
+Amendment</span>) <span>Act</span>, 2002 2002</a>)</span> into the
+Constitution of India. One might expect this to explain our <span class="math inline">\(\mathrm{AME}_{\text{Age}}\)</span> result as the
+product of a steep drop in enrollment between the ages of 14 and 15
+which violates the linearity assumption underlying the interpretation of
+AME values <span class="citation">(<a href="#ref-scholbeckMarginalEffectsNonlinear2024">Scholbeck et al.
+2024</a>)</span>. But the amendment neither enforced nor implemented,
+instead only mandating future legislation to do so; such legislation was
+not passed until 2009 <span class="citation">Department of Higher
+Education (<a href="#ref-departmentofhighereducationProvisionsConstitutionIndia2010">2010</a>)</span>.
+Something which did exist in 2007-08, however, was the Sarva Shiksha
+Abhiyan program, which had been allocating funds for school
+construction, facilities management, teacher training, girls’ education,
+and so on since 2001-02 <span class="citation">(<a href="#ref-pressinformationbureauInitiativesHumanResource2008">Press
+Information Bureau 2008</a>)</span>. One would expect this to increase
+(as in make more positive) our <span class="math inline">\(\mathrm{AME}_{\text{Age}} =\)</span> — estimate,
+and it likely has increased our <span class="math inline">\(\mathrm{AME}_{\text{Female}} =\)</span> —
+estimate.<a href="#fnref23" class="footnote-back">↩︎</a></p></li>
+<li id="fn24"><p>Given a <span class="math inline">\(p\)</span>-value,
+we can define the <span class="math inline">\(s\)</span>-value as <span class="math inline">\(s=-\log_2(p)\)</span> <span class="citation">(<a href="#ref-mansourniaPvalueCompatibilitySvalue2022">Mansournia et al.
+2022</a>)</span>.<a href="#fnref24" class="footnote-back">↩︎</a></p></li>
+<li id="fn25"><p>Future work will likely add school enrollment in
+general as another endogenous regressor in our model, to reflect the
+extensive margin of selection into school.<a href="#fnref25" class="footnote-back">↩︎</a></p></li>
+<li id="fn26"><p>Which is a flawed measure of consumption growth on two
+fronts: 1) it is only a nominal measure, meaning local variations in
+inflation are not accounted for, and 2) by using a ratio it creates the
+potential for spurious correlations <span class="citation">(<a href="#ref-kronmalSpuriousCorrelationFallacy1993">Kronmal
+1993</a>)</span>; see Sec. <span class="citation">(<a href="#ref-sec-alty"><strong>sec-alty?</strong></a>)</span> for more.
+Future work will deflate all monetary measures and will either use
+equations of the form Kronmal proposes, or will replace this measure
+with standard, simple log differences.<a href="#fnref26" class="footnote-back">↩︎</a></p></li>
+<li id="fn27"><p>Perhaps the largest in the world, per one metric from
+<span class="citation">Gurevich et al. (<a href="#ref-gurevichDatasetLinguisticConnectivity2025">2025</a>)</span>.<a href="#fnref27" class="footnote-back">↩︎</a></p></li>
+<li id="fn28"><p>Many-to-many matching from 2001 to 2007-08 to 2017-18
+was used to accurately reflect how real district changes occur as both
+mergers and partitions. While the intent was accuracy, the effect was
+degradation: the multiple duplicated rows for 2001 and 2007-08 measures
+in particular almost surely devastated the rank of the design matrix.<a href="#fnref28" class="footnote-back">↩︎</a></p></li>
+<li id="fn29"><p>Dimensionality reduction (e.g., principal component
+analysis, ridge, lasso) and simultaneous equation estimation techniques
+beyond 2SLS (e.g., LIML) may also be used if our instrument reveals
+itself it to be weak after this.<a href="#fnref29" class="footnote-back">↩︎</a></p></li>
+<li id="fn30"><p>Though perhaps not in line with <span class="citation">Economic Division (<a href="#ref-divison2015a">2017</a>)</span>, whose gravity model for
+migration purportedly shows that while political barriers constrain
+migration, linguistic ones do not: “not having a common language does
+not impede the flow of migrants” (p. 275). Their ‘common language’
+proxy, however, only indicates if a state is primarily Hindi-speaking or
+not. If Hindi truly does compete with English as national lingua franca,
+as <span class="citation">Clingingsmith (<a href="#ref-clingingsmithIndustrializationBilingualismIndia2014">2014</a>)</span>
+claims, then insignificance is expected.<a href="#fnref30" class="footnote-back">↩︎</a></p></li>
+<li id="fn31"><p><span class="citation">Shastry (<a href="#ref-shastry2012a">2012</a>)</span> finds similar results across
+different measures, including the share of speakers with mother tongues
+three or more degrees away. One such measure relies on currently
+inaccessible data on the percent of cognates shared with Hindi. <span class="citation">Anderson et al. (<a href="#ref-andersonIndoEuropeanCognateRelationships2025">2025</a>)</span>
+may enable us to construct a cognate-based measure and replicate her
+robustness checks.<a href="#fnref31" class="footnote-back">↩︎</a></p></li>
+<li id="fn32"><p>This <span class="math inline">\(p\)</span>-value is
+suspiciously small and likely driven, at least in part, by confounding
+state/region effects. After adding state FEs, future relevance checks
+include the partial <span class="math inline">\(R^2\)</span>,
+statistical tests beyond a Wald with robust covariances, and a jackknife
+to ensure that leaving out any one state/region does not destroy <span class="math inline">\(F\)</span>.<a href="#fnref32" class="footnote-back">↩︎</a></p></li>
+<li id="fn33"><p>Which would allow us to obtain a LATE interpretation
+without nonparametric estimation or further parametric specification,
+per <span class="citation">Blandhol et al. (<a href="#ref-blandholWhenTSLSActually2022">2022</a>)</span>. Conversely,
+see <span class="citation">Chen (<a href="#ref-chenNoteInstrumentalVariable2022">2022</a>)</span> for the
+conditions under which we can get a conditional LATE.<a href="#fnref33" class="footnote-back">↩︎</a></p></li>
+<li id="fn34"><p>Multiple specifications could help us confirm relevance
+and covariate constructions (e.g., by testing the effect of EMI under
+different proxies of ability, as <span class="citation">Azam et al. (<a href="#ref-azam2013a">2013</a>)</span> do), but they may be helpful in
+other ways as well. A positive OLS coefficient on <span class="math inline">\(\mathrm{EMIE}_d\)</span> despite a near-zero IV
+coefficient on <span class="math inline">\({\mathrm{EMIE}_d}\)</span>,
+for example, could imply that while EMIE can <em>predict</em> local
+growth, any ostensible causality there is actually driven by unobserved
+features of households’ contexts which correlate with their EMIE.<a href="#fnref34" class="footnote-back">↩︎</a></p></li>
+<li id="fn35"><p>What they may not address, however, is possible
+collider bias; see <span class="citation">Schneider (<a href="#ref-schneiderColliderBiasEconomic2020">2020</a>)</span> for an
+excellent review.<a href="#fnref35" class="footnote-back">↩︎</a></p></li>
+<li id="fn36"><p>Note that a shortage of labor demand contradicts <span class="citation">Mukherjee (<a href="#ref-mukherjee2013a">2013</a>)</span>, <span class="citation">International Labour Organization (<a href="#ref-organization2024a">2024</a>)</span>, and <span class="citation">Wheebox (<a href="#ref-wheeboxIndiaSkillsReport2024">2024</a>)</span>, who all find
+in Indian labor markets a shortage of talented labor <em>supply</em>,
+not demand. Even those who do get an education often do not gain
+in-demand technical proficiencies and skills as a result of the poor
+quality of education.<a href="#fnref36" class="footnote-back">↩︎</a></p></li>
+<li id="fn37"><p>Though note that medium and large land-ownership still
+had <span class="math inline">\(p\)</span>-values of — and —
+respectively.<a href="#fnref37" class="footnote-back">↩︎</a></p></li>
+<li id="fn38"><p>Which itself is a flawed measure due to the spurious
+correlations which may arise from regressing on a ratio <span class="citation">(<a href="#ref-kronmalSpuriousCorrelationFallacy1993">Kronmal
+1993</a>)</span>. Future work will either replace this with Kronmal’s
+proposed model (akin to “multiplying” the response variable’s
+denominator across the right-hand side) or with a simple log
+difference.<a href="#fnref38" class="footnote-back">↩︎</a></p></li>
+<li id="fn39"><p>State fixed effects should absorb many predictors of
+this e.g., labor regulation <span class="citation">(<a href="#ref-besleyCanLaborRegulation2004">Besley and Burgess
+2004</a>)</span>.<a href="#fnref39" class="footnote-back">↩︎</a></p></li>
+<li id="fn40"><p>We define an area’s ‘migration rate’ over a period as
+the share of this area’s end-of-period population who report having
+migrated over said period. The ‘decadal inter-district migration rate
+for rural areas in 2001’, for example, would refer to the “percent of
+people living in rural areas [who in 2001] reported changing [their
+district] within the past 10 years” <span class="citation">(<a href="#ref-topalovaTradeLiberalizationPoverty2005">Topalova 2005,
+25</a>)</span>. Social scientists only look at migrations reported
+within the past one, five, ten, etc. years to both capture shorter-term
+fluctuations in migration trends and to avoid the cumulative nature of
+metrics built on all lifetime migrants <span class="citation">(<a href="#ref-mahapatroInternalMigrationEmerging2020">Mahapatro
+2020</a>)</span>.<a href="#fnref40" class="footnote-back">↩︎</a></p></li>
+<li id="fn41"><p>More precisely, they “assume that district of current
+residence (or of employment) of an individual is approximately the same
+as the schooling district” <span class="citation">(<a href="#ref-chakraborty2016a">Chakraborty and Bakshi 2016,
+6</a>)</span>.<a href="#fnref41" class="footnote-back">↩︎</a></p></li>
+<li id="fn42"><p>And perhaps only for short times as well, though this
+may only be the product of data interpretation errors. <span class="citation">Keshri and Bhagat (<a href="#ref-keshriSocioeconomicDeterminantsTemporary2013">2013</a>)</span>,
+for example, use 2007-08 data from the <span class="citation">National
+Sample Survey Office (<a href="#ref-nationalsamplesurveyofficeIndiaEmploymentUnemployment2010">2010</a>)</span>
+to find a temporary (1-6 months) labor migration rate of 26% in rural
+areas, 13 times larger than the permanent labor migration rate. And yet,
+despite using the same 2007-08 data, <span class="citation">Lucas (<a href="#ref-lucasImpermanenceMovesReturn2021">2021b</a>)</span> finds
+this same rate to be 2.6%. Barring the possibility of a misplaced
+decimal point, the sole difference seems to be Lucas’s observation that
+the NSS Office’s definition of ‘temporary’ migration only considered if
+a migration was <em>intended</em> to be temporary, not if it actually
+was; he adjusts his measures accordingly, whereas Keshri and Bhagat, it
+seems, do not. <span class="citation">Imbert and Papp (<a href="#ref-imbertShorttermMigrationRural2020">2020</a>)</span>
+corroborate Lucas’s number.<a href="#fnref42" class="footnote-back">↩︎</a></p></li>
+<li id="fn43"><p>Though a large majority of women list marriage as their
+primary reason for migrating, over the past few decades economic factors
+have gained greater and greater explanatory power <span class="citation">(<a href="#ref-mahapatroInternalMigrationEmerging2020">Mahapatro
+2020</a>)</span>, and women who list marriage will increasingly begin
+working right after migrating anyways <span class="citation">(<a href="#ref-rajanCOVID19PandemicInternal2020">Rajan et al.
+2020</a>)</span>. The relationship between social capital, information
+networks, and economically-motivated female migration is further
+explored by <span class="citation">Neetha (<a href="#ref-neethaMakingFemaleBreadwinners2004">2004</a>)</span>.<a href="#fnref43" class="footnote-back">↩︎</a></p></li>
+<li id="fn44"><p><span class="citation">Lucas (<a href="#ref-lucasImpermanenceMovesReturn2021">2021b</a>)</span> also uses
+NSS data to find far, far smaller rates of short-term migration, with
+2.6% of rural adults migrating for 1-6 months versus the 50% estimates
+cited by, say, <span class="citation">Morten (<a href="#ref-mortenTemporaryMigrationEndogenous2019">2019</a>)</span>.<a href="#fnref44" class="footnote-back">↩︎</a></p></li>
+<li id="fn45"><p>Which defines net migration as “the percentage change
+in population between the 10-19 year-old cohort in an initial census
+period and the 20-29 year-old cohort in the same area a decade later,
+after correcting for mortality effects” <span class="citation">(<a href="#ref-divison2015a">Economic Division 2017, 267</a>)</span>.<a href="#fnref45" class="footnote-back">↩︎</a></p></li>
+<li id="fn46"><p>Reminiscent of <span class="citation">Kone et al. (<a href="#ref-koneInternalBordersMigration2018">2018</a>)</span>, the <span class="citation">Economic Division (<a href="#ref-divison2015a">2017</a>)</span> finds that within-state flows
+of labor migration are much higher than between-state flows. State fixed
+effects will be essential for further analysis.<a href="#fnref46" class="footnote-back">↩︎</a></p></li>
+<li id="fn47"><p>Results reflect queen contiguity but are robust to rook
+contiguity.<a href="#fnref47" class="footnote-back">↩︎</a></p></li>
+</ol>
 </div>
 
 

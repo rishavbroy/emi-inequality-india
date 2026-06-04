@@ -1,3 +1,3 @@
-"model","status"
-"baseline","out_of_active_pipeline"
-"fd_log","out_of_active_pipeline"
+"model","term","estimate","std.error","statistic","p.value","status","reason"
+"baseline",NA,NA,NA,NA,NA,"out_of_active_pipeline","Missing variables: consumption_growth_pct, consumption_2007, gini_consumption_2007, wavg_ling_degrees"
+"fd_log",NA,NA,NA,NA,NA,"out_of_active_pipeline","Missing variables: log_consumption_difference, consumption_2007, gini_consumption_2007, wavg_ling_degrees"
