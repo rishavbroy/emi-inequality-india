@@ -55,6 +55,7 @@ full_output.txt
 # operating-system metadata
 .DS_Store
 __MACOSX/
+__pycache__/
 
 # survey-download executables and autorun files
 *.exe
