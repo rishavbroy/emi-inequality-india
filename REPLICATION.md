@@ -41,6 +41,9 @@ make test
 make pipeline-draft
 make report
 make samples
+make check-public-draft
 ```
 
 `make test` should pass without local raw data. The full pipeline requires the local-only raw files listed in the manifest.
+
+`make check-public-draft` is the current public-render smoke check. It tolerates draft-stage unresolved cross-references but still fails on scaffold prose, broken application-sample specs, render failures, and rendered placeholder phrases. `make check-public-final` uses `config/final.yml`, audits all legacy inline report quantities, and is expected to fail until the final model outputs and report cross-references are complete.

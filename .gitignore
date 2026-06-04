@@ -37,6 +37,7 @@ relevant-literature/
 *.bbl
 *.blg
 *.tex
+.texcache/
 
 # temporary application sample assembly files
 application-samples/.work/

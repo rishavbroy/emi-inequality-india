@@ -109,6 +109,17 @@ rewrite_yaml_field <- function(lines, field, value) {
 }
 
 normalize_sample_yaml <- function(lines, bibliography = "../../paper/references.bib") {
+  if (!any(grepl("^format:", lines))) {
+    close <- which(lines[-1L] == "---")
+    if (length(close)) {
+      end <- close[[1]] + 1L
+      lines <- append(lines, c("format:", "  pdf:", "    pdf-engine: xelatex"), after = end - 1L)
+    }
+  }
+  if (!any(grepl("^    pdf-engine:", lines))) {
+    pdf_idx <- grep("^  pdf:\\s*$", lines)
+    if (length(pdf_idx)) lines <- append(lines, "    pdf-engine: xelatex", after = pdf_idx[[1]])
+  }
   lines <- rewrite_yaml_field(lines, "bibliography", bibliography)
   lines <- ensure_yaml_field(lines, "link-citations", "true")
   lines

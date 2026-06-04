@@ -73,8 +73,12 @@ normalize_coding_sample_yaml <- function(lines) {
   rest <- lines[-seq_len(end)]
 
   if (!any(grepl("^format:", yaml))) {
-    yaml <- append(yaml, c("format:", "  pdf:", "    pdf-engine: lualatex"), after = end - 1L)
+    yaml <- append(yaml, c("format:", "  pdf:", "    pdf-engine: xelatex"), after = end - 1L)
     end <- end + 3L
+  }
+  if (!any(grepl("^    pdf-engine:", yaml))) {
+    pdf_idx <- grep("^  pdf:\\s*$", yaml)
+    if (length(pdf_idx)) yaml <- append(yaml, "    pdf-engine: xelatex", after = pdf_idx[[1]])
   }
   if (!any(grepl("^include-in-header:", yaml))) {
     yaml <- append(yaml, c(

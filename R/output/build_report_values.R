@@ -4,51 +4,69 @@ inline_expression_key <- function(expr) {
   paste0("inline_", substr(digest::digest(expr, algo = "xxhash32"), 1L, 8L))
 }
 
+report_value_status <- function(reason, status = "unavailable_in_draft", value = NA, display = "—") {
+  list(status = status, reason = reason, value = value, display = display)
+}
+
+is_report_value_status <- function(value) {
+  is.list(value) && !is.null(value$status) && !is.null(value$reason)
+}
+
+value_or_status <- function(value, reason) {
+  if (length(value) == 0L || all(is.na(value))) report_value_status(reason) else value
+}
+
+as_plain_data_frame <- function(x) {
+  tryCatch(as.data.frame(x), error = function(e) data.frame())
+}
+
 first_available_number <- function(x, candidates) {
   if (is.null(x)) return(NA_real_)
-  x <- tryCatch(as.data.frame(x), error = function(e) data.frame())
+  x <- as_plain_data_frame(x)
   hit <- intersect(candidates, names(x))
   if (!length(hit) || !nrow(x)) return(NA_real_)
   suppressWarnings(as.numeric(x[[hit[[1]]]][[1]]))
 }
 
-first_available_text <- function(x, candidates, default = "not run in current draft pipeline") {
+first_available_text <- function(x, candidates, default = "unavailable in current draft pipeline") {
   if (is.null(x)) return(default)
-  x <- tryCatch(as.data.frame(x), error = function(e) data.frame())
+  x <- as_plain_data_frame(x)
   hit <- intersect(candidates, names(x))
   if (!length(hit) || !nrow(x)) return(default)
   out <- as.character(x[[hit[[1]]]][[1]])
   if (!length(out) || is.na(out) || !nzchar(out)) default else out
 }
 
-coefficient_value <- function(model, term, column = c("Estimate", "estimate"), digits = NULL) {
+coefficient_value <- function(model, terms, column = c("Estimate", "estimate"), digits = NULL) {
   out <- tryCatch({
     sm <- summary(model)
     coefs <- as.data.frame(sm$coefficients)
-    if (!term %in% rownames(coefs)) return(NA_real_)
+    term <- intersect(terms, rownames(coefs))
+    if (!length(term)) return(NA_real_)
     hit <- intersect(column, names(coefs))
     if (!length(hit)) return(NA_real_)
-    suppressWarnings(as.numeric(coefs[term, hit[[1]]]))
+    suppressWarnings(as.numeric(coefs[term[[1]], hit[[1]]]))
   }, error = function(e) NA_real_)
   if (!is.null(digits) && is.finite(out)) out <- round(out, digits)
   out
 }
 
-p_value <- function(model, term, digits = NULL) {
+p_value <- function(model, terms, digits = NULL) {
   out <- tryCatch({
     sm <- summary(model)
     coefs <- as.data.frame(sm$coefficients)
-    if (!term %in% rownames(coefs)) return(NA_real_)
+    term <- intersect(terms, rownames(coefs))
+    if (!length(term)) return(NA_real_)
     hit <- intersect(c("Pr(>|t|)", "Pr(>|z|)", "p.value", "p_value"), names(coefs))
     if (!length(hit)) return(NA_real_)
-    suppressWarnings(as.numeric(coefs[term, hit[[1]]]))
+    suppressWarnings(as.numeric(coefs[term[[1]], hit[[1]]]))
   }, error = function(e) NA_real_)
   if (!is.null(digits) && is.finite(out)) out <- signif(out, digits)
   out
 }
 
 lookup_ame <- function(ame_results, term_pattern, value_col = "estimate", multiply = 1, digits = NULL, contrast_pattern = NULL) {
-  x <- tryCatch(as.data.frame(ame_results), error = function(e) data.frame())
+  x <- as_plain_data_frame(ame_results)
   if (!nrow(x) || !"term" %in% names(x)) return(NA_real_)
   keep <- grepl(term_pattern, x$term)
   if (!is.null(contrast_pattern) && "contrast" %in% names(x)) keep <- keep & grepl(contrast_pattern, x$contrast)
@@ -59,20 +77,59 @@ lookup_ame <- function(ame_results, term_pattern, value_col = "estimate", multip
   out
 }
 
-add_inline_value <- function(values, expr, value) {
-  values[[inline_expression_key(expr)]] <- value
-  values[[expr]] <- value
-  values
+lookup_ame_s_value <- function(ame_results, term_pattern, contrast_pattern = NULL, digits = NULL) {
+  out <- lookup_ame(ame_results, term_pattern, value_col = "s.value", contrast_pattern = contrast_pattern)
+  if (is.finite(out)) {
+    if (!is.null(digits)) out <- signif(out, digits)
+    return(out)
+  }
+  p <- lookup_ame(ame_results, term_pattern, value_col = "p.value", contrast_pattern = contrast_pattern)
+  if (!is.finite(p) || p <= 0) return(NA_real_)
+  out <- -log2(p)
+  if (!is.null(digits)) out <- signif(out, digits)
+  out
 }
 
-format_value <- function(x, fallback = "not run in current draft pipeline") {
-  if (length(x) == 0L || all(is.na(x))) return(fallback)
-  x
+selection_summary_value <- function(selection_data, relation_to_head, sex, summary = c("mean_age", "share_children")) {
+  summary <- match.arg(summary)
+  x <- as_plain_data_frame(selection_data)
+  relation_col <- first_col(x, c("RELATION_TO_HEAD", "relation_to_head"))
+  sex_col <- first_col(x, c("SEX", "sex"))
+  age_col <- first_col(x, c("AGE", "age"))
+  if (is.null(relation_col) || is.null(sex_col) || is.null(age_col)) return(NA_real_)
+
+  keep <- suppressWarnings(as.numeric(as.character(x[[relation_col]])) == relation_to_head) &
+    suppressWarnings(as.numeric(as.character(x[[sex_col]])) == sex)
+  ages <- suppressWarnings(as.numeric(as.character(x[[age_col]][keep])))
+  ages <- ages[is.finite(ages)]
+  if (!length(ages)) return(NA_real_)
+  if (identical(summary, "mean_age")) return(round(mean(ages), 1))
+  round(mean(ages <= 17), 3)
+}
+
+condition_number_value <- function(model) {
+  out <- tryCatch({
+    X <- stats::model.matrix(model)
+    kappa(X, exact = TRUE)
+  }, error = function(e) NA_real_)
+  if (is.finite(out)) format(out, scientific = FALSE, digits = 7) else NA_character_
+}
+
+first_stage_value <- function(first_stage_tests, terms, column = "estimate", digits = NULL) {
+  x <- as_plain_data_frame(first_stage_tests)
+  if (!nrow(x) || !"term" %in% names(x) || !column %in% names(x)) return(NA_real_)
+  term <- intersect(terms, x$term)
+  if (!length(term)) return(NA_real_)
+  out <- suppressWarnings(as.numeric(x[x$term == term[[1]], column][[1]]))
+  if (!is.null(digits) && is.finite(out)) {
+    if (identical(column, "p.value")) out <- signif(out, digits) else out <- round(out, digits)
+  }
+  out
 }
 
 spatial_p_value <- function(diag, pattern = NULL) {
-  x <- tryCatch(as.data.frame(diag), error = function(e) data.frame())
-  if (!nrow(x)) return(first_available_text(diag, c("status", "reason")))
+  x <- as_plain_data_frame(diag)
+  if (!nrow(x)) return(NA_real_)
   if (!is.null(pattern)) {
     text_cols <- intersect(c("estimand", "model", "target", "outcome", "name", "test"), names(x))
     if (length(text_cols)) {
@@ -81,7 +138,18 @@ spatial_p_value <- function(diag, pattern = NULL) {
     }
   }
   out <- first_available_number(x, c("p.value", "p_value", "p", "pval"))
-  if (is.finite(out)) signif(out, 3) else first_available_text(x, c("status", "reason"))
+  if (is.finite(out)) signif(out, 3) else NA_real_
+}
+
+add_inline_value <- function(values, expr, value) {
+  values[[inline_expression_key(expr)]] <- value
+  values[[expr]] <- value
+  values
+}
+
+add_report_value <- function(values, name, expr, value, reason) {
+  values[[name]] <- value_or_status(value, reason)
+  add_inline_value(values, expr, values[[name]])
 }
 
 #' Build report values from current targets
@@ -90,47 +158,76 @@ spatial_p_value <- function(diag, pattern = NULL) {
 build_report_values <- function(ame_results, first_stage_tests, iv_models, selection_data, district_panel, diag_spatial_autocorrelation = NULL, cfg = list()) {
   values <- list()
 
-  values$partial_f <- first_available_number(first_stage_tests, c("partial_f", "statistic", "f_stat", "F"))
-  values$partial_p <- first_available_number(first_stage_tests, c("partial_p", "p.value", "p_value", "p"))
-
   model <- if (is.list(iv_models) && length(iv_models)) iv_models[[1]] else iv_models
-  values$iv_emie_estimate <- coefficient_value(model, "EMIE", c("Estimate", "estimate"), digits = 2)
-  values$iv_emie_p <- p_value(model, "EMIE", digits = 2)
-  values$iv_pct_urban_estimate <- coefficient_value(model, "pct_urban", c("Estimate", "estimate"), digits = 2)
-  values$iv_pct_urban_p <- p_value(model, "pct_urban", digits = 3)
-  values$iv_pct_head_secondary_plus_estimate <- coefficient_value(model, "pct_head_secondary_plus", c("Estimate", "estimate"), digits = 2)
-  values$iv_pct_head_secondary_plus_p <- p_value(model, "pct_head_secondary_plus", digits = 3)
+  unavailable_ame <- "Full AME result is not available in the current draft pipeline."
+  unavailable_iv <- "The requested IV coefficient is not available from the active model specification."
+  unavailable_first_stage <- "The requested first-stage coefficient is not available from the active model specification."
+  unavailable_selection <- "The requested relationship/age summary is not available from the active selection data."
 
-  values$ame_age <- lookup_ame(ame_results, "AGE", digits = 3)
-  values$ame_age_pct <- lookup_ame(ame_results, "AGE", multiply = 100, digits = 3)
-  values$ame_sex_pct <- lookup_ame(ame_results, "SEX", multiply = 100, digits = 3)
-  values$ame_hh_size_pct <- lookup_ame(ame_results, "HH_SIZE", multiply = 100, digits = 3)
-  values$ame_muslim_pct <- lookup_ame(ame_results, "RELIGION", contrast_pattern = "Muslim", multiply = 100, digits = 3)
-  values$ame_st_pct <- lookup_ame(ame_results, "SOCIAL_GROUP", contrast_pattern = "Tribe", multiply = 100, digits = 3)
+  values <- add_report_value(values, "head_male_age", "edu0708b4 %>% filter(RELATION_TO_HEAD==1 & SEX==1) %>% summarise(round(mean(AGE),1)) %>% .[[1]]", selection_summary_value(selection_data, 1, 1), unavailable_selection)
+  values <- add_report_value(values, "married_child_male_age", "edu0708b4 %>% filter(RELATION_TO_HEAD==3 & SEX==1) %>% summarise(round(mean(AGE),1)) %>% .[[1]]", selection_summary_value(selection_data, 3, 1), unavailable_selection)
+  values <- add_report_value(values, "parent_in_law_male_age", "edu0708b4 %>% filter(RELATION_TO_HEAD==7 & SEX==1) %>% summarise(round(mean(AGE),1)) %>% .[[1]]", selection_summary_value(selection_data, 7, 1), unavailable_selection)
+  values <- add_report_value(values, "spouse_male_age", "edu0708b4 %>% filter(RELATION_TO_HEAD==2 & SEX==1) %>% summarise(round(mean(AGE),1)) %>% .[[1]]", selection_summary_value(selection_data, 2, 1), unavailable_selection)
+  values <- add_report_value(values, "spouse_male_child_share", "edu0708b4 %>% filter(RELATION_TO_HEAD==2 & SEX==1) %>% summarise(round(mean(AGE<=17),3)) %>% .[[1]]", selection_summary_value(selection_data, 2, 1, "share_children"), unavailable_selection)
+  values <- add_report_value(values, "unmarried_child_male_age", "edu0708b4 %>% filter(RELATION_TO_HEAD==5 & SEX==1) %>% summarise(round(mean(AGE),1)) %>% .[[1]]", selection_summary_value(selection_data, 5, 1), unavailable_selection)
 
-  values$spatial_residual_p <- spatial_p_value(diag_spatial_autocorrelation, "resid")
-  values$spatial_consumption_p <- spatial_p_value(diag_spatial_autocorrelation, "consumption|growth")
+  values <- add_report_value(values, "ame_age", "mfx_df %>% filter(term==\"AGE\") %>% pull(estimate) %>% round(3)", lookup_ame(ame_results, "AGE", digits = 3), unavailable_ame)
+  values <- add_report_value(values, "ame_age_abs_pct", "mfx_df %>% filter(term==\"AGE\") %>% pull(estimate) %>% round(3) %>% abs()*100", abs(lookup_ame(ame_results, "AGE", multiply = 100, digits = 3)), unavailable_ame)
+  values <- add_report_value(values, "ame_muslim", "mfx_df %>% filter(term==\"RELIGION\" & grepl(\"Muslim\",contrast)) %>% pull(estimate) %>% round(3)", lookup_ame(ame_results, "RELIGION", contrast_pattern = "Muslim", digits = 3), unavailable_ame)
+  values <- add_report_value(values, "ame_age_pct", "mfx_df %>% filter(term==\"AGE\") %>% pull(estimate) %>% round(3)*100", lookup_ame(ame_results, "AGE", multiply = 100, digits = 3), unavailable_ame)
+  values <- add_report_value(values, "ame_sex_pct", "mfx_df %>% filter(term==\"SEX\") %>% pull(estimate) %>% round(3)*100", lookup_ame(ame_results, "SEX", multiply = 100, digits = 3), unavailable_ame)
+  values <- add_report_value(values, "ame_hh_size_pct", "mfx_df %>% filter(term==\"HH_SIZE\") %>% pull(estimate) %>% round(3)*100", lookup_ame(ame_results, "HH_SIZE", multiply = 100, digits = 3), unavailable_ame)
+  values <- add_report_value(values, "ame_muslim_pct", "mfx_df %>% filter(term==\"RELIGION\" & grepl(\"Muslim\", contrast)) %>% pull(estimate) %>% round(3)*100", lookup_ame(ame_results, "RELIGION", contrast_pattern = "Muslim", multiply = 100, digits = 3), unavailable_ame)
+  values <- add_report_value(values, "ame_st_pct", "mfx_df %>% filter(term==\"SOCIAL_GROUP\" & grepl(\"Tribe\", contrast)) %>% pull(estimate) %>% round(3)*100", lookup_ame(ame_results, "SOCIAL_GROUP", contrast_pattern = "Tribe", multiply = 100, digits = 3), unavailable_ame)
+  values <- add_report_value(values, "ame_free_education_pct", "mfx_df %>% filter(grepl(\"dmean_num\", term) & grepl(\"IS_EDU_FREE\", term)) %>% pull(estimate) %>% round(3)*100", lookup_ame(ame_results, "dmean_num.*IS_EDU_FREE|IS_EDU_FREE.*dmean_num", multiply = 100, digits = 3), unavailable_ame)
+  values <- add_report_value(values, "ame_textbooks_s", "mfx_df %>% filter(grepl(\"dmean_num\", term) & grepl(\"RECD_TXT_BOOKS\", term)) %>% pull(s.value) %>% signif(3)", lookup_ame_s_value(ame_results, "dmean_num.*RECD_TXT_BOOKS|RECD_TXT_BOOKS.*dmean_num", digits = 3), unavailable_ame)
+  values <- add_report_value(values, "ame_free_education_s", "mfx_df %>% filter(grepl(\"dmean_num\", term) & grepl(\"IS_EDU_FREE\", term)) %>% pull(s.value) %>% signif(3)", lookup_ame_s_value(ame_results, "dmean_num.*IS_EDU_FREE|IS_EDU_FREE.*dmean_num", digits = 3), unavailable_ame)
 
-  values <- add_inline_value(values, "partial_f %>% round(digits = 2)", if (is.finite(values$partial_f)) round(values$partial_f, 2) else NA_real_)
-  values <- add_inline_value(values, "partial_p %>% signif(digits = 2)", if (is.finite(values$partial_p)) signif(values$partial_p, 2) else NA_real_)
-  values <- add_inline_value(values, "m_cons_resid$p.value %>% signif(3)", values$spatial_residual_p)
-  values <- add_inline_value(values, "m_cons$p.value %>% signif(3)", values$spatial_consumption_p)
+  values <- add_report_value(values, "kappa", "kappa %>% format(scientific = FALSE, digits = 7)", condition_number_value(model), "The model design matrix condition number is not available from the active model specification.")
 
-  values <- add_inline_value(values, "mfx_df %>% filter(term==\"AGE\") %>% pull(estimate) %>% round(3)", values$ame_age)
-  values <- add_inline_value(values, "mfx_df %>% filter(term==\"AGE\") %>% pull(estimate) %>% round(3) %>% abs()*100", abs(values$ame_age_pct))
-  values <- add_inline_value(values, "mfx_df %>% filter(term==\"AGE\") %>% pull(estimate) %>% round(3)*100", values$ame_age_pct)
-  values <- add_inline_value(values, "mfx_df %>% filter(term==\"SEX\") %>% pull(estimate) %>% round(3)*100", values$ame_sex_pct)
-  values <- add_inline_value(values, "mfx_df %>% filter(term==\"HH_SIZE\") %>% pull(estimate) %>% round(3)*100", values$ame_hh_size_pct)
-  values <- add_inline_value(values, "mfx_df %>% filter(term==\"RELIGION\" & grepl(\"Muslim\",contrast)) %>% pull(estimate) %>% round(3)", values$ame_muslim_pct / 100)
-  values <- add_inline_value(values, "mfx_df %>% filter(term==\"RELIGION\" & grepl(\"Muslim\", contrast)) %>% pull(estimate) %>% round(3)*100", values$ame_muslim_pct)
-  values <- add_inline_value(values, "mfx_df %>% filter(term==\"SOCIAL_GROUP\" & grepl(\"Tribe\", contrast)) %>% pull(estimate) %>% round(3)*100", values$ame_st_pct)
+  values$partial_f <- value_or_status(first_available_number(first_stage_tests, c("partial_f", "statistic", "f_stat", "F")), unavailable_first_stage)
+  values$partial_p <- value_or_status(first_available_number(first_stage_tests, c("partial_p", "p.value", "p_value", "p")), unavailable_first_stage)
+  values <- add_inline_value(values, "partial_f %>% round(digits = 2)", if (is_report_value_status(values$partial_f)) values$partial_f else round(values$partial_f, 2))
+  values <- add_inline_value(values, "partial_p %>% signif(digits = 2)", if (is_report_value_status(values$partial_p)) values$partial_p else signif(values$partial_p, 2))
+
+  values <- add_report_value(values, "first_stage_linguistic_distance_estimate", "summary(first_stage_consumption, vcov = vcov_first_stage_consumption)$coefficients[\"wavg_ling_degrees\",1] %>% round(2)", first_stage_value(first_stage_tests, "wavg_ling_degrees", "estimate", 2), unavailable_first_stage)
+  values$first_stage_linguistic_distance_p <- value_or_status(first_stage_value(first_stage_tests, "wavg_ling_degrees", "p.value", 3), unavailable_first_stage)
+  values <- add_report_value(values, "first_stage_gini_estimate", "summary(first_stage_consumption, vcov = vcov_first_stage_consumption)$coefficients[\"gini_cons_0708\",1] %>% round(2)", first_stage_value(first_stage_tests, c("gini_cons_0708", "gini_consumption_2007"), "estimate", 2), unavailable_first_stage)
+  values$first_stage_gini_p <- value_or_status(first_stage_value(first_stage_tests, c("gini_cons_0708", "gini_consumption_2007"), "p.value", 3), unavailable_first_stage)
+
+  iv_terms <- list(
+    iv_emie = c("EMIE", "emie_2007"),
+    iv_pct_urban = "pct_urban",
+    iv_pct_head_secondary_plus = "pct_head_secondary_plus",
+    iv_pct_muslim = "pct_muslim",
+    iv_pct_st = "pct_st",
+    iv_pct_obc = "pct_obc",
+    iv_pct_medium_land = "pct_medium_land",
+    iv_pct_large_land = "pct_large_land",
+    iv_gini_cons_0708 = c("gini_cons_0708", "gini_consumption_2007"),
+    iv_pct_fem_head = "pct_fem_head"
+  )
+  for (name in names(iv_terms)) {
+    values[[paste0(name, "_estimate")]] <- value_or_status(coefficient_value(model, iv_terms[[name]], digits = 3), unavailable_iv)
+    values[[paste0(name, "_p")]] <- value_or_status(p_value(model, iv_terms[[name]], digits = 3), unavailable_iv)
+  }
 
   values <- add_inline_value(values, "summary(model_consumption_iv, vcov = vcov_model_consumption_iv)$coefficients[\"EMIE\",4] %>% round(digits = 2)", values$iv_emie_p)
-  values <- add_inline_value(values, "summary(model_consumption_iv, vcov = vcov_model_consumption_iv)$coefficients[\"EMIE\",1] %>% round(digits = 2)", values$iv_emie_estimate)
-  values <- add_inline_value(values, "summary(model_consumption_iv, vcov = vcov_model_consumption_iv)$coefficients[\"pct_urban\",1] %>% round(digits = 2)", values$iv_pct_urban_estimate)
+  values <- add_inline_value(values, "summary(model_consumption_iv, vcov = vcov_model_consumption_iv)$coefficients[\"EMIE\",1] %>% round(digits = 2)", value_or_status(coefficient_value(model, iv_terms$iv_emie, digits = 2), unavailable_iv))
+  values <- add_inline_value(values, "summary(model_consumption_iv, vcov = vcov_model_consumption_iv)$coefficients[\"pct_urban\",1] %>% round(digits = 2)", value_or_status(coefficient_value(model, iv_terms$iv_pct_urban, digits = 2), unavailable_iv))
   values <- add_inline_value(values, "summary(model_consumption_iv, vcov = vcov_model_consumption_iv)$coefficients[\"pct_urban\",4] %>% round(digits = 3)", values$iv_pct_urban_p)
-  values <- add_inline_value(values, "summary(model_consumption_iv, vcov = vcov_model_consumption_iv)$coefficients[\"pct_head_secondary_plus\",1] %>% round(digits = 2)", values$iv_pct_head_secondary_plus_estimate)
+  values <- add_inline_value(values, "summary(model_consumption_iv, vcov = vcov_model_consumption_iv)$coefficients[\"pct_head_secondary_plus\",1] %>% round(digits = 2)", value_or_status(coefficient_value(model, iv_terms$iv_pct_head_secondary_plus, digits = 2), unavailable_iv))
   values <- add_inline_value(values, "summary(model_consumption_iv, vcov = vcov_model_consumption_iv)$coefficients[\"pct_head_secondary_plus\",4] %>% round(digits = 3)", values$iv_pct_head_secondary_plus_p)
+  values <- add_inline_value(values, "summary(model_consumption_iv, vcov = vcov_model_consumption_iv)$coefficients[\"pct_muslim\",\"Estimate\"] %>% round(digits=3)", values$iv_pct_muslim_estimate)
+  values <- add_inline_value(values, "summary(model_consumption_iv, vcov = vcov_model_consumption_iv)$coefficients[\"pct_st\",\"Estimate\"] %>% round(digits=3)", values$iv_pct_st_estimate)
+  values <- add_inline_value(values, "summary(model_consumption_iv, vcov = vcov_model_consumption_iv)$coefficients[\"pct_obc\",\"Estimate\"] %>% round(digits=3)", values$iv_pct_obc_estimate)
+  values <- add_inline_value(values, "summary(model_consumption_iv, vcov = vcov_model_consumption_iv)$coefficients[\"pct_medium_land\",4] %>% round(digits = 3)", values$iv_pct_medium_land_p)
+  values <- add_inline_value(values, "summary(model_consumption_iv, vcov = vcov_model_consumption_iv)$coefficients[\"pct_large_land\",4] %>% round(digits = 3)", values$iv_pct_large_land_p)
+  values <- add_inline_value(values, "summary(model_consumption_iv, vcov = vcov_model_consumption_iv)$coefficients[\"gini_cons_0708\",4] %>% round(digits = 3)", values$iv_gini_cons_0708_p)
+  values <- add_inline_value(values, "summary(model_consumption_iv, vcov = vcov_model_consumption_iv)$coefficients[\"pct_fem_head\",4] %>% round(digits = 3)", values$iv_pct_fem_head_p)
+
+  values <- add_report_value(values, "spatial_residual_p", "m_cons_resid$p.value %>% signif(3)", spatial_p_value(diag_spatial_autocorrelation, "resid"), "Spatial residual autocorrelation diagnostics are not available in the current draft pipeline.")
+  values <- add_report_value(values, "spatial_consumption_p", "m_cons$p.value %>% signif(3)", spatial_p_value(diag_spatial_autocorrelation, "consumption|growth"), "Spatial consumption autocorrelation diagnostics are not available in the current draft pipeline.")
 
   values
 }

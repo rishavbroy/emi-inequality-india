@@ -34,9 +34,12 @@ make test        # smoke tests and input/output contracts
 make pipeline-draft
 make report
 make samples
+make check-public-draft
 ```
 
 Raw data are not tracked. Place raw files according to `data/metadata/file_manifest.csv`. See `REPLICATION.md` for the current replication data contract and expected behavior on a fresh clone without local-only raw data.
+
+`make check-public-draft` verifies that the current draft renders without scaffold or fallback prose. `make check-public-final` is stricter: it runs the final config and fails on unresolved report cross-references or placeholder-valued legacy inline quantities that still need final data/model outputs.
 
 The two public processed data products are:
 
