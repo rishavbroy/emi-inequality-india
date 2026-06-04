@@ -1,4 +1,4 @@
-.PHONY: init-renv restore snapshot rebuild-qmds pipeline-draft pipeline-final diagnostics report samples audit-report-values audit-report-values-final check-public check-public-draft check-public-final check-public-text check-rendered-text check-sample-specs test tests clean-targets clean-renders
+.PHONY: init-renv restore snapshot rebuild-qmds pipeline-draft pipeline-final diagnostics report samples audit-report-values audit-report-values-final audit-crossrefs audit-crossrefs-final check-public check-public-draft check-public-final check-public-text check-rendered-text check-sample-specs test tests clean-targets clean-renders
 
 TEXCACHE_ROOT ?= /private/tmp/emi-inequality-india-texcache
 QUARTO_CACHE_ROOT ?= /private/tmp/emi-inequality-india-quarto-cache
@@ -52,6 +52,12 @@ audit-report-values:
 audit-report-values-final:
 	EMI_CONFIG=config/final.yml Rscript scripts/audit_report_values.R --strict
 
+audit-crossrefs:
+	Rscript scripts/audit_crossrefs.R
+
+audit-crossrefs-final:
+	Rscript scripts/audit_crossrefs.R --strict-report
+
 check-public-text:
 	Rscript scripts/check_public_text.R
 
@@ -75,6 +81,7 @@ check-public-draft: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
 check-public-final: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
 	EMI_CONFIG=config/final.yml Rscript -e 'targets::tar_make()'
 	EMI_CONFIG=config/final.yml Rscript scripts/audit_report_values.R --strict
+	Rscript scripts/audit_crossrefs.R --strict-report
 	HOME=$(QUARTO_HOME) quarto render paper/report.qmd
 	HOME=$(QUARTO_HOME) quarto render docs/district-matching.qmd
 	HOME=$(QUARTO_HOME) quarto render docs/long-paths-and-8-3-filenames.qmd
