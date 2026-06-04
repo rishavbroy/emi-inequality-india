@@ -1,8 +1,8 @@
 source_id,source_name,source_type,used_in_current_pipeline,current_or_future,local_raw_path,source_url,access_date,license_or_terms_notes,citation_key,notes
-nss_2007_education,NSS 2007-08 Participation and Expenditure in Education 64th Round,microdata,true,current,data/raw/NSS 2007-08 Participation and Expenditure in Education 64th Round,,,,national_sample_survey_2011,Core 2007 education and participation source.
-nss_2007_consumption,NSS 2007-08 Household Consumer Expenditure Survey 64th Round,microdata,true,current,data/raw/NSS 2007-08 Household Consumer Expenditure Survey 64th Round,,,,national_sample_survey_2011_consumption,Core baseline consumption source.
-nss_2017_education,NSS 2017-18 Household Social Consumption Education 75th Round,microdata,true,current,data/raw/NSS 2017-18 Household Social Consumption Education 75th Round Data July 2017 - June 2018,,,,national_sample_survey_2022,Core outcome consumption/education source.
-census_2001_mother_tongue,Census of India 2001 C-16 Mother Tongue,tables,true,current,data/raw/Indian Census 2001,,,,census_india_2001,35 Excel files PC01_C16_01 through PC01_C16_35.
-district_boundaries_2020,India Official District Boundaries 2020,geospatial,true,current,data/raw/District Boundaries 2020,,,,meyers_india_boundaries_2020,Shapefile used for maps and spatial weights.
-district_changes,District change and tracker sources,crosswalk,true,current,data/raw/District Changes Data,,,,,All small district-change files including validation sources.
+nss_2007_education,NSS 2007-08 Participation and Expenditure in Education 64th Round,microdata,true,current,data/raw/nss_2007_education_64,,,,national_sample_survey_2011,Core 2007 education and participation source.
+nss_2007_consumption,NSS 2007-08 Household Consumer Expenditure Survey 64th Round,microdata,true,current,data/raw/nss_2007_consumption_64,,,,national_sample_survey_2011_consumption,Core baseline consumption source.
+nss_2017_education,NSS 2017-18 Household Social Consumption Education 75th Round,microdata,true,current,data/raw/nss_2017_education_75,,,,national_sample_survey_2022,Core outcome consumption/education source.
+census_2001_mother_tongue,Census of India 2001 C-16 Mother Tongue,tables,true,current,data/raw/census_2001_mother_tongue,,,,census_india_2001,35 Excel files PC01_C16_01 through PC01_C16_35.
+district_boundaries_2020,India Official District Boundaries 2020,geospatial,true,current,data/raw/district_boundaries_2020,,,,meyers_india_boundaries_2020,Shapefile used for maps and spatial weights.
+district_changes,District change and tracker sources,crosswalk,true,current,data/raw/district_changes,,,,,All small district-change files including validation sources.
 ilo_figures,ILO figures,image_assets,true,current,assets/ilo_figures,,,,ilo_2024,Static figures used in paper collage.

@@ -25,6 +25,13 @@ path_raw <- function(paths, ...) {
   file.path(paths$raw, ...)
 }
 
+#' path from project root
+#'
+#' @return Absolute path under the project root.
+path_project <- function(paths, ...) {
+  file.path(paths$root, ...)
+}
+
 #' path processed
 #'
 #' @return A tibble, model object, list, or file path depending on context.
@@ -73,4 +80,3 @@ path_diagnostics <- function(paths, ...) {
 path_assets <- function(paths, ...) {
   file.path(paths$assets, ...)
 }
-

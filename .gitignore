@@ -27,6 +27,7 @@ relevant-literature/
 *_cache/
 *_files/
 *.nb.html
+paper/report.html
 *.log
 *.aux
 *.out
@@ -45,6 +46,7 @@ application-samples/.work/
 # temporary files to help auditing and debugging
 Archive.zip
 full_output.txt
+outputs/diagnostics/raw_data_rename_plan.csv
 
 # keep deliberate TeX source templates if any remain
 !application-samples/templates/*.tex

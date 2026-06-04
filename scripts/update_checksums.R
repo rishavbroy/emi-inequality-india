@@ -6,6 +6,7 @@ paths <- c(
 )
 
 paths <- sort(unique(paths[file.exists(paths)]))
+paths <- setdiff(paths, "data/metadata/checksums.csv")
 if (!length(paths)) {
   stop("No metadata or processed CSV files found for checksums.", call. = FALSE)
 }

@@ -21,7 +21,7 @@ manifest_rows <- function(paths, source_id = NULL, target_name = NULL) {
   if ("required_for_current_pipeline" %in% names(manifest)) {
     manifest <- manifest[tolower(as.character(manifest$required_for_current_pipeline)) == "true", , drop = FALSE]
   }
-  manifest$absolute_path <- file.path(paths$root, manifest$relative_path)
+  manifest$absolute_path <- path_project(paths, manifest$relative_path)
   manifest$exists <- file.exists(manifest$absolute_path)
   manifest
 }

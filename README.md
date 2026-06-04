@@ -49,7 +49,7 @@ make samples
 make check-public-draft
 ```
 
-Raw data are not tracked. Place raw files according to `data/metadata/file_manifest.csv`. See `REPLICATION.md` for the current replication data contract and expected behavior on a fresh clone without local-only raw data.
+Raw data are not tracked. Place raw files according to the canonical paths in `data/metadata/file_manifest.csv`. If your local raw folders still use the older long names, run `Rscript scripts/rename_raw_data_from_manifest.R` first for a dry-run rename plan; use `--execute` only after reviewing that plan. See `REPLICATION.md` for the current replication data contract and expected behavior on a fresh clone without local-only raw data.
 
 `make check-public-draft` verifies that the current draft renders without scaffold or fallback prose. `make check-public-final` is stricter: it runs the final config and fails on unresolved report cross-references or placeholder-valued legacy inline quantities that still need final data/model outputs.
 
