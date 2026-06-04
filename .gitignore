@@ -42,6 +42,10 @@ relevant-literature/
 # temporary application sample assembly files
 application-samples/.work/
 
+# temporary files to help auditing and debugging
+Archive.zip
+full_output.txt
+
 # keep deliberate TeX source templates if any remain
 !application-samples/templates/*.tex
 !application-samples/cover-notes/**/*.tex
