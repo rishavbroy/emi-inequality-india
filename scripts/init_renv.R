@@ -64,6 +64,6 @@ if (length(missing) > 0L) {
 }
 
 message("Writing renv.lock from DESCRIPTION dependencies...")
-renv::snapshot(prompt = FALSE)
+renv::snapshot(prompt = FALSE, force = TRUE)
 message("renv.lock updated.")
 message("== Done ==")

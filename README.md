@@ -2,6 +2,17 @@
 
 This repository contains the research pipeline for my independent paper, **"Escaping Inequality in India: The Role of English-Medium Instruction."**
 
+## For pre-doc hiring committees / faculty reviewers
+
+- Main paper source: [paper/report.qmd](paper/report.qmd)
+- Rendered draft paper PDF: [paper/report.pdf](paper/report.pdf) (provisional; final checks do not yet pass)
+- Writing sample PDF: [application-samples/output/RishavRoy_WritingSample.pdf](application-samples/output/RishavRoy_WritingSample.pdf) (generated from the current sample pipeline)
+- Coding sample PDF: [application-samples/output/RishavRoy_CodingSample.pdf](application-samples/output/RishavRoy_CodingSample.pdf) (generated from the current sample pipeline)
+- District-matching note: [docs/district-matching.qmd](docs/district-matching.qmd) and [docs/district-matching.html](docs/district-matching.html)
+- Replication guide: [REPLICATION.md](REPLICATION.md)
+- Data availability: [DATA_AVAILABILITY.md](DATA_AVAILABILITY.md)
+- Research roadmap: [docs/plan/roadmap.md](docs/plan/roadmap.md)
+
 ## Research question
 
 Does increasing baseline district-level exposure to English-medium instruction (EMI) in 2007–08 affect local consumption growth over the next decade?

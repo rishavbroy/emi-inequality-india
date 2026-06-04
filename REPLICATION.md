@@ -2,6 +2,8 @@
 
 Raw data are intentionally not tracked in this repository. The active pipeline reads `data/metadata/file_manifest.csv` before attempting to load raw data. If a required file is missing, the pipeline should fail with a manifest-based message listing the exact missing path.
 
+See `DATA_AVAILABILITY.md` for the source-by-source availability table, redistribution notes, expected local paths, and reconstruction targets.
+
 ## Required local files
 
 Place required current-pipeline files under `data/raw/` and static image assets under `assets/` according to `data/metadata/file_manifest.csv`.
@@ -28,6 +30,12 @@ The only processed data products intended to be tracked at this stage are:
 
 - `data/processed/district_tracker_2001_2007_2017_2020.csv`
 - `data/processed/district_panel_emi_consumption_2001_2007_2017_2020.csv`
+
+Checksums for tracked metadata and processed CSV files are recorded in `data/metadata/checksums.csv`. Refresh them with:
+
+```bash
+Rscript scripts/update_checksums.R
+```
 
 ## Expected behavior without raw data
 
