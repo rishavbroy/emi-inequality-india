@@ -22,6 +22,7 @@ The project is under active revision. The main methodological priorities are dis
 - `data/processed/`: tracked processed district tracker and district panel.
 - `data/raw/`, `data/raw_future/`, `data/interim/`: local-only, gitignored data folders.
 - `docs/`: polished methodological notes.
+- `docs/plan/roadmap.md`: converted project planning roadmap.
 - `analysis/diagnostics/`: diagnostic notebooks whose outputs are generated from the pipeline.
 - `application-samples/`: cover notes, sample specifications, and generated writing/coding samples for pre-doc applications.
 - `archive/`: legacy drafts, source samples, and old rendered files.
