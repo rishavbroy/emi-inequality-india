@@ -83,6 +83,15 @@ report_abstract_block <- function(source_lines) {
   c("", "## Abstract", "", abstract, "")
 }
 
+report_setup_chunks <- function(source_lines) {
+  start <- grep("^```\\{r report-target-values", source_lines)
+  if (!length(start)) return(character())
+  end <- grep("^```\\s*$", source_lines)
+  end <- end[end > start[[1]]]
+  if (!length(end)) return(character())
+  c(source_lines[start[[1]]:end[[1]]], "")
+}
+
 ensure_yaml_field <- function(lines, field, value) {
   if (!length(lines) || !identical(lines[[1]], "---")) return(lines)
   close <- which(lines[-1L] == "---")
@@ -125,6 +134,10 @@ normalize_sample_yaml <- function(lines, bibliography = "../../paper/references.
   lines
 }
 
+normalize_sample_resource_paths <- function(lines) {
+  gsub("../outputs/", "../../outputs/", lines, fixed = TRUE)
+}
+
 #' Assemble a temporary writing-sample QMD
 #'
 #' @param cover_note Path to cover-note QMD.
@@ -134,6 +147,7 @@ normalize_sample_yaml <- function(lines, bibliography = "../../paper/references.
 assemble_writing_sample_qmd <- function(cover_note, excerpts, output_qmd) {
   cover <- if (!is.null(cover_note) && file.exists(cover_note)) readLines(cover_note, warn = FALSE) else character()
   cover <- normalize_sample_yaml(cover)
+  excerpts <- normalize_sample_resource_paths(excerpts)
   body <- c(cover, "", "\\newpage", "", excerpts)
   dir.create(dirname(output_qmd), recursive = TRUE, showWarnings = FALSE)
   writeLines(body, output_qmd)

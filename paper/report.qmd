@@ -26,6 +26,7 @@ find_targets_store <- function(start = getwd()) {
   }
 }
 report_values <- tryCatch(targets::tar_read(report_values, store = find_targets_store()), error = function(e) list())
+report_output_files <- tryCatch(c(targets::tar_read(figure_files, store = find_targets_store()), targets::tar_read(table_files, store = find_targets_store())), error = function(e) character())
 if (is.null(report_values) || !is.list(report_values)) report_values <- list()
 legacy_inline_expressions <- list(
   inline_391c516e = "edu0708b4 %>% filter(RELATION_TO_HEAD==1 & SEX==1) %>% summarise(round(mean(AGE),1)) %>% .[[1]]",
@@ -89,6 +90,9 @@ report_value <- function(key) {
 
 The Indian economy presents a series of paradoxes. The same economy whose GDP has grown at 6% annually on average for decades [@organization2024a, p. 2] has also seen stagnation if not losses in wages, employment, and labor force participation (see Figure @fig-ILO-fig), all while higher education has continued to develop an extremely strong, positive correlation with higher youth *unemployment*.^[Note that lower levels of education are instead strongly correlated with youth *under*employment [@organization2024a, p. 130]. There are no winners here.] And though the International Labour Organization (ILO) traces this back to a labor supply which lacks the skills needed to fill available job openings (p. 174), high unemployment rates can be found for skilled laborers of all backgrounds, including those who received vocational education and training [@agrawal.agrawal2017].
 
+![ILO labor market indicators composed from archived ILO figure assets.](../outputs/figures/main/fig_ilo_trends.png){#fig-ILO-fig}
+
+
 Appreciating this broader view helps reveal the degree to which unemployment, underemployment, and "jobless growth" [@graddol2010a] have, alongside wealth inequality, combined to undermine the degree to which many benefit from India's recent economic growth [@bharti.etal2024]. From here we adopt a bottom-up perspective---what can members of this "many" do to improve their lives in such a context?---and in doing so, our motivating question reveals itself to be two-fold: 1) If I am a household, what can I do to best ensure my children's future success in this context? And 2) if I am a local policy-maker, what can I do to best ensure my constituents' future welfare in this context?
 
 
@@ -138,6 +142,18 @@ All variables reflecting 2017-18 data come from the 75th Round of the National S
 Sample weights were applied wherever applicable. All district-level aggregates were formed as sample-weighted averages. The education participation probit of Sec. @sec-heckman used survey-weighted generalized linear models and design-based standard errors.^[Clusters were formed at the primary sampling unit, which were rural villages and urban blocks. These clusters were nested, or defined within, substrata which were themselves nested within strata. (Strata generally corresponded to districts, whereas substrata generally corresponded to each side of the rural/urban partition of the district. Multiple urban substrata were allowed for particularly dense areas, with the largest number of substrata within a district being 29.) All were accounted for in the probit.]. Summary statistics for variables used in the probit are given in Tables @tbl-sum-tbl-probit-quant and @tbl-sum-tbl-probit-cat, whereas Table @tbl-sum-tbl-iv contains summary statistics for variables used in the 2SLS estimation. 
 
 Except for certain individual-level variables in the education probit, we will be aggregating variables at the district level. As will be shown in Table @tbl-sum-tbl-iv, the average population of a district in either sample period (2007-08 and 2017-18) is 2 million. In the survey samples, however, most districts have between 400 and 1200 people represented in the data, with the exact number varying in line with a district's population.
+
+```{r}
+#| label: tbl-sum-tbl-iv
+#| tbl-cap: "Summary statistics for 2SLS model variables"
+#| echo: false
+output_table <- function(path) {
+  if (file.exists(path)) return(utils::read.csv(path, check.names = FALSE))
+  data.frame(status = "missing generated output", path = path)
+}
+knitr::kable(output_table("../outputs/tables/main/sum_tbl_iv.csv"), digits = 3)
+```
+
 
 ## Data Issues: Representativeness and Quality
 
@@ -211,10 +227,45 @@ The @nationalsamplesurveyoffice2008 do not explicitly identify parent-child rela
 
 Summary statistics for numeric variables are given in Table @tbl-sum-tbl-probit-quant, and for categorical variables in Table @tbl-sum-tbl-probit-cat.
 
+```{r}
+#| label: tbl-sum-tbl-probit-quant
+#| tbl-cap: "Summary statistics for enrollment participation model numeric variables"
+#| echo: false
+output_table <- function(path) {
+  if (file.exists(path)) return(utils::read.csv(path, check.names = FALSE))
+  data.frame(status = "missing generated output", path = path)
+}
+knitr::kable(output_table("../outputs/tables/main/sum_tbl_probit_quant.csv"), digits = 3)
+```
+
+```{r}
+#| label: tbl-sum-tbl-probit-cat
+#| tbl-cap: "Summary statistics for enrollment participation model categorical variables"
+#| echo: false
+output_table <- function(path) {
+  if (file.exists(path)) return(utils::read.csv(path, check.names = FALSE))
+  data.frame(status = "missing generated output", path = path)
+}
+knitr::kable(output_table("../outputs/tables/main/sum_tbl_probit_cat.csv"), digits = 3)
+```
+
+
 
 
 ## Results and Discussion {#sec-heckman-results}
 Average marginal effects for numeric variables and counterfactual comparisons (relative to the reference level) for categorical variables (both referred to as AME henceforth) are reported in Table @tbl-probit-mfx, which has been derived using the work of @arel-bundockHowInterpretStatistical2024 In line with advice from @nowosadElegantInformativeMaps2021, we report the AME instead of marginal effects at the mean.
+
+```{r}
+#| label: tbl-probit-mfx
+#| tbl-cap: "Average marginal effects from the education participation probit"
+#| echo: false
+output_table <- function(path) {
+  if (file.exists(path)) return(utils::read.csv(path, check.names = FALSE))
+  data.frame(status = "missing generated output", path = path)
+}
+knitr::kable(output_table("../outputs/tables/main/probit_mfx.csv"), digits = 3)
+```
+
 
 Table @tbl-probit-mfx has been calculated over all observations, with standard errors clustered at the rural village and urban block level (no district clustering) derived using the delta method and automatic differentiation.^[@dawoodAutomaticDifferentiationUncertainties2023 provide a good treatment of automatic differentiation, describing it as a process which is "neither numeric nor symbolic, nor is it a combination of both.... In contrast to the more traditional numerical methods based on finite differences, auto-differentiation is ‘in theory’ exact, and in comparison to symbolic algorithms, it is computationally inexpensive." The `marginaleffects` package itself claims automatic differentiation is both faster and more accurate for some models [@arel-bundockHowInterpretStatistical2024].] All reported values are probabilities: that $\mathrm{AME}_{\text{Age}} =$ `r report_value("inline_5aa491ab")` in the table below thus means that, on average, a one-year increase in age is associated with a `r report_value("inline_7f5360c6")` percentage point decrease in the probability of being enrolled by, holding all else constant [@hansenEconometrics2022]. The counterfactual comparison $\mathrm{AME}_{\text{Muslim}} =$ `r report_value("inline_9cd11971")`, meanwhile, where 'Hindu' is the reference category to 'Muslim', means that the average change in the probability of a Hindu child being enrolled if they were hypothetically made Muslim is `r report_value("inline_9cd11971")`, keeping all else fixed at observed values.^[Such interpretations are possible because AME is averaged across all observations, making them more generalizable than metrics like marginal effects at the mean [@nguyenGuideDataAnalysis2020]. But their interpretability is still also dependent on a linearity assumption which may not be valid. Future work may thus abide by the argument of @scholbeckMarginalEffectsNonlinear2024, that no one single metric can be used to summarize a non-linear prediction function’s feature effects, and may instead report conditional feature effect estimates by applying their concept of forward marginal effects within population subgroups.]
 
@@ -253,6 +304,11 @@ $$
 $$ {#eq-iv-eq}
 Summary statistics for all of the variables in this model, including the controls $k$ in the vector $X_{kd}$, are provided in Table @tbl-sum-tbl-iv. Maps of these variables are presented in Figures @fig-map1-fig and @fig-map2-fig; the number of missing districts in them, as discussed in Sec. @sec-distma-spa, is the product of a data harmonization method which performed many-to-many matching from 2001 to 2007-08 to 2017-18 to 2019-20, the years our shapefiles data was collected [@bhatiaMergingUpdatedDistrictlevel2020]. Issues of and improvements to this method are also discussed in Sec. @sec-distma-spa.
 
+![Main district-level map inputs.](../outputs/figures/main/collage_main_maps.png){#fig-map1-fig}
+
+![Instrument and region map inputs.](../outputs/figures/main/collage_iv_region_maps.png){#fig-map2-fig}
+
+
 
 
 
@@ -284,6 +340,29 @@ $\mathrm{LingDistance}_d$ is defined as the population-weighted average of Shast
 ::: {.sample-excerpt #ws-first-stage-results sets="writing-10pg" order="5"}
 ## Results {#sec-iv-results}
 The results of our first-stage regression, of EMI exposure on linguistic distance, are provided in Table @tbl-fs-cons. The results of the second-stage regression, where consumption growth is regressed onto the fitted values of EMI exposure, are provided in Table @tbl-cons-iv. All standard errors in both stages are clustered at the state level.
+
+```{r}
+#| label: tbl-fs-cons
+#| tbl-cap: "First-stage regression results"
+#| echo: false
+output_table <- function(path) {
+  if (file.exists(path)) return(utils::read.csv(path, check.names = FALSE))
+  data.frame(status = "missing generated output", path = path)
+}
+knitr::kable(output_table("../outputs/tables/main/fs_cons.csv"), digits = 3)
+```
+
+```{r}
+#| label: tbl-cons-iv
+#| tbl-cap: "Second-stage 2SLS consumption regression results"
+#| echo: false
+output_table <- function(path) {
+  if (file.exists(path)) return(utils::read.csv(path, check.names = FALSE))
+  data.frame(status = "missing generated output", path = path)
+}
+knitr::kable(output_table("../outputs/tables/main/cons_iv.csv"), digits = 3)
+```
+
 
 
 
@@ -354,6 +433,9 @@ There are three reasons that district labels vary between 2001 to 2007-08 to 201
 Political changes, however, were not so easily addressed. The vast majority of such changes were one of five kinds: name changes, clean partitions (one district is partitioned into multiple), clean mergers (multiple districts merge into one), carve-outs (*pieces* of multiple districts combine into one), and boundary shifts [@indiastatestoriesDistrictEvolution2024]. Without knowing precisely where in its district each household was at the time of sampling, it is not feasible to match districts across carve-outs and boundary shifts. Our district matching method is thus reliant on the assumption that all district changes were either name changes, clean partitions, or clean mergers.
 
 This seems to be precisely the same assumption made by @indiastatestoriesDistrictEvolution2024 and @jaacksIndiaDistrictChanges2020, whose data, despite containing some factual errors and typos, was the basis of our district matching method. To justify this assumption we turn to @kumarCreatingLongPanels2016, who up until 2001 are able to track the *proportion* of each district's population that was allocated into a new district as a result of district changes. They label these changes as one of two types: clean partitions and non-partitions (which would include name changes, clean mergers, carve-outs, and border shifts). By extracting their results using Tabula [@aristaranTabula2018], we know that 93.4% of non-partitions were either name changes or transfers of uninhabited land [@kumarCreatingLongPanels2016]. These district changes are plotted in Figure @fig-districtcarveoutsshifts-fig.
+
+![District carve-outs, shifts, and non-partitions.](../outputs/figures/main/district_carveouts_shifts.png){#fig-districtcarveoutsshifts-fig}
+
 
 
 

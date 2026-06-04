@@ -23,7 +23,7 @@ tar_option_set(
 
 list(
   # Configuration and paths -----------------------------------------------------
-  tar_target(config_path, Sys.getenv("EMI_CONFIG", "config/draft.yml")),
+  tar_target(config_path, Sys.getenv("EMI_CONFIG", "config/draft.yml"), cue = tar_cue(mode = "always")),
   tar_target(cfg, read_config(config_path)),
   tar_target(paths, build_paths()),
   tar_target(raw_manifest, validate_raw_files(paths)),
@@ -122,6 +122,6 @@ list(
   tar_render(fuzzy_matching_note, "analysis/diagnostics/fuzzy-matching-diagnostics.qmd"),
   tar_render(spatial_autocorrelation_note, "analysis/diagnostics/spatial-autocorrelation-diagnostics.qmd"),
   tar_render(report, "paper/report.qmd"),
-  tar_target(writing_sample_pdfs, render_writing_samples(), format = "file"),
+  tar_target(writing_sample_pdfs, render_writing_samples(output_files = c(figure_files, table_files)), format = "file"),
   tar_target(coding_sample_pdfs, render_coding_samples(), format = "file")
 )
