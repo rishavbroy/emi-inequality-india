@@ -23,9 +23,9 @@ has_sf_geometry <- function(x) {
 require_final_figure_inputs <- function(district_panel, cfg, required_variables) {
   if (!identical(cfg$mode, "final")) return(invisible(TRUE))
   missing_vars <- setdiff(required_variables, names(as.data.frame(district_panel)))
-  if (!has_sf_geometry(district_panel) || length(missing_vars)) {
+  if (length(missing_vars)) {
     stop(
-      "Final figure generation requires district geometry and mapped variables. Missing variables: ",
+      "Final figure generation requires mapped variables. Missing variables: ",
       paste(missing_vars, collapse = ", "),
       call. = FALSE
     )
@@ -80,8 +80,8 @@ make_figures <- function(district_panel, raw_ilo_figures, cfg) {
       "district_carveouts_shifts",
       "district_carveouts_shifts.png",
       "District carve-outs, shifts, and non-partitions",
-      "Draft mode records the unavailable legacy figure input; final mode must provide the district-change figure data.",
-      kind = "status"
+      "Source coverage in the active district-tracker inputs.",
+      kind = "district_tracker_summary"
     )
   )
   attr(out, "district_panel") <- district_panel

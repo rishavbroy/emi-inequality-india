@@ -20,18 +20,28 @@ make_iv_formula <- function(dep, endog, instruments, controls = NULL, fixed_effe
 #'
 #' @return A tibble, model object, list, or file path depending on context.
 build_iv_formulas <- function(cfg) {
+  controls <- c(
+    "consumption_2007", "gini_consumption_2007",
+    "pct_urban", "avg_hh_size", "dependency_ratio",
+    "pct_fem_head",
+    "pct_hindu", "pct_muslim",
+    "pct_st", "pct_sc", "pct_obc",
+    "pct_small_land", "pct_medium_land", "pct_large_land",
+    "pct_head_lit_to_primary",
+    "pct_head_secondary_plus"
+  )
   list(
     baseline = make_iv_formula(
       "consumption_growth_pct",
       "emie_2007",
       "wavg_ling_degrees",
-      c("consumption_2007", "gini_consumption_2007")
+      controls
     ),
     fd_log = make_iv_formula(
       "log_consumption_difference",
       "emie_2007",
       "wavg_ling_degrees",
-      c("consumption_2007", "gini_consumption_2007")
+      controls
     )
   )
 }

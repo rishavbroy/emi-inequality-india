@@ -9,7 +9,8 @@ is_final_mode <- function(cfg) {
 
 fail_final_if_status <- function(x, cfg, label) {
   df <- as.data.frame(x)
-  if (is_final_mode(cfg) && "status" %in% names(df) && any(!is.na(df$status) & df$status != "mapped")) {
+  ok_status <- c("mapped", "estimated")
+  if (is_final_mode(cfg) && "status" %in% names(df) && any(!is.na(df$status) & !df$status %in% ok_status)) {
     stop("Final table generation requires completed model output for ", label, ".", call. = FALSE)
   }
   invisible(TRUE)

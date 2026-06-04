@@ -10,7 +10,15 @@ estimate_selection_probit <- function(selection_data, cfg) {
   if (!"enrolled" %in% names(selection_data) || all(is.na(selection_data$enrolled))) {
     return(list(status = "out_of_active_pipeline", reason = "No enrolled variable."))
   }
-  covars <- intersect(c("AGE", "age", "SEX", "sex", "state_std"), names(selection_data))
+  covars <- intersect(
+    c(
+      "AGE", "SEX", "HH_SIZE", "RELIGION", "SOCIAL_GROUP", "SECTOR",
+      "age", "sex", "hh_size", "religion", "social_group", "sector",
+      "DIST_FROM_NEAREST_PRIMARY_CLASS",
+      "dmean_num_IS_EDU_FREE", "dmean_num_RECD_TXT_BOOKS"
+    ),
+    names(selection_data)
+  )
   if (!length(covars)) {
     return(list(status = "out_of_active_pipeline", reason = "No probit covariates."))
   }

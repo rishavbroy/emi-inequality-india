@@ -46,20 +46,46 @@ save_distribution_figure <- function(spec, path, district_panel) {
   x <- panel[[spec$variable]]
   if (is.numeric(x)) {
     plot_data <- data.frame(value = x)
+    subtitle <- if (has_sf_geometry(district_panel)) "District map input distribution." else "District distribution; geometry join remains under validation."
     p <- ggplot2::ggplot(plot_data, ggplot2::aes(value)) +
       ggplot2::geom_histogram(bins = 30, fill = "#4e79a7", color = "white", na.rm = TRUE) +
-      ggplot2::labs(title = spec$title, subtitle = "Draft distribution; final mode requires geometry for maps.", x = spec$variable, y = "Districts") +
+      ggplot2::labs(title = spec$title, subtitle = subtitle, x = spec$variable, y = "Districts") +
       ggplot2::theme_minimal(base_size = 12)
   } else {
     plot_data <- as.data.frame(sort(table(x), decreasing = TRUE))
     names(plot_data) <- c("value", "n")
     plot_data <- head(plot_data, 20)
+    subtitle <- if (has_sf_geometry(district_panel)) "District map input categories." else "District categories; geometry join remains under validation."
     p <- ggplot2::ggplot(plot_data, ggplot2::aes(stats::reorder(value, n), n)) +
       ggplot2::geom_col(fill = "#59a14f", width = 0.65) +
       ggplot2::coord_flip() +
-      ggplot2::labs(title = spec$title, subtitle = "Draft distribution; final mode requires geometry for maps.", x = NULL, y = "Districts") +
+      ggplot2::labs(title = spec$title, subtitle = subtitle, x = NULL, y = "Districts") +
       ggplot2::theme_minimal(base_size = 12)
   }
+  ggplot2::ggsave(path, p, width = 7, height = 4.5, dpi = 300)
+  path
+}
+
+save_district_tracker_summary <- function(spec, path) {
+  need_pkg("ggplot2", "district tracker figure")
+  tracker_path <- "data/processed/district_tracker_2001_2007_2017_2020.csv"
+  if (!file.exists(tracker_path)) return(save_status_figure(spec, path))
+  tracker <- utils::read.csv(tracker_path, stringsAsFactors = FALSE)
+  source <- first_col(tracker, c("source_file_id", "source", "Source"))
+  if (is.null(source)) return(save_status_figure(spec, path, tracker))
+  plot_data <- as.data.frame(sort(table(tracker[[source]], useNA = "ifany"), decreasing = TRUE))
+  names(plot_data) <- c("source", "rows")
+  plot_data <- head(plot_data, 20)
+  p <- ggplot2::ggplot(plot_data, ggplot2::aes(stats::reorder(source, rows), rows)) +
+    ggplot2::geom_col(fill = "#7f7f7f", width = 0.65) +
+    ggplot2::coord_flip() +
+    ggplot2::labs(
+      title = spec$title,
+      subtitle = spec$subtitle %||% "Source coverage in district tracker inputs.",
+      x = NULL,
+      y = "Rows"
+    ) +
+    ggplot2::theme_minimal(base_size = 12)
   ggplot2::ggsave(path, p, width = 7, height = 4.5, dpi = 300)
   path
 }
@@ -103,6 +129,7 @@ save_figures <- function(figures, cfg) {
       spec$kind,
       ilo_collage = save_ilo_collage(spec, path),
       status = save_status_figure(spec, path),
+      district_tracker_summary = save_district_tracker_summary(spec, path),
       save_distribution_figure(spec, path, attr(figures, "district_panel") %||% data.frame())
     )
   }

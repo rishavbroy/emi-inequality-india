@@ -98,8 +98,11 @@ selection_summary_value <- function(selection_data, relation_to_head, sex, summa
   age_col <- first_col(x, c("AGE", "age"))
   if (is.null(relation_col) || is.null(sex_col) || is.null(age_col)) return(NA_real_)
 
+  sex_raw <- as.character(x[[sex_col]])
+  sex_num <- suppressWarnings(as.numeric(sex_raw))
+  sex_keep <- sex_num == sex | (sex == 1 & tolower(sex_raw) == "male") | (sex == 2 & tolower(sex_raw) == "female")
   keep <- suppressWarnings(as.numeric(as.character(x[[relation_col]])) == relation_to_head) &
-    suppressWarnings(as.numeric(as.character(x[[sex_col]])) == sex)
+    sex_keep
   ages <- suppressWarnings(as.numeric(as.character(x[[age_col]][keep])))
   ages <- ages[is.finite(ages)]
   if (!length(ages)) return(NA_real_)

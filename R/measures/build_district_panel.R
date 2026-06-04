@@ -17,6 +17,9 @@ build_district_panel <- function(district_tracker, district_join_map, measures_2
   if (!"district_panel_id" %in% names(out)) {
     out$district_panel_id <- make_district_key(out$state_std, out$district_std, 2007L)
   }
+  out <- compute_consumption_growth_pct(out)
+  out <- compute_log_consumption_difference(out)
+  out <- compute_gini_change(out)
   out
 }
 
@@ -24,6 +27,11 @@ build_district_panel <- function(district_tracker, district_join_map, measures_2
 #'
 #' @return A tibble, model object, list, or file path depending on context.
 compute_consumption_growth_pct <- function(df) {
+  if (all(c("consumption_2007", "consumption_2017") %in% names(df))) {
+    base <- num(df$consumption_2007)
+    follow <- num(df$consumption_2017)
+    df$consumption_growth_pct <- ifelse(is.finite(base) & base != 0, 100 * (follow - base) / base, NA_real_)
+  }
   df
 }
 
@@ -31,6 +39,11 @@ compute_consumption_growth_pct <- function(df) {
 #'
 #' @return A tibble, model object, list, or file path depending on context.
 compute_log_consumption_difference <- function(df) {
+  if (all(c("consumption_2007", "consumption_2017") %in% names(df))) {
+    base <- num(df$consumption_2007)
+    follow <- num(df$consumption_2017)
+    df$log_consumption_difference <- ifelse(base > 0 & follow > 0, log(follow) - log(base), NA_real_)
+  }
   df
 }
 
@@ -38,6 +51,9 @@ compute_log_consumption_difference <- function(df) {
 #'
 #' @return A tibble, model object, list, or file path depending on context.
 compute_gini_change <- function(df) {
+  if (all(c("gini_consumption_2007", "gini_consumption_2017") %in% names(df))) {
+    df$gini_change <- num(df$gini_consumption_2017) - num(df$gini_consumption_2007)
+  }
   df
 }
 
