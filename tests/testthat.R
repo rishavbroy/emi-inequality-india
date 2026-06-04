@@ -12,7 +12,7 @@ source("R/paths.R")
 # pipeline while avoiding a hard dependency on targets itself.
 source_dirs <- c(
   "R/io", "R/clean", "R/districts", "R/measures", "R/selection",
-  "R/iv", "R/diagnostics", "R/output", "R/samples"
+  "R/iv", "R/diagnostics", "R/output", "R/application_samples"
 )
 for (dir in source_dirs) {
   files <- sort(list.files(dir, pattern = "\\.R$", full.names = TRUE))

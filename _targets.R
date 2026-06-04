@@ -13,7 +13,7 @@ tar_source("R/selection")
 tar_source("R/iv")
 tar_source("R/diagnostics")
 tar_source("R/output")
-tar_source("R/samples")
+tar_source("R/application_samples")
 
 tar_option_set(
   packages = project_packages(),

@@ -1,9 +1,9 @@
 source("R/packages.R")
-source("R/samples/zzz_legacy_pipeline_impl.R")
-source("R/samples/extract_qmd_excerpts.R")
-source("R/samples/extract_code_excerpts.R")
-source("R/samples/render_writing_sample.R")
-source("R/samples/render_coding_sample.R")
+source("R/application_samples/zzz_legacy_pipeline_impl.R")
+source("R/application_samples/extract_qmd_excerpts.R")
+source("R/application_samples/extract_code_excerpts.R")
+source("R/application_samples/render_writing_sample.R")
+source("R/application_samples/render_coding_sample.R")
 
 if (!requireNamespace("yaml", quietly = TRUE)) {
   stop("Package 'yaml' is required for application-sample specs. Run `make init-renv`.", call. = FALSE)
