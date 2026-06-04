@@ -7,7 +7,7 @@
 #'
 #' @return A tibble, model object, list, or file path depending on context.
 diagnose_multicollinearity <- function(district_panel, iv_models, cfg) {
-  tibble::tibble()
+  data.frame(test = "kappa", status = "not_run_in_smoke_mode")
 }
 
 #' compute design matrix rank

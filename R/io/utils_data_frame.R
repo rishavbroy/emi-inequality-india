@@ -1,4 +1,4 @@
-# Shared low-level helpers for raw readers, cleaning modules, and bridge code.
+# Shared low-level helpers for raw readers, cleaning modules, and measures.
 
 `%||%` <- function(x, y) {
   if (is.null(x) || length(x) == 0L || all(is.na(x))) y else x
@@ -24,6 +24,25 @@ safe_df <- function(x) {
     }
   }
   x
+}
+
+empty_panel <- function() {
+  data.frame(
+    district_panel_id = character(),
+    state_std = character(),
+    district_std = character(),
+    stringsAsFactors = FALSE
+  )
+}
+
+std <- function(df, year) {
+  df <- safe_df(df)
+  s <- first_col(df, c("state", "STATE", "state_0708", "state_1718", "state_20", "stname", "ST_NM", "State", "state name", "Name of State", "state_name"))
+  d <- first_col(df, c("district", "DISTRICT", "district_0708", "district_1718", "district_20", "dtname", "DT_NM", "District", "district name", "district_name", "Name of District"))
+  if (!is.null(s)) df$state_std <- canonicalize_state_name(df[[s]])
+  if (!is.null(d)) df$district_std <- canonicalize_district_name(df[[d]])
+  df$source_year <- rep(as.integer(year), nrow(df))
+  df
 }
 
 safe_bind_rows <- function(xs) {
@@ -69,6 +88,20 @@ wmean <- function(x, w = NULL) {
   ok <- is.finite(x) & is.finite(w) & w >= 0
   if (!any(ok) || sum(w[ok]) == 0) return(NA_real_)
   stats::weighted.mean(x[ok], w[ok])
+}
+
+bydist <- function(df, value, weight = NULL, name = "value", fun = wmean) {
+  g <- intersect(c("state_std", "district_std"), names(df))
+  if (length(g) < 2 || is.null(value) || !nrow(df)) {
+    return(data.frame(state_std = character(), district_std = character()))
+  }
+  split_i <- split(seq_len(nrow(df)), interaction(df[g], drop = TRUE))
+  safe_bind_rows(lapply(split_i, function(i) {
+    z <- df[i[1], g, drop = FALSE]
+    z[[name]] <- fun(df[[value]][i], if (!is.null(weight)) df[[weight]][i] else NULL)
+    z$n <- length(i)
+    z
+  }))
 }
 
 wgini <- function(x, w = NULL) {

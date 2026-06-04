@@ -6,7 +6,7 @@
 #'
 #' @return A tibble, model object, list, or file path depending on context.
 diagnose_spatial_autocorrelation <- function(district_panel, iv_models, spatial_weights, cfg) {
-  list()
+  data.frame(test = "moran", status = "not_run_in_smoke_mode")
 }
 
 #' compute moran tests
@@ -29,4 +29,3 @@ compute_monte_carlo_moran_tests <- function(...) {
 save_spatial_autocorrelation_diagnostics <- function(diagnostics) {
   diagnostics
 }
-

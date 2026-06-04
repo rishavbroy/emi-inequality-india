@@ -6,8 +6,13 @@
 #'
 #' @return A tibble, model object, list, or file path depending on context.
 save_tables <- function(tables, cfg) {
-  dir.create("outputs/tables/main", recursive = TRUE, showWarnings = FALSE)
-  character()
+  dir <- "outputs/tables/main"
+  dir.create(dir, recursive = TRUE, showWarnings = FALSE)
+  vapply(names(tables), function(n) {
+    p <- file.path(dir, paste0(n, ".csv"))
+    utils::write.csv(as.data.frame(tables[[n]]), p, row.names = FALSE)
+    p
+  }, character(1))
 }
 
 #' save table csv tex
@@ -23,4 +28,3 @@ save_table_csv_tex <- function(table, path_base) {
 save_table_html_if_requested <- function(table, path_base) {
   html <- paste0(path_base, ".html"); html
 }
-

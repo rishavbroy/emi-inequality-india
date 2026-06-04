@@ -1,5 +1,4 @@
 source("R/packages.R")
-source("R/application_samples/zzz_legacy_pipeline_impl.R")
 source("R/application_samples/extract_qmd_excerpts.R")
 source("R/application_samples/extract_code_excerpts.R")
 source("R/application_samples/render_writing_sample.R")

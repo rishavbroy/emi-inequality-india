@@ -7,7 +7,11 @@
 #'
 #' @return A tibble, model object, list, or file path depending on context.
 make_tables <- function(selection_data, ame_results, district_panel, iv_models, first_stage_tests, cfg) {
-  list()
+  list(
+    selection_n = data.frame(n = nrow(as.data.frame(selection_data))),
+    ame_results = as.data.frame(ame_results),
+    first_stage = as.data.frame(first_stage_tests)
+  )
 }
 
 #' make selection summary numeric table

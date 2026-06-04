@@ -6,8 +6,11 @@
 #'
 #' @return A tibble, model object, list, or file path depending on context.
 save_figures <- function(figures, cfg) {
-  dir.create("outputs/figures/main", recursive = TRUE, showWarnings = FALSE)
-  character()
+  dir <- "outputs/figures/main"
+  dir.create(dir, recursive = TRUE, showWarnings = FALSE)
+  p <- file.path(dir, "figure_manifest.csv")
+  utils::write.csv(data.frame(name = names(figures)), p, row.names = FALSE)
+  p
 }
 
 #' save figure pdf png
@@ -32,4 +35,3 @@ save_map_pdf_png <- function(plot, path_base) {
 save_diagnostic_figure <- function(plot, path_base) {
   save_figure_pdf_png(plot, path_base)
 }
-

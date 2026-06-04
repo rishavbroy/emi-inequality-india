@@ -7,7 +7,7 @@
 #'
 #' @return A tibble, model object, list, or file path depending on context.
 make_figures <- function(district_panel, raw_ilo_figures, cfg) {
-  list(ilo = make_ilo_trends_figure(raw_ilo_figures))
+  list(n_districts = nrow(as.data.frame(district_panel)), ilo_figures = raw_ilo_figures)
 }
 
 #' make ilo trends figure
