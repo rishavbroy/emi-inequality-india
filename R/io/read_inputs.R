@@ -5,35 +5,35 @@
 
 #' read nss 2007 education
 #'
-#' @return A tibble, model object, list, or file path depending on context.
+#' @return Function-specific return value.
 read_nss_2007_education <- function(paths) {
   read_manifest_group(paths, "nss_2007_education")
 }
 
 #' read nss 2007 consumption
 #'
-#' @return A tibble, model object, list, or file path depending on context.
+#' @return Function-specific return value.
 read_nss_2007_consumption <- function(paths) {
   read_manifest_group(paths, "nss_2007_consumption")
 }
 
 #' read nss 2017 education
 #'
-#' @return A tibble, model object, list, or file path depending on context.
+#' @return Function-specific return value.
 read_nss_2017_education <- function(paths) {
   read_manifest_group(paths, "nss_2017_education")
 }
 
 #' read census 2001 mother tongue
 #'
-#' @return A tibble, model object, list, or file path depending on context.
+#' @return Function-specific return value.
 read_census_2001_mother_tongue <- function(paths) {
   read_manifest_group(paths, "census_2001_mother_tongue")
 }
 
 #' read district boundaries 2020
 #'
-#' @return A tibble, model object, list, or file path depending on context.
+#' @return Function-specific return value.
 read_district_boundaries_2020 <- function(paths) {
   rows <- require_manifest_files(paths, "district_boundaries_2020")
   shp <- rows[tolower(rows$file_type) == "shp", , drop = FALSE]
@@ -44,14 +44,14 @@ read_district_boundaries_2020 <- function(paths) {
 
 #' read district change sources
 #'
-#' @return A tibble, model object, list, or file path depending on context.
+#' @return Function-specific return value.
 read_district_change_sources <- function(paths) {
   read_manifest_group(paths, "district_changes")
 }
 
 #' list ilo figure paths
 #'
-#' @return A tibble, model object, list, or file path depending on context.
+#' @return Function-specific return value.
 list_ilo_figure_paths <- function(paths) {
   rows <- require_manifest_files(paths, "ilo_figures")
   stats::setNames(rows$absolute_path, rows$file_id)

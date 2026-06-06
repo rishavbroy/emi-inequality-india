@@ -4,7 +4,7 @@
 
 #' diagnose district tracker sources
 #'
-#' @return A tibble, model object, list, or file path depending on context.
+#' @return Function-specific return value.
 diagnose_district_tracker_sources <- function(raw_district_changes, district_tracker, cfg) {
   data.frame(
     source_file_id = names(raw_district_changes),
@@ -15,28 +15,28 @@ diagnose_district_tracker_sources <- function(raw_district_changes, district_tra
 
 #' compare tracker source coverage
 #'
-#' @return A tibble, model object, list, or file path depending on context.
+#' @return Function-specific return value.
 compare_tracker_source_coverage <- function(...) {
   tibble::tibble()
 }
 
 #' find source disagreements
 #'
-#' @return A tibble, model object, list, or file path depending on context.
+#' @return Function-specific return value.
 find_source_disagreements <- function(...) {
   tibble::tibble()
 }
 
 #' summarize tracker source errors
 #'
-#' @return A tibble, model object, list, or file path depending on context.
+#' @return Function-specific return value.
 summarize_tracker_source_errors <- function(...) {
   tibble::tibble()
 }
 
 #' save tracker source diagnostics
 #'
-#' @return A tibble, model object, list, or file path depending on context.
+#' @return Function-specific return value.
 save_tracker_source_diagnostics <- function(diagnostics) {
   diagnostics
 }

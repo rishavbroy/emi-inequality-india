@@ -98,8 +98,11 @@ selection_summary_value <- function(selection_data, relation_to_head, sex, summa
   age_col <- first_col(x, c("AGE", "age"))
   if (is.null(relation_col) || is.null(sex_col) || is.null(age_col)) return(NA_real_)
 
+  sex_raw <- as.character(x[[sex_col]])
+  sex_num <- suppressWarnings(as.numeric(sex_raw))
+  sex_keep <- sex_num == sex | (sex == 1 & tolower(sex_raw) == "male") | (sex == 2 & tolower(sex_raw) == "female")
   keep <- suppressWarnings(as.numeric(as.character(x[[relation_col]])) == relation_to_head) &
-    suppressWarnings(as.numeric(as.character(x[[sex_col]])) == sex)
+    sex_keep
   ages <- suppressWarnings(as.numeric(as.character(x[[age_col]][keep])))
   ages <- ages[is.finite(ages)]
   if (!length(ages)) return(NA_real_)
@@ -179,9 +182,7 @@ build_report_values <- function(ame_results, first_stage_tests, iv_models, selec
   values <- add_report_value(values, "ame_hh_size_pct", "mfx_df %>% filter(term==\"HH_SIZE\") %>% pull(estimate) %>% round(3)*100", lookup_ame(ame_results, "HH_SIZE", multiply = 100, digits = 3), unavailable_ame)
   values <- add_report_value(values, "ame_muslim_pct", "mfx_df %>% filter(term==\"RELIGION\" & grepl(\"Muslim\", contrast)) %>% pull(estimate) %>% round(3)*100", lookup_ame(ame_results, "RELIGION", contrast_pattern = "Muslim", multiply = 100, digits = 3), unavailable_ame)
   values <- add_report_value(values, "ame_st_pct", "mfx_df %>% filter(term==\"SOCIAL_GROUP\" & grepl(\"Tribe\", contrast)) %>% pull(estimate) %>% round(3)*100", lookup_ame(ame_results, "SOCIAL_GROUP", contrast_pattern = "Tribe", multiply = 100, digits = 3), unavailable_ame)
-  values <- add_report_value(values, "ame_free_education_pct", "mfx_df %>% filter(grepl(\"dmean_num\", term) & grepl(\"IS_EDU_FREE\", term)) %>% pull(estimate) %>% round(3)*100", lookup_ame(ame_results, "dmean_num.*IS_EDU_FREE|IS_EDU_FREE.*dmean_num", multiply = 100, digits = 3), unavailable_ame)
   values <- add_report_value(values, "ame_textbooks_s", "mfx_df %>% filter(grepl(\"dmean_num\", term) & grepl(\"RECD_TXT_BOOKS\", term)) %>% pull(s.value) %>% signif(3)", lookup_ame_s_value(ame_results, "dmean_num.*RECD_TXT_BOOKS|RECD_TXT_BOOKS.*dmean_num", digits = 3), unavailable_ame)
-  values <- add_report_value(values, "ame_free_education_s", "mfx_df %>% filter(grepl(\"dmean_num\", term) & grepl(\"IS_EDU_FREE\", term)) %>% pull(s.value) %>% signif(3)", lookup_ame_s_value(ame_results, "dmean_num.*IS_EDU_FREE|IS_EDU_FREE.*dmean_num", digits = 3), unavailable_ame)
 
   values <- add_report_value(values, "kappa", "kappa %>% format(scientific = FALSE, digits = 7)", condition_number_value(model), "The model design matrix condition number is not available from the active model specification.")
 
@@ -225,9 +226,6 @@ build_report_values <- function(ame_results, first_stage_tests, iv_models, selec
   values <- add_inline_value(values, "summary(model_consumption_iv, vcov = vcov_model_consumption_iv)$coefficients[\"pct_large_land\",4] %>% round(digits = 3)", values$iv_pct_large_land_p)
   values <- add_inline_value(values, "summary(model_consumption_iv, vcov = vcov_model_consumption_iv)$coefficients[\"gini_cons_0708\",4] %>% round(digits = 3)", values$iv_gini_cons_0708_p)
   values <- add_inline_value(values, "summary(model_consumption_iv, vcov = vcov_model_consumption_iv)$coefficients[\"pct_fem_head\",4] %>% round(digits = 3)", values$iv_pct_fem_head_p)
-
-  values <- add_report_value(values, "spatial_residual_p", "m_cons_resid$p.value %>% signif(3)", spatial_p_value(diag_spatial_autocorrelation, "resid"), "Spatial residual autocorrelation diagnostics are not available in the current draft pipeline.")
-  values <- add_report_value(values, "spatial_consumption_p", "m_cons$p.value %>% signif(3)", spatial_p_value(diag_spatial_autocorrelation, "consumption|growth"), "Spatial consumption autocorrelation diagnostics are not available in the current draft pipeline.")
 
   values
 }

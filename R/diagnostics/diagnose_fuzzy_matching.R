@@ -4,7 +4,7 @@
 
 #' diagnose fuzzy matching
 #'
-#' @return A tibble, model object, list, or file path depending on context.
+#' @return Function-specific return value.
 diagnose_fuzzy_matching <- function(district_tracker, district_join_map, cfg) {
   data.frame(
     n_tracker_rows = nrow(as.data.frame(district_tracker)),
@@ -14,28 +14,28 @@ diagnose_fuzzy_matching <- function(district_tracker, district_join_map, cfg) {
 
 #' benchmark string distance methods
 #'
-#' @return A tibble, model object, list, or file path depending on context.
+#' @return Function-specific return value.
 benchmark_string_distance_methods <- function(pairs, methods, thresholds) {
   evaluate_distances(pairs, methods, thresholds)
 }
 
 #' test troublesome name pairs
 #'
-#' @return A tibble, model object, list, or file path depending on context.
+#' @return Function-specific return value.
 test_troublesome_name_pairs <- function(...) {
   tibble::tibble()
 }
 
 #' summarize threshold sensitivity
 #'
-#' @return A tibble, model object, list, or file path depending on context.
+#' @return Function-specific return value.
 summarize_threshold_sensitivity <- function(...) {
   tibble::tibble()
 }
 
 #' save fuzzy matching diagnostics
 #'
-#' @return A tibble, model object, list, or file path depending on context.
+#' @return Function-specific return value.
 save_fuzzy_matching_diagnostics <- function(diagnostics) {
   diagnostics
 }

@@ -5,35 +5,60 @@
 
 #' diagnose multicollinearity
 #'
-#' @return A tibble, model object, list, or file path depending on context.
+#' @return A data frame with design-matrix condition diagnostics.
 diagnose_multicollinearity <- function(district_panel, iv_models, cfg) {
-  tibble::tibble()
+  model <- if (is.list(iv_models) && length(iv_models)) iv_models[[1]] else iv_models
+  out <- tryCatch({
+    X <- stats::model.matrix(model)
+    data.frame(
+      test = "kappa",
+      n = nrow(X),
+      rank = qr(X)$rank,
+      columns = ncol(X),
+      kappa = kappa(X, exact = TRUE),
+      status = "estimated",
+      reason = NA_character_,
+      stringsAsFactors = FALSE
+    )
+  }, error = function(e) {
+    data.frame(
+      test = "kappa",
+      n = NA_integer_,
+      rank = NA_integer_,
+      columns = NA_integer_,
+      kappa = NA_real_,
+      status = "out_of_active_pipeline",
+      reason = conditionMessage(e),
+      stringsAsFactors = FALSE
+    )
+  })
+  out
 }
 
 #' compute design matrix rank
 #'
-#' @return A tibble, model object, list, or file path depending on context.
+#' @return Function-specific return value.
 compute_design_matrix_rank <- function(formula, data) {
   X <- stats::model.matrix(formula, data = data); tibble::tibble(rank = qr(X)$rank, ncol = ncol(X))
 }
 
 #' compute kappa
 #'
-#' @return A tibble, model object, list, or file path depending on context.
+#' @return Function-specific return value.
 compute_kappa <- function(formula, data) {
   X <- stats::model.matrix(formula, data = data); kappa(X, exact = TRUE)
 }
 
 #' compute vif if applicable
 #'
-#' @return A tibble, model object, list, or file path depending on context.
+#' @return Function-specific return value.
 compute_vif_if_applicable <- function(model) {
   if (requireNamespace("car", quietly = TRUE)) car::vif(model) else NULL
 }
 
 #' save multicollinearity diagnostics
 #'
-#' @return A tibble, model object, list, or file path depending on context.
+#' @return Function-specific return value.
 save_multicollinearity_diagnostics <- function(diagnostics) {
   diagnostics
 }

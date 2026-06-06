@@ -5,7 +5,7 @@
 
 #' build spatial weights
 #'
-#' @return A tibble, model object, list, or file path depending on context.
+#' @return Function-specific return value.
 build_spatial_weights <- function(district_panel, cfg) {
   if (inherits(district_panel, "sf")) {
     nb <- spdep::poly2nb(district_panel, queen = FALSE)
@@ -16,7 +16,7 @@ build_spatial_weights <- function(district_panel, cfg) {
 
 #' diagnose spatial weights
 #'
-#' @return A tibble, model object, list, or file path depending on context.
+#' @return Function-specific return value.
 diagnose_spatial_weights <- function(district_panel, spatial_weights, cfg) {
   data.frame(
     diagnostic = "spatial_weights",
@@ -27,28 +27,28 @@ diagnose_spatial_weights <- function(district_panel, spatial_weights, cfg) {
 
 #' compare rook queen contiguity
 #'
-#' @return A tibble, model object, list, or file path depending on context.
+#' @return Function-specific return value.
 compare_rook_queen_contiguity <- function(district_panel) {
   tibble::tibble()
 }
 
 #' summarize islands
 #'
-#' @return A tibble, model object, list, or file path depending on context.
+#' @return Function-specific return value.
 summarize_islands <- function(spatial_weights) {
   tibble::tibble()
 }
 
 #' summarize neighbor counts
 #'
-#' @return A tibble, model object, list, or file path depending on context.
+#' @return Function-specific return value.
 summarize_neighbor_counts <- function(spatial_weights) {
   tibble::tibble()
 }
 
 #' save spatial weight diagnostics
 #'
-#' @return A tibble, model object, list, or file path depending on context.
+#' @return Function-specific return value.
 save_spatial_weight_diagnostics <- function(diagnostics) {
   diagnostics
 }

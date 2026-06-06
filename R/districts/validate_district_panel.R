@@ -4,28 +4,28 @@
 
 #' validate district panel
 #'
-#' @return A tibble, model object, list, or file path depending on context.
+#' @return Function-specific return value.
 validate_district_panel <- function(panel) {
   check_core_variables_present(panel); panel
 }
 
 #' check unique district units
 #'
-#' @return A tibble, model object, list, or file path depending on context.
+#' @return Function-specific return value.
 check_unique_district_units <- function(panel) {
   stopifnot(!anyDuplicated(panel$district_panel_id)); invisible(TRUE)
 }
 
 #' check no unintended many to many
 #'
-#' @return A tibble, model object, list, or file path depending on context.
+#' @return Function-specific return value.
 check_no_unintended_many_to_many <- function(panel) {
   invisible(TRUE)
 }
 
 #' check core variables present
 #'
-#' @return A tibble, model object, list, or file path depending on context.
+#' @return Function-specific return value.
 check_core_variables_present <- function(panel) {
   required <- c("EMIE", "wavg_ling_degrees")
   missing <- setdiff(required, names(panel))
@@ -35,7 +35,7 @@ check_core_variables_present <- function(panel) {
 
 #' check panel variable ranges
 #'
-#' @return A tibble, model object, list, or file path depending on context.
+#' @return Function-specific return value.
 check_panel_variable_ranges <- function(panel) {
   invisible(TRUE)
 }

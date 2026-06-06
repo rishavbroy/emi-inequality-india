@@ -4,7 +4,7 @@
 
 #' apply manual district corrections
 #'
-#' @return A tibble, model object, list, or file path depending on context.
+#' @return Function-specific return value.
 apply_manual_district_corrections <- function(tracker, corrections_path = "data/metadata/manual_district_corrections.csv") {
   if (!file.exists(corrections_path)) return(tracker)
   corrections <- utils::read.csv(corrections_path, stringsAsFactors = FALSE)
@@ -15,7 +15,7 @@ apply_manual_district_corrections <- function(tracker, corrections_path = "data/
 
 #' validate manual corrections
 #'
-#' @return A tibble, model object, list, or file path depending on context.
+#' @return Function-specific return value.
 validate_manual_corrections <- function(corrections, tracker) {
   required <- c("correction_id", "source_year", "source_dataset", "state_raw", "district_raw", "correction_type", "reason")
   missing <- setdiff(required, names(corrections))
@@ -25,21 +25,21 @@ validate_manual_corrections <- function(corrections, tracker) {
 
 #' apply rename corrections
 #'
-#' @return A tibble, model object, list, or file path depending on context.
+#' @return Function-specific return value.
 apply_rename_corrections <- function(tracker, corrections) {
   tracker
 }
 
 #' apply split merge corrections
 #'
-#' @return A tibble, model object, list, or file path depending on context.
+#' @return Function-specific return value.
 apply_split_merge_corrections <- function(tracker, corrections) {
   tracker
 }
 
 #' apply typo corrections
 #'
-#' @return A tibble, model object, list, or file path depending on context.
+#' @return Function-specific return value.
 apply_typo_corrections <- function(tracker, corrections) {
   tracker
 }
