@@ -1,7 +1,7 @@
 # Check that application-sample YAML specs refer to real, nonempty excerpts.
 
-source("R/samples/extract_qmd_excerpts.R")
-source("R/samples/extract_code_excerpts.R")
+source("R/application_samples/extract_qmd_excerpts.R")
+source("R/application_samples/extract_code_excerpts.R")
 
 `%||%` <- function(x, y) if (is.null(x) || length(x) == 0L) y else x
 

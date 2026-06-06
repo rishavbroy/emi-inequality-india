@@ -26,6 +26,7 @@ find_targets_store <- function(start = getwd()) {
   }
 }
 report_values <- tryCatch(targets::tar_read(report_values, store = find_targets_store()), error = function(e) list())
+report_output_files <- tryCatch(c(targets::tar_read(figure_files, store = find_targets_store()), targets::tar_read(table_files, store = find_targets_store())), error = function(e) character())
 if (is.null(report_values) || !is.list(report_values)) report_values <- list()
 legacy_inline_expressions <- list(
   inline_391c516e = "edu0708b4 %>% filter(RELATION_TO_HEAD==1 & SEX==1) %>% summarise(round(mean(AGE),1)) %>% .[[1]]",
@@ -42,9 +43,7 @@ legacy_inline_expressions <- list(
   inline_eb012827 = "mfx_df %>% filter(term==\"HH_SIZE\") %>% pull(estimate) %>% round(3)*100",
   inline_a3fcb577 = "mfx_df %>% filter(term==\"RELIGION\" & grepl(\"Muslim\", contrast)) %>% pull(estimate) %>% round(3)*100",
   inline_dfcb22a5 = "mfx_df %>% filter(term==\"SOCIAL_GROUP\" & grepl(\"Tribe\", contrast)) %>% pull(estimate) %>% round(3)*100",
-  inline_7a04581a = "mfx_df %>% filter(grepl(\"dmean_num\", term) & grepl(\"IS_EDU_FREE\", term)) %>% pull(estimate) %>% round(3)*100",
   inline_55014f4e = "mfx_df %>% filter(grepl(\"dmean_num\", term) & grepl(\"RECD_TXT_BOOKS\", term)) %>% pull(s.value) %>% signif(3)",
-  inline_0937ca53 = "mfx_df %>% filter(grepl(\"dmean_num\", term) & grepl(\"IS_EDU_FREE\", term)) %>% pull(s.value) %>% signif(3)",
   inline_7d871500 = "kappa %>% format(scientific = FALSE, digits = 7)",
   inline_d306ea57 = "partial_f %>% round(digits = 2)",
   inline_c0673df9 = "partial_p %>% signif(digits = 2)",
@@ -62,9 +61,7 @@ legacy_inline_expressions <- list(
   inline_cd5afd77 = "summary(model_consumption_iv, vcov = vcov_model_consumption_iv)$coefficients[\"pct_medium_land\",4] %>% round(digits = 3)",
   inline_861e7564 = "summary(model_consumption_iv, vcov = vcov_model_consumption_iv)$coefficients[\"pct_large_land\",4] %>% round(digits = 3)",
   inline_46353c81 = "summary(model_consumption_iv, vcov = vcov_model_consumption_iv)$coefficients[\"gini_cons_0708\",4] %>% round(digits = 3)",
-  inline_0b52593f = "summary(model_consumption_iv, vcov = vcov_model_consumption_iv)$coefficients[\"pct_fem_head\",4] %>% round(digits = 3)",
-  inline_2b7c944a = "m_cons_resid$p.value %>% signif(3)",
-  inline_7e66a3fd = "m_cons$p.value %>% signif(3)"
+  inline_0b52593f = "summary(model_consumption_iv, vcov = vcov_model_consumption_iv)$coefficients[\"pct_fem_head\",4] %>% round(digits = 3)"
 )
 is_report_value_status <- function(value) {
   is.list(value) && !is.null(value$status) && !is.null(value$reason)
@@ -88,6 +85,9 @@ report_value <- function(key) {
 # Introduction and Literature Review {#sec-intro}
 
 The Indian economy presents a series of paradoxes. The same economy whose GDP has grown at 6% annually on average for decades [@organization2024a, p. 2] has also seen stagnation if not losses in wages, employment, and labor force participation (see Figure @fig-ILO-fig), all while higher education has continued to develop an extremely strong, positive correlation with higher youth *unemployment*.^[Note that lower levels of education are instead strongly correlated with youth *under*employment [@organization2024a, p. 130]. There are no winners here.] And though the International Labour Organization (ILO) traces this back to a labor supply which lacks the skills needed to fill available job openings (p. 174), high unemployment rates can be found for skilled laborers of all backgrounds, including those who received vocational education and training [@agrawal.agrawal2017].
+
+![ILO labor market indicators composed from archived ILO figure assets.](../outputs/figures/main/fig_ilo_trends.png){#fig-ILO-fig}
+
 
 Appreciating this broader view helps reveal the degree to which unemployment, underemployment, and "jobless growth" [@graddol2010a] have, alongside wealth inequality, combined to undermine the degree to which many benefit from India's recent economic growth [@bharti.etal2024]. From here we adopt a bottom-up perspective---what can members of this "many" do to improve their lives in such a context?---and in doing so, our motivating question reveals itself to be two-fold: 1) If I am a household, what can I do to best ensure my children's future success in this context? And 2) if I am a local policy-maker, what can I do to best ensure my constituents' future welfare in this context?
 
@@ -131,13 +131,25 @@ With our current methodology, we find that greater exposure to EMI enrollment ha
 
 The sole 2001 variable, linguistic distance from Hindi, comes from the 2001 Census of India [@officeoftheregistrargeneralandcensuscommissionerofindiaCensusIndia20012001]. 
 
-Geospatial data used to construct the maps in this paper as well as all spatial autocorrelation measures is sourced from @bhatiaMergingUpdatedDistrictlevel2020, which is itself an adaptation of @meyersIndiaOfficialBoundaries2020. Our methods for tracking districts across time (see Sec. @sec-distma) begin with data from @indiastatestoriesDistrictEvolution2024 and @jaacksIndiaDistrictChanges2020. 
+Geospatial data intended for maps and spatial autocorrelation measures is sourced from @bhatiaMergingUpdatedDistrictlevel2020, which is itself an adaptation of @meyersIndiaOfficialBoundaries2020. The active figures below use district-level empirical distributions while the geometry join remains under validation. Our methods for tracking districts across time (see Sec. @sec-distma) begin with data from @indiastatestoriesDistrictEvolution2024 and @jaacksIndiaDistrictChanges2020.
 
 All variables reflecting 2017-18 data come from the 75th Round of the National Sample Survey (NSS), titled "Household Social Consumption: Education" [@office2022a]. All 2007-08 variables but one come from the 64th round of the NSS, on "Participation and Expenditure in Education" [@nationalsamplesurveyoffice2008]; the sole exception to this is the percentage of homes which are pucca (i.e., permanent), which is instead sourced from a separate schedule of the 64th NSS, “Household Consumer Expenditure” [@nationalstatisticalofficeIndiaHouseholdConsumer2011]. Response rates in all of the surveys were above 96%. 
 
 Sample weights were applied wherever applicable. All district-level aggregates were formed as sample-weighted averages. The education participation probit of Sec. @sec-heckman used survey-weighted generalized linear models and design-based standard errors.^[Clusters were formed at the primary sampling unit, which were rural villages and urban blocks. These clusters were nested, or defined within, substrata which were themselves nested within strata. (Strata generally corresponded to districts, whereas substrata generally corresponded to each side of the rural/urban partition of the district. Multiple urban substrata were allowed for particularly dense areas, with the largest number of substrata within a district being 29.) All were accounted for in the probit.]. Summary statistics for variables used in the probit are given in Tables @tbl-sum-tbl-probit-quant and @tbl-sum-tbl-probit-cat, whereas Table @tbl-sum-tbl-iv contains summary statistics for variables used in the 2SLS estimation. 
 
 Except for certain individual-level variables in the education probit, we will be aggregating variables at the district level. As will be shown in Table @tbl-sum-tbl-iv, the average population of a district in either sample period (2007-08 and 2017-18) is 2 million. In the survey samples, however, most districts have between 400 and 1200 people represented in the data, with the exact number varying in line with a district's population.
+
+```{r}
+#| label: tbl-sum-tbl-iv
+#| tbl-cap: "Summary statistics for 2SLS model variables"
+#| echo: false
+output_table <- function(path) {
+  if (file.exists(path)) return(utils::read.csv(path, check.names = FALSE))
+  data.frame(status = "missing generated output", path = path)
+}
+knitr::kable(output_table("../outputs/tables/main/sum_tbl_iv.csv"), digits = 3)
+```
+
 
 ## Data Issues: Representativeness and Quality
 
@@ -211,10 +223,45 @@ The @nationalsamplesurveyoffice2008 do not explicitly identify parent-child rela
 
 Summary statistics for numeric variables are given in Table @tbl-sum-tbl-probit-quant, and for categorical variables in Table @tbl-sum-tbl-probit-cat.
 
+```{r}
+#| label: tbl-sum-tbl-probit-quant
+#| tbl-cap: "Summary statistics for enrollment participation model numeric variables"
+#| echo: false
+output_table <- function(path) {
+  if (file.exists(path)) return(utils::read.csv(path, check.names = FALSE))
+  data.frame(status = "missing generated output", path = path)
+}
+knitr::kable(output_table("../outputs/tables/main/sum_tbl_probit_quant.csv"), digits = 3)
+```
+
+```{r}
+#| label: tbl-sum-tbl-probit-cat
+#| tbl-cap: "Summary statistics for enrollment participation model categorical variables"
+#| echo: false
+output_table <- function(path) {
+  if (file.exists(path)) return(utils::read.csv(path, check.names = FALSE))
+  data.frame(status = "missing generated output", path = path)
+}
+knitr::kable(output_table("../outputs/tables/main/sum_tbl_probit_cat.csv"), digits = 3)
+```
+
+
 
 
 ## Results and Discussion {#sec-heckman-results}
 Average marginal effects for numeric variables and counterfactual comparisons (relative to the reference level) for categorical variables (both referred to as AME henceforth) are reported in Table @tbl-probit-mfx, which has been derived using the work of @arel-bundockHowInterpretStatistical2024 In line with advice from @nowosadElegantInformativeMaps2021, we report the AME instead of marginal effects at the mean.
+
+```{r}
+#| label: tbl-probit-mfx
+#| tbl-cap: "Average marginal effects from the education participation probit"
+#| echo: false
+output_table <- function(path) {
+  if (file.exists(path)) return(utils::read.csv(path, check.names = FALSE))
+  data.frame(status = "missing generated output", path = path)
+}
+knitr::kable(output_table("../outputs/tables/main/probit_mfx.csv"), digits = 3)
+```
+
 
 Table @tbl-probit-mfx has been calculated over all observations, with standard errors clustered at the rural village and urban block level (no district clustering) derived using the delta method and automatic differentiation.^[@dawoodAutomaticDifferentiationUncertainties2023 provide a good treatment of automatic differentiation, describing it as a process which is "neither numeric nor symbolic, nor is it a combination of both.... In contrast to the more traditional numerical methods based on finite differences, auto-differentiation is ‘in theory’ exact, and in comparison to symbolic algorithms, it is computationally inexpensive." The `marginaleffects` package itself claims automatic differentiation is both faster and more accurate for some models [@arel-bundockHowInterpretStatistical2024].] All reported values are probabilities: that $\mathrm{AME}_{\text{Age}} =$ `r report_value("inline_5aa491ab")` in the table below thus means that, on average, a one-year increase in age is associated with a `r report_value("inline_7f5360c6")` percentage point decrease in the probability of being enrolled by, holding all else constant [@hansenEconometrics2022]. The counterfactual comparison $\mathrm{AME}_{\text{Muslim}} =$ `r report_value("inline_9cd11971")`, meanwhile, where 'Hindu' is the reference category to 'Muslim', means that the average change in the probability of a Hindu child being enrolled if they were hypothetically made Muslim is `r report_value("inline_9cd11971")`, keeping all else fixed at observed values.^[Such interpretations are possible because AME is averaged across all observations, making them more generalizable than metrics like marginal effects at the mean [@nguyenGuideDataAnalysis2020]. But their interpretability is still also dependent on a linearity assumption which may not be valid. Future work may thus abide by the argument of @scholbeckMarginalEffectsNonlinear2024, that no one single metric can be used to summarize a non-linear prediction function’s feature effects, and may instead report conditional feature effect estimates by applying their concept of forward marginal effects within population subgroups.]
 
@@ -225,7 +272,7 @@ We first look at household-level determinants of who gets to stay in school. Our
 
 While both Muslims and Christians are less likely to be enrolled than Hindus (whereas Buddhists and Zoroastrians are more likely), the sharp Muslim penalty of `r report_value("inline_a3fcb577")` percent echoes @borooah2021a, who find that even upper-class Muslims enroll at lower rates. Even greater statistical significance can be found among Scheduled Tribe, Scheduled Caste, and Other Backward Class members, all of whom have negative coefficients, with Scheduled Tribes faring the worst at `r report_value("inline_dfcb22a5")` percent. While we should be suspicious of causal interpretations, it is likely these coefficients reflect the way structural factors i.e., those which cannot be changed through individual actions alone, constrain the choice set over which households optimize over. For example, if we use chronic teacher absenteeism to reflect school quality, then we can use @kremer.etal2005 to see that better infrastructure and proximity to a paved road correlate with increased school quality, as does more frequent school monitoring per both Kremer et al. and @muralidharan.etal2017. If we assume that the physical and political infrastructure needed to do this is decreasing in the share of ST/SC/OBC members in the area, then this only decreases the opportunity cost of labor for children in these groups.
 
-Looking deeper into the supply side of education, it seems that all variation which could potentially be explained by enrollment cost has, at best, been consumed by other variables, implying direct costs matter less than social barriers and other correlates of supply-side factors. While one would expect the causal effect of an exogenous shock in scholarships/stipends, stationery, or textbooks to match the sign of their positive coefficient estimates, only textbooks show up as statistically significant. Instead, our other significant result is the `r report_value("inline_7a04581a")` percent change in enrollment associated with a marginal change in the share of students within one's district who attend a school which charges no tuition fees (i.e., where 'Educ. freely available'). @nationalsamplesurveyoffice2008 documentation indicates that such schools include most if not all government schools, as well as private schools in some states up to a certain level of education. Building off observations in Sec. @sec-intro that government schools tend to have worse facilities, chronic teacher absenteeism, and so on, this coefficient seems to imply that when the modal inside option is poor-quality schooling, the marginal child is more likely to have taken the outside option not be enrolled. If this interpretation is correct, then comparing the variables' $s$-values^[Given a $p$-value, we can define the $s$-value as $s=-\log_2(p)$ [@mansourniaPvalueCompatibilitySvalue2022].] using @mansourniaPvalueCompatibilitySvalue2022 reveals just how much evidence we find for government schools being a negatively-priced deterrent [a la @muralidharan2019a]: while both 'Textbook(s) received' and 'Educ. free available' have similar effect sizes and standard errors, the former has an $s$-value of `r report_value("inline_55014f4e")`, meaning that the data provided `r report_value("inline_55014f4e")` bits of information against the null hypothesis (a coefficient of zero), whereas the 'Educ. free available' result communicated a far higher `r report_value("inline_0937ca53")` bits against its null.
+Looking deeper into the supply side of education, it seems that all variation which could potentially be explained by enrollment cost has, at best, been consumed by other variables, implying direct costs matter less than social barriers and other correlates of supply-side factors. While one would expect the causal effect of an exogenous shock in scholarships/stipends, stationery, or textbooks to match the sign of their positive coefficient estimates, only textbooks show up as statistically significant. The district-level share of students who attend a school which charges no tuition fees (i.e., where 'Educ. freely available') is collinear with the intercept in the active probit specification, so we do not report its AME in this draft. @nationalsamplesurveyoffice2008 documentation indicates that such schools include most if not all government schools, as well as private schools in some states up to a certain level of education. Building off observations in Sec. @sec-intro that government schools tend to have worse facilities, chronic teacher absenteeism, and so on, this omitted coefficient remains a useful warning about the difficulty of separating direct costs from the quality and availability of public schooling. Comparing the remaining variables' $s$-values^[Given a $p$-value, we can define the $s$-value as $s=-\log_2(p)$ [@mansourniaPvalueCompatibilitySvalue2022].] using @mansourniaPvalueCompatibilitySvalue2022 shows that 'Textbook(s) received' has an $s$-value of `r report_value("inline_55014f4e")`, meaning that the data provided `r report_value("inline_55014f4e")` bits of information against the null hypothesis (a coefficient of zero).
 
 Finally we have the most economically and statistically significant terms: the father's (or father proxy's) education level. We can interpret this in multiple ways: as a proxy for financial ability (via the relationship between a father’s education and the household’s permanent income), for heritable cognitive ability, for a child’s valuation of education (via intergenerational transmission of tastes and values), and even for access to educational and labor market information (via social capital). It's possible that these variables, insofar as they correlate with fertility and schooling choices, absorbed some of the variation which otherwise would've been explained by, say, household size. But the size and significance of these coefficients may imply something further: that a household's financial/cognitive ability, tastes/preferences, and social capital/information networks affect both household optimization and the choice set available for them to optimize over. 
 
@@ -251,7 +298,12 @@ $$
 &= \beta_0 + \beta_1\,\widehat{\mathrm{EMIE}}_d + \sum_{k=1}^{K}\beta_{k+1}\,X_{kd}.
 \end{aligned}
 $$ {#eq-iv-eq}
-Summary statistics for all of the variables in this model, including the controls $k$ in the vector $X_{kd}$, are provided in Table @tbl-sum-tbl-iv. Maps of these variables are presented in Figures @fig-map1-fig and @fig-map2-fig; the number of missing districts in them, as discussed in Sec. @sec-distma-spa, is the product of a data harmonization method which performed many-to-many matching from 2001 to 2007-08 to 2017-18 to 2019-20, the years our shapefiles data was collected [@bhatiaMergingUpdatedDistrictlevel2020]. Issues of and improvements to this method are also discussed in Sec. @sec-distma-spa.
+Summary statistics for all of the variables in this model, including the controls $k$ in the vector $X_{kd}$, are provided in Table @tbl-sum-tbl-iv. Distribution figures for these variables are presented in Figures @fig-map1-fig and @fig-map2-fig; the missing geometry join discussed in Sec. @sec-distma-spa is the product of a data harmonization method which performed many-to-many matching from 2001 to 2007-08 to 2017-18 to 2019-20, the years our shapefiles data was collected [@bhatiaMergingUpdatedDistrictlevel2020]. Issues of and improvements to this method are also discussed in Sec. @sec-distma-spa.
+
+![Main district-level empirical inputs.](../outputs/figures/main/collage_main_maps.png){#fig-map1-fig}
+
+![Instrument and region empirical inputs.](../outputs/figures/main/collage_iv_region_maps.png){#fig-map2-fig}
+
 
 
 
@@ -284,6 +336,29 @@ $\mathrm{LingDistance}_d$ is defined as the population-weighted average of Shast
 ::: {.sample-excerpt #ws-first-stage-results sets="writing-10pg" order="5"}
 ## Results {#sec-iv-results}
 The results of our first-stage regression, of EMI exposure on linguistic distance, are provided in Table @tbl-fs-cons. The results of the second-stage regression, where consumption growth is regressed onto the fitted values of EMI exposure, are provided in Table @tbl-cons-iv. All standard errors in both stages are clustered at the state level.
+
+```{r}
+#| label: tbl-fs-cons
+#| tbl-cap: "First-stage regression results"
+#| echo: false
+output_table <- function(path) {
+  if (file.exists(path)) return(utils::read.csv(path, check.names = FALSE))
+  data.frame(status = "missing generated output", path = path)
+}
+knitr::kable(output_table("../outputs/tables/main/fs_cons.csv"), digits = 3)
+```
+
+```{r}
+#| label: tbl-cons-iv
+#| tbl-cap: "Second-stage 2SLS consumption regression results"
+#| echo: false
+output_table <- function(path) {
+  if (file.exists(path)) return(utils::read.csv(path, check.names = FALSE))
+  data.frame(status = "missing generated output", path = path)
+}
+knitr::kable(output_table("../outputs/tables/main/cons_iv.csv"), digits = 3)
+```
+
 
 
 
@@ -355,6 +430,9 @@ Political changes, however, were not so easily addressed. The vast majority of s
 
 This seems to be precisely the same assumption made by @indiastatestoriesDistrictEvolution2024 and @jaacksIndiaDistrictChanges2020, whose data, despite containing some factual errors and typos, was the basis of our district matching method. To justify this assumption we turn to @kumarCreatingLongPanels2016, who up until 2001 are able to track the *proportion* of each district's population that was allocated into a new district as a result of district changes. They label these changes as one of two types: clean partitions and non-partitions (which would include name changes, clean mergers, carve-outs, and border shifts). By extracting their results using Tabula [@aristaranTabula2018], we know that 93.4% of non-partitions were either name changes or transfers of uninhabited land [@kumarCreatingLongPanels2016]. These district changes are plotted in Figure @fig-districtcarveoutsshifts-fig.
 
+![District carve-outs, shifts, and non-partitions.](../outputs/figures/main/district_carveouts_shifts.png){#fig-districtcarveoutsshifts-fig}
+
+
 
 
 We thus assume no district changes were carve-outs or border shifts. To match districts, we ran a hierarchical, cascading sequence of iterated fuzzy joins. Data from 2001, 2007-08, and 2017-18 is first linked to the closest year in the district trackers of @indiastatestoriesDistrictEvolution2024 and @jaacksIndiaDistrictChanges2020. Districts are then matched if they meet a certain string/phonetic distance threshold. Matches were made in the following order:
@@ -373,7 +451,7 @@ The current method, however, attempted to mirror the mergers and partitions whic
 :::
 
 ### Spatial Autocorrelation, Spatial Spillovers, and Migration {#sec-spa}
-As was evident from the maps of Figures @fig-map1-fig and @fig-map2-fig, numerous districts are still missing from the data. Perhaps the assumption of no carveouts and border shifts was a false one to make. And yet, even if all districts were perfectly matched, problems would arise. The aforementioned figures were constructed using 2019-20 shapefiles from @bhatiaMergingUpdatedDistrictlevel2020, despite our "treatment" year being 2007-08. The splintering of districts into multiple neighbors over time allocates the same value of the 2007-08 treatment across neighbors, a rank wreckage equivalent to spatial autocorrelation in treatment when using 2019-20 geometry. 
+As was evident from Figures @fig-map1-fig and @fig-map2-fig, numerous districts are still missing from the data. Perhaps the assumption of no carveouts and border shifts was a false one to make. And yet, even if all districts were perfectly matched, problems would arise. The geographic version of these figures would use 2019-20 shapefiles from @bhatiaMergingUpdatedDistrictlevel2020, despite our "treatment" year being 2007-08. The splintering of districts into multiple neighbors over time allocates the same value of the 2007-08 treatment across neighbors, a rank wreckage equivalent to spatial autocorrelation in treatment when using 2019-20 geometry.
 
 The presence of true spatial autocorrelation in this environment is plausible. The spatial spillovers of development and the agglomeration of tech firms are key forms of autocorrelation which render the assumption of identical and independent distributions false, and thus many of the results of OLS meaningless. But special attention must be paid to the role of migration here. Note that, if part of EMI’s effect is in enabling children to migrate across the country (e.g., to districts which have more tech firms), then the true structural parameter $\text{EMIE}_d$ in our model would only reflect the EMI-induced benefits which they send back e.g., as remittances. In other words, even in a world of perfect shapefiles, our results could show that EMIE is a substandard tool for local area's development even if it is actually a great tool for a local population's development. How, then, could the effect of EMI ever be identified without being dissipated away by between-district migration?
 
@@ -385,7 +463,7 @@ Newer findings, however, repudiate many of these low migration rates wholesale. 
 
 The significance of this new literature for us is two-fold: one, it means the mechanism behind part of @shastry2012a's exclusion restriction demonstration in Sec. @sec-iv-iv may not apply as much to our period of interest; and two, it means that EMIE's effect dissipating away with migration is a genuine possibility. If we tentatively assume that regressors such as urbanization adequately capture the effect of longer-distance migration [which accords with the @divison2015a's finding that it is "rich metropolises [attracting] large inward flows of labour," p. 277] then the most relevant kind of dissipation for us will be over neighboring district lines [which also accords with @divison2015a, p. 276].^[Reminiscent of @koneInternalBordersMigration2018, the @divison2015a finds that within-state flows of labor migration are much higher than between-state flows. State fixed effects will be essential for further analysis.]
 
-We can control for this spatial autocorrelation by incorporating spatial lags into our model. To test for spatial autocorrelation we would follow p. 323 of @anselin2001 and construct a Moran's I statistic; but proper estimation of it would depend on us having proper shapefiles for the year of interest with which to build contiguity neighbor lists. If our unit of analysis ends up being 2001 districts, then this would require 2001 shapefiles. As it stands however, using 2019-20 shapefiles, the $p$-value for spatial autocorrelation in the residuals of our 2SLS model is `r report_value("inline_2b7c944a")` and for consumption growth `r report_value("inline_7e66a3fd")`.^[Results reflect queen contiguity but are robust to rook contiguity.] Future work will combine shapefiles from the 2011 and 2001 censuses with the data harmonization changes described in @sec-distma to ensure these reflect genuine spatial autocorrelation as opposed to the flaws of our current district tracking methodology.
+We can control for this spatial autocorrelation by incorporating spatial lags into our model. To test for spatial autocorrelation we would follow p. 323 of @anselin2001 and construct a Moran's I statistic; but proper estimation of it would depend on us having proper shapefiles for the year of interest with which to build contiguity neighbor lists. If our unit of analysis ends up being 2001 districts, then this would require 2001 shapefiles. The current 2019-20 shapefile is available in the repository, but the active district panel is not yet joined to geometry with a validated 2001/2007-to-2020 crosswalk, so we do not report Moran's I $p$-values in this draft. Future work will combine shapefiles from the 2011 and 2001 censuses with the data harmonization changes described in @sec-distma to ensure these reflect genuine spatial autocorrelation as opposed to the flaws of our current district tracking methodology.
 
 If spatial autocorrelation is ultimately found to be significant, then the methods of @murgante.borruso2012, @pebesmaSpatialDataScience2025, @xu2022a, and @zhang.etal2024 would be used to develop a spatial Durbin-type model (a spatial error model, a spatial lag model, a spatial Durbin model, a general nested model, etc., depending on the results of LM tests on the common factor specifications which distinguish these kinds of models), a class of model which incorporates spatial lags of spatially autocorrelated variables as further regressors or in the error. Conley standard errors and/or @kelejianHACEstimationSpatial2007 could also be used to create heteroskedasticity and autocorrelation consistent SEs.
 
