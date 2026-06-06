@@ -131,7 +131,7 @@ With our current methodology, we find that greater exposure to EMI enrollment ha
 
 The sole 2001 variable, linguistic distance from Hindi, comes from the 2001 Census of India [@officeoftheregistrargeneralandcensuscommissionerofindiaCensusIndia20012001]. 
 
-Geospatial data intended for maps and spatial autocorrelation measures is sourced from @bhatiaMergingUpdatedDistrictlevel2020, which is itself an adaptation of @meyersIndiaOfficialBoundaries2020. The active figures below use district-level empirical distributions while the geometry join remains under validation. Our methods for tracking districts across time (see @sec-distma) begin with data from @indiastatestoriesDistrictEvolution2024 and @jaacksIndiaDistrictChanges2020.
+Geospatial data intended for maps and spatial autocorrelation measures is sourced from @bhatiaMergingUpdatedDistrictlevel2020, which is itself an adaptation of @meyersIndiaOfficialBoundaries2020. Final map figures are withheld until the geometry join is validated. Our methods for tracking districts across time (see @sec-distma) begin with data from @indiastatestoriesDistrictEvolution2024 and @jaacksIndiaDistrictChanges2020.
 
 All variables reflecting 2017-18 data come from the 75th Round of the National Sample Survey (NSS), titled "Household Social Consumption: Education" [@office2022a]. All 2007-08 variables but one come from the 64th round of the NSS, on "Participation and Expenditure in Education" [@nationalsamplesurveyoffice2008]; the sole exception to this is the percentage of homes which are pucca (i.e., permanent), which is instead sourced from a separate schedule of the 64th NSS, “Household Consumer Expenditure” [@nationalstatisticalofficeIndiaHouseholdConsumer2011]. Response rates in all of the surveys were above 96%. 
 
@@ -143,17 +143,11 @@ Except for certain individual-level variables in the education probit, we will b
 #| label: tbl-sum-tbl-iv
 #| tbl-cap: "Summary Statistics for 2SLS Model"
 #| echo: false
-#| results: asis
 output_table <- function(path) {
   if (file.exists(path)) return(utils::read.csv(path, check.names = FALSE))
   data.frame(status = "missing generated output", path = path)
 }
-tex_path <- "../outputs/tables/main/sum_tbl_iv.tex"
-if (knitr::is_latex_output() && file.exists(tex_path)) {
-  cat(paste(readLines(tex_path, warn = FALSE), collapse = "\n"))
-} else {
-  print(knitr::kable(output_table("../outputs/tables/main/sum_tbl_iv.csv"), digits = 3))
-}
+knitr::kable(output_table("../outputs/tables/main/sum_tbl_iv.csv"), digits = 3, booktabs = knitr::is_latex_output(), longtable = knitr::is_latex_output())
 ```
 
 
@@ -233,34 +227,22 @@ Summary statistics for numeric variables are given in @tbl-sum-tbl-probit-quant,
 #| label: tbl-sum-tbl-probit-quant
 #| tbl-cap: "Summary Statistics for Enrollment Participation Model (Numeric Variables)"
 #| echo: false
-#| results: asis
 output_table <- function(path) {
   if (file.exists(path)) return(utils::read.csv(path, check.names = FALSE))
   data.frame(status = "missing generated output", path = path)
 }
-tex_path <- "../outputs/tables/main/sum_tbl_probit_quant.tex"
-if (knitr::is_latex_output() && file.exists(tex_path)) {
-  cat(paste(readLines(tex_path, warn = FALSE), collapse = "\n"))
-} else {
-  print(knitr::kable(output_table("../outputs/tables/main/sum_tbl_probit_quant.csv"), digits = 3))
-}
+knitr::kable(output_table("../outputs/tables/main/sum_tbl_probit_quant.csv"), digits = 3, booktabs = knitr::is_latex_output(), longtable = knitr::is_latex_output())
 ```
 
 ```{r}
 #| label: tbl-sum-tbl-probit-cat
 #| tbl-cap: "Summary Statistics for Enrollment Participation Model (Categorical Variables)"
 #| echo: false
-#| results: asis
 output_table <- function(path) {
   if (file.exists(path)) return(utils::read.csv(path, check.names = FALSE))
   data.frame(status = "missing generated output", path = path)
 }
-tex_path <- "../outputs/tables/main/sum_tbl_probit_cat.tex"
-if (knitr::is_latex_output() && file.exists(tex_path)) {
-  cat(paste(readLines(tex_path, warn = FALSE), collapse = "\n"))
-} else {
-  print(knitr::kable(output_table("../outputs/tables/main/sum_tbl_probit_cat.csv"), digits = 3))
-}
+knitr::kable(output_table("../outputs/tables/main/sum_tbl_probit_cat.csv"), digits = 3, booktabs = knitr::is_latex_output(), longtable = knitr::is_latex_output())
 ```
 
 
@@ -273,17 +255,11 @@ Average marginal effects for numeric variables and counterfactual comparisons (r
 #| label: tbl-probit-mfx
 #| tbl-cap: "Average Marginal Effects and Counterfactual Comparisons for Enrollment Probit"
 #| echo: false
-#| results: asis
 output_table <- function(path) {
   if (file.exists(path)) return(utils::read.csv(path, check.names = FALSE))
   data.frame(status = "missing generated output", path = path)
 }
-tex_path <- "../outputs/tables/main/probit_mfx.tex"
-if (knitr::is_latex_output() && file.exists(tex_path)) {
-  cat(paste(readLines(tex_path, warn = FALSE), collapse = "\n"))
-} else {
-  print(knitr::kable(output_table("../outputs/tables/main/probit_mfx.csv"), digits = 3))
-}
+knitr::kable(output_table("../outputs/tables/main/probit_mfx.csv"), digits = 3, booktabs = knitr::is_latex_output(), longtable = knitr::is_latex_output())
 ```
 
 
@@ -322,11 +298,14 @@ $$
 &= \beta_0 + \beta_1\,\widehat{\mathrm{EMIE}}_d + \sum_{k=1}^{K}\beta_{k+1}\,X_{kd}.
 \end{aligned}
 $$ {#eq-iv-eq}
-Summary statistics for all of the variables in this model, including the controls $k$ in the vector $X_{kd}$, are provided in @tbl-sum-tbl-iv. Distribution figures for these variables are presented in @fig-map1-fig and @fig-map2-fig; the missing geometry join discussed in @sec-distma-spa is the product of a data harmonization method which performed many-to-many matching from 2001 to 2007-08 to 2017-18 to 2019-20, the years our shapefiles data was collected [@bhatiaMergingUpdatedDistrictlevel2020]. Issues of and improvements to this method are also discussed in @sec-distma-spa.
+Summary statistics for all of the variables in this model, including the controls $k$ in the vector $X_{kd}$, are provided in @tbl-sum-tbl-iv. Final map figures are withheld until the missing geometry join discussed in @sec-distma-spa is validated; that join is currently blocked by a data harmonization method which performed many-to-many matching from 2001 to 2007-08 to 2017-18 to 2019-20, the years our shapefiles data was collected [@bhatiaMergingUpdatedDistrictlevel2020]. Issues of and improvements to this method are also discussed in @sec-distma-spa.
 
-![(Clockwise from top left) EMI exposure, consumption growth, pucca (permanent) housing, and household heads with secondary education or more. Data from the 64th round of the NSS 2007-08, ``Participation and Expenditure in Education'' and ``Household Consumer Expenditure.''](../outputs/figures/main/collage_main_maps.png){#fig-map1-fig}
+::: {.callout-important}
+Final district map figures are withheld until the district panel joins to validated geometry for at least 75% of district-panel rows. This prevents diagnostic distribution plots from being presented as geographic maps.
+:::
 
-![From left to right: regions of India and linguistic distance from Hindi. District-level data, from the 2001 Census of India.](../outputs/figures/main/collage_iv_region_maps.png){#fig-map2-fig}
+
+
 
 
 
@@ -342,7 +321,7 @@ Our instrument for $\mathrm{EMIE}_d$ is $\mathrm{LingDistance}_d$, the average l
 
 As the 'distance' between one's mother tongue and Hindi increases, we expect the opportunity cost of learning English over Hindi to decrease. Because of this, we also expect individuals with a mother tongue further from Hindi to be more likely to enroll in EMI. "That distance from Hindi induces people to learn English" and even "schools to teach English" is in fact precisely what @shastry2012a [p. 289] claims. If we can then show that local linguistic distance induces exogenous variation in local EMI, we can wield it as an instrumental variable (IV) to isolate $\text{EMIE}_d$'s effect on consumption growth. Shastry helps us once more here, evidencing both the relevance (pp. 299-301) and exclusion restriction (pp. 302-305) of $\mathrm{LingDistance}_d$'s effect on $\text{EMIE}_d$.
 
-We are currently unable to replicate her justification of the exclusion restriction, however. Her argument centers on a map depicting the geographical balance of her residual variation, made possible despite the distinct regional divide in @fig-map2-fig thanks to state fixed effects. In our case, adding state FEs explodes the condition number of our design matrix to $\kappa =$ `r report_value("inline_7d871500")` despite all individual collinearity measures remaining low (every scaled generalized variance inflation factor (GVIF) was below 6.05), with similar results for region FEs to a lesser degree. This almost certainly results from the many-to-many matching used in this paper's district tracking algorithms.^[Many-to-many matching from 2001 to 2007-08 to 2017-18 was used to accurately reflect how real district changes occur as both mergers and partitions. While the intent was accuracy, the effect was degradation: the multiple duplicated rows for 2001 and 2007-08 measures in particular almost surely devastated the rank of the design matrix.] Our plan to repair it moving forward is discussed in @sec-distma.
+We are currently unable to replicate her justification of the exclusion restriction, however. Her argument centers on a map depicting the geographical balance of her residual variation, made possible despite regional linguistic divides thanks to state fixed effects. In our case, adding state FEs explodes the condition number of our design matrix to $\kappa =$ `r report_value("inline_7d871500")` despite all individual collinearity measures remaining low (every scaled generalized variance inflation factor (GVIF) was below 6.05), with similar results for region FEs to a lesser degree. This almost certainly results from the many-to-many matching used in this paper's district tracking algorithms.^[Many-to-many matching from 2001 to 2007-08 to 2017-18 was used to accurately reflect how real district changes occur as both mergers and partitions. While the intent was accuracy, the effect was degradation: the multiple duplicated rows for 2001 and 2007-08 measures in particular almost surely devastated the rank of the design matrix.] Our plan to repair it moving forward is discussed in @sec-distma.
 
 A portion of this near-perfect multicollinearity may simply just be "God's will" [@blanchardComment1987, p. 449]: the States Reorganization Act of 1956, for example, aligned state lines with linguistic lines, a precedent which new states have followed since [@sarmaIntersectionsHeritageMultilingualism2025]. This possiblity is precisely the motivation for our planned first-difference 2SLS design [@angristMostlyHarmlessEconometrics2008, p. 167]. Even if only the data harmonization changes from @sec-distma are made, future work will still demean each district's linguistic distance by subtracting away its state's linguistic distance.^[Dimensionality reduction (e.g., principal component analysis, ridge, lasso) and simultaneous equation estimation techniques beyond 2SLS (e.g., LIML) may also be used if our instrument reveals itself it to be weak after this.] 
 
@@ -365,34 +344,22 @@ The results of our first-stage regression, of EMI exposure on linguistic distanc
 #| label: tbl-fs-cons
 #| tbl-cap: "First-Stage Regression: EMI Exposure on Linguistic Distance"
 #| echo: false
-#| results: asis
 output_table <- function(path) {
   if (file.exists(path)) return(utils::read.csv(path, check.names = FALSE))
   data.frame(status = "missing generated output", path = path)
 }
-tex_path <- "../outputs/tables/main/fs_cons.tex"
-if (knitr::is_latex_output() && file.exists(tex_path)) {
-  cat(paste(readLines(tex_path, warn = FALSE), collapse = "\n"))
-} else {
-  print(knitr::kable(output_table("../outputs/tables/main/fs_cons.csv"), digits = 3))
-}
+knitr::kable(output_table("../outputs/tables/main/fs_cons.csv"), digits = 3, booktabs = knitr::is_latex_output(), longtable = knitr::is_latex_output())
 ```
 
 ```{r}
 #| label: tbl-cons-iv
 #| tbl-cap: "Second-Stage Regression: Consumption Growth on EMIE (Fitted)"
 #| echo: false
-#| results: asis
 output_table <- function(path) {
   if (file.exists(path)) return(utils::read.csv(path, check.names = FALSE))
   data.frame(status = "missing generated output", path = path)
 }
-tex_path <- "../outputs/tables/main/cons_iv.tex"
-if (knitr::is_latex_output() && file.exists(tex_path)) {
-  cat(paste(readLines(tex_path, warn = FALSE), collapse = "\n"))
-} else {
-  print(knitr::kable(output_table("../outputs/tables/main/cons_iv.csv"), digits = 3))
-}
+knitr::kable(output_table("../outputs/tables/main/cons_iv.csv"), digits = 3, booktabs = knitr::is_latex_output(), longtable = knitr::is_latex_output())
 ```
 
 
@@ -487,7 +454,7 @@ The current method, however, attempted to mirror the mergers and partitions whic
 :::
 
 ### Spatial Autocorrelation, Spatial Spillovers, and Migration {#sec-spa}
-As was evident from @fig-map1-fig and @fig-map2-fig, numerous districts are still missing from the data. Perhaps the assumption of no carveouts and border shifts was a false one to make. And yet, even if all districts were perfectly matched, problems would arise. The geographic version of these figures would use 2019-20 shapefiles from @bhatiaMergingUpdatedDistrictlevel2020, despite our "treatment" year being 2007-08. The splintering of districts into multiple neighbors over time allocates the same value of the 2007-08 treatment across neighbors, a rank wreckage equivalent to spatial autocorrelation in treatment when using 2019-20 geometry.
+The withheld final map figures underscore the same district-harmonization problem: numerous districts are still missing from the validated geometry join. Perhaps the assumption of no carveouts and border shifts was a false one to make. And yet, even if all districts were perfectly matched, problems would arise. The geographic version of these figures would use 2019-20 shapefiles from @bhatiaMergingUpdatedDistrictlevel2020, despite our "treatment" year being 2007-08. The splintering of districts into multiple neighbors over time allocates the same value of the 2007-08 treatment across neighbors, a rank wreckage equivalent to spatial autocorrelation in treatment when using 2019-20 geometry.
 
 The presence of true spatial autocorrelation in this environment is plausible. The spatial spillovers of development and the agglomeration of tech firms are key forms of autocorrelation which render the assumption of identical and independent distributions false, and thus many of the results of OLS meaningless. But special attention must be paid to the role of migration here. Note that, if part of EMI’s effect is in enabling children to migrate across the country (e.g., to districts which have more tech firms), then the true structural parameter $\text{EMIE}_d$ in our model would only reflect the EMI-induced benefits which they send back e.g., as remittances. In other words, even in a world of perfect shapefiles, our results could show that EMIE is a substandard tool for local area's development even if it is actually a great tool for a local population's development. How, then, could the effect of EMI ever be identified without being dissipated away by between-district migration?
 

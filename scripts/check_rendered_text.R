@@ -62,7 +62,8 @@ fixed_patterns <- c(
   "Table Table",
   "Figure Figure",
   "Table ?@",
-  "Figure ?@"
+  "Figure ?@",
+  "active figures below use district-level empirical distributions"
 )
 
 regex_patterns <- c(

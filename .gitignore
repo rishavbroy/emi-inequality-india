@@ -65,4 +65,5 @@ __pycache__/
 *.exe
 autorun.inf
 /.quarto/
+/.quarto-home/
 **/*.quarto_ipynb
