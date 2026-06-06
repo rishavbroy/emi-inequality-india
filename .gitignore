@@ -44,7 +44,10 @@ application-samples/.work/
 
 # temporary files to help auditing and debugging
 Archive.zip
+legacy.zip
+data.zip
 full_output.txt
+file_list.txt
 
 # keep deliberate TeX source templates if any remain
 !application-samples/templates/*.tex
