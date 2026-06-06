@@ -86,7 +86,7 @@ report_value <- function(key) {
 
 The Indian economy presents a series of paradoxes. The same economy whose GDP has grown at 6% annually on average for decades [@organization2024a, p. 2] has also seen stagnation if not losses in wages, employment, and labor force participation (see @fig-ILO-fig), all while higher education has continued to develop an extremely strong, positive correlation with higher youth *unemployment*.^[Note that lower levels of education are instead strongly correlated with youth *under*employment [@organization2024a, p. 130]. There are no winners here.] And though the International Labour Organization (ILO) traces this back to a labor supply which lacks the skills needed to fill available job openings (p. 174), high unemployment rates can be found for skilled laborers of all backgrounds, including those who received vocational education and training [@agrawal.agrawal2017].
 
-![ILO labor market indicators composed from archived ILO figure assets.](../outputs/figures/main/fig_ilo_trends.png){#fig-ILO-fig}
+![Trends in earnings, labor‐force participation, and unemployment (ILO, 2024).](../outputs/figures/main/fig_ilo_trends.png){#fig-ILO-fig}
 
 
 Appreciating this broader view helps reveal the degree to which unemployment, underemployment, and "jobless growth" [@graddol2010a] have, alongside wealth inequality, combined to undermine the degree to which many benefit from India's recent economic growth [@bharti.etal2024]. From here we adopt a bottom-up perspective---what can members of this "many" do to improve their lives in such a context?---and in doing so, our motivating question reveals itself to be two-fold: 1) If I am a household, what can I do to best ensure my children's future success in this context? And 2) if I am a local policy-maker, what can I do to best ensure my constituents' future welfare in this context?
@@ -141,7 +141,7 @@ Except for certain individual-level variables in the education probit, we will b
 
 ```{r}
 #| label: tbl-sum-tbl-iv
-#| tbl-cap: "Summary statistics for 2SLS model variables"
+#| tbl-cap: "Summary Statistics for 2SLS Model"
 #| echo: false
 output_table <- function(path) {
   if (file.exists(path)) return(utils::read.csv(path, check.names = FALSE))
@@ -225,7 +225,7 @@ Summary statistics for numeric variables are given in @tbl-sum-tbl-probit-quant,
 
 ```{r}
 #| label: tbl-sum-tbl-probit-quant
-#| tbl-cap: "Summary statistics for enrollment participation model numeric variables"
+#| tbl-cap: "Summary Statistics for Enrollment Participation Model (Numeric Variables)"
 #| echo: false
 output_table <- function(path) {
   if (file.exists(path)) return(utils::read.csv(path, check.names = FALSE))
@@ -236,7 +236,7 @@ knitr::kable(output_table("../outputs/tables/main/sum_tbl_probit_quant.csv"), di
 
 ```{r}
 #| label: tbl-sum-tbl-probit-cat
-#| tbl-cap: "Summary statistics for enrollment participation model categorical variables"
+#| tbl-cap: "Summary Statistics for Enrollment Participation Model (Categorical Variables)"
 #| echo: false
 output_table <- function(path) {
   if (file.exists(path)) return(utils::read.csv(path, check.names = FALSE))
@@ -253,7 +253,7 @@ Average marginal effects for numeric variables and counterfactual comparisons (r
 
 ```{r}
 #| label: tbl-probit-mfx
-#| tbl-cap: "Average marginal effects from the education participation probit"
+#| tbl-cap: "Average Marginal Effects and Counterfactual Comparisons for Enrollment Probit"
 #| echo: false
 output_table <- function(path) {
   if (file.exists(path)) return(utils::read.csv(path, check.names = FALSE))
@@ -300,9 +300,9 @@ $$
 $$ {#eq-iv-eq}
 Summary statistics for all of the variables in this model, including the controls $k$ in the vector $X_{kd}$, are provided in @tbl-sum-tbl-iv. Distribution figures for these variables are presented in @fig-map1-fig and @fig-map2-fig; the missing geometry join discussed in @sec-distma-spa is the product of a data harmonization method which performed many-to-many matching from 2001 to 2007-08 to 2017-18 to 2019-20, the years our shapefiles data was collected [@bhatiaMergingUpdatedDistrictlevel2020]. Issues of and improvements to this method are also discussed in @sec-distma-spa.
 
-![Main district-level empirical inputs.](../outputs/figures/main/collage_main_maps.png){#fig-map1-fig}
+![(Clockwise from top left) EMI exposure, consumption growth, pucca (permanent) housing, and household heads with secondary education or more. Data from the 64th round of the NSS 2007-08, ``Participation and Expenditure in Education'' and ``Household Consumer Expenditure.''](../outputs/figures/main/collage_main_maps.png){#fig-map1-fig}
 
-![Instrument and region empirical inputs.](../outputs/figures/main/collage_iv_region_maps.png){#fig-map2-fig}
+![From left to right: regions of India and linguistic distance from Hindi. District-level data, from the 2001 Census of India.](../outputs/figures/main/collage_iv_region_maps.png){#fig-map2-fig}
 
 
 
@@ -339,7 +339,7 @@ The results of our first-stage regression, of EMI exposure on linguistic distanc
 
 ```{r}
 #| label: tbl-fs-cons
-#| tbl-cap: "First-stage regression results"
+#| tbl-cap: "First-Stage Regression: EMI Exposure on Linguistic Distance"
 #| echo: false
 output_table <- function(path) {
   if (file.exists(path)) return(utils::read.csv(path, check.names = FALSE))
@@ -350,7 +350,7 @@ knitr::kable(output_table("../outputs/tables/main/fs_cons.csv"), digits = 3)
 
 ```{r}
 #| label: tbl-cons-iv
-#| tbl-cap: "Second-stage 2SLS consumption regression results"
+#| tbl-cap: "Second-Stage Regression: Consumption Growth on EMIE (Fitted)"
 #| echo: false
 output_table <- function(path) {
   if (file.exists(path)) return(utils::read.csv(path, check.names = FALSE))
@@ -430,7 +430,7 @@ Political changes, however, were not so easily addressed. The vast majority of s
 
 This seems to be precisely the same assumption made by @indiastatestoriesDistrictEvolution2024 and @jaacksIndiaDistrictChanges2020, whose data, despite containing some factual errors and typos, was the basis of our district matching method. To justify this assumption we turn to @kumarCreatingLongPanels2016, who up until 2001 are able to track the *proportion* of each district's population that was allocated into a new district as a result of district changes. They label these changes as one of two types: clean partitions and non-partitions (which would include name changes, clean mergers, carve-outs, and border shifts). By extracting their results using Tabula [@aristaranTabula2018], we know that 93.4% of non-partitions were either name changes or transfers of uninhabited land [@kumarCreatingLongPanels2016]. These district changes are plotted in @fig-districtcarveoutsshifts-fig.
 
-![District carve-outs, shifts, and non-partitions.](../outputs/figures/main/district_carveouts_shifts.png){#fig-districtcarveoutsshifts-fig}
+![Number of 2001 districts which absorbed a percentage of a 1991 district's population via name change, clean merger, carve-out, or border shift. Data from Kumar \& Somanathan (2016).](../outputs/figures/main/district_carveouts_shifts.png){#fig-districtcarveoutsshifts-fig}
 
 
 

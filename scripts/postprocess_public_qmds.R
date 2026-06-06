@@ -32,6 +32,26 @@ legacy_abstract <- paste0(
   "implications for future work."
 )
 
+legacy_figure_captions <- c(
+  "fig-ILO-fig" = "Trends in earnings, labor‐force participation, and unemployment (ILO, 2024).",
+  "fig-map1-fig" = "(Clockwise from top left) EMI exposure, consumption growth, pucca (permanent) housing, and household heads with secondary education or more. Data from the 64th round of the NSS 2007-08, ``Participation and Expenditure in Education'' and ``Household Consumer Expenditure.''",
+  "fig-map2-fig" = "From left to right: regions of India and linguistic distance from Hindi. District-level data, from the 2001 Census of India.",
+  "fig-districtcarveoutsshifts-fig" = "Number of 2001 districts which absorbed a percentage of a 1991 district's population via name change, clean merger, carve-out, or border shift. Data from Kumar \\& Somanathan (2016)."
+)
+
+legacy_table_captions <- c(
+  "tbl-sum-tbl-probit-quant" = "Summary Statistics for Enrollment Participation Model (Numeric Variables)",
+  "tbl-sum-tbl-probit-cat" = "Summary Statistics for Enrollment Participation Model (Categorical Variables)",
+  "tbl-probit-mfx" = "Average Marginal Effects and Counterfactual Comparisons for Enrollment Probit",
+  "tbl-sum-tbl-iv" = "Summary Statistics for 2SLS Model",
+  "tbl-fs-cons" = "First-Stage Regression: EMI Exposure on Linguistic Distance",
+  "tbl-cons-iv" = "Second-Stage Regression: Consumption Growth on EMIE (Fitted)"
+)
+
+figure_markdown <- function(label, path) {
+  paste0("![", legacy_figure_captions[[label]], "](", path, "){#", label, "}")
+}
+
 ensure_yaml_field <- function(lines, field, value) {
   if (!length(lines) || !identical(lines[[1]], "---")) return(lines)
   close <- which(lines[-1L] == "---")
@@ -187,6 +207,30 @@ output_table_chunk <- function(label, caption, path) {
   )
 }
 
+normalize_inserted_output_captions <- function(lines) {
+  for (label in names(legacy_figure_captions)) {
+    idx <- grep(paste0("\\{#", label, "\\}"), lines, fixed = FALSE)
+    if (!length(idx)) next
+    for (i in idx) {
+      path <- sub("^!\\[[^]]*\\]\\(([^)]*)\\)\\{#[^}]+\\}.*$", "\\1", lines[[i]], perl = TRUE)
+      if (!identical(path, lines[[i]])) {
+        lines[[i]] <- figure_markdown(label, path)
+      }
+    }
+  }
+
+  for (label in names(legacy_table_captions)) {
+    idx <- grep(paste0("^#\\|\\s*label:\\s*", label, "\\s*$"), lines, perl = TRUE)
+    if (!length(idx)) next
+    for (i in idx) {
+      cap_idx <- which(seq_along(lines) > i & grepl("^#\\|\\s*tbl-cap:", lines, perl = TRUE))
+      if (!length(cap_idx)) next
+      lines[[cap_idx[[1]]]] <- paste0("#| tbl-cap: \"", legacy_table_captions[[label]], "\"")
+    }
+  }
+  lines
+}
+
 insert_after_first <- function(lines, pattern, block) {
   hit <- grep(pattern, lines, fixed = TRUE)
   if (!length(hit)) return(lines)
@@ -198,49 +242,49 @@ insert_report_output_objects <- function(lines) {
 
   lines <- insert_after_first(lines, "all while higher education has continued to develop an extremely strong, positive correlation with higher youth *unemployment*.", c(
     "",
-    "![ILO labor market indicators composed from archived ILO figure assets.](../outputs/figures/main/fig_ilo_trends.png){#fig-ILO-fig}",
+    figure_markdown("fig-ILO-fig", "../outputs/figures/main/fig_ilo_trends.png"),
     ""
   ))
 
   lines <- insert_after_first(lines, "the average population of a district in either sample period (2007-08 and 2017-18) is 2 million.", c(
     "",
-    output_table_chunk("tbl-sum-tbl-iv", "Summary statistics for 2SLS model variables", "../outputs/tables/main/sum_tbl_iv.csv"),
+    output_table_chunk("tbl-sum-tbl-iv", legacy_table_captions[["tbl-sum-tbl-iv"]], "../outputs/tables/main/sum_tbl_iv.csv"),
     ""
   ))
 
   lines <- insert_after_first(lines, "Summary statistics for numeric variables are given in Table @tbl-sum-tbl-probit-quant, and for categorical variables in Table @tbl-sum-tbl-probit-cat.", c(
     "",
-    output_table_chunk("tbl-sum-tbl-probit-quant", "Summary statistics for enrollment participation model numeric variables", "../outputs/tables/main/sum_tbl_probit_quant.csv"),
+    output_table_chunk("tbl-sum-tbl-probit-quant", legacy_table_captions[["tbl-sum-tbl-probit-quant"]], "../outputs/tables/main/sum_tbl_probit_quant.csv"),
     "",
-    output_table_chunk("tbl-sum-tbl-probit-cat", "Summary statistics for enrollment participation model categorical variables", "../outputs/tables/main/sum_tbl_probit_cat.csv"),
+    output_table_chunk("tbl-sum-tbl-probit-cat", legacy_table_captions[["tbl-sum-tbl-probit-cat"]], "../outputs/tables/main/sum_tbl_probit_cat.csv"),
     ""
   ))
 
   lines <- insert_after_first(lines, "Average marginal effects for numeric variables and counterfactual comparisons", c(
     "",
-    output_table_chunk("tbl-probit-mfx", "Average marginal effects from the education participation probit", "../outputs/tables/main/probit_mfx.csv"),
+    output_table_chunk("tbl-probit-mfx", legacy_table_captions[["tbl-probit-mfx"]], "../outputs/tables/main/probit_mfx.csv"),
     ""
   ))
 
   lines <- insert_after_first(lines, "Maps of these variables are presented in Figures @fig-map1-fig and @fig-map2-fig;", c(
     "",
-    "![Main district-level empirical inputs.](../outputs/figures/main/collage_main_maps.png){#fig-map1-fig}",
+    figure_markdown("fig-map1-fig", "../outputs/figures/main/collage_main_maps.png"),
     "",
-    "![Instrument and region empirical inputs.](../outputs/figures/main/collage_iv_region_maps.png){#fig-map2-fig}",
+    figure_markdown("fig-map2-fig", "../outputs/figures/main/collage_iv_region_maps.png"),
     ""
   ))
 
   lines <- insert_after_first(lines, "The results of our first-stage regression, of EMI exposure on linguistic distance, are provided in Table @tbl-fs-cons.", c(
     "",
-    output_table_chunk("tbl-fs-cons", "First-stage regression results", "../outputs/tables/main/fs_cons.csv"),
+    output_table_chunk("tbl-fs-cons", legacy_table_captions[["tbl-fs-cons"]], "../outputs/tables/main/fs_cons.csv"),
     "",
-    output_table_chunk("tbl-cons-iv", "Second-stage 2SLS consumption regression results", "../outputs/tables/main/cons_iv.csv"),
+    output_table_chunk("tbl-cons-iv", legacy_table_captions[["tbl-cons-iv"]], "../outputs/tables/main/cons_iv.csv"),
     ""
   ))
 
   lines <- insert_after_first(lines, "These district changes are plotted in Figure @fig-districtcarveoutsshifts-fig.", c(
     "",
-    "![District carve-outs, shifts, and non-partitions.](../outputs/figures/main/district_carveouts_shifts.png){#fig-districtcarveoutsshifts-fig}",
+    figure_markdown("fig-districtcarveoutsshifts-fig", "../outputs/figures/main/district_carveouts_shifts.png"),
     ""
   ))
 
@@ -252,15 +296,15 @@ insert_district_note_output_objects <- function(lines) {
 
   lines <- insert_after_first(lines, "These district changes are plotted in Figure @fig-districtcarveoutsshifts-fig.", c(
     "",
-    "![District carve-outs, shifts, and non-partitions.](../outputs/figures/main/district_carveouts_shifts.png){#fig-districtcarveoutsshifts-fig}",
+    figure_markdown("fig-districtcarveoutsshifts-fig", "../outputs/figures/main/district_carveouts_shifts.png"),
     ""
   ))
 
   lines <- insert_after_first(lines, "As was evident from the maps of Figures @fig-map1-fig and @fig-map2-fig,", c(
     "",
-    "![Main district-level empirical inputs.](../outputs/figures/main/collage_main_maps.png){#fig-map1-fig}",
+    figure_markdown("fig-map1-fig", "../outputs/figures/main/collage_main_maps.png"),
     "",
-    "![Instrument and region empirical inputs.](../outputs/figures/main/collage_iv_region_maps.png){#fig-map2-fig}",
+    figure_markdown("fig-map2-fig", "../outputs/figures/main/collage_iv_region_maps.png"),
     ""
   ))
 
@@ -288,6 +332,7 @@ postprocess_one <- function(path) {
   }
   lines <- fix_final_public_prose(lines)
   lines <- remove_quarto_crossref_prefixes(lines)
+  lines <- normalize_inserted_output_captions(lines)
   if (identical(path, "paper/report.qmd") || identical(path, "docs/district-matching.qmd")) {
     lines <- prune_unavailable_report_inline_expressions(lines)
   }
