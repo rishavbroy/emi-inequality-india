@@ -193,16 +193,23 @@ fix_final_public_prose <- function(lines) {
 }
 
 output_table_chunk <- function(label, caption, path) {
+  tex_path <- sub("\\.csv$", ".tex", path)
   c(
     "```{r}",
     paste0("#| label: ", label),
     paste0("#| tbl-cap: \"", caption, "\""),
     "#| echo: false",
+    "#| results: asis",
     "output_table <- function(path) {",
     "  if (file.exists(path)) return(utils::read.csv(path, check.names = FALSE))",
     "  data.frame(status = \"missing generated output\", path = path)",
     "}",
-    paste0("knitr::kable(output_table(\"", path, "\"), digits = 3)"),
+    paste0("tex_path <- \"", tex_path, "\""),
+    "if (knitr::is_latex_output() && file.exists(tex_path)) {",
+    "  cat(paste(readLines(tex_path, warn = FALSE), collapse = \"\\n\"))",
+    "} else {",
+    paste0("  print(knitr::kable(output_table(\"", path, "\"), digits = 3))"),
+    "}",
     "```"
   )
 }
@@ -226,6 +233,30 @@ normalize_inserted_output_captions <- function(lines) {
       cap_idx <- which(seq_along(lines) > i & grepl("^#\\|\\s*tbl-cap:", lines, perl = TRUE))
       if (!length(cap_idx)) next
       lines[[cap_idx[[1]]]] <- paste0("#| tbl-cap: \"", legacy_table_captions[[label]], "\"")
+    }
+  }
+  lines
+}
+
+normalize_output_table_chunks <- function(lines) {
+  for (label in names(legacy_table_captions)) {
+    idx <- grep(paste0("^#\\|\\s*label:\\s*", label, "\\s*$"), lines, perl = TRUE)
+    if (!length(idx)) next
+    for (i in rev(idx)) {
+      starts <- grep("^```\\{r.*\\}\\s*$", lines[seq_len(i)], perl = TRUE)
+      ends <- grep("^```\\s*$", lines[i:length(lines)], perl = TRUE)
+      if (!length(starts) || !length(ends)) next
+      start <- max(starts)
+      end <- i + min(ends) - 1L
+      block <- lines[start:end]
+      path_line <- grep("output_table\\(\"[^\"]+\\.csv\"\\)", block, value = TRUE)
+      if (!length(path_line)) next
+      path <- sub(".*output_table\\(\"([^\"]+\\.csv)\"\\).*", "\\1", path_line[[1]], perl = TRUE)
+      lines <- c(
+        if (start > 1L) lines[seq_len(start - 1L)] else character(),
+        output_table_chunk(label, legacy_table_captions[[label]], path),
+        if (end < length(lines)) lines[(end + 1L):length(lines)] else character()
+      )
     }
   }
   lines
@@ -333,6 +364,7 @@ postprocess_one <- function(path) {
   lines <- fix_final_public_prose(lines)
   lines <- remove_quarto_crossref_prefixes(lines)
   lines <- normalize_inserted_output_captions(lines)
+  if (identical(path, "paper/report.qmd")) lines <- normalize_output_table_chunks(lines)
   if (identical(path, "paper/report.qmd") || identical(path, "docs/district-matching.qmd")) {
     lines <- prune_unavailable_report_inline_expressions(lines)
   }
