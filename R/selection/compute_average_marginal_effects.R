@@ -22,6 +22,7 @@ compute_average_marginal_effects <- function(selection_model, selection_data, cf
       std.error = NA_real_,
       statistic = NA_real_,
       p.value = NA_real_,
+      s.value = NA_real_,
       conf.low = NA_real_,
       conf.high = NA_real_,
       method = "coefficient_fallback",
@@ -37,7 +38,11 @@ compute_average_marginal_effects <- function(selection_model, selection_data, cf
     ))
   }
 
-  format_ame_results(compute_ames_probit_analytic(selection_model, selection_data))
+  out <- tryCatch(
+    compute_ames_autodiff(selection_model, selection_data),
+    error = function(e) ame_out_of_pipeline("out_of_active_pipeline", conditionMessage(e))
+  )
+  format_ame_results(out)
 }
 
 ame_out_of_pipeline <- function(status, reason) {
@@ -47,6 +52,7 @@ ame_out_of_pipeline <- function(status, reason) {
     std.error = NA_real_,
     statistic = NA_real_,
     p.value = NA_real_,
+    s.value = NA_real_,
     conf.low = NA_real_,
     conf.high = NA_real_,
     method = "not_run",
@@ -59,14 +65,16 @@ ame_out_of_pipeline <- function(status, reason) {
 #'
 #' @return Function-specific return value.
 compute_ames_autodiff <- function(model, newdata) {
-  marginaleffects::avg_slopes(model, newdata = newdata, wts = "weight", type = "response")
+  wts <- if ("weight" %in% names(newdata)) "weight" else FALSE
+  marginaleffects::avg_slopes(model, newdata = newdata, wts = wts, vcov = TRUE, type = "response")
 }
 
 #' compute ames fast draft
 #'
 #' @return Function-specific return value.
 compute_ames_fast_draft <- function(model, newdata, n = 200) {
-  marginaleffects::avg_slopes(model, newdata = dplyr::slice_sample(newdata, n = min(n, nrow(newdata))), wts = "weight", type = "response")
+  wts <- if ("weight" %in% names(newdata)) "weight" else FALSE
+  marginaleffects::avg_slopes(model, newdata = dplyr::slice_sample(newdata, n = min(n, nrow(newdata))), wts = wts, vcov = TRUE, type = "response")
 }
 
 #' compute analytic probit AMEs
@@ -108,6 +116,7 @@ compute_ames_probit_analytic <- function(model, newdata) {
       std.error = NA_real_,
       statistic = NA_real_,
       p.value = p,
+      s.value = if (is.finite(p) && p > 0) -log2(p) else NA_real_,
       conf.low = NA_real_,
       conf.high = NA_real_,
       method = "analytic_probit_ame",
@@ -130,7 +139,7 @@ format_ame_results <- function(ame_results) {
   if (!"reason" %in% names(out)) out$reason <- NA_character_
 
   required <- c(
-    "term", "estimate", "std.error", "statistic", "p.value",
+    "term", "estimate", "std.error", "statistic", "p.value", "s.value",
     "conf.low", "conf.high", "method", "status", "reason"
   )
   for (nm in setdiff(required, names(out))) out[[nm]] <- NA

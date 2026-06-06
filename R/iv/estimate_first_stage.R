@@ -46,21 +46,29 @@ estimate_first_stage <- function(iv_models, district_panel, cfg) {
       paste(iv_terms$instruments, collapse = " + ")
     ))
     fit <- stats::lm(first_stage_formula, data = district_panel)
-    coefs <- as.data.frame(summary(fit)$coefficients)
+    vc <- first_stage_vcov(fit, district_panel)
+    coefs <- if (is.null(vc)) {
+      as.data.frame(summary(fit)$coefficients)
+    } else {
+      as.data.frame(lmtest::coeftest(fit, vcov. = vc))
+    }
     coefs$term <- rownames(coefs)
     rownames(coefs) <- NULL
     excluded <- setdiff(iv_terms$instruments, iv_terms$regressors)
     excluded_term <- if (length(excluded)) excluded[[1]] else NA_character_
     excluded_row <- match(excluded_term, coefs$term)
-    partial_f <- if (!is.na(excluded_row)) coefs$`t value`[[excluded_row]]^2 else NA_real_
-    partial_p <- if (!is.na(excluded_row)) coefs$`Pr(>|t|)`[[excluded_row]] else NA_real_
+    wald <- first_stage_wald_test(fit, excluded_term, vc)
+    statistic_col <- intersect(c("t value", "z value", "t"), names(coefs))[[1]]
+    p_col <- intersect(c("Pr(>|t|)", "Pr(>|z|)", "Pr(>|t|)"), names(coefs))[[1]]
+    partial_f <- wald$partial_f %||% if (!is.na(excluded_row)) coefs[[statistic_col]][[excluded_row]]^2 else NA_real_
+    partial_p <- wald$partial_p %||% if (!is.na(excluded_row)) coefs[[p_col]][[excluded_row]] else NA_real_
     data.frame(
       model = model_name,
       term = coefs$term,
       estimate = coefs$Estimate,
       std.error = coefs$`Std. Error`,
-      statistic = coefs$`t value`,
-      p.value = coefs$`Pr(>|t|)`,
+      statistic = coefs[[statistic_col]],
+      p.value = coefs[[p_col]],
       partial_f = partial_f,
       partial_p = partial_p,
       status = "estimated",
@@ -70,6 +78,27 @@ estimate_first_stage <- function(iv_models, district_panel, cfg) {
   })
 
   do.call(rbind, rows)
+}
+
+first_stage_vcov <- function(fit, district_panel) {
+  if (!"state_std" %in% names(district_panel) || !requireNamespace("sandwich", quietly = TRUE)) return(NULL)
+  mf_rows <- suppressWarnings(as.integer(rownames(stats::model.frame(fit))))
+  if (!length(mf_rows) || any(is.na(mf_rows))) return(NULL)
+  cluster <- district_panel$state_std[mf_rows]
+  if (length(unique(cluster)) < 2L) return(NULL)
+  sandwich::vcovCL(fit, cluster = cluster)
+}
+
+first_stage_wald_test <- function(fit, excluded_term, vc) {
+  if (is.na(excluded_term) || is.null(vc) || !requireNamespace("car", quietly = TRUE)) {
+    return(list(partial_f = NA_real_, partial_p = NA_real_))
+  }
+  out <- tryCatch(
+    car::linearHypothesis(fit, paste0(excluded_term, " = 0"), vcov. = vc, test = "F"),
+    error = function(e) NULL
+  )
+  if (is.null(out)) return(list(partial_f = NA_real_, partial_p = NA_real_))
+  list(partial_f = out[["F"]][[2]], partial_p = out[["Pr(>F)"]][[2]])
 }
 
 parse_iv_formula_terms <- function(model) {

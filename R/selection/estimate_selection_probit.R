@@ -22,19 +22,34 @@ estimate_selection_probit <- function(selection_data, cfg) {
   if (!length(covars)) {
     return(list(status = "out_of_active_pipeline", reason = "No probit covariates."))
   }
-  # Keep the probit descriptive if it is not currently part of the causal design.
-  stats::glm(
-    stats::as.formula(paste("enrolled ~", paste(covars, collapse = "+"))),
-    data = selection_data,
-    family = stats::binomial(link = "probit")
-  )
+  f_probit <- stats::as.formula(paste("enrolled ~", paste(covars, collapse = "+")))
+  if (identical(cfg$mode, "final") && requireNamespace("survey", quietly = TRUE)) {
+    design <- build_survey_design_selection(selection_data)
+    if (!is.null(design)) {
+      return(fit_selection_probit(design, f_probit))
+    }
+  }
+  stats::glm(f_probit, data = selection_data, family = stats::binomial(link = "probit"))
 }
 
 #' build survey design selection
 #'
 #' @return Function-specific return value.
 build_survey_design_selection <- function(selection_df) {
-  survey::svydesign(ids = ~1, data = selection_df)
+  psu <- first_col(selection_df, c("FSU_SL_NO", "fsu", "PSU", "psu"))
+  weight <- first_col(selection_df, c("weight", "WEIGHT", "Multiplier", "multiplier"))
+  strata_cols <- intersect(c("STATE", "state_std", "STRATUM", "SUB_STRATUM_NO"), names(selection_df))
+  if (is.null(psu) || is.null(weight) || !length(strata_cols)) return(NULL)
+  options(survey.lonely.psu = "average")
+  strata <- interaction(selection_df[strata_cols], drop = TRUE)
+  selection_df$.survey_strata <- strata
+  survey::svydesign(
+    ids = stats::as.formula(paste0("~", psu)),
+    strata = ~.survey_strata,
+    weights = stats::as.formula(paste0("~", weight)),
+    data = selection_df,
+    nest = TRUE
+  )
 }
 
 #' fit selection probit

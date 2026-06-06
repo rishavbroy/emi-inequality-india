@@ -18,7 +18,14 @@ estimate_2sls <- function(district_panel, formulas, cfg) {
     if (!requireNamespace("ivreg", quietly = TRUE)) {
       return(list(status = "out_of_active_pipeline", reason = "Package ivreg not installed."))
     }
-    ivreg::ivreg(formula, data = district_panel)
+    fit <- ivreg::ivreg(formula, data = district_panel)
+    if ("state_std" %in% names(district_panel)) {
+      mf_rows <- suppressWarnings(as.integer(rownames(stats::model.frame(fit))))
+      if (length(mf_rows) && all(!is.na(mf_rows))) {
+        attr(fit, "cluster_state") <- district_panel$state_std[mf_rows]
+      }
+    }
+    fit
   })
 }
 
