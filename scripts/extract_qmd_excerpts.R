@@ -1,4 +1,4 @@
-source("R/samples/extract_qmd_excerpts.R")
+source("R/application_samples/extract_qmd_excerpts.R")
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) < 3) {
   stop("Usage: Rscript scripts/extract_qmd_excerpts.R SOURCE_QMD OUTPUT_QMD EXCERPT_ID [EXCERPT_ID ...]", call. = FALSE)

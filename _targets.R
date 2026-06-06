@@ -13,29 +13,30 @@ tar_source("R/selection")
 tar_source("R/iv")
 tar_source("R/diagnostics")
 tar_source("R/output")
-tar_source("R/samples")
+tar_source("R/application_samples")
 
 tar_option_set(
   packages = project_packages(),
   format = "rds",
-  error = "continue"
+  error = "abridge"
 )
 
 list(
   # Configuration and paths -----------------------------------------------------
-  tar_target(config_path, Sys.getenv("EMI_CONFIG", "config/draft.yml")),
+  tar_target(config_path, Sys.getenv("EMI_CONFIG", "config/draft.yml"), cue = tar_cue(mode = "always")),
   tar_target(cfg, read_config(config_path)),
   tar_target(paths, build_paths()),
   tar_target(raw_manifest, validate_raw_files(paths)),
+  tar_target(raw_data_preflight, stop_if_required_files_missing(raw_manifest)),
 
   # Raw inputs ------------------------------------------------------------------
-  tar_target(raw_nss_2007_education, read_nss_2007_education(paths)),
-  tar_target(raw_nss_2007_consumption, read_nss_2007_consumption(paths)),
-  tar_target(raw_nss_2017_education, read_nss_2017_education(paths)),
-  tar_target(raw_census_2001, read_census_2001_mother_tongue(paths)),
-  tar_target(raw_boundaries_2020, read_district_boundaries_2020(paths)),
-  tar_target(raw_district_changes, read_district_change_sources(paths)),
-  tar_target(raw_ilo_figures, list_ilo_figure_paths(paths), format = "file"),
+  tar_target(raw_nss_2007_education, { raw_data_preflight; read_nss_2007_education(paths) }),
+  tar_target(raw_nss_2007_consumption, { raw_data_preflight; read_nss_2007_consumption(paths) }),
+  tar_target(raw_nss_2017_education, { raw_data_preflight; read_nss_2017_education(paths) }),
+  tar_target(raw_census_2001, { raw_data_preflight; read_census_2001_mother_tongue(paths) }),
+  tar_target(raw_boundaries_2020, { raw_data_preflight; read_district_boundaries_2020(paths) }),
+  tar_target(raw_district_changes, { raw_data_preflight; read_district_change_sources(paths) }),
+  tar_target(raw_ilo_figures, { raw_data_preflight; list_ilo_figure_paths(paths) }, format = "file"),
 
   # Clean inputs ----------------------------------------------------------------
   tar_target(nss_2007_education, clean_nss_2007_education(raw_nss_2007_education)),
@@ -122,6 +123,6 @@ list(
   tar_render(fuzzy_matching_note, "analysis/diagnostics/fuzzy-matching-diagnostics.qmd"),
   tar_render(spatial_autocorrelation_note, "analysis/diagnostics/spatial-autocorrelation-diagnostics.qmd"),
   tar_render(report, "paper/report.qmd"),
-  tar_target(writing_sample_pdfs, render_writing_samples(), format = "file"),
+  tar_target(writing_sample_pdfs, render_writing_samples(output_files = c(figure_files, table_files)), format = "file"),
   tar_target(coding_sample_pdfs, render_coding_samples(), format = "file")
 )

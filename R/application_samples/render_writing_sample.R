@@ -4,7 +4,8 @@
 #'
 #' @param spec_dir Directory containing `writing-*.yml` specs.
 #' @return Character vector of output PDF paths.
-render_writing_samples <- function(spec_dir = "application-samples/specs") {
+render_writing_samples <- function(spec_dir = "application-samples/specs", output_files = NULL) {
+  force(output_files)
   specs <- list.files(spec_dir, pattern = "^writing-.*\\.yml$", full.names = TRUE)
   vapply(specs, render_one_writing_sample, character(1))
 }
@@ -25,7 +26,11 @@ render_one_writing_sample <- function(spec_path) {
     source_lines <- c(report_abstract_block(raw_source_lines), strip_qmd_yaml(raw_source_lines))
     assemble_writing_sample_qmd(spec$cover_note, source_lines, output_qmd)
   } else {
-    excerpts <- extract_qmd_excerpts(spec$source, unlist(spec$excerpts, use.names = FALSE))
+    raw_source_lines <- readLines(spec$source, warn = FALSE)
+    excerpts <- c(
+      report_setup_chunks(raw_source_lines),
+      extract_qmd_excerpts(spec$source, unlist(spec$excerpts, use.names = FALSE))
+    )
     assemble_writing_sample_qmd(spec$cover_note, excerpts, output_qmd)
   }
 
