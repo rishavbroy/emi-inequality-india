@@ -6,7 +6,15 @@ See `DATA_AVAILABILITY.md` for the source-by-source availability table, redistri
 
 ## Required local files
 
-Place required current-pipeline files under `data/raw/` and static image assets under `assets/` according to `data/metadata/file_manifest.csv`.
+Place required current-pipeline files under the canonical `data/raw/` source directories listed in `data/metadata/file_manifest.csv`, and place static image assets under `assets/`.
+
+If your local copy still uses the older long raw-folder names from the pre-refactor project layout, first run a dry run:
+
+```bash
+Rscript scripts/rename_raw_data_from_manifest.R
+```
+
+Review the printed plan and `outputs/diagnostics/raw_data_rename_plan.csv`. To move local raw directories after review, run the same script with `--execute`. The script refuses to overwrite existing canonical directories and does not delete raw data.
 
 The active manifest currently covers:
 
@@ -17,6 +25,15 @@ The active manifest currently covers:
 - District Boundaries 2020 shapefile components;
 - district-change tracker and validation sources;
 - static ILO image assets used in the paper.
+
+The canonical raw source directories are:
+
+- `data/raw/nss_2007_education_64/`
+- `data/raw/nss_2007_consumption_64/`
+- `data/raw/nss_2017_education_75/`
+- `data/raw/census_2001_mother_tongue/`
+- `data/raw/district_boundaries_2020/`
+- `data/raw/district_changes/`
 
 ## System dependencies
 
