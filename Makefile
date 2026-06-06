@@ -62,7 +62,7 @@ check-public-text:
 	Rscript scripts/check_public_text.R
 
 check-rendered-text:
-	Rscript scripts/check_rendered_text.R
+	EMI_CONFIG=config/final.yml Rscript scripts/check_rendered_text.R --final
 
 check-sample-specs:
 	Rscript scripts/check_sample_specs.R
@@ -86,7 +86,7 @@ check-public-final: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
 	HOME=$(QUARTO_HOME) quarto render docs/district-matching.qmd
 	HOME=$(QUARTO_HOME) quarto render docs/long-paths-and-8-3-filenames.qmd
 	Rscript scripts/render_application_samples.R
-	Rscript scripts/check_rendered_text.R
+	EMI_CONFIG=config/final.yml Rscript scripts/check_rendered_text.R --final
 	Rscript scripts/check_public_final.R
 
 test: tests

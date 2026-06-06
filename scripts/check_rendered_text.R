@@ -1,8 +1,11 @@
 # Check rendered/public files for placeholder value text and visible crossref
-# failures.
-#
-# This check intentionally normalizes whitespace so it catches phrases that are
-# split across lines in HTML or Markdown output.
+# failures. Final checks require PDF text extraction so broken PDFs cannot pass
+# because the local machine lacks an extractor.
+
+args <- commandArgs(trailingOnly = TRUE)
+is_final_check <- "--final" %in% args ||
+  identical(normalizePath(Sys.getenv("EMI_CONFIG"), mustWork = FALSE), normalizePath("config/final.yml", mustWork = FALSE)) ||
+  identical(basename(Sys.getenv("EMI_CONFIG")), "final.yml")
 
 paths <- c(
   list.files("paper", pattern = "\\.(html|md|tex)$", full.names = TRUE),
@@ -18,6 +21,14 @@ is_ignored_by_git <- function(path) {
 }
 
 paths <- paths[!vapply(paths, is_ignored_by_git, logical(1))]
+
+source_paths <- c(
+  list.files("paper", pattern = "\\.(qmd|md|tex)$", full.names = TRUE),
+  list.files("docs", pattern = "\\.(qmd|md|tex)$", full.names = TRUE),
+  list.files("application-samples/.work", pattern = "\\.(qmd|md|tex)$", full.names = TRUE, recursive = TRUE)
+)
+source_paths <- source_paths[file.exists(source_paths)]
+source_paths <- source_paths[!vapply(source_paths, is_ignored_by_git, logical(1))]
 
 pdf_paths <- c(
   "paper/report.pdf",
@@ -60,7 +71,24 @@ regex_patterns <- c(
   "p\\s*=\\s*—"
 )
 
+source_regex_patterns <- c(
+  "\\bFigures?\\s+@fig-",
+  "\\bTables?\\s+@tbl-",
+  "\\bSec\\.\\s+@sec-",
+  "\\bSections?\\s+@sec-"
+)
+
 hits <- character()
+for (path in source_paths) {
+  text <- paste(readLines(path, warn = FALSE), collapse = "\n")
+  text <- gsub("\\s+", " ", text)
+  for (pattern in source_regex_patterns) {
+    if (grepl(pattern, text, perl = TRUE)) {
+      hits <- c(hits, paste0(path, " matches /", pattern, "/"))
+    }
+  }
+}
+
 for (path in paths) {
   text <- paste(readLines(path, warn = FALSE), collapse = "\n")
   text <- gsub("\\s+", " ", text)
@@ -104,11 +132,13 @@ if (length(hits)) {
 }
 
 if (length(pdf_skipped)) {
-  warning(
+  msg <- paste0(
     "PDF text extraction unavailable; skipped PDF text checks for: ",
     paste(pdf_skipped, collapse = ", "),
-    call. = FALSE
+    ". Install poppler/pdftotext or the R package pdftools before running final public checks."
   )
+  if (is_final_check) stop(msg, call. = FALSE)
+  warning(msg, call. = FALSE)
 }
 
 message("No rendered placeholder value text or visible cross-reference failures detected in checked public files.")

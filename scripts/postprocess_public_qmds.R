@@ -93,6 +93,13 @@ convert_legacy_crossrefs <- function(lines) {
   lines
 }
 
+remove_quarto_crossref_prefixes <- function(lines) {
+  lines <- gsub("\\bFigures?\\s+(@fig-[A-Za-z0-9_-]+)", "\\1", lines, perl = TRUE)
+  lines <- gsub("\\bTables?\\s+(@tbl-[A-Za-z0-9_-]+)", "\\1", lines, perl = TRUE)
+  lines <- gsub("\\b(?:Sec\\.|Sections?)\\s+(@sec-[A-Za-z0-9_-]+)", "\\1", lines, perl = TRUE)
+  lines
+}
+
 fix_equation_labels <- function(lines) {
   label_idx <- grep("^\\{#eq-[A-Za-z0-9_-]+\\}\\s*$", lines)
   if (!length(label_idx)) return(lines)
@@ -271,6 +278,7 @@ postprocess_one <- function(path) {
   lines <- normalize_yaml(lines, path)
   lines <- normalize_heading_labels(lines)
   lines <- convert_legacy_crossrefs(lines)
+  lines <- remove_quarto_crossref_prefixes(lines)
   lines <- fix_equation_labels(lines)
   lines <- cleanup_public_placeholders(lines)
   if (identical(path, "paper/report.qmd")) lines <- insert_report_output_objects(lines)
@@ -279,6 +287,7 @@ postprocess_one <- function(path) {
     lines <- fix_district_note_crossrefs(lines)
   }
   lines <- fix_final_public_prose(lines)
+  lines <- remove_quarto_crossref_prefixes(lines)
   if (identical(path, "paper/report.qmd") || identical(path, "docs/district-matching.qmd")) {
     lines <- prune_unavailable_report_inline_expressions(lines)
   }
