@@ -4,7 +4,7 @@
 
 #' clean district boundaries
 #'
-#' @return A tibble, model object, list, or file path depending on context.
+#' @return Function-specific return value.
 clean_district_boundaries <- function(raw_sf) {
   df <- safe_df(raw_sf)
   if ("dtname" %in% names(df)) df$district_20 <- df$dtname
@@ -16,28 +16,28 @@ clean_district_boundaries <- function(raw_sf) {
 
 #' standardize boundary state names
 #'
-#' @return A tibble, model object, list, or file path depending on context.
+#' @return Function-specific return value.
 standardize_boundary_state_names <- function(df) {
   std(df, 2020L)
 }
 
 #' standardize boundary district names
 #'
-#' @return A tibble, model object, list, or file path depending on context.
+#' @return Function-specific return value.
 standardize_boundary_district_names <- function(df) {
   std(df, 2020L)
 }
 
 #' repair invalid geometries
 #'
-#' @return A tibble, model object, list, or file path depending on context.
+#' @return Function-specific return value.
 repair_invalid_geometries <- function(sf_df) {
   sf::st_make_valid(sf_df)
 }
 
 #' add boundary join ids
 #'
-#' @return A tibble, model object, list, or file path depending on context.
+#' @return Function-specific return value.
 add_boundary_join_ids <- function(df) {
   df
 }

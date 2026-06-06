@@ -8,7 +8,7 @@ test_that("2007 measures compute weighted EMIE by district", {
 
   out <- build_2007_measures(edu, list(), data.frame(), data.frame(), list())
 
-  expect_equal(out$emie_2007[out$district_std == "patna"], 0.25)
+  expect_equal(out$emie_2007[out$district_std == "patna"], 25)
   expect_true(all(!duplicated(out$district_panel_id)))
 })
 
@@ -51,6 +51,28 @@ test_that("linguistic distance IV uses real columns when present", {
 
   expect_equal(out$wavg_ling_degrees, 1.25)
   expect_equal(out$district_panel_id, "2001__bihar__patna")
+})
+
+test_that("Census 2001 cleaner parses district language rows", {
+  raw <- data.frame(
+    `C-16 POPULATION BY MOTHER TONGUE` = rep("C0116", 5),
+    ...2 = rep("01", 5),
+    ...3 = rep("02", 5),
+    ...4 = rep("0000", 5),
+    ...5 = rep("District - Baramula  02", 5),
+    ...6 = c("001000", "006000", "016000", "004000", "001999"),
+    ...7 = c("1 ASSAMESE", "2 HINDI", "3 PUNJABI", "4 DOGRI", "1 Others"),
+    ...8 = c(100, 200, 50, 10, 500),
+    check.names = FALSE
+  )
+
+  out <- clean_census_2001_languages(list(raw))
+
+  expect_equal(nrow(out), 3)
+  expect_setequal(out$mother_tongue, c("Assamese", "Hindi", "Punjabi"))
+  expect_equal(unique(out$state_std), "01")
+  expect_equal(unique(out$district_std), "02")
+  expect_setequal(out$ling_degrees, c(0, 1, 3))
 })
 
 test_that("linguistic distance IV does not invent placeholder values", {

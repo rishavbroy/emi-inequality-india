@@ -5,7 +5,7 @@
 
 #' diagnose missingness
 #'
-#' @return A tibble, model object, list, or file path depending on context.
+#' @return Function-specific return value.
 diagnose_missingness <- function(selection_data, cfg) {
   data.frame(
     missing_var = names(selection_data)[vapply(selection_data, function(x) any(is.na(x)), logical(1))],
@@ -15,7 +15,7 @@ diagnose_missingness <- function(selection_data, cfg) {
 
 #' check missing logit parallel
 #'
-#' @return A tibble, model object, list, or file path depending on context.
+#' @return Function-specific return value.
 check_missing_logit_parallel <- function(df, miss_vars, covars, method_p = "BH") {
   rhs <- paste(covars, collapse = " + ")
   fit_one <- function(m) { f <- stats::as.formula(paste0("is.na(", m, ") ~ ", rhs)); fit <- stats::glm(f, data = df, family = stats::binomial); broom::tidy(fit) |> dplyr::mutate(missing_var = m, pseudoR2 = 1 - fit$deviance / fit$null.deviance, nobs = stats::nobs(fit)) }
@@ -25,7 +25,7 @@ check_missing_logit_parallel <- function(df, miss_vars, covars, method_p = "BH")
 
 #' summarize missingness by variable
 #'
-#' @return A tibble, model object, list, or file path depending on context.
+#' @return Function-specific return value.
 summarize_missingness_by_variable <- function(df) {
   data.frame(
     missing_var = names(df),
@@ -36,21 +36,21 @@ summarize_missingness_by_variable <- function(df) {
 
 #' run missingness logits
 #'
-#' @return A tibble, model object, list, or file path depending on context.
+#' @return Function-specific return value.
 run_missingness_logits <- function(df, miss_vars, covars) {
   check_missing_logit_parallel(df, miss_vars, covars)
 }
 
 #' adjust missingness pvalues bh
 #'
-#' @return A tibble, model object, list, or file path depending on context.
+#' @return Function-specific return value.
 adjust_missingness_pvalues_bh <- function(df) {
   df
 }
 
 #' save missingness diagnostics
 #'
-#' @return A tibble, model object, list, or file path depending on context.
+#' @return Function-specific return value.
 save_missingness_diagnostics <- function(diagnostics) {
   diagnostics
 }
