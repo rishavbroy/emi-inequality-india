@@ -54,6 +54,7 @@ file_list.txt
 !application-samples/cover-notes/**/*.tex
 !archive/application-sample-sources/*.tex
 !archive/application-sample-sources/original-cover-note-tex/**/*.tex
+!outputs/tables/main/*.tex
 
 # operating-system metadata
 .DS_Store
