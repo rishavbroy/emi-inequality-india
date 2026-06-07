@@ -68,15 +68,20 @@ ame_out_of_pipeline <- function(status, reason) {
 #' compute ames autodiff
 #'
 compute_ames_autodiff <- function(model, newdata) {
-  wts <- if ("weight" %in% names(newdata)) "weight" else FALSE
-  marginaleffects::avg_slopes(model, newdata = newdata, wts = wts, vcov = TRUE, type = "response")
+  # Use the exact estimation sample retained by glm/svyglm. Passing the full
+  # pre-model selection_data can have extra rows omitted during model fitting,
+  # which makes marginaleffects recycle weights/covariates silently.
+  model_data <- stats::model.frame(model)
+  wts <- if ("weight" %in% names(model_data)) "weight" else FALSE
+  marginaleffects::avg_slopes(model, newdata = model_data, wts = wts, vcov = TRUE, type = "response")
 }
 
 #' compute ames fast draft
 #'
 compute_ames_fast_draft <- function(model, newdata, n = 200) {
-  wts <- if ("weight" %in% names(newdata)) "weight" else FALSE
-  marginaleffects::avg_slopes(model, newdata = dplyr::slice_sample(newdata, n = min(n, nrow(newdata))), wts = wts, vcov = TRUE, type = "response")
+  model_data <- stats::model.frame(model)
+  wts <- if ("weight" %in% names(model_data)) "weight" else FALSE
+  marginaleffects::avg_slopes(model, newdata = dplyr::slice_sample(model_data, n = min(n, nrow(model_data))), wts = wts, vcov = TRUE, type = "response")
 }
 
 #' compute analytic probit AMEs

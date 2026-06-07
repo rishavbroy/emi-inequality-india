@@ -88,8 +88,10 @@ tidy_iv_models <- function(iv_models) {
 
 clustered_model_vcov <- function(model) {
   cluster <- attr(model, "cluster_state")
+  cluster <- stats::na.omit(cluster)
   if (!is.null(cluster) && length(unique(cluster)) > 1L && requireNamespace("sandwich", quietly = TRUE)) {
-    return(sandwich::vcovCL(model, cluster = cluster))
+    force(cluster)
+    return(function(x) sandwich::vcovCL(x, cluster = cluster))
   }
   NULL
 }
