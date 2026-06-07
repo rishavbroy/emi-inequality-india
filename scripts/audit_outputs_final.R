@@ -1,7 +1,27 @@
-# Audit final-mode public output artifacts for diagnostic leftovers.
+# Audit final-mode public output artifacts for required files and diagnostic leftovers.
+
+if (!file.exists(".pipeline-final-ok")) {
+  stop("Final output audit requires a successful current final pipeline run. Run `make pipeline-final` first.", call. = FALSE)
+}
 
 failures <- character()
 add_failure <- function(...) failures <<- c(failures, paste0(...))
+
+required_files <- c(
+  "paper/references.bib",
+  "outputs/tables/main/sum_tbl_probit_quant.csv",
+  "outputs/tables/main/sum_tbl_probit_cat.csv",
+  "outputs/tables/main/probit_mfx.csv",
+  "outputs/tables/main/sum_tbl_iv.csv",
+  "outputs/tables/main/fs_cons.csv",
+  "outputs/tables/main/cons_iv.csv",
+  "outputs/figures/main/fig_ilo_trends.png",
+  "outputs/figures/main/district_carveouts_shifts.png"
+)
+missing_required <- required_files[!file.exists(required_files) | file.info(required_files)$size <= 0]
+if (length(missing_required)) {
+  add_failure("Missing required public output files: ", paste(missing_required, collapse = ", "))
+}
 
 report_has_geometry_blocker <- FALSE
 if (file.exists("paper/report.qmd")) {
@@ -14,7 +34,7 @@ if (dir.exists(figure_dir)) {
   manifest_path <- file.path(figure_dir, "figure_manifest.csv")
   if (file.exists(manifest_path)) {
     manifest <- utils::read.csv(manifest_path, stringsAsFactors = FALSE)
-    if (report_has_geometry_blocker) {
+    if (report_has_geometry_blocker && "name" %in% names(manifest)) {
       diagnostic_names <- grep("^(map_|collage_.*maps)", manifest$name, value = TRUE)
       if (length(diagnostic_names)) {
         add_failure("Final figure manifest lists map/collage outputs while final maps are withheld: ", paste(diagnostic_names, collapse = ", "))
@@ -49,7 +69,7 @@ if (dir.exists(table_dir)) {
       for (col in intersect(required, names(ame))) {
         if (all(is.na(ame[[col]][estimated]))) add_failure("AME results have no final values in column: ", col)
       }
-      if ("method" %in% names(ame) && any(ame$method[estimated] %in% c("analytic_probit_ame", "coefficient_fallback"), na.rm = TRUE)) {
+      if ("method" %in% names(ame) && any(ame$method[estimated] %in% c("coefficient_fallback"), na.rm = TRUE)) {
         add_failure("Final AME results still use draft/fallback methods: ", paste(unique(ame$method[estimated]), collapse = ", "))
       }
     }

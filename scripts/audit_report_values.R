@@ -1,6 +1,14 @@
 args <- commandArgs(trailingOnly = TRUE)
 strict <- "--strict" %in% args || identical(Sys.getenv("EMI_CONFIG"), "config/final.yml")
 
+if (strict && !file.exists(".pipeline-final-ok")) {
+  stop("Strict report-value audit requires .pipeline-final-ok. Run `make pipeline-final` successfully first.", call. = FALSE)
+}
+
+if (strict && !file.exists(".pipeline-final-ok")) {
+  stop("Strict report-value audit requires a successful current final pipeline run. Run `make pipeline-final` first.", call. = FALSE)
+}
+
 find_targets_store <- function(start = getwd()) {
   here <- normalizePath(start, mustWork = TRUE)
   repeat {
