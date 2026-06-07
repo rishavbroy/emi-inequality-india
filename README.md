@@ -5,7 +5,7 @@ This repository contains the research pipeline for my independent paper, **"Esca
 ## For pre-doc hiring committees / faculty reviewers
 
 - Main paper source: [paper/report.qmd](paper/report.qmd)
-- Rendered draft paper PDF: [paper/report.pdf](paper/report.pdf) (provisional; final checks do not yet pass)
+- Rendered draft paper PDF: [paper/report.pdf](paper/report.pdf) (provisional; final empirical estimates and map geometry remain under active validation)
 - Writing sample PDF: [application-samples/output/RishavRoy_WritingSample.pdf](application-samples/output/RishavRoy_WritingSample.pdf) (generated from the current sample pipeline)
 - Coding sample PDF: [application-samples/output/RishavRoy_CodingSample.pdf](application-samples/output/RishavRoy_CodingSample.pdf) (generated from the current sample pipeline)
 - District-matching note: [docs/district-matching.qmd](docs/district-matching.qmd) and [docs/district-matching.html](docs/district-matching.html)
@@ -41,17 +41,17 @@ The project is under active revision. The main methodological priorities are dis
 ## Quickstart
 
 ```bash
-make init-renv   # first local setup; creates/updates renv.lock
-make test        # smoke tests and input/output contracts
+make init-renv
+make test
 make pipeline-draft
 make report
 make samples
 make check-public-draft
 ```
 
-Raw data are not tracked. Place raw files according to `data/metadata/file_manifest.csv`. See `REPLICATION.md` for the current replication data contract and expected behavior on a fresh clone without local-only raw data.
+Raw data are not tracked. Place raw files according to `data/metadata/file_manifest.csv`. See `REPLICATION.md` for the current replication data contract.
 
-`make check-public-draft` verifies that the current draft renders without scaffold or fallback prose. `make check-public-final` is stricter: it runs the final config and fails on unresolved report cross-references or placeholder-valued legacy inline quantities that still need final data/model outputs.
+`make check-public-draft` verifies that the current draft renders without scaffold or fallback prose. `make check-public-final` is stricter: it runs the final config and fails if final rendered PDFs cannot be text-audited, if final public PDFs contain visible cross-reference artifacts, or if final report values/cross-references are incomplete.
 
 The two public processed data products are:
 
@@ -60,10 +60,10 @@ The two public processed data products are:
 
 ## Missing-data behavior
 
-The pipeline should fail gracefully when required raw data are absent: it reads `data/metadata/file_manifest.csv`, checks the listed paths, and reports the exact missing files before attempting to call readers like `read_sav()`, `read_excel()`, or `sf::st_read()`. A cryptic raw-reader path error should be treated as a bug.
+The pipeline should fail gracefully when required raw data are absent: it reads `data/metadata/file_manifest.csv`, checks the listed paths, and reports the exact missing files before attempting to call raw readers. A cryptic raw-reader path error should be treated as a bug.
 
 ## Current limitations
 
-The current estimates should be treated as provisional. Active issues include district harmonization, geographic controls, state fixed effects/state-demeaned IVs, spatial autocorrelation, migration, inflation/local price changes, and the transition from a simple consumption-percent-change response variable to log consumption differences.
+The current estimates should be treated as provisional. Active issues include district harmonization, geographic controls, state fixed effects/state-demeaned IVs, spatial autocorrelation, migration, inflation/local price changes, and the transition from a simple consumption-percent-change response variable to log consumption differences. Final map figures are withheld from the active paper until the district panel joins to validated geometry with sufficient coverage.
 
 See `docs/district-matching.qmd` for the district-harmonization plan.
