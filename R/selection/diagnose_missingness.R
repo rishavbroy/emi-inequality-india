@@ -5,7 +5,7 @@
 
 #' diagnose missingness
 #'
-#' @return Function-specific return value.
+#' @return Internal pipeline output used by the targets graph.
 diagnose_missingness <- function(selection_data, cfg) {
   data.frame(
     missing_var = names(selection_data)[vapply(selection_data, function(x) any(is.na(x)), logical(1))],
@@ -15,7 +15,7 @@ diagnose_missingness <- function(selection_data, cfg) {
 
 #' check missing logit parallel
 #'
-#' @return Function-specific return value.
+#' @return Internal pipeline output used by the targets graph.
 check_missing_logit_parallel <- function(df, miss_vars, covars, method_p = "BH") {
   rhs <- paste(covars, collapse = " + ")
   fit_one <- function(m) { f <- stats::as.formula(paste0("is.na(", m, ") ~ ", rhs)); fit <- stats::glm(f, data = df, family = stats::binomial); broom::tidy(fit) |> dplyr::mutate(missing_var = m, pseudoR2 = 1 - fit$deviance / fit$null.deviance, nobs = stats::nobs(fit)) }
@@ -25,7 +25,7 @@ check_missing_logit_parallel <- function(df, miss_vars, covars, method_p = "BH")
 
 #' summarize missingness by variable
 #'
-#' @return Function-specific return value.
+#' @return Internal pipeline output used by the targets graph.
 summarize_missingness_by_variable <- function(df) {
   data.frame(
     missing_var = names(df),
@@ -36,21 +36,21 @@ summarize_missingness_by_variable <- function(df) {
 
 #' run missingness logits
 #'
-#' @return Function-specific return value.
+#' @return Internal pipeline output used by the targets graph.
 run_missingness_logits <- function(df, miss_vars, covars) {
   check_missing_logit_parallel(df, miss_vars, covars)
 }
 
 #' adjust missingness pvalues bh
 #'
-#' @return Function-specific return value.
+#' @return Internal pipeline output used by the targets graph.
 adjust_missingness_pvalues_bh <- function(df) {
   df
 }
 
 #' save missingness diagnostics
 #'
-#' @return Function-specific return value.
+#' @return Internal pipeline output used by the targets graph.
 save_missingness_diagnostics <- function(diagnostics) {
   diagnostics
 }

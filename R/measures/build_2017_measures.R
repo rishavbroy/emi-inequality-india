@@ -4,7 +4,7 @@
 
 #' build 2017 measures
 #'
-#' @return Function-specific return value.
+#' @return Internal pipeline output used by the targets graph.
 build_2017_measures <- function(nss_2017_education, cfg) {
   df <- std(safe_bind_rows(lapply(as_input_list(nss_2017_education), safe_df)), 2017L)
   if (!all(c("state_std", "district_std") %in% names(df))) return(empty_panel())
@@ -25,7 +25,7 @@ build_2017_measures <- function(nss_2017_education, cfg) {
 
 #' compute consumption 2017
 #'
-#' @return Function-specific return value.
+#' @return Internal pipeline output used by the targets graph.
 compute_consumption_2017 <- function(df) {
   df <- std(df, 2017L)
   value <- first_col(df, c("HH_Con_exp_rs", "MPCE", "mpce", "consumption", "hh_cons"))
@@ -40,7 +40,7 @@ compute_consumption_2017 <- function(df) {
 
 #' compute gini consumption 2017
 #'
-#' @return Function-specific return value.
+#' @return Internal pipeline output used by the targets graph.
 compute_gini_consumption_2017 <- function(df) {
   df <- std(df, 2017L)
   value <- first_col(df, c("HH_Con_exp_rs", "MPCE", "mpce", "consumption", "hh_cons"))
@@ -55,7 +55,7 @@ compute_gini_consumption_2017 <- function(df) {
 
 #' compute 2017 controls
 #'
-#' @return Function-specific return value.
+#' @return Internal pipeline output used by the targets graph.
 compute_2017_controls <- function(df) {
   df
 }

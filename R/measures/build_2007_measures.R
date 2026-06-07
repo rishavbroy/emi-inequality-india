@@ -4,7 +4,7 @@
 
 #' build 2007 measures
 #'
-#' @return Function-specific return value.
+#' @return Internal pipeline output used by the targets graph.
 build_2007_measures <- function(nss_2007_education, nss_2007_consumption, selection_data, ame_results, cfg) {
   edu <- std(safe_bind_rows(lapply(as_input_list(nss_2007_education), safe_df)), 2007L)
   if (!all(c("state_std", "district_std") %in% names(edu))) return(empty_panel())
@@ -38,7 +38,7 @@ merge_measure <- function(x, y) {
 
 #' compute emie 2007
 #'
-#' @return Function-specific return value.
+#' @return Internal pipeline output used by the targets graph.
 compute_emie_2007 <- function(df) {
   df <- std(df, 2007L)
   weight <- first_col(df, c("weight", "WEIGHT", "multiplier"))
@@ -64,14 +64,14 @@ english_medium_indicator <- function(x, column_name) {
 
 #' compute enrollment share 2007
 #'
-#' @return Function-specific return value.
+#' @return Internal pipeline output used by the targets graph.
 compute_enrollment_share_2007 <- function(df) {
   df
 }
 
 #' compute consumption 2007
 #'
-#' @return Function-specific return value.
+#' @return Internal pipeline output used by the targets graph.
 compute_consumption_2007 <- function(df) {
   df <- std(df, 2007L)
   df <- normalize_2007_consumption_district_key(df)
@@ -87,7 +87,7 @@ compute_consumption_2007 <- function(df) {
 
 #' compute gini consumption 2007
 #'
-#' @return Function-specific return value.
+#' @return Internal pipeline output used by the targets graph.
 compute_gini_consumption_2007 <- function(df) {
   df <- std(df, 2007L)
   df <- normalize_2007_consumption_district_key(df)
@@ -103,7 +103,7 @@ compute_gini_consumption_2007 <- function(df) {
 
 #' compute baseline controls 2007
 #'
-#' @return Function-specific return value.
+#' @return Internal pipeline output used by the targets graph.
 compute_baseline_controls_2007 <- function(df) {
   df <- std(df, 2007L)
   if (!all(c("state_std", "district_std") %in% names(df))) return(empty_panel())
@@ -159,7 +159,7 @@ compute_baseline_controls_2007 <- function(df) {
 
 #' compute education freebies ivs 2007
 #'
-#' @return Function-specific return value.
+#' @return Internal pipeline output used by the targets graph.
 compute_education_freebies_ivs_2007 <- function(df) {
   df
 }

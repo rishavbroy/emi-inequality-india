@@ -7,7 +7,7 @@
 
 #' evaluate distances
 #'
-#' @return Function-specific return value.
+#' @return Internal pipeline output used by the targets graph.
 evaluate_distances <- function(pairs, methods, thresholds, col1 = "str1", col2 = "str2") {
   if (length(methods) != length(thresholds)) stop("\"methods\" and \"thresholds\" must have the same length.")
   safe_bind_rows(lapply(seq_along(methods), function(i) {
@@ -26,7 +26,7 @@ evaluate_distances <- function(pairs, methods, thresholds, col1 = "str1", col2 =
 
 #' fuzzy join sequence
 #'
-#' @return Function-specific return value.
+#' @return Internal pipeline output used by the targets graph.
 fuzzy_join_sequence <- function(df1, df2, dist1, state1, dist2, state2, methods, thresholds, mode = "full") {
   df1_id <- df1 |> dplyr::mutate(.id1 = dplyr::row_number())
   df2_id <- df2 |> dplyr::mutate(.id2 = dplyr::row_number())
@@ -78,21 +78,21 @@ join_all_district_sources <- function(...) {
 
 #' flag many to many matches
 #'
-#' @return Function-specific return value.
+#' @return Internal pipeline output used by the targets graph.
 flag_many_to_many_matches <- function(join_map) {
   join_map
 }
 
 #' score candidate matches
 #'
-#' @return Function-specific return value.
+#' @return Internal pipeline output used by the targets graph.
 score_candidate_matches <- function(candidates) {
   candidates
 }
 
 #' fuzzy join districts
 #'
-#' @return Function-specific return value.
+#' @return Internal pipeline output used by the targets graph.
 fuzzy_join_districts <- function(district_tracker, district_keys_2001, district_keys_2007, district_keys_2017, district_keys_2020, cfg) {
   out <- safe_bind_rows(Map(function(keys, source) {
     if (!nrow(keys)) return(data.frame())

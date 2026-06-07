@@ -37,28 +37,28 @@ diagnose_multicollinearity <- function(district_panel, iv_models, cfg) {
 
 #' compute design matrix rank
 #'
-#' @return Function-specific return value.
+#' @return Internal pipeline output used by the targets graph.
 compute_design_matrix_rank <- function(formula, data) {
   X <- stats::model.matrix(formula, data = data); tibble::tibble(rank = qr(X)$rank, ncol = ncol(X))
 }
 
 #' compute kappa
 #'
-#' @return Function-specific return value.
+#' @return Internal pipeline output used by the targets graph.
 compute_kappa <- function(formula, data) {
   X <- stats::model.matrix(formula, data = data); kappa(X, exact = TRUE)
 }
 
 #' compute vif if applicable
 #'
-#' @return Function-specific return value.
+#' @return Internal pipeline output used by the targets graph.
 compute_vif_if_applicable <- function(model) {
   if (requireNamespace("car", quietly = TRUE)) car::vif(model) else NULL
 }
 
 #' save multicollinearity diagnostics
 #'
-#' @return Function-specific return value.
+#' @return Internal pipeline output used by the targets graph.
 save_multicollinearity_diagnostics <- function(diagnostics) {
   diagnostics
 }

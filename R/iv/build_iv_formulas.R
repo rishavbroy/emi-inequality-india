@@ -5,7 +5,7 @@
 
 #' make iv formula
 #'
-#' @return Function-specific return value.
+#' @return Internal pipeline output used by the targets graph.
 make_iv_formula <- function(dep, endog, instruments, controls = NULL, fixed_effects = NULL) {
   stats::as.formula(paste(
     dep,
@@ -18,7 +18,7 @@ make_iv_formula <- function(dep, endog, instruments, controls = NULL, fixed_effe
 
 #' build iv formulas
 #'
-#' @return Function-specific return value.
+#' @return Internal pipeline output used by the targets graph.
 build_iv_formulas <- function(cfg) {
   controls <- c(
     "consumption_2007", "gini_consumption_2007",
@@ -48,7 +48,7 @@ build_iv_formulas <- function(cfg) {
 
 #' build baseline 2sls formula
 #'
-#' @return Function-specific return value.
+#' @return Internal pipeline output used by the targets graph.
 build_baseline_2sls_formula <- function(...) {
   make_iv_formula(...)
 }
