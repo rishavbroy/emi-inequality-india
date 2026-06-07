@@ -67,3 +67,7 @@ The pipeline should fail gracefully when required raw data are absent: it reads 
 The current estimates should be treated as provisional. Active issues include district harmonization, geographic controls, state fixed effects/state-demeaned IVs, spatial autocorrelation, migration, inflation/local price changes, and the transition from a simple consumption-percent-change response variable to log consumption differences.
 
 See `docs/district-matching.qmd` for the district-harmonization plan.
+
+## Review archive
+
+Build `Archive.zip` only after `make check-public-final` succeeds. The packaging script stages the current working tree, omits raw data and local caches, and refuses to run without the `.public-final-ok` stamp produced by the final public check.

@@ -92,6 +92,7 @@ check-public-final: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
 	Rscript scripts/render_application_samples.R
 	EMI_CONFIG=config/final.yml Rscript scripts/check_rendered_text.R --final
 	Rscript scripts/check_public_final.R
+	touch .public-final-ok
 
 test: tests
 
@@ -107,3 +108,4 @@ clean-renders:
 	rm -f docs/district-matching.html docs/district-matching.pdf docs/district-matching.tex
 	rm -f docs/long-paths-and-8-3-filenames.html docs/long-paths-and-8-3-filenames.pdf docs/long-paths-and-8-3-filenames.tex
 	rm -f application-samples/output/*.pdf application-samples/output/*.tex application-samples/output/*.html
+	rm -f .public-final-ok
