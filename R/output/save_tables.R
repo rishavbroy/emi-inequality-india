@@ -29,22 +29,41 @@ table_caption <- function(name) {
   captions[[name]] %||% name
 }
 
-format_table_for_output <- function(table) {
+nice_column_name <- function(x) {
+  x <- gsub("\\.", " ", x)
+  x <- gsub("_", " ", x)
+  x <- gsub("p value", "p-value", x, ignore.case = TRUE)
+  x <- gsub("std error", "Std. Error", x, ignore.case = TRUE)
+  tools::toTitleCase(x)
+}
+
+format_table_for_output <- function(table, public = TRUE) {
   out <- as.data.frame(table)
-  names(out) <- gsub("\\.", " ", names(out), fixed = TRUE)
-  names(out) <- gsub("_", " ", names(out), fixed = TRUE)
-  names(out) <- tools::toTitleCase(names(out))
+  if (!nrow(out)) return(out)
+
+  if (public) {
+    # Diagnostic status columns are kept in internal tables only. They are
+    # removed from polished public tables whenever they contain no substantive
+    # warnings; final audits fail if public tables still expose them.
+    if ("status" %in% names(out) && all(is.na(out$status) | out$status %in% c("mapped", "estimated"))) out$status <- NULL
+    if ("reason" %in% names(out) && all(is.na(out$reason) | !nzchar(as.character(out$reason)))) out$reason <- NULL
+    if ("method" %in% names(out) && length(unique(stats::na.omit(out$method))) <= 1L) out$method <- NULL
+  }
+
+  keep <- vapply(out, function(col) !all(is.na(col) | !nzchar(as.character(col))), logical(1))
+  out <- out[, keep, drop = FALSE]
+  names(out) <- vapply(names(out), nice_column_name, character(1))
   out
 }
 
-save_table_csv <- function(table, path) {
-  utils::write.csv(as.data.frame(table), path, row.names = FALSE)
+save_table_csv <- function(table, path, public = TRUE) {
+  utils::write.csv(format_table_for_output(table, public = public), path, row.names = FALSE)
   path
 }
 
-save_table_tex <- function(table, path, name) {
+save_table_tex <- function(table, path, name, public = TRUE) {
   need_pkg("kableExtra", "LaTeX table output")
-  df <- format_table_for_output(table)
+  df <- format_table_for_output(table, public = public)
   tex <- kableExtra::kbl(
     df,
     format = "latex",
@@ -74,14 +93,12 @@ save_tables <- function(tables, cfg) {
   dir <- table_output_dir(cfg)
   dir.create(dir, recursive = TRUE, showWarnings = FALSE)
   formats <- table_formats(cfg)
+  public_table_names <- setdiff(names(tables), c("ame_results", "first_stage", "selection_n"))
   unlist(lapply(names(tables), function(n) {
     paths <- character()
-    if ("csv" %in% formats) {
-      paths <- c(paths, save_table_csv(tables[[n]], file.path(dir, paste0(n, ".csv"))))
-    }
-    if ("tex" %in% formats) {
-      paths <- c(paths, save_table_tex(tables[[n]], file.path(dir, paste0(n, ".tex")), n))
-    }
+    public <- n %in% public_table_names
+    if ("csv" %in% formats) paths <- c(paths, save_table_csv(tables[[n]], file.path(dir, paste0(n, ".csv")), public = public))
+    if ("tex" %in% formats) paths <- c(paths, save_table_tex(tables[[n]], file.path(dir, paste0(n, ".tex")), n, public = public))
     paths
   }), use.names = FALSE)
 }
