@@ -10,17 +10,9 @@ is_final_check <- "--final" %in% args ||
 paths <- c(
   list.files("paper", pattern = "\\.(html|md|tex)$", full.names = TRUE),
   list.files("docs", pattern = "\\.(html|md|tex)$", full.names = TRUE),
-  list.files("application-samples/.work", pattern = "\\.(html|md)$", full.names = TRUE, recursive = TRUE)
+  list.files("application-samples/.work", pattern = "\\.(html|md|qmd|tex)$", full.names = TRUE, recursive = TRUE)
 )
 paths <- paths[file.exists(paths)]
-
-is_ignored_by_git <- function(path) {
-  if (!nzchar(Sys.which("git"))) return(FALSE)
-  status <- system2("git", c("check-ignore", "--no-index", "--quiet", path), stdout = FALSE, stderr = FALSE)
-  identical(status, 0L)
-}
-
-paths <- paths[!vapply(paths, is_ignored_by_git, logical(1))]
 
 source_paths <- c(
   list.files("paper", pattern = "\\.(qmd|md|tex)$", full.names = TRUE),
@@ -28,7 +20,6 @@ source_paths <- c(
   list.files("application-samples/.work", pattern = "\\.(qmd|md|tex)$", full.names = TRUE, recursive = TRUE)
 )
 source_paths <- source_paths[file.exists(source_paths)]
-source_paths <- source_paths[!vapply(source_paths, is_ignored_by_git, logical(1))]
 
 pdf_paths <- c(
   "paper/report.pdf",
@@ -43,13 +34,9 @@ extract_pdf_text <- function(path) {
   if (nzchar(Sys.which("pdftotext"))) {
     out <- tempfile(fileext = ".txt")
     status <- system2("pdftotext", c(path, out), stdout = FALSE, stderr = FALSE)
-    if (identical(status, 0L) && file.exists(out)) {
-      return(paste(readLines(out, warn = FALSE), collapse = "\n"))
-    }
+    if (identical(status, 0L) && file.exists(out)) return(paste(readLines(out, warn = FALSE), collapse = "\n"))
   }
-  if (requireNamespace("pdftools", quietly = TRUE)) {
-    return(paste(pdftools::pdf_text(path), collapse = "\n"))
-  }
+  if (requireNamespace("pdftools", quietly = TRUE)) return(paste(pdftools::pdf_text(path), collapse = "\n"))
   NA_character_
 }
 
@@ -63,12 +50,13 @@ fixed_patterns <- c(
   "Figure Figure",
   "Table ?@",
   "Figure ?@",
-  "active figures below use district-level empirical distributions"
+  "active figures below use district-level empirical distributions",
+  "Draft diagnostic for unavailable"
 )
 
 regex_patterns <- c(
-  "AME[^\\n\\.;]*=\\s*—",
-  "coefficient[^\\n\\.;]*—",
+  "AME[^\n\.;]*=\\s*—",
+  "coefficient[^\n\.;]*—",
   "p\\s*=\\s*—"
 )
 
@@ -84,9 +72,7 @@ for (path in source_paths) {
   text <- paste(readLines(path, warn = FALSE), collapse = "\n")
   text <- gsub("\\s+", " ", text)
   for (pattern in source_regex_patterns) {
-    if (grepl(pattern, text, perl = TRUE)) {
-      hits <- c(hits, paste0(path, " matches /", pattern, "/"))
-    }
+    if (grepl(pattern, text, perl = TRUE)) hits <- c(hits, paste0(path, " matches /", pattern, "/"))
   }
 }
 
@@ -94,14 +80,10 @@ for (path in paths) {
   text <- paste(readLines(path, warn = FALSE), collapse = "\n")
   text <- gsub("\\s+", " ", text)
   for (pattern in fixed_patterns) {
-    if (grepl(pattern, text, fixed = TRUE)) {
-      hits <- c(hits, paste0(path, " contains '", pattern, "'"))
-    }
+    if (grepl(pattern, text, fixed = TRUE)) hits <- c(hits, paste0(path, " contains '", pattern, "'"))
   }
   for (pattern in regex_patterns) {
-    if (grepl(pattern, text, perl = TRUE)) {
-      hits <- c(hits, paste0(path, " matches /", pattern, "/"))
-    }
+    if (grepl(pattern, text, perl = TRUE)) hits <- c(hits, paste0(path, " matches /", pattern, "/"))
   }
 }
 
@@ -116,14 +98,10 @@ for (path in pdf_paths) {
   pdf_checked <- c(pdf_checked, path)
   text <- gsub("\\s+", " ", text)
   for (pattern in fixed_patterns) {
-    if (grepl(pattern, text, fixed = TRUE)) {
-      hits <- c(hits, paste0(path, " contains '", pattern, "'"))
-    }
+    if (grepl(pattern, text, fixed = TRUE)) hits <- c(hits, paste0(path, " contains '", pattern, "'"))
   }
   for (pattern in regex_patterns) {
-    if (grepl(pattern, text, perl = TRUE)) {
-      hits <- c(hits, paste0(path, " matches /", pattern, "/"))
-    }
+    if (grepl(pattern, text, perl = TRUE)) hits <- c(hits, paste0(path, " matches /", pattern, "/"))
   }
 }
 
