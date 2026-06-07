@@ -108,6 +108,11 @@ make_figures <- function(district_panel, raw_ilo_figures, cfg) {
       )
     ))
   } else if (identical(cfg$mode, "final")) {
+    # Provisional-final policy: the active public report withholds map figures
+    # until the district panel joins to validated geometry. This is deliberately
+    # not an error here because final rendering must still complete for the
+    # non-map paper, tables, and samples. Strict map production should instead
+    # be re-enabled by adding geometry and removing the map-withheld prose.
     attr(out, "maps_withheld_reason") <- paste0(
       "Final maps withheld: missing variables [", paste(missing_vars, collapse = ", "),
       "]; geometry coverage = ", round(100 * sf_geometry_coverage(district_panel), 1), "%"
@@ -132,52 +137,4 @@ make_ilo_trends_figure <- function(raw_ilo_figures) {
   raw_ilo_figures
 }
 
-#' make emi map
-#'
-#' @return The district panel used for map generation.
-make_emi_map <- function(district_panel) {
-  district_panel
-}
-
-#' make consumption growth map
-#'
-#' @return The district panel used for map generation.
-make_consumption_growth_map <- function(district_panel) {
-  district_panel
-}
-
-#' make pucca map
-#'
-#' @return The district panel used for map generation.
-make_pucca_map <- function(district_panel) {
-  district_panel
-}
-
-#' make education map
-#'
-#' @return The district panel used for map generation.
-make_education_map <- function(district_panel) {
-  district_panel
-}
-
-#' make region map
-#'
-#' @return The district panel used for map generation.
-make_region_map <- function(district_panel) {
-  district_panel
-}
-
-#' make linguistic distance map
-#'
-#' @return The district panel used for map generation.
-make_linguistic_distance_map <- function(district_panel) {
-  district_panel
-}
-
-#' make map collages
-#'
-#' @return A list of figure specifications.
-make_map_collages <- function(figures) {
-  figures
-}
 # sample-end: code-output-generation

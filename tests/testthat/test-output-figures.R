@@ -1,4 +1,4 @@
-test_that("final figures require real sf geometry", {
+test_that("final figures withhold maps until real sf geometry is validated", {
   cfg <- list(mode = "final", output_formats = list(figures = "png"))
   panel <- data.frame(
     emie_2007 = 1,
@@ -9,13 +9,14 @@ test_that("final figures require real sf geometry", {
     wavg_ling_degrees = 5
   )
 
-  expect_error(
-    make_figures(panel, character(), cfg),
-    "Final map generation requires an sf district_panel"
-  )
+  figures <- make_figures(panel, character(), cfg)
+  expect_true("fig_ilo_trends" %in% names(figures))
+  expect_true("district_carveouts_shifts" %in% names(figures))
+  expect_false(any(grepl("^map_|^collage_.*maps", names(figures))))
+  expect_match(attr(figures, "maps_withheld_reason"), "geometry coverage")
 })
 
-test_that("final figures require sufficient non-empty geometry coverage", {
+test_that("final figures withhold maps when non-empty geometry coverage is insufficient", {
   skip_if_not_installed("sf")
   cfg <- list(mode = "final", output_formats = list(figures = "png"))
   geometry <- sf::st_sfc(
@@ -33,10 +34,9 @@ test_that("final figures require sufficient non-empty geometry coverage", {
     geometry = geometry
   )
 
-  expect_error(
-    make_figures(panel, character(), cfg),
-    "covering at least 75%"
-  )
+  figures <- make_figures(panel, character(), cfg)
+  expect_false(any(grepl("^map_|^collage_.*maps", names(figures))))
+  expect_match(attr(figures, "maps_withheld_reason"), "50%")
 })
 
 test_that("district carve-out figure data uses pct_91in01 values", {

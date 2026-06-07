@@ -84,6 +84,11 @@ save_plot_formats <- function(plot, path_base, formats, width = 7, height = 5, d
 }
 
 save_magick_formats <- function(image, path_base, formats) {
+  # Flatten alpha before writing so XeLaTeX never rejects RGBA PNGs as an
+  # unrecognized image format. The PDF copy is used by PDF reports/samples;
+  # PNG remains available for HTML and review archives.
+  image <- magick::image_background(image, "white", flatten = TRUE)
+  image <- magick::image_convert(image, colorspace = "sRGB")
   paths <- vapply(formats, function(format) {
     path <- format_path(path_base, format)
     magick::image_write(image, path = path, format = format)
