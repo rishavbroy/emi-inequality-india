@@ -32,18 +32,22 @@ rebuild-qmds:
 	Rscript scripts/postprocess_public_qmds.R
 
 pipeline-draft: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
-	EMI_CONFIG=config/draft.yml Rscript -e 'targets::tar_make()'
+	rm -f .pipeline-draft-ok
+	EMI_CONFIG=config/draft.yml Rscript scripts/run_targets_strict.R
 
 pipeline-final: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
-	EMI_CONFIG=config/final.yml Rscript -e 'targets::tar_make()'
+	rm -f .pipeline-final-ok .public-final-ok
+	EMI_CONFIG=config/final.yml Rscript scripts/run_targets_strict.R
 
 diagnostics:
 	EMI_CONFIG=config/diagnostics.yml Rscript -e 'targets::tar_make(starts_with("diag_"))'
 
 report: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
+	Rscript scripts/check_required_outputs.R --require-final-stamp
 	HOME=$(QUARTO_HOME) quarto render paper/report.qmd
 
 samples: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
+	Rscript scripts/check_required_outputs.R --require-final-stamp
 	Rscript scripts/render_application_samples.R
 
 audit-report-values:
@@ -82,10 +86,12 @@ check-public-draft: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
 	Rscript scripts/check_rendered_text.R
 
 check-public-final: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
-	EMI_CONFIG=config/final.yml Rscript -e 'targets::tar_make()'
+	rm -f .public-final-ok .pipeline-final-ok .pipeline-draft-ok
+	$(MAKE) pipeline-final
 	EMI_CONFIG=config/final.yml Rscript scripts/audit_report_values.R --strict
 	Rscript scripts/audit_crossrefs.R --strict-report
 	EMI_CONFIG=config/final.yml Rscript scripts/audit_outputs_final.R
+	Rscript scripts/check_required_outputs.R --require-final-stamp
 	HOME=$(QUARTO_HOME) quarto render paper/report.qmd
 	HOME=$(QUARTO_HOME) quarto render docs/district-matching.qmd
 	HOME=$(QUARTO_HOME) quarto render docs/long-paths-and-8-3-filenames.qmd
@@ -108,4 +114,4 @@ clean-renders:
 	rm -f docs/district-matching.html docs/district-matching.pdf docs/district-matching.tex
 	rm -f docs/long-paths-and-8-3-filenames.html docs/long-paths-and-8-3-filenames.pdf docs/long-paths-and-8-3-filenames.tex
 	rm -f application-samples/output/*.pdf application-samples/output/*.tex application-samples/output/*.html
-	rm -f .public-final-ok
+	rm -f .public-final-ok .pipeline-final-ok .pipeline-draft-ok
