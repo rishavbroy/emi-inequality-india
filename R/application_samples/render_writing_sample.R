@@ -21,12 +21,11 @@ render_one_writing_sample <- function(spec_path) {
   dir.create(work_dir, recursive = TRUE, showWarnings = FALSE)
   output_qmd <- file.path(work_dir, paste0(tools::file_path_sans_ext(basename(output)), ".qmd"))
 
+  raw_source_lines <- readLines(spec$source, warn = FALSE)
   if (identical(spec$mode, "full")) {
-    raw_source_lines <- readLines(spec$source, warn = FALSE)
     source_lines <- c(report_abstract_block(raw_source_lines), strip_qmd_yaml(raw_source_lines))
     assemble_writing_sample_qmd(spec$cover_note, source_lines, output_qmd)
   } else {
-    raw_source_lines <- readLines(spec$source, warn = FALSE)
     excerpts <- c(
       report_setup_chunks(raw_source_lines),
       extract_qmd_excerpts(spec$source, unlist(spec$excerpts, use.names = FALSE))
@@ -39,8 +38,47 @@ render_one_writing_sample <- function(spec_path) {
   output
 }
 
+read_sample_report_values <- function() {
+  if (!requireNamespace("targets", quietly = TRUE)) return(list())
+  tryCatch(targets::tar_read(report_values), error = function(e) list())
+}
+
+sample_value <- function(values, name, digits = NULL) {
+  x <- values[[name]]
+  if (is.null(x)) return(NA_character_)
+  if (is.list(x) && !is.null(x$value)) x <- x$value
+  if (is.list(x) && !is.null(x$display)) x <- x$display
+  if (length(x) == 0L || all(is.na(x))) return(NA_character_)
+  x <- x[[1]]
+  if (is.numeric(x) && is.finite(x) && !is.null(digits)) x <- round(x, digits)
+  as.character(x)
+}
+
+inject_cover_note_values <- function(lines) {
+  values <- read_sample_report_values()
+  if (!length(values)) return(lines)
+  f <- sample_value(values, "partial_f", 1)
+  beta <- sample_value(values, "iv_emie_estimate", 1)
+  p <- sample_value(values, "iv_emie_p", 2)
+  if (any(is.na(c(f, beta, p)))) return(lines)
+  new_line <- paste0(
+    "4. **Main result**: Current generated first-stage ($F=", f,
+    "$) and second-stage estimates ($", beta, "$ pp, $p=", p,
+    "$) are reported in the included tables. Estimates are provisional pending a validated district-geometry join, repaired district matching, and state-FE/FD-2SLS redesign."
+  )
+  idx <- grep("^4[.] [*][*]Main result[*][*]:", lines)
+  if (length(idx)) lines[idx] <- new_line
+  lines
+}
+
 clean_writing_sample_qmd <- function(path) {
   lines <- readLines(path, warn = FALSE)
+  lines <- inject_cover_note_values(lines)
+
+  # Quarto resolves @fig-*/@tbl-*/@sec-* with their own prefixes; legacy prose
+  # already wrote Figure/Table/Sec. before bookdown \@ref(). Remove those
+  # prefixes, then convert any excerpt-external references to clear prose so
+  # sample PDFs never show ?@ markers or "Figure Figure"/"Sec. Section".
   lines <- gsub("Figure @fig-", "@fig-", lines, fixed = TRUE)
   lines <- gsub("Figures @fig-", "@fig-", lines, fixed = TRUE)
   lines <- gsub("Table @tbl-", "@tbl-", lines, fixed = TRUE)
@@ -67,19 +105,13 @@ render_qmd_to_pdf <- function(input_qmd, output_file) {
   output_file <- normalizePath(output_file, mustWork = FALSE)
   rendered_name <- basename(output_file)
 
-  if (!nzchar(Sys.which("quarto"))) {
-    stop("Quarto CLI was not found on PATH; cannot render ", input_qmd, call. = FALSE)
-  }
+  if (!nzchar(Sys.which("quarto"))) stop("Quarto CLI was not found on PATH; cannot render ", input_qmd, call. = FALSE)
 
   old_wd <- getwd()
   on.exit(setwd(old_wd), add = TRUE)
   setwd(dirname(input_qmd))
 
-  status <- system2(
-    "quarto",
-    c("render", basename(input_qmd), "--to", "pdf", "--output", rendered_name)
-  )
-
+  status <- system2("quarto", c("render", basename(input_qmd), "--to", "pdf", "--output", rendered_name))
   if (!identical(status, 0L)) stop("quarto render failed for ", input_qmd, call. = FALSE)
 
   rendered_path <- normalizePath(file.path(dirname(input_qmd), rendered_name), mustWork = FALSE)
