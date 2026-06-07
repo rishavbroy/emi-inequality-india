@@ -55,7 +55,7 @@ normalize_panel_geometry_key <- function(x) {
 
 #' compute consumption growth pct
 #'
-#' @return Function-specific return value.
+#' @return Internal pipeline output used by the targets graph.
 compute_consumption_growth_pct <- function(df) {
   if (all(c("consumption_2007", "consumption_2017") %in% names(df))) {
     base <- num(df$consumption_2007)
@@ -67,7 +67,7 @@ compute_consumption_growth_pct <- function(df) {
 
 #' compute log consumption difference
 #'
-#' @return Function-specific return value.
+#' @return Internal pipeline output used by the targets graph.
 compute_log_consumption_difference <- function(df) {
   if (all(c("consumption_2007", "consumption_2017") %in% names(df))) {
     base <- num(df$consumption_2007)
@@ -79,7 +79,7 @@ compute_log_consumption_difference <- function(df) {
 
 #' compute gini change
 #'
-#' @return Function-specific return value.
+#' @return Internal pipeline output used by the targets graph.
 compute_gini_change <- function(df) {
   if (all(c("gini_consumption_2007", "gini_consumption_2017") %in% names(df))) {
     df$gini_change <- num(df$gini_consumption_2017) - num(df$gini_consumption_2007)
@@ -89,21 +89,21 @@ compute_gini_change <- function(df) {
 
 #' attach baseline controls
 #'
-#' @return Function-specific return value.
+#' @return Internal pipeline output used by the targets graph.
 attach_baseline_controls <- function(df) {
   df
 }
 
 #' attach iv measures
 #'
-#' @return Function-specific return value.
+#' @return Internal pipeline output used by the targets graph.
 attach_iv_measures <- function(df) {
   df
 }
 
 #' save processed district panel
 #'
-#' @return Function-specific return value.
+#' @return Internal pipeline output used by the targets graph.
 save_processed_district_panel <- function(district_panel, path = "data/processed/district_panel_emi_consumption_2001_2007_2017_2020.csv") {
   dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
   out <- if (inherits(district_panel, "sf")) sf::st_drop_geometry(district_panel) else as.data.frame(district_panel)
@@ -113,9 +113,27 @@ save_processed_district_panel <- function(district_panel, path = "data/processed
 
 #' save processed district tracker
 #'
-#' @return Function-specific return value.
+#' @return Path to a normalized processed tracker CSV.
 save_processed_district_tracker <- function(district_tracker, path = "data/processed/district_tracker_2001_2007_2017_2020.csv") {
   dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
-  utils::write.csv(as.data.frame(district_tracker), path, row.names = FALSE)
+  tracker <- as.data.frame(district_tracker)
+  if (!nrow(tracker)) {
+    out <- data.frame(source_file_id = character(), row_in_source = integer(), stringsAsFactors = FALSE)
+  } else {
+    candidate_cols <- intersect(
+      c(
+        "source_file_id", ".row_in_source", "source", "year", "state_std", "district_std",
+        "state", "district", "old_state", "old_district", "new_state", "new_district",
+        "match_status", "possible_false_positive", "many_to_many"
+      ),
+      names(tracker)
+    )
+    out <- tracker[candidate_cols]
+    if (".row_in_source" %in% names(out)) names(out)[names(out) == ".row_in_source"] <- "row_in_source"
+    if (!"source_file_id" %in% names(out)) out$source_file_id <- NA_character_
+    if (!"row_in_source" %in% names(out)) out$row_in_source <- seq_len(nrow(out))
+    out <- out[, unique(c("source_file_id", "row_in_source", setdiff(names(out), c("source_file_id", "row_in_source")))), drop = FALSE]
+  }
+  utils::write.csv(out, path, row.names = FALSE)
   path
 }

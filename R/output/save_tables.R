@@ -42,11 +42,11 @@ format_table_for_output <- function(table, public = TRUE) {
   if (!nrow(out)) return(out)
 
   if (public) {
-    # Diagnostic status columns are kept in internal tables only. They are
-    # removed from polished public tables whenever they contain no substantive
-    # warnings; final audits fail if public tables still expose them.
-    if ("status" %in% names(out) && all(is.na(out$status) | out$status %in% c("mapped", "estimated"))) out$status <- NULL
-    if ("reason" %in% names(out) && all(is.na(out$reason) | !nzchar(as.character(out$reason)))) out$reason <- NULL
+    # Public paper tables should not expose pipeline status scaffolding. Those
+    # columns remain available in internal diagnostic tables, but polished report
+    # tables carry only substantive variables/results.
+    out$status <- NULL
+    out$reason <- NULL
     if ("method" %in% names(out) && length(unique(stats::na.omit(out$method))) <= 1L) out$method <- NULL
   }
 
