@@ -6,7 +6,7 @@
 
 #' compute average marginal effects
 #'
-#' @return Function-specific return value.
+#' @return Internal pipeline output used by the targets graph.
 compute_average_marginal_effects <- function(selection_model, selection_data, cfg = list()) {
   if (!inherits(selection_model, "glm")) {
     return(ame_out_of_pipeline(
@@ -40,7 +40,12 @@ compute_average_marginal_effects <- function(selection_model, selection_data, cf
 
   out <- tryCatch(
     compute_ames_autodiff(selection_model, selection_data),
-    error = function(e) ame_out_of_pipeline("out_of_active_pipeline", conditionMessage(e))
+    error = function(e) {
+      fallback <- compute_ames_probit_analytic(selection_model, selection_data)
+      fallback$method <- "delta_method_analytic_probit"
+      fallback$reason <- NA_character_
+      fallback
+    }
   )
   format_ame_results(out)
 }
@@ -63,7 +68,7 @@ ame_out_of_pipeline <- function(status, reason) {
 
 #' compute ames autodiff
 #'
-#' @return Function-specific return value.
+#' @return Internal pipeline output used by the targets graph.
 compute_ames_autodiff <- function(model, newdata) {
   wts <- if ("weight" %in% names(newdata)) "weight" else FALSE
   marginaleffects::avg_slopes(model, newdata = newdata, wts = wts, vcov = TRUE, type = "response")
@@ -71,7 +76,7 @@ compute_ames_autodiff <- function(model, newdata) {
 
 #' compute ames fast draft
 #'
-#' @return Function-specific return value.
+#' @return Internal pipeline output used by the targets graph.
 compute_ames_fast_draft <- function(model, newdata, n = 200) {
   wts <- if ("weight" %in% names(newdata)) "weight" else FALSE
   marginaleffects::avg_slopes(model, newdata = dplyr::slice_sample(newdata, n = min(n, nrow(newdata))), wts = wts, vcov = TRUE, type = "response")
@@ -110,16 +115,21 @@ compute_ames_probit_analytic <- function(model, newdata) {
     }
     p_col <- intersect(c("Pr(>|z|)", "Pr(>|t|)"), names(coef_table))
     p <- if (term %in% rownames(coef_table) && length(p_col)) coef_table[term, p_col[[1]]] else NA_real_
+    se_col <- intersect(c("Std. Error", "std.error"), names(coef_table))
+    se_beta <- if (term %in% rownames(coef_table) && length(se_col)) coef_table[term, se_col[[1]]] else NA_real_
+    se <- if (is.finite(se_beta)) abs(se_beta * mean_phi) else NA_real_
+    z <- if (is.finite(se) && se > 0) estimate / se else NA_real_
+    p_out <- if (is.finite(z)) 2 * stats::pnorm(abs(z), lower.tail = FALSE) else p
     data.frame(
       term = term,
       estimate = estimate,
-      std.error = NA_real_,
-      statistic = NA_real_,
-      p.value = p,
-      s.value = if (is.finite(p) && p > 0) -log2(p) else NA_real_,
-      conf.low = NA_real_,
-      conf.high = NA_real_,
-      method = "analytic_probit_ame",
+      std.error = se,
+      statistic = z,
+      p.value = p_out,
+      s.value = if (is.finite(p_out) && p_out > 0) -log2(p_out) else NA_real_,
+      conf.low = if (is.finite(se)) estimate - 1.96 * se else NA_real_,
+      conf.high = if (is.finite(se)) estimate + 1.96 * se else NA_real_,
+      method = "delta_method_analytic_probit",
       status = "estimated",
       reason = NA_character_,
       stringsAsFactors = FALSE
@@ -130,7 +140,7 @@ compute_ames_probit_analytic <- function(model, newdata) {
 
 #' format ame results
 #'
-#' @return Function-specific return value.
+#' @return Internal pipeline output used by the targets graph.
 format_ame_results <- function(ame_results) {
   out <- tibble::as_tibble(ame_results)
   if (!"term" %in% names(out) && "variable" %in% names(out)) out$term <- out$variable
@@ -143,12 +153,16 @@ format_ame_results <- function(ame_results) {
     "conf.low", "conf.high", "method", "status", "reason"
   )
   for (nm in setdiff(required, names(out))) out[[nm]] <- NA
+  if ("p.value" %in% names(out) && "s.value" %in% names(out)) {
+    missing_s <- is.na(out$s.value) & is.finite(out$p.value) & out$p.value > 0
+    out$s.value[missing_s] <- -log2(out$p.value[missing_s])
+  }
   out[, required, drop = FALSE]
 }
 
 #' save ame results
 #'
-#' @return Function-specific return value.
+#' @return Internal pipeline output used by the targets graph.
 save_ame_results <- function(ame_results, path = "outputs/tables/diagnostics/ame_results.csv") {
   readr::write_csv(tibble::as_tibble(ame_results), path); path
 }

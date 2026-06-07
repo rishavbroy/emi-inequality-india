@@ -4,7 +4,7 @@
 
 #' build selection data
 #'
-#' @return Function-specific return value.
+#' @return Internal pipeline output used by the targets graph.
 build_selection_data <- function(nss_2007_education, district_keys_2007, cfg) {
   blocks <- as_input_list(nss_2007_education)
   b4 <- std(safe_df(blocks[["nss0708edu_block4"]] %||% data.frame()), 2007L)
@@ -31,8 +31,8 @@ build_selection_data <- function(nss_2007_education, district_keys_2007, cfg) {
     c("PID", "TUTION_FEE", "EXAMINATION_FEE", "OTHER_FEES_PAYMENTS", "BOOKS", "STATIONERY", "UNIFORM", "TRANSPORT"),
     names(b6)
   )
-  if (length(keep_b5) > 1L) kids <- merge(kids, unique(b5[keep_b5]), by = "PID", all.x = TRUE, suffixes = c("", "_b5"))
-  if (length(keep_b6) > 1L) kids <- merge(kids, unique(b6[keep_b6]), by = "PID", all.x = TRUE, suffixes = c("", "_b6"))
+  if (length(keep_b5) > 1L) kids <- merge(kids, collapse_to_unique_key(b5[keep_b5], "PID"), by = "PID", all.x = TRUE, suffixes = c("", "_b5"))
+  if (length(keep_b6) > 1L) kids <- merge(kids, collapse_to_unique_key(b6[keep_b6], "PID"), by = "PID", all.x = TRUE, suffixes = c("", "_b6"))
 
   kids$AGE <- num(kids$AGE)
   kids$HH_SIZE <- num(kids$HH_SIZE)
@@ -69,28 +69,28 @@ build_selection_data <- function(nss_2007_education, district_keys_2007, cfg) {
 
 #' construct child level selection sample
 #'
-#' @return Function-specific return value.
+#' @return Internal pipeline output used by the targets graph.
 construct_child_level_selection_sample <- function(df) {
   df
 }
 
 #' construct household covariates
 #'
-#' @return Function-specific return value.
+#' @return Internal pipeline output used by the targets graph.
 construct_household_covariates <- function(df) {
   df
 }
 
 #' construct district level context
 #'
-#' @return Function-specific return value.
+#' @return Internal pipeline output used by the targets graph.
 construct_district_level_context <- function(df) {
   df
 }
 
 #' define probit variables
 #'
-#' @return Function-specific return value.
+#' @return Internal pipeline output used by the targets graph.
 define_probit_variables <- function(df) {
   if (!"enrolled" %in% names(df)) df$enrolled <- NA_real_
   df
@@ -98,9 +98,15 @@ define_probit_variables <- function(df) {
 
 #' apply selection sample restrictions
 #'
-#' @return Function-specific return value.
+#' @return Internal pipeline output used by the targets graph.
 apply_selection_sample_restrictions <- function(df) {
   df
+}
+
+
+collapse_to_unique_key <- function(df, key) {
+  if (!key %in% names(df) || !nrow(df)) return(df)
+  df[!duplicated(df[[key]]), , drop = FALSE]
 }
 
 district_enrolled_means <- function(df, vars) {

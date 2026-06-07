@@ -5,7 +5,7 @@
 
 #' estimate selection probit
 #'
-#' @return Function-specific return value.
+#' @return Internal pipeline output used by the targets graph.
 estimate_selection_probit <- function(selection_data, cfg) {
   if (!"enrolled" %in% names(selection_data) || all(is.na(selection_data$enrolled))) {
     return(list(status = "out_of_active_pipeline", reason = "No enrolled variable."))
@@ -34,7 +34,7 @@ estimate_selection_probit <- function(selection_data, cfg) {
 
 #' build survey design selection
 #'
-#' @return Function-specific return value.
+#' @return Internal pipeline output used by the targets graph.
 build_survey_design_selection <- function(selection_df) {
   psu <- first_col(selection_df, c("FSU_SL_NO", "fsu", "PSU", "psu"))
   weight <- first_col(selection_df, c("weight", "WEIGHT", "Multiplier", "multiplier"))
@@ -54,21 +54,21 @@ build_survey_design_selection <- function(selection_df) {
 
 #' fit selection probit
 #'
-#' @return Function-specific return value.
+#' @return Internal pipeline output used by the targets graph.
 fit_selection_probit <- function(selection_design, f_probit) {
-  survey::svyglm(f_probit, design = selection_design, family = binomial(link = "probit"))
+  survey::svyglm(f_probit, design = selection_design, family = quasibinomial(link = "probit"))
 }
 
 #' compute inverse mills ratio
 #'
-#' @return Function-specific return value.
+#' @return Internal pipeline output used by the targets graph.
 compute_inverse_mills_ratio <- function(model, selection_df, f_probit) {
   selection_df
 }
 
 #' tidy selection model
 #'
-#' @return Function-specific return value.
+#' @return Internal pipeline output used by the targets graph.
 tidy_selection_model <- function(model) {
   broom::tidy(model)
 }
