@@ -38,6 +38,8 @@ find "$tmpdir" -type f \( -name '*.aux' -o -name '*.log' -o -name '*.fls' -o -na
 
 # Raw data and literature are intentionally omitted from the review archive.
 rm -rf "$tmpdir/data/raw" "$tmpdir/data/raw_future" "$tmpdir/relevant-literature"
+rm -rf "$tmpdir/archive/implementation-bundles"
+rm -f "$tmpdir/docs/plan/THOROUGH NOTES Research Paper ECON 623.docx"       "$tmpdir/docs/plan/COMPACTED NOTES Research Paper ECON 623.docx"
 
 rm -f "$out"
 (cd "$tmpdir" && zip -r "$OLDPWD/$out" . >/dev/null)

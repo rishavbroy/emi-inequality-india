@@ -103,3 +103,7 @@ clean-targets:
 
 clean-renders:
 	rm -rf outputs/figures/* outputs/tables/* outputs/diagnostics/* paper/output/* application-samples/.work/*
+	rm -f paper/report.pdf paper/report.html paper/report.tex paper/appendix.pdf paper/appendix.html paper/appendix.tex
+	rm -f docs/district-matching.html docs/district-matching.pdf docs/district-matching.tex
+	rm -f docs/long-paths-and-8-3-filenames.html docs/long-paths-and-8-3-filenames.pdf docs/long-paths-and-8-3-filenames.tex
+	rm -f application-samples/output/*.pdf application-samples/output/*.tex application-samples/output/*.html
