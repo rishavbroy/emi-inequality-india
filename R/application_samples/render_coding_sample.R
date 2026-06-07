@@ -4,7 +4,8 @@
 #'
 #' @param spec_dir Directory containing `coding-*.yml` specs.
 #' @return Character vector of output PDF paths.
-render_coding_samples <- function(spec_dir = "application-samples/specs") {
+render_coding_samples <- function(spec_dir = "application-samples/specs", output_files = NULL) {
+  force(output_files)
   specs <- list.files(spec_dir, pattern = "^coding-.*\\.yml$", full.names = TRUE)
   vapply(specs, render_one_coding_sample, character(1))
 }

@@ -83,13 +83,21 @@ report_abstract_block <- function(source_lines) {
   c("", "## Abstract", "", abstract, "")
 }
 
-report_setup_chunks <- function(source_lines) {
-  start <- grep("^```\\{r report-target-values", source_lines)
+extract_named_r_chunk <- function(source_lines, label) {
+  start <- grep(paste0("^```\\{r\\s+", label, "(,|\\s|\\})"), source_lines, perl = TRUE)
   if (!length(start)) return(character())
   end <- grep("^```\\s*$", source_lines)
   end <- end[end > start[[1]]]
-  if (!length(end)) return(character())
-  c(source_lines[start[[1]]:end[[1]]], "")
+  if (!length(end)) stop("Unclosed setup chunk in report: ", label, call. = FALSE)
+  source_lines[start[[1]]:end[[1]]]
+}
+
+report_setup_chunks <- function(source_lines) {
+  labels <- c("report-target-values", "public-output-table-helper")
+  chunks <- lapply(labels, extract_named_r_chunk, source_lines = source_lines)
+  chunks <- chunks[lengths(chunks) > 0L]
+  if (!length(chunks)) return(character())
+  c(unlist(lapply(chunks, function(x) c(x, "")), use.names = FALSE), "")
 }
 
 ensure_yaml_field <- function(lines, field, value) {
