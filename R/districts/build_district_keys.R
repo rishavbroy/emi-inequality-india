@@ -4,49 +4,42 @@
 
 #' canonicalize district name
 #'
-#' @return Internal pipeline output used by the targets graph.
 canonicalize_district_name <- function(x) {
   canon(x)
 }
 
 #' canonicalize state name
 #'
-#' @return Internal pipeline output used by the targets graph.
 canonicalize_state_name <- function(x) {
   canonicalize_district_name(x)
 }
 
 #' make district key
 #'
-#' @return Internal pipeline output used by the targets graph.
 make_district_key <- function(state, district, year) {
   paste(year, canonicalize_state_name(state), canonicalize_district_name(district), sep = "__")
 }
 
 #' build district keys 2001
 #'
-#' @return Internal pipeline output used by the targets graph.
 build_district_keys_2001 <- function(census_2001_languages) {
   key_df(census_2001_languages, 2001L)
 }
 
 #' build district keys 2007
 #'
-#' @return Internal pipeline output used by the targets graph.
 build_district_keys_2007 <- function(nss_2007_education, nss_2007_consumption = NULL) {
   unique(safe_bind_rows(lapply(c(as_input_list(nss_2007_education), as_input_list(nss_2007_consumption)), key_df, year = 2007L)))
 }
 
 #' build district keys 2017
 #'
-#' @return Internal pipeline output used by the targets graph.
 build_district_keys_2017 <- function(nss_2017_education) {
   unique(safe_bind_rows(lapply(as_input_list(nss_2017_education), key_df, year = 2017L)))
 }
 
 #' build district keys 2020
 #'
-#' @return Internal pipeline output used by the targets graph.
 build_district_keys_2020 <- function(boundaries_2020) {
   key_df(boundaries_2020, 2020L)
 }

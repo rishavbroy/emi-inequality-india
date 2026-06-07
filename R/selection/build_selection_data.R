@@ -4,7 +4,6 @@
 
 #' build selection data
 #'
-#' @return Internal pipeline output used by the targets graph.
 build_selection_data <- function(nss_2007_education, district_keys_2007, cfg) {
   blocks <- as_input_list(nss_2007_education)
   b4 <- std(safe_df(blocks[["nss0708edu_block4"]] %||% data.frame()), 2007L)
@@ -69,28 +68,24 @@ build_selection_data <- function(nss_2007_education, district_keys_2007, cfg) {
 
 #' construct child level selection sample
 #'
-#' @return Internal pipeline output used by the targets graph.
 construct_child_level_selection_sample <- function(df) {
   df
 }
 
 #' construct household covariates
 #'
-#' @return Internal pipeline output used by the targets graph.
 construct_household_covariates <- function(df) {
   df
 }
 
 #' construct district level context
 #'
-#' @return Internal pipeline output used by the targets graph.
 construct_district_level_context <- function(df) {
   df
 }
 
 #' define probit variables
 #'
-#' @return Internal pipeline output used by the targets graph.
 define_probit_variables <- function(df) {
   if (!"enrolled" %in% names(df)) df$enrolled <- NA_real_
   df
@@ -98,7 +93,6 @@ define_probit_variables <- function(df) {
 
 #' apply selection sample restrictions
 #'
-#' @return Internal pipeline output used by the targets graph.
 apply_selection_sample_restrictions <- function(df) {
   df
 }

@@ -55,7 +55,6 @@ normalize_panel_geometry_key <- function(x) {
 
 #' compute consumption growth pct
 #'
-#' @return Internal pipeline output used by the targets graph.
 compute_consumption_growth_pct <- function(df) {
   if (all(c("consumption_2007", "consumption_2017") %in% names(df))) {
     base <- num(df$consumption_2007)
@@ -67,7 +66,6 @@ compute_consumption_growth_pct <- function(df) {
 
 #' compute log consumption difference
 #'
-#' @return Internal pipeline output used by the targets graph.
 compute_log_consumption_difference <- function(df) {
   if (all(c("consumption_2007", "consumption_2017") %in% names(df))) {
     base <- num(df$consumption_2007)
@@ -79,7 +77,6 @@ compute_log_consumption_difference <- function(df) {
 
 #' compute gini change
 #'
-#' @return Internal pipeline output used by the targets graph.
 compute_gini_change <- function(df) {
   if (all(c("gini_consumption_2007", "gini_consumption_2017") %in% names(df))) {
     df$gini_change <- num(df$gini_consumption_2017) - num(df$gini_consumption_2007)
@@ -89,21 +86,18 @@ compute_gini_change <- function(df) {
 
 #' attach baseline controls
 #'
-#' @return Internal pipeline output used by the targets graph.
 attach_baseline_controls <- function(df) {
   df
 }
 
 #' attach iv measures
 #'
-#' @return Internal pipeline output used by the targets graph.
 attach_iv_measures <- function(df) {
   df
 }
 
 #' save processed district panel
 #'
-#' @return Internal pipeline output used by the targets graph.
 save_processed_district_panel <- function(district_panel, path = "data/processed/district_panel_emi_consumption_2001_2007_2017_2020.csv") {
   dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
   out <- if (inherits(district_panel, "sf")) sf::st_drop_geometry(district_panel) else as.data.frame(district_panel)

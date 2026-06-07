@@ -4,7 +4,6 @@
 
 #' clean census 2001 languages
 #'
-#' @return Internal pipeline output used by the targets graph.
 clean_census_2001_languages <- function(raw) {
   out <- safe_bind_rows(lapply(raw, function(x) {
     clean_census_2001_language_file(x)
@@ -123,21 +122,18 @@ select_top_mother_tongues <- function(df, n = 3L) {
 
 #' standardize census state names
 #'
-#' @return Internal pipeline output used by the targets graph.
 standardize_census_state_names <- function(df) {
   df
 }
 
 #' standardize census district names
 #'
-#' @return Internal pipeline output used by the targets graph.
 standardize_census_district_names <- function(df) {
   df
 }
 
 #' clean mother tongue names
 #'
-#' @return Internal pipeline output used by the targets graph.
 clean_mother_tongue_names <- function(df) {
   mother_tongue <- first_col(df, c("mother_tongue", "Mother Tongue", "Language", "...7", "...2"))
   if (!is.null(mother_tongue)) {
@@ -148,7 +144,6 @@ clean_mother_tongue_names <- function(df) {
 
 #' compute mother tongue population shares
 #'
-#' @return Internal pipeline output used by the targets graph.
 compute_mother_tongue_population_shares <- function(df) {
   df
 }

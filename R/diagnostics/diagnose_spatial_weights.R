@@ -26,7 +26,6 @@ build_spatial_weights <- function(district_panel, cfg) {
 
 #' diagnose spatial weights
 #'
-#' @return Internal pipeline output used by the targets graph.
 diagnose_spatial_weights <- function(district_panel, spatial_weights, cfg) {
   data.frame(
     diagnostic = "spatial_weights",
@@ -37,28 +36,24 @@ diagnose_spatial_weights <- function(district_panel, spatial_weights, cfg) {
 
 #' compare rook queen contiguity
 #'
-#' @return Internal pipeline output used by the targets graph.
 compare_rook_queen_contiguity <- function(district_panel) {
   tibble::tibble()
 }
 
 #' summarize islands
 #'
-#' @return Internal pipeline output used by the targets graph.
 summarize_islands <- function(spatial_weights) {
   tibble::tibble()
 }
 
 #' summarize neighbor counts
 #'
-#' @return Internal pipeline output used by the targets graph.
 summarize_neighbor_counts <- function(spatial_weights) {
   tibble::tibble()
 }
 
 #' save spatial weight diagnostics
 #'
-#' @return Internal pipeline output used by the targets graph.
 save_spatial_weight_diagnostics <- function(diagnostics) {
   diagnostics
 }

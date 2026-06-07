@@ -6,7 +6,6 @@
 
 #' compute average marginal effects
 #'
-#' @return Internal pipeline output used by the targets graph.
 compute_average_marginal_effects <- function(selection_model, selection_data, cfg = list()) {
   if (!inherits(selection_model, "glm")) {
     return(ame_out_of_pipeline(
@@ -68,7 +67,6 @@ ame_out_of_pipeline <- function(status, reason) {
 
 #' compute ames autodiff
 #'
-#' @return Internal pipeline output used by the targets graph.
 compute_ames_autodiff <- function(model, newdata) {
   wts <- if ("weight" %in% names(newdata)) "weight" else FALSE
   marginaleffects::avg_slopes(model, newdata = newdata, wts = wts, vcov = TRUE, type = "response")
@@ -76,7 +74,6 @@ compute_ames_autodiff <- function(model, newdata) {
 
 #' compute ames fast draft
 #'
-#' @return Internal pipeline output used by the targets graph.
 compute_ames_fast_draft <- function(model, newdata, n = 200) {
   wts <- if ("weight" %in% names(newdata)) "weight" else FALSE
   marginaleffects::avg_slopes(model, newdata = dplyr::slice_sample(newdata, n = min(n, nrow(newdata))), wts = wts, vcov = TRUE, type = "response")
@@ -140,7 +137,6 @@ compute_ames_probit_analytic <- function(model, newdata) {
 
 #' format ame results
 #'
-#' @return Internal pipeline output used by the targets graph.
 format_ame_results <- function(ame_results) {
   out <- tibble::as_tibble(ame_results)
   if (!"term" %in% names(out) && "variable" %in% names(out)) out$term <- out$variable
@@ -162,7 +158,6 @@ format_ame_results <- function(ame_results) {
 
 #' save ame results
 #'
-#' @return Internal pipeline output used by the targets graph.
 save_ame_results <- function(ame_results, path = "outputs/tables/diagnostics/ame_results.csv") {
   readr::write_csv(tibble::as_tibble(ame_results), path); path
 }

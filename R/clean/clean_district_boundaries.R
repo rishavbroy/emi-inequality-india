@@ -42,21 +42,18 @@ normalize_numeric_join_code <- function(x) {
 
 #' standardize boundary state names
 #'
-#' @return Internal pipeline output used by the targets graph.
 standardize_boundary_state_names <- function(df) {
   std(df, 2020L)
 }
 
 #' standardize boundary district names
 #'
-#' @return Internal pipeline output used by the targets graph.
 standardize_boundary_district_names <- function(df) {
   std(df, 2020L)
 }
 
 #' repair invalid geometries
 #'
-#' @return Internal pipeline output used by the targets graph.
 repair_invalid_geometries <- function(sf_df) {
   if (!inherits(sf_df, "sf")) return(sf_df)
   sf::st_make_valid(sf_df)
@@ -64,7 +61,6 @@ repair_invalid_geometries <- function(sf_df) {
 
 #' add boundary join ids
 #'
-#' @return Internal pipeline output used by the targets graph.
 add_boundary_join_ids <- function(df) {
   df
 }

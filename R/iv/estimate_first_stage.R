@@ -4,7 +4,6 @@
 
 #' estimate first stage
 #'
-#' @return Internal pipeline output used by the targets graph.
 estimate_first_stage <- function(iv_models, district_panel, cfg) {
   rows <- lapply(names(iv_models), function(model_name) {
     model <- iv_models[[model_name]]
@@ -114,21 +113,18 @@ parse_iv_formula_terms <- function(model) {
 
 #' tidy first stage results
 #'
-#' @return Internal pipeline output used by the targets graph.
 tidy_first_stage_results <- function(first_stage) {
   first_stage
 }
 
 #' compute partial f statistics
 #'
-#' @return Internal pipeline output used by the targets graph.
 compute_partial_f_statistics <- function(first_stage) {
   first_stage
 }
 
 #' compute partial r2
 #'
-#' @return Internal pipeline output used by the targets graph.
 compute_partial_r2 <- function(first_stage) {
   first_stage
 }

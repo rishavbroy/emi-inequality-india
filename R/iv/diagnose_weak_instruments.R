@@ -4,7 +4,6 @@
 
 #' diagnose weak instruments
 #'
-#' @return Internal pipeline output used by the targets graph.
 diagnose_weak_instruments <- function(iv_models, district_panel, cfg) {
   estimate_first_stage(iv_models, district_panel, cfg)
 }
