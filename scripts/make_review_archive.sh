@@ -2,47 +2,33 @@
 set -euo pipefail
 
 out="${1:-Archive.zip}"
+tmpdir="$(mktemp -d)"
+trap 'rm -rf "$tmpdir"' EXIT
 
-zip -r "$out" . \
-  -x "docs/plan/THOROUGH NOTES Research Paper ECON 623.docx" \
-  -x "docs/plan/COMPACTED NOTES Research Paper ECON 623.docx" \
-  -x "__MACOSX/*" \
-  -x ".DS_Store" \
-  -x "*/.DS_Store" \
-  -x ".git/*" \
-  -x "Archive.zip" \
-  -x "legacy.zip" \
-  -x "data.zip" \
-  -x "full_output.txt" \
-  -x "file_list.txt" \
-  -x "archive/implementation-bundles/*" \
-  -x "_targets/*" \
-  -x "renv/library/*" \
-  -x "renv/staging/*" \
-  -x "renv/cache/*" \
-  -x ".quarto/*" \
-  -x "*_cache/*" \
-  -x "*_files/*" \
-  -x "application-samples/.work/*" \
-  -x "scripts/__pycache__/*" \
-  -x "*/__pycache__/*" \
-  -x ".Rproj.user/*" \
-  -x ".RData" \
-  -x ".Rhistory" \
-  -x ".RDataTmp" \
-  -x "*.nb.html" \
-  -x "*.aux" \
-  -x "*.log" \
-  -x "*.fls" \
-  -x "*.fdb_latexmk" \
-  -x "*.synctex.gz" \
-  -x "*.toc" \
-  -x "*.out" \
-  -x "*.bbl" \
-  -x "*.blg" \
-  -x "data/raw/*" \
-  -x "data/raw_future/*" \
-  -x "docs/*_files/*" \
-  -x "analysis/**/*_files/*" \
-  -x "paper/*_files/*" \
-  -x "relevant-literature/*"
+git archive --format=tar HEAD | tar -x -C "$tmpdir"
+
+# Include rendered public artifacts that may be intentionally ignored or locally regenerated.
+mkdir -p "$tmpdir/paper" "$tmpdir/application-samples/output" "$tmpdir/outputs"
+cp -f paper/report.pdf "$tmpdir/paper/" 2>/dev/null || true
+cp -f application-samples/output/*.pdf "$tmpdir/application-samples/output/" 2>/dev/null || true
+cp -R outputs/figures "$tmpdir/outputs/" 2>/dev/null || true
+cp -R outputs/tables "$tmpdir/outputs/" 2>/dev/null || true
+
+# Ensure the eight known local-only/cache families never enter the review archive.
+rm -rf \
+  "$tmpdir/_targets" \
+  "$tmpdir/renv/library" \
+  "$tmpdir/application-samples/.work" \
+  "$tmpdir/scripts/__pycache__" \
+  "$tmpdir/.quarto-home" \
+  "$tmpdir/.texcache" \
+  "$tmpdir/__MACOSX"
+find "$tmpdir" -name '.DS_Store' -delete
+
+rm -f "$out"
+(cd "$tmpdir" && zip -r "$OLDPWD/$out" . >/dev/null)
+
+if unzip -l "$out" | grep -E '(^|/)(_targets|renv/library|application-samples/\.work|scripts/__pycache__|\.quarto-home|\.texcache|__MACOSX|\.DS_Store)(/|$)' >/dev/null; then
+  echo "Review archive contains local-only cache artifacts." >&2
+  exit 1
+fi
