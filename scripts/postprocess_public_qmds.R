@@ -304,7 +304,7 @@ insert_report_output_objects <- function(lines) {
 
   lines <- insert_after_first(lines, "all while higher education has continued to develop an extremely strong, positive correlation with higher youth *unemployment*.", c(
     "",
-    figure_markdown("fig-ILO-fig", "../outputs/figures/main/fig_ilo_trends.png"),
+    figure_markdown("fig-ILO-fig", "../outputs/figures/main/fig_ilo_trends.pdf"),
     ""
   ))
 
@@ -340,7 +340,7 @@ insert_report_output_objects <- function(lines) {
 
   lines <- insert_after_first(lines, "These district changes are plotted in Figure @fig-districtcarveoutsshifts-fig.", c(
     "",
-    figure_markdown("fig-districtcarveoutsshifts-fig", "../outputs/figures/main/district_carveouts_shifts.png"),
+    figure_markdown("fig-districtcarveoutsshifts-fig", "../outputs/figures/main/district_carveouts_shifts.pdf"),
     ""
   ))
 
@@ -352,7 +352,7 @@ insert_district_note_output_objects <- function(lines) {
 
   lines <- insert_after_first(lines, "These district changes are plotted in Figure @fig-districtcarveoutsshifts-fig.", c(
     "",
-    figure_markdown("fig-districtcarveoutsshifts-fig", "../outputs/figures/main/district_carveouts_shifts.png"),
+    figure_markdown("fig-districtcarveoutsshifts-fig", "../outputs/figures/main/district_carveouts_shifts.pdf"),
     ""
   ))
 
@@ -376,6 +376,43 @@ fix_appendix_crossrefs <- function(lines) {
   lines
 }
 
+replace_withheld_map_refs <- function(lines) {
+  lines <- gsub("@fig-map1-fig and @fig-map2-fig", "the withheld final map figures", lines, fixed = TRUE)
+  lines <- gsub("@fig-map1-fig", "the withheld final map figures", lines, fixed = TRUE)
+  lines <- gsub("@fig-map2-fig", "the withheld final map figures", lines, fixed = TRUE)
+  lines
+}
+
+ensure_report_object <- function(lines, label, block) {
+  if (any(grepl(paste0("#", label, "\\}"), lines)) ||
+      any(grepl(paste0("#\\|\\s*label:\\s*", label, "\\s*$"), lines, perl = TRUE))) {
+    return(lines)
+  }
+  ref <- grep(paste0("@", label), lines, fixed = TRUE)
+  if (length(ref)) return(append(lines, c("", block, ""), after = ref[[1]]))
+  append(lines, c("", block, ""), after = length(lines))
+}
+
+ensure_report_output_objects <- function(lines) {
+  lines <- ensure_report_object(lines, "fig-ILO-fig", figure_markdown("fig-ILO-fig", "../outputs/figures/main/fig_ilo_trends.pdf"))
+  lines <- ensure_report_object(lines, "fig-districtcarveoutsshifts-fig", figure_markdown("fig-districtcarveoutsshifts-fig", "../outputs/figures/main/district_carveouts_shifts.pdf"))
+  for (label in names(legacy_table_captions)) {
+    path <- paste0("../outputs/tables/main/", gsub("-", "_", sub("^tbl-", "", label)), ".csv")
+    # Legacy labels do not always map mechanically to file names.
+    path <- switch(label,
+      "tbl-sum-tbl-probit-quant" = "../outputs/tables/main/sum_tbl_probit_quant.csv",
+      "tbl-sum-tbl-probit-cat" = "../outputs/tables/main/sum_tbl_probit_cat.csv",
+      "tbl-probit-mfx" = "../outputs/tables/main/probit_mfx.csv",
+      "tbl-sum-tbl-iv" = "../outputs/tables/main/sum_tbl_iv.csv",
+      "tbl-fs-cons" = "../outputs/tables/main/fs_cons.csv",
+      "tbl-cons-iv" = "../outputs/tables/main/cons_iv.csv",
+      path
+    )
+    lines <- ensure_report_object(lines, label, output_table_chunk(label, legacy_table_captions[[label]], path))
+  }
+  lines
+}
+
 postprocess_one <- function(path) {
   lines <- readLines(path, warn = FALSE)
   lines <- normalize_yaml(lines, path)
@@ -386,21 +423,17 @@ postprocess_one <- function(path) {
   lines <- cleanup_public_placeholders(lines)
   if (identical(path, "paper/report.qmd")) lines <- insert_report_output_objects(lines)
   if (identical(path, "paper/appendix.qmd")) {
-    if (!any(grepl("#fig-districtcarveoutsshifts-fig", lines, fixed = TRUE))) {
-      lines <- insert_after_first(lines, "These district changes are plotted in @fig-districtcarveoutsshifts-fig.", c(
-        "",
-        figure_markdown("fig-districtcarveoutsshifts-fig", "../outputs/figures/main/district_carveouts_shifts.png"),
-        ""
-      ))
-    }
+    lines <- ensure_report_object(lines, "fig-districtcarveoutsshifts-fig", figure_markdown("fig-districtcarveoutsshifts-fig", "../outputs/figures/main/district_carveouts_shifts.pdf"))
     lines <- fix_appendix_crossrefs(lines)
   }
   if (identical(path, "docs/district-matching.qmd")) {
     lines <- insert_district_note_output_objects(lines)
+    lines <- ensure_report_object(lines, "fig-districtcarveoutsshifts-fig", figure_markdown("fig-districtcarveoutsshifts-fig", "../outputs/figures/main/district_carveouts_shifts.pdf"))
     lines <- fix_district_note_crossrefs(lines)
   }
   lines <- fix_final_public_prose(lines)
   lines <- remove_quarto_crossref_prefixes(lines)
+  lines <- replace_withheld_map_refs(lines)
   lines <- remove_unavailable_map_figures(lines)
   if (identical(path, "paper/report.qmd")) {
     lines <- ensure_map_geometry_note(lines, "Final map figures are withheld until the missing geometry join discussed in @sec-distma-spa is validated;")
@@ -409,7 +442,10 @@ postprocess_one <- function(path) {
     lines <- ensure_map_geometry_note(lines, "The withheld final map figures underscore the same district-harmonization problem:")
   }
   lines <- normalize_inserted_output_captions(lines)
-  if (identical(path, "paper/report.qmd")) lines <- normalize_output_table_chunks(lines)
+  if (identical(path, "paper/report.qmd")) {
+    lines <- normalize_output_table_chunks(lines)
+    lines <- ensure_report_output_objects(lines)
+  }
   if (identical(path, "paper/report.qmd") || identical(path, "docs/district-matching.qmd")) {
     lines <- prune_unavailable_report_inline_expressions(lines)
   }
