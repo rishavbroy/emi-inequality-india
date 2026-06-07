@@ -34,8 +34,25 @@ render_one_writing_sample <- function(spec_path) {
     assemble_writing_sample_qmd(spec$cover_note, excerpts, output_qmd)
   }
 
+  clean_writing_sample_qmd(output_qmd)
   render_qmd_to_pdf(output_qmd, output)
   output
+}
+
+clean_writing_sample_qmd <- function(path) {
+  lines <- readLines(path, warn = FALSE)
+  lines <- gsub("Figure @fig-", "@fig-", lines, fixed = TRUE)
+  lines <- gsub("Figures @fig-", "@fig-", lines, fixed = TRUE)
+  lines <- gsub("Table @tbl-", "@tbl-", lines, fixed = TRUE)
+  lines <- gsub("Tables @tbl-", "@tbl-", lines, fixed = TRUE)
+  lines <- gsub("Sec. @sec-", "@sec-", lines, fixed = TRUE)
+  lines <- gsub("Section @sec-", "@sec-", lines, fixed = TRUE)
+  lines <- gsub("@fig-[A-Za-z0-9_-]+", "the corresponding figure in the full report", lines, perl = TRUE)
+  lines <- gsub("@tbl-[A-Za-z0-9_-]+", "the corresponding table in the full report", lines, perl = TRUE)
+  lines <- gsub("@sec-[A-Za-z0-9_-]+", "the corresponding section of the full report", lines, perl = TRUE)
+  lines <- gsub("@eq-[A-Za-z0-9_-]+", "the corresponding equation in the full report", lines, perl = TRUE)
+  writeLines(lines, path)
+  invisible(path)
 }
 
 #' Render a QMD file to a PDF path
