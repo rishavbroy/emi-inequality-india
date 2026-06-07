@@ -41,17 +41,17 @@ The project is under active revision. The main methodological priorities are dis
 ## Quickstart
 
 ```bash
-make init-renv
-make test
+make init-renv   # first local setup; creates/updates renv.lock
+make test        # smoke tests and input/output contracts
 make pipeline-draft
 make report
 make samples
 make check-public-draft
 ```
 
-Raw data are not tracked. Place raw files according to `data/metadata/file_manifest.csv`. See `REPLICATION.md` for the current replication data contract.
+Raw data are not tracked. Place raw files according to `data/metadata/file_manifest.csv`. See `REPLICATION.md` for the current replication data contract and expected behavior on a fresh clone without local-only raw data.
 
-`make check-public-draft` verifies that the current draft renders without scaffold or fallback prose. `make check-public-final` is stricter: it runs the final config and fails if final rendered PDFs cannot be text-audited, if final public PDFs contain visible cross-reference artifacts, or if final report values/cross-references are incomplete.
+`make check-public-draft` verifies that the current draft renders without scaffold or fallback prose. `make check-public-final` is stricter: it runs the final config and fails if final rendered PDFs cannot be text-audited, if final public PDFs contain visible cross-reference artifacts, if final output artifacts are diagnostic-only, or if final report values/cross-references are incomplete.
 
 The two public processed data products are:
 
@@ -60,10 +60,10 @@ The two public processed data products are:
 
 ## Missing-data behavior
 
-The pipeline should fail gracefully when required raw data are absent: it reads `data/metadata/file_manifest.csv`, checks the listed paths, and reports the exact missing files before attempting to call raw readers. A cryptic raw-reader path error should be treated as a bug.
+The pipeline should fail gracefully when required raw data are absent: it reads `data/metadata/file_manifest.csv`, checks the listed paths, and reports the exact missing files before attempting to call readers like `read_sav()`, `read_excel()`, or `sf::st_read()`. A cryptic raw-reader path error should be treated as a bug.
 
 ## Current limitations
 
-The current estimates should be treated as provisional. Active issues include district harmonization, geographic controls, state fixed effects/state-demeaned IVs, spatial autocorrelation, migration, inflation/local price changes, and the transition from a simple consumption-percent-change response variable to log consumption differences. Final map figures are withheld from the active paper until the district panel joins to validated geometry with sufficient coverage.
+The current estimates should be treated as provisional. Active issues include district harmonization, geographic controls, state fixed effects/state-demeaned IVs, spatial autocorrelation, migration, inflation/local price changes, and the transition from a simple consumption-percent-change response variable to log consumption differences.
 
 See `docs/district-matching.qmd` for the district-harmonization plan.
