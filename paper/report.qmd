@@ -143,11 +143,11 @@ Except for certain individual-level variables in the education probit, we will b
 #| label: tbl-sum-tbl-iv
 #| tbl-cap: "Summary Statistics for 2SLS Model"
 #| echo: false
-output_table <- function(path) {
-  if (file.exists(path)) return(utils::read.csv(path, check.names = FALSE))
-  data.frame(status = "missing generated output", path = path)
-}
-knitr::kable(output_table("../outputs/tables/main/sum_tbl_iv.csv"), digits = 3, booktabs = knitr::is_latex_output(), longtable = knitr::is_latex_output())
+#| warning: false
+#| message: false
+path <- "../outputs/tables/main/sum_tbl_iv.csv"
+if (!file.exists(path)) stop("Missing table output: ", path, call. = FALSE)
+knitr::kable(utils::read.csv(path, check.names = FALSE), digits = 3, booktabs = knitr::is_latex_output(), longtable = knitr::is_latex_output())
 ```
 
 
@@ -227,22 +227,22 @@ Summary statistics for numeric variables are given in @tbl-sum-tbl-probit-quant,
 #| label: tbl-sum-tbl-probit-quant
 #| tbl-cap: "Summary Statistics for Enrollment Participation Model (Numeric Variables)"
 #| echo: false
-output_table <- function(path) {
-  if (file.exists(path)) return(utils::read.csv(path, check.names = FALSE))
-  data.frame(status = "missing generated output", path = path)
-}
-knitr::kable(output_table("../outputs/tables/main/sum_tbl_probit_quant.csv"), digits = 3, booktabs = knitr::is_latex_output(), longtable = knitr::is_latex_output())
+#| warning: false
+#| message: false
+path <- "../outputs/tables/main/sum_tbl_probit_quant.csv"
+if (!file.exists(path)) stop("Missing table output: ", path, call. = FALSE)
+knitr::kable(utils::read.csv(path, check.names = FALSE), digits = 3, booktabs = knitr::is_latex_output(), longtable = knitr::is_latex_output())
 ```
 
 ```{r}
 #| label: tbl-sum-tbl-probit-cat
 #| tbl-cap: "Summary Statistics for Enrollment Participation Model (Categorical Variables)"
 #| echo: false
-output_table <- function(path) {
-  if (file.exists(path)) return(utils::read.csv(path, check.names = FALSE))
-  data.frame(status = "missing generated output", path = path)
-}
-knitr::kable(output_table("../outputs/tables/main/sum_tbl_probit_cat.csv"), digits = 3, booktabs = knitr::is_latex_output(), longtable = knitr::is_latex_output())
+#| warning: false
+#| message: false
+path <- "../outputs/tables/main/sum_tbl_probit_cat.csv"
+if (!file.exists(path)) stop("Missing table output: ", path, call. = FALSE)
+knitr::kable(utils::read.csv(path, check.names = FALSE), digits = 3, booktabs = knitr::is_latex_output(), longtable = knitr::is_latex_output())
 ```
 
 
@@ -255,11 +255,11 @@ Average marginal effects for numeric variables and counterfactual comparisons (r
 #| label: tbl-probit-mfx
 #| tbl-cap: "Average Marginal Effects and Counterfactual Comparisons for Enrollment Probit"
 #| echo: false
-output_table <- function(path) {
-  if (file.exists(path)) return(utils::read.csv(path, check.names = FALSE))
-  data.frame(status = "missing generated output", path = path)
-}
-knitr::kable(output_table("../outputs/tables/main/probit_mfx.csv"), digits = 3, booktabs = knitr::is_latex_output(), longtable = knitr::is_latex_output())
+#| warning: false
+#| message: false
+path <- "../outputs/tables/main/probit_mfx.csv"
+if (!file.exists(path)) stop("Missing table output: ", path, call. = FALSE)
+knitr::kable(utils::read.csv(path, check.names = FALSE), digits = 3, booktabs = knitr::is_latex_output(), longtable = knitr::is_latex_output())
 ```
 
 
@@ -344,22 +344,22 @@ The results of our first-stage regression, of EMI exposure on linguistic distanc
 #| label: tbl-fs-cons
 #| tbl-cap: "First-Stage Regression: EMI Exposure on Linguistic Distance"
 #| echo: false
-output_table <- function(path) {
-  if (file.exists(path)) return(utils::read.csv(path, check.names = FALSE))
-  data.frame(status = "missing generated output", path = path)
-}
-knitr::kable(output_table("../outputs/tables/main/fs_cons.csv"), digits = 3, booktabs = knitr::is_latex_output(), longtable = knitr::is_latex_output())
+#| warning: false
+#| message: false
+path <- "../outputs/tables/main/fs_cons.csv"
+if (!file.exists(path)) stop("Missing table output: ", path, call. = FALSE)
+knitr::kable(utils::read.csv(path, check.names = FALSE), digits = 3, booktabs = knitr::is_latex_output(), longtable = knitr::is_latex_output())
 ```
 
 ```{r}
 #| label: tbl-cons-iv
 #| tbl-cap: "Second-Stage Regression: Consumption Growth on EMIE (Fitted)"
 #| echo: false
-output_table <- function(path) {
-  if (file.exists(path)) return(utils::read.csv(path, check.names = FALSE))
-  data.frame(status = "missing generated output", path = path)
-}
-knitr::kable(output_table("../outputs/tables/main/cons_iv.csv"), digits = 3, booktabs = knitr::is_latex_output(), longtable = knitr::is_latex_output())
+#| warning: false
+#| message: false
+path <- "../outputs/tables/main/cons_iv.csv"
+if (!file.exists(path)) stop("Missing table output: ", path, call. = FALSE)
+knitr::kable(utils::read.csv(path, check.names = FALSE), digits = 3, booktabs = knitr::is_latex_output(), longtable = knitr::is_latex_output())
 ```
 
 

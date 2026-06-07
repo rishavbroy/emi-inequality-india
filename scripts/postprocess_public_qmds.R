@@ -229,18 +229,16 @@ ensure_map_geometry_note <- function(lines, anchor) {
 
 output_table_chunk <- function(label, caption, path) {
   c(
+    "",
     "```{r}",
     paste0("#| label: ", label),
     paste0("#| tbl-cap: \"", caption, "\""),
     "#| echo: false",
-    "output_table <- function(path) {",
-    "  if (file.exists(path)) return(utils::read.csv(path, check.names = FALSE))",
-    "  data.frame(status = \"missing generated output\", path = path)",
-    "}",
-    paste0(
-      "knitr::kable(output_table(\"", path, "\"), digits = 3, ",
-      "booktabs = knitr::is_latex_output(), longtable = knitr::is_latex_output())"
-    ),
+    "#| warning: false",
+    "#| message: false",
+    paste0("path <- \"", path, "\""),
+    "if (!file.exists(path)) stop(\"Missing table output: \", path, call. = FALSE)",
+    "knitr::kable(utils::read.csv(path, check.names = FALSE), digits = 3, booktabs = knitr::is_latex_output(), longtable = knitr::is_latex_output())",
     "```"
   )
 }
@@ -304,7 +302,7 @@ insert_report_output_objects <- function(lines) {
 
   lines <- insert_after_first(lines, "all while higher education has continued to develop an extremely strong, positive correlation with higher youth *unemployment*.", c(
     "",
-    figure_markdown("fig-ILO-fig", "../outputs/figures/main/fig_ilo_trends.pdf"),
+    figure_markdown("fig-ILO-fig", "../outputs/figures/main/fig_ilo_trends.png"),
     ""
   ))
 
@@ -364,6 +362,8 @@ insert_district_note_output_objects <- function(lines) {
 fix_district_note_crossrefs <- function(lines) {
   lines <- gsub("Sec\\. @sec-iv-iv", "the IV section of the main report", lines, perl = TRUE)
   lines <- gsub("Sec\\. @sec-intro", "the introduction of the main report", lines, perl = TRUE)
+  lines <- gsub("@sec-iv-iv", "the IV section of the main report", lines, fixed = TRUE)
+  lines <- gsub("@sec-intro", "the introduction of the main report", lines, fixed = TRUE)
   lines
 }
 
@@ -394,7 +394,7 @@ ensure_report_object <- function(lines, label, block) {
 }
 
 ensure_report_output_objects <- function(lines) {
-  lines <- ensure_report_object(lines, "fig-ILO-fig", figure_markdown("fig-ILO-fig", "../outputs/figures/main/fig_ilo_trends.pdf"))
+  lines <- ensure_report_object(lines, "fig-ILO-fig", figure_markdown("fig-ILO-fig", "../outputs/figures/main/fig_ilo_trends.png"))
   lines <- ensure_report_object(lines, "fig-districtcarveoutsshifts-fig", figure_markdown("fig-districtcarveoutsshifts-fig", "../outputs/figures/main/district_carveouts_shifts.pdf"))
   for (label in names(legacy_table_captions)) {
     path <- paste0("../outputs/tables/main/", gsub("-", "_", sub("^tbl-", "", label)), ".csv")
