@@ -75,15 +75,12 @@ for (i in seq_len(nrow(results))) {
   }
 }
 
-report_row <- results[results$file == "paper/report.qmd", , drop = FALSE]
-if (strict_report && nrow(report_row) && report_row$unresolved > 0L) {
-  stop(
-    sprintf(
-      "Strict report cross-reference audit failed: paper/report.qmd has unresolved references: %s",
-      report_row$unresolved_refs
-    ),
-    call. = FALSE
-  )
+if (strict_report) {
+  failing <- results[results$unresolved > 0L, , drop = FALSE]
+  if (nrow(failing)) {
+    details <- paste(sprintf("%s: %s", failing$file, failing$unresolved_refs), collapse = "\n")
+    stop("Strict public cross-reference audit failed:\n", details, call. = FALSE)
+  }
 }
 
-message(if (strict_report) "Strict report cross-reference audit completed." else "Draft cross-reference audit completed.")
+message(if (strict_report) "Strict public cross-reference audit completed." else "Draft cross-reference audit completed.")
