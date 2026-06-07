@@ -227,21 +227,53 @@ ensure_map_geometry_note <- function(lines, anchor) {
   insert_after_first(lines, anchor, c("", map_geometry_note_block(), ""))
 }
 
+output_table_helper_chunk <- function() {
+  c(
+    "```{r public-output-table-helper, include=FALSE}",
+    "resolve_public_output_path <- function(path) {",
+    "  candidates <- unique(c(",
+    "    path,",
+    "    file.path(getwd(), path),",
+    "    file.path('paper', path),",
+    "    file.path(dirname(knitr::current_input()), path),",
+    "    sub('^\\.\\./', '', path)",
+    "  ))",
+    "  candidates <- candidates[nzchar(candidates)]",
+    "  hit <- candidates[file.exists(candidates) & file.info(candidates)$size > 0]",
+    "  if (length(hit)) return(hit[[1]])",
+    "  stop('Missing table output: ', path, '\\nTried: ', paste(candidates, collapse = '; '), call. = FALSE)",
+    "}",
+    "read_public_table <- function(path) {",
+    "  utils::read.csv(resolve_public_output_path(path), check.names = FALSE)",
+    "}",
+    "```"
+  )
+}
+
+ensure_output_table_helper <- function(lines) {
+  if (any(grepl("public-output-table-helper", lines, fixed = TRUE))) return(lines)
+  setup <- grep("^```\\{r report-target-values", lines)
+  if (!length(setup)) return(c(output_table_helper_chunk(), "", lines))
+  ends <- grep("^```\\s*$", lines)
+  ends <- ends[ends > setup[[1]]]
+  if (!length(ends)) return(c(output_table_helper_chunk(), "", lines))
+  append(lines, c("", output_table_helper_chunk(), ""), after = ends[[1]])
+}
+
 output_table_chunk <- function(label, caption, path) {
   c(
-    "",
     "```{r}",
     paste0("#| label: ", label),
     paste0("#| tbl-cap: \"", caption, "\""),
     "#| echo: false",
-    "#| warning: false",
-    "#| message: false",
-    paste0("path <- \"", path, "\""),
-    "if (!file.exists(path)) stop(\"Missing table output: \", path, call. = FALSE)",
-    "knitr::kable(utils::read.csv(path, check.names = FALSE), digits = 3, booktabs = knitr::is_latex_output(), longtable = knitr::is_latex_output())",
+    paste0(
+      "knitr::kable(read_public_table(\"", path, "\"), digits = 3, ",
+      "booktabs = knitr::is_latex_output(), longtable = knitr::is_latex_output())"
+    ),
     "```"
   )
 }
+
 
 normalize_inserted_output_captions <- function(lines) {
   for (label in names(legacy_figure_captions)) {
@@ -360,10 +392,14 @@ insert_district_note_output_objects <- function(lines) {
 }
 
 fix_district_note_crossrefs <- function(lines) {
-  lines <- gsub("Sec\\. @sec-iv-iv", "the IV section of the main report", lines, perl = TRUE)
-  lines <- gsub("Sec\\. @sec-intro", "the introduction of the main report", lines, perl = TRUE)
+  lines <- gsub("These district changes are plotted in @fig-districtcarveoutsshifts-fig.", "These district changes are plotted in the district carve-outs figure below.", lines, fixed = TRUE)
+  lines <- gsub("These district changes are plotted in Figure @fig-districtcarveoutsshifts-fig.", "These district changes are plotted in the district carve-outs figure below.", lines, fixed = TRUE)
+  lines <- gsub("see @sec-iv-iv", "see the IV section of the main report", lines, fixed = TRUE)
+  lines <- gsub("in @sec-iv-iv", "in the IV section of the main report", lines, fixed = TRUE)
   lines <- gsub("@sec-iv-iv", "the IV section of the main report", lines, fixed = TRUE)
   lines <- gsub("@sec-intro", "the introduction of the main report", lines, fixed = TRUE)
+  lines <- gsub("@sec-distma", "this district-matching note", lines, fixed = TRUE)
+  lines <- gsub("@fig-districtcarveoutsshifts-fig", "the district carve-outs figure below", lines, fixed = TRUE)
   lines
 }
 
@@ -448,6 +484,9 @@ postprocess_one <- function(path) {
   }
   if (identical(path, "paper/report.qmd") || identical(path, "docs/district-matching.qmd")) {
     lines <- prune_unavailable_report_inline_expressions(lines)
+  }
+  if (identical(path, "paper/report.qmd")) {
+    lines <- ensure_output_table_helper(lines)
   }
   writeLines(lines, path)
   message("Postprocessed ", path)
