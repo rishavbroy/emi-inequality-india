@@ -33,7 +33,7 @@ render_one_writing_sample <- function(spec_path) {
     assemble_writing_sample_qmd(spec$cover_note, excerpts, output_qmd)
   }
 
-  clean_writing_sample_qmd(output_qmd)
+  clean_writing_sample_qmd(output_qmd, replace_external_refs = !identical(spec$mode, "full"))
   render_qmd_to_pdf(output_qmd, output)
   output
 }
@@ -71,7 +71,7 @@ inject_cover_note_values <- function(lines) {
   lines
 }
 
-clean_writing_sample_qmd <- function(path) {
+clean_writing_sample_qmd <- function(path, replace_external_refs = TRUE) {
   lines <- readLines(path, warn = FALSE)
   lines <- inject_cover_note_values(lines)
 
@@ -85,10 +85,12 @@ clean_writing_sample_qmd <- function(path) {
   lines <- gsub("Tables @tbl-", "@tbl-", lines, fixed = TRUE)
   lines <- gsub("Sec. @sec-", "@sec-", lines, fixed = TRUE)
   lines <- gsub("Section @sec-", "@sec-", lines, fixed = TRUE)
-  lines <- gsub("@fig-[A-Za-z0-9_-]+", "the corresponding figure in the full report", lines, perl = TRUE)
-  lines <- gsub("@tbl-[A-Za-z0-9_-]+", "the corresponding table in the full report", lines, perl = TRUE)
-  lines <- gsub("@sec-[A-Za-z0-9_-]+", "the corresponding section of the full report", lines, perl = TRUE)
-  lines <- gsub("@eq-[A-Za-z0-9_-]+", "the corresponding equation in the full report", lines, perl = TRUE)
+  if (isTRUE(replace_external_refs)) {
+    lines <- gsub("@fig-[A-Za-z0-9_-]+", "the corresponding figure in the full report", lines, perl = TRUE)
+    lines <- gsub("@tbl-[A-Za-z0-9_-]+", "the corresponding table in the full report", lines, perl = TRUE)
+    lines <- gsub("@sec-[A-Za-z0-9_-]+", "the corresponding section of the full report", lines, perl = TRUE)
+    lines <- gsub("@eq-[A-Za-z0-9_-]+", "the corresponding equation in the full report", lines, perl = TRUE)
+  }
   writeLines(lines, path)
   invisible(path)
 }
@@ -99,15 +101,16 @@ clean_writing_sample_qmd <- function(path) {
 #' @param output_file Desired PDF output path.
 #' @return Output PDF path invisibly.
 render_qmd_to_pdf <- function(input_qmd, output_file) {
-  dir.create(dirname(output_file), recursive = TRUE, showWarnings = FALSE)
+  old_wd <- getwd()
 
   input_qmd <- normalizePath(input_qmd, mustWork = TRUE)
+  if (!grepl("^/", output_file)) output_file <- file.path(old_wd, output_file)
   output_file <- normalizePath(output_file, mustWork = FALSE)
+  dir.create(dirname(output_file), recursive = TRUE, showWarnings = FALSE)
   rendered_name <- basename(output_file)
 
   if (!nzchar(Sys.which("quarto"))) stop("Quarto CLI was not found on PATH; cannot render ", input_qmd, call. = FALSE)
 
-  old_wd <- getwd()
   on.exit(setwd(old_wd), add = TRUE)
   setwd(dirname(input_qmd))
 
@@ -116,7 +119,11 @@ render_qmd_to_pdf <- function(input_qmd, output_file) {
 
   rendered_path <- normalizePath(file.path(dirname(input_qmd), rendered_name), mustWork = FALSE)
   if (!file.exists(rendered_path)) stop("Expected rendered PDF was not created: ", rendered_path, call. = FALSE)
-  if (!identical(rendered_path, output_file)) file.copy(rendered_path, output_file, overwrite = TRUE)
+  if (!identical(rendered_path, output_file)) {
+    ok <- file.copy(rendered_path, output_file, overwrite = TRUE)
+    if (!isTRUE(ok)) stop("Could not copy rendered PDF to ", output_file, call. = FALSE)
+  }
+  if (!file.exists(output_file)) stop("Rendered PDF was not copied to expected output path: ", output_file, call. = FALSE)
 
   invisible(output_file)
 }
