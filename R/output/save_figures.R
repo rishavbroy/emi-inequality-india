@@ -83,29 +83,23 @@ save_plot_formats <- function(plot, path_base, formats, width = 7, height = 5, d
   unname(paths)
 }
 
-save_magick_pdf <- function(image, path) {
-  dims <- as.integer(magick::image_info(image)[1, c("width", "height")])
-  width <- max(1, dims[[1]] / 300)
-  height <- max(1, dims[[2]] / 300)
-  grDevices::pdf(path, width = width, height = height, useDingbats = FALSE)
-  on.exit(grDevices::dev.off(), add = TRUE)
-  graphics::par(mar = c(0, 0, 0, 0), xaxs = "i", yaxs = "i")
-  graphics::plot.new()
-  graphics::plot.window(xlim = c(0, 1), ylim = c(0, 1), asp = NA)
-  graphics::rasterImage(as.raster(image), 0, 0, 1, 1)
-  invisible(path)
-}
-
 save_magick_formats <- function(image, path_base, formats) {
   # Flatten alpha before writing so XeLaTeX never rejects RGBA PNGs as an
-  # unrecognized image format. PDF copies are written through grDevices rather
-  # than ImageMagick because XeLaTeX can reject ImageMagick-produced PDFs.
+  # unrecognized image format. For PDF, do not ask ImageMagick to write a PDF:
+  # those files have repeatedly failed LaTeX embedding. Instead, draw the raster
+  # with grDevices/grid so the PDF is a normal R graphics-device PDF.
   image <- magick::image_background(image, "white", flatten = TRUE)
   image <- magick::image_convert(image, colorspace = "sRGB")
   paths <- vapply(formats, function(format) {
     path <- format_path(path_base, format)
-    if (identical(format, "pdf")) {
-      save_magick_pdf(image, path)
+    if (identical(tolower(format), "pdf")) {
+      info <- magick::image_info(image)
+      width <- max(4, info$width / 150)
+      height <- max(4, info$height / 150)
+      grDevices::pdf(path, width = width, height = height, onefile = TRUE)
+      grid::grid.newpage()
+      grid::grid.raster(as.raster(image), width = grid::unit(1, "npc"), height = grid::unit(1, "npc"), interpolate = TRUE)
+      grDevices::dev.off()
     } else {
       magick::image_write(image, path = path, format = format)
     }

@@ -28,8 +28,7 @@ estimate_selection_probit <- function(selection_data, cfg) {
       return(fit_selection_probit(design, f_probit))
     }
   }
-  family <- if (identical(cfg$mode, "final")) stats::quasibinomial(link = "probit") else stats::binomial(link = "probit")
-  stats::glm(f_probit, data = selection_data, family = family)
+  stats::glm(f_probit, data = selection_data, family = stats::binomial(link = "probit"))
 }
 
 #' build survey design selection

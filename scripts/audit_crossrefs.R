@@ -76,9 +76,9 @@ for (i in seq_len(nrow(results))) {
 }
 
 if (strict_report) {
-  failing <- results[results$unresolved > 0L, , drop = FALSE]
-  if (nrow(failing)) {
-    details <- paste(sprintf("%s: %s", failing$file, failing$unresolved_refs), collapse = "\n")
+  bad <- results[results$unresolved > 0L, , drop = FALSE]
+  if (nrow(bad)) {
+    details <- paste(sprintf("%s: %s", bad$file, bad$unresolved_refs), collapse = "\\n")
     stop("Strict public cross-reference audit failed:\n", details, call. = FALSE)
   }
 }

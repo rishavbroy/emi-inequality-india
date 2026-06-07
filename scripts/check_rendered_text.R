@@ -55,8 +55,8 @@ fixed_patterns <- c(
 )
 
 regex_patterns <- c(
-  "AME[^\n\.;]*=\\s*—",
-  "coefficient[^\n\.;]*—",
+  "AME[^\n.;]*=\\s*—",
+  "coefficient[^\n.;]*—",
   "p\\s*=\\s*—"
 )
 

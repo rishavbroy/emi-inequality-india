@@ -104,9 +104,12 @@ collapse_to_unique_key <- function(df, key) {
 }
 
 district_enrolled_means <- function(df, vars) {
-  keep <- df$enrolled == 1
+  enrolled <- !is.na(df$enrolled) & df$enrolled == 1
+  idx <- which(enrolled)
+  if (!length(idx)) return(df[0, c("state_std", "district_std"), drop = FALSE])
   weight <- if ("weight" %in% names(df)) num(df$weight) else rep(1, nrow(df))
-  split_i <- split(which(keep), interaction(df[keep, c("state_std", "district_std")], drop = TRUE))
+  groups <- interaction(df[idx, c("state_std", "district_std"), drop = TRUE], drop = TRUE)
+  split_i <- split(idx, groups)
   safe_bind_rows(lapply(split_i, function(i) {
     z <- df[i[1], c("state_std", "district_std"), drop = FALSE]
     for (nm in vars) z[[paste0("dmean_", nm)]] <- wmean(df[[nm]][i], weight[i])
