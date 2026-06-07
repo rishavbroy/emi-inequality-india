@@ -488,6 +488,7 @@ postprocess_one <- function(path) {
   if (identical(path, "paper/report.qmd")) {
     lines <- ensure_output_table_helper(lines)
   }
+  lines <- sub("[ \t]+$", "", lines, perl = TRUE)
   writeLines(lines, path)
   message("Postprocessed ", path)
 }
