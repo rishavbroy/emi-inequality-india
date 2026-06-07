@@ -236,7 +236,7 @@ output_table_helper_chunk <- function() {
     "    file.path(getwd(), path),",
     "    file.path('paper', path),",
     "    file.path(dirname(knitr::current_input()), path),",
-    "    sub('^\\.\\./', '', path)",
+    "    sub('^\\\\.\\\\./', '', path)",
     "  ))",
     "  candidates <- candidates[nzchar(candidates)]",
     "  hit <- candidates[file.exists(candidates) & file.info(candidates)$size > 0]",

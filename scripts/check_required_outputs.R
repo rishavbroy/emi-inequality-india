@@ -28,9 +28,9 @@ if (length(missing)) add_failure("Missing required public file(s): ", paste(miss
 check_bibliography_paths <- function(path) {
   if (!file.exists(path)) return()
   lines <- readLines(path, warn = FALSE)
-  idx <- grep("^bibliography:\s*", lines)
+  idx <- grep("^bibliography:\\s*", lines)
   for (i in idx) {
-    val <- trimws(sub("^bibliography:\s*", "", lines[[i]]))
+    val <- trimws(sub("^bibliography:\\s*", "", lines[[i]]))
     if (!nzchar(val)) next
     val <- gsub("^['\"]|['\"]$", "", val)
     full <- file.path(dirname(path), val)
@@ -44,7 +44,7 @@ for (qmd in c("paper/report.qmd", "paper/appendix.qmd", "docs/district-matching.
 
 if (file.exists("paper/report.qmd")) {
   report <- paste(readLines("paper/report.qmd", warn = FALSE), collapse = "\n")
-  if (grepl("read_public_table\(", report) && !grepl("public-output-table-helper", report, fixed = TRUE)) {
+  if (grepl("read_public_table\\(", report) && !grepl("public-output-table-helper", report, fixed = TRUE)) {
     add_failure("paper/report.qmd calls read_public_table() but lacks public-output-table-helper.")
   }
 }
