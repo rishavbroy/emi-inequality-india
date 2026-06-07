@@ -7,12 +7,12 @@ is_final_check <- "--final" %in% args ||
   identical(normalizePath(Sys.getenv("EMI_CONFIG"), mustWork = FALSE), normalizePath("config/final.yml", mustWork = FALSE)) ||
   identical(basename(Sys.getenv("EMI_CONFIG")), "final.yml")
 
-paths <- c(
+text_paths <- c(
   list.files("paper", pattern = "\\.(html|md|tex)$", full.names = TRUE),
   list.files("docs", pattern = "\\.(html|md|tex)$", full.names = TRUE),
   list.files("application-samples/.work", pattern = "\\.(html|md|qmd|tex)$", full.names = TRUE, recursive = TRUE)
 )
-paths <- paths[file.exists(paths)]
+text_paths <- text_paths[file.exists(text_paths)]
 
 source_paths <- c(
   list.files("paper", pattern = "\\.(qmd|md|tex)$", full.names = TRUE),
@@ -68,26 +68,26 @@ source_regex_patterns <- c(
 )
 
 hits <- character()
-for (path in source_paths) {
-  text <- paste(readLines(path, warn = FALSE), collapse = "\n")
+scan_text <- function(path, text, include_source_patterns = FALSE) {
   text <- gsub("\\s+", " ", text)
-  for (pattern in source_regex_patterns) {
-    if (grepl(pattern, text, perl = TRUE)) hits <- c(hits, paste0(path, " matches /", pattern, "/"))
+  local_hits <- character()
+  if (include_source_patterns) {
+    for (pattern in source_regex_patterns) {
+      if (grepl(pattern, text, perl = TRUE)) local_hits <- c(local_hits, paste0(path, " matches /", pattern, "/"))
+    }
   }
-}
-
-for (path in paths) {
-  text <- paste(readLines(path, warn = FALSE), collapse = "\n")
-  text <- gsub("\\s+", " ", text)
   for (pattern in fixed_patterns) {
-    if (grepl(pattern, text, fixed = TRUE)) hits <- c(hits, paste0(path, " contains '", pattern, "'"))
+    if (grepl(pattern, text, fixed = TRUE)) local_hits <- c(local_hits, paste0(path, " contains '", pattern, "'"))
   }
   for (pattern in regex_patterns) {
-    if (grepl(pattern, text, perl = TRUE)) hits <- c(hits, paste0(path, " matches /", pattern, "/"))
+    if (grepl(pattern, text, perl = TRUE)) local_hits <- c(local_hits, paste0(path, " matches /", pattern, "/"))
   }
+  local_hits
 }
 
-pdf_checked <- character()
+for (path in source_paths) hits <- c(hits, scan_text(path, paste(readLines(path, warn = FALSE), collapse = "\n"), TRUE))
+for (path in text_paths) hits <- c(hits, scan_text(path, paste(readLines(path, warn = FALSE), collapse = "\n"), FALSE))
+
 pdf_skipped <- character()
 for (path in pdf_paths) {
   text <- extract_pdf_text(path)
@@ -95,14 +95,7 @@ for (path in pdf_paths) {
     pdf_skipped <- c(pdf_skipped, path)
     next
   }
-  pdf_checked <- c(pdf_checked, path)
-  text <- gsub("\\s+", " ", text)
-  for (pattern in fixed_patterns) {
-    if (grepl(pattern, text, fixed = TRUE)) hits <- c(hits, paste0(path, " contains '", pattern, "'"))
-  }
-  for (pattern in regex_patterns) {
-    if (grepl(pattern, text, perl = TRUE)) hits <- c(hits, paste0(path, " matches /", pattern, "/"))
-  }
+  hits <- c(hits, scan_text(path, text, FALSE))
 }
 
 if (length(hits)) {

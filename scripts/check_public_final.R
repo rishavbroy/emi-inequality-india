@@ -15,8 +15,13 @@ required_files <- c(
 missing_or_empty <- required_files[!file.exists(required_files) | file.info(required_files)$size <= 0]
 
 failures <- character()
-if (length(missing_or_empty)) {
-  failures <- c(failures, paste0("Missing or empty final output: ", missing_or_empty))
+if (length(missing_or_empty)) failures <- c(failures, paste0("Missing or empty final output: ", missing_or_empty))
+
+if (file.exists("scripts/audit_outputs_final.R")) {
+  tryCatch(
+    source("scripts/audit_outputs_final.R", local = new.env(parent = globalenv())),
+    error = function(e) failures <<- c(failures, paste0("Final output audit failed: ", conditionMessage(e)))
+  )
 }
 
 if (length(failures)) {

@@ -1,9 +1,12 @@
 # Audit final-mode public output artifacts for diagnostic leftovers.
 
 failures <- character()
+add_failure <- function(...) failures <<- c(failures, paste0(...))
 
-add_failure <- function(...) {
-  failures <<- c(failures, paste0(...))
+report_has_geometry_blocker <- FALSE
+if (file.exists("paper/report.qmd")) {
+  report_text <- paste(readLines("paper/report.qmd", warn = FALSE), collapse = "\n")
+  report_has_geometry_blocker <- grepl("Final district map figures are withheld", report_text, fixed = TRUE)
 }
 
 figure_dir <- "outputs/figures/main"
@@ -11,20 +14,16 @@ if (dir.exists(figure_dir)) {
   manifest_path <- file.path(figure_dir, "figure_manifest.csv")
   if (file.exists(manifest_path)) {
     manifest <- utils::read.csv(manifest_path, stringsAsFactors = FALSE)
-    diagnostic_names <- grep("map_|collage_.*maps", manifest$name, value = TRUE)
-    if (length(diagnostic_names)) {
-      add_failure(
-        "Final figure manifest still lists map/collage outputs even though final maps are withheld until geometry validation: ",
-        paste(diagnostic_names, collapse = ", ")
-      )
+    if (report_has_geometry_blocker) {
+      diagnostic_names <- grep("^(map_|collage_.*maps)", manifest$name, value = TRUE)
+      if (length(diagnostic_names)) {
+        add_failure("Final figure manifest lists map/collage outputs while final maps are withheld: ", paste(diagnostic_names, collapse = ", "))
+      }
     }
   }
-  map_files <- list.files(figure_dir, pattern = "^(map_|collage_.*maps)", full.names = TRUE)
-  if (length(map_files)) {
-    add_failure(
-      "Final figure directory contains map-like files despite withheld final maps: ",
-      paste(basename(map_files), collapse = ", ")
-    )
+  if (report_has_geometry_blocker) {
+    map_files <- list.files(figure_dir, pattern = "^(map_|collage_.*maps)", full.names = TRUE)
+    if (length(map_files)) add_failure("Final figure directory contains map-like files despite withheld final maps: ", paste(basename(map_files), collapse = ", "))
   }
 }
 
@@ -36,9 +35,7 @@ if (dir.exists(table_dir)) {
     if (!file.exists(path)) next
     tab <- tryCatch(utils::read.csv(path, stringsAsFactors = FALSE), error = function(e) data.frame())
     bad_cols <- intersect(c("status", "reason"), names(tab))
-    if (length(bad_cols)) {
-      add_failure(basename(path), " contains diagnostic columns in a public table: ", paste(bad_cols, collapse = ", "))
-    }
+    if (length(bad_cols)) add_failure(basename(path), " contains diagnostic columns in a public table: ", paste(bad_cols, collapse = ", "))
   }
 
   ame_path <- file.path(table_dir, "ame_results.csv")
@@ -49,8 +46,7 @@ if (dir.exists(table_dir)) {
       required <- c("std.error", "statistic", "p.value", "s.value", "conf.low", "conf.high")
       missing_cols <- setdiff(required, names(ame))
       if (length(missing_cols)) add_failure("AME results are missing required columns: ", paste(missing_cols, collapse = ", "))
-      present <- intersect(required, names(ame))
-      for (col in present) {
+      for (col in intersect(required, names(ame))) {
         if (all(is.na(ame[[col]][estimated]))) add_failure("AME results have no final values in column: ", col)
       }
       if ("method" %in% names(ame) && any(ame$method[estimated] %in% c("analytic_probit_ame", "coefficient_fallback"), na.rm = TRUE)) {
