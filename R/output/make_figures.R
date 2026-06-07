@@ -62,7 +62,6 @@ make_figures <- function(district_panel, raw_ilo_figures, cfg) {
     "region",
     "wavg_ling_degrees"
   )
-  require_final_figure_inputs(district_panel, cfg, required_variables)
 
   out <- list(
     fig_ilo_trends = figure_spec(
@@ -73,26 +72,6 @@ make_figures <- function(district_panel, raw_ilo_figures, cfg) {
       kind = "ilo_collage",
       sources = raw_ilo_figures
     ),
-    map_emi_exposure = figure_spec("map_emi_exposure", "map_emi_exposure.png", "EMI Exposure", kind = "map", variable = "emie_2007"),
-    map_consumption_growth = figure_spec("map_consumption_growth", "map_consumption_growth.png", "%Δ Consumption", kind = "map", variable = "consumption_growth_pct"),
-    map_pucca = figure_spec("map_pucca", "map_pucca.png", "% Pucca Homes", kind = "map", variable = "pucca_share_2007"),
-    map_education = figure_spec("map_education", "map_education.png", "% HH Head w/ Sec.+", kind = "map", variable = "head_secondary_plus_2007"),
-    map_region = figure_spec("map_region", "map_region.png", "Region", kind = "map", variable = "region"),
-    map_linguistic_distance = figure_spec("map_linguistic_distance", "map_linguistic_distance.png", "Linguistic Distance", kind = "map", variable = "wavg_ling_degrees"),
-    collage_main_maps = figure_spec(
-      "collage_main_maps",
-      "collage_main_maps.png",
-      "Main district-level map inputs",
-      kind = "collage",
-      inputs = c("map_emi_exposure", "map_consumption_growth", "map_pucca", "map_education")
-    ),
-    collage_iv_region_maps = figure_spec(
-      "collage_iv_region_maps",
-      "collage_iv_region_maps.png",
-      "Instrument and region map inputs",
-      kind = "collage",
-      inputs = c("map_linguistic_distance", "map_region")
-    ),
     district_carveouts_shifts = figure_spec(
       "district_carveouts_shifts",
       "district_carveouts_shifts.png",
@@ -100,6 +79,48 @@ make_figures <- function(district_panel, raw_ilo_figures, cfg) {
       kind = "district_carveouts_shifts"
     )
   )
+
+  missing_vars <- setdiff(required_variables, names(as.data.frame(district_panel)))
+  geometry_ok <- has_sf_geometry(district_panel) && is.finite(sf_geometry_coverage(district_panel)) && sf_geometry_coverage(district_panel) >= 0.75
+  maps_available <- !length(missing_vars) && geometry_ok
+
+  if (maps_available) {
+    out <- c(out, list(
+      map_emi_exposure = figure_spec("map_emi_exposure", "map_emi_exposure.png", "EMI Exposure", kind = "map", variable = "emie_2007"),
+      map_consumption_growth = figure_spec("map_consumption_growth", "map_consumption_growth.png", "%Δ Consumption", kind = "map", variable = "consumption_growth_pct"),
+      map_pucca = figure_spec("map_pucca", "map_pucca.png", "% Pucca Homes", kind = "map", variable = "pucca_share_2007"),
+      map_education = figure_spec("map_education", "map_education.png", "% HH Head w/ Sec.+", kind = "map", variable = "head_secondary_plus_2007"),
+      map_region = figure_spec("map_region", "map_region.png", "Region", kind = "map", variable = "region"),
+      map_linguistic_distance = figure_spec("map_linguistic_distance", "map_linguistic_distance.png", "Linguistic Distance", kind = "map", variable = "wavg_ling_degrees"),
+      collage_main_maps = figure_spec(
+        "collage_main_maps",
+        "collage_main_maps.png",
+        "Main district-level map inputs",
+        kind = "collage",
+        inputs = c("map_emi_exposure", "map_consumption_growth", "map_pucca", "map_education")
+      ),
+      collage_iv_region_maps = figure_spec(
+        "collage_iv_region_maps",
+        "collage_iv_region_maps.png",
+        "Instrument and region map inputs",
+        kind = "collage",
+        inputs = c("map_linguistic_distance", "map_region")
+      )
+    ))
+  } else if (identical(cfg$mode, "final")) {
+    attr(out, "maps_withheld_reason") <- paste0(
+      "Final maps withheld: missing variables [", paste(missing_vars, collapse = ", "),
+      "]; geometry coverage = ", round(100 * sf_geometry_coverage(district_panel), 1), "%"
+    )
+  } else {
+    # Draft-mode diagnostics live outside outputs/figures/main and are explicitly
+    # labeled as diagnostics by figure_output_dir().
+    out <- c(out, list(
+      map_emi_exposure = figure_spec("map_emi_exposure", "map_emi_exposure.png", "EMI Exposure", kind = "status", variable = "emie_2007"),
+      map_consumption_growth = figure_spec("map_consumption_growth", "map_consumption_growth.png", "%Δ Consumption", kind = "status", variable = "consumption_growth_pct")
+    ))
+  }
+
   attr(out, "district_panel") <- district_panel
   out
 }
