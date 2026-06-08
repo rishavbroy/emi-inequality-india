@@ -16,7 +16,9 @@ required_files <- c(
   "outputs/tables/main/fs_cons.csv",
   "outputs/tables/main/cons_iv.csv",
   "outputs/figures/main/fig_ilo_trends.png",
-  "outputs/figures/main/district_carveouts_shifts.png"
+  "outputs/figures/main/district_carveouts_shifts.png",
+  "outputs/figures/main/collage_main_maps.png",
+  "outputs/figures/main/collage_iv_region_maps.png"
 )
 missing_required <- required_files[!file.exists(required_files) | file.info(required_files)$size <= 0]
 if (length(missing_required)) {

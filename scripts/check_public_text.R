@@ -27,18 +27,18 @@ legacy_figure_captions <- c(
   "docs/district-matching.qmd" = "Number of 2001 districts which absorbed a percentage of a 1991 district's population via name change, clean merger, carve-out, or border shift. Data from Kumar \\& Somanathan (2016)."
 )
 
-geometry_note <- paste(
-  "Final district map figures are withheld until the district panel joins to validated",
-  "geometry for at least 75% of district-panel rows. This prevents diagnostic",
-  "distribution plots from being presented as geographic maps."
+required_map_paths <- c(
+  "../outputs/figures/main/collage_main_maps.pdf",
+  "../outputs/figures/main/collage_iv_region_maps.pdf"
 )
 
-blocked_map_paths <- c(
-  "../outputs/figures/main/collage_main_maps.png",
-  "../outputs/figures/main/collage_iv_region_maps.png"
-)
+required_map_refs <- c("@fig-map1-fig", "@fig-map2-fig")
 
-blocked_map_refs <- c("@fig-map1-fig", "@fig-map2-fig")
+blocked_map_text <- c(
+  "Final district map figures are withheld",
+  "Final map figures are withheld",
+  "the withheld final map figures"
+)
 
 legacy_table_captions <- c(
   "Summary Statistics for Enrollment Participation Model (Numeric Variables)",

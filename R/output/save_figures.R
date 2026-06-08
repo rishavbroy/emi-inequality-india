@@ -236,13 +236,6 @@ save_figures <- function(figures, cfg) {
   dir.create(dir, recursive = TRUE, showWarnings = FALSE)
   formats <- figure_formats(cfg)
 
-  # Prevent stale draft-map artifacts from masquerading as final public figures
-  # after map references have been withheld from the report.
-  if (identical(cfg$mode, "final")) {
-    stale <- list.files(dir, pattern = "^(map_|collage_.*maps)", full.names = TRUE)
-    if (length(stale)) unlink(stale)
-  }
-
   primary <- character()
   all_written <- character()
 

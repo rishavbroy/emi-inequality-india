@@ -108,14 +108,11 @@ make_figures <- function(district_panel, raw_ilo_figures, cfg) {
       )
     ))
   } else if (identical(cfg$mode, "final")) {
-    # Provisional-final policy: the active public report withholds map figures
-    # until the district panel joins to validated geometry. This is deliberately
-    # not an error here because final rendering must still complete for the
-    # non-map paper, tables, and samples. Strict map production should instead
-    # be re-enabled by adding geometry and removing the map-withheld prose.
-    attr(out, "maps_withheld_reason") <- paste0(
-      "Final maps withheld: missing variables [", paste(missing_vars, collapse = ", "),
-      "]; geometry coverage = ", round(100 * sf_geometry_coverage(district_panel), 1), "%"
+    stop(
+      "Final legacy-parity map generation requires validated map inputs. Missing variables [",
+      paste(missing_vars, collapse = ", "), "]; geometry coverage = ",
+      round(100 * sf_geometry_coverage(district_panel), 1), "%.",
+      call. = FALSE
     )
   } else {
     # Draft-mode diagnostics live outside outputs/figures/main and are explicitly
