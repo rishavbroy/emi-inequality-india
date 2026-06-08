@@ -1,7 +1,0 @@
-"source_id","legacy_relative_path","canonical_relative_path","legacy_exists","canonical_exists","status","action"
-"nss_2007_education","data/raw/NSS 2007-08 Participation and Expenditure in Education 64th Round","data/raw/nss_2007_education_64",FALSE,TRUE,"already_canonical","none"
-"nss_2007_consumption","data/raw/NSS 2007-08 Household Consumer Expenditure Survey 64th Round","data/raw/nss_2007_consumption_64",FALSE,TRUE,"already_canonical","none"
-"nss_2017_education","data/raw/NSS 2017-18 Household Social Consumption Education 75th Round Data July 2017 - June 2018","data/raw/nss_2017_education_75",FALSE,TRUE,"already_canonical","none"
-"census_2001_mother_tongue","data/raw/Indian Census 2001","data/raw/census_2001_mother_tongue",FALSE,TRUE,"already_canonical","none"
-"district_boundaries_2020","data/raw/District Boundaries 2020","data/raw/district_boundaries_2020",FALSE,TRUE,"already_canonical","none"
-"district_changes","data/raw/District Changes Data","data/raw/district_changes",FALSE,TRUE,"already_canonical","none"
