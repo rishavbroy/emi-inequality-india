@@ -15,3 +15,7 @@ test_that("read_with_short_path reports missing files clearly", {
     fixed = TRUE
   )
 })
+
+test_that("Excel reader defaults to text columns to avoid raw import type-guess warnings", {
+  expect_identical(as.character(formals(read_excel_short)$col_types), "text")
+})

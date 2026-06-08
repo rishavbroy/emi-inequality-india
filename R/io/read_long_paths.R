@@ -52,9 +52,15 @@ read_csv_short <- function(long_path, ...) {
 #' read excel short
 #'
 #' @return Data frame read from an Excel file.
-read_excel_short <- function(long_path, sheet = 1, ...) {
+read_excel_short <- function(long_path, sheet = 1, col_types = "text", ...) {
   need_pkg("readxl", "Excel files")
-  readxl::read_excel(normalize_path_for_os(long_path), sheet = sheet, ...)
+  readxl::read_excel(
+    normalize_path_for_os(long_path),
+    sheet = sheet,
+    col_types = col_types,
+    .name_repair = "unique",
+    ...
+  )
 }
 
 #' read ODS using a path normalized for this OS
