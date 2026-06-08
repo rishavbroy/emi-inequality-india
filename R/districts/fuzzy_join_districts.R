@@ -47,42 +47,138 @@ unmatched_rows <- function(join_map, ...) {
 
 #' merge dfs into tracker
 #'
-#' @return A row-bound tracker data frame from source-specific tracker fragments.
-merge_dfs_into_tracker <- function(...) {
-  safe_bind_rows(list(...))
+#' Legacy-compatible cascading district matcher. `df_names` is a named list (or a
+#' data frame) whose elements carry source-specific district/state names.  For
+#' each source we try every requested tracker year in order, keep one-to-one
+#' canonical name matches, and then fuzzy-match remaining rows within state.
+#'
+#' @return A list with `joined_df`, `unmatched_df`, and `flagged_df`, matching
+#' the object contract used by the legacy Rmd.
+merge_dfs_into_tracker <- function(df_names, tracker = NULL, years_of_interest = c("2001", "2007", "2008", "2017", "2018", "2020"), flag = TRUE, ...) {
+  if (is.null(tracker)) return(list(joined_df = safe_df(df_names), unmatched_df = data.frame(), flagged_df = data.frame()))
+  tracker <- safe_df(tracker)
+  if (!nrow(tracker)) return(list(joined_df = data.frame(), unmatched_df = safe_df(df_names), flagged_df = data.frame()))
+  if (!".tracker_row" %in% names(tracker)) tracker$.tracker_row <- seq_len(nrow(tracker))
+  xs <- if (inherits(df_names, "data.frame")) list(source = df_names) else as_input_list(df_names)
+
+  joined_all <- list()
+  unmatched_all <- list()
+  flagged_all <- list()
+  for (source_name in names(xs)) {
+    source <- safe_df(xs[[source_name]])
+    if (!nrow(source)) next
+    source$.source_row <- seq_len(nrow(source))
+    source$.source_name <- source_name
+    source <- add_source_name_keys(source)
+    if (!all(c(".source_state_key", ".source_district_key") %in% names(source))) {
+      unmatched_all[[source_name]] <- source
+      next
+    }
+
+    source$.matched <- FALSE
+    for (yr in years_of_interest) {
+      sfx <- substr(as.character(yr), 3, 4)
+      state_col <- paste0("state_", sfx)
+      district_col <- paste0("district_", sfx)
+      if (!all(c(state_col, district_col) %in% names(tracker))) next
+      candidate <- tracker[c(".tracker_row", state_col, district_col)]
+      candidate$.tracker_state_key <- canon(candidate[[state_col]])
+      candidate$.tracker_district_key <- canon(candidate[[district_col]])
+      exact <- merge(
+        source[!source$.matched, , drop = FALSE],
+        candidate,
+        by.x = c(".source_state_key", ".source_district_key"),
+        by.y = c(".tracker_state_key", ".tracker_district_key"),
+        all.x = FALSE,
+        all.y = FALSE
+      )
+      if (!nrow(exact)) next
+      exact <- exact[!duplicated(exact$.source_row) & !duplicated(exact$.tracker_row), , drop = FALSE]
+      if (!nrow(exact)) next
+      exact$match_year <- as.character(yr)
+      exact$match_status <- "exact_name"
+      joined_all[[paste(source_name, yr, sep = "_")]] <- exact
+      source$.matched[source$.source_row %in% exact$.source_row] <- TRUE
+    }
+
+    if (any(!source$.matched)) {
+      fuzzy <- fuzzy_match_remaining_to_tracker(source[!source$.matched, , drop = FALSE], tracker, years_of_interest)
+      if (nrow(fuzzy)) {
+        joined_all[[paste0(source_name, "_fuzzy")]] <- fuzzy
+        source$.matched[source$.source_row %in% fuzzy$.source_row] <- TRUE
+        if (flag) flagged_all[[source_name]] <- fuzzy[fuzzy$possible_false_positive %in% TRUE, , drop = FALSE]
+      }
+    }
+    unmatched_all[[source_name]] <- source[!source$.matched, , drop = FALSE]
+  }
+  list(
+    joined_df = safe_bind_rows(joined_all),
+    unmatched_df = safe_bind_rows(unmatched_all),
+    flagged_df = safe_bind_rows(flagged_all)
+  )
+}
+
+add_source_name_keys <- function(source) {
+  state <- first_col(source, c("state", "state_01", "state_07", "state_08", "state_17", "state_18", "state_20", "state_0708", "state_1718"))
+  district <- first_col(source, c("district", "district_01", "district_07", "district_08", "district_17", "district_18", "district_20", "district_0708", "district_1718", "district_name"))
+  if (!is.null(state)) source$.source_state_key <- canon(source[[state]])
+  if (!is.null(district)) source$.source_district_key <- canon(source[[district]])
+  source
+}
+
+fuzzy_match_remaining_to_tracker <- function(source, tracker, years_of_interest) {
+  out <- list()
+  for (yr in years_of_interest) {
+    sfx <- substr(as.character(yr), 3, 4)
+    state_col <- paste0("state_", sfx)
+    district_col <- paste0("district_", sfx)
+    if (!all(c(state_col, district_col) %in% names(tracker))) next
+    candidate <- tracker[c(".tracker_row", state_col, district_col)]
+    candidate$.tracker_state_key <- canon(candidate[[state_col]])
+    candidate$.tracker_district_key <- canon(candidate[[district_col]])
+    for (i in seq_len(nrow(source))) {
+      pool <- candidate[candidate$.tracker_state_key == source$.source_state_key[[i]], , drop = FALSE]
+      if (!nrow(pool)) next
+      dist <- utils::adist(source$.source_district_key[[i]], pool$.tracker_district_key, ignore.case = TRUE)[1, ]
+      best <- which.min(dist)
+      if (!length(best) || !is.finite(dist[[best]]) || dist[[best]] > 2) next
+      row <- cbind(source[i, , drop = FALSE], pool[best, , drop = FALSE])
+      row$match_year <- as.character(yr)
+      row$match_status <- "fuzzy_name"
+      row$dist <- dist[[best]]
+      row$possible_false_positive <- dist[[best]] > 0
+      out[[length(out) + 1L]] <- row
+    }
+  }
+  x <- safe_bind_rows(out)
+  if (nrow(x)) x <- x[!duplicated(x$.source_row) & !duplicated(x$.tracker_row), , drop = FALSE]
+  x
 }
 
 #' join year to tracker
 #'
-#' @return Explicit inactive status for the future source-specific tracker join.
-join_year_to_tracker <- function(...) {
-  data.frame(
-    status = "out_of_active_pipeline",
-    reason = "Source-specific year-to-tracker joins are not active; fuzzy_join_districts() consumes normalized keys directly.",
-    stringsAsFactors = FALSE
-  )
+join_year_to_tracker <- function(source, tracker, years_of_interest, ...) {
+  merge_dfs_into_tracker(source, tracker = tracker, years_of_interest = years_of_interest, ...)
 }
 
 #' join all district sources
 #'
-#' @return Explicit inactive status for the future all-source tracker join.
-join_all_district_sources <- function(...) {
-  data.frame(
-    status = "out_of_active_pipeline",
-    reason = "All-source district joining is represented by fuzzy_join_districts() in the active pipeline.",
-    stringsAsFactors = FALSE
-  )
+join_all_district_sources <- function(df_names, tracker, years_of_interest, ...) {
+  merge_dfs_into_tracker(df_names, tracker = tracker, years_of_interest = years_of_interest, ...)
 }
 
 #' flag many to many matches
 #'
 flag_many_to_many_matches <- function(join_map) {
+  join_map$many_to_many <- duplicated(join_map$.source_row) | duplicated(join_map$.tracker_row)
   join_map
 }
 
 #' score candidate matches
 #'
 score_candidate_matches <- function(candidates) {
+  if (!"dist" %in% names(candidates)) candidates$dist <- 0
+  candidates$score <- -num(candidates$dist)
   candidates
 }
 

@@ -23,6 +23,8 @@ build_2007_measures <- function(nss_2007_education, nss_2007_consumption, select
   out <- merge_measure(out, compute_gini_consumption_2007(safe_bind_rows(lapply(as_input_list(nss_2007_consumption), safe_df))))
   out <- merge_measure(out, compute_baseline_controls_2007(edu))
   out <- merge_measure(out, compute_housing_controls_2007(safe_bind_rows(lapply(as_input_list(nss_2007_consumption), safe_df))))
+  out <- attach_2007_district_names(out, nss_2007_education)
+  out <- add_legacy_2007_aliases(out)
   out$district_panel_id <- make_district_key(out$state_std, out$district_std, 2007L)
   out
 }
@@ -49,7 +51,7 @@ compute_emie_2007 <- function(df) {
   }
   bydist(df, emi, weight, "emie_2007", function(x, w) {
     100 * wmean(english_medium_indicator(x, emi), w)
-  })
+  }) |> add_legacy_emie_alias()
 }
 
 english_medium_indicator <- function(x, column_name) {
@@ -176,4 +178,35 @@ normalize_2007_consumption_district_key <- function(df) {
   use_tail <- nchar(raw) >= 5
   df$district_std[use_tail] <- substring(raw[use_tail], nchar(raw[use_tail]) - 1L)
   df
+}
+
+
+add_legacy_emie_alias <- function(df) {
+  if ("emie_2007" %in% names(df)) df$EMIE <- df$emie_2007
+  df
+}
+
+add_legacy_2007_aliases <- function(out) {
+  alias <- function(new, old) if (old %in% names(out) && !new %in% names(out)) out[[new]] <<- out[[old]]
+  alias("EMIE", "emie_2007")
+  alias("consumption_0708", "consumption_2007")
+  alias("gini_cons_0708", "gini_consumption_2007")
+  alias("pct_pucca", "pucca_share_2007")
+  alias("n_2007", "n")
+  alias("npeople_0708", "n")
+  if (!"nhouses_0708" %in% names(out) && "n" %in% names(out)) out$nhouses_0708 <- out$n
+  out
+}
+
+attach_2007_district_names <- function(out, nss_2007_education) {
+  lookup <- parse_2007_district_metadata((as_input_list(nss_2007_education)[["nss0708edu_metadata"]]) %||% data.frame())
+  if (!nrow(lookup)) return(out)
+  key <- NULL
+  if ("district_code_0708" %in% names(out)) key <- "district_code_0708"
+  if (is.null(key) && "district_std" %in% names(out)) {
+    lookup$district_std <- canonicalize_district_name(substring(lookup$district_code_0708, 4, 5))
+    key <- "district_std"
+  }
+  if (is.null(key)) return(out)
+  merge(out, lookup, by = key, all.x = TRUE)
 }

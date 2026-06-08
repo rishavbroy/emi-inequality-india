@@ -17,6 +17,13 @@ build_linguistic_distance_iv <- function(census_2001_languages, cfg) {
   population <- first_col(df, c("spkr_tot", "speakers", "population", "tot_p"))
   out <- bydist(df, value, population, "wavg_ling_degrees")
   if (!nrow(out)) return(linguistic_distance_out_of_pipeline("No district-level linguistic-distance rows could be computed."))
+  names_df <- unique(df[intersect(c("state_std", "district_std", "state", "district", "district_name"), names(df))])
+  if (all(c("state_std", "district_std") %in% names(names_df))) {
+    out <- merge(out, names_df, by = c("state_std", "district_std"), all.x = TRUE)
+  }
+  if ("state" %in% names(out)) out$state_01 <- out$state
+  if ("district" %in% names(out)) out$district_01 <- out$district
+  if (!"district_01" %in% names(out) && "district_name" %in% names(out)) out$district_01 <- out$district_name
   out$district_panel_id <- make_district_key(out$state_std, out$district_std, 2001L)
   out
 }
