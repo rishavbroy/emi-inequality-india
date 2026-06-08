@@ -44,8 +44,10 @@ application-samples/.work/
 
 # temporary files to help auditing and debugging
 Archive.zip
+review.zip
 legacy.zip
 data.zip
+raw.zip
 full_output.txt
 file_list.txt
 
