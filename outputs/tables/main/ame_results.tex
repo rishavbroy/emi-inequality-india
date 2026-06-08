@@ -1,40 +1,40 @@
 
-\begin{longtable}[t]{lrllrlllll}
+\begin{longtable}[t]{lrrrrrrrll}
 \caption{\label{tab:ame-results}Average Marginal Effects Results}\\
 \toprule
-Term & Estimate & Std.error & Statistic & P.value & Conf.low & Conf.high & Method & Status & Reason\\
+term & estimate & std.error & statistic & p.value & s.value & conf.low & conf.high & method & status\\
 \midrule
 \endfirsthead
 \caption[]{Average Marginal Effects Results \textit{(continued)}}\\
 \toprule
-Term & Estimate & Std.error & Statistic & P.value & Conf.low & Conf.high & Method & Status & Reason\\
+term & estimate & std.error & statistic & p.value & s.value & conf.low & conf.high & method & status\\
 \midrule
 \endhead
 
 \endfoot
 \bottomrule
 \endlastfoot
-\cellcolor{gray!10}{AGE} & \cellcolor{gray!10}{-0.028} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{0.000} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{analytic_probit_ame} & \cellcolor{gray!10}{estimated} & \cellcolor{gray!10}{NA}\\
-SEXFemale & 0.039 & NA & NA & 0.000 & NA & NA & analytic_probit_ame & estimated & NA\\
-\cellcolor{gray!10}{HH_SIZE} & \cellcolor{gray!10}{-0.008} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{0.000} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{analytic_probit_ame} & \cellcolor{gray!10}{estimated} & \cellcolor{gray!10}{NA}\\
-RELIGIONMuslim & -0.167 & NA & NA & 0.000 & NA & NA & analytic_probit_ame & estimated & NA\\
-\cellcolor{gray!10}{RELIGIONChristian} & \cellcolor{gray!10}{-0.010} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{0.275} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{analytic_probit_ame} & \cellcolor{gray!10}{estimated} & \cellcolor{gray!10}{NA}\\
+\cellcolor{gray!10}{AGE} & \cellcolor{gray!10}{-0.029} & \cellcolor{gray!10}{0.000} & \cellcolor{gray!10}{-67.525} & \cellcolor{gray!10}{0.000} & \cellcolor{gray!10}{Inf} & \cellcolor{gray!10}{-0.030} & \cellcolor{gray!10}{-0.028} & \cellcolor{gray!10}{autodiff} & \cellcolor{gray!10}{estimated}\\
+DIST_FROM_NEAREST_PRIMARY_CLASS & -0.056 & 0.026 & -2.152 & 0.031 & 4.993 & -0.106 & -0.005 & autodiff & estimated\\
+\cellcolor{gray!10}{DIST_FROM_NEAREST_PRIMARY_CLASS} & \cellcolor{gray!10}{0.002} & \cellcolor{gray!10}{0.011} & \cellcolor{gray!10}{0.230} & \cellcolor{gray!10}{0.818} & \cellcolor{gray!10}{0.290} & \cellcolor{gray!10}{-0.018} & \cellcolor{gray!10}{0.023} & \cellcolor{gray!10}{autodiff} & \cellcolor{gray!10}{estimated}\\
+DIST_FROM_NEAREST_PRIMARY_CLASS & -0.079 & 0.103 & -0.764 & 0.445 & 1.168 & -0.282 & 0.124 & autodiff & estimated\\
+\cellcolor{gray!10}{DIST_FROM_NEAREST_PRIMARY_CLASS} & \cellcolor{gray!10}{0.054} & \cellcolor{gray!10}{0.035} & \cellcolor{gray!10}{1.520} & \cellcolor{gray!10}{0.128} & \cellcolor{gray!10}{2.961} & \cellcolor{gray!10}{-0.015} & \cellcolor{gray!10}{0.123} & \cellcolor{gray!10}{autodiff} & \cellcolor{gray!10}{estimated}\\
 \addlinespace
-RELIGIONSikh & 0.067 & NA & NA & 0.000 & NA & NA & analytic_probit_ame & estimated & NA\\
-\cellcolor{gray!10}{RELIGIONJain} & \cellcolor{gray!10}{0.082} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{0.000} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{analytic_probit_ame} & \cellcolor{gray!10}{estimated} & \cellcolor{gray!10}{NA}\\
-RELIGIONBuddhist & 0.063 & NA & NA & 0.000 & NA & NA & analytic_probit_ame & estimated & NA\\
-\cellcolor{gray!10}{RELIGIONZoroastrian} & \cellcolor{gray!10}{0.144} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{0.000} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{analytic_probit_ame} & \cellcolor{gray!10}{estimated} & \cellcolor{gray!10}{NA}\\
-RELIGIONOther & 0.278 & NA & NA & 0.725 & NA & NA & analytic_probit_ame & estimated & NA\\
+HH_SIZE & -0.009 & 0.001 & -11.336 & 0.000 & 96.532 & -0.011 & -0.008 & autodiff & estimated\\
+\cellcolor{gray!10}{RELIGION} & \cellcolor{gray!10}{0.068} & \cellcolor{gray!10}{0.023} & \cellcolor{gray!10}{2.911} & \cellcolor{gray!10}{0.004} & \cellcolor{gray!10}{8.117} & \cellcolor{gray!10}{0.022} & \cellcolor{gray!10}{0.114} & \cellcolor{gray!10}{autodiff} & \cellcolor{gray!10}{estimated}\\
+RELIGION & -0.023 & 0.014 & -1.670 & 0.095 & 3.396 & -0.049 & 0.004 & autodiff & estimated\\
+\cellcolor{gray!10}{RELIGION} & \cellcolor{gray!10}{0.054} & \cellcolor{gray!10}{0.011} & \cellcolor{gray!10}{4.793} & \cellcolor{gray!10}{0.000} & \cellcolor{gray!10}{19.216} & \cellcolor{gray!10}{0.032} & \cellcolor{gray!10}{0.076} & \cellcolor{gray!10}{autodiff} & \cellcolor{gray!10}{estimated}\\
+RELIGION & -0.170 & 0.007 & -23.410 & 0.000 & 400.188 & -0.185 & -0.156 & autodiff & estimated\\
 \addlinespace
-\cellcolor{gray!10}{SOCIAL_GROUPScheduled Caste} & \cellcolor{gray!10}{-0.001} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{0.892} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{analytic_probit_ame} & \cellcolor{gray!10}{estimated} & \cellcolor{gray!10}{NA}\\
-SOCIAL_GROUPOther Backward Class & 0.067 & NA & NA & 0.000 & NA & NA & analytic_probit_ame & estimated & NA\\
-\cellcolor{gray!10}{SOCIAL_GROUPOther} & \cellcolor{gray!10}{0.141} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{0.000} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{analytic_probit_ame} & \cellcolor{gray!10}{estimated} & \cellcolor{gray!10}{NA}\\
-SECTORUrban & 0.077 & NA & NA & 0.000 & NA & NA & analytic_probit_ame & estimated & NA\\
-\cellcolor{gray!10}{DIST_FROM_NEAREST_PRIMARY_CLASS2} & \cellcolor{gray!10}{-0.010} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{0.371} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{analytic_probit_ame} & \cellcolor{gray!10}{estimated} & \cellcolor{gray!10}{NA}\\
+\cellcolor{gray!10}{RELIGION} & \cellcolor{gray!10}{0.254} & \cellcolor{gray!10}{0.002} & \cellcolor{gray!10}{119.004} & \cellcolor{gray!10}{0.000} & \cellcolor{gray!10}{Inf} & \cellcolor{gray!10}{0.249} & \cellcolor{gray!10}{0.258} & \cellcolor{gray!10}{autodiff} & \cellcolor{gray!10}{estimated}\\
+RELIGION & 0.043 & 0.025 & 1.752 & 0.080 & 3.646 & -0.005 & 0.092 & autodiff & estimated\\
+\cellcolor{gray!10}{RELIGION} & \cellcolor{gray!10}{0.137} & \cellcolor{gray!10}{0.024} & \cellcolor{gray!10}{5.671} & \cellcolor{gray!10}{0.000} & \cellcolor{gray!10}{26.069} & \cellcolor{gray!10}{0.090} & \cellcolor{gray!10}{0.184} & \cellcolor{gray!10}{autodiff} & \cellcolor{gray!10}{estimated}\\
+SECTOR & 0.053 & 0.005 & 10.568 & 0.000 & 84.303 & 0.043 & 0.063 & autodiff & estimated\\
+\cellcolor{gray!10}{SEX} & \cellcolor{gray!10}{0.045} & \cellcolor{gray!10}{0.003} & \cellcolor{gray!10}{14.943} & \cellcolor{gray!10}{0.000} & \cellcolor{gray!10}{165.307} & \cellcolor{gray!10}{0.039} & \cellcolor{gray!10}{0.051} & \cellcolor{gray!10}{autodiff} & \cellcolor{gray!10}{estimated}\\
 \addlinespace
-DIST_FROM_NEAREST_PRIMARY_CLASS3 & 0.014 & NA & NA & 0.004 & NA & NA & analytic_probit_ame & estimated & NA\\
-\cellcolor{gray!10}{DIST_FROM_NEAREST_PRIMARY_CLASS4} & \cellcolor{gray!10}{-0.077} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{0.027} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{analytic_probit_ame} & \cellcolor{gray!10}{estimated} & \cellcolor{gray!10}{NA}\\
-DIST_FROM_NEAREST_PRIMARY_CLASS5 & 0.025 & NA & NA & 0.325 & NA & NA & analytic_probit_ame & estimated & NA\\
-\cellcolor{gray!10}{dmean_num_IS_EDU_FREE} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{analytic_probit_ame} & \cellcolor{gray!10}{estimated} & \cellcolor{gray!10}{NA}\\
-dmean_num_RECD_TXT_BOOKS & -0.028 & NA & NA & 0.000 & NA & NA & analytic_probit_ame & estimated & NA\\*
+SOCIAL_GROUP & 0.156 & 0.008 & 18.566 & 0.000 & 253.204 & 0.140 & 0.173 & autodiff & estimated\\
+\cellcolor{gray!10}{SOCIAL_GROUP} & \cellcolor{gray!10}{0.090} & \cellcolor{gray!10}{0.008} & \cellcolor{gray!10}{11.087} & \cellcolor{gray!10}{0.000} & \cellcolor{gray!10}{92.474} & \cellcolor{gray!10}{0.074} & \cellcolor{gray!10}{0.106} & \cellcolor{gray!10}{autodiff} & \cellcolor{gray!10}{estimated}\\
+SOCIAL_GROUP & 0.019 & 0.009 & 2.246 & 0.025 & 5.338 & 0.002 & 0.036 & autodiff & estimated\\
+\cellcolor{gray!10}{dmean_num_IS_EDU_FREE} & \cellcolor{gray!10}{0.000} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{autodiff} & \cellcolor{gray!10}{estimated}\\
+dmean_num_RECD_TXT_BOOKS & -0.031 & 0.011 & -2.728 & 0.006 & 7.296 & -0.053 & -0.009 & autodiff & estimated\\*
 \end{longtable}
