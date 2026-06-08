@@ -37,21 +37,30 @@ nice_column_name <- function(x) {
   tools::toTitleCase(x)
 }
 
+drop_empty_output_columns <- function(out) {
+  if (!nrow(out)) return(out)
+  keep <- vapply(out, function(col) !all(is.na(col) | !nzchar(as.character(col))), logical(1))
+  out[, keep, drop = FALSE]
+}
+
 format_table_for_output <- function(table, public = TRUE) {
-  out <- as.data.frame(table)
+  out <- as.data.frame(table, check.names = FALSE)
   if (!nrow(out)) return(out)
 
-  if (public) {
-    # Public paper tables should not expose pipeline status scaffolding. Those
-    # columns remain available in internal diagnostic tables, but polished report
-    # tables carry only substantive variables/results.
-    out$status <- NULL
-    out$reason <- NULL
-    if ("method" %in% names(out) && length(unique(stats::na.omit(out$method))) <= 1L) out$method <- NULL
+  if (!public) {
+    # Internal/diagnostic CSVs are audited by exact schema. Preserve machine-
+    # readable names such as std.error, p.value, conf.low, and conf.high.
+    return(drop_empty_output_columns(out))
   }
 
-  keep <- vapply(out, function(col) !all(is.na(col) | !nzchar(as.character(col))), logical(1))
-  out <- out[, keep, drop = FALSE]
+  # Public paper tables should not expose pipeline status scaffolding. Those
+  # columns remain available in internal diagnostic tables, but polished report
+  # tables carry only substantive variables/results.
+  out$status <- NULL
+  out$reason <- NULL
+  if ("method" %in% names(out) && length(unique(stats::na.omit(out$method))) <= 1L) out$method <- NULL
+
+  out <- drop_empty_output_columns(out)
   names(out) <- vapply(names(out), nice_column_name, character(1))
   out
 }

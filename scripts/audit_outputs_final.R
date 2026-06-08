@@ -60,7 +60,7 @@ if (dir.exists(table_dir)) {
 
   ame_path <- file.path(table_dir, "ame_results.csv")
   if (file.exists(ame_path)) {
-    ame <- utils::read.csv(ame_path, stringsAsFactors = FALSE)
+    ame <- utils::read.csv(ame_path, stringsAsFactors = FALSE, check.names = FALSE)
     estimated <- if ("status" %in% names(ame)) ame$status == "estimated" else rep(TRUE, nrow(ame))
     if (any(estimated, na.rm = TRUE)) {
       required <- c("std.error", "statistic", "p.value", "s.value", "conf.low", "conf.high")
