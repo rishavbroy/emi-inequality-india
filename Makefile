@@ -1,4 +1,4 @@
-.PHONY: init-renv restore snapshot rebuild-qmds pipeline-draft pipeline-final diagnostics report samples audit-report-values audit-report-values-final audit-crossrefs audit-crossrefs-final audit-outputs-final check-public check-public-draft check-public-final check-public-text check-rendered-text check-sample-specs test tests clean-targets clean-renders
+.PHONY: init-renv restore snapshot rebuild-qmds pipeline-draft pipeline-final pipeline-final-no-samples diagnostics report samples audit-report-values audit-report-values-final audit-crossrefs audit-crossrefs-final audit-outputs-final check-public check-public-draft check-public-final check-public-final-no-samples check-public-text check-rendered-text check-sample-specs test tests clean-targets clean-renders clean-renders-core clean-renders-no-samples
 
 TEXCACHE_ROOT ?= /private/tmp/emi-inequality-india-texcache
 QUARTO_CACHE_ROOT ?= /private/tmp/emi-inequality-india-quarto-cache
@@ -38,6 +38,10 @@ pipeline-draft: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
 pipeline-final: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
 	rm -f .pipeline-final-ok .public-final-ok
 	EMI_CONFIG=config/final.yml Rscript scripts/run_targets_strict.R
+
+pipeline-final-no-samples: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
+	rm -f .pipeline-final-ok .public-final-ok
+	EMI_CONFIG=config/final.yml EMI_RENDER_APPLICATION_SAMPLES=false Rscript scripts/run_targets_strict.R
 
 diagnostics:
 	EMI_CONFIG=config/diagnostics.yml Rscript -e 'targets::tar_make(starts_with("diag_"))'
@@ -100,6 +104,20 @@ check-public-final: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
 	Rscript scripts/check_public_final.R
 	touch .public-final-ok
 
+check-public-final-no-samples: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
+	rm -f .public-final-ok .pipeline-final-ok .pipeline-draft-ok
+	$(MAKE) pipeline-final-no-samples
+	EMI_CONFIG=config/final.yml Rscript scripts/audit_report_values.R --strict
+	Rscript scripts/audit_crossrefs.R --strict-report
+	EMI_CONFIG=config/final.yml Rscript scripts/audit_outputs_final.R
+	Rscript scripts/check_required_outputs.R --require-final-stamp
+	HOME=$(QUARTO_HOME) quarto render paper/report.qmd
+	HOME=$(QUARTO_HOME) quarto render docs/district-matching.qmd
+	HOME=$(QUARTO_HOME) quarto render docs/long-paths-and-8-3-filenames.qmd
+	EMI_CONFIG=config/final.yml EMI_REQUIRE_APPLICATION_SAMPLES=false Rscript scripts/check_rendered_text.R --final
+	EMI_REQUIRE_APPLICATION_SAMPLES=false Rscript scripts/check_public_final.R
+	touch .public-final-ok
+
 test: tests
 
 tests:
@@ -108,10 +126,15 @@ tests:
 clean-targets:
 	Rscript -e 'targets::tar_destroy(destroy = "all")'
 
-clean-renders:
-	rm -rf outputs/figures/* outputs/tables/* outputs/diagnostics/* paper/output/* application-samples/.work/*
+clean-renders-core:
+	rm -rf outputs/figures/* outputs/tables/* outputs/diagnostics/* paper/output/*
 	rm -f paper/report.pdf paper/report.html paper/report.tex paper/appendix.pdf paper/appendix.html paper/appendix.tex
 	rm -f docs/district-matching.html docs/district-matching.pdf docs/district-matching.tex
 	rm -f docs/long-paths-and-8-3-filenames.html docs/long-paths-and-8-3-filenames.pdf docs/long-paths-and-8-3-filenames.tex
-	rm -f application-samples/output/*.pdf application-samples/output/*.tex application-samples/output/*.html
 	rm -f .public-final-ok .pipeline-final-ok .pipeline-draft-ok
+
+clean-renders-no-samples: clean-renders-core
+
+clean-renders: clean-renders-core
+	rm -rf application-samples/.work/*
+	rm -f application-samples/output/*.pdf application-samples/output/*.tex application-samples/output/*.html

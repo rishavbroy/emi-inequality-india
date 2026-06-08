@@ -1,6 +1,50 @@
 #!/usr/bin/env bash
 set -euxo pipefail
 
+render_samples="false"
+archive_out="review.zip"
+
+usage() {
+  cat <<'USAGE'
+Usage: bash scripts/run_public_build_audit.sh [--with-samples|--without-samples] [-o OUT.zip]
+
+Runs the final public build audit. The default is --without-samples for a faster
+report/data/output audit that omits application-sample rendering and excludes
+application-samples/output from the review archive. Use --with-samples before a
+full submission/review bundle.
+USAGE
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --with-samples)
+      render_samples="true"
+      shift
+      ;;
+    --without-samples|--no-samples)
+      render_samples="false"
+      shift
+      ;;
+    -o|--output)
+      if [[ $# -lt 2 ]]; then
+        echo "Missing argument for $1" >&2
+        exit 2
+      fi
+      archive_out="$2"
+      shift 2
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      echo "Unknown argument: $1" >&2
+      usage >&2
+      exit 2
+      ;;
+  esac
+done
+
 dump_diagnostics() {
   exit_code=$?
   echo "=== EXIT CODE: ${exit_code} ==="
@@ -26,6 +70,18 @@ dump_diagnostics() {
 }
 trap dump_diagnostics EXIT
 
+if [[ "$render_samples" == "true" ]]; then
+  sample_mode="with application samples"
+  clean_target="clean-renders"
+  check_target="check-public-final"
+  archive_sample_flag="--with-samples"
+else
+  sample_mode="without application samples"
+  clean_target="clean-renders-no-samples"
+  check_target="check-public-final-no-samples"
+  archive_sample_flag="--without-samples"
+fi
+
 echo "=== START: git state ==="
 git status --short
 git diff --check -- \
@@ -34,8 +90,10 @@ git diff --check -- \
   ':(exclude)outputs/**' \
   ':(exclude)application-samples/output/**'
 
+echo "=== PUBLIC BUILD AUDIT MODE: ${sample_mode} ==="
+
 echo "=== CLEAN GENERATED RENDERS ==="
-make clean-renders
+make "$clean_target"
 
 echo "=== REBUILD GENERATED QMD SOURCES ==="
 make rebuild-qmds
@@ -56,20 +114,11 @@ Rscript -e 'tmp <- tempfile(fileext = ".R"); knitr::purl("paper/report.qmd", out
 echo "=== UNIT TESTS ==="
 make test
 
-echo "=== FINAL TARGETS PIPELINE ==="
-make pipeline-final
-
-echo "=== PUBLIC REPORT ==="
-make report
-
-echo "=== APPLICATION SAMPLES ==="
-make samples
-
-echo "=== PUBLIC FINAL CHECK ==="
-make check-public-final
+echo "=== PUBLIC FINAL CHECK (${sample_mode}) ==="
+make "$check_target"
 
 echo "=== REVIEW ARCHIVE ==="
-bash scripts/make_review_archive.sh
+bash scripts/make_review_archive.sh "$archive_sample_flag" --output "$archive_out"
 
 echo "=== STRICT TARGET WARNING CHECK ==="
 if [ -s outputs/diagnostics/target_warnings.csv ]; then
@@ -79,7 +128,11 @@ if [ -s outputs/diagnostics/target_warnings.csv ]; then
 fi
 
 echo "=== OUTPUT MANIFEST ==="
-find paper application-samples/output outputs docs \
+manifest_roots=(paper outputs docs)
+if [[ "$render_samples" == "true" ]]; then
+  manifest_roots+=(application-samples/output)
+fi
+find "${manifest_roots[@]}" \
   -maxdepth 3 \
   -type f \
   \( -name '*.pdf' -o -name '*.html' -o -name '*.csv' -o -name '*.tex' -o -name '*.png' \) \

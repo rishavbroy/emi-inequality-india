@@ -21,7 +21,12 @@ tar_option_set(
   error = "abridge"
 )
 
-list(
+render_application_samples_enabled <- function() {
+  value <- tolower(trimws(Sys.getenv("EMI_RENDER_APPLICATION_SAMPLES", "true")))
+  !value %in% c("0", "false", "no", "off")
+}
+
+pipeline_targets <- list(
   tar_target(config_path, Sys.getenv("EMI_CONFIG", "config/draft.yml"), cue = tar_cue(mode = "always")),
   tar_target(cfg, read_config(config_path)),
   tar_target(paths, build_paths()),
@@ -89,7 +94,17 @@ list(
   tar_render(ame_benchmark_note, "analysis/diagnostics/ame-benchmark.qmd"),
   tar_render(fuzzy_matching_note, "analysis/diagnostics/fuzzy-matching-diagnostics.qmd"),
   tar_render(spatial_autocorrelation_note, "analysis/diagnostics/spatial-autocorrelation-diagnostics.qmd"),
-  tar_render(report, "paper/report.qmd"),
+  tar_render(report, "paper/report.qmd")
+)
+
+application_sample_targets <- list(
   tar_target(writing_sample_pdfs, { report_values; render_writing_samples(output_files = c(figure_files, table_files)) }, format = "file"),
   tar_target(coding_sample_pdfs, { report_values; render_coding_samples(output_files = c(figure_files, table_files)) }, format = "file")
 )
+
+if (render_application_samples_enabled()) {
+  c(pipeline_targets, application_sample_targets)
+} else {
+  message("EMI_RENDER_APPLICATION_SAMPLES=false: omitting application-sample targets from this targets run.")
+  pipeline_targets
+}

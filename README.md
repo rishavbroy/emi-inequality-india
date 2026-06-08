@@ -70,4 +70,6 @@ See `docs/district-matching.qmd` for the district-harmonization plan.
 
 ## Review archive
 
-Build `review.zip` only after `make check-public-final` succeeds. The packaging script stages the current working tree, omits raw data and local caches, and refuses to run without the `.public-final-ok` stamp produced by the final public check. `scripts/make_review_archive.sh` writes `review.zip` by default; pass an explicit path only when intentionally creating a differently named archive.
+Build `review.zip` only after a final public check succeeds. The packaging script stages the current working tree, omits raw data and local caches, and refuses to run without the `.public-final-ok` stamp produced by a final public check. `scripts/make_review_archive.sh` writes `review.zip` by default; pass an explicit path only when intentionally creating a differently named archive.
+
+For fast iteration, run `bash scripts/run_public_build_audit.sh` to audit the report, tables, figures, diagnostics, and review archive without rendering application samples. This mode omits `application-samples/output/` from `review.zip`, so it cannot accidentally package stale sample PDFs. Before a full submission or application bundle, run `bash scripts/run_public_build_audit.sh --with-samples`; that mode renders application samples and requires them in `review.zip`.
