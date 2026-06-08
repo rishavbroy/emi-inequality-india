@@ -3,16 +3,18 @@ set -euo pipefail
 
 out="review.zip"
 include_samples="true"
+allow_incomplete="false"
 
 usage() {
   cat <<'USAGE'
-Usage: bash scripts/make_review_archive.sh [--with-samples|--without-samples] [-o OUT.zip]
+Usage: bash scripts/make_review_archive.sh [--with-samples|--without-samples] [--allow-incomplete] [-o OUT.zip]
        bash scripts/make_review_archive.sh OUT.zip
 
 Creates a public review archive from the current working tree. By default the
 archive is written to review.zip and includes application-sample PDFs. Use
 --without-samples for fast-audit archives that intentionally omit
-application-samples/output.
+application-samples/output. Use --allow-incomplete only for debugging failed
+audits; it includes diagnostics without requiring final public artifacts.
 USAGE
 }
 
@@ -24,6 +26,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --without-samples|--no-samples)
       include_samples="false"
+      shift
+      ;;
+    --allow-incomplete)
+      allow_incomplete="true"
       shift
       ;;
     -o|--output)
@@ -54,7 +60,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-if [[ ! -f .public-final-ok ]]; then
+if [[ "$allow_incomplete" != "true" && ! -f .public-final-ok ]]; then
   echo "Cannot build review archive because .public-final-ok is missing. Run make check-public-final successfully first." >&2
   exit 1
 fi
@@ -90,6 +96,9 @@ else
 fi
 cp -R outputs/figures "$tmpdir/outputs/" 2>/dev/null || true
 cp -R outputs/tables "$tmpdir/outputs/" 2>/dev/null || true
+cp -R outputs/diagnostics "$tmpdir/outputs/" 2>/dev/null || true
+mkdir -p "$tmpdir/data/processed"
+cp -f data/processed/*.csv "$tmpdir/data/processed/" 2>/dev/null || true
 
 # Manually remove the eight local-only/cache families identified in review, plus
 # common render/cache byproducts.
@@ -125,12 +134,14 @@ if [[ "$include_samples" == "true" ]]; then
     "application-samples/output/RishavRoy_CodingSample25pg.pdf"
   )
 fi
-for f in "${required_public[@]}"; do
-  if [[ ! -s "$tmpdir/$f" ]]; then
-    echo "Review archive is missing required public artifact: $f" >&2
-    exit 1
-  fi
-done
+if [[ "$allow_incomplete" != "true" ]]; then
+  for f in "${required_public[@]}"; do
+    if [[ ! -s "$tmpdir/$f" ]]; then
+      echo "Review archive is missing required public artifact: $f" >&2
+      exit 1
+    fi
+  done
+fi
 
 if [[ "$include_samples" != "true" && -d "$tmpdir/application-samples/output" ]]; then
   echo "Fast review archive unexpectedly contains application-samples/output." >&2
@@ -151,6 +162,9 @@ if [[ "$include_samples" != "true" ]] && unzip -l "$out_path" | grep -E '(^|/)ap
 fi
 
 echo "Wrote $out_path"
+if [[ "$allow_incomplete" == "true" ]]; then
+  echo "Archive was created in --allow-incomplete debug mode; final public artifacts may be absent."
+fi
 if [[ "$include_samples" != "true" ]]; then
   echo "Application-sample outputs were omitted; rerun with --with-samples for the full review archive."
 fi

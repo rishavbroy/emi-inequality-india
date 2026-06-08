@@ -91,12 +91,42 @@ rewrite_yaml_field <- function(lines, field, value) {
   lines
 }
 
+remove_yaml_field <- function(lines, field) {
+  if (!length(lines) || !identical(lines[[1]], "---")) return(lines)
+  close <- which(lines[-1L] == "---")
+  if (!length(close)) return(lines)
+  end <- close[[1]] + 1L
+  field_re <- paste0("^", field, ":")
+  idx <- grep(field_re, lines[seq_len(end)], perl = TRUE)
+  if (!length(idx)) return(lines)
+  lines[-idx[[1]]]
+}
+
+ensure_yaml_block <- function(lines, field, values) {
+  if (!length(lines) || !identical(lines[[1]], "---")) return(lines)
+  close <- which(lines[-1L] == "---")
+  if (!length(close)) return(lines)
+  end <- close[[1]] + 1L
+  field_re <- paste0("^", field, ":")
+  if (any(grepl(field_re, lines[seq_len(end)], perl = TRUE))) return(lines)
+  append(lines, c(paste0(field, ":"), values), after = end - 1L)
+}
+
 normalize_yaml <- function(lines, path) {
   if (grepl("^paper/", path)) {
     lines <- rewrite_yaml_field(lines, "bibliography", "references.bib")
   }
   if (identical(path, "paper/report.qmd")) {
     lines <- rewrite_yaml_field(lines, "abstract", paste0('"', legacy_abstract, '"'))
+    lines <- remove_yaml_field(lines, "author")
+    lines <- ensure_yaml_block(lines, "header-includes", c(
+      "  - \\usepackage{setspace}\\doublespacing",
+      "  - \\usepackage{mathtools}",
+      "  - \\usepackage{longtable}",
+      "  - \\usepackage{tabularray}",
+      "  - \\UseTblrLibrary{booktabs}",
+      "  - \\UseTblrLibrary{siunitx}"
+    ))
   }
   if (identical(path, "docs/district-matching.qmd")) {
     lines <- rewrite_yaml_field(lines, "bibliography", "../paper/references.bib")
@@ -189,10 +219,10 @@ prune_unavailable_report_inline_expressions <- function(lines) {
 
 fix_final_public_prose <- function(lines) {
   lines[startsWith(lines, "Geospatial data used to construct the maps in this paper as well as all spatial autocorrelation measures")] <-
-    "Geospatial data intended for maps and spatial autocorrelation measures is sourced from @bhatiaMergingUpdatedDistrictlevel2020, which is itself an adaptation of @meyersIndiaOfficialBoundaries2020. Final map figures are withheld until the geometry join is validated. Our methods for tracking districts across time (see Sec. @sec-distma) begin with data from @indiastatestoriesDistrictEvolution2024 and @jaacksIndiaDistrictChanges2020."
+    "Geospatial data intended for maps and spatial autocorrelation measures is sourced from @bhatiaMergingUpdatedDistrictlevel2020, which is itself an adaptation of @meyersIndiaOfficialBoundaries2020. Our methods for tracking districts across time (see Sec. @sec-distma) begin with data from @indiastatestoriesDistrictEvolution2024 and @jaacksIndiaDistrictChanges2020."
 
   lines[startsWith(lines, "Geospatial data intended for maps and spatial autocorrelation measures is sourced from @bhatiaMergingUpdatedDistrictlevel2020")] <-
-    "Geospatial data intended for maps and spatial autocorrelation measures is sourced from @bhatiaMergingUpdatedDistrictlevel2020, which is itself an adaptation of @meyersIndiaOfficialBoundaries2020. Final map figures are withheld until the geometry join is validated. Our methods for tracking districts across time (see Sec. @sec-distma) begin with data from @indiastatestoriesDistrictEvolution2024 and @jaacksIndiaDistrictChanges2020."
+    "Geospatial data intended for maps and spatial autocorrelation measures is sourced from @bhatiaMergingUpdatedDistrictlevel2020, which is itself an adaptation of @meyersIndiaOfficialBoundaries2020. Our methods for tracking districts across time (see Sec. @sec-distma) begin with data from @indiastatestoriesDistrictEvolution2024 and @jaacksIndiaDistrictChanges2020."
 
   lines[startsWith(lines, "Looking deeper into the supply side of education, it seems that all variation which could potentially be explained by enrollment cost")] <-
     "Looking deeper into the supply side of education, it seems that all variation which could potentially be explained by enrollment cost has, at best, been consumed by other variables, implying direct costs matter less than social barriers and other correlates of supply-side factors. While one would expect the causal effect of an exogenous shock in scholarships/stipends, stationery, or textbooks to match the sign of their positive coefficient estimates, only textbooks show up as statistically significant. The district-level share of students who attend a school which charges no tuition fees (i.e., where 'Educ. freely available') is collinear with the intercept in the active probit specification, so we do not report its AME in this draft. @nationalsamplesurveyoffice2008 documentation indicates that such schools include most if not all government schools, as well as private schools in some states up to a certain level of education. Building off observations in Sec. @sec-intro that government schools tend to have worse facilities, chronic teacher absenteeism, and so on, this omitted coefficient remains a useful warning about the difficulty of separating direct costs from the quality and availability of public schooling. Comparing the remaining variables' $s$-values^[Given a $p$-value, we can define the $s$-value as $s=-\\log_2(p)$ [@mansourniaPvalueCompatibilitySvalue2022].] using @mansourniaPvalueCompatibilitySvalue2022 shows that 'Textbook(s) received' has an $s$-value of `r report_value(\"inline_55014f4e\")`, meaning that the data provided `r report_value(\"inline_55014f4e\")` bits of information against the null hypothesis (a coefficient of zero)."
@@ -216,178 +246,10 @@ fix_final_public_prose <- function(lines) {
 }
 
 remove_unavailable_map_figures <- function(lines) {
-  is_map_figure <- grepl("#fig-map[12]-fig", lines, perl = TRUE) |
-    grepl("\\.\\./outputs/figures/main/collage_(main|iv_region)_maps\\.(png|pdf)", lines, perl = TRUE)
-  if (!any(is_map_figure)) return(lines)
-  lines[!is_map_figure]
+  lines
 }
 
 ensure_map_geometry_note <- function(lines, anchor) {
-  if (any(grepl(map_geometry_validation_note, lines, fixed = TRUE))) return(lines)
-  insert_after_first(lines, anchor, c("", map_geometry_note_block(), ""))
-}
-
-output_table_helper_chunk <- function() {
-  c(
-    "```{r public-output-table-helper, include=FALSE}",
-    "resolve_public_output_path <- function(path) {",
-    "  candidates <- unique(c(",
-    "    path,",
-    "    file.path(getwd(), path),",
-    "    file.path('paper', path),",
-    "    file.path(dirname(knitr::current_input()), path),",
-    "    sub('^\\\\.\\\\./', '', path)",
-    "  ))",
-    "  candidates <- candidates[nzchar(candidates)]",
-    "  hit <- candidates[file.exists(candidates) & file.info(candidates)$size > 0]",
-    "  if (length(hit)) return(hit[[1]])",
-    "  stop('Missing table output: ', path, '\\nTried: ', paste(candidates, collapse = '; '), call. = FALSE)",
-    "}",
-    "read_public_table <- function(path) {",
-    "  utils::read.csv(resolve_public_output_path(path), check.names = FALSE)",
-    "}",
-    "```"
-  )
-}
-
-ensure_output_table_helper <- function(lines) {
-  if (any(grepl("public-output-table-helper", lines, fixed = TRUE))) return(lines)
-  setup <- grep("^```\\{r report-target-values", lines)
-  if (!length(setup)) return(c(output_table_helper_chunk(), "", lines))
-  ends <- grep("^```\\s*$", lines)
-  ends <- ends[ends > setup[[1]]]
-  if (!length(ends)) return(c(output_table_helper_chunk(), "", lines))
-  append(lines, c("", output_table_helper_chunk(), ""), after = ends[[1]])
-}
-
-output_table_chunk <- function(label, caption, path) {
-  c(
-    "```{r}",
-    paste0("#| label: ", label),
-    paste0("#| tbl-cap: \"", caption, "\""),
-    "#| echo: false",
-    paste0(
-      "knitr::kable(read_public_table(\"", path, "\"), digits = 3, ",
-      "booktabs = knitr::is_latex_output(), longtable = knitr::is_latex_output())"
-    ),
-    "```"
-  )
-}
-
-
-normalize_inserted_output_captions <- function(lines) {
-  for (label in names(legacy_figure_captions)) {
-    idx <- grep(paste0("\\{#", label, "\\}"), lines, fixed = FALSE)
-    if (!length(idx)) next
-    for (i in idx) {
-      path <- sub("^!\\[[^]]*\\]\\(([^)]*)\\)\\{#[^}]+\\}.*$", "\\1", lines[[i]], perl = TRUE)
-      if (!identical(path, lines[[i]])) {
-        lines[[i]] <- figure_markdown(label, path)
-      }
-    }
-  }
-
-  for (label in names(legacy_table_captions)) {
-    idx <- grep(paste0("^#\\|\\s*label:\\s*", label, "\\s*$"), lines, perl = TRUE)
-    if (!length(idx)) next
-    for (i in idx) {
-      cap_idx <- which(seq_along(lines) > i & grepl("^#\\|\\s*tbl-cap:", lines, perl = TRUE))
-      if (!length(cap_idx)) next
-      lines[[cap_idx[[1]]]] <- paste0("#| tbl-cap: \"", legacy_table_captions[[label]], "\"")
-    }
-  }
-  lines
-}
-
-normalize_output_table_chunks <- function(lines) {
-  for (label in names(legacy_table_captions)) {
-    idx <- grep(paste0("^#\\|\\s*label:\\s*", label, "\\s*$"), lines, perl = TRUE)
-    if (!length(idx)) next
-    for (i in rev(idx)) {
-      starts <- grep("^```\\{r.*\\}\\s*$", lines[seq_len(i)], perl = TRUE)
-      ends <- grep("^```\\s*$", lines[i:length(lines)], perl = TRUE)
-      if (!length(starts) || !length(ends)) next
-      start <- max(starts)
-      end <- i + min(ends) - 1L
-      block <- lines[start:end]
-      path_line <- grep("output_table\\(\"[^\"]+\\.csv\"\\)", block, value = TRUE)
-      if (!length(path_line)) next
-      path <- sub(".*output_table\\(\"([^\"]+\\.csv)\"\\).*", "\\1", path_line[[1]], perl = TRUE)
-      lines <- c(
-        if (start > 1L) lines[seq_len(start - 1L)] else character(),
-        output_table_chunk(label, legacy_table_captions[[label]], path),
-        if (end < length(lines)) lines[(end + 1L):length(lines)] else character()
-      )
-    }
-  }
-  lines
-}
-
-insert_after_first <- function(lines, pattern, block) {
-  hit <- grep(pattern, lines, fixed = TRUE)
-  if (!length(hit)) return(lines)
-  append(lines, block, after = hit[[1]])
-}
-
-insert_report_output_objects <- function(lines) {
-  if (any(grepl("#\\|\\s*label:\\s*tbl-cons-iv", lines))) return(lines)
-
-  lines <- insert_after_first(lines, "all while higher education has continued to develop an extremely strong, positive correlation with higher youth *unemployment*.", c(
-    "",
-    figure_markdown("fig-ILO-fig", "../outputs/figures/main/fig_ilo_trends.png"),
-    ""
-  ))
-
-  lines <- insert_after_first(lines, "the average population of a district in either sample period (2007-08 and 2017-18) is 2 million.", c(
-    "",
-    output_table_chunk("tbl-sum-tbl-iv", legacy_table_captions[["tbl-sum-tbl-iv"]], "../outputs/tables/main/sum_tbl_iv.csv"),
-    ""
-  ))
-
-  lines <- insert_after_first(lines, "Summary statistics for numeric variables are given in Table @tbl-sum-tbl-probit-quant, and for categorical variables in Table @tbl-sum-tbl-probit-cat.", c(
-    "",
-    output_table_chunk("tbl-sum-tbl-probit-quant", legacy_table_captions[["tbl-sum-tbl-probit-quant"]], "../outputs/tables/main/sum_tbl_probit_quant.csv"),
-    "",
-    output_table_chunk("tbl-sum-tbl-probit-cat", legacy_table_captions[["tbl-sum-tbl-probit-cat"]], "../outputs/tables/main/sum_tbl_probit_cat.csv"),
-    ""
-  ))
-
-  lines <- insert_after_first(lines, "Average marginal effects for numeric variables and counterfactual comparisons", c(
-    "",
-    output_table_chunk("tbl-probit-mfx", legacy_table_captions[["tbl-probit-mfx"]], "../outputs/tables/main/probit_mfx.csv"),
-    ""
-  ))
-
-  lines <- ensure_map_geometry_note(lines, "Final map figures are withheld until the missing geometry join discussed in @sec-distma-spa is validated;")
-
-  lines <- insert_after_first(lines, "The results of our first-stage regression, of EMI exposure on linguistic distance, are provided in Table @tbl-fs-cons.", c(
-    "",
-    output_table_chunk("tbl-fs-cons", legacy_table_captions[["tbl-fs-cons"]], "../outputs/tables/main/fs_cons.csv"),
-    "",
-    output_table_chunk("tbl-cons-iv", legacy_table_captions[["tbl-cons-iv"]], "../outputs/tables/main/cons_iv.csv"),
-    ""
-  ))
-
-  lines <- insert_after_first(lines, "These district changes are plotted in Figure @fig-districtcarveoutsshifts-fig.", c(
-    "",
-    figure_markdown("fig-districtcarveoutsshifts-fig", "../outputs/figures/main/district_carveouts_shifts.pdf"),
-    ""
-  ))
-
-  lines
-}
-
-insert_district_note_output_objects <- function(lines) {
-  if (any(grepl(map_geometry_validation_note, lines, fixed = TRUE))) return(lines)
-
-  lines <- insert_after_first(lines, "These district changes are plotted in Figure @fig-districtcarveoutsshifts-fig.", c(
-    "",
-    figure_markdown("fig-districtcarveoutsshifts-fig", "../outputs/figures/main/district_carveouts_shifts.pdf"),
-    ""
-  ))
-
-  lines <- ensure_map_geometry_note(lines, "The withheld final map figures underscore the same district-harmonization problem:")
-
   lines
 }
 
@@ -413,10 +275,96 @@ fix_appendix_crossrefs <- function(lines) {
 }
 
 replace_withheld_map_refs <- function(lines) {
-  lines <- gsub("@fig-map1-fig and @fig-map2-fig", "the withheld final map figures", lines, fixed = TRUE)
-  lines <- gsub("@fig-map1-fig", "the withheld final map figures", lines, fixed = TRUE)
-  lines <- gsub("@fig-map2-fig", "the withheld final map figures", lines, fixed = TRUE)
+  lines <- gsub("the withheld final map figures", "@fig-map1-fig and @fig-map2-fig", lines, fixed = TRUE)
   lines
+}
+
+
+insert_after_first <- function(lines, pattern, block) {
+  hit <- grep(pattern, lines, fixed = TRUE)
+  if (!length(hit)) return(lines)
+  append(lines, block, after = hit[[1]])
+}
+
+output_table_helper_chunk <- function() {
+  c(
+    "```{r public-output-table-helper}",
+    "#| include: false",
+    "find_targets_store <- function(start = getwd()) {",
+    "  here <- normalizePath(start, mustWork = TRUE)",
+    "  repeat {",
+    "    candidate <- file.path(here, \"_targets\")",
+    "    if (dir.exists(candidate)) return(candidate)",
+    "    parent <- dirname(here)",
+    "    if (identical(parent, here)) return(\"_targets\")",
+    "    here <- parent",
+    "  }",
+    "}",
+    "report_values <- tryCatch(targets::tar_read(report_values, store = find_targets_store()), error = function(e) list())",
+    "report_value <- function(key) {",
+    "  value <- report_values[[key]]",
+    "  if (is.null(value)) value <- NA",
+    "  if (is.list(value) && !is.null(value$value)) value <- value$value",
+    "  if (length(value) == 0L || all(is.na(value))) return(\"—\")",
+    "  paste(value, collapse = \", \")",
+    "}",
+    "resolve_public_output_path <- function(path) {",
+    "  candidates <- unique(c(path, file.path(getwd(), path), file.path(\"paper\", path), file.path(dirname(knitr::current_input()), path), sub(\"^\\\\.\\\\./\", \"\", path)))",
+    "  hit <- candidates[file.exists(candidates) & file.info(candidates)$size > 0]",
+    "  if (length(hit)) return(hit[[1]])",
+    "  stop(\"Missing table output: \", path, call. = FALSE)",
+    "}",
+    "read_public_table <- function(path) utils::read.csv(resolve_public_output_path(path), check.names = FALSE)",
+    "```"
+  )
+}
+
+ensure_output_table_helper <- function(lines) {
+  if (any(grepl("public-output-table-helper", lines, fixed = TRUE))) return(lines)
+  insert_at <- grep("^```\\{r", lines, perl = TRUE)
+  if (length(insert_at)) return(append(lines, c("", output_table_helper_chunk(), ""), after = insert_at[[1]] - 1L))
+  append(lines, c("", output_table_helper_chunk(), ""), after = length(lines))
+}
+
+output_table_chunk <- function(label, caption, path) {
+  caption <- gsub("\\\\", "\\\\\\\\", caption)
+  caption <- gsub('"', '\\"', caption, fixed = TRUE)
+
+  c(
+    "```{r}",
+    paste0("#| label: ", label),
+    paste0("#| tbl-cap: \"", caption, "\""),
+    "#| echo: false",
+    "",
+    paste0("knitr::kable(read_public_table(\"", path, "\"), "),
+    "  digits = 3,",
+    "  booktabs = knitr::is_latex_output(),",
+    "  longtable = knitr::is_latex_output()",
+    ")",
+    "```"
+  )
+}
+
+normalize_inserted_output_captions <- function(lines) {
+  lines <- gsub("^Table: +", "", lines)
+  lines <- gsub("^Figure: +", "", lines)
+  lines
+}
+
+normalize_output_table_chunks <- function(lines) {
+  lines
+}
+
+insert_report_output_objects <- function(lines) {
+  ensure_report_output_objects(lines)
+}
+
+insert_district_note_output_objects <- function(lines) {
+  ensure_report_object(
+    lines,
+    "fig-districtcarveoutsshifts-fig",
+    figure_markdown("fig-districtcarveoutsshifts-fig", "../outputs/figures/main/district_carveouts_shifts.pdf")
+  )
 }
 
 ensure_report_object <- function(lines, label, block) {
@@ -431,6 +379,8 @@ ensure_report_object <- function(lines, label, block) {
 
 ensure_report_output_objects <- function(lines) {
   lines <- ensure_report_object(lines, "fig-ILO-fig", figure_markdown("fig-ILO-fig", "../outputs/figures/main/fig_ilo_trends.png"))
+  lines <- ensure_report_object(lines, "fig-map1-fig", figure_markdown("fig-map1-fig", "../outputs/figures/main/collage_main_maps.pdf"))
+  lines <- ensure_report_object(lines, "fig-map2-fig", figure_markdown("fig-map2-fig", "../outputs/figures/main/collage_iv_region_maps.pdf"))
   lines <- ensure_report_object(lines, "fig-districtcarveoutsshifts-fig", figure_markdown("fig-districtcarveoutsshifts-fig", "../outputs/figures/main/district_carveouts_shifts.pdf"))
   for (label in names(legacy_table_captions)) {
     path <- paste0("../outputs/tables/main/", gsub("-", "_", sub("^tbl-", "", label)), ".csv")
@@ -472,7 +422,13 @@ postprocess_one <- function(path) {
   lines <- replace_withheld_map_refs(lines)
   lines <- remove_unavailable_map_figures(lines)
   if (identical(path, "paper/report.qmd")) {
-    lines <- ensure_map_geometry_note(lines, "Final map figures are withheld until the missing geometry join discussed in @sec-distma-spa is validated;")
+    lines <- insert_after_first(lines, "Summary statistics for all of the variables in this model, including the controls $k$ in the vector $X_{kd}$, are provided in @tbl-sum-tbl-iv.", c(
+    "",
+    figure_markdown("fig-map1-fig", "../outputs/figures/main/collage_main_maps.pdf"),
+    "",
+    figure_markdown("fig-map2-fig", "../outputs/figures/main/collage_iv_region_maps.pdf"),
+    ""
+  ))
   }
   if (identical(path, "docs/district-matching.qmd")) {
     lines <- ensure_map_geometry_note(lines, "The withheld final map figures underscore the same district-harmonization problem:")
