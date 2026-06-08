@@ -202,11 +202,40 @@ compute_ames_probit_analytic <- function(model, newdata) {
   do.call(rbind, rows)
 }
 
+copy_first_ame_column <- function(out, target, candidates) {
+  if (!target %in% names(out)) out[[target]] <- NA
+  for (candidate in candidates) {
+    if (!candidate %in% names(out)) next
+    missing_target <- is.na(out[[target]])
+    if (any(missing_target)) out[[target]][missing_target] <- out[[candidate]][missing_target]
+  }
+  out
+}
+
+normalize_ame_columns <- function(out) {
+  # marginaleffects has used both dotted and snake_case names across versions
+  # and model classes. Normalize here before selecting the public/audit schema
+  # so uncertainty columns are not silently dropped downstream.
+  aliases <- list(
+    std.error = c("std_error", "std.err", "Std. Error"),
+    statistic = c("z", "z.value", "z_value", "t", "t.value", "t_value"),
+    p.value = c("p_value", "p", "Pr(>|z|)", "Pr(>|t|)"),
+    s.value = c("s_value"),
+    conf.low = c("conf_low", "conf.low", "2.5 %"),
+    conf.high = c("conf_high", "conf.high", "97.5 %")
+  )
+  for (target in names(aliases)) {
+    out <- copy_first_ame_column(out, target, aliases[[target]])
+  }
+  out
+}
+
 #' format ame results
 #'
 format_ame_results <- function(ame_results) {
   out <- tibble::as_tibble(ame_results)
   if (!"term" %in% names(out) && "variable" %in% names(out)) out$term <- out$variable
+  out <- normalize_ame_columns(out)
   if (!"method" %in% names(out)) out$method <- "autodiff"
   if (!"status" %in% names(out)) out$status <- "estimated"
   if (!"reason" %in% names(out)) out$reason <- NA_character_

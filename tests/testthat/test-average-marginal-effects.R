@@ -41,6 +41,31 @@ test_that("AME results keep the active pipeline schema stable", {
   )
 })
 
+
+
+test_that("AME formatting normalizes marginaleffects snake_case uncertainty columns", {
+  out <- format_ame_results(data.frame(
+    variable = "age",
+    estimate = 0.1,
+    std_error = 0.02,
+    statistic = 5,
+    p_value = 0.001,
+    s_value = 9.965784,
+    conf_low = 0.06,
+    conf_high = 0.14
+  ))
+
+  expect_equal(names(out), c(
+    "term", "estimate", "std.error", "statistic", "p.value",
+    "s.value", "conf.low", "conf.high", "method", "status", "reason"
+  ))
+  expect_equal(out$term, "age")
+  expect_equal(out$std.error, 0.02)
+  expect_equal(out$p.value, 0.001)
+  expect_equal(out$conf.low, 0.06)
+  expect_equal(out$conf.high, 0.14)
+})
+
 test_that("full AME path uses marginaleffects uncertainty when available", {
   skip_if_not_installed("marginaleffects")
   selection_data <- data.frame(
