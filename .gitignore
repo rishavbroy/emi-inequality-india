@@ -15,6 +15,11 @@ renv/sandbox/
 _targets/
 _targets.Rout
 
+# stamp files
+.pipeline-final-ok
+.public-final-ok
+.pipeline-draft-ok
+
 # raw, future, and intermediate data
 data/raw/
 data/raw_future/
