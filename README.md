@@ -70,4 +70,4 @@ See `docs/district-matching.qmd` for the district-harmonization plan.
 
 ## Review archive
 
-Build `Archive.zip` only after `make check-public-final` succeeds. The packaging script stages the current working tree, omits raw data and local caches, and refuses to run without the `.public-final-ok` stamp produced by the final public check.
+Build `review.zip` only after `make check-public-final` succeeds. The packaging script stages the current working tree, omits raw data and local caches, and refuses to run without the `.public-final-ok` stamp produced by the final public check. `scripts/make_review_archive.sh` writes `review.zip` by default; pass an explicit path only when intentionally creating a differently named archive.

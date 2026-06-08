@@ -71,8 +71,8 @@ make check-public-draft
 
 `make test` should pass without local raw data. The full pipeline requires the local-only raw files listed in the manifest.
 
-`make check-public-draft` is the current public-render smoke check. It tolerates explicitly deferred geometry/map work but still fails on scaffold prose, broken application-sample specs, render failures, and rendered placeholder phrases. `make check-public-final` uses `config/final.yml`, audits all legacy inline report quantities, audits final output artifacts, requires PDF text extraction, and fails on visible public-PDF cross-reference artifacts or incomplete report values/cross-references.
+`make check-public-draft` is the current public-render smoke check. It tolerates explicitly deferred geometry/map work but still fails on scaffold prose, broken application-sample specs, render failures, and rendered placeholder phrases. `make check-public-final` uses `config/final.yml`, audits all legacy inline report quantities, audits final output artifacts, checks PDF text when `pdftotext` or `pdftools` is available, and fails on visible public-document cross-reference artifacts or incomplete report values/cross-references.
 
 ## Review archive contract
 
-`scripts/make_review_archive.sh` is intentionally not a substitute for the final public checks. It now refuses to package the repository unless `.public-final-ok` exists, which is written only after `make check-public-final` completes successfully. This prevents a review archive from mixing regenerated source files with stale PDFs or outputs from an earlier run.
+`scripts/make_review_archive.sh` is intentionally not a substitute for the final public checks. It writes `review.zip` by default and refuses to package the repository unless `.public-final-ok` exists, which is written only after `make check-public-final` completes successfully. This prevents a review archive from mixing regenerated source files with stale PDFs or outputs from an earlier run.

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-out="${1:-Archive.zip}"
+out="${1:-review.zip}"
 
 if [[ ! -f .public-final-ok ]]; then
   echo "Cannot build review archive because .public-final-ok is missing. Run make check-public-final successfully first." >&2

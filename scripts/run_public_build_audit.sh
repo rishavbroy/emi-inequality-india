@@ -69,7 +69,7 @@ echo "=== PUBLIC FINAL CHECK ==="
 make check-public-final
 
 echo "=== REVIEW ARCHIVE ==="
-bash scripts/make_review_archive.sh Archive.zip
+bash scripts/make_review_archive.sh
 
 echo "=== STRICT TARGET WARNING CHECK ==="
 if [ -s outputs/diagnostics/target_warnings.csv ]; then
