@@ -15,6 +15,11 @@ renv/sandbox/
 _targets/
 _targets.Rout
 
+# stamp files
+.pipeline-final-ok
+.public-final-ok
+.pipeline-draft-ok
+
 # raw, future, and intermediate data
 data/raw/
 data/raw_future/
@@ -44,13 +49,19 @@ application-samples/.work/
 
 # temporary files to help auditing and debugging
 Archive.zip
+review.zip
+legacy.zip
+data.zip
+raw.zip
 full_output.txt
+file_list.txt
 
 # keep deliberate TeX source templates if any remain
 !application-samples/templates/*.tex
 !application-samples/cover-notes/**/*.tex
 !archive/application-sample-sources/*.tex
 !archive/application-sample-sources/original-cover-note-tex/**/*.tex
+!outputs/tables/main/*.tex
 
 # operating-system metadata
 .DS_Store
@@ -61,4 +72,5 @@ __pycache__/
 *.exe
 autorun.inf
 /.quarto/
+/.quarto-home/
 **/*.quarto_ipynb

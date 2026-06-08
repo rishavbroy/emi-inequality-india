@@ -4,7 +4,6 @@
 
 #' build linguistic distance iv
 #'
-#' @return Function-specific return value.
 build_linguistic_distance_iv <- function(census_2001_languages, cfg) {
   df <- std(safe_df(census_2001_languages), 2001L)
   if (!all(c("state_std", "district_std") %in% names(df)) || !nrow(df)) {
@@ -24,28 +23,24 @@ build_linguistic_distance_iv <- function(census_2001_languages, cfg) {
 
 #' compute population weighted linguistic distance
 #'
-#' @return Function-specific return value.
 compute_population_weighted_linguistic_distance <- function(df) {
   build_linguistic_distance_iv(df, list())
 }
 
 #' compute linguistic distance variants
 #'
-#' @return Function-specific return value.
 compute_linguistic_distance_variants <- function(df) {
   df
 }
 
 #' demean iv within state
 #'
-#' @return Function-specific return value.
 demean_iv_within_state <- function(df) {
   df
 }
 
 #' validate linguistic distance ranges
 #'
-#' @return Function-specific return value.
 validate_linguistic_distance_ranges <- function(df) {
   if ("wavg_ling_degrees" %in% names(df) && any(df$wavg_ling_degrees < 0 | df$wavg_ling_degrees > 5, na.rm = TRUE)) {
     stop("Linguistic-distance values must be in the 0-5 range.", call. = FALSE)

@@ -4,35 +4,30 @@
 
 #' join district panel
 #'
-#' @return Function-specific return value.
 join_district_panel <- function(district_tracker, district_join_map, measures_2007, measures_2017, linguistic_distance_iv, boundaries_2020, cfg = list()) {
   build_district_panel(district_tracker, district_join_map, measures_2007, measures_2017, linguistic_distance_iv, boundaries_2020, cfg)
 }
 
 #' join panel to geometry
 #'
-#' @return Function-specific return value.
 join_panel_to_geometry <- function(panel, geometry) {
   dplyr::left_join(panel, geometry)
 }
 
 #' collapse or expand split districts
 #'
-#' @return Function-specific return value.
 collapse_or_expand_split_districts <- function(panel) {
   panel
 }
 
 #' assert unique panel rows
 #'
-#' @return Function-specific return value.
 assert_unique_panel_rows <- function(panel) {
   stopifnot(!anyDuplicated(panel$district_panel_id)); invisible(panel)
 }
 
 #' attach spatial ids
 #'
-#' @return Function-specific return value.
 attach_spatial_ids <- function(panel) {
   panel
 }

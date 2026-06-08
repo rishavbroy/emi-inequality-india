@@ -26,7 +26,7 @@ What follows are excerpts from my 49-page independent research paper, "Escaping 
 
    - **Key clarification**: State FEs, essential for 2SLS exclusion restriction, trigger extreme multicollinearity. District matching & possible FD-2SLS redesign needed.
 
-4. **Main result**: Strong first-stage ($F=39.2$), null second-stage estimate ($0.2$ pp, $p=0.78$). <u>Estimates are provisional</u> pending district matching that enables state FEs.
+4. **Main result**: Current generated first- and second-stage estimates are reported in the included tables. <u>Estimates are provisional</u> pending a validated district-geometry join, repaired district matching, and state-FE/FD-2SLS redesign.
 
 5. **Next steps**:
 

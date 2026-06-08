@@ -36,18 +36,31 @@ read_sav_short <- function(long_path, ...) {
 #' @return Data frame read from a CSV file.
 read_csv_short <- function(long_path, ...) {
   if (requireNamespace("readr", quietly = TRUE)) {
-    read_with_short_path(long_path, readr::read_csv, ..., show_col_types = FALSE)
+    read_with_short_path(
+      long_path,
+      readr::read_csv,
+      ...,
+      col_types = readr::cols(.default = readr::col_character()),
+      show_col_types = FALSE,
+      progress = FALSE
+    )
   } else {
-    utils::read.csv(long_path, stringsAsFactors = FALSE, ...)
+    utils::read.csv(long_path, stringsAsFactors = FALSE, colClasses = "character", ...)
   }
 }
 
 #' read excel short
 #'
 #' @return Data frame read from an Excel file.
-read_excel_short <- function(long_path, sheet = 1, ...) {
+read_excel_short <- function(long_path, sheet = 1, col_types = "text", ...) {
   need_pkg("readxl", "Excel files")
-  readxl::read_excel(normalize_path_for_os(long_path), sheet = sheet, ...)
+  readxl::read_excel(
+    normalize_path_for_os(long_path),
+    sheet = sheet,
+    col_types = col_types,
+    .name_repair = "unique",
+    ...
+  )
 }
 
 #' read ODS using a path normalized for this OS

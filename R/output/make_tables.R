@@ -65,7 +65,10 @@ tidy_iv_models <- function(iv_models) {
     if (is.list(model) && !is.null(model$status)) {
       return(data.frame(model = name, term = NA_character_, estimate = NA_real_, std.error = NA_real_, statistic = NA_real_, p.value = NA_real_, status = model$status, reason = model$reason %||% NA_character_))
     }
-    coefs <- tryCatch(as.data.frame(summary(model)$coefficients), error = function(e) data.frame())
+    coefs <- tryCatch({
+      vc <- clustered_model_vcov(model)
+      if (is.null(vc)) as.data.frame(summary(model)$coefficients) else as.data.frame(summary(model, vcov. = vc)$coefficients)
+    }, error = function(e) data.frame())
     if (!nrow(coefs)) {
       return(data.frame(model = name, term = NA_character_, estimate = NA_real_, std.error = NA_real_, statistic = NA_real_, p.value = NA_real_, status = "unavailable", reason = "Model coefficients are unavailable."))
     }
@@ -81,6 +84,16 @@ tidy_iv_models <- function(iv_models) {
       stringsAsFactors = FALSE
     )
   }))
+}
+
+clustered_model_vcov <- function(model) {
+  cluster <- attr(model, "cluster_state")
+  cluster <- stats::na.omit(cluster)
+  if (!is.null(cluster) && length(unique(cluster)) > 1L && requireNamespace("sandwich", quietly = TRUE)) {
+    force(cluster)
+    return(function(x) sandwich::vcovCL(x, cluster = cluster))
+  }
+  NULL
 }
 
 #' make tables

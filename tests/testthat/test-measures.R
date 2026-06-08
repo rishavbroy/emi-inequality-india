@@ -102,3 +102,26 @@ test_that("district panel preserves IDs and avoids duplicate generated units", {
   expect_setequal(out$district_panel_id, c("id1", "id2"))
   expect_false(anyDuplicated(out$district_panel_id) > 0L)
 })
+
+test_that("district panel preserves sf geometry when boundary keys match", {
+  skip_if_not_installed("sf")
+  poly <- sf::st_sfc(sf::st_polygon(list(rbind(
+    c(0, 0), c(1, 0), c(1, 1), c(0, 1), c(0, 0)
+  ))), crs = 4326)
+  boundaries <- sf::st_sf(
+    state_std = "bihar",
+    district_std = "patna",
+    geometry = poly
+  )
+  measures_2007 <- data.frame(
+    state_std = "bihar",
+    district_std = "patna",
+    district_panel_id = "id1",
+    emie_2007 = 0.2
+  )
+
+  out <- build_district_panel(data.frame(), data.frame(), measures_2007, data.frame(), data.frame(), boundaries, list())
+
+  expect_s3_class(out, "sf")
+  expect_true("geometry" %in% names(out))
+})

@@ -5,18 +5,27 @@
 
 #' build spatial weights
 #'
-#' @return Function-specific return value.
+#' @return A spatial weights object, or an explicit inactive status when geometry is unavailable.
 build_spatial_weights <- function(district_panel, cfg) {
-  if (inherits(district_panel, "sf")) {
-    nb <- spdep::poly2nb(district_panel, queen = FALSE)
-    return(spdep::nb2listw(nb, style = "W", zero.policy = TRUE))
+  if (!inherits(district_panel, "sf")) {
+    return(list(status = "out_of_active_pipeline", reason = "Requires sf geometry."))
   }
-  list(status = "out_of_active_pipeline", reason = "Requires sf geometry.")
+  geom <- sf::st_geometry(district_panel)
+  coverage <- mean(!sf::st_is_empty(geom))
+  if (!is.finite(coverage) || coverage < 0.75) {
+    return(list(
+      status = "out_of_active_pipeline",
+      reason = paste0(
+        "Requires validated non-empty geometry for at least 75% of district-panel rows; current coverage is ",
+        round(100 * coverage, 1), "%.")
+    ))
+  }
+  nb <- spdep::poly2nb(district_panel[!sf::st_is_empty(geom), , drop = FALSE], queen = FALSE)
+  spdep::nb2listw(nb, style = "W", zero.policy = TRUE)
 }
 
 #' diagnose spatial weights
 #'
-#' @return Function-specific return value.
 diagnose_spatial_weights <- function(district_panel, spatial_weights, cfg) {
   data.frame(
     diagnostic = "spatial_weights",
@@ -27,28 +36,24 @@ diagnose_spatial_weights <- function(district_panel, spatial_weights, cfg) {
 
 #' compare rook queen contiguity
 #'
-#' @return Function-specific return value.
 compare_rook_queen_contiguity <- function(district_panel) {
   tibble::tibble()
 }
 
 #' summarize islands
 #'
-#' @return Function-specific return value.
 summarize_islands <- function(spatial_weights) {
   tibble::tibble()
 }
 
 #' summarize neighbor counts
 #'
-#' @return Function-specific return value.
 summarize_neighbor_counts <- function(spatial_weights) {
   tibble::tibble()
 }
 
 #' save spatial weight diagnostics
 #'
-#' @return Function-specific return value.
 save_spatial_weight_diagnostics <- function(diagnostics) {
   diagnostics
 }

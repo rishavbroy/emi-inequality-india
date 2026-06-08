@@ -16,21 +16,21 @@ diagnose_spatial_autocorrelation <- function(district_panel, iv_models, spatial_
 
 #' compute moran tests
 #'
-#' @return Function-specific return value.
+#' @return A tibble placeholder for future Moran diagnostics.
 compute_moran_tests <- function(...) {
   tibble::tibble()
 }
 
 #' compute monte carlo moran tests
 #'
-#' @return Function-specific return value.
+#' @return A tibble placeholder for future Moran diagnostics.
 compute_monte_carlo_moran_tests <- function(...) {
   tibble::tibble()
 }
 
 #' save spatial autocorrelation diagnostics
 #'
-#' @return Function-specific return value.
+#' @return A tibble placeholder for future Moran diagnostics.
 save_spatial_autocorrelation_diagnostics <- function(diagnostics) {
   diagnostics
 }

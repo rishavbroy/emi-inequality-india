@@ -23,3 +23,12 @@ test_that("AME benchmark diagnostic is skipped unless enabled", {
 
   expect_equal(out$status, "skipped")
 })
+
+test_that("rendered PDF text checks skip only when no extractor is available", {
+  skipped <- c("paper/report.pdf", "docs/district-matching.pdf")
+
+  expect_false(should_fail_pdf_text_skip(skipped, extractor_available = FALSE))
+  expect_true(should_fail_pdf_text_skip(skipped, extractor_available = TRUE))
+  expect_match(pdf_text_skip_message(skipped), "PDF text extractor unavailable")
+  expect_match(pdf_text_failure_message(skipped), "PDF text extraction failed")
+})
