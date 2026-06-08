@@ -11,27 +11,47 @@ is_final_check <- "--final" %in% args ||
   identical(normalizePath(Sys.getenv("EMI_CONFIG"), mustWork = FALSE), normalizePath("config/final.yml", mustWork = FALSE)) ||
   identical(basename(Sys.getenv("EMI_CONFIG")), "final.yml")
 
+is_false_env <- function(name, default = "true") {
+  tolower(trimws(Sys.getenv(name, default))) %in% c("0", "false", "no", "off")
+}
+check_application_samples <- !is_false_env("EMI_REQUIRE_APPLICATION_SAMPLES", Sys.getenv("EMI_RENDER_APPLICATION_SAMPLES", "true"))
+
 text_paths <- c(
   list.files("paper", pattern = "\\.(html|md|tex)$", full.names = TRUE),
-  list.files("docs", pattern = "\\.(html|md|tex)$", full.names = TRUE),
-  list.files("application-samples/.work", pattern = "\\.(html|md|qmd|tex)$", full.names = TRUE, recursive = TRUE)
+  list.files("docs", pattern = "\\.(html|md|tex)$", full.names = TRUE)
 )
+if (check_application_samples) {
+  text_paths <- c(
+    text_paths,
+    list.files("application-samples/.work", pattern = "\\.(html|md|qmd|tex)$", full.names = TRUE, recursive = TRUE)
+  )
+}
 text_paths <- text_paths[file.exists(text_paths)]
 
 source_paths <- c(
   list.files("paper", pattern = "\\.(qmd|md|tex)$", full.names = TRUE),
-  list.files("docs", pattern = "\\.(qmd|md|tex)$", full.names = TRUE),
-  list.files("application-samples/.work", pattern = "\\.(qmd|md|tex)$", full.names = TRUE, recursive = TRUE)
+  list.files("docs", pattern = "\\.(qmd|md|tex)$", full.names = TRUE)
 )
+if (check_application_samples) {
+  source_paths <- c(
+    source_paths,
+    list.files("application-samples/.work", pattern = "\\.(qmd|md|tex)$", full.names = TRUE, recursive = TRUE)
+  )
+}
 source_paths <- source_paths[file.exists(source_paths)]
 
 pdf_paths <- c(
   "paper/report.pdf",
   "paper/appendix.pdf",
   "docs/district-matching.pdf",
-  "docs/long-paths-and-8-3-filenames.pdf",
-  list.files("application-samples/output", pattern = "\\.pdf$", full.names = TRUE)
+  "docs/long-paths-and-8-3-filenames.pdf"
 )
+if (check_application_samples) {
+  pdf_paths <- c(
+    pdf_paths,
+    list.files("application-samples/output", pattern = "\\.pdf$", full.names = TRUE)
+  )
+}
 pdf_paths <- pdf_paths[file.exists(pdf_paths)]
 
 extract_pdf_text <- function(path) {
@@ -145,4 +165,7 @@ if (length(pdf_skipped)) {
   warning(pdf_text_skip_message(pdf_skipped), call. = FALSE)
 }
 
+if (!check_application_samples) {
+  message("Rendered text checks skipped application-sample files because EMI_REQUIRE_APPLICATION_SAMPLES=false.")
+}
 message("No rendered placeholder value text or visible cross-reference failures detected in checked public files.")
