@@ -87,7 +87,7 @@ make_figures <- function(district_panel, raw_ilo_figures, cfg) {
   if (maps_available) {
     out <- c(out, list(
       map_emi_exposure = figure_spec("map_emi_exposure", "map_emi_exposure.png", "EMI Exposure", kind = "map", variable = "emie_2007"),
-      map_consumption_growth = figure_spec("map_consumption_growth", "map_consumption_growth.png", "%Δ Consumption", kind = "map", variable = "consumption_growth_pct"),
+      map_consumption_growth = figure_spec("map_consumption_growth", "map_consumption_growth.png", "% Change in Consumption", kind = "map", variable = "consumption_growth_pct"),
       map_pucca = figure_spec("map_pucca", "map_pucca.png", "% Pucca Homes", kind = "map", variable = "pucca_share_2007"),
       map_education = figure_spec("map_education", "map_education.png", "% HH Head w/ Sec.+", kind = "map", variable = "head_secondary_plus_2007"),
       map_region = figure_spec("map_region", "map_region.png", "Region", kind = "map", variable = "region"),
@@ -119,7 +119,7 @@ make_figures <- function(district_panel, raw_ilo_figures, cfg) {
     # labeled as diagnostics by figure_output_dir().
     out <- c(out, list(
       map_emi_exposure = figure_spec("map_emi_exposure", "map_emi_exposure.png", "EMI Exposure", kind = "status", variable = "emie_2007"),
-      map_consumption_growth = figure_spec("map_consumption_growth", "map_consumption_growth.png", "%Δ Consumption", kind = "status", variable = "consumption_growth_pct")
+      map_consumption_growth = figure_spec("map_consumption_growth", "map_consumption_growth.png", "% Change in Consumption", kind = "status", variable = "consumption_growth_pct")
     ))
   }
 
