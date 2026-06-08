@@ -378,16 +378,16 @@ Most important changes to make
 
             2.  Construct avg_df0708 with one row per district, and averages of each columns.
 
-            3.  Estimate \$\Pr(\text{enroll}\_i=1\mid X_i,Z_d) \\=\\\Phi\bigl(\beta X_i \\+\\\gamma Z_d\bigr)\$, for child-level controls \$X_i\$ and district-level instruments \$Z_d\$. Then set \$\hat\eta_i = X_i\hat\beta + Z_d\hat\gamma\$ and the IMR becomes:  
-                \$\$  
-                \widehat\lambda_i  
-                =  
-                \begin{cases}  
-                \dfrac{\phi(\hat\eta_i)}{\Phi(\hat\eta_i)}  
-                &\text{if enrolled}\_i=1,\\\[6pt\]  
-                \dfrac{\phi(\hat\eta_i)}{1-\Phi(\hat\eta_i)}  
-                &\text{if enrolled}\_i=0,  
-                \end{cases}  
+            3.  Estimate \$\Pr(\text{enroll}\_i=1\mid X_i,Z_d) \\=\\\Phi\bigl(\beta X_i \\+\\\gamma Z_d\bigr)\$, for child-level controls \$X_i\$ and district-level instruments \$Z_d\$. Then set \$\hat\eta_i = X_i\hat\beta + Z_d\hat\gamma\$ and the IMR becomes:
+                \$\$
+                \widehat\lambda_i
+                =
+                \begin{cases}
+                \dfrac{\phi(\hat\eta_i)}{\Phi(\hat\eta_i)}
+                &\text{if enrolled}\_i=1,\\\[6pt\]
+                \dfrac{\phi(\hat\eta_i)}{1-\Phi(\hat\eta_i)}
+                &\text{if enrolled}\_i=0,
+                \end{cases}
                 \$\$
 
             4.  Aggregate this IMR at the district level for the district-level regression
