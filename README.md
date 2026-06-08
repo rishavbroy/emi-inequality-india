@@ -2,6 +2,17 @@
 
 This repository contains the research pipeline for my independent paper, **"Escaping Inequality in India: The Role of English-Medium Instruction."**
 
+## For pre-doc hiring committees / faculty reviewers
+
+- Main paper source: [paper/report.qmd](paper/report.qmd)
+- Rendered draft paper PDF: [paper/report.pdf](paper/report.pdf) (provisional; final empirical estimates and map geometry remain under active validation)
+- Writing sample PDF: [application-samples/output/RishavRoy_WritingSample.pdf](application-samples/output/RishavRoy_WritingSample.pdf) (generated from the current sample pipeline)
+- Coding sample PDF: [application-samples/output/RishavRoy_CodingSample.pdf](application-samples/output/RishavRoy_CodingSample.pdf) (generated from the current sample pipeline)
+- District-matching note: [docs/district-matching.qmd](docs/district-matching.qmd) and [docs/district-matching.html](docs/district-matching.html)
+- Replication guide: [REPLICATION.md](REPLICATION.md)
+- Data availability: [DATA_AVAILABILITY.md](DATA_AVAILABILITY.md)
+- Research roadmap: [docs/plan/roadmap.md](docs/plan/roadmap.md)
+
 ## Research question
 
 Does increasing baseline district-level exposure to English-medium instruction (EMI) in 2007–08 affect local consumption growth over the next decade?
@@ -22,6 +33,7 @@ The project is under active revision. The main methodological priorities are dis
 - `data/processed/`: tracked processed district tracker and district panel.
 - `data/raw/`, `data/raw_future/`, `data/interim/`: local-only, gitignored data folders.
 - `docs/`: polished methodological notes.
+- `docs/plan/roadmap.md`: converted project planning roadmap.
 - `analysis/diagnostics/`: diagnostic notebooks whose outputs are generated from the pipeline.
 - `application-samples/`: cover notes, sample specifications, and generated writing/coding samples for pre-doc applications.
 - `archive/`: legacy drafts, source samples, and old rendered files.
@@ -34,9 +46,12 @@ make test        # smoke tests and input/output contracts
 make pipeline-draft
 make report
 make samples
+make check-public-draft
 ```
 
 Raw data are not tracked. Place raw files according to `data/metadata/file_manifest.csv`. See `REPLICATION.md` for the current replication data contract and expected behavior on a fresh clone without local-only raw data.
+
+`make check-public-draft` verifies that the current draft renders without scaffold or fallback prose. `make check-public-final` is stricter: it runs the final config and fails if final rendered PDFs cannot be text-audited, if final public PDFs contain visible cross-reference artifacts, if final output artifacts are diagnostic-only, or if final report values/cross-references are incomplete.
 
 The two public processed data products are:
 
@@ -52,3 +67,9 @@ The pipeline should fail gracefully when required raw data are absent: it reads 
 The current estimates should be treated as provisional. Active issues include district harmonization, geographic controls, state fixed effects/state-demeaned IVs, spatial autocorrelation, migration, inflation/local price changes, and the transition from a simple consumption-percent-change response variable to log consumption differences.
 
 See `docs/district-matching.qmd` for the district-harmonization plan.
+
+## Review archive
+
+Build `review.zip` only after a final public check succeeds. The packaging script stages the current working tree, omits raw data and local caches, and refuses to run without the `.public-final-ok` stamp produced by a final public check. `scripts/make_review_archive.sh` writes `review.zip` by default; pass an explicit path only when intentionally creating a differently named archive.
+
+For fast iteration, run `bash scripts/run_public_build_audit.sh` to audit the report, tables, figures, diagnostics, and review archive without rendering application samples. This mode omits `application-samples/output/` from `review.zip`, so it cannot accidentally package stale sample PDFs. Before a full submission or application bundle, run `bash scripts/run_public_build_audit.sh --with-samples`; that mode renders application samples and requires them in `review.zip`.

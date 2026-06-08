@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+message: "If you use this research compendium, please cite it using this metadata."
+title: "Replication Pipeline for English-Medium Instruction and Inequality in India"
+type: software
+authors:
+  - family-names: Roy
+    given-names: Rishav
+version: 0.0.0.9000
+date-released: 2026-06-04
+license: MIT
+repository-code: "https://github.com/rishavbroy/emi-inequality-india"
+abstract: "Research compendium for a district-level empirical analysis of English-medium instruction, linguistic distance, and consumption growth in India."

@@ -1,10 +1,46 @@
 ---
-title: "Long Paths and 8.3 Filename Fallbacks"
+title: "Technical Note for Replication: 8.3 Filenames"
+author: "Rishav Roy"
 format:
   html: default
-  pdf: default
+  pdf:
+    pdf-engine: xelatex
+execute:
+  echo: false
+  warning: false
+  message: false
 ---
 
-This note preserves the troubleshooting logic from the legacy R Markdown file. The original project used long source-like folder names so paths would remain transparent. That decision made the data provenance legible, but it also made path handling brittle on some systems.
+# Technical Note for Replication
 
-The reusable readers now live in `R/io/read_long_paths.R`. The new repo structure keeps raw data local and uses `data/metadata/file_manifest.csv` to make the source-path mapping auditable without forcing every path into the analysis code.
+Those replicating the code for this paper are encouraged to skim the code chunk titled ` Define functions to read in short 8.3 filenames`. There the functions `read_sav_short()`, `read_csv_short()`, and `read_excel_short()` are defined; if the replicator runs into issues while reading in files, troubleshooting methods are explained there.
+
+\newpage
+
+
+```{r}
+#| echo: true
+#| eval: false
+# ---TROUBLESHOOTING---
+# If getting "file does not exist" or similar errors:
+# Switch the function used to read in the file e.g., if the relevant file is being read in using read_sav() or read_sav_short(), switch to read_sav_short() or read_sav() respectively.
+
+# If that didn't work and you're not using Windows:
+# Either modify this code chunk for your OS (note the "if" statement at the start of each function) or manually shorten the error-inducing file paths.
+
+# ---
+
+# Purpose of this chunk:
+# To ensure R can identify and read in all necessary files.
+# This project found me making frequent use of file paths over 260 characters in length. Out of my naivete, I didn't realize Windows File Explorer automatically shortens such file paths by rewriting them in the 8.3 filename convention---meaning R can no longer access their standard "long name." Conversely, functions like read_sav() automatically lengthen 8.3 filenames via functions like normalizePath(), turning the true 8.3 file path into a long name which, from R's and (thus our) perspective, is useless.
+# This code chunk turns our long name inputs into 8.3 filenames while tricking the read_*()-type functions into not turning them back.
+
+
+# Context for nerds:
+# In my Registry Editor, under Computer\HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FileSystem, I had set the LongPathsEnabled value to 1 (which enables Windows to use long file paths) and the NtfsDisable8dot3NameCreation value to 2. I had also changed Group Policy to "Enable Win32 long paths".
+# But none of that mattered! Windows File Explorer lacks a longPathAware entry in its .exe file's manifest--so despite LongPathsEnabled=1, my file paths were still capped at 260 characters. Ergo this code chunk.
+# It's possible that setting NtfsDisable8dot3NameCreation=0 would've prevented all of this code from being necessary. But I'd rather not force replicators to change their registry settings.
+
+# ---
+
+```

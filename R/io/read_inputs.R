@@ -5,58 +5,82 @@
 
 #' read nss 2007 education
 #'
-#' @return A tibble, model object, list, or file path depending on context.
 read_nss_2007_education <- function(paths) {
-  base <- path_raw(paths, "NSS 2007-08 Participation and Expenditure in Education 64th Round")
-  list(block3 = haven::read_sav(file.path(base, "Block-3  Household  characteristics.sav")), block4 = read_sav_short(file.path(base, "Block-4  Demographic and other particulars of household members.sav")), block5 = read_sav_short(file.path(base, "Block-5  Education particulars of those aged 5-29 years who are currently attending primary level and above.sav")), block6 = haven::read_sav(file.path(base, "Block-6  Particulars of private expend.sav")), metadata = readxl::read_xlsx(file.path(base, "DDI Metadata from Nesstar XML.xlsx")))
+  read_manifest_group(paths, "nss_2007_education")
 }
 
 #' read nss 2007 consumption
 #'
-#' @return A tibble, model object, list, or file path depending on context.
 read_nss_2007_consumption <- function(paths) {
-  base <- path_raw(paths, "NSS 2007-08 Household Consumer Expenditure Survey 64th Round")
-  list(household_characteristics = haven::read_sav(file.path(base, "Household Characteristics.sav")))
+  read_manifest_group(paths, "nss_2007_consumption")
 }
 
 #' read nss 2017 education
 #'
-#' @return A tibble, model object, list, or file path depending on context.
 read_nss_2017_education <- function(paths) {
-  base <- path_raw(paths, "NSS 2017-18 Household Social Consumption Education 75th Round Data July 2017 - June 2018")
-  list(block3 = read_sav_short(file.path(base, "Block 3 - Household characteristics.sav")), districts = read_csv_short(file.path(base, "List of Districts NSS 2017-18.csv"), col_names = FALSE), state_codes = read_csv_short(file.path(base, "State Codes.csv")))
+  read_manifest_group(paths, "nss_2017_education")
 }
 
 #' read census 2001 mother tongue
 #'
-#' @return A tibble, model object, list, or file path depending on context.
 read_census_2001_mother_tongue <- function(paths) {
-  base <- path_raw(paths, "Indian Census 2001")
-  files <- file.path(base, sprintf("PC01_C16_%02d.xls", 1:35))
-  setNames(lapply(files, readxl::read_excel, skip = 6, col_names = FALSE), basename(files))
+  read_manifest_group(paths, "census_2001_mother_tongue")
 }
 
 #' read district boundaries 2020
 #'
-#' @return A tibble, model object, list, or file path depending on context.
 read_district_boundaries_2020 <- function(paths) {
-  sf::st_read(path_raw(paths, "District Boundaries 2020", "district", "in_district.shp"), quiet = TRUE)
+  rows <- require_manifest_files(paths, "district_boundaries_2020")
+  shp <- rows[tolower(rows$file_type) == "shp", , drop = FALSE]
+  if (!nrow(shp)) stop("The district-boundary manifest includes shapefile sidecars but no .shp row.", call. = FALSE)
+  need_pkg("sf", "district boundaries")
+  sf::st_read(shp$absolute_path[[1]], quiet = TRUE)
 }
 
 #' read district change sources
 #'
-#' @return A tibble, model object, list, or file path depending on context.
 read_district_change_sources <- function(paths) {
-  base <- path_raw(paths, "District Changes Data")
-  list(alluvial = readxl::read_xlsx(file.path(base, "Time series- State and Districts Changes -Alluvial 1951-2024.xlsx")), carveouts = readr::read_csv(file.path(base, "District Carve-Outs and Renamings 1961-2001.csv"), show_col_types = FALSE), tracker = readODS::read_ods(file.path(base, "IndiaDistrictTracker2001to2020.ods")), new_districts = readxl::read_xlsx(file.path(base, "New Districts Created between 1951-2024.xlsx")), name_changes = readxl::read_xlsx(file.path(base, "Name Changes_Districts_Indian States_1951-2021.xlsx")), splits = readxl::read_xlsx(file.path(base, "District Splits and Carve outs-decadewise  1951-2024.xlsx")))
+  read_manifest_group(paths, "district_changes")
 }
 
 #' list ilo figure paths
 #'
-#' @return A tibble, model object, list, or file path depending on context.
 list_ilo_figure_paths <- function(paths) {
-  files <- c("average_monthly_real_earnings_total.png", "lfpr_wpr_unemployment_all.png", "unemployment_rate_by_general_education.png")
-  file.path(paths$assets, "ilo_figures", files)
+  rows <- require_manifest_files(paths, "ilo_figures")
+  stats::setNames(rows$absolute_path, rows$file_id)
+}
+
+#' read one manifest row
+#'
+#' @return Reader output for raw data files, or a validated path for sidecars/assets.
+read_by_manifest_row <- function(row) {
+  path <- row$absolute_path[[1]]
+  file_type <- tolower(row$file_type[[1]])
+  switch(
+    file_type,
+    sav = read_sav_short(path),
+    csv = read_csv_short(path),
+    xls = read_excel_short(path),
+    xlsx = read_excel_short(path),
+    ods = read_ods_short(path),
+    shp = {
+      need_pkg("sf", "shapefiles")
+      sf::st_read(path, quiet = TRUE)
+    },
+    shx = path,
+    dbf = path,
+    prj = path,
+    png = path,
+    stop("No reader implemented for ", file_type, call. = FALSE)
+  )
+}
+
+#' read all manifest rows for a source
+#'
+#' @return Named list of reader outputs keyed by manifest file_id.
+read_manifest_group <- function(paths, source_id) {
+  rows <- require_manifest_files(paths, source_id)
+  stats::setNames(lapply(seq_len(nrow(rows)), function(i) read_by_manifest_row(rows[i, ])), rows$file_id)
 }
 
 # sample-end: code-census-geospatial-import

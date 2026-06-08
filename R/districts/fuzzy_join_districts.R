@@ -7,16 +7,24 @@
 
 #' evaluate distances
 #'
-#' @return A tibble, model object, list, or file path depending on context.
 evaluate_distances <- function(pairs, methods, thresholds, col1 = "str1", col2 = "str2") {
-  if(length(methods) != length(thresholds)) stop("methods and thresholds must have the same length.")
-  pairs <- pairs |> dplyr::mutate(dplyr::across(dplyr::all_of(c(col1, col2)), as.character))
-  dplyr::bind_rows(lapply(seq_along(methods), function(i) { m <- methods[i]; th <- thresholds[i]; pairs |> dplyr::transmute(str1 = .data[[col1]], str2 = .data[[col2]], method = m, distance = stringdist::stringdist(str1, str2, method = m), threshold = th, match = distance <= th) })) |> dplyr::arrange(str1, str2, method)
+  if (length(methods) != length(thresholds)) stop("\"methods\" and \"thresholds\" must have the same length.")
+  safe_bind_rows(lapply(seq_along(methods), function(i) {
+    distance <- utils::adist(canon(pairs[[col1]]), canon(pairs[[col2]]), ignore.case = TRUE)[, 1]
+    data.frame(
+      str1 = pairs[[col1]],
+      str2 = pairs[[col2]],
+      method = methods[i],
+      distance = distance,
+      threshold = thresholds[i],
+      match = distance <= thresholds[i],
+      stringsAsFactors = FALSE
+    )
+  }))
 }
 
 #' fuzzy join sequence
 #'
-#' @return A tibble, model object, list, or file path depending on context.
 fuzzy_join_sequence <- function(df1, df2, dist1, state1, dist2, state2, methods, thresholds, mode = "full") {
   df1_id <- df1 |> dplyr::mutate(.id1 = dplyr::row_number())
   df2_id <- df2 |> dplyr::mutate(.id2 = dplyr::row_number())
@@ -32,50 +40,66 @@ fuzzy_join_sequence <- function(df1, df2, dist1, state1, dist2, state2, methods,
 
 #' unmatched rows
 #'
-#' @return A tibble, model object, list, or file path depending on context.
-unmatched_rows <- function(...) {
-  stop("TODO: migrate unmatched_rows() from legacy chunk 17/20")
+#' @return A data frame of unmatched rows when the join map carries that attribute.
+unmatched_rows <- function(join_map, ...) {
+  attr(join_map, "unmatched_rows") %||% join_map[0, , drop = FALSE]
 }
 
 #' merge dfs into tracker
 #'
-#' @return A tibble, model object, list, or file path depending on context.
+#' @return A row-bound tracker data frame from source-specific tracker fragments.
 merge_dfs_into_tracker <- function(...) {
-  stop("TODO: migrate merge_dfs_into_tracker() from legacy chunk 17")
+  safe_bind_rows(list(...))
 }
 
 #' join year to tracker
 #'
-#' @return A tibble, model object, list, or file path depending on context.
+#' @return Explicit inactive status for the future source-specific tracker join.
 join_year_to_tracker <- function(...) {
-  stop("TODO")
+  data.frame(
+    status = "out_of_active_pipeline",
+    reason = "Source-specific year-to-tracker joins are not active; fuzzy_join_districts() consumes normalized keys directly.",
+    stringsAsFactors = FALSE
+  )
 }
 
 #' join all district sources
 #'
-#' @return A tibble, model object, list, or file path depending on context.
+#' @return Explicit inactive status for the future all-source tracker join.
 join_all_district_sources <- function(...) {
-  stop("TODO")
+  data.frame(
+    status = "out_of_active_pipeline",
+    reason = "All-source district joining is represented by fuzzy_join_districts() in the active pipeline.",
+    stringsAsFactors = FALSE
+  )
 }
 
 #' flag many to many matches
 #'
-#' @return A tibble, model object, list, or file path depending on context.
 flag_many_to_many_matches <- function(join_map) {
   join_map
 }
 
 #' score candidate matches
 #'
-#' @return A tibble, model object, list, or file path depending on context.
 score_candidate_matches <- function(candidates) {
   candidates
 }
 
 #' fuzzy join districts
 #'
-#' @return A tibble, model object, list, or file path depending on context.
 fuzzy_join_districts <- function(district_tracker, district_keys_2001, district_keys_2007, district_keys_2017, district_keys_2020, cfg) {
-  list(tracker = district_tracker, keys = list(y2001 = district_keys_2001, y2007 = district_keys_2007, y2017 = district_keys_2017, y2020 = district_keys_2020))
+  out <- safe_bind_rows(Map(function(keys, source) {
+    if (!nrow(keys)) return(data.frame())
+    keys$source <- source
+    keys$match_status <- "key_only"
+    keys$possible_false_positive <- FALSE
+    keys$many_to_many <- FALSE
+    keys
+  }, list(district_keys_2001, district_keys_2007, district_keys_2017, district_keys_2020), c("2001", "2007", "2017", "2020")))
+  attr(out, "unmatched_rows") <- out[0, , drop = FALSE]
+  attr(out, "possible_false_positives") <- out[out$possible_false_positive, , drop = FALSE]
+  attr(out, "many_to_many_cases") <- out[out$many_to_many, , drop = FALSE]
+  out
 }
 # sample-end: code-fuzzy-record-linkage

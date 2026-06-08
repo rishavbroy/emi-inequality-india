@@ -1,4 +1,4 @@
-source("R/samples/extract_code_excerpts.R")
+source("R/application_samples/extract_code_excerpts.R")
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) != 2) {
   stop("Usage: Rscript scripts/extract_code_excerpts.R SPEC_YML OUTPUT_QMD", call. = FALSE)

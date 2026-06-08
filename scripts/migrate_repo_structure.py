@@ -18,7 +18,7 @@ from typing import Iterable
 
 DIRS = [
     "config",
-    "R/io", "R/clean", "R/districts", "R/measures", "R/selection", "R/iv", "R/diagnostics", "R/output", "R/samples",
+    "R/io", "R/clean", "R/districts", "R/measures", "R/selection", "R/iv", "R/diagnostics", "R/output", "R/application_samples",
     "scripts",
     "data/raw", "data/raw_future", "data/interim", "data/processed", "data/metadata",
     "assets/ilo_figures",

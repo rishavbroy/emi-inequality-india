@@ -1,0 +1,33 @@
+Type: Project
+Package: emi-inequality-india
+Title: Replication Pipeline for English-Medium Instruction and Inequality in India
+Version: 0.0.0.9000
+Authors@R: person("Rishav", "Roy", role = c("aut", "cre"))
+Description: Research compendium for a district-level empirical analysis of English-medium instruction, linguistic distance, and consumption growth in India.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Imports:
+    targets,
+    tarchetypes,
+    yaml,
+    tidyverse,
+    readxl,
+    haven,
+    sf,
+    spdep,
+    survey,
+    marginaleffects,
+    ivreg,
+    sandwich,
+    lmtest,
+    modelsummary,
+    kableExtra,
+    stringdist,
+    fuzzyjoin,
+    magick,
+    broom,
+    quarto,
+    readODS,
+    car,
+    digest,
+    testthat
