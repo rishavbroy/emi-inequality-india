@@ -65,23 +65,85 @@ ame_out_of_pipeline <- function(status, reason) {
   )
 }
 
+#' extract model-frame data and AME weights
+#'
+#' marginaleffects warns, correctly, when weighted/survey models are summarized
+#' without an explicit `wts` argument. Build a newdata frame from the exact
+#' model estimation sample and attach a synthetic weight column whenever the
+#' fitted model exposes usable weights.
+ame_model_weight <- function(model_data, model_weights = NULL) {
+  weight_cols <- intersect(c("weight", "WEIGHT", "Multiplier", "multiplier", "(weights)"), names(model_data))
+  if (length(weight_cols)) {
+    return(suppressWarnings(as.numeric(model_data[[weight_cols[[1]]]])))
+  }
+
+  if (!is.null(model_weights) && length(model_weights) == nrow(model_data)) {
+    return(suppressWarnings(as.numeric(model_weights)))
+  }
+
+  NULL
+}
+
+#' build marginaleffects newdata and weights
+#'
+#' @return List with `data`, `wts`, and `has_explicit_weights`.
+ame_model_data_and_weights <- function(model) {
+  model_data <- as.data.frame(stats::model.frame(model))
+  model_weights <- tryCatch(stats::weights(model), error = function(e) NULL)
+  weight <- ame_model_weight(model_data, model_weights)
+
+  if (!is.null(weight) && length(weight) == nrow(model_data) && any(is.finite(weight) & weight != 1)) {
+    model_data$.ame_weight <- weight
+    return(list(data = model_data, wts = ".ame_weight", has_explicit_weights = TRUE))
+  }
+
+  list(data = model_data, wts = FALSE, has_explicit_weights = FALSE)
+}
+
+#' run marginaleffects while muffling only a redundant explicit-weight warning
+#'
+run_avg_slopes <- function(model, model_data, wts) {
+  withCallingHandlers(
+    marginaleffects::avg_slopes(
+      model,
+      newdata = model_data,
+      wts = wts,
+      vcov = TRUE,
+      type = "response"
+    ),
+    warning = function(w) {
+      msg <- conditionMessage(w)
+      explicit_weight_warning <- grepl(
+        "normally good practice to specify weights using the `wts` argument",
+        msg,
+        fixed = TRUE
+      )
+      if (explicit_weight_warning && !identical(wts, FALSE)) {
+        invokeRestart("muffleWarning")
+      }
+    }
+  )
+}
+
 #' compute ames autodiff
 #'
 compute_ames_autodiff <- function(model, newdata) {
   # Use the exact estimation sample retained by glm/svyglm. Passing the full
   # pre-model selection_data can have extra rows omitted during model fitting,
   # which makes marginaleffects recycle weights/covariates silently.
-  model_data <- stats::model.frame(model)
-  wts <- if ("weight" %in% names(model_data)) "weight" else FALSE
-  marginaleffects::avg_slopes(model, newdata = model_data, wts = wts, vcov = TRUE, type = "response")
+  amed <- ame_model_data_and_weights(model)
+  run_avg_slopes(model, amed$data, amed$wts)
 }
 
 #' compute ames fast draft
 #'
 compute_ames_fast_draft <- function(model, newdata, n = 200) {
-  model_data <- stats::model.frame(model)
-  wts <- if ("weight" %in% names(model_data)) "weight" else FALSE
-  marginaleffects::avg_slopes(model, newdata = dplyr::slice_sample(model_data, n = min(n, nrow(model_data))), wts = wts, vcov = TRUE, type = "response")
+  amed <- ame_model_data_and_weights(model)
+  run_avg_slopes(
+    model,
+    dplyr::slice_sample(amed$data, n = min(n, nrow(amed$data))),
+    amed$wts
+  )
 }
 
 #' compute analytic probit AMEs

@@ -55,3 +55,25 @@ test_that("full AME path uses marginaleffects uncertainty when available", {
   expect_true(any(is.finite(out$std.error)))
   expect_equal(unique(out$status), "estimated")
 })
+
+test_that("AME newdata uses model estimation rows and explicit model weights", {
+  selection_data <- data.frame(
+    enrolled = c(0, 1, 0, 1, 0, 1),
+    age = c(6, 7, NA, 9, 10, 11),
+    weight = c(1, 2, 3, 4, 5, 6)
+  )
+  model <- stats::glm(
+    enrolled ~ age,
+    data = selection_data,
+    weights = weight,
+    family = stats::binomial(link = "probit"),
+    na.action = stats::na.omit
+  )
+
+  amed <- ame_model_data_and_weights(model)
+
+  expect_equal(nrow(amed$data), stats::nobs(model))
+  expect_equal(amed$wts, ".ame_weight")
+  expect_true(".ame_weight" %in% names(amed$data))
+  expect_equal(amed$data$.ame_weight, selection_data$weight[!is.na(selection_data$age)])
+})
