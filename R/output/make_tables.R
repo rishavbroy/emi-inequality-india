@@ -266,7 +266,7 @@ make_tables <- function(selection_data, ame_results, district_panel, iv_models, 
     sum_tbl_probit_cat = make_selection_summary_categorical_table(selection_data),
     probit_mfx = make_probit_ame_table(ame_results),
     sum_tbl_iv = make_iv_summary_table(district_panel),
-    fs_cons = make_first_stage_table(first_stage_tests),
+    fs_cons = make_first_stage_table(first_stage_tests, cfg),
     cons_iv = make_second_stage_table(iv_models),
     ame_results = as.data.frame(ame_results),
     first_stage = as.data.frame(first_stage_tests)
@@ -275,8 +275,8 @@ make_tables <- function(selection_data, ame_results, district_panel, iv_models, 
 
 make_selection_summary_numeric_table <- function(selection_data) {
   meta <- data.frame(
-    var = c("AGE", "HH_SIZE", "ENROLLMENT_COST", "dmean_num_IS_EDU_FREE", "dmean_num_TUTION_FEE_WAIVED", "dmean_num_RECD_SCHOLARSHIP_STIPEND", "dmean_num_RECD_TXT_BOOKS", "dmean_num_RECD_STATIONERY", "dmean_num_MID_DAY_MEAL_ETC_RECD"),
-    label = c("Age", "Household size", "Enrollment cost (Rs.)", "Educ. free available? (Yes = 1)", "Tuition waived?", "Scholarship/Stipend?", "Textbooks received?", "Stationery received?", "Mid-day meal or more received?"),
+    var = c("AGE", "HH_SIZE", "ENROLLMENT_COST", "dmean_num_IS_EDU_FREE", "dmean_num_TUTION_FEE_WAIVED", "dmean_num_RECD_SCHOLARSHIP_STIPEND", "dmean_num_RECD_TXT_BOOKS", "dmean_num_RECD_STATIONERY", "dmean_num_MID_DAY_MEAL_ETC_RECD", "dmean_num_ENROLLMENT_COST"),
+    label = c("Age", "Household size", "Enrollment cost (Rs.)", "Educ. free available? (Yes = 1)", "Tuition waived?", "Scholarship/Stipend?", "Textbooks received?", "Stationery received?", "Mid-day meal or more received?", "Avg. district enrollment cost"),
     stringsAsFactors = FALSE
   )
   legacy_numeric_stats(selection_data, meta, cost_vars = "ENROLLMENT_COST")
@@ -313,21 +313,48 @@ make_iv_summary_table <- function(district_panel) {
   legacy_numeric_stats(district_panel, meta, cost_vars = c("npeople_0708", "npeople_1718"))
 }
 
-make_first_stage_table <- function(first_stage_tests) {
+make_first_stage_table <- function(first_stage_tests, cfg = list()) {
   fs <- as.data.frame(first_stage_tests, stringsAsFactors = FALSE)
+  required_cols <- c("model", "term", "estimate", "std.error", "p.value", "partial_f", "partial_p", "status")
+  missing_cols <- setdiff(required_cols, names(fs))
+  if (length(missing_cols)) {
+    msg <- paste("First-stage results are missing columns:", paste(missing_cols, collapse = ", "))
+    if (is_final_mode(cfg)) stop(msg, call. = FALSE)
+    return(table_status_row("first_stage", "unavailable", msg))
+  }
   if ("model" %in% names(fs) && any(fs$model %in% c("consumption", "baseline"))) fs <- fs[fs$model %in% c("consumption", "baseline"), , drop = FALSE]
+  if (any(grepl("^[0-9]+$", as.character(fs$term)))) {
+    msg <- "First-stage coefficient terms are numeric row positions; coefficient names were lost upstream."
+    if (is_final_mode(cfg)) stop(msg, call. = FALSE)
+    return(table_status_row("first_stage", "malformed", msg))
+  }
   fs <- fs[fs$status == "estimated" & fs$term %in% c("wavg_ling_degrees", "(Intercept)"), , drop = FALSE]
-  if (!nrow(fs)) return(as.data.frame(first_stage_tests))
+  required_terms <- c("wavg_ling_degrees", "(Intercept)")
+  missing_terms <- setdiff(required_terms, fs$term)
+  if (length(missing_terms)) {
+    msg <- paste("First-stage table lacks required coefficient(s):", paste(missing_terms, collapse = ", "))
+    if (is_final_mode(cfg)) stop(msg, call. = FALSE)
+    return(table_status_row("first_stage", "unavailable", msg))
+  }
+  fs <- fs[match(required_terms, fs$term), , drop = FALSE]
   fs$stars <- ifelse(is.finite(fs$p.value) & fs$p.value < 0.001, "***", ifelse(is.finite(fs$p.value) & fs$p.value < 0.01, "**", ifelse(is.finite(fs$p.value) & fs$p.value < 0.05, "*", "")))
   out <- data.frame(
-    Term = ifelse(fs$term == "wavg_ling_degrees", "Linguistic distance", fs$term),
-    Estimate = paste0(sprintf("%.2f", fs$estimate), fs$stars),
-    `Std. Error` = sprintf("(%.2f)", fs$std.error),
+    Term = ifelse(fs$term == "wavg_ling_degrees", "Linguistic distance", "Constant"),
+    Estimate = paste0(sprintf("%.3f", fs$estimate), fs$stars),
+    `Std. Error` = sprintf("(%.3f)", fs$std.error),
     check.names = FALSE,
     stringsAsFactors = FALSE
   )
   stat <- fs[fs$term == "wavg_ling_degrees", , drop = FALSE]
-  if (nrow(stat)) out <- rbind(out, data.frame(Term = "First-stage F", Estimate = sprintf("%.2f", stat$partial_f[[1]]), `Std. Error` = "", check.names = FALSE))
+  if (nrow(stat)) {
+    out <- rbind(out, data.frame(
+      Term = "Instrument's F-Statistic",
+      Estimate = paste0(sprintf("%.2f", stat$partial_f[[1]]), ifelse(is.finite(stat$partial_p[[1]]) & stat$partial_p[[1]] < 0.001, "***", ifelse(is.finite(stat$partial_p[[1]]) & stat$partial_p[[1]] < 0.01, "**", ifelse(is.finite(stat$partial_p[[1]]) & stat$partial_p[[1]] < 0.05, "*", "")))),
+      `Std. Error` = "",
+      check.names = FALSE,
+      stringsAsFactors = FALSE
+    ))
+  }
   out
 }
 

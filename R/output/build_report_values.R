@@ -204,6 +204,11 @@ format_report_number <- function(out, column = "estimate", digits = NULL) {
 first_stage_value <- function(first_stage_tests, terms, column = "estimate", digits = NULL) {
   x <- as_plain_data_frame(first_stage_tests)
   if (!nrow(x) || !"term" %in% names(x) || !column %in% names(x)) return(NA_real_)
+  if ("model" %in% names(x) && any(x$model %in% c("consumption", "baseline"))) {
+    x <- x[x$model %in% c("consumption", "baseline"), , drop = FALSE]
+  }
+  if (any(grepl("^[0-9]+$", as.character(x$term)))) return(NA_real_)
+  if ("status" %in% names(x)) x <- x[x$status == "estimated", , drop = FALSE]
   term <- first_matching_term(terms, x$term)
   if (is.na(term)) return(NA_real_)
   out <- suppressWarnings(as.numeric(x[x$term == term, column][[1]]))

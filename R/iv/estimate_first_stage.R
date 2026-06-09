@@ -46,12 +46,17 @@ estimate_first_stage <- function(iv_models, district_panel, cfg) {
     if (inherits(fit, "error")) return(first_stage_status_row(model_name, conditionMessage(fit)))
 
     vc <- first_stage_vcov(fit, district_panel)
-    coefs <- tryCatch({
-      if (is.null(vc)) as.data.frame(summary(fit)$coefficients) else as.data.frame(lmtest::coeftest(fit, vcov. = vc))
-    }, error = function(e) data.frame())
-    if (!nrow(coefs)) return(first_stage_status_row(model_name, "First-stage coefficient table is empty."))
+    coef_mat <- tryCatch({
+      if (is.null(vc)) summary(fit)$coefficients else lmtest::coeftest(fit, vcov. = vc)
+    }, error = function(e) NULL)
+    if (is.null(coef_mat) || !NROW(coef_mat)) return(first_stage_status_row(model_name, "First-stage coefficient table is empty."))
 
-    coefs$term <- rownames(coefs)
+    coef_terms <- rownames(coef_mat)
+    coefs <- as.data.frame(coef_mat, check.names = FALSE)
+    if (is.null(coef_terms) || !length(coef_terms) || all(grepl("^[0-9]+$", coef_terms))) {
+      coef_terms <- names(stats::coef(fit))
+    }
+    coefs$term <- coef_terms
     rownames(coefs) <- NULL
     estimate_col <- first_existing_column(coefs, c("Estimate", "estimate"))
     se_col <- first_existing_column(coefs, c("Std. Error", "std.error"))
