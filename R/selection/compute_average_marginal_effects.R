@@ -35,6 +35,27 @@ compute_average_marginal_effects <- function(selection_model, selection_data, cf
     }
   }, add = TRUE)
 
+#' run expression while muffling survey lonely-PSU warnings
+#'
+#' survey emits lonely-PSU warnings even when survey.lonely.psu is set to
+#' average and the adjustment is intentional. Muffle only those handled
+#' warnings inside the AME target so strict final builds remain warning-clean.
+muffle_survey_lonely_psu_warnings <- function(expr) {
+  withCallingHandlers(
+    expr,
+    warning = function(w) {
+      msg <- conditionMessage(w)
+      lonely_psu_warning <- grepl(
+        "has only one PSU at stage",
+        msg,
+        fixed = TRUE
+      )
+      if (lonely_psu_warning) invokeRestart("muffleWarning")
+    }
+  )
+}
+
+
   if (!isTRUE(cfg$run_full_ame)) {
     return(format_ame_results(data.frame(
       term = names(stats::coef(selection_model)),
@@ -58,14 +79,16 @@ compute_average_marginal_effects <- function(selection_model, selection_data, cf
     ))
   }
 
-  out <- tryCatch(
-    compute_ames_autodiff(selection_model, selection_data),
-    error = function(e) {
-      fallback <- compute_ames_probit_analytic(selection_model, selection_data)
-      fallback$method <- "delta_method_analytic_probit"
-      fallback$reason <- NA_character_
-      fallback
-    }
+  out <- muffle_survey_lonely_psu_warnings(
+    tryCatch(
+      compute_ames_autodiff(selection_model, selection_data),
+      error = function(e) {
+        fallback <- compute_ames_probit_analytic(selection_model, selection_data)
+        fallback$method <- "delta_method_analytic_probit"
+        fallback$reason <- NA_character_
+        fallback
+      }
+    )
   )
   format_ame_results(out)
 }
