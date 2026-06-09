@@ -20,8 +20,29 @@ build_spatial_weights <- function(district_panel, cfg) {
         round(100 * coverage, 1), "%.")
     ))
   }
-  nb <- spdep::poly2nb(district_panel[!sf::st_is_empty(geom), , drop = FALSE], queen = FALSE)
-  spdep::nb2listw(nb, style = "W", zero.policy = TRUE)
+  spatial_warnings <- character()
+  capture_expected_spatial_warning <- function(expr) {
+    withCallingHandlers(
+      expr,
+      warning = function(w) {
+        msg <- conditionMessage(w)
+        expected <- grepl("no neighbours|sub-graphs", msg, ignore.case = TRUE)
+        if (expected) {
+          spatial_warnings <<- unique(c(spatial_warnings, msg))
+          invokeRestart("muffleWarning")
+        }
+      }
+    )
+  }
+
+  nb <- capture_expected_spatial_warning(
+    spdep::poly2nb(district_panel[!sf::st_is_empty(geom), , drop = FALSE], queen = FALSE)
+  )
+  out <- capture_expected_spatial_warning(
+    spdep::nb2listw(nb, style = "W", zero.policy = TRUE)
+  )
+  attr(out, "spatial_warnings") <- spatial_warnings
+  out
 }
 
 #' diagnose spatial weights
@@ -30,6 +51,7 @@ diagnose_spatial_weights <- function(district_panel, spatial_weights, cfg) {
   data.frame(
     diagnostic = "spatial_weights",
     status = spatial_weights$status %||% "constructed",
+    warnings = paste(attr(spatial_weights, "spatial_warnings") %||% character(), collapse = "; "),
     stringsAsFactors = FALSE
   )
 }

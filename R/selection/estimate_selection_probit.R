@@ -60,7 +60,7 @@ build_survey_design_selection <- function(selection_df) {
 #' fit selection probit
 #'
 fit_selection_probit <- function(selection_design, f_probit) {
-  survey::svyglm(f_probit, design = selection_design, family = stats::binomial(link = "probit"))
+  survey::svyglm(f_probit, design = selection_design, family = stats::quasibinomial(link = "probit"))
 }
 
 #' compute inverse mills ratio
