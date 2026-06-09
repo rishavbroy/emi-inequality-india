@@ -37,15 +37,60 @@ first_available_text <- function(x, candidates, default = "unavailable in curren
   if (!length(out) || is.na(out) || !nzchar(out)) default else out
 }
 
+report_coefficient_frame <- function(model) {
+  estimates <- tryCatch(stats::coef(model), error = function(e) NULL)
+  if (is.null(estimates) || !length(estimates)) return(data.frame())
+
+  terms <- names(estimates)
+  if (is.null(terms) || !length(terms)) terms <- paste0("term_", seq_along(estimates))
+  estimates <- suppressWarnings(as.numeric(estimates))
+
+  vc <- tryCatch(stats::vcov(model), error = function(e) NULL)
+  se <- rep(NA_real_, length(estimates))
+  if (!is.null(vc) && length(dim(vc)) == 2L && all(dim(vc) >= length(estimates))) {
+    diag_vc <- suppressWarnings(as.numeric(diag(vc)))
+    vc_terms <- rownames(vc)
+    if (!is.null(vc_terms) && length(vc_terms)) {
+      matched <- match(terms, vc_terms)
+      ok <- !is.na(matched) & matched <= length(diag_vc)
+      se[ok] <- sqrt(pmax(diag_vc[matched[ok]], 0))
+    } else {
+      se <- sqrt(pmax(diag_vc[seq_along(estimates)], 0))
+    }
+  }
+
+  statistic <- estimates / se
+  statistic[!is.finite(statistic)] <- NA_real_
+  df_resid <- tryCatch(stats::df.residual(model), error = function(e) NA_real_)
+  p_value <- if (is.finite(df_resid) && df_resid > 0) {
+    2 * stats::pt(abs(statistic), df = df_resid, lower.tail = FALSE)
+  } else {
+    2 * stats::pnorm(abs(statistic), lower.tail = FALSE)
+  }
+  p_value[!is.finite(p_value)] <- NA_real_
+
+  out <- data.frame(
+    Estimate = estimates,
+    estimate = estimates,
+    p.value = p_value,
+    `Pr(>|t|)` = p_value,
+    statistic = statistic,
+    std.error = se,
+    check.names = FALSE,
+    stringsAsFactors = FALSE
+  )
+  rownames(out) <- terms
+  out
+}
+
 coefficient_value <- function(model, terms, column = c("Estimate", "estimate"), digits = NULL) {
   out <- tryCatch({
-    sm <- summary(model)
-    coefs <- as.data.frame(sm$coefficients)
-    term <- intersect(terms, rownames(coefs))
-    if (!length(term)) return(NA_real_)
+    coefs <- report_coefficient_frame(model)
+    term <- first_matching_term(terms, rownames(coefs))
+    if (is.na(term)) return(NA_real_)
     hit <- intersect(column, names(coefs))
     if (!length(hit)) return(NA_real_)
-    suppressWarnings(as.numeric(coefs[term[[1]], hit[[1]]]))
+    suppressWarnings(as.numeric(coefs[term, hit[[1]]]))
   }, error = function(e) NA_real_)
   if (!is.null(digits) && is.finite(out)) out <- round(out, digits)
   out
@@ -53,13 +98,12 @@ coefficient_value <- function(model, terms, column = c("Estimate", "estimate"), 
 
 p_value <- function(model, terms, digits = NULL) {
   out <- tryCatch({
-    sm <- summary(model)
-    coefs <- as.data.frame(sm$coefficients)
-    term <- intersect(terms, rownames(coefs))
-    if (!length(term)) return(NA_real_)
+    coefs <- report_coefficient_frame(model)
+    term <- first_matching_term(terms, rownames(coefs))
+    if (is.na(term)) return(NA_real_)
     hit <- intersect(c("Pr(>|t|)", "Pr(>|z|)", "p.value", "p_value"), names(coefs))
     if (!length(hit)) return(NA_real_)
-    suppressWarnings(as.numeric(coefs[term[[1]], hit[[1]]]))
+    suppressWarnings(as.numeric(coefs[term, hit[[1]]]))
   }, error = function(e) NA_real_)
   if (!is.null(digits) && is.finite(out)) out <- signif(out, digits)
   out

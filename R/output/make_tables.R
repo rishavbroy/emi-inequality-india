@@ -8,8 +8,14 @@ is_final_mode <- function(cfg) identical(cfg$mode, "final")
 fail_final_if_status <- function(x, cfg, label) {
   df <- as.data.frame(x)
   ok_status <- c("mapped", "estimated")
-  if (is_final_mode(cfg) && "status" %in% names(df) && any(!is.na(df$status) & !df$status %in% ok_status)) {
-    stop("Final table generation requires completed model output for ", label, ".", call. = FALSE)
+  if (is_final_mode(cfg) && "status" %in% names(df)) {
+    bad <- !is.na(df$status) & !df$status %in% ok_status
+    if (any(bad)) {
+      reasons <- character()
+      if ("reason" %in% names(df)) reasons <- unique(stats::na.omit(as.character(df$reason[bad])))
+      suffix <- if (length(reasons)) paste0(" Reasons: ", paste(reasons, collapse = "; ")) else ""
+      stop("Final table generation requires completed model output for ", label, ".", suffix, call. = FALSE)
+    }
   }
   invisible(TRUE)
 }
@@ -94,25 +100,138 @@ categorical_summary <- function(df, variables) {
   }))
 }
 
+table_status_row <- function(model, status = "unavailable", reason = NA_character_) {
+  data.frame(
+    model = model,
+    term = NA_character_,
+    estimate = NA_real_,
+    std.error = NA_real_,
+    statistic = NA_real_,
+    p.value = NA_real_,
+    status = status,
+    reason = reason,
+    stringsAsFactors = FALSE
+  )
+}
+
+table_first_existing_column <- function(df, candidates) {
+  hit <- intersect(candidates, names(df))
+  if (length(hit)) hit[[1]] else NA_character_
+}
+
+table_column_or_na <- function(df, column) {
+  if (length(column) != 1L || is.na(column) || !column %in% names(df)) {
+    return(rep(NA_real_, nrow(df)))
+  }
+  suppressWarnings(as.numeric(df[[column]]))
+}
+
+coefficient_frame <- function(model, vcov_matrix = NULL) {
+  estimates <- tryCatch(stats::coef(model), error = function(e) NULL)
+  if (is.null(estimates) || !length(estimates)) return(data.frame())
+
+  terms <- names(estimates)
+  if (is.null(terms) || !length(terms)) terms <- paste0("term_", seq_along(estimates))
+  estimates <- suppressWarnings(as.numeric(estimates))
+
+  vc <- vcov_matrix
+  if (is.null(vc)) vc <- tryCatch(stats::vcov(model), error = function(e) NULL)
+  se <- rep(NA_real_, length(estimates))
+  if (!is.null(vc) && length(dim(vc)) == 2L && all(dim(vc) >= length(estimates))) {
+    diag_vc <- suppressWarnings(as.numeric(diag(vc)))
+    vc_terms <- rownames(vc)
+    if (!is.null(vc_terms) && length(vc_terms)) {
+      matched <- match(terms, vc_terms)
+      ok <- !is.na(matched) & matched <= length(diag_vc)
+      se[ok] <- sqrt(pmax(diag_vc[matched[ok]], 0))
+    } else {
+      se <- sqrt(pmax(diag_vc[seq_along(estimates)], 0))
+    }
+  }
+
+  statistic <- estimates / se
+  statistic[!is.finite(statistic)] <- NA_real_
+  df_resid <- tryCatch(stats::df.residual(model), error = function(e) NA_real_)
+  p_value <- if (is.finite(df_resid) && df_resid > 0) {
+    2 * stats::pt(abs(statistic), df = df_resid, lower.tail = FALSE)
+  } else {
+    2 * stats::pnorm(abs(statistic), lower.tail = FALSE)
+  }
+  p_value[!is.finite(p_value)] <- NA_real_
+
+  out <- data.frame(
+    Estimate = estimates,
+    `Std. Error` = se,
+    statistic = statistic,
+    `Pr(>|t|)` = p_value,
+    check.names = FALSE,
+    stringsAsFactors = FALSE
+  )
+  rownames(out) <- terms
+  out
+}
+
+plain_model_coefficients <- function(model) {
+  coefficient_frame(model)
+}
+
+clustered_model_coefficients <- function(model) {
+  tryCatch({
+    vc_fun <- clustered_model_vcov(model)
+    if (is.null(vc_fun)) return(data.frame())
+    vc <- vc_fun(model)
+    coefficient_frame(model, vc)
+  }, error = function(e) data.frame())
+}
+
+filter_table_model <- function(df, candidates) {
+  if (!"model" %in% names(df)) return(df)
+  out <- df[df$model %in% candidates, , drop = FALSE]
+  if (nrow(out)) out else df[0L, , drop = FALSE]
+}
+
+is_model_status_payload <- function(x) {
+  is.list(x) &&
+    !inherits(x, c("lm", "ivreg")) &&
+    !is.null(x$status) &&
+    length(x$status) == 1L &&
+    (is.character(x$status) || is.factor(x$status))
+}
+
+model_status_reason <- function(x) {
+  reason <- x$reason
+  if (is.null(reason) || !length(reason) || all(is.na(reason))) NA_character_ else as.character(reason[[1]])
+}
+
 tidy_iv_models <- function(iv_models) {
-  if (!is.list(iv_models)) iv_models <- list(model = iv_models)
+  if (!is.list(iv_models) || inherits(iv_models, c("lm", "ivreg"))) iv_models <- list(model = iv_models)
   safe_bind_rows(lapply(names(iv_models), function(name) {
     model <- iv_models[[name]]
-    if (is.list(model) && !is.null(model$status)) {
-      return(data.frame(model = name, term = NA_character_, estimate = NA_real_, std.error = NA_real_, statistic = NA_real_, p.value = NA_real_, status = model$status, reason = model$reason %||% NA_character_))
+    if (is_model_status_payload(model)) {
+      return(table_status_row(name, as.character(model$status[[1]]), model_status_reason(model)))
     }
-    coefs <- tryCatch({
-      vc <- clustered_model_vcov(model)
-      if (is.null(vc)) as.data.frame(summary(model)$coefficients) else as.data.frame(lmtest::coeftest(model, vcov. = vc))
-    }, error = function(e) data.frame())
-    if (!nrow(coefs)) return(data.frame(model = name, term = NA_character_, estimate = NA_real_, std.error = NA_real_, statistic = NA_real_, p.value = NA_real_, status = "unavailable", reason = "Model coefficients are unavailable."))
+    coefs <- clustered_model_coefficients(model)
+    if (!nrow(coefs)) coefs <- plain_model_coefficients(model)
+    if (!nrow(coefs)) {
+      return(table_status_row(name, "unavailable", "Model coefficients are unavailable."))
+    }
+
+    estimate_col <- table_first_existing_column(coefs, c("Estimate", "estimate"))
+    se_col <- table_first_existing_column(coefs, c("Std. Error", "std.error", "Std.Error"))
+    statistic_col <- table_first_existing_column(coefs, c("t value", "z value", "t", "z", "statistic"))
+    p_col <- table_first_existing_column(coefs, c("Pr(>|t|)", "Pr(>|z|)", "p.value", "p", "P>|t|", "P>|z|"))
+
+    if (is.na(estimate_col)) {
+      return(table_status_row(name, "unavailable", paste("Model coefficient table lacks an estimate column. Columns:", paste(names(coefs), collapse = ", "))))
+    }
+
     data.frame(
       model = name,
       term = rownames(coefs),
-      estimate = coefs[[intersect(c("Estimate", "estimate"), names(coefs))[[1]]]],
-      std.error = coefs[[intersect(c("Std. Error", "std.error"), names(coefs))[[1]]]],
-      statistic = coefs[[intersect(c("t value", "z value", "statistic"), names(coefs))[[1]]]],
-      p.value = coefs[[intersect(c("Pr(>|t|)", "Pr(>|z|)", "p.value"), names(coefs))[[1]]]],
+      estimate = table_column_or_na(coefs, estimate_col),
+      std.error = table_column_or_na(coefs, se_col),
+      statistic = table_column_or_na(coefs, statistic_col),
+      p.value = table_column_or_na(coefs, p_col),
       status = "estimated",
       reason = NA_character_,
       stringsAsFactors = FALSE
@@ -122,12 +241,13 @@ tidy_iv_models <- function(iv_models) {
 
 clustered_model_vcov <- function(model) {
   cluster <- attr(model, "cluster_state")
-  cluster <- stats::na.omit(cluster)
-  if (!is.null(cluster) && length(unique(cluster)) > 1L && requireNamespace("sandwich", quietly = TRUE)) {
-    force(cluster)
-    return(function(x) sandwich::vcovCL(x, cluster = cluster))
-  }
-  NULL
+  if (is.null(cluster)) return(NULL)
+  cluster <- as.vector(cluster)
+  if (length(cluster) != stats::nobs(model)) return(NULL)
+  if (sum(!is.na(cluster)) < 2L || length(unique(cluster[!is.na(cluster)])) <= 1L) return(NULL)
+  if (!requireNamespace("sandwich", quietly = TRUE)) return(NULL)
+  force(cluster)
+  function(x) sandwich::vcovCL(x, cluster = cluster)
 }
 
 #' make tables
@@ -137,7 +257,8 @@ make_tables <- function(selection_data, ame_results, district_panel, iv_models, 
   fail_final_if_status(ame_results, cfg, "average marginal effects")
   fail_final_if_status(first_stage_tests, cfg, "first-stage regression")
   cons_iv <- tidy_iv_models(iv_models)
-  fail_final_if_status(cons_iv, cfg, "second-stage IV regression")
+  cons_iv_required <- filter_table_model(cons_iv, c("consumption", "baseline"))
+  fail_final_if_status(cons_iv_required, cfg, "second-stage IV regression")
 
   list(
     selection_n = data.frame(n = nrow(as.data.frame(selection_data))),
@@ -212,7 +333,8 @@ make_first_stage_table <- function(first_stage_tests) {
 
 make_second_stage_table <- function(iv_models) {
   out <- tidy_iv_models(iv_models)
-  out <- out[out$model %in% c("consumption", "baseline"), , drop = FALSE]
+  out <- filter_table_model(out, c("consumption", "baseline"))
+  if (!nrow(out)) return(data.frame(Term = character(), Estimate = character(), `Std. Error` = character(), check.names = FALSE))
   out$stars <- ifelse(is.finite(out$p.value) & out$p.value < 0.001, "***", ifelse(is.finite(out$p.value) & out$p.value < 0.01, "**", ifelse(is.finite(out$p.value) & out$p.value < 0.05, "*", "")))
   data.frame(
     Term = legacy_iv_term_label(out$term),
