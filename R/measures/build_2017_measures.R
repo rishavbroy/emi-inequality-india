@@ -5,31 +5,68 @@
 #'
 build_2017_measures <- function(nss_2017_education, cfg) {
   inputs <- as_input_list(nss_2017_education)
-  df <- std(safe_bind_rows(lapply(inputs, safe_df)), 2017L)
-  if (!all(c("state_std", "district_std") %in% names(df))) return(empty_panel())
-
+  df <- std(safe_df(select_input_frame_2017(inputs, c("nss1718edu_block3", "block3", "block"))), 2017L)
   df <- normalize_2017_district_code(df)
+  key <- district_group_vars_2017(df)
+  if (!length(key) || !nrow(df)) return(empty_panel())
+
   value <- first_col(df, c("HH_Con_exp_rs", "MPCE", "mpce", "consumption", "hh_cons"))
   hh_size <- first_col(df, c("Household_size", "HH_SIZE", "household_size"))
   weight <- first_col(df, c("MULT_Combined", "weight", "WEIGHT", "multiplier"))
-  out <- unique(df[c("state_std", "district_std")])
-  if ("district_code_1718" %in% names(df)) out <- merge(out, unique(df[c("state_std", "district_std", "district_code_1718")]), by = c("state_std", "district_std"), all.x = TRUE)
-  out <- out[!is.na(out$district_std) & nzchar(out$district_std), , drop = FALSE]
-  if (identical(value, "HH_Con_exp_rs") && !is.null(hh_size)) {
+  if (is.null(value) || is.null(weight)) return(empty_panel())
+
+  hh_key <- first_col(df, c("HHID", "HH_ID", "household_id"))
+  if (!is.null(hh_key)) {
+    df$.hh_distinct_key <- paste(do.call(paste, c(df[key], sep = "__")), canon(df[[hh_key]]), sep = "__")
+    df <- df[!duplicated(df$.hh_distinct_key), , drop = FALSE]
+  }
+  if (!is.null(hh_size)) {
     df$consumption_pc_2017 <- num(df[[value]]) / num(df[[hh_size]])
-    value <- "consumption_pc_2017"
+  } else {
+    df$consumption_pc_2017 <- num(df[[value]])
   }
-  if (!is.null(value)) {
-    cons <- bydist(df, value, weight, "consumption_2017")
-    out <- merge(out, cons, by = c("state_std", "district_std"), all.x = TRUE)
-    gini <- bydist(df, value, weight, "gini_cons_1718", wgini)
-    gini$n <- NULL
-    out <- merge(out, gini, by = c("state_std", "district_std"), all.x = TRUE)
-  }
+
+  idx <- which(stats::complete.cases(df[key]))
+  split_i <- split(idx, interaction(df[idx, key, drop = FALSE], drop = TRUE, sep = "__"))
+  out <- safe_bind_rows(lapply(split_i, function(i) {
+    w <- num(df[[weight]][i])
+    size <- if (!is.null(hh_size)) num(df[[hh_size]][i]) else rep(1, length(i))
+    z <- df[i[[1]], key, drop = FALSE]
+    z <- z[rep(1L, 1L), , drop = FALSE]
+    data.frame(
+      z,
+      consumption_2017 = wmean(df$consumption_pc_2017[i], w),
+      gini_cons_1718 = wgini(df$consumption_pc_2017[i], w),
+      n_2017 = length(i),
+      npeople_1718 = sum(w * size, na.rm = TRUE),
+      nhouses_1718 = sum(w, na.rm = TRUE),
+      stringsAsFactors = FALSE
+    )
+  }))
   out <- attach_2017_district_names(out, inputs)
   out <- add_legacy_2017_aliases(out)
-  out$district_panel_id <- make_district_key(out$state_std, out$district_std, 2017L)
+  if (all(c("state_std", "district_std") %in% names(out))) {
+    out$district_panel_id <- make_district_key(out$state_std, out$district_std, 2017L)
+  }
   out
+}
+
+select_input_frame_2017 <- function(inputs, candidates) {
+  inputs <- as_input_list(inputs)
+  for (nm in candidates) {
+    if (!is.null(inputs[[nm]]) && nrow(safe_df(inputs[[nm]]))) return(inputs[[nm]])
+  }
+  if (length(inputs) == 1L) return(inputs[[1L]])
+  data.frame()
+}
+
+district_group_vars_2017 <- function(df) {
+  if ("district_code_1718" %in% names(df)) {
+    val <- as.character(df$district_code_1718)
+    if (any(!is.na(val) & nzchar(val))) return("district_code_1718")
+  }
+  if (all(c("state_std", "district_std") %in% names(df))) return(c("state_std", "district_std"))
+  character()
 }
 
 #' compute consumption 2017
@@ -92,7 +129,10 @@ attach_2017_district_names <- function(out, inputs) {
   lookup$district_17 <- lookup$district_1718
   lookup$state_18 <- lookup$state_1718
   lookup$district_18 <- lookup$district_1718
-  merge(out, lookup[c("district_code_1718", "state_1718", "district_1718", "state_17", "district_17", "state_18", "district_18")], by = "district_code_1718", all.x = TRUE)
+  merged <- merge(out, lookup[c("district_code_1718", "state_1718", "district_1718", "state_17", "district_17", "state_18", "district_18")], by = "district_code_1718", all.x = TRUE, sort = FALSE)
+  if ("state_1718" %in% names(merged)) merged$state_std <- canonicalize_state_name(merged$state_1718)
+  if ("district_1718" %in% names(merged)) merged$district_std <- canonicalize_district_name(merged$district_1718)
+  merged
 }
 
 add_legacy_2017_aliases <- function(out) {
@@ -100,9 +140,6 @@ add_legacy_2017_aliases <- function(out) {
   alias("consumption_1718", "consumption_2017")
   alias("gini_consumption_2017", "gini_cons_1718")
   alias("gini_cons_1718", "gini_consumption_2017")
-  alias("n_2017", "n")
-  alias("npeople_1718", "n")
-  if (!"nhouses_1718" %in% names(out) && "n" %in% names(out)) out$nhouses_1718 <- out$n
   out
 }
 

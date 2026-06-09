@@ -8,7 +8,7 @@ build_district_panel <- function(district_tracker, district_join_map, measures_2
   tracker <- legacy_tracker_frame(district_tracker)
   if (nrow(tracker) && legacy_named_measures_available(measures_2007, measures_2017, linguistic_distance_iv)) {
     out <- build_tracker_based_district_panel(tracker, measures_2007, measures_2017, linguistic_distance_iv, boundaries_2020)
-    if (nrow(out)) return(out)
+    if (nrow(out)) return(validate_legacy_district_panel(out, cfg))
   }
 
   # Fallback for tests and draft diagnostics when named tracker inputs are not
@@ -28,7 +28,7 @@ build_district_panel <- function(district_tracker, district_join_map, measures_2
   out <- compute_consumption_growth_pct(out)
   out <- compute_log_consumption_difference(out)
   out <- compute_gini_change(out)
-  attach_panel_geometry(out, boundaries_2020)
+  validate_legacy_district_panel(attach_panel_geometry(out, boundaries_2020), cfg)
 }
 
 legacy_tracker_frame <- function(district_tracker) {
@@ -358,4 +358,28 @@ flatten_processed_output <- function(x) {
     }
   }
   x
+}
+
+validate_legacy_district_panel <- function(out, cfg = list()) {
+  if (!identical(cfg$mode, "final")) return(out)
+  df <- as.data.frame(out)
+  failures <- character()
+  add <- function(...) failures <<- c(failures, paste0(...))
+  if (nrow(df) != 454L) add("district_panel has ", nrow(df), " rows; legacy analysis panel has 454 rows.")
+  required <- c("EMIE", "wavg_ling_degrees", "npeople_0708", "consumption_0708", "gini_cons_0708", "consumption_1718", "gini_cons_1718", "consumption_pct_change", "gini_change")
+  missing <- setdiff(required, names(df))
+  if (length(missing)) add("district_panel is missing required legacy columns: ", paste(missing, collapse = ", "))
+  if ("EMIE" %in% names(df)) {
+    emie <- num(df$EMIE)
+    if (mean(emie, na.rm = TRUE) < 10 || max(emie, na.rm = TRUE) < 90) add("EMIE scale is inconsistent with legacy 0-100 percentage scale.")
+  }
+  if ("npeople_0708" %in% names(df) && mean(num(df$npeople_0708), na.rm = TRUE) < 10000) {
+    add("npeople_0708 looks like a sample count rather than weighted population.")
+  }
+  if ("dependency_ratio" %in% names(df) && mean(num(df$dependency_ratio), na.rm = TRUE) > 80) {
+    add("dependency_ratio mean is implausibly high relative to the legacy table; verify weighted numerator/denominator construction.")
+  }
+  if (length(failures)) stop(paste(failures, collapse = "
+"), call. = FALSE)
+  out
 }

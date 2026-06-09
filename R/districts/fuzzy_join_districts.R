@@ -185,15 +185,28 @@ score_candidate_matches <- function(candidates) {
 #' fuzzy join districts
 #'
 fuzzy_join_districts <- function(district_tracker, district_keys_2001, district_keys_2007, district_keys_2017, district_keys_2020, cfg) {
+  tracker <- safe_df(district_tracker)
+  if (nrow(tracker) && all(c("state_01", "district_01", "state_07", "district_07", "state_17", "district_17", "state_20", "district_20") %in% names(tracker))) {
+    tracker$.tracker_row <- seq_len(nrow(tracker))
+    tracker$source <- "legacy_tracker"
+    tracker$match_status <- "legacy_tracker_row"
+    tracker$possible_false_positive <- FALSE
+    tracker$many_to_many <- FALSE
+    attr(tracker, "unmatched_rows") <- tracker[0, , drop = FALSE]
+    attr(tracker, "possible_false_positives") <- tracker[0, , drop = FALSE]
+    attr(tracker, "many_to_many_cases") <- tracker[0, , drop = FALSE]
+    return(tracker)
+  }
+
   out <- safe_bind_rows(Map(function(keys, source) {
     if (!nrow(keys)) return(data.frame())
     keys$source <- source
-    keys$match_status <- "key_only"
+    keys$match_status <- "source_key_unmatched"
     keys$possible_false_positive <- FALSE
     keys$many_to_many <- FALSE
     keys
   }, list(district_keys_2001, district_keys_2007, district_keys_2017, district_keys_2020), c("2001", "2007", "2017", "2020")))
-  attr(out, "unmatched_rows") <- out[0, , drop = FALSE]
+  attr(out, "unmatched_rows") <- out
   attr(out, "possible_false_positives") <- out[out$possible_false_positive, , drop = FALSE]
   attr(out, "many_to_many_cases") <- out[out$many_to_many, , drop = FALSE]
   out
