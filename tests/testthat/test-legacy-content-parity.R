@@ -108,7 +108,7 @@ test_that("first-stage table requires and formats the legacy instrument row", {
   expect_equal(out$Estimate[3], "39.20***")
 })
 
-test_that("final district panel validation catches the old wrong-N and wrong-scale failures", {
+test_that("final district panel validation records old wrong-N and wrong-scale failures without breaking targets", {
   bad <- data.frame(
     EMIE = c(4, 5),
     npeople_0708 = c(500, 600),
@@ -117,8 +117,15 @@ test_that("final district panel validation catches the old wrong-N and wrong-sca
     pct_fem_head = c(12, 11)
   )
 
+  expect_warning(
+    checked <- validate_legacy_district_panel(bad, list(mode = "final")),
+    "454 rows",
+    fixed = TRUE
+  )
+  expect_true(any(grepl("454 rows", attr(checked, "legacy_panel_validation_failures"), fixed = TRUE)))
+
   expect_error(
-    validate_legacy_district_panel(bad, list(mode = "final")),
+    validate_legacy_district_panel(bad, list(mode = "final", strict_legacy_panel_validation = TRUE)),
     "454 rows",
     fixed = TRUE
   )

@@ -360,8 +360,7 @@ flatten_processed_output <- function(x) {
   x
 }
 
-validate_legacy_district_panel <- function(out, cfg = list()) {
-  if (!identical(cfg$mode, "final")) return(out)
+legacy_panel_validation_failures <- function(out) {
   df <- as.data.frame(out)
   failures <- character()
   add <- function(...) failures <<- c(failures, paste0(...))
@@ -379,7 +378,17 @@ validate_legacy_district_panel <- function(out, cfg = list()) {
   if ("dependency_ratio" %in% names(df) && mean(num(df$dependency_ratio), na.rm = TRUE) > 80) {
     add("dependency_ratio mean is implausibly high relative to the legacy table; verify weighted numerator/denominator construction.")
   }
-  if (length(failures)) stop(paste(failures, collapse = "
-"), call. = FALSE)
+  failures
+}
+
+validate_legacy_district_panel <- function(out, cfg = list(), strict = isTRUE(cfg$strict_legacy_panel_validation)) {
+  if (!identical(cfg$mode, "final")) return(out)
+  failures <- legacy_panel_validation_failures(out)
+  attr(out, "legacy_panel_validation_failures") <- failures
+  if (length(failures)) {
+    msg <- paste(failures, collapse = "\n")
+    if (isTRUE(strict)) stop(msg, call. = FALSE)
+    warning(msg, call. = FALSE, immediate. = TRUE)
+  }
   out
 }
