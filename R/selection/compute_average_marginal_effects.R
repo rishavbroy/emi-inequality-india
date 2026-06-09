@@ -275,10 +275,48 @@ infer_ame_contrast <- function(out) {
   contrast
 }
 
+ame_factor_base_terms <- function() {
+  unique(legacy_ame_lookup()$term[legacy_ame_lookup()$contrast != "dY/dX"])
+}
+
+normalize_encoded_factor_ame_terms <- function(out) {
+  out <- as.data.frame(out, stringsAsFactors = FALSE)
+  if (!"term" %in% names(out)) return(out)
+  if (!"contrast" %in% names(out)) out$contrast <- infer_ame_contrast(out)
+
+  lookup <- legacy_ame_lookup()
+  factor_terms <- ame_factor_base_terms()
+  factor_terms <- factor_terms[order(nchar(factor_terms), decreasing = TRUE)]
+
+  for (i in seq_len(nrow(out))) {
+    current_term <- as.character(out$term[[i]])
+    current_contrast <- as.character(out$contrast[[i]])
+    if (!nzchar(current_term) || (!is.na(current_contrast) && current_contrast != "dY/dX")) next
+
+    direct <- lookup$term == current_term & lookup$contrast == current_contrast
+    if (any(direct)) next
+
+    for (base_term in factor_terms) {
+      if (!startsWith(current_term, base_term)) next
+      level <- trimws(sub(paste0("^", base_term), "", current_term))
+      if (!nzchar(level)) next
+      candidates <- lookup[lookup$term == base_term, , drop = FALSE]
+      contrast_hit <- candidates$contrast[startsWith(candidates$contrast, paste0(level, " - "))]
+      if (length(contrast_hit)) {
+        out$term[[i]] <- base_term
+        out$contrast[[i]] <- contrast_hit[[1]]
+        break
+      }
+    }
+  }
+  out
+}
+
 attach_legacy_ame_labels <- function(out) {
   out <- as.data.frame(out, stringsAsFactors = FALSE)
   if (!"term" %in% names(out) && "variable" %in% names(out)) out$term <- out$variable
   if (!"contrast" %in% names(out)) out$contrast <- infer_ame_contrast(out)
+  out <- normalize_encoded_factor_ame_terms(out)
   lookup <- legacy_ame_lookup()
   labeled <- merge(out, lookup, by = c("term", "contrast"), all.x = TRUE, sort = FALSE)
   labeled$Term[is.na(labeled$Term)] <- labeled$term[is.na(labeled$Term)]

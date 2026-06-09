@@ -112,8 +112,20 @@ p_value <- function(model, terms, digits = NULL) {
 lookup_ame <- function(ame_results, term_pattern, value_col = "estimate", multiply = 1, digits = NULL, contrast_pattern = NULL) {
   x <- as_plain_data_frame(ame_results)
   if (!nrow(x) || !"term" %in% names(x)) return(NA_real_)
-  keep <- grepl(term_pattern, x$term)
-  if (!is.null(contrast_pattern) && "contrast" %in% names(x)) keep <- keep & grepl(contrast_pattern, x$contrast)
+
+  term_text <- as.character(x$term)
+  contrast_text <- if ("contrast" %in% names(x)) as.character(x$contrast) else rep("", nrow(x))
+  label_text <- if ("Term" %in% names(x)) as.character(x$Term) else rep("", nrow(x))
+
+  keep <- grepl(term_pattern, term_text)
+  if (!is.null(contrast_pattern)) {
+    keep <- keep & (
+      grepl(contrast_pattern, contrast_text, ignore.case = TRUE) |
+        grepl(contrast_pattern, term_text, ignore.case = TRUE) |
+        grepl(contrast_pattern, label_text, ignore.case = TRUE)
+    )
+  }
+
   x <- x[keep, , drop = FALSE]
   if (!nrow(x) || !value_col %in% names(x)) return(NA_real_)
   out <- suppressWarnings(as.numeric(x[[value_col]][[1]])) * multiply
