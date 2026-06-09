@@ -97,9 +97,16 @@ build_selection_data <- function(nss_2007_education, district_keys_2007, cfg) {
   )
   selection_df <- legacy_full_join(selection_df, temp, selection_join_keys(enrolled = FALSE))
 
-  # Father's education proxy from the legacy priority ordering.
+  # Father's education proxy from the legacy priority ordering.  The legacy Rmd
+  # wrote this as a join by HHID, but the imported HHID alone is not globally
+  # unique after the refactor's raw readers standardize files independently. Use
+  # the full household-survey key to preserve the legacy intent without creating
+  # a many-to-many row explosion.
+  selection_df$.legacy_household_key <- legacy_household_key(selection_df)
   father_proxy <- build_father_education_proxy(b4)
-  if (nrow(father_proxy)) selection_df <- merge(selection_df, father_proxy, by = "HHID", all.x = TRUE)
+  if (nrow(father_proxy)) {
+    selection_df <- merge(selection_df, father_proxy, by = ".legacy_household_key", all.x = TRUE)
+  }
 
   # Any child absent from Blocks 5/6 is not enrolled.
   selection_df$enrolled[is.na(selection_df$enrolled)] <- 0L
@@ -116,8 +123,11 @@ build_selection_data <- function(nss_2007_education, district_keys_2007, cfg) {
   selection_df$DIST_FROM_NEAREST_PRIMARY_CLASS <- stats::relevel(selection_df$DIST_FROM_NEAREST_PRIMARY_CLASS, ref = "d<1km")
   if ("father_educ" %in% names(selection_df)) selection_df$father_educ <- stats::relevel(selection_df$father_educ, ref = "Illiterate")
 
+  selection_df <- enforce_selection_child_key_uniqueness(selection_df)
   selection_df <- attach_legacy_district_schooling_means(selection_df)
   selection_df <- attach_legacy_district_names(selection_df, blocks[["nss0708edu_metadata"]] %||% data.frame())
+  selection_df$.legacy_household_key <- NULL
+  selection_df$.legacy_child_key <- NULL
   selection_df
 }
 
@@ -161,17 +171,47 @@ legacy_yes_no <- function(x, yes = c(1), no = c(2)) {
   factor(out, levels = c("Yes", "No"))
 }
 
+legacy_household_key <- function(df) {
+  df <- safe_df(df)
+  key_cols <- c("STATE", "FSU_SL_NO", "STRATUM", "SUB_STRATUM_NO", "HHID")
+  for (nm in key_cols) if (!nm %in% names(df)) df[[nm]] <- NA_character_
+  do.call(paste, c(lapply(df[key_cols], function(x) canon(as.character(x))), sep = "__"))
+}
+
+legacy_child_key <- function(df) {
+  df <- safe_df(df)
+  hh <- legacy_household_key(df)
+  pid <- if ("PID" %in% names(df)) canon(as.character(df$PID)) else rep("", nrow(df))
+  district <- if ("district_code_0708" %in% names(df)) canon(as.character(df$district_code_0708)) else rep("", nrow(df))
+  paste(hh, district, pid, sep = "__")
+}
+
+enforce_selection_child_key_uniqueness <- function(df) {
+  if (!nrow(df) || !"PID" %in% names(df)) return(df)
+  pid <- canon(as.character(df$PID))
+  if (!any(nzchar(pid) & !is.na(pid))) return(df)
+  df$.legacy_household_key <- if (".legacy_household_key" %in% names(df)) df$.legacy_household_key else legacy_household_key(df)
+  df$.legacy_child_key <- legacy_child_key(df)
+  dup <- duplicated(df$.legacy_child_key)
+  if (any(dup, na.rm = TRUE)) {
+    df <- df[!dup, , drop = FALSE]
+  }
+  rownames(df) <- NULL
+  df
+}
+
 build_father_education_proxy <- function(b4) {
   if (!all(c("HHID", "RELATION_TO_HEAD", "SEX", "EDUCATION_LEVEL") %in% names(b4))) return(data.frame())
   df <- b4
+  df$.legacy_household_key <- legacy_household_key(df)
   df$educ_collapsed <- collapse_legacy_education(df$EDUCATION_LEVEL)
   df$father_rank <- ifelse(num(df$RELATION_TO_HEAD) == 1 & num(df$SEX) == 1, 1L,
     ifelse(num(df$RELATION_TO_HEAD) == 3 & num(df$SEX) == 1, 2L,
       ifelse(num(df$RELATION_TO_HEAD) == 7 & num(df$SEX) == 1, 4L, NA_integer_)))
   df <- df[is.finite(df$father_rank), , drop = FALSE]
-  if (!nrow(df)) return(data.frame(HHID = character(), father_educ = factor()))
-  df <- df[order(df$HHID, df$father_rank), , drop = FALSE]
-  df <- df[!duplicated(df$HHID), c("HHID", "educ_collapsed"), drop = FALSE]
+  if (!nrow(df)) return(data.frame(.legacy_household_key = character(), father_educ = factor()))
+  df <- df[order(df$.legacy_household_key, df$father_rank), , drop = FALSE]
+  df <- df[!duplicated(df$.legacy_household_key), c(".legacy_household_key", "educ_collapsed"), drop = FALSE]
   names(df)[names(df) == "educ_collapsed"] <- "father_educ"
   df$father_educ <- factor(
     df$father_educ,
