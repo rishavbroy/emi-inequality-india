@@ -15,8 +15,10 @@ Usage: bash scripts/run_public_build_audit.sh [--with-samples|--without-samples]
 Runs the final public build audit. The default is --without-samples for a faster
 report/data/output audit that omits application-sample rendering and excludes
 application-samples/output from the review archive. Use --with-samples before a
-full submission/review bundle. Debug-only options are off by default so reviewers
-do not see incomplete archives or cache-preserving shortcuts unless requested.
+full submission/review bundle. This script is the canonical end-to-end audit; use
+scripts/run_legacy_content_audit.sh for the narrower post-build legacy-results
+parity audit. Debug-only options are off by default so reviewers do not see
+incomplete archives or cache-preserving shortcuts unless requested.
 USAGE
 }
 
@@ -176,6 +178,7 @@ git diff --check -- \
 echo "=== STATIC/PARSE CHECKS ==="
 Rscript -e 'parse("scripts/check_required_outputs.R"); cat("check_required_outputs.R parses\n")'
 Rscript -e 'tmp <- tempfile(fileext = ".R"); knitr::purl("paper/report.qmd", output = tmp, quiet = TRUE); parse(tmp); cat("paper/report.qmd R chunks parse\n")'
+python3 -m py_compile scripts/audit_legacy_parity.py
 checkpoint_archive "after-static-parse"
 
 if [[ "$skip_tests" == "true" ]]; then
@@ -189,6 +192,11 @@ checkpoint_archive "after-unit-tests"
 echo "=== PUBLIC FINAL CHECK (${sample_mode}) ==="
 make "$check_target"
 checkpoint_archive "after-public-final-check"
+
+echo "=== LEGACY CONTENT PARITY AUDIT ==="
+python3 -m py_compile scripts/audit_legacy_parity.py
+python3 scripts/audit_legacy_parity.py
+checkpoint_archive "after-legacy-content-audit"
 
 echo "=== REVIEW ARCHIVE ==="
 bash scripts/make_review_archive.sh "$archive_sample_flag" --output "$archive_out"
