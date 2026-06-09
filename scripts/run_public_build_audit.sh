@@ -7,10 +7,11 @@ archive_on_error="false"
 archive_each_step="false"
 skip_clean="false"
 skip_tests="false"
+incremental="false"
 
 usage() {
   cat <<'USAGE'
-Usage: bash scripts/run_public_build_audit.sh [--with-samples|--without-samples] [--archive-on-error] [--archive-each-step] [--skip-clean] [--skip-tests] [-o OUT.zip]
+Usage: bash scripts/run_public_build_audit.sh [--with-samples|--without-samples] [--archive-on-error] [--archive-each-step] [--incremental|--skip-clean] [--skip-tests] [-o OUT.zip]
 
 Runs the final public build audit. The default is --without-samples for a faster
 report/data/output audit that omits application-sample rendering and excludes
@@ -18,7 +19,9 @@ application-samples/output from the review archive. Use --with-samples before a
 full submission/review bundle. This script is the canonical end-to-end audit; use
 scripts/run_legacy_content_audit.sh for the narrower post-build legacy-results
 parity audit. Debug-only options are off by default so reviewers do not see
-incomplete archives or cache-preserving shortcuts unless requested.
+incomplete archives or cache-preserving shortcuts unless requested. Use --incremental
+to preserve generated renders and the {targets} store while debugging content parity;
+use a non-incremental run for the final reviewer-facing proof build.
 USAGE
 }
 
@@ -39,6 +42,11 @@ while [[ $# -gt 0 ]]; do
     --archive-each-step)
       archive_each_step="true"
       archive_on_error="true"
+      shift
+      ;;
+    --incremental)
+      incremental="true"
+      skip_clean="true"
       shift
       ;;
     --skip-clean)
@@ -151,7 +159,11 @@ git diff --check -- \
   ':(exclude)outputs/**' \
   ':(exclude)application-samples/output/**'
 
-echo "=== PUBLIC BUILD AUDIT MODE: ${sample_mode} ==="
+if [[ "$incremental" == "true" ]]; then
+  echo "=== PUBLIC BUILD AUDIT MODE: ${sample_mode} (incremental/cache-preserving) ==="
+else
+  echo "=== PUBLIC BUILD AUDIT MODE: ${sample_mode} ==="
+fi
 
 if [[ "$skip_clean" == "true" ]]; then
   echo "=== CLEAN GENERATED RENDERS: skipped by --skip-clean ==="
