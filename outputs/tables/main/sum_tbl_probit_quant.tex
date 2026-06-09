@@ -1,30 +1,29 @@
 
 \begin{landscape}
-\begin{longtable}[t]{lrrrrrrrr}
+\begin{longtable}[t]{llrlllllll}
 \caption{\label{tab:sum-tbl-probit-quant}Summary Statistics for Enrollment Participation Model (Numeric Variables)}\\
 \toprule
-Variable & Min & Q1 & Median & Q3 & Max & Mean & Sd & n\\
+var & label & N & Min & 1Q & Med & 3Q & Max & Mean & SD\\
 \midrule
 \endfirsthead
 \caption[]{Summary Statistics for Enrollment Participation Model (Numeric Variables) \textit{(continued)}}\\
 \toprule
-Variable & Min & Q1 & Median & Q3 & Max & Mean & Sd & n\\
+var & label & N & Min & 1Q & Med & 3Q & Max & Mean & SD\\
 \midrule
 \endhead
 
 \endfoot
 \bottomrule
 \endlastfoot
-\cellcolor{gray!10}{AGE} & \cellcolor{gray!10}{5} & \cellcolor{gray!10}{8} & \cellcolor{gray!10}{12.0} & \cellcolor{gray!10}{16.00} & \cellcolor{gray!10}{19.00} & \cellcolor{gray!10}{11.890} & \cellcolor{gray!10}{4.218} & \cellcolor{gray!10}{127181}\\
-HH_SIZE & 1 & 4 & 5.0 & 7.00 & 30.00 & 5.914 & 2.397 & 127181\\
-\cellcolor{gray!10}{DIST_FROM_NEAREST_PRIMARY_CLASS} & \cellcolor{gray!10}{1} & \cellcolor{gray!10}{1} & \cellcolor{gray!10}{1.0} & \cellcolor{gray!10}{1.00} & \cellcolor{gray!10}{5.00} & \cellcolor{gray!10}{1.160} & \cellcolor{gray!10}{0.552} & \cellcolor{gray!10}{126869}\\
-DIST_FROM_UPPER_PRIMARY_CLASS & 1 & 2 & 2.0 & 2.00 & 5.00 & 2.103 & 0.856 & 126851\\
-\cellcolor{gray!10}{DIST_FROM_SEC_CLASS} & \cellcolor{gray!10}{1} & \cellcolor{gray!10}{2} & \cellcolor{gray!10}{4.0} & \cellcolor{gray!10}{4.00} & \cellcolor{gray!10}{5.00} & \cellcolor{gray!10}{3.245} & \cellcolor{gray!10}{1.242} & \cellcolor{gray!10}{126815}\\
+\cellcolor{gray!10}{AGE} & \cellcolor{gray!10}{Age} & \cellcolor{gray!10}{4580856} & \cellcolor{gray!10}{5.00} & \cellcolor{gray!10}{8.00} & \cellcolor{gray!10}{12.00} & \cellcolor{gray!10}{16.00} & \cellcolor{gray!10}{19.00} & \cellcolor{gray!10}{11.89} & \cellcolor{gray!10}{4.22}\\
+HH_SIZE & Household size & 4580856 & 1.00 & 4.00 & 5.00 & 7.00 & 30.00 & 5.91 & 2.40\\
+\cellcolor{gray!10}{ENROLLMENT_COST} & \cellcolor{gray!10}{Enrollment cost (Rs.)} & \cellcolor{gray!10}{258624} & \cellcolor{gray!10}{0.00} & \cellcolor{gray!10}{2,318.75} & \cellcolor{gray!10}{4,900.00} & \cellcolor{gray!10}{8,750.00} & \cellcolor{gray!10}{338,300.00} & \cellcolor{gray!10}{7,049.28} & \cellcolor{gray!10}{9,283.24}\\
+dmean_num_IS_EDU_FREE & Educ. free available? (Yes = 1) & 4580856 & 0.00 & 0.48 & 0.69 & 0.85 & 1.00 & 0.65 & 0.23\\
+\cellcolor{gray!10}{dmean_num_TUTION_FEE_WAIVED} & \cellcolor{gray!10}{Tuition waived?} & \cellcolor{gray!10}{4580856} & \cellcolor{gray!10}{0.00} & \cellcolor{gray!10}{0.00} & \cellcolor{gray!10}{0.01} & \cellcolor{gray!10}{0.02} & \cellcolor{gray!10}{0.48} & \cellcolor{gray!10}{0.02} & \cellcolor{gray!10}{0.04}\\
 \addlinespace
-IS_EDU_FREE & 1 & 1 & 1.0 & 2.00 & 2.00 & 1.379 & 0.485 & 89776\\
-\cellcolor{gray!10}{RECD_TXT_BOOKS} & \cellcolor{gray!10}{1} & \cellcolor{gray!10}{1} & \cellcolor{gray!10}{6.0} & \cellcolor{gray!10}{6.00} & \cellcolor{gray!10}{6.00} & \cellcolor{gray!10}{3.637} & \cellcolor{gray!10}{2.420} & \cellcolor{gray!10}{89699}\\
-TOTAL & 1 & 2500 & 3500.0 & 5000.00 & 80000.00 & 4252.138 & 2890.599 & 127176\\
-\cellcolor{gray!10}{weight} & \cellcolor{gray!10}{6} & \cellcolor{gray!10}{1100} & \cellcolor{gray!10}{2397.5} & \cellcolor{gray!10}{3525.03} & \cellcolor{gray!10}{79599.75} & \cellcolor{gray!10}{2499.409} & \cellcolor{gray!10}{1820.437} & \cellcolor{gray!10}{127181}\\
-enrolled & 0 & 0 & 1.0 & 1.00 & 1.00 & 0.706 & 0.456 & 127181\\*
+dmean_num_RECD_SCHOLARSHIP_STIPEND & Scholarship/Stipend? & 4580856 & 0.00 & 0.01 & 0.05 & 0.20 & 0.90 & 0.13 & 0.17\\
+\cellcolor{gray!10}{dmean_num_RECD_TXT_BOOKS} & \cellcolor{gray!10}{Textbooks received?} & \cellcolor{gray!10}{4580856} & \cellcolor{gray!10}{0.00} & \cellcolor{gray!10}{0.37} & \cellcolor{gray!10}{0.52} & \cellcolor{gray!10}{0.66} & \cellcolor{gray!10}{0.97} & \cellcolor{gray!10}{0.51} & \cellcolor{gray!10}{0.20}\\
+dmean_num_RECD_STATIONERY & Stationery received? & 4580856 & 0.00 & 0.01 & 0.04 & 0.11 & 0.95 & 0.08 & 0.12\\
+\cellcolor{gray!10}{dmean_num_MID_DAY_MEAL_ETC_RECD} & \cellcolor{gray!10}{Mid-day meal or more received?} & \cellcolor{gray!10}{4580856} & \cellcolor{gray!10}{0.02} & \cellcolor{gray!10}{0.33} & \cellcolor{gray!10}{0.42} & \cellcolor{gray!10}{0.55} & \cellcolor{gray!10}{0.90} & \cellcolor{gray!10}{0.43} & \cellcolor{gray!10}{0.17}\\*
 \end{longtable}
 \end{landscape}

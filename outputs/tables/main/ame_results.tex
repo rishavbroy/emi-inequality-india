@@ -1,40 +1,55 @@
 
-\begin{longtable}[t]{lrrrrrrrll}
+\begin{longtable}[t]{lllrrrrrrrll}
 \caption{\label{tab:ame-results}Average Marginal Effects Results}\\
 \toprule
-term & estimate & std.error & statistic & p.value & s.value & conf.low & conf.high & method & status\\
+Term & term & contrast & estimate & std.error & statistic & p.value & s.value & conf.low & conf.high & method & status\\
 \midrule
 \endfirsthead
 \caption[]{Average Marginal Effects Results \textit{(continued)}}\\
 \toprule
-term & estimate & std.error & statistic & p.value & s.value & conf.low & conf.high & method & status\\
+Term & term & contrast & estimate & std.error & statistic & p.value & s.value & conf.low & conf.high & method & status\\
 \midrule
 \endhead
 
 \endfoot
 \bottomrule
 \endlastfoot
-\cellcolor{gray!10}{AGE} & \cellcolor{gray!10}{-0.029} & \cellcolor{gray!10}{0.000} & \cellcolor{gray!10}{-67.525} & \cellcolor{gray!10}{0.000} & \cellcolor{gray!10}{Inf} & \cellcolor{gray!10}{-0.030} & \cellcolor{gray!10}{-0.028} & \cellcolor{gray!10}{autodiff} & \cellcolor{gray!10}{estimated}\\
-DIST_FROM_NEAREST_PRIMARY_CLASS & -0.056 & 0.026 & -2.152 & 0.031 & 4.993 & -0.106 & -0.005 & autodiff & estimated\\
-\cellcolor{gray!10}{DIST_FROM_NEAREST_PRIMARY_CLASS} & \cellcolor{gray!10}{0.002} & \cellcolor{gray!10}{0.011} & \cellcolor{gray!10}{0.230} & \cellcolor{gray!10}{0.818} & \cellcolor{gray!10}{0.290} & \cellcolor{gray!10}{-0.018} & \cellcolor{gray!10}{0.023} & \cellcolor{gray!10}{autodiff} & \cellcolor{gray!10}{estimated}\\
-DIST_FROM_NEAREST_PRIMARY_CLASS & -0.079 & 0.103 & -0.764 & 0.445 & 1.168 & -0.282 & 0.124 & autodiff & estimated\\
-\cellcolor{gray!10}{DIST_FROM_NEAREST_PRIMARY_CLASS} & \cellcolor{gray!10}{0.054} & \cellcolor{gray!10}{0.035} & \cellcolor{gray!10}{1.520} & \cellcolor{gray!10}{0.128} & \cellcolor{gray!10}{2.961} & \cellcolor{gray!10}{-0.015} & \cellcolor{gray!10}{0.123} & \cellcolor{gray!10}{autodiff} & \cellcolor{gray!10}{estimated}\\
+\cellcolor{gray!10}{Age (years)} & \cellcolor{gray!10}{AGE} & \cellcolor{gray!10}{dY/dX} & \cellcolor{gray!10}{-0.028} & \cellcolor{gray!10}{0.001} & \cellcolor{gray!10}{-53.579} & \cellcolor{gray!10}{0.000} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{-0.029} & \cellcolor{gray!10}{-0.027} & \cellcolor{gray!10}{delta_method_analytic_probit} & \cellcolor{gray!10}{estimated}\\
+Female (ref: Male) & SEX & Female - Male & 0.044 & 0.003 & 14.637 & 0.000 & 158.746 & 0.038 & 0.050 & delta_method_analytic_probit & estimated\\
+\cellcolor{gray!10}{Household size} & \cellcolor{gray!10}{HH_SIZE} & \cellcolor{gray!10}{dY/dX} & \cellcolor{gray!10}{-0.004} & \cellcolor{gray!10}{0.001} & \cellcolor{gray!10}{-4.478} & \cellcolor{gray!10}{0.000} & \cellcolor{gray!10}{17.016} & \cellcolor{gray!10}{-0.005} & \cellcolor{gray!10}{-0.002} & \cellcolor{gray!10}{delta_method_analytic_probit} & \cellcolor{gray!10}{estimated}\\
+Religion: Muslim (ref: Hindu) & RELIGION & Muslim - Hindu & -0.125 & 0.006 & -20.147 & 0.000 & 297.472 & -0.137 & -0.112 & delta_method_analytic_probit & estimated\\
+\cellcolor{gray!10}{Religion: Christian} & \cellcolor{gray!10}{RELIGION} & \cellcolor{gray!10}{Christian - Hindu} & \cellcolor{gray!10}{-0.042} & \cellcolor{gray!10}{0.013} & \cellcolor{gray!10}{-3.251} & \cellcolor{gray!10}{0.001} & \cellcolor{gray!10}{9.766} & \cellcolor{gray!10}{-0.068} & \cellcolor{gray!10}{-0.017} & \cellcolor{gray!10}{delta_method_analytic_probit} & \cellcolor{gray!10}{estimated}\\
 \addlinespace
-HH_SIZE & -0.009 & 0.001 & -11.336 & 0.000 & 96.532 & -0.011 & -0.008 & autodiff & estimated\\
-\cellcolor{gray!10}{RELIGION} & \cellcolor{gray!10}{0.068} & \cellcolor{gray!10}{0.023} & \cellcolor{gray!10}{2.911} & \cellcolor{gray!10}{0.004} & \cellcolor{gray!10}{8.117} & \cellcolor{gray!10}{0.022} & \cellcolor{gray!10}{0.114} & \cellcolor{gray!10}{autodiff} & \cellcolor{gray!10}{estimated}\\
-RELIGION & -0.023 & 0.014 & -1.670 & 0.095 & 3.396 & -0.049 & 0.004 & autodiff & estimated\\
-\cellcolor{gray!10}{RELIGION} & \cellcolor{gray!10}{0.054} & \cellcolor{gray!10}{0.011} & \cellcolor{gray!10}{4.793} & \cellcolor{gray!10}{0.000} & \cellcolor{gray!10}{19.216} & \cellcolor{gray!10}{0.032} & \cellcolor{gray!10}{0.076} & \cellcolor{gray!10}{autodiff} & \cellcolor{gray!10}{estimated}\\
-RELIGION & -0.170 & 0.007 & -23.410 & 0.000 & 400.188 & -0.185 & -0.156 & autodiff & estimated\\
+Religion: Sikh & RELIGION & Sikh - Hindu & 0.040 & 0.028 & 1.426 & 0.154 & 2.699 & -0.015 & 0.095 & delta_method_analytic_probit & estimated\\
+\cellcolor{gray!10}{Religion: Jain} & \cellcolor{gray!10}{RELIGION} & \cellcolor{gray!10}{Jain - Hindu} & \cellcolor{gray!10}{0.000} & \cellcolor{gray!10}{0.013} & \cellcolor{gray!10}{-0.001} & \cellcolor{gray!10}{0.999} & \cellcolor{gray!10}{0.001} & \cellcolor{gray!10}{-0.025} & \cellcolor{gray!10}{0.025} & \cellcolor{gray!10}{delta_method_analytic_probit} & \cellcolor{gray!10}{estimated}\\
+Religion: Buddhist & RELIGION & Buddhist - Hindu & 0.046 & 0.028 & 1.674 & 0.094 & 3.410 & -0.008 & 0.101 & delta_method_analytic_probit & estimated\\
+\cellcolor{gray!10}{Religion: Zoroastrian} & \cellcolor{gray!10}{RELIGION} & \cellcolor{gray!10}{Zoroastrian - Hindu} & \cellcolor{gray!10}{0.100} & \cellcolor{gray!10}{0.047} & \cellcolor{gray!10}{2.146} & \cellcolor{gray!10}{0.032} & \cellcolor{gray!10}{4.972} & \cellcolor{gray!10}{0.009} & \cellcolor{gray!10}{0.192} & \cellcolor{gray!10}{delta_method_analytic_probit} & \cellcolor{gray!10}{estimated}\\
+Religion: Other & RELIGION & Other - Hindu & 0.250 & 0.061 & 4.070 & 0.000 & 14.376 & 0.130 & 0.370 & delta_method_analytic_probit & estimated\\
 \addlinespace
-\cellcolor{gray!10}{RELIGION} & \cellcolor{gray!10}{0.254} & \cellcolor{gray!10}{0.002} & \cellcolor{gray!10}{119.004} & \cellcolor{gray!10}{0.000} & \cellcolor{gray!10}{Inf} & \cellcolor{gray!10}{0.249} & \cellcolor{gray!10}{0.258} & \cellcolor{gray!10}{autodiff} & \cellcolor{gray!10}{estimated}\\
-RELIGION & 0.043 & 0.025 & 1.752 & 0.080 & 3.646 & -0.005 & 0.092 & autodiff & estimated\\
-\cellcolor{gray!10}{RELIGION} & \cellcolor{gray!10}{0.137} & \cellcolor{gray!10}{0.024} & \cellcolor{gray!10}{5.671} & \cellcolor{gray!10}{0.000} & \cellcolor{gray!10}{26.069} & \cellcolor{gray!10}{0.090} & \cellcolor{gray!10}{0.184} & \cellcolor{gray!10}{autodiff} & \cellcolor{gray!10}{estimated}\\
-SECTOR & 0.053 & 0.005 & 10.568 & 0.000 & 84.303 & 0.043 & 0.063 & autodiff & estimated\\
-\cellcolor{gray!10}{SEX} & \cellcolor{gray!10}{0.045} & \cellcolor{gray!10}{0.003} & \cellcolor{gray!10}{14.943} & \cellcolor{gray!10}{0.000} & \cellcolor{gray!10}{165.307} & \cellcolor{gray!10}{0.039} & \cellcolor{gray!10}{0.051} & \cellcolor{gray!10}{autodiff} & \cellcolor{gray!10}{estimated}\\
+\cellcolor{gray!10}{Social group: Scheduled Tribe (ref: Other)} & \cellcolor{gray!10}{SOCIAL_GROUP} & \cellcolor{gray!10}{Scheduled Tribe - Other} & \cellcolor{gray!10}{-0.101} & \cellcolor{gray!10}{0.008} & \cellcolor{gray!10}{-13.016} & \cellcolor{gray!10}{0.000} & \cellcolor{gray!10}{126.250} & \cellcolor{gray!10}{-0.116} & \cellcolor{gray!10}{-0.085} & \cellcolor{gray!10}{delta_method_analytic_probit} & \cellcolor{gray!10}{estimated}\\
+Social group: Scheduled Caste & SOCIAL_GROUP & Scheduled Caste - Other & -0.074 & 0.006 & -12.489 & 0.000 & 116.483 & -0.086 & -0.062 & delta_method_analytic_probit & estimated\\
+\cellcolor{gray!10}{Social group: Other Backward Class} & \cellcolor{gray!10}{SOCIAL_GROUP} & \cellcolor{gray!10}{Other Backward Class - Other} & \cellcolor{gray!10}{-0.029} & \cellcolor{gray!10}{0.005} & \cellcolor{gray!10}{-5.770} & \cellcolor{gray!10}{0.000} & \cellcolor{gray!10}{26.908} & \cellcolor{gray!10}{-0.038} & \cellcolor{gray!10}{-0.019} & \cellcolor{gray!10}{delta_method_analytic_probit} & \cellcolor{gray!10}{estimated}\\
+Urban (ref: Rural) & SECTOR & Urban - Rural & -0.003 & 0.005 & -0.605 & 0.545 & 0.875 & -0.013 & 0.007 & delta_method_analytic_probit & estimated\\
+\cellcolor{gray!10}{Distance 1–2km (ref: <1km)} & \cellcolor{gray!10}{DIST_FROM_NEAREST_PRIMARY_CLASS} & \cellcolor{gray!10}{1km <= d <2kms - d<1km} & \cellcolor{gray!10}{-0.076} & \cellcolor{gray!10}{0.023} & \cellcolor{gray!10}{-3.302} & \cellcolor{gray!10}{0.001} & \cellcolor{gray!10}{10.026} & \cellcolor{gray!10}{-0.121} & \cellcolor{gray!10}{-0.031} & \cellcolor{gray!10}{delta_method_analytic_probit} & \cellcolor{gray!10}{estimated}\\
 \addlinespace
-SOCIAL_GROUP & 0.156 & 0.008 & 18.566 & 0.000 & 253.204 & 0.140 & 0.173 & autodiff & estimated\\
-\cellcolor{gray!10}{SOCIAL_GROUP} & \cellcolor{gray!10}{0.090} & \cellcolor{gray!10}{0.008} & \cellcolor{gray!10}{11.087} & \cellcolor{gray!10}{0.000} & \cellcolor{gray!10}{92.474} & \cellcolor{gray!10}{0.074} & \cellcolor{gray!10}{0.106} & \cellcolor{gray!10}{autodiff} & \cellcolor{gray!10}{estimated}\\
-SOCIAL_GROUP & 0.019 & 0.009 & 2.246 & 0.025 & 5.338 & 0.002 & 0.036 & autodiff & estimated\\
-\cellcolor{gray!10}{dmean_num_IS_EDU_FREE} & \cellcolor{gray!10}{0.000} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{autodiff} & \cellcolor{gray!10}{estimated}\\
-dmean_num_RECD_TXT_BOOKS & -0.031 & 0.011 & -2.728 & 0.006 & 7.296 & -0.053 & -0.009 & autodiff & estimated\\*
+Distance 2–3km & DIST_FROM_NEAREST_PRIMARY_CLASS & 2kms<= d <3kms - d<1km & -0.001 & 0.010 & -0.105 & 0.916 & 0.126 & -0.020 & 0.018 & delta_method_analytic_probit & estimated\\
+\cellcolor{gray!10}{Distance 3–5km} & \cellcolor{gray!10}{DIST_FROM_NEAREST_PRIMARY_CLASS} & \cellcolor{gray!10}{3kms <= d <5kms - d<1km} & \cellcolor{gray!10}{0.004} & \cellcolor{gray!10}{0.066} & \cellcolor{gray!10}{0.060} & \cellcolor{gray!10}{0.952} & \cellcolor{gray!10}{0.070} & \cellcolor{gray!10}{-0.125} & \cellcolor{gray!10}{0.133} & \cellcolor{gray!10}{delta_method_analytic_probit} & \cellcolor{gray!10}{estimated}\\
+Distance > 5km & DIST_FROM_NEAREST_PRIMARY_CLASS & d>=5kms - d<1km & 0.036 & 0.037 & 0.968 & 0.333 & 1.587 & -0.037 & 0.109 & delta_method_analytic_probit & estimated\\
+\cellcolor{gray!10}{Father's educ.: Literate, no school (ref: Illiterate)} & \cellcolor{gray!10}{father_educ} & \cellcolor{gray!10}{Literate, no school - Illiterate} & \cellcolor{gray!10}{0.097} & \cellcolor{gray!10}{0.017} & \cellcolor{gray!10}{5.704} & \cellcolor{gray!10}{0.000} & \cellcolor{gray!10}{26.350} & \cellcolor{gray!10}{0.064} & \cellcolor{gray!10}{0.131} & \cellcolor{gray!10}{delta_method_analytic_probit} & \cellcolor{gray!10}{estimated}\\
+Father's educ.: Literate, school < primary & father_educ & Literate, school < primary - Illiterate & 0.129 & 0.006 & 19.849 & 0.000 & 288.836 & 0.116 & 0.142 & delta_method_analytic_probit & estimated\\
+\addlinespace
+\cellcolor{gray!10}{Father's educ.: Primary} & \cellcolor{gray!10}{father_educ} & \cellcolor{gray!10}{Primary - Illiterate} & \cellcolor{gray!10}{0.144} & \cellcolor{gray!10}{0.006} & \cellcolor{gray!10}{24.962} & \cellcolor{gray!10}{0.000} & \cellcolor{gray!10}{454.436} & \cellcolor{gray!10}{0.132} & \cellcolor{gray!10}{0.155} & \cellcolor{gray!10}{delta_method_analytic_probit} & \cellcolor{gray!10}{estimated}\\
+Father's educ.: Upper primary & father_educ & Upper primary - Illiterate & 0.198 & 0.007 & 27.829 & 0.000 & 563.769 & 0.184 & 0.212 & delta_method_analytic_probit & estimated\\
+\cellcolor{gray!10}{Father's educ.: Secondary} & \cellcolor{gray!10}{father_educ} & \cellcolor{gray!10}{Secondary - Illiterate} & \cellcolor{gray!10}{0.215} & \cellcolor{gray!10}{0.010} & \cellcolor{gray!10}{21.268} & \cellcolor{gray!10}{0.000} & \cellcolor{gray!10}{331.018} & \cellcolor{gray!10}{0.195} & \cellcolor{gray!10}{0.234} & \cellcolor{gray!10}{delta_method_analytic_probit} & \cellcolor{gray!10}{estimated}\\
+Father's educ.: Higher secondary & father_educ & Higher secondary - Illiterate & 0.252 & 0.015 & 16.471 & 0.000 & 200.078 & 0.222 & 0.282 & delta_method_analytic_probit & estimated\\
+\cellcolor{gray!10}{Father's educ.: Postsecondary+} & \cellcolor{gray!10}{father_educ} & \cellcolor{gray!10}{Postsecondary+ - Illiterate} & \cellcolor{gray!10}{0.249} & \cellcolor{gray!10}{0.016} & \cellcolor{gray!10}{15.561} & \cellcolor{gray!10}{0.000} & \cellcolor{gray!10}{178.954} & \cellcolor{gray!10}{0.218} & \cellcolor{gray!10}{0.281} & \cellcolor{gray!10}{delta_method_analytic_probit} & \cellcolor{gray!10}{estimated}\\
+\addlinespace
+Educ. free available (ref: No) & dmean_num_IS_EDU_FREE & dY/dX & -0.087 & 0.015 & -5.804 & 0.000 & 27.199 & -0.117 & -0.058 & delta_method_analytic_probit & estimated\\
+\cellcolor{gray!10}{Tuition waiver received} & \cellcolor{gray!10}{dmean_num_TUTION_FEE_WAIVED} & \cellcolor{gray!10}{dY/dX} & \cellcolor{gray!10}{-0.082} & \cellcolor{gray!10}{0.056} & \cellcolor{gray!10}{-1.460} & \cellcolor{gray!10}{0.144} & \cellcolor{gray!10}{2.793} & \cellcolor{gray!10}{-0.193} & \cellcolor{gray!10}{0.028} & \cellcolor{gray!10}{delta_method_analytic_probit} & \cellcolor{gray!10}{estimated}\\
+Scholarship/Stipend received & dmean_num_RECD_SCHOLARSHIP_STIPEND & dY/dX & 0.029 & 0.012 & 2.444 & 0.015 & 6.106 & 0.006 & 0.053 & delta_method_analytic_probit & estimated\\
+\cellcolor{gray!10}{Textbook(s) received} & \cellcolor{gray!10}{dmean_num_RECD_TXT_BOOKS} & \cellcolor{gray!10}{dY/dX} & \cellcolor{gray!10}{0.065} & \cellcolor{gray!10}{0.018} & \cellcolor{gray!10}{3.723} & \cellcolor{gray!10}{0.000} & \cellcolor{gray!10}{12.310} & \cellcolor{gray!10}{0.031} & \cellcolor{gray!10}{0.100} & \cellcolor{gray!10}{delta_method_analytic_probit} & \cellcolor{gray!10}{estimated}\\
+Stationery received & dmean_num_RECD_STATIONERY & dY/dX & 0.014 & 0.019 & 0.697 & 0.486 & 1.042 & -0.025 & 0.052 & delta_method_analytic_probit & estimated\\
+\addlinespace
+\cellcolor{gray!10}{Mid-day meal, etc. received} & \cellcolor{gray!10}{dmean_num_MID_DAY_MEAL_ETC_RECD} & \cellcolor{gray!10}{dY/dX} & \cellcolor{gray!10}{-0.011} & \cellcolor{gray!10}{0.019} & \cellcolor{gray!10}{-0.568} & \cellcolor{gray!10}{0.570} & \cellcolor{gray!10}{0.810} & \cellcolor{gray!10}{-0.048} & \cellcolor{gray!10}{0.027} & \cellcolor{gray!10}{delta_method_analytic_probit} & \cellcolor{gray!10}{estimated}\\
+Enrollment cost (Rs.) & dmean_num_ENROLLMENT_COST & dY/dX & 0.000 & 0.000 & 1.799 & 0.072 & 3.795 & 0.000 & 0.000 & delta_method_analytic_probit & estimated\\*
 \end{longtable}

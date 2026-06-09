@@ -3,15 +3,20 @@ set -euxo pipefail
 
 render_samples="false"
 archive_out="review.zip"
+archive_on_error="false"
+archive_each_step="false"
+skip_clean="false"
+skip_tests="false"
 
 usage() {
   cat <<'USAGE'
-Usage: bash scripts/run_public_build_audit.sh [--with-samples|--without-samples] [-o OUT.zip]
+Usage: bash scripts/run_public_build_audit.sh [--with-samples|--without-samples] [--archive-on-error] [--archive-each-step] [--skip-clean] [--skip-tests] [-o OUT.zip]
 
 Runs the final public build audit. The default is --without-samples for a faster
 report/data/output audit that omits application-sample rendering and excludes
 application-samples/output from the review archive. Use --with-samples before a
-full submission/review bundle.
+full submission/review bundle. Debug-only options are off by default so reviewers
+do not see incomplete archives or cache-preserving shortcuts unless requested.
 USAGE
 }
 
@@ -23,6 +28,23 @@ while [[ $# -gt 0 ]]; do
       ;;
     --without-samples|--no-samples)
       render_samples="false"
+      shift
+      ;;
+    --archive-on-error)
+      archive_on_error="true"
+      shift
+      ;;
+    --archive-each-step)
+      archive_each_step="true"
+      archive_on_error="true"
+      shift
+      ;;
+    --skip-clean)
+      skip_clean="true"
+      shift
+      ;;
+    --skip-tests)
+      skip_tests="true"
       shift
       ;;
     -o|--output)
@@ -45,6 +67,23 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+make_debug_archive() {
+  local label="$1"
+  if [[ "$archive_on_error" != "true" && "$archive_each_step" != "true" ]]; then
+    return 0
+  fi
+  echo "=== DEBUG REVIEW ARCHIVE (${label}) ==="
+  bash scripts/make_review_archive.sh "$archive_sample_flag" --allow-incomplete --output "$archive_out" || \
+    echo "Could not create debug review archive ${archive_out}" >&2
+}
+
+checkpoint_archive() {
+  local label="$1"
+  if [[ "$archive_each_step" == "true" ]]; then
+    make_debug_archive "$label"
+  fi
+}
+
 dump_diagnostics() {
   exit_code=$?
   echo "=== EXIT CODE: ${exit_code} ==="
@@ -66,9 +105,25 @@ dump_diagnostics() {
   echo "=== END: git state ==="
   git status --short
 
+  if [[ "${exit_code}" -ne 0 && "$archive_on_error" == "true" ]]; then
+    make_debug_archive "error"
+  fi
+
   exit "${exit_code}"
 }
 trap dump_diagnostics EXIT
+
+normalize_source_whitespace() {
+  if ! command -v perl >/dev/null 2>&1; then
+    echo "perl is required for source whitespace normalization" >&2
+    exit 2
+  fi
+
+  find paper docs scripts R tests \
+    -type f \
+    \( -name '*.qmd' -o -name '*.R' -o -name '*.r' -o -name '*.sh' -o -name '*.md' \) \
+    -print0 | xargs -0 perl -pi -e 's/[ \t]+$//'
+}
 
 if [[ "$render_samples" == "true" ]]; then
   sample_mode="with application samples"
@@ -84,6 +139,10 @@ fi
 
 echo "=== START: git state ==="
 git status --short
+
+echo "=== NORMALIZE SOURCE WHITESPACE ==="
+normalize_source_whitespace
+
 git diff --check -- \
   . \
   ':(exclude)*.html' \
@@ -92,13 +151,20 @@ git diff --check -- \
 
 echo "=== PUBLIC BUILD AUDIT MODE: ${sample_mode} ==="
 
-echo "=== CLEAN GENERATED RENDERS ==="
-make "$clean_target"
+if [[ "$skip_clean" == "true" ]]; then
+  echo "=== CLEAN GENERATED RENDERS: skipped by --skip-clean ==="
+else
+  echo "=== CLEAN GENERATED RENDERS ==="
+  make "$clean_target"
+fi
+checkpoint_archive "after-clean"
 
 echo "=== REBUILD GENERATED QMD SOURCES ==="
 make rebuild-qmds
+checkpoint_archive "after-rebuild-qmds"
 
 echo "=== SOURCE WHITESPACE CHECK AFTER QMD REBUILD ==="
+normalize_source_whitespace
 git diff --check -- \
   paper/report.qmd \
   paper/appendix.qmd \
@@ -110,12 +176,19 @@ git diff --check -- \
 echo "=== STATIC/PARSE CHECKS ==="
 Rscript -e 'parse("scripts/check_required_outputs.R"); cat("check_required_outputs.R parses\n")'
 Rscript -e 'tmp <- tempfile(fileext = ".R"); knitr::purl("paper/report.qmd", output = tmp, quiet = TRUE); parse(tmp); cat("paper/report.qmd R chunks parse\n")'
+checkpoint_archive "after-static-parse"
 
-echo "=== UNIT TESTS ==="
-make test
+if [[ "$skip_tests" == "true" ]]; then
+  echo "=== UNIT TESTS: skipped by --skip-tests ==="
+else
+  echo "=== UNIT TESTS ==="
+  make test
+fi
+checkpoint_archive "after-unit-tests"
 
 echo "=== PUBLIC FINAL CHECK (${sample_mode}) ==="
 make "$check_target"
+checkpoint_archive "after-public-final-check"
 
 echo "=== REVIEW ARCHIVE ==="
 bash scripts/make_review_archive.sh "$archive_sample_flag" --output "$archive_out"

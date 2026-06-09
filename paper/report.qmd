@@ -1,6 +1,5 @@
 ---
 title: "Escaping Inequality in India: Role of English-Medium Instruction"
-author: "Rishav Roy"
 format:
   pdf:
     pdf-engine: xelatex
@@ -10,9 +9,46 @@ execute:
   warning: false
   message: false
 abstract: "English-medium instruction (EMI), or the teaching of school subjects in English, is often viewed as a potential tool for economic mobility in India, where English skills command substantial wage premia. Yet it remains unclear whether greater exposure to EMI generates broader local development gains. We study whether district-level EMI exposure in 2007, measured as the share of school-going children enrolled in EMI, affected growth in average household consumption between 2007 and 2018. To address endogeneity, we instrument EMI exposure using a proxy for the opporunity cost of acquiring EMI over Hindi-based schooling: the population-weighted average linguistic distance of districts’ mother tongues from Hindi in 2001. District-level 2SLS estimates with state-clustered standard errors are positive but insignificant, providing limited evidence that EMI exposure increased local consumption growth over the medium run. This district-level equilibrium analysis is supplemented with an individual-level probit model of selection into education. We conclude by discussing threats to identification and interpretation (namely spatial autocorrelation and migration) and their implications for future work."
+header-includes:
+  - \usepackage{setspace}\doublespacing
+  - \usepackage{mathtools}
+  - \usepackage{longtable}
+  - \usepackage{tabularray}
+  - \UseTblrLibrary{booktabs}
+  - \UseTblrLibrary{siunitx}
 link-citations: true
 cite-method: citeproc
 ---
+
+
+```{r public-output-table-helper}
+#| include: false
+find_targets_store <- function(start = getwd()) {
+  here <- normalizePath(start, mustWork = TRUE)
+  repeat {
+    candidate <- file.path(here, "_targets")
+    if (dir.exists(candidate)) return(candidate)
+    parent <- dirname(here)
+    if (identical(parent, here)) return("_targets")
+    here <- parent
+  }
+}
+report_values <- tryCatch(targets::tar_read(report_values, store = find_targets_store()), error = function(e) list())
+report_value <- function(key) {
+  value <- report_values[[key]]
+  if (is.null(value)) value <- NA
+  if (is.list(value) && !is.null(value$value)) value <- value$value
+  if (length(value) == 0L || all(is.na(value))) return("—")
+  paste(value, collapse = ", ")
+}
+resolve_public_output_path <- function(path) {
+  candidates <- unique(c(path, file.path(getwd(), path), file.path("paper", path), file.path(dirname(knitr::current_input()), path), sub("^\\.\\./", "", path)))
+  hit <- candidates[file.exists(candidates) & file.info(candidates)$size > 0]
+  if (length(hit)) return(hit[[1]])
+  stop("Missing table output: ", path, call. = FALSE)
+}
+read_public_table <- function(path) utils::read.csv(resolve_public_output_path(path), check.names = FALSE)
+```
 
 ```{r report-target-values, include=FALSE}
 find_targets_store <- function(start = getwd()) {
@@ -81,26 +117,6 @@ report_value <- function(key) {
 }
 ```
 
-```{r public-output-table-helper, include=FALSE}
-resolve_public_output_path <- function(path) {
-  candidates <- unique(c(
-    path,
-    file.path(getwd(), path),
-    file.path('paper', path),
-    file.path(dirname(knitr::current_input()), path),
-    sub('^\\.\\./', '', path)
-  ))
-  candidates <- candidates[nzchar(candidates)]
-  hit <- candidates[file.exists(candidates) & file.info(candidates)$size > 0]
-  if (length(hit)) return(hit[[1]])
-  stop('Missing table output: ', path, '\nTried: ', paste(candidates, collapse = '; '), call. = FALSE)
-}
-read_public_table <- function(path) {
-  utils::read.csv(resolve_public_output_path(path), check.names = FALSE)
-}
-```
-
-
 ::: {.sample-excerpt #ws-intro-question-contribution sets="writing-5pg writing-10pg" order="1"}
 # Introduction and Literature Review {#sec-intro}
 
@@ -134,13 +150,31 @@ First, note the improvements made here over the previous literature. The setting
 
 Second, we must highlight that unlike much of this literature, we lack household panel data. We will thus follow previous papers [e.g., @martinBigOutSmall2017] and aggregate data at the district level.^[A district in India is akin to a county in the United States, but with an average population of 2 million. @tbl-sum-tbl-iv contains more information on district populations.] More specifically, we will take cross-sectional data from 2007-08 [@nationalsamplesurveyoffice2008] and 2017-18 [@office2022a], aggregate each at the district level separately, and match districts across the time periods to construct a district pseudo-panel. District-level variables are developed in @sec-iv-model and the district matching method is explained in @sec-distma-spa .
 
+```{r}
+#| label: tbl-sum-tbl-iv
+#| tbl-cap: "Summary Statistics for 2SLS Model"
+#| echo: false
+
+knitr::kable(read_public_table("../outputs/tables/main/sum_tbl_iv.csv"),
+  digits = 3,
+  booktabs = knitr::is_latex_output(),
+  longtable = knitr::is_latex_output()
+)
+```
+
+
 Our empirical methodology will then proceed in two parts. In @sec-heckman, we study the composition of our key "EMI exposure" measure by estimating an individual-level probit of school participation in 2007-08. In @sec-iv, we move to the district level and implement two-stage least squares (2SLS): the weighted average of linguistic distance from Hindi in 2001 will be used to instrument for EMI exposure, onto whose fitted values we regress the growth rate of average consumption.^[Future work may incorporate both education selection and EMI exposure as endogenous regressors in a first-difference (FD) 2SLS design. The district-level aggregates of @tbl-sum-tbl-probit-quant may be able to function as education supply-shifting instruments.] The choice of instrument is discussed in @sec-iv-iv.
 
 ```{r}
 #| label: tbl-sum-tbl-probit-quant
 #| tbl-cap: "Summary Statistics for Enrollment Participation Model (Numeric Variables)"
 #| echo: false
-knitr::kable(read_public_table("../outputs/tables/main/sum_tbl_probit_quant.csv"), digits = 3, booktabs = knitr::is_latex_output(), longtable = knitr::is_latex_output())
+
+knitr::kable(read_public_table("../outputs/tables/main/sum_tbl_probit_quant.csv"),
+  digits = 3,
+  booktabs = knitr::is_latex_output(),
+  longtable = knitr::is_latex_output()
+)
 ```
 
 
@@ -159,7 +193,7 @@ With our current methodology, we find that greater exposure to EMI enrollment ha
 
 The sole 2001 variable, linguistic distance from Hindi, comes from the 2001 Census of India [@officeoftheregistrargeneralandcensuscommissionerofindiaCensusIndia20012001].
 
-Geospatial data intended for maps and spatial autocorrelation measures is sourced from @bhatiaMergingUpdatedDistrictlevel2020, which is itself an adaptation of @meyersIndiaOfficialBoundaries2020. Final map figures are withheld until the geometry join is validated. Our methods for tracking districts across time (see @sec-distma) begin with data from @indiastatestoriesDistrictEvolution2024 and @jaacksIndiaDistrictChanges2020.
+Geospatial data intended for maps and spatial autocorrelation measures is sourced from @bhatiaMergingUpdatedDistrictlevel2020, which is itself an adaptation of @meyersIndiaOfficialBoundaries2020. Our methods for tracking districts across time (see @sec-distma) begin with data from @indiastatestoriesDistrictEvolution2024 and @jaacksIndiaDistrictChanges2020.
 
 All variables reflecting 2017-18 data come from the 75th Round of the National Sample Survey (NSS), titled "Household Social Consumption: Education" [@office2022a]. All 2007-08 variables but one come from the 64th round of the NSS, on "Participation and Expenditure in Education" [@nationalsamplesurveyoffice2008]; the sole exception to this is the percentage of homes which are pucca (i.e., permanent), which is instead sourced from a separate schedule of the 64th NSS, “Household Consumer Expenditure” [@nationalstatisticalofficeIndiaHouseholdConsumer2011]. Response rates in all of the surveys were above 96%.
 
@@ -169,19 +203,16 @@ Sample weights were applied wherever applicable. All district-level aggregates w
 #| label: tbl-sum-tbl-probit-cat
 #| tbl-cap: "Summary Statistics for Enrollment Participation Model (Categorical Variables)"
 #| echo: false
-knitr::kable(read_public_table("../outputs/tables/main/sum_tbl_probit_cat.csv"), digits = 3, booktabs = knitr::is_latex_output(), longtable = knitr::is_latex_output())
+
+knitr::kable(read_public_table("../outputs/tables/main/sum_tbl_probit_cat.csv"),
+  digits = 3,
+  booktabs = knitr::is_latex_output(),
+  longtable = knitr::is_latex_output()
+)
 ```
 
 
 Except for certain individual-level variables in the education probit, we will be aggregating variables at the district level. As will be shown in @tbl-sum-tbl-iv, the average population of a district in either sample period (2007-08 and 2017-18) is 2 million. In the survey samples, however, most districts have between 400 and 1200 people represented in the data, with the exact number varying in line with a district's population.
-
-```{r}
-#| label: tbl-sum-tbl-iv
-#| tbl-cap: "Summary Statistics for 2SLS Model"
-#| echo: false
-knitr::kable(read_public_table("../outputs/tables/main/sum_tbl_iv.csv"), digits = 3, booktabs = knitr::is_latex_output(), longtable = knitr::is_latex_output())
-```
-
 
 ## Data Issues: Representativeness and Quality
 
@@ -249,6 +280,19 @@ There are two kinds of regressors here: those in $X_i$, the variables unique to 
 
 The district-level averages can be interpreted as reflections of local supply-side factors, namely the general availability or generosity of educational inputs in a child's local environment. Their marginal effects (see @tbl-probit-mfx) may reflect how changes in these district-level characteristics affect the probability a child enrolls in education---or in other words, the elasticity of enrollment with respect to local schooling conditions.^[Future work will likely use these district-level averages as instruments for enrollment, an endogenous variable to be included alongside EMIE in a first-difference (FD) 2SLS framework. It may be possible to use this probit as a control function or in a two-stage residual inclusion (2SRI) estimation.]
 
+```{r}
+#| label: tbl-probit-mfx
+#| tbl-cap: "Average Marginal Effects and Counterfactual Comparisons for Enrollment Probit"
+#| echo: false
+
+knitr::kable(read_public_table("../outputs/tables/main/probit_mfx.csv"),
+  digits = 3,
+  booktabs = knitr::is_latex_output(),
+  longtable = knitr::is_latex_output()
+)
+```
+
+
 Following @azam2013a, @munshi2006a, and @singh2013, we use father's education to proxy a child’s ability before schooling. We use the father despite evidence indicating that the mother’s education is more strongly associated with early life human capital development.^[@card1999 shows that in the US, among people born from before 1920 to 1964, mother’s education better predicts school completion among Black people, whereas father’s education better predicts for cohorts born 1955-1964. In general, however, he finds mother’s education to be the the slightly better predictor of school completion. It’s interesting to note that this is a quantitative outcome: one might also expect mother’s education to better predict the *quality* of early childhood investment too, with father’s education relating more to the quantity of early childhood investment.] Taking the average of the mother’s and father’s education is not possible as education level is recorded by the @nationalsamplesurveyoffice2008 as a categorical variable. Future work may attempt to create an index variable for this.
 
 The @nationalsamplesurveyoffice2008 do not explicitly identify parent-child relationships. Instead, they only provide each person's relationship to the head of their household. Father's education is thus proxied by the education of the head of the household if they are male (average age here is `r report_value("inline_391c516e")`); else as the married child of the head if they are male (married men often live with their elderly parents; average age of `r report_value("inline_502254b6")`); else as the parent/parent-in-law of the head if they are male (average age of `r report_value("inline_101aa68e")`). We do not include male spouses of the head, whose average age is `r report_value("inline_4ba2ef54")` and share of children (aged <18) is `r report_value("inline_7b41b8b0")` in our data.^[This is a clear indication of severe, systematic misclassification error. Further checks on the presence of misclassification imply that the codes for unmarried children and spouses of heads were simply flipped; the average age of male "unmarried children," for example, is `r report_value("inline_a5aa43ec")` in the data. Future work will either incorporate the mislabeled "unmarried children" into this proxy chain for father's education, or use the household head's education alone as proxy.]
@@ -259,14 +303,6 @@ Summary statistics for numeric variables are given in @tbl-sum-tbl-probit-quant,
 
 ## Results and Discussion {#sec-heckman-results}
 Average marginal effects for numeric variables and counterfactual comparisons (relative to the reference level) for categorical variables (both referred to as AME henceforth) are reported in @tbl-probit-mfx, which has been derived using the work of @arel-bundockHowInterpretStatistical2024 In line with advice from @nowosadElegantInformativeMaps2021, we report the AME instead of marginal effects at the mean.
-
-```{r}
-#| label: tbl-probit-mfx
-#| tbl-cap: "Average Marginal Effects and Counterfactual Comparisons for Enrollment Probit"
-#| echo: false
-knitr::kable(read_public_table("../outputs/tables/main/probit_mfx.csv"), digits = 3, booktabs = knitr::is_latex_output(), longtable = knitr::is_latex_output())
-```
-
 
 @tbl-probit-mfx has been calculated over all observations, with standard errors clustered at the rural village and urban block level (no district clustering) derived using the delta method and automatic differentiation.^[@dawoodAutomaticDifferentiationUncertainties2023 provide a good treatment of automatic differentiation, describing it as a process which is "neither numeric nor symbolic, nor is it a combination of both.... In contrast to the more traditional numerical methods based on finite differences, auto-differentiation is ‘in theory’ exact, and in comparison to symbolic algorithms, it is computationally inexpensive." The `marginaleffects` package itself claims automatic differentiation is both faster and more accurate for some models [@arel-bundockHowInterpretStatistical2024].] All reported values are probabilities: that $\mathrm{AME}_{\text{Age}} =$ `r report_value("inline_5aa491ab")` in the table below thus means that, on average, a one-year increase in age is associated with a `r report_value("inline_7f5360c6")` percentage point decrease in the probability of being enrolled by, holding all else constant [@hansenEconometrics2022]. The counterfactual comparison $\mathrm{AME}_{\text{Muslim}} =$ `r report_value("inline_9cd11971")`, meanwhile, where 'Hindu' is the reference category to 'Muslim', means that the average change in the probability of a Hindu child being enrolled if they were hypothetically made Muslim is `r report_value("inline_9cd11971")`, keeping all else fixed at observed values.^[Such interpretations are possible because AME is averaged across all observations, making them more generalizable than metrics like marginal effects at the mean [@nguyenGuideDataAnalysis2020]. But their interpretability is still also dependent on a linearity assumption which may not be valid. Future work may thus abide by the argument of @scholbeckMarginalEffectsNonlinear2024, that no one single metric can be used to summarize a non-linear prediction function’s feature effects, and may instead report conditional feature effect estimates by applying their concept of forward marginal effects within population subgroups.]
 
@@ -305,9 +341,15 @@ $$
 $$ {#eq-iv-eq}
 Summary statistics for all of the variables in this model, including the controls $k$ in the vector $X_{kd}$, are provided in @tbl-sum-tbl-iv. Final map figures are withheld until the missing geometry join discussed in @sec-distma-spa is validated; that join is currently blocked by a data harmonization method which performed many-to-many matching from 2001 to 2007-08 to 2017-18 to 2019-20, the years our shapefiles data was collected [@bhatiaMergingUpdatedDistrictlevel2020]. Issues of and improvements to this method are also discussed in @sec-distma-spa.
 
-::: {.callout-important}
-Final district map figures are withheld until the district panel joins to validated geometry for at least 75% of district-panel rows. This prevents diagnostic distribution plots from being presented as geographic maps.
-:::
+![(Clockwise from top left) EMI exposure, consumption growth, pucca (permanent) housing, and household heads with secondary education or more. Data from the 64th round of the NSS 2007-08, ``Participation and Expenditure in Education'' and ``Household Consumer Expenditure.''](../outputs/figures/main/collage_main_maps.pdf){#fig-map1-fig}
+
+![From left to right: regions of India and linguistic distance from Hindi. District-level data, from the 2001 Census of India.](../outputs/figures/main/collage_iv_region_maps.pdf){#fig-map2-fig}
+
+
+![From left to right: regions of India and linguistic distance from Hindi. District-level data, from the 2001 Census of India.](../outputs/figures/main/collage_iv_region_maps.pdf){#fig-map2-fig}
+
+
+![(Clockwise from top left) EMI exposure, consumption growth, pucca (permanent) housing, and household heads with secondary education or more. Data from the 64th round of the NSS 2007-08, ``Participation and Expenditure in Education'' and ``Household Consumer Expenditure.''](../outputs/figures/main/collage_main_maps.pdf){#fig-map1-fig}
 
 
 
@@ -346,7 +388,12 @@ The results of our first-stage regression, of EMI exposure on linguistic distanc
 #| label: tbl-cons-iv
 #| tbl-cap: "Second-Stage Regression: Consumption Growth on EMIE (Fitted)"
 #| echo: false
-knitr::kable(read_public_table("../outputs/tables/main/cons_iv.csv"), digits = 3, booktabs = knitr::is_latex_output(), longtable = knitr::is_latex_output())
+
+knitr::kable(read_public_table("../outputs/tables/main/cons_iv.csv"),
+  digits = 3,
+  booktabs = knitr::is_latex_output(),
+  longtable = knitr::is_latex_output()
+)
 ```
 
 
@@ -354,7 +401,12 @@ knitr::kable(read_public_table("../outputs/tables/main/cons_iv.csv"), digits = 3
 #| label: tbl-fs-cons
 #| tbl-cap: "First-Stage Regression: EMI Exposure on Linguistic Distance"
 #| echo: false
-knitr::kable(read_public_table("../outputs/tables/main/fs_cons.csv"), digits = 3, booktabs = knitr::is_latex_output(), longtable = knitr::is_latex_output())
+
+knitr::kable(read_public_table("../outputs/tables/main/fs_cons.csv"),
+  digits = 3,
+  booktabs = knitr::is_latex_output(),
+  longtable = knitr::is_latex_output()
+)
 ```
 
 
@@ -449,7 +501,7 @@ The current method, however, attempted to mirror the mergers and partitions whic
 :::
 
 ### Spatial Autocorrelation, Spatial Spillovers, and Migration {#sec-spa}
-As was evident from the maps of the withheld final map figures, numerous districts are still missing from the data. Perhaps the assumption of no carveouts and border shifts was a false one to make. And yet, even if all districts were perfectly matched, problems would arise. The aforementioned figures were constructed using 2019-20 shapefiles from @bhatiaMergingUpdatedDistrictlevel2020, despite our "treatment" year being 2007-08. The splintering of districts into multiple neighbors over time allocates the same value of the 2007-08 treatment across neighbors, a rank wreckage equivalent to spatial autocorrelation in treatment when using 2019-20 geometry.
+As was evident from the maps of @fig-map1-fig and @fig-map2-fig, numerous districts are still missing from the data. Perhaps the assumption of no carveouts and border shifts was a false one to make. And yet, even if all districts were perfectly matched, problems would arise. The aforementioned figures were constructed using 2019-20 shapefiles from @bhatiaMergingUpdatedDistrictlevel2020, despite our "treatment" year being 2007-08. The splintering of districts into multiple neighbors over time allocates the same value of the 2007-08 treatment across neighbors, a rank wreckage equivalent to spatial autocorrelation in treatment when using 2019-20 geometry.
 
 The presence of true spatial autocorrelation in this environment is plausible. The spatial spillovers of development and the agglomeration of tech firms are key forms of autocorrelation which render the assumption of identical and independent distributions false, and thus many of the results of OLS meaningless. But special attention must be paid to the role of migration here. Note that, if part of EMI’s effect is in enabling children to migrate across the country (e.g., to districts which have more tech firms), then the true structural parameter $\text{EMIE}_d$ in our model would only reflect the EMI-induced benefits which they send back e.g., as remittances. In other words, even in a world of perfect shapefiles, our results could show that EMIE is a substandard tool for local area's development even if it is actually a great tool for a local population's development. How, then, could the effect of EMI ever be identified without being dissipated away by between-district migration?
 

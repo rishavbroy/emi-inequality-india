@@ -1,60 +1,38 @@
 
-\begin{longtable}[t]{llrrrr}
+\begin{longtable}[t]{lll}
 \caption{\label{tab:cons-iv}Second-Stage Regression: Consumption Growth on EMIE (Fitted)}\\
 \toprule
-Model & Term & Estimate & Std. Error & Statistic & p-Value\\
+Term & Estimate & Std. Error\\
 \midrule
 \endfirsthead
 \caption[]{Second-Stage Regression: Consumption Growth on EMIE (Fitted) \textit{(continued)}}\\
 \toprule
-Model & Term & Estimate & Std. Error & Statistic & p-Value\\
+Term & Estimate & Std. Error\\
 \midrule
 \endhead
 
 \endfoot
 \bottomrule
 \endlastfoot
-\cellcolor{gray!10}{baseline} & \cellcolor{gray!10}{(Intercept)} & \cellcolor{gray!10}{203.131} & \cellcolor{gray!10}{76.829} & \cellcolor{gray!10}{2.644} & \cellcolor{gray!10}{0.008}\\
-baseline & emie_2007 & 4.178 & 3.629 & 1.151 & 0.250\\
-\cellcolor{gray!10}{baseline} & \cellcolor{gray!10}{consumption_2007} & \cellcolor{gray!10}{-0.075} & \cellcolor{gray!10}{0.018} & \cellcolor{gray!10}{-4.103} & \cellcolor{gray!10}{0.000}\\
-baseline & gini_consumption_2007 & -110.719 & 52.346 & -2.115 & 0.035\\
-\cellcolor{gray!10}{baseline} & \cellcolor{gray!10}{pct_urban} & \cellcolor{gray!10}{0.419} & \cellcolor{gray!10}{0.346} & \cellcolor{gray!10}{1.210} & \cellcolor{gray!10}{0.227}\\
+\cellcolor{gray!10}{Constant} & \cellcolor{gray!10}{3165.007*} & \cellcolor{gray!10}{(1514.573)}\\
+EMIE & -102.306 & (61.786)\\
+\cellcolor{gray!10}{Consumption, 2007-08} & \cellcolor{gray!10}{0.634} & \cellcolor{gray!10}{(0.415)}\\
+Gini consumption, 2007-08 & -1135.670* & (527.974)\\
+\cellcolor{gray!10}{Pct. urban} & \cellcolor{gray!10}{1.357} & \cellcolor{gray!10}{(1.468)}\\
 \addlinespace
-baseline & avg_hh_size & -3.765 & 5.457 & -0.690 & 0.491\\
-\cellcolor{gray!10}{baseline} & \cellcolor{gray!10}{dependency_ratio} & \cellcolor{gray!10}{0.119} & \cellcolor{gray!10}{0.241} & \cellcolor{gray!10}{0.495} & \cellcolor{gray!10}{0.621}\\
-baseline & pct_fem_head & 1.424 & 2.099 & 0.678 & 0.498\\
-\cellcolor{gray!10}{baseline} & \cellcolor{gray!10}{pct_hindu} & \cellcolor{gray!10}{0.508} & \cellcolor{gray!10}{0.624} & \cellcolor{gray!10}{0.813} & \cellcolor{gray!10}{0.417}\\
-baseline & pct_muslim & 0.395 & 0.611 & 0.647 & 0.518\\
+Avg. HH size & -79.729* & (39.282)\\
+\cellcolor{gray!10}{Dependency ratio} & \cellcolor{gray!10}{-6.455} & \cellcolor{gray!10}{(3.455)}\\
+Pct. female head & -20.610 & (17.634)\\
+\cellcolor{gray!10}{Pct. Hindu} & \cellcolor{gray!10}{-22.411} & \cellcolor{gray!10}{(12.654)}\\
+Pct. Muslim & -17.457* & (8.725)\\
 \addlinespace
-\cellcolor{gray!10}{baseline} & \cellcolor{gray!10}{pct_st} & \cellcolor{gray!10}{-0.462} & \cellcolor{gray!10}{0.300} & \cellcolor{gray!10}{-1.541} & \cellcolor{gray!10}{0.124}\\
-baseline & pct_sc & 0.815 & 0.398 & 2.046 & 0.041\\
-\cellcolor{gray!10}{baseline} & \cellcolor{gray!10}{pct_obc} & \cellcolor{gray!10}{-0.507} & \cellcolor{gray!10}{0.220} & \cellcolor{gray!10}{-2.306} & \cellcolor{gray!10}{0.021}\\
-baseline & pct_small_land & -0.409 & 0.241 & -1.696 & 0.090\\
-\cellcolor{gray!10}{baseline} & \cellcolor{gray!10}{pct_medium_land} & \cellcolor{gray!10}{-0.410} & \cellcolor{gray!10}{0.391} & \cellcolor{gray!10}{-1.048} & \cellcolor{gray!10}{0.295}\\
+\cellcolor{gray!10}{Pct. ST} & \cellcolor{gray!10}{5.050} & \cellcolor{gray!10}{(3.508)}\\
+Pct. SC & 13.120* & (5.743)\\
+\cellcolor{gray!10}{Pct. OBC} & \cellcolor{gray!10}{7.249} & \cellcolor{gray!10}{(4.608)}\\
+Pct. small land & -0.483 & (1.242)\\
+\cellcolor{gray!10}{Pct. medium land} & \cellcolor{gray!10}{3.301} & \cellcolor{gray!10}{(1.868)}\\
 \addlinespace
-baseline & pct_large_land & -0.261 & 0.413 & -0.632 & 0.528\\
-\cellcolor{gray!10}{baseline} & \cellcolor{gray!10}{pct_head_lit_to_primary} & \cellcolor{gray!10}{0.513} & \cellcolor{gray!10}{0.349} & \cellcolor{gray!10}{1.471} & \cellcolor{gray!10}{0.142}\\
-baseline & pct_head_secondary_plus & -0.498 & 0.418 & -1.192 & 0.234\\
-\cellcolor{gray!10}{fd_log} & \cellcolor{gray!10}{(Intercept)} & \cellcolor{gray!10}{1.523} & \cellcolor{gray!10}{0.299} & \cellcolor{gray!10}{5.085} & \cellcolor{gray!10}{0.000}\\
-fd_log & emie_2007 & 0.012 & 0.013 & 0.907 & 0.365\\
-\addlinespace
-\cellcolor{gray!10}{fd_log} & \cellcolor{gray!10}{consumption_2007} & \cellcolor{gray!10}{0.000} & \cellcolor{gray!10}{0.000} & \cellcolor{gray!10}{-4.472} & \cellcolor{gray!10}{0.000}\\
-fd_log & gini_consumption_2007 & -0.633 & 0.217 & -2.921 & 0.004\\
-\cellcolor{gray!10}{fd_log} & \cellcolor{gray!10}{pct_urban} & \cellcolor{gray!10}{0.002} & \cellcolor{gray!10}{0.001} & \cellcolor{gray!10}{1.672} & \cellcolor{gray!10}{0.095}\\
-fd_log & avg_hh_size & -0.027 & 0.020 & -1.342 & 0.180\\
-\cellcolor{gray!10}{fd_log} & \cellcolor{gray!10}{dependency_ratio} & \cellcolor{gray!10}{0.000} & \cellcolor{gray!10}{0.001} & \cellcolor{gray!10}{0.098} & \cellcolor{gray!10}{0.922}\\
-\addlinespace
-fd_log & pct_fem_head & -0.004 & 0.008 & -0.450 & 0.653\\
-\cellcolor{gray!10}{fd_log} & \cellcolor{gray!10}{pct_hindu} & \cellcolor{gray!10}{0.001} & \cellcolor{gray!10}{0.002} & \cellcolor{gray!10}{0.492} & \cellcolor{gray!10}{0.623}\\
-fd_log & pct_muslim & 0.000 & 0.002 & 0.128 & 0.898\\
-\cellcolor{gray!10}{fd_log} & \cellcolor{gray!10}{pct_st} & \cellcolor{gray!10}{-0.002} & \cellcolor{gray!10}{0.001} & \cellcolor{gray!10}{-1.831} & \cellcolor{gray!10}{0.068}\\
-fd_log & pct_sc & 0.003 & 0.002 & 1.947 & 0.052\\
-\addlinespace
-\cellcolor{gray!10}{fd_log} & \cellcolor{gray!10}{pct_obc} & \cellcolor{gray!10}{-0.002} & \cellcolor{gray!10}{0.001} & \cellcolor{gray!10}{-2.460} & \cellcolor{gray!10}{0.014}\\
-fd_log & pct_small_land & -0.001 & 0.001 & -1.300 & 0.194\\
-\cellcolor{gray!10}{fd_log} & \cellcolor{gray!10}{pct_medium_land} & \cellcolor{gray!10}{-0.002} & \cellcolor{gray!10}{0.002} & \cellcolor{gray!10}{-1.329} & \cellcolor{gray!10}{0.184}\\
-fd_log & pct_large_land & -0.001 & 0.002 & -0.576 & 0.565\\
-\cellcolor{gray!10}{fd_log} & \cellcolor{gray!10}{pct_head_lit_to_primary} & \cellcolor{gray!10}{0.002} & \cellcolor{gray!10}{0.001} & \cellcolor{gray!10}{1.274} & \cellcolor{gray!10}{0.203}\\
-\addlinespace
-fd_log & pct_head_secondary_plus & -0.002 & 0.002 & -1.088 & 0.277\\*
+Pct. large land & -14.693*** & (4.021)\\
+\cellcolor{gray!10}{Pct. head literate-primary} & \cellcolor{gray!10}{-7.684*} & \cellcolor{gray!10}{(3.285)}\\
+Pct. head secondary+ & -1.908* & (0.789)\\*
 \end{longtable}

@@ -113,10 +113,12 @@ column_or_na <- function(df, col) {
 }
 
 first_stage_vcov <- function(fit, district_panel) {
-  if (!"state_std" %in% names(district_panel) || !requireNamespace("sandwich", quietly = TRUE)) return(NULL)
+  if (!requireNamespace("sandwich", quietly = TRUE)) return(NULL)
+  cluster_col <- first_col(as.data.frame(district_panel), c("state_20", "state_std", "state_0708"))
+  if (is.null(cluster_col)) return(NULL)
   mf_rows <- suppressWarnings(as.integer(rownames(stats::model.frame(fit))))
   if (!length(mf_rows) || any(is.na(mf_rows))) return(NULL)
-  cluster <- district_panel$state_std[mf_rows]
+  cluster <- as.data.frame(district_panel)[[cluster_col]][mf_rows]
   if (length(unique(stats::na.omit(cluster))) < 2L) return(NULL)
   sandwich::vcovCL(fit, cluster = cluster)
 }

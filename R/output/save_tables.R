@@ -61,7 +61,8 @@ format_table_for_output <- function(table, public = TRUE) {
   if ("method" %in% names(out) && length(unique(stats::na.omit(out$method))) <= 1L) out$method <- NULL
 
   out <- drop_empty_output_columns(out)
-  names(out) <- vapply(names(out), nice_column_name, character(1))
+  already_polished <- any(names(out) %in% c("Term", "Estimate", "Std. Error", "N", "Min", "1Q", "Med", "3Q", "Max", "Mean", "SD"))
+  if (!already_polished) names(out) <- vapply(names(out), nice_column_name, character(1))
   out
 }
 

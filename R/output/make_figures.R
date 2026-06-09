@@ -87,7 +87,7 @@ make_figures <- function(district_panel, raw_ilo_figures, cfg) {
   if (maps_available) {
     out <- c(out, list(
       map_emi_exposure = figure_spec("map_emi_exposure", "map_emi_exposure.png", "EMI Exposure", kind = "map", variable = "emie_2007"),
-      map_consumption_growth = figure_spec("map_consumption_growth", "map_consumption_growth.png", "%Δ Consumption", kind = "map", variable = "consumption_growth_pct"),
+      map_consumption_growth = figure_spec("map_consumption_growth", "map_consumption_growth.png", "% Change in Consumption", kind = "map", variable = "consumption_growth_pct"),
       map_pucca = figure_spec("map_pucca", "map_pucca.png", "% Pucca Homes", kind = "map", variable = "pucca_share_2007"),
       map_education = figure_spec("map_education", "map_education.png", "% HH Head w/ Sec.+", kind = "map", variable = "head_secondary_plus_2007"),
       map_region = figure_spec("map_region", "map_region.png", "Region", kind = "map", variable = "region"),
@@ -108,21 +108,18 @@ make_figures <- function(district_panel, raw_ilo_figures, cfg) {
       )
     ))
   } else if (identical(cfg$mode, "final")) {
-    # Provisional-final policy: the active public report withholds map figures
-    # until the district panel joins to validated geometry. This is deliberately
-    # not an error here because final rendering must still complete for the
-    # non-map paper, tables, and samples. Strict map production should instead
-    # be re-enabled by adding geometry and removing the map-withheld prose.
-    attr(out, "maps_withheld_reason") <- paste0(
-      "Final maps withheld: missing variables [", paste(missing_vars, collapse = ", "),
-      "]; geometry coverage = ", round(100 * sf_geometry_coverage(district_panel), 1), "%"
+    stop(
+      "Final legacy-parity map generation requires validated map inputs. Missing variables [",
+      paste(missing_vars, collapse = ", "), "]; geometry coverage = ",
+      round(100 * sf_geometry_coverage(district_panel), 1), "%.",
+      call. = FALSE
     )
   } else {
     # Draft-mode diagnostics live outside outputs/figures/main and are explicitly
     # labeled as diagnostics by figure_output_dir().
     out <- c(out, list(
       map_emi_exposure = figure_spec("map_emi_exposure", "map_emi_exposure.png", "EMI Exposure", kind = "status", variable = "emie_2007"),
-      map_consumption_growth = figure_spec("map_consumption_growth", "map_consumption_growth.png", "%Δ Consumption", kind = "status", variable = "consumption_growth_pct")
+      map_consumption_growth = figure_spec("map_consumption_growth", "map_consumption_growth.png", "% Change in Consumption", kind = "status", variable = "consumption_growth_pct")
     ))
   }
 

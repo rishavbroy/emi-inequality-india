@@ -14,6 +14,48 @@ compute_average_marginal_effects <- function(selection_model, selection_data, cf
     ))
   }
 
+  # `selection_model` is often a survey::svyglm object loaded from the targets
+  # store. Survey lonely-PSU handling is an R option, not a durable model
+  # attribute, so it may not be set in the downstream AME target even though it
+  # was set when the model was estimated. Set it explicitly around all AME
+  # computations to make reruns deterministic and warning/error-free.
+  old_lonely_psu <- getOption("survey.lonely.psu")
+  old_domain_lonely <- getOption("survey.adjust.domain.lonely")
+  options(survey.lonely.psu = "average", survey.adjust.domain.lonely = TRUE)
+  on.exit({
+    if (is.null(old_lonely_psu)) {
+      options(survey.lonely.psu = NULL)
+    } else {
+      options(survey.lonely.psu = old_lonely_psu)
+    }
+    if (is.null(old_domain_lonely)) {
+      options(survey.adjust.domain.lonely = NULL)
+    } else {
+      options(survey.adjust.domain.lonely = old_domain_lonely)
+    }
+  }, add = TRUE)
+
+#' run expression while muffling survey lonely-PSU warnings
+#'
+#' survey emits lonely-PSU warnings even when survey.lonely.psu is set to
+#' average and the adjustment is intentional. Muffle only those handled
+#' warnings inside the AME target so strict final builds remain warning-clean.
+muffle_survey_lonely_psu_warnings <- function(expr) {
+  withCallingHandlers(
+    expr,
+    warning = function(w) {
+      msg <- conditionMessage(w)
+      lonely_psu_warning <- grepl(
+        "has only one PSU at stage",
+        msg,
+        fixed = TRUE
+      )
+      if (lonely_psu_warning) invokeRestart("muffleWarning")
+    }
+  )
+}
+
+
   if (!isTRUE(cfg$run_full_ame)) {
     return(format_ame_results(data.frame(
       term = names(stats::coef(selection_model)),
@@ -37,14 +79,16 @@ compute_average_marginal_effects <- function(selection_model, selection_data, cf
     ))
   }
 
-  out <- tryCatch(
-    compute_ames_autodiff(selection_model, selection_data),
-    error = function(e) {
-      fallback <- compute_ames_probit_analytic(selection_model, selection_data)
-      fallback$method <- "delta_method_analytic_probit"
-      fallback$reason <- NA_character_
-      fallback
-    }
+  out <- muffle_survey_lonely_psu_warnings(
+    tryCatch(
+      compute_ames_autodiff(selection_model, selection_data),
+      error = function(e) {
+        fallback <- compute_ames_probit_analytic(selection_model, selection_data)
+        fallback$method <- "delta_method_analytic_probit"
+        fallback$reason <- NA_character_
+        fallback
+      }
+    )
   )
   format_ame_results(out)
 }
@@ -230,20 +274,130 @@ normalize_ame_columns <- function(out) {
   out
 }
 
+legacy_ame_lookup <- function() {
+  data.frame(
+    term = c(
+      "AGE", "SEX", "HH_SIZE",
+      "RELIGION", "RELIGION", "RELIGION", "RELIGION", "RELIGION", "RELIGION", "RELIGION",
+      "SOCIAL_GROUP", "SOCIAL_GROUP", "SOCIAL_GROUP",
+      "SECTOR",
+      "DIST_FROM_NEAREST_PRIMARY_CLASS", "DIST_FROM_NEAREST_PRIMARY_CLASS", "DIST_FROM_NEAREST_PRIMARY_CLASS", "DIST_FROM_NEAREST_PRIMARY_CLASS",
+      "father_educ", "father_educ", "father_educ", "father_educ", "father_educ", "father_educ", "father_educ",
+      "dmean_num_IS_EDU_FREE", "dmean_num_TUTION_FEE_WAIVED", "dmean_num_RECD_SCHOLARSHIP_STIPEND",
+      "dmean_num_RECD_TXT_BOOKS", "dmean_num_RECD_STATIONERY", "dmean_num_MID_DAY_MEAL_ETC_RECD", "dmean_num_ENROLLMENT_COST"
+    ),
+    contrast = c(
+      "dY/dX", "Female - Male", "dY/dX",
+      "Muslim - Hindu", "Christian - Hindu", "Sikh - Hindu", "Jain - Hindu", "Buddhist - Hindu", "Zoroastrian - Hindu", "Other - Hindu",
+      "Scheduled Tribe - Other", "Scheduled Caste - Other", "Other Backward Class - Other",
+      "Urban - Rural",
+      "1km <= d <2kms - d<1km", "2kms<= d <3kms - d<1km", "3kms <= d <5kms - d<1km", "d>=5kms - d<1km",
+      "Literate, no school - Illiterate", "Literate, school < primary - Illiterate", "Primary - Illiterate", "Upper primary - Illiterate", "Secondary - Illiterate", "Higher secondary - Illiterate", "Postsecondary+ - Illiterate",
+      "dY/dX", "dY/dX", "dY/dX", "dY/dX", "dY/dX", "dY/dX", "dY/dX"
+    ),
+    Term = c(
+      "Age (years)", "Female (ref: Male)", "Household size",
+      "Religion: Muslim (ref: Hindu)", "Religion: Christian", "Religion: Sikh", "Religion: Jain", "Religion: Buddhist", "Religion: Zoroastrian", "Religion: Other",
+      "Social group: Scheduled Tribe (ref: Other)", "Social group: Scheduled Caste", "Social group: Other Backward Class",
+      "Urban (ref: Rural)",
+      "Distance 1–2km (ref: <1km)", "Distance 2–3km", "Distance 3–5km", "Distance > 5km",
+      "Father's educ.: Literate, no school (ref: Illiterate)", "Father's educ.: Literate, school < primary", "Father's educ.: Primary", "Father's educ.: Upper primary", "Father's educ.: Secondary", "Father's educ.: Higher secondary", "Father's educ.: Postsecondary+",
+      "Educ. free available (ref: No)", "Tuition waiver received", "Scholarship/Stipend received", "Textbook(s) received", "Stationery received", "Mid-day meal, etc. received", "Enrollment cost (Rs.)"
+    ),
+    stringsAsFactors = FALSE
+  )
+}
+
+legacy_ame_label_order <- function() legacy_ame_lookup()$Term
+
+infer_ame_contrast <- function(out) {
+  if ("contrast" %in% names(out)) return(as.character(out$contrast))
+  contrast <- rep("dY/dX", nrow(out))
+  if (!"term" %in% names(out)) return(contrast)
+  if ("comparison" %in% names(out)) contrast <- as.character(out$comparison)
+  contrast[is.na(contrast) | !nzchar(contrast)] <- "dY/dX"
+  contrast
+}
+
+ame_factor_base_terms <- function() {
+  unique(legacy_ame_lookup()$term[legacy_ame_lookup()$contrast != "dY/dX"])
+}
+
+normalize_encoded_factor_ame_terms <- function(out) {
+  out <- as.data.frame(out, stringsAsFactors = FALSE)
+  if (!"term" %in% names(out)) return(out)
+  if (!"contrast" %in% names(out)) out$contrast <- infer_ame_contrast(out)
+
+  lookup <- legacy_ame_lookup()
+  factor_terms <- ame_factor_base_terms()
+  factor_terms <- factor_terms[order(nchar(factor_terms), decreasing = TRUE)]
+
+  for (i in seq_len(nrow(out))) {
+    current_term <- as.character(out$term[[i]])
+    current_contrast <- as.character(out$contrast[[i]])
+    if (!nzchar(current_term) || (!is.na(current_contrast) && current_contrast != "dY/dX")) next
+
+    direct <- lookup$term == current_term & lookup$contrast == current_contrast
+    if (any(direct)) next
+
+    for (base_term in factor_terms) {
+      if (!startsWith(current_term, base_term)) next
+      level <- trimws(sub(paste0("^", base_term), "", current_term))
+      if (!nzchar(level)) next
+      candidates <- lookup[lookup$term == base_term, , drop = FALSE]
+      contrast_hit <- candidates$contrast[startsWith(candidates$contrast, paste0(level, " - "))]
+      if (length(contrast_hit)) {
+        out$term[[i]] <- base_term
+        out$contrast[[i]] <- contrast_hit[[1]]
+        break
+      }
+    }
+  }
+  out
+}
+
+attach_legacy_ame_labels <- function(out) {
+  out <- as.data.frame(out, stringsAsFactors = FALSE)
+  if (!"term" %in% names(out) && "variable" %in% names(out)) out$term <- out$variable
+  if (!"contrast" %in% names(out)) out$contrast <- infer_ame_contrast(out)
+  out <- normalize_encoded_factor_ame_terms(out)
+  lookup <- legacy_ame_lookup()
+  labeled <- merge(out, lookup, by = c("term", "contrast"), all.x = TRUE, sort = FALSE)
+  labeled$Term[is.na(labeled$Term)] <- labeled$term[is.na(labeled$Term)]
+  labeled$Term <- factor(labeled$Term, levels = unique(c(legacy_ame_label_order(), labeled$Term)))
+  labeled <- labeled[order(labeled$Term), , drop = FALSE]
+  labeled$Term <- as.character(labeled$Term)
+  labeled
+}
+
 #' format ame results
 #'
 format_ame_results <- function(ame_results) {
   out <- tibble::as_tibble(ame_results)
   if (!"term" %in% names(out) && "variable" %in% names(out)) out$term <- out$variable
+  if (!"contrast" %in% names(out)) out$contrast <- infer_ame_contrast(as.data.frame(out))
   out <- normalize_ame_columns(out)
   if (!"method" %in% names(out)) out$method <- "autodiff"
   if (!"status" %in% names(out)) out$status <- "estimated"
   if (!"reason" %in% names(out)) out$reason <- NA_character_
+  legacy_terms <- unique(legacy_ame_lookup()$term)
+  use_legacy_schema <- any(out$term %in% legacy_terms) ||
+    any(grepl("^dmean_num_", out$term %||% character(), perl = TRUE)) ||
+    any((out$contrast %||% "dY/dX") != "dY/dX", na.rm = TRUE)
 
-  required <- c(
-    "term", "estimate", "std.error", "statistic", "p.value", "s.value",
-    "conf.low", "conf.high", "method", "status", "reason"
-  )
+  if (isTRUE(use_legacy_schema)) {
+    out <- attach_legacy_ame_labels(out)
+    required <- c(
+      "Term", "term", "contrast", "estimate", "std.error", "statistic", "p.value", "s.value",
+      "conf.low", "conf.high", "method", "status", "reason"
+    )
+  } else {
+    required <- c(
+      "term", "estimate", "std.error", "statistic", "p.value",
+      "s.value", "conf.low", "conf.high", "method", "status", "reason"
+    )
+  }
+
   for (nm in setdiff(required, names(out))) out[[nm]] <- NA
   if ("p.value" %in% names(out) && "s.value" %in% names(out)) {
     missing_s <- is.na(out$s.value) & is.finite(out$p.value) & out$p.value > 0
