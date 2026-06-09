@@ -274,8 +274,26 @@ fix_appendix_crossrefs <- function(lines) {
   lines
 }
 
-replace_withheld_map_refs <- function(lines) {
+replace_withheld_map_refs <- function(lines, allow_crossrefs = FALSE) {
+  # The appendix and district-matching note are rendered as standalone QMDs, so
+  # they cannot reference figure labels defined only in paper/report.qmd. Keep
+  # those references as plain prose outside the main report to satisfy the
+  # strict per-document cross-reference audit.
+  if (!isTRUE(allow_crossrefs)) return(lines)
   lines <- gsub("the withheld final map figures", "@fig-map1-fig and @fig-map2-fig", lines, fixed = TRUE)
+  lines
+}
+
+neutralize_standalone_map_crossrefs <- function(lines) {
+  # Legacy prose in the appendix and district-matching note mentions the main
+  # report's map figures. Those standalone documents do not define the map
+  # figure labels, so keep the prose but remove Quarto cross-reference tokens.
+  lines <- gsub("the maps of Figures @fig-map1-fig and @fig-map2-fig", "the main report's map figures", lines, fixed = TRUE)
+  lines <- gsub("the maps of @fig-map1-fig and @fig-map2-fig", "the main report's map figures", lines, fixed = TRUE)
+  lines <- gsub("Figures @fig-map1-fig and @fig-map2-fig", "the main report's map figures", lines, fixed = TRUE)
+  lines <- gsub("@fig-map1-fig and @fig-map2-fig", "the main report's map figures", lines, fixed = TRUE)
+  lines <- gsub("@fig-map1-fig", "the main report's first map figure", lines, fixed = TRUE)
+  lines <- gsub("@fig-map2-fig", "the main report's second map figure", lines, fixed = TRUE)
   lines
 }
 
@@ -419,7 +437,10 @@ postprocess_one <- function(path) {
   }
   lines <- fix_final_public_prose(lines)
   lines <- remove_quarto_crossref_prefixes(lines)
-  lines <- replace_withheld_map_refs(lines)
+  lines <- replace_withheld_map_refs(lines, allow_crossrefs = identical(path, "paper/report.qmd"))
+  if (identical(path, "paper/appendix.qmd") || identical(path, "docs/district-matching.qmd")) {
+    lines <- neutralize_standalone_map_crossrefs(lines)
+  }
   lines <- remove_unavailable_map_figures(lines)
   if (identical(path, "paper/report.qmd")) {
     lines <- insert_after_first(lines, "Summary statistics for all of the variables in this model, including the controls $k$ in the vector $X_{kd}$, are provided in @tbl-sum-tbl-iv.", c(
