@@ -1,56 +1,51 @@
 
 \begin{landscape}
-\begin{longtable}[t]{lrrrrrrrr}
+\begin{longtable}[t]{llrlllllll}
 \caption{\label{tab:sum-tbl-iv}Summary Statistics for 2SLS Model}\\
 \toprule
-Variable & Min & Q1 & Median & Q3 & Max & Mean & Sd & n\\
+var & label & N & Min & 1Q & Med & 3Q & Max & Mean & SD\\
 \midrule
 \endfirsthead
 \caption[]{Summary Statistics for 2SLS Model \textit{(continued)}}\\
 \toprule
-Variable & Min & Q1 & Median & Q3 & Max & Mean & Sd & n\\
+var & label & N & Min & 1Q & Med & 3Q & Max & Mean & SD\\
 \midrule
 \endhead
 
 \endfoot
 \bottomrule
 \endlastfoot
-\cellcolor{gray!10}{state_std} & \cellcolor{gray!10}{1.000} & \cellcolor{gray!10}{9.000} & \cellcolor{gray!10}{18.000} & \cellcolor{gray!10}{24.000} & \cellcolor{gray!10}{35.000} & \cellcolor{gray!10}{17.400} & \cellcolor{gray!10}{9.335} & \cellcolor{gray!10}{588}\\
-district_std & 1.000 & 5.000 & 12.000 & 21.000 & 70.000 & 15.361 & 13.570 & 588\\
-\cellcolor{gray!10}{emie_2007} & \cellcolor{gray!10}{0.000} & \cellcolor{gray!10}{0.543} & \cellcolor{gray!10}{2.172} & \cellcolor{gray!10}{6.343} & \cellcolor{gray!10}{31.626} & \cellcolor{gray!10}{5.097} & \cellcolor{gray!10}{6.862} & \cellcolor{gray!10}{588}\\
-n_2007 & 35.000 & 376.000 & 508.000 & 738.250 & 3021.000 & 604.444 & 352.551 & 588\\
-\cellcolor{gray!10}{consumption_2007} & \cellcolor{gray!10}{380.129} & \cellcolor{gray!10}{742.781} & \cellcolor{gray!10}{934.457} & \cellcolor{gray!10}{1191.698} & \cellcolor{gray!10}{4408.381} & \cellcolor{gray!10}{1036.152} & \cellcolor{gray!10}{442.671} & \cellcolor{gray!10}{588}\\
+\cellcolor{gray!10}{EMIE} & \cellcolor{gray!10}{EMIE} & \cellcolor{gray!10}{444} & \cellcolor{gray!10}{0.00} & \cellcolor{gray!10}{0.64} & \cellcolor{gray!10}{3.24} & \cellcolor{gray!10}{5.46} & \cellcolor{gray!10}{25.25} & \cellcolor{gray!10}{4.74} & \cellcolor{gray!10}{6.11}\\
+wavg_ling_degrees & Ling. Distance & 444 & 0.00 & 0.12 & 3.03 & 4.63 & 5.00 & 2.50 & 1.96\\
+\cellcolor{gray!10}{npeople_0708} & \cellcolor{gray!10}{Population} & \cellcolor{gray!10}{444} & \cellcolor{gray!10}{215.00} & \cellcolor{gray!10}{391.00} & \cellcolor{gray!10}{480.00} & \cellcolor{gray!10}{659.25} & \cellcolor{gray!10}{2,373.00} & \cellcolor{gray!10}{570.07} & \cellcolor{gray!10}{329.30}\\
+consumption_0708 & Consumption & 444 & 514.61 & 788.57 & 962.19 & 1244.90 & 2664.35 & 1044.72 & 363.04\\
+\cellcolor{gray!10}{gini_cons_0708} & \cellcolor{gray!10}{Gini of Consumption} & \cellcolor{gray!10}{444} & \cellcolor{gray!10}{0.10} & \cellcolor{gray!10}{0.19} & \cellcolor{gray!10}{0.27} & \cellcolor{gray!10}{0.32} & \cellcolor{gray!10}{0.42} & \cellcolor{gray!10}{0.26} & \cellcolor{gray!10}{0.08}\\
 \addlinespace
-gini_consumption_2007 & 0.063 & 0.218 & 0.264 & 0.312 & 0.548 & 0.270 & 0.077 & 588\\
-\cellcolor{gray!10}{pct_urban} & \cellcolor{gray!10}{0.000} & \cellcolor{gray!10}{8.307} & \cellcolor{gray!10}{16.202} & \cellcolor{gray!10}{29.085} & \cellcolor{gray!10}{100.000} & \cellcolor{gray!10}{21.630} & \cellcolor{gray!10}{18.857} & \cellcolor{gray!10}{588}\\
-avg_hh_size & 3.836 & 5.026 & 5.504 & 6.127 & 8.778 & 5.570 & 0.834 & 588\\
-\cellcolor{gray!10}{dependency_ratio} & \cellcolor{gray!10}{39.124} & \cellcolor{gray!10}{81.786} & \cellcolor{gray!10}{97.228} & \cellcolor{gray!10}{119.799} & \cellcolor{gray!10}{206.353} & \cellcolor{gray!10}{101.596} & \cellcolor{gray!10}{26.886} & \cellcolor{gray!10}{588}\\
-pct_fem_head & 5.893 & 10.495 & 11.490 & 12.708 & 24.559 & 11.705 & 1.969 & 588\\
+pct_urban & Pct. Urban & 444 & 1.65 & 5.99 & 15.28 & 24.20 & 88.22 & 20.42 & 18.49\\
+\cellcolor{gray!10}{avg_hh_size} & \cellcolor{gray!10}{Avg. HH Size} & \cellcolor{gray!10}{444} & \cellcolor{gray!10}{3.85} & \cellcolor{gray!10}{5.08} & \cellcolor{gray!10}{5.33} & \cellcolor{gray!10}{5.77} & \cellcolor{gray!10}{8.74} & \cellcolor{gray!10}{5.41} & \cellcolor{gray!10}{0.77}\\
+dependency_ratio & Dependency Ratio × 100 & 444 & 59.87 & 78.93 & 91.95 & 103.29 & 165.28 & 96.74 & 24.61\\
+\cellcolor{gray!10}{pct_fem_head} & \cellcolor{gray!10}{Pct. Female Head} & \cellcolor{gray!10}{444} & \cellcolor{gray!10}{6.81} & \cellcolor{gray!10}{10.75} & \cellcolor{gray!10}{11.43} & \cellcolor{gray!10}{12.71} & \cellcolor{gray!10}{15.66} & \cellcolor{gray!10}{11.60} & \cellcolor{gray!10}{1.67}\\
+pct_hindu & Pct. Hindu & 444 & 0.00 & 85.75 & 92.42 & 97.67 & 100.00 & 81.02 & 30.47\\
 \addlinespace
-\cellcolor{gray!10}{pct_hindu} & \cellcolor{gray!10}{0.000} & \cellcolor{gray!10}{72.534} & \cellcolor{gray!10}{88.015} & \cellcolor{gray!10}{94.958} & \cellcolor{gray!10}{100.000} & \cellcolor{gray!10}{77.328} & \cellcolor{gray!10}{26.975} & \cellcolor{gray!10}{588}\\
-pct_muslim & 0.000 & 1.498 & 6.238 & 13.877 & 100.000 & 11.021 & 15.904 & 588\\
-\cellcolor{gray!10}{pct_other_religion} & \cellcolor{gray!10}{0.000} & \cellcolor{gray!10}{0.000} & \cellcolor{gray!10}{0.957} & \cellcolor{gray!10}{6.342} & \cellcolor{gray!10}{100.000} & \cellcolor{gray!10}{11.651} & \cellcolor{gray!10}{25.606} & \cellcolor{gray!10}{588}\\
-pct_st & 0.000 & 0.030 & 3.049 & 19.236 & 100.000 & 16.885 & 27.767 & 588\\
-\cellcolor{gray!10}{pct_sc} & \cellcolor{gray!10}{0.000} & \cellcolor{gray!10}{8.762} & \cellcolor{gray!10}{17.361} & \cellcolor{gray!10}{24.835} & \cellcolor{gray!10}{63.040} & \cellcolor{gray!10}{17.429} & \cellcolor{gray!10}{11.069} & \cellcolor{gray!10}{588}\\
+\cellcolor{gray!10}{pct_muslim} & \cellcolor{gray!10}{Pct. Muslim} & \cellcolor{gray!10}{444} & \cellcolor{gray!10}{0.00} & \cellcolor{gray!10}{1.59} & \cellcolor{gray!10}{4.71} & \cellcolor{gray!10}{11.99} & \cellcolor{gray!10}{100.00} & \cellcolor{gray!10}{12.00} & \cellcolor{gray!10}{23.18}\\
+pct_other_religion & Pct. Other & 444 & 0.00 & 0.00 & 0.15 & 2.31 & 99.88 & 6.98 & 23.28\\
+\cellcolor{gray!10}{pct_st} & \cellcolor{gray!10}{Pct. ST} & \cellcolor{gray!10}{444} & \cellcolor{gray!10}{0.00} & \cellcolor{gray!10}{0.00} & \cellcolor{gray!10}{3.00} & \cellcolor{gray!10}{17.31} & \cellcolor{gray!10}{99.88} & \cellcolor{gray!10}{14.35} & \cellcolor{gray!10}{25.19}\\
+pct_sc & Pct. SC & 444 & 0.00 & 7.98 & 17.36 & 23.59 & 42.71 & 16.51 & 9.81\\
+\cellcolor{gray!10}{pct_obc} & \cellcolor{gray!10}{Pct. OBC} & \cellcolor{gray!10}{444} & \cellcolor{gray!10}{0.00} & \cellcolor{gray!10}{24.23} & \cellcolor{gray!10}{37.96} & \cellcolor{gray!10}{59.22} & \cellcolor{gray!10}{79.56} & \cellcolor{gray!10}{39.27} & \cellcolor{gray!10}{23.03}\\
 \addlinespace
-pct_obc & 0.000 & 15.569 & 41.981 & 58.998 & 95.235 & 38.675 & 24.338 & 588\\
-\cellcolor{gray!10}{pct_small_land} & \cellcolor{gray!10}{2.664} & \cellcolor{gray!10}{32.096} & \cellcolor{gray!10}{45.251} & \cellcolor{gray!10}{59.522} & \cellcolor{gray!10}{96.165} & \cellcolor{gray!10}{46.213} & \cellcolor{gray!10}{18.390} & \cellcolor{gray!10}{588}\\
-pct_medium_land & 0.000 & 19.115 & 31.508 & 43.699 & 95.276 & 32.502 & 17.731 & 588\\
-\cellcolor{gray!10}{pct_large_land} & \cellcolor{gray!10}{0.000} & \cellcolor{gray!10}{0.000} & \cellcolor{gray!10}{1.436} & \cellcolor{gray!10}{5.500} & \cellcolor{gray!10}{41.373} & \cellcolor{gray!10}{3.866} & \cellcolor{gray!10}{5.689} & \cellcolor{gray!10}{588}\\
-pct_head_illiterate & 0.000 & 22.782 & 33.447 & 45.222 & 78.503 & 33.798 & 15.617 & 588\\
+pct_small_land & Pct. Small Land-Owner & 444 & 11.15 & 39.19 & 46.41 & 59.06 & 80.33 & 45.36 & 16.36\\
+\cellcolor{gray!10}{pct_medium_land} & \cellcolor{gray!10}{Pct. Med. Land-Owner} & \cellcolor{gray!10}{444} & \cellcolor{gray!10}{4.95} & \cellcolor{gray!10}{24.98} & \cellcolor{gray!10}{33.03} & \cellcolor{gray!10}{48.59} & \cellcolor{gray!10}{60.99} & \cellcolor{gray!10}{34.50} & \cellcolor{gray!10}{16.44}\\
+pct_large_land & Pct. Large Land-Owner & 444 & 0.00 & 0.00 & 0.91 & 2.69 & 18.54 & 3.46 & 5.45\\
+\cellcolor{gray!10}{pct_head_illiterate} & \cellcolor{gray!10}{Pct. Head Educ., Illiterate} & \cellcolor{gray!10}{444} & \cellcolor{gray!10}{2.16} & \cellcolor{gray!10}{24.49} & \cellcolor{gray!10}{35.10} & \cellcolor{gray!10}{52.81} & \cellcolor{gray!10}{74.04} & \cellcolor{gray!10}{36.85} & \cellcolor{gray!10}{19.28}\\
+pct_head_lit_to_primary & Pct. Head Educ., Lit.-Primary & 444 & 4.45 & 16.34 & 22.52 & 30.85 & 60.77 & 24.07 & 10.69\\
 \addlinespace
-\cellcolor{gray!10}{pct_head_lit_to_primary} & \cellcolor{gray!10}{3.231} & \cellcolor{gray!10}{19.754} & \cellcolor{gray!10}{26.520} & \cellcolor{gray!10}{34.296} & \cellcolor{gray!10}{77.631} & \cellcolor{gray!10}{28.066} & \cellcolor{gray!10}{11.387} & \cellcolor{gray!10}{588}\\
-pct_head_secondary_plus & 0.582 & 27.143 & 35.877 & 47.030 & 81.487 & 38.087 & 14.751 & 588\\
-\cellcolor{gray!10}{head_secondary_plus_2007} & \cellcolor{gray!10}{0.582} & \cellcolor{gray!10}{27.143} & \cellcolor{gray!10}{35.877} & \cellcolor{gray!10}{47.030} & \cellcolor{gray!10}{81.487} & \cellcolor{gray!10}{38.087} & \cellcolor{gray!10}{14.751} & \cellcolor{gray!10}{588}\\
-region & 1.000 & 1.000 & 2.000 & 3.000 & 6.000 & 2.323 & 1.377 & 588\\
-\cellcolor{gray!10}{pucca_share_2007} & \cellcolor{gray!10}{0.000} & \cellcolor{gray!10}{28.728} & \cellcolor{gray!10}{56.013} & \cellcolor{gray!10}{80.744} & \cellcolor{gray!10}{100.000} & \cellcolor{gray!10}{54.549} & \cellcolor{gray!10}{29.269} & \cellcolor{gray!10}{588}\\
+\cellcolor{gray!10}{pct_head_secondary_plus} & \cellcolor{gray!10}{Pct. Head Educ., Secondary+} & \cellcolor{gray!10}{444} & \cellcolor{gray!10}{8.60} & \cellcolor{gray!10}{23.35} & \cellcolor{gray!10}{38.39} & \cellcolor{gray!10}{51.14} & \cellcolor{gray!10}{71.08} & \cellcolor{gray!10}{39.09} & \cellcolor{gray!10}{16.40}\\
+pct_pucca & Pct. Pucca & 444 & 2.64 & 30.62 & 50.10 & 77.66 & 100.00 & 53.48 & 27.90\\
+\cellcolor{gray!10}{npeople_1718} & \cellcolor{gray!10}{Population} & \cellcolor{gray!10}{444} & \cellcolor{gray!10}{64.00} & \cellcolor{gray!10}{96.00} & \cellcolor{gray!10}{128.00} & \cellcolor{gray!10}{176.00} & \cellcolor{gray!10}{959.00} & \cellcolor{gray!10}{161.92} & \cellcolor{gray!10}{124.84}\\
+consumption_1718 & Consumption & 444 & 1138.38 & 1607.08 & 1890.44 & 2389.25 & 3570.31 & 2069.78 & 608.43\\
+\cellcolor{gray!10}{gini_cons_1718} & \cellcolor{gray!10}{Gini of Consumption} & \cellcolor{gray!10}{444} & \cellcolor{gray!10}{0.16} & \cellcolor{gray!10}{0.19} & \cellcolor{gray!10}{0.22} & \cellcolor{gray!10}{0.29} & \cellcolor{gray!10}{0.43} & \cellcolor{gray!10}{0.24} & \cellcolor{gray!10}{0.06}\\
 \addlinespace
-consumption_2017 & 771.501 & 1536.832 & 2036.445 & 2601.629 & 11031.456 & 2237.366 & 991.941 & 578\\
-\cellcolor{gray!10}{n_2017} & \cellcolor{gray!10}{7.000} & \cellcolor{gray!10}{96.000} & \cellcolor{gray!10}{128.000} & \cellcolor{gray!10}{192.000} & \cellcolor{gray!10}{1101.000} & \cellcolor{gray!10}{177.837} & \cellcolor{gray!10}{132.108} & \cellcolor{gray!10}{578}\\
-wavg_ling_degrees & 0.000 & 0.049 & 1.623 & 4.070 & 5.000 & 2.071 & 1.952 & 587\\
-\cellcolor{gray!10}{n} & \cellcolor{gray!10}{3.000} & \cellcolor{gray!10}{3.000} & \cellcolor{gray!10}{3.000} & \cellcolor{gray!10}{3.000} & \cellcolor{gray!10}{3.000} & \cellcolor{gray!10}{3.000} & \cellcolor{gray!10}{0.000} & \cellcolor{gray!10}{587}\\
-consumption_growth_pct & -51.504 & 78.295 & 115.600 & 153.758 & 738.440 & 125.613 & 76.100 & 578\\
-\addlinespace
-\cellcolor{gray!10}{log_consumption_difference} & \cellcolor{gray!10}{-0.724} & \cellcolor{gray!10}{0.578} & \cellcolor{gray!10}{0.768} & \cellcolor{gray!10}{0.931} & \cellcolor{gray!10}{2.126} & \cellcolor{gray!10}{0.766} & \cellcolor{gray!10}{0.305} & \cellcolor{gray!10}{578}\\*
+consumption_pct_change & $%\Delta\text{Consumption}$ & 444 & -10.33 & 67.41 & 98.12 & 138.73 & 386.57 & 109.50 & 65.07\\
+\cellcolor{gray!10}{gini_change} & \cellcolor{gray!10}{$\Delta\text{Gini}^{\text{Consumption}}$} & \cellcolor{gray!10}{444} & \cellcolor{gray!10}{-0.24} & \cellcolor{gray!10}{-0.07} & \cellcolor{gray!10}{-0.02} & \cellcolor{gray!10}{0.05} & \cellcolor{gray!10}{0.22} & \cellcolor{gray!10}{-0.02} & \cellcolor{gray!10}{0.10}\\*
 \end{longtable}
 \end{landscape}

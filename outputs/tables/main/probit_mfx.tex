@@ -1,40 +1,55 @@
 
-\begin{longtable}[t]{lrrrrrrr}
+\begin{longtable}[t]{lll}
 \caption{\label{tab:probit-mfx}Average Marginal Effects and Counterfactual Comparisons for Enrollment Probit}\\
 \toprule
-Term & Estimate & Std. Error & Statistic & p-Value & s Value & Conf Low & Conf High\\
+Term & Estimate & Std. Error\\
 \midrule
 \endfirsthead
 \caption[]{Average Marginal Effects and Counterfactual Comparisons for Enrollment Probit \textit{(continued)}}\\
 \toprule
-Term & Estimate & Std. Error & Statistic & p-Value & s Value & Conf Low & Conf High\\
+Term & Estimate & Std. Error\\
 \midrule
 \endhead
 
 \endfoot
 \bottomrule
 \endlastfoot
-\cellcolor{gray!10}{AGE} & \cellcolor{gray!10}{-0.029} & \cellcolor{gray!10}{0.000} & \cellcolor{gray!10}{-67.525} & \cellcolor{gray!10}{0.000} & \cellcolor{gray!10}{Inf} & \cellcolor{gray!10}{-0.030} & \cellcolor{gray!10}{-0.028}\\
-DIST_FROM_NEAREST_PRIMARY_CLASS & -0.056 & 0.026 & -2.152 & 0.031 & 4.993 & -0.106 & -0.005\\
-\cellcolor{gray!10}{DIST_FROM_NEAREST_PRIMARY_CLASS} & \cellcolor{gray!10}{0.002} & \cellcolor{gray!10}{0.011} & \cellcolor{gray!10}{0.230} & \cellcolor{gray!10}{0.818} & \cellcolor{gray!10}{0.290} & \cellcolor{gray!10}{-0.018} & \cellcolor{gray!10}{0.023}\\
-DIST_FROM_NEAREST_PRIMARY_CLASS & -0.079 & 0.103 & -0.764 & 0.445 & 1.168 & -0.282 & 0.124\\
-\cellcolor{gray!10}{DIST_FROM_NEAREST_PRIMARY_CLASS} & \cellcolor{gray!10}{0.054} & \cellcolor{gray!10}{0.035} & \cellcolor{gray!10}{1.520} & \cellcolor{gray!10}{0.128} & \cellcolor{gray!10}{2.961} & \cellcolor{gray!10}{-0.015} & \cellcolor{gray!10}{0.123}\\
+\cellcolor{gray!10}{Age (years)} & \cellcolor{gray!10}{-0.028***} & \cellcolor{gray!10}{(0.001)}\\
+Female (ref: Male) & 0.044*** & (0.003)\\
+\cellcolor{gray!10}{Household size} & \cellcolor{gray!10}{-0.004***} & \cellcolor{gray!10}{(0.001)}\\
+Religion: Muslim (ref: Hindu) & -0.125*** & (0.006)\\
+\cellcolor{gray!10}{Religion: Christian} & \cellcolor{gray!10}{-0.042**} & \cellcolor{gray!10}{(0.013)}\\
 \addlinespace
-HH_SIZE & -0.009 & 0.001 & -11.336 & 0.000 & 96.532 & -0.011 & -0.008\\
-\cellcolor{gray!10}{RELIGION} & \cellcolor{gray!10}{0.068} & \cellcolor{gray!10}{0.023} & \cellcolor{gray!10}{2.911} & \cellcolor{gray!10}{0.004} & \cellcolor{gray!10}{8.117} & \cellcolor{gray!10}{0.022} & \cellcolor{gray!10}{0.114}\\
-RELIGION & -0.023 & 0.014 & -1.670 & 0.095 & 3.396 & -0.049 & 0.004\\
-\cellcolor{gray!10}{RELIGION} & \cellcolor{gray!10}{0.054} & \cellcolor{gray!10}{0.011} & \cellcolor{gray!10}{4.793} & \cellcolor{gray!10}{0.000} & \cellcolor{gray!10}{19.216} & \cellcolor{gray!10}{0.032} & \cellcolor{gray!10}{0.076}\\
-RELIGION & -0.170 & 0.007 & -23.410 & 0.000 & 400.188 & -0.185 & -0.156\\
+Religion: Sikh & 0.040 & (0.028)\\
+\cellcolor{gray!10}{Religion: Jain} & \cellcolor{gray!10}{-0.000} & \cellcolor{gray!10}{(0.013)}\\
+Religion: Buddhist & 0.046 & (0.028)\\
+\cellcolor{gray!10}{Religion: Zoroastrian} & \cellcolor{gray!10}{0.100*} & \cellcolor{gray!10}{(0.047)}\\
+Religion: Other & 0.250*** & (0.061)\\
 \addlinespace
-\cellcolor{gray!10}{RELIGION} & \cellcolor{gray!10}{0.254} & \cellcolor{gray!10}{0.002} & \cellcolor{gray!10}{119.004} & \cellcolor{gray!10}{0.000} & \cellcolor{gray!10}{Inf} & \cellcolor{gray!10}{0.249} & \cellcolor{gray!10}{0.258}\\
-RELIGION & 0.043 & 0.025 & 1.752 & 0.080 & 3.646 & -0.005 & 0.092\\
-\cellcolor{gray!10}{RELIGION} & \cellcolor{gray!10}{0.137} & \cellcolor{gray!10}{0.024} & \cellcolor{gray!10}{5.671} & \cellcolor{gray!10}{0.000} & \cellcolor{gray!10}{26.069} & \cellcolor{gray!10}{0.090} & \cellcolor{gray!10}{0.184}\\
-SECTOR & 0.053 & 0.005 & 10.568 & 0.000 & 84.303 & 0.043 & 0.063\\
-\cellcolor{gray!10}{SEX} & \cellcolor{gray!10}{0.045} & \cellcolor{gray!10}{0.003} & \cellcolor{gray!10}{14.943} & \cellcolor{gray!10}{0.000} & \cellcolor{gray!10}{165.307} & \cellcolor{gray!10}{0.039} & \cellcolor{gray!10}{0.051}\\
+\cellcolor{gray!10}{Social group: Scheduled Tribe (ref: Other)} & \cellcolor{gray!10}{-0.101***} & \cellcolor{gray!10}{(0.008)}\\
+Social group: Scheduled Caste & -0.074*** & (0.006)\\
+\cellcolor{gray!10}{Social group: Other Backward Class} & \cellcolor{gray!10}{-0.029***} & \cellcolor{gray!10}{(0.005)}\\
+Urban (ref: Rural) & -0.003 & (0.005)\\
+\cellcolor{gray!10}{Distance 1–2km (ref: <1km)} & \cellcolor{gray!10}{-0.076***} & \cellcolor{gray!10}{(0.023)}\\
 \addlinespace
-SOCIAL_GROUP & 0.156 & 0.008 & 18.566 & 0.000 & 253.204 & 0.140 & 0.173\\
-\cellcolor{gray!10}{SOCIAL_GROUP} & \cellcolor{gray!10}{0.090} & \cellcolor{gray!10}{0.008} & \cellcolor{gray!10}{11.087} & \cellcolor{gray!10}{0.000} & \cellcolor{gray!10}{92.474} & \cellcolor{gray!10}{0.074} & \cellcolor{gray!10}{0.106}\\
-SOCIAL_GROUP & 0.019 & 0.009 & 2.246 & 0.025 & 5.338 & 0.002 & 0.036\\
-\cellcolor{gray!10}{dmean_num_IS_EDU_FREE} & \cellcolor{gray!10}{0.000} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{NA} & \cellcolor{gray!10}{NA}\\
-dmean_num_RECD_TXT_BOOKS & -0.031 & 0.011 & -2.728 & 0.006 & 7.296 & -0.053 & -0.009\\*
+Distance 2–3km & -0.001 & (0.010)\\
+\cellcolor{gray!10}{Distance 3–5km} & \cellcolor{gray!10}{0.004} & \cellcolor{gray!10}{(0.066)}\\
+Distance > 5km & 0.036 & (0.037)\\
+\cellcolor{gray!10}{Father's educ.: Literate, no school (ref: Illiterate)} & \cellcolor{gray!10}{0.097***} & \cellcolor{gray!10}{(0.017)}\\
+Father's educ.: Literate, school < primary & 0.129*** & (0.006)\\
+\addlinespace
+\cellcolor{gray!10}{Father's educ.: Primary} & \cellcolor{gray!10}{0.144***} & \cellcolor{gray!10}{(0.006)}\\
+Father's educ.: Upper primary & 0.198*** & (0.007)\\
+\cellcolor{gray!10}{Father's educ.: Secondary} & \cellcolor{gray!10}{0.215***} & \cellcolor{gray!10}{(0.010)}\\
+Father's educ.: Higher secondary & 0.252*** & (0.015)\\
+\cellcolor{gray!10}{Father's educ.: Postsecondary+} & \cellcolor{gray!10}{0.249***} & \cellcolor{gray!10}{(0.016)}\\
+\addlinespace
+Educ. free available (ref: No) & -0.087*** & (0.015)\\
+\cellcolor{gray!10}{Tuition waiver received} & \cellcolor{gray!10}{-0.082} & \cellcolor{gray!10}{(0.056)}\\
+Scholarship/Stipend received & 0.029* & (0.012)\\
+\cellcolor{gray!10}{Textbook(s) received} & \cellcolor{gray!10}{0.065***} & \cellcolor{gray!10}{(0.018)}\\
+Stationery received & 0.014 & (0.019)\\
+\addlinespace
+\cellcolor{gray!10}{Mid-day meal, etc. received} & \cellcolor{gray!10}{-0.011} & \cellcolor{gray!10}{(0.019)}\\
+Enrollment cost (Rs.) & 0.000 & (0.000)\\*
 \end{longtable}
