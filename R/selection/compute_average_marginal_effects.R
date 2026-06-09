@@ -14,6 +14,27 @@ compute_average_marginal_effects <- function(selection_model, selection_data, cf
     ))
   }
 
+  # `selection_model` is often a survey::svyglm object loaded from the targets
+  # store. Survey lonely-PSU handling is an R option, not a durable model
+  # attribute, so it may not be set in the downstream AME target even though it
+  # was set when the model was estimated. Set it explicitly around all AME
+  # computations to make reruns deterministic and warning/error-free.
+  old_lonely_psu <- getOption("survey.lonely.psu")
+  old_domain_lonely <- getOption("survey.adjust.domain.lonely")
+  options(survey.lonely.psu = "average", survey.adjust.domain.lonely = TRUE)
+  on.exit({
+    if (is.null(old_lonely_psu)) {
+      options(survey.lonely.psu = NULL)
+    } else {
+      options(survey.lonely.psu = old_lonely_psu)
+    }
+    if (is.null(old_domain_lonely)) {
+      options(survey.adjust.domain.lonely = NULL)
+    } else {
+      options(survey.adjust.domain.lonely = old_domain_lonely)
+    }
+  }, add = TRUE)
+
   if (!isTRUE(cfg$run_full_ame)) {
     return(format_ame_results(data.frame(
       term = names(stats::coef(selection_model)),
