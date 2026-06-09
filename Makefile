@@ -1,4 +1,4 @@
-.PHONY: init-renv restore snapshot rebuild-qmds pipeline-draft pipeline-final pipeline-final-no-samples diagnostics report samples audit-report-values audit-report-values-final audit-crossrefs audit-crossrefs-final audit-outputs-final check-public check-public-draft check-public-final check-public-final-no-samples check-public-text check-rendered-text check-sample-specs test tests clean-targets clean-renders clean-renders-core clean-renders-no-samples
+.PHONY: init-renv restore snapshot rebuild-qmds pipeline-draft pipeline-final pipeline-final-no-samples diagnostics report samples audit-report-values audit-report-values-final audit-crossrefs audit-crossrefs-final audit-outputs-final audit-legacy-content public-build-audit public-build-audit-full check-public check-public-draft check-public-final check-public-final-no-samples check-public-text check-rendered-text check-sample-specs test tests clean-targets clean-renders clean-renders-core clean-renders-no-samples
 
 TEXCACHE_ROOT ?= /private/tmp/emi-inequality-india-texcache
 QUARTO_CACHE_ROOT ?= /private/tmp/emi-inequality-india-quarto-cache
@@ -68,6 +68,16 @@ audit-crossrefs-final:
 
 audit-outputs-final:
 	EMI_CONFIG=config/final.yml Rscript scripts/audit_outputs_final.R
+
+audit-legacy-content:
+	python3 -m py_compile scripts/audit_legacy_parity.py
+	python3 scripts/audit_legacy_parity.py
+
+public-build-audit:
+	bash scripts/run_public_build_audit.sh --without-samples
+
+public-build-audit-full:
+	bash scripts/run_public_build_audit.sh --with-samples
 
 check-public-text:
 	Rscript scripts/check_public_text.R
