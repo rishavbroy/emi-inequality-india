@@ -25,6 +25,31 @@ test_that("2017 measures compute weighted consumption by district", {
   expect_equal(out$consumption_2017, 175)
 })
 
+test_that("2017 district lookup recovers headerless Tabula CSV rows", {
+  districts <- data.frame(
+    check.names = FALSE,
+    `1.` = c("", "", "", "", "", "2."),
+    `Andaman &` = c("Nicobar Islands", "(35)", "", "", "", "Andhra Pradesh"),
+    `351` = c("", "", "", "", "", "281"),
+    `Andaman &.1` = c("Nicobar", "Islands", "", "", "", "Coastal"),
+    `1..1` = c("2.", "3.", "", "", "", "4."),
+    `Nicobars` = c("North & Middle Andaman", "South Andaman", "", "", "", "Srikakulam"),
+    `(01)` = c("(02)", "(03)", "", "", "", "(01)")
+  )
+  states <- data.frame(
+    `State/UT name` = c("A & N Islands", "Andhra Pradesh"),
+    code = c("35", "28"),
+    check.names = FALSE
+  )
+
+  out <- parse_2017_district_lookup(list(nss1718_districts = districts, nss1718_state_codes = states))
+
+  expect_equal(nrow(out), 4L)
+  expect_equal(out$district_code_1718[1], "35101")
+  expect_equal(out$state_1718[1], "Andaman & Nicobar Islands")
+  expect_equal(out$district_1718[out$district_code_1718 == "28101"], "Srikakulam")
+})
+
 test_that("weighted Gini helper is available for measure construction", {
   df <- data.frame(
     State = c("Bihar", "Bihar"),
@@ -51,6 +76,15 @@ test_that("linguistic distance IV uses real columns when present", {
 
   expect_equal(out$wavg_ling_degrees, 1.25)
   expect_equal(out$district_panel_id, "2001__bihar__patna")
+})
+
+test_that("Census 2001 state codes map to tracker state names", {
+  expect_equal(census_2001_state_name(c("01", "05", "21", "35")), c(
+    "Jammu & Kashmir",
+    "Uttaranchal",
+    "Orissa",
+    "Andaman & Nicobar Islands"
+  ))
 })
 
 test_that("Census 2001 cleaner parses district language rows", {

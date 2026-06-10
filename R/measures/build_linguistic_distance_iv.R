@@ -17,13 +17,14 @@ build_linguistic_distance_iv <- function(census_2001_languages, cfg) {
   population <- first_col(df, c("spkr_tot", "speakers", "population", "tot_p"))
   out <- bydist(df, value, population, "wavg_ling_degrees")
   if (!nrow(out)) return(linguistic_distance_out_of_pipeline("No district-level linguistic-distance rows could be computed."))
-  names_df <- unique(df[intersect(c("state_std", "district_std", "state", "district", "district_name"), names(df))])
+  names_df <- unique(df[intersect(c("state_std", "district_std", "state", "district", "state_code", "district_code", "district_name"), names(df))])
   if (all(c("state_std", "district_std") %in% names(names_df))) {
     out <- merge(out, names_df, by = c("state_std", "district_std"), all.x = TRUE)
   }
-  if ("state" %in% names(out)) out$state_01 <- out$state
-  if ("district" %in% names(out)) out$district_01 <- out$district
-  if (!"district_01" %in% names(out) && "district_name" %in% names(out)) out$district_01 <- out$district_name
+  state_code <- first_col(out, c("state_code", "state"))
+  if (!is.null(state_code)) out$state_01 <- census_2001_state_name(out[[state_code]])
+  if ("district_name" %in% names(out)) out$district_01 <- out$district_name
+  if (!"district_01" %in% names(out) && "district" %in% names(out)) out$district_01 <- out$district
   out$district_panel_id <- make_district_key(out$state_std, out$district_std, 2001L)
   out
 }
@@ -61,4 +62,46 @@ linguistic_distance_out_of_pipeline <- function(reason) {
     reason = reason,
     stringsAsFactors = FALSE
   )
+}
+
+census_2001_state_name <- function(code) {
+  key <- sprintf("%02d", as.integer(num(code)))
+  lookup <- c(
+    "01" = "Jammu & Kashmir",
+    "02" = "Himachal Pradesh",
+    "03" = "Punjab",
+    "04" = "Chandigarh",
+    "05" = "Uttaranchal",
+    "06" = "Haryana",
+    "07" = "Delhi",
+    "08" = "Rajasthan",
+    "09" = "Uttar Pradesh",
+    "10" = "Bihar",
+    "11" = "Sikkim",
+    "12" = "Arunachal Pradesh",
+    "13" = "Nagaland",
+    "14" = "Manipur",
+    "15" = "Mizoram",
+    "16" = "Tripura",
+    "17" = "Meghalaya",
+    "18" = "Assam",
+    "19" = "West Bengal",
+    "20" = "Jharkhand",
+    "21" = "Orissa",
+    "22" = "Chhattisgarh",
+    "23" = "Madhya Pradesh",
+    "24" = "Gujarat",
+    "25" = "Daman & Diu",
+    "26" = "Dadra & Nagar Haveli",
+    "27" = "Maharashtra",
+    "28" = "Andhra Pradesh",
+    "29" = "Karnataka",
+    "30" = "Goa",
+    "31" = "Lakshadweep",
+    "32" = "Kerala",
+    "33" = "Tamil Nadu",
+    "34" = "Pondicherry",
+    "35" = "Andaman & Nicobar Islands"
+  )
+  unname(lookup[key])
 }
