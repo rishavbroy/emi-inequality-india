@@ -117,16 +117,32 @@ test_that("final district panel validation records old wrong-N and wrong-scale f
     pct_fem_head = c(12, 11)
   )
 
+  expect_silent(checked <- validate_legacy_district_panel(bad, list(mode = "final")))
+  expect_true(any(grepl("454 rows", attr(checked, "legacy_panel_validation_failures"), fixed = TRUE)))
+
   expect_warning(
-    checked <- validate_legacy_district_panel(bad, list(mode = "final")),
+    validate_legacy_district_panel(bad, list(mode = "final", warn_legacy_panel_validation = TRUE)),
     "454 rows",
     fixed = TRUE
   )
-  expect_true(any(grepl("454 rows", attr(checked, "legacy_panel_validation_failures"), fixed = TRUE)))
 
   expect_error(
     validate_legacy_district_panel(bad, list(mode = "final", strict_legacy_panel_validation = TRUE)),
     "454 rows",
     fixed = TRUE
   )
+})
+
+
+test_that("final figure specs degrade to status outputs instead of aborting when map inputs are incomplete", {
+  panel <- data.frame(
+    emie_2007 = c(10, 20),
+    pucca_share_2007 = c(30, 40),
+    head_secondary_plus_2007 = c(5, 6),
+    region = c("North", "South")
+  )
+  figs <- make_figures(panel, character(), list(mode = "final"))
+  expect_true("map_consumption_growth" %in% names(figs))
+  expect_identical(figs$map_consumption_growth$kind, "status")
+  expect_true(any(grepl("wavg_ling_degrees", attr(figs, "legacy_map_input_failures"), fixed = TRUE)))
 })
