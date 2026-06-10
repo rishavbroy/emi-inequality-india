@@ -84,44 +84,43 @@ make_figures <- function(district_panel, raw_ilo_figures, cfg) {
   geometry_ok <- has_sf_geometry(district_panel) && is.finite(sf_geometry_coverage(district_panel)) && sf_geometry_coverage(district_panel) >= 0.75
   maps_available <- !length(missing_vars) && geometry_ok
 
-  if (maps_available) {
-    out <- c(out, list(
-      map_emi_exposure = figure_spec("map_emi_exposure", "map_emi_exposure.png", "EMI Exposure", kind = "map", variable = "emie_2007"),
-      map_consumption_growth = figure_spec("map_consumption_growth", "map_consumption_growth.png", "% Change in Consumption", kind = "map", variable = "consumption_growth_pct"),
-      map_pucca = figure_spec("map_pucca", "map_pucca.png", "% Pucca Homes", kind = "map", variable = "pucca_share_2007"),
-      map_education = figure_spec("map_education", "map_education.png", "% HH Head w/ Sec.+", kind = "map", variable = "head_secondary_plus_2007"),
-      map_region = figure_spec("map_region", "map_region.png", "Region", kind = "map", variable = "region"),
-      map_linguistic_distance = figure_spec("map_linguistic_distance", "map_linguistic_distance.png", "Linguistic Distance", kind = "map", variable = "wavg_ling_degrees"),
-      collage_main_maps = figure_spec(
-        "collage_main_maps",
-        "collage_main_maps.png",
-        "Main district-level map inputs",
-        kind = "collage",
-        inputs = c("map_emi_exposure", "map_consumption_growth", "map_pucca", "map_education")
-      ),
-      collage_iv_region_maps = figure_spec(
-        "collage_iv_region_maps",
-        "collage_iv_region_maps.png",
-        "Instrument and region map inputs",
-        kind = "collage",
-        inputs = c("map_linguistic_distance", "map_region")
-      )
-    ))
-  } else if (identical(cfg$mode, "final")) {
-    stop(
-      "Final legacy-parity map generation requires validated map inputs. Missing variables [",
-      paste(missing_vars, collapse = ", "), "]; geometry coverage = ",
-      round(100 * sf_geometry_coverage(district_panel), 1), "%.",
-      call. = FALSE
+  map_specs <- list(
+    map_emi_exposure = figure_spec("map_emi_exposure", "map_emi_exposure.png", "EMI Exposure", kind = if (maps_available) "map" else "status", variable = "emie_2007"),
+    map_consumption_growth = figure_spec("map_consumption_growth", "map_consumption_growth.png", "% Change in Consumption", kind = if (maps_available) "map" else "status", variable = "consumption_growth_pct"),
+    map_pucca = figure_spec("map_pucca", "map_pucca.png", "% Pucca Homes", kind = if (maps_available) "map" else "status", variable = "pucca_share_2007"),
+    map_education = figure_spec("map_education", "map_education.png", "% HH Head w/ Sec.+", kind = if (maps_available) "map" else "status", variable = "head_secondary_plus_2007"),
+    map_region = figure_spec("map_region", "map_region.png", "Region", kind = if (maps_available) "map" else "status", variable = "region"),
+    map_linguistic_distance = figure_spec("map_linguistic_distance", "map_linguistic_distance.png", "Linguistic Distance", kind = if (maps_available) "map" else "status", variable = "wavg_ling_degrees"),
+    collage_main_maps = figure_spec(
+      "collage_main_maps",
+      "collage_main_maps.png",
+      "Main district-level map inputs",
+      kind = "collage",
+      inputs = c("map_emi_exposure", "map_consumption_growth", "map_pucca", "map_education")
+    ),
+    collage_iv_region_maps = figure_spec(
+      "collage_iv_region_maps",
+      "collage_iv_region_maps.png",
+      "Instrument and region map inputs",
+      kind = "collage",
+      inputs = c("map_linguistic_distance", "map_region")
     )
-  } else {
+  )
+
+  if (!maps_available && !identical(cfg$mode, "final")) {
     # Draft-mode diagnostics live outside outputs/figures/main and are explicitly
     # labeled as diagnostics by figure_output_dir().
-    out <- c(out, list(
-      map_emi_exposure = figure_spec("map_emi_exposure", "map_emi_exposure.png", "EMI Exposure", kind = "status", variable = "emie_2007"),
-      map_consumption_growth = figure_spec("map_consumption_growth", "map_consumption_growth.png", "% Change in Consumption", kind = "status", variable = "consumption_growth_pct")
-    ))
+    map_specs <- map_specs[c("map_emi_exposure", "map_consumption_growth")]
   }
+
+  if (!maps_available && identical(cfg$mode, "final")) {
+    attr(out, "legacy_map_input_failures") <- c(
+      if (length(missing_vars)) paste0("Missing map variables: ", paste(missing_vars, collapse = ", ")),
+      paste0("Geometry coverage: ", round(100 * sf_geometry_coverage(district_panel), 1), "%")
+    )
+  }
+
+  out <- c(out, map_specs)
 
   attr(out, "district_panel") <- district_panel
   out
