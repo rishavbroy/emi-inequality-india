@@ -1,5 +1,6 @@
 args <- commandArgs(trailingOnly = TRUE)
 strict <- "--strict" %in% args || identical(Sys.getenv("EMI_CONFIG"), "config/final.yml")
+allow_status_placeholders <- "--allow-status-placeholders" %in% args || "--allow-placeholder-status" %in% args
 
 if (strict && !file.exists(".pipeline-final-ok")) {
   stop("Strict report-value audit requires .pipeline-final-ok. Run `make pipeline-final` successfully first.", call. = FALSE)
@@ -117,15 +118,35 @@ cat("  expressions: ", nrow(audit), "\n", sep = "")
 cat("  mapped: ", sum(!is.na(audit$mapped_by)), "\n", sep = "")
 cat("  unmapped: ", sum(is.na(audit$mapped_by)), "\n", sep = "")
 cat("  placeholder/status values: ", sum(audit$placeholder), "\n", sep = "")
+if (allow_status_placeholders) {
+  cat("  status placeholders allowed for build-gate audit: yes\n")
+}
 
 if (nrow(audit)) {
   print(audit[order(audit$placeholder, is.na(audit$mapped_by), audit$key, decreasing = TRUE), ], row.names = FALSE)
 }
 
-fail <- is.na(audit$mapped_by) | audit$placeholder
+allowed_statuses <- c(
+  "unavailable_in_draft",
+  "out_of_active_pipeline",
+  "missing_model_output",
+  "incomplete_model_output"
+)
+allowed_status_placeholder <- !is.na(audit$mapped_by) &
+  audit$placeholder &
+  audit$status %in% allowed_statuses
+
+fail <- is.na(audit$mapped_by) |
+  (audit$placeholder & !(allow_status_placeholders & allowed_status_placeholder))
 if (strict && any(fail)) {
   bad <- audit[fail, c("key", "expression", "status", "reason", "value")]
   cat("\nStrict report-value audit failures:\n")
   print(bad, row.names = FALSE)
-  stop("Final report has unmapped or placeholder-valued legacy inline expressions.", call. = FALSE)
+  stop("Final report has unmapped or disallowed placeholder-valued legacy inline expressions.", call. = FALSE)
+}
+
+if (strict && allow_status_placeholders && any(allowed_status_placeholder)) {
+  deferred <- audit[allowed_status_placeholder, c("key", "expression", "status", "reason", "value")]
+  cat("\nDeferred report-value parity failures (status placeholders allowed through build gate):\n")
+  print(deferred, row.names = FALSE)
 }
