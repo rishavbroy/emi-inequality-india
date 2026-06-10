@@ -49,6 +49,7 @@ build_selection_data <- function(nss_2007_education, district_keys_2007, cfg) {
     MID_DAY_MEAL_ETC_RECD = legacy_yes_no(selection_df$MID_DAY_MEAL_ETC_RECD, yes = c(1), no = c(2)),
     stringsAsFactors = FALSE
   )
+  selection_df <- dedupe_selection_join_rows(selection_df, selection_join_keys(enrolled = TRUE))
 
   # Legacy Block 6 merge by the full survey-identification key.
   temp <- b6[is.finite(num(b6$AGE)) & num(b6$AGE) <= 19, , drop = FALSE]
@@ -62,7 +63,9 @@ build_selection_data <- function(nss_2007_education, district_keys_2007, cfg) {
     ),
     names(temp)
   )]
+  temp <- dedupe_selection_join_rows(temp, selection_join_keys(enrolled = TRUE))
   selection_df <- legacy_full_join(selection_df, temp, selection_join_keys(enrolled = TRUE))
+  selection_df <- enforce_selection_child_key_uniqueness(selection_df)
 
   # Legacy Block 4 full join brings in every 5--19 year-old, including those not
   # observed in the enrolled-child blocks.
@@ -95,7 +98,9 @@ build_selection_data <- function(nss_2007_education, district_keys_2007, cfg) {
     district_std = temp$district_std %||% NA,
     stringsAsFactors = FALSE
   )
+  temp <- dedupe_selection_join_rows(temp, selection_join_keys(enrolled = FALSE))
   selection_df <- legacy_full_join(selection_df, temp, selection_join_keys(enrolled = FALSE))
+  selection_df <- enforce_selection_child_key_uniqueness(selection_df)
 
   # Father's education proxy from the legacy priority ordering.  The legacy Rmd
   # wrote this as a join by HHID, but the imported HHID alone is not globally
@@ -145,9 +150,20 @@ apply_selection_sample_restrictions <- function(df) df
 normalize_selection_identifiers <- function(df) {
   df <- safe_df(df)
   if (!nrow(df)) return(df)
-  district_col <- first_col(df, c("district_code", "District", "DISTRICT", "district", "district_code_0708"))
+  district_col <- first_col(df, c("district_code_0708", "district_code", "District", "DISTRICT", "district"))
   if (!is.null(district_col)) df$district_code_0708 <- as.character(df[[district_col]])
-  for (nm in c("PID", "weight", "FSU_SL_NO", "HHID", "STATE", "STRATUM", "SUB_STRATUM_NO")) {
+  aliases <- list(
+    PID = c("PID", "pid", "person_id", "Person_ID", "person_serial_no", "Person_Serial_No"),
+    weight = c("weight", "WEIGHT", "Multiplier", "MULT", "multiplier"),
+    FSU_SL_NO = c("FSU_SL_NO", "fsu_sl_no", "FSU", "fsu", "FSU_Serial_No"),
+    HHID = c("HHID", "HH_ID", "household_id", "Household_ID", "Sample_HH_No"),
+    STATE = c("STATE", "State", "state", "state_code"),
+    STRATUM = c("STRATUM", "Stratum", "stratum"),
+    SUB_STRATUM_NO = c("SUB_STRATUM_NO", "Sub_Stratum_No", "sub_stratum_no", "SUBSTRATUM", "Substratum")
+  )
+  for (nm in names(aliases)) {
+    hit <- first_col(df, aliases[[nm]])
+    if (!is.null(hit)) df[[nm]] <- df[[hit]]
     if (!nm %in% names(df)) df[[nm]] <- NA
   }
   df
@@ -163,6 +179,14 @@ legacy_full_join <- function(x, y, by) {
   by <- intersect(by, intersect(names(x), names(y)))
   if (!length(by)) return(safe_bind_rows(list(x, y)))
   dplyr::full_join(x, y, by = by)
+}
+
+dedupe_selection_join_rows <- function(df, by) {
+  df <- safe_df(df)
+  by <- intersect(by, names(df))
+  if (!nrow(df) || !length(by)) return(df)
+  key <- do.call(paste, c(lapply(df[by], function(x) canon(as.character(x))), sep = "\r"))
+  df[!duplicated(key), , drop = FALSE]
 }
 
 legacy_yes_no <- function(x, yes = c(1), no = c(2)) {
