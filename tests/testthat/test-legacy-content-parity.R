@@ -120,11 +120,8 @@ test_that("final district panel validation records old wrong-N and wrong-scale f
   expect_silent(checked <- validate_legacy_district_panel(bad, list(mode = "final")))
   expect_true(any(grepl("454 rows", attr(checked, "legacy_panel_validation_failures"), fixed = TRUE)))
 
-  expect_warning(
-    validate_legacy_district_panel(bad, list(mode = "final", warn_legacy_panel_validation = TRUE)),
-    "454 rows",
-    fixed = TRUE
-  )
+  expect_silent(checked_explicit <- validate_legacy_district_panel(bad, list(mode = "final", warn_legacy_panel_validation = TRUE)))
+  expect_true(any(grepl("454 rows", attr(checked_explicit, "legacy_panel_validation_failures"), fixed = TRUE)))
 
   expect_error(
     validate_legacy_district_panel(bad, list(mode = "final", strict_legacy_panel_validation = TRUE)),

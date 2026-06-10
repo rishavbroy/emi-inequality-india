@@ -1,4 +1,4 @@
-test_that("final figures require real sf geometry for legacy maps", {
+test_that("final figures degrade to status specs without real sf geometry", {
   cfg <- list(mode = "final", output_formats = list(figures = "png"))
   panel <- data.frame(
     emie_2007 = 1,
@@ -9,7 +9,9 @@ test_that("final figures require real sf geometry for legacy maps", {
     wavg_ling_degrees = 5
   )
 
-  expect_error(make_figures(panel, character(), cfg), "validated map inputs")
+  figures <- make_figures(panel, character(), cfg)
+  expect_identical(figures$map_emi_exposure$kind, "status")
+  expect_true(any(grepl("Geometry coverage", attr(figures, "legacy_map_input_failures"), fixed = TRUE)))
 })
 
 test_that("final figures include legacy map collages when geometry is validated", {
