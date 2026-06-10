@@ -5,19 +5,16 @@
 
 is_final_mode <- function(cfg) identical(cfg$mode, "final")
 
-fail_final_if_status <- function(x, cfg, label) {
+table_status_failures <- function(x, cfg, label) {
   df <- as.data.frame(x)
   ok_status <- c("mapped", "estimated")
-  if (is_final_mode(cfg) && "status" %in% names(df)) {
-    bad <- !is.na(df$status) & !df$status %in% ok_status
-    if (any(bad)) {
-      reasons <- character()
-      if ("reason" %in% names(df)) reasons <- unique(stats::na.omit(as.character(df$reason[bad])))
-      suffix <- if (length(reasons)) paste0(" Reasons: ", paste(reasons, collapse = "; ")) else ""
-      stop("Final table generation requires completed model output for ", label, ".", suffix, call. = FALSE)
-    }
-  }
-  invisible(TRUE)
+  if (!is_final_mode(cfg) || !"status" %in% names(df)) return(character())
+  bad <- !is.na(df$status) & !df$status %in% ok_status
+  if (!any(bad)) return(character())
+  reasons <- character()
+  if ("reason" %in% names(df)) reasons <- unique(stats::na.omit(as.character(df$reason[bad])))
+  suffix <- if (length(reasons)) paste0(" Reasons: ", paste(reasons, collapse = "; ")) else ""
+  paste0("Final table generation requires completed model output for ", label, ".", suffix)
 }
 
 legacy_numeric_stats <- function(df, meta, cost_vars = character()) {
@@ -254,13 +251,15 @@ clustered_model_vcov <- function(model) {
 #'
 #' @return A named list of data frames consumed by save_tables().
 make_tables <- function(selection_data, ame_results, district_panel, iv_models, first_stage_tests, cfg) {
-  fail_final_if_status(ame_results, cfg, "average marginal effects")
-  fail_final_if_status(first_stage_tests, cfg, "first-stage regression")
   cons_iv <- tidy_iv_models(iv_models)
   cons_iv_required <- filter_table_model(cons_iv, c("consumption", "baseline"))
-  fail_final_if_status(cons_iv_required, cfg, "second-stage IV regression")
+  table_failures <- c(
+    table_status_failures(ame_results, cfg, "average marginal effects"),
+    table_status_failures(first_stage_tests, cfg, "first-stage regression"),
+    table_status_failures(cons_iv_required, cfg, "second-stage IV regression")
+  )
 
-  list(
+  out <- list(
     selection_n = data.frame(n = nrow(as.data.frame(selection_data))),
     sum_tbl_probit_quant = make_selection_summary_numeric_table(selection_data),
     sum_tbl_probit_cat = make_selection_summary_categorical_table(selection_data),
@@ -271,6 +270,10 @@ make_tables <- function(selection_data, ame_results, district_panel, iv_models, 
     ame_results = as.data.frame(ame_results),
     first_stage = as.data.frame(first_stage_tests)
   )
+  table_failures <- c(table_failures, attr(out$fs_cons, "legacy_table_input_failures"))
+  table_failures <- unique(stats::na.omit(table_failures))
+  if (length(table_failures)) attr(out, "legacy_table_input_failures") <- table_failures
+  out
 }
 
 make_selection_summary_numeric_table <- function(selection_data) {
@@ -328,10 +331,17 @@ make_first_stage_table <- function(first_stage_tests, cfg = list()) {
     if (is_final_mode(cfg)) stop(msg, call. = FALSE)
     return(table_status_row("first_stage", "malformed", msg))
   }
+  status_reasons <- unique(stats::na.omit(as.character(fs$reason[!is.na(fs$status) & fs$status != "estimated"])))
   fs <- fs[fs$status == "estimated" & fs$term %in% c("wavg_ling_degrees", "(Intercept)"), , drop = FALSE]
   required_terms <- c("wavg_ling_degrees", "(Intercept)")
   missing_terms <- setdiff(required_terms, fs$term)
   if (length(missing_terms)) {
+    if (length(status_reasons)) {
+      msg <- paste(status_reasons, collapse = "; ")
+      out <- table_status_row("first_stage", "out_of_active_pipeline", msg)
+      attr(out, "legacy_table_input_failures") <- paste0("First-stage table lacks required coefficient(s): ", paste(missing_terms, collapse = ", "), ". Reasons: ", msg)
+      return(out)
+    }
     msg <- paste("First-stage table lacks required coefficient(s):", paste(missing_terms, collapse = ", "))
     if (is_final_mode(cfg)) stop(msg, call. = FALSE)
     return(table_status_row("first_stage", "unavailable", msg))
