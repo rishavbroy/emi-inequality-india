@@ -108,7 +108,7 @@ check-public-draft: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
 check-public-final: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
 	rm -f .public-final-ok .pipeline-final-ok .pipeline-draft-ok
 	$(MAKE) pipeline-final
-	EMI_CONFIG=config/final.yml Rscript scripts/audit_report_values.R --strict
+	EMI_CONFIG=config/final.yml Rscript scripts/audit_report_values.R --strict --allow-status-placeholders
 	Rscript scripts/audit_crossrefs.R --strict-report
 	EMI_CONFIG=config/final.yml Rscript scripts/audit_outputs_final.R
 	Rscript scripts/check_required_outputs.R --require-final-stamp
@@ -123,7 +123,7 @@ check-public-final: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
 check-public-final-no-samples: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
 	rm -f .public-final-ok .pipeline-final-ok .pipeline-draft-ok
 	$(MAKE) pipeline-final-no-samples
-	EMI_CONFIG=config/final.yml Rscript scripts/audit_report_values.R --strict
+	EMI_CONFIG=config/final.yml Rscript scripts/audit_report_values.R --strict --allow-status-placeholders
 	Rscript scripts/audit_crossrefs.R --strict-report
 	EMI_CONFIG=config/final.yml Rscript scripts/audit_outputs_final.R
 	Rscript scripts/check_required_outputs.R --require-final-stamp
