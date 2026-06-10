@@ -143,3 +143,36 @@ test_that("final figure specs degrade to status outputs instead of aborting when
   expect_identical(figs$map_consumption_growth$kind, "status")
   expect_true(any(grepl("wavg_ling_degrees", attr(figs, "legacy_map_input_failures"), fixed = TRUE)))
 })
+
+
+test_that("final table generation records incomplete first-stage diagnostics without aborting", {
+  first_stage <- data.frame(
+    model = "consumption",
+    term = NA_character_,
+    estimate = NA_real_,
+    std.error = NA_real_,
+    statistic = NA_real_,
+    p.value = NA_real_,
+    partial_f = NA_real_,
+    partial_p = NA_real_,
+    status = "out_of_active_pipeline",
+    reason = "Missing first-stage variables: consumption_pct_change, wavg_ling_degrees",
+    stringsAsFactors = FALSE
+  )
+
+  fs_table <- make_first_stage_table(first_stage, list(mode = "final"))
+  expect_identical(fs_table$status, "out_of_active_pipeline")
+  expect_match(fs_table$reason, "wavg_ling_degrees", fixed = TRUE)
+  expect_true(any(grepl("wavg_ling_degrees", attr(fs_table, "legacy_table_input_failures"), fixed = TRUE)))
+
+  tables <- make_tables(
+    selection_data = data.frame(AGE = 10, HH_SIZE = 4),
+    ame_results = data.frame(term = "AGE", estimate = 0, std.error = 1, p.value = 1, status = "estimated"),
+    district_panel = data.frame(EMIE = 10, consumption_0708 = 100, gini_cons_0708 = 0.3),
+    iv_models = list(consumption = list(status = "out_of_active_pipeline", reason = "Missing variables: consumption_pct_change")),
+    first_stage_tests = first_stage,
+    cfg = list(mode = "final")
+  )
+  expect_true(any(grepl("first-stage regression", attr(tables, "legacy_table_input_failures"), fixed = TRUE)))
+  expect_true(any(grepl("wavg_ling_degrees", attr(tables, "legacy_table_input_failures"), fixed = TRUE)))
+})
