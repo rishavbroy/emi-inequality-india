@@ -385,12 +385,8 @@ validate_legacy_district_panel <- function(out, cfg = list(), strict = isTRUE(cf
   if (!identical(cfg$mode, "final")) return(out)
   failures <- legacy_panel_validation_failures(out)
   attr(out, "legacy_panel_validation_failures") <- failures
-  if (length(failures)) {
-    msg <- paste(failures, collapse = "\n")
-    if (isTRUE(strict)) stop(msg, call. = FALSE)
-    if (isTRUE(cfg$warn_legacy_panel_validation) || identical(Sys.getenv("EMI_WARN_LEGACY_PANEL_VALIDATION"), "true")) {
-      warning(msg, call. = FALSE, immediate. = TRUE)
-    }
+  if (length(failures) && isTRUE(strict)) {
+    stop(paste(failures, collapse = "\n"), call. = FALSE)
   }
   out
 }
