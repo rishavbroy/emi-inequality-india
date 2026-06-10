@@ -150,6 +150,10 @@ fi
 echo "=== START: git state ==="
 git status --short
 
+echo "=== RESET AUDIT DIAGNOSTICS ==="
+rm -rf outputs/diagnostics/*
+mkdir -p outputs/diagnostics
+
 echo "=== NORMALIZE SOURCE WHITESPACE ==="
 normalize_source_whitespace
 
