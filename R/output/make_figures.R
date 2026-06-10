@@ -113,8 +113,9 @@ make_figures <- function(district_panel, raw_ilo_figures, cfg) {
     map_specs <- map_specs[c("map_emi_exposure", "map_consumption_growth")]
   }
 
+  map_input_failures <- character()
   if (!maps_available && identical(cfg$mode, "final")) {
-    attr(out, "legacy_map_input_failures") <- c(
+    map_input_failures <- c(
       if (length(missing_vars)) paste0("Missing map variables: ", paste(missing_vars, collapse = ", ")),
       paste0("Geometry coverage: ", round(100 * sf_geometry_coverage(district_panel), 1), "%")
     )
@@ -122,6 +123,9 @@ make_figures <- function(district_panel, raw_ilo_figures, cfg) {
 
   out <- c(out, map_specs)
 
+  if (length(map_input_failures)) {
+    attr(out, "legacy_map_input_failures") <- map_input_failures
+  }
   attr(out, "district_panel") <- district_panel
   out
 }
