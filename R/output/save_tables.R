@@ -43,37 +43,97 @@ drop_empty_output_columns <- function(out) {
   out[, keep, drop = FALSE]
 }
 
+is_status_only_table <- function(out) {
+  if (!nrow(out) || !"status" %in% names(out)) return(FALSE)
+  substantive <- setdiff(names(out), c("status", "reason", "method", "model"))
+  if (!length(substantive)) return(TRUE)
+  all(vapply(out[substantive], function(col) all(is.na(col) | !nzchar(as.character(col))), logical(1)))
+}
+
+format_status_table_for_output <- function(out, public = TRUE) {
+  status <- if ("status" %in% names(out)) as.character(out$status) else rep("unavailable", nrow(out))
+  reason <- if ("reason" %in% names(out)) as.character(out$reason) else rep(NA_character_, nrow(out))
+  model <- if ("model" %in% names(out)) as.character(out$model) else rep(NA_character_, nrow(out))
+
+  status[is.na(status) | !nzchar(status)] <- "unavailable"
+  reason[is.na(reason) | !nzchar(reason)] <- "No completed model output is available."
+  model[is.na(model) | !nzchar(model)] <- "output"
+
+  if (public) {
+    data.frame(
+      Term = model,
+      Estimate = status,
+      `Std. Error` = reason,
+      check.names = FALSE,
+      stringsAsFactors = FALSE
+    )
+  } else {
+    data.frame(
+      model = model,
+      status = status,
+      reason = reason,
+      check.names = FALSE,
+      stringsAsFactors = FALSE
+    )
+  }
+}
+
 format_table_for_output <- function(table, public = TRUE) {
   out <- as.data.frame(table, check.names = FALSE)
-  if (!nrow(out)) return(out)
+  if (!nrow(out)) return(data.frame(Note = "No rows to display.", stringsAsFactors = FALSE))
+
+  if (is_status_only_table(out)) {
+    return(format_status_table_for_output(out, public = public))
+  }
 
   if (!public) {
     # Internal/diagnostic CSVs are audited by exact schema. Preserve machine-
     # readable names such as std.error, p.value, conf.low, and conf.high.
-    return(drop_empty_output_columns(out))
+    formatted <- drop_empty_output_columns(out)
+    if (!length(names(formatted))) formatted <- format_status_table_for_output(out, public = FALSE)
+    return(formatted)
   }
 
-  # Public paper tables should not expose pipeline status scaffolding. Those
-  # columns remain available in internal diagnostic tables, but polished report
-  # tables carry only substantive variables/results.
+  # Public paper tables should not expose pipeline status scaffolding when
+  # substantive rows exist. Pure status tables are handled above so incomplete
+  # final model outputs can still be rendered and audited instead of crashing in
+  # the table writer.
   out$status <- NULL
   out$reason <- NULL
   if ("method" %in% names(out) && length(unique(stats::na.omit(out$method))) <= 1L) out$method <- NULL
 
   out <- drop_empty_output_columns(out)
+  if (!length(names(out))) return(data.frame(Note = "No displayable columns.", stringsAsFactors = FALSE))
   already_polished <- any(names(out) %in% c("Term", "Estimate", "Std. Error", "N", "Min", "1Q", "Med", "3Q", "Max", "Mean", "SD"))
   if (!already_polished) names(out) <- vapply(names(out), nice_column_name, character(1))
   out
 }
 
+sanitize_table_for_kable <- function(df) {
+  df <- as.data.frame(df, check.names = FALSE, stringsAsFactors = FALSE)
+  if (!nrow(df)) df <- data.frame(Note = "No rows to display.", stringsAsFactors = FALSE)
+  if (!length(names(df))) df <- data.frame(Note = rep("No displayable columns.", nrow(df)), stringsAsFactors = FALSE)
+  for (nm in names(df)) {
+    if (is.factor(df[[nm]])) df[[nm]] <- as.character(df[[nm]])
+    if (is.list(df[[nm]])) {
+      df[[nm]] <- vapply(df[[nm]], function(value) {
+        if (length(value) == 0L || all(is.na(value))) return("")
+        paste(as.character(value), collapse = "; ")
+      }, character(1))
+    }
+    if (is.character(df[[nm]])) df[[nm]][is.na(df[[nm]])] <- ""
+  }
+  df
+}
+
 save_table_csv <- function(table, path, public = TRUE) {
-  utils::write.csv(format_table_for_output(table, public = public), path, row.names = FALSE)
+  utils::write.csv(sanitize_table_for_kable(format_table_for_output(table, public = public)), path, row.names = FALSE)
   path
 }
 
 save_table_tex <- function(table, path, name, public = TRUE) {
   need_pkg("kableExtra", "LaTeX table output")
-  df <- format_table_for_output(table, public = public)
+  df <- sanitize_table_for_kable(format_table_for_output(table, public = public))
   tex <- kableExtra::kbl(
     df,
     format = "latex",
