@@ -74,23 +74,34 @@ format_path <- function(path_base, format) {
   paste0(path_base, ".", format)
 }
 
+save_plot_file <- function(plot, path, width = 7, height = 5, dpi = 300) {
+  fmt <- tolower(tools::file_ext(path))
+  if (identical(fmt, "pdf")) {
+    # Use the base PDF device directly. Calling cairo_pdf/capabilities() on
+    # macOS can attempt to load X11/Cairo shared libraries and emit warnings
+    # that strict targets treats as failures. The map labels are ASCII now, so
+    # the standard PDF device is sufficient and fully explicit.
+    grDevices::pdf(file = path, width = width, height = height, onefile = TRUE, useDingbats = FALSE)
+    dev <- grDevices::dev.cur()
+    on.exit(if (grDevices::dev.cur() == dev) grDevices::dev.off(), add = TRUE)
+    print(plot)
+    return(path)
+  }
+  if (identical(fmt, "png")) {
+    grDevices::png(filename = path, width = width, height = height, units = "in", res = dpi, bg = "white")
+    dev <- grDevices::dev.cur()
+    on.exit(if (grDevices::dev.cur() == dev) grDevices::dev.off(), add = TRUE)
+    print(plot)
+    return(path)
+  }
+  ggplot2::ggsave(path, plot = plot, width = width, height = height, dpi = dpi, bg = "white")
+  path
+}
+
 save_plot_formats <- function(plot, path_base, formats, width = 7, height = 5, dpi = 300) {
   paths <- vapply(formats, function(format) {
     path <- format_path(path_base, format)
-    fmt <- tolower(format)
-    if (identical(fmt, "pdf")) {
-      # Use an explicit device rather than allowing R to fall back to the
-      # session default graphics device, which can create stray Rplots.pdf
-      # files when a plot is printed outside an active device. cairo_pdf also
-      # handles text encoding more robustly than the default PDF device.
-      pdf_device <- if (isTRUE(capabilities("cairo"))) grDevices::cairo_pdf else grDevices::pdf
-      ggplot2::ggsave(path, plot = plot, width = width, height = height, device = pdf_device, bg = "white")
-    } else if (identical(fmt, "png")) {
-      ggplot2::ggsave(path, plot = plot, width = width, height = height, dpi = dpi, device = "png", bg = "white")
-    } else {
-      ggplot2::ggsave(path, plot = plot, width = width, height = height, dpi = dpi, bg = "white")
-    }
-    path
+    save_plot_file(plot, path, width = width, height = height, dpi = dpi)
   }, character(1))
   unname(paths)
 }
@@ -451,9 +462,7 @@ save_figures <- function(figures, cfg) {
 #'
 #' @return Generated file paths.
 save_figure_pdf_png <- function(plot, path_base, width = 7, height = 5, dpi = 300) {
-  ggplot2::ggsave(paste0(path_base, ".png"), plot, width = width, height = height, dpi = dpi)
-  ggplot2::ggsave(paste0(path_base, ".pdf"), plot, width = width, height = height)
-  c(paste0(path_base, ".png"), paste0(path_base, ".pdf"))
+  save_plot_formats(plot, path_base, c("png", "pdf"), width = width, height = height, dpi = dpi)
 }
 
 #' save map pdf png
