@@ -53,7 +53,7 @@ require_final_figure_inputs <- function(district_panel, cfg, required_variables)
 #' make figures
 #'
 #' @return A named list of figure specifications consumed by save_figures().
-make_figures <- function(district_panel, raw_ilo_figures, cfg) {
+make_figures <- function(district_panel, raw_ilo_figures, cfg, boundaries_2020 = NULL) {
   required_variables <- c(
     "emie_2007",
     "consumption_growth_pct",
@@ -96,14 +96,14 @@ make_figures <- function(district_panel, raw_ilo_figures, cfg) {
       "collage_main_maps.png",
       "Main district-level map inputs",
       kind = "collage",
-      inputs = c("map_emi_exposure", "map_consumption_growth", "map_pucca", "map_education")
+      inputs = c("map_emi_exposure", "map_consumption_growth", "map_education", "map_pucca")
     ),
     collage_iv_region_maps = figure_spec(
       "collage_iv_region_maps",
       "collage_iv_region_maps.png",
       "Instrument and region map inputs",
       kind = "collage",
-      inputs = c("map_linguistic_distance", "map_region")
+      inputs = c("map_region", "map_linguistic_distance")
     )
   )
 
@@ -127,6 +127,7 @@ make_figures <- function(district_panel, raw_ilo_figures, cfg) {
     attr(out, "legacy_map_input_failures") <- map_input_failures
   }
   attr(out, "district_panel") <- district_panel
+  attr(out, "boundaries_2020") <- boundaries_2020
   out
 }
 

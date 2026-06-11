@@ -121,11 +121,118 @@ map_palette <- function(variable) {
     pucca_share_2007 = c("#f6eee3", "#d7b98e", "#a87845", "#6f3f1d"),
     head_secondary_plus_2007 = c("#f7fcf5", "#c7e9c0", "#74c476", "#238b45", "#00441b"),
     wavg_ling_degrees = c("#f7fcf5", "#c7e9c0", "#41ab5d", "#006d2c"),
+    region = c(North = "#1b9e77", Central = "#d95f02", East = "#7570b3", West = "#e7298a", South = "#66a61e"),
     c("#f7fbff", "#9ecae1", "#3182bd", "#08519c")
   )
 }
 
-save_map_figure <- function(spec, path_base, district_panel, formats) {
+complete_map_geometry <- function(district_panel, boundaries_2020, variable) {
+  panel <- district_panel
+  if (!has_sf_geometry(panel)) return(panel)
+  if (!inherits(boundaries_2020, "sf")) return(panel)
+  b <- boundaries_2020
+  geom_col <- attr(b, "sf_column")
+  if (is.null(geom_col) || !geom_col %in% names(b)) return(panel)
+
+  panel_df <- if (inherits(panel, "sf")) sf::st_drop_geometry(panel) else as.data.frame(panel)
+  keys <- if (all(c("state_20", "district_20") %in% names(panel_df)) && all(c("state_20", "district_20") %in% names(b))) {
+    c("state_20", "district_20")
+  } else if (all(c("state_std", "district_std") %in% names(panel_df)) && all(c("state_std", "district_std") %in% names(b))) {
+    c("state_std", "district_std")
+  } else {
+    character()
+  }
+  if (!length(keys)) return(panel)
+
+  keep <- unique(c(keys, variable, "region"))
+  keep <- intersect(keep, names(panel_df))
+  panel_df <- panel_df[!duplicated(panel_df[keys]), keep, drop = FALSE]
+  out <- merge(b, panel_df, by = keys, all.x = TRUE, sort = FALSE)
+  sf::st_as_sf(out, sf_column_name = geom_col)
+}
+
+numeric_map_bins <- function(x, variable) {
+  x_num <- suppressWarnings(as.numeric(x))
+  if (identical(variable, "emie_2007")) {
+    bins <- cut(
+      x_num,
+      breaks = c(-Inf, 0, 2.5, 10, 25, 50, Inf),
+      labels = c("0", "0–2.5", "2.5–10", "10–25", "25–50", "50+"),
+      right = TRUE
+    )
+  } else {
+    qs <- unique(stats::quantile(x_num[is.finite(x_num)], probs = seq(0, 1, length.out = 6), na.rm = TRUE))
+    if (length(qs) < 3L) {
+      bins <- cut(x_num, breaks = 5, include.lowest = TRUE)
+    } else {
+      bins <- cut(x_num, breaks = qs, include.lowest = TRUE)
+    }
+  }
+  out <- as.character(bins)
+  out[is.na(out)] <- "No data"
+  factor(out, levels = c(setdiff(unique(as.character(bins)), NA_character_), "No data"))
+}
+
+map_fill_values <- function(fill_values, variable) {
+  levels <- levels(fill_values)
+  nonmissing <- setdiff(levels, "No data")
+  palette <- map_palette(variable)
+  if (!is.null(names(palette)) && any(nzchar(names(palette)))) {
+    values <- palette[intersect(nonmissing, names(palette))]
+    missing_names <- setdiff(nonmissing, names(values))
+    if (length(missing_names)) values <- c(values, stats::setNames(rep("#bdbdbd", length(missing_names)), missing_names))
+  } else {
+    values <- stats::setNames(stats::colorRampPalette(palette)(max(1, length(nonmissing))), nonmissing)
+  }
+  c(values, "No data" = "grey82")
+}
+
+map_diagnostic_plot <- function(plot_data, variable, title) {
+  df <- as.data.frame(plot_data)
+  x <- df[[variable]]
+  if (is.numeric(x)) {
+    ggplot2::ggplot(df, ggplot2::aes(x = .data[[variable]])) +
+      ggplot2::geom_histogram(bins = 20, fill = "grey55", color = "white", na.rm = TRUE) +
+      ggplot2::labs(x = title, y = "Districts") +
+      ggplot2::theme_minimal(base_size = 8) +
+      ggplot2::theme(plot.margin = ggplot2::margin(0, 0, 0, 0))
+  } else {
+    counts <- as.data.frame(sort(table(x, useNA = "ifany"), decreasing = TRUE))
+    names(counts) <- c("value", "n")
+    ggplot2::ggplot(counts, ggplot2::aes(stats::reorder(value, n), n)) +
+      ggplot2::geom_col(fill = "grey55", width = 0.7) +
+      ggplot2::coord_flip() +
+      ggplot2::labs(x = NULL, y = "Districts") +
+      ggplot2::theme_minimal(base_size = 8) +
+      ggplot2::theme(plot.margin = ggplot2::margin(0, 0, 0, 0))
+  }
+}
+
+save_map_panel_formats <- function(map_plot, diagnostic_plot, path_base, formats, width = 8.5, height = 5.6, dpi = 300) {
+  paths <- vapply(formats, function(format) {
+    path <- format_path(path_base, format)
+    fmt <- tolower(format)
+    if (identical(fmt, "pdf")) {
+      grDevices::pdf(path, width = width, height = height, onefile = TRUE)
+    } else if (identical(fmt, "png")) {
+      grDevices::png(path, width = width, height = height, units = "in", res = dpi)
+    } else {
+      ggplot2::ggsave(path, map_plot, width = width, height = height, dpi = dpi)
+      return(path)
+    }
+    grid::grid.newpage()
+    layout <- grid::grid.layout(nrow = 1, ncol = 2, widths = grid::unit(c(4.8, 1.35), c("null", "null")))
+    grid::pushViewport(grid::viewport(layout = layout))
+    print(map_plot, vp = grid::viewport(layout.pos.row = 1, layout.pos.col = 1))
+    print(diagnostic_plot, vp = grid::viewport(layout.pos.row = 1, layout.pos.col = 2))
+    grid::popViewport()
+    grDevices::dev.off()
+    path
+  }, character(1))
+  unname(paths)
+}
+
+save_map_figure <- function(spec, path_base, district_panel, formats, boundaries_2020 = NULL) {
   if (!has_sf_geometry(district_panel)) {
     stop("Map figure '", spec$name, "' requires an sf district_panel with validated geometry.", call. = FALSE)
   }
@@ -134,35 +241,37 @@ save_map_figure <- function(spec, path_base, district_panel, formats) {
   }
 
   need_pkg("ggplot2", "sf map figure")
-  plot_data <- district_panel
+  plot_data <- complete_map_geometry(district_panel, boundaries_2020, spec$variable)
+  if (!spec$variable %in% names(plot_data)) plot_data[[spec$variable]] <- NA
   plot_data$.map_value <- plot_data[[spec$variable]]
-  p <- ggplot2::ggplot(plot_data) +
-    ggplot2::geom_sf(ggplot2::aes(fill = .map_value), color = "grey35", linewidth = 0.08) +
-    ggplot2::labs(fill = spec$title) +
-    ggplot2::theme_void(base_size = 9) +
-    ggplot2::theme(
-      legend.position = "right",
-      plot.margin = ggplot2::margin(3, 3, 3, 3)
-    )
-
-  if (is.numeric(plot_data$.map_value)) {
-    scale_args <- list(colors = map_palette(spec$variable), na.value = "grey90")
-    if (identical(spec$variable, "emie_2007")) {
-      scale_args$breaks <- c(0, 2.5, 10, 25, 50, 100)
-      scale_args$limits <- c(0, 100)
-    }
-    p <- p + do.call(ggplot2::scale_fill_gradientn, scale_args)
-  } else {
-    plot_data$.map_value <- as.factor(plot_data$.map_value)
-    p <- ggplot2::ggplot(plot_data) +
-      ggplot2::geom_sf(ggplot2::aes(fill = .map_value), color = "grey35", linewidth = 0.08) +
-      ggplot2::scale_fill_discrete(na.value = "grey90") +
-      ggplot2::labs(fill = spec$title) +
-      ggplot2::theme_void(base_size = 9) +
-      ggplot2::theme(legend.position = "right", plot.margin = ggplot2::margin(3, 3, 3, 3))
+  if (identical(spec$variable, "region")) {
+    valid_regions <- c("North", "Central", "East", "West", "South")
+    plot_data$.map_value <- factor(as.character(plot_data$.map_value), levels = valid_regions)
   }
 
-  save_plot_formats(p, path_base, formats, width = 6, height = 5, dpi = 300)
+  if (is.numeric(plot_data$.map_value)) {
+    plot_data$.map_fill <- numeric_map_bins(plot_data$.map_value, spec$variable)
+  } else {
+    fill <- as.character(plot_data$.map_value)
+    fill[is.na(fill) | !nzchar(fill)] <- "No data"
+    plot_data$.map_fill <- factor(fill, levels = c(setdiff(sort(unique(fill)), "No data"), "No data"))
+  }
+  fill_values <- map_fill_values(plot_data$.map_fill, spec$variable)
+
+  p <- ggplot2::ggplot(plot_data) +
+    ggplot2::geom_sf(ggplot2::aes(fill = .map_fill), color = "grey45", linewidth = 0.06) +
+    ggplot2::scale_fill_manual(values = fill_values, drop = FALSE, name = spec$title) +
+    ggplot2::theme_void(base_size = 12) +
+    ggplot2::theme(
+      legend.position = "right",
+      legend.title = ggplot2::element_text(size = 11),
+      legend.text = ggplot2::element_text(size = 9),
+      legend.key.height = grid::unit(0.32, "cm"),
+      legend.key.width = grid::unit(0.42, "cm"),
+      plot.margin = ggplot2::margin(2, 2, 2, 2)
+    )
+  diagnostic <- map_diagnostic_plot(plot_data, spec$variable, spec$title)
+  save_map_panel_formats(p, diagnostic, path_base, formats, width = 8.5, height = 5.6, dpi = 300)
 }
 
 read_carveout_shift_data <- function(path = "data/raw/district_changes/District Carve-Outs and Renamings 1961-2001.csv") {
@@ -221,7 +330,7 @@ save_collage <- function(spec, path_base, written, formats) {
   inputs <- inputs[file.exists(inputs)]
   if (!length(inputs)) return(save_status_figure(spec, format_path(path_base, "png")))
   need_pkg("magick", "figure collage")
-  imgs <- lapply(inputs, function(p) magick::image_scale(magick::image_read(p), "900"))
+  imgs <- lapply(inputs, function(p) magick::image_scale(magick::image_read(p), "1200"))
   rows <- split(imgs, ceiling(seq_along(imgs) / 2))
   row_imgs <- lapply(rows, function(row) magick::image_append(magick::image_join(row), stack = FALSE))
   collage <- magick::image_append(magick::image_join(row_imgs), stack = TRUE)
@@ -246,7 +355,7 @@ save_figures <- function(figures, cfg) {
     paths <- switch(
       spec$kind,
       ilo_collage = save_ilo_collage(spec, path_base, formats),
-      map = save_map_figure(spec, path_base, attr(figures, "district_panel") %||% data.frame(), formats),
+      map = save_map_figure(spec, path_base, attr(figures, "district_panel") %||% data.frame(), formats, attr(figures, "boundaries_2020")),
       district_carveouts_shifts = save_district_carveouts_shifts(spec, path_base, formats),
       status = save_status_figure(spec, format_path(path_base, "png")),
       save_distribution_figure(spec, format_path(path_base, "png"), attr(figures, "district_panel") %||% data.frame())

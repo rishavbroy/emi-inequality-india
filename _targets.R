@@ -82,7 +82,7 @@ pipeline_targets <- list(
   tar_target(diag_spatial_autocorrelation, diagnose_spatial_autocorrelation(district_panel, iv_models, spatial_weights, cfg)),
   tar_target(diag_multicollinearity, diagnose_multicollinearity(district_panel, iv_models, cfg)),
 
-  tar_target(figures, make_figures(district_panel, raw_ilo_figures, cfg)),
+  tar_target(figures, make_figures(district_panel, raw_ilo_figures, cfg, boundaries_2020)),
   tar_target(figure_files, save_figures(figures, cfg), format = "file"),
   tar_target(tables, make_tables(selection_data, ame_results, district_panel, iv_models, first_stage_tests, cfg)),
   tar_target(table_files, save_tables(tables, cfg), format = "file"),

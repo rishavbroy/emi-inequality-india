@@ -415,7 +415,13 @@ add_legacy_panel_aliases <- function(out) {
 }
 
 add_legacy_regions <- function(out) {
-  if ("region" %in% names(out)) return(out)
+  valid_regions <- c("North", "Central", "East", "West", "South")
+  if ("region" %in% names(out)) {
+    current <- as.character(out$region)
+    current_nonmissing <- stats::na.omit(current)
+    if (length(current_nonmissing) && all(current_nonmissing %in% valid_regions)) return(out)
+  }
+
   state <- NULL
   for (nm in c("state_20", "state_17", "state_07", "state_01", "state_std")) {
     if (nm %in% names(out)) { state <- canon(out[[nm]]); break }
@@ -431,6 +437,7 @@ add_legacy_regions <- function(out) {
       ifelse(state %in% east, "East",
         ifelse(state %in% west, "West",
           ifelse(state %in% south, "South", NA_character_)))))
+  out$region <- factor(out$region, levels = valid_regions)
   out
 }
 
