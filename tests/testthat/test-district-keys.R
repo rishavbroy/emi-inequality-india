@@ -2,6 +2,15 @@ test_that("canonical names are stable", {
   expect_equal(canonicalize_district_name(" East  Godavari! "), "east godavari")
 })
 
+test_that("state canonicalization covers legacy NSS spelling variants", {
+  raw <- c("Andhra Pardesh", "Gujrat", "Maharastra", "Andaman & Nicober", "Pondicheri", "Uttaranchal", "Orissa")
+
+  expect_equal(
+    canonicalize_state_name(raw),
+    c("andhra pradesh", "gujarat", "maharashtra", "andaman and nicobar islands", "puducherry", "uttarakhand", "odisha")
+  )
+})
+
 test_that("key_df returns typed empty district keys for unrecognizable inputs", {
   out <- key_df(data.frame(other = character()), 2007L)
 

@@ -50,7 +50,7 @@ build_tracker_based_district_panel <- function(tracker, measures_2007, measures_
   tracker$.tracker_row <- seq_len(nrow(tracker))
   out <- tracker
   out <- legacy_attach_source(out, safe_df(linguistic_distance_iv), c("01"), source_label = "2001")
-  out <- legacy_attach_source(out, safe_df(measures_2007), c("07", "08", "06", "05"), source_label = "2007")
+  out <- legacy_attach_source_one_to_one(out, safe_df(measures_2007), c("07", "08", "06", "05"), source_label = "2007")
   out <- legacy_attach_source(out, safe_df(measures_2017), c("17", "18"), source_label = "2017")
 
   # Some rebuilt measure targets only expose numeric standardized district keys
@@ -99,7 +99,7 @@ legacy_attach_source <- function(tracker, source, suffixes, source_label) {
     s_col <- paste0("state_", suffix)
     d_col <- paste0("district_", suffix)
     if (!all(c(s_col, d_col) %in% names(tracker))) next
-    tracker$.legacy_state_key <- canon(tracker[[s_col]])
+    tracker$.legacy_state_key <- canonicalize_state_name(tracker[[s_col]])
     tracker$.legacy_district_key <- canon(tracker[[d_col]])
     already <- paste0(".matched_", source_label)
     if (!already %in% names(tracker)) tracker[[already]] <- FALSE
@@ -118,10 +118,101 @@ legacy_attach_source <- function(tracker, source, suffixes, source_label) {
     rows <- match(hits$.tracker_row, tracker$.tracker_row)
     for (nm in setdiff(names(hits), c(".legacy_state_key", ".legacy_district_key", ".tracker_row"))) {
       if (!nm %in% names(tracker)) tracker[[nm]] <- NA
-      tracker[[nm]][rows] <- hits[[nm]]
+      fill <- !vapply(tracker[[nm]][rows], scalar_has_value, logical(1)) &
+        vapply(hits[[nm]], scalar_has_value, logical(1))
+      if (any(fill)) tracker[[nm]][rows[fill]] <- hits[[nm]][fill]
     }
     tracker[[already]][rows] <- TRUE
   }
+  tracker$.legacy_state_key <- NULL
+  tracker$.legacy_district_key <- NULL
+  tracker
+}
+
+legacy_attach_source_one_to_one <- function(tracker, source, suffixes, source_label, max_dist = 2L) {
+  if (!nrow(source)) return(tracker)
+  source <- add_legacy_join_keys(source, suffixes)
+  if (!all(c(".legacy_state_key", ".legacy_district_key") %in% names(source))) return(tracker)
+  source$.source_row <- seq_len(nrow(source))
+  source$.source_used <- FALSE
+
+  matched <- paste0(".matched_", source_label)
+  if (!matched %in% names(tracker)) tracker[[matched]] <- FALSE
+
+  for (suffix in suffixes) {
+    s_col <- paste0("state_", suffix)
+    d_col <- paste0("district_", suffix)
+    if (!all(c(s_col, d_col) %in% names(tracker))) next
+
+    tracker$.legacy_state_key <- canonicalize_state_name(tracker[[s_col]])
+    tracker$.legacy_district_key <- canon(tracker[[d_col]])
+    tracker_open <- tracker[
+      !tracker[[matched]] &
+        !is.na(tracker$.legacy_state_key) &
+        nzchar(tracker$.legacy_state_key) &
+        !is.na(tracker$.legacy_district_key) &
+        nzchar(tracker$.legacy_district_key),
+      c(".tracker_row", ".legacy_state_key", ".legacy_district_key"),
+      drop = FALSE
+    ]
+    source_open <- source[
+      !source$.source_used &
+        !is.na(source$.legacy_state_key) &
+        nzchar(source$.legacy_state_key) &
+        !is.na(source$.legacy_district_key) &
+        nzchar(source$.legacy_district_key),
+      c(".source_row", ".legacy_state_key", ".legacy_district_key"),
+      drop = FALSE
+    ]
+    if (!nrow(tracker_open) || !nrow(source_open)) next
+
+    candidates <- merge(
+      source_open,
+      tracker_open,
+      by = ".legacy_state_key",
+      suffixes = c("_source", "_tracker"),
+      sort = FALSE
+    )
+    if (!nrow(candidates)) next
+    candidates$.dist <- mapply(
+      function(x, y) utils::adist(x, y, ignore.case = TRUE)[1, 1],
+      candidates$.legacy_district_key_source,
+      candidates$.legacy_district_key_tracker
+    )
+    candidates <- candidates[is.finite(candidates$.dist) & candidates$.dist <= max_dist, , drop = FALSE]
+    if (!nrow(candidates)) next
+    candidates <- candidates[order(candidates$.dist, candidates$.source_row, candidates$.tracker_row), , drop = FALSE]
+
+    chosen <- data.frame(.source_row = integer(), .tracker_row = integer())
+    used_source <- integer()
+    used_tracker <- integer()
+    for (i in seq_len(nrow(candidates))) {
+      source_i <- candidates$.source_row[[i]]
+      tracker_i <- candidates$.tracker_row[[i]]
+      if (source_i %in% used_source || tracker_i %in% used_tracker) next
+      chosen <- rbind(chosen, data.frame(.source_row = source_i, .tracker_row = tracker_i))
+      used_source <- c(used_source, source_i)
+      used_tracker <- c(used_tracker, tracker_i)
+    }
+    if (!nrow(chosen)) next
+
+    hits <- merge(chosen, source, by = ".source_row", sort = FALSE)
+    rows <- match(hits$.tracker_row, tracker$.tracker_row)
+    source_cols <- setdiff(
+      names(hits),
+      c(".source_row", ".source_used", ".tracker_row", ".legacy_state_key", ".legacy_district_key")
+    )
+    for (nm in source_cols) {
+      if (!nm %in% names(tracker)) tracker[[nm]] <- NA
+      fill <- !vapply(tracker[[nm]][rows], scalar_has_value, logical(1)) &
+        vapply(hits[[nm]], scalar_has_value, logical(1))
+      if (any(fill)) tracker[[nm]][rows[fill]] <- hits[[nm]][fill]
+    }
+    tracker[[matched]][rows] <- TRUE
+    source$.source_used[match(hits$.source_row, source$.source_row)] <- TRUE
+    if (all(source$.source_used)) break
+  }
+
   tracker$.legacy_state_key <- NULL
   tracker$.legacy_district_key <- NULL
   tracker
@@ -135,7 +226,7 @@ add_legacy_join_keys <- function(source, suffixes) {
   candidates <- c(candidates, list(c("state_0708", "district_0708"), c("state_1718", "district_1718"), c("state", "district"), c("state", "district_name")))
   for (pair in candidates) {
     if (all(pair %in% names(source))) {
-      source$.legacy_state_key <- canon(source[[pair[[1]]]])
+      source$.legacy_state_key <- canonicalize_state_name(source[[pair[[1]]]])
       source$.legacy_district_key <- canon(source[[pair[[2]]]])
       return(source)
     }

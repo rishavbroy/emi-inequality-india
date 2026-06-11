@@ -11,7 +11,22 @@ canonicalize_district_name <- function(x) {
 #' canonicalize state name
 #'
 canonicalize_state_name <- function(x) {
-  canonicalize_district_name(x)
+  out <- canonicalize_district_name(x)
+  aliases <- c(
+    "andaman and nicober" = "andaman and nicobar islands",
+    "andaman and nicobar" = "andaman and nicobar islands",
+    "andaman nicobar islands" = "andaman and nicobar islands",
+    "andhra pardesh" = "andhra pradesh",
+    "gujrat" = "gujarat",
+    "maharastra" = "maharashtra",
+    "pondicheri" = "puducherry",
+    "pondicherry" = "puducherry",
+    "uttaranchal" = "uttarakhand",
+    "orissa" = "odisha"
+  )
+  hit <- match(out, names(aliases), nomatch = 0L)
+  out[hit > 0L] <- unname(aliases[hit[hit > 0L]])
+  out
 }
 
 #' make district key
