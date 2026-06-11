@@ -49,9 +49,9 @@ legacy_named_measures_available <- function(...) {
 build_tracker_based_district_panel <- function(tracker, measures_2007, measures_2017, linguistic_distance_iv, boundaries_2020) {
   tracker$.tracker_row <- seq_len(nrow(tracker))
   out <- tracker
-  out <- legacy_attach_source(out, safe_df(linguistic_distance_iv), c("01"), source_label = "2001")
-  out <- legacy_attach_source_one_to_one(out, safe_df(measures_2007), c("07", "08", "06", "05"), source_label = "2007")
-  out <- legacy_attach_source(out, safe_df(measures_2017), c("17", "18"), source_label = "2017")
+  out <- legacy_attach_source(out, safe_df(linguistic_distance_iv), legacy_suffix_chain("01"), source_label = "2001")
+  out <- legacy_attach_source_one_to_one(out, safe_df(measures_2007), legacy_suffix_chain("08"), source_label = "2007")
+  out <- legacy_attach_source(out, safe_df(measures_2017), legacy_suffix_chain("18"), source_label = "2017")
 
   # Some rebuilt measure targets only expose numeric standardized district keys
   # (state_std/district_std) and no longer carry the legacy name columns used by
@@ -71,6 +71,15 @@ build_tracker_based_district_panel <- function(tracker, measures_2007, measures_
   out <- out[legacy_panel_has_analysis_core(out), , drop = FALSE]
   rownames(out) <- NULL
   out
+}
+
+
+legacy_suffix_chain <- function(source_suffix, years_of_interest = c("2001", "2005", "2006", "2007", "2008", "2011", "2017", "2018", "2019", "2020")) {
+  suffixes <- substr(as.character(years_of_interest), 3, 4)
+  source_num <- suppressWarnings(as.integer(source_suffix))
+  suffix_nums <- suppressWarnings(as.integer(suffixes))
+  if (!is.finite(source_num)) return(suffixes)
+  suffixes[order(abs(suffix_nums - source_num), suffix_nums)]
 }
 
 legacy_panel_has_analysis_core <- function(out) {
