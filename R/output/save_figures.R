@@ -326,7 +326,7 @@ build_legacy_ggplot_map <- function(plot_data, spec) {
 
   ggplot2::ggplot(plot_data) +
     ggplot2::geom_sf(ggplot2::aes(fill = .data[[fill$fill]]), color = "grey65", linewidth = 0.05) +
-    ggplot2::scale_fill_manual(values = fill$colors, drop = FALSE) +
+    ggplot2::scale_fill_manual(values = fill$colors, limits = names(fill$colors), drop = FALSE, na.value = "grey70") +
     ggplot2::coord_sf(datum = NA) +
     ggplot2::labs(fill = fill$title) +
     ggplot2::theme_void(base_size = 10) +
@@ -388,14 +388,14 @@ save_district_carveouts_shifts <- function(spec, path_base, formats) {
   binwidth <- diff(range(carveouts$pct_91in01, na.rm = TRUE)) / 40
   if (!is.finite(binwidth) || binwidth <= 0) binwidth <- 1
   p <- ggplot2::ggplot(carveouts, ggplot2::aes(x = pct_91in01)) +
-    ggplot2::geom_histogram(binwidth = binwidth, fill = "goldenrod", color = "white") +
+    ggplot2::geom_histogram(binwidth = binwidth, fill = "goldenrod", color = NA) +
     ggplot2::guides(fill = "none") +
     ggplot2::labs(
       y = "Number of 2001 Districts",
       x = "Percentage of a 1991 District's Population in the 2001 District"
     ) +
     ggplot2::theme_grey(base_size = 10)
-  save_plot_formats(p, path_base, formats, width = 5.75, height = 3.5, dpi = 300)
+  save_plot_formats(p, path_base, formats, width = 4.8, height = 3.0, dpi = 300)
 }
 
 save_ilo_collage <- function(spec, path_base, formats) {

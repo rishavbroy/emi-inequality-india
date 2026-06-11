@@ -80,3 +80,11 @@ test_that("linguistic-distance map labels begin at zero and no-data uses visible
   expect_true(startsWith(levels(fill$data$.map_fill)[[1]], "0-"))
   expect_equal(unname(fill$colors[["No data"]]), "grey70")
 })
+
+test_that("district carve-out figure uses unbordered legacy-style bars", {
+  path <- file.path("R", "output", "save_figures.R")
+  if (!file.exists(path)) path <- file.path("..", "..", "R", "output", "save_figures.R")
+  src <- paste(readLines(path, warn = FALSE), collapse = "\n")
+
+  expect_match(src, "geom_histogram\\(binwidth = binwidth, fill = \"goldenrod\", color = NA\\)")
+})
