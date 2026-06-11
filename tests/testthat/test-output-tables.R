@@ -280,6 +280,7 @@ test_that("regression captions carry significance-star note", {
   expect_match(table_caption("fs_cons"), "\\* p < 0.05", fixed = FALSE)
   expect_match(table_caption("cons_iv"), "\\* p < 0.05", fixed = FALSE)
   expect_match(table_caption("probit_mfx"), "\\* p < 0.05", fixed = FALSE)
-  expect_match(table_caption("fs_cons"), "shortstack", fixed = TRUE)
+  expect_match(table_caption("fs_cons"), "begin{tabular}", fixed = TRUE)
+  expect_false(grepl("shortstack", table_caption("fs_cons"), fixed = TRUE))
   expect_false(grepl("linebreak", table_caption("fs_cons"), fixed = TRUE))
 })

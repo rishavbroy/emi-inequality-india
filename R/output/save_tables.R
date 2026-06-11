@@ -31,11 +31,19 @@ legacy_table_caption_text <- function(name) {
   captions[[name]] %||% name
 }
 
+regression_caption <- function(cap) {
+  paste0(
+    "\\protect\\begin{tabular}[t]{@{}l@{}}",
+    "\\textit{", regression_star_note(), "}",
+    "\\\\",
+    cap,
+    "\\protect\\end{tabular}"
+  )
+}
+
 table_caption <- function(name) {
   cap <- legacy_table_caption_text(name)
-  if (name %in% c("probit_mfx", "fs_cons", "cons_iv")) {
-    return(paste0("\\protect\\shortstack[l]{\\textit{", regression_star_note(), "}\\\\{}", cap, "}"))
-  }
+  if (name %in% c("probit_mfx", "fs_cons", "cons_iv")) return(regression_caption(cap))
   cap
 }
 
