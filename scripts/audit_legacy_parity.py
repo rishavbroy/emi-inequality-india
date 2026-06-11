@@ -19,6 +19,7 @@ LEGACY_RMD = ROOT / "archive/legacy-paper-drafts/580-Draft-ECON-580.Rmd"
 LEGACY_PDF = ROOT / "archive/legacy-paper-drafts/580-Draft-ECON-580.pdf"
 CURRENT_QMD = ROOT / "paper/report.qmd"
 CURRENT_PDF = ROOT / "paper/report.pdf"
+DIAG_DIR = ROOT / "outputs/diagnostics"
 
 FAILURES: list[str] = []
 WARNINGS: list[str] = []
@@ -86,6 +87,132 @@ def by_any_key(rows: list[dict[str, str]]) -> dict[str, dict[str, str]]:
             if key:
                 out[key] = row
     return out
+
+
+
+
+def optional_csv_rows(path: str) -> list[dict[str, str]]:
+    p = ROOT / path
+    if not p.exists():
+        return []
+    with p.open(newline="", encoding="utf-8") as f:
+        return list(csv.DictReader(f))
+
+
+def write_diag_csv(name: str, rows: list[dict[str, object]], fieldnames: list[str] | None = None) -> None:
+    if not rows:
+        return
+    DIAG_DIR.mkdir(parents=True, exist_ok=True)
+    if fieldnames is None:
+        seen: list[str] = []
+        for row in rows:
+            for key in row:
+                if key not in seen:
+                    seen.append(key)
+        fieldnames = seen
+    with (DIAG_DIR / name).open("w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames, extrasaction="ignore")
+        writer.writeheader()
+        for row in rows:
+            writer.writerow({key: row.get(key, "") for key in fieldnames})
+
+
+def first_nonempty(row: dict[str, str], names: tuple[str, ...]) -> str:
+    for name in names:
+        value = row.get(name)
+        if value not in {None, ""}:
+            return str(value)
+    return ""
+
+
+def mean_of(rows: list[dict[str, str]], name: str) -> float | None:
+    vals = [fnum(row.get(name)) for row in rows]
+    vals = [v for v in vals if v is not None]
+    if not vals:
+        return None
+    return sum(vals) / len(vals)
+
+
+def audit_iv_panel_diagnostics() -> None:
+    """Write row-level diagnostics for the unresolved IV pseudo-panel audit.
+
+    These diagnostics are intentionally descriptive. They do not bless the
+    current panel: they make the remaining panel/measure mismatch reviewable in
+    review.zip so methodological decisions can be documented from row-level
+    evidence rather than from the final PDF table numbers alone.
+    """
+    rows = optional_csv_rows("data/processed/district_panel_emi_consumption_2001_2007_2017_2020.csv")
+    if not rows:
+        return
+
+    identity_cols = [
+        ".tracker_row", "district_panel_id",
+        "state_01", "district_01", "state_07", "district_07", "state_08", "district_08",
+        "state_17", "district_17", "state_18", "district_18", "state_20", "district_20",
+        "state_std", "district_std", "district_code_0708", "district_code_1718",
+        ".matched_2001", ".matched_2007", ".matched_2017",
+    ]
+    measure_cols = [
+        "EMIE", "emie_2007", "wavg_ling_degrees", "npeople_0708", "consumption_0708",
+        "gini_cons_0708", "consumption_1718", "gini_cons_1718", "consumption_pct_change",
+        "log_consumption_difference", "dependency_ratio", "pct_fem_head", "pct_pucca",
+        "pct_head_secondary_plus", "region",
+    ]
+    row_cols = [c for c in identity_cols + measure_cols if c in rows[0]]
+    write_diag_csv(
+        "iv_panel_current_rows.csv",
+        [{c: row.get(c, "") for c in row_cols} for row in rows],
+        row_cols,
+    )
+
+    group_cols = [c for c in [".matched_2001", ".matched_2007", ".matched_2017"] if c in rows[0]]
+    grouped: dict[tuple[str, ...], list[dict[str, str]]] = {}
+    for row in rows:
+        key = tuple(str(row.get(c, "")) for c in group_cols)
+        grouped.setdefault(key, []).append(row)
+    summary_rows: list[dict[str, object]] = []
+    for key, group in sorted(grouped.items(), key=lambda item: item[0]):
+        out: dict[str, object] = {group_cols[i]: key[i] for i in range(len(group_cols))}
+        out["n_rows"] = len(group)
+        for var in ["EMIE", "wavg_ling_degrees", "npeople_0708", "consumption_0708", "dependency_ratio"]:
+            if var in rows[0]:
+                value = mean_of(group, var)
+                out[f"mean_{var}"] = "" if value is None else f"{value:.6g}"
+        summary_rows.append(out)
+    write_diag_csv("iv_panel_match_summary.csv", summary_rows)
+
+    state_groups: dict[str, list[dict[str, str]]] = {}
+    for row in rows:
+        state = first_nonempty(row, ("state_20", "state_18", "state_17", "state_08", "state_07", "state_01", "state_std"))
+        state_groups.setdefault(state, []).append(row)
+    state_summary: list[dict[str, object]] = []
+    for state, group in sorted(state_groups.items()):
+        out = {"state": state, "n_rows": len(group)}
+        for var in ["EMIE", "wavg_ling_degrees", "npeople_0708", "consumption_0708", "dependency_ratio"]:
+            if var in rows[0]:
+                value = mean_of(group, var)
+                out[f"mean_{var}"] = "" if value is None else f"{value:.6g}"
+        state_summary.append(out)
+    write_diag_csv("iv_panel_state_summary.csv", state_summary)
+
+    # Rows at the extremes of the treatment/instrument distributions are often
+    # the quickest way to spot an accidental extra fuzzy match or an accepted
+    # coverage correction.
+    extreme_rows: list[dict[str, str]] = []
+    for var in ["EMIE", "wavg_ling_degrees", "npeople_0708"]:
+        if var not in rows[0]:
+            continue
+        numeric = [(fnum(row.get(var)), row) for row in rows]
+        numeric = [(v, row) for v, row in numeric if v is not None]
+        numeric.sort(key=lambda item: item[0])
+        for label, subset in ((f"lowest_{var}", numeric[:10]), (f"highest_{var}", numeric[-10:])):
+            for value, row in subset:
+                out = {c: row.get(c, "") for c in row_cols}
+                out["diagnostic_set"] = label
+                out["diagnostic_value"] = f"{value:.6g}"
+                extreme_rows.append(out)
+    if extreme_rows:
+        write_diag_csv("iv_panel_extreme_rows.csv", extreme_rows, ["diagnostic_set", "diagnostic_value"] + row_cols)
 
 
 def pdf_pages(path: Path) -> int | None:
@@ -266,6 +393,7 @@ def audit_source_flags() -> None:
 
 
 def main() -> int:
+    audit_iv_panel_diagnostics()
     audit_pdf_and_qmd_shape()
     audit_selection_tables()
     audit_iv_tables()
