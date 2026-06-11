@@ -52,7 +52,7 @@ estimate_first_stage <- function(iv_models, district_panel, cfg) {
     if (is.null(coef_mat) || !NROW(coef_mat)) return(first_stage_status_row(model_name, "First-stage coefficient table is empty."))
 
     coef_terms <- rownames(coef_mat)
-    coefs <- as.data.frame(coef_mat, check.names = FALSE)
+    coefs <- as.data.frame(unclass(coef_mat), check.names = FALSE)
     if (is.null(coef_terms) || !length(coef_terms) || all(grepl("^[0-9]+$", coef_terms))) {
       coef_terms <- names(stats::coef(fit))
     }
