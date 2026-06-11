@@ -188,7 +188,7 @@ test_that("IV summary table retains legacy description column", {
   public <- format_table_for_output(out, public = TRUE)
 
   expect_true("Description" %in% names(public))
-  expect_match(public$Description[public$Variable == "EMIE"][[1]], "English-medium", ignore.case = TRUE)
+  expect_equal(public$Description[public$Variable == "EMIE"][[1]], "EMI exposure")
 })
 
 test_that("probit table uses compact dependent-variable header and fit statistics", {
