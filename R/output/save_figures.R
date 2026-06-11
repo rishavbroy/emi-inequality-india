@@ -228,45 +228,28 @@ map_diagnostic_plot <- function(plot_data, variable, title) {
   }
 }
 
-build_ggplot_map <- function(plot_data, spec, fill_values) {
-  ggplot2::ggplot(plot_data) +
-    ggplot2::geom_sf(ggplot2::aes(fill = .map_fill), color = "grey45", linewidth = 0.06) +
-    ggplot2::scale_fill_manual(values = fill_values, drop = FALSE, name = spec$title) +
-    ggplot2::theme_void(base_size = 12) +
-    ggplot2::theme(
-      legend.position = "right",
-      legend.title = ggplot2::element_text(size = 12),
-      legend.text = ggplot2::element_text(size = 10),
-      legend.key.height = grid::unit(0.34, "cm"),
-      legend.key.width = grid::unit(0.46, "cm"),
-      plot.margin = ggplot2::margin(2, 2, 2, 2)
-    )
-}
-
 build_tmap_map <- function(plot_data, spec, fill_values) {
-  if (!requireNamespace("tmap", quietly = TRUE)) return(NULL)
-  tryCatch({
-    old_mode <- tryCatch(tmap::tmap_mode("plot"), error = function(e) NULL)
-    on.exit(tryCatch(if (!is.null(old_mode)) tmap::tmap_mode(old_mode), error = function(e) NULL), add = TRUE)
-    tmap::tm_shape(plot_data) +
-      tmap::tm_polygons(
-        col = ".map_fill",
-        palette = fill_values,
-        title = spec$title,
-        border.col = "grey55",
-        lwd = 0.15,
-        colorNA = "grey82",
-        textNA = "No data"
-      ) +
-      tmap::tm_layout(
-        frame = FALSE,
-        legend.outside = TRUE,
-        legend.outside.position = "right",
-        legend.title.size = 1.0,
-        legend.text.size = 0.8,
-        inner.margins = 0.01
-      )
-  }, error = function(e) NULL)
+  need_pkg("tmap", "classified choropleth maps")
+  old_mode <- tryCatch(tmap::tmap_mode("plot"), error = function(e) NULL)
+  on.exit(tryCatch(if (!is.null(old_mode)) tmap::tmap_mode(old_mode), error = function(e) NULL), add = TRUE)
+  tmap::tm_shape(plot_data) +
+    tmap::tm_polygons(
+      col = ".map_fill",
+      palette = fill_values,
+      title = spec$title,
+      border.col = "grey55",
+      lwd = 0.15,
+      colorNA = "grey82",
+      textNA = "No data"
+    ) +
+    tmap::tm_layout(
+      frame = FALSE,
+      legend.outside = TRUE,
+      legend.outside.position = "right",
+      legend.title.size = 1.0,
+      legend.text.size = 0.8,
+      inner.margins = 0.01
+    )
 }
 
 map_plot_to_grob <- function(plot) {
@@ -306,7 +289,8 @@ save_map_figure <- function(spec, path_base, district_panel, formats, boundaries
     stop("Map figure '", spec$name, "' is missing variable '", spec$variable, "'.", call. = FALSE)
   }
 
-  need_pkg("ggplot2", "sf map figure")
+  need_pkg("ggplot2", "map distribution side panels")
+  need_pkg("tmap", "classified choropleth maps")
   plot_data <- complete_map_geometry(district_panel, boundaries_2020, spec$variable)
   if (!spec$variable %in% names(plot_data)) plot_data[[spec$variable]] <- NA
   plot_data$.map_value <- plot_data[[spec$variable]]
@@ -325,7 +309,6 @@ save_map_figure <- function(spec, path_base, district_panel, formats, boundaries
   fill_values <- map_fill_values(plot_data$.map_fill, spec$variable)
 
   p <- build_tmap_map(plot_data, spec, fill_values)
-  if (is.null(p)) p <- build_ggplot_map(plot_data, spec, fill_values)
   diagnostic <- map_diagnostic_plot(plot_data, spec$variable, spec$title)
   save_map_panel_formats(p, diagnostic, path_base, formats, width = 8.2, height = 5.4, dpi = 300)
 }
