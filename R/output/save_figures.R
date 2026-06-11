@@ -153,6 +153,11 @@ complete_map_geometry <- function(district_panel, boundaries_2020, variable) {
 
 numeric_map_bins <- function(x, variable) {
   x_num <- suppressWarnings(as.numeric(x))
+  finite_x <- x_num[is.finite(x_num)]
+  if (!length(finite_x)) {
+    out <- rep("No data", length(x_num))
+    return(factor(out, levels = "No data"))
+  }
   if (identical(variable, "emie_2007")) {
     bins <- cut(
       x_num,
@@ -161,12 +166,17 @@ numeric_map_bins <- function(x, variable) {
       right = TRUE
     )
   } else {
-    qs <- unique(stats::quantile(x_num[is.finite(x_num)], probs = seq(0, 1, length.out = 6), na.rm = TRUE))
+    qs <- unique(stats::quantile(finite_x, probs = seq(0, 1, length.out = 6), na.rm = TRUE))
     if (length(qs) < 3L) {
-      bins <- cut(x_num, breaks = 5, include.lowest = TRUE)
-    } else {
-      bins <- cut(x_num, breaks = qs, include.lowest = TRUE)
+      spread <- range(finite_x, na.rm = TRUE)
+      if (!is.finite(diff(spread)) || diff(spread) <= 0) {
+        pad <- max(1, abs(spread[[1]]) * 0.05)
+        qs <- c(spread[[1]] - pad, spread[[1]] + pad)
+      } else {
+        qs <- seq(spread[[1]], spread[[2]], length.out = 6)
+      }
     }
+    bins <- cut(x_num, breaks = qs, include.lowest = TRUE)
   }
   out <- as.character(bins)
   out[is.na(out)] <- "No data"
