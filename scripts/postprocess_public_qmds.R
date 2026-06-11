@@ -34,8 +34,8 @@ legacy_abstract <- paste0(
 
 legacy_figure_captions <- c(
   "fig-ILO-fig" = "Trends in earnings, labor‐force participation, and unemployment (ILO, 2024).",
-  "fig-map1-fig" = 'From top to bottom: EMI exposure, consumption growth, pucca (permanent) housing, and household heads with secondary education or more. Data from the 64th round of the NSS 2007-08, "Participation and Expenditure in Education" and "Household Consumer Expenditure."',
-  "fig-map2-fig" = "From top to bottom: regions of India and linguistic distance from Hindi. District-level data, from the 2001 Census of India.",
+  "fig-map1-fig" = 'Clockwise from top left: EMI exposure, consumption growth, household heads with secondary education or more, and pucca (permanent) housing. Data from the 64th round of the NSS 2007-08, "Participation and Expenditure in Education" and "Household Consumer Expenditure."',
+  "fig-map2-fig" = "From left to right: regions of India and linguistic distance from Hindi. District-level data, from the 2001 Census of India.",
   "fig-districtcarveoutsshifts-fig" = "Number of 2001 districts which absorbed a percentage of a 1991 district's population via name change, clean merger, carve-out, or border shift. Data from Kumar \\& Somanathan (2016)."
 )
 
@@ -161,11 +161,17 @@ normalize_yaml <- function(lines, path) {
       "  - \\usepackage{tabularray}",
       "  - \\usepackage{float}",
       "  - \\usepackage{threeparttable}",
+      "  - \\usepackage{etoolbox}",
+      "  - \\AtBeginEnvironment{CSLReferences}{\\begin{singlespace}\\setlength{\\parskip}{0pt}}",
+      "  - \\AtEndEnvironment{CSLReferences}{\\end{singlespace}}",
       "  - \\UseTblrLibrary{booktabs}",
       "  - \\UseTblrLibrary{siunitx}"
     ))
     lines <- ensure_yaml_list_item(lines, "header-includes", "\\usepackage{float}")
     lines <- ensure_yaml_list_item(lines, "header-includes", "\\usepackage{threeparttable}")
+    lines <- ensure_yaml_list_item(lines, "header-includes", "\\usepackage{etoolbox}")
+    lines <- ensure_yaml_list_item(lines, "header-includes", "\\AtBeginEnvironment{CSLReferences}{\\begin{singlespace}\\setlength{\\parskip}{0pt}}")
+    lines <- ensure_yaml_list_item(lines, "header-includes", "\\AtEndEnvironment{CSLReferences}{\\end{singlespace}}")
   }
   if (identical(path, "docs/district-matching.qmd")) {
     lines <- rewrite_yaml_field(lines, "bibliography", "../paper/references.bib")
@@ -378,7 +384,8 @@ output_table_helper_chunk <- function() {
     "  if (length(value) == 0L || all(is.na(value))) return(\"—\")",
     "  paste(value, collapse = \", \")",
     "}",
-    "table_caption <- function(name) {",
+    "regression_star_note <- function() \"* p < 0.05, ** p < 0.01, *** p < 0.001\"",
+    "legacy_table_caption_text <- function(name) {",
     "  captions <- c(",
     "    sum_tbl_probit_cat = \"Summary Statistics for Enrollment Participation Model (Categorical Variables)\",",
     "    sum_tbl_probit_quant = \"Summary Statistics for Enrollment Participation Model (Numeric Variables)\",",
@@ -389,12 +396,17 @@ output_table_helper_chunk <- function() {
     "  )",
     "  captions[[name]] %||% name",
     "}",
+    "table_caption <- function(name) {",
+    "  cap <- legacy_table_caption_text(name)",
+    "  if (name %in% c(\"probit_mfx\", \"fs_cons\", \"cons_iv\")) return(paste0(\"\\\\textit{\", regression_star_note(), \"}\\\\protect\\\\linebreak{}\", cap))",
+    "  cap",
+    "}",
     "table_note <- function(name) {",
     "  switch(name,",
     "    sum_tbl_probit_quant = \"Min. = minimum; 1Q = first quartile; Med. = median; 3Q = third quartile; Max. = maximum; Mean = arithmetic mean; SD = standard deviation; N = number of observations.\",",
     "    sum_tbl_iv = \"Min. = minimum; 1Q = first quartile; Med. = median; 3Q = third quartile; Max. = maximum; Mean = arithmetic mean; SD = standard deviation; N = number of observations.\",",
     "    sum_tbl_probit_cat = \"Values = all possible values; Mode = most frequent value; Pct. Mode = percent of observations taking the modal value; Least Freq. = least frequent value; Pct. Least Freq. = percent of observations taking the least frequent value; N = number of observations.\",",
-    "    probit_mfx = \"Data from the 64th round of the NSS, Participation and Expenditure in Education, 2007-08. Standard errors are design-based and use the active survey design.\",",
+    "    probit_mfx = \"Data from the 64th round of the NSS, \\\"Participation and Expenditure in Education\\\" in 2007-08. All standard errors are design-based (clustered and nested within strata).\",",
     "    fs_cons = \"Standard errors clustered by state in parentheses.\",",
     "    cons_iv = \"Standard errors clustered by state in parentheses.\",",
     "    NULL)",
@@ -429,14 +441,22 @@ output_table_helper_chunk <- function() {
     "  list(data = df[!group_row, , drop = FALSE], groups = groups)",
     "}",
     "wrap_cell <- function(x, width = 28L) {",
-    "  x <- as.character(x); x[is.na(x)] <- \"\"",
-    "  vapply(x, function(value) if (!nzchar(value) || grepl(\"\\\\\\\\\", value, fixed = TRUE)) value else paste(strwrap(value, width = width), collapse = \"\\\\\\\\\"), character(1), USE.NAMES = FALSE)",
+    "  x <- as.character(x)",
+    "  x[is.na(x)] <- \"\"",
+    "  x",
     "}",
-    "wrap_table_text <- function(df) {",
-    "  for (nm in intersect(c(\"Variable\", \"Description\", \"Values\", \"Mode\", \"Least Freq.\", \"Term\"), names(df))) {",
-    "    df[[nm]] <- wrap_cell(df[[nm]], switch(nm, Description = 34L, Values = 36L, Term = 34L, 24L))",
-    "  }",
-    "  df",
+    "wrap_table_text <- function(df) as.data.frame(df, check.names = FALSE, stringsAsFactors = FALSE)",
+    "regression_summary_start <- function(df) {",
+    "  if (!\"Term\" %in% names(df)) return(NA_integer_)",
+    "  hit <- which(as.character(df$Term) %in% c(\"Observations\", \"R-squared\", \"Adjusted R-squared\", \"Instrument's F-Statistic\", \"Model's F-Statistic\", \"F-Statistic\"))",
+    "  if (length(hit)) hit[[1]] else NA_integer_",
+    "}",
+    "style_regression_table <- function(tab, df, name) {",
+    "  if (!name %in% c(\"probit_mfx\", \"fs_cons\", \"cons_iv\")) return(tab)",
+    "  start <- regression_summary_start(df)",
+    "  if (is.finite(start) && start > 1L) tab <- kableExtra::row_spec(tab, start - 1L, hline_after = TRUE)",
+    "  if (is.finite(start) && start <= nrow(df)) tab <- kableExtra::row_spec(tab, start:nrow(df), background = \"white\")",
+    "  tab",
     "}",
     "render_public_table <- function(path, name) {",
     "  df <- read_public_table(path)",
@@ -456,6 +476,7 @@ output_table_helper_chunk <- function() {
     "    if (name == \"probit_mfx\") tab <- kableExtra::add_header_above(tab, c(\" \" = 1, \"Enrolled (1 = yes)\" = 1), escape = FALSE)",
     "    if (name == \"fs_cons\") tab <- kableExtra::add_header_above(tab, c(\" \" = 1, \"EMI Exposure\" = 1), escape = FALSE)",
     "    if (name == \"cons_iv\") tab <- kableExtra::add_header_above(tab, c(\" \" = 1, \"Consumption Growth\" = 1), escape = FALSE)",
+    "    tab <- style_regression_table(tab, df_render, name)",
     "    note <- table_note(name)",
     "    if (!is.null(note)) tab <- kableExtra::footnote(tab, general = note, threeparttable = TRUE, footnote_as_chunk = TRUE, escape = FALSE)",
     "    if (wide) tab <- kableExtra::landscape(tab)",
@@ -565,13 +586,13 @@ insert_report_output_objects_explicit <- function(lines) {
     c(
       output_table_chunk("tbl-sum-tbl-iv", legacy_table_captions[["tbl-sum-tbl-iv"]], "../outputs/tables/main/sum_tbl_iv.csv"),
       "",
-      figure_markdown("fig-map2-fig", "../outputs/figures/main/collage_iv_region_maps.pdf")
+      figure_markdown("fig-map1-fig", "../outputs/figures/main/collage_main_maps.pdf")
     )
   )
   lines <- insert_after_line(
     lines,
     "We are currently unable to replicate her justification of the exclusion restriction",
-    figure_markdown("fig-map1-fig", "../outputs/figures/main/collage_main_maps.pdf")
+    figure_markdown("fig-map2-fig", "../outputs/figures/main/collage_iv_region_maps.pdf")
   )
   lines <- insert_after_line(
     lines,
@@ -635,6 +656,13 @@ ensure_report_output_objects <- function(lines) {
   lines
 }
 
+ensure_references_heading <- function(lines) {
+  if (any(grepl("^# References", lines))) return(lines)
+  appendix <- grep("^# (\\(APPENDIX\\) )?Appendix|^# A Appendix|^# B Technical Note", lines, perl = TRUE)
+  insert_at <- if (length(appendix)) appendix[[1]] - 1L else length(lines)
+  append(lines, c("", "# References {-}"), after = max(0L, insert_at - 1L))
+}
+
 postprocess_one <- function(path) {
   lines <- readLines(path, warn = FALSE)
   lines <- normalize_yaml(lines, path)
@@ -661,7 +689,7 @@ postprocess_one <- function(path) {
   }
   lines <- remove_unavailable_map_figures(lines)
   if (identical(path, "paper/report.qmd") || identical(path, "paper/appendix.qmd")) lines <- fix_appendix_headings(lines)
-
+  if (identical(path, "paper/report.qmd")) lines <- ensure_references_heading(lines)
 
   lines <- normalize_inserted_output_captions(lines)
   if (identical(path, "paper/report.qmd")) {
