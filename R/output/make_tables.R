@@ -72,6 +72,79 @@ legacy_categorical_stats <- function(df, meta) {
   if (!nrow(out)) data.frame(var = character(), label = character(), N = integer()) else out
 }
 
+legacy_summary_group_row <- function(label, columns) {
+  row <- as.list(stats::setNames(rep(NA_character_, length(columns)), columns))
+  if ("var" %in% columns) row$var <- paste0(".group_", gsub("[^A-Za-z0-9]+", "_", label))
+  if ("label" %in% columns) row$label <- label
+  as.data.frame(row, check.names = FALSE, stringsAsFactors = FALSE)
+}
+
+insert_summary_group <- function(df, label, before_var) {
+  if (!nrow(df) || !"var" %in% names(df)) return(df)
+  pos <- match(before_var, df$var)
+  if (is.na(pos)) return(df)
+  rbind(
+    if (pos > 1L) df[seq_len(pos - 1L), , drop = FALSE] else df[0L, , drop = FALSE],
+    legacy_summary_group_row(label, names(df)),
+    df[pos:nrow(df), , drop = FALSE]
+  )
+}
+
+legacy_significance_stars <- function(p) {
+  ifelse(is.finite(p) & p < 0.001, "***",
+    ifelse(is.finite(p) & p < 0.01, "**",
+      ifelse(is.finite(p) & p < 0.05, "*", "")))
+}
+
+format_estimate <- function(estimate, p.value = NA_real_) {
+  ifelse(is.finite(estimate), paste0(sprintf("%.3f", estimate), legacy_significance_stars(p.value)), NA_character_)
+}
+
+format_se <- function(std.error) {
+  ifelse(is.finite(std.error), sprintf("(%.3f)", std.error), NA_character_)
+}
+
+regression_display_table <- function(terms, estimates, std_errors, p_values, outcome_label, gof = NULL) {
+  rows <- safe_bind_rows(lapply(seq_along(terms), function(i) {
+    data.frame(
+      Term = c(terms[[i]], ""),
+      value = c(format_estimate(estimates[[i]], p_values[[i]]), format_se(std_errors[[i]])),
+      stringsAsFactors = FALSE
+    )
+  }))
+  names(rows)[names(rows) == "value"] <- outcome_label
+  if (!is.null(gof) && nrow(gof)) {
+    names(gof) <- names(rows)
+    rows <- rbind(rows, gof)
+  }
+  rows
+}
+
+model_gof_rows <- function(model, outcome_label, statistic_name = "F-Statistic") {
+  if (is.null(model) || is_model_status_payload(model)) return(data.frame())
+  sm <- tryCatch(summary(model), error = function(e) NULL)
+  nobs <- tryCatch(stats::nobs(model), error = function(e) NA_real_)
+  r2 <- tryCatch(sm$r.squared, error = function(e) NA_real_)
+  adj_r2 <- tryCatch(sm$adj.r.squared, error = function(e) NA_real_)
+  sigma <- tryCatch(sm$sigma, error = function(e) NA_real_)
+  fstat <- tryCatch(sm$fstatistic, error = function(e) NULL)
+  f_value <- if (!is.null(fstat) && length(fstat)) suppressWarnings(as.numeric(fstat[[1]])) else NA_real_
+  data.frame(
+    Term = c("Observations", "$R^2$", "Adjusted $R^2$", "Residual Std. Error", statistic_name),
+    value = c(
+      ifelse(is.finite(nobs), sprintf("%.0f", nobs), ""),
+      ifelse(is.finite(r2), sprintf("%.3f", r2), ""),
+      ifelse(is.finite(adj_r2), sprintf("%.3f", adj_r2), ""),
+      ifelse(is.finite(sigma), sprintf("%.3f", sigma), ""),
+      ifelse(is.finite(f_value), sprintf("%.2f", f_value), "")
+    ),
+    check.names = FALSE,
+    stringsAsFactors = FALSE
+  ) |>
+    stats::setNames(c("Term", outcome_label))
+}
+
+
 numeric_summary <- function(df, variables = NULL) {
   df <- as.data.frame(df)
   if (is.null(variables)) variables <- names(df)
@@ -263,7 +336,7 @@ make_tables <- function(selection_data, ame_results, district_panel, iv_models, 
     selection_n = data.frame(n = nrow(as.data.frame(selection_data))),
     sum_tbl_probit_quant = make_selection_summary_numeric_table(selection_data),
     sum_tbl_probit_cat = make_selection_summary_categorical_table(selection_data),
-    probit_mfx = make_probit_ame_table(ame_results),
+    probit_mfx = make_probit_ame_table(ame_results, nrow(as.data.frame(selection_data))),
     sum_tbl_iv = make_iv_summary_table(district_panel),
     fs_cons = make_first_stage_table(first_stage_tests, cfg),
     cons_iv = make_second_stage_table(iv_models),
@@ -282,7 +355,8 @@ make_selection_summary_numeric_table <- function(selection_data) {
     label = c("Age", "Household size", "Enrollment cost (Rs.)", "Educ. free available? (Yes = 1)", "Tuition waived?", "Scholarship/Stipend?", "Textbooks received?", "Stationery received?", "Mid-day meal or more received?", "Avg. district enrollment cost"),
     stringsAsFactors = FALSE
   )
-  legacy_numeric_stats(selection_data, meta, cost_vars = "ENROLLMENT_COST")
+  out <- legacy_numeric_stats(selection_data, meta, cost_vars = "ENROLLMENT_COST")
+  insert_summary_group(out, "District-level aggregates:", "dmean_num_IS_EDU_FREE")
 }
 
 make_selection_summary_categorical_table <- function(selection_data) {
@@ -294,17 +368,22 @@ make_selection_summary_categorical_table <- function(selection_data) {
   legacy_categorical_stats(selection_data, meta)
 }
 
-make_probit_ame_table <- function(ame_results) {
+make_probit_ame_table <- function(ame_results, n = NA_integer_) {
   out <- as.data.frame(ame_results, stringsAsFactors = FALSE)
   if (!"Term" %in% names(out)) out$Term <- out$term
-  out$stars <- ifelse(is.finite(out$p.value) & out$p.value < 0.001, "***", ifelse(is.finite(out$p.value) & out$p.value < 0.01, "**", ifelse(is.finite(out$p.value) & out$p.value < 0.05, "*", "")))
-  data.frame(
-    Term = out$Term,
-    Estimate = ifelse(is.finite(out$estimate), paste0(sprintf("%.3f", out$estimate), out$stars), NA_character_),
-    `Std. Error` = ifelse(is.finite(out$std.error), sprintf("(%.3f)", out$std.error), NA_character_),
-    check.names = FALSE,
-    stringsAsFactors = FALSE
+  display <- regression_display_table(
+    terms = out$Term,
+    estimates = suppressWarnings(as.numeric(out$estimate)),
+    std_errors = suppressWarnings(as.numeric(out$std.error)),
+    p_values = suppressWarnings(as.numeric(out$p.value)),
+    outcome_label = "Enrolled in School (1 = yes)",
+    gof = data.frame(
+      Term = "Observations",
+      value = ifelse(is.finite(n), sprintf("%.0f", n), ""),
+      stringsAsFactors = FALSE
+    )
   )
+  display
 }
 
 make_iv_summary_table <- function(district_panel) {
@@ -313,7 +392,12 @@ make_iv_summary_table <- function(district_panel) {
     label = c("EMIE", "Ling. Distance", "Population", "Consumption", "Gini of Consumption", "Pct. Urban", "Avg. HH Size", "Dependency Ratio × 100", "Pct. Female Head", "Pct. Hindu", "Pct. Muslim", "Pct. Other", "Pct. ST", "Pct. SC", "Pct. OBC", "Pct. Small Land-Owner", "Pct. Med. Land-Owner", "Pct. Large Land-Owner", "Pct. Head Educ., Illiterate", "Pct. Head Educ., Lit.-Primary", "Pct. Head Educ., Secondary+", "Pct. Pucca", "Population", "Consumption", "Gini of Consumption", "$%\\Delta\\text{Consumption}$", "$\\Delta\\text{Gini}^{\\text{Consumption}}$"),
     stringsAsFactors = FALSE
   )
-  legacy_numeric_stats(district_panel, meta, cost_vars = c("npeople_0708", "npeople_1718"))
+  out <- legacy_numeric_stats(district_panel, meta, cost_vars = c("npeople_0708", "npeople_1718"))
+  out <- insert_summary_group(out, "From 2001:", "wavg_ling_degrees")
+  out <- insert_summary_group(out, "From 2007-08:", "EMIE")
+  out <- insert_summary_group(out, "From 2017-18:", "npeople_1718")
+  out <- insert_summary_group(out, "Changes:", "consumption_pct_change")
+  out
 }
 
 make_first_stage_table <- function(first_stage_tests, cfg = list()) {
@@ -332,7 +416,7 @@ make_first_stage_table <- function(first_stage_tests, cfg = list()) {
     return(table_status_row("first_stage", "malformed", msg))
   }
   status_reasons <- unique(stats::na.omit(as.character(fs$reason[!is.na(fs$status) & fs$status != "estimated"])))
-  fs <- fs[fs$status == "estimated" & fs$term %in% c("wavg_ling_degrees", "(Intercept)"), , drop = FALSE]
+  fs <- fs[fs$status == "estimated" & !is.na(fs$term), , drop = FALSE]
   required_terms <- c("wavg_ling_degrees", "(Intercept)")
   missing_terms <- setdiff(required_terms, fs$term)
   if (length(missing_terms)) {
@@ -346,28 +430,38 @@ make_first_stage_table <- function(first_stage_tests, cfg = list()) {
     if (is_final_mode(cfg)) stop(msg, call. = FALSE)
     return(table_status_row("first_stage", "unavailable", msg))
   }
-  fs <- fs[match(required_terms, fs$term), , drop = FALSE]
-  fs$stars <- ifelse(is.finite(fs$p.value) & fs$p.value < 0.001, "***", ifelse(is.finite(fs$p.value) & fs$p.value < 0.01, "**", ifelse(is.finite(fs$p.value) & fs$p.value < 0.05, "*", "")))
-  out <- data.frame(
-    Term = ifelse(fs$term == "wavg_ling_degrees", "Linguistic distance", "Constant"),
-    Estimate = paste0(sprintf("%.3f", fs$estimate), fs$stars),
-    `Std. Error` = sprintf("(%.3f)", fs$std.error),
-    check.names = FALSE,
+  term_order <- c(
+    "wavg_ling_degrees", "consumption_0708", "gini_cons_0708",
+    "pct_urban", "avg_hh_size", "dependency_ratio", "pct_fem_head",
+    "pct_hindu", "pct_muslim", "pct_st", "pct_sc", "pct_obc",
+    "pct_small_land", "pct_medium_land", "pct_large_land",
+    "pct_head_lit_to_primary", "pct_head_secondary_plus", "(Intercept)"
+  )
+  fs <- fs[order(match(fs$term, term_order), fs$term), , drop = FALSE]
+  fs <- fs[!is.na(match(fs$term, term_order)), , drop = FALSE]
+
+  stat <- fs[fs$term == "wavg_ling_degrees", , drop = FALSE]
+  f_value <- if (nrow(stat)) first_finite_value(stat, c("partial_f", "legacy_model_f")) else NA_real_
+  f_p <- if (nrow(stat)) first_finite_value(stat, c("partial_p", "legacy_model_p")) else NA_real_
+  f_row <- data.frame(
+    Term = "Instrument's F-Statistic",
+    value = paste0(sprintf("%.2f", f_value), legacy_significance_stars(f_p)),
     stringsAsFactors = FALSE
   )
-  stat <- fs[fs$term == "wavg_ling_degrees", , drop = FALSE]
-  if (nrow(stat)) {
-    f_value <- first_finite_value(stat, c("partial_f", "legacy_model_f"))
-    f_p <- first_finite_value(stat, c("partial_p", "legacy_model_p"))
-    out <- rbind(out, data.frame(
-      Term = "Instrument's F-Statistic",
-      Estimate = paste0(sprintf("%.2f", f_value), ifelse(is.finite(f_p) & f_p < 0.001, "***", ifelse(is.finite(f_p) & f_p < 0.01, "**", ifelse(is.finite(f_p) & f_p < 0.05, "*", "")))),
-      `Std. Error` = "",
-      check.names = FALSE,
-      stringsAsFactors = FALSE
-    ))
-  }
-  out
+  model_f <- if (nrow(stat)) first_finite_value(stat, c("legacy_model_f")) else NA_real_
+  gof <- rbind(
+    f_row,
+    data.frame(Term = "Model's F-Statistic", value = ifelse(is.finite(model_f), sprintf("%.2f", model_f), ""), stringsAsFactors = FALSE)
+  )
+
+  regression_display_table(
+    terms = legacy_iv_term_label(fs$term),
+    estimates = suppressWarnings(as.numeric(fs$estimate)),
+    std_errors = suppressWarnings(as.numeric(fs$std.error)),
+    p_values = suppressWarnings(as.numeric(fs$p.value)),
+    outcome_label = "EMI Exposure",
+    gof = gof
+  )
 }
 
 first_finite_value <- function(df, cols) {
@@ -382,14 +476,21 @@ first_finite_value <- function(df, cols) {
 make_second_stage_table <- function(iv_models) {
   out <- tidy_iv_models(iv_models)
   out <- filter_table_model(out, c("consumption", "baseline"))
-  if (!nrow(out)) return(data.frame(Term = character(), Estimate = character(), `Std. Error` = character(), check.names = FALSE))
-  out$stars <- ifelse(is.finite(out$p.value) & out$p.value < 0.001, "***", ifelse(is.finite(out$p.value) & out$p.value < 0.01, "**", ifelse(is.finite(out$p.value) & out$p.value < 0.05, "*", "")))
-  data.frame(
-    Term = legacy_iv_term_label(out$term),
-    Estimate = ifelse(is.finite(out$estimate), paste0(sprintf("%.3f", out$estimate), out$stars), NA_character_),
-    `Std. Error` = ifelse(is.finite(out$std.error), sprintf("(%.3f)", out$std.error), NA_character_),
-    check.names = FALSE,
-    stringsAsFactors = FALSE
+  if (!nrow(out)) return(data.frame(Term = character(), `Consumption Growth` = character(), check.names = FALSE))
+  model <- NULL
+  if (is.list(iv_models) && !inherits(iv_models, c("lm", "ivreg"))) {
+    hit <- intersect(c("consumption", "baseline"), names(iv_models))
+    if (length(hit)) model <- iv_models[[hit[[1]]]]
+  } else {
+    model <- iv_models
+  }
+  regression_display_table(
+    terms = legacy_iv_term_label(out$term),
+    estimates = suppressWarnings(as.numeric(out$estimate)),
+    std_errors = suppressWarnings(as.numeric(out$std.error)),
+    p_values = suppressWarnings(as.numeric(out$p.value)),
+    outcome_label = "Consumption Growth",
+    gof = model_gof_rows(model, "Consumption Growth", statistic_name = "F-Statistic")
   )
 }
 

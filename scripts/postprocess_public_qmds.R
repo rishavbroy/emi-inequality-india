@@ -34,7 +34,7 @@ legacy_abstract <- paste0(
 
 legacy_figure_captions <- c(
   "fig-ILO-fig" = "Trends in earnings, labor‐force participation, and unemployment (ILO, 2024).",
-  "fig-map1-fig" = "(Clockwise from top left) EMI exposure, consumption growth, pucca (permanent) housing, and household heads with secondary education or more. Data from the 64th round of the NSS 2007-08, ``Participation and Expenditure in Education'' and ``Household Consumer Expenditure.''",
+  "fig-map1-fig" = '(Clockwise from top left) EMI exposure, consumption growth, pucca (permanent) housing, and household heads with secondary education or more. Data from the 64th round of the NSS 2007-08, "Participation and Expenditure in Education" and "Household Consumer Expenditure."',
   "fig-map2-fig" = "From left to right: regions of India and linguistic distance from Hindi. District-level data, from the 2001 Census of India.",
   "fig-districtcarveoutsshifts-fig" = "Number of 2001 districts which absorbed a percentage of a 1991 district's population via name change, clean merger, carve-out, or border shift. Data from Kumar \\& Somanathan (2016)."
 )
@@ -297,6 +297,19 @@ neutralize_standalone_map_crossrefs <- function(lines) {
   lines
 }
 
+fix_appendix_headings <- function(lines) {
+  idx <- grep("^# \\(APPENDIX\\) Appendix \\{-\\}$", lines, perl = TRUE)
+  if (!length(idx)) return(lines)
+  first <- idx[[1]]
+  lines[first] <- "\\appendix"
+  dup <- which(seq_along(lines) > first & lines == "# Appendix {#sec-appendix}")
+  if (!length(dup)) {
+    lines <- append(lines, c("", "# Appendix {#sec-appendix}"), after = first)
+  }
+  lines
+}
+
+
 
 insert_after_first <- function(lines, pattern, block) {
   hit <- grep(pattern, lines, fixed = TRUE)
@@ -333,6 +346,20 @@ output_table_helper_chunk <- function() {
     "  stop(\"Missing table output: \", path, call. = FALSE)",
     "}",
     "read_public_table <- function(path) utils::read.csv(resolve_public_output_path(path), check.names = FALSE)",
+    "render_public_table <- function(path, name) {",
+    "  df <- read_public_table(path)",
+    "  tab <- knitr::kable(df, digits = 3, booktabs = knitr::is_latex_output(), longtable = knitr::is_latex_output(), escape = FALSE)",
+    "  if (knitr::is_latex_output() && requireNamespace("kableExtra", quietly = TRUE)) {",
+    "    opts <- c("repeat_header", "striped")",
+    "    if (name %in% c("sum_tbl_iv", "sum_tbl_probit_quant", "sum_tbl_probit_cat")) opts <- c(opts, "scale_down")",
+    "    if (name %in% c("probit_mfx", "fs_cons", "cons_iv")) opts <- c(opts, "hold_position")",
+    "    tab <- kableExtra::kable_styling(tab, latex_options = opts, position = "center", full_width = FALSE)",
+    "    group_rows <- which(grepl(":$", df[[1]]) & apply(df[-1], 1, function(x) all(!nzchar(as.character(x)))))",
+    "    for (idx in group_rows) tab <- kableExtra::row_spec(tab, idx, bold = TRUE, background = "gray!12")",
+    "    if (name %in% c("sum_tbl_iv", "sum_tbl_probit_quant", "sum_tbl_probit_cat")) tab <- kableExtra::landscape(tab)",
+    "  }",
+    "  tab",
+    "}",
     "```"
   )
 }
@@ -354,11 +381,7 @@ output_table_chunk <- function(label, caption, path) {
     paste0("#| tbl-cap: \"", caption, "\""),
     "#| echo: false",
     "",
-    paste0("knitr::kable(read_public_table(\"", path, "\"), "),
-    "  digits = 3,",
-    "  booktabs = knitr::is_latex_output(),",
-    "  longtable = knitr::is_latex_output()",
-    ")",
+    paste0("render_public_table(\"", path, "\", \"", gsub("^tbl-", "", gsub("-", "_", label)), "\")"),
     "```"
   )
 }
@@ -366,6 +389,88 @@ output_table_chunk <- function(label, caption, path) {
 normalize_inserted_output_captions <- function(lines) {
   lines <- gsub("^Table: +", "", lines)
   lines <- gsub("^Figure: +", "", lines)
+  lines
+}
+
+normalize_legacy_quotes <- function(lines) {
+  lines <- gsub("``([^`]*)''", '"\\1"', lines, perl = TRUE)
+  lines
+}
+
+remove_report_output_objects <- function(lines) {
+  labels <- c(
+    "tbl-sum-tbl-probit-quant", "tbl-sum-tbl-probit-cat", "tbl-probit-mfx",
+    "tbl-sum-tbl-iv", "tbl-fs-cons", "tbl-cons-iv"
+  )
+  out <- character()
+  i <- 1L
+  while (i <= length(lines)) {
+    if (grepl("^```\\{r\\}", lines[[i]], perl = TRUE)) {
+      end <- which(seq_along(lines) > i & grepl("^```\\s*$", lines, perl = TRUE))
+      end <- if (length(end)) end[[1]] else i
+      block <- lines[i:end]
+      if (any(grepl(paste0("#\\|\\s*label:\\s*(", paste(labels, collapse = "|"), ")\\s*$"), block, perl = TRUE))) {
+        i <- end + 1L
+        next
+      }
+    }
+    if (grepl("\\{#fig-(map1|map2|ILO|districtcarveoutsshifts)-fig\\}", lines[[i]], perl = TRUE)) {
+      i <- i + 1L
+      next
+    }
+    out <- c(out, lines[[i]])
+    i <- i + 1L
+  }
+  out
+}
+
+insert_after_line <- function(lines, pattern, block, fixed = TRUE) {
+  hit <- grep(pattern, lines, fixed = fixed)
+  if (!length(hit)) return(lines)
+  append(lines, c("", block, ""), after = hit[[1]])
+}
+
+insert_report_output_objects_explicit <- function(lines) {
+  lines <- remove_report_output_objects(lines)
+  lines <- insert_after_line(
+    lines,
+    "Summary statistics for numeric variables are given in @tbl-sum-tbl-probit-quant, and for categorical variables in @tbl-sum-tbl-probit-cat.",
+    c(
+      output_table_chunk("tbl-sum-tbl-probit-cat", legacy_table_captions[["tbl-sum-tbl-probit-cat"]], "../outputs/tables/main/sum_tbl_probit_cat.csv"),
+      "",
+      output_table_chunk("tbl-sum-tbl-probit-quant", legacy_table_captions[["tbl-sum-tbl-probit-quant"]], "../outputs/tables/main/sum_tbl_probit_quant.csv")
+    )
+  )
+  lines <- insert_after_line(
+    lines,
+    "Average marginal effects for numeric variables and counterfactual comparisons",
+    output_table_chunk("tbl-probit-mfx", legacy_table_captions[["tbl-probit-mfx"]], "../outputs/tables/main/probit_mfx.csv")
+  )
+  lines <- insert_after_line(
+    lines,
+    "Summary statistics for all of the variables in this model, including the controls",
+    c(
+      output_table_chunk("tbl-sum-tbl-iv", legacy_table_captions[["tbl-sum-tbl-iv"]], "../outputs/tables/main/sum_tbl_iv.csv"),
+      "",
+      figure_markdown("fig-map1-fig", "../outputs/figures/main/collage_main_maps.pdf")
+    )
+  )
+  lines <- insert_after_line(
+    lines,
+    "We are currently unable to replicate her justification of the exclusion restriction",
+    figure_markdown("fig-map2-fig", "../outputs/figures/main/collage_iv_region_maps.pdf")
+  )
+  lines <- insert_after_line(
+    lines,
+    "The results of our first-stage regression, of EMI exposure on linguistic distance, are provided in @tbl-fs-cons.",
+    c(
+      output_table_chunk("tbl-fs-cons", legacy_table_captions[["tbl-fs-cons"]], "../outputs/tables/main/fs_cons.csv"),
+      "",
+      output_table_chunk("tbl-cons-iv", legacy_table_captions[["tbl-cons-iv"]], "../outputs/tables/main/cons_iv.csv")
+    )
+  )
+  lines <- ensure_report_object(lines, "fig-ILO-fig", figure_markdown("fig-ILO-fig", "../outputs/figures/main/fig_ilo_trends.png"))
+  lines <- ensure_report_object(lines, "fig-districtcarveoutsshifts-fig", figure_markdown("fig-districtcarveoutsshifts-fig", "../outputs/figures/main/district_carveouts_shifts.pdf"))
   lines
 }
 
@@ -425,7 +530,7 @@ postprocess_one <- function(path) {
   lines <- remove_quarto_crossref_prefixes(lines)
   lines <- fix_equation_labels(lines)
   lines <- cleanup_public_placeholders(lines)
-  if (identical(path, "paper/report.qmd")) lines <- insert_report_output_objects(lines)
+  if (identical(path, "paper/report.qmd")) lines <- insert_report_output_objects_explicit(lines)
   if (identical(path, "paper/appendix.qmd")) {
     lines <- ensure_report_object(lines, "fig-districtcarveoutsshifts-fig", figure_markdown("fig-districtcarveoutsshifts-fig", "../outputs/figures/main/district_carveouts_shifts.pdf"))
     lines <- fix_appendix_crossrefs(lines)
@@ -442,12 +547,13 @@ postprocess_one <- function(path) {
     lines <- neutralize_standalone_map_crossrefs(lines)
   }
   lines <- remove_unavailable_map_figures(lines)
+  if (identical(path, "paper/report.qmd") || identical(path, "paper/appendix.qmd")) lines <- fix_appendix_headings(lines)
 
 
   lines <- normalize_inserted_output_captions(lines)
   if (identical(path, "paper/report.qmd")) {
     lines <- normalize_output_table_chunks(lines)
-    lines <- ensure_report_output_objects(lines)
+    lines <- insert_report_output_objects_explicit(lines)
   }
   if (identical(path, "paper/report.qmd") || identical(path, "docs/district-matching.qmd")) {
     lines <- prune_unavailable_report_inline_expressions(lines)
@@ -455,6 +561,7 @@ postprocess_one <- function(path) {
   if (identical(path, "paper/report.qmd")) {
     lines <- ensure_output_table_helper(lines)
   }
+  lines <- normalize_legacy_quotes(lines)
   lines <- sub("[ \t]+$", "", lines, perl = TRUE)
   writeLines(lines, path)
   message("Postprocessed ", path)

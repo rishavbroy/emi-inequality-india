@@ -43,6 +43,25 @@ drop_empty_output_columns <- function(out) {
   out[, keep, drop = FALSE]
 }
 
+format_public_summary_columns <- function(out) {
+  if (all(c("var", "label") %in% names(out))) {
+    out$Variable <- out$label
+    group <- startsWith(as.character(out$var), ".group_")
+    out$var <- NULL
+    out$label <- NULL
+    out <- out[, c("Variable", setdiff(names(out), "Variable")), drop = FALSE]
+    if (any(group)) {
+      for (nm in setdiff(names(out), "Variable")) out[[nm]][group] <- ""
+    }
+  }
+  rename <- c("% Mode" = "Pct. Mode", "% Least Freq." = "Pct. Least Freq.")
+  for (old in names(rename)) if (old %in% names(out)) names(out)[names(out) == old] <- rename[[old]]
+  preferred <- c("Variable", "Values", "Mode", "Pct. Mode", "Least Freq.", "Pct. Least Freq.", "Min", "1Q", "Med", "3Q", "Max", "Mean", "SD", "N")
+  ordered <- c(intersect(preferred, names(out)), setdiff(names(out), preferred))
+  out[, ordered, drop = FALSE]
+}
+
+
 is_status_only_table <- function(out) {
   if (!nrow(out) || !"status" %in% names(out)) return(FALSE)
   substantive <- setdiff(names(out), c("status", "reason", "method", "model"))
@@ -102,9 +121,10 @@ format_table_for_output <- function(table, public = TRUE) {
   out$reason <- NULL
   if ("method" %in% names(out) && length(unique(stats::na.omit(out$method))) <= 1L) out$method <- NULL
 
+  out <- format_public_summary_columns(out)
   out <- drop_empty_output_columns(out)
   if (!length(names(out))) return(data.frame(Note = "No displayable columns.", stringsAsFactors = FALSE))
-  already_polished <- any(names(out) %in% c("Term", "Estimate", "Std. Error", "N", "Min", "1Q", "Med", "3Q", "Max", "Mean", "SD"))
+  already_polished <- any(names(out) %in% c("Term", "Estimate", "Std. Error", "N", "Min", "1Q", "Med", "3Q", "Max", "Mean", "SD", "Variable", "Consumption Growth", "EMI Exposure", "Enrolled in School (1 = yes)"))
   if (!already_polished) names(out) <- vapply(names(out), nice_column_name, character(1))
   out
 }
@@ -144,11 +164,17 @@ save_table_tex <- function(table, path, name, public = TRUE) {
     escape = FALSE,
     digits = 3
   )
+  latex_options <- c("repeat_header", "striped")
+  if (name %in% c("sum_tbl_iv", "sum_tbl_probit_quant", "sum_tbl_probit_cat")) latex_options <- c(latex_options, "scale_down")
+  if (name %in% c("probit_mfx", "fs_cons", "cons_iv")) latex_options <- c(latex_options, "hold_position")
   tex <- kableExtra::kable_styling(
     tex,
-    latex_options = c("repeat_header", "striped"),
-    full_width = FALSE
+    latex_options = latex_options,
+    full_width = FALSE,
+    position = "center"
   )
+  group_rows <- which(grepl(":$", df[[1]]) & apply(df[-1], 1, function(x) all(!nzchar(as.character(x)))))
+  for (idx in group_rows) tex <- kableExtra::row_spec(tex, idx, bold = TRUE, background = "gray!12")
   if (name %in% c("sum_tbl_iv", "sum_tbl_probit_quant", "sum_tbl_probit_cat")) {
     tex <- kableExtra::landscape(tex)
   }
