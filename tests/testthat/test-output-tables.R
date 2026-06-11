@@ -81,3 +81,29 @@ test_that("status-only public tables write stable csv and tex outputs", {
   tex <- paste(readLines(file.path("outputs", "tables", "main", "fs_cons.tex"), warn = FALSE), collapse = "\n")
   expect_match(tex, "Missing variables", fixed = TRUE)
 })
+
+
+test_that("first-stage public table reports instrument partial F before model F", {
+  first_stage <- data.frame(
+    model = rep("consumption", 2),
+    term = c("wavg_ling_degrees", "(Intercept)"),
+    estimate = c(3.8386, 17.1288),
+    std.error = c(1.2477, 23.6954),
+    statistic = c(3.0765, 0.7229),
+    p.value = c(0.0022, 0.4700),
+    partial_f = c(9.4646, 9.4646),
+    partial_p = c(0.0022, 0.0022),
+    legacy_model_f = c(68.2013, 68.2013),
+    legacy_model_p = c(3.9e-114, 3.9e-114),
+    status = rep("estimated", 2),
+    reason = c(NA_character_, NA_character_),
+    stringsAsFactors = FALSE
+  )
+
+  out <- make_first_stage_table(first_stage, list(final = TRUE))
+
+  f_row <- out[out$Term == "Instrument's F-Statistic", , drop = FALSE]
+  expect_equal(nrow(f_row), 1L)
+  expect_match(f_row$Estimate[[1]], "9.46", fixed = TRUE)
+  expect_false(grepl("68.20", f_row$Estimate[[1]], fixed = TRUE))
+})
