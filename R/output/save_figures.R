@@ -77,7 +77,19 @@ format_path <- function(path_base, format) {
 save_plot_formats <- function(plot, path_base, formats, width = 7, height = 5, dpi = 300) {
   paths <- vapply(formats, function(format) {
     path <- format_path(path_base, format)
-    ggplot2::ggsave(path, plot, width = width, height = height, dpi = dpi)
+    fmt <- tolower(format)
+    if (identical(fmt, "pdf")) {
+      # Use an explicit device rather than allowing R to fall back to the
+      # session default graphics device, which can create stray Rplots.pdf
+      # files when a plot is printed outside an active device. cairo_pdf also
+      # handles text encoding more robustly than the default PDF device.
+      pdf_device <- if (isTRUE(grDevices::capabilities("cairo"))) grDevices::cairo_pdf else grDevices::pdf
+      ggplot2::ggsave(path, plot = plot, width = width, height = height, device = pdf_device, bg = "white")
+    } else if (identical(fmt, "png")) {
+      ggplot2::ggsave(path, plot = plot, width = width, height = height, dpi = dpi, device = "png", bg = "white")
+    } else {
+      ggplot2::ggsave(path, plot = plot, width = width, height = height, dpi = dpi, bg = "white")
+    }
     path
   }, character(1))
   unname(paths)
@@ -125,7 +137,7 @@ legacy_map_style <- function(variable) {
     ),
     consumption_growth_pct = list(
       palette = "brewer.reds",
-      title = "%Δ Consumption",
+      title = "Consumption growth (%)",
       style = "cont",
       breaks = NULL,
       labels = NULL
@@ -310,10 +322,7 @@ build_legacy_ggplot_map <- function(plot_data, spec) {
 }
 
 save_map_plot_formats <- function(map_plot, path_base, formats, width = 8, height = 6, dpi = 300) {
-  unlink("Rplots.pdf")
-  paths <- save_plot_formats(map_plot, path_base, formats, width = width, height = height, dpi = dpi)
-  unlink("Rplots.pdf")
-  paths
+  save_plot_formats(map_plot, path_base, formats, width = width, height = height, dpi = dpi)
 }
 
 save_map_figure <- function(spec, path_base, district_panel, formats, boundaries_2020 = NULL) {
@@ -395,8 +404,6 @@ save_collage <- function(spec, path_base, written, formats) {
 #'
 #' @return A character vector of generated figure and manifest paths.
 save_figures <- function(figures, cfg) {
-  unlink("Rplots.pdf")
-  on.exit(unlink("Rplots.pdf"), add = TRUE)
   dir <- figure_output_dir(cfg)
   dir.create(dir, recursive = TRUE, showWarnings = FALSE)
   formats <- figure_formats(cfg)
