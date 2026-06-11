@@ -175,41 +175,18 @@ legacy_attach_source_one_to_one <- function(tracker, source, suffixes, source_la
     ]
     if (!nrow(tracker_open) || !nrow(source_open)) next
 
-    candidates <- merge(
-      source_open,
-      tracker_open,
-      by = ".legacy_state_key",
-      suffixes = c("_source", "_tracker"),
-      sort = FALSE
-    )
-    if (!nrow(candidates)) next
-    candidates$.dist <- mapply(
-      function(x, y) utils::adist(x, y, ignore.case = TRUE)[1, 1],
-      candidates$.legacy_district_key_source,
-      candidates$.legacy_district_key_tracker
-    )
-    candidates <- candidates[is.finite(candidates$.dist) & candidates$.dist <= max_dist, , drop = FALSE]
-    if (!nrow(candidates)) next
-    candidates <- candidates[order(candidates$.dist, candidates$.source_row, candidates$.tracker_row), , drop = FALSE]
-
-    chosen <- data.frame(.source_row = integer(), .tracker_row = integer())
-    used_source <- integer()
-    used_tracker <- integer()
-    for (i in seq_len(nrow(candidates))) {
-      source_i <- candidates$.source_row[[i]]
-      tracker_i <- candidates$.tracker_row[[i]]
-      if (source_i %in% used_source || tracker_i %in% used_tracker) next
-      chosen <- rbind(chosen, data.frame(.source_row = source_i, .tracker_row = tracker_i))
-      used_source <- c(used_source, source_i)
-      used_tracker <- c(used_tracker, tracker_i)
-    }
+    chosen <- legacy_select_source_tracker_matches(source_open, tracker_open)
     if (!nrow(chosen)) next
 
     hits <- merge(chosen, source, by = ".source_row", sort = FALSE)
     rows <- match(hits$.tracker_row, tracker$.tracker_row)
     source_cols <- setdiff(
       names(hits),
-      c(".source_row", ".source_used", ".tracker_row", ".legacy_state_key", ".legacy_district_key")
+      c(
+        ".source_row", ".source_used", ".tracker_row",
+        ".legacy_state_key", ".legacy_district_key",
+        ".legacy_match_method", ".legacy_match_distance"
+      )
     )
     for (nm in source_cols) {
       if (!nm %in% names(tracker)) tracker[[nm]] <- NA
@@ -225,6 +202,106 @@ legacy_attach_source_one_to_one <- function(tracker, source, suffixes, source_la
   tracker$.legacy_state_key <- NULL
   tracker$.legacy_district_key <- NULL
   tracker
+}
+
+
+legacy_source_match_methods <- function() c("soundex", "qgram", "jw", "dl", "osa")
+
+legacy_source_match_thresholds <- function() c(0, 0, 0.15, 2, 1)
+
+legacy_select_source_tracker_matches <- function(
+  source_open, tracker_open,
+  methods = legacy_source_match_methods(),
+  thresholds = legacy_source_match_thresholds()
+) {
+  if (!nrow(source_open) || !nrow(tracker_open)) {
+    return(data.frame(
+      .source_row = integer(),
+      .tracker_row = integer(),
+      .legacy_match_method = character(),
+      .legacy_match_distance = numeric(),
+      stringsAsFactors = FALSE
+    ))
+  }
+  if (length(methods) != length(thresholds)) {
+    stop("Legacy district match methods and thresholds must have the same length.", call. = FALSE)
+  }
+  need_pkg("stringdist", "legacy district-source fuzzy matching")
+
+  remaining_source <- source_open
+  remaining_tracker <- tracker_open
+  chosen <- data.frame(
+    .source_row = integer(),
+    .tracker_row = integer(),
+    .legacy_match_method = character(),
+    .legacy_match_distance = numeric(),
+    stringsAsFactors = FALSE
+  )
+
+  for (i in seq_along(methods)) {
+    candidates <- merge(
+      remaining_source,
+      remaining_tracker,
+      by = ".legacy_state_key",
+      suffixes = c("_source", "_tracker"),
+      sort = FALSE
+    )
+    if (!nrow(candidates)) next
+
+    candidates$.legacy_match_distance <- stringdist::stringdist(
+      candidates$.legacy_district_key_source,
+      candidates$.legacy_district_key_tracker,
+      method = methods[[i]]
+    )
+    candidates <- candidates[
+      is.finite(candidates$.legacy_match_distance) &
+        candidates$.legacy_match_distance <= thresholds[[i]],
+      ,
+      drop = FALSE
+    ]
+    if (!nrow(candidates)) next
+    candidates <- candidates[
+      order(candidates$.legacy_match_distance, candidates$.source_row, candidates$.tracker_row),
+      ,
+      drop = FALSE
+    ]
+
+    picked <- data.frame(
+      .source_row = integer(),
+      .tracker_row = integer(),
+      .legacy_match_method = character(),
+      .legacy_match_distance = numeric(),
+      stringsAsFactors = FALSE
+    )
+    used_source <- integer()
+    used_tracker <- integer()
+    for (j in seq_len(nrow(candidates))) {
+      source_j <- candidates$.source_row[[j]]
+      tracker_j <- candidates$.tracker_row[[j]]
+      if (source_j %in% used_source || tracker_j %in% used_tracker) next
+      picked <- rbind(
+        picked,
+        data.frame(
+          .source_row = source_j,
+          .tracker_row = tracker_j,
+          .legacy_match_method = methods[[i]],
+          .legacy_match_distance = candidates$.legacy_match_distance[[j]],
+          stringsAsFactors = FALSE
+        )
+      )
+      used_source <- c(used_source, source_j)
+      used_tracker <- c(used_tracker, tracker_j)
+    }
+    if (!nrow(picked)) next
+
+    chosen <- rbind(chosen, picked)
+    remaining_source <- remaining_source[!remaining_source$.source_row %in% picked$.source_row, , drop = FALSE]
+    remaining_tracker <- remaining_tracker[!remaining_tracker$.tracker_row %in% picked$.tracker_row, , drop = FALSE]
+    if (!nrow(remaining_source) || !nrow(remaining_tracker)) break
+  }
+
+  rownames(chosen) <- NULL
+  chosen
 }
 
 add_legacy_join_keys <- function(source, suffixes) {
