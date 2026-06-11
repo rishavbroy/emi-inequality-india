@@ -250,3 +250,34 @@ test_that("regression GOF rows omit residual standard error", {
   expect_true("R-squared" %in% out$Term)
   expect_false("Residual Std. Error" %in% out$Term)
 })
+
+test_that("public table wrapping does not inject literal LaTeX line breaks", {
+  df <- data.frame(Variable = "A very long public variable label which should wrap by column width", stringsAsFactors = FALSE)
+  out <- wrap_table_text_columns(df, "sum_tbl_probit_cat")
+  expect_false(grepl("\\\\", out$Variable[[1]], fixed = TRUE))
+})
+
+test_that("IV summary descriptions follow legacy prose and grouping order", {
+  panel <- data.frame(
+    EMIE = c(0, 10), wavg_ling_degrees = c(0, 2),
+    npeople_0708 = c(1000, 2000), consumption_0708 = c(700, 900), gini_cons_0708 = c(.2, .3),
+    pct_urban = c(10, 20), avg_hh_size = c(5, 6), dependency_ratio = c(50, 60), pct_fem_head = c(18, 20),
+    pct_hindu = c(80, 70), pct_muslim = c(10, 20), pct_other_religion = c(10, 10),
+    pct_st = c(1, 2), pct_sc = c(10, 15), pct_obc = c(40, 45),
+    pct_small_land = c(50, 55), pct_medium_land = c(30, 25), pct_large_land = c(2, 3),
+    pct_head_illiterate = c(30, 40), pct_head_lit_to_primary = c(30, 20), pct_head_secondary_plus = c(40, 40), pct_pucca = c(50, 60),
+    npeople_1718 = c(1200, 2100), consumption_1718 = c(800, 1000), gini_cons_1718 = c(.25, .35),
+    consumption_pct_change = c(10, 20), gini_change = c(.01, .02)
+  )
+  public <- format_table_for_output(make_iv_summary_table(panel), public = TRUE)
+  expect_equal(public$Variable[[1]], "From 2001:")
+  expect_equal(public$Variable[[3]], "From 2007-08:")
+  expect_equal(public$Description[public$Variable == "EMIE"][[1]], "EMI exposure")
+  expect_equal(public$Description[public$Variable == "Ling. Distance"][[1]], "Average linguistic distance of mother tongue from Hindi")
+})
+
+test_that("regression captions carry significance-star note", {
+  expect_match(table_caption("fs_cons"), "\\* p < 0.05", fixed = FALSE)
+  expect_match(table_caption("cons_iv"), "\\* p < 0.05", fixed = FALSE)
+  expect_match(table_caption("probit_mfx"), "\\* p < 0.05", fixed = FALSE)
+})

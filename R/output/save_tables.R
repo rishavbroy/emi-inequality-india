@@ -14,7 +14,9 @@ table_label <- function(name) {
   gsub("_", "-", name, fixed = TRUE)
 }
 
-table_caption <- function(name) {
+regression_star_note <- function() "* p < 0.05, ** p < 0.01, *** p < 0.001"
+
+legacy_table_caption_text <- function(name) {
   captions <- c(
     selection_n = "Enrollment Participation Model Sample Size",
     sum_tbl_probit_quant = "Summary Statistics for Enrollment Participation Model (Numeric Variables)",
@@ -27,6 +29,14 @@ table_caption <- function(name) {
     first_stage = "First-Stage Diagnostic Results"
   )
   captions[[name]] %||% name
+}
+
+table_caption <- function(name) {
+  cap <- legacy_table_caption_text(name)
+  if (name %in% c("probit_mfx", "fs_cons", "cons_iv")) {
+    return(paste0("\\textit{", regression_star_note(), "}\\protect\\linebreak{}", cap))
+  }
+  cap
 }
 
 nice_column_name <- function(x) {
@@ -42,7 +52,7 @@ legacy_table_note <- function(name) {
     sum_tbl_probit_quant = "Min. = minimum; 1Q = first quartile; Med. = median; 3Q = third quartile; Max. = maximum; Mean = arithmetic mean; SD = standard deviation; N = number of observations.",
     sum_tbl_iv = "Min. = minimum; 1Q = first quartile; Med. = median; 3Q = third quartile; Max. = maximum; Mean = arithmetic mean; SD = standard deviation; N = number of observations.",
     sum_tbl_probit_cat = "Values = all possible values; Mode = most frequent value; Pct. Mode = percent of observations taking the modal value; Least Freq. = least frequent value; Pct. Least Freq. = percent of observations taking the least frequent value; N = number of observations.",
-    probit_mfx = "Data from the 64th round of the NSS, Participation and Expenditure in Education, 2007-08. Standard errors are design-based and use the active survey design.",
+    probit_mfx = "Data from the 64th round of the NSS, \"Participation and Expenditure in Education\" in 2007-08. All standard errors are design-based (clustered and nested within strata).",
     fs_cons = "Standard errors clustered by state in parentheses.",
     cons_iv = "Standard errors clustered by state in parentheses.",
     NULL
@@ -52,21 +62,15 @@ legacy_table_note <- function(name) {
 wrap_table_cell <- function(x, width = 28L) {
   x <- as.character(x)
   x[is.na(x)] <- ""
-  vapply(x, function(value) {
-    if (!nzchar(value) || grepl("\\\\", value, fixed = TRUE)) return(value)
-    paste(strwrap(value, width = width), collapse = "\\\\ ")
-  }, character(1), USE.NAMES = FALSE)
+  x
 }
 
 wrap_table_text_columns <- function(df, name = NULL) {
-  df <- as.data.frame(df, check.names = FALSE, stringsAsFactors = FALSE)
-  text_cols <- intersect(c("Variable", "Description", "Values", "Mode", "Least Freq.", "Term"), names(df))
-  for (nm in text_cols) {
-    width <- switch(nm, Description = 34L, Values = 36L, Term = 34L, 24L)
-    df[[nm]] <- wrap_table_cell(df[[nm]], width = width)
-  }
-  df
+  # Column widths below give LaTeX's tabular engine the wrapping constraints;
+  # do not inject literal `\\` breaks into cell text.
+  as.data.frame(df, check.names = FALSE, stringsAsFactors = FALSE)
 }
+
 
 drop_empty_output_columns <- function(out) {
   if (!nrow(out)) return(out)
@@ -222,6 +226,25 @@ sanitize_table_for_kable <- function(df) {
   render_table_math_labels(df)
 }
 
+regression_summary_start <- function(df) {
+  if (!"Term" %in% names(df)) return(NA_integer_)
+  terms <- as.character(df$Term)
+  hit <- which(terms %in% c("Observations", "R-squared", "Adjusted R-squared", "Instrument's F-Statistic", "Model's F-Statistic", "F-Statistic"))
+  if (length(hit)) hit[[1]] else NA_integer_
+}
+
+style_regression_table <- function(tex, df, name) {
+  if (!name %in% c("probit_mfx", "fs_cons", "cons_iv")) return(tex)
+  start <- regression_summary_start(df)
+  if (is.finite(start) && start > 1L) {
+    tex <- kableExtra::row_spec(tex, start - 1L, hline_after = TRUE)
+  }
+  if (is.finite(start) && start <= nrow(df)) {
+    tex <- kableExtra::row_spec(tex, start:nrow(df), background = "white")
+  }
+  tex
+}
+
 save_table_csv <- function(table, path, public = TRUE) {
   utils::write.csv(sanitize_table_for_kable(format_table_for_output(table, public = public)), path, row.names = FALSE)
   path
@@ -290,6 +313,7 @@ save_table_tex <- function(table, path, name, public = TRUE) {
       cons_iv = c(" " = 1, "Consumption Growth" = 1)
     )
     tex <- kableExtra::add_header_above(tex, header, escape = FALSE)
+    tex <- style_regression_table(tex, df_render, name)
   }
   note <- legacy_table_note(name)
   if (!is.null(note)) {

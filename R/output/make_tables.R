@@ -426,27 +426,52 @@ make_probit_ame_table <- function(ame_results, n = NA_integer_, selection_model 
 
 make_iv_summary_table <- function(district_panel) {
   meta <- data.frame(
-    var = c("EMIE", "wavg_ling_degrees", "npeople_0708", "consumption_0708", "gini_cons_0708", "pct_urban", "avg_hh_size", "dependency_ratio", "pct_fem_head", "pct_hindu", "pct_muslim", "pct_other_religion", "pct_st", "pct_sc", "pct_obc", "pct_small_land", "pct_medium_land", "pct_large_land", "pct_head_illiterate", "pct_head_lit_to_primary", "pct_head_secondary_plus", "pct_pucca", "npeople_1718", "consumption_1718", "gini_cons_1718", "consumption_pct_change", "gini_change"),
-    label = c("EMIE", "Ling. Distance", "Population", "Consumption", "Gini of Consumption", "Pct. Urban", "Avg. HH Size", "Dependency Ratio × 100", "Pct. Female Head", "Pct. Hindu", "Pct. Muslim", "Pct. Other", "Pct. ST", "Pct. SC", "Pct. OBC", "Pct. Small Land-Owner", "Pct. Med. Land-Owner", "Pct. Large Land-Owner", "Pct. Head Educ., Illiterate", "Pct. Head Educ., Lit.-Primary", "Pct. Head Educ., Secondary+", "Pct. Pucca", "Population", "Consumption", "Gini of Consumption", "Percent change in consumption", "Change in Gini of consumption"),
+    var = c(
+      "wavg_ling_degrees",
+      "EMIE", "npeople_0708", "consumption_0708", "gini_cons_0708", "pct_urban", "avg_hh_size",
+      "dependency_ratio", "pct_fem_head", "pct_hindu", "pct_muslim", "pct_other_religion",
+      "pct_st", "pct_sc", "pct_obc", "pct_small_land", "pct_medium_land", "pct_large_land",
+      "pct_head_illiterate", "pct_head_lit_to_primary", "pct_head_secondary_plus", "pct_pucca",
+      "npeople_1718", "consumption_1718", "gini_cons_1718",
+      "consumption_pct_change", "gini_change"
+    ),
+    label = c(
+      "Ling. Distance",
+      "EMIE", "Population", "Consumption", "Gini of Consumption", "Pct. Urban", "Avg. HH Size",
+      "Dependency Ratio × 100", "Pct. Female Head", "Pct. Hindu", "Pct. Muslim", "Pct. Other",
+      "Pct. ST", "Pct. SC", "Pct. OBC", "Pct. Small Land-Owner", "Pct. Med. Land-Owner", "Pct. Large Land-Owner",
+      "Pct. Head Educ., Illiterate", "Pct. Head Educ., Lit.-Primary", "Pct. Head Educ., Secondary+", "Pct. Pucca",
+      "Population", "Consumption", "Gini of Consumption",
+      "Percent change in consumption", "Change in Gini of consumption"
+    ),
     desc = c(
-      "Share of school-going children enrolled in English-medium instruction",
-      "Population-weighted linguistic distance from Hindi",
-      "Weighted district population in the 2007-08 education household file",
-      "Weighted mean monthly per-capita consumption in 2007-08",
-      "Weighted Gini coefficient of 2007-08 consumption",
-      "Share of population in urban sector",
+      "Average linguistic distance of mother tongue from Hindi",
+      "EMI exposure",
+      "Estimated via NSS sample weights",
+      "Average household monthly consumption expenditures (Rs.)",
+      "Gini coefficient of consumption",
+      "Percentage of people in an urban area",
       "Average household size",
-      "Dependents per working-age person, multiplied by 100",
-      "Share of persons in female-headed households",
-      "Share Hindu", "Share Muslim", "Share other religion", "Share Scheduled Tribe", "Share Scheduled Caste", "Share Other Backward Class",
-      "Share with small landholdings", "Share with medium landholdings", "Share with large landholdings",
-      "Share of household heads who are illiterate", "Share of household heads literate through primary", "Share of household heads with secondary education or more",
-      "Share of households in pucca dwellings",
-      "Weighted district population in the 2017-18 education household file",
-      "Weighted mean monthly per-capita consumption in 2017-18",
-      "Weighted Gini coefficient of 2017-18 consumption",
-      "Percent change in consumption between 2007-08 and 2017-18",
-      "Change in consumption Gini between 2007-08 and 2017-18"
+      "Ratio of dependents (0-14, 65+) to labor force (15-64), × 100",
+      "Percentage of households with a female head",
+      "Percentage of Hindus",
+      "Percentage of Muslims",
+      "Percentage not Hindu/Muslim",
+      "Scheduled Tribe",
+      "Scheduled Caste",
+      "Other Backward Class",
+      "Owns 0.005–0.40 hectares",
+      "Owns 0.41–3.00 hectares",
+      "Owns $\\geq$ 3.01 hectares",
+      "Percentage of household heads with educ. level: illiterate",
+      "Percentage of heads with educ. level: literate-primary",
+      "Percentage of heads with educ. level: above secondary",
+      "Percentage in pucca (permanent) homes",
+      "Estimated via NSS sample weights",
+      "Average household monthly consumption expenditures (Rs.)",
+      "Gini coefficient of consumption",
+      "Percent change in consumption",
+      "Change in the Gini coefficient of consumption"
     ),
     stringsAsFactors = FALSE
   )
@@ -457,7 +482,6 @@ make_iv_summary_table <- function(district_panel) {
   out <- insert_summary_group(out, "From 2007-08 to 2017-18:", "consumption_pct_change")
   out
 }
-
 make_first_stage_table <- function(first_stage_tests, cfg = list()) {
   fs <- as.data.frame(first_stage_tests, stringsAsFactors = FALSE)
   required_cols <- c("model", "term", "estimate", "std.error", "p.value", "partial_f", "partial_p", "status")
