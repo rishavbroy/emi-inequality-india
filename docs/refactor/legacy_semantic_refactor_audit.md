@@ -26,3 +26,8 @@ Latest inspected logs:
 2. Fix district-panel construction so the IV panel carries `wavg_ling_degrees`, `consumption_pct_change`, `gini_change`, and the legacy 454-row analysis sample.
 3. Regenerate tables/figures and re-check IV first-stage/second-stage rows.
 4. Reassess withheld map figures and `paper/report.pdf` once the panel and render target are healthy.
+
+### 2026-06-11 district-source attachment refinement
+
+The active panel builder now attaches source datasets using the same nearest-year suffix priority implied by the legacy `merge_dfs_into_tracker()` loop. In particular, 2007-08 NSS district measures start from tracker suffix `08` before falling back to `07`, `06`, and `05`; 2017-18 measures start from `18` before `17`; and 2001 linguistic-distance measures start from `01`. This corrects a refactor-only ordering difference in which 2007-08 measures were tried against `07` before `08`, potentially matching survey-year district data to an adjacent tracker column before the intended one. The remaining IV-panel parity failures should be re-audited after this attachment-order correction.
+
