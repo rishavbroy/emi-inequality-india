@@ -49,8 +49,6 @@ build_selection_data <- function(nss_2007_education, district_keys_2007, cfg) {
     MID_DAY_MEAL_ETC_RECD = legacy_yes_no(selection_df$MID_DAY_MEAL_ETC_RECD, yes = c(1), no = c(2)),
     stringsAsFactors = FALSE
   )
-  selection_df <- dedupe_selection_join_rows(selection_df, selection_join_keys(enrolled = TRUE))
-
   # Legacy Block 6 merge by the full survey-identification key.
   temp <- b6[is.finite(num(b6$AGE)) & num(b6$AGE) <= 19, , drop = FALSE]
   temp$enrolled <- 1L
@@ -63,9 +61,7 @@ build_selection_data <- function(nss_2007_education, district_keys_2007, cfg) {
     ),
     names(temp)
   )]
-  temp <- dedupe_selection_join_rows(temp, selection_join_keys(enrolled = TRUE))
   selection_df <- legacy_full_join(selection_df, temp, selection_join_keys(enrolled = TRUE))
-  selection_df <- enforce_selection_child_key_uniqueness(selection_df)
 
   # Legacy Block 4 full join brings in every 5--19 year-old, including those not
   # observed in the enrolled-child blocks.
@@ -98,9 +94,7 @@ build_selection_data <- function(nss_2007_education, district_keys_2007, cfg) {
     district_std = temp$district_std %||% NA,
     stringsAsFactors = FALSE
   )
-  temp <- dedupe_selection_join_rows(temp, selection_join_keys(enrolled = FALSE))
   selection_df <- legacy_full_join(selection_df, temp, selection_join_keys(enrolled = FALSE))
-  selection_df <- enforce_selection_child_key_uniqueness(selection_df)
 
   # Father's education proxy from the legacy priority ordering.  The legacy Rmd
   # wrote this as a join by HHID, but the imported HHID alone is not globally
@@ -128,7 +122,6 @@ build_selection_data <- function(nss_2007_education, district_keys_2007, cfg) {
   selection_df$DIST_FROM_NEAREST_PRIMARY_CLASS <- stats::relevel(selection_df$DIST_FROM_NEAREST_PRIMARY_CLASS, ref = "d<1km")
   if ("father_educ" %in% names(selection_df)) selection_df$father_educ <- stats::relevel(selection_df$father_educ, ref = "Illiterate")
 
-  selection_df <- enforce_selection_child_key_uniqueness(selection_df)
   selection_df <- attach_legacy_district_schooling_means(selection_df)
   selection_df <- attach_legacy_district_names(selection_df, blocks[["nss0708edu_metadata"]] %||% data.frame())
   selection_df$.legacy_household_key <- NULL
@@ -151,7 +144,7 @@ normalize_selection_identifiers <- function(df) {
   df <- safe_df(df)
   if (!nrow(df)) return(df)
   district_col <- first_col(df, c("district_code_0708", "district_code", "District", "DISTRICT", "district"))
-  if (!is.null(district_col)) df$district_code_0708 <- as.character(df[[district_col]])
+  if (!is.null(district_col)) df$district_code_0708 <- plain_chr(df[[district_col]])
   aliases <- list(
     PID = c("PID", "pid", "person_id", "Person_ID", "person_serial_no", "Person_Serial_No"),
     weight = c("weight", "WEIGHT", "Multiplier", "MULT", "multiplier"),
@@ -185,7 +178,7 @@ dedupe_selection_join_rows <- function(df, by) {
   df <- safe_df(df)
   by <- intersect(by, names(df))
   if (!nrow(df) || !length(by)) return(df)
-  key <- do.call(paste, c(lapply(df[by], function(x) canon(as.character(x))), sep = "\r"))
+  key <- do.call(paste, c(lapply(df[by], function(x) canon(plain_chr(x))), sep = "\r"))
   df[!duplicated(key), , drop = FALSE]
 }
 
@@ -199,20 +192,20 @@ legacy_household_key <- function(df) {
   df <- safe_df(df)
   key_cols <- c("STATE", "FSU_SL_NO", "STRATUM", "SUB_STRATUM_NO", "HHID")
   for (nm in key_cols) if (!nm %in% names(df)) df[[nm]] <- NA_character_
-  do.call(paste, c(lapply(df[key_cols], function(x) canon(as.character(x))), sep = "__"))
+  do.call(paste, c(lapply(df[key_cols], function(x) canon(plain_chr(x))), sep = "__"))
 }
 
 legacy_child_key <- function(df) {
   df <- safe_df(df)
   hh <- legacy_household_key(df)
-  pid <- if ("PID" %in% names(df)) canon(as.character(df$PID)) else rep("", nrow(df))
-  district <- if ("district_code_0708" %in% names(df)) canon(as.character(df$district_code_0708)) else rep("", nrow(df))
+  pid <- if ("PID" %in% names(df)) canon(plain_chr(df$PID)) else rep("", nrow(df))
+  district <- if ("district_code_0708" %in% names(df)) canon(plain_chr(df$district_code_0708)) else rep("", nrow(df))
   paste(hh, district, pid, sep = "__")
 }
 
 enforce_selection_child_key_uniqueness <- function(df) {
   if (!nrow(df) || !"PID" %in% names(df)) return(df)
-  pid <- canon(as.character(df$PID))
+  pid <- canon(plain_chr(df$PID))
   if (!any(nzchar(pid) & !is.na(pid))) return(df)
   df$.legacy_household_key <- if (".legacy_household_key" %in% names(df)) df$.legacy_household_key else legacy_household_key(df)
   df$.legacy_child_key <- legacy_child_key(df)
@@ -289,7 +282,7 @@ attach_legacy_district_schooling_means <- function(df) {
   if (!length(idx)) return(df)
   split_i <- split(idx, df$district_code_0708[idx])
   means <- safe_bind_rows(lapply(split_i, function(i) {
-    z <- data.frame(district_code_0708 = as.character(df$district_code_0708[i[[1]]]), stringsAsFactors = FALSE)
+    z <- data.frame(district_code_0708 = plain_chr(df$district_code_0708[i[[1]]]), stringsAsFactors = FALSE)
     w <- if ("weight" %in% names(df)) num(df$weight[i]) else rep(1, length(i))
     for (nm in num_vars) z[[paste0("dmean_", nm)]] <- wmean(df[[nm]][i], w)
     z
@@ -300,6 +293,7 @@ attach_legacy_district_schooling_means <- function(df) {
 attach_legacy_district_names <- function(df, metadata) {
   lookup <- parse_2007_district_metadata(metadata)
   if (!nrow(lookup) || !"district_code_0708" %in% names(df)) return(df)
+  lookup <- lookup[!duplicated(lookup$district_code_0708), , drop = FALSE]
   merge(df, lookup, by = "district_code_0708", all.x = TRUE)
 }
 
@@ -316,11 +310,14 @@ parse_2007_district_metadata <- function(metadata) {
   if (!nrow(districts) || !nrow(states)) return(data.frame())
   names(districts) <- c("district_code_0708", "district_0708")
   names(states) <- c("state_code_0708", "state_0708")
-  districts$district_code_0708 <- as.character(districts$district_code_0708)
+  districts$district_code_0708 <- plain_chr(districts$district_code_0708)
   districts <- districts[grepl("^[0-9]{5}$", districts$district_code_0708), , drop = FALSE]
+  districts <- districts[!duplicated(districts$district_code_0708), , drop = FALSE]
   districts$state_code_0708 <- substr(districts$district_code_0708, 1, 2)
-  states$state_code_0708 <- as.character(states$state_code_0708)
+  states$state_code_0708 <- plain_chr(states$state_code_0708)
+  states <- states[!duplicated(states$state_code_0708), , drop = FALSE]
   out <- merge(districts, states, by = "state_code_0708", all.x = TRUE)
+  out <- out[!duplicated(out$district_code_0708), , drop = FALSE]
   out$state_07 <- out$state_0708
   out$district_07 <- out$district_0708
   out$state_08 <- out$state_0708

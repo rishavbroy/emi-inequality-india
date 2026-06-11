@@ -62,8 +62,15 @@ safe_bind_rows <- function(xs) {
   out
 }
 
+plain_chr <- function(x) {
+  tryCatch(
+    as.character(x),
+    error = function(e) as.character(unclass(x))
+  )
+}
+
 canon <- function(x) {
-  trimws(gsub("\\s+", " ", gsub("[^a-z0-9]+", " ", tolower(gsub("&", " and ", as.character(x))))))
+  trimws(gsub("\\s+", " ", gsub("[^a-z0-9]+", " ", tolower(gsub("&", " and ", plain_chr(x))))))
 }
 
 first_col <- function(df, candidates) {
@@ -79,7 +86,7 @@ first_col <- function(df, candidates) {
 }
 
 num <- function(x) {
-  suppressWarnings(as.numeric(as.character(x)))
+  suppressWarnings(as.numeric(plain_chr(x)))
 }
 
 wmean <- function(x, w = NULL) {
