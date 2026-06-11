@@ -28,3 +28,10 @@ test_that("district key construction handles list and data-frame inputs", {
   expect_true(all(out$source_year == 2007L))
   expect_false(anyDuplicated(out$district_key) > 0L)
 })
+
+
+test_that("legacy district source suffix chains start from the source survey year", {
+  expect_equal(legacy_suffix_chain("08")[1:4], c("08", "07", "06", "05"))
+  expect_equal(legacy_suffix_chain("18")[1:3], c("18", "17", "19"))
+  expect_equal(legacy_suffix_chain("01")[1], "01")
+})
