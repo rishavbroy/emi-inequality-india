@@ -121,56 +121,49 @@ legacy_map_style <- function(variable) {
       title = "EMI Exposure",
       style = "fixed",
       breaks = c(0, 2.5, 10, 25, 50, 100),
-      labels = c("0-2.5", "2.5-10", "10-25", "25-50", "50-100"),
-      legend.hist = TRUE
+      labels = c("0-2.5", "2.5-10", "10-25", "25-50", "50-100")
     ),
     consumption_growth_pct = list(
       palette = "brewer.reds",
       title = "%Δ Consumption",
       style = "cont",
       breaks = NULL,
-      labels = NULL,
-      legend.hist = FALSE
+      labels = NULL
     ),
     pucca_share_2007 = list(
       palette = "brown",
       title = "% Pucca Homes",
       style = NULL,
       breaks = NULL,
-      labels = NULL,
-      legend.hist = TRUE
+      labels = NULL
     ),
     head_secondary_plus_2007 = list(
       palette = "brewer.greens",
       title = "% HH Head w/ Sec.+",
       style = "cont",
       breaks = NULL,
-      labels = NULL,
-      legend.hist = FALSE
+      labels = NULL
     ),
     region = list(
       palette = "brewer.dark2",
       title = "Region",
-      style = NULL,
+      style = "cat",
       breaks = NULL,
-      labels = NULL,
-      legend.hist = FALSE
+      labels = NULL
     ),
     wavg_ling_degrees = list(
       palette = "carto.emrld",
       title = "Linguistic Distance",
       style = NULL,
       breaks = NULL,
-      labels = NULL,
-      legend.hist = TRUE
+      labels = NULL
     ),
     list(
       palette = "brewer.blues",
       title = variable,
       style = NULL,
       breaks = NULL,
-      labels = NULL,
-      legend.hist = FALSE
+      labels = NULL
     )
   )
 }
@@ -221,55 +214,106 @@ prepare_legacy_map_data <- function(plot_data, variable) {
   plot_data
 }
 
-build_legacy_tmap <- function(plot_data, spec) {
-  need_pkg("tmap", "classified choropleth maps")
-  style <- legacy_map_style(spec$variable)
-  fill_args <- list(
-    col = spec$variable,
-    palette = style$palette,
-    title = style$title,
-    colorNA = "grey82",
-    textNA = "No data",
-    legend.hist = isTRUE(style$legend.hist)
+legacy_palette_values <- function(palette, n) {
+  n <- max(1L, as.integer(n))
+  base <- switch(
+    palette,
+    brewer.blues = c("#eff3ff", "#bdd7e7", "#6baed6", "#3182bd", "#08519c"),
+    brewer.reds = c("#fee5d9", "#fcae91", "#fb6a4a", "#de2d26", "#a50f15"),
+    brewer.greens = c("#edf8e9", "#bae4b3", "#74c476", "#31a354", "#006d2c"),
+    brewer.dark2 = c("#1b9e77", "#d95f02", "#7570b3", "#e7298a", "#66a61e"),
+    brown = c("#f6eee3", "#dfc29d", "#bf8f59", "#8c5a2b", "#543005"),
+    carto.emrld = c("#d3f2a3", "#97e196", "#6cc08b", "#4c9b82", "#217a79"),
+    c("#eff3ff", "#bdd7e7", "#6baed6", "#3182bd", "#08519c")
   )
-  if (!is.null(style$style)) fill_args$style <- style$style
-  if (!is.null(style$breaks)) fill_args$breaks <- style$breaks
-  if (!is.null(style$labels)) fill_args$labels <- style$labels
-
-  suppressWarnings(suppressMessages({
-    tmap::tm_shape(plot_data) +
-      do.call(tmap::tm_fill, fill_args) +
-      tmap::tm_borders(alpha = 0.2) +
-      tmap::tm_layout(
-        frame = FALSE,
-        asp = 0,
-        legend.outside = TRUE,
-        legend.outside.position = "right",
-        legend.title.size = 1.0,
-        legend.text.size = 0.8,
-        inner.margins = 0.01
-      )
-  }))
+  if (n == length(base)) return(base)
+  grDevices::colorRampPalette(base)(n)
 }
 
-save_tmap_formats <- function(map_plot, path_base, formats, width = 8, height = 6, dpi = 300) {
+legacy_pretty_breaks <- function(x, n = 5L) {
+  x <- x[is.finite(x)]
+  if (!length(x)) return(NULL)
+  rng <- range(x, na.rm = TRUE)
+  if (!all(is.finite(rng))) return(NULL)
+  if (isTRUE(all.equal(rng[[1]], rng[[2]]))) {
+    delta <- if (rng[[1]] == 0) 1 else abs(rng[[1]]) * 0.01
+    return(c(rng[[1]] - delta, rng[[2]] + delta))
+  }
+  br <- pretty(rng, n = n)
+  br <- br[br >= rng[[1]] & br <= rng[[2]]]
+  br <- unique(c(rng[[1]], br, rng[[2]]))
+  if (length(br) < 2L) br <- pretty(rng, n = n)
+  br
+}
+
+legacy_cut_labels <- function(breaks) {
+  if (length(breaks) < 2L) return(character())
+  paste0(
+    formatC(head(breaks, -1L), format = "fg", digits = 4),
+    "-",
+    formatC(tail(breaks, -1L), format = "fg", digits = 4)
+  )
+}
+
+legacy_map_fill <- function(plot_data, variable, style) {
+  values <- plot_data[[variable]]
+  if (is.factor(values) || is.character(values) || identical(style$style, "cat")) {
+    fac <- as.factor(values)
+    levels <- levels(fac)
+    if (!"No data" %in% levels) levels <- c(levels, "No data")
+    plot_data$.map_fill <- as.character(fac)
+    plot_data$.map_fill[is.na(plot_data$.map_fill) | !nzchar(plot_data$.map_fill)] <- "No data"
+    plot_data$.map_fill <- factor(plot_data$.map_fill, levels = levels)
+    colors <- stats::setNames(c(legacy_palette_values(style$palette, length(levels) - 1L), "grey82"), levels)
+    return(list(data = plot_data, fill = ".map_fill", colors = colors, title = style$title))
+  }
+
+  breaks <- style$breaks
+  labels <- style$labels
+  if (is.null(breaks)) {
+    breaks <- legacy_pretty_breaks(values, n = 5L)
+    labels <- legacy_cut_labels(breaks)
+  }
+  if (is.null(breaks) || length(breaks) < 2L) {
+    levels <- "No data"
+    plot_data$.map_fill <- factor("No data", levels = levels)
+    colors <- stats::setNames("grey82", levels)
+  } else {
+    if (is.null(labels) || length(labels) != length(breaks) - 1L) labels <- legacy_cut_labels(breaks)
+    levels <- c(labels, "No data")
+    plot_data$.map_fill <- as.character(cut(values, breaks = breaks, include.lowest = TRUE, right = TRUE, labels = labels))
+    plot_data$.map_fill[is.na(plot_data$.map_fill) | !nzchar(plot_data$.map_fill)] <- "No data"
+    plot_data$.map_fill <- factor(plot_data$.map_fill, levels = levels)
+    colors <- stats::setNames(c(legacy_palette_values(style$palette, length(labels)), "grey82"), levels)
+  }
+  list(data = plot_data, fill = ".map_fill", colors = colors, title = style$title)
+}
+
+build_legacy_ggplot_map <- function(plot_data, spec) {
+  need_pkg("ggplot2", "classified choropleth maps")
+  style <- legacy_map_style(spec$variable)
+  fill <- legacy_map_fill(plot_data, spec$variable, style)
+  plot_data <- fill$data
+
+  ggplot2::ggplot(plot_data) +
+    ggplot2::geom_sf(ggplot2::aes(fill = .data[[fill$fill]]), color = "grey65", linewidth = 0.05) +
+    ggplot2::scale_fill_manual(values = fill$colors, drop = FALSE) +
+    ggplot2::coord_sf(datum = NA) +
+    ggplot2::labs(fill = fill$title) +
+    ggplot2::theme_void(base_size = 10) +
+    ggplot2::theme(
+      legend.position = "right",
+      legend.title = ggplot2::element_text(size = 10),
+      legend.text = ggplot2::element_text(size = 8),
+      plot.margin = grid::unit(c(2, 2, 2, 2), "pt")
+    )
+}
+
+save_map_plot_formats <- function(map_plot, path_base, formats, width = 8, height = 6, dpi = 300) {
   unlink("Rplots.pdf")
-  paths <- vapply(formats, function(format) {
-    path <- format_path(path_base, format)
-    suppressWarnings(suppressMessages(
-      tmap::tmap_save(
-        tm = map_plot,
-        filename = path,
-        width = width,
-        height = height,
-        units = "in",
-        dpi = dpi
-      )
-    ))
-    unlink("Rplots.pdf")
-    path
-  }, character(1))
-  unname(paths)
+  paths <- save_plot_formats(map_plot, path_base, formats, width = width, height = height, dpi = dpi)
+  unlink("Rplots.pdf")
+  paths
 }
 
 save_map_figure <- function(spec, path_base, district_panel, formats, boundaries_2020 = NULL) {
@@ -280,11 +324,10 @@ save_map_figure <- function(spec, path_base, district_panel, formats, boundaries
     stop("Map figure '", spec$name, "' is missing variable '", spec$variable, "'.", call. = FALSE)
   }
 
-  need_pkg("tmap", "classified choropleth maps")
   plot_data <- complete_map_geometry(district_panel, boundaries_2020, spec$variable)
   plot_data <- prepare_legacy_map_data(plot_data, spec$variable)
-  p <- build_legacy_tmap(plot_data, spec)
-  save_tmap_formats(p, path_base, formats, width = 8, height = 6, dpi = 300)
+  p <- build_legacy_ggplot_map(plot_data, spec)
+  save_map_plot_formats(p, path_base, formats, width = 8, height = 6, dpi = 300)
 }
 
 read_carveout_shift_data <- function(path = "data/raw/district_changes/District Carve-Outs and Renamings 1961-2001.csv") {
