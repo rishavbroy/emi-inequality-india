@@ -34,8 +34,8 @@ legacy_abstract <- paste0(
 
 legacy_figure_captions <- c(
   "fig-ILO-fig" = "Trends in earnings, labor‐force participation, and unemployment (ILO, 2024).",
-  "fig-map1-fig" = '(Clockwise from top left) EMI exposure, consumption growth, pucca (permanent) housing, and household heads with secondary education or more. Data from the 64th round of the NSS 2007-08, "Participation and Expenditure in Education" and "Household Consumer Expenditure."',
-  "fig-map2-fig" = "From left to right: regions of India and linguistic distance from Hindi. District-level data, from the 2001 Census of India.",
+  "fig-map1-fig" = 'From top to bottom: EMI exposure, consumption growth, pucca (permanent) housing, and household heads with secondary education or more. Data from the 64th round of the NSS 2007-08, "Participation and Expenditure in Education" and "Household Consumer Expenditure."',
+  "fig-map2-fig" = "From top to bottom: regions of India and linguistic distance from Hindi. District-level data, from the 2001 Census of India.",
   "fig-districtcarveoutsshifts-fig" = "Number of 2001 districts which absorbed a percentage of a 1991 district's population via name change, clean merger, carve-out, or border shift. Data from Kumar \\& Somanathan (2016)."
 )
 
@@ -55,7 +55,7 @@ legacy_table_captions <- c(
 )
 
 figure_markdown <- function(label, path) {
-  paste0("![", legacy_figure_captions[[label]], "](", path, "){#", label, "}")
+  paste0("![", legacy_figure_captions[[label]], "](", path, "){#", label, " fig-pos=\"H\" width=\"100%\"}")
 }
 
 map_geometry_note_block <- function() {
@@ -112,6 +112,40 @@ ensure_yaml_block <- function(lines, field, values) {
   append(lines, c(paste0(field, ":"), values), after = end - 1L)
 }
 
+ensure_yaml_list_item <- function(lines, field, item) {
+  if (!length(lines) || !identical(lines[[1]], "---")) return(lines)
+  close <- which(lines[-1L] == "---")
+  if (!length(close)) return(lines)
+  end <- close[[1]] + 1L
+  yaml_idx <- seq_len(end)
+  if (any(grepl(item, lines[yaml_idx], fixed = TRUE))) return(lines)
+  field_line <- grep(paste0("^", field, ":"), lines[yaml_idx], perl = TRUE)
+  if (!length(field_line)) return(ensure_yaml_block(lines, field, paste0("  - ", item)))
+  insert_after <- field_line[[1]]
+  next_field <- which(seq_along(lines) > field_line[[1]] & seq_along(lines) <= end & grepl("^[A-Za-z0-9_-]+:", lines, perl = TRUE))
+  if (length(next_field)) insert_after <- next_field[[1]] - 1L else insert_after <- end - 1L
+  append(lines, paste0("  - ", item), after = insert_after)
+}
+
+ensure_pdf_geometry <- function(lines, geometry) {
+  if (!length(lines) || !identical(lines[[1]], "---")) return(lines)
+  close <- which(lines[-1L] == "---")
+  if (!length(close)) return(lines)
+  end <- close[[1]] + 1L
+  yaml <- lines[seq_len(end)]
+  if (any(grepl(paste0("- ", geometry), yaml, fixed = TRUE))) return(lines)
+  pdf_engine <- grep("pdf-engine:", yaml, fixed = TRUE)
+  if (length(pdf_engine)) {
+    insert <- pdf_engine[[length(pdf_engine)]]
+    return(append(lines, c("    geometry:", paste0("      - ", geometry)), after = insert))
+  }
+  format_line <- grep("format:", yaml, fixed = TRUE)
+  if (length(format_line)) {
+    return(append(lines, c("  pdf:", "    pdf-engine: xelatex", "    geometry:", paste0("      - ", geometry)), after = format_line[[1]]))
+  }
+  append(lines, c("format:", "  pdf:", "    pdf-engine: xelatex", "    geometry:", paste0("      - ", geometry)), after = end - 1L)
+}
+
 normalize_yaml <- function(lines, path) {
   if (grepl("^paper/", path)) {
     lines <- rewrite_yaml_field(lines, "bibliography", "references.bib")
@@ -119,14 +153,17 @@ normalize_yaml <- function(lines, path) {
   if (identical(path, "paper/report.qmd")) {
     lines <- rewrite_yaml_field(lines, "abstract", paste0('"', legacy_abstract, '"'))
     lines <- remove_yaml_field(lines, "author")
+    lines <- rewrite_yaml_field(lines, "geometry", "margin=1in")
     lines <- ensure_yaml_block(lines, "header-includes", c(
       "  - \\usepackage{setspace}\\doublespacing",
       "  - \\usepackage{mathtools}",
       "  - \\usepackage{longtable}",
       "  - \\usepackage{tabularray}",
+      "  - \\usepackage{float}",
       "  - \\UseTblrLibrary{booktabs}",
       "  - \\UseTblrLibrary{siunitx}"
     ))
+    lines <- ensure_yaml_list_item(lines, "header-includes", "\\usepackage{float}")
   }
   if (identical(path, "docs/district-matching.qmd")) {
     lines <- rewrite_yaml_field(lines, "bibliography", "../paper/references.bib")
@@ -345,30 +382,47 @@ output_table_helper_chunk <- function() {
     "  if (length(hit)) return(hit[[1]])",
     "  stop(\"Missing table output: \", path, call. = FALSE)",
     "}",
-    "read_public_table <- function(path) utils::read.csv(resolve_public_output_path(path), check.names = FALSE)",
+    "read_public_table <- function(path) {",
+    "  df <- utils::read.csv(resolve_public_output_path(path), check.names = FALSE, na.strings = character())",
+    "  for (nm in names(df)) if (is.character(df[[nm]])) df[[nm]][is.na(df[[nm]])] <- \"\"",
+    "  df",
+    "}",
     "render_public_table <- function(path, name) {",
     "  df <- read_public_table(path)",
-    "  tab <- knitr::kable(df, digits = 3, booktabs = knitr::is_latex_output(), longtable = knitr::is_latex_output(), escape = FALSE)",
-    '  if (knitr::is_latex_output() && requireNamespace("kableExtra", quietly = TRUE)) {',
-    '    opts <- c("repeat_header", "striped")',
-    '    if (name %in% c("sum_tbl_iv", "sum_tbl_probit_quant", "sum_tbl_probit_cat")) opts <- c(opts, "scale_down")',
-    '    if (name %in% c("probit_mfx", "fs_cons", "cons_iv")) opts <- c(opts, "hold_position")',
-    '    tab <- kableExtra::kable_styling(tab, latex_options = opts, position = "center", full_width = FALSE)',
-    '    group_rows <- which(grepl(":$", df[[1]]) & apply(df[-1], 1, function(x) all(!nzchar(as.character(x)))))',
-    '    for (idx in group_rows) tab <- kableExtra::row_spec(tab, idx, bold = TRUE, background = "gray!12")',
-    '    if (name %in% c("sum_tbl_iv", "sum_tbl_probit_quant", "sum_tbl_probit_cat")) tab <- kableExtra::landscape(tab)',
+    "  wide <- name %in% c(\"sum_tbl_iv\", \"sum_tbl_probit_quant\", \"sum_tbl_probit_cat\")",
+    "  tab <- knitr::kable(df, digits = 3, booktabs = knitr::is_latex_output(), longtable = knitr::is_latex_output() && !wide, escape = FALSE)",
+    "  if (knitr::is_latex_output() && requireNamespace(\"kableExtra\", quietly = TRUE)) {",
+    "    opts <- c(\"striped\")",
+    "    if (!wide) opts <- c(opts, \"repeat_header\")",
+    "    if (wide) opts <- c(opts, \"scale_down\")",
+    "    if (name %in% c(\"probit_mfx\", \"fs_cons\", \"cons_iv\")) opts <- c(opts, \"hold_position\")",
+    "    tab <- kableExtra::kable_styling(tab, latex_options = opts, position = \"center\", full_width = FALSE)",
+    "    group_rows <- which(grepl(\":$\", df[[1]]) & apply(df[-1], 1, function(x) all(is.na(x) | !nzchar(as.character(x)))))",
+    "    for (idx in group_rows) tab <- kableExtra::row_spec(tab, idx, bold = TRUE, background = \"gray!12\")",
+    "    if (wide) tab <- kableExtra::landscape(tab)",
     "  }",
     "  tab",
     "}",
     "```"
   )
 }
-
 ensure_output_table_helper <- function(lines) {
   if (any(grepl("public-output-table-helper", lines, fixed = TRUE))) return(lines)
   insert_at <- grep("^```\\{r", lines, perl = TRUE)
   if (length(insert_at)) return(append(lines, c("", output_table_helper_chunk(), ""), after = insert_at[[1]] - 1L))
   append(lines, c("", output_table_helper_chunk(), ""), after = length(lines))
+}
+
+public_table_name_for_label <- function(label) {
+  switch(label,
+    "tbl-sum-tbl-probit-quant" = "sum_tbl_probit_quant",
+    "tbl-sum-tbl-probit-cat" = "sum_tbl_probit_cat",
+    "tbl-probit-mfx" = "probit_mfx",
+    "tbl-sum-tbl-iv" = "sum_tbl_iv",
+    "tbl-fs-cons" = "fs_cons",
+    "tbl-cons-iv" = "cons_iv",
+    gsub("^tbl-", "", gsub("-", "_", label))
+  )
 }
 
 output_table_chunk <- function(label, caption, path) {
@@ -380,12 +434,12 @@ output_table_chunk <- function(label, caption, path) {
     paste0("#| label: ", label),
     paste0("#| tbl-cap: \"", caption, "\""),
     "#| echo: false",
+    "#| results: asis",
     "",
-    paste0("render_public_table(\"", path, "\", \"", gsub("^tbl-", "", gsub("-", "_", label)), "\")"),
+    paste0("render_public_table(\"", path, "\", \"", public_table_name_for_label(label), "\")"),
     "```"
   )
 }
-
 normalize_inserted_output_captions <- function(lines) {
   lines <- gsub("^Table: +", "", lines)
   lines <- gsub("^Figure: +", "", lines)
@@ -452,13 +506,13 @@ insert_report_output_objects_explicit <- function(lines) {
     c(
       output_table_chunk("tbl-sum-tbl-iv", legacy_table_captions[["tbl-sum-tbl-iv"]], "../outputs/tables/main/sum_tbl_iv.csv"),
       "",
-      figure_markdown("fig-map1-fig", "../outputs/figures/main/collage_main_maps.pdf")
+      figure_markdown("fig-map2-fig", "../outputs/figures/main/collage_iv_region_maps.pdf")
     )
   )
   lines <- insert_after_line(
     lines,
     "We are currently unable to replicate her justification of the exclusion restriction",
-    figure_markdown("fig-map2-fig", "../outputs/figures/main/collage_iv_region_maps.pdf")
+    figure_markdown("fig-map1-fig", "../outputs/figures/main/collage_main_maps.pdf")
   )
   lines <- insert_after_line(
     lines,
