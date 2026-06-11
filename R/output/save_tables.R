@@ -154,18 +154,20 @@ save_table_csv <- function(table, path, public = TRUE) {
 save_table_tex <- function(table, path, name, public = TRUE) {
   need_pkg("kableExtra", "LaTeX table output")
   df <- sanitize_table_for_kable(format_table_for_output(table, public = public))
+  wide_summary_table <- name %in% c("sum_tbl_iv", "sum_tbl_probit_quant", "sum_tbl_probit_cat")
   tex <- kableExtra::kbl(
     df,
     format = "latex",
     booktabs = TRUE,
-    longtable = TRUE,
+    longtable = !wide_summary_table,
     label = table_label(name),
     caption = table_caption(name),
     escape = FALSE,
     digits = 3
   )
-  latex_options <- c("repeat_header", "striped")
-  if (name %in% c("sum_tbl_iv", "sum_tbl_probit_quant", "sum_tbl_probit_cat")) latex_options <- c(latex_options, "scale_down")
+  latex_options <- c("striped")
+  if (!wide_summary_table) latex_options <- c(latex_options, "repeat_header")
+  if (wide_summary_table) latex_options <- c(latex_options, "scale_down")
   if (name %in% c("probit_mfx", "fs_cons", "cons_iv")) latex_options <- c(latex_options, "hold_position")
   tex <- kableExtra::kable_styling(
     tex,
@@ -175,7 +177,7 @@ save_table_tex <- function(table, path, name, public = TRUE) {
   )
   group_rows <- which(grepl(":$", df[[1]]) & apply(df[-1], 1, function(x) all(!nzchar(as.character(x)))))
   for (idx in group_rows) tex <- kableExtra::row_spec(tex, idx, bold = TRUE, background = "gray!12")
-  if (name %in% c("sum_tbl_iv", "sum_tbl_probit_quant", "sum_tbl_probit_cat")) {
+  if (wide_summary_table) {
     tex <- kableExtra::landscape(tex)
   }
   writeLines(as.character(tex), path)
