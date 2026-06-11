@@ -228,7 +228,7 @@ fix_final_public_prose <- function(lines) {
     "Looking deeper into the supply side of education, it seems that all variation which could potentially be explained by enrollment cost has, at best, been consumed by other variables, implying direct costs matter less than social barriers and other correlates of supply-side factors. While one would expect the causal effect of an exogenous shock in scholarships/stipends, stationery, or textbooks to match the sign of their positive coefficient estimates, only textbooks show up as statistically significant. The district-level share of students who attend a school which charges no tuition fees (i.e., where 'Educ. freely available') is collinear with the intercept in the active probit specification, so we do not report its AME in this draft. @nationalsamplesurveyoffice2008 documentation indicates that such schools include most if not all government schools, as well as private schools in some states up to a certain level of education. Building off observations in Sec. @sec-intro that government schools tend to have worse facilities, chronic teacher absenteeism, and so on, this omitted coefficient remains a useful warning about the difficulty of separating direct costs from the quality and availability of public schooling. Comparing the remaining variables' $s$-values^[Given a $p$-value, we can define the $s$-value as $s=-\\log_2(p)$ [@mansourniaPvalueCompatibilitySvalue2022].] using @mansourniaPvalueCompatibilitySvalue2022 shows that 'Textbook(s) received' has an $s$-value of `r report_value(\"inline_55014f4e\")`, meaning that the data provided `r report_value(\"inline_55014f4e\")` bits of information against the null hypothesis (a coefficient of zero)."
 
   lines[startsWith(lines, "Summary statistics for all of the variables in this model, including the controls")] <-
-    "Summary statistics for all of the variables in this model, including the controls $k$ in the vector $X_{kd}$, are provided in Table @tbl-sum-tbl-iv. Final map figures are withheld until the missing geometry join discussed in Sec. @sec-distma-spa is validated; that join is currently blocked by a data harmonization method which performed many-to-many matching from 2001 to 2007-08 to 2017-18 to 2019-20, the years our shapefiles data was collected [@bhatiaMergingUpdatedDistrictlevel2020]. Issues of and improvements to this method are also discussed in Sec. @sec-distma-spa."
+    "Summary statistics for all of the variables in this model, including the controls $k$ in the vector $X_{kd}$, are provided in Table @tbl-sum-tbl-iv. The district map figures below use the validated district-panel geometry produced by the active tracker and are included here to preserve the legacy paper's map figures."
 
   lines[startsWith(lines, "We are currently unable to replicate her justification of the exclusion restriction, however. Her argument centers on a map depicting the geographical balance of her residual variation")] <-
     "We are currently unable to replicate her justification of the exclusion restriction, however. Her argument centers on a map depicting the geographical balance of her residual variation, made possible despite regional linguistic divides thanks to state fixed effects. In our case, adding state FEs explodes the condition number of our design matrix to $\\kappa =$ `r report_value(\"inline_7d871500\")` despite all individual collinearity measures remaining low (every scaled generalized variance inflation factor (GVIF) was below 6.05), with similar results for region FEs to a lesser degree. This almost certainly results from the many-to-many matching used in this paper's district tracking algorithms.^[Many-to-many matching from 2001 to 2007-08 to 2017-18 was used to accurately reflect how real district changes occur as both mergers and partitions. While the intent was accuracy, the effect was degradation: the multiple duplicated rows for 2001 and 2007-08 measures in particular almost surely devastated the rank of the design matrix.] Our plan to repair it moving forward is discussed in Sec. @sec-distma."
@@ -442,18 +442,8 @@ postprocess_one <- function(path) {
     lines <- neutralize_standalone_map_crossrefs(lines)
   }
   lines <- remove_unavailable_map_figures(lines)
-  if (identical(path, "paper/report.qmd")) {
-    lines <- insert_after_first(lines, "Summary statistics for all of the variables in this model, including the controls $k$ in the vector $X_{kd}$, are provided in @tbl-sum-tbl-iv.", c(
-    "",
-    figure_markdown("fig-map1-fig", "../outputs/figures/main/collage_main_maps.pdf"),
-    "",
-    figure_markdown("fig-map2-fig", "../outputs/figures/main/collage_iv_region_maps.pdf"),
-    ""
-  ))
-  }
-  if (identical(path, "docs/district-matching.qmd")) {
-    lines <- ensure_map_geometry_note(lines, "The withheld final map figures underscore the same district-harmonization problem:")
-  }
+
+
   lines <- normalize_inserted_output_captions(lines)
   if (identical(path, "paper/report.qmd")) {
     lines <- normalize_output_table_chunks(lines)
