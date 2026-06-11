@@ -339,14 +339,9 @@ $$
 &= \beta_0 + \beta_1\,\widehat{\mathrm{EMIE}}_d + \sum_{k=1}^{K}\beta_{k+1}\,X_{kd}.
 \end{aligned}
 $$ {#eq-iv-eq}
-Summary statistics for all of the variables in this model, including the controls $k$ in the vector $X_{kd}$, are provided in @tbl-sum-tbl-iv. Final map figures are withheld until the missing geometry join discussed in @sec-distma-spa is validated; that join is currently blocked by a data harmonization method which performed many-to-many matching from 2001 to 2007-08 to 2017-18 to 2019-20, the years our shapefiles data was collected [@bhatiaMergingUpdatedDistrictlevel2020]. Issues of and improvements to this method are also discussed in @sec-distma-spa.
+Summary statistics for all of the variables in this model, including the controls $k$ in the vector $X_{kd}$, are provided in @tbl-sum-tbl-iv. To best reflect how districts merged and split over time, our current data harmonization method uses many-to-many matching from 2001 to 2007-08 to 2017-18 to 2019-20, the years our shapefiles data was collected [@bhatiaMergingUpdatedDistrictlevel2020]. Issues with and improvements to this method are discussed in @sec-distma-spa.
 
-![(Clockwise from top left) EMI exposure, consumption growth, pucca (permanent) housing, and household heads with secondary education or more. Data from the 64th round of the NSS 2007-08, ``Participation and Expenditure in Education'' and ``Household Consumer Expenditure.''](../outputs/figures/main/collage_main_maps.pdf){#fig-map1-fig}
-
-![From left to right: regions of India and linguistic distance from Hindi. District-level data, from the 2001 Census of India.](../outputs/figures/main/collage_iv_region_maps.pdf){#fig-map2-fig}
-
-
-![From left to right: regions of India and linguistic distance from Hindi. District-level data, from the 2001 Census of India.](../outputs/figures/main/collage_iv_region_maps.pdf){#fig-map2-fig}
+![From left to right: linguistic distance from Hindi and regions of India. District-level data, from the 2001 Census of India.](../outputs/figures/main/collage_iv_region_maps.pdf){#fig-map2-fig}
 
 
 ![(Clockwise from top left) EMI exposure, consumption growth, pucca (permanent) housing, and household heads with secondary education or more. Data from the 64th round of the NSS 2007-08, ``Participation and Expenditure in Education'' and ``Household Consumer Expenditure.''](../outputs/figures/main/collage_main_maps.pdf){#fig-map1-fig}
