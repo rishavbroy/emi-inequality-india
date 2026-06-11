@@ -120,23 +120,20 @@ regression_display_table <- function(terms, estimates, std_errors, p_values, out
   rows
 }
 
-model_gof_rows <- function(model, outcome_label, statistic_name = "F-Statistic") {
+model_gof_rows <- function(model, outcome_label) {
   if (is.null(model) || is_model_status_payload(model)) return(data.frame())
   sm <- tryCatch(summary(model), error = function(e) NULL)
   nobs <- tryCatch(stats::nobs(model), error = function(e) NA_real_)
   r2 <- tryCatch(sm$r.squared, error = function(e) NA_real_)
   adj_r2 <- tryCatch(sm$adj.r.squared, error = function(e) NA_real_)
   sigma <- tryCatch(sm$sigma, error = function(e) NA_real_)
-  fstat <- tryCatch(sm$fstatistic, error = function(e) NULL)
-  f_value <- if (!is.null(fstat) && length(fstat)) suppressWarnings(as.numeric(fstat[[1]])) else NA_real_
   data.frame(
-    Term = c("Observations", "$R^2$", "Adjusted $R^2$", "Residual Std. Error", statistic_name),
+    Term = c("Observations", "$R^2$", "Adjusted $R^2$", "Residual Std. Error"),
     value = c(
       ifelse(is.finite(nobs), sprintf("%.0f", nobs), ""),
       ifelse(is.finite(r2), sprintf("%.3f", r2), ""),
       ifelse(is.finite(adj_r2), sprintf("%.3f", adj_r2), ""),
-      ifelse(is.finite(sigma), sprintf("%.3f", sigma), ""),
-      ifelse(is.finite(f_value), sprintf("%.2f", f_value), "")
+      ifelse(is.finite(sigma), sprintf("%.3f", sigma), "")
     ),
     check.names = FALSE,
     stringsAsFactors = FALSE
@@ -389,14 +386,14 @@ make_probit_ame_table <- function(ame_results, n = NA_integer_) {
 make_iv_summary_table <- function(district_panel) {
   meta <- data.frame(
     var = c("EMIE", "wavg_ling_degrees", "npeople_0708", "consumption_0708", "gini_cons_0708", "pct_urban", "avg_hh_size", "dependency_ratio", "pct_fem_head", "pct_hindu", "pct_muslim", "pct_other_religion", "pct_st", "pct_sc", "pct_obc", "pct_small_land", "pct_medium_land", "pct_large_land", "pct_head_illiterate", "pct_head_lit_to_primary", "pct_head_secondary_plus", "pct_pucca", "npeople_1718", "consumption_1718", "gini_cons_1718", "consumption_pct_change", "gini_change"),
-    label = c("EMIE", "Ling. Distance", "Population", "Consumption", "Gini of Consumption", "Pct. Urban", "Avg. HH Size", "Dependency Ratio × 100", "Pct. Female Head", "Pct. Hindu", "Pct. Muslim", "Pct. Other", "Pct. ST", "Pct. SC", "Pct. OBC", "Pct. Small Land-Owner", "Pct. Med. Land-Owner", "Pct. Large Land-Owner", "Pct. Head Educ., Illiterate", "Pct. Head Educ., Lit.-Primary", "Pct. Head Educ., Secondary+", "Pct. Pucca", "Population", "Consumption", "Gini of Consumption", "$%\\Delta\\text{Consumption}$", "$\\Delta\\text{Gini}^{\\text{Consumption}}$"),
+    label = c("EMIE", "Ling. Distance", "Population", "Consumption", "Gini of Consumption", "Pct. Urban", "Avg. HH Size", "Dependency Ratio × 100", "Pct. Female Head", "Pct. Hindu", "Pct. Muslim", "Pct. Other", "Pct. ST", "Pct. SC", "Pct. OBC", "Pct. Small Land-Owner", "Pct. Med. Land-Owner", "Pct. Large Land-Owner", "Pct. Head Educ., Illiterate", "Pct. Head Educ., Lit.-Primary", "Pct. Head Educ., Secondary+", "Pct. Pucca", "Population", "Consumption", "Gini of Consumption", "Consumption growth (%)", "Change in Gini of Consumption"),
     stringsAsFactors = FALSE
   )
   out <- legacy_numeric_stats(district_panel, meta, cost_vars = c("npeople_0708", "npeople_1718"))
   out <- insert_summary_group(out, "From 2001:", "wavg_ling_degrees")
   out <- insert_summary_group(out, "From 2007-08:", "EMIE")
   out <- insert_summary_group(out, "From 2017-18:", "npeople_1718")
-  out <- insert_summary_group(out, "Changes:", "consumption_pct_change")
+  out <- insert_summary_group(out, "From 2007-08 to 2017-18:", "consumption_pct_change")
   out
 }
 
@@ -448,11 +445,17 @@ make_first_stage_table <- function(first_stage_tests, cfg = list()) {
     value = paste0(sprintf("%.2f", f_value), legacy_significance_stars(f_p)),
     stringsAsFactors = FALSE
   )
-  model_f <- if (nrow(stat)) first_finite_value(stat, c("legacy_model_f")) else NA_real_
-  gof <- rbind(
-    f_row,
-    data.frame(Term = "Model's F-Statistic", value = ifelse(is.finite(model_f), sprintf("%.2f", model_f), ""), stringsAsFactors = FALSE)
-  )
+  nobs_value <- first_finite_value(stat, c("nobs", "n", "N"))
+  r2_value <- first_finite_value(stat, c("r.squared", "r2"))
+  adj_r2_value <- first_finite_value(stat, c("adj.r.squared", "adj_r2"))
+  sigma_value <- first_finite_value(stat, c("sigma", "residual_se"))
+  gof <- safe_bind_rows(list(
+    data.frame(Term = "Observations", value = ifelse(is.finite(nobs_value), sprintf("%.0f", nobs_value), ""), stringsAsFactors = FALSE),
+    data.frame(Term = "$R^2$", value = ifelse(is.finite(r2_value), sprintf("%.3f", r2_value), ""), stringsAsFactors = FALSE),
+    data.frame(Term = "Adjusted $R^2$", value = ifelse(is.finite(adj_r2_value), sprintf("%.3f", adj_r2_value), ""), stringsAsFactors = FALSE),
+    data.frame(Term = "Residual Std. Error", value = ifelse(is.finite(sigma_value), sprintf("%.3f", sigma_value), ""), stringsAsFactors = FALSE),
+    f_row
+  ))
 
   regression_display_table(
     terms = legacy_iv_term_label(fs$term),
@@ -490,7 +493,7 @@ make_second_stage_table <- function(iv_models) {
     std_errors = suppressWarnings(as.numeric(out$std.error)),
     p_values = suppressWarnings(as.numeric(out$p.value)),
     outcome_label = "Consumption Growth",
-    gof = model_gof_rows(model, "Consumption Growth", statistic_name = "F-Statistic")
+    gof = model_gof_rows(model, "Consumption Growth")
   )
 }
 

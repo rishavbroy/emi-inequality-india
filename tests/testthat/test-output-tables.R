@@ -159,4 +159,5 @@ test_that("regression public tables place standard errors below estimates", {
   expect_equal(out$`EMI Exposure`[[2]], "(1.237)")
   expect_true("Pct. urban" %in% out$Term)
   expect_true("Instrument's F-Statistic" %in% out$Term)
+  expect_false("Model's F-Statistic" %in% out$Term)
 })

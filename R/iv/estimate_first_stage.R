@@ -16,6 +16,10 @@ estimate_first_stage <- function(iv_models, district_panel, cfg) {
         partial_p = NA_real_,
         legacy_model_f = NA_real_,
         legacy_model_p = NA_real_,
+        nobs = NA_real_,
+        r.squared = NA_real_,
+        adj.r.squared = NA_real_,
+        sigma = NA_real_,
         status = model$status %||% "out_of_active_pipeline",
         reason = model$reason %||% NA_character_,
         stringsAsFactors = FALSE
@@ -70,6 +74,11 @@ estimate_first_stage <- function(iv_models, district_panel, cfg) {
     excluded_row <- if (!is.na(excluded_term)) match(excluded_term, coefs$term) else NA_integer_
     wald <- first_stage_wald_test(fit, excluded_term, vc)
     legacy_f <- legacy_first_stage_model_f(fit)
+    sm <- tryCatch(summary(fit), error = function(e) NULL)
+    nobs_value <- tryCatch(stats::nobs(fit), error = function(e) NA_real_)
+    r2_value <- tryCatch(sm$r.squared, error = function(e) NA_real_)
+    adj_r2_value <- tryCatch(sm$adj.r.squared, error = function(e) NA_real_)
+    sigma_value <- tryCatch(sm$sigma, error = function(e) NA_real_)
 
     statistic_values <- column_or_na(coefs, statistic_col)
     p_values <- column_or_na(coefs, p_col)
@@ -87,6 +96,10 @@ estimate_first_stage <- function(iv_models, district_panel, cfg) {
       partial_p = partial_p,
       legacy_model_f = legacy_f$statistic,
       legacy_model_p = legacy_f$p.value,
+      nobs = nobs_value,
+      r.squared = r2_value,
+      adj.r.squared = adj_r2_value,
+      sigma = sigma_value,
       status = "estimated",
       reason = NA_character_,
       stringsAsFactors = FALSE
@@ -108,6 +121,10 @@ first_stage_status_row <- function(model_name, reason) {
     partial_p = NA_real_,
     legacy_model_f = NA_real_,
     legacy_model_p = NA_real_,
+    nobs = NA_real_,
+    r.squared = NA_real_,
+    adj.r.squared = NA_real_,
+    sigma = NA_real_,
     status = "out_of_active_pipeline",
     reason = reason,
     stringsAsFactors = FALSE

@@ -107,17 +107,16 @@ test_that("first-stage table reports full coefficients with standard errors bene
 
   expect_true(all(c(
     "Linguistic distance", "Consumption, 2007-08", "Constant",
-    "Instrument's F-Statistic", "Model's F-Statistic"
+    "Observations", "Instrument's F-Statistic"
   ) %in% out$Term))
+  expect_false("Model's F-Statistic" %in% out$Term)
 
   ling_row <- which(out$Term == "Linguistic distance")
   expect_equal(out[[value_col]][[ling_row]], "2.945**")
   expect_equal(out[[value_col]][[ling_row + 1L]], "(0.949)")
 
   f_row <- out[out$Term == "Instrument's F-Statistic", , drop = FALSE]
-  model_f_row <- out[out$Term == "Model's F-Statistic", , drop = FALSE]
   expect_equal(f_row[[value_col]][[1]], "9.46**")
-  expect_equal(model_f_row[[value_col]][[1]], "39.20")
 })
 
 test_that("final district panel validation enforces structural IV-panel contract", {

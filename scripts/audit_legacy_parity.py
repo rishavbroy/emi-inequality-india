@@ -286,13 +286,16 @@ def audit_selection_tables() -> None:
     if "TOTAL" in by_var:
         fail("Selection numeric summary contains raw TOTAL instead of legacy ENROLLMENT_COST.")
     required_dmeans = {
-        "dmean_num_TUTION_FEE_WAIVED",
-        "dmean_num_RECD_SCHOLARSHIP_STIPEND",
-        "dmean_num_RECD_STATIONERY",
-        "dmean_num_MID_DAY_MEAL_ETC_RECD",
-        "dmean_num_ENROLLMENT_COST",
+        "dmean_num_TUTION_FEE_WAIVED": "Tuition waived?",
+        "dmean_num_RECD_SCHOLARSHIP_STIPEND": "Scholarship/Stipend?",
+        "dmean_num_RECD_STATIONERY": "Stationery received?",
+        "dmean_num_MID_DAY_MEAL_ETC_RECD": "Mid-day meal or more received?",
+        "dmean_num_ENROLLMENT_COST": "Avg. district enrollment cost",
     }
-    missing_dmeans = sorted(required_dmeans - set(by_var))
+    missing_dmeans = sorted(
+        raw for raw, label in required_dmeans.items()
+        if raw not in by_var and label not in by_var
+    )
     if missing_dmeans:
         fail("Selection numeric summary is missing legacy district aggregates: " + ", ".join(missing_dmeans))
 
@@ -354,13 +357,13 @@ def audit_iv_tables() -> None:
         fail("IV summary table lacks EMIE/emie_2007 row.")
 
     expected_summary = {
-        "npeople_0708": (1979019.0, 5000.0, "mean"),
-        "consumption_0708": (861.53, 0.5, "mean"),
-        "dependency_ratio": (58.24, 0.5, "mean"),
-        "pct_fem_head": (19.49, 0.5, "mean"),
+        "npeople_0708": ("Population", 1979019.0, 5000.0, "mean"),
+        "consumption_0708": ("Consumption", 861.53, 0.5, "mean"),
+        "dependency_ratio": ("Dependency Ratio × 100", 58.24, 0.5, "mean"),
+        "pct_fem_head": ("Pct. Female Head", 19.49, 0.5, "mean"),
     }
-    for var, (expected, tol, stat) in expected_summary.items():
-        row = by_var.get(var)
+    for var, (label, expected, tol, stat) in expected_summary.items():
+        row = by_var.get(var) or by_var.get(label)
         if not row:
             fail(f"IV summary table lacks {var} row.")
             continue
@@ -380,7 +383,7 @@ def audit_iv_tables() -> None:
         if not row:
             fail(f"Second-stage IV table has no {term} row.")
             continue
-        est = fnum(first_present(row, ("Estimate", "estimate")))
+        est = fnum(first_present(row, ("Estimate", "estimate", "Consumption Growth")))
         tol = 0.02 if term != "Constant" else 1.0
         if est is not None and abs(est - expected) > tol:
             legacy_or_warn(f"Second-stage {term} estimate is {est:.3f}; legacy Table 6 reports {expected:.3f}.", corrected_panel)
@@ -389,21 +392,19 @@ def audit_iv_tables() -> None:
     if fs_raw and any(re.fullmatch(r"\d+", row_key(r) or "") for r in fs_raw):
         fail("First-stage raw table still has numeric coefficient terms; coefficient names were lost.")
     fs = csv_rows("outputs/tables/main/fs_cons.csv")
-    if len(fs) > 5:
-        fail(f"First-stage public table has {len(fs)} rows; legacy Table 5 has one regression column, not one row per coefficient repeated.")
     fs_by_term = {row_key(r): r for r in fs}
     ling = fs_by_term.get("Linguistic distance") or fs_by_term.get("wavg_ling_degrees")
     if not ling:
         fail("First-stage public table lacks the legacy linguistic-distance coefficient row.")
     else:
-        est = fnum(first_present(ling, ("Estimate", "estimate")))
+        est = fnum(first_present(ling, ("Estimate", "estimate", "EMI Exposure")))
         if est is not None and abs(est - 2.945) > 0.05:
             legacy_or_warn(f"First-stage linguistic-distance estimate is {est:.3f}; legacy Table 5 reports 2.945.", corrected_panel)
     f_row = fs_by_term.get("Instrument's F-Statistic") or fs_by_term.get("First-stage F")
     if not f_row:
         fail("First-stage public table lacks the legacy instrument F-statistic row.")
     else:
-        fstat = fnum(first_present(f_row, ("Estimate", "estimate")))
+        fstat = fnum(first_present(f_row, ("Estimate", "estimate", "EMI Exposure")))
         # The legacy table/report label this row as the instrument F-statistic,
         # and the legacy Rmd constructs it from a cluster-robust one-restriction
         # Wald test. Treat the legacy PDF value as documentation context, not a
