@@ -31,4 +31,4 @@ Imports:
     car,
     digest,
     testthat,
-    tmap
+    tmap (>= 4.0.0)

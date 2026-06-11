@@ -234,13 +234,15 @@ build_tmap_map <- function(plot_data, spec, fill_values) {
   on.exit(tryCatch(if (!is.null(old_mode)) tmap::tmap_mode(old_mode), error = function(e) NULL), add = TRUE)
   tmap::tm_shape(plot_data) +
     tmap::tm_polygons(
-      col = ".map_fill",
-      palette = fill_values,
-      title = spec$title,
-      border.col = "grey55",
-      lwd = 0.15,
-      colorNA = "grey82",
-      textNA = "No data"
+      fill = ".map_fill",
+      fill.scale = tmap::tm_scale(
+        values = fill_values,
+        value.na = "grey82",
+        label.na = "No data"
+      ),
+      fill.legend = tmap::tm_legend(title = spec$title),
+      col = "grey55",
+      lwd = 0.15
     ) +
     tmap::tm_layout(
       frame = FALSE,
@@ -271,10 +273,15 @@ save_map_panel_formats <- function(map_plot, diagnostic_plot, path_base, formats
     grid::grid.newpage()
     layout <- grid::grid.layout(nrow = 1, ncol = 2, widths = grid::unit(c(5.2, 1.15), c("null", "null")))
     grid::pushViewport(grid::viewport(layout = layout))
+    on.exit(try(grid::popViewport(), silent = TRUE), add = TRUE)
     map_grob <- map_plot_to_grob(map_plot)
     diag_grob <- ggplot2::ggplotGrob(diagnostic_plot)
-    grid::grid.draw(map_grob, vp = grid::viewport(layout.pos.row = 1, layout.pos.col = 1))
-    grid::grid.draw(diag_grob, vp = grid::viewport(layout.pos.row = 1, layout.pos.col = 2))
+    grid::pushViewport(grid::viewport(layout.pos.row = 1, layout.pos.col = 1))
+    grid::grid.draw(map_grob)
+    grid::popViewport()
+    grid::pushViewport(grid::viewport(layout.pos.row = 1, layout.pos.col = 2))
+    grid::grid.draw(diag_grob)
+    grid::popViewport()
     grid::popViewport()
     grDevices::dev.off()
     path
