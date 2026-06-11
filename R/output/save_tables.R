@@ -80,10 +80,13 @@ format_public_summary_columns <- function(out) {
     group <- startsWith(as.character(out$var), ".group_")
     out$var <- NULL
     out$label <- NULL
+    if ("desc" %in% names(out)) names(out)[names(out) == "desc"] <- "Description"
     out <- out[, c("Variable", setdiff(names(out), "Variable")), drop = FALSE]
     if (any(group)) {
       for (nm in setdiff(names(out), "Variable")) out[[nm]][group] <- ""
     }
+  } else if ("desc" %in% names(out)) {
+    names(out)[names(out) == "desc"] <- "Description"
   }
   rename <- c("% Mode" = "Pct. Mode", "% Least Freq." = "Pct. Least Freq.")
   for (old in names(rename)) if (old %in% names(out)) names(out)[names(out) == old] <- rename[[old]]
