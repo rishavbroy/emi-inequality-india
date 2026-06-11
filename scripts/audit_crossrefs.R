@@ -32,8 +32,13 @@ scan_crossrefs <- function(path) {
   text <- paste(lines, collapse = "\n")
 
   refs <- unique(extract_matches(text, "@(fig|tbl|sec|eq)-[A-Za-z0-9_-]+"))
-  brace_labels <- extract_matches(text, "\\{#(fig|tbl|sec|eq)-[A-Za-z0-9_-]+\\}")
-  brace_labels <- sub("^\\{#", "", sub("\\}$", "", brace_labels))
+  # Quarto/Pandoc labels can appear either as a bare attribute,
+  # `{#fig-example}`, or alongside other attributes,
+  # `{#fig-example fig-pos="H" width="100%"}`. The strict public
+  # cross-reference audit should count both as labels.
+  brace_labels <- extract_matches(text, "\\{#(fig|tbl|sec|eq)-[A-Za-z0-9_-]+(?:[^}]*)\\}")
+  brace_labels <- sub("^\\{#", "", brace_labels)
+  brace_labels <- sub("[[:space:]}].*$", "", brace_labels)
 
   chunk_label_lines <- grep("^\\s*#\\|\\s*label:\\s*(fig|tbl|sec|eq)-[A-Za-z0-9_-]+\\s*$", lines, value = TRUE, perl = TRUE)
   chunk_labels <- sub("^\\s*#\\|\\s*label:\\s*", "", chunk_label_lines)
