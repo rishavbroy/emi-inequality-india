@@ -129,6 +129,48 @@ format_table_for_output <- function(table, public = TRUE) {
   out
 }
 
+
+summary_table_groups <- function(df) {
+  df <- as.data.frame(df, check.names = FALSE, stringsAsFactors = FALSE)
+  if (!nrow(df) || !length(names(df))) return(list(data = df, groups = data.frame()))
+  empty_rest <- if (ncol(df) > 1L) {
+    apply(df[-1], 1, function(x) all(is.na(x) | !nzchar(as.character(x))))
+  } else {
+    rep(TRUE, nrow(df))
+  }
+  group_row <- grepl(":$", as.character(df[[1]])) & empty_rest
+  group_idx <- which(group_row)
+  if (!length(group_idx)) return(list(data = df, groups = data.frame()))
+
+  groups <- lapply(seq_along(group_idx), function(i) {
+    start_orig <- group_idx[[i]] + 1L
+    end_orig <- if (i < length(group_idx)) group_idx[[i + 1L]] - 1L else nrow(df)
+    start <- start_orig - sum(group_idx < start_orig)
+    end <- end_orig - sum(group_idx <= end_orig)
+    if (start > end) return(NULL)
+    data.frame(
+      label = as.character(df[[1]][[group_idx[[i]]]]),
+      start = start,
+      end = end,
+      stringsAsFactors = FALSE
+    )
+  })
+  groups <- do.call(rbind, Filter(Negate(is.null), groups))
+  if (is.null(groups)) groups <- data.frame()
+  list(data = df[!group_row, , drop = FALSE], groups = groups)
+}
+
+render_table_math_labels <- function(df) {
+  df <- as.data.frame(df, check.names = FALSE, stringsAsFactors = FALSE)
+  for (nm in names(df)) {
+    if (!is.character(df[[nm]])) next
+    df[[nm]] <- gsub("$%\\\\Delta", "$\\\\%\\\\Delta", df[[nm]], fixed = TRUE)
+    df[[nm]] <- gsub("$%\\Delta", "$\\%\\Delta", df[[nm]], fixed = TRUE)
+    df[[nm]] <- gsub("$\\\\%Delta", "$\\\\%\\\\Delta", df[[nm]], fixed = TRUE)
+  }
+  df
+}
+
 sanitize_table_for_kable <- function(df) {
   df <- as.data.frame(df, check.names = FALSE, stringsAsFactors = FALSE)
   if (!nrow(df)) df <- data.frame(Note = "No rows to display.", stringsAsFactors = FALSE)
@@ -143,7 +185,7 @@ sanitize_table_for_kable <- function(df) {
     }
     if (is.character(df[[nm]])) df[[nm]][is.na(df[[nm]])] <- ""
   }
-  df
+  render_table_math_labels(df)
 }
 
 save_table_csv <- function(table, path, public = TRUE) {
@@ -154,9 +196,11 @@ save_table_csv <- function(table, path, public = TRUE) {
 save_table_tex <- function(table, path, name, public = TRUE) {
   need_pkg("kableExtra", "LaTeX table output")
   df <- sanitize_table_for_kable(format_table_for_output(table, public = public))
+  grouped <- summary_table_groups(df)
+  df_render <- grouped$data
   wide_summary_table <- name %in% c("sum_tbl_iv", "sum_tbl_probit_quant", "sum_tbl_probit_cat")
   tex <- kableExtra::kbl(
-    df,
+    df_render,
     format = "latex",
     booktabs = TRUE,
     longtable = !wide_summary_table,
@@ -173,10 +217,23 @@ save_table_tex <- function(table, path, name, public = TRUE) {
     tex,
     latex_options = latex_options,
     full_width = FALSE,
-    position = "center"
+    position = "center",
+    font_size = if (wide_summary_table) 8 else NULL
   )
-  group_rows <- which(grepl(":$", df[[1]]) & apply(df[-1], 1, function(x) all(!nzchar(as.character(x)))))
-  for (idx in group_rows) tex <- kableExtra::row_spec(tex, idx, bold = TRUE, background = "gray!12")
+  if (nrow(grouped$groups)) {
+    for (i in rev(seq_len(nrow(grouped$groups)))) {
+      tex <- kableExtra::pack_rows(
+        tex,
+        grouped$groups$label[[i]],
+        grouped$groups$start[[i]],
+        grouped$groups$end[[i]],
+        bold = TRUE,
+        italic = FALSE,
+        background = "gray!12",
+        escape = FALSE
+      )
+    }
+  }
   if (wide_summary_table) {
     tex <- kableExtra::landscape(tex)
   }
