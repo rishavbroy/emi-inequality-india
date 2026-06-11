@@ -152,18 +152,20 @@ normalize_yaml <- function(lines, path) {
   }
   if (identical(path, "paper/report.qmd")) {
     lines <- rewrite_yaml_field(lines, "abstract", paste0('"', legacy_abstract, '"'))
-    lines <- remove_yaml_field(lines, "author")
-    lines <- rewrite_yaml_field(lines, "geometry", "margin=1in")
+    lines <- rewrite_yaml_field(lines, "author", '"Rishav Roy"')
+    lines <- rewrite_yaml_field(lines, "geometry", '"left=0.85in, right=0.85in, top=0.9in, bottom=0.9in"')
     lines <- ensure_yaml_block(lines, "header-includes", c(
       "  - \\usepackage{setspace}\\doublespacing",
       "  - \\usepackage{mathtools}",
       "  - \\usepackage{longtable}",
       "  - \\usepackage{tabularray}",
       "  - \\usepackage{float}",
+      "  - \\usepackage{threeparttable}",
       "  - \\UseTblrLibrary{booktabs}",
       "  - \\UseTblrLibrary{siunitx}"
     ))
     lines <- ensure_yaml_list_item(lines, "header-includes", "\\usepackage{float}")
+    lines <- ensure_yaml_list_item(lines, "header-includes", "\\usepackage{threeparttable}")
   }
   if (identical(path, "docs/district-matching.qmd")) {
     lines <- rewrite_yaml_field(lines, "bibliography", "../paper/references.bib")
@@ -271,10 +273,10 @@ fix_final_public_prose <- function(lines) {
     "We are currently unable to replicate her justification of the exclusion restriction, however. Her argument centers on a map depicting the geographical balance of her residual variation, made possible despite regional linguistic divides thanks to state fixed effects. In our case, adding state FEs explodes the condition number of our design matrix to $\\kappa =$ `r report_value(\"inline_7d871500\")` despite all individual collinearity measures remaining low (every scaled generalized variance inflation factor (GVIF) was below 6.05), with similar results for region FEs to a lesser degree. This almost certainly results from the many-to-many matching used in this paper's district tracking algorithms.^[Many-to-many matching from 2001 to 2007-08 to 2017-18 was used to accurately reflect how real district changes occur as both mergers and partitions. While the intent was accuracy, the effect was degradation: the multiple duplicated rows for 2001 and 2007-08 measures in particular almost surely devastated the rank of the design matrix.] Our plan to repair it moving forward is discussed in Sec. @sec-distma."
 
   lines[startsWith(lines, "As was evident from the maps of Figures @fig-map1-fig and @fig-map2-fig")] <-
-    "The withheld final map figures underscore the same district-harmonization problem: numerous districts are still missing from the validated geometry join. Perhaps the assumption of no carveouts and border shifts was a false one to make. And yet, even if all districts were perfectly matched, problems would arise. The geographic version of these figures would use 2019-20 shapefiles from @bhatiaMergingUpdatedDistrictlevel2020, despite our \"treatment\" year being 2007-08. The splintering of districts into multiple neighbors over time allocates the same value of the 2007-08 treatment across neighbors, a rank wreckage equivalent to spatial autocorrelation in treatment when using 2019-20 geometry."
+    "As was evident from @fig-map1-fig and @fig-map2-fig, numerous districts are still missing from the data or are not comparable across all map variables. Perhaps the assumption of no carveouts and border shifts was a false one to make. And yet, even if all districts were perfectly matched, problems would arise. These figures use 2019-20 shapefiles from @bhatiaMergingUpdatedDistrictlevel2020, despite our \"treatment\" year being 2007-08. The splintering of districts into multiple neighbors over time allocates the same value of the 2007-08 treatment across neighbors, a rank wreckage equivalent to spatial autocorrelation in treatment when using 2019-20 geometry."
 
   lines[startsWith(lines, "As was evident from @fig-map1-fig and @fig-map2-fig")] <-
-    "The withheld final map figures underscore the same district-harmonization problem: numerous districts are still missing from the validated geometry join. Perhaps the assumption of no carveouts and border shifts was a false one to make. And yet, even if all districts were perfectly matched, problems would arise. The geographic version of these figures would use 2019-20 shapefiles from @bhatiaMergingUpdatedDistrictlevel2020, despite our \"treatment\" year being 2007-08. The splintering of districts into multiple neighbors over time allocates the same value of the 2007-08 treatment across neighbors, a rank wreckage equivalent to spatial autocorrelation in treatment when using 2019-20 geometry."
+    "As was evident from @fig-map1-fig and @fig-map2-fig, numerous districts are still missing from the data or are not comparable across all map variables. Perhaps the assumption of no carveouts and border shifts was a false one to make. And yet, even if all districts were perfectly matched, problems would arise. These figures use 2019-20 shapefiles from @bhatiaMergingUpdatedDistrictlevel2020, despite our \"treatment\" year being 2007-08. The splintering of districts into multiple neighbors over time allocates the same value of the 2007-08 treatment across neighbors, a rank wreckage equivalent to spatial autocorrelation in treatment when using 2019-20 geometry."
 
   lines[startsWith(lines, "We can control for this spatial autocorrelation by incorporating spatial lags into our model. To test for spatial autocorrelation")] <-
     "We can control for this spatial autocorrelation by incorporating spatial lags into our model. To test for spatial autocorrelation we would follow p. 323 of @anselin2001 and construct a Moran's I statistic; but proper estimation of it would depend on us having proper shapefiles for the year of interest with which to build contiguity neighbor lists. If our unit of analysis ends up being 2001 districts, then this would require 2001 shapefiles. The current 2019-20 shapefile is available in the repository, but the active district panel is not yet joined to geometry with a validated 2001/2007-to-2020 crosswalk, so we do not report Moran's I $p$-values in this draft. Future work will combine shapefiles from the 2011 and 2001 censuses with the data harmonization changes described in @sec-distma to ensure these reflect genuine spatial autocorrelation as opposed to the flaws of our current district tracking methodology."
@@ -376,6 +378,27 @@ output_table_helper_chunk <- function() {
     "  if (length(value) == 0L || all(is.na(value))) return(\"—\")",
     "  paste(value, collapse = \", \")",
     "}",
+    "table_caption <- function(name) {",
+    "  captions <- c(",
+    "    sum_tbl_probit_cat = \"Summary Statistics for Enrollment Participation Model (Categorical Variables)\",",
+    "    sum_tbl_probit_quant = \"Summary Statistics for Enrollment Participation Model (Numeric Variables)\",",
+    "    probit_mfx = \"Average Marginal Effects and Counterfactual Comparisons for Enrollment Probit\",",
+    "    sum_tbl_iv = \"Summary Statistics for 2SLS Model\",",
+    "    fs_cons = \"First-Stage Regression: EMI Exposure on Linguistic Distance\",",
+    "    cons_iv = \"Second-Stage Regression: Consumption Growth on EMIE (Fitted)\"",
+    "  )",
+    "  captions[[name]] %||% name",
+    "}",
+    "table_note <- function(name) {",
+    "  switch(name,",
+    "    sum_tbl_probit_quant = \"Min. = minimum; 1Q = first quartile; Med. = median; 3Q = third quartile; Max. = maximum; Mean = arithmetic mean; SD = standard deviation; N = number of observations.\",",
+    "    sum_tbl_iv = \"Min. = minimum; 1Q = first quartile; Med. = median; 3Q = third quartile; Max. = maximum; Mean = arithmetic mean; SD = standard deviation; N = number of observations.\",",
+    "    sum_tbl_probit_cat = \"Values = all possible values; Mode = most frequent value; Pct. Mode = percent of observations taking the modal value; Least Freq. = least frequent value; Pct. Least Freq. = percent of observations taking the least frequent value; N = number of observations.\",",
+    "    probit_mfx = \"Data from the 64th round of the NSS, Participation and Expenditure in Education, 2007-08. Standard errors are design-based and use the active survey design.\",",
+    "    fs_cons = \"Standard errors clustered by state in parentheses.\",",
+    "    cons_iv = \"Standard errors clustered by state in parentheses.\",",
+    "    NULL)",
+    "}",
     "resolve_public_output_path <- function(path) {",
     "  candidates <- unique(c(path, file.path(getwd(), path), file.path(\"paper\", path), file.path(dirname(knitr::current_input()), path), sub(\"^\\\\.\\\\./\", \"\", path)))",
     "  hit <- candidates[file.exists(candidates) & file.info(candidates)$size > 0]",
@@ -384,9 +407,7 @@ output_table_helper_chunk <- function() {
     "}",
     "read_public_table <- function(path) {",
     "  df <- utils::read.csv(resolve_public_output_path(path), check.names = FALSE, na.strings = character())",
-    "  for (nm in names(df)) if (is.character(df[[nm]])) {",
-    "    df[[nm]][is.na(df[[nm]])] <- \"\"",
-    "  }",
+    "  for (nm in names(df)) if (is.character(df[[nm]])) df[[nm]][is.na(df[[nm]])] <- \"\"",
     "  df",
     "}",
     "summary_table_groups <- function(df) {",
@@ -407,23 +428,36 @@ output_table_helper_chunk <- function() {
     "  if (is.null(groups)) groups <- data.frame()",
     "  list(data = df[!group_row, , drop = FALSE], groups = groups)",
     "}",
+    "wrap_cell <- function(x, width = 28L) {",
+    "  x <- as.character(x); x[is.na(x)] <- \"\"",
+    "  vapply(x, function(value) if (!nzchar(value) || grepl(\"\\\\\\\\\", value, fixed = TRUE)) value else paste(strwrap(value, width = width), collapse = \"\\\\\\\\\"), character(1), USE.NAMES = FALSE)",
+    "}",
+    "wrap_table_text <- function(df) {",
+    "  for (nm in intersect(c(\"Variable\", \"Description\", \"Values\", \"Mode\", \"Least Freq.\", \"Term\"), names(df))) {",
+    "    df[[nm]] <- wrap_cell(df[[nm]], switch(nm, Description = 34L, Values = 36L, Term = 34L, 24L))",
+    "  }",
+    "  df",
+    "}",
     "render_public_table <- function(path, name) {",
     "  df <- read_public_table(path)",
     "  grouped <- summary_table_groups(df)",
-    "  df_render <- grouped$data",
+    "  df_render <- wrap_table_text(grouped$data)",
     "  wide <- name %in% c(\"sum_tbl_iv\", \"sum_tbl_probit_quant\", \"sum_tbl_probit_cat\")",
-    "  tab <- knitr::kable(df_render, digits = 3, booktabs = knitr::is_latex_output(), longtable = knitr::is_latex_output() && !wide, escape = FALSE, row.names = FALSE)",
+    "  tab <- knitr::kable(df_render, digits = 3, booktabs = knitr::is_latex_output(), longtable = knitr::is_latex_output() && !wide, escape = FALSE, row.names = FALSE, caption = table_caption(name), linesep = \"\")",
     "  if (knitr::is_latex_output() && requireNamespace(\"kableExtra\", quietly = TRUE)) {",
     "    opts <- c(\"striped\")",
     "    if (!wide) opts <- c(opts, \"repeat_header\")",
-    "    if (wide) opts <- c(opts, \"scale_down\")",
     "    if (name %in% c(\"probit_mfx\", \"fs_cons\", \"cons_iv\")) opts <- c(opts, \"hold_position\")",
-    "    tab <- kableExtra::kable_styling(tab, latex_options = opts, position = \"center\", full_width = FALSE, font_size = if (wide) 8 else NULL)",
-    "    if (nrow(grouped$groups)) {",
-    "      for (i in rev(seq_len(nrow(grouped$groups)))) {",
-    "        tab <- kableExtra::pack_rows(tab, grouped$groups$label[[i]], grouped$groups$start[[i]], grouped$groups$end[[i]], bold = TRUE, italic = FALSE, background = \"gray!12\", escape = FALSE)",
-    "      }",
-    "    }",
+    "    tab <- kableExtra::kable_styling(tab, latex_options = opts, position = \"center\", full_width = FALSE)",
+    "    if (nrow(grouped$groups)) for (i in rev(seq_len(nrow(grouped$groups)))) tab <- kableExtra::pack_rows(tab, grouped$groups$label[[i]], grouped$groups$start[[i]], grouped$groups$end[[i]], bold = TRUE, italic = FALSE, background = \"white\", escape = FALSE)",
+    "    if (name == \"sum_tbl_probit_cat\") tab <- tab |> kableExtra::column_spec(1, width = \"3.5cm\") |> kableExtra::column_spec(2, width = \"5.6cm\") |> kableExtra::column_spec(4, width = \"1.7cm\") |> kableExtra::column_spec(6, width = \"1.9cm\")",
+    "    if (name == \"sum_tbl_iv\") tab <- tab |> kableExtra::column_spec(1, width = \"3.2cm\") |> kableExtra::column_spec(2, width = \"5.0cm\")",
+    "    if (name == \"sum_tbl_probit_quant\") tab <- tab |> kableExtra::column_spec(1, width = \"4.5cm\")",
+    "    if (name == \"probit_mfx\") tab <- kableExtra::add_header_above(tab, c(\" \" = 1, \"Enrolled (1 = yes)\" = 1), escape = FALSE)",
+    "    if (name == \"fs_cons\") tab <- kableExtra::add_header_above(tab, c(\" \" = 1, \"EMI Exposure\" = 1), escape = FALSE)",
+    "    if (name == \"cons_iv\") tab <- kableExtra::add_header_above(tab, c(\" \" = 1, \"Consumption Growth\" = 1), escape = FALSE)",
+    "    note <- table_note(name)",
+    "    if (!is.null(note)) tab <- kableExtra::footnote(tab, general = note, threeparttable = TRUE, footnote_as_chunk = TRUE, escape = FALSE)",
     "    if (wide) tab <- kableExtra::landscape(tab)",
     "  }",
     "  tab",
