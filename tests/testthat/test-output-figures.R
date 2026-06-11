@@ -56,7 +56,7 @@ test_that("legacy regions overwrite numeric source codes with named categories",
   expect_equal(as.character(out$region), c("North", "South"))
 })
 
-test_that("map collage order matches legacy captions", {
+test_that("map collage order matches public captions", {
   cfg <- list(mode = "final", output_formats = list(figures = "png"))
   panel <- data.frame(
     emie_2007 = 1,
@@ -69,6 +69,6 @@ test_that("map collage order matches legacy captions", {
 
   figs <- make_figures(panel, character(), cfg)
 
-  expect_equal(figs$collage_main_maps$inputs, c("map_emi_exposure", "map_consumption_growth", "map_education", "map_pucca"))
+  expect_equal(figs$collage_main_maps$inputs, c("map_emi_exposure", "map_consumption_growth", "map_pucca", "map_education"))
   expect_equal(figs$collage_iv_region_maps$inputs, c("map_region", "map_linguistic_distance"))
 })
