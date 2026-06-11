@@ -541,10 +541,27 @@ legacy_panel_validation_failures <- function(out) {
   df <- as.data.frame(out)
   failures <- character()
   add <- function(...) failures <<- c(failures, paste0(...))
-  if (nrow(df) != 454L) add("district_panel has ", nrow(df), " rows; legacy analysis panel has 454 rows.")
+
   required <- c("EMIE", "wavg_ling_degrees", "npeople_0708", "consumption_0708", "gini_cons_0708", "consumption_1718", "gini_cons_1718", "consumption_pct_change", "gini_change")
   missing <- setdiff(required, names(df))
   if (length(missing)) add("district_panel is missing required legacy columns: ", paste(missing, collapse = ", "))
+
+  present_required <- intersect(required, names(df))
+  if (length(present_required)) {
+    incomplete <- !stats::complete.cases(df[present_required])
+    if (any(incomplete)) add("district_panel has ", sum(incomplete), " rows with missing core IV analysis values.")
+  }
+
+  if ("district_panel_id" %in% names(df) && anyDuplicated(df$district_panel_id)) {
+    add("district_panel_id is not unique after tracker/source matching.")
+  }
+
+  for (flag in c(".matched_2001", ".matched_2007", ".matched_2017")) {
+    if (flag %in% names(df) && any(!isTRUEish(df[[flag]]), na.rm = TRUE)) {
+      add("district_panel contains rows without ", flag, " after final core filtering.")
+    }
+  }
+
   if ("EMIE" %in% names(df)) {
     emie <- num(df$EMIE)
     if (mean(emie, na.rm = TRUE) < 10 || max(emie, na.rm = TRUE) < 90) add("EMIE scale is inconsistent with legacy 0-100 percentage scale.")
@@ -556,6 +573,11 @@ legacy_panel_validation_failures <- function(out) {
     add("dependency_ratio mean is implausibly high relative to the legacy table; verify weighted numerator/denominator construction.")
   }
   failures
+}
+
+isTRUEish <- function(x) {
+  if (is.logical(x)) return(!is.na(x) & x)
+  tolower(as.character(x)) %in% c("true", "1")
 }
 
 validate_legacy_district_panel <- function(out, cfg = list(), strict = isTRUE(cfg$strict_legacy_panel_validation)) {

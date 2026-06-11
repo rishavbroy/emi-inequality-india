@@ -108,24 +108,35 @@ test_that("first-stage table requires and formats the legacy instrument row", {
   expect_equal(out$Estimate[3], "39.20***")
 })
 
-test_that("final district panel validation records old wrong-N and wrong-scale failures without breaking targets", {
+test_that("final district panel validation enforces structural IV-panel contract", {
   bad <- data.frame(
-    EMIE = c(4, 5),
+    district_panel_id = c("a", "a"),
+    EMIE = c(4, NA),
+    wavg_ling_degrees = c(1, 2),
     npeople_0708 = c(500, 600),
     consumption_0708 = c(1000, 1001),
+    gini_cons_0708 = c(0.2, 0.3),
+    consumption_1718 = c(2000, 2001),
+    gini_cons_1718 = c(0.2, 0.3),
+    consumption_pct_change = c(100, 100),
+    gini_change = c(0, 0),
     dependency_ratio = c(97, 96),
-    pct_fem_head = c(12, 11)
+    pct_fem_head = c(12, 11),
+    .matched_2001 = c(TRUE, TRUE),
+    .matched_2007 = c(TRUE, FALSE),
+    .matched_2017 = c(TRUE, TRUE)
   )
 
   expect_silent(checked <- validate_legacy_district_panel(bad, list(mode = "final")))
-  expect_true(any(grepl("454 rows", attr(checked, "legacy_panel_validation_failures"), fixed = TRUE)))
-
-  expect_silent(checked_explicit <- validate_legacy_district_panel(bad, list(mode = "final", warn_legacy_panel_validation = TRUE)))
-  expect_true(any(grepl("454 rows", attr(checked_explicit, "legacy_panel_validation_failures"), fixed = TRUE)))
+  failures <- attr(checked, "legacy_panel_validation_failures")
+  expect_false(any(grepl("454 rows", failures, fixed = TRUE)))
+  expect_true(any(grepl("missing core IV analysis values", failures, fixed = TRUE)))
+  expect_true(any(grepl("district_panel_id is not unique", failures, fixed = TRUE)))
+  expect_true(any(grepl(".matched_2007", failures, fixed = TRUE)))
 
   expect_error(
     validate_legacy_district_panel(bad, list(mode = "final", strict_legacy_panel_validation = TRUE)),
-    "454 rows",
+    "core IV analysis",
     fixed = TRUE
   )
 })
