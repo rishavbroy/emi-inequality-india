@@ -357,8 +357,8 @@ make_first_stage_table <- function(first_stage_tests, cfg = list()) {
   )
   stat <- fs[fs$term == "wavg_ling_degrees", , drop = FALSE]
   if (nrow(stat)) {
-    f_value <- first_finite_value(stat, c("legacy_model_f", "partial_f"))
-    f_p <- first_finite_value(stat, c("legacy_model_p", "partial_p"))
+    f_value <- first_finite_value(stat, c("partial_f", "legacy_model_f"))
+    f_p <- first_finite_value(stat, c("partial_p", "legacy_model_p"))
     out <- rbind(out, data.frame(
       Term = "Instrument's F-Statistic",
       Estimate = paste0(sprintf("%.2f", f_value), ifelse(is.finite(f_p) & f_p < 0.001, "***", ifelse(is.finite(f_p) & f_p < 0.01, "**", ifelse(is.finite(f_p) & f_p < 0.05, "*", "")))),
