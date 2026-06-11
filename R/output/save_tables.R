@@ -164,9 +164,9 @@ render_table_math_labels <- function(df) {
   df <- as.data.frame(df, check.names = FALSE, stringsAsFactors = FALSE)
   for (nm in names(df)) {
     if (!is.character(df[[nm]])) next
-    df[[nm]] <- gsub("$%\\\\Delta", "$\\\\%\\\\Delta", df[[nm]], fixed = TRUE)
-    df[[nm]] <- gsub("$%\\Delta", "$\\%\\Delta", df[[nm]], fixed = TRUE)
-    df[[nm]] <- gsub("$\\\\%Delta", "$\\\\%\\\\Delta", df[[nm]], fixed = TRUE)
+    df[[nm]] <- gsub("$\\%\\Delta\\text{Consumption}$", "Percent change in consumption", df[[nm]], fixed = TRUE)
+    df[[nm]] <- gsub("$%\\Delta\\text{Consumption}$", "Percent change in consumption", df[[nm]], fixed = TRUE)
+    df[[nm]] <- gsub("$\\Delta\\text{Gini}^{\\text{Consumption}}$", "Change in Gini of consumption", df[[nm]], fixed = TRUE)
   }
   df
 }
@@ -207,7 +207,8 @@ save_table_tex <- function(table, path, name, public = TRUE) {
     label = table_label(name),
     caption = table_caption(name),
     escape = FALSE,
-    digits = 3
+    digits = 3,
+    row.names = FALSE
   )
   latex_options <- c("striped")
   if (!wide_summary_table) latex_options <- c(latex_options, "repeat_header")
