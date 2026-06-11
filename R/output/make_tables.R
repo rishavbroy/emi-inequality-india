@@ -121,6 +121,18 @@ regression_display_table <- function(terms, estimates, std_errors, p_values, out
   rows
 }
 
+first_finite_scalar <- function(value) {
+  value <- suppressWarnings(as.numeric(value))
+  value <- value[is.finite(value)]
+  if (length(value)) value[[1]] else NA_real_
+}
+
+format_gof_number <- function(value, digits = 3L, integer = FALSE) {
+  value <- first_finite_scalar(value)
+  if (!is.finite(value)) return("")
+  if (isTRUE(integer)) sprintf("%.0f", value) else sprintf(paste0("%.", digits, "f"), value)
+}
+
 model_gof_rows <- function(model, outcome_label) {
   if (is.null(model) || is_model_status_payload(model)) return(data.frame())
   sm <- tryCatch(summary(model), error = function(e) NULL)
@@ -131,10 +143,10 @@ model_gof_rows <- function(model, outcome_label) {
   data.frame(
     Term = c("Observations", "R-squared", "Adjusted R-squared", "Model's F-Statistic"),
     value = c(
-      ifelse(is.finite(nobs), sprintf("%.0f", nobs), ""),
-      ifelse(is.finite(r2), sprintf("%.3f", r2), ""),
-      ifelse(is.finite(adj_r2), sprintf("%.3f", adj_r2), ""),
-      ifelse(is.finite(fstat), sprintf("%.2f", fstat), "")
+      format_gof_number(nobs, integer = TRUE),
+      format_gof_number(r2),
+      format_gof_number(adj_r2),
+      format_gof_number(fstat, digits = 2L)
     ),
     check.names = FALSE,
     stringsAsFactors = FALSE
@@ -145,18 +157,30 @@ model_gof_rows <- function(model, outcome_label) {
 probit_gof_rows <- function(selection_model, n, outcome_label) {
   rows <- data.frame(
     Term = "Observations",
-    value = ifelse(is.finite(n), sprintf("%.0f", n), ""),
+    value = format_gof_number(n, integer = TRUE),
     stringsAsFactors = FALSE
   )
-  if (inherits(selection_model, "glm")) {
-    loglik <- tryCatch(as.numeric(stats::logLik(selection_model)), error = function(e) NA_real_)
+
+  # The active participation model is fit with survey::svyglm(), which is
+  # design-based rather than maximum-likelihood.  Likelihood-based quantities
+  # such as log-likelihood and McFadden's pseudo-R^2 are therefore deliberately
+  # omitted for svyglm objects; calling stats::logLik() on svyglm emits the
+  # survey package warning that the model was not fitted by maximum likelihood.
+  # If this helper is reused for an ordinary glm in diagnostics, the usual ML
+  # summary rows are still meaningful and are reported.
+  if (inherits(selection_model, "glm") && !inherits(selection_model, "svyglm")) {
+    loglik <- tryCatch(stats::logLik(selection_model), error = function(e) NA_real_)
     null_dev <- tryCatch(selection_model$null.deviance, error = function(e) NA_real_)
     dev <- tryCatch(selection_model$deviance, error = function(e) NA_real_)
-    pseudo_r2 <- if (is.finite(null_dev) && null_dev > 0 && is.finite(dev)) 1 - dev / null_dev else NA_real_
+    pseudo_r2 <- if (is.finite(first_finite_scalar(null_dev)) && first_finite_scalar(null_dev) > 0 && is.finite(first_finite_scalar(dev))) {
+      1 - first_finite_scalar(dev) / first_finite_scalar(null_dev)
+    } else {
+      NA_real_
+    }
     rows <- rbind(
       rows,
-      data.frame(Term = "Log Likelihood", value = ifelse(is.finite(loglik), sprintf("%.2f", loglik), ""), stringsAsFactors = FALSE),
-      data.frame(Term = "McFadden pseudo-R-squared", value = ifelse(is.finite(pseudo_r2), sprintf("%.3f", pseudo_r2), ""), stringsAsFactors = FALSE)
+      data.frame(Term = "Log Likelihood", value = format_gof_number(loglik, digits = 2L), stringsAsFactors = FALSE),
+      data.frame(Term = "McFadden pseudo-R-squared", value = format_gof_number(pseudo_r2), stringsAsFactors = FALSE)
     )
   }
   stats::setNames(rows, c("Term", outcome_label))

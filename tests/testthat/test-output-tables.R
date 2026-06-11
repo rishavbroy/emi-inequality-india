@@ -202,6 +202,28 @@ test_that("probit table uses compact dependent-variable header and fit statistic
   expect_true("Observations" %in% out$Term)
 })
 
+
+
+test_that("survey-weighted probit table omits likelihood-based fit statistics", {
+  svy_model <- structure(
+    list(null.deviance = 100, deviance = 80),
+    class = c("svyglm", "glm")
+  )
+
+  out <- probit_gof_rows(svy_model, 100, "Enrolled (1 = yes)")
+
+  expect_equal(out$Term, "Observations")
+  expect_false("Log Likelihood" %in% out$Term)
+  expect_false("McFadden pseudo-R-squared" %in% out$Term)
+})
+
+test_that("GOF number formatting returns one cell for empty statistics", {
+  expect_equal(format_gof_number(numeric()), "")
+  expect_equal(format_gof_number(NULL), "")
+  expect_equal(format_gof_number(c(NA_real_, 2.3456)), "2.346")
+})
+
+
 test_that("regression GOF rows omit residual standard error", {
   first_stage <- data.frame(
     model = rep("consumption", 2),
