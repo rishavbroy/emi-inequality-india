@@ -287,27 +287,33 @@ legacy_map_fill <- function(plot_data, variable, style) {
     plot_data$.map_fill <- as.character(fac)
     plot_data$.map_fill[is.na(plot_data$.map_fill) | !nzchar(plot_data$.map_fill)] <- "No data"
     plot_data$.map_fill <- factor(plot_data$.map_fill, levels = levels)
-    colors <- stats::setNames(c(legacy_palette_values(style$palette, length(levels) - 1L), "grey82"), levels)
+    colors <- stats::setNames(c(legacy_palette_values(style$palette, length(levels) - 1L), "grey70"), levels)
     return(list(data = plot_data, fill = ".map_fill", colors = colors, title = style$title))
   }
 
   breaks <- style$breaks
   labels <- style$labels
   if (is.null(breaks)) {
-    breaks <- legacy_pretty_breaks(values, n = 5L)
+    if (identical(variable, "wavg_ling_degrees")) {
+      vmax <- suppressWarnings(max(values, na.rm = TRUE))
+      breaks <- legacy_pretty_breaks(c(0, vmax), n = 5L)
+      if (length(breaks)) breaks[[1]] <- 0
+    } else {
+      breaks <- legacy_pretty_breaks(values, n = 5L)
+    }
     labels <- legacy_cut_labels(breaks)
   }
   if (is.null(breaks) || length(breaks) < 2L) {
     levels <- "No data"
     plot_data$.map_fill <- factor("No data", levels = levels)
-    colors <- stats::setNames("grey82", levels)
+    colors <- stats::setNames("grey70", levels)
   } else {
     if (is.null(labels) || length(labels) != length(breaks) - 1L) labels <- legacy_cut_labels(breaks)
     levels <- c(labels, "No data")
     plot_data$.map_fill <- as.character(cut(values, breaks = breaks, include.lowest = TRUE, right = TRUE, labels = labels))
     plot_data$.map_fill[is.na(plot_data$.map_fill) | !nzchar(plot_data$.map_fill)] <- "No data"
     plot_data$.map_fill <- factor(plot_data$.map_fill, levels = levels)
-    colors <- stats::setNames(c(legacy_palette_values(style$palette, length(labels)), "grey82"), levels)
+    colors <- stats::setNames(c(legacy_palette_values(style$palette, length(labels)), "grey70"), levels)
   }
   list(data = plot_data, fill = ".map_fill", colors = colors, title = style$title)
 }
@@ -326,8 +332,8 @@ build_legacy_ggplot_map <- function(plot_data, spec) {
     ggplot2::theme_void(base_size = 10) +
     ggplot2::theme(
       legend.position = "right",
-      legend.title = ggplot2::element_text(size = 10),
-      legend.text = ggplot2::element_text(size = 8),
+      legend.title = ggplot2::element_text(size = 11),
+      legend.text = ggplot2::element_text(size = 9),
       plot.margin = grid::unit(c(2, 2, 2, 2), "pt")
     )
 }
@@ -347,7 +353,7 @@ save_map_figure <- function(spec, path_base, district_panel, formats, boundaries
   plot_data <- complete_map_geometry(district_panel, boundaries_2020, spec$variable)
   plot_data <- prepare_legacy_map_data(plot_data, spec$variable)
   p <- build_legacy_ggplot_map(plot_data, spec)
-  save_map_plot_formats(p, path_base, formats, width = 8, height = 6, dpi = 300)
+  save_map_plot_formats(p, path_base, formats, width = 7.2, height = 5.2, dpi = 300)
 }
 
 read_carveout_shift_data <- function(path = "data/raw/district_changes/District Carve-Outs and Renamings 1961-2001.csv") {
@@ -388,8 +394,8 @@ save_district_carveouts_shifts <- function(spec, path_base, formats) {
       y = "Number of 2001 Districts",
       x = "Percentage of a 1991 District's Population in the 2001 District"
     ) +
-    ggplot2::theme_minimal(base_size = 12)
-  save_plot_formats(p, path_base, formats, width = 7, height = 4.5, dpi = 300)
+    ggplot2::theme_grey(base_size = 10)
+  save_plot_formats(p, path_base, formats, width = 5.75, height = 3.5, dpi = 300)
 }
 
 save_ilo_collage <- function(spec, path_base, formats) {
@@ -406,8 +412,10 @@ save_collage <- function(spec, path_base, written, formats) {
   inputs <- inputs[file.exists(inputs)]
   if (!length(inputs)) return(save_status_figure(spec, format_path(path_base, "png")))
   need_pkg("magick", "figure collage")
-  imgs <- lapply(inputs, function(p) magick::image_scale(magick::image_read(p), "1900"))
-  collage <- magick::image_append(magick::image_join(imgs), stack = TRUE)
+  imgs <- lapply(inputs, function(p) magick::image_scale(magick::image_read(p), "1200"))
+  rows <- split(imgs, ceiling(seq_along(imgs) / 2))
+  row_imgs <- lapply(rows, function(row) magick::image_append(magick::image_join(row), stack = FALSE))
+  collage <- magick::image_append(magick::image_join(row_imgs), stack = TRUE)
   save_magick_formats(collage, path_base, formats)
 }
 

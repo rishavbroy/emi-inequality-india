@@ -72,3 +72,11 @@ test_that("map collage order matches public captions", {
   expect_equal(figs$collage_main_maps$inputs, c("map_emi_exposure", "map_consumption_growth", "map_pucca", "map_education"))
   expect_equal(figs$collage_iv_region_maps$inputs, c("map_region", "map_linguistic_distance"))
 })
+
+test_that("linguistic-distance map labels begin at zero and no-data uses visible grey", {
+  df <- data.frame(wavg_ling_degrees = c(0.0001089, 1.5, 5, NA))
+  fill <- legacy_map_fill(df, "wavg_ling_degrees", legacy_map_style("wavg_ling_degrees"))
+
+  expect_true(startsWith(levels(fill$data$.map_fill)[[1]], "0-"))
+  expect_equal(unname(fill$colors[["No data"]]), "grey70")
+})
