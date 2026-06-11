@@ -325,7 +325,7 @@ save_table_tex <- function(table, path, name, public = TRUE) {
   }
   note <- legacy_table_note(name)
   if (!is.null(note)) {
-    tex <- kableExtra::footnote(tex, general = note, threeparttable = TRUE, footnote_as_chunk = TRUE, escape = FALSE)
+    tex <- kableExtra::footnote(tex, general = note, threeparttable = FALSE, footnote_as_chunk = TRUE, escape = FALSE)
   }
   if (wide_summary_table) {
     tex <- kableExtra::landscape(tex)

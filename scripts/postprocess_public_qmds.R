@@ -488,7 +488,7 @@ output_table_helper_chunk <- function() {
     "    if (name == \"cons_iv\") tab <- kableExtra::add_header_above(tab, c(\" \" = 1, \"Consumption Growth\" = 1), escape = FALSE)",
     "    tab <- style_regression_table(tab, df_render, name)",
     "    note <- table_note(name)",
-    "    if (!is.null(note)) tab <- kableExtra::footnote(tab, general = note, threeparttable = TRUE, footnote_as_chunk = TRUE, escape = FALSE)",
+    "    if (!is.null(note)) tab <- kableExtra::footnote(tab, general = note, threeparttable = FALSE, footnote_as_chunk = TRUE, escape = FALSE)",
     "    if (wide) tab <- kableExtra::landscape(tab)",
     "  }",
     "  tab",
