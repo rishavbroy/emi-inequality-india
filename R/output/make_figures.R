@@ -96,7 +96,7 @@ make_figures <- function(district_panel, raw_ilo_figures, cfg, boundaries_2020 =
       "collage_main_maps.png",
       "Main district-level map inputs",
       kind = "collage",
-      inputs = c("map_emi_exposure", "map_consumption_growth", "map_education", "map_pucca")
+      inputs = c("map_emi_exposure", "map_consumption_growth", "map_pucca", "map_education")
     ),
     collage_iv_region_maps = figure_spec(
       "collage_iv_region_maps",

@@ -148,9 +148,19 @@ complete_map_geometry <- function(district_panel, boundaries_2020, variable) {
   keep <- intersect(keep, names(panel_df))
   panel_df <- panel_df[!duplicated(panel_df[keys]), keep, drop = FALSE]
   out <- merge(b, panel_df, by = keys, all.x = TRUE, sort = FALSE)
-  sf::st_as_sf(out, sf_column_name = geom_col)
-}
+  out <- sf::st_as_sf(out, sf_column_name = geom_col)
 
+  panel_nonmissing <- if (variable %in% names(panel_df)) sum(!is.na(panel_df[[variable]])) else 0L
+  out_nonmissing <- if (variable %in% names(out)) sum(!is.na(out[[variable]])) else 0L
+  # If the full-boundary merge loses most/all data, keep the validated panel
+  # geometry. Showing an all-grey full-boundary map is worse than showing the
+  # matched panel geography with explicit No data categories for genuinely
+  # missing matched rows.
+  if (panel_nonmissing > 0L && out_nonmissing < max(1L, floor(0.5 * panel_nonmissing))) {
+    return(panel)
+  }
+  out
+}
 numeric_map_bins <- function(x, variable) {
   x_num <- suppressWarnings(as.numeric(x))
   finite_x <- x_num[is.finite(x_num)]
@@ -218,7 +228,52 @@ map_diagnostic_plot <- function(plot_data, variable, title) {
   }
 }
 
-save_map_panel_formats <- function(map_plot, diagnostic_plot, path_base, formats, width = 8.5, height = 5.6, dpi = 300) {
+build_ggplot_map <- function(plot_data, spec, fill_values) {
+  ggplot2::ggplot(plot_data) +
+    ggplot2::geom_sf(ggplot2::aes(fill = .map_fill), color = "grey45", linewidth = 0.06) +
+    ggplot2::scale_fill_manual(values = fill_values, drop = FALSE, name = spec$title) +
+    ggplot2::theme_void(base_size = 12) +
+    ggplot2::theme(
+      legend.position = "right",
+      legend.title = ggplot2::element_text(size = 12),
+      legend.text = ggplot2::element_text(size = 10),
+      legend.key.height = grid::unit(0.34, "cm"),
+      legend.key.width = grid::unit(0.46, "cm"),
+      plot.margin = ggplot2::margin(2, 2, 2, 2)
+    )
+}
+
+build_tmap_map <- function(plot_data, spec, fill_values) {
+  if (!requireNamespace("tmap", quietly = TRUE)) return(NULL)
+  tryCatch({
+    old_mode <- tryCatch(tmap::tmap_mode("plot"), error = function(e) NULL)
+    on.exit(tryCatch(if (!is.null(old_mode)) tmap::tmap_mode(old_mode), error = function(e) NULL), add = TRUE)
+    tmap::tm_shape(plot_data) +
+      tmap::tm_polygons(
+        col = ".map_fill",
+        palette = fill_values,
+        title = spec$title,
+        border.col = "grey55",
+        lwd = 0.15,
+        colorNA = "grey82",
+        textNA = "No data"
+      ) +
+      tmap::tm_layout(
+        frame = FALSE,
+        legend.outside = TRUE,
+        legend.outside.position = "right",
+        legend.title.size = 1.0,
+        legend.text.size = 0.8,
+        inner.margins = 0.01
+      )
+  }, error = function(e) NULL)
+}
+
+map_plot_to_grob <- function(plot) {
+  grid::grid.grabExpr(print(plot))
+}
+
+save_map_panel_formats <- function(map_plot, diagnostic_plot, path_base, formats, width = 8.2, height = 5.4, dpi = 300) {
   paths <- vapply(formats, function(format) {
     path <- format_path(path_base, format)
     fmt <- tolower(format)
@@ -231,17 +286,18 @@ save_map_panel_formats <- function(map_plot, diagnostic_plot, path_base, formats
       return(path)
     }
     grid::grid.newpage()
-    layout <- grid::grid.layout(nrow = 1, ncol = 2, widths = grid::unit(c(4.8, 1.35), c("null", "null")))
+    layout <- grid::grid.layout(nrow = 1, ncol = 2, widths = grid::unit(c(5.2, 1.15), c("null", "null")))
     grid::pushViewport(grid::viewport(layout = layout))
-    print(map_plot, vp = grid::viewport(layout.pos.row = 1, layout.pos.col = 1))
-    print(diagnostic_plot, vp = grid::viewport(layout.pos.row = 1, layout.pos.col = 2))
+    map_grob <- map_plot_to_grob(map_plot)
+    diag_grob <- ggplot2::ggplotGrob(diagnostic_plot)
+    grid::grid.draw(map_grob, vp = grid::viewport(layout.pos.row = 1, layout.pos.col = 1))
+    grid::grid.draw(diag_grob, vp = grid::viewport(layout.pos.row = 1, layout.pos.col = 2))
     grid::popViewport()
     grDevices::dev.off()
     path
   }, character(1))
   unname(paths)
 }
-
 save_map_figure <- function(spec, path_base, district_panel, formats, boundaries_2020 = NULL) {
   if (!has_sf_geometry(district_panel)) {
     stop("Map figure '", spec$name, "' requires an sf district_panel with validated geometry.", call. = FALSE)
@@ -268,20 +324,10 @@ save_map_figure <- function(spec, path_base, district_panel, formats, boundaries
   }
   fill_values <- map_fill_values(plot_data$.map_fill, spec$variable)
 
-  p <- ggplot2::ggplot(plot_data) +
-    ggplot2::geom_sf(ggplot2::aes(fill = .map_fill), color = "grey45", linewidth = 0.06) +
-    ggplot2::scale_fill_manual(values = fill_values, drop = FALSE, name = spec$title) +
-    ggplot2::theme_void(base_size = 12) +
-    ggplot2::theme(
-      legend.position = "right",
-      legend.title = ggplot2::element_text(size = 11),
-      legend.text = ggplot2::element_text(size = 9),
-      legend.key.height = grid::unit(0.32, "cm"),
-      legend.key.width = grid::unit(0.42, "cm"),
-      plot.margin = ggplot2::margin(2, 2, 2, 2)
-    )
+  p <- build_tmap_map(plot_data, spec, fill_values)
+  if (is.null(p)) p <- build_ggplot_map(plot_data, spec, fill_values)
   diagnostic <- map_diagnostic_plot(plot_data, spec$variable, spec$title)
-  save_map_panel_formats(p, diagnostic, path_base, formats, width = 8.5, height = 5.6, dpi = 300)
+  save_map_panel_formats(p, diagnostic, path_base, formats, width = 8.2, height = 5.4, dpi = 300)
 }
 
 read_carveout_shift_data <- function(path = "data/raw/district_changes/District Carve-Outs and Renamings 1961-2001.csv") {
@@ -340,10 +386,8 @@ save_collage <- function(spec, path_base, written, formats) {
   inputs <- inputs[file.exists(inputs)]
   if (!length(inputs)) return(save_status_figure(spec, format_path(path_base, "png")))
   need_pkg("magick", "figure collage")
-  imgs <- lapply(inputs, function(p) magick::image_scale(magick::image_read(p), "1200"))
-  rows <- split(imgs, ceiling(seq_along(imgs) / 2))
-  row_imgs <- lapply(rows, function(row) magick::image_append(magick::image_join(row), stack = FALSE))
-  collage <- magick::image_append(magick::image_join(row_imgs), stack = TRUE)
+  imgs <- lapply(inputs, function(p) magick::image_scale(magick::image_read(p), "1900"))
+  collage <- magick::image_append(magick::image_join(imgs), stack = TRUE)
   save_magick_formats(collage, path_base, formats)
 }
 

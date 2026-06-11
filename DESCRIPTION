@@ -30,4 +30,5 @@ Imports:
     readODS,
     car,
     digest,
-    testthat
+    testthat,
+    tmap
