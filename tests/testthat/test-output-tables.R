@@ -13,7 +13,8 @@ test_that("save_tables honors requested csv and tex formats", {
   expect_true(file.exists(file.path("outputs/tables/main/sum_tbl_iv.csv")))
   tex <- paste(readLines(file.path("outputs/tables/main/sum_tbl_iv.tex"), warn = FALSE), collapse = "\n")
   expect_match(tex, "Summary Statistics for 2SLS Model", fixed = TRUE)
-  expect_match(tex, "longtable", fixed = TRUE)
+  expect_match(tex, "landscape", fixed = TRUE)
+  expect_false(grepl("longtable", tex, fixed = TRUE))
 })
 
 
@@ -103,9 +104,10 @@ test_that("first-stage public table reports instrument partial F before model F"
   out <- make_first_stage_table(first_stage, list(final = TRUE))
 
   f_row <- out[out$Term == "Instrument's F-Statistic", , drop = FALSE]
+  value_col <- setdiff(names(out), "Term")[[1]]
   expect_equal(nrow(f_row), 1L)
-  expect_match(f_row$Estimate[[1]], "9.46", fixed = TRUE)
-  expect_false(grepl("68.20", f_row$Estimate[[1]], fixed = TRUE))
+  expect_match(f_row[[value_col]][[1]], "9.46", fixed = TRUE)
+  expect_false(grepl("68.20", f_row[[value_col]][[1]], fixed = TRUE))
 })
 
 test_that("public summary tables use legacy display names and grouping rows", {

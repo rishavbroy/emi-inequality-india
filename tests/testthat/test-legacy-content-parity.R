@@ -87,25 +87,37 @@ test_that("first-stage table rejects numeric coefficient terms in final mode", {
   )
 })
 
-test_that("first-stage table requires and formats the legacy instrument row", {
+test_that("first-stage table reports full coefficients with standard errors beneath estimates", {
   fs <- data.frame(
     model = "consumption",
-    term = c("wavg_ling_degrees", "(Intercept)"),
-    estimate = c(2.945, 1.234),
-    std.error = c(0.949, 0.500),
-    p.value = c(0.004, 0.1),
-    partial_f = c(39.20, 39.20),
-    partial_p = c(0.0001, 0.0001),
+    term = c("wavg_ling_degrees", "consumption_0708", "(Intercept)"),
+    estimate = c(2.945, -0.111, 1.234),
+    std.error = c(0.949, 0.025, 0.500),
+    p.value = c(0.004, 0.02, 0.1),
+    partial_f = c(9.46, 9.46, 9.46),
+    partial_p = c(0.0021, 0.0021, 0.0021),
+    legacy_model_f = c(39.20, 39.20, 39.20),
+    legacy_model_p = c(0.0001, 0.0001, 0.0001),
     status = "estimated",
     stringsAsFactors = FALSE
   )
 
   out <- make_first_stage_table(fs, list(mode = "final"))
+  value_col <- setdiff(names(out), "Term")[[1]]
 
-  expect_equal(out$Term, c("Linguistic distance", "Constant", "Instrument's F-Statistic"))
-  expect_equal(out$Estimate[1], "2.945**")
-  expect_equal(out$`Std. Error`[1], "(0.949)")
-  expect_equal(out$Estimate[3], "39.20***")
+  expect_true(all(c(
+    "Linguistic distance", "Consumption, 2007-08", "Constant",
+    "Instrument's F-Statistic", "Model's F-Statistic"
+  ) %in% out$Term))
+
+  ling_row <- which(out$Term == "Linguistic distance")
+  expect_equal(out[[value_col]][[ling_row]], "2.945**")
+  expect_equal(out[[value_col]][[ling_row + 1L]], "(0.949)")
+
+  f_row <- out[out$Term == "Instrument's F-Statistic", , drop = FALSE]
+  model_f_row <- out[out$Term == "Model's F-Statistic", , drop = FALSE]
+  expect_equal(f_row[[value_col]][[1]], "9.46**")
+  expect_equal(model_f_row[[value_col]][[1]], "39.20")
 })
 
 test_that("final district panel validation enforces structural IV-panel contract", {
