@@ -83,7 +83,7 @@ save_plot_formats <- function(plot, path_base, formats, width = 7, height = 5, d
       # session default graphics device, which can create stray Rplots.pdf
       # files when a plot is printed outside an active device. cairo_pdf also
       # handles text encoding more robustly than the default PDF device.
-      pdf_device <- if (isTRUE(grDevices::capabilities("cairo"))) grDevices::cairo_pdf else grDevices::pdf
+      pdf_device <- if (isTRUE(capabilities("cairo"))) grDevices::cairo_pdf else grDevices::pdf
       ggplot2::ggsave(path, plot = plot, width = width, height = height, device = pdf_device, bg = "white")
     } else if (identical(fmt, "png")) {
       ggplot2::ggsave(path, plot = plot, width = width, height = height, dpi = dpi, device = "png", bg = "white")
