@@ -33,11 +33,11 @@ legacy_table_caption_text <- function(name) {
 
 regression_caption <- function(cap) {
   paste0(
-    "\\protect\\begin{tabular}[t]{@{}l@{}}",
+    "\\protect\\parbox[t]{0.92\\linewidth}{",
     "\\textit{", regression_star_note(), "}",
     "\\\\",
     cap,
-    "\\protect\\end{tabular}"
+    "}"
   )
 }
 
