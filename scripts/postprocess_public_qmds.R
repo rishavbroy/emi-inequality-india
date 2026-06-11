@@ -493,7 +493,7 @@ remove_report_output_objects <- function(lines) {
         next
       }
     }
-    if (grepl("\\{#fig-(map1|map2|ILO|districtcarveoutsshifts)-fig\\}", lines[[i]], perl = TRUE)) {
+    if (grepl("\\{#fig-(map1|map2|ILO|districtcarveoutsshifts)-fig(\\s|\\})", lines[[i]], perl = TRUE)) {
       i <- i + 1L
       next
     }
@@ -570,7 +570,7 @@ insert_district_note_output_objects <- function(lines) {
 }
 
 ensure_report_object <- function(lines, label, block) {
-  if (any(grepl(paste0("#", label, "\\}"), lines)) ||
+  if (any(grepl(paste0("#", label, "(\\s|\\})"), lines, perl = TRUE)) ||
       any(grepl(paste0("#\\|\\s*label:\\s*", label, "\\s*$"), lines, perl = TRUE))) {
     return(lines)
   }
