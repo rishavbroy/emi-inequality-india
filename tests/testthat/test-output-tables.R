@@ -161,3 +161,70 @@ test_that("regression public tables place standard errors below estimates", {
   expect_true("Instrument's F-Statistic" %in% out$Term)
   expect_false("Model's F-Statistic" %in% out$Term)
 })
+
+test_that("IV summary table retains legacy description column", {
+  panel <- data.frame(
+    EMIE = c(0, 10),
+    wavg_ling_degrees = c(0, 2),
+    npeople_0708 = c(1000, 2000),
+    consumption_0708 = c(700, 900),
+    gini_cons_0708 = c(.2, .3),
+    pct_urban = c(10, 20),
+    avg_hh_size = c(5, 6),
+    dependency_ratio = c(50, 60),
+    pct_fem_head = c(18, 20),
+    pct_hindu = c(80, 70),
+    pct_muslim = c(10, 20),
+    pct_other_religion = c(10, 10),
+    pct_st = c(1, 2), pct_sc = c(10, 15), pct_obc = c(40, 45),
+    pct_small_land = c(50, 55), pct_medium_land = c(30, 25), pct_large_land = c(2, 3),
+    pct_head_illiterate = c(30, 40), pct_head_lit_to_primary = c(30, 20), pct_head_secondary_plus = c(40, 40),
+    pct_pucca = c(50, 60),
+    npeople_1718 = c(1200, 2100), consumption_1718 = c(800, 1000), gini_cons_1718 = c(.25, .35),
+    consumption_pct_change = c(10, 20), gini_change = c(.01, .02)
+  )
+
+  out <- make_iv_summary_table(panel)
+  public <- format_table_for_output(out, public = TRUE)
+
+  expect_true("Description" %in% names(public))
+  expect_match(public$Description[public$Variable == "EMIE"][[1]], "English-medium", ignore.case = TRUE)
+})
+
+test_that("probit table uses compact dependent-variable header and fit statistics", {
+  out <- make_probit_ame_table(
+    data.frame(Term = "Age", term = "AGE", estimate = -0.1, std.error = 0.02, p.value = 0.01),
+    n = 100,
+    selection_model = NULL
+  )
+
+  expect_true("Enrolled (1 = yes)" %in% names(out))
+  expect_true("Observations" %in% out$Term)
+})
+
+test_that("regression GOF rows omit residual standard error", {
+  first_stage <- data.frame(
+    model = rep("consumption", 2),
+    term = c("wavg_ling_degrees", "(Intercept)"),
+    estimate = c(3.825, 17.7),
+    std.error = c(1.237, 23.5),
+    statistic = c(3.1, 0.75),
+    p.value = c(0.002, 0.45),
+    partial_f = c(9.56, 9.56),
+    partial_p = c(0.002, 0.002),
+    legacy_model_f = c(60, 60),
+    legacy_model_p = c(0, 0),
+    nobs = c(482, 482),
+    r.squared = c(.7, .7),
+    adj.r.squared = c(.68, .68),
+    sigma = c(13, 13),
+    status = rep("estimated", 2),
+    reason = c(NA_character_, NA_character_),
+    stringsAsFactors = FALSE
+  )
+
+  out <- make_first_stage_table(first_stage, list(mode = "final"))
+
+  expect_true("R-squared" %in% out$Term)
+  expect_false("Residual Std. Error" %in% out$Term)
+})

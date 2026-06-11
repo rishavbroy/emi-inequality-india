@@ -84,7 +84,7 @@ pipeline_targets <- list(
 
   tar_target(figures, make_figures(district_panel, raw_ilo_figures, cfg, boundaries_2020)),
   tar_target(figure_files, save_figures(figures, cfg), format = "file"),
-  tar_target(tables, make_tables(selection_data, ame_results, district_panel, iv_models, first_stage_tests, cfg)),
+  tar_target(tables, make_tables(selection_data, ame_results, district_panel, iv_models, first_stage_tests, cfg, selection_model)),
   tar_target(table_files, save_tables(tables, cfg), format = "file"),
   tar_target(report_values, build_report_values(ame_results, first_stage_tests, iv_models, selection_data, district_panel, diag_spatial_autocorrelation, cfg)),
 

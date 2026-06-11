@@ -35,6 +35,7 @@ legacy_numeric_stats <- function(df, meta, cost_vars = character()) {
       SD = stats::sd(x[ok], na.rm = TRUE)
     )
     z <- data.frame(var = v, label = meta$label[[i]], N = sum(ok), t(stats), check.names = FALSE, stringsAsFactors = FALSE)
+    if ("desc" %in% names(meta)) z$desc <- meta$desc[[i]]
     z
   })
   out <- safe_bind_rows(rows)
@@ -126,19 +127,39 @@ model_gof_rows <- function(model, outcome_label) {
   nobs <- tryCatch(stats::nobs(model), error = function(e) NA_real_)
   r2 <- tryCatch(sm$r.squared, error = function(e) NA_real_)
   adj_r2 <- tryCatch(sm$adj.r.squared, error = function(e) NA_real_)
-  sigma <- tryCatch(sm$sigma, error = function(e) NA_real_)
+  fstat <- tryCatch(sm$fstatistic[[1]], error = function(e) NA_real_)
   data.frame(
-    Term = c("Observations", "$R^2$", "Adjusted $R^2$", "Residual Std. Error"),
+    Term = c("Observations", "R-squared", "Adjusted R-squared", "Model's F-Statistic"),
     value = c(
       ifelse(is.finite(nobs), sprintf("%.0f", nobs), ""),
       ifelse(is.finite(r2), sprintf("%.3f", r2), ""),
       ifelse(is.finite(adj_r2), sprintf("%.3f", adj_r2), ""),
-      ifelse(is.finite(sigma), sprintf("%.3f", sigma), "")
+      ifelse(is.finite(fstat), sprintf("%.2f", fstat), "")
     ),
     check.names = FALSE,
     stringsAsFactors = FALSE
   ) |>
     stats::setNames(c("Term", outcome_label))
+}
+
+probit_gof_rows <- function(selection_model, n, outcome_label) {
+  rows <- data.frame(
+    Term = "Observations",
+    value = ifelse(is.finite(n), sprintf("%.0f", n), ""),
+    stringsAsFactors = FALSE
+  )
+  if (inherits(selection_model, "glm")) {
+    loglik <- tryCatch(as.numeric(stats::logLik(selection_model)), error = function(e) NA_real_)
+    null_dev <- tryCatch(selection_model$null.deviance, error = function(e) NA_real_)
+    dev <- tryCatch(selection_model$deviance, error = function(e) NA_real_)
+    pseudo_r2 <- if (is.finite(null_dev) && null_dev > 0 && is.finite(dev)) 1 - dev / null_dev else NA_real_
+    rows <- rbind(
+      rows,
+      data.frame(Term = "Log Likelihood", value = ifelse(is.finite(loglik), sprintf("%.2f", loglik), ""), stringsAsFactors = FALSE),
+      data.frame(Term = "McFadden pseudo-R-squared", value = ifelse(is.finite(pseudo_r2), sprintf("%.3f", pseudo_r2), ""), stringsAsFactors = FALSE)
+    )
+  }
+  stats::setNames(rows, c("Term", outcome_label))
 }
 
 
@@ -320,7 +341,7 @@ clustered_model_vcov <- function(model) {
 #' make tables
 #'
 #' @return A named list of data frames consumed by save_tables().
-make_tables <- function(selection_data, ame_results, district_panel, iv_models, first_stage_tests, cfg) {
+make_tables <- function(selection_data, ame_results, district_panel, iv_models, first_stage_tests, cfg, selection_model = NULL) {
   cons_iv <- tidy_iv_models(iv_models)
   cons_iv_required <- filter_table_model(cons_iv, c("consumption", "baseline"))
   table_failures <- c(
@@ -333,7 +354,7 @@ make_tables <- function(selection_data, ame_results, district_panel, iv_models, 
     selection_n = data.frame(n = nrow(as.data.frame(selection_data))),
     sum_tbl_probit_quant = make_selection_summary_numeric_table(selection_data),
     sum_tbl_probit_cat = make_selection_summary_categorical_table(selection_data),
-    probit_mfx = make_probit_ame_table(ame_results, nrow(as.data.frame(selection_data))),
+    probit_mfx = make_probit_ame_table(ame_results, nrow(as.data.frame(selection_data)), selection_model),
     sum_tbl_iv = make_iv_summary_table(district_panel),
     fs_cons = make_first_stage_table(first_stage_tests, cfg),
     cons_iv = make_second_stage_table(iv_models),
@@ -365,7 +386,7 @@ make_selection_summary_categorical_table <- function(selection_data) {
   legacy_categorical_stats(selection_data, meta)
 }
 
-make_probit_ame_table <- function(ame_results, n = NA_integer_) {
+make_probit_ame_table <- function(ame_results, n = NA_integer_, selection_model = NULL) {
   out <- as.data.frame(ame_results, stringsAsFactors = FALSE)
   if (!"Term" %in% names(out)) out$Term <- out$term
   display <- regression_display_table(
@@ -373,12 +394,8 @@ make_probit_ame_table <- function(ame_results, n = NA_integer_) {
     estimates = suppressWarnings(as.numeric(out$estimate)),
     std_errors = suppressWarnings(as.numeric(out$std.error)),
     p_values = suppressWarnings(as.numeric(out$p.value)),
-    outcome_label = "Enrolled in School (1 = yes)",
-    gof = data.frame(
-      Term = "Observations",
-      value = ifelse(is.finite(n), sprintf("%.0f", n), ""),
-      stringsAsFactors = FALSE
-    )
+    outcome_label = "Enrolled (1 = yes)",
+    gof = probit_gof_rows(selection_model, n, "Enrolled (1 = yes)")
   )
   display
 }
@@ -387,6 +404,26 @@ make_iv_summary_table <- function(district_panel) {
   meta <- data.frame(
     var = c("EMIE", "wavg_ling_degrees", "npeople_0708", "consumption_0708", "gini_cons_0708", "pct_urban", "avg_hh_size", "dependency_ratio", "pct_fem_head", "pct_hindu", "pct_muslim", "pct_other_religion", "pct_st", "pct_sc", "pct_obc", "pct_small_land", "pct_medium_land", "pct_large_land", "pct_head_illiterate", "pct_head_lit_to_primary", "pct_head_secondary_plus", "pct_pucca", "npeople_1718", "consumption_1718", "gini_cons_1718", "consumption_pct_change", "gini_change"),
     label = c("EMIE", "Ling. Distance", "Population", "Consumption", "Gini of Consumption", "Pct. Urban", "Avg. HH Size", "Dependency Ratio × 100", "Pct. Female Head", "Pct. Hindu", "Pct. Muslim", "Pct. Other", "Pct. ST", "Pct. SC", "Pct. OBC", "Pct. Small Land-Owner", "Pct. Med. Land-Owner", "Pct. Large Land-Owner", "Pct. Head Educ., Illiterate", "Pct. Head Educ., Lit.-Primary", "Pct. Head Educ., Secondary+", "Pct. Pucca", "Population", "Consumption", "Gini of Consumption", "Percent change in consumption", "Change in Gini of consumption"),
+    desc = c(
+      "Share of school-going children enrolled in English-medium instruction",
+      "Population-weighted linguistic distance from Hindi",
+      "Weighted district population in the 2007-08 education household file",
+      "Weighted mean monthly per-capita consumption in 2007-08",
+      "Weighted Gini coefficient of 2007-08 consumption",
+      "Share of population in urban sector",
+      "Average household size",
+      "Dependents per working-age person, multiplied by 100",
+      "Share of persons in female-headed households",
+      "Share Hindu", "Share Muslim", "Share other religion", "Share Scheduled Tribe", "Share Scheduled Caste", "Share Other Backward Class",
+      "Share with small landholdings", "Share with medium landholdings", "Share with large landholdings",
+      "Share of household heads who are illiterate", "Share of household heads literate through primary", "Share of household heads with secondary education or more",
+      "Share of households in pucca dwellings",
+      "Weighted district population in the 2017-18 education household file",
+      "Weighted mean monthly per-capita consumption in 2017-18",
+      "Weighted Gini coefficient of 2017-18 consumption",
+      "Percent change in consumption between 2007-08 and 2017-18",
+      "Change in consumption Gini between 2007-08 and 2017-18"
+    ),
     stringsAsFactors = FALSE
   )
   out <- legacy_numeric_stats(district_panel, meta, cost_vars = c("npeople_0708", "npeople_1718"))
@@ -448,12 +485,10 @@ make_first_stage_table <- function(first_stage_tests, cfg = list()) {
   nobs_value <- first_finite_value(stat, c("nobs", "n", "N"))
   r2_value <- first_finite_value(stat, c("r.squared", "r2"))
   adj_r2_value <- first_finite_value(stat, c("adj.r.squared", "adj_r2"))
-  sigma_value <- first_finite_value(stat, c("sigma", "residual_se"))
   gof <- safe_bind_rows(list(
     data.frame(Term = "Observations", value = ifelse(is.finite(nobs_value), sprintf("%.0f", nobs_value), ""), stringsAsFactors = FALSE),
-    data.frame(Term = "$R^2$", value = ifelse(is.finite(r2_value), sprintf("%.3f", r2_value), ""), stringsAsFactors = FALSE),
-    data.frame(Term = "Adjusted $R^2$", value = ifelse(is.finite(adj_r2_value), sprintf("%.3f", adj_r2_value), ""), stringsAsFactors = FALSE),
-    data.frame(Term = "Residual Std. Error", value = ifelse(is.finite(sigma_value), sprintf("%.3f", sigma_value), ""), stringsAsFactors = FALSE),
+    data.frame(Term = "R-squared", value = ifelse(is.finite(r2_value), sprintf("%.3f", r2_value), ""), stringsAsFactors = FALSE),
+    data.frame(Term = "Adjusted R-squared", value = ifelse(is.finite(adj_r2_value), sprintf("%.3f", adj_r2_value), ""), stringsAsFactors = FALSE),
     f_row
   ))
 

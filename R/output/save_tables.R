@@ -37,6 +37,37 @@ nice_column_name <- function(x) {
   tools::toTitleCase(x)
 }
 
+legacy_table_note <- function(name) {
+  switch(name,
+    sum_tbl_probit_quant = "Min. = minimum; 1Q = first quartile; Med. = median; 3Q = third quartile; Max. = maximum; Mean = arithmetic mean; SD = standard deviation; N = number of observations.",
+    sum_tbl_iv = "Min. = minimum; 1Q = first quartile; Med. = median; 3Q = third quartile; Max. = maximum; Mean = arithmetic mean; SD = standard deviation; N = number of observations.",
+    sum_tbl_probit_cat = "Values = all possible values; Mode = most frequent value; Pct. Mode = percent of observations taking the modal value; Least Freq. = least frequent value; Pct. Least Freq. = percent of observations taking the least frequent value; N = number of observations.",
+    probit_mfx = "Data from the 64th round of the NSS, Participation and Expenditure in Education, 2007-08. Standard errors are design-based and use the active survey design.",
+    fs_cons = "Standard errors clustered by state in parentheses.",
+    cons_iv = "Standard errors clustered by state in parentheses.",
+    NULL
+  )
+}
+
+wrap_table_cell <- function(x, width = 28L) {
+  x <- as.character(x)
+  x[is.na(x)] <- ""
+  vapply(x, function(value) {
+    if (!nzchar(value) || grepl("\\\\", value, fixed = TRUE)) return(value)
+    paste(strwrap(value, width = width), collapse = "\\\\ ")
+  }, character(1), USE.NAMES = FALSE)
+}
+
+wrap_table_text_columns <- function(df, name = NULL) {
+  df <- as.data.frame(df, check.names = FALSE, stringsAsFactors = FALSE)
+  text_cols <- intersect(c("Variable", "Description", "Values", "Mode", "Least Freq.", "Term"), names(df))
+  for (nm in text_cols) {
+    width <- switch(nm, Description = 34L, Values = 36L, Term = 34L, 24L)
+    df[[nm]] <- wrap_table_cell(df[[nm]], width = width)
+  }
+  df
+}
+
 drop_empty_output_columns <- function(out) {
   if (!nrow(out)) return(out)
   keep <- vapply(out, function(col) !all(is.na(col) | !nzchar(as.character(col))), logical(1))
@@ -56,7 +87,7 @@ format_public_summary_columns <- function(out) {
   }
   rename <- c("% Mode" = "Pct. Mode", "% Least Freq." = "Pct. Least Freq.")
   for (old in names(rename)) if (old %in% names(out)) names(out)[names(out) == old] <- rename[[old]]
-  preferred <- c("Variable", "Values", "Mode", "Pct. Mode", "Least Freq.", "Pct. Least Freq.", "Min", "1Q", "Med", "3Q", "Max", "Mean", "SD", "N")
+  preferred <- c("Variable", "Description", "Values", "Mode", "Pct. Mode", "Least Freq.", "Pct. Least Freq.", "Min", "1Q", "Med", "3Q", "Max", "Mean", "SD", "N")
   ordered <- c(intersect(preferred, names(out)), setdiff(names(out), preferred))
   out[, ordered, drop = FALSE]
 }
@@ -124,7 +155,7 @@ format_table_for_output <- function(table, public = TRUE) {
   out <- format_public_summary_columns(out)
   out <- drop_empty_output_columns(out)
   if (!length(names(out))) return(data.frame(Note = "No displayable columns.", stringsAsFactors = FALSE))
-  already_polished <- any(names(out) %in% c("Term", "Estimate", "Std. Error", "N", "Min", "1Q", "Med", "3Q", "Max", "Mean", "SD", "Variable", "Consumption Growth", "EMI Exposure", "Enrolled in School (1 = yes)"))
+  already_polished <- any(names(out) %in% c("Term", "Estimate", "Std. Error", "N", "Min", "1Q", "Med", "3Q", "Max", "Mean", "SD", "Variable", "Description", "Consumption Growth", "EMI Exposure", "Enrolled (1 = yes)"))
   if (!already_polished) names(out) <- vapply(names(out), nice_column_name, character(1))
   out
 }
@@ -197,7 +228,7 @@ save_table_tex <- function(table, path, name, public = TRUE) {
   need_pkg("kableExtra", "LaTeX table output")
   df <- sanitize_table_for_kable(format_table_for_output(table, public = public))
   grouped <- summary_table_groups(df)
-  df_render <- grouped$data
+  df_render <- wrap_table_text_columns(grouped$data, name)
   wide_summary_table <- name %in% c("sum_tbl_iv", "sum_tbl_probit_quant", "sum_tbl_probit_cat")
   tex <- kableExtra::kbl(
     df_render,
@@ -207,19 +238,18 @@ save_table_tex <- function(table, path, name, public = TRUE) {
     label = table_label(name),
     caption = table_caption(name),
     escape = FALSE,
+    linesep = "",
     digits = 3,
     row.names = FALSE
   )
   latex_options <- c("striped")
   if (!wide_summary_table) latex_options <- c(latex_options, "repeat_header")
-  if (wide_summary_table) latex_options <- c(latex_options, "scale_down")
   if (name %in% c("probit_mfx", "fs_cons", "cons_iv")) latex_options <- c(latex_options, "hold_position")
   tex <- kableExtra::kable_styling(
     tex,
     latex_options = latex_options,
     full_width = FALSE,
-    position = "center",
-    font_size = if (wide_summary_table) 8 else NULL
+    position = "center"
   )
   if (nrow(grouped$groups)) {
     for (i in rev(seq_len(nrow(grouped$groups)))) {
@@ -230,10 +260,37 @@ save_table_tex <- function(table, path, name, public = TRUE) {
         grouped$groups$end[[i]],
         bold = TRUE,
         italic = FALSE,
-        background = "gray!12",
+        background = "white",
         escape = FALSE
       )
     }
+  }
+  if (name == "sum_tbl_probit_cat") {
+    tex <- tex |>
+      kableExtra::column_spec(1, width = "3.5cm") |>
+      kableExtra::column_spec(2, width = "5.6cm") |>
+      kableExtra::column_spec(4, width = "1.7cm") |>
+      kableExtra::column_spec(6, width = "1.9cm")
+  }
+  if (name == "sum_tbl_iv") {
+    tex <- tex |>
+      kableExtra::column_spec(1, width = "3.2cm") |>
+      kableExtra::column_spec(2, width = "5.0cm")
+  }
+  if (name == "sum_tbl_probit_quant") {
+    tex <- tex |> kableExtra::column_spec(1, width = "4.5cm")
+  }
+  if (name %in% c("probit_mfx", "fs_cons", "cons_iv")) {
+    header <- switch(name,
+      probit_mfx = c(" " = 1, "Enrolled (1 = yes)" = 1),
+      fs_cons = c(" " = 1, "EMI Exposure" = 1),
+      cons_iv = c(" " = 1, "Consumption Growth" = 1)
+    )
+    tex <- kableExtra::add_header_above(tex, header, escape = FALSE)
+  }
+  note <- legacy_table_note(name)
+  if (!is.null(note)) {
+    tex <- kableExtra::footnote(tex, general = note, threeparttable = TRUE, footnote_as_chunk = TRUE, escape = FALSE)
   }
   if (wide_summary_table) {
     tex <- kableExtra::landscape(tex)
