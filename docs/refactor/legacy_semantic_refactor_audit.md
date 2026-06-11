@@ -22,7 +22,7 @@ Latest inspected logs:
 
 ## Immediate Repair Order
 
-1. Audit the district pseudo-panel row set and measure construction, especially the source rows added by the legacy fuzzy cascade, to decide whether the active 482-row panel is a justified correction or a remaining refactor error.
+1. Audit the district pseudo-panel row set and measure construction, especially the source rows added by the legacy fuzzy cascade, to decide whether the active 482-row panel is a justified correction or a remaining refactor error. The final parity audit now writes row-level diagnostics to `outputs/diagnostics/iv_panel_current_rows.csv`, `iv_panel_match_summary.csv`, `iv_panel_state_summary.csv`, and `iv_panel_extreme_rows.csv` so this decision can be made from district-level evidence.
 2. Reconcile the IV treatment/instrument/outcome summaries against the legacy Rmd code, not only against the PDF table values.
 3. Keep the probit and selection pipeline under methodological-contract tests; the current selection row count and core survey/probit specification are treated as retained unless a new code-level discrepancy is found.
 4. Reduce final report page-count/prose drift after the panel/model outputs are methodologically settled.
@@ -72,3 +72,15 @@ The legacy Rmd creates the public “Instrument's F-Statistic” row from `car::
 ### 2026-06-11 district-source fuzzy cascade refinement
 
 The district-panel builder now applies the legacy source-attachment cascade more literally: after choosing the nearest tracker suffix for each source year, unmatched source rows are matched within state using the legacy method/threshold sequence `soundex == 0`, `qgram == 0`, `jw <= 0.15`, `dl <= 2`, and `osa <= 1`. The refactor still keeps the deliberate one-source-to-one-tracker safeguard to avoid silently duplicating source measures across tracker rows; this is a reproducibility correction to the legacy `stringdist_join(..., mode = "full")` workflow, whose many-to-many candidates were later collapsed implicitly when columns were merged back by tracker row. Remaining IV-panel mismatches should therefore be interpreted as unresolved district-panel/measure-construction differences, not as license to force the legacy PDF numbers.
+
+
+### 2026-06-11 IV pseudo-panel diagnostic contract
+
+The final legacy-parity audit now writes row-level IV pseudo-panel diagnostics into `outputs/diagnostics/` before applying the hard parity checks. These files are not acceptance criteria and do not weaken the audit. They are review artifacts for deciding whether the current enlarged panel is a justified correction to legacy district harmonization or a remaining refactor error. The expected review path is:
+
+- inspect `iv_panel_current_rows.csv` for the exact tracker rows, district names, source-year keys, match flags, and core IV measures used by the active model;
+- inspect `iv_panel_match_summary.csv` to separate rows attached through all core source years from rows entering via a partial or fallback source match;
+- inspect `iv_panel_state_summary.csv` for states driving the sample-size and mean-shift differences;
+- inspect `iv_panel_extreme_rows.csv` for districts with high/low EMIE, linguistic distance, and weighted population that can disproportionately move Table 4/5/6 estimates.
+
+The methodological standard remains unchanged: changes to the probit, district pseudo-panel, or measure construction must either retain the legacy research design or be recorded in this ledger as an `accepted_deviation` with a reason. The diagnostic CSVs exist to make that judgment falsifiable rather than inferred from aggregate table differences alone.
