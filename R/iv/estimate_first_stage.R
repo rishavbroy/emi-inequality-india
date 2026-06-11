@@ -14,6 +14,8 @@ estimate_first_stage <- function(iv_models, district_panel, cfg) {
         p.value = NA_real_,
         partial_f = NA_real_,
         partial_p = NA_real_,
+        legacy_model_f = NA_real_,
+        legacy_model_p = NA_real_,
         status = model$status %||% "out_of_active_pipeline",
         reason = model$reason %||% NA_character_,
         stringsAsFactors = FALSE
@@ -67,6 +69,7 @@ estimate_first_stage <- function(iv_models, district_panel, cfg) {
     excluded_term <- if (length(excluded)) excluded[[1]] else NA_character_
     excluded_row <- if (!is.na(excluded_term)) match(excluded_term, coefs$term) else NA_integer_
     wald <- first_stage_wald_test(fit, excluded_term, vc)
+    legacy_f <- legacy_first_stage_model_f(fit)
 
     statistic_values <- column_or_na(coefs, statistic_col)
     p_values <- column_or_na(coefs, p_col)
@@ -82,6 +85,8 @@ estimate_first_stage <- function(iv_models, district_panel, cfg) {
       p.value = p_values,
       partial_f = partial_f,
       partial_p = partial_p,
+      legacy_model_f = legacy_f$statistic,
+      legacy_model_p = legacy_f$p.value,
       status = "estimated",
       reason = NA_character_,
       stringsAsFactors = FALSE
@@ -101,6 +106,8 @@ first_stage_status_row <- function(model_name, reason) {
     p.value = NA_real_,
     partial_f = NA_real_,
     partial_p = NA_real_,
+    legacy_model_f = NA_real_,
+    legacy_model_p = NA_real_,
     status = "out_of_active_pipeline",
     reason = reason,
     stringsAsFactors = FALSE
@@ -115,6 +122,18 @@ first_existing_column <- function(df, candidates) {
 column_or_na <- function(df, col) {
   if (is.na(col) || !col %in% names(df)) return(rep(NA_real_, nrow(df)))
   suppressWarnings(as.numeric(df[[col]]))
+}
+
+legacy_first_stage_model_f <- function(fit) {
+  fstat <- tryCatch(summary(fit)$fstatistic, error = function(e) NULL)
+  if (is.null(fstat) || length(fstat) < 3L) {
+    return(list(statistic = NA_real_, p.value = NA_real_))
+  }
+  f <- suppressWarnings(as.numeric(fstat[[1]]))
+  df1 <- suppressWarnings(as.numeric(fstat[[2]]))
+  df2 <- suppressWarnings(as.numeric(fstat[[3]]))
+  p <- if (all(is.finite(c(f, df1, df2)))) stats::pf(f, df1, df2, lower.tail = FALSE) else NA_real_
+  list(statistic = f, p.value = p)
 }
 
 first_stage_vcov <- function(fit, district_panel) {

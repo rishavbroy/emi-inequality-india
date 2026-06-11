@@ -357,15 +357,26 @@ make_first_stage_table <- function(first_stage_tests, cfg = list()) {
   )
   stat <- fs[fs$term == "wavg_ling_degrees", , drop = FALSE]
   if (nrow(stat)) {
+    f_value <- first_finite_value(stat, c("legacy_model_f", "partial_f"))
+    f_p <- first_finite_value(stat, c("legacy_model_p", "partial_p"))
     out <- rbind(out, data.frame(
       Term = "Instrument's F-Statistic",
-      Estimate = paste0(sprintf("%.2f", stat$partial_f[[1]]), ifelse(is.finite(stat$partial_p[[1]]) & stat$partial_p[[1]] < 0.001, "***", ifelse(is.finite(stat$partial_p[[1]]) & stat$partial_p[[1]] < 0.01, "**", ifelse(is.finite(stat$partial_p[[1]]) & stat$partial_p[[1]] < 0.05, "*", "")))),
+      Estimate = paste0(sprintf("%.2f", f_value), ifelse(is.finite(f_p) & f_p < 0.001, "***", ifelse(is.finite(f_p) & f_p < 0.01, "**", ifelse(is.finite(f_p) & f_p < 0.05, "*", "")))),
       `Std. Error` = "",
       check.names = FALSE,
       stringsAsFactors = FALSE
     ))
   }
   out
+}
+
+first_finite_value <- function(df, cols) {
+  for (col in cols) {
+    if (!col %in% names(df)) next
+    value <- suppressWarnings(as.numeric(df[[col]][[1]]))
+    if (length(value) && is.finite(value)) return(value)
+  }
+  NA_real_
 }
 
 make_second_stage_table <- function(iv_models) {
