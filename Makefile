@@ -1,4 +1,4 @@
-.PHONY: init-renv restore snapshot rebuild-qmds pipeline-draft pipeline-final pipeline-final-no-samples diagnostics report samples audit-report-values audit-report-values-final audit-crossrefs audit-crossrefs-final audit-outputs-final audit-legacy-content public-build-audit public-build-audit-full public-build-audit-incremental public-build-audit-full-incremental check-public check-public-draft check-public-final check-public-final-no-samples check-public-text check-rendered-text check-sample-specs test tests clean-targets clean-renders clean-renders-core clean-renders-no-samples
+.PHONY: init-renv restore snapshot rebuild-qmds pipeline-draft pipeline-final pipeline-final-no-samples diagnostics report samples audit-report-values audit-report-values-final audit-crossrefs audit-crossrefs-final audit-outputs-final audit-legacy-content public-build-audit public-build-audit-full public-build-audit-incremental public-build-audit-full-incremental public-build-audit-incremental-review public-build-audit-full-incremental-review check-public check-public-draft check-public-final check-public-final-no-samples check-public-text check-rendered-text check-sample-specs test tests clean-targets clean-renders clean-renders-core clean-renders-no-samples
 
 TEXCACHE_ROOT ?= /private/tmp/emi-inequality-india-texcache
 QUARTO_CACHE_ROOT ?= /private/tmp/emi-inequality-india-quarto-cache
@@ -85,6 +85,12 @@ public-build-audit-incremental:
 public-build-audit-full-incremental:
 	bash scripts/run_public_build_audit.sh --with-samples --incremental
 
+public-build-audit-incremental-review:
+	bash scripts/run_public_build_audit.sh --without-samples --incremental --archive-always
+
+public-build-audit-full-incremental-review:
+	bash scripts/run_public_build_audit.sh --with-samples --incremental --archive-always
+
 check-public-text:
 	Rscript scripts/check_public_text.R
 
@@ -110,7 +116,6 @@ check-public-final: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
 	$(MAKE) pipeline-final
 	EMI_CONFIG=config/final.yml Rscript scripts/audit_report_values.R --strict --allow-status-placeholders
 	Rscript scripts/audit_crossrefs.R --strict-report
-	EMI_CONFIG=config/final.yml Rscript scripts/audit_outputs_final.R
 	Rscript scripts/check_required_outputs.R --require-final-stamp
 	HOME=$(QUARTO_HOME) quarto render paper/report.qmd
 	HOME=$(QUARTO_HOME) quarto render docs/district-matching.qmd
@@ -118,6 +123,7 @@ check-public-final: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
 	Rscript scripts/render_application_samples.R
 	EMI_CONFIG=config/final.yml Rscript scripts/check_rendered_text.R --final
 	Rscript scripts/check_public_final.R
+	EMI_CONFIG=config/final.yml Rscript scripts/audit_outputs_final.R
 	touch .public-final-ok
 
 check-public-final-no-samples: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
@@ -125,13 +131,13 @@ check-public-final-no-samples: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
 	$(MAKE) pipeline-final-no-samples
 	EMI_CONFIG=config/final.yml Rscript scripts/audit_report_values.R --strict --allow-status-placeholders
 	Rscript scripts/audit_crossrefs.R --strict-report
-	EMI_CONFIG=config/final.yml Rscript scripts/audit_outputs_final.R
 	Rscript scripts/check_required_outputs.R --require-final-stamp
 	HOME=$(QUARTO_HOME) quarto render paper/report.qmd
 	HOME=$(QUARTO_HOME) quarto render docs/district-matching.qmd
 	HOME=$(QUARTO_HOME) quarto render docs/long-paths-and-8-3-filenames.qmd
 	EMI_CONFIG=config/final.yml EMI_REQUIRE_APPLICATION_SAMPLES=false Rscript scripts/check_rendered_text.R --final
 	EMI_REQUIRE_APPLICATION_SAMPLES=false Rscript scripts/check_public_final.R
+	EMI_CONFIG=config/final.yml Rscript scripts/audit_outputs_final.R
 	touch .public-final-ok
 
 test: tests

@@ -11,7 +11,7 @@ incremental="false"
 
 usage() {
   cat <<'USAGE'
-Usage: bash scripts/run_public_build_audit.sh [--with-samples|--without-samples] [--archive-on-error] [--archive-each-step] [--incremental|--skip-clean] [--skip-tests] [-o OUT.zip]
+Usage: bash scripts/run_public_build_audit.sh [--with-samples|--without-samples] [--archive-on-error|--archive-always] [--archive-each-step] [--incremental|--skip-clean] [--skip-tests] [-o OUT.zip]
 
 Runs the final public build audit. The default is --without-samples for a faster
 report/data/output audit that omits application-sample rendering and excludes
@@ -21,7 +21,9 @@ scripts/run_legacy_content_audit.sh for the narrower post-build legacy-results
 parity audit. Debug-only options are off by default so reviewers do not see
 incomplete archives or cache-preserving shortcuts unless requested. Use --incremental
 to preserve generated renders and the {targets} store while debugging content parity;
-use a non-incremental run for the final reviewer-facing proof build.
+use a non-incremental run for the final reviewer-facing proof build. Use
+--archive-on-error, or the synonym --archive-always, to write a debug review.zip
+if the audit fails; successful audits always write the final review archive.
 USAGE
 }
 
@@ -35,7 +37,7 @@ while [[ $# -gt 0 ]]; do
       render_samples="false"
       shift
       ;;
-    --archive-on-error)
+    --archive-on-error|--archive-always)
       archive_on_error="true"
       shift
       ;;
