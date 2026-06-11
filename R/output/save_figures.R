@@ -182,7 +182,7 @@ map_fill_values <- function(fill_values, variable) {
     missing_names <- setdiff(nonmissing, names(values))
     if (length(missing_names)) values <- c(values, stats::setNames(rep("#bdbdbd", length(missing_names)), missing_names))
   } else {
-    values <- stats::setNames(stats::colorRampPalette(palette)(max(1, length(nonmissing))), nonmissing)
+    values <- stats::setNames(grDevices::colorRampPalette(palette)(max(1, length(nonmissing))), nonmissing)
   }
   c(values, "No data" = "grey82")
 }
