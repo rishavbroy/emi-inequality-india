@@ -29,6 +29,7 @@ data/interim/
 relevant-literature/
 
 # generated caches and render byproducts
+Rplots.pdf
 *_cache/
 *_files/
 *.nb.html

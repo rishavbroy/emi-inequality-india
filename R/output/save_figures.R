@@ -113,16 +113,65 @@ primary_figure_path <- function(paths) {
   if (length(png)) png[[1]] else paths[[1]]
 }
 
-map_palette <- function(variable) {
+legacy_map_style <- function(variable) {
   switch(
     variable,
-    emie_2007 = c("#f7fbff", "#c6dbef", "#6baed6", "#2171b5", "#08306b"),
-    consumption_growth_pct = c("#fff5f0", "#fcbba1", "#fb6a4a", "#cb181d", "#67000d"),
-    pucca_share_2007 = c("#f6eee3", "#d7b98e", "#a87845", "#6f3f1d"),
-    head_secondary_plus_2007 = c("#f7fcf5", "#c7e9c0", "#74c476", "#238b45", "#00441b"),
-    wavg_ling_degrees = c("#f7fcf5", "#c7e9c0", "#41ab5d", "#006d2c"),
-    region = c(North = "#1b9e77", Central = "#d95f02", East = "#7570b3", West = "#e7298a", South = "#66a61e"),
-    c("#f7fbff", "#9ecae1", "#3182bd", "#08519c")
+    emie_2007 = list(
+      palette = "brewer.blues",
+      title = "EMI Exposure",
+      style = "fixed",
+      breaks = c(0, 2.5, 10, 25, 50, 100),
+      labels = c("0-2.5", "2.5-10", "10-25", "25-50", "50-100"),
+      legend.hist = TRUE
+    ),
+    consumption_growth_pct = list(
+      palette = "brewer.reds",
+      title = "%Δ Consumption",
+      style = "cont",
+      breaks = NULL,
+      labels = NULL,
+      legend.hist = FALSE
+    ),
+    pucca_share_2007 = list(
+      palette = "brown",
+      title = "% Pucca Homes",
+      style = NULL,
+      breaks = NULL,
+      labels = NULL,
+      legend.hist = TRUE
+    ),
+    head_secondary_plus_2007 = list(
+      palette = "brewer.greens",
+      title = "% HH Head w/ Sec.+",
+      style = "cont",
+      breaks = NULL,
+      labels = NULL,
+      legend.hist = FALSE
+    ),
+    region = list(
+      palette = "brewer.dark2",
+      title = "Region",
+      style = NULL,
+      breaks = NULL,
+      labels = NULL,
+      legend.hist = FALSE
+    ),
+    wavg_ling_degrees = list(
+      palette = "carto.emrld",
+      title = "Linguistic Distance",
+      style = NULL,
+      breaks = NULL,
+      labels = NULL,
+      legend.hist = TRUE
+    ),
+    list(
+      palette = "brewer.blues",
+      title = variable,
+      style = NULL,
+      breaks = NULL,
+      labels = NULL,
+      legend.hist = FALSE
+    )
   )
 }
 
@@ -152,142 +201,77 @@ complete_map_geometry <- function(district_panel, boundaries_2020, variable) {
 
   panel_nonmissing <- if (variable %in% names(panel_df)) sum(!is.na(panel_df[[variable]])) else 0L
   out_nonmissing <- if (variable %in% names(out)) sum(!is.na(out[[variable]])) else 0L
-  # If the full-boundary merge loses most/all data, keep the validated panel
-  # geometry. Showing an all-grey full-boundary map is worse than showing the
-  # matched panel geography with explicit No data categories for genuinely
-  # missing matched rows.
+  # Preserve the validated matched-panel geometry when a full-boundary merge
+  # would make almost the entire map missing. This follows the legacy maps more
+  # closely: only districts missing a map variable are greyed out.
   if (panel_nonmissing > 0L && out_nonmissing < max(1L, floor(0.5 * panel_nonmissing))) {
     return(panel)
   }
   out
 }
-numeric_map_bins <- function(x, variable) {
-  x_num <- suppressWarnings(as.numeric(x))
-  finite_x <- x_num[is.finite(x_num)]
-  if (!length(finite_x)) {
-    out <- rep("No data", length(x_num))
-    return(factor(out, levels = "No data"))
+
+prepare_legacy_map_data <- function(plot_data, variable) {
+  if (!variable %in% names(plot_data)) plot_data[[variable]] <- NA
+  if (identical(variable, "region")) {
+    valid_regions <- c("North", "Central", "East", "West", "South")
+    value <- as.character(plot_data[[variable]])
+    value[!value %in% valid_regions] <- NA_character_
+    plot_data[[variable]] <- factor(value, levels = valid_regions)
   }
-  if (identical(variable, "emie_2007")) {
-    bins <- cut(
-      x_num,
-      breaks = c(-Inf, 0, 2.5, 10, 25, 50, Inf),
-      labels = c("0", "0–2.5", "2.5–10", "10–25", "25–50", "50+"),
-      right = TRUE
-    )
-  } else {
-    qs <- unique(stats::quantile(finite_x, probs = seq(0, 1, length.out = 6), na.rm = TRUE))
-    if (length(qs) < 3L) {
-      spread <- range(finite_x, na.rm = TRUE)
-      if (!is.finite(diff(spread)) || diff(spread) <= 0) {
-        pad <- max(1, abs(spread[[1]]) * 0.05)
-        qs <- c(spread[[1]] - pad, spread[[1]] + pad)
-      } else {
-        qs <- seq(spread[[1]], spread[[2]], length.out = 6)
-      }
-    }
-    bins <- cut(x_num, breaks = qs, include.lowest = TRUE)
-  }
-  out <- as.character(bins)
-  out[is.na(out)] <- "No data"
-  factor(out, levels = c(setdiff(unique(as.character(bins)), NA_character_), "No data"))
+  plot_data
 }
 
-map_fill_values <- function(fill_values, variable) {
-  levels <- levels(fill_values)
-  nonmissing <- setdiff(levels, "No data")
-  palette <- map_palette(variable)
-  if (!is.null(names(palette)) && any(nzchar(names(palette)))) {
-    values <- palette[intersect(nonmissing, names(palette))]
-    missing_names <- setdiff(nonmissing, names(values))
-    if (length(missing_names)) values <- c(values, stats::setNames(rep("#bdbdbd", length(missing_names)), missing_names))
-  } else {
-    values <- stats::setNames(grDevices::colorRampPalette(palette)(max(1, length(nonmissing))), nonmissing)
-  }
-  c(values, "No data" = "grey82")
-}
-
-map_diagnostic_plot <- function(plot_data, variable, title) {
-  df <- as.data.frame(plot_data)
-  x <- df[[variable]]
-  if (is.numeric(x)) {
-    ggplot2::ggplot(df, ggplot2::aes(x = .data[[variable]])) +
-      ggplot2::geom_histogram(bins = 20, fill = "grey55", color = "white", na.rm = TRUE) +
-      ggplot2::labs(x = title, y = "Districts") +
-      ggplot2::theme_minimal(base_size = 8) +
-      ggplot2::theme(plot.margin = ggplot2::margin(0, 0, 0, 0))
-  } else {
-    counts <- as.data.frame(sort(table(x, useNA = "ifany"), decreasing = TRUE))
-    names(counts) <- c("value", "n")
-    ggplot2::ggplot(counts, ggplot2::aes(stats::reorder(value, n), n)) +
-      ggplot2::geom_col(fill = "grey55", width = 0.7) +
-      ggplot2::coord_flip() +
-      ggplot2::labs(x = NULL, y = "Districts") +
-      ggplot2::theme_minimal(base_size = 8) +
-      ggplot2::theme(plot.margin = ggplot2::margin(0, 0, 0, 0))
-  }
-}
-
-build_tmap_map <- function(plot_data, spec, fill_values) {
+build_legacy_tmap <- function(plot_data, spec) {
   need_pkg("tmap", "classified choropleth maps")
-  old_mode <- tryCatch(tmap::tmap_mode("plot"), error = function(e) NULL)
-  on.exit(tryCatch(if (!is.null(old_mode)) tmap::tmap_mode(old_mode), error = function(e) NULL), add = TRUE)
-  tmap::tm_shape(plot_data) +
-    tmap::tm_polygons(
-      fill = ".map_fill",
-      fill.scale = tmap::tm_scale(
-        values = fill_values,
-        value.na = "grey82",
-        label.na = "No data"
-      ),
-      fill.legend = tmap::tm_legend(title = spec$title),
-      col = "grey55",
-      lwd = 0.15
-    ) +
-    tmap::tm_layout(
-      frame = FALSE,
-      legend.outside = TRUE,
-      legend.outside.position = "right",
-      legend.title.size = 1.0,
-      legend.text.size = 0.8,
-      inner.margins = 0.01
-    )
+  style <- legacy_map_style(spec$variable)
+  fill_args <- list(
+    col = spec$variable,
+    palette = style$palette,
+    title = style$title,
+    colorNA = "grey82",
+    textNA = "No data",
+    legend.hist = isTRUE(style$legend.hist)
+  )
+  if (!is.null(style$style)) fill_args$style <- style$style
+  if (!is.null(style$breaks)) fill_args$breaks <- style$breaks
+  if (!is.null(style$labels)) fill_args$labels <- style$labels
+
+  suppressWarnings(suppressMessages({
+    tmap::tm_shape(plot_data) +
+      do.call(tmap::tm_fill, fill_args) +
+      tmap::tm_borders(alpha = 0.2) +
+      tmap::tm_layout(
+        frame = FALSE,
+        asp = 0,
+        legend.outside = TRUE,
+        legend.outside.position = "right",
+        legend.title.size = 1.0,
+        legend.text.size = 0.8,
+        inner.margins = 0.01
+      )
+  }))
 }
 
-map_plot_to_grob <- function(plot) {
-  grid::grid.grabExpr(print(plot))
-}
-
-save_map_panel_formats <- function(map_plot, diagnostic_plot, path_base, formats, width = 8.2, height = 5.4, dpi = 300) {
+save_tmap_formats <- function(map_plot, path_base, formats, width = 8, height = 6, dpi = 300) {
+  unlink("Rplots.pdf")
   paths <- vapply(formats, function(format) {
     path <- format_path(path_base, format)
-    fmt <- tolower(format)
-    if (identical(fmt, "pdf")) {
-      grDevices::pdf(path, width = width, height = height, onefile = TRUE)
-    } else if (identical(fmt, "png")) {
-      grDevices::png(path, width = width, height = height, units = "in", res = dpi)
-    } else {
-      ggplot2::ggsave(path, map_plot, width = width, height = height, dpi = dpi)
-      return(path)
-    }
-    grid::grid.newpage()
-    layout <- grid::grid.layout(nrow = 1, ncol = 2, widths = grid::unit(c(5.2, 1.15), c("null", "null")))
-    grid::pushViewport(grid::viewport(layout = layout))
-    on.exit(try(grid::popViewport(), silent = TRUE), add = TRUE)
-    map_grob <- map_plot_to_grob(map_plot)
-    diag_grob <- ggplot2::ggplotGrob(diagnostic_plot)
-    grid::pushViewport(grid::viewport(layout.pos.row = 1, layout.pos.col = 1))
-    grid::grid.draw(map_grob)
-    grid::popViewport()
-    grid::pushViewport(grid::viewport(layout.pos.row = 1, layout.pos.col = 2))
-    grid::grid.draw(diag_grob)
-    grid::popViewport()
-    grid::popViewport()
-    grDevices::dev.off()
+    suppressWarnings(suppressMessages(
+      tmap::tmap_save(
+        tm = map_plot,
+        filename = path,
+        width = width,
+        height = height,
+        units = "in",
+        dpi = dpi
+      )
+    ))
+    unlink("Rplots.pdf")
     path
   }, character(1))
   unname(paths)
 }
+
 save_map_figure <- function(spec, path_base, district_panel, formats, boundaries_2020 = NULL) {
   if (!has_sf_geometry(district_panel)) {
     stop("Map figure '", spec$name, "' requires an sf district_panel with validated geometry.", call. = FALSE)
@@ -296,28 +280,11 @@ save_map_figure <- function(spec, path_base, district_panel, formats, boundaries
     stop("Map figure '", spec$name, "' is missing variable '", spec$variable, "'.", call. = FALSE)
   }
 
-  need_pkg("ggplot2", "map distribution side panels")
   need_pkg("tmap", "classified choropleth maps")
   plot_data <- complete_map_geometry(district_panel, boundaries_2020, spec$variable)
-  if (!spec$variable %in% names(plot_data)) plot_data[[spec$variable]] <- NA
-  plot_data$.map_value <- plot_data[[spec$variable]]
-  if (identical(spec$variable, "region")) {
-    valid_regions <- c("North", "Central", "East", "West", "South")
-    plot_data$.map_value <- factor(as.character(plot_data$.map_value), levels = valid_regions)
-  }
-
-  if (is.numeric(plot_data$.map_value)) {
-    plot_data$.map_fill <- numeric_map_bins(plot_data$.map_value, spec$variable)
-  } else {
-    fill <- as.character(plot_data$.map_value)
-    fill[is.na(fill) | !nzchar(fill)] <- "No data"
-    plot_data$.map_fill <- factor(fill, levels = c(setdiff(sort(unique(fill)), "No data"), "No data"))
-  }
-  fill_values <- map_fill_values(plot_data$.map_fill, spec$variable)
-
-  p <- build_tmap_map(plot_data, spec, fill_values)
-  diagnostic <- map_diagnostic_plot(plot_data, spec$variable, spec$title)
-  save_map_panel_formats(p, diagnostic, path_base, formats, width = 8.2, height = 5.4, dpi = 300)
+  plot_data <- prepare_legacy_map_data(plot_data, spec$variable)
+  p <- build_legacy_tmap(plot_data, spec)
+  save_tmap_formats(p, path_base, formats, width = 8, height = 6, dpi = 300)
 }
 
 read_carveout_shift_data <- function(path = "data/raw/district_changes/District Carve-Outs and Renamings 1961-2001.csv") {
@@ -385,6 +352,8 @@ save_collage <- function(spec, path_base, written, formats) {
 #'
 #' @return A character vector of generated figure and manifest paths.
 save_figures <- function(figures, cfg) {
+  unlink("Rplots.pdf")
+  on.exit(unlink("Rplots.pdf"), add = TRUE)
   dir <- figure_output_dir(cfg)
   dir.create(dir, recursive = TRUE, showWarnings = FALSE)
   formats <- figure_formats(cfg)
