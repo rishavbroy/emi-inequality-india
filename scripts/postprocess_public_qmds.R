@@ -398,7 +398,7 @@ output_table_helper_chunk <- function() {
     "}",
     "table_caption <- function(name) {",
     "  cap <- legacy_table_caption_text(name)",
-    "  if (name %in% c(\"probit_mfx\", \"fs_cons\", \"cons_iv\")) return(paste0(\"\\\\textit{\", regression_star_note(), \"}\\\\protect\\\\linebreak{}\", cap))",
+    "  if (name %in% c(\"probit_mfx\", \"fs_cons\", \"cons_iv\")) return(paste0(\"\\\\protect\\\\shortstack[l]{\\\\textit{\", regression_star_note(), \"}\\\\\\\\{}\", cap, \"}\"))",
     "  cap",
     "}",
     "table_note <- function(name) {",
