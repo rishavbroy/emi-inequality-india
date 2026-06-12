@@ -387,6 +387,16 @@ test_that("unrelated table-write warnings are still surfaced", {
 })
 
 
+
+test_that("long captions are kept plain and not linebreak-corrupted", {
+  cap <- caption_for_latex("sum_tbl_probit_cat")
+
+  expect_match(cap, "Summary Statistics for Enrollment Participation Model", fixed = TRUE)
+  expect_match(cap, "Categorical Variables", fixed = TRUE)
+  expect_false(grepl("&", cap, fixed = TRUE))
+  expect_false(grepl("\\caption", cap, fixed = TRUE))
+})
+
 test_that("regression TeX output uses modelsummary standard rendering", {
   skip_if_not_installed("modelsummary")
   table <- data.frame(Term = c("EMIE", "", "Observations"), `Consumption Growth` = c("0.406", "(0.612)", "482"), check.names = FALSE)

@@ -273,11 +273,11 @@ table_alignments <- function(df, name) {
 }
 
 caption_for_latex <- function(name) {
-  cap <- table_caption(name)
-  if (name %in% c("sum_tbl_probit_quant", "sum_tbl_probit_cat", "sum_tbl_iv", "probit_mfx", "fs_cons", "cons_iv")) {
-    return(kableExtra::linebreak(cap, align = "c"))
-  }
-  cap
+  # Do not run full captions through kableExtra::linebreak().  That helper is
+  # intended for table cells/headers and can corrupt kable captions by
+  # repeatedly injecting caption fragments separated by alignment markers.
+  # Caption wrapping is handled globally by the LaTeX caption package.
+  table_caption(name)
 }
 
 latex_escape_text <- function(x) {
@@ -313,14 +313,22 @@ modelsummary_regression_table <- function(df, name) {
   )
   names(df) <- c("Term", model_col)
   note <- legacy_table_note(name)
-  out <- modelsummary::datasummary_df(
-    df,
-    output = "latex_tabular",
-    fmt = identity,
-    align = "lc",
-    notes = note
+  old_opt <- getOption("modelsummary_format_numeric_latex")
+  on.exit(options(modelsummary_format_numeric_latex = old_opt), add = TRUE)
+  options(modelsummary_format_numeric_latex = "plain")
+  out <- suppress_modelsummary_latex_preamble_warning(
+    modelsummary::datasummary_df(
+      df,
+      output = "latex_tabular",
+      fmt = identity,
+      align = "lc"
+    )
   )
-  as.character(out)
+  tex <- as.character(out)
+  if (!is.null(note) && !grepl(note, tex, fixed = TRUE)) {
+    tex <- paste0(tex, "\n\\begin{flushleft}\\footnotesize ", note, "\\end{flushleft}")
+  }
+  tex
 }
 
 regression_standard_error_rows <- function(df) {
@@ -382,13 +390,31 @@ save_table_csv <- function(table, path, public = TRUE) {
   path
 }
 
+is_formatted_status_table <- function(df) {
+  all(c("Term", "Estimate", "Std. Error") %in% names(df)) &&
+    any(table_column_to_strings(df$Estimate) %in% c("out_of_active_pipeline", "unavailable", "not_run", "failed"))
+}
+
+suppress_modelsummary_latex_preamble_warning <- function(expr) {
+  withCallingHandlers(
+    expr,
+    warning = function(w) {
+      msg <- conditionMessage(w)
+      if (grepl("To compile a LaTeX document with this table", msg, fixed = TRUE) ||
+          grepl("latex_siunitx_preamble", msg, fixed = TRUE)) {
+        invokeRestart("muffleWarning")
+      }
+    }
+  )
+}
+
 save_table_tex <- function(table, path, name, public = TRUE) {
   need_pkg("kableExtra", "LaTeX table output")
   df <- sanitize_table_for_kable(format_table_for_output(table, public = public))
   grouped <- summary_table_groups(df)
   df_render <- wrap_table_text_columns(grouped$data, name)
   wide_summary_table <- name %in% c("sum_tbl_iv", "sum_tbl_probit_quant", "sum_tbl_probit_cat")
-  regression_table <- name %in% c("probit_mfx", "fs_cons", "cons_iv")
+  regression_table <- name %in% c("probit_mfx", "fs_cons", "cons_iv") && !is_formatted_status_table(df_render)
   if (regression_table) {
     tex <- modelsummary_regression_table(df_render, name)
     writeLines(tex, path)
