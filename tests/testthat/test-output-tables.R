@@ -286,3 +286,20 @@ test_that("regression captions carry significance-star note without raw LaTeX", 
   expect_false(grepl("shortstack", table_caption("fs_cons"), fixed = TRUE))
   expect_false(grepl("linebreak", table_caption("fs_cons"), fixed = TRUE))
 })
+
+
+test_that("wide table headers are wrapped without scaling down", {
+  df <- data.frame(
+    Variable = "Urban", Values = "Rural, Urban", Mode = "Rural",
+    `Pct. Mode` = "67.5", `Least Freq.` = "Urban", `Pct. Least Freq.` = "32.5", N = "127246",
+    check.names = FALSE
+  )
+  labels <- table_header_labels(df, "sum_tbl_probit_cat")
+  expect_true(any(grepl("\\\\", labels, fixed = FALSE)))
+  expect_false(any(grepl("scale_down", labels, fixed = TRUE)))
+})
+
+test_that("regression table styling identifies standard-error rows", {
+  df <- data.frame(Term = c("EMIE", "", "Observations"), `(1)` = c("0.406", "(0.612)", "482"), check.names = FALSE)
+  expect_equal(regression_standard_error_rows(df), 2L)
+})

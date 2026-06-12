@@ -278,6 +278,8 @@ legacy_cut_labels <- function(breaks) {
   )
 }
 
+legacy_no_data_colour <- function() "#bdbdbd"
+
 legacy_map_fill <- function(plot_data, variable, style) {
   values <- plot_data[[variable]]
   if (is.factor(values) || is.character(values) || identical(style$style, "cat")) {
@@ -287,7 +289,7 @@ legacy_map_fill <- function(plot_data, variable, style) {
     plot_data$.map_fill <- as.character(fac)
     plot_data$.map_fill[is.na(plot_data$.map_fill) | !nzchar(plot_data$.map_fill)] <- "No data"
     plot_data$.map_fill <- factor(plot_data$.map_fill, levels = levels)
-    colors <- stats::setNames(c(legacy_palette_values(style$palette, length(levels) - 1L), "grey70"), levels)
+    colors <- stats::setNames(c(legacy_palette_values(style$palette, length(levels) - 1L), legacy_no_data_colour()), levels)
     return(list(data = plot_data, fill = ".map_fill", colors = colors, title = style$title))
   }
 
@@ -306,14 +308,14 @@ legacy_map_fill <- function(plot_data, variable, style) {
   if (is.null(breaks) || length(breaks) < 2L) {
     levels <- "No data"
     plot_data$.map_fill <- factor("No data", levels = levels)
-    colors <- stats::setNames("grey70", levels)
+    colors <- stats::setNames(legacy_no_data_colour(), levels)
   } else {
     if (is.null(labels) || length(labels) != length(breaks) - 1L) labels <- legacy_cut_labels(breaks)
     levels <- c(labels, "No data")
     plot_data$.map_fill <- as.character(cut(values, breaks = breaks, include.lowest = TRUE, right = TRUE, labels = labels))
     plot_data$.map_fill[is.na(plot_data$.map_fill) | !nzchar(plot_data$.map_fill)] <- "No data"
     plot_data$.map_fill <- factor(plot_data$.map_fill, levels = levels)
-    colors <- stats::setNames(c(legacy_palette_values(style$palette, length(labels)), "grey70"), levels)
+    colors <- stats::setNames(c(legacy_palette_values(style$palette, length(labels)), legacy_no_data_colour()), levels)
   }
   list(data = plot_data, fill = ".map_fill", colors = colors, title = style$title)
 }
@@ -325,15 +327,15 @@ build_legacy_ggplot_map <- function(plot_data, spec) {
   plot_data <- fill$data
 
   ggplot2::ggplot(plot_data) +
-    ggplot2::geom_sf(ggplot2::aes(fill = .data[[fill$fill]]), color = "grey65", linewidth = 0.05) +
-    ggplot2::scale_fill_manual(values = fill$colors, limits = names(fill$colors), drop = FALSE, na.value = "grey70") +
+    ggplot2::geom_sf(ggplot2::aes(fill = .data[[fill$fill]]), color = "grey55", linewidth = 0.05) +
+    ggplot2::scale_fill_manual(values = fill$colors, limits = names(fill$colors), drop = FALSE, na.value = legacy_no_data_colour()) +
     ggplot2::coord_sf(datum = NA) +
     ggplot2::labs(fill = fill$title) +
     ggplot2::theme_void(base_size = 10) +
     ggplot2::theme(
       legend.position = "right",
-      legend.title = ggplot2::element_text(size = 11),
-      legend.text = ggplot2::element_text(size = 9),
+      legend.title = ggplot2::element_text(size = 12),
+      legend.text = ggplot2::element_text(size = 10),
       plot.margin = grid::unit(c(2, 2, 2, 2), "pt")
     )
 }

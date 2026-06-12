@@ -78,7 +78,7 @@ test_that("linguistic-distance map labels begin at zero and no-data uses visible
   fill <- legacy_map_fill(df, "wavg_ling_degrees", legacy_map_style("wavg_ling_degrees"))
 
   expect_true(startsWith(levels(fill$data$.map_fill)[[1]], "0-"))
-  expect_equal(unname(fill$colors[["No data"]]), "grey70")
+  expect_equal(unname(fill$colors[["No data"]]), "#bdbdbd")
 })
 
 test_that("district carve-out figure uses unbordered legacy-style bars", {
@@ -87,4 +87,9 @@ test_that("district carve-out figure uses unbordered legacy-style bars", {
   src <- paste(readLines(path, warn = FALSE), collapse = "\n")
 
   expect_match(src, "geom_histogram\\(binwidth = binwidth, fill = \"goldenrod\", color = NA\\)")
+})
+
+
+test_that("legacy no-data map colour is a visible ggplot2 scale na.value", {
+  expect_equal(legacy_no_data_colour(), "#bdbdbd")
 })
