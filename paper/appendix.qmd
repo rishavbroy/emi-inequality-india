@@ -13,7 +13,7 @@ link-citations: true
 cite-method: citeproc
 ---
 
-# (APPENDIX) Appendix {-}
+\appendix
 
 # Appendix {#sec-appendix}
 
@@ -43,7 +43,7 @@ Political changes, however, were not so easily addressed. The vast majority of s
 
 This seems to be precisely the same assumption made by @indiastatestoriesDistrictEvolution2024 and @jaacksIndiaDistrictChanges2020, whose data, despite containing some factual errors and typos, was the basis of our district matching method. To justify this assumption we turn to @kumarCreatingLongPanels2016, who up until 2001 are able to track the *proportion* of each district's population that was allocated into a new district as a result of district changes. They label these changes as one of two types: clean partitions and non-partitions (which would include name changes, clean mergers, carve-outs, and border shifts). By extracting their results using Tabula [@aristaranTabula2018], we know that 93.4% of non-partitions were either name changes or transfers of uninhabited land [@kumarCreatingLongPanels2016]. These district changes are plotted in @fig-districtcarveoutsshifts-fig.
 
-![Number of 2001 districts which absorbed a percentage of a 1991 district's population via name change, clean merger, carve-out, or border shift. Data from Kumar \& Somanathan (2016).](../outputs/figures/main/district_carveouts_shifts.pdf){#fig-districtcarveoutsshifts-fig}
+![Number of 2001 districts which absorbed a percentage of a 1991 district's population via name change, clean merger, carve-out, or border shift. Data from Kumar \& Somanathan (2016).](../outputs/figures/main/district_carveouts_shifts.pdf){#fig-districtcarveoutsshifts-fig fig-pos="H" width="100%"}
 
 
 
