@@ -78,9 +78,33 @@ wrap_table_text_columns <- function(df, name = NULL) {
 }
 
 
+table_cell_to_string <- function(value) {
+  if (length(value) == 0L) return("")
+  if (is.data.frame(value)) value <- unlist(value, recursive = TRUE, use.names = FALSE)
+  if (is.list(value)) value <- unlist(value, recursive = TRUE, use.names = FALSE)
+  if (length(value) == 0L || all(is.na(value))) return("")
+  paste(as.character(value), collapse = "; ")
+}
+
+table_column_to_strings <- function(col) {
+  if (is.factor(col)) col <- as.character(col)
+  if (is.list(col)) {
+    out <- vapply(col, table_cell_to_string, character(1))
+  } else {
+    out <- as.character(col)
+  }
+  out[is.na(out)] <- ""
+  out
+}
+
+is_blank_table_column <- function(col) {
+  values <- table_column_to_strings(col)
+  all(!nzchar(values))
+}
+
 drop_empty_output_columns <- function(out) {
   if (!nrow(out)) return(out)
-  keep <- vapply(out, function(col) !all(is.na(col) | !nzchar(as.character(col))), logical(1))
+  keep <- vapply(out, function(col) !is_blank_table_column(col), logical(1))
   out[, keep, drop = FALSE]
 }
 
@@ -178,7 +202,7 @@ summary_table_groups <- function(df) {
   df <- as.data.frame(df, check.names = FALSE, stringsAsFactors = FALSE)
   if (!nrow(df) || !length(names(df))) return(list(data = df, groups = data.frame()))
   empty_rest <- if (ncol(df) > 1L) {
-    apply(df[-1], 1, function(x) all(is.na(x) | !nzchar(as.character(x))))
+    apply(df[-1], 1, function(x) all(!nzchar(table_column_to_strings(x))))
   } else {
     rep(TRUE, nrow(df))
   }
@@ -258,14 +282,7 @@ sanitize_table_for_kable <- function(df) {
   if (!nrow(df)) df <- data.frame(Note = "No rows to display.", stringsAsFactors = FALSE)
   if (!length(names(df))) df <- data.frame(Note = rep("No displayable columns.", nrow(df)), stringsAsFactors = FALSE)
   for (nm in names(df)) {
-    if (is.factor(df[[nm]])) df[[nm]] <- as.character(df[[nm]])
-    if (is.list(df[[nm]])) {
-      df[[nm]] <- vapply(df[[nm]], function(value) {
-        if (length(value) == 0L || all(is.na(value))) return("")
-        paste(as.character(value), collapse = "; ")
-      }, character(1))
-    }
-    if (is.character(df[[nm]])) df[[nm]][is.na(df[[nm]])] <- ""
+    df[[nm]] <- table_column_to_strings(df[[nm]])
   }
   render_table_math_labels(df)
 }
@@ -403,13 +420,15 @@ save_tables <- function(tables, cfg) {
   dir.create(dir, recursive = TRUE, showWarnings = FALSE)
   formats <- table_formats(cfg)
   public_table_names <- setdiff(names(tables), c("ame_results", "first_stage", "selection_n"))
-  unlist(lapply(names(tables), function(n) {
+  paths <- unlist(lapply(names(tables), function(n) {
     paths <- character()
     public <- n %in% public_table_names
     if ("csv" %in% formats) paths <- c(paths, save_table_csv(tables[[n]], file.path(dir, paste0(n, ".csv")), public = public))
     if ("tex" %in% formats) paths <- c(paths, save_table_tex(tables[[n]], file.path(dir, paste0(n, ".tex")), n, public = public))
     paths
   }), use.names = FALSE)
+  paths <- as.character(paths)
+  unname(paths[nzchar(paths)])
 }
 
 #' save table csv tex

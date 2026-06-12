@@ -303,3 +303,25 @@ test_that("regression table styling identifies standard-error rows", {
   df <- data.frame(Term = c("EMIE", "", "Observations"), `(1)` = c("0.406", "(0.612)", "482"), check.names = FALSE)
   expect_equal(regression_standard_error_rows(df), 2L)
 })
+
+test_that("table path target remains atomic when tables contain list-like cells", {
+  skip_if_not_installed("kableExtra")
+  old <- setwd(tempdir())
+  on.exit(setwd(old), add = TRUE)
+  unlink("outputs", recursive = TRUE)
+
+  table <- data.frame(Term = c("A", ""), stringsAsFactors = FALSE)
+  table$`EMI Exposure` <- I(list(c("1.234", "extra"), "(0.123)"))
+
+  expect_warning(
+    paths <- save_tables(
+      list(fs_cons = table),
+      list(output_formats = list(tables = c("csv", "tex")))
+    ),
+    NA
+  )
+
+  expect_type(paths, "character")
+  expect_false(is.object(paths))
+  expect_true(all(file.exists(paths)))
+})
