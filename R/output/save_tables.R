@@ -103,6 +103,13 @@ table_column_to_strings <- function(col) {
   out
 }
 
+table_column_or_default <- function(df, column, default) {
+  if (!column %in% names(df)) return(rep(default, nrow(df)))
+  out <- table_column_to_strings(df[[column]])
+  out[!nzchar(out)] <- default
+  out
+}
+
 is_blank_table_column <- function(col) {
   values <- table_column_to_strings(col)
   all(!nzchar(values))
@@ -117,7 +124,7 @@ drop_empty_output_columns <- function(out) {
 format_public_summary_columns <- function(out) {
   if (all(c("var", "label") %in% names(out))) {
     out$Variable <- out$label
-    group <- startsWith(as.character(out$var), ".group_")
+    group <- startsWith(table_column_to_strings(out$var), ".group_")
     out$var <- NULL
     out$label <- NULL
     if ("desc" %in% names(out)) names(out)[names(out) == "desc"] <- "Description"
@@ -140,17 +147,13 @@ is_status_only_table <- function(out) {
   if (!nrow(out) || !"status" %in% names(out)) return(FALSE)
   substantive <- setdiff(names(out), c("status", "reason", "method", "model"))
   if (!length(substantive)) return(TRUE)
-  all(vapply(out[substantive], function(col) all(is.na(col) | !nzchar(as.character(col))), logical(1)))
+  all(vapply(out[substantive], function(col) all(!nzchar(table_column_to_strings(col))), logical(1)))
 }
 
 format_status_table_for_output <- function(out, public = TRUE) {
-  status <- if ("status" %in% names(out)) as.character(out$status) else rep("unavailable", nrow(out))
-  reason <- if ("reason" %in% names(out)) as.character(out$reason) else rep(NA_character_, nrow(out))
-  model <- if ("model" %in% names(out)) as.character(out$model) else rep(NA_character_, nrow(out))
-
-  status[is.na(status) | !nzchar(status)] <- "unavailable"
-  reason[is.na(reason) | !nzchar(reason)] <- "No completed model output is available."
-  model[is.na(model) | !nzchar(model)] <- "output"
+  status <- table_column_or_default(out, "status", "unavailable")
+  reason <- table_column_or_default(out, "reason", "No completed model output is available.")
+  model <- table_column_or_default(out, "model", "output")
 
   if (public) {
     data.frame(
@@ -212,7 +215,8 @@ summary_table_groups <- function(df) {
   } else {
     rep(TRUE, nrow(df))
   }
-  group_row <- grepl(":$", as.character(df[[1]])) & empty_rest
+  first_col <- table_column_to_strings(df[[1]])
+  group_row <- grepl(":$", first_col) & empty_rest
   group_idx <- which(group_row)
   if (!length(group_idx)) return(list(data = df, groups = data.frame()))
 
@@ -223,7 +227,7 @@ summary_table_groups <- function(df) {
     end <- end_orig - sum(group_idx <= end_orig)
     if (start > end) return(NULL)
     data.frame(
-      label = as.character(df[[1]][[group_idx[[i]]]]),
+      label = first_col[[group_idx[[i]]]],
       start = start,
       end = end,
       stringsAsFactors = FALSE
@@ -278,8 +282,8 @@ caption_for_latex <- function(name) {
 
 regression_standard_error_rows <- function(df) {
   if (!"Term" %in% names(df) || ncol(df) < 2L) return(integer())
-  terms <- as.character(df$Term)
-  vals <- as.character(df[[2]])
+  terms <- table_column_to_strings(df$Term)
+  vals <- table_column_to_strings(df[[2]])
   which((is.na(terms) | !nzchar(terms)) & grepl("^\\(", vals))
 }
 
@@ -295,7 +299,7 @@ sanitize_table_for_kable <- function(df) {
 
 regression_summary_start <- function(df) {
   if (!"Term" %in% names(df)) return(NA_integer_)
-  terms <- as.character(df$Term)
+  terms <- table_column_to_strings(df$Term)
   hit <- which(terms %in% c("Observations", "R-squared", "Adjusted R-squared", "Instrument's F-Statistic", "Model's F-Statistic", "F-Statistic"))
   if (length(hit)) hit[[1]] else NA_integer_
 }
@@ -426,15 +430,28 @@ save_tables <- function(tables, cfg) {
   dir.create(dir, recursive = TRUE, showWarnings = FALSE)
   formats <- table_formats(cfg)
   public_table_names <- setdiff(names(tables), c("ame_results", "first_stage", "selection_n"))
-  paths <- unlist(lapply(names(tables), function(n) {
-    paths <- character()
+  paths <- character()
+
+  append_path <- function(value) {
+    value <- unlist(value, recursive = TRUE, use.names = FALSE)
+    if (!length(value)) return(invisible(NULL))
+    value <- as.character(value)
+    value <- value[nzchar(value)]
+    if (length(value)) paths <<- c(paths, value)
+    invisible(NULL)
+  }
+
+  for (n in names(tables)) {
     public <- n %in% public_table_names
-    if ("csv" %in% formats) paths <- c(paths, save_table_csv(tables[[n]], file.path(dir, paste0(n, ".csv")), public = public))
-    if ("tex" %in% formats) paths <- c(paths, save_table_tex(tables[[n]], file.path(dir, paste0(n, ".tex")), n, public = public))
-    paths
-  }), use.names = FALSE)
-  paths <- as.character(paths)
-  unname(paths[nzchar(paths)])
+    if ("csv" %in% formats) {
+      append_path(save_table_csv(tables[[n]], file.path(dir, paste0(n, ".csv")), public = public))
+    }
+    if ("tex" %in% formats) {
+      append_path(save_table_tex(tables[[n]], file.path(dir, paste0(n, ".tex")), n, public = public))
+    }
+  }
+
+  unname(unique(paths))
 }
 
 #' save table csv tex

@@ -334,3 +334,39 @@ test_that("table path target remains atomic when tables contain list-like cells"
   expect_false(is.object(paths))
   expect_true(all(file.exists(paths)))
 })
+
+
+test_that("status-only detection handles list columns without warnings", {
+  out <- data.frame(
+    model = I(list("first_stage")),
+    status = I(list("unavailable")),
+    reason = I(list(c("missing", "variables"))),
+    term = I(list(character())),
+    estimate = I(list(NA_real_)),
+    check.names = FALSE
+  )
+
+  expect_warning(status <- is_status_only_table(out), NA)
+  expect_true(status)
+  expect_warning(public <- format_status_table_for_output(out, public = TRUE), NA)
+  expect_equal(public$Term[[1]], "first_stage")
+  expect_match(public$`Std. Error`[[1]], "missing; variables", fixed = TRUE)
+})
+
+test_that("save_tables returns plain unique character paths", {
+  skip_if_not_installed("kableExtra")
+  old <- setwd(tempdir())
+  on.exit(setwd(old), add = TRUE)
+  unlink("outputs", recursive = TRUE)
+
+  table <- data.frame(Variable = "Age", N = 1, stringsAsFactors = FALSE)
+  paths <- save_tables(
+    list(sum_tbl_probit_quant = table),
+    list(output_formats = list(tables = list("csv", "tex")))
+  )
+
+  expect_type(paths, "character")
+  expect_null(names(paths))
+  expect_equal(length(paths), length(unique(paths)))
+  expect_true(all(file.exists(paths)))
+})
