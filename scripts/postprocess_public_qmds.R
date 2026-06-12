@@ -34,7 +34,7 @@ legacy_abstract <- paste0(
 
 legacy_figure_captions <- c(
   "fig-ILO-fig" = "Trends in earnings, labor‐force participation, and unemployment (ILO, 2024).",
-  "fig-map1-fig" = 'Clockwise from top left: EMI exposure, consumption growth, household heads with secondary education or more, and pucca (permanent) housing. Data from the 64th round of the NSS 2007-08, "Participation and Expenditure in Education" and "Household Consumer Expenditure."',
+  "fig-map1-fig" = '(Clockwise from top left) EMI exposure, consumption growth, pucca (permanent) housing, and household heads with secondary education or more. Data from the 64th round of the NSS 2007-08, "Participation and Expenditure in Education" and "Household Consumer Expenditure."',
   "fig-map2-fig" = "From left to right: regions of India and linguistic distance from Hindi. District-level data, from the 2001 Census of India.",
   "fig-districtcarveoutsshifts-fig" = "Number of 2001 districts which absorbed a percentage of a 1991 district's population via name change, clean merger, carve-out, or border shift. Data from Kumar \\& Somanathan (2016)."
 )
@@ -388,18 +388,17 @@ output_table_helper_chunk <- function() {
     "regression_star_note <- function() \"* p < 0.05, ** p < 0.01, *** p < 0.001\"",
     "legacy_table_caption_text <- function(name) {",
     "  captions <- c(",
-    "    sum_tbl_probit_cat = \"Summary Statistics for Enrollment Participation Model\\n(Categorical Variables)\",",
-    "    sum_tbl_probit_quant = \"Summary Statistics for Enrollment Participation Model\\n(Numeric Variables)\",",
+    "    sum_tbl_probit_quant = \"Summary Statistics for Enrollment Participation Model (Numeric Variables)\",",
+    "    sum_tbl_probit_cat = \"Summary Statistics for Enrollment Participation Model (Categorical Variables)\",",
     "    probit_mfx = \"Average Marginal Effects and Counterfactual Comparisons for Enrollment Probit\",",
     "    sum_tbl_iv = \"Summary Statistics for 2SLS Model\",",
     "    fs_cons = \"First-Stage Regression: EMI Exposure on Linguistic Distance\",",
     "    cons_iv = \"Second-Stage Regression: Consumption Growth on EMIE (Fitted)\")",
     "  captions[[name]] %||% name",
     "}",
-    "regression_caption <- function(cap) paste(regression_star_note(), cap, sep = \"\\n\")",
+    "regression_caption <- function(cap) cap",
     "table_caption <- function(name) {",
     "  cap <- legacy_table_caption_text(name)",
-    "  if (name %in% c(\"probit_mfx\", \"fs_cons\", \"cons_iv\")) return(regression_caption(cap))",
     "  cap",
     "}",
     "table_note <- function(name) {",
@@ -422,6 +421,10 @@ output_table_helper_chunk <- function() {
     "  df <- utils::read.csv(resolve_public_output_path(path), check.names = FALSE, na.strings = character())",
     "  for (nm in names(df)) if (is.character(df[[nm]])) df[[nm]][is.na(df[[nm]])] <- \"\"",
     "  df",
+    "}",
+    "render_public_tex <- function(path) {",
+    "  tex <- readLines(resolve_public_output_path(path), warn = FALSE)",
+    "  cat(tex, sep = \"\\n\")",
     "}",
     "cell_string <- function(x) {",
     "  if (length(x) == 0L) return(\"\")",
@@ -486,6 +489,7 @@ output_table_helper_chunk <- function() {
     "  md",
     "}",
     "render_public_table <- function(path, name) {",
+    "  if (tolower(tools::file_ext(path)) == \"tex\") return(render_public_tex(path))",
     "  df <- read_public_table(path)",
     "  grouped <- summary_table_groups(df)",
     "  df_render <- wrap_table_text(grouped$data)",
@@ -596,23 +600,23 @@ insert_report_output_objects_explicit <- function(lines) {
     lines,
     "Summary statistics for numeric variables are given in @tbl-sum-tbl-probit-quant, and for categorical variables in @tbl-sum-tbl-probit-cat.",
     c(
-      output_table_chunk("tbl-sum-tbl-probit-cat", legacy_table_captions[["tbl-sum-tbl-probit-cat"]], "../outputs/tables/main/sum_tbl_probit_cat.csv"),
+      output_table_chunk("tbl-sum-tbl-probit-quant", legacy_table_captions[["tbl-sum-tbl-probit-quant"]], "../outputs/tables/main/sum_tbl_probit_quant.tex"),
       "",
-      output_table_chunk("tbl-sum-tbl-probit-quant", legacy_table_captions[["tbl-sum-tbl-probit-quant"]], "../outputs/tables/main/sum_tbl_probit_quant.csv")
+      output_table_chunk("tbl-sum-tbl-probit-cat", legacy_table_captions[["tbl-sum-tbl-probit-cat"]], "../outputs/tables/main/sum_tbl_probit_cat.tex")
     )
   )
   lines <- insert_after_line(
     lines,
     "Average marginal effects for numeric variables and counterfactual comparisons",
-    output_table_chunk("tbl-probit-mfx", legacy_table_captions[["tbl-probit-mfx"]], "../outputs/tables/main/probit_mfx.csv")
+    output_table_chunk("tbl-probit-mfx", legacy_table_captions[["tbl-probit-mfx"]], "../outputs/tables/main/probit_mfx.tex")
   )
   lines <- insert_after_line(
     lines,
     "Summary statistics for all of the variables in this model, including the controls",
     c(
-      output_table_chunk("tbl-sum-tbl-iv", legacy_table_captions[["tbl-sum-tbl-iv"]], "../outputs/tables/main/sum_tbl_iv.csv"),
+      figure_markdown("fig-map1-fig", "../outputs/figures/main/collage_main_maps.pdf"),
       "",
-      figure_markdown("fig-map1-fig", "../outputs/figures/main/collage_main_maps.pdf")
+      output_table_chunk("tbl-sum-tbl-iv", legacy_table_captions[["tbl-sum-tbl-iv"]], "../outputs/tables/main/sum_tbl_iv.tex")
     )
   )
   lines <- insert_after_line(
@@ -624,9 +628,9 @@ insert_report_output_objects_explicit <- function(lines) {
     lines,
     "The results of our first-stage regression, of EMI exposure on linguistic distance, are provided in @tbl-fs-cons.",
     c(
-      output_table_chunk("tbl-fs-cons", legacy_table_captions[["tbl-fs-cons"]], "../outputs/tables/main/fs_cons.csv"),
+      output_table_chunk("tbl-fs-cons", legacy_table_captions[["tbl-fs-cons"]], "../outputs/tables/main/fs_cons.tex"),
       "",
-      output_table_chunk("tbl-cons-iv", legacy_table_captions[["tbl-cons-iv"]], "../outputs/tables/main/cons_iv.csv")
+      output_table_chunk("tbl-cons-iv", legacy_table_captions[["tbl-cons-iv"]], "../outputs/tables/main/cons_iv.tex")
     )
   )
   lines <- ensure_report_object(lines, "fig-ILO-fig", figure_markdown("fig-ILO-fig", "../outputs/figures/main/fig_ilo_trends.png"))
@@ -669,12 +673,12 @@ ensure_report_output_objects <- function(lines) {
     path <- paste0("../outputs/tables/main/", gsub("-", "_", sub("^tbl-", "", label)), ".csv")
     # Legacy labels do not always map mechanically to file names.
     path <- switch(label,
-      "tbl-sum-tbl-probit-quant" = "../outputs/tables/main/sum_tbl_probit_quant.csv",
-      "tbl-sum-tbl-probit-cat" = "../outputs/tables/main/sum_tbl_probit_cat.csv",
-      "tbl-probit-mfx" = "../outputs/tables/main/probit_mfx.csv",
-      "tbl-sum-tbl-iv" = "../outputs/tables/main/sum_tbl_iv.csv",
-      "tbl-fs-cons" = "../outputs/tables/main/fs_cons.csv",
-      "tbl-cons-iv" = "../outputs/tables/main/cons_iv.csv",
+      "tbl-sum-tbl-probit-quant" = "../outputs/tables/main/sum_tbl_probit_quant.tex",
+      "tbl-sum-tbl-probit-cat" = "../outputs/tables/main/sum_tbl_probit_cat.tex",
+      "tbl-probit-mfx" = "../outputs/tables/main/probit_mfx.tex",
+      "tbl-sum-tbl-iv" = "../outputs/tables/main/sum_tbl_iv.tex",
+      "tbl-fs-cons" = "../outputs/tables/main/fs_cons.tex",
+      "tbl-cons-iv" = "../outputs/tables/main/cons_iv.tex",
       path
     )
     lines <- ensure_report_object(lines, label, output_table_chunk(label, legacy_table_captions[[label]], path))
