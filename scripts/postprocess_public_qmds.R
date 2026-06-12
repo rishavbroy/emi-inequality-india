@@ -167,6 +167,8 @@ normalize_yaml <- function(lines, path) {
       "  - \\UseTblrLibrary{booktabs}",
       "  - \\UseTblrLibrary{siunitx}"
     ))
+    lines <- ensure_yaml_list_item(lines, "header-includes", "\\usepackage{caption}")
+    lines <- ensure_yaml_list_item(lines, "header-includes", "\\captionsetup{width=.95\\linewidth,justification=centering}")
     lines <- ensure_yaml_list_item(lines, "header-includes", "\\usepackage{float}")
     lines <- ensure_yaml_list_item(lines, "header-includes", "\\usepackage{threeparttable}")
     lines <- ensure_yaml_list_item(lines, "header-includes", "\\usepackage{etoolbox}")
@@ -474,8 +476,14 @@ output_table_helper_chunk <- function() {
     "  out <- data.frame(Term = latex_escape_text(df[[1]]), stringsAsFactors = FALSE, check.names = FALSE)",
     "  out[[model_col]] <- latex_escape_text(df[[2]])",
     "  out$Term[!nzchar(out$Term)] <- \"~\"",
-    "  tab <- modelsummary::datasummary_df(out, output = if (knitr::is_latex_output()) \"latex_tabular\" else \"markdown\", fmt = identity, align = \"lc\", notes = table_note(name))",
-    "  as.character(tab)",
+    "  # Use modelsummary for layout, but emit Markdown into Quarto rather than raw LaTeX.",
+    "  # Raw modelsummary LaTeX tabular output is fragile inside extracted writing-sample",
+    "  # chunks with Quarto table captions; Markdown lets Pandoc own the final LaTeX table.",
+    "  note <- table_note(name)",
+    "  tab <- suppressWarnings(modelsummary::datasummary_df(out, output = \"markdown\", fmt = identity, align = \"lc\"))",
+    "  md <- as.character(tab)",
+    "  if (!is.null(note) && !grepl(note, md, fixed = TRUE)) md <- paste0(md, \"\\n\\n_\", note, \"_\")",
+    "  md",
     "}",
     "render_public_table <- function(path, name) {",
     "  df <- read_public_table(path)",
