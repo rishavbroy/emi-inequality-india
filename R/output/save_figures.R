@@ -200,19 +200,28 @@ complete_map_geometry <- function(district_panel, boundaries_2020, variable) {
   if (is.null(geom_col) || !geom_col %in% names(b)) return(panel)
 
   panel_df <- if (inherits(panel, "sf")) sf::st_drop_geometry(panel) else as.data.frame(panel)
-  keys <- if (all(c("state_20", "district_20") %in% names(panel_df)) && all(c("state_20", "district_20") %in% names(b))) {
-    c("state_20", "district_20")
+  if (all(c("state_20", "district_20") %in% names(panel_df)) && all(c("state_20", "district_20") %in% names(b))) {
+    panel_df$.map_state_key <- canon(panel_df$state_20)
+    panel_df$.map_district_key <- canon(panel_df$district_20)
+    b$.map_state_key <- canon(b$state_20)
+    b$.map_district_key <- canon(b$district_20)
+    keys <- c(".map_state_key", ".map_district_key")
   } else if (all(c("state_std", "district_std") %in% names(panel_df)) && all(c("state_std", "district_std") %in% names(b))) {
-    c("state_std", "district_std")
+    panel_df$.map_state_key <- canon(panel_df$state_std)
+    panel_df$.map_district_key <- canon(panel_df$district_std)
+    b$.map_state_key <- canon(b$state_std)
+    b$.map_district_key <- canon(b$district_std)
+    keys <- c(".map_state_key", ".map_district_key")
   } else {
-    character()
+    return(panel)
   }
-  if (!length(keys)) return(panel)
 
   keep <- unique(c(keys, variable, "region"))
   keep <- intersect(keep, names(panel_df))
   panel_df <- panel_df[!duplicated(panel_df[keys]), keep, drop = FALSE]
   out <- merge(b, panel_df, by = keys, all.x = TRUE, sort = FALSE)
+  out$.map_state_key <- NULL
+  out$.map_district_key <- NULL
   out <- sf::st_as_sf(out, sf_column_name = geom_col)
 
   # Always keep the full boundary frame once a reliable boundary source is
@@ -318,14 +327,25 @@ legacy_map_fill <- function(plot_data, variable, style) {
   list(data = plot_data, fill = ".map_fill", colors = colors, title = style$title)
 }
 
+map_overlay_rows <- function(plot_data, fill_column = ".map_fill") {
+  if (!fill_column %in% names(plot_data)) return(rep(FALSE, nrow(plot_data)))
+  fill <- as.character(plot_data[[fill_column]])
+  !is.na(fill) & nzchar(fill) & fill != "No data"
+}
+
 build_legacy_ggplot_map <- function(plot_data, spec) {
   need_pkg("ggplot2", "classified choropleth maps")
   style <- legacy_map_style(spec$variable)
   fill <- legacy_map_fill(plot_data, spec$variable, style)
   plot_data <- fill$data
+  overlay <- plot_data[map_overlay_rows(plot_data, fill$fill), , drop = FALSE]
+  if (!nrow(overlay)) {
+    stop("Map figure '", spec$name, "' has no non-missing overlay districts for variable '", spec$variable, "'.", call. = FALSE)
+  }
 
-  ggplot2::ggplot(plot_data) +
-    ggplot2::geom_sf(ggplot2::aes(fill = .data[[fill$fill]]), color = "grey55", linewidth = 0.05) +
+  ggplot2::ggplot() +
+    ggplot2::geom_sf(data = plot_data, fill = legacy_no_data_colour(), color = "grey70", linewidth = 0.04) +
+    ggplot2::geom_sf(data = overlay, ggplot2::aes(fill = .data[[fill$fill]]), color = "grey35", linewidth = 0.05) +
     ggplot2::scale_fill_manual(
       values = fill$colors,
       breaks = names(fill$colors),
