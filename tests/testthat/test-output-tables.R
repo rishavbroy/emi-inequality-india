@@ -276,11 +276,13 @@ test_that("IV summary descriptions follow legacy prose and grouping order", {
   expect_equal(public$Description[public$Variable == "Ling. Distance"][[1]], "Average linguistic distance of mother tongue from Hindi")
 })
 
-test_that("regression captions carry significance-star note", {
+test_that("regression captions carry significance-star note without raw LaTeX", {
   expect_match(table_caption("fs_cons"), "\\* p < 0.05", fixed = FALSE)
   expect_match(table_caption("cons_iv"), "\\* p < 0.05", fixed = FALSE)
   expect_match(table_caption("probit_mfx"), "\\* p < 0.05", fixed = FALSE)
-  expect_match(table_caption("fs_cons"), "parbox", fixed = TRUE)
+  expect_match(table_caption("fs_cons"), "\\n", fixed = TRUE)
+  expect_false(grepl("parbox", table_caption("fs_cons"), fixed = TRUE))
+  expect_false(grepl("tabular", table_caption("fs_cons"), fixed = TRUE))
   expect_false(grepl("shortstack", table_caption("fs_cons"), fixed = TRUE))
   expect_false(grepl("linebreak", table_caption("fs_cons"), fixed = TRUE))
 })

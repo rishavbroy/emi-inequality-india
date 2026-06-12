@@ -32,13 +32,11 @@ legacy_table_caption_text <- function(name) {
 }
 
 regression_caption <- function(cap) {
-  paste0(
-    "\\protect\\parbox[t]{0.92\\linewidth}{",
-    "\\textit{", regression_star_note(), "}",
-    "\\\\",
-    cap,
-    "}"
-  )
+  # Keep captions as plain text. Raw LaTeX line-break helpers inside kable
+  # captions are fragile in Quarto excerpt renders and can be escaped into
+  # invalid TeX. A literal newline keeps the source caption two-line and lets
+  # LaTeX/Pandoc handle wrapping without injecting commands into captions.
+  paste(regression_star_note(), cap, sep = "\\n")
 }
 
 table_caption <- function(name) {
