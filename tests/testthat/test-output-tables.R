@@ -370,3 +370,18 @@ test_that("save_tables returns plain unique character paths", {
   expect_equal(length(paths), length(unique(paths)))
   expect_true(all(file.exists(paths)))
 })
+
+
+test_that("known kable coercion warning is muffled at table-write boundary", {
+  expect_warning(
+    suppress_atomic_vector_coercion_warning(warning("argument is not an atomic vector; coercing", call. = FALSE)),
+    NA
+  )
+})
+
+test_that("unrelated table-write warnings are still surfaced", {
+  expect_warning(
+    suppress_atomic_vector_coercion_warning(warning("unexpected table warning", call. = FALSE)),
+    "unexpected table warning"
+  )
+})

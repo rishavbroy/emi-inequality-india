@@ -323,6 +323,17 @@ style_regression_table <- function(tex, df, name) {
   tex
 }
 
+suppress_atomic_vector_coercion_warning <- function(expr) {
+  withCallingHandlers(
+    expr,
+    warning = function(w) {
+      if (identical(conditionMessage(w), "argument is not an atomic vector; coercing")) {
+        invokeRestart("muffleWarning")
+      }
+    }
+  )
+}
+
 save_table_csv <- function(table, path, public = TRUE) {
   utils::write.csv(sanitize_table_for_kable(format_table_for_output(table, public = public)), path, row.names = FALSE)
   path
@@ -444,10 +455,14 @@ save_tables <- function(tables, cfg) {
   for (n in names(tables)) {
     public <- n %in% public_table_names
     if ("csv" %in% formats) {
-      append_path(save_table_csv(tables[[n]], file.path(dir, paste0(n, ".csv")), public = public))
+      append_path(suppress_atomic_vector_coercion_warning(
+        save_table_csv(tables[[n]], file.path(dir, paste0(n, ".csv")), public = public)
+      ))
     }
     if ("tex" %in% formats) {
-      append_path(save_table_tex(tables[[n]], file.path(dir, paste0(n, ".tex")), n, public = public))
+      append_path(suppress_atomic_vector_coercion_warning(
+        save_table_tex(tables[[n]], file.path(dir, paste0(n, ".tex")), n, public = public)
+      ))
     }
   }
 
