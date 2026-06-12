@@ -215,14 +215,12 @@ complete_map_geometry <- function(district_panel, boundaries_2020, variable) {
   out <- merge(b, panel_df, by = keys, all.x = TRUE, sort = FALSE)
   out <- sf::st_as_sf(out, sf_column_name = geom_col)
 
-  panel_nonmissing <- if (variable %in% names(panel_df)) sum(!is.na(panel_df[[variable]])) else 0L
-  out_nonmissing <- if (variable %in% names(out)) sum(!is.na(out[[variable]])) else 0L
-  # Preserve the validated matched-panel geometry when a full-boundary merge
-  # would make almost the entire map missing. This follows the legacy maps more
-  # closely: only districts missing a map variable are greyed out.
-  if (panel_nonmissing > 0L && out_nonmissing < max(1L, floor(0.5 * panel_nonmissing))) {
-    return(panel)
-  }
+  # Always keep the full boundary frame once a reliable boundary source is
+  # available.  The previous fallback returned the matched panel when many
+  # boundary rows lacked data; those absent geometries rendered as literal white
+  # holes and bypassed ggplot2's missing-value scale.  Keeping all boundaries
+  # lets the map encode unmatched or variable-missing districts explicitly as
+  # "No data" polygons.
   out
 }
 
@@ -278,7 +276,7 @@ legacy_cut_labels <- function(breaks) {
   )
 }
 
-legacy_no_data_colour <- function() "#bdbdbd"
+legacy_no_data_colour <- function() "#969696"
 
 legacy_map_fill <- function(plot_data, variable, style) {
   values <- plot_data[[variable]]
@@ -328,7 +326,14 @@ build_legacy_ggplot_map <- function(plot_data, spec) {
 
   ggplot2::ggplot(plot_data) +
     ggplot2::geom_sf(ggplot2::aes(fill = .data[[fill$fill]]), color = "grey55", linewidth = 0.05) +
-    ggplot2::scale_fill_manual(values = fill$colors, limits = names(fill$colors), drop = FALSE, na.value = legacy_no_data_colour()) +
+    ggplot2::scale_fill_manual(
+      values = fill$colors,
+      breaks = names(fill$colors),
+      limits = names(fill$colors),
+      drop = FALSE,
+      na.translate = TRUE,
+      na.value = legacy_no_data_colour()
+    ) +
     ggplot2::coord_sf(datum = NA) +
     ggplot2::labs(fill = fill$title) +
     ggplot2::theme_void(base_size = 10) +

@@ -78,7 +78,7 @@ test_that("linguistic-distance map labels begin at zero and no-data uses visible
   fill <- legacy_map_fill(df, "wavg_ling_degrees", legacy_map_style("wavg_ling_degrees"))
 
   expect_true(startsWith(levels(fill$data$.map_fill)[[1]], "0-"))
-  expect_equal(unname(fill$colors[["No data"]]), "#bdbdbd")
+  expect_equal(unname(fill$colors[["No data"]]), "#969696")
 })
 
 test_that("district carve-out figure uses unbordered legacy-style bars", {
@@ -91,5 +91,31 @@ test_that("district carve-out figure uses unbordered legacy-style bars", {
 
 
 test_that("legacy no-data map colour is a visible ggplot2 scale na.value", {
-  expect_equal(legacy_no_data_colour(), "#bdbdbd")
+  expect_equal(legacy_no_data_colour(), "#969696")
+})
+
+test_that("complete map geometry keeps unmatched boundaries for grey no-data polygons", {
+  skip_if_not_installed("sf")
+  geometry <- sf::st_sfc(
+    sf::st_polygon(list(rbind(c(0, 0), c(1, 0), c(1, 1), c(0, 1), c(0, 0)))),
+    sf::st_polygon(list(rbind(c(1, 0), c(2, 0), c(2, 1), c(1, 1), c(1, 0)))),
+    crs = 4326
+  )
+  boundaries <- sf::st_sf(
+    state_20 = c("A", "A"),
+    district_20 = c("matched", "unmatched"),
+    geometry = geometry
+  )
+  panel <- sf::st_sf(
+    state_20 = "A",
+    district_20 = "matched",
+    emie_2007 = 10,
+    geometry = geometry[1]
+  )
+
+  out <- complete_map_geometry(panel, boundaries, "emie_2007")
+  fill <- legacy_map_fill(out, "emie_2007", legacy_map_style("emie_2007"))
+
+  expect_equal(nrow(out), 2L)
+  expect_true("No data" %in% as.character(fill$data$.map_fill))
 })
