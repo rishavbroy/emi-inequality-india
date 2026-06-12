@@ -18,6 +18,15 @@ test_that("save_tables honors requested csv and tex formats", {
 })
 
 
+
+
+test_that("table_formats accepts YAML-style list values without warnings", {
+  cfg <- list(output_formats = list(tables = list("csv", "tex")))
+
+  expect_warning(formats <- table_formats(cfg), NA)
+  expect_equal(formats, c("csv", "tex"))
+})
+
 test_that("diagnostic table CSVs preserve machine-readable column names", {
   old <- setwd(tempdir())
   on.exit(setwd(old), add = TRUE)

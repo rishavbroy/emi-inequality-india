@@ -7,7 +7,13 @@ table_output_dir <- function(cfg) {
 
 table_formats <- function(cfg) {
   out <- cfg$output_formats$tables %||% "csv"
-  unique(as.character(out))
+  # yaml::read_yaml() represents sequence values as lists, not necessarily as
+  # atomic character vectors.  Calling as.character() directly on that list
+  # emits "argument is not an atomic vector; coercing", which targets records as
+  # a warning on the file target even when all table files are written correctly.
+  out <- unlist(out, recursive = TRUE, use.names = FALSE)
+  out <- as.character(out)
+  unique(out[nzchar(out)])
 }
 
 table_label <- function(name) {
