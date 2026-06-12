@@ -19,8 +19,8 @@ regression_star_note <- function() "* p < 0.05, ** p < 0.01, *** p < 0.001"
 legacy_table_caption_text <- function(name) {
   captions <- c(
     selection_n = "Enrollment Participation Model Sample Size",
-    sum_tbl_probit_quant = "Summary Statistics for Enrollment Participation Model (Numeric Variables)",
-    sum_tbl_probit_cat = "Summary Statistics for Enrollment Participation Model (Categorical Variables)",
+    sum_tbl_probit_quant = "Summary Statistics for Enrollment Participation Model\n(Numeric Variables)",
+    sum_tbl_probit_cat = "Summary Statistics for Enrollment Participation Model\n(Categorical Variables)",
     probit_mfx = "Average Marginal Effects and Counterfactual Comparisons for Enrollment Probit",
     sum_tbl_iv = "Summary Statistics for 2SLS Model",
     fs_cons = "First-Stage Regression: EMI Exposure on Linguistic Distance",
@@ -215,6 +215,44 @@ render_table_math_labels <- function(df) {
   df
 }
 
+table_header_labels <- function(df, name) {
+  labels <- names(df)
+  wrap <- c(
+    "Pct. Mode" = "Pct.\nMode",
+    "Least Freq." = "Least\nFreq.",
+    "Pct. Least Freq." = "Pct. Least\nFreq.",
+    "Adjusted R-squared" = "Adjusted\nR-squared"
+  )
+  labels <- ifelse(labels %in% names(wrap), unname(wrap[labels]), labels)
+  if (name == "sum_tbl_iv") {
+    labels <- ifelse(labels == "Description", "Description", labels)
+  }
+  vapply(labels, function(x) {
+    if (grepl("\n", x, fixed = TRUE)) kableExtra::linebreak(x, align = "c") else x
+  }, character(1))
+}
+
+table_alignments <- function(df, name) {
+  if (name %in% c("probit_mfx", "fs_cons", "cons_iv")) return(c("l", rep("c", max(0, ncol(df) - 1L))))
+  if (ncol(df) <= 1L) return("l")
+  c("l", rep("c", ncol(df) - 1L))
+}
+
+caption_for_latex <- function(name) {
+  cap <- table_caption(name)
+  if (name %in% c("sum_tbl_probit_quant", "sum_tbl_probit_cat", "sum_tbl_iv", "probit_mfx", "fs_cons", "cons_iv")) {
+    return(kableExtra::linebreak(cap, align = "c"))
+  }
+  cap
+}
+
+regression_standard_error_rows <- function(df) {
+  if (!"Term" %in% names(df) || ncol(df) < 2L) return(integer())
+  terms <- as.character(df$Term)
+  vals <- as.character(df[[2]])
+  which((is.na(terms) | !nzchar(terms)) & grepl("^\\(", vals))
+}
+
 sanitize_table_for_kable <- function(df) {
   df <- as.data.frame(df, check.names = FALSE, stringsAsFactors = FALSE)
   if (!nrow(df)) df <- data.frame(Note = "No rows to display.", stringsAsFactors = FALSE)
@@ -241,6 +279,13 @@ regression_summary_start <- function(df) {
 
 style_regression_table <- function(tex, df, name) {
   if (!name %in% c("probit_mfx", "fs_cons", "cons_iv")) return(tex)
+  if (nrow(df)) {
+    tex <- kableExtra::row_spec(tex, seq_len(nrow(df)), background = "white")
+  }
+  se_rows <- regression_standard_error_rows(df)
+  if (length(se_rows)) {
+    tex <- kableExtra::row_spec(tex, se_rows, italic = TRUE, color = "gray35")
+  }
   start <- regression_summary_start(df)
   if (is.finite(start) && start > 1L) {
     tex <- kableExtra::row_spec(tex, start - 1L, hline_after = TRUE)
@@ -262,26 +307,35 @@ save_table_tex <- function(table, path, name, public = TRUE) {
   grouped <- summary_table_groups(df)
   df_render <- wrap_table_text_columns(grouped$data, name)
   wide_summary_table <- name %in% c("sum_tbl_iv", "sum_tbl_probit_quant", "sum_tbl_probit_cat")
+  regression_table <- name %in% c("probit_mfx", "fs_cons", "cons_iv")
+  if (regression_table && ncol(df_render) >= 2L) {
+    names(df_render)[[1]] <- ""
+    names(df_render)[[2]] <- "(1)"
+  } else {
+    names(df_render) <- table_header_labels(df_render, name)
+  }
   tex <- kableExtra::kbl(
     df_render,
     format = "latex",
     booktabs = TRUE,
-    longtable = !wide_summary_table,
+    longtable = !(wide_summary_table || regression_table),
     label = table_label(name),
-    caption = table_caption(name),
+    caption = caption_for_latex(name),
     escape = FALSE,
     linesep = "",
     digits = 3,
+    align = table_alignments(df_render, name),
     row.names = FALSE
   )
-  latex_options <- c("striped")
-  if (!wide_summary_table) latex_options <- c(latex_options, "repeat_header")
-  if (name %in% c("probit_mfx", "fs_cons", "cons_iv")) latex_options <- c(latex_options, "hold_position")
+  latex_options <- if (regression_table) character() else c("striped")
+  if (!(wide_summary_table || regression_table)) latex_options <- c(latex_options, "repeat_header")
+  if (regression_table) latex_options <- c(latex_options, "hold_position")
   tex <- kableExtra::kable_styling(
     tex,
     latex_options = latex_options,
     full_width = FALSE,
-    position = "center"
+    position = "center",
+    font_size = if (wide_summary_table || regression_table) 9 else NULL
   )
   if (nrow(grouped$groups)) {
     for (i in rev(seq_len(nrow(grouped$groups)))) {
@@ -299,31 +353,40 @@ save_table_tex <- function(table, path, name, public = TRUE) {
   }
   if (name == "sum_tbl_probit_cat") {
     tex <- tex |>
-      kableExtra::column_spec(1, width = "3.5cm") |>
-      kableExtra::column_spec(2, width = "5.6cm") |>
-      kableExtra::column_spec(4, width = "1.7cm") |>
-      kableExtra::column_spec(6, width = "1.9cm")
+      kableExtra::column_spec(1, width = "3.0cm") |>
+      kableExtra::column_spec(2, width = "5.0cm") |>
+      kableExtra::column_spec(3, width = "2.6cm") |>
+      kableExtra::column_spec(4, width = "1.35cm") |>
+      kableExtra::column_spec(5, width = "2.9cm") |>
+      kableExtra::column_spec(6, width = "1.45cm") |>
+      kableExtra::column_spec(7, width = "1.25cm")
   }
   if (name == "sum_tbl_iv") {
     tex <- tex |>
-      kableExtra::column_spec(1, width = "3.2cm") |>
-      kableExtra::column_spec(2, width = "5.0cm")
+      kableExtra::column_spec(1, width = "3.5cm") |>
+      kableExtra::column_spec(2, width = "5.0cm") |>
+      kableExtra::column_spec(3:ncol(df_render), width = "1.55cm")
   }
   if (name == "sum_tbl_probit_quant") {
-    tex <- tex |> kableExtra::column_spec(1, width = "4.5cm")
+    tex <- tex |>
+      kableExtra::column_spec(1, width = "4.3cm") |>
+      kableExtra::column_spec(2:ncol(df_render), width = "1.75cm")
   }
-  if (name %in% c("probit_mfx", "fs_cons", "cons_iv")) {
+  if (regression_table) {
     header <- switch(name,
       probit_mfx = c(" " = 1, "Enrolled (1 = yes)" = 1),
       fs_cons = c(" " = 1, "EMI Exposure" = 1),
       cons_iv = c(" " = 1, "Consumption Growth" = 1)
     )
     tex <- kableExtra::add_header_above(tex, header, escape = FALSE)
+    tex <- tex |>
+      kableExtra::column_spec(1, width = "5.8cm") |>
+      kableExtra::column_spec(2, width = "2.6cm")
     tex <- style_regression_table(tex, df_render, name)
   }
   note <- legacy_table_note(name)
   if (!is.null(note)) {
-    tex <- kableExtra::footnote(tex, general = note, threeparttable = FALSE, footnote_as_chunk = TRUE, escape = FALSE)
+    tex <- kableExtra::footnote(tex, general = note, threeparttable = TRUE, footnote_as_chunk = TRUE, escape = FALSE)
   }
   if (wide_summary_table) {
     tex <- kableExtra::landscape(tex)
