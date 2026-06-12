@@ -20,13 +20,17 @@ table_label <- function(name) {
   gsub("_", "-", name, fixed = TRUE)
 }
 
+quarto_table_label <- function(name) {
+  paste0("tbl-", table_label(name))
+}
+
 regression_star_note <- function() "* p < 0.05, ** p < 0.01, *** p < 0.001"
 
 legacy_table_caption_text <- function(name) {
   captions <- c(
     selection_n = "Enrollment Participation Model Sample Size",
-    sum_tbl_probit_quant = "Summary Statistics for Enrollment Participation Model\n(Numeric Variables)",
-    sum_tbl_probit_cat = "Summary Statistics for Enrollment Participation Model\n(Categorical Variables)",
+    sum_tbl_probit_quant = "Summary Statistics for Enrollment Participation Model (Numeric Variables)",
+    sum_tbl_probit_cat = "Summary Statistics for Enrollment Participation Model (Categorical Variables)",
     probit_mfx = "Average Marginal Effects and Counterfactual Comparisons for Enrollment Probit",
     sum_tbl_iv = "Summary Statistics for 2SLS Model",
     fs_cons = "First-Stage Regression: EMI Exposure on Linguistic Distance",
@@ -38,16 +42,11 @@ legacy_table_caption_text <- function(name) {
 }
 
 regression_caption <- function(cap) {
-  # Keep captions as plain text. Raw LaTeX line-break helpers inside kable
-  # captions are fragile in Quarto excerpt renders and can be escaped into
-  # invalid TeX. A literal newline keeps the source caption two-line and lets
-  # LaTeX/Pandoc handle wrapping without injecting commands into captions.
-  paste(regression_star_note(), cap, sep = "\\n")
+  cap
 }
 
 table_caption <- function(name) {
   cap <- legacy_table_caption_text(name)
-  if (name %in% c("probit_mfx", "fs_cons", "cons_iv")) return(regression_caption(cap))
   cap
 }
 
@@ -331,6 +330,85 @@ modelsummary_regression_table <- function(df, name) {
   tex
 }
 
+legacy_regression_coef_map <- function() {
+  c(
+    "EMIE" = "EMI exposure (fitted)",
+    "emie_2007" = "EMI exposure (fitted)",
+    "wavg_ling_degrees" = "Linguistic distance",
+    "consumption_0708" = "Consumption (2007-08)",
+    "gini_cons_0708" = "Gini of Consumption (2007-08)",
+    "pct_urban" = "Pct. Urban (ref: Rural)",
+    "avg_hh_size" = "Average HH size",
+    "dependency_ratio" = "Dependency ratio x 100",
+    "pct_fem_head" = "Pct. Female head",
+    "pct_hindu" = "Pct. Hindu  (ref: Other)",
+    "pct_muslim" = "Pct. Muslim",
+    "pct_st" = "Pct. Scheduled Tribe (ref: Other)",
+    "pct_sc" = "Pct. Scheduled Caste",
+    "pct_obc" = "Pct. OBC",
+    "pct_small_land" = "Pct. Small Land-owner (ref: No Land)",
+    "pct_medium_land" = "Pct. Medium Land-owner",
+    "pct_large_land" = "Pct. Large Land-owner",
+    "pct_head_lit_to_primary" = "Pct. Head Educ., Lit.-Primary (ref: Illiterate)",
+    "pct_head_secondary_plus" = "Pct. Head Educ., Secondary+",
+    "(Intercept)" = "Intercept"
+  )
+}
+
+legacy_modelsummary_gof_map <- function(name) {
+  if (identical(name, "fs_cons")) {
+    return(list(
+      list(raw = "nobs", clean = "Observations", fmt = 0),
+      list(raw = "r.squared", clean = "$R^2$", fmt = 3),
+      list(raw = "adj.r.squared", clean = "Adjusted $R^2$", fmt = 3),
+      list(raw = "sigma", clean = "Residual Std. Error", fmt = 3),
+      list(raw = "statistic", clean = "Model's F-Statistic", fmt = 2)
+    ))
+  }
+  list(
+    list(raw = "nobs", clean = "Observations", fmt = 0),
+    list(raw = "r.squared", clean = "$R^2$", fmt = 3),
+    list(raw = "adj.r.squared", clean = "Adjusted $R^2$", fmt = 3),
+    list(raw = "sigma", clean = "Residual Std. Error", fmt = 3),
+    list(raw = "waldtest", clean = "F-Statistic", fmt = 2)
+  )
+}
+
+legacy_modelsummary_table <- function(model, name, vcov_matrix = NULL, add_rows = NULL) {
+  need_pkg("modelsummary", "legacy regression table rendering")
+  old_knit_to <- knitr::opts_knit$get("rmarkdown.pandoc.to")
+  old_opt <- getOption("modelsummary_format_numeric_latex")
+  on.exit(knitr::opts_knit$set(rmarkdown.pandoc.to = old_knit_to), add = TRUE)
+  on.exit(options(modelsummary_format_numeric_latex = old_opt), add = TRUE)
+  knitr::opts_knit$set(rmarkdown.pandoc.to = "latex")
+  options(modelsummary_format_numeric_latex = "plain")
+  args <- list(
+    models = model,
+    coef_map = legacy_regression_coef_map(),
+    gof_map = legacy_modelsummary_gof_map(name),
+    stars = c("*" = .05, "**" = .01, "***" = .001),
+    fmt = 3,
+    title = table_caption(name),
+    output = "kableExtra",
+    escape = FALSE,
+    notes = list(legacy_table_note(name))
+  )
+  if (!is.null(vcov_matrix)) args$vcov <- vcov_matrix
+  if (!is.null(add_rows)) args$add_rows <- add_rows
+  tex <- suppress_modelsummary_latex_preamble_warning(do.call(modelsummary::modelsummary, args))
+  tex <- kableExtra::kable_styling(
+    tex,
+    latex_options = c("hold_position", "repeat_header", "striped", "longtable"),
+    position = "center",
+    full_width = FALSE
+  )
+  header <- switch(name,
+    fs_cons = c(" " = 1, "EMI Exposure" = 1),
+    cons_iv = c(" " = 1, "Consumption Growth" = 1)
+  )
+  kableExtra::add_header_above(tex, header)
+}
+
 regression_standard_error_rows <- function(df) {
   if (!"Term" %in% names(df) || ncol(df) < 2L) return(integer())
   terms <- table_column_to_strings(df$Term)
@@ -408,25 +486,54 @@ suppress_modelsummary_latex_preamble_warning <- function(expr) {
   )
 }
 
+normalize_quarto_table_labels <- function(tex, name) {
+  tex <- as.character(tex)
+  label <- table_label(name)
+  tex <- gsub(
+    paste0("\\\\label\\{tab:", label, "\\}"),
+    paste0("\\\\label{", quarto_table_label(name), "}"),
+    tex
+  )
+  if (!any(grepl("\\\\label\\{", tex))) {
+    tex <- sub(
+      "\\\\caption\\{",
+      paste0("\\\\caption{\\\\label{", quarto_table_label(name), "}"),
+      tex
+    )
+  }
+  tex
+}
+
+write_table_tex <- function(tex, path, name) {
+  writeLines(normalize_quarto_table_labels(tex, name), path)
+  path
+}
+
 save_table_tex <- function(table, path, name, public = TRUE) {
   need_pkg("kableExtra", "LaTeX table output")
+  legacy_model <- attr(table, "legacy_model")
+  if (name %in% c("fs_cons", "cons_iv") && !is.null(legacy_model) && !is_formatted_status_table(as.data.frame(table, check.names = FALSE))) {
+    tex <- legacy_modelsummary_table(
+      legacy_model,
+      name,
+      vcov_matrix = attr(table, "legacy_vcov"),
+      add_rows = attr(table, "legacy_add_rows")
+    )
+    return(write_table_tex(tex, path, name))
+  }
   df <- sanitize_table_for_kable(format_table_for_output(table, public = public))
   grouped <- summary_table_groups(df)
   df_render <- wrap_table_text_columns(grouped$data, name)
   wide_summary_table <- name %in% c("sum_tbl_iv", "sum_tbl_probit_quant", "sum_tbl_probit_cat")
   regression_table <- name %in% c("probit_mfx", "fs_cons", "cons_iv") && !is_formatted_status_table(df_render)
-  if (regression_table) {
-    tex <- modelsummary_regression_table(df_render, name)
-    writeLines(tex, path)
-    return(path)
-  } else {
+  if (!regression_table) {
     names(df_render) <- table_header_labels(df_render, name)
   }
   tex <- kableExtra::kbl(
     df_render,
     format = "latex",
     booktabs = TRUE,
-    longtable = !(wide_summary_table || regression_table),
+    longtable = !wide_summary_table,
     label = table_label(name),
     caption = caption_for_latex(name),
     escape = FALSE,
@@ -435,9 +542,8 @@ save_table_tex <- function(table, path, name, public = TRUE) {
     align = table_alignments(df_render, name),
     row.names = FALSE
   )
-  latex_options <- if (regression_table) character() else c("striped")
-  if (!(wide_summary_table || regression_table)) latex_options <- c(latex_options, "repeat_header")
-  if (regression_table) latex_options <- c(latex_options, "hold_position")
+  latex_options <- if (regression_table) c("hold_position", "repeat_header", "striped") else c("striped")
+  if (!wide_summary_table && !regression_table) latex_options <- c(latex_options, "repeat_header")
   tex <- kableExtra::kable_styling(
     tex,
     latex_options = latex_options,
@@ -482,7 +588,7 @@ save_table_tex <- function(table, path, name, public = TRUE) {
   }
   if (regression_table) {
     header <- switch(name,
-      probit_mfx = c(" " = 1, "Enrolled (1 = yes)" = 1),
+      probit_mfx = c(" " = 1, "Enrolled in School (1 = yes)" = 1),
       fs_cons = c(" " = 1, "EMI Exposure" = 1),
       cons_iv = c(" " = 1, "Consumption Growth" = 1)
     )
@@ -499,8 +605,7 @@ save_table_tex <- function(table, path, name, public = TRUE) {
   if (wide_summary_table) {
     tex <- kableExtra::landscape(tex)
   }
-  writeLines(as.character(tex), path)
-  path
+  write_table_tex(tex, path, name)
 }
 
 #' save tables

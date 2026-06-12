@@ -374,14 +374,28 @@ make_tables <- function(selection_data, ame_results, district_panel, iv_models, 
     table_status_failures(cons_iv_required, cfg, "second-stage IV regression")
   )
 
+  fs_cons <- make_first_stage_table(first_stage_tests, cfg)
+  cons_iv_table <- make_second_stage_table(iv_models)
+  fs_model <- first_stage_table_model(iv_models, district_panel)
+  if (!is.null(fs_model$model)) {
+    attr(fs_cons, "legacy_model") <- fs_model$model
+    attr(fs_cons, "legacy_vcov") <- fs_model$vcov
+    attr(fs_cons, "legacy_add_rows") <- fs_model$add_rows
+  }
+  cons_model <- second_stage_table_model(iv_models)
+  if (!is.null(cons_model$model)) {
+    attr(cons_iv_table, "legacy_model") <- cons_model$model
+    attr(cons_iv_table, "legacy_vcov") <- cons_model$vcov
+  }
+
   out <- list(
     selection_n = data.frame(n = nrow(as.data.frame(selection_data))),
     sum_tbl_probit_quant = make_selection_summary_numeric_table(selection_data),
     sum_tbl_probit_cat = make_selection_summary_categorical_table(selection_data),
     probit_mfx = make_probit_ame_table(ame_results, nrow(as.data.frame(selection_data)), selection_model),
     sum_tbl_iv = make_iv_summary_table(district_panel),
-    fs_cons = make_first_stage_table(first_stage_tests, cfg),
-    cons_iv = make_second_stage_table(iv_models),
+    fs_cons = fs_cons,
+    cons_iv = cons_iv_table,
     ame_results = as.data.frame(ame_results),
     first_stage = as.data.frame(first_stage_tests)
   )
@@ -413,22 +427,23 @@ make_selection_summary_categorical_table <- function(selection_data) {
 make_probit_ame_table <- function(ame_results, n = NA_integer_, selection_model = NULL) {
   out <- as.data.frame(ame_results, stringsAsFactors = FALSE)
   if (!"Term" %in% names(out)) out$Term <- out$term
-  display <- regression_display_table(
-    terms = out$Term,
-    estimates = suppressWarnings(as.numeric(out$estimate)),
-    std_errors = suppressWarnings(as.numeric(out$std.error)),
-    p_values = suppressWarnings(as.numeric(out$p.value)),
-    outcome_label = "Enrolled (1 = yes)",
-    gof = probit_gof_rows(selection_model, n, "Enrolled (1 = yes)")
+  data.frame(
+    Term = out$Term,
+    Estimate = format_estimate(
+      suppressWarnings(as.numeric(out$estimate)),
+      suppressWarnings(as.numeric(out$p.value))
+    ),
+    `Std. Error` = format_se(suppressWarnings(as.numeric(out$std.error))),
+    check.names = FALSE,
+    stringsAsFactors = FALSE
   )
-  display
 }
 
 make_iv_summary_table <- function(district_panel) {
   meta <- data.frame(
     var = c(
-      "wavg_ling_degrees",
-      "EMIE", "npeople_0708", "consumption_0708", "gini_cons_0708", "pct_urban", "avg_hh_size",
+      "wavg_ling_degrees", "EMIE",
+      "npeople_0708", "consumption_0708", "gini_cons_0708", "pct_urban", "avg_hh_size",
       "dependency_ratio", "pct_fem_head", "pct_hindu", "pct_muslim", "pct_other_religion",
       "pct_st", "pct_sc", "pct_obc", "pct_small_land", "pct_medium_land", "pct_large_land",
       "pct_head_illiterate", "pct_head_lit_to_primary", "pct_head_secondary_plus", "pct_pucca",
@@ -557,6 +572,51 @@ first_finite_value <- function(df, cols) {
     if (length(value) && is.finite(value)) return(value)
   }
   NA_real_
+}
+
+first_stage_table_model <- function(iv_models, district_panel) {
+  model <- second_stage_table_model(iv_models)$model
+  if (is.null(model) || !inherits(model, "ivreg")) return(list(model = NULL, vcov = NULL, add_rows = NULL))
+  terms <- parse_iv_formula_terms(model)
+  if (is.null(terms) || !length(terms$regressors) || !length(terms$instruments)) {
+    return(list(model = NULL, vcov = NULL, add_rows = NULL))
+  }
+  endogenous <- setdiff(terms$regressors, terms$instruments)
+  if (!length(endogenous)) endogenous <- terms$regressors[[1]]
+  if (!length(endogenous) || is.na(endogenous[[1]]) || !nzchar(endogenous[[1]])) {
+    return(list(model = NULL, vcov = NULL, add_rows = NULL))
+  }
+  formula <- stats::as.formula(paste(endogenous[[1]], "~", paste(terms$instruments, collapse = " + ")))
+  data <- add_legacy_iv_aliases(district_panel)
+  if (length(setdiff(all.vars(formula), names(as.data.frame(data))))) {
+    return(list(model = NULL, vcov = NULL, add_rows = NULL))
+  }
+  fit <- tryCatch(stats::lm(formula, data = data), error = function(e) NULL)
+  if (is.null(fit)) return(list(model = NULL, vcov = NULL, add_rows = NULL))
+  vc <- first_stage_vcov(fit, data)
+  excluded <- setdiff(terms$instruments, terms$regressors)
+  excluded_term <- if (length(excluded)) excluded[[1]] else NA_character_
+  wald <- first_stage_wald_test(fit, excluded_term, vc)
+  add_rows <- data.frame(
+    term = "Instrument's F-Statistic",
+    estimate = paste0(formatC(wald$partial_f, digits = 2, format = "f"), legacy_significance_stars(wald$partial_p)),
+    stringsAsFactors = FALSE
+  )
+  list(model = fit, vcov = vc, add_rows = add_rows)
+}
+
+second_stage_table_model <- function(iv_models) {
+  model <- NULL
+  if (is.list(iv_models) && !inherits(iv_models, c("lm", "ivreg"))) {
+    hit <- intersect(c("consumption", "baseline"), names(iv_models))
+    if (length(hit)) model <- iv_models[[hit[[1]]]]
+  } else {
+    model <- iv_models
+  }
+  if (is.null(model) || is_model_status_payload(model)) return(list(model = NULL, vcov = NULL))
+  vc_fun <- clustered_model_vcov(model)
+  vc <- if (is.null(vc_fun)) NULL else tryCatch(vc_fun(model), error = function(e) NULL)
+  list(model = model, vcov = vc)
 }
 
 make_second_stage_table <- function(iv_models) {
