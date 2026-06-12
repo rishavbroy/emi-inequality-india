@@ -385,3 +385,24 @@ test_that("unrelated table-write warnings are still surfaced", {
     "unexpected table warning"
   )
 })
+
+
+test_that("regression TeX output uses modelsummary standard rendering", {
+  skip_if_not_installed("modelsummary")
+  table <- data.frame(Term = c("EMIE", "", "Observations"), `Consumption Growth` = c("0.406", "(0.612)", "482"), check.names = FALSE)
+  tex <- modelsummary_regression_table(table, "cons_iv")
+
+  expect_match(tex, "\\begin\{tabular", fixed = FALSE)
+  expect_match(tex, "Consumption Growth", fixed = TRUE)
+  expect_match(tex, "Standard errors clustered by state", fixed = TRUE)
+})
+
+test_that("caption setup is inserted for wrapping long table captions", {
+  path <- file.path("scripts", "postprocess_public_qmds.R")
+  if (!file.exists(path)) path <- file.path("..", "..", "scripts", "postprocess_public_qmds.R")
+  src <- paste(readLines(path, warn = FALSE), collapse = "
+")
+
+  expect_match(src, "\\usepackage\{caption\}", fixed = FALSE)
+  expect_match(src, "captionsetup", fixed = TRUE)
+})

@@ -280,6 +280,49 @@ caption_for_latex <- function(name) {
   cap
 }
 
+latex_escape_text <- function(x) {
+  # modelsummary/tinytable handle LaTeX escaping.  The helper exists only to
+  # standardize list/factor columns before handing them to that renderer.
+  table_column_to_strings(x)
+}
+
+
+regression_rows_for_modelsummary <- function(df) {
+  df <- sanitize_table_for_kable(df)
+  if (ncol(df) < 2L) return(df)
+  model_col <- names(df)[[2]]
+  out <- data.frame(
+    Term = latex_escape_text(df[[1]]),
+    stringsAsFactors = FALSE,
+    check.names = FALSE
+  )
+  out[[model_col]] <- latex_escape_text(df[[2]])
+  out$Term[!nzchar(out$Term)] <- "~"
+  out
+}
+
+modelsummary_regression_table <- function(df, name) {
+  need_pkg("modelsummary", "standard regression table rendering")
+  df <- regression_rows_for_modelsummary(df)
+  if (ncol(df) < 2L) return(NULL)
+  model_col <- switch(name,
+    probit_mfx = "Enrolled (1 = yes)",
+    fs_cons = "EMI Exposure",
+    cons_iv = "Consumption Growth",
+    names(df)[[2]]
+  )
+  names(df) <- c("Term", model_col)
+  note <- legacy_table_note(name)
+  out <- modelsummary::datasummary_df(
+    df,
+    output = "latex_tabular",
+    fmt = identity,
+    align = "lc",
+    notes = note
+  )
+  as.character(out)
+}
+
 regression_standard_error_rows <- function(df) {
   if (!"Term" %in% names(df) || ncol(df) < 2L) return(integer())
   terms <- table_column_to_strings(df$Term)
@@ -346,9 +389,10 @@ save_table_tex <- function(table, path, name, public = TRUE) {
   df_render <- wrap_table_text_columns(grouped$data, name)
   wide_summary_table <- name %in% c("sum_tbl_iv", "sum_tbl_probit_quant", "sum_tbl_probit_cat")
   regression_table <- name %in% c("probit_mfx", "fs_cons", "cons_iv")
-  if (regression_table && ncol(df_render) >= 2L) {
-    names(df_render)[[1]] <- ""
-    names(df_render)[[2]] <- "(1)"
+  if (regression_table) {
+    tex <- modelsummary_regression_table(df_render, name)
+    writeLines(tex, path)
+    return(path)
   } else {
     names(df_render) <- table_header_labels(df_render, name)
   }
