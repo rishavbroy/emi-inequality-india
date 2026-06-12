@@ -94,7 +94,7 @@ test_that("legacy no-data map colour is a visible ggplot2 scale na.value", {
   expect_equal(legacy_no_data_colour(), "#969696")
 })
 
-test_that("complete map geometry keeps unmatched boundaries for grey no-data polygons", {
+test_that("complete map geometry keeps grey boundaries and non-missing overlay rows", {
   skip_if_not_installed("sf")
   geometry <- sf::st_sfc(
     sf::st_polygon(list(rbind(c(0, 0), c(1, 0), c(1, 1), c(0, 1), c(0, 0)))),
@@ -118,4 +118,26 @@ test_that("complete map geometry keeps unmatched boundaries for grey no-data pol
 
   expect_equal(nrow(out), 2L)
   expect_true("No data" %in% as.character(fill$data$.map_fill))
+  expect_equal(sum(map_overlay_rows(fill$data, ".map_fill")), 1L)
+})
+
+test_that("legacy map rendering refuses all-grey data layers", {
+  skip_if_not_installed("sf")
+  geometry <- sf::st_sfc(
+    sf::st_polygon(list(rbind(c(0, 0), c(1, 0), c(1, 1), c(0, 1), c(0, 0)))),
+    crs = 4326
+  )
+  panel <- sf::st_sf(
+    state_20 = "A",
+    district_20 = "missing",
+    emie_2007 = NA_real_,
+    geometry = geometry
+  )
+  spec <- figure_spec("map_emi_exposure", "map_emi_exposure.png", "EMI Exposure", kind = "map", variable = "emie_2007")
+
+  expect_error(
+    build_legacy_ggplot_map(panel, spec),
+    "no non-missing overlay districts",
+    fixed = TRUE
+  )
 })

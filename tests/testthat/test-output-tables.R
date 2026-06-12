@@ -200,15 +200,18 @@ test_that("IV summary table retains legacy description column", {
   expect_equal(public$Description[public$Variable == "EMIE"][[1]], "EMI exposure")
 })
 
-test_that("probit table uses compact dependent-variable header and fit statistics", {
+test_that("probit table uses legacy AME estimate and standard-error columns", {
   out <- make_probit_ame_table(
     data.frame(Term = "Age", term = "AGE", estimate = -0.1, std.error = 0.02, p.value = 0.01),
     n = 100,
     selection_model = NULL
   )
 
-  expect_true("Enrolled (1 = yes)" %in% names(out))
-  expect_true("Observations" %in% out$Term)
+  expect_equal(names(out), c("Term", "Estimate", "Std. Error"))
+  expect_equal(out$Term, "Age")
+  expect_match(out$Estimate, "-0.100", fixed = TRUE)
+  expect_equal(out$`Std. Error`, "(0.020)")
+  expect_false("Observations" %in% out$Term)
 })
 
 
@@ -233,7 +236,7 @@ test_that("GOF number formatting returns one cell for empty statistics", {
 })
 
 
-test_that("regression GOF rows omit residual standard error", {
+test_that("legacy regression GOF map includes residual standard error", {
   first_stage <- data.frame(
     model = rep("consumption", 2),
     term = c("wavg_ling_degrees", "(Intercept)"),
@@ -254,10 +257,11 @@ test_that("regression GOF rows omit residual standard error", {
     stringsAsFactors = FALSE
   )
 
-  out <- make_first_stage_table(first_stage, list(mode = "final"))
+  gof <- legacy_modelsummary_gof_map("fs_cons")
+  clean <- vapply(gof, `[[`, character(1), "clean")
 
-  expect_true("R-squared" %in% out$Term)
-  expect_false("Residual Std. Error" %in% out$Term)
+  expect_true("Residual Std. Error" %in% clean)
+  expect_true("Model's F-Statistic" %in% clean)
 })
 
 test_that("public table wrapping does not inject literal LaTeX line breaks", {
@@ -285,11 +289,12 @@ test_that("IV summary descriptions follow legacy prose and grouping order", {
   expect_equal(public$Description[public$Variable == "Ling. Distance"][[1]], "Average linguistic distance of mother tongue from Hindi")
 })
 
-test_that("regression captions carry significance-star note without raw LaTeX", {
-  expect_match(table_caption("fs_cons"), "\\* p < 0.05", fixed = FALSE)
-  expect_match(table_caption("cons_iv"), "\\* p < 0.05", fixed = FALSE)
-  expect_match(table_caption("probit_mfx"), "\\* p < 0.05", fixed = FALSE)
-  expect_match(table_caption("fs_cons"), "\\n", fixed = TRUE)
+test_that("regression captions are plain legacy titles", {
+  expect_equal(table_caption("fs_cons"), "First-Stage Regression: EMI Exposure on Linguistic Distance")
+  expect_equal(table_caption("cons_iv"), "Second-Stage Regression: Consumption Growth on EMIE (Fitted)")
+  expect_equal(table_caption("probit_mfx"), "Average Marginal Effects and Counterfactual Comparisons for Enrollment Probit")
+  expect_false(grepl("\\* p < 0.05", table_caption("fs_cons")))
+  expect_false(grepl("\\n", table_caption("fs_cons"), fixed = TRUE))
   expect_false(grepl("parbox", table_caption("fs_cons"), fixed = TRUE))
   expect_false(grepl("tabular", table_caption("fs_cons"), fixed = TRUE))
   expect_false(grepl("shortstack", table_caption("fs_cons"), fixed = TRUE))
@@ -397,14 +402,56 @@ test_that("long captions are kept plain and not linebreak-corrupted", {
   expect_false(grepl("\\caption", cap, fixed = TRUE))
 })
 
-test_that("regression TeX output uses modelsummary standard rendering", {
-  skip_if_not_installed("modelsummary")
-  table <- data.frame(Term = c("EMIE", "", "Observations"), `Consumption Growth` = c("0.406", "(0.612)", "482"), check.names = FALSE)
-  tex <- modelsummary_regression_table(table, "cons_iv")
+test_that("fallback regression TeX output does not expose placeholder term rows", {
+  skip_if_not_installed("kableExtra")
+  old <- setwd(tempdir())
+  on.exit(setwd(old), add = TRUE)
+  unlink("outputs", recursive = TRUE)
 
-  expect_match(tex, "\\begin{tabular", fixed = TRUE)
-  expect_match(tex, "Consumption Growth", fixed = TRUE)
+  table <- data.frame(Term = c("EMIE", "", "Observations"), `Consumption Growth` = c("0.406", "(0.612)", "482"), check.names = FALSE)
+  save_tables(list(cons_iv = table), list(output_formats = list(tables = "tex")))
+  tex <- paste(readLines(file.path("outputs", "tables", "main", "cons_iv.tex"), warn = FALSE), collapse = "\n")
+
+  expect_match(tex, "Second-Stage Regression: Consumption Growth on EMIE", fixed = TRUE)
   expect_match(tex, "Standard errors clustered by state", fixed = TRUE)
+  expect_false(grepl(">~<|& ~ &|^~$", tex))
+})
+
+test_that("legacy modelsummary regression writer emits LaTeX rather than HTML", {
+  skip_if_not_installed("modelsummary")
+  skip_if_not_installed("kableExtra")
+  model <- lm(mpg ~ wt, data = mtcars)
+
+  tex <- paste(as.character(legacy_modelsummary_table(model, "fs_cons")), collapse = "\n")
+  tex <- paste(normalize_quarto_table_labels(tex, "fs_cons"), collapse = "\n")
+
+  expect_match(tex, "\\begin{table}", fixed = TRUE)
+  expect_match(tex, "\\label{tbl-fs-cons}", fixed = TRUE)
+  expect_false(grepl("<table", tex, fixed = TRUE))
+  expect_false(grepl("<caption>", tex, fixed = TRUE))
+})
+
+test_that("generated table TeX labels are Quarto cross-reference labels", {
+  tex <- "\\begin{table}\n\\caption{\\label{tab:sum-tbl-iv}Summary Statistics for 2SLS Model}\n\\end{table}"
+
+  out <- normalize_quarto_table_labels(tex, "sum_tbl_iv")
+
+  expect_match(out, "\\label{tbl-sum-tbl-iv}", fixed = TRUE)
+  expect_false(grepl("\\label{tab:sum-tbl-iv}", out, fixed = TRUE))
+})
+
+test_that("probit TeX dependent-variable header matches two-column AME layout", {
+  skip_if_not_installed("kableExtra")
+  old <- setwd(tempdir())
+  on.exit(setwd(old), add = TRUE)
+  unlink("outputs", recursive = TRUE)
+  table <- data.frame(Term = "Age", Estimate = "-0.100", check.names = FALSE)
+
+  save_tables(list(probit_mfx = table), list(output_formats = list(tables = "tex")))
+  tex <- paste(readLines(file.path("outputs", "tables", "main", "probit_mfx.tex"), warn = FALSE), collapse = "\n")
+
+  expect_match(tex, "\\multicolumn{1}{c}{Enrolled in School (1 = yes)}", fixed = TRUE)
+  expect_false(grepl("\\multicolumn{2}{c}{Enrolled in School (1 = yes)}", tex, fixed = TRUE))
 })
 
 test_that("caption setup is inserted for wrapping long table captions", {
