@@ -110,6 +110,26 @@ ensure_yaml_field <- function(lines, field, value) {
   append(lines, paste0(field, ": ", value), after = end - 1L)
 }
 
+ensure_yaml_list_item <- function(lines, field, value) {
+  if (!length(lines) || !identical(lines[[1]], "---")) return(lines)
+  close <- which(lines[-1L] == "---")
+  if (!length(close)) return(lines)
+  end <- close[[1]] + 1L
+  field_re <- paste0("^", field, ":\\s*$")
+  field_idx <- grep(field_re, lines[seq_len(end)], perl = TRUE)
+  item <- paste0("  - ", value)
+  if (any(lines[seq_len(end)] == item)) return(lines)
+  if (!length(field_idx)) {
+    lines <- append(lines, c(paste0(field, ":"), item), after = end - 1L)
+    return(lines)
+  }
+  insert_after <- field_idx[[1]]
+  while (insert_after + 1L <= end && grepl("^\\s+-\\s+", lines[[insert_after + 1L]], perl = TRUE)) {
+    insert_after <- insert_after + 1L
+  }
+  append(lines, item, after = insert_after)
+}
+
 rewrite_yaml_field <- function(lines, field, value) {
   if (!length(lines) || !identical(lines[[1]], "---")) return(lines)
   close <- which(lines[-1L] == "---")
@@ -139,6 +159,24 @@ normalize_sample_yaml <- function(lines, bibliography = "../../paper/references.
   }
   lines <- rewrite_yaml_field(lines, "bibliography", bibliography)
   lines <- ensure_yaml_field(lines, "link-citations", "true")
+  for (pkg in c(
+    "\\usepackage{booktabs}",
+    "\\usepackage{longtable}",
+    "\\usepackage{array}",
+    "\\usepackage{multirow}",
+    "\\usepackage{wrapfig}",
+    "\\usepackage{float}",
+    "\\usepackage{colortbl}",
+    "\\usepackage{pdflscape}",
+    "\\usepackage{tabu}",
+    "\\usepackage{threeparttable}",
+    "\\usepackage{threeparttablex}",
+    "\\usepackage[normalem]{ulem}",
+    "\\usepackage{makecell}",
+    "\\usepackage{xcolor}"
+  )) {
+    lines <- ensure_yaml_list_item(lines, "header-includes", pkg)
+  }
   lines
 }
 
