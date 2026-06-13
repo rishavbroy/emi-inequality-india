@@ -440,7 +440,7 @@ output_table_helper_chunk <- function() {
     "}",
     "render_public_tex <- function(path) {",
     "  tex <- paste(readLines(resolve_public_output_path(path), warn = FALSE), collapse = \"\\n\")",
-    "  knitr::asis_output(tex)",
+    "  knitr::asis_output(paste0(\"\\n\\n\", tex, \"\\n\\n\"))",
     "}",
     "cell_string <- function(x) {",
     "  if (length(x) == 0L) return(\"\")",

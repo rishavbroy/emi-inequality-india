@@ -77,3 +77,13 @@ test_that("postprocessor places probit AME table after the explanatory paragraph
     perl = TRUE
   ))
 })
+
+
+test_that("raw TeX table inclusion is emitted as an as-is block with block boundaries", {
+  path <- file.path("scripts", "postprocess_public_qmds.R")
+  if (!file.exists(path)) path <- file.path("..", "..", "scripts", "postprocess_public_qmds.R")
+  src <- paste(readLines(path, warn = FALSE), collapse = "\n")
+
+  expect_match(src, "knitr::asis_output", fixed = TRUE)
+  expect_match(src, "paste0(\"\\\\n\\\\n\", tex, \"\\\\n\\\\n\")", fixed = TRUE)
+})
