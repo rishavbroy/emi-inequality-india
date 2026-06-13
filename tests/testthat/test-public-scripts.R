@@ -61,6 +61,7 @@ test_that("report raw TeX table chunks rely on TeX captions and load their depen
   src <- paste(readLines(repo_file("scripts", "postprocess_public_qmds.R"), warn = FALSE), collapse = "\n")
 
   expect_match(src, "\\usepackage{xcolor}", fixed = TRUE)
+  expect_match(src, "\\definecolor{gray35}{gray}{0.35}", fixed = TRUE)
   expect_match(src, "\\usepackage{colortbl}", fixed = TRUE)
   expect_match(src, "\\usepackage{pdflscape}", fixed = TRUE)
   expect_match(src, "is_raw_tex", fixed = TRUE)

@@ -162,6 +162,7 @@ normalize_yaml <- function(lines, path) {
       "  - \\usepackage{booktabs}",
       "  - \\usepackage{array}",
       "  - \\usepackage{xcolor}",
+      "  - \\definecolor{gray35}{gray}{0.35}",
       "  - \\usepackage{colortbl}",
       "  - \\usepackage{pdflscape}",
       "  - \\usepackage{threeparttablex}",
@@ -177,6 +178,7 @@ normalize_yaml <- function(lines, path) {
     lines <- ensure_yaml_list_item(lines, "header-includes", "\\usepackage{booktabs}")
     lines <- ensure_yaml_list_item(lines, "header-includes", "\\usepackage{array}")
     lines <- ensure_yaml_list_item(lines, "header-includes", "\\usepackage{xcolor}")
+    lines <- ensure_yaml_list_item(lines, "header-includes", "\\definecolor{gray35}{gray}{0.35}")
     lines <- ensure_yaml_list_item(lines, "header-includes", "\\usepackage{colortbl}")
     lines <- ensure_yaml_list_item(lines, "header-includes", "\\usepackage{pdflscape}")
     lines <- ensure_yaml_list_item(lines, "header-includes", "\\usepackage{threeparttablex}")

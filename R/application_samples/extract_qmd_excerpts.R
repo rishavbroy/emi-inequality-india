@@ -174,6 +174,7 @@ normalize_sample_yaml <- function(lines, bibliography = "../../paper/references.
     "\\usepackage[normalem]{ulem}",
     "\\usepackage{makecell}",
     "\\usepackage{xcolor}",
+    "\\definecolor{gray35}{gray}{0.35}",
     "\\usepackage{subcaption}",
     "\\captionsetup[subtable]{labelformat=empty}"
   )) {
