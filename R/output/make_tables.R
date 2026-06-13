@@ -17,7 +17,7 @@ table_status_failures <- function(x, cfg, label) {
   paste0("Final table generation requires completed model output for ", label, ".", suffix)
 }
 
-legacy_numeric_stats <- function(df, meta, cost_vars = character()) {
+legacy_numeric_stats <- function(df, meta, cost_vars = character(), count_vars = character()) {
   df <- as.data.frame(df)
   rows <- lapply(seq_len(nrow(meta)), function(i) {
     v <- meta$var[[i]]
@@ -42,7 +42,11 @@ legacy_numeric_stats <- function(df, meta, cost_vars = character()) {
   if (!nrow(out)) return(data.frame(var = character(), label = character(), N = integer()))
   for (nm in intersect(c("Min", "1Q", "Med", "3Q", "Max", "Mean", "SD"), names(out))) {
     x <- suppressWarnings(as.numeric(out[[nm]]))
-    out[[nm]] <- ifelse(out$var %in% cost_vars, formatC(x, format = "f", big.mark = ",", digits = 2), sprintf("%.2f", x))
+    out[[nm]] <- ifelse(
+      out$var %in% count_vars,
+      formatC(round(x), format = "f", big.mark = ",", digits = 0),
+      ifelse(out$var %in% cost_vars, formatC(x, format = "f", big.mark = ",", digits = 2), sprintf("%.2f", x))
+    )
   }
   out
 }
@@ -490,7 +494,7 @@ make_iv_summary_table <- function(district_panel) {
     ),
     stringsAsFactors = FALSE
   )
-  out <- legacy_numeric_stats(district_panel, meta, cost_vars = c("npeople_0708", "npeople_1718"))
+  out <- legacy_numeric_stats(district_panel, meta, count_vars = c("npeople_0708", "npeople_1718"))
   out <- insert_summary_group(out, "From 2001:", "wavg_ling_degrees")
   out <- insert_summary_group(out, "From 2007-08:", "EMIE")
   out <- insert_summary_group(out, "From 2017-18:", "npeople_1718")

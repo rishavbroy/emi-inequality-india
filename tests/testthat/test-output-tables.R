@@ -200,6 +200,19 @@ test_that("IV summary table retains legacy description column", {
   expect_equal(public$Description[public$Variable == "EMIE"][[1]], "EMI exposure")
 })
 
+
+test_that("population summary statistics use comma integers without artificial decimals", {
+  out <- legacy_numeric_stats(
+    data.frame(npeople_0708 = c(1234.4, 98765.6)),
+    data.frame(var = "npeople_0708", label = "Population", stringsAsFactors = FALSE),
+    count_vars = "npeople_0708"
+  )
+
+  expect_equal(out$Min[[1]], "1,234")
+  expect_equal(out$Max[[1]], "98,766")
+  expect_false(grepl("\\.00$", out$Mean[[1]]))
+})
+
 test_that("probit table uses legacy AME estimate and standard-error columns", {
   out <- make_probit_ame_table(
     data.frame(Term = "Age", term = "AGE", estimate = -0.1, std.error = 0.02, p.value = 0.01),
