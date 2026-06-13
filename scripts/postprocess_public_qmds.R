@@ -182,7 +182,9 @@ normalize_yaml <- function(lines, path) {
     lines <- ensure_yaml_list_item(lines, "header-includes", "\\usepackage{threeparttablex}")
     lines <- ensure_yaml_list_item(lines, "header-includes", "\\usepackage{makecell}")
     lines <- ensure_yaml_list_item(lines, "header-includes", "\\usepackage{caption}")
+    lines <- ensure_yaml_list_item(lines, "header-includes", "\\usepackage{subcaption}")
     lines <- ensure_yaml_list_item(lines, "header-includes", "\\captionsetup{width=.95\\linewidth,justification=centering}")
+    lines <- ensure_yaml_list_item(lines, "header-includes", "\\captionsetup[subtable]{labelformat=empty}")
     lines <- ensure_yaml_list_item(lines, "header-includes", "\\usepackage{float}")
     lines <- ensure_yaml_list_item(lines, "header-includes", "\\usepackage{threeparttable}")
     lines <- ensure_yaml_list_item(lines, "header-includes", "\\usepackage{etoolbox}")
@@ -625,7 +627,7 @@ insert_report_output_objects_explicit <- function(lines) {
   )
   lines <- insert_after_line(
     lines,
-    "Average marginal effects for numeric variables and counterfactual comparisons",
+    "@tbl-probit-mfx has been calculated over all observations",
     output_table_chunk("tbl-probit-mfx", legacy_table_captions[["tbl-probit-mfx"]], "../outputs/tables/main/probit_mfx.tex")
   )
   lines <- insert_after_line(

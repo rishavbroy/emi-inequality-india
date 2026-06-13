@@ -66,3 +66,14 @@ test_that("report raw TeX table chunks rely on TeX captions and load their depen
   expect_match(src, "is_raw_tex", fixed = TRUE)
   expect_match(src, "knitr::asis_output(tex)", fixed = TRUE)
 })
+
+test_that("postprocessor places probit AME table after the explanatory paragraph", {
+  src <- paste(readLines(repo_file("scripts", "postprocess_public_qmds.R"), warn = FALSE), collapse = "\n")
+
+  expect_match(src, "@tbl-probit-mfx has been calculated over all observations", fixed = TRUE)
+  expect_false(grepl(
+    '"Average marginal effects for numeric variables and counterfactual comparisons",\\n    output_table_chunk\\("tbl-probit-mfx"',
+    src,
+    perl = TRUE
+  ))
+})
