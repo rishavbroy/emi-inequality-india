@@ -173,7 +173,9 @@ normalize_sample_yaml <- function(lines, bibliography = "../../paper/references.
     "\\usepackage{threeparttablex}",
     "\\usepackage[normalem]{ulem}",
     "\\usepackage{makecell}",
-    "\\usepackage{xcolor}"
+    "\\usepackage{xcolor}",
+    "\\usepackage{subcaption}",
+    "\\captionsetup[subtable]{labelformat=empty}"
   )) {
     lines <- ensure_yaml_list_item(lines, "header-includes", pkg)
   }
