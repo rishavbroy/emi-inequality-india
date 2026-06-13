@@ -475,3 +475,30 @@ test_that("caption setup is inserted for wrapping long table captions", {
   expect_match(src, "\\usepackage{caption}", fixed = TRUE)
   expect_match(src, "captionsetup", fixed = TRUE)
 })
+
+test_that("wide summary tables hold their float inside landscape pages", {
+  skip_if_not_installed("kableExtra")
+  old <- setwd(tempdir())
+  on.exit(setwd(old), add = TRUE)
+  unlink("outputs", recursive = TRUE)
+
+  table <- data.frame(
+    Variable = c("Population", "Consumption"),
+    Description = c("Estimated via NSS sample weights", "Average household monthly consumption expenditures (Rs.)"),
+    Min = c("12,285", "330.09"),
+    `1Q` = c("823,676", "626.88"),
+    Med = c("1,396,516", "768.60"),
+    `3Q` = c("2,317,118", "999.13"),
+    Max = c("9,922,640", "2923.14"),
+    Mean = c("1,700,682", "850.21"),
+    SD = c("1,307,716", "319.75"),
+    N = c("482", "482"),
+    check.names = FALSE
+  )
+
+  save_tables(list(sum_tbl_iv = table), list(output_formats = list(tables = "tex")))
+  tex <- paste(readLines(file.path("outputs", "tables", "main", "sum_tbl_iv.tex"), warn = FALSE), collapse = "\n")
+
+  expect_match(tex, "\\begin{landscape}", fixed = TRUE)
+  expect_match(tex, "\\begin{table}[H]", fixed = TRUE)
+})

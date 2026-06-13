@@ -542,8 +542,16 @@ save_table_tex <- function(table, path, name, public = TRUE) {
     align = table_alignments(df_render, name),
     row.names = FALSE
   )
-  latex_options <- if (regression_table) c("hold_position", "repeat_header", "striped") else c("striped")
-  if (!wide_summary_table && !regression_table) latex_options <- c(latex_options, "repeat_header")
+  if (regression_table) {
+    latex_options <- c("hold_position", "repeat_header", "striped")
+  } else if (wide_summary_table) {
+    # Wide summary tables are wrapped in a landscape environment below.  Use
+    # kableExtra's [H] float placement so the table float cannot escape the
+    # landscape environment and render as a clipped portrait table.
+    latex_options <- c("HOLD_position", "striped")
+  } else {
+    latex_options <- c("striped", "repeat_header")
+  }
   tex <- kableExtra::kable_styling(
     tex,
     latex_options = latex_options,
