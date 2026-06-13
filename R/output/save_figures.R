@@ -285,7 +285,7 @@ legacy_cut_labels <- function(breaks) {
   )
 }
 
-legacy_no_data_colour <- function() "#969696"
+legacy_no_data_colour <- function() "#bdbdbd"
 
 legacy_map_fill <- function(plot_data, variable, style) {
   values <- plot_data[[variable]]
