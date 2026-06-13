@@ -55,3 +55,14 @@ test_that("writing sample YAML includes LaTeX table packages for raw table excer
   expect_true(any(out == "  - \\usepackage{booktabs}"))
   expect_true(any(out == "  - \\usepackage{xcolor}"))
 })
+
+
+test_that("report raw TeX table chunks rely on TeX captions and load their dependencies", {
+  src <- paste(readLines(repo_file("scripts", "postprocess_public_qmds.R"), warn = FALSE), collapse = "\n")
+
+  expect_match(src, "\\usepackage{xcolor}", fixed = TRUE)
+  expect_match(src, "\\usepackage{colortbl}", fixed = TRUE)
+  expect_match(src, "\\usepackage{pdflscape}", fixed = TRUE)
+  expect_match(src, "is_raw_tex", fixed = TRUE)
+  expect_match(src, "knitr::asis_output(tex)", fixed = TRUE)
+})

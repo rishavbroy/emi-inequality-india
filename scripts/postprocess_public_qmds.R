@@ -159,6 +159,13 @@ normalize_yaml <- function(lines, path) {
       "  - \\usepackage{setspace}\\doublespacing",
       "  - \\usepackage{mathtools}",
       "  - \\usepackage{longtable}",
+      "  - \\usepackage{booktabs}",
+      "  - \\usepackage{array}",
+      "  - \\usepackage{xcolor}",
+      "  - \\usepackage{colortbl}",
+      "  - \\usepackage{pdflscape}",
+      "  - \\usepackage{threeparttablex}",
+      "  - \\usepackage{makecell}",
       "  - \\usepackage{tabularray}",
       "  - \\usepackage{float}",
       "  - \\usepackage{threeparttable}",
@@ -167,6 +174,13 @@ normalize_yaml <- function(lines, path) {
       "  - \\UseTblrLibrary{booktabs}",
       "  - \\UseTblrLibrary{siunitx}"
     ))
+    lines <- ensure_yaml_list_item(lines, "header-includes", "\\usepackage{booktabs}")
+    lines <- ensure_yaml_list_item(lines, "header-includes", "\\usepackage{array}")
+    lines <- ensure_yaml_list_item(lines, "header-includes", "\\usepackage{xcolor}")
+    lines <- ensure_yaml_list_item(lines, "header-includes", "\\usepackage{colortbl}")
+    lines <- ensure_yaml_list_item(lines, "header-includes", "\\usepackage{pdflscape}")
+    lines <- ensure_yaml_list_item(lines, "header-includes", "\\usepackage{threeparttablex}")
+    lines <- ensure_yaml_list_item(lines, "header-includes", "\\usepackage{makecell}")
     lines <- ensure_yaml_list_item(lines, "header-includes", "\\usepackage{caption}")
     lines <- ensure_yaml_list_item(lines, "header-includes", "\\captionsetup{width=.95\\linewidth,justification=centering}")
     lines <- ensure_yaml_list_item(lines, "header-includes", "\\usepackage{float}")
@@ -423,8 +437,8 @@ output_table_helper_chunk <- function() {
     "  df",
     "}",
     "render_public_tex <- function(path) {",
-    "  tex <- readLines(resolve_public_output_path(path), warn = FALSE)",
-    "  cat(tex, sep = \"\\n\")",
+    "  tex <- paste(readLines(resolve_public_output_path(path), warn = FALSE), collapse = \"\\n\")",
+    "  knitr::asis_output(tex)",
     "}",
     "cell_string <- function(x) {",
     "  if (length(x) == 0L) return(\"\")",
@@ -538,13 +552,17 @@ public_table_name_for_label <- function(label) {
 output_table_chunk <- function(label, caption, path) {
   caption <- gsub("\\\\", "\\\\\\\\", caption)
   caption <- gsub('"', '\\"', caption, fixed = TRUE)
-
-  c(
+  is_raw_tex <- identical(tolower(tools::file_ext(path)), "tex")
+  chunk <- c(
     "```{r}",
     paste0("#| label: ", label),
-    paste0("#| tbl-cap: \"", caption, "\""),
     "#| echo: false",
-    "#| results: asis",
+    "#| results: asis"
+  )
+  if (!is_raw_tex) chunk <- append(chunk, paste0("#| tbl-cap: \"", caption, "\""), after = 2L)
+
+  c(
+    chunk,
     "",
     paste0("render_public_table(\"", path, "\", \"", public_table_name_for_label(label), "\")"),
     "```"
