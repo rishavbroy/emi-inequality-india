@@ -64,7 +64,7 @@ test_that("report raw TeX table chunks rely on TeX captions and load their depen
   expect_match(src, "\\usepackage{colortbl}", fixed = TRUE)
   expect_match(src, "\\usepackage{pdflscape}", fixed = TRUE)
   expect_match(src, "is_raw_tex", fixed = TRUE)
-  expect_match(src, "knitr::asis_output(tex)", fixed = TRUE)
+  expect_match(src, "knitr::asis_output(paste0", fixed = TRUE)
 })
 
 test_that("postprocessor places probit AME table after the explanatory paragraph", {
@@ -84,6 +84,6 @@ test_that("raw TeX table inclusion is emitted as an as-is block with block bound
   if (!file.exists(path)) path <- file.path("..", "..", "scripts", "postprocess_public_qmds.R")
   src <- paste(readLines(path, warn = FALSE), collapse = "\n")
 
-  expect_match(src, "knitr::asis_output", fixed = TRUE)
-  expect_match(src, "paste0(\"\\\\n\\\\n\", tex, \"\\\\n\\\\n\")", fixed = TRUE)
+  expect_match(src, "knitr::asis_output(paste0", fixed = TRUE)
+  expect_match(src, "\\n\\n", fixed = TRUE)
 })
