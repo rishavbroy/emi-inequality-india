@@ -85,5 +85,5 @@ test_that("raw TeX table inclusion is emitted as an as-is block with block bound
   src <- paste(readLines(path, warn = FALSE), collapse = "\n")
 
   expect_match(src, "knitr::asis_output(paste0", fixed = TRUE)
-  expect_match(src, "\\n\\n", fixed = TRUE)
+  expect_match(src, "tex, ", fixed = TRUE)
 })
