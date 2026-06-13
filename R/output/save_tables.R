@@ -285,6 +285,25 @@ latex_escape_text <- function(x) {
   table_column_to_strings(x)
 }
 
+stack_estimate_se_rows <- function(df, estimate_col = "Estimate", se_col = "Std. Error") {
+  df <- as.data.frame(df, check.names = FALSE, stringsAsFactors = FALSE)
+  if (!all(c("Term", estimate_col, se_col) %in% names(df))) return(df)
+  terms <- table_column_to_strings(df$Term)
+  estimates <- table_column_to_strings(df[[estimate_col]])
+  ses <- table_column_to_strings(df[[se_col]])
+
+  out <- data.frame(
+    Term = rep(terms, each = 2L),
+    Estimate = as.vector(rbind(estimates, ses)),
+    check.names = FALSE,
+    stringsAsFactors = FALSE
+  )
+  out$Term[seq.int(2L, nrow(out), by = 2L)] <- ""
+  out <- out[nzchar(out$Estimate), , drop = FALSE]
+  rownames(out) <- NULL
+  out
+}
+
 
 regression_rows_for_modelsummary <- function(df) {
   df <- sanitize_table_for_kable(df)
@@ -529,11 +548,14 @@ save_table_tex <- function(table, path, name, public = TRUE) {
   if (!regression_table) {
     names(df_render) <- table_header_labels(df_render, name)
   }
+  if (identical(name, "probit_mfx") && !is_formatted_status_table(df_render)) {
+    df_render <- stack_estimate_se_rows(df_render)
+  }
   tex <- kableExtra::kbl(
     df_render,
     format = "latex",
     booktabs = TRUE,
-    longtable = !wide_summary_table,
+    longtable = wide_summary_table || regression_table,
     label = table_label(name),
     caption = caption_for_latex(name),
     escape = FALSE,
@@ -545,10 +567,11 @@ save_table_tex <- function(table, path, name, public = TRUE) {
   if (regression_table) {
     latex_options <- c("hold_position", "repeat_header", "striped")
   } else if (wide_summary_table) {
-    # Wide summary tables are wrapped in a landscape environment below.  Use
-    # kableExtra's [H] float placement so the table float cannot escape the
-    # landscape environment and render as a clipped portrait table.
-    latex_options <- c("HOLD_position", "striped")
+    # Wide summary tables must be true longtables inside pdflscape. A floating
+    # table can escape the landscape environment when emitted as raw TeX from
+    # Quarto, leaving a clipped portrait page. Longtable keeps the table content
+    # inside the environment so pdflscape can rotate the page metadata.
+    latex_options <- c("repeat_header", "striped")
   } else {
     latex_options <- c("striped", "repeat_header")
   }
@@ -612,6 +635,7 @@ save_table_tex <- function(table, path, name, public = TRUE) {
   }
   if (wide_summary_table) {
     tex <- kableExtra::landscape(tex)
+    tex <- paste0("\\clearpage\n", as.character(tex), "\n\\clearpage")
   }
   write_table_tex(tex, path, name)
 }

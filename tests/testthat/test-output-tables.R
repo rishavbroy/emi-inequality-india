@@ -14,7 +14,8 @@ test_that("save_tables honors requested csv and tex formats", {
   tex <- paste(readLines(file.path("outputs/tables/main/sum_tbl_iv.tex"), warn = FALSE), collapse = "\n")
   expect_match(tex, "Summary Statistics for 2SLS Model", fixed = TRUE)
   expect_match(tex, "landscape", fixed = TRUE)
-  expect_false(grepl("longtable", tex, fixed = TRUE))
+  expect_match(tex, "longtable", fixed = TRUE)
+  expect_false(grepl("\\begin{table}", tex, fixed = TRUE))
 })
 
 
@@ -453,17 +454,20 @@ test_that("generated table TeX labels are Quarto cross-reference labels", {
   expect_false(grepl("\\label{tab:sum-tbl-iv}", out, fixed = TRUE))
 })
 
-test_that("probit TeX dependent-variable header matches two-column AME layout", {
+test_that("probit TeX stacks standard errors below AME estimates", {
   skip_if_not_installed("kableExtra")
   old <- setwd(tempdir())
   on.exit(setwd(old), add = TRUE)
   unlink("outputs", recursive = TRUE)
-  table <- data.frame(Term = "Age", Estimate = "-0.100", check.names = FALSE)
+  table <- data.frame(Term = "Age", Estimate = "-0.100", `Std. Error` = "(0.020)", check.names = FALSE)
 
   save_tables(list(probit_mfx = table), list(output_formats = list(tables = "tex")))
   tex <- paste(readLines(file.path("outputs", "tables", "main", "probit_mfx.tex"), warn = FALSE), collapse = "\n")
 
   expect_match(tex, "\\multicolumn{1}{c}{Enrolled in School (1 = yes)}", fixed = TRUE)
+  expect_match(tex, "-0.100", fixed = TRUE)
+  expect_match(tex, "(0.020)", fixed = TRUE)
+  expect_false(grepl("Std. Error", tex, fixed = TRUE))
   expect_false(grepl("\\multicolumn{2}{c}{Enrolled in School (1 = yes)}", tex, fixed = TRUE))
 })
 
@@ -500,5 +504,6 @@ test_that("wide summary tables hold their float inside landscape pages", {
   tex <- paste(readLines(file.path("outputs", "tables", "main", "sum_tbl_iv.tex"), warn = FALSE), collapse = "\n")
 
   expect_match(tex, "\\begin{landscape}", fixed = TRUE)
-  expect_match(tex, "\\begin{table}[H]", fixed = TRUE)
+  expect_match(tex, "\\begin{longtable}", fixed = TRUE)
+  expect_false(grepl("\\begin{table}", tex, fixed = TRUE))
 })
