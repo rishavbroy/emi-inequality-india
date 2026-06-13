@@ -459,7 +459,7 @@ style_regression_table <- function(tex, df, name) {
   }
   se_rows <- regression_standard_error_rows(df)
   if (length(se_rows)) {
-    tex <- kableExtra::row_spec(tex, se_rows, italic = TRUE, color = "gray35")
+    tex <- kableExtra::row_spec(tex, se_rows, italic = TRUE, color = "gray")
   }
   start <- regression_summary_start(df)
   if (is.finite(start) && start > 1L) {

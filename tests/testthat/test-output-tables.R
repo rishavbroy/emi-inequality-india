@@ -468,6 +468,7 @@ test_that("probit TeX stacks standard errors below AME estimates", {
   expect_match(tex, "-0.100", fixed = TRUE)
   expect_match(tex, "(0.020)", fixed = TRUE)
   expect_false(grepl("Std. Error", tex, fixed = TRUE))
+  expect_false(grepl("gray35", tex, fixed = TRUE))
   expect_false(grepl("\\multicolumn{2}{c}{Enrolled in School (1 = yes)}", tex, fixed = TRUE))
 })
 
