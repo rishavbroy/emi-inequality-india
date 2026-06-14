@@ -375,6 +375,26 @@ attach_legacy_ame_labels <- function(out) {
   labeled
 }
 
+
+legacy_modelsummary_marginaleffects_object <- function(out, native_ame) {
+  if (!is_marginaleffects_object(native_ame)) return(NULL)
+  out <- as.data.frame(out, stringsAsFactors = FALSE)
+  required <- c("Term", "estimate", "std.error", "statistic", "p.value", "conf.low", "conf.high")
+  if (!all(required %in% names(out))) return(native_ame)
+
+  ms <- out[, required, drop = FALSE]
+  ms$term <- as.character(ms$Term)
+  ms$contrast <- ""
+  ms$Term <- NULL
+  # Preserve the marginaleffects class so modelsummary can use its native
+  # marginaleffects/tidy pathway, but hand it the labeled, ordered rows that
+  # are already validated for the public table.  Passing the raw object here
+  # caused modelsummary to reorder contrasts and display labels against the
+  # wrong estimates.
+  class(ms) <- unique(c(class(native_ame), class(ms)))
+  ms
+}
+
 #' format ame results
 #'
 format_ame_results <- function(ame_results) {
@@ -411,7 +431,7 @@ format_ame_results <- function(ame_results) {
   }
   out <- out[, required, drop = FALSE]
   if (is_marginaleffects_object(native_ame)) {
-    attr(out, "legacy_marginaleffects") <- native_ame
+    attr(out, "legacy_marginaleffects") <- legacy_modelsummary_marginaleffects_object(out, native_ame)
   }
   out
 }

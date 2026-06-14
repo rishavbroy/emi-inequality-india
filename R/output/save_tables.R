@@ -250,12 +250,18 @@ render_table_math_labels <- function(df) {
 
 table_header_labels <- function(df, name) {
   labels <- names(df)
-  wrap <- c(
-    "Pct. Mode" = "Pct.\nMode",
-    "Least Freq." = "Least\nFreq.",
-    "Pct. Least Freq." = "Pct. Least\nFreq.",
-    "Adjusted R-squared" = "Adjusted\nR-squared"
-  )
+  # Table 2 is now wide enough to keep these compact legacy headers on one
+  # line.  Continue wrapping only where a table genuinely needs it.
+  wrap <- if (identical(name, "sum_tbl_probit_cat")) {
+    c("Adjusted R-squared" = "Adjusted\nR-squared")
+  } else {
+    c(
+      "Pct. Mode" = "Pct.\nMode",
+      "Least Freq." = "Least\nFreq.",
+      "Pct. Least Freq." = "Pct. Least\nFreq.",
+      "Adjusted R-squared" = "Adjusted\nR-squared"
+    )
+  }
   labels <- ifelse(labels %in% names(wrap), unname(wrap[labels]), labels)
   if (name == "sum_tbl_iv") {
     labels <- ifelse(labels == "Description", "Description", labels)
@@ -384,6 +390,35 @@ legacy_ame_add_rows <- function(table) {
   )
 }
 
+legacy_replace_first <- function(x, pattern, replacement, perl = TRUE) {
+  hit <- regexpr(pattern, x, perl = perl)
+  start <- as.integer(hit[[1]])
+  if (start < 0L) return(x)
+  end <- start + attr(hit, "match.length")[[1]] - 1L
+  paste0(substr(x, 1L, start - 1L), replacement, substr(x, end + 1L, nchar(x)))
+}
+
+legacy_ame_longtable_tex <- function(tex, name) {
+  tex <- paste(as.character(tex), collapse = "\n")
+  tex <- gsub("\\begin{table}[!h]\n", "", tex, fixed = TRUE)
+  tex <- gsub("\\begin{table}[!h]", "", tex, fixed = TRUE)
+  tex <- gsub("\\end{table}", "", tex, fixed = TRUE)
+  tex <- gsub("(\\\\centering\\s*)+", "\\\\centering\n", tex, perl = TRUE)
+  tex <- gsub("\\\\caption\\{[^\n]*\\}\n?", "", tex, perl = TRUE)
+  tex <- legacy_replace_first(
+    tex,
+    "\\\\begin\\{tabular\\}\\[t\\]\\{[^\n]+\\}",
+    "\\begin{longtable}[t]{>{\\raggedright\\arraybackslash}p{9.0cm}>{\\centering\\arraybackslash}p{2.6cm}}"
+  )
+  tex <- legacy_replace_first(
+    tex,
+    "\\\\toprule",
+    paste0("\\caption{\\label{", quarto_table_label(name), "}", table_caption(name), "}\\\\\n\\toprule")
+  )
+  tex <- legacy_replace_first(tex, "\\\\end\\{tabular\\}", "\\end{longtable}")
+  paste0("\\clearpage\n\\begingroup\n", tex, "\n\\endgroup{}\n\\clearpage")
+}
+
 legacy_ame_modelsummary_table <- function(table, name) {
   need_pkg("modelsummary", "native marginaleffects AME table rendering")
   mfx <- legacy_ame_modelsummary_object(table)
@@ -411,11 +446,11 @@ legacy_ame_modelsummary_table <- function(table, name) {
   tex <- suppress_modelsummary_latex_preamble_warning(do.call(modelsummary::modelsummary, args))
   tex <- kableExtra::kable_styling(
     tex,
-    latex_options = c("hold_position", "repeat_header", "striped", "longtable"),
+    latex_options = c("striped"),
     position = "center",
     full_width = FALSE
   )
-  tex
+  legacy_ame_longtable_tex(tex, name)
 }
 
 modelsummary_regression_table <- function(df, name) {
@@ -689,12 +724,12 @@ save_table_tex <- function(table, path, name, public = TRUE) {
   }
   if (name == "sum_tbl_probit_cat") {
     tex <- tex |>
-      kableExtra::column_spec(1, width = "3.6cm") |>
-      kableExtra::column_spec(2, width = "6.1cm") |>
-      kableExtra::column_spec(3, width = "3.1cm") |>
-      kableExtra::column_spec(4, width = "1.55cm") |>
-      kableExtra::column_spec(5, width = "3.25cm") |>
-      kableExtra::column_spec(6, width = "1.65cm") |>
+      kableExtra::column_spec(1, width = "3.8cm") |>
+      kableExtra::column_spec(2, width = "6.6cm") |>
+      kableExtra::column_spec(3, width = "3.2cm") |>
+      kableExtra::column_spec(4, width = "2.05cm") |>
+      kableExtra::column_spec(5, width = "3.35cm") |>
+      kableExtra::column_spec(6, width = "2.35cm") |>
       kableExtra::column_spec(7, width = "1.35cm")
   }
   if (name == "sum_tbl_iv") {

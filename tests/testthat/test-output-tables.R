@@ -555,3 +555,66 @@ test_that("modelsummary datasummary alignment is a single string", {
   expect_equal(table_alignments(df, "probit_mfx"), c("l", "c"))
   expect_equal(modelsummary_align_string(df, "probit_mfx"), "lc")
 })
+
+
+test_that("Table 2 categorical headers remain on one line", {
+  df <- data.frame(
+    Variable = "Urban", Values = "Rural, Urban", Mode = "Rural",
+    `Pct. Mode` = "67.5", `Least Freq.` = "Urban", `Pct. Least Freq.` = "32.5", N = "127246",
+    check.names = FALSE
+  )
+  labels <- table_header_labels(df, "sum_tbl_probit_cat")
+  expect_true(all(!grepl("\\\\|newline|makecell", labels)))
+})
+
+test_that("probit AME modelsummary output is converted to a page-breaking longtable", {
+  tex <- paste0(
+    "\\begin{table}[!h]\n",
+    "\\centering\\centering\n",
+    "\\caption{Old}\n",
+    "\\begin{tabular}[t]{lc}\n",
+    "\\toprule\n",
+    " & Enrolled (1 = yes)\\\\\n",
+    "\\midrule\n",
+    "Age & -0.100\\\\\n",
+    " & (0.020)\\\\\n",
+    "\\bottomrule\n",
+    "\\end{tabular}\n",
+    "\\end{table}"
+  )
+  out <- legacy_ame_longtable_tex(tex, "probit_mfx")
+  expect_match(out, "\\begin{longtable}", fixed = TRUE)
+  expect_match(out, "p{9.0cm}", fixed = TRUE)
+  expect_false(grepl("\\begin{table}", out, fixed = TRUE))
+})
+
+test_that("labeled marginaleffects object preserves public AME order", {
+  native <- structure(
+    data.frame(
+      term = c("SEX", "AGE"),
+      estimate = c(0.2, -0.1),
+      std.error = c(0.03, 0.02),
+      statistic = c(6.7, -5),
+      p.value = c(0.001, 0.001),
+      conf.low = c(0.14, -0.14),
+      conf.high = c(0.26, -0.06),
+      check.names = FALSE
+    ),
+    class = c("slopes", "marginaleffects", "data.frame")
+  )
+  formatted <- data.frame(
+    Term = c("Age (years)", "Female (ref: Male)"),
+    term = c("AGE", "SEX"),
+    contrast = c("dY/dX", "Female - Male"),
+    estimate = c(-0.1, 0.2),
+    std.error = c(0.02, 0.03),
+    statistic = c(-5, 6.7),
+    p.value = c(0.001, 0.001),
+    conf.low = c(-0.14, 0.14),
+    conf.high = c(-0.06, 0.26),
+    check.names = FALSE
+  )
+  out <- legacy_modelsummary_marginaleffects_object(formatted, native)
+  expect_equal(out$term, formatted$Term)
+  expect_equal(out$estimate, formatted$estimate)
+})
