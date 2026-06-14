@@ -148,10 +148,10 @@ legacy_map_style <- function(variable) {
     ),
     consumption_growth_pct = list(
       palette = "brewer.reds",
-      title = "Consumption growth (%)",
-      style = "cont",
-      breaks = NULL,
-      labels = NULL
+      title = "Consumption Growth (%)",
+      style = "fixed",
+      breaks = c(10, 100, 200, 300, 400, 450),
+      labels = c("10-100", "100-200", "200-300", "300-400", "400-450")
     ),
     pucca_share_2007 = list(
       palette = "brown",
@@ -163,9 +163,9 @@ legacy_map_style <- function(variable) {
     head_secondary_plus_2007 = list(
       palette = "brewer.greens",
       title = "% HH Head w/ Sec.+",
-      style = "cont",
-      breaks = NULL,
-      labels = NULL
+      style = "fixed",
+      breaks = c(0, 20, 40, 60, 80),
+      labels = c("0-20", "20-40", "40-60", "60-80")
     ),
     region = list(
       palette = "brewer.dark2",

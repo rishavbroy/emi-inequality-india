@@ -155,3 +155,16 @@ test_that("No data is mapped through the fill scale so its legend key is grey", 
   expect_match(src, "guide_legend", fixed = TRUE)
   expect_match(src, "legacy_no_data_colour()", fixed = TRUE)
 })
+
+
+test_that("main map legends use rounded publication bounds", {
+  cons <- legacy_map_style("consumption_growth_pct")
+  educ <- legacy_map_style("head_secondary_plus_2007")
+
+  expect_equal(cons$title, "Consumption Growth (%)")
+  expect_equal(cons$breaks, c(10, 100, 200, 300, 400, 450))
+  expect_equal(cons$labels, c("10-100", "100-200", "200-300", "300-400", "400-450"))
+  expect_equal(educ$breaks, c(0, 20, 40, 60, 80))
+  expect_equal(educ$labels, c("0-20", "20-40", "40-60", "60-80"))
+  expect_equal(legacy_no_data_colour(), "#bdbdbd")
+})
