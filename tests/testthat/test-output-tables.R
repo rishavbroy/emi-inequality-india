@@ -316,14 +316,14 @@ test_that("regression captions are plain legacy titles", {
 })
 
 
-test_that("wide table headers are wrapped without scaling down", {
+test_that("widened categorical summary table headers stay unwrapped without scaling down", {
   df <- data.frame(
     Variable = "Urban", Values = "Rural, Urban", Mode = "Rural",
     `Pct. Mode` = "67.5", `Least Freq.` = "Urban", `Pct. Least Freq.` = "32.5", N = "127246",
     check.names = FALSE
   )
   labels <- table_header_labels(df, "sum_tbl_probit_cat")
-  expect_true(any(grepl("\\\\", labels, fixed = FALSE)))
+  expect_false(any(grepl("\\\\", labels, fixed = FALSE)))
   expect_false(any(grepl("scale_down", labels, fixed = TRUE)))
 })
 
@@ -546,7 +546,7 @@ test_that("probit AME table has a modelsummary-native path and no map side effec
 test_that("probit summary table column widths are closer to IV summary width", {
   src <- paste(deparse(save_table_tex), collapse = "\n")
   expect_match(src, "5.4cm", fixed = TRUE)
-  expect_match(src, "6.1cm", fixed = TRUE)
+  expect_match(src, "6.6cm", fixed = TRUE)
 })
 
 
