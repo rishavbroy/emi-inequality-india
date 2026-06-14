@@ -429,9 +429,10 @@ make_selection_summary_categorical_table <- function(selection_data) {
 }
 
 make_probit_ame_table <- function(ame_results, n = NA_integer_, selection_model = NULL) {
+  native_ame <- attr(ame_results, "legacy_marginaleffects", exact = TRUE)
   out <- as.data.frame(ame_results, stringsAsFactors = FALSE)
   if (!"Term" %in% names(out)) out$Term <- out$term
-  data.frame(
+  table <- data.frame(
     Term = out$Term,
     Estimate = format_estimate(
       suppressWarnings(as.numeric(out$estimate)),
@@ -441,6 +442,11 @@ make_probit_ame_table <- function(ame_results, n = NA_integer_, selection_model 
     check.names = FALSE,
     stringsAsFactors = FALSE
   )
+  if (!is.null(native_ame)) {
+    attr(table, "legacy_marginaleffects") <- native_ame
+    attr(table, "legacy_marginaleffects_n") <- n
+  }
+  table
 }
 
 make_iv_summary_table <- function(district_panel) {

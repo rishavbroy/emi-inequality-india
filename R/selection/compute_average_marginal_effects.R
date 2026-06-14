@@ -246,6 +246,11 @@ compute_ames_probit_analytic <- function(model, newdata) {
   do.call(rbind, rows)
 }
 
+
+is_marginaleffects_object <- function(x) {
+  inherits(x, c("marginaleffects", "comparisons", "avg_comparisons", "slopes", "avg_slopes", "predictions"))
+}
+
 copy_first_ame_column <- function(out, target, candidates) {
   if (!target %in% names(out)) out[[target]] <- NA
   for (candidate in candidates) {
@@ -373,6 +378,7 @@ attach_legacy_ame_labels <- function(out) {
 #' format ame results
 #'
 format_ame_results <- function(ame_results) {
+  native_ame <- ame_results
   out <- tibble::as_tibble(ame_results)
   if (!"term" %in% names(out) && "variable" %in% names(out)) out$term <- out$variable
   if (!"contrast" %in% names(out)) out$contrast <- infer_ame_contrast(as.data.frame(out))
@@ -403,7 +409,11 @@ format_ame_results <- function(ame_results) {
     missing_s <- is.na(out$s.value) & is.finite(out$p.value) & out$p.value > 0
     out$s.value[missing_s] <- -log2(out$p.value[missing_s])
   }
-  out[, required, drop = FALSE]
+  out <- out[, required, drop = FALSE]
+  if (is_marginaleffects_object(native_ame)) {
+    attr(out, "legacy_marginaleffects") <- native_ame
+  }
+  out
 }
 
 #' save ame results
