@@ -572,25 +572,18 @@ test_that("Table 2 categorical headers remain on one line", {
   expect_true(all(!grepl("\\\\|newline|makecell", labels)))
 })
 
-test_that("probit AME modelsummary output is converted to a page-breaking longtable", {
-  tex <- paste0(
-    "\\begin{table}[!h]\n",
-    "\\centering\\centering\n",
-    "\\caption{Old}\n",
-    "\\begin{tabular}[t]{lc}\n",
-    "\\toprule\n",
-    " & Enrolled (1 = yes)\\\\\n",
-    "\\midrule\n",
-    "Age & -0.100\\\\\n",
-    " & (0.020)\\\\\n",
-    "\\bottomrule\n",
-    "\\end{tabular}\n",
-    "\\end{table}"
-  )
-  out <- legacy_ame_longtable_tex(tex, "probit_mfx")
-  expect_match(out, "\\begin{longtable}", fixed = TRUE)
-  expect_match(out, "p{9.0cm}", fixed = TRUE)
-  expect_false(grepl("\\begin{table}", out, fixed = TRUE))
+test_that("probit AME modelsummary table uses same standard styling path as IV tables", {
+  src <- paste(deparse(legacy_ame_modelsummary_table), collapse = "\n")
+
+  expect_match(src, "modelsummary::modelsummary", fixed = TRUE)
+  expect_match(src, "kableExtra::kable_styling", fixed = TRUE)
+  expect_match(src, "hold_position", fixed = TRUE)
+  expect_match(src, "repeat_header", fixed = TRUE)
+  expect_match(src, "striped", fixed = TRUE)
+  expect_match(src, "longtable", fixed = TRUE)
+  expect_match(src, "Enrolled (1 = yes)", fixed = TRUE)
+  expect_false(grepl("p\\{[0-9.]+cm\\}", src))
+  expect_false(grepl("legacy_ame_longtable_tex", src, fixed = TRUE))
 })
 
 test_that("labeled marginaleffects object preserves public AME order", {

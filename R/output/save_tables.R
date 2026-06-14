@@ -406,27 +406,6 @@ legacy_replace_first <- function(x, pattern, replacement, perl = TRUE) {
   paste0(substr(x, 1L, start - 1L), replacement, substr(x, end + 1L, nchar(x)))
 }
 
-legacy_ame_longtable_tex <- function(tex, name) {
-  tex <- paste(as.character(tex), collapse = "\n")
-  tex <- gsub("\\begin{table}[!h]\n", "", tex, fixed = TRUE)
-  tex <- gsub("\\begin{table}[!h]", "", tex, fixed = TRUE)
-  tex <- gsub("\\end{table}", "", tex, fixed = TRUE)
-  tex <- gsub("(\\\\centering\\s*)+", "\\\\centering\n", tex, perl = TRUE)
-  tex <- gsub("\\\\caption\\{[^\n]*\\}\n?", "", tex, perl = TRUE)
-  tex <- legacy_replace_first(
-    tex,
-    "\\\\begin\\{tabular\\}\\[t\\]\\{[^\n]+\\}",
-    "\\begin{longtable}[t]{>{\\raggedright\\arraybackslash}p{9.0cm}>{\\centering\\arraybackslash}p{2.6cm}}"
-  )
-  tex <- legacy_replace_first(
-    tex,
-    "\\\\toprule",
-    paste0("\\caption{\\label{", quarto_table_label(name), "}", table_caption(name), "}\\\\\n\\toprule")
-  )
-  tex <- legacy_replace_first(tex, "\\\\end\\{tabular\\}", "\\end{longtable}")
-  paste0("\\clearpage\n\\begingroup\n", tex, "\n\\endgroup{}\n\\clearpage")
-}
-
 legacy_ame_modelsummary_table <- function(table, name) {
   need_pkg("modelsummary", "native marginaleffects AME table rendering")
   mfx <- legacy_ame_modelsummary_object(table)
@@ -458,11 +437,11 @@ legacy_ame_modelsummary_table <- function(table, name) {
   tex <- suppress_modelsummary_latex_preamble_warning(do.call(modelsummary::modelsummary, args))
   tex <- kableExtra::kable_styling(
     tex,
-    latex_options = c("striped"),
+    latex_options = c("hold_position", "repeat_header", "striped", "longtable"),
     position = "center",
     full_width = FALSE
   )
-  legacy_ame_longtable_tex(tex, name)
+  kableExtra::add_header_above(tex, c(" " = 1, "Enrolled (1 = yes)" = 1))
 }
 
 modelsummary_regression_table <- function(df, name) {
