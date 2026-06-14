@@ -464,11 +464,12 @@ test_that("probit TeX stacks standard errors below AME estimates", {
   save_tables(list(probit_mfx = table), list(output_formats = list(tables = "tex")))
   tex <- paste(readLines(file.path("outputs", "tables", "main", "probit_mfx.tex"), warn = FALSE), collapse = "\n")
 
-  expect_match(tex, "\\multicolumn{1}{c}{Enrolled in School (1 = yes)}", fixed = TRUE)
+  expect_match(tex, "Enrolled (1 = yes)", fixed = TRUE)
   expect_match(tex, "-0.100", fixed = TRUE)
   expect_match(tex, "(0.020)", fixed = TRUE)
   expect_false(grepl("Std. Error", tex, fixed = TRUE))
-  expect_false(grepl("gray35", tex, fixed = TRUE))
+  expect_false(grepl("textcolor", tex, fixed = TRUE))
+  expect_false(grepl("textit", tex, fixed = TRUE))
   expect_false(grepl("\\multicolumn{2}{c}{Enrolled in School (1 = yes)}", tex, fixed = TRUE))
 })
 
@@ -507,4 +508,43 @@ test_that("wide summary tables hold their float inside landscape pages", {
   expect_match(tex, "\\begin{landscape}", fixed = TRUE)
   expect_match(tex, "\\begin{longtable}", fixed = TRUE)
   expect_false(grepl("\\begin{table}", tex, fixed = TRUE))
+})
+
+
+test_that("native marginaleffects objects are preserved for modelsummary rendering", {
+  mfx <- structure(
+    data.frame(
+      term = "AGE",
+      contrast = "dY/dX",
+      estimate = -0.1,
+      std.error = 0.02,
+      statistic = -5,
+      p.value = 0.001,
+      s.value = 9.97,
+      conf.low = -0.14,
+      conf.high = -0.06,
+      check.names = FALSE
+    ),
+    class = c("slopes", "marginaleffects", "data.frame")
+  )
+
+  formatted <- format_ame_results(mfx)
+  table <- make_probit_ame_table(formatted, n = 100)
+
+  expect_s3_class(attr(formatted, "legacy_marginaleffects"), "marginaleffects")
+  expect_s3_class(attr(table, "legacy_marginaleffects"), "marginaleffects")
+  expect_equal(attr(table, "legacy_marginaleffects_n"), 100)
+})
+
+test_that("probit AME table has a modelsummary-native path and no map side effects", {
+  src <- paste(deparse(save_table_tex), collapse = "\n")
+  expect_match(src, "legacy_ame_modelsummary_table", fixed = TRUE)
+  expect_match(paste(deparse(legacy_ame_modelsummary_table), collapse = "\n"), "modelsummary::modelsummary", fixed = TRUE)
+  expect_false(grepl("legacy_no_data_colour", src, fixed = TRUE))
+})
+
+test_that("probit summary table column widths are closer to IV summary width", {
+  src <- paste(deparse(save_table_tex), collapse = "\n")
+  expect_match(src, "5.4cm", fixed = TRUE)
+  expect_match(src, "6.1cm", fixed = TRUE)
 })

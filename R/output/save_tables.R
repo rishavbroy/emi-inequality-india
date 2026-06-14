@@ -315,8 +315,103 @@ regression_rows_for_modelsummary <- function(df) {
     check.names = FALSE
   )
   out[[model_col]] <- latex_escape_text(df[[2]])
-  out$Term[!nzchar(out$Term)] <- "~"
+  out$Term[!nzchar(out$Term)] <- " "
   out
+}
+
+
+legacy_datasummary_table_tex <- function(df, name) {
+  body <- suppress_modelsummary_latex_preamble_warning(
+    modelsummary::datasummary_df(
+      df,
+      output = "latex_tabular",
+      fmt = identity,
+      align = table_alignments(df, name)
+    )
+  )
+  body <- paste(as.character(body), collapse = "\n")
+  note <- legacy_table_note(name)
+  note_tex <- if (!is.null(note)) {
+    paste0("\n\\begin{tablenotes}[flushleft]\n\\footnotesize\n\\item ", note, "\n\\end{tablenotes}")
+  } else {
+    ""
+  }
+  paste0(
+    "\\begin{table}[!h]\n",
+    "\\centering\n",
+    "\\caption{\\label{", quarto_table_label(name), "}", table_caption(name), "}\n",
+    "\\begin{threeparttable}\n",
+    body,
+    note_tex,
+    "\n\\end{threeparttable}\n",
+    "\\end{table}"
+  )
+}
+
+legacy_ame_modelsummary_object <- function(table) {
+  native <- attr(table, "legacy_marginaleffects", exact = TRUE)
+  if (is.null(native)) return(NULL)
+  if (!is.data.frame(native)) return(NULL)
+  if (!"term" %in% names(native)) return(NULL)
+
+  out <- native
+  labels <- table_column_to_strings(table$Term)
+  labels <- labels[nzchar(labels)]
+  if (length(labels) == nrow(as.data.frame(out))) {
+    out$term <- labels
+  } else {
+    labeled <- tryCatch(attach_legacy_ame_labels(as.data.frame(out)), error = function(e) NULL)
+    if (!is.null(labeled) && "Term" %in% names(labeled) && nrow(labeled) == nrow(as.data.frame(out))) {
+      out$term <- table_column_to_strings(labeled$Term)
+    }
+  }
+  out
+}
+
+legacy_ame_add_rows <- function(table) {
+  n <- attr(table, "legacy_marginaleffects_n", exact = TRUE)
+  n <- suppressWarnings(as.numeric(n))
+  if (!length(n) || !is.finite(n[[1]])) return(NULL)
+  data.frame(
+    term = "Observations",
+    `Enrolled (1 = yes)` = sprintf("%.0f", n[[1]]),
+    check.names = FALSE,
+    stringsAsFactors = FALSE
+  )
+}
+
+legacy_ame_modelsummary_table <- function(table, name) {
+  need_pkg("modelsummary", "native marginaleffects AME table rendering")
+  mfx <- legacy_ame_modelsummary_object(table)
+  if (is.null(mfx)) return(NULL)
+  old_knit_to <- knitr::opts_knit$get("rmarkdown.pandoc.to")
+  old_opt <- getOption("modelsummary_format_numeric_latex")
+  on.exit(knitr::opts_knit$set(rmarkdown.pandoc.to = old_knit_to), add = TRUE)
+  on.exit(options(modelsummary_format_numeric_latex = old_opt), add = TRUE)
+  knitr::opts_knit$set(rmarkdown.pandoc.to = "latex")
+  options(modelsummary_format_numeric_latex = "plain")
+
+  args <- list(
+    models = list(`Enrolled (1 = yes)` = mfx),
+    shape = stats::as.formula("term ~ model"),
+    gof_omit = ".*",
+    add_rows = legacy_ame_add_rows(table),
+    stars = c("*" = .05, "**" = .01, "***" = .001),
+    fmt = 3,
+    title = table_caption(name),
+    output = "kableExtra",
+    escape = FALSE,
+    notes = list(legacy_table_note(name))
+  )
+  if (is.null(args$add_rows)) args$add_rows <- NULL
+  tex <- suppress_modelsummary_latex_preamble_warning(do.call(modelsummary::modelsummary, args))
+  tex <- kableExtra::kable_styling(
+    tex,
+    latex_options = c("hold_position", "repeat_header", "striped", "longtable"),
+    position = "center",
+    full_width = FALSE
+  )
+  tex
 }
 
 modelsummary_regression_table <- function(df, name) {
@@ -330,23 +425,10 @@ modelsummary_regression_table <- function(df, name) {
     names(df)[[2]]
   )
   names(df) <- c("Term", model_col)
-  note <- legacy_table_note(name)
   old_opt <- getOption("modelsummary_format_numeric_latex")
   on.exit(options(modelsummary_format_numeric_latex = old_opt), add = TRUE)
   options(modelsummary_format_numeric_latex = "plain")
-  out <- suppress_modelsummary_latex_preamble_warning(
-    modelsummary::datasummary_df(
-      df,
-      output = "latex_tabular",
-      fmt = identity,
-      align = "lc"
-    )
-  )
-  tex <- as.character(out)
-  if (!is.null(note) && !grepl(note, tex, fixed = TRUE)) {
-    tex <- paste0(tex, "\n\\begin{flushleft}\\footnotesize ", note, "\\end{flushleft}")
-  }
-  tex
+  legacy_datasummary_table_tex(df, name)
 }
 
 legacy_regression_coef_map <- function() {
@@ -457,10 +539,9 @@ style_regression_table <- function(tex, df, name) {
   if (nrow(df)) {
     tex <- kableExtra::row_spec(tex, seq_len(nrow(df)), background = "white")
   }
-  se_rows <- regression_standard_error_rows(df)
-  if (length(se_rows)) {
-    tex <- kableExtra::row_spec(tex, se_rows, italic = TRUE, color = "gray")
-  }
+  # Keep standard-error rows in the same roman face as modelsummary's native
+  # regression output. Italic grey SE rows made the AME table visually diverge
+  # from the legacy modelsummary tables.
   start <- regression_summary_start(df)
   if (is.finite(start) && start > 1L) {
     tex <- kableExtra::row_spec(tex, start - 1L, hline_after = TRUE)
@@ -540,6 +621,10 @@ save_table_tex <- function(table, path, name, public = TRUE) {
     )
     return(write_table_tex(tex, path, name))
   }
+  if (identical(name, "probit_mfx") && !is_formatted_status_table(as.data.frame(table, check.names = FALSE))) {
+    tex <- legacy_ame_modelsummary_table(table, name)
+    if (!is.null(tex)) return(write_table_tex(tex, path, name))
+  }
   df <- sanitize_table_for_kable(format_table_for_output(table, public = public))
   grouped <- summary_table_groups(df)
   df_render <- wrap_table_text_columns(grouped$data, name)
@@ -550,6 +635,8 @@ save_table_tex <- function(table, path, name, public = TRUE) {
   }
   if (identical(name, "probit_mfx") && !is_formatted_status_table(df_render)) {
     df_render <- stack_estimate_se_rows(df_render)
+    tex <- modelsummary_regression_table(df_render, name)
+    return(write_table_tex(tex, path, name))
   }
   tex <- kableExtra::kbl(
     df_render,
@@ -598,13 +685,13 @@ save_table_tex <- function(table, path, name, public = TRUE) {
   }
   if (name == "sum_tbl_probit_cat") {
     tex <- tex |>
-      kableExtra::column_spec(1, width = "3.0cm") |>
-      kableExtra::column_spec(2, width = "5.0cm") |>
-      kableExtra::column_spec(3, width = "2.6cm") |>
-      kableExtra::column_spec(4, width = "1.35cm") |>
-      kableExtra::column_spec(5, width = "2.9cm") |>
-      kableExtra::column_spec(6, width = "1.45cm") |>
-      kableExtra::column_spec(7, width = "1.25cm")
+      kableExtra::column_spec(1, width = "3.6cm") |>
+      kableExtra::column_spec(2, width = "6.1cm") |>
+      kableExtra::column_spec(3, width = "3.1cm") |>
+      kableExtra::column_spec(4, width = "1.55cm") |>
+      kableExtra::column_spec(5, width = "3.25cm") |>
+      kableExtra::column_spec(6, width = "1.65cm") |>
+      kableExtra::column_spec(7, width = "1.35cm")
   }
   if (name == "sum_tbl_iv") {
     tex <- tex |>
@@ -614,12 +701,12 @@ save_table_tex <- function(table, path, name, public = TRUE) {
   }
   if (name == "sum_tbl_probit_quant") {
     tex <- tex |>
-      kableExtra::column_spec(1, width = "4.3cm") |>
-      kableExtra::column_spec(2:ncol(df_render), width = "1.75cm")
+      kableExtra::column_spec(1, width = "5.4cm") |>
+      kableExtra::column_spec(2:ncol(df_render), width = "2.0cm")
   }
   if (regression_table) {
     header <- switch(name,
-      probit_mfx = c(" " = 1, "Enrolled in School (1 = yes)" = 1),
+      probit_mfx = c(" " = 1, "Enrolled (1 = yes)" = 1),
       fs_cons = c(" " = 1, "EMI Exposure" = 1),
       cons_iv = c(" " = 1, "Consumption Growth" = 1)
     )
