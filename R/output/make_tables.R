@@ -446,6 +446,9 @@ make_probit_ame_table <- function(ame_results, n = NA_integer_, selection_model 
     attr(table, "legacy_marginaleffects") <- native_ame
     attr(table, "legacy_marginaleffects_n") <- n
   }
+  if (!is.null(selection_model)) {
+    attr(table, "legacy_selection_model") <- selection_model
+  }
   table
 }
 

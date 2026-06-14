@@ -528,18 +528,23 @@ test_that("native marginaleffects objects are preserved for modelsummary renderi
     class = c("slopes", "marginaleffects", "data.frame")
   )
 
+  attr(mfx, "model") <- "underlying model metadata"
   formatted <- format_ame_results(mfx)
   table <- make_probit_ame_table(formatted, n = 100)
 
   expect_s3_class(attr(formatted, "legacy_marginaleffects"), "marginaleffects")
+  expect_equal(attr(attr(formatted, "legacy_marginaleffects"), "model"), "underlying model metadata")
   expect_s3_class(attr(table, "legacy_marginaleffects"), "marginaleffects")
   expect_equal(attr(table, "legacy_marginaleffects_n"), 100)
 })
 
 test_that("probit AME table has a modelsummary-native path and no map side effects", {
   src <- paste(deparse(save_table_tex), collapse = "\n")
+  ame_src <- paste(deparse(legacy_ame_modelsummary_table), collapse = "\n")
   expect_match(src, "legacy_ame_modelsummary_table", fixed = TRUE)
-  expect_match(paste(deparse(legacy_ame_modelsummary_table), collapse = "\n"), "modelsummary::modelsummary", fixed = TRUE)
+  expect_match(ame_src, "modelsummary::modelsummary", fixed = TRUE)
+  expect_match(ame_src, "gof_map = NA", fixed = TRUE)
+  expect_false(grepl("gof_omit", ame_src, fixed = TRUE))
   expect_false(grepl("legacy_no_data_colour", src, fixed = TRUE))
 })
 
@@ -614,7 +619,18 @@ test_that("labeled marginaleffects object preserves public AME order", {
     conf.high = c(-0.06, 0.26),
     check.names = FALSE
   )
+  attr(native, "model") <- list(name = "original-model")
   out <- legacy_modelsummary_marginaleffects_object(formatted, native)
   expect_equal(out$term, formatted$Term)
   expect_equal(out$estimate, formatted$estimate)
+  expect_equal(attr(out, "model")$name, "original-model")
+})
+
+test_that("AME add_rows uses probit GOF helper without asking modelsummary to extract slopes GOF", {
+  table <- data.frame(Term = "Age", Estimate = "-0.100", check.names = FALSE)
+  attr(table, "legacy_marginaleffects_n") <- 127246
+  rows <- legacy_ame_add_rows(table)
+  expect_equal(names(rows), c("term", "Enrolled (1 = yes)"))
+  expect_equal(rows$term[[1]], "Observations")
+  expect_equal(rows[["Enrolled (1 = yes)"]][[1]], "127246")
 })

@@ -382,6 +382,14 @@ legacy_ame_add_rows <- function(table) {
   n <- attr(table, "legacy_marginaleffects_n", exact = TRUE)
   n <- suppressWarnings(as.numeric(n))
   if (!length(n) || !is.finite(n[[1]])) return(NULL)
+
+  selection_model <- attr(table, "legacy_selection_model", exact = TRUE)
+  if (exists("probit_gof_rows", mode = "function")) {
+    rows <- probit_gof_rows(selection_model, n[[1]], "Enrolled (1 = yes)")
+    names(rows)[[1]] <- "term"
+    return(rows)
+  }
+
   data.frame(
     term = "Observations",
     `Enrolled (1 = yes)` = sprintf("%.0f", n[[1]]),
@@ -433,7 +441,11 @@ legacy_ame_modelsummary_table <- function(table, name) {
   args <- list(
     models = list(`Enrolled (1 = yes)` = mfx),
     shape = stats::as.formula("term ~ model"),
-    gof_omit = ".*",
+    # gof_omit filters after modelsummary tries to extract GOF, so it still
+    # emitted a target-failing warning for the labeled slopes object.  The
+    # documented modelsummary switch for skipping GOF extraction is gof_map = NA;
+    # rows we want in the public probit table are added explicitly below.
+    gof_map = NA,
     add_rows = legacy_ame_add_rows(table),
     stars = c("*" = .05, "**" = .01, "***" = .001),
     fmt = 3,
