@@ -386,11 +386,16 @@ legacy_modelsummary_marginaleffects_object <- function(out, native_ame) {
   ms$term <- as.character(ms$Term)
   ms$contrast <- ""
   ms$Term <- NULL
-  # Preserve the marginaleffects class so modelsummary can use its native
-  # marginaleffects/tidy pathway, but hand it the labeled, ordered rows that
-  # are already validated for the public table.  Passing the raw object here
-  # caused modelsummary to reorder contrasts and display labels against the
-  # wrong estimates.
+  # Preserve the marginaleffects class and non-structural attributes so
+  # modelsummary can use its native marginaleffects/tidy pathway.  We still
+  # hand modelsummary the labeled, ordered rows that are validated for the
+  # public table, because passing the raw object caused modelsummary to reorder
+  # contrasts and display labels against the wrong estimates.
+  native_attributes <- attributes(native_ame)
+  structural_attributes <- c("names", "row.names", "class")
+  for (nm in setdiff(names(native_attributes), structural_attributes)) {
+    attr(ms, nm) <- native_attributes[[nm]]
+  }
   class(ms) <- unique(c(class(native_ame), class(ms)))
   ms
 }
