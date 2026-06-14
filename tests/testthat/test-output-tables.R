@@ -576,6 +576,8 @@ test_that("probit AME modelsummary table uses same standard styling path as IV t
   src <- paste(deparse(legacy_ame_modelsummary_table), collapse = "\n")
 
   expect_match(src, "modelsummary::modelsummary", fixed = TRUE)
+  expect_match(src, "models = list(mfx)", fixed = TRUE)
+  expect_match(src, "longtable = TRUE", fixed = TRUE)
   expect_match(src, "kableExtra::kable_styling", fixed = TRUE)
   expect_match(src, "hold_position", fixed = TRUE)
   expect_match(src, "repeat_header", fixed = TRUE)
@@ -623,7 +625,19 @@ test_that("AME add_rows uses probit GOF helper without asking modelsummary to ex
   table <- data.frame(Term = "Age", Estimate = "-0.100", check.names = FALSE)
   attr(table, "legacy_marginaleffects_n") <- 127246
   rows <- legacy_ame_add_rows(table)
-  expect_equal(names(rows), c("term", "Enrolled (1 = yes)"))
+  expect_equal(names(rows), c("term", "(1)"))
   expect_equal(rows$term[[1]], "Observations")
-  expect_equal(rows[["Enrolled (1 = yes)"]][[1]], "127246")
+  expect_equal(rows[["(1)"]][[1]], "127246")
+})
+
+
+test_that("AME modelsummary labels use colon separators", {
+  expect_equal(legacy_ame_modelsummary_label("Religion × Muslim (ref × Hindu)"), "Religion: Muslim (ref: Hindu)")
+  expect_equal(legacy_ame_modelsummary_label("Social group × Scheduled Tribe (ref × Other)"), "Social group: Scheduled Tribe (ref: Other)")
+})
+
+
+test_that("probit AME note is split into short modelsummary notes", {
+  expect_equal(legacy_table_note("probit_mfx"), c("NSS 64th round (2007-08).", "Design-based standard errors in parentheses."))
+  expect_equal(legacy_modelsummary_notes("probit_mfx"), as.list(legacy_table_note("probit_mfx")))
 })

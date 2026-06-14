@@ -315,6 +315,14 @@ legacy_ame_lookup <- function() {
 
 legacy_ame_label_order <- function() legacy_ame_lookup()$Term
 
+legacy_ame_modelsummary_label <- function(x) {
+  x <- as.character(x)
+  x <- gsub("\u00d7", ":", x, fixed = TRUE)
+  x <- gsub("\\s+:\\s+", ": ", x, perl = TRUE)
+  x <- gsub("\\(ref:\\s*", "(ref: ", x, perl = TRUE)
+  x
+}
+
 infer_ame_contrast <- function(out) {
   if ("contrast" %in% names(out)) return(as.character(out$contrast))
   contrast <- rep("dY/dX", nrow(out))
@@ -383,7 +391,7 @@ legacy_modelsummary_marginaleffects_object <- function(out, native_ame) {
   if (!all(required %in% names(out))) return(native_ame)
 
   ms <- out[, required, drop = FALSE]
-  ms$term <- as.character(ms$Term)
+  ms$term <- legacy_ame_modelsummary_label(ms$Term)
   ms$contrast <- ""
   ms$Term <- NULL
   # Preserve the marginaleffects class and non-structural attributes so

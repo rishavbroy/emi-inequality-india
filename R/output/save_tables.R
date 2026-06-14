@@ -63,11 +63,17 @@ legacy_table_note <- function(name) {
     sum_tbl_probit_quant = "Min. = minimum; 1Q = first quartile; Med. = median; 3Q = third quartile; Max. = maximum; Mean = arithmetic mean; SD = standard deviation; N = number of observations.",
     sum_tbl_iv = "Min. = minimum; 1Q = first quartile; Med. = median; 3Q = third quartile; Max. = maximum; Mean = arithmetic mean; SD = standard deviation; N = number of observations.",
     sum_tbl_probit_cat = "Values = all possible values; Mode = most frequent value; Pct. Mode = percent of observations taking the modal value; Least Freq. = least frequent value; Pct. Least Freq. = percent of observations taking the least frequent value; N = number of observations.",
-    probit_mfx = "Data from the 64th round of the NSS, \"Participation and Expenditure in Education\" in 2007-08. All standard errors are design-based (clustered and nested within strata).",
+    probit_mfx = c("NSS 64th round (2007-08).", "Design-based standard errors in parentheses."),
     fs_cons = "Standard errors clustered by state in parentheses.",
     cons_iv = "Standard errors clustered by state in parentheses.",
     NULL
   )
+}
+
+legacy_modelsummary_notes <- function(name) {
+  note <- legacy_table_note(name)
+  if (is.null(note)) return(NULL)
+  as.list(note)
 }
 
 wrap_table_cell <- function(x, width = 28L) {
@@ -385,14 +391,14 @@ legacy_ame_add_rows <- function(table) {
 
   selection_model <- attr(table, "legacy_selection_model", exact = TRUE)
   if (exists("probit_gof_rows", mode = "function")) {
-    rows <- probit_gof_rows(selection_model, n[[1]], "Enrolled (1 = yes)")
+    rows <- probit_gof_rows(selection_model, n[[1]], "(1)")
     names(rows)[[1]] <- "term"
     return(rows)
   }
 
   data.frame(
     term = "Observations",
-    `Enrolled (1 = yes)` = sprintf("%.0f", n[[1]]),
+    `(1)` = sprintf("%.0f", n[[1]]),
     check.names = FALSE,
     stringsAsFactors = FALSE
   )
@@ -418,7 +424,12 @@ legacy_ame_modelsummary_table <- function(table, name) {
   options(modelsummary_format_numeric_latex = "plain")
 
   args <- list(
-    models = list(`Enrolled (1 = yes)` = mfx),
+    # Keep modelsummary's default compact model-column label, "(1)", and add
+    # the dependent-variable label as a spanning header below. Naming the
+    # marginaleffects object itself "Enrolled (1 = yes)" made modelsummary use
+    # that long text as the actual model column, which widened the AME table and
+    # duplicated the header. This mirrors the IV tables' modelsummary path.
+    models = list(mfx),
     shape = stats::as.formula("term ~ model"),
     # gof_omit filters after modelsummary tries to extract GOF, so it still
     # emitted a target-failing warning for the labeled slopes object.  The
@@ -430,8 +441,9 @@ legacy_ame_modelsummary_table <- function(table, name) {
     fmt = 3,
     title = table_caption(name),
     output = "kableExtra",
+    longtable = TRUE,
     escape = FALSE,
-    notes = list(legacy_table_note(name))
+    notes = legacy_modelsummary_notes(name)
   )
   if (is.null(args$add_rows)) args$add_rows <- NULL
   tex <- suppress_modelsummary_latex_preamble_warning(do.call(modelsummary::modelsummary, args))
@@ -522,7 +534,7 @@ legacy_modelsummary_table <- function(model, name, vcov_matrix = NULL, add_rows 
     title = table_caption(name),
     output = "kableExtra",
     escape = FALSE,
-    notes = list(legacy_table_note(name))
+    notes = legacy_modelsummary_notes(name)
   )
   if (!is.null(vcov_matrix)) args$vcov <- vcov_matrix
   if (!is.null(add_rows)) args$add_rows <- add_rows
