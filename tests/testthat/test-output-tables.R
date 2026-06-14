@@ -548,3 +548,10 @@ test_that("probit summary table column widths are closer to IV summary width", {
   expect_match(src, "5.4cm", fixed = TRUE)
   expect_match(src, "6.1cm", fixed = TRUE)
 })
+
+
+test_that("modelsummary datasummary alignment is a single string", {
+  df <- data.frame(Term = c("Urban", ""), `Enrolled (1 = yes)` = c("0.001", "(0.002)"), check.names = FALSE)
+  expect_equal(table_alignments(df, "probit_mfx"), c("l", "c"))
+  expect_equal(modelsummary_align_string(df, "probit_mfx"), "lc")
+})

@@ -271,6 +271,10 @@ table_alignments <- function(df, name) {
   c("l", rep("c", ncol(df) - 1L))
 }
 
+modelsummary_align_string <- function(df, name) {
+  paste(table_alignments(df, name), collapse = "")
+}
+
 caption_for_latex <- function(name) {
   # Do not run full captions through kableExtra::linebreak().  That helper is
   # intended for table cells/headers and can corrupt kable captions by
@@ -326,7 +330,7 @@ legacy_datasummary_table_tex <- function(df, name) {
       df,
       output = "latex_tabular",
       fmt = identity,
-      align = table_alignments(df, name)
+      align = modelsummary_align_string(df, name)
     )
   )
   body <- paste(as.character(body), collapse = "\n")
