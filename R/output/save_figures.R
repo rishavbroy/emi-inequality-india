@@ -276,12 +276,21 @@ legacy_pretty_breaks <- function(x, n = 5L) {
   br
 }
 
+legacy_cut_label_number <- function(x) {
+  out <- trimws(formatC(x, format = "fg", digits = 4))
+  out <- sub("\\.0+$", "", out)
+  out <- sub("(\\.\\d*?)0+$", "\\1", out)
+  out <- sub("\\.$", "", out)
+  out <- sub("^-$", "0", out)
+  out
+}
+
 legacy_cut_labels <- function(breaks) {
   if (length(breaks) < 2L) return(character())
   paste0(
-    formatC(head(breaks, -1L), format = "fg", digits = 4),
+    legacy_cut_label_number(head(breaks, -1L)),
     "-",
-    formatC(tail(breaks, -1L), format = "fg", digits = 4)
+    legacy_cut_label_number(tail(breaks, -1L))
   )
 }
 
@@ -344,8 +353,7 @@ build_legacy_ggplot_map <- function(plot_data, spec) {
   }
 
   ggplot2::ggplot() +
-    ggplot2::geom_sf(data = plot_data, fill = legacy_no_data_colour(), color = "grey70", linewidth = 0.04) +
-    ggplot2::geom_sf(data = overlay, ggplot2::aes(fill = .data[[fill$fill]]), color = "grey35", linewidth = 0.05) +
+    ggplot2::geom_sf(data = plot_data, ggplot2::aes(fill = .data[[fill$fill]]), color = "grey35", linewidth = 0.05) +
     ggplot2::scale_fill_manual(
       values = fill$colors,
       breaks = names(fill$colors),
@@ -354,6 +362,7 @@ build_legacy_ggplot_map <- function(plot_data, spec) {
       na.translate = TRUE,
       na.value = legacy_no_data_colour()
     ) +
+    ggplot2::guides(fill = ggplot2::guide_legend(override.aes = list(color = "grey35", linewidth = 0.25))) +
     ggplot2::coord_sf(datum = NA) +
     ggplot2::labs(fill = fill$title) +
     ggplot2::theme_void(base_size = 10) +

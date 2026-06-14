@@ -141,3 +141,17 @@ test_that("legacy map rendering refuses all-grey data layers", {
     fixed = TRUE
   )
 })
+
+
+test_that("legacy map range labels do not contain padded spaces", {
+  labels <- legacy_cut_labels(c(0, 20, 40, 60, 80, 100))
+  expect_equal(labels, c("0-20", "20-40", "40-60", "60-80", "80-100"))
+  expect_false(any(grepl("\\s+-|-[[:space:]]+", labels)))
+})
+
+test_that("No data is mapped through the fill scale so its legend key is grey", {
+  src <- paste(deparse(build_legacy_ggplot_map), collapse = "\n")
+  expect_match(src, "geom_sf(data = plot_data, ggplot2::aes(fill = .data[[fill$fill]])", fixed = TRUE)
+  expect_match(src, "guide_legend", fixed = TRUE)
+  expect_match(src, "legacy_no_data_colour()", fixed = TRUE)
+})
