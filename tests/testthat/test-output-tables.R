@@ -543,8 +543,9 @@ test_that("probit AME table has a modelsummary-native path and no map side effec
   ame_src <- paste(deparse(legacy_ame_modelsummary_table), collapse = "\n")
   expect_match(src, "legacy_ame_modelsummary_table", fixed = TRUE)
   expect_match(ame_src, "modelsummary::modelsummary", fixed = TRUE)
-  expect_match(ame_src, "gof_map = NA", fixed = TRUE)
+  expect_match(ame_src, "gof_map = legacy_ame_gof_map", fixed = TRUE)
   expect_false(grepl("gof_omit", ame_src, fixed = TRUE))
+  expect_false(grepl("add_rows", ame_src, fixed = TRUE))
   expect_false(grepl("legacy_no_data_colour", src, fixed = TRUE))
 })
 
@@ -577,6 +578,8 @@ test_that("probit AME modelsummary table uses same standard styling path as IV t
 
   expect_match(src, "modelsummary::modelsummary", fixed = TRUE)
   expect_match(src, "models = list(mfx)", fixed = TRUE)
+  expect_match(src, "gof_map = legacy_ame_gof_map", fixed = TRUE)
+  expect_match(src, "coef_rename = legacy_ame_modelsummary_label", fixed = TRUE)
   expect_match(src, "longtable = TRUE", fixed = TRUE)
   expect_match(src, "kableExtra::kable_styling", fixed = TRUE)
   expect_match(src, "hold_position", fixed = TRUE)
@@ -588,7 +591,7 @@ test_that("probit AME modelsummary table uses same standard styling path as IV t
   expect_false(grepl("legacy_ame_longtable_tex", src, fixed = TRUE))
 })
 
-test_that("labeled marginaleffects object preserves public AME order", {
+test_that("labeled AME modelsummary_list preserves public AME order and labels", {
   native <- structure(
     data.frame(
       term = c("SEX", "AGE"),
@@ -614,25 +617,29 @@ test_that("labeled marginaleffects object preserves public AME order", {
     conf.high = c(-0.06, 0.26),
     check.names = FALSE
   )
-  attr(native, "model") <- list(name = "original-model")
-  out <- legacy_modelsummary_marginaleffects_object(formatted, native)
-  expect_equal(out$term, formatted$Term)
-  expect_equal(out$estimate, formatted$estimate)
-  expect_equal(attr(out, "model")$name, "original-model")
+  attr(formatted, "legacy_marginaleffects") <- native
+  table <- make_probit_ame_table(formatted, n = 100)
+  out <- legacy_ame_modelsummary_object(table)
+  expect_s3_class(out, "modelsummary_list")
+  expect_equal(out$tidy$term, formatted$Term)
+  expect_equal(out$tidy$estimate, formatted$estimate)
+  expect_equal(out$glance$nobs[[1]], 100)
 })
 
-test_that("AME add_rows uses probit GOF helper without asking modelsummary to extract slopes GOF", {
+test_that("AME modelsummary_list exposes observations as GOF", {
   table <- data.frame(Term = "Age", Estimate = "-0.100", check.names = FALSE)
   attr(table, "legacy_marginaleffects_n") <- 127246
-  rows <- legacy_ame_add_rows(table)
-  expect_equal(names(rows), c("term", "(1)"))
-  expect_equal(rows$term[[1]], "Observations")
-  expect_equal(rows[["(1)"]][[1]], "127246")
+  glance <- legacy_ame_glance(table)
+  gof <- legacy_ame_gof_map()
+  expect_equal(glance$nobs[[1]], 127246)
+  expect_equal(gof$raw[[1]], "nobs")
+  expect_equal(gof$clean[[1]], "Observations")
 })
 
 
 test_that("AME modelsummary labels use colon separators", {
   expect_equal(legacy_ame_modelsummary_label("Religion × Muslim (ref × Hindu)"), "Religion: Muslim (ref: Hindu)")
+  expect_equal(legacy_ame_modelsummary_label("Religion ×  Muslim (ref ×  Hindu)"), "Religion: Muslim (ref: Hindu)")
   expect_equal(legacy_ame_modelsummary_label("Social group × Scheduled Tribe (ref × Other)"), "Social group: Scheduled Tribe (ref: Other)")
 })
 

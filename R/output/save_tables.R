@@ -368,38 +368,51 @@ legacy_ame_modelsummary_object <- function(table) {
   native <- attr(table, "legacy_marginaleffects", exact = TRUE)
   if (is.null(native)) return(NULL)
   if (!is.data.frame(native)) return(NULL)
-  if (!"term" %in% names(native)) return(NULL)
 
-  out <- native
+  out <- as.data.frame(native, check.names = FALSE, stringsAsFactors = FALSE)
+  required <- c("estimate", "std.error", "statistic", "p.value")
+  if (!all(required %in% names(out))) return(NULL)
+
   labels <- table_column_to_strings(table$Term)
   labels <- labels[nzchar(labels)]
-  if (length(labels) == nrow(as.data.frame(out))) {
+  if (length(labels) == nrow(out)) {
     out$term <- labels
-  } else {
-    labeled <- tryCatch(attach_legacy_ame_labels(as.data.frame(out)), error = function(e) NULL)
-    if (!is.null(labeled) && "Term" %in% names(labeled) && nrow(labeled) == nrow(as.data.frame(out))) {
-      out$term <- table_column_to_strings(labeled$Term)
-    }
+  } else if (!"term" %in% names(out)) {
+    return(NULL)
   }
-  out
+  out$term <- legacy_ame_modelsummary_label(out$term)
+
+  tidy <- data.frame(
+    term = out$term,
+    estimate = suppressWarnings(as.numeric(out$estimate)),
+    std.error = suppressWarnings(as.numeric(out$std.error)),
+    statistic = suppressWarnings(as.numeric(out$statistic)),
+    p.value = suppressWarnings(as.numeric(out$p.value)),
+    check.names = FALSE,
+    stringsAsFactors = FALSE
+  )
+  if ("conf.low" %in% names(out)) tidy$conf.low <- suppressWarnings(as.numeric(out$conf.low))
+  if ("conf.high" %in% names(out)) tidy$conf.high <- suppressWarnings(as.numeric(out$conf.high))
+
+  mod <- list(tidy = tidy, glance = legacy_ame_glance(table))
+  class(mod) <- "modelsummary_list"
+  mod
 }
 
-legacy_ame_add_rows <- function(table) {
+legacy_ame_glance <- function(table) {
   n <- attr(table, "legacy_marginaleffects_n", exact = TRUE)
   n <- suppressWarnings(as.numeric(n))
-  if (!length(n) || !is.finite(n[[1]])) return(NULL)
-
-  selection_model <- attr(table, "legacy_selection_model", exact = TRUE)
-  if (exists("probit_gof_rows", mode = "function")) {
-    rows <- probit_gof_rows(selection_model, n[[1]], "(1)")
-    names(rows)[[1]] <- "term"
-    return(rows)
+  if (length(n) && is.finite(n[[1]])) {
+    return(data.frame(nobs = n[[1]], check.names = FALSE))
   }
+  data.frame(row.names = 1L)
+}
 
+legacy_ame_gof_map <- function() {
   data.frame(
-    term = "Observations",
-    `(1)` = sprintf("%.0f", n[[1]]),
-    check.names = FALSE,
+    raw = "nobs",
+    clean = "Observations",
+    fmt = 0,
     stringsAsFactors = FALSE
   )
 }
@@ -424,19 +437,14 @@ legacy_ame_modelsummary_table <- function(table, name) {
   options(modelsummary_format_numeric_latex = "plain")
 
   args <- list(
-    # Keep modelsummary's default compact model-column label, "(1)", and add
-    # the dependent-variable label as a spanning header below. Naming the
-    # marginaleffects object itself "Enrolled (1 = yes)" made modelsummary use
-    # that long text as the actual model column, which widened the AME table and
-    # duplicated the header. This mirrors the IV tables' modelsummary path.
+    # Use modelsummary's documented custom-model interface: a modelsummary_list
+    # with a broom-like tidy component for the AMEs and a glance component for
+    # GOF rows. This preserves the same modelsummary/kableExtra table machinery
+    # used by Tables 5 and 6 without asking modelsummary to infer labels or GOF
+    # from a modified slopes object.
     models = list(mfx),
-    shape = stats::as.formula("term ~ model"),
-    # gof_omit filters after modelsummary tries to extract GOF, so it still
-    # emitted a target-failing warning for the labeled slopes object.  The
-    # documented modelsummary switch for skipping GOF extraction is gof_map = NA;
-    # rows we want in the public probit table are added explicitly below.
-    gof_map = NA,
-    add_rows = legacy_ame_add_rows(table),
+    gof_map = legacy_ame_gof_map(),
+    coef_rename = legacy_ame_modelsummary_label,
     stars = c("*" = .05, "**" = .01, "***" = .001),
     fmt = 3,
     title = table_caption(name),
@@ -445,7 +453,6 @@ legacy_ame_modelsummary_table <- function(table, name) {
     escape = FALSE,
     notes = legacy_modelsummary_notes(name)
   )
-  if (is.null(args$add_rows)) args$add_rows <- NULL
   tex <- suppress_modelsummary_latex_preamble_warning(do.call(modelsummary::modelsummary, args))
   tex <- kableExtra::kable_styling(
     tex,
