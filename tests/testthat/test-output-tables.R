@@ -538,14 +538,16 @@ test_that("native marginaleffects objects are preserved for modelsummary renderi
   expect_equal(attr(table, "legacy_marginaleffects_n"), 100)
 })
 
-test_that("probit AME table has a modelsummary-native path and no map side effects", {
+test_that("probit AME table has a native marginaleffects modelsummary path and no map side effects", {
   src <- paste(deparse(save_table_tex), collapse = "\n")
   ame_src <- paste(deparse(legacy_ame_modelsummary_table), collapse = "\n")
   expect_match(src, "legacy_ame_modelsummary_table", fixed = TRUE)
   expect_match(ame_src, "modelsummary::modelsummary", fixed = TRUE)
-  expect_match(ame_src, "gof_map = legacy_ame_gof_map", fixed = TRUE)
+  expect_match(ame_src, "models = list(mfx)", fixed = TRUE)
+  expect_match(ame_src, "gof_map = NA", fixed = TRUE)
+  expect_match(ame_src, "add_rows = legacy_ame_observation_rows", fixed = TRUE)
   expect_false(grepl("gof_omit", ame_src, fixed = TRUE))
-  expect_false(grepl("add_rows", ame_src, fixed = TRUE))
+  expect_false(grepl("modelsummary_list", ame_src, fixed = TRUE))
   expect_false(grepl("legacy_no_data_colour", src, fixed = TRUE))
 })
 
@@ -578,8 +580,9 @@ test_that("probit AME modelsummary table uses same standard styling path as IV t
 
   expect_match(src, "modelsummary::modelsummary", fixed = TRUE)
   expect_match(src, "models = list(mfx)", fixed = TRUE)
-  expect_match(src, "gof_map = legacy_ame_gof_map", fixed = TRUE)
   expect_match(src, "coef_rename = legacy_ame_modelsummary_label", fixed = TRUE)
+  expect_match(src, "gof_map = NA", fixed = TRUE)
+  expect_match(src, "add_rows = legacy_ame_observation_rows", fixed = TRUE)
   expect_match(src, "longtable = TRUE", fixed = TRUE)
   expect_match(src, "kableExtra::kable_styling", fixed = TRUE)
   expect_match(src, "hold_position", fixed = TRUE)
@@ -591,7 +594,7 @@ test_that("probit AME modelsummary table uses same standard styling path as IV t
   expect_false(grepl("legacy_ame_longtable_tex", src, fixed = TRUE))
 })
 
-test_that("labeled AME modelsummary_list preserves public AME order and labels", {
+test_that("labeled native marginaleffects object preserves public AME order and labels", {
   native <- structure(
     data.frame(
       term = c("SEX", "AGE"),
@@ -617,51 +620,26 @@ test_that("labeled AME modelsummary_list preserves public AME order and labels",
     conf.high = c(-0.06, 0.26),
     check.names = FALSE
   )
-  attr(formatted, "legacy_marginaleffects") <- native
+  attr(formatted, "legacy_marginaleffects") <- legacy_modelsummary_marginaleffects_object(formatted, native)
   table <- make_probit_ame_table(formatted, n = 100)
   out <- legacy_ame_modelsummary_object(table)
-  expect_s3_class(out, "modelsummary_list")
-  expect_equal(out$tidy$term, formatted$Term)
-  expect_equal(out$tidy$estimate, formatted$estimate)
-  expect_equal(out$glance$nobs[[1]], 100)
-})
-
-test_that("AME modelsummary_list reorders native rows by rendered estimates when needed", {
-  native <- structure(
-    data.frame(
-      term = c("SEX", "AGE"),
-      estimate = c(0.2, -0.1),
-      std.error = c(0.03, 0.02),
-      statistic = c(6.7, -5),
-      p.value = c(0.001, 0.001),
-      check.names = FALSE
-    ),
-    class = c("slopes", "marginaleffects", "data.frame")
-  )
-  table <- data.frame(
-    Term = c("Age (years)", "Female (ref: Male)"),
-    Estimate = c("-0.100***", "0.200***"),
-    `Std. Error` = c("(0.020)", "(0.030)"),
-    check.names = FALSE
-  )
-  attr(table, "legacy_marginaleffects") <- native
-  attr(table, "legacy_marginaleffects_n") <- 100
-  out <- legacy_ame_modelsummary_object(table)
-  expect_equal(out$tidy$term, table$Term)
-  expect_equal(out$tidy$estimate, c(-0.1, 0.2))
+  expect_s3_class(out, "marginaleffects")
+  expect_false(inherits(out, "modelsummary_list"))
+  expect_equal(out$term, formatted$Term)
+  expect_equal(out$estimate, formatted$estimate)
+  expect_equal(attr(table, "legacy_marginaleffects_n"), 100)
 })
 
 
-test_that("AME modelsummary_list exposes observations as GOF", {
+test_that("AME observations are added through modelsummary gof_start rows", {
   table <- data.frame(Term = "Age", Estimate = "-0.100", check.names = FALSE)
   attr(table, "legacy_marginaleffects_n") <- 127246
-  glance <- legacy_ame_glance(table)
-  gof <- legacy_ame_gof_map()
-  expect_equal(glance$nobs[[1]], 127246)
-  expect_equal(gof$raw[[1]], "nobs")
-  expect_equal(gof$clean[[1]], "Observations")
+  rows <- legacy_ame_observation_rows(table)
+  expect_equal(rows$term[[1]], "Observations")
+  expect_equal(rows$estimate[[1]], "127246")
+  expect_false("(1)" %in% names(rows))
+  expect_equal(attr(rows, "position"), "gof_start")
 })
-
 
 test_that("AME modelsummary labels use colon separators", {
   expect_equal(legacy_ame_modelsummary_label("Religion × Muslim (ref × Hindu)"), "Religion: Muslim (ref: Hindu)")
@@ -670,7 +648,7 @@ test_that("AME modelsummary labels use colon separators", {
 })
 
 
-test_that("probit AME note is split into short modelsummary notes", {
-  expect_equal(legacy_table_note("probit_mfx"), c("NSS 64th round (2007-08).", "Design-based standard errors in parentheses."))
+test_that("probit AME note is compact for longtable output", {
+  expect_equal(legacy_table_note("probit_mfx"), "NSS 64th round; design-based SEs in parentheses.")
   expect_equal(legacy_modelsummary_notes("probit_mfx"), as.list(legacy_table_note("probit_mfx")))
 })

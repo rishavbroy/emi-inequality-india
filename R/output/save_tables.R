@@ -63,7 +63,7 @@ legacy_table_note <- function(name) {
     sum_tbl_probit_quant = "Min. = minimum; 1Q = first quartile; Med. = median; 3Q = third quartile; Max. = maximum; Mean = arithmetic mean; SD = standard deviation; N = number of observations.",
     sum_tbl_iv = "Min. = minimum; 1Q = first quartile; Med. = median; 3Q = third quartile; Max. = maximum; Mean = arithmetic mean; SD = standard deviation; N = number of observations.",
     sum_tbl_probit_cat = "Values = all possible values; Mode = most frequent value; Pct. Mode = percent of observations taking the modal value; Least Freq. = least frequent value; Pct. Least Freq. = percent of observations taking the least frequent value; N = number of observations.",
-    probit_mfx = c("NSS 64th round (2007-08).", "Design-based standard errors in parentheses."),
+    probit_mfx = "NSS 64th round; design-based SEs in parentheses.",
     fs_cons = "Standard errors clustered by state in parentheses.",
     cons_iv = "Standard errors clustered by state in parentheses.",
     NULL
@@ -364,87 +364,28 @@ legacy_datasummary_table_tex <- function(df, name) {
   )
 }
 
-parse_table_number <- function(x) {
-  x <- table_column_to_strings(x)
-  x <- gsub("\\*", "", x, perl = TRUE)
-  x <- gsub("[(),]", "", x, perl = TRUE)
-  suppressWarnings(as.numeric(trimws(x)))
-}
-
-legacy_match_ame_public_order <- function(out, table) {
-  labels <- table_column_to_strings(table$Term)
-  labels <- labels[nzchar(labels)]
-  if (!length(labels) || length(labels) != nrow(out)) return(out)
-
-  current_labels <- if ("term" %in% names(out)) legacy_ame_modelsummary_label(out$term) else rep(NA_character_, nrow(out))
-  if (identical(current_labels, legacy_ame_modelsummary_label(labels))) return(out)
-
-  table_est <- if ("Estimate" %in% names(table)) parse_table_number(table$Estimate) else rep(NA_real_, length(labels))
-  table_se <- if ("Std. Error" %in% names(table)) parse_table_number(table[["Std. Error"]]) else rep(NA_real_, length(labels))
-  out_est <- suppressWarnings(as.numeric(out$estimate))
-  out_se <- suppressWarnings(as.numeric(out$std.error))
-
-  matched <- integer(length(labels))
-  available <- seq_len(nrow(out))
-  for (i in seq_along(labels)) {
-    candidates <- available
-    if (is.finite(table_est[[i]])) {
-      candidates <- candidates[is.finite(out_est[candidates]) & abs(out_est[candidates] - table_est[[i]]) < 1e-8]
-    }
-    if (length(candidates) > 1L && is.finite(table_se[[i]])) {
-      candidates <- candidates[is.finite(out_se[candidates]) & abs(out_se[candidates] - table_se[[i]]) < 1e-8]
-    }
-    if (length(candidates) != 1L) return(out)
-    matched[[i]] <- candidates[[1]]
-    available <- setdiff(available, candidates[[1]])
-  }
-  out[matched, , drop = FALSE]
-}
 
 legacy_ame_modelsummary_object <- function(table) {
   native <- attr(table, "legacy_marginaleffects", exact = TRUE)
-  if (is.null(native)) return(NULL)
-  if (!is.data.frame(native)) return(NULL)
+  if (is.null(native) || !is_marginaleffects_object(native)) return(NULL)
+  native
+}
 
-  out <- as.data.frame(native, check.names = FALSE, stringsAsFactors = FALSE)
-  required <- c("estimate", "std.error", "statistic", "p.value")
-  if (!all(required %in% names(out))) return(NULL)
+legacy_ame_observation_rows <- function(table) {
+  n <- attr(table, "legacy_marginaleffects_n", exact = TRUE)
+  n <- suppressWarnings(as.numeric(n))
+  if (!length(n) || !is.finite(n[[1]])) return(NULL)
 
-  labels <- table_column_to_strings(table$Term)
-  labels <- labels[nzchar(labels)]
-  if (length(labels) == nrow(out)) {
-    out <- legacy_match_ame_public_order(out, table)
-    out$term <- labels
-  } else if (!"term" %in% names(out)) {
-    return(NULL)
-  }
-  out$term <- legacy_ame_modelsummary_label(out$term)
-
-  tidy <- data.frame(
-    term = out$term,
-    estimate = suppressWarnings(as.numeric(out$estimate)),
-    std.error = suppressWarnings(as.numeric(out$std.error)),
-    statistic = suppressWarnings(as.numeric(out$statistic)),
-    p.value = suppressWarnings(as.numeric(out$p.value)),
+  rows <- data.frame(
+    term = "Observations",
+    estimate = format(round(n[[1]]), trim = TRUE, scientific = FALSE),
     check.names = FALSE,
     stringsAsFactors = FALSE
   )
-  if ("conf.low" %in% names(out)) tidy$conf.low <- suppressWarnings(as.numeric(out$conf.low))
-  if ("conf.high" %in% names(out)) tidy$conf.high <- suppressWarnings(as.numeric(out$conf.high))
-
-  mod <- list(tidy = tidy, glance = legacy_ame_glance(table))
-  class(mod) <- "modelsummary_list"
-  mod
+  attr(rows, "position") <- "gof_start"
+  rows
 }
 
-legacy_ame_glance <- function(table) {
-  n <- attr(table, "legacy_marginaleffects_n", exact = TRUE)
-  n <- suppressWarnings(as.numeric(n))
-  if (length(n) && is.finite(n[[1]])) {
-    return(data.frame(nobs = n[[1]], check.names = FALSE))
-  }
-  data.frame(row.names = 1L)
-}
 
 legacy_ame_gof_map <- function() {
   data.frame(
@@ -475,14 +416,15 @@ legacy_ame_modelsummary_table <- function(table, name) {
   options(modelsummary_format_numeric_latex = "plain")
 
   args <- list(
-    # Use modelsummary's documented custom-model interface: a modelsummary_list
-    # with a broom-like tidy component for the AMEs and a glance component for
-    # GOF rows. This preserves the same modelsummary/kableExtra table machinery
-    # used by Tables 5 and 6 without asking modelsummary to infer labels or GOF
-    # from a modified slopes object.
+    # Pass the marginaleffects object itself to modelsummary, following the
+    # native marginaleffects -> modelsummary integration.  We keep the same
+    # kableExtra styling path as the IV regression tables, while using
+    # modelsummary's standard add_rows mechanism at gof_start for the one
+    # meaningful survey-design GOF row.
     models = list(mfx),
-    gof_map = legacy_ame_gof_map(),
     coef_rename = legacy_ame_modelsummary_label,
+    gof_map = NA,
+    add_rows = legacy_ame_observation_rows(table),
     stars = c("*" = .05, "**" = .01, "***" = .001),
     fmt = 3,
     title = table_caption(name),
