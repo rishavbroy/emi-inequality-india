@@ -46,7 +46,6 @@
 "district_keys_2017",NA,NA
 "missingness_diagnostics",NA,NA
 "diag_fuzzy_matching",NA,NA
-"processed_district_panel_file",NA,NA
 "diag_district_matching",NA,NA
 "diag_multicollinearity",NA,NA
 "overid_diagnostics",NA,NA
@@ -76,12 +75,19 @@
 "diag_spatial_autocorrelation",NA,NA
 "diag_ame_benchmark",NA,NA
 "legacy_ame_longtable_tex",NA,NA
-"figure_files",NA,NA
 "legacy_ame_add_rows",NA,NA
 "ame_results",NA,NA
 "measures_2007",NA,NA
 "tables",NA,NA
 "report_values",NA,NA
+"legacy_ame_glance",NA,NA
+"parse_table_number",NA,NA
+"legacy_match_ame_public_order",NA,NA
+"processed_district_panel_file",NA,NA
+"figure_files",NA,NA
+"legacy_ame_observation_rows",NA,NA
+"table_files",NA,NA
+"coding_sample_pdfs",NA,NA
 "make_ilo_trends_figure",NA,NA
 "compare_rook_queen_contiguity",NA,NA
 "path_outputs",NA,NA
@@ -107,11 +113,11 @@
 "copy_first_ame_column",NA,NA
 "format_se",NA,NA
 "path_figures",NA,NA
+"legacy_ame_gof_function",NA,NA
 "model_status_reason",NA,NA
 "normalize_report_term",NA,NA
 "plain_chr",NA,NA
-"legacy_ame_glance",NA,NA
-"legacy_ame_modelsummary_label",NA,NA
+"is_marginaleffects_object",NA,NA
 "compare_no_iv_no_controls",NA,NA
 "validate_linguistic_distance_ranges",NA,NA
 "legacy_iv_term_label",NA,NA
@@ -123,6 +129,7 @@
 "save_spatial_autocorrelation_diagnostics",NA,NA
 "legacy_replace_first",NA,NA
 "clean_census_area_name",NA,NA
+"single_space_longtable_tex",NA,NA
 "adjust_missingness_pvalues_bh",NA,NA
 "compute_linguistic_distance_variants",NA,NA
 "diagnose_district_matching",NA,NA
@@ -143,6 +150,7 @@
 "check_core_variables_present",NA,NA
 "run_avg_slopes",NA,NA
 "legacy_summary_group_row",NA,NA
+"legacy_table2_column_widths",NA,NA
 "suppress_atomic_vector_coercion_warning",NA,NA
 "flatten_processed_output",NA,NA
 "save_model_robustness_diagnostics",NA,NA
@@ -168,7 +176,7 @@
 "read_sample_report_values",NA,NA
 "sample_value",NA,NA
 "is_model_status_payload",NA,NA
-"is_marginaleffects_object",NA,NA
+"legacy_ame_modelsummary_label",NA,NA
 "path_diagnostics",NA,NA
 "extract_yaml_field",NA,NA
 "validate_config",NA,NA
@@ -283,6 +291,7 @@
 "compute_partial_f_statistics",NA,NA
 "table_cell_to_string",NA,NA
 "clean_edu0708_private_expenditure",NA,NA
+"regression_star_note",NA,NA
 "standardize_edu0708_weights",NA,NA
 "first_finite_value",NA,NA
 "is_final_mode",NA,NA
@@ -313,13 +322,13 @@
 "fuzzy_join_sequence",NA,NA
 "compute_kappa",NA,NA
 "compute_mother_tongue_population_shares",NA,NA
-"regression_star_note",NA,NA
 "summarize_islands",NA,NA
 "path_tables",NA,NA
 "standardize_cons0708_weights",NA,NA
 "save_district_matching_diagnostics",NA,NA
 "diagnose_fuzzy_matching",NA,NA
 "clean_edu0708_households",NA,NA
+"apply_table_column_widths",NA,NA
 "tidy_selection_model",NA,NA
 "check_no_unintended_many_to_many",NA,NA
 "regression_caption",NA,NA
@@ -353,6 +362,7 @@
 "first_matching_term",NA,NA
 "num",NA,NA
 "canon",NA,NA
+"legacy_ame_modelsummary_object",NA,NA
 "plain_model_coefficients",NA,NA
 "value_or_status",NA,NA
 "save_status_figure",NA,NA
@@ -396,6 +406,7 @@
 "diagnose_ame_benchmark",NA,NA
 "save_plot_formats",NA,NA
 "table_column_to_strings",NA,NA
+"legacy_ame_table_notes",NA,NA
 "table_status_failures",NA,NA
 "project_packages",NA,NA
 "normalize_encoded_factor_ame_terms",NA,NA
@@ -471,7 +482,6 @@
 "regression_standard_error_rows",NA,NA
 "stack_estimate_se_rows",NA,NA
 "is_status_only_table",NA,NA
-"parse_table_number",NA,NA
 "sanitize_table_for_kable",NA,NA
 "regression_summary_start",NA,NA
 "format_public_summary_columns",NA,NA
@@ -487,6 +497,7 @@
 "legacy_modelsummary_table",NA,NA
 "caption_for_latex",NA,NA
 "legacy_datasummary_table_tex",NA,NA
+"legacy_ame_modelsummary_table",NA,NA
 "make_selection_summary_categorical_table",NA,NA
 "make_iv_summary_table",NA,NA
 "make_selection_summary_numeric_table",NA,NA
@@ -525,7 +536,6 @@
 "render_coding_samples",NA,NA
 "save_diagnostic_figure",NA,NA
 "save_map_pdf_png",NA,NA
-"legacy_match_ame_public_order",NA,NA
 "style_regression_table",NA,NA
 "drop_empty_output_columns",NA,NA
 "format_status_table_for_output",NA,NA
@@ -554,7 +564,6 @@
 "read_district_boundaries_2020",NA,NA
 "list_ilo_figure_paths",NA,NA
 "render_writing_samples",NA,NA
-"legacy_ame_modelsummary_object",NA,NA
 "format_table_for_output",NA,NA
 "modelsummary_regression_table",NA,NA
 "compute_average_marginal_effects",NA,NA
@@ -591,8 +600,8 @@
 "read_nss_2017_education",NA,NA
 "read_nss_2007_education",NA,NA
 "read_census_2001_mother_tongue",NA,NA
-"legacy_ame_modelsummary_table",NA,NA
 "save_table_csv",NA,NA
+"save_table_tex",NA,NA
 "build_2017_measures",NA,NA
 "clean_census_2001_language_file",NA,NA
 "compute_gini_consumption_2007",NA,NA
@@ -604,16 +613,13 @@
 "build_district_keys_2007",NA,NA
 "compute_population_weighted_linguistic_distance",NA,NA
 "build_tracker_based_district_panel",NA,NA
-"save_table_tex",NA,NA
-"clean_census_2001_languages",NA,NA
-"build_district_panel",NA,NA
 "save_tables",NA,NA
 "save_table_csv_tex",NA,NA
+"clean_census_2001_languages",NA,NA
+"build_district_panel",NA,NA
 "join_district_panel",NA,NA
 "long_paths_note",NA,NA
 "config_path",NA,NA
-"table_files",NA,NA
 "district_matching_note",NA,NA
 "report",NA,NA
-"coding_sample_pdfs",NA,NA
 "writing_sample_pdfs",NA,NA
