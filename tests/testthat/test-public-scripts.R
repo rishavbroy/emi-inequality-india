@@ -51,6 +51,7 @@ test_that("writing sample YAML includes LaTeX table packages for raw table excer
 
   out <- normalize_sample_yaml(lines)
 
+  expect_true(any(out == "  - \\usepackage{setspace}"))
   expect_true(any(out == "  - \\usepackage{threeparttable}"))
   expect_true(any(out == "  - \\usepackage{booktabs}"))
   expect_true(any(out == "  - \\usepackage{xcolor}"))

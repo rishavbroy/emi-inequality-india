@@ -160,6 +160,7 @@ normalize_sample_yaml <- function(lines, bibliography = "../../paper/references.
   lines <- rewrite_yaml_field(lines, "bibliography", bibliography)
   lines <- ensure_yaml_field(lines, "link-citations", "true")
   for (pkg in c(
+    "\\usepackage{setspace}",
     "\\usepackage{booktabs}",
     "\\usepackage{longtable}",
     "\\usepackage{array}",
