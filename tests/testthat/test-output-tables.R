@@ -626,6 +626,32 @@ test_that("labeled AME modelsummary_list preserves public AME order and labels",
   expect_equal(out$glance$nobs[[1]], 100)
 })
 
+test_that("AME modelsummary_list reorders native rows by rendered estimates when needed", {
+  native <- structure(
+    data.frame(
+      term = c("SEX", "AGE"),
+      estimate = c(0.2, -0.1),
+      std.error = c(0.03, 0.02),
+      statistic = c(6.7, -5),
+      p.value = c(0.001, 0.001),
+      check.names = FALSE
+    ),
+    class = c("slopes", "marginaleffects", "data.frame")
+  )
+  table <- data.frame(
+    Term = c("Age (years)", "Female (ref: Male)"),
+    Estimate = c("-0.100***", "0.200***"),
+    `Std. Error` = c("(0.020)", "(0.030)"),
+    check.names = FALSE
+  )
+  attr(table, "legacy_marginaleffects") <- native
+  attr(table, "legacy_marginaleffects_n") <- 100
+  out <- legacy_ame_modelsummary_object(table)
+  expect_equal(out$tidy$term, table$Term)
+  expect_equal(out$tidy$estimate, c(-0.1, 0.2))
+})
+
+
 test_that("AME modelsummary_list exposes observations as GOF", {
   table <- data.frame(Term = "Age", Estimate = "-0.100", check.names = FALSE)
   attr(table, "legacy_marginaleffects_n") <- 127246

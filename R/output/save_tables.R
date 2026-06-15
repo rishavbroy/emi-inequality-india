@@ -364,6 +364,43 @@ legacy_datasummary_table_tex <- function(df, name) {
   )
 }
 
+parse_table_number <- function(x) {
+  x <- table_column_to_strings(x)
+  x <- gsub("\\*", "", x, perl = TRUE)
+  x <- gsub("[(),]", "", x, perl = TRUE)
+  suppressWarnings(as.numeric(trimws(x)))
+}
+
+legacy_match_ame_public_order <- function(out, table) {
+  labels <- table_column_to_strings(table$Term)
+  labels <- labels[nzchar(labels)]
+  if (!length(labels) || length(labels) != nrow(out)) return(out)
+
+  current_labels <- if ("term" %in% names(out)) legacy_ame_modelsummary_label(out$term) else rep(NA_character_, nrow(out))
+  if (identical(current_labels, legacy_ame_modelsummary_label(labels))) return(out)
+
+  table_est <- if ("Estimate" %in% names(table)) parse_table_number(table$Estimate) else rep(NA_real_, length(labels))
+  table_se <- if ("Std. Error" %in% names(table)) parse_table_number(table[["Std. Error"]]) else rep(NA_real_, length(labels))
+  out_est <- suppressWarnings(as.numeric(out$estimate))
+  out_se <- suppressWarnings(as.numeric(out$std.error))
+
+  matched <- integer(length(labels))
+  available <- seq_len(nrow(out))
+  for (i in seq_along(labels)) {
+    candidates <- available
+    if (is.finite(table_est[[i]])) {
+      candidates <- candidates[is.finite(out_est[candidates]) & abs(out_est[candidates] - table_est[[i]]) < 1e-8]
+    }
+    if (length(candidates) > 1L && is.finite(table_se[[i]])) {
+      candidates <- candidates[is.finite(out_se[candidates]) & abs(out_se[candidates] - table_se[[i]]) < 1e-8]
+    }
+    if (length(candidates) != 1L) return(out)
+    matched[[i]] <- candidates[[1]]
+    available <- setdiff(available, candidates[[1]])
+  }
+  out[matched, , drop = FALSE]
+}
+
 legacy_ame_modelsummary_object <- function(table) {
   native <- attr(table, "legacy_marginaleffects", exact = TRUE)
   if (is.null(native)) return(NULL)
@@ -376,6 +413,7 @@ legacy_ame_modelsummary_object <- function(table) {
   labels <- table_column_to_strings(table$Term)
   labels <- labels[nzchar(labels)]
   if (length(labels) == nrow(out)) {
+    out <- legacy_match_ame_public_order(out, table)
     out$term <- labels
   } else if (!"term" %in% names(out)) {
     return(NULL)
