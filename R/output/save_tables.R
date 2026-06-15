@@ -371,19 +371,15 @@ legacy_ame_modelsummary_object <- function(table) {
   native
 }
 
-legacy_ame_observation_rows <- function(table) {
+legacy_ame_gof_function <- function(table) {
   n <- attr(table, "legacy_marginaleffects_n", exact = TRUE)
   n <- suppressWarnings(as.numeric(n))
   if (!length(n) || !is.finite(n[[1]])) return(NULL)
 
-  rows <- data.frame(
-    term = "Observations",
-    estimate = format(round(n[[1]]), trim = TRUE, scientific = FALSE),
-    check.names = FALSE,
-    stringsAsFactors = FALSE
-  )
-  attr(rows, "position") <- "gof_start"
-  rows
+  n <- round(n[[1]])
+  function(model) {
+    data.frame(nobs = n, check.names = FALSE)
+  }
 }
 
 
@@ -418,13 +414,13 @@ legacy_ame_modelsummary_table <- function(table, name) {
   args <- list(
     # Pass the marginaleffects object itself to modelsummary, following the
     # native marginaleffects -> modelsummary integration.  We keep the same
-    # kableExtra styling path as the IV regression tables, while using
-    # modelsummary's standard add_rows mechanism at gof_start for the one
-    # meaningful survey-design GOF row.
+    # kableExtra styling path as the IV regression tables.  Observations are
+    # supplied through modelsummary's GOF extension hook instead of
+    # manually inserting a rendered table row.
     models = list(mfx),
     coef_rename = legacy_ame_modelsummary_label,
-    gof_map = NA,
-    add_rows = legacy_ame_observation_rows(table),
+    gof_map = legacy_ame_gof_map(),
+    gof_function = legacy_ame_gof_function(table),
     stars = c("*" = .05, "**" = .01, "***" = .001),
     fmt = 3,
     title = table_caption(name),

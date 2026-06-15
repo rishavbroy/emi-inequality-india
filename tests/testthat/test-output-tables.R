@@ -544,9 +544,10 @@ test_that("probit AME table has a native marginaleffects modelsummary path and n
   expect_match(src, "legacy_ame_modelsummary_table", fixed = TRUE)
   expect_match(ame_src, "modelsummary::modelsummary", fixed = TRUE)
   expect_match(ame_src, "models = list(mfx)", fixed = TRUE)
-  expect_match(ame_src, "gof_map = NA", fixed = TRUE)
-  expect_match(ame_src, "add_rows = legacy_ame_observation_rows", fixed = TRUE)
+  expect_match(ame_src, "gof_map = legacy_ame_gof_map", fixed = TRUE)
+  expect_match(ame_src, "gof_function = legacy_ame_gof_function", fixed = TRUE)
   expect_false(grepl("gof_omit", ame_src, fixed = TRUE))
+  expect_false(grepl("add_rows =", ame_src, fixed = TRUE))
   expect_false(grepl("modelsummary_list", ame_src, fixed = TRUE))
   expect_false(grepl("legacy_no_data_colour", src, fixed = TRUE))
 })
@@ -581,8 +582,8 @@ test_that("probit AME modelsummary table uses same standard styling path as IV t
   expect_match(src, "modelsummary::modelsummary", fixed = TRUE)
   expect_match(src, "models = list(mfx)", fixed = TRUE)
   expect_match(src, "coef_rename = legacy_ame_modelsummary_label", fixed = TRUE)
-  expect_match(src, "gof_map = NA", fixed = TRUE)
-  expect_match(src, "add_rows = legacy_ame_observation_rows", fixed = TRUE)
+  expect_match(src, "gof_map = legacy_ame_gof_map", fixed = TRUE)
+  expect_match(src, "gof_function = legacy_ame_gof_function", fixed = TRUE)
   expect_match(src, "longtable = TRUE", fixed = TRUE)
   expect_match(src, "kableExtra::kable_styling", fixed = TRUE)
   expect_match(src, "hold_position", fixed = TRUE)
@@ -591,6 +592,7 @@ test_that("probit AME modelsummary table uses same standard styling path as IV t
   expect_match(src, "longtable", fixed = TRUE)
   expect_match(src, "Enrolled (1 = yes)", fixed = TRUE)
   expect_false(grepl("p\\{[0-9.]+cm\\}", src))
+  expect_false(grepl("add_rows =", src, fixed = TRUE))
   expect_false(grepl("legacy_ame_longtable_tex", src, fixed = TRUE))
 })
 
@@ -631,14 +633,14 @@ test_that("labeled native marginaleffects object preserves public AME order and 
 })
 
 
-test_that("AME observations are added through modelsummary gof_start rows", {
+test_that("AME observations are supplied through modelsummary gof_function", {
   table <- data.frame(Term = "Age", Estimate = "-0.100", check.names = FALSE)
   attr(table, "legacy_marginaleffects_n") <- 127246
-  rows <- legacy_ame_observation_rows(table)
-  expect_equal(rows$term[[1]], "Observations")
-  expect_equal(rows$estimate[[1]], "127246")
-  expect_false("(1)" %in% names(rows))
-  expect_equal(attr(rows, "position"), "gof_start")
+  gof_fun <- legacy_ame_gof_function(table)
+  expect_true(is.function(gof_fun))
+  expect_equal(gof_fun(NULL)$nobs[[1]], 127246)
+  expect_equal(legacy_ame_gof_map()$raw[[1]], "nobs")
+  expect_equal(legacy_ame_gof_map()$clean[[1]], "Observations")
 })
 
 test_that("AME modelsummary labels use colon separators", {
