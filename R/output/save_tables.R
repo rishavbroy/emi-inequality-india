@@ -365,6 +365,31 @@ legacy_datasummary_table_tex <- function(df, name) {
 }
 
 
+legacy_table2_column_widths <- function() {
+  # Table 2 is the only public summary table with several long text columns.
+  # Keep explicit column constraints, but centralize them here so small width
+  # adjustments do not require duplicating page-bound assumptions in the writer.
+  c("3.55cm", "6.25cm", "3.2cm", "2.05cm", "3.35cm", "2.35cm", "1.25cm")
+}
+
+apply_table_column_widths <- function(tex, widths) {
+  for (i in seq_along(widths)) {
+    tex <- kableExtra::column_spec(tex, i, width = widths[[i]])
+  }
+  tex
+}
+
+legacy_ame_table_notes <- function(name) {
+  note <- legacy_table_note(name)
+  if (is.null(note)) return(regression_star_note())
+  c(regression_star_note(), note)
+}
+
+single_space_longtable_tex <- function(tex) {
+  paste(c("\\begingroup\\singlespacing", as.character(tex), "\\endgroup"), collapse = "\n")
+}
+
+
 legacy_ame_modelsummary_object <- function(table) {
   native <- attr(table, "legacy_marginaleffects", exact = TRUE)
   if (is.null(native) || !is_marginaleffects_object(native)) return(NULL)
@@ -406,10 +431,11 @@ legacy_ame_modelsummary_table <- function(table, name) {
   if (is.null(mfx)) return(NULL)
   old_knit_to <- knitr::opts_knit$get("rmarkdown.pandoc.to")
   old_opt <- getOption("modelsummary_format_numeric_latex")
+  old_stars_note <- getOption("modelsummary_stars_note")
   on.exit(knitr::opts_knit$set(rmarkdown.pandoc.to = old_knit_to), add = TRUE)
-  on.exit(options(modelsummary_format_numeric_latex = old_opt), add = TRUE)
+  on.exit(options(modelsummary_format_numeric_latex = old_opt, modelsummary_stars_note = old_stars_note), add = TRUE)
   knitr::opts_knit$set(rmarkdown.pandoc.to = "latex")
-  options(modelsummary_format_numeric_latex = "plain")
+  options(modelsummary_format_numeric_latex = "plain", modelsummary_stars_note = FALSE)
 
   args <- list(
     # Pass the marginaleffects object itself to modelsummary, following the
@@ -427,7 +453,7 @@ legacy_ame_modelsummary_table <- function(table, name) {
     output = "kableExtra",
     longtable = TRUE,
     escape = FALSE,
-    notes = legacy_modelsummary_notes(name)
+    notes = NULL
   )
   tex <- suppress_modelsummary_latex_preamble_warning(do.call(modelsummary::modelsummary, args))
   tex <- kableExtra::kable_styling(
@@ -436,7 +462,16 @@ legacy_ame_modelsummary_table <- function(table, name) {
     position = "center",
     full_width = FALSE
   )
-  kableExtra::add_header_above(tex, c(" " = 1, "Enrolled (1 = yes)" = 1))
+  tex <- kableExtra::add_header_above(tex, c(" " = 1, "Enrolled (1 = yes)" = 1))
+  tex <- kableExtra::footnote(
+    tex,
+    general = legacy_ame_table_notes(name),
+    general_title = "",
+    threeparttable = TRUE,
+    footnote_as_chunk = TRUE,
+    escape = FALSE
+  )
+  single_space_longtable_tex(tex)
 }
 
 modelsummary_regression_table <- function(df, name) {
@@ -709,14 +744,7 @@ save_table_tex <- function(table, path, name, public = TRUE) {
     }
   }
   if (name == "sum_tbl_probit_cat") {
-    tex <- tex |>
-      kableExtra::column_spec(1, width = "3.8cm") |>
-      kableExtra::column_spec(2, width = "6.6cm") |>
-      kableExtra::column_spec(3, width = "3.2cm") |>
-      kableExtra::column_spec(4, width = "2.05cm") |>
-      kableExtra::column_spec(5, width = "3.35cm") |>
-      kableExtra::column_spec(6, width = "2.35cm") |>
-      kableExtra::column_spec(7, width = "1.35cm")
+    tex <- apply_table_column_widths(tex, legacy_table2_column_widths())
   }
   if (name == "sum_tbl_iv") {
     tex <- tex |>

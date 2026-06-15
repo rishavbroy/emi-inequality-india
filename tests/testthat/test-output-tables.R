@@ -552,10 +552,16 @@ test_that("probit AME table has a native marginaleffects modelsummary path and n
   expect_false(grepl("legacy_no_data_colour", src, fixed = TRUE))
 })
 
-test_that("probit summary table column widths are closer to IV summary width", {
+test_that("probit summary table column widths are centralized and slightly narrowed", {
   src <- paste(deparse(save_table_tex), collapse = "\n")
   expect_match(src, "5.4cm", fixed = TRUE)
-  expect_match(src, "6.6cm", fixed = TRUE)
+  expect_match(src, "legacy_table2_column_widths", fixed = TRUE)
+
+  widths <- legacy_table2_column_widths()
+  numeric_widths <- as.numeric(sub("cm", "", widths, fixed = TRUE))
+  expect_equal(length(widths), 7)
+  expect_lt(numeric_widths[[2]], 6.6)
+  expect_lt(numeric_widths[[7]], 1.35)
 })
 
 
@@ -576,6 +582,16 @@ test_that("Table 2 categorical headers remain on one line", {
   expect_true(all(!grepl("\\\\|newline|makecell", labels)))
 })
 
+test_that("Table 2 categorical column widths are slightly narrowed", {
+  widths <- legacy_table2_column_widths()
+  expect_equal(length(widths), 7)
+  expect_true(all(grepl("cm", widths, fixed = TRUE)))
+  numeric_widths <- as.numeric(sub("cm", "", widths, fixed = TRUE))
+  expect_lt(sum(numeric_widths), 24.7)
+  expect_lt(numeric_widths[[1]], 3.8)
+  expect_lt(numeric_widths[[2]], 6.6)
+})
+
 test_that("probit AME modelsummary table uses same standard styling path as IV tables", {
   src <- paste(deparse(legacy_ame_modelsummary_table), collapse = "\n")
 
@@ -591,6 +607,9 @@ test_that("probit AME modelsummary table uses same standard styling path as IV t
   expect_match(src, "striped", fixed = TRUE)
   expect_match(src, "longtable", fixed = TRUE)
   expect_match(src, "Enrolled (1 = yes)", fixed = TRUE)
+  expect_match(src, "modelsummary_stars_note", fixed = TRUE)
+  expect_match(src, "kableExtra::footnote", fixed = TRUE)
+  expect_match(src, "single_space_longtable_tex", fixed = TRUE)
   expect_false(grepl("p\\{[0-9.]+cm\\}", src))
   expect_false(grepl("add_rows =", src, fixed = TRUE))
   expect_false(grepl("legacy_ame_longtable_tex", src, fixed = TRUE))
@@ -652,5 +671,8 @@ test_that("AME modelsummary labels use colon separators", {
 
 test_that("probit AME note is compact for longtable output", {
   expect_equal(legacy_table_note("probit_mfx"), "NSS 64th round; design-based SEs in parentheses.")
-  expect_equal(legacy_modelsummary_notes("probit_mfx"), as.list(legacy_table_note("probit_mfx")))
+  expect_equal(legacy_ame_table_notes("probit_mfx"), c(regression_star_note(), legacy_table_note("probit_mfx")))
+  wrapped <- single_space_longtable_tex("BODY")
+  expect_true(grepl("singlespacing", wrapped, fixed = TRUE))
+  expect_true(grepl("BODY", wrapped, fixed = TRUE))
 })
