@@ -15,6 +15,14 @@ header-includes:
   - \usepackage{setspace}\doublespacing
   - \usepackage{mathtools}
   - \usepackage{longtable}
+  - \usepackage{booktabs}
+  - \usepackage{array}
+  - \usepackage{xcolor}
+  - \definecolor{gray35}{gray}{0.35}
+  - \usepackage{colortbl}
+  - \usepackage{pdflscape}
+  - \usepackage{threeparttablex}
+  - \usepackage{makecell}
   - \usepackage{tabularray}
   - \usepackage{float}
   - \usepackage{threeparttable}
@@ -23,7 +31,9 @@ header-includes:
   - \UseTblrLibrary{booktabs}
   - \UseTblrLibrary{siunitx}
   - \usepackage{caption}
+  - \usepackage{subcaption}
   - \captionsetup{width=.95\linewidth,justification=centering}
+  - \captionsetup[subtable]{labelformat=empty}
 link-citations: true
 cite-method: citeproc
 ---
@@ -87,8 +97,8 @@ read_public_table <- function(path) {
   df
 }
 render_public_tex <- function(path) {
-  tex <- readLines(resolve_public_output_path(path), warn = FALSE)
-  cat(tex, sep = "\n")
+  tex <- paste(readLines(resolve_public_output_path(path), warn = FALSE), collapse = "\n")
+  knitr::asis_output(paste0("\n\n", tex, "\n\n"))
 }
 cell_string <- function(x) {
   if (length(x) == 0L) return("")
@@ -379,7 +389,6 @@ Summary statistics for numeric variables are given in @tbl-sum-tbl-probit-quant,
 
 ```{r}
 #| label: tbl-sum-tbl-probit-quant
-#| tbl-cap: "Summary Statistics for Enrollment Participation Model (Numeric Variables)"
 #| echo: false
 #| results: asis
 
@@ -388,7 +397,6 @@ render_public_table("../outputs/tables/main/sum_tbl_probit_quant.tex", "sum_tbl_
 
 ```{r}
 #| label: tbl-sum-tbl-probit-cat
-#| tbl-cap: "Summary Statistics for Enrollment Participation Model (Categorical Variables)"
 #| echo: false
 #| results: asis
 
@@ -404,9 +412,10 @@ render_public_table("../outputs/tables/main/sum_tbl_probit_cat.tex", "sum_tbl_pr
 ## Results and Discussion {#sec-heckman-results}
 Average marginal effects for numeric variables and counterfactual comparisons (relative to the reference level) for categorical variables (both referred to as AME henceforth) are reported in @tbl-probit-mfx, which has been derived using the work of @arel-bundockHowInterpretStatistical2024 In line with advice from @nowosadElegantInformativeMaps2021, we report the AME instead of marginal effects at the mean.
 
+@tbl-probit-mfx has been calculated over all observations, with standard errors clustered at the rural village and urban block level (no district clustering) derived using the delta method and automatic differentiation.^[@dawoodAutomaticDifferentiationUncertainties2023 provide a good treatment of automatic differentiation, describing it as a process which is "neither numeric nor symbolic, nor is it a combination of both.... In contrast to the more traditional numerical methods based on finite differences, auto-differentiation is ‘in theory’ exact, and in comparison to symbolic algorithms, it is computationally inexpensive." The `marginaleffects` package itself claims automatic differentiation is both faster and more accurate for some models [@arel-bundockHowInterpretStatistical2024].] All reported values are probabilities: that $\mathrm{AME}_{\text{Age}} =$ `r report_value("inline_5aa491ab")` in the table below thus means that, on average, a one-year increase in age is associated with a `r report_value("inline_7f5360c6")` percentage point decrease in the probability of being enrolled by, holding all else constant [@hansenEconometrics2022]. The counterfactual comparison $\mathrm{AME}_{\text{Muslim}} =$ `r report_value("inline_9cd11971")`, meanwhile, where 'Hindu' is the reference category to 'Muslim', means that the average change in the probability of a Hindu child being enrolled if they were hypothetically made Muslim is `r report_value("inline_9cd11971")`, keeping all else fixed at observed values.^[Such interpretations are possible because AME is averaged across all observations, making them more generalizable than metrics like marginal effects at the mean [@nguyenGuideDataAnalysis2020]. But their interpretability is still also dependent on a linearity assumption which may not be valid. Future work may thus abide by the argument of @scholbeckMarginalEffectsNonlinear2024, that no one single metric can be used to summarize a non-linear prediction function’s feature effects, and may instead report conditional feature effect estimates by applying their concept of forward marginal effects within population subgroups.]
+
 ```{r}
 #| label: tbl-probit-mfx
-#| tbl-cap: "Average Marginal Effects and Counterfactual Comparisons for Enrollment Probit"
 #| echo: false
 #| results: asis
 
@@ -415,8 +424,6 @@ render_public_table("../outputs/tables/main/probit_mfx.tex", "probit_mfx")
 
 
 
-
-@tbl-probit-mfx has been calculated over all observations, with standard errors clustered at the rural village and urban block level (no district clustering) derived using the delta method and automatic differentiation.^[@dawoodAutomaticDifferentiationUncertainties2023 provide a good treatment of automatic differentiation, describing it as a process which is "neither numeric nor symbolic, nor is it a combination of both.... In contrast to the more traditional numerical methods based on finite differences, auto-differentiation is ‘in theory’ exact, and in comparison to symbolic algorithms, it is computationally inexpensive." The `marginaleffects` package itself claims automatic differentiation is both faster and more accurate for some models [@arel-bundockHowInterpretStatistical2024].] All reported values are probabilities: that $\mathrm{AME}_{\text{Age}} =$ `r report_value("inline_5aa491ab")` in the table below thus means that, on average, a one-year increase in age is associated with a `r report_value("inline_7f5360c6")` percentage point decrease in the probability of being enrolled by, holding all else constant [@hansenEconometrics2022]. The counterfactual comparison $\mathrm{AME}_{\text{Muslim}} =$ `r report_value("inline_9cd11971")`, meanwhile, where 'Hindu' is the reference category to 'Muslim', means that the average change in the probability of a Hindu child being enrolled if they were hypothetically made Muslim is `r report_value("inline_9cd11971")`, keeping all else fixed at observed values.^[Such interpretations are possible because AME is averaged across all observations, making them more generalizable than metrics like marginal effects at the mean [@nguyenGuideDataAnalysis2020]. But their interpretability is still also dependent on a linearity assumption which may not be valid. Future work may thus abide by the argument of @scholbeckMarginalEffectsNonlinear2024, that no one single metric can be used to summarize a non-linear prediction function’s feature effects, and may instead report conditional feature effect estimates by applying their concept of forward marginal effects within population subgroups.]
 
 
 The goal of this paper is to study how well household optimization (through education participation and EMI enrollment) and local policy changes (aimed at shifting education supply or EMI enrollment) can lead to upward mobility given the context they exist in: one of inequality and jobless growth. In our results we do indeed find supply and social structure to be meaningful predictors of how households optimize via education enrollment.
@@ -457,7 +464,6 @@ Summary statistics for all of the variables in this model, including the control
 
 ```{r}
 #| label: tbl-sum-tbl-iv
-#| tbl-cap: "Summary Statistics for 2SLS Model"
 #| echo: false
 #| results: asis
 
@@ -507,7 +513,6 @@ The results of our first-stage regression, of EMI exposure on linguistic distanc
 
 ```{r}
 #| label: tbl-fs-cons
-#| tbl-cap: "First-Stage Regression: EMI Exposure on Linguistic Distance"
 #| echo: false
 #| results: asis
 
@@ -516,7 +521,6 @@ render_public_table("../outputs/tables/main/fs_cons.tex", "fs_cons")
 
 ```{r}
 #| label: tbl-cons-iv
-#| tbl-cap: "Second-Stage Regression: Consumption Growth on EMIE (Fitted)"
 #| echo: false
 #| results: asis
 

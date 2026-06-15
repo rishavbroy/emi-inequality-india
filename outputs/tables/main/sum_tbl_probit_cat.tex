@@ -1,26 +1,36 @@
+\clearpage
 
-\begin{landscape}
-\begin{longtable}[t]{llrllrlr}
-\caption{\label{tab:sum-tbl-probit-cat}Summary Statistics for Enrollment Participation Model (Categorical Variables)}\\
+\begin{landscape}\begingroup\fontsize{9}{11}\selectfont
+
+\begin{ThreePartTable}
+\begin{TableNotes}[para]
+\item \textit{Note: } 
+\item Values = all possible values; Mode = most frequent value; Pct. Mode = percent of observations taking the modal value; Least Freq. = least frequent value; Pct. Least Freq. = percent of observations taking the least frequent value; N = number of observations.
+\end{TableNotes}
+\begin{longtable}[t]{>{\raggedright\arraybackslash}p{3.8cm}>{\centering\arraybackslash}p{6.6cm}>{\centering\arraybackslash}p{3.2cm}>{\centering\arraybackslash}p{2.05cm}>{\centering\arraybackslash}p{3.35cm}>{\centering\arraybackslash}p{2.35cm}>{\centering\arraybackslash}p{1.35cm}}
+\caption{\label{tbl-sum-tbl-probit-cat}Summary Statistics for Enrollment Participation Model (Categorical Variables)}\\
 \toprule
-var & label & N & Values & Mode & % Mode & Least Freq. & % Least Freq.\\
+Variable & Values & Mode & Pct. Mode & Least Freq. & Pct. Least Freq. & N\\
 \midrule
 \endfirsthead
 \caption[]{Summary Statistics for Enrollment Participation Model (Categorical Variables) \textit{(continued)}}\\
 \toprule
-var & label & N & Values & Mode & % Mode & Least Freq. & % Least Freq.\\
+Variable & Values & Mode & Pct. Mode & Least Freq. & Pct. Least Freq. & N\\
 \midrule
 \endhead
 
 \endfoot
 \bottomrule
+\insertTableNotes
 \endlastfoot
-\cellcolor{gray!10}{SEX} & \cellcolor{gray!10}{Sex} & \cellcolor{gray!10}{127246} & \cellcolor{gray!10}{Male, Female} & \cellcolor{gray!10}{Female} & \cellcolor{gray!10}{53.4} & \cellcolor{gray!10}{Male} & \cellcolor{gray!10}{46.6}\\
-RELIGION & Religion & 127246 & Hindu, Muslim, Christian, Sikh, Jain, Buddhist, Zoroastrian, Other & Hindu & 75.2 & Other & 0.0\\
-\cellcolor{gray!10}{SOCIAL_GROUP} & \cellcolor{gray!10}{Social group} & \cellcolor{gray!10}{127246} & \cellcolor{gray!10}{Other, Scheduled Tribe, Scheduled Caste, Other Backward Class} & \cellcolor{gray!10}{Other Backward Class} & \cellcolor{gray!10}{39.5} & \cellcolor{gray!10}{Scheduled Tribe} & \cellcolor{gray!10}{14.2}\\
-SECTOR & Urban & 127246 & Rural, Urban & Rural & 67.5 & Urban & 32.5\\
-\cellcolor{gray!10}{DIST_FROM_NEAREST_PRIMARY_CLASS} & \cellcolor{gray!10}{Distance of nearest primary class} & \cellcolor{gray!10}{126934} & \cellcolor{gray!10}{d<1km, 1km <= d <2kms, 2kms<= d <3kms, 3kms <= d <5kms, d>=5kms} & \cellcolor{gray!10}{d<1km} & \cellcolor{gray!10}{91.7} & \cellcolor{gray!10}{3kms <= d <5kms} & \cellcolor{gray!10}{0.1}\\
-\addlinespace
-father_educ & Father's education & 122041 & Illiterate, Literate, no school, Literate, school < primary, Primary, Upper primary, Secondary, Higher secondary, Postsecondary+ & Illiterate & 55.8 & Literate, no school & 1.4\\*
+\cellcolor{gray!10}{Sex} & \cellcolor{gray!10}{Male, Female} & \cellcolor{gray!10}{Female} & \cellcolor{gray!10}{53.4} & \cellcolor{gray!10}{Male} & \cellcolor{gray!10}{46.6} & \cellcolor{gray!10}{127246}\\
+Religion & Hindu, Muslim, Christian, Sikh, Jain, Buddhist, Zoroastrian, Other & Hindu & 75.2 & Other & 0 & 127246\\
+\cellcolor{gray!10}{Social group} & \cellcolor{gray!10}{Other, Scheduled Tribe, Scheduled Caste, Other Backward Class} & \cellcolor{gray!10}{Other Backward Class} & \cellcolor{gray!10}{39.5} & \cellcolor{gray!10}{Scheduled Tribe} & \cellcolor{gray!10}{14.2} & \cellcolor{gray!10}{127246}\\
+Urban & Rural, Urban & Rural & 67.5 & Urban & 32.5 & 127246\\
+\cellcolor{gray!10}{Distance of nearest primary class} & \cellcolor{gray!10}{d<1km, 1km <= d <2kms, 2kms<= d <3kms, 3kms <= d <5kms, d>=5kms} & \cellcolor{gray!10}{d<1km} & \cellcolor{gray!10}{91.7} & \cellcolor{gray!10}{3kms <= d <5kms} & \cellcolor{gray!10}{0.1} & \cellcolor{gray!10}{126934}\\
+Father's education & Illiterate, Literate, no school, Literate, school < primary, Primary, Upper primary, Secondary, Higher secondary, Postsecondary+ & Illiterate & 55.8 & Literate, no school & 1.4 & 122041\\*
 \end{longtable}
+\end{ThreePartTable}
+\endgroup{}
 \end{landscape}
+\clearpage

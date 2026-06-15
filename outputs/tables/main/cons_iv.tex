@@ -1,38 +1,55 @@
-
-\begin{longtable}[t]{lll}
-\caption{\label{tab:cons-iv}Second-Stage Regression: Consumption Growth on EMIE (Fitted)}\\
+\begin{table}[!h]
+\centering\centering
+\caption{\label{tbl-cons-iv}Second-Stage Regression: Consumption Growth on EMIE (Fitted)}
+\centering
+\begin{tabular}[t]{lc}
 \toprule
-Term & Estimate & Std. Error\\
+\multicolumn{1}{c}{ } & \multicolumn{1}{c}{Consumption Growth} \\
+\cmidrule(l{3pt}r{3pt}){2-2}
+  & (1)\\
 \midrule
-\endfirsthead
-\caption[]{Second-Stage Regression: Consumption Growth on EMIE (Fitted) \textit{(continued)}}\\
-\toprule
-Term & Estimate & Std. Error\\
+\cellcolor{gray!10}{EMI exposure (fitted)} & \cellcolor{gray!10}{0.406}\\
+ & (0.612)\\
+\cellcolor{gray!10}{Consumption (2007-08)} & \cellcolor{gray!10}{-0.110***}\\
+ & (0.023)\\
+\cellcolor{gray!10}{Gini of Consumption (2007-08)} & \cellcolor{gray!10}{-27.871}\\
+ & (54.869)\\
+\cellcolor{gray!10}{Pct. Urban (ref: Rural)} & \cellcolor{gray!10}{1.244***}\\
+ & (0.360)\\
+\cellcolor{gray!10}{Average HH size} & \cellcolor{gray!10}{-3.585}\\
+ & (8.967)\\
+\cellcolor{gray!10}{Dependency ratio x 100} & \cellcolor{gray!10}{-0.456}\\
+ & (0.275)\\
+\cellcolor{gray!10}{Pct. Female head} & \cellcolor{gray!10}{-1.558}\\
+ & (2.834)\\
+\cellcolor{gray!10}{Pct. Hindu  (ref: Other)} & \cellcolor{gray!10}{-0.128}\\
+ & (0.372)\\
+\cellcolor{gray!10}{Pct. Muslim} & \cellcolor{gray!10}{-0.188}\\
+ & (0.379)\\
+\cellcolor{gray!10}{Pct. Scheduled Tribe (ref: Other)} & \cellcolor{gray!10}{-0.709**}\\
+ & (0.217)\\
+\cellcolor{gray!10}{Pct. Scheduled Caste} & \cellcolor{gray!10}{0.520}\\
+ & (0.433)\\
+\cellcolor{gray!10}{Pct. OBC} & \cellcolor{gray!10}{-0.581***}\\
+ & (0.168)\\
+\cellcolor{gray!10}{Pct. Small Land-owner (ref: No Land)} & \cellcolor{gray!10}{-0.194}\\
+ & (0.314)\\
+\cellcolor{gray!10}{Pct. Medium Land-owner} & \cellcolor{gray!10}{-0.534}\\
+ & (0.381)\\
+\cellcolor{gray!10}{Pct. Large Land-owner} & \cellcolor{gray!10}{0.375}\\
+ & (0.376)\\
+\cellcolor{gray!10}{Pct. Head Educ., Lit.-Primary (ref: Illiterate)} & \cellcolor{gray!10}{0.120}\\
+ & (0.394)\\
+\cellcolor{gray!10}{Pct. Head Educ., Secondary+} & \cellcolor{gray!10}{-0.442}\\
+ & (0.302)\\
+\cellcolor{gray!10}{Intercept} & \cellcolor{gray!10}{385.674***}\\
+ & (112.280)\\
 \midrule
-\endhead
-
-\endfoot
+\cellcolor{gray!10}{Observations} & \cellcolor{gray!10}{482}\\
+$R^2$ & 0.236\\
+\cellcolor{gray!10}{Adjusted $R^2$} & \cellcolor{gray!10}{0.208}\\
 \bottomrule
-\endlastfoot
-\cellcolor{gray!10}{Constant} & \cellcolor{gray!10}{385.674***} & \cellcolor{gray!10}{(112.280)}\\
-EMIE & 0.406 & (0.612)\\
-\cellcolor{gray!10}{Consumption, 2007-08} & \cellcolor{gray!10}{-0.110***} & \cellcolor{gray!10}{(0.023)}\\
-Gini consumption, 2007-08 & -27.871 & (54.869)\\
-\cellcolor{gray!10}{Pct. urban} & \cellcolor{gray!10}{1.244***} & \cellcolor{gray!10}{(0.360)}\\
-\addlinespace
-Avg. HH size & -3.585 & (8.967)\\
-\cellcolor{gray!10}{Dependency ratio} & \cellcolor{gray!10}{-0.456} & \cellcolor{gray!10}{(0.275)}\\
-Pct. female head & -1.558 & (2.834)\\
-\cellcolor{gray!10}{Pct. Hindu} & \cellcolor{gray!10}{-0.128} & \cellcolor{gray!10}{(0.372)}\\
-Pct. Muslim & -0.188 & (0.379)\\
-\addlinespace
-\cellcolor{gray!10}{Pct. ST} & \cellcolor{gray!10}{-0.709**} & \cellcolor{gray!10}{(0.217)}\\
-Pct. SC & 0.520 & (0.433)\\
-\cellcolor{gray!10}{Pct. OBC} & \cellcolor{gray!10}{-0.581***} & \cellcolor{gray!10}{(0.168)}\\
-Pct. small land & -0.194 & (0.314)\\
-\cellcolor{gray!10}{Pct. medium land} & \cellcolor{gray!10}{-0.534} & \cellcolor{gray!10}{(0.381)}\\
-\addlinespace
-Pct. large land & 0.375 & (0.376)\\
-\cellcolor{gray!10}{Pct. head literate-primary} & \cellcolor{gray!10}{0.120} & \cellcolor{gray!10}{(0.394)}\\
-Pct. head secondary+ & -0.442 & (0.302)\\*
-\end{longtable}
+\multicolumn{2}{l}{\rule{0pt}{1em}* p $<$ 0.05, ** p $<$ 0.01, *** p $<$ 0.001}\\
+\multicolumn{2}{l}{\rule{0pt}{1em}Standard errors clustered by state in parentheses.}\\
+\end{tabular}
+\end{table}
