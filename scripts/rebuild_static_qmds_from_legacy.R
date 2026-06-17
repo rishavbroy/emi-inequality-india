@@ -131,7 +131,6 @@ report_setup_chunk <- function() {
     "  }",
     "}",
     "report_values <- tryCatch(targets::tar_read(report_values, store = find_targets_store()), error = function(e) list())",
-    "report_output_files <- tryCatch(c(targets::tar_read(figure_files, store = find_targets_store()), targets::tar_read(table_files, store = find_targets_store())), error = function(e) character())",
     "if (is.null(report_values) || !is.list(report_values)) report_values <- list()",
     expr_lines,
     "is_report_value_status <- function(value) {",

@@ -89,3 +89,28 @@ test_that("raw TeX table inclusion is emitted as an as-is block with block bound
   expect_match(src, "knitr::asis_output(paste0", fixed = TRUE)
   expect_match(src, "tex, ", fixed = TRUE)
 })
+
+
+test_that("standalone district matching note and appendix do not consume generated figure artifacts", {
+  src <- paste(readLines(repo_file("scripts", "postprocess_public_qmds.R"), warn = FALSE), collapse = "\n")
+
+  expect_false(grepl("insert_district_note_output_objects", src, fixed = TRUE))
+  expect_match(src, paste0(
+    "if (identical(path, \"paper/appendix.qmd\")) {\n",
+    "    lines <- fix_district_note_crossrefs(lines)\n",
+    "    lines <- fix_appendix_crossrefs(lines)\n",
+    "  }"
+  ), fixed = TRUE)
+  expect_match(src, paste0(
+    "if (identical(path, \"docs/district-matching.qmd\")) {\n",
+    "    lines <- fix_district_note_crossrefs(lines)\n",
+    "  }"
+  ), fixed = TRUE)
+  expect_match(src, "district carve-outs diagnostic figure generated with the main public artifacts", fixed = TRUE)
+})
+
+test_that("static QMD setup does not create fake output-file dependencies", {
+  src <- paste(readLines(repo_file("scripts", "rebuild_static_qmds_from_legacy.R"), warn = FALSE), collapse = "\n")
+
+  expect_false(grepl("report_output_files", src, fixed = TRUE))
+})

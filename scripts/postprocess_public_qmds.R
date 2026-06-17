@@ -318,8 +318,9 @@ ensure_map_geometry_note <- function(lines, anchor) {
 }
 
 fix_district_note_crossrefs <- function(lines) {
-  lines <- gsub("These district changes are plotted in @fig-districtcarveoutsshifts-fig.", "These district changes are plotted in the district carve-outs figure below.", lines, fixed = TRUE)
-  lines <- gsub("These district changes are plotted in Figure @fig-districtcarveoutsshifts-fig.", "These district changes are plotted in the district carve-outs figure below.", lines, fixed = TRUE)
+  lines <- gsub("These district changes are plotted in @fig-districtcarveoutsshifts-fig.", "These district changes are summarized in the district carve-outs diagnostic figure generated with the main public artifacts.", lines, fixed = TRUE)
+  lines <- gsub("These district changes are plotted in Figure @fig-districtcarveoutsshifts-fig.", "These district changes are summarized in the district carve-outs diagnostic figure generated with the main public artifacts.", lines, fixed = TRUE)
+  lines <- gsub("These district changes are plotted in the district carve-outs figure below.", "These district changes are summarized in the district carve-outs diagnostic figure generated with the main public artifacts.", lines, fixed = TRUE)
   lines <- gsub("see @sec-iv-iv", "see the IV section of the main report", lines, fixed = TRUE)
   lines <- gsub("in @sec-iv-iv", "in the IV section of the main report", lines, fixed = TRUE)
   lines <- gsub("@sec-iv-iv", "the IV section of the main report", lines, fixed = TRUE)
@@ -668,14 +669,6 @@ insert_report_output_objects <- function(lines) {
   ensure_report_output_objects(lines)
 }
 
-insert_district_note_output_objects <- function(lines) {
-  ensure_report_object(
-    lines,
-    "fig-districtcarveoutsshifts-fig",
-    figure_markdown("fig-districtcarveoutsshifts-fig", "../outputs/figures/main/district_carveouts_shifts.pdf")
-  )
-}
-
 ensure_report_object <- function(lines, label, block) {
   if (any(grepl(paste0("#", label, "(\\s|\\})"), lines, perl = TRUE)) ||
       any(grepl(paste0("#\\|\\s*label:\\s*", label, "\\s*$"), lines, perl = TRUE))) {
@@ -725,12 +718,10 @@ postprocess_one <- function(path) {
   lines <- cleanup_public_placeholders(lines)
   if (identical(path, "paper/report.qmd")) lines <- insert_report_output_objects_explicit(lines)
   if (identical(path, "paper/appendix.qmd")) {
-    lines <- ensure_report_object(lines, "fig-districtcarveoutsshifts-fig", figure_markdown("fig-districtcarveoutsshifts-fig", "../outputs/figures/main/district_carveouts_shifts.pdf"))
+    lines <- fix_district_note_crossrefs(lines)
     lines <- fix_appendix_crossrefs(lines)
   }
   if (identical(path, "docs/district-matching.qmd")) {
-    lines <- insert_district_note_output_objects(lines)
-    lines <- ensure_report_object(lines, "fig-districtcarveoutsshifts-fig", figure_markdown("fig-districtcarveoutsshifts-fig", "../outputs/figures/main/district_carveouts_shifts.pdf"))
     lines <- fix_district_note_crossrefs(lines)
   }
   lines <- fix_final_public_prose(lines)
