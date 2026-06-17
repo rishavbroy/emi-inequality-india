@@ -91,6 +91,63 @@ def by_any_key(rows: list[dict[str, str]]) -> dict[str, dict[str, str]]:
 
 
 
+
+
+IV_SUMMARY_ALIASES = {
+    ("2001", "Ling. Distance"): "wavg_ling_degrees",
+    ("2007-08", "EMIE"): "EMIE",
+    ("2007-08", "Population"): "npeople_0708",
+    ("2007-08", "Consumption"): "consumption_0708",
+    ("2007-08", "Gini of Consumption"): "gini_cons_0708",
+    ("2007-08", "Dependency Ratio × 100"): "dependency_ratio",
+    ("2007-08", "Pct. Female Head"): "pct_fem_head",
+    ("2017-18", "Population"): "npeople_1718",
+    ("2017-18", "Consumption"): "consumption_1718",
+    ("2017-18", "Gini of Consumption"): "gini_cons_1718",
+    ("2007-08 to 2017-18", "Percent change in consumption"): "consumption_pct_change",
+}
+
+
+def iv_summary_group_label(label: str) -> str:
+    label = label.strip()
+    return label[len("From "):-1].strip() if label.startswith("From ") and label.endswith(":") else ""
+
+
+def keyed_iv_summary_rows(rows: list[dict[str, str]]) -> list[dict[str, str]]:
+    keyed: list[dict[str, str]] = []
+    group = ""
+    for row in rows:
+        label = row_key(row).strip()
+        group_label = iv_summary_group_label(label)
+        if group_label:
+            group = group_label
+            continue
+        if not label:
+            continue
+        out = dict(row)
+        out["group"] = group
+        out["variable"] = row.get("variable") or row.get("var") or IV_SUMMARY_ALIASES.get((group, label), label)
+        keyed.append(out)
+    return keyed
+
+
+def iv_summary_by_key(rows: list[dict[str, str]]) -> dict[str, dict[str, str]]:
+    keyed = keyed_iv_summary_rows(rows)
+    out: dict[str, dict[str, str]] = {}
+    label_counts: dict[str, int] = {}
+    for row in keyed:
+        label = row_key(row)
+        if label:
+            label_counts[label] = label_counts.get(label, 0) + 1
+    for row in keyed:
+        variable = row.get("variable", "")
+        label = row_key(row)
+        if variable:
+            out[variable] = row
+        if label and label_counts.get(label, 0) == 1:
+            out[label] = row
+    return out
+
 def optional_csv_rows(path: str) -> list[dict[str, str]]:
     p = ROOT / path
     if not p.exists():
@@ -338,7 +395,14 @@ def audit_iv_tables() -> None:
                     fail(f"Corrected IV panel has {len(bad)} rows without {flag}=TRUE.")
 
     summary = csv_rows("outputs/tables/main/sum_tbl_iv.csv")
-    by_var = by_any_key(summary)
+    keyed_summary = keyed_iv_summary_rows(summary)
+    if keyed_summary:
+        write_diag_csv(
+            "iv_summary_keyed_rows.csv",
+            keyed_summary,
+            ["group", "variable"] + [name for name in summary[0].keys()] if summary else None,
+        )
+    by_var = iv_summary_by_key(summary)
     emie = by_var.get("emie_2007") or by_var.get("EMIE")
     if emie:
         n = fnum(first_present(emie, ("N", "n")))
