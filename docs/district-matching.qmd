@@ -26,7 +26,6 @@ find_targets_store <- function(start = getwd()) {
   }
 }
 report_values <- tryCatch(targets::tar_read(report_values, store = find_targets_store()), error = function(e) list())
-report_output_files <- tryCatch(c(targets::tar_read(figure_files, store = find_targets_store()), targets::tar_read(table_files, store = find_targets_store())), error = function(e) character())
 if (is.null(report_values) || !is.list(report_values)) report_values <- list()
 legacy_inline_expressions <- list(
   inline_391c516e = "edu0708b4 %>% filter(RELATION_TO_HEAD==1 & SEX==1) %>% summarise(round(mean(AGE),1)) %>% .[[1]]",
@@ -89,10 +88,7 @@ There are three reasons that district labels vary between 2001 to 2007-08 to 201
 
 Political changes, however, were not so easily addressed. The vast majority of such changes were one of five kinds: name changes, clean partitions (one district is partitioned into multiple), clean mergers (multiple districts merge into one), carve-outs (*pieces* of multiple districts combine into one), and boundary shifts [@indiastatestoriesDistrictEvolution2024]. Without knowing precisely where in its district each household was at the time of sampling, it is not feasible to match districts across carve-outs and boundary shifts. Our district matching method is thus reliant on the assumption that all district changes were either name changes, clean partitions, or clean mergers.
 
-This seems to be precisely the same assumption made by @indiastatestoriesDistrictEvolution2024 and @jaacksIndiaDistrictChanges2020, whose data, despite containing some factual errors and typos, was the basis of our district matching method. To justify this assumption we turn to @kumarCreatingLongPanels2016, who up until 2001 are able to track the *proportion* of each district's population that was allocated into a new district as a result of district changes. They label these changes as one of two types: clean partitions and non-partitions (which would include name changes, clean mergers, carve-outs, and border shifts). By extracting their results using Tabula [@aristaranTabula2018], we know that 93.4% of non-partitions were either name changes or transfers of uninhabited land [@kumarCreatingLongPanels2016]. These district changes are plotted in the district carve-outs figure below.
-
-![Number of 2001 districts which absorbed a percentage of a 1991 district's population via name change, clean merger, carve-out, or border shift. Data from Kumar \& Somanathan (2016).](../outputs/figures/main/district_carveouts_shifts.pdf){#fig-districtcarveoutsshifts-fig fig-pos="H" width="100%"}
-
+This seems to be precisely the same assumption made by @indiastatestoriesDistrictEvolution2024 and @jaacksIndiaDistrictChanges2020, whose data, despite containing some factual errors and typos, was the basis of our district matching method. To justify this assumption we turn to @kumarCreatingLongPanels2016, who up until 2001 are able to track the *proportion* of each district's population that was allocated into a new district as a result of district changes. They label these changes as one of two types: clean partitions and non-partitions (which would include name changes, clean mergers, carve-outs, and border shifts). By extracting their results using Tabula [@aristaranTabula2018], we know that 93.4% of non-partitions were either name changes or transfers of uninhabited land [@kumarCreatingLongPanels2016]. These district changes are summarized in the district carve-outs diagnostic figure generated with the main public artifacts.
 
 
 
