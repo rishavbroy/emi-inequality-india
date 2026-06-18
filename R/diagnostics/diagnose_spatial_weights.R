@@ -124,7 +124,8 @@ diagnose_spatial_weights <- function(district_panel, spatial_weights, cfg) {
     warnings = paste(spatial_weights$warnings %||% attr(spatial_weights, "spatial_warnings") %||% character(), collapse = "; "),
     stringsAsFactors = FALSE
   )
-  attr(base, "rook_queen_comparison") <- comparison
+  attr(base, "rook_queen_comparison") <- add_legacy_spatial_weight_reference(comparison)
+  attr(base, "legacy_reference") <- legacy_spatial_weight_reference()
   base
 }
 
@@ -170,6 +171,31 @@ compare_rook_queen_contiguity <- function(district_panel) {
   safe_bind_rows(list(one(FALSE), one(TRUE)))
 }
 
+
+legacy_spatial_weight_reference <- function() {
+  data.frame(
+    contiguity = c("rook", "queen"),
+    legacy_method = c(
+      "sfExtras::st_rook() timing comment; final weights use spdep::poly2nb(queen = FALSE)",
+      "sfExtras::st_queen() timing comment; benchmark uses spdep::poly2nb(queen = TRUE)"
+    ),
+    legacy_mean_neighbors = c(4.780165, 4.783471),
+    legacy_elapsed_note = c("legacy comment recorded similar run time to queen", "legacy comment recorded similar run time to rook"),
+    interpretation = "Current means may differ because the active matched panel and geometry coverage differ from the legacy exploratory object; compare deltas before treating this as an improvement.",
+    stringsAsFactors = FALSE
+  )
+}
+
+add_legacy_spatial_weight_reference <- function(comparison) {
+  comparison <- as.data.frame(comparison, stringsAsFactors = FALSE)
+  if (!nrow(comparison)) return(comparison)
+  ref <- legacy_spatial_weight_reference()[c("contiguity", "legacy_mean_neighbors")]
+  out <- merge(comparison, ref, by = "contiguity", all.x = TRUE, sort = FALSE)
+  out$mean_neighbor_delta_from_legacy <- out$mean_neighbors - out$legacy_mean_neighbors
+  out$pct_delta_from_legacy <- 100 * out$mean_neighbor_delta_from_legacy / out$legacy_mean_neighbors
+  out
+}
+
 #' summarize islands
 #'
 summarize_islands <- function(spatial_weights) {
@@ -196,6 +222,10 @@ save_spatial_weight_diagnostics <- function(diagnostics, dir = "outputs/diagnost
   comparison <- attr(diagnostics, "rook_queen_comparison")
   if (!is.null(comparison) && nrow(as.data.frame(comparison))) {
     utils::write.csv(as.data.frame(comparison), file.path(dir, "rook_queen_contiguity_comparison.csv"), row.names = FALSE)
+  }
+  reference <- attr(diagnostics, "legacy_reference")
+  if (!is.null(reference) && nrow(as.data.frame(reference))) {
+    utils::write.csv(as.data.frame(reference), file.path(dir, "spatial_weights_legacy_reference.csv"), row.names = FALSE)
   }
   diagnostics
 }

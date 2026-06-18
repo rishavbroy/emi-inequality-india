@@ -130,7 +130,7 @@ extended_diagnostic_targets <- list(
 
 benchmark_targets <- list(
   tar_target(bench_ame_methods, run_ame_methods_benchmark(selection_model, selection_data, cfg)),
-  tar_target(bench_fuzzy_matching, run_fuzzy_matching_benchmark(cfg)),
+  tar_target(bench_fuzzy_matching, run_fuzzy_matching_benchmark(district_tracker, district_join_map, cfg)),
   tar_target(bench_spatial_weights, run_spatial_weights_benchmark(district_panel, cfg)),
   tar_target(bench_spatial_iv_experimental, run_spatial_iv_benchmark(district_panel, spatial_weights, with_diagnostic_enabled(cfg, "spatial_iv_experimental"))),
   tar_render(bench_ame_methods_note, "analysis/benchmarking/ame-benchmark.qmd"),

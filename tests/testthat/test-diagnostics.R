@@ -143,3 +143,55 @@ test_that("fuzzy diagnostics use legacy methods and troublesome pairs", {
   expect_equal(attr(out, "legacy_methods")$method, c("soundex", "qgram", "jw", "dl", "osa"))
   expect_true(nrow(attr(out, "troublesome_pairs")) > 0L)
 })
+
+test_that("district matching diagnostics preserve matcher attributes before data-frame coercion", {
+  join_map <- data.frame(state_20 = c("A", "B"), district_20 = c("One", "Two"), match_status = "source_key_unmatched")
+  attr(join_map, "unmatched_rows") <- join_map[0, , drop = FALSE]
+  panel <- data.frame(state_20 = c("A", "B"), district_20 = c("One", "Two"))
+
+  out <- diagnose_district_matching(panel, join_map, list())
+
+  expect_equal(out$n_unmatched_rows, 0L)
+  expect_equal(out$n_join_unmatched_by_key, 0L)
+  expect_true("key_comparison" %in% names(attributes(out)))
+})
+
+test_that("tracker diagnostics preserve legacy comment benchmarks", {
+  tracker <- data.frame(
+    state_05 = c("A", "A"), district_05 = c("Old", "Same"),
+    state_06 = c("A", "A"), district_06 = c("New", "Same"),
+    state_19 = c("Old State", "B"), district_19 = c("X", "Y"),
+    state_20 = c("New State", "B"), district_20 = c("X", "Y")
+  )
+  out <- diagnose_district_tracker_sources(list(source = data.frame(x = 1)), tracker, list())
+
+  expect_true(nrow(attr(out, "state_changes")) >= 1L)
+  expect_true(nrow(attr(out, "state_change_events")) >= 1L)
+  expect_true(nrow(attr(out, "inperiod_district_changes")) >= 1L)
+  expect_true(nrow(attr(out, "legacy_reference")) >= 3L)
+})
+
+test_that("fuzzy benchmarking uses active tracker candidate pairs beyond toy examples", {
+  testthat::skip_if_not_installed("stringdist")
+  tracker <- data.frame(
+    district_01 = c("Old Name", "Stable"),
+    district_07 = c("New Name", "Stable"),
+    district_17 = c("New Name", "Stable"),
+    district_20 = c("Newest Name", "Stable")
+  )
+
+  pairs <- legacy_fuzzy_candidate_pairs(tracker, data.frame())
+  sens <- summarize_threshold_sensitivity(pairs)
+
+  expect_true(any(pairs$pair_source == "tracker_2001_to_2007"))
+  expect_true(any(pairs$pair_source == "tracker_2017_to_2020"))
+  expect_true(any(sens$pair_source == "tracker_2001_to_2007"))
+})
+
+test_that("spatial weights diagnostics include legacy neighbor-count reference", {
+  comp <- data.frame(contiguity = c("rook", "queen"), mean_neighbors = c(4, 4.1), stringsAsFactors = FALSE)
+  out <- add_legacy_spatial_weight_reference(comp)
+
+  expect_true("legacy_mean_neighbors" %in% names(out))
+  expect_true("mean_neighbor_delta_from_legacy" %in% names(out))
+})

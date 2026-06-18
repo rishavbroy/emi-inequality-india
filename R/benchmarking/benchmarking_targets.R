@@ -20,12 +20,14 @@ run_ame_methods_benchmark <- function(selection_model, selection_data, cfg) {
   )
 }
 
-run_fuzzy_matching_benchmark <- function(cfg) {
+run_fuzzy_matching_benchmark <- function(district_tracker = data.frame(), district_join_map = data.frame(), cfg = list()) {
+  pairs <- legacy_fuzzy_candidate_pairs(district_tracker, district_join_map)
   save_fuzzy_matching_benchmark(
     summarize_threshold_sensitivity(
-      pairs = legacy_troublesome_name_pairs(),
+      pairs = pairs,
       methods = legacy_fuzzy_match_methods()
-    )
+    ),
+    pairs = pairs
   )
 }
 
@@ -39,9 +41,12 @@ run_spatial_weights_benchmark <- function(district_panel, cfg) {
   save_spatial_weights_benchmark(compare_rook_queen_contiguity(district_panel))
 }
 
-save_fuzzy_matching_benchmark <- function(x, dir = "outputs/benchmarking/fuzzy_matching") {
+save_fuzzy_matching_benchmark <- function(x, pairs = data.frame(), dir = "outputs/benchmarking/fuzzy_matching") {
   dir.create(dir, recursive = TRUE, showWarnings = FALSE)
-  legacy_output_manifest(c(threshold_sensitivity = write_diagnostic_csv(x, file.path(dir, "fuzzy_matching_threshold_sensitivity.csv"))))
+  legacy_output_manifest(c(
+    threshold_sensitivity = write_diagnostic_csv(x, file.path(dir, "fuzzy_matching_threshold_sensitivity.csv")),
+    candidate_pairs = write_diagnostic_csv(pairs, file.path(dir, "fuzzy_matching_candidate_pairs.csv"))
+  ))
 }
 
 save_spatial_iv_benchmark <- function(x, dir = "outputs/benchmarking/spatial_iv") {

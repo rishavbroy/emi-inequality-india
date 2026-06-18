@@ -5,21 +5,30 @@
 #'
 #' Preserve the legacy tracker-source QA from Chunk 6: source row coverage,
 #' state/UT changes recorded in the tracker, unrecorded historical state-name
-#' changes documented in comments, districts changing names within sample periods,
-#' and same-name districts occurring across multiple states.
+#' changes documented in comments, districts changing names within sample
+#' periods, and same-name districts occurring across multiple states.  The
+#' diagnostic records both row-level current results and the legacy comment
+#' benchmarks so a changed tracker can be distinguished from a missing port.
 diagnose_district_tracker_sources <- function(raw_district_changes, district_tracker, cfg) {
-  source_counts <- data.frame(
-    source_file_id = names(raw_district_changes),
-    n_rows = vapply(raw_district_changes, function(x) nrow(as.data.frame(x)), integer(1)),
-    stringsAsFactors = FALSE
-  )
+  source_counts <- compare_tracker_source_coverage(raw_district_changes, district_tracker)
   tracker <- as.data.frame(district_tracker, stringsAsFactors = FALSE)
+
+  state_changes <- detect_tracker_state_changes(tracker)
+  inperiod <- detect_inperiod_district_changes(tracker)
+  same_names <- find_same_name_districts(tracker)
+  legacy_reference <- legacy_tracker_comment_reference(
+    detected_state_change_rows = nrow(state_changes),
+    detected_inperiod_rows = nrow(inperiod)
+  )
+
   out <- source_counts
-  attr(out, "state_changes") <- detect_tracker_state_changes(tracker)
+  attr(out, "state_changes") <- state_changes
+  attr(out, "state_change_events") <- summarize_tracker_state_change_events(state_changes)
   attr(out, "unrecorded_state_changes") <- legacy_unrecorded_state_changes()
-  attr(out, "inperiod_district_changes") <- detect_inperiod_district_changes(tracker)
-  attr(out, "same_name_districts") <- find_same_name_districts(tracker)
+  attr(out, "inperiod_district_changes") <- inperiod
+  attr(out, "same_name_districts") <- same_names
   attr(out, "source_disagreements") <- find_source_disagreements(raw_district_changes, tracker)
+  attr(out, "legacy_reference") <- legacy_reference
   class(out) <- c("emi_tracker_source_diagnostics", class(out))
   out
 }
@@ -33,15 +42,60 @@ compare_tracker_source_coverage <- function(raw_district_changes, district_track
   )
 }
 
+tracker_year_suffixes <- function(tracker, prefix = "state") {
+  cols <- grep(paste0("^", prefix, "_([0-9]{2}|[0-9]{4})$"), names(tracker), value = TRUE)
+  suffixes <- sub(paste0("^", prefix, "_"), "", cols)
+  suffixes[order(suppressWarnings(as.integer(ifelse(nchar(suffixes) == 2L, paste0("20", suffixes), suffixes))))]
+}
+
+tracker_suffix_year <- function(sfx) {
+  yr <- suppressWarnings(as.integer(sfx))
+  ifelse(nchar(sfx) == 2L, ifelse(yr <= 30L, 2000L + yr, 1900L + yr), yr)
+}
+
+tracker_value <- function(x) {
+  x <- as.character(x)
+  x[is.na(x)] <- ""
+  trimws(x)
+}
+
 detect_tracker_state_changes <- function(tracker) {
   tracker <- as.data.frame(tracker, stringsAsFactors = FALSE)
-  state_cols <- grep("^state_[0-9]{2}$", names(tracker), value = TRUE)
+  suffixes <- tracker_year_suffixes(tracker, "state")
+  state_cols <- paste0("state_", suffixes)
+  state_cols <- state_cols[state_cols %in% names(tracker)]
   if (!length(state_cols) || !nrow(tracker)) return(data.frame())
-  changed <- apply(tracker[state_cols], 1, function(x) length(unique(stats::na.omit(as.character(x)))) > 1L)
-  out <- tracker[changed, state_cols, drop = FALSE]
-  if (!nrow(out)) return(data.frame())
-  out$.tracker_row <- which(changed)
-  out
+
+  changed <- apply(tracker[state_cols], 1, function(x) {
+    vals <- unique(tracker_value(x))
+    vals <- vals[nzchar(vals)]
+    length(vals) > 1L
+  })
+  if (!any(changed)) return(data.frame())
+
+  rows <- tracker[changed, , drop = FALSE]
+  safe_bind_rows(lapply(seq_len(nrow(rows)), function(i) {
+    vals <- tracker_value(rows[i, state_cols, drop = TRUE])
+    vals <- vals[nzchar(vals)]
+    data.frame(
+      tracker_row = as.integer(rownames(rows)[[i]]),
+      years = paste(tracker_suffix_year(suffixes[seq_along(tracker_value(rows[i, state_cols, drop = TRUE]))]), collapse = ";"),
+      states = paste(unique(vals), collapse = " -> "),
+      first_state = vals[[1]],
+      last_state = vals[[length(vals)]],
+      stringsAsFactors = FALSE
+    )
+  }))
+}
+
+summarize_tracker_state_change_events <- function(state_changes) {
+  state_changes <- as.data.frame(state_changes, stringsAsFactors = FALSE)
+  if (!nrow(state_changes)) return(data.frame())
+  pairs <- paste(state_changes$first_state, state_changes$last_state, sep = " -> ")
+  tab <- as.data.frame(table(state_transition = pairs), stringsAsFactors = FALSE)
+  names(tab) <- c("state_transition", "n_rows")
+  tab$n_rows <- as.integer(tab$n_rows)
+  tab[order(-tab$n_rows, tab$state_transition), , drop = FALSE]
 }
 
 legacy_unrecorded_state_changes <- function() {
@@ -69,11 +123,17 @@ detect_inperiod_district_changes <- function(tracker) {
     a <- paste0("district_", pair[[1]])
     b <- paste0("district_", pair[[2]])
     if (!all(c(a, b) %in% names(tracker))) return(data.frame())
-    changed <- !is.na(tracker[[a]]) & !is.na(tracker[[b]]) & tracker[[a]] != tracker[[b]]
+    av <- tracker_value(tracker[[a]])
+    bv <- tracker_value(tracker[[b]])
+    changed <- nzchar(av) & nzchar(bv) & av != bv
     if (!any(changed)) return(data.frame())
+    state_a <- paste0("state_", pair[[1]])
+    state_b <- paste0("state_", pair[[2]])
     data.frame(
-      .tracker_row = which(changed),
+      tracker_row = which(changed),
       period = paste(pair, collapse = "_to_"),
+      state_start = if (state_a %in% names(tracker)) tracker[[state_a]][changed] else NA_character_,
+      state_end = if (state_b %in% names(tracker)) tracker[[state_b]][changed] else NA_character_,
       district_start = tracker[[a]][changed],
       district_end = tracker[[b]][changed],
       stringsAsFactors = FALSE
@@ -84,20 +144,22 @@ detect_inperiod_district_changes <- function(tracker) {
 
 find_same_name_districts <- function(tracker) {
   tracker <- as.data.frame(tracker, stringsAsFactors = FALSE)
-  suffixes <- sub("^district_", "", grep("^district_[0-9]{2}$", names(tracker), value = TRUE))
+  suffixes <- tracker_year_suffixes(tracker, "district")
   out <- lapply(suffixes, function(sfx) {
     state_col <- paste0("state_", sfx)
     district_col <- paste0("district_", sfx)
     if (!all(c(state_col, district_col) %in% names(tracker))) return(data.frame())
     temp <- tracker[c(state_col, district_col)]
     names(temp) <- c("state", "district")
-    temp <- temp[!is.na(temp$district) & nzchar(as.character(temp$district)), , drop = FALSE]
+    temp$state <- tracker_value(temp$state)
+    temp$district <- tracker_value(temp$district)
+    temp <- temp[nzchar(temp$district), , drop = FALSE]
     if (!nrow(temp)) return(data.frame())
     split_d <- split(temp, temp$district)
     safe_bind_rows(lapply(split_d, function(x) {
-      n_states <- length(unique(stats::na.omit(as.character(x$state))))
-      if (n_states <= 1L) return(data.frame())
-      data.frame(year_suffix = sfx, district_name = x$district[[1]], n_districts = nrow(x), n_states = n_states, states = paste(sort(unique(x$state)), collapse = "; "), stringsAsFactors = FALSE)
+      states <- sort(unique(x$state[nzchar(x$state)]))
+      if (length(states) <= 1L) return(data.frame())
+      data.frame(year_suffix = sfx, district_name = x$district[[1]], n_districts = nrow(x), n_states = length(states), states = paste(states, collapse = "; "), stringsAsFactors = FALSE)
     }))
   })
   safe_bind_rows(out)
@@ -110,11 +172,33 @@ find_source_disagreements <- function(raw_district_changes, district_tracker = N
   coverage
 }
 
+legacy_tracker_comment_reference <- function(detected_state_change_rows, detected_inperiod_rows) {
+  data.frame(
+    diagnostic = c(
+      "recorded_state_ut_changes",
+      "unrecorded_state_ut_changes",
+      "in_period_district_name_changes"
+    ),
+    legacy_comment_expected = c(
+      "Legacy Chunk 6 comments identify two recorded state/UT change events in the tracker sources.",
+      "Legacy Chunk 6 comments identify four unrecorded state/UT naming/split changes requiring manual attention.",
+      "Legacy Chunk 6 comments record 16 districts changing names within the sampling periods."
+    ),
+    current_detected_rows = c(detected_state_change_rows, nrow(legacy_unrecorded_state_changes()), detected_inperiod_rows),
+    interpretation = c(
+      "Compare row-level current detections with tracker_state_change_events.csv because row counts can exceed event counts.",
+      "These are preserved as documented legacy correction notes, not inferred from active tracker rows.",
+      "A current count different from 16 reflects active tracker/correction changes and should be reviewed before describing it as an improvement."
+    ),
+    stringsAsFactors = FALSE
+  )
+}
+
 summarize_tracker_source_errors <- function(raw_district_changes, district_tracker = NULL) {
   diag <- diagnose_district_tracker_sources(raw_district_changes, district_tracker %||% data.frame(), list())
   data.frame(
-    diagnostic = c("state_changes", "inperiod_district_changes", "same_name_districts"),
-    n = c(nrow(attr(diag, "state_changes")), nrow(attr(diag, "inperiod_district_changes")), nrow(attr(diag, "same_name_districts"))),
+    diagnostic = c("state_changes", "state_change_events", "inperiod_district_changes", "same_name_districts"),
+    n = c(nrow(attr(diag, "state_changes")), nrow(attr(diag, "state_change_events")), nrow(attr(diag, "inperiod_district_changes")), nrow(attr(diag, "same_name_districts"))),
     stringsAsFactors = FALSE
   )
 }
@@ -124,10 +208,12 @@ save_tracker_source_diagnostics <- function(diagnostics, dir = "outputs/diagnost
   paths <- c(
     source_counts = write_diagnostic_csv(as.data.frame(diagnostics), file.path(dir, "tracker_source_counts.csv")),
     state_changes = write_diagnostic_csv(attr(diagnostics, "state_changes") %||% data.frame(), file.path(dir, "tracker_state_changes.csv")),
+    state_change_events = write_diagnostic_csv(attr(diagnostics, "state_change_events") %||% data.frame(), file.path(dir, "tracker_state_change_events.csv")),
     unrecorded_state_changes = write_diagnostic_csv(attr(diagnostics, "unrecorded_state_changes") %||% data.frame(), file.path(dir, "tracker_unrecorded_state_changes.csv")),
     inperiod_district_changes = write_diagnostic_csv(attr(diagnostics, "inperiod_district_changes") %||% data.frame(), file.path(dir, "tracker_inperiod_district_changes.csv")),
     same_name_districts = write_diagnostic_csv(attr(diagnostics, "same_name_districts") %||% data.frame(), file.path(dir, "tracker_same_name_districts.csv")),
-    source_disagreements = write_diagnostic_csv(attr(diagnostics, "source_disagreements") %||% data.frame(), file.path(dir, "tracker_source_disagreements.csv"))
+    source_disagreements = write_diagnostic_csv(attr(diagnostics, "source_disagreements") %||% data.frame(), file.path(dir, "tracker_source_disagreements.csv")),
+    legacy_reference = write_diagnostic_csv(attr(diagnostics, "legacy_reference") %||% data.frame(), file.path(dir, "tracker_legacy_comment_reference.csv"))
   )
   legacy_output_manifest(paths)
 }

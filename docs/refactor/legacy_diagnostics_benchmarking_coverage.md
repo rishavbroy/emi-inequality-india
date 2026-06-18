@@ -39,3 +39,14 @@ This file records how diagnostic and tuning/benchmarking logic from the legacy R
 - View-only or GUI-only exploratory code, such as `View()` calls, Tabula inspection, palette GUI exploration, and commented `tmap_save()` experiments, is represented as notes or benchmark metadata rather than executed automatically.
 - Expensive or unstable commented paths, especially the future/marginaleffects parallel attempt and spatial-IV model attempts, are opt-in benchmark artifacts and not part of the normal public build.
 - Normal public builds preserve `outputs/diagnostics/extended/` and `outputs/benchmarking/`; only `outputs/diagnostics/build/` and `outputs/diagnostics/public/` are reset automatically.
+
+## Correctness follow-up notes
+
+The diagnostics/benchmarking correctness pass adds the following guardrails after the first full optional run exposed incomplete parity:
+
+- Optional target groups are now run through `scripts/run_targets_checked.R`, which inspects selected target metadata and exits non-zero if any requested `diag_ext_` or `bench_` target recorded an error.  This prevents benchmark failures from being hidden by a successful review archive.
+- Chunk 30 spatial-IV formulas are built through `make_iv_formula(dep, endog, instruments, controls)`, matching the current IV adapter while preserving the legacy choice to treat `W_consY`/`W_giniY`, `EMIE`, and `W_EMIE` as endogenous and to use `wavg_ling_degrees`, `W_wLing`, and `W2_wLing` as excluded instruments.
+- Chunk 20 district-matching diagnostics read matcher attributes before data-frame coercion so explicit empty `unmatched_rows` attributes are not replaced by broad `match_status` fallbacks.
+- Chunk 16 fuzzy-matching benchmarks now include active tracker/join candidate pairs in addition to the hand-written troublesome pairs from the legacy comments.
+- Chunk 24 spatial-weight outputs now include the legacy commented rook/queen mean-neighbor references and current-vs-legacy deltas.
+- Chunk 10 AME benchmarking preserves the legacy `vcov = TRUE` method attempt but records a derivative-only `vcov = FALSE` fallback when the current `marginaleffects` package fails on sub-sampled uncertainty calculations, so the benchmark reports both the incompatibility and a current runtime comparison.
