@@ -166,7 +166,20 @@ missingness_correlation_matrix <- function(df, miss_vars, group_vars, cts_vars) 
       x[is.na(x) | !nzchar(x)] <- "missing"
       factor(x)
     }), check.names = FALSE)
-    stats::model.matrix(stats::as.formula(paste0("~", paste(grp, collapse = "+"), "-1")), data = grp_data)
+    # Legacy Chunk 8 used model.matrix-style expansions of sector, sex,
+    # religion, social group, state, and related grouping variables before
+    # computing missingness correlations.  Small diagnostic subsets, especially
+    # enrolled-only slices used in tests or regional filters, may contain only a
+    # single observed level for one or more grouping variables.  model.matrix()
+    # cannot apply contrasts to one-level factors, so drop constant grouping
+    # variables while preserving all grouping variables with real variation.
+    varying <- vapply(grp_data, function(x) length(unique(as.character(x))) > 1L, logical(1))
+    grp_data <- grp_data[varying]
+    if (length(grp_data)) {
+      stats::model.matrix(~ . - 1, data = grp_data)
+    } else {
+      matrix(numeric(), nrow = nrow(df), ncol = 0L)
+    }
   } else matrix(numeric(), nrow = nrow(df), ncol = 0L)
   legacy_safe_cor(cbind(miss_df, cts_df, grp_df))
 }
