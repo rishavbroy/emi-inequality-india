@@ -39,11 +39,6 @@ legacy_figure_captions <- c(
   "fig-districtcarveoutsshifts-fig" = "Number of 2001 districts which absorbed a percentage of a 1991 district's population via name change, clean merger, carve-out, or border shift. Data from Kumar \\& Somanathan (2016)."
 )
 
-map_geometry_validation_note <- paste(
-  "Final district map figures are withheld until the district panel joins to validated",
-  "geometry for at least 75% of district-panel rows. This prevents diagnostic",
-  "distribution plots from being presented as geographic maps."
-)
 
 legacy_table_captions <- c(
   "tbl-sum-tbl-probit-quant" = "Summary Statistics for Enrollment Participation Model (Numeric Variables)",
@@ -58,13 +53,6 @@ figure_markdown <- function(label, path) {
   paste0("![", legacy_figure_captions[[label]], "](", path, "){#", label, " fig-pos=\"H\" width=\"100%\"}")
 }
 
-map_geometry_note_block <- function() {
-  c(
-    "::: {.callout-important}",
-    map_geometry_validation_note,
-    ":::"
-  )
-}
 
 ensure_yaml_field <- function(lines, field, value) {
   if (!length(lines) || !identical(lines[[1]], "---")) return(lines)
@@ -264,58 +252,14 @@ cleanup_public_placeholders <- function(lines) {
   lines
 }
 
-prune_unavailable_report_inline_expressions <- function(lines) {
-  remove_ids <- c("inline_7a04581a", "inline_0937ca53", "inline_2b7c944a", "inline_7e66a3fd")
-  lines <- lines[!grepl(paste0("^\\s*(", paste(remove_ids, collapse = "|"), ")\\s*="), lines, perl = TRUE)]
 
-  start <- grep("^legacy_inline_expressions <- list\\(", lines)
-  if (!length(start)) return(lines)
-  close <- which(seq_along(lines) > start[[1]] & trimws(lines) == ")")
-  if (!length(close)) return(lines)
-  end <- close[[1]]
-  value_lines <- seq.int(start[[1]] + 1L, end - 1L)
-  value_lines <- value_lines[nzchar(trimws(lines[value_lines]))]
-  if (length(value_lines)) {
-    lines[value_lines[[length(value_lines)]]] <- sub(",\\s*$", "", lines[value_lines[[length(value_lines)]]])
-  }
-  lines
-}
-
-fix_final_public_prose <- function(lines) {
-  lines[startsWith(lines, "Geospatial data used to construct the maps in this paper as well as all spatial autocorrelation measures")] <-
-    "Geospatial data intended for maps and spatial autocorrelation measures is sourced from @bhatiaMergingUpdatedDistrictlevel2020, which is itself an adaptation of @meyersIndiaOfficialBoundaries2020. Our methods for tracking districts across time (see Sec. @sec-distma) begin with data from @indiastatestoriesDistrictEvolution2024 and @jaacksIndiaDistrictChanges2020."
-
-  lines[startsWith(lines, "Geospatial data intended for maps and spatial autocorrelation measures is sourced from @bhatiaMergingUpdatedDistrictlevel2020")] <-
-    "Geospatial data intended for maps and spatial autocorrelation measures is sourced from @bhatiaMergingUpdatedDistrictlevel2020, which is itself an adaptation of @meyersIndiaOfficialBoundaries2020. Our methods for tracking districts across time (see Sec. @sec-distma) begin with data from @indiastatestoriesDistrictEvolution2024 and @jaacksIndiaDistrictChanges2020."
-
-  lines[startsWith(lines, "Looking deeper into the supply side of education, it seems that all variation which could potentially be explained by enrollment cost")] <-
-    "Looking deeper into the supply side of education, it seems that all variation which could potentially be explained by enrollment cost has, at best, been consumed by other variables, implying direct costs matter less than social barriers and other correlates of supply-side factors. While one would expect the causal effect of an exogenous shock in scholarships/stipends, stationery, or textbooks to match the sign of their positive coefficient estimates, only textbooks show up as statistically significant. The district-level share of students who attend a school which charges no tuition fees (i.e., where 'Educ. freely available') is collinear with the intercept in the active probit specification, so we do not report its AME in this draft. @nationalsamplesurveyoffice2008 documentation indicates that such schools include most if not all government schools, as well as private schools in some states up to a certain level of education. Building off observations in Sec. @sec-intro that government schools tend to have worse facilities, chronic teacher absenteeism, and so on, this omitted coefficient remains a useful warning about the difficulty of separating direct costs from the quality and availability of public schooling. Comparing the remaining variables' $s$-values^[Given a $p$-value, we can define the $s$-value as $s=-\\log_2(p)$ [@mansourniaPvalueCompatibilitySvalue2022].] using @mansourniaPvalueCompatibilitySvalue2022 shows that 'Textbook(s) received' has an $s$-value of `r report_value(\"inline_55014f4e\")`, meaning that the data provided `r report_value(\"inline_55014f4e\")` bits of information against the null hypothesis (a coefficient of zero)."
-
-  lines[startsWith(lines, "Summary statistics for all of the variables in this model, including the controls")] <-
-    "Summary statistics for all of the variables in this model, including the controls $k$ in the vector $X_{kd}$, are provided in Table @tbl-sum-tbl-iv. The district map figures below use the validated district-panel geometry produced by the active tracker and are included here to preserve the legacy paper's map figures."
-
-  lines[startsWith(lines, "We are currently unable to replicate her justification of the exclusion restriction, however. Her argument centers on a map depicting the geographical balance of her residual variation")] <-
-    "We are currently unable to replicate her justification of the exclusion restriction, however. Her argument centers on a map depicting the geographical balance of her residual variation, made possible despite regional linguistic divides thanks to state fixed effects. In our case, adding state FEs explodes the condition number of our design matrix to $\\kappa =$ `r report_value(\"inline_7d871500\")` despite all individual collinearity measures remaining low (every scaled generalized variance inflation factor (GVIF) was below 6.05), with similar results for region FEs to a lesser degree. This almost certainly results from the many-to-many matching used in this paper's district tracking algorithms.^[Many-to-many matching from 2001 to 2007-08 to 2017-18 was used to accurately reflect how real district changes occur as both mergers and partitions. While the intent was accuracy, the effect was degradation: the multiple duplicated rows for 2001 and 2007-08 measures in particular almost surely devastated the rank of the design matrix.] Our plan to repair it moving forward is discussed in Sec. @sec-distma."
-
-  lines[startsWith(lines, "As was evident from the maps of Figures @fig-map1-fig and @fig-map2-fig")] <-
-    "As was evident from @fig-map1-fig and @fig-map2-fig, numerous districts are still missing from the data or are not comparable across all map variables. Perhaps the assumption of no carveouts and border shifts was a false one to make. And yet, even if all districts were perfectly matched, problems would arise. These figures use 2019-20 shapefiles from @bhatiaMergingUpdatedDistrictlevel2020, despite our \"treatment\" year being 2007-08. The splintering of districts into multiple neighbors over time allocates the same value of the 2007-08 treatment across neighbors, a rank wreckage equivalent to spatial autocorrelation in treatment when using 2019-20 geometry."
-
-  lines[startsWith(lines, "As was evident from @fig-map1-fig and @fig-map2-fig")] <-
-    "As was evident from @fig-map1-fig and @fig-map2-fig, numerous districts are still missing from the data or are not comparable across all map variables. Perhaps the assumption of no carveouts and border shifts was a false one to make. And yet, even if all districts were perfectly matched, problems would arise. These figures use 2019-20 shapefiles from @bhatiaMergingUpdatedDistrictlevel2020, despite our \"treatment\" year being 2007-08. The splintering of districts into multiple neighbors over time allocates the same value of the 2007-08 treatment across neighbors, a rank wreckage equivalent to spatial autocorrelation in treatment when using 2019-20 geometry."
-
+defer_unavailable_morans_i_values <- function(lines) {
   lines[startsWith(lines, "We can control for this spatial autocorrelation by incorporating spatial lags into our model. To test for spatial autocorrelation")] <-
     "We can control for this spatial autocorrelation by incorporating spatial lags into our model. To test for spatial autocorrelation we would follow p. 323 of @anselin2001 and construct a Moran's I statistic; but proper estimation of it would depend on us having proper shapefiles for the year of interest with which to build contiguity neighbor lists. If our unit of analysis ends up being 2001 districts, then this would require 2001 shapefiles. The current 2019-20 shapefile is available in the repository, but the active district panel is not yet joined to geometry with a validated 2001/2007-to-2020 crosswalk, so we do not report Moran's I $p$-values in this draft. Future work will combine shapefiles from the 2011 and 2001 censuses with the data harmonization changes described in @sec-distma to ensure these reflect genuine spatial autocorrelation as opposed to the flaws of our current district tracking methodology."
 
   lines
 }
 
-remove_unavailable_map_figures <- function(lines) {
-  lines
-}
-
-ensure_map_geometry_note <- function(lines, anchor) {
-  lines
-}
 
 fix_district_note_crossrefs <- function(lines) {
   lines <- gsub("These district changes are plotted in @fig-districtcarveoutsshifts-fig.", "These district changes are summarized in the district carve-outs diagnostic figure generated with the main public artifacts.", lines, fixed = TRUE)
@@ -336,16 +280,6 @@ fix_appendix_crossrefs <- function(lines) {
   lines <- gsub("see @sec-iv-iv", "see the IV section of the main report", lines, fixed = TRUE)
   lines <- gsub("in @sec-iv-iv", "in the IV section of the main report", lines, fixed = TRUE)
   lines <- gsub("@sec-intro", "the introduction of the main report", lines, fixed = TRUE)
-  lines
-}
-
-replace_withheld_map_refs <- function(lines, allow_crossrefs = FALSE) {
-  # The appendix and district-matching note are rendered as standalone QMDs, so
-  # they cannot reference figure labels defined only in paper/report.qmd. Keep
-  # those references as plain prose outside the main report to satisfy the
-  # strict per-document cross-reference audit.
-  if (!isTRUE(allow_crossrefs)) return(lines)
-  lines <- gsub("the withheld final map figures", "@fig-map1-fig and @fig-map2-fig", lines, fixed = TRUE)
   lines
 }
 
@@ -724,13 +658,11 @@ postprocess_one <- function(path) {
   if (identical(path, "docs/district-matching.qmd")) {
     lines <- fix_district_note_crossrefs(lines)
   }
-  lines <- fix_final_public_prose(lines)
+  lines <- defer_unavailable_morans_i_values(lines)
   lines <- remove_quarto_crossref_prefixes(lines)
-  lines <- replace_withheld_map_refs(lines, allow_crossrefs = identical(path, "paper/report.qmd"))
   if (identical(path, "paper/appendix.qmd") || identical(path, "docs/district-matching.qmd")) {
     lines <- neutralize_standalone_map_crossrefs(lines)
   }
-  lines <- remove_unavailable_map_figures(lines)
   if (identical(path, "paper/report.qmd") || identical(path, "paper/appendix.qmd")) lines <- fix_appendix_headings(lines)
   if (identical(path, "paper/report.qmd")) lines <- ensure_references_heading(lines)
 
@@ -738,9 +670,6 @@ postprocess_one <- function(path) {
   if (identical(path, "paper/report.qmd")) {
     lines <- normalize_output_table_chunks(lines)
     lines <- insert_report_output_objects_explicit(lines)
-  }
-  if (identical(path, "paper/report.qmd") || identical(path, "docs/district-matching.qmd")) {
-    lines <- prune_unavailable_report_inline_expressions(lines)
   }
   if (identical(path, "paper/report.qmd")) {
     lines <- ensure_output_table_helper(lines)

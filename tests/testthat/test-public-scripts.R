@@ -114,3 +114,25 @@ test_that("static QMD setup does not create fake output-file dependencies", {
 
   expect_false(grepl("report_output_files", src, fixed = TRUE))
 })
+
+
+test_that("postprocessor preserves legacy report prose rewrites except Moran deferral", {
+  src <- paste(readLines(repo_file("scripts", "postprocess_public_qmds.R"), warn = FALSE), collapse = "\n")
+
+  expect_false(grepl("fix_final_public_prose", src, fixed = TRUE))
+  expect_false(grepl("Geospatial data intended for maps and spatial autocorrelation measures", src, fixed = TRUE))
+  expect_false(grepl("collinear with the intercept in the active probit specification", src, fixed = TRUE))
+  expect_false(grepl("validated district-panel geometry produced by the active tracker", src, fixed = TRUE))
+  expect_false(grepl("regional linguistic divides thanks to state fixed effects", src, fixed = TRUE))
+  expect_false(grepl("not comparable across all map variables", src, fixed = TRUE))
+  expect_match(src, "defer_unavailable_morans_i_values", fixed = TRUE)
+  expect_match(src, "Moran's I $p$-values", fixed = TRUE)
+})
+
+test_that("report values retain restored legacy inline expressions", {
+  src <- paste(readLines(repo_file("R", "output", "build_report_values.R"), warn = FALSE), collapse = "\n")
+
+  expect_match(src, "IS_EDU_FREE", fixed = TRUE)
+  expect_match(src, "m_cons_resid$p.value", fixed = TRUE)
+  expect_match(src, "m_cons$p.value", fixed = TRUE)
+})
