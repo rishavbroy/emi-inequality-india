@@ -36,3 +36,14 @@ test_that("experimental spatial IV returns explicit inactive status", {
   expect_true("status" %in% names(out))
   expect_equal(out$status$status, "out_of_active_pipeline")
 })
+
+
+test_that("spatial IV formula attempts use current IV formula adapter", {
+  path <- if (file.exists("R/iv/estimate_spatial_iv_experimental.R")) "R/iv/estimate_spatial_iv_experimental.R" else file.path("..", "..", "R", "iv", "estimate_spatial_iv_experimental.R")
+  src <- paste(readLines(path, warn = FALSE), collapse = "\n")
+
+  expect_match(src, "make_iv_formula", fixed = TRUE)
+  expect_match(src, "instruments = c(\"wavg_ling_degrees\", \"W_wLing\", \"W2_wLing\")", fixed = TRUE)
+  expect_false(grepl("exog =", src, fixed = TRUE))
+  expect_false(grepl("inst =", src, fixed = TRUE))
+})

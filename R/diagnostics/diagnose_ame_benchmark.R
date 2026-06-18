@@ -48,13 +48,13 @@ legacy_ame_benchmark_notes <- function() {
 
 benchmark_ame_methods <- function(selection_model, selection_data, cfg, sample_sizes = NULL) {
   if (!requireNamespace("marginaleffects", quietly = TRUE)) {
-    return(data.frame(method = "avg_slopes", status = "skipped", reason = "Package marginaleffects not installed.", stringsAsFactors = FALSE))
+    return(data.frame(method = "avg_slopes", sample_size = NA_integer_, elapsed_seconds = NA_real_, status = "skipped", reason = "Package marginaleffects not installed.", stringsAsFactors = FALSE))
   }
   if (is.list(selection_model) && !inherits(selection_model, "glm")) {
-    return(data.frame(method = "avg_slopes", status = "skipped", reason = selection_model$reason %||% "Selection model is not fitted.", stringsAsFactors = FALSE))
+    return(data.frame(method = "avg_slopes", sample_size = NA_integer_, elapsed_seconds = NA_real_, status = "skipped", reason = selection_model$reason %||% "Selection model is not fitted.", stringsAsFactors = FALSE))
   }
   data <- as.data.frame(selection_data, stringsAsFactors = FALSE)
-  if (!nrow(data)) return(data.frame(method = "avg_slopes", status = "skipped", reason = "No selection rows.", stringsAsFactors = FALSE))
+  if (!nrow(data)) return(data.frame(method = "avg_slopes", sample_size = NA_integer_, elapsed_seconds = NA_real_, status = "skipped", reason = "No selection rows.", stringsAsFactors = FALSE))
   if (is.null(sample_sizes)) sample_sizes <- c(200L, 2000L)
   sample_sizes <- sample_sizes[sample_sizes <= nrow(data)]
   if (!length(sample_sizes)) sample_sizes <- min(200L, nrow(data))
@@ -62,18 +62,39 @@ benchmark_ame_methods <- function(selection_model, selection_data, cfg, sample_s
   options(marginaleffects_parallel = FALSE)
   on.exit(options(marginaleffects_parallel = old_parallel), add = TRUE)
 
+  has_weight <- "weight" %in% names(data)
+  base_args <- list(model = selection_model, vcov = TRUE, type = "response")
+  if (has_weight) base_args$wts <- "weight"
+
   safe_bind_rows(lapply(sample_sizes, function(n) {
     set.seed(999)
     rows <- if (n < nrow(data)) sample(seq_len(nrow(data)), n) else seq_len(nrow(data))
     newdata_sub <- data[rows, , drop = FALSE]
     run_one <- function(label, args = list()) {
       elapsed <- system.time({
-        result <- tryCatch({
-          do.call(marginaleffects::avg_slopes, c(list(model = selection_model, newdata = newdata_sub, wts = "weight", vcov = TRUE, type = "response"), args))
-          "estimated"
-        }, error = function(e) paste0("failed: ", conditionMessage(e)))
+        attempt <- tryCatch({
+          do.call(marginaleffects::avg_slopes, c(base_args, list(newdata = newdata_sub), args))
+          list(status = "estimated", reason = NA_character_)
+        }, error = function(e) {
+          # Recent marginaleffects versions can fail for the full legacy call
+          # (vcov = TRUE) on sub-sampled newdata.  Preserve that failure, then
+          # retry a derivative-only timing without uncertainty calculation so the
+          # benchmark still records a current runtime comparison instead of only
+          # an error string.
+          fallback <- tryCatch({
+            fallback_args <- c(base_args, list(newdata = newdata_sub), args)
+            fallback_args$vcov <- FALSE
+            do.call(marginaleffects::avg_slopes, fallback_args)
+            TRUE
+          }, error = function(e2) conditionMessage(e2))
+          if (isTRUE(fallback)) {
+            list(status = "estimated_derivative_only_after_vcov_failure", reason = conditionMessage(e))
+          } else {
+            list(status = "failed", reason = paste(conditionMessage(e), "Fallback vcov=FALSE failed:", fallback))
+          }
+        })
       })[["elapsed"]]
-      data.frame(method = label, sample_size = n, elapsed_seconds = unname(elapsed), status = result, stringsAsFactors = FALSE)
+      data.frame(method = label, sample_size = n, elapsed_seconds = unname(elapsed), status = attempt$status, reason = attempt$reason, stringsAsFactors = FALSE)
     }
     safe_bind_rows(list(
       run_one("avg_slopes_centered_default"),

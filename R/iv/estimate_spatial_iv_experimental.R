@@ -63,11 +63,17 @@ fit_spatial_lag_iv_attempts <- function(panel, spatial_weights = NULL, cfg = lis
   controls_lagged <- intersect(controls_lagged, names(panel))
   controls_nolag <- intersect(c("pct_urban", "pct_head_secondary_plus", "pct_muslim", "pct_st", "pct_obc", "pct_fem_head", "pct_medium_land", "pct_large_land"), names(panel))
   safe_formula <- function(dep, spatial_y) {
+    # Legacy Chunk 30 wrote spatial lag IV attempts using the AER::ivreg-style
+    # RHS separator directly, with controls repeated on both sides of the IV
+    # bar.  make_iv_formula() is the project-level adapter for that contract:
+    # controls are automatically placed on both sides, while instruments holds
+    # only the excluded instruments.  Keep W_y, EMIE, and W_EMIE endogenous and
+    # use the original instrument set wavg_ling_degrees, W_wLing, and W2_wLing.
     make_iv_formula(
       dep = dep,
       endog = c(spatial_y, "EMIE", "W_EMIE"),
-      exog = c(controls_needlag, controls_nolag, controls_lagged),
-      inst = c(controls_needlag, controls_nolag, controls_lagged, "wavg_ling_degrees", "W_wLing", "W2_wLing")
+      instruments = c("wavg_ling_degrees", "W_wLing", "W2_wLing"),
+      controls = unique(c(controls_needlag, controls_nolag, controls_lagged))
     )
   }
   forms <- list(
