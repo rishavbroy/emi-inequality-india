@@ -19,7 +19,7 @@ LEGACY_RMD = ROOT / "archive/legacy-paper-drafts/580-Draft-ECON-580.Rmd"
 LEGACY_PDF = ROOT / "archive/legacy-paper-drafts/580-Draft-ECON-580.pdf"
 CURRENT_QMD = ROOT / "paper/report.qmd"
 CURRENT_PDF = ROOT / "paper/report.pdf"
-DIAG_DIR = ROOT / "outputs/diagnostics"
+DIAG_DIR = ROOT / "outputs/diagnostics/public"
 
 FAILURES: list[str] = []
 WARNINGS: list[str] = []

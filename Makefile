@@ -1,4 +1,4 @@
-.PHONY: init-renv restore snapshot rebuild-qmds pipeline-draft pipeline-final pipeline-final-no-samples diagnostics report samples audit-report-values audit-report-values-final audit-crossrefs audit-crossrefs-final audit-outputs-final audit-legacy-content public-build-audit public-build-audit-full public-build-audit-incremental public-build-audit-full-incremental public-build-audit-incremental-review public-build-audit-full-incremental-review check-public check-public-draft check-public-final check-public-final-no-samples check-public-text check-rendered-text check-sample-specs test tests clean-targets clean-renders clean-renders-core clean-renders-no-samples
+.PHONY: init-renv restore snapshot rebuild-qmds pipeline-draft pipeline-final pipeline-final-no-samples diagnostics extended-diagnostics benchmarking rerun-extended-diagnostics rerun-benchmarks clean-public-diagnostics clean-extended-diagnostics clean-benchmarking report samples audit-report-values audit-report-values-final audit-crossrefs audit-crossrefs-final audit-outputs-final audit-legacy-content public-build-audit public-build-audit-full public-build-audit-incremental public-build-audit-full-incremental public-build-audit-incremental-review public-build-audit-full-incremental-review public-build-audit-with-diagnostics public-build-audit-full-with-diagnostics public-build-audit-full-with-benchmarks check-public check-public-draft check-public-final check-public-final-no-samples check-public-text check-rendered-text check-sample-specs test tests clean-targets clean-renders clean-renders-core clean-renders-no-samples
 
 TEXCACHE_ROOT ?= /private/tmp/emi-inequality-india-texcache
 QUARTO_CACHE_ROOT ?= /private/tmp/emi-inequality-india-quarto-cache
@@ -43,8 +43,31 @@ pipeline-final-no-samples: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
 	rm -f .pipeline-final-ok .public-final-ok
 	EMI_CONFIG=config/final.yml EMI_RENDER_APPLICATION_SAMPLES=false Rscript scripts/run_targets_strict.R
 
-diagnostics:
-	EMI_CONFIG=config/diagnostics.yml Rscript -e 'targets::tar_make(starts_with("diag_"))'
+diagnostics: extended-diagnostics
+
+extended-diagnostics:
+	EMI_CONFIG=config/final.yml EMI_RUN_EXTENDED_DIAGNOSTICS=true Rscript -e 'targets::tar_make(starts_with("diag_ext_"))'
+
+benchmarking:
+	EMI_CONFIG=config/final.yml EMI_RUN_BENCHMARKS=true Rscript -e 'targets::tar_make(starts_with("bench_"))'
+
+rerun-extended-diagnostics:
+	EMI_CONFIG=config/final.yml EMI_RUN_EXTENDED_DIAGNOSTICS=true Rscript -e 'targets::tar_invalidate(starts_with("diag_ext_")); targets::tar_make(starts_with("diag_ext_"))'
+
+rerun-benchmarks:
+	EMI_CONFIG=config/final.yml EMI_RUN_BENCHMARKS=true Rscript -e 'targets::tar_invalidate(starts_with("bench_")); targets::tar_make(starts_with("bench_"))'
+
+clean-public-diagnostics:
+	rm -rf outputs/diagnostics/build outputs/diagnostics/public
+	mkdir -p outputs/diagnostics/build outputs/diagnostics/public
+
+clean-extended-diagnostics:
+	rm -rf outputs/diagnostics/extended
+	mkdir -p outputs/diagnostics/extended
+
+clean-benchmarking:
+	mkdir -p outputs/benchmarking
+	find outputs/benchmarking -mindepth 1 ! -name README.md -exec rm -rf {} +
 
 report: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
 	Rscript scripts/check_required_outputs.R --require-final-stamp
@@ -90,6 +113,15 @@ public-build-audit-incremental-review:
 
 public-build-audit-full-incremental-review:
 	bash scripts/run_public_build_audit.sh --with-samples --incremental --archive-always
+
+public-build-audit-with-diagnostics:
+	bash scripts/run_public_build_audit.sh --without-samples --with-extended-diagnostics
+
+public-build-audit-full-with-diagnostics:
+	bash scripts/run_public_build_audit.sh --with-samples --with-extended-diagnostics
+
+public-build-audit-full-with-benchmarks:
+	bash scripts/run_public_build_audit.sh --with-samples --with-extended-diagnostics --with-benchmarks
 
 check-public-text:
 	Rscript scripts/check_public_text.R
@@ -149,7 +181,8 @@ clean-targets:
 	Rscript -e 'targets::tar_destroy(destroy = "all")'
 
 clean-renders-core:
-	rm -rf outputs/figures/* outputs/tables/* outputs/diagnostics/* paper/output/*
+	rm -rf outputs/figures/* outputs/tables/* outputs/diagnostics/build outputs/diagnostics/public paper/output/*
+	mkdir -p outputs/diagnostics/build outputs/diagnostics/public
 	rm -f paper/report.pdf paper/report.html paper/report.tex paper/appendix.pdf paper/appendix.html paper/appendix.tex
 	rm -f docs/district-matching.html docs/district-matching.pdf docs/district-matching.tex
 	rm -f docs/long-paths-and-8-3-filenames.html docs/long-paths-and-8-3-filenames.pdf docs/long-paths-and-8-3-filenames.tex

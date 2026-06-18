@@ -97,6 +97,7 @@ fi
 cp -R outputs/figures "$tmpdir/outputs/" 2>/dev/null || true
 cp -R outputs/tables "$tmpdir/outputs/" 2>/dev/null || true
 cp -R outputs/diagnostics "$tmpdir/outputs/" 2>/dev/null || true
+cp -R outputs/benchmarking "$tmpdir/outputs/" 2>/dev/null || true
 mkdir -p "$tmpdir/data/processed"
 cp -f data/processed/*.csv "$tmpdir/data/processed/" 2>/dev/null || true
 

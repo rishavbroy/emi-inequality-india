@@ -25,16 +25,16 @@ meta <- tryCatch(
   error = function(e) data.frame()
 )
 
-dir.create("outputs/diagnostics", recursive = TRUE, showWarnings = FALSE)
+dir.create("outputs/diagnostics/build", recursive = TRUE, showWarnings = FALSE)
 if (nrow(meta)) {
-  utils::write.csv(meta, "outputs/diagnostics/target_meta_after_strict_run.csv", row.names = FALSE)
+  utils::write.csv(meta, "outputs/diagnostics/build/target_meta_after_strict_run.csv", row.names = FALSE)
 }
 
 if (nrow(meta) && "warnings" %in% names(meta)) {
   warn <- !is.na(meta$warnings) & nzchar(as.character(meta$warnings))
   if (any(warn)) {
     warning_rows <- meta[warn, intersect(c("name", "warnings"), names(meta)), drop = FALSE]
-    utils::write.csv(warning_rows, "outputs/diagnostics/target_warnings.csv", row.names = FALSE)
+    utils::write.csv(warning_rows, "outputs/diagnostics/build/target_warnings.csv", row.names = FALSE)
     cat("Target warnings:\n")
     print(warning_rows, row.names = FALSE)
     if (is_final && !identical(Sys.getenv("EMI_ALLOW_TARGET_WARNINGS"), "true")) {

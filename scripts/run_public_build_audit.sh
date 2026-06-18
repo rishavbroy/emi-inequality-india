@@ -8,10 +8,12 @@ archive_each_step="false"
 skip_clean="false"
 skip_tests="false"
 incremental="false"
+with_extended_diagnostics="false"
+with_benchmarks="false"
 
 usage() {
   cat <<'USAGE'
-Usage: bash scripts/run_public_build_audit.sh [--with-samples|--without-samples] [--archive-on-error|--archive-always] [--archive-each-step] [--incremental|--skip-clean] [--skip-tests] [-o OUT.zip]
+Usage: bash scripts/run_public_build_audit.sh [--with-samples|--without-samples] [--with-extended-diagnostics] [--with-benchmarks] [--archive-on-error|--archive-always] [--archive-each-step] [--incremental|--skip-clean] [--skip-tests] [-o OUT.zip]
 
 Runs the final public build audit. The default is --without-samples for a faster
 report/data/output audit that omits application-sample rendering and excludes
@@ -24,6 +26,12 @@ to preserve generated renders and the {targets} store while debugging content pa
 use a non-incremental run for the final reviewer-facing proof build. Use
 --archive-on-error, or the synonym --archive-always, to write a debug review.zip
 if the audit fails; successful audits always write the final review archive.
+
+Optional extended diagnostics and benchmarks are included only when requested and
+respect the {targets} cache. Ordinary public builds clear only short-lived
+outputs/diagnostics/build and outputs/diagnostics/public files; longer
+outputs/diagnostics/extended and outputs/benchmarking artifacts are preserved
+unless explicitly cleaned.
 USAGE
 }
 
@@ -53,6 +61,14 @@ while [[ $# -gt 0 ]]; do
       ;;
     --skip-clean)
       skip_clean="true"
+      shift
+      ;;
+    --with-extended-diagnostics)
+      with_extended_diagnostics="true"
+      shift
+      ;;
+    --with-benchmarks)
+      with_benchmarks="true"
       shift
       ;;
     --skip-tests)
@@ -101,15 +117,15 @@ dump_diagnostics() {
   echo "=== EXIT CODE: ${exit_code} ==="
 
   echo "=== DIAGNOSTICS: target_warnings.csv ==="
-  if [ -f outputs/diagnostics/target_warnings.csv ]; then
-    cat outputs/diagnostics/target_warnings.csv
+  if [ -f outputs/diagnostics/build/target_warnings.csv ]; then
+    cat outputs/diagnostics/build/target_warnings.csv
   else
     echo "No target_warnings.csv found"
   fi
 
   echo "=== DIAGNOSTICS: target_meta_after_strict_run.csv tail ==="
-  if [ -f outputs/diagnostics/target_meta_after_strict_run.csv ]; then
-    tail -120 outputs/diagnostics/target_meta_after_strict_run.csv
+  if [ -f outputs/diagnostics/build/target_meta_after_strict_run.csv ]; then
+    tail -120 outputs/diagnostics/build/target_meta_after_strict_run.csv
   else
     echo "No target_meta_after_strict_run.csv found"
   fi
@@ -152,9 +168,9 @@ fi
 echo "=== START: git state ==="
 git status --short
 
-echo "=== RESET AUDIT DIAGNOSTICS ==="
-rm -rf outputs/diagnostics/*
-mkdir -p outputs/diagnostics
+echo "=== RESET PUBLIC/BUILD DIAGNOSTICS ==="
+rm -rf outputs/diagnostics/build outputs/diagnostics/public
+mkdir -p outputs/diagnostics/build outputs/diagnostics/public outputs/diagnostics/extended outputs/benchmarking
 
 echo "=== NORMALIZE SOURCE WHITESPACE ==="
 normalize_source_whitespace
@@ -216,13 +232,25 @@ python3 -m py_compile scripts/audit_legacy_parity.py
 python3 scripts/audit_legacy_parity.py
 checkpoint_archive "after-legacy-content-audit"
 
+if [[ "$with_extended_diagnostics" == "true" ]]; then
+  echo "=== EXTENDED DIAGNOSTICS ==="
+  make extended-diagnostics
+  checkpoint_archive "after-extended-diagnostics"
+fi
+
+if [[ "$with_benchmarks" == "true" ]]; then
+  echo "=== BENCHMARKS ==="
+  make benchmarking
+  checkpoint_archive "after-benchmarks"
+fi
+
 echo "=== REVIEW ARCHIVE ==="
 bash scripts/make_review_archive.sh "$archive_sample_flag" --output "$archive_out"
 
 echo "=== STRICT TARGET WARNING CHECK ==="
-if [ -s outputs/diagnostics/target_warnings.csv ]; then
+if [ -s outputs/diagnostics/build/target_warnings.csv ]; then
   echo "target_warnings.csv is non-empty"
-  cat outputs/diagnostics/target_warnings.csv
+  cat outputs/diagnostics/build/target_warnings.csv
   exit 1
 fi
 
