@@ -57,6 +57,7 @@ raw.zip
 full_output.txt
 test_output.txt
 file_list.txt
+parity_audit_output.txt
 
 # keep deliberate TeX source templates if any remain
 !application-samples/templates/*.tex
