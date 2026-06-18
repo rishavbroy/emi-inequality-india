@@ -30,8 +30,9 @@ test_that("legacy 2007 district metadata lookup is unique by district code", {
 test_that("missingness diagnostics return a stable schema", {
   out <- diagnose_missingness(data.frame(a = c(1, NA), b = c(1, 2)), list())
 
-  expect_equal(names(out), "missing_var")
-  expect_equal(out$missing_var, "a")
+  expect_s3_class(out, "emi_missingness_diagnostics")
+  expect_true("missing_counts" %in% names(out))
+  expect_true("a" %in% out$missing_counts$missing_var)
 })
 
 test_that("selection probit returns out-of-pipeline fallback without covariates", {

@@ -77,3 +77,69 @@ test_that("report values read Moran p-values from spatial autocorrelation diagno
   expect_equal(values[["m_cons_resid$p.value %>% signif(3)"]], signif(0.01234, 3))
   expect_equal(values[["m_cons$p.value %>% signif(3)"]], signif(0.98765, 3))
 })
+
+test_that("missingness diagnostics preserve legacy diagnostic components", {
+  df <- data.frame(
+    enrolled = c("Yes", "No", "Yes", "Yes"),
+    AGE = c(10, 11, 12, 13),
+    HH_SIZE = c(4, 5, 4, 6),
+    SEX = c("Female", "Male", "Female", "Male"),
+    SECTOR = c("Urban", "Rural", "Urban", "Rural"),
+    RELIGION = c("Hindu", "Muslim", "Hindu", "Hindu"),
+    SOCIAL_GROUP = c("Scheduled Tribe", "Other", "Other Backward Class", "Other"),
+    state_0708 = c("Rajasthan", "Rajasthan", "Bihar", "Bihar"),
+    region_0708 = c("Southern", "Southern", "North", "North"),
+    dmean_num_ENROLLMENT_COST = c(NA, 10, NA, 12),
+    DIST_FROM_NEAREST_PRIMARY_CLASS = c(1, NA, 2, 3),
+    father_educ = c(NA, 1, 1, NA),
+    TUTION_FEE = c(NA, 1, 2, 3)
+  )
+
+  out <- diagnose_missingness(df, list())
+
+  expect_s3_class(out, "emi_missingness_diagnostics")
+  expect_true(all(c("missing_counts", "regional_cost", "corr_all", "logit_summary", "notes") %in% names(out)))
+  expect_true("Total probit-relevant with NA" %in% out$missing_counts$missing_var)
+})
+
+test_that("tracker diagnostics include legacy source QA tables", {
+  tracker <- data.frame(
+    state_01 = c("Andhra Pradesh", "Jammu & Kashmir"),
+    district_01 = c("Same", "Old Name"),
+    state_07 = c("Andhra Pradesh", "Jammu & Kashmir"),
+    district_07 = c("Same", "Old Name"),
+    state_08 = c("Andhra Pradesh", "Jammu & Kashmir"),
+    district_08 = c("Same", "New Name"),
+    state_20 = c("Telangana", "Ladakh"),
+    district_20 = c("Same", "New Name")
+  )
+  raw <- list(source = data.frame(x = 1:2))
+
+  out <- diagnose_district_tracker_sources(raw, tracker, list())
+
+  expect_s3_class(out, "emi_tracker_source_diagnostics")
+  expect_equal(out$n_rows, 2L)
+  expect_true(nrow(attr(out, "state_changes")) >= 1L)
+  expect_true(nrow(attr(out, "inperiod_district_changes")) >= 1L)
+})
+
+test_that("district matching diagnostics expose unmatched and search tables", {
+  join_map <- data.frame(state_07 = "A", district_07 = "B", match_status = "source_key_unmatched")
+  attr(join_map, "unmatched_rows") <- join_map
+  panel <- data.frame(state_20 = "A", district_20 = "B")
+
+  out <- diagnose_district_matching(panel, join_map, list())
+
+  expect_s3_class(out, "emi_district_matching_diagnostics")
+  expect_equal(out$n_unmatched_rows, 1L)
+  expect_true(nrow(attr(out, "all_rows_search")) >= 1L)
+})
+
+test_that("fuzzy diagnostics use legacy methods and troublesome pairs", {
+  testthat::skip_if_not_installed("stringdist")
+  out <- diagnose_fuzzy_matching(data.frame(id = 1), data.frame(match_status = "legacy_tracker_row"), list())
+
+  expect_s3_class(out, "emi_fuzzy_matching_diagnostics")
+  expect_equal(attr(out, "legacy_methods")$method, c("soundex", "qgram", "jw", "dl", "osa"))
+  expect_true(nrow(attr(out, "troublesome_pairs")) > 0L)
+})

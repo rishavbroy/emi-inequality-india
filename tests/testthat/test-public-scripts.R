@@ -172,3 +172,23 @@ test_that("report values retain restored legacy inline expressions", {
   expect_match(src, "m_cons_resid$p.value", fixed = TRUE)
   expect_match(src, "m_cons$p.value", fixed = TRUE)
 })
+
+test_that("legacy diagnostics and benchmarking coverage document tracks ported chunks", {
+  src <- paste(readLines(repo_file("docs", "refactor", "legacy_diagnostics_benchmarking_coverage.md"), warn = FALSE), collapse = "\n")
+
+  expect_match(src, "Chunk 8 missingness diagnostics", fixed = TRUE)
+  expect_match(src, "Chunk 10 AME runtime/tuning", fixed = TRUE)
+  expect_match(src, "Chunk 16 fuzzy", fixed = TRUE)
+  expect_match(src, "Chunk 30 experimental spatial IV", fixed = TRUE)
+  expect_match(src, "outputs/benchmarking", fixed = TRUE)
+})
+
+test_that("benchmark targets cover fuzzy matching, spatial weights, and spatial IV", {
+  src <- paste(readLines(repo_file("_targets.R"), warn = FALSE), collapse = "\n")
+
+  expect_match(src, "bench_fuzzy_matching", fixed = TRUE)
+  expect_match(src, "bench_spatial_weights", fixed = TRUE)
+  expect_match(src, "bench_spatial_iv_experimental", fixed = TRUE)
+  expect_match(src, "save_missingness_diagnostics", fixed = TRUE)
+  expect_match(src, "save_district_matching_diagnostics", fixed = TRUE)
+})

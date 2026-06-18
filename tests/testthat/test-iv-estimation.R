@@ -33,5 +33,6 @@ test_that("first-stage diagnostics preserve out-of-pipeline statuses", {
 test_that("experimental spatial IV returns explicit inactive status", {
   out <- estimate_spatial_iv_experimental(data.frame(), list(), list())
 
-  expect_equal(out$status, "out_of_active_pipeline")
+  expect_true("status" %in% names(out))
+  expect_equal(out$status$status, "out_of_active_pipeline")
 })
