@@ -28,6 +28,42 @@ test_that("report target renders the PDF artifact explicitly", {
   expect_false(grepl("tar_render\\(report|tar_quarto\\(report", src, perl = TRUE))
 })
 
+
+test_that("public audit clean preserves extended diagnostics and benchmarks", {
+  src <- paste(readLines(repo_file("scripts", "run_public_build_audit.sh"), warn = FALSE), collapse = "\n")
+  makefile <- paste(readLines(repo_file("Makefile"), warn = FALSE), collapse = "\n")
+
+  expect_match(src, "--with-extended-diagnostics", fixed = TRUE)
+  expect_match(src, "--with-benchmarks", fixed = TRUE)
+  expect_match(src, "rm -rf outputs/diagnostics/build outputs/diagnostics/public", fixed = TRUE)
+  expect_false(grepl("rm -rf outputs/diagnostics/\\*", src))
+  expect_match(makefile, "rm -rf outputs/figures/* outputs/tables/* outputs/diagnostics/build outputs/diagnostics/public", fixed = TRUE)
+  expect_match(makefile, "clean-extended-diagnostics", fixed = TRUE)
+  expect_match(makefile, "clean-benchmarking", fixed = TRUE)
+})
+
+test_that("targets graph separates public diagnostics, extended diagnostics, and benchmarks", {
+  src <- paste(readLines(repo_file("_targets.R"), warn = FALSE), collapse = "\n")
+
+  expect_match(src, "core_pipeline_targets <- list", fixed = TRUE)
+  expect_match(src, "extended_diagnostic_targets <- list", fixed = TRUE)
+  expect_match(src, "benchmark_targets <- list", fixed = TRUE)
+  expect_match(src, "diag_public_spatial_autocorrelation", fixed = TRUE)
+  expect_match(src, "diag_ext_missingness", fixed = TRUE)
+  expect_match(src, "bench_ame_methods", fixed = TRUE)
+  expect_match(src, "EMI_RUN_EXTENDED_DIAGNOSTICS", fixed = TRUE)
+  expect_match(src, "EMI_RUN_BENCHMARKS", fixed = TRUE)
+})
+
+test_that("target warning metadata is written to build diagnostics", {
+  strict <- paste(readLines(repo_file("scripts", "run_targets_strict.R"), warn = FALSE), collapse = "\n")
+  audit <- paste(readLines(repo_file("scripts", "run_public_build_audit.sh"), warn = FALSE), collapse = "\n")
+
+  expect_match(strict, "outputs/diagnostics/build/target_meta_after_strict_run.csv", fixed = TRUE)
+  expect_match(strict, "outputs/diagnostics/build/target_warnings.csv", fixed = TRUE)
+  expect_match(audit, "outputs/diagnostics/build/target_warnings.csv", fixed = TRUE)
+})
+
 test_that("postprocessor records legacy map placement and references-heading helpers", {
   src <- paste(readLines(repo_file("scripts", "postprocess_public_qmds.R"), warn = FALSE), collapse = "\n")
 
