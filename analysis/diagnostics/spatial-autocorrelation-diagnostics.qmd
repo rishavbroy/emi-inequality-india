@@ -6,8 +6,11 @@ format:
 ---
 
 ```{r}
+#| echo: false
 library(targets)
-# x <- tar_read(diag_public_spatial_autocorrelation)
+
+diag <- tar_read(diag_public_spatial_autocorrelation)
+diag
 ```
 
-This notebook should render from target outputs, not manually copied numbers.
+These diagnostics reproduce the legacy Rmd's rook-contiguity Moran's I checks using row-standardized spatial weights and `zero.policy = TRUE`. The main report consumes the `m_cons_resid` and `m_cons` p-values; the remaining rows document residual, treatment, instrument, and outcome checks retained from the legacy diagnostic workflow.

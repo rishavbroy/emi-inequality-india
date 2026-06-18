@@ -5,13 +5,25 @@
 
 #' build spatial weights
 #'
-#' @return A spatial weights object, or an explicit inactive status when geometry is unavailable.
+#' Build the rook-contiguity spatial weights used by the legacy Rmd.
+#'
+#' The legacy chunk first removed rows with missing analysis values, then called
+#' `poly2nb(queen = FALSE)`, `nb2mat(style = "B")`, and `nb2listw(style = "W")`.
+#' The target stores all three objects so downstream diagnostics can reproduce
+#' both the binary adjacency matrix and the row-standardized listw object.
+#'
+#' @return A list containing neighbor, matrix, and listw objects, or an explicit
+#' inactive status when geometry is unavailable.
 build_spatial_weights <- function(district_panel, cfg) {
   if (!inherits(district_panel, "sf")) {
     return(list(status = "out_of_active_pipeline", reason = "Requires sf geometry."))
   }
+  need_pkg("spdep", "spatial weights")
+  need_pkg("sf", "spatial weights")
+
   geom <- sf::st_geometry(district_panel)
-  coverage <- mean(!sf::st_is_empty(geom))
+  row_index <- which(!sf::st_is_empty(geom))
+  coverage <- length(row_index) / max(nrow(district_panel), 1L)
   if (!is.finite(coverage) || coverage < 0.75) {
     return(list(
       status = "out_of_active_pipeline",
@@ -20,6 +32,33 @@ build_spatial_weights <- function(district_panel, cfg) {
         round(100 * coverage, 1), "%.")
     ))
   }
+
+  weights <- build_spatial_weights_for_rows(district_panel, row_index, queen = FALSE)
+  weights$coverage <- coverage
+  weights
+}
+
+#' build spatial weights for selected district-panel rows
+#'
+#' @return A list with nb, binary matrix, and row-standardized listw objects.
+build_spatial_weights_for_rows <- function(district_panel, rows, queen = FALSE) {
+  if (!inherits(district_panel, "sf")) {
+    return(list(status = "out_of_active_pipeline", reason = "Requires sf geometry."))
+  }
+  need_pkg("spdep", "spatial weights")
+  need_pkg("sf", "spatial weights")
+
+  rows <- as.integer(rows)
+  rows <- rows[is.finite(rows) & rows >= 1L & rows <= nrow(district_panel)]
+  if (!length(rows)) {
+    return(list(status = "out_of_active_pipeline", reason = "No rows with usable geometry."))
+  }
+  geom <- sf::st_geometry(district_panel)
+  rows <- rows[!sf::st_is_empty(geom[rows])]
+  if (!length(rows)) {
+    return(list(status = "out_of_active_pipeline", reason = "Selected rows have empty geometry."))
+  }
+
   spatial_warnings <- character()
   capture_expected_spatial_warning <- function(expr) {
     withCallingHandlers(
@@ -35,48 +74,129 @@ build_spatial_weights <- function(district_panel, cfg) {
     )
   }
 
-  nb <- capture_expected_spatial_warning(
-    spdep::poly2nb(district_panel[!sf::st_is_empty(geom), , drop = FALSE], queen = FALSE)
+  panel <- district_panel[rows, , drop = FALSE]
+  nb <- capture_expected_spatial_warning(spdep::poly2nb(panel, queen = queen))
+  W <- capture_expected_spatial_warning(spdep::nb2mat(nb, style = "B", zero.policy = TRUE))
+  listw <- capture_expected_spatial_warning(spdep::nb2listw(nb, style = "W", zero.policy = TRUE))
+
+  out <- list(
+    status = "constructed",
+    contiguity = if (isTRUE(queen)) "queen" else "rook",
+    style = "W",
+    matrix_style = "B",
+    zero_policy = TRUE,
+    row_index = rows,
+    nb = nb,
+    W = W,
+    listw = listw,
+    neighbor_counts = lengths(nb),
+    n = length(rows),
+    n_islands = sum(lengths(nb) == 0L),
+    mean_neighbors = mean(lengths(nb)),
+    warnings = spatial_warnings
   )
-  out <- capture_expected_spatial_warning(
-    spdep::nb2listw(nb, style = "W", zero.policy = TRUE)
-  )
-  attr(out, "spatial_warnings") <- spatial_warnings
+  class(out) <- c("emi_spatial_weights", class(out))
   out
 }
 
 #' diagnose spatial weights
 #'
 diagnose_spatial_weights <- function(district_panel, spatial_weights, cfg) {
-  data.frame(
+  if (!inherits(district_panel, "sf")) {
+    return(data.frame(
+      diagnostic = "spatial_weights",
+      status = "out_of_active_pipeline",
+      reason = "Requires sf geometry.",
+      stringsAsFactors = FALSE
+    ))
+  }
+
+  comparison <- compare_rook_queen_contiguity(district_panel)
+  base <- data.frame(
     diagnostic = "spatial_weights",
     status = spatial_weights$status %||% "constructed",
-    warnings = paste(attr(spatial_weights, "spatial_warnings") %||% character(), collapse = "; "),
+    contiguity = spatial_weights$contiguity %||% NA_character_,
+    style = spatial_weights$style %||% NA_character_,
+    matrix_style = spatial_weights$matrix_style %||% NA_character_,
+    n = spatial_weights$n %||% NA_real_,
+    n_islands = spatial_weights$n_islands %||% NA_real_,
+    mean_neighbors = spatial_weights$mean_neighbors %||% NA_real_,
+    warnings = paste(spatial_weights$warnings %||% attr(spatial_weights, "spatial_warnings") %||% character(), collapse = "; "),
     stringsAsFactors = FALSE
   )
+  attr(base, "rook_queen_comparison") <- comparison
+  base
 }
 
-#' compare rook queen contiguity
+#' compare rook and queen contiguity
 #'
+#' The legacy Rmd commented out an sfExtras rook-vs-queen check and recorded
+#' nearly identical mean neighbor counts (rook 4.780165, queen 4.783471) plus
+#' similar run times.  To avoid an extra sfExtras dependency, this project uses
+#' the same `spdep::poly2nb()` implementation used by the final rook weights and
+#' records elapsed time and average neighbor counts for both choices.
 compare_rook_queen_contiguity <- function(district_panel) {
-  tibble::tibble()
+  if (!inherits(district_panel, "sf")) return(tibble::tibble())
+  need_pkg("spdep", "rook/queen contiguity comparison")
+  need_pkg("sf", "rook/queen contiguity comparison")
+  geom <- sf::st_geometry(district_panel)
+  panel <- district_panel[!sf::st_is_empty(geom), , drop = FALSE]
+  if (!nrow(panel)) return(tibble::tibble())
+
+  one <- function(queen) {
+    warnings <- character()
+    elapsed <- system.time({
+      nb <- withCallingHandlers(
+        spdep::poly2nb(panel, queen = queen),
+        warning = function(w) {
+          msg <- conditionMessage(w)
+          if (grepl("no neighbours|sub-graphs", msg, ignore.case = TRUE)) {
+            warnings <<- unique(c(warnings, msg))
+            invokeRestart("muffleWarning")
+          }
+        }
+      )
+    })[["elapsed"]]
+    tibble::tibble(
+      contiguity = if (isTRUE(queen)) "queen" else "rook",
+      n = length(nb),
+      mean_neighbors = mean(lengths(nb)),
+      n_islands = sum(lengths(nb) == 0L),
+      elapsed_seconds = unname(elapsed),
+      warnings = paste(warnings, collapse = "; ")
+    )
+  }
+
+  safe_bind_rows(list(one(FALSE), one(TRUE)))
 }
 
 #' summarize islands
 #'
 summarize_islands <- function(spatial_weights) {
-  tibble::tibble()
+  if (!inherits(spatial_weights, "emi_spatial_weights")) return(tibble::tibble())
+  islands <- which(spatial_weights$neighbor_counts == 0L)
+  tibble::tibble(row_index = spatial_weights$row_index[islands], n_neighbors = 0L)
 }
 
 #' summarize neighbor counts
 #'
 summarize_neighbor_counts <- function(spatial_weights) {
-  tibble::tibble()
+  if (!inherits(spatial_weights, "emi_spatial_weights")) return(tibble::tibble())
+  tibble::tibble(
+    row_index = spatial_weights$row_index,
+    n_neighbors = spatial_weights$neighbor_counts
+  )
 }
 
 #' save spatial weight diagnostics
 #'
-save_spatial_weight_diagnostics <- function(diagnostics) {
+save_spatial_weight_diagnostics <- function(diagnostics, dir = "outputs/diagnostics/extended/spatial") {
+  dir.create(dir, recursive = TRUE, showWarnings = FALSE)
+  utils::write.csv(as.data.frame(diagnostics), file.path(dir, "spatial_weights_summary.csv"), row.names = FALSE)
+  comparison <- attr(diagnostics, "rook_queen_comparison")
+  if (!is.null(comparison) && nrow(as.data.frame(comparison))) {
+    utils::write.csv(as.data.frame(comparison), file.path(dir, "rook_queen_contiguity_comparison.csv"), row.names = FALSE)
+  }
   diagnostics
 }
 
