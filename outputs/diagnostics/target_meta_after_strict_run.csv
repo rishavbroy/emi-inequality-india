@@ -79,7 +79,6 @@
 "ame_results",NA,NA
 "measures_2007",NA,NA
 "tables",NA,NA
-"report_values",NA,NA
 "legacy_ame_glance",NA,NA
 "parse_table_number",NA,NA
 "legacy_match_ame_public_order",NA,NA
@@ -619,6 +618,7 @@
 "join_district_panel",NA,NA
 "long_paths_note",NA,NA
 "config_path",NA,NA
+"report_values",NA,NA
 "district_matching_note",NA,NA
 "report",NA,NA
 "coding_sample_pdfs",NA,NA
