@@ -3,50 +3,254 @@
 
 # sample-start: code-missingness-logit-parallel
 
+legacy_missingness_variables <- function(selection_data) {
+  df <- as.data.frame(selection_data, stringsAsFactors = FALSE)
+  probit_vars <- cfg_probit_vars <- c(
+    "enrolled", "ENROLLED", "AGE", "age", "SEX", "HH_SIZE", "RELIGION", "SOCIAL_GROUP",
+    "SECTOR", "state_0708", "region_0708", "DIST_FROM_NEAREST_PRIMARY_CLASS",
+    "dmean_num_ENROLLMENT_COST", "father_educ", "TUTION_FEE", "EXAMINATION_FEE",
+    "OTHER_FEES_PAYMENTS", "BOOKS", "STATIONERY", "UNIFORM", "TRANSPORT"
+  )
+  probit_vars <- intersect(probit_vars, names(df))
+  if (!length(probit_vars)) probit_vars <- names(df)
+
+  list(
+    probit_vars = probit_vars,
+    miss_vars_all = intersect(c("DIST_FROM_NEAREST_PRIMARY_CLASS", "dmean_num_ENROLLMENT_COST", "father_educ"), names(df)),
+    miss_vars_enrolled = intersect(c("TUTION_FEE", "EXAMINATION_FEE", "OTHER_FEES_PAYMENTS", "BOOKS", "STATIONERY", "UNIFORM", "TRANSPORT"), names(df)),
+    group_vars = intersect(c("SECTOR", "SEX", "RELIGION", "SOCIAL_GROUP", "state_0708"), names(df)),
+    cts_vars = intersect(c("AGE", "HH_SIZE"), names(df)),
+    regional_vars = intersect(c("state_0708", "region_0708"), names(df))
+  )
+}
+
 #' diagnose missingness
 #'
+#' Port the legacy Chunk 8 missingness diagnostics into an opt-in diagnostic
+#' object.  The returned list preserves the legacy sequence: variable counts,
+#' regional rankings, missingness correlation matrices, BH-adjusted logit screens,
+#' and notes for commented case-study / chi-square checks.
 diagnose_missingness <- function(selection_data, cfg) {
-  data.frame(
-    missing_var = names(selection_data)[vapply(selection_data, function(x) any(is.na(x)), logical(1))],
+  df <- as.data.frame(selection_data, stringsAsFactors = FALSE)
+  vars <- legacy_missingness_variables(df)
+  probit_vars <- vars$probit_vars
+
+  counts <- summarize_missingness_by_variable(df[probit_vars])
+  if (length(probit_vars)) {
+    total_na <- sum(!stats::complete.cases(df[probit_vars]))
+    total_complete <- sum(stats::complete.cases(df[probit_vars]))
+  } else {
+    total_na <- 0L
+    total_complete <- nrow(df)
+  }
+  counts <- safe_bind_rows(list(
+    counts,
+    data.frame(missing_var = "Total probit-relevant with NA", n_missing = total_na, pct_missing = if (nrow(df)) total_na / nrow(df) else NA_real_),
+    data.frame(missing_var = "Total probit-relevant with no NA", n_missing = total_complete, pct_missing = if (nrow(df)) total_complete / nrow(df) else NA_real_)
+  ))
+
+  regional <- summarize_missingness_regions(df, probit_vars, vars)
+  corr_all <- missingness_correlation_matrix(df, vars$miss_vars_all, vars$group_vars, vars$cts_vars)
+  enrolled_rows <- legacy_enrolled_rows(df)
+  corr_enrolled <- missingness_correlation_matrix(df[enrolled_rows, , drop = FALSE], vars$miss_vars_enrolled, vars$group_vars, vars$cts_vars)
+
+  covars <- intersect(c("SECTOR", "SEX", "AGE", "HH_SIZE", "RELIGION", "SOCIAL_GROUP", "state_0708"), names(df))
+  miss_all <- intersect(vars$miss_vars_all, names(df))
+  miss_enrolled <- intersect(vars$miss_vars_enrolled, names(df))
+  logit_all <- if (length(miss_all) && length(covars)) run_missingness_logits(df, miss_all, covars) else data.frame()
+  logit_enrolled <- if (length(miss_enrolled) && length(covars) && any(enrolled_rows)) run_missingness_logits(df[enrolled_rows, , drop = FALSE], miss_enrolled, covars) else data.frame()
+  logit_summary <- summarize_missingness_logits(safe_bind_rows(list(logit_all, logit_enrolled)))
+
+  notes <- data.frame(
+    diagnostic = c(
+      "rajasthan_southern_case_study",
+      "chi_square_any_na_by_state",
+      "chi_square_any_na_by_region",
+      "parallel_missingness_logit"
+    ),
+    legacy_status = c(
+      "commented diagnostic View() code preserved as documented note",
+      "commented diagnostic test not run by default",
+      "commented diagnostic test not run by default",
+      "ported using lapply for reproducible targets execution; legacy mclapply/parLapply choice documented"
+    ),
     stringsAsFactors = FALSE
   )
+
+  out <- list(
+    missing_counts = counts,
+    regional_cost = regional$cost,
+    regional_distance = regional$distance,
+    regional_father_education = regional$father_education,
+    corr_all = corr_all,
+    corr_enrolled = corr_enrolled,
+    logit_all = logit_all,
+    logit_enrolled = logit_enrolled,
+    logit_summary = logit_summary,
+    notes = notes
+  )
+  class(out) <- c("emi_missingness_diagnostics", class(out))
+  out
+}
+
+legacy_enrolled_rows <- function(df) {
+  if (!"enrolled" %in% names(df)) return(rep(TRUE, nrow(df)))
+  value <- tolower(as.character(df$enrolled))
+  value %in% c("yes", "1", "true", "enrolled")
+}
+
+summarize_missingness_by_variable <- function(df) {
+  df <- as.data.frame(df, stringsAsFactors = FALSE)
+  if (!length(names(df))) {
+    return(data.frame(missing_var = character(), n_missing = integer(), pct_missing = numeric(), stringsAsFactors = FALSE))
+  }
+  data.frame(
+    missing_var = names(df),
+    n_missing = vapply(df, function(x) sum(is.na(x)), integer(1)),
+    pct_missing = if (nrow(df)) vapply(df, function(x) mean(is.na(x)), numeric(1)) else NA_real_,
+    stringsAsFactors = FALSE
+  )
+}
+
+summarize_missingness_regions <- function(df, probit_vars, vars, top_n = 20L) {
+  empty <- data.frame()
+  if (!all(c("state_0708", "region_0708") %in% names(df))) {
+    return(list(cost = empty, distance = empty, father_education = empty))
+  }
+  if (!length(probit_vars)) probit_vars <- names(df)
+  temp <- df
+  temp$any_na_row <- !stats::complete.cases(temp[intersect(probit_vars, names(temp))])
+  for (nm in c("dmean_num_ENROLLMENT_COST", "DIST_FROM_NEAREST_PRIMARY_CLASS", "father_educ")) {
+    temp[[paste0("miss_", nm)]] <- if (nm %in% names(temp)) as.integer(is.na(temp[[nm]])) else NA_integer_
+  }
+  temp$is_urban <- if ("SECTOR" %in% names(temp)) as.integer(temp$SECTOR == "Urban") else NA_integer_
+  temp$is_female <- if ("SEX" %in% names(temp)) as.integer(temp$SEX == "Female") else NA_integer_
+  temp$is_hindu <- if ("RELIGION" %in% names(temp)) as.integer(temp$RELIGION == "Hindu") else NA_integer_
+  temp$is_muslim <- if ("RELIGION" %in% names(temp)) as.integer(temp$RELIGION == "Muslim") else NA_integer_
+  temp$is_st_sc_obc <- if ("SOCIAL_GROUP" %in% names(temp)) as.integer(temp$SOCIAL_GROUP %in% c("Scheduled Tribe", "Scheduled Caste", "Other Backward Class")) else NA_integer_
+
+  grouped <- stats::aggregate(
+    temp[c("any_na_row", "miss_dmean_num_ENROLLMENT_COST", "miss_DIST_FROM_NEAREST_PRIMARY_CLASS", "miss_father_educ", "is_urban", "is_female", "is_hindu", "is_muslim", "is_st_sc_obc")],
+    temp[c("state_0708", "region_0708")],
+    function(x) mean(as.numeric(x), na.rm = TRUE)
+  )
+  n <- stats::aggregate(temp$any_na_row, temp[c("state_0708", "region_0708")], length)
+  names(n)[names(n) == "x"] <- "n"
+  out <- merge(n, grouped, by = c("state_0708", "region_0708"), all = TRUE)
+  names(out) <- sub("^any_na_row$", "pct_any_na", names(out))
+  pct_cols <- setdiff(names(out), c("state_0708", "region_0708", "n"))
+  out[pct_cols] <- lapply(out[pct_cols], function(x) round(100 * x, 2))
+  rank_one <- function(col) {
+    if (!col %in% names(out)) return(empty)
+    out[order(-out[[col]]), , drop = FALSE][seq_len(min(top_n, nrow(out))), , drop = FALSE]
+  }
+  list(
+    cost = rank_one("miss_dmean_num_ENROLLMENT_COST"),
+    distance = rank_one("miss_DIST_FROM_NEAREST_PRIMARY_CLASS"),
+    father_education = rank_one("miss_father_educ")
+  )
+}
+
+missingness_correlation_matrix <- function(df, miss_vars, group_vars, cts_vars) {
+  df <- as.data.frame(df, stringsAsFactors = FALSE)
+  miss_vars <- intersect(miss_vars, names(df))
+  if (!length(miss_vars) || !nrow(df)) return(matrix(numeric(), nrow = 0L, ncol = 0L))
+  miss_df <- as.data.frame(lapply(df[miss_vars], function(x) as.integer(is.na(x))), check.names = FALSE)
+  names(miss_df) <- paste0("miss_", names(miss_df))
+  cts <- intersect(cts_vars, names(df))
+  cts_df <- if (length(cts)) as.data.frame(lapply(df[cts], numeric_like), check.names = FALSE) else data.frame()
+  grp <- intersect(group_vars, names(df))
+  grp_df <- if (length(grp)) {
+    grp_data <- as.data.frame(lapply(df[grp], function(x) {
+      x <- as.character(x)
+      x[is.na(x) | !nzchar(x)] <- "missing"
+      factor(x)
+    }), check.names = FALSE)
+    stats::model.matrix(stats::as.formula(paste0("~", paste(grp, collapse = "+"), "-1")), data = grp_data)
+  } else matrix(numeric(), nrow = nrow(df), ncol = 0L)
+  legacy_safe_cor(cbind(miss_df, cts_df, grp_df))
 }
 
 #' check missing logit parallel
 #'
+#' Legacy Chunk 8 used mclapply/parLapply after defining the same one-logit-per-
+#' missing-variable problem.  Targets already parallelizes at the target level,
+#' so this implementation keeps deterministic in-process lapply while preserving
+#' the model specification and BH adjustment.
 check_missing_logit_parallel <- function(df, miss_vars, covars, method_p = "BH") {
+  df <- as.data.frame(df, stringsAsFactors = FALSE)
+  miss_vars <- intersect(miss_vars, names(df))
+  covars <- intersect(covars, names(df))
+  if (!length(miss_vars) || !length(covars)) return(data.frame())
   rhs <- paste(covars, collapse = " + ")
-  fit_one <- function(m) { f <- stats::as.formula(paste0("is.na(", m, ") ~ ", rhs)); fit <- stats::glm(f, data = df, family = stats::binomial); broom::tidy(fit) |> dplyr::mutate(missing_var = m, pseudoR2 = 1 - fit$deviance / fit$null.deviance, nobs = stats::nobs(fit)) }
-  out <- dplyr::bind_rows(lapply(miss_vars, fit_one))
-  out |> dplyr::group_by(missing_var) |> dplyr::mutate(p_adj = {adj <- rep(NA_real_, dplyr::n()); idx <- term != "(Intercept)"; adj[idx] <- p.adjust(p.value[idx], method = method_p); adj}) |> dplyr::ungroup()
+  fit_one <- function(m) {
+    y <- is.na(df[[m]])
+    if (length(unique(y)) < 2L) return(data.frame())
+    f <- stats::as.formula(paste0("is.na(`", m, "`) ~ ", rhs))
+    tryCatch({
+      fit <- stats::glm(f, data = df, family = stats::binomial)
+      pseudoR2 <- 1 - fit$deviance / fit$null.deviance
+      out <- broom::tidy(fit)
+      out$missing_var <- m
+      out$pseudoR2 <- pseudoR2
+      out$nobs <- stats::nobs(fit)
+      out
+    }, error = function(e) {
+      data.frame(term = NA_character_, estimate = NA_real_, std.error = NA_real_, statistic = NA_real_, p.value = NA_real_, missing_var = m, pseudoR2 = NA_real_, nobs = length(y), status = "failed", reason = conditionMessage(e), stringsAsFactors = FALSE)
+    })
+  }
+  out <- safe_bind_rows(lapply(miss_vars, fit_one))
+  adjust_missingness_pvalues_bh(out, method_p = method_p)
 }
 
-#' summarize missingness by variable
-#'
-summarize_missingness_by_variable <- function(df) {
-  data.frame(
-    missing_var = names(df),
-    n_missing = vapply(df, function(x) sum(is.na(x)), integer(1)),
-    stringsAsFactors = FALSE
-  )
-}
-
-#' run missingness logits
-#'
 run_missingness_logits <- function(df, miss_vars, covars) {
   check_missing_logit_parallel(df, miss_vars, covars)
 }
 
-#' adjust missingness pvalues bh
-#'
-adjust_missingness_pvalues_bh <- function(df) {
+adjust_missingness_pvalues_bh <- function(df, method_p = "BH") {
+  df <- as.data.frame(df, stringsAsFactors = FALSE)
+  if (!nrow(df) || !"p.value" %in% names(df)) return(df)
+  df$p_adj <- NA_real_
+  idx <- !is.na(df$p.value) & df$term != "(Intercept)"
+  df$p_adj[idx] <- stats::p.adjust(df$p.value[idx], method = method_p)
   df
 }
 
-#' save missingness diagnostics
-#'
-save_missingness_diagnostics <- function(diagnostics) {
-  diagnostics
+summarize_missingness_logits <- function(df) {
+  df <- as.data.frame(df, stringsAsFactors = FALSE)
+  if (!nrow(df) || !all(c("missing_var", "p_adj", "pseudoR2") %in% names(df))) {
+    return(data.frame(missing_var = character(), n_sig = integer(), pseudoR2 = numeric(), stringsAsFactors = FALSE))
+  }
+  split_df <- split(df, df$missing_var)
+  out <- safe_bind_rows(lapply(split_df, function(x) {
+    pmax <- suppressWarnings(max(x$pseudoR2, na.rm = TRUE))
+    if (!is.finite(pmax)) pmax <- NA_real_
+    data.frame(
+      missing_var = x$missing_var[[1]],
+      n_sig = sum(x$p_adj < 0.05 & x$term != "(Intercept)", na.rm = TRUE),
+      pseudoR2 = pmax,
+      stringsAsFactors = FALSE
+    )
+  }))
+  out[order(-out$pseudoR2), , drop = FALSE]
+}
+
+save_missingness_diagnostics <- function(diagnostics, dir = "outputs/diagnostics/extended/missingness") {
+  dir.create(dir, recursive = TRUE, showWarnings = FALSE)
+  if (!inherits(diagnostics, "emi_missingness_diagnostics")) diagnostics <- list(missing_counts = as.data.frame(diagnostics))
+  paths <- c(
+    missing_counts = write_diagnostic_csv(diagnostics$missing_counts %||% data.frame(), file.path(dir, "missingness_counts.csv")),
+    regional_cost = write_diagnostic_csv(diagnostics$regional_cost %||% data.frame(), file.path(dir, "regional_missingness_cost.csv")),
+    regional_distance = write_diagnostic_csv(diagnostics$regional_distance %||% data.frame(), file.path(dir, "regional_missingness_distance.csv")),
+    regional_father = write_diagnostic_csv(diagnostics$regional_father_education %||% data.frame(), file.path(dir, "regional_missingness_father_education.csv")),
+    logit_all = write_diagnostic_csv(diagnostics$logit_all %||% data.frame(), file.path(dir, "missingness_logits_all.csv")),
+    logit_enrolled = write_diagnostic_csv(diagnostics$logit_enrolled %||% data.frame(), file.path(dir, "missingness_logits_enrolled.csv")),
+    logit_summary = write_diagnostic_csv(diagnostics$logit_summary %||% data.frame(), file.path(dir, "missingness_logit_summary.csv")),
+    notes = write_diagnostic_csv(diagnostics$notes %||% data.frame(), file.path(dir, "missingness_legacy_notes.csv"))
+  )
+  if (length(diagnostics$corr_all)) paths <- c(paths, corr_all = write_diagnostic_matrix(diagnostics$corr_all, file.path(dir, "missingness_correlation_all.csv")))
+  if (length(diagnostics$corr_enrolled)) paths <- c(paths, corr_enrolled = write_diagnostic_matrix(diagnostics$corr_enrolled, file.path(dir, "missingness_correlation_enrolled.csv")))
+  legacy_output_manifest(paths)
 }
 
 # sample-end: code-missingness-logit-parallel

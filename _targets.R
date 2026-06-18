@@ -118,10 +118,10 @@ core_pipeline_targets <- list(
 )
 
 extended_diagnostic_targets <- list(
-  tar_target(diag_ext_missingness, diagnose_missingness(selection_data, cfg)),
-  tar_target(diag_ext_district_tracker_sources, diagnose_district_tracker_sources(raw_district_changes, district_tracker, cfg)),
-  tar_target(diag_ext_district_matching, diagnose_district_matching(district_panel, district_join_map, cfg)),
-  tar_target(diag_ext_fuzzy_matching, diagnose_fuzzy_matching(district_tracker, district_join_map, cfg)),
+  tar_target(diag_ext_missingness, save_missingness_diagnostics(diagnose_missingness(selection_data, cfg))),
+  tar_target(diag_ext_district_tracker_sources, save_tracker_source_diagnostics(diagnose_district_tracker_sources(raw_district_changes, district_tracker, cfg))),
+  tar_target(diag_ext_district_matching, save_district_matching_diagnostics(diagnose_district_matching(district_panel, district_join_map, cfg))),
+  tar_target(diag_ext_fuzzy_matching, save_fuzzy_matching_diagnostics(diagnose_fuzzy_matching(district_tracker, district_join_map, cfg))),
   tar_target(diag_ext_spatial_weights, save_spatial_weight_diagnostics(diagnose_spatial_weights(district_panel, spatial_weights, cfg))),
   tar_render(diag_ext_district_tracker_source_note, "analysis/diagnostics/district-tracker-source-diagnostics.qmd"),
   tar_render(diag_ext_fuzzy_matching_note, "analysis/diagnostics/fuzzy-matching-diagnostics.qmd"),
