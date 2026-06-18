@@ -1,0 +1,13 @@
+---
+title: "Fuzzy Matching Benchmark"
+format:
+  html: default
+  pdf: default
+---
+
+```{r}
+library(targets)
+# x <- tar_read(bench_fuzzy_matching)
+```
+
+This benchmark records the legacy string-distance method and threshold checks used to tune district matching.

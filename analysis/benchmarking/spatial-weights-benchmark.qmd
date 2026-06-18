@@ -1,0 +1,13 @@
+---
+title: "Spatial Weights Benchmark"
+format:
+  html: default
+  pdf: default
+---
+
+```{r}
+library(targets)
+# x <- tar_read(bench_spatial_weights)
+```
+
+This benchmark records the legacy rook-versus-queen contiguity comparison and neighbor-count timing checks.

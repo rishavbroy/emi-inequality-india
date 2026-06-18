@@ -1,5 +1,5 @@
-# Benchmarking helpers
+# Benchmarking code
 
-This directory is reserved for opt-in tuning and benchmarking code ported from the legacy Rmd.
-Targets that use these helpers should be named `bench_*` and should write to `outputs/benchmarking/`.
-They are not part of the ordinary public build unless requested with `--with-benchmarks` or `make benchmarking`.
+This directory contains opt-in benchmarking/tuning adapters for legacy exploratory work.  These targets are not part of the normal public build.  Run them with `make benchmarking` or with `scripts/run_public_build_audit.sh --with-benchmarks`.
+
+Outputs are written to `outputs/benchmarking/` and are preserved by ordinary public-build clean steps.

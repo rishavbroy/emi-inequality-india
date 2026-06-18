@@ -1,0 +1,13 @@
+---
+title: "Spatial IV Benchmark"
+format:
+  html: default
+  pdf: default
+---
+
+```{r}
+library(targets)
+# x <- tar_read(bench_spatial_iv_experimental)
+```
+
+This notebook documents the legacy experimental spatial-lag IV attempts. These attempts remain opt-in benchmarks rather than final-paper models.

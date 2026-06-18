@@ -1,28 +1,106 @@
 # This file is part of the EMI inequality research pipeline.
 # Functions are intentionally small enough to be tested and called by _targets.R.
 
-
 #' diagnose ame benchmark
 #'
+#' Port the legacy Chunk 10 AME timing/tuning code into opt-in benchmarks.  The
+#' legacy final method used `avg_slopes(..., vcov = TRUE, type = "response")`
+#' over all complete cases with `marginaleffects_parallel = FALSE`, and recorded
+#' exploratory timings for subsampling, forward differences, split slopes vs.
+#' comparisons, and failed future-based parallelization.  This function records
+#' those choices and, when packages/model support it, runs small reproducible
+#' timing checks behind the benchmark target.
 diagnose_ame_benchmark <- function(selection_model, selection_data, cfg) {
   if (!diagnostic_enabled(cfg, "ame_benchmark")) return(tibble::tibble(status = "skipped"))
-  data.frame(method = "autodiff_or_fallback", n = nrow(as.data.frame(selection_data)))
+  notes <- legacy_ame_benchmark_notes()
+  methods <- benchmark_ame_methods(selection_model, selection_data, cfg)
+  parallel <- benchmark_parallelization_options(selection_model, selection_data, cfg)
+  out <- list(methods = methods, parallel = parallel, notes = notes)
+  class(out) <- c("emi_ame_benchmark", class(out))
+  out
 }
 
-#' benchmark ame methods
-#'
-benchmark_ame_methods <- function(...) {
-  tibble::tibble()
+legacy_ame_benchmark_notes <- function() {
+  data.frame(
+    topic = c(
+      "final_method",
+      "sample_seed",
+      "full_data_legacy_timing",
+      "subsample_20000_legacy_timing",
+      "subsample_2000_legacy_timing",
+      "forward_difference_result",
+      "split_slopes_comparisons_result",
+      "parallelization_failure"
+    ),
+    legacy_choice = c(
+      "avg_slopes(model_probit_selection, newdata = sel_data, wts = 'weight', vcov = TRUE, type = 'response'); marginaleffects_parallel = FALSE",
+      "set.seed(999)",
+      "legacy notes: full data first run around 6-11 minutes, later around 4.85 minutes; raw derivation once took ~40 minutes",
+      "legacy notes: around 36-39 seconds",
+      "legacy notes: around 4-5 seconds",
+      "fdforward did not materially help; centered differences retained for accuracy on continuous variables",
+      "splitting numeric slopes and factor comparisons did not help; use avg_slopes()",
+      "future/marginaleffects parallelization exceeded available memory because exported globals were tens of GiB"
+    ),
+    stringsAsFactors = FALSE
+  )
 }
 
-#' benchmark parallelization options
-#'
-benchmark_parallelization_options <- function(...) {
-  tibble::tibble()
+benchmark_ame_methods <- function(selection_model, selection_data, cfg, sample_sizes = NULL) {
+  if (!requireNamespace("marginaleffects", quietly = TRUE)) {
+    return(data.frame(method = "avg_slopes", status = "skipped", reason = "Package marginaleffects not installed.", stringsAsFactors = FALSE))
+  }
+  if (is.list(selection_model) && !inherits(selection_model, "glm")) {
+    return(data.frame(method = "avg_slopes", status = "skipped", reason = selection_model$reason %||% "Selection model is not fitted.", stringsAsFactors = FALSE))
+  }
+  data <- as.data.frame(selection_data, stringsAsFactors = FALSE)
+  if (!nrow(data)) return(data.frame(method = "avg_slopes", status = "skipped", reason = "No selection rows.", stringsAsFactors = FALSE))
+  if (is.null(sample_sizes)) sample_sizes <- c(200L, 2000L)
+  sample_sizes <- sample_sizes[sample_sizes <= nrow(data)]
+  if (!length(sample_sizes)) sample_sizes <- min(200L, nrow(data))
+  old_parallel <- getOption("marginaleffects_parallel")
+  options(marginaleffects_parallel = FALSE)
+  on.exit(options(marginaleffects_parallel = old_parallel), add = TRUE)
+
+  safe_bind_rows(lapply(sample_sizes, function(n) {
+    set.seed(999)
+    rows <- if (n < nrow(data)) sample(seq_len(nrow(data)), n) else seq_len(nrow(data))
+    newdata_sub <- data[rows, , drop = FALSE]
+    run_one <- function(label, args = list()) {
+      elapsed <- system.time({
+        result <- tryCatch({
+          do.call(marginaleffects::avg_slopes, c(list(model = selection_model, newdata = newdata_sub, wts = "weight", vcov = TRUE, type = "response"), args))
+          "estimated"
+        }, error = function(e) paste0("failed: ", conditionMessage(e)))
+      })[["elapsed"]]
+      data.frame(method = label, sample_size = n, elapsed_seconds = unname(elapsed), status = result, stringsAsFactors = FALSE)
+    }
+    safe_bind_rows(list(
+      run_one("avg_slopes_centered_default"),
+      run_one("avg_slopes_fdforward", list(numderiv = "fdforward"))
+    ))
+  }))
 }
 
-#' save ame benchmark
-#'
-save_ame_benchmark <- function(benchmark) {
-  benchmark
+benchmark_parallelization_options <- function(selection_model, selection_data, cfg) {
+  data.frame(
+    method = c("marginaleffects_parallel_false", "future_parallel_attempt"),
+    status = c("legacy_final_choice", "documented_not_run_by_default"),
+    reason = c(
+      "Legacy final draft set options(marginaleffects_parallel = FALSE).",
+      "Legacy commented attempt failed because exported globals exceeded available RAM; benchmark target records this rather than forcing an unsafe run."
+    ),
+    stringsAsFactors = FALSE
+  )
+}
+
+save_ame_benchmark <- function(benchmark, dir = "outputs/benchmarking/ame") {
+  dir.create(dir, recursive = TRUE, showWarnings = FALSE)
+  if (!inherits(benchmark, "emi_ame_benchmark")) benchmark <- list(methods = as.data.frame(benchmark), parallel = data.frame(), notes = data.frame())
+  paths <- c(
+    methods = write_diagnostic_csv(benchmark$methods %||% data.frame(), file.path(dir, "ame_methods_benchmark.csv")),
+    parallel = write_diagnostic_csv(benchmark$parallel %||% data.frame(), file.path(dir, "ame_parallelization_notes.csv")),
+    notes = write_diagnostic_csv(benchmark$notes %||% data.frame(), file.path(dir, "ame_legacy_benchmark_notes.csv"))
+  )
+  legacy_output_manifest(paths)
 }

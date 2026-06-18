@@ -1,3 +1,3 @@
 # Benchmarking outputs
 
-Long-running tuning and benchmarking outputs live here and are preserved by ordinary public builds. Use `make clean-benchmarking` to clear them intentionally.
+This directory stores opt-in benchmark and tuning outputs. Ordinary public builds preserve this directory; use `make clean-benchmarking` to clear it intentionally.
