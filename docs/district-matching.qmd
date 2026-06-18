@@ -42,7 +42,9 @@ legacy_inline_expressions <- list(
   inline_eb012827 = "mfx_df %>% filter(term==\"HH_SIZE\") %>% pull(estimate) %>% round(3)*100",
   inline_a3fcb577 = "mfx_df %>% filter(term==\"RELIGION\" & grepl(\"Muslim\", contrast)) %>% pull(estimate) %>% round(3)*100",
   inline_dfcb22a5 = "mfx_df %>% filter(term==\"SOCIAL_GROUP\" & grepl(\"Tribe\", contrast)) %>% pull(estimate) %>% round(3)*100",
+  inline_7a04581a = "mfx_df %>% filter(grepl(\"dmean_num\", term) & grepl(\"IS_EDU_FREE\", term)) %>% pull(estimate) %>% round(3)*100",
   inline_55014f4e = "mfx_df %>% filter(grepl(\"dmean_num\", term) & grepl(\"RECD_TXT_BOOKS\", term)) %>% pull(s.value) %>% signif(3)",
+  inline_0937ca53 = "mfx_df %>% filter(grepl(\"dmean_num\", term) & grepl(\"IS_EDU_FREE\", term)) %>% pull(s.value) %>% signif(3)",
   inline_7d871500 = "kappa %>% format(scientific = FALSE, digits = 7)",
   inline_d306ea57 = "partial_f %>% round(digits = 2)",
   inline_c0673df9 = "partial_p %>% signif(digits = 2)",
@@ -60,7 +62,9 @@ legacy_inline_expressions <- list(
   inline_cd5afd77 = "summary(model_consumption_iv, vcov = vcov_model_consumption_iv)$coefficients[\"pct_medium_land\",4] %>% round(digits = 3)",
   inline_861e7564 = "summary(model_consumption_iv, vcov = vcov_model_consumption_iv)$coefficients[\"pct_large_land\",4] %>% round(digits = 3)",
   inline_46353c81 = "summary(model_consumption_iv, vcov = vcov_model_consumption_iv)$coefficients[\"gini_cons_0708\",4] %>% round(digits = 3)",
-  inline_0b52593f = "summary(model_consumption_iv, vcov = vcov_model_consumption_iv)$coefficients[\"pct_fem_head\",4] %>% round(digits = 3)"
+  inline_0b52593f = "summary(model_consumption_iv, vcov = vcov_model_consumption_iv)$coefficients[\"pct_fem_head\",4] %>% round(digits = 3)",
+  inline_2b7c944a = "m_cons_resid$p.value %>% signif(3)",
+  inline_7e66a3fd = "m_cons$p.value %>% signif(3)"
 )
 is_report_value_status <- function(value) {
   is.list(value) && !is.null(value$status) && !is.null(value$reason)
