@@ -7,7 +7,7 @@ format:
 
 ```{r}
 library(targets)
-# x <- tar_read(diag_fuzzy_matching)
+# x <- tar_read(diag_ext_fuzzy_matching)
 ```
 
 This notebook should render from target outputs, not manually copied numbers.

@@ -7,7 +7,7 @@ format:
 
 ```{r}
 library(targets)
-# x <- tar_read(diag_district_tracker_sources)
+# x <- tar_read(diag_ext_district_tracker_sources)
 ```
 
 This notebook should render from target outputs, not manually copied numbers.

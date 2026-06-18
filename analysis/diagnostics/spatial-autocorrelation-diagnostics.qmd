@@ -7,7 +7,7 @@ format:
 
 ```{r}
 library(targets)
-# x <- tar_read(diag_spatial_autocorrelation)
+# x <- tar_read(diag_public_spatial_autocorrelation)
 ```
 
 This notebook should render from target outputs, not manually copied numbers.

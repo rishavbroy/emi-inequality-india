@@ -12,6 +12,7 @@ tar_source("R/measures")
 tar_source("R/selection")
 tar_source("R/iv")
 tar_source("R/diagnostics")
+tar_source("R/benchmarking")
 tar_source("R/output")
 tar_source("R/application_samples")
 
@@ -21,9 +22,22 @@ tar_option_set(
   error = "abridge"
 )
 
-render_application_samples_enabled <- function() {
-  value <- tolower(trimws(Sys.getenv("EMI_RENDER_APPLICATION_SAMPLES", "true")))
+env_flag_enabled <- function(name, default = FALSE) {
+  default_value <- if (isTRUE(default)) "true" else "false"
+  value <- tolower(trimws(Sys.getenv(name, default_value)))
   !value %in% c("0", "false", "no", "off")
+}
+
+render_application_samples_enabled <- function() {
+  env_flag_enabled("EMI_RENDER_APPLICATION_SAMPLES", default = TRUE)
+}
+
+extended_diagnostics_enabled <- function() {
+  env_flag_enabled("EMI_RUN_EXTENDED_DIAGNOSTICS", default = FALSE)
+}
+
+benchmarks_enabled <- function() {
+  env_flag_enabled("EMI_RUN_BENCHMARKS", default = FALSE)
 }
 
 render_report_pdf <- function(report_values, figure_files, table_files) {
@@ -42,7 +56,7 @@ render_report_pdf <- function(report_values, figure_files, table_files) {
   c(pdf_path, "paper/report.qmd")
 }
 
-pipeline_targets <- list(
+core_pipeline_targets <- list(
   tar_target(config_path, Sys.getenv("EMI_CONFIG", "config/draft.yml"), cue = tar_cue(mode = "always")),
   tar_target(cfg, read_config(config_path)),
   tar_target(paths, build_paths()),
@@ -72,7 +86,6 @@ pipeline_targets <- list(
   tar_target(district_join_map, fuzzy_join_districts(district_tracker, district_keys_2001, district_keys_2007, district_keys_2017, district_keys_2020, cfg)),
 
   tar_target(selection_data, build_selection_data(nss_2007_education, district_keys_2007, cfg)),
-  tar_target(missingness_diagnostics, diagnose_missingness(selection_data, cfg)),
   tar_target(selection_model, estimate_selection_probit(selection_data, cfg)),
   tar_target(ame_results, compute_average_marginal_effects(selection_model, selection_data, cfg)),
 
@@ -86,31 +99,38 @@ pipeline_targets <- list(
   tar_target(iv_formulas, build_iv_formulas(cfg)),
   tar_target(iv_models, estimate_2sls(district_panel, iv_formulas, cfg)),
   tar_target(first_stage_tests, estimate_first_stage(iv_models, district_panel, cfg)),
-  tar_target(weak_iv_diagnostics, diagnose_weak_instruments(iv_models, district_panel, cfg)),
-  tar_target(overid_diagnostics, diagnose_overidentification(iv_models, district_panel, cfg)),
+  tar_target(diag_public_weak_instruments, diagnose_weak_instruments(iv_models, district_panel, cfg)),
+  tar_target(diag_public_overidentification, diagnose_overidentification(iv_models, district_panel, cfg)),
 
   tar_target(spatial_weights, build_spatial_weights(district_panel, cfg)),
-  tar_target(diag_district_tracker_sources, diagnose_district_tracker_sources(raw_district_changes, district_tracker, cfg)),
-  tar_target(diag_district_matching, diagnose_district_matching(district_panel, district_join_map, cfg)),
-  tar_target(diag_fuzzy_matching, diagnose_fuzzy_matching(district_tracker, district_join_map, cfg)),
-  tar_target(diag_ame_benchmark, diagnose_ame_benchmark(selection_model, selection_data, cfg)),
-  tar_target(diag_spatial_weights, diagnose_spatial_weights(district_panel, spatial_weights, cfg)),
-  tar_target(diag_spatial_autocorrelation, diagnose_spatial_autocorrelation(district_panel, iv_models, spatial_weights, cfg)),
-  tar_target(diag_multicollinearity, diagnose_multicollinearity(district_panel, iv_models, cfg)),
+  tar_target(diag_public_spatial_autocorrelation, diagnose_spatial_autocorrelation(district_panel, iv_models, spatial_weights, cfg)),
+  tar_target(diag_public_multicollinearity, diagnose_multicollinearity(district_panel, iv_models, cfg)),
 
   tar_target(figures, make_figures(district_panel, raw_ilo_figures, cfg, boundaries_2020)),
   tar_target(figure_files, save_figures(figures, cfg), format = "file"),
   tar_target(tables, make_tables(selection_data, ame_results, district_panel, iv_models, first_stage_tests, cfg, selection_model)),
   tar_target(table_files, save_tables(tables, cfg), format = "file"),
-  tar_target(report_values, build_report_values(ame_results, first_stage_tests, iv_models, selection_data, district_panel, diag_spatial_autocorrelation, cfg)),
+  tar_target(report_values, build_report_values(ame_results, first_stage_tests, iv_models, selection_data, district_panel, diag_public_spatial_autocorrelation, cfg)),
 
   tar_render(district_matching_note, "docs/district-matching.qmd"),
   tar_render(long_paths_note, "docs/long-paths-and-8-3-filenames.qmd"),
-  tar_render(district_tracker_source_diagnostics, "analysis/diagnostics/district-tracker-source-diagnostics.qmd"),
-  tar_render(ame_benchmark_note, "analysis/diagnostics/ame-benchmark.qmd"),
-  tar_render(fuzzy_matching_note, "analysis/diagnostics/fuzzy-matching-diagnostics.qmd"),
-  tar_render(spatial_autocorrelation_note, "analysis/diagnostics/spatial-autocorrelation-diagnostics.qmd"),
   tar_target(report, render_report_pdf(report_values, figure_files, table_files), format = "file")
+)
+
+extended_diagnostic_targets <- list(
+  tar_target(diag_ext_missingness, diagnose_missingness(selection_data, cfg)),
+  tar_target(diag_ext_district_tracker_sources, diagnose_district_tracker_sources(raw_district_changes, district_tracker, cfg)),
+  tar_target(diag_ext_district_matching, diagnose_district_matching(district_panel, district_join_map, cfg)),
+  tar_target(diag_ext_fuzzy_matching, diagnose_fuzzy_matching(district_tracker, district_join_map, cfg)),
+  tar_target(diag_ext_spatial_weights, diagnose_spatial_weights(district_panel, spatial_weights, cfg)),
+  tar_render(diag_ext_district_tracker_source_note, "analysis/diagnostics/district-tracker-source-diagnostics.qmd"),
+  tar_render(diag_ext_fuzzy_matching_note, "analysis/diagnostics/fuzzy-matching-diagnostics.qmd"),
+  tar_render(diag_ext_spatial_autocorrelation_note, "analysis/diagnostics/spatial-autocorrelation-diagnostics.qmd")
+)
+
+benchmark_targets <- list(
+  tar_target(bench_ame_methods, run_ame_methods_benchmark(selection_model, selection_data, cfg)),
+  tar_render(bench_ame_methods_note, "analysis/benchmarking/ame-benchmark.qmd")
 )
 
 application_sample_targets <- list(
@@ -118,9 +138,24 @@ application_sample_targets <- list(
   tar_target(coding_sample_pdfs, { report_values; render_coding_samples(output_files = c(figure_files, table_files)) }, format = "file")
 )
 
+selected_targets <- core_pipeline_targets
+
+if (extended_diagnostics_enabled()) {
+  selected_targets <- c(selected_targets, extended_diagnostic_targets)
+} else {
+  message("EMI_RUN_EXTENDED_DIAGNOSTICS=false: omitting extended diagnostic targets from this targets run.")
+}
+
+if (benchmarks_enabled()) {
+  selected_targets <- c(selected_targets, benchmark_targets)
+} else {
+  message("EMI_RUN_BENCHMARKS=false: omitting benchmark targets from this targets run.")
+}
+
 if (render_application_samples_enabled()) {
-  c(pipeline_targets, application_sample_targets)
+  selected_targets <- c(selected_targets, application_sample_targets)
 } else {
   message("EMI_RENDER_APPLICATION_SAMPLES=false: omitting application-sample targets from this targets run.")
-  pipeline_targets
 }
+
+selected_targets
