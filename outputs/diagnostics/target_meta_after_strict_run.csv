@@ -87,7 +87,6 @@
 "figure_files",NA,NA
 "legacy_ame_observation_rows",NA,NA
 "table_files",NA,NA
-"coding_sample_pdfs",NA,NA
 "make_ilo_trends_figure",NA,NA
 "compare_rook_queen_contiguity",NA,NA
 "path_outputs",NA,NA
@@ -622,4 +621,5 @@
 "config_path",NA,NA
 "district_matching_note",NA,NA
 "report",NA,NA
+"coding_sample_pdfs",NA,NA
 "writing_sample_pdfs",NA,NA
