@@ -46,16 +46,18 @@ pipeline-final-no-samples: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
 diagnostics: extended-diagnostics
 
 extended-diagnostics:
-	EMI_CONFIG=config/final.yml EMI_RUN_EXTENDED_DIAGNOSTICS=true Rscript -e 'targets::tar_make(starts_with("diag_ext_"))'
+	EMI_CONFIG=config/final.yml EMI_RUN_EXTENDED_DIAGNOSTICS=true Rscript scripts/run_targets_checked.R --starts-with diag_ext_
 
 benchmarking:
-	EMI_CONFIG=config/final.yml EMI_RUN_BENCHMARKS=true Rscript -e 'targets::tar_make(starts_with("bench_"))'
+	EMI_CONFIG=config/final.yml EMI_RUN_BENCHMARKS=true Rscript scripts/run_targets_checked.R --starts-with bench_
 
 rerun-extended-diagnostics:
-	EMI_CONFIG=config/final.yml EMI_RUN_EXTENDED_DIAGNOSTICS=true Rscript -e 'targets::tar_invalidate(starts_with("diag_ext_")); targets::tar_make(starts_with("diag_ext_"))'
+	EMI_CONFIG=config/final.yml EMI_RUN_EXTENDED_DIAGNOSTICS=true Rscript -e 'targets::tar_invalidate(starts_with("diag_ext_"))'
+	$(MAKE) extended-diagnostics
 
 rerun-benchmarks:
-	EMI_CONFIG=config/final.yml EMI_RUN_BENCHMARKS=true Rscript -e 'targets::tar_invalidate(starts_with("bench_")); targets::tar_make(starts_with("bench_"))'
+	EMI_CONFIG=config/final.yml EMI_RUN_BENCHMARKS=true Rscript -e 'targets::tar_invalidate(starts_with("bench_"))'
+	$(MAKE) benchmarking
 
 clean-public-diagnostics:
 	rm -rf outputs/diagnostics/build outputs/diagnostics/public

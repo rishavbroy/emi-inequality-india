@@ -15,6 +15,7 @@ test_that("public build helper scripts parse", {
   expect_silent(parse(repo_file("_targets.R")))
   expect_silent(parse(repo_file("scripts", "postprocess_public_qmds.R")))
   expect_silent(parse(repo_file("scripts", "check_required_outputs.R")))
+  expect_silent(parse(repo_file("scripts", "run_targets_checked.R")))
   expect_silent(parse(repo_file("scripts", "check_rendered_text.R")))
   expect_silent(parse(repo_file("R", "application_samples", "extract_qmd_excerpts.R")))
 })
@@ -191,4 +192,14 @@ test_that("benchmark targets cover fuzzy matching, spatial weights, and spatial 
   expect_match(src, "bench_spatial_iv_experimental", fixed = TRUE)
   expect_match(src, "save_missingness_diagnostics", fixed = TRUE)
   expect_match(src, "save_district_matching_diagnostics", fixed = TRUE)
+})
+
+test_that("optional target groups use checked targets wrapper", {
+  makefile <- paste(readLines(repo_file("Makefile"), warn = FALSE), collapse = "\n")
+  checked <- paste(readLines(repo_file("scripts", "run_targets_checked.R"), warn = FALSE), collapse = "\n")
+
+  expect_match(makefile, "Rscript scripts/run_targets_checked.R --starts-with diag_ext_", fixed = TRUE)
+  expect_match(makefile, "Rscript scripts/run_targets_checked.R --starts-with bench_", fixed = TRUE)
+  expect_match(checked, "Errored selected targets", fixed = TRUE)
+  expect_match(checked, "quit(status = status)", fixed = TRUE)
 })
