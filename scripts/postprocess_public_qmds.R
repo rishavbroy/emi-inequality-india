@@ -253,12 +253,6 @@ cleanup_public_placeholders <- function(lines) {
 }
 
 
-defer_unavailable_morans_i_values <- function(lines) {
-  lines[startsWith(lines, "We can control for this spatial autocorrelation by incorporating spatial lags into our model. To test for spatial autocorrelation")] <-
-    "We can control for this spatial autocorrelation by incorporating spatial lags into our model. To test for spatial autocorrelation we would follow p. 323 of @anselin2001 and construct a Moran's I statistic; but proper estimation of it would depend on us having proper shapefiles for the year of interest with which to build contiguity neighbor lists. If our unit of analysis ends up being 2001 districts, then this would require 2001 shapefiles. The current 2019-20 shapefile is available in the repository, but the active district panel is not yet joined to geometry with a validated 2001/2007-to-2020 crosswalk, so we do not report Moran's I $p$-values in this draft. Future work will combine shapefiles from the 2011 and 2001 censuses with the data harmonization changes described in @sec-distma to ensure these reflect genuine spatial autocorrelation as opposed to the flaws of our current district tracking methodology."
-
-  lines
-}
 
 
 fix_district_note_crossrefs <- function(lines) {
@@ -658,7 +652,6 @@ postprocess_one <- function(path) {
   if (identical(path, "docs/district-matching.qmd")) {
     lines <- fix_district_note_crossrefs(lines)
   }
-  lines <- defer_unavailable_morans_i_values(lines)
   lines <- remove_quarto_crossref_prefixes(lines)
   if (identical(path, "paper/appendix.qmd") || identical(path, "docs/district-matching.qmd")) {
     lines <- neutralize_standalone_map_crossrefs(lines)

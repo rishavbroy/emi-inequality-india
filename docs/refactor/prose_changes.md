@@ -1,10 +1,9 @@
 # Prose Change Log
 
-This log records remaining postprocessing changes that intentionally diverge from the legacy Rmd prose. Main-report prose is preserved except where current generated outputs are unavailable, and such exceptions should remain temporary and explicit.
+This log records remaining postprocessing changes that intentionally diverge from the legacy Rmd prose. Main-report prose is preserved; entries below are standalone-document or generated-sample adaptations rather than main-report prose rewrites.
 
 | file | location / legacy text start | new text start | reason | status |
 |---|---|---|---|---|
-| `paper/report.qmd` | `We can control for this spatial autocorrelation...` | `We can control for this spatial autocorrelation by incorporating spatial lags...` | The active pipeline has not validated the 2001/2007-to-2020 geometry join, so Moran statistics are not reported as final. | temporary |
 | `docs/district-matching.qmd` | `Sec. @sec-iv-iv` / `Sec. @sec-intro` | `the IV section of the main report` / `the introduction of the main report` | Standalone district-matching note cannot cross-reference sections only present in the full report. | permanent standalone-note adaptation |
 | `paper/appendix.qmd` | `Equation @eq-iv-eq`, `@tbl-cons-iv`, and report-only section references | plain descriptions of the main report's 2SLS equation, second-stage table, and IV/introduction sections | The standalone appendix includes only appendix-local cross-references; report-only references are converted to prose to avoid rendered `?@...` markers. | permanent standalone-note adaptation |
 | `application-samples/.work/*.qmd` (generated) | excerpt cross-references such as `Figure @fig-*`, `Table @tbl-*`, and `Sec. @sec-*` | plain references to the corresponding figure/table/section/equation in the full report | Writing samples are excerpts, so many report labels are absent from the assembled document; replacing excerpt-external cross-references prevents public PDFs from rendering `?@...`, `Figure Figure`, `Table Table`, or `Sec. Section`. | temporary until external-link/book-crossref strategy is implemented |
