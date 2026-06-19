@@ -5,15 +5,15 @@ This repository contains my paper "Escaping Inequality in India: The Role of Eng
 
 This project is currently being refactored into a reproducible codebase. The ["Commands for running and auditing"](#commands-for-running-and-auditing) listed below currently do the following:
 
-1. Builds Quarto documents and R scripts using the [text](archive/legacy-paper-drafts/580-Draft-ECON-580.pdf) and [code chunks](archive/legacy-rmd-chunks) of my [original R Markdown document](archive/legacy-paper-drafts/580-Draft-ECON-580.Rmd).
-2. Implements improvements to methodology, data work, and formatting in [postprocessing](scripts/postprocess_public_qmds.R).  
+1. Builds Quarto documents and R scripts from my [original R Markdown document](archive/legacy-paper-drafts/580-Draft-ECON-580.Rmd).
+2. Implements imporvements to methodology, data work, and formatting.  
 3. Generates empirical outputs using [`{targets}`](_targets.R).
 4. [Tests](tests) the parity, empirical values, and rendering of all public-facing artifacts.
 
 ## Key files
 
 - **[`paper/report.pdf`](paper/report.pdf): Current rendered paper**. All of its results, tables, and figures are generated in this codebase.
-- [`paper/report.qmd`](paper/report.qmd): Source of paper. First rebuilt from the [legacy R Markdown](archive/legacy-paper-drafts/580-Draft-ECON-580.Rmd), then [postprocessed](scripts/postprocess_public_qmds.R) to improve methodology and formatting. 
+- [`paper/report.qmd`](paper/report.qmd): Source of paper. First rebuilt from the legacy R Markdown, then postprocessed to improve methodology and formatting. 
 - [`REPLICATION.md`](REPLICATION.md): Replication guide.
 - [`DATA_AVAILABILITY.md`](DATA_AVAILABILITY.md): Source-by-source data availability and redistribution notes.
   
@@ -38,7 +38,7 @@ Current build status:
 
 ## For faculty reviewers and hiring/admissions committees
 
-I believe the [current paper draft](paper/report.pdf) displays multiple traits that are essential to high-quality economics research: a commitment to institutional knowledge and literature reviews, a deep understanding of econometrics, and meticulous empirical judgement.
+I believe the [current draft](paper/report.pdf) displays multiple traits that are essential to high-quality economics research: a commitment to institutional knowledge and literature reviews, a deep understanding of econometrics, and meticulous empirical judgement.
 
 This repository, on the other hand, is intended to signal more than just one PDF. Its current state contains the following:
 
