@@ -29,9 +29,16 @@ if (!length(selected_target_names)) {
   stop("No active targets match prefix: ", starts_with_arg, call. = FALSE)
 }
 
+selected_names_literal <- paste(deparse(selected_target_names), collapse = "\n")
+selected_names_call <- paste0(
+  "targets::tar_make(names = tidyselect::all_of(",
+  selected_names_literal,
+  "))"
+)
+
 status <- 0L
 tryCatch(
-  targets::tar_make(names = all_of(selected_target_names)),
+  eval(parse(text = selected_names_call)),
   error = function(e) {
     message("targets::tar_make() errored: ", conditionMessage(e))
     status <<- 1L
