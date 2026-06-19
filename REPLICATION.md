@@ -75,6 +75,21 @@ make check-public-draft
 
 For the scripted audit, `bash scripts/run_public_build_audit.sh` defaults to the faster no-samples mode and writes `review.zip` without `application-samples/output/`. Use `bash scripts/run_public_build_audit.sh --with-samples` before a full submission/review bundle; that mode renders the application samples and requires their PDFs in `review.zip`.
 
+Useful audit variants:
+
+```bash
+# Full reviewer-facing archive with a log and a debug archive if anything fails.
+bash scripts/run_public_build_audit.sh --with-samples --archive-on-error 2>&1 | tee full_output.txt
+
+# Faster cache-preserving iteration without application samples.
+bash scripts/run_public_build_audit.sh --without-samples --incremental --archive-on-error 2>&1 | tee full_output.txt
+
+# Full optional diagnostics/benchmarking run.
+bash scripts/run_public_build_audit.sh --with-samples --incremental --archive-on-error --with-extended-diagnostics --with-benchmarks 2>&1 | tee full_output_with_diagnostics_benchmarks.txt
+```
+
+On Windows, run the same commands through WSL or Git Bash. From PowerShell, replace `tee` with `Tee-Object -FilePath full_output.txt`; from `cmd.exe`, redirect with `> full_output.txt 2>&1`.
+
 ## Review archive contract
 
 `scripts/make_review_archive.sh` is intentionally not a substitute for the final public checks. It writes `review.zip` by default and refuses to package the repository unless `.public-final-ok` exists, which is written only after a final public check completes successfully. By default the archive script includes application-sample PDFs; pass `--without-samples` only when the audit intentionally skipped rendering them and the archive should omit `application-samples/output/` rather than risk packaging stale sample PDFs. This prevents a review archive from mixing regenerated source files with stale PDFs or outputs from an earlier run.

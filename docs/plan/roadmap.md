@@ -1,6 +1,4 @@
-Goal: FD 2SLS with baseline exposure and SEs clustered at state level
-
-Plan
+## Top priorities
 
 - Turn percent change consumption into difference of log consumption.
 
@@ -20,9 +18,10 @@ Plan
 
 - Incorporate new data sources
 
-  - DISE data
+  -  Expand window of time using school-reported DISE data 
 
-    - Send email [similar to this](https://chatgpt.com/c/69c5dcf3-e558-8328-82f1-07270e9ba7a6)
+       - The PhD student's data looks very wrong; confirm by refining the email draft [here](https://chatgpt.com/c/69c5dcf3-e558-8328-82f1-07270e9ba7a6).
+       - Is best method to go through the archived PDFs and use Tabula to extract data? Cumbersome but... what else is there?
 
   - 2001 geometry
 
@@ -52,7 +51,7 @@ Plan
 
       - Acknowledge exclusion in the test: conditional on controls and fixed effects, 2001 LingDist affects 2007→2017 consumption growth only through schooling composition (EMIE and/or enrollment). LingDist is predetermined and plausibly orthogonal to later consumption shocks except via schooling pathways.
 
-- Try to add state FEs to FD 2SLS
+- Add state FEs
 
   - Demean IV to force identification to within-state differences
 
@@ -72,19 +71,19 @@ Plan
 
     - Temporal stability: 1991 linguistic distance heavily correlated with 1961 linguistic distance. She also replicates all regressions using both 1991 and 1961 linguistic distance and argues against remaining sources of heterogeneity.
 
-- Keep current education probit but only use it descriptively
+- Better incorporate education probit
 
-  - In writing, use it to contextualize the environment, mechanisms behind EMI variation.
+  - Use it to contextualize the environment, mechanisms behind EMI variatio + importance of my paper.
 
-    - Constraints (class, social group, geography) shape enrollment; this frames why we need IV/FE to study EMI’s macro impact.
-
-  <!-- -->
-
-  - Show how school supply correlates with geography, caste mix, urbanization (supports my narrative about constraints beyond individual optimization).
+    - Constraints (class, social group, geography) shape enrollment --> we need IV to study EMI’s macro impact.
 
   <!-- -->
 
-  - Don’t use it for control function or 2SRI method
+  - School supply correlates with geography, caste, urbanization, etc. Supports my narrative about constraints beyond individual optimization.
+
+  <!-- -->
+
+  - Control function or 2SRI method? Probably not
 
     - Both work for endogenous regressors and a potentially nonlinear outcome equation. Would compute first-stage probit for enrollment, find generalized residual (Vella-Newey) for each district (e.g., averaging the residual to district). Include that residual as a control in the consumption regression if enrollment enters linearly and is endogenous. 
 
@@ -94,65 +93,11 @@ Plan
 
 <!-- -->
 
-- Expand window of time using school-reported data.
 
-Introduction {#intro} \\ref(intro)
 
-ILO graphs: \\ref(fig:ILO-fig)
+## Comprehensive plan
 
-Data Sources {#data}
-
-Correct Selection Bias in Education Participation {#heckman}
-
-Model and Variables {#heckman-model}
-
-Summary table for probit numeric vars \\ref(tab:sum-tbl-probit-quant)
-
-Summary table for probit categorical vars \\ref(tab:sel-cat-stats)
-
-Results {#heckman-results}
-
-Probit results table \\ref(tab:probit-mfx)
-
-2SLS Estimation and Main Results {#iv}
-
-Model and Variables {#iv-model}
-
-2SLS model equation \\ref(eq:iv-eq)
-
-2x2 collage of EMIE cons pucca educ maps \\ref(fig:map1-fig)
-
-Summary table for 2sls \\ref(tab:sum-tbl-iv)
-
-Instrumental Variable {#iv-iv}
-
-1x2 collage of IV region \\ref(fig:map2-fig)
-
-Results {#iv-results}
-
-First-stage result table \\ref(tab:fs-cons)
-
-Second-stage result table \\ref(tab:cons-iv)
-
-Discussion {#disc}
-
-Appendix {#appendix}
-
-Alternative Response Variables {#alty}
-
-District Matching and Spatial Autocorrelation {#distma-spa}
-
-District Matching Method {#distma}
-
-Spatial Autocorrelation {#spa}
-
-Systemic Errors in Education Selection {#probit-flaw}
-
-On the Heckman Correction for a District Pseudo-Panel {#bad-heck}
-
-Alternative Methodologies {#alt-meth}
-
-Do before submitting this as a writing sample in any form:
+Should goal actually be FD 2SLS with baseline exposure and SEs clustered at state level?
 
 1.  Add notes
 
@@ -168,9 +113,9 @@ Do before submitting this as a writing sample in any form:
 
     <!-- -->
 
-    1.  Change summary tables to reflect instrument aggregation
+    2.  Change summary tables to reflect instrument aggregation
 
-    2.  Cluster probit’s SE at district level?
+    3.  Cluster probit’s SE at district level?
 
 3.  Acknowledge flaws in IV and my explanation
 
