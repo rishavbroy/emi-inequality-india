@@ -19,9 +19,19 @@ if (!requireNamespace("targets", quietly = TRUE)) {
 }
 library(targets)
 
+manifest <- tryCatch(
+  targets::tar_manifest(fields = "name"),
+  error = function(e) data.frame(name = character())
+)
+selected_target_names <- as.character(manifest$name)
+selected_target_names <- selected_target_names[grepl(paste0("^", starts_with_arg), selected_target_names)]
+if (!length(selected_target_names)) {
+  stop("No active targets match prefix: ", starts_with_arg, call. = FALSE)
+}
+
 status <- 0L
 tryCatch(
-  targets::tar_make(starts_with(starts_with_arg)),
+  targets::tar_make(names = all_of(selected_target_names)),
   error = function(e) {
     message("targets::tar_make() errored: ", conditionMessage(e))
     status <<- 1L
@@ -35,7 +45,7 @@ meta <- tryCatch(
 
 dir.create("outputs/diagnostics/build", recursive = TRUE, showWarnings = FALSE)
 if (nrow(meta)) {
-  selected <- grepl(paste0("^", starts_with_arg), as.character(meta$name))
+  selected <- as.character(meta$name) %in% selected_target_names
   meta_selected <- meta[selected, , drop = FALSE]
   utils::write.csv(
     meta_selected,
