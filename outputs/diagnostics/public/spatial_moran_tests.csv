@@ -1,0 +1,25 @@
+"legacy_name","estimand","variable","source","test","status","statistic","estimate","expected","variance","p.value","method","alternative","n","contiguity","weights_style","matrix_style","zero_policy","n_spatial_rows","n_islands","mean_neighbors","warnings","reason","legacy_note"
+"m_cons_resid","consumption_iv_residual","resid_cons","second_stage_residual","moran","estimated",5.52504997760567,0.190220188083796,-0.00212314225053079,0.00121194201340724,1.64695916679953e-08,"Moran I test under randomisation","greater",482,"rook","W","B",TRUE,482,0,4.02904564315353,"some observations have no neighbours;
+if this seems unexpected, try increasing the snap argument.; neighbour object has 21 sub-graphs;
+if this sub-graph count seems unexpected, try increasing the snap argument.",NA,"Final-paper residual p-value: residuals(model_consumption_iv). Legacy comments reported a pre-control value of 2.779572e-23."
+"m_gini_resid","gini_iv_residual","resid_gini","second_stage_residual","moran","estimated",5.63130821657531,0.194833525139676,-0.00212314225053079,0.0012232712762314,8.94238896259405e-09,"Moran I test under randomisation","greater",482,"rook","W","B",TRUE,482,0,4.02904564315353,"some observations have no neighbours;
+if this seems unexpected, try increasing the snap argument.; neighbour object has 21 sub-graphs;
+if this sub-graph count seems unexpected, try increasing the snap argument.",NA,"Legacy residual diagnostic: residuals(model_gini_iv). Legacy comments reported a pre-control value of 2.033012e-40."
+"m_fscons_resid","consumption_first_stage_residual","resid_fscons","first_stage_residual","moran","estimated",13.3117137387621,0.461717068409692,-0.00212314225053079,0.00121414023403594,9.89449723332413e-41,"Moran I test under randomisation","greater",482,"rook","W","B",TRUE,482,0,4.02904564315353,"some observations have no neighbours;
+if this seems unexpected, try increasing the snap argument.; neighbour object has 21 sub-graphs;
+if this sub-graph count seems unexpected, try increasing the snap argument.",NA,"Legacy first-stage residual diagnostic: residuals(first_stage_consumption). Legacy comments reported a pre-control value of 1.189148e-105."
+"m_fsgini_resid","gini_first_stage_residual","resid_fsgini","first_stage_residual","moran","estimated",13.3117137387621,0.461717068409692,-0.00212314225053079,0.00121414023403594,9.89449723332413e-41,"Moran I test under randomisation","greater",482,"rook","W","B",TRUE,482,0,4.02904564315353,"some observations have no neighbours;
+if this seems unexpected, try increasing the snap argument.; neighbour object has 21 sub-graphs;
+if this sub-graph count seems unexpected, try increasing the snap argument.",NA,"Legacy first-stage residual diagnostic: residuals(first_stage_gini). Legacy comments noted the same pre-control value as first-stage consumption."
+"m_EMIE","emie","EMIE","treatment","moran","estimated",20.4941310530486,0.713506149200649,-0.00212314225053079,0.00121931859975582,1.21441910475632e-93,"Moran I test under randomisation","greater",482,"rook","W","B",TRUE,482,0,4.02904564315353,"some observations have no neighbours;
+if this seems unexpected, try increasing the snap argument.; neighbour object has 21 sub-graphs;
+if this sub-graph count seems unexpected, try increasing the snap argument.",NA,"Legacy comments reported p = 8.990354e-180 for EMIE."
+"m_wavg_ling_degrees","linguistic_distance","wavg_ling_degrees","instrument","moran","estimated",25.5334874812562,0.893800527549522,-0.00212314225053079,0.00123118055444114,4.18834033412828e-144,"Moran I test under randomisation","greater",482,"rook","W","B",TRUE,482,0,4.02904564315353,"some observations have no neighbours;
+if this seems unexpected, try increasing the snap argument.; neighbour object has 21 sub-graphs;
+if this sub-graph count seems unexpected, try increasing the snap argument.",NA,"Legacy comments reported p = 1.721903e-254 for weighted average linguistic distance."
+"m_cons","consumption_growth","consumption_pct_change","outcome","moran","estimated",6.67368271842066,0.231125678552878,-0.00212314225053079,0.00122154030919863,1.24731322434687e-11,"Moran I test under randomisation","greater",482,"rook","W","B",TRUE,482,0,4.02904564315353,"some observations have no neighbours;
+if this seems unexpected, try increasing the snap argument.; neighbour object has 21 sub-graphs;
+if this sub-graph count seems unexpected, try increasing the snap argument.",NA,"Final-paper outcome p-value: consumption_pct_change. Legacy comments reported p = 1.608813e-26."
+"m_gini","gini_change","gini_change","outcome","moran","estimated",3.04076767146571,0.104236718152818,-0.00212314225053079,0.00122345792551935,0.00117987918798132,"Moran I test under randomisation","greater",482,"rook","W","B",TRUE,482,0,4.02904564315353,"some observations have no neighbours;
+if this seems unexpected, try increasing the snap argument.; neighbour object has 21 sub-graphs;
+if this sub-graph count seems unexpected, try increasing the snap argument.",NA,"Legacy outcome diagnostic: gini_change. Legacy comments reported p = 8.51626e-22."
