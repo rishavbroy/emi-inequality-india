@@ -1,0 +1,3 @@
+"contiguity","legacy_method","legacy_mean_neighbors","legacy_elapsed_note","interpretation"
+"rook","sfExtras::st_rook() timing comment; final weights use spdep::poly2nb(queen = FALSE)",4.780165,"legacy comment recorded similar run time to queen","Current means may differ because the active matched panel and geometry coverage differ from the legacy exploratory object; compare deltas before treating this as an improvement."
+"queen","sfExtras::st_queen() timing comment; benchmark uses spdep::poly2nb(queen = TRUE)",4.783471,"legacy comment recorded similar run time to rook","Current means may differ because the active matched panel and geometry coverage differ from the legacy exploratory object; compare deltas before treating this as an improvement."

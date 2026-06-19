@@ -1,0 +1,4 @@
+"diagnostic","legacy_comment_expected","current_detected_rows","interpretation"
+"recorded_state_ut_changes","Legacy Chunk 6 comments identify two recorded state/UT change events in the tracker sources.",0,"Compare row-level current detections with tracker_state_change_events.csv because row counts can exceed event counts."
+"unrecorded_state_ut_changes","Legacy Chunk 6 comments identify four unrecorded state/UT naming/split changes requiring manual attention.",4,"These are preserved as documented legacy correction notes, not inferred from active tracker rows."
+"in_period_district_name_changes","Legacy Chunk 6 comments record 16 districts changing names within the sampling periods.",0,"A current count different from 16 reflects active tracker/correction changes and should be reviewed before describing it as an improvement."

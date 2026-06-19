@@ -1,0 +1,5 @@
+"diagnostic","legacy_status"
+"rajasthan_southern_case_study","commented diagnostic View() code preserved as documented note"
+"chi_square_any_na_by_state","commented diagnostic test not run by default"
+"chi_square_any_na_by_region","commented diagnostic test not run by default"
+"parallel_missingness_logit","ported using lapply for reproducible targets execution; legacy mclapply/parLapply choice documented"

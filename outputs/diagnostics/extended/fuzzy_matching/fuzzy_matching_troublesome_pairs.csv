@@ -1,0 +1,46 @@
+"str1","str2","pair_source","method","distance","threshold","match"
+"24-Parganas ( North )","North Twenty Four Parganas","legacy_troublesome_comment","dl",22,2,FALSE
+"24-Parganas ( North )","North Twenty Four Parganas","legacy_troublesome_comment","jw",0.482498982498983,0.15,FALSE
+"24-Parganas ( North )","North Twenty Four Parganas","legacy_troublesome_comment","osa",22,1,FALSE
+"24-Parganas ( North )","North Twenty Four Parganas","legacy_troublesome_comment","qgram",15,0,FALSE
+"24-Parganas ( North )","North Twenty Four Parganas","legacy_troublesome_comment","soundex",1,0,FALSE
+"Baleshwar","Balasore","legacy_troublesome_comment","dl",5,2,FALSE
+"Baleshwar","Balasore","legacy_troublesome_comment","jw",0.273148148148148,0.15,FALSE
+"Baleshwar","Balasore","legacy_troublesome_comment","osa",5,1,FALSE
+"Baleshwar","Balasore","legacy_troublesome_comment","qgram",3,0,FALSE
+"Baleshwar","Balasore","legacy_troublesome_comment","soundex",0,0,TRUE
+"East Godavari","Godavari East","legacy_troublesome_comment","dl",10,2,FALSE
+"East Godavari","Godavari East","legacy_troublesome_comment","jw",0.303846153846154,0.15,FALSE
+"East Godavari","Godavari East","legacy_troublesome_comment","osa",10,1,FALSE
+"East Godavari","Godavari East","legacy_troublesome_comment","qgram",0,0,TRUE
+"East Godavari","Godavari East","legacy_troublesome_comment","soundex",1,0,FALSE
+"Jammu & Kashmir","Jammu and Kashmir","legacy_troublesome_comment","dl",3,2,FALSE
+"Jammu & Kashmir","Jammu and Kashmir","legacy_troublesome_comment","jw",0.116760037348273,0.15,TRUE
+"Jammu & Kashmir","Jammu and Kashmir","legacy_troublesome_comment","osa",3,1,FALSE
+"Jammu & Kashmir","Jammu and Kashmir","legacy_troublesome_comment","qgram",4,0,FALSE
+"Jammu & Kashmir","Jammu and Kashmir","legacy_troublesome_comment","soundex",1,0,FALSE
+"Mumbai","Mumbai","legacy_troublesome_comment","dl",0,2,TRUE
+"Mumbai","Mumbai","legacy_troublesome_comment","jw",5.55111512312578e-17,0.15,TRUE
+"Mumbai","Mumbai","legacy_troublesome_comment","osa",0,1,TRUE
+"Mumbai","Mumbai","legacy_troublesome_comment","qgram",0,0,TRUE
+"Mumbai","Mumbai","legacy_troublesome_comment","soundex",0,0,TRUE
+"North Twenty Four Pargan*","North Twenty Four Parganas","legacy_troublesome_comment","dl",2,2,TRUE
+"North Twenty Four Pargan*","North Twenty Four Parganas","legacy_troublesome_comment","jw",0.038974358974359,0.15,TRUE
+"North Twenty Four Pargan*","North Twenty Four Parganas","legacy_troublesome_comment","osa",2,1,FALSE
+"North Twenty Four Pargan*","North Twenty Four Parganas","legacy_troublesome_comment","qgram",3,0,FALSE
+"North Twenty Four Pargan*","North Twenty Four Parganas","legacy_troublesome_comment","soundex",0,0,TRUE
+"Sahibzada Ajit Singh Nag*","Sahibzada Ajit Singh Nagar","legacy_troublesome_comment","dl",2,2,TRUE
+"Sahibzada Ajit Singh Nag*","Sahibzada Ajit Singh Nagar","legacy_troublesome_comment","jw",0.038974358974359,0.15,TRUE
+"Sahibzada Ajit Singh Nag*","Sahibzada Ajit Singh Nagar","legacy_troublesome_comment","osa",2,1,FALSE
+"Sahibzada Ajit Singh Nag*","Sahibzada Ajit Singh Nagar","legacy_troublesome_comment","qgram",3,0,FALSE
+"Sahibzada Ajit Singh Nag*","Sahibzada Ajit Singh Nagar","legacy_troublesome_comment","soundex",0,0,TRUE
+"Sikim","Sikkim","legacy_troublesome_comment","dl",1,2,TRUE
+"Sikim","Sikkim","legacy_troublesome_comment","jw",0.0555555555555556,0.15,TRUE
+"Sikim","Sikkim","legacy_troublesome_comment","osa",1,1,TRUE
+"Sikim","Sikkim","legacy_troublesome_comment","qgram",1,0,FALSE
+"Sikim","Sikkim","legacy_troublesome_comment","soundex",0,0,TRUE
+"Sri Potti Sriramulu Nell*","Sri Potti Sriramulu Nellore","legacy_troublesome_comment","dl",3,2,FALSE
+"Sri Potti Sriramulu Nell*","Sri Potti Sriramulu Nellore","legacy_troublesome_comment","jw",0.0503703703703705,0.15,TRUE
+"Sri Potti Sriramulu Nell*","Sri Potti Sriramulu Nellore","legacy_troublesome_comment","osa",3,1,FALSE
+"Sri Potti Sriramulu Nell*","Sri Potti Sriramulu Nellore","legacy_troublesome_comment","qgram",4,0,FALSE
+"Sri Potti Sriramulu Nell*","Sri Potti Sriramulu Nellore","legacy_troublesome_comment","soundex",0,0,TRUE

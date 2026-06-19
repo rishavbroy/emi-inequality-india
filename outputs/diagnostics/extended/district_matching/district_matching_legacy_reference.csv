@@ -1,0 +1,4 @@
+"diagnostic","legacy_chunk","current_value","interpretation"
+"unmatched_rows","Chunk 20 Match districts: Diagnose errors",3175,"Uses legacy matcher attributes when available; only falls back to match_status when attributes are absent."
+"many_to_many_cases","Chunk 20 Match districts: Diagnose errors",0,"Uses explicit many_to_many attributes/flags rather than treating every source-key row as a many-to-many case."
+"all_rows_search","Chunk 20 Match districts: Diagnose errors",NA,"Search table preserves the legacy View()-style close-match inspection in a CSV artifact."

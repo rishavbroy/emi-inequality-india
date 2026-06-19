@@ -353,10 +353,84 @@ display: none;
 </div>
 
 
-<pre class="r"><code>library(targets)
-# x &lt;- tar_read(diag_spatial_autocorrelation)</code></pre>
-<p>This notebook should render from target outputs, not manually copied
-numbers.</p>
+<pre><code>##           legacy_name                         estimand               variable
+## 1        m_cons_resid          consumption_iv_residual             resid_cons
+## 2        m_gini_resid                 gini_iv_residual             resid_gini
+## 3      m_fscons_resid consumption_first_stage_residual           resid_fscons
+## 4      m_fsgini_resid        gini_first_stage_residual           resid_fsgini
+## 5              m_EMIE                             emie                   EMIE
+## 6 m_wavg_ling_degrees              linguistic_distance      wavg_ling_degrees
+## 7              m_cons               consumption_growth consumption_pct_change
+## 8              m_gini                      gini_change            gini_change
+##                  source  test    status statistic  estimate     expected
+## 1 second_stage_residual moran estimated  5.525050 0.1902202 -0.002123142
+## 2 second_stage_residual moran estimated  5.631308 0.1948335 -0.002123142
+## 3  first_stage_residual moran estimated 13.311714 0.4617171 -0.002123142
+## 4  first_stage_residual moran estimated 13.311714 0.4617171 -0.002123142
+## 5             treatment moran estimated 20.494131 0.7135061 -0.002123142
+## 6            instrument moran estimated 25.533487 0.8938005 -0.002123142
+## 7               outcome moran estimated  6.673683 0.2311257 -0.002123142
+## 8               outcome moran estimated  3.040768 0.1042367 -0.002123142
+##      variance       p.value                           method alternative   n
+## 1 0.001211942  1.646959e-08 Moran I test under randomisation     greater 482
+## 2 0.001223271  8.942389e-09 Moran I test under randomisation     greater 482
+## 3 0.001214140  9.894497e-41 Moran I test under randomisation     greater 482
+## 4 0.001214140  9.894497e-41 Moran I test under randomisation     greater 482
+## 5 0.001219319  1.214419e-93 Moran I test under randomisation     greater 482
+## 6 0.001231181 4.188340e-144 Moran I test under randomisation     greater 482
+## 7 0.001221540  1.247313e-11 Moran I test under randomisation     greater 482
+## 8 0.001223458  1.179879e-03 Moran I test under randomisation     greater 482
+##   contiguity weights_style matrix_style zero_policy n_spatial_rows n_islands
+## 1       rook             W            B        TRUE            482         0
+## 2       rook             W            B        TRUE            482         0
+## 3       rook             W            B        TRUE            482         0
+## 4       rook             W            B        TRUE            482         0
+## 5       rook             W            B        TRUE            482         0
+## 6       rook             W            B        TRUE            482         0
+## 7       rook             W            B        TRUE            482         0
+## 8       rook             W            B        TRUE            482         0
+##   mean_neighbors
+## 1       4.029046
+## 2       4.029046
+## 3       4.029046
+## 4       4.029046
+## 5       4.029046
+## 6       4.029046
+## 7       4.029046
+## 8       4.029046
+##                                                                                                                                                                                                               warnings
+## 1 some observations have no neighbours;\nif this seems unexpected, try increasing the snap argument.; neighbour object has 21 sub-graphs;\nif this sub-graph count seems unexpected, try increasing the snap argument.
+## 2 some observations have no neighbours;\nif this seems unexpected, try increasing the snap argument.; neighbour object has 21 sub-graphs;\nif this sub-graph count seems unexpected, try increasing the snap argument.
+## 3 some observations have no neighbours;\nif this seems unexpected, try increasing the snap argument.; neighbour object has 21 sub-graphs;\nif this sub-graph count seems unexpected, try increasing the snap argument.
+## 4 some observations have no neighbours;\nif this seems unexpected, try increasing the snap argument.; neighbour object has 21 sub-graphs;\nif this sub-graph count seems unexpected, try increasing the snap argument.
+## 5 some observations have no neighbours;\nif this seems unexpected, try increasing the snap argument.; neighbour object has 21 sub-graphs;\nif this sub-graph count seems unexpected, try increasing the snap argument.
+## 6 some observations have no neighbours;\nif this seems unexpected, try increasing the snap argument.; neighbour object has 21 sub-graphs;\nif this sub-graph count seems unexpected, try increasing the snap argument.
+## 7 some observations have no neighbours;\nif this seems unexpected, try increasing the snap argument.; neighbour object has 21 sub-graphs;\nif this sub-graph count seems unexpected, try increasing the snap argument.
+## 8 some observations have no neighbours;\nif this seems unexpected, try increasing the snap argument.; neighbour object has 21 sub-graphs;\nif this sub-graph count seems unexpected, try increasing the snap argument.
+##   reason
+## 1   &lt;NA&gt;
+## 2   &lt;NA&gt;
+## 3   &lt;NA&gt;
+## 4   &lt;NA&gt;
+## 5   &lt;NA&gt;
+## 6   &lt;NA&gt;
+## 7   &lt;NA&gt;
+## 8   &lt;NA&gt;
+##                                                                                                                                         legacy_note
+## 1                      Final-paper residual p-value: residuals(model_consumption_iv). Legacy comments reported a pre-control value of 2.779572e-23.
+## 2                               Legacy residual diagnostic: residuals(model_gini_iv). Legacy comments reported a pre-control value of 2.033012e-40.
+## 3        Legacy first-stage residual diagnostic: residuals(first_stage_consumption). Legacy comments reported a pre-control value of 1.189148e-105.
+## 4 Legacy first-stage residual diagnostic: residuals(first_stage_gini). Legacy comments noted the same pre-control value as first-stage consumption.
+## 5                                                                                              Legacy comments reported p = 8.990354e-180 for EMIE.
+## 6                                                              Legacy comments reported p = 1.721903e-254 for weighted average linguistic distance.
+## 7                                                   Final-paper outcome p-value: consumption_pct_change. Legacy comments reported p = 1.608813e-26.
+## 8                                                                 Legacy outcome diagnostic: gini_change. Legacy comments reported p = 8.51626e-22.</code></pre>
+<p>These diagnostics reproduce the legacy Rmd’s rook-contiguity Moran’s
+I checks using row-standardized spatial weights and
+<code>zero.policy = TRUE</code>. The main report consumes the
+<code>m_cons_resid</code> and <code>m_cons</code> p-values; the
+remaining rows document residual, treatment, instrument, and outcome
+checks retained from the legacy diagnostic workflow.</p>
 
 
 

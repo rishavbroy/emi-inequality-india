@@ -1,0 +1,16 @@
+"method","threshold","pair_source","n_pairs","n_matches","pct_matches"
+"soundex",0,"legacy_troublesome_comment",9,6,0.666666666666667
+"qgram",0,"legacy_troublesome_comment",9,2,0.222222222222222
+"qgram",1,"legacy_troublesome_comment",9,3,0.333333333333333
+"qgram",2,"legacy_troublesome_comment",9,3,0.333333333333333
+"jw",0.1,"legacy_troublesome_comment",9,5,0.555555555555556
+"jw",0.15,"legacy_troublesome_comment",9,6,0.666666666666667
+"jw",0.2,"legacy_troublesome_comment",9,6,0.666666666666667
+"dl",1,"legacy_troublesome_comment",9,2,0.222222222222222
+"dl",2,"legacy_troublesome_comment",9,4,0.444444444444444
+"dl",3,"legacy_troublesome_comment",9,6,0.666666666666667
+"osa",1,"legacy_troublesome_comment",9,2,0.222222222222222
+"osa",2,"legacy_troublesome_comment",9,4,0.444444444444444
+"osa",3,"legacy_troublesome_comment",9,6,0.666666666666667
+"lcs",3,"legacy_troublesome_comment",9,4,0.444444444444444
+"lcs",5,"legacy_troublesome_comment",9,6,0.666666666666667

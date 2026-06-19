@@ -1,0 +1,2 @@
+"diagnostic","status","reason"
+"spatial_iv_experimental","documented_experimental","Legacy eval=FALSE spatial lag IV attempts are reproduced as opt-in benchmark artifacts, not final models."
