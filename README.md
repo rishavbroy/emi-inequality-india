@@ -1,14 +1,14 @@
 # Escaping Inequality in India: English-Medium Instruction and Local Development
 
-This repository contains my paper "Escaping Inequality in India: The Role of English-Medium Instruction," as well as the empirical pipeline needed to reproduce it and the application samples built from it. 
+This repository contains the code and derived data needed to replicate my paper, "Escaping Inequality in India: The Role of English-Medium Instruction," as well as the application samples built from it. 
 
 
-This project is currently being refactored into a reproducible codebase. The ["Commands for running and auditing"](#commands-for-running-and-auditing) listed below currently do the following:
+This project is currently being refactored. For now, run the ["Commands for running and auditing"](#commands-for-running-and-auditing) listed below to do the following:
 
-1. Builds Quarto documents and R scripts from my [original R Markdown document](archive/legacy-paper-drafts/580-Draft-ECON-580.Rmd).
-2. Implements imporvements to methodology, data work, and formatting.  
-3. Generates empirical outputs using [`{targets}`](_targets.R).
-4. [Tests](tests) the parity, empirical values, and rendering of all public-facing artifacts.
+1. Build Quarto documents and R scripts from my [original R Markdown document](archive/legacy-paper-drafts/580-Draft-ECON-580.Rmd).
+2. Implement improvements in methodology, data work, and formatting.  
+3. Generate empirical outputs using [`{targets}`](_targets.R).
+4. [Test](tests) the parity, empirical values, and rendering of all public-facing artifacts.
 
 ## Key files
 
@@ -27,7 +27,7 @@ Does increasing baseline district-level exposure to English-medium instruction (
 
 ## Empirical design and current status
 
-This project combines 2007-08 and 2017-18 National Sample Survey microdata, 2001 Census mother tongue data, 2020 district boundary data, and district change trackers to construct a district pseudo-panel. The current 2SLS design instruments district-level EMI exposure with a population-weighted measure of linguistic distance from Hindi. Pending the research design changes I discuss in [`docs/plan/roadmap.md`](docs/plan/roadmap.md), all current estimates should be treated as **provisional**.
+This project combines 2007-08 and 2017-18 National Sample Survey microdata, 2001 Census mother tongue data, 2020 district boundary data, and district change trackers to construct a district pseudo-panel. The current 2SLS design instruments district-level EMI exposure with a population-weighted measure of linguistic distance from Hindi. Pending the changes I discuss in [`docs/plan/roadmap.md`](docs/plan/roadmap.md), all current estimates should be treated as **provisional**.
 
 Current build status:
 
