@@ -34,9 +34,9 @@ outputs/diagnostics/build and outputs/diagnostics/public files; longer
 outputs/diagnostics/extended and outputs/benchmarking artifacts are preserved
 unless explicitly cleaned. Use --with-analysis-notes to render the human-readable
 analysis notebooks to GitHub-flavored Markdown in the same audit log; this also
-requests the extended diagnostics and benchmarks that those notebooks read. It does
-not request application samples; add --with-samples only when sample-generation
-code or sample-facing outputs may have changed.
+requests the extended diagnostics and benchmarks that those notebooks read.
+Analysis notes do not request application samples; add --with-samples only when
+sample-generation code or sample-facing outputs may have changed.
 USAGE
 }
 

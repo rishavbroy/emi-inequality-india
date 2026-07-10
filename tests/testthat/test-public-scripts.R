@@ -237,7 +237,7 @@ test_that("public audit can include analysis notes in the same log", {
   expect_match(src, "with_benchmarks=\"true\"", fixed = TRUE)
   expect_match(src, "=== ANALYSIS NOTES ===", fixed = TRUE)
   expect_match(src, "make render-analysis", fixed = TRUE)
-  expect_match(src, "does not request application", fixed = TRUE)
+  expect_match(src, "Analysis notes do not request application samples", fixed = TRUE)
   expect_match(src, "manifest_roots+=(analysis)", fixed = TRUE)
 })
 
@@ -257,6 +257,6 @@ test_that("analysis notebooks render only to GitHub-flavored Markdown", {
 
 
 test_that("analysis long-path note reads source from project root", {
-  qmd <- paste(readLines("analysis/io/long-paths-and-8-3-filenames.qmd", warn = FALSE), collapse = "\n")
+  qmd <- paste(readLines(repo_file("analysis", "io", "long-paths-and-8-3-filenames.qmd"), warn = FALSE), collapse = "\n")
   expect_match(qmd, 'analysis_path("R", "io", "read_long_paths.R")', fixed = TRUE)
 })
