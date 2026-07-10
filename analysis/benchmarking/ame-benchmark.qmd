@@ -1,13 +1,25 @@
 ---
-title: "AME Benchmark"
+title: "Average Marginal Effects Benchmark"
 format:
   html: default
   pdf: default
 ---
 
-```{r}
-library(targets)
-# x <- tar_read(bench_ame_methods)
+```{r setup, include=FALSE}
+helper <- if (file.exists("analysis/_analysis_helpers.R")) "analysis/_analysis_helpers.R" else "../_analysis_helpers.R"
+source(helper)
 ```
 
-This notebook should render from target outputs, not manually copied numbers.
+This notebook preserves the AME timing and method-selection notes from legacy Chunk 10. The final method remains `avg_slopes(..., vcov = TRUE, type = "response")` with `marginaleffects_parallel = FALSE`; any current-version incompatibility is shown as a benchmark result rather than hidden.
+
+```{r methods, echo=FALSE, results='asis'}
+analysis_table(read_analysis_csv("benchmarking", "ame", "ame_methods_benchmark.csv"), "Current AME benchmark attempts")
+```
+
+```{r notes, echo=FALSE, results='asis'}
+analysis_table(read_analysis_csv("benchmarking", "ame", "ame_legacy_benchmark_notes.csv"), "Legacy AME benchmark notes")
+```
+
+```{r parallel, echo=FALSE, results='asis'}
+analysis_table(read_analysis_csv("benchmarking", "ame", "ame_parallelization_notes.csv"), "Parallelization notes")
+```

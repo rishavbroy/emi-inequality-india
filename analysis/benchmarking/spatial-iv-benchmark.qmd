@@ -5,9 +5,25 @@ format:
   pdf: default
 ---
 
-```{r}
-library(targets)
-# x <- tar_read(bench_spatial_iv_experimental)
+```{r setup, include=FALSE}
+helper <- if (file.exists("analysis/_analysis_helpers.R")) "analysis/_analysis_helpers.R" else "../_analysis_helpers.R"
+source(helper)
 ```
 
-This notebook documents the legacy experimental spatial-lag IV attempts. These attempts remain opt-in benchmarks rather than final-paper models.
+This notebook renders the legacy eval=FALSE Chunk 30 spatial-IV attempts. These are exploratory benchmarks only. A status of `estimated` means the current `ivreg()` call returned an object; it does not promote the model to the final paper.
+
+```{r status, echo=FALSE, results='asis'}
+analysis_table(read_analysis_csv("benchmarking", "spatial_iv", "spatial_iv_model_status.csv"), "Spatial-IV model status")
+```
+
+```{r diagnostics, echo=FALSE, results='asis'}
+analysis_table(read_analysis_csv("benchmarking", "spatial_iv", "spatial_iv_diagnostics_summary.csv"), "IV diagnostic summaries")
+```
+
+```{r coeffs, echo=FALSE, results='asis'}
+analysis_table(read_analysis_csv("benchmarking", "spatial_iv", "spatial_iv_coefficient_summary.csv"), "Default coefficient summaries")
+```
+
+```{r clustered, echo=FALSE, results='asis'}
+analysis_table(read_analysis_csv("benchmarking", "spatial_iv", "spatial_iv_clustered_coefficient_summary.csv"), "Clustered-SE coeftest attempt")
+```

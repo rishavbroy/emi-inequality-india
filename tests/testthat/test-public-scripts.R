@@ -206,3 +206,23 @@ test_that("optional target groups use checked targets wrapper", {
   expect_match(checked, "Errored selected targets", fixed = TRUE)
   expect_match(checked, "quit(status = status)", fixed = TRUE)
 })
+
+
+test_that("analysis notebooks render from explicit make target, not optional target graph", {
+  makefile <- paste(readLines(repo_file("Makefile"), warn = FALSE), collapse = "\n")
+  targets <- paste(readLines(repo_file("_targets.R"), warn = FALSE), collapse = "\n")
+
+  expect_match(makefile, "analysis-notes: extended-diagnostics benchmarking render-analysis", fixed = TRUE)
+  expect_match(makefile, "Rscript scripts/render_analysis_notes.R", fixed = TRUE)
+  expect_false(grepl("tar_render\\(bench_", targets))
+  expect_false(grepl("tar_render\\(diag_ext_", targets))
+})
+
+test_that("analysis notebooks are populated with current-output tables", {
+  qmd <- paste(readLines(repo_file("analysis", "benchmarking", "spatial-iv-benchmark.qmd"), warn = FALSE), collapse = "\n")
+  helper <- paste(readLines(repo_file("analysis", "_analysis_helpers.R"), warn = FALSE), collapse = "\n")
+
+  expect_match(qmd, "spatial_iv_model_status.csv", fixed = TRUE)
+  expect_match(qmd, "spatial_iv_diagnostics_summary.csv", fixed = TRUE)
+  expect_match(helper, "knitr::kable", fixed = TRUE)
+})

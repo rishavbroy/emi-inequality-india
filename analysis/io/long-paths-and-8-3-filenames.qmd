@@ -1,0 +1,28 @@
+---
+title: "Long Paths and 8.3 Filename Troubleshooting"
+format:
+  html: default
+  pdf: default
+---
+
+```{r setup, include=FALSE}
+helper <- if (file.exists("analysis/_analysis_helpers.R")) "analysis/_analysis_helpers.R" else "../_analysis_helpers.R"
+source(helper)
+```
+
+This note preserves the troubleshooting and design comments from legacy Chunk 3, "Define functions to read in short 8.3 filenames." The production helpers now live in `R/io/read_long_paths.R`; this notebook exists so the long explanatory comments remain publicly inspectable without keeping them inline in production code.
+
+The original problem was Windows-specific. Windows File Explorer could silently expose 8.3 short names for very long paths, while R readers such as `haven::read_sav()` and `readr::read_csv()` could normalize those paths back into unusable long names. The legacy workaround converted the requested long path to a Windows 8.3 path and, for formats that permit it, opened a connection directly to that short path before handing it to the reader.
+
+The current design keeps the same choices:
+
+```{r long-path-functions, echo=TRUE}
+readLines("R/io/read_long_paths.R", warn = FALSE)
+```
+
+Troubleshooting guidance retained from the legacy comments:
+
+1. If a reader says a file does not exist, try the paired short-path reader, for example `read_sav_short()` instead of `read_sav()`.
+2. If that does not help and the system is not Windows, the local path layout probably needs to be shortened manually or the reader adapter needs an OS-specific branch.
+3. Excel readers are different from SPSS/CSV readers because `readxl::read_excel()` expects a file path rather than a connection; the current helper therefore normalizes the path for the current OS instead of forcing a binary connection.
+4. Replicators should not be asked to change Windows registry settings just to run the project.

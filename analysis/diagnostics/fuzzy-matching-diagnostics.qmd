@@ -5,9 +5,33 @@ format:
   pdf: default
 ---
 
-```{r}
-library(targets)
-# x <- tar_read(diag_ext_fuzzy_matching)
+```{r setup, include=FALSE}
+helper <- if (file.exists("analysis/_analysis_helpers.R")) "analysis/_analysis_helpers.R" else "../_analysis_helpers.R"
+source(helper)
 ```
 
-This notebook should render from target outputs, not manually copied numbers.
+This notebook preserves the diagnostic parts of legacy Chunk 16: the final string-distance methods and thresholds, troublesome name-pair checks, active join-status counts, and candidate-pair coverage.
+
+```{r summary, echo=FALSE, results='asis'}
+analysis_table(read_analysis_csv("diagnostics", "extended", "fuzzy_matching", "fuzzy_matching_summary.csv"), "Fuzzy matching diagnostic summary")
+```
+
+```{r methods, echo=FALSE, results='asis'}
+analysis_table(read_analysis_csv("diagnostics", "extended", "fuzzy_matching", "fuzzy_matching_legacy_methods.csv"), "Legacy final string-distance methods and thresholds")
+```
+
+```{r legacy-tuning, echo=FALSE, results='asis'}
+analysis_table(read_analysis_csv("diagnostics", "extended", "fuzzy_matching", "fuzzy_matching_legacy_tuning_reference.csv"), "Legacy tuning comments retained as benchmarks")
+```
+
+```{r pair-coverage, echo=FALSE, results='asis'}
+analysis_table(read_analysis_csv("diagnostics", "extended", "fuzzy_matching", "fuzzy_matching_candidate_pair_coverage.csv"), "Candidate-pair coverage")
+```
+
+```{r troublesome, echo=FALSE, results='asis'}
+analysis_table(read_analysis_csv("diagnostics", "extended", "fuzzy_matching", "fuzzy_matching_troublesome_pairs.csv"), "Troublesome legacy name-pair checks")
+```
+
+```{r join-status, echo=FALSE, results='asis'}
+analysis_table(read_analysis_csv("diagnostics", "extended", "fuzzy_matching", "fuzzy_matching_join_status_counts.csv"), "Current join status counts")
+```

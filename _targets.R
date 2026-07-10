@@ -122,21 +122,14 @@ extended_diagnostic_targets <- list(
   tar_target(diag_ext_district_tracker_sources, save_tracker_source_diagnostics(diagnose_district_tracker_sources(raw_district_changes, district_tracker, cfg))),
   tar_target(diag_ext_district_matching, save_district_matching_diagnostics(diagnose_district_matching(district_panel, district_join_map, cfg))),
   tar_target(diag_ext_fuzzy_matching, save_fuzzy_matching_diagnostics(diagnose_fuzzy_matching(district_tracker, district_join_map, cfg))),
-  tar_target(diag_ext_spatial_weights, save_spatial_weight_diagnostics(diagnose_spatial_weights(district_panel, spatial_weights, cfg))),
-  tar_render(diag_ext_district_tracker_source_note, "analysis/diagnostics/district-tracker-source-diagnostics.qmd"),
-  tar_render(diag_ext_fuzzy_matching_note, "analysis/diagnostics/fuzzy-matching-diagnostics.qmd"),
-  tar_render(diag_ext_spatial_autocorrelation_note, "analysis/diagnostics/spatial-autocorrelation-diagnostics.qmd")
+  tar_target(diag_ext_spatial_weights, save_spatial_weight_diagnostics(diagnose_spatial_weights(district_panel, spatial_weights, cfg)))
 )
 
 benchmark_targets <- list(
   tar_target(bench_ame_methods, run_ame_methods_benchmark(selection_model, selection_data, cfg)),
   tar_target(bench_fuzzy_matching, run_fuzzy_matching_benchmark(district_tracker, district_join_map, cfg)),
   tar_target(bench_spatial_weights, run_spatial_weights_benchmark(district_panel, cfg)),
-  tar_target(bench_spatial_iv_experimental, run_spatial_iv_benchmark(district_panel, spatial_weights, with_diagnostic_enabled(cfg, "spatial_iv_experimental"))),
-  tar_render(bench_ame_methods_note, "analysis/benchmarking/ame-benchmark.qmd"),
-  tar_render(bench_fuzzy_matching_note, "analysis/benchmarking/fuzzy-matching-benchmark.qmd"),
-  tar_render(bench_spatial_weights_note, "analysis/benchmarking/spatial-weights-benchmark.qmd"),
-  tar_render(bench_spatial_iv_note, "analysis/benchmarking/spatial-iv-benchmark.qmd")
+  tar_target(bench_spatial_iv_experimental, run_spatial_iv_benchmark(district_panel, spatial_weights, with_diagnostic_enabled(cfg, "spatial_iv_experimental")))
 )
 
 application_sample_targets <- list(

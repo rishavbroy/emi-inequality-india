@@ -5,9 +5,17 @@ format:
   pdf: default
 ---
 
-```{r}
-library(targets)
-# x <- tar_read(bench_spatial_weights)
+```{r setup, include=FALSE}
+helper <- if (file.exists("analysis/_analysis_helpers.R")) "analysis/_analysis_helpers.R" else "../_analysis_helpers.R"
+source(helper)
 ```
 
-This benchmark records the legacy rook-versus-queen contiguity comparison and neighbor-count timing checks.
+This notebook renders the rook-versus-queen comparison retained from the legacy spatial-weight tuning comments. The interpretation of current-vs-legacy neighbor-count differences is documented under `docs/refactor/`, not in the public paper.
+
+```{r benchmark, echo=FALSE, results='asis'}
+analysis_table(read_analysis_csv("benchmarking", "spatial_weights", "spatial_weights_rook_queen_benchmark.csv"), "Current rook/queen benchmark")
+```
+
+```{r diagnostic, echo=FALSE, results='asis'}
+analysis_table(read_analysis_csv("diagnostics", "extended", "spatial", "rook_queen_contiguity_comparison.csv"), "Current-vs-legacy rook/queen comparison")
+```

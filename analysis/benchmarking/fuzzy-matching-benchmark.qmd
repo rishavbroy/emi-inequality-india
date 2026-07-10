@@ -5,9 +5,21 @@ format:
   pdf: default
 ---
 
-```{r}
-library(targets)
-# x <- tar_read(bench_fuzzy_matching)
+```{r setup, include=FALSE}
+helper <- if (file.exists("analysis/_analysis_helpers.R")) "analysis/_analysis_helpers.R" else "../_analysis_helpers.R"
+source(helper)
 ```
 
-This benchmark records the legacy string-distance method and threshold checks used to tune district matching.
+This benchmark renders the Chunk 16 string-distance tuning work using current candidate pairs where the active pipeline exposes them, while preserving the original hand-picked problematic examples.
+
+```{r coverage, echo=FALSE, results='asis'}
+analysis_table(read_analysis_csv("benchmarking", "fuzzy_matching", "fuzzy_matching_candidate_pair_coverage.csv"), "Benchmark candidate-pair coverage")
+```
+
+```{r tuning-reference, echo=FALSE, results='asis'}
+analysis_table(read_analysis_csv("benchmarking", "fuzzy_matching", "fuzzy_matching_legacy_tuning_reference.csv"), "Legacy fuzzy-tuning reference results")
+```
+
+```{r threshold, echo=FALSE, results='asis'}
+analysis_table(read_analysis_csv("benchmarking", "fuzzy_matching", "fuzzy_matching_threshold_sensitivity.csv"), "Threshold sensitivity by method and pair source")
+```
