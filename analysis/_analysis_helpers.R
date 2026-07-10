@@ -1,4 +1,19 @@
-analysis_csv <- function(...) file.path("outputs", ...)
+analysis_project_root <- function(start = getwd()) {
+  here <- normalizePath(start, mustWork = TRUE)
+  repeat {
+    if (file.exists(file.path(here, "_targets.R")) && dir.exists(file.path(here, "analysis"))) {
+      return(here)
+    }
+    parent <- dirname(here)
+    if (identical(parent, here)) {
+      stop("Could not locate project root from ", start, call. = FALSE)
+    }
+    here <- parent
+  }
+}
+
+analysis_path <- function(...) file.path(analysis_project_root(), ...)
+analysis_csv <- function(...) analysis_path("outputs", ...)
 
 read_analysis_csv <- function(...) {
   path <- analysis_csv(...)

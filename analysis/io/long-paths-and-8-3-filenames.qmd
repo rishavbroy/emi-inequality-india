@@ -14,7 +14,7 @@ The original problem was Windows-specific. Windows File Explorer could silently 
 The current design keeps the same choices:
 
 ```{r long-path-functions, echo=TRUE}
-readLines("R/io/read_long_paths.R", warn = FALSE)
+readLines(analysis_path("R", "io", "read_long_paths.R"), warn = FALSE)
 ```
 
 Troubleshooting guidance retained from the legacy comments:
