@@ -4,6 +4,25 @@
 legacy_fuzzy_match_methods <- function() c("soundex", "qgram", "jw", "dl", "osa")
 legacy_fuzzy_match_thresholds <- function() c(0, 0, 0.15, 2, 1)
 
+legacy_fuzzy_tuning_reference <- function() {
+  data.frame(
+    diagnostic = c(
+      "full_join_method_row_counts",
+      "lcs_osa_3_3",
+      "jw_dl_osa_lcs",
+      "final_method_choice"
+    ),
+    legacy_result = c(
+      "osa/lv/dl 859 rows; hamming 872; lcs 825; qgram 829; cosine/jaccard/jw 435262",
+      "189/734 rows had any NA",
+      "180/734 rows had any NA",
+      "soundex=0, qgram=0, jw<=0.15, dl<=2, osa<=1; 166/734 rows had any NA"
+    ),
+    legacy_chunk = "Chunk 16 Match districts: Test joining methods",
+    stringsAsFactors = FALSE
+  )
+}
+
 legacy_troublesome_name_pairs <- function() {
   data.frame(
     str1 = c(
@@ -48,12 +67,15 @@ diagnose_fuzzy_matching <- function(district_tracker, district_join_map, cfg) {
     n_join_rows = nrow(join_map),
     n_unmatched_rows = nrow(attr(district_join_map, "unmatched_rows", exact = TRUE) %||% data.frame()),
     n_candidate_pairs = nrow(candidate_pairs),
+    n_active_candidate_pairs = sum(candidate_pairs$pair_source != "legacy_troublesome_comment", na.rm = TRUE),
     stringsAsFactors = FALSE
   )
   attr(base, "legacy_methods") <- data.frame(method = legacy_fuzzy_match_methods(), threshold = legacy_fuzzy_match_thresholds(), stringsAsFactors = FALSE)
   attr(base, "troublesome_pairs") <- test_troublesome_name_pairs()
   attr(base, "candidate_pairs") <- candidate_pairs
   attr(base, "join_status_counts") <- summarize_fuzzy_join_status(join_map)
+  attr(base, "legacy_tuning_reference") <- legacy_fuzzy_tuning_reference()
+  attr(base, "candidate_pair_coverage") <- summarize_fuzzy_candidate_pair_coverage(candidate_pairs)
   class(base) <- c("emi_fuzzy_matching_diagnostics", class(base))
   base
 }
@@ -71,6 +93,16 @@ legacy_fuzzy_candidate_pairs <- function(district_tracker = data.frame(), distri
     x <- x[!is.na(x$str1) & !is.na(x$str2) & nzchar(x$str1) & nzchar(x$str2) & x$str1 != x$str2, , drop = FALSE]
     unique(x)
   }
+  suffixes <- tracker_year_suffixes(tracker, "district")
+  if (length(suffixes) >= 2L) {
+    for (i in seq_len(length(suffixes) - 1L)) {
+      out[[length(out) + 1L]] <- add_tracker_pair(
+        suffixes[[i]],
+        suffixes[[i + 1L]],
+        paste0("tracker_", tracker_suffix_year(suffixes[[i]]), "_to_", tracker_suffix_year(suffixes[[i + 1L]]))
+      )
+    }
+  }
   out[[length(out) + 1L]] <- add_tracker_pair("01", "07", "tracker_2001_to_2007")
   out[[length(out) + 1L]] <- add_tracker_pair("07", "17", "tracker_2007_to_2017")
   out[[length(out) + 1L]] <- add_tracker_pair("17", "20", "tracker_2017_to_2020")
@@ -84,6 +116,18 @@ legacy_fuzzy_candidate_pairs <- function(district_tracker = data.frame(), distri
     x <- data.frame(str1 = as.character(join_map[[src_district]]), str2 = as.character(join_map[[trk_district]]), pair_source = "active_join_candidates", stringsAsFactors = FALSE)
     x <- x[!is.na(x$str1) & !is.na(x$str2) & nzchar(x$str1) & nzchar(x$str2) & x$str1 != x$str2, , drop = FALSE]
     out[[length(out) + 1L]] <- unique(x)
+  }
+
+  join_district_cols <- grep("district", names(join_map), value = TRUE, ignore.case = TRUE)
+  join_district_cols <- setdiff(join_district_cols, grep("key|code", join_district_cols, value = TRUE, ignore.case = TRUE))
+  if (length(join_district_cols) >= 2L) {
+    for (i in seq_len(length(join_district_cols) - 1L)) {
+      a <- join_district_cols[[i]]
+      b <- join_district_cols[[i + 1L]]
+      x <- data.frame(str1 = as.character(join_map[[a]]), str2 = as.character(join_map[[b]]), pair_source = paste0("join_map_", a, "_to_", b), stringsAsFactors = FALSE)
+      x <- x[!is.na(x$str1) & !is.na(x$str2) & nzchar(x$str1) & nzchar(x$str2) & x$str1 != x$str2, , drop = FALSE]
+      out[[length(out) + 1L]] <- unique(x)
+    }
   }
 
   pairs <- unique(safe_bind_rows(out))
@@ -135,6 +179,20 @@ summarize_fuzzy_join_status <- function(join_map) {
   as.data.frame(table(match_status = status), stringsAsFactors = FALSE)
 }
 
+summarize_fuzzy_candidate_pair_coverage <- function(pairs) {
+  pairs <- as.data.frame(pairs, stringsAsFactors = FALSE)
+  if (!nrow(pairs)) return(data.frame())
+  out <- as.data.frame(table(pair_source = pairs$pair_source), stringsAsFactors = FALSE)
+  names(out) <- c("pair_source", "n_pairs")
+  out$n_pairs <- as.integer(out$n_pairs)
+  out$coverage_note <- ifelse(
+    out$pair_source == "legacy_troublesome_comment",
+    "legacy hand-picked examples from Chunk 16",
+    "active source/tracker candidate pair emitted by the current pipeline"
+  )
+  out
+}
+
 summarize_threshold_sensitivity <- function(pairs = legacy_troublesome_name_pairs(), methods = legacy_fuzzy_match_methods(), threshold_grid = NULL) {
   pairs <- as.data.frame(pairs, stringsAsFactors = FALSE)
   if (!nrow(pairs)) return(data.frame())
@@ -159,7 +217,9 @@ save_fuzzy_matching_diagnostics <- function(diagnostics, dir = "outputs/diagnost
     legacy_methods = write_diagnostic_csv(attr(diagnostics, "legacy_methods") %||% data.frame(), file.path(dir, "fuzzy_matching_legacy_methods.csv")),
     troublesome_pairs = write_diagnostic_csv(attr(diagnostics, "troublesome_pairs") %||% data.frame(), file.path(dir, "fuzzy_matching_troublesome_pairs.csv")),
     candidate_pairs = write_diagnostic_csv(attr(diagnostics, "candidate_pairs") %||% data.frame(), file.path(dir, "fuzzy_matching_candidate_pairs.csv")),
-    join_status_counts = write_diagnostic_csv(attr(diagnostics, "join_status_counts") %||% data.frame(), file.path(dir, "fuzzy_matching_join_status_counts.csv"))
+    join_status_counts = write_diagnostic_csv(attr(diagnostics, "join_status_counts") %||% data.frame(), file.path(dir, "fuzzy_matching_join_status_counts.csv")),
+    candidate_pair_coverage = write_diagnostic_csv(attr(diagnostics, "candidate_pair_coverage") %||% data.frame(), file.path(dir, "fuzzy_matching_candidate_pair_coverage.csv")),
+    legacy_tuning_reference = write_diagnostic_csv(attr(diagnostics, "legacy_tuning_reference") %||% data.frame(), file.path(dir, "fuzzy_matching_legacy_tuning_reference.csv"))
   )
   legacy_output_manifest(paths)
 }

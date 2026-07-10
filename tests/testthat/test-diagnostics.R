@@ -123,15 +123,17 @@ test_that("tracker diagnostics include legacy source QA tables", {
   expect_true(nrow(attr(out, "inperiod_district_changes")) >= 1L)
 })
 
-test_that("district matching diagnostics expose unmatched and search tables", {
-  join_map <- data.frame(state_07 = "A", district_07 = "B", match_status = "source_key_unmatched")
+test_that("district matching diagnostics separate source-key inventory from true unmatched rows", {
+  join_map <- data.frame(state_std = "A", district_std = "B", source_year = 2007, match_status = "source_key_unmatched")
   attr(join_map, "unmatched_rows") <- join_map
   panel <- data.frame(state_20 = "A", district_20 = "B")
 
   out <- diagnose_district_matching(panel, join_map, list())
 
   expect_s3_class(out, "emi_district_matching_diagnostics")
-  expect_equal(out$n_unmatched_rows, 1L)
+  expect_equal(out$n_unmatched_rows, 0L)
+  expect_equal(out$n_source_key_inventory_rows, 1L)
+  expect_true(nrow(attr(out, "source_key_inventory")) >= 1L)
   expect_true(nrow(attr(out, "all_rows_search")) >= 1L)
 })
 
@@ -169,6 +171,8 @@ test_that("tracker diagnostics preserve legacy comment benchmarks", {
   expect_true(nrow(attr(out, "state_change_events")) >= 1L)
   expect_true(nrow(attr(out, "inperiod_district_changes")) >= 1L)
   expect_true(nrow(attr(out, "legacy_reference")) >= 3L)
+  expect_equal(nrow(attr(out, "legacy_expected_state_changes")), 2L)
+  expect_equal(attr(out, "legacy_expected_inperiod_district_changes")$legacy_expected_rows[[1]], 16L)
 })
 
 test_that("fuzzy benchmarking uses active tracker candidate pairs beyond toy examples", {
@@ -186,6 +190,8 @@ test_that("fuzzy benchmarking uses active tracker candidate pairs beyond toy exa
   expect_true(any(pairs$pair_source == "tracker_2001_to_2007"))
   expect_true(any(pairs$pair_source == "tracker_2017_to_2020"))
   expect_true(any(sens$pair_source == "tracker_2001_to_2007"))
+  expect_true("candidate_pair_coverage" %in% names(attributes(diagnose_fuzzy_matching(tracker, data.frame(), list()))))
+  expect_true(nrow(legacy_fuzzy_tuning_reference()) >= 4L)
 })
 
 test_that("spatial weights diagnostics include legacy neighbor-count reference", {

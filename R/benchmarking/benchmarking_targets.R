@@ -45,7 +45,9 @@ save_fuzzy_matching_benchmark <- function(x, pairs = data.frame(), dir = "output
   dir.create(dir, recursive = TRUE, showWarnings = FALSE)
   legacy_output_manifest(c(
     threshold_sensitivity = write_diagnostic_csv(x, file.path(dir, "fuzzy_matching_threshold_sensitivity.csv")),
-    candidate_pairs = write_diagnostic_csv(pairs, file.path(dir, "fuzzy_matching_candidate_pairs.csv"))
+    candidate_pairs = write_diagnostic_csv(pairs, file.path(dir, "fuzzy_matching_candidate_pairs.csv")),
+    candidate_pair_coverage = write_diagnostic_csv(summarize_fuzzy_candidate_pair_coverage(pairs), file.path(dir, "fuzzy_matching_candidate_pair_coverage.csv")),
+    legacy_tuning_reference = write_diagnostic_csv(legacy_fuzzy_tuning_reference(), file.path(dir, "fuzzy_matching_legacy_tuning_reference.csv"))
   ))
 }
 
@@ -56,6 +58,9 @@ save_spatial_iv_benchmark <- function(x, dir = "outputs/benchmarking/spatial_iv"
       status = write_diagnostic_csv(x$status %||% data.frame(), file.path(dir, "spatial_iv_status.csv")),
       augmented_panel_summary = write_diagnostic_csv(x$augmented_panel_summary %||% data.frame(), file.path(dir, "spatial_iv_augmented_panel_summary.csv")),
       model_status = write_diagnostic_csv(x$model_status %||% data.frame(), file.path(dir, "spatial_iv_model_status.csv")),
+      coefficient_summary = write_diagnostic_csv(x$coefficient_summary %||% data.frame(), file.path(dir, "spatial_iv_coefficient_summary.csv")),
+      clustered_coefficient_summary = write_diagnostic_csv(x$clustered_coefficient_summary %||% data.frame(), file.path(dir, "spatial_iv_clustered_coefficient_summary.csv")),
+      diagnostics_summary = write_diagnostic_csv(x$diagnostics_summary %||% data.frame(), file.path(dir, "spatial_iv_diagnostics_summary.csv")),
       failure_summary = write_diagnostic_csv(x$failure_summary %||% data.frame(), file.path(dir, "spatial_iv_failure_summary.csv"))
     )
   } else {

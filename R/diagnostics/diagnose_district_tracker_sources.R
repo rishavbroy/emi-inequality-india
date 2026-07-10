@@ -13,9 +13,17 @@ diagnose_district_tracker_sources <- function(raw_district_changes, district_tra
   source_counts <- compare_tracker_source_coverage(raw_district_changes, district_tracker)
   tracker <- as.data.frame(district_tracker, stringsAsFactors = FALSE)
 
-  state_changes <- detect_tracker_state_changes(tracker)
-  inperiod <- detect_inperiod_district_changes(tracker)
+  state_changes <- safe_bind_rows(list(
+    detect_tracker_state_changes(tracker),
+    detect_raw_tracker_state_changes(raw_district_changes)
+  ))
+  inperiod <- safe_bind_rows(list(
+    detect_inperiod_district_changes(tracker),
+    detect_raw_inperiod_district_changes(raw_district_changes)
+  ))
   same_names <- find_same_name_districts(tracker)
+  legacy_expected_state_changes <- legacy_recorded_state_changes()
+  legacy_expected_inperiod <- legacy_inperiod_district_changes_reference()
   legacy_reference <- legacy_tracker_comment_reference(
     detected_state_change_rows = nrow(state_changes),
     detected_inperiod_rows = nrow(inperiod)
@@ -25,7 +33,9 @@ diagnose_district_tracker_sources <- function(raw_district_changes, district_tra
   attr(out, "state_changes") <- state_changes
   attr(out, "state_change_events") <- summarize_tracker_state_change_events(state_changes)
   attr(out, "unrecorded_state_changes") <- legacy_unrecorded_state_changes()
+  attr(out, "legacy_expected_state_changes") <- legacy_expected_state_changes
   attr(out, "inperiod_district_changes") <- inperiod
+  attr(out, "legacy_expected_inperiod_district_changes") <- legacy_expected_inperiod
   attr(out, "same_name_districts") <- same_names
   attr(out, "source_disagreements") <- find_source_disagreements(raw_district_changes, tracker)
   attr(out, "legacy_reference") <- legacy_reference
@@ -98,6 +108,30 @@ summarize_tracker_state_change_events <- function(state_changes) {
   tab[order(-tab$n_rows, tab$state_transition), , drop = FALSE]
 }
 
+legacy_recorded_state_changes <- function() {
+  data.frame(
+    legacy_event = c(
+      "Ladakh split from Jammu and Kashmir",
+      "Dadra and Nagar Haveli and Daman and Diu merger"
+    ),
+    first_reflected = "2019 data",
+    legacy_chunk = "Chunk 6 district tracker source QA",
+    current_detection_status = "must be detected from raw/pre-correction tracker columns or carried as this reference row",
+    stringsAsFactors = FALSE
+  )
+}
+
+legacy_inperiod_district_changes_reference <- function() {
+  data.frame(
+    diagnostic = "in_period_district_name_changes",
+    legacy_expected_rows = 16L,
+    legacy_chunk = "Chunk 6 district tracker source QA",
+    legacy_note = "Legacy comments counted rows where district_05 != district_06, district_07 != district_08, district_17 != district_18, or district_19 != district_20 before downstream corrections.",
+    current_detection_status = "rendered analysis should compare this benchmark with current tracker_inperiod_district_changes.csv",
+    stringsAsFactors = FALSE
+  )
+}
+
 legacy_unrecorded_state_changes <- function() {
   data.frame(
     change = c(
@@ -114,6 +148,30 @@ legacy_unrecorded_state_changes <- function() {
     ),
     stringsAsFactors = FALSE
   )
+}
+
+detect_raw_tracker_state_changes <- function(raw_district_changes) {
+  safe_bind_rows(lapply(names(raw_district_changes), function(source_id) {
+    df <- as.data.frame(raw_district_changes[[source_id]], stringsAsFactors = FALSE)
+    if (!nrow(df)) return(data.frame())
+    out <- detect_tracker_state_changes(df)
+    if (!nrow(out)) return(data.frame())
+    out$source_file_id <- source_id
+    out$detection_source <- "raw_district_change_source"
+    out
+  }))
+}
+
+detect_raw_inperiod_district_changes <- function(raw_district_changes) {
+  safe_bind_rows(lapply(names(raw_district_changes), function(source_id) {
+    df <- as.data.frame(raw_district_changes[[source_id]], stringsAsFactors = FALSE)
+    if (!nrow(df)) return(data.frame())
+    out <- detect_inperiod_district_changes(df)
+    if (!nrow(out)) return(data.frame())
+    out$source_file_id <- source_id
+    out$detection_source <- "raw_district_change_source"
+    out
+  }))
 }
 
 detect_inperiod_district_changes <- function(tracker) {
@@ -210,7 +268,9 @@ save_tracker_source_diagnostics <- function(diagnostics, dir = "outputs/diagnost
     state_changes = write_diagnostic_csv(attr(diagnostics, "state_changes") %||% data.frame(), file.path(dir, "tracker_state_changes.csv")),
     state_change_events = write_diagnostic_csv(attr(diagnostics, "state_change_events") %||% data.frame(), file.path(dir, "tracker_state_change_events.csv")),
     unrecorded_state_changes = write_diagnostic_csv(attr(diagnostics, "unrecorded_state_changes") %||% data.frame(), file.path(dir, "tracker_unrecorded_state_changes.csv")),
+    legacy_expected_state_changes = write_diagnostic_csv(attr(diagnostics, "legacy_expected_state_changes") %||% data.frame(), file.path(dir, "tracker_legacy_expected_state_changes.csv")),
     inperiod_district_changes = write_diagnostic_csv(attr(diagnostics, "inperiod_district_changes") %||% data.frame(), file.path(dir, "tracker_inperiod_district_changes.csv")),
+    legacy_expected_inperiod_district_changes = write_diagnostic_csv(attr(diagnostics, "legacy_expected_inperiod_district_changes") %||% data.frame(), file.path(dir, "tracker_legacy_expected_inperiod_district_changes.csv")),
     same_name_districts = write_diagnostic_csv(attr(diagnostics, "same_name_districts") %||% data.frame(), file.path(dir, "tracker_same_name_districts.csv")),
     source_disagreements = write_diagnostic_csv(attr(diagnostics, "source_disagreements") %||% data.frame(), file.path(dir, "tracker_source_disagreements.csv")),
     legacy_reference = write_diagnostic_csv(attr(diagnostics, "legacy_reference") %||% data.frame(), file.path(dir, "tracker_legacy_comment_reference.csv"))
