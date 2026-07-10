@@ -50,3 +50,10 @@ The diagnostics/benchmarking correctness pass adds the following guardrails afte
 - Chunk 16 fuzzy-matching benchmarks now include active tracker/join candidate pairs in addition to the hand-written troublesome pairs from the legacy comments.
 - Chunk 24 spatial-weight outputs now include the legacy commented rook/queen mean-neighbor references and current-vs-legacy deltas.
 - Chunk 10 AME benchmarking preserves the legacy `vcov = TRUE` method attempt but records a derivative-only `vcov = FALSE` fallback when the current `marginaleffects` package fails on sub-sampled uncertainty calculations, so the benchmark reports both the incompatibility and a current runtime comparison.
+
+## Parity-correction notes
+
+- Missingness diagnostics intentionally retain `glm.fit: fitted probabilities numerically 0 or 1 occurred` as a discoverable warning in the full optional audit/review archive; it is not currently promoted into another code change.
+- Spatial-weight and Moran's I current-vs-legacy differences are documented in `docs/refactor/spatial_diagnostics_context.md` rather than in the paper or README.
+- Legacy Chunk 22 map palette/break/tmap-save exploration is out of scope for the current diagnostic/benchmarking parity correction.
+- Legacy Chunk 3 long-path and 8.3 filename troubleshooting comments are represented in `analysis/io/long-paths-and-8-3-filenames.qmd`.
