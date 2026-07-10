@@ -74,27 +74,30 @@ benchmark_ame_methods <- function(selection_model, selection_data, cfg, sample_s
       elapsed <- system.time({
         attempt <- tryCatch({
           do.call(marginaleffects::avg_slopes, c(base_args, list(newdata = newdata_sub), args))
-          list(status = "estimated", reason = NA_character_)
+          list(status = "estimated_legacy_vcov", reason = NA_character_, fallback = NA_character_)
         }, error = function(e) {
-          # Recent marginaleffects versions can fail for the full legacy call
-          # (vcov = TRUE) on sub-sampled newdata.  Preserve that failure, then
-          # retry a derivative-only timing without uncertainty calculation so the
-          # benchmark still records a current runtime comparison instead of only
-          # an error string.
+          # Recent marginaleffects versions can fail for the exact legacy call
+          # (wts = "weight", vcov = TRUE) on sub-sampled survey-style newdata.
+          # Preserve that failure, then try a clearly labeled current-version
+          # timing path without uncertainty and without the legacy weight-string
+          # dispatch.  This prevents failed rows from being mistaken for a
+          # successful legacy timing while still yielding a useful current timing
+          # when the package supports derivative-only estimation.
+          legacy_error <- conditionMessage(e)
           fallback <- tryCatch({
-            fallback_args <- c(base_args, list(newdata = newdata_sub), args)
-            fallback_args$vcov <- FALSE
+            fallback_args <- c(list(model = selection_model, vcov = FALSE, type = "response", newdata = newdata_sub), args)
+            if (has_weight) fallback_args$wts <- newdata_sub$weight
             do.call(marginaleffects::avg_slopes, fallback_args)
             TRUE
           }, error = function(e2) conditionMessage(e2))
           if (isTRUE(fallback)) {
-            list(status = "estimated_derivative_only_after_vcov_failure", reason = conditionMessage(e))
+            list(status = "estimated_current_derivative_only_after_legacy_failure", reason = legacy_error, fallback = "vcov=FALSE with explicit sampled weights")
           } else {
-            list(status = "failed", reason = paste(conditionMessage(e), "Fallback vcov=FALSE failed:", fallback))
+            list(status = "current_version_incompatible", reason = legacy_error, fallback = paste("vcov=FALSE fallback failed:", fallback))
           }
         })
       })[["elapsed"]]
-      data.frame(method = label, sample_size = n, elapsed_seconds = unname(elapsed), status = attempt$status, reason = attempt$reason, stringsAsFactors = FALSE)
+      data.frame(method = label, sample_size = n, elapsed_seconds = unname(elapsed), status = attempt$status, reason = attempt$reason, fallback = attempt$fallback, stringsAsFactors = FALSE)
     }
     safe_bind_rows(list(
       run_one("avg_slopes_centered_default"),

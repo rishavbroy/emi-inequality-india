@@ -46,4 +46,6 @@ test_that("spatial IV formula attempts use current IV formula adapter", {
   expect_match(src, "instruments = c(\"wavg_ling_degrees\", \"W_wLing\", \"W2_wLing\")", fixed = TRUE)
   expect_false(grepl("exog =", src, fixed = TRUE))
   expect_false(grepl("inst =", src, fixed = TRUE))
+  expect_match(src, "cluster_se_status", fixed = TRUE)
+  expect_match(src, "tidy_spatial_iv_diagnostics", fixed = TRUE)
 })
