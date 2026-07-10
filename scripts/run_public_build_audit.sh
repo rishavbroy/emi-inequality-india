@@ -10,10 +10,11 @@ skip_tests="false"
 incremental="false"
 with_extended_diagnostics="false"
 with_benchmarks="false"
+with_analysis_notes="false"
 
 usage() {
   cat <<'USAGE'
-Usage: bash scripts/run_public_build_audit.sh [--with-samples|--without-samples] [--with-extended-diagnostics] [--with-benchmarks] [--archive-on-error|--archive-always] [--archive-each-step] [--incremental|--skip-clean] [--skip-tests] [-o OUT.zip]
+Usage: bash scripts/run_public_build_audit.sh [--with-samples|--without-samples] [--with-extended-diagnostics] [--with-benchmarks] [--with-analysis-notes] [--archive-on-error|--archive-always] [--archive-each-step] [--incremental|--skip-clean] [--skip-tests] [-o OUT.zip]
 
 Runs the final public build audit. The default is --without-samples for a faster
 report/data/output audit that omits application-sample rendering and excludes
@@ -31,7 +32,9 @@ Optional extended diagnostics and benchmarks are included only when requested an
 respect the {targets} cache. Ordinary public builds clear only short-lived
 outputs/diagnostics/build and outputs/diagnostics/public files; longer
 outputs/diagnostics/extended and outputs/benchmarking artifacts are preserved
-unless explicitly cleaned.
+unless explicitly cleaned. Use --with-analysis-notes to render the human-readable
+analysis notebooks to GitHub-flavored Markdown in the same audit log; this also
+requests the extended diagnostics and benchmarks that those notebooks read.
 USAGE
 }
 
@@ -68,6 +71,12 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     --with-benchmarks)
+      with_benchmarks="true"
+      shift
+      ;;
+    --with-analysis-notes)
+      with_analysis_notes="true"
+      with_extended_diagnostics="true"
       with_benchmarks="true"
       shift
       ;;
@@ -244,6 +253,13 @@ if [[ "$with_benchmarks" == "true" ]]; then
   checkpoint_archive "after-benchmarks"
 fi
 
+if [[ "$with_analysis_notes" == "true" ]]; then
+  echo "=== ANALYSIS NOTES ==="
+  make clean-analysis
+  make render-analysis
+  checkpoint_archive "after-analysis-notes"
+fi
+
 echo "=== REVIEW ARCHIVE ==="
 bash scripts/make_review_archive.sh "$archive_sample_flag" --output "$archive_out"
 
@@ -259,8 +275,11 @@ manifest_roots=(paper outputs docs)
 if [[ "$render_samples" == "true" ]]; then
   manifest_roots+=(application-samples/output)
 fi
+if [[ "$with_analysis_notes" == "true" ]]; then
+  manifest_roots+=(analysis)
+fi
 find "${manifest_roots[@]}" \
   -maxdepth 3 \
   -type f \
-  \( -name '*.pdf' -o -name '*.html' -o -name '*.csv' -o -name '*.tex' -o -name '*.png' \) \
+  \( -name '*.pdf' -o -name '*.html' -o -name '*.md' -o -name '*.csv' -o -name '*.tex' -o -name '*.png' \) \
   -print | sort

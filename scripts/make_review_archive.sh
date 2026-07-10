@@ -99,8 +99,12 @@ cp -R outputs/tables "$tmpdir/outputs/" 2>/dev/null || true
 cp -R outputs/diagnostics "$tmpdir/outputs/" 2>/dev/null || true
 cp -R outputs/benchmarking "$tmpdir/outputs/" 2>/dev/null || true
 # Include rendered analysis notebooks, which are intentionally outside the
-# normal public-paper render path.
+# normal public-paper render path. Keep GitHub-flavored Markdown outputs and
+# source QMDs, but do not carry stale HTML/PDF/TeX analysis renders.
 cp -R analysis "$tmpdir/" 2>/dev/null || true
+if [[ -d "$tmpdir/analysis" ]]; then
+  find "$tmpdir/analysis" -type f \( -name '*.html' -o -name '*.pdf' -o -name '*.tex' -o -name '*.log' \) -delete
+fi
 mkdir -p "$tmpdir/data/processed"
 cp -f data/processed/*.csv "$tmpdir/data/processed/" 2>/dev/null || true
 
