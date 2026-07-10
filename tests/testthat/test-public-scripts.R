@@ -212,8 +212,9 @@ test_that("analysis notebooks render from explicit make target, not optional tar
   makefile <- paste(readLines(repo_file("Makefile"), warn = FALSE), collapse = "\n")
   targets <- paste(readLines(repo_file("_targets.R"), warn = FALSE), collapse = "\n")
 
-  expect_match(makefile, "analysis-notes: extended-diagnostics benchmarking render-analysis", fixed = TRUE)
+  expect_match(makefile, "analysis-notes: extended-diagnostics benchmarking clean-analysis render-analysis", fixed = TRUE)
   expect_match(makefile, "Rscript scripts/render_analysis_notes.R", fixed = TRUE)
+  expect_match(makefile, "clean-analysis", fixed = TRUE)
   expect_false(grepl("tar_render\\(bench_", targets))
   expect_false(grepl("tar_render\\(diag_ext_", targets))
 })
@@ -225,4 +226,30 @@ test_that("analysis notebooks are populated with current-output tables", {
   expect_match(qmd, "spatial_iv_model_status.csv", fixed = TRUE)
   expect_match(qmd, "spatial_iv_diagnostics_summary.csv", fixed = TRUE)
   expect_match(helper, "knitr::kable", fixed = TRUE)
+})
+
+test_that("public audit can include analysis notes in the same log", {
+  src <- paste(readLines(repo_file("scripts", "run_public_build_audit.sh"), warn = FALSE), collapse = "\n")
+
+  expect_match(src, "--with-analysis-notes", fixed = TRUE)
+  expect_match(src, "with_analysis_notes=\"false\"", fixed = TRUE)
+  expect_match(src, "with_extended_diagnostics=\"true\"", fixed = TRUE)
+  expect_match(src, "with_benchmarks=\"true\"", fixed = TRUE)
+  expect_match(src, "=== ANALYSIS NOTES ===", fixed = TRUE)
+  expect_match(src, "make render-analysis", fixed = TRUE)
+  expect_match(src, "manifest_roots+=(analysis)", fixed = TRUE)
+})
+
+test_that("analysis notebooks render only to GitHub-flavored Markdown", {
+  renderer <- paste(readLines(repo_file("scripts", "render_analysis_notes.R"), warn = FALSE), collapse = "\n")
+  qmd <- paste(readLines(repo_file("analysis", "benchmarking", "ame-benchmark.qmd"), warn = FALSE), collapse = "\n")
+  archive <- paste(readLines(repo_file("scripts", "make_review_archive.sh"), warn = FALSE), collapse = "\n")
+
+  expect_match(renderer, "--to", fixed = TRUE)
+  expect_match(renderer, "gfm", fixed = TRUE)
+  expect_match(qmd, "format: gfm", fixed = TRUE)
+  expect_false(grepl("pdf: default", qmd, fixed = TRUE))
+  expect_false(grepl("html: default", qmd, fixed = TRUE))
+  expect_match(archive, "GitHub-flavored Markdown", fixed = TRUE)
+  expect_match(archive, "-name '*.html' -o -name '*.pdf' -o -name '*.tex' -o -name '*.log'", fixed = TRUE)
 })
