@@ -1,10 +1,7 @@
 ---
 title: "Fuzzy Matching Benchmark"
-format:
-  html: default
-  pdf: default
+format: gfm
 ---
-
 ```{r setup, include=FALSE}
 helper <- if (file.exists("analysis/_analysis_helpers.R")) "analysis/_analysis_helpers.R" else "../_analysis_helpers.R"
 source(helper)

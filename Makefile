@@ -59,13 +59,14 @@ rerun-benchmarks:
 	EMI_CONFIG=config/final.yml EMI_RUN_BENCHMARKS=true Rscript -e 'targets::tar_invalidate(starts_with("bench_"))'
 	$(MAKE) benchmarking
 
-analysis-notes: extended-diagnostics benchmarking render-analysis
+analysis-notes: extended-diagnostics benchmarking clean-analysis render-analysis
 
 render-analysis: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
 	HOME=$(QUARTO_HOME) Rscript scripts/render_analysis_notes.R
 
 clean-analysis:
-	find analysis -type f \( -name '*.html' -o -name '*.pdf' -o -name '*.tex' \) -delete
+	find analysis -type f \( -name '*.html' -o -name '*.pdf' -o -name '*.tex' -o -name '*.log' \) -delete
+	find analysis -type f -name '*.qmd' -exec sh -c 'for qmd do rm -f "$${qmd%.qmd}.md"; done' sh {} +
 
 clean-public-diagnostics:
 	rm -rf outputs/diagnostics/build outputs/diagnostics/public
