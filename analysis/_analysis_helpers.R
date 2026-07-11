@@ -54,3 +54,48 @@ analysis_table <- function(df, caption = NULL, digits = 3) {
   }
   tab
 }
+
+
+analysis_legacy_chunk_path <- function(filename) {
+  analysis_path("archive", "legacy-rmd-chunks", filename)
+}
+
+analysis_legacy_comment_lines <- function(filename, from = NULL, to = NULL) {
+  path <- analysis_legacy_chunk_path(filename)
+  if (!file.exists(path)) {
+    return(paste("Missing legacy chunk:", path))
+  }
+  lines <- readLines(path, warn = FALSE)
+  idx <- seq_along(lines)
+  if (!is.null(from)) idx <- idx[idx >= from]
+  if (!is.null(to)) idx <- idx[idx <= to]
+  lines <- lines[idx]
+  keep <- grepl("^\\s*#", lines) | !nzchar(trimws(lines))
+  lines <- lines[keep]
+  lines <- sub("^\\s*# ?", "", lines)
+  rle_blank <- rle(!nzchar(trimws(lines)))
+  out <- character()
+  pos <- 1L
+  for (i in seq_along(rle_blank$lengths)) {
+    run <- lines[pos:(pos + rle_blank$lengths[[i]] - 1L)]
+    if (rle_blank$values[[i]]) {
+      out <- c(out, "")
+    } else {
+      out <- c(out, run)
+    }
+    pos <- pos + rle_blank$lengths[[i]]
+  }
+  while (length(out) && !nzchar(trimws(out[[1]]))) out <- out[-1]
+  while (length(out) && !nzchar(trimws(out[[length(out)]]))) out <- out[-length(out)]
+  out
+}
+
+analysis_render_legacy_comments <- function(filename, from = NULL, to = NULL, caption = NULL) {
+  if (!is.null(caption)) cat("\n### ", caption, "\n\n", sep = "")
+  lines <- analysis_legacy_comment_lines(filename, from = from, to = to)
+  cat(paste(lines, collapse = "\n"), "\n\n", sep = "")
+}
+
+analysis_deviation_note <- function(text) {
+  cat("\n**Deviation note.** ", text, "\n\n", sep = "")
+}

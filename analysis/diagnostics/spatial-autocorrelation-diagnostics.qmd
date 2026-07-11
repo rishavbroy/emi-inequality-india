@@ -7,10 +7,18 @@ helper <- if (file.exists("analysis/_analysis_helpers.R")) "analysis/_analysis_h
 source(helper)
 ```
 
-These diagnostics reproduce the legacy Rmd's rook-contiguity Moran's I checks using row-standardized spatial weights and `zero.policy = TRUE`. The main report consumes the `m_cons_resid` and `m_cons` p-values; the remaining rows document residual, treatment, instrument, and outcome checks retained from the legacy diagnostic workflow.
+## Legacy comments
+
+```{r legacy-comments, echo=FALSE, results='asis'}
+analysis_render_legacy_comments("29-geospatial-spatial-autocorrelation-tests.R", caption = "Legacy Chunk 29: Moran's I checks")
+```
+
+```{r deviation-note, echo=FALSE, results='asis'}
+analysis_deviation_note("The table below uses the current active panel and geometry. The current p-values are substantively consistent with the legacy conclusion of strong positive spatial autocorrelation, but are not exact legacy parity; that context is documented in `docs/refactor/spatial_diagnostics_context.md`.")
+```
+
+## Current targets-backed results
 
 ```{r moran, echo=FALSE, results='asis'}
 analysis_table(read_analysis_csv("diagnostics", "public", "spatial_moran_tests.csv"), "Current Moran's I diagnostics")
 ```
-
-The current p-values are substantively consistent with the legacy conclusion of strong positive spatial autocorrelation, but they are not exact legacy parity. The current active panel and geometry differ from the exploratory legacy object; see `docs/refactor/spatial_diagnostics_context.md` for the internal refactor note.

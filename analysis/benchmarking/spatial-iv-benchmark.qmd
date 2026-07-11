@@ -7,10 +7,33 @@ helper <- if (file.exists("analysis/_analysis_helpers.R")) "analysis/_analysis_h
 source(helper)
 ```
 
-This notebook renders the legacy eval=FALSE Chunk 30 spatial-IV attempts. These are exploratory benchmarks only. A status of `estimated` means the current `ivreg()` call returned an object; it does not promote the model to the final paper.
+## Legacy comments
+
+```{r legacy-comments, echo=FALSE, results='asis'}
+analysis_render_legacy_comments("30-spatial-2sls-model-attempts.R", caption = "Legacy Chunk 30: spatial-2SLS attempts")
+```
+
+```{r deviation-note, echo=FALSE, results='asis'}
+analysis_deviation_note("The legacy comments said these attempts did not work even with diagnostics disabled. The current tables therefore distinguish between `ivreg()` returning an object and diagnostics/coefficient summaries being numerically meaningful. These outputs remain exploratory and are not promoted to the final paper.")
+```
+
+## Current targets-backed results
 
 ```{r status, echo=FALSE, results='asis'}
-analysis_table(read_analysis_csv("benchmarking", "spatial_iv", "spatial_iv_model_status.csv"), "Spatial-IV model status")
+spatial_iv_status <- read_analysis_csv("benchmarking", "spatial_iv", "spatial_iv_model_status.csv")
+status_table <- spatial_iv_status[setdiff(names(spatial_iv_status), "formula")]
+analysis_table(status_table, "Spatial-IV model status")
+```
+
+```{r formulas, echo=FALSE, results='asis'}
+if (all(c("model", "formula") %in% names(spatial_iv_status))) {
+  for (i in seq_len(nrow(spatial_iv_status))) {
+    if (nzchar(spatial_iv_status$formula[[i]])) {
+      cat("### Formula: `", spatial_iv_status$model[[i]], "`\n\n", sep = "")
+      cat("```text\n", spatial_iv_status$formula[[i]], "\n```\n\n", sep = "")
+    }
+  }
+}
 ```
 
 ```{r diagnostics, echo=FALSE, results='asis'}

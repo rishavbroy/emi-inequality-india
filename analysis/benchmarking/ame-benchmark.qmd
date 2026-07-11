@@ -7,10 +7,36 @@ helper <- if (file.exists("analysis/_analysis_helpers.R")) "analysis/_analysis_h
 source(helper)
 ```
 
-This notebook preserves the AME timing and method-selection notes from legacy Chunk 10. The final method remains `avg_slopes(..., vcov = TRUE, type = "response")` with `marginaleffects_parallel = FALSE`; any current-version incompatibility is shown as a benchmark result rather than hidden.
+## Legacy comments
+
+```{r legacy-comments, echo=FALSE, results='asis'}
+analysis_render_legacy_comments("10-participation-model-derive-ame.R", caption = "Legacy Chunk 10: AME method choice and timing notes")
+```
+
+```{r deviation-note, echo=FALSE, results='asis'}
+analysis_deviation_note("The prose above is rendered from the legacy comments, with comment markers removed. The tables below replace manually written timing/status comments with current target outputs; where the current `marginaleffects` call is incompatible with the active package version, the incompatibility is shown explicitly rather than rewritten as a successful timing result.")
+```
+
+## Current targets-backed results
 
 ```{r methods, echo=FALSE, results='asis'}
-analysis_table(read_analysis_csv("benchmarking", "ame", "ame_methods_benchmark.csv"), "Current AME benchmark attempts")
+ame_methods <- read_analysis_csv("benchmarking", "ame", "ame_methods_benchmark.csv")
+ame_table_cols <- intersect(c("method", "sample_size", "elapsed_seconds", "status"), names(ame_methods))
+analysis_table(ame_methods[ame_table_cols], "Current AME benchmark attempts")
+```
+
+```{r method-reasons, echo=FALSE, results='asis'}
+if (all(c("method", "sample_size", "reason") %in% names(ame_methods))) {
+  for (i in seq_len(nrow(ame_methods))) {
+    reason <- ame_methods$reason[[i]]
+    fallback <- if ("fallback" %in% names(ame_methods)) ame_methods$fallback[[i]] else ""
+    if (nzchar(reason) || nzchar(fallback)) {
+      cat("### Current-version benchmark note: `", ame_methods$method[[i]], "`, n = ", ame_methods$sample_size[[i]], "\n\n", sep = "")
+      if (nzchar(reason)) cat("```text\n", reason, "\n```\n\n", sep = "")
+      if (nzchar(fallback)) cat("```text\n", fallback, "\n```\n\n", sep = "")
+    }
+  }
+}
 ```
 
 ```{r notes, echo=FALSE, results='asis'}

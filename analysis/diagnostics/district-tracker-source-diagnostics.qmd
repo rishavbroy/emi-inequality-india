@@ -7,9 +7,17 @@ helper <- if (file.exists("analysis/_analysis_helpers.R")) "analysis/_analysis_h
 source(helper)
 ```
 
-This notebook carries forward the long district-tracker source QA comments from legacy Chunk 6. It renders the current diagnostic outputs instead of copying counts from comments by hand.
+## Legacy comments
 
-The legacy workflow used these diagnostics to justify cross-year district matching, identify recorded and unrecorded state/UT changes, count district names changing inside multi-year survey periods, and check same-name districts across states.
+```{r legacy-comments, echo=FALSE, results='asis'}
+analysis_render_legacy_comments("06-match-districts-construct-district-tracking-dfs.R", from = 1, to = 220, caption = "Legacy Chunk 6: district tracker construction and QA notes")
+```
+
+```{r deviation-note, echo=FALSE, results='asis'}
+analysis_deviation_note("The prose above is rendered from the legacy comments. The current tables below replace manually written counts with target outputs, and separately show legacy expected-count benchmarks when the active cleaned tracker no longer contains the same raw changes.")
+```
+
+## Current targets-backed results
 
 ```{r source-counts, echo=FALSE, results='asis'}
 analysis_table(read_analysis_csv("diagnostics", "extended", "district_tracker_sources", "tracker_source_counts.csv"), "Raw district-change source coverage")

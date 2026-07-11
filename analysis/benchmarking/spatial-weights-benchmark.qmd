@@ -7,7 +7,17 @@ helper <- if (file.exists("analysis/_analysis_helpers.R")) "analysis/_analysis_h
 source(helper)
 ```
 
-This notebook renders the rook-versus-queen comparison retained from the legacy spatial-weight tuning comments. The interpretation of current-vs-legacy neighbor-count differences is documented under `docs/refactor/`, not in the public paper.
+## Legacy comments
+
+```{r legacy-comments, echo=FALSE, results='asis'}
+analysis_render_legacy_comments("24-geospatial-neighbor-list-construction.R", caption = "Legacy Chunk 24: rook/queen tuning notes")
+```
+
+```{r deviation-note, echo=FALSE, results='asis'}
+analysis_deviation_note("The tables below use the current active panel and geometry. Current-vs-legacy neighbor-count differences are documented under `docs/refactor/` rather than in the paper or README.")
+```
+
+## Current targets-backed results
 
 ```{r benchmark, echo=FALSE, results='asis'}
 analysis_table(read_analysis_csv("benchmarking", "spatial_weights", "spatial_weights_rook_queen_benchmark.csv"), "Current rook/queen benchmark")
