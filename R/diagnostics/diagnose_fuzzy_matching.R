@@ -118,6 +118,13 @@ legacy_fuzzy_candidate_pairs <- function(district_tracker = data.frame(), distri
     out[[length(out) + 1L]] <- unique(x)
   }
 
+  # The current fallback key-map path records source keys separately from true
+  # unmatched rows.  To keep the legacy Chunk 16 tuning exercise meaningful in
+  # that path, compare each source-key district with tracker district names in
+  # the same state/year when those columns are available.  This yields an active
+  # candidate universe instead of only the nine hand-picked legacy examples.
+  out[[length(out) + 1L]] <- source_key_inventory_candidate_pairs(tracker, join_map)
+
   join_district_cols <- grep("district", names(join_map), value = TRUE, ignore.case = TRUE)
   join_district_cols <- setdiff(join_district_cols, grep("key|code", join_district_cols, value = TRUE, ignore.case = TRUE))
   if (length(join_district_cols) >= 2L) {
@@ -132,6 +139,49 @@ legacy_fuzzy_candidate_pairs <- function(district_tracker = data.frame(), distri
 
   pairs <- unique(safe_bind_rows(out))
   pairs[order(pairs$pair_source, pairs$str1, pairs$str2), , drop = FALSE]
+}
+
+
+source_key_inventory_candidate_pairs <- function(tracker, join_map) {
+  tracker <- as.data.frame(tracker, stringsAsFactors = FALSE)
+  join_map <- as.data.frame(join_map, stringsAsFactors = FALSE)
+  if (!nrow(tracker) || !nrow(join_map)) return(data.frame())
+  if (!all(c("state_std", "district_std") %in% names(join_map))) return(data.frame())
+
+  source_year <- if ("source_year" %in% names(join_map)) as.character(join_map$source_year) else rep(NA_character_, nrow(join_map))
+  suffix_for_year <- function(x) {
+    x <- gsub("[^0-9]", "", x)
+    if (!nzchar(x)) return(NA_character_)
+    if (nchar(x) == 4L) return(substr(x, 3L, 4L))
+    x
+  }
+
+  safe_bind_rows(lapply(seq_len(nrow(join_map)), function(i) {
+    sfx <- suffix_for_year(source_year[[i]])
+    candidate_suffixes <- unique(c(sfx, tracker_year_suffixes(tracker, "district")))
+    candidate_suffixes <- candidate_suffixes[!is.na(candidate_suffixes) & nzchar(candidate_suffixes)]
+    if (!length(candidate_suffixes)) return(data.frame())
+
+    state_key <- canon(join_map$state_std[[i]])
+    source_name <- as.character(join_map$district_std[[i]])
+    if (!nzchar(source_name) || !nzchar(state_key)) return(data.frame())
+
+    safe_bind_rows(lapply(candidate_suffixes, function(candidate_sfx) {
+      state_col <- paste0("state_", candidate_sfx)
+      district_col <- paste0("district_", candidate_sfx)
+      if (!all(c(state_col, district_col) %in% names(tracker))) return(data.frame())
+      keep <- canon(tracker[[state_col]]) == state_key
+      names <- unique(as.character(tracker[[district_col]][keep]))
+      names <- names[!is.na(names) & nzchar(names) & names != source_name]
+      if (!length(names)) return(data.frame())
+      data.frame(
+        str1 = source_name,
+        str2 = names,
+        pair_source = paste0("active_source_key_inventory_", tracker_suffix_year(candidate_sfx)),
+        stringsAsFactors = FALSE
+      )
+    }))
+  }))
 }
 
 #' evaluate distances

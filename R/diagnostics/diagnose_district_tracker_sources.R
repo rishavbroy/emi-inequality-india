@@ -24,9 +24,11 @@ diagnose_district_tracker_sources <- function(raw_district_changes, district_tra
   same_names <- find_same_name_districts(tracker)
   legacy_expected_state_changes <- legacy_recorded_state_changes()
   legacy_expected_inperiod <- legacy_inperiod_district_changes_reference()
+  legacy_expected_same_names <- legacy_same_name_districts_reference()
   legacy_reference <- legacy_tracker_comment_reference(
     detected_state_change_rows = nrow(state_changes),
-    detected_inperiod_rows = nrow(inperiod)
+    detected_inperiod_rows = nrow(inperiod),
+    detected_same_name_rows = nrow(same_names)
   )
 
   out <- source_counts
@@ -37,6 +39,7 @@ diagnose_district_tracker_sources <- function(raw_district_changes, district_tra
   attr(out, "inperiod_district_changes") <- inperiod
   attr(out, "legacy_expected_inperiod_district_changes") <- legacy_expected_inperiod
   attr(out, "same_name_districts") <- same_names
+  attr(out, "legacy_expected_same_name_districts") <- legacy_expected_same_names
   attr(out, "source_disagreements") <- find_source_disagreements(raw_district_changes, tracker)
   attr(out, "legacy_reference") <- legacy_reference
   class(out) <- c("emi_tracker_source_diagnostics", class(out))
@@ -128,6 +131,19 @@ legacy_inperiod_district_changes_reference <- function() {
     legacy_chunk = "Chunk 6 district tracker source QA",
     legacy_note = "Legacy comments counted rows where district_05 != district_06, district_07 != district_08, district_17 != district_18, or district_19 != district_20 before downstream corrections.",
     current_detection_status = "rendered analysis should compare this benchmark with current tracker_inperiod_district_changes.csv",
+    stringsAsFactors = FALSE
+  )
+}
+
+
+legacy_same_name_districts_reference <- function() {
+  data.frame(
+    diagnostic = "same_name_districts_across_states",
+    legacy_expected_min_districts = 6L,
+    legacy_expected_max_districts = 10L,
+    legacy_chunk = "Chunk 6 district tracker source QA",
+    legacy_note = "Legacy comments counted between min(n_same_name_districts$n) = 6 and max(n_same_name_districts$n) = 10 districts with shared names in each year of interest.",
+    current_detection_status = "rendered analysis should compare this benchmark with tracker_same_name_districts.csv; a zero current count means the active tracker no longer exposes the raw same-name ambiguity, not that the legacy QA was irrelevant.",
     stringsAsFactors = FALSE
   )
 }
@@ -230,23 +246,26 @@ find_source_disagreements <- function(raw_district_changes, district_tracker = N
   coverage
 }
 
-legacy_tracker_comment_reference <- function(detected_state_change_rows, detected_inperiod_rows) {
+legacy_tracker_comment_reference <- function(detected_state_change_rows, detected_inperiod_rows, detected_same_name_rows = 0L) {
   data.frame(
     diagnostic = c(
       "recorded_state_ut_changes",
       "unrecorded_state_ut_changes",
-      "in_period_district_name_changes"
+      "in_period_district_name_changes",
+      "same_name_districts_across_states"
     ),
     legacy_comment_expected = c(
       "Legacy Chunk 6 comments identify two recorded state/UT change events in the tracker sources.",
       "Legacy Chunk 6 comments identify four unrecorded state/UT naming/split changes requiring manual attention.",
-      "Legacy Chunk 6 comments record 16 districts changing names within the sampling periods."
+      "Legacy Chunk 6 comments record 16 districts changing names within the sampling periods.",
+      "Legacy Chunk 6 comments record between 6 and 10 same-name districts in each year of interest."
     ),
-    current_detected_rows = c(detected_state_change_rows, nrow(legacy_unrecorded_state_changes()), detected_inperiod_rows),
+    current_detected_rows = c(detected_state_change_rows, nrow(legacy_unrecorded_state_changes()), detected_inperiod_rows, detected_same_name_rows),
     interpretation = c(
       "Compare row-level current detections with tracker_state_change_events.csv because row counts can exceed event counts.",
       "These are preserved as documented legacy correction notes, not inferred from active tracker rows.",
-      "A current count different from 16 reflects active tracker/correction changes and should be reviewed before describing it as an improvement."
+      "A current count different from 16 reflects active tracker/correction changes and should be reviewed before describing it as an improvement.",
+      "A current count of zero means the active cleaned tracker no longer exposes this raw ambiguity; it should be reported as resolved-by-current-cleaning, not as proof that the legacy QA was unnecessary."
     ),
     stringsAsFactors = FALSE
   )
@@ -272,6 +291,7 @@ save_tracker_source_diagnostics <- function(diagnostics, dir = "outputs/diagnost
     inperiod_district_changes = write_diagnostic_csv(attr(diagnostics, "inperiod_district_changes") %||% data.frame(), file.path(dir, "tracker_inperiod_district_changes.csv")),
     legacy_expected_inperiod_district_changes = write_diagnostic_csv(attr(diagnostics, "legacy_expected_inperiod_district_changes") %||% data.frame(), file.path(dir, "tracker_legacy_expected_inperiod_district_changes.csv")),
     same_name_districts = write_diagnostic_csv(attr(diagnostics, "same_name_districts") %||% data.frame(), file.path(dir, "tracker_same_name_districts.csv")),
+    legacy_expected_same_name_districts = write_diagnostic_csv(attr(diagnostics, "legacy_expected_same_name_districts") %||% data.frame(), file.path(dir, "tracker_legacy_expected_same_name_districts.csv")),
     source_disagreements = write_diagnostic_csv(attr(diagnostics, "source_disagreements") %||% data.frame(), file.path(dir, "tracker_source_disagreements.csv")),
     legacy_reference = write_diagnostic_csv(attr(diagnostics, "legacy_reference") %||% data.frame(), file.path(dir, "tracker_legacy_comment_reference.csv"))
   )

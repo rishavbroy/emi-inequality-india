@@ -156,6 +156,7 @@ test_that("district matching diagnostics preserve matcher attributes before data
   expect_equal(out$n_unmatched_rows, 0L)
   expect_equal(out$n_join_unmatched_by_key, 0L)
   expect_true("key_comparison" %in% names(attributes(out)))
+  expect_true("key_role" %in% names(attr(out, "key_comparison")))
 })
 
 test_that("tracker diagnostics preserve legacy comment benchmarks", {
@@ -173,6 +174,7 @@ test_that("tracker diagnostics preserve legacy comment benchmarks", {
   expect_true(nrow(attr(out, "legacy_reference")) >= 3L)
   expect_equal(nrow(attr(out, "legacy_expected_state_changes")), 2L)
   expect_equal(attr(out, "legacy_expected_inperiod_district_changes")$legacy_expected_rows[[1]], 16L)
+  expect_equal(attr(out, "legacy_expected_same_name_districts")$legacy_expected_min_districts[[1]], 6L)
 })
 
 test_that("fuzzy benchmarking uses active tracker candidate pairs beyond toy examples", {
@@ -192,6 +194,28 @@ test_that("fuzzy benchmarking uses active tracker candidate pairs beyond toy exa
   expect_true(any(sens$pair_source == "tracker_2001_to_2007"))
   expect_true("candidate_pair_coverage" %in% names(attributes(diagnose_fuzzy_matching(tracker, data.frame(), list()))))
   expect_true(nrow(legacy_fuzzy_tuning_reference()) >= 4L)
+})
+
+
+
+test_that("fuzzy benchmarking expands fallback source-key inventory into active candidates", {
+  tracker <- data.frame(
+    state_07 = c("A", "A", "B"),
+    district_07 = c("One", "Two", "Three"),
+    state_20 = c("A", "A", "B"),
+    district_20 = c("One New", "Two", "Three")
+  )
+  join_map <- data.frame(
+    state_std = "A",
+    district_std = "Onee",
+    source_year = 2007,
+    match_status = "source_key_unmatched"
+  )
+
+  pairs <- legacy_fuzzy_candidate_pairs(tracker, join_map)
+
+  expect_true(any(grepl("active_source_key_inventory", pairs$pair_source)))
+  expect_true(any(pairs$str1 == "Onee"))
 })
 
 test_that("spatial weights diagnostics include legacy neighbor-count reference", {

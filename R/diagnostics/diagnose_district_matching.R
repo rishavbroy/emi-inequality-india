@@ -18,7 +18,10 @@ diagnose_district_matching <- function(district_panel, district_join_map, cfg) {
 
   panel <- as.data.frame(if (inherits(district_panel, "sf")) sf::st_drop_geometry(district_panel) else district_panel, stringsAsFactors = FALSE)
   join_map <- as.data.frame(district_join_map, stringsAsFactors = FALSE)
-  key_comparison <- compare_join_keys_to_panel(panel, join_map)
+  key_comparison <- compare_join_keys_to_panel(panel, join_map, source_key_inventory)
+  if (!all(c("panel_key_status", "join_key_status") %in% names(key_comparison))) {
+    key_comparison <- data.frame(key = character(), panel_key_status = character(), join_key_status = character(), key_role = character())
+  }
 
   base <- data.frame(
     n_panel_rows = nrow(panel),
@@ -26,8 +29,8 @@ diagnose_district_matching <- function(district_panel, district_join_map, cfg) {
     n_unmatched_rows = nrow(unmatched),
     n_source_key_inventory_rows = nrow(source_key_inventory),
     n_many_to_many_cases = nrow(many),
-    n_panel_unmatched_by_key = sum(key_comparison$panel_key_status == "not_in_join_map", na.rm = TRUE),
-    n_join_unmatched_by_key = sum(key_comparison$join_key_status == "not_in_panel", na.rm = TRUE),
+    n_panel_unmatched_by_key = sum(key_comparison$panel_key_status == "in_panel" & key_comparison$join_key_status == "not_in_join_map", na.rm = TRUE),
+    n_join_unmatched_by_key = sum(key_comparison$join_key_status == "in_join_map" & key_comparison$panel_key_status == "not_in_panel", na.rm = TRUE),
     stringsAsFactors = FALSE
   )
   attr(base, "unmatched_rows") <- unmatched
@@ -129,7 +132,7 @@ canonical_match_key <- function(df, state_candidates, district_candidates) {
   paste(canon(df[[state_col]]), canon(df[[district_col]]), sep = "__")
 }
 
-compare_join_keys_to_panel <- function(panel, join_map) {
+compare_join_keys_to_panel <- function(panel, join_map, source_key_inventory = NULL) {
   panel <- as.data.frame(panel, stringsAsFactors = FALSE)
   join_map <- as.data.frame(join_map, stringsAsFactors = FALSE)
   if (!nrow(panel) || !nrow(join_map)) return(data.frame())
@@ -140,13 +143,25 @@ compare_join_keys_to_panel <- function(panel, join_map) {
   join_key <- join_key[!is.na(join_key) & nzchar(join_key)]
   if (!length(panel_key) || !length(join_key)) return(data.frame())
 
-  keys <- sort(unique(c(panel_key, join_key)))
-  data.frame(
+  source_key_inventory <- as.data.frame(source_key_inventory %||% data.frame(), stringsAsFactors = FALSE)
+  inventory_key <- if (nrow(source_key_inventory)) {
+    canonical_match_key(source_key_inventory, c("state_std", "state_20", "state_17", "state_07"), c("district_std", "district_20", "district_17", "district_07"))
+  } else character()
+  inventory_key <- inventory_key[!is.na(inventory_key) & nzchar(inventory_key)]
+
+  keys <- sort(unique(c(panel_key, join_key, inventory_key)))
+  out <- data.frame(
     key = keys,
     panel_key_status = ifelse(keys %in% panel_key, "in_panel", "not_in_panel"),
     join_key_status = ifelse(keys %in% join_key, "in_join_map", "not_in_join_map"),
     stringsAsFactors = FALSE
   )
+  out$key_role <- ifelse(
+    out$key %in% inventory_key & out$panel_key_status == "not_in_panel",
+    "source_key_inventory_only",
+    ifelse(out$panel_key_status == "in_panel" & out$join_key_status == "in_join_map", "shared_panel_join_key", "requires_review")
+  )
+  out
 }
 
 build_district_matching_search_table <- function(district_panel, district_join_map, unmatched_rows = NULL, source_key_inventory = NULL) {
