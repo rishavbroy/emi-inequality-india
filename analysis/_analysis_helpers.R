@@ -20,7 +20,21 @@ read_analysis_csv <- function(...) {
   if (!file.exists(path)) {
     return(data.frame(note = paste("Missing analysis output:", path), stringsAsFactors = FALSE))
   }
-  utils::read.csv(path, stringsAsFactors = FALSE, check.names = FALSE)
+
+  if (file.info(path)$size <= 3L) {
+    return(data.frame(note = paste("No rows in analysis output:", path), stringsAsFactors = FALSE))
+  }
+
+  tryCatch(
+    utils::read.csv(path, stringsAsFactors = FALSE, check.names = FALSE),
+    error = function(e) {
+      data.frame(
+        note = paste("Could not read analysis output:", path),
+        reason = conditionMessage(e),
+        stringsAsFactors = FALSE
+      )
+    }
+  )
 }
 
 analysis_table <- function(df, caption = NULL, digits = 3) {

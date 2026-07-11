@@ -49,3 +49,17 @@ test_that("spatial IV formula attempts use current IV formula adapter", {
   expect_match(src, "cluster_se_status", fixed = TRUE)
   expect_match(src, "tidy_spatial_iv_diagnostics", fixed = TRUE)
 })
+
+
+test_that("spatial IV coefficient summaries fall back to point estimates", {
+  fit <- structure(list(coefficients = c(`(Intercept)` = 1, x = 2)), class = "toy_ivreg_for_coefficients")
+  coef.toy_ivreg_for_coefficients <- function(object, ...) object$coefficients
+  summary.toy_ivreg_for_coefficients <- function(object, ...) stop("singular summary")
+
+  out <- tidy_spatial_iv_coefficients(fit, "toy_model", "model_default")
+
+  expect_equal(out$model, c("toy_model", "toy_model"))
+  expect_equal(out$vcov_type, c("model_default", "model_default"))
+  expect_equal(out$term, c("(Intercept)", "x"))
+  expect_equal(out$estimate, c(1, 2))
+})

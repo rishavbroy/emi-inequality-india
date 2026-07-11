@@ -226,6 +226,8 @@ test_that("analysis notebooks are populated with current-output tables", {
   expect_match(qmd, "spatial_iv_model_status.csv", fixed = TRUE)
   expect_match(qmd, "spatial_iv_diagnostics_summary.csv", fixed = TRUE)
   expect_match(helper, "knitr::kable", fixed = TRUE)
+  expect_match(helper, "No rows in analysis output", fixed = TRUE)
+  expect_match(helper, "Could not read analysis output", fixed = TRUE)
 })
 
 test_that("public audit can include analysis notes in the same log", {

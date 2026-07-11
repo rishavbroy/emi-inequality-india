@@ -126,9 +126,23 @@ fit_spatial_lag_iv_attempts <- function(panel, spatial_weights = NULL, cfg = lis
 
 tidy_spatial_iv_coefficients <- function(fit, model_name, vcov_type) {
   mat <- tryCatch(stats::coef(summary(fit)), error = function(e) NULL)
-  if (is.null(mat)) return(data.frame())
-  out <- as.data.frame(mat, stringsAsFactors = FALSE)
-  out$term <- rownames(mat)
+  if (!is.null(mat)) {
+    mat <- as.matrix(unclass(mat))
+    out <- as.data.frame(mat, stringsAsFactors = FALSE, check.names = FALSE)
+    out$term <- rownames(mat)
+  } else {
+    coefs <- tryCatch(stats::coef(fit), error = function(e) NULL)
+    if (is.null(coefs) || !length(coefs)) {
+      return(data.frame(
+        model = model_name,
+        vcov_type = vcov_type,
+        status = "not_available",
+        reason = "Could not extract either summary coefficients or point estimates.",
+        stringsAsFactors = FALSE
+      ))
+    }
+    out <- data.frame(term = names(coefs), estimate = as.numeric(coefs), stringsAsFactors = FALSE)
+  }
   rownames(out) <- NULL
   names(out) <- gsub(" ", "_", tolower(names(out)))
   out$model <- model_name
@@ -156,8 +170,9 @@ try_clustered_spatial_iv <- function(fit, panel, model_name) {
   if (inherits(ct, "error")) {
     return(data.frame(model = model_name, status = "failed", reason = conditionMessage(ct), stringsAsFactors = FALSE))
   }
-  out <- as.data.frame(ct, stringsAsFactors = FALSE)
-  out$term <- rownames(ct)
+  ct_mat <- as.matrix(unclass(ct))
+  out <- as.data.frame(ct_mat, stringsAsFactors = FALSE, check.names = FALSE)
+  out$term <- rownames(ct_mat)
   rownames(out) <- NULL
   names(out) <- gsub(" ", "_", tolower(names(out)))
   out$model <- model_name
@@ -174,8 +189,9 @@ tidy_spatial_iv_diagnostics <- function(summary_attempt, model_name) {
   if (is.null(diag)) {
     return(data.frame(model = model_name, status = "not_available", reason = "summary(..., diagnostics = TRUE) returned no diagnostics table.", stringsAsFactors = FALSE))
   }
-  out <- as.data.frame(diag, stringsAsFactors = FALSE)
-  out$diagnostic <- rownames(diag)
+  diag_mat <- as.matrix(unclass(diag))
+  out <- as.data.frame(diag_mat, stringsAsFactors = FALSE, check.names = FALSE)
+  out$diagnostic <- rownames(diag_mat)
   rownames(out) <- NULL
   names(out) <- gsub(" ", "_", tolower(names(out)))
   out$model <- model_name
