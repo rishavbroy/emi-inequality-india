@@ -53,8 +53,13 @@ benchmark_ame_methods <- function(selection_model, selection_data, cfg, sample_s
   if (is.list(selection_model) && !inherits(selection_model, "glm")) {
     return(data.frame(method = "avg_slopes", sample_size = NA_integer_, elapsed_seconds = NA_real_, status = "skipped", reason = selection_model$reason %||% "Selection model is not fitted.", stringsAsFactors = FALSE))
   }
-  data <- as.data.frame(selection_data, stringsAsFactors = FALSE)
-  if (!nrow(data)) return(data.frame(method = "avg_slopes", sample_size = NA_integer_, elapsed_seconds = NA_real_, status = "skipped", reason = "No selection rows.", stringsAsFactors = FALSE))
+  amed <- if (exists("ame_model_data_and_weights", mode = "function")) {
+    ame_model_data_and_weights(selection_model)
+  } else {
+    list(data = as.data.frame(stats::model.frame(selection_model)), wts = FALSE)
+  }
+  data <- as.data.frame(amed$data, stringsAsFactors = FALSE)
+  if (!nrow(data)) return(data.frame(method = "avg_slopes", sample_size = NA_integer_, elapsed_seconds = NA_real_, status = "skipped", reason = "No model-frame rows.", stringsAsFactors = FALSE))
   if (is.null(sample_sizes)) sample_sizes <- c(200L, 2000L)
   sample_sizes <- sample_sizes[sample_sizes <= nrow(data)]
   if (!length(sample_sizes)) sample_sizes <- min(200L, nrow(data))
@@ -62,9 +67,7 @@ benchmark_ame_methods <- function(selection_model, selection_data, cfg, sample_s
   options(marginaleffects_parallel = FALSE)
   on.exit(options(marginaleffects_parallel = old_parallel), add = TRUE)
 
-  has_weight <- "weight" %in% names(data)
-  base_args <- list(model = selection_model, vcov = TRUE, type = "response")
-  if (has_weight) base_args$wts <- "weight"
+  base_args <- list(model = selection_model, vcov = TRUE, type = "response", wts = amed$wts)
 
   safe_bind_rows(lapply(sample_sizes, function(n) {
     set.seed(999)
@@ -85,8 +88,7 @@ benchmark_ame_methods <- function(selection_model, selection_data, cfg, sample_s
           # when the package supports derivative-only estimation.
           legacy_error <- conditionMessage(e)
           fallback <- tryCatch({
-            fallback_args <- c(list(model = selection_model, vcov = FALSE, type = "response", newdata = newdata_sub), args)
-            if (has_weight) fallback_args$wts <- newdata_sub$weight
+            fallback_args <- c(list(model = selection_model, vcov = FALSE, type = "response", newdata = newdata_sub, wts = amed$wts), args)
             do.call(marginaleffects::avg_slopes, fallback_args)
             TRUE
           }, error = function(e2) conditionMessage(e2))

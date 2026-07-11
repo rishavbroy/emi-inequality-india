@@ -102,6 +102,24 @@ test_that("missingness diagnostics preserve legacy diagnostic components", {
   expect_true("Total probit-relevant with NA" %in% out$missing_counts$missing_var)
 })
 
+test_that("missingness regional diagnostics fall back to state-only rankings", {
+  df <- data.frame(
+    enrolled = c("Yes", "No", "Yes"),
+    AGE = c(10, 11, 12),
+    SEX = c("Female", "Male", "Female"),
+    HH_SIZE = c(4, 5, 4),
+    state_0708 = c("A", "A", "B"),
+    dmean_num_ENROLLMENT_COST = c(NA, 1, NA),
+    DIST_FROM_NEAREST_PRIMARY_CLASS = c(1, NA, 2),
+    father_educ = c(NA, 1, NA)
+  )
+
+  out <- diagnose_missingness(df, list())
+
+  expect_true(nrow(out$regional_cost) > 0L)
+  expect_equal(unique(out$regional_cost$region_diagnostic_level), "state_only_fallback")
+})
+
 test_that("tracker diagnostics include legacy source QA tables", {
   tracker <- data.frame(
     state_01 = c("Andhra Pradesh", "Jammu & Kashmir"),
@@ -121,6 +139,10 @@ test_that("tracker diagnostics include legacy source QA tables", {
   expect_equal(out$n_rows, 2L)
   expect_true(nrow(attr(out, "state_changes")) >= 1L)
   expect_true(nrow(attr(out, "inperiod_district_changes")) >= 1L)
+  expect_true(nrow(find_same_name_districts(data.frame(
+    state_20 = c("A", "B", "A"),
+    district_20 = c("Same", "same", "Different")
+  ))) >= 1L)
 })
 
 test_that("district matching diagnostics separate source-key inventory from true unmatched rows", {
@@ -134,6 +156,7 @@ test_that("district matching diagnostics separate source-key inventory from true
   expect_equal(out$n_unmatched_rows, 0L)
   expect_equal(out$n_source_key_inventory_rows, 1L)
   expect_true(nrow(attr(out, "source_key_inventory")) >= 1L)
+  expect_true(nrow(attr(out, "key_role_counts")) >= 1L)
   expect_true(nrow(attr(out, "all_rows_search")) >= 1L)
 })
 

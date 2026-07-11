@@ -114,11 +114,20 @@ summarize_missingness_by_variable <- function(df) {
 
 summarize_missingness_regions <- function(df, probit_vars, vars, top_n = 20L) {
   empty <- data.frame()
-  if (!all(c("state_0708", "region_0708") %in% names(df))) {
+  if (!"state_0708" %in% names(df)) {
     return(list(cost = empty, distance = empty, father_education = empty))
   }
   if (!length(probit_vars)) probit_vars <- names(df)
   temp <- df
+  region_cols <- intersect(c("state_0708", "region_0708"), names(temp))
+  # Legacy Chunk 8 inspected both state and region.  Some cleaned selection
+  # inputs no longer expose region_0708, so keep the diagnostic alive at the
+  # state level instead of writing empty CSVs.
+  if (!"region_0708" %in% region_cols) {
+    temp$region_0708 <- "all_regions_available_in_state_only_input"
+    region_cols <- c("state_0708", "region_0708")
+  }
+
   temp$any_na_row <- !stats::complete.cases(temp[intersect(probit_vars, names(temp))])
   for (nm in c("dmean_num_ENROLLMENT_COST", "DIST_FROM_NEAREST_PRIMARY_CLASS", "father_educ")) {
     temp[[paste0("miss_", nm)]] <- if (nm %in% names(temp)) as.integer(is.na(temp[[nm]])) else NA_integer_
@@ -129,16 +138,18 @@ summarize_missingness_regions <- function(df, probit_vars, vars, top_n = 20L) {
   temp$is_muslim <- if ("RELIGION" %in% names(temp)) as.integer(temp$RELIGION == "Muslim") else NA_integer_
   temp$is_st_sc_obc <- if ("SOCIAL_GROUP" %in% names(temp)) as.integer(temp$SOCIAL_GROUP %in% c("Scheduled Tribe", "Scheduled Caste", "Other Backward Class")) else NA_integer_
 
+  measure_cols <- c("any_na_row", "miss_dmean_num_ENROLLMENT_COST", "miss_DIST_FROM_NEAREST_PRIMARY_CLASS", "miss_father_educ", "is_urban", "is_female", "is_hindu", "is_muslim", "is_st_sc_obc")
   grouped <- stats::aggregate(
-    temp[c("any_na_row", "miss_dmean_num_ENROLLMENT_COST", "miss_DIST_FROM_NEAREST_PRIMARY_CLASS", "miss_father_educ", "is_urban", "is_female", "is_hindu", "is_muslim", "is_st_sc_obc")],
-    temp[c("state_0708", "region_0708")],
+    temp[measure_cols],
+    temp[region_cols],
     function(x) mean(as.numeric(x), na.rm = TRUE)
   )
-  n <- stats::aggregate(temp$any_na_row, temp[c("state_0708", "region_0708")], length)
+  n <- stats::aggregate(temp$any_na_row, temp[region_cols], length)
   names(n)[names(n) == "x"] <- "n"
-  out <- merge(n, grouped, by = c("state_0708", "region_0708"), all = TRUE)
+  out <- merge(n, grouped, by = region_cols, all = TRUE)
   names(out) <- sub("^any_na_row$", "pct_any_na", names(out))
-  pct_cols <- setdiff(names(out), c("state_0708", "region_0708", "n"))
+  out$region_diagnostic_level <- if ("region_0708" %in% names(df)) "state_region" else "state_only_fallback"
+  pct_cols <- setdiff(names(out), c(region_cols, "n", "region_diagnostic_level"))
   out[pct_cols] <- lapply(out[pct_cols], function(x) round(100 * x, 2))
   rank_one <- function(col) {
     if (!col %in% names(out)) return(empty)
