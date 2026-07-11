@@ -40,6 +40,7 @@ diagnose_district_matching <- function(district_panel, district_join_map, cfg) {
   attr(base, "tracker_panel_comparison") <- compare_tracker_to_matched_panel(panel, join_map, unmatched, many, source_key_inventory)
   attr(base, "all_rows_search") <- build_district_matching_search_table(panel, join_map, unmatched, source_key_inventory)
   attr(base, "key_comparison") <- key_comparison
+  attr(base, "key_role_counts") <- summarize_district_key_roles(key_comparison)
   attr(base, "legacy_reference") <- legacy_district_matching_reference(base)
   class(base) <- c("emi_district_matching_diagnostics", class(base))
   base
@@ -182,6 +183,22 @@ build_district_matching_search_table <- function(district_panel, district_join_m
   }))
 }
 
+
+summarize_district_key_roles <- function(key_comparison) {
+  key_comparison <- as.data.frame(key_comparison, stringsAsFactors = FALSE)
+  if (!nrow(key_comparison) || !"key_role" %in% names(key_comparison)) return(data.frame())
+  tab <- as.data.frame(table(key_role = key_comparison$key_role), stringsAsFactors = FALSE)
+  names(tab) <- c("key_role", "n_keys")
+  tab$n_keys <- as.integer(tab$n_keys)
+  tab$interpretation <- ifelse(
+    tab$key_role == "source_key_inventory_only",
+    "Observed only in the fallback source-key inventory; not a true failed final-panel join.",
+    ifelse(tab$key_role == "shared_panel_join_key", "Shared by active final panel and join map.", "Requires manual review.")
+  )
+  tab[order(tab$key_role), , drop = FALSE]
+}
+
+
 legacy_district_matching_reference <- function(summary) {
   data.frame(
     diagnostic = c("unmatched_rows", "source_key_inventory", "many_to_many_cases", "all_rows_search"),
@@ -207,6 +224,7 @@ save_district_matching_diagnostics <- function(diagnostics, dir = "outputs/diagn
     many_to_many = write_diagnostic_csv(attr(diagnostics, "many_to_many_cases") %||% data.frame(), file.path(dir, "district_matching_many_to_many_cases.csv")),
     tracker_panel_comparison = write_diagnostic_csv(attr(diagnostics, "tracker_panel_comparison") %||% data.frame(), file.path(dir, "district_matching_tracker_panel_comparison.csv")),
     key_comparison = write_diagnostic_csv(attr(diagnostics, "key_comparison") %||% data.frame(), file.path(dir, "district_matching_key_comparison.csv")),
+    key_role_counts = write_diagnostic_csv(attr(diagnostics, "key_role_counts") %||% data.frame(), file.path(dir, "district_matching_key_role_counts.csv")),
     all_rows_search = write_diagnostic_csv(attr(diagnostics, "all_rows_search") %||% data.frame(), file.path(dir, "district_matching_all_rows_search.csv")),
     legacy_reference = write_diagnostic_csv(attr(diagnostics, "legacy_reference") %||% data.frame(), file.path(dir, "district_matching_legacy_reference.csv"))
   )

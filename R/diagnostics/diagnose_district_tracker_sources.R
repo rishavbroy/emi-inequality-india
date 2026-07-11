@@ -11,7 +11,7 @@
 #' benchmarks so a changed tracker can be distinguished from a missing port.
 diagnose_district_tracker_sources <- function(raw_district_changes, district_tracker, cfg) {
   source_counts <- compare_tracker_source_coverage(raw_district_changes, district_tracker)
-  tracker <- as.data.frame(district_tracker, stringsAsFactors = FALSE)
+  tracker <- tracker_with_processed_fallback(district_tracker)
 
   state_changes <- safe_bind_rows(list(
     detect_tracker_state_changes(tracker),
@@ -44,6 +44,19 @@ diagnose_district_tracker_sources <- function(raw_district_changes, district_tra
   attr(out, "legacy_reference") <- legacy_reference
   class(out) <- c("emi_tracker_source_diagnostics", class(out))
   out
+}
+
+
+tracker_with_processed_fallback <- function(district_tracker) {
+  tracker <- as.data.frame(district_tracker, stringsAsFactors = FALSE)
+  if (nrow(tracker) && length(tracker_year_suffixes(tracker, "district"))) return(tracker)
+  for (path in c("data/processed/district_tracker_2001_2007_2017_2020.csv", "data/processed/district_tracker_legacy.csv")) {
+    if (file.exists(path) && file.info(path)$size > 0) {
+      fallback <- utils::read.csv(path, stringsAsFactors = FALSE, check.names = FALSE)
+      if (nrow(fallback) && length(tracker_year_suffixes(fallback, "district"))) return(fallback)
+    }
+  }
+  tracker
 }
 
 compare_tracker_source_coverage <- function(raw_district_changes, district_tracker = NULL) {
@@ -217,7 +230,7 @@ detect_inperiod_district_changes <- function(tracker) {
 }
 
 find_same_name_districts <- function(tracker) {
-  tracker <- as.data.frame(tracker, stringsAsFactors = FALSE)
+  tracker <- tracker_with_processed_fallback(tracker)
   suffixes <- tracker_year_suffixes(tracker, "district")
   out <- lapply(suffixes, function(sfx) {
     state_col <- paste0("state_", sfx)
@@ -227,13 +240,25 @@ find_same_name_districts <- function(tracker) {
     names(temp) <- c("state", "district")
     temp$state <- tracker_value(temp$state)
     temp$district <- tracker_value(temp$district)
-    temp <- temp[nzchar(temp$district), , drop = FALSE]
+    temp$state_key <- canon(temp$state)
+    temp$district_key <- canon(temp$district)
+    temp <- temp[nzchar(temp$district_key), , drop = FALSE]
     if (!nrow(temp)) return(data.frame())
-    split_d <- split(temp, temp$district)
+    split_d <- split(temp, temp$district_key)
     safe_bind_rows(lapply(split_d, function(x) {
       states <- sort(unique(x$state[nzchar(x$state)]))
-      if (length(states) <= 1L) return(data.frame())
-      data.frame(year_suffix = sfx, district_name = x$district[[1]], n_districts = nrow(x), n_states = length(states), states = paste(states, collapse = "; "), stringsAsFactors = FALSE)
+      state_keys <- sort(unique(x$state_key[nzchar(x$state_key)]))
+      if (length(state_keys) <= 1L) return(data.frame())
+      data.frame(
+        year_suffix = sfx,
+        year = tracker_suffix_year(sfx),
+        district_name = sort(unique(x$district[nzchar(x$district)]))[[1]],
+        district_key = x$district_key[[1]],
+        n_districts = nrow(x),
+        n_states = length(states),
+        states = paste(states, collapse = "; "),
+        stringsAsFactors = FALSE
+      )
     }))
   })
   safe_bind_rows(out)

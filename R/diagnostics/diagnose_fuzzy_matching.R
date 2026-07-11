@@ -82,7 +82,8 @@ diagnose_fuzzy_matching <- function(district_tracker, district_join_map, cfg) {
 
 legacy_fuzzy_candidate_pairs <- function(district_tracker = data.frame(), district_join_map = data.frame()) {
   out <- list(legacy_troublesome_name_pairs())
-  tracker <- as.data.frame(district_tracker, stringsAsFactors = FALSE)
+  tracker <- if (exists("tracker_with_processed_fallback", mode = "function")) tracker_with_processed_fallback(district_tracker) else as.data.frame(district_tracker, stringsAsFactors = FALSE)
+  source_key_inventory <- if (exists("extract_source_key_inventory", mode = "function")) extract_source_key_inventory(district_join_map) else data.frame()
   join_map <- as.data.frame(district_join_map, stringsAsFactors = FALSE)
 
   add_tracker_pair <- function(a, b, source) {
@@ -123,7 +124,7 @@ legacy_fuzzy_candidate_pairs <- function(district_tracker = data.frame(), distri
   # that path, compare each source-key district with tracker district names in
   # the same state/year when those columns are available.  This yields an active
   # candidate universe instead of only the nine hand-picked legacy examples.
-  out[[length(out) + 1L]] <- source_key_inventory_candidate_pairs(tracker, join_map)
+  out[[length(out) + 1L]] <- source_key_inventory_candidate_pairs(tracker, source_key_inventory)
 
   join_district_cols <- grep("district", names(join_map), value = TRUE, ignore.case = TRUE)
   join_district_cols <- setdiff(join_district_cols, grep("key|code", join_district_cols, value = TRUE, ignore.case = TRUE))

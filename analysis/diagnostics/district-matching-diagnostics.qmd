@@ -41,6 +41,11 @@ if (all(c("panel_key_status", "join_key_status") %in% names(key_comparison))) {
 }
 ```
 
+
+```{r key-role-counts, echo=FALSE, results='asis'}
+analysis_table(read_analysis_csv("diagnostics", "extended", "district_matching", "district_matching_key_role_counts.csv"), "Panel/join key roles and interpretation")
+```
+
 ```{r source-inventory, echo=FALSE, results='asis'}
 analysis_table(read_analysis_csv("diagnostics", "extended", "district_matching", "district_matching_source_key_inventory.csv"), "Fallback source-key inventory separated from true unmatched rows", max_rows = 20)
 ```
