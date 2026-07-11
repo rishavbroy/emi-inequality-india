@@ -13,3 +13,7 @@ Current counts can differ because the active object is the refactored district p
 The refactored public diagnostic reproduces the legacy method choices: rook contiguity, `spdep::nb2listw(..., style = "W", zero.policy = TRUE)`, and `spdep::moran.test(..., zero.policy = TRUE)`. The current paper consumes the active-pipeline p-values for `m_cons_resid` and `m_cons` through `report_values`.
 
 The legacy comments recorded more extreme p-values for several tests. Some of those comments explicitly refer to residual diagnostics before additional controls were added. The current values should therefore be described as current active-pipeline diagnostics that preserve the qualitative conclusion of strong spatial autocorrelation, not as exact numeric parity with every legacy comment.
+
+## Current paper prose
+
+The legacy report prose previously said that the Moran's I values reflected queen contiguity and were robust to rook contiguity.  The active public diagnostic now reports rook-contiguity values, while queen-contiguity comparisons are preserved in the extended diagnostics.  The postprocessor therefore rewrites that footnote minimally so the current paper does not claim queen-contiguity results for rook-backed report values.

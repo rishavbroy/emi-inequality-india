@@ -629,11 +629,19 @@ ensure_report_output_objects <- function(lines) {
   lines
 }
 
-ensure_references_heading <- function(lines) {
-  if (any(grepl("^# References", lines))) return(lines)
-  appendix <- grep("^# (\\(APPENDIX\\) )?Appendix|^# A Appendix|^# B Technical Note", lines, perl = TRUE)
-  insert_at <- if (length(appendix)) appendix[[1]] - 1L else length(lines)
-  append(lines, c("", "# References {-}"), after = max(0L, insert_at - 1L))
+move_references_heading_to_end <- function(lines) {
+  lines <- lines[!grepl("^# References", lines)]
+  while (length(lines) && !nzchar(trimws(lines[[length(lines)]]))) lines <- lines[-length(lines)]
+  c(lines, "", "# References {-}")
+}
+
+fix_spatial_contiguity_note <- function(lines) {
+  gsub(
+    "Results reflect queen contiguity but are robust to rook contiguity.",
+    "Results currently reflect rook contiguity; queen-contiguity comparisons are retained in the extended spatial diagnostics and refactor notes.",
+    lines,
+    fixed = TRUE
+  )
 }
 
 postprocess_one <- function(path) {
@@ -657,7 +665,12 @@ postprocess_one <- function(path) {
     lines <- neutralize_standalone_map_crossrefs(lines)
   }
   if (identical(path, "paper/report.qmd") || identical(path, "paper/appendix.qmd")) lines <- fix_appendix_headings(lines)
-  if (identical(path, "paper/report.qmd")) lines <- ensure_references_heading(lines)
+  if (identical(path, "paper/report.qmd") || identical(path, "paper/appendix.qmd") || identical(path, "docs/district-matching.qmd")) {
+    lines <- fix_spatial_contiguity_note(lines)
+  }
+  if (identical(path, "paper/report.qmd")) {
+    lines <- move_references_heading_to_end(lines)
+  }
 
   lines <- normalize_inserted_output_captions(lines)
   if (identical(path, "paper/report.qmd")) {
