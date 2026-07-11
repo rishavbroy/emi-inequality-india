@@ -266,6 +266,8 @@ test_that("analysis helpers avoid absolute-path diagnostics and fence legacy cod
 
   expect_match(helper, "analysis_rel_path", fixed = TRUE)
   expect_match(helper, "analysis_is_code_like", fixed = TRUE)
+  expect_match(helper, "analysis_line_continues_code", fixed = TRUE)
+  expect_match(helper, "^#\\s+", fixed = TRUE)
   expect_match(helper, "```r", fixed = TRUE)
   expect_match(long_paths, "analysis_render_source_file", fixed = TRUE)
   expect_false(grepl("readLines(analysis_path", long_paths, fixed = TRUE))

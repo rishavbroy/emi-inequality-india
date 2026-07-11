@@ -86,6 +86,11 @@ analysis_legacy_comment_lines <- function(filename, from = NULL, to = NULL) {
   keep <- grepl("^\\s*#", lines) | !nzchar(trimws(lines))
   lines <- lines[keep]
   lines <- sub("^\\s*# ?", "", lines)
+  # Legacy comments sometimes contain commented-out R comments, e.g.
+  # "# # Resolve futures...". After removing the outer R comment marker,
+  # a bare leading "#" is a code-comment marker, not a Markdown heading.
+  lines <- sub("^#\\s*$", "", lines)
+  lines <- sub("^#\\s+", "", lines)
   while (length(lines) && !nzchar(trimws(lines[[1]]))) lines <- lines[-1]
   while (length(lines) && !nzchar(trimws(lines[[length(lines)]]))) lines <- lines[-length(lines)]
   lines
@@ -94,8 +99,23 @@ analysis_legacy_comment_lines <- function(filename, from = NULL, to = NULL) {
 analysis_is_code_like <- function(x) {
   z <- trimws(x)
   if (!nzchar(z)) return(FALSE)
-  grepl("(<-|%>%|\\|>|::|:::)" , z) ||
-    grepl("^(library|require|source|set\\.|[A-Za-z0-9_.]+\\s*<-|[A-Za-z0-9_.]+\\s*\\(|[A-Za-z0-9_.]+\\s*\\+|\\+|\\)|\\}|\\]|if\\s*\\(|else\\b|for\\s*\\(|function\\s*\\(|ggplot\\(|aes\\(|geom_|labs\\(|theme_|scale_|mutate\\(|filter\\(|select\\(|summari[sz]e\\(|group_by\\(|arrange\\(|View\\b|chisq\\.test\\(|t\\.test\\(|map_df\\(|bind_rows\\(|full_join\\(|left_join\\(|anti_join\\(|inner_join\\(|coalesce\\(|case_when\\(|tribble\\(|data\\.frame\\(|read_|write_)" , z)
+  grepl("(<-|%>%|\\|>|::|:::|=\\s*(TRUE|FALSE|NULL|NA|[A-Za-z0-9_.]+)|,$|\\)\\s*$)" , z) ||
+    grepl("^(library|require|source|set\\.|[A-Za-z0-9_.]+\\s*<-|[A-Za-z0-9_.]+\\s*\\(|[A-Za-z0-9_.]+\\s*\\+|[A-Za-z0-9_.]+\\s*,|\\+|\\)|\\}|\\]|if\\s*\\(|else\\b|for\\s*\\(|function\\s*\\(|ggplot\\(|aes\\(|geom_|labs\\(|theme_|scale_|mutate\\(|filter\\(|select\\(|summari[sz]e\\(|group_by\\(|arrange\\(|View\\b|chisq\\.test\\(|t\\.test\\(|map_df\\(|bind_rows\\(|full_join\\(|left_join\\(|anti_join\\(|inner_join\\(|coalesce\\(|case_when\\(|tribble\\(|data\\.frame\\(|read_|write_)" , z)
+}
+
+analysis_code_balance <- function(lines) {
+  text <- paste(lines, collapse = "\n")
+  opens <- gregexpr("[\\(\\{\\[]", text)[[1]]
+  closes <- gregexpr("[\\)\\}\\]]", text)[[1]]
+  n_open <- if (opens[[1]] == -1L) 0L else length(opens)
+  n_close <- if (closes[[1]] == -1L) 0L else length(closes)
+  n_open - n_close
+}
+
+analysis_line_continues_code <- function(lines) {
+  if (!length(lines)) return(FALSE)
+  last <- trimws(lines[[length(lines)]])
+  analysis_code_balance(lines) > 0L || grepl("(,|\\+|%>%|\\|>|\\()$", last)
 }
 
 analysis_flush_legacy_block <- function(lines, code) {
@@ -123,6 +143,9 @@ analysis_render_legacy_comments <- function(filename, from = NULL, to = NULL, ca
       block <- character()
       block_code <- NA
       next
+    }
+    if (isTRUE(block_code) && !code && analysis_line_continues_code(block)) {
+      code <- TRUE
     }
     if (is.na(block_code)) block_code <- code
     if (!identical(code, block_code)) {
