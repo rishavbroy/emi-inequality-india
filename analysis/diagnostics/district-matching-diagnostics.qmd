@@ -1,0 +1,54 @@
+---
+title: "District Matching Diagnostics"
+format: gfm
+---
+```{r setup, include=FALSE}
+helper <- if (file.exists("analysis/_analysis_helpers.R")) "analysis/_analysis_helpers.R" else "../_analysis_helpers.R"
+source(helper)
+```
+
+## Legacy comments
+
+```{r legacy-comments, echo=FALSE, results='asis'}
+analysis_render_legacy_comments("20-match-districts-diagnose-errors.R", caption = "Legacy Chunk 20: district-matching error diagnosis")
+```
+
+```{r deviation-note, echo=FALSE, results='asis'}
+analysis_deviation_note("The legacy comments above diagnose unmatched rows from `merge_dfs_into_tracker()` and compare tracker alternatives. The current outputs below keep true unmatched rows, fallback source-key inventory rows, and panel-vs-join key comparisons separate so that source-key inventory is not misreported as a failed final-panel join.")
+```
+
+## Current targets-backed results
+
+```{r summary, echo=FALSE, results='asis'}
+analysis_table(read_analysis_csv("diagnostics", "extended", "district_matching", "district_matching_summary.csv"), "District-matching diagnostic summary")
+```
+
+```{r legacy-reference, echo=FALSE, results='asis'}
+analysis_table(read_analysis_csv("diagnostics", "extended", "district_matching", "district_matching_legacy_reference.csv"), "Legacy Chunk 20 diagnostic reference")
+```
+
+```{r tracker-panel, echo=FALSE, results='asis'}
+analysis_table(read_analysis_csv("diagnostics", "extended", "district_matching", "district_matching_tracker_panel_comparison.csv"), "Tracker/panel/intermediate row-count comparison")
+```
+
+```{r key-comparison, echo=FALSE, results='asis'}
+key_comparison <- read_analysis_csv("diagnostics", "extended", "district_matching", "district_matching_key_comparison.csv")
+if (all(c("panel_key_status", "join_key_status") %in% names(key_comparison))) {
+  key_summary <- as.data.frame(table(panel_key_status = key_comparison$panel_key_status, join_key_status = key_comparison$join_key_status), stringsAsFactors = FALSE)
+  analysis_table(key_summary, "Panel-vs-join key-status summary")
+} else {
+  analysis_table(key_comparison, "Panel-vs-join key-status summary")
+}
+```
+
+```{r source-inventory, echo=FALSE, results='asis'}
+analysis_table(read_analysis_csv("diagnostics", "extended", "district_matching", "district_matching_source_key_inventory.csv"), "Fallback source-key inventory separated from true unmatched rows", max_rows = 20)
+```
+
+```{r unmatched, echo=FALSE, results='asis'}
+analysis_table(read_analysis_csv("diagnostics", "extended", "district_matching", "district_matching_unmatched_rows.csv"), "True unmatched rows from current matching diagnostics", max_rows = 20)
+```
+
+```{r many-to-many, echo=FALSE, results='asis'}
+analysis_table(read_analysis_csv("diagnostics", "extended", "district_matching", "district_matching_many_to_many_cases.csv"), "Many-to-many cases from current matching diagnostics", max_rows = 20)
+```

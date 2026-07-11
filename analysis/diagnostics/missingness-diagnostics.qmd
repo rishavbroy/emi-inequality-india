@@ -1,0 +1,44 @@
+---
+title: "Missingness Diagnostics"
+format: gfm
+---
+```{r setup, include=FALSE}
+helper <- if (file.exists("analysis/_analysis_helpers.R")) "analysis/_analysis_helpers.R" else "../_analysis_helpers.R"
+source(helper)
+```
+
+## Legacy comments
+
+```{r legacy-comments, echo=FALSE, results='asis'}
+analysis_render_legacy_comments("08-participation-model-are-nas-randomly-distributed.R", caption = "Legacy Chunk 8: missingness checks")
+```
+
+```{r deviation-note, echo=FALSE, results='asis'}
+analysis_deviation_note("The prose and commented exploratory code above are rendered from the legacy comments, with comment markers removed and code-like comment blocks fenced. The tables below replace manually inspected objects and plots with current target outputs. The known `glm.fit: fitted probabilities numerically 0 or 1 occurred` warning is intentionally left in the target metadata and review archive because it is a diagnostic warning, not a public-build failure.")
+```
+
+## Current targets-backed results
+
+```{r counts, echo=FALSE, results='asis'}
+analysis_table(read_analysis_csv("diagnostics", "extended", "missingness", "missingness_counts.csv"), "Current missingness counts")
+```
+
+```{r regional-cost, echo=FALSE, results='asis'}
+analysis_table(read_analysis_csv("diagnostics", "extended", "missingness", "regional_missingness_cost.csv"), "Regions with the most cost-variable missingness", max_rows = 20)
+```
+
+```{r regional-distance, echo=FALSE, results='asis'}
+analysis_table(read_analysis_csv("diagnostics", "extended", "missingness", "regional_missingness_distance.csv"), "Regions with the most distance-to-school missingness", max_rows = 20)
+```
+
+```{r regional-father, echo=FALSE, results='asis'}
+analysis_table(read_analysis_csv("diagnostics", "extended", "missingness", "regional_missingness_father_education.csv"), "Regions with the most father-education missingness", max_rows = 20)
+```
+
+```{r logit-summary, echo=FALSE, results='asis'}
+analysis_table(read_analysis_csv("diagnostics", "extended", "missingness", "missingness_logit_summary.csv"), "Logit summaries for structured missingness")
+```
+
+```{r notes, echo=FALSE, results='asis'}
+analysis_table(read_analysis_csv("diagnostics", "extended", "missingness", "missingness_legacy_notes.csv"), "Legacy missingness notes retained as diagnostics")
+```

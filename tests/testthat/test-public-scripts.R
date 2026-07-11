@@ -72,7 +72,17 @@ test_that("postprocessor records legacy map placement and references-heading hel
   expect_match(src, "collage_main_maps")
   expect_match(src, "We are currently unable to replicate her justification of the exclusion restriction")
   expect_match(src, "collage_iv_region_maps")
-  expect_match(src, "ensure_references_heading")
+  expect_match(src, "move_references_heading_to_end")
+  expect_match(src, "fix_spatial_contiguity_note")
+})
+
+
+
+test_that("postprocessor moves references after the appendix and updates spatial contiguity prose", {
+  src <- paste(readLines(repo_file("scripts", "postprocess_public_qmds.R"), warn = FALSE), collapse = "\n")
+
+  expect_match(src, "move_references_heading_to_end", fixed = TRUE)
+  expect_match(src, "Results currently reflect rook contiguity", fixed = TRUE)
 })
 
 test_that("writing sample YAML includes LaTeX table packages for raw table excerpts", {
@@ -180,6 +190,8 @@ test_that("legacy diagnostics and benchmarking coverage document tracks ported c
   expect_match(src, "Chunk 8 missingness diagnostics", fixed = TRUE)
   expect_match(src, "Chunk 10 AME runtime/tuning", fixed = TRUE)
   expect_match(src, "Chunk 16 fuzzy", fixed = TRUE)
+  expect_match(src, "Chunk 15", fixed = TRUE)
+  expect_match(src, "Chunk 20", fixed = TRUE)
   expect_match(src, "Chunk 30 experimental spatial IV", fixed = TRUE)
   expect_match(src, "outputs/benchmarking", fixed = TRUE)
 })
@@ -230,6 +242,35 @@ test_that("analysis notebooks are populated with current-output tables", {
   expect_match(helper, "Could not read analysis output", fixed = TRUE)
 })
 
+
+
+test_that("analysis notebooks cover remaining legacy diagnostic comments", {
+  files <- c(
+    repo_file("analysis", "diagnostics", "missingness-diagnostics.qmd"),
+    repo_file("analysis", "diagnostics", "district-matching-diagnostics.qmd"),
+    repo_file("analysis", "exploratory", "instrument-exploration.qmd"),
+    repo_file("analysis", "diagnostics", "district-tracker-source-diagnostics.qmd")
+  )
+  text <- paste(vapply(files, function(x) paste(readLines(x, warn = FALSE), collapse = "\n"), character(1)), collapse = "\n")
+
+  expect_match(text, "08-participation-model-are-nas-randomly-distributed.R", fixed = TRUE)
+  expect_match(text, "20-match-districts-diagnose-errors.R", fixed = TRUE)
+  expect_match(text, "15-construct-2001-measure-iv.R", fixed = TRUE)
+  expect_false(grepl("to = 220", text, fixed = TRUE))
+  expect_match(text, "tracker_legacy_expected_same_name_districts.csv", fixed = TRUE)
+})
+
+test_that("analysis helpers avoid absolute-path diagnostics and fence legacy code", {
+  helper <- paste(readLines(repo_file("analysis", "_analysis_helpers.R"), warn = FALSE), collapse = "\n")
+  long_paths <- paste(readLines(repo_file("analysis", "io", "long-paths-and-8-3-filenames.qmd"), warn = FALSE), collapse = "\n")
+
+  expect_match(helper, "analysis_rel_path", fixed = TRUE)
+  expect_match(helper, "analysis_is_code_like", fixed = TRUE)
+  expect_match(helper, "```r", fixed = TRUE)
+  expect_match(long_paths, "analysis_render_source_file", fixed = TRUE)
+  expect_false(grepl("readLines(analysis_path", long_paths, fixed = TRUE))
+})
+
 test_that("public audit can include analysis notes in the same log", {
   src <- paste(readLines(repo_file("scripts", "run_public_build_audit.sh"), warn = FALSE), collapse = "\n")
 
@@ -260,5 +301,5 @@ test_that("analysis notebooks render only to GitHub-flavored Markdown", {
 
 test_that("analysis long-path note reads source from project root", {
   qmd <- paste(readLines(repo_file("analysis", "io", "long-paths-and-8-3-filenames.qmd"), warn = FALSE), collapse = "\n")
-  expect_match(qmd, 'analysis_path("R", "io", "read_long_paths.R")', fixed = TRUE)
+  expect_match(qmd, 'analysis_render_source_file("R/io/read_long_paths.R"', fixed = TRUE)
 })

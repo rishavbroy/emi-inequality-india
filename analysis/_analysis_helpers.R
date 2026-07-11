@@ -14,22 +14,30 @@ analysis_project_root <- function(start = getwd()) {
 
 analysis_path <- function(...) file.path(analysis_project_root(), ...)
 analysis_csv <- function(...) analysis_path("outputs", ...)
+analysis_rel_path <- function(path) {
+  root <- normalizePath(analysis_project_root(), winslash = "/", mustWork = TRUE)
+  path <- normalizePath(path, winslash = "/", mustWork = FALSE)
+  prefix <- paste0(root, "/")
+  if (startsWith(path, prefix)) substring(path, nchar(prefix) + 1L) else path
+}
+
 
 read_analysis_csv <- function(...) {
   path <- analysis_csv(...)
+  rel <- analysis_rel_path(path)
   if (!file.exists(path)) {
-    return(data.frame(note = paste("Missing analysis output:", path), stringsAsFactors = FALSE))
+    return(data.frame(note = paste("Missing analysis output:", rel), stringsAsFactors = FALSE))
   }
 
   if (file.info(path)$size <= 3L) {
-    return(data.frame(note = paste("No rows in analysis output:", path), stringsAsFactors = FALSE))
+    return(data.frame(note = paste("No rows in analysis output:", rel), stringsAsFactors = FALSE))
   }
 
   tryCatch(
     utils::read.csv(path, stringsAsFactors = FALSE, check.names = FALSE),
     error = function(e) {
       data.frame(
-        note = paste("Could not read analysis output:", path),
+        note = paste("Could not read analysis output:", rel),
         reason = conditionMessage(e),
         stringsAsFactors = FALSE
       )
@@ -37,9 +45,15 @@ read_analysis_csv <- function(...) {
   )
 }
 
-analysis_table <- function(df, caption = NULL, digits = 3) {
+analysis_table <- function(df, caption = NULL, digits = 3, max_rows = NULL) {
   df <- as.data.frame(df, stringsAsFactors = FALSE, check.names = FALSE)
   if (!nrow(df)) df <- data.frame(note = "No rows in this diagnostic output.", stringsAsFactors = FALSE)
+  if (!is.null(max_rows) && nrow(df) > max_rows) {
+    note_row <- as.data.frame(as.list(rep("", ncol(df))), stringsAsFactors = FALSE)
+    names(note_row) <- names(df)
+    note_row[[1]] <- paste("Table truncated in rendered note; full CSV has", nrow(df), "rows.")
+    df <- rbind(head(df, max_rows), note_row)
+  }
   tab <- knitr::kable(
     df,
     caption = caption,
@@ -55,7 +69,6 @@ analysis_table <- function(df, caption = NULL, digits = 3) {
   tab
 }
 
-
 analysis_legacy_chunk_path <- function(filename) {
   analysis_path("archive", "legacy-rmd-chunks", filename)
 }
@@ -63,7 +76,7 @@ analysis_legacy_chunk_path <- function(filename) {
 analysis_legacy_comment_lines <- function(filename, from = NULL, to = NULL) {
   path <- analysis_legacy_chunk_path(filename)
   if (!file.exists(path)) {
-    return(paste("Missing legacy chunk:", path))
+    return(paste("Missing legacy chunk:", analysis_rel_path(path)))
   }
   lines <- readLines(path, warn = FALSE)
   idx <- seq_along(lines)
@@ -73,29 +86,63 @@ analysis_legacy_comment_lines <- function(filename, from = NULL, to = NULL) {
   keep <- grepl("^\\s*#", lines) | !nzchar(trimws(lines))
   lines <- lines[keep]
   lines <- sub("^\\s*# ?", "", lines)
-  rle_blank <- rle(!nzchar(trimws(lines)))
-  out <- character()
-  pos <- 1L
-  for (i in seq_along(rle_blank$lengths)) {
-    run <- lines[pos:(pos + rle_blank$lengths[[i]] - 1L)]
-    if (rle_blank$values[[i]]) {
-      out <- c(out, "")
-    } else {
-      out <- c(out, run)
-    }
-    pos <- pos + rle_blank$lengths[[i]]
+  while (length(lines) && !nzchar(trimws(lines[[1]]))) lines <- lines[-1]
+  while (length(lines) && !nzchar(trimws(lines[[length(lines)]]))) lines <- lines[-length(lines)]
+  lines
+}
+
+analysis_is_code_like <- function(x) {
+  z <- trimws(x)
+  if (!nzchar(z)) return(FALSE)
+  grepl("(<-|%>%|\\|>|::|:::)" , z) ||
+    grepl("^(library|require|source|set\\.|[A-Za-z0-9_.]+\\s*<-|[A-Za-z0-9_.]+\\s*\\(|[A-Za-z0-9_.]+\\s*\\+|\\+|\\)|\\}|\\]|if\\s*\\(|else\\b|for\\s*\\(|function\\s*\\(|ggplot\\(|aes\\(|geom_|labs\\(|theme_|scale_|mutate\\(|filter\\(|select\\(|summari[sz]e\\(|group_by\\(|arrange\\(|View\\b|chisq\\.test\\(|t\\.test\\(|map_df\\(|bind_rows\\(|full_join\\(|left_join\\(|anti_join\\(|inner_join\\(|coalesce\\(|case_when\\(|tribble\\(|data\\.frame\\(|read_|write_)" , z)
+}
+
+analysis_flush_legacy_block <- function(lines, code) {
+  if (!length(lines)) return(invisible(NULL))
+  if (code) {
+    cat("```r\n", paste(lines, collapse = "\n"), "\n```\n\n", sep = "")
+  } else {
+    # Avoid accidental fenced-div parsing in GitHub/Pandoc when legacy prose uses :::.
+    lines <- gsub(":::", "\\\\:\\\\:\\\\:", lines, fixed = TRUE)
+    cat(paste(lines, collapse = "\n"), "\n\n", sep = "")
   }
-  while (length(out) && !nzchar(trimws(out[[1]]))) out <- out[-1]
-  while (length(out) && !nzchar(trimws(out[[length(out)]]))) out <- out[-length(out)]
-  out
 }
 
 analysis_render_legacy_comments <- function(filename, from = NULL, to = NULL, caption = NULL) {
   if (!is.null(caption)) cat("\n### ", caption, "\n\n", sep = "")
   lines <- analysis_legacy_comment_lines(filename, from = from, to = to)
-  cat(paste(lines, collapse = "\n"), "\n\n", sep = "")
+  if (!length(lines)) return(invisible(NULL))
+  block <- character()
+  block_code <- NA
+  for (line in lines) {
+    blank <- !nzchar(trimws(line))
+    code <- analysis_is_code_like(line)
+    if (blank) {
+      analysis_flush_legacy_block(block, isTRUE(block_code))
+      block <- character()
+      block_code <- NA
+      next
+    }
+    if (is.na(block_code)) block_code <- code
+    if (!identical(code, block_code)) {
+      analysis_flush_legacy_block(block, isTRUE(block_code))
+      block <- character()
+      block_code <- code
+    }
+    block <- c(block, line)
+  }
+  analysis_flush_legacy_block(block, isTRUE(block_code))
+  invisible(NULL)
 }
 
 analysis_deviation_note <- function(text) {
   cat("\n**Deviation note.** ", text, "\n\n", sep = "")
+}
+
+analysis_render_source_file <- function(path, language = "r") {
+  full <- if (file.exists(path)) path else analysis_path(path)
+  cat("```", language, "\n", sep = "")
+  cat(paste(readLines(full, warn = FALSE), collapse = "\n"), "\n", sep = "")
+  cat("```\n\n")
 }

@@ -10,7 +10,7 @@ source(helper)
 ## Legacy comments
 
 ```{r legacy-comments, echo=FALSE, results='asis'}
-analysis_render_legacy_comments("06-match-districts-construct-district-tracking-dfs.R", from = 1, to = 220, caption = "Legacy Chunk 6: district tracker construction and QA notes")
+analysis_render_legacy_comments("06-match-districts-construct-district-tracking-dfs.R", caption = "Legacy Chunk 6: district tracker construction and QA notes")
 ```
 
 ```{r deviation-note, echo=FALSE, results='asis'}
@@ -48,5 +48,9 @@ analysis_table(read_analysis_csv("diagnostics", "extended", "district_tracker_so
 ```
 
 ```{r same-name-districts, echo=FALSE, results='asis'}
-analysis_table(read_analysis_csv("diagnostics", "extended", "district_tracker_sources", "tracker_same_name_districts.csv"), "Same-name districts appearing in multiple states")
+analysis_table(read_analysis_csv("diagnostics", "extended", "district_tracker_sources", "tracker_same_name_districts.csv"), "Current same-name districts appearing in multiple states")
+```
+
+```{r expected-same-name, echo=FALSE, results='asis'}
+analysis_table(read_analysis_csv("diagnostics", "extended", "district_tracker_sources", "tracker_legacy_expected_same_name_districts.csv"), "Legacy same-name-district benchmark")
 ```

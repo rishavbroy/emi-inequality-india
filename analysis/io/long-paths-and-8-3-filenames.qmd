@@ -19,6 +19,6 @@ analysis_deviation_note("The prose above is rendered from the legacy comments, w
 
 ## Current helper implementation
 
-```{r long-path-functions, echo=TRUE}
-readLines(analysis_path("R", "io", "read_long_paths.R"), warn = FALSE)
+```{r long-path-functions, echo=FALSE, results='asis'}
+analysis_render_source_file("R/io/read_long_paths.R", language = "r")
 ```
