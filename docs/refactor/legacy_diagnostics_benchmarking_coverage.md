@@ -65,3 +65,15 @@ The diagnostics/benchmarking correctness pass adds the following guardrails afte
 - Legacy Chunk 20 is rendered in `analysis/diagnostics/district-matching-diagnostics.qmd`, with current unmatched-row, source-key-inventory, key-comparison, and many-to-many diagnostics from `outputs/diagnostics/extended/district_matching/`.
 - Legacy Chunk 6 is rendered without the earlier line-220 truncation so the same-name-district summary comments are included.  The expected 6--10 same-name-district benchmark is now emitted as `tracker_legacy_expected_same_name_districts.csv`.
 - Rendered analysis prose uses legacy comments as the source of truth.  Code-like commented blocks are fenced for readability and to prevent Quarto/GFM parsing artifacts; prose deviations are limited to explicit deviation notes immediately adjacent to current target-backed outputs.
+
+## Current-vs-legacy reconciliation status
+
+The goal of these diagnostics is methodological parity with the legacy checks, not forcing identical numeric output when the active cleaned inputs differ.  The following differences are therefore handled explicitly rather than hidden:
+
+- Missingness regional rankings fall back to state-level rankings when the cleaned selection data no longer expose `region_0708`.  This preserves the legacy "where are misses concentrated?" diagnostic instead of writing empty regional CSVs.
+- District tracker state-change, in-period district-name-change, and same-name-district outputs read the active tracker and, when needed, the processed tracker files.  If the cleaned tracker has resolved an ambiguity that was visible in raw legacy comments, the legacy expected rows remain in explicit reference CSVs for comparison.
+- District matching separates true unmatched rows from fallback source-key inventory rows and emits key-role counts so source-key inventory is not misinterpreted as failed final-panel matches.
+- Fuzzy-matching benchmarks expand from the nine hand-picked legacy examples to tracker transition pairs and fallback source-key inventory candidate pairs whenever those active inputs are present.
+- AME benchmarking now samples the fitted model frame and its explicit AME weights, matching the production AME path.  If the current `marginaleffects` version still fails, the failure is retained as a package-compatibility result rather than relabeled as a successful timing benchmark.
+- Spatial-weight and Moran's I differences remain documented in `docs/refactor/spatial_diagnostics_context.md`; the paper reports the active rook-based results and preserves queen comparisons in diagnostics, not in paper prose.
+- Spatial-IV attempts remain opt-in benchmarks.  Returning an `ivreg()` object is not treated as methodological success unless coefficient, clustered-SE, and diagnostics outputs are also numerically meaningful.
