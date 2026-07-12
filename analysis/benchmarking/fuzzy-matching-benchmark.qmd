@@ -25,6 +25,14 @@ fuzzy_reference <- analysis_target_csv("bench_fuzzy_matching", "fuzzy_matching_l
 
 The current benchmark evaluates `r analysis_format_number(sum(fuzzy_cov$n_pairs, na.rm = TRUE), 0)` candidate pairs across `r analysis_format_number(nrow(fuzzy_cov), 0)` pair-source groups.
 
+```{r fuzzy-current-candidate-count-analog}
+data.frame(
+  current_code_analog = "sum(fuzzy_cov$n_pairs, na.rm = TRUE)",
+  candidate_pairs = sum(fuzzy_cov$n_pairs, na.rm = TRUE),
+  pair_source_groups = nrow(fuzzy_cov)
+)
+```
+
 ```{r fuzzy-coverage}
 analysis_table(fuzzy_cov, "Benchmark candidate-pair coverage", max_rows = 30)
 ```

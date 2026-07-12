@@ -29,6 +29,10 @@ figure_manifest
 
 The current figure target produced `r analysis_format_number(length(figure_outputs), 0)` files.  The map-collage previews below are target outputs, not copied legacy exploratory graphics.
 
+```{r map-current-code-analog}
+figure_manifest[grepl("collage|map", figure_manifest$path, ignore.case = TRUE), , drop = FALSE]
+```
+
 ```{r map-previews, results='asis'}
 analysis_image("figure_files", "collage_main_maps.png", "Current main-map collage")
 analysis_image("figure_files", "collage_iv_region_maps.png", "Current IV and region map collage")

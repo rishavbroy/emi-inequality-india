@@ -15,8 +15,29 @@ source(helper)
 
 ## Legacy diagnostic intent
 
-The legacy project carried lengthy troubleshooting comments about Windows long paths, 8.3 short filenames, and reader fallbacks.  The current production implementation is in `R/io/read_long_paths.R`; this analysis note keeps the explanatory material out of production code and renders the current helper implementation directly.
+The legacy project carried lengthy troubleshooting comments about Windows long paths, 8.3 short filenames, and reader fallbacks.  The current production implementation is in `R/io/read_long_paths.R`; this analysis note keeps the troubleshooting material out of production code while rendering runnable current-code analogs directly.
 
-```{r long-path-functions}
-analysis_render_source_file("R/io/read_long_paths.R", language = "r")
+```{r long-path-source-current-functions}
+source(analysis_path("R", "io", "read_long_paths.R"))
+read_with_short_path
+get_windows_short_path
+normalize_path_for_os
+```
+
+```{r long-path-current-reader-contract}
+tmp <- tempfile(fileext = ".csv")
+write.csv(data.frame(x = 1:2), tmp, row.names = FALSE)
+read_csv_short(tmp)
+data.frame(
+  current_code_analog = c(
+    "normalize_path_for_os(tmp)",
+    "get_windows_short_path(tmp)",
+    "read_csv_short(tmp)"
+  ),
+  result = c(
+    normalize_path_for_os(tmp),
+    get_windows_short_path(tmp),
+    paste(names(read_csv_short(tmp)), collapse = ", ")
+  )
+)
 ```

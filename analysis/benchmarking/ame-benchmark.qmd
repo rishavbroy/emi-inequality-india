@@ -28,6 +28,15 @@ predict_calls <- analysis_value(ame_methods, column = "centered_predict_calls_fu
 
 The current active model frame has `r analysis_format_number(n_numeric, 0)` numeric variables and `r analysis_format_number(full_n, 0)` observations.  Centered finite differences therefore imply `r analysis_format_number(predict_calls, 0)` full-data calls of `predict()` if each numeric variable is perturbed up and down once.  This is the current-codebase analog of the legacy note that `avg_slopes()` uses centered finite differences.
 
+```{r ame-predict-call-count-current-code}
+data.frame(
+  current_code_analog = "n_numeric_variables * n_observations * 2 predict() calls",
+  n_numeric_variables = n_numeric,
+  n_observations = full_n,
+  centered_predict_calls = n_numeric * full_n * 2
+)
+```
+
 Method 1 was straight sampling/subsampling.  The current benchmark keeps `set.seed(999)`, samples from the active model frame, and calls the production `marginaleffects::avg_slopes()` method.
 
 ```{r ame-methods-table}
@@ -38,6 +47,10 @@ analysis_table(
 ```
 
 With `newdata = sel_data` (no subsampling, as if `num_samp` were `r analysis_format_number(full_n, 0)`), the legacy run took several minutes; the default current benchmark tier intentionally does not rerun the full-data AME timing every public build.  With the current default benchmark tier, the largest sampled benchmark uses `num_samp` equal to `r analysis_format_number(max(ame_methods$sample_size, na.rm = TRUE), 0)` and the slowest recorded current run took `r analysis_format_number(max(ame_methods$elapsed_seconds, na.rm = TRUE), 3)` seconds.
+
+```{r ame-current-runtime-analog}
+ame_methods[, intersect(c("method", "sample_size", "elapsed_seconds", "status", "reason"), names(ame_methods)), drop = FALSE]
+```
 
 Method 2 was subsampling with forward differences.  The current analog is the row whose method is `avg_slopes_fdforward`.
 

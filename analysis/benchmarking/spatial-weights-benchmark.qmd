@@ -25,6 +25,10 @@ spatial_ref <- analysis_target_csv("diag_ext_spatial_weights", "spatial_weights_
 
 The current rook benchmark has `r analysis_format_number(analysis_metric(spatial_bench, "contiguity", "rook", "mean_neighbors"), 3)` mean neighbors; the current queen benchmark has `r analysis_format_number(analysis_metric(spatial_bench, "contiguity", "queen", "mean_neighbors"), 3)` mean neighbors.
 
+```{r spatial-weight-current-code-analog}
+spatial_bench[spatial_bench$contiguity %in% c("rook", "queen"), c("contiguity", "n", "mean_neighbors", "n_islands", "elapsed_seconds"), drop = FALSE]
+```
+
 ```{r spatial-weight-benchmark}
 analysis_table(spatial_bench, "Current rook/queen benchmark")
 ```

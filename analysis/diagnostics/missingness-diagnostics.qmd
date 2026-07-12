@@ -30,6 +30,10 @@ corr_enrolled_pairs <- analysis_target_csv("diag_ext_missingness", "missingness_
 
 The current active data contain `r analysis_format_number(analysis_metric(missing_counts, "missing_var", "Total probit-relevant with NA", "n_missing"), 0)` probit-relevant rows with at least one missing value and `r analysis_format_number(analysis_metric(missing_counts, "missing_var", "Total probit-relevant with no NA", "n_missing"), 0)` probit-relevant rows with no missing value.
 
+```{r missingness-current-code-analog}
+missing_counts[order(-missing_counts$n_missing), c("missing_var", "n_missing", "pct_missing"), drop = FALSE]
+```
+
 ```{r missingness-counts}
 analysis_table(missing_counts, "Current missingness counts")
 ```

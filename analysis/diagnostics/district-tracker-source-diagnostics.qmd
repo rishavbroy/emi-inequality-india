@@ -29,6 +29,23 @@ tracker_same <- analysis_target_csv("diag_ext_district_tracker_sources", "tracke
 tracker_expected_same <- analysis_target_csv("diag_ext_district_tracker_sources", "tracker_legacy_expected_same_name_districts.csv")
 ```
 
+```{r tracker-current-count-analogs}
+data.frame(
+  current_code_analog = c(
+    "nrow(tracker_state_events)",
+    "nrow(tracker_expected_state)",
+    "nrow(tracker_inperiod)",
+    "nrow(tracker_expected_inperiod)"
+  ),
+  rows = c(
+    nrow(tracker_state_events),
+    nrow(tracker_expected_state),
+    nrow(tracker_inperiod),
+    nrow(tracker_expected_inperiod)
+  )
+)
+```
+
 ```{r tracker-tables}
 analysis_table(tracker_counts, "Tracker source row counts")
 analysis_table(tracker_state_changes, "Current row-level state/UT changes")
