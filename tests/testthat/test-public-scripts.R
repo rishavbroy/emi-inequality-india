@@ -341,3 +341,27 @@ test_that("analysis notebooks contain prose/current code directly instead of leg
   expect_match(text, "figure_files", fixed = TRUE)
   expect_match(text, "execute:\n  echo: true\n  output: true", fixed = TRUE)
 })
+
+test_that("analysis notes preserve legacy prose and document deviations", {
+  qmds <- list.files(repo_file("analysis"), pattern = "[.]qmd$", recursive = TRUE, full.names = TRUE)
+  text <- paste(vapply(qmds, function(x) paste(readLines(x, warn = FALSE), collapse = "\n"), character(1)), collapse = "\n")
+  deviations <- paste(readLines(repo_file("docs", "refactor", "analysis_prose_deviations.md"), warn = FALSE), collapse = "\n")
+
+  expect_match(text, "Raw AME derivation is very slow", fixed = TRUE)
+  expect_match(text, "Southern region of Rajasthan: People with one missing cost variable", fixed = TRUE)
+  expect_match(text, "***Why the gigantic discrepancy???", fixed = TRUE)
+  expect_match(text, "Number of rows from fuzzy full joining", fixed = TRUE)
+  expect_match(text, "All of these Moran's I stats are ridiculously, suspiciously high", fixed = TRUE)
+  expect_match(text, "Don't work even when diagnostics = FALSE", fixed = TRUE)
+  expect_match(text, "For the names of all color palette", fixed = TRUE)
+  expect_match(text, "EMIE has three peaks", fixed = TRUE)
+  expect_match(text, "Purpose of this chunk: to ensure R can identify and read in all necessary files", fixed = TRUE)
+  expect_match(text, "analysis_deviation_note", fixed = TRUE)
+
+  expect_match(deviations, "default rule is to keep legacy prose", fixed = TRUE)
+  expect_match(deviations, "Chunk 10", fixed = TRUE)
+  expect_match(deviations, "Chunk 8", fixed = TRUE)
+  expect_match(deviations, "Chunk 20", fixed = TRUE)
+  expect_match(deviations, "Chunk 29", fixed = TRUE)
+  expect_match(deviations, "Chunk 30", fixed = TRUE)
+})
