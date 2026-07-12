@@ -253,24 +253,24 @@ test_that("analysis notebooks cover remaining legacy diagnostic comments", {
   )
   text <- paste(vapply(files, function(x) paste(readLines(x, warn = FALSE), collapse = "\n"), character(1)), collapse = "\n")
 
-  expect_match(text, "08-participation-model-are-nas-randomly-distributed.R", fixed = TRUE)
-  expect_match(text, "20-match-districts-diagnose-errors.R", fixed = TRUE)
-  expect_match(text, "15-construct-2001-measure-iv.R", fixed = TRUE)
-  expect_false(grepl("to = 220", text, fixed = TRUE))
+  expect_match(text, "Rajasthan/Southern case study", fixed = TRUE)
+  expect_match(text, "merge_dfs_into_tracker", fixed = TRUE)
+  expect_match(text, "instrument-strength plots", fixed = TRUE)
   expect_match(text, "tracker_legacy_expected_same_name_districts.csv", fixed = TRUE)
+  expect_false(grepl("analysis_render_legacy_comments", text, fixed = TRUE))
 })
 
-test_that("analysis helpers avoid absolute-path diagnostics and fence legacy code", {
+test_that("analysis helpers read target-backed outputs and render source files", {
   helper <- paste(readLines(repo_file("analysis", "_analysis_helpers.R"), warn = FALSE), collapse = "\n")
   long_paths <- paste(readLines(repo_file("analysis", "io", "long-paths-and-8-3-filenames.qmd"), warn = FALSE), collapse = "\n")
 
   expect_match(helper, "analysis_rel_path", fixed = TRUE)
-  expect_match(helper, "analysis_is_code_like", fixed = TRUE)
-  expect_match(helper, "analysis_line_continues_code", fixed = TRUE)
-  expect_match(helper, "sub(\"^#\\\\s+\", \"\", lines)", fixed = TRUE)
-  expect_match(helper, "```r", fixed = TRUE)
+  expect_match(helper, "analysis_read_target", fixed = TRUE)
+  expect_match(helper, "analysis_target_csv", fixed = TRUE)
+  expect_match(helper, "analysis_image", fixed = TRUE)
   expect_match(long_paths, "analysis_render_source_file", fixed = TRUE)
   expect_false(grepl("readLines(analysis_path", long_paths, fixed = TRUE))
+  expect_false(grepl("analysis_is_code_like", helper, fixed = TRUE))
 })
 
 test_that("public audit can include analysis notes in the same log", {
@@ -304,4 +304,18 @@ test_that("analysis notebooks render only to GitHub-flavored Markdown", {
 test_that("analysis long-path note reads source from project root", {
   qmd <- paste(readLines(repo_file("analysis", "io", "long-paths-and-8-3-filenames.qmd"), warn = FALSE), collapse = "\n")
   expect_match(qmd, 'analysis_render_source_file("R/io/read_long_paths.R"', fixed = TRUE)
+})
+
+
+test_that("analysis notebooks contain prose/current code directly instead of legacy extraction calls", {
+  qmds <- list.files(repo_file("analysis"), pattern = "[.]qmd$", recursive = TRUE, full.names = TRUE)
+  text <- paste(vapply(qmds, function(x) paste(readLines(x, warn = FALSE), collapse = "\n"), character(1)), collapse = "\n")
+
+  expect_false(grepl("analysis_render_legacy_comments", text, fixed = TRUE))
+  expect_false(grepl("echo=FALSE", text, fixed = TRUE))
+  expect_match(text, "analysis_target_csv", fixed = TRUE)
+  expect_match(text, "missingness_correlation_all.png", fixed = TRUE)
+  expect_match(text, "collage_main_maps.png", fixed = TRUE)
+  expect_match(text, "figure_files", fixed = TRUE)
+  expect_match(text, "execute:\n  echo: true\n  output: true", fixed = TRUE)
 })
