@@ -114,8 +114,35 @@ analysis_target_path <- function(target, filename = NULL) {
   paths[[1]]
 }
 
+analysis_target_output_dir <- function(target) {
+  dirs <- c(
+    diag_public_spatial_autocorrelation = "outputs/diagnostics/public",
+    diag_ext_spatial_weights = "outputs/diagnostics/extended/spatial",
+    diag_ext_missingness = "outputs/diagnostics/extended/missingness",
+    diag_ext_district_matching = "outputs/diagnostics/extended/district_matching",
+    diag_ext_district_tracker_sources = "outputs/diagnostics/extended/district_tracker_sources",
+    diag_ext_fuzzy_matching = "outputs/diagnostics/extended/fuzzy_matching",
+    diag_ext_instrument_exploration = "outputs/diagnostics/extended/instrument_exploration",
+    bench_ame_methods = "outputs/benchmarking/ame",
+    bench_fuzzy_matching = "outputs/benchmarking/fuzzy_matching",
+    bench_spatial_weights = "outputs/benchmarking/spatial_weights",
+    bench_spatial_iv_experimental = "outputs/benchmarking/spatial_iv"
+  )
+  value <- dirs[[target]]
+  if (is.null(value)) NA_character_ else unname(value)
+}
+
+analysis_target_side_effect_path <- function(target, filename) {
+  dir <- analysis_target_output_dir(target)
+  if (length(dir) != 1L || is.na(dir) || !nzchar(dir)) return(NA_character_)
+  path <- file.path(dir, filename)
+  full <- analysis_path(path)
+  if (file.exists(full)) path else NA_character_
+}
+
 analysis_target_csv <- function(target, filename) {
   path <- analysis_target_path(target, filename)
+  if (is.na(path)) path <- analysis_target_side_effect_path(target, filename)
   if (is.na(path)) {
     return(data.frame(note = paste("Target output not found:", target, filename), stringsAsFactors = FALSE))
   }

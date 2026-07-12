@@ -218,16 +218,12 @@ summarize_neighbor_counts <- function(spatial_weights) {
 #'
 save_spatial_weight_diagnostics <- function(diagnostics, dir = "outputs/diagnostics/extended/spatial") {
   dir.create(dir, recursive = TRUE, showWarnings = FALSE)
-  utils::write.csv(as.data.frame(diagnostics), file.path(dir, "spatial_weights_summary.csv"), row.names = FALSE)
-  comparison <- attr(diagnostics, "rook_queen_comparison")
-  if (!is.null(comparison) && nrow(as.data.frame(comparison))) {
-    utils::write.csv(as.data.frame(comparison), file.path(dir, "rook_queen_contiguity_comparison.csv"), row.names = FALSE)
-  }
-  reference <- attr(diagnostics, "legacy_reference")
-  if (!is.null(reference) && nrow(as.data.frame(reference))) {
-    utils::write.csv(as.data.frame(reference), file.path(dir, "spatial_weights_legacy_reference.csv"), row.names = FALSE)
-  }
-  diagnostics
+  paths <- c(
+    summary = write_diagnostic_csv(as.data.frame(diagnostics), file.path(dir, "spatial_weights_summary.csv")),
+    rook_queen_comparison = write_diagnostic_csv(attr(diagnostics, "rook_queen_comparison") %||% data.frame(), file.path(dir, "rook_queen_contiguity_comparison.csv")),
+    legacy_reference = write_diagnostic_csv(attr(diagnostics, "legacy_reference") %||% data.frame(), file.path(dir, "spatial_weights_legacy_reference.csv"))
+  )
+  legacy_output_manifest(paths)
 }
 
 # sample-end: code-spatial-weights
