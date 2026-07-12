@@ -46,6 +46,24 @@ legacy_ame_benchmark_notes <- function() {
   )
 }
 
+ame_env_flag_enabled <- function(name, default = FALSE) {
+  value <- tolower(trimws(Sys.getenv(name, if (isTRUE(default)) "true" else "false")))
+  !value %in% c("0", "false", "no", "off", "")
+}
+
+ame_benchmark_sample_sizes <- function(n_observations, cfg = list()) {
+  configured <- cfg$diagnostics$ame_benchmark_sample_sizes %||% cfg$ame_benchmark_sample_sizes %||% NULL
+  env <- Sys.getenv("EMI_AME_BENCHMARK_SAMPLE_SIZES", unset = "")
+  if (nzchar(env)) configured <- strsplit(env, ",", fixed = TRUE)[[1]]
+  if (is.null(configured)) configured <- c(200L, 2000L, 20000L)
+  configured <- trimws(as.character(configured))
+  include_full <- ame_env_flag_enabled("EMI_AME_BENCHMARK_INCLUDE_FULL", default = FALSE) || any(tolower(configured) %in% c("full", "all"))
+  numeric_sizes <- suppressWarnings(as.integer(configured[!tolower(configured) %in% c("full", "all")]))
+  numeric_sizes <- numeric_sizes[is.finite(numeric_sizes) & numeric_sizes > 0L]
+  out <- unique(c(numeric_sizes, if (isTRUE(include_full)) as.integer(n_observations) else integer()))
+  sort(out)
+}
+
 benchmark_ame_methods <- function(selection_model, selection_data, cfg, sample_sizes = NULL) {
   if (!requireNamespace("marginaleffects", quietly = TRUE)) {
     return(data.frame(method = "avg_slopes", sample_size = NA_integer_, elapsed_seconds = NA_real_, status = "skipped", reason = "Package marginaleffects not installed.", stringsAsFactors = FALSE))
@@ -66,7 +84,7 @@ benchmark_ame_methods <- function(selection_model, selection_data, cfg, sample_s
   n_observations <- nrow(data)
   n_numeric_variables <- length(numeric_variables)
   centered_predict_calls <- n_numeric_variables * n_observations * 2L
-  if (is.null(sample_sizes)) sample_sizes <- c(200L, 2000L)
+  if (is.null(sample_sizes)) sample_sizes <- ame_benchmark_sample_sizes(nrow(data), cfg)
   sample_sizes <- sample_sizes[sample_sizes <= nrow(data)]
   if (!length(sample_sizes)) sample_sizes <- min(200L, nrow(data))
   old_parallel <- getOption("marginaleffects_parallel")
