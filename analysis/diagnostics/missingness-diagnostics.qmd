@@ -23,7 +23,7 @@ Variables with NAs. Only variables in the probit. Regions with the _most_ NAs.
 
 The legacy case study inspected Rajasthan's Southern region and concluded: Southern region of Rajasthan: People with one missing cost variable often have ones which aren't missing. The person as a whole wasn't excluded from the data. Explanations: Surveyor messed up writing some costs but not others. Or surveyor meant to put a 0.
 
-Potential chi-square tests for independence: ANY NA vs. state; ANY NA vs region. The target output preserves these checks as notes rather than rerunning exploratory `View()` calls.
+Potential chi-square tests for independence: ANY NA vs. state; ANY NA vs region. The target output now renders those tests when the active cleaned data expose enough variation.
 
 #### Correlation matrix
 
@@ -34,7 +34,7 @@ For all observations: make new data frame with missingness indicator variables, 
 One logistic per missing variable. Summarize coefficient significance and overall fit. So `n_sig` = number of predictors which survive FDR at 0.05 significance (i.e., number of covariates associated with missingness).
 
 ```{r missingness-prose-deviation-note, results='asis'}
-analysis_deviation_note("The rendered note preserves the legacy diagnostic order and prose but replaces interactive View() calls and platform-specific parallelization with target-backed CSVs, heatmaps, and pseudo-R-squared figures.")
+analysis_deviation_note("The rendered note preserves the legacy diagnostic order and prose while replacing interactive View() calls and platform-specific parallelization with target-backed case-study summaries, chi-square outputs, CSVs, heatmaps, and pseudo-R-squared figures.")
 ```
 
 ```{r missingness-targets}
@@ -43,12 +43,14 @@ regional_cost <- analysis_target_csv("diag_ext_missingness", "regional_missingne
 regional_distance <- analysis_target_csv("diag_ext_missingness", "regional_missingness_distance.csv")
 regional_father <- analysis_target_csv("diag_ext_missingness", "regional_missingness_father_education.csv")
 logit_summary <- analysis_target_csv("diag_ext_missingness", "missingness_logit_summary.csv")
+case_study <- analysis_target_csv("diag_ext_missingness", "missingness_rajasthan_southern_case_study.csv")
+chi_square <- analysis_target_csv("diag_ext_missingness", "missingness_chi_square_tests.csv")
 legacy_notes <- analysis_target_csv("diag_ext_missingness", "missingness_legacy_notes.csv")
 corr_all_pairs <- analysis_target_csv("diag_ext_missingness", "missingness_correlation_all_top_pairs.csv")
 corr_enrolled_pairs <- analysis_target_csv("diag_ext_missingness", "missingness_correlation_enrolled_top_pairs.csv")
 ```
 
-The current active data contain `r analysis_format_number(analysis_metric(missing_counts, "missing_var", "Total probit-relevant with NA", "n_missing"), 0)` probit-relevant rows with at least one missing value and `r analysis_format_number(analysis_metric(missing_counts, "missing_var", "Total probit-relevant with no NA", "n_missing"), 0)` probit-relevant rows with no missing value.
+The current active data contain `r analysis_format_number(analysis_metric(missing_counts, "missing_var", "Total probit-model with NA", "n_missing"), 0)` probit-model rows with at least one missing value and `r analysis_format_number(analysis_metric(missing_counts, "missing_var", "Total probit-model with no NA", "n_missing"), 0)` probit-model rows with no missing value. Enrolled-only expenditure fields are diagnosed separately rather than included in this probit-model total.
 
 ```{r missingness-current-code-analog}
 missing_counts[order(-missing_counts$n_missing), c("missing_var", "n_missing", "pct_missing"), drop = FALSE]
@@ -62,6 +64,11 @@ analysis_table(missing_counts, "Current missingness counts")
 analysis_table(regional_cost, "Regions with the most cost-variable missingness", max_rows = 20)
 analysis_table(regional_distance, "Regions with the most distance-to-school missingness", max_rows = 20)
 analysis_table(regional_father, "Regions with the most father-education missingness", max_rows = 20)
+```
+
+```{r missingness-case-study-and-chisq}
+analysis_table(case_study, "Current Rajasthan/Southern case-study analog")
+analysis_table(chi_square, "Current chi-square tests for ANY probit-model NA")
 ```
 
 The current analog of the legacy correlation-matrix work writes both CSV matrices and rendered heatmaps as target outputs.  The legacy logit-screen plots are likewise rendered from the current target output rather than copied from the old notebook.

@@ -5,19 +5,24 @@
 
 legacy_missingness_variables <- function(selection_data) {
   df <- as.data.frame(selection_data, stringsAsFactors = FALSE)
-  probit_vars <- cfg_probit_vars <- c(
+  all_child_missing_vars <- c("DIST_FROM_NEAREST_PRIMARY_CLASS", "dmean_num_ENROLLMENT_COST", "father_educ")
+  enrolled_only_missing_vars <- c("TUTION_FEE", "EXAMINATION_FEE", "OTHER_FEES_PAYMENTS", "BOOKS", "STATIONERY", "UNIFORM", "TRANSPORT")
+
+  # Legacy Chunk 8 distinguished variables used in the probit from
+  # enrolled-only expenditure variables.  Keep that distinction so the total
+  # row labelled "probit-model" is not inflated by fee variables that are
+  # undefined for non-enrolled children.
+  probit_vars <- c(
     "enrolled", "ENROLLED", "AGE", "age", "SEX", "HH_SIZE", "RELIGION", "SOCIAL_GROUP",
-    "SECTOR", "state_0708", "region_0708", "DIST_FROM_NEAREST_PRIMARY_CLASS",
-    "dmean_num_ENROLLMENT_COST", "father_educ", "TUTION_FEE", "EXAMINATION_FEE",
-    "OTHER_FEES_PAYMENTS", "BOOKS", "STATIONERY", "UNIFORM", "TRANSPORT"
+    "SECTOR", "state_0708", "region_0708", all_child_missing_vars
   )
   probit_vars <- intersect(probit_vars, names(df))
-  if (!length(probit_vars)) probit_vars <- names(df)
+  if (!length(probit_vars)) probit_vars <- setdiff(names(df), intersect(enrolled_only_missing_vars, names(df)))
 
   list(
     probit_vars = probit_vars,
-    miss_vars_all = intersect(c("DIST_FROM_NEAREST_PRIMARY_CLASS", "dmean_num_ENROLLMENT_COST", "father_educ"), names(df)),
-    miss_vars_enrolled = intersect(c("TUTION_FEE", "EXAMINATION_FEE", "OTHER_FEES_PAYMENTS", "BOOKS", "STATIONERY", "UNIFORM", "TRANSPORT"), names(df)),
+    miss_vars_all = intersect(all_child_missing_vars, names(df)),
+    miss_vars_enrolled = intersect(enrolled_only_missing_vars, names(df)),
     group_vars = intersect(c("SECTOR", "SEX", "RELIGION", "SOCIAL_GROUP", "state_0708"), names(df)),
     cts_vars = intersect(c("AGE", "HH_SIZE"), names(df)),
     regional_vars = intersect(c("state_0708", "region_0708"), names(df))
@@ -45,8 +50,8 @@ diagnose_missingness <- function(selection_data, cfg) {
   }
   counts <- safe_bind_rows(list(
     counts,
-    data.frame(missing_var = "Total probit-relevant with NA", n_missing = total_na, pct_missing = if (nrow(df)) total_na / nrow(df) else NA_real_),
-    data.frame(missing_var = "Total probit-relevant with no NA", n_missing = total_complete, pct_missing = if (nrow(df)) total_complete / nrow(df) else NA_real_)
+    data.frame(missing_var = "Total probit-model with NA", n_missing = total_na, pct_missing = if (nrow(df)) total_na / nrow(df) else NA_real_),
+    data.frame(missing_var = "Total probit-model with no NA", n_missing = total_complete, pct_missing = if (nrow(df)) total_complete / nrow(df) else NA_real_)
   ))
 
   regional <- summarize_missingness_regions(df, probit_vars, vars)
@@ -60,6 +65,8 @@ diagnose_missingness <- function(selection_data, cfg) {
   logit_all <- if (length(miss_all) && length(covars)) run_missingness_logits(df, miss_all, covars) else data.frame()
   logit_enrolled <- if (length(miss_enrolled) && length(covars) && any(enrolled_rows)) run_missingness_logits(df[enrolled_rows, , drop = FALSE], miss_enrolled, covars) else data.frame()
   logit_summary <- summarize_missingness_logits(safe_bind_rows(list(logit_all, logit_enrolled)))
+  case_study <- summarize_missingness_case_study(df, vars)
+  chi_square <- summarize_missingness_chisq(df, probit_vars)
 
   notes <- data.frame(
     diagnostic = c(
@@ -87,6 +94,8 @@ diagnose_missingness <- function(selection_data, cfg) {
     logit_all = logit_all,
     logit_enrolled = logit_enrolled,
     logit_summary = logit_summary,
+    case_study = case_study,
+    chi_square = chi_square,
     notes = notes
   )
   class(out) <- c("emi_missingness_diagnostics", class(out))
@@ -110,6 +119,75 @@ summarize_missingness_by_variable <- function(df) {
     pct_missing = if (nrow(df)) vapply(df, function(x) mean(is.na(x)), numeric(1)) else NA_real_,
     stringsAsFactors = FALSE
   )
+}
+
+
+summarize_missingness_case_study <- function(df, vars) {
+  df <- as.data.frame(df, stringsAsFactors = FALSE)
+  if (!nrow(df)) return(data.frame())
+  state_col <- intersect(c("state_0708", "state"), names(df))
+  region_col <- intersect(c("region_0708", "region"), names(df))
+  if (!length(state_col)) return(data.frame(note = "No state column available for Rajasthan/Southern case study.", stringsAsFactors = FALSE))
+
+  keep <- grepl("rajasthan", as.character(df[[state_col[[1]]]]), ignore.case = TRUE)
+  case_scope <- "Rajasthan"
+  if (length(region_col)) {
+    region_keep <- grepl("southern", as.character(df[[region_col[[1]]]]), ignore.case = TRUE)
+    if (any(keep & region_keep, na.rm = TRUE)) {
+      keep <- keep & region_keep
+      case_scope <- "Rajasthan / Southern"
+    }
+  }
+  vars_to_check <- intersect(c(vars$miss_vars_all, vars$miss_vars_enrolled), names(df))
+  if (!length(vars_to_check) || !any(keep, na.rm = TRUE)) {
+    return(data.frame(case_scope = case_scope, n_rows = sum(keep, na.rm = TRUE), note = "No matching rows or missingness variables available.", stringsAsFactors = FALSE))
+  }
+  case_df <- df[keep, vars_to_check, drop = FALSE]
+  any_missing <- !stats::complete.cases(case_df)
+  data.frame(
+    case_scope = case_scope,
+    n_rows = nrow(case_df),
+    n_rows_with_any_missing = sum(any_missing),
+    n_rows_with_partial_missing = sum(any_missing & rowSums(is.na(case_df)) < ncol(case_df)),
+    n_missing_cells = sum(is.na(case_df)),
+    n_observed_cells_in_rows_with_missing = sum(!is.na(case_df[any_missing, , drop = FALSE])),
+    interpretation = "Current analog of the legacy Rajasthan/Southern View() check: rows with partial cost-variable missingness preserve the legacy concern that a child was not necessarily excluded wholesale when one cost field was missing.",
+    stringsAsFactors = FALSE
+  )
+}
+
+summarize_missingness_chisq <- function(df, probit_vars) {
+  df <- as.data.frame(df, stringsAsFactors = FALSE)
+  if (!nrow(df) || !length(probit_vars)) return(data.frame())
+  probit_vars <- intersect(probit_vars, names(df))
+  if (!length(probit_vars)) return(data.frame())
+  any_na <- !stats::complete.cases(df[probit_vars])
+  safe_test <- function(group_col, label) {
+    if (!group_col %in% names(df)) {
+      return(data.frame(test = label, status = "not_available", reason = paste("Missing column", group_col), stringsAsFactors = FALSE))
+    }
+    group <- as.character(df[[group_col]])
+    keep <- !is.na(group) & nzchar(group)
+    if (length(unique(group[keep])) < 2L || length(unique(any_na[keep])) < 2L) {
+      return(data.frame(test = label, status = "not_estimated", reason = "Insufficient variation for chi-square test.", stringsAsFactors = FALSE))
+    }
+    tab <- table(any_na = any_na[keep], group = group[keep])
+    fit <- suppressWarnings(stats::chisq.test(tab))
+    data.frame(
+      test = label,
+      status = "estimated",
+      statistic = unname(fit$statistic),
+      parameter = unname(fit$parameter),
+      p.value = unname(fit$p.value),
+      n = sum(tab),
+      method = fit$method,
+      stringsAsFactors = FALSE
+    )
+  }
+  safe_bind_rows(list(
+    safe_test("state_0708", "any_probit_model_na_by_state"),
+    safe_test("region_0708", "any_probit_model_na_by_region")
+  ))
 }
 
 summarize_missingness_regions <- function(df, probit_vars, vars, top_n = 20L) {
@@ -358,6 +436,8 @@ save_missingness_diagnostics <- function(diagnostics, dir = "outputs/diagnostics
     logit_all = write_diagnostic_csv(diagnostics$logit_all %||% data.frame(), file.path(dir, "missingness_logits_all.csv")),
     logit_enrolled = write_diagnostic_csv(diagnostics$logit_enrolled %||% data.frame(), file.path(dir, "missingness_logits_enrolled.csv")),
     logit_summary = write_diagnostic_csv(diagnostics$logit_summary %||% data.frame(), file.path(dir, "missingness_logit_summary.csv")),
+    case_study = write_diagnostic_csv(diagnostics$case_study %||% data.frame(), file.path(dir, "missingness_rajasthan_southern_case_study.csv")),
+    chi_square = write_diagnostic_csv(diagnostics$chi_square %||% data.frame(), file.path(dir, "missingness_chi_square_tests.csv")),
     notes = write_diagnostic_csv(diagnostics$notes %||% data.frame(), file.path(dir, "missingness_legacy_notes.csv"))
   )
   if (length(diagnostics$corr_all)) {

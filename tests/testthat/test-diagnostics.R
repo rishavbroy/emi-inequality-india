@@ -275,3 +275,40 @@ test_that("missingness diagnostics save logit plot outputs", {
   expect_match(src, "missingness_logit_pseudo_r2.png", fixed = TRUE)
   expect_match(src, "save_missingness_logit_plot", fixed = TRUE)
 })
+
+test_that("missingness diagnostics distinguish probit-model and enrolled-only missingness", {
+  df <- data.frame(
+    enrolled = c("yes", "no", "yes", "no"),
+    AGE = c(10, 11, 12, 13),
+    SEX = c("Male", "Female", "Male", "Female"),
+    HH_SIZE = c(4, 5, 6, 7),
+    RELIGION = c("Hindu", "Muslim", "Hindu", "Muslim"),
+    SOCIAL_GROUP = c("Other", "Other", "Scheduled Tribe", "Other"),
+    SECTOR = c("Urban", "Rural", "Urban", "Rural"),
+    state_0708 = c("Rajasthan", "Rajasthan", "Other", "Other"),
+    region_0708 = c("Southern", "Southern", "Other", "Other"),
+    DIST_FROM_NEAREST_PRIMARY_CLASS = c(1, NA, 2, 3),
+    dmean_num_ENROLLMENT_COST = c(10, 11, NA, 13),
+    father_educ = c(1, 2, 3, NA),
+    TUTION_FEE = c(NA, NA, 20, NA)
+  )
+  out <- diagnose_missingness(df, list())
+
+  counts <- out$missing_counts
+  expect_true("Total probit-model with NA" %in% counts$missing_var)
+  expect_false("Total probit-relevant with NA" %in% counts$missing_var)
+  expect_true(nrow(out$case_study) >= 1L)
+  expect_true(nrow(out$chi_square) >= 1L)
+})
+
+test_that("tracker diagnostics summarize same-name districts by year", {
+  same <- data.frame(
+    year = c(2001, 2001, 2007),
+    district_key = c("a", "b", "a"),
+    stringsAsFactors = FALSE
+  )
+  out <- summarize_same_name_districts_by_year(same)
+
+  expect_true(all(c("year", "n_same_name_districts", "within_legacy_range") %in% names(out)))
+  expect_equal(out$n_same_name_districts[out$year == 2001], 2L)
+})
