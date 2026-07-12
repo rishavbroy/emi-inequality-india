@@ -276,12 +276,23 @@ spatial_legacy_note <- function(legacy_name) {
   unname(notes[legacy_name]) %||% NA_character_
 }
 
+spatial_moran_mc_reference <- function() {
+  data.frame(
+    scaffold = "moran.mc(resid_cons, listw_2020, nsim = 9999)",
+    status = "documented_not_run_by_default",
+    reason = "Legacy Chunk 29 kept this as a Monte Carlo robustness scaffold. The default public diagnostic keeps the asymptotic moran.test() path used by report_values; run a separate opt-in benchmark before treating Monte Carlo p-values as refreshed current results.",
+    stringsAsFactors = FALSE
+  )
+}
+
+
 #' save spatial autocorrelation diagnostics
 #'
 #' @return The diagnostics, invisibly writing public CSV artifacts for review.
 save_spatial_autocorrelation_diagnostics <- function(diagnostics, dir = "outputs/diagnostics/public") {
   dir.create(dir, recursive = TRUE, showWarnings = FALSE)
   utils::write.csv(as.data.frame(diagnostics), file.path(dir, "spatial_moran_tests.csv"), row.names = FALSE)
+  utils::write.csv(spatial_moran_mc_reference(), file.path(dir, "spatial_moran_mc_reference.csv"), row.names = FALSE)
   diagnostics
 }
 

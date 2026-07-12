@@ -17,12 +17,12 @@ source(helper)
 
 Preliminary test of IV strength: Dotplot of EMIE values by `district_code`. These are the current target-backed instrument-strength plots for the legacy exploratory check.
 
-EMIE has three peaks: in Jammu and Kashmir; in Sikkim, Arunachal Pradesh, Nagaland, Manipur, Mizoran, Tripura, maybe Meghalaya; and in Andhra Pradesh, Karnataka, Goa, Lakshadweep, Kerala, Tamil Nadu, Pondicheri, and Andaman & Nicobar! The regions which historically were the furthest from Hindi! Many districts in the second group seem to have EMIE around 1, and the range of EMIE outside peaks is between 0.4 and 0.1. Justification for looking at smaller units of analysis?
+EMIE has three peaks: in Jammu and Kashmir; in Sikkim, Arunachal Pradesh, Nagaland, Manipur, Mizoran, Tripura, maybe Meghalaya; and in Andhra Pradesh, Karnataka, Goa, Lakshadweep, Kerala, Tamil Nadu, Pondicheri, and Andaman & Nicobar! The regions which historically were the furthest from Hindi! The legacy prose used a 0-1 scale: many districts in the second group seem to have EMIE around 1, and the range of EMIE outside peaks is between 0.4 and 0.1. The current target output stores the same exposure as a 0-100 percentage scale, so those legacy reference values correspond to about 100 and 40-10. Justification for looking at smaller units of analysis?
 
 Process the dataframe and compute the weighted average `ling_distance` for each `(state, district)` group. Group by state and district to ensure that same district names in different states are treated separately. For each group, keep only the top three rows by `spkr_tot`. Create the `ling_degrees` column based on the mother tongue values and @shastry2012a's 0-5 measure of degrees of linguistic distance. Calculate the weighted average linguistic distance for each group.
 
 ```{r instrument-prose-deviation-note, results='asis'}
-analysis_deviation_note("The active note renders the current EMIE dotplot target and IV-panel diagnostics, while preserving the legacy interpretation of the peaks as prose rather than copied static output.")
+analysis_deviation_note("The active note renders the current EMIE dotplot target and IV-panel diagnostics, while preserving the legacy interpretation of the peaks as prose rather than copied static output. EMIE scale language is minimally updated because current outputs use a 0-100 percentage scale while the legacy comments described the same concept on a 0-1 scale.")
 ```
 
 ```{r instrument-targets}
@@ -37,6 +37,14 @@ The current analog of the legacy `ggplot(..., aes(x = district_code_0708, y = EM
 
 ```{r instrument-current-code-analog}
 instrument_dotplot_rows <- iv_dotplot[, intersect(c("district_order", "district_code", "state", "district", "EMIE", "wavg_ling_degrees", "state_prefix"), names(iv_dotplot)), drop = FALSE]
+emie_scale_summary <- data.frame(
+  current_scale = "0-100 percentage scale",
+  min_EMIE = min(iv_dotplot$EMIE, na.rm = TRUE),
+  median_EMIE = stats::median(iv_dotplot$EMIE, na.rm = TRUE),
+  max_EMIE = max(iv_dotplot$EMIE, na.rm = TRUE),
+  legacy_scale_note = "legacy prose values 1 and 0.4-0.1 correspond to 100 and 40-10 on the current scale"
+)
+analysis_table(emie_scale_summary, "Current EMIE scale check")
 analysis_table(instrument_dotplot_rows, "Current EMIE-by-district dotplot data", max_rows = 30)
 ```
 
