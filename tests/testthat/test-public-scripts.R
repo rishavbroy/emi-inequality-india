@@ -275,6 +275,16 @@ test_that("analysis helpers read target-backed outputs without regex filename ma
   expect_false(grepl("analysis_is_code_like", helper, fixed = TRUE))
 })
 
+
+
+test_that("analysis relative image paths collapse to a scalar Markdown path", {
+  helper <- paste(readLines(repo_file("analysis", "_analysis_helpers.R"), warn = FALSE), collapse = "\n")
+
+  expect_match(helper, "do.call(file.path, as.list(parts))", fixed = TRUE)
+  expect_match(helper, "rel[[1]]", fixed = TRUE)
+  expect_false(grepl("rel <- file.path(c(rep", helper, fixed = TRUE))
+})
+
 test_that("public audit can include analysis notes in the same log", {
   src <- paste(readLines(repo_file("scripts", "run_public_build_audit.sh"), warn = FALSE), collapse = "\n")
 

@@ -156,8 +156,10 @@ analysis_rel_to_current <- function(path) {
     from <- from[-1]
     to <- to[-1]
   }
-  rel <- file.path(c(rep("..", length(from)), to))
-  if (!nzchar(rel)) "." else rel
+  parts <- c(rep("..", length(from)), to)
+  if (!length(parts)) return(".")
+  rel <- do.call(file.path, as.list(parts))
+  if (!length(rel) || !nzchar(rel[[1]])) "." else rel[[1]]
 }
 
 analysis_image <- function(target, filename, alt = filename) {
