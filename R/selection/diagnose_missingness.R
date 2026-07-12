@@ -259,6 +259,62 @@ summarize_missingness_logits <- function(df) {
   out[order(-out$pseudoR2), , drop = FALSE]
 }
 
+
+missingness_correlation_pairs <- function(mat, top_n = 50L) {
+  mat <- as.matrix(mat)
+  if (!length(mat) || nrow(mat) < 2L || ncol(mat) < 2L) {
+    return(data.frame(var1 = character(), var2 = character(), correlation = numeric(), abs_correlation = numeric(), stringsAsFactors = FALSE))
+  }
+  mat[lower.tri(mat, diag = TRUE)] <- NA_real_
+  idx <- which(is.finite(mat), arr.ind = TRUE)
+  if (!nrow(idx)) {
+    return(data.frame(var1 = character(), var2 = character(), correlation = numeric(), abs_correlation = numeric(), stringsAsFactors = FALSE))
+  }
+  out <- data.frame(
+    var1 = rownames(mat)[idx[, "row"]],
+    var2 = colnames(mat)[idx[, "col"]],
+    correlation = mat[idx],
+    stringsAsFactors = FALSE
+  )
+  out$abs_correlation <- abs(out$correlation)
+  out <- out[order(-out$abs_correlation), , drop = FALSE]
+  utils::head(out, top_n)
+}
+
+save_missingness_correlation_heatmap <- function(mat, path, max_vars = 35L, title = "Missingness correlation matrix") {
+  mat <- as.matrix(mat)
+  dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
+  if (!length(mat) || nrow(mat) < 2L || ncol(mat) < 2L) {
+    grDevices::png(path, width = 900, height = 500, res = 120)
+    graphics::plot.new()
+    graphics::text(0.5, 0.5, "No correlation matrix available")
+    grDevices::dev.off()
+    return(normalizePath(path, mustWork = FALSE))
+  }
+  score <- apply(abs(mat), 1L, function(x) max(x[is.finite(x) & x < 1], na.rm = TRUE))
+  score[!is.finite(score)] <- 0
+  keep <- names(sort(score, decreasing = TRUE))[seq_len(min(max_vars, length(score)))]
+  mat <- mat[keep, keep, drop = FALSE]
+  grDevices::png(path, width = 1400, height = 1200, res = 140)
+  old <- graphics::par(no.readonly = TRUE)
+  on.exit({ graphics::par(old); grDevices::dev.off() }, add = TRUE)
+  graphics::par(mar = c(11, 11, 4, 2))
+  graphics::image(
+    x = seq_len(ncol(mat)),
+    y = seq_len(nrow(mat)),
+    z = t(mat[nrow(mat):1, , drop = FALSE]),
+    axes = FALSE,
+    xlab = "",
+    ylab = "",
+    main = title,
+    zlim = c(-1, 1)
+  )
+  graphics::axis(1, at = seq_len(ncol(mat)), labels = colnames(mat), las = 2, cex.axis = 0.55)
+  graphics::axis(2, at = seq_len(nrow(mat)), labels = rev(rownames(mat)), las = 2, cex.axis = 0.55)
+  graphics::box()
+  normalizePath(path, mustWork = FALSE)
+}
+
 save_missingness_diagnostics <- function(diagnostics, dir = "outputs/diagnostics/extended/missingness") {
   dir.create(dir, recursive = TRUE, showWarnings = FALSE)
   if (!inherits(diagnostics, "emi_missingness_diagnostics")) diagnostics <- list(missing_counts = as.data.frame(diagnostics))
@@ -272,8 +328,22 @@ save_missingness_diagnostics <- function(diagnostics, dir = "outputs/diagnostics
     logit_summary = write_diagnostic_csv(diagnostics$logit_summary %||% data.frame(), file.path(dir, "missingness_logit_summary.csv")),
     notes = write_diagnostic_csv(diagnostics$notes %||% data.frame(), file.path(dir, "missingness_legacy_notes.csv"))
   )
-  if (length(diagnostics$corr_all)) paths <- c(paths, corr_all = write_diagnostic_matrix(diagnostics$corr_all, file.path(dir, "missingness_correlation_all.csv")))
-  if (length(diagnostics$corr_enrolled)) paths <- c(paths, corr_enrolled = write_diagnostic_matrix(diagnostics$corr_enrolled, file.path(dir, "missingness_correlation_enrolled.csv")))
+  if (length(diagnostics$corr_all)) {
+    paths <- c(
+      paths,
+      corr_all = write_diagnostic_matrix(diagnostics$corr_all, file.path(dir, "missingness_correlation_all.csv")),
+      corr_all_pairs = write_diagnostic_csv(missingness_correlation_pairs(diagnostics$corr_all), file.path(dir, "missingness_correlation_all_top_pairs.csv")),
+      corr_all_heatmap = save_missingness_correlation_heatmap(diagnostics$corr_all, file.path(dir, "missingness_correlation_all.png"), title = "Missingness correlations: all observations")
+    )
+  }
+  if (length(diagnostics$corr_enrolled)) {
+    paths <- c(
+      paths,
+      corr_enrolled = write_diagnostic_matrix(diagnostics$corr_enrolled, file.path(dir, "missingness_correlation_enrolled.csv")),
+      corr_enrolled_pairs = write_diagnostic_csv(missingness_correlation_pairs(diagnostics$corr_enrolled), file.path(dir, "missingness_correlation_enrolled_top_pairs.csv")),
+      corr_enrolled_heatmap = save_missingness_correlation_heatmap(diagnostics$corr_enrolled, file.path(dir, "missingness_correlation_enrolled.png"), title = "Missingness correlations: enrolled observations")
+    )
+  }
   legacy_output_manifest(paths)
 }
 

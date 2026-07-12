@@ -53,3 +53,13 @@ test_that("selection probit fits toy glm when covariates are present", {
   expect_s3_class(model, "glm")
   expect_equal(model$family$link, "probit")
 })
+
+
+test_that("missingness diagnostics write correlation figures and top-pair tables", {
+  mat <- matrix(c(1, 0.4, -0.2, 0.4, 1, 0.8, -0.2, 0.8, 1), nrow = 3)
+  rownames(mat) <- colnames(mat) <- c("a", "b", "c")
+  pairs <- missingness_correlation_pairs(mat, top_n = 2)
+
+  expect_equal(nrow(pairs), 2L)
+  expect_true(all(c("var1", "var2", "correlation", "abs_correlation") %in% names(pairs)))
+})

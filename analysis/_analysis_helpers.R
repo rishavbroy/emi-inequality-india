@@ -69,96 +69,6 @@ analysis_table <- function(df, caption = NULL, digits = 3, max_rows = NULL) {
   tab
 }
 
-analysis_legacy_chunk_path <- function(filename) {
-  analysis_path("archive", "legacy-rmd-chunks", filename)
-}
-
-analysis_legacy_comment_lines <- function(filename, from = NULL, to = NULL) {
-  path <- analysis_legacy_chunk_path(filename)
-  if (!file.exists(path)) {
-    return(paste("Missing legacy chunk:", analysis_rel_path(path)))
-  }
-  lines <- readLines(path, warn = FALSE)
-  idx <- seq_along(lines)
-  if (!is.null(from)) idx <- idx[idx >= from]
-  if (!is.null(to)) idx <- idx[idx <= to]
-  lines <- lines[idx]
-  keep <- grepl("^\\s*#", lines) | !nzchar(trimws(lines))
-  lines <- lines[keep]
-  lines <- sub("^\\s*# ?", "", lines)
-  # Legacy comments sometimes contain commented-out R comments, e.g.
-  # "# # Resolve futures...". After removing the outer R comment marker,
-  # a bare leading "#" is a code-comment marker, not a Markdown heading.
-  lines <- sub("^#\\s*$", "", lines)
-  lines <- sub("^#\\s+", "", lines)
-  while (length(lines) && !nzchar(trimws(lines[[1]]))) lines <- lines[-1]
-  while (length(lines) && !nzchar(trimws(lines[[length(lines)]]))) lines <- lines[-length(lines)]
-  lines
-}
-
-analysis_is_code_like <- function(x) {
-  z <- trimws(x)
-  if (!nzchar(z)) return(FALSE)
-  grepl("(<-|%>%|\\|>|::|:::|=\\s*(TRUE|FALSE|NULL|NA|[A-Za-z0-9_.]+)|,$|\\)\\s*$)" , z) ||
-    grepl("^(library|require|source|set\\.|[A-Za-z0-9_.]+\\s*<-|[A-Za-z0-9_.]+\\s*\\(|[A-Za-z0-9_.]+\\s*\\+|[A-Za-z0-9_.]+\\s*,|\\+|\\)|\\}|\\]|if\\s*\\(|else\\b|for\\s*\\(|function\\s*\\(|ggplot\\(|aes\\(|geom_|labs\\(|theme_|scale_|mutate\\(|filter\\(|select\\(|summari[sz]e\\(|group_by\\(|arrange\\(|View\\b|chisq\\.test\\(|t\\.test\\(|map_df\\(|bind_rows\\(|full_join\\(|left_join\\(|anti_join\\(|inner_join\\(|coalesce\\(|case_when\\(|tribble\\(|data\\.frame\\(|read_|write_)" , z)
-}
-
-analysis_code_balance <- function(lines) {
-  text <- paste(lines, collapse = "\n")
-  opens <- gregexpr("[\\(\\{\\[]", text)[[1]]
-  closes <- gregexpr("[\\)\\}\\]]", text)[[1]]
-  n_open <- if (opens[[1]] == -1L) 0L else length(opens)
-  n_close <- if (closes[[1]] == -1L) 0L else length(closes)
-  n_open - n_close
-}
-
-analysis_line_continues_code <- function(lines) {
-  if (!length(lines)) return(FALSE)
-  last <- trimws(lines[[length(lines)]])
-  analysis_code_balance(lines) > 0L || grepl("(,|\\+|%>%|\\|>|\\()$", last)
-}
-
-analysis_flush_legacy_block <- function(lines, code) {
-  if (!length(lines)) return(invisible(NULL))
-  if (code) {
-    cat("```r\n", paste(lines, collapse = "\n"), "\n```\n\n", sep = "")
-  } else {
-    # Avoid accidental fenced-div parsing in GitHub/Pandoc when legacy prose uses :::.
-    lines <- gsub(":::", "\\\\:\\\\:\\\\:", lines, fixed = TRUE)
-    cat(paste(lines, collapse = "\n"), "\n\n", sep = "")
-  }
-}
-
-analysis_render_legacy_comments <- function(filename, from = NULL, to = NULL, caption = NULL) {
-  if (!is.null(caption)) cat("\n### ", caption, "\n\n", sep = "")
-  lines <- analysis_legacy_comment_lines(filename, from = from, to = to)
-  if (!length(lines)) return(invisible(NULL))
-  block <- character()
-  block_code <- NA
-  for (line in lines) {
-    blank <- !nzchar(trimws(line))
-    code <- analysis_is_code_like(line)
-    if (blank) {
-      analysis_flush_legacy_block(block, isTRUE(block_code))
-      block <- character()
-      block_code <- NA
-      next
-    }
-    if (isTRUE(block_code) && !code && analysis_line_continues_code(block)) {
-      code <- TRUE
-    }
-    if (is.na(block_code)) block_code <- code
-    if (!identical(code, block_code)) {
-      analysis_flush_legacy_block(block, isTRUE(block_code))
-      block <- character()
-      block_code <- code
-    }
-    block <- c(block, line)
-  }
-  analysis_flush_legacy_block(block, isTRUE(block_code))
-  invisible(NULL)
-}
-
 analysis_deviation_note <- function(text) {
   cat("\n**Deviation note.** ", text, "\n\n", sep = "")
 }
@@ -168,4 +78,106 @@ analysis_render_source_file <- function(path, language = "r") {
   cat("```", language, "\n", sep = "")
   cat(paste(readLines(full, warn = FALSE), collapse = "\n"), "\n", sep = "")
   cat("```\n\n")
+}
+
+
+analysis_store_path <- function() analysis_path("_targets")
+
+analysis_read_target <- function(name) {
+  if (!requireNamespace("targets", quietly = TRUE)) {
+    stop("Package targets is required to read analysis target output: ", name, call. = FALSE)
+  }
+  root <- analysis_project_root()
+  store <- file.path(root, "_targets")
+  old <- getwd()
+  on.exit(setwd(old), add = TRUE)
+  setwd(root)
+  if ("tar_read_raw" %in% getNamespaceExports("targets")) {
+    return(targets::tar_read_raw(name, store = store))
+  }
+  eval(substitute(targets::tar_read(TARGET, store = STORE), list(TARGET = as.name(name), STORE = store)))
+}
+
+analysis_target_manifest <- function(name) {
+  out <- tryCatch(analysis_read_target(name), error = function(e) {
+    data.frame(path = character(), description = character(), reason = conditionMessage(e), stringsAsFactors = FALSE)
+  })
+  if (is.character(out)) {
+    return(data.frame(path = out, description = basename(out), stringsAsFactors = FALSE))
+  }
+  if (is.data.frame(out) && "path" %in% names(out)) return(out)
+  data.frame(path = character(), description = character(), stringsAsFactors = FALSE)
+}
+
+analysis_target_path <- function(target, filename = NULL) {
+  manifest <- analysis_target_manifest(target)
+  if (!nrow(manifest) || !"path" %in% names(manifest)) return(NA_character_)
+  paths <- as.character(manifest$path)
+  if (!is.null(filename)) {
+    hit <- basename(paths) == filename | grepl(paste0("/", gsub("([.^$|()\\[\\]{}*+?\\\\])", "\\\\\\1", filename), "$"), paths)
+    paths <- paths[hit]
+  }
+  if (!length(paths)) return(NA_character_)
+  paths[[1]]
+}
+
+analysis_target_csv <- function(target, filename) {
+  path <- analysis_target_path(target, filename)
+  if (is.na(path)) {
+    return(data.frame(note = paste("Target output not found:", target, filename), stringsAsFactors = FALSE))
+  }
+  full <- if (file.exists(path)) path else analysis_path(path)
+  read_analysis_csv(sub("^outputs/", "", analysis_rel_path(full)))
+}
+
+analysis_value <- function(df, row = 1L, column, default = NA) {
+  df <- as.data.frame(df, stringsAsFactors = FALSE)
+  if (!nrow(df) || !column %in% names(df) || row > nrow(df)) return(default)
+  value <- df[[column]][[row]]
+  if (is.na(value)) default else value
+}
+
+analysis_metric <- function(df, key_column, key, value_column, default = NA) {
+  df <- as.data.frame(df, stringsAsFactors = FALSE)
+  if (!nrow(df) || !all(c(key_column, value_column) %in% names(df))) return(default)
+  hit <- which(as.character(df[[key_column]]) == key)
+  if (!length(hit)) return(default)
+  value <- df[[value_column]][[hit[[1]]]]
+  if (is.na(value)) default else value
+}
+
+analysis_format_number <- function(x, digits = 3) {
+  if (length(x) != 1L || is.na(x)) return("NA")
+  if (is.numeric(x)) return(format(round(x, digits), big.mark = ",", trim = TRUE, scientific = FALSE))
+  as.character(x)
+}
+
+analysis_rel_to_current <- function(path) {
+  full <- if (file.exists(path)) normalizePath(path, winslash = "/", mustWork = FALSE) else normalizePath(analysis_path(path), winslash = "/", mustWork = FALSE)
+  current <- tryCatch(knitr::current_input(), error = function(e) NULL)
+  if (is.null(current) || !nzchar(current)) return(analysis_rel_path(full))
+  base <- normalizePath(dirname(current), winslash = "/", mustWork = FALSE)
+  from <- strsplit(base, "/", fixed = TRUE)[[1]]
+  to <- strsplit(full, "/", fixed = TRUE)[[1]]
+  while (length(from) && length(to) && identical(from[[1]], to[[1]])) {
+    from <- from[-1]
+    to <- to[-1]
+  }
+  rel <- file.path(c(rep("..", length(from)), to))
+  if (!nzchar(rel)) "." else rel
+}
+
+analysis_image <- function(target, filename, alt = filename) {
+  path <- analysis_target_path(target, filename)
+  if (is.na(path)) {
+    cat("Missing image target output: `", target, "` / `", filename, "`.\n\n", sep = "")
+    return(invisible(NULL))
+  }
+  cat("![", alt, "](", analysis_rel_to_current(path), ")\n\n", sep = "")
+}
+
+analysis_top_rows <- function(df, n = 10L) {
+  df <- as.data.frame(df, stringsAsFactors = FALSE)
+  if (!nrow(df)) return(df)
+  utils::head(df, n)
 }

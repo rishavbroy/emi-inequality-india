@@ -60,6 +60,12 @@ benchmark_ame_methods <- function(selection_model, selection_data, cfg, sample_s
   }
   data <- as.data.frame(amed$data, stringsAsFactors = FALSE)
   if (!nrow(data)) return(data.frame(method = "avg_slopes", sample_size = NA_integer_, elapsed_seconds = NA_real_, status = "skipped", reason = "No model-frame rows.", stringsAsFactors = FALSE))
+  response_name <- as.character(stats::formula(selection_model)[[2]])
+  weight_name <- if (is.character(amed$wts) && length(amed$wts) == 1L) amed$wts else "weight"
+  numeric_variables <- setdiff(names(data)[vapply(data, is.numeric, logical(1))], c(response_name, weight_name))
+  n_observations <- nrow(data)
+  n_numeric_variables <- length(numeric_variables)
+  centered_predict_calls <- n_numeric_variables * n_observations * 2L
   if (is.null(sample_sizes)) sample_sizes <- c(200L, 2000L)
   sample_sizes <- sample_sizes[sample_sizes <= nrow(data)]
   if (!length(sample_sizes)) sample_sizes <- min(200L, nrow(data))
@@ -99,7 +105,18 @@ benchmark_ame_methods <- function(selection_model, selection_data, cfg, sample_s
           }
         })
       })[["elapsed"]]
-      data.frame(method = label, sample_size = n, elapsed_seconds = unname(elapsed), status = attempt$status, reason = attempt$reason, fallback = attempt$fallback, stringsAsFactors = FALSE)
+      data.frame(
+        method = label,
+        sample_size = n,
+        n_observations = n_observations,
+        n_numeric_variables = n_numeric_variables,
+        centered_predict_calls_full_data = centered_predict_calls,
+        elapsed_seconds = unname(elapsed),
+        status = attempt$status,
+        reason = attempt$reason,
+        fallback = attempt$fallback,
+        stringsAsFactors = FALSE
+      )
     }
     safe_bind_rows(list(
       run_one("avg_slopes_centered_default"),
