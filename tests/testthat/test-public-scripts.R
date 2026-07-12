@@ -260,6 +260,8 @@ test_that("analysis notebooks cover remaining legacy diagnostic comments", {
   expect_match(text, "merge_dfs_into_tracker", fixed = TRUE)
   expect_match(text, "instrument-strength plots", fixed = TRUE)
   expect_match(text, "emie_by_district_dotplot.png", fixed = TRUE)
+  expect_match(text, "Current EMIE-by-district dotplot data", fixed = TRUE)
+  expect_match(text, "max_rows = 30", fixed = TRUE)
   expect_match(text, "tracker_legacy_expected_same_name_districts.csv", fixed = TRUE)
   expect_false(grepl("analysis_render_legacy_comments", text, fixed = TRUE))
 })

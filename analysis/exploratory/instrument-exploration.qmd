@@ -28,7 +28,8 @@ iv_notes <- analysis_target_csv("diag_ext_instrument_exploration", "instrument_e
 The current analog of the legacy `ggplot(..., aes(x = district_code_0708, y = EMIE, color = district_prefix)) + geom_point()` check uses `r analysis_format_number(nrow(iv_dotplot), 0)` active district-panel rows.
 
 ```{r instrument-current-code-analog}
-iv_dotplot[, intersect(c("district_order", "district_code", "state", "district", "EMIE", "wavg_ling_degrees", "state_prefix"), names(iv_dotplot)), drop = FALSE]
+instrument_dotplot_rows <- iv_dotplot[, intersect(c("district_order", "district_code", "state", "district", "EMIE", "wavg_ling_degrees", "state_prefix"), names(iv_dotplot)), drop = FALSE]
+analysis_table(instrument_dotplot_rows, "Current EMIE-by-district dotplot data", max_rows = 30)
 ```
 
 ```{r instrument-dotplot, results='asis'}
