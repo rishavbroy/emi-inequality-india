@@ -268,7 +268,9 @@ test_that("instrument exploration diagnostics render target-backed dotplot artif
 })
 
 test_that("missingness diagnostics save logit plot outputs", {
-  src <- paste(readLines("R/selection/diagnose_missingness.R", warn = FALSE), collapse = "\n")
+  root <- Sys.getenv("EMI_PROJECT_ROOT", unset = normalizePath(file.path("..", ".."), mustWork = TRUE))
+  src_path <- file.path(root, "R", "selection", "diagnose_missingness.R")
+  src <- paste(readLines(src_path, warn = FALSE), collapse = "\n")
 
   expect_match(src, "missingness_logit_pseudo_r2.png", fixed = TRUE)
   expect_match(src, "save_missingness_logit_plot", fixed = TRUE)
