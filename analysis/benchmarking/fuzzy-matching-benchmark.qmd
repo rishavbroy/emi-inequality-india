@@ -1,32 +1,38 @@
 ---
 title: "Fuzzy Matching Benchmark"
 format: gfm
+execute:
+  echo: true
+  output: true
+  warning: true
+  message: true
 ---
-```{r setup, include=FALSE}
+
+```{r setup}
 helper <- if (file.exists("analysis/_analysis_helpers.R")) "analysis/_analysis_helpers.R" else "../_analysis_helpers.R"
 source(helper)
 ```
 
-## Legacy comments
+## Legacy diagnostic intent
 
-```{r legacy-comments, echo=FALSE, results='asis'}
-analysis_render_legacy_comments("16-match-districts-test-joining-methods.R", caption = "Legacy Chunk 16: string-distance tuning notes")
+The legacy tuning chunk compared string-distance methods and thresholds before settling on `soundex = 0`, `qgram = 0`, `jw <= 0.15`, `dl <= 2`, and `osa <= 1`.  The current benchmark replaces the hand-inspected legacy objects with target-generated candidate pairs from the active tracker/join-map objects, while keeping the final thresholds visible.
+
+```{r fuzzy-targets}
+fuzzy_cov <- analysis_target_csv("bench_fuzzy_matching", "fuzzy_matching_candidate_pair_coverage.csv")
+fuzzy_threshold <- analysis_target_csv("bench_fuzzy_matching", "fuzzy_matching_threshold_sensitivity.csv")
+fuzzy_reference <- analysis_target_csv("bench_fuzzy_matching", "fuzzy_matching_legacy_tuning_reference.csv")
 ```
 
-```{r deviation-note, echo=FALSE, results='asis'}
-analysis_deviation_note("The legacy prose is rendered from the old comments. The tables below replace the old hand-counted diagnostics with current target outputs and keep the original final thresholds visible.")
+The current benchmark evaluates `r analysis_format_number(sum(fuzzy_cov$n_pairs, na.rm = TRUE), 0)` candidate pairs across `r analysis_format_number(nrow(fuzzy_cov), 0)` pair-source groups.
+
+```{r fuzzy-coverage}
+analysis_table(fuzzy_cov, "Benchmark candidate-pair coverage", max_rows = 30)
 ```
 
-## Current targets-backed results
-
-```{r coverage, echo=FALSE, results='asis'}
-analysis_table(read_analysis_csv("benchmarking", "fuzzy_matching", "fuzzy_matching_candidate_pair_coverage.csv"), "Benchmark candidate-pair coverage")
+```{r fuzzy-reference}
+analysis_table(fuzzy_reference, "Legacy fuzzy-tuning reference results")
 ```
 
-```{r tuning-reference, echo=FALSE, results='asis'}
-analysis_table(read_analysis_csv("benchmarking", "fuzzy_matching", "fuzzy_matching_legacy_tuning_reference.csv"), "Legacy fuzzy-tuning reference results")
-```
-
-```{r threshold, echo=FALSE, results='asis'}
-analysis_table(read_analysis_csv("benchmarking", "fuzzy_matching", "fuzzy_matching_threshold_sensitivity.csv"), "Threshold sensitivity by method and pair source")
+```{r fuzzy-thresholds}
+analysis_table(fuzzy_threshold, "Threshold sensitivity by method and pair source", max_rows = 40)
 ```

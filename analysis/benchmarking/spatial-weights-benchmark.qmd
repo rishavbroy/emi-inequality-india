@@ -1,28 +1,35 @@
 ---
 title: "Spatial Weights Benchmark"
 format: gfm
+execute:
+  echo: true
+  output: true
+  warning: true
+  message: true
 ---
-```{r setup, include=FALSE}
+
+```{r setup}
 helper <- if (file.exists("analysis/_analysis_helpers.R")) "analysis/_analysis_helpers.R" else "../_analysis_helpers.R"
 source(helper)
 ```
 
-## Legacy comments
+## Legacy diagnostic intent
 
-```{r legacy-comments, echo=FALSE, results='asis'}
-analysis_render_legacy_comments("24-geospatial-neighbor-list-construction.R", caption = "Legacy Chunk 24: rook/queen tuning notes")
+The legacy geospatial diagnostic compared rook and queen contiguity, recorded similar mean-neighbor counts, and then kept rook contiguity for the spatial-autocorrelation path.  The current benchmark uses the active matched panel and `spdep::poly2nb()` rather than the legacy exploratory `sfExtras` calls.
+
+```{r spatial-weight-targets}
+spatial_bench <- analysis_target_csv("bench_spatial_weights", "spatial_weights_rook_queen_benchmark.csv")
+spatial_diag <- analysis_target_csv("diag_ext_spatial_weights", "rook_queen_contiguity_comparison.csv")
+spatial_ref <- analysis_target_csv("diag_ext_spatial_weights", "spatial_weights_legacy_reference.csv")
 ```
 
-```{r deviation-note, echo=FALSE, results='asis'}
-analysis_deviation_note("The tables below use the current active panel and geometry. Current-vs-legacy neighbor-count differences are documented under `docs/refactor/` rather than in the paper or README.")
+The current rook benchmark has `r analysis_format_number(analysis_metric(spatial_bench, "contiguity", "rook", "mean_neighbors"), 3)` mean neighbors; the current queen benchmark has `r analysis_format_number(analysis_metric(spatial_bench, "contiguity", "queen", "mean_neighbors"), 3)` mean neighbors.
+
+```{r spatial-weight-benchmark}
+analysis_table(spatial_bench, "Current rook/queen benchmark")
 ```
 
-## Current targets-backed results
-
-```{r benchmark, echo=FALSE, results='asis'}
-analysis_table(read_analysis_csv("benchmarking", "spatial_weights", "spatial_weights_rook_queen_benchmark.csv"), "Current rook/queen benchmark")
-```
-
-```{r diagnostic, echo=FALSE, results='asis'}
-analysis_table(read_analysis_csv("diagnostics", "extended", "spatial", "rook_queen_contiguity_comparison.csv"), "Current-vs-legacy rook/queen comparison")
+```{r spatial-weight-comparison}
+analysis_table(spatial_diag, "Current-vs-legacy rook/queen comparison")
+analysis_table(spatial_ref, "Legacy spatial-weight reference comments")
 ```

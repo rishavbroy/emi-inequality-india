@@ -1,49 +1,43 @@
 ---
 title: "Spatial IV Benchmark"
 format: gfm
+execute:
+  echo: true
+  output: true
+  warning: true
+  message: true
 ---
-```{r setup, include=FALSE}
+
+```{r setup}
 helper <- if (file.exists("analysis/_analysis_helpers.R")) "analysis/_analysis_helpers.R" else "../_analysis_helpers.R"
 source(helper)
 ```
 
-## Legacy comments
+## Legacy diagnostic intent
 
-```{r legacy-comments, echo=FALSE, results='asis'}
-analysis_render_legacy_comments("30-spatial-2sls-model-attempts.R", caption = "Legacy Chunk 30: spatial-2SLS attempts")
+The legacy experimental spatial-IV chunk tried spatial lags of the dependent variable, `EMIE`, the linguistic-distance instrument, second-order instrument lags, and lagged controls.  The legacy comments said the attempts did not work even when IV diagnostics were disabled.  The current benchmark distinguishes between `ivreg()` returning an object and the model being numerically meaningful.
+
+```{r spatial-iv-targets}
+spatial_iv_status <- analysis_target_csv("bench_spatial_iv_experimental", "spatial_iv_model_status.csv")
+spatial_iv_diag <- analysis_target_csv("bench_spatial_iv_experimental", "spatial_iv_diagnostics_summary.csv")
+spatial_iv_coef <- analysis_target_csv("bench_spatial_iv_experimental", "spatial_iv_coefficient_summary.csv")
+spatial_iv_cluster <- analysis_target_csv("bench_spatial_iv_experimental", "spatial_iv_clustered_coefficient_summary.csv")
+spatial_iv_fail <- analysis_target_csv("bench_spatial_iv_experimental", "spatial_iv_failure_summary.csv")
 ```
 
-```{r deviation-note, echo=FALSE, results='asis'}
-analysis_deviation_note("The legacy comments said these attempts did not work even with diagnostics disabled. The current tables therefore distinguish between `ivreg()` returning an object and diagnostics/coefficient summaries being numerically meaningful. These outputs remain exploratory and are not promoted to the final paper.")
+The current benchmark estimates `r analysis_format_number(nrow(spatial_iv_status), 0)` experimental specifications.  A status of `estimated` means that `ivreg()` returned an object, not that the model is suitable for the final paper.
+
+```{r spatial-iv-status}
+analysis_table(spatial_iv_status[setdiff(names(spatial_iv_status), "formula")], "Spatial-IV model status")
 ```
 
-## Current targets-backed results
-
-```{r status, echo=FALSE, results='asis'}
-spatial_iv_status <- read_analysis_csv("benchmarking", "spatial_iv", "spatial_iv_model_status.csv")
-status_table <- spatial_iv_status[setdiff(names(spatial_iv_status), "formula")]
-analysis_table(status_table, "Spatial-IV model status")
+```{r spatial-iv-formulas}
+spatial_iv_status[, c("model", "formula"), drop = FALSE]
 ```
 
-```{r formulas, echo=FALSE, results='asis'}
-if (all(c("model", "formula") %in% names(spatial_iv_status))) {
-  for (i in seq_len(nrow(spatial_iv_status))) {
-    if (nzchar(spatial_iv_status$formula[[i]])) {
-      cat("### Formula: `", spatial_iv_status$model[[i]], "`\n\n", sep = "")
-      cat("```text\n", spatial_iv_status$formula[[i]], "\n```\n\n", sep = "")
-    }
-  }
-}
-```
-
-```{r diagnostics, echo=FALSE, results='asis'}
-analysis_table(read_analysis_csv("benchmarking", "spatial_iv", "spatial_iv_diagnostics_summary.csv"), "IV diagnostic summaries")
-```
-
-```{r coeffs, echo=FALSE, results='asis'}
-analysis_table(read_analysis_csv("benchmarking", "spatial_iv", "spatial_iv_coefficient_summary.csv"), "Default coefficient summaries")
-```
-
-```{r clustered, echo=FALSE, results='asis'}
-analysis_table(read_analysis_csv("benchmarking", "spatial_iv", "spatial_iv_clustered_coefficient_summary.csv"), "Clustered-SE coeftest attempt")
+```{r spatial-iv-diagnostics}
+analysis_table(spatial_iv_diag, "IV diagnostic summaries")
+analysis_table(spatial_iv_coef, "Default coefficient summaries")
+analysis_table(spatial_iv_cluster, "Clustered-SE coeftest attempt")
+analysis_table(spatial_iv_fail, "Failure/status summary")
 ```

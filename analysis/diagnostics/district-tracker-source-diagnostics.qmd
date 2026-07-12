@@ -1,56 +1,42 @@
 ---
 title: "District Tracker Source Diagnostics"
 format: gfm
+execute:
+  echo: true
+  output: true
+  warning: true
+  message: true
 ---
-```{r setup, include=FALSE}
+
+```{r setup}
 helper <- if (file.exists("analysis/_analysis_helpers.R")) "analysis/_analysis_helpers.R" else "../_analysis_helpers.R"
 source(helper)
 ```
 
-## Legacy comments
+## Legacy diagnostic intent
 
-```{r legacy-comments, echo=FALSE, results='asis'}
-analysis_render_legacy_comments("06-match-districts-construct-district-tracking-dfs.R", caption = "Legacy Chunk 6: district tracker construction and QA notes")
+The legacy tracker-source diagnostics compared district names across years, inspected state and union-territory changes, noted unrecorded state changes requiring manual attention, and checked same-name districts that appeared across states.
+
+```{r tracker-targets}
+tracker_counts <- analysis_target_csv("diag_ext_district_tracker_sources", "tracker_source_counts.csv")
+tracker_state_changes <- analysis_target_csv("diag_ext_district_tracker_sources", "tracker_state_changes.csv")
+tracker_state_events <- analysis_target_csv("diag_ext_district_tracker_sources", "tracker_state_change_events.csv")
+tracker_expected_state <- analysis_target_csv("diag_ext_district_tracker_sources", "tracker_legacy_expected_state_changes.csv")
+tracker_unrecorded <- analysis_target_csv("diag_ext_district_tracker_sources", "tracker_unrecorded_state_changes.csv")
+tracker_inperiod <- analysis_target_csv("diag_ext_district_tracker_sources", "tracker_inperiod_district_changes.csv")
+tracker_expected_inperiod <- analysis_target_csv("diag_ext_district_tracker_sources", "tracker_legacy_expected_inperiod_district_changes.csv")
+tracker_same <- analysis_target_csv("diag_ext_district_tracker_sources", "tracker_same_name_districts.csv")
+tracker_expected_same <- analysis_target_csv("diag_ext_district_tracker_sources", "tracker_legacy_expected_same_name_districts.csv")
 ```
 
-```{r deviation-note, echo=FALSE, results='asis'}
-analysis_deviation_note("The prose above is rendered from the legacy comments. The current tables below replace manually written counts with target outputs, and separately show legacy expected-count benchmarks when the active cleaned tracker no longer contains the same raw changes.")
-```
-
-## Current targets-backed results
-
-```{r source-counts, echo=FALSE, results='asis'}
-analysis_table(read_analysis_csv("diagnostics", "extended", "district_tracker_sources", "tracker_source_counts.csv"), "Raw district-change source coverage")
-```
-
-```{r legacy-reference, echo=FALSE, results='asis'}
-analysis_table(read_analysis_csv("diagnostics", "extended", "district_tracker_sources", "tracker_legacy_comment_reference.csv"), "Legacy comment benchmarks versus current detections")
-```
-
-```{r state-changes, echo=FALSE, results='asis'}
-analysis_table(read_analysis_csv("diagnostics", "extended", "district_tracker_sources", "tracker_state_change_events.csv"), "Current recorded state/UT change events")
-```
-
-```{r expected-state-changes, echo=FALSE, results='asis'}
-analysis_table(read_analysis_csv("diagnostics", "extended", "district_tracker_sources", "tracker_legacy_expected_state_changes.csv"), "Recorded state/UT changes noted in the legacy comments")
-```
-
-```{r unrecorded-state-changes, echo=FALSE, results='asis'}
-analysis_table(read_analysis_csv("diagnostics", "extended", "district_tracker_sources", "tracker_unrecorded_state_changes.csv"), "Unrecorded state/UT changes requiring manual attention")
-```
-
-```{r inperiod-changes, echo=FALSE, results='asis'}
-analysis_table(read_analysis_csv("diagnostics", "extended", "district_tracker_sources", "tracker_inperiod_district_changes.csv"), "Current district-name changes inside sampling periods")
-```
-
-```{r expected-inperiod, echo=FALSE, results='asis'}
-analysis_table(read_analysis_csv("diagnostics", "extended", "district_tracker_sources", "tracker_legacy_expected_inperiod_district_changes.csv"), "Legacy in-period district-name-change benchmark")
-```
-
-```{r same-name-districts, echo=FALSE, results='asis'}
-analysis_table(read_analysis_csv("diagnostics", "extended", "district_tracker_sources", "tracker_same_name_districts.csv"), "Current same-name districts appearing in multiple states")
-```
-
-```{r expected-same-name, echo=FALSE, results='asis'}
-analysis_table(read_analysis_csv("diagnostics", "extended", "district_tracker_sources", "tracker_legacy_expected_same_name_districts.csv"), "Legacy same-name-district benchmark")
+```{r tracker-tables}
+analysis_table(tracker_counts, "Tracker source row counts")
+analysis_table(tracker_state_changes, "Current row-level state/UT changes")
+analysis_table(tracker_state_events, "Current state/UT change events")
+analysis_table(tracker_expected_state, "Legacy expected recorded state/UT changes")
+analysis_table(tracker_unrecorded, "Legacy unrecorded state/UT changes requiring manual attention")
+analysis_table(tracker_inperiod, "Current district-name changes inside sampling periods")
+analysis_table(tracker_expected_inperiod, "Legacy in-period district-name-change benchmark")
+analysis_table(tracker_same, "Current same-name districts appearing in multiple states")
+analysis_table(tracker_expected_same, "Legacy same-name-district benchmark")
 ```

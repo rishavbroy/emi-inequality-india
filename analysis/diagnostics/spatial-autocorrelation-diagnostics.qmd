@@ -1,24 +1,28 @@
 ---
 title: "Spatial Autocorrelation Diagnostics"
 format: gfm
+execute:
+  echo: true
+  output: true
+  warning: true
+  message: true
 ---
-```{r setup, include=FALSE}
+
+```{r setup}
 helper <- if (file.exists("analysis/_analysis_helpers.R")) "analysis/_analysis_helpers.R" else "../_analysis_helpers.R"
 source(helper)
 ```
 
-## Legacy comments
+## Legacy diagnostic intent
 
-```{r legacy-comments, echo=FALSE, results='asis'}
-analysis_render_legacy_comments("29-geospatial-spatial-autocorrelation-tests.R", caption = "Legacy Chunk 29: Moran's I checks")
+The legacy spatial-autocorrelation chunk used rook contiguity, a binary adjacency matrix, row-standardized weights, and `moran.test(..., zero.policy = TRUE)`.  It checked IV residuals, first-stage residuals, `EMIE`, linguistic distance, consumption growth, and Gini growth, while also leaving a Monte Carlo Moran scaffold commented out.
+
+```{r moran-target}
+moran <- analysis_target_csv("diag_public_spatial_autocorrelation", "spatial_moran_tests.csv")
 ```
 
-```{r deviation-note, echo=FALSE, results='asis'}
-analysis_deviation_note("The table below uses the current active panel and geometry. The current p-values are substantively consistent with the legacy conclusion of strong positive spatial autocorrelation, but are not exact legacy parity; that context is documented in `docs/refactor/spatial_diagnostics_context.md`.")
-```
+The current `m_cons_resid` p-value is `r analysis_format_number(analysis_metric(moran, "legacy_name", "m_cons_resid", "p.value"), 12)`, and the current `m_cons` p-value is `r analysis_format_number(analysis_metric(moran, "legacy_name", "m_cons", "p.value"), 12)`.  These are current active-pipeline results, not hard-coded legacy comments.
 
-## Current targets-backed results
-
-```{r moran, echo=FALSE, results='asis'}
-analysis_table(read_analysis_csv("diagnostics", "public", "spatial_moran_tests.csv"), "Current Moran's I diagnostics")
+```{r moran-table}
+analysis_table(moran, "Current Moran's I diagnostics")
 ```

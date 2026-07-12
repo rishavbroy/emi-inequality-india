@@ -1,24 +1,22 @@
 ---
 title: "Long Paths and 8.3 Filename Troubleshooting"
 format: gfm
+execute:
+  echo: true
+  output: true
+  warning: true
+  message: true
 ---
-```{r setup, include=FALSE}
+
+```{r setup}
 helper <- if (file.exists("analysis/_analysis_helpers.R")) "analysis/_analysis_helpers.R" else "../_analysis_helpers.R"
 source(helper)
 ```
 
-## Legacy comments
+## Legacy diagnostic intent
 
-```{r legacy-comments, echo=FALSE, results='asis'}
-analysis_render_legacy_comments("03-define-functions-to-read-in-short-8-3-filenames.R", caption = "Legacy Chunk 3: long-path troubleshooting and design notes")
-```
+The legacy project carried lengthy troubleshooting comments about Windows long paths, 8.3 short filenames, and reader fallbacks.  The current production implementation is in `R/io/read_long_paths.R`; this analysis note keeps the explanatory material out of production code and renders the current helper implementation directly.
 
-```{r deviation-note, echo=FALSE, results='asis'}
-analysis_deviation_note("The prose above is rendered from the legacy comments, with comment markers removed. The code below shows the current production helper implementation in `R/io/read_long_paths.R`, so the long explanation can live in `analysis/` rather than as lengthy inline comments in production code.")
-```
-
-## Current helper implementation
-
-```{r long-path-functions, echo=FALSE, results='asis'}
+```{r long-path-functions}
 analysis_render_source_file("R/io/read_long_paths.R", language = "r")
 ```

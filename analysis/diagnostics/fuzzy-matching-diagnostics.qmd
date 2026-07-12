@@ -1,44 +1,36 @@
 ---
 title: "Fuzzy Matching Diagnostics"
 format: gfm
+execute:
+  echo: true
+  output: true
+  warning: true
+  message: true
 ---
-```{r setup, include=FALSE}
+
+```{r setup}
 helper <- if (file.exists("analysis/_analysis_helpers.R")) "analysis/_analysis_helpers.R" else "../_analysis_helpers.R"
 source(helper)
 ```
 
-## Legacy comments
+## Legacy diagnostic intent
 
-```{r legacy-comments, echo=FALSE, results='asis'}
-analysis_render_legacy_comments("16-match-districts-test-joining-methods.R", caption = "Legacy Chunk 16: fuzzy-join diagnostics")
+The legacy fuzzy-matching chunk tested string-distance methods, inspected troublesome pairs, and compared thresholds before fixing the production thresholds.  The current diagnostic uses target outputs from the active tracker and join map rather than pasting hand-counted results from commented code.
+
+```{r fuzzy-diagnostic-targets}
+fuzzy_summary <- analysis_target_csv("diag_ext_fuzzy_matching", "fuzzy_matching_summary.csv")
+fuzzy_methods <- analysis_target_csv("diag_ext_fuzzy_matching", "fuzzy_matching_legacy_methods.csv")
+fuzzy_tuning <- analysis_target_csv("diag_ext_fuzzy_matching", "fuzzy_matching_legacy_tuning_reference.csv")
+fuzzy_coverage <- analysis_target_csv("diag_ext_fuzzy_matching", "fuzzy_matching_candidate_pair_coverage.csv")
+fuzzy_trouble <- analysis_target_csv("diag_ext_fuzzy_matching", "fuzzy_matching_troublesome_pairs.csv")
+fuzzy_status <- analysis_target_csv("diag_ext_fuzzy_matching", "fuzzy_matching_join_status_counts.csv")
 ```
 
-```{r deviation-note, echo=FALSE, results='asis'}
-analysis_deviation_note("The prose above is rendered from the legacy comments. The current tables below keep the final methods/thresholds visible while replacing hand-inspected join-status counts with target outputs.")
-```
-
-## Current targets-backed results
-
-```{r summary, echo=FALSE, results='asis'}
-analysis_table(read_analysis_csv("diagnostics", "extended", "fuzzy_matching", "fuzzy_matching_summary.csv"), "Fuzzy matching diagnostic summary")
-```
-
-```{r methods, echo=FALSE, results='asis'}
-analysis_table(read_analysis_csv("diagnostics", "extended", "fuzzy_matching", "fuzzy_matching_legacy_methods.csv"), "Legacy final string-distance methods and thresholds")
-```
-
-```{r legacy-tuning, echo=FALSE, results='asis'}
-analysis_table(read_analysis_csv("diagnostics", "extended", "fuzzy_matching", "fuzzy_matching_legacy_tuning_reference.csv"), "Legacy tuning comments retained as benchmarks")
-```
-
-```{r pair-coverage, echo=FALSE, results='asis'}
-analysis_table(read_analysis_csv("diagnostics", "extended", "fuzzy_matching", "fuzzy_matching_candidate_pair_coverage.csv"), "Candidate-pair coverage")
-```
-
-```{r troublesome, echo=FALSE, results='asis'}
-analysis_table(read_analysis_csv("diagnostics", "extended", "fuzzy_matching", "fuzzy_matching_troublesome_pairs.csv"), "Troublesome legacy name-pair checks")
-```
-
-```{r join-status, echo=FALSE, results='asis'}
-analysis_table(read_analysis_csv("diagnostics", "extended", "fuzzy_matching", "fuzzy_matching_join_status_counts.csv"), "Current join status counts")
+```{r fuzzy-diagnostic-tables}
+analysis_table(fuzzy_summary, "Fuzzy matching diagnostic summary")
+analysis_table(fuzzy_methods, "Legacy final string-distance methods and thresholds")
+analysis_table(fuzzy_tuning, "Legacy tuning comments retained as benchmarks")
+analysis_table(fuzzy_coverage, "Candidate-pair coverage", max_rows = 30)
+analysis_table(fuzzy_trouble, "Troublesome legacy name-pair checks")
+analysis_table(fuzzy_status, "Current join status counts")
 ```

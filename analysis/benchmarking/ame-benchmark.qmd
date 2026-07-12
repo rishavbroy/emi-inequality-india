@@ -1,48 +1,58 @@
 ---
 title: "Average Marginal Effects Benchmark"
 format: gfm
+execute:
+  echo: true
+  output: true
+  warning: true
+  message: true
 ---
-```{r setup, include=FALSE}
+
+```{r setup}
 helper <- if (file.exists("analysis/_analysis_helpers.R")) "analysis/_analysis_helpers.R" else "../_analysis_helpers.R"
 source(helper)
 ```
 
-## Legacy comments
+## Legacy diagnostic intent
 
-```{r legacy-comments, echo=FALSE, results='asis'}
-analysis_render_legacy_comments("10-participation-model-derive-ame.R", caption = "Legacy Chunk 10: AME method choice and timing notes")
+Use automatic differentiation (AD) for standard-error delta-method gradients, but keep the final method as `avg_slopes(model_probit_selection, newdata = sel_data, wts = "weight", vcov = TRUE, type = "response")` with `options(marginaleffects_parallel = FALSE)`.  The legacy notebook noted that raw AME derivation is slow because the count of numeric variables, observations, and centered finite-difference prediction calls is large.
+
+```{r ame-current-metadata}
+ame_methods <- analysis_target_csv("bench_ame_methods", "ame_methods_benchmark.csv")
+ame_notes <- analysis_target_csv("bench_ame_methods", "ame_legacy_benchmark_notes.csv")
+ame_parallel <- analysis_target_csv("bench_ame_methods", "ame_parallelization_notes.csv")
+full_n <- analysis_value(ame_methods, column = "n_observations")
+n_numeric <- analysis_value(ame_methods, column = "n_numeric_variables")
+predict_calls <- analysis_value(ame_methods, column = "centered_predict_calls_full_data")
 ```
 
-```{r deviation-note, echo=FALSE, results='asis'}
-analysis_deviation_note("The prose above is rendered from the legacy comments, with comment markers removed. The tables below replace manually written timing/status comments with current target outputs; where the current `marginaleffects` call is incompatible with the active package version, the incompatibility is shown explicitly rather than rewritten as a successful timing result.")
+The current active model frame has `r analysis_format_number(n_numeric, 0)` numeric variables and `r analysis_format_number(full_n, 0)` observations.  Centered finite differences therefore imply `r analysis_format_number(predict_calls, 0)` full-data calls of `predict()` if each numeric variable is perturbed up and down once.  This is the current-codebase analog of the legacy note that `avg_slopes()` uses centered finite differences.
+
+Method 1 was straight sampling/subsampling.  The current benchmark keeps `set.seed(999)`, samples from the active model frame, and calls the production `marginaleffects::avg_slopes()` method.
+
+```{r ame-methods-table}
+analysis_table(
+  ame_methods[intersect(c("method", "sample_size", "n_observations", "n_numeric_variables", "centered_predict_calls_full_data", "elapsed_seconds", "status"), names(ame_methods))],
+  "Current AME benchmark attempts"
+)
 ```
 
-## Current targets-backed results
+With `newdata = sel_data` (no subsampling, as if `num_samp` were `r analysis_format_number(full_n, 0)`), the legacy run took several minutes; the default current benchmark tier intentionally does not rerun the full-data AME timing every public build.  With the current default benchmark tier, the largest sampled benchmark uses `num_samp` equal to `r analysis_format_number(max(ame_methods$sample_size, na.rm = TRUE), 0)` and the slowest recorded current run took `r analysis_format_number(max(ame_methods$elapsed_seconds, na.rm = TRUE), 3)` seconds.
 
-```{r methods, echo=FALSE, results='asis'}
-ame_methods <- read_analysis_csv("benchmarking", "ame", "ame_methods_benchmark.csv")
-ame_table_cols <- intersect(c("method", "sample_size", "elapsed_seconds", "status"), names(ame_methods))
-analysis_table(ame_methods[ame_table_cols], "Current AME benchmark attempts")
+Method 2 was subsampling with forward differences.  The current analog is the row whose method is `avg_slopes_fdforward`.
+
+```{r ame-forward-difference}
+analysis_table(
+  ame_methods[ame_methods$method == "avg_slopes_fdforward", intersect(c("method", "sample_size", "elapsed_seconds", "status", "reason", "fallback"), names(ame_methods)), drop = FALSE],
+  "Forward-difference AME benchmark rows"
+)
 ```
 
-```{r method-reasons, echo=FALSE, results='asis'}
-if (all(c("method", "sample_size", "reason") %in% names(ame_methods))) {
-  for (i in seq_len(nrow(ame_methods))) {
-    reason <- ame_methods$reason[[i]]
-    fallback <- if ("fallback" %in% names(ame_methods)) ame_methods$fallback[[i]] else ""
-    if (nzchar(reason) || nzchar(fallback)) {
-      cat("### Current-version benchmark note: `", ame_methods$method[[i]], "`, n = ", ame_methods$sample_size[[i]], "\n\n", sep = "")
-      if (nzchar(reason)) cat("```text\n", reason, "\n```\n\n", sep = "")
-      if (nzchar(fallback)) cat("```text\n", fallback, "\n```\n\n", sep = "")
-    }
-  }
-}
-```
+Method 3 split numeric `slopes()` and factor `comparisons()` just to check whether it improved runtime.  The legacy conclusion was no: use `avg_slopes()`.  Because the current production pipeline uses `avg_slopes()` directly, this note is retained as a benchmark note rather than a second production path.
 
-```{r notes, echo=FALSE, results='asis'}
-analysis_table(read_analysis_csv("benchmarking", "ame", "ame_legacy_benchmark_notes.csv"), "Legacy AME benchmark notes")
-```
+Method 4 attempted parallelization with `future.apply`, `plan(multicore, workers = 4)`, and `options(marginaleffects_parallel = TRUE)`.  The legacy attempt failed because the exported globals exceeded available RAM.  The current benchmark therefore records the parallelization attempt as documented-not-run instead of rerunning an unsafe memory-heavy path.
 
-```{r parallel, echo=FALSE, results='asis'}
-analysis_table(read_analysis_csv("benchmarking", "ame", "ame_parallelization_notes.csv"), "Parallelization notes")
+```{r ame-notes}
+analysis_table(ame_notes, "Legacy AME benchmark notes retained as target output")
+analysis_table(ame_parallel, "Parallelization notes")
 ```

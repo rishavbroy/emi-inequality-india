@@ -1,44 +1,60 @@
 ---
 title: "Missingness Diagnostics"
 format: gfm
+execute:
+  echo: true
+  output: true
+  warning: true
+  message: true
 ---
-```{r setup, include=FALSE}
+
+```{r setup}
 helper <- if (file.exists("analysis/_analysis_helpers.R")) "analysis/_analysis_helpers.R" else "../_analysis_helpers.R"
 source(helper)
 ```
 
-## Legacy comments
+## Legacy diagnostic intent
 
-```{r legacy-comments, echo=FALSE, results='asis'}
-analysis_render_legacy_comments("08-participation-model-are-nas-randomly-distributed.R", caption = "Legacy Chunk 8: missingness checks")
+The legacy missingness chunk asked whether NAs in the probit-related variables were randomly distributed.  It listed variables with NAs, ranked regions with the most missingness, inspected a Rajasthan/Southern case study, proposed chi-square checks for `any_na_row` by state and region, built missingness-indicator correlation matrices, and fit one logistic regression per missing variable with FDR adjustment.
+
+```{r missingness-targets}
+missing_counts <- analysis_target_csv("diag_ext_missingness", "missingness_counts.csv")
+regional_cost <- analysis_target_csv("diag_ext_missingness", "regional_missingness_cost.csv")
+regional_distance <- analysis_target_csv("diag_ext_missingness", "regional_missingness_distance.csv")
+regional_father <- analysis_target_csv("diag_ext_missingness", "regional_missingness_father_education.csv")
+logit_summary <- analysis_target_csv("diag_ext_missingness", "missingness_logit_summary.csv")
+legacy_notes <- analysis_target_csv("diag_ext_missingness", "missingness_legacy_notes.csv")
+corr_all_pairs <- analysis_target_csv("diag_ext_missingness", "missingness_correlation_all_top_pairs.csv")
+corr_enrolled_pairs <- analysis_target_csv("diag_ext_missingness", "missingness_correlation_enrolled_top_pairs.csv")
 ```
 
-```{r deviation-note, echo=FALSE, results='asis'}
-analysis_deviation_note("The prose and commented exploratory code above are rendered from the legacy comments, with comment markers removed and code-like comment blocks fenced. The tables below replace manually inspected objects and plots with current target outputs. The known `glm.fit: fitted probabilities numerically 0 or 1 occurred` warning is intentionally left in the target metadata and review archive because it is a diagnostic warning, not a public-build failure.")
+The current active data contain `r analysis_format_number(analysis_metric(missing_counts, "missing_var", "Total probit-relevant with NA", "n_missing"), 0)` probit-relevant rows with at least one missing value and `r analysis_format_number(analysis_metric(missing_counts, "missing_var", "Total probit-relevant with no NA", "n_missing"), 0)` probit-relevant rows with no missing value.
+
+```{r missingness-counts}
+analysis_table(missing_counts, "Current missingness counts")
 ```
 
-## Current targets-backed results
-
-```{r counts, echo=FALSE, results='asis'}
-analysis_table(read_analysis_csv("diagnostics", "extended", "missingness", "missingness_counts.csv"), "Current missingness counts")
+```{r missingness-regions}
+analysis_table(regional_cost, "Regions with the most cost-variable missingness", max_rows = 20)
+analysis_table(regional_distance, "Regions with the most distance-to-school missingness", max_rows = 20)
+analysis_table(regional_father, "Regions with the most father-education missingness", max_rows = 20)
 ```
 
-```{r regional-cost, echo=FALSE, results='asis'}
-analysis_table(read_analysis_csv("diagnostics", "extended", "missingness", "regional_missingness_cost.csv"), "Regions with the most cost-variable missingness", max_rows = 20)
+The current analog of the legacy correlation-matrix work writes both CSV matrices and rendered heatmaps as target outputs.
+
+```{r missingness-correlation-figures, results='asis'}
+analysis_image("diag_ext_missingness", "missingness_correlation_all.png", "Missingness correlation heatmap for all observations")
+analysis_image("diag_ext_missingness", "missingness_correlation_enrolled.png", "Missingness correlation heatmap for enrolled observations")
 ```
 
-```{r regional-distance, echo=FALSE, results='asis'}
-analysis_table(read_analysis_csv("diagnostics", "extended", "missingness", "regional_missingness_distance.csv"), "Regions with the most distance-to-school missingness", max_rows = 20)
+```{r missingness-correlation-tables}
+analysis_table(corr_all_pairs, "Largest absolute missingness correlations: all observations", max_rows = 20)
+analysis_table(corr_enrolled_pairs, "Largest absolute missingness correlations: enrolled observations", max_rows = 20)
 ```
 
-```{r regional-father, echo=FALSE, results='asis'}
-analysis_table(read_analysis_csv("diagnostics", "extended", "missingness", "regional_missingness_father_education.csv"), "Regions with the most father-education missingness", max_rows = 20)
-```
+The current analog of the legacy one-logit-per-missing-variable screen is summarized below.  `n_sig` counts covariates that survive Benjamini-Hochberg/FDR adjustment at the target's configured threshold.
 
-```{r logit-summary, echo=FALSE, results='asis'}
-analysis_table(read_analysis_csv("diagnostics", "extended", "missingness", "missingness_logit_summary.csv"), "Logit summaries for structured missingness")
-```
-
-```{r notes, echo=FALSE, results='asis'}
-analysis_table(read_analysis_csv("diagnostics", "extended", "missingness", "missingness_legacy_notes.csv"), "Legacy missingness notes retained as diagnostics")
+```{r missingness-logits}
+analysis_table(logit_summary, "Logit summaries for structured missingness")
+analysis_table(legacy_notes, "Legacy missingness notes retained as diagnostics")
 ```
