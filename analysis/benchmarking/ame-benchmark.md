@@ -6,15 +6,12 @@ helper <- if (file.exists("analysis/_analysis_helpers.R")) "analysis/_analysis_h
 source(helper)
 ```
 
-## Legacy diagnostic intent
+## Legacy prose retained with current results
 
-Use automatic differentiation (AD) for standard-error delta-method
-gradients, but keep the final method as
-`avg_slopes(model_probit_selection, newdata = sel_data, wts = "weight", vcov = TRUE, type = "response")`
-with `options(marginaleffects_parallel = FALSE)`. The legacy notebook
-noted that raw AME derivation is slow because the count of numeric
-variables, observations, and centered finite-difference prediction calls
-is large.
+The legacy chunk began: Use automatic differentiation (AD) for SE delta
+method gradients. It also set
+`options(marginaleffects_parallel = FALSE)` and kept the final method as
+`avg_slopes(model_probit_selection, newdata = sel_data, wts = "weight", vcov = TRUE, type = "response")`.
 
 ``` r
 ame_methods <- analysis_target_csv("bench_ame_methods", "ame_methods_benchmark.csv")
@@ -25,11 +22,30 @@ n_numeric <- analysis_value(ame_methods, column = "n_numeric_variables")
 predict_calls <- analysis_value(ame_methods, column = "centered_predict_calls_full_data")
 ```
 
-The current active model frame has 10 numeric variables and 114,961
-observations. Centered finite differences therefore imply 2,299,220
-full-data calls of `predict()` if each numeric variable is perturbed up
-and down once. This is the current-codebase analog of the legacy note
-that `avg_slopes()` uses centered finite differences.
+With `newdata = sel_data` (no subsampling, as if `num_samp =` 114,961):
+the default current benchmark tier intentionally does not rerun the
+full-data AME timing every public build. With the current default
+benchmark tier, the largest sampled benchmark uses `num_samp =` 2,000,
+and the slowest recorded current run took 5.109 seconds.
+
+The rest of this chunk is saved for quick replications of robustness
+checks on my final method.
+
+Raw AME derivation is very slow: 10 numeric variables \* 114,961
+observations \* 2 calls of `predict()` per observation per variable
+(`avg_slopes()` uses centered finite difference, see
+<https://marginaleffects.com/bonus/uncertainty.html#numerical-derivatives-sensitivity-to-step-size>)
+= 2,299,220 `predict()` calls.
+
+``` r
+analysis_deviation_note("Legacy full-data and 20,000-row timings are preserved in target notes, but the rendered sentence reports current target-backed default-tier timings because rerunning the legacy full-data benchmark on every analysis refresh would defeat the analysis-notes workflow.")
+```
+
+**Deviation note.** Legacy full-data and 20,000-row timings are
+preserved in target notes, but the rendered sentence reports current
+target-backed default-tier timings because rerunning the legacy
+full-data benchmark on every analysis refresh would defeat the
+analysis-notes workflow.
 
 ``` r
 data.frame(
@@ -45,9 +61,11 @@ data.frame(
       n_observations centered_predict_calls
     1         114961                2299220
 
-Method 1 was straight sampling/subsampling. The current benchmark keeps
-`set.seed(999)`, samples from the active model frame, and calls the
-production `marginaleffects::avg_slopes()` method.
+Method 1: Straight Sampling and Subsampling. Note: “`slopes()` functions
+will automatically revert to `comparisons()` for binary or categorical
+variables” (<https://marginaleffects.com/man/r/slopes.html>). The
+current benchmark keeps `set.seed(999)`, samples from the active model
+frame, and calls the production `marginaleffects::avg_slopes()` method.
 
 ``` r
 analysis_table(
@@ -65,13 +83,6 @@ analysis_table(
 
 Current AME benchmark attempts
 
-With `newdata = sel_data` (no subsampling, as if `num_samp` were
-114,961), the legacy run took several minutes; the default current
-benchmark tier intentionally does not rerun the full-data AME timing
-every public build. With the current default benchmark tier, the largest
-sampled benchmark uses `num_samp` equal to 2,000 and the slowest
-recorded current run took 5.109 seconds.
-
 ``` r
 ame_methods[, intersect(c("method", "sample_size", "elapsed_seconds", "status", "reason"), names(ame_methods)), drop = FALSE]
 ```
@@ -87,8 +98,13 @@ ame_methods[, intersect(c("method", "sample_size", "elapsed_seconds", "status", 
     3     NA
     4     NA
 
-Method 2 was subsampling with forward differences. The current analog is
-the row whose method is `avg_slopes_fdforward`.
+Method 2: Subsampling with forward differences. The legacy note was:
+calls `predict()` once per perturbation instead of twice (a la central
+differences, `fdcenter`). Run the above, but add
+`numderiv = "fdforward"` into `avg_slopes()`. Cheaper numeric
+differentiation didn’t help at all! Reflective of how many discrete
+variables I have. Centered differences are generally more accurate than
+forward differences for continuous vars.
 
 ``` r
 analysis_table(
@@ -104,18 +120,21 @@ analysis_table(
 
 Forward-difference AME benchmark rows
 
-Method 3 split numeric `slopes()` and factor `comparisons()` just to
-check whether it improved runtime. The legacy conclusion was no: use
-`avg_slopes()`. Because the current production pipeline uses
-`avg_slopes()` directly, this note is retained as a benchmark note
-rather than a second production path.
+Method 3: Split slopes and comparisons, just to be sure. Ran
+`avg_slopes()` on numeric variables and `avg_comparisons()` on factor
+variables. No. Just use `avg_slopes()`.
 
-Method 4 attempted parallelization with `future.apply`,
+Method 4: Parallelization. The legacy attempt used `future.apply`,
 `plan(multicore, workers = 4)`, and
-`options(marginaleffects_parallel = TRUE)`. The legacy attempt failed
-because the exported globals exceeded available RAM. The current
-benchmark therefore records the parallelization attempt as
-documented-not-run instead of rerunning an unsafe memory-heavy path.
+`options(marginaleffects_parallel = TRUE)`. Failed! “The total size of
+the 18 globals exported for future expression (`FUN()`) is 7.90 GiB.” As
+documentation states: “There is always considerable overhead when using
+parallel computation, mainly involved in passing the whole dataset to
+the different processes.” To parallelize for the whole dataset after
+trimming the model object still required 53.96 GiB. My laptop has 24 GB
+of RAM! So no parallelization. The current benchmark therefore records
+the parallelization attempt as documented-not-run instead of rerunning
+an unsafe memory-heavy path.
 
 ``` r
 analysis_table(ame_notes, "Legacy AME benchmark notes retained as target output")

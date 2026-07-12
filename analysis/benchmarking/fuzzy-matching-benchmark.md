@@ -6,13 +6,35 @@ helper <- if (file.exists("analysis/_analysis_helpers.R")) "analysis/_analysis_h
 source(helper)
 ```
 
-## Legacy diagnostic intent
+## Legacy prose retained with current results
 
-The legacy tuning chunk compared string-distance methods and thresholds
-before settling on `soundex = 0`, `qgram = 0`, `jw <= 0.15`, `dl <= 2`,
-and `osa <= 1`. The current benchmark replaces the hand-inspected legacy
-objects with target-generated candidate pairs from the active
-tracker/join-map objects, while keeping the final thresholds visible.
+Number of rows from fuzzy full joining `district_tracker` (734 rows) and
+`mother_tongues_01` (593 rows) with different metrics: `osa`: 859; `lv`:
+859; `dl`: 859; `hamming`: 872; `lcs`: 825; `qgram`: 829; `cosine`,
+`jaccard`, and `jw`: 435,262. See
+<https://cran.r-project.org/web/packages/stringdist/stringdist.pdf#page=23>
+for more.
+
+Testing different methods of fuzzy joining. With (`lcs`, `osa`), (3, 3):
+189/734 rows have an NA. With (`jw`, `dl`, `osa`, `lcs`), (0.10, 2, 3,
+5): 180/734. With final helper vectors
+`methods <- c("soundex", "qgram", "jw", "dl", "osa")` and
+`thresholds <- c(0, 0, 0.15, 2, 1)`: 166/734.
+
+`soundex = 0` means phonetic variants in anglicization allowed.
+`qgram = 0` means rearrangements of words allowed. `jw <= 0.15` means
+respellings and vowel swaps with 0.85 similarity allowed. `dl <= 2`
+means no more than two insertions, deletions, substitutions, and
+transpositions allowed. `osa <= 1` means one typo allowed.
+
+``` r
+analysis_deviation_note("The legacy hand-counts are preserved as prose/reference rows; the current benchmark additionally evaluates target-generated candidate pairs from the active tracker and join-map objects.")
+```
+
+**Deviation note.** The legacy hand-counts are preserved as
+prose/reference rows; the current benchmark additionally evaluates
+target-generated candidate pairs from the active tracker and join-map
+objects.
 
 ``` r
 fuzzy_cov <- analysis_target_csv("bench_fuzzy_matching", "fuzzy_matching_candidate_pair_coverage.csv")
