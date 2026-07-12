@@ -300,9 +300,11 @@ test_that("analysis relative image paths collapse to a scalar Markdown path", {
 
 
 test_that("map tuning analysis notebook is removed from diagnostics layer", {
-  expect_false(file.exists(repo_file("analysis", "exploratory", "map-tuning.qmd")))
-  expect_false(file.exists(repo_file("analysis", "exploratory", "map-tuning.md")))
-  readme <- paste(readLines(repo_file("analysis", "README.md"), warn = FALSE), collapse = "\n")
+  readme_path <- repo_file("analysis", "README.md")
+  root <- dirname(dirname(readme_path))
+  expect_false(file.exists(file.path(root, "analysis", "exploratory", "map-tuning.qmd")))
+  expect_false(file.exists(file.path(root, "analysis", "exploratory", "map-tuning.md")))
+  readme <- paste(readLines(readme_path, warn = FALSE), collapse = "\n")
   deviations <- paste(readLines(repo_file("docs", "refactor", "analysis_prose_deviations.md"), warn = FALSE), collapse = "\n")
   expect_false(grepl("map-tuning.qmd", readme, fixed = TRUE))
   expect_match(deviations, "Map palette/export tuning is intentionally excluded", fixed = TRUE)

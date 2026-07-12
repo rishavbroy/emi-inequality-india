@@ -99,7 +99,8 @@ test_that("missingness diagnostics preserve legacy diagnostic components", {
 
   expect_s3_class(out, "emi_missingness_diagnostics")
   expect_true(all(c("missing_counts", "regional_cost", "corr_all", "logit_summary", "notes") %in% names(out)))
-  expect_true("Total probit-relevant with NA" %in% out$missing_counts$missing_var)
+  expect_true("Total probit-model with NA" %in% out$missing_counts$missing_var)
+  expect_false("Total probit-relevant with NA" %in% out$missing_counts$missing_var)
 })
 
 test_that("missingness regional diagnostics fall back to state-only rankings", {
