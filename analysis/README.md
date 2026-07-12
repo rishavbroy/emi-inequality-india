@@ -21,3 +21,8 @@ Notebook coverage currently includes the legacy comments and diagnostic/explorat
 Do not add `--with-samples` unless the changes may affect application-sample PDFs or the sample extraction/rendering code.
 
 - `exploratory/map-tuning.qmd`: map palette, break, and export-size tuning notes moved out of legacy comments and refreshed from current figure targets.
+
+
+## Prose parity
+
+The analysis notes preserve legacy diagnostic prose where possible while replacing hard-coded legacy results with current target-backed results. Nontrivial prose deviations are documented in [`docs/refactor/analysis_prose_deviations.md`](../docs/refactor/analysis_prose_deviations.md).
