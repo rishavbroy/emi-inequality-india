@@ -33,7 +33,7 @@ spatial_iv_cluster <- analysis_target_csv("bench_spatial_iv_experimental", "spat
 spatial_iv_fail <- analysis_target_csv("bench_spatial_iv_experimental", "spatial_iv_failure_summary.csv")
 ```
 
-The current benchmark estimates `r analysis_format_number(nrow(spatial_iv_status), 0)` experimental specifications.  A status of `estimated` means that `ivreg()` returned an object, not that the model is suitable for the final paper.
+The current benchmark estimates `r analysis_format_number(nrow(spatial_iv_status), 0)` experimental specifications. A status of `estimated` means that `ivreg()` returned an object; the `methodological_success` field is the stricter current analog of the legacy "Don't work even when diagnostics = FALSE" conclusion because it requires diagnostics and clustered-SE extraction to succeed as well.
 
 ```{r spatial-iv-status}
 analysis_table(spatial_iv_status[setdiff(names(spatial_iv_status), "formula")], "Spatial-IV model status")

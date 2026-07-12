@@ -310,6 +310,6 @@ test_that("tracker diagnostics summarize same-name districts by year", {
   )
   out <- summarize_same_name_districts_by_year(same)
 
-  expect_true(all(c("year", "n_same_name_districts", "within_legacy_range") %in% names(out)))
+  expect_true(all(c("year", "n_same_name_districts", "n_same_name_district_names", "within_legacy_range") %in% names(out)))
   expect_equal(out$n_same_name_districts[out$year == 2001], 2L)
 })

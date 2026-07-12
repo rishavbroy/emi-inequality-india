@@ -87,12 +87,12 @@ fit_spatial_lag_iv_attempts <- function(panel, spatial_weights = NULL, cfg = lis
   for (name in names(forms)) {
     form <- forms[[name]]
     if (!requireNamespace("ivreg", quietly = TRUE)) {
-      model_rows[[name]] <- data.frame(model = name, status = "not_estimated", reason = "Package ivreg not installed.", formula = paste(deparse(form), collapse = " "), stringsAsFactors = FALSE)
+      model_rows[[name]] <- data.frame(model = name, status = "not_estimated", methodological_success = FALSE, reason = "Package ivreg not installed.", formula = paste(deparse(form), collapse = " "), stringsAsFactors = FALSE)
       next
     }
     fit_attempt <- tryCatch(ivreg::ivreg(form, data = panel), error = function(e) e)
     if (inherits(fit_attempt, "error")) {
-      model_rows[[name]] <- data.frame(model = name, status = "failed", reason = conditionMessage(fit_attempt), formula = paste(deparse(form), collapse = " "), nobs = NA_integer_, diagnostics_status = "not_run", cluster_se_status = "not_run", stringsAsFactors = FALSE)
+      model_rows[[name]] <- data.frame(model = name, status = "failed", methodological_success = FALSE, reason = conditionMessage(fit_attempt), formula = paste(deparse(form), collapse = " "), nobs = NA_integer_, diagnostics_status = "not_run", cluster_se_status = "not_run", stringsAsFactors = FALSE)
       next
     }
 
@@ -101,10 +101,12 @@ fit_spatial_lag_iv_attempts <- function(panel, spatial_weights = NULL, cfg = lis
     diagnostics_status <- if (inherits(summary_attempt, "error")) paste("failed:", conditionMessage(summary_attempt)) else "estimated"
     cluster_attempt <- try_clustered_spatial_iv(fit, panel, name)
     cluster_status <- unique(cluster_attempt$status %||% "not_run")[[1]]
+    methodological_success <- identical(diagnostics_status, "estimated") && identical(cluster_status, "estimated")
     model_rows[[name]] <- data.frame(
       model = name,
       status = "estimated",
-      reason = "Legacy comments said these attempts did not work; current status only means ivreg returned an object, not that the model is suitable for final use.",
+      methodological_success = methodological_success,
+      reason = "Legacy comments said these attempts did not work; current status only means ivreg returned an object. A model is marked as methodologically successful only when diagnostics and clustered-SE extraction also succeed.",
       formula = paste(deparse(form), collapse = " "),
       nobs = stats::nobs(fit),
       diagnostics_status = diagnostics_status,

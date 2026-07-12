@@ -268,12 +268,19 @@ find_same_name_districts <- function(tracker) {
 summarize_same_name_districts_by_year <- function(same_names) {
   same_names <- as.data.frame(same_names, stringsAsFactors = FALSE)
   if (!nrow(same_names) || !"year" %in% names(same_names)) return(data.frame())
-  out <- stats::aggregate(
+  rows <- stats::aggregate(
+    same_names$district_key,
+    list(year = same_names$year),
+    length
+  )
+  names(rows)[names(rows) == "x"] <- "n_same_name_districts"
+  names_count <- stats::aggregate(
     same_names$district_key,
     list(year = same_names$year),
     function(x) length(unique(x))
   )
-  names(out)[names(out) == "x"] <- "n_same_name_districts"
+  names(names_count)[names(names_count) == "x"] <- "n_same_name_district_names"
+  out <- merge(rows, names_count, by = "year", all.x = TRUE, sort = FALSE)
   out$legacy_expected_min_districts <- 6L
   out$legacy_expected_max_districts <- 10L
   out$within_legacy_range <- out$n_same_name_districts >= 6L & out$n_same_name_districts <= 10L
