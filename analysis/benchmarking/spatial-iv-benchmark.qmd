@@ -13,9 +13,17 @@ helper <- if (file.exists("analysis/_analysis_helpers.R")) "analysis/_analysis_h
 source(helper)
 ```
 
-## Legacy diagnostic intent
+## Legacy prose retained with current results
 
-The legacy experimental spatial-IV chunk tried spatial lags of the dependent variable, `EMIE`, the linguistic-distance instrument, second-order instrument lags, and lagged controls.  The legacy comments said the attempts did not work even when IV diagnostics were disabled.  The current benchmark distinguishes between `ivreg()` returning an object and the model being numerically meaningful.
+Build spatial lags of dependent variables: `W_consY` and `W_giniY`. Rebuild the spatial lags of endogenous `EMIE` and IV: `W_EMIE` and `W_wLing`. Build the second-order lag `W2_wLing`. Rebuild spatial lags of exogenous controls. Spatial-2SLS for consumption change, also instrumenting `W_consY`.
+
+The legacy comments left `summary(model_sdm2sls_cons, diagnostics = TRUE)` and `summary(model_sdm2sls_gini, diagnostics = TRUE)` commented out and concluded: Don't work even when diagnostics = FALSE.
+
+Region clustered standard errors. `vcovCL(..., cluster = ~ region, data = joined_df)`. HC0 by default. Then `coeftest(model_sdm2sls_cons, vcov. = vcov_cluster_cons)` and `coeftest(model_sdm2sls_gini, vcov. = vcov_cluster_gini)`.
+
+```{r spatial-iv-prose-deviation-note, results='asis'}
+analysis_deviation_note("The current benchmark preserves the legacy experimental specifications and clustered-SE attempt, but separates ivreg object creation from diagnostic numerical suitability.")
+```
 
 ```{r spatial-iv-targets}
 spatial_iv_status <- analysis_target_csv("bench_spatial_iv_experimental", "spatial_iv_model_status.csv")

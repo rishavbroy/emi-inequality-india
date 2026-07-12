@@ -13,9 +13,17 @@ helper <- if (file.exists("analysis/_analysis_helpers.R")) "analysis/_analysis_h
 source(helper)
 ```
 
-## Legacy diagnostic intent
+## Legacy prose retained with current results
 
-The legacy IV-construction chunk included exploratory checks of the 2001 instrument, district joins, and potential instrument-strength plots that were not used as final paper outputs.  The current note reads the parity-audit diagnostics produced by the active pipeline instead of copying exploratory values from deleted code.
+Preliminary test of IV strength: Dotplot of EMIE values by `district_code`.
+
+EMIE has three peaks: in Jammu and Kashmir; in Sikkim, Arunachal Pradesh, Nagaland, Manipur, Mizoran, Tripura, maybe Meghalaya; and in Andhra Pradesh, Karnataka, Goa, Lakshadweep, Kerala, Tamil Nadu, Pondicheri, and Andaman & Nicobar! The regions which historically were the furthest from Hindi! Many districts in the second group seem to have EMIE around 1, and the range of EMIE outside peaks is between 0.4 and 0.1. Justification for looking at smaller units of analysis?
+
+Process the dataframe and compute the weighted average `ling_distance` for each `(state, district)` group. Group by state and district to ensure that same district names in different states are treated separately. For each group, keep only the top three rows by `spkr_tot`. Create the `ling_degrees` column based on the mother tongue values and @shastry2012a's 0-5 measure of degrees of linguistic distance. Calculate the weighted average linguistic distance for each group.
+
+```{r instrument-prose-deviation-note, results='asis'}
+analysis_deviation_note("The active note renders the current EMIE dotplot target and IV-panel diagnostics, while preserving the legacy interpretation of the peaks as prose rather than copied static output.")
+```
 
 ```{r instrument-targets}
 iv_match <- read_analysis_csv("diagnostics", "public", "iv_panel_match_summary.csv")
