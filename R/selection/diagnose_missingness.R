@@ -315,6 +315,38 @@ save_missingness_correlation_heatmap <- function(mat, path, max_vars = 35L, titl
   normalizePath(path, mustWork = FALSE)
 }
 
+
+save_missingness_logit_plot <- function(summary_df, path, title = "Structured missingness logit screen", top_n = 25L) {
+  dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
+  df <- as.data.frame(summary_df, stringsAsFactors = FALSE)
+  grDevices::png(path, width = 1100, height = 850, res = 130)
+  old <- graphics::par(no.readonly = TRUE)
+  on.exit({ graphics::par(old); grDevices::dev.off() }, add = TRUE)
+  if (!nrow(df) || !all(c("missing_var", "pseudoR2") %in% names(df))) {
+    graphics::plot.new()
+    graphics::text(0.5, 0.5, "No missingness-logit summary available")
+    return(normalizePath(path, mustWork = FALSE))
+  }
+  df <- df[is.finite(df$pseudoR2), , drop = FALSE]
+  if (!nrow(df)) {
+    graphics::plot.new()
+    graphics::text(0.5, 0.5, "No finite pseudo-R² values available")
+    return(normalizePath(path, mustWork = FALSE))
+  }
+  df <- df[order(df$pseudoR2, decreasing = TRUE), , drop = FALSE]
+  df <- utils::head(df, top_n)
+  graphics::par(mar = c(5, 13, 4, 2))
+  graphics::barplot(
+    rev(df$pseudoR2),
+    names.arg = rev(df$missing_var),
+    horiz = TRUE,
+    las = 1,
+    xlab = "Pseudo-R² (predictability of missingness)",
+    main = title
+  )
+  normalizePath(path, mustWork = FALSE)
+}
+
 save_missingness_diagnostics <- function(diagnostics, dir = "outputs/diagnostics/extended/missingness") {
   dir.create(dir, recursive = TRUE, showWarnings = FALSE)
   if (!inherits(diagnostics, "emi_missingness_diagnostics")) diagnostics <- list(missing_counts = as.data.frame(diagnostics))
@@ -342,6 +374,16 @@ save_missingness_diagnostics <- function(diagnostics, dir = "outputs/diagnostics
       corr_enrolled = write_diagnostic_matrix(diagnostics$corr_enrolled, file.path(dir, "missingness_correlation_enrolled.csv")),
       corr_enrolled_pairs = write_diagnostic_csv(missingness_correlation_pairs(diagnostics$corr_enrolled), file.path(dir, "missingness_correlation_enrolled_top_pairs.csv")),
       corr_enrolled_heatmap = save_missingness_correlation_heatmap(diagnostics$corr_enrolled, file.path(dir, "missingness_correlation_enrolled.png"), title = "Missingness correlations: enrolled observations")
+    )
+  }
+  if (nrow(diagnostics$logit_summary %||% data.frame())) {
+    paths <- c(
+      paths,
+      logit_pseudo_r2_plot = save_missingness_logit_plot(
+        diagnostics$logit_summary,
+        file.path(dir, "missingness_logit_pseudo_r2.png"),
+        title = "How structured is missingness?"
+      )
     )
   }
   legacy_output_manifest(paths)

@@ -248,3 +248,28 @@ test_that("spatial weights diagnostics include legacy neighbor-count reference",
   expect_true("legacy_mean_neighbors" %in% names(out))
   expect_true("mean_neighbor_delta_from_legacy" %in% names(out))
 })
+
+test_that("instrument exploration diagnostics render target-backed dotplot artifacts", {
+  panel <- data.frame(
+    district_code_0708 = c(101L, 102L, 201L),
+    state_07 = c("A", "A", "B"),
+    district_07 = c("One", "Two", "Three"),
+    EMIE = c(0, 10, 80),
+    wavg_ling_degrees = c(0, 1, 5),
+    region = c("North", "North", "South")
+  )
+
+  out <- diagnose_instrument_exploration(panel, list())
+
+  expect_true(is.list(out))
+  expect_equal(nrow(out$dotplot_data), 3L)
+  expect_true(all(c("district_order", "district_code", "EMIE", "state_prefix") %in% names(out$dotplot_data)))
+  expect_true(nrow(out$legacy_notes) >= 3L)
+})
+
+test_that("missingness diagnostics save logit plot outputs", {
+  src <- paste(readLines("R/selection/diagnose_missingness.R", warn = FALSE), collapse = "\n")
+
+  expect_match(src, "missingness_logit_pseudo_r2.png", fixed = TRUE)
+  expect_match(src, "save_missingness_logit_plot", fixed = TRUE)
+})

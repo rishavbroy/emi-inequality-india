@@ -44,11 +44,12 @@ analysis_table(regional_distance, "Regions with the most distance-to-school miss
 analysis_table(regional_father, "Regions with the most father-education missingness", max_rows = 20)
 ```
 
-The current analog of the legacy correlation-matrix work writes both CSV matrices and rendered heatmaps as target outputs.
+The current analog of the legacy correlation-matrix work writes both CSV matrices and rendered heatmaps as target outputs.  The legacy logit-screen plots are likewise rendered from the current target output rather than copied from the old notebook.
 
 ```{r missingness-correlation-figures, results='asis'}
 analysis_image("diag_ext_missingness", "missingness_correlation_all.png", "Missingness correlation heatmap for all observations")
 analysis_image("diag_ext_missingness", "missingness_correlation_enrolled.png", "Missingness correlation heatmap for enrolled observations")
+analysis_image("diag_ext_missingness", "missingness_logit_pseudo_r2.png", "Pseudo-R-squared bar chart for missingness logit screens")
 ```
 
 ```{r missingness-correlation-tables}

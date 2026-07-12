@@ -204,6 +204,7 @@ test_that("benchmark targets cover fuzzy matching, spatial weights, and spatial 
   expect_match(src, "bench_spatial_iv_experimental", fixed = TRUE)
   expect_match(src, "save_missingness_diagnostics", fixed = TRUE)
   expect_match(src, "save_district_matching_diagnostics", fixed = TRUE)
+  expect_match(src, "diag_ext_instrument_exploration", fixed = TRUE)
 })
 
 test_that("optional target groups use checked targets wrapper", {
@@ -258,6 +259,7 @@ test_that("analysis notebooks cover remaining legacy diagnostic comments", {
   expect_match(text, "Rajasthan/Southern case study", fixed = TRUE)
   expect_match(text, "merge_dfs_into_tracker", fixed = TRUE)
   expect_match(text, "instrument-strength plots", fixed = TRUE)
+  expect_match(text, "emie_by_district_dotplot.png", fixed = TRUE)
   expect_match(text, "tracker_legacy_expected_same_name_districts.csv", fixed = TRUE)
   expect_false(grepl("analysis_render_legacy_comments", text, fixed = TRUE))
 })
@@ -332,6 +334,7 @@ test_that("analysis notebooks contain prose/current code directly instead of leg
   expect_match(text, "current_code_analog", fixed = TRUE)
   expect_match(text, "intersect(c(\"legacy_name\", \"statistic\", \"estimate\", \"p.value\", \"legacy_note\"), names(moran))", fixed = TRUE)
   expect_match(text, "missingness_correlation_all.png", fixed = TRUE)
+  expect_match(text, "missingness_logit_pseudo_r2.png", fixed = TRUE)
   expect_match(text, "collage_main_maps.png", fixed = TRUE)
   expect_match(text, "figure_files", fixed = TRUE)
   expect_match(text, "execute:\n  echo: true\n  output: true", fixed = TRUE)
