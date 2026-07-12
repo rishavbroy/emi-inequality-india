@@ -224,7 +224,9 @@ test_that("analysis notebooks render from explicit make target, not optional tar
   makefile <- paste(readLines(repo_file("Makefile"), warn = FALSE), collapse = "\n")
   targets <- paste(readLines(repo_file("_targets.R"), warn = FALSE), collapse = "\n")
 
-  expect_match(makefile, "analysis-notes: extended-diagnostics benchmarking clean-analysis render-analysis", fixed = TRUE)
+  expect_match(makefile, "public-diagnostics:", fixed = TRUE)
+  expect_match(makefile, "Rscript scripts/run_targets_checked.R --starts-with diag_public_", fixed = TRUE)
+  expect_match(makefile, "analysis-notes: public-diagnostics extended-diagnostics benchmarking clean-analysis render-analysis", fixed = TRUE)
   expect_match(makefile, "Rscript scripts/render_analysis_notes.R", fixed = TRUE)
   expect_match(makefile, "clean-analysis", fixed = TRUE)
   expect_false(grepl("tar_render\\(bench_", targets))
@@ -328,6 +330,7 @@ test_that("analysis notebooks contain prose/current code directly instead of leg
   expect_false(grepl("echo=FALSE", text, fixed = TRUE))
   expect_match(text, "analysis_target_csv", fixed = TRUE)
   expect_match(text, "current_code_analog", fixed = TRUE)
+  expect_match(text, "intersect(c(\"legacy_name\", \"statistic\", \"estimate\", \"p.value\", \"legacy_note\"), names(moran))", fixed = TRUE)
   expect_match(text, "missingness_correlation_all.png", fixed = TRUE)
   expect_match(text, "collage_main_maps.png", fixed = TRUE)
   expect_match(text, "figure_files", fixed = TRUE)

@@ -1,4 +1,4 @@
-.PHONY: init-renv restore snapshot rebuild-qmds pipeline-draft pipeline-final pipeline-final-no-samples diagnostics extended-diagnostics benchmarking rerun-extended-diagnostics rerun-benchmarks analysis-notes render-analysis clean-analysis clean-public-diagnostics clean-extended-diagnostics clean-benchmarking report samples audit-report-values audit-report-values-final audit-crossrefs audit-crossrefs-final audit-outputs-final audit-legacy-content public-build-audit public-build-audit-full public-build-audit-incremental public-build-audit-full-incremental public-build-audit-incremental-review public-build-audit-full-incremental-review public-build-audit-with-diagnostics public-build-audit-full-with-diagnostics public-build-audit-full-with-benchmarks check-public check-public-draft check-public-final check-public-final-no-samples check-public-text check-rendered-text check-sample-specs test tests clean-targets clean-renders clean-renders-core clean-renders-no-samples
+.PHONY: init-renv restore snapshot rebuild-qmds pipeline-draft pipeline-final pipeline-final-no-samples diagnostics public-diagnostics extended-diagnostics benchmarking rerun-extended-diagnostics rerun-benchmarks analysis-notes render-analysis clean-analysis clean-public-diagnostics clean-extended-diagnostics clean-benchmarking report samples audit-report-values audit-report-values-final audit-crossrefs audit-crossrefs-final audit-outputs-final audit-legacy-content public-build-audit public-build-audit-full public-build-audit-incremental public-build-audit-full-incremental public-build-audit-incremental-review public-build-audit-full-incremental-review public-build-audit-with-diagnostics public-build-audit-full-with-diagnostics public-build-audit-full-with-benchmarks check-public check-public-draft check-public-final check-public-final-no-samples check-public-text check-rendered-text check-sample-specs test tests clean-targets clean-renders clean-renders-core clean-renders-no-samples
 
 TEXCACHE_ROOT ?= /private/tmp/emi-inequality-india-texcache
 QUARTO_CACHE_ROOT ?= /private/tmp/emi-inequality-india-quarto-cache
@@ -45,6 +45,9 @@ pipeline-final-no-samples: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
 
 diagnostics: extended-diagnostics
 
+public-diagnostics:
+	EMI_CONFIG=config/final.yml Rscript scripts/run_targets_checked.R --starts-with diag_public_
+
 extended-diagnostics:
 	EMI_CONFIG=config/final.yml EMI_RUN_EXTENDED_DIAGNOSTICS=true Rscript scripts/run_targets_checked.R --starts-with diag_ext_
 
@@ -59,7 +62,7 @@ rerun-benchmarks:
 	EMI_CONFIG=config/final.yml EMI_RUN_BENCHMARKS=true Rscript -e 'targets::tar_invalidate(starts_with("bench_"))'
 	$(MAKE) benchmarking
 
-analysis-notes: extended-diagnostics benchmarking clean-analysis render-analysis
+analysis-notes: public-diagnostics extended-diagnostics benchmarking clean-analysis render-analysis
 
 render-analysis: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
 	HOME=$(QUARTO_HOME) Rscript scripts/render_analysis_notes.R

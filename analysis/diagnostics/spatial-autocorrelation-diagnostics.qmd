@@ -24,7 +24,13 @@ moran <- analysis_target_csv("diag_public_spatial_autocorrelation", "spatial_mor
 The current `m_cons_resid` p-value is `r analysis_format_number(analysis_metric(moran, "legacy_name", "m_cons_resid", "p.value"), 12)`, and the current `m_cons` p-value is `r analysis_format_number(analysis_metric(moran, "legacy_name", "m_cons", "p.value"), 12)`.  These are current active-pipeline results, not hard-coded legacy comments.
 
 ```{r moran-current-code-analog}
-moran[moran$legacy_name %in% c("m_cons_resid", "m_cons", "m_EMIE", "m_wavg_ling_degrees"), c("legacy_name", "statistic", "estimate", "p.value", "legacy_note"), drop = FALSE]
+if ("legacy_name" %in% names(moran)) {
+  keep <- moran$legacy_name %in% c("m_cons_resid", "m_cons", "m_EMIE", "m_wavg_ling_degrees")
+  cols <- intersect(c("legacy_name", "statistic", "estimate", "p.value", "legacy_note"), names(moran))
+  moran[keep, cols, drop = FALSE]
+} else {
+  moran
+}
 ```
 
 ```{r moran-table}
