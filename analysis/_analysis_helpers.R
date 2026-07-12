@@ -73,14 +73,6 @@ analysis_deviation_note <- function(text) {
   cat("\n**Deviation note.** ", text, "\n\n", sep = "")
 }
 
-analysis_render_source_file <- function(path, language = "r") {
-  full <- if (file.exists(path)) path else analysis_path(path)
-  cat("```", language, "\n", sep = "")
-  cat(paste(readLines(full, warn = FALSE), collapse = "\n"), "\n", sep = "")
-  cat("```\n\n")
-}
-
-
 analysis_store_path <- function() analysis_path("_targets")
 
 analysis_read_target <- function(name) {
@@ -114,7 +106,8 @@ analysis_target_path <- function(target, filename = NULL) {
   if (!nrow(manifest) || !"path" %in% names(manifest)) return(NA_character_)
   paths <- as.character(manifest$path)
   if (!is.null(filename)) {
-    hit <- basename(paths) == filename | grepl(paste0("/", gsub("([.^$|()\\[\\]{}*+?\\\\])", "\\\\\\1", filename), "$"), paths)
+    normalized_paths <- gsub("\\\\", "/", paths)
+    hit <- basename(normalized_paths) == filename | endsWith(normalized_paths, paste0("/", filename))
     paths <- paths[hit]
   }
   if (!length(paths)) return(NA_character_)

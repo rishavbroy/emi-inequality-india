@@ -260,7 +260,7 @@ test_that("analysis notebooks cover remaining legacy diagnostic comments", {
   expect_false(grepl("analysis_render_legacy_comments", text, fixed = TRUE))
 })
 
-test_that("analysis helpers read target-backed outputs and render source files", {
+test_that("analysis helpers read target-backed outputs without regex filename matching", {
   helper <- paste(readLines(repo_file("analysis", "_analysis_helpers.R"), warn = FALSE), collapse = "\n")
   long_paths <- paste(readLines(repo_file("analysis", "io", "long-paths-and-8-3-filenames.qmd"), warn = FALSE), collapse = "\n")
 
@@ -268,8 +268,10 @@ test_that("analysis helpers read target-backed outputs and render source files",
   expect_match(helper, "analysis_read_target", fixed = TRUE)
   expect_match(helper, "analysis_target_csv", fixed = TRUE)
   expect_match(helper, "analysis_image", fixed = TRUE)
-  expect_match(long_paths, "analysis_render_source_file", fixed = TRUE)
-  expect_false(grepl("readLines(analysis_path", long_paths, fixed = TRUE))
+  expect_match(helper, "endsWith(normalized_paths", fixed = TRUE)
+  expect_false(grepl('gsub("([.^$|()', helper, fixed = TRUE))
+  expect_false(grepl("analysis_render_source_file", helper, fixed = TRUE))
+  expect_false(grepl("analysis_render_source_file", long_paths, fixed = TRUE))
   expect_false(grepl("analysis_is_code_like", helper, fixed = TRUE))
 })
 
@@ -301,11 +303,12 @@ test_that("analysis notebooks render only to GitHub-flavored Markdown", {
 })
 
 
-test_that("analysis long-path note reads source from project root", {
+test_that("analysis long-path note contains runnable current code analogs", {
   qmd <- paste(readLines(repo_file("analysis", "io", "long-paths-and-8-3-filenames.qmd"), warn = FALSE), collapse = "\n")
-  expect_match(qmd, 'analysis_render_source_file("R/io/read_long_paths.R"', fixed = TRUE)
+  expect_match(qmd, 'source(analysis_path("R", "io", "read_long_paths.R"))', fixed = TRUE)
+  expect_match(qmd, "read_csv_short(tmp)", fixed = TRUE)
+  expect_match(qmd, "get_windows_short_path(tmp)", fixed = TRUE)
 })
-
 
 test_that("analysis notebooks contain prose/current code directly instead of legacy extraction calls", {
   qmds <- list.files(repo_file("analysis"), pattern = "[.]qmd$", recursive = TRUE, full.names = TRUE)
@@ -314,6 +317,7 @@ test_that("analysis notebooks contain prose/current code directly instead of leg
   expect_false(grepl("analysis_render_legacy_comments", text, fixed = TRUE))
   expect_false(grepl("echo=FALSE", text, fixed = TRUE))
   expect_match(text, "analysis_target_csv", fixed = TRUE)
+  expect_match(text, "current_code_analog", fixed = TRUE)
   expect_match(text, "missingness_correlation_all.png", fixed = TRUE)
   expect_match(text, "collage_main_maps.png", fixed = TRUE)
   expect_match(text, "figure_files", fixed = TRUE)
