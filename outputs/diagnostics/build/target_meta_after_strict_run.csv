@@ -99,14 +99,12 @@
 "bench_ame_methods_note",NA,NA
 "bench_fuzzy_matching_note",NA,NA
 "bench_spatial_weights_note",NA,NA
-"writing_sample_pdfs",NA,NA
-"coding_sample_pdfs",NA,NA
 "bench_spatial_iv_experimental",NA,NA
 "diag_ext_district_tracker_sources",NA,NA
-"diag_ext_missingness",NA,"glm.fit: fitted probabilities numerically 0 or 1 occurred"
 "diag_ext_fuzzy_matching",NA,NA
 "diag_ext_district_matching",NA,NA
 "bench_fuzzy_matching",NA,"Non-printable ascii or non-ascii characters in soundex. Results may be unreliable. See ?printable_ascii."
+"diag_ext_missingness",NA,"glm.fit: fitted probabilities numerically 0 or 1 occurred"
 "bench_ame_methods",NA,NA
 "legacy_fuzzy_tuning_reference",NA,NA
 "summarize_fuzzy_candidate_pair_coverage",NA,NA
@@ -288,6 +286,7 @@
 "fit_selection_probit",NA,NA
 "summarize_fuzzy_join_status",NA,NA
 "prepare_legacy_map_data",NA,NA
+"missingness_correlation_pairs",NA,NA
 "standardize_tracker_names",NA,NA
 "legacy_no_data_colour",NA,NA
 "cfg_get",NA,NA
@@ -301,6 +300,7 @@
 "clustered_model_vcov",NA,NA
 "summarize_tracker_state_change_events",NA,NA
 "present_cols",NA,NA
+"save_missingness_correlation_heatmap",NA,NA
 "write_diagnostic_matrix",NA,NA
 "clean_edu0708_members",NA,NA
 "path_metadata",NA,NA
@@ -710,8 +710,10 @@
 "clean_census_2001_languages",NA,NA
 "build_district_panel",NA,NA
 "join_district_panel",NA,NA
-"long_paths_note",NA,NA
 "config_path",NA,NA
+"long_paths_note",NA,NA
 "diag_public_spatial_autocorrelation",NA,NA
 "district_matching_note",NA,NA
+"writing_sample_pdfs",NA,NA
+"coding_sample_pdfs",NA,NA
 "report",NA,NA
