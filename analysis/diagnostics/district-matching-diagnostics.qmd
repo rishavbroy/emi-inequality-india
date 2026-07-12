@@ -13,9 +13,19 @@ helper <- if (file.exists("analysis/_analysis_helpers.R")) "analysis/_analysis_h
 source(helper)
 ```
 
-## Legacy diagnostic intent
+## Legacy prose retained with current results
 
-The legacy Chunk 20 diagnosed district-matching errors after `merge_dfs_into_tracker()`, extracted unmatched rows, tagged their source, compared tracker alternatives, created an all-rows search table for close-match inspection, and asked why complete-case row counts differed so much across flagged and joined objects.
+Errors are fixed in the chunk "Match districts: Manually fix errors". Changed for diagnostic purposes.
+
+To extract mismatches: the legacy chunk pulled the rows whose merged district/year fields were absent after `merge_dfs_into_tracker()`, tagged their source, and combined them for inspection. Compare outcomes with different tracker dfs. Identify errors for each tracker dr. Combine all errors. Create a df with all rows from original data, so I can search for close matches easily.
+
+#### Correct even more NAs
+
+The legacy row-count checks were: `flagged_df_timeseries %>% .[!complete.cases(.),] %>% nrow()` = 155 rows; `joined_df_timeseries %>% .[!complete.cases(.),] %>% nrow()` = 305 rows; `flagged_df_tracker %>% .[!complete.cases(.),] %>% nrow()` = 92 rows; `joined_df_tracker %>% .[!complete.cases(.),] %>% nrow()` = 250 rows. ***Why the gigantic discrepancy???
+
+```{r district-matching-prose-deviation-note, results='asis'}
+analysis_deviation_note("The legacy helper objects no longer exist in the active architecture. The rendered current-code analog counts incomplete rows in target-backed tracker/panel, source-inventory, unmatched-row, and many-to-many outputs.")
+```
 
 ```{r district-matching-targets}
 dm_summary <- analysis_target_csv("diag_ext_district_matching", "district_matching_summary.csv")

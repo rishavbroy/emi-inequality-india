@@ -13,9 +13,13 @@ helper <- if (file.exists("analysis/_analysis_helpers.R")) "analysis/_analysis_h
 source(helper)
 ```
 
-## Legacy diagnostic intent
+## Legacy prose retained with current results
 
-The legacy tracker-source diagnostics compared district names across years, inspected state and union-territory changes, noted unrecorded state changes requiring manual attention, and checked same-name districts that appeared across states.
+The legacy tracker-source diagnostics compared district names across years, inspected state and union-territory changes, noted unrecorded state changes requiring manual attention, and checked same-name districts that appeared across states. The analysis note keeps the legacy recorded-change, unrecorded-change, in-period district-name-change, and same-name-district benchmarks beside the current row-level outputs so differences in counting level are visible.
+
+```{r tracker-prose-deviation-note, results='asis'}
+analysis_deviation_note("The current source diagnostics report both row-level outputs and legacy expected-event benchmarks, because active tracker sources can count more rows than the legacy comments' event-level summaries.")
+```
 
 ```{r tracker-targets}
 tracker_counts <- analysis_target_csv("diag_ext_district_tracker_sources", "tracker_source_counts.csv")

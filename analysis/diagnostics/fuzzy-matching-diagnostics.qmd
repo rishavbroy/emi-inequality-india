@@ -13,9 +13,15 @@ helper <- if (file.exists("analysis/_analysis_helpers.R")) "analysis/_analysis_h
 source(helper)
 ```
 
-## Legacy diagnostic intent
+## Legacy prose retained with current results
 
-The legacy fuzzy-matching chunk tested string-distance methods, inspected troublesome pairs, and compared thresholds before fixing the production thresholds.  The current diagnostic uses target outputs from the active tracker and join map rather than pasting hand-counted results from commented code.
+The legacy fuzzy-matching chunk tested string-distance methods, inspected troublesome pairs, and compared thresholds before fixing the production thresholds. Some sample pairs included `Baleshwar`/`Balasore`, `Jammu & Kashmir`/`Jammu and Kashmir`, `East Godavari`/`Godavari East`, `Sikim`/`Sikkim`, and long truncated district names such as `Sahibzada Ajit Singh Nag*`/`Sahibzada Ajit Singh Nagar`.
+
+The final helper vectors were `methods <- c("soundex", "qgram", "jw", "dl", "osa")` and `thresholds <- c(0, 0, 0.15, 2, 1)`. `soundex = 0` means phonetic variants in anglicization allowed. `qgram = 0` means rearrangements of words allowed. `jw <= 0.15` means respellings and vowel swaps with 0.85 similarity allowed. `dl <= 2` means no more than two insertions, deletions, substitutions, and transpositions allowed. `osa <= 1` means one typo allowed.
+
+```{r fuzzy-diagnostic-prose-deviation-note, results='asis'}
+analysis_deviation_note("The current diagnostic renders active target outputs rather than legacy View() calls, but preserves the sample-pair and threshold prose in the note body.")
+```
 
 ```{r fuzzy-diagnostic-targets}
 fuzzy_summary <- analysis_target_csv("diag_ext_fuzzy_matching", "fuzzy_matching_summary.csv")
