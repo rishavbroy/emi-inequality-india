@@ -263,6 +263,10 @@ test_that("analysis notebooks cover remaining legacy diagnostic comments", {
   expect_match(text, "Current EMIE-by-district dotplot data", fixed = TRUE)
   expect_match(text, "max_rows = 30", fixed = TRUE)
   expect_match(text, "tracker_legacy_expected_same_name_districts.csv", fixed = TRUE)
+  expect_match(text, "missingness_chi_square_tests.csv", fixed = TRUE)
+  expect_match(text, "missingness_rajasthan_southern_case_study.csv", fixed = TRUE)
+  expect_match(text, "district_matching_all_rows_search.csv", fixed = TRUE)
+  expect_match(text, "tracker_same_name_districts_by_year.csv", fixed = TRUE)
   expect_false(grepl("analysis_render_legacy_comments", text, fixed = TRUE))
 })
 
@@ -273,6 +277,8 @@ test_that("analysis helpers read target-backed outputs without regex filename ma
   expect_match(helper, "analysis_rel_path", fixed = TRUE)
   expect_match(helper, "analysis_read_target", fixed = TRUE)
   expect_match(helper, "analysis_target_csv", fixed = TRUE)
+  expect_match(helper, "analysis_target_side_effect_path", fixed = TRUE)
+  expect_match(helper, "diag_public_spatial_autocorrelation", fixed = TRUE)
   expect_match(helper, "analysis_image", fixed = TRUE)
   expect_match(helper, "endsWith(normalized_paths", fixed = TRUE)
   expect_false(grepl('gsub("([.^$|()', helper, fixed = TRUE))
@@ -289,6 +295,17 @@ test_that("analysis relative image paths collapse to a scalar Markdown path", {
   expect_match(helper, "do.call(file.path, as.list(parts))", fixed = TRUE)
   expect_match(helper, "rel[[1]]", fixed = TRUE)
   expect_false(grepl("rel <- file.path(c(rep", helper, fixed = TRUE))
+})
+
+
+
+test_that("map tuning analysis notebook is removed from diagnostics layer", {
+  expect_false(file.exists(repo_file("analysis", "exploratory", "map-tuning.qmd")))
+  expect_false(file.exists(repo_file("analysis", "exploratory", "map-tuning.md")))
+  readme <- paste(readLines(repo_file("analysis", "README.md"), warn = FALSE), collapse = "\n")
+  deviations <- paste(readLines(repo_file("docs", "refactor", "analysis_prose_deviations.md"), warn = FALSE), collapse = "\n")
+  expect_false(grepl("map-tuning.qmd", readme, fixed = TRUE))
+  expect_match(deviations, "Map palette/export tuning is intentionally excluded", fixed = TRUE)
 })
 
 test_that("public audit can include analysis notes in the same log", {
@@ -337,8 +354,9 @@ test_that("analysis notebooks contain prose/current code directly instead of leg
   expect_match(text, "intersect(c(\"legacy_name\", \"statistic\", \"estimate\", \"p.value\", \"legacy_note\"), names(moran))", fixed = TRUE)
   expect_match(text, "missingness_correlation_all.png", fixed = TRUE)
   expect_match(text, "missingness_logit_pseudo_r2.png", fixed = TRUE)
-  expect_match(text, "collage_main_maps.png", fixed = TRUE)
-  expect_match(text, "figure_files", fixed = TRUE)
+  expect_false(any(grepl("map-tuning", qmds, fixed = TRUE)))
+  expect_false(grepl("collage_main_maps.png", text, fixed = TRUE))
+  expect_false(grepl("figure_files", text, fixed = TRUE))
   expect_match(text, "execute:\n  echo: true\n  output: true", fixed = TRUE)
 })
 
@@ -353,8 +371,9 @@ test_that("analysis notes preserve legacy prose and document deviations", {
   expect_match(text, "Number of rows from fuzzy full joining", fixed = TRUE)
   expect_match(text, "All of these Moran's I stats are ridiculously, suspiciously high", fixed = TRUE)
   expect_match(text, "Don't work even when diagnostics = FALSE", fixed = TRUE)
-  expect_match(text, "For the names of all color palette", fixed = TRUE)
+  expect_false(grepl("For the names of all color palette", text, fixed = TRUE))
   expect_match(text, "EMIE has three peaks", fixed = TRUE)
+  expect_match(text, "0-100 percentage scale", fixed = TRUE)
   expect_match(text, "Purpose of this chunk: to ensure R can identify and read in all necessary files", fixed = TRUE)
   expect_match(text, "analysis_deviation_note", fixed = TRUE)
 
