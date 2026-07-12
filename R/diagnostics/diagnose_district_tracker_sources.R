@@ -39,6 +39,7 @@ diagnose_district_tracker_sources <- function(raw_district_changes, district_tra
   attr(out, "inperiod_district_changes") <- inperiod
   attr(out, "legacy_expected_inperiod_district_changes") <- legacy_expected_inperiod
   attr(out, "same_name_districts") <- same_names
+  attr(out, "same_name_districts_by_year") <- summarize_same_name_districts_by_year(same_names)
   attr(out, "legacy_expected_same_name_districts") <- legacy_expected_same_names
   attr(out, "source_disagreements") <- find_source_disagreements(raw_district_changes, tracker)
   attr(out, "legacy_reference") <- legacy_reference
@@ -264,6 +265,21 @@ find_same_name_districts <- function(tracker) {
   safe_bind_rows(out)
 }
 
+summarize_same_name_districts_by_year <- function(same_names) {
+  same_names <- as.data.frame(same_names, stringsAsFactors = FALSE)
+  if (!nrow(same_names) || !"year" %in% names(same_names)) return(data.frame())
+  out <- stats::aggregate(
+    same_names$district_key,
+    list(year = same_names$year),
+    function(x) length(unique(x))
+  )
+  names(out)[names(out) == "x"] <- "n_same_name_districts"
+  out$legacy_expected_min_districts <- 6L
+  out$legacy_expected_max_districts <- 10L
+  out$within_legacy_range <- out$n_same_name_districts >= 6L & out$n_same_name_districts <= 10L
+  out[order(out$year), , drop = FALSE]
+}
+
 find_source_disagreements <- function(raw_district_changes, district_tracker = NULL) {
   coverage <- compare_tracker_source_coverage(raw_district_changes, district_tracker)
   if (!nrow(coverage)) return(data.frame())
@@ -316,6 +332,7 @@ save_tracker_source_diagnostics <- function(diagnostics, dir = "outputs/diagnost
     inperiod_district_changes = write_diagnostic_csv(attr(diagnostics, "inperiod_district_changes") %||% data.frame(), file.path(dir, "tracker_inperiod_district_changes.csv")),
     legacy_expected_inperiod_district_changes = write_diagnostic_csv(attr(diagnostics, "legacy_expected_inperiod_district_changes") %||% data.frame(), file.path(dir, "tracker_legacy_expected_inperiod_district_changes.csv")),
     same_name_districts = write_diagnostic_csv(attr(diagnostics, "same_name_districts") %||% data.frame(), file.path(dir, "tracker_same_name_districts.csv")),
+    same_name_districts_by_year = write_diagnostic_csv(attr(diagnostics, "same_name_districts_by_year") %||% data.frame(), file.path(dir, "tracker_same_name_districts_by_year.csv")),
     legacy_expected_same_name_districts = write_diagnostic_csv(attr(diagnostics, "legacy_expected_same_name_districts") %||% data.frame(), file.path(dir, "tracker_legacy_expected_same_name_districts.csv")),
     source_disagreements = write_diagnostic_csv(attr(diagnostics, "source_disagreements") %||% data.frame(), file.path(dir, "tracker_source_disagreements.csv")),
     legacy_reference = write_diagnostic_csv(attr(diagnostics, "legacy_reference") %||% data.frame(), file.path(dir, "tracker_legacy_comment_reference.csv"))

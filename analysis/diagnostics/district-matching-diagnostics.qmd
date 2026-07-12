@@ -24,7 +24,7 @@ To extract mismatches: the legacy chunk pulled the rows whose merged district/ye
 The legacy row-count checks were: `flagged_df_timeseries %>% .[!complete.cases(.),] %>% nrow()` = 155 rows; `joined_df_timeseries %>% .[!complete.cases(.),] %>% nrow()` = 305 rows; `flagged_df_tracker %>% .[!complete.cases(.),] %>% nrow()` = 92 rows; `joined_df_tracker %>% .[!complete.cases(.),] %>% nrow()` = 250 rows. ***Why the gigantic discrepancy???
 
 ```{r district-matching-prose-deviation-note, results='asis'}
-analysis_deviation_note("The legacy helper objects no longer exist in the active architecture. The rendered current-code analog counts incomplete rows in target-backed tracker/panel, source-inventory, unmatched-row, and many-to-many outputs.")
+analysis_deviation_note("The legacy helper objects no longer exist in the active architecture. The rendered current-code analog counts incomplete rows in target-backed tracker/panel, source-inventory, unmatched-row, and many-to-many outputs, and renders the all-rows close-match search table as a bounded preview.")
 ```
 
 ```{r district-matching-targets}
@@ -36,6 +36,7 @@ dm_key_roles <- analysis_target_csv("diag_ext_district_matching", "district_matc
 dm_source_inventory <- analysis_target_csv("diag_ext_district_matching", "district_matching_source_key_inventory.csv")
 dm_unmatched <- analysis_target_csv("diag_ext_district_matching", "district_matching_unmatched_rows.csv")
 dm_many <- analysis_target_csv("diag_ext_district_matching", "district_matching_many_to_many_cases.csv")
+dm_all_rows <- analysis_target_csv("diag_ext_district_matching", "district_matching_all_rows_search.csv")
 ```
 
 The current analog keeps true unmatched rows separate from fallback source-key inventory rows.  It reports `r analysis_format_number(analysis_value(dm_summary, column = "n_unmatched_rows"), 0)` true unmatched rows and `r analysis_format_number(analysis_value(dm_summary, column = "n_source_key_inventory_rows"), 0)` fallback source-key inventory rows.
@@ -74,4 +75,5 @@ analysis_table(dm_key_roles, "Panel/join key roles and interpretation")
 analysis_table(dm_source_inventory, "Fallback source-key inventory separated from true unmatched rows", max_rows = 20)
 analysis_table(dm_unmatched, "True unmatched rows from current matching diagnostics", max_rows = 20)
 analysis_table(dm_many, "Many-to-many cases from current matching diagnostics", max_rows = 20)
+analysis_table(dm_all_rows, "All-rows close-match search table", max_rows = 30)
 ```
