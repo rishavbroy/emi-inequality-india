@@ -13,9 +13,27 @@ helper <- if (file.exists("analysis/_analysis_helpers.R")) "analysis/_analysis_h
 source(helper)
 ```
 
-## Legacy diagnostic intent
+## Legacy prose retained with current results
 
-The legacy missingness chunk asked whether NAs in the probit-related variables were randomly distributed.  It listed variables with NAs, ranked regions with the most missingness, inspected a Rajasthan/Southern case study, proposed chi-square checks for `any_na_row` by state and region, built missingness-indicator correlation matrices, and fit one logistic regression per missing variable with FDR adjustment.
+#### All variables: Variables/Regions with NAs
+
+Variables with NAs. Only variables in the probit. Regions with the _most_ NAs.
+
+The legacy case study inspected Rajasthan's Southern region and concluded: Southern region of Rajasthan: People with one missing cost variable often have ones which aren't missing. The person as a whole wasn't excluded from the data. Explanations: Surveyor messed up writing some costs but not others. Or surveyor meant to put a 0.
+
+Potential chi-square tests for independence: ANY NA vs. state; ANY NA vs region. The target output preserves these checks as notes rather than rerunning exploratory `View()` calls.
+
+#### Correlation matrix
+
+For all observations: make new data frame with missingness indicator variables, expand factors to dummy variables, and compute the correlation matrix using pairwise-complete observations. For enrolled observations: repeat the same logic for missing variables defined only for enrolled children.
+
+#### Logistic per missing variable (parallelized)
+
+One logistic per missing variable. Summarize coefficient significance and overall fit. So `n_sig` = number of predictors which survive FDR at 0.05 significance (i.e., number of covariates associated with missingness).
+
+```{r missingness-prose-deviation-note, results='asis'}
+analysis_deviation_note("The rendered note preserves the legacy diagnostic order and prose but replaces interactive View() calls and platform-specific parallelization with target-backed CSVs, heatmaps, and pseudo-R-squared figures.")
+```
 
 ```{r missingness-targets}
 missing_counts <- analysis_target_csv("diag_ext_missingness", "missingness_counts.csv")
