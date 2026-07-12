@@ -19,6 +19,8 @@ source(helper)
 
 Variables with NAs. Only variables in the probit. Regions with the _most_ NAs.
 
+#### Rajasthan/Southern case study
+
 The legacy case study inspected Rajasthan's Southern region and concluded: Southern region of Rajasthan: People with one missing cost variable often have ones which aren't missing. The person as a whole wasn't excluded from the data. Explanations: Surveyor messed up writing some costs but not others. Or surveyor meant to put a 0.
 
 Potential chi-square tests for independence: ANY NA vs. state; ANY NA vs region. The target output preserves these checks as notes rather than rerunning exploratory `View()` calls.

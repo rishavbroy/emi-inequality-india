@@ -15,7 +15,7 @@ source(helper)
 
 ## Legacy prose retained with current results
 
-Preliminary test of IV strength: Dotplot of EMIE values by `district_code`.
+Preliminary test of IV strength: Dotplot of EMIE values by `district_code`. These are the current target-backed instrument-strength plots for the legacy exploratory check.
 
 EMIE has three peaks: in Jammu and Kashmir; in Sikkim, Arunachal Pradesh, Nagaland, Manipur, Mizoran, Tripura, maybe Meghalaya; and in Andhra Pradesh, Karnataka, Goa, Lakshadweep, Kerala, Tamil Nadu, Pondicheri, and Andaman & Nicobar! The regions which historically were the furthest from Hindi! Many districts in the second group seem to have EMIE around 1, and the range of EMIE outside peaks is between 0.4 and 0.1. Justification for looking at smaller units of analysis?
 
