@@ -10,9 +10,9 @@ test_that("selection data builder returns enrolled fallback and standardized key
 
 test_that("legacy 2007 district metadata lookup is unique by district code", {
   metadata <- data.frame(
-    name = c("district_code", "district_code", "STATE", "STATE"),
-    `ns1:catValu` = c("01001", "01001", "01", "01"),
-    `ns1:labl25` = c("Kupwara", "Kupwara", "Jammu & Kashmir", "Jammu & Kashmir"),
+    name = c("district_code", "district_code", "STATE", "STATE", "region_code"),
+    `ns1:catValu` = c("01001", "01001", "01", "01", "010"),
+    `ns1:labl25` = c("Kupwara", "Kupwara", "Jammu & Kashmir", "Jammu & Kashmir", "Northern"),
     check.names = FALSE
   )
 
@@ -25,6 +25,7 @@ test_that("legacy 2007 district metadata lookup is unique by district code", {
   expect_equal(nrow(lookup), 1L)
   expect_equal(nrow(out), 1L)
   expect_equal(out$district_0708, "Kupwara")
+  expect_equal(out$region_0708, "Northern")
 })
 
 test_that("missingness diagnostics return a stable schema", {

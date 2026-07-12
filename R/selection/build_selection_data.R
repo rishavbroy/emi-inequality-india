@@ -307,22 +307,33 @@ parse_2007_district_metadata <- function(metadata) {
 
   districts <- metadata[metadata[[name_col]] == "district_code", c(value_col, label_col), drop = FALSE]
   states <- metadata[metadata[[name_col]] == "STATE", c(value_col, label_col), drop = FALSE]
+  regions <- metadata[metadata[[name_col]] == "region_code", c(value_col, label_col), drop = FALSE]
   if (!nrow(districts) || !nrow(states)) return(data.frame())
   names(districts) <- c("district_code_0708", "district_0708")
   names(states) <- c("state_code_0708", "state_0708")
+  if (nrow(regions)) names(regions) <- c("region_code_0708", "region_0708")
   districts$district_code_0708 <- plain_chr(districts$district_code_0708)
   districts <- districts[grepl("^[0-9]{5}$", districts$district_code_0708), , drop = FALSE]
   districts <- districts[!duplicated(districts$district_code_0708), , drop = FALSE]
   districts$state_code_0708 <- substr(districts$district_code_0708, 1, 2)
+  districts$region_code_0708 <- substr(districts$district_code_0708, 1, 3)
   states$state_code_0708 <- plain_chr(states$state_code_0708)
   states <- states[!duplicated(states$state_code_0708), , drop = FALSE]
   out <- merge(districts, states, by = "state_code_0708", all.x = TRUE)
+  if (nrow(regions)) {
+    regions$region_code_0708 <- plain_chr(regions$region_code_0708)
+    regions <- regions[grepl("^[0-9]{3}$", regions$region_code_0708), , drop = FALSE]
+    regions <- regions[!duplicated(regions$region_code_0708), , drop = FALSE]
+    out <- merge(out, regions, by = "region_code_0708", all.x = TRUE)
+  } else {
+    out$region_0708 <- NA_character_
+  }
   out <- out[!duplicated(out$district_code_0708), , drop = FALSE]
   out$state_07 <- out$state_0708
   out$district_07 <- out$district_0708
   out$state_08 <- out$state_0708
   out$district_08 <- out$district_0708
-  out[c("district_code_0708", "state_0708", "district_0708", "state_07", "district_07", "state_08", "district_08")]
+  out[c("district_code_0708", "state_0708", "region_0708", "district_0708", "state_07", "district_07", "state_08", "district_08")]
 }
 
 collapse_to_unique_key <- function(df, key) {
