@@ -36,6 +36,7 @@ test_that("public audit clean preserves extended diagnostics and benchmarks", {
 
   expect_match(src, "--with-extended-diagnostics", fixed = TRUE)
   expect_match(src, "--with-benchmarks", fixed = TRUE)
+  expect_match(src, "--with-benchmarking-full", fixed = TRUE)
   expect_match(src, "rm -rf outputs/diagnostics/build outputs/diagnostics/public", fixed = TRUE)
   expect_false(grepl("rm -rf outputs/diagnostics/\\*", src))
   expect_match(makefile, "rm -rf outputs/figures/* outputs/tables/* outputs/diagnostics/build outputs/diagnostics/public", fixed = TRUE)
@@ -49,11 +50,13 @@ test_that("targets graph separates public diagnostics, extended diagnostics, and
   expect_match(src, "core_pipeline_targets <- list", fixed = TRUE)
   expect_match(src, "extended_diagnostic_targets <- list", fixed = TRUE)
   expect_match(src, "benchmark_targets <- list", fixed = TRUE)
+  expect_match(src, "full_benchmark_targets <- list", fixed = TRUE)
   expect_match(src, "diag_public_spatial_autocorrelation", fixed = TRUE)
   expect_match(src, "diag_ext_missingness", fixed = TRUE)
   expect_match(src, "bench_ame_methods", fixed = TRUE)
   expect_match(src, "EMI_RUN_EXTENDED_DIAGNOSTICS", fixed = TRUE)
   expect_match(src, "EMI_RUN_BENCHMARKS", fixed = TRUE)
+  expect_match(src, "EMI_RUN_BENCHMARKS_FULL", fixed = TRUE)
 })
 
 test_that("target warning metadata is written to build diagnostics", {
@@ -202,6 +205,8 @@ test_that("benchmark targets cover fuzzy matching, spatial weights, and spatial 
   expect_match(src, "bench_fuzzy_matching", fixed = TRUE)
   expect_match(src, "bench_spatial_weights", fixed = TRUE)
   expect_match(src, "bench_spatial_iv_experimental", fixed = TRUE)
+  expect_match(src, "bench_full_ame_methods", fixed = TRUE)
+  expect_match(src, "bench_full_spatial_moran_mc", fixed = TRUE)
   expect_match(src, "save_missingness_diagnostics", fixed = TRUE)
   expect_match(src, "save_district_matching_diagnostics", fixed = TRUE)
   expect_match(src, "diag_ext_instrument_exploration", fixed = TRUE)
@@ -228,6 +233,8 @@ test_that("analysis notebooks render from explicit make target, not optional tar
   expect_match(makefile, "public-diagnostics:", fixed = TRUE)
   expect_match(makefile, "Rscript scripts/run_targets_checked.R --starts-with diag_public_", fixed = TRUE)
   expect_match(makefile, "analysis-notes: public-diagnostics extended-diagnostics benchmarking clean-analysis render-analysis", fixed = TRUE)
+  expect_match(makefile, "benchmarking-full:", fixed = TRUE)
+  expect_match(makefile, "--starts-with bench_full_", fixed = TRUE)
   expect_match(makefile, "Rscript scripts/render_analysis_notes.R", fixed = TRUE)
   expect_match(makefile, "clean-analysis", fixed = TRUE)
   expect_false(grepl("tar_render\\(bench_", targets))
@@ -240,6 +247,7 @@ test_that("analysis notebooks are populated with current-output tables", {
 
   expect_match(qmd, "spatial_iv_model_status.csv", fixed = TRUE)
   expect_match(qmd, "spatial_iv_diagnostics_summary.csv", fixed = TRUE)
+  expect_match(qmd, "methodological_success", fixed = TRUE)
   expect_match(helper, "knitr::kable", fixed = TRUE)
   expect_match(helper, "No rows in analysis output", fixed = TRUE)
   expect_match(helper, "Could not read analysis output", fixed = TRUE)

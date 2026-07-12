@@ -20,6 +20,29 @@ run_ame_methods_benchmark <- function(selection_model, selection_data, cfg) {
   )
 }
 
+
+run_ame_methods_benchmark_full <- function(selection_model, selection_data, cfg) {
+  cfg <- with_diagnostic_enabled(cfg, "ame_benchmark")
+  cfg$ame_benchmark_sample_sizes <- "full"
+  save_ame_benchmark(
+    diagnose_ame_benchmark(selection_model, selection_data, cfg),
+    dir = "outputs/benchmarking/ame_full"
+  )
+}
+
+run_spatial_moran_mc_benchmark <- function(district_panel, iv_models, spatial_weights, cfg) {
+  save_spatial_moran_mc_benchmark(
+    diagnose_spatial_moran_mc(district_panel, iv_models, spatial_weights, cfg)
+  )
+}
+
+save_spatial_moran_mc_benchmark <- function(x, dir = "outputs/benchmarking/spatial_moran_mc") {
+  dir.create(dir, recursive = TRUE, showWarnings = FALSE)
+  legacy_output_manifest(c(
+    monte_carlo = write_diagnostic_csv(as.data.frame(x), file.path(dir, "spatial_moran_mc_tests.csv"))
+  ))
+}
+
 run_fuzzy_matching_benchmark <- function(district_tracker = data.frame(), district_join_map = data.frame(), cfg = list()) {
   pairs <- legacy_fuzzy_candidate_pairs(district_tracker, district_join_map)
   save_fuzzy_matching_benchmark(

@@ -15,7 +15,7 @@ This file records how diagnostic and tuning/benchmarking logic from the legacy R
   - Regional missingness rankings for enrollment cost, distance to primary school, and father education.
   - Missingness correlation matrices for all rows and enrolled rows.
   - One-logit-per-missing-variable screens with Benjamini-Hochberg adjustment.
-  - Notes for commented Rajasthan/Southern case-study views and chi-square checks.
+  - Target-backed Rajasthan/Southern case-study and chi-square outputs; `region_0708` is reconstructed from the 2007 district metadata.
 - Chunks 5, 6, 20, and 21 district-matching/source diagnostics: `R/diagnostics/diagnose_district_tracker_sources.R` and `R/diagnostics/diagnose_district_matching.R`; outputs under `outputs/diagnostics/extended/district_tracker_sources/` and `outputs/diagnostics/extended/district_matching/`.
   - Source coverage, state/UT changes, in-period district-name changes, same-name district diagnostics, unmatched rows, many-to-many/flagged rows, and searchable all-row source tables.
 - Chunk 16 fuzzy matching diagnostics: `R/diagnostics/diagnose_fuzzy_matching.R`; outputs under `outputs/diagnostics/extended/fuzzy_matching/`.
@@ -27,7 +27,7 @@ This file records how diagnostic and tuning/benchmarking logic from the legacy R
 ## Benchmarks and tuning outputs
 
 - Chunk 10 AME runtime/tuning: `R/diagnostics/diagnose_ame_benchmark.R` called through `R/benchmarking/benchmarking_targets.R`; output under `outputs/benchmarking/ame/`.
-  - Retains final choice `marginaleffects_parallel = FALSE`, `set.seed(999)`, sample-size timing checks, forward-difference comparison, and documented failed future parallelization.
+  - Retains final choice `marginaleffects_parallel = FALSE`, `set.seed(999)`, sample-size timing checks, forward-difference comparison, and documented failed future parallelization. The default tier includes 20,000-row checks; `make benchmarking-full` refreshes the full-data AME timing deliberately.
 - Chunk 16 fuzzy-match threshold benchmarking: `R/benchmarking/benchmarking_targets.R`; output under `outputs/benchmarking/fuzzy_matching/`.
 - Chunk 24 rook-versus-queen spatial-weight benchmarking: `R/benchmarking/benchmarking_targets.R`; output under `outputs/benchmarking/spatial_weights/`.
 - Chunk 30 experimental spatial IV attempts: `R/iv/estimate_spatial_iv_experimental.R` called through `R/benchmarking/benchmarking_targets.R`; output under `outputs/benchmarking/spatial_iv/`.
@@ -37,7 +37,7 @@ This file records how diagnostic and tuning/benchmarking logic from the legacy R
 ## Legacy logic intentionally documented rather than force-run
 
 - View-only or GUI-only exploratory code, such as `View()` calls, Tabula inspection, palette GUI exploration, and commented `tmap_save()` experiments, is represented as notes or benchmark metadata rather than executed automatically.
-- Expensive or unstable commented paths, especially the future/marginaleffects parallel attempt and spatial-IV model attempts, are opt-in benchmark artifacts and not part of the normal public build.
+- Expensive or unstable commented paths, especially the full-data AME timing, Monte Carlo Moran simulation, future/marginaleffects parallel attempt, and spatial-IV model attempts, are opt-in benchmark artifacts and not part of the normal public build.
 - Normal public builds preserve `outputs/diagnostics/extended/` and `outputs/benchmarking/`; only `outputs/diagnostics/build/` and `outputs/diagnostics/public/` are reset automatically.
 
 ## Correctness follow-up notes
@@ -70,10 +70,10 @@ The diagnostics/benchmarking correctness pass adds the following guardrails afte
 
 The goal of these diagnostics is methodological parity with the legacy checks, not forcing identical numeric output when the active cleaned inputs differ.  The following differences are therefore handled explicitly rather than hidden:
 
-- Missingness regional rankings fall back to state-level rankings when the cleaned selection data no longer expose `region_0708`.  This preserves the legacy "where are misses concentrated?" diagnostic instead of writing empty regional CSVs.
+- Missingness regional rankings reconstruct `region_0708` from 2007 district metadata so the legacy state/region diagnostics, chi-square check, and Rajasthan/Southern case study can run on active selection data.
 - District tracker state-change, in-period district-name-change, and same-name-district outputs read the active tracker and, when needed, the processed tracker files.  If the cleaned tracker has resolved an ambiguity that was visible in raw legacy comments, the legacy expected rows remain in explicit reference CSVs for comparison.
 - District matching separates true unmatched rows from fallback source-key inventory rows and emits key-role counts so source-key inventory is not misinterpreted as failed final-panel matches.
 - Fuzzy-matching benchmarks expand from the nine hand-picked legacy examples to tracker transition pairs and fallback source-key inventory candidate pairs whenever those active inputs are present.
 - AME benchmarking now samples the fitted model frame and its explicit AME weights, matching the production AME path.  If the current `marginaleffects` version still fails, the failure is retained as a package-compatibility result rather than relabeled as a successful timing benchmark.
-- Spatial-weight and Moran's I differences remain documented in `docs/refactor/spatial_diagnostics_context.md`; the paper reports the active rook-based results and preserves queen comparisons in diagnostics, not in paper prose.
+- Spatial-weight and Moran's I diagnostics now explicitly use the current final matched panel rows with non-empty geometry. Legacy exploratory mean-neighbor values remain references, while `make benchmarking-full` refreshes the expensive Monte Carlo Moran benchmark.
 - Spatial-IV attempts remain opt-in benchmarks.  Returning an `ivreg()` object is not treated as methodological success unless coefficient, clustered-SE, and diagnostics outputs are also numerically meaningful.

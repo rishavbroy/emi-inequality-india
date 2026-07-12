@@ -26,7 +26,7 @@ Test Moran's I on the response variables: `m_cons$p.value` = 1.608813e-26 and `m
 Estimate p-values using Monte Carlo. `moran.test()` assumes asymptotic normality. The legacy scaffold used `set.seed(999)`, `num_m = 9999`, `moran.mc(resid_cons, listw_2020, nsim = num_m)`, `plot(mc)`, and `mc$p.value`.
 
 ```{r moran-prose-deviation-note, results='asis'}
-analysis_deviation_note("The current note keeps the legacy Moran prose and benchmark p-values, but reports active-pipeline Moran tests from the target output instead of copying legacy comments into the result fields. The Monte Carlo scaffold is retained as a target-backed reference row rather than silently omitted.")
+analysis_deviation_note("The current note keeps the legacy Moran prose and benchmark p-values, but reports active-pipeline Moran tests from the target output instead of copying legacy comments into the result fields. The default analysis note retains the Monte Carlo scaffold as a target-backed reference row; run `make benchmarking-full` to refresh the expensive `moran.mc(..., nsim = 9999)` benchmark output deliberately.")
 ```
 
 ```{r moran-target}
@@ -49,4 +49,5 @@ if ("legacy_name" %in% names(moran)) {
 ```{r moran-table}
 analysis_table(moran, "Current Moran's I diagnostics")
 analysis_table(moran_mc, "Monte Carlo Moran scaffold retained as target-backed reference")
+
 ```

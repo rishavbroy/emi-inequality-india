@@ -262,6 +262,73 @@ compute_monte_carlo_moran_tests <- function(x, spatial_weights, nsim = 9999L, se
   )
 }
 
+
+spatial_moran_mc_nsim <- function(cfg = list()) {
+  configured <- cfg$diagnostics$spatial_moran_mc_nsim %||% cfg$spatial_moran_mc_nsim %||% NULL
+  env <- Sys.getenv("EMI_SPATIAL_MORAN_MC_NSIM", unset = "")
+  if (nzchar(env)) configured <- env
+  nsim <- suppressWarnings(as.integer(configured %||% 9999L))
+  if (!is.finite(nsim) || nsim < 1L) nsim <- 9999L
+  nsim
+}
+
+spatial_moran_mc_seed <- function(cfg = list()) {
+  configured <- cfg$diagnostics$spatial_moran_mc_seed %||% cfg$spatial_moran_mc_seed %||% NULL
+  env <- Sys.getenv("EMI_SPATIAL_MORAN_MC_SEED", unset = "")
+  if (nzchar(env)) configured <- env
+  seed <- suppressWarnings(as.integer(configured %||% 999L))
+  if (!is.finite(seed)) seed <- 999L
+  seed
+}
+
+#' diagnose Monte Carlo Moran benchmark
+#'
+#' Expensive legacy sensitivity path for Moran's I p-values.  This is not part
+#' of the public default diagnostics because `moran.mc(..., nsim = 9999)` is much
+#' slower than the asymptotic `moran.test()` path used in the paper values.
+#' `make benchmarking-full` runs this target deliberately.
+diagnose_spatial_moran_mc <- function(district_panel, iv_models, spatial_weights, cfg) {
+  nsim <- spatial_moran_mc_nsim(cfg)
+  seed <- spatial_moran_mc_seed(cfg)
+  if (!inherits(spatial_weights, "emi_spatial_weights") || !identical(spatial_weights$status, "constructed")) {
+    out <- spatial_autocorrelation_status_row("out_of_active_pipeline", "Spatial weights were not constructed for Monte Carlo Moran benchmark.")
+    out$nsim <- nsim
+    out$seed <- seed
+    return(out)
+  }
+  out <- list()
+
+  add_model_residual <- function(model, legacy_name, estimand, variable, source) {
+    if (!inherits(model, "ivreg")) {
+      return(spatial_autocorrelation_status_row("out_of_active_pipeline", paste0("No active IV model for ", estimand, ".")))
+    }
+    rows <- spatial_model_rows(model, district_panel)
+    weights <- if (identical(as.integer(rows), as.integer(spatial_weights$row_index))) spatial_weights else build_spatial_weights_for_rows(district_panel, rows, queen = FALSE)
+    x <- tryCatch(stats::residuals(model), error = function(e) NA_real_)
+    compute_monte_carlo_moran_tests(x, weights, nsim = nsim, seed = seed, legacy_name = legacy_name, estimand = estimand, variable = variable, source = source)
+  }
+
+  out <- c(out, list(add_model_residual(spatial_iv_model(iv_models, "consumption"), "m_cons_resid", "consumption_iv_residual", "resid_cons", "second_stage_residual")))
+  out <- c(out, list(add_model_residual(spatial_iv_model(iv_models, "gini"), "m_gini_resid", "gini_iv_residual", "resid_gini", "second_stage_residual")))
+
+  panel <- as.data.frame(district_panel)[spatial_weights$row_index, , drop = FALSE]
+  for (spec in list(
+    list(col = "EMIE", legacy_name = "m_EMIE", estimand = "emie", source = "treatment"),
+    list(col = "wavg_ling_degrees", legacy_name = "m_wavg_ling_degrees", estimand = "linguistic_distance", source = "instrument"),
+    list(col = "consumption_pct_change", legacy_name = "m_cons", estimand = "consumption_growth", source = "outcome"),
+    list(col = "gini_change", legacy_name = "m_gini", estimand = "gini_change", source = "outcome")
+  )) {
+    if (spec$col %in% names(panel)) {
+      out <- c(out, list(compute_monte_carlo_moran_tests(panel[[spec$col]], spatial_weights, nsim = nsim, seed = seed, legacy_name = spec$legacy_name, estimand = spec$estimand, variable = spec$col, source = spec$source)))
+    }
+  }
+  out <- safe_bind_rows(out)
+  out$nsim <- nsim
+  out$seed <- seed
+  out$legacy_note <- spatial_legacy_note(sub("_mc$", "", out$legacy_name))
+  out
+}
+
 spatial_legacy_note <- function(legacy_name) {
   notes <- c(
     m_cons_resid = "Final-paper residual p-value: residuals(model_consumption_iv). Legacy comments reported a pre-control value of 2.779572e-23.",
@@ -280,7 +347,7 @@ spatial_moran_mc_reference <- function() {
   data.frame(
     scaffold = "moran.mc(resid_cons, listw_2020, nsim = 9999)",
     status = "documented_not_run_by_default",
-    reason = "Legacy Chunk 29 kept this as a Monte Carlo robustness scaffold. The default public diagnostic keeps the asymptotic moran.test() path used by report_values; run a separate opt-in benchmark before treating Monte Carlo p-values as refreshed current results.",
+    reason = "Legacy Chunk 29 kept this as a Monte Carlo robustness scaffold. The default public diagnostic keeps the asymptotic moran.test() path used by report_values; run `make benchmarking-full` or the public audit flag `--with-benchmarking-full` before treating Monte Carlo p-values as refreshed current results.",
     stringsAsFactors = FALSE
   )
 }

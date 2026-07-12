@@ -11,10 +11,11 @@ incremental="false"
 with_extended_diagnostics="false"
 with_benchmarks="false"
 with_analysis_notes="false"
+with_benchmarking_full="false"
 
 usage() {
   cat <<'USAGE'
-Usage: bash scripts/run_public_build_audit.sh [--with-samples|--without-samples] [--with-extended-diagnostics] [--with-benchmarks] [--with-analysis-notes] [--archive-on-error|--archive-always] [--archive-each-step] [--incremental|--skip-clean] [--skip-tests] [-o OUT.zip]
+Usage: bash scripts/run_public_build_audit.sh [--with-samples|--without-samples] [--with-extended-diagnostics] [--with-benchmarks] [--with-benchmarking-full] [--with-analysis-notes] [--archive-on-error|--archive-always] [--archive-each-step] [--incremental|--skip-clean] [--skip-tests] [-o OUT.zip]
 
 Runs the final public build audit. The default is --without-samples for a faster
 report/data/output audit that omits application-sample rendering and excludes
@@ -35,8 +36,10 @@ outputs/diagnostics/extended and outputs/benchmarking artifacts are preserved
 unless explicitly cleaned. Use --with-analysis-notes to render the human-readable
 analysis notebooks to GitHub-flavored Markdown in the same audit log; this also
 requests the extended diagnostics and benchmarks that those notebooks read.
-Analysis notes do not request application samples; add --with-samples only when
-sample-generation code or sample-facing outputs may have changed.
+Use --with-benchmarking-full deliberately for expensive full-data AME and Monte
+Carlo Moran benchmarks. Analysis notes do not request application samples; add
+--with-samples only when sample-generation code or sample-facing outputs may have
+changed.
 USAGE
 }
 
@@ -73,6 +76,11 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     --with-benchmarks)
+      with_benchmarks="true"
+      shift
+      ;;
+    --with-benchmarking-full|--with-benchmarks-full)
+      with_benchmarking_full="true"
       with_benchmarks="true"
       shift
       ;;
@@ -253,6 +261,12 @@ if [[ "$with_benchmarks" == "true" ]]; then
   echo "=== BENCHMARKS ==="
   make benchmarking
   checkpoint_archive "after-benchmarks"
+fi
+
+if [[ "$with_benchmarking_full" == "true" ]]; then
+  echo "=== FULL BENCHMARKS ==="
+  make benchmarking-full
+  checkpoint_archive "after-benchmarking-full"
 fi
 
 if [[ "$with_analysis_notes" == "true" ]]; then
