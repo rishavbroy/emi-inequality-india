@@ -25,3 +25,24 @@ test_that("spatial weights store legacy rook listw and binary adjacency matrix",
   expect_true(inherits(weights$listw, "listw"))
   expect_equal(dim(weights$W), c(3L, 3L))
 })
+
+test_that("spatial weights explicitly use current final matched panel rows", {
+  testthat::skip_if_not_installed("sf")
+  testthat::skip_if_not_installed("spdep")
+
+  polys <- sf::st_sfc(
+    sf::st_polygon(list(rbind(c(0, 0), c(1, 0), c(1, 1), c(0, 1), c(0, 0)))),
+    sf::st_polygon(list(rbind(c(1, 0), c(2, 0), c(2, 1), c(1, 1), c(1, 0)))),
+    sf::st_polygon(list(rbind(c(0, 1), c(1, 1), c(1, 2), c(0, 2), c(0, 1)))),
+    sf::st_sfc(sf::st_geometrycollection(), crs = 4326)[[1]],
+    crs = 4326
+  )
+  panel <- sf::st_sf(id = 1:4, geometry = polys)
+
+  expect_equal(spatial_weight_final_panel_rows(panel), 1:3)
+  weights <- build_spatial_weights(panel, list())
+  expect_equal(weights$row_index, 1:3)
+  expect_equal(weights$panel_scope, "current_final_matched_panel_non_empty_geometry")
+  comp <- compare_rook_queen_contiguity(panel)
+  expect_true(all(comp$panel_scope == "current_final_matched_panel_non_empty_geometry"))
+})

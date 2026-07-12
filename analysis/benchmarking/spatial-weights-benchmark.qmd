@@ -18,7 +18,7 @@ source(helper)
 Test for best contiguity measure. Code is based on @liChapter14Spatial2019. The legacy exploratory comments tried `st_rook()` and `st_queen()` from `sfExtras`: rook had 4.780165 average neighbors per district, and queen had 4.783471. Build a rook-contiguity neighbor list. With `queen = TRUE`: 32.64976 seconds. With `queen = FALSE`: 31.15051 seconds. Turn that into a binary adjacency matrix, where `W_2020[i, j] == 1` if districts `i` and `j` share a border and 0 otherwise.
 
 ```{r spatial-weight-prose-deviation-note, results='asis'}
-analysis_deviation_note("The current benchmark uses the active matched panel and spdep::poly2nb() rather than legacy exploratory sfExtras calls. The note preserves the legacy values while rendering current target-backed rook/queen comparisons.")
+analysis_deviation_note("The current benchmark uses the active final matched panel with non-empty geometry and spdep::poly2nb() rather than legacy exploratory sfExtras calls. This makes spatial weights match the current final-panel diagnostics, while the legacy mean-neighbor values remain a reference rather than a target to reproduce.")
 ```
 
 ```{r spatial-weight-targets}
@@ -27,7 +27,7 @@ spatial_diag <- analysis_target_csv("diag_ext_spatial_weights", "rook_queen_cont
 spatial_ref <- analysis_target_csv("diag_ext_spatial_weights", "spatial_weights_legacy_reference.csv")
 ```
 
-The current rook benchmark has `r analysis_format_number(analysis_metric(spatial_bench, "contiguity", "rook", "mean_neighbors"), 3)` mean neighbors; the current queen benchmark has `r analysis_format_number(analysis_metric(spatial_bench, "contiguity", "queen", "mean_neighbors"), 3)` mean neighbors.
+The current rook benchmark has `r analysis_format_number(analysis_metric(spatial_bench, "contiguity", "rook", "mean_neighbors"), 3)` mean neighbors; the current queen benchmark has `r analysis_format_number(analysis_metric(spatial_bench, "contiguity", "queen", "mean_neighbors"), 3)` mean neighbors. These current values are intentionally computed on the current final matched panel with non-empty geometry, not on the legacy exploratory `sfExtras` object.
 
 ```{r spatial-weight-current-code-analog}
 spatial_bench[spatial_bench$contiguity %in% c("rook", "queen"), c("contiguity", "n", "mean_neighbors", "n_islands", "elapsed_seconds"), drop = FALSE]

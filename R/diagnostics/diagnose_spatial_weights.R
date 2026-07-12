@@ -21,8 +21,7 @@ build_spatial_weights <- function(district_panel, cfg) {
   need_pkg("spdep", "spatial weights")
   need_pkg("sf", "spatial weights")
 
-  geom <- sf::st_geometry(district_panel)
-  row_index <- which(!sf::st_is_empty(geom))
+  row_index <- spatial_weight_final_panel_rows(district_panel)
   coverage <- length(row_index) / max(nrow(district_panel), 1L)
   if (!is.finite(coverage) || coverage < 0.75) {
     return(list(
@@ -35,7 +34,19 @@ build_spatial_weights <- function(district_panel, cfg) {
 
   weights <- build_spatial_weights_for_rows(district_panel, row_index, queen = FALSE)
   weights$coverage <- coverage
+  weights$panel_scope <- "current_final_matched_panel_non_empty_geometry"
   weights
+}
+
+#' rows used by final-panel spatial diagnostics
+#'
+#' Spatial diagnostics operate on the active `district_panel` target, not on the
+#' legacy exploratory geometry object.  The final-panel scope is therefore all
+#' rows in the current matched panel with non-empty geometry.
+spatial_weight_final_panel_rows <- function(district_panel) {
+  if (!inherits(district_panel, "sf")) return(integer())
+  geom <- sf::st_geometry(district_panel)
+  which(!sf::st_is_empty(geom))
 }
 
 #' build spatial weights for selected district-panel rows
@@ -121,6 +132,7 @@ diagnose_spatial_weights <- function(district_panel, spatial_weights, cfg) {
     n = spatial_weights$n %||% NA_real_,
     n_islands = spatial_weights$n_islands %||% NA_real_,
     mean_neighbors = spatial_weights$mean_neighbors %||% NA_real_,
+    panel_scope = spatial_weights$panel_scope %||% "current_final_matched_panel_non_empty_geometry",
     warnings = paste(spatial_weights$warnings %||% attr(spatial_weights, "spatial_warnings") %||% character(), collapse = "; "),
     stringsAsFactors = FALSE
   )
@@ -140,8 +152,7 @@ compare_rook_queen_contiguity <- function(district_panel) {
   if (!inherits(district_panel, "sf")) return(tibble::tibble())
   need_pkg("spdep", "rook/queen contiguity comparison")
   need_pkg("sf", "rook/queen contiguity comparison")
-  geom <- sf::st_geometry(district_panel)
-  panel <- district_panel[!sf::st_is_empty(geom), , drop = FALSE]
+  panel <- district_panel[spatial_weight_final_panel_rows(district_panel), , drop = FALSE]
   if (!nrow(panel)) return(tibble::tibble())
 
   one <- function(queen) {
@@ -163,6 +174,7 @@ compare_rook_queen_contiguity <- function(district_panel) {
       n = length(nb),
       mean_neighbors = mean(lengths(nb)),
       n_islands = sum(lengths(nb) == 0L),
+      panel_scope = "current_final_matched_panel_non_empty_geometry",
       elapsed_seconds = unname(elapsed),
       warnings = paste(warnings, collapse = "; ")
     )
@@ -181,7 +193,7 @@ legacy_spatial_weight_reference <- function() {
     ),
     legacy_mean_neighbors = c(4.780165, 4.783471),
     legacy_elapsed_note = c("legacy comment recorded similar run time to queen", "legacy comment recorded similar run time to rook"),
-    interpretation = "Current means may differ because the active matched panel and geometry coverage differ from the legacy exploratory object; compare deltas before treating this as an improvement.",
+    interpretation = "Current means are intentionally computed on the active final matched panel with non-empty geometry; they may differ from legacy exploratory sfExtras objects, but they now match the panel used for current spatial diagnostics.",
     stringsAsFactors = FALSE
   )
 }
