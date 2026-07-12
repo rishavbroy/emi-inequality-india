@@ -18,7 +18,61 @@ copying exploratory values from deleted code.
 iv_match <- read_analysis_csv("diagnostics", "public", "iv_panel_match_summary.csv")
 iv_state <- read_analysis_csv("diagnostics", "public", "iv_panel_state_summary.csv")
 iv_rows <- read_analysis_csv("diagnostics", "public", "iv_summary_keyed_rows.csv")
+iv_dotplot <- analysis_target_csv("diag_ext_instrument_exploration", "instrument_strength_dotplot_data.csv")
+iv_notes <- analysis_target_csv("diag_ext_instrument_exploration", "instrument_exploration_legacy_notes.csv")
 ```
+
+The current analog of the legacy
+`ggplot(..., aes(x = district_code_0708, y = EMIE, color = district_prefix)) + geom_point()`
+check uses 482 active district-panel rows.
+
+``` r
+instrument_dotplot_rows <- iv_dotplot[, intersect(c("district_order", "district_code", "state", "district", "EMIE", "wavg_ling_degrees", "state_prefix"), names(iv_dotplot)), drop = FALSE]
+analysis_table(instrument_dotplot_rows, "Current EMIE-by-district dotplot data", max_rows = 30)
+```
+
+| district_order | district_code | state | district | EMIE | wavg_ling_degrees | state_prefix |
+|:---|:---|:---|:---|:---|:---|:---|
+| 1 | 1113 | Jammu and Kashmir | Jammu | 55.9373478876879 | 4.10472406351803 | 1 |
+| 2 | 1114 | Jammu and Kashmir | Kathua | 44.1686433398463 | 4.47509586442914 | 1 |
+| 3 | 1209 | Jammu and Kashmir | Doda | 100 | 2.80978436598451 | 1 |
+| 4 | 1210 | Jammu and Kashmir | Udhampur | 100 | 3.89551856807832 | 1 |
+| 5 | 1301 | Jammu and Kashmir | Kupwara | 35.3856881455635 | 3.03277502974141 | 1 |
+| 6 | 1303 | Jammu and Kashmir | Srinagar | 85.077782419044 | 3.68960681829044 | 1 |
+| 7 | 1305 | Jammu and Kashmir | Pulwama | 90.3661939188381 | 3.77674113819634 | 1 |
+| 8 | 1306 | Jammu and Kashmir | Anantnag | 85.3633724175985 | 3.53093067678782 | 1 |
+| 9 | 2102 | Himachal Pradesh | Kangra | 23.0964013292776 | 0.0511254204156725 | 2 |
+| 10 | 2104 | Himachal Pradesh | Kullu | 2.16035948115958 | 1.93095942551585 | 2 |
+| 11 | 2105 | Himachal Pradesh | Mandi | 13.1015338642775 | 0.0223237688187754 | 2 |
+| 12 | 2106 | Himachal Pradesh | Hamirpur | 16.4639133923992 | 0.0486081824586379 | 2 |
+| 13 | 2107 | Himachal Pradesh | Una | 14.6258166762162 | 0.226245237822633 | 2 |
+| 14 | 2201 | Himachal Pradesh | Chamba | 11.6242446239474 | 0.11429443132082 | 2 |
+| 15 | 2208 | Himachal Pradesh | Bilaspur | 16.8181705232738 | 0.559565764910242 | 2 |
+| 16 | 2209 | Himachal Pradesh | Solan | 17.8837636459365 | 0.187361916175475 | 2 |
+| 17 | 2210 | Himachal Pradesh | Sirmaur | 17.7238270927478 | 0.0939557639834032 | 2 |
+| 18 | 2211 | Himachal Pradesh | Shimla | 41.7306051009988 | 0.163964926837157 | 2 |
+| 19 | 2212 | Himachal Pradesh | Kinnaur | 5.15399235250357 | 4.43059659051503 | 2 |
+| 20 | 3101 | Punjab | Gurdaspur | 34.4063148539354 | 0.978981869361082 | 3 |
+| 21 | 3102 | Punjab | Amritsar | 32.9079601779732 | 0.95674459915501 | 3 |
+| 22 | 3103 | Punjab | Kapurthala | 43.9577396007221 | 0.936608167186548 | 3 |
+| 23 | 3104 | Punjab | Jalandhar | 39.7958708417419 | 0.918986609063724 | 3 |
+| 24 | 3105 | Punjab | Hoshiarpur | 14.6471262784023 | 0.952338796474347 | 3 |
+| 25 | 3106 | Punjab | Nawanshahr | 39.073688061125 | 0.966297335658519 | 3 |
+| 26 | 3107 | Punjab | Rupnagar | 37.1008378309431 | 0.903243078071297 | 3 |
+| 27 | 3208 | Punjab | Fatehgarh Sahib | 26.1747306686159 | 0.935136464132648 | 3 |
+| 28 | 3209 | Punjab | Ludhiana | 28.2453355709974 | 0.824173864209363 | 3 |
+| 29 | 3210 | Punjab | Moga | 13.648210472959 | 0.974371536656354 | 3 |
+| 30 | 3211 | Punjab | Firozpur | 26.704471925114 | 0.883867895594906 | 3 |
+| Table truncated in rendered note; full CSV has 482 rows. |  |  |  |  |  |  |
+
+Current EMIE-by-district dotplot data
+
+``` r
+analysis_image("diag_ext_instrument_exploration", "emie_by_district_dotplot.png", "Current EMIE-by-district exploratory dotplot")
+```
+
+![Current EMIE-by-district exploratory
+dotplot](../../outputs/diagnostics/extended/instrument_exploration/emie_by_district_dotplot.png)
 
 ``` r
 analysis_table(iv_match, "Current IV-panel match summary")
@@ -105,3 +159,16 @@ analysis_table(iv_rows, "Current keyed IV summary rows", max_rows = 30)
 | 2007-08 to 2017-18 | Change in Gini of consumption | Change in Gini of consumption | Change in the Gini coefficient of consumption | -0.30 | -0.07 | -0.02 | 0.03 | 0.29 | -0.02 | 0.08 | 482 |
 
 Current keyed IV summary rows
+
+``` r
+analysis_table(iv_notes, "Legacy instrument-exploration notes retained as target output")
+```
+
+| diagnostic | legacy_note | current_status |
+|:---|:---|:---|
+| emie_dotplot | Dotplot of EMIE values by district_code. | rendered from active district_panel as a target-backed figure |
+| legacy_peak_comment | EMIE had visible peaks in Jammu and Kashmir; in several Northeast states; and in southern/coastal districts historically furthest from Hindi. | use current dotplot/table rather than the legacy hard-coded visual impression |
+| smaller_units_question | Many districts outside peaks had low EMIE values; legacy comments asked whether smaller units of analysis would be useful. | retained as exploratory rationale, not a final-paper claim |
+| district_count_check | Legacy code checked that the number of districts did not change while constructing weighted linguistic distance. | final panel match summaries are rendered in this analysis note |
+
+Legacy instrument-exploration notes retained as target output
