@@ -1,0 +1,3 @@
+"test","status","statistic","parameter","p.value","n","method","reason"
+"any_probit_model_na_by_state","estimated",13631.182081018,34,0,127246,"Pearson's Chi-squared test",NA
+"any_probit_model_na_by_region","not_available",NA,NA,NA,NA,NA,"Missing column region_0708"

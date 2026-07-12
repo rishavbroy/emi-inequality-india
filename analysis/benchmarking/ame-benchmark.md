@@ -24,9 +24,13 @@ predict_calls <- analysis_value(ame_methods, column = "centered_predict_calls_fu
 
 With `newdata = sel_data` (no subsampling, as if `num_samp =` 114,961):
 the default current benchmark tier intentionally does not rerun the
-full-data AME timing every public build. With the current default
-benchmark tier, the largest sampled benchmark uses `num_samp =` 2,000,
-and the slowest recorded current run took 5.109 seconds.
+full-data AME timing every public build. To reconcile the legacy
+20,000-row timing, the default tier now includes `num_samp = 20000` when
+the active model frame has that many rows; the largest sampled benchmark
+uses `num_samp =` 20,000, and the slowest recorded current run took
+62.269 seconds. Set `EMI_AME_BENCHMARK_INCLUDE_FULL=true` or include
+`full` in `EMI_AME_BENCHMARK_SAMPLE_SIZES` to run the full-data
+benchmark deliberately.
 
 The rest of this chunk is saved for quick replications of robustness
 checks on my final method.
@@ -38,14 +42,14 @@ observations \* 2 calls of `predict()` per observation per variable
 = 2,299,220 `predict()` calls.
 
 ``` r
-analysis_deviation_note("Legacy full-data and 20,000-row timings are preserved in target notes, but the rendered sentence reports current target-backed default-tier timings because rerunning the legacy full-data benchmark on every analysis refresh would defeat the analysis-notes workflow.")
+analysis_deviation_note("Legacy full-data timings are preserved in target notes, but the rendered sentence reports current target-backed default-tier timings unless the full-data benchmark is explicitly requested. The 20,000-row legacy timing is now part of the default benchmark tier when enough rows are available.")
 ```
 
-**Deviation note.** Legacy full-data and 20,000-row timings are
-preserved in target notes, but the rendered sentence reports current
-target-backed default-tier timings because rerunning the legacy
-full-data benchmark on every analysis refresh would defeat the
-analysis-notes workflow.
+**Deviation note.** Legacy full-data timings are preserved in target
+notes, but the rendered sentence reports current target-backed
+default-tier timings unless the full-data benchmark is explicitly
+requested. The 20,000-row legacy timing is now part of the default
+benchmark tier when enough rows are available.
 
 ``` r
 data.frame(
@@ -76,10 +80,12 @@ analysis_table(
 
 | method | sample_size | n_observations | n_numeric_variables | centered_predict_calls_full_data | elapsed_seconds | status |
 |:---|---:|---:|---:|---:|---:|:---|
-| avg_slopes_centered_default | 200 | 114961 | 10 | 2299220 | 0.841 | estimated_legacy_vcov |
-| avg_slopes_fdforward | 200 | 114961 | 10 | 2299220 | 0.926 | estimated_legacy_vcov |
-| avg_slopes_centered_default | 2000 | 114961 | 10 | 2299220 | 5.109 | estimated_legacy_vcov |
-| avg_slopes_fdforward | 2000 | 114961 | 10 | 2299220 | 4.791 | estimated_legacy_vcov |
+| avg_slopes_centered_default | 200 | 114961 | 10 | 2299220 | 1.038 | estimated_legacy_vcov |
+| avg_slopes_fdforward | 200 | 114961 | 10 | 2299220 | 0.966 | estimated_legacy_vcov |
+| avg_slopes_centered_default | 2000 | 114961 | 10 | 2299220 | 6.530 | estimated_legacy_vcov |
+| avg_slopes_fdforward | 2000 | 114961 | 10 | 2299220 | 6.049 | estimated_legacy_vcov |
+| avg_slopes_centered_default | 20000 | 114961 | 10 | 2299220 | 62.269 | estimated_legacy_vcov |
+| avg_slopes_fdforward | 20000 | 114961 | 10 | 2299220 | 61.169 | estimated_legacy_vcov |
 
 Current AME benchmark attempts
 
@@ -88,15 +94,19 @@ ame_methods[, intersect(c("method", "sample_size", "elapsed_seconds", "status", 
 ```
 
                            method sample_size elapsed_seconds                status
-    1 avg_slopes_centered_default         200           0.841 estimated_legacy_vcov
-    2        avg_slopes_fdforward         200           0.926 estimated_legacy_vcov
-    3 avg_slopes_centered_default        2000           5.109 estimated_legacy_vcov
-    4        avg_slopes_fdforward        2000           4.791 estimated_legacy_vcov
+    1 avg_slopes_centered_default         200           1.038 estimated_legacy_vcov
+    2        avg_slopes_fdforward         200           0.966 estimated_legacy_vcov
+    3 avg_slopes_centered_default        2000           6.530 estimated_legacy_vcov
+    4        avg_slopes_fdforward        2000           6.049 estimated_legacy_vcov
+    5 avg_slopes_centered_default       20000          62.269 estimated_legacy_vcov
+    6        avg_slopes_fdforward       20000          61.169 estimated_legacy_vcov
       reason
     1     NA
     2     NA
     3     NA
     4     NA
+    5     NA
+    6     NA
 
 Method 2: Subsampling with forward differences. The legacy note was:
 calls `predict()` once per perturbation instead of twice (a la central
@@ -115,8 +125,9 @@ analysis_table(
 
 | method | sample_size | elapsed_seconds | status | reason | fallback |
 |:---|---:|---:|:---|:---|:---|
-| avg_slopes_fdforward | 200 | 0.926 | estimated_legacy_vcov | NA | NA |
-| avg_slopes_fdforward | 2000 | 4.791 | estimated_legacy_vcov | NA | NA |
+| avg_slopes_fdforward | 200 | 0.966 | estimated_legacy_vcov | NA | NA |
+| avg_slopes_fdforward | 2000 | 6.049 | estimated_legacy_vcov | NA | NA |
+| avg_slopes_fdforward | 20000 | 61.169 | estimated_legacy_vcov | NA | NA |
 
 Forward-difference AME benchmark rows
 

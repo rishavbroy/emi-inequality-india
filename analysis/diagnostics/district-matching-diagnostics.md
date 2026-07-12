@@ -28,13 +28,14 @@ rows; `joined_df_tracker %>% .[!complete.cases(.),] %>% nrow()` = 250
 rows. \*\*\*Why the gigantic discrepancy???
 
 ``` r
-analysis_deviation_note("The legacy helper objects no longer exist in the active architecture. The rendered current-code analog counts incomplete rows in target-backed tracker/panel, source-inventory, unmatched-row, and many-to-many outputs.")
+analysis_deviation_note("The legacy helper objects no longer exist in the active architecture. The rendered current-code analog counts incomplete rows in target-backed tracker/panel, source-inventory, unmatched-row, and many-to-many outputs, and renders the all-rows close-match search table as a bounded preview.")
 ```
 
 **Deviation note.** The legacy helper objects no longer exist in the
 active architecture. The rendered current-code analog counts incomplete
 rows in target-backed tracker/panel, source-inventory, unmatched-row,
-and many-to-many outputs.
+and many-to-many outputs, and renders the all-rows close-match search
+table as a bounded preview.
 
 ``` r
 dm_summary <- analysis_target_csv("diag_ext_district_matching", "district_matching_summary.csv")
@@ -45,6 +46,7 @@ dm_key_roles <- analysis_target_csv("diag_ext_district_matching", "district_matc
 dm_source_inventory <- analysis_target_csv("diag_ext_district_matching", "district_matching_source_key_inventory.csv")
 dm_unmatched <- analysis_target_csv("diag_ext_district_matching", "district_matching_unmatched_rows.csv")
 dm_many <- analysis_target_csv("diag_ext_district_matching", "district_matching_many_to_many_cases.csv")
+dm_all_rows <- analysis_target_csv("diag_ext_district_matching", "district_matching_all_rows_search.csv")
 ```
 
 The current analog keeps true unmatched rows separate from fallback
@@ -187,3 +189,43 @@ analysis_table(dm_many, "Many-to-many cases from current matching diagnostics", 
 | No rows in analysis output: outputs/diagnostics/extended/district_matching/district_matching_many_to_many_cases.csv |
 
 Many-to-many cases from current matching diagnostics
+
+``` r
+analysis_table(dm_all_rows, "All-rows close-match search table", max_rows = 30)
+```
+
+| state | district | source |
+|:---|:---|:---|
+| Andhra Pradesh | Anantapur | panel |
+| Andhra Pradesh | Chittoor | panel |
+| Andhra Pradesh | East Godavari | panel |
+| Andhra Pradesh | Guntur | panel |
+| Andhra Pradesh | Krishna | panel |
+| Andhra Pradesh | Kurnool | panel |
+| Andhra Pradesh | Prakasam | panel |
+| Andhra Pradesh | Srikakulam | panel |
+| Andhra Pradesh | Visakhapatnam | panel |
+| Andhra Pradesh | Vizianagaram | panel |
+| Andhra Pradesh | West Godavari | panel |
+| Arunachal Pradesh | Changlang | panel |
+| Arunachal Pradesh | East Kameng | panel |
+| Arunachal Pradesh | East Siang | panel |
+| Arunachal Pradesh | Lohit | panel |
+| Arunachal Pradesh | Tirap | panel |
+| Arunachal Pradesh | Dibang Valley | panel |
+| Arunachal Pradesh | Lower Subansiri | panel |
+| Arunachal Pradesh | Papum Pare | panel |
+| Arunachal Pradesh | Tawang | panel |
+| Arunachal Pradesh | Upper Siang | panel |
+| Arunachal Pradesh | Upper Subansiri | panel |
+| Arunachal Pradesh | West Kameng | panel |
+| Arunachal Pradesh | West Siang | panel |
+| Assam | Barpeta | panel |
+| Assam | Darrang | panel |
+| Assam | Bongaigaon | panel |
+| Assam | Cachar | panel |
+| Assam | Dhemaji | panel |
+| Assam | Dhubri | panel |
+| Table truncated in rendered note; full CSV has 6832 rows. |  |  |
+
+All-rows close-match search table

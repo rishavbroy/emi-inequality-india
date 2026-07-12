@@ -1,0 +1,2 @@
+"case_scope","n_rows","n_rows_with_any_missing","n_rows_with_partial_missing","n_missing_cells","n_observed_cells_in_rows_with_missing","interpretation"
+"Rajasthan",6676,6442,6442,25486,38934,"Current analog of the legacy Rajasthan/Southern View() check: rows with partial cost-variable missingness preserve the legacy concern that a child was not necessarily excluded wholesale when one cost field was missing."

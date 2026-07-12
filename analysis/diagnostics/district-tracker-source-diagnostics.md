@@ -17,11 +17,12 @@ district-name-change, and same-name-district benchmarks beside the
 current row-level outputs so differences in counting level are visible.
 
 ``` r
-analysis_deviation_note("The current source diagnostics report both row-level outputs and legacy expected-event benchmarks, because active tracker sources can count more rows than the legacy comments' event-level summaries.")
+analysis_deviation_note("The current source diagnostics report row-level outputs, event-level summaries, and per-year same-name-district counts beside the legacy expected-event benchmarks, because active tracker sources can count more rows than the legacy comments' event-level summaries.")
 ```
 
-**Deviation note.** The current source diagnostics report both row-level
-outputs and legacy expected-event benchmarks, because active tracker
+**Deviation note.** The current source diagnostics report row-level
+outputs, event-level summaries, and per-year same-name-district counts
+beside the legacy expected-event benchmarks, because active tracker
 sources can count more rows than the legacy comments’ event-level
 summaries.
 
@@ -34,6 +35,7 @@ tracker_unrecorded <- analysis_target_csv("diag_ext_district_tracker_sources", "
 tracker_inperiod <- analysis_target_csv("diag_ext_district_tracker_sources", "tracker_inperiod_district_changes.csv")
 tracker_expected_inperiod <- analysis_target_csv("diag_ext_district_tracker_sources", "tracker_legacy_expected_inperiod_district_changes.csv")
 tracker_same <- analysis_target_csv("diag_ext_district_tracker_sources", "tracker_same_name_districts.csv")
+tracker_same_by_year <- analysis_target_csv("diag_ext_district_tracker_sources", "tracker_same_name_districts_by_year.csv")
 tracker_expected_same <- analysis_target_csv("diag_ext_district_tracker_sources", "tracker_legacy_expected_same_name_districts.csv")
 ```
 
@@ -43,22 +45,25 @@ data.frame(
     "nrow(tracker_state_events)",
     "nrow(tracker_expected_state)",
     "nrow(tracker_inperiod)",
-    "nrow(tracker_expected_inperiod)"
+    "nrow(tracker_expected_inperiod)",
+    "nrow(tracker_same_by_year[tracker_same_by_year$within_legacy_range, ])"
   ),
   rows = c(
     nrow(tracker_state_events),
     nrow(tracker_expected_state),
     nrow(tracker_inperiod),
-    nrow(tracker_expected_inperiod)
+    nrow(tracker_expected_inperiod),
+    if ("within_legacy_range" %in% names(tracker_same_by_year)) sum(tracker_same_by_year$within_legacy_range %in% TRUE) else NA_integer_
   )
 )
 ```
 
-                  current_code_analog rows
-    1      nrow(tracker_state_events)    7
-    2    nrow(tracker_expected_state)    2
-    3          nrow(tracker_inperiod)   17
-    4 nrow(tracker_expected_inperiod)    1
+                                                         current_code_analog rows
+    1                                             nrow(tracker_state_events)    7
+    2                                           nrow(tracker_expected_state)    2
+    3                                                 nrow(tracker_inperiod)   17
+    4                                        nrow(tracker_expected_inperiod)    1
+    5 nrow(tracker_same_by_year[tracker_same_by_year$within_legacy_range, ])    0
 
 ``` r
 analysis_table(tracker_counts, "Tracker source row counts")
@@ -246,11 +251,11 @@ analysis_table(tracker_expected_inperiod, "Legacy in-period district-name-change
 Legacy in-period district-name-change benchmark
 
 ``` r
-analysis_table(tracker_same, "Current same-name districts appearing in multiple states")
+analysis_table(tracker_same, "Current same-name districts appearing in multiple states", max_rows = 30)
 ```
 
 | year_suffix | year | district_name | district_key | n_districts | n_states | states |
-|---:|---:|:---|:---|---:|---:|:---|
+|:---|:---|:---|:---|:---|:---|:---|
 | 1 | 2001 | Aurangabad | aurangabad | 2 | 2 | Bihar; Maharashtra |
 | 1 | 2001 | Bilaspur | bilaspur | 3 | 2 | Chhattisgarh; Himachal Pradesh |
 | 1 | 2001 | Hamirpur | hamirpur | 2 | 2 | Himachal Pradesh; Uttar Pradesh |
@@ -281,20 +286,28 @@ analysis_table(tracker_same, "Current same-name districts appearing in multiple 
 | 18 | 2018 | Aurangabad | aurangabad | 2 | 2 | Bihar; Maharashtra |
 | 18 | 2018 | Balrampur | balrampur | 2 | 2 | Chhattisgarh; Uttar Pradesh |
 | 18 | 2018 | Bilaspur | bilaspur | 2 | 2 | Chhattisgarh; Himachal Pradesh |
-| 18 | 2018 | Hamirpur | hamirpur | 2 | 2 | Himachal Pradesh; Uttar Pradesh |
-| 18 | 2018 | Pratapgarh | pratapgarh | 2 | 2 | Rajasthan; Uttar Pradesh |
-| 19 | 2019 | Aurangabad | aurangabad | 2 | 2 | Bihar; Maharashtra |
-| 19 | 2019 | Balrampur | balrampur | 2 | 2 | Chhattisgarh; Uttar Pradesh |
-| 19 | 2019 | Bilaspur | bilaspur | 2 | 2 | Chhattisgarh; Himachal Pradesh |
-| 19 | 2019 | Hamirpur | hamirpur | 2 | 2 | Himachal Pradesh; Uttar Pradesh |
-| 19 | 2019 | Pratapgarh | pratapgarh | 2 | 2 | Rajasthan; Uttar Pradesh |
-| 20 | 2020 | Aurangabad | aurangabad | 2 | 2 | Bihar; Maharashtra |
-| 20 | 2020 | Balrampur | balrampur | 2 | 2 | Chhattisgarh; Uttar Pradesh |
-| 20 | 2020 | Bilaspur | bilaspur | 2 | 2 | Chhattisgarh; Himachal Pradesh |
-| 20 | 2020 | Hamirpur | hamirpur | 2 | 2 | Himachal Pradesh; Uttar Pradesh |
-| 20 | 2020 | Pratapgarh | pratapgarh | 2 | 2 | Rajasthan; Uttar Pradesh |
+| Table truncated in rendered note; full CSV has 42 rows. |  |  |  |  |  |  |
 
 Current same-name districts appearing in multiple states
+
+``` r
+analysis_table(tracker_same_by_year, "Current same-name districts per year compared to legacy 6-10 range")
+```
+
+| year | n_same_name_districts | legacy_expected_min_districts | legacy_expected_max_districts | within_legacy_range |
+|---:|---:|---:|---:|:---|
+| 2001 | 3 | 6 | 10 | FALSE |
+| 2005 | 3 | 6 | 10 | FALSE |
+| 2006 | 3 | 6 | 10 | FALSE |
+| 2007 | 4 | 6 | 10 | FALSE |
+| 2008 | 5 | 6 | 10 | FALSE |
+| 2011 | 4 | 6 | 10 | FALSE |
+| 2017 | 5 | 6 | 10 | FALSE |
+| 2018 | 5 | 6 | 10 | FALSE |
+| 2019 | 5 | 6 | 10 | FALSE |
+| 2020 | 5 | 6 | 10 | FALSE |
+
+Current same-name districts per year compared to legacy 6-10 range
 
 ``` r
 analysis_table(tracker_expected_same, "Legacy same-name-district benchmark")

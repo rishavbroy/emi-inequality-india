@@ -65,18 +65,27 @@ argument. \|
 analysis_table(spatial_diag, "Current-vs-legacy rook/queen comparison")
 ```
 
-| note |
-|:---|
-| Target output not found: diag_ext_spatial_weights rook_queen_contiguity_comparison.csv |
+| contiguity | n | mean_neighbors | n_islands | elapsed_seconds | warnings | legacy_mean_neighbors | mean_neighbor_delta_from_legacy | pct_delta_from_legacy |
+|:---|---:|---:|---:|---:|:---|---:|---:|---:|
+| rook | 482 | 4.029 | 0 | 13.566 | some observations have no neighbours; |  |  |  |
 
 Current-vs-legacy rook/queen comparison
+
+if this seems unexpected, try increasing the snap argument.; neighbour
+object has 21 sub-graphs; if this sub-graph count seems unexpected, try
+increasing the snap argument. \| 4.780\| -0.751\| -15.713\| \|queen \|
+482\| 4.041\| 0\| 14.059\|some observations have no neighbours; if this
+seems unexpected, try increasing the snap argument.; neighbour object
+has 21 sub-graphs; if this sub-graph count seems unexpected, try
+increasing the snap argument. \| 4.783\| -0.742\| -15.511\|
 
 ``` r
 analysis_table(spatial_ref, "Legacy spatial-weight reference comments")
 ```
 
-| note |
-|:---|
-| Target output not found: diag_ext_spatial_weights spatial_weights_legacy_reference.csv |
+| contiguity | legacy_method | legacy_mean_neighbors | legacy_elapsed_note | interpretation |
+|:---|:---|---:|:---|:---|
+| rook | sfExtras::st_rook() timing comment; final weights use spdep::poly2nb(queen = FALSE) | 4.780 | legacy comment recorded similar run time to queen | Current means may differ because the active matched panel and geometry coverage differ from the legacy exploratory object; compare deltas before treating this as an improvement. |
+| queen | sfExtras::st_queen() timing comment; benchmark uses spdep::poly2nb(queen = TRUE) | 4.783 | legacy comment recorded similar run time to rook | Current means may differ because the active matched panel and geometry coverage differ from the legacy exploratory object; compare deltas before treating this as an improvement. |
 
 Legacy spatial-weight reference comments

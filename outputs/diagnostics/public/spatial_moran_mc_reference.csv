@@ -1,0 +1,2 @@
+"scaffold","status","reason"
+"moran.mc(resid_cons, listw_2020, nsim = 9999)","documented_not_run_by_default","Legacy Chunk 29 kept this as a Monte Carlo robustness scaffold. The default public diagnostic keeps the asymptotic moran.test() path used by report_values; run a separate opt-in benchmark before treating Monte Carlo p-values as refreshed current results."

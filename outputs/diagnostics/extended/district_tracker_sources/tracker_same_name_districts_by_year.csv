@@ -1,0 +1,11 @@
+"year","n_same_name_districts","legacy_expected_min_districts","legacy_expected_max_districts","within_legacy_range"
+2001,3,6,10,FALSE
+2005,3,6,10,FALSE
+2006,3,6,10,FALSE
+2007,4,6,10,FALSE
+2008,5,6,10,FALSE
+2011,4,6,10,FALSE
+2017,5,6,10,FALSE
+2018,5,6,10,FALSE
+2019,5,6,10,FALSE
+2020,5,6,10,FALSE
