@@ -16,7 +16,7 @@ bash scripts/run_public_build_audit.sh --incremental --archive-always --with-ana
 
 The notebooks render to GitHub-flavored Markdown (`.md`) rather than PDF/HTML so they are readable in GitHub and avoid LaTeX-cache failures. They read current CSV outputs from `outputs/diagnostics/` and `outputs/benchmarking/` rather than relying on manually pasted results from legacy comments.
 
-Notebook coverage currently includes the legacy comments from Chunks 3, 6, 8, 10, 15, 16, 20, 24, 29, and 30. The prose sections use the legacy comments as the source of truth, with comment markers removed and code-like commented blocks fenced. Current-output tables follow each legacy-comment section so methodological changes are visible without rewriting legacy prose.
+Notebook coverage currently includes the legacy comments and diagnostic/exploratory outputs from Chunks 3, 6, 8, 10, 15, 16, 20, 22, 24, 29, and 30. The QMDs keep prose in the notebooks themselves, show current-code analog chunks with `echo: true` and `output: true`, and read current target-backed tables and figures rather than relying on manually pasted legacy results.
 
 Do not add `--with-samples` unless the changes may affect application-sample PDFs or the sample extraction/rendering code.
 
