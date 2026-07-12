@@ -1,0 +1,6 @@
+"name","error","warnings"
+"diag_ext_spatial_weights",NA,NA
+"diag_ext_district_tracker_sources",NA,NA
+"diag_ext_missingness",NA,"glm.fit: fitted probabilities numerically 0 or 1 occurred"
+"diag_ext_fuzzy_matching",NA,NA
+"diag_ext_district_matching",NA,NA

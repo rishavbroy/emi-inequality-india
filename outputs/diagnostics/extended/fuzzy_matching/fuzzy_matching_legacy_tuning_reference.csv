@@ -1,0 +1,5 @@
+"diagnostic","legacy_result","legacy_chunk"
+"full_join_method_row_counts","osa/lv/dl 859 rows; hamming 872; lcs 825; qgram 829; cosine/jaccard/jw 435262","Chunk 16 Match districts: Test joining methods"
+"lcs_osa_3_3","189/734 rows had any NA","Chunk 16 Match districts: Test joining methods"
+"jw_dl_osa_lcs","180/734 rows had any NA","Chunk 16 Match districts: Test joining methods"
+"final_method_choice","soundex=0, qgram=0, jw<=0.15, dl<=2, osa<=1; 166/734 rows had any NA","Chunk 16 Match districts: Test joining methods"

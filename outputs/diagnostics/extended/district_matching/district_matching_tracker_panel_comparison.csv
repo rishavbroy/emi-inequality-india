@@ -1,5 +1,6 @@
 "object","n_rows","n_complete_rows"
 "district_panel",482,482
 "district_join_map",3175,3175
-"unmatched_rows",3175,NA
+"unmatched_rows",0,NA
+"source_key_inventory",3175,NA
 "many_to_many_cases",0,NA

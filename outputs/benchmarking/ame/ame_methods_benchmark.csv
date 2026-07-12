@@ -1,5 +1,5 @@
-"method","sample_size","elapsed_seconds","status","reason"
-"avg_slopes_centered_default",200,0.224,"failed","Supplied 5920 items to be assigned to 6400 items of column 'predicted_lo'. If you wish to 'recycle' the RHS please use rep() to make this intent clear to readers of your code. Fallback vcov=FALSE failed: Supplied 5920 items to be assigned to 6400 items of column 'predicted_lo'. If you wish to 'recycle' the RHS please use rep() to make this intent clear to readers of your code."
-"avg_slopes_fdforward",200,0.164000000000001,"failed","Supplied 5920 items to be assigned to 6400 items of column 'predicted_lo'. If you wish to 'recycle' the RHS please use rep() to make this intent clear to readers of your code. Fallback vcov=FALSE failed: Supplied 5920 items to be assigned to 6400 items of column 'predicted_lo'. If you wish to 'recycle' the RHS please use rep() to make this intent clear to readers of your code."
-"avg_slopes_centered_default",2000,0.420999999999999,"failed","Supplied 58415 items to be assigned to 64000 items of column 'predicted_lo'. If you wish to 'recycle' the RHS please use rep() to make this intent clear to readers of your code. Fallback vcov=FALSE failed: Supplied 58415 items to be assigned to 64000 items of column 'predicted_lo'. If you wish to 'recycle' the RHS please use rep() to make this intent clear to readers of your code."
-"avg_slopes_fdforward",2000,0.353999999999999,"failed","Supplied 58415 items to be assigned to 64000 items of column 'predicted_lo'. If you wish to 'recycle' the RHS please use rep() to make this intent clear to readers of your code. Fallback vcov=FALSE failed: Supplied 58415 items to be assigned to 64000 items of column 'predicted_lo'. If you wish to 'recycle' the RHS please use rep() to make this intent clear to readers of your code."
+"method","sample_size","elapsed_seconds","status","reason","fallback"
+"avg_slopes_centered_default",200,0.869,"estimated_legacy_vcov",NA,NA
+"avg_slopes_fdforward",200,0.704000000000001,"estimated_legacy_vcov",NA,NA
+"avg_slopes_centered_default",2000,4.547,"estimated_legacy_vcov",NA,NA
+"avg_slopes_fdforward",2000,4.812,"estimated_legacy_vcov",NA,NA

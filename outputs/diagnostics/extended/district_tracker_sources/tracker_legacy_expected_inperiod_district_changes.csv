@@ -1,0 +1,2 @@
+"diagnostic","legacy_expected_rows","legacy_chunk","legacy_note","current_detection_status"
+"in_period_district_name_changes",16,"Chunk 6 district tracker source QA","Legacy comments counted rows where district_05 != district_06, district_07 != district_08, district_17 != district_18, or district_19 != district_20 before downstream corrections.","rendered analysis should compare this benchmark with current tracker_inperiod_district_changes.csv"

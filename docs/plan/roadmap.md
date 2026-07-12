@@ -18,7 +18,7 @@
 
 - Incorporate new data sources
 
-  -  Expand window of time using school-reported DISE data 
+  -  Expand window of time using school-reported DISE data
 
        - The PhD student's data looks very wrong; confirm by refining the email draft [here](https://chatgpt.com/c/69c5dcf3-e558-8328-82f1-07270e9ba7a6).
        - Is best method to go through the archived PDFs and use Tabula to extract data? Cumbersome but... what else is there?

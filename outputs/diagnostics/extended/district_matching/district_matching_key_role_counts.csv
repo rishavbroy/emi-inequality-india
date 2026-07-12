@@ -1,0 +1,3 @@
+"key_role","n_keys","interpretation"
+"shared_panel_join_key",482,"Shared by active final panel and join map."
+"source_key_inventory_only",1523,"Observed only in the fallback source-key inventory; not a true failed final-panel join."
