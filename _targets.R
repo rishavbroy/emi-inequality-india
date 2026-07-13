@@ -40,9 +40,6 @@ benchmarks_enabled <- function() {
   env_flag_enabled("EMI_RUN_BENCHMARKS", default = FALSE)
 }
 
-full_benchmarks_enabled <- function() {
-  env_flag_enabled("EMI_RUN_BENCHMARKS_FULL", default = FALSE)
-}
 
 render_report_pdf <- function(report_values, figure_files, table_files) {
   force(report_values)
@@ -137,10 +134,6 @@ benchmark_targets <- list(
   tar_target(bench_spatial_iv_experimental, run_spatial_iv_benchmark(district_panel, spatial_weights, with_diagnostic_enabled(cfg, "spatial_iv_experimental")))
 )
 
-full_benchmark_targets <- list(
-  tar_target(bench_full_ame_methods, run_ame_methods_benchmark_full(selection_model, selection_data, cfg)),
-  tar_target(bench_full_spatial_moran_mc, run_spatial_moran_mc_benchmark(district_panel, iv_models, spatial_weights, cfg))
-)
 
 application_sample_targets <- list(
   tar_target(writing_sample_pdfs, { report_values; render_writing_samples(output_files = c(figure_files, table_files)) }, format = "file"),
@@ -161,11 +154,6 @@ if (benchmarks_enabled()) {
   message("EMI_RUN_BENCHMARKS=false: omitting benchmark targets from this targets run.")
 }
 
-if (full_benchmarks_enabled()) {
-  selected_targets <- c(selected_targets, full_benchmark_targets)
-} else {
-  message("EMI_RUN_BENCHMARKS_FULL=false: omitting expensive full benchmark targets from this targets run.")
-}
 
 if (render_application_samples_enabled()) {
   selected_targets <- c(selected_targets, application_sample_targets)
