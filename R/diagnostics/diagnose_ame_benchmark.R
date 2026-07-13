@@ -45,23 +45,15 @@ legacy_ame_benchmark_notes <- function() {
     stringsAsFactors = FALSE
   )
 }
-
-ame_env_flag_enabled <- function(name, default = FALSE) {
-  value <- tolower(trimws(Sys.getenv(name, if (isTRUE(default)) "true" else "false")))
-  !value %in% c("0", "false", "no", "off", "")
-}
-
 ame_benchmark_sample_sizes <- function(n_observations, cfg = list()) {
   configured <- cfg$diagnostics$ame_benchmark_sample_sizes %||% cfg$ame_benchmark_sample_sizes %||% NULL
   env <- Sys.getenv("EMI_AME_BENCHMARK_SAMPLE_SIZES", unset = "")
   if (nzchar(env)) configured <- strsplit(env, ",", fixed = TRUE)[[1]]
   if (is.null(configured)) configured <- c(200L, 2000L, 20000L)
   configured <- trimws(as.character(configured))
-  include_full <- ame_env_flag_enabled("EMI_AME_BENCHMARK_INCLUDE_FULL", default = FALSE) || any(tolower(configured) %in% c("full", "all"))
-  numeric_sizes <- suppressWarnings(as.integer(configured[!tolower(configured) %in% c("full", "all")]))
+  numeric_sizes <- suppressWarnings(as.integer(configured))
   numeric_sizes <- numeric_sizes[is.finite(numeric_sizes) & numeric_sizes > 0L]
-  out <- unique(c(numeric_sizes, if (isTRUE(include_full)) as.integer(n_observations) else integer()))
-  sort(out)
+  sort(unique(numeric_sizes[numeric_sizes <= n_observations]))
 }
 
 benchmark_ame_methods <- function(selection_model, selection_data, cfg, sample_sizes = NULL) {
