@@ -351,6 +351,9 @@ test_that("analysis long-path note contains runnable current code analogs", {
   expect_match(qmd, 'source(analysis_path("R", "io", "read_long_paths.R"))', fixed = TRUE)
   expect_match(qmd, "read_csv_short(tmp)", fixed = TRUE)
   expect_match(qmd, "get_windows_short_path(tmp)", fixed = TRUE)
+  expect_match(qmd, "LongPathsEnabled", fixed = TRUE)
+  expect_match(qmd, "readr:::standardise_path", fixed = TRUE)
+  expect_match(qmd, "vroom", fixed = TRUE)
 })
 
 test_that("analysis notebooks contain prose/current code directly instead of legacy extraction calls", {
@@ -378,6 +381,8 @@ test_that("analysis notes preserve legacy prose and document deviations", {
   expect_match(text, "Raw AME derivation is very slow", fixed = TRUE)
   expect_match(text, "Southern region of Rajasthan: People with one missing cost variable", fixed = TRUE)
   expect_match(text, "***Why the gigantic discrepancy???", fixed = TRUE)
+  expect_match(text, "Deviation from legacy prose: why the source-key inventory is large", fixed = TRUE)
+  expect_match(text, "source-key inventory", fixed = TRUE)
   expect_match(text, "Number of rows from fuzzy full joining", fixed = TRUE)
   expect_match(text, "All of these Moran's I stats are ridiculously, suspiciously high", fixed = TRUE)
   expect_match(text, "Don't work even when diagnostics = FALSE", fixed = TRUE)

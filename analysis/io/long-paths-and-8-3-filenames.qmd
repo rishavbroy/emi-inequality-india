@@ -21,10 +21,22 @@ If that didn't work and you're not using Windows: either modify this code chunk 
 
 Purpose of this chunk: to ensure R can identify and read in all necessary files. This project found me making frequent use of file paths over 260 characters in length. Out of my naivete, I didn't realize Windows File Explorer automatically shortens such file paths by rewriting them in the 8.3 filename convention---meaning R can no longer access their standard "long name." Conversely, functions like `read_sav()` automatically lengthen 8.3 filenames via functions like `normalizePath()`, turning the true 8.3 file path into a long name which, from R's and thus our perspective, is useless. This code chunk turns our long name inputs into 8.3 filenames while tricking the `read_*()`-type functions into not turning them back.
 
+#### Context for nerds
+
+In my Registry Editor, under `Computer\HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FileSystem`, I had set the `LongPathsEnabled` value to 1, which enables Windows to use long file paths, and the `NtfsDisable8dot3NameCreation` value to 2. I had also changed Group Policy to "Enable Win32 long paths".
+
+But none of that mattered. Windows File Explorer lacks a `longPathAware` entry in its `.exe` file's manifest, so despite `LongPathsEnabled = 1`, my file paths were still capped at 260 characters. Ergo this code chunk. It is possible that setting `NtfsDisable8dot3NameCreation = 0` would have prevented all of this code from being necessary. But I would rather not force replicators to change their registry settings.
+
 Goal: make alternative readers which accept 8.3 filenames. The current production implementation is in `R/io/read_long_paths.R`; this analysis note keeps the troubleshooting material out of production code while rendering runnable current-code analogs directly.
 
+For `read_sav_short()`, the legacy code used `shell()` on Windows to ask `cmd.exe` for the 8.3 alias of a file's absolute path, opened a binary connection with `file(short_path, "rb")`, and passed that connection to `read_sav()` so `read_sav()` would not convert the short filename back into a long filename. The legacy comment noted something strange: in File Explorer, the entire absolute path was not an 8.3 alias; only the relative path was. Yet the code worked because it fed a connection opened from the absolute 8.3 alias directly into `read_sav()`. This was confusing because `read_sav(path)` calls `datasource(path)`, which calls `readr:::standardise_path(path)`, then `readr:::detect_compression(path)`, then `readBin(path)`, then `file(path, "rb")` when `path` is a string. That `file(..., "rb")` call is exactly what happens to the explicit connection in `read_sav_short()`, and yet it was precisely at `file(..., "rb")` that `read_sav()` failed when called on an 8.3 file path.
+
+For `read_csv_short()`, the legacy code used the same 8.3 alias and opened a binary connection even though CSVs are text files. The reason was empirical and implementation-specific: `read_csv()` feeds its inputs into `vroom()`, and the legacy notes traced that path through `readr` and `vroom` internals. The working hypothesis was that `read_csv()` reads raw bytes using `readBin()` before applying its parser to text.
+
+For Excel files, the legacy note was even more cautious: `read_excel()` accepts file paths as strings, not connections, so the workaround was to split the long path into folder and file components, get the folder's 8.3 alias, inspect `dir /x` output to find the file's short name, construct the absolute short path, copy it to a temporary file, and then read that temporary file with `xlsx::read.xlsx()` for `.xls`/`.xlsm` or `openxlsx::read.xlsx()` for `.xlsx`. The legacy code included error checks because the 8.3 filename pattern and Java-backed Excel readers are more brittle than the `read_sav()` and `read_csv()` connection-based cases.
+
 ```{r long-path-prose-deviation-note, results='asis'}
-analysis_deviation_note("The legacy comment included extensive Windows Registry and readr/vroom internals notes. The rendered note preserves the operational troubleshooting prose and runs the current production reader contract; full implementation details live in R/io/read_long_paths.R.")
+analysis_deviation_note("The legacy comment included extensive Windows Registry, readr/vroom, and Excel-reader internals. The rendered note now preserves those notes as prose while showing the current production reader contract from R/io/read_long_paths.R rather than copying the full legacy implementation into the analysis notebook.")
 ```
 
 ```{r long-path-source-current-functions}
