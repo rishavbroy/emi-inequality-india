@@ -37,15 +37,16 @@ normality. The legacy scaffold used `set.seed(999)`, `num_m = 9999`,
 `mc$p.value`.
 
 ``` r
-analysis_deviation_note("The current note keeps the legacy Moran prose and benchmark p-values, but reports active-pipeline Moran tests from the target output instead of copying legacy comments into the result fields. The default analysis note retains the Monte Carlo scaffold as a target-backed reference row; run `make benchmarking-full` to refresh the expensive `moran.mc(..., nsim = 9999)` benchmark output deliberately.")
+analysis_deviation_note("The current note keeps the legacy Moran prose and benchmark p-values, but reports active-pipeline Moran tests from the target output instead of copying legacy comments into the result fields. The current analysis note retains the Monte Carlo scaffold as a target-backed reference row and explicitly marks the deviation from the legacy prose: the pipeline no longer maintains functionality for refreshing the expensive `moran.mc(..., nsim = 9999)` benchmark.")
 ```
 
 **Deviation note.** The current note keeps the legacy Moran prose and
 benchmark p-values, but reports active-pipeline Moran tests from the
 target output instead of copying legacy comments into the result fields.
-The default analysis note retains the Monte Carlo scaffold as a
-target-backed reference row; run `make benchmarking-full` to refresh the
-expensive `moran.mc(..., nsim = 9999)` benchmark output deliberately.
+The current analysis note retains the Monte Carlo scaffold as a
+target-backed reference row and explicitly marks the deviation from the
+legacy prose: the pipeline no longer maintains functionality for
+refreshing the expensive `moran.mc(..., nsim = 9999)` benchmark.
 
 ``` r
 moran <- analysis_target_csv("diag_public_spatial_autocorrelation", "spatial_moran_tests.csv")
@@ -154,6 +155,6 @@ analysis_table(moran_mc, "Monte Carlo Moran scaffold retained as target-backed r
 
 | scaffold | status | reason |
 |:---|:---|:---|
-| moran.mc(resid_cons, listw_2020, nsim = 9999) | documented_not_run_by_default | Legacy Chunk 29 kept this as a Monte Carlo robustness scaffold. The default public diagnostic keeps the asymptotic moran.test() path used by report_values; run `make benchmarking-full` or the public audit flag `--with-benchmarking-full` before treating Monte Carlo p-values as refreshed current results. |
+| moran.mc(resid_cons, listw_2020, nsim = 9999) | documented_not_run_by_default | Legacy Chunk 29 kept this as a Monte Carlo robustness scaffold. The current pipeline deliberately documents this deviation instead of maintaining full-sample Monte Carlo benchmark functionality; active results use the asymptotic moran.test() path used by report_values. |
 
 Monte Carlo Moran scaffold retained as target-backed reference
