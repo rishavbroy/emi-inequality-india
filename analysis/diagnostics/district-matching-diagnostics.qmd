@@ -24,7 +24,7 @@ To extract mismatches: the legacy chunk pulled the rows whose merged district/ye
 The legacy row-count checks were: `flagged_df_timeseries %>% .[!complete.cases(.),] %>% nrow()` = 155 rows; `joined_df_timeseries %>% .[!complete.cases(.),] %>% nrow()` = 305 rows; `flagged_df_tracker %>% .[!complete.cases(.),] %>% nrow()` = 92 rows; `joined_df_tracker %>% .[!complete.cases(.),] %>% nrow()` = 250 rows. ***Why the gigantic discrepancy???
 
 ```{r district-matching-prose-deviation-note, results='asis'}
-analysis_deviation_note("The legacy helper objects no longer exist in the active architecture. The rendered current-code analog counts incomplete rows in target-backed tracker/panel, source-inventory, unmatched-row, and many-to-many outputs, and renders the all-rows close-match search table as a bounded preview.")
+analysis_deviation_note("The legacy helper objects no longer exist in the active architecture. The rendered current-code analog counts incomplete rows in target-backed tracker/panel, source-inventory, unmatched-row, and many-to-many outputs, renders the all-rows close-match search table as a bounded preview, and explicitly separates fallback source-key inventory from true legacy unmatched rows. This explanation is a prose deviation from the legacy comment because the legacy Rmd did not have a separate source-key-inventory object.")
 ```
 
 ```{r district-matching-targets}
@@ -40,6 +40,18 @@ dm_all_rows <- analysis_target_csv("diag_ext_district_matching", "district_match
 ```
 
 The current analog keeps true unmatched rows separate from fallback source-key inventory rows.  It reports `r analysis_format_number(analysis_value(dm_summary, column = "n_unmatched_rows"), 0)` true unmatched rows and `r analysis_format_number(analysis_value(dm_summary, column = "n_source_key_inventory_rows"), 0)` fallback source-key inventory rows.
+
+#### Deviation from legacy prose: why the source-key inventory is large
+
+The 3,175 source-key rows and 1,523 join-only canonical keys are not a second copy of the legacy `unmatched_df` failure. They come from the active diagnostic contract around `district_join_map`. The exact root cause is:
+
+1. `_targets.R` builds `district_join_map` with `fuzzy_join_districts(district_tracker, district_keys_2001, district_keys_2007, district_keys_2017, district_keys_2020, cfg)`.
+2. `fuzzy_join_districts()` only returns tracker rows as the join map when its `district_tracker` input already has the full legacy tracker shape: `state_01`/`district_01`, `state_07`/`district_07`, `state_17`/`district_17`, and `state_20`/`district_20`.
+3. When that condition is not met, `fuzzy_join_districts()` takes its fallback path: it binds the 2001, 2007, 2017, and 2020 source key tables, sets `match_status = "source_key_unmatched"`, and stores that same key inventory in `attr(out, "unmatched_rows")`.
+4. `diagnose_district_matching()` then recognizes this fallback object with `is_source_key_inventory()` and deliberately excludes it from `n_unmatched_rows`. That is why true unmatched rows are 0 while source-key inventory rows are 3,175.
+5. `compare_join_keys_to_panel()` compares canonical panel keys from the final 482-row analysis panel against canonical keys from the fallback source-key inventory. The 1,523 join-only keys are therefore source keys that appear in the broad raw key universe but not in the final matched analysis panel. They are not direct final-panel join failures.
+
+This is still an important warning. It means the diagnostic object called `district_join_map` is not presently the same kind of object as the legacy `merge_dfs_into_tracker()` joined tracker. The final `district_panel` is being built from the current tracker/panel-building path, while this diagnostic join map is mostly a broad source-key inventory. The diagnostic is useful for search and auditing, but it should not be interpreted as saying that 3,175 districts failed to join into the final panel.
 
 ```{r district-matching-summary}
 analysis_table(dm_summary, "District-matching diagnostic summary")
