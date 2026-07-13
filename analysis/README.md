@@ -8,19 +8,11 @@ Render them directly with:
 make analysis-notes
 ```
 
-Run the deliberately expensive full benchmark tier with:
-
-```sh
-make benchmarking-full
-```
-
 Or include them in the same log as a public audit with:
 
 ```sh
 bash scripts/run_public_build_audit.sh --incremental --archive-always --with-analysis-notes
 ```
-
-Add `--with-benchmarking-full` only when you intentionally want the full-data AME timing and Monte Carlo Moran benchmark refreshed in the same audit log.
 
 The notebooks render to GitHub-flavored Markdown (`.md`) rather than PDF/HTML so they are readable in GitHub and avoid LaTeX-cache failures. They read current CSV outputs from `outputs/diagnostics/` and `outputs/benchmarking/` rather than relying on manually pasted results from legacy comments.
 

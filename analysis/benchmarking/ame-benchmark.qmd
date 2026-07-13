@@ -26,14 +26,14 @@ n_numeric <- analysis_value(ame_methods, column = "n_numeric_variables")
 predict_calls <- analysis_value(ame_methods, column = "centered_predict_calls_full_data")
 ```
 
-With `newdata = sel_data` (no subsampling, as if `num_samp = ` `r analysis_format_number(full_n, 0)`): the default current benchmark tier intentionally does not rerun the full-data AME timing every public build. To reconcile the legacy 20,000-row timing, the default tier now includes `num_samp = 20000` when the active model frame has that many rows; the largest sampled benchmark uses `num_samp = ` `r analysis_format_number(max(ame_methods$sample_size, na.rm = TRUE), 0)`, and the slowest recorded current run took `r analysis_format_number(max(ame_methods$elapsed_seconds, na.rm = TRUE), 3)` seconds. Run `make benchmarking-full`, set `EMI_AME_BENCHMARK_INCLUDE_FULL=true`, or include `full` in `EMI_AME_BENCHMARK_SAMPLE_SIZES` to run the full-data benchmark deliberately.
+With `newdata = sel_data` (no subsampling, as if `num_samp = ` `r analysis_format_number(full_n, 0)`): the default current benchmark tier intentionally does not rerun the full-data AME timing every public build. To reconcile the legacy 20,000-row timing, the default tier now includes `num_samp = 20000` when the active model frame has that many rows; the largest sampled benchmark uses `num_samp = ` `r analysis_format_number(max(ame_methods$sample_size, na.rm = TRUE), 0)`, and the slowest recorded current run took `r analysis_format_number(max(ame_methods$elapsed_seconds, na.rm = TRUE), 3)` seconds. This creates a documented deviation from the legacy prose: full-data AME timings are preserved only as legacy notes, not refreshed by the current pipeline.
 
 The rest of this chunk is saved for quick replications of robustness checks on my final method.
 
 Raw AME derivation is very slow: `r analysis_format_number(n_numeric, 0)` numeric variables * `r analysis_format_number(full_n, 0)` observations * 2 calls of `predict()` per observation per variable (`avg_slopes()` uses centered finite difference, see <https://marginaleffects.com/bonus/uncertainty.html#numerical-derivatives-sensitivity-to-step-size>) = `r analysis_format_number(predict_calls, 0)` `predict()` calls.
 
 ```{r ame-prose-deviation-note, results='asis'}
-analysis_deviation_note("Legacy full-data timings are preserved in target notes, but the rendered sentence reports current target-backed default-tier timings unless `make benchmarking-full` or an equivalent full-data benchmark flag is explicitly requested. The 20,000-row legacy timing is now part of the default benchmark tier when enough rows are available.")
+analysis_deviation_note("Legacy full-data timings are preserved in target notes, but the current pipeline deliberately no longer refreshes full-sample AME timings. The 20,000-row legacy timing remains part of the default benchmark tier when enough active model-frame rows are available; the missing full-data refresh is a marked deviation from the legacy timing prose.")
 ```
 
 ```{r ame-predict-call-count-current-code}

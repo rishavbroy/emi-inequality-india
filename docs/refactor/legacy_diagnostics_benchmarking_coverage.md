@@ -27,7 +27,7 @@ This file records how diagnostic and tuning/benchmarking logic from the legacy R
 ## Benchmarks and tuning outputs
 
 - Chunk 10 AME runtime/tuning: `R/diagnostics/diagnose_ame_benchmark.R` called through `R/benchmarking/benchmarking_targets.R`; output under `outputs/benchmarking/ame/`.
-  - Retains final choice `marginaleffects_parallel = FALSE`, `set.seed(999)`, sample-size timing checks, forward-difference comparison, and documented failed future parallelization. The default tier includes 20,000-row checks; `make benchmarking-full` refreshes the full-data AME timing deliberately.
+  - Retains final choice `marginaleffects_parallel = FALSE`, `set.seed(999)`, sample-size timing checks, forward-difference comparison, and documented failed future parallelization. The default tier includes 20,000-row checks. Full-data AME timing is retained only as a legacy note and is deliberately not refreshed by the current benchmark pipeline.
 - Chunk 16 fuzzy-match threshold benchmarking: `R/benchmarking/benchmarking_targets.R`; output under `outputs/benchmarking/fuzzy_matching/`.
 - Chunk 24 rook-versus-queen spatial-weight benchmarking: `R/benchmarking/benchmarking_targets.R`; output under `outputs/benchmarking/spatial_weights/`.
 - Chunk 30 experimental spatial IV attempts: `R/iv/estimate_spatial_iv_experimental.R` called through `R/benchmarking/benchmarking_targets.R`; output under `outputs/benchmarking/spatial_iv/`.
@@ -37,7 +37,7 @@ This file records how diagnostic and tuning/benchmarking logic from the legacy R
 ## Legacy logic intentionally documented rather than force-run
 
 - View-only or GUI-only exploratory code, such as `View()` calls, Tabula inspection, palette GUI exploration, and commented `tmap_save()` experiments, is represented as notes or benchmark metadata rather than executed automatically.
-- Expensive or unstable commented paths, especially the full-data AME timing, Monte Carlo Moran simulation, future/marginaleffects parallel attempt, and spatial-IV model attempts, are opt-in benchmark artifacts and not part of the normal public build.
+- Expensive or unstable commented paths, especially the full-data AME timing, Monte Carlo Moran simulation, and future/marginaleffects parallel attempt, are documented as deviations rather than executable current benchmarks. Spatial-IV model attempts remain opt-in benchmark artifacts because they are lightweight enough to preserve and directly diagnose current model failure modes.
 - Normal public builds preserve `outputs/diagnostics/extended/` and `outputs/benchmarking/`; only `outputs/diagnostics/build/` and `outputs/diagnostics/public/` are reset automatically.
 
 ## Correctness follow-up notes
@@ -75,5 +75,5 @@ The goal of these diagnostics is methodological parity with the legacy checks, n
 - District matching separates true unmatched rows from fallback source-key inventory rows and emits key-role counts so source-key inventory is not misinterpreted as failed final-panel matches.
 - Fuzzy-matching benchmarks expand from the nine hand-picked legacy examples to tracker transition pairs and fallback source-key inventory candidate pairs whenever those active inputs are present.
 - AME benchmarking now samples the fitted model frame and its explicit AME weights, matching the production AME path.  If the current `marginaleffects` version still fails, the failure is retained as a package-compatibility result rather than relabeled as a successful timing benchmark.
-- Spatial-weight and Moran's I diagnostics now explicitly use the current final matched panel rows with non-empty geometry. Legacy exploratory mean-neighbor values remain references, while `make benchmarking-full` refreshes the expensive Monte Carlo Moran benchmark.
+- Spatial-weight and Moran's I diagnostics now explicitly use the current final matched panel rows with non-empty geometry. Legacy exploratory mean-neighbor values and the Monte Carlo Moran scaffold remain references; the expensive Monte Carlo benchmark is deliberately not refreshed by the current pipeline.
 - Spatial-IV attempts remain opt-in benchmarks.  Returning an `ivreg()` object is not treated as methodological success unless coefficient, clustered-SE, and diagnostics outputs are also numerically meaningful.
