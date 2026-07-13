@@ -1,4 +1,4 @@
-"diagnostic","status","contiguity","style","matrix_style","n","n_islands","mean_neighbors","warnings"
-"spatial_weights","constructed","rook","W","B",482,0,4.02904564315353,"some observations have no neighbours;
+"diagnostic","status","contiguity","style","matrix_style","n","n_islands","mean_neighbors","panel_scope","warnings"
+"spatial_weights","constructed","rook","W","B",482,0,4.02904564315353,"current_final_matched_panel_non_empty_geometry","some observations have no neighbours;
 if this seems unexpected, try increasing the snap argument.; neighbour object has 21 sub-graphs;
 if this sub-graph count seems unexpected, try increasing the snap argument."

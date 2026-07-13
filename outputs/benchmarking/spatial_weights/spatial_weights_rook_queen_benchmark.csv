@@ -1,7 +1,7 @@
-"contiguity","n","mean_neighbors","n_islands","elapsed_seconds","warnings"
-"rook",482,4.02904564315353,0,11.402,"some observations have no neighbours;
+"contiguity","n","mean_neighbors","n_islands","panel_scope","elapsed_seconds","warnings"
+"rook",482,4.02904564315353,0,"current_final_matched_panel_non_empty_geometry",15.256,"some observations have no neighbours;
 if this seems unexpected, try increasing the snap argument.; neighbour object has 21 sub-graphs;
 if this sub-graph count seems unexpected, try increasing the snap argument."
-"queen",482,4.04149377593361,0,11.637,"some observations have no neighbours;
+"queen",482,4.04149377593361,0,"current_final_matched_panel_non_empty_geometry",15.403,"some observations have no neighbours;
 if this seems unexpected, try increasing the snap argument.; neighbour object has 21 sub-graphs;
 if this sub-graph count seems unexpected, try increasing the snap argument."

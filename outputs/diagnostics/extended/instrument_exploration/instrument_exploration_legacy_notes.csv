@@ -1,0 +1,5 @@
+"diagnostic","legacy_note","current_status"
+"emie_dotplot","Dotplot of EMIE values by district_code.","rendered from active district_panel as a target-backed figure"
+"legacy_peak_comment","EMIE had visible peaks in Jammu and Kashmir; in several Northeast states; and in southern/coastal districts historically furthest from Hindi.","use current dotplot/table rather than the legacy hard-coded visual impression"
+"smaller_units_question","Many districts outside peaks had low EMIE values; legacy comments asked whether smaller units of analysis would be useful.","retained as exploratory rationale, not a final-paper claim"
+"district_count_check","Legacy code checked that the number of districts did not change while constructing weighted linguistic distance.","final panel match summaries are rendered in this analysis note"
