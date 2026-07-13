@@ -135,7 +135,11 @@ normalize_path_for_os
 
 ``` r
 tmp <- tempfile(fileext = ".csv")
+on.exit(unlink(tmp), add = TRUE)
 write.csv(data.frame(x = 1:2), tmp, row.names = FALSE)
+short_tmp <- get_windows_short_path(tmp)
+normalized_tmp <- normalize_path_for_os(tmp)
+csv_names <- names(read_csv_short(tmp))
 read_csv_short(tmp)
 ```
 
@@ -148,23 +152,19 @@ read_csv_short(tmp)
 ``` r
 data.frame(
   current_code_analog = c(
-    "normalize_path_for_os(tmp)",
-    "get_windows_short_path(tmp)",
-    "read_csv_short(tmp)"
+    "file.exists(normalize_path_for_os(tmp))",
+    "file.exists(get_windows_short_path(tmp))",
+    "identical(names(read_csv_short(tmp)), \"x\")"
   ),
   result = c(
-    normalize_path_for_os(tmp),
-    get_windows_short_path(tmp),
-    paste(names(read_csv_short(tmp)), collapse = ", ")
+    file.exists(normalized_tmp),
+    file.exists(short_tmp),
+    identical(csv_names, "x")
   )
 )
 ```
 
-              current_code_analog
-    1  normalize_path_for_os(tmp)
-    2 get_windows_short_path(tmp)
-    3         read_csv_short(tmp)
-                                                                                       result
-    1 /private/var/folders/v0/7rc_jjhs6dv8gzmtnmqtpg3w0000gn/T/RtmpI1V5Te/file35f7d4056be.csv
-    2        /var/folders/v0/7rc_jjhs6dv8gzmtnmqtpg3w0000gn/T//RtmpI1V5Te/file35f7d4056be.csv
-    3                                                                                       x
+                           current_code_analog result
+    1  file.exists(normalize_path_for_os(tmp))   TRUE
+    2 file.exists(get_windows_short_path(tmp))   TRUE
+    3 identical(names(read_csv_short(tmp)), "x")  TRUE
