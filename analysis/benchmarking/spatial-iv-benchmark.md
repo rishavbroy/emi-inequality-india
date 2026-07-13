@@ -41,17 +41,19 @@ spatial_iv_fail <- analysis_target_csv("bench_spatial_iv_experimental", "spatial
 ```
 
 The current benchmark estimates 2 experimental specifications. A status
-of `estimated` means that `ivreg()` returned an object, not that the
-model is suitable for the final paper.
+of `estimated` means that `ivreg()` returned an object; the
+`methodological_success` field is the stricter current analog of the
+legacy “Don’t work even when diagnostics = FALSE” conclusion because it
+requires diagnostics and clustered-SE extraction to succeed as well.
 
 ``` r
 analysis_table(spatial_iv_status[setdiff(names(spatial_iv_status), "formula")], "Spatial-IV model status")
 ```
 
-| model | status | reason | nobs | diagnostics_status | cluster_se_status |
-|:---|:---|:---|---:|:---|:---|
-| model_sdm2sls_cons | estimated | Legacy comments said these attempts did not work; current status only means ivreg returned an object, not that the model is suitable for final use. | 482 | failed: system is computationally singular: reciprocal condition number = 6.38409e-18 | estimated |
-| model_sdm2sls_gini | estimated | Legacy comments said these attempts did not work; current status only means ivreg returned an object, not that the model is suitable for final use. | 482 | failed: system is computationally singular: reciprocal condition number = 3.61172e-19 | estimated |
+| model | status | methodological_success | reason | nobs | diagnostics_status | cluster_se_status |
+|:---|:---|:---|:---|---:|:---|:---|
+| model_sdm2sls_cons | estimated | FALSE | Legacy comments said these attempts did not work; current status only means ivreg returned an object. A model is marked as methodologically successful only when diagnostics and clustered-SE extraction also succeed. | 482 | failed: system is computationally singular: reciprocal condition number = 6.38409e-18 | estimated |
+| model_sdm2sls_gini | estimated | FALSE | Legacy comments said these attempts did not work; current status only means ivreg returned an object. A model is marked as methodologically successful only when diagnostics and clustered-SE extraction also succeed. | 482 | failed: system is computationally singular: reciprocal condition number = 3.61172e-19 | estimated |
 
 Spatial-IV model status
 

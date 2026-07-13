@@ -28,7 +28,7 @@ rows; `joined_df_tracker %>% .[!complete.cases(.),] %>% nrow()` = 250
 rows. \*\*\*Why the gigantic discrepancy???
 
 ``` r
-analysis_deviation_note("The legacy helper objects no longer exist in the active architecture. The rendered current-code analog counts incomplete rows in target-backed tracker/panel, source-inventory, unmatched-row, and many-to-many outputs, and renders the all-rows close-match search table as a bounded preview.")
+analysis_deviation_note("The legacy helper objects no longer exist in the active architecture. The rendered current-code analog counts incomplete rows in target-backed tracker/panel, source-inventory, unmatched-row, and many-to-many outputs, renders the all-rows close-match search table as a bounded preview, and explicitly separates fallback source-key inventory from true legacy unmatched rows. This explanation is a prose deviation from the legacy comment because the legacy Rmd did not have a separate source-key-inventory object.")
 ```
 
 **Deviation note.** The legacy helper objects no longer exist in the
@@ -79,10 +79,10 @@ cause is:
     source-key inventory rows are 3,175.
 5.  `compare_join_keys_to_panel()` compares canonical panel keys from
     the final 482-row analysis panel against canonical keys from the
-    fallback source-key inventory. The 1,523 join-only keys are therefore
-    source keys that appear in the broad raw key universe but not in the
-    final matched analysis panel. They are not direct final-panel join
-    failures.
+    fallback source-key inventory. The 1,523 join-only keys are
+    therefore source keys that appear in the broad raw key universe but
+    not in the final matched analysis panel. They are not direct
+    final-panel join failures.
 
 This is still an important warning. It means the diagnostic object
 called `district_join_map` is not presently the same kind of object as

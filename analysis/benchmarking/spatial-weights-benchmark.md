@@ -18,13 +18,14 @@ matrix, where `W_2020[i, j] == 1` if districts `i` and `j` share a
 border and 0 otherwise.
 
 ``` r
-analysis_deviation_note("The current benchmark uses the active matched panel and spdep::poly2nb() rather than legacy exploratory sfExtras calls. The note preserves the legacy values while rendering current target-backed rook/queen comparisons.")
+analysis_deviation_note("The current benchmark uses the active final matched panel with non-empty geometry and spdep::poly2nb() rather than legacy exploratory sfExtras calls. This makes spatial weights match the current final-panel diagnostics, while the legacy mean-neighbor values remain a reference rather than a target to reproduce.")
 ```
 
-**Deviation note.** The current benchmark uses the active matched panel
-and spdep::poly2nb() rather than legacy exploratory sfExtras calls. The
-note preserves the legacy values while rendering current target-backed
-rook/queen comparisons.
+**Deviation note.** The current benchmark uses the active final matched
+panel with non-empty geometry and spdep::poly2nb() rather than legacy
+exploratory sfExtras calls. This makes spatial weights match the current
+final-panel diagnostics, while the legacy mean-neighbor values remain a
+reference rather than a target to reproduce.
 
 ``` r
 spatial_bench <- analysis_target_csv("bench_spatial_weights", "spatial_weights_rook_queen_benchmark.csv")
@@ -33,51 +34,55 @@ spatial_ref <- analysis_target_csv("diag_ext_spatial_weights", "spatial_weights_
 ```
 
 The current rook benchmark has 4.029 mean neighbors; the current queen
-benchmark has 4.041 mean neighbors.
+benchmark has 4.041 mean neighbors. These current values are
+intentionally computed on the current final matched panel with non-empty
+geometry, not on the legacy exploratory `sfExtras` object.
 
 ``` r
 spatial_bench[spatial_bench$contiguity %in% c("rook", "queen"), c("contiguity", "n", "mean_neighbors", "n_islands", "elapsed_seconds"), drop = FALSE]
 ```
 
       contiguity   n mean_neighbors n_islands elapsed_seconds
-    1       rook 482       4.029046         0          11.402
-    2      queen 482       4.041494         0          11.637
+    1       rook 482       4.029046         0          15.256
+    2      queen 482       4.041494         0          15.403
 
 ``` r
 analysis_table(spatial_bench, "Current rook/queen benchmark")
 ```
 
-| contiguity | n | mean_neighbors | n_islands | elapsed_seconds | warnings |
-|:---|---:|---:|---:|---:|:---|
-| rook | 482 | 4.029 | 0 | 11.402 | some observations have no neighbours; |
+| contiguity | n | mean_neighbors | n_islands | panel_scope | elapsed_seconds | warnings |
+|:---|---:|---:|---:|:---|---:|:---|
+| rook | 482 | 4.029 | 0 | current_final_matched_panel_non_empty_geometry | 15.256 | some observations have no neighbours; |
 
 Current rook/queen benchmark
 
 if this seems unexpected, try increasing the snap argument.; neighbour
 object has 21 sub-graphs; if this sub-graph count seems unexpected, try
-increasing the snap argument. \| \|queen \| 482\| 4.041\| 0\|
-11.637\|some observations have no neighbours; if this seems unexpected,
-try increasing the snap argument.; neighbour object has 21 sub-graphs;
-if this sub-graph count seems unexpected, try increasing the snap
-argument. \|
+increasing the snap argument. \| \|queen \| 482\| 4.041\|
+0\|current_final_matched_panel_non_empty_geometry \| 15.403\|some
+observations have no neighbours; if this seems unexpected, try
+increasing the snap argument.; neighbour object has 21 sub-graphs; if
+this sub-graph count seems unexpected, try increasing the snap argument.
+\|
 
 ``` r
 analysis_table(spatial_diag, "Current-vs-legacy rook/queen comparison")
 ```
 
-| contiguity | n | mean_neighbors | n_islands | elapsed_seconds | warnings | legacy_mean_neighbors | mean_neighbor_delta_from_legacy | pct_delta_from_legacy |
-|:---|---:|---:|---:|---:|:---|---:|---:|---:|
-| rook | 482 | 4.029 | 0 | 13.566 | some observations have no neighbours; |  |  |  |
+| contiguity | n | mean_neighbors | n_islands | panel_scope | elapsed_seconds | warnings | legacy_mean_neighbors | mean_neighbor_delta_from_legacy | pct_delta_from_legacy |
+|:---|---:|---:|---:|:---|---:|:---|---:|---:|---:|
+| rook | 482 | 4.029 | 0 | current_final_matched_panel_non_empty_geometry | 13.566 | some observations have no neighbours; |  |  |  |
 
 Current-vs-legacy rook/queen comparison
 
 if this seems unexpected, try increasing the snap argument.; neighbour
 object has 21 sub-graphs; if this sub-graph count seems unexpected, try
 increasing the snap argument. \| 4.780\| -0.751\| -15.713\| \|queen \|
-482\| 4.041\| 0\| 14.059\|some observations have no neighbours; if this
-seems unexpected, try increasing the snap argument.; neighbour object
-has 21 sub-graphs; if this sub-graph count seems unexpected, try
-increasing the snap argument. \| 4.783\| -0.742\| -15.511\|
+482\| 4.041\| 0\|current_final_matched_panel_non_empty_geometry \|
+12.459\|some observations have no neighbours; if this seems unexpected,
+try increasing the snap argument.; neighbour object has 21 sub-graphs;
+if this sub-graph count seems unexpected, try increasing the snap
+argument. \| 4.783\| -0.742\| -15.511\|
 
 ``` r
 analysis_table(spatial_ref, "Legacy spatial-weight reference comments")
@@ -85,7 +90,7 @@ analysis_table(spatial_ref, "Legacy spatial-weight reference comments")
 
 | contiguity | legacy_method | legacy_mean_neighbors | legacy_elapsed_note | interpretation |
 |:---|:---|---:|:---|:---|
-| rook | sfExtras::st_rook() timing comment; final weights use spdep::poly2nb(queen = FALSE) | 4.780 | legacy comment recorded similar run time to queen | Current means may differ because the active matched panel and geometry coverage differ from the legacy exploratory object; compare deltas before treating this as an improvement. |
-| queen | sfExtras::st_queen() timing comment; benchmark uses spdep::poly2nb(queen = TRUE) | 4.783 | legacy comment recorded similar run time to rook | Current means may differ because the active matched panel and geometry coverage differ from the legacy exploratory object; compare deltas before treating this as an improvement. |
+| rook | sfExtras::st_rook() timing comment; final weights use spdep::poly2nb(queen = FALSE) | 4.780 | legacy comment recorded similar run time to queen | Current means are intentionally computed on the active final matched panel with non-empty geometry; they may differ from legacy exploratory sfExtras objects, but they now match the panel used for current spatial diagnostics. |
+| queen | sfExtras::st_queen() timing comment; benchmark uses spdep::poly2nb(queen = TRUE) | 4.783 | legacy comment recorded similar run time to rook | Current means are intentionally computed on the active final matched panel with non-empty geometry; they may differ from legacy exploratory sfExtras objects, but they now match the panel used for current spatial diagnostics. |
 
 Legacy spatial-weight reference comments

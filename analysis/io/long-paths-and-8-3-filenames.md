@@ -33,16 +33,16 @@ turns our long name inputs into 8.3 filenames while tricking the
 
 In my Registry Editor, under
 `Computer\HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FileSystem`,
-I had set the `LongPathsEnabled` value to 1, which enables Windows to use
-long file paths, and the `NtfsDisable8dot3NameCreation` value to 2. I
-had also changed Group Policy to “Enable Win32 long paths”.
+I had set the `LongPathsEnabled` value to 1, which enables Windows to
+use long file paths, and the `NtfsDisable8dot3NameCreation` value to 2.
+I had also changed Group Policy to “Enable Win32 long paths”.
 
 But none of that mattered. Windows File Explorer lacks a `longPathAware`
 entry in its `.exe` file’s manifest, so despite `LongPathsEnabled = 1`,
 my file paths were still capped at 260 characters. Ergo this code chunk.
-It is possible that setting `NtfsDisable8dot3NameCreation = 0` would have
-prevented all of this code from being necessary. But I would rather not
-force replicators to change their registry settings.
+It is possible that setting `NtfsDisable8dot3NameCreation = 0` would
+have prevented all of this code from being necessary. But I would rather
+not force replicators to change their registry settings.
 
 Goal: make alternative readers which accept 8.3 filenames. The current
 production implementation is in `R/io/read_long_paths.R`; this analysis
@@ -55,32 +55,32 @@ connection with `file(short_path, "rb")`, and passed that connection to
 `read_sav()` so `read_sav()` would not convert the short filename back
 into a long filename. The legacy comment noted something strange: in
 File Explorer, the entire absolute path was not an 8.3 alias; only the
-relative path was. Yet the code worked because it fed a connection opened
-from the absolute 8.3 alias directly into `read_sav()`. This was
+relative path was. Yet the code worked because it fed a connection
+opened from the absolute 8.3 alias directly into `read_sav()`. This was
 confusing because `read_sav(path)` calls `datasource(path)`, which calls
-`readr:::standardise_path(path)`, then `readr:::detect_compression(path)`,
-then `readBin(path)`, then `file(path, "rb")` when `path` is a string.
-That `file(..., "rb")` call is exactly what happens to the explicit
-connection in `read_sav_short()`, and yet it was precisely at
-`file(..., "rb")` that `read_sav()` failed when called on an 8.3 file
-path.
+`readr:::standardise_path(path)`, then
+`readr:::detect_compression(path)`, then `readBin(path)`, then
+`file(path, "rb")` when `path` is a string. That `file(..., "rb")` call
+is exactly what happens to the explicit connection in
+`read_sav_short()`, and yet it was precisely at `file(..., "rb")` that
+`read_sav()` failed when called on an 8.3 file path.
 
 For `read_csv_short()`, the legacy code used the same 8.3 alias and
 opened a binary connection even though CSVs are text files. The reason
 was empirical and implementation-specific: `read_csv()` feeds its inputs
-into `vroom()`, and the legacy notes traced that path through `readr` and
-`vroom` internals. The working hypothesis was that `read_csv()` reads raw
-bytes using `readBin()` before applying its parser to text.
+into `vroom()`, and the legacy notes traced that path through `readr`
+and `vroom` internals. The working hypothesis was that `read_csv()`
+reads raw bytes using `readBin()` before applying its parser to text.
 
 For Excel files, the legacy note was even more cautious: `read_excel()`
 accepts file paths as strings, not connections, so the workaround was to
-split the long path into folder and file components, get the folder’s 8.3
-alias, inspect `dir /x` output to find the file’s short name, construct
-the absolute short path, copy it to a temporary file, and then read that
-temporary file with `xlsx::read.xlsx()` for `.xls`/`.xlsm` or
+split the long path into folder and file components, get the folder’s
+8.3 alias, inspect `dir /x` output to find the file’s short name,
+construct the absolute short path, copy it to a temporary file, and then
+read that temporary file with `xlsx::read.xlsx()` for `.xls`/`.xlsm` or
 `openxlsx::read.xlsx()` for `.xlsx`. The legacy code included error
-checks because the 8.3 filename pattern and Java-backed Excel readers are
-more brittle than the `read_sav()` and `read_csv()` connection-based
+checks because the 8.3 filename pattern and Java-backed Excel readers
+are more brittle than the `read_sav()` and `read_csv()` connection-based
 cases.
 
 ``` r
@@ -164,7 +164,7 @@ data.frame(
     1  normalize_path_for_os(tmp)
     2 get_windows_short_path(tmp)
     3         read_csv_short(tmp)
-                                                                                         result
-    1 /private/var/folders/v0/7rc_jjhs6dv8gzmtnmqtpg3w0000gn/T/RtmpmuzK3p/file14c6d78ac5070.csv
-    2        /var/folders/v0/7rc_jjhs6dv8gzmtnmqtpg3w0000gn/T//RtmpmuzK3p/file14c6d78ac5070.csv
-    3                                                                                         x
+                                                                                       result
+    1 /private/var/folders/v0/7rc_jjhs6dv8gzmtnmqtpg3w0000gn/T/RtmpI1V5Te/file35f7d4056be.csv
+    2        /var/folders/v0/7rc_jjhs6dv8gzmtnmqtpg3w0000gn/T//RtmpI1V5Te/file35f7d4056be.csv
+    3                                                                                       x
