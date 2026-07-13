@@ -5,6 +5,9 @@
 .Rproj.user/
 *.Rproj
 
+# VS Code files
+.vscode/
+
 # renv local files
 renv/library/
 renv/staging/
