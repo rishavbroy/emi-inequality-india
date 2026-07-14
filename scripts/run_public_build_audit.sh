@@ -258,7 +258,6 @@ fi
 
 if [[ "$with_analysis_notes" == "true" ]]; then
   echo "=== ANALYSIS NOTES ==="
-  make clean-analysis
   make render-analysis
   checkpoint_archive "after-analysis-notes"
 fi
