@@ -127,3 +127,27 @@ render_qmd_to_pdf <- function(input_qmd, output_file) {
 
   invisible(output_file)
 }
+
+#' Return files that should invalidate application-sample render targets
+#'
+#' @param spec_dir Directory containing application-sample YAML specs.
+#' @return Existing spec, cover-note, report, and source-code paths.
+application_sample_input_files <- function(spec_dir = "application-samples/specs") {
+  specs <- list.files(spec_dir, pattern = "^(writing|coding)-.*\\.yml$", full.names = TRUE)
+  referenced <- unlist(lapply(specs, application_sample_spec_files), use.names = FALSE)
+  unique(normalizePath(c(specs, referenced[file.exists(referenced)]), mustWork = TRUE))
+}
+
+application_sample_spec_files <- function(spec_path) {
+  spec <- yaml::read_yaml(spec_path)
+  files <- character()
+  if (!is.null(spec$cover_note)) files <- c(files, spec$cover_note)
+  if (!is.null(spec$source)) files <- c(files, spec$source)
+  if (!is.null(spec$excerpts) && length(spec$excerpts)) {
+    excerpt_files <- vapply(spec$excerpts, function(x) {
+      if (is.list(x) && !is.null(x$file)) x$file else NA_character_
+    }, character(1))
+    files <- c(files, excerpt_files[!is.na(excerpt_files)])
+  }
+  unique(files)
+}

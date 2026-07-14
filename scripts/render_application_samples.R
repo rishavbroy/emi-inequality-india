@@ -1,15 +1,20 @@
-source("R/packages.R")
-source("R/application_samples/extract_qmd_excerpts.R")
-source("R/application_samples/extract_code_excerpts.R")
-source("R/application_samples/render_writing_sample.R")
-source("R/application_samples/render_coding_sample.R")
+# Render application samples through the {targets} graph.
+#
+# This wrapper exists for compatibility with older workflows that called this
+# script directly. Public render caching and invalidation are owned by targets.
 
-if (!requireNamespace("yaml", quietly = TRUE)) {
-  stop("Package 'yaml' is required for application-sample specs. Run `make init-renv`.", call. = FALSE)
+if (!requireNamespace("targets", quietly = TRUE)) {
+  stop("Package 'targets' is required. Run `make init-renv`.", call. = FALSE)
 }
 
-writing <- render_writing_samples()
-coding <- render_coding_samples()
+if (!nzchar(Sys.getenv("EMI_CONFIG"))) {
+  Sys.setenv(EMI_CONFIG = "config/final.yml")
+}
+Sys.setenv(EMI_RENDER_APPLICATION_SAMPLES = "true")
+
+targets::tar_make(names = tidyselect::all_of(c("writing_sample_pdfs", "coding_sample_pdfs")))
+writing <- targets::tar_read(writing_sample_pdfs)
+coding <- targets::tar_read(coding_sample_pdfs)
 
 message("Writing samples: ", paste(writing, collapse = ", "))
 message("Coding samples: ", paste(coding, collapse = ", "))
