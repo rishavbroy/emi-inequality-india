@@ -118,7 +118,8 @@ analysis_markdown_target_definitions <- function(root = "analysis") {
       targets::tar_target_raw(
         name = "analysis_runtime_input_files",
         command = quote(list_analysis_runtime_input_files()),
-        format = "file"
+        format = "file",
+        cue = targets::tar_cue(mode = "always")
       )
     ),
     qmd_targets,

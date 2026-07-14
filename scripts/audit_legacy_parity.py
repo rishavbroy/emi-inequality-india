@@ -371,6 +371,26 @@ def audit_selection_tables() -> None:
         fail("AME table exposes raw variable names instead of legacy contrast labels.")
 
 
+def write_iv_summary_keyed_diagnostics() -> None:
+    """Write a stable keyed version of the public IV summary table.
+
+    Analysis notes read this CSV directly from outputs/diagnostics/public/.  Keep
+    it available in diagnostics-only mode as well as in the full parity audit so
+    cached analysis renders never depend on whether the full audit happened to
+    run after make analysis-notes.
+    """
+    summary = optional_csv_rows("outputs/tables/main/sum_tbl_iv.csv")
+    if not summary:
+        return
+    keyed_summary = keyed_iv_summary_rows(summary)
+    if keyed_summary:
+        write_diag_csv(
+            "iv_summary_keyed_rows.csv",
+            keyed_summary,
+            ["group", "variable"] + [name for name in summary[0].keys()],
+        )
+
+
 def audit_iv_tables() -> None:
     corrected_panel = documented_corrected_iv_panel()
 
@@ -395,13 +415,7 @@ def audit_iv_tables() -> None:
                     fail(f"Corrected IV panel has {len(bad)} rows without {flag}=TRUE.")
 
     summary = csv_rows("outputs/tables/main/sum_tbl_iv.csv")
-    keyed_summary = keyed_iv_summary_rows(summary)
-    if keyed_summary:
-        write_diag_csv(
-            "iv_summary_keyed_rows.csv",
-            keyed_summary,
-            ["group", "variable"] + [name for name in summary[0].keys()] if summary else None,
-        )
+    write_iv_summary_keyed_diagnostics()
     by_var = iv_summary_by_key(summary)
     emie = by_var.get("emie_2007") or by_var.get("EMIE")
     if emie:
@@ -508,6 +522,7 @@ def audit_source_flags() -> None:
 
 def write_public_diagnostics_only() -> int:
     audit_iv_panel_diagnostics()
+    write_iv_summary_keyed_diagnostics()
     print("Wrote public legacy diagnostics to", rel(DIAG_DIR))
     return 0
 

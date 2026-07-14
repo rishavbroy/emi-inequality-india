@@ -259,6 +259,7 @@ test_that("analysis notebooks render through cached targets, not unconditional Q
   expect_false(grepl("pattern = map(analysis_qmd_files)", targets, fixed = TRUE))
   expect_match(renderer, "analysis_markdown_target_definitions", fixed = TRUE)
   expect_match(renderer, "targets::tar_target_raw", fixed = TRUE)
+  expect_match(renderer, "cue = targets::tar_cue(mode = \"always\")", fixed = TRUE)
   expect_match(renderer, "name = \"analysis_markdown_files\"", fixed = TRUE)
   expect_match(renderer, "format = \"file\"", fixed = TRUE)
   expect_match(renderer, "render_analysis_markdown_file", fixed = TRUE)
@@ -268,6 +269,17 @@ test_that("analysis notebooks render through cached targets, not unconditional Q
   expect_false(grepl("tar_render\\(diag_ext_", targets))
 })
 
+
+
+test_that("diagnostics-only legacy audit writes IV summary inputs for analysis notes", {
+  audit <- paste(readLines(repo_file("scripts", "audit_legacy_parity.py"), warn = FALSE), collapse = "\n")
+  makefile <- paste(readLines(repo_file("Makefile"), warn = FALSE), collapse = "\n")
+
+  expect_match(audit, "def write_iv_summary_keyed_diagnostics", fixed = TRUE)
+  expect_match(audit, "write_iv_summary_keyed_diagnostics()", fixed = TRUE)
+  expect_match(audit, "iv_summary_keyed_rows.csv", fixed = TRUE)
+  expect_match(makefile, "python3 scripts/audit_legacy_parity.py --write-diagnostics-only", fixed = TRUE)
+})
 test_that("analysis notebooks are populated with current-output tables", {
   qmd <- paste(readLines(repo_file("analysis", "benchmarking", "spatial-iv-benchmark.qmd"), warn = FALSE), collapse = "\n")
   helper <- paste(readLines(repo_file("analysis", "_analysis_helpers.R"), warn = FALSE), collapse = "\n")
