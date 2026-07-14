@@ -40,6 +40,10 @@ benchmarks_enabled <- function() {
   env_flag_enabled("EMI_RUN_BENCHMARKS", default = FALSE)
 }
 
+analysis_notes_enabled <- function() {
+  env_flag_enabled("EMI_RENDER_ANALYSIS_NOTES", default = FALSE)
+}
+
 
 core_pipeline_targets <- list(
   tar_target(config_path, Sys.getenv("EMI_CONFIG", "config/draft.yml"), cue = tar_cue(mode = "always")),
@@ -120,6 +124,17 @@ benchmark_targets <- list(
 )
 
 
+analysis_note_targets <- list(
+  tar_target(analysis_qmd_files, list_analysis_qmd_files("analysis"), format = "file"),
+  tar_target(analysis_runtime_input_files, list_analysis_runtime_input_files(), format = "file"),
+  tar_target(
+    analysis_markdown_files,
+    render_analysis_markdown_file(analysis_qmd_files, analysis_runtime_input_files),
+    pattern = map(analysis_qmd_files),
+    format = "file"
+  )
+)
+
 application_sample_targets <- list(
   tar_target(application_sample_inputs, application_sample_input_files(), format = "file"),
   tar_target(writing_sample_pdfs, { report_values; application_sample_inputs; render_writing_samples(output_files = c(figure_files, table_files)) }, format = "file"),
@@ -140,6 +155,11 @@ if (benchmarks_enabled()) {
   message("EMI_RUN_BENCHMARKS=false: omitting benchmark targets from this targets run.")
 }
 
+if (analysis_notes_enabled()) {
+  selected_targets <- c(selected_targets, analysis_note_targets)
+} else {
+  message("EMI_RENDER_ANALYSIS_NOTES=false: omitting analysis-note render targets from this targets run.")
+}
 
 if (render_application_samples_enabled()) {
   selected_targets <- c(selected_targets, application_sample_targets)
