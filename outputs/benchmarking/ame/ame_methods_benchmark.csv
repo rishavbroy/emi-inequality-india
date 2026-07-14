@@ -1,7 +1,7 @@
 "method","sample_size","n_observations","n_numeric_variables","centered_predict_calls_full_data","elapsed_seconds","status","reason","fallback"
-"avg_slopes_centered_default",200,114961,10,2299220,1.021,"estimated_legacy_vcov",NA,NA
-"avg_slopes_fdforward",200,114961,10,2299220,0.880000000000001,"estimated_legacy_vcov",NA,NA
-"avg_slopes_centered_default",2000,114961,10,2299220,5.454,"estimated_legacy_vcov",NA,NA
-"avg_slopes_fdforward",2000,114961,10,2299220,5.692,"estimated_legacy_vcov",NA,NA
-"avg_slopes_centered_default",20000,114961,10,2299220,56.193,"estimated_legacy_vcov",NA,NA
-"avg_slopes_fdforward",20000,114961,10,2299220,50.272,"estimated_legacy_vcov",NA,NA
+"avg_slopes_centered_default",200,114961,10,2299220,0.809,"estimated_legacy_vcov",NA,NA
+"avg_slopes_fdforward",200,114961,10,2299220,0.741999999999999,"estimated_legacy_vcov",NA,NA
+"avg_slopes_centered_default",2000,114961,10,2299220,4.772,"estimated_legacy_vcov",NA,NA
+"avg_slopes_fdforward",2000,114961,10,2299220,4.79,"estimated_legacy_vcov",NA,NA
+"avg_slopes_centered_default",20000,114961,10,2299220,81.804,"estimated_legacy_vcov",NA,NA
+"avg_slopes_fdforward",20000,114961,10,2299220,68.949,"estimated_legacy_vcov",NA,NA

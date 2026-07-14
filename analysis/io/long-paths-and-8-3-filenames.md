@@ -164,7 +164,7 @@ data.frame(
 )
 ```
 
-                           current_code_analog result
-    1  file.exists(normalize_path_for_os(tmp))   TRUE
-    2 file.exists(get_windows_short_path(tmp))   TRUE
-    3 identical(names(read_csv_short(tmp)), "x")  TRUE
+                             current_code_analog result
+    1    file.exists(normalize_path_for_os(tmp))   TRUE
+    2   file.exists(get_windows_short_path(tmp))   TRUE
+    3 identical(names(read_csv_short(tmp)), "x")   TRUE

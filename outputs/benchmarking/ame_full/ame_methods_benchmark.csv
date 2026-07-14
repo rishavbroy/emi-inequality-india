@@ -1,3 +1,0 @@
-"method","sample_size","n_observations","n_numeric_variables","centered_predict_calls_full_data","elapsed_seconds","status","reason","fallback"
-"avg_slopes_centered_default",114961,114961,10,2299220,353.728,"estimated_legacy_vcov",NA,NA
-"avg_slopes_fdforward",114961,114961,10,2299220,338.198,"estimated_legacy_vcov",NA,NA

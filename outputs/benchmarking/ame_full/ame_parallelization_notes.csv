@@ -1,3 +1,0 @@
-"method","status","reason"
-"marginaleffects_parallel_false","legacy_final_choice","Legacy final draft set options(marginaleffects_parallel = FALSE)."
-"future_parallel_attempt","documented_not_run_by_default","Legacy commented attempt failed because exported globals exceeded available RAM; benchmark target records this rather than forcing an unsafe run."
