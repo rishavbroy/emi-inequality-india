@@ -78,7 +78,7 @@ render-analysis: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
 	HOME=$(QUARTO_HOME) EMI_CONFIG=config/final.yml EMI_RUN_EXTENDED_DIAGNOSTICS=true EMI_RUN_BENCHMARKS=true EMI_RENDER_ANALYSIS_NOTES=true EMI_RENDER_APPLICATION_SAMPLES=false Rscript scripts/run_targets_checked.R --targets analysis_markdown_files
 
 rerun-analysis:
-	EMI_CONFIG=config/final.yml EMI_RUN_EXTENDED_DIAGNOSTICS=true EMI_RUN_BENCHMARKS=true EMI_RENDER_ANALYSIS_NOTES=true EMI_RENDER_APPLICATION_SAMPLES=false Rscript -e 'targets::tar_invalidate(starts_with("analysis_markdown_files"))'
+	EMI_CONFIG=config/final.yml EMI_RUN_EXTENDED_DIAGNOSTICS=true EMI_RUN_BENCHMARKS=true EMI_RENDER_ANALYSIS_NOTES=true EMI_RENDER_APPLICATION_SAMPLES=false Rscript -e 'targets::tar_invalidate(starts_with("analysis_md_")); targets::tar_invalidate("analysis_markdown_files")'
 	$(MAKE) render-analysis
 
 clean-analysis:

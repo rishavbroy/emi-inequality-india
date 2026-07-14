@@ -124,16 +124,7 @@ benchmark_targets <- list(
 )
 
 
-analysis_note_targets <- list(
-  tar_target(analysis_qmd_files, list_analysis_qmd_files("analysis"), format = "file"),
-  tar_target(analysis_runtime_input_files, list_analysis_runtime_input_files(), format = "file"),
-  tar_target(
-    analysis_markdown_files,
-    render_analysis_markdown_file(analysis_qmd_files, analysis_runtime_input_files),
-    pattern = map(analysis_qmd_files),
-    format = "file"
-  )
-)
+analysis_note_targets <- analysis_markdown_target_definitions("analysis")
 
 application_sample_targets <- list(
   tar_target(application_sample_inputs, application_sample_input_files(), format = "file"),

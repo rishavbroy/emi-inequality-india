@@ -3,12 +3,12 @@
 
 #' list analysis notebooks
 #'
-#' @return Character vector of analysis QMD paths.
+#' @return Character vector of analysis QMD paths relative to the project root.
 list_analysis_qmd_files <- function(root = "analysis") {
   if (!dir.exists(root)) stop("Missing analysis directory: ", root, call. = FALSE)
   qmds <- list.files(root, pattern = "[.]qmd$", recursive = TRUE, full.names = TRUE)
   qmds <- qmds[!grepl("(^|/)_[^/]+[.]qmd$", qmds)]
-  normalizePath(sort(qmds), mustWork = TRUE)
+  sort(qmds)
 }
 
 #' list rendered-analysis runtime inputs
@@ -50,4 +50,77 @@ render_analysis_markdown_file <- function(qmd, runtime_inputs = character()) {
     stop("Analysis render did not create non-empty Markdown output: ", out, call. = FALSE)
   }
   normalizePath(out, mustWork = TRUE)
+}
+
+
+#' construct a stable target name for an analysis file
+#'
+#' Static per-note render targets avoid illegal dynamic branching over a vector
+#' of file paths and let {targets} skip each rendered Markdown file separately.
+#'
+#' @return A syntactically valid {targets} target name.
+analysis_note_target_name <- function(prefix, path, root = "analysis") {
+  rel <- gsub("\\\\", "/", path)
+  root_prefix <- paste0(gsub("\\\\", "/", root), "/")
+  rel <- sub(paste0("^", root_prefix), "", rel)
+  stem <- tools::file_path_sans_ext(rel)
+  slug <- gsub("[^A-Za-z0-9]+", "_", stem)
+  slug <- gsub("^_+|_+$", "", slug)
+  if (!nzchar(slug)) stop("Could not derive analysis target name for: ", path, call. = FALSE)
+  paste0(prefix, "_", slug)
+}
+
+#' define cached analysis-note render targets
+#'
+#' Each QMD is first declared as a `format = "file"` target, then rendered by
+#' its own Markdown file target. The final `analysis_markdown_files` target is
+#' a convenience aggregate used by Makefile wrappers and audit scripts.
+#'
+#' @return List of {targets} target definitions.
+analysis_markdown_target_definitions <- function(root = "analysis") {
+  qmds <- list_analysis_qmd_files(root)
+  if (!length(qmds)) stop("No analysis QMD files found under: ", root, call. = FALSE)
+
+  qmd_target_names <- vapply(qmds, analysis_note_target_name, character(1), prefix = "analysis_qmd", root = root)
+  md_target_names <- vapply(qmds, analysis_note_target_name, character(1), prefix = "analysis_md", root = root)
+
+  qmd_targets <- Map(function(target_name, qmd) {
+    targets::tar_target_raw(
+      name = target_name,
+      command = substitute(qmd_path, list(qmd_path = qmd)),
+      format = "file"
+    )
+  }, qmd_target_names, qmds)
+
+  md_targets <- Map(function(target_name, qmd_target_name) {
+    targets::tar_target_raw(
+      name = target_name,
+      command = substitute(
+        render_analysis_markdown_file(qmd_target, analysis_runtime_input_files),
+        list(qmd_target = as.name(qmd_target_name))
+      ),
+      format = "file"
+    )
+  }, md_target_names, qmd_target_names)
+
+  aggregate_command <- as.call(c(as.name("c"), lapply(md_target_names, as.name)))
+
+  c(
+    list(
+      targets::tar_target_raw(
+        name = "analysis_runtime_input_files",
+        command = quote(list_analysis_runtime_input_files()),
+        format = "file"
+      )
+    ),
+    qmd_targets,
+    md_targets,
+    list(
+      targets::tar_target_raw(
+        name = "analysis_markdown_files",
+        command = aggregate_command,
+        format = "file"
+      )
+    )
+  )
 }
