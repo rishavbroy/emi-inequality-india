@@ -20,19 +20,26 @@ test_that("public build helper scripts parse", {
   expect_silent(parse(repo_file("R", "application_samples", "extract_qmd_excerpts.R")))
 })
 
-test_that("report target renders the PDF artifact explicitly", {
-  src <- paste(readLines(repo_file("_targets.R"), warn = FALSE), collapse = "\n")
+test_that("public render targets own final report and sample rendering", {
+  targets <- paste(readLines(repo_file("_targets.R"), warn = FALSE), collapse = "\n")
+  renderer <- paste(readLines(repo_file("R", "output", "render_public_artifacts.R"), warn = FALSE), collapse = "\n")
+  samples <- paste(readLines(repo_file("R", "application_samples", "render_writing_sample.R"), warn = FALSE), collapse = "\n")
 
-  expect_match(src, "tar_target\\(report, render_report_pdf\\(report_values, figure_files, table_files\\), format = \"file\"\\)")
-  expect_match(src, "quarto\", c\\(\"render\", \"paper/report\\.qmd\", \"--to\", \"pdf\"\\)")
-  expect_match(src, "paper/report\\.pdf")
-  expect_false(grepl("tar_render\\(report|tar_quarto\\(report", src, perl = TRUE))
+  expect_match(targets, 'tar_target(report_qmd, "paper/report.qmd", format = "file")', fixed = TRUE)
+  expect_match(targets, 'tar_target(report, render_report_pdf(report_qmd, report_values, figure_files, table_files), format = "file")', fixed = TRUE)
+  expect_match(targets, 'tar_target(application_sample_inputs, application_sample_input_files(), format = "file")', fixed = TRUE)
+  expect_match(renderer, 'system2("quarto", c("render", report_qmd, "--to", "pdf"))', fixed = TRUE)
+  expect_match(renderer, 'format = "file"', fixed = TRUE)
+  expect_match(samples, "application_sample_input_files", fixed = TRUE)
+  expect_false(grepl("tar_render\\(report|tar_quarto\\(report", targets, perl = TRUE))
 })
+
 
 
 test_that("public audit clean preserves extended diagnostics and benchmarks", {
   src <- paste(readLines(repo_file("scripts", "run_public_build_audit.sh"), warn = FALSE), collapse = "\n")
   makefile <- paste(readLines(repo_file("Makefile"), warn = FALSE), collapse = "\n")
+  gitignore <- paste(readLines(repo_file(".gitignore"), warn = FALSE), collapse = "\n")
 
   expect_match(src, "--with-extended-diagnostics", fixed = TRUE)
   expect_match(src, "--with-benchmarks", fixed = TRUE)
@@ -41,6 +48,8 @@ test_that("public audit clean preserves extended diagnostics and benchmarks", {
   expect_match(makefile, "rm -rf outputs/figures/* outputs/tables/* outputs/diagnostics/build outputs/diagnostics/public", fixed = TRUE)
   expect_match(makefile, "clean-extended-diagnostics", fixed = TRUE)
   expect_match(makefile, "clean-benchmarking", fixed = TRUE)
+  expect_match(gitignore, "outputs/diagnostics/build/", fixed = TRUE)
+  expect_match(gitignore, "outputs/diagnostics/public/", fixed = TRUE)
 })
 
 test_that("targets graph separates public diagnostics, extended diagnostics, and benchmarks", {
@@ -216,6 +225,7 @@ test_that("optional target groups use checked targets wrapper", {
   expect_match(makefile, "Rscript scripts/run_targets_checked.R --starts-with diag_ext_", fixed = TRUE)
   expect_match(makefile, "Rscript scripts/run_targets_checked.R --starts-with bench_", fixed = TRUE)
   expect_match(checked, "selected_target_names", fixed = TRUE)
+  expect_match(checked, "--targets TARGET[,TARGET...]", fixed = TRUE)
   expect_match(checked, "selected_names_call", fixed = TRUE)
   expect_match(checked, "tidyselect::all_of", fixed = TRUE)
   expect_match(checked, "Errored selected targets", fixed = TRUE)
@@ -327,6 +337,20 @@ test_that("public audit can include analysis notes in the same log", {
   expect_match(src, "make render-analysis", fixed = TRUE)
   expect_match(src, "Analysis notes do not request application samples", fixed = TRUE)
   expect_match(src, "manifest_roots+=(analysis)", fixed = TRUE)
+})
+
+test_that("public checks use cached targets renders instead of direct Quarto renders", {
+  makefile <- paste(readLines(repo_file("Makefile"), warn = FALSE), collapse = "\n")
+  sample_script <- paste(readLines(repo_file("scripts", "render_application_samples.R"), warn = FALSE), collapse = "\n")
+
+  expect_match(makefile, "$(MAKE) pipeline-final", fixed = TRUE)
+  expect_false(grepl("HOME=\\$\\(QUARTO_HOME\\) quarto render", makefile))
+  expect_false(grepl("Rscript scripts/render_application_samples.R", makefile, fixed = TRUE))
+  expect_match(makefile, "run_targets_checked.R --targets report", fixed = TRUE)
+  expect_match(makefile, "run_targets_checked.R --targets writing_sample_pdfs,coding_sample_pdfs", fixed = TRUE)
+  expect_match(sample_script, "targets::tar_make", fixed = TRUE)
+  expect_false(grepl("render_writing_samples\\(", sample_script))
+  expect_false(grepl("render_coding_samples\\(", sample_script))
 })
 
 test_that("analysis notebooks render only to GitHub-flavored Markdown", {

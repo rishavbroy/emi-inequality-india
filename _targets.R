@@ -41,22 +41,6 @@ benchmarks_enabled <- function() {
 }
 
 
-render_report_pdf <- function(report_values, figure_files, table_files) {
-  force(report_values)
-  force(figure_files)
-  force(table_files)
-
-  pdf_path <- "paper/report.pdf"
-  status <- system2("quarto", c("render", "paper/report.qmd", "--to", "pdf"))
-  if (!identical(status, 0L)) {
-    stop("quarto render paper/report.qmd --to pdf failed with status ", status, call. = FALSE)
-  }
-  if (!file.exists(pdf_path) || file.info(pdf_path)$size <= 0L) {
-    stop("quarto render did not create a non-empty ", pdf_path, call. = FALSE)
-  }
-  c(pdf_path, "paper/report.qmd")
-}
-
 core_pipeline_targets <- list(
   tar_target(config_path, Sys.getenv("EMI_CONFIG", "config/draft.yml"), cue = tar_cue(mode = "always")),
   tar_target(cfg, read_config(config_path)),
@@ -112,10 +96,11 @@ core_pipeline_targets <- list(
   tar_target(tables, make_tables(selection_data, ame_results, district_panel, iv_models, first_stage_tests, cfg, selection_model)),
   tar_target(table_files, save_tables(tables, cfg), format = "file"),
   tar_target(report_values, build_report_values(ame_results, first_stage_tests, iv_models, selection_data, district_panel, diag_public_spatial_autocorrelation, cfg)),
+  tar_target(report_qmd, "paper/report.qmd", format = "file"),
 
   tar_render(district_matching_note, "docs/district-matching.qmd"),
   tar_render(long_paths_note, "docs/long-paths-and-8-3-filenames.qmd"),
-  tar_target(report, render_report_pdf(report_values, figure_files, table_files), format = "file")
+  tar_target(report, render_report_pdf(report_qmd, report_values, figure_files, table_files), format = "file")
 )
 
 extended_diagnostic_targets <- list(
@@ -136,8 +121,9 @@ benchmark_targets <- list(
 
 
 application_sample_targets <- list(
-  tar_target(writing_sample_pdfs, { report_values; render_writing_samples(output_files = c(figure_files, table_files)) }, format = "file"),
-  tar_target(coding_sample_pdfs, { report_values; render_coding_samples(output_files = c(figure_files, table_files)) }, format = "file")
+  tar_target(application_sample_inputs, application_sample_input_files(), format = "file"),
+  tar_target(writing_sample_pdfs, { report_values; application_sample_inputs; render_writing_samples(output_files = c(figure_files, table_files)) }, format = "file"),
+  tar_target(coding_sample_pdfs, { report_values; application_sample_inputs; render_coding_samples(output_files = c(figure_files, table_files)) }, format = "file")
 )
 
 selected_targets <- core_pipeline_targets
