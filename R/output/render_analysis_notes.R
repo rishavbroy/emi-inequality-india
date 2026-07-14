@@ -43,8 +43,16 @@ render_analysis_markdown_file <- function(qmd, runtime_inputs = character()) {
   if (!nzchar(Sys.which("quarto"))) stop("quarto is required to render analysis notebooks.", call. = FALSE)
   invisible(runtime_inputs)
   message("Rendering ", qmd, " to GitHub-flavored Markdown")
-  status <- system2("quarto", c("render", qmd, "--to", "gfm"))
+
+  # Render from the notebook directory and pass Quarto only the basename.
+  # This avoids Quarto CLI edge cases with absolute paths containing spaces
+  # while preserving {targets}' file tracking on the absolute QMD path.
+  old_wd <- getwd()
+  on.exit(setwd(old_wd), add = TRUE)
+  setwd(dirname(qmd))
+  status <- system2("quarto", c("render", basename(qmd), "--to", "gfm"))
   if (!identical(status, 0L)) stop("quarto render failed for ", qmd, " with status ", status, call. = FALSE)
+
   out <- sub("[.]qmd$", ".md", qmd)
   if (!file.exists(out) || file.info(out)$size <= 0) {
     stop("Analysis render did not create non-empty Markdown output: ", out, call. = FALSE)
