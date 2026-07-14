@@ -38,7 +38,7 @@ This file records how diagnostic and tuning/benchmarking logic from the legacy R
 
 - View-only or GUI-only exploratory code, such as `View()` calls, Tabula inspection, palette GUI exploration, and commented `tmap_save()` experiments, is represented as notes or benchmark metadata rather than executed automatically.
 - Expensive or unstable commented paths, especially the full-data AME timing, Monte Carlo Moran simulation, and future/marginaleffects parallel attempt, are documented as deviations rather than executable current benchmarks. Spatial-IV model attempts remain opt-in benchmark artifacts because they are lightweight enough to preserve and directly diagnose current model failure modes.
-- Normal public builds preserve `outputs/diagnostics/extended/` and `outputs/benchmarking/`; only `outputs/diagnostics/build/` and `outputs/diagnostics/public/` are reset automatically.
+- Normal public builds preserve `outputs/diagnostics/extended/` and `outputs/benchmarking/`; `outputs/diagnostics/build/` and `outputs/diagnostics/public/` are reset automatically and intentionally untracked.
 
 ## Correctness follow-up notes
 

@@ -31,6 +31,10 @@ data/interim/
 # locally stored literature PDFs
 relevant-literature/
 
+# short-lived target/build diagnostics
+outputs/diagnostics/build/
+outputs/diagnostics/public/
+
 # generated caches and render byproducts
 Rplots.pdf
 *_cache/

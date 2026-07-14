@@ -1,5 +1,0 @@
-"name","error","warnings"
-"bench_fuzzy_matching",NA,"Non-printable ascii or non-ascii characters in soundex. Results may be unreliable. See ?printable_ascii."
-"bench_spatial_weights",NA,NA
-"bench_spatial_iv_experimental",NA,NA
-"bench_ame_methods",NA,NA
