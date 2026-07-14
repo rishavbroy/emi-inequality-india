@@ -29,10 +29,10 @@ use a non-incremental run for the final reviewer-facing proof build. Use
 if the audit fails; successful audits always write the final review archive.
 
 Optional extended diagnostics and benchmarks are included only when requested and
-respect the {targets} cache. Ordinary public builds clear only short-lived
-outputs/diagnostics/build and outputs/diagnostics/public files; longer
-outputs/diagnostics/extended and outputs/benchmarking artifacts are preserved
-unless explicitly cleaned. Use --with-analysis-notes to render the human-readable
+respect the {targets} cache. Ordinary public builds clear only short-lived,
+Git-ignored outputs/diagnostics/build and outputs/diagnostics/public files;
+longer outputs/diagnostics/extended and outputs/benchmarking artifacts are
+preserved unless explicitly cleaned. Use --with-analysis-notes to render the human-readable
 analysis notebooks to GitHub-flavored Markdown in the same audit log; this also
 requests the extended diagnostics and benchmarks that those notebooks read.
 Analysis notes do not request application samples; add --with-samples only when

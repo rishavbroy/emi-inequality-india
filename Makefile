@@ -86,12 +86,10 @@ clean-benchmarking:
 	find outputs/benchmarking -mindepth 1 ! -name README.md -exec rm -rf {} +
 
 report: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
-	Rscript scripts/check_required_outputs.R --require-final-stamp
-	HOME=$(QUARTO_HOME) quarto render paper/report.qmd
+	EMI_CONFIG=config/final.yml Rscript scripts/run_targets_checked.R --targets report
 
 samples: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
-	Rscript scripts/check_required_outputs.R --require-final-stamp
-	Rscript scripts/render_application_samples.R
+	EMI_CONFIG=config/final.yml EMI_RENDER_APPLICATION_SAMPLES=true Rscript scripts/run_targets_checked.R --targets writing_sample_pdfs,coding_sample_pdfs
 
 audit-report-values:
 	Rscript scripts/audit_report_values.R
@@ -153,10 +151,7 @@ check-public: check-public-draft
 check-public-draft: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
 	Rscript scripts/check_public_text.R
 	Rscript scripts/check_sample_specs.R
-	HOME=$(QUARTO_HOME) quarto render paper/report.qmd
-	HOME=$(QUARTO_HOME) quarto render docs/district-matching.qmd
-	HOME=$(QUARTO_HOME) quarto render docs/long-paths-and-8-3-filenames.qmd
-	Rscript scripts/render_application_samples.R
+	$(MAKE) pipeline-draft
 	Rscript scripts/check_rendered_text.R
 
 check-public-final: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
@@ -165,10 +160,6 @@ check-public-final: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
 	EMI_CONFIG=config/final.yml Rscript scripts/audit_report_values.R --strict --allow-status-placeholders
 	Rscript scripts/audit_crossrefs.R --strict-report
 	Rscript scripts/check_required_outputs.R --require-final-stamp
-	HOME=$(QUARTO_HOME) quarto render paper/report.qmd
-	HOME=$(QUARTO_HOME) quarto render docs/district-matching.qmd
-	HOME=$(QUARTO_HOME) quarto render docs/long-paths-and-8-3-filenames.qmd
-	Rscript scripts/render_application_samples.R
 	EMI_CONFIG=config/final.yml Rscript scripts/check_rendered_text.R --final
 	Rscript scripts/check_public_final.R
 	EMI_CONFIG=config/final.yml Rscript scripts/audit_outputs_final.R
@@ -180,9 +171,6 @@ check-public-final-no-samples: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
 	EMI_CONFIG=config/final.yml Rscript scripts/audit_report_values.R --strict --allow-status-placeholders
 	Rscript scripts/audit_crossrefs.R --strict-report
 	Rscript scripts/check_required_outputs.R --require-final-stamp
-	HOME=$(QUARTO_HOME) quarto render paper/report.qmd
-	HOME=$(QUARTO_HOME) quarto render docs/district-matching.qmd
-	HOME=$(QUARTO_HOME) quarto render docs/long-paths-and-8-3-filenames.qmd
 	EMI_CONFIG=config/final.yml EMI_REQUIRE_APPLICATION_SAMPLES=false Rscript scripts/check_rendered_text.R --final
 	EMI_REQUIRE_APPLICATION_SAMPLES=false Rscript scripts/check_public_final.R
 	EMI_CONFIG=config/final.yml Rscript scripts/audit_outputs_final.R

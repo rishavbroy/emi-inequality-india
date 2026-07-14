@@ -5,13 +5,20 @@
 
 args <- commandArgs(trailingOnly = TRUE)
 starts_with_arg <- ""
+targets_arg <- ""
 for (i in seq_along(args)) {
   if (identical(args[[i]], "--starts-with") && i < length(args)) {
     starts_with_arg <- args[[i + 1L]]
   }
+  if (identical(args[[i]], "--targets") && i < length(args)) {
+    targets_arg <- args[[i + 1L]]
+  }
 }
-if (!nzchar(starts_with_arg)) {
-  stop("Usage: Rscript scripts/run_targets_checked.R --starts-with PREFIX", call. = FALSE)
+if (!nzchar(starts_with_arg) && !nzchar(targets_arg)) {
+  stop("Usage: Rscript scripts/run_targets_checked.R --starts-with PREFIX | --targets TARGET[,TARGET...]", call. = FALSE)
+}
+if (nzchar(starts_with_arg) && nzchar(targets_arg)) {
+  stop("Use either --starts-with or --targets, not both.", call. = FALSE)
 }
 
 if (!requireNamespace("targets", quietly = TRUE)) {
@@ -23,10 +30,21 @@ manifest <- tryCatch(
   targets::tar_manifest(fields = "name"),
   error = function(e) data.frame(name = character())
 )
-selected_target_names <- as.character(manifest$name)
-selected_target_names <- selected_target_names[grepl(paste0("^", starts_with_arg), selected_target_names)]
-if (!length(selected_target_names)) {
-  stop("No active targets match prefix: ", starts_with_arg, call. = FALSE)
+active_target_names <- as.character(manifest$name)
+if (nzchar(starts_with_arg)) {
+  selected_target_names <- active_target_names[grepl(paste0("^", starts_with_arg), active_target_names)]
+  run_label <- starts_with_arg
+  if (!length(selected_target_names)) {
+    stop("No active targets match prefix: ", starts_with_arg, call. = FALSE)
+  }
+} else {
+  selected_target_names <- trimws(unlist(strsplit(targets_arg, ",", fixed = TRUE), use.names = FALSE))
+  selected_target_names <- selected_target_names[nzchar(selected_target_names)]
+  missing_targets <- setdiff(selected_target_names, active_target_names)
+  if (length(missing_targets)) {
+    stop("Requested targets are not active in the current target graph: ", paste(missing_targets, collapse = ", "), call. = FALSE)
+  }
+  run_label <- "selected_targets_"
 }
 
 selected_names_literal <- paste(deparse(selected_target_names), collapse = "\n")
@@ -56,7 +74,7 @@ if (nrow(meta)) {
   meta_selected <- meta[selected, , drop = FALSE]
   utils::write.csv(
     meta_selected,
-    file.path("outputs/diagnostics/build", paste0("target_meta_after_", starts_with_arg, "run.csv")),
+    file.path("outputs/diagnostics/build", paste0("target_meta_after_", run_label, "run.csv")),
     row.names = FALSE
   )
   if (nrow(meta_selected) && "error" %in% names(meta_selected)) {
