@@ -506,7 +506,16 @@ def audit_source_flags() -> None:
                 fail("build_selection_data() lacks the legacy father-education proxy construction.")
 
 
+def write_public_diagnostics_only() -> int:
+    audit_iv_panel_diagnostics()
+    print("Wrote public legacy diagnostics to", rel(DIAG_DIR))
+    return 0
+
+
 def main() -> int:
+    if "--write-diagnostics-only" in sys.argv:
+        return write_public_diagnostics_only()
+
     audit_iv_panel_diagnostics()
     audit_pdf_and_qmd_shape()
     audit_selection_tables()
