@@ -16,6 +16,7 @@ test_that("public build helper scripts parse", {
   expect_silent(parse(repo_file("scripts", "postprocess_public_qmds.R")))
   expect_silent(parse(repo_file("scripts", "check_required_outputs.R")))
   expect_silent(parse(repo_file("scripts", "run_targets_checked.R")))
+  expect_silent(parse(repo_file("R", "output", "render_analysis_notes.R")))
   expect_silent(parse(repo_file("scripts", "check_rendered_text.R")))
   expect_silent(parse(repo_file("R", "application_samples", "extract_qmd_excerpts.R")))
 })
@@ -232,18 +233,35 @@ test_that("optional target groups use checked targets wrapper", {
   expect_match(checked, "quit(status = status)", fixed = TRUE)
 })
 
+test_that("legacy parity script can write diagnostics without running full audit", {
+  audit <- paste(readLines(repo_file("scripts", "audit_legacy_parity.py"), warn = FALSE), collapse = "\n")
 
-test_that("analysis notebooks render from explicit make target, not optional target graph", {
+  expect_match(audit, "--write-diagnostics-only", fixed = TRUE)
+  expect_match(audit, "write_public_diagnostics_only", fixed = TRUE)
+  expect_match(audit, "audit_iv_panel_diagnostics()", fixed = TRUE)
+})
+
+
+test_that("analysis notebooks render through cached targets, not unconditional Quarto loops", {
   makefile <- paste(readLines(repo_file("Makefile"), warn = FALSE), collapse = "\n")
   targets <- paste(readLines(repo_file("_targets.R"), warn = FALSE), collapse = "\n")
+  renderer <- paste(readLines(repo_file("R", "output", "render_analysis_notes.R"), warn = FALSE), collapse = "\n")
 
   expect_match(makefile, "public-diagnostics:", fixed = TRUE)
+  expect_match(makefile, "legacy-public-diagnostics:", fixed = TRUE)
   expect_match(makefile, "Rscript scripts/run_targets_checked.R --starts-with diag_public_", fixed = TRUE)
-  expect_match(makefile, "analysis-notes: public-diagnostics extended-diagnostics benchmarking clean-analysis render-analysis", fixed = TRUE)
+  expect_match(makefile, "Rscript scripts/run_targets_checked.R --targets analysis_markdown_files", fixed = TRUE)
+  expect_match(makefile, "EMI_RENDER_ANALYSIS_NOTES=true", fixed = TRUE)
+  expect_match(makefile, "rerun-analysis:", fixed = TRUE)
   expect_false(grepl("benchmarking-full:", makefile, fixed = TRUE))
   expect_false(grepl("--starts-with bench_full_", makefile, fixed = TRUE))
-  expect_match(makefile, "Rscript scripts/render_analysis_notes.R", fixed = TRUE)
-  expect_match(makefile, "clean-analysis", fixed = TRUE)
+  expect_match(targets, "analysis_note_targets <- list", fixed = TRUE)
+  expect_match(targets, "tar_target(analysis_qmd_files", fixed = TRUE)
+  expect_match(targets, "tar_target(analysis_runtime_input_files", fixed = TRUE)
+  expect_match(targets, "tar_target(analysis_markdown_files", fixed = TRUE)
+  expect_match(targets, "pattern = map(analysis_qmd_files)", fixed = TRUE)
+  expect_match(renderer, "render_analysis_markdown_file", fixed = TRUE)
+  expect_match(renderer, "format = \"file\"", fixed = TRUE)
   expect_false(grepl("tar_render\\(bench_", targets))
   expect_false(grepl("tar_render\\(diag_ext_", targets))
 })
@@ -335,6 +353,7 @@ test_that("public audit can include analysis notes in the same log", {
   expect_false(grepl("--with-benchmarking-full", src, fixed = TRUE))
   expect_match(src, "=== ANALYSIS NOTES ===", fixed = TRUE)
   expect_match(src, "make render-analysis", fixed = TRUE)
+  expect_false(grepl("make clean-analysis", src, fixed = TRUE))
   expect_match(src, "Analysis notes do not request application samples", fixed = TRUE)
   expect_match(src, "manifest_roots+=(analysis)", fixed = TRUE)
 })
@@ -354,12 +373,15 @@ test_that("public checks use cached targets renders instead of direct Quarto ren
 })
 
 test_that("analysis notebooks render only to GitHub-flavored Markdown", {
-  renderer <- paste(readLines(repo_file("scripts", "render_analysis_notes.R"), warn = FALSE), collapse = "\n")
+  renderer <- paste(readLines(repo_file("R", "output", "render_analysis_notes.R"), warn = FALSE), collapse = "\n")
+  wrapper <- paste(readLines(repo_file("scripts", "render_analysis_notes.R"), warn = FALSE), collapse = "\n")
   qmd <- paste(readLines(repo_file("analysis", "benchmarking", "ame-benchmark.qmd"), warn = FALSE), collapse = "\n")
   archive <- paste(readLines(repo_file("scripts", "make_review_archive.sh"), warn = FALSE), collapse = "\n")
 
   expect_match(renderer, "--to", fixed = TRUE)
   expect_match(renderer, "gfm", fixed = TRUE)
+  expect_match(wrapper, "targets::tar_make", fixed = TRUE)
+  expect_match(wrapper, "analysis_markdown_files", fixed = TRUE)
   expect_match(qmd, "format: gfm", fixed = TRUE)
   expect_false(grepl("pdf: default", qmd, fixed = TRUE))
   expect_false(grepl("html: default", qmd, fixed = TRUE))
