@@ -457,3 +457,41 @@ test_that("analysis notes preserve legacy prose and document deviations", {
   expect_match(deviations, "Chunk 29", fixed = TRUE)
   expect_match(deviations, "Chunk 30", fixed = TRUE)
 })
+
+test_that("targets-sourced R directories do not contain non-R files", {
+  targets <- paste(readLines(repo_file("_targets.R"), warn = FALSE), collapse = "\n")
+  sourced_dirs <- regmatches(targets, gregexpr('tar_source\\("R/[^"\\n]+"\\)', targets, perl = TRUE))[[1]]
+  sourced_dirs <- sub('tar_source\\("', '', sub('"\\)$', '', sourced_dirs))
+  for (dir in sourced_dirs) {
+    files <- list.files(repo_file(dir), recursive = TRUE, all.files = FALSE, full.names = FALSE)
+    non_r <- files[!dir.exists(file.path(repo_file(dir), files)) & !grepl("\\.[Rr]$", files)]
+    expect_length(non_r, 0L, info = paste(dir, paste(non_r, collapse = ", ")))
+  }
+})
+
+test_that("removed placeholder scaffolds do not return as runnable APIs", {
+  files <- list.files(repo_file("R"), pattern = "\\.[Rr]$", recursive = TRUE, full.names = TRUE)
+  src <- paste(vapply(files, function(path) paste(readLines(path, warn = FALSE), collapse = "\n"), character(1)), collapse = "\n")
+  removed <- c(
+    "diagnose_model_robustness",
+    "compare_no_iv_no_controls",
+    "compare_no_iv_with_controls",
+    "compare_iv_no_controls",
+    "compare_iv_with_controls",
+    "compare_state_fe_specs",
+    "make_diagnostic_tables",
+    "jackknife_first_stage_by_state",
+    "jackknife_first_stage_by_region",
+    "summarize_weak_iv_metrics",
+    "build_fd_2sls_formula",
+    "build_state_fe_2sls_formula",
+    "compute_linguistic_distance_variants",
+    "demean_iv_within_state",
+    "tidy_first_stage_results",
+    "compute_partial_f_statistics",
+    "compute_partial_r2"
+  )
+  for (fn in removed) {
+    expect_false(grepl(paste0("\\b", fn, "\\s*<-\\s*function\\b"), src, perl = TRUE), info = fn)
+  }
+})
