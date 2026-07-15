@@ -159,3 +159,18 @@ test_that("district panel preserves sf geometry when boundary keys match", {
   expect_s3_class(out, "sf")
   expect_true("geometry" %in% names(out))
 })
+
+test_that("district panel validation records duplicate and range issues", {
+  panel <- data.frame(
+    district_panel_id = c("a", "a"),
+    EMIE = c(10, 120),
+    wavg_ling_degrees = c(1, 2)
+  )
+
+  out <- validate_district_panel(panel)
+  issues <- attr(out, "district_panel_validation")
+
+  expect_true(any(issues$check == "unique_district_units"))
+  expect_true(any(issues$check == "panel_variable_ranges"))
+  expect_error(validate_district_panel(panel, strict = TRUE), "district_panel_id is not unique")
+})

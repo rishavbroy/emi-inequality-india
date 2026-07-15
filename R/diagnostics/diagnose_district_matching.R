@@ -105,8 +105,13 @@ extract_many_to_many_cases <- function(join_map, ...) {
 
   join_map <- as.data.frame(join_map, stringsAsFactors = FALSE)
   if (!nrow(join_map)) return(data.frame())
+  if (!"many_to_many" %in% names(join_map) && exists("flag_many_to_many_matches", mode = "function")) {
+    join_map <- flag_many_to_many_matches(join_map)
+  }
   if ("many_to_many" %in% names(join_map)) {
-    return(join_map[!is.na(join_map$many_to_many) & join_map$many_to_many %in% TRUE, , drop = FALSE])
+    keep <- !is.na(join_map$many_to_many) & join_map$many_to_many %in% TRUE
+    if ("many_to_many_type" %in% names(join_map)) keep <- keep | grepl("many|one_source|many_source", join_map$many_to_many_type, ignore.case = TRUE)
+    return(join_map[keep, , drop = FALSE])
   }
   data.frame()
 }
@@ -117,12 +122,19 @@ compare_tracker_to_matched_panel <- function(district_panel, district_join_map, 
   unmatched_rows <- unmatched_rows %||% extract_unmatched_districts(district_join_map)
   many_to_many_cases <- many_to_many_cases %||% extract_many_to_many_cases(district_join_map)
   source_key_inventory <- source_key_inventory %||% extract_source_key_inventory(district_join_map)
-  data.frame(
+  key_comparison <- compare_join_keys_to_panel(panel, join_map, source_key_inventory)
+  role_counts <- summarize_district_key_roles(key_comparison)
+  base <- data.frame(
     object = c("district_panel", "district_join_map", "unmatched_rows", "source_key_inventory", "many_to_many_cases"),
     n_rows = c(nrow(panel), nrow(join_map), nrow(unmatched_rows), nrow(source_key_inventory), nrow(many_to_many_cases)),
     n_complete_rows = c(sum(stats::complete.cases(panel)), sum(stats::complete.cases(join_map)), NA_integer_, NA_integer_, NA_integer_),
     stringsAsFactors = FALSE
   )
+  if (!nrow(role_counts)) return(base)
+  role_counts$object <- paste0("key_role:", role_counts$key_role)
+  role_counts$n_rows <- if ("n_keys" %in% names(role_counts)) role_counts$n_keys else role_counts$n
+  role_counts$n_complete_rows <- NA_integer_
+  safe_bind_rows(list(base, role_counts[c("object", "n_rows", "n_complete_rows")]))
 }
 
 canonical_match_key <- function(df, state_candidates, district_candidates) {

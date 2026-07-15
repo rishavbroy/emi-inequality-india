@@ -588,6 +588,7 @@ isTRUEish <- function(x) {
 }
 
 validate_legacy_district_panel <- function(out, cfg = list(), strict = isTRUE(cfg$strict_legacy_panel_validation)) {
+  out <- validate_district_panel(out, strict = isTRUE(cfg$strict_district_panel_validation))
   if (!identical(cfg$mode, "final")) return(out)
   failures <- legacy_panel_validation_failures(out)
   attr(out, "legacy_panel_validation_failures") <- failures

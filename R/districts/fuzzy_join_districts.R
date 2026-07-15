@@ -169,8 +169,34 @@ join_all_district_sources <- function(df_names, tracker, years_of_interest, ...)
 
 #' flag many to many matches
 #'
-flag_many_to_many_matches <- function(join_map) {
-  join_map$many_to_many <- duplicated(join_map$.source_row) | duplicated(join_map$.tracker_row)
+flag_many_to_many_matches <- function(join_map, source_col = NULL, tracker_col = NULL) {
+  join_map <- safe_df(join_map)
+  if (!nrow(join_map)) {
+    join_map$many_to_many <- logical()
+    join_map$many_to_many_type <- character()
+    return(join_map)
+  }
+  source_col <- source_col %||% first_col(join_map, c(".source_row", "source_row", "source_key", "source_id"))
+  tracker_col <- tracker_col %||% first_col(join_map, c(".tracker_row", "tracker_row", "tracker_key", "district_panel_id"))
+  if (is.null(source_col) || is.null(tracker_col)) {
+    join_map$many_to_many <- FALSE
+    join_map$many_to_many_type <- "not_evaluable_missing_keys"
+    return(join_map)
+  }
+  source_key <- canon(join_map[[source_col]])
+  tracker_key <- canon(join_map[[tracker_col]])
+  source_n <- ave(rep(1L, nrow(join_map)), source_key, FUN = length)
+  tracker_n <- ave(rep(1L, nrow(join_map)), tracker_key, FUN = length)
+  source_dup <- source_n > 1L & !is.na(source_key) & nzchar(source_key)
+  tracker_dup <- tracker_n > 1L & !is.na(tracker_key) & nzchar(tracker_key)
+  join_map$n_source_matches <- as.integer(source_n)
+  join_map$n_tracker_matches <- as.integer(tracker_n)
+  join_map$many_to_many <- source_dup & tracker_dup
+  join_map$many_to_many_type <- ifelse(
+    source_dup & tracker_dup, "many_to_many",
+    ifelse(source_dup, "one_source_to_many_tracker",
+      ifelse(tracker_dup, "many_source_to_one_tracker", "one_to_one"))
+  )
   join_map
 }
 

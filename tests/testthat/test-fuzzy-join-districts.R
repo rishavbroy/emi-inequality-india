@@ -19,3 +19,18 @@ test_that("fuzzy_join_districts exposes diagnostic columns and attributes", {
   expect_s3_class(attr(out, "possible_false_positives"), "data.frame")
   expect_s3_class(attr(out, "many_to_many_cases"), "data.frame")
 })
+
+test_that("many-to-many match flags mark all duplicated source and tracker links", {
+  join_map <- data.frame(
+    .source_row = c(1, 1, 2, 3),
+    .tracker_row = c(10, 11, 10, 12)
+  )
+
+  out <- flag_many_to_many_matches(join_map)
+
+  expect_true(out$many_to_many[1])
+  expect_false(out$many_to_many[3])
+  expect_equal(out$many_to_many_type[2], "one_source_to_many_tracker")
+  expect_equal(out$many_to_many_type[3], "many_source_to_one_tracker")
+  expect_equal(out$many_to_many_type[4], "one_to_one")
+})
