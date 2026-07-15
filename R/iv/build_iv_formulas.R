@@ -51,15 +51,4 @@ build_iv_formulas <- function(cfg) {
 #'
 build_baseline_2sls_formula <- function(...) make_iv_formula(...)
 
-#' build fd 2sls formula
-#'
-build_fd_2sls_formula <- function(...) {
-  list(status = "out_of_active_pipeline", reason = "First-difference 2SLS formula is deferred until the FD redesign is specified.")
-}
-
-#' build state fe 2sls formula
-#'
-build_state_fe_2sls_formula <- function(...) {
-  list(status = "out_of_active_pipeline", reason = "State fixed-effect 2SLS formula is deferred until the state-FE redesign is specified.")
-}
 # sample-end: code-iv-formula-estimation

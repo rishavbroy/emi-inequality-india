@@ -680,6 +680,4 @@ legacy_iv_term_label <- function(term) {
   out[is.na(out)] <- term[is.na(out)]
   out
 }
-
-make_diagnostic_tables <- function(...) list()
 # sample-end: code-table-generation

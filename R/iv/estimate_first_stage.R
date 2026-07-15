@@ -188,15 +188,3 @@ parse_iv_formula_terms <- function(model) {
     instruments = all.vars(f[[3]][[3]])
   )
 }
-
-tidy_first_stage_results <- function(first_stage) {
-  first_stage
-}
-
-compute_partial_f_statistics <- function(first_stage) {
-  first_stage
-}
-
-compute_partial_r2 <- function(first_stage) {
-  first_stage
-}

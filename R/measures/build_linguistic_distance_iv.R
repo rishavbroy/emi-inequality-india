@@ -35,17 +35,6 @@ compute_population_weighted_linguistic_distance <- function(df) {
   build_linguistic_distance_iv(df, list())
 }
 
-#' compute linguistic distance variants
-#'
-compute_linguistic_distance_variants <- function(df) {
-  df
-}
-
-#' demean iv within state
-#'
-demean_iv_within_state <- function(df) {
-  df
-}
 
 #' validate linguistic distance ranges
 #'
