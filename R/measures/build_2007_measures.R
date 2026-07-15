@@ -161,9 +161,6 @@ compute_education_household_measures_2007 <- function(df) {
   }))
 }
 
-#' compute enrollment share 2007
-#'
-compute_enrollment_share_2007 <- function(df) df
 
 #' compute consumption 2007
 #'
@@ -238,9 +235,6 @@ compute_baseline_controls_2007 <- function(df) {
   }))
 }
 
-#' compute education freebies ivs 2007
-#'
-compute_education_freebies_ivs_2007 <- function(df) df
 
 #' compute housing controls 2007
 #'

@@ -43,7 +43,6 @@ add_legacy_iv_aliases <- function(df) {
 estimate_consumption_iv_models <- function(district_panel, formulas, cfg) ivreg::ivreg(formulas$consumption, data = add_legacy_iv_aliases(district_panel))
 #' estimate gini iv models
 estimate_gini_iv_models <- function(district_panel, formulas, cfg) ivreg::ivreg(formulas$gini, data = add_legacy_iv_aliases(district_panel))
-#' estimate non iv comparisons
-estimate_non_iv_comparisons <- function(district_panel, cfg) list()
+
 #' estimate model set
 estimate_model_set <- function(district_panel, formulas, cfg) estimate_2sls(district_panel, formulas, cfg)

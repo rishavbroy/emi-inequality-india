@@ -97,9 +97,6 @@ compute_gini_consumption_2017 <- function(df) {
   bydist(df, value, weight, "gini_cons_1718", wgini)
 }
 
-#' compute 2017 controls
-#'
-compute_2017_controls <- function(df) df
 
 normalize_2017_district_code <- function(df) {
   df <- safe_df(df)
