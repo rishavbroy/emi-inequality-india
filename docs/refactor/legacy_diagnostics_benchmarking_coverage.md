@@ -26,9 +26,9 @@ This file records how diagnostic and tuning/benchmarking logic from the legacy R
 
 ## Benchmarks and tuning outputs
 
-- Chunk 10 AME runtime/tuning: `R/diagnostics/diagnose_ame_benchmark.R` called through `R/benchmarking/benchmarking_targets.R`; output under `outputs/benchmarking/ame/`.
+- Chunk 10 AME runtime/tuning: `R/benchmarking/benchmark_ame_methods.R` called through `R/benchmarking/benchmarking_targets.R`; output under `outputs/benchmarking/ame/`.
   - Retains final choice `marginaleffects_parallel = FALSE`, `set.seed(999)`, sample-size timing checks, forward-difference comparison, and documented failed future parallelization. The default tier includes 20,000-row checks. Full-data AME timing is retained only as a legacy note and is deliberately not refreshed by the current benchmark pipeline.
-- Chunk 16 fuzzy-match threshold benchmarking: `R/benchmarking/benchmarking_targets.R`; output under `outputs/benchmarking/fuzzy_matching/`.
+- Chunk 16 fuzzy-match threshold benchmarking: `R/benchmarking/benchmark_fuzzy_matching.R` called through `R/benchmarking/benchmarking_targets.R`; output under `outputs/benchmarking/fuzzy_matching/`.
 - Chunk 24 rook-versus-queen spatial-weight benchmarking: `R/benchmarking/benchmarking_targets.R`; output under `outputs/benchmarking/spatial_weights/`.
 - Chunk 30 experimental spatial IV attempts: `R/iv/estimate_spatial_iv_experimental.R` called through `R/benchmarking/benchmarking_targets.R`; output under `outputs/benchmarking/spatial_iv/`.
   - The spatial lags `W_consY`, `W_giniY`, `W_EMIE`, `W_wLing`, `W2_wLing`, and lagged controls are generated when inputs are available.

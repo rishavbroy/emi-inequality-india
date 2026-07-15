@@ -458,15 +458,12 @@ test_that("analysis notes preserve legacy prose and document deviations", {
   expect_match(deviations, "Chunk 30", fixed = TRUE)
 })
 
-test_that("targets-sourced R directories do not contain non-R files", {
+test_that("targets sources only R scripts from source directories", {
   targets <- paste(readLines(repo_file("_targets.R"), warn = FALSE), collapse = "\n")
-  sourced_dirs <- regmatches(targets, gregexpr('tar_source\\("R/[^"\\n]+"\\)', targets, perl = TRUE))[[1]]
-  sourced_dirs <- sub('tar_source\\("', '', sub('"\\)$', '', sourced_dirs))
-  for (dir in sourced_dirs) {
-    files <- list.files(repo_file(dir), recursive = TRUE, all.files = FALSE, full.names = FALSE)
-    non_r <- files[!dir.exists(file.path(repo_file(dir), files)) & !grepl("\\.[Rr]$", files)]
-    expect_identical(non_r, character())
-  }
+
+  expect_match(targets, "tar_source_r <- function", fixed = TRUE)
+  expect_match(targets, "list.files(path, pattern = \"\\\\.[Rr]$\", recursive = TRUE, full.names = TRUE)", fixed = TRUE)
+  expect_false(grepl('tar_source\\("R/', targets))
 })
 
 test_that("removed placeholder scaffolds do not return as runnable APIs", {
@@ -489,7 +486,23 @@ test_that("removed placeholder scaffolds do not return as runnable APIs", {
     "demean_iv_within_state",
     "tidy_first_stage_results",
     "compute_partial_f_statistics",
-    "compute_partial_r2"
+    "compute_partial_r2",
+    "clean_edu0708_households",
+    "clean_edu0708_members",
+    "clean_edu0708_schooling",
+    "clean_edu0708_private_expenditure",
+    "standardize_edu0708_weights",
+    "standardize_cons0708_hhid",
+    "standardize_cons0708_weights",
+    "standardize_edu1718_hhid",
+    "standardize_edu1718_weights",
+    "join_2017_state_district_labels",
+    "standardize_census_state_names",
+    "standardize_census_district_names",
+    "compute_mother_tongue_population_shares",
+    "add_boundary_join_ids",
+    "collapse_or_expand_split_districts",
+    "attach_spatial_ids"
   )
   for (fn in removed) {
     expect_false(grepl(paste0("\\b", fn, "\\s*<-\\s*function\\b"), src, perl = TRUE), info = fn)

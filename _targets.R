@@ -5,16 +5,20 @@ source("R/packages.R")
 source("R/config.R")
 source("R/paths.R")
 
-tar_source("R/io")
-tar_source("R/clean")
-tar_source("R/districts")
-tar_source("R/measures")
-tar_source("R/selection")
-tar_source("R/iv")
-tar_source("R/diagnostics")
-tar_source("R/benchmarking")
-tar_source("R/output")
-tar_source("R/application_samples")
+tar_source_r <- function(path) {
+  tar_source(list.files(path, pattern = "\\.[Rr]$", recursive = TRUE, full.names = TRUE))
+}
+
+tar_source_r("R/io")
+tar_source_r("R/clean")
+tar_source_r("R/districts")
+tar_source_r("R/measures")
+tar_source_r("R/selection")
+tar_source_r("R/iv")
+tar_source_r("R/diagnostics")
+tar_source_r("R/benchmarking")
+tar_source_r("R/output")
+tar_source_r("R/application_samples")
 
 tar_option_set(
   packages = project_packages(),
