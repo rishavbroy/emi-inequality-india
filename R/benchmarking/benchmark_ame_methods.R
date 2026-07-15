@@ -1,7 +1,7 @@
 # This file is part of the EMI inequality research pipeline.
 # Functions are intentionally small enough to be tested and called by _targets.R.
 
-#' diagnose ame benchmark
+#' benchmark AME methods
 #'
 #' Port the legacy Chunk 10 AME timing/tuning code into opt-in benchmarks.  The
 #' legacy final method used `avg_slopes(..., vcov = TRUE, type = "response")`
