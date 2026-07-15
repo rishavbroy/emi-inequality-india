@@ -64,3 +64,27 @@ test_that("missingness diagnostics write correlation figures and top-pair tables
   expect_equal(nrow(pairs), 2L)
   expect_true(all(c("var1", "var2", "correlation", "abs_correlation") %in% names(pairs)))
 })
+
+test_that("district enrolled means compute weighted enrolled-child context", {
+  df <- data.frame(
+    district_code_0708 = c("001", "001", "001", "002"),
+    enrolled = factor(c("Yes", "Yes", "No", "Yes"), levels = c("No", "Yes")),
+    weight = c(1, 3, 10, 2),
+    IS_EDU_FREE = factor(c("Yes", "No", "Yes", "Yes"), levels = c("Yes", "No")),
+    ENROLLMENT_COST = c(0, 100, 999, 50)
+  )
+
+  out <- district_enrolled_means(df, vars = c("IS_EDU_FREE", "ENROLLMENT_COST"))
+
+  expect_equal(out$dmean_num_IS_EDU_FREE[out$district_code_0708 == "001"], 0.25)
+  expect_equal(out$dmean_num_ENROLLMENT_COST[out$district_code_0708 == "001"], 75)
+  expect_equal(out$dmean_num_ENROLLMENT_COST[out$district_code_0708 == "002"], 50)
+})
+
+test_that("selection join dedupe collapses only identical duplicate rows", {
+  identical_rows <- data.frame(id = c(1, 1), value = c("a", "a"))
+  different_rows <- data.frame(id = c(1, 1), value = c("a", "b"))
+
+  expect_equal(nrow(dedupe_selection_join_rows(identical_rows, "id")), 1L)
+  expect_error(dedupe_selection_join_rows(different_rows, "id"), "non-identical rows")
+})
