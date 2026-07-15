@@ -181,6 +181,9 @@ git status --short
 
 echo "=== RESET PUBLIC/BUILD DIAGNOSTICS ==="
 rm -rf outputs/diagnostics/build outputs/diagnostics/public
+# Clean legacy root-level diagnostic CSVs from the pre-split layout so stale
+# files cannot be mistaken for current public/build diagnostics.
+rm -f outputs/diagnostics/*.csv
 mkdir -p outputs/diagnostics/build outputs/diagnostics/public outputs/diagnostics/extended outputs/benchmarking
 
 echo "=== NORMALIZE SOURCE WHITESPACE ==="

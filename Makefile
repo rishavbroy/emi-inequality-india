@@ -87,6 +87,7 @@ clean-analysis:
 
 clean-public-diagnostics:
 	rm -rf outputs/diagnostics/build outputs/diagnostics/public
+	rm -f outputs/diagnostics/*.csv
 	mkdir -p outputs/diagnostics/build outputs/diagnostics/public
 
 clean-extended-diagnostics:
@@ -198,6 +199,7 @@ clean-targets:
 
 clean-renders-core:
 	rm -rf outputs/figures/* outputs/tables/* outputs/diagnostics/build outputs/diagnostics/public paper/output/*
+	rm -f outputs/diagnostics/*.csv
 	mkdir -p outputs/diagnostics/build outputs/diagnostics/public
 	rm -f paper/report.pdf paper/report.html paper/report.tex paper/appendix.pdf paper/appendix.html paper/appendix.tex
 	rm -f docs/district-matching.html docs/district-matching.pdf docs/district-matching.tex

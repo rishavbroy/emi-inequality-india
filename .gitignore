@@ -32,6 +32,7 @@ data/interim/
 relevant-literature/
 
 # short-lived target/build diagnostics
+outputs/diagnostics/*.csv
 outputs/diagnostics/build/
 outputs/diagnostics/public/
 

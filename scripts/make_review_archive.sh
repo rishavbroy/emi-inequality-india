@@ -97,6 +97,11 @@ fi
 cp -R outputs/figures "$tmpdir/outputs/" 2>/dev/null || true
 cp -R outputs/tables "$tmpdir/outputs/" 2>/dev/null || true
 cp -R outputs/diagnostics "$tmpdir/outputs/" 2>/dev/null || true
+# The canonical diagnostics layout is outputs/diagnostics/{build,public,extended}.
+# Drop stale root-level CSVs from earlier layouts before zipping review.zip.
+if [[ -d "$tmpdir/outputs/diagnostics" ]]; then
+  find "$tmpdir/outputs/diagnostics" -maxdepth 1 -type f -name '*.csv' -delete
+fi
 cp -R outputs/benchmarking "$tmpdir/outputs/" 2>/dev/null || true
 # Include rendered analysis notebooks, which are intentionally outside the
 # normal public-paper render path. Keep GitHub-flavored Markdown outputs and
