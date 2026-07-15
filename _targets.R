@@ -75,6 +75,8 @@ core_pipeline_targets <- list(
   tar_target(district_keys_2017, build_district_keys_2017(nss_2017_education)),
   tar_target(district_keys_2020, build_district_keys_2020(boundaries_2020)),
   tar_target(district_tracker_raw, build_district_tracker(raw_district_changes)),
+  tar_target(legacy_district_tracker_file, "data/processed/district_tracker_legacy.csv", format = "file"),
+  tar_target(legacy_district_tracker, read_legacy_district_tracker(legacy_district_tracker_file)),
   tar_target(district_tracker, apply_manual_district_corrections(district_tracker_raw)),
   tar_target(district_join_map, fuzzy_join_districts(district_tracker, district_keys_2001, district_keys_2007, district_keys_2017, district_keys_2020, cfg)),
 
@@ -85,15 +87,15 @@ core_pipeline_targets <- list(
   tar_target(measures_2007, build_2007_measures(nss_2007_education, nss_2007_consumption, selection_data, ame_results, cfg)),
   tar_target(measures_2017, build_2017_measures(nss_2017_education, cfg)),
   tar_target(linguistic_distance_iv, build_linguistic_distance_iv(census_2001_languages, cfg)),
-  tar_target(district_panel, build_district_panel(district_tracker, district_join_map, measures_2007, measures_2017, linguistic_distance_iv, boundaries_2020, cfg)),
-  tar_target(processed_district_tracker_file, save_processed_district_tracker(district_tracker), format = "file"),
+  tar_target(district_panel, build_district_panel(district_tracker, district_join_map, measures_2007, measures_2017, linguistic_distance_iv, boundaries_2020, cfg, legacy_district_tracker = legacy_district_tracker)),
+  tar_target(processed_district_tracker_file, save_processed_district_tracker(district_tracker, legacy_district_tracker), format = "file"),
   tar_target(processed_district_panel_file, save_processed_district_panel(district_panel), format = "file"),
 
   tar_target(iv_formulas, build_iv_formulas(cfg)),
   tar_target(iv_models, estimate_2sls(district_panel, iv_formulas, cfg)),
   tar_target(first_stage_tests, estimate_first_stage(iv_models, district_panel, cfg)),
   tar_target(diag_public_weak_instruments, diagnose_weak_instruments(iv_models, district_panel, cfg)),
-  tar_target(diag_public_overidentification, diagnose_overidentification(iv_models, district_panel, cfg)),
+  tar_target(diag_public_overidentification, diagnose_overidentification(iv_models, iv_formulas, cfg)),
 
   tar_target(spatial_weights, build_spatial_weights(district_panel, cfg)),
   tar_target(diag_public_spatial_autocorrelation, save_spatial_autocorrelation_diagnostics(diagnose_spatial_autocorrelation(district_panel, iv_models, spatial_weights, cfg)), cue = tar_cue(mode = "always")),
