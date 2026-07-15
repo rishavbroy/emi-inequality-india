@@ -117,9 +117,9 @@ analysis_table(fuzzy_trouble, "Troublesome legacy name-pair checks")
 | str1 | str2 | pair_source | method | distance | threshold | match |
 |:---|:---|:---|:---|---:|---:|:---|
 | 24-Parganas ( North ) | North Twenty Four Parganas | legacy_troublesome_comment | dl | 22.000 | 2.00 | FALSE |
-| 24-Parganas ( North ) | North Twenty Four Parganas | legacy_troublesome_comment | jw | 0.482 | 0.15 | FALSE |
+| 24-Parganas ( North ) | North Twenty Four Parganas | legacy_troublesome_comment | jw | 0.509 | 0.15 | FALSE |
 | 24-Parganas ( North ) | North Twenty Four Parganas | legacy_troublesome_comment | osa | 22.000 | 1.00 | FALSE |
-| 24-Parganas ( North ) | North Twenty Four Parganas | legacy_troublesome_comment | qgram | 15.000 | 0.00 | FALSE |
+| 24-Parganas ( North ) | North Twenty Four Parganas | legacy_troublesome_comment | qgram | 13.000 | 0.00 | FALSE |
 | 24-Parganas ( North ) | North Twenty Four Parganas | legacy_troublesome_comment | soundex | 1.000 | 0.00 | FALSE |
 | Baleshwar | Balasore | legacy_troublesome_comment | dl | 5.000 | 2.00 | FALSE |
 | Baleshwar | Balasore | legacy_troublesome_comment | jw | 0.273 | 0.15 | FALSE |
@@ -131,25 +131,25 @@ analysis_table(fuzzy_trouble, "Troublesome legacy name-pair checks")
 | East Godavari | Godavari East | legacy_troublesome_comment | osa | 10.000 | 1.00 | FALSE |
 | East Godavari | Godavari East | legacy_troublesome_comment | qgram | 0.000 | 0.00 | TRUE |
 | East Godavari | Godavari East | legacy_troublesome_comment | soundex | 1.000 | 0.00 | FALSE |
-| Jammu & Kashmir | Jammu and Kashmir | legacy_troublesome_comment | dl | 3.000 | 2.00 | FALSE |
-| Jammu & Kashmir | Jammu and Kashmir | legacy_troublesome_comment | jw | 0.117 | 0.15 | TRUE |
-| Jammu & Kashmir | Jammu and Kashmir | legacy_troublesome_comment | osa | 3.000 | 1.00 | FALSE |
-| Jammu & Kashmir | Jammu and Kashmir | legacy_troublesome_comment | qgram | 4.000 | 0.00 | FALSE |
-| Jammu & Kashmir | Jammu and Kashmir | legacy_troublesome_comment | soundex | 1.000 | 0.00 | FALSE |
+| Jammu & Kashmir | Jammu and Kashmir | legacy_troublesome_comment | dl | 0.000 | 2.00 | TRUE |
+| Jammu & Kashmir | Jammu and Kashmir | legacy_troublesome_comment | jw | 0.000 | 0.15 | TRUE |
+| Jammu & Kashmir | Jammu and Kashmir | legacy_troublesome_comment | osa | 0.000 | 1.00 | TRUE |
+| Jammu & Kashmir | Jammu and Kashmir | legacy_troublesome_comment | qgram | 0.000 | 0.00 | TRUE |
+| Jammu & Kashmir | Jammu and Kashmir | legacy_troublesome_comment | soundex | 0.000 | 0.00 | TRUE |
 | Mumbai | Mumbai | legacy_troublesome_comment | dl | 0.000 | 2.00 | TRUE |
 | Mumbai | Mumbai | legacy_troublesome_comment | jw | 0.000 | 0.15 | TRUE |
 | Mumbai | Mumbai | legacy_troublesome_comment | osa | 0.000 | 1.00 | TRUE |
 | Mumbai | Mumbai | legacy_troublesome_comment | qgram | 0.000 | 0.00 | TRUE |
 | Mumbai | Mumbai | legacy_troublesome_comment | soundex | 0.000 | 0.00 | TRUE |
 | North Twenty Four Pargan\* | North Twenty Four Parganas | legacy_troublesome_comment | dl | 2.000 | 2.00 | TRUE |
-| North Twenty Four Pargan\* | North Twenty Four Parganas | legacy_troublesome_comment | jw | 0.039 | 0.15 | TRUE |
+| North Twenty Four Pargan\* | North Twenty Four Parganas | legacy_troublesome_comment | jw | 0.026 | 0.15 | TRUE |
 | North Twenty Four Pargan\* | North Twenty Four Parganas | legacy_troublesome_comment | osa | 2.000 | 1.00 | FALSE |
-| North Twenty Four Pargan\* | North Twenty Four Parganas | legacy_troublesome_comment | qgram | 3.000 | 0.00 | FALSE |
+| North Twenty Four Pargan\* | North Twenty Four Parganas | legacy_troublesome_comment | qgram | 2.000 | 0.00 | FALSE |
 | North Twenty Four Pargan\* | North Twenty Four Parganas | legacy_troublesome_comment | soundex | 0.000 | 0.00 | TRUE |
 | Sahibzada Ajit Singh Nag\* | Sahibzada Ajit Singh Nagar | legacy_troublesome_comment | dl | 2.000 | 2.00 | TRUE |
-| Sahibzada Ajit Singh Nag\* | Sahibzada Ajit Singh Nagar | legacy_troublesome_comment | jw | 0.039 | 0.15 | TRUE |
+| Sahibzada Ajit Singh Nag\* | Sahibzada Ajit Singh Nagar | legacy_troublesome_comment | jw | 0.026 | 0.15 | TRUE |
 | Sahibzada Ajit Singh Nag\* | Sahibzada Ajit Singh Nagar | legacy_troublesome_comment | osa | 2.000 | 1.00 | FALSE |
-| Sahibzada Ajit Singh Nag\* | Sahibzada Ajit Singh Nagar | legacy_troublesome_comment | qgram | 3.000 | 0.00 | FALSE |
+| Sahibzada Ajit Singh Nag\* | Sahibzada Ajit Singh Nagar | legacy_troublesome_comment | qgram | 2.000 | 0.00 | FALSE |
 | Sahibzada Ajit Singh Nag\* | Sahibzada Ajit Singh Nagar | legacy_troublesome_comment | soundex | 0.000 | 0.00 | TRUE |
 | Sikim | Sikkim | legacy_troublesome_comment | dl | 1.000 | 2.00 | TRUE |
 | Sikim | Sikkim | legacy_troublesome_comment | jw | 0.056 | 0.15 | TRUE |
@@ -157,9 +157,9 @@ analysis_table(fuzzy_trouble, "Troublesome legacy name-pair checks")
 | Sikim | Sikkim | legacy_troublesome_comment | qgram | 1.000 | 0.00 | FALSE |
 | Sikim | Sikkim | legacy_troublesome_comment | soundex | 0.000 | 0.00 | TRUE |
 | Sri Potti Sriramulu Nell\* | Sri Potti Sriramulu Nellore | legacy_troublesome_comment | dl | 3.000 | 2.00 | FALSE |
-| Sri Potti Sriramulu Nell\* | Sri Potti Sriramulu Nellore | legacy_troublesome_comment | jw | 0.050 | 0.15 | TRUE |
+| Sri Potti Sriramulu Nell\* | Sri Potti Sriramulu Nellore | legacy_troublesome_comment | jw | 0.037 | 0.15 | TRUE |
 | Sri Potti Sriramulu Nell\* | Sri Potti Sriramulu Nellore | legacy_troublesome_comment | osa | 3.000 | 1.00 | FALSE |
-| Sri Potti Sriramulu Nell\* | Sri Potti Sriramulu Nellore | legacy_troublesome_comment | qgram | 4.000 | 0.00 | FALSE |
+| Sri Potti Sriramulu Nell\* | Sri Potti Sriramulu Nellore | legacy_troublesome_comment | qgram | 3.000 | 0.00 | FALSE |
 | Sri Potti Sriramulu Nell\* | Sri Potti Sriramulu Nellore | legacy_troublesome_comment | soundex | 0.000 | 0.00 | TRUE |
 
 Troublesome legacy name-pair checks

@@ -106,8 +106,8 @@ analysis_table(fuzzy_threshold, "Threshold sensitivity by method and pair source
 
 | method | threshold | pair_source | n_pairs | n_matches | pct_matches |
 |:---|:---|:---|:---|:---|:---|
-| soundex | 0 | active_source_key_inventory_2001 | 19071 | 549 | 0.0287871637564889 |
-| soundex | 0 | active_source_key_inventory_2005 | 19610 | 567 | 0.0289138194798572 |
+| soundex | 0 | active_source_key_inventory_2001 | 19071 | 550 | 0.0288395993917466 |
+| soundex | 0 | active_source_key_inventory_2005 | 19610 | 568 | 0.0289648138704742 |
 | soundex | 0 | active_source_key_inventory_2006 | 19714 | 575 | 0.0291670893781069 |
 | soundex | 0 | active_source_key_inventory_2007 | 20069 | 595 | 0.0296477153819323 |
 | soundex | 0 | active_source_key_inventory_2008 | 20276 | 602 | 0.0296902742158217 |
@@ -116,7 +116,7 @@ analysis_table(fuzzy_threshold, "Threshold sensitivity by method and pair source
 | soundex | 0 | active_source_key_inventory_2018 | 23793 | 740 | 0.0311015844996428 |
 | soundex | 0 | active_source_key_inventory_2019 | 24022 | 749 | 0.0311797518940971 |
 | soundex | 0 | active_source_key_inventory_2020 | 24022 | 749 | 0.0311797518940971 |
-| soundex | 0 | legacy_troublesome_comment | 9 | 6 | 0.666666666666667 |
+| soundex | 0 | legacy_troublesome_comment | 9 | 7 | 0.777777777777778 |
 | soundex | 0 | tracker_2001_to_2005 | 21 | 1 | 0.0476190476190476 |
 | soundex | 0 | tracker_2001_to_2007 | 35 | 1 | 0.0285714285714286 |
 | soundex | 0 | tracker_2005_to_2006 | 6 | 0 | 0 |
@@ -128,17 +128,17 @@ analysis_table(fuzzy_threshold, "Threshold sensitivity by method and pair source
 | soundex | 0 | tracker_2017_to_2018 | 3 | 0 | 0 |
 | soundex | 0 | tracker_2017_to_2020 | 13 | 1 | 0.0769230769230769 |
 | soundex | 0 | tracker_2018_to_2019 | 10 | 1 | 0.1 |
-| qgram | 0 | active_source_key_inventory_2001 | 19071 | 0 | 0 |
-| qgram | 0 | active_source_key_inventory_2005 | 19610 | 0 | 0 |
-| qgram | 0 | active_source_key_inventory_2006 | 19714 | 0 | 0 |
-| qgram | 0 | active_source_key_inventory_2007 | 20069 | 0 | 0 |
-| qgram | 0 | active_source_key_inventory_2008 | 20276 | 0 | 0 |
-| qgram | 0 | active_source_key_inventory_2011 | 21761 | 0 | 0 |
-| qgram | 0 | active_source_key_inventory_2017 | 23741 | 0 | 0 |
-| qgram | 0 | active_source_key_inventory_2018 | 23793 | 0 | 0 |
-| qgram | 0 | active_source_key_inventory_2019 | 24022 | 0 | 0 |
-| qgram | 0 | active_source_key_inventory_2020 | 24022 | 0 | 0 |
-| qgram | 0 | legacy_troublesome_comment | 9 | 2 | 0.222222222222222 |
+| qgram | 0 | active_source_key_inventory_2001 | 19071 | 482 | 0.0252739761942216 |
+| qgram | 0 | active_source_key_inventory_2005 | 19610 | 501 | 0.0255481896991331 |
+| qgram | 0 | active_source_key_inventory_2006 | 19714 | 508 | 0.0257684893983971 |
+| qgram | 0 | active_source_key_inventory_2007 | 20069 | 525 | 0.0261597488664109 |
+| qgram | 0 | active_source_key_inventory_2008 | 20276 | 531 | 0.0261885973564806 |
+| qgram | 0 | active_source_key_inventory_2011 | 21761 | 567 | 0.0260557878773953 |
+| qgram | 0 | active_source_key_inventory_2017 | 23741 | 645 | 0.0271681900509667 |
+| qgram | 0 | active_source_key_inventory_2018 | 23793 | 646 | 0.0271508426848233 |
+| qgram | 0 | active_source_key_inventory_2019 | 24022 | 654 | 0.0272250437099326 |
+| qgram | 0 | active_source_key_inventory_2020 | 24022 | 654 | 0.0272250437099326 |
+| qgram | 0 | legacy_troublesome_comment | 9 | 3 | 0.333333333333333 |
 | qgram | 0 | tracker_2001_to_2005 | 21 | 0 | 0 |
 | qgram | 0 | tracker_2001_to_2007 | 35 | 0 | 0 |
 | qgram | 0 | tracker_2005_to_2006 | 6 | 0 | 0 |
