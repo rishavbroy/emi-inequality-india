@@ -10,20 +10,8 @@ clean_nss_2007_consumption <- function(raw) {
   out
 }
 
-#' standardize cons0708 hhid
-#'
-standardize_cons0708_hhid <- function(df) {
-  df
-}
-
 #' standardize cons0708 district codes
 #'
 standardize_cons0708_district_codes <- function(df) {
   std(df, 2007L)
-}
-
-#' standardize cons0708 weights
-#'
-standardize_cons0708_weights <- function(df) {
-  df
 }

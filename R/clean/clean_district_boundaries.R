@@ -58,9 +58,3 @@ repair_invalid_geometries <- function(sf_df) {
   if (!inherits(sf_df, "sf")) return(sf_df)
   sf::st_make_valid(sf_df)
 }
-
-#' add boundary join ids
-#'
-add_boundary_join_ids <- function(df) {
-  df
-}

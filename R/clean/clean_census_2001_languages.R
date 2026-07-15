@@ -120,18 +120,6 @@ select_top_mother_tongues <- function(df, n = 3L) {
   df[sort(keep), , drop = FALSE]
 }
 
-#' standardize census state names
-#'
-standardize_census_state_names <- function(df) {
-  df
-}
-
-#' standardize census district names
-#'
-standardize_census_district_names <- function(df) {
-  df
-}
-
 #' clean mother tongue names
 #'
 clean_mother_tongue_names <- function(df) {
@@ -139,11 +127,5 @@ clean_mother_tongue_names <- function(df) {
   if (!is.null(mother_tongue)) {
     df$mother_tongue <- tools::toTitleCase(tolower(gsub("^\\d{1,3}\\s+", "", as.character(df[[mother_tongue]]))))
   }
-  df
-}
-
-#' compute mother tongue population shares
-#'
-compute_mother_tongue_population_shares <- function(df) {
   df
 }
