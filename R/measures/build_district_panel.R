@@ -202,6 +202,10 @@ legacy_panel_validation_failures <- function(out) {
     if (any(incomplete)) add("district_panel has ", sum(incomplete), " rows with missing core IV analysis values.")
   }
 
+  general_validation <- attr(out, "district_panel_validation", exact = TRUE)
+  if (is.data.frame(general_validation) && "message" %in% names(general_validation) && nrow(general_validation)) {
+    failures <- c(failures, unique(stats::na.omit(as.character(general_validation$message))))
+  }
 
   for (flag in c(".matched_2001", ".matched_2007", ".matched_2017")) {
     if (flag %in% names(df) && any(!isTRUEish(df[[flag]]), na.rm = TRUE)) {
