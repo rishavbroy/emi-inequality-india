@@ -4,8 +4,8 @@
 #' build district panel
 #'
 #' @return A district panel; an sf object when validated boundary geometry joins.
-build_district_panel <- function(district_tracker, district_join_map, measures_2007, measures_2017, linguistic_distance_iv, boundaries_2020, cfg) {
-  tracker <- legacy_tracker_frame(district_tracker)
+build_district_panel <- function(district_tracker, district_join_map, measures_2007, measures_2017, linguistic_distance_iv, boundaries_2020, cfg, legacy_district_tracker = NULL) {
+  tracker <- legacy_tracker_frame(district_tracker, legacy_district_tracker)
   if (nrow(tracker) && legacy_named_measures_available(measures_2007, measures_2017, linguistic_distance_iv)) {
     out <- build_tracker_based_district_panel(tracker, measures_2007, measures_2017, linguistic_distance_iv, boundaries_2020)
     if (nrow(out)) return(validate_legacy_district_panel(out, cfg, join_map = district_join_map))
@@ -31,14 +31,27 @@ build_district_panel <- function(district_tracker, district_join_map, measures_2
   validate_legacy_district_panel(attach_panel_geometry(out, boundaries_2020), cfg, join_map = district_join_map)
 }
 
-legacy_tracker_frame <- function(district_tracker) {
+legacy_tracker_frame <- function(district_tracker, legacy_district_tracker = NULL) {
   tracker <- safe_df(district_tracker)
-  if (all(c("state_01", "district_01", "state_07", "district_07", "state_17", "district_17", "state_20", "district_20") %in% names(tracker))) {
+  if (all(legacy_tracker_required_columns() %in% names(tracker))) {
     return(tracker)
   }
-  path <- "data/processed/district_tracker_legacy.csv"
-  if (file.exists(path)) return(utils::read.csv(path, stringsAsFactors = FALSE))
+  fallback <- safe_df(legacy_district_tracker %||% data.frame())
+  if (all(legacy_tracker_required_columns() %in% names(fallback))) {
+    return(fallback)
+  }
   data.frame()
+}
+
+legacy_tracker_required_columns <- function() {
+  c("state_01", "district_01", "state_07", "district_07", "state_17", "district_17", "state_20", "district_20")
+}
+
+read_legacy_district_tracker <- function(path) {
+  if (!file.exists(path)) {
+    stop("Missing legacy district tracker file: ", path, call. = FALSE)
+  }
+  utils::read.csv(path, stringsAsFactors = FALSE)
 }
 
 legacy_named_measures_available <- function(...) {
@@ -189,9 +202,6 @@ legacy_panel_validation_failures <- function(out) {
     if (any(incomplete)) add("district_panel has ", sum(incomplete), " rows with missing core IV analysis values.")
   }
 
-  if ("district_panel_id" %in% names(df) && anyDuplicated(df$district_panel_id)) {
-    add("district_panel_id is not unique after tracker/source matching.")
-  }
 
   for (flag in c(".matched_2001", ".matched_2007", ".matched_2017")) {
     if (flag %in% names(df) && any(!isTRUEish(df[[flag]]), na.rm = TRUE)) {

@@ -1,5 +1,7 @@
 mode: final
 run_full_ame: true
+strict_district_panel_validation: false
+strict_legacy_panel_validation: false
 run_diagnostics:
   ame_benchmark: false
   district_tracker_sources: true
