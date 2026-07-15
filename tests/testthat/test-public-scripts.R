@@ -45,10 +45,13 @@ test_that("public audit clean preserves extended diagnostics and benchmarks", {
   expect_match(src, "--with-extended-diagnostics", fixed = TRUE)
   expect_match(src, "--with-benchmarks", fixed = TRUE)
   expect_match(src, "rm -rf outputs/diagnostics/build outputs/diagnostics/public", fixed = TRUE)
+  expect_match(src, "rm -f outputs/diagnostics/*.csv", fixed = TRUE)
   expect_false(grepl("rm -rf outputs/diagnostics/\\*", src))
   expect_match(makefile, "rm -rf outputs/figures/* outputs/tables/* outputs/diagnostics/build outputs/diagnostics/public", fixed = TRUE)
+  expect_match(makefile, "rm -f outputs/diagnostics/*.csv", fixed = TRUE)
   expect_match(makefile, "clean-extended-diagnostics", fixed = TRUE)
   expect_match(makefile, "clean-benchmarking", fixed = TRUE)
+  expect_match(gitignore, "outputs/diagnostics/*.csv", fixed = TRUE)
   expect_match(gitignore, "outputs/diagnostics/build/", fixed = TRUE)
   expect_match(gitignore, "outputs/diagnostics/public/", fixed = TRUE)
 })
@@ -458,6 +461,14 @@ test_that("analysis notes preserve legacy prose and document deviations", {
   expect_match(deviations, "Chunk 30", fixed = TRUE)
 })
 
+
+
+test_that("review archives do not carry stale root-level diagnostic CSVs", {
+  archive <- paste(readLines(repo_file("scripts", "make_review_archive.sh"), warn = FALSE), collapse = "\n")
+
+  expect_match(archive, "find \"$tmpdir/outputs/diagnostics\" -maxdepth 1 -type f -name '*.csv' -delete", fixed = TRUE)
+})
+
 test_that("targets sources only R scripts from source directories", {
   targets <- paste(readLines(repo_file("_targets.R"), warn = FALSE), collapse = "\n")
 
@@ -502,7 +513,11 @@ test_that("removed placeholder scaffolds do not return as runnable APIs", {
     "compute_mother_tongue_population_shares",
     "add_boundary_join_ids",
     "collapse_or_expand_split_districts",
-    "attach_spatial_ids"
+    "attach_spatial_ids",
+    "compute_enrollment_share_2007",
+    "compute_education_freebies_ivs_2007",
+    "compute_2017_controls",
+    "estimate_non_iv_comparisons"
   )
   for (fn in removed) {
     expect_false(grepl(paste0("\\b", fn, "\\s*<-\\s*function\\b"), src, perl = TRUE), info = fn)

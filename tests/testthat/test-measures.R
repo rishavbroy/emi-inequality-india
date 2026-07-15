@@ -174,3 +174,25 @@ test_that("district panel validation records duplicate and range issues", {
   expect_true(any(issues$check == "panel_variable_ranges"))
   expect_error(validate_district_panel(panel, strict = TRUE), "district_panel_id is not unique")
 })
+
+
+test_that("legacy district-panel validation inspects join-map many-to-many flags", {
+  panel <- data.frame(
+    district_panel_id = "a",
+    EMIE = 10,
+    wavg_ling_degrees = 1
+  )
+  join_map <- data.frame(
+    many_to_many = TRUE,
+    many_to_many_allowed = FALSE
+  )
+
+  out <- validate_legacy_district_panel(panel, cfg = list(strict_district_panel_validation = FALSE), join_map = join_map)
+  issues <- attr(out, "district_panel_validation")
+
+  expect_true(any(issues$message == "join_map contains unintended many-to-many matches."))
+  expect_error(
+    validate_legacy_district_panel(panel, cfg = list(strict_district_panel_validation = TRUE), join_map = join_map),
+    "join_map contains unintended many-to-many matches"
+  )
+})

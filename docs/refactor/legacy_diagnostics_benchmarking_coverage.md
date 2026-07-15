@@ -61,7 +61,7 @@ The diagnostics/benchmarking correctness pass adds the following guardrails afte
 ## Analysis note coverage added after rendered-note review
 
 - Legacy Chunk 8 is rendered in `analysis/diagnostics/missingness-diagnostics.qmd`, with current missingness-count, regional-missingness, and logit-summary tables from `outputs/diagnostics/extended/missingness/`.
-- Legacy Chunk 15 is rendered in `analysis/exploratory/instrument-exploration.qmd`, with current IV-panel diagnostic tables from `outputs/diagnostics/`.
+- Legacy Chunk 15 is rendered in `analysis/exploratory/instrument-exploration.qmd`, with current IV-panel diagnostic tables from `outputs/diagnostics/public/`.
 - Legacy Chunk 20 is rendered in `analysis/diagnostics/district-matching-diagnostics.qmd`, with current unmatched-row, source-key-inventory, key-comparison, and many-to-many diagnostics from `outputs/diagnostics/extended/district_matching/`.
 - Legacy Chunk 6 is rendered without the earlier line-220 truncation so the same-name-district summary comments are included.  The expected 6--10 same-name-district benchmark is now emitted as `tracker_legacy_expected_same_name_districts.csv`.
 - Rendered analysis prose uses legacy comments as the source of truth.  Code-like commented blocks are fenced for readability and to prevent Quarto/GFM parsing artifacts; prose deviations are limited to explicit deviation notes immediately adjacent to current target-backed outputs.

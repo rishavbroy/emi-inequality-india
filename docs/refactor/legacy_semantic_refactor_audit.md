@@ -22,7 +22,7 @@ Latest inspected logs:
 
 ## Immediate Repair Order
 
-1. Keep auditing the corrected district pseudo-panel row set and measure construction, especially the source rows added by the legacy fuzzy cascade, as an accepted correction rather than forcing the legacy 454-row PDF target. The final parity audit now writes row-level diagnostics to `outputs/diagnostics/iv_panel_current_rows.csv`, `iv_panel_match_summary.csv`, `iv_panel_state_summary.csv`, and `iv_panel_extreme_rows.csv` so this decision can be made from district-level evidence.
+1. Keep auditing the corrected district pseudo-panel row set and measure construction, especially the source rows added by the legacy fuzzy cascade, as an accepted correction rather than forcing the legacy 454-row PDF target. The final parity audit now writes row-level diagnostics to `outputs/diagnostics/public/iv_panel_current_rows.csv`, `outputs/diagnostics/public/iv_panel_match_summary.csv`, `outputs/diagnostics/public/iv_panel_state_summary.csv`, and `outputs/diagnostics/public/iv_panel_extreme_rows.csv` so this decision can be made from district-level evidence.
 2. Reconcile the IV treatment/instrument/outcome summaries against the legacy Rmd code, not only against the PDF table values.
 3. Keep the probit and selection pipeline under methodological-contract tests; the current selection row count and core survey/probit specification are treated as retained unless a new code-level discrepancy is found.
 4. Reduce final report page-count/prose drift after the panel/model outputs are methodologically settled.
@@ -76,12 +76,12 @@ The district-panel builder now applies the legacy source-attachment cascade more
 
 ### 2026-06-11 IV pseudo-panel diagnostic contract
 
-The final legacy-parity audit now writes row-level IV pseudo-panel diagnostics into `outputs/diagnostics/` before applying the hard parity checks. These files are not output targets and do not weaken the structural audit. They are review artifacts supporting the decision to treat the current enlarged panel as a justified correction to legacy district harmonization. The expected review path is:
+The final legacy-parity audit now writes row-level IV pseudo-panel diagnostics into `outputs/diagnostics/public/` before applying the hard parity checks. These files are not output targets and do not weaken the structural audit. They are review artifacts supporting the decision to treat the current enlarged panel as a justified correction to legacy district harmonization. The expected review path is:
 
-- inspect `iv_panel_current_rows.csv` for the exact tracker rows, district names, source-year keys, match flags, and core IV measures used by the active model;
-- inspect `iv_panel_match_summary.csv` to separate rows attached through all core source years from rows entering via a partial or fallback source match;
-- inspect `iv_panel_state_summary.csv` for states driving the sample-size and mean-shift differences;
-- inspect `iv_panel_extreme_rows.csv` for districts with high/low EMIE, linguistic distance, and weighted population that can disproportionately move Table 4/5/6 estimates.
+- inspect `outputs/diagnostics/public/iv_panel_current_rows.csv` for the exact tracker rows, district names, source-year keys, match flags, and core IV measures used by the active model;
+- inspect `outputs/diagnostics/public/iv_panel_match_summary.csv` to separate rows attached through all core source years from rows entering via a partial or fallback source match;
+- inspect `outputs/diagnostics/public/iv_panel_state_summary.csv` for states driving the sample-size and mean-shift differences;
+- inspect `outputs/diagnostics/public/iv_panel_extreme_rows.csv` for districts with high/low EMIE, linguistic distance, and weighted population that can disproportionately move Table 4/5/6 estimates.
 
 The methodological standard remains unchanged: changes to the probit, district pseudo-panel, or measure construction must either retain the legacy research design or be recorded in this ledger as an `accepted_deviation` with a reason. The diagnostic CSVs exist to make that judgment falsifiable rather than inferred from aggregate table differences alone.
 
