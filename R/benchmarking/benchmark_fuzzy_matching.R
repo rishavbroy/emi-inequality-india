@@ -2,10 +2,6 @@
 # Fuzzy-matching tuning and threshold helpers are sourced by benchmark targets
 # and reused by extended fuzzy-matching diagnostics.
 
-legacy_fuzzy_match_methods <- function() c("soundex", "qgram", "jw", "dl", "osa")
-
-legacy_fuzzy_match_thresholds <- function() c(0, 0, 0.15, 2, 1)
-
 legacy_fuzzy_tuning_reference <- function() {
   data.frame(
     diagnostic = c(
@@ -59,31 +55,6 @@ legacy_troublesome_name_pairs <- function() {
 #' This preserves the legacy helper from Chunk 16.  It uses stringdist's named
 #' methods when available, including the legacy notes: soundex = 0, qgram = 0,
 #' jw <= 0.15, dl <= 2, and osa <= 1.
-evaluate_distances <- function(pairs, methods, thresholds, col1 = "str1", col2 = "str2") {
-  if (length(methods) != length(thresholds)) {
-    stop('The character vectors "methods" and "thresholds" must have the same length.', call. = FALSE)
-  }
-  pairs <- as.data.frame(pairs, stringsAsFactors = FALSE)
-  if (!"pair_source" %in% names(pairs)) pairs$pair_source <- "unspecified"
-  need_pkg("stringdist", "fuzzy matching diagnostics")
-  out <- safe_bind_rows(lapply(seq_along(methods), function(i) {
-    m <- methods[[i]]
-    th <- thresholds[[i]]
-    distance <- stringdist::stringdist(as.character(pairs[[col1]]), as.character(pairs[[col2]]), method = m)
-    data.frame(
-      str1 = pairs[[col1]],
-      str2 = pairs[[col2]],
-      pair_source = pairs$pair_source,
-      method = m,
-      distance = distance,
-      threshold = th,
-      match = distance <= th,
-      stringsAsFactors = FALSE
-    )
-  }))
-  out[order(out$pair_source, out$str1, out$str2, out$method), , drop = FALSE]
-}
-
 benchmark_string_distance_methods <- function(pairs, methods = legacy_fuzzy_match_methods(), thresholds = legacy_fuzzy_match_thresholds()) {
   evaluate_distances(pairs, methods, thresholds)
 }

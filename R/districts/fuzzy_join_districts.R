@@ -5,24 +5,6 @@
 # The functions below preserve the cascading fuzzy-match architecture from the legacy Rmd.
 # sample-end marker appears near the end of this file after the functions are migrated.
 
-#' evaluate distances
-#'
-evaluate_distances <- function(pairs, methods, thresholds, col1 = "str1", col2 = "str2") {
-  if (length(methods) != length(thresholds)) stop("\"methods\" and \"thresholds\" must have the same length.")
-  safe_bind_rows(lapply(seq_along(methods), function(i) {
-    distance <- utils::adist(canon(pairs[[col1]]), canon(pairs[[col2]]), ignore.case = TRUE)[, 1]
-    data.frame(
-      str1 = pairs[[col1]],
-      str2 = pairs[[col2]],
-      method = methods[i],
-      distance = distance,
-      threshold = thresholds[i],
-      match = distance <= thresholds[i],
-      stringsAsFactors = FALSE
-    )
-  }))
-}
-
 #' fuzzy join sequence
 #'
 fuzzy_join_sequence <- function(df1, df2, dist1, state1, dist2, state2, methods, thresholds, mode = "full") {

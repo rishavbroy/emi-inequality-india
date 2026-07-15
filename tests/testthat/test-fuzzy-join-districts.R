@@ -1,7 +1,11 @@
-test_that("evaluate_distances works on known pairs", {
+test_that("evaluate_distances works on known pairs with method-specific backends", {
+  skip_if_not_installed("stringdist")
   pairs <- tibble::tribble(~str1, ~str2, "Sikim", "Sikkim")
-  out <- evaluate_distances(pairs, c("osa"), c(1))
-  expect_true(out$match[1])
+  out <- evaluate_distances(pairs, c("jw", "osa"), c(0.15, 1))
+
+  expect_true(all(out$match))
+  expect_setequal(out$method, c("jw", "osa"))
+  expect_gt(length(unique(out$distance)), 1L)
 })
 
 test_that("fuzzy_join_districts exposes diagnostic columns and attributes", {

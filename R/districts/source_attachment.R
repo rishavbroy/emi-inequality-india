@@ -26,30 +26,19 @@ legacy_attach_source <- function(tracker, source, suffixes, source_label) {
     to_join <- tracker[!tracker[[already]], c(".tracker_row", ".legacy_state_key", ".legacy_district_key"), drop = FALSE]
     if (!nrow(to_join)) next
     joined <- merge(to_join, source, by = c(".legacy_state_key", ".legacy_district_key"), all.x = TRUE, sort = FALSE)
-    source_cols <- setdiff(names(source), c(".legacy_state_key", ".legacy_district_key"))
-    has_value <- vapply(seq_len(nrow(joined)), function(i) {
-      any(vapply(joined[i, source_cols, drop = FALSE], function(col) {
-        value <- col[[1]]
-        length(value) > 0L && !all(is.na(value))
-      }, logical(1)))
-    }, logical(1))
-    hits <- joined[!is.na(joined$.tracker_row) & has_value, , drop = FALSE]
+    source_cols <- setdiff(names(joined), c(".legacy_state_key", ".legacy_district_key", ".tracker_row"))
+    hits <- source_hits_with_values(joined, source_cols)
     if (!nrow(hits)) next
     rows <- match(hits$.tracker_row, tracker$.tracker_row)
-    for (nm in setdiff(names(hits), c(".legacy_state_key", ".legacy_district_key", ".tracker_row"))) {
-      if (!nm %in% names(tracker)) tracker[[nm]] <- NA
-      fill <- !vapply(tracker[[nm]][rows], scalar_has_value, logical(1)) &
-        vapply(hits[[nm]], scalar_has_value, logical(1))
-      if (any(fill)) tracker[[nm]][rows[fill]] <- hits[[nm]][fill]
-    }
-    tracker[[already]][rows] <- TRUE
+    tracker <- fill_source_values_by_tracker_row(tracker, hits, source_cols, rows)
+    tracker[[already]][rows[!is.na(rows)]] <- TRUE
   }
   tracker$.legacy_state_key <- NULL
   tracker$.legacy_district_key <- NULL
   tracker
 }
 
-legacy_attach_source_one_to_one <- function(tracker, source, suffixes, source_label, max_dist = 2L) {
+legacy_attach_source_one_to_one <- function(tracker, source, suffixes, source_label) {
   if (!nrow(source)) return(tracker)
   source <- add_legacy_join_keys(source, suffixes)
   if (!all(c(".legacy_state_key", ".legacy_district_key") %in% names(source))) return(tracker)
@@ -99,13 +88,8 @@ legacy_attach_source_one_to_one <- function(tracker, source, suffixes, source_la
         ".legacy_match_method", ".legacy_match_distance"
       )
     )
-    for (nm in source_cols) {
-      if (!nm %in% names(tracker)) tracker[[nm]] <- NA
-      fill <- !vapply(tracker[[nm]][rows], scalar_has_value, logical(1)) &
-        vapply(hits[[nm]], scalar_has_value, logical(1))
-      if (any(fill)) tracker[[nm]][rows[fill]] <- hits[[nm]][fill]
-    }
-    tracker[[matched]][rows] <- TRUE
+    tracker <- fill_source_values_by_tracker_row(tracker, hits, source_cols, rows)
+    tracker[[matched]][rows[!is.na(rows)]] <- TRUE
     source$.source_used[match(hits$.source_row, source$.source_row)] <- TRUE
     if (all(source$.source_used)) break
   }
@@ -115,10 +99,6 @@ legacy_attach_source_one_to_one <- function(tracker, source, suffixes, source_la
   tracker
 }
 
-
-legacy_source_match_methods <- function() c("soundex", "qgram", "jw", "dl", "osa")
-
-legacy_source_match_thresholds <- function() c(0, 0, 0.15, 2, 1)
 
 legacy_select_source_tracker_matches <- function(
   source_open, tracker_open,
@@ -273,22 +253,39 @@ legacy_attach_source_by_standard_keys <- function(panel, source, source_label = 
   }
 
   rows <- match(hits$.tracker_row, panel$.tracker_row)
-  for (nm in source_cols) {
-    if (!nm %in% names(panel)) panel[[nm]] <- NA
-    fill <- !vapply(panel[[nm]][rows], scalar_has_value, logical(1)) &
-      vapply(hits[[nm]], scalar_has_value, logical(1))
-    if (any(fill)) panel[[nm]][rows[fill]] <- hits[[nm]][fill]
-  }
+  panel <- fill_source_values_by_tracker_row(panel, hits, source_cols, rows)
 
   if (!is.null(source_label)) {
     matched <- paste0(".matched_", source_label)
     if (!matched %in% names(panel)) panel[[matched]] <- FALSE
-    panel[[matched]][rows] <- TRUE
+    panel[[matched]][rows[!is.na(rows)]] <- TRUE
   }
 
   panel$.std_state_key <- NULL
   panel$.std_district_key <- NULL
   panel
+}
+
+source_hits_with_values <- function(joined, source_cols) {
+  if (!nrow(joined) || !length(source_cols)) return(joined[0, , drop = FALSE])
+  has_value <- vapply(seq_len(nrow(joined)), function(i) {
+    any(vapply(joined[i, source_cols, drop = FALSE], scalar_has_value, logical(1)))
+  }, logical(1))
+  joined[!is.na(joined$.tracker_row) & has_value, , drop = FALSE]
+}
+
+fill_source_values_by_tracker_row <- function(target, hits, source_cols, rows) {
+  valid <- !is.na(rows)
+  if (!any(valid) || !length(source_cols)) return(target)
+  rows <- rows[valid]
+  hits <- hits[valid, , drop = FALSE]
+  for (nm in source_cols) {
+    if (!nm %in% names(target)) target[[nm]] <- NA
+    fill <- !vapply(target[[nm]][rows], scalar_has_value, logical(1)) &
+      vapply(hits[[nm]], scalar_has_value, logical(1))
+    if (any(fill)) target[[nm]][rows[fill]] <- hits[[nm]][fill]
+  }
+  target
 }
 
 scalar_has_value <- function(x) {
