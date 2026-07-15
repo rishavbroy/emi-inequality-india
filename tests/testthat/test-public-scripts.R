@@ -517,7 +517,11 @@ test_that("removed placeholder scaffolds do not return as runnable APIs", {
     "compute_enrollment_share_2007",
     "compute_education_freebies_ivs_2007",
     "compute_2017_controls",
-    "estimate_non_iv_comparisons"
+    "estimate_non_iv_comparisons",
+    "join_panel_to_geometry",
+    "assert_unique_panel_rows",
+    "run_sargan_if_applicable",
+    "run_gmm_overid_if_applicable"
   )
   for (fn in removed) {
     expect_false(grepl(paste0("\\b", fn, "\\s*<-\\s*function\\b"), src, perl = TRUE), info = fn)
