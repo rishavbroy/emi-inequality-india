@@ -4,3 +4,5 @@
 "unmatched_rows",0,NA
 "source_key_inventory",3175,NA
 "many_to_many_cases",0,NA
+"key_role:shared_panel_join_key",482,NA
+"key_role:source_key_inventory_only",1523,NA

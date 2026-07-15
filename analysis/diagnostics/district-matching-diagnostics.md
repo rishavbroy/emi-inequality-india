@@ -120,13 +120,15 @@ Legacy Chunk 20 diagnostic reference
 analysis_table(dm_tracker_panel, "Tracker/panel/intermediate row-count comparison")
 ```
 
-| object               | n_rows | n_complete_rows |
-|:---------------------|-------:|----------------:|
-| district_panel       |    482 |             482 |
-| district_join_map    |   3175 |            3175 |
-| unmatched_rows       |      0 |              NA |
-| source_key_inventory |   3175 |              NA |
-| many_to_many_cases   |      0 |              NA |
+| object                             | n_rows | n_complete_rows |
+|:-----------------------------------|-------:|----------------:|
+| district_panel                     |    482 |             482 |
+| district_join_map                  |   3175 |            3175 |
+| unmatched_rows                     |      0 |              NA |
+| source_key_inventory               |   3175 |              NA |
+| many_to_many_cases                 |      0 |              NA |
+| key_role:shared_panel_join_key     |    482 |              NA |
+| key_role:source_key_inventory_only |   1523 |              NA |
 
 Tracker/panel/intermediate row-count comparison
 
@@ -149,7 +151,7 @@ sapply(
 ```
 
     tracker_panel_comparison     source_key_inventory      true_unmatched_rows 
-                           3                        0                        0 
+                           5                        0                        0 
           many_to_many_cases 
                            0 
 
