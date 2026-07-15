@@ -28,3 +28,32 @@ test_that("manual correction validation requires audit columns", {
     "Manual corrections missing columns:"
   )
 })
+
+test_that("manual corrections apply documented typo replacements", {
+  path <- tempfile(fileext = ".csv")
+  corrections <- data.frame(
+    correction_id = "c1",
+    source_year = 2007L,
+    source_dataset = "toy",
+    state_raw = "Bihar",
+    district_raw = "Patna Old",
+    state_corrected = "Bihar",
+    district_corrected = "Patna",
+    correction_type = "typo",
+    reason = "Toy correction for test",
+    stringsAsFactors = FALSE
+  )
+  utils::write.csv(corrections, path, row.names = FALSE)
+  tracker <- data.frame(
+    source_file_id = "toy",
+    source_year = 2007L,
+    state_07 = "Bihar",
+    district_07 = "Patna Old",
+    stringsAsFactors = FALSE
+  )
+
+  out <- apply_manual_district_corrections(tracker, path)
+
+  expect_equal(out$district_07, "Patna")
+  expect_equal(attr(out, "manual_correction_audit")$n_matching_rows_before, 1L)
+})
