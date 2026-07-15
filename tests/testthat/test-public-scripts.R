@@ -465,7 +465,7 @@ test_that("targets-sourced R directories do not contain non-R files", {
   for (dir in sourced_dirs) {
     files <- list.files(repo_file(dir), recursive = TRUE, all.files = FALSE, full.names = FALSE)
     non_r <- files[!dir.exists(file.path(repo_file(dir), files)) & !grepl("\\.[Rr]$", files)]
-    expect_length(non_r, 0L, info = paste(dir, paste(non_r, collapse = ", ")))
+    expect_identical(non_r, character())
   }
 })
 
