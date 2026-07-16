@@ -52,7 +52,7 @@ Rscript scripts/update_checksums.R
 
 ## Commands
 
-The recommended replication entry point is the [scripted public-build audit](scripts/run_public_build_audit.sh), because it rebuilds the public QMDs, runs tests, executes the final public checks, audits rendered values, and packages a review archive. Lower-level [`Makefile`](Makefile) targets remain useful for development, but they are not a substitute for the audit script before sharing a bundle.
+The recommended replication entry point is the [scripted public-build audit](scripts/run_public_build_audit.sh), because it checks the current public QMD sources, runs tests, executes the final public checks, checks report values, and packages a review archive. Lower-level [`Makefile`](Makefile) targets remain useful for development, but they are not a substitute for the audit script before sharing a bundle.
 
 ```bash
 # Fast contract tests; should pass without local raw data.
