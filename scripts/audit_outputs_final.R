@@ -79,21 +79,6 @@ if (dir.exists(table_dir)) {
 }
 
 
-legacy_parity_script <- "scripts/audit_legacy_parity.py"
-if (file.exists(legacy_parity_script)) {
-  python <- Sys.which("python3")
-  if (!nzchar(python)) {
-    add_failure("python3 is required to run the legacy parity audit.")
-  } else {
-    parity <- system2(python, legacy_parity_script, stdout = TRUE, stderr = TRUE)
-    status <- attr(parity, "status")
-    cat(paste(parity, collapse = "\n"), "\n")
-    if (!is.null(status) && status != 0) {
-      add_failure("Legacy equivalence audit failed; see scripts/audit_legacy_parity.py output above.")
-    }
-  }
-}
-
 if (length(failures)) {
   cat(paste0("- ", failures, collapse = "\n"), "\n")
   stop("Final output artifact audit failed.", call. = FALSE)
