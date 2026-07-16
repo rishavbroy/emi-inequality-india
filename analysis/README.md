@@ -24,4 +24,4 @@ Do not add `--with-samples` unless the changes may affect application-sample PDF
 
 ## Prose parity
 
-The analysis notes preserve legacy diagnostic prose where possible while replacing hard-coded legacy results with current target-backed results. Nontrivial prose deviations are documented in [`docs/refactor/analysis_prose_deviations.md`](../docs/refactor/analysis_prose_deviations.md).
+The analysis notes preserve legacy diagnostic prose where possible while replacing hard-coded legacy results with current target-backed results. Nontrivial prose deviations are documented in [`archive/refactoring/docs/analysis_prose_deviations.md`](../archive/refactoring/docs/analysis_prose_deviations.md).
