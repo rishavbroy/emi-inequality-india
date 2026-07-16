@@ -33,7 +33,7 @@ This project combines 2007-08 and 2017-18 National Sample Survey microdata, 2001
 
 Current build status:
 
-- report values are generated through [`R/output/build_report_values.R`](R/output/build_report_values.R) and audited before final rendering;
+- report values are generated through [`R/output/build_report_values.R`](R/output/build_report_values.R) and checked before final rendering;
 - accepted historical refactor warnings are frozen in the refactor-proof tag rather than enforced in active builds;
 - lengthy diagnostics and benchmarks are optional, not part of ordinary public builds;
 - several optional diagnostic/benchmarking artifacts are still investigative rather than final empirical claims, especially district-matching diagnostics, fuzzy-matching benchmarks, AME benchmarks, and experimental spatial-IV attempts.

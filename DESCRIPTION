@@ -29,5 +29,4 @@ Imports:
     quarto,
     readODS,
     car,
-    digest,
     testthat
