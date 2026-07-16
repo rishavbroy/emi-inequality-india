@@ -1,0 +1,2926 @@
++ render_samples=false
++ archive_out=review.zip
++ archive_on_error=false
++ archive_each_step=false
++ skip_clean=false
++ skip_tests=false
++ incremental=false
++ with_extended_diagnostics=false
++ with_benchmarks=false
++ with_analysis_notes=false
++ [[ 5 -gt 0 ]]
++ case "$1" in
++ render_samples=true
++ shift
++ [[ 4 -gt 0 ]]
++ case "$1" in
++ archive_on_error=true
++ shift
++ [[ 3 -gt 0 ]]
++ case "$1" in
++ with_analysis_notes=true
++ with_extended_diagnostics=true
++ with_benchmarks=true
++ shift
++ [[ 2 -gt 0 ]]
++ case "$1" in
++ with_extended_diagnostics=true
++ shift
++ [[ 1 -gt 0 ]]
++ case "$1" in
++ with_benchmarks=true
++ shift
++ [[ 0 -gt 0 ]]
++ trap dump_diagnostics EXIT
++ [[ true == \t\r\u\e ]]
++ sample_mode='with application samples'
++ clean_target=clean-renders
++ check_target=check-public-final
++ archive_sample_flag=--with-samples
++ echo '=== START: git state ==='
+=== START: git state ===
++ git status --short
+ D analysis/benchmarking/ame-benchmark.md
+ D analysis/benchmarking/fuzzy-matching-benchmark.md
+ D analysis/benchmarking/spatial-iv-benchmark.md
+ D analysis/benchmarking/spatial-weights-benchmark.md
+ D analysis/diagnostics/district-matching-diagnostics.md
+ D analysis/diagnostics/district-tracker-source-diagnostics.md
+ D analysis/diagnostics/fuzzy-matching-diagnostics.md
+ D analysis/diagnostics/missingness-diagnostics.md
+ D analysis/diagnostics/spatial-autocorrelation-diagnostics.md
+ D analysis/exploratory/instrument-exploration.md
+ D analysis/exploratory/spatial-iv-experimental.md
+ D analysis/io/long-paths-and-8-3-filenames.md
+ D application-samples/output/RishavRoy_CodingSample.pdf
+ D application-samples/output/RishavRoy_CodingSample25pg.pdf
+ D application-samples/output/RishavRoy_CodingSample47pg.pdf
+ D application-samples/output/RishavRoy_WritingSample.pdf
+ D application-samples/output/RishavRoy_WritingSample10pg.pdf
+ D application-samples/output/RishavRoy_WritingSample5pg.pdf
+ D docs/district-matching.html
+ D docs/district-matching.pdf
+ D docs/long-paths-and-8-3-filenames.html
+ D docs/long-paths-and-8-3-filenames.pdf
+ D outputs/benchmarking/ame/ame_legacy_benchmark_notes.csv
+ D outputs/benchmarking/ame/ame_methods_benchmark.csv
+ D outputs/benchmarking/ame/ame_parallelization_notes.csv
+ D outputs/benchmarking/fuzzy_matching/fuzzy_matching_candidate_pair_coverage.csv
+ D outputs/benchmarking/fuzzy_matching/fuzzy_matching_candidate_pairs.csv
+ D outputs/benchmarking/fuzzy_matching/fuzzy_matching_legacy_tuning_reference.csv
+ D outputs/benchmarking/fuzzy_matching/fuzzy_matching_threshold_sensitivity.csv
+ D outputs/benchmarking/spatial_iv/spatial_iv_augmented_panel_summary.csv
+ D outputs/benchmarking/spatial_iv/spatial_iv_clustered_coefficient_summary.csv
+ D outputs/benchmarking/spatial_iv/spatial_iv_coefficient_summary.csv
+ D outputs/benchmarking/spatial_iv/spatial_iv_diagnostics_summary.csv
+ D outputs/benchmarking/spatial_iv/spatial_iv_failure_summary.csv
+ D outputs/benchmarking/spatial_iv/spatial_iv_model_status.csv
+ D outputs/benchmarking/spatial_iv/spatial_iv_status.csv
+ D outputs/benchmarking/spatial_weights/spatial_weights_rook_queen_benchmark.csv
+ D outputs/diagnostics/extended/district_matching/district_matching_all_rows_search.csv
+ D outputs/diagnostics/extended/district_matching/district_matching_key_comparison.csv
+ D outputs/diagnostics/extended/district_matching/district_matching_key_role_counts.csv
+ D outputs/diagnostics/extended/district_matching/district_matching_legacy_reference.csv
+ D outputs/diagnostics/extended/district_matching/district_matching_manual_matches.csv
+ D outputs/diagnostics/extended/district_matching/district_matching_many_to_many_cases.csv
+ D outputs/diagnostics/extended/district_matching/district_matching_source_key_inventory.csv
+ D outputs/diagnostics/extended/district_matching/district_matching_summary.csv
+ D outputs/diagnostics/extended/district_matching/district_matching_tracker_panel_comparison.csv
+ D outputs/diagnostics/extended/district_matching/district_matching_unmatched_rows.csv
+ D outputs/diagnostics/extended/district_tracker_sources/tracker_inperiod_district_changes.csv
+ D outputs/diagnostics/extended/district_tracker_sources/tracker_legacy_comment_reference.csv
+ D outputs/diagnostics/extended/district_tracker_sources/tracker_legacy_expected_inperiod_district_changes.csv
+ D outputs/diagnostics/extended/district_tracker_sources/tracker_legacy_expected_same_name_districts.csv
+ D outputs/diagnostics/extended/district_tracker_sources/tracker_legacy_expected_state_changes.csv
+ D outputs/diagnostics/extended/district_tracker_sources/tracker_same_name_districts.csv
+ D outputs/diagnostics/extended/district_tracker_sources/tracker_same_name_districts_by_year.csv
+ D outputs/diagnostics/extended/district_tracker_sources/tracker_source_counts.csv
+ D outputs/diagnostics/extended/district_tracker_sources/tracker_source_disagreements.csv
+ D outputs/diagnostics/extended/district_tracker_sources/tracker_state_change_events.csv
+ D outputs/diagnostics/extended/district_tracker_sources/tracker_state_changes.csv
+ D outputs/diagnostics/extended/district_tracker_sources/tracker_unrecorded_state_changes.csv
+ D outputs/diagnostics/extended/fuzzy_matching/fuzzy_matching_candidate_pair_coverage.csv
+ D outputs/diagnostics/extended/fuzzy_matching/fuzzy_matching_candidate_pairs.csv
+ D outputs/diagnostics/extended/fuzzy_matching/fuzzy_matching_join_status_counts.csv
+ D outputs/diagnostics/extended/fuzzy_matching/fuzzy_matching_legacy_methods.csv
+ D outputs/diagnostics/extended/fuzzy_matching/fuzzy_matching_legacy_tuning_reference.csv
+ D outputs/diagnostics/extended/fuzzy_matching/fuzzy_matching_summary.csv
+ D outputs/diagnostics/extended/fuzzy_matching/fuzzy_matching_troublesome_pairs.csv
+ D outputs/diagnostics/extended/instrument_exploration/emie_by_district_dotplot.png
+ D outputs/diagnostics/extended/instrument_exploration/instrument_exploration_legacy_notes.csv
+ D outputs/diagnostics/extended/instrument_exploration/instrument_strength_dotplot_data.csv
+ D outputs/diagnostics/extended/missingness/missingness_chi_square_tests.csv
+ D outputs/diagnostics/extended/missingness/missingness_correlation_all.csv
+ D outputs/diagnostics/extended/missingness/missingness_correlation_all.png
+ D outputs/diagnostics/extended/missingness/missingness_correlation_all_top_pairs.csv
+ D outputs/diagnostics/extended/missingness/missingness_correlation_enrolled.csv
+ D outputs/diagnostics/extended/missingness/missingness_correlation_enrolled.png
+ D outputs/diagnostics/extended/missingness/missingness_correlation_enrolled_top_pairs.csv
+ D outputs/diagnostics/extended/missingness/missingness_counts.csv
+ D outputs/diagnostics/extended/missingness/missingness_legacy_notes.csv
+ D outputs/diagnostics/extended/missingness/missingness_logit_pseudo_r2.png
+ D outputs/diagnostics/extended/missingness/missingness_logit_summary.csv
+ D outputs/diagnostics/extended/missingness/missingness_logits_all.csv
+ D outputs/diagnostics/extended/missingness/missingness_logits_enrolled.csv
+ D outputs/diagnostics/extended/missingness/missingness_rajasthan_southern_case_study.csv
+ D outputs/diagnostics/extended/missingness/regional_missingness_cost.csv
+ D outputs/diagnostics/extended/missingness/regional_missingness_distance.csv
+ D outputs/diagnostics/extended/missingness/regional_missingness_father_education.csv
+ D outputs/diagnostics/extended/spatial/rook_queen_contiguity_comparison.csv
+ D outputs/diagnostics/extended/spatial/spatial_weights_legacy_reference.csv
+ D outputs/diagnostics/extended/spatial/spatial_weights_summary.csv
+ D outputs/figures/main/collage_iv_region_maps.pdf
+ D outputs/figures/main/collage_iv_region_maps.png
+ D outputs/figures/main/collage_main_maps.pdf
+ D outputs/figures/main/collage_main_maps.png
+ D outputs/figures/main/district_carveouts_shifts.pdf
+ D outputs/figures/main/district_carveouts_shifts.png
+ D outputs/figures/main/fig_ilo_trends.pdf
+ D outputs/figures/main/fig_ilo_trends.png
+ D outputs/figures/main/figure_manifest.csv
+ D outputs/figures/main/map_consumption_growth.pdf
+ D outputs/figures/main/map_consumption_growth.png
+ D outputs/figures/main/map_education.pdf
+ D outputs/figures/main/map_education.png
+ D outputs/figures/main/map_emi_exposure.pdf
+ D outputs/figures/main/map_emi_exposure.png
+ D outputs/figures/main/map_linguistic_distance.pdf
+ D outputs/figures/main/map_linguistic_distance.png
+ D outputs/figures/main/map_pucca.pdf
+ D outputs/figures/main/map_pucca.png
+ D outputs/figures/main/map_region.pdf
+ D outputs/figures/main/map_region.png
+ D outputs/tables/main/ame_results.csv
+ D outputs/tables/main/ame_results.tex
+ D outputs/tables/main/cons_iv.csv
+ D outputs/tables/main/cons_iv.tex
+ D outputs/tables/main/first_stage.csv
+ D outputs/tables/main/first_stage.tex
+ D outputs/tables/main/fs_cons.csv
+ D outputs/tables/main/fs_cons.tex
+ D outputs/tables/main/probit_mfx.csv
+ D outputs/tables/main/probit_mfx.tex
+ D outputs/tables/main/selection_n.csv
+ D outputs/tables/main/selection_n.tex
+ D outputs/tables/main/sum_tbl_iv.csv
+ D outputs/tables/main/sum_tbl_iv.tex
+ D outputs/tables/main/sum_tbl_probit_cat.csv
+ D outputs/tables/main/sum_tbl_probit_cat.tex
+ D outputs/tables/main/sum_tbl_probit_quant.csv
+ D outputs/tables/main/sum_tbl_probit_quant.tex
+ D paper/report.pdf
+?? finish_refactor_phases_0_3.patch
++ echo '=== RESET PUBLIC/BUILD DIAGNOSTICS ==='
+=== RESET PUBLIC/BUILD DIAGNOSTICS ===
++ rm -rf outputs/diagnostics/build outputs/diagnostics/public
++ rm -f 'outputs/diagnostics/*.csv'
++ mkdir -p outputs/diagnostics/build outputs/diagnostics/public outputs/diagnostics/extended outputs/benchmarking
++ echo '=== NORMALIZE SOURCE WHITESPACE ==='
+=== NORMALIZE SOURCE WHITESPACE ===
++ normalize_source_whitespace
++ command -v perl
++ find paper docs scripts R tests -type f '(' -name '*.qmd' -o -name '*.R' -o -name '*.r' -o -name '*.sh' -o -name '*.md' ')' -print0
++ xargs -0 perl -pi -e 's/[ \t]+$//'
++ git diff --check -- . ':(exclude)*.html' ':(exclude)outputs/**' ':(exclude)application-samples/output/**'
++ [[ false == \t\r\u\e ]]
++ echo '=== PUBLIC BUILD AUDIT MODE: with application samples ==='
+=== PUBLIC BUILD AUDIT MODE: with application samples ===
++ [[ false == \t\r\u\e ]]
++ echo '=== CLEAN GENERATED RENDERS ==='
+=== CLEAN GENERATED RENDERS ===
++ make clean-renders
+rm -rf outputs/figures/* outputs/tables/* outputs/diagnostics/build outputs/diagnostics/public paper/output/*
+rm -f outputs/diagnostics/*.csv
+mkdir -p outputs/diagnostics/build outputs/diagnostics/public
+rm -f paper/report.pdf paper/report.html paper/report.tex paper/appendix.pdf paper/appendix.html paper/appendix.tex
+rm -f docs/district-matching.html docs/district-matching.pdf docs/district-matching.tex
+rm -f docs/long-paths-and-8-3-filenames.html docs/long-paths-and-8-3-filenames.pdf docs/long-paths-and-8-3-filenames.tex
+rm -f .public-final-ok .pipeline-final-ok .pipeline-draft-ok
+rm -rf application-samples/.work/*
+rm -f application-samples/output/*.pdf application-samples/output/*.tex application-samples/output/*.html
++ checkpoint_archive after-clean
++ local label=after-clean
++ [[ false == \t\r\u\e ]]
++ echo '=== REBUILD GENERATED QMD SOURCES ==='
+=== REBUILD GENERATED QMD SOURCES ===
++ make rebuild-qmds
+Rscript scripts/rebuild_static_qmds_from_legacy.R
+Wrote paper/report.qmd
+Wrote paper/appendix.qmd
+Wrote docs/district-matching.qmd
+Wrote docs/long-paths-and-8-3-filenames.qmd
+Static QMD rebuild complete.
+Rscript scripts/postprocess_public_qmds.R
+Postprocessed paper/report.qmd
+Postprocessed paper/appendix.qmd
+Postprocessed docs/district-matching.qmd
+Postprocessed docs/long-paths-and-8-3-filenames.qmd
++ checkpoint_archive after-rebuild-qmds
++ local label=after-rebuild-qmds
++ [[ false == \t\r\u\e ]]
++ echo '=== SOURCE WHITESPACE CHECK AFTER QMD REBUILD ==='
+=== SOURCE WHITESPACE CHECK AFTER QMD REBUILD ===
++ normalize_source_whitespace
++ command -v perl
++ find paper docs scripts R tests -type f '(' -name '*.qmd' -o -name '*.R' -o -name '*.r' -o -name '*.sh' -o -name '*.md' ')' -print0
++ xargs -0 perl -pi -e 's/[ \t]+$//'
++ git diff --check -- paper/report.qmd paper/appendix.qmd docs/district-matching.qmd docs/long-paths-and-8-3-filenames.qmd scripts/postprocess_public_qmds.R scripts/check_required_outputs.R
++ echo '=== STATIC/PARSE CHECKS ==='
+=== STATIC/PARSE CHECKS ===
++ Rscript -e 'parse("scripts/check_required_outputs.R"); cat("check_required_outputs.R parses\n")'
+expression(args <- commandArgs(trailingOnly = TRUE), require_stamp <- "--require-final-stamp" %in% 
+    args, failures <- character(), add_failure <- function(...) failures <<- c(failures, 
+    paste0(...)), if (require_stamp && !file.exists(".pipeline-final-ok")) {
+    add_failure("Missing .pipeline-final-ok; run `make pipeline-final` successfully before rendering public outputs.")
+}, required_files <- c("paper/references.bib", "outputs/tables/main/sum_tbl_probit_quant.csv", 
+    "outputs/tables/main/sum_tbl_probit_cat.csv", "outputs/tables/main/probit_mfx.csv", 
+    "outputs/tables/main/sum_tbl_iv.csv", "outputs/tables/main/fs_cons.csv", 
+    "outputs/tables/main/cons_iv.csv", "outputs/figures/main/fig_ilo_trends.png", 
+    "outputs/figures/main/district_carveouts_shifts.png"), missing <- required_files[!file.exists(required_files) | 
+    file.info(required_files)$size <= 0], if (length(missing)) add_failure("Missing required public file(s): ", 
+    paste(missing, collapse = ", ")), check_bibliography_paths <- function(path) {
+    if (!file.exists(path)) 
+        return()
+    lines <- readLines(path, warn = FALSE)
+    idx <- grep("^bibliography:\\s*", lines)
+    for (i in idx) {
+        val <- trimws(sub("^bibliography:\\s*", "", lines[[i]]))
+        if (!nzchar(val)) 
+            next
+        val <- gsub("^['\"]|['\"]$", "", val)
+        full <- file.path(dirname(path), val)
+        if (!file.exists(full)) 
+            add_failure(path, " points to missing bibliography: ", 
+                val)
+    }
+}, for (qmd in c("paper/report.qmd", "paper/appendix.qmd", "docs/district-matching.qmd", 
+    "docs/long-paths-and-8-3-filenames.qmd")) {
+    check_bibliography_paths(qmd)
+}, if (file.exists("paper/report.qmd")) {
+    report <- paste(readLines("paper/report.qmd", warn = FALSE), 
+        collapse = "\n")
+    if (grepl("read_public_table\\(", report) && !grepl("public-output-table-helper", 
+        report, fixed = TRUE)) {
+        add_failure("paper/report.qmd calls read_public_table() but lacks public-output-table-helper.")
+    }
+}, if (length(failures)) {
+    cat(paste0("- ", failures, collapse = "\n"), "\n")
+    stop("Required public render dependencies are missing.", 
+        call. = FALSE)
+}, message("Required public render dependencies exist."))
+check_required_outputs.R parses
++ Rscript -e 'tmp <- tempfile(fileext = ".R"); knitr::purl("paper/report.qmd", output = tmp, quiet = TRUE); parse(tmp); cat("paper/report.qmd R chunks parse\n")'
+[1] "/var/folders/v0/7rc_jjhs6dv8gzmtnmqtpg3w0000gn/T//RtmpiERwq1/file87eb1bc5c788.R"
+expression(find_targets_store <- function(start = getwd()) {
+    here <- normalizePath(start, mustWork = TRUE)
+    repeat {
+        candidate <- file.path(here, "_targets")
+        if (dir.exists(candidate)) 
+            return(candidate)
+        parent <- dirname(here)
+        if (identical(parent, here)) 
+            return("_targets")
+        here <- parent
+    }
+}, report_values <- tryCatch(targets::tar_read(report_values, 
+    store = find_targets_store()), error = function(e) list()), 
+    report_value <- function(key) {
+        value <- report_values[[key]]
+        if (is.null(value)) 
+            value <- NA
+        if (is.list(value) && !is.null(value$value)) 
+            value <- value$value
+        if (length(value) == 0L || all(is.na(value))) 
+            return("—")
+        paste(value, collapse = ", ")
+    }, regression_star_note <- function() "* p < 0.05, ** p < 0.01, *** p < 0.001", 
+    legacy_table_caption_text <- function(name) {
+        captions <- c(sum_tbl_probit_quant = "Summary Statistics for Enrollment Participation Model (Numeric Variables)", 
+            sum_tbl_probit_cat = "Summary Statistics for Enrollment Participation Model (Categorical Variables)", 
+            probit_mfx = "Average Marginal Effects and Counterfactual Comparisons for Enrollment Probit", 
+            sum_tbl_iv = "Summary Statistics for 2SLS Model", 
+            fs_cons = "First-Stage Regression: EMI Exposure on Linguistic Distance", 
+            cons_iv = "Second-Stage Regression: Consumption Growth on EMIE (Fitted)")
+        captions[[name]] %||% name
+    }, regression_caption <- function(cap) cap, table_caption <- function(name) {
+        cap <- legacy_table_caption_text(name)
+        cap
+    }, table_note <- function(name) {
+        switch(name, sum_tbl_probit_quant = "Min. = minimum; 1Q = first quartile; Med. = median; 3Q = third quartile; Max. = maximum; Mean = arithmetic mean; SD = standard deviation; N = number of observations.", 
+            sum_tbl_iv = "Min. = minimum; 1Q = first quartile; Med. = median; 3Q = third quartile; Max. = maximum; Mean = arithmetic mean; SD = standard deviation; N = number of observations.", 
+            sum_tbl_probit_cat = "Values = all possible values; Mode = most frequent value; Pct. Mode = percent of observations taking the modal value; Least Freq. = least frequent value; Pct. Least Freq. = percent of observations taking the least frequent value; N = number of observations.", 
+            probit_mfx = "Data from the 64th round of the NSS, \"Participation and Expenditure in Education\" in 2007-08. All standard errors are design-based (clustered and nested within strata).", 
+            fs_cons = "Standard errors clustered by state in parentheses.", 
+            cons_iv = "Standard errors clustered by state in parentheses.", 
+            NULL)
+    }, resolve_public_output_path <- function(path) {
+        candidates <- unique(c(path, file.path(getwd(), path), 
+            file.path("paper", path), file.path(dirname(knitr::current_input()), 
+                path), sub("^\\.\\/", "", path)))
+        hit <- candidates[file.exists(candidates) & file.info(candidates)$size > 
+            0]
+        if (length(hit)) 
+            return(hit[[1]])
+        stop("Missing table output: ", path, call. = FALSE)
+    }, read_public_table <- function(path) {
+        df <- utils::read.csv(resolve_public_output_path(path), 
+            check.names = FALSE, na.strings = character())
+        for (nm in names(df)) if (is.character(df[[nm]])) 
+            df[[nm]][is.na(df[[nm]])] <- ""
+        df
+    }, render_public_tex <- function(path) {
+        tex <- paste(readLines(resolve_public_output_path(path), 
+            warn = FALSE), collapse = "\n")
+        knitr::asis_output(paste0("\n\n", tex, "\n\n"))
+    }, cell_string <- function(x) {
+        if (length(x) == 0L) 
+            return("")
+        if (is.list(x)) 
+            x <- unlist(x, recursive = TRUE, use.names = FALSE)
+        if (length(x) == 0L || all(is.na(x))) 
+            return("")
+        paste(as.character(x), collapse = "; ")
+    }, column_strings <- function(x) {
+        if (is.factor(x)) 
+            x <- as.character(x)
+        if (is.list(x)) 
+            out <- vapply(x, cell_string, character(1))
+        else out <- as.character(x)
+        out[is.na(out)] <- ""
+        out
+    }, summary_table_groups <- function(df) {
+        if (!nrow(df) || !length(names(df))) 
+            return(list(data = df, groups = data.frame()))
+        empty_rest <- if (ncol(df) > 1L) 
+            apply(df[-1], 1, function(x) all(!nzchar(column_strings(x))))
+        else rep(TRUE, nrow(df))
+        first_col <- column_strings(df[[1]])
+        group_row <- grepl(":$", first_col) & empty_rest
+        group_idx <- which(group_row)
+        if (!length(group_idx)) 
+            return(list(data = df, groups = data.frame()))
+        groups <- lapply(seq_along(group_idx), function(i) {
+            start_orig <- group_idx[[i]] + 1L
+            end_orig <- if (i < length(group_idx)) 
+                group_idx[[i + 1L]] - 1L
+            else nrow(df)
+            start <- start_orig - sum(group_idx < start_orig)
+            end <- end_orig - sum(group_idx <= end_orig)
+            if (start > end) 
+                return(NULL)
+            data.frame(label = first_col[[group_idx[[i]]]], start = start, 
+                end = end, stringsAsFactors = FALSE)
+        })
+        groups <- do.call(rbind, Filter(Negate(is.null), groups))
+        if (is.null(groups)) 
+            groups <- data.frame()
+        list(data = df[!group_row, , drop = FALSE], groups = groups)
+    }, wrap_table_text <- function(df) as.data.frame(df, check.names = FALSE, 
+        stringsAsFactors = FALSE), table_header_labels <- function(df, 
+        name) {
+        labels <- names(df)
+        wrap <- c(`Pct. Mode` = "Pct.\nMode", `Least Freq.` = "Least\nFreq.", 
+            `Pct. Least Freq.` = "Pct. Least\nFreq.", `Adjusted R-squared` = "Adjusted\nR-squared")
+        labels <- ifelse(labels %in% names(wrap), unname(wrap[labels]), 
+            labels)
+        vapply(labels, function(x) if (grepl("\n", x, fixed = TRUE)) 
+            kableExtra::linebreak(x, align = "c")
+        else x, character(1))
+    }, caption_for_latex <- function(name) {
+        table_caption(name)
+    }, latex_escape_text <- function(x) {
+        column_strings(x)
+    }, render_regression_table <- function(df, name) {
+        if (!requireNamespace("modelsummary", quietly = TRUE)) 
+            stop("modelsummary is required for regression table rendering.", 
+                call. = FALSE)
+        if (ncol(df) < 2L) 
+            return(knitr::kable(df, row.names = FALSE))
+        model_col <- switch(name, probit_mfx = "Enrolled (1 = yes)", 
+            fs_cons = "EMI Exposure", cons_iv = "Consumption Growth", 
+            names(df)[[2]])
+        out <- data.frame(Term = latex_escape_text(df[[1]]), 
+            stringsAsFactors = FALSE, check.names = FALSE)
+        out[[model_col]] <- latex_escape_text(df[[2]])
+        out$Term[!nzchar(out$Term)] <- "~"
+        note <- table_note(name)
+        tab <- suppressWarnings(modelsummary::datasummary_df(out, 
+            output = "markdown", fmt = identity, align = "lc"))
+        md <- as.character(tab)
+        if (!is.null(note) && !grepl(note, md, fixed = TRUE)) 
+            md <- paste0(md, "\n\n_", note, "_")
+        md
+    }, render_public_table <- function(path, name) {
+        if (tolower(tools::file_ext(path)) == "tex") 
+            return(render_public_tex(path))
+        df <- read_public_table(path)
+        grouped <- summary_table_groups(df)
+        df_render <- wrap_table_text(grouped$data)
+        wide <- name %in% c("sum_tbl_iv", "sum_tbl_probit_quant", 
+            "sum_tbl_probit_cat")
+        regression <- name %in% c("probit_mfx", "fs_cons", "cons_iv")
+        if (regression) 
+            return(knitr::asis_output(render_regression_table(df_render, 
+                name)))
+        names(df_render) <- table_header_labels(df_render, name)
+        tab <- knitr::kable(df_render, digits = 3, booktabs = knitr::is_latex_output(), 
+            longtable = knitr::is_latex_output() && !wide, escape = FALSE, 
+            row.names = FALSE, caption = caption_for_latex(name), 
+            linesep = "")
+        if (knitr::is_latex_output() && requireNamespace("kableExtra", 
+            quietly = TRUE)) {
+            opts <- c("striped")
+            if (!wide) 
+                opts <- c(opts, "repeat_header")
+            tab <- kableExtra::kable_styling(tab, latex_options = opts, 
+                position = "center", full_width = FALSE, font_size = 10)
+            if (nrow(grouped$groups)) 
+                for (i in rev(seq_len(nrow(grouped$groups)))) tab <- kableExtra::pack_rows(tab, 
+                  grouped$groups$label[[i]], grouped$groups$start[[i]], 
+                  grouped$groups$end[[i]], bold = TRUE, italic = FALSE, 
+                  background = "white", escape = FALSE)
+            if (name == "sum_tbl_probit_cat") 
+                tab <- kableExtra::column_spec(kableExtra::column_spec(kableExtra::column_spec(kableExtra::column_spec(kableExtra::column_spec(kableExtra::column_spec(kableExtra::column_spec(tab, 
+                  1, width = "3.0cm"), 2, width = "5.0cm"), 3, 
+                  width = "2.4cm"), 4, width = "1.35cm"), 5, 
+                  width = "2.7cm"), 6, width = "1.45cm"), 7, 
+                  width = "1.25cm")
+            if (name == "sum_tbl_iv") 
+                tab <- kableExtra::column_spec(kableExtra::column_spec(kableExtra::column_spec(tab, 
+                  1, width = "3.0cm"), 2, width = "4.6cm"), 3:ncol(df_render), 
+                  width = "1.45cm")
+            if (name == "sum_tbl_probit_quant") 
+                tab <- kableExtra::column_spec(kableExtra::column_spec(tab, 
+                  1, width = "4.0cm"), 2:ncol(df_render), width = "1.55cm")
+            note <- table_note(name)
+            if (!is.null(note)) 
+                tab <- kableExtra::footnote(tab, general = note, 
+                  threeparttable = TRUE, footnote_as_chunk = TRUE, 
+                  escape = FALSE)
+            if (wide) 
+                tab <- kableExtra::landscape(tab)
+        }
+        tab
+    }, find_targets_store <- function(start = getwd()) {
+        here <- normalizePath(start, mustWork = TRUE)
+        repeat {
+            candidate <- file.path(here, "_targets")
+            if (dir.exists(candidate)) 
+                return(candidate)
+            parent <- dirname(here)
+            if (identical(parent, here)) 
+                return("_targets")
+            here <- parent
+        }
+    }, report_values <- tryCatch(targets::tar_read(report_values, 
+        store = find_targets_store()), error = function(e) list()), 
+    if (is.null(report_values) || !is.list(report_values)) report_values <- list(), 
+    legacy_inline_expressions <- list(inline_391c516e = "edu0708b4 %>% filter(RELATION_TO_HEAD==1 & SEX==1) %>% summarise(round(mean(AGE),1)) %>% .[[1]]", 
+        inline_502254b6 = "edu0708b4 %>% filter(RELATION_TO_HEAD==3 & SEX==1) %>% summarise(round(mean(AGE),1)) %>% .[[1]]", 
+        inline_101aa68e = "edu0708b4 %>% filter(RELATION_TO_HEAD==7 & SEX==1) %>% summarise(round(mean(AGE),1)) %>% .[[1]]", 
+        inline_4ba2ef54 = "edu0708b4 %>% filter(RELATION_TO_HEAD==2 & SEX==1) %>% summarise(round(mean(AGE),1)) %>% .[[1]]", 
+        inline_7b41b8b0 = "edu0708b4 %>% filter(RELATION_TO_HEAD==2 & SEX==1) %>% summarise(round(mean(AGE<=17),3)) %>% .[[1]]", 
+        inline_a5aa43ec = "edu0708b4 %>% filter(RELATION_TO_HEAD==5 & SEX==1) %>% summarise(round(mean(AGE),1)) %>% .[[1]]", 
+        inline_5aa491ab = "mfx_df %>% filter(term==\"AGE\") %>% pull(estimate) %>% round(3)", 
+        inline_7f5360c6 = "mfx_df %>% filter(term==\"AGE\") %>% pull(estimate) %>% round(3) %>% abs()*100", 
+        inline_9cd11971 = "mfx_df %>% filter(term==\"RELIGION\" & grepl(\"Muslim\",contrast)) %>% pull(estimate) %>% round(3)", 
+        inline_dee45a99 = "mfx_df %>% filter(term==\"AGE\") %>% pull(estimate) %>% round(3)*100", 
+        inline_b833e95b = "mfx_df %>% filter(term==\"SEX\") %>% pull(estimate) %>% round(3)*100", 
+        inline_eb012827 = "mfx_df %>% filter(term==\"HH_SIZE\") %>% pull(estimate) %>% round(3)*100", 
+        inline_a3fcb577 = "mfx_df %>% filter(term==\"RELIGION\" & grepl(\"Muslim\", contrast)) %>% pull(estimate) %>% round(3)*100", 
+        inline_dfcb22a5 = "mfx_df %>% filter(term==\"SOCIAL_GROUP\" & grepl(\"Tribe\", contrast)) %>% pull(estimate) %>% round(3)*100", 
+        inline_7a04581a = "mfx_df %>% filter(grepl(\"dmean_num\", term) & grepl(\"IS_EDU_FREE\", term)) %>% pull(estimate) %>% round(3)*100", 
+        inline_55014f4e = "mfx_df %>% filter(grepl(\"dmean_num\", term) & grepl(\"RECD_TXT_BOOKS\", term)) %>% pull(s.value) %>% signif(3)", 
+        inline_0937ca53 = "mfx_df %>% filter(grepl(\"dmean_num\", term) & grepl(\"IS_EDU_FREE\", term)) %>% pull(s.value) %>% signif(3)", 
+        inline_7d871500 = "kappa %>% format(scientific = FALSE, digits = 7)", 
+        inline_d306ea57 = "partial_f %>% round(digits = 2)", 
+        inline_c0673df9 = "partial_p %>% signif(digits = 2)", 
+        inline_a07dddc1 = "summary(first_stage_consumption, vcov = vcov_first_stage_consumption)$coefficients[\"wavg_ling_degrees\",1] %>% round(2)", 
+        inline_4f1d6a5b = "summary(first_stage_consumption, vcov = vcov_first_stage_consumption)$coefficients[\"gini_cons_0708\",1] %>% round(2)", 
+        inline_97bf1523 = "summary(model_consumption_iv, vcov = vcov_model_consumption_iv)$coefficients[\"EMIE\",4] %>% round(digits = 2)", 
+        inline_07c03c06 = "summary(model_consumption_iv, vcov = vcov_model_consumption_iv)$coefficients[\"EMIE\",1] %>% round(digits = 2)", 
+        inline_19ced62f = "summary(model_consumption_iv, vcov = vcov_model_consumption_iv)$coefficients[\"pct_urban\",1] %>% round(digits = 2)", 
+        inline_98e93a71 = "summary(model_consumption_iv, vcov = vcov_model_consumption_iv)$coefficients[\"pct_urban\",4] %>% round(digits = 3)", 
+        inline_178b6738 = "summary(model_consumption_iv, vcov = vcov_model_consumption_iv)$coefficients[\"pct_head_secondary_plus\",1] %>% round(digits = 2)", 
+        inline_8a7afce3 = "summary(model_consumption_iv, vcov = vcov_model_consumption_iv)$coefficients[\"pct_head_secondary_plus\",4] %>% round(digits = 3)", 
+        inline_56755d09 = "summary(model_consumption_iv, vcov = vcov_model_consumption_iv)$coefficients[\"pct_muslim\",\"Estimate\"] %>% round(digits=3)", 
+        inline_4c904f9e = "summary(model_consumption_iv, vcov = vcov_model_consumption_iv)$coefficients[\"pct_st\",\"Estimate\"] %>% round(digits=3)", 
+        inline_f7e3ad2c = "summary(model_consumption_iv, vcov = vcov_model_consumption_iv)$coefficients[\"pct_obc\",\"Estimate\"] %>% round(digits=3)", 
+        inline_cd5afd77 = "summary(model_consumption_iv, vcov = vcov_model_consumption_iv)$coefficients[\"pct_medium_land\",4] %>% round(digits = 3)", 
+        inline_861e7564 = "summary(model_consumption_iv, vcov = vcov_model_consumption_iv)$coefficients[\"pct_large_land\",4] %>% round(digits = 3)", 
+        inline_46353c81 = "summary(model_consumption_iv, vcov = vcov_model_consumption_iv)$coefficients[\"gini_cons_0708\",4] %>% round(digits = 3)", 
+        inline_0b52593f = "summary(model_consumption_iv, vcov = vcov_model_consumption_iv)$coefficients[\"pct_fem_head\",4] %>% round(digits = 3)", 
+        inline_2b7c944a = "m_cons_resid$p.value %>% signif(3)", 
+        inline_7e66a3fd = "m_cons$p.value %>% signif(3)"), is_report_value_status <- function(value) {
+        is.list(value) && !is.null(value$status) && !is.null(value$reason)
+    }, report_value <- function(key) {
+        value <- report_values[[key]]
+        if (is.null(value)) 
+            value <- report_values[[legacy_inline_expressions[[key]]]]
+        if (is.null(value)) 
+            value <- NA
+        if (is_report_value_status(value)) {
+            display <- value$value
+            if (is.null(display) || length(display) == 0L || 
+                all(is.na(display))) 
+                display <- value$display
+            if (is.null(display) || length(display) == 0L || 
+                all(is.na(display))) 
+                display <- "—"
+            value <- display
+        }
+        if (length(value) == 0L || all(is.na(value))) 
+            return("—")
+        paste(value, collapse = ", ")
+    }, render_public_table("../outputs/tables/main/sum_tbl_probit_quant.tex", 
+        "sum_tbl_probit_quant"), render_public_table("../outputs/tables/main/sum_tbl_probit_cat.tex", 
+        "sum_tbl_probit_cat"), render_public_table("../outputs/tables/main/probit_mfx.tex", 
+        "probit_mfx"), render_public_table("../outputs/tables/main/sum_tbl_iv.tex", 
+        "sum_tbl_iv"), render_public_table("../outputs/tables/main/fs_cons.tex", 
+        "fs_cons"), render_public_table("../outputs/tables/main/cons_iv.tex", 
+        "cons_iv"))
+paper/report.qmd R chunks parse
++ python3 -m py_compile scripts/audit_legacy_parity.py
++ checkpoint_archive after-static-parse
++ local label=after-static-parse
++ [[ false == \t\r\u\e ]]
++ [[ false == \t\r\u\e ]]
++ echo '=== UNIT TESTS ==='
+=== UNIT TESTS ===
++ make test
+Rscript tests/testthat.R
+✔ | F W  S  OK | Context
+
+⠏ |          0 | average-marginal-effects                                       
+⠸ |          4 | average-marginal-effects                                       
+⠸ |         14 | average-marginal-effects                                       
+✔ |         19 | average-marginal-effects
+
+⠏ |          0 | cleaning-contracts                                             
+✔ |         14 | cleaning-contracts
+
+⠏ |          0 | config                                                         
+✔ |          1 | config
+
+⠏ |          0 | diagnostics                                                    
+⠙ |          2 | diagnostics                                                    
+⠏ |         10 | diagnostics                                                    
+⠴ |         16 | diagnostics                                                    
+⠦ |         47 | diagnostics                                                    
+✔ |         67 | diagnostics [1.8s]
+
+⠏ |          0 | district-keys                                                  
+✔ |         15 | district-keys
+
+⠏ |          0 | district-tracker                                               
+✔ |          8 | district-tracker
+
+⠏ |          0 | fuzzy-join-districts                                           
+✔ |         12 | fuzzy-join-districts
+
+⠏ |          0 | iv-estimation                                                  
+⠹ |          3 | iv-estimation                                                  
+✔ |         17 | iv-estimation
+
+⠏ |          0 | iv-formulas                                                    
+✔ |          2 | iv-formulas
+
+⠏ |          0 | legacy-content-parity                                          
+⠧ |          8 | legacy-content-parity                                          
+⠇ |         29 | legacy-content-parity                                          
+✔ |         30 | legacy-content-parity
+
+⠏ |          0 | manual-district-corrections                                    
+⠋ |          1 | manual-district-corrections                                    
+✔ |          5 | manual-district-corrections
+
+⠏ |          0 | measures                                                       
+⠏ |         10 | measures                                                       
+✔ |         28 | measures
+
+⠏ |          0 | methodology-contract                                           
+⠙ |          2 | methodology-contract                                           
+✔ |         18 | methodology-contract
+
+⠏ |          0 | output-figures                                                 
+⠦ |         17 | output-figures                                                 
+✔ |         28 | output-figures
+
+⠏ |          0 | output-tables                                                  
+⠋ |          1 | output-tables                                                  
+⠇ |         39 | output-tables                                                  
+⠹ |         83 | output-tables                                                  
+⠴ |         86 | output-tables                                                  
+⠸ |        104 | output-tables                                                  
+✔ |        163 | output-tables [1.1s]
+
+⠏ |          0 | overidentification                                             
+✔ |          6 | overidentification
+
+⠏ |          0 | paths                                                          
+✔ |          1 | paths
+
+⠏ |          0 | public-scripts                                                 
+⠏ |         50 | public-scripts                                                 
+⠇ |        159 | public-scripts                                                 
+⠧ |        248 | public-scripts                                                 
+✔ |        269 | public-scripts
+
+⠏ |          0 | raw-file-manifest                                              
+✔ |         12 | raw-file-manifest
+
+⠏ |          0 | read-long-paths                                                
+✔ |          4 | read-long-paths
+
+⠏ |          0 | selection                                                      
+✔ |         21 | selection
+
+⠏ |          0 | spatial-weights                                                
+⠙ |         12 | spatial-weights                                                
+✔ |         12 | spatial-weights
+
+⠏ |          0 | utils-data-frame                                               
+✔ |         12 | utils-data-frame
+
+══ Results ═════════════════════════════════════════════════════════════════════
+Duration: 6.5 s
+
+[ FAIL 0 | WARN 0 | SKIP 0 | PASS 764 ]
++ checkpoint_archive after-unit-tests
++ local label=after-unit-tests
++ [[ false == \t\r\u\e ]]
++ echo '=== PUBLIC FINAL CHECK (with application samples) ==='
+=== PUBLIC FINAL CHECK (with application samples) ===
++ make check-public-final
+rm -f .public-final-ok .pipeline-final-ok .pipeline-draft-ok
+/Library/Developer/CommandLineTools/usr/bin/make pipeline-final
+rm -f .pipeline-final-ok .public-final-ok
+EMI_CONFIG=config/final.yml Rscript scripts/run_targets_strict.R
+EMI_RUN_EXTENDED_DIAGNOSTICS=false: omitting extended diagnostic targets from this targets run.
+EMI_RUN_BENCHMARKS=false: omitting benchmark targets from this targets run.
+EMI_RENDER_ANALYSIS_NOTES=false: omitting analysis-note render targets from this targets run.
+EMI_RUN_EXTENDED_DIAGNOSTICS=false: omitting extended diagnostic targets from this targets run.
+EMI_RUN_BENCHMARKS=false: omitting benchmark targets from this targets run.
+EMI_RENDER_ANALYSIS_NOTES=false: omitting analysis-note render targets from this targets run.
++ paths dispatched
+✔ paths completed [1.8s, 382 B]
++ config_path dispatched
+✔ config_path completed [0ms, 67 B]
++ long_paths_note dispatched
+✔ long_paths_note completed [1.8s, 645.46 kB]
++ application_sample_inputs dispatched
+✔ application_sample_inputs completed [11ms, 238.05 kB]
++ report_qmd dispatched
+✔ report_qmd completed [0ms, 108.47 kB]
++ legacy_district_tracker_file dispatched
+✔ legacy_district_tracker_file completed [0ms, 181 kB]
++ raw_manifest dispatched
+✔ raw_manifest completed [14ms, 2.53 kB]
++ cfg dispatched
+✔ cfg completed [0ms, 417 B]
++ legacy_district_tracker dispatched
+✔ legacy_district_tracker completed [2ms, 8.68 kB]
++ raw_data_preflight dispatched
+✔ raw_data_preflight completed [0ms, 46 B]
++ iv_formulas dispatched
+✔ iv_formulas completed [3ms, 633 B]
++ raw_ilo_figures dispatched
+✔ raw_ilo_figures completed [5ms, 459.88 kB]
++ raw_nss_2007_education dispatched
+✔ raw_nss_2007_education completed [8.6s, 13.31 MB]
++ raw_census_2001 dispatched
+New names:
+• `` -> `...2`
+• `` -> `...3`
+• `` -> `...4`
+• `` -> `...5`
+• `` -> `...6`
+• `` -> `...7`
+• `` -> `...8`
+• `` -> `...9`
+• `` -> `...10`
+• `` -> `...11`
+• `` -> `...12`
+• `` -> `...13`
+• `` -> `...14`
+• `` -> `...15`
+• `` -> `...16`
+New names:
+• `` -> `...2`
+• `` -> `...3`
+• `` -> `...4`
+• `` -> `...5`
+• `` -> `...6`
+• `` -> `...7`
+• `` -> `...8`
+• `` -> `...9`
+• `` -> `...10`
+• `` -> `...11`
+• `` -> `...12`
+• `` -> `...13`
+• `` -> `...14`
+• `` -> `...15`
+• `` -> `...16`
+New names:
+• `` -> `...2`
+• `` -> `...3`
+• `` -> `...4`
+• `` -> `...5`
+• `` -> `...6`
+• `` -> `...7`
+• `` -> `...8`
+• `` -> `...9`
+• `` -> `...10`
+• `` -> `...11`
+• `` -> `...12`
+• `` -> `...13`
+• `` -> `...14`
+• `` -> `...15`
+• `` -> `...16`
+New names:
+• `` -> `...2`
+• `` -> `...3`
+• `` -> `...4`
+• `` -> `...5`
+• `` -> `...6`
+• `` -> `...7`
+• `` -> `...8`
+• `` -> `...9`
+• `` -> `...10`
+• `` -> `...11`
+• `` -> `...12`
+• `` -> `...13`
+• `` -> `...14`
+• `` -> `...15`
+• `` -> `...16`
+New names:
+• `` -> `...2`
+• `` -> `...3`
+• `` -> `...4`
+• `` -> `...5`
+• `` -> `...6`
+• `` -> `...7`
+• `` -> `...8`
+• `` -> `...9`
+• `` -> `...10`
+• `` -> `...11`
+• `` -> `...12`
+• `` -> `...13`
+• `` -> `...14`
+• `` -> `...15`
+• `` -> `...16`
+New names:
+• `` -> `...2`
+• `` -> `...3`
+• `` -> `...4`
+• `` -> `...5`
+• `` -> `...6`
+• `` -> `...7`
+• `` -> `...8`
+• `` -> `...9`
+• `` -> `...10`
+• `` -> `...11`
+• `` -> `...12`
+• `` -> `...13`
+• `` -> `...14`
+• `` -> `...15`
+• `` -> `...16`
+New names:
+• `` -> `...2`
+• `` -> `...3`
+• `` -> `...4`
+• `` -> `...5`
+• `` -> `...6`
+• `` -> `...7`
+• `` -> `...8`
+• `` -> `...9`
+• `` -> `...10`
+• `` -> `...11`
+• `` -> `...12`
+• `` -> `...13`
+• `` -> `...14`
+• `` -> `...15`
+• `` -> `...16`
+New names:
+• `` -> `...2`
+• `` -> `...3`
+• `` -> `...4`
+• `` -> `...5`
+• `` -> `...6`
+• `` -> `...7`
+• `` -> `...8`
+• `` -> `...9`
+• `` -> `...10`
+• `` -> `...11`
+• `` -> `...12`
+• `` -> `...13`
+• `` -> `...14`
+• `` -> `...15`
+• `` -> `...16`
+New names:
+• `` -> `...2`
+• `` -> `...3`
+• `` -> `...4`
+• `` -> `...5`
+• `` -> `...6`
+• `` -> `...7`
+• `` -> `...8`
+• `` -> `...9`
+• `` -> `...10`
+• `` -> `...11`
+• `` -> `...12`
+• `` -> `...13`
+• `` -> `...14`
+• `` -> `...15`
+• `` -> `...16`
+New names:
+• `` -> `...2`
+• `` -> `...3`
+• `` -> `...4`
+• `` -> `...5`
+• `` -> `...6`
+• `` -> `...7`
+• `` -> `...8`
+• `` -> `...9`
+• `` -> `...10`
+• `` -> `...11`
+• `` -> `...12`
+• `` -> `...13`
+• `` -> `...14`
+• `` -> `...15`
+• `` -> `...16`
+New names:
+• `` -> `...2`
+• `` -> `...3`
+• `` -> `...4`
+• `` -> `...5`
+• `` -> `...6`
+• `` -> `...7`
+• `` -> `...8`
+• `` -> `...9`
+• `` -> `...10`
+• `` -> `...11`
+• `` -> `...12`
+• `` -> `...13`
+• `` -> `...14`
+• `` -> `...15`
+• `` -> `...16`
+New names:
+• `` -> `...2`
+• `` -> `...3`
+• `` -> `...4`
+• `` -> `...5`
+• `` -> `...6`
+• `` -> `...7`
+• `` -> `...8`
+• `` -> `...9`
+• `` -> `...10`
+• `` -> `...11`
+• `` -> `...12`
+• `` -> `...13`
+• `` -> `...14`
+• `` -> `...15`
+• `` -> `...16`
+New names:
+• `` -> `...2`
+• `` -> `...3`
+• `` -> `...4`
+• `` -> `...5`
+• `` -> `...6`
+• `` -> `...7`
+• `` -> `...8`
+• `` -> `...9`
+• `` -> `...10`
+• `` -> `...11`
+• `` -> `...12`
+• `` -> `...13`
+• `` -> `...14`
+• `` -> `...15`
+• `` -> `...16`
+New names:
+• `` -> `...2`
+• `` -> `...3`
+• `` -> `...4`
+• `` -> `...5`
+• `` -> `...6`
+• `` -> `...7`
+• `` -> `...8`
+• `` -> `...9`
+• `` -> `...10`
+• `` -> `...11`
+• `` -> `...12`
+• `` -> `...13`
+• `` -> `...14`
+• `` -> `...15`
+• `` -> `...16`
+New names:
+• `` -> `...2`
+• `` -> `...3`
+• `` -> `...4`
+• `` -> `...5`
+• `` -> `...6`
+• `` -> `...7`
+• `` -> `...8`
+• `` -> `...9`
+• `` -> `...10`
+• `` -> `...11`
+• `` -> `...12`
+• `` -> `...13`
+• `` -> `...14`
+• `` -> `...15`
+• `` -> `...16`
+New names:
+• `` -> `...2`
+• `` -> `...3`
+• `` -> `...4`
+• `` -> `...5`
+• `` -> `...6`
+• `` -> `...7`
+• `` -> `...8`
+• `` -> `...9`
+• `` -> `...10`
+• `` -> `...11`
+• `` -> `...12`
+• `` -> `...13`
+• `` -> `...14`
+• `` -> `...15`
+• `` -> `...16`
+New names:
+• `` -> `...2`
+• `` -> `...3`
+• `` -> `...4`
+• `` -> `...5`
+• `` -> `...6`
+• `` -> `...7`
+• `` -> `...8`
+• `` -> `...9`
+• `` -> `...10`
+• `` -> `...11`
+• `` -> `...12`
+• `` -> `...13`
+• `` -> `...14`
+• `` -> `...15`
+• `` -> `...16`
+New names:
+• `` -> `...2`
+• `` -> `...3`
+• `` -> `...4`
+• `` -> `...5`
+• `` -> `...6`
+• `` -> `...7`
+• `` -> `...8`
+• `` -> `...9`
+• `` -> `...10`
+• `` -> `...11`
+• `` -> `...12`
+• `` -> `...13`
+• `` -> `...14`
+• `` -> `...15`
+• `` -> `...16`
+New names:
+• `` -> `...2`
+• `` -> `...3`
+• `` -> `...4`
+• `` -> `...5`
+• `` -> `...6`
+• `` -> `...7`
+• `` -> `...8`
+• `` -> `...9`
+• `` -> `...10`
+• `` -> `...11`
+• `` -> `...12`
+• `` -> `...13`
+• `` -> `...14`
+• `` -> `...15`
+• `` -> `...16`
+New names:
+• `` -> `...2`
+• `` -> `...3`
+• `` -> `...4`
+• `` -> `...5`
+• `` -> `...6`
+• `` -> `...7`
+• `` -> `...8`
+• `` -> `...9`
+• `` -> `...10`
+• `` -> `...11`
+• `` -> `...12`
+• `` -> `...13`
+• `` -> `...14`
+• `` -> `...15`
+• `` -> `...16`
+New names:
+• `` -> `...2`
+• `` -> `...3`
+• `` -> `...4`
+• `` -> `...5`
+• `` -> `...6`
+• `` -> `...7`
+• `` -> `...8`
+• `` -> `...9`
+• `` -> `...10`
+• `` -> `...11`
+• `` -> `...12`
+• `` -> `...13`
+• `` -> `...14`
+• `` -> `...15`
+• `` -> `...16`
+New names:
+• `` -> `...2`
+• `` -> `...3`
+• `` -> `...4`
+• `` -> `...5`
+• `` -> `...6`
+• `` -> `...7`
+• `` -> `...8`
+• `` -> `...9`
+• `` -> `...10`
+• `` -> `...11`
+• `` -> `...12`
+• `` -> `...13`
+• `` -> `...14`
+• `` -> `...15`
+• `` -> `...16`
+New names:
+• `` -> `...2`
+• `` -> `...3`
+• `` -> `...4`
+• `` -> `...5`
+• `` -> `...6`
+• `` -> `...7`
+• `` -> `...8`
+• `` -> `...9`
+• `` -> `...10`
+• `` -> `...11`
+• `` -> `...12`
+• `` -> `...13`
+• `` -> `...14`
+• `` -> `...15`
+• `` -> `...16`
+New names:
+• `` -> `...2`
+• `` -> `...3`
+• `` -> `...4`
+• `` -> `...5`
+• `` -> `...6`
+• `` -> `...7`
+• `` -> `...8`
+• `` -> `...9`
+• `` -> `...10`
+• `` -> `...11`
+• `` -> `...12`
+• `` -> `...13`
+• `` -> `...14`
+• `` -> `...15`
+• `` -> `...16`
+New names:
+• `` -> `...2`
+• `` -> `...3`
+• `` -> `...4`
+• `` -> `...5`
+• `` -> `...6`
+• `` -> `...7`
+• `` -> `...8`
+• `` -> `...9`
+• `` -> `...10`
+• `` -> `...11`
+• `` -> `...12`
+• `` -> `...13`
+• `` -> `...14`
+• `` -> `...15`
+• `` -> `...16`
+New names:
+• `` -> `...2`
+• `` -> `...3`
+• `` -> `...4`
+• `` -> `...5`
+• `` -> `...6`
+• `` -> `...7`
+• `` -> `...8`
+• `` -> `...9`
+• `` -> `...10`
+• `` -> `...11`
+• `` -> `...12`
+• `` -> `...13`
+• `` -> `...14`
+• `` -> `...15`
+• `` -> `...16`
+New names:
+• `` -> `...2`
+• `` -> `...3`
+• `` -> `...4`
+• `` -> `...5`
+• `` -> `...6`
+• `` -> `...7`
+• `` -> `...8`
+• `` -> `...9`
+• `` -> `...10`
+• `` -> `...11`
+• `` -> `...12`
+• `` -> `...13`
+• `` -> `...14`
+• `` -> `...15`
+• `` -> `...16`
+New names:
+• `` -> `...2`
+• `` -> `...3`
+• `` -> `...4`
+• `` -> `...5`
+• `` -> `...6`
+• `` -> `...7`
+• `` -> `...8`
+• `` -> `...9`
+• `` -> `...10`
+• `` -> `...11`
+• `` -> `...12`
+• `` -> `...13`
+• `` -> `...14`
+• `` -> `...15`
+• `` -> `...16`
+New names:
+• `` -> `...2`
+• `` -> `...3`
+• `` -> `...4`
+• `` -> `...5`
+• `` -> `...6`
+• `` -> `...7`
+• `` -> `...8`
+• `` -> `...9`
+• `` -> `...10`
+• `` -> `...11`
+• `` -> `...12`
+• `` -> `...13`
+• `` -> `...14`
+• `` -> `...15`
+• `` -> `...16`
+New names:
+• `` -> `...2`
+• `` -> `...3`
+• `` -> `...4`
+• `` -> `...5`
+• `` -> `...6`
+• `` -> `...7`
+• `` -> `...8`
+• `` -> `...9`
+• `` -> `...10`
+• `` -> `...11`
+• `` -> `...12`
+• `` -> `...13`
+• `` -> `...14`
+• `` -> `...15`
+• `` -> `...16`
+New names:
+• `` -> `...2`
+• `` -> `...3`
+• `` -> `...4`
+• `` -> `...5`
+• `` -> `...6`
+• `` -> `...7`
+• `` -> `...8`
+• `` -> `...9`
+• `` -> `...10`
+• `` -> `...11`
+• `` -> `...12`
+• `` -> `...13`
+• `` -> `...14`
+• `` -> `...15`
+• `` -> `...16`
+New names:
+• `` -> `...2`
+• `` -> `...3`
+• `` -> `...4`
+• `` -> `...5`
+• `` -> `...6`
+• `` -> `...7`
+• `` -> `...8`
+• `` -> `...9`
+• `` -> `...10`
+• `` -> `...11`
+• `` -> `...12`
+• `` -> `...13`
+• `` -> `...14`
+• `` -> `...15`
+• `` -> `...16`
+New names:
+• `` -> `...2`
+• `` -> `...3`
+• `` -> `...4`
+• `` -> `...5`
+• `` -> `...6`
+• `` -> `...7`
+• `` -> `...8`
+• `` -> `...9`
+• `` -> `...10`
+• `` -> `...11`
+• `` -> `...12`
+• `` -> `...13`
+• `` -> `...14`
+• `` -> `...15`
+• `` -> `...16`
+New names:
+• `` -> `...2`
+• `` -> `...3`
+• `` -> `...4`
+• `` -> `...5`
+• `` -> `...6`
+• `` -> `...7`
+• `` -> `...8`
+• `` -> `...9`
+• `` -> `...10`
+• `` -> `...11`
+• `` -> `...12`
+• `` -> `...13`
+• `` -> `...14`
+• `` -> `...15`
+• `` -> `...16`
+New names:
+• `` -> `...2`
+• `` -> `...3`
+• `` -> `...4`
+• `` -> `...5`
+• `` -> `...6`
+• `` -> `...7`
+• `` -> `...8`
+• `` -> `...9`
+• `` -> `...10`
+• `` -> `...11`
+• `` -> `...12`
+• `` -> `...13`
+• `` -> `...14`
+• `` -> `...15`
+• `` -> `...16`
+✔ raw_census_2001 completed [5s, 4.30 MB]
++ raw_boundaries_2020 dispatched
+✔ raw_boundaries_2020 completed [118ms, 47.31 MB]
++ raw_nss_2017_education dispatched
+New names:
+• `1.` -> `1....1`
+• `Andaman &` -> `Andaman &...2`
+• `Andaman &` -> `Andaman &...4`
+• `1.` -> `1....5`
+✔ raw_nss_2017_education completed [1.9s, 2.20 MB]
++ raw_district_changes dispatched
+New names:
+• `Anantapur` -> `Anantapur...1`
+• `Anantapur` -> `Anantapur...3`
+New names:
+• `` -> `...2`
+• `` -> `...3`
+• `` -> `...5`
+• `` -> `...6`
+• `` -> `...8`
+• `` -> `...9`
+• `` -> `...11`
+• `` -> `...12`
+• `` -> `...14`
+• `` -> `...15`
+• `` -> `...17`
+• `` -> `...18`
+• `` -> `...20`
+• `` -> `...21`
+• `` -> `...23`
+• `` -> `...24`
+• `` -> `...26`
+• `` -> `...27`
+• `` -> `...29`
+• `` -> `...30`
+• `` -> `...32`
+• `` -> `...33`
+• `` -> `...35`
+• `` -> `...36`
+• `` -> `...38`
+• `` -> `...39`
+• `` -> `...41`
+• `` -> `...42`
+• `` -> `...44`
+• `` -> `...45`
+• `` -> `...47`
+• `` -> `...48`
+• `` -> `...50`
+• `` -> `...51`
+• `` -> `...53`
+• `` -> `...54`
+• `` -> `...56`
+• `` -> `...57`
+• `` -> `...59`
+• `` -> `...60`
+New names:
+• `` -> `...6`
+New names:
+• `` -> `...6`
+New names:
+• `` -> `...6`
+✔ raw_district_changes completed [326ms, 160.86 kB]
++ raw_nss_2007_consumption dispatched
+✔ raw_nss_2007_consumption completed [546ms, 1.17 MB]
++ nss_2007_education dispatched
+✔ nss_2007_education completed [976ms, 13.44 MB]
++ census_2001_languages dispatched
+✔ census_2001_languages completed [5.4s, 32.10 kB]
++ boundaries_2020 dispatched
+✔ boundaries_2020 completed [4.2s, 47.95 MB]
++ nss_2017_education dispatched
+✔ nss_2017_education completed [306ms, 2.22 MB]
++ district_tracker_raw dispatched
+✔ district_tracker_raw completed [62ms, 214.25 kB]
++ nss_2007_consumption dispatched
+✔ nss_2007_consumption completed [71ms, 1.18 MB]
++ linguistic_distance_iv dispatched
+✔ linguistic_distance_iv completed [127ms, 11.84 kB]
++ district_keys_2001 dispatched
+✔ district_keys_2001 completed [13ms, 3.84 kB]
++ district_keys_2020 dispatched
+✔ district_keys_2020 completed [6.6s, 9.19 kB]
++ measures_2017 dispatched
+✔ measures_2017 completed [1.6s, 46.53 kB]
++ district_keys_2017 dispatched
+✔ district_keys_2017 completed [237ms, 2.44 kB]
++ district_tracker dispatched
+✔ district_tracker completed [24ms, 214.40 kB]
++ district_keys_2007 dispatched
+✔ district_keys_2007 completed [1.6s, 9.13 kB]
++ processed_district_tracker_file dispatched
+✔ processed_district_tracker_file completed [37ms, 181 kB]
++ district_join_map dispatched
+✔ district_join_map completed [12ms, 113.07 kB]
++ selection_data dispatched
+✔ selection_data completed [7.8s, 2.90 MB]
++ selection_model dispatched
+✔ selection_model completed [3.9s, 102.39 MB]
++ ame_results dispatched
+✔ ame_results completed [5m 10s, 149.70 MB]
++ measures_2007 dispatched
+✔ measures_2007 completed [5s, 124.57 kB]
++ district_panel dispatched
+✔ district_panel completed [5.2s, 33.10 MB]
++ figures dispatched
+✔ figures completed [70ms, 81.06 MB]
++ iv_models dispatched
+✔ iv_models completed [25ms, 579.00 kB]
++ spatial_weights dispatched
+✔ spatial_weights completed [12.1s, 18.92 kB]
++ processed_district_panel_file dispatched
+✔ processed_district_panel_file completed [13ms, 490.08 kB]
++ figure_files dispatched
+✔ figure_files completed [37.3s, 49.41 MB]
++ first_stage_tests dispatched
+✔ first_stage_tests completed [306ms, 1.23 kB]
++ diag_public_weak_instruments dispatched
+✔ diag_public_weak_instruments completed [13ms, 1.23 kB]
++ diag_public_overidentification dispatched
+✔ diag_public_overidentification completed [47ms, 280 B]
++ diag_public_multicollinearity dispatched
+✔ diag_public_multicollinearity completed [4ms, 203 B]
++ diag_public_spatial_autocorrelation dispatched
+✔ diag_public_spatial_autocorrelation completed [14.9s, 1.36 kB]
++ tables dispatched
+✔ tables completed [2.6s, 411.55 MB]
++ report_values dispatched
+✔ report_values completed [772ms, 1.90 kB]
++ table_files dispatched
+✔ table_files completed [3.4s, 75.63 kB]
++ district_matching_note dispatched
+✔ district_matching_note completed [1s, 693.44 kB]
++ writing_sample_pdfs dispatched
+[31m
+
+processing file: RishavRoy_WritingSample10pg.qmd
+[39m1/17                             
+2/17 [report-target-values]      
+3/17                             
+4/17 [public-output-table-helper]
+5/17                             
+6/17 [tbl-sum-tbl-probit-quant]  
+7/17                             
+8/17 [tbl-sum-tbl-probit-cat]    
+9/17                             
+10/17 [tbl-probit-mfx]            
+11/17                             
+12/17 [tbl-sum-tbl-iv]            
+13/17                             
+14/17 [tbl-fs-cons]               
+15/17                             
+16/17 [tbl-cons-iv]               
+17/17                             
+[31moutput file: RishavRoy_WritingSample10pg.knit.md
+
+[39m[1mpandoc --output RishavRoy_WritingSample10pg.tex[22m
+  to: latex
+  standalone: true
+  pdf-engine: xelatex
+  variables:
+    graphics: true
+    tables: true
+  default-image-extension: pdf
+  
+[1mmetadata[22m
+  block-headings: true
+  engines:
+    - path: /Applications/quarto/share/extension-subtrees/julia-engine/_extensions/julia-engine/julia-engine.js
+  title: 'Escaping Inequality in India: The Role of English-Medium Instruction'
+  subtitle: Selected Excerpts
+  author: Rishav Roy
+  bibliography:
+    - ../../paper/references.bib
+  link-citations: true
+  header-includes:
+    - \usepackage{setspace}
+    - \usepackage{booktabs}
+    - \usepackage{longtable}
+    - \usepackage{array}
+    - \usepackage{multirow}
+    - \usepackage{wrapfig}
+    - \usepackage{float}
+    - \usepackage{colortbl}
+    - \usepackage{pdflscape}
+    - \usepackage{tabu}
+    - \usepackage{threeparttable}
+    - \usepackage{threeparttablex}
+    - \usepackage[normalem]{ulem}
+    - \usepackage{makecell}
+    - \usepackage{xcolor}
+    - \definecolor{gray35}{gray}{0.35}
+    - \usepackage{subcaption}
+    - \captionsetup[subtable]{labelformat=empty}
+  documentclass: article
+  papersize: letter
+  geometry:
+    - left=1in
+    - right=1in
+    - top=1in
+    - bottom=1in
+    - footskip=30pt
+  
+[1m[34m
+Rendering PDF[39m[22m
+[1m[34mrunning xelatex - 1[39m[22m
+  This is XeTeX, Version 3.141592653-2.6-0.999998 (TeX Live 2026) (preloaded format=xelatex)
+   restricted \write18 enabled.
+  entering extended mode
+  
+[1m[34mrunning xelatex - 2[39m[22m
+  This is XeTeX, Version 3.141592653-2.6-0.999998 (TeX Live 2026) (preloaded format=xelatex)
+   restricted \write18 enabled.
+  entering extended mode
+  
+
+Output created: RishavRoy_WritingSample10pg.pdf
+
+[31m
+
+processing file: RishavRoy_WritingSample5pg.qmd
+[39m1/5                             
+2/5 [report-target-values]      
+3/5                             
+4/5 [public-output-table-helper]
+5/5                             
+[31moutput file: RishavRoy_WritingSample5pg.knit.md
+
+[39m[1mpandoc --output RishavRoy_WritingSample5pg.tex[22m
+  to: latex
+  standalone: true
+  pdf-engine: xelatex
+  variables:
+    graphics: true
+    tables: true
+  default-image-extension: pdf
+  
+[1mmetadata[22m
+  block-headings: true
+  engines:
+    - path: /Applications/quarto/share/extension-subtrees/julia-engine/_extensions/julia-engine/julia-engine.js
+  title: 'Escaping Inequality in India: The Role of English-Medium Instruction'
+  subtitle: Selected Excerpts
+  author: Rishav Roy
+  bibliography:
+    - ../../paper/references.bib
+  link-citations: true
+  header-includes:
+    - \usepackage{setspace}
+    - \usepackage{booktabs}
+    - \usepackage{longtable}
+    - \usepackage{array}
+    - \usepackage{multirow}
+    - \usepackage{wrapfig}
+    - \usepackage{float}
+    - \usepackage{colortbl}
+    - \usepackage{pdflscape}
+    - \usepackage{tabu}
+    - \usepackage{threeparttable}
+    - \usepackage{threeparttablex}
+    - \usepackage[normalem]{ulem}
+    - \usepackage{makecell}
+    - \usepackage{xcolor}
+    - \definecolor{gray35}{gray}{0.35}
+    - \usepackage{subcaption}
+    - \captionsetup[subtable]{labelformat=empty}
+  documentclass: article
+  papersize: letter
+  geometry:
+    - left=1in
+    - right=1in
+    - top=1in
+    - bottom=1in
+    - footskip=30pt
+  
+[1m[34m
+Rendering PDF[39m[22m
+[1m[34mrunning xelatex - 1[39m[22m
+  This is XeTeX, Version 3.141592653-2.6-0.999998 (TeX Live 2026) (preloaded format=xelatex)
+   restricted \write18 enabled.
+  entering extended mode
+  
+[1m[34mrunning xelatex - 2[39m[22m
+  This is XeTeX, Version 3.141592653-2.6-0.999998 (TeX Live 2026) (preloaded format=xelatex)
+   restricted \write18 enabled.
+  entering extended mode
+  
+[1m[34mrunning xelatex - 3[39m[22m
+  This is XeTeX, Version 3.141592653-2.6-0.999998 (TeX Live 2026) (preloaded format=xelatex)
+   restricted \write18 enabled.
+  entering extended mode
+  
+
+Output created: RishavRoy_WritingSample5pg.pdf
+
+[31m
+
+processing file: RishavRoy_WritingSample.qmd
+[39m1/17                             
+2/17 [public-output-table-helper]
+3/17                             
+4/17 [report-target-values]      
+5/17                             
+6/17 [tbl-sum-tbl-probit-quant]  
+7/17                             
+8/17 [tbl-sum-tbl-probit-cat]    
+9/17                             
+10/17 [tbl-probit-mfx]            
+11/17                             
+12/17 [tbl-sum-tbl-iv]            
+13/17                             
+14/17 [tbl-fs-cons]               
+15/17                             
+16/17 [tbl-cons-iv]               
+17/17                             
+[31moutput file: RishavRoy_WritingSample.knit.md
+
+[39m[1mpandoc --output RishavRoy_WritingSample.tex[22m
+  to: latex
+  standalone: true
+  pdf-engine: xelatex
+  variables:
+    graphics: true
+    tables: true
+  default-image-extension: pdf
+  
+[1mmetadata[22m
+  block-headings: true
+  engines:
+    - path: /Applications/quarto/share/extension-subtrees/julia-engine/_extensions/julia-engine/julia-engine.js
+  title: 'Escaping Inequality in India: The Role of English-Medium Instruction'
+  author: Rishav Roy
+  bibliography:
+    - ../../paper/references.bib
+  link-citations: true
+  header-includes:
+    - \usepackage{setspace}
+    - \usepackage{booktabs}
+    - \usepackage{longtable}
+    - \usepackage{array}
+    - \usepackage{multirow}
+    - \usepackage{wrapfig}
+    - \usepackage{float}
+    - \usepackage{colortbl}
+    - \usepackage{pdflscape}
+    - \usepackage{tabu}
+    - \usepackage{threeparttable}
+    - \usepackage{threeparttablex}
+    - \usepackage[normalem]{ulem}
+    - \usepackage{makecell}
+    - \usepackage{xcolor}
+    - \definecolor{gray35}{gray}{0.35}
+    - \usepackage{subcaption}
+    - \captionsetup[subtable]{labelformat=empty}
+  documentclass: article
+  papersize: letter
+  geometry:
+    - left=.9in
+    - right=.9in
+    - top=1in
+    - bottom=1in
+    - footskip=30pt
+  
+[1m[34m
+Rendering PDF[39m[22m
+[1m[34mrunning xelatex - 1[39m[22m
+  This is XeTeX, Version 3.141592653-2.6-0.999998 (TeX Live 2026) (preloaded format=xelatex)
+   restricted \write18 enabled.
+  entering extended mode
+  
+[1m[34mrunning xelatex - 2[39m[22m
+  This is XeTeX, Version 3.141592653-2.6-0.999998 (TeX Live 2026) (preloaded format=xelatex)
+   restricted \write18 enabled.
+  entering extended mode
+  
+
+Output created: RishavRoy_WritingSample.pdf
+
+✔ writing_sample_pdfs completed [25s, 5.40 MB]
++ report dispatched
+[31m
+
+processing file: report.qmd
+[39m1/17                             
+2/17 [public-output-table-helper]
+3/17                             
+4/17 [report-target-values]      
+5/17                             
+6/17 [tbl-sum-tbl-probit-quant]  
+7/17                             
+8/17 [tbl-sum-tbl-probit-cat]    
+9/17                             
+10/17 [tbl-probit-mfx]            
+11/17                             
+12/17 [tbl-sum-tbl-iv]            
+13/17                             
+14/17 [tbl-fs-cons]               
+15/17                             
+16/17 [tbl-cons-iv]               
+17/17                             
+[31moutput file: report.knit.md
+
+[39m[1mpandoc [22m
+  to: latex
+  output-file: report.tex
+  standalone: true
+  pdf-engine: xelatex
+  variables:
+    graphics: true
+    tables: true
+  default-image-extension: pdf
+  toc: false
+  number-sections: true
+  cite-method: citeproc
+  
+[1mmetadata[22m
+  block-headings: true
+  engines:
+    - path: /Applications/quarto/share/extension-subtrees/julia-engine/_extensions/julia-engine/julia-engine.js
+  documentclass: article
+  colorlinks: true
+  title: 'Escaping Inequality in India: Role of English-Medium Instruction'
+  author: Rishav Roy
+  bibliography:
+    - references.bib
+  abstract: 'English-medium instruction (EMI), or the teaching of school subjects in English, is often viewed as a potential tool for economic mobility in India, where English skills command substantial wage premia. Yet it remains unclear whether greater exposure to EMI generates broader local development gains. We study whether district-level EMI exposure in 2007, measured as the share of school-going children enrolled in EMI, affected growth in average household consumption between 2007 and 2018. To address endogeneity, we instrument EMI exposure using a proxy for the opporunity cost of acquiring EMI over Hindi-based schooling: the population-weighted average linguistic distance of districts’ mother tongues from Hindi in 2001. District-level 2SLS estimates with state-clustered standard errors are positive but insignificant, providing limited evidence that EMI exposure increased local consumption growth over the medium run. This district-level equilibrium analysis is supplemented with an individual-level probit model of selection into education. We conclude by discussing threats to identification and interpretation (namely spatial autocorrelation and migration) and their implications for future work.'
+  geometry: left=0.85in, right=0.85in, top=0.9in, bottom=0.9in
+  header-includes:
+    - \usepackage{setspace}\doublespacing
+    - \usepackage{mathtools}
+    - \usepackage{longtable}
+    - \usepackage{booktabs}
+    - \usepackage{array}
+    - \usepackage{xcolor}
+    - \definecolor{gray35}{gray}{0.35}
+    - \usepackage{colortbl}
+    - \usepackage{pdflscape}
+    - \usepackage{threeparttablex}
+    - \usepackage{makecell}
+    - \usepackage{tabularray}
+    - \usepackage{float}
+    - \usepackage{threeparttable}
+    - \usepackage{etoolbox}
+    - \AtBeginEnvironment{CSLReferences}{\setstretch{1}\setlength{\parskip}{0pt}\setlength{\itemsep}{0pt}}
+    - \UseTblrLibrary{booktabs}
+    - \UseTblrLibrary{siunitx}
+    - \usepackage{caption}
+    - \usepackage{subcaption}
+    - \captionsetup{width=.95\linewidth,justification=centering}
+    - \captionsetup[subtable]{labelformat=empty}
+  link-citations: true
+  
+[1m[34m
+Rendering PDF[39m[22m
+[1m[34mrunning xelatex - 1[39m[22m
+  This is XeTeX, Version 3.141592653-2.6-0.999998 (TeX Live 2026) (preloaded format=xelatex)
+   restricted \write18 enabled.
+  entering extended mode
+  
+[1m[34mrunning xelatex - 2[39m[22m
+  This is XeTeX, Version 3.141592653-2.6-0.999998 (TeX Live 2026) (preloaded format=xelatex)
+   restricted \write18 enabled.
+  entering extended mode
+  
+
+Output created: report.pdf
+
+✔ report completed [14.1s, 2.19 MB]
++ coding_sample_pdfs dispatched
+[31m
+
+processing file: RishavRoy_CodingSample25pg.qmd
+[39m1/19                  
+2/19 [unnamed-chunk-1]
+3/19                  
+4/19 [unnamed-chunk-2]
+5/19                  
+6/19 [unnamed-chunk-3]
+7/19                  
+8/19 [unnamed-chunk-4]
+9/19                  
+10/19 [unnamed-chunk-5]
+11/19                  
+12/19 [unnamed-chunk-6]
+13/19                  
+14/19 [unnamed-chunk-7]
+15/19                  
+16/19 [unnamed-chunk-8]
+17/19                  
+18/19 [unnamed-chunk-9]
+19/19                  
+[31moutput file: RishavRoy_CodingSample25pg.knit.md
+
+[39m[1mpandoc --output RishavRoy_CodingSample25pg.tex[22m
+  to: latex
+  standalone: true
+  pdf-engine: xelatex
+  variables:
+    graphics: true
+    tables: true
+  default-image-extension: pdf
+  
+[1mmetadata[22m
+  block-headings: true
+  engines:
+    - path: /Applications/quarto/share/extension-subtrees/julia-engine/_extensions/julia-engine/julia-engine.js
+  title: 'Coding Sample: Escaping Inequality in India'
+  subtitle: Selected Excerpts
+  author: Rishav Roy
+  documentclass: article
+  papersize: letter
+  geometry:
+    - left=1in
+    - right=1in
+    - top=1in
+    - bottom=1in
+    - footskip=30pt
+  
+[1m[34m
+Rendering PDF[39m[22m
+[1m[34mrunning xelatex - 1[39m[22m
+  This is XeTeX, Version 3.141592653-2.6-0.999998 (TeX Live 2026) (preloaded format=xelatex)
+   restricted \write18 enabled.
+  entering extended mode
+  
+[1m[34mrunning xelatex - 2[39m[22m
+  This is XeTeX, Version 3.141592653-2.6-0.999998 (TeX Live 2026) (preloaded format=xelatex)
+   restricted \write18 enabled.
+  entering extended mode
+  
+
+Output created: RishavRoy_CodingSample25pg.pdf
+
+[31m
+
+processing file: RishavRoy_CodingSample47pg.qmd
+[39m1/23                   
+2/23 [unnamed-chunk-1] 
+3/23                   
+4/23 [unnamed-chunk-2] 
+5/23                   
+6/23 [unnamed-chunk-3] 
+7/23                   
+8/23 [unnamed-chunk-4] 
+9/23                   
+10/23 [unnamed-chunk-5] 
+11/23                   
+12/23 [unnamed-chunk-6] 
+13/23                   
+14/23 [unnamed-chunk-7] 
+15/23                   
+16/23 [unnamed-chunk-8] 
+17/23                   
+18/23 [unnamed-chunk-9] 
+19/23                   
+20/23 [unnamed-chunk-10]
+21/23                   
+22/23 [unnamed-chunk-11]
+23/23                   
+[31moutput file: RishavRoy_CodingSample47pg.knit.md
+
+[39m[1mpandoc --output RishavRoy_CodingSample47pg.tex[22m
+  to: latex
+  standalone: true
+  pdf-engine: xelatex
+  variables:
+    graphics: true
+    tables: true
+  default-image-extension: pdf
+  
+[1mmetadata[22m
+  block-headings: true
+  engines:
+    - path: /Applications/quarto/share/extension-subtrees/julia-engine/_extensions/julia-engine/julia-engine.js
+  title: 'Coding Sample: Escaping Inequality in India'
+  subtitle: Selected Excerpts
+  author: Rishav Roy
+  documentclass: article
+  papersize: letter
+  geometry:
+    - left=1in
+    - right=1in
+    - top=1in
+    - bottom=1in
+    - footskip=30pt
+  
+[1m[34m
+Rendering PDF[39m[22m
+[1m[34mrunning xelatex - 1[39m[22m
+  This is XeTeX, Version 3.141592653-2.6-0.999998 (TeX Live 2026) (preloaded format=xelatex)
+   restricted \write18 enabled.
+  entering extended mode
+  
+[1m[34mrunning xelatex - 2[39m[22m
+  This is XeTeX, Version 3.141592653-2.6-0.999998 (TeX Live 2026) (preloaded format=xelatex)
+   restricted \write18 enabled.
+  entering extended mode
+  
+
+Output created: RishavRoy_CodingSample47pg.pdf
+
+[31m
+
+processing file: RishavRoy_CodingSample.qmd
+[39m1/23                   
+2/23 [unnamed-chunk-1] 
+3/23                   
+4/23 [unnamed-chunk-2] 
+5/23                   
+6/23 [unnamed-chunk-3] 
+7/23                   
+8/23 [unnamed-chunk-4] 
+9/23                   
+10/23 [unnamed-chunk-5] 
+11/23                   
+12/23 [unnamed-chunk-6] 
+13/23                   
+14/23 [unnamed-chunk-7] 
+15/23                   
+16/23 [unnamed-chunk-8] 
+17/23                   
+18/23 [unnamed-chunk-9] 
+19/23                   
+20/23 [unnamed-chunk-10]
+21/23                   
+22/23 [unnamed-chunk-11]
+23/23                   
+[31moutput file: RishavRoy_CodingSample.knit.md
+
+[39m[1mpandoc --output RishavRoy_CodingSample.tex[22m
+  to: latex
+  standalone: true
+  pdf-engine: xelatex
+  variables:
+    graphics: true
+    tables: true
+  default-image-extension: pdf
+  
+[1mmetadata[22m
+  block-headings: true
+  engines:
+    - path: /Applications/quarto/share/extension-subtrees/julia-engine/_extensions/julia-engine/julia-engine.js
+  title: 'Coding Sample: Escaping Inequality in India'
+  author: Rishav Roy
+  documentclass: article
+  papersize: letter
+  geometry:
+    - left=.9in
+    - right=.9in
+    - top=1in
+    - bottom=1in
+    - footskip=30pt
+  
+[1m[34m
+Rendering PDF[39m[22m
+[1m[34mrunning xelatex - 1[39m[22m
+  This is XeTeX, Version 3.141592653-2.6-0.999998 (TeX Live 2026) (preloaded format=xelatex)
+   restricted \write18 enabled.
+  entering extended mode
+  
+[1m[34mrunning xelatex - 2[39m[22m
+  This is XeTeX, Version 3.141592653-2.6-0.999998 (TeX Live 2026) (preloaded format=xelatex)
+   restricted \write18 enabled.
+  entering extended mode
+  
+
+Output created: RishavRoy_CodingSample.pdf
+
+✔ coding_sample_pdfs completed [29.2s, 601.40 kB]
+✔ ended pipeline [10m 47.9s, 55 completed, 0 skipped]
+[1] TRUE
+Targets completed successfully; wrote .pipeline-final-ok
+EMI_CONFIG=config/final.yml Rscript scripts/audit_report_values.R --strict --allow-status-placeholders
+Report values audit
+  expressions: 37
+  mapped: 37
+  unmapped: 0
+  placeholder/status values: 0
+  status placeholders allowed for build-gate audit: yes
+             key
+ inline_f7e3ad2c
+ inline_eb012827
+ inline_dfcb22a5
+ inline_dee45a99
+ inline_d306ea57
+ inline_cd5afd77
+ inline_c0673df9
+ inline_b833e95b
+ inline_a5aa43ec
+ inline_a3fcb577
+ inline_a07dddc1
+ inline_9cd11971
+ inline_98e93a71
+ inline_97bf1523
+ inline_8a7afce3
+ inline_861e7564
+ inline_7f5360c6
+ inline_7e66a3fd
+ inline_7d871500
+ inline_7b41b8b0
+ inline_7a04581a
+ inline_5aa491ab
+ inline_56755d09
+ inline_55014f4e
+ inline_502254b6
+ inline_4f1d6a5b
+ inline_4c904f9e
+ inline_4ba2ef54
+ inline_46353c81
+ inline_391c516e
+ inline_2b7c944a
+ inline_19ced62f
+ inline_178b6738
+ inline_101aa68e
+ inline_0b52593f
+ inline_0937ca53
+ inline_07c03c06
+                                                                                                                      expression
+          summary(model_consumption_iv, vcov = vcov_model_consumption_iv)$coefficients["pct_obc","Estimate"] %>% round(digits=3)
+                                                          mfx_df %>% filter(term=="HH_SIZE") %>% pull(estimate) %>% round(3)*100
+                          mfx_df %>% filter(term=="SOCIAL_GROUP" & grepl("Tribe", contrast)) %>% pull(estimate) %>% round(3)*100
+                                                              mfx_df %>% filter(term=="AGE") %>% pull(estimate) %>% round(3)*100
+                                                                                                 partial_f %>% round(digits = 2)
+         summary(model_consumption_iv, vcov = vcov_model_consumption_iv)$coefficients["pct_medium_land",4] %>% round(digits = 3)
+                                                                                                partial_p %>% signif(digits = 2)
+                                                              mfx_df %>% filter(term=="SEX") %>% pull(estimate) %>% round(3)*100
+                                 edu0708b4 %>% filter(RELATION_TO_HEAD==5 & SEX==1) %>% summarise(round(mean(AGE),1)) %>% .[[1]]
+                             mfx_df %>% filter(term=="RELIGION" & grepl("Muslim", contrast)) %>% pull(estimate) %>% round(3)*100
+          summary(first_stage_consumption, vcov = vcov_first_stage_consumption)$coefficients["wavg_ling_degrees",1] %>% round(2)
+                                  mfx_df %>% filter(term=="RELIGION" & grepl("Muslim",contrast)) %>% pull(estimate) %>% round(3)
+               summary(model_consumption_iv, vcov = vcov_model_consumption_iv)$coefficients["pct_urban",4] %>% round(digits = 3)
+                    summary(model_consumption_iv, vcov = vcov_model_consumption_iv)$coefficients["EMIE",4] %>% round(digits = 2)
+ summary(model_consumption_iv, vcov = vcov_model_consumption_iv)$coefficients["pct_head_secondary_plus",4] %>% round(digits = 3)
+          summary(model_consumption_iv, vcov = vcov_model_consumption_iv)$coefficients["pct_large_land",4] %>% round(digits = 3)
+                                                    mfx_df %>% filter(term=="AGE") %>% pull(estimate) %>% round(3) %>% abs()*100
+                                                                                                    m_cons$p.value %>% signif(3)
+                                                                                kappa %>% format(scientific = FALSE, digits = 7)
+                             edu0708b4 %>% filter(RELATION_TO_HEAD==2 & SEX==1) %>% summarise(round(mean(AGE<=17),3)) %>% .[[1]]
+                    mfx_df %>% filter(grepl("dmean_num", term) & grepl("IS_EDU_FREE", term)) %>% pull(estimate) %>% round(3)*100
+                                                                  mfx_df %>% filter(term=="AGE") %>% pull(estimate) %>% round(3)
+       summary(model_consumption_iv, vcov = vcov_model_consumption_iv)$coefficients["pct_muslim","Estimate"] %>% round(digits=3)
+                     mfx_df %>% filter(grepl("dmean_num", term) & grepl("RECD_TXT_BOOKS", term)) %>% pull(s.value) %>% signif(3)
+                                 edu0708b4 %>% filter(RELATION_TO_HEAD==3 & SEX==1) %>% summarise(round(mean(AGE),1)) %>% .[[1]]
+             summary(first_stage_consumption, vcov = vcov_first_stage_consumption)$coefficients["gini_cons_0708",1] %>% round(2)
+           summary(model_consumption_iv, vcov = vcov_model_consumption_iv)$coefficients["pct_st","Estimate"] %>% round(digits=3)
+                                 edu0708b4 %>% filter(RELATION_TO_HEAD==2 & SEX==1) %>% summarise(round(mean(AGE),1)) %>% .[[1]]
+          summary(model_consumption_iv, vcov = vcov_model_consumption_iv)$coefficients["gini_cons_0708",4] %>% round(digits = 3)
+                                 edu0708b4 %>% filter(RELATION_TO_HEAD==1 & SEX==1) %>% summarise(round(mean(AGE),1)) %>% .[[1]]
+                                                                                              m_cons_resid$p.value %>% signif(3)
+               summary(model_consumption_iv, vcov = vcov_model_consumption_iv)$coefficients["pct_urban",1] %>% round(digits = 2)
+ summary(model_consumption_iv, vcov = vcov_model_consumption_iv)$coefficients["pct_head_secondary_plus",1] %>% round(digits = 2)
+                                 edu0708b4 %>% filter(RELATION_TO_HEAD==7 & SEX==1) %>% summarise(round(mean(AGE),1)) %>% .[[1]]
+            summary(model_consumption_iv, vcov = vcov_model_consumption_iv)$coefficients["pct_fem_head",4] %>% round(digits = 3)
+                        mfx_df %>% filter(grepl("dmean_num", term) & grepl("IS_EDU_FREE", term)) %>% pull(s.value) %>% signif(3)
+                    summary(model_consumption_iv, vcov = vcov_model_consumption_iv)$coefficients["EMIE",1] %>% round(digits = 2)
+ mapped_by status placeholder    value reason
+       key mapped       FALSE   -0.581   <NA>
+       key mapped       FALSE   -0.369   <NA>
+       key mapped       FALSE   -10.22   <NA>
+       key mapped       FALSE   -2.829   <NA>
+       key mapped       FALSE     9.56   <NA>
+       key mapped       FALSE   0.0387   <NA>
+       key mapped       FALSE   0.0021   <NA>
+       key mapped       FALSE     4.42   <NA>
+       key mapped       FALSE     18.1   <NA>
+       key mapped       FALSE  -12.574   <NA>
+       key mapped       FALSE     3.83   <NA>
+       key mapped       FALSE   -0.126   <NA>
+       key mapped       FALSE 3.31e-07   <NA>
+       key mapped       FALSE    0.433   <NA>
+       key mapped       FALSE    0.098   <NA>
+       key mapped       FALSE    0.451   <NA>
+       key mapped       FALSE    2.829   <NA>
+       key mapped       FALSE 1.25e-11   <NA>
+       key mapped       FALSE  27634.1   <NA>
+       key mapped       FALSE    0.896   <NA>
+       key mapped       FALSE    -8.83   <NA>
+       key mapped       FALSE   -0.028   <NA>
+       key mapped       FALSE   -0.188   <NA>
+       key mapped       FALSE     12.3   <NA>
+       key mapped       FALSE     18.1   <NA>
+       key mapped       FALSE   -19.33   <NA>
+       key mapped       FALSE   -0.709   <NA>
+       key mapped       FALSE     11.8   <NA>
+       key mapped       FALSE    0.549   <NA>
+       key mapped       FALSE       14   <NA>
+       key mapped       FALSE 1.65e-08   <NA>
+       key mapped       FALSE     1.24   <NA>
+       key mapped       FALSE    -0.44   <NA>
+       key mapped       FALSE     13.5   <NA>
+       key mapped       FALSE    0.407   <NA>
+       key mapped       FALSE     27.3   <NA>
+       key mapped       FALSE     0.41   <NA>
+Rscript scripts/audit_crossrefs.R --strict-report
+Cross-reference audit
+=====================
+- paper/report.qmd: 22 refs, 26 labels, 0 unresolved
+- paper/appendix.qmd: 1 refs, 5 labels, 0 unresolved
+- docs/district-matching.qmd: 0 refs, 3 labels, 0 unresolved
+- docs/long-paths-and-8-3-filenames.qmd: 0 refs, 0 labels, 0 unresolved
+- application-samples/.work/RishavRoy_CodingSample.qmd: 0 refs, 0 labels, 0 unresolved
+- application-samples/.work/RishavRoy_CodingSample25pg.qmd: 0 refs, 0 labels, 0 unresolved
+- application-samples/.work/RishavRoy_CodingSample47pg.qmd: 0 refs, 0 labels, 0 unresolved
+- application-samples/.work/RishavRoy_WritingSample.qmd: 22 refs, 26 labels, 0 unresolved
+- application-samples/.work/RishavRoy_WritingSample10pg.qmd: 0 refs, 21 labels, 0 unresolved
+- application-samples/.work/RishavRoy_WritingSample5pg.qmd: 0 refs, 7 labels, 0 unresolved
+Strict public cross-reference audit completed.
+Rscript scripts/check_required_outputs.R --require-final-stamp
+Required public render dependencies exist.
+EMI_CONFIG=config/final.yml Rscript scripts/check_rendered_text.R --final
+No rendered placeholder value text or visible cross-reference failures detected in checked public files.
+Rscript scripts/check_public_final.R
+Legacy parity audit
+  failures: 0
+  warnings: 11
+
+Warnings:
+- PDF page count differs: legacy=49, current=47.
+- Current report prints an author, while the legacy Rmd commented the author out.
+- IV EMIE summary N is 482; legacy Table 4 reports 454. This legacy numeric target is documented as a corrected IV-panel deviation.
+- IV EMIE mean is 18.97; legacy Table 4 reports 16.28. This legacy numeric target is documented as a corrected IV-panel deviation.
+- IV npeople_0708 mean is 1700682.00; legacy reports 1979019.00. This legacy numeric target is documented as a corrected IV-panel deviation.
+- IV consumption_0708 mean is 850.21; legacy reports 861.53. This legacy numeric target is documented as a corrected IV-panel deviation.
+- IV dependency_ratio mean is 60.26; legacy reports 58.24. This legacy numeric target is documented as a corrected IV-panel deviation.
+- Second-stage EMIE estimate is 0.406; legacy Table 6 reports 0.201. This legacy numeric target is documented as a corrected IV-panel deviation.
+- Second-stage Constant estimate is 385.674; legacy Table 6 reports 457.536. This legacy numeric target is documented as a corrected IV-panel deviation.
+- First-stage linguistic-distance estimate is 3.825; legacy Table 5 reports 2.945. This legacy numeric target is documented as a corrected IV-panel deviation.
+- First-stage instrument F-statistic is 9.56; legacy Table 5 reports 39.20, but the legacy target is not used as a hard parity check because the statistic is recomputed from the active first-stage design. 
+Final output artifact audit passed.
+Final public checks passed.
+EMI_CONFIG=config/final.yml Rscript scripts/audit_outputs_final.R
+Legacy parity audit
+  failures: 0
+  warnings: 11
+
+Warnings:
+- PDF page count differs: legacy=49, current=47.
+- Current report prints an author, while the legacy Rmd commented the author out.
+- IV EMIE summary N is 482; legacy Table 4 reports 454. This legacy numeric target is documented as a corrected IV-panel deviation.
+- IV EMIE mean is 18.97; legacy Table 4 reports 16.28. This legacy numeric target is documented as a corrected IV-panel deviation.
+- IV npeople_0708 mean is 1700682.00; legacy reports 1979019.00. This legacy numeric target is documented as a corrected IV-panel deviation.
+- IV consumption_0708 mean is 850.21; legacy reports 861.53. This legacy numeric target is documented as a corrected IV-panel deviation.
+- IV dependency_ratio mean is 60.26; legacy reports 58.24. This legacy numeric target is documented as a corrected IV-panel deviation.
+- Second-stage EMIE estimate is 0.406; legacy Table 6 reports 0.201. This legacy numeric target is documented as a corrected IV-panel deviation.
+- Second-stage Constant estimate is 385.674; legacy Table 6 reports 457.536. This legacy numeric target is documented as a corrected IV-panel deviation.
+- First-stage linguistic-distance estimate is 3.825; legacy Table 5 reports 2.945. This legacy numeric target is documented as a corrected IV-panel deviation.
+- First-stage instrument F-statistic is 9.56; legacy Table 5 reports 39.20, but the legacy target is not used as a hard parity check because the statistic is recomputed from the active first-stage design. 
+Final output artifact audit passed.
+touch .public-final-ok
++ checkpoint_archive after-public-final-check
++ local label=after-public-final-check
++ [[ false == \t\r\u\e ]]
++ echo '=== LEGACY CONTENT PARITY AUDIT ==='
+=== LEGACY CONTENT PARITY AUDIT ===
++ python3 -m py_compile scripts/audit_legacy_parity.py
++ python3 scripts/audit_legacy_parity.py
+Legacy parity audit
+  failures: 0
+  warnings: 11
+
+Warnings:
+- PDF page count differs: legacy=49, current=47.
+- Current report prints an author, while the legacy Rmd commented the author out.
+- IV EMIE summary N is 482; legacy Table 4 reports 454. This legacy numeric target is documented as a corrected IV-panel deviation.
+- IV EMIE mean is 18.97; legacy Table 4 reports 16.28. This legacy numeric target is documented as a corrected IV-panel deviation.
+- IV npeople_0708 mean is 1700682.00; legacy reports 1979019.00. This legacy numeric target is documented as a corrected IV-panel deviation.
+- IV consumption_0708 mean is 850.21; legacy reports 861.53. This legacy numeric target is documented as a corrected IV-panel deviation.
+- IV dependency_ratio mean is 60.26; legacy reports 58.24. This legacy numeric target is documented as a corrected IV-panel deviation.
+- Second-stage EMIE estimate is 0.406; legacy Table 6 reports 0.201. This legacy numeric target is documented as a corrected IV-panel deviation.
+- Second-stage Constant estimate is 385.674; legacy Table 6 reports 457.536. This legacy numeric target is documented as a corrected IV-panel deviation.
+- First-stage linguistic-distance estimate is 3.825; legacy Table 5 reports 2.945. This legacy numeric target is documented as a corrected IV-panel deviation.
+- First-stage instrument F-statistic is 9.56; legacy Table 5 reports 39.20, but the legacy target is not used as a hard parity check because the statistic is recomputed from the active first-stage design.
++ checkpoint_archive after-legacy-content-audit
++ local label=after-legacy-content-audit
++ [[ false == \t\r\u\e ]]
++ [[ true == \t\r\u\e ]]
++ echo '=== EXTENDED DIAGNOSTICS ==='
+=== EXTENDED DIAGNOSTICS ===
++ make extended-diagnostics
+EMI_CONFIG=config/final.yml EMI_RUN_EXTENDED_DIAGNOSTICS=true Rscript scripts/run_targets_checked.R --starts-with diag_ext_
+EMI_RUN_BENCHMARKS=false: omitting benchmark targets from this targets run.
+EMI_RENDER_ANALYSIS_NOTES=false: omitting analysis-note render targets from this targets run.
+EMI_RUN_BENCHMARKS=false: omitting benchmark targets from this targets run.
+EMI_RENDER_ANALYSIS_NOTES=false: omitting analysis-note render targets from this targets run.
++ config_path dispatched
+✔ config_path completed [1.8s, 67 B]
++ diag_ext_district_tracker_sources dispatched
+✔ diag_ext_district_tracker_sources completed [578ms, 488 B]
++ diag_ext_missingness dispatched
+✔ diag_ext_missingness completed [38.6s, 581 B]
++ diag_ext_fuzzy_matching dispatched
+✔ diag_ext_fuzzy_matching completed [30s, 392 B]
++ diag_ext_district_matching dispatched
+✔ diag_ext_district_matching completed [166ms, 448 B]
++ diag_ext_instrument_exploration dispatched
+✔ diag_ext_instrument_exploration completed [40ms, 325 B]
++ diag_ext_spatial_weights dispatched
+✔ diag_ext_spatial_weights completed [24.5s, 321 B]
+✔ ended pipeline [1m 37.8s, 7 completed, 32 skipped]
+Warning messages:
+1: glm.fit: fitted probabilities numerically 0 or 1 occurred 
+2: 1 targets produced warnings. Run targets::tar_meta(fields = warnings, complete_only = TRUE) for the messages. 
++ checkpoint_archive after-extended-diagnostics
++ local label=after-extended-diagnostics
++ [[ false == \t\r\u\e ]]
++ [[ true == \t\r\u\e ]]
++ echo '=== BENCHMARKS ==='
+=== BENCHMARKS ===
++ make benchmarking
+EMI_CONFIG=config/final.yml EMI_RUN_BENCHMARKS=true Rscript scripts/run_targets_checked.R --starts-with bench_
+EMI_RUN_EXTENDED_DIAGNOSTICS=false: omitting extended diagnostic targets from this targets run.
+EMI_RENDER_ANALYSIS_NOTES=false: omitting analysis-note render targets from this targets run.
+EMI_RUN_EXTENDED_DIAGNOSTICS=false: omitting extended diagnostic targets from this targets run.
+EMI_RENDER_ANALYSIS_NOTES=false: omitting analysis-note render targets from this targets run.
++ config_path dispatched
+✔ config_path completed [1.7s, 67 B]
++ bench_fuzzy_matching dispatched
+✔ bench_fuzzy_matching completed [50.2s, 335 B]
++ bench_ame_methods dispatched
+✔ bench_ame_methods completed [1m 48s, 299 B]
++ bench_spatial_weights dispatched
+✔ bench_spatial_weights completed [27.9s, 259 B]
++ bench_spatial_iv_experimental dispatched
+✔ bench_spatial_iv_experimental completed [395ms, 381 B]
+✔ ended pipeline [3m 14s, 5 completed, 32 skipped]
++ checkpoint_archive after-benchmarks
++ local label=after-benchmarks
++ [[ false == \t\r\u\e ]]
++ [[ true == \t\r\u\e ]]
++ echo '=== ANALYSIS NOTES ==='
+=== ANALYSIS NOTES ===
++ make render-analysis
+HOME=/private/tmp/emi-inequality-india-quarto-cache/home EMI_CONFIG=config/final.yml EMI_RUN_EXTENDED_DIAGNOSTICS=true EMI_RUN_BENCHMARKS=true EMI_RENDER_ANALYSIS_NOTES=true EMI_RENDER_APPLICATION_SAMPLES=false Rscript scripts/run_targets_checked.R --targets analysis_markdown_files
+EMI_RENDER_APPLICATION_SAMPLES=false: omitting application-sample targets from this targets run.
+EMI_RENDER_APPLICATION_SAMPLES=false: omitting application-sample targets from this targets run.
++ analysis_qmd_diagnostics_fuzzy_matching_diagnostics dispatched
+✔ analysis_qmd_diagnostics_fuzzy_matching_diagnostics completed [1.8s, 2.55 kB]
++ analysis_qmd_exploratory_instrument_exploration dispatched
+✔ analysis_qmd_exploratory_instrument_exploration completed [0ms, 4.02 kB]
++ analysis_runtime_input_files dispatched
+✔ analysis_runtime_input_files completed [10ms, 27.33 MB]
++ analysis_qmd_diagnostics_missingness_diagnostics dispatched
+✔ analysis_qmd_diagnostics_missingness_diagnostics completed [0ms, 5.60 kB]
++ analysis_qmd_benchmarking_spatial_iv_benchmark dispatched
+✔ analysis_qmd_benchmarking_spatial_iv_benchmark completed [0ms, 2.80 kB]
++ analysis_qmd_exploratory_spatial_iv_experimental dispatched
+✔ analysis_qmd_exploratory_spatial_iv_experimental completed [1ms, 777 B]
++ analysis_qmd_benchmarking_fuzzy_matching_benchmark dispatched
+✔ analysis_qmd_benchmarking_fuzzy_matching_benchmark completed [1ms, 2.63 kB]
++ analysis_qmd_diagnostics_district_matching_diagnostics dispatched
+✔ analysis_qmd_diagnostics_district_matching_diagnostics completed [0ms, 7.00 kB]
++ analysis_qmd_benchmarking_spatial_weights_benchmark dispatched
+✔ analysis_qmd_benchmarking_spatial_weights_benchmark completed [0ms, 2.49 kB]
++ analysis_qmd_diagnostics_spatial_autocorrelation_diagnostics dispatched
+✔ analysis_qmd_diagnostics_spatial_autocorrelation_diagnostics completed [0ms, 3.29 kB]
++ analysis_qmd_io_long_paths_and_8_3_filenames dispatched
+✔ analysis_qmd_io_long_paths_and_8_3_filenames completed [0ms, 5.74 kB]
++ analysis_qmd_benchmarking_ame_benchmark dispatched
+✔ analysis_qmd_benchmarking_ame_benchmark completed [0ms, 5.63 kB]
++ analysis_qmd_diagnostics_district_tracker_source_diagnostics dispatched
+✔ analysis_qmd_diagnostics_district_tracker_source_diagnostics completed [0ms, 3.85 kB]
++ analysis_md_exploratory_instrument_exploration dispatched
+Rendering /Users/Patron/Library/CloudStorage/OneDrive-UW-Madison/Classes/Old Classes/580 and 623 Research Paper/analysis/exploratory/instrument-exploration.qmd to GitHub-flavored Markdown
+[31m
+
+processing file: instrument-exploration.qmd
+[39m1/13                                  
+2/13 [setup]                          
+3/13                                  
+4/13 [instrument-prose-deviation-note]
+5/13                                  
+6/13 [instrument-targets]             
+7/13                                  
+8/13 [instrument-current-code-analog] 
+9/13                                  
+10/13 [instrument-dotplot]             
+11/13                                  
+12/13 [instrument-tables]              
+13/13                                  
+[31moutput file: instrument-exploration.knit.md
+
+[39m[1mpandoc [22m
+  to: >-
+    commonmark+autolink_bare_uris+emoji+footnotes+gfm_auto_identifiers+pipe_tables+strikeout+task_lists+tex_math_dollars
+  output-file: instrument-exploration.md
+  standalone: true
+  default-image-extension: png
+  variables: {}
+  
+[1mmetadata[22m
+  engines:
+    - path: /Applications/quarto/share/extension-subtrees/julia-engine/_extensions/julia-engine/julia-engine.js
+  title: Instrument Exploration
+  
+Output created: instrument-exploration.md
+
+✔ analysis_md_exploratory_instrument_exploration completed [4s, 15.00 kB]
++ analysis_md_diagnostics_fuzzy_matching_diagnostics dispatched
+Rendering /Users/Patron/Library/CloudStorage/OneDrive-UW-Madison/Classes/Old Classes/580 and 623 Research Paper/analysis/diagnostics/fuzzy-matching-diagnostics.qmd to GitHub-flavored Markdown
+[31m
+
+processing file: fuzzy-matching-diagnostics.qmd
+[39m1/9                                        
+2/9 [setup]                                
+3/9                                        
+4/9 [fuzzy-diagnostic-prose-deviation-note]
+5/9                                        
+6/9 [fuzzy-diagnostic-targets]             
+7/9                                        
+8/9 [fuzzy-diagnostic-tables]              
+9/9                                        
+[31moutput file: fuzzy-matching-diagnostics.knit.md
+
+[39m[1mpandoc [22m
+  to: >-
+    commonmark+autolink_bare_uris+emoji+footnotes+gfm_auto_identifiers+pipe_tables+strikeout+task_lists+tex_math_dollars
+  output-file: fuzzy-matching-diagnostics.md
+  standalone: true
+  default-image-extension: png
+  variables: {}
+  
+[1mmetadata[22m
+  engines:
+    - path: /Applications/quarto/share/extension-subtrees/julia-engine/_extensions/julia-engine/julia-engine.js
+  title: Fuzzy Matching Diagnostics
+  
+Output created: fuzzy-matching-diagnostics.md
+
+✔ analysis_md_diagnostics_fuzzy_matching_diagnostics completed [3.2s, 10.80 kB]
++ analysis_md_diagnostics_missingness_diagnostics dispatched
+Rendering /Users/Patron/Library/CloudStorage/OneDrive-UW-Madison/Classes/Old Classes/580 and 623 Research Paper/analysis/diagnostics/missingness-diagnostics.qmd to GitHub-flavored Markdown
+[31m
+
+processing file: missingness-diagnostics.qmd
+[39m1/21                                   
+2/21 [setup]                           
+3/21                                   
+4/21 [missingness-prose-deviation-note]
+5/21                                   
+6/21 [missingness-targets]             
+7/21                                   
+8/21 [missingness-current-code-analog] 
+9/21                                   
+10/21 [missingness-counts]              
+11/21                                   
+12/21 [missingness-regions]             
+13/21                                   
+14/21 [missingness-case-study-and-chisq]
+15/21                                   
+16/21 [missingness-correlation-figures] 
+17/21                                   
+18/21 [missingness-correlation-tables]  
+19/21                                   
+20/21 [missingness-logits]              
+21/21                                   
+[31moutput file: missingness-diagnostics.knit.md
+
+[39m[1mpandoc [22m
+  to: >-
+    commonmark+autolink_bare_uris+emoji+footnotes+gfm_auto_identifiers+pipe_tables+strikeout+task_lists+tex_math_dollars
+  output-file: missingness-diagnostics.md
+  standalone: true
+  default-image-extension: png
+  variables: {}
+  
+[1mmetadata[22m
+  engines:
+    - path: /Applications/quarto/share/extension-subtrees/julia-engine/_extensions/julia-engine/julia-engine.js
+  title: Missingness Diagnostics
+  
+Output created: missingness-diagnostics.md
+
+✔ analysis_md_diagnostics_missingness_diagnostics completed [3.5s, 21.76 kB]
++ analysis_md_benchmarking_spatial_iv_benchmark dispatched
+Rendering /Users/Patron/Library/CloudStorage/OneDrive-UW-Madison/Classes/Old Classes/580 and 623 Research Paper/analysis/benchmarking/spatial-iv-benchmark.qmd to GitHub-flavored Markdown
+[31m
+
+processing file: spatial-iv-benchmark.qmd
+[39m1/13                                  
+2/13 [setup]                          
+3/13                                  
+4/13 [spatial-iv-prose-deviation-note]
+5/13                                  
+6/13 [spatial-iv-targets]             
+7/13                                  
+8/13 [spatial-iv-status]              
+9/13                                  
+10/13 [spatial-iv-formulas]            
+11/13                                  
+12/13 [spatial-iv-diagnostics]         
+13/13                                  
+[31moutput file: spatial-iv-benchmark.knit.md
+
+[39m[1mpandoc [22m
+  to: >-
+    commonmark+autolink_bare_uris+emoji+footnotes+gfm_auto_identifiers+pipe_tables+strikeout+task_lists+tex_math_dollars
+  output-file: spatial-iv-benchmark.md
+  standalone: true
+  default-image-extension: png
+  variables: {}
+  
+[1mmetadata[22m
+  engines:
+    - path: /Applications/quarto/share/extension-subtrees/julia-engine/_extensions/julia-engine/julia-engine.js
+  title: Spatial IV Benchmark
+  
+Output created: spatial-iv-benchmark.md
+
+✔ analysis_md_benchmarking_spatial_iv_benchmark completed [3.2s, 13.21 kB]
++ analysis_md_exploratory_spatial_iv_experimental dispatched
+Rendering /Users/Patron/Library/CloudStorage/OneDrive-UW-Madison/Classes/Old Classes/580 and 623 Research Paper/analysis/exploratory/spatial-iv-experimental.qmd to GitHub-flavored Markdown
+[31m
+
+processing file: spatial-iv-experimental.qmd
+[39m1/5                                
+2/5 [setup]                        
+3/5                                
+4/5 [spatial-iv-exploratory-status]
+5/5                                
+[31moutput file: spatial-iv-experimental.knit.md
+
+[39m[1mpandoc [22m
+  to: >-
+    commonmark+autolink_bare_uris+emoji+footnotes+gfm_auto_identifiers+pipe_tables+strikeout+task_lists+tex_math_dollars
+  output-file: spatial-iv-experimental.md
+  standalone: true
+  default-image-extension: png
+  variables: {}
+  
+[1mmetadata[22m
+  engines:
+    - path: /Applications/quarto/share/extension-subtrees/julia-engine/_extensions/julia-engine/julia-engine.js
+  title: Spatial IV Experimental Models
+  
+Output created: spatial-iv-experimental.md
+
+✔ analysis_md_exploratory_spatial_iv_experimental completed [3s, 2.77 kB]
++ analysis_md_benchmarking_fuzzy_matching_benchmark dispatched
+Rendering /Users/Patron/Library/CloudStorage/OneDrive-UW-Madison/Classes/Old Classes/580 and 623 Research Paper/analysis/benchmarking/fuzzy-matching-benchmark.qmd to GitHub-flavored Markdown
+[31m
+
+processing file: fuzzy-matching-benchmark.qmd
+[39m1/15                                       
+2/15 [setup]                               
+3/15                                       
+4/15 [fuzzy-prose-deviation-note]          
+5/15                                       
+6/15 [fuzzy-targets]                       
+7/15                                       
+8/15 [fuzzy-current-candidate-count-analog]
+9/15                                       
+10/15 [fuzzy-coverage]                      
+11/15                                       
+12/15 [fuzzy-reference]                     
+13/15                                       
+14/15 [fuzzy-thresholds]                    
+15/15                                       
+[31moutput file: fuzzy-matching-benchmark.knit.md
+
+[39m[1mpandoc [22m
+  to: >-
+    commonmark+autolink_bare_uris+emoji+footnotes+gfm_auto_identifiers+pipe_tables+strikeout+task_lists+tex_math_dollars
+  output-file: fuzzy-matching-benchmark.md
+  standalone: true
+  default-image-extension: png
+  variables: {}
+  
+[1mmetadata[22m
+  engines:
+    - path: /Applications/quarto/share/extension-subtrees/julia-engine/_extensions/julia-engine/julia-engine.js
+  title: Fuzzy Matching Benchmark
+  
+Output created: fuzzy-matching-benchmark.md
+
+✔ analysis_md_benchmarking_fuzzy_matching_benchmark completed [2.8s, 8.78 kB]
++ analysis_md_diagnostics_district_matching_diagnostics dispatched
+Rendering /Users/Patron/Library/CloudStorage/OneDrive-UW-Madison/Classes/Old Classes/580 and 623 Research Paper/analysis/diagnostics/district-matching-diagnostics.qmd to GitHub-flavored Markdown
+[31m
+
+processing file: district-matching-diagnostics.qmd
+[39m1/15                                         
+2/15 [setup]                                 
+3/15                                         
+4/15 [district-matching-prose-deviation-note]
+5/15                                         
+6/15 [district-matching-targets]             
+7/15                                         
+8/15 [district-matching-summary]             
+9/15                                         
+10/15 [district-matching-current-code-analogs]
+11/15                                         
+12/15 [district-matching-keys]                
+13/15                                         
+14/15 [district-matching-details]             
+15/15                                         
+[31moutput file: district-matching-diagnostics.knit.md
+
+[39m[1mpandoc [22m
+  to: >-
+    commonmark+autolink_bare_uris+emoji+footnotes+gfm_auto_identifiers+pipe_tables+strikeout+task_lists+tex_math_dollars
+  output-file: district-matching-diagnostics.md
+  standalone: true
+  default-image-extension: png
+  variables: {}
+  
+[1mmetadata[22m
+  engines:
+    - path: /Applications/quarto/share/extension-subtrees/julia-engine/_extensions/julia-engine/julia-engine.js
+  title: District Matching Diagnostics
+  
+Output created: district-matching-diagnostics.md
+
+✔ analysis_md_diagnostics_district_matching_diagnostics completed [2.9s, 17.48 kB]
++ analysis_md_benchmarking_spatial_weights_benchmark dispatched
+Rendering /Users/Patron/Library/CloudStorage/OneDrive-UW-Madison/Classes/Old Classes/580 and 623 Research Paper/analysis/benchmarking/spatial-weights-benchmark.qmd to GitHub-flavored Markdown
+[31m
+
+processing file: spatial-weights-benchmark.qmd
+[39m1/13                                      
+2/13 [setup]                              
+3/13                                      
+4/13 [spatial-weight-prose-deviation-note]
+5/13                                      
+6/13 [spatial-weight-targets]             
+7/13                                      
+8/13 [spatial-weight-current-code-analog] 
+9/13                                      
+10/13 [spatial-weight-benchmark]           
+11/13                                      
+12/13 [spatial-weight-comparison]          
+13/13                                      
+[31moutput file: spatial-weights-benchmark.knit.md
+
+[39m[1mpandoc [22m
+  to: >-
+    commonmark+autolink_bare_uris+emoji+footnotes+gfm_auto_identifiers+pipe_tables+strikeout+task_lists+tex_math_dollars
+  output-file: spatial-weights-benchmark.md
+  standalone: true
+  default-image-extension: png
+  variables: {}
+  
+[1mmetadata[22m
+  engines:
+    - path: /Applications/quarto/share/extension-subtrees/julia-engine/_extensions/julia-engine/julia-engine.js
+  title: Spatial Weights Benchmark
+  
+Output created: spatial-weights-benchmark.md
+
+✔ analysis_md_benchmarking_spatial_weights_benchmark completed [3.1s, 5.18 kB]
++ analysis_md_diagnostics_spatial_autocorrelation_diagnostics dispatched
+Rendering /Users/Patron/Library/CloudStorage/OneDrive-UW-Madison/Classes/Old Classes/580 and 623 Research Paper/analysis/diagnostics/spatial-autocorrelation-diagnostics.qmd to GitHub-flavored Markdown
+[31m
+
+processing file: spatial-autocorrelation-diagnostics.qmd
+[39m1/11                             
+2/11 [setup]                     
+3/11                             
+4/11 [moran-prose-deviation-note]
+5/11                             
+6/11 [moran-target]              
+7/11                             
+8/11 [moran-current-code-analog] 
+9/11                             
+10/11 [moran-table]               
+11/11                             
+[31moutput file: spatial-autocorrelation-diagnostics.knit.md
+
+[39m[1mpandoc [22m
+  to: >-
+    commonmark+autolink_bare_uris+emoji+footnotes+gfm_auto_identifiers+pipe_tables+strikeout+task_lists+tex_math_dollars
+  output-file: spatial-autocorrelation-diagnostics.md
+  standalone: true
+  default-image-extension: png
+  variables: {}
+  
+[1mmetadata[22m
+  engines:
+    - path: /Applications/quarto/share/extension-subtrees/julia-engine/_extensions/julia-engine/julia-engine.js
+  title: Spatial Autocorrelation Diagnostics
+  
+Output created: spatial-autocorrelation-diagnostics.md
+
+✔ analysis_md_diagnostics_spatial_autocorrelation_diagnostics completed [2.8s, 9.69 kB]
++ analysis_md_io_long_paths_and_8_3_filenames dispatched
+Rendering /Users/Patron/Library/CloudStorage/OneDrive-UW-Madison/Classes/Old Classes/580 and 623 Research Paper/analysis/io/long-paths-and-8-3-filenames.qmd to GitHub-flavored Markdown
+[31m
+
+processing file: long-paths-and-8-3-filenames.qmd
+[39m1/9                                     
+2/9 [setup]                             
+3/9                                     
+4/9 [long-path-prose-deviation-note]    
+5/9                                     
+6/9 [long-path-source-current-functions]
+7/9                                     
+8/9 [long-path-current-reader-contract] 
+9/9                                     
+[31moutput file: long-paths-and-8-3-filenames.knit.md
+
+[39m[1mpandoc [22m
+  to: >-
+    commonmark+autolink_bare_uris+emoji+footnotes+gfm_auto_identifiers+pipe_tables+strikeout+task_lists+tex_math_dollars
+  output-file: long-paths-and-8-3-filenames.md
+  standalone: true
+  default-image-extension: png
+  variables: {}
+  
+[1mmetadata[22m
+  engines:
+    - path: /Applications/quarto/share/extension-subtrees/julia-engine/_extensions/julia-engine/julia-engine.js
+  title: Long Paths and 8.3 Filename Troubleshooting
+  
+Output created: long-paths-and-8-3-filenames.md
+
+✔ analysis_md_io_long_paths_and_8_3_filenames completed [2.9s, 6.98 kB]
++ analysis_md_benchmarking_ame_benchmark dispatched
+Rendering /Users/Patron/Library/CloudStorage/OneDrive-UW-Madison/Classes/Old Classes/580 and 623 Research Paper/analysis/benchmarking/ame-benchmark.qmd to GitHub-flavored Markdown
+[31m
+
+processing file: ame-benchmark.qmd
+[39m1/17                                      
+2/17 [setup]                              
+3/17                                      
+4/17 [ame-current-metadata]               
+5/17                                      
+6/17 [ame-prose-deviation-note]           
+7/17                                      
+8/17 [ame-predict-call-count-current-code]
+9/17                                      
+10/17 [ame-methods-table]                  
+11/17                                      
+12/17 [ame-current-runtime-analog]         
+13/17                                      
+14/17 [ame-forward-difference]             
+15/17                                      
+16/17 [ame-notes]                          
+17/17                                      
+[31moutput file: ame-benchmark.knit.md
+
+[39m[1mpandoc [22m
+  to: >-
+    commonmark+autolink_bare_uris+emoji+footnotes+gfm_auto_identifiers+pipe_tables+strikeout+task_lists+tex_math_dollars
+  output-file: ame-benchmark.md
+  standalone: true
+  default-image-extension: png
+  variables: {}
+  
+[1mmetadata[22m
+  engines:
+    - path: /Applications/quarto/share/extension-subtrees/julia-engine/_extensions/julia-engine/julia-engine.js
+  title: Average Marginal Effects Benchmark
+  
+Output created: ame-benchmark.md
+
+✔ analysis_md_benchmarking_ame_benchmark completed [2.8s, 8.88 kB]
++ analysis_md_diagnostics_district_tracker_source_diagnostics dispatched
+Rendering /Users/Patron/Library/CloudStorage/OneDrive-UW-Madison/Classes/Old Classes/580 and 623 Research Paper/analysis/diagnostics/district-tracker-source-diagnostics.qmd to GitHub-flavored Markdown
+[31m
+
+processing file: district-tracker-source-diagnostics.qmd
+[39m1/11                                
+2/11 [setup]                        
+3/11                                
+4/11 [tracker-prose-deviation-note] 
+5/11                                
+6/11 [tracker-targets]              
+7/11                                
+8/11 [tracker-current-count-analogs]
+9/11                                
+10/11 [tracker-tables]               
+11/11                                
+[31moutput file: district-tracker-source-diagnostics.knit.md
+
+[39m[1mpandoc [22m
+  to: >-
+    commonmark+autolink_bare_uris+emoji+footnotes+gfm_auto_identifiers+pipe_tables+strikeout+task_lists+tex_math_dollars
+  output-file: district-tracker-source-diagnostics.md
+  standalone: true
+  default-image-extension: png
+  variables: {}
+  
+[1mmetadata[22m
+  engines:
+    - path: /Applications/quarto/share/extension-subtrees/julia-engine/_extensions/julia-engine/julia-engine.js
+  title: District Tracker Source Diagnostics
+  
+Output created: district-tracker-source-diagnostics.md
+
+✔ analysis_md_diagnostics_district_tracker_source_diagnostics completed [3.3s, 21.92 kB]
++ analysis_markdown_files dispatched
+✔ analysis_markdown_files completed [0ms, 142.45 kB]
+✔ ended pipeline [40.7s, 26 completed, 0 skipped]
++ checkpoint_archive after-analysis-notes
++ local label=after-analysis-notes
++ [[ false == \t\r\u\e ]]
++ echo '=== REVIEW ARCHIVE ==='
+=== REVIEW ARCHIVE ===
++ bash scripts/make_review_archive.sh --with-samples --output review.zip
+Wrote /Users/Patron/Library/CloudStorage/OneDrive-UW-Madison/Classes/Old Classes/580 and 623 Research Paper/review.zip
++ echo '=== STRICT TARGET WARNING CHECK ==='
+=== STRICT TARGET WARNING CHECK ===
++ '[' -s outputs/diagnostics/build/target_warnings.csv ']'
++ echo '=== OUTPUT MANIFEST ==='
+=== OUTPUT MANIFEST ===
++ manifest_roots=(paper outputs docs)
++ [[ true == \t\r\u\e ]]
++ manifest_roots+=(application-samples/output)
++ [[ true == \t\r\u\e ]]
++ manifest_roots+=(analysis)
++ find paper outputs docs application-samples/output analysis -maxdepth 3 -type f '(' -name '*.pdf' -o -name '*.html' -o -name '*.md' -o -name '*.csv' -o -name '*.tex' -o -name '*.png' ')' -print
++ sort
+analysis/benchmarking/ame-benchmark.md
+analysis/benchmarking/fuzzy-matching-benchmark.md
+analysis/benchmarking/spatial-iv-benchmark.md
+analysis/benchmarking/spatial-weights-benchmark.md
+analysis/diagnostics/district-matching-diagnostics.md
+analysis/diagnostics/district-tracker-source-diagnostics.md
+analysis/diagnostics/fuzzy-matching-diagnostics.md
+analysis/diagnostics/missingness-diagnostics.md
+analysis/diagnostics/spatial-autocorrelation-diagnostics.md
+analysis/exploratory/instrument-exploration.md
+analysis/exploratory/spatial-iv-experimental.md
+analysis/io/long-paths-and-8-3-filenames.md
+analysis/README.md
+application-samples/output/RishavRoy_CodingSample.pdf
+application-samples/output/RishavRoy_CodingSample25pg.pdf
+application-samples/output/RishavRoy_CodingSample47pg.pdf
+application-samples/output/RishavRoy_WritingSample.pdf
+application-samples/output/RishavRoy_WritingSample10pg.pdf
+application-samples/output/RishavRoy_WritingSample5pg.pdf
+docs/admin/IMPLEMENTATION_NOTES.md
+docs/district-matching.html
+docs/feedback/schechter-feedback.pdf
+docs/long-paths-and-8-3-filenames.html
+docs/plan/roadmap.md
+docs/refactor/analysis_prose_deviations.md
+docs/refactor/final-output-object-map.md
+docs/refactor/legacy_diagnostics_benchmarking_coverage.md
+docs/refactor/legacy_semantic_refactor_audit.md
+docs/refactor/prose_changes.md
+docs/refactor/scaffold_classification.md
+docs/refactor/spatial_diagnostics_context.md
+outputs/benchmarking/ame/ame_legacy_benchmark_notes.csv
+outputs/benchmarking/ame/ame_methods_benchmark.csv
+outputs/benchmarking/ame/ame_parallelization_notes.csv
+outputs/benchmarking/fuzzy_matching/fuzzy_matching_candidate_pair_coverage.csv
+outputs/benchmarking/fuzzy_matching/fuzzy_matching_candidate_pairs.csv
+outputs/benchmarking/fuzzy_matching/fuzzy_matching_legacy_tuning_reference.csv
+outputs/benchmarking/fuzzy_matching/fuzzy_matching_threshold_sensitivity.csv
+outputs/benchmarking/README.md
+outputs/benchmarking/spatial_iv/spatial_iv_augmented_panel_summary.csv
+outputs/benchmarking/spatial_iv/spatial_iv_clustered_coefficient_summary.csv
+outputs/benchmarking/spatial_iv/spatial_iv_coefficient_summary.csv
+outputs/benchmarking/spatial_iv/spatial_iv_diagnostics_summary.csv
+outputs/benchmarking/spatial_iv/spatial_iv_failure_summary.csv
+outputs/benchmarking/spatial_iv/spatial_iv_model_status.csv
+outputs/benchmarking/spatial_iv/spatial_iv_status.csv
+outputs/benchmarking/spatial_weights/spatial_weights_rook_queen_benchmark.csv
+outputs/diagnostics/build/target_meta_after_bench_run.csv
+outputs/diagnostics/build/target_meta_after_diag_ext_run.csv
+outputs/diagnostics/build/target_meta_after_selected_targets_run.csv
+outputs/diagnostics/build/target_meta_after_strict_run.csv
+outputs/diagnostics/public/iv_panel_current_rows.csv
+outputs/diagnostics/public/iv_panel_extreme_rows.csv
+outputs/diagnostics/public/iv_panel_match_summary.csv
+outputs/diagnostics/public/iv_panel_state_summary.csv
+outputs/diagnostics/public/iv_summary_keyed_rows.csv
+outputs/diagnostics/public/spatial_moran_mc_reference.csv
+outputs/diagnostics/public/spatial_moran_tests.csv
+outputs/diagnostics/README.md
+outputs/figures/main/collage_iv_region_maps.pdf
+outputs/figures/main/collage_iv_region_maps.png
+outputs/figures/main/collage_main_maps.pdf
+outputs/figures/main/collage_main_maps.png
+outputs/figures/main/district_carveouts_shifts.pdf
+outputs/figures/main/district_carveouts_shifts.png
+outputs/figures/main/fig_ilo_trends.pdf
+outputs/figures/main/fig_ilo_trends.png
+outputs/figures/main/figure_manifest.csv
+outputs/figures/main/map_consumption_growth.pdf
+outputs/figures/main/map_consumption_growth.png
+outputs/figures/main/map_education.pdf
+outputs/figures/main/map_education.png
+outputs/figures/main/map_emi_exposure.pdf
+outputs/figures/main/map_emi_exposure.png
+outputs/figures/main/map_linguistic_distance.pdf
+outputs/figures/main/map_linguistic_distance.png
+outputs/figures/main/map_pucca.pdf
+outputs/figures/main/map_pucca.png
+outputs/figures/main/map_region.pdf
+outputs/figures/main/map_region.png
+outputs/tables/main/ame_results.csv
+outputs/tables/main/ame_results.tex
+outputs/tables/main/cons_iv.csv
+outputs/tables/main/cons_iv.tex
+outputs/tables/main/first_stage.csv
+outputs/tables/main/first_stage.tex
+outputs/tables/main/fs_cons.csv
+outputs/tables/main/fs_cons.tex
+outputs/tables/main/probit_mfx.csv
+outputs/tables/main/probit_mfx.tex
+outputs/tables/main/selection_n.csv
+outputs/tables/main/selection_n.tex
+outputs/tables/main/sum_tbl_iv.csv
+outputs/tables/main/sum_tbl_iv.tex
+outputs/tables/main/sum_tbl_probit_cat.csv
+outputs/tables/main/sum_tbl_probit_cat.tex
+outputs/tables/main/sum_tbl_probit_quant.csv
+outputs/tables/main/sum_tbl_probit_quant.tex
+paper/report.pdf
++ dump_diagnostics
++ exit_code=0
++ echo '=== EXIT CODE: 0 ==='
+=== EXIT CODE: 0 ===
++ echo '=== DIAGNOSTICS: target_warnings.csv ==='
+=== DIAGNOSTICS: target_warnings.csv ===
++ '[' -f outputs/diagnostics/build/target_warnings.csv ']'
++ echo 'No target_warnings.csv found'
+No target_warnings.csv found
++ echo '=== DIAGNOSTICS: target_meta_after_strict_run.csv tail ==='
+=== DIAGNOSTICS: target_meta_after_strict_run.csv tail ===
++ '[' -f outputs/diagnostics/build/target_meta_after_strict_run.csv ']'
++ tail -120 outputs/diagnostics/build/target_meta_after_strict_run.csv
+"make_tables",NA,NA
+"compute_district_imr_2007",NA,NA
+"estimate_spatial_iv_experimental",NA,NA
+"compare_tracker_to_matched_panel",NA,NA
+"construct_district_level_context",NA,NA
+"parse_name_changes",NA,NA
+"parse_india_district_tracker",NA,NA
+"parse_alluvial_district_changes",NA,NA
+"parse_new_districts_created",NA,NA
+"parse_carveouts_renamings",NA,NA
+"parse_district_splits",NA,NA
+"join_all_district_sources",NA,NA
+"join_year_to_tracker",NA,NA
+"attach_2017_district_names",NA,NA
+"standardize_boundary_state_names",NA,NA
+"clean_nss_2007_consumption",NA,NA
+"standardize_cons0708_district_codes",NA,NA
+"standardize_edu1718_district_codes",NA,NA
+"clean_nss_2017_education",NA,NA
+"compute_emie_2007",NA,NA
+"standardize_edu0708_district_codes",NA,NA
+"clean_census_2001_language_fallback",NA,NA
+"compute_baseline_controls_2007",NA,NA
+"compute_education_household_measures_2007",NA,NA
+"compute_housing_controls_2007",NA,NA
+"compute_gini_consumption_2017",NA,NA
+"clean_nss_2007_education",NA,NA
+"standardize_boundary_district_names",NA,NA
+"compute_consumption_2017",NA,NA
+"apply_name_corrections_by_type",NA,NA
+"key_df",NA,NA
+"build_linguistic_distance_iv",NA,NA
+"legacy_attach_source",NA,NA
+"legacy_attach_source_one_to_one",NA,NA
+"read_district_change_sources",NA,NA
+"read_nss_2007_consumption",NA,NA
+"read_nss_2017_education",NA,NA
+"read_nss_2007_education",NA,NA
+"read_census_2001_mother_tongue",NA,NA
+"save_table_csv",NA,NA
+"save_table_tex",NA,NA
+"run_spatial_iv_benchmark",NA,NA
+"diagnose_district_matching",NA,NA
+"build_selection_data",NA,NA
+"build_district_tracker",NA,NA
+"build_2017_measures",NA,NA
+"clean_census_2001_language_file",NA,NA
+"compute_gini_consumption_2007",NA,NA
+"compute_consumption_2007",NA,NA
+"build_2007_measures",NA,NA
+"apply_rename_corrections",NA,NA
+"apply_split_merge_corrections",NA,NA
+"apply_typo_corrections",NA,NA
+"build_district_keys_2020",NA,NA
+"build_district_keys_2017",NA,NA
+"build_district_keys_2001",NA,NA
+"build_district_keys_2007",NA,NA
+"compute_population_weighted_linguistic_distance",NA,NA
+"build_tracker_based_district_panel",NA,NA
+"save_tables",NA,NA
+"save_table_csv_tex",NA,NA
+"clean_census_2001_languages",NA,NA
+"apply_manual_district_corrections",NA,NA
+"build_district_panel",NA,NA
+"join_district_panel",NA,NA
+"paths",NA,NA
+"config_path",NA,NA
+"long_paths_note",NA,NA
+"application_sample_inputs",NA,NA
+"report_qmd",NA,NA
+"legacy_district_tracker_file",NA,NA
+"raw_manifest",NA,NA
+"cfg",NA,NA
+"legacy_district_tracker",NA,NA
+"raw_data_preflight",NA,NA
+"iv_formulas",NA,NA
+"raw_ilo_figures",NA,NA
+"raw_nss_2007_education",NA,NA
+"raw_census_2001",NA,NA
+"raw_boundaries_2020",NA,NA
+"raw_nss_2017_education",NA,NA
+"raw_district_changes",NA,NA
+"raw_nss_2007_consumption",NA,NA
+"nss_2007_education",NA,NA
+"census_2001_languages",NA,NA
+"boundaries_2020",NA,NA
+"nss_2017_education",NA,NA
+"district_tracker_raw",NA,NA
+"nss_2007_consumption",NA,NA
+"linguistic_distance_iv",NA,NA
+"district_keys_2001",NA,NA
+"district_keys_2020",NA,NA
+"measures_2017",NA,NA
+"district_keys_2017",NA,NA
+"district_tracker",NA,NA
+"district_keys_2007",NA,NA
+"processed_district_tracker_file",NA,NA
+"district_join_map",NA,NA
+"selection_data",NA,NA
+"selection_model",NA,NA
+"ame_results",NA,NA
+"measures_2007",NA,NA
+"district_panel",NA,NA
+"figures",NA,NA
+"iv_models",NA,NA
+"spatial_weights",NA,NA
+"processed_district_panel_file",NA,NA
+"figure_files",NA,NA
+"first_stage_tests",NA,NA
+"diag_public_weak_instruments",NA,NA
+"diag_public_overidentification",NA,NA
+"diag_public_multicollinearity",NA,NA
+"diag_public_spatial_autocorrelation",NA,NA
+"tables",NA,NA
+"report_values",NA,NA
+"table_files",NA,NA
+"district_matching_note",NA,NA
+"writing_sample_pdfs",NA,NA
+"report",NA,NA
+"coding_sample_pdfs",NA,NA
++ echo '=== END: git state ==='
+=== END: git state ===
++ git status --short
+ M analysis/benchmarking/ame-benchmark.md
+ M analysis/benchmarking/spatial-weights-benchmark.md
+ M application-samples/output/RishavRoy_CodingSample.pdf
+ M application-samples/output/RishavRoy_CodingSample25pg.pdf
+ M application-samples/output/RishavRoy_CodingSample47pg.pdf
+ M application-samples/output/RishavRoy_WritingSample.pdf
+ M application-samples/output/RishavRoy_WritingSample10pg.pdf
+ M application-samples/output/RishavRoy_WritingSample5pg.pdf
+ D docs/district-matching.pdf
+ D docs/long-paths-and-8-3-filenames.pdf
+ M outputs/benchmarking/ame/ame_methods_benchmark.csv
+ M outputs/benchmarking/spatial_weights/spatial_weights_rook_queen_benchmark.csv
+ M outputs/diagnostics/extended/spatial/rook_queen_contiguity_comparison.csv
+ M outputs/figures/main/collage_iv_region_maps.pdf
+ M outputs/figures/main/collage_iv_region_maps.png
+ M outputs/figures/main/collage_main_maps.pdf
+ M outputs/figures/main/collage_main_maps.png
+ M outputs/figures/main/district_carveouts_shifts.pdf
+ M outputs/figures/main/fig_ilo_trends.pdf
+ M outputs/figures/main/fig_ilo_trends.png
+ M outputs/figures/main/map_consumption_growth.pdf
+ M outputs/figures/main/map_education.pdf
+ M outputs/figures/main/map_emi_exposure.pdf
+ M outputs/figures/main/map_linguistic_distance.pdf
+ M outputs/figures/main/map_pucca.pdf
+ M outputs/figures/main/map_region.pdf
+ M paper/report.pdf
+?? finish_refactor_phases_0_3.patch
++ [[ 0 -ne 0 ]]
++ exit 0
