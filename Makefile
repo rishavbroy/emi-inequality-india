@@ -1,4 +1,4 @@
-.PHONY: init-renv restore snapshot pipeline-draft pipeline-final pipeline-final-no-samples diagnostics public-diagnostics extended-diagnostics benchmarking rerun-extended-diagnostics rerun-benchmarks rerun-analysis analysis-notes render-analysis clean-analysis clean-public-diagnostics clean-extended-diagnostics clean-benchmarking report samples audit-report-values audit-report-values-final audit-crossrefs audit-crossrefs-final audit-outputs-final public-build-audit public-build-audit-full public-build-audit-incremental public-build-audit-full-incremental public-build-audit-incremental-review public-build-audit-full-incremental-review public-build-audit-with-diagnostics public-build-audit-full-with-diagnostics public-build-audit-full-with-benchmarks check-public check-public-draft check-public-final check-public-final-no-samples check-public-text check-rendered-text check-sample-specs test tests clean-targets clean-renders clean-renders-core clean-renders-no-samples
+.PHONY: init-renv restore snapshot pipeline-draft pipeline-final pipeline-final-no-samples diagnostics public-diagnostics extended-diagnostics benchmarking rerun-extended-diagnostics rerun-benchmarks rerun-analysis analysis-notes render-analysis clean-analysis clean-public-diagnostics clean-extended-diagnostics clean-benchmarking report samples check-report-values check-report-values-final audit-crossrefs audit-crossrefs-final audit-outputs-final public-build-audit public-build-audit-full public-build-audit-incremental public-build-audit-full-incremental public-build-audit-incremental-review public-build-audit-full-incremental-review public-build-audit-with-diagnostics public-build-audit-full-with-diagnostics public-build-audit-full-with-benchmarks check-public check-public-draft check-public-final check-public-final-no-samples check-public-text check-rendered-text check-sample-specs test tests clean-targets clean-renders clean-renders-core clean-renders-no-samples
 
 TEXCACHE_ROOT ?= /private/tmp/emi-inequality-india-texcache
 QUARTO_CACHE_ROOT ?= /private/tmp/emi-inequality-india-quarto-cache
@@ -98,11 +98,11 @@ report: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
 samples: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
 	EMI_CONFIG=config/final.yml EMI_RENDER_APPLICATION_SAMPLES=true Rscript scripts/run_targets_checked.R --targets writing_sample_pdfs,coding_sample_pdfs
 
-audit-report-values:
-	Rscript scripts/audit_report_values.R
+check-report-values:
+	Rscript scripts/check_report_values.R
 
-audit-report-values-final:
-	EMI_CONFIG=config/final.yml Rscript scripts/audit_report_values.R --strict
+check-report-values-final:
+	EMI_CONFIG=config/final.yml Rscript scripts/check_report_values.R --strict
 
 audit-crossrefs:
 	Rscript scripts/audit_crossrefs.R
@@ -161,7 +161,7 @@ check-public-draft: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
 check-public-final: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
 	rm -f .public-final-ok .pipeline-final-ok .pipeline-draft-ok
 	$(MAKE) pipeline-final
-	EMI_CONFIG=config/final.yml Rscript scripts/audit_report_values.R --strict --allow-status-placeholders
+	EMI_CONFIG=config/final.yml Rscript scripts/check_report_values.R --strict --allow-status-placeholders
 	Rscript scripts/audit_crossrefs.R --strict-report
 	Rscript scripts/check_required_outputs.R --require-final-stamp
 	EMI_CONFIG=config/final.yml Rscript scripts/check_rendered_text.R --final
@@ -172,7 +172,7 @@ check-public-final: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
 check-public-final-no-samples: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
 	rm -f .public-final-ok .pipeline-final-ok .pipeline-draft-ok
 	$(MAKE) pipeline-final-no-samples
-	EMI_CONFIG=config/final.yml Rscript scripts/audit_report_values.R --strict --allow-status-placeholders
+	EMI_CONFIG=config/final.yml Rscript scripts/check_report_values.R --strict --allow-status-placeholders
 	Rscript scripts/audit_crossrefs.R --strict-report
 	Rscript scripts/check_required_outputs.R --require-final-stamp
 	EMI_CONFIG=config/final.yml EMI_REQUIRE_APPLICATION_SAMPLES=false Rscript scripts/check_rendered_text.R --final
