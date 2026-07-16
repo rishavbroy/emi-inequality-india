@@ -14,7 +14,7 @@ test_that("selection joins use household keys rather than many-to-many HHID join
   proxy <- build_father_education_proxy(block4)
 
   expect_equal(nrow(proxy), 2L)
-  expect_equal(length(unique(proxy$.legacy_household_key)), 2L)
+  expect_equal(length(unique(proxy$.nss_2007_household_key)), 2L)
 })
 
 test_that("2007 household measures use weighted population rather than sample counts", {
@@ -35,7 +35,7 @@ test_that("2007 household measures use weighted population rather than sample co
   expect_gt(out$gini_consumption_2007, 0)
 })
 
-test_that("2007 EMIE treats legacy Block 5 medium code 02 as English-medium", {
+test_that("2007 EMIE treats NSS Block 5 medium code 02 as English-medium", {
   block5 <- data.frame(
     district_code = c("01001", "01001", "01001"),
     MEDIUM_INSTRUCTION = c("02", "01", "02"),
@@ -96,8 +96,8 @@ test_that("first-stage table reports full coefficients with standard errors bene
     p.value = c(0.004, 0.02, 0.1),
     partial_f = c(9.46, 9.46, 9.46),
     partial_p = c(0.0021, 0.0021, 0.0021),
-    legacy_model_f = c(39.20, 39.20, 39.20),
-    legacy_model_p = c(0.0001, 0.0001, 0.0001),
+    model_f = c(39.20, 39.20, 39.20),
+    model_p = c(0.0001, 0.0001, 0.0001),
     status = "estimated",
     stringsAsFactors = FALSE
   )
@@ -138,15 +138,15 @@ test_that("final district panel validation enforces structural IV-panel contract
     .matched_2017 = c(TRUE, TRUE)
   )
 
-  expect_silent(checked <- validate_legacy_district_panel(bad, list(mode = "final")))
-  failures <- attr(checked, "legacy_panel_validation_failures")
+  expect_silent(checked <- validate_analysis_district_panel(bad, list(mode = "final")))
+  failures <- attr(checked, "analysis_panel_validation_failures")
   expect_false(any(grepl("454 rows", failures, fixed = TRUE)))
   expect_true(any(grepl("missing core IV analysis values", failures, fixed = TRUE)))
   expect_true(any(grepl("district_panel_id is not unique", failures, fixed = TRUE)))
   expect_true(any(grepl(".matched_2007", failures, fixed = TRUE)))
 
   expect_error(
-    validate_legacy_district_panel(bad, list(mode = "final", strict_legacy_panel_validation = TRUE)),
+    validate_analysis_district_panel(bad, list(mode = "final", strict_analysis_panel_validation = TRUE)),
     "core IV analysis",
     fixed = TRUE
   )
@@ -163,7 +163,7 @@ test_that("final figure specs degrade to status outputs instead of aborting when
   figs <- make_figures(panel, character(), list(mode = "final"))
   expect_true("map_consumption_growth" %in% names(figs))
   expect_identical(figs$map_consumption_growth$kind, "status")
-  expect_true(any(grepl("wavg_ling_degrees", attr(figs, "legacy_map_input_failures"), fixed = TRUE)))
+  expect_true(any(grepl("wavg_ling_degrees", attr(figs, "map_input_failures"), fixed = TRUE)))
 })
 
 
@@ -185,7 +185,7 @@ test_that("final table generation records incomplete first-stage diagnostics wit
   fs_table <- make_first_stage_table(first_stage, list(mode = "final"))
   expect_identical(fs_table$status, "out_of_active_pipeline")
   expect_match(fs_table$reason, "wavg_ling_degrees", fixed = TRUE)
-  expect_true(any(grepl("wavg_ling_degrees", attr(fs_table, "legacy_table_input_failures"), fixed = TRUE)))
+  expect_true(any(grepl("wavg_ling_degrees", attr(fs_table, "table_input_failures"), fixed = TRUE)))
 
   tables <- make_tables(
     selection_data = data.frame(AGE = 10, HH_SIZE = 4),
@@ -195,6 +195,6 @@ test_that("final table generation records incomplete first-stage diagnostics wit
     first_stage_tests = first_stage,
     cfg = list(mode = "final")
   )
-  expect_true(any(grepl("first-stage regression", attr(tables, "legacy_table_input_failures"), fixed = TRUE)))
-  expect_true(any(grepl("wavg_ling_degrees", attr(tables, "legacy_table_input_failures"), fixed = TRUE)))
+  expect_true(any(grepl("first-stage regression", attr(tables, "table_input_failures"), fixed = TRUE)))
+  expect_true(any(grepl("wavg_ling_degrees", attr(tables, "table_input_failures"), fixed = TRUE)))
 })

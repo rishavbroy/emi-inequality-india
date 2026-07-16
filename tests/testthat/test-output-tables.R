@@ -1,3 +1,7 @@
+repo_file <- function(...) {
+  normalizePath(file.path(Sys.getenv("EMI_PROJECT_ROOT", getwd()), ...), mustWork = TRUE)
+}
+
 test_that("save_tables honors requested csv and tex formats", {
   skip_if_not_installed("kableExtra")
   old <- setwd(tempdir())
@@ -104,8 +108,8 @@ test_that("first-stage public table reports instrument partial F before model F"
     p.value = c(0.0022, 0.4700),
     partial_f = c(9.4646, 9.4646),
     partial_p = c(0.0022, 0.0022),
-    legacy_model_f = c(68.2013, 68.2013),
-    legacy_model_p = c(3.9e-114, 3.9e-114),
+    model_f = c(68.2013, 68.2013),
+    model_p = c(3.9e-114, 3.9e-114),
     status = rep("estimated", 2),
     reason = c(NA_character_, NA_character_),
     stringsAsFactors = FALSE
@@ -154,8 +158,8 @@ test_that("regression public tables place standard errors below estimates", {
     p.value = c(0.002, 0.01, 0.45),
     partial_f = c(9.56, 9.56, 9.56),
     partial_p = c(0.002, 0.002, 0.002),
-    legacy_model_f = c(60, 60, 60),
-    legacy_model_p = c(0, 0, 0),
+    model_f = c(60, 60, 60),
+    model_p = c(0, 0, 0),
     status = rep("estimated", 3),
     reason = c(NA_character_, NA_character_, NA_character_),
     stringsAsFactors = FALSE
@@ -203,7 +207,7 @@ test_that("IV summary table retains legacy description column", {
 
 
 test_that("population summary statistics use comma integers without artificial decimals", {
-  out <- legacy_numeric_stats(
+  out <- public_numeric_stats(
     data.frame(npeople_0708 = c(1234.4, 98765.6)),
     data.frame(var = "npeople_0708", label = "Population", stringsAsFactors = FALSE),
     count_vars = "npeople_0708"
@@ -260,8 +264,8 @@ test_that("legacy regression GOF map includes residual standard error", {
     p.value = c(0.002, 0.45),
     partial_f = c(9.56, 9.56),
     partial_p = c(0.002, 0.002),
-    legacy_model_f = c(60, 60),
-    legacy_model_p = c(0, 0),
+    model_f = c(60, 60),
+    model_p = c(0, 0),
     nobs = c(482, 482),
     r.squared = c(.7, .7),
     adj.r.squared = c(.68, .68),
@@ -271,7 +275,7 @@ test_that("legacy regression GOF map includes residual standard error", {
     stringsAsFactors = FALSE
   )
 
-  gof <- legacy_modelsummary_gof_map("fs_cons")
+  gof <- public_modelsummary_gof_map("fs_cons")
   clean <- vapply(gof, `[[`, character(1), "clean")
 
   expect_true("Residual Std. Error" %in% clean)
@@ -431,12 +435,12 @@ test_that("fallback regression TeX output does not expose placeholder term rows"
   expect_false(grepl(">~<|& ~ &|^~$", tex))
 })
 
-test_that("legacy modelsummary regression writer emits LaTeX rather than HTML", {
+test_that("public modelsummary regression writer emits LaTeX rather than HTML", {
   skip_if_not_installed("modelsummary")
   skip_if_not_installed("kableExtra")
   model <- lm(mpg ~ wt, data = mtcars)
 
-  tex <- paste(as.character(legacy_modelsummary_table(model, "fs_cons")), collapse = "\n")
+  tex <- paste(as.character(public_modelsummary_table(model, "fs_cons")), collapse = "\n")
   tex <- paste(normalize_quarto_table_labels(tex, "fs_cons"), collapse = "\n")
 
   expect_match(tex, "\\begin{table}", fixed = TRUE)
@@ -473,10 +477,8 @@ test_that("probit TeX stacks standard errors below AME estimates", {
   expect_false(grepl("\\multicolumn{2}{c}{Enrolled in School (1 = yes)}", tex, fixed = TRUE))
 })
 
-test_that("caption setup is inserted for wrapping long table captions", {
-  path <- file.path("scripts", "postprocess_public_qmds.R")
-  if (!file.exists(path)) path <- file.path("..", "..", "scripts", "postprocess_public_qmds.R")
-  src <- paste(readLines(path, warn = FALSE), collapse = "\n")
+test_that("report source loads caption setup for wrapping long table captions", {
+  src <- paste(readLines(repo_file("paper", "report.qmd"), warn = FALSE), collapse = "\n")
 
   expect_match(src, "\\usepackage{caption}", fixed = TRUE)
   expect_match(src, "captionsetup", fixed = TRUE)
@@ -532,32 +534,32 @@ test_that("native marginaleffects objects are preserved for modelsummary renderi
   formatted <- format_ame_results(mfx)
   table <- make_probit_ame_table(formatted, n = 100)
 
-  expect_s3_class(attr(formatted, "legacy_marginaleffects"), "marginaleffects")
-  expect_equal(attr(attr(formatted, "legacy_marginaleffects"), "model"), "underlying model metadata")
-  expect_s3_class(attr(table, "legacy_marginaleffects"), "marginaleffects")
-  expect_equal(attr(table, "legacy_marginaleffects_n"), 100)
+  expect_s3_class(attr(formatted, "marginaleffects_object"), "marginaleffects")
+  expect_equal(attr(attr(formatted, "marginaleffects_object"), "model"), "underlying model metadata")
+  expect_s3_class(attr(table, "marginaleffects_object"), "marginaleffects")
+  expect_equal(attr(table, "marginaleffects_n"), 100)
 })
 
 test_that("probit AME table has a native marginaleffects modelsummary path and no map side effects", {
   src <- paste(deparse(save_table_tex), collapse = "\n")
-  ame_src <- paste(deparse(legacy_ame_modelsummary_table), collapse = "\n")
-  expect_match(src, "legacy_ame_modelsummary_table", fixed = TRUE)
+  ame_src <- paste(deparse(ame_modelsummary_table), collapse = "\n")
+  expect_match(src, "ame_modelsummary_table", fixed = TRUE)
   expect_match(ame_src, "modelsummary::modelsummary", fixed = TRUE)
   expect_match(ame_src, "models = list(mfx)", fixed = TRUE)
-  expect_match(ame_src, "gof_map = legacy_ame_gof_map", fixed = TRUE)
-  expect_match(ame_src, "gof_function = legacy_ame_gof_function", fixed = TRUE)
+  expect_match(ame_src, "gof_map = ame_gof_map", fixed = TRUE)
+  expect_match(ame_src, "gof_function = ame_gof_function", fixed = TRUE)
   expect_false(grepl("gof_omit", ame_src, fixed = TRUE))
   expect_false(grepl("add_rows =", ame_src, fixed = TRUE))
   expect_false(grepl("modelsummary_list", ame_src, fixed = TRUE))
-  expect_false(grepl("legacy_no_data_colour", src, fixed = TRUE))
+  expect_false(grepl("map_no_data_colour", src, fixed = TRUE))
 })
 
 test_that("probit summary table column widths are centralized and slightly narrowed", {
   src <- paste(deparse(save_table_tex), collapse = "\n")
   expect_match(src, "5.4cm", fixed = TRUE)
-  expect_match(src, "legacy_table2_column_widths", fixed = TRUE)
+  expect_match(src, "public_table2_column_widths", fixed = TRUE)
 
-  widths <- legacy_table2_column_widths()
+  widths <- public_table2_column_widths()
   numeric_widths <- as.numeric(sub("cm", "", widths, fixed = TRUE))
   expect_equal(length(widths), 7)
   expect_lt(numeric_widths[[2]], 6.6)
@@ -583,7 +585,7 @@ test_that("Table 2 categorical headers remain on one line", {
 })
 
 test_that("Table 2 categorical column widths are slightly narrowed", {
-  widths <- legacy_table2_column_widths()
+  widths <- public_table2_column_widths()
   expect_equal(length(widths), 7)
   expect_true(all(grepl("cm", widths, fixed = TRUE)))
   numeric_widths <- as.numeric(sub("cm", "", widths, fixed = TRUE))
@@ -593,13 +595,13 @@ test_that("Table 2 categorical column widths are slightly narrowed", {
 })
 
 test_that("probit AME modelsummary table uses same standard styling path as IV tables", {
-  src <- paste(deparse(legacy_ame_modelsummary_table), collapse = "\n")
+  src <- paste(deparse(ame_modelsummary_table), collapse = "\n")
 
   expect_match(src, "modelsummary::modelsummary", fixed = TRUE)
   expect_match(src, "models = list(mfx)", fixed = TRUE)
-  expect_match(src, "coef_rename = legacy_ame_modelsummary_label", fixed = TRUE)
-  expect_match(src, "gof_map = legacy_ame_gof_map", fixed = TRUE)
-  expect_match(src, "gof_function = legacy_ame_gof_function", fixed = TRUE)
+  expect_match(src, "coef_rename = ame_modelsummary_label", fixed = TRUE)
+  expect_match(src, "gof_map = ame_gof_map", fixed = TRUE)
+  expect_match(src, "gof_function = ame_gof_function", fixed = TRUE)
   expect_match(src, "longtable = TRUE", fixed = TRUE)
   expect_match(src, "kableExtra::kable_styling", fixed = TRUE)
   expect_match(src, "hold_position", fixed = TRUE)
@@ -641,37 +643,37 @@ test_that("labeled native marginaleffects object preserves public AME order and 
     conf.high = c(-0.06, 0.26),
     check.names = FALSE
   )
-  attr(formatted, "legacy_marginaleffects") <- legacy_modelsummary_marginaleffects_object(formatted, native)
+  attr(formatted, "marginaleffects_object") <- modelsummary_marginaleffects_object(formatted, native)
   table <- make_probit_ame_table(formatted, n = 100)
-  out <- legacy_ame_modelsummary_object(table)
+  out <- ame_modelsummary_object(table)
   expect_s3_class(out, "marginaleffects")
   expect_false(inherits(out, "modelsummary_list"))
   expect_equal(out$term, formatted$Term)
   expect_equal(out$estimate, formatted$estimate)
-  expect_equal(attr(table, "legacy_marginaleffects_n"), 100)
+  expect_equal(attr(table, "marginaleffects_n"), 100)
 })
 
 
 test_that("AME observations are supplied through modelsummary gof_function", {
   table <- data.frame(Term = "Age", Estimate = "-0.100", check.names = FALSE)
-  attr(table, "legacy_marginaleffects_n") <- 127246
-  gof_fun <- legacy_ame_gof_function(table)
+  attr(table, "marginaleffects_n") <- 127246
+  gof_fun <- ame_gof_function(table)
   expect_true(is.function(gof_fun))
   expect_equal(gof_fun(NULL)$nobs[[1]], 127246)
-  expect_equal(legacy_ame_gof_map()$raw[[1]], "nobs")
-  expect_equal(legacy_ame_gof_map()$clean[[1]], "Observations")
+  expect_equal(ame_gof_map()$raw[[1]], "nobs")
+  expect_equal(ame_gof_map()$clean[[1]], "Observations")
 })
 
 test_that("AME modelsummary labels use colon separators", {
-  expect_equal(legacy_ame_modelsummary_label("Religion × Muslim (ref × Hindu)"), "Religion: Muslim (ref: Hindu)")
-  expect_equal(legacy_ame_modelsummary_label("Religion ×  Muslim (ref ×  Hindu)"), "Religion: Muslim (ref: Hindu)")
-  expect_equal(legacy_ame_modelsummary_label("Social group × Scheduled Tribe (ref × Other)"), "Social group: Scheduled Tribe (ref: Other)")
+  expect_equal(ame_modelsummary_label("Religion × Muslim (ref × Hindu)"), "Religion: Muslim (ref: Hindu)")
+  expect_equal(ame_modelsummary_label("Religion ×  Muslim (ref ×  Hindu)"), "Religion: Muslim (ref: Hindu)")
+  expect_equal(ame_modelsummary_label("Social group × Scheduled Tribe (ref × Other)"), "Social group: Scheduled Tribe (ref: Other)")
 })
 
 
 test_that("probit AME note is compact for longtable output", {
-  expect_equal(legacy_table_note("probit_mfx"), "NSS 64th round; design-based SEs in parentheses.")
-  expect_equal(legacy_ame_table_notes("probit_mfx"), c(regression_star_note(), legacy_table_note("probit_mfx")))
+  expect_equal(public_table_note("probit_mfx"), "NSS 64th round; design-based SEs in parentheses.")
+  expect_equal(public_ame_table_notes("probit_mfx"), c(regression_star_note(), public_table_note("probit_mfx")))
   wrapped <- single_space_longtable_tex("BODY")
   expect_true(grepl("singlespacing", wrapped, fixed = TRUE))
   expect_true(grepl("BODY", wrapped, fixed = TRUE))

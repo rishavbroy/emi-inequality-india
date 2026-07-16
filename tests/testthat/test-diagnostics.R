@@ -163,7 +163,7 @@ test_that("district matching diagnostics separate source-key inventory from true
 
 test_that("fuzzy diagnostics use legacy methods and troublesome pairs", {
   testthat::skip_if_not_installed("stringdist")
-  out <- diagnose_fuzzy_matching(data.frame(id = 1), data.frame(match_status = "legacy_tracker_row"), list())
+  out <- diagnose_fuzzy_matching(data.frame(id = 1), data.frame(match_status = "harmonization_crosswalk_row"), list())
 
   expect_s3_class(out, "emi_fuzzy_matching_diagnostics")
   expect_equal(attr(out, "legacy_methods")$method, c("soundex", "qgram", "jw", "dl", "osa"))
@@ -210,14 +210,14 @@ test_that("fuzzy benchmarking uses active tracker candidate pairs beyond toy exa
     district_20 = c("Newest Name", "Stable")
   )
 
-  pairs <- legacy_fuzzy_candidate_pairs(tracker, data.frame())
+  pairs <- fuzzy_candidate_pairs(tracker, data.frame())
   sens <- summarize_threshold_sensitivity(pairs)
 
   expect_true(any(pairs$pair_source == "tracker_2001_to_2007"))
   expect_true(any(pairs$pair_source == "tracker_2017_to_2020"))
   expect_true(any(sens$pair_source == "tracker_2001_to_2007"))
   expect_true("candidate_pair_coverage" %in% names(attributes(diagnose_fuzzy_matching(tracker, data.frame(), list()))))
-  expect_true(nrow(legacy_fuzzy_tuning_reference()) >= 4L)
+  expect_true(nrow(fuzzy_tuning_reference()) >= 4L)
 })
 
 
@@ -236,7 +236,7 @@ test_that("fuzzy benchmarking expands fallback source-key inventory into active 
     match_status = "source_key_unmatched"
   )
 
-  pairs <- legacy_fuzzy_candidate_pairs(tracker, join_map)
+  pairs <- fuzzy_candidate_pairs(tracker, join_map)
 
   expect_true(any(grepl("active_source_key_inventory", pairs$pair_source)))
   expect_true(any(pairs$str1 == "Onee"))
@@ -244,7 +244,7 @@ test_that("fuzzy benchmarking expands fallback source-key inventory into active 
 
 test_that("spatial weights diagnostics include legacy neighbor-count reference", {
   comp <- data.frame(contiguity = c("rook", "queen"), mean_neighbors = c(4, 4.1), stringsAsFactors = FALSE)
-  out <- add_legacy_spatial_weight_reference(comp)
+  out <- add_spatial_weight_reference(comp)
 
   expect_true("legacy_mean_neighbors" %in% names(out))
   expect_true("mean_neighbor_delta_from_legacy" %in% names(out))

@@ -8,7 +8,7 @@ test_that("selection data builder returns enrolled fallback and standardized key
   expect_equal(out$district_std, "patna")
 })
 
-test_that("legacy 2007 district metadata lookup is unique by district code", {
+test_that("NSS 2007 district metadata lookup is unique by district code", {
   metadata <- data.frame(
     name = c("district_code", "district_code", "STATE", "STATE", "region_code"),
     `ns1:catValu` = c("01001", "01001", "01", "01", "010"),
@@ -17,7 +17,7 @@ test_that("legacy 2007 district metadata lookup is unique by district code", {
   )
 
   lookup <- parse_2007_district_metadata(metadata)
-  out <- attach_legacy_district_names(
+  out <- attach_nss_2007_district_names(
     data.frame(district_code_0708 = "01001", child = 1L),
     metadata
   )

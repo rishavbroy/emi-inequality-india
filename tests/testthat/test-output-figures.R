@@ -11,10 +11,10 @@ test_that("final figures degrade to status specs without real sf geometry", {
 
   figures <- make_figures(panel, character(), cfg)
   expect_identical(figures$map_emi_exposure$kind, "status")
-  expect_true(any(grepl("Geometry coverage", attr(figures, "legacy_map_input_failures"), fixed = TRUE)))
+  expect_true(any(grepl("Geometry coverage", attr(figures, "map_input_failures"), fixed = TRUE)))
 })
 
-test_that("final figures include legacy map collages when geometry is validated", {
+test_that("final figures include public map collages when geometry is validated", {
   skip_if_not_installed("sf")
   cfg <- list(mode = "final", output_formats = list(figures = "png"))
   geometry <- sf::st_sfc(
@@ -44,14 +44,14 @@ test_that("district carve-out figure data uses pct_91in01 values", {
   expect_true(all(is.finite(carveouts$pct_91in01)))
 })
 
-test_that("legacy regions overwrite numeric source codes with named categories", {
+test_that("public-map regions overwrite numeric source codes with named categories", {
   panel <- data.frame(
     state_20 = c("Punjab", "Tamil Nadu"),
     region = c(1, 5),
     stringsAsFactors = FALSE
   )
 
-  out <- add_legacy_regions(panel)
+  out <- add_panel_regions(panel)
 
   expect_equal(as.character(out$region), c("North", "South"))
 })
@@ -75,7 +75,7 @@ test_that("map collage order matches public captions", {
 
 test_that("linguistic-distance map labels begin at zero and no-data uses visible grey", {
   df <- data.frame(wavg_ling_degrees = c(0.0001089, 1.5, 5, NA))
-  fill <- legacy_map_fill(df, "wavg_ling_degrees", legacy_map_style("wavg_ling_degrees"))
+  fill <- public_map_fill(df, "wavg_ling_degrees", public_map_style("wavg_ling_degrees"))
 
   expect_true(startsWith(levels(fill$data$.map_fill)[[1]], "0-"))
   expect_equal(unname(fill$colors[["No data"]]), "#bdbdbd")
@@ -90,8 +90,8 @@ test_that("district carve-out figure uses unbordered legacy-style bars", {
 })
 
 
-test_that("legacy no-data map colour is a visible ggplot2 scale na.value", {
-  expect_equal(legacy_no_data_colour(), "#bdbdbd")
+test_that("public no-data map colour is a visible ggplot2 scale na.value", {
+  expect_equal(map_no_data_colour(), "#bdbdbd")
 })
 
 test_that("complete map geometry keeps grey boundaries and non-missing overlay rows", {
@@ -114,14 +114,14 @@ test_that("complete map geometry keeps grey boundaries and non-missing overlay r
   )
 
   out <- complete_map_geometry(panel, boundaries, "emie_2007")
-  fill <- legacy_map_fill(out, "emie_2007", legacy_map_style("emie_2007"))
+  fill <- public_map_fill(out, "emie_2007", public_map_style("emie_2007"))
 
   expect_equal(nrow(out), 2L)
   expect_true("No data" %in% as.character(fill$data$.map_fill))
   expect_equal(sum(map_overlay_rows(fill$data, ".map_fill")), 1L)
 })
 
-test_that("legacy map rendering refuses all-grey data layers", {
+test_that("public map rendering refuses all-grey data layers", {
   skip_if_not_installed("sf")
   geometry <- sf::st_sfc(
     sf::st_polygon(list(rbind(c(0, 0), c(1, 0), c(1, 1), c(0, 1), c(0, 0)))),
@@ -136,35 +136,35 @@ test_that("legacy map rendering refuses all-grey data layers", {
   spec <- figure_spec("map_emi_exposure", "map_emi_exposure.png", "EMI Exposure", kind = "map", variable = "emie_2007")
 
   expect_error(
-    build_legacy_ggplot_map(panel, spec),
+    build_public_ggplot_map(panel, spec),
     "no non-missing overlay districts",
     fixed = TRUE
   )
 })
 
 
-test_that("legacy map range labels do not contain padded spaces", {
-  labels <- legacy_cut_labels(c(0, 20, 40, 60, 80, 100))
+test_that("public map range labels do not contain padded spaces", {
+  labels <- map_cut_labels(c(0, 20, 40, 60, 80, 100))
   expect_equal(labels, c("0-20", "20-40", "40-60", "60-80", "80-100"))
   expect_false(any(grepl("\\s+-|-[[:space:]]+", labels)))
 })
 
 test_that("No data is mapped through the fill scale so its legend key is grey", {
-  src <- paste(deparse(build_legacy_ggplot_map), collapse = "\n")
+  src <- paste(deparse(build_public_ggplot_map), collapse = "\n")
   expect_match(src, "geom_sf(data = plot_data, ggplot2::aes(fill = .data[[fill$fill]])", fixed = TRUE)
   expect_match(src, "guide_legend", fixed = TRUE)
-  expect_match(src, "legacy_no_data_colour()", fixed = TRUE)
+  expect_match(src, "map_no_data_colour()", fixed = TRUE)
 })
 
 
 test_that("main map legends use rounded publication bounds", {
-  cons <- legacy_map_style("consumption_growth_pct")
-  educ <- legacy_map_style("head_secondary_plus_2007")
+  cons <- public_map_style("consumption_growth_pct")
+  educ <- public_map_style("head_secondary_plus_2007")
 
   expect_equal(cons$title, "Consumption Growth (%)")
   expect_equal(cons$breaks, c(10, 100, 200, 300, 400, 450))
   expect_equal(cons$labels, c("10-100", "100-200", "200-300", "300-400", "400-450"))
   expect_equal(educ$breaks, c(0, 20, 40, 60, 80))
   expect_equal(educ$labels, c("0-20", "20-40", "40-60", "60-80"))
-  expect_equal(legacy_no_data_colour(), "#bdbdbd")
+  expect_equal(map_no_data_colour(), "#bdbdbd")
 })

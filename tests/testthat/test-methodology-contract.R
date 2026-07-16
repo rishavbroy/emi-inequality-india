@@ -11,7 +11,7 @@ test_that("selection probit covariate contract matches the legacy Rmd", {
     stats::setNames(replicate(length(legacy_vars), numeric(), simplify = FALSE), legacy_vars)
   )
 
-  expect_equal(legacy_probit_variables(selection_data), legacy_vars)
+  expect_equal(selection_probit_variables(selection_data), legacy_vars)
 })
 
 test_that("selection survey design preserves legacy stratification and lonely-PSU policy", {
@@ -38,7 +38,7 @@ test_that("selection survey design preserves legacy stratification and lonely-PS
   expect_equal(length(unique(design$variables$.survey_strata)), 2L)
 })
 
-test_that("legacy EMIE uses Block 5 English-medium code 02 among children at most 19", {
+test_that("EMIE uses Block 5 English-medium code 02 among children at most 19", {
   b5 <- data.frame(
     district_code = c("01001", "01001", "01001", "01002"),
     AGE = c(10, 12, 20, 9),
@@ -102,25 +102,25 @@ test_that("district pseudo-panel analysis core requires the IV instrument, treat
     consumption_1718 = c(150, 250, 350)
   )
 
-  expect_equal(legacy_panel_has_analysis_core(panel), c(TRUE, FALSE, FALSE))
+  expect_equal(panel_has_analysis_core(panel), c(TRUE, FALSE, FALSE))
 })
 
 test_that("district source matching keeps a one-to-one correction to the legacy fuzzy cascade", {
   skip_if_not_installed("stringdist")
   source <- data.frame(
     .source_row = c(1L, 2L),
-    .legacy_state_key = c("bihar", "bihar"),
-    .legacy_district_key = c("patna", "patna"),
+    .source_state_key = c("bihar", "bihar"),
+    .source_district_key = c("patna", "patna"),
     stringsAsFactors = FALSE
   )
   tracker <- data.frame(
     .tracker_row = 10L,
-    .legacy_state_key = "bihar",
-    .legacy_district_key = "patna",
+    .source_state_key = "bihar",
+    .source_district_key = "patna",
     stringsAsFactors = FALSE
   )
 
-  out <- legacy_select_source_tracker_matches(source, tracker)
+  out <- select_source_tracker_matches(source, tracker)
 
   expect_equal(nrow(out), 1L)
   expect_equal(out$.tracker_row, 10L)
