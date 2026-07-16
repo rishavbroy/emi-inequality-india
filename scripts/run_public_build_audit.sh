@@ -19,11 +19,10 @@ Usage: bash scripts/run_public_build_audit.sh [--with-samples|--without-samples]
 Runs the final public build audit. The default is --without-samples for a faster
 report/data/output audit that omits application-sample rendering and excludes
 application-samples/output from the review archive. Use --with-samples before a
-full submission/review bundle. This script is the canonical end-to-end audit; use
-scripts/run_legacy_content_audit.sh for the narrower post-build legacy-results
-parity audit. Debug-only options are off by default so reviewers do not see
+full submission/review bundle. This script is the canonical end-to-end audit for the active current pipeline.
+Debug-only options are off by default so reviewers do not see
 incomplete archives or cache-preserving shortcuts unless requested. Use --incremental
-to preserve generated renders and the {targets} store while debugging content parity;
+to preserve generated renders and the {targets} store while debugging;
 use a non-incremental run for the final reviewer-facing proof build. Use
 --archive-on-error, or the synonym --archive-always, to write a debug review.zip
 if the audit fails; successful audits always write the final review archive.
@@ -209,24 +208,18 @@ else
 fi
 checkpoint_archive "after-clean"
 
-echo "=== REBUILD GENERATED QMD SOURCES ==="
-make rebuild-qmds
-checkpoint_archive "after-rebuild-qmds"
-
-echo "=== SOURCE WHITESPACE CHECK AFTER QMD REBUILD ==="
+echo "=== SOURCE WHITESPACE CHECK AFTER SOURCE NORMALIZATION ==="
 normalize_source_whitespace
 git diff --check -- \
   paper/report.qmd \
   paper/appendix.qmd \
   docs/district-matching.qmd \
   docs/long-paths-and-8-3-filenames.qmd \
-  scripts/postprocess_public_qmds.R \
   scripts/check_required_outputs.R
 
 echo "=== STATIC/PARSE CHECKS ==="
 Rscript -e 'parse("scripts/check_required_outputs.R"); cat("check_required_outputs.R parses\n")'
 Rscript -e 'tmp <- tempfile(fileext = ".R"); knitr::purl("paper/report.qmd", output = tmp, quiet = TRUE); parse(tmp); cat("paper/report.qmd R chunks parse\n")'
-python3 -m py_compile scripts/audit_legacy_parity.py
 checkpoint_archive "after-static-parse"
 
 if [[ "$skip_tests" == "true" ]]; then
@@ -241,10 +234,6 @@ echo "=== PUBLIC FINAL CHECK (${sample_mode}) ==="
 make "$check_target"
 checkpoint_archive "after-public-final-check"
 
-echo "=== LEGACY CONTENT PARITY AUDIT ==="
-python3 -m py_compile scripts/audit_legacy_parity.py
-python3 scripts/audit_legacy_parity.py
-checkpoint_archive "after-legacy-content-audit"
 
 if [[ "$with_extended_diagnostics" == "true" ]]; then
   echo "=== EXTENDED DIAGNOSTICS ==="

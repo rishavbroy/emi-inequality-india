@@ -1,22 +1,24 @@
 # Escaping Inequality in India: English-Medium Instruction and Local Development
 
-This repository contains the code and derived data needed to replicate my paper, "Escaping Inequality in India: The Role of English-Medium Instruction," as well as the application samples built from it. 
+This repository contains the code and derived data needed to replicate my paper, "Escaping Inequality in India: The Role of English-Medium Instruction," as well as the application samples built from it.
 
 
-This project is currently being refactored. For now, run the ["Commands for running and auditing"](#commands-for-running-and-auditing) listed below to do the following:
+The legacy-to-Quarto refactor is complete. Active paper, analysis, and code changes now happen in the current source tree rather than by regenerating public documents from the archived R Markdown draft. The completed refactor proof is preserved through the `archive/refactoring-complete` tag/branch workflow described in [`archive/refactoring/README.md`](archive/refactoring/README.md).
 
-1. Build Quarto documents and R scripts from my [original R Markdown document](archive/legacy-paper-drafts/580-Draft-ECON-580.Rmd).
-2. Implement improvements in methodology, data work, and formatting.  
-3. Generate empirical outputs using [`{targets}`](_targets.R).
-4. [Test](tests) the parity, empirical values, and rendering of all public-facing artifacts.
+Use the ["Commands for running and auditing"](#commands-for-running-and-auditing) listed below to:
+
+1. Generate empirical outputs using [`{targets}`](_targets.R).
+2. Render the current paper, application samples, and public artifacts from their active sources.
+3. Run tests and current public-output checks.
+4. Optionally run extended diagnostics, benchmarks, and analysis notebooks for methodological review.
 
 ## Key files
 
 - **[`paper/report.pdf`](paper/report.pdf): Current rendered paper**. All of its results, tables, and figures are generated in this codebase.
-- [`paper/report.qmd`](paper/report.qmd): Source of paper. First rebuilt from the legacy R Markdown, then postprocessed to improve methodology and formatting. 
+- [`paper/report.qmd`](paper/report.qmd): Source of paper. This is now an ordinary active Quarto source file edited directly.
 - [`REPLICATION.md`](REPLICATION.md): Replication guide.
 - [`DATA_AVAILABILITY.md`](DATA_AVAILABILITY.md): Source-by-source data availability and redistribution notes.
-  
+
 - [`docs/plan/roadmap.md`](docs/plan/roadmap.md): My plan going forward, after this refactoring is done.
 - [`application-samples/output/RishavRoy_WritingSample.pdf`](application-samples/output/RishavRoy_WritingSample.pdf): Reviewer-facing writing sample generated from [marked excerpts](application-samples/specs/writing-10pg.yml) in the [paper](paper/report.qmd). Cover note under active review.
 - [`application-samples/output/RishavRoy_CodingSample.pdf`](application-samples/output/RishavRoy_CodingSample.pdf):  Reviewer-facing coding sample generated from [marked excerpts](application-samples/specs/coding-full.yml) in the [code](R). Cover note under active review.
@@ -32,7 +34,7 @@ This project combines 2007-08 and 2017-18 National Sample Survey microdata, 2001
 Current build status:
 
 - report values are generated through [`R/output/build_report_values.R`](R/output/build_report_values.R) and audited before final rendering;
-- parity warnings are documented rather than silently ignored;
+- accepted historical refactor warnings are frozen in the refactor-proof tag rather than enforced in active builds;
 - lengthy diagnostics and benchmarks are optional, not part of ordinary public builds;
 - several optional diagnostic/benchmarking artifacts are still investigative rather than final empirical claims, especially district-matching diagnostics, fuzzy-matching benchmarks, AME benchmarks, and experimental spatial-IV attempts.
 
@@ -42,9 +44,9 @@ I believe the [current draft](paper/report.pdf) displays multiple traits that ar
 
 This repository, on the other hand, is intended to signal more than just one PDF. Its current state contains the following:
 
-- **Legacy-to-Quarto migration.** [`scripts/rebuild_static_qmds_from_legacy.R`](scripts/rebuild_static_qmds_from_legacy.R) and [`scripts/postprocess_public_qmds.R`](scripts/postprocess_public_qmds.R) rebuild public Quarto documents from the legacy Rmd while preserving paper prose and replacing legacy inline expressions with audited report values.
+- **Completed refactor proof.** The legacy-to-Quarto migration and parity machinery has been frozen under `archive/refactoring/` and the `archive/refactoring-complete` branch/tag workflow. Active paper and analysis sources are now edited directly.
 - **Targets-based research pipeline.** [`_targets.R`](_targets.R) organizes raw-data readers, district tracking, measure construction, IV/probit models, figures, tables, diagnostics, report rendering, and application samples.
-- **Audited public artifacts.** [`scripts/run_public_build_audit.sh`](scripts/run_public_build_audit.sh) normalizes source whitespace, rebuilds QMDs, runs tests, executes final public checks, audits legacy content parity, optionally runs extended diagnostics/benchmarks, and packages `review.zip`.
+- **Audited public artifacts.** [`scripts/run_public_build_audit.sh`](scripts/run_public_build_audit.sh) normalizes source whitespace, runs tests, executes final public checks, optionally runs extended diagnostics/benchmarks, and packages `review.zip`.
 - **Review archives without raw data.** [`scripts/make_review_archive.sh`](scripts/make_review_archive.sh) packages source, public outputs, and diagnostics into `review.zip` while omitting local raw data and caches.
 - **Explicit diagnostics policy.** Public/build diagnostics are short-lived; extended diagnostics and benchmarking outputs are preserved unless intentionally cleaned.
 - **Application-sample automation.** Writing and coding samples are generated from the same source/pipeline used for the paper rather than hand-maintained as separate PDFs.
@@ -95,7 +97,6 @@ Use a small number of commands repeatedly rather than trying to remember every [
 | Use case | Command | Explanation |
 |---|---|---|
 | Unit-test smoke check | `make test` | Fast contract tests; should pass without local raw data. |
-| Rebuild generated QMD sources | `make rebuild-qmds` | Copies/postprocesses legacy-derived public QMDs; useful before inspecting prose diffs. |
 | Fast public audit, no samples | `make public-build-audit` | Runs the canonical audit without application samples and writes a no-samples `review.zip` on success. |
 | Full reviewer-facing audit | `make public-build-audit-full` | Runs cached `{targets}` public render targets for the report, docs, and application samples, audits outputs, and writes a full `review.zip`. |
 | Cache-preserving debug audit | `make public-build-audit-full-incremental-review` | Preserves generated renders and the `{targets}` cache, and writes a debug archive if the run fails. |

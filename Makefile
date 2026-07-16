@@ -1,4 +1,4 @@
-.PHONY: init-renv restore snapshot rebuild-qmds pipeline-draft pipeline-final pipeline-final-no-samples diagnostics public-diagnostics extended-diagnostics benchmarking rerun-extended-diagnostics rerun-benchmarks rerun-analysis analysis-notes render-analysis clean-analysis legacy-public-diagnostics clean-public-diagnostics clean-extended-diagnostics clean-benchmarking report samples audit-report-values audit-report-values-final audit-crossrefs audit-crossrefs-final audit-outputs-final audit-legacy-content public-build-audit public-build-audit-full public-build-audit-incremental public-build-audit-full-incremental public-build-audit-incremental-review public-build-audit-full-incremental-review public-build-audit-with-diagnostics public-build-audit-full-with-diagnostics public-build-audit-full-with-benchmarks check-public check-public-draft check-public-final check-public-final-no-samples check-public-text check-rendered-text check-sample-specs test tests clean-targets clean-renders clean-renders-core clean-renders-no-samples
+.PHONY: init-renv restore snapshot pipeline-draft pipeline-final pipeline-final-no-samples diagnostics public-diagnostics extended-diagnostics benchmarking rerun-extended-diagnostics rerun-benchmarks rerun-analysis analysis-notes render-analysis clean-analysis clean-public-diagnostics clean-extended-diagnostics clean-benchmarking report samples audit-report-values audit-report-values-final audit-crossrefs audit-crossrefs-final audit-outputs-final public-build-audit public-build-audit-full public-build-audit-incremental public-build-audit-full-incremental public-build-audit-incremental-review public-build-audit-full-incremental-review public-build-audit-with-diagnostics public-build-audit-full-with-diagnostics public-build-audit-full-with-benchmarks check-public check-public-draft check-public-final check-public-final-no-samples check-public-text check-rendered-text check-sample-specs test tests clean-targets clean-renders clean-renders-core clean-renders-no-samples
 
 TEXCACHE_ROOT ?= /private/tmp/emi-inequality-india-texcache
 QUARTO_CACHE_ROOT ?= /private/tmp/emi-inequality-india-quarto-cache
@@ -27,9 +27,6 @@ restore:
 snapshot:
 	Rscript -e 'renv::settings$$snapshot.type("explicit"); renv::snapshot(prompt = FALSE)'
 
-rebuild-qmds:
-	Rscript scripts/rebuild_static_qmds_from_legacy.R
-	Rscript scripts/postprocess_public_qmds.R
 
 pipeline-draft: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
 	rm -f .pipeline-draft-ok
@@ -64,14 +61,11 @@ rerun-benchmarks:
 	$(MAKE) benchmarking
 
 
-legacy-public-diagnostics:
-	python3 scripts/audit_legacy_parity.py --write-diagnostics-only
 
 analysis-notes:
 	$(MAKE) public-diagnostics
 	$(MAKE) extended-diagnostics
 	$(MAKE) benchmarking
-	$(MAKE) legacy-public-diagnostics
 	$(MAKE) render-analysis
 
 render-analysis: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
@@ -119,9 +113,6 @@ audit-crossrefs-final:
 audit-outputs-final:
 	EMI_CONFIG=config/final.yml Rscript scripts/audit_outputs_final.R
 
-audit-legacy-content:
-	python3 -m py_compile scripts/audit_legacy_parity.py
-	python3 scripts/audit_legacy_parity.py
 
 public-build-audit:
 	bash scripts/run_public_build_audit.sh --without-samples
