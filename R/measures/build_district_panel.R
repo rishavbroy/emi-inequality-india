@@ -4,16 +4,16 @@
 #' build district panel
 #'
 #' @return A district panel; an sf object when validated boundary geometry joins.
-build_district_panel <- function(district_tracker, district_join_map, measures_2007, measures_2017, linguistic_distance_iv, boundaries_2020, cfg, legacy_district_tracker = NULL) {
-  tracker <- legacy_tracker_frame(district_tracker, legacy_district_tracker)
-  if (nrow(tracker) && legacy_named_measures_available(measures_2007, measures_2017, linguistic_distance_iv)) {
+build_district_panel <- function(district_tracker, district_join_map, measures_2007, measures_2017, linguistic_distance_iv, boundaries_2020, cfg, district_harmonization_crosswalk = NULL) {
+  tracker <- harmonization_tracker_frame(district_tracker, district_harmonization_crosswalk)
+  if (nrow(tracker) && harmonized_named_measures_available(measures_2007, measures_2017, linguistic_distance_iv)) {
     out <- build_tracker_based_district_panel(tracker, measures_2007, measures_2017, linguistic_distance_iv, boundaries_2020)
-    if (nrow(out)) return(validate_legacy_district_panel(out, cfg, join_map = district_join_map))
+    if (nrow(out)) return(validate_analysis_district_panel(out, cfg, join_map = district_join_map))
   }
 
   # Fallback for tests and draft diagnostics when named tracker inputs are not
-  # available.  This preserves the previous key merge but still emits legacy
-  # aliases expected by the report/table code.
+  # available. This preserves the simple key merge used by tests/draft diagnostics
+  # while still emitting analysis aliases expected by the report/table code.
   out <- safe_df(measures_2007)
   if (!nrow(out)) return(empty_panel())
   if (all(c("state_std", "district_std") %in% names(measures_2017))) {
@@ -22,44 +22,44 @@ build_district_panel <- function(district_tracker, district_join_map, measures_2
   if (all(c("state_std", "district_std") %in% names(linguistic_distance_iv))) {
     out <- merge(out, linguistic_distance_iv, by = c("state_std", "district_std"), all.x = TRUE)
   }
-  out <- add_legacy_panel_aliases(out)
-  out <- add_legacy_regions(out)
+  out <- add_panel_output_aliases(out)
+  out <- add_panel_regions(out)
   if (!"district_panel_id" %in% names(out)) out$district_panel_id <- make_district_key(out$state_std, out$district_std, 2007L)
   out <- compute_consumption_growth_pct(out)
   out <- compute_log_consumption_difference(out)
   out <- compute_gini_change(out)
-  validate_legacy_district_panel(attach_panel_geometry(out, boundaries_2020), cfg, join_map = district_join_map)
+  validate_analysis_district_panel(attach_panel_geometry(out, boundaries_2020), cfg, join_map = district_join_map)
 }
 
-legacy_tracker_frame <- function(district_tracker, legacy_district_tracker = NULL) {
+harmonization_tracker_frame <- function(district_tracker, district_harmonization_crosswalk = NULL) {
   tracker <- safe_df(district_tracker)
-  if (all(legacy_tracker_required_columns() %in% names(tracker))) {
+  if (all(harmonization_tracker_required_columns() %in% names(tracker))) {
     return(tracker)
   }
-  fallback <- safe_df(legacy_district_tracker %||% data.frame())
-  if (all(legacy_tracker_required_columns() %in% names(fallback))) {
+  fallback <- safe_df(district_harmonization_crosswalk %||% data.frame())
+  if (all(harmonization_tracker_required_columns() %in% names(fallback))) {
     return(fallback)
   }
   data.frame()
 }
 
-legacy_tracker_required_columns <- function() {
+harmonization_tracker_required_columns <- function() {
   c("state_01", "district_01", "state_07", "district_07", "state_17", "district_17", "state_20", "district_20")
 }
 
-read_legacy_district_tracker <- function(path) {
+read_district_harmonization_crosswalk <- function(path) {
   if (!file.exists(path)) {
-    stop("Missing legacy district tracker file: ", path, call. = FALSE)
+    stop("Missing district harmonization crosswalk file: ", path, call. = FALSE)
   }
   utils::read.csv(path, stringsAsFactors = FALSE)
 }
 
-legacy_named_measures_available <- function(...) {
+harmonized_named_measures_available <- function(...) {
   dfs <- list(...)
   any(vapply(dfs, function(df) any(grepl("^state_(01|07|08|17|18)$", names(safe_df(df)))), logical(1)))
 }
 
-legacy_panel_has_analysis_core <- function(out) {
+panel_has_analysis_core <- function(out) {
   required <- c("EMIE", "wavg_ling_degrees", "consumption_0708", "consumption_1718")
   present <- intersect(required, names(out))
   if (!length(present)) return(rep(TRUE, nrow(out)))
@@ -78,32 +78,32 @@ legacy_panel_has_analysis_core <- function(out) {
 build_tracker_based_district_panel <- function(tracker, measures_2007, measures_2017, linguistic_distance_iv, boundaries_2020) {
   tracker$.tracker_row <- seq_len(nrow(tracker))
   out <- tracker
-  out <- legacy_attach_source(out, safe_df(linguistic_distance_iv), legacy_suffix_chain("01"), source_label = "2001")
-  out <- legacy_attach_source_one_to_one(out, safe_df(measures_2007), legacy_suffix_chain("08"), source_label = "2007")
-  out <- legacy_attach_source(out, safe_df(measures_2017), legacy_suffix_chain("18"), source_label = "2017")
+  out <- attach_source_by_harmonized_names(out, safe_df(linguistic_distance_iv), district_source_suffix_chain("01"), source_label = "2001")
+  out <- attach_source_one_to_one_by_harmonized_names(out, safe_df(measures_2007), district_source_suffix_chain("08"), source_label = "2007")
+  out <- attach_source_by_harmonized_names(out, safe_df(measures_2017), district_source_suffix_chain("18"), source_label = "2017")
 
   # Some rebuilt measure targets only expose numeric standardized district keys
-  # (state_std/district_std) and no longer carry the legacy name columns used by
-  # the tracker.  Attach those sources after the 2007 join has supplied the
+  # (state_std/district_std) and no longer carry the harmonized name columns
+  # used by the tracker.  Attach those sources after the 2007 join has supplied the
   # panel's standardized district keys; otherwise the panel silently lacks the
   # 2017 outcome and 2001 instrument required by maps and IV models.
-  out <- legacy_attach_source_by_standard_keys(out, safe_df(linguistic_distance_iv), source_label = "2001")
-  out <- legacy_attach_source_by_standard_keys(out, safe_df(measures_2017), source_label = "2017")
+  out <- attach_source_by_standard_keys(out, safe_df(linguistic_distance_iv), source_label = "2001")
+  out <- attach_source_by_standard_keys(out, safe_df(measures_2017), source_label = "2017")
 
-  out <- add_legacy_panel_aliases(out)
-  out <- add_legacy_regions(out)
+  out <- add_panel_output_aliases(out)
+  out <- add_panel_regions(out)
   out <- compute_consumption_growth_pct(out)
   out <- compute_log_consumption_difference(out)
   out <- compute_gini_change(out)
-  if (!"district_panel_id" %in% names(out)) out$district_panel_id <- paste0("legacy_tracker_", out$.tracker_row)
+  if (!"district_panel_id" %in% names(out)) out$district_panel_id <- paste0("harmonization_tracker_", out$.tracker_row)
   out <- attach_panel_geometry(out, boundaries_2020)
-  out <- out[legacy_panel_has_analysis_core(out), , drop = FALSE]
+  out <- out[panel_has_analysis_core(out), , drop = FALSE]
   rownames(out) <- NULL
   out
 }
 
 
-add_legacy_panel_aliases <- function(out) {
+add_panel_output_aliases <- function(out) {
   alias <- function(new, old) if (old %in% names(out) && !new %in% names(out)) out[[new]] <<- out[[old]]
   alias("EMIE", "emie_2007")
   alias("emie_2007", "EMIE")
@@ -129,7 +129,7 @@ add_legacy_panel_aliases <- function(out) {
   out
 }
 
-add_legacy_regions <- function(out) {
+add_panel_regions <- function(out) {
   valid_regions <- c("North", "Central", "East", "West", "South")
   if ("region" %in% names(out)) {
     current <- as.character(out$region)
@@ -187,14 +187,14 @@ compute_gini_change <- function(panel) {
   panel
 }
 
-legacy_panel_validation_failures <- function(out) {
+analysis_panel_validation_failures <- function(out) {
   df <- as.data.frame(out)
   failures <- character()
   add <- function(...) failures <<- c(failures, paste0(...))
 
   required <- c("EMIE", "wavg_ling_degrees", "npeople_0708", "consumption_0708", "gini_cons_0708", "consumption_1718", "gini_cons_1718", "consumption_pct_change", "gini_change")
   missing <- setdiff(required, names(df))
-  if (length(missing)) add("district_panel is missing required legacy columns: ", paste(missing, collapse = ", "))
+  if (length(missing)) add("district_panel is missing required analysis columns: ", paste(missing, collapse = ", "))
 
   present_required <- intersect(required, names(df))
   if (length(present_required)) {
@@ -215,13 +215,13 @@ legacy_panel_validation_failures <- function(out) {
 
   if ("EMIE" %in% names(df)) {
     emie <- num(df$EMIE)
-    if (mean(emie, na.rm = TRUE) < 10 || max(emie, na.rm = TRUE) < 90) add("EMIE scale is inconsistent with legacy 0-100 percentage scale.")
+    if (mean(emie, na.rm = TRUE) < 10 || max(emie, na.rm = TRUE) < 90) add("EMIE scale is inconsistent with the expected 0-100 percentage scale.")
   }
   if ("npeople_0708" %in% names(df) && mean(num(df$npeople_0708), na.rm = TRUE) < 10000) {
     add("npeople_0708 looks like a sample count rather than weighted population.")
   }
   if ("dependency_ratio" %in% names(df) && mean(num(df$dependency_ratio), na.rm = TRUE) > 80) {
-    add("dependency_ratio mean is implausibly high relative to the legacy table; verify weighted numerator/denominator construction.")
+    add("dependency_ratio mean is implausibly high; verify weighted numerator/denominator construction.")
   }
   failures
 }
@@ -231,11 +231,11 @@ isTRUEish <- function(x) {
   tolower(as.character(x)) %in% c("true", "1")
 }
 
-validate_legacy_district_panel <- function(out, cfg = list(), join_map = NULL, strict = isTRUE(cfg$strict_legacy_panel_validation)) {
+validate_analysis_district_panel <- function(out, cfg = list(), join_map = NULL, strict = isTRUE(cfg$strict_analysis_panel_validation)) {
   out <- validate_district_panel(out, join_map = join_map, strict = isTRUE(cfg$strict_district_panel_validation))
   if (!identical(cfg$mode, "final")) return(out)
-  failures <- legacy_panel_validation_failures(out)
-  attr(out, "legacy_panel_validation_failures") <- failures
+  failures <- analysis_panel_validation_failures(out)
+  attr(out, "analysis_panel_validation_failures") <- failures
   if (length(failures) && isTRUE(strict)) {
     stop(paste(failures, collapse = "\n"), call. = FALSE)
   }

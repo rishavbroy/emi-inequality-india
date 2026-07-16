@@ -5,9 +5,9 @@
 #'
 #' Write the public processed district tracker artifact expected by `_targets.R`.
 #' Geometry/list columns are flattened so the file is a portable CSV.
-save_processed_district_tracker <- function(district_tracker, legacy_district_tracker = NULL, path = "data/processed/district_tracker_2001_2007_2017_2020.csv") {
+save_processed_district_tracker <- function(district_tracker, district_harmonization_crosswalk = NULL, path = "data/processed/district_tracker_2001_2007_2017_2020.csv") {
   dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
-  x <- legacy_tracker_frame(district_tracker, legacy_district_tracker)
+  x <- harmonization_tracker_frame(district_tracker, district_harmonization_crosswalk)
   if (!nrow(x)) x <- district_tracker
   x <- flatten_processed_output(x)
   utils::write.csv(x, path, row.names = FALSE, na = "")
