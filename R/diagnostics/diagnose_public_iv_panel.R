@@ -11,7 +11,7 @@ save_public_iv_panel_diagnostics <- function(district_panel, tables = NULL, dir 
     extreme_rows = write_diagnostic_csv(public_iv_panel_extreme_rows(panel), file.path(dir, "iv_panel_extreme_rows.csv")),
     keyed_summary_rows = write_diagnostic_csv(public_iv_summary_keyed_rows(panel, tables), file.path(dir, "iv_summary_keyed_rows.csv"))
   )
-  output_manifest(paths)
+  unname(unlist(paths, use.names = FALSE))
 }
 
 public_iv_panel_diagnostic_columns <- function(panel) {

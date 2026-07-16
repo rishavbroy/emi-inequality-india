@@ -313,3 +313,29 @@ test_that("tracker diagnostics summarize same-name districts by year", {
   expect_true(all(c("year", "n_same_name_districts", "n_same_name_district_names", "within_legacy_range") %in% names(out)))
   expect_equal(out$n_same_name_districts[out$year == 2001], 2L)
 })
+
+test_that("public IV-panel diagnostics return file paths for targets", {
+  dir <- tempfile("public-iv-panel-")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  panel <- data.frame(
+    district_panel_id = c("a", "b"),
+    state_20 = c("State A", "State B"),
+    district_20 = c("District A", "District B"),
+    EMIE = c(1, 2),
+    wavg_ling_degrees = c(3, 4),
+    npeople_0708 = c(10, 20),
+    consumption_0708 = c(100, 200),
+    dependency_ratio = c(50, 60),
+    .matched_2001 = c(TRUE, TRUE),
+    .matched_2007 = c(TRUE, FALSE),
+    .matched_2017 = c(TRUE, TRUE),
+    stringsAsFactors = FALSE
+  )
+
+  paths <- save_public_iv_panel_diagnostics(panel, dir = dir)
+
+  expect_type(paths, "character")
+  expect_true(length(paths) >= 5L)
+  expect_true(all(file.exists(paths)))
+})
