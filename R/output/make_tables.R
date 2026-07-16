@@ -17,7 +17,7 @@ table_status_failures <- function(x, cfg, label) {
   paste0("Final table generation requires completed model output for ", label, ".", suffix)
 }
 
-legacy_numeric_stats <- function(df, meta, cost_vars = character(), count_vars = character()) {
+public_numeric_stats <- function(df, meta, cost_vars = character(), count_vars = character()) {
   df <- as.data.frame(df)
   rows <- lapply(seq_len(nrow(meta)), function(i) {
     v <- meta$var[[i]]
@@ -51,7 +51,7 @@ legacy_numeric_stats <- function(df, meta, cost_vars = character(), count_vars =
   out
 }
 
-legacy_categorical_stats <- function(df, meta) {
+public_categorical_stats <- function(df, meta) {
   df <- as.data.frame(df)
   rows <- lapply(seq_len(nrow(meta)), function(i) {
     v <- meta$var[[i]]
@@ -77,7 +77,7 @@ legacy_categorical_stats <- function(df, meta) {
   if (!nrow(out)) data.frame(var = character(), label = character(), N = integer()) else out
 }
 
-legacy_summary_group_row <- function(label, columns) {
+summary_group_row <- function(label, columns) {
   row <- as.list(stats::setNames(rep(NA_character_, length(columns)), columns))
   if ("var" %in% columns) row$var <- paste0(".group_", gsub("[^A-Za-z0-9]+", "_", label))
   if ("label" %in% columns) row$label <- label
@@ -90,19 +90,19 @@ insert_summary_group <- function(df, label, before_var) {
   if (is.na(pos)) return(df)
   rbind(
     if (pos > 1L) df[seq_len(pos - 1L), , drop = FALSE] else df[0L, , drop = FALSE],
-    legacy_summary_group_row(label, names(df)),
+    summary_group_row(label, names(df)),
     df[pos:nrow(df), , drop = FALSE]
   )
 }
 
-legacy_significance_stars <- function(p) {
+significance_stars <- function(p) {
   ifelse(is.finite(p) & p < 0.001, "***",
     ifelse(is.finite(p) & p < 0.01, "**",
       ifelse(is.finite(p) & p < 0.05, "*", "")))
 }
 
 format_estimate <- function(estimate, p.value = NA_real_) {
-  ifelse(is.finite(estimate), paste0(sprintf("%.3f", estimate), legacy_significance_stars(p.value)), NA_character_)
+  ifelse(is.finite(estimate), paste0(sprintf("%.3f", estimate), significance_stars(p.value)), NA_character_)
 }
 
 format_se <- function(std.error) {
@@ -382,14 +382,14 @@ make_tables <- function(selection_data, ame_results, district_panel, iv_models, 
   cons_iv_table <- make_second_stage_table(iv_models)
   fs_model <- first_stage_table_model(iv_models, district_panel)
   if (!is.null(fs_model$model)) {
-    attr(fs_cons, "legacy_model") <- fs_model$model
-    attr(fs_cons, "legacy_vcov") <- fs_model$vcov
-    attr(fs_cons, "legacy_add_rows") <- fs_model$add_rows
+    attr(fs_cons, "table_model") <- fs_model$model
+    attr(fs_cons, "table_vcov") <- fs_model$vcov
+    attr(fs_cons, "table_add_rows") <- fs_model$add_rows
   }
   cons_model <- second_stage_table_model(iv_models)
   if (!is.null(cons_model$model)) {
-    attr(cons_iv_table, "legacy_model") <- cons_model$model
-    attr(cons_iv_table, "legacy_vcov") <- cons_model$vcov
+    attr(cons_iv_table, "table_model") <- cons_model$model
+    attr(cons_iv_table, "table_vcov") <- cons_model$vcov
   }
 
   out <- list(
@@ -403,9 +403,9 @@ make_tables <- function(selection_data, ame_results, district_panel, iv_models, 
     ame_results = as.data.frame(ame_results),
     first_stage = as.data.frame(first_stage_tests)
   )
-  table_failures <- c(table_failures, attr(out$fs_cons, "legacy_table_input_failures"))
+  table_failures <- c(table_failures, attr(out$fs_cons, "table_input_failures"))
   table_failures <- unique(stats::na.omit(table_failures))
-  if (length(table_failures)) attr(out, "legacy_table_input_failures") <- table_failures
+  if (length(table_failures)) attr(out, "table_input_failures") <- table_failures
   out
 }
 
@@ -415,7 +415,7 @@ make_selection_summary_numeric_table <- function(selection_data) {
     label = c("Age", "Household size", "Enrollment cost (Rs.)", "Educ. free available? (Yes = 1)", "Tuition waived?", "Scholarship/Stipend?", "Textbooks received?", "Stationery received?", "Mid-day meal or more received?", "Avg. district enrollment cost"),
     stringsAsFactors = FALSE
   )
-  out <- legacy_numeric_stats(selection_data, meta, cost_vars = "ENROLLMENT_COST")
+  out <- public_numeric_stats(selection_data, meta, cost_vars = "ENROLLMENT_COST")
   insert_summary_group(out, "District-level aggregates:", "dmean_num_IS_EDU_FREE")
 }
 
@@ -425,11 +425,11 @@ make_selection_summary_categorical_table <- function(selection_data) {
     label = c("Sex", "Religion", "Social group", "Urban", "Distance of nearest primary class", "Father's education"),
     stringsAsFactors = FALSE
   )
-  legacy_categorical_stats(selection_data, meta)
+  public_categorical_stats(selection_data, meta)
 }
 
 make_probit_ame_table <- function(ame_results, n = NA_integer_, selection_model = NULL) {
-  native_ame <- attr(ame_results, "legacy_marginaleffects", exact = TRUE)
+  native_ame <- attr(ame_results, "marginaleffects_object", exact = TRUE)
   out <- as.data.frame(ame_results, stringsAsFactors = FALSE)
   if (!"Term" %in% names(out)) out$Term <- out$term
   table <- data.frame(
@@ -443,11 +443,11 @@ make_probit_ame_table <- function(ame_results, n = NA_integer_, selection_model 
     stringsAsFactors = FALSE
   )
   if (!is.null(native_ame)) {
-    attr(table, "legacy_marginaleffects") <- native_ame
-    attr(table, "legacy_marginaleffects_n") <- n
+    attr(table, "marginaleffects_object") <- native_ame
+    attr(table, "marginaleffects_n") <- n
   }
   if (!is.null(selection_model)) {
-    attr(table, "legacy_selection_model") <- selection_model
+    attr(table, "selection_model") <- selection_model
   }
   table
 }
@@ -503,7 +503,7 @@ make_iv_summary_table <- function(district_panel) {
     ),
     stringsAsFactors = FALSE
   )
-  out <- legacy_numeric_stats(district_panel, meta, count_vars = c("npeople_0708", "npeople_1718"))
+  out <- public_numeric_stats(district_panel, meta, count_vars = c("npeople_0708", "npeople_1718"))
   out <- insert_summary_group(out, "From 2001:", "wavg_ling_degrees")
   out <- insert_summary_group(out, "From 2007-08:", "EMIE")
   out <- insert_summary_group(out, "From 2017-18:", "npeople_1718")
@@ -533,7 +533,7 @@ make_first_stage_table <- function(first_stage_tests, cfg = list()) {
     if (length(status_reasons)) {
       msg <- paste(status_reasons, collapse = "; ")
       out <- table_status_row("first_stage", "out_of_active_pipeline", msg)
-      attr(out, "legacy_table_input_failures") <- paste0("First-stage table lacks required coefficient(s): ", paste(missing_terms, collapse = ", "), ". Reasons: ", msg)
+      attr(out, "table_input_failures") <- paste0("First-stage table lacks required coefficient(s): ", paste(missing_terms, collapse = ", "), ". Reasons: ", msg)
       return(out)
     }
     msg <- paste("First-stage table lacks required coefficient(s):", paste(missing_terms, collapse = ", "))
@@ -551,11 +551,11 @@ make_first_stage_table <- function(first_stage_tests, cfg = list()) {
   fs <- fs[!is.na(match(fs$term, term_order)), , drop = FALSE]
 
   stat <- fs[fs$term == "wavg_ling_degrees", , drop = FALSE]
-  f_value <- if (nrow(stat)) first_finite_value(stat, c("partial_f", "legacy_model_f")) else NA_real_
-  f_p <- if (nrow(stat)) first_finite_value(stat, c("partial_p", "legacy_model_p")) else NA_real_
+  f_value <- if (nrow(stat)) first_finite_value(stat, c("partial_f", "model_f")) else NA_real_
+  f_p <- if (nrow(stat)) first_finite_value(stat, c("partial_p", "model_p")) else NA_real_
   f_row <- data.frame(
     Term = "Instrument's F-Statistic",
-    value = paste0(sprintf("%.2f", f_value), legacy_significance_stars(f_p)),
+    value = paste0(sprintf("%.2f", f_value), significance_stars(f_p)),
     stringsAsFactors = FALSE
   )
   nobs_value <- first_finite_value(stat, c("nobs", "n", "N"))
@@ -569,7 +569,7 @@ make_first_stage_table <- function(first_stage_tests, cfg = list()) {
   ))
 
   regression_display_table(
-    terms = legacy_iv_term_label(fs$term),
+    terms = iv_table_term_label(fs$term),
     estimates = suppressWarnings(as.numeric(fs$estimate)),
     std_errors = suppressWarnings(as.numeric(fs$std.error)),
     p_values = suppressWarnings(as.numeric(fs$p.value)),
@@ -600,7 +600,7 @@ first_stage_table_model <- function(iv_models, district_panel) {
     return(list(model = NULL, vcov = NULL, add_rows = NULL))
   }
   formula <- stats::as.formula(paste(endogenous[[1]], "~", paste(terms$instruments, collapse = " + ")))
-  data <- add_legacy_iv_aliases(district_panel)
+  data <- add_iv_panel_aliases(district_panel)
   if (length(setdiff(all.vars(formula), names(as.data.frame(data))))) {
     return(list(model = NULL, vcov = NULL, add_rows = NULL))
   }
@@ -612,7 +612,7 @@ first_stage_table_model <- function(iv_models, district_panel) {
   wald <- first_stage_wald_test(fit, excluded_term, vc)
   add_rows <- data.frame(
     term = "Instrument's F-Statistic",
-    estimate = paste0(formatC(wald$partial_f, digits = 2, format = "f"), legacy_significance_stars(wald$partial_p)),
+    estimate = paste0(formatC(wald$partial_f, digits = 2, format = "f"), significance_stars(wald$partial_p)),
     stringsAsFactors = FALSE
   )
   list(model = fit, vcov = vc, add_rows = add_rows)
@@ -644,7 +644,7 @@ make_second_stage_table <- function(iv_models) {
     model <- iv_models
   }
   regression_display_table(
-    terms = legacy_iv_term_label(out$term),
+    terms = iv_table_term_label(out$term),
     estimates = suppressWarnings(as.numeric(out$estimate)),
     std_errors = suppressWarnings(as.numeric(out$std.error)),
     p_values = suppressWarnings(as.numeric(out$p.value)),
@@ -653,7 +653,7 @@ make_second_stage_table <- function(iv_models) {
   )
 }
 
-legacy_iv_term_label <- function(term) {
+iv_table_term_label <- function(term) {
   labels <- c(
     "(Intercept)" = "Constant",
     EMIE = "EMIE",

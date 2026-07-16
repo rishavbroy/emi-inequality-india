@@ -14,8 +14,8 @@ estimate_first_stage <- function(iv_models, district_panel, cfg) {
         p.value = NA_real_,
         partial_f = NA_real_,
         partial_p = NA_real_,
-        legacy_model_f = NA_real_,
-        legacy_model_p = NA_real_,
+        model_f = NA_real_,
+        model_p = NA_real_,
         nobs = NA_real_,
         r.squared = NA_real_,
         adj.r.squared = NA_real_,
@@ -73,7 +73,7 @@ estimate_first_stage <- function(iv_models, district_panel, cfg) {
     excluded_term <- if (length(excluded)) excluded[[1]] else NA_character_
     excluded_row <- if (!is.na(excluded_term)) match(excluded_term, coefs$term) else NA_integer_
     wald <- first_stage_wald_test(fit, excluded_term, vc)
-    legacy_f <- legacy_first_stage_model_f(fit)
+    model_f <- model_f_statistic(fit)
     sm <- tryCatch(summary(fit), error = function(e) NULL)
     nobs_value <- tryCatch(stats::nobs(fit), error = function(e) NA_real_)
     r2_value <- tryCatch(sm$r.squared, error = function(e) NA_real_)
@@ -94,8 +94,8 @@ estimate_first_stage <- function(iv_models, district_panel, cfg) {
       p.value = p_values,
       partial_f = partial_f,
       partial_p = partial_p,
-      legacy_model_f = legacy_f$statistic,
-      legacy_model_p = legacy_f$p.value,
+      model_f = model_f$statistic,
+      model_p = model_f$p.value,
       nobs = nobs_value,
       r.squared = r2_value,
       adj.r.squared = adj_r2_value,
@@ -119,8 +119,8 @@ first_stage_status_row <- function(model_name, reason) {
     p.value = NA_real_,
     partial_f = NA_real_,
     partial_p = NA_real_,
-    legacy_model_f = NA_real_,
-    legacy_model_p = NA_real_,
+    model_f = NA_real_,
+    model_p = NA_real_,
     nobs = NA_real_,
     r.squared = NA_real_,
     adj.r.squared = NA_real_,
@@ -141,7 +141,7 @@ column_or_na <- function(df, col) {
   suppressWarnings(as.numeric(df[[col]]))
 }
 
-legacy_first_stage_model_f <- function(fit) {
+model_f_statistic <- function(fit) {
   fstat <- tryCatch(summary(fit)$fstatistic, error = function(e) NULL)
   if (is.null(fstat) || length(fstat) < 3L) {
     return(list(statistic = NA_real_, p.value = NA_real_))

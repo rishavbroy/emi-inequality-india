@@ -279,7 +279,7 @@ normalize_ame_columns <- function(out) {
   out
 }
 
-legacy_ame_lookup <- function() {
+ame_label_lookup <- function() {
   data.frame(
     term = c(
       "AGE", "SEX", "HH_SIZE",
@@ -313,9 +313,9 @@ legacy_ame_lookup <- function() {
   )
 }
 
-legacy_ame_label_order <- function() legacy_ame_lookup()$Term
+ame_label_order <- function() ame_label_lookup()$Term
 
-legacy_ame_modelsummary_label <- function(x) {
+ame_modelsummary_label <- function(x) {
   x <- as.character(x)
   x <- gsub("\u00d7", ":", x, fixed = TRUE)
   x <- gsub("\\s+:\\s+", ": ", x, perl = TRUE)
@@ -333,7 +333,7 @@ infer_ame_contrast <- function(out) {
 }
 
 ame_factor_base_terms <- function() {
-  unique(legacy_ame_lookup()$term[legacy_ame_lookup()$contrast != "dY/dX"])
+  unique(ame_label_lookup()$term[ame_label_lookup()$contrast != "dY/dX"])
 }
 
 normalize_encoded_factor_ame_terms <- function(out) {
@@ -341,7 +341,7 @@ normalize_encoded_factor_ame_terms <- function(out) {
   if (!"term" %in% names(out)) return(out)
   if (!"contrast" %in% names(out)) out$contrast <- infer_ame_contrast(out)
 
-  lookup <- legacy_ame_lookup()
+  lookup <- ame_label_lookup()
   factor_terms <- ame_factor_base_terms()
   factor_terms <- factor_terms[order(nchar(factor_terms), decreasing = TRUE)]
 
@@ -369,29 +369,29 @@ normalize_encoded_factor_ame_terms <- function(out) {
   out
 }
 
-attach_legacy_ame_labels <- function(out) {
+attach_ame_labels <- function(out) {
   out <- as.data.frame(out, stringsAsFactors = FALSE)
   if (!"term" %in% names(out) && "variable" %in% names(out)) out$term <- out$variable
   if (!"contrast" %in% names(out)) out$contrast <- infer_ame_contrast(out)
   out <- normalize_encoded_factor_ame_terms(out)
-  lookup <- legacy_ame_lookup()
+  lookup <- ame_label_lookup()
   labeled <- merge(out, lookup, by = c("term", "contrast"), all.x = TRUE, sort = FALSE)
   labeled$Term[is.na(labeled$Term)] <- labeled$term[is.na(labeled$Term)]
-  labeled$Term <- factor(labeled$Term, levels = unique(c(legacy_ame_label_order(), labeled$Term)))
+  labeled$Term <- factor(labeled$Term, levels = unique(c(ame_label_order(), labeled$Term)))
   labeled <- labeled[order(labeled$Term), , drop = FALSE]
   labeled$Term <- as.character(labeled$Term)
   labeled
 }
 
 
-legacy_modelsummary_marginaleffects_object <- function(out, native_ame) {
+modelsummary_marginaleffects_object <- function(out, native_ame) {
   if (!is_marginaleffects_object(native_ame)) return(NULL)
   out <- as.data.frame(out, stringsAsFactors = FALSE)
   required <- c("Term", "estimate", "std.error", "statistic", "p.value", "conf.low", "conf.high")
   if (!all(required %in% names(out))) return(native_ame)
 
   ms <- out[, required, drop = FALSE]
-  ms$term <- legacy_ame_modelsummary_label(ms$Term)
+  ms$term <- ame_modelsummary_label(ms$Term)
   ms$contrast <- ""
   ms$Term <- NULL
   # Preserve the marginaleffects class and non-structural attributes so
@@ -419,13 +419,13 @@ format_ame_results <- function(ame_results) {
   if (!"method" %in% names(out)) out$method <- "autodiff"
   if (!"status" %in% names(out)) out$status <- "estimated"
   if (!"reason" %in% names(out)) out$reason <- NA_character_
-  legacy_terms <- unique(legacy_ame_lookup()$term)
+  legacy_terms <- unique(ame_label_lookup()$term)
   use_legacy_schema <- any(out$term %in% legacy_terms) ||
     any(grepl("^dmean_num_", out$term %||% character(), perl = TRUE)) ||
     any((out$contrast %||% "dY/dX") != "dY/dX", na.rm = TRUE)
 
   if (isTRUE(use_legacy_schema)) {
-    out <- attach_legacy_ame_labels(out)
+    out <- attach_ame_labels(out)
     required <- c(
       "Term", "term", "contrast", "estimate", "std.error", "statistic", "p.value", "s.value",
       "conf.low", "conf.high", "method", "status", "reason"
@@ -444,7 +444,7 @@ format_ame_results <- function(ame_results) {
   }
   out <- out[, required, drop = FALSE]
   if (is_marginaleffects_object(native_ame)) {
-    attr(out, "legacy_marginaleffects") <- legacy_modelsummary_marginaleffects_object(out, native_ame)
+    attr(out, "marginaleffects_object") <- modelsummary_marginaleffects_object(out, native_ame)
   }
   out
 }

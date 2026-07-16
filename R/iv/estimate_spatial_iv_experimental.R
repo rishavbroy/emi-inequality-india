@@ -9,7 +9,7 @@
 #' to the final public model.
 estimate_spatial_iv_experimental <- function(district_panel, spatial_weights, cfg) {
   if (!diagnostic_enabled(cfg, "spatial_iv_experimental")) {
-    status <- legacy_status_tbl("spatial_iv_experimental", "out_of_active_pipeline", "Experimental spatial IV is documented but not active.")
+    status <- diagnostic_status_table("spatial_iv_experimental", "out_of_active_pipeline", "Experimental spatial IV is documented but not active.")
     return(list(status = status, augmented_panel_summary = data.frame(), model_status = data.frame(), failure_summary = summarize_spatial_iv_failures(status)))
   }
   panel <- add_spatial_lags(district_panel, spatial_weights, c("consumption_pct_change", "gini_change", "EMIE", "wavg_ling_degrees", "npeople_0708", "nhouses_0708", "consumption_0708", "gini_cons_0708"))
@@ -33,7 +33,7 @@ add_spatial_lags <- function(district_panel, spatial_weights, vars) {
   rows <- spatial_weights$row_index %||% seq_len(nrow(panel))
   out <- panel[rows, , drop = FALSE]
   for (v in intersect(vars, names(out))) {
-    out[[paste0("W_", legacy_spatial_lag_name(v))]] <- tryCatch(
+    out[[paste0("W_", spatial_lag_name(v))]] <- tryCatch(
       spdep::lag.listw(spatial_weights$listw, numeric_like(out[[v]]), zero.policy = TRUE),
       error = function(e) rep(NA_real_, nrow(out))
     )
@@ -44,7 +44,7 @@ add_spatial_lags <- function(district_panel, spatial_weights, vars) {
   out
 }
 
-legacy_spatial_lag_name <- function(v) {
+spatial_lag_name <- function(v) {
   switch(v,
     consumption_pct_change = "consY",
     gini_change = "giniY",

@@ -3,7 +3,7 @@
 
 # sample-start: code-missingness-logit-parallel
 
-legacy_missingness_variables <- function(selection_data) {
+missingness_variables <- function(selection_data) {
   df <- as.data.frame(selection_data, stringsAsFactors = FALSE)
   all_child_missing_vars <- c("DIST_FROM_NEAREST_PRIMARY_CLASS", "dmean_num_ENROLLMENT_COST", "father_educ")
   enrolled_only_missing_vars <- c("TUTION_FEE", "EXAMINATION_FEE", "OTHER_FEES_PAYMENTS", "BOOKS", "STATIONERY", "UNIFORM", "TRANSPORT")
@@ -37,7 +37,7 @@ legacy_missingness_variables <- function(selection_data) {
 #' and notes for commented case-study / chi-square checks.
 diagnose_missingness <- function(selection_data, cfg) {
   df <- as.data.frame(selection_data, stringsAsFactors = FALSE)
-  vars <- legacy_missingness_variables(df)
+  vars <- missingness_variables(df)
   probit_vars <- vars$probit_vars
 
   counts <- summarize_missingness_by_variable(df[probit_vars])
@@ -56,7 +56,7 @@ diagnose_missingness <- function(selection_data, cfg) {
 
   regional <- summarize_missingness_regions(df, probit_vars, vars)
   corr_all <- missingness_correlation_matrix(df, vars$miss_vars_all, vars$group_vars, vars$cts_vars)
-  enrolled_rows <- legacy_enrolled_rows(df)
+  enrolled_rows <- enrolled_schooling_rows(df)
   corr_enrolled <- missingness_correlation_matrix(df[enrolled_rows, , drop = FALSE], vars$miss_vars_enrolled, vars$group_vars, vars$cts_vars)
 
   covars <- intersect(c("SECTOR", "SEX", "AGE", "HH_SIZE", "RELIGION", "SOCIAL_GROUP", "state_0708"), names(df))
@@ -102,7 +102,7 @@ diagnose_missingness <- function(selection_data, cfg) {
   out
 }
 
-legacy_enrolled_rows <- function(df) {
+enrolled_schooling_rows <- function(df) {
   if (!"enrolled" %in% names(df)) return(rep(TRUE, nrow(df)))
   value <- tolower(as.character(df$enrolled))
   value %in% c("yes", "1", "true", "enrolled")
@@ -270,7 +270,7 @@ missingness_correlation_matrix <- function(df, miss_vars, group_vars, cts_vars) 
       matrix(numeric(), nrow = nrow(df), ncol = 0L)
     }
   } else matrix(numeric(), nrow = nrow(df), ncol = 0L)
-  legacy_safe_cor(cbind(miss_df, cts_df, grp_df))
+  safe_pairwise_cor(cbind(miss_df, cts_df, grp_df))
 }
 
 #' check missing logit parallel
@@ -466,7 +466,7 @@ save_missingness_diagnostics <- function(diagnostics, dir = "outputs/diagnostics
       )
     )
   }
-  legacy_output_manifest(paths)
+  output_manifest(paths)
 }
 
 # sample-end: code-missingness-logit-parallel

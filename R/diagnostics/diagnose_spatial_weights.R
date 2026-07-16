@@ -136,8 +136,8 @@ diagnose_spatial_weights <- function(district_panel, spatial_weights, cfg) {
     warnings = paste(spatial_weights$warnings %||% attr(spatial_weights, "spatial_warnings") %||% character(), collapse = "; "),
     stringsAsFactors = FALSE
   )
-  attr(base, "rook_queen_comparison") <- add_legacy_spatial_weight_reference(comparison)
-  attr(base, "legacy_reference") <- legacy_spatial_weight_reference()
+  attr(base, "rook_queen_comparison") <- add_spatial_weight_reference(comparison)
+  attr(base, "legacy_reference") <- spatial_weight_reference()
   base
 }
 
@@ -184,7 +184,7 @@ compare_rook_queen_contiguity <- function(district_panel) {
 }
 
 
-legacy_spatial_weight_reference <- function() {
+spatial_weight_reference <- function() {
   data.frame(
     contiguity = c("rook", "queen"),
     legacy_method = c(
@@ -198,10 +198,10 @@ legacy_spatial_weight_reference <- function() {
   )
 }
 
-add_legacy_spatial_weight_reference <- function(comparison) {
+add_spatial_weight_reference <- function(comparison) {
   comparison <- as.data.frame(comparison, stringsAsFactors = FALSE)
   if (!nrow(comparison)) return(comparison)
-  ref <- legacy_spatial_weight_reference()[c("contiguity", "legacy_mean_neighbors")]
+  ref <- spatial_weight_reference()[c("contiguity", "legacy_mean_neighbors")]
   out <- merge(comparison, ref, by = "contiguity", all.x = TRUE, sort = FALSE)
   out$mean_neighbor_delta_from_legacy <- out$mean_neighbors - out$legacy_mean_neighbors
   out$pct_delta_from_legacy <- 100 * out$mean_neighbor_delta_from_legacy / out$legacy_mean_neighbors
@@ -235,7 +235,7 @@ save_spatial_weight_diagnostics <- function(diagnostics, dir = "outputs/diagnost
     rook_queen_comparison = write_diagnostic_csv(attr(diagnostics, "rook_queen_comparison") %||% data.frame(), file.path(dir, "rook_queen_contiguity_comparison.csv")),
     legacy_reference = write_diagnostic_csv(attr(diagnostics, "legacy_reference") %||% data.frame(), file.path(dir, "spatial_weights_legacy_reference.csv"))
   )
-  legacy_output_manifest(paths)
+  output_manifest(paths)
 }
 
 # sample-end: code-spatial-weights

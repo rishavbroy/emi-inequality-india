@@ -41,7 +41,7 @@ diagnose_district_matching <- function(district_panel, district_join_map, cfg) {
   attr(base, "all_rows_search") <- build_district_matching_search_table(panel, join_map, unmatched, source_key_inventory)
   attr(base, "key_comparison") <- key_comparison
   attr(base, "key_role_counts") <- summarize_district_key_roles(key_comparison)
-  attr(base, "legacy_reference") <- legacy_district_matching_reference(base)
+  attr(base, "legacy_reference") <- district_matching_reference(base)
   class(base) <- c("emi_district_matching_diagnostics", class(base))
   base
 }
@@ -83,7 +83,7 @@ extract_unmatched_districts <- function(join_map, ...) {
   if ("match_status" %in% names(join_map)) {
     status <- as.character(join_map$match_status)
     keep <- grepl("unmatched|failed", status, ignore.case = TRUE) &
-      !grepl("source_key_unmatched|legacy_tracker_row|matched|exact_name|fuzzy_name", status, ignore.case = TRUE)
+      !grepl("source_key_unmatched|harmonization_crosswalk_row|matched|exact_name|fuzzy_name", status, ignore.case = TRUE)
     return(join_map[keep, , drop = FALSE])
   }
   data.frame()
@@ -211,7 +211,7 @@ summarize_district_key_roles <- function(key_comparison) {
 }
 
 
-legacy_district_matching_reference <- function(summary) {
+district_matching_reference <- function(summary) {
   data.frame(
     diagnostic = c("unmatched_rows", "source_key_inventory", "many_to_many_cases", "all_rows_search"),
     legacy_chunk = "Chunk 20 Match districts: Diagnose errors",
@@ -240,5 +240,5 @@ save_district_matching_diagnostics <- function(diagnostics, dir = "outputs/diagn
     all_rows_search = write_diagnostic_csv(attr(diagnostics, "all_rows_search") %||% data.frame(), file.path(dir, "district_matching_all_rows_search.csv")),
     legacy_reference = write_diagnostic_csv(attr(diagnostics, "legacy_reference") %||% data.frame(), file.path(dir, "district_matching_legacy_reference.csv"))
   )
-  legacy_output_manifest(paths)
+  output_manifest(paths)
 }

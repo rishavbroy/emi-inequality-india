@@ -13,10 +13,10 @@ build_2007_measures <- function(nss_2007_education, nss_2007_consumption, select
   edu <- as_input_list(nss_2007_education)
   cons <- as_input_list(nss_2007_consumption)
 
-  b3 <- standardize_legacy_2007_district_code(std(safe_df(select_input_frame(edu, c("nss0708edu_block3", "block3"))), 2007L))
-  b4 <- standardize_legacy_2007_district_code(std(safe_df(select_input_frame(edu, c("nss0708edu_block4", "block4"))), 2007L))
-  b5 <- standardize_legacy_2007_district_code(std(safe_df(select_input_frame(edu, c("nss0708edu_block5", "block5", "block"))), 2007L))
-  cons_hh <- standardize_legacy_2007_district_code(std(safe_df(select_input_frame(cons, c("nss0708cons_hhchar", "hhchar", "block"))), 2007L))
+  b3 <- standardize_nss_2007_district_code(std(safe_df(select_input_frame(edu, c("nss0708edu_block3", "block3"))), 2007L))
+  b4 <- standardize_nss_2007_district_code(std(safe_df(select_input_frame(edu, c("nss0708edu_block4", "block4"))), 2007L))
+  b5 <- standardize_nss_2007_district_code(std(safe_df(select_input_frame(edu, c("nss0708edu_block5", "block5", "block"))), 2007L))
+  cons_hh <- standardize_nss_2007_district_code(std(safe_df(select_input_frame(cons, c("nss0708cons_hhchar", "hhchar", "block"))), 2007L))
 
   out <- compute_emie_2007(b5)
   if (!nrow(out)) return(empty_panel())
@@ -25,7 +25,7 @@ build_2007_measures <- function(nss_2007_education, nss_2007_consumption, select
   out <- merge_measure_2007(out, compute_housing_controls_2007(cons_hh))
   out <- merge_measure_2007(out, compute_district_imr_2007(selection_data))
   out <- attach_2007_district_names(out, nss_2007_education)
-  out <- add_legacy_2007_aliases(out)
+  out <- add_2007_measure_aliases(out)
   if (all(c("state_std", "district_std") %in% names(out))) {
     out$district_panel_id <- make_district_key(out$state_std, out$district_std, 2007L)
   }
@@ -69,7 +69,7 @@ merge_measure_2007 <- function(x, y) {
   merge(x, y, by = key, all.x = TRUE, sort = FALSE)
 }
 
-standardize_legacy_2007_district_code <- function(df) {
+standardize_nss_2007_district_code <- function(df) {
   df <- safe_df(df)
   if (!nrow(df)) return(df)
   district <- first_col(df, c("district_code_0708", "district_code", "District", "DISTRICT", "district"))
@@ -82,7 +82,7 @@ standardize_legacy_2007_district_code <- function(df) {
 }
 
 by_district_code_2007 <- function(df, value = NULL, weight = NULL, name = "value", fun = wmean) {
-  df <- standardize_legacy_2007_district_code(df)
+  df <- standardize_nss_2007_district_code(df)
   key <- district_group_vars_2007(df)
   if (!length(key) || !nrow(df) || (is.null(value) && !identical(name, "n"))) {
     return(data.frame(district_code_0708 = character(), state_std = character(), district_std = character()))
@@ -104,7 +104,7 @@ by_district_code_2007 <- function(df, value = NULL, weight = NULL, name = "value
 #' compute emie 2007
 #'
 compute_emie_2007 <- function(df) {
-  df <- standardize_legacy_2007_district_code(std(df, 2007L))
+  df <- standardize_nss_2007_district_code(std(df, 2007L))
   weight <- first_col(df, c("weight", "WEIGHT", "multiplier"))
   emi <- first_col(df, c("MEDIUM_INSTRUCTION", "medium_instruction", "medium", "EMI", "emie"))
   if (is.null(emi)) return(empty_panel())
@@ -115,7 +115,7 @@ compute_emie_2007 <- function(df) {
   }
   by_district_code_2007(df, emi, weight, "emie_2007", function(x, w) {
     100 * wmean(english_medium_indicator(x, emi), w)
-  }) |> add_legacy_emie_alias()
+  }) |> add_emie_alias()
 }
 
 english_medium_indicator <- function(x, column_name = NULL) {
@@ -129,7 +129,7 @@ english_medium_indicator <- function(x, column_name = NULL) {
 #' compute education household measures 2007
 #'
 compute_education_household_measures_2007 <- function(df) {
-  df <- standardize_legacy_2007_district_code(std(df, 2007L))
+  df <- standardize_nss_2007_district_code(std(df, 2007L))
   key <- district_group_vars_2007(df)
   if (!nrow(df) || !length(key)) return(data.frame(district_code_0708 = character(), state_std = character(), district_std = character()))
   weight <- first_col(df, c("weight", "WEIGHT", "Multiplier", "multiplier"))
@@ -179,7 +179,7 @@ compute_gini_consumption_2007 <- function(df) {
 #' compute baseline controls 2007
 #'
 compute_baseline_controls_2007 <- function(df) {
-  df <- standardize_legacy_2007_district_code(std(df, 2007L))
+  df <- standardize_nss_2007_district_code(std(df, 2007L))
   key <- district_group_vars_2007(df)
   if (!length(key) || !nrow(df)) return(data.frame(district_code_0708 = character(), state_std = character(), district_std = character()))
   weight <- first_col(df, c("weight", "WEIGHT", "multiplier"))
@@ -240,7 +240,7 @@ compute_baseline_controls_2007 <- function(df) {
 #'
 #' @return District-level housing controls from the 2007 consumption household file.
 compute_housing_controls_2007 <- function(df) {
-  df <- standardize_legacy_2007_district_code(std(df, 2007L))
+  df <- standardize_nss_2007_district_code(std(df, 2007L))
   type <- first_col(df, c("Type_of_structure", "type_of_structure"))
   weight <- first_col(df, c("Multiplier", "weight", "WEIGHT", "multiplier"))
   if (is.null(type) || is.null(weight) || !length(district_group_vars_2007(df))) return(data.frame(district_code_0708 = character(), state_std = character(), district_std = character()))
@@ -260,15 +260,15 @@ compute_district_imr_2007 <- function(selection_data) {
 }
 
 normalize_2007_consumption_district_key <- function(df) {
-  standardize_legacy_2007_district_code(df)
+  standardize_nss_2007_district_code(df)
 }
 
-add_legacy_emie_alias <- function(df) {
+add_emie_alias <- function(df) {
   if ("emie_2007" %in% names(df)) df$EMIE <- df$emie_2007
   df
 }
 
-add_legacy_2007_aliases <- function(out) {
+add_2007_measure_aliases <- function(out) {
   alias <- function(new, old) if (old %in% names(out) && !new %in% names(out)) out[[new]] <<- out[[old]]
   alias("EMIE", "emie_2007")
   alias("consumption_0708", "consumption_2007")

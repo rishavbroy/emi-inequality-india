@@ -12,7 +12,7 @@
 diagnose_fuzzy_matching <- function(district_tracker, district_join_map, cfg) {
   tracker <- as.data.frame(district_tracker, stringsAsFactors = FALSE)
   join_map <- as.data.frame(district_join_map, stringsAsFactors = FALSE)
-  candidate_pairs <- legacy_fuzzy_candidate_pairs(tracker, join_map)
+  candidate_pairs <- fuzzy_candidate_pairs(tracker, join_map)
   base <- data.frame(
     n_tracker_rows = nrow(tracker),
     n_join_rows = nrow(join_map),
@@ -21,18 +21,18 @@ diagnose_fuzzy_matching <- function(district_tracker, district_join_map, cfg) {
     n_active_candidate_pairs = sum(candidate_pairs$pair_source != "legacy_troublesome_comment", na.rm = TRUE),
     stringsAsFactors = FALSE
   )
-  attr(base, "legacy_methods") <- data.frame(method = legacy_fuzzy_match_methods(), threshold = legacy_fuzzy_match_thresholds(), stringsAsFactors = FALSE)
+  attr(base, "legacy_methods") <- data.frame(method = district_fuzzy_match_methods(), threshold = district_fuzzy_match_thresholds(), stringsAsFactors = FALSE)
   attr(base, "troublesome_pairs") <- test_troublesome_name_pairs()
   attr(base, "candidate_pairs") <- candidate_pairs
   attr(base, "join_status_counts") <- summarize_fuzzy_join_status(join_map)
-  attr(base, "legacy_tuning_reference") <- legacy_fuzzy_tuning_reference()
+  attr(base, "legacy_tuning_reference") <- fuzzy_tuning_reference()
   attr(base, "candidate_pair_coverage") <- summarize_fuzzy_candidate_pair_coverage(candidate_pairs)
   class(base) <- c("emi_fuzzy_matching_diagnostics", class(base))
   base
 }
 
-legacy_fuzzy_candidate_pairs <- function(district_tracker = data.frame(), district_join_map = data.frame()) {
-  out <- list(legacy_troublesome_name_pairs())
+fuzzy_candidate_pairs <- function(district_tracker = data.frame(), district_join_map = data.frame()) {
+  out <- list(troublesome_name_pairs())
   tracker <- if (exists("tracker_with_processed_fallback", mode = "function")) tracker_with_processed_fallback(district_tracker) else as.data.frame(district_tracker, stringsAsFactors = FALSE)
   source_key_inventory <- if (exists("extract_source_key_inventory", mode = "function")) extract_source_key_inventory(district_join_map) else data.frame()
   join_map <- as.data.frame(district_join_map, stringsAsFactors = FALSE)
@@ -154,5 +154,5 @@ save_fuzzy_matching_diagnostics <- function(diagnostics, dir = "outputs/diagnost
     candidate_pair_coverage = write_diagnostic_csv(attr(diagnostics, "candidate_pair_coverage") %||% data.frame(), file.path(dir, "fuzzy_matching_candidate_pair_coverage.csv")),
     legacy_tuning_reference = write_diagnostic_csv(attr(diagnostics, "legacy_tuning_reference") %||% data.frame(), file.path(dir, "fuzzy_matching_legacy_tuning_reference.csv"))
   )
-  legacy_output_manifest(paths)
+  output_manifest(paths)
 }

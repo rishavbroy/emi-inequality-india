@@ -15,7 +15,7 @@ make_iv_formula <- function(dep, endog, instruments, controls = NULL, fixed_effe
   ))
 }
 
-legacy_iv_controls <- function() {
+baseline_iv_controls <- function() {
   c(
     "consumption_0708", "gini_cons_0708",
     "pct_urban", "avg_hh_size", "dependency_ratio",
@@ -30,7 +30,7 @@ legacy_iv_controls <- function() {
 #' build iv formulas
 #'
 build_iv_formulas <- function(cfg) {
-  controls <- legacy_iv_controls()
+  controls <- baseline_iv_controls()
   list(
     consumption = make_iv_formula(
       "consumption_pct_change",

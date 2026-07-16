@@ -136,7 +136,7 @@ primary_figure_path <- function(paths) {
   if (length(png)) png[[1]] else paths[[1]]
 }
 
-legacy_map_style <- function(variable) {
+public_map_style <- function(variable) {
   switch(
     variable,
     emie_2007 = list(
@@ -233,7 +233,7 @@ complete_map_geometry <- function(district_panel, boundaries_2020, variable) {
   out
 }
 
-prepare_legacy_map_data <- function(plot_data, variable) {
+prepare_public_map_data <- function(plot_data, variable) {
   if (!variable %in% names(plot_data)) plot_data[[variable]] <- NA
   if (identical(variable, "region")) {
     valid_regions <- c("North", "Central", "East", "West", "South")
@@ -244,7 +244,7 @@ prepare_legacy_map_data <- function(plot_data, variable) {
   plot_data
 }
 
-legacy_palette_values <- function(palette, n) {
+map_palette_values <- function(palette, n) {
   n <- max(1L, as.integer(n))
   base <- switch(
     palette,
@@ -260,7 +260,7 @@ legacy_palette_values <- function(palette, n) {
   grDevices::colorRampPalette(base)(n)
 }
 
-legacy_pretty_breaks <- function(x, n = 5L) {
+map_pretty_breaks <- function(x, n = 5L) {
   x <- x[is.finite(x)]
   if (!length(x)) return(NULL)
   rng <- range(x, na.rm = TRUE)
@@ -276,7 +276,7 @@ legacy_pretty_breaks <- function(x, n = 5L) {
   br
 }
 
-legacy_cut_label_number <- function(x) {
+map_cut_label_number <- function(x) {
   out <- trimws(formatC(x, format = "fg", digits = 4))
   out <- sub("\\.0+$", "", out)
   out <- sub("(\\.\\d*?)0+$", "\\1", out)
@@ -285,18 +285,18 @@ legacy_cut_label_number <- function(x) {
   out
 }
 
-legacy_cut_labels <- function(breaks) {
+map_cut_labels <- function(breaks) {
   if (length(breaks) < 2L) return(character())
   paste0(
-    legacy_cut_label_number(head(breaks, -1L)),
+    map_cut_label_number(head(breaks, -1L)),
     "-",
-    legacy_cut_label_number(tail(breaks, -1L))
+    map_cut_label_number(tail(breaks, -1L))
   )
 }
 
-legacy_no_data_colour <- function() "#bdbdbd"
+map_no_data_colour <- function() "#bdbdbd"
 
-legacy_map_fill <- function(plot_data, variable, style) {
+public_map_fill <- function(plot_data, variable, style) {
   values <- plot_data[[variable]]
   if (is.factor(values) || is.character(values) || identical(style$style, "cat")) {
     fac <- as.factor(values)
@@ -305,7 +305,7 @@ legacy_map_fill <- function(plot_data, variable, style) {
     plot_data$.map_fill <- as.character(fac)
     plot_data$.map_fill[is.na(plot_data$.map_fill) | !nzchar(plot_data$.map_fill)] <- "No data"
     plot_data$.map_fill <- factor(plot_data$.map_fill, levels = levels)
-    colors <- stats::setNames(c(legacy_palette_values(style$palette, length(levels) - 1L), legacy_no_data_colour()), levels)
+    colors <- stats::setNames(c(map_palette_values(style$palette, length(levels) - 1L), map_no_data_colour()), levels)
     return(list(data = plot_data, fill = ".map_fill", colors = colors, title = style$title))
   }
 
@@ -314,24 +314,24 @@ legacy_map_fill <- function(plot_data, variable, style) {
   if (is.null(breaks)) {
     if (identical(variable, "wavg_ling_degrees")) {
       vmax <- suppressWarnings(max(values, na.rm = TRUE))
-      breaks <- legacy_pretty_breaks(c(0, vmax), n = 5L)
+      breaks <- map_pretty_breaks(c(0, vmax), n = 5L)
       if (length(breaks)) breaks[[1]] <- 0
     } else {
-      breaks <- legacy_pretty_breaks(values, n = 5L)
+      breaks <- map_pretty_breaks(values, n = 5L)
     }
-    labels <- legacy_cut_labels(breaks)
+    labels <- map_cut_labels(breaks)
   }
   if (is.null(breaks) || length(breaks) < 2L) {
     levels <- "No data"
     plot_data$.map_fill <- factor("No data", levels = levels)
-    colors <- stats::setNames(legacy_no_data_colour(), levels)
+    colors <- stats::setNames(map_no_data_colour(), levels)
   } else {
-    if (is.null(labels) || length(labels) != length(breaks) - 1L) labels <- legacy_cut_labels(breaks)
+    if (is.null(labels) || length(labels) != length(breaks) - 1L) labels <- map_cut_labels(breaks)
     levels <- c(labels, "No data")
     plot_data$.map_fill <- as.character(cut(values, breaks = breaks, include.lowest = TRUE, right = TRUE, labels = labels))
     plot_data$.map_fill[is.na(plot_data$.map_fill) | !nzchar(plot_data$.map_fill)] <- "No data"
     plot_data$.map_fill <- factor(plot_data$.map_fill, levels = levels)
-    colors <- stats::setNames(c(legacy_palette_values(style$palette, length(labels)), legacy_no_data_colour()), levels)
+    colors <- stats::setNames(c(map_palette_values(style$palette, length(labels)), map_no_data_colour()), levels)
   }
   list(data = plot_data, fill = ".map_fill", colors = colors, title = style$title)
 }
@@ -342,10 +342,10 @@ map_overlay_rows <- function(plot_data, fill_column = ".map_fill") {
   !is.na(fill) & nzchar(fill) & fill != "No data"
 }
 
-build_legacy_ggplot_map <- function(plot_data, spec) {
+build_public_ggplot_map <- function(plot_data, spec) {
   need_pkg("ggplot2", "classified choropleth maps")
-  style <- legacy_map_style(spec$variable)
-  fill <- legacy_map_fill(plot_data, spec$variable, style)
+  style <- public_map_style(spec$variable)
+  fill <- public_map_fill(plot_data, spec$variable, style)
   plot_data <- fill$data
   overlay <- plot_data[map_overlay_rows(plot_data, fill$fill), , drop = FALSE]
   if (!nrow(overlay)) {
@@ -360,7 +360,7 @@ build_legacy_ggplot_map <- function(plot_data, spec) {
       limits = names(fill$colors),
       drop = FALSE,
       na.translate = TRUE,
-      na.value = legacy_no_data_colour()
+      na.value = map_no_data_colour()
     ) +
     ggplot2::guides(fill = ggplot2::guide_legend(override.aes = list(color = "grey35", linewidth = 0.25))) +
     ggplot2::coord_sf(datum = NA) +
@@ -387,8 +387,8 @@ save_map_figure <- function(spec, path_base, district_panel, formats, boundaries
   }
 
   plot_data <- complete_map_geometry(district_panel, boundaries_2020, spec$variable)
-  plot_data <- prepare_legacy_map_data(plot_data, spec$variable)
-  p <- build_legacy_ggplot_map(plot_data, spec)
+  plot_data <- prepare_public_map_data(plot_data, spec$variable)
+  p <- build_public_ggplot_map(plot_data, spec)
   save_map_plot_formats(p, path_base, formats, width = 7.2, height = 5.2, dpi = 300)
 }
 

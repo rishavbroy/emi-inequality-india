@@ -44,7 +44,7 @@ build_2017_measures <- function(nss_2017_education, cfg) {
     )
   }))
   out <- attach_2017_district_names(out, inputs)
-  out <- add_legacy_2017_aliases(out)
+  out <- add_2017_measure_aliases(out)
   if (all(c("state_std", "district_std") %in% names(out))) {
     out$district_panel_id <- make_district_key(out$state_std, out$district_std, 2017L)
   }
@@ -186,7 +186,7 @@ normalize_2017_state_name <- function(x) {
   out
 }
 
-add_legacy_2017_aliases <- function(out) {
+add_2017_measure_aliases <- function(out) {
   alias <- function(new, old) if (old %in% names(out) && !new %in% names(out)) out[[new]] <<- out[[old]]
   alias("consumption_1718", "consumption_2017")
   alias("gini_consumption_2017", "gini_cons_1718")

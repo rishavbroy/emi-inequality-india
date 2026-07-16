@@ -1,15 +1,14 @@
 # Canonical district fuzzy-distance helpers.
-# Legacy chunks 16--20 used the same method cascade for tuning diagnostics and
-# district-source attachment. Keep the methods and thresholds in one place so
+# The completed refactor established one method cascade for tuning diagnostics
+# and district-source attachment. Keep the methods and thresholds in one place so
 # benchmarks, diagnostics, and production matching cannot drift apart.
 
-legacy_fuzzy_match_methods <- function() c("soundex", "qgram", "jw", "dl", "osa")
+district_fuzzy_match_methods <- function() c("soundex", "qgram", "jw", "dl", "osa")
 
-legacy_fuzzy_match_thresholds <- function() c(0, 0, 0.15, 2, 1)
+district_fuzzy_match_thresholds <- function() c(0, 0, 0.15, 2, 1)
 
-# Compatibility aliases used by district-source attachment tests and callers.
-legacy_source_match_methods <- legacy_fuzzy_match_methods
-legacy_source_match_thresholds <- legacy_fuzzy_match_thresholds
+district_source_match_methods <- district_fuzzy_match_methods
+district_source_match_thresholds <- district_fuzzy_match_thresholds
 
 #' Evaluate district-name string distances for a method cascade
 #'

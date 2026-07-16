@@ -124,7 +124,7 @@ make_figures <- function(district_panel, raw_ilo_figures, cfg, boundaries_2020 =
   out <- c(out, map_specs)
 
   if (length(map_input_failures)) {
-    attr(out, "legacy_map_input_failures") <- map_input_failures
+    attr(out, "map_input_failures") <- map_input_failures
   }
   attr(out, "district_panel") <- district_panel
   attr(out, "boundaries_2020") <- boundaries_2020

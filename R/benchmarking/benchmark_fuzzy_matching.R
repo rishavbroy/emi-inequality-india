@@ -2,7 +2,7 @@
 # Fuzzy-matching tuning and threshold helpers are sourced by benchmark targets
 # and reused by extended fuzzy-matching diagnostics.
 
-legacy_fuzzy_tuning_reference <- function() {
+fuzzy_tuning_reference <- function() {
   data.frame(
     diagnostic = c(
       "full_join_method_row_counts",
@@ -21,7 +21,7 @@ legacy_fuzzy_tuning_reference <- function() {
   )
 }
 
-legacy_troublesome_name_pairs <- function() {
+troublesome_name_pairs <- function() {
   data.frame(
     str1 = c(
       "Baleshwar",
@@ -55,11 +55,11 @@ legacy_troublesome_name_pairs <- function() {
 #' This preserves the legacy helper from Chunk 16.  It uses stringdist's named
 #' methods when available, including the legacy notes: soundex = 0, qgram = 0,
 #' jw <= 0.15, dl <= 2, and osa <= 1.
-benchmark_string_distance_methods <- function(pairs, methods = legacy_fuzzy_match_methods(), thresholds = legacy_fuzzy_match_thresholds()) {
+benchmark_string_distance_methods <- function(pairs, methods = district_fuzzy_match_methods(), thresholds = district_fuzzy_match_thresholds()) {
   evaluate_distances(pairs, methods, thresholds)
 }
 
-test_troublesome_name_pairs <- function(pairs = legacy_troublesome_name_pairs(), methods = legacy_fuzzy_match_methods(), thresholds = legacy_fuzzy_match_thresholds()) {
+test_troublesome_name_pairs <- function(pairs = troublesome_name_pairs(), methods = district_fuzzy_match_methods(), thresholds = district_fuzzy_match_thresholds()) {
   evaluate_distances(pairs, methods, thresholds)
 }
 
@@ -77,7 +77,7 @@ summarize_fuzzy_candidate_pair_coverage <- function(pairs) {
   out
 }
 
-summarize_threshold_sensitivity <- function(pairs = legacy_troublesome_name_pairs(), methods = legacy_fuzzy_match_methods(), threshold_grid = NULL) {
+summarize_threshold_sensitivity <- function(pairs = troublesome_name_pairs(), methods = district_fuzzy_match_methods(), threshold_grid = NULL) {
   pairs <- as.data.frame(pairs, stringsAsFactors = FALSE)
   if (!nrow(pairs)) return(data.frame())
   if (!"pair_source" %in% names(pairs)) pairs$pair_source <- "unspecified"

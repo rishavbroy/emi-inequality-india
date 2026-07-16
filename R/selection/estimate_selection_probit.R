@@ -3,7 +3,7 @@
 
 # sample-start: code-survey-probit-imr
 
-legacy_probit_variables <- function(selection_data) {
+selection_probit_variables <- function(selection_data) {
   controls <- c("AGE", "age", "SEX", "HH_SIZE", "RELIGION", "SOCIAL_GROUP", "SECTOR")
   exclusion_all_kids <- c("DIST_FROM_NEAREST_PRIMARY_CLASS", "father_educ")
   exclusion_district <- c(
@@ -21,7 +21,7 @@ estimate_selection_probit <- function(selection_data, cfg) {
   if (!"enrolled" %in% names(selection_data) || all(is.na(selection_data$enrolled))) {
     return(list(status = "out_of_active_pipeline", reason = "No enrolled variable."))
   }
-  covars <- legacy_probit_variables(selection_data)
+  covars <- selection_probit_variables(selection_data)
   if (!length(covars)) {
     return(list(status = "out_of_active_pipeline", reason = "No probit covariates."))
   }
@@ -30,12 +30,12 @@ estimate_selection_probit <- function(selection_data, cfg) {
     design <- build_survey_design_selection(selection_data)
     if (!is.null(design)) {
       out <- fit_selection_probit(design, f_probit)
-      attr(out, "legacy_probit_formula") <- f_probit
+      attr(out, "selection_probit_formula") <- f_probit
       return(out)
     }
   }
   out <- stats::glm(f_probit, data = selection_data, family = stats::binomial(link = "probit"))
-  attr(out, "legacy_probit_formula") <- f_probit
+  attr(out, "selection_probit_formula") <- f_probit
   out
 }
 
@@ -66,7 +66,7 @@ fit_selection_probit <- function(selection_design, f_probit) {
 #' compute inverse mills ratio
 #'
 compute_inverse_mills_ratio <- function(model, selection_df, f_probit = NULL) {
-  if (is.null(f_probit)) f_probit <- attr(model, "legacy_probit_formula") %||% stats::formula(model)
+  if (is.null(f_probit)) f_probit <- attr(model, "selection_probit_formula") %||% stats::formula(model)
   needed <- all.vars(f_probit)
   needed <- intersect(needed, names(selection_df))
   comp_cases <- stats::complete.cases(selection_df[, needed, drop = FALSE])

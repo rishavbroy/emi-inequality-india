@@ -22,10 +22,10 @@ diagnose_district_tracker_sources <- function(raw_district_changes, district_tra
     detect_raw_inperiod_district_changes(raw_district_changes)
   ))
   same_names <- find_same_name_districts(tracker)
-  legacy_expected_state_changes <- legacy_recorded_state_changes()
-  legacy_expected_inperiod <- legacy_inperiod_district_changes_reference()
-  legacy_expected_same_names <- legacy_same_name_districts_reference()
-  legacy_reference <- legacy_tracker_comment_reference(
+  legacy_expected_state_changes <- recorded_state_changes_reference()
+  legacy_expected_inperiod <- inperiod_district_changes_reference()
+  legacy_expected_same_names <- same_name_districts_reference()
+  legacy_reference <- tracker_comment_reference(
     detected_state_change_rows = nrow(state_changes),
     detected_inperiod_rows = nrow(inperiod),
     detected_same_name_rows = nrow(same_names)
@@ -34,7 +34,7 @@ diagnose_district_tracker_sources <- function(raw_district_changes, district_tra
   out <- source_counts
   attr(out, "state_changes") <- state_changes
   attr(out, "state_change_events") <- summarize_tracker_state_change_events(state_changes)
-  attr(out, "unrecorded_state_changes") <- legacy_unrecorded_state_changes()
+  attr(out, "unrecorded_state_changes") <- unrecorded_state_changes_reference()
   attr(out, "legacy_expected_state_changes") <- legacy_expected_state_changes
   attr(out, "inperiod_district_changes") <- inperiod
   attr(out, "legacy_expected_inperiod_district_changes") <- legacy_expected_inperiod
@@ -51,7 +51,7 @@ diagnose_district_tracker_sources <- function(raw_district_changes, district_tra
 tracker_with_processed_fallback <- function(district_tracker) {
   tracker <- as.data.frame(district_tracker, stringsAsFactors = FALSE)
   if (nrow(tracker) && length(tracker_year_suffixes(tracker, "district"))) return(tracker)
-  for (path in c("data/processed/district_tracker_2001_2007_2017_2020.csv", "data/processed/district_tracker_legacy.csv")) {
+  for (path in c("data/processed/district_tracker_2001_2007_2017_2020.csv", "data/metadata/district_harmonization_crosswalk.csv")) {
     if (file.exists(path) && file.info(path)$size > 0) {
       fallback <- utils::read.csv(path, stringsAsFactors = FALSE, check.names = FALSE)
       if (nrow(fallback) && length(tracker_year_suffixes(fallback, "district"))) return(fallback)
@@ -125,7 +125,7 @@ summarize_tracker_state_change_events <- function(state_changes) {
   tab[order(-tab$n_rows, tab$state_transition), , drop = FALSE]
 }
 
-legacy_recorded_state_changes <- function() {
+recorded_state_changes_reference <- function() {
   data.frame(
     legacy_event = c(
       "Ladakh split from Jammu and Kashmir",
@@ -138,7 +138,7 @@ legacy_recorded_state_changes <- function() {
   )
 }
 
-legacy_inperiod_district_changes_reference <- function() {
+inperiod_district_changes_reference <- function() {
   data.frame(
     diagnostic = "in_period_district_name_changes",
     legacy_expected_rows = 16L,
@@ -150,7 +150,7 @@ legacy_inperiod_district_changes_reference <- function() {
 }
 
 
-legacy_same_name_districts_reference <- function() {
+same_name_districts_reference <- function() {
   data.frame(
     diagnostic = "same_name_districts_across_states",
     legacy_expected_min_districts = 6L,
@@ -162,7 +162,7 @@ legacy_same_name_districts_reference <- function() {
   )
 }
 
-legacy_unrecorded_state_changes <- function() {
+unrecorded_state_changes_reference <- function() {
   data.frame(
     change = c(
       "Pondicherry/Puducherry district and UT rename",
@@ -294,7 +294,7 @@ find_source_disagreements <- function(raw_district_changes, district_tracker = N
   coverage
 }
 
-legacy_tracker_comment_reference <- function(detected_state_change_rows, detected_inperiod_rows, detected_same_name_rows = 0L) {
+tracker_comment_reference <- function(detected_state_change_rows, detected_inperiod_rows, detected_same_name_rows = 0L) {
   data.frame(
     diagnostic = c(
       "recorded_state_ut_changes",
@@ -308,7 +308,7 @@ legacy_tracker_comment_reference <- function(detected_state_change_rows, detecte
       "Legacy Chunk 6 comments record 16 districts changing names within the sampling periods.",
       "Legacy Chunk 6 comments record between 6 and 10 same-name districts in each year of interest."
     ),
-    current_detected_rows = c(detected_state_change_rows, nrow(legacy_unrecorded_state_changes()), detected_inperiod_rows, detected_same_name_rows),
+    current_detected_rows = c(detected_state_change_rows, nrow(unrecorded_state_changes_reference()), detected_inperiod_rows, detected_same_name_rows),
     interpretation = c(
       "Compare row-level current detections with tracker_state_change_events.csv because row counts can exceed event counts.",
       "These are preserved as documented legacy correction notes, not inferred from active tracker rows.",
@@ -344,5 +344,5 @@ save_tracker_source_diagnostics <- function(diagnostics, dir = "outputs/diagnost
     source_disagreements = write_diagnostic_csv(attr(diagnostics, "source_disagreements") %||% data.frame(), file.path(dir, "tracker_source_disagreements.csv")),
     legacy_reference = write_diagnostic_csv(attr(diagnostics, "legacy_reference") %||% data.frame(), file.path(dir, "tracker_legacy_comment_reference.csv"))
   )
-  legacy_output_manifest(paths)
+  output_manifest(paths)
 }

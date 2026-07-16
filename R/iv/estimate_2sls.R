@@ -4,7 +4,7 @@
 #' estimate 2sls
 #'
 estimate_2sls <- function(district_panel, formulas, cfg) {
-  district_panel <- add_legacy_iv_aliases(district_panel)
+  district_panel <- add_iv_panel_aliases(district_panel)
   lapply(formulas, function(formula) {
     vars <- all.vars(formula)
     missing <- setdiff(vars, names(district_panel))
@@ -22,7 +22,7 @@ estimate_2sls <- function(district_panel, formulas, cfg) {
   })
 }
 
-add_legacy_iv_aliases <- function(df) {
+add_iv_panel_aliases <- function(df) {
   df <- as.data.frame(df)
   alias <- function(new, old) if (old %in% names(df) && !new %in% names(df)) df[[new]] <<- df[[old]]
   alias("EMIE", "emie_2007")
@@ -40,9 +40,9 @@ add_legacy_iv_aliases <- function(df) {
 
 #' estimate consumption iv models
 #'
-estimate_consumption_iv_models <- function(district_panel, formulas, cfg) ivreg::ivreg(formulas$consumption, data = add_legacy_iv_aliases(district_panel))
+estimate_consumption_iv_models <- function(district_panel, formulas, cfg) ivreg::ivreg(formulas$consumption, data = add_iv_panel_aliases(district_panel))
 #' estimate gini iv models
-estimate_gini_iv_models <- function(district_panel, formulas, cfg) ivreg::ivreg(formulas$gini, data = add_legacy_iv_aliases(district_panel))
+estimate_gini_iv_models <- function(district_panel, formulas, cfg) ivreg::ivreg(formulas$gini, data = add_iv_panel_aliases(district_panel))
 
 #' estimate model set
 estimate_model_set <- function(district_panel, formulas, cfg) estimate_2sls(district_panel, formulas, cfg)

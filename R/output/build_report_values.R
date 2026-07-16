@@ -347,8 +347,8 @@ build_report_values <- function(ame_results, first_stage_tests, iv_models, selec
 
   values <- add_report_value(values, "kappa", "kappa %>% format(scientific = FALSE, digits = 7)", condition_number_value(model), "The model design matrix condition number is not available from the active model specification.")
 
-  values$partial_f <- value_or_status(first_available_number(first_stage_tests, c("partial_f", "legacy_model_f", "statistic", "f_stat", "F")), unavailable_first_stage)
-  values$partial_p <- value_or_status(first_available_number(first_stage_tests, c("partial_p", "legacy_model_p", "p.value", "p_value", "p")), unavailable_first_stage)
+  values$partial_f <- value_or_status(first_available_number(first_stage_tests, c("partial_f", "model_f", "statistic", "f_stat", "F")), unavailable_first_stage)
+  values$partial_p <- value_or_status(first_available_number(first_stage_tests, c("partial_p", "model_p", "p.value", "p_value", "p")), unavailable_first_stage)
   values <- add_inline_value(values, "partial_f %>% round(digits = 2)", if (is_report_value_status(values$partial_f)) values$partial_f else round(values$partial_f, 2))
   values <- add_inline_value(values, "partial_p %>% signif(digits = 2)", if (is_report_value_status(values$partial_p)) values$partial_p else signif(values$partial_p, 2))
 

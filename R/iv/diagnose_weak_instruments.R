@@ -91,7 +91,7 @@ save_instrument_exploration_plot <- function(dotplot_data, path) {
 save_instrument_exploration_diagnostics <- function(x, dir = "outputs/diagnostics/extended/instrument_exploration") {
   dir.create(dir, recursive = TRUE, showWarnings = FALSE)
   if (!is.list(x)) x <- list(dotplot_data = data.frame(), legacy_notes = data.frame())
-  legacy_output_manifest(c(
+  output_manifest(c(
     dotplot_data = write_diagnostic_csv(x$dotplot_data %||% data.frame(), file.path(dir, "instrument_strength_dotplot_data.csv")),
     legacy_notes = write_diagnostic_csv(x$legacy_notes %||% data.frame(), file.path(dir, "instrument_exploration_legacy_notes.csv")),
     emie_dotplot = save_instrument_exploration_plot(x$dotplot_data %||% data.frame(), file.path(dir, "emie_by_district_dotplot.png"))

@@ -12,7 +12,7 @@
 #' timing checks behind the benchmark target.
 diagnose_ame_benchmark <- function(selection_model, selection_data, cfg) {
   if (!diagnostic_enabled(cfg, "ame_benchmark")) return(tibble::tibble(status = "skipped"))
-  notes <- legacy_ame_benchmark_notes()
+  notes <- ame_benchmark_notes()
   methods <- benchmark_ame_methods(selection_model, selection_data, cfg)
   parallel <- benchmark_parallelization_options(selection_model, selection_data, cfg)
   out <- list(methods = methods, parallel = parallel, notes = notes)
@@ -20,7 +20,7 @@ diagnose_ame_benchmark <- function(selection_model, selection_data, cfg) {
   out
 }
 
-legacy_ame_benchmark_notes <- function() {
+ame_benchmark_notes <- function() {
   data.frame(
     topic = c(
       "final_method",
@@ -93,7 +93,7 @@ benchmark_ame_methods <- function(selection_model, selection_data, cfg, sample_s
       elapsed <- system.time({
         attempt <- tryCatch({
           do.call(marginaleffects::avg_slopes, c(base_args, list(newdata = newdata_sub), args))
-          list(status = "estimated_legacy_vcov", reason = NA_character_, fallback = NA_character_)
+          list(status = "estimated_table_vcov", reason = NA_character_, fallback = NA_character_)
         }, error = function(e) {
           # Recent marginaleffects versions can fail for the exact legacy call
           # (wts = "weight", vcov = TRUE) on sub-sampled survey-style newdata.
@@ -155,5 +155,5 @@ save_ame_benchmark <- function(benchmark, dir = "outputs/benchmarking/ame") {
     parallel = write_diagnostic_csv(benchmark$parallel %||% data.frame(), file.path(dir, "ame_parallelization_notes.csv")),
     notes = write_diagnostic_csv(benchmark$notes %||% data.frame(), file.path(dir, "ame_legacy_benchmark_notes.csv"))
   )
-  legacy_output_manifest(paths)
+  output_manifest(paths)
 }

@@ -2,7 +2,7 @@
 # Functions are intentionally small enough to be tested and called by _targets.R.
 
 # The active selection-data builder intentionally mirrors the legacy Rmd's
-# child-level sample construction.  The legacy model used NSS Block 5 and Block
+# child-level sample construction.  The current selection model uses NSS Block 5 and Block
 # 6 schooling/expenditure records for enrolled children, then full-joined Block
 # 4 demographics for every 5--19 year-old.  Joining only by PID is not enough:
 # PID is not globally unique, and the legacy Rmd joined by household, FSU,
@@ -31,11 +31,11 @@ build_selection_data <- function(nss_2007_education, district_keys_2007, cfg) {
   selection_df <- construct_child_level_selection_sample(list(b4 = b4, b5 = b5, b6 = b6))
   selection_df <- attach_household_covariates(selection_df, construct_household_covariates(b4))
   selection_df <- apply_selection_sample_restrictions(selection_df)
-  selection_df <- apply_legacy_cost_rules(selection_df)
+  selection_df <- apply_nss_enrollment_cost_rules(selection_df)
   selection_df <- define_probit_variables(selection_df)
   selection_df <- construct_district_level_context(selection_df, blocks[["nss0708edu_metadata"]] %||% data.frame())
-  selection_df$.legacy_household_key <- NULL
-  selection_df$.legacy_child_key <- NULL
+  selection_df$.nss_2007_household_key <- NULL
+  selection_df$.nss_2007_child_key <- NULL
   selection_df
 }
 
@@ -61,12 +61,12 @@ construct_child_level_selection_sample <- function(blocks) {
     STATE = selection_df$STATE,
     STRATUM = selection_df$STRATUM,
     SUB_STRATUM_NO = selection_df$SUB_STRATUM_NO,
-    IS_EDU_FREE = legacy_yes_no(selection_df$IS_EDU_FREE, yes = c(1), no = c(2)),
-    TUTION_FEE_WAIVED = legacy_yes_no(selection_df$TUTION_FEE_WAIVED, yes = c(1, 2), no = c(3, NA)),
-    RECD_SCHOLARSHIP_STIPEND = legacy_yes_no(selection_df$RECD_SCHOLARSHIP_STIPEND, yes = c(1), no = c(2)),
-    RECD_TXT_BOOKS = legacy_yes_no(selection_df$RECD_TXT_BOOKS, yes = c(1, 2), no = c(3, NA)),
-    RECD_STATIONERY = legacy_yes_no(selection_df$RECD_STATIONERY, yes = c(1, 2), no = c(3, NA)),
-    MID_DAY_MEAL_ETC_RECD = legacy_yes_no(selection_df$MID_DAY_MEAL_ETC_RECD, yes = c(1), no = c(2)),
+    IS_EDU_FREE = nss_yes_no_indicator(selection_df$IS_EDU_FREE, yes = c(1), no = c(2)),
+    TUTION_FEE_WAIVED = nss_yes_no_indicator(selection_df$TUTION_FEE_WAIVED, yes = c(1, 2), no = c(3, NA)),
+    RECD_SCHOLARSHIP_STIPEND = nss_yes_no_indicator(selection_df$RECD_SCHOLARSHIP_STIPEND, yes = c(1), no = c(2)),
+    RECD_TXT_BOOKS = nss_yes_no_indicator(selection_df$RECD_TXT_BOOKS, yes = c(1, 2), no = c(3, NA)),
+    RECD_STATIONERY = nss_yes_no_indicator(selection_df$RECD_STATIONERY, yes = c(1, 2), no = c(3, NA)),
+    MID_DAY_MEAL_ETC_RECD = nss_yes_no_indicator(selection_df$MID_DAY_MEAL_ETC_RECD, yes = c(1), no = c(2)),
     stringsAsFactors = FALSE
   )
 
@@ -81,7 +81,7 @@ construct_child_level_selection_sample <- function(blocks) {
     ),
     names(costs)
   )]
-  selection_df <- legacy_full_join(selection_df, costs, selection_join_keys(enrolled = TRUE))
+  selection_df <- safe_selection_full_join(selection_df, costs, selection_join_keys(enrolled = TRUE))
 
   children <- b4[is.finite(num(b4$AGE)) & num(b4$AGE) >= 5 & num(b4$AGE) <= 19, , drop = FALSE]
   children <- data.frame(
@@ -112,7 +112,7 @@ construct_child_level_selection_sample <- function(blocks) {
     district_std = children$district_std %||% NA,
     stringsAsFactors = FALSE
   )
-  legacy_full_join(selection_df, children, selection_join_keys(enrolled = FALSE))
+  safe_selection_full_join(selection_df, children, selection_join_keys(enrolled = FALSE))
 }
 
 #' construct household covariates
@@ -123,17 +123,17 @@ construct_household_covariates <- function(df) {
 attach_household_covariates <- function(selection_df, household_covariates) {
   selection_df <- safe_df(selection_df)
   household_covariates <- safe_df(household_covariates)
-  selection_df$.legacy_household_key <- legacy_household_key(selection_df)
+  selection_df$.nss_2007_household_key <- nss_2007_household_key(selection_df)
   if (nrow(household_covariates)) {
-    selection_df <- merge(selection_df, household_covariates, by = ".legacy_household_key", all.x = TRUE)
+    selection_df <- merge(selection_df, household_covariates, by = ".nss_2007_household_key", all.x = TRUE)
   }
   selection_df
 }
 
 #' construct district level context
 construct_district_level_context <- function(df, metadata = data.frame()) {
-  df <- attach_legacy_district_schooling_means(df)
-  attach_legacy_district_names(df, metadata)
+  df <- attach_district_schooling_context(df)
+  attach_nss_2007_district_names(df, metadata)
 }
 
 #' define probit variables
@@ -194,7 +194,7 @@ selection_join_keys <- function(enrolled = TRUE) {
   out
 }
 
-legacy_full_join <- function(x, y, by) {
+safe_selection_full_join <- function(x, y, by) {
   by <- intersect(by, intersect(names(x), names(y)))
   if (!length(by)) return(safe_bind_rows(list(x, y)))
   dplyr::full_join(x, y, by = by)
@@ -240,22 +240,22 @@ selection_duplicate_rows_identical <- function(df) {
   all(vapply(normalized, function(col) all(col == col[[1]] | (is.na(col) & is.na(col[[1]]))), logical(1)))
 }
 
-legacy_yes_no <- function(x, yes = c(1), no = c(2)) {
+nss_yes_no_indicator <- function(x, yes = c(1), no = c(2)) {
   val <- num(x)
   out <- ifelse(val %in% yes, "Yes", "No")
   factor(out, levels = c("Yes", "No"))
 }
 
-legacy_household_key <- function(df) {
+nss_2007_household_key <- function(df) {
   df <- safe_df(df)
   key_cols <- c("STATE", "FSU_SL_NO", "STRATUM", "SUB_STRATUM_NO", "HHID")
   for (nm in key_cols) if (!nm %in% names(df)) df[[nm]] <- NA_character_
   do.call(paste, c(lapply(df[key_cols], function(x) canon(plain_chr(x))), sep = "__"))
 }
 
-legacy_child_key <- function(df) {
+nss_2007_child_key <- function(df) {
   df <- safe_df(df)
-  hh <- legacy_household_key(df)
+  hh <- nss_2007_household_key(df)
   pid <- if ("PID" %in% names(df)) canon(plain_chr(df$PID)) else rep("", nrow(df))
   district <- if ("district_code_0708" %in% names(df)) canon(plain_chr(df$district_code_0708)) else rep("", nrow(df))
   paste(hh, district, pid, sep = "__")
@@ -266,23 +266,23 @@ enforce_selection_child_key_uniqueness <- function(df) {
   if (!nrow(df) || !"PID" %in% names(df)) return(df)
   pid <- canon(plain_chr(df$PID))
   if (!any(nzchar(pid) & !is.na(pid))) return(df)
-  df$.legacy_household_key <- if (".legacy_household_key" %in% names(df)) df$.legacy_household_key else legacy_household_key(df)
-  df$.legacy_child_key <- legacy_child_key(df)
-  collapse_identical_selection_join_rows(df, ".legacy_child_key", context = "selection child key")
+  df$.nss_2007_household_key <- if (".nss_2007_household_key" %in% names(df)) df$.nss_2007_household_key else nss_2007_household_key(df)
+  df$.nss_2007_child_key <- nss_2007_child_key(df)
+  collapse_identical_selection_join_rows(df, ".nss_2007_child_key", context = "selection child key")
 }
 
 build_father_education_proxy <- function(b4) {
   if (!all(c("HHID", "RELATION_TO_HEAD", "SEX", "EDUCATION_LEVEL") %in% names(b4))) return(data.frame())
   df <- b4
-  df$.legacy_household_key <- legacy_household_key(df)
-  df$educ_collapsed <- collapse_legacy_education(df$EDUCATION_LEVEL)
+  df$.nss_2007_household_key <- nss_2007_household_key(df)
+  df$educ_collapsed <- collapse_nss_education(df$EDUCATION_LEVEL)
   df$father_rank <- ifelse(num(df$RELATION_TO_HEAD) == 1 & num(df$SEX) == 1, 1L,
     ifelse(num(df$RELATION_TO_HEAD) == 3 & num(df$SEX) == 1, 2L,
       ifelse(num(df$RELATION_TO_HEAD) == 7 & num(df$SEX) == 1, 4L, NA_integer_)))
   df <- df[is.finite(df$father_rank), , drop = FALSE]
-  if (!nrow(df)) return(data.frame(.legacy_household_key = character(), father_educ = factor()))
-  df <- df[order(df$.legacy_household_key, df$father_rank), , drop = FALSE]
-  df <- df[!duplicated(df$.legacy_household_key), c(".legacy_household_key", "educ_collapsed"), drop = FALSE]
+  if (!nrow(df)) return(data.frame(.nss_2007_household_key = character(), father_educ = factor()))
+  df <- df[order(df$.nss_2007_household_key, df$father_rank), , drop = FALSE]
+  df <- df[!duplicated(df$.nss_2007_household_key), c(".nss_2007_household_key", "educ_collapsed"), drop = FALSE]
   names(df)[names(df) == "educ_collapsed"] <- "father_educ"
   df$father_educ <- factor(
     df$father_educ,
@@ -291,7 +291,7 @@ build_father_education_proxy <- function(b4) {
   df
 }
 
-collapse_legacy_education <- function(x) {
+collapse_nss_education <- function(x) {
   code <- sprintf("%02d", as.integer(num(x)))
   out <- rep(NA_character_, length(code))
   out[code == "01"] <- "Illiterate"
@@ -305,7 +305,7 @@ collapse_legacy_education <- function(x) {
   out
 }
 
-apply_legacy_cost_rules <- function(df) {
+apply_nss_enrollment_cost_rules <- function(df) {
   for (nm in c("TUTION_FEE", "EXAMINATION_FEE", "OTHER_FEES_PAYMENTS", "BOOKS", "STATIONERY", "UNIFORM", "TRANSPORT")) {
     if (!nm %in% names(df)) df[[nm]] <- NA_real_
     df[[nm]] <- num(df[[nm]])
@@ -317,13 +317,13 @@ apply_legacy_cost_rules <- function(df) {
   df
 }
 
-attach_legacy_district_schooling_means <- function(df) {
+attach_district_schooling_context <- function(df) {
   means <- district_enrolled_means(df)
   if (!nrow(means) || !"district_code_0708" %in% names(df)) return(df)
   merge(df, means, by = "district_code_0708", all.x = TRUE)
 }
 
-attach_legacy_district_names <- function(df, metadata) {
+attach_nss_2007_district_names <- function(df, metadata) {
   lookup <- parse_2007_district_metadata(metadata)
   if (!nrow(lookup) || !"district_code_0708" %in% names(df)) return(df)
   lookup <- lookup[!duplicated(lookup$district_code_0708), , drop = FALSE]

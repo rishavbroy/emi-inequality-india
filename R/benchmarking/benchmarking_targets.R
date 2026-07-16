@@ -22,11 +22,11 @@ run_ame_methods_benchmark <- function(selection_model, selection_data, cfg) {
 
 
 run_fuzzy_matching_benchmark <- function(district_tracker = data.frame(), district_join_map = data.frame(), cfg = list()) {
-  pairs <- legacy_fuzzy_candidate_pairs(district_tracker, district_join_map)
+  pairs <- fuzzy_candidate_pairs(district_tracker, district_join_map)
   save_fuzzy_matching_benchmark(
     summarize_threshold_sensitivity(
       pairs = pairs,
-      methods = legacy_fuzzy_match_methods()
+      methods = district_fuzzy_match_methods()
     ),
     pairs = pairs
   )
@@ -44,11 +44,11 @@ run_spatial_weights_benchmark <- function(district_panel, cfg) {
 
 save_fuzzy_matching_benchmark <- function(x, pairs = data.frame(), dir = "outputs/benchmarking/fuzzy_matching") {
   dir.create(dir, recursive = TRUE, showWarnings = FALSE)
-  legacy_output_manifest(c(
+  output_manifest(c(
     threshold_sensitivity = write_diagnostic_csv(x, file.path(dir, "fuzzy_matching_threshold_sensitivity.csv")),
     candidate_pairs = write_diagnostic_csv(pairs, file.path(dir, "fuzzy_matching_candidate_pairs.csv")),
     candidate_pair_coverage = write_diagnostic_csv(summarize_fuzzy_candidate_pair_coverage(pairs), file.path(dir, "fuzzy_matching_candidate_pair_coverage.csv")),
-    legacy_tuning_reference = write_diagnostic_csv(legacy_fuzzy_tuning_reference(), file.path(dir, "fuzzy_matching_legacy_tuning_reference.csv"))
+    legacy_tuning_reference = write_diagnostic_csv(fuzzy_tuning_reference(), file.path(dir, "fuzzy_matching_legacy_tuning_reference.csv"))
   ))
 }
 
@@ -67,10 +67,10 @@ save_spatial_iv_benchmark <- function(x, dir = "outputs/benchmarking/spatial_iv"
   } else {
     paths <- c(status = write_diagnostic_csv(as.data.frame(x), file.path(dir, "spatial_iv_status.csv")))
   }
-  legacy_output_manifest(paths)
+  output_manifest(paths)
 }
 
 save_spatial_weights_benchmark <- function(x, dir = "outputs/benchmarking/spatial_weights") {
   dir.create(dir, recursive = TRUE, showWarnings = FALSE)
-  legacy_output_manifest(c(rook_queen = write_diagnostic_csv(x, file.path(dir, "spatial_weights_rook_queen_benchmark.csv"))))
+  output_manifest(c(rook_queen = write_diagnostic_csv(x, file.path(dir, "spatial_weights_rook_queen_benchmark.csv"))))
 }

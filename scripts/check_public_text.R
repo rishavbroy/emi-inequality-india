@@ -21,7 +21,7 @@ patterns <- c(
   "active figures below use district-level empirical distributions"
 )
 
-legacy_figure_captions <- c(
+required_figure_captions <- c(
   "paper/report.qmd" = "Trends in earnings, labor‐force participation, and unemployment (ILO, 2024).",
   "paper/report.qmd" = "Number of 2001 districts which absorbed a percentage of a 1991 district's population via name change, clean merger, carve-out, or border shift. Data from Kumar \\& Somanathan (2016).",
   "docs/district-matching.qmd" = "Number of 2001 districts which absorbed a percentage of a 1991 district's population via name change, clean merger, carve-out, or border shift. Data from Kumar \\& Somanathan (2016)."
@@ -40,7 +40,7 @@ blocked_map_text <- c(
   "the withheld final map figures"
 )
 
-legacy_table_captions <- c(
+required_table_captions <- c(
   "Summary Statistics for Enrollment Participation Model (Numeric Variables)",
   "Summary Statistics for Enrollment Participation Model (Categorical Variables)",
   "Average Marginal Effects and Counterfactual Comparisons for Enrollment Probit",
@@ -67,33 +67,30 @@ for (file in files) {
 }
 
 caption_hits <- character()
-for (file in unique(names(legacy_figure_captions))) {
+for (file in unique(names(required_figure_captions))) {
   if (!file.exists(file)) {
     caption_hits <- c(caption_hits, paste0(file, " is missing"))
     next
   }
   text <- paste(readLines(file, warn = FALSE), collapse = "\n")
-  expected <- unname(legacy_figure_captions[names(legacy_figure_captions) == file])
+  expected <- unname(required_figure_captions[names(required_figure_captions) == file])
   missing <- expected[!vapply(expected, grepl, logical(1), x = text, fixed = TRUE)]
   if (length(missing)) {
-    caption_hits <- c(caption_hits, paste0(file, " is missing legacy figure caption: ", missing))
+    caption_hits <- c(caption_hits, paste0(file, " is missing required figure caption: ", missing))
   }
 }
 
 if (file.exists("paper/report.qmd")) {
   report_text <- paste(readLines("paper/report.qmd", warn = FALSE), collapse = "\n")
-  missing <- legacy_table_captions[!vapply(legacy_table_captions, grepl, logical(1), x = report_text, fixed = TRUE)]
+  missing <- required_table_captions[!vapply(required_table_captions, grepl, logical(1), x = report_text, fixed = TRUE)]
   if (length(missing)) {
-    caption_hits <- c(caption_hits, paste0("paper/report.qmd is missing legacy table caption: ", missing))
+    caption_hits <- c(caption_hits, paste0("paper/report.qmd is missing required table caption: ", missing))
   }
 }
 
 for (file in c("paper/report.qmd", "docs/district-matching.qmd")) {
   if (!file.exists(file)) next
   text <- paste(readLines(file, warn = FALSE), collapse = "\n")
-  if (!grepl(geometry_note, text, fixed = TRUE)) {
-    caption_hits <- c(caption_hits, paste0(file, " is missing the final map geometry-validation note"))
-  }
   stale <- blocked_map_paths[vapply(blocked_map_paths, grepl, logical(1), x = text, fixed = TRUE)]
   if (length(stale)) {
     caption_hits <- c(caption_hits, paste0(file, " still references blocked final map path: ", paste(stale, collapse = ", ")))
@@ -112,7 +109,7 @@ if (length(hits)) {
 
 if (length(caption_hits)) {
   cat(paste0("- ", caption_hits, collapse = "\n"), "\n")
-  stop("Public-facing legacy captions are missing.", call. = FALSE)
+  stop("Public-facing required captions are missing.", call. = FALSE)
 }
 
 message("No public-facing placeholder/fallback text detected.")

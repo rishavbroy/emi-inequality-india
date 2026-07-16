@@ -26,7 +26,7 @@ quarto_table_label <- function(name) {
 
 regression_star_note <- function() "* p < 0.05, ** p < 0.01, *** p < 0.001"
 
-legacy_table_caption_text <- function(name) {
+public_table_caption_text <- function(name) {
   captions <- c(
     selection_n = "Enrollment Participation Model Sample Size",
     sum_tbl_probit_quant = "Summary Statistics for Enrollment Participation Model (Numeric Variables)",
@@ -46,7 +46,7 @@ regression_caption <- function(cap) {
 }
 
 table_caption <- function(name) {
-  cap <- legacy_table_caption_text(name)
+  cap <- public_table_caption_text(name)
   cap
 }
 
@@ -58,7 +58,7 @@ nice_column_name <- function(x) {
   tools::toTitleCase(x)
 }
 
-legacy_table_note <- function(name) {
+public_table_note <- function(name) {
   switch(name,
     sum_tbl_probit_quant = "Min. = minimum; 1Q = first quartile; Med. = median; 3Q = third quartile; Max. = maximum; Mean = arithmetic mean; SD = standard deviation; N = number of observations.",
     sum_tbl_iv = "Min. = minimum; 1Q = first quartile; Med. = median; 3Q = third quartile; Max. = maximum; Mean = arithmetic mean; SD = standard deviation; N = number of observations.",
@@ -70,8 +70,8 @@ legacy_table_note <- function(name) {
   )
 }
 
-legacy_modelsummary_notes <- function(name) {
-  note <- legacy_table_note(name)
+public_modelsummary_notes <- function(name) {
+  note <- public_table_note(name)
   if (is.null(note)) return(NULL)
   as.list(note)
 }
@@ -336,7 +336,7 @@ regression_rows_for_modelsummary <- function(df) {
 }
 
 
-legacy_datasummary_table_tex <- function(df, name) {
+public_datasummary_table_tex <- function(df, name) {
   body <- suppress_modelsummary_latex_preamble_warning(
     modelsummary::datasummary_df(
       df,
@@ -346,7 +346,7 @@ legacy_datasummary_table_tex <- function(df, name) {
     )
   )
   body <- paste(as.character(body), collapse = "\n")
-  note <- legacy_table_note(name)
+  note <- public_table_note(name)
   note_tex <- if (!is.null(note)) {
     paste0("\n\\begin{tablenotes}[flushleft]\n\\footnotesize\n\\item ", note, "\n\\end{tablenotes}")
   } else {
@@ -365,7 +365,7 @@ legacy_datasummary_table_tex <- function(df, name) {
 }
 
 
-legacy_table2_column_widths <- function() {
+public_table2_column_widths <- function() {
   # Table 2 is the only public summary table with several long text columns.
   # Keep explicit column constraints, but centralize them here so small width
   # adjustments do not require duplicating page-bound assumptions in the writer.
@@ -379,8 +379,8 @@ apply_table_column_widths <- function(tex, widths) {
   tex
 }
 
-legacy_ame_table_notes <- function(name) {
-  note <- legacy_table_note(name)
+public_ame_table_notes <- function(name) {
+  note <- public_table_note(name)
   if (is.null(note)) return(regression_star_note())
   c(regression_star_note(), note)
 }
@@ -390,14 +390,14 @@ single_space_longtable_tex <- function(tex) {
 }
 
 
-legacy_ame_modelsummary_object <- function(table) {
-  native <- attr(table, "legacy_marginaleffects", exact = TRUE)
+ame_modelsummary_object <- function(table) {
+  native <- attr(table, "marginaleffects_object", exact = TRUE)
   if (is.null(native) || !is_marginaleffects_object(native)) return(NULL)
   native
 }
 
-legacy_ame_gof_function <- function(table) {
-  n <- attr(table, "legacy_marginaleffects_n", exact = TRUE)
+ame_gof_function <- function(table) {
+  n <- attr(table, "marginaleffects_n", exact = TRUE)
   n <- suppressWarnings(as.numeric(n))
   if (!length(n) || !is.finite(n[[1]])) return(NULL)
 
@@ -408,7 +408,7 @@ legacy_ame_gof_function <- function(table) {
 }
 
 
-legacy_ame_gof_map <- function() {
+ame_gof_map <- function() {
   data.frame(
     raw = "nobs",
     clean = "Observations",
@@ -417,7 +417,7 @@ legacy_ame_gof_map <- function() {
   )
 }
 
-legacy_replace_first <- function(x, pattern, replacement, perl = TRUE) {
+replace_first <- function(x, pattern, replacement, perl = TRUE) {
   hit <- regexpr(pattern, x, perl = perl)
   start <- as.integer(hit[[1]])
   if (start < 0L) return(x)
@@ -425,9 +425,9 @@ legacy_replace_first <- function(x, pattern, replacement, perl = TRUE) {
   paste0(substr(x, 1L, start - 1L), replacement, substr(x, end + 1L, nchar(x)))
 }
 
-legacy_ame_modelsummary_table <- function(table, name) {
+ame_modelsummary_table <- function(table, name) {
   need_pkg("modelsummary", "native marginaleffects AME table rendering")
-  mfx <- legacy_ame_modelsummary_object(table)
+  mfx <- ame_modelsummary_object(table)
   if (is.null(mfx)) return(NULL)
   old_knit_to <- knitr::opts_knit$get("rmarkdown.pandoc.to")
   old_opt <- getOption("modelsummary_format_numeric_latex")
@@ -444,9 +444,9 @@ legacy_ame_modelsummary_table <- function(table, name) {
     # supplied through modelsummary's GOF extension hook instead of
     # manually inserting a rendered table row.
     models = list(mfx),
-    coef_rename = legacy_ame_modelsummary_label,
-    gof_map = legacy_ame_gof_map(),
-    gof_function = legacy_ame_gof_function(table),
+    coef_rename = ame_modelsummary_label,
+    gof_map = ame_gof_map(),
+    gof_function = ame_gof_function(table),
     stars = c("*" = .05, "**" = .01, "***" = .001),
     fmt = 3,
     title = table_caption(name),
@@ -465,7 +465,7 @@ legacy_ame_modelsummary_table <- function(table, name) {
   tex <- kableExtra::add_header_above(tex, c(" " = 1, "Enrolled (1 = yes)" = 1))
   tex <- kableExtra::footnote(
     tex,
-    general = legacy_ame_table_notes(name),
+    general = public_ame_table_notes(name),
     general_title = "",
     threeparttable = TRUE,
     footnote_as_chunk = TRUE,
@@ -488,10 +488,10 @@ modelsummary_regression_table <- function(df, name) {
   old_opt <- getOption("modelsummary_format_numeric_latex")
   on.exit(options(modelsummary_format_numeric_latex = old_opt), add = TRUE)
   options(modelsummary_format_numeric_latex = "plain")
-  legacy_datasummary_table_tex(df, name)
+  public_datasummary_table_tex(df, name)
 }
 
-legacy_regression_coef_map <- function() {
+public_regression_coef_map <- function() {
   c(
     "EMIE" = "EMI exposure (fitted)",
     "emie_2007" = "EMI exposure (fitted)",
@@ -516,7 +516,7 @@ legacy_regression_coef_map <- function() {
   )
 }
 
-legacy_modelsummary_gof_map <- function(name) {
+public_modelsummary_gof_map <- function(name) {
   if (identical(name, "fs_cons")) {
     return(list(
       list(raw = "nobs", clean = "Observations", fmt = 0),
@@ -535,7 +535,7 @@ legacy_modelsummary_gof_map <- function(name) {
   )
 }
 
-legacy_modelsummary_table <- function(model, name, vcov_matrix = NULL, add_rows = NULL) {
+public_modelsummary_table <- function(model, name, vcov_matrix = NULL, add_rows = NULL) {
   need_pkg("modelsummary", "legacy regression table rendering")
   old_knit_to <- knitr::opts_knit$get("rmarkdown.pandoc.to")
   old_opt <- getOption("modelsummary_format_numeric_latex")
@@ -545,14 +545,14 @@ legacy_modelsummary_table <- function(model, name, vcov_matrix = NULL, add_rows 
   options(modelsummary_format_numeric_latex = "plain")
   args <- list(
     models = model,
-    coef_map = legacy_regression_coef_map(),
-    gof_map = legacy_modelsummary_gof_map(name),
+    coef_map = public_regression_coef_map(),
+    gof_map = public_modelsummary_gof_map(name),
     stars = c("*" = .05, "**" = .01, "***" = .001),
     fmt = 3,
     title = table_caption(name),
     output = "kableExtra",
     escape = FALSE,
-    notes = legacy_modelsummary_notes(name)
+    notes = public_modelsummary_notes(name)
   )
   if (!is.null(vcov_matrix)) args$vcov <- vcov_matrix
   if (!is.null(add_rows)) args$add_rows <- add_rows
@@ -601,7 +601,7 @@ style_regression_table <- function(tex, df, name) {
   }
   # Keep standard-error rows in the same roman face as modelsummary's native
   # regression output. Italic grey SE rows made the AME table visually diverge
-  # from the legacy modelsummary tables.
+  # from the public modelsummary tables.
   start <- regression_summary_start(df)
   if (is.finite(start) && start > 1L) {
     tex <- kableExtra::row_spec(tex, start - 1L, hline_after = TRUE)
@@ -671,18 +671,18 @@ write_table_tex <- function(tex, path, name) {
 
 save_table_tex <- function(table, path, name, public = TRUE) {
   need_pkg("kableExtra", "LaTeX table output")
-  legacy_model <- attr(table, "legacy_model")
-  if (name %in% c("fs_cons", "cons_iv") && !is.null(legacy_model) && !is_formatted_status_table(as.data.frame(table, check.names = FALSE))) {
-    tex <- legacy_modelsummary_table(
-      legacy_model,
+  table_model <- attr(table, "table_model")
+  if (name %in% c("fs_cons", "cons_iv") && !is.null(table_model) && !is_formatted_status_table(as.data.frame(table, check.names = FALSE))) {
+    tex <- public_modelsummary_table(
+      table_model,
       name,
-      vcov_matrix = attr(table, "legacy_vcov"),
-      add_rows = attr(table, "legacy_add_rows")
+      vcov_matrix = attr(table, "table_vcov"),
+      add_rows = attr(table, "table_add_rows")
     )
     return(write_table_tex(tex, path, name))
   }
   if (identical(name, "probit_mfx") && !is_formatted_status_table(as.data.frame(table, check.names = FALSE))) {
-    tex <- legacy_ame_modelsummary_table(table, name)
+    tex <- ame_modelsummary_table(table, name)
     if (!is.null(tex)) return(write_table_tex(tex, path, name))
   }
   df <- sanitize_table_for_kable(format_table_for_output(table, public = public))
@@ -744,7 +744,7 @@ save_table_tex <- function(table, path, name, public = TRUE) {
     }
   }
   if (name == "sum_tbl_probit_cat") {
-    tex <- apply_table_column_widths(tex, legacy_table2_column_widths())
+    tex <- apply_table_column_widths(tex, public_table2_column_widths())
   }
   if (name == "sum_tbl_iv") {
     tex <- tex |>
@@ -769,7 +769,7 @@ save_table_tex <- function(table, path, name, public = TRUE) {
       kableExtra::column_spec(2, width = "2.6cm")
     tex <- style_regression_table(tex, df_render, name)
   }
-  note <- legacy_table_note(name)
+  note <- public_table_note(name)
   if (!is.null(note)) {
     tex <- kableExtra::footnote(tex, general = note, threeparttable = TRUE, footnote_as_chunk = TRUE, escape = FALSE)
   }
