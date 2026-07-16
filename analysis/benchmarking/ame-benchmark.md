@@ -28,7 +28,7 @@ full-data AME timing every public build. To reconcile the legacy
 20,000-row timing, the default tier now includes `num_samp = 20000` when
 the active model frame has that many rows; the largest sampled benchmark
 uses `num_samp =` 20,000, and the slowest recorded current run took
-48.806 seconds. This creates a documented deviation from the legacy
+57.583 seconds. This creates a documented deviation from the legacy
 prose: full-data AME timings are preserved only as legacy notes, not
 refreshed by the current pipeline.
 
@@ -81,12 +81,12 @@ analysis_table(
 
 | method | sample_size | n_observations | n_numeric_variables | centered_predict_calls_full_data | elapsed_seconds | status |
 |:---|---:|---:|---:|---:|---:|:---|
-| avg_slopes_centered_default | 200 | 114961 | 10 | 2299220 | 0.973 | estimated_legacy_vcov |
-| avg_slopes_fdforward | 200 | 114961 | 10 | 2299220 | 0.919 | estimated_legacy_vcov |
-| avg_slopes_centered_default | 2000 | 114961 | 10 | 2299220 | 4.939 | estimated_legacy_vcov |
-| avg_slopes_fdforward | 2000 | 114961 | 10 | 2299220 | 4.761 | estimated_legacy_vcov |
-| avg_slopes_centered_default | 20000 | 114961 | 10 | 2299220 | 48.806 | estimated_legacy_vcov |
-| avg_slopes_fdforward | 20000 | 114961 | 10 | 2299220 | 46.277 | estimated_legacy_vcov |
+| avg_slopes_centered_default | 200 | 114961 | 10 | 2299220 | 0.768 | estimated_table_vcov |
+| avg_slopes_fdforward | 200 | 114961 | 10 | 2299220 | 0.712 | estimated_table_vcov |
+| avg_slopes_centered_default | 2000 | 114961 | 10 | 2299220 | 4.881 | estimated_table_vcov |
+| avg_slopes_fdforward | 2000 | 114961 | 10 | 2299220 | 4.532 | estimated_table_vcov |
+| avg_slopes_centered_default | 20000 | 114961 | 10 | 2299220 | 53.362 | estimated_table_vcov |
+| avg_slopes_fdforward | 20000 | 114961 | 10 | 2299220 | 57.583 | estimated_table_vcov |
 
 Current AME benchmark attempts
 
@@ -94,13 +94,13 @@ Current AME benchmark attempts
 ame_methods[, intersect(c("method", "sample_size", "elapsed_seconds", "status", "reason"), names(ame_methods)), drop = FALSE]
 ```
 
-                           method sample_size elapsed_seconds                status
-    1 avg_slopes_centered_default         200           0.973 estimated_legacy_vcov
-    2        avg_slopes_fdforward         200           0.919 estimated_legacy_vcov
-    3 avg_slopes_centered_default        2000           4.939 estimated_legacy_vcov
-    4        avg_slopes_fdforward        2000           4.761 estimated_legacy_vcov
-    5 avg_slopes_centered_default       20000          48.806 estimated_legacy_vcov
-    6        avg_slopes_fdforward       20000          46.277 estimated_legacy_vcov
+                           method sample_size elapsed_seconds               status
+    1 avg_slopes_centered_default         200           0.768 estimated_table_vcov
+    2        avg_slopes_fdforward         200           0.712 estimated_table_vcov
+    3 avg_slopes_centered_default        2000           4.881 estimated_table_vcov
+    4        avg_slopes_fdforward        2000           4.532 estimated_table_vcov
+    5 avg_slopes_centered_default       20000          53.362 estimated_table_vcov
+    6        avg_slopes_fdforward       20000          57.583 estimated_table_vcov
       reason
     1     NA
     2     NA
@@ -126,9 +126,9 @@ analysis_table(
 
 | method | sample_size | elapsed_seconds | status | reason | fallback |
 |:---|---:|---:|:---|:---|:---|
-| avg_slopes_fdforward | 200 | 0.919 | estimated_legacy_vcov | NA | NA |
-| avg_slopes_fdforward | 2000 | 4.761 | estimated_legacy_vcov | NA | NA |
-| avg_slopes_fdforward | 20000 | 46.277 | estimated_legacy_vcov | NA | NA |
+| avg_slopes_fdforward | 200 | 0.712 | estimated_table_vcov | NA | NA |
+| avg_slopes_fdforward | 2000 | 4.532 | estimated_table_vcov | NA | NA |
+| avg_slopes_fdforward | 20000 | 57.583 | estimated_table_vcov | NA | NA |
 
 Forward-difference AME benchmark rows
 
