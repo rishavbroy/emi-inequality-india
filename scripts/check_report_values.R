@@ -22,7 +22,7 @@ extract_report_value_keys <- function(paths) {
   sort(unique(keys))
 }
 
-report_sources <- c("paper/report.qmd", "docs/district-matching.qmd")
+report_sources <- c("paper/report.qmd", "paper/appendix.qmd", "docs/district-matching.qmd")
 keys <- extract_report_value_keys(report_sources)
 
 report_values <- tryCatch(

@@ -13,6 +13,36 @@ link-citations: true
 cite-method: citeproc
 ---
 
+```{r report-target-values, include=FALSE}
+find_targets_store <- function(start = getwd()) {
+  here <- normalizePath(start, mustWork = TRUE)
+  repeat {
+    candidate <- file.path(here, "_targets")
+    if (dir.exists(candidate)) return(candidate)
+    parent <- dirname(here)
+    if (identical(parent, here)) return("_targets")
+    here <- parent
+  }
+}
+report_values <- tryCatch(targets::tar_read(report_values, store = find_targets_store()), error = function(e) list())
+if (is.null(report_values) || !is.list(report_values)) report_values <- list()
+is_report_value_status <- function(value) {
+  is.list(value) && !is.null(value$status) && !is.null(value$reason)
+}
+report_value <- function(key) {
+  value <- report_values[[key]]
+  if (is.null(value)) value <- NA
+  if (is_report_value_status(value)) {
+    display <- value$value
+    if (is.null(display) || length(display) == 0L || all(is.na(display))) display <- value$display
+    if (is.null(display) || length(display) == 0L || all(is.na(display))) display <- "—"
+    value <- display
+  }
+  if (length(value) == 0L || all(is.na(value))) return("—")
+  paste(value, collapse = ", ")
+}
+```
+
 \appendix
 
 # Appendix {#sec-appendix}
@@ -71,7 +101,7 @@ Newer findings, however, repudiate many of these low migration rates wholesale. 
 
 The significance of this new literature for us is two-fold: one, it means the mechanism behind part of @shastry2012a's exclusion restriction demonstration in the IV section of the main report may not apply as much to our period of interest; and two, it means that EMIE's effect dissipating away with migration is a genuine possibility. If we tentatively assume that regressors such as urbanization adequately capture the effect of longer-distance migration [which accords with the @divison2015a's finding that it is "rich metropolises [attracting] large inward flows of labour," p. 277] then the most relevant kind of dissipation for us will be over neighboring district lines [which also accords with @divison2015a, p. 276].^[Reminiscent of @koneInternalBordersMigration2018, the @divison2015a finds that within-state flows of labor migration are much higher than between-state flows. State fixed effects will be essential for further analysis.]
 
-We can control for this spatial autocorrelation by incorporating spatial lags into our model. To test for spatial autocorrelation we would follow p. 323 of @anselin2001 and construct a Moran's I statistic; but proper estimation of it would depend on us having proper shapefiles for the year of interest with which to build contiguity neighbor lists. If our unit of analysis ends up being 2001 districts, then this would require 2001 shapefiles. As it stands however, using 2019-20 shapefiles, the $p$-value for spatial autocorrelation in the residuals of our 2SLS model is `r m_cons_resid$p.value %>% signif(3)` and for consumption growth `r m_cons$p.value %>% signif(3)`.^[Results currently reflect rook contiguity; queen-contiguity comparisons are retained in the extended spatial diagnostics and refactor notes.] Future work will combine shapefiles from the 2011 and 2001 censuses with the data harmonization changes described in this district-matching note to ensure these reflect genuine spatial autocorrelation as opposed to the flaws of our current district tracking methodology.
+We can control for this spatial autocorrelation by incorporating spatial lags into our model. To test for spatial autocorrelation we would follow p. 323 of @anselin2001 and construct a Moran's I statistic; but proper estimation of it would depend on us having proper shapefiles for the year of interest with which to build contiguity neighbor lists. If our unit of analysis ends up being 2001 districts, then this would require 2001 shapefiles. As it stands however, using 2019-20 shapefiles, the $p$-value for spatial autocorrelation in the residuals of our 2SLS model is `r report_value("moran_iv_residual_p")` and for consumption growth `r report_value("moran_consumption_growth_p")`.^[Results currently reflect rook contiguity; queen-contiguity comparisons are retained in the extended spatial diagnostics and refactor notes.] Future work will combine shapefiles from the 2011 and 2001 censuses with the data harmonization changes described in this district-matching note to ensure these reflect genuine spatial autocorrelation as opposed to the flaws of our current district tracking methodology.
 
 If spatial autocorrelation is ultimately found to be significant, then the methods of @murgante.borruso2012, @pebesmaSpatialDataScience2025, @xu2022a, and @zhang.etal2024 would be used to develop a spatial Durbin-type model (a spatial error model, a spatial lag model, a spatial Durbin model, a general nested model, etc., depending on the results of LM tests on the common factor specifications which distinguish these kinds of models), a class of model which incorporates spatial lags of spatially autocorrelated variables as further regressors or in the error. Conley standard errors and/or @kelejianHACEstimationSpatial2007 could also be used to create heteroskedasticity and autocorrelation consistent SEs.
 

@@ -74,8 +74,8 @@ test_that("report values read Moran p-values from spatial autocorrelation diagno
 
   values <- build_report_values(data.frame(), data.frame(), list(), data.frame(), data.frame(), diag, list())
 
-  expect_equal(values[["m_cons_resid$p.value %>% signif(3)"]], signif(0.01234, 3))
-  expect_equal(values[["m_cons$p.value %>% signif(3)"]], signif(0.98765, 3))
+  expect_equal(values[["moran_iv_residual_p"]], signif(0.01234, 3))
+  expect_equal(values[["moran_consumption_growth_p"]], signif(0.98765, 3))
 })
 
 test_that("missingness diagnostics preserve legacy diagnostic components", {

@@ -147,16 +147,22 @@ test_that("current report source carries table rendering helpers directly", {
 test_that("report values use current named keys", {
   report <- repo_text("paper", "report.qmd")
   docs_note <- repo_text("docs", "district-matching.qmd")
+  appendix <- repo_text("paper", "appendix.qmd")
   builder <- repo_text("R", "output", "build_report_values.R")
   checker <- repo_text("scripts", "check_report_values.R")
 
   expect_false(grepl("legacy_inline_expressions", report, fixed = TRUE))
   expect_false(grepl("legacy_inline_expressions", docs_note, fixed = TRUE))
+  expect_false(grepl("legacy_inline_expressions", appendix, fixed = TRUE))
   expect_false(grepl("inline_", report, fixed = TRUE))
+  expect_false(grepl("m_cons_resid$p.value", appendix, fixed = TRUE))
+  expect_false(grepl("m_cons$p.value", appendix, fixed = TRUE))
   expect_false(grepl("add_inline_value", builder, fixed = TRUE))
   expect_match(report, "report_value(\"ame_edu_free_pct\")", fixed = TRUE)
   expect_match(docs_note, "report_value(\"moran_iv_residual_p\")", fixed = TRUE)
-  expect_match(builder, "set_report_value(values, \"moran_iv_residual_p\"", fixed = TRUE)
+  expect_match(builder, "moran_iv_residual_p", fixed = TRUE)
+  expect_match(builder, "moran_consumption_growth_p", fixed = TRUE)
+  expect_match(builder, "spatial_p_value", fixed = TRUE)
   expect_match(checker, "extract_report_value_keys", fixed = TRUE)
 })
 
