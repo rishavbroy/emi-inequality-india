@@ -11,10 +11,11 @@ incremental="false"
 with_extended_diagnostics="false"
 with_benchmarks="false"
 with_analysis_notes="false"
+require_clean="false"
 
 usage() {
   cat <<'USAGE'
-Usage: bash scripts/run_public_build_audit.sh [--with-samples|--without-samples] [--with-extended-diagnostics] [--with-benchmarks] [--with-analysis-notes] [--archive-on-error|--archive-always] [--archive-each-step] [--incremental|--skip-clean] [--skip-tests] [-o OUT.zip]
+Usage: bash scripts/run_public_build_audit.sh [--with-samples|--without-samples] [--with-extended-diagnostics] [--with-benchmarks] [--with-analysis-notes] [--archive-on-error|--archive-always] [--archive-each-step] [--incremental|--skip-clean] [--skip-tests] [--require-clean] [-o OUT.zip]
 
 Runs the final public build audit. The default is --without-samples for a faster
 report/data/output audit that omits application-sample rendering and excludes
@@ -35,7 +36,8 @@ preserved unless explicitly cleaned. Use --with-analysis-notes to render the hum
 analysis notebooks to GitHub-flavored Markdown in the same audit log; this also
 requests the extended diagnostics and benchmarks that those notebooks read.
 Analysis notes do not request application samples; add --with-samples only when
-sample-generation code or sample-facing outputs may have changed.
+sample-generation code or sample-facing outputs may have changed. Use --require-clean
+to fail if the repository is dirty at the start or end of the audit.
 USAGE
 }
 
@@ -85,6 +87,10 @@ while [[ $# -gt 0 ]]; do
       skip_tests="true"
       shift
       ;;
+    --require-clean)
+      require_clean="true"
+      shift
+      ;;
     -o|--output)
       if [[ $# -lt 2 ]]; then
         echo "Missing argument for $1" >&2
@@ -104,6 +110,17 @@ while [[ $# -gt 0 ]]; do
       ;;
   esac
 done
+
+require_clean_git_state() {
+  local label="$1"
+  local status
+  status="$(git status --short)"
+  if [[ -n "$status" ]]; then
+    echo "Repository is not clean at ${label}:" >&2
+    echo "$status" >&2
+    exit 1
+  fi
+}
 
 make_debug_archive() {
   local label="$1"
@@ -177,6 +194,9 @@ fi
 
 echo "=== START: git state ==="
 git status --short
+if [[ "$require_clean" == "true" ]]; then
+  require_clean_git_state "audit start"
+fi
 
 echo "=== RESET PUBLIC/BUILD DIAGNOSTICS ==="
 rm -rf outputs/diagnostics/build outputs/diagnostics/public
@@ -277,3 +297,8 @@ find "${manifest_roots[@]}" \
   -type f \
   \( -name '*.pdf' -o -name '*.html' -o -name '*.md' -o -name '*.csv' -o -name '*.tex' -o -name '*.png' \) \
   -print | sort
+
+if [[ "$require_clean" == "true" ]]; then
+  echo "=== REQUIRE CLEAN GIT STATE ==="
+  require_clean_git_state "audit end"
+fi

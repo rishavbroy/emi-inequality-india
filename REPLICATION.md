@@ -59,7 +59,7 @@ The recommended replication entry point is the [scripted public-build audit](scr
 make test
 
 # Full reviewer-facing archive with a log and a debug archive if anything fails.
-bash scripts/run_public_build_audit.sh --with-samples --archive-on-error 2>&1 | tee full_output.txt
+bash scripts/run_public_build_audit.sh --with-samples --archive-on-error --require-clean 2>&1 | tee full_output.txt
 
 # Faster cache-preserving iteration without application samples.
 bash scripts/run_public_build_audit.sh --without-samples --incremental --archive-on-error 2>&1 | tee full_output.txt
@@ -68,7 +68,7 @@ bash scripts/run_public_build_audit.sh --without-samples --incremental --archive
 bash scripts/run_public_build_audit.sh --with-samples --incremental --archive-on-error --with-extended-diagnostics --with-benchmarks 2>&1 | tee full_output_with_diagnostics_benchmarks.txt
 ```
 
-`make test` should pass without local raw data. The full pipeline requires the local-only raw files listed in the manifest. [`bash scripts/run_public_build_audit.sh`](scripts/run_public_build_audit.sh) defaults to the faster no-samples mode and writes `review.zip` without [`application-samples/output/`](application-samples/output/); pass `--with-samples` before a full submission/review bundle so the application samples are rendered and required in the archive.
+`make test` should pass without local raw data. The full pipeline requires the local-only raw files listed in the manifest. [`bash scripts/run_public_build_audit.sh`](scripts/run_public_build_audit.sh) defaults to the faster no-samples mode and writes `review.zip` without [`application-samples/output/`](application-samples/output/); pass `--with-samples` before a full submission/review bundle so the application samples are rendered and required in the archive. Add `--require-clean` for proof runs when the working tree should be clean before and after the audit.
 
 Useful lower-level Makefile targets are:
 

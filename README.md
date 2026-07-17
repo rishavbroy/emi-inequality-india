@@ -112,7 +112,7 @@ The shell script is the canonical configurable audit. It is more flexible than t
 
 ```bash
 # macOS/Linux/Git Bash: full reviewer bundle, archive on failure, save the log.
-bash scripts/run_public_build_audit.sh --with-samples --archive-on-error 2>&1 | tee full_output.txt
+bash scripts/run_public_build_audit.sh --with-samples --archive-on-error --require-clean 2>&1 | tee full_output.txt
 
 # Faster iterative debug run: keep caches/renders, omit application samples, archive on failure.
 bash scripts/run_public_build_audit.sh --without-samples --incremental --archive-on-error 2>&1 | tee full_output.txt
@@ -130,7 +130,7 @@ bash scripts/run_public_build_audit.sh --with-samples --archive-on-error 2>&1 | 
 From `cmd.exe`, use:
 
 ```bat
-bash scripts\run_public_build_audit.sh --with-samples --archive-on-error > full_output.txt 2>&1
+bash scripts\run_public_build_audit.sh --with-samples --archive-on-error --require-clean > full_output.txt 2>&1
 ```
 
 ### Cheaper workflow for LLMs
@@ -147,7 +147,7 @@ If you want help changing the code but do not want to spend hundreds of dollars 
 
 Build `review.zip` through [`scripts/run_public_build_audit.sh`](scripts/run_public_build_audit.sh) or after a final public check succeeds. The packaging script stages the current working tree, omits raw data and local caches, and normally refuses to run without the `.public-final-ok` stamp produced by a final public check. When called by the audit script with `--archive-on-error`, it can create an `--allow-incomplete` debug archive after a failed run; that archive is for diagnosis, not for reviewer submission.
 
-For fast iteration, run `bash scripts/run_public_build_audit.sh --without-samples --archive-on-error`. This mode omits [`application-samples/output/`](application-samples/output/) from `review.zip`, so it cannot accidentally package stale sample PDFs. Before a full submission or application bundle, run `bash scripts/run_public_build_audit.sh --with-samples --archive-on-error`; that mode renders application samples and requires them in `review.zip`.
+For fast iteration, run `bash scripts/run_public_build_audit.sh --without-samples --archive-on-error`. This mode omits [`application-samples/output/`](application-samples/output/) from `review.zip`, so it cannot accidentally package stale sample PDFs. Before a full submission or application bundle, run `bash scripts/run_public_build_audit.sh --with-samples --archive-on-error --require-clean`; that mode renders application samples, requires them in `review.zip`, and fails if the working tree is dirty before or after the audit.
 
 ## Behavior without raw data
 

@@ -22,7 +22,13 @@ test_that("current public build helper scripts parse", {
   expect_silent(parse(repo_file("R", "output", "render_analysis_notes.R")))
   expect_silent(parse(repo_file("scripts", "check_rendered_text.R")))
   expect_silent(parse(repo_file("scripts", "audit_outputs_final.R")))
+  expect_silent(parse(repo_file("scripts", "public_output_contract.R")))
   expect_silent(parse(repo_file("scripts", "check_report_values.R")))
+  expect_silent(parse(repo_file("R", "output", "public_qmd_helpers.R")))
+  expect_silent(parse(repo_file("R", "output", "report_value_core.R")))
+  expect_silent(parse(repo_file("R", "output", "report_value_coefficients.R")))
+  expect_silent(parse(repo_file("R", "output", "report_value_selection_ame.R")))
+  expect_silent(parse(repo_file("R", "output", "report_value_spatial.R")))
   expect_silent(parse(repo_file("R", "application_samples", "extract_qmd_excerpts.R")))
 })
 
@@ -49,16 +55,18 @@ test_that("legacy regeneration and parity audit scripts are retired from active 
   expect_false(grepl("audit_legacy_parity", final_audit, fixed = TRUE))
 })
 
-test_that("public render targets own final report and sample rendering", {
+test_that("public render targets own final report, notes, and sample rendering", {
   targets <- repo_text("_targets.R")
   renderer <- repo_text("R", "output", "render_public_artifacts.R")
   samples <- repo_text("R", "application_samples", "render_writing_sample.R")
 
   expect_match(targets, 'tar_target(report_qmd, "paper/report.qmd", format = "file")', fixed = TRUE)
+  expect_match(targets, 'tar_target(district_matching_qmd, "docs/district-matching.qmd", format = "file")', fixed = TRUE)
+  expect_match(targets, 'render_public_html(district_matching_qmd, dependencies = list(report_values))', fixed = TRUE)
   expect_match(targets, 'tar_target(report, render_report_pdf(report_qmd, report_values, figure_files, table_files), format = "file")', fixed = TRUE)
   expect_match(targets, 'tar_target(application_sample_inputs, application_sample_input_files(), format = "file")', fixed = TRUE)
   expect_match(renderer, 'system2("quarto", c("render", report_qmd, "--to", "pdf"))', fixed = TRUE)
-  expect_match(renderer, 'format = "file"', fixed = TRUE)
+  expect_match(renderer, 'render_public_html <- function', fixed = TRUE)
   expect_match(samples, "application_sample_input_files", fixed = TRUE)
   expect_false(grepl("tar_render\\(report|tar_quarto\\(report", targets, perl = TRUE))
 })
@@ -68,6 +76,8 @@ test_that("public audit checks current QMDs without regenerating them", {
 
   expect_match(src, "paper/report.qmd R chunks parse", fixed = TRUE)
   expect_match(src, "SOURCE WHITESPACE CHECK AFTER SOURCE NORMALIZATION", fixed = TRUE)
+  expect_match(src, "--require-clean", fixed = TRUE)
+  expect_match(src, "require_clean_git_state", fixed = TRUE)
   expect_false(grepl("make rebuild-qmds", src, fixed = TRUE))
   expect_false(grepl("REBUILD GENERATED QMD SOURCES", src, fixed = TRUE))
 })
@@ -103,6 +113,7 @@ test_that("targets graph separates public diagnostics, extended diagnostics, and
   expect_match(src, "bench_ame_methods", fixed = TRUE)
   expect_match(src, "EMI_RUN_EXTENDED_DIAGNOSTICS", fixed = TRUE)
   expect_match(src, "EMI_RUN_BENCHMARKS", fixed = TRUE)
+  expect_false(grepl('diag_public_spatial_autocorrelation.*tar_cue\\(mode = "always"', src))
 })
 
 test_that("target warning metadata is written to build diagnostics", {
@@ -133,12 +144,18 @@ test_that("writing sample YAML includes LaTeX table packages for raw table excer
   expect_true(any(out == "  - \\usepackage{xcolor}"))
 })
 
-test_that("current report source carries table rendering helpers directly", {
+test_that("current QMD sources load shared public rendering helpers", {
   report <- repo_text("paper", "report.qmd")
+  appendix <- repo_text("paper", "appendix.qmd")
+  docs_note <- repo_text("docs", "district-matching.qmd")
+  helper <- repo_text("R", "output", "public_qmd_helpers.R")
 
   expect_match(report, "public-output-table-helper", fixed = TRUE)
-  expect_match(report, "render_public_tex", fixed = TRUE)
-  expect_match(report, "knitr::asis_output(paste0", fixed = TRUE)
+  expect_match(report, "source_public_qmd_helpers", fixed = TRUE)
+  expect_match(appendix, "source_public_qmd_helpers", fixed = TRUE)
+  expect_match(docs_note, "source_public_qmd_helpers", fixed = TRUE)
+  expect_match(helper, "render_public_tex", fixed = TRUE)
+  expect_match(helper, "knitr::asis_output(paste0", fixed = TRUE)
   expect_match(report, "\\usepackage{xcolor}", fixed = TRUE)
   expect_match(report, "\\definecolor{gray35}{gray}{0.35}", fixed = TRUE)
   expect_match(report, "\\usepackage{pdflscape}", fixed = TRUE)
@@ -149,6 +166,7 @@ test_that("report values use current named keys", {
   docs_note <- repo_text("docs", "district-matching.qmd")
   appendix <- repo_text("paper", "appendix.qmd")
   builder <- repo_text("R", "output", "build_report_values.R")
+  spatial_values <- repo_text("R", "output", "report_value_spatial.R")
   checker <- repo_text("scripts", "check_report_values.R")
 
   expect_false(grepl("legacy_inline_expressions", report, fixed = TRUE))
@@ -162,8 +180,10 @@ test_that("report values use current named keys", {
   expect_match(docs_note, "report_value(\"moran_iv_residual_p\")", fixed = TRUE)
   expect_match(builder, "moran_iv_residual_p", fixed = TRUE)
   expect_match(builder, "moran_consumption_growth_p", fixed = TRUE)
-  expect_match(builder, "spatial_p_value", fixed = TRUE)
-  expect_match(checker, "extract_report_value_keys", fixed = TRUE)
+  expect_match(spatial_values, "spatial_p_value", fixed = TRUE)
+  expect_match(checker, "public_report_value_sources", fixed = TRUE)
+  expect_match(checker, "pattern <-", fixed = TRUE)
+  expect_match(checker, "gregexpr(pattern", fixed = TRUE)
 })
 
 test_that("public diagnostics are generated by current R code, not legacy parity audit", {
@@ -173,6 +193,20 @@ test_that("public diagnostics are generated by current R code, not legacy parity
   expect_match(targets, "save_public_iv_panel_diagnostics(district_panel, tables)", fixed = TRUE)
   expect_match(diagnostic, "current-pipeline diagnostics, not legacy-parity checks", fixed = TRUE)
   expect_false(grepl("audit_legacy_parity", targets, fixed = TRUE))
+})
+
+test_that("public-output checks share one file contract", {
+  contract <- repo_text("scripts", "public_output_contract.R")
+  required <- repo_text("scripts", "check_required_outputs.R")
+  final <- repo_text("scripts", "check_public_final.R")
+  audit <- repo_text("scripts", "audit_outputs_final.R")
+
+  expect_match(contract, "required_public_render_inputs", fixed = TRUE)
+  expect_match(contract, "required_final_documents", fixed = TRUE)
+  expect_match(contract, "required_final_artifacts", fixed = TRUE)
+  expect_match(required, "required_public_render_inputs()", fixed = TRUE)
+  expect_match(final, "required_final_documents(require_application_samples)", fixed = TRUE)
+  expect_match(audit, "required_final_artifacts()", fixed = TRUE)
 })
 
 test_that("optional diagnostics and benchmarking targets use checked targets wrapper", {
@@ -255,6 +289,9 @@ test_that("targets sources only R scripts from source directories", {
   expect_match(targets, "tar_source_r <- function", fixed = TRUE)
   expect_match(targets, "list.files(path, pattern = \"\\\\.[Rr]$\", recursive = TRUE, full.names = TRUE)", fixed = TRUE)
   expect_false(grepl('tar_source\\("R/', targets))
+  root <- dirname(repo_file("README.md"))
+  expect_false(file.exists(file.path(root, "R", "districts", "join_district_panel.R")))
+  expect_false(grepl("join_district_panel", targets, fixed = TRUE))
 })
 
 test_that("removed placeholder scaffolds do not return as runnable APIs", {
