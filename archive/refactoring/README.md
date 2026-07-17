@@ -33,7 +33,8 @@ unzip -l review.zip > archive/refactoring/review-archive-inventory.txt
 
 The active `main` branch no longer regenerates public Quarto sources from the
 archived R Markdown draft and no longer audits legacy parity during ordinary
-builds. Historical refactor notes and initial migration/admin material are kept
-under this archive directory for provenance only. To rerun the legacy-regeneration
-or legacy-parity machinery, check out the frozen tag or branch instead of trying
-to run archived materials from their moved locations.
+builds. Historical refactor notes, initial migration/admin material, and one-off
+repository/raw-data migration scripts are kept under this archive directory for
+provenance only. To rerun the legacy-regeneration or legacy-parity machinery,
+check out the frozen tag or branch instead of trying to run archived materials
+from their moved locations.
