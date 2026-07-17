@@ -1,17 +1,10 @@
 # Architecture
 
-This is a living document. Update it whenever the codebase’s structure,
-pipeline contracts, public outputs, or contribution rules change. Its goal is
-to help future contributors and agents understand the project quickly enough to
-make safe, well-scoped changes from day one.
+This is a living document. Update it whenever the codebase’s structure, pipeline contracts, public outputs, or contribution rules change. Its goal is to help future contributors and agents understand the project quickly enough to make safe, well-scoped changes from day one.
 
 ## Purpose
 
-This repository builds the English-medium instruction and inequality paper,
-supporting diagnostics, application samples, and replication artifacts. The
-active codebase is current-source-first: edit current R modules, current QMDs,
-tests, and documentation directly. Historical refactor evidence lives under
-`archive/refactoring/` and should not drive active builds.
+This repository builds the English-medium instruction and inequality paper, supporting diagnostics, application samples, and replication artifacts. The active codebase is current-source-first: edit current R modules, current QMDs, tests, and documentation directly. Historical refactor evidence lives under `archive/refactoring/` and should not drive active builds.
 
 ## Hard Rules for Agents and LLMs
 
@@ -94,7 +87,7 @@ flowchart TD
   tests --> measures
   tests --> models
   tests --> output
-````
+```
 
 ## Data Flow
 
@@ -138,3 +131,11 @@ Update this file when:
 
 Prefer concise updates. Do not duplicate function-level documentation or the
 full replication guide.
+
+## Build Philosophy
+
+`{targets}` is the source of build truth. Add durable computation as functions used by targets, and add generated public artifacts as explicit file targets when later steps read them from disk. Avoid untracked side effects: if a QMD, diagnostic, or check reads a generated CSV, PDF, HTML, or Markdown file, that file should be produced by a target or by a documented render/check script.
+
+Keep orchestration thin. `_targets.R`, Makefile targets, and scripts should coordinate work; reusable logic should live in `R/` modules with tests. Public QMDs should contain prose and small rendering calls, not large helper implementations.
+
+Use tests as architecture guards. Unit tests should cover low-level behavior, while contract tests should protect public output structure, required artifacts, report-value keys, and retired build machinery.

@@ -49,8 +49,8 @@ legacy prose: the pipeline no longer maintains functionality for
 refreshing the expensive `moran.mc(..., nsim = 9999)` benchmark.
 
 ``` r
-moran <- analysis_target_csv("diag_public_spatial_autocorrelation", "spatial_moran_tests.csv")
-moran_mc <- analysis_target_csv("diag_public_spatial_autocorrelation", "spatial_moran_mc_reference.csv")
+moran <- analysis_target_csv("diag_public_spatial_autocorrelation_files", "spatial_moran_tests.csv")
+moran_mc <- analysis_target_csv("diag_public_spatial_autocorrelation_files", "spatial_moran_mc_reference.csv")
 ```
 
 The current `m_cons_resid` p-value is 0.00000001647, and the current
