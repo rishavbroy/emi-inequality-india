@@ -3,8 +3,6 @@
 
 # sample-start: code-table-generation
 
-is_final_mode <- function(cfg) identical(cfg$mode, "final")
-
 table_status_failures <- function(x, cfg, label) {
   df <- as.data.frame(x)
   ok_status <- c("mapped", "estimated")
