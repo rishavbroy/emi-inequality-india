@@ -241,12 +241,13 @@ spatial_moran_mc_reference <- function() {
 
 #' save spatial autocorrelation diagnostics
 #'
-#' @return The diagnostics, invisibly writing public CSV artifacts for review.
+#' @return Character vector of diagnostic CSV paths written for public review.
 save_spatial_autocorrelation_diagnostics <- function(diagnostics, dir = "outputs/diagnostics/public") {
-  dir.create(dir, recursive = TRUE, showWarnings = FALSE)
-  utils::write.csv(as.data.frame(diagnostics), file.path(dir, "spatial_moran_tests.csv"), row.names = FALSE)
-  utils::write.csv(spatial_moran_mc_reference(), file.path(dir, "spatial_moran_mc_reference.csv"), row.names = FALSE)
-  diagnostics
+  paths <- c(
+    moran_tests = write_diagnostic_csv(as.data.frame(diagnostics), file.path(dir, "spatial_moran_tests.csv")),
+    moran_mc_reference = write_diagnostic_csv(spatial_moran_mc_reference(), file.path(dir, "spatial_moran_mc_reference.csv"))
+  )
+  unname(unlist(paths, use.names = FALSE))
 }
 
 # sample-end: code-spatial-autocorrelation

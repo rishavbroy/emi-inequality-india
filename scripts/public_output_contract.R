@@ -60,7 +60,9 @@ required_final_artifacts <- function() {
     "outputs/figures/main/fig_ilo_trends.png",
     "outputs/figures/main/district_carveouts_shifts.png",
     "outputs/figures/main/collage_main_maps.png",
-    "outputs/figures/main/collage_iv_region_maps.png"
+    "outputs/figures/main/collage_iv_region_maps.png",
+    "outputs/diagnostics/public/spatial_moran_tests.csv",
+    "outputs/diagnostics/public/spatial_moran_mc_reference.csv"
   )
 }
 

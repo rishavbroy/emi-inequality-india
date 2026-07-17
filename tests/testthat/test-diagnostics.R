@@ -63,6 +63,25 @@ test_that("Moran diagnostics compute legacy asymptotic p-values from spatial wei
   expect_true(is.finite(out$p.value))
 })
 
+
+test_that("public spatial autocorrelation diagnostics return tracked files", {
+  dir <- tempfile("spatial-public-diagnostics-")
+  on.exit(unlink(dir, recursive = TRUE, force = TRUE), add = TRUE)
+
+  diagnostics <- data.frame(
+    legacy_name = "m_cons",
+    status = "estimated",
+    p.value = 0.01,
+    stringsAsFactors = FALSE
+  )
+
+  paths <- save_spatial_autocorrelation_diagnostics(diagnostics, dir = dir)
+
+  expect_type(paths, "character")
+  expect_setequal(basename(paths), c("spatial_moran_tests.csv", "spatial_moran_mc_reference.csv"))
+  expect_true(all(file.exists(paths)))
+})
+
 test_that("report values read Moran p-values from spatial autocorrelation diagnostics", {
   diag <- data.frame(
     legacy_name = c("m_cons_resid", "m_cons"),
