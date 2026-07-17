@@ -2,8 +2,8 @@
 # Functions are intentionally small enough to be tested and called by _targets.R.
 
 # sample-start: code-fuzzy-record-linkage
-# The functions below preserve the cascading fuzzy-match architecture from the legacy Rmd.
-# sample-end marker appears near the end of this file after the functions are migrated.
+# The functions below implement the current cascading fuzzy-match architecture.
+# sample-end marker appears near the end of this file for coding-sample extraction.
 
 #' fuzzy join sequence
 #'
@@ -29,13 +29,13 @@ unmatched_rows <- function(join_map, ...) {
 
 #' merge dfs into tracker
 #'
-#' Legacy-compatible cascading district matcher. `df_names` is a named list (or a
+#' Cascading district matcher. `df_names` is a named list (or a
 #' data frame) whose elements carry source-specific district/state names.  For
 #' each source we try every requested tracker year in order, keep one-to-one
 #' canonical name matches, and then fuzzy-match remaining rows within state.
 #'
 #' @return A list with `joined_df`, `unmatched_df`, and `flagged_df`, matching
-#' the object contract used by the legacy Rmd.
+#' the current matcher object contract.
 merge_dfs_into_tracker <- function(df_names, tracker = NULL, years_of_interest = c("2001", "2007", "2008", "2017", "2018", "2020"), flag = TRUE, ...) {
   if (is.null(tracker)) return(list(joined_df = safe_df(df_names), unmatched_df = data.frame(), flagged_df = data.frame()))
   tracker <- safe_df(tracker)

@@ -38,9 +38,13 @@ test_that("legacy regeneration and parity audit scripts are retired from active 
     "scripts/rebuild_static_qmds_from_legacy.R",
     "scripts/postprocess_public_qmds.R",
     "scripts/audit_legacy_parity.py",
-    "scripts/run_legacy_content_audit.sh"
+    "scripts/run_legacy_content_audit.sh",
+    "scripts/migrate_repo_structure.py",
+    "scripts/rename_raw_data_from_manifest.R"
   )
   for (path in retired) expect_false(file.exists(file.path(root, path)))
+  expect_true(file.exists(file.path(root, "archive/refactoring/scripts/migrate_repo_structure.py")))
+  expect_true(file.exists(file.path(root, "archive/refactoring/scripts/rename_raw_data_from_manifest.R")))
 
   makefile <- repo_text("Makefile")
   public_audit <- repo_text("scripts", "run_public_build_audit.sh")
@@ -92,6 +96,7 @@ test_that("public audit clean preserves extended diagnostics and benchmarks", {
   expect_match(src, "rm -rf outputs/diagnostics/build outputs/diagnostics/public", fixed = TRUE)
   expect_match(src, "rm -f outputs/diagnostics/*.csv", fixed = TRUE)
   expect_false(grepl("rm -rf outputs/diagnostics/\\*", src))
+  expect_false(grepl("legacy root-level diagnostic", src, fixed = TRUE))
   expect_match(makefile, "clean:\n\t$(MAKE) clean-renders", fixed = TRUE)
   expect_match(makefile, "clean-all: clean clean-targets", fixed = TRUE)
   expect_match(makefile, "rm -rf outputs/figures/* outputs/tables/* outputs/diagnostics/build outputs/diagnostics/public", fixed = TRUE)
@@ -101,6 +106,22 @@ test_that("public audit clean preserves extended diagnostics and benchmarks", {
   expect_match(gitignore, "outputs/diagnostics/*.csv", fixed = TRUE)
   expect_match(gitignore, "outputs/diagnostics/build/", fixed = TRUE)
   expect_match(gitignore, "outputs/diagnostics/public/", fixed = TRUE)
+})
+
+
+test_that("current-facing code avoids refactor-era naming for active helpers", {
+  ame <- repo_text("R", "selection", "compute_average_marginal_effects.R")
+  fuzzy <- repo_text("R", "districts", "fuzzy_join_districts.R")
+  audit <- repo_text("scripts", "run_public_build_audit.sh")
+
+  expect_false(grepl("legacy_terms", ame, fixed = TRUE))
+  expect_false(grepl("use_legacy_schema", ame, fixed = TRUE))
+  expect_match(ame, "labeled_terms", fixed = TRUE)
+  expect_match(ame, "use_labeled_schema", fixed = TRUE)
+  expect_false(grepl("Legacy-compatible cascading district matcher", fuzzy, fixed = TRUE))
+  expect_false(grepl("legacy Rmd", fuzzy, fixed = TRUE))
+  expect_match(fuzzy, "current cascading fuzzy-match architecture", fixed = TRUE)
+  expect_false(grepl("legacy root-level diagnostic", audit, fixed = TRUE))
 })
 
 test_that("targets graph separates public diagnostics, extended diagnostics, and benchmarks", {

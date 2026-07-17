@@ -419,12 +419,12 @@ format_ame_results <- function(ame_results) {
   if (!"method" %in% names(out)) out$method <- "autodiff"
   if (!"status" %in% names(out)) out$status <- "estimated"
   if (!"reason" %in% names(out)) out$reason <- NA_character_
-  legacy_terms <- unique(ame_label_lookup()$term)
-  use_legacy_schema <- any(out$term %in% legacy_terms) ||
+  labeled_terms <- unique(ame_label_lookup()$term)
+  use_labeled_schema <- any(out$term %in% labeled_terms) ||
     any(grepl("^dmean_num_", out$term %||% character(), perl = TRUE)) ||
     any((out$contrast %||% "dY/dX") != "dY/dX", na.rm = TRUE)
 
-  if (isTRUE(use_legacy_schema)) {
+  if (isTRUE(use_labeled_schema)) {
     out <- attach_ame_labels(out)
     required <- c(
       "Term", "term", "contrast", "estimate", "std.error", "statistic", "p.value", "s.value",
