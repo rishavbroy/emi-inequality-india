@@ -15,33 +15,18 @@ cite-method: citeproc
 ---
 
 ```{r report-target-values, include=FALSE}
-find_targets_store <- function(start = getwd()) {
-  here <- normalizePath(start, mustWork = TRUE)
-  repeat {
-    candidate <- file.path(here, "_targets")
-    if (dir.exists(candidate)) return(candidate)
-    parent <- dirname(here)
-    if (identical(parent, here)) return("_targets")
-    here <- parent
-  }
+source_public_qmd_helpers <- function() {
+  candidates <- c(
+    "R/output/public_qmd_helpers.R",
+    "../R/output/public_qmd_helpers.R",
+    "../../R/output/public_qmd_helpers.R"
+  )
+  hit <- candidates[file.exists(candidates)]
+  if (!length(hit)) stop("Could not locate R/output/public_qmd_helpers.R", call. = FALSE)
+  source(hit[[1]], local = knitr::knit_global())
 }
-report_values <- tryCatch(targets::tar_read(report_values, store = find_targets_store()), error = function(e) list())
-if (is.null(report_values) || !is.list(report_values)) report_values <- list()
-is_report_value_status <- function(value) {
-  is.list(value) && !is.null(value$status) && !is.null(value$reason)
-}
-report_value <- function(key) {
-  value <- report_values[[key]]
-  if (is.null(value)) value <- NA
-  if (is_report_value_status(value)) {
-    display <- value$value
-    if (is.null(display) || length(display) == 0L || all(is.na(display))) display <- value$display
-    if (is.null(display) || length(display) == 0L || all(is.na(display))) display <- "—"
-    value <- display
-  }
-  if (length(value) == 0L || all(is.na(value))) return("—")
-  paste(value, collapse = ", ")
-}
+source_public_qmd_helpers()
+initialize_public_qmd_helpers(knitr::knit_global())
 ```
 
 ## District Matching and Spatial Autocorrelation {#sec-distma-spa}
