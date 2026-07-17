@@ -1,6 +1,8 @@
 # Verify that public render dependencies exist before Quarto starts.
 # This catches incomplete pipelines with one concise error.
 
+source("scripts/public_output_contract.R", local = TRUE)
+
 args <- commandArgs(trailingOnly = TRUE)
 require_stamp <- "--require-final-stamp" %in% args
 
@@ -11,18 +13,7 @@ if (require_stamp && !file.exists(".pipeline-final-ok")) {
   add_failure("Missing .pipeline-final-ok; run `make pipeline-final` successfully before rendering public outputs.")
 }
 
-required_files <- c(
-  "paper/references.bib",
-  "outputs/tables/main/sum_tbl_probit_quant.csv",
-  "outputs/tables/main/sum_tbl_probit_cat.csv",
-  "outputs/tables/main/probit_mfx.csv",
-  "outputs/tables/main/sum_tbl_iv.csv",
-  "outputs/tables/main/fs_cons.csv",
-  "outputs/tables/main/cons_iv.csv",
-  "outputs/figures/main/fig_ilo_trends.png",
-  "outputs/figures/main/district_carveouts_shifts.png"
-)
-missing <- required_files[!file.exists(required_files) | file.info(required_files)$size <= 0]
+missing <- missing_or_empty_files(required_public_render_inputs())
 if (length(missing)) add_failure("Missing required public file(s): ", paste(missing, collapse = ", "))
 
 check_bibliography_paths <- function(path) {
@@ -38,15 +29,17 @@ check_bibliography_paths <- function(path) {
   }
 }
 
-for (qmd in c("paper/report.qmd", "paper/appendix.qmd", "docs/district-matching.qmd", "docs/long-paths-and-8-3-filenames.qmd")) {
-  check_bibliography_paths(qmd)
-}
+for (qmd in public_qmd_sources()) check_bibliography_paths(qmd)
 
 if (file.exists("paper/report.qmd")) {
   report <- paste(readLines("paper/report.qmd", warn = FALSE), collapse = "\n")
-  if (grepl("read_public_table\\(", report) && !grepl("public-output-table-helper", report, fixed = TRUE)) {
-    add_failure("paper/report.qmd calls read_public_table() but lacks public-output-table-helper.")
+  if (grepl("render_public_table\\(", report) && !grepl("source_public_qmd_helpers", report, fixed = TRUE)) {
+    add_failure("paper/report.qmd calls render_public_table() but does not source public QMD helpers.")
   }
+}
+
+if (!file.exists("R/output/public_qmd_helpers.R")) {
+  add_failure("Missing shared public QMD helper file: R/output/public_qmd_helpers.R")
 }
 
 if (length(failures)) {

@@ -1,5 +1,7 @@
 # Check that current public documents use named report values backed by the targets graph.
 
+source("scripts/public_output_contract.R", local = TRUE)
+
 args <- commandArgs(trailingOnly = TRUE)
 strict <- "--strict" %in% args
 allow_status_placeholders <- "--allow-status-placeholders" %in% args
@@ -10,19 +12,20 @@ is_report_value_status <- function(value) {
 
 extract_report_value_keys <- function(paths) {
   keys <- character()
+  pattern <- "report_value\\s*\\(\\s*['\"][^'\"]+['\"]\\s*\\)"
   for (path in paths[file.exists(paths)]) {
     text <- paste(readLines(path, warn = FALSE), collapse = "\n")
-    matches <- gregexpr("report_value\\(\\\"([^\\\"]+)\\\"\\)", text, perl = TRUE)[[1]]
+    matches <- gregexpr(pattern, text, perl = TRUE)[[1]]
     if (matches[[1]] == -1L) next
     found <- regmatches(text, list(matches))[[1]]
-    found <- sub('^report_value\\("', "", found)
-    found <- sub('"\\)$', "", found)
+    found <- sub("^report_value\\s*\\(\\s*['\"]", "", found, perl = TRUE)
+    found <- sub("['\"]\\s*\\)$", "", found, perl = TRUE)
     keys <- c(keys, found)
   }
   sort(unique(keys))
 }
 
-report_sources <- c("paper/report.qmd", "paper/appendix.qmd", "docs/district-matching.qmd")
+report_sources <- public_report_value_sources()
 keys <- extract_report_value_keys(report_sources)
 
 report_values <- tryCatch(

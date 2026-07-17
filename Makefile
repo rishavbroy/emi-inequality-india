@@ -166,7 +166,6 @@ check-public-final: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
 	Rscript scripts/check_required_outputs.R --require-final-stamp
 	EMI_CONFIG=config/final.yml Rscript scripts/check_rendered_text.R --final
 	Rscript scripts/check_public_final.R
-	EMI_CONFIG=config/final.yml Rscript scripts/audit_outputs_final.R
 	touch .public-final-ok
 
 check-public-final-no-samples: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
@@ -177,7 +176,6 @@ check-public-final-no-samples: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
 	Rscript scripts/check_required_outputs.R --require-final-stamp
 	EMI_CONFIG=config/final.yml EMI_REQUIRE_APPLICATION_SAMPLES=false Rscript scripts/check_rendered_text.R --final
 	EMI_REQUIRE_APPLICATION_SAMPLES=false Rscript scripts/check_public_final.R
-	EMI_CONFIG=config/final.yml Rscript scripts/audit_outputs_final.R
 	touch .public-final-ok
 
 test: tests

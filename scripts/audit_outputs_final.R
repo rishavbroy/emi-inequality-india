@@ -1,5 +1,7 @@
 # Audit final-mode public output artifacts for required files and diagnostic leftovers.
 
+source("scripts/public_output_contract.R", local = TRUE)
+
 if (!file.exists(".pipeline-final-ok")) {
   stop("Final output audit requires a successful current final pipeline run. Run `make pipeline-final` first.", call. = FALSE)
 }
@@ -7,20 +9,8 @@ if (!file.exists(".pipeline-final-ok")) {
 failures <- character()
 add_failure <- function(...) failures <<- c(failures, paste0(...))
 
-required_files <- c(
-  "paper/references.bib",
-  "outputs/tables/main/sum_tbl_probit_quant.csv",
-  "outputs/tables/main/sum_tbl_probit_cat.csv",
-  "outputs/tables/main/probit_mfx.csv",
-  "outputs/tables/main/sum_tbl_iv.csv",
-  "outputs/tables/main/fs_cons.csv",
-  "outputs/tables/main/cons_iv.csv",
-  "outputs/figures/main/fig_ilo_trends.png",
-  "outputs/figures/main/district_carveouts_shifts.png",
-  "outputs/figures/main/collage_main_maps.png",
-  "outputs/figures/main/collage_iv_region_maps.png"
-)
-missing_required <- required_files[!file.exists(required_files) | file.info(required_files)$size <= 0]
+required_files <- required_final_artifacts()
+missing_required <- missing_or_empty_files(required_files)
 if (length(missing_required)) {
   add_failure("Missing required public output files: ", paste(missing_required, collapse = ", "))
 }

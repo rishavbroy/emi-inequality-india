@@ -1,30 +1,14 @@
 # Strict final-output file checks for the final replication mode.
 
+source("scripts/public_output_contract.R", local = TRUE)
+
 is_false_env <- function(name, default = "true") {
   tolower(trimws(Sys.getenv(name, default))) %in% c("0", "false", "no", "off")
 }
 require_application_samples <- !is_false_env("EMI_REQUIRE_APPLICATION_SAMPLES", Sys.getenv("EMI_RENDER_APPLICATION_SAMPLES", "true"))
 
-required_files <- c(
-  "paper/report.pdf",
-  "docs/district-matching.html",
-  "docs/long-paths-and-8-3-filenames.html"
-)
-
-sample_files <- c(
-  "application-samples/output/RishavRoy_WritingSample.pdf",
-  "application-samples/output/RishavRoy_WritingSample10pg.pdf",
-  "application-samples/output/RishavRoy_WritingSample5pg.pdf",
-  "application-samples/output/RishavRoy_CodingSample.pdf",
-  "application-samples/output/RishavRoy_CodingSample47pg.pdf",
-  "application-samples/output/RishavRoy_CodingSample25pg.pdf"
-)
-
-if (require_application_samples) {
-  required_files <- c(required_files, sample_files)
-}
-
-missing_or_empty <- required_files[!file.exists(required_files) | file.info(required_files)$size <= 0]
+required_files <- required_final_documents(require_application_samples)
+missing_or_empty <- missing_or_empty_files(required_files)
 
 failures <- character()
 if (length(missing_or_empty)) failures <- c(failures, paste0("Missing or empty final output: ", missing_or_empty))
