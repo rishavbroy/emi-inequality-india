@@ -1,5 +1,5 @@
-test_that("selection probit covariate contract matches the legacy Rmd", {
-  legacy_vars <- c(
+test_that("selection probit uses the documented active covariate set", {
+  expected_vars <- c(
     "AGE", "SEX", "HH_SIZE", "RELIGION", "SOCIAL_GROUP", "SECTOR",
     "DIST_FROM_NEAREST_PRIMARY_CLASS", "father_educ",
     "dmean_num_IS_EDU_FREE", "dmean_num_TUTION_FEE_WAIVED",
@@ -8,13 +8,13 @@ test_that("selection probit covariate contract matches the legacy Rmd", {
     "dmean_num_ENROLLMENT_COST"
   )
   selection_data <- as.data.frame(
-    stats::setNames(replicate(length(legacy_vars), numeric(), simplify = FALSE), legacy_vars)
+    stats::setNames(replicate(length(expected_vars), numeric(), simplify = FALSE), expected_vars)
   )
 
-  expect_equal(selection_probit_variables(selection_data), legacy_vars)
+  expect_equal(selection_probit_variables(selection_data), expected_vars)
 })
 
-test_that("selection survey design preserves legacy stratification and lonely-PSU policy", {
+test_that("selection survey design preserves documented stratification and lonely-PSU policy", {
   skip_if_not_installed("survey")
   old_lonely <- getOption("survey.lonely.psu")
   on.exit(options(survey.lonely.psu = old_lonely), add = TRUE)
@@ -127,7 +127,7 @@ test_that("district pseudo-panel analysis core requires the IV instrument, treat
   expect_equal(panel_has_analysis_core(panel), c(TRUE, FALSE, FALSE))
 })
 
-test_that("district source matching keeps a one-to-one correction to the legacy fuzzy cascade", {
+test_that("district source matching keeps deterministic one-to-one assignments", {
   skip_if_not_installed("stringdist")
   source <- data.frame(
     .source_row = c(1L, 2L),

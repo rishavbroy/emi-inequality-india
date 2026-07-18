@@ -87,7 +87,7 @@ test_that("linguistic-distance map labels begin at zero and no-data uses visible
   expect_equal(unname(fill$colors[["No data"]]), "#bdbdbd")
 })
 
-test_that("district carve-out figure uses unbordered legacy-style bars", {
+test_that("district carve-out figure uses unbordered bars", {
   path <- file.path("R", "output", "save_figures.R")
   if (!file.exists(path)) path <- file.path("..", "..", "R", "output", "save_figures.R")
   src <- paste(readLines(path, warn = FALSE), collapse = "\n")

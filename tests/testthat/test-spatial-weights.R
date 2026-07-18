@@ -4,7 +4,7 @@ test_that("spatial weights diagnostics can be skipped on non-sf objects", {
   expect_equal(out$status, "out_of_active_pipeline")
 })
 
-test_that("spatial weights store legacy rook listw and binary adjacency matrix", {
+test_that("spatial weights store rook listw and binary adjacency matrix", {
   testthat::skip_if_not_installed("sf")
   testthat::skip_if_not_installed("spdep")
 

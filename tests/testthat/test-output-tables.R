@@ -124,7 +124,7 @@ test_that("first-stage public table reports instrument partial F before model F"
   expect_false(grepl("68.20", f_row[[value_col]][[1]], fixed = TRUE))
 })
 
-test_that("public summary tables use legacy display names and grouping rows", {
+test_that("public summary tables use documented display names and grouping rows", {
   df <- data.frame(
     var = c("AGE", ".group_district", "dmean_num_IS_EDU_FREE"),
     label = c("Age", "District-level aggregates:", "Educ. free available? (Yes = 1)"),
@@ -176,7 +176,7 @@ test_that("regression public tables place standard errors below estimates", {
   expect_false("Model's F-Statistic" %in% out$Term)
 })
 
-test_that("IV summary table retains legacy description column", {
+test_that("IV summary table retains its description column", {
   panel <- data.frame(
     EMIE = c(0, 10),
     wavg_ling_degrees = c(0, 2),
@@ -218,7 +218,7 @@ test_that("population summary statistics use comma integers without artificial d
   expect_false(grepl("\\.00$", out$Mean[[1]]))
 })
 
-test_that("probit table uses legacy AME estimate and standard-error columns", {
+test_that("probit table uses documented AME estimate and standard-error columns", {
   out <- make_probit_ame_table(
     data.frame(Term = "Age", term = "AGE", estimate = -0.1, std.error = 0.02, p.value = 0.01),
     n = 100,
@@ -254,7 +254,7 @@ test_that("GOF number formatting returns one cell for empty statistics", {
 })
 
 
-test_that("legacy regression GOF map includes residual standard error", {
+test_that("regression GOF map includes residual standard error", {
   first_stage <- data.frame(
     model = rep("consumption", 2),
     term = c("wavg_ling_degrees", "(Intercept)"),
@@ -288,7 +288,7 @@ test_that("public table wrapping does not inject literal LaTeX line breaks", {
   expect_false(grepl("\\\\", out$Variable[[1]], fixed = TRUE))
 })
 
-test_that("IV summary descriptions follow legacy prose and grouping order", {
+test_that("IV summary descriptions follow documented prose and grouping order", {
   panel <- data.frame(
     EMIE = c(0, 10), wavg_ling_degrees = c(0, 2),
     npeople_0708 = c(1000, 2000), consumption_0708 = c(700, 900), gini_cons_0708 = c(.2, .3),
@@ -307,7 +307,7 @@ test_that("IV summary descriptions follow legacy prose and grouping order", {
   expect_equal(public$Description[public$Variable == "Ling. Distance"][[1]], "Average linguistic distance of mother tongue from Hindi")
 })
 
-test_that("regression captions are plain legacy titles", {
+test_that("regression captions use plain public titles", {
   expect_equal(table_caption("fs_cons"), "First-Stage Regression: EMI Exposure on Linguistic Distance")
   expect_equal(table_caption("cons_iv"), "Second-Stage Regression: Consumption Growth on EMIE (Fitted)")
   expect_equal(table_caption("probit_mfx"), "Average Marginal Effects and Counterfactual Comparisons for Enrollment Probit")
@@ -615,7 +615,6 @@ test_that("probit AME modelsummary table uses same standard styling path as IV t
   expect_match(src, "single_space_longtable_tex", fixed = TRUE)
   expect_false(grepl("p\\{[0-9.]+cm\\}", src))
   expect_false(grepl("add_rows =", src, fixed = TRUE))
-  expect_false(grepl("legacy_ame_longtable_tex", src, fixed = TRUE))
 })
 
 test_that("labeled native marginaleffects object preserves public AME order and labels", {

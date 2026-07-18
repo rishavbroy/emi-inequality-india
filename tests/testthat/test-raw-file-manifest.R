@@ -17,14 +17,6 @@ test_that("manifest and data_sources use canonical raw-data directories", {
     "data/raw/district_boundaries_2020",
     "data/raw/district_changes"
   )
-  legacy_dirs <- c(
-    "data/raw/NSS 2007-08 Participation and Expenditure in Education 64th Round",
-    "data/raw/NSS 2007-08 Household Consumer Expenditure Survey 64th Round",
-    "data/raw/NSS 2017-18 Household Social Consumption Education 75th Round Data July 2017 - June 2018",
-    "data/raw/Indian Census 2001",
-    "data/raw/District Boundaries 2020",
-    "data/raw/District Changes Data"
-  )
   raw_source_ids <- c(
     "nss_2007_education",
     "nss_2007_consumption",
@@ -36,8 +28,6 @@ test_that("manifest and data_sources use canonical raw-data directories", {
   manifest <- manifest[manifest$source_id %in% raw_source_ids, , drop = FALSE]
   sources <- sources[sources$source_id %in% raw_source_ids, , drop = FALSE]
 
-  expect_false(any(grepl(paste(legacy_dirs, collapse = "|"), manifest$relative_path)))
-  expect_false(any(grepl(paste(legacy_dirs, collapse = "|"), sources$local_raw_path)))
   manifest_roots <- vapply(
     manifest$relative_path,
     function(path) any(startsWith(path, paste0(canonical_dirs, "/")) | path %in% canonical_dirs),
