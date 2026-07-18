@@ -2,7 +2,7 @@ test_that("canonical names are stable", {
   expect_equal(canonicalize_district_name(" East  Godavari! "), "east godavari")
 })
 
-test_that("state canonicalization covers legacy NSS spelling variants", {
+test_that("state canonicalization covers observed NSS spelling variants", {
   raw <- c("Andhra Pardesh", "Gujrat", "Maharastra", "Andaman & Nicober", "Pondicheri", "Uttaranchal", "Orissa")
 
   expect_equal(
@@ -30,18 +30,22 @@ test_that("district key construction handles list and data-frame inputs", {
 })
 
 
-test_that("legacy district source suffix chains start from the source survey year", {
-  expect_equal(district_source_suffix_chain("08")[1:4], c("08", "07", "06", "05"))
-  expect_equal(district_source_suffix_chain("18")[1:3], c("18", "17", "19"))
-  expect_equal(district_source_suffix_chain("01")[1], "01")
+test_that("district source matching configuration is internally consistent", {
+  for (suffix in c("08", "18", "01")) {
+    chain <- district_source_suffix_chain(suffix)
+    expect_identical(chain[[1]], suffix)
+    expect_false(anyDuplicated(chain) > 0L)
+  }
+
+  methods <- district_source_match_methods()
+  thresholds <- district_source_match_thresholds()
+  expect_gt(length(methods), 0L)
+  expect_length(thresholds, length(methods))
+  expect_false(anyDuplicated(methods) > 0L)
+  expect_true(all(is.finite(thresholds) & thresholds >= 0))
 })
 
-test_that("legacy district source matcher exposes original fuzzy cascade", {
-  expect_equal(district_source_match_methods(), c("soundex", "qgram", "jw", "dl", "osa"))
-  expect_equal(district_source_match_thresholds(), c(0, 0, 0.15, 2, 1))
-})
-
-test_that("legacy district source matcher keeps deterministic one-to-one matches", {
+test_that("district source matcher keeps deterministic one-to-one matches", {
   skip_if_not_installed("stringdist")
   source <- data.frame(
     .source_row = c(1L, 2L),

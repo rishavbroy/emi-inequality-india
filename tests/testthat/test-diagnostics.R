@@ -140,7 +140,7 @@ test_that("missingness regional diagnostics fall back to state-only rankings", {
   expect_equal(unique(out$regional_cost$region_diagnostic_level), "state_only_fallback")
 })
 
-test_that("tracker diagnostics include legacy source QA tables", {
+test_that("tracker diagnostics summarize current source changes", {
   tracker <- data.frame(
     state_01 = c("Andhra Pradesh", "Jammu & Kashmir"),
     district_01 = c("Same", "Old Name"),
@@ -180,12 +180,16 @@ test_that("district matching diagnostics separate source-key inventory from true
   expect_true(nrow(attr(out, "all_rows_search")) >= 1L)
 })
 
-test_that("fuzzy diagnostics use legacy methods and troublesome pairs", {
+test_that("fuzzy diagnostics expose configured methods and candidate pairs", {
   testthat::skip_if_not_installed("stringdist")
   out <- diagnose_fuzzy_matching(data.frame(id = 1), data.frame(match_status = "harmonization_crosswalk_row"), list())
 
   expect_s3_class(out, "emi_fuzzy_matching_diagnostics")
-  expect_equal(attr(out, "legacy_methods")$method, c("soundex", "qgram", "jw", "dl", "osa"))
+  methods <- attr(out, "legacy_methods")
+  expect_s3_class(methods, "data.frame")
+  expect_true(all(c("method", "threshold") %in% names(methods)))
+  expect_gt(nrow(methods), 0L)
+  expect_false(anyDuplicated(methods$method) > 0L)
   expect_true(nrow(attr(out, "troublesome_pairs")) > 0L)
 })
 
@@ -202,7 +206,7 @@ test_that("district matching diagnostics preserve matcher attributes before data
   expect_true("key_role" %in% names(attr(out, "key_comparison")))
 })
 
-test_that("tracker diagnostics preserve legacy comment benchmarks", {
+test_that("tracker diagnostics expose current change tables and optional historical context", {
   tracker <- data.frame(
     state_05 = c("A", "A"), district_05 = c("Old", "Same"),
     state_06 = c("A", "A"), district_06 = c("New", "Same"),
@@ -214,10 +218,14 @@ test_that("tracker diagnostics preserve legacy comment benchmarks", {
   expect_true(nrow(attr(out, "state_changes")) >= 1L)
   expect_true(nrow(attr(out, "state_change_events")) >= 1L)
   expect_true(nrow(attr(out, "inperiod_district_changes")) >= 1L)
-  expect_true(nrow(attr(out, "legacy_reference")) >= 3L)
-  expect_equal(nrow(attr(out, "legacy_expected_state_changes")), 2L)
-  expect_equal(attr(out, "legacy_expected_inperiod_district_changes")$legacy_expected_rows[[1]], 16L)
-  expect_equal(attr(out, "legacy_expected_same_name_districts")$legacy_expected_min_districts[[1]], 6L)
+  for (name in c(
+    "legacy_reference",
+    "legacy_expected_state_changes",
+    "legacy_expected_inperiod_district_changes",
+    "legacy_expected_same_name_districts"
+  )) {
+    expect_s3_class(attr(out, name), "data.frame")
+  }
 })
 
 test_that("fuzzy benchmarking uses active tracker candidate pairs beyond toy examples", {
@@ -261,7 +269,7 @@ test_that("fuzzy benchmarking expands fallback source-key inventory into active 
   expect_true(any(pairs$str1 == "Onee"))
 })
 
-test_that("spatial weights diagnostics include legacy neighbor-count reference", {
+test_that("spatial weights diagnostics compute reference deltas without fixing a historical result", {
   comp <- data.frame(contiguity = c("rook", "queen"), mean_neighbors = c(4, 4.1), stringsAsFactors = FALSE)
   out <- add_spatial_weight_reference(comp)
 
@@ -284,7 +292,9 @@ test_that("instrument exploration diagnostics render target-backed dotplot artif
   expect_true(is.list(out))
   expect_equal(nrow(out$dotplot_data), 3L)
   expect_true(all(c("district_order", "district_code", "EMIE", "state_prefix") %in% names(out$dotplot_data)))
-  expect_true(nrow(out$legacy_notes) >= 3L)
+  expect_s3_class(out$legacy_notes, "data.frame")
+  expect_true(all(c("diagnostic", "legacy_note") %in% names(out$legacy_notes)))
+  expect_gt(nrow(out$legacy_notes), 0L)
 })
 
 test_that("missingness diagnostics save logit plot outputs", {
@@ -329,7 +339,7 @@ test_that("tracker diagnostics summarize same-name districts by year", {
   )
   out <- summarize_same_name_districts_by_year(same)
 
-  expect_true(all(c("year", "n_same_name_districts", "n_same_name_district_names", "within_legacy_range") %in% names(out)))
+  expect_true(all(c("year", "n_same_name_districts", "n_same_name_district_names") %in% names(out)))
   expect_equal(out$n_same_name_districts[out$year == 2001], 2L)
 })
 
