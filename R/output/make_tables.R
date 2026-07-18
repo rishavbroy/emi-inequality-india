@@ -188,32 +188,6 @@ probit_gof_rows <- function(selection_model, n, outcome_label) {
   stats::setNames(rows, c("Term", outcome_label))
 }
 
-
-numeric_summary <- function(df, variables = NULL) {
-  df <- as.data.frame(df)
-  if (is.null(variables)) variables <- names(df)
-  variables <- intersect(variables, names(df))
-  out <- lapply(variables, function(v) {
-    x <- suppressWarnings(as.numeric(as.character(df[[v]])))
-    x <- x[is.finite(x)]
-    if (!length(x)) return(NULL)
-    data.frame(variable = v, min = min(x), q1 = unname(stats::quantile(x, 0.25)), median = stats::median(x), q3 = unname(stats::quantile(x, 0.75)), max = max(x), mean = mean(x), sd = stats::sd(x), n = length(x), stringsAsFactors = FALSE)
-  })
-  out <- safe_bind_rows(out)
-  if (!nrow(out)) data.frame(variable = character(), n = integer()) else out
-}
-
-categorical_summary <- function(df, variables) {
-  df <- as.data.frame(df)
-  variables <- intersect(variables, names(df))
-  safe_bind_rows(lapply(variables, function(v) {
-    x <- df[[v]]
-    tab <- sort(table(x, useNA = "ifany"), decreasing = TRUE)
-    if (!length(tab)) return(NULL)
-    data.frame(variable = v, category = names(tab), n = as.integer(tab), share = round(as.numeric(tab) / sum(tab), 4), stringsAsFactors = FALSE)
-  }))
-}
-
 table_status_row <- function(model, status = "unavailable", reason = NA_character_) {
   data.frame(
     model = model,
@@ -598,7 +572,7 @@ first_stage_table_model <- function(iv_models, district_panel) {
     return(list(model = NULL, vcov = NULL, add_rows = NULL))
   }
   formula <- stats::as.formula(paste(endogenous[[1]], "~", paste(terms$instruments, collapse = " + ")))
-  data <- add_iv_panel_aliases(district_panel)
+  data <- as.data.frame(district_panel)
   if (length(setdiff(all.vars(formula), names(as.data.frame(data))))) {
     return(list(model = NULL, vcov = NULL, add_rows = NULL))
   }
@@ -655,7 +629,6 @@ iv_table_term_label <- function(term) {
   labels <- c(
     "(Intercept)" = "Constant",
     EMIE = "EMIE",
-    emie_2007 = "EMIE",
     wavg_ling_degrees = "Linguistic distance",
     consumption_0708 = "Consumption, 2007-08",
     gini_cons_0708 = "Gini consumption, 2007-08",

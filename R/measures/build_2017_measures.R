@@ -35,16 +35,14 @@ build_2017_measures <- function(nss_2017_education, cfg) {
     z <- z[rep(1L, 1L), , drop = FALSE]
     data.frame(
       z,
-      consumption_2017 = wmean(df$consumption_pc_2017[i], w),
+      consumption_1718 = wmean(df$consumption_pc_2017[i], w),
       gini_cons_1718 = wgini(df$consumption_pc_2017[i], w),
-      n_2017 = length(i),
       npeople_1718 = sum(w * size, na.rm = TRUE),
       nhouses_1718 = sum(w, na.rm = TRUE),
       stringsAsFactors = FALSE
     )
   }))
   out <- attach_2017_district_names(out, inputs)
-  out <- add_2017_measure_aliases(out)
   if (all(c("state_std", "district_std") %in% names(out))) {
     out$district_panel_id <- make_district_key(out$state_std, out$district_std, 2017L)
   }
@@ -69,33 +67,6 @@ district_group_vars_2017 <- function(df) {
   character()
 }
 
-#' compute consumption 2017
-#'
-compute_consumption_2017 <- function(df) {
-  df <- std(normalize_2017_district_code(df), 2017L)
-  value <- first_col(df, c("HH_Con_exp_rs", "MPCE", "mpce", "consumption", "hh_cons"))
-  hh_size <- first_col(df, c("Household_size", "HH_SIZE", "household_size"))
-  weight <- first_col(df, c("MULT_Combined", "weight", "WEIGHT", "multiplier"))
-  if (identical(value, "HH_Con_exp_rs") && !is.null(hh_size)) {
-    df$consumption_pc_2017 <- num(df[[value]]) / num(df[[hh_size]])
-    value <- "consumption_pc_2017"
-  }
-  bydist(df, value, weight, "consumption_2017")
-}
-
-#' compute gini consumption 2017
-#'
-compute_gini_consumption_2017 <- function(df) {
-  df <- std(normalize_2017_district_code(df), 2017L)
-  value <- first_col(df, c("HH_Con_exp_rs", "MPCE", "mpce", "consumption", "hh_cons"))
-  hh_size <- first_col(df, c("Household_size", "HH_SIZE", "household_size"))
-  weight <- first_col(df, c("MULT_Combined", "weight", "WEIGHT", "multiplier"))
-  if (identical(value, "HH_Con_exp_rs") && !is.null(hh_size)) {
-    df$consumption_pc_2017 <- num(df[[value]]) / num(df[[hh_size]])
-    value <- "consumption_pc_2017"
-  }
-  bydist(df, value, weight, "gini_cons_1718", wgini)
-}
 
 
 normalize_2017_district_code <- function(df) {
@@ -186,13 +157,6 @@ normalize_2017_state_name <- function(x) {
   out
 }
 
-add_2017_measure_aliases <- function(out) {
-  alias <- function(new, old) if (old %in% names(out) && !new %in% names(out)) out[[new]] <<- out[[old]]
-  alias("consumption_1718", "consumption_2017")
-  alias("gini_consumption_2017", "gini_cons_1718")
-  alias("gini_cons_1718", "gini_consumption_2017")
-  out
-}
 
 zoo_fill_down <- function(x) {
   last <- NA_character_

@@ -52,46 +52,38 @@ dm_many <- analysis_target_csv("diag_ext_district_matching", "district_matching_
 dm_all_rows <- analysis_target_csv("diag_ext_district_matching", "district_matching_all_rows_search.csv")
 ```
 
-The current analog keeps true unmatched rows separate from fallback
-source-key inventory rows. It reports 0 true unmatched rows and 3,175
-fallback source-key inventory rows.
+The current analog distinguishes the reviewed crosswalk from a future
+row-level source-match ledger. The values shown in this rendered file
+reflect the last completed analysis-note render and will be refreshed by
+`make render-analysis`.
 
-#### Deviation from legacy prose: why the source-key inventory is large
+#### Deviation from legacy prose: what the active join map establishes
 
-The 3,175 source-key rows and 1,523 join-only canonical keys are not a
-second copy of the legacy `unmatched_df` failure. They come from the
-active diagnostic contract around `district_join_map`. The exact root
-cause is:
+The active diagnostic contract around `district_join_map` now has a
+narrower and more accurate meaning:
 
-1.  `_targets.R` builds `district_join_map` with
-    `fuzzy_join_districts(district_tracker, district_keys_2001, district_keys_2007, district_keys_2017, district_keys_2020, cfg)`.
-2.  `fuzzy_join_districts()` only returns tracker rows as the join map
-    when its `district_tracker` input already has the full legacy
-    tracker shape: `state_01`/`district_01`, `state_07`/`district_07`,
-    `state_17`/`district_17`, and `state_20`/`district_20`.
-3.  When that condition is not met, `fuzzy_join_districts()` takes its
-    fallback path: it binds the 2001, 2007, 2017, and 2020 source key
-    tables, sets `match_status = "source_key_unmatched"`, and stores
-    that same key inventory in `attr(out, "unmatched_rows")`.
-4.  `diagnose_district_matching()` then recognizes this fallback object
-    with `is_source_key_inventory()` and deliberately excludes it from
-    `n_unmatched_rows`. That is why true unmatched rows are 0 while
-    source-key inventory rows are 3,175.
-5.  `compare_join_keys_to_panel()` compares canonical panel keys from
-    the final 482-row analysis panel against canonical keys from the
-    fallback source-key inventory. The 1,523 join-only keys are
-    therefore source keys that appear in the broad raw key universe but
-    not in the final matched analysis panel. They are not direct
-    final-panel join failures.
+1.  `_targets.R` reads
+    `data/metadata/district_harmonization_crosswalk.csv` and passes it
+    to `prepare_district_join_map()`.
+2.  The reviewed crosswalk is the sole active harmonization-map
+    authority; the constructor validates its required year-specific
+    name columns and adds stable internal row identifiers.
+3.  Source-to-crosswalk attachment remains in
+    `R/districts/source_attachment.R`. The attributes on
+    `district_join_map` describe the reviewed map itself, not a
+    row-level ledger of the 2001, 2007, and 2017 source assignments.
+4.  The source-key-inventory diagnostic is retained only as an empty
+    compatibility artifact so historical review outputs have a stable
+    filename. It is no longer the active join-map fallback.
+5.  `compare_join_keys_to_panel()` compares canonical 2020 crosswalk
+    keys with canonical final-panel keys. This is a crosswalk/panel
+    coverage check; it cannot prove that every earlier-wave source row
+    was assigned to the correct crosswalk row.
 
-This is still an important warning. It means the diagnostic object
-called `district_join_map` is not presently the same kind of object as
-the legacy `merge_dfs_into_tracker()` joined tracker. The final
-`district_panel` is being built from the current tracker/panel-building
-path, while this diagnostic join map is mostly a broad source-key
-inventory. The diagnostic is useful for search and auditing, but it
-should not be interpreted as saying that 3,175 districts failed to join
-into the final panel.
+This is an important scope warning. Empty join-map `unmatched_rows` and
+`many_to_many_cases` attributes do not establish that production source
+attachment is correct. The forthcoming district-matching redesign
+should expose that production row-level source-match ledger directly.
 
 ``` r
 analysis_table(dm_summary, "District-matching diagnostic summary")

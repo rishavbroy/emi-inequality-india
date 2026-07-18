@@ -76,11 +76,6 @@ public_modelsummary_notes <- function(name) {
   as.list(note)
 }
 
-wrap_table_cell <- function(x, width = 28L) {
-  x <- as.character(x)
-  x[is.na(x)] <- ""
-  x
-}
 
 wrap_table_text_columns <- function(df, name = NULL) {
   # Column widths below give LaTeX's tabular engine the wrapping constraints;
@@ -417,13 +412,6 @@ ame_gof_map <- function() {
   )
 }
 
-replace_first <- function(x, pattern, replacement, perl = TRUE) {
-  hit <- regexpr(pattern, x, perl = perl)
-  start <- as.integer(hit[[1]])
-  if (start < 0L) return(x)
-  end <- start + attr(hit, "match.length")[[1]] - 1L
-  paste0(substr(x, 1L, start - 1L), replacement, substr(x, end + 1L, nchar(x)))
-}
 
 ame_modelsummary_table <- function(table, name) {
   need_pkg("modelsummary", "native marginaleffects AME table rendering")
@@ -494,7 +482,6 @@ modelsummary_regression_table <- function(df, name) {
 public_regression_coef_map <- function() {
   c(
     "EMIE" = "EMI exposure (fitted)",
-    "emie_2007" = "EMI exposure (fitted)",
     "wavg_ling_degrees" = "Linguistic distance",
     "consumption_0708" = "Consumption (2007-08)",
     "gini_cons_0708" = "Gini of Consumption (2007-08)",
@@ -814,22 +801,4 @@ save_tables <- function(tables, cfg) {
   }
 
   unname(unique(paths))
-}
-
-#' save table csv tex
-#'
-#' @return Generated table paths.
-save_table_csv_tex <- function(table, path_base) {
-  c(
-    save_table_csv(table, paste0(path_base, ".csv")),
-    save_table_tex(table, paste0(path_base, ".tex"), basename(path_base))
-  )
-}
-
-#' save table html if requested
-#'
-#' @return Generated HTML path.
-save_table_html_if_requested <- function(table, path_base) {
-  html <- paste0(path_base, ".html")
-  html
 }

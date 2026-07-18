@@ -139,28 +139,28 @@ primary_figure_path <- function(paths) {
 public_map_style <- function(variable) {
   switch(
     variable,
-    emie_2007 = list(
+    EMIE = list(
       palette = "brewer.blues",
       title = "EMI Exposure",
       style = "fixed",
       breaks = c(0, 2.5, 10, 25, 50, 100),
       labels = c("0-2.5", "2.5-10", "10-25", "25-50", "50-100")
     ),
-    consumption_growth_pct = list(
+    consumption_pct_change = list(
       palette = "brewer.reds",
       title = "Consumption Growth (%)",
       style = "fixed",
       breaks = c(10, 100, 200, 300, 400, 450),
       labels = c("10-100", "100-200", "200-300", "300-400", "400-450")
     ),
-    pucca_share_2007 = list(
+    pct_pucca = list(
       palette = "brown",
       title = "% Pucca Homes",
       style = NULL,
       breaks = NULL,
       labels = NULL
     ),
-    head_secondary_plus_2007 = list(
+    pct_head_secondary_plus = list(
       palette = "brewer.greens",
       title = "% HH Head w/ Sec.+",
       style = "fixed",
@@ -397,23 +397,7 @@ read_carveout_shift_data <- function(path = "data/raw/district_changes/District 
     path <- file.path(Sys.getenv("EMI_PROJECT_ROOT"), path)
   }
   if (!file.exists(path)) return(data.frame())
-  out <- utils::read.csv(
-    path,
-    header = FALSE,
-    col.names = c("district_1991", "pop_1991", "district_2001", "pct_01in91", "pct_91in01"),
-    stringsAsFactors = FALSE
-  )
-  if (nrow(out)) {
-    for (i in seq_len(nrow(out))) {
-      if ((is.na(out$district_1991[[i]]) || !nzchar(out$district_1991[[i]])) && i > 1L) {
-        out$district_1991[[i]] <- out$district_1991[[i - 1L]]
-      }
-      if ((is.na(out$pop_1991[[i]]) || !nzchar(out$pop_1991[[i]])) && i > 1L) {
-        out$pop_1991[[i]] <- out$pop_1991[[i - 1L]]
-      }
-    }
-  }
-  out$pct_91in01 <- num(out$pct_91in01)
+  out <- read_district_carveouts(path)
   out[is.finite(out$pct_91in01), , drop = FALSE]
 }
 
@@ -500,25 +484,4 @@ save_figures <- function(figures, cfg) {
   manifest_path <- file.path(dir, "figure_manifest.csv")
   utils::write.csv(manifest, manifest_path, row.names = FALSE)
   c(unname(all_written), manifest_path)
-}
-
-#' save figure pdf png
-#'
-#' @return Generated file paths.
-save_figure_pdf_png <- function(plot, path_base, width = 7, height = 5, dpi = 300) {
-  save_plot_formats(plot, path_base, c("png", "pdf"), width = width, height = height, dpi = dpi)
-}
-
-#' save map pdf png
-#'
-#' @return Generated file paths.
-save_map_pdf_png <- function(plot, path_base) {
-  save_figure_pdf_png(plot, path_base)
-}
-
-#' save diagnostic figure
-#'
-#' @return Generated file paths.
-save_diagnostic_figure <- function(plot, path_base) {
-  save_figure_pdf_png(plot, path_base)
 }

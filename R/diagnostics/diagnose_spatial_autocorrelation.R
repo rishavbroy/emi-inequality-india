@@ -159,7 +159,7 @@ spatial_first_stage_model <- function(model, district_panel) {
   if (!length(endogenous)) endogenous <- iv_terms$regressors[[1]]
   if (!length(endogenous) || is.na(endogenous[[1]]) || !nzchar(endogenous[[1]])) return(NULL)
   first_stage_formula <- stats::as.formula(paste(endogenous[[1]], "~", paste(iv_terms$instruments, collapse = " + ")))
-  data <- add_iv_panel_aliases(as.data.frame(district_panel))
+  data <- as.data.frame(district_panel)
   missing <- setdiff(all.vars(first_stage_formula), names(data))
   if (length(missing)) return(NULL)
   tryCatch(stats::lm(first_stage_formula, data = data), error = function(e) NULL)

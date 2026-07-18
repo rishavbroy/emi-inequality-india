@@ -51,7 +51,7 @@ diagnose_district_tracker_sources <- function(raw_district_changes, district_tra
 tracker_with_processed_fallback <- function(district_tracker) {
   tracker <- as.data.frame(district_tracker, stringsAsFactors = FALSE)
   if (nrow(tracker) && length(tracker_year_suffixes(tracker, "district"))) return(tracker)
-  for (path in c("data/processed/district_tracker_2001_2007_2017_2020.csv", "data/metadata/district_harmonization_crosswalk.csv")) {
+  for (path in "data/metadata/district_harmonization_crosswalk.csv") {
     if (file.exists(path) && file.info(path)$size > 0) {
       fallback <- utils::read.csv(path, stringsAsFactors = FALSE, check.names = FALSE)
       if (nrow(fallback) && length(tracker_year_suffixes(fallback, "district"))) return(fallback)
@@ -315,15 +315,6 @@ tracker_comment_reference <- function(detected_state_change_rows, detected_inper
       "A current count different from 16 reflects active tracker/correction changes and should be reviewed before describing it as an improvement.",
       "A current count of zero means the active cleaned tracker no longer exposes this raw ambiguity; it should be reported as resolved-by-current-cleaning, not as proof that the legacy QA was unnecessary."
     ),
-    stringsAsFactors = FALSE
-  )
-}
-
-summarize_tracker_source_errors <- function(raw_district_changes, district_tracker = NULL) {
-  diag <- diagnose_district_tracker_sources(raw_district_changes, district_tracker %||% data.frame(), list())
-  data.frame(
-    diagnostic = c("state_changes", "state_change_events", "inperiod_district_changes", "same_name_districts"),
-    n = c(nrow(attr(diag, "state_changes")), nrow(attr(diag, "state_change_events")), nrow(attr(diag, "inperiod_district_changes")), nrow(attr(diag, "same_name_districts"))),
     stringsAsFactors = FALSE
   )
 }

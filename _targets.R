@@ -1,6 +1,5 @@
 library(targets)
 
-source("R/packages.R")
 source("R/config.R")
 source("R/paths.R")
 
@@ -20,7 +19,7 @@ tar_source_r("R/output")
 tar_source_r("R/application_samples")
 
 tar_option_set(
-  packages = project_packages(),
+  packages = character(),
   format = "rds",
   error = "abridge"
 )
@@ -77,17 +76,16 @@ core_pipeline_targets <- list(
   tar_target(district_harmonization_crosswalk_file, "data/metadata/district_harmonization_crosswalk.csv", format = "file"),
   tar_target(district_harmonization_crosswalk, read_district_harmonization_crosswalk(district_harmonization_crosswalk_file)),
   tar_target(district_tracker, apply_manual_district_corrections(district_tracker_raw)),
-  tar_target(district_join_map, fuzzy_join_districts(district_tracker, district_keys_2001, district_keys_2007, district_keys_2017, district_keys_2020, cfg)),
+  tar_target(district_join_map, prepare_district_join_map(district_harmonization_crosswalk)),
 
   tar_target(selection_data, build_selection_data(nss_2007_education, district_keys_2007, cfg)),
   tar_target(selection_model, estimate_selection_probit(selection_data, cfg)),
   tar_target(ame_results, compute_average_marginal_effects(selection_model, selection_data, cfg)),
 
-  tar_target(measures_2007, build_2007_measures(nss_2007_education, nss_2007_consumption, selection_data, ame_results, cfg)),
+  tar_target(measures_2007, build_2007_measures(nss_2007_education, nss_2007_consumption, cfg)),
   tar_target(measures_2017, build_2017_measures(nss_2017_education, cfg)),
   tar_target(linguistic_distance_iv, build_linguistic_distance_iv(census_2001_languages, cfg)),
-  tar_target(district_panel, build_district_panel(district_tracker, district_join_map, measures_2007, measures_2017, linguistic_distance_iv, boundaries_2020, cfg, district_harmonization_crosswalk = district_harmonization_crosswalk)),
-  tar_target(processed_district_tracker_file, save_processed_district_tracker(district_tracker, district_harmonization_crosswalk), format = "file"),
+  tar_target(district_panel, build_district_panel(district_join_map, measures_2007, measures_2017, linguistic_distance_iv, boundaries_2020, cfg)),
   tar_target(processed_district_panel_file, save_processed_district_panel(district_panel), format = "file"),
 
   tar_target(iv_formulas, build_iv_formulas(cfg)),
@@ -99,7 +97,7 @@ core_pipeline_targets <- list(
   tar_target(spatial_weights, build_spatial_weights(district_panel, cfg)),
   tar_target(diag_public_spatial_autocorrelation, diagnose_spatial_autocorrelation(district_panel, iv_models, spatial_weights, cfg)),
   tar_target(diag_public_spatial_autocorrelation_files, save_spatial_autocorrelation_diagnostics(diag_public_spatial_autocorrelation), format = "file"),
-  tar_target(diag_public_multicollinearity, diagnose_multicollinearity(district_panel, iv_models, cfg)),
+  tar_target(diag_public_multicollinearity, save_multicollinearity_diagnostics(diagnose_multicollinearity(district_panel, iv_models, cfg)), format = "file"),
 
   tar_target(figures, make_figures(district_panel, raw_ilo_figures, cfg, boundaries_2020)),
   tar_target(figure_files, save_figures(figures, cfg), format = "file"),

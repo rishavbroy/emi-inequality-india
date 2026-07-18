@@ -59,8 +59,8 @@ fuzzy_candidate_pairs <- function(district_tracker = data.frame(), district_join
   out[[length(out) + 1L]] <- add_tracker_pair("07", "17", "tracker_2007_to_2017")
   out[[length(out) + 1L]] <- add_tracker_pair("17", "20", "tracker_2017_to_2020")
 
-  # When merge_dfs_into_tracker() has real fuzzy candidate columns, preserve the
-  # current source-vs-tracker comparisons.  This keeps the legacy "all rows
+  # When the active join map exposes source/tracker candidate columns, preserve
+  # those comparisons. This keeps the legacy "all rows
   # search" / View()-style inspection reproducible without forcing GUI output.
   src_district <- first_col(join_map, c(".source_district_key", "district", "district_name", "district_0708", "district_1718"))
   trk_district <- first_col(join_map, c(".tracker_district_key", "district_20", "district_17", "district_07", "district_std"))

@@ -12,14 +12,14 @@ excerpts:
     id: code-missingness-logit-parallel
     title: Parallelized missingness diagnostics with BH correction
   - file: R/selection/estimate_selection_probit.R
-    id: code-survey-probit-imr
-    title: Survey-weighted probit and IMR setup
+    id: code-survey-probit
+    title: Survey-weighted enrollment probit
   - file: R/selection/compute_average_marginal_effects.R
     id: code-ame-autodiff
     title: Average marginal effects via automatic differentiation
-  - file: R/districts/fuzzy_join_districts.R
-    id: code-fuzzy-record-linkage
-    title: Cascading fuzzy district record linkage
+  - file: R/districts/build_district_join_map.R
+    id: code-district-join-map
+    title: District harmonization map and many-to-many QA
   - file: R/diagnostics/diagnose_spatial_weights.R
     id: code-spatial-weights
     title: Contiguity-based spatial weights

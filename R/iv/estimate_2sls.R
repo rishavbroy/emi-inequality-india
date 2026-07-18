@@ -4,7 +4,6 @@
 #' estimate 2sls
 #'
 estimate_2sls <- function(district_panel, formulas, cfg) {
-  district_panel <- add_iv_panel_aliases(district_panel)
   lapply(formulas, function(formula) {
     vars <- all.vars(formula)
     missing <- setdiff(vars, names(district_panel))
@@ -21,28 +20,3 @@ estimate_2sls <- function(district_panel, formulas, cfg) {
     fit
   })
 }
-
-add_iv_panel_aliases <- function(df) {
-  df <- as.data.frame(df)
-  alias <- function(new, old) if (old %in% names(df) && !new %in% names(df)) df[[new]] <<- df[[old]]
-  alias("EMIE", "emie_2007")
-  alias("consumption_0708", "consumption_2007")
-  alias("gini_cons_0708", "gini_consumption_2007")
-  alias("consumption_1718", "consumption_2017")
-  if (!"consumption_pct_change" %in% names(df) && all(c("consumption_1718", "consumption_0708") %in% names(df))) {
-    df$consumption_pct_change <- (num(df$consumption_1718) - num(df$consumption_0708)) / num(df$consumption_0708) * 100
-  }
-  if (!"gini_change" %in% names(df) && all(c("gini_cons_1718", "gini_cons_0708") %in% names(df))) {
-    df$gini_change <- num(df$gini_cons_1718) - num(df$gini_cons_0708)
-  }
-  df
-}
-
-#' estimate consumption iv models
-#'
-estimate_consumption_iv_models <- function(district_panel, formulas, cfg) ivreg::ivreg(formulas$consumption, data = add_iv_panel_aliases(district_panel))
-#' estimate gini iv models
-estimate_gini_iv_models <- function(district_panel, formulas, cfg) ivreg::ivreg(formulas$gini, data = add_iv_panel_aliases(district_panel))
-
-#' estimate model set
-estimate_model_set <- function(district_panel, formulas, cfg) estimate_2sls(district_panel, formulas, cfg)

@@ -54,11 +54,11 @@ build_report_values <- function(ame_results, first_stage_tests, iv_models, selec
 
   values <- set_report_value(values, "first_stage_linguistic_distance_estimate", first_stage_report_value(first_stage_tests, iv_models, district_panel, c("wavg_ling_degrees", "linguistic_distance", "ling_degrees"), "estimate", 2), unavailable_first_stage)
   values$first_stage_linguistic_distance_p <- value_or_status(first_stage_report_value(first_stage_tests, iv_models, district_panel, c("wavg_ling_degrees", "linguistic_distance", "ling_degrees"), "p.value", 3), unavailable_first_stage)
-  values <- set_report_value(values, "first_stage_gini_estimate", first_stage_report_value(first_stage_tests, iv_models, district_panel, c("gini_cons_0708", "gini_consumption_2007"), "estimate", 2), unavailable_first_stage)
-  values$first_stage_gini_p <- value_or_status(first_stage_report_value(first_stage_tests, iv_models, district_panel, c("gini_cons_0708", "gini_consumption_2007"), "p.value", 3), unavailable_first_stage)
+  values <- set_report_value(values, "first_stage_gini_estimate", first_stage_report_value(first_stage_tests, iv_models, district_panel, "gini_cons_0708", "estimate", 2), unavailable_first_stage)
+  values$first_stage_gini_p <- value_or_status(first_stage_report_value(first_stage_tests, iv_models, district_panel, "gini_cons_0708", "p.value", 3), unavailable_first_stage)
 
   iv_terms <- list(
-    iv_emie = c("EMIE", "emie_2007"),
+    iv_emie = "EMIE",
     iv_pct_urban = "pct_urban",
     iv_pct_head_secondary_plus = "pct_head_secondary_plus",
     iv_pct_muslim = "pct_muslim",
@@ -66,7 +66,7 @@ build_report_values <- function(ame_results, first_stage_tests, iv_models, selec
     iv_pct_obc = "pct_obc",
     iv_pct_medium_land = "pct_medium_land",
     iv_pct_large_land = "pct_large_land",
-    iv_gini_cons_0708 = c("gini_cons_0708", "gini_consumption_2007"),
+    iv_gini_cons_0708 = "gini_cons_0708",
     iv_pct_fem_head = "pct_fem_head"
   )
   for (name in names(iv_terms)) {

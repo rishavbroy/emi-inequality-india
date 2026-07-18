@@ -58,13 +58,13 @@ extract_source_key_inventory <- function(join_map) {
   if (!is.null(out) && is_source_key_inventory(out)) {
     out <- as.data.frame(out, stringsAsFactors = FALSE)
     out$diagnostic_role <- "source_key_inventory_not_true_unmatched_rows"
-    out$legacy_note <- "These rows are the source-key inventory emitted by the fallback key-map path, not the legacy Chunk 20 unmatched_df output from merge_dfs_into_tracker()."
+    out$legacy_note <- "These rows are a fallback source-key inventory, not a row-level ledger of production source-attachment failures."
     return(out)
   }
   join_map <- as.data.frame(join_map, stringsAsFactors = FALSE)
   if (is_source_key_inventory(join_map)) {
     join_map$diagnostic_role <- "source_key_inventory_not_true_unmatched_rows"
-    join_map$legacy_note <- "These rows are the source-key inventory emitted by the fallback key-map path, not the legacy Chunk 20 unmatched_df output from merge_dfs_into_tracker()."
+    join_map$legacy_note <- "These rows are a fallback source-key inventory, not a row-level ledger of production source-attachment failures."
     return(join_map)
   }
   data.frame()
@@ -204,7 +204,7 @@ summarize_district_key_roles <- function(key_comparison) {
   tab$n_keys <- as.integer(tab$n_keys)
   tab$interpretation <- ifelse(
     tab$key_role == "source_key_inventory_only",
-    "Observed only in the fallback source-key inventory; not a true failed final-panel join.",
+    "Observed only in a historical fallback source-key inventory; not a production source-attachment result.",
     ifelse(tab$key_role == "shared_panel_join_key", "Shared by active final panel and join map.", "Requires manual review.")
   )
   tab[order(tab$key_role), , drop = FALSE]
@@ -218,7 +218,7 @@ district_matching_reference <- function(summary) {
     current_value = c(summary$n_unmatched_rows, summary$n_source_key_inventory_rows, summary$n_many_to_many_cases, NA_integer_),
     interpretation = c(
       "Counts true legacy unmatched_df rows when they are present; source-key inventory rows are excluded.",
-      "Rows marked source_key_unmatched by the fallback key-map path are preserved separately because they are not the legacy unmatched_df diagnostic.",
+      "Historical fallback source-key rows remain a separate compatibility output and are empty for the reviewed-crosswalk join map.",
       "Uses explicit many_to_many attributes/flags rather than treating every source-key row as a many-to-many case.",
       "Search table preserves the legacy View()-style close-match inspection in a CSV artifact."
     ),

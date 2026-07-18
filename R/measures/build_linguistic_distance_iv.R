@@ -26,14 +26,9 @@ build_linguistic_distance_iv <- function(census_2001_languages, cfg) {
   if ("district_name" %in% names(out)) out$district_01 <- out$district_name
   if (!"district_01" %in% names(out) && "district" %in% names(out)) out$district_01 <- out$district
   out$district_panel_id <- make_district_key(out$state_std, out$district_std, 2001L)
-  out
+  validate_linguistic_distance_ranges(out)
 }
 
-#' compute population weighted linguistic distance
-#'
-compute_population_weighted_linguistic_distance <- function(df) {
-  build_linguistic_distance_iv(df, list())
-}
 
 
 #' validate linguistic distance ranges

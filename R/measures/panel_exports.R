@@ -1,19 +1,6 @@
 # Processed district artifact writers.
 # These are target output helpers, separate from panel construction.
 
-#' Save processed district tracker
-#'
-#' Write the public processed district tracker artifact expected by `_targets.R`.
-#' Geometry/list columns are flattened so the file is a portable CSV.
-save_processed_district_tracker <- function(district_tracker, district_harmonization_crosswalk = NULL, path = "data/processed/district_tracker_2001_2007_2017_2020.csv") {
-  dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
-  x <- harmonization_tracker_frame(district_tracker, district_harmonization_crosswalk)
-  if (!nrow(x)) x <- district_tracker
-  x <- flatten_processed_output(x)
-  utils::write.csv(x, path, row.names = FALSE, na = "")
-  path
-}
-
 #' Save processed district panel
 #'
 #' Write the public processed district-level analysis panel expected by `_targets.R`.

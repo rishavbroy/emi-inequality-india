@@ -4,8 +4,8 @@
 #' build district panel
 #'
 #' @return A district panel; an sf object when validated boundary geometry joins.
-build_district_panel <- function(district_tracker, district_join_map, measures_2007, measures_2017, linguistic_distance_iv, boundaries_2020, cfg, district_harmonization_crosswalk = NULL) {
-  tracker <- harmonization_tracker_frame(district_tracker, district_harmonization_crosswalk)
+build_district_panel <- function(district_join_map, measures_2007, measures_2017, linguistic_distance_iv, boundaries_2020, cfg) {
+  tracker <- harmonization_tracker_frame(district_join_map)
   if (nrow(tracker) && harmonized_named_measures_available(measures_2007, measures_2017, linguistic_distance_iv)) {
     out <- build_tracker_based_district_panel(tracker, measures_2007, measures_2017, linguistic_distance_iv, boundaries_2020)
     if (nrow(out)) return(validate_analysis_district_panel(out, cfg, join_map = district_join_map))
@@ -13,7 +13,7 @@ build_district_panel <- function(district_tracker, district_join_map, measures_2
 
   # Fallback for tests and draft diagnostics when named tracker inputs are not
   # available. This preserves the simple key merge used by tests/draft diagnostics
-  # while still emitting analysis aliases expected by the report/table code.
+  # while retaining the canonical analysis schema expected by report/table code.
   out <- safe_df(measures_2007)
   if (!nrow(out)) return(empty_panel())
   if (all(c("state_std", "district_std") %in% names(measures_2017))) {
@@ -22,29 +22,21 @@ build_district_panel <- function(district_tracker, district_join_map, measures_2
   if (all(c("state_std", "district_std") %in% names(linguistic_distance_iv))) {
     out <- merge(out, linguistic_distance_iv, by = c("state_std", "district_std"), all.x = TRUE)
   }
-  out <- add_panel_output_aliases(out)
+  out <- add_panel_standardized_names(out)
   out <- add_panel_regions(out)
   if (!"district_panel_id" %in% names(out)) out$district_panel_id <- make_district_key(out$state_std, out$district_std, 2007L)
-  out <- compute_consumption_growth_pct(out)
+  out <- compute_consumption_pct_change(out)
   out <- compute_log_consumption_difference(out)
   out <- compute_gini_change(out)
   validate_analysis_district_panel(attach_panel_geometry(out, boundaries_2020), cfg, join_map = district_join_map)
 }
 
-harmonization_tracker_frame <- function(district_tracker, district_harmonization_crosswalk = NULL) {
-  tracker <- safe_df(district_tracker)
-  if (all(harmonization_tracker_required_columns() %in% names(tracker))) {
+harmonization_tracker_frame <- function(district_join_map) {
+  tracker <- safe_df(district_join_map)
+  if (all(district_join_map_required_columns() %in% names(tracker))) {
     return(tracker)
   }
-  fallback <- safe_df(district_harmonization_crosswalk %||% data.frame())
-  if (all(harmonization_tracker_required_columns() %in% names(fallback))) {
-    return(fallback)
-  }
   data.frame()
-}
-
-harmonization_tracker_required_columns <- function() {
-  c("state_01", "district_01", "state_07", "district_07", "state_17", "district_17", "state_20", "district_20")
 }
 
 read_district_harmonization_crosswalk <- function(path) {
@@ -90,9 +82,9 @@ build_tracker_based_district_panel <- function(tracker, measures_2007, measures_
   out <- attach_source_by_standard_keys(out, safe_df(linguistic_distance_iv), source_label = "2001")
   out <- attach_source_by_standard_keys(out, safe_df(measures_2017), source_label = "2017")
 
-  out <- add_panel_output_aliases(out)
+  out <- add_panel_standardized_names(out)
   out <- add_panel_regions(out)
-  out <- compute_consumption_growth_pct(out)
+  out <- compute_consumption_pct_change(out)
   out <- compute_log_consumption_difference(out)
   out <- compute_gini_change(out)
   if (!"district_panel_id" %in% names(out)) out$district_panel_id <- paste0("harmonization_tracker_", out$.tracker_row)
@@ -103,29 +95,13 @@ build_tracker_based_district_panel <- function(tracker, measures_2007, measures_
 }
 
 
-add_panel_output_aliases <- function(out) {
-  alias <- function(new, old) if (old %in% names(out) && !new %in% names(out)) out[[new]] <<- out[[old]]
-  alias("EMIE", "emie_2007")
-  alias("emie_2007", "EMIE")
-  alias("consumption_0708", "consumption_2007")
-  alias("consumption_2007", "consumption_0708")
-  alias("gini_cons_0708", "gini_consumption_2007")
-  alias("gini_consumption_2007", "gini_cons_0708")
-  alias("consumption_1718", "consumption_2017")
-  alias("consumption_2017", "consumption_1718")
-  alias("gini_cons_1718", "gini_consumption_2017")
-  alias("gini_consumption_2017", "gini_cons_1718")
-  alias("pucca_share_2007", "pct_pucca")
-  alias("pct_pucca", "pucca_share_2007")
-  alias("head_secondary_plus_2007", "pct_head_secondary_plus")
-  alias("npeople_0708", "n_2007")
-  alias("n_2007", "npeople_0708")
-  alias("npeople_1718", "n_2017")
-  alias("n_2017", "npeople_1718")
-  if (!"nhouses_0708" %in% names(out) && "n_households_2007" %in% names(out)) out$nhouses_0708 <- out$n_households_2007
-  if (!"nhouses_1718" %in% names(out) && "n_households_2017" %in% names(out)) out$nhouses_1718 <- out$n_households_2017
-  if (!"state_std" %in% names(out) && "state_20" %in% names(out)) out$state_std <- canonicalize_state_name(out$state_20)
-  if (!"district_std" %in% names(out) && "district_20" %in% names(out)) out$district_std <- canonicalize_district_name(out$district_20)
+add_panel_standardized_names <- function(out) {
+  if (!"state_std" %in% names(out) && "state_20" %in% names(out)) {
+    out$state_std <- canonicalize_state_name(out$state_20)
+  }
+  if (!"district_std" %in% names(out) && "district_20" %in% names(out)) {
+    out$district_std <- canonicalize_district_name(out$district_20)
+  }
   out
 }
 
@@ -156,24 +132,18 @@ add_panel_regions <- function(out) {
   out
 }
 
-compute_consumption_growth_pct <- function(panel) {
+compute_consumption_pct_change <- function(panel) {
   if (all(c("consumption_1718", "consumption_0708") %in% names(panel))) {
-    growth <- (num(panel$consumption_1718) - num(panel$consumption_0708)) / num(panel$consumption_0708) * 100
-    panel$consumption_pct_change <- growth
-    panel$consumption_growth_pct <- growth
-  } else if (all(c("consumption_2017", "consumption_2007") %in% names(panel))) {
-    growth <- (num(panel$consumption_2017) - num(panel$consumption_2007)) / num(panel$consumption_2007) * 100
-    panel$consumption_growth_pct <- growth
-    panel$consumption_pct_change <- growth
+    panel$consumption_pct_change <-
+      (num(panel$consumption_1718) - num(panel$consumption_0708)) / num(panel$consumption_0708) * 100
   }
   panel
 }
 
 compute_log_consumption_difference <- function(panel) {
   if (all(c("consumption_1718", "consumption_0708") %in% names(panel))) {
-    panel$log_consumption_difference <- log(num(panel$consumption_1718)) - log(num(panel$consumption_0708))
-  } else if (all(c("consumption_2017", "consumption_2007") %in% names(panel))) {
-    panel$log_consumption_difference <- log(num(panel$consumption_2017)) - log(num(panel$consumption_2007))
+    panel$log_consumption_difference <-
+      log(num(panel$consumption_1718)) - log(num(panel$consumption_0708))
   }
   panel
 }
@@ -181,8 +151,6 @@ compute_log_consumption_difference <- function(panel) {
 compute_gini_change <- function(panel) {
   if (all(c("gini_cons_1718", "gini_cons_0708") %in% names(panel))) {
     panel$gini_change <- num(panel$gini_cons_1718) - num(panel$gini_cons_0708)
-  } else if (all(c("gini_consumption_2017", "gini_consumption_2007") %in% names(panel))) {
-    panel$gini_change <- num(panel$gini_consumption_2017) - num(panel$gini_consumption_2007)
   }
   panel
 }
