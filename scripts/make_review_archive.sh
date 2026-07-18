@@ -97,6 +97,32 @@ fi
 cp -R outputs/figures "$tmpdir/outputs/" 2>/dev/null || true
 cp -R outputs/tables "$tmpdir/outputs/" 2>/dev/null || true
 cp -R outputs/diagnostics "$tmpdir/outputs/" 2>/dev/null || true
+mkdir -p "$tmpdir/outputs/diagnostics/build"
+if [[ ! -s "$tmpdir/outputs/diagnostics/build/audit_status.json" ]]; then
+  ARCHIVE_ALLOW_INCOMPLETE="$allow_incomplete" ARCHIVE_INCLUDE_SAMPLES="$include_samples" python3 - "$tmpdir/outputs/diagnostics/build/audit_status.json" <<'PY_STATUS'
+import json
+import os
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+path = Path(sys.argv[1])
+status = {
+    "schema_version": 1,
+    "status": "not_run",
+    "stage": "standalone_archive",
+    "exit_code": None,
+    "archive_mode": "incomplete" if os.environ["ARCHIVE_ALLOW_INCOMPLETE"] == "true" else "artifact_only",
+    "updated_at_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+    "options": {
+        "with_samples": os.environ["ARCHIVE_INCLUDE_SAMPLES"] == "true"
+    },
+    "note": "The archive was created outside scripts/run_public_build_audit.sh; no audit result is asserted."
+}
+path.write_text(json.dumps(status, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+PY_STATUS
+fi
+cp -f "$tmpdir/outputs/diagnostics/build/audit_status.json" "$tmpdir/audit_status.json"
 # The canonical diagnostics layout is outputs/diagnostics/{build,public,extended}.
 # Drop stale root-level CSVs from earlier layouts before zipping review.zip.
 if [[ -d "$tmpdir/outputs/diagnostics" ]]; then
