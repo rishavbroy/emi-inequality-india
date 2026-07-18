@@ -79,8 +79,11 @@ test_that("public render targets own final report, notes, and sample rendering",
 
 test_that("public audit checks current QMDs without regenerating them", {
   src <- repo_text("scripts", "run_public_build_audit.sh")
+  syntax_helper <- repo_text("scripts", "check_source_syntax.sh")
 
-  expect_match(src, "paper/report.qmd R chunks parse", fixed = TRUE)
+  expect_match(src, "bash scripts/check_source_syntax.sh", fixed = TRUE)
+  expect_match(syntax_helper, 'list.files("paper", "\\.qmd$"', fixed = TRUE)
+  expect_match(syntax_helper, "knitr::purl", fixed = TRUE)
   expect_match(src, "READ-ONLY SOURCE WHITESPACE CHECK", fixed = TRUE)
   expect_match(src, "audit_status.json", fixed = TRUE)
   expect_false(grepl("perl -pi", src, fixed = TRUE))
