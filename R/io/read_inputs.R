@@ -50,11 +50,43 @@ list_ilo_figure_paths <- function(paths) {
   stats::setNames(rows$absolute_path, rows$file_id)
 }
 
+#' Read the headerless 1961-2001 district carve-out source
+#'
+#' The source has five data columns and no header row. Reading it with the
+#' ordinary CSV default would consume the first Anantapur observation as names.
+read_district_carveouts <- function(path) {
+  out <- utils::read.csv(
+    path,
+    header = FALSE,
+    col.names = c("district_1991", "pop_1991", "district_2001", "pct_01in91", "pct_91in01"),
+    stringsAsFactors = FALSE,
+    na.strings = c("", "NA"),
+    check.names = FALSE
+  )
+  fill_down <- function(x) {
+    if (!length(x)) return(x)
+    for (i in seq_along(x)) {
+      missing <- is.na(x[[i]]) || (is.character(x) && !nzchar(trimws(x[[i]])))
+      if (missing && i > 1L) x[[i]] <- x[[i - 1L]]
+    }
+    x
+  }
+  out$district_1991 <- fill_down(out$district_1991)
+  out$pop_1991 <- num(gsub(",", "", fill_down(out$pop_1991), fixed = TRUE))
+  out$pct_01in91 <- num(out$pct_01in91)
+  out$pct_91in01 <- num(out$pct_91in01)
+  out
+}
+
 #' read one manifest row
 #'
 #' @return Reader output for raw data files, or a validated path for sidecars/assets.
 read_by_manifest_row <- function(row) {
   path <- row$absolute_path[[1]]
+  reader <- as.character(row$reader_function[[1]] %||% "")
+  if (identical(reader, "read_district_carveouts")) {
+    return(read_district_carveouts(path))
+  }
   file_type <- tolower(row$file_type[[1]])
   switch(
     file_type,

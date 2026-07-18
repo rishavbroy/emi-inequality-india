@@ -128,3 +128,14 @@ wgini <- function(x, w = NULL) {
 
   sum(w * (2 * cumsum(w) - w - total_weight) * x) / (total_weight^2 * mean_x)
 }
+
+#' Stable NSS 2007 household key
+#'
+#' The household number is not globally unique, so combine it with the survey
+#' state, first-stage unit, stratum, and substratum identifiers.
+nss_2007_household_key <- function(df) {
+  df <- safe_df(df)
+  key_cols <- c("STATE", "FSU_SL_NO", "STRATUM", "SUB_STRATUM_NO", "HHID")
+  for (nm in key_cols) if (!nm %in% names(df)) df[[nm]] <- NA_character_
+  do.call(paste, c(lapply(df[key_cols], function(x) canon(plain_chr(x))), sep = "__"))
+}

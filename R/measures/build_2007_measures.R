@@ -9,7 +9,7 @@
 
 #' build 2007 measures
 #'
-build_2007_measures <- function(nss_2007_education, nss_2007_consumption, selection_data, ame_results, cfg) {
+build_2007_measures <- function(nss_2007_education, nss_2007_consumption, cfg) {
   edu <- as_input_list(nss_2007_education)
   cons <- as_input_list(nss_2007_consumption)
 
@@ -21,11 +21,9 @@ build_2007_measures <- function(nss_2007_education, nss_2007_consumption, select
   out <- compute_emie_2007(b5)
   if (!nrow(out)) return(empty_panel())
   out <- merge_measure_2007(out, compute_education_household_measures_2007(b3))
-  out <- merge_measure_2007(out, compute_baseline_controls_2007(b4))
+  out <- merge_measure_2007(out, compute_baseline_controls_2007(b4, b3))
   out <- merge_measure_2007(out, compute_housing_controls_2007(cons_hh))
-  out <- merge_measure_2007(out, compute_district_imr_2007(selection_data))
   out <- attach_2007_district_names(out, nss_2007_education)
-  out <- add_2007_measure_aliases(out)
   if (all(c("state_std", "district_std") %in% names(out))) {
     out$district_panel_id <- make_district_key(out$state_std, out$district_std, 2007L)
   }
@@ -50,7 +48,6 @@ district_group_vars_2007 <- function(df) {
   character()
 }
 
-merge_measure <- function(x, y) merge_measure_2007(x, y)
 
 merge_measure_2007 <- function(x, y) {
   y <- safe_df(y)
@@ -113,9 +110,9 @@ compute_emie_2007 <- function(df) {
     keep <- is.finite(num(df[[age]])) & num(df[[age]]) <= 19
     df <- df[keep, , drop = FALSE]
   }
-  by_district_code_2007(df, emi, weight, "emie_2007", function(x, w) {
+  by_district_code_2007(df, emi, weight, "EMIE", function(x, w) {
     100 * wmean(english_medium_indicator(x, emi), w)
-  }) |> add_emie_alias()
+  })
 }
 
 english_medium_indicator <- function(x, column_name = NULL) {
@@ -154,83 +151,146 @@ compute_education_household_measures_2007 <- function(df) {
       z,
       npeople_0708 = sum(w * size, na.rm = TRUE),
       nhouses_0708 = sum(w, na.rm = TRUE),
-      consumption_2007 = wmean(cons_pc, w),
-      gini_consumption_2007 = wgini(cons_pc, w),
+      consumption_0708 = wmean(cons_pc, w),
+      gini_cons_0708 = wgini(cons_pc, w),
       stringsAsFactors = FALSE
     )
   }))
 }
 
 
-#' compute consumption 2007
+
+#' Build one row per 2007 education household
 #'
-compute_consumption_2007 <- function(df) {
-  out <- compute_education_household_measures_2007(df)
-  out[intersect(c("district_code_0708", "state_std", "district_std", "consumption_2007"), names(out))]
+#' Block 3 is the household-level source of sector, household size, religion,
+#' social group, land, region, and survey weight. Block 4 supplies the household
+#' head's sex and education plus the person-level ages used for the dependency
+#' ratio. Keeping those roles separate prevents household attributes repeated on
+#' every member from becoming population-weighted by accident.
+household_controls_frame_2007 <- function(person_df, household_df = data.frame()) {
+  people <- safe_df(person_df)
+  households <- safe_df(household_df)
+  if (!nrow(people) && !nrow(households)) return(data.frame())
+
+  if (nrow(households)) {
+    households$.nss_2007_household_key <- nss_2007_household_key(households)
+    households <- households[!duplicated(households$.nss_2007_household_key), , drop = FALSE]
+  }
+
+  if (nrow(people)) {
+    people$.nss_2007_household_key <- nss_2007_household_key(people)
+    relation <- num(people$RELATION_TO_HEAD %||% NA)
+    split_i <- split(seq_len(nrow(people)), people$.nss_2007_household_key)
+    head_rows <- vapply(split_i, function(i) {
+      heads <- i[is.finite(relation[i]) & relation[i] == 1]
+      if (length(heads)) heads[[1]] else i[[1]]
+    }, integer(1))
+    head_columns <- if (nrow(households)) {
+      intersect(
+        c(".nss_2007_household_key", "SEX", "EDUCATION_LEVEL", "RELATION_TO_HEAD"),
+        names(people)
+      )
+    } else {
+      names(people)
+    }
+    heads <- people[head_rows, head_columns, drop = FALSE]
+    heads <- heads[!duplicated(heads$.nss_2007_household_key), , drop = FALSE]
+  } else {
+    heads <- data.frame(.nss_2007_household_key = character())
+  }
+
+  if (!nrow(households)) return(heads)
+  if (!nrow(heads)) return(households)
+  merge(households, heads, by = ".nss_2007_household_key", all.x = TRUE, sort = FALSE)
 }
 
-#' compute gini consumption 2007
-#'
-compute_gini_consumption_2007 <- function(df) {
-  out <- compute_education_household_measures_2007(df)
-  out[intersect(c("district_code_0708", "state_std", "district_std", "gini_consumption_2007"), names(out))]
+weighted_share_2007 <- function(condition, weight) {
+  condition <- as.logical(condition)
+  weight <- num(weight)
+  keep <- is.finite(weight) & weight > 0 & !is.na(condition)
+  denom <- sum(weight[keep], na.rm = TRUE)
+  if (!is.finite(denom) || denom <= 0) return(NA_real_)
+  100 * sum(weight[keep] * condition[keep], na.rm = TRUE) / denom
+}
+
+weighted_code_share_2007 <- function(value, codes, weight) {
+  value <- num(value)
+  condition <- ifelse(is.finite(value), value %in% codes, NA)
+  weighted_share_2007(condition, weight)
 }
 
 #' compute baseline controls 2007
 #'
-compute_baseline_controls_2007 <- function(df) {
-  df <- standardize_nss_2007_district_code(std(df, 2007L))
-  key <- district_group_vars_2007(df)
-  if (!length(key) || !nrow(df)) return(data.frame(district_code_0708 = character(), state_std = character(), district_std = character()))
-  weight <- first_col(df, c("weight", "WEIGHT", "multiplier"))
-  if (is.null(weight)) return(data.frame(district_code_0708 = character()))
-  idx <- which(stats::complete.cases(df[key]))
-  split_i <- split(idx, interaction(df[idx, key, drop = FALSE], drop = TRUE, sep = "__"))
-  safe_bind_rows(lapply(split_i, function(i) {
-    z <- df[i[[1]], key, drop = FALSE]
-    z <- z[rep(1L, 1L), , drop = FALSE]
-    w <- num(df[[weight]][i])
-    valid_w <- is.finite(w) & w > 0
-    total_w <- sum(w[valid_w], na.rm = TRUE)
-    weighted_share <- function(condition) {
-      condition <- as.logical(condition)
-      if (!is.finite(total_w) || total_w == 0) return(NA_real_)
-      100 * sum(w[valid_w] * condition[valid_w], na.rm = TRUE) / total_w
-    }
-    age <- num(df$AGE[i] %||% NA)
-    sex <- num(df$SEX[i] %||% NA)
-    relation <- num(df$RELATION_TO_HEAD[i] %||% NA)
-    edu <- num(df$EDUCATION_LEVEL[i] %||% NA)
-    land <- sprintf("%02d", as.integer(num(df$LAND_POSSESSED_CODE[i] %||% NA)))
-    z$pct_urban <- weighted_share(num(df$SECTOR[i] %||% NA) == 2)
-    z$avg_hh_size <- wmean(df$HH_SIZE[i] %||% NA, w)
+#' Household attributes are aggregated from the household-level Block 3 using
+#' household survey weights. Head characteristics come from one Block 4 head
+#' record per household. The dependency ratio alone remains person-weighted.
+compute_baseline_controls_2007 <- function(person_df, household_df = data.frame()) {
+  people <- standardize_nss_2007_district_code(std(person_df, 2007L))
+  household_source <- standardize_nss_2007_district_code(std(household_df, 2007L))
+  key <- district_group_vars_2007(household_source)
+  if (!length(key)) key <- district_group_vars_2007(people)
+  if (!length(key) || (!nrow(people) && !nrow(household_source))) {
+    return(data.frame(district_code_0708 = character(), state_std = character(), district_std = character()))
+  }
+
+  households <- household_controls_frame_2007(people, household_source)
+  group_id <- function(df) {
+    if (!nrow(df)) return(character())
+    do.call(paste, c(lapply(df[key], plain_chr), sep = "__"))
+  }
+  people_groups <- split(seq_len(nrow(people)), group_id(people))
+  household_groups <- split(seq_len(nrow(households)), group_id(households))
+  groups <- union(names(household_groups), names(people_groups))
+  groups <- groups[!is.na(groups) & nzchar(groups)]
+
+  safe_bind_rows(lapply(groups, function(group) {
+    people_i <- people_groups[[group]] %||% integer()
+    household_i <- household_groups[[group]] %||% integer()
+    district_people <- people[people_i, , drop = FALSE]
+    district_households <- households[household_i, , drop = FALSE]
+    source <- if (nrow(district_households)) district_households else district_people
+    if (!nrow(source)) return(data.frame())
+
+    household_weight <- first_col(district_households, c("weight", "WEIGHT", "Multiplier", "multiplier"))
+    person_weight <- first_col(district_people, c("weight", "WEIGHT", "Multiplier", "multiplier"))
+    if (is.null(household_weight)) return(data.frame())
+    household_w <- num(district_households[[household_weight]])
+    person_w <- if (!is.null(person_weight)) num(district_people[[person_weight]]) else numeric()
+    age <- num(district_people$AGE %||% NA)
+    relation_hh <- num(district_households$RELATION_TO_HEAD %||% NA)
+    sex_hh <- num(district_households$SEX %||% NA)
+    edu_hh <- num(district_households$EDUCATION_LEVEL %||% NA)
+    religion_hh <- num(district_households$RELIGION %||% NA)
+    social_hh <- num(district_households$SOCIAL_GROUP %||% NA)
+    land_hh <- num(district_households$LAND_POSSESSED_CODE %||% NA)
+
+    z <- source[1, key, drop = FALSE]
+    z$pct_urban <- weighted_code_share_2007(district_households$SECTOR %||% NA, 2, household_w)
+    z$avg_hh_size <- wmean(district_households$HH_SIZE %||% NA, household_w)
     z$dependency_ratio <- {
-      dep <- is.finite(age) & (age <= 14 | age >= 65)
-      work <- is.finite(age) & age >= 15 & age <= 64
-      denom <- sum(w[valid_w] * work[valid_w], na.rm = TRUE)
-      if (denom > 0) 100 * sum(w[valid_w] * dep[valid_w], na.rm = TRUE) / denom else NA_real_
+      valid <- is.finite(person_w) & person_w > 0 & is.finite(age)
+      dep <- valid & (age <= 14 | age >= 65)
+      work <- valid & age >= 15 & age <= 64
+      denom <- sum(person_w[work], na.rm = TRUE)
+      if (denom > 0) 100 * sum(person_w[dep], na.rm = TRUE) / denom else NA_real_
     }
-    z$pct_fem_head <- weighted_share(sex == 2 & relation == 1)
-    z$pct_hindu <- weighted_share(num(df$RELIGION[i] %||% NA) == 1)
-    z$pct_muslim <- weighted_share(num(df$RELIGION[i] %||% NA) == 2)
-    z$pct_other_religion <- weighted_share(num(df$RELIGION[i] %||% NA) %in% c(3, 4, 5, 6, 7, 8))
-    z$pct_st <- weighted_share(num(df$SOCIAL_GROUP[i] %||% NA) == 1)
-    z$pct_sc <- weighted_share(num(df$SOCIAL_GROUP[i] %||% NA) == 2)
-    z$pct_obc <- weighted_share(num(df$SOCIAL_GROUP[i] %||% NA) == 3)
-    z$pct_small_land <- weighted_share(land %in% c("02", "03", "04"))
-    z$pct_medium_land <- weighted_share(land %in% c("05", "06", "07"))
-    z$pct_large_land <- weighted_share(land %in% c("08", "10", "11", "12"))
-    heads <- relation == 1
-    head_w <- sum(w[valid_w] * heads[valid_w], na.rm = TRUE)
-    head_share <- function(condition) {
-      if (!is.finite(head_w) || head_w == 0) return(NA_real_)
-      100 * sum(w[valid_w] * heads[valid_w] * condition[valid_w], na.rm = TRUE) / head_w
-    }
-    z$pct_head_illiterate <- head_share(edu == 1)
-    z$pct_head_lit_to_primary <- head_share(edu >= 2 & edu <= 7)
-    z$pct_head_secondary_plus <- head_share(edu >= 8)
-    z$head_secondary_plus_2007 <- z$pct_head_secondary_plus
-    z$region <- df$REGION[i][[1]] %||% NA
+    female_head <- ifelse(is.finite(relation_hh) & relation_hh == 1, sex_hh == 2, NA)
+    z$pct_fem_head <- weighted_share_2007(female_head, household_w)
+    z$pct_hindu <- weighted_code_share_2007(religion_hh, 1, household_w)
+    z$pct_muslim <- weighted_code_share_2007(religion_hh, 2, household_w)
+    z$pct_other_religion <- weighted_code_share_2007(religion_hh, c(3, 4, 5, 6, 7, 8), household_w)
+    z$pct_st <- weighted_code_share_2007(social_hh, 1, household_w)
+    z$pct_sc <- weighted_code_share_2007(social_hh, 2, household_w)
+    z$pct_obc <- weighted_code_share_2007(social_hh, 3, household_w)
+    z$pct_small_land <- weighted_code_share_2007(land_hh, c(2, 3, 4), household_w)
+    z$pct_medium_land <- weighted_code_share_2007(land_hh, c(5, 6, 7), household_w)
+    z$pct_large_land <- weighted_code_share_2007(land_hh, c(8, 10, 11, 12), household_w)
+    z$pct_head_illiterate <- weighted_share_2007(edu_hh == 1, household_w)
+    z$pct_head_lit_to_primary <- weighted_share_2007(edu_hh >= 2 & edu_hh <= 7, household_w)
+    z$pct_head_secondary_plus <- weighted_share_2007(edu_hh >= 8, household_w)
+    region <- as.character(district_households$REGION %||% district_people$REGION %||% NA)
+    region <- region[!is.na(region) & nzchar(region)]
+    z$region <- if (length(region)) region[[1]] else NA_character_
     z
   }))
 }
@@ -252,31 +312,9 @@ compute_housing_controls_2007 <- function(df) {
   by_district_code_2007(df, type, weight, "pct_pucca", function(x, w) 100 * wmean(as.numeric(num(x) == 1), w))
 }
 
-compute_district_imr_2007 <- function(selection_data) {
-  df <- safe_df(selection_data)
-  if (!nrow(df) || !all(c("district_code_0708", "IMR") %in% names(df))) return(data.frame(district_code_0708 = character()))
-  weight <- first_col(df, c("weight", "WEIGHT", "multiplier"))
-  by_district_code_2007(df, "IMR", weight, "avg_IMR")
-}
 
-normalize_2007_consumption_district_key <- function(df) {
-  standardize_nss_2007_district_code(df)
-}
 
-add_emie_alias <- function(df) {
-  if ("emie_2007" %in% names(df)) df$EMIE <- df$emie_2007
-  df
-}
 
-add_2007_measure_aliases <- function(out) {
-  alias <- function(new, old) if (old %in% names(out) && !new %in% names(out)) out[[new]] <<- out[[old]]
-  alias("EMIE", "emie_2007")
-  alias("consumption_0708", "consumption_2007")
-  alias("gini_cons_0708", "gini_consumption_2007")
-  alias("pucca_share_2007", "pct_pucca")
-  alias("n_2007", "n")
-  out
-}
 
 attach_2007_district_names <- function(out, nss_2007_education) {
   lookup <- parse_2007_district_metadata((as_input_list(nss_2007_education)[["nss0708edu_metadata"]]) %||% data.frame())

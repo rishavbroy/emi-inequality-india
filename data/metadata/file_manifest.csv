@@ -48,7 +48,7 @@ district_boundaries_2020_shx,district_boundaries_2020,true,data/raw/district_bou
 district_boundaries_2020_dbf,district_boundaries_2020,true,data/raw/district_boundaries_2020/district/in_district.dbf,,dbf,sf::st_read,raw_boundaries_2020,District shapefile component
 district_boundaries_2020_prj,district_boundaries_2020,true,data/raw/district_boundaries_2020/district/in_district.prj,,prj,sf::st_read,raw_boundaries_2020,District shapefile component
 district_changes_alluvial,district_changes,true,data/raw/district_changes/Time series- State and Districts Changes -Alluvial 1951-2024.xlsx,64960,xlsx,readxl::read_xlsx,raw_district_changes,Primary alluvial district-change source
-district_changes_carveouts,district_changes,true,data/raw/district_changes/District Carve-Outs and Renamings 1961-2001.csv,12737,csv,readr::read_csv,raw_district_changes,Carve-out/renaming source
+district_changes_carveouts,district_changes,true,data/raw/district_changes/District Carve-Outs and Renamings 1961-2001.csv,12737,csv,read_district_carveouts,raw_district_changes,Headerless five-column carve-out/renaming source
 district_changes_tracker,district_changes,true,data/raw/district_changes/IndiaDistrictTracker2001to2020.ods,111057,ods,readODS::read_ods,raw_district_changes,Tracker source
 district_changes_new_districts,district_changes,true,data/raw/district_changes/New Districts Created between 1951-2024.xlsx,29535,xlsx,readxl::read_xlsx,raw_district_changes,Validation source
 district_changes_name_changes,district_changes,true,data/raw/district_changes/Name Changes_Districts_Indian States_1951-2021.xlsx,18606,xlsx,readxl::read_xlsx,raw_district_changes,Validation source
