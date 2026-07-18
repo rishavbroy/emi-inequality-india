@@ -1,7 +1,7 @@
 # This file is part of the EMI inequality research pipeline.
 # Functions are intentionally small enough to be tested and called by _targets.R.
 
-# sample-start: code-survey-probit-imr
+# sample-start: code-survey-probit
 
 selection_probit_variables <- function(selection_data) {
   controls <- c("AGE", "age", "SEX", "HH_SIZE", "RELIGION", "SOCIAL_GROUP", "SECTOR")
@@ -63,26 +63,6 @@ fit_selection_probit <- function(selection_design, f_probit) {
   survey::svyglm(f_probit, design = selection_design, family = stats::quasibinomial(link = "probit"))
 }
 
-#' compute inverse mills ratio
-#'
-compute_inverse_mills_ratio <- function(model, selection_df, f_probit = NULL) {
-  if (is.null(f_probit)) f_probit <- attr(model, "selection_probit_formula") %||% stats::formula(model)
-  needed <- all.vars(f_probit)
-  needed <- intersect(needed, names(selection_df))
-  comp_cases <- stats::complete.cases(selection_df[, needed, drop = FALSE])
-  lp <- rep(NA_real_, nrow(selection_df))
-  lp[comp_cases] <- stats::predict(model, newdata = selection_df[comp_cases, , drop = FALSE], type = "link")
-  phi_lp <- stats::dnorm(lp)
-  Phi_lp <- pmin(pmax(stats::pnorm(lp), .Machine$double.eps), 1 - .Machine$double.eps)
-  enrolled <- as.character(selection_df$enrolled)
-  selection_df$IMR <- ifelse(enrolled == "Yes", phi_lp / Phi_lp, ifelse(enrolled == "No", phi_lp / (1 - Phi_lp), NA_real_))
-  selection_df
-}
 
-#' tidy selection model
-#'
-tidy_selection_model <- function(model) {
-  broom::tidy(model)
-}
 
-# sample-end: code-survey-probit-imr
+# sample-end: code-survey-probit

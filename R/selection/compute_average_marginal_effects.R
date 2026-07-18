@@ -179,16 +179,6 @@ compute_ames_autodiff <- function(model, newdata) {
   run_avg_slopes(model, amed$data, amed$wts)
 }
 
-#' compute ames fast draft
-#'
-compute_ames_fast_draft <- function(model, newdata, n = 200) {
-  amed <- ame_model_data_and_weights(model)
-  run_avg_slopes(
-    model,
-    dplyr::slice_sample(amed$data, n = min(n, nrow(amed$data))),
-    amed$wts
-  )
-}
 
 #' compute analytic probit AMEs
 #'
@@ -449,9 +439,4 @@ format_ame_results <- function(ame_results) {
   out
 }
 
-#' save ame results
-#'
-save_ame_results <- function(ame_results, path = "outputs/tables/diagnostics/ame_results.csv") {
-  readr::write_csv(tibble::as_tibble(ame_results), path); path
-}
 # sample-end: code-ame-autodiff

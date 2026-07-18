@@ -29,7 +29,9 @@ build_selection_data <- function(nss_2007_education, district_keys_2007, cfg) {
   b3 <- normalize_selection_identifiers(b3)
 
   selection_df <- construct_child_level_selection_sample(list(b4 = b4, b5 = b5, b6 = b6))
+  selection_df <- enforce_selection_child_key_uniqueness(selection_df)
   selection_df <- attach_household_covariates(selection_df, construct_household_covariates(b4))
+  selection_df <- enforce_selection_child_key_uniqueness(selection_df)
   selection_df <- apply_selection_sample_restrictions(selection_df)
   selection_df <- apply_nss_enrollment_cost_rules(selection_df)
   selection_df <- define_probit_variables(selection_df)
@@ -246,12 +248,6 @@ nss_yes_no_indicator <- function(x, yes = c(1), no = c(2)) {
   factor(out, levels = c("Yes", "No"))
 }
 
-nss_2007_household_key <- function(df) {
-  df <- safe_df(df)
-  key_cols <- c("STATE", "FSU_SL_NO", "STRATUM", "SUB_STRATUM_NO", "HHID")
-  for (nm in key_cols) if (!nm %in% names(df)) df[[nm]] <- NA_character_
-  do.call(paste, c(lapply(df[key_cols], function(x) canon(plain_chr(x))), sep = "__"))
-}
 
 nss_2007_child_key <- function(df) {
   df <- safe_df(df)
@@ -369,10 +365,6 @@ parse_2007_district_metadata <- function(metadata) {
   out[c("district_code_0708", "state_0708", "region_0708", "district_0708", "state_07", "district_07", "state_08", "district_08")]
 }
 
-collapse_to_unique_key <- function(df, key) {
-  if (!key %in% names(df) || !nrow(df)) return(df)
-  df[!duplicated(df[[key]]), , drop = FALSE]
-}
 
 district_enrolled_means <- function(df, vars = NULL) {
   df <- safe_df(df)
