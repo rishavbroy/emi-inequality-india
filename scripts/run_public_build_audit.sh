@@ -241,8 +241,7 @@ checkpoint_archive "after-clean"
 current_stage="static-parse-checks"
 echo "=== STATIC/PARSE CHECKS ==="
 check_source_whitespace
-Rscript -e 'parse("scripts/check_required_outputs.R"); cat("check_required_outputs.R parses\n")'
-Rscript -e 'tmp <- tempfile(fileext = ".R"); knitr::purl("paper/report.qmd", output = tmp, quiet = TRUE); parse(tmp); cat("paper/report.qmd R chunks parse\n")'
+bash scripts/check_source_syntax.sh
 checkpoint_archive "after-static-parse"
 
 current_stage="unit-tests"

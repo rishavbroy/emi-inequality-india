@@ -463,3 +463,18 @@ test_that("district harmonization crosswalk is the sole tracked tracker authorit
   expect_match(diagnostics, "data/metadata/district_harmonization_crosswalk.csv", fixed = TRUE)
   expect_false(file.exists(file.path(root, "data", "processed", "district_tracker_2001_2007_2017_2020.csv")))
 })
+
+test_that("source syntax preflight is centralized and read-only", {
+  helper <- repo_text("scripts", "check_source_syntax.sh")
+  audit <- repo_text("scripts", "run_public_build_audit.sh")
+
+  expect_match(audit, "bash scripts/check_source_syntax.sh", fixed = TRUE)
+  expect_match(helper, "bash -n", fixed = TRUE)
+  expect_match(helper, "ast.parse", fixed = TRUE)
+  expect_match(helper, "json.loads", fixed = TRUE)
+  expect_match(helper, "DESCRIPTION runtime dependencies", fixed = TRUE)
+  expect_match(helper, "Rscript -", fixed = TRUE)
+  expect_match(helper, "knitr::purl", fixed = TRUE)
+  expect_false(grepl("py_compile", helper, fixed = TRUE))
+  expect_false(grepl("renv::snapshot", helper, fixed = TRUE))
+})
