@@ -413,8 +413,8 @@ test_that("multicollinearity diagnostics save one tracked public CSV", {
 
   written <- save_multicollinearity_diagnostics(diagnostics, path)
 
-  expect_identical(written, path)
-  expect_true(file.exists(path))
+  expect_identical(written, normalizePath(path, mustWork = TRUE))
+  expect_true(file.exists(written))
 })
 
 test_that("spatial island diagnostics use spdep cardinalities", {
