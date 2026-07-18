@@ -6,9 +6,9 @@ test_that("2007 measures compute weighted EMIE by district", {
     weight = c(1, 3, 2)
   ))
 
-  out <- build_2007_measures(edu, list(), data.frame(), data.frame(), list())
+  out <- build_2007_measures(edu, list(), list())
 
-  expect_equal(out$emie_2007[out$district_std == "patna"], 25)
+  expect_equal(out$EMIE[out$district_std == "patna"], 25)
   expect_true(all(!duplicated(out$district_panel_id)))
 })
 
@@ -22,7 +22,7 @@ test_that("2017 measures compute weighted consumption by district", {
 
   out <- build_2017_measures(edu, list())
 
-  expect_equal(out$consumption_2017, 175)
+  expect_equal(out$consumption_1718, 175)
 })
 
 test_that("2017 district lookup recovers headerless Tabula CSV rows", {
@@ -50,18 +50,19 @@ test_that("2017 district lookup recovers headerless Tabula CSV rows", {
   expect_equal(out$district_1718[out$district_code_1718 == "28101"], "Srikakulam")
 })
 
-test_that("weighted Gini helper is available for measure construction", {
+test_that("2007 household aggregation computes a weighted Gini through the canonical path", {
   df <- data.frame(
-    State = c("Bihar", "Bihar"),
-    District = c("Patna", "Patna"),
+    district_code = c("01001", "01001"),
+    HHID = c("h1", "h2"),
     MPCE = c(100, 200),
+    HH_SIZE = c(2, 2),
     weight = c(1, 1)
   )
 
-  out <- compute_gini_consumption_2007(df)
+  out <- compute_education_household_measures_2007(df)
 
-  expect_gt(out$gini_consumption_2007, 0)
-  expect_lt(out$gini_consumption_2007, 1)
+  expect_gt(out$gini_cons_0708, 0)
+  expect_lt(out$gini_cons_0708, 1)
 })
 
 test_that("linguistic distance IV uses real columns when present", {
@@ -123,15 +124,15 @@ test_that("district panel preserves IDs and avoids duplicate generated units", {
     state_std = c("bihar", "bihar"),
     district_std = c("patna", "gaya"),
     district_panel_id = c("id1", "id2"),
-    emie_2007 = c(0.2, 0.4)
+    EMIE = c(0.2, 0.4)
   )
   measures_2017 <- data.frame(
     state_std = "bihar",
     district_std = "patna",
-    consumption_2017 = 100
+    consumption_1718 = 100
   )
 
-  out <- build_district_panel(data.frame(), data.frame(), measures_2007, measures_2017, data.frame(), data.frame(), list())
+  out <- build_district_panel(data.frame(), measures_2007, measures_2017, data.frame(), data.frame(), list())
 
   expect_setequal(out$district_panel_id, c("id1", "id2"))
   expect_false(anyDuplicated(out$district_panel_id) > 0L)
@@ -151,10 +152,10 @@ test_that("district panel preserves sf geometry when boundary keys match", {
     state_std = "bihar",
     district_std = "patna",
     district_panel_id = "id1",
-    emie_2007 = 0.2
+    EMIE = 0.2
   )
 
-  out <- build_district_panel(data.frame(), data.frame(), measures_2007, data.frame(), data.frame(), boundaries, list())
+  out <- build_district_panel(data.frame(), measures_2007, data.frame(), data.frame(), boundaries, list())
 
   expect_s3_class(out, "sf")
   expect_true("geometry" %in% names(out))
@@ -194,5 +195,20 @@ test_that("analysis district-panel validation inspects join-map many-to-many fla
   expect_error(
     validate_analysis_district_panel(panel, cfg = list(strict_district_panel_validation = TRUE), join_map = join_map),
     "join_map contains unintended many-to-many matches"
+  )
+})
+
+test_that("linguistic-distance range validation is part of the active builder", {
+  census <- data.frame(
+    State = "Bihar",
+    District = "Patna",
+    ling_degrees = 6,
+    spkr_tot = 1
+  )
+
+  expect_error(
+    build_linguistic_distance_iv(census, list()),
+    "0-5 range",
+    fixed = TRUE
   )
 })

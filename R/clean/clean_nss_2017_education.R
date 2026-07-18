@@ -9,9 +9,3 @@ clean_nss_2017_education <- function(raw) {
   class(out) <- c("nss_2017_education_clean", class(out))
   out
 }
-
-#' standardize edu1718 district codes
-#'
-standardize_edu1718_district_codes <- function(df) {
-  std(df, 2017L)
-}

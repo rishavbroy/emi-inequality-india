@@ -8,20 +8,26 @@ test_that("evaluate_distances works on known pairs with method-specific backends
   expect_gt(length(unique(out$distance)), 1L)
 })
 
-test_that("fuzzy_join_districts exposes diagnostic columns and attributes", {
-  keys_2007 <- data.frame(
-    state_std = "bihar",
-    district_std = "patna",
-    source_year = 2007L,
-    district_key = "2007__bihar__patna"
+test_that("prepare_district_join_map validates and annotates the reviewed crosswalk", {
+  crosswalk <- data.frame(
+    state_01 = "A", district_01 = "Old",
+    state_07 = "A", district_07 = "Middle",
+    state_17 = "A", district_17 = "New",
+    state_20 = "A", district_20 = "New",
+    stringsAsFactors = FALSE
   )
 
-  out <- fuzzy_join_districts(data.frame(), data.frame(), keys_2007, data.frame(), data.frame(), list())
+  out <- prepare_district_join_map(crosswalk)
 
-  expect_true(all(c("match_status", "possible_false_positive", "many_to_many") %in% names(out)))
+  expect_equal(out$.tracker_row, 1L)
+  expect_equal(out$source, "harmonization_crosswalk")
+  expect_equal(out$match_status, "reviewed_crosswalk_row")
   expect_s3_class(attr(out, "unmatched_rows"), "data.frame")
-  expect_s3_class(attr(out, "possible_false_positives"), "data.frame")
-  expect_s3_class(attr(out, "many_to_many_cases"), "data.frame")
+  expect_equal(nrow(attr(out, "unmatched_rows")), 0L)
+  expect_error(
+    prepare_district_join_map(data.frame(state_01 = "A")),
+    "missing required columns"
+  )
 })
 
 test_that("many-to-many match flags mark all duplicated source and tracker links", {

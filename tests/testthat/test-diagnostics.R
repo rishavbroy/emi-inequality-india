@@ -47,10 +47,10 @@ test_that("Moran diagnostics compute legacy asymptotic p-values from spatial wei
     nb = nb,
     W = spdep::nb2mat(nb, style = "B", zero.policy = TRUE),
     listw = spdep::nb2listw(nb, style = "W", zero.policy = TRUE),
-    neighbor_counts = lengths(nb),
+    neighbor_counts = spdep::card(nb),
     n = 4L,
     n_islands = 0L,
-    mean_neighbors = mean(lengths(nb)),
+    mean_neighbors = mean(spdep::card(nb)),
     warnings = character()
   )
   class(weights) <- c("emi_spatial_weights", class(weights))
@@ -357,4 +357,86 @@ test_that("public IV-panel diagnostics return file paths for targets", {
   expect_type(paths, "character")
   expect_true(length(paths) >= 5L)
   expect_true(all(file.exists(paths)))
+})
+
+test_that("multicollinearity diagnostics report factor-aware GVIF output", {
+  skip_if_not_installed("car")
+  set.seed(42)
+  df <- data.frame(
+    y = rnorm(60),
+    x = rnorm(60),
+    group = factor(rep(c("a", "b", "c"), each = 20))
+  )
+  model <- stats::lm(y ~ x + group, data = df)
+
+  out <- diagnose_multicollinearity(data.frame(), list(model), list())
+
+  expect_true(all(c("design_matrix", "vif") %in% out$diagnostic))
+  group_row <- out[out$diagnostic == "vif" & out$term == "group", , drop = FALSE]
+  expect_equal(group_row$df, 2L)
+  expect_true(is.finite(group_row$gvif_scaled))
+})
+
+test_that("multicollinearity diagnostics cover every supplied IV model", {
+  set.seed(44)
+  df <- data.frame(y = rnorm(60), x = rnorm(60), z = rnorm(60))
+  models <- list(first = stats::lm(y ~ x, data = df), second = stats::lm(y ~ z, data = df))
+
+  out <- diagnose_multicollinearity(data.frame(), models, list())
+
+  expect_setequal(unique(out$model), c("first", "second"))
+  expect_equal(sum(out$diagnostic == "design_matrix"), 2L)
+})
+
+test_that("IV VIF diagnostics use structural regressors rather than instruments", {
+  skip_if_not_installed("car")
+  skip_if_not_installed("ivreg")
+  set.seed(43)
+  df <- data.frame(
+    y = rnorm(90),
+    x = rnorm(90),
+    z = rnorm(90),
+    group = factor(rep(c("a", "b", "c"), each = 30))
+  )
+  model <- ivreg::ivreg(y ~ x + group | z + group, data = df)
+
+  out <- compute_vif_if_applicable(model)
+
+  expect_true(all(out$model_scope == "ivreg_structural_regressors"))
+  expect_true("group" %in% out$term)
+  expect_false("z" %in% out$term)
+})
+
+test_that("multicollinearity diagnostics save one tracked public CSV", {
+  path <- tempfile(fileext = ".csv")
+  diagnostics <- data.frame(diagnostic = "design_matrix", status = "estimated")
+
+  written <- save_multicollinearity_diagnostics(diagnostics, path)
+
+  expect_identical(written, path)
+  expect_true(file.exists(path))
+})
+
+test_that("spatial island diagnostics use spdep cardinalities", {
+  skip_if_not_installed("sf")
+  skip_if_not_installed("spdep")
+  square <- function(xmin, ymin) sf::st_polygon(list(rbind(
+    c(xmin, ymin), c(xmin + 1, ymin), c(xmin + 1, ymin + 1),
+    c(xmin, ymin + 1), c(xmin, ymin)
+  )))
+  panel <- sf::st_sf(
+    district_panel_id = c("a", "b", "island"),
+    geometry = sf::st_sfc(square(0, 0), square(1, 0), square(10, 10), crs = 3857)
+  )
+
+  weights <- build_spatial_weights_for_rows(panel, 1:3, queen = FALSE)
+  connectivity <- summarize_spatial_connectivity(weights)
+
+  expect_equal(weights$neighbor_counts, c(1L, 1L, 0L))
+  expect_equal(weights$n_islands, 1L)
+  islands <- summarize_islands(weights)
+  expect_equal(islands$row_index, 3L)
+  expect_equal(islands$district_panel_id, "island")
+  expect_true(connectivity$snap_investigation_needed)
+  expect_gt(weights$n_subgraphs, 1L)
 })

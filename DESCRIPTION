@@ -8,9 +8,13 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 Imports:
     targets,
-    tarchetypes,
     yaml,
-    tidyverse,
+    dplyr,
+    ggplot2,
+    purrr,
+    readr,
+    tibble,
+    tidyselect,
     readxl,
     haven,
     sf,
@@ -23,10 +27,11 @@ Imports:
     modelsummary,
     kableExtra,
     stringdist,
-    fuzzyjoin,
     magick,
     broom,
-    quarto,
     readODS,
     car,
+    knitr
+Suggests:
+    pdftools,
     testthat

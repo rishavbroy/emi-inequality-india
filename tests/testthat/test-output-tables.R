@@ -6,7 +6,7 @@ test_that("save_tables honors requested csv and tex formats", {
   skip_if_not_installed("kableExtra")
   old <- setwd(tempdir())
   on.exit(setwd(old), add = TRUE)
-  table <- data.frame(variable = "emie_2007", estimate = 1.23)
+  table <- data.frame(variable = "EMIE", estimate = 1.23)
 
   paths <- save_tables(
     list(sum_tbl_iv = table),
@@ -459,6 +459,7 @@ test_that("generated table TeX labels are Quarto cross-reference labels", {
 })
 
 test_that("probit TeX stacks standard errors below AME estimates", {
+  skip_if_not_installed("modelsummary")
   skip_if_not_installed("kableExtra")
   old <- setwd(tempdir())
   on.exit(setwd(old), add = TRUE)

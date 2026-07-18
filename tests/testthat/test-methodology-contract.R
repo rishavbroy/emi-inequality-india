@@ -49,8 +49,8 @@ test_that("EMIE uses Block 5 English-medium code 02 among children at most 19", 
 
   out <- compute_emie_2007(b5)
 
-  expect_equal(out$emie_2007[out$district_code_0708 == "01001"], 25)
-  expect_equal(out$emie_2007[out$district_code_0708 == "01002"], 100)
+  expect_equal(out$EMIE[out$district_code_0708 == "01001"], 25)
+  expect_equal(out$EMIE[out$district_code_0708 == "01002"], 100)
 })
 
 test_that("2007 household measures retain the district-HHID de-duplication correction", {
@@ -67,32 +67,54 @@ test_that("2007 household measures retain the district-HHID de-duplication corre
 
   expect_equal(out$npeople_0708, 10)
   expect_equal(out$nhouses_0708, 3)
-  expect_equal(out$consumption_2007, (1 * 100 + 2 * 200) / 3)
+  expect_equal(out$consumption_0708, (1 * 100 + 2 * 200) / 3)
 })
 
-test_that("baseline controls preserve legacy weighted dependency-ratio semantics", {
+test_that("baseline controls use household weights for household concepts", {
   b4 <- data.frame(
-    district_code = rep("01001", 4),
-    weight = c(1, 2, 3, 4),
-    AGE = c(10, 30, 70, 40),
-    SEX = c(1, 2, 2, 1),
-    RELATION_TO_HEAD = c(3, 1, 1, 1),
-    SECTOR = c(1, 2, 1, 2),
-    RELIGION = c(1, 2, 1, 3),
-    SOCIAL_GROUP = c("1", "2", "3", "9"),
-    HH_SIZE = c(4, 4, 2, 2),
-    EDUCATION_LEVEL = c("1", "8", "3", "10"),
-    LAND_POSSESSED_CODE = c("01", "05", "08", "03"),
+    district_code = rep("01001", 6),
+    STATE = rep("01", 6),
+    FSU_SL_NO = c(rep("100", 2), rep("200", 4)),
+    STRATUM = rep("01", 6),
+    SUB_STRATUM_NO = rep("01", 6),
+    HHID = c(rep("h1", 2), rep("h2", 4)),
+    weight = c(rep(1, 2), rep(3, 4)),
+    AGE = c(30, 10, 40, 70, 12, 35),
+    SEX = c(1, 2, 2, 1, 2, 1),
+    RELATION_TO_HEAD = c(1, 3, 1, 3, 3, 3),
+    EDUCATION_LEVEL = c(rep("8", 2), rep("3", 4)),
+    stringsAsFactors = FALSE
+  )
+  b3 <- data.frame(
+    district_code = rep("01001", 2),
+    STATE = rep("01", 2),
+    FSU_SL_NO = c("100", "200"),
+    STRATUM = rep("01", 2),
+    SUB_STRATUM_NO = rep("01", 2),
+    HHID = c("h1", "h2"),
+    weight = c(1, 3),
+    SECTOR = c(1, 2),
+    RELIGION = c(1, 2),
+    SOCIAL_GROUP = c("1", "2"),
+    HH_SIZE = c(2, 4),
+    LAND_POSSESSED_CODE = c("05", "08"),
+    REGION = c("011", "011"),
     stringsAsFactors = FALSE
   )
 
-  out <- compute_baseline_controls_2007(b4)
+  out <- compute_baseline_controls_2007(b4, b3)
 
-  expect_equal(out$dependency_ratio, 100 * (1 + 3) / (2 + 4))
-  expect_equal(out$pct_fem_head, 100 * (2 + 3) / 10)
-  expect_equal(out$pct_medium_land, 100 * 2 / 10)
-  expect_equal(out$pct_large_land, 100 * 3 / 10)
+  expect_equal(out$avg_hh_size, weighted.mean(c(2, 4), c(1, 3)))
+  expect_equal(out$pct_fem_head, 75)
+  expect_equal(out$pct_urban, 75)
+  expect_equal(out$pct_hindu, 25)
+  expect_equal(out$pct_muslim, 75)
+  expect_equal(out$pct_medium_land, 25)
+  expect_equal(out$pct_large_land, 75)
+  expect_equal(out$pct_head_secondary_plus, 25)
+  expect_equal(out$dependency_ratio, 100)
 })
+
 
 test_that("district pseudo-panel analysis core requires the IV instrument, treatment, and outcomes", {
   panel <- data.frame(

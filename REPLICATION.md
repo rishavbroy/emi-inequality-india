@@ -35,9 +35,9 @@ The setup script checks for `gdal-config`, `geos-config`, and `pkg-config` and p
 
 ## Public processed outputs
 
-The only processed data products intended to be tracked at this stage are:
+The only public district data products intended to be tracked at this stage are:
 
-- [`data/processed/district_tracker_2001_2007_2017_2020.csv`](data/processed/district_tracker_2001_2007_2017_2020.csv)
+- [`data/metadata/district_harmonization_crosswalk.csv`](data/metadata/district_harmonization_crosswalk.csv), the single tracked district harmonization authority
 - [`data/processed/district_panel_emi_consumption_2001_2007_2017_2020.csv`](data/processed/district_panel_emi_consumption_2001_2007_2017_2020.csv)
 
 Checksums for tracked metadata and processed CSV files are recorded in [`data/metadata/checksums.csv`](data/metadata/checksums.csv). Refresh them with:

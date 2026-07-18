@@ -151,3 +151,35 @@ test_that("district boundary reader validates shapefile sidecars before reading 
     fixed = TRUE
   )
 })
+
+test_that("headerless district carve-out reader preserves the first observation", {
+  path <- tempfile(fileext = ".csv")
+  writeLines(c(
+    "Anantapur,100,Anantapur,75,80",
+    ",,Sri Sathya Sai,25,20"
+  ), path)
+
+  out <- read_district_carveouts(path)
+
+  expect_equal(nrow(out), 2L)
+  expect_equal(out$district_1991, c("Anantapur", "Anantapur"))
+  expect_equal(out$pop_1991, c(100, 100))
+  expect_equal(out$district_2001[[1]], "Anantapur")
+  expect_equal(out$pct_91in01, c(80, 20))
+})
+
+test_that("manifest dispatches district carve-out rows to the explicit headerless reader", {
+  path <- tempfile(fileext = ".csv")
+  writeLines(c("Anantapur,100,Anantapur,75,80", "Kurnool,200,Kurnool,100,100"), path)
+  row <- data.frame(
+    absolute_path = path,
+    file_type = "csv",
+    reader_function = "read_district_carveouts",
+    stringsAsFactors = FALSE
+  )
+
+  out <- read_by_manifest_row(row)
+
+  expect_equal(nrow(out), 2L)
+  expect_equal(out$district_1991[[1]], "Anantapur")
+})

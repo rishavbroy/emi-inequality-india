@@ -21,28 +21,13 @@ validate_config <- function(cfg) {
   invisible(TRUE)
 }
 
-#' cfg get
-#'
-cfg_get <- function(cfg, key, default = NULL) {
-  if (!key %in% names(cfg)) return(default)
-  cfg[[key]]
-}
-
 #' diagnostic enabled
 #'
 diagnostic_enabled <- function(cfg, name) {
   isTRUE(cfg$run_diagnostics[[name]])
 }
 
-#' is final mode
-#'
+#' Is the active configuration a final/public build?
 is_final_mode <- function(cfg) {
   identical(cfg$mode, "final")
 }
-
-#' is diagnostics mode
-#'
-is_diagnostics_mode <- function(cfg) {
-  identical(cfg$mode, "diagnostics")
-}
-

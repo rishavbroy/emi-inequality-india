@@ -19,6 +19,8 @@ test_that("current public build helper scripts parse", {
   expect_silent(parse(repo_file("_targets.R")))
   expect_silent(parse(repo_file("scripts", "check_required_outputs.R")))
   expect_silent(parse(repo_file("scripts", "run_targets_checked.R")))
+  expect_silent(parse(repo_file("scripts", "run_targets_strict.R")))
+  expect_silent(parse(repo_file("scripts", "target_metadata_helpers.R")))
   expect_silent(parse(repo_file("R", "output", "render_analysis_notes.R")))
   expect_silent(parse(repo_file("scripts", "check_rendered_text.R")))
   expect_silent(parse(repo_file("scripts", "audit_outputs_final.R")))
@@ -79,7 +81,9 @@ test_that("public audit checks current QMDs without regenerating them", {
   src <- repo_text("scripts", "run_public_build_audit.sh")
 
   expect_match(src, "paper/report.qmd R chunks parse", fixed = TRUE)
-  expect_match(src, "SOURCE WHITESPACE CHECK AFTER SOURCE NORMALIZATION", fixed = TRUE)
+  expect_match(src, "READ-ONLY SOURCE WHITESPACE CHECK", fixed = TRUE)
+  expect_match(src, "audit_status.json", fixed = TRUE)
+  expect_false(grepl("perl -pi", src, fixed = TRUE))
   expect_false(grepl("--require-clean", src, fixed = TRUE))
   expect_false(grepl("require_clean_git_state", src, fixed = TRUE))
   expect_false(grepl("make rebuild-qmds", src, fixed = TRUE))
@@ -111,7 +115,7 @@ test_that("public audit clean preserves extended diagnostics and benchmarks", {
 
 test_that("current-facing code avoids refactor-era naming for active helpers", {
   ame <- repo_text("R", "selection", "compute_average_marginal_effects.R")
-  fuzzy <- repo_text("R", "districts", "fuzzy_join_districts.R")
+  fuzzy <- repo_text("R", "districts", "build_district_join_map.R")
   audit <- repo_text("scripts", "run_public_build_audit.sh")
 
   expect_false(grepl("legacy_terms", ame, fixed = TRUE))
@@ -120,7 +124,7 @@ test_that("current-facing code avoids refactor-era naming for active helpers", {
   expect_match(ame, "use_labeled_schema", fixed = TRUE)
   expect_false(grepl("Legacy-compatible cascading district matcher", fuzzy, fixed = TRUE))
   expect_false(grepl("legacy Rmd", fuzzy, fixed = TRUE))
-  expect_match(fuzzy, "current cascading fuzzy-match architecture", fixed = TRUE)
+  expect_match(fuzzy, "sole active district-map authority", fixed = TRUE)
   expect_false(grepl("legacy root-level diagnostic", audit, fixed = TRUE))
 })
 
@@ -143,10 +147,12 @@ test_that("targets graph separates public diagnostics, extended diagnostics, and
 
 test_that("target warning metadata is written to build diagnostics", {
   strict <- repo_text("scripts", "run_targets_strict.R")
+  helper <- repo_text("scripts", "target_metadata_helpers.R")
   audit <- repo_text("scripts", "run_public_build_audit.sh")
 
-  expect_match(strict, "outputs/diagnostics/build/target_meta_after_strict_run.csv", fixed = TRUE)
-  expect_match(strict, "outputs/diagnostics/build/target_warnings.csv", fixed = TRUE)
+  expect_match(strict, "write_target_run_metadata(meta_active, \"strict\")", fixed = TRUE)
+  expect_match(helper, "target_meta_after_", fixed = TRUE)
+  expect_match(helper, "outputs/diagnostics/build/target_warnings.csv", fixed = TRUE)
   expect_match(audit, "outputs/diagnostics/build/target_warnings.csv", fixed = TRUE)
 })
 
@@ -370,4 +376,90 @@ test_that("removed placeholder scaffolds do not return as runnable APIs", {
   for (fn in removed) {
     expect_false(grepl(paste0("\\b", fn, "\\s*<-\\s*function\\b"), src, perl = TRUE))
   }
+})
+
+test_that("selected target runner uses the programmatic targets API and shared warning metadata", {
+  runner <- repo_text("scripts", "run_targets_checked.R")
+  helper <- repo_text("scripts", "target_metadata_helpers.R")
+
+  expect_match(runner, "targets::tar_make(names = tidyselect::all_of(selected_target_names))", fixed = TRUE)
+  expect_false(grepl("eval(parse", runner, fixed = TRUE))
+  expect_match(runner, "record_target_warnings", fixed = TRUE)
+  expect_match(helper, "targets" , fixed = TRUE)
+  expect_match(helper, "target_warnings.csv", fixed = TRUE)
+})
+
+test_that("selected target warning scope includes rebuilt dependencies", {
+  env <- new.env(parent = globalenv())
+  sys.source(repo_file("scripts", "target_metadata_helpers.R"), envir = env)
+  before <- data.frame(
+    name = c("selected", "dependency"),
+    time = as.POSIXct(c("2026-01-01", "2026-01-01"), tz = "UTC"),
+    error = c(NA_character_, NA_character_),
+    warnings = c(NA_character_, NA_character_),
+    stringsAsFactors = FALSE
+  )
+  after <- before
+  after$time[[2]] <- as.POSIXct("2026-01-02", tz = "UTC")
+  after$warnings[[2]] <- "dependency warning"
+
+  changed <- env$changed_target_metadata_names(before, after)
+
+  expect_equal(changed, "dependency")
+  scoped <- env$select_target_metadata(after, unique(c("selected", changed)))
+  expect_setequal(scoped$name, c("selected", "dependency"))
+})
+
+test_that("target warning metadata normalizes list columns and consolidates runs", {
+  env <- new.env(parent = globalenv())
+  sys.source(repo_file("scripts", "target_metadata_helpers.R"), envir = env)
+  meta <- data.frame(name = c("a", "b"), stringsAsFactors = FALSE)
+  meta$warnings <- I(list(c("first", "second"), character()))
+  meta$error <- I(list(character(), character()))
+  path <- tempfile(fileext = ".csv")
+
+  normalized <- env$normalize_target_metadata(meta)
+  env$record_target_warnings(normalized, "optional", path)
+
+  expect_equal(normalized$warnings[[1]], "first; second")
+  recorded <- utils::read.csv(path, stringsAsFactors = FALSE)
+  expect_equal(recorded$name, "a")
+  expect_equal(recorded$run_label, "optional")
+})
+
+test_that("audit and archive scripts carry machine-readable run status", {
+  audit <- repo_text("scripts", "run_public_build_audit.sh")
+  archive <- repo_text("scripts", "make_review_archive.sh")
+
+  expect_match(audit, "audit_status.json", fixed = TRUE)
+  expect_match(audit, 'write_audit_status "failed"', fixed = TRUE)
+  expect_match(audit, 'write_audit_status "passed" "complete"', fixed = TRUE)
+  expect_match(archive, "standalone_archive", fixed = TRUE)
+  expect_match(archive, 'cp -f "$tmpdir/outputs/diagnostics/build/audit_status.json" "$tmpdir/audit_status.json"', fixed = TRUE)
+})
+
+test_that("dependency and target-worker contracts avoid unused attachment machinery", {
+  description <- repo_text("DESCRIPTION")
+  targets <- repo_text("_targets.R")
+  root <- dirname(repo_file("README.md"))
+
+  expect_false(grepl("tarchetypes", description, fixed = TRUE))
+  expect_false(grepl("fuzzyjoin", description, fixed = TRUE))
+  expect_match(description, "Suggests:", fixed = TRUE)
+  expect_match(description, "pdftools", fixed = TRUE)
+  expect_match(description, "testthat", fixed = TRUE)
+  expect_match(targets, "packages = character()", fixed = TRUE)
+  expect_false(file.exists(file.path(root, "R", "packages.R")))
+})
+
+test_that("district harmonization crosswalk is the sole tracked tracker authority", {
+  targets <- repo_text("_targets.R")
+  diagnostics <- repo_text("R", "diagnostics", "diagnose_district_tracker_sources.R")
+  root <- dirname(repo_file("README.md"))
+
+  expect_false(grepl("processed_district_tracker_file", targets, fixed = TRUE))
+  expect_match(targets, "prepare_district_join_map(district_harmonization_crosswalk)", fixed = TRUE)
+  expect_match(targets, "build_district_panel(district_join_map, measures_2007", fixed = TRUE)
+  expect_match(diagnostics, "data/metadata/district_harmonization_crosswalk.csv", fixed = TRUE)
+  expect_false(file.exists(file.path(root, "data", "processed", "district_tracker_2001_2007_2017_2020.csv")))
 })

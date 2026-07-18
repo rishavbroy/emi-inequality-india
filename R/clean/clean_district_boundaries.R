@@ -40,18 +40,6 @@ normalize_numeric_join_code <- function(x) {
   x
 }
 
-#' standardize boundary state names
-#'
-standardize_boundary_state_names <- function(df) {
-  std(df, 2020L)
-}
-
-#' standardize boundary district names
-#'
-standardize_boundary_district_names <- function(df) {
-  std(df, 2020L)
-}
-
 #' repair invalid geometries
 #'
 repair_invalid_geometries <- function(sf_df) {

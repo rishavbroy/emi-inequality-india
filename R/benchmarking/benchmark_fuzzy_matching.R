@@ -50,15 +50,6 @@ troublesome_name_pairs <- function() {
   )
 }
 
-#' evaluate distances
-#'
-#' This preserves the legacy helper from Chunk 16.  It uses stringdist's named
-#' methods when available, including the legacy notes: soundex = 0, qgram = 0,
-#' jw <= 0.15, dl <= 2, and osa <= 1.
-benchmark_string_distance_methods <- function(pairs, methods = district_fuzzy_match_methods(), thresholds = district_fuzzy_match_thresholds()) {
-  evaluate_distances(pairs, methods, thresholds)
-}
-
 test_troublesome_name_pairs <- function(pairs = troublesome_name_pairs(), methods = district_fuzzy_match_methods(), thresholds = district_fuzzy_match_thresholds()) {
   evaluate_distances(pairs, methods, thresholds)
 }

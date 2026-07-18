@@ -46,7 +46,7 @@ This repository, on the other hand, is intended to signal more than just one PDF
 
 - **Completed refactor proof.** The legacy-to-Quarto migration and parity machinery has been frozen under `archive/refactoring/` and the `archive/refactoring-complete` branch/tag workflow. Active paper and analysis sources are now edited directly.
 - **Targets-based research pipeline.** [`_targets.R`](_targets.R) organizes raw-data readers, district tracking, measure construction, IV/probit models, figures, tables, diagnostics, report rendering, and application samples.
-- **Audited public artifacts.** [`scripts/run_public_build_audit.sh`](scripts/run_public_build_audit.sh) normalizes source whitespace, runs tests, executes final public checks, optionally runs extended diagnostics/benchmarks, and packages `review.zip`.
+- **Audited public artifacts.** [`scripts/run_public_build_audit.sh`](scripts/run_public_build_audit.sh) checks source whitespace without modifying the working tree, runs tests and final public checks, optionally runs extended diagnostics/benchmarks, records machine-readable audit status, and packages `review.zip`.
 - **Review archives without raw data.** [`scripts/make_review_archive.sh`](scripts/make_review_archive.sh) packages source, public outputs, and diagnostics into `review.zip` while omitting local raw data and caches.
 - **Explicit diagnostics policy.** Public/build diagnostics are short-lived; extended diagnostics and benchmarking outputs are preserved unless intentionally cleaned.
 - **Application-sample automation.** Writing and coding samples are generated from the same source/pipeline used for the paper rather than hand-maintained as separate PDFs.
@@ -85,9 +85,9 @@ make check-public-draft
 
 Raw data are not tracked. Place raw files according to [`data/metadata/file_manifest.csv`](data/metadata/file_manifest.csv). See [`REPLICATION.md`](REPLICATION.md) for the current replication data contract and expected behavior on a fresh clone without local-only raw data.
 
-The two public processed data products are:
+The two tracked public district data products are:
 
-- [`data/processed/district_tracker_2001_2007_2017_2020.csv`](data/processed/district_tracker_2001_2007_2017_2020.csv)
+- [`data/metadata/district_harmonization_crosswalk.csv`](data/metadata/district_harmonization_crosswalk.csv), the single tracked harmonization authority
 - [`data/processed/district_panel_emi_consumption_2001_2007_2017_2020.csv`](data/processed/district_panel_emi_consumption_2001_2007_2017_2020.csv)
 
 ## Commands for running and auditing

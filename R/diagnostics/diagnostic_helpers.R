@@ -1,13 +1,5 @@
 # Shared helpers for optional diagnostics and benchmarking outputs.
 
-diagnostic_output_dir <- function(..., root = "outputs/diagnostics/extended") {
-  file.path(root, ...)
-}
-
-benchmark_output_dir <- function(..., root = "outputs/benchmarking") {
-  file.path(root, ...)
-}
-
 write_diagnostic_csv <- function(x, path, row.names = FALSE) {
   dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
   x <- as.data.frame(x, stringsAsFactors = FALSE)

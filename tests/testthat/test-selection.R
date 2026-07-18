@@ -88,3 +88,20 @@ test_that("selection join dedupe collapses only identical duplicate rows", {
   expect_equal(nrow(dedupe_selection_join_rows(identical_rows, "id")), 1L)
   expect_error(dedupe_selection_join_rows(different_rows, "id"), "non-identical rows")
 })
+
+test_that("selection child keys collapse identical rows and reject conflicts", {
+  base <- data.frame(
+    STATE = "01", FSU_SL_NO = "100", STRATUM = "01", SUB_STRATUM_NO = "01",
+    HHID = "h1", PID = "p1", district_code_0708 = "01001", AGE = 10,
+    stringsAsFactors = FALSE
+  )
+  identical_rows <- rbind(base, base)
+  conflicting_rows <- rbind(base, transform(base, AGE = 11))
+
+  expect_equal(nrow(enforce_selection_child_key_uniqueness(identical_rows)), 1L)
+  expect_error(
+    enforce_selection_child_key_uniqueness(conflicting_rows),
+    "duplicate keys with non-identical rows",
+    fixed = TRUE
+  )
+})

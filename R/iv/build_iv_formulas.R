@@ -47,8 +47,5 @@ build_iv_formulas <- function(cfg) {
   )
 }
 
-#' build baseline 2sls formula
-#'
-build_baseline_2sls_formula <- function(...) make_iv_formula(...)
 
 # sample-end: code-iv-formula-estimation

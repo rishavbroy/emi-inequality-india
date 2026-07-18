@@ -1,10 +1,10 @@
 test_that("final figures degrade to status specs without real sf geometry", {
   cfg <- list(mode = "final", output_formats = list(figures = "png"))
   panel <- data.frame(
-    emie_2007 = 1,
-    consumption_growth_pct = 2,
-    pucca_share_2007 = 3,
-    head_secondary_plus_2007 = 4,
+    EMIE = 1,
+    consumption_pct_change = 2,
+    pct_pucca = 3,
+    pct_head_secondary_plus = 4,
     region = "North",
     wavg_ling_degrees = 5
   )
@@ -23,10 +23,10 @@ test_that("final figures include public map collages when geometry is validated"
     crs = 4326
   )
   panel <- sf::st_sf(
-    emie_2007 = c(1, 2),
-    consumption_growth_pct = c(2, 3),
-    pucca_share_2007 = c(3, 4),
-    head_secondary_plus_2007 = c(4, 5),
+    EMIE = c(1, 2),
+    consumption_pct_change = c(2, 3),
+    pct_pucca = c(3, 4),
+    pct_head_secondary_plus = c(4, 5),
     region = c("North", "North"),
     wavg_ling_degrees = c(5, 6),
     geometry = geometry
@@ -37,11 +37,17 @@ test_that("final figures include public map collages when geometry is validated"
 })
 
 test_that("district carve-out figure data uses pct_91in01 values", {
-  carveouts <- read_carveout_shift_data()
+  path <- tempfile(fileext = ".csv")
+  writeLines(c(
+    'Anantapur,"3,183,814",Anantapur,100,75.5',
+    ',,Sri Sathya Sai,25.5,24.5'
+  ), path)
 
-  expect_true(nrow(carveouts) > 0)
+  carveouts <- read_carveout_shift_data(path)
+
+  expect_equal(nrow(carveouts), 2L)
   expect_true("pct_91in01" %in% names(carveouts))
-  expect_true(all(is.finite(carveouts$pct_91in01)))
+  expect_equal(carveouts$pct_91in01, c(75.5, 24.5))
 })
 
 test_that("public-map regions overwrite numeric source codes with named categories", {
@@ -59,10 +65,10 @@ test_that("public-map regions overwrite numeric source codes with named categori
 test_that("map collage order matches public captions", {
   cfg <- list(mode = "final", output_formats = list(figures = "png"))
   panel <- data.frame(
-    emie_2007 = 1,
-    consumption_growth_pct = 2,
-    pucca_share_2007 = 3,
-    head_secondary_plus_2007 = 4,
+    EMIE = 1,
+    consumption_pct_change = 2,
+    pct_pucca = 3,
+    pct_head_secondary_plus = 4,
     region = "North",
     wavg_ling_degrees = 5
   )
@@ -109,12 +115,12 @@ test_that("complete map geometry keeps grey boundaries and non-missing overlay r
   panel <- sf::st_sf(
     state_20 = "A",
     district_20 = "matched",
-    emie_2007 = 10,
+    EMIE = 10,
     geometry = geometry[1]
   )
 
-  out <- complete_map_geometry(panel, boundaries, "emie_2007")
-  fill <- public_map_fill(out, "emie_2007", public_map_style("emie_2007"))
+  out <- complete_map_geometry(panel, boundaries, "EMIE")
+  fill <- public_map_fill(out, "EMIE", public_map_style("EMIE"))
 
   expect_equal(nrow(out), 2L)
   expect_true("No data" %in% as.character(fill$data$.map_fill))
@@ -130,10 +136,10 @@ test_that("public map rendering refuses all-grey data layers", {
   panel <- sf::st_sf(
     state_20 = "A",
     district_20 = "missing",
-    emie_2007 = NA_real_,
+    EMIE = NA_real_,
     geometry = geometry
   )
-  spec <- figure_spec("map_emi_exposure", "map_emi_exposure.png", "EMI Exposure", kind = "map", variable = "emie_2007")
+  spec <- figure_spec("map_emi_exposure", "map_emi_exposure.png", "EMI Exposure", kind = "map", variable = "EMIE")
 
   expect_error(
     build_public_ggplot_map(panel, spec),
@@ -158,8 +164,8 @@ test_that("No data is mapped through the fill scale so its legend key is grey", 
 
 
 test_that("main map legends use rounded publication bounds", {
-  cons <- public_map_style("consumption_growth_pct")
-  educ <- public_map_style("head_secondary_plus_2007")
+  cons <- public_map_style("consumption_pct_change")
+  educ <- public_map_style("pct_head_secondary_plus")
 
   expect_equal(cons$title, "Consumption Growth (%)")
   expect_equal(cons$breaks, c(10, 100, 200, 300, 400, 450))
