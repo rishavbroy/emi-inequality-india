@@ -32,7 +32,7 @@ build_spatial_weights <- function(district_panel, cfg) {
     ))
   }
 
-  weights <- build_spatial_weights_for_rows(district_panel, row_index, queen = FALSE)
+  weights <- build_spatial_weights_for_rows(district_panel, row_index, queen = FALSE, snap = spatial_snap_setting(cfg))
   weights$coverage <- coverage
   weights$panel_scope <- "current_final_matched_panel_non_empty_geometry"
   weights
@@ -49,10 +49,25 @@ spatial_weight_final_panel_rows <- function(district_panel) {
   which(!sf::st_is_empty(geom))
 }
 
+spatial_snap_setting <- function(cfg) {
+  cfg <- cfg %||% list()
+  spatial_cfg <- cfg$spatial_weights %||% list()
+  value <- spatial_cfg$snap %||% cfg$spatial_snap %||% NULL
+  if (is.null(value) || !length(value) || is.na(value[[1]])) return(NULL)
+  value <- suppressWarnings(as.numeric(value[[1]]))
+  if (!is.finite(value) || value < 0) stop("Spatial snap must be a finite non-negative number.", call. = FALSE)
+  value
+}
+
+poly2nb_with_optional_snap <- function(panel, queen, snap = NULL) {
+  if (is.null(snap)) return(spdep::poly2nb(panel, queen = queen))
+  spdep::poly2nb(panel, queen = queen, snap = snap)
+}
+
 #' build spatial weights for selected district-panel rows
 #'
 #' @return A list with nb, binary matrix, and row-standardized listw objects.
-build_spatial_weights_for_rows <- function(district_panel, rows, queen = FALSE) {
+build_spatial_weights_for_rows <- function(district_panel, rows, queen = FALSE, snap = NULL) {
   if (!inherits(district_panel, "sf")) {
     return(list(status = "out_of_active_pipeline", reason = "Requires sf geometry."))
   }
@@ -86,9 +101,25 @@ build_spatial_weights_for_rows <- function(district_panel, rows, queen = FALSE) 
   }
 
   panel <- district_panel[rows, , drop = FALSE]
-  nb <- capture_expected_spatial_warning(spdep::poly2nb(panel, queen = queen))
+  nb <- capture_expected_spatial_warning(poly2nb_with_optional_snap(panel, queen = queen, snap = snap))
   W <- capture_expected_spatial_warning(spdep::nb2mat(nb, style = "B", zero.policy = TRUE))
   listw <- capture_expected_spatial_warning(spdep::nb2listw(nb, style = "W", zero.policy = TRUE))
+
+  neighbor_counts <- spdep::card(nb)
+  n_components <- spdep::n.comp.nb(nb)$nc %||% NA_integer_
+  snap_used <- if (is.null(snap)) NA_real_ else as.numeric(snap)
+  panel_data <- as.data.frame(sf::st_drop_geometry(panel), stringsAsFactors = FALSE)
+  identifier_cols <- intersect(
+    c("district_panel_id", "state_20", "district_20", "state_std", "district_std"),
+    names(panel_data)
+  )
+  neighbor_ledger <- data.frame(
+    row_index = rows,
+    n_neighbors = neighbor_counts,
+    panel_data[identifier_cols],
+    check.names = FALSE,
+    stringsAsFactors = FALSE
+  )
 
   out <- list(
     status = "constructed",
@@ -100,10 +131,14 @@ build_spatial_weights_for_rows <- function(district_panel, rows, queen = FALSE) 
     nb = nb,
     W = W,
     listw = listw,
-    neighbor_counts = lengths(nb),
+    neighbor_counts = neighbor_counts,
+    neighbor_ledger = neighbor_ledger,
     n = length(rows),
-    n_islands = sum(lengths(nb) == 0L),
-    mean_neighbors = mean(lengths(nb)),
+    n_islands = sum(neighbor_counts == 0L),
+    mean_neighbors = mean(neighbor_counts),
+    n_subgraphs = n_components,
+    snap = snap_used,
+    snap_investigation_needed = sum(neighbor_counts == 0L) > 0L || (!is.na(n_components) && n_components > 1L),
     warnings = spatial_warnings
   )
   class(out) <- c("emi_spatial_weights", class(out))
@@ -122,7 +157,7 @@ diagnose_spatial_weights <- function(district_panel, spatial_weights, cfg) {
     ))
   }
 
-  comparison <- compare_rook_queen_contiguity(district_panel)
+  comparison <- compare_rook_queen_contiguity(district_panel, snap = spatial_snap_setting(cfg))
   base <- data.frame(
     diagnostic = "spatial_weights",
     status = spatial_weights$status %||% "constructed",
@@ -132,12 +167,18 @@ diagnose_spatial_weights <- function(district_panel, spatial_weights, cfg) {
     n = spatial_weights$n %||% NA_real_,
     n_islands = spatial_weights$n_islands %||% NA_real_,
     mean_neighbors = spatial_weights$mean_neighbors %||% NA_real_,
+    n_subgraphs = spatial_weights$n_subgraphs %||% NA_integer_,
+    snap = spatial_weights$snap %||% NA_real_,
+    snap_investigation_needed = spatial_weights$snap_investigation_needed %||% NA,
     panel_scope = spatial_weights$panel_scope %||% "current_final_matched_panel_non_empty_geometry",
     warnings = paste(spatial_weights$warnings %||% attr(spatial_weights, "spatial_warnings") %||% character(), collapse = "; "),
     stringsAsFactors = FALSE
   )
   attr(base, "rook_queen_comparison") <- add_spatial_weight_reference(comparison)
   attr(base, "legacy_reference") <- spatial_weight_reference()
+  attr(base, "neighbor_counts") <- summarize_neighbor_counts(spatial_weights)
+  attr(base, "islands") <- summarize_islands(spatial_weights)
+  attr(base, "connectivity") <- summarize_spatial_connectivity(spatial_weights)
   base
 }
 
@@ -148,7 +189,7 @@ diagnose_spatial_weights <- function(district_panel, spatial_weights, cfg) {
 #' similar run times.  To avoid an extra sfExtras dependency, this project uses
 #' the same `spdep::poly2nb()` implementation used by the final rook weights and
 #' records elapsed time and average neighbor counts for both choices.
-compare_rook_queen_contiguity <- function(district_panel) {
+compare_rook_queen_contiguity <- function(district_panel, snap = NULL) {
   if (!inherits(district_panel, "sf")) return(tibble::tibble())
   need_pkg("spdep", "rook/queen contiguity comparison")
   need_pkg("sf", "rook/queen contiguity comparison")
@@ -159,7 +200,7 @@ compare_rook_queen_contiguity <- function(district_panel) {
     warnings <- character()
     elapsed <- system.time({
       nb <- withCallingHandlers(
-        spdep::poly2nb(panel, queen = queen),
+        poly2nb_with_optional_snap(panel, queen = queen, snap = snap),
         warning = function(w) {
           msg <- conditionMessage(w)
           if (grepl("no neighbours|sub-graphs", msg, ignore.case = TRUE)) {
@@ -169,11 +210,14 @@ compare_rook_queen_contiguity <- function(district_panel) {
         }
       )
     })[["elapsed"]]
+    cards <- spdep::card(nb)
     tibble::tibble(
       contiguity = if (isTRUE(queen)) "queen" else "rook",
       n = length(nb),
-      mean_neighbors = mean(lengths(nb)),
-      n_islands = sum(lengths(nb) == 0L),
+      mean_neighbors = mean(cards),
+      n_islands = sum(cards == 0L),
+      n_subgraphs = spdep::n.comp.nb(nb)$nc %||% NA_integer_,
+      snap = if (is.null(snap)) NA_real_ else as.numeric(snap),
       panel_scope = "current_final_matched_panel_non_empty_geometry",
       elapsed_seconds = unname(elapsed),
       warnings = paste(warnings, collapse = "; ")
@@ -211,18 +255,36 @@ add_spatial_weight_reference <- function(comparison) {
 #' summarize islands
 #'
 summarize_islands <- function(spatial_weights) {
-  if (!inherits(spatial_weights, "emi_spatial_weights")) return(tibble::tibble())
-  islands <- which(spatial_weights$neighbor_counts == 0L)
-  tibble::tibble(row_index = spatial_weights$row_index[islands], n_neighbors = 0L)
+  ledger <- summarize_neighbor_counts(spatial_weights)
+  if (!nrow(ledger)) return(ledger)
+  ledger[ledger$n_neighbors == 0L, , drop = FALSE]
 }
 
 #' summarize neighbor counts
 #'
 summarize_neighbor_counts <- function(spatial_weights) {
   if (!inherits(spatial_weights, "emi_spatial_weights")) return(tibble::tibble())
-  tibble::tibble(
+  ledger <- spatial_weights$neighbor_ledger %||% data.frame(
     row_index = spatial_weights$row_index,
     n_neighbors = spatial_weights$neighbor_counts
+  )
+  tibble::as_tibble(ledger)
+}
+
+#' Summarize graph connectivity and whether `poly2nb()` snap needs review
+summarize_spatial_connectivity <- function(spatial_weights) {
+  if (!inherits(spatial_weights, "emi_spatial_weights")) return(tibble::tibble())
+  tibble::tibble(
+    n = spatial_weights$n,
+    n_islands = spatial_weights$n_islands,
+    n_subgraphs = spatial_weights$n_subgraphs,
+    snap = spatial_weights$snap,
+    snap_investigation_needed = isTRUE(spatial_weights$snap_investigation_needed),
+    recommendation = if (isTRUE(spatial_weights$snap_investigation_needed)) {
+      "Inspect geometry validity and sensitivity to a documented poly2nb snap value before interpreting spatial results."
+    } else {
+      "No island/subgraph-driven snap investigation is currently indicated."
+    }
   )
 }
 
@@ -233,7 +295,10 @@ save_spatial_weight_diagnostics <- function(diagnostics, dir = "outputs/diagnost
   paths <- c(
     summary = write_diagnostic_csv(as.data.frame(diagnostics), file.path(dir, "spatial_weights_summary.csv")),
     rook_queen_comparison = write_diagnostic_csv(attr(diagnostics, "rook_queen_comparison") %||% data.frame(), file.path(dir, "rook_queen_contiguity_comparison.csv")),
-    legacy_reference = write_diagnostic_csv(attr(diagnostics, "legacy_reference") %||% data.frame(), file.path(dir, "spatial_weights_legacy_reference.csv"))
+    legacy_reference = write_diagnostic_csv(attr(diagnostics, "legacy_reference") %||% data.frame(), file.path(dir, "spatial_weights_legacy_reference.csv")),
+    neighbor_counts = write_diagnostic_csv(attr(diagnostics, "neighbor_counts") %||% data.frame(), file.path(dir, "spatial_weights_neighbor_counts.csv")),
+    islands = write_diagnostic_csv(attr(diagnostics, "islands") %||% data.frame(), file.path(dir, "spatial_weights_islands.csv")),
+    connectivity = write_diagnostic_csv(attr(diagnostics, "connectivity") %||% data.frame(), file.path(dir, "spatial_weights_connectivity.csv"))
   )
   output_manifest(paths)
 }
