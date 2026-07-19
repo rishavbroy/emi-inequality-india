@@ -237,7 +237,29 @@ test_that("district panel attaches 2020 geometry without merge coercion", {
   expect_s3_class(out, "sf")
   expect_identical(out$district_panel_id, panel$district_panel_id)
   expect_equal(sf::st_coordinates(sf::st_geometry(out)[1])[, 1], c(2, 3, 3, 2, 2))
-  expect_true(is.na(sf::st_as_text(sf::st_geometry(out)[3])))
+  expect_identical(sf::st_is_empty(sf::st_geometry(out)), c(FALSE, FALSE, TRUE))
+})
+
+test_that("district geometry attachment keeps an sf contract when no keys match", {
+  skip_if_not_installed("sf")
+  boundaries <- sf::st_sf(
+    state_20 = "Bihar",
+    district_20 = "Patna",
+    geometry = sf::st_sfc(sf::st_point(c(0, 0)), crs = 4326)
+  )
+  panel <- data.frame(
+    district_panel_id = c("gaya", "nalanda"),
+    state_20 = c("Bihar", "Bihar"),
+    district_20 = c("Gaya", "Nalanda"),
+    stringsAsFactors = FALSE
+  )
+
+  out <- attach_panel_geometry(panel, boundaries)
+
+  expect_s3_class(out, "sf")
+  expect_identical(out$district_panel_id, panel$district_panel_id)
+  expect_true(all(sf::st_is_empty(sf::st_geometry(out))))
+  expect_identical(sf::st_crs(out), sf::st_crs(boundaries))
 })
 
 test_that("district geometry matching uses the first unique boundary key", {

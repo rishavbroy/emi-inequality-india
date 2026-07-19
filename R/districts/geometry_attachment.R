@@ -48,14 +48,11 @@ attach_geometry_by_keys <- function(panel, boundaries, panel_state, panel_distri
   boundary_key <- boundary_key[keep]
   geometry <- geometry[keep]
   matched <- match(panel_key, boundary_key)
-  if (all(is.na(matched))) return(panel)
 
-  geometry_name <- attr(boundaries, "sf_column")
-  if (!is.character(geometry_name) || length(geometry_name) != 1L || !nzchar(geometry_name)) {
-    geometry_name <- "geometry"
-  }
-  panel[[geometry_name]] <- geometry[matched]
-  sf::st_as_sf(panel, sf_column_name = geometry_name)
+  # Subsetting an sfc vector with unmatched (NA) indices yields typed empty
+  # geometries. Assign through sf's documented geometry setter so the result
+  # remains an sf object even when no panel row matches a boundary key.
+  sf::st_set_geometry(panel, geometry[matched])
 }
 
 district_geometry_key <- function(state, district) {
