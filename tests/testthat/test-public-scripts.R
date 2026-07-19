@@ -245,7 +245,8 @@ test_that("selected target runner uses the programmatic targets API and shared w
   runner <- repo_text("scripts", "run_targets_checked.R")
   helper <- repo_text("scripts", "target_metadata_helpers.R")
 
-  expect_match(runner, "targets::tar_make(names = tidyselect::all_of(selected_target_names))", fixed = TRUE)
+  expect_match(runner, "rlang::inject", fixed = TRUE)
+  expect_match(runner, "tidyselect::all_of(!!selected_target_names)", fixed = TRUE)
   expect_false(grepl("eval(parse", runner, fixed = TRUE))
   expect_match(runner, "record_target_warnings", fixed = TRUE)
   expect_match(helper, "targets" , fixed = TRUE)

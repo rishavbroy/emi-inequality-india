@@ -23,6 +23,9 @@ if (!requireNamespace("targets", quietly = TRUE)) {
 if (!requireNamespace("tidyselect", quietly = TRUE)) {
   stop("Package 'tidyselect' is required. Run `make init-renv`.", call. = FALSE)
 }
+if (!requireNamespace("rlang", quietly = TRUE)) {
+  stop("Package 'rlang' is required. Run `make init-renv`.", call. = FALSE)
+}
 
 manifest <- tryCatch(
   targets::tar_manifest(fields = "name"),
@@ -47,7 +50,9 @@ meta_before <- target_metadata_snapshot()
 
 status <- 0L
 tryCatch(
-  targets::tar_make(names = tidyselect::all_of(selected_target_names)),
+  rlang::inject(
+    targets::tar_make(names = tidyselect::all_of(!!selected_target_names))
+  ),
   error = function(e) {
     message("targets::tar_make() errored: ", conditionMessage(e))
     status <<- 1L
