@@ -12,21 +12,16 @@
 #'
 build_selection_data <- function(nss_2007_education, district_keys_2007, cfg) {
   blocks <- as_input_list(nss_2007_education)
-  b3 <- std(safe_df(blocks[["nss0708edu_block3"]] %||% data.frame()), 2007L)
-  b4 <- std(safe_df(blocks[["nss0708edu_block4"]] %||% data.frame()), 2007L)
-  b5 <- std(safe_df(blocks[["nss0708edu_block5"]] %||% data.frame()), 2007L)
-  b6 <- std(safe_df(blocks[["nss0708edu_block6"]] %||% data.frame()), 2007L)
+  b3 <- normalize_selection_block(blocks[["nss0708edu_block3"]] %||% data.frame())
+  b4 <- normalize_selection_block(blocks[["nss0708edu_block4"]] %||% data.frame())
+  b5 <- normalize_selection_block(blocks[["nss0708edu_block5"]] %||% data.frame())
+  b6 <- normalize_selection_block(blocks[["nss0708edu_block6"]] %||% data.frame())
 
   if (!nrow(b4) || !"PID" %in% names(b4) || !"AGE" %in% names(b4)) {
     df <- std(safe_bind_rows(lapply(blocks, safe_df)), 2007L)
     if (!"enrolled" %in% names(df)) df$enrolled <- NA_real_
     return(df)
   }
-
-  b4 <- normalize_selection_identifiers(b4)
-  b5 <- normalize_selection_identifiers(b5)
-  b6 <- normalize_selection_identifiers(b6)
-  b3 <- normalize_selection_identifiers(b3)
 
   selection_df <- construct_child_level_selection_sample(list(b4 = b4, b5 = b5, b6 = b6))
   selection_df <- enforce_selection_child_key_uniqueness(selection_df)
@@ -166,6 +161,19 @@ apply_selection_sample_restrictions <- function(df) {
   }
   if ("district_code_0708" %in% names(df)) df$district_code_0708 <- as.factor(df$district_code_0708)
   df
+}
+
+normalize_selection_block <- function(x, year = 2007L) {
+  df <- safe_df(x)
+  if (!nrow(df)) return(std(df, year))
+
+  for (nm in names(df)) {
+    if (inherits(df[[nm]], c("haven_labelled", "haven_labelled_spss", "labelled"))) {
+      df[[nm]] <- haven::zap_labels(df[[nm]])
+    }
+  }
+
+  normalize_selection_identifiers(std(df, year))
 }
 
 normalize_selection_identifiers <- function(df) {

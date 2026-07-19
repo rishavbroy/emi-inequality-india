@@ -107,12 +107,12 @@ test_that("selection child keys collapse identical rows and reject conflicts", {
 })
 
 
-test_that("selection join identifiers discard incompatible haven labels", {
+test_that("selection blocks discard incompatible haven labels before standardization and joins", {
   skip_if_not_installed("haven")
 
   block5 <- data.frame(
     PID = haven::labelled(1, labels = c(child = 1)),
-    AGE = 10,
+    AGE = haven::labelled(10, labels = c(age_ten = 10)),
     district_code = haven::labelled(101, labels = c(Patna = 101)),
     weight = haven::labelled(2, labels = c(sample_weight = 2)),
     FSU_SL_NO = haven::labelled(11, labels = c(fsu_a = 11)),
@@ -126,14 +126,20 @@ test_that("selection join identifiers discard incompatible haven labels", {
   block6$PID <- haven::labelled(1, labels = c(person_one = 1))
   block6$FSU_SL_NO <- haven::labelled(11, labels = c(first_stage_unit = 11))
 
-  normalized5 <- normalize_selection_identifiers(block5)
-  normalized6 <- normalize_selection_identifiers(block6)
+  normalized5 <- normalize_selection_block(block5)
+  normalized6 <- normalize_selection_block(block6)
   joined <- safe_selection_full_join(
     normalized5,
     normalized6,
     selection_join_keys(enrolled = FALSE)
   )
 
+  expect_false(any(vapply(
+    normalized5,
+    inherits,
+    logical(1),
+    what = c("haven_labelled", "haven_labelled_spss", "labelled")
+  )))
   identifier_cols <- c("PID", "district_code_0708", "FSU_SL_NO", "HHID", "STATE", "STRATUM", "SUB_STRATUM_NO")
   expect_true(all(vapply(normalized5[identifier_cols], is.character, logical(1))))
   expect_type(normalized5$weight, "double")
