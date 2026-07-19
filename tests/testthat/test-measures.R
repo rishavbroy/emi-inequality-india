@@ -212,3 +212,49 @@ test_that("linguistic-distance range validation is part of the active builder", 
     fixed = TRUE
   )
 })
+
+test_that("district panel attaches 2020 geometry without merge coercion", {
+  skip_if_not_installed("sf")
+  polygons <- sf::st_sfc(
+    sf::st_polygon(list(rbind(c(0, 0), c(1, 0), c(1, 1), c(0, 1), c(0, 0)))),
+    sf::st_polygon(list(rbind(c(2, 0), c(3, 0), c(3, 1), c(2, 1), c(2, 0)))),
+    crs = 4326
+  )
+  boundaries <- sf::st_sf(
+    state_20 = c("Bihar", "Bihar"),
+    district_20 = c("Patna", "Gaya"),
+    geometry = polygons
+  )
+  panel <- data.frame(
+    district_panel_id = c("gaya", "patna", "missing"),
+    state_20 = c("Bihar", "Bihar", "Bihar"),
+    district_20 = c("Gaya", "Patna", "Nalanda"),
+    stringsAsFactors = FALSE
+  )
+
+  out <- attach_panel_geometry(panel, boundaries)
+
+  expect_s3_class(out, "sf")
+  expect_identical(out$district_panel_id, panel$district_panel_id)
+  expect_equal(sf::st_coordinates(sf::st_geometry(out)[1])[, 1], c(2, 3, 3, 2, 2))
+  expect_true(is.na(sf::st_as_text(sf::st_geometry(out)[3])))
+})
+
+test_that("district geometry matching uses the first unique boundary key", {
+  skip_if_not_installed("sf")
+  polygons <- sf::st_sfc(
+    sf::st_point(c(0, 0)),
+    sf::st_point(c(9, 9)),
+    crs = 4326
+  )
+  boundaries <- sf::st_sf(
+    state_20 = c("Bihar", "Bihar"),
+    district_20 = c("Patna", "Patna"),
+    geometry = polygons
+  )
+  panel <- data.frame(state_20 = "Bihar", district_20 = "Patna")
+
+  out <- attach_panel_geometry(panel, boundaries)
+
+  expect_equal(as.numeric(sf::st_coordinates(out)[1, ]), c(0, 0))
+})
