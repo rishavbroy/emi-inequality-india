@@ -290,12 +290,21 @@ check_missing_logit_parallel <- function(df, miss_vars, covars, method_p = "BH")
     if (length(unique(y)) < 2L) return(data.frame())
     f <- stats::as.formula(paste0("is.na(`", m, "`) ~ ", rhs))
     tryCatch({
-      fit <- stats::glm(f, data = df, family = stats::binomial)
+      fit_warnings <- character()
+      fit <- withCallingHandlers(
+        stats::glm(f, data = df, family = stats::binomial),
+        warning = function(w) {
+          fit_warnings <<- c(fit_warnings, conditionMessage(w))
+          invokeRestart("muffleWarning")
+        }
+      )
       pseudoR2 <- 1 - fit$deviance / fit$null.deviance
       out <- broom::tidy(fit)
       out$missing_var <- m
       out$pseudoR2 <- pseudoR2
       out$nobs <- stats::nobs(fit)
+      out$status <- if (length(fit_warnings)) "estimated_with_warning" else "estimated"
+      out$reason <- if (length(fit_warnings)) paste(unique(fit_warnings), collapse = "; ") else NA_character_
       out
     }, error = function(e) {
       data.frame(term = NA_character_, estimate = NA_real_, std.error = NA_real_, statistic = NA_real_, p.value = NA_real_, missing_var = m, pseudoR2 = NA_real_, nobs = length(y), status = "failed", reason = conditionMessage(e), stringsAsFactors = FALSE)

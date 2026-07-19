@@ -450,3 +450,23 @@ test_that("spatial island diagnostics use spdep cardinalities", {
   expect_true(connectivity$snap_investigation_needed)
   expect_gt(weights$n_subgraphs, 1L)
 })
+
+
+test_that("missingness logits record separation warnings without leaking target warnings", {
+  df <- data.frame(
+    missing_input = c(NA, NA, 1, 1),
+    predictor = c(0, 0, 1, 1)
+  )
+
+  expect_silent(
+    out <- check_missing_logit_parallel(
+      df,
+      miss_vars = "missing_input",
+      covars = "predictor"
+    )
+  )
+
+  expect_true(nrow(out) > 0L)
+  expect_true(all(out$status == "estimated_with_warning"))
+  expect_true(any(!is.na(out$reason) & nzchar(out$reason)))
+})
