@@ -187,6 +187,10 @@ normalize_selection_identifiers <- function(df) {
     if (!is.null(hit)) df[[nm]] <- df[[hit]]
     if (!nm %in% names(df)) df[[nm]] <- NA
   }
+
+  identifier_cols <- c("PID", "FSU_SL_NO", "HHID", "STATE", "STRATUM", "SUB_STRATUM_NO")
+  for (nm in identifier_cols) df[[nm]] <- plain_chr(df[[nm]])
+  df$weight <- num(df$weight)
   df
 }
 

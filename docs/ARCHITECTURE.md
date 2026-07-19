@@ -6,23 +6,6 @@ This is a living document. Update it whenever the codebase’s structure, pipeli
 
 This repository builds the English-medium instruction and inequality paper, supporting diagnostics, application samples, and replication artifacts. The active codebase is current-source-first: edit current R modules, current QMDs, tests, and documentation directly. Historical refactor evidence lives under `archive/refactoring/` and should not drive active builds.
 
-## Hard Rules for Agents and LLMs
-
-When generating a response based on the codebase:
-
-> Make sure you are complete and thorough in inspecting the entire codebase first and then responding to the entirety of this prompt. Each part of your response should be particular and thorough in how it cites specific parts of the codebase.
-
-When asked to make changes to the codebase:
-
-> Provide a .patch and a series of granular git adds/commits which implements all of these changes. All code changes should be based on relevant documentation and the deeper architecture of the codebase (including preexisting unit tests). Changes should focus on trimming, removing, and simplifying code, except when adding code is necessary for present functionality. Prioritize the DRY principle (Don't Repeat Yourself) and the Boy Scout Rule (leave the codebase cleaner than you found it). You may want to use the separation of concerns and deep modules.
-
-> Ensure that no code, commands, functions, modules, files, or folders are:
-> - Incorrect or logically inconsistent
-> - Non-standard or do not follow from the relevant documentation
-> - Redundant, useless, or duplicated
-> - Insufficiently completing a goal of mine
-> - Overly verbose or inefficient
-
 ## Project Structure
 
 - `_targets.R` — central pipeline definition. Describes the active data,
