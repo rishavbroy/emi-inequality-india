@@ -273,6 +273,23 @@ missingness_correlation_matrix <- function(df, miss_vars, group_vars, cts_vars) 
   safe_pairwise_cor(cbind(miss_df, cts_df, grp_df))
 }
 
+
+binomial_fit_issues <- function(fit, warnings = character(), tolerance = sqrt(.Machine$double.eps)) {
+  issues <- unique(as.character(warnings[nzchar(warnings)]))
+  probabilities <- stats::fitted(fit)
+  boundary_fit <- any(
+    is.finite(probabilities) &
+      (probabilities <= tolerance | probabilities >= 1 - tolerance)
+  )
+  if (boundary_fit) {
+    issues <- c(issues, "fitted probabilities are numerically near 0 or 1")
+  }
+  if (!isTRUE(fit$converged)) {
+    issues <- c(issues, "binomial model did not converge")
+  }
+  unique(issues)
+}
+
 #' check missing logit parallel
 #'
 #' Legacy Chunk 8 used mclapply/parLapply after defining the same one-logit-per-
@@ -298,13 +315,14 @@ check_missing_logit_parallel <- function(df, miss_vars, covars, method_p = "BH")
           invokeRestart("muffleWarning")
         }
       )
+      fit_issues <- binomial_fit_issues(fit, fit_warnings)
       pseudoR2 <- 1 - fit$deviance / fit$null.deviance
       out <- broom::tidy(fit)
       out$missing_var <- m
       out$pseudoR2 <- pseudoR2
       out$nobs <- stats::nobs(fit)
-      out$status <- if (length(fit_warnings)) "estimated_with_warning" else "estimated"
-      out$reason <- if (length(fit_warnings)) paste(unique(fit_warnings), collapse = "; ") else NA_character_
+      out$status <- if (length(fit_issues)) "estimated_with_warning" else "estimated"
+      out$reason <- if (length(fit_issues)) paste(fit_issues, collapse = "; ") else NA_character_
       out
     }, error = function(e) {
       data.frame(term = NA_character_, estimate = NA_real_, std.error = NA_real_, statistic = NA_real_, p.value = NA_real_, missing_var = m, pseudoR2 = NA_real_, nobs = length(y), status = "failed", reason = conditionMessage(e), stringsAsFactors = FALSE)

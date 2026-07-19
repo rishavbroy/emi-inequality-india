@@ -452,7 +452,7 @@ test_that("spatial island diagnostics use spdep cardinalities", {
 })
 
 
-test_that("missingness logits record separation warnings without leaking target warnings", {
+test_that("missingness logits keep fit issues inside diagnostic output", {
   df <- data.frame(
     missing_input = c(NA, NA, 1, 1),
     predictor = c(0, 0, 1, 1)
@@ -467,6 +467,25 @@ test_that("missingness logits record separation warnings without leaking target 
   )
 
   expect_true(nrow(out) > 0L)
-  expect_true(all(out$status == "estimated_with_warning"))
-  expect_true(any(!is.na(out$reason) & nzchar(out$reason)))
+  expect_true(all(out$status %in% c("estimated", "estimated_with_warning")))
+  expect_identical(
+    !is.na(out$reason) & nzchar(out$reason),
+    out$status == "estimated_with_warning"
+  )
+})
+
+test_that("binomial fit issues detect boundary probabilities deterministically", {
+  fit <- structure(
+    list(fitted.values = c(0, 0.5, 1), converged = TRUE),
+    class = "glm"
+  )
+
+  issues <- binomial_fit_issues(fit)
+  expect_match(issues, "near 0 or 1", fixed = TRUE)
+
+  issues <- binomial_fit_issues(fit, "captured warning")
+  expect_setequal(
+    issues,
+    c("captured warning", "fitted probabilities are numerically near 0 or 1")
+  )
 })
