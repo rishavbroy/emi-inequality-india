@@ -46,6 +46,7 @@ construct_child_level_selection_sample <- function(blocks) {
   b5 <- safe_df(blocks[["b5"]] %||% blocks[["nss0708edu_block5"]] %||% data.frame())
   b6 <- safe_df(blocks[["b6"]] %||% blocks[["nss0708edu_block6"]] %||% data.frame())
 
+  b5 <- select_primary_education_course(b5)
   selection_df <- b5[is.finite(num(b5$AGE)) & num(b5$AGE) <= 19, , drop = FALSE]
   selection_df$enrolled <- 1L
   selection_df <- data.frame(
@@ -110,6 +111,16 @@ construct_child_level_selection_sample <- function(blocks) {
     stringsAsFactors = FALSE
   )
   safe_selection_full_join(selection_df, children, selection_join_keys(enrolled = FALSE))
+}
+
+
+select_primary_education_course <- function(df) {
+  df <- safe_df(df)
+  if (!nrow(df) || !"COURSE_NO" %in% names(df)) return(df)
+
+  course_no <- num(df$COURSE_NO)
+  primary <- is.na(course_no) | course_no == 1
+  df[primary, , drop = FALSE]
 }
 
 #' construct household covariates

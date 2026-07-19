@@ -145,3 +145,78 @@ test_that("selection blocks discard incompatible haven labels before standardiza
   expect_type(normalized5$weight, "double")
   expect_equal(nrow(joined), 1L)
 })
+
+
+test_that("selection sample keeps one primary education-course record per child", {
+  base <- data.frame(
+    PID = "p1",
+    AGE = 17,
+    district_code_0708 = "19515",
+    weight = 344.03,
+    FSU_SL_NO = "11231",
+    HHID = "112312101",
+    STATE = "19",
+    STRATUM = "83",
+    SUB_STRATUM_NO = "01",
+    stringsAsFactors = FALSE
+  )
+  b4 <- transform(
+    base,
+    SEX = 1,
+    HH_SIZE = 4,
+    RELIGION = 1,
+    SOCIAL_GROUP = 9,
+    SECTOR = 1,
+    DIST_FROM_NEAREST_PRIMARY_CLASS = 1
+  )
+  b5 <- rbind(
+    transform(
+      base,
+      COURSE_NO = 1,
+      IS_EDU_FREE = 1,
+      TUTION_FEE_WAIVED = 3,
+      RECD_SCHOLARSHIP_STIPEND = 2,
+      RECD_TXT_BOOKS = 3,
+      RECD_STATIONERY = 3,
+      MID_DAY_MEAL_ETC_RECD = 2
+    ),
+    transform(
+      base,
+      COURSE_NO = 2,
+      IS_EDU_FREE = 2,
+      TUTION_FEE_WAIVED = 3,
+      RECD_SCHOLARSHIP_STIPEND = 2,
+      RECD_TXT_BOOKS = 3,
+      RECD_STATIONERY = 3,
+      MID_DAY_MEAL_ETC_RECD = 2
+    )
+  )
+  b6 <- transform(
+    base,
+    TUTION_FEE = 10,
+    EXAMINATION_FEE = 1,
+    OTHER_FEES_PAYMENTS = 2,
+    BOOKS = 3,
+    STATIONERY = 4,
+    UNIFORM = 5,
+    TRANSPORT = 6
+  )
+
+  primary <- select_primary_education_course(b5)
+  out <- construct_child_level_selection_sample(list(b4 = b4, b5 = b5, b6 = b6))
+
+  expect_equal(nrow(primary), 1L)
+  expect_equal(primary$COURSE_NO, 1)
+  expect_equal(nrow(out), 1L)
+  expect_equal(as.character(out$IS_EDU_FREE), "Yes")
+})
+
+test_that("selection sample leaves single-course inputs unchanged", {
+  b5 <- data.frame(
+    PID = c("p1", "p2"),
+    COURSE_NO = c(NA, 1),
+    stringsAsFactors = FALSE
+  )
+
+  expect_identical(select_primary_education_course(b5), b5)
+})
