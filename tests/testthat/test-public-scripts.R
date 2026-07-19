@@ -341,3 +341,22 @@ test_that("source syntax preflight is centralized and read-only", {
   expect_false(grepl("py_compile", helper, fixed = TRUE))
   expect_false(grepl("renv::snapshot", helper, fixed = TRUE))
 })
+
+test_that("target issue printer selects columns without data-frame drop warnings", {
+  env <- new.env(parent = globalenv())
+  sys.source(repo_file("scripts", "target_metadata_helpers.R"), envir = env)
+  rows <- data.frame(
+    name = "district_panel",
+    error = "example failure",
+    extra = "ignored",
+    stringsAsFactors = FALSE
+  )
+
+  expect_warning(
+    output <- capture.output(env$print_target_issues(rows, "error", "Errored targets:")),
+    NA
+  )
+  expect_match(paste(output, collapse = "\n"), "district_panel", fixed = TRUE)
+  expect_match(paste(output, collapse = "\n"), "example failure", fixed = TRUE)
+  expect_false(grepl("ignored", paste(output, collapse = "\n"), fixed = TRUE))
+})

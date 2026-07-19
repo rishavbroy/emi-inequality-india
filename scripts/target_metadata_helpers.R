@@ -109,6 +109,6 @@ record_target_warnings <- function(meta, label, path = "outputs/diagnostics/buil
 print_target_issues <- function(rows, field, heading) {
   if (!nrow(rows)) return(invisible(FALSE))
   cat(heading, "\n", sep = "")
-  print(rows[intersect(c("name", field), names(rows)), drop = FALSE], row.names = FALSE)
+  print(rows[, intersect(c("name", field), names(rows)), drop = FALSE], row.names = FALSE)
   invisible(TRUE)
 }
