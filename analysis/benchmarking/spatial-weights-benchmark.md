@@ -33,8 +33,8 @@ spatial_diag <- analysis_target_csv("diag_ext_spatial_weights", "rook_queen_cont
 spatial_ref <- analysis_target_csv("diag_ext_spatial_weights", "spatial_weights_legacy_reference.csv")
 ```
 
-The current rook benchmark has 4.029 mean neighbors; the current queen
-benchmark has 4.041 mean neighbors. These current values are
+The current rook benchmark has 4.008 mean neighbors; the current queen
+benchmark has 4.021 mean neighbors. These current values are
 intentionally computed on the current final matched panel with non-empty
 geometry, not on the legacy exploratory `sfExtras` object.
 
@@ -43,23 +43,23 @@ spatial_bench[spatial_bench$contiguity %in% c("rook", "queen"), c("contiguity", 
 ```
 
       contiguity   n mean_neighbors n_islands elapsed_seconds
-    1       rook 482       4.029046         0          12.030
-    2      queen 482       4.041494         0          11.272
+    1       rook 482       4.008299        10          11.578
+    2      queen 482       4.020747        10          11.493
 
 ``` r
 analysis_table(spatial_bench, "Current rook/queen benchmark")
 ```
 
-| contiguity | n | mean_neighbors | n_islands | panel_scope | elapsed_seconds | warnings |
-|:---|---:|---:|---:|:---|---:|:---|
-| rook | 482 | 4.029 | 0 | current_final_matched_panel_non_empty_geometry | 12.030 | some observations have no neighbours; |
+| contiguity | n | mean_neighbors | n_islands | n_subgraphs | snap | panel_scope | elapsed_seconds | warnings |
+|:---|---:|---:|---:|---:|:---|:---|---:|:---|
+| rook | 482 | 4.008 | 10 | 21 | NA | current_final_matched_panel_non_empty_geometry | 11.578 | some observations have no neighbours; |
 
 Current rook/queen benchmark
 
 if this seems unexpected, try increasing the snap argument.; neighbour
 object has 21 sub-graphs; if this sub-graph count seems unexpected, try
-increasing the snap argument. \| \|queen \| 482\| 4.041\|
-0\|current_final_matched_panel_non_empty_geometry \| 11.272\|some
+increasing the snap argument. \| \|queen \| 482\| 4.021\| 10\| 21\|NA
+\|current_final_matched_panel_non_empty_geometry \| 11.493\|some
 observations have no neighbours; if this seems unexpected, try
 increasing the snap argument.; neighbour object has 21 sub-graphs; if
 this sub-graph count seems unexpected, try increasing the snap argument.
@@ -69,20 +69,21 @@ this sub-graph count seems unexpected, try increasing the snap argument.
 analysis_table(spatial_diag, "Current-vs-legacy rook/queen comparison")
 ```
 
-| contiguity | n | mean_neighbors | n_islands | panel_scope | elapsed_seconds | warnings | legacy_mean_neighbors | mean_neighbor_delta_from_legacy | pct_delta_from_legacy |
-|:---|---:|---:|---:|:---|---:|:---|---:|---:|---:|
-| rook | 482 | 4.029 | 0 | current_final_matched_panel_non_empty_geometry | 11.399 | some observations have no neighbours; |  |  |  |
+| contiguity | n | mean_neighbors | n_islands | n_subgraphs | snap | panel_scope | elapsed_seconds | warnings | legacy_mean_neighbors | mean_neighbor_delta_from_legacy | pct_delta_from_legacy |
+|:---|---:|---:|---:|---:|:---|:---|---:|:---|---:|---:|---:|
+| rook | 482 | 4.008 | 10 | 21 | NA | current_final_matched_panel_non_empty_geometry | 12.195 | some observations have no neighbours; |  |  |  |
 
 Current-vs-legacy rook/queen comparison
 
 if this seems unexpected, try increasing the snap argument.; neighbour
 object has 21 sub-graphs; if this sub-graph count seems unexpected, try
-increasing the snap argument. \| 4.780\| -0.751\| -15.713\| \|queen \|
-482\| 4.041\| 0\|current_final_matched_panel_non_empty_geometry \|
-11.304\|some observations have no neighbours; if this seems unexpected,
-try increasing the snap argument.; neighbour object has 21 sub-graphs;
-if this sub-graph count seems unexpected, try increasing the snap
-argument. \| 4.783\| -0.742\| -15.511\|
+increasing the snap argument. \| 4.780\| -0.772\| -16.147\| \|queen \|
+482\| 4.021\| 10\| 21\|NA
+\|current_final_matched_panel_non_empty_geometry \| 11.399\|some
+observations have no neighbours; if this seems unexpected, try
+increasing the snap argument.; neighbour object has 21 sub-graphs; if
+this sub-graph count seems unexpected, try increasing the snap argument.
+\| 4.783\| -0.763\| -15.945\|
 
 ``` r
 analysis_table(spatial_ref, "Legacy spatial-weight reference comments")

@@ -63,8 +63,8 @@ corr_all_pairs <- analysis_target_csv("diag_ext_missingness", "missingness_corre
 corr_enrolled_pairs <- analysis_target_csv("diag_ext_missingness", "missingness_correlation_enrolled_top_pairs.csv")
 ```
 
-The current active data contain 12,285 probit-model rows with at least
-one missing value and 114,961 probit-model rows with no missing value.
+The current active data contain 12,283 probit-model rows with at least
+one missing value and 114,898 probit-model rows with no missing value.
 Enrolled-only expenditure fields are diagnosed separately rather than
 included in this probit-model total.
 
@@ -73,11 +73,11 @@ missing_counts[order(-missing_counts$n_missing), c("missing_var", "n_missing", "
 ```
 
                            missing_var n_missing pct_missing
-    14   Total probit-model with no NA    114961 0.903454725
-    13      Total probit-model with NA     12285 0.096545275
-    11       dmean_num_ENROLLMENT_COST      7109 0.055868161
-    12                     father_educ      5205 0.040905019
-    10 DIST_FROM_NEAREST_PRIMARY_CLASS       312 0.002451943
+    14   Total probit-model with no NA    114898 0.903421108
+    13      Total probit-model with NA     12283 0.096578892
+    11       dmean_num_ENROLLMENT_COST      7109 0.055896714
+    12                     father_educ      5203 0.040910199
+    10 DIST_FROM_NEAREST_PRIMARY_CLASS       312 0.002453197
     1                         enrolled         0 0.000000000
     2                              AGE         0 0.000000000
     3                              SEX         0 0.000000000
@@ -105,9 +105,9 @@ analysis_table(missing_counts, "Current missingness counts")
 | region_0708                     |         0 |       0.000 |
 | DIST_FROM_NEAREST_PRIMARY_CLASS |       312 |       0.002 |
 | dmean_num_ENROLLMENT_COST       |      7109 |       0.056 |
-| father_educ                     |      5205 |       0.041 |
-| Total probit-model with NA      |     12285 |       0.097 |
-| Total probit-model with no NA   |    114961 |       0.903 |
+| father_educ                     |      5203 |       0.041 |
+| Total probit-model with NA      |     12283 |       0.097 |
+| Total probit-model with no NA   |    114898 |       0.903 |
 
 Current missingness counts
 
@@ -124,16 +124,16 @@ analysis_table(regional_cost, "Regions with the most cost-variable missingness",
 | Gujrat | Saurashtra | 1487 | 27.77 | 25.69 | 0.00 | 3.16 | 39.48 | 53.80 | 86.01 | 13.32 | 74.11 | state_region |
 | Bihar | Northern | 6808 | 29.32 | 24.93 | 1.16 | 4.04 | 14.39 | 57.56 | 79.33 | 20.51 | 85.90 | state_region |
 | Chhattisgarh | Southern Chhattishgarh | 441 | 28.80 | 23.36 | 0.45 | 8.16 | 23.13 | 51.47 | 96.83 | 2.27 | 92.29 | state_region |
-| Bihar | Central | 4377 | 27.10 | 22.21 | 0.18 | 5.30 | 22.25 | 54.67 | 90.68 | 9.09 | 84.33 | state_region |
+| Bihar | Central | 4376 | 27.10 | 22.21 | 0.18 | 5.30 | 22.23 | 54.68 | 90.68 | 9.10 | 84.35 | state_region |
 | Karnataka | Coastal & Ghats | 393 | 23.66 | 21.88 | 0.00 | 1.78 | 35.62 | 54.45 | 72.26 | 23.92 | 49.36 | state_region |
 | Assam | Cachar Plain | 515 | 25.63 | 21.75 | 0.00 | 4.47 | 28.54 | 66.02 | 65.05 | 25.05 | 57.09 | state_region |
 | Mizoram | Mizoram | 1533 | 22.44 | 19.24 | 0.00 | 4.04 | 57.21 | 53.62 | 0.46 | 0.26 | 99.54 | state_region |
 | Delhi | Delhi | 1310 | 18.63 | 14.27 | 0.00 | 4.96 | 88.40 | 56.49 | 79.62 | 15.80 | 47.56 | state_region |
-| Rajasthan | North-Eastern | 2288 | 18.71 | 12.85 | 0.00 | 6.51 | 29.15 | 54.50 | 86.28 | 11.89 | 78.15 | state_region |
-| Orissa | Southern | 1684 | 15.44 | 12.83 | 0.00 | 3.33 | 26.13 | 53.62 | 96.79 | 0.59 | 84.80 | state_region |
+| Rajasthan | North-Eastern | 2287 | 18.71 | 12.86 | 0.00 | 6.52 | 29.12 | 54.48 | 86.27 | 11.89 | 78.18 | state_region |
+| Orissa | Southern | 1682 | 15.46 | 12.84 | 0.00 | 3.33 | 26.10 | 53.63 | 96.79 | 0.59 | 84.84 | state_region |
 | Madhya Pradesh | Northern | 1140 | 16.32 | 12.81 | 0.18 | 4.12 | 31.40 | 57.98 | 90.18 | 9.21 | 69.74 | state_region |
 | Assam | Plains Western | 927 | 14.67 | 11.97 | 0.00 | 3.99 | 26.75 | 52.75 | 49.95 | 49.51 | 33.01 | state_region |
-| Uttar Pradesh | Central | 2525 | 13.15 | 9.07 | 0.00 | 4.51 | 30.69 | 53.74 | 77.82 | 21.78 | 76.28 | state_region |
+| Uttar Pradesh | Central | 2524 | 13.15 | 9.07 | 0.00 | 4.52 | 30.71 | 53.72 | 77.81 | 21.79 | 76.31 | state_region |
 | Himachal Pradesh | Trans Himalayan & Southern | 922 | 13.77 | 7.70 | 0.00 | 6.29 | 20.61 | 55.42 | 87.74 | 4.88 | 43.49 | state_region |
 | Uttaranchal | Uttaranchal | 1843 | 9.50 | 5.86 | 0.81 | 3.64 | 34.13 | 51.33 | 77.65 | 21.32 | 48.51 | state_region |
 | Jammu & Kashmir | Outer Hills | 327 | 7.03 | 4.89 | 0.00 | 2.14 | 28.44 | 52.91 | 75.84 | 23.85 | 29.97 | state_region |
@@ -156,14 +156,14 @@ analysis_table(regional_distance, "Regions with the most distance-to-school miss
 | Uttaranchal | Uttaranchal | 1843 | 9.50 | 5.86 | 0.81 | 3.64 | 34.13 | 51.33 | 77.65 | 21.32 | 48.51 | state_region |
 | Chhattisgarh | Southern Chhattishgarh | 441 | 28.80 | 23.36 | 0.45 | 8.16 | 23.13 | 51.47 | 96.83 | 2.27 | 92.29 | state_region |
 | Madhya Pradesh | Central | 1053 | 2.85 | 0.00 | 0.28 | 2.56 | 41.41 | 55.27 | 81.29 | 17.76 | 73.60 | state_region |
-| Bihar | Central | 4377 | 27.10 | 22.21 | 0.18 | 5.30 | 22.25 | 54.67 | 90.68 | 9.09 | 84.33 | state_region |
+| Bihar | Central | 4376 | 27.10 | 22.21 | 0.18 | 5.30 | 22.23 | 54.68 | 90.68 | 9.10 | 84.35 | state_region |
 | Madhya Pradesh | Northern | 1140 | 16.32 | 12.81 | 0.18 | 4.12 | 31.40 | 57.98 | 90.18 | 9.21 | 69.74 | state_region |
-| Uttar Pradesh | Eastern | 6954 | 6.49 | 0.00 | 0.16 | 6.36 | 22.40 | 53.74 | 80.50 | 19.31 | 83.13 | state_region |
-| Andaman & Nicober | Andaman & Nicobar Islands | 456 | 3.29 | 0.00 | 0.00 | 3.29 | 42.11 | 50.66 | 67.98 | 13.38 | 23.03 | state_region |
+| Uttar Pradesh | Eastern | 6952 | 6.49 | 0.00 | 0.16 | 6.36 | 22.38 | 53.74 | 80.51 | 19.30 | 83.14 | state_region |
+| Andaman & Nicober | Andaman & Nicobar Islands | 453 | 3.31 | 0.00 | 0.00 | 3.31 | 42.16 | 50.77 | 67.99 | 13.25 | 22.52 | state_region |
 | Andhra Pardesh | Costal Northern | 1507 | 3.92 | 0.00 | 0.00 | 3.92 | 30.92 | 50.17 | 93.36 | 3.52 | 77.84 | state_region |
-| Andhra Pardesh | Costal Southern | 1243 | 2.57 | 0.00 | 0.00 | 2.57 | 31.70 | 51.33 | 92.28 | 6.60 | 61.54 | state_region |
-| Andhra Pardesh | Inland North Eastern | 1123 | 2.76 | 0.00 | 0.00 | 2.76 | 23.06 | 51.47 | 92.97 | 4.63 | 86.73 | state_region |
-| Andhra Pardesh | Inland North Western | 1917 | 2.92 | 0.00 | 0.00 | 2.92 | 45.54 | 49.61 | 81.95 | 16.22 | 76.06 | state_region |
+| Andhra Pardesh | Costal Southern | 1241 | 2.50 | 0.00 | 0.00 | 2.50 | 31.59 | 51.25 | 92.26 | 6.61 | 61.64 | state_region |
+| Andhra Pardesh | Inland North Eastern | 1122 | 2.76 | 0.00 | 0.00 | 2.76 | 22.99 | 51.52 | 92.96 | 4.63 | 86.72 | state_region |
+| Andhra Pardesh | Inland North Western | 1914 | 2.93 | 0.00 | 0.00 | 2.93 | 45.51 | 49.58 | 81.92 | 16.25 | 76.12 | state_region |
 | Andhra Pardesh | Inland Southern | 1425 | 3.37 | 0.00 | 0.00 | 3.37 | 31.09 | 51.37 | 79.23 | 18.95 | 65.40 | state_region |
 | Assam | Cachar Plain | 515 | 25.63 | 21.75 | 0.00 | 4.47 | 28.54 | 66.02 | 65.05 | 25.05 | 57.09 | state_region |
 
@@ -176,25 +176,25 @@ analysis_table(regional_father, "Regions with the most father-education missingn
 | state_0708 | region_0708 | n | pct_any_na | miss_dmean_num_ENROLLMENT_COST | miss_DIST_FROM_NEAREST_PRIMARY_CLASS | miss_father_educ | is_urban | is_female | is_hindu | is_muslim | is_st_sc_obc | region_diagnostic_level |
 |:---|:---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|:---|
 | Chhattisgarh | Southern Chhattishgarh | 441 | 28.80 | 23.36 | 0.45 | 8.16 | 23.13 | 51.47 | 96.83 | 2.27 | 92.29 | state_region |
-| Sikkim | Sikkim | 1410 | 7.59 | 0.00 | 0.00 | 7.59 | 14.18 | 52.84 | 63.05 | 1.49 | 85.18 | state_region |
+| Sikkim | Sikkim | 1409 | 7.59 | 0.00 | 0.00 | 7.59 | 14.19 | 52.87 | 63.02 | 1.49 | 85.17 | state_region |
 | Lakshadweep | Lakshadweep | 256 | 100.00 | 100.00 | 0.00 | 6.64 | 67.19 | 53.91 | 0.78 | 98.44 | 98.83 | state_region |
-| Rajasthan | North-Eastern | 2288 | 18.71 | 12.85 | 0.00 | 6.51 | 29.15 | 54.50 | 86.28 | 11.89 | 78.15 | state_region |
-| Uttar Pradesh | Eastern | 6954 | 6.49 | 0.00 | 0.16 | 6.36 | 22.40 | 53.74 | 80.50 | 19.31 | 83.13 | state_region |
+| Rajasthan | North-Eastern | 2287 | 18.71 | 12.86 | 0.00 | 6.52 | 29.12 | 54.48 | 86.27 | 11.89 | 78.18 | state_region |
+| Uttar Pradesh | Eastern | 6952 | 6.49 | 0.00 | 0.16 | 6.36 | 22.38 | 53.74 | 80.51 | 19.30 | 83.14 | state_region |
 | Himachal Pradesh | Trans Himalayan & Southern | 922 | 13.77 | 7.70 | 0.00 | 6.29 | 20.61 | 55.42 | 87.74 | 4.88 | 43.49 | state_region |
-| Chandigarh | Chandigarh | 317 | 5.99 | 0.00 | 0.00 | 5.99 | 75.71 | 58.36 | 79.81 | 5.36 | 37.54 | state_region |
+| Chandigarh | Chandigarh | 316 | 6.01 | 0.00 | 0.00 | 6.01 | 75.63 | 58.54 | 79.75 | 5.38 | 37.66 | state_region |
 | Jammu & Kashmir | Jhelam Valley | 1210 | 5.95 | 0.00 | 0.00 | 5.95 | 34.38 | 51.74 | 0.41 | 99.42 | 20.91 | state_region |
 | Uttar Pradesh | Southern Upper Ganga Plains | 3990 | 5.76 | 0.00 | 0.00 | 5.76 | 26.42 | 56.12 | 80.20 | 18.97 | 77.89 | state_region |
 | Manipur | Plains | 1493 | 10.05 | 0.00 | 4.49 | 5.63 | 42.73 | 55.26 | 74.82 | 14.53 | 83.66 | state_region |
 | Punjab | Southern | 1796 | 5.46 | 0.00 | 0.00 | 5.46 | 43.71 | 55.96 | 33.91 | 3.34 | 50.56 | state_region |
 | Uttar Pradesh | Southern | 937 | 5.44 | 0.00 | 0.00 | 5.44 | 32.66 | 49.73 | 90.50 | 9.18 | 82.28 | state_region |
 | Madhya Pradesh | South | 1211 | 5.37 | 0.00 | 0.00 | 5.37 | 30.88 | 53.26 | 91.74 | 7.02 | 91.58 | state_region |
-| Bihar | Central | 4377 | 27.10 | 22.21 | 0.18 | 5.30 | 22.25 | 54.67 | 90.68 | 9.09 | 84.33 | state_region |
-| Uttar Pradesh | Northern Upper Ganga Plains | 2833 | 5.29 | 0.00 | 0.00 | 5.29 | 29.97 | 53.55 | 54.96 | 44.26 | 78.86 | state_region |
+| Bihar | Central | 4376 | 27.10 | 22.21 | 0.18 | 5.30 | 22.23 | 54.68 | 90.68 | 9.10 | 84.35 | state_region |
+| Uttar Pradesh | Northern Upper Ganga Plains | 2832 | 5.30 | 0.00 | 0.00 | 5.30 | 29.98 | 53.53 | 54.98 | 44.24 | 78.88 | state_region |
 | Rajasthan | South-Eastern | 725 | 5.10 | 0.00 | 0.00 | 5.10 | 32.83 | 54.76 | 91.45 | 8.41 | 79.59 | state_region |
 | Jharkhand | Hazaribagh Plateau | 1850 | 43.46 | 40.65 | 0.00 | 4.97 | 23.73 | 53.41 | 81.03 | 15.41 | 86.43 | state_region |
 | Delhi | Delhi | 1310 | 18.63 | 14.27 | 0.00 | 4.96 | 88.40 | 56.49 | 79.62 | 15.80 | 47.56 | state_region |
 | Gujrat | Kachchh | 223 | 4.93 | 0.00 | 0.00 | 4.93 | 37.22 | 47.09 | 69.51 | 30.49 | 83.86 | state_region |
-| Orissa | Northern | 1522 | 4.86 | 0.00 | 0.00 | 4.86 | 22.08 | 50.59 | 96.78 | 1.18 | 88.76 | state_region |
+| Orissa | Northern | 1520 | 4.87 | 0.00 | 0.00 | 4.87 | 21.97 | 50.53 | 96.78 | 1.18 | 88.82 | state_region |
 
 Regions with the most father-education missingness
 
@@ -214,8 +214,8 @@ analysis_table(chi_square, "Current chi-square tests for ANY probit-model NA")
 
 | test | status | statistic | parameter | p.value | n | method |
 |:---|:---|---:|---:|---:|---:|:---|
-| any_probit_model_na_by_state | estimated | 13631.18 | 34 | 0 | 127246 | Pearson’s Chi-squared test |
-| any_probit_model_na_by_region | estimated | 13497.62 | 65 | 0 | 127246 | Pearson’s Chi-squared test |
+| any_probit_model_na_by_state | estimated | 13626.17 | 34 | 0 | 127181 | Pearson’s Chi-squared test |
+| any_probit_model_na_by_region | estimated | 13491.22 | 65 | 0 | 127181 | Pearson’s Chi-squared test |
 
 Current chi-square tests for ANY probit-model NA
 
@@ -252,25 +252,25 @@ analysis_table(corr_all_pairs, "Largest absolute missingness correlations: all o
 | var1 | var2 | correlation | abs_correlation |
 |:---|:---|:---|:---|
 | SECTORRural | SECTORUrban | -1 | 1 |
-| RELIGIONHindu | RELIGIONMuslim | -0.730383346752003 | 0.730383346752003 |
-| RELIGIONChristian | state_0708Punjab | 0.657344877127819 | 0.657344877127819 |
-| RELIGIONJain | SOCIAL_GROUPScheduled Tribe | 0.47874340913374 | 0.47874340913374 |
-| RELIGIONHindu | RELIGIONJain | -0.438599819325384 | 0.438599819325384 |
-| RELIGIONJain | state_0708Nagaland | 0.410679153917942 | 0.410679153917942 |
-| RELIGIONJain | state_0708Meghalaya | 0.40751062441323 | 0.40751062441323 |
-| RELIGIONSikh | state_0708Arunachal Pradesh | 0.403425166613576 | 0.403425166613576 |
-| RELIGIONJain | state_0708Mizoram | 0.402909453013499 | 0.402909453013499 |
-| SOCIAL_GROUPOther Backward Class | SOCIAL_GROUPScheduled Caste | -0.385475803464673 | 0.385475803464673 |
-| SOCIAL_GROUPOther Backward Class | SOCIAL_GROUPScheduled Tribe | -0.327761849001667 | 0.327761849001667 |
-| SOCIAL_GROUPScheduled Tribe | state_0708Meghalaya | 0.276299001690817 | 0.276299001690817 |
-| SOCIAL_GROUPScheduled Tribe | state_0708Mizoram | 0.268672223559778 | 0.268672223559778 |
-| SOCIAL_GROUPScheduled Tribe | state_0708Nagaland | 0.253511532465407 | 0.253511532465407 |
-| miss_dmean_num_ENROLLMENT_COST | state_0708Bihar | 0.247027661323561 | 0.247027661323561 |
-| RELIGIONChristian | RELIGIONHindu | -0.234582673841914 | 0.234582673841914 |
-| RELIGIONHindu | state_0708Meghalaya | -0.200512246897761 | 0.200512246897761 |
-| RELIGIONHindu | SOCIAL_GROUPScheduled Caste | 0.195593863051862 | 0.195593863051862 |
-| SOCIAL_GROUPScheduled Caste | SOCIAL_GROUPScheduled Tribe | -0.19387886257538 | 0.19387886257538 |
-| RELIGIONHindu | state_0708Mizoram | -0.19087154261766 | 0.19087154261766 |
+| RELIGIONHindu | RELIGIONMuslim | -0.730352767628187 | 0.730352767628187 |
+| RELIGIONChristian | state_0708Punjab | 0.657341197117487 | 0.657341197117487 |
+| RELIGIONJain | SOCIAL_GROUPScheduled Tribe | 0.478890744033803 | 0.478890744033803 |
+| RELIGIONHindu | RELIGIONJain | -0.438594959728884 | 0.438594959728884 |
+| RELIGIONJain | state_0708Nagaland | 0.410788553426636 | 0.410788553426636 |
+| RELIGIONJain | state_0708Meghalaya | 0.407619693413785 | 0.407619693413785 |
+| RELIGIONSikh | state_0708Arunachal Pradesh | 0.403422327157635 | 0.403422327157635 |
+| RELIGIONJain | state_0708Mizoram | 0.403016862876936 | 0.403016862876936 |
+| SOCIAL_GROUPOther Backward Class | SOCIAL_GROUPScheduled Caste | -0.385554428806168 | 0.385554428806168 |
+| SOCIAL_GROUPOther Backward Class | SOCIAL_GROUPScheduled Tribe | -0.327857495572207 | 0.327857495572207 |
+| SOCIAL_GROUPScheduled Tribe | state_0708Meghalaya | 0.276285643539746 | 0.276285643539746 |
+| SOCIAL_GROUPScheduled Tribe | state_0708Mizoram | 0.268661463763534 | 0.268661463763534 |
+| SOCIAL_GROUPScheduled Tribe | state_0708Nagaland | 0.253500621882801 | 0.253500621882801 |
+| miss_dmean_num_ENROLLMENT_COST | state_0708Bihar | 0.247015617170005 | 0.247015617170005 |
+| RELIGIONChristian | RELIGIONHindu | -0.234642951092739 | 0.234642951092739 |
+| RELIGIONHindu | state_0708Meghalaya | -0.200563619530547 | 0.200563619530547 |
+| RELIGIONHindu | SOCIAL_GROUPScheduled Caste | 0.19562252770786 | 0.19562252770786 |
+| SOCIAL_GROUPScheduled Caste | SOCIAL_GROUPScheduled Tribe | -0.193977258221556 | 0.193977258221556 |
+| RELIGIONHindu | state_0708Mizoram | -0.190920293394014 | 0.190920293394014 |
 | Table truncated in rendered note; full CSV has 50 rows. |  |  |  |
 
 Largest absolute missingness correlations: all observations
@@ -282,25 +282,25 @@ analysis_table(corr_enrolled_pairs, "Largest absolute missingness correlations: 
 | var1 | var2 | correlation | abs_correlation |
 |:---|:---|:---|:---|
 | SECTORRural | SECTORUrban | -1 | 1 |
-| RELIGIONHindu | RELIGIONMuslim | -0.692449884981076 | 0.692449884981076 |
-| RELIGIONChristian | state_0708Punjab | 0.643962976297627 | 0.643962976297627 |
-| RELIGIONJain | SOCIAL_GROUPScheduled Tribe | 0.503686999682562 | 0.503686999682562 |
-| RELIGIONHindu | RELIGIONJain | -0.480062208085166 | 0.480062208085166 |
-| RELIGIONSikh | state_0708Arunachal Pradesh | 0.436240465116191 | 0.436240465116191 |
-| RELIGIONJain | state_0708Nagaland | 0.418452541270751 | 0.418452541270751 |
-| RELIGIONJain | state_0708Mizoram | 0.418244402854174 | 0.418244402854174 |
-| RELIGIONJain | state_0708Meghalaya | 0.388595370895933 | 0.388595370895933 |
-| SOCIAL_GROUPOther Backward Class | SOCIAL_GROUPScheduled Caste | -0.365125695740288 | 0.365125695740288 |
-| SOCIAL_GROUPOther Backward Class | SOCIAL_GROUPScheduled Tribe | -0.319516518279027 | 0.319516518279027 |
-| miss_UNIFORM | state_0708Bihar | 0.31084828494805 | 0.31084828494805 |
-| SOCIAL_GROUPScheduled Tribe | state_0708Mizoram | 0.295407875837424 | 0.295407875837424 |
-| SOCIAL_GROUPScheduled Tribe | state_0708Meghalaya | 0.278833449395762 | 0.278833449395762 |
-| SOCIAL_GROUPScheduled Tribe | state_0708Nagaland | 0.277260062555034 | 0.277260062555034 |
-| miss_TRANSPORT | AGE | -0.250880548055749 | 0.250880548055749 |
-| RELIGIONHindu | SOCIAL_GROUPScheduled Tribe | -0.246399015955626 | 0.246399015955626 |
-| RELIGIONChristian | RELIGIONHindu | -0.244665502645653 | 0.244665502645653 |
-| miss_EXAMINATION_FEE | AGE | -0.215661560628372 | 0.215661560628372 |
-| RELIGIONHindu | state_0708Mizoram | -0.2133846638528 | 0.2133846638528 |
+| RELIGIONHindu | RELIGIONMuslim | -0.692373844680057 | 0.692373844680057 |
+| RELIGIONChristian | state_0708Punjab | 0.643957482896051 | 0.643957482896051 |
+| RELIGIONJain | SOCIAL_GROUPScheduled Tribe | 0.503881729855742 | 0.503881729855742 |
+| RELIGIONHindu | RELIGIONJain | -0.480085894082433 | 0.480085894082433 |
+| RELIGIONSikh | state_0708Arunachal Pradesh | 0.436236456878389 | 0.436236456878389 |
+| RELIGIONJain | state_0708Nagaland | 0.418594905643235 | 0.418594905643235 |
+| RELIGIONJain | state_0708Mizoram | 0.418386800302075 | 0.418386800302075 |
+| RELIGIONJain | state_0708Meghalaya | 0.388727714617899 | 0.388727714617899 |
+| SOCIAL_GROUPOther Backward Class | SOCIAL_GROUPScheduled Caste | -0.365222771040763 | 0.365222771040763 |
+| SOCIAL_GROUPOther Backward Class | SOCIAL_GROUPScheduled Tribe | -0.319645591856161 | 0.319645591856161 |
+| miss_UNIFORM | state_0708Bihar | 0.311114762730919 | 0.311114762730919 |
+| SOCIAL_GROUPScheduled Tribe | state_0708Mizoram | 0.29539205542993 | 0.29539205542993 |
+| SOCIAL_GROUPScheduled Tribe | state_0708Meghalaya | 0.278814711348354 | 0.278814711348354 |
+| SOCIAL_GROUPScheduled Tribe | state_0708Nagaland | 0.277244351558723 | 0.277244351558723 |
+| miss_TRANSPORT | AGE | -0.249900889040538 | 0.249900889040538 |
+| RELIGIONHindu | SOCIAL_GROUPScheduled Tribe | -0.246513278856422 | 0.246513278856422 |
+| RELIGIONChristian | RELIGIONHindu | -0.244761311354973 | 0.244761311354973 |
+| miss_EXAMINATION_FEE | AGE | -0.215715449233446 | 0.215715449233446 |
+| RELIGIONHindu | state_0708Mizoram | -0.213467911757855 | 0.213467911757855 |
 | Table truncated in rendered note; full CSV has 50 rows. |  |  |  |
 
 Largest absolute missingness correlations: enrolled observations
@@ -318,10 +318,10 @@ analysis_table(logit_summary, "Logit summaries for structured missingness")
 | dmean_num_ENROLLMENT_COST       |     9 |    0.310 |
 | DIST_FROM_NEAREST_PRIMARY_CLASS |     3 |    0.246 |
 | EXAMINATION_FEE                 |    37 |    0.164 |
-| UNIFORM                         |    34 |    0.161 |
-| TRANSPORT                       |    38 |    0.151 |
+| UNIFORM                         |    33 |    0.161 |
+| TRANSPORT                       |    37 |    0.151 |
 | OTHER_FEES_PAYMENTS             |    39 |    0.134 |
-| TUTION_FEE                      |    20 |    0.056 |
+| TUTION_FEE                      |     5 |    0.056 |
 | STATIONERY                      |     3 |    0.039 |
 | BOOKS                           |     4 |    0.027 |
 | father_educ                     |    11 |    0.023 |

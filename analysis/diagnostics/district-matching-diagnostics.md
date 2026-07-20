@@ -53,9 +53,9 @@ dm_all_rows <- analysis_target_csv("diag_ext_district_matching", "district_match
 ```
 
 The current analog distinguishes the reviewed crosswalk from a future
-row-level source-match ledger. The values shown in this rendered file
-reflect the last completed analysis-note render and will be refreshed by
-`make render-analysis`.
+row-level source-match ledger. It reports 734 reviewed crosswalk rows, 0
+explicitly recorded unmatched rows, and 0 rows in the retired fallback
+source-key-inventory compatibility output.
 
 #### Deviation from legacy prose: what the active join map establishes
 
@@ -66,8 +66,8 @@ narrower and more accurate meaning:
     `data/metadata/district_harmonization_crosswalk.csv` and passes it
     to `prepare_district_join_map()`.
 2.  The reviewed crosswalk is the sole active harmonization-map
-    authority; the constructor validates its required year-specific
-    name columns and adds stable internal row identifiers.
+    authority; the constructor validates its required year-specific name
+    columns and adds stable internal row identifiers.
 3.  Source-to-crosswalk attachment remains in
     `R/districts/source_attachment.R`. The attributes on
     `district_join_map` describe the reviewed map itself, not a
@@ -82,8 +82,8 @@ narrower and more accurate meaning:
 
 This is an important scope warning. Empty join-map `unmatched_rows` and
 `many_to_many_cases` attributes do not establish that production source
-attachment is correct. The forthcoming district-matching redesign
-should expose that production row-level source-match ledger directly.
+attachment is correct. The forthcoming district-matching redesign should
+expose that production row-level source-match ledger directly.
 
 ``` r
 analysis_table(dm_summary, "District-matching diagnostic summary")
@@ -91,7 +91,7 @@ analysis_table(dm_summary, "District-matching diagnostic summary")
 
 | n_panel_rows | n_join_rows | n_unmatched_rows | n_source_key_inventory_rows | n_many_to_many_cases | n_panel_unmatched_by_key | n_join_unmatched_by_key |
 |---:|---:|---:|---:|---:|---:|---:|
-| 482 | 3175 | 0 | 3175 | 0 | 0 | 1523 |
+| 482 | 734 | 0 | 0 | 0 | 0 | 252 |
 
 District-matching diagnostic summary
 
@@ -102,7 +102,7 @@ analysis_table(dm_reference, "Legacy Chunk 20 diagnostic reference")
 | diagnostic | legacy_chunk | current_value | interpretation |
 |:---|:---|---:|:---|
 | unmatched_rows | Chunk 20 Match districts: Diagnose errors | 0 | Counts true legacy unmatched_df rows when they are present; source-key inventory rows are excluded. |
-| source_key_inventory | Chunk 20 Match districts: Diagnose errors | 3175 | Rows marked source_key_unmatched by the fallback key-map path are preserved separately because they are not the legacy unmatched_df diagnostic. |
+| source_key_inventory | Chunk 20 Match districts: Diagnose errors | 0 | Historical fallback source-key rows remain a separate compatibility output and are empty for the reviewed-crosswalk join map. |
 | many_to_many_cases | Chunk 20 Match districts: Diagnose errors | 0 | Uses explicit many_to_many attributes/flags rather than treating every source-key row as a many-to-many case. |
 | all_rows_search | Chunk 20 Match districts: Diagnose errors | NA | Search table preserves the legacy View()-style close-match inspection in a CSV artifact. |
 
@@ -112,15 +112,15 @@ Legacy Chunk 20 diagnostic reference
 analysis_table(dm_tracker_panel, "Tracker/panel/intermediate row-count comparison")
 ```
 
-| object                             | n_rows | n_complete_rows |
-|:-----------------------------------|-------:|----------------:|
-| district_panel                     |    482 |             482 |
-| district_join_map                  |   3175 |            3175 |
-| unmatched_rows                     |      0 |              NA |
-| source_key_inventory               |   3175 |              NA |
-| many_to_many_cases                 |      0 |              NA |
-| key_role:shared_panel_join_key     |    482 |              NA |
-| key_role:source_key_inventory_only |   1523 |              NA |
+| object                         | n_rows | n_complete_rows |
+|:-------------------------------|-------:|----------------:|
+| district_panel                 |    482 |             482 |
+| district_join_map              |    734 |             734 |
+| unmatched_rows                 |      0 |              NA |
+| source_key_inventory           |      0 |              NA |
+| many_to_many_cases             |      0 |              NA |
+| key_role:requires_review       |    252 |              NA |
+| key_role:shared_panel_join_key |    482 |              NA |
 
 Tracker/panel/intermediate row-count comparison
 
@@ -159,7 +159,7 @@ if (all(c("panel_key_status", "join_key_status") %in% names(dm_key_comparison)))
 | panel_key_status | join_key_status | Freq |
 |:-----------------|:----------------|-----:|
 | in_panel         | in_join_map     |  482 |
-| not_in_panel     | in_join_map     | 1523 |
+| not_in_panel     | in_join_map     |  252 |
 
 Panel-vs-join key-status summary
 
@@ -167,10 +167,10 @@ Panel-vs-join key-status summary
 analysis_table(dm_key_roles, "Panel/join key roles and interpretation")
 ```
 
-| key_role | n_keys | interpretation |
-|:---|---:|:---|
-| shared_panel_join_key | 482 | Shared by active final panel and join map. |
-| source_key_inventory_only | 1523 | Observed only in the fallback source-key inventory; not a true failed final-panel join. |
+| key_role              | n_keys | interpretation                             |
+|:----------------------|-------:|:-------------------------------------------|
+| requires_review       |    252 | Requires manual review.                    |
+| shared_panel_join_key |    482 | Shared by active final panel and join map. |
 
 Panel/join key roles and interpretation
 
@@ -178,29 +178,9 @@ Panel/join key roles and interpretation
 analysis_table(dm_source_inventory, "Fallback source-key inventory separated from true unmatched rows", max_rows = 20)
 ```
 
-| state_std | district_std | source_year | district_key | source | match_status | possible_false_positive | many_to_many | diagnostic_role | legacy_note |
-|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|
-| 01 | 01 | 2001 | 2001\_\_01\_\_01 | 2001 | source_key_unmatched | FALSE | FALSE | source_key_inventory_not_true_unmatched_rows | These rows are the source-key inventory emitted by the fallback key-map path, not the legacy Chunk 20 unmatched_df output from merge_dfs_into_tracker(). |
-| 01 | 02 | 2001 | 2001\_\_01\_\_02 | 2001 | source_key_unmatched | FALSE | FALSE | source_key_inventory_not_true_unmatched_rows | These rows are the source-key inventory emitted by the fallback key-map path, not the legacy Chunk 20 unmatched_df output from merge_dfs_into_tracker(). |
-| 01 | 03 | 2001 | 2001\_\_01\_\_03 | 2001 | source_key_unmatched | FALSE | FALSE | source_key_inventory_not_true_unmatched_rows | These rows are the source-key inventory emitted by the fallback key-map path, not the legacy Chunk 20 unmatched_df output from merge_dfs_into_tracker(). |
-| 01 | 04 | 2001 | 2001\_\_01\_\_04 | 2001 | source_key_unmatched | FALSE | FALSE | source_key_inventory_not_true_unmatched_rows | These rows are the source-key inventory emitted by the fallback key-map path, not the legacy Chunk 20 unmatched_df output from merge_dfs_into_tracker(). |
-| 01 | 05 | 2001 | 2001\_\_01\_\_05 | 2001 | source_key_unmatched | FALSE | FALSE | source_key_inventory_not_true_unmatched_rows | These rows are the source-key inventory emitted by the fallback key-map path, not the legacy Chunk 20 unmatched_df output from merge_dfs_into_tracker(). |
-| 01 | 06 | 2001 | 2001\_\_01\_\_06 | 2001 | source_key_unmatched | FALSE | FALSE | source_key_inventory_not_true_unmatched_rows | These rows are the source-key inventory emitted by the fallback key-map path, not the legacy Chunk 20 unmatched_df output from merge_dfs_into_tracker(). |
-| 01 | 07 | 2001 | 2001\_\_01\_\_07 | 2001 | source_key_unmatched | FALSE | FALSE | source_key_inventory_not_true_unmatched_rows | These rows are the source-key inventory emitted by the fallback key-map path, not the legacy Chunk 20 unmatched_df output from merge_dfs_into_tracker(). |
-| 01 | 08 | 2001 | 2001\_\_01\_\_08 | 2001 | source_key_unmatched | FALSE | FALSE | source_key_inventory_not_true_unmatched_rows | These rows are the source-key inventory emitted by the fallback key-map path, not the legacy Chunk 20 unmatched_df output from merge_dfs_into_tracker(). |
-| 01 | 09 | 2001 | 2001\_\_01\_\_09 | 2001 | source_key_unmatched | FALSE | FALSE | source_key_inventory_not_true_unmatched_rows | These rows are the source-key inventory emitted by the fallback key-map path, not the legacy Chunk 20 unmatched_df output from merge_dfs_into_tracker(). |
-| 01 | 10 | 2001 | 2001\_\_01\_\_10 | 2001 | source_key_unmatched | FALSE | FALSE | source_key_inventory_not_true_unmatched_rows | These rows are the source-key inventory emitted by the fallback key-map path, not the legacy Chunk 20 unmatched_df output from merge_dfs_into_tracker(). |
-| 01 | 11 | 2001 | 2001\_\_01\_\_11 | 2001 | source_key_unmatched | FALSE | FALSE | source_key_inventory_not_true_unmatched_rows | These rows are the source-key inventory emitted by the fallback key-map path, not the legacy Chunk 20 unmatched_df output from merge_dfs_into_tracker(). |
-| 01 | 12 | 2001 | 2001\_\_01\_\_12 | 2001 | source_key_unmatched | FALSE | FALSE | source_key_inventory_not_true_unmatched_rows | These rows are the source-key inventory emitted by the fallback key-map path, not the legacy Chunk 20 unmatched_df output from merge_dfs_into_tracker(). |
-| 01 | 13 | 2001 | 2001\_\_01\_\_13 | 2001 | source_key_unmatched | FALSE | FALSE | source_key_inventory_not_true_unmatched_rows | These rows are the source-key inventory emitted by the fallback key-map path, not the legacy Chunk 20 unmatched_df output from merge_dfs_into_tracker(). |
-| 01 | 14 | 2001 | 2001\_\_01\_\_14 | 2001 | source_key_unmatched | FALSE | FALSE | source_key_inventory_not_true_unmatched_rows | These rows are the source-key inventory emitted by the fallback key-map path, not the legacy Chunk 20 unmatched_df output from merge_dfs_into_tracker(). |
-| 02 | 01 | 2001 | 2001\_\_02\_\_01 | 2001 | source_key_unmatched | FALSE | FALSE | source_key_inventory_not_true_unmatched_rows | These rows are the source-key inventory emitted by the fallback key-map path, not the legacy Chunk 20 unmatched_df output from merge_dfs_into_tracker(). |
-| 02 | 02 | 2001 | 2001\_\_02\_\_02 | 2001 | source_key_unmatched | FALSE | FALSE | source_key_inventory_not_true_unmatched_rows | These rows are the source-key inventory emitted by the fallback key-map path, not the legacy Chunk 20 unmatched_df output from merge_dfs_into_tracker(). |
-| 02 | 03 | 2001 | 2001\_\_02\_\_03 | 2001 | source_key_unmatched | FALSE | FALSE | source_key_inventory_not_true_unmatched_rows | These rows are the source-key inventory emitted by the fallback key-map path, not the legacy Chunk 20 unmatched_df output from merge_dfs_into_tracker(). |
-| 02 | 04 | 2001 | 2001\_\_02\_\_04 | 2001 | source_key_unmatched | FALSE | FALSE | source_key_inventory_not_true_unmatched_rows | These rows are the source-key inventory emitted by the fallback key-map path, not the legacy Chunk 20 unmatched_df output from merge_dfs_into_tracker(). |
-| 02 | 05 | 2001 | 2001\_\_02\_\_05 | 2001 | source_key_unmatched | FALSE | FALSE | source_key_inventory_not_true_unmatched_rows | These rows are the source-key inventory emitted by the fallback key-map path, not the legacy Chunk 20 unmatched_df output from merge_dfs_into_tracker(). |
-| 02 | 06 | 2001 | 2001\_\_02\_\_06 | 2001 | source_key_unmatched | FALSE | FALSE | source_key_inventory_not_true_unmatched_rows | These rows are the source-key inventory emitted by the fallback key-map path, not the legacy Chunk 20 unmatched_df output from merge_dfs_into_tracker(). |
-| Table truncated in rendered note; full CSV has 3175 rows. |  |  |  |  |  |  |  |  |  |
+| note |
+|:---|
+| No rows in analysis output: outputs/diagnostics/extended/district_matching/district_matching_source_key_inventory.csv |
 
 Fallback source-key inventory separated from true unmatched rows
 
@@ -260,6 +240,6 @@ analysis_table(dm_all_rows, "All-rows close-match search table", max_rows = 30)
 | Assam | Cachar | panel |
 | Assam | Dhemaji | panel |
 | Assam | Dhubri | panel |
-| Table truncated in rendered note; full CSV has 6832 rows. |  |  |
+| Table truncated in rendered note; full CSV has 1216 rows. |  |  |
 
 All-rows close-match search table

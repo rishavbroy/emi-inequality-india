@@ -1,8 +1,8 @@
 "object","n_rows","n_complete_rows"
 "district_panel",482,482
-"district_join_map",3175,3175
+"district_join_map",734,734
 "unmatched_rows",0,NA
-"source_key_inventory",3175,NA
+"source_key_inventory",0,NA
 "many_to_many_cases",0,NA
+"key_role:requires_review",252,NA
 "key_role:shared_panel_join_key",482,NA
-"key_role:source_key_inventory_only",1523,NA

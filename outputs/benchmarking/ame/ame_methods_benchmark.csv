@@ -1,7 +1,7 @@
 "method","sample_size","n_observations","n_numeric_variables","centered_predict_calls_full_data","elapsed_seconds","status","reason","fallback"
-"avg_slopes_centered_default",200,114961,10,2299220,1.025,"estimated_table_vcov",NA,NA
-"avg_slopes_fdforward",200,114961,10,2299220,0.93,"estimated_table_vcov",NA,NA
-"avg_slopes_centered_default",2000,114961,10,2299220,6.637,"estimated_table_vcov",NA,NA
-"avg_slopes_fdforward",2000,114961,10,2299220,5.647,"estimated_table_vcov",NA,NA
-"avg_slopes_centered_default",20000,114961,10,2299220,82.25,"estimated_table_vcov",NA,NA
-"avg_slopes_fdforward",20000,114961,10,2299220,45.106,"estimated_table_vcov",NA,NA
+"avg_slopes_centered_default",200,114898,10,2297960,0.0420000000000016,"current_version_incompatible","invalid formula","vcov=FALSE fallback failed: invalid formula"
+"avg_slopes_fdforward",200,114898,10,2297960,0.0139999999999993,"current_version_incompatible","invalid formula","vcov=FALSE fallback failed: invalid formula"
+"avg_slopes_centered_default",2000,114898,10,2297960,0.0139999999999993,"current_version_incompatible","invalid formula","vcov=FALSE fallback failed: invalid formula"
+"avg_slopes_fdforward",2000,114898,10,2297960,0.0139999999999993,"current_version_incompatible","invalid formula","vcov=FALSE fallback failed: invalid formula"
+"avg_slopes_centered_default",20000,114898,10,2297960,0.0150000000000006,"current_version_incompatible","invalid formula","vcov=FALSE fallback failed: invalid formula"
+"avg_slopes_fdforward",20000,114898,10,2297960,0.0140000000000029,"current_version_incompatible","invalid formula","vcov=FALSE fallback failed: invalid formula"

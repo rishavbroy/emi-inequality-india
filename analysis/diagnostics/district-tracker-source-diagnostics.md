@@ -59,11 +59,11 @@ data.frame(
 ```
 
                                                          current_code_analog rows
-    1                                             nrow(tracker_state_events)    7
+    1                                             nrow(tracker_state_events)    1
     2                                           nrow(tracker_expected_state)    2
-    3                                                 nrow(tracker_inperiod)   17
+    3                                                 nrow(tracker_inperiod)    1
     4                                        nrow(tracker_expected_inperiod)    1
-    5 nrow(tracker_same_by_year[tracker_same_by_year$within_legacy_range, ])    0
+    5 nrow(tracker_same_by_year[tracker_same_by_year$within_legacy_range, ])   NA
 
 ``` r
 analysis_table(tracker_counts, "Tracker source row counts")
@@ -72,7 +72,7 @@ analysis_table(tracker_counts, "Tracker source row counts")
 | source_file_id                 | n_rows | n_columns |
 |:-------------------------------|-------:|----------:|
 | district_changes_alluvial      |    808 |        16 |
-| district_changes_carveouts     |    383 |         5 |
+| district_changes_carveouts     |    384 |         5 |
 | district_changes_tracker       |    735 |        60 |
 | district_changes_new_districts |    487 |         6 |
 | district_changes_name_changes  |    134 |         6 |
@@ -84,93 +84,9 @@ Tracker source row counts
 analysis_table(tracker_state_changes, "Current row-level state/UT changes")
 ```
 
-| tracker_row | years | states | first_state | last_state |
-|---:|:---|:---|:---|:---|
-| 141 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Dadra and Nagar Haveli -\> Dadra and Nagar Haveli and Daman and Diu | Dadra and Nagar Haveli | Dadra and Nagar Haveli and Daman and Diu |
-| 142 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Daman and Diu -\> Dadra and Nagar Haveli and Daman and Diu | Daman and Diu | Dadra and Nagar Haveli and Daman and Diu |
-| 143 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Daman and Diu -\> Dadra and Nagar Haveli and Daman and Diu | Daman and Diu | Dadra and Nagar Haveli and Daman and Diu |
-| 246 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Jammu and Kashmir -\> Ladakh | Jammu and Kashmir | Ladakh |
-| 247 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Jammu and Kashmir -\> Ladakh | Jammu and Kashmir | Ladakh |
-| 453 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Orissa -\> Odisha | Orissa | Odisha |
-| 454 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Orissa -\> Odisha | Orissa | Odisha |
-| 455 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Orissa -\> Odisha | Orissa | Odisha |
-| 456 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Orissa -\> Odisha | Orissa | Odisha |
-| 457 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Orissa -\> Odisha | Orissa | Odisha |
-| 458 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Orissa -\> Odisha | Orissa | Odisha |
-| 459 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Orissa -\> Odisha | Orissa | Odisha |
-| 460 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Orissa -\> Odisha | Orissa | Odisha |
-| 461 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Orissa -\> Odisha | Orissa | Odisha |
-| 462 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Orissa -\> Odisha | Orissa | Odisha |
-| 463 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Orissa -\> Odisha | Orissa | Odisha |
-| 464 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Orissa -\> Odisha | Orissa | Odisha |
-| 465 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Orissa -\> Odisha | Orissa | Odisha |
-| 466 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Orissa -\> Odisha | Orissa | Odisha |
-| 467 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Orissa -\> Odisha | Orissa | Odisha |
-| 468 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Orissa -\> Odisha | Orissa | Odisha |
-| 469 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Orissa -\> Odisha | Orissa | Odisha |
-| 470 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Orissa -\> Odisha | Orissa | Odisha |
-| 471 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Orissa -\> Odisha | Orissa | Odisha |
-| 472 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Orissa -\> Odisha | Orissa | Odisha |
-| 473 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Orissa -\> Odisha | Orissa | Odisha |
-| 474 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Orissa -\> Odisha | Orissa | Odisha |
-| 475 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Orissa -\> Odisha | Orissa | Odisha |
-| 476 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Orissa -\> Odisha | Orissa | Odisha |
-| 477 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Orissa -\> Odisha | Orissa | Odisha |
-| 478 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Orissa -\> Odisha | Orissa | Odisha |
-| 479 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Orissa -\> Odisha | Orissa | Odisha |
-| 480 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Orissa -\> Odisha | Orissa | Odisha |
-| 481 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Orissa -\> Odisha | Orissa | Odisha |
-| 482 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Orissa -\> Odisha | Orissa | Odisha |
-| 483 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Pondicherry -\> Puducherry | Pondicherry | Puducherry |
-| 484 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Pondicherry -\> Puducherry | Pondicherry | Puducherry |
-| 485 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Pondicherry -\> Puducherry | Pondicherry | Puducherry |
-| 486 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Pondicherry -\> Puducherry | Pondicherry | Puducherry |
-| 583 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Andhra Pradesh -\> Telangana | Andhra Pradesh | Telangana |
-| 584 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Andhra Pradesh -\> Telangana | Andhra Pradesh | Telangana |
-| 585 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Andhra Pradesh -\> Telangana | Andhra Pradesh | Telangana |
-| 586 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Andhra Pradesh -\> Telangana | Andhra Pradesh | Telangana |
-| 587 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Andhra Pradesh -\> Telangana | Andhra Pradesh | Telangana |
-| 588 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Andhra Pradesh -\> Telangana | Andhra Pradesh | Telangana |
-| 589 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Andhra Pradesh -\> Telangana | Andhra Pradesh | Telangana |
-| 590 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Andhra Pradesh -\> Telangana | Andhra Pradesh | Telangana |
-| 591 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Andhra Pradesh -\> Telangana | Andhra Pradesh | Telangana |
-| 592 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Andhra Pradesh -\> Telangana | Andhra Pradesh | Telangana |
-| 593 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Andhra Pradesh -\> Telangana | Andhra Pradesh | Telangana |
-| 594 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Andhra Pradesh -\> Telangana | Andhra Pradesh | Telangana |
-| 595 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Andhra Pradesh -\> Telangana | Andhra Pradesh | Telangana |
-| 596 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Andhra Pradesh -\> Telangana | Andhra Pradesh | Telangana |
-| 597 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Andhra Pradesh -\> Telangana | Andhra Pradesh | Telangana |
-| 598 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Andhra Pradesh -\> Telangana | Andhra Pradesh | Telangana |
-| 599 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Andhra Pradesh -\> Telangana | Andhra Pradesh | Telangana |
-| 600 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Andhra Pradesh -\> Telangana | Andhra Pradesh | Telangana |
-| 601 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Andhra Pradesh -\> Telangana | Andhra Pradesh | Telangana |
-| 602 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Andhra Pradesh -\> Telangana | Andhra Pradesh | Telangana |
-| 603 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Andhra Pradesh -\> Telangana | Andhra Pradesh | Telangana |
-| 604 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Andhra Pradesh -\> Telangana | Andhra Pradesh | Telangana |
-| 605 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Andhra Pradesh -\> Telangana | Andhra Pradesh | Telangana |
-| 606 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Andhra Pradesh -\> Telangana | Andhra Pradesh | Telangana |
-| 607 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Andhra Pradesh -\> Telangana | Andhra Pradesh | Telangana |
-| 608 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Andhra Pradesh -\> Telangana | Andhra Pradesh | Telangana |
-| 609 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Andhra Pradesh -\> Telangana | Andhra Pradesh | Telangana |
-| 610 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Andhra Pradesh -\> Telangana | Andhra Pradesh | Telangana |
-| 611 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Andhra Pradesh -\> Telangana | Andhra Pradesh | Telangana |
-| 612 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Andhra Pradesh -\> Telangana | Andhra Pradesh | Telangana |
-| 613 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Andhra Pradesh -\> Telangana | Andhra Pradesh | Telangana |
-| 614 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Andhra Pradesh -\> Telangana | Andhra Pradesh | Telangana |
-| 615 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Andhra Pradesh -\> Telangana | Andhra Pradesh | Telangana |
-| 699 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Uttaranchal -\> Uttarakhand | Uttaranchal | Uttarakhand |
-| 700 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Uttaranchal -\> Uttarakhand | Uttaranchal | Uttarakhand |
-| 701 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Uttaranchal -\> Uttarakhand | Uttaranchal | Uttarakhand |
-| 702 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Uttaranchal -\> Uttarakhand | Uttaranchal | Uttarakhand |
-| 703 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Uttaranchal -\> Uttarakhand | Uttaranchal | Uttarakhand |
-| 704 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Uttaranchal -\> Uttarakhand | Uttaranchal | Uttarakhand |
-| 705 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Uttaranchal -\> Uttarakhand | Uttaranchal | Uttarakhand |
-| 706 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Uttaranchal -\> Uttarakhand | Uttaranchal | Uttarakhand |
-| 707 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Uttaranchal -\> Uttarakhand | Uttaranchal | Uttarakhand |
-| 708 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Uttaranchal -\> Uttarakhand | Uttaranchal | Uttarakhand |
-| 709 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Uttaranchal -\> Uttarakhand | Uttaranchal | Uttarakhand |
-| 710 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Uttaranchal -\> Uttarakhand | Uttaranchal | Uttarakhand |
-| 711 | 2001;2005;2006;2007;2008;2011;2017;2018;2019;2020 | Uttaranchal -\> Uttarakhand | Uttaranchal | Uttarakhand |
+| note |
+|:---|
+| No rows in analysis output: outputs/diagnostics/extended/district_tracker_sources/tracker_state_changes.csv |
 
 Current row-level state/UT changes
 
@@ -178,15 +94,9 @@ Current row-level state/UT changes
 analysis_table(tracker_state_events, "Current state/UT change events")
 ```
 
-| state_transition | n_rows |
-|:---|---:|
-| Andhra Pradesh -\> Telangana | 33 |
-| Orissa -\> Odisha | 30 |
-| Uttaranchal -\> Uttarakhand | 13 |
-| Pondicherry -\> Puducherry | 4 |
-| Daman and Diu -\> Dadra and Nagar Haveli and Daman and Diu | 2 |
-| Jammu and Kashmir -\> Ladakh | 2 |
-| Dadra and Nagar Haveli -\> Dadra and Nagar Haveli and Daman and Diu | 1 |
+| note |
+|:---|
+| No rows in analysis output: outputs/diagnostics/extended/district_tracker_sources/tracker_state_change_events.csv |
 
 Current state/UT change events
 
@@ -218,25 +128,9 @@ Legacy unrecorded state/UT changes requiring manual attention
 analysis_table(tracker_inperiod, "Current district-name changes inside sampling periods")
 ```
 
-| tracker_row | period | state_start | state_end | district_start | district_end |
-|---:|:---|:---|:---|:---|:---|
-| 240 | 05_to_06 | Jammu and Kashmir | Jammu and Kashmir | Doda | Ramban |
-| 242 | 05_to_06 | Jammu and Kashmir | Jammu and Kashmir | Jammu | Samba |
-| 485 | 05_to_06 | Pondicherry | Puducherry | Pondicherry | Puducherry |
-| 488 | 05_to_06 | Punjab | Punjab | Sangrur | Barnala |
-| 506 | 05_to_06 | Punjab | Punjab | Rupnagar | S.A.S. Nagar |
-| 508 | 05_to_06 | Punjab | Punjab | Amritsar | Tarn Taran |
-| 11 | 07_to_08 | Andhra Pradesh | Andhra Pradesh | Nellore | S.P.S. Nellore |
-| 204 | 07_to_08 | Haryana | Haryana | Gurgaon | Palwal |
-| 260 | 07_to_08 | Jharkhand | Jharkhand | Ranchi | Khunti |
-| 266 | 07_to_08 | Jharkhand | Jharkhand | Hazaribagh | Ramgarh |
-| 279 | 07_to_08 | Karnataka | Karnataka | Kolar | Chikkaballapura |
-| 502 | 07_to_08 | Punjab | Punjab | Nawanshahr | Shahid Bhagat Singh Nagar |
-| 534 | 07_to_08 | Rajasthan | Rajasthan | Chittorgarh | Pratapgarh |
-| 668 | 07_to_08 | Uttar Pradesh | Uttar Pradesh | Etah | Kasganj |
-| 349 | 17_to_18 | Madhya Pradesh | Madhya Pradesh | Tikamgarh | Niwari |
-| 626 | 17_to_18 | Uttar Pradesh | Uttar Pradesh | Allahabad | Prayagraj |
-| 649 | 17_to_18 | Uttar Pradesh | Uttar Pradesh | Faizabad | Ayodhya |
+| note |
+|:---|
+| No rows in analysis output: outputs/diagnostics/extended/district_tracker_sources/tracker_inperiod_district_changes.csv |
 
 Current district-name changes inside sampling periods
 
@@ -254,39 +148,9 @@ Legacy in-period district-name-change benchmark
 analysis_table(tracker_same, "Current same-name districts appearing in multiple states", max_rows = 30)
 ```
 
-| year_suffix | year | district_name | district_key | n_districts | n_states | states |
-|:---|:---|:---|:---|:---|:---|:---|
-| 1 | 2001 | Aurangabad | aurangabad | 2 | 2 | Bihar; Maharashtra |
-| 1 | 2001 | Bilaspur | bilaspur | 3 | 2 | Chhattisgarh; Himachal Pradesh |
-| 1 | 2001 | Hamirpur | hamirpur | 2 | 2 | Himachal Pradesh; Uttar Pradesh |
-| 5 | 2005 | Aurangabad | aurangabad | 2 | 2 | Bihar; Maharashtra |
-| 5 | 2005 | Bilaspur | bilaspur | 3 | 2 | Chhattisgarh; Himachal Pradesh |
-| 5 | 2005 | Hamirpur | hamirpur | 2 | 2 | Himachal Pradesh; Uttar Pradesh |
-| 6 | 2006 | Aurangabad | aurangabad | 2 | 2 | Bihar; Maharashtra |
-| 6 | 2006 | Bilaspur | bilaspur | 3 | 2 | Chhattisgarh; Himachal Pradesh |
-| 6 | 2006 | Hamirpur | hamirpur | 2 | 2 | Himachal Pradesh; Uttar Pradesh |
-| 7 | 2007 | Aurangabad | aurangabad | 2 | 2 | Bihar; Maharashtra |
-| 7 | 2007 | Bijapur | bijapur | 2 | 2 | Chhattisgarh; Karnataka |
-| 7 | 2007 | Bilaspur | bilaspur | 3 | 2 | Chhattisgarh; Himachal Pradesh |
-| 7 | 2007 | Hamirpur | hamirpur | 2 | 2 | Himachal Pradesh; Uttar Pradesh |
-| 8 | 2008 | Aurangabad | aurangabad | 2 | 2 | Bihar; Maharashtra |
-| 8 | 2008 | Bijapur | bijapur | 2 | 2 | Chhattisgarh; Karnataka |
-| 8 | 2008 | Bilaspur | bilaspur | 3 | 2 | Chhattisgarh; Himachal Pradesh |
-| 8 | 2008 | Hamirpur | hamirpur | 2 | 2 | Himachal Pradesh; Uttar Pradesh |
-| 8 | 2008 | Pratapgarh | pratapgarh | 2 | 2 | Rajasthan; Uttar Pradesh |
-| 11 | 2011 | Aurangabad | aurangabad | 2 | 2 | Bihar; Maharashtra |
-| 11 | 2011 | Bilaspur | bilaspur | 3 | 2 | Chhattisgarh; Himachal Pradesh |
-| 11 | 2011 | Hamirpur | hamirpur | 2 | 2 | Himachal Pradesh; Uttar Pradesh |
-| 11 | 2011 | Pratapgarh | pratapgarh | 2 | 2 | Rajasthan; Uttar Pradesh |
-| 17 | 2017 | Aurangabad | aurangabad | 2 | 2 | Bihar; Maharashtra |
-| 17 | 2017 | Balrampur | balrampur | 2 | 2 | Chhattisgarh; Uttar Pradesh |
-| 17 | 2017 | Bilaspur | bilaspur | 2 | 2 | Chhattisgarh; Himachal Pradesh |
-| 17 | 2017 | Hamirpur | hamirpur | 2 | 2 | Himachal Pradesh; Uttar Pradesh |
-| 17 | 2017 | Pratapgarh | pratapgarh | 2 | 2 | Rajasthan; Uttar Pradesh |
-| 18 | 2018 | Aurangabad | aurangabad | 2 | 2 | Bihar; Maharashtra |
-| 18 | 2018 | Balrampur | balrampur | 2 | 2 | Chhattisgarh; Uttar Pradesh |
-| 18 | 2018 | Bilaspur | bilaspur | 2 | 2 | Chhattisgarh; Himachal Pradesh |
-| Table truncated in rendered note; full CSV has 42 rows. |  |  |  |  |  |  |
+| note |
+|:---|
+| No rows in analysis output: outputs/diagnostics/extended/district_tracker_sources/tracker_same_name_districts.csv |
 
 Current same-name districts appearing in multiple states
 
@@ -294,18 +158,9 @@ Current same-name districts appearing in multiple states
 analysis_table(tracker_same_by_year, "Current same-name districts per year compared to legacy 6-10 range")
 ```
 
-| year | n_same_name_districts | n_same_name_district_names | legacy_expected_min_districts | legacy_expected_max_districts | within_legacy_range |
-|---:|---:|---:|---:|---:|:---|
-| 2001 | 3 | 3 | 6 | 10 | FALSE |
-| 2005 | 3 | 3 | 6 | 10 | FALSE |
-| 2006 | 3 | 3 | 6 | 10 | FALSE |
-| 2007 | 4 | 4 | 6 | 10 | FALSE |
-| 2008 | 5 | 5 | 6 | 10 | FALSE |
-| 2011 | 4 | 4 | 6 | 10 | FALSE |
-| 2017 | 5 | 5 | 6 | 10 | FALSE |
-| 2018 | 5 | 5 | 6 | 10 | FALSE |
-| 2019 | 5 | 5 | 6 | 10 | FALSE |
-| 2020 | 5 | 5 | 6 | 10 | FALSE |
+| note |
+|:---|
+| No rows in analysis output: outputs/diagnostics/extended/district_tracker_sources/tracker_same_name_districts_by_year.csv |
 
 Current same-name districts per year compared to legacy 6-10 range
 

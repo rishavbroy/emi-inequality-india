@@ -22,24 +22,24 @@ n_numeric <- analysis_value(ame_methods, column = "n_numeric_variables")
 predict_calls <- analysis_value(ame_methods, column = "centered_predict_calls_full_data")
 ```
 
-With `newdata = sel_data` (no subsampling, as if `num_samp =` 114,961):
+With `newdata = sel_data` (no subsampling, as if `num_samp =` 114,898):
 the default current benchmark tier intentionally does not rerun the
 full-data AME timing every public build. To reconcile the legacy
 20,000-row timing, the default tier now includes `num_samp = 20000` when
 the active model frame has that many rows; the largest sampled benchmark
 uses `num_samp =` 20,000, and the slowest recorded current run took
-82.25 seconds. This creates a documented deviation from the legacy
+0.042 seconds. This creates a documented deviation from the legacy
 prose: full-data AME timings are preserved only as legacy notes, not
 refreshed by the current pipeline.
 
 The rest of this chunk is saved for quick replications of robustness
 checks on my final method.
 
-Raw AME derivation is very slow: 10 numeric variables \* 114,961
+Raw AME derivation is very slow: 10 numeric variables \* 114,898
 observations \* 2 calls of `predict()` per observation per variable
 (`avg_slopes()` uses centered finite difference, see
 <https://marginaleffects.com/bonus/uncertainty.html#numerical-derivatives-sensitivity-to-step-size>)
-= 2,299,220 `predict()` calls.
+= 2,297,960 `predict()` calls.
 
 ``` r
 analysis_deviation_note("Legacy full-data timings are preserved in target notes, but the current pipeline deliberately no longer refreshes full-sample AME timings. The 20,000-row legacy timing remains part of the default benchmark tier when enough active model-frame rows are available; the missing full-data refresh is a marked deviation from the legacy timing prose.")
@@ -64,7 +64,7 @@ data.frame(
                                            current_code_analog n_numeric_variables
     1 n_numeric_variables * n_observations * 2 predict() calls                  10
       n_observations centered_predict_calls
-    1         114961                2299220
+    1         114898                2297960
 
 Method 1: Straight Sampling and Subsampling. Note: “`slopes()` functions
 will automatically revert to `comparisons()` for binary or categorical
@@ -81,12 +81,12 @@ analysis_table(
 
 | method | sample_size | n_observations | n_numeric_variables | centered_predict_calls_full_data | elapsed_seconds | status |
 |:---|---:|---:|---:|---:|---:|:---|
-| avg_slopes_centered_default | 200 | 114961 | 10 | 2299220 | 1.025 | estimated_table_vcov |
-| avg_slopes_fdforward | 200 | 114961 | 10 | 2299220 | 0.930 | estimated_table_vcov |
-| avg_slopes_centered_default | 2000 | 114961 | 10 | 2299220 | 6.637 | estimated_table_vcov |
-| avg_slopes_fdforward | 2000 | 114961 | 10 | 2299220 | 5.647 | estimated_table_vcov |
-| avg_slopes_centered_default | 20000 | 114961 | 10 | 2299220 | 82.250 | estimated_table_vcov |
-| avg_slopes_fdforward | 20000 | 114961 | 10 | 2299220 | 45.106 | estimated_table_vcov |
+| avg_slopes_centered_default | 200 | 114898 | 10 | 2297960 | 0.042 | current_version_incompatible |
+| avg_slopes_fdforward | 200 | 114898 | 10 | 2297960 | 0.014 | current_version_incompatible |
+| avg_slopes_centered_default | 2000 | 114898 | 10 | 2297960 | 0.014 | current_version_incompatible |
+| avg_slopes_fdforward | 2000 | 114898 | 10 | 2297960 | 0.014 | current_version_incompatible |
+| avg_slopes_centered_default | 20000 | 114898 | 10 | 2297960 | 0.015 | current_version_incompatible |
+| avg_slopes_fdforward | 20000 | 114898 | 10 | 2297960 | 0.014 | current_version_incompatible |
 
 Current AME benchmark attempts
 
@@ -94,20 +94,20 @@ Current AME benchmark attempts
 ame_methods[, intersect(c("method", "sample_size", "elapsed_seconds", "status", "reason"), names(ame_methods)), drop = FALSE]
 ```
 
-                           method sample_size elapsed_seconds               status
-    1 avg_slopes_centered_default         200           1.025 estimated_table_vcov
-    2        avg_slopes_fdforward         200           0.930 estimated_table_vcov
-    3 avg_slopes_centered_default        2000           6.637 estimated_table_vcov
-    4        avg_slopes_fdforward        2000           5.647 estimated_table_vcov
-    5 avg_slopes_centered_default       20000          82.250 estimated_table_vcov
-    6        avg_slopes_fdforward       20000          45.106 estimated_table_vcov
-      reason
-    1     NA
-    2     NA
-    3     NA
-    4     NA
-    5     NA
-    6     NA
+                           method sample_size elapsed_seconds
+    1 avg_slopes_centered_default         200           0.042
+    2        avg_slopes_fdforward         200           0.014
+    3 avg_slopes_centered_default        2000           0.014
+    4        avg_slopes_fdforward        2000           0.014
+    5 avg_slopes_centered_default       20000           0.015
+    6        avg_slopes_fdforward       20000           0.014
+                            status          reason
+    1 current_version_incompatible invalid formula
+    2 current_version_incompatible invalid formula
+    3 current_version_incompatible invalid formula
+    4 current_version_incompatible invalid formula
+    5 current_version_incompatible invalid formula
+    6 current_version_incompatible invalid formula
 
 Method 2: Subsampling with forward differences. The legacy note was:
 calls `predict()` once per perturbation instead of twice (a la central
@@ -126,9 +126,9 @@ analysis_table(
 
 | method | sample_size | elapsed_seconds | status | reason | fallback |
 |:---|---:|---:|:---|:---|:---|
-| avg_slopes_fdforward | 200 | 0.930 | estimated_table_vcov | NA | NA |
-| avg_slopes_fdforward | 2000 | 5.647 | estimated_table_vcov | NA | NA |
-| avg_slopes_fdforward | 20000 | 45.106 | estimated_table_vcov | NA | NA |
+| avg_slopes_fdforward | 200 | 0.014 | current_version_incompatible | invalid formula | vcov=FALSE fallback failed: invalid formula |
+| avg_slopes_fdforward | 2000 | 0.014 | current_version_incompatible | invalid formula | vcov=FALSE fallback failed: invalid formula |
+| avg_slopes_fdforward | 20000 | 0.014 | current_version_incompatible | invalid formula | vcov=FALSE fallback failed: invalid formula |
 
 Forward-difference AME benchmark rows
 

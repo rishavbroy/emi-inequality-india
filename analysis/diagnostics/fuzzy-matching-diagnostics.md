@@ -48,7 +48,7 @@ analysis_table(fuzzy_summary, "Fuzzy matching diagnostic summary")
 
 | n_tracker_rows | n_join_rows | n_unmatched_rows | n_candidate_pairs | n_active_candidate_pairs |
 |---:|---:|---:|---:|---:|
-| 3476 | 3175 | 3175 | 216402 | 216393 |
+| 3477 | 734 | 0 | 333 | 324 |
 
 Fuzzy matching diagnostic summary
 
@@ -85,28 +85,16 @@ analysis_table(fuzzy_coverage, "Candidate-pair coverage", max_rows = 30)
 
 | pair_source | n_pairs | coverage_note |
 |:---|---:|:---|
-| active_source_key_inventory_2001 | 19071 | active source/tracker candidate pair emitted by the current pipeline |
-| active_source_key_inventory_2005 | 19610 | active source/tracker candidate pair emitted by the current pipeline |
-| active_source_key_inventory_2006 | 19714 | active source/tracker candidate pair emitted by the current pipeline |
-| active_source_key_inventory_2007 | 20069 | active source/tracker candidate pair emitted by the current pipeline |
-| active_source_key_inventory_2008 | 20276 | active source/tracker candidate pair emitted by the current pipeline |
-| active_source_key_inventory_2011 | 21761 | active source/tracker candidate pair emitted by the current pipeline |
-| active_source_key_inventory_2017 | 23741 | active source/tracker candidate pair emitted by the current pipeline |
-| active_source_key_inventory_2018 | 23793 | active source/tracker candidate pair emitted by the current pipeline |
-| active_source_key_inventory_2019 | 24022 | active source/tracker candidate pair emitted by the current pipeline |
-| active_source_key_inventory_2020 | 24022 | active source/tracker candidate pair emitted by the current pipeline |
+| join_map_district_01_to_district_05 | 21 | active source/tracker candidate pair emitted by the current pipeline |
+| join_map_district_05_to_district_06 | 6 | active source/tracker candidate pair emitted by the current pipeline |
+| join_map_district_06_to_district_07 | 8 | active source/tracker candidate pair emitted by the current pipeline |
+| join_map_district_07_to_district_08 | 8 | active source/tracker candidate pair emitted by the current pipeline |
+| join_map_district_08_to_district_11 | 29 | active source/tracker candidate pair emitted by the current pipeline |
+| join_map_district_11_to_district_17 | 79 | active source/tracker candidate pair emitted by the current pipeline |
+| join_map_district_17_to_district_18 | 3 | active source/tracker candidate pair emitted by the current pipeline |
+| join_map_district_18_to_district_19 | 10 | active source/tracker candidate pair emitted by the current pipeline |
 | legacy_troublesome_comment | 9 | legacy hand-picked examples from Chunk 16 |
-| tracker_2001_to_2005 | 21 | active source/tracker candidate pair emitted by the current pipeline |
-| tracker_2001_to_2007 | 35 | active source/tracker candidate pair emitted by the current pipeline |
-| tracker_2005_to_2006 | 6 | active source/tracker candidate pair emitted by the current pipeline |
-| tracker_2006_to_2007 | 8 | active source/tracker candidate pair emitted by the current pipeline |
-| tracker_2007_to_2008 | 8 | active source/tracker candidate pair emitted by the current pipeline |
-| tracker_2007_to_2017 | 102 | active source/tracker candidate pair emitted by the current pipeline |
-| tracker_2008_to_2011 | 29 | active source/tracker candidate pair emitted by the current pipeline |
-| tracker_2011_to_2017 | 79 | active source/tracker candidate pair emitted by the current pipeline |
-| tracker_2017_to_2018 | 3 | active source/tracker candidate pair emitted by the current pipeline |
-| tracker_2017_to_2020 | 13 | active source/tracker candidate pair emitted by the current pipeline |
-| tracker_2018_to_2019 | 10 | active source/tracker candidate pair emitted by the current pipeline |
+| tracker_1991_to_2001 | 160 | active source/tracker candidate pair emitted by the current pipeline |
 
 Candidate-pair coverage
 
@@ -168,8 +156,8 @@ Troublesome legacy name-pair checks
 analysis_table(fuzzy_status, "Current join status counts")
 ```
 
-| match_status         | Freq |
-|:---------------------|-----:|
-| source_key_unmatched | 3175 |
+| match_status           | Freq |
+|:-----------------------|-----:|
+| reviewed_crosswalk_row |  734 |
 
 Current join status counts

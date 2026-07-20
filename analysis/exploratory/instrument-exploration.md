@@ -180,22 +180,22 @@ analysis_table(iv_rows, "Current keyed IV summary rows", max_rows = 30)
 | From 2007-08 | npeople_0708 | npeople_0708 | Population | 482 | 12,285 | 823,676 | 1,396,516 | 2,317,118 | 9,922,640 | 1,700,682 | 1,307,716 | Estimated via NSS sample weights |
 | From 2007-08 | consumption_0708 | consumption_0708 | Consumption | 482 | 330.09 | 626.88 | 768.60 | 999.13 | 2923.14 | 850.21 | 319.75 | Average household monthly consumption expenditures (Rs.) |
 | From 2007-08 | gini_cons_0708 | gini_cons_0708 | Gini of Consumption | 482 | 0.06 | 0.22 | 0.26 | 0.30 | 0.56 | 0.26 | 0.07 | Gini coefficient of consumption |
-| From 2007-08 | pct_urban | pct_urban | Pct. Urban | 482 | 0.00 | 8.60 | 15.69 | 28.13 | 100.00 | 21.09 | 17.91 | Percentage of people in an urban area |
-| From 2007-08 | avg_hh_size | avg_hh_size | Avg. HH Size | 482 | 3.85 | 5.10 | 5.60 | 6.23 | 8.94 | 5.66 | 0.85 | Average household size |
+| From 2007-08 | pct_urban | pct_urban | Pct. Urban | 482 | 0.00 | 9.25 | 16.59 | 30.31 | 100.00 | 22.00 | 18.21 | Percentage of people in an urban area |
+| From 2007-08 | avg_hh_size | avg_hh_size | Avg. HH Size | 482 | 3.15 | 4.27 | 4.70 | 5.12 | 6.44 | 4.68 | 0.65 | Average household size |
 | From 2007-08 | dependency_ratio | dependency_ratio | Dependency Ratio × 100 | 482 | 23.69 | 48.43 | 57.43 | 71.22 | 110.65 | 60.26 | 15.45 | Ratio of dependents (0-14, 65+) to labor force (15-64), × 100 |
-| From 2007-08 | pct_fem_head | pct_fem_head | Pct. Female Head | 482 | 9.81 | 17.56 | 19.04 | 20.89 | 28.98 | 19.29 | 2.64 | Percentage of households with a female head |
-| From 2007-08 | pct_hindu | pct_hindu | Pct. Hindu | 482 | 0.00 | 71.62 | 87.94 | 95.10 | 100.00 | 76.78 | 27.73 | Percentage of Hindus |
-| From 2007-08 | pct_muslim | pct_muslim | Pct. Muslim | 482 | 0.00 | 1.55 | 6.14 | 13.64 | 100.00 | 11.15 | 16.00 | Percentage of Muslims |
-| From 2007-08 | pct_other_religion | pct_other_religion | Pct. Other | 482 | 0.00 | 0.00 | 1.02 | 6.65 | 100.00 | 12.07 | 26.56 | Percentage not Hindu/Muslim |
-| From 2007-08 | pct_st | pct_st | Pct. ST | 482 | 0.00 | 0.00 | 2.93 | 18.06 | 100.00 | 16.97 | 28.12 | Scheduled Tribe |
-| From 2007-08 | pct_sc | pct_sc | Pct. SC | 482 | 0.00 | 9.45 | 17.68 | 25.55 | 46.42 | 17.61 | 10.86 | Scheduled Caste |
-| From 2007-08 | pct_obc | pct_obc | Pct. OBC | 482 | 0.00 | 18.15 | 43.12 | 59.18 | 96.69 | 39.41 | 24.28 | Other Backward Class |
-| From 2007-08 | pct_small_land | pct_small_land | Pct. Small Land-Owner | 482 | 4.89 | 32.36 | 45.80 | 59.45 | 95.61 | 46.49 | 18.52 | Owns 0.005–0.40 hectares |
-| From 2007-08 | pct_medium_land | pct_medium_land | Pct. Med. Land-Owner | 482 | 0.00 | 19.92 | 31.71 | 44.77 | 94.64 | 33.25 | 17.70 | Owns 0.41–3.00 hectares |
-| From 2007-08 | pct_large_land | pct_large_land | Pct. Large Land-Owner | 482 | 0.00 | 0.00 | 1.67 | 6.11 | 43.73 | 4.20 | 6.07 | Owns $\geq$ 3.01 hectares |
-| From 2007-08 | pct_head_illiterate | pct_head_illiterate | Pct. Head Educ., Illiterate | 482 | 0.00 | 23.95 | 34.35 | 46.16 | 78.68 | 34.88 | 15.87 | Percentage of household heads with educ. level: illiterate |
-| From 2007-08 | pct_head_lit_to_primary | pct_head_lit_to_primary | Pct. Head Educ., Lit.-Primary | 482 | 3.28 | 19.67 | 26.46 | 33.77 | 77.63 | 27.74 | 11.02 | Percentage of heads with educ. level: literate-primary |
-| From 2007-08 | pct_head_secondary_plus | pct_head_secondary_plus | Pct. Head Educ., Secondary+ | 482 | 0.58 | 26.90 | 35.20 | 46.43 | 79.43 | 37.32 | 14.40 | Percentage of heads with educ. level: above secondary |
+| From 2007-08 | pct_fem_head | pct_fem_head | Pct. Female Head | 482 | 50.44 | 85.57 | 90.22 | 93.95 | 100.00 | 88.84 | 7.09 | Percentage of households with a female head |
+| From 2007-08 | pct_hindu | pct_hindu | Pct. Hindu | 482 | 0.00 | 72.83 | 88.62 | 95.14 | 100.00 | 77.60 | 27.27 | Percentage of Hindus |
+| From 2007-08 | pct_muslim | pct_muslim | Pct. Muslim | 482 | 0.00 | 1.67 | 5.70 | 12.20 | 100.00 | 10.26 | 15.13 | Percentage of Muslims |
+| From 2007-08 | pct_other_religion | pct_other_religion | Pct. Other | 482 | 0.00 | 0.00 | 1.21 | 7.29 | 100.00 | 12.14 | 26.20 | Percentage not Hindu/Muslim |
+| From 2007-08 | pct_st | pct_st | Pct. ST | 482 | 0.00 | 0.00 | 2.88 | 19.26 | 100.00 | 17.03 | 27.84 | Scheduled Tribe |
+| From 2007-08 | pct_sc | pct_sc | Pct. SC | 482 | 0.00 | 9.97 | 17.67 | 25.78 | 46.72 | 17.77 | 10.88 | Scheduled Caste |
+| From 2007-08 | pct_obc | pct_obc | Pct. OBC | 482 | 0.00 | 18.24 | 41.83 | 57.45 | 96.60 | 38.74 | 23.76 | Other Backward Class |
+| From 2007-08 | pct_small_land | pct_small_land | Pct. Small Land-Owner | 482 | 5.03 | 33.21 | 47.07 | 60.52 | 94.20 | 47.22 | 18.29 | Owns 0.005–0.40 hectares |
+| From 2007-08 | pct_medium_land | pct_medium_land | Pct. Med. Land-Owner | 482 | 0.00 | 17.39 | 28.41 | 40.77 | 90.73 | 30.30 | 16.86 | Owns 0.41–3.00 hectares |
+| From 2007-08 | pct_large_land | pct_large_land | Pct. Large Land-Owner | 482 | 0.00 | 0.00 | 1.30 | 4.73 | 34.94 | 3.35 | 4.96 | Owns $\geq$ 3.01 hectares |
+| From 2007-08 | pct_head_illiterate | pct_head_illiterate | Pct. Head Educ., Illiterate | 482 | 0.00 | 24.07 | 34.35 | 46.16 | 78.68 | 34.90 | 15.88 | Percentage of household heads with educ. level: illiterate |
+| From 2007-08 | pct_head_lit_to_primary | pct_head_lit_to_primary | Pct. Head Educ., Lit.-Primary | 482 | 3.28 | 19.67 | 26.46 | 33.77 | 77.63 | 27.76 | 11.05 | Percentage of heads with educ. level: literate-primary |
+| From 2007-08 | pct_head_secondary_plus | pct_head_secondary_plus | Pct. Head Educ., Secondary+ | 482 | 0.58 | 26.90 | 35.20 | 46.43 | 79.43 | 37.34 | 14.40 | Percentage of heads with educ. level: above secondary |
 | From 2007-08 | pct_pucca | pct_pucca | Pct. Pucca | 482 | 0.00 | 27.51 | 55.63 | 80.92 | 100.00 | 53.95 | 29.42 | Percentage in pucca (permanent) homes |
 | From 2017-18 | npeople_1718 | npeople_1718 | Population | 482 | 30,094 | 807,081 | 1,481,289 | 2,342,633 | 12,274,837 | 1,788,321 | 1,476,278 | Estimated via NSS sample weights |
 | From 2017-18 | consumption_1718 | consumption_1718 | Consumption | 482 | 850.53 | 1544.12 | 2038.39 | 2618.70 | 6764.46 | 2214.82 | 902.80 | Average household monthly consumption expenditures (Rs.) |

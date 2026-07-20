@@ -1,0 +1,2 @@
+"n","n_islands","n_subgraphs","snap","snap_investigation_needed","recommendation"
+482,10,21,NA,TRUE,"Inspect geometry validity and sensitivity to a documented poly2nb snap value before interpreting spatial results."
