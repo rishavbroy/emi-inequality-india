@@ -34,6 +34,7 @@ Raw AME derivation is very slow: `r analysis_format_number(n_numeric, 0)` numeri
 
 ```{r ame-prose-deviation-note, results='asis'}
 analysis_deviation_note("Legacy full-data timings are preserved in target notes, but the current pipeline deliberately no longer refreshes full-sample AME timings. The 20,000-row legacy timing remains part of the default benchmark tier when enough active model-frame rows are available; the missing full-data refresh is a marked deviation from the legacy timing prose.")
+analysis_deviation_note("The active benchmark now calls the same current marginaleffects::avg_slopes() wrapper as the production AME target, using observed model-frame rows, explicit averaging weights, response-scale estimates, uncertainty, and the documented numderiv choices. It no longer treats a failed legacy call plus an uncertainty-free fallback as a successful benchmark result.")
 ```
 
 ```{r ame-predict-call-count-current-code}
@@ -62,7 +63,7 @@ Method 2: Subsampling with forward differences. The legacy note was: calls `pred
 
 ```{r ame-forward-difference}
 analysis_table(
-  ame_methods[ame_methods$method == "avg_slopes_fdforward", intersect(c("method", "sample_size", "elapsed_seconds", "status", "reason", "fallback"), names(ame_methods)), drop = FALSE],
+  ame_methods[ame_methods$method == "avg_slopes_fdforward", intersect(c("method", "sample_size", "elapsed_seconds", "n_estimates", "status", "reason"), names(ame_methods)), drop = FALSE],
   "Forward-difference AME benchmark rows"
 )
 ```

@@ -146,15 +146,18 @@ ame_model_data_and_weights <- function(model) {
 
 #' run marginaleffects while muffling only a redundant explicit-weight warning
 #'
-run_avg_slopes <- function(model, model_data, wts) {
+run_avg_slopes <- function(model, model_data, wts, numderiv = NULL) {
+  args <- list(
+    model = model,
+    newdata = model_data,
+    wts = wts,
+    vcov = TRUE,
+    type = "response"
+  )
+  if (!is.null(numderiv)) args$numderiv <- numderiv
+
   withCallingHandlers(
-    marginaleffects::avg_slopes(
-      model,
-      newdata = model_data,
-      wts = wts,
-      vcov = TRUE,
-      type = "response"
-    ),
+    do.call(marginaleffects::avg_slopes, args),
     warning = function(w) {
       msg <- conditionMessage(w)
       explicit_weight_warning <- grepl(

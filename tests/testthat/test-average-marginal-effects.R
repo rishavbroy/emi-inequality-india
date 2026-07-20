@@ -102,3 +102,34 @@ test_that("AME newdata uses model estimation rows and explicit model weights", {
   expect_true(".ame_weight" %in% names(amed$data))
   expect_equal(amed$data$.ame_weight, selection_data$weight[!is.na(selection_data$age)])
 })
+
+
+test_that("programmatic selection formulas remain reconstructable", {
+  selection_data <- data.frame(
+    enrolled = c(0, 1, 0, 1, 0, 1, 1, 0),
+    AGE = 6:13,
+    weight = rep(1, 8)
+  )
+  model <- estimate_selection_probit(selection_data, list(mode = "draft"))
+
+  expect_s3_class(model$call$formula, "formula")
+  expect_identical(model$call$formula, attr(model, "selection_probit_formula"))
+  expect_identical(stats::formula(model), model$call$formula)
+})
+
+test_that("AME benchmark exercises the production marginaleffects wrapper", {
+  skip_if_not_installed("marginaleffects")
+  selection_data <- data.frame(
+    enrolled = rep(c(0, 1), 20),
+    AGE = seq_len(40),
+    weight = rep(c(1, 2), 20)
+  )
+  model <- estimate_selection_probit(selection_data, list(mode = "draft"))
+
+  out <- benchmark_ame_methods(model, selection_data, list(), sample_sizes = 20L)
+
+  expect_setequal(out$method, c("avg_slopes_centered_default", "avg_slopes_fdforward"))
+  expect_true(all(out$status == "estimated"))
+  expect_true(all(is.na(out$reason)))
+  expect_true(all(out$n_estimates > 0L))
+})

@@ -43,6 +43,7 @@ observations \* 2 calls of `predict()` per observation per variable
 
 ``` r
 analysis_deviation_note("Legacy full-data timings are preserved in target notes, but the current pipeline deliberately no longer refreshes full-sample AME timings. The 20,000-row legacy timing remains part of the default benchmark tier when enough active model-frame rows are available; the missing full-data refresh is a marked deviation from the legacy timing prose.")
+analysis_deviation_note("The active benchmark now calls the same current marginaleffects::avg_slopes() wrapper as the production AME target, using observed model-frame rows, explicit averaging weights, response-scale estimates, uncertainty, and the documented numderiv choices. It no longer treats a failed legacy call plus an uncertainty-free fallback as a successful benchmark result.")
 ```
 
 **Deviation note.** Legacy full-data timings are preserved in target
@@ -51,6 +52,13 @@ full-sample AME timings. The 20,000-row legacy timing remains part of
 the default benchmark tier when enough active model-frame rows are
 available; the missing full-data refresh is a marked deviation from the
 legacy timing prose.
+
+**Deviation note.** The active benchmark now calls the same current
+`marginaleffects::avg_slopes()` wrapper as the production AME target,
+using observed model-frame rows, explicit averaging weights,
+response-scale estimates, uncertainty, and the documented `numderiv`
+choices. It no longer treats a failed legacy call plus an
+uncertainty-free fallback as a successful benchmark result.
 
 ``` r
 data.frame(

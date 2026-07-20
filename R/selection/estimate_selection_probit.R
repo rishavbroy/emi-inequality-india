@@ -30,13 +30,26 @@ estimate_selection_probit <- function(selection_data, cfg) {
     design <- build_survey_design_selection(selection_data)
     if (!is.null(design)) {
       out <- fit_selection_probit(design, f_probit)
-      attr(out, "selection_probit_formula") <- f_probit
-      return(out)
+      return(stabilize_selection_model_formula(out, f_probit))
     }
   }
   out <- stats::glm(f_probit, data = selection_data, family = stats::binomial(link = "probit"))
-  attr(out, "selection_probit_formula") <- f_probit
-  out
+  stabilize_selection_model_formula(out, f_probit)
+}
+
+#' store a durable selection-model formula
+#'
+#' Programmatically fitted models otherwise retain a call to the local symbol
+#' `f_probit`. Packages which reconstruct model data from the saved call cannot
+#' resolve that symbol after the model is serialized by targets. Embed the
+#' formula object in the call and retain the existing audit attribute.
+stabilize_selection_model_formula <- function(model, formula) {
+  if (!inherits(formula, "formula")) {
+    stop("Selection model formula must inherit from formula.", call. = FALSE)
+  }
+  if (!is.null(model$call)) model$call$formula <- formula
+  attr(model, "selection_probit_formula") <- formula
+  model
 }
 
 #' build survey design selection

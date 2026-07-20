@@ -63,58 +63,47 @@ benchmark_ame_methods <- function(selection_model, selection_data, cfg, sample_s
   if (is.list(selection_model) && !inherits(selection_model, "glm")) {
     return(data.frame(method = "avg_slopes", sample_size = NA_integer_, elapsed_seconds = NA_real_, status = "skipped", reason = selection_model$reason %||% "Selection model is not fitted.", stringsAsFactors = FALSE))
   }
-  amed <- if (exists("ame_model_data_and_weights", mode = "function")) {
-    ame_model_data_and_weights(selection_model)
-  } else {
-    list(data = as.data.frame(stats::model.frame(selection_model)), wts = FALSE)
-  }
+
+  amed <- ame_model_data_and_weights(selection_model)
   data <- as.data.frame(amed$data, stringsAsFactors = FALSE)
-  if (!nrow(data)) return(data.frame(method = "avg_slopes", sample_size = NA_integer_, elapsed_seconds = NA_real_, status = "skipped", reason = "No model-frame rows.", stringsAsFactors = FALSE))
+  if (!nrow(data)) {
+    return(data.frame(method = "avg_slopes", sample_size = NA_integer_, elapsed_seconds = NA_real_, status = "skipped", reason = "No model-frame rows.", stringsAsFactors = FALSE))
+  }
+
   response_name <- as.character(stats::formula(selection_model)[[2]])
   weight_name <- if (is.character(amed$wts) && length(amed$wts) == 1L) amed$wts else "weight"
   numeric_variables <- setdiff(names(data)[vapply(data, is.numeric, logical(1))], c(response_name, weight_name))
   n_observations <- nrow(data)
   n_numeric_variables <- length(numeric_variables)
   centered_predict_calls <- n_numeric_variables * n_observations * 2L
-  if (is.null(sample_sizes)) sample_sizes <- ame_benchmark_sample_sizes(nrow(data), cfg)
-  sample_sizes <- sample_sizes[sample_sizes <= nrow(data)]
-  if (!length(sample_sizes)) sample_sizes <- min(200L, nrow(data))
+  if (is.null(sample_sizes)) sample_sizes <- ame_benchmark_sample_sizes(n_observations, cfg)
+  sample_sizes <- sample_sizes[sample_sizes <= n_observations]
+  if (!length(sample_sizes)) sample_sizes <- min(200L, n_observations)
+
   old_parallel <- getOption("marginaleffects_parallel")
   options(marginaleffects_parallel = FALSE)
   on.exit(options(marginaleffects_parallel = old_parallel), add = TRUE)
 
-  base_args <- list(model = selection_model, vcov = TRUE, type = "response", wts = amed$wts)
+  methods <- list(
+    avg_slopes_centered_default = NULL,
+    avg_slopes_fdforward = "fdforward"
+  )
 
   safe_bind_rows(lapply(sample_sizes, function(n) {
     set.seed(999)
-    rows <- if (n < nrow(data)) sample(seq_len(nrow(data)), n) else seq_len(nrow(data))
+    rows <- if (n < n_observations) sample(seq_len(n_observations), n) else seq_len(n_observations)
     newdata_sub <- data[rows, , drop = FALSE]
-    run_one <- function(label, args = list()) {
+
+    safe_bind_rows(lapply(names(methods), function(label) {
+      result <- NULL
       elapsed <- system.time({
-        attempt <- tryCatch({
-          do.call(marginaleffects::avg_slopes, c(base_args, list(newdata = newdata_sub), args))
-          list(status = "estimated_table_vcov", reason = NA_character_, fallback = NA_character_)
-        }, error = function(e) {
-          # Recent marginaleffects versions can fail for the exact legacy call
-          # (wts = "weight", vcov = TRUE) on sub-sampled survey-style newdata.
-          # Preserve that failure, then try a clearly labeled current-version
-          # timing path without uncertainty and without the legacy weight-string
-          # dispatch.  This prevents failed rows from being mistaken for a
-          # successful legacy timing while still yielding a useful current timing
-          # when the package supports derivative-only estimation.
-          legacy_error <- conditionMessage(e)
-          fallback <- tryCatch({
-            fallback_args <- c(list(model = selection_model, vcov = FALSE, type = "response", newdata = newdata_sub, wts = amed$wts), args)
-            do.call(marginaleffects::avg_slopes, fallback_args)
-            TRUE
-          }, error = function(e2) conditionMessage(e2))
-          if (isTRUE(fallback)) {
-            list(status = "estimated_current_derivative_only_after_legacy_failure", reason = legacy_error, fallback = "vcov=FALSE with explicit sampled weights")
-          } else {
-            list(status = "current_version_incompatible", reason = legacy_error, fallback = paste("vcov=FALSE fallback failed:", fallback))
-          }
-        })
+        result <- tryCatch(
+          run_avg_slopes(selection_model, newdata_sub, amed$wts, numderiv = methods[[label]]),
+          error = function(e) e
+        )
       })[["elapsed"]]
+      failed <- inherits(result, "error")
+
       data.frame(
         method = label,
         sample_size = n,
@@ -122,16 +111,12 @@ benchmark_ame_methods <- function(selection_model, selection_data, cfg, sample_s
         n_numeric_variables = n_numeric_variables,
         centered_predict_calls_full_data = centered_predict_calls,
         elapsed_seconds = unname(elapsed),
-        status = attempt$status,
-        reason = attempt$reason,
-        fallback = attempt$fallback,
+        n_estimates = if (failed) NA_integer_ else nrow(as.data.frame(result)),
+        status = if (failed) "failed" else "estimated",
+        reason = if (failed) conditionMessage(result) else NA_character_,
         stringsAsFactors = FALSE
       )
-    }
-    safe_bind_rows(list(
-      run_one("avg_slopes_centered_default"),
-      run_one("avg_slopes_fdforward", list(numderiv = "fdforward"))
-    ))
+    }))
   }))
 }
 
