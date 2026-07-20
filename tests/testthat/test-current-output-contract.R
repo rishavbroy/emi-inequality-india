@@ -91,8 +91,8 @@ test_that("first-stage table reports full coefficients with standard errors bene
   fs <- data.frame(
     model = "consumption",
     term = c("wavg_ling_degrees", "consumption_0708", "(Intercept)"),
-    estimate = c(2.945, -0.111, 1.234),
-    std.error = c(0.949, 0.025, 0.500),
+    estimate = c(1.234, -0.111, 2.345),
+    std.error = c(0.456, 0.025, 0.500),
     p.value = c(0.004, 0.02, 0.1),
     partial_f = c(9.46, 9.46, 9.46),
     partial_p = c(0.0021, 0.0021, 0.0021),
@@ -112,8 +112,8 @@ test_that("first-stage table reports full coefficients with standard errors bene
   expect_false("Model's F-Statistic" %in% out$Term)
 
   ling_row <- which(out$Term == "Linguistic distance")
-  expect_equal(out[[value_col]][[ling_row]], "2.945**")
-  expect_equal(out[[value_col]][[ling_row + 1L]], "(0.949)")
+  expect_equal(out[[value_col]][[ling_row]], "1.234**")
+  expect_equal(out[[value_col]][[ling_row + 1L]], "(0.456)")
 
   f_row <- out[out$Term == "Instrument's F-Statistic", , drop = FALSE]
   expect_equal(f_row[[value_col]][[1]], "9.46**")
@@ -140,7 +140,6 @@ test_that("final district panel validation enforces structural IV-panel contract
 
   expect_silent(checked <- validate_analysis_district_panel(bad, list(mode = "final")))
   failures <- attr(checked, "analysis_panel_validation_failures")
-  expect_false(any(grepl("454 rows", failures, fixed = TRUE)))
   expect_true(any(grepl("missing core IV analysis values", failures, fixed = TRUE)))
   expect_true(any(grepl("district_panel_id is not unique", failures, fixed = TRUE)))
   expect_true(any(grepl(".matched_2007", failures, fixed = TRUE)))

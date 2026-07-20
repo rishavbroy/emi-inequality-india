@@ -25,3 +25,7 @@ Do not add `--with-samples` unless the changes may affect application-sample PDF
 ## Prose parity
 
 The analysis notes preserve legacy diagnostic prose where possible while replacing hard-coded legacy results with current target-backed results. Nontrivial prose deviations are documented in [`archive/refactoring/docs/analysis_prose_deviations.md`](../archive/refactoring/docs/analysis_prose_deviations.md).
+
+## Legacy IV result warning
+
+Do not use the legacy 454-district count, first-stage estimate 2.945 (SE 0.949), second-stage estimate 0.201 (SE 0.710), or partial F-statistic 37.77 as parity targets. The sample and coefficient estimates followed an almost certainly flawed legacy district-matching procedure, and the partial F-statistic is known to have been computed incorrectly. The live warning and current row-level evidence are maintained in [`analysis/diagnostics/district-matching-diagnostics.qmd`](diagnostics/district-matching-diagnostics.qmd).
