@@ -31,6 +31,8 @@ Imports:
     magick,
     broom,
     readODS,
+    jsonlite,
+    xml2,
     car,
     knitr
 Suggests:

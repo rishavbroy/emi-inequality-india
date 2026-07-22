@@ -6,7 +6,7 @@ test_that("build_district_tracker preserves source file ids and row positions", 
 
   out <- build_district_tracker(raw)
 
-  expect_setequal(out$source_file_id, c("alluvial", "tracker"))
+  expect_setequal(out$source_file_id, c("alluvial", "india_district_tracker"))
   expect_equal(out$.row_in_source[out$source_file_id == "alluvial"], c(1L, 2L))
 })
 
