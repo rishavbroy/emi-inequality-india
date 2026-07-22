@@ -96,7 +96,8 @@ Do not add columns unless they support a real decision, invariant, or citation. 
 - The LGD modification reports contain many duplicate rows and describe entities modified within a date interval, not complete event records.
 - The Alluvial workbook uses year-paired columns and needs a dedicated parser.
 - The Kumar-Somanathan CSV is headerless.
-- SHRUG locality keys are not necessarily unique on `shrid2`; duplicate membership must be diagnosed rather than silently reduced.
+- SHRUG locality keys are not necessarily unique on `shrid2`; duplicate locality rows must be aggregated for population and area weights.
+- SHRUG district keys are unique on the full SHRID-state-district key, not necessarily on `shrid2`. Multi-district SHRID rows are explicit cross-boundary cases and must remain distinguishable from genuinely missing Census membership.
 - SHRUG open polygons are analytical approximations assembled from multiple sources. Geometry QA, validity repair, area checks, and alternative-source comparison are required before final adjacency is accepted.
 - The current 2020 geometry belongs to the existing production draft and should not be relabeled as 2001 geometry.
 
