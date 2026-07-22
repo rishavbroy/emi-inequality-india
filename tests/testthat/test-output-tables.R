@@ -435,6 +435,31 @@ test_that("fallback regression TeX output does not expose placeholder term rows"
   expect_false(grepl(">~<|& ~ &|^~$", tex))
 })
 
+test_that("modelsummary payload uses project-owned coefficient extraction", {
+  model <- lm(mpg ~ wt, data = mtcars)
+  vc <- stats::vcov(model) * 4
+
+  out <- modelsummary_payload(model, vc)
+
+  expect_s3_class(out, "modelsummary_list")
+  expect_equal(out$tidy$term, names(stats::coef(model)))
+  expect_equal(out$tidy$estimate, unname(stats::coef(model)))
+  expect_equal(out$tidy$std.error, sqrt(diag(vc)), tolerance = 1e-12)
+  expect_equal(out$glance$nobs, stats::nobs(model))
+})
+
+test_that("public modelsummary writer renders ivreg through the custom payload", {
+  skip_if_not_installed("ivreg")
+  skip_if_not_installed("modelsummary")
+  skip_if_not_installed("kableExtra")
+  model <- ivreg::ivreg(mpg ~ wt | disp, data = mtcars)
+
+  tex <- paste(as.character(public_modelsummary_table(model, "cons_iv")), collapse = "\n")
+
+  expect_match(tex, "\\begin{table}", fixed = TRUE)
+  expect_match(tex, "Consumption Growth", fixed = TRUE)
+})
+
 test_that("public modelsummary regression writer emits LaTeX rather than HTML", {
   skip_if_not_installed("modelsummary")
   skip_if_not_installed("kableExtra")

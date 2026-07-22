@@ -522,6 +522,35 @@ public_modelsummary_gof_map <- function(name) {
   )
 }
 
+modelsummary_payload <- function(model, vcov_matrix = NULL) {
+  coefs <- coefficient_frame(model, vcov_matrix)
+  if (!nrow(coefs)) {
+    stop("Cannot render a regression table without model coefficients.", call. = FALSE)
+  }
+
+  tidy <- data.frame(
+    term = rownames(coefs),
+    estimate = suppressWarnings(as.numeric(coefs$Estimate)),
+    std.error = suppressWarnings(as.numeric(coefs[["Std. Error"]])),
+    statistic = suppressWarnings(as.numeric(coefs$statistic)),
+    p.value = suppressWarnings(as.numeric(coefs[["Pr(>|t|)"]])),
+    stringsAsFactors = FALSE
+  )
+
+  sm <- tryCatch(summary(model), error = function(e) NULL)
+  glance <- data.frame(
+    nobs = tryCatch(stats::nobs(model), error = function(e) NA_real_),
+    r.squared = tryCatch(sm$r.squared, error = function(e) NA_real_),
+    adj.r.squared = tryCatch(sm$adj.r.squared, error = function(e) NA_real_),
+    sigma = tryCatch(sm$sigma, error = function(e) NA_real_),
+    statistic = tryCatch(sm$fstatistic[[1]], error = function(e) NA_real_),
+    waldtest = tryCatch(sm$fstatistic[[1]], error = function(e) NA_real_),
+    stringsAsFactors = FALSE
+  )
+
+  structure(list(tidy = tidy, glance = glance), class = "modelsummary_list")
+}
+
 public_modelsummary_table <- function(model, name, vcov_matrix = NULL, add_rows = NULL) {
   need_pkg("modelsummary", "legacy regression table rendering")
   old_knit_to <- knitr::opts_knit$get("rmarkdown.pandoc.to")
@@ -531,7 +560,7 @@ public_modelsummary_table <- function(model, name, vcov_matrix = NULL, add_rows 
   knitr::opts_knit$set(rmarkdown.pandoc.to = "latex")
   options(modelsummary_format_numeric_latex = "plain")
   args <- list(
-    models = model,
+    models = modelsummary_payload(model, vcov_matrix),
     coef_map = public_regression_coef_map(),
     gof_map = public_modelsummary_gof_map(name),
     stars = c("*" = .05, "**" = .01, "***" = .001),
@@ -541,7 +570,6 @@ public_modelsummary_table <- function(model, name, vcov_matrix = NULL, add_rows 
     escape = FALSE,
     notes = public_modelsummary_notes(name)
   )
-  if (!is.null(vcov_matrix)) args$vcov <- vcov_matrix
   if (!is.null(add_rows)) args$add_rows <- add_rows
   tex <- suppress_modelsummary_latex_preamble_warning(do.call(modelsummary::modelsummary, args))
   tex <- kableExtra::kable_styling(
