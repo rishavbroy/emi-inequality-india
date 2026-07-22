@@ -29,3 +29,13 @@ The analysis notes preserve legacy diagnostic prose where possible while replaci
 ## Legacy IV result warning
 
 Do not use the legacy 454-district count, first-stage estimate 2.945 (SE 0.949), second-stage estimate 0.201 (SE 0.710), or partial F-statistic 37.77 as parity targets. The sample and coefficient estimates followed an almost certainly flawed legacy district-matching procedure, and the partial F-statistic is known to have been computed incorrectly. The live warning and current row-level evidence are maintained in [`analysis/diagnostics/district-matching-diagnostics.qmd`](diagnostics/district-matching-diagnostics.qmd).
+
+## District-lineage v2
+
+[`analysis/diagnostics/district-lineage-v2.qmd`](diagnostics/district-lineage-v2.qmd) reports the parallel rebuild of
+source identity, Census 2001/2011 locality transitions, administrative-event
+candidates, and primary-panel eligibility. It is intentionally diagnostic: the
+existing reviewed crosswalk remains the production authority until every
+source match and event used by the preferred panel is adjudicated and the
+strict invariants pass. Fuzzy scores rank review candidates; they never approve
+production geography by themselves.

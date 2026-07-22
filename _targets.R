@@ -115,6 +115,19 @@ core_pipeline_targets <- list(
 )
 
 extended_diagnostic_targets <- list(
+  tar_target(district_lineage_v2_specs, district_lineage_v2_input_specs(paths), cue = tar_cue(mode = "always")),
+  tar_target(district_lineage_v2_input_files, district_lineage_v2_existing_files(district_lineage_v2_specs), format = "file"),
+  tar_target(raw_district_lineage_v2, read_district_lineage_v2_sources(district_lineage_v2_specs, district_lineage_v2_input_files)),
+  tar_target(
+    diag_ext_district_lineage_v2,
+    save_district_lineage_v2(build_district_lineage_v2(
+      raw_district_lineage_v2,
+      district_tracker,
+      census_2001_languages,
+      measures_2007,
+      measures_2017
+    ))
+  ),
   tar_target(diag_ext_missingness, save_missingness_diagnostics(diagnose_missingness(selection_data, cfg))),
   tar_target(diag_ext_district_tracker_sources, save_tracker_source_diagnostics(diagnose_district_tracker_sources(raw_district_changes, district_tracker, cfg))),
   tar_target(diag_ext_district_matching, save_district_matching_diagnostics(diagnose_district_matching(district_panel, district_join_map, cfg))),

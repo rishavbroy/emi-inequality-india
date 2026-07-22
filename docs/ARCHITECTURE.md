@@ -13,8 +13,8 @@ This repository builds the English-medium instruction and inequality paper, supp
 - `R/` — source modules used by the pipeline.
   - `R/config.R` — configuration helpers.
   - `R/io/` — raw data readers and file/path handling.
-  - `R/districts/` — district keys, district tracker parsing, matching,
-    harmonization, and manual corrections.
+  - `R/districts/` — district keys, tracker parsing, current harmonization,
+    and the parallel district-lineage v2 source/bridge/matching modules.
   - `R/measures/` — construction of analysis measures and district panels.
   - `R/models/` — model estimation and IV formulas.
   - `R/selection/` — selection/probit sample construction and AMEs.
@@ -76,7 +76,11 @@ flowchart TD
 
 1. Raw files and metadata are read through `R/io/`.
 2. District source names, tracker records, boundaries, manual corrections, and
-   harmonized keys are built in `R/districts/`.
+   harmonized keys are built in `R/districts/`. The reviewed wide crosswalk
+   remains the production authority while the v2 lineage diagnostic builds
+   code-based Census registries, SHRUG transition weights, LGD subdistrict and
+   urban-coverage registries, source-match candidates, and administrative-event
+   review queues in parallel.
 3. Analysis-ready measures and panels are built in `R/measures/`.
 4. Estimation happens in `R/models/` and `R/selection/`.
 5. Public diagnostics and optional diagnostics/benchmarks are built in
@@ -100,6 +104,18 @@ flowchart TD
 * `scripts/` should orchestrate checks and audits, not duplicate core R logic.
 * `archive/refactoring/` is historical. Active code must not depend on it.
 
+
+## District-lineage migration rule
+
+The current production panel and the lineage-v2 rebuild are intentionally
+separate. `data/metadata/district_harmonization_crosswalk.csv` remains the
+production authority until the v2 ledgers are fully adjudicated. The v2 modules
+must not silently promote fuzzy candidates or unknown LGD modifications into
+production. Their durable interfaces are compact tracked metadata tables plus
+CSV diagnostics under `outputs/diagnostics/extended/district_lineage_v2/`.
+Production migration requires unique 2001 IDs, valid source-date identities,
+allocation weights summing to one, documented exclusions, and no unresolved
+production match.
 
 ## Updating This Document
 

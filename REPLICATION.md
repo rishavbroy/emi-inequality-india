@@ -27,6 +27,16 @@ The canonical raw source directories are:
 - `data/raw/district_boundaries_2020/`
 - `data/raw/district_changes/`
 
+## Optional district-lineage v2 inputs
+
+The extended-diagnostics audit discovers the local LGD, SHRUG, Census-locality,
+and published-concordance files described by
+`district_lineage_v2_input_specs()`. These files are intentionally not required
+for the existing production report and are not added to the main raw-file
+manifest. When present, `--with-extended-diagnostics` writes a reviewable
+parallel rebuild under
+`outputs/diagnostics/extended/district_lineage_v2/`. Current LGD district, subdistrict, urban-local-body, and urban-coverage tables are loaded for review, together with compact district/subdistrict modification rosters. Large village modification files, Census locality attributes, and SHRID/village polygon archives are inventoried but are not loaded in every audit; a later dedicated geometry build may dissolve them into a compact 2001-district GeoPackage.
+
 ## System dependencies
 
 The R package dependencies are declared in [`DESCRIPTION`](DESCRIPTION), and [`renv.lock`](renv.lock) records exact package versions. Spatial packages such as `sf` and `spdep` may also require GDAL, GEOS, PROJ, and `pkg-config` system libraries. On macOS, these are commonly available through Homebrew as `gdal`, `geos`, `proj`, and `pkg-config`.

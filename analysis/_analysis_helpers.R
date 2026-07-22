@@ -120,6 +120,7 @@ analysis_target_output_dir <- function(target) {
     diag_ext_spatial_weights = "outputs/diagnostics/extended/spatial",
     diag_ext_missingness = "outputs/diagnostics/extended/missingness",
     diag_ext_district_matching = "outputs/diagnostics/extended/district_matching",
+    diag_ext_district_lineage_v2 = "outputs/diagnostics/extended/district_lineage_v2",
     diag_ext_district_tracker_sources = "outputs/diagnostics/extended/district_tracker_sources",
     diag_ext_fuzzy_matching = "outputs/diagnostics/extended/fuzzy_matching",
     diag_ext_instrument_exploration = "outputs/diagnostics/extended/instrument_exploration",

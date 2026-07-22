@@ -1,0 +1,107 @@
+---
+title: "District Lineage v2 Diagnostics"
+format: gfm
+execute:
+  echo: true
+  output: true
+  warning: true
+  message: true
+---
+
+```{r setup}
+helper <- if (file.exists("analysis/_analysis_helpers.R")) "analysis/_analysis_helpers.R" else "../_analysis_helpers.R"
+source(helper)
+```
+
+## Scope
+
+```{r lineage-v2-deviation, results='asis'}
+analysis_deviation_note("This notebook is a new current-code diagnostic rather than preserved legacy prose. It does not treat the inherited 454-district panel or its legacy IV estimates as validation targets. The legacy matching was almost certainly flawed, and the legacy partial F-statistic of 37.77 was computed incorrectly.")
+```
+
+The v2 pipeline runs beside the current reviewed crosswalk. It does not replace
+production geography until all source identities and administrative events used
+by the preferred panel are adjudicated. Exact names and fuzzy scores generate
+review candidates. Only tracked code, alias, or dated-lineage adjudications can
+accept a source identity.
+
+```{r lineage-v2-inputs}
+summary <- analysis_target_csv("diag_ext_district_lineage_v2", "summary.csv")
+readiness <- analysis_target_csv("diag_ext_district_lineage_v2", "migration_readiness.csv")
+inventory <- analysis_target_csv("diag_ext_district_lineage_v2", "source_inventory.csv")
+source_registry <- analysis_target_csv("diag_ext_district_lineage_v2", "source_registry.csv")
+source_reference_issues <- analysis_target_csv("diag_ext_district_lineage_v2", "source_reference_issues.csv")
+bridge_summary <- analysis_target_csv("diag_ext_district_lineage_v2", "shrid_bridge_summary.csv")
+bridge_qa <- analysis_target_csv("diag_ext_district_lineage_v2", "shrid_bridge_qa.csv")
+weight_validation <- analysis_target_csv("diag_ext_district_lineage_v2", "allocation_weight_validation.csv")
+adjudicated_weights <- analysis_target_csv("diag_ext_district_lineage_v2", "adjudicated_allocation_weights.csv")
+adjudicated_weight_validation <- analysis_target_csv("diag_ext_district_lineage_v2", "adjudicated_allocation_validation.csv")
+transition <- analysis_target_csv("diag_ext_district_lineage_v2", "district_transition_2001_2011.csv")
+eligibility <- analysis_target_csv("diag_ext_district_lineage_v2", "primary_mapping_eligibility.csv")
+primary_crosswalk <- analysis_target_csv("diag_ext_district_lineage_v2", "primary_source_crosswalk.csv")
+excluded_sources <- analysis_target_csv("diag_ext_district_lineage_v2", "excluded_source_rows.csv")
+candidates <- analysis_target_csv("diag_ext_district_lineage_v2", "source_match_candidates.csv")
+events <- analysis_target_csv("diag_ext_district_lineage_v2", "candidate_admin_events.csv")
+current_components <- analysis_target_csv("diag_ext_district_lineage_v2", "current_component_registry.csv")
+urban_coverage <- analysis_target_csv("diag_ext_district_lineage_v2", "current_urban_coverage.csv")
+components <- analysis_target_csv("diag_ext_district_lineage_v2", "changed_component_roster.csv")
+evidence <- analysis_target_csv("diag_ext_district_lineage_v2", "evidence_requests.csv")
+duplicates <- analysis_target_csv("diag_ext_district_lineage_v2", "duplicate_keys.csv")
+gold <- analysis_target_csv("diag_ext_district_lineage_v2", "match_gold_scored.csv")
+gold_summary <- analysis_target_csv("diag_ext_district_lineage_v2", "match_gold_summary.csv")
+```
+
+## Build and migration status
+
+```{r lineage-v2-summary}
+analysis_table(summary, "District-lineage v2 summary")
+analysis_table(readiness, "Production-migration gates")
+analysis_table(inventory, "Available and missing lineage inputs", max_rows = 60)
+analysis_table(source_registry, "District-lineage evidence registry", max_rows = 50)
+analysis_table(source_reference_issues, "Unregistered or missing adjudication evidence", max_rows = 50)
+```
+
+A failed migration gate is expected while the adjudication files are incomplete.
+The diagnostic remains intentionally separate from the current production panel.
+
+## Census transition and allocation integrity
+
+```{r lineage-v2-transition}
+analysis_table(bridge_summary, "SHRUG bridge-status summary", max_rows = 50)
+analysis_table(bridge_qa, "Non-deterministic or incomplete SHRID bridge records", max_rows = 50)
+analysis_table(weight_validation, "SHRUG source-district allocation checks", max_rows = 50)
+analysis_table(adjudicated_weight_validation, "Tracked sensitivity-allocation checks", max_rows = 50)
+analysis_table(adjudicated_weights, "Tracked sensitivity allocations", max_rows = 50)
+analysis_table(transition, "Census 2011 to Census 2001 district transitions", max_rows = 50)
+analysis_table(duplicates, "Duplicate-key diagnostics", max_rows = 50)
+```
+
+SHRID units that cross district boundaries or lack either Census membership are
+not silently renormalized away. Their omission lowers coverage and prevents a
+transition from being classified as deterministic.
+
+## Review queues
+
+```{r lineage-v2-review}
+analysis_table(eligibility, "Primary-panel source eligibility", max_rows = 50)
+analysis_table(primary_crosswalk, "Adjudicated deterministic source-to-2001 crosswalk", max_rows = 50)
+analysis_table(excluded_sources, "Excluded or unresolved source rows", max_rows = 50)
+analysis_table(candidates, "Top source-match candidates; never automatic adjudications", max_rows = 50)
+analysis_table(events, "Candidate administrative events", max_rows = 50)
+analysis_table(current_components, "Current LGD subdistrict and urban-local-body registry", max_rows = 50)
+analysis_table(urban_coverage, "Current LGD urban coverage bridge", max_rows = 50)
+analysis_table(components, "LGD changed-component roster", max_rows = 50)
+analysis_table(evidence, "Targeted official-evidence requests", max_rows = 50)
+```
+
+## Fuzzy-name calibration
+
+```{r lineage-v2-gold}
+analysis_table(gold_summary, "Hand-reviewed candidate-rule summary")
+analysis_table(gold, "Hand-reviewed fuzzy-match cases", max_rows = 50)
+```
+
+The calibration table is intentionally small and conservative. It documents
+known spelling variants and hard negatives, but it is not large enough to
+establish a 99.5 percent automatic-match precision claim. Candidate thresholds
+therefore remain review aids rather than production decision rules.
