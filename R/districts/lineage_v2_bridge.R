@@ -109,18 +109,18 @@ aggregate_shrid_weights <- function(locality_keys) {
 
 unique_shrid_district_membership <- function(key, suffix) {
   key <- unique(safe_df(key)[c("shrid2", "state_code", "district_code")])
-  key <- key[!is.na(key$shrid2) & nzchar(key$shrid2) & !is.na(key$district_code), , drop = FALSE]
+  key <- key[!is.na(key$shrid2) & nzchar(key$shrid2), , drop = FALSE]
   duplicate <- duplicate_ids(key$shrid2)
   single <- key[!key$shrid2 %in% duplicate, , drop = FALSE]
-  single$n_state_memberships <- ifelse(is.na(single$state_code), 0L, 1L)
-  single$n_district_memberships <- 1L
-  single$deterministic <- !is.na(single$state_code) & nzchar(single$state_code)
+  single$n_state_memberships <- as.integer(!is.na(single$state_code) & nzchar(single$state_code))
+  single$n_district_memberships <- as.integer(!is.na(single$district_code) & nzchar(single$district_code))
+  single$deterministic <- single$n_state_memberships == 1L & single$n_district_memberships == 1L
 
   repeated <- key[key$shrid2 %in% duplicate, , drop = FALSE]
   groups <- split(seq_len(nrow(repeated)), repeated$shrid2)
   combined <- safe_bind_rows(lapply(groups, function(i) {
-    states <- unique(repeated$state_code[i][!is.na(repeated$state_code[i])])
-    districts <- unique(repeated$district_code[i][!is.na(repeated$district_code[i])])
+    states <- unique(repeated$state_code[i][!is.na(repeated$state_code[i]) & nzchar(repeated$state_code[i])])
+    districts <- unique(repeated$district_code[i][!is.na(repeated$district_code[i]) & nzchar(repeated$district_code[i])])
     data.frame(
       shrid2 = repeated$shrid2[[i[[1]]]],
       state_code = if (length(states) == 1L) states else NA_character_,
@@ -137,6 +137,26 @@ unique_shrid_district_membership <- function(key, suffix) {
     paste0("n_state_memberships_", suffix), paste0("n_district_memberships_", suffix),
     paste0("deterministic_", suffix)
   ))
+}
+
+shrid_bridge_status <- function(bridge) {
+  bridge <- safe_df(bridge)
+  n <- nrow(bridge)
+  status <- rep("missing_census_membership", n)
+  crosses <-
+    (num(bridge$n_state_memberships_2001) > 1L) %in% TRUE |
+    (num(bridge$n_district_memberships_2001) > 1L) %in% TRUE |
+    (num(bridge$n_state_memberships_2011) > 1L) %in% TRUE |
+    (num(bridge$n_district_memberships_2011) > 1L) %in% TRUE
+  missing_locality <-
+    !(bridge$has_locality_key_2001 %in% TRUE) |
+    !(bridge$has_locality_key_2011 %in% TRUE)
+  deterministic <- bridge$deterministic %in% TRUE
+
+  status[crosses] <- "crosses_district_boundary"
+  status[!crosses & missing_locality] <- "missing_census_locality_key"
+  status[deterministic] <- "deterministic_one_district_each_year"
+  status
 }
 
 #' Build a deterministic SHRUG district bridge
@@ -164,19 +184,7 @@ build_shrug_district_bridge <- function(pc01r, pc01u, pc11r, pc11u, pc01dist, pc
   bridge$deterministic <- bridge$deterministic_2001 %in% TRUE &
     bridge$deterministic_2011 %in% TRUE &
     bridge$has_locality_key_2001 & bridge$has_locality_key_2011
-  bridge$bridge_status <- ifelse(
-    bridge$deterministic,
-    "deterministic_one_district_each_year",
-    ifelse(
-      is.na(bridge$district_code_2001) | is.na(bridge$district_code_2011),
-      "missing_census_membership",
-      ifelse(
-        !bridge$has_locality_key_2001 | !bridge$has_locality_key_2011,
-        "missing_census_locality_key",
-        "crosses_district_boundary"
-      )
-    )
-  )
+  bridge$bridge_status <- shrid_bridge_status(bridge)
   attr(bridge, "locality_keys_2001") <- loc01
   attr(bridge, "locality_keys_2011") <- loc11
   bridge

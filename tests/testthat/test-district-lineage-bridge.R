@@ -207,3 +207,44 @@ test_that("SHRUG district membership requires a unique state as well as district
   expect_false(out$deterministic[out$shrid2 == "ambiguous_state"])
   expect_equal(out$n_state_memberships[out$shrid2 == "ambiguous_state"], 2L)
 })
+
+test_that("SHRUG bridge distinguishes ambiguous from absent district membership", {
+  locality <- data.frame(
+    shrid2 = c("ambiguous", "missing"),
+    pc01_state_id = "01", pc01_district_id = "01",
+    pc01_subdistrict_id = "0001", pc01_village_id = c("1", "2"),
+    pc01_pca_tot_p = c(10, 20), pc01_land_area = c(1, 2)
+  )
+  locality11 <- data.frame(
+    shrid2 = c("ambiguous", "missing"),
+    pc11_state_id = "01", pc11_district_id = "001",
+    pc11_subdistrict_id = "00001", pc11_village_id = c("1", "2"),
+    pc11_pca_tot_p = c(10, 20), pc11_land_area = c(1, 2)
+  )
+  d01 <- data.frame(
+    shrid2 = c("ambiguous", "ambiguous", "missing"),
+    pc01_state_id = "01",
+    pc01_district_id = c("01", "02", NA_character_)
+  )
+  d11 <- data.frame(
+    shrid2 = c("ambiguous", "missing"),
+    pc11_state_id = "01", pc11_district_id = "001"
+  )
+
+  bridge <- build_shrug_district_bridge(
+    locality, locality[0, ], locality11, locality11[0, ], d01, d11
+  )
+
+  expect_equal(
+    bridge$bridge_status[bridge$shrid2 == "ambiguous"],
+    "crosses_district_boundary"
+  )
+  expect_equal(
+    bridge$bridge_status[bridge$shrid2 == "missing"],
+    "missing_census_membership"
+  )
+  expect_equal(
+    bridge$n_district_memberships_2001[bridge$shrid2 == "ambiguous"],
+    2L
+  )
+})
