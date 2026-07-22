@@ -1,0 +1,30 @@
+source_id,citation,path_or_url,accessed
+census2001_c16,Census of India 2001 C-16 mother-tongue tables,data/raw/census_2001_mother_tongue,2026-07-22
+shrug_pc_keys,Development Data Lab SHRUG Population Census location keys,data/raw/shrug/shrug-pc-keys-csv,2026-07-22
+shrug_pc11_district_geometry,Development Data Lab SHRUG PC11 district polygons,data/raw/shrug/open-polygons/shrug-pc11dist-poly-gpkg/district.gpkg,2026-07-22
+shrug_open_polygons,Development Data Lab SHRUG open polygons,data/raw/shrug/open-polygons,2026-07-22
+lgd_states,Ministry of Panchayati Raj Local Government Directory states,data/raw/local_government_directory/states.json,2026-07-22
+lgd_districts,Ministry of Panchayati Raj Local Government Directory districts,data/raw/local_government_directory/districts.json,2026-07-22
+lgd_subdistricts,Ministry of Panchayati Raj Local Government Directory subdistricts,data/raw/local_government_directory/subdistricts.json,2026-07-22
+lgd_villages,Ministry of Panchayati Raj Local Government Directory villages,data/raw/local_government_directory/villages.xlsx,2026-07-22
+lgd_urban_local_bodies,Ministry of Panchayati Raj Local Government Directory urban local bodies,data/raw/local_government_directory/urbanLocalBody.xlsx,2026-07-22
+lgd_urban_coverage,Ministry of Panchayati Raj Local Government Directory urban coverage,data/raw/local_government_directory/urbanLocalBody-coverage.xlsx,2026-07-22
+lgd_mod_districts,LGD districts modified from 2011-01-01 through 2018-06-30,data/raw/local_government_directory/modifications_01-01-2011_30-06-2018/districts.xls,2026-07-22
+lgd_mod_subdistricts,LGD subdistricts modified from 2011-01-01 through 2018-06-30,data/raw/local_government_directory/modifications_01-01-2011_30-06-2018/subdistricts.xls,2026-07-22
+lgd_mod_villages,LGD villages modified from 2011-01-01 through 2018-06-30,data/raw/local_government_directory/modifications_01-01-2011_30-06-2018/villages.xls,2026-07-22
+lgd_mod_urban_local_bodies,LGD urban local bodies modified from 2011-01-01 through 2018-06-30,data/raw/local_government_directory/modifications_01-01-2011_30-06-2018/urbanLocalBody.xls,2026-07-22
+alluvial,India State Stories Alluvial district-change workbook,data/raw/district_changes/Time series- State and Districts Changes -Alluvial 1951-2024.xlsx,2026-07-22
+district_splits,India State Stories district splits and carve-outs workbook,data/raw/district_changes/District Splits and Carve outs-decadewise  1951-2024.xlsx,2026-07-22
+name_changes,India State Stories district and state name-change workbook,data/raw/district_changes/Name Changes_Districts_Indian States_1951-2021.xlsx,2026-07-22
+new_districts_created,India State Stories new-district workbook,data/raw/district_changes/New Districts Created between 1951-2024.xlsx,2026-07-22
+india_district_tracker,Jaacks Research Group India district changes tracker,data/raw/district_changes/IndiaDistrictTracker2001to2020.ods,2026-07-22
+isded_1951_2024,India State and District Evolution Database 1951-2024,data/raw/district_changes/india_state_stories/isded/1951-2024,2026-07-22
+isded_admin_units_2025,India State and District Evolution Database administrative units 2025,data/raw/district_changes/india_state_stories/isded/2025,2026-07-22
+iss_census_collection,Indian Census Data Collection 1901-2026,data/raw/district_changes/india_state_stories/census_data_collection,2026-07-22
+kumar_somanathan_2016,Kumar and Somanathan Creating Long Panels Using Census Data 1961-2001,data/raw/district_changes/District Carve-Outs and Renamings 1961-2001.csv,2026-07-22
+concordance_plfs_nss,Deshpande Khanna and Walia PLFS-to-NSS district concordance,data/raw/concordance/plfs_nss_distcodes.csv,2026-07-22
+concordance_census_plfs,Deshpande Khanna and Walia Census-to-PLFS district concordance,data/raw/concordance/census_plfs_distcodes.csv,2026-07-22
+concordance_nrlm_plfs,Deshpande Khanna and Walia NRLM-to-PLFS district concordance,data/raw/concordance/nrlm_plfs_distcodes.csv,2026-07-22
+concordance_telangana,Deshpande Khanna and Walia Telangana district concordance,data/raw/concordance/telangana_plfs_districts.csv,2026-07-22
+concordance_census_region,Deshpande Khanna and Walia Census-region concordance,data/raw/concordance/census_region.csv,2026-07-22
+ipums_geo2_1987_2009,IPUMS harmonized India second-level geography 1987-2009,data/raw/ipums/geo2_in1987_2009,2026-07-22

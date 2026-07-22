@@ -1,0 +1,69 @@
+source_wave,state,source_name,reference_name,label,case_type,evidence
+nss_2017_18,Chhattisgarh,Balodabazar,Baloda Bazar,match,spacing,manual review of NSS and tracker rosters
+nss_2017_18,Chhattisgarh,Gariyaband,Gariaband,match,typo,manual review of NSS and tracker rosters
+nss_2017_18,Chhattisgarh,Sukama,Sukma,match,typo,manual review of NSS and tracker rosters
+nss_2017_18,Gujarat,Panch Mahals,Panchmahal,match,spacing,manual review of NSS and tracker rosters
+nss_2017_18,Gujarat,Dohad,Dahod,match,transliteration,manual review of NSS and tracker rosters
+nss_2017_18,Gujarat,The Dangs,Dang,match,prefix,manual review of NSS and tracker rosters
+nss_2017_18,Gujarat,Mahesana,Mehsana,match,transliteration,manual review of NSS and tracker rosters
+nss_2017_18,Gujarat,Sabar Kantha,Sabarkantha,match,spacing,manual review of NSS and tracker rosters
+nss_2017_18,Gujarat,Ahmadabad,Ahmedabad,match,transliteration,manual review of NSS and tracker rosters
+nss_2017_18,Gujarat,Banas Kantha,Banaskantha,match,spacing,manual review of NSS and tracker rosters
+nss_2017_18,Gujarat,Kachchh,Kutch,match,transliteration,manual review of NSS and tracker rosters
+nss_2017_18,Himachal Pradesh,Lahul & Spiti,Lahaul and Spiti,match,punctuation,manual review of NSS and tracker rosters
+nss_2017_18,Jammu and Kashmir,Badgam,Budgam,match,transliteration,manual review of NSS and tracker rosters
+nss_2017_18,Jammu and Kashmir,Baramula,Baramulla,match,typo,manual review of NSS and tracker rosters
+nss_2017_18,Jammu and Kashmir,Bandipore,Bandipora,match,transliteration,manual review of NSS and tracker rosters
+nss_2017_18,Jammu and Kashmir,Shupiyan,Shopiyan,match,transliteration,manual review of NSS and tracker rosters
+nss_2017_18,Jharkhand,Kodarma,Koderma,match,transliteration,manual review of NSS and tracker rosters
+nss_2017_18,Karnataka,Chikmagalur,Chikkamagaluru,match,official_rename,manual review; requires official alias evidence before production
+nss_2017_18,Karnataka,Bagalkot,Bagalkote,match,transliteration,manual review of NSS and tracker rosters
+nss_2017_18,Maharashtra,Raigarh,Raigad,match,transliteration,manual review of NSS and tracker rosters
+nss_2017_18,Maharashtra,Bid,Beed,match,transliteration,manual review of NSS and tracker rosters
+nss_2017_18,Odisha,Baleshwar,Balasore,match,regional_english,manual review; requires official alias evidence before production
+nss_2017_18,Odisha,Debagarh,Deogarh,match,regional_english,manual review; requires state-constrained evidence before production
+nss_2017_18,Punjab,Firozpur,Ferozepur,match,transliteration,manual review of NSS and tracker rosters
+nss_2017_18,Punjab,Bhatinda,Bathinda,match,transliteration,manual review of NSS and tracker rosters
+nss_2017_18,West Bengal,Koch Bihar,Cooch Behar,match,regional_english,manual review; requires official alias evidence before production
+nss_2017_18,West Bengal,Haora,Howrah,match,regional_english,manual review of NSS and tracker rosters
+nss_2017_18,Uttar Pradesh,Farrukhabad,Firozabad,nonmatch,hard_negative,known implausible current attachment
+nss_2017_18,Arunachal Pradesh,Upper Siang,Upper Subansiri,nonmatch,hard_negative,known implausible current attachment
+nss_2017_18,Manipur,Imphal East,Imphal West,nonmatch,directional_hard_negative,known implausible current attachment
+nss_2017_18,Gujarat,Dang,Porbandar,nonmatch,hard_negative,known implausible current attachment
+nss_2017_18,Uttar Pradesh,Kasganj,Kushinagar,nonmatch,hard_negative,known implausible current attachment
+nss_2017_18,Uttar Pradesh,Etah,Kasganj,nonmatch,lineage_not_alias,distinct districts despite administrative relationship
+nss_2007_08,Jammu and Kashmir,Kathus,Kathua,match,typo,manual review of NSS and tracker rosters
+nss_2007_08,Haryana,Jhaijar,Jhajjar,match,typo,manual review of NSS and tracker rosters
+nss_2007_08,Tamil Nadu,Arivalur,Ariyalur,match,typo,manual review of NSS and tracker rosters
+nss_2007_08,Assam,Karimgang,Karimganj,match,typo,manual review of NSS and tracker rosters
+nss_2007_08,Tamil Nadu,Siyaganga,Sivaganga,match,typo,manual review of NSS and tracker rosters
+nss_2007_08,Nagaland,Mukokchung,Mokokchung,match,typo,manual review of NSS and tracker rosters
+nss_2007_08,Uttarakhand,Bageswar,Bageshwar,match,typo,manual review of NSS and tracker rosters
+nss_2007_08,Uttar Pradesh,Varanashi,Varanasi,match,typo,manual review of NSS and tracker rosters
+nss_2007_08,Kerala,Triruvananthapuram,Thiruvananthapuram,match,typo,manual review of NSS and tracker rosters
+nss_2007_08,Jharkhand,Lohardanga,Lohardaga,match,typo,manual review of NSS and tracker rosters
+nss_2007_08,Kerala,Malapuram,Malappuram,match,typo,manual review of NSS and tracker rosters
+nss_2007_08,Odisha,Bolangir,Balangir,match,transliteration,manual review of NSS and tracker rosters
+nss_2007_08,Andhra Pradesh,West Godawari,West Godavari,match,typo,manual review of NSS and tracker rosters
+nss_2007_08,Chhattisgarh,Janigir-Champa,Janjgir Champa,match,typo_and_punctuation,manual review of NSS and tracker rosters
+nss_2007_08,Tamil Nadu,Tiruvanmalai,Tiruvannamalai,match,typo,manual review of NSS and tracker rosters
+nss_2007_08,Uttar Pradesh,Sidhartha Nagar,Siddharthnagar,match,spacing_and_transliteration,manual review of NSS and tracker rosters
+nss_2007_08,Karnataka,Dakshin Kannad,Dakshina Kannada,match,suffix,manual review of NSS and tracker rosters
+nss_2007_08,Himachal Pradesh,Sirmapur,Sirmaur,match,typo,manual review of NSS and tracker rosters
+nss_2007_08,Haryana,Bhilwani,Bhiwani,match,typo,manual review of NSS and tracker rosters
+nss_2007_08,Uttar Pradesh,Fatepur,Fatehpur,match,typo,manual review of NSS and tracker rosters
+nss_2007_08,Mizoram,Serchip,Serchhip,match,typo,manual review of NSS and tracker rosters
+nss_2007_08,Andhra Pradesh,Anantpur,Anantapur,match,typo,manual review of NSS and tracker rosters
+nss_2007_08,Bihar,Sitamari,Sitamarhi,match,typo,manual review of NSS and tracker rosters
+nss_2007_08,Uttar Pradesh,Rai Bareli,Rae Bareli,match,transliteration,manual review of NSS and tracker rosters
+nss_2007_08,Tamil Nadu,Toothukudi,Thoothukkudi,match,transliteration,manual review of NSS and tracker rosters
+nss_2007_08,Karnataka,Uttar Kannad,Uttara Kannada,match,suffix,manual review of NSS and tracker rosters
+nss_2007_08,Uttar Pradesh,Ambedkar Nag.,Ambedkar Nagar,match,abbreviation,manual review of NSS and tracker rosters
+nss_2007_08,Uttarakhand,Udham Sing Nagar,Udham Singh Nagar,match,typo,manual review of NSS and tracker rosters
+nss_2007_08,Tamil Nadu,Ramnathapuram,Ramanathapuram,match,typo,manual review of NSS and tracker rosters
+nss_2007_08,Tamil Nadu,Tiruchirapalli,Tiruchirappalli,match,typo,manual review of NSS and tracker rosters
+nss_2007_08,Uttar Pradesh,Firozabad,Farrukhabad,nonmatch,hard_negative,known cross-assignment in current source attachment
+nss_2007_08,Arunachal Pradesh,Upper Siang,Upper Subansiri,nonmatch,hard_negative,known cross-assignment in current source attachment
+nss_2007_08,Manipur,Imphal East,Imphal West,nonmatch,directional_hard_negative,known cross-assignment in current source attachment
+nss_2007_08,Gujarat,Dang,Porbandar,nonmatch,hard_negative,known implausible current attachment
+nss_2007_08,Uttar Pradesh,Kasganj,Kushinagar,nonmatch,hard_negative,known implausible current attachment
