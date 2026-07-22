@@ -31,6 +31,7 @@ district_lineage_v2_input_specs <- function(paths = build_paths()) {
     spec("lgd_mod_subdistricts", "data/raw/local_government_directory/modifications_01-01-2011_30-06-2018/subdistricts.xls", "spreadsheetml", TRUE, "changed_unit_roster_2011_2018"),
     spec("lgd_mod_villages", "data/raw/local_government_directory/modifications_01-01-2011_30-06-2018/villages.xls", "spreadsheetml", TRUE, "changed_unit_roster_2011_2018"),
     spec("lgd_mod_urban_local_bodies", "data/raw/local_government_directory/modifications_01-01-2011_30-06-2018/urbanLocalBody.xls", "spreadsheetml", TRUE, "changed_unit_roster_2011_2018"),
+    spec("lgd_changes_post_2018", "data/raw/local_government_directory/changes.csv", "inventory_only", FALSE, "post_2018_validation"),
     spec("isded_1951_2024", "data/raw/district_changes/india_state_stories/isded/1951-2024/district_proliferation_1951_2024.xlsx", "xlsx", TRUE, "candidate_lineage"),
     spec("isded_admin_units_2025", "data/raw/district_changes/india_state_stories/isded/2025/admin_units_2025.xlsx", "xlsx", TRUE, "published_current_component_registry"),
     spec("iss_census_series_1901_2011", "data/raw/district_changes/india_state_stories/census_data_collection/1901-2011/1901-2011-State Districts-Population Time Series.xlsx", "inventory_only", FALSE, "historical_population_validation"),

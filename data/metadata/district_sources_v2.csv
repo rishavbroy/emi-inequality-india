@@ -13,6 +13,7 @@ lgd_mod_districts,LGD districts modified from 2011-01-01 through 2018-06-30,data
 lgd_mod_subdistricts,LGD subdistricts modified from 2011-01-01 through 2018-06-30,data/raw/local_government_directory/modifications_01-01-2011_30-06-2018/subdistricts.xls,2026-07-22
 lgd_mod_villages,LGD villages modified from 2011-01-01 through 2018-06-30,data/raw/local_government_directory/modifications_01-01-2011_30-06-2018/villages.xls,2026-07-22
 lgd_mod_urban_local_bodies,LGD urban local bodies modified from 2011-01-01 through 2018-06-30,data/raw/local_government_directory/modifications_01-01-2011_30-06-2018/urbanLocalBody.xls,2026-07-22
+lgd_changes_post_2018,ramSeraph archive of Local Government Directory changes from 2018-10-13 onward,data/raw/local_government_directory/changes.csv,2026-07-22
 alluvial,India State Stories Alluvial district-change workbook,data/raw/district_changes/Time series- State and Districts Changes -Alluvial 1951-2024.xlsx,2026-07-22
 district_splits,India State Stories district splits and carve-outs workbook,data/raw/district_changes/District Splits and Carve outs-decadewise  1951-2024.xlsx,2026-07-22
 name_changes,India State Stories district and state name-change workbook,data/raw/district_changes/Name Changes_Districts_Indian States_1951-2021.xlsx,2026-07-22

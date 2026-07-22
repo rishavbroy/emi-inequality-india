@@ -29,13 +29,11 @@ The canonical raw source directories are:
 
 ## Optional district-lineage v2 inputs
 
-The extended-diagnostics audit discovers the local LGD, SHRUG, Census-locality,
-and published-concordance files described by
-`district_lineage_v2_input_specs()`. These files are intentionally not required
-for the existing production report and are not added to the main raw-file
-manifest. When present, `--with-extended-diagnostics` writes a reviewable
-parallel rebuild under
-`outputs/diagnostics/extended/district_lineage_v2/`. Current LGD district, subdistrict, urban-local-body, and urban-coverage tables are loaded for review, together with compact district/subdistrict modification rosters. Large village modification files, Census locality attributes, and SHRID/village polygon archives are inventoried but are not loaded in every audit; a later dedicated geometry build may dissolve them into a compact 2001-district GeoPackage.
+The extended-diagnostics audit discovers the local LGD, SHRUG, Census-locality, boundary, literature-derived, and published-concordance files described by `district_lineage_v2_input_specs()`. They are intentionally not required for the existing production report and are not part of the main raw-file manifest. Their source catalog and acquisition routes are recorded in [`data/metadata/data_sources.csv`](data/metadata/data_sources.csv); the full methodology and work plan are in [`docs/DISTRICT_LINEAGE_V2.md`](docs/DISTRICT_LINEAGE_V2.md).
+
+When present, `--with-extended-diagnostics` writes a reviewable parallel rebuild under `outputs/diagnostics/extended/district_lineage_v2/`. Current LGD registries, compact modification rosters, SHRUG keys, Census-2011 district geometry, candidate trackers, and tracked adjudication ledgers are loaded for review. Large village/Census attribute tables, post-2018 LGD change history, and SHRID/village polygon archives are inventoried but are not loaded during every audit. A later dedicated geography target should dissolve local SHRID polygons into a compact, validated 2001-district GeoPackage.
+
+The v2 system must remain parallel until source identities, administrative events, exclusions, and any sensitivity weights are adjudicated. Exact or fuzzy name matches are review candidates, not production geography.
 
 ## System dependencies
 

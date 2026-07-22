@@ -173,3 +173,28 @@ test_that("manifest dispatches district carve-out rows to the explicit headerles
   expect_equal(nrow(out), 2L)
   expect_equal(out$district_1991[[1]], "Anantapur")
 })
+
+test_that("data source catalogs are documented and uniquely identified", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
+  sources <- readr::read_csv(file.path(root, "data", "metadata", "data_sources.csv"), show_col_types = FALSE)
+  lineage <- readr::read_csv(file.path(root, "data", "metadata", "district_sources_v2.csv"), show_col_types = FALSE)
+
+  expect_equal(anyDuplicated(sources$source_id), 0L)
+  expect_equal(anyDuplicated(lineage$source_id), 0L)
+  expect_true(all(c(
+    "source_url", "access_date", "license_or_terms_notes", "notes"
+  ) %in% names(sources)))
+  expect_true(all(nzchar(sources$source_name)))
+  expect_true(file.exists(file.path(root, "data", "metadata", "README.md")))
+  expect_true(file.exists(file.path(root, "docs", "DISTRICT_LINEAGE_V2.md")))
+})
+
+test_that("post-period LGD history is inventory-only lineage evidence", {
+  specs <- district_lineage_v2_input_specs(build_paths(Sys.getenv("EMI_PROJECT_ROOT", ".")))
+  row <- specs[specs$source_id == "lgd_changes_post_2018", , drop = FALSE]
+
+  expect_equal(nrow(row), 1L)
+  expect_false(row$load_for_diagnostic)
+  expect_equal(row$reader, "inventory_only")
+  expect_equal(row$role, "post_2018_validation")
+})

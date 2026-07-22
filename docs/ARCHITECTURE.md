@@ -138,3 +138,6 @@ full replication guide.
 Keep orchestration thin. `_targets.R`, Makefile targets, and scripts should coordinate work; reusable logic should live in `R/` modules with tests. Public QMDs should contain prose and small rendering calls, not large helper implementations.
 
 Use tests as architecture guards. Unit tests should cover low-level behavior, while contract tests should protect public output structure, required artifacts, report-value keys, and retired build machinery.
+## District-lineage migration boundary
+
+The existing reviewed crosswalk remains the production authority. The parallel lineage-v2 modules under `R/districts/lineage_v2_*` and `R/diagnostics/diagnose_district_lineage_v2.R` ingest candidate sources, build Census registries and a SHRID bridge, generate review candidates, and evaluate migration gates. They must not alter the paper panel until tracked adjudications are complete. See [`docs/DISTRICT_LINEAGE_V2.md`](DISTRICT_LINEAGE_V2.md) for source authority, statistical rules, invariants, and the ordered work plan.
