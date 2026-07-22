@@ -35,16 +35,17 @@ standardize_shrug_locality_key <- function(x, year, sector) {
 
   district_width <- if (as.integer(year) == 2001L) 2L else 3L
   subdistrict_width <- if (as.integer(year) == 2001L) 4L else 5L
+  n <- nrow(x)
   data.frame(
     shrid2 = plain_chr(x[[shrid]]),
-    census_year = as.integer(year),
-    sector = sector,
-    state_code = if (!is.null(state)) pad_admin_code(x[[state]], 2L) else NA_character_,
-    district_code = if (!is.null(district)) pad_admin_code(x[[district]], district_width) else NA_character_,
-    subdistrict_code = if (!is.null(subdistrict)) pad_admin_code(x[[subdistrict]], subdistrict_width) else NA_character_,
-    locality_code = if (!is.null(locality)) plain_chr(x[[locality]]) else NA_character_,
-    population = if (!is.null(population)) num(x[[population]]) else NA_real_,
-    area = if (!is.null(area)) num(x[[area]]) else NA_real_,
+    census_year = rep(as.integer(year), n),
+    sector = rep(sector, n),
+    state_code = if (!is.null(state)) pad_admin_code(x[[state]], 2L) else rep(NA_character_, n),
+    district_code = if (!is.null(district)) pad_admin_code(x[[district]], district_width) else rep(NA_character_, n),
+    subdistrict_code = if (!is.null(subdistrict)) pad_admin_code(x[[subdistrict]], subdistrict_width) else rep(NA_character_, n),
+    locality_code = if (!is.null(locality)) plain_chr(x[[locality]]) else rep(NA_character_, n),
+    population = if (!is.null(population)) num(x[[population]]) else rep(NA_real_, n),
+    area = if (!is.null(area)) num(x[[area]]) else rep(NA_real_, n),
     stringsAsFactors = FALSE
   )
 }

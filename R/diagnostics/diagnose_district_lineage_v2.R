@@ -10,31 +10,43 @@ ensure_columns_v2 <- function(x, columns, value = NA) {
 
 build_isded_candidate_events_v2 <- function(raw_sources) {
   x <- clean_source_names(safe_df(raw_sources$isded_1951_2024 %||% data.frame()))
-  required <- c("source_district", "dest_district", "source_year", "dest_year", "filter_state")
-  if (!all(required %in% names(x))) return(data.frame())
-  x <- unique(x[required])
+  source_district <- first_col(x, c("source district", "source_district"))
+  dest_district <- first_col(x, c("dest district", "destination district", "dest_district"))
+  source_year <- first_col(x, c("source year", "source_year"))
+  dest_year <- first_col(x, c("dest year", "destination year", "dest_year"))
+  state <- first_col(x, c("filter state", "state", "filter_state"))
+  if (any(vapply(list(source_district, dest_district, source_year, dest_year, state), is.null, logical(1)))) {
+    return(data.frame())
+  }
+  x <- unique(data.frame(
+    source_district = plain_chr(x[[source_district]]),
+    dest_district = plain_chr(x[[dest_district]]),
+    source_year = num(x[[source_year]]),
+    dest_year = num(x[[dest_year]]),
+    filter_state = plain_chr(x[[state]]),
+    stringsAsFactors = FALSE
+  ))
   source_key <- paste(canonicalize_state_name(x$filter_state), canon(x$source_district), sep = "__")
   target_key <- paste(canonicalize_state_name(x$filter_state), canon(x$dest_district), sep = "__")
   changed <- !is.na(source_key) & nzchar(source_key) & !is.na(target_key) & nzchar(target_key) & source_key != target_key
-  dest_year <- num(x$dest_year)
-  x <- x[changed & is.finite(dest_year) & dest_year >= 2001L & dest_year <= 2018L, , drop = FALSE]
+  x <- x[changed & is.finite(x$dest_year) & x$dest_year >= 2001L & x$dest_year <= 2018L, , drop = FALSE]
   if (!nrow(x)) return(data.frame())
   data.frame(
     event_id = paste0("candidate__isded_1951_2024__", seq_len(nrow(x))),
     effective_date = NA_character_,
     reported_year = NA_integer_,
-    source_year = as.integer(num(x$source_year)),
-    target_year = as.integer(num(x$dest_year)),
+    source_year = as.integer(x$source_year),
+    target_year = as.integer(x$dest_year),
     date_precision = "census_anchor_interval",
     event_type = "census_anchor_lineage_candidate",
-    from_state = plain_chr(x$filter_state),
-    from_district = plain_chr(x$source_district),
-    to_state = plain_chr(x$filter_state),
-    to_district = plain_chr(x$dest_district),
+    from_state = x$filter_state,
+    from_district = x$source_district,
+    to_state = x$filter_state,
+    to_district = x$dest_district,
     source_id = "isded_1951_2024",
     status = "candidate_unadjudicated",
     note = paste0(
-      "ISDED links Census anchors ", plain_chr(x$source_year), "-", plain_chr(x$dest_year),
+      "ISDED links Census anchors ", x$source_year, "-", x$dest_year,
       "; it does not by itself establish an effective event date or territorial share."
     ),
     stringsAsFactors = FALSE

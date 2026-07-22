@@ -402,6 +402,13 @@ resolve_lineage_terminals_v2 <- function(unit_ids, admin_events, admin_2001, adm
   out[c("source_unit", "terminal_unit", "terminal_vintage", "resolution_status", "lineage_path")]
 }
 
+normalize_admin_lookup_v2 <- function(x) {
+  x <- safe_df(x)
+  required <- c("unit_id", "state_code", "district_code")
+  for (nm in setdiff(required, names(x))) x[[nm]] <- rep(NA_character_, nrow(x))
+  x[required]
+}
+
 build_primary_mapping_eligibility <- function(
   source_roster, source_matches, transition_2001_2011,
   admin_2001, admin_2011, admin_events = data.frame()
@@ -420,11 +427,11 @@ build_primary_mapping_eligibility <- function(
   out$row_order <- seq_len(nrow(out))
   out <- merge(out, resolution, by.x = c("unit_id", "row_order"), by.y = c("source_unit", "row_order"), all.x = TRUE, sort = FALSE)
 
-  a01 <- safe_df(admin_2001)[c("unit_id", "state_code", "district_code")]
+  a01 <- normalize_admin_lookup_v2(admin_2001)
   names(a01)[2:3] <- c("target_state_code_2001", "target_district_code_2001")
   out <- merge(out, a01, by.x = "terminal_unit", by.y = "unit_id", all.x = TRUE, sort = FALSE)
 
-  a11 <- safe_df(admin_2011)[c("unit_id", "state_code", "district_code")]
+  a11 <- normalize_admin_lookup_v2(admin_2011)
   names(a11)[2:3] <- c("source_state_code_2011", "source_district_code_2011")
   out <- merge(out, a11, by.x = "terminal_unit", by.y = "unit_id", all.x = TRUE, sort = FALSE)
   transition <- safe_df(transition_2001_2011)
@@ -446,7 +453,7 @@ build_primary_mapping_eligibility <- function(
     out$population_share_to_2001 <- NA_real_
   }
 
-  target_lookup <- safe_df(admin_2001)[c("unit_id", "state_code", "district_code")]
+  target_lookup <- normalize_admin_lookup_v2(admin_2001)
   names(target_lookup) <- c("bridged_target_unit_2001", "state_code_2001", "district_code_2001")
   out <- merge(
     out, target_lookup,

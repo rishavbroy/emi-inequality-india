@@ -86,7 +86,13 @@ test_that("targets graph separates public diagnostics, extended diagnostics, and
   expect_match(src, "bench_ame_methods", fixed = TRUE)
   expect_match(src, "EMI_RUN_EXTENDED_DIAGNOSTICS", fixed = TRUE)
   expect_match(src, "EMI_RUN_BENCHMARKS", fixed = TRUE)
-  expect_false(grepl('diag_public_spatial_autocorrelation.*tar_cue\\(mode = "always"', src))
+  public_spatial_line <- grep(
+    "tar_target\\(diag_public_spatial_autocorrelation,",
+    strsplit(src, "\n", fixed = TRUE)[[1]],
+    value = TRUE
+  )
+  expect_length(public_spatial_line, 1L)
+  expect_false(grepl('tar_cue(mode = "always")', public_spatial_line, fixed = TRUE))
 })
 
 test_that("target warning metadata is written to build diagnostics", {
