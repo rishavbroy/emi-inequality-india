@@ -163,6 +163,32 @@ The existing production crosswalk must not be replaced until all of the followin
 
 Only after those gates pass should `strict_district_panel_validation` and `strict_analysis_panel_validation` be reconsidered for final-mode activation.
 
+## Completion workflow
+
+The diagnostic now writes five additional completion artifacts:
+
+- `adjudication_draft.csv`: one review-ready row per source identity, always
+  `needs_review`; it is never an automatic acceptance ledger;
+- `sensitivity_source_crosswalk.csv`: deterministic accepted mappings plus
+  accepted reviewed allocation weights;
+- `production_crosswalk_comparison.csv`: accepted v2 source mappings compared
+  with the current production panel;
+- `geometry_2001_qa.csv`: the geometry availability and topology contract;
+- `completion_status.csv`: one row for each of the nine remaining research
+  steps, with observed progress and the next required action.
+
+The draft is intentionally generated rather than tracked. A researcher must
+verify administrative continuity and evidence, then copy only reviewed rows
+into `district_adjudications_v2.csv`. This preserves the distinction between a
+reproducible recommendation and a historical fact.
+
+`dissolve_shrid_geometry_2001_v2()` implements the compact geometry operation
+for local SHRID polygons. It joins only deterministic 2001 memberships and
+unions polygons by code-based 2001 district ID. `geometry_qa_v2()` checks
+coverage against the canonical registry and counts unexpected, missing, and
+invalid geometries. The raw polygons remain local-only; the derived compact
+GeoPackage may be retained after review.
+
 ## Immediate work plan
 
 ### 1. Make the parallel diagnostic green
