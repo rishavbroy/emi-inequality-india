@@ -10,7 +10,6 @@
   $if(footer-color)$ footer_color: "$footer-color$", $endif$
   $if(num-columns)$ num_columns: $num-columns$, $endif$
   $if(univ-logo-column-size)$ univ_logo_column_size: $univ-logo-column-size$, $endif$
-  $if(title-column-size)$ title_column_size: $title-column-size$, $endif$
   $if(title-font-size)$ title_font_size: $title-font-size$, $endif$
   $if(authors-font-size)$ authors_font_size: $authors-font-size$, $endif$
   $if(footer-url-font-size)$ footer_url_font_size: $footer-url-font-size$, $endif$
