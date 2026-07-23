@@ -388,6 +388,19 @@ source of inferential state. Coefficient comparisons expose
 `inference_available`, and a row cannot be marked comparable when either
 variant lacks a finite clustered standard error or p-value.
 
+## Cache-safe public clustered inference
+
+Public second-stage tables and report values pass the fitting district panel to
+the common clustered-coefficient helpers. This allows clustered covariance to
+be reconstructed when an `iv_models` target was cached before the model-level
+`cluster_state` attribute existed or when that nonstandard attribute did not
+survive serialization.
+
+The model attribute remains a cache, not the sole source of inferential state.
+Public and diagnostic paths therefore use the same fitted-row alignment and
+cluster-validation contract without forcing an otherwise unnecessary model
+refit.
+
 ## Fitted-row cluster alignment
 
 Cluster vectors are aligned to the rows in each fitted model through model-frame
