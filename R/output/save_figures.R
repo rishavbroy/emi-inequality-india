@@ -458,6 +458,23 @@ first_estimable_iv_model <- function(iv_models) {
   if (length(hits)) hits[[1]] else NULL
 }
 
+poster_prediction_vcov <- function(model) {
+  if (!inherits(model, "ivreg")) {
+    stop("Poster prediction covariance requires an ivreg model.", call. = FALSE)
+  }
+
+  # targets restores fitted models from RDS without loading the package that
+  # registered their S3 methods. Load both namespaces before sandwich dispatch.
+  need_pkg("ivreg", "poster expected-values inference")
+  need_pkg("sandwich", "poster expected-values inference")
+
+  cluster <- attr(model, "cluster_state", exact = TRUE)
+  if (!is.null(cluster) && length(cluster) == stats::nobs(model) && !anyNA(cluster)) {
+    return(sandwich::vcovCL(model, cluster = cluster, type = "HC1"))
+  }
+  sandwich::vcovHC(model, type = "HC1")
+}
+
 save_emie_expected_values <- function(spec, path_base, formats, district_panel, iv_models) {
   need_pkg("ggplot2", "poster expected-values figure")
   need_pkg("marginaleffects", "poster expected-values figure")
@@ -467,12 +484,7 @@ save_emie_expected_values <- function(spec, path_base, formats, district_panel, 
     stop("Poster expected-values figure requires an estimated ivreg model and observed EMIE values.", call. = FALSE)
   }
 
-  cluster <- attr(model, "cluster_state")
-  vcov_arg <- if (!is.null(cluster) && length(cluster) == stats::nobs(model)) {
-    sandwich::vcovCL(model, cluster = cluster, type = "HC1")
-  } else {
-    "HC1"
-  }
+  vcov_arg <- poster_prediction_vcov(model)
   predictions <- marginaleffects::avg_predictions(
     model,
     variables = list(EMIE = grid$EMIE),
