@@ -333,6 +333,18 @@ summarize_lineage_v2_downstream_coverage <- function(
 ) {
   crosswalk <- safe_df(primary_crosswalk)
   eligibility <- safe_df(primary_eligibility)
+  for (nm in setdiff(
+    c("source_row_id", "wave", "target_unit_2001"),
+    names(crosswalk)
+  )) {
+    crosswalk[[nm]] <- rep(NA_character_, nrow(crosswalk))
+  }
+  for (nm in setdiff(
+    c("source_row_id", "wave", "status"),
+    names(eligibility)
+  )) {
+    eligibility[[nm]] <- rep(NA_character_, nrow(eligibility))
+  }
 
   waves <- sort(unique(c(
     plain_chr(crosswalk$wave),
@@ -442,12 +454,12 @@ lineage_v2_downstream_review_gates <- function(
       "Resolve duplicated Census-2001 units in the inherited production panel.",
       "Resolve duplicated Census-2001 units in the lineage-v2 panel.",
       paste0(
-        "Complete reviewed 2017-18-to-2001 transitions before comparing ",
-        "full-panel estimates."
+        "Review production-only and lineage-v2-only units before full-panel ",
+        "migration."
       ),
       paste0(
-        "Do not interpret coefficient changes until both panels represent ",
-        "the same unique district support."
+        "Use the shared, unique Census-2001 support for interpretable model ",
+        "comparisons."
       ),
       paste0(
         "Keep downstream_results as needs_review until coverage and duplicate ",

@@ -627,6 +627,7 @@ test_that("panel membership comparison separates additions and removals", {
 
 test_that("downstream coverage exposes incomplete 2017 lineage", {
   crosswalk <- data.frame(
+    source_row_id = c("a", "b", "c"),
     wave = c("nss_2007_08", "nss_2007_08", "nss_2017_18"),
     target_unit_2001 = c(
       "pc2001__01__01", "pc2001__01__02", "pc2001__01__01"
@@ -634,11 +635,12 @@ test_that("downstream coverage exposes incomplete 2017 lineage", {
     stringsAsFactors = FALSE
   )
   eligibility <- data.frame(
+    source_row_id = c("a", "b", "c", "d"),
     wave = c(
       "nss_2007_08", "nss_2007_08",
       "nss_2017_18", "nss_2017_18"
     ),
-    eligible_primary = c(TRUE, TRUE, TRUE, FALSE),
+    status = "accepted",
     stringsAsFactors = FALSE
   )
   production <- data.frame(
@@ -657,17 +659,23 @@ test_that("downstream coverage exposes incomplete 2017 lineage", {
   panel <- coverage[coverage$scope == "panel", , drop = FALSE]
 
   expect_equal(row_17$accepted_identities, 2L)
-  expect_equal(row_17$preferred_mappings, 1L)
-  expect_equal(row_17$excluded_identities, 1L)
-  expect_equal(panel$preferred_targets, 1L)
-  expect_equal(panel$preferred_identity_share, 0.5)
+  expect_equal(row_17$mapped_identities, 1L)
+  expect_equal(row_17$crosswalk_rows, 1L)
+  expect_equal(row_17$unmapped_identities, 1L)
+  expect_equal(row_17$identity_coverage_share, 0.5)
+  expect_equal(panel$mapped_targets, 1L)
+  expect_equal(panel$shared_unique_units, 1L)
+  expect_equal(panel$production_only_units, 1L)
+  expect_equal(panel$candidate_only_units, 0L)
 })
 
-test_that("downstream gates block unequal support and duplicate production units", {
+test_that("downstream gates distinguish shared review from migration", {
   coverage <- data.frame(
     scope = "panel",
-    wave = "two_wave_overlap",
-    preferred_identity_share = 0.5,
+    wave = "two_wave_panel",
+    production_only_units = 1L,
+    candidate_only_units = 0L,
+    shared_unique_units = 1L,
     stringsAsFactors = FALSE
   )
   production <- data.frame(
@@ -687,10 +695,13 @@ test_that("downstream gates block unequal support and duplicate production units
     gates$gate == "production_panel_unique_by_2001_unit"
   ])
   expect_false(gates$passed[
-    gates$gate == "lineage_v2_panel_matches_production_coverage"
+    gates$gate == "full_panels_have_identical_support"
+  ])
+  expect_true(gates$passed[
+    gates$gate == "shared_support_comparison_available"
   ])
   expect_false(gates$passed[
-    gates$gate == "downstream_model_comparison_interpretable"
+    gates$gate == "production_migration_reviewable"
   ])
 })
 
