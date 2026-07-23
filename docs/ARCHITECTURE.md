@@ -131,6 +131,14 @@ Update this file when:
 Prefer concise updates. Do not duplicate function-level documentation or the
 full replication guide.
 
+### Selected-target metadata checks
+
+`scripts/run_targets_checked.R` reads the most recent `tar_progress()` record to
+identify upstream dependencies that actually ran, then reads `tar_meta()` only
+for those targets and the explicitly selected targets. This preserves warning
+and error checks for rebuilt dependencies without scanning the full dynamic
+metadata store before and after every small selected-target run.
+
 ## Build Philosophy
 
 `{targets}` is the source of build truth. Add durable computation as functions used by targets, and add generated public artifacts as explicit file targets when later steps read them from disk. Avoid untracked side effects: if a QMD, diagnostic, or check reads a generated CSV, PDF, HTML, or Markdown file, that file should be produced by a target or by a documented render/check script.
