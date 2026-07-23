@@ -13,6 +13,12 @@ format:
     footer-url: "rishavbroy.github.io"
     footer-emails: "roybrishav@gmail.com"
     footer-color: "7a0019"
+    univ-logo-column-size: 8
+    title-column-size: 22
+    title-font-size: 42
+    authors-font-size: 28
+    footer-url-font-size: 20
+    footer-text-font-size: 24
 execute:
   echo: false
   warning: false
@@ -42,7 +48,7 @@ execute:
 ]
 ```
 
-**Treatment:** percentage of school-going children enrolled in EMI in 2007-08. **Outcome:** percentage growth in district mean household consumption, 2007-08 to 2017-18. **Instrument:** average linguistic distance between Hindi and each district's three most common mother tongues. **Controls:** baseline consumption, inequality, urbanization, household composition, social-group and religion shares, landholding, head education, and region fixed effects.
+**Treatment:** district EMI enrollment among school-going children in 2007-08. **Outcome:** growth in mean household consumption through 2017-18. **Instrument:** linguistic distance from Hindi, based on each district's three leading mother tongues. **Controls:** baseline living standards, demography, social composition, landholding, head education, and region fixed effects.
 
 ![District EMI exposure in 2007-08.](../../outputs/figures/main/map_emi_exposure.pdf){width=76%}
 
@@ -51,33 +57,29 @@ execute:
 
 ![Adjusted consumption growth across observed district EMI exposure. Points mark exposure percentiles; the ribbon shows 95% confidence intervals.](../../outputs/figures/main/poster_emie_expected_values.pdf){width=92%}
 
-The estimate is small and imprecise: after accounting for baseline district conditions, a higher EMI share does not clearly predict faster local consumption growth.
-
-Individual gains may still be important. Students can benefit without raising average living standards in the district where they were educated.
+The estimate is small and imprecise: higher EMI exposure does not clearly predict faster local consumption growth after baseline adjustment. Individual gains may still matter without raising average living standards in students' home districts.
 
 # Interpretation
 
-- **Selection:** EMI enrollment reflects income, parental education, urban access, school supply, and perceived quality.
-- **Migration:** gains may follow students who move rather than remain in their childhood district.
-- **School quality:** an English label does not guarantee English instruction [@lahoti2019a].
-- **Labor demand:** English skills pay most where local firms and occupations reward them.
+- **Selection:** EMI enrollment reflects family resources, access, and school supply.
+- **Migration:** gains may follow students who leave their childhood districts.
+- **School quality:** an English label need not imply English instruction [@lahoti2019a].
+- **Labor demand:** returns depend on local firms and occupations.
 
 # Instrumental variation
 
 ![Average linguistic distance from Hindi, constructed from Census 2001 mother-tongue composition.](../../outputs/figures/main/map_linguistic_distance.pdf){width=72%}
 
-The design assumes that, conditional on baseline characteristics and region, linguistic distance affects later consumption growth through EMI exposure rather than another channel.
+Conditional on baseline characteristics and region, the design assumes linguistic distance affects later consumption only through EMI exposure.
 
 
 # Why district histories matter
 
-A credible pseudo-panel must distinguish three problems created by changing district names and boundaries.
-
-## 1. Name resolution
+## Name resolution
 
 Resolve typographical errors, punctuation, transliteration, shortening, and official renaming for both district and state names [@indiastatestories1HowDistricts2025].
 
-## 2. Geographical change
+## Geographical change
 
 - **Partition:** one district becomes two or more.
 - **Merger:** two or more districts become one.
@@ -85,24 +87,23 @@ Resolve typographical errors, punctuation, transliteration, shortening, and offi
 
 Equal names across years do not prove equal territory.
 
-## 3. Variable assignment
+## Variable assignment
 
 - *Counts:* sum additive components.
-- *Means and shares:* pool records or numerators and denominators, then recompute.
-- *EMI exposure:* pool eligible children and recompute enrollment shares.
-- *Gini coefficients:* pool household consumption records and recompute; never average district Ginis.
+- *Means and shares, including EMI:* pool records or numerators and denominators, then recompute.
+- *Gini coefficients:* pool household records and recompute; never average district Ginis.
 
-Where exact assignment is impossible, retain deterministic histories and report alternative assumptions separately.
+Where exact assignment is impossible, retain deterministic histories and report alternative assumptions.
 
 # Contribution
 
-The project combines household surveys, Census language data, administrative histories, and spatial data to study education, language, inequality, and local development. Estimates remain provisional while district histories are strengthened; the reproducible analysis updates with each improved district panel.
+The project integrates household surveys, Census language data, administrative histories, and spatial data in a reproducible district panel. Estimates remain provisional while district histories are strengthened.
 
 ```{=typst}
-#block(fill: rgb("f3f0ea"), inset: 10pt, radius: 5pt, width: 100%)[
+#block(fill: rgb("f3f0ea"), inset: 6pt, radius: 5pt, width: 100%)[
   #grid(columns: (1fr, auto), gutter: 14pt,
     [*Code, paper, and updates*\ #link("https://git.new/FwmVaXq")[git.new/FwmVaXq]\ #link("https://rishavbroy.github.io")[rishavbroy.github.io]],
-    image("../../assets/repo-qr.svg", width: 1.2in)
+    image("../../assets/repo-qr.svg", width: 0.85in)
   )
 ]
 ```
