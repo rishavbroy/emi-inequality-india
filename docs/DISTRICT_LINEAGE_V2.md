@@ -311,6 +311,19 @@ Dadra & Nagar Haveli. These decisions do not establish Census-2001 ancestry.
 Maharajganj remains under alias review because the Census-2011 handbook uses
 the spelling `Mahrajganj`.
 
+## Completed NSS-75 alias review
+
+The remaining 16 NSS-75 source labels are accepted after manual review as
+official spelling, short-name, or later-name equivalents. The reviewed set
+includes `Maharajganj` -> Census-2011 `Mahrajganj`; Chhattisgarh short forms
+such as `Balodabazar`; and Telangana labels such as `Rangareddy`,
+`Warangal Rural`, and `Warangal Urban`.
+
+This completes source-identity adjudication for all 1,259 NSS district rows.
+It does not complete historical ancestry. Current-LGD identities still require
+a reviewed administrative event or allocation before they can enter a
+Census-2001 preferred or sensitivity crosswalk.
+
 ## NSS-75 official exact Census-2011 identities
 
 The official NSS-75 district list covers all 671 source codes in the

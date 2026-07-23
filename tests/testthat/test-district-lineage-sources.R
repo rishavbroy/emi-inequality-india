@@ -578,7 +578,7 @@ test_that("reviewed geometry and source decisions satisfy evidence contracts", {
 
   expect_equal(nrow(carrybacks), 11L)
   expect_true(all(carrybacks$status == "accepted"))
-  expect_equal(nrow(adjudications), 1243L)
+  expect_equal(nrow(adjudications), 1259L)
   expect_true(all(adjudications$status == "accepted"))
   expect_setequal(
     unique(adjudications$method),
@@ -592,7 +592,8 @@ test_that("reviewed geometry and source decisions satisfy evidence contracts", {
       "official_census2011_alias_identity",
       "official_lgd_modification_census2011_identity",
       "official_nss75_exact_census2011_identity",
-      "official_nss75_exact_contemporaneous_identity"
+      "official_nss75_exact_contemporaneous_identity",
+      "reviewed_nss75_official_alias_identity"
     )
   )
 
@@ -1124,5 +1125,46 @@ test_that("official NSS-75 exact current identities do not imply bridge eligibil
       "Daman & Diu", "Dadra & Nagar Haveli"
     )],
     c("pc2011__25__494", "pc2011__25__495", "pc2011__26__496")
+  )
+})
+
+test_that("reviewed NSS-75 aliases complete source identity without granting ancestry", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
+  rows <- read_adjudicated_source_matches_v2(
+    read.csv(
+      file.path(
+        root, "data", "metadata", "district_adjudications_v2.csv"
+      ),
+      stringsAsFactors = FALSE
+    )
+  )
+  aliases <- rows[
+    rows$method %in% "reviewed_nss75_official_alias_identity",
+    ,
+    drop = FALSE
+  ]
+
+  expect_equal(nrow(rows), 1259L)
+  expect_equal(anyDuplicated(rows$source_row_id), 0L)
+  expect_true(all(rows$status == "accepted"))
+
+  expect_equal(nrow(aliases), 16L)
+  expect_true(all(aliases$wave == "nss_2017_18"))
+  expect_true(all(
+    aliases$source_id == "nss75_reviewed_district_aliases"
+  ))
+  expect_setequal(
+    aliases$unit_id[aliases$raw_district %in% c(
+      "Rangareddy", "Warangal Rural", "Warangal Urban"
+    )],
+    c(
+      "lgd_district__518",
+      "lgd_district__522",
+      "lgd_district__686"
+    )
+  )
+  expect_identical(
+    aliases$unit_id[aliases$raw_district == "Maharajganj"],
+    "pc2011__09__187"
   )
 })
