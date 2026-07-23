@@ -392,3 +392,20 @@ test_that("NSS-64 district codes resolve only the documented code shape", {
     nss64_census2001_unit_id_v2(c("0711", "071001", "07A01", NA))
   )))
 })
+
+test_that("NSS-64 code resolution requires a known Census-2001 unit", {
+  admin <- data.frame(
+    unit_id = c("pc2001__07__01", "pc2001__35__02"),
+    state_code = c("07", "35"),
+    district_code = c("01", "02"),
+    stringsAsFactors = FALSE
+  )
+
+  expect_identical(
+    resolve_nss64_census2001_unit_id_v2(
+      c("07101", "35102", "28111", "invalid"),
+      admin
+    ),
+    c("pc2001__07__01", "pc2001__35__02", NA_character_, NA_character_)
+  )
+})
