@@ -942,3 +942,30 @@ test_that("non-overlap queue retains both panel-only directions", {
   )
   expect_true(all(nzchar(out$next_action)))
 })
+
+test_that("non-overlap queue prefers human-readable panel labels", {
+  membership <- data.frame(
+    target_unit_2001 = "pc2001__09__17",
+    in_production = TRUE,
+    in_v2 = FALSE,
+    comparison_status = "production_only",
+    stringsAsFactors = FALSE
+  )
+  production <- data.frame(
+    district_panel_id = "2001__09__17",
+    state_std = 9,
+    district_std = 17,
+    state_20 = "Uttar Pradesh",
+    district_20 = "Etah",
+    stringsAsFactors = FALSE
+  )
+
+  out <- build_lineage_v2_nonoverlap_queue(
+    membership,
+    production,
+    data.frame()
+  )
+
+  expect_identical(out$state_label, "Uttar Pradesh")
+  expect_identical(out$district_label, "Etah")
+})

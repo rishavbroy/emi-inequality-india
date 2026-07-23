@@ -322,13 +322,16 @@ lineage_v2_panel_labels <- function(panel, variant) {
   panel$target_unit_2001 <- lineage_panel_unit_id(panel)
   state_col <- first_col(
     panel,
-    c("state_std", "state_20", "state_0708", "state_name_2001")
+    c(
+      "state_20", "state_0708", "state_1718",
+      "state_name_2001", "state_std"
+    )
   )
   district_col <- first_col(
     panel,
     c(
-      "district_std", "district_20", "district_0708",
-      "district_name_2001"
+      "district_20", "district_0708", "district_1718",
+      "district_name", "district_name_2001", "district_std"
     )
   )
   groups <- split(
