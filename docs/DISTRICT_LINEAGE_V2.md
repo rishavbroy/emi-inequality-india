@@ -236,6 +236,12 @@ identity. These rows appear only in the sensitivity crosswalk. Districts below
 99 percent mapped population remain unresolved, and the preferred panel
 continues to require direct Census-2001 identity or deterministic containment.
 
+Allocation source keys use the canonical `SS.DDD` Census-2011 code form.
+Readers normalize numeric CSV imports back to this representation before
+validation; this is necessary because base R type conversion can remove leading
+zeros and trailing zeros from values such as `01.010`. Generated and reviewed
+coverage are compared only after this normalization.
+
 ## First reviewed decisions
 
 The first accepted tranche is deliberately narrow:
