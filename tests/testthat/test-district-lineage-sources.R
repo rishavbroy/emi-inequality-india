@@ -392,15 +392,15 @@ test_that("lineage summary preserves the complete diagnostic metric contract", {
     changed_components = data.frame(row = 1:5),
     evidence_requests = data.frame(row = 1:6),
     adjudicated_weights = data.frame(
-      source_unit = c("reviewed", "reviewed"),
+      source_unit = c("pc2011__01__002", "pc2011__01__002"),
       status = c("accepted", "accepted")
     ),
     adjudicated_weight_validation = data.frame(
-      source_key = "reviewed",
+      source_key = "pc2011__01__002",
       coverage_complete = TRUE
     ),
     allocation_validation = data.frame(
-      source_key = c("complete", "reviewed", "open"),
+      source_key = c("pc2011__01__001", "pc2011__01__002", "pc2011__01__003"),
       coverage_complete = c(TRUE, FALSE, FALSE)
     )
   )
@@ -444,7 +444,7 @@ test_that("migration readiness is derived from prerequisite gates", {
     admin_2001 = data.frame(unit_id = "pc2001__01__01"),
     admin_2011 = data.frame(unit_id = "pc2011__01__001"),
     allocation_validation = data.frame(
-      source_key = "complete",
+      source_key = "pc2011__01__001",
       weights_well_formed = TRUE,
       coverage_complete = TRUE
     ),
@@ -497,7 +497,7 @@ test_that("migration gates distinguish absent acceptances from ineligible accept
     admin_2001 = data.frame(unit_id = "pc2001__01__01"),
     admin_2011 = data.frame(unit_id = "pc2011__01__001"),
     allocation_validation = data.frame(
-      source_key = "complete",
+      source_key = "pc2011__01__001",
       weights_well_formed = TRUE,
       coverage_complete = TRUE
     ),
@@ -590,7 +590,7 @@ test_that("accepted primary eligibility ignores unrelated NA statuses", {
     admin_2001 = data.frame(unit_id = "pc2001__01__01"),
     admin_2011 = data.frame(unit_id = "pc2011__01__001"),
     allocation_validation = data.frame(
-      source_key = "complete",
+      source_key = "pc2011__01__001",
       weights_well_formed = TRUE,
       coverage_complete = TRUE
     ),
@@ -617,13 +617,13 @@ test_that("accepted primary eligibility ignores unrelated NA statuses", {
 
 test_that("migration readiness counts valid reviewed sensitivity coverage", {
   generated <- data.frame(
-    source_key = c("reviewed", "open"),
+    source_key = c("pc2011__01__001", "pc2011__01__002"),
     weights_well_formed = TRUE,
     coverage_complete = FALSE,
     stringsAsFactors = FALSE
   )
   reviewed <- data.frame(
-    source_key = "reviewed",
+    source_key = "pc2011__01__002",
     coverage_complete = TRUE,
     stringsAsFactors = FALSE
   )
@@ -650,7 +650,7 @@ test_that("migration readiness counts valid reviewed sensitivity coverage", {
 
   reviewed <- rbind(
     reviewed,
-    data.frame(source_key = "open", coverage_complete = TRUE)
+    data.frame(source_key = "pc2011__01__002", coverage_complete = TRUE)
   )
   readiness <- build_migration_readiness_v2(
     missing_core = character(),

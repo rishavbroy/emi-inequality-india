@@ -119,7 +119,7 @@ test_that("allocation validation rejects incomplete or negative source weights",
 test_that("tracked allocation weights require known targets and sum to one", {
   admin <- data.frame(unit_id = c("pc2001__01__01", "pc2001__01__02"))
   raw <- data.frame(
-    source_unit = c("later", "later"),
+    source_unit = c("pc2011__01__001", "pc2011__01__001"),
     target_2001 = admin$unit_id,
     weight = c(0.25, 0.75),
     basis = "population",
@@ -154,7 +154,7 @@ test_that("tracked allocation weights require known targets and sum to one", {
 test_that("accepted tracked allocations reject negative or missing weights", {
   admin <- data.frame(unit_id = "pc2001__01__01")
   raw <- data.frame(
-    source_unit = "later", target_2001 = admin$unit_id,
+    source_unit = "pc2011__01__001", target_2001 = admin$unit_id,
     weight = -0.1, basis = "population", reference_year = 2011,
     source_id = "shrug_pc_keys", status = "accepted", note = NA_character_,
     stringsAsFactors = FALSE
@@ -302,8 +302,8 @@ test_that("allocation coverage rejects malformed nonempty validation tables", {
   )
   expect_error(
     allocation_coverage_status_v2(
-      data.frame(source_key = "complete", coverage_complete = TRUE),
-      data.frame(source_key = "reviewed")
+      data.frame(source_key = "pc2011__01__001", coverage_complete = TRUE),
+      data.frame(source_key = "pc2011__01__002")
     ),
     class = "lineage_allocation_validation_error"
   )
@@ -311,12 +311,14 @@ test_that("allocation coverage rejects malformed nonempty validation tables", {
 
 test_that("reviewed allocations resolve only their corresponding coverage gaps", {
   generated <- data.frame(
-    source_key = c("complete", "reviewed", "open"),
+    source_key = c(
+      "pc2011__01__001", "pc2011__01__002", "pc2011__01__003"
+    ),
     coverage_complete = c(TRUE, FALSE, FALSE),
     stringsAsFactors = FALSE
   )
   reviewed <- data.frame(
-    source_key = "reviewed",
+    source_key = "pc2011__01__002",
     coverage_complete = TRUE,
     stringsAsFactors = FALSE
   )
@@ -334,7 +336,11 @@ test_that("tracked high-coverage sensitivity allocations are normalized", {
   path <- file.path(
     root, "data", "metadata", "district_allocation_weights_v2.csv"
   )
-  weights <- read.csv(path, stringsAsFactors = FALSE)
+  weights <- read_lineage_source(
+    path,
+    reader = "allocation_csv",
+    source_id = "lineage_allocation_weights"
+  )
   validation <- validate_adjudicated_allocation_weights_v2(weights)
 
   expect_equal(nrow(weights), 503L)
@@ -344,31 +350,31 @@ test_that("tracked high-coverage sensitivity allocations are normalized", {
   expect_true(all(grepl("99pct", weights$basis, fixed = TRUE)))
 })
 
-test_that("allocation source keys preserve Census code widths", {
+test_that("allocation source keys use canonical Census unit IDs", {
   expect_identical(
     canonical_allocation_source_key_v2(
       c("01.001", "1.001", "pc2011__01__001")
     ),
-    rep("01.001", 3)
+    rep("pc2011__01__001", 3)
   )
-  expect_identical(
-    canonical_allocation_source_key_v2(c(1.001, 1.01, 27.518)),
-    c("01.001", "01.010", "27.518")
+  expect_error(
+    canonical_allocation_source_key_v2(c(1.001, 1.01)),
+    "must be read as character"
   )
   expect_identical(
     allocation_source_key_v2(c(1, 27), c(1, 518)),
-    c("01.001", "27.518")
+    c("pc2011__01__001", "pc2011__27__518")
   )
 })
 
 test_that("reviewed allocation coverage matches canonicalized source keys", {
   generated <- data.frame(
-    source_key = c("1.001", "1.010"),
+    source_key = c("pc2011__01__001", "pc2011__01__010"),
     coverage_complete = FALSE,
     stringsAsFactors = FALSE
   )
   reviewed <- data.frame(
-    source_key = c(1.001, 1.01),
+    source_key = c("01.001", "01.010"),
     coverage_complete = TRUE,
     stringsAsFactors = FALSE
   )
@@ -393,5 +399,29 @@ test_that("tracked allocation decisions resolve 457 generated gaps", {
   )
 
   expect_equal(length(unique(reviewed$source_key)), 457L)
-  expect_true(all(grepl("^[0-9]{2}[.][0-9]{3}$", reviewed$source_key)))
+  expect_true(all(grepl(
+    "^pc2011__[0-9]{2}__[0-9]{3}$",
+    reviewed$source_key
+  )))
+})
+
+test_that("allocation CSV reader preserves identifier columns as character", {
+  skip_if_not_installed("data.table")
+
+  path <- tempfile(fileext = ".csv")
+  writeLines(c(
+    "source_unit,target_2001,weight,basis,reference_year,source_id,status,note",
+    "01.010,pc2001__01__01,1,population,2011,shrug_pc_keys,accepted,"
+  ), path)
+
+  raw <- read_lineage_source(
+    path,
+    reader = "allocation_csv",
+    source_id = "lineage_allocation_weights"
+  )
+  parsed <- read_adjudicated_allocation_weights_v2(raw)
+
+  expect_type(raw$source_unit, "character")
+  expect_identical(raw$source_unit, "01.010")
+  expect_identical(parsed$source_unit, "pc2011__01__010")
 })

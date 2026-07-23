@@ -283,11 +283,11 @@ test_that("accepted allocations may include resolved complete sources", {
     ),
     evidence_requests = data.frame(),
     allocation_validation = data.frame(
-      source_key = c("gap", "complete"),
+      source_key = c("pc2011__01__001", "pc2011__01__002"),
       coverage_complete = c(FALSE, TRUE)
     ),
     allocation_weights = data.frame(
-      source_unit = c("gap", "complete"),
+      source_unit = c("pc2011__01__001", "pc2011__01__002"),
       target_2001 = c("pc2001__01__01", "pc2001__01__02"),
       weight = c(1, 1),
       status = c("accepted", "accepted")
@@ -363,7 +363,7 @@ test_that("geometry completion reports constructed but incomplete QA", {
     ),
     evidence_requests = data.frame(),
     allocation_validation = data.frame(
-      source_key = "source",
+      source_key = "pc2011__01__001",
       coverage_complete = TRUE
     ),
     allocation_weights = data.frame(
@@ -432,7 +432,7 @@ test_that("constructed incomplete geometry points to the coverage table", {
     ),
     evidence_requests = data.frame(),
     allocation_validation = data.frame(
-      source_key = "source",
+      source_key = "pc2011__01__001",
       coverage_complete = TRUE
     ),
     allocation_weights = data.frame(
