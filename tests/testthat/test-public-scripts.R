@@ -69,6 +69,11 @@ test_that("public audit clean preserves extended diagnostics and benchmarks", {
   expect_match(gitignore, "outputs/diagnostics/*.csv", fixed = TRUE)
   expect_match(gitignore, "outputs/diagnostics/build/", fixed = TRUE)
   expect_match(gitignore, "outputs/diagnostics/public/", fixed = TRUE)
+  expect_match(
+    gitignore,
+    "posters/2026_predoc_conference/poster.typ",
+    fixed = TRUE
+  )
 })
 
 
