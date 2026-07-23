@@ -441,11 +441,63 @@ validate_allocation_weights <- function(weights, source_cols = c("state_code_201
   }))
 }
 
+allocation_decision_status_v2 <- function(weights) {
+  weights <- safe_df(weights)
+  required <- c("source_unit", "status")
+  if (!nrow(weights)) {
+    return(data.frame(
+      source_key = character(),
+      decision_status = character(),
+      decision_complete = logical(),
+      stringsAsFactors = FALSE
+    ))
+  }
+  missing <- setdiff(required, names(weights))
+  if (length(missing)) {
+    stop(
+      "Allocation decisions are missing required columns: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+
+  source_key <- canonical_allocation_source_key_v2(
+    plain_chr(weights$source_unit)
+  )
+  if (anyNA(source_key)) {
+    stop(
+      "Allocation decisions contain noncanonical source identifiers.",
+      call. = FALSE
+    )
+  }
+  status <- plain_chr(weights$status)
+  groups <- split(seq_len(nrow(weights)), source_key)
+  safe_bind_rows(lapply(names(groups), function(key) {
+    values <- unique(status[groups[[key]]])
+    values <- values[!is.na(values) & nzchar(values)]
+    if (length(values) != 1L) {
+      stop(
+        "Each allocation source must have exactly one decision status: ",
+        key,
+        call. = FALSE
+      )
+    }
+    data.frame(
+      source_key = key,
+      decision_status = values,
+      decision_complete = values %in% c("accepted", "rejected"),
+      stringsAsFactors = FALSE
+    )
+  }))
+}
+
 allocation_coverage_status_v2 <- function(
-  generated_validation, adjudicated_validation
+  generated_validation, adjudicated_validation,
+  adjudicated_decisions = data.frame()
 ) {
   generated <- safe_df(generated_validation)
   adjudicated <- safe_df(adjudicated_validation)
+  decisions <- safe_df(adjudicated_decisions)
 
   require_coverage_columns <- function(x, label) {
     if (!nrow(x)) return(invisible())
@@ -477,10 +529,27 @@ allocation_coverage_status_v2 <- function(
   incomplete_keys <- unique(canonical_allocation_source_key_v2(
     generated$source_key[!(generated$coverage_complete %in% TRUE)]
   ))
-  reviewed_keys <- unique(canonical_allocation_source_key_v2(
+  accepted_keys <- unique(canonical_allocation_source_key_v2(
     adjudicated$source_key[adjudicated$coverage_complete %in% TRUE]
   ))
-  if (anyNA(c(generated_keys, incomplete_keys, reviewed_keys))) {
+  rejected_keys <- if (
+    nrow(decisions) &&
+      all(c("source_key", "decision_status", "decision_complete") %in%
+          names(decisions))
+  ) {
+    unique(canonical_allocation_source_key_v2(
+      decisions$source_key[
+        decisions$decision_complete %in% TRUE &
+          decisions$decision_status %in% "rejected"
+      ]
+    ))
+  } else {
+    character()
+  }
+  reviewed_keys <- unique(c(accepted_keys, rejected_keys))
+  if (anyNA(c(
+    generated_keys, incomplete_keys, accepted_keys, rejected_keys
+  ))) {
     stop(
       "Allocation coverage contains noncanonical source keys.",
       call. = FALSE
@@ -491,6 +560,8 @@ allocation_coverage_status_v2 <- function(
   data.frame(
     n_generated_sources = length(generated_keys),
     n_generated_complete = sum(generated$coverage_complete %in% TRUE),
+    n_reviewed_accepted = length(intersect(incomplete_keys, accepted_keys)),
+    n_reviewed_rejected = length(intersect(incomplete_keys, rejected_keys)),
     n_reviewed_complete = length(intersect(incomplete_keys, reviewed_keys)),
     n_unresolved = length(unresolved_keys),
     coverage_resolved =
@@ -529,6 +600,17 @@ read_adjudicated_allocation_weights_v2 <- function(x, admin_2001 = data.frame())
     stop("Unknown district-allocation status: ", paste(invalid_status, collapse = ", "), call. = FALSE)
   }
   accepted <- x$status %in% "accepted"
+  rejected <- x$status %in% "rejected"
+  rejected_payload <- rejected & (
+    (!is.na(x$target_2001) & nzchar(x$target_2001)) |
+      is.finite(x$weight)
+  )
+  if (any(rejected_payload)) {
+    stop(
+      "Rejected district-allocation rows must not carry targets or weights.",
+      call. = FALSE
+    )
+  }
   incomplete <- accepted & (
     is.na(x$target_2001) | !nzchar(x$target_2001) |
       !is.finite(x$weight) | x$weight < 0
