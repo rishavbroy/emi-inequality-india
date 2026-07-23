@@ -431,3 +431,40 @@ test_that("NSS-64 code resolution declares its registry schema", {
     "missing required columns: unit_id"
   )
 })
+
+test_that("deterministic transitions require complete one-to-one coverage", {
+  transition <- data.frame(
+    state_code_2011 = c("01", "01", "01"),
+    district_code_2011 = c("001", "002", "003"),
+    state_code_2001 = c("01", "01", "01"),
+    district_code_2001 = c("01", "02", "03"),
+    population_share_to_2001 = c(1, 0.99, 1),
+    shrid_coverage = c(1, 1, 0.99),
+    mapping_class = rep("deterministic_containment", 3),
+    stringsAsFactors = FALSE
+  )
+
+  out <- deterministic_transition_2011_to_2001_v2(transition)
+
+  expect_equal(nrow(out), 1L)
+  expect_identical(out$district_code_2011, "001")
+  expect_identical(out$district_code_2001, "01")
+})
+
+test_that("deterministic transitions reject duplicate source targets", {
+  transition <- data.frame(
+    state_code_2011 = c("01", "01"),
+    district_code_2011 = c("001", "001"),
+    state_code_2001 = c("01", "01"),
+    district_code_2001 = c("01", "02"),
+    population_share_to_2001 = c(1, 1),
+    shrid_coverage = c(1, 1),
+    mapping_class = rep("deterministic_containment", 2),
+    stringsAsFactors = FALSE
+  )
+
+  expect_error(
+    deterministic_transition_2011_to_2001_v2(transition),
+    "one target per source"
+  )
+})

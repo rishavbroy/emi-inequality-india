@@ -886,3 +886,26 @@ test_that("tracked NSS-64 code decisions cover every known Census unit", {
   expect_equal(anyDuplicated(code_rows$source_row_id), 0L)
   expect_true(all(grepl("^pc2001__", code_rows$unit_id)))
 })
+
+test_that("tracked NSS-75 identities use exact names and deterministic bridges", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
+  metadata <- read.csv(
+    file.path(
+      root, "data", "metadata", "district_adjudications_v2.csv"
+    ),
+    stringsAsFactors = FALSE
+  )
+  rows <- metadata[
+    metadata$method %in%
+      "official_nss75_exact_name_deterministic_2011_to_2001",
+    ,
+    drop = FALSE
+  ]
+
+  expect_equal(nrow(rows), 85L)
+  expect_true(all(rows$wave == "nss_2017_18"))
+  expect_true(all(rows$status == "accepted"))
+  expect_true(all(rows$source_id == "nss75_shrug_exact_deterministic"))
+  expect_equal(anyDuplicated(rows$source_row_id), 0L)
+  expect_true(all(grepl("^pc2011__", rows$unit_id)))
+})
