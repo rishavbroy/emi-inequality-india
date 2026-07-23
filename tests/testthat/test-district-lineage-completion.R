@@ -791,3 +791,70 @@ test_that("lineage-v2 measure mapping returns empty for an absent wave", {
   expect_s3_class(out, "data.frame")
   expect_equal(nrow(out), 0L)
 })
+
+test_that("allocation coverage counts identities separately from crosswalk rows", {
+  crosswalk <- data.frame(
+    source_row_id = c("a", "b", "b"),
+    wave = "nss_2017_18",
+    target_unit_2001 = c(
+      "pc2001__01__01", "pc2001__01__02", "pc2001__01__03"
+    ),
+    stringsAsFactors = FALSE
+  )
+  eligibility <- data.frame(
+    source_row_id = c("a", "b", "c"),
+    wave = "nss_2017_18",
+    status = "accepted",
+    stringsAsFactors = FALSE
+  )
+  production <- data.frame(
+    district_panel_id = c("2001__01__01", "2001__01__02"),
+    stringsAsFactors = FALSE
+  )
+  candidate <- data.frame(
+    target_unit_2001 = c("pc2001__01__01", "pc2001__01__03"),
+    stringsAsFactors = FALSE
+  )
+
+  out <- summarize_lineage_v2_downstream_coverage(
+    crosswalk, eligibility, production, candidate
+  )
+  wave <- out[out$scope == "wave", , drop = FALSE]
+  panel <- out[out$scope == "panel", , drop = FALSE]
+
+  expect_equal(wave$accepted_identities, 3L)
+  expect_equal(wave$mapped_identities, 2L)
+  expect_equal(wave$crosswalk_rows, 3L)
+  expect_equal(wave$unmapped_identities, 1L)
+  expect_equal(wave$identity_coverage_share, 2 / 3)
+  expect_equal(panel$shared_unique_units, 1L)
+  expect_equal(panel$production_only_units, 1L)
+  expect_equal(panel$candidate_only_units, 1L)
+})
+
+test_that("shared support excludes duplicate and non-overlapping units", {
+  production <- data.frame(
+    district_panel_id = c(
+      "2001__01__01", "2001__01__02",
+      "2001__01__02", "2001__01__03"
+    ),
+    value = 1:4,
+    stringsAsFactors = FALSE
+  )
+  candidate <- data.frame(
+    target_unit_2001 = c(
+      "pc2001__01__01", "pc2001__01__02", "pc2001__01__04"
+    ),
+    value = 5:7,
+    stringsAsFactors = FALSE
+  )
+
+  out <- build_lineage_v2_shared_support(production, candidate)
+
+  expect_identical(out$units$target_unit_2001, "pc2001__01__01")
+  expect_equal(nrow(out$production), 1L)
+  expect_equal(nrow(out$lineage_v2), 1L)
+  expect_false(any(
+    out$production$target_unit_2001 == "pc2001__01__02"
+  ))
+})

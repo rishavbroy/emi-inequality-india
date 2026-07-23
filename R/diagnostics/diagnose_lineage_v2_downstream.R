@@ -339,22 +339,28 @@ summarize_lineage_v2_downstream_coverage <- function(
     plain_chr(eligibility$wave)
   )))
   wave_rows <- safe_bind_rows(lapply(waves, function(wave) {
-    eligible <- eligibility[eligibility$wave %in% wave, , drop = FALSE]
-    preferred <- crosswalk[crosswalk$wave %in% wave, , drop = FALSE]
+    eligible <- eligibility[
+      eligibility$wave %in% wave &
+        eligibility$status %in% "accepted",
+      ,
+      drop = FALSE
+    ]
+    mapped <- crosswalk[crosswalk$wave %in% wave, , drop = FALSE]
+    mapped_identities <- length(unique(stats::na.omit(
+      mapped$source_row_id
+    )))
     data.frame(
       scope = "wave",
       wave = wave,
       accepted_identities = nrow(eligible),
-      preferred_mappings = nrow(preferred),
-      preferred_targets = length(unique(stats::na.omit(
-        preferred$target_unit_2001
+      mapped_identities = mapped_identities,
+      crosswalk_rows = nrow(mapped),
+      mapped_targets = length(unique(stats::na.omit(
+        mapped$target_unit_2001
       ))),
-      excluded_identities = sum(
-        eligible$eligible_primary %in% FALSE,
-        na.rm = TRUE
-      ),
-      preferred_identity_share = if (nrow(eligible)) {
-        nrow(preferred) / nrow(eligible)
+      unmapped_identities = max(nrow(eligible) - mapped_identities, 0L),
+      identity_coverage_share = if (nrow(eligible)) {
+        mapped_identities / nrow(eligible)
       } else {
         NA_real_
       },
@@ -366,27 +372,28 @@ summarize_lineage_v2_downstream_coverage <- function(
     lineage_panel_unit_id(production_panel)
   ))
   v2_units <- unique(stats::na.omit(lineage_panel_unit_id(v2_panel)))
-  overlap <- if (all(c("nss_2007_08", "nss_2017_18") %in% waves)) {
-    map_07 <- crosswalk$target_unit_2001[
-      crosswalk$wave %in% "nss_2007_08"
-    ]
-    map_17 <- crosswalk$target_unit_2001[
-      crosswalk$wave %in% "nss_2017_18"
-    ]
-    length(intersect(unique(map_07), unique(map_17)))
-  } else {
-    0L
-  }
-
+  shared_units <- intersect(production_units, v2_units)
   overall <- data.frame(
     scope = "panel",
-    wave = "two_wave_overlap",
+    wave = "two_wave_panel",
     accepted_identities = NA_integer_,
-    preferred_mappings = NA_integer_,
-    preferred_targets = overlap,
-    excluded_identities = NA_integer_,
-    preferred_identity_share = if (length(production_units)) {
-      length(v2_units) / length(production_units)
+    mapped_identities = NA_integer_,
+    crosswalk_rows = NA_integer_,
+    mapped_targets = length(v2_units),
+    unmapped_identities = NA_integer_,
+    identity_coverage_share = NA_real_,
+    production_unique_units = length(production_units),
+    candidate_unique_units = length(v2_units),
+    shared_unique_units = length(shared_units),
+    production_only_units = length(setdiff(production_units, v2_units)),
+    candidate_only_units = length(setdiff(v2_units, production_units)),
+    shared_share_of_production = if (length(production_units)) {
+      length(shared_units) / length(production_units)
+    } else {
+      NA_real_
+    },
+    shared_share_of_candidate = if (length(v2_units)) {
+      length(shared_units) / length(v2_units)
     } else {
       NA_real_
     },
@@ -405,29 +412,29 @@ lineage_v2_downstream_review_gates <- function(
   v2_duplicates <- lineage_v2_panel_duplicates(v2_panel, "lineage_v2")
   panel_row <- coverage[
     coverage$scope %in% "panel" &
-      coverage$wave %in% "two_wave_overlap",
+      coverage$wave %in% "two_wave_panel",
     ,
     drop = FALSE
   ]
-  coverage_equal <- nrow(panel_row) &&
-    isTRUE(all.equal(panel_row$preferred_identity_share[[1L]], 1))
+  same_support <- nrow(panel_row) &&
+    panel_row$production_only_units[[1L]] == 0L &&
+    panel_row$candidate_only_units[[1L]] == 0L
 
   data.frame(
     gate = c(
       "production_panel_unique_by_2001_unit",
       "lineage_v2_panel_unique_by_2001_unit",
-      "lineage_v2_panel_matches_production_coverage",
-      "downstream_model_comparison_interpretable",
+      "full_panels_have_identical_support",
+      "shared_support_comparison_available",
       "production_migration_reviewable"
     ),
     passed = c(
       nrow(production_duplicates) == 0L,
       nrow(v2_duplicates) == 0L,
-      coverage_equal,
-      coverage_equal &&
-        nrow(production_duplicates) == 0L &&
-        nrow(v2_duplicates) == 0L,
-      coverage_equal &&
+      same_support,
+      nrow(panel_row) &&
+        panel_row$shared_unique_units[[1L]] > 0L,
+      same_support &&
         nrow(production_duplicates) == 0L &&
         nrow(v2_duplicates) == 0L
     ),
@@ -448,6 +455,36 @@ lineage_v2_downstream_review_gates <- function(
       )
     ),
     stringsAsFactors = FALSE
+  )
+}
+
+build_lineage_v2_shared_support <- function(production_panel, v2_panel) {
+  production <- safe_df(production_panel)
+  candidate <- safe_df(v2_panel)
+  production$target_unit_2001 <- lineage_panel_unit_id(production)
+  candidate$target_unit_2001 <- lineage_panel_unit_id(candidate)
+
+  production_counts <- table(production$target_unit_2001)
+  candidate_counts <- table(candidate$target_unit_2001)
+  production_unique <- names(production_counts[production_counts == 1L])
+  candidate_unique <- names(candidate_counts[candidate_counts == 1L])
+  shared <- sort(intersect(production_unique, candidate_unique))
+
+  list(
+    production = production[
+      production$target_unit_2001 %in% shared,
+      ,
+      drop = FALSE
+    ],
+    lineage_v2 = candidate[
+      candidate$target_unit_2001 %in% shared,
+      ,
+      drop = FALSE
+    ],
+    units = data.frame(
+      target_unit_2001 = shared,
+      stringsAsFactors = FALSE
+    )
   )
 }
 
@@ -486,7 +523,11 @@ lineage_v2_model_summary <- function(iv_models, first_stage_tests, panel, varian
   )
 }
 
-compare_lineage_v2_model_summaries <- function(production, candidate) {
+compare_lineage_v2_model_summaries <- function(
+  production, candidate,
+  comparison_scope = "different_panel_composition",
+  comparable = FALSE
+) {
   prod_coef <- safe_df(production$coefficients)
   cand_coef <- safe_df(candidate$coefficients)
   keys <- intersect(c("model", "term"), intersect(names(prod_coef), names(cand_coef)))
@@ -509,9 +550,8 @@ compare_lineage_v2_model_summaries <- function(production, candidate) {
     coefficient_comparison$std_error_change <-
       coefficient_comparison$std.error_v2 -
       coefficient_comparison$std.error_production
-    coefficient_comparison$comparison_scope <-
-      "different_panel_composition"
-    coefficient_comparison$comparable <- FALSE
+    coefficient_comparison$comparison_scope <- comparison_scope
+    coefficient_comparison$comparable <- comparable
   }
 
   prod_fs <- safe_df(production$first_stage)
@@ -535,9 +575,8 @@ compare_lineage_v2_model_summaries <- function(production, candidate) {
   }
 
   if (nrow(first_stage_comparison)) {
-    first_stage_comparison$comparison_scope <-
-      "different_panel_composition"
-    first_stage_comparison$comparable <- FALSE
+    first_stage_comparison$comparison_scope <- comparison_scope
+    first_stage_comparison$comparable <- comparable
   }
 
   list(
@@ -554,7 +593,13 @@ build_lineage_v2_downstream_review <- function(
   production_panel, v2_panel, production_models, v2_models,
   production_first_stage, v2_first_stage,
   primary_crosswalk = data.frame(),
-  primary_eligibility = data.frame()
+  primary_eligibility = data.frame(),
+  production_shared_models = NULL,
+  v2_shared_models = NULL,
+  production_shared_first_stage = data.frame(),
+  v2_shared_first_stage = data.frame(),
+  production_shared_panel = data.frame(),
+  v2_shared_panel = data.frame()
 ) {
   production <- lineage_v2_model_summary(
     production_models, production_first_stage, production_panel, "production"
@@ -582,6 +627,30 @@ build_lineage_v2_downstream_review <- function(
     production_panel,
     v2_panel
   )
+
+  if (!is.null(production_shared_models) && !is.null(v2_shared_models)) {
+    shared_production <- lineage_v2_model_summary(
+      production_shared_models,
+      production_shared_first_stage,
+      production_shared_panel,
+      "production_shared"
+    )
+    shared_candidate <- lineage_v2_model_summary(
+      v2_shared_models,
+      v2_shared_first_stage,
+      v2_shared_panel,
+      "lineage_v2_shared"
+    )
+    shared <- compare_lineage_v2_model_summaries(
+      shared_production,
+      shared_candidate,
+      comparison_scope = "shared_unique_2001_support",
+      comparable = TRUE
+    )
+    comparison$shared_panel_summary <- shared$panel_summary
+    comparison$shared_coefficient_comparison <- shared$coefficient_comparison
+    comparison$shared_first_stage_comparison <- shared$first_stage_comparison
+  }
   comparison
 }
 
@@ -617,6 +686,18 @@ save_lineage_v2_downstream_review <- function(
     downstream_review_gates = write_diagnostic_csv(
       review$review_gates %||% data.frame(),
       file.path(dir, "downstream_review_gates.csv")
+    ),
+    downstream_shared_panel_summary = write_diagnostic_csv(
+      review$shared_panel_summary %||% data.frame(),
+      file.path(dir, "downstream_shared_panel_summary.csv")
+    ),
+    downstream_shared_coefficient_comparison = write_diagnostic_csv(
+      review$shared_coefficient_comparison %||% data.frame(),
+      file.path(dir, "downstream_shared_coefficient_comparison.csv")
+    ),
+    downstream_shared_first_stage_comparison = write_diagnostic_csv(
+      review$shared_first_stage_comparison %||% data.frame(),
+      file.path(dir, "downstream_shared_first_stage_comparison.csv")
     )
   ))
 }
