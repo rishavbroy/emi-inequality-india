@@ -209,6 +209,45 @@ extended_diagnostic_targets <- list(
     )
   ),
   tar_target(
+    lineage_v2_shared_support,
+    build_lineage_v2_shared_support(
+      district_panel,
+      district_panel_v2_allocated
+    )
+  ),
+  tar_target(
+    iv_models_production_shared_v2,
+    estimate_2sls(
+      lineage_v2_shared_support$production,
+      iv_formulas,
+      cfg
+    )
+  ),
+  tar_target(
+    first_stage_tests_production_shared_v2,
+    estimate_first_stage(
+      iv_models_production_shared_v2,
+      lineage_v2_shared_support$production,
+      cfg
+    )
+  ),
+  tar_target(
+    iv_models_v2_allocated_shared,
+    estimate_2sls(
+      lineage_v2_shared_support$lineage_v2,
+      iv_formulas,
+      cfg
+    )
+  ),
+  tar_target(
+    first_stage_tests_v2_allocated_shared,
+    estimate_first_stage(
+      iv_models_v2_allocated_shared,
+      lineage_v2_shared_support$lineage_v2,
+      cfg
+    )
+  ),
+  tar_target(
     lineage_v2_downstream_review,
     build_lineage_v2_downstream_review(
       district_panel,
@@ -218,7 +257,13 @@ extended_diagnostic_targets <- list(
       first_stage_tests,
       first_stage_tests_v2_allocated,
       district_lineage_v2$sensitivity_source_crosswalk,
-      district_lineage_v2$primary_mapping_eligibility
+      district_lineage_v2$primary_mapping_eligibility,
+      iv_models_production_shared_v2,
+      iv_models_v2_allocated_shared,
+      first_stage_tests_production_shared_v2,
+      first_stage_tests_v2_allocated_shared,
+      lineage_v2_shared_support$production,
+      lineage_v2_shared_support$lineage_v2
     )
   ),
   tar_target(
