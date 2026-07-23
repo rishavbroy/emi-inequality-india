@@ -311,6 +311,24 @@ Dadra & Nagar Haveli. These decisions do not establish Census-2001 ancestry.
 Maharajganj remains under alias review because the Census-2011 handbook uses
 the spelling `Mahrajganj`.
 
+## Chhattisgarh and Punjab single-parent ancestry
+
+Eleven accepted administrative edges complete the remaining single-parent
+lineage queue outside Telangana:
+
+- Surajpur and Balrampur-Ramanujganj descend from Census-2011 Surguja;
+- Balodabazar-Bhatapara and Gariyaband descend from Census-2011 Raipur;
+- Balod and Bemetara descend from Census-2011 Durg;
+- Mungeli descends from Census-2011 Bilaspur;
+- Kondagaon descends from Census-2011 Bastar;
+- Sukma descends from Census-2011 Dakshin Bastar Dantewada;
+- Pathankot descends from Census-2011 Gurdaspur; and
+- Fazilka descends from Census-2011 Firozpur.
+
+These edges record parentage only and intentionally leave `share` blank.
+After this tranche, only the mixed-parent Telangana districts Vikarabad and
+Mahabubabad remain in the missing-parent evidence queue.
+
 ## Telangana 2016 single-parent ancestry
 
 Twenty-four current Telangana district identities now have reviewed ancestry
