@@ -100,17 +100,20 @@ test_that("spatial IV coefficient summaries fall back to point estimates", {
 
 test_that("shared-support inference prefers canonical Census-2001 clusters", {
   dat <- data.frame(
-    y = c(1, 2, 4, 5, 7, 8),
-    x = c(2, 3, 5, 6, 8, 9),
-    z = c(1, 1.5, 2.5, 3, 4, 4.5),
-    state_2001_cluster = rep(c("01", "02", "03"), each = 2),
+    y = c(2.1, 3.4, 4.0, 5.8, 6.2, 7.9, 8.4, 9.7, 10.1, 11.6, 12.0, 13.5),
+    x = c(1.2, 2.0, 2.8, 3.9, 4.7, 5.5, 6.4, 7.1, 8.0, 8.8, 9.7, 10.4),
+    w = c(0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1),
+    z = c(0.8, 1.7, 2.5, 3.1, 4.2, 4.9, 5.8, 6.6, 7.4, 8.1, 9.0, 9.8),
+    state_2001_cluster = rep(sprintf("%02d", 1:6), each = 2),
     state_std = NA_character_,
     stringsAsFactors = FALSE
   )
-  formulas <- list(model = y ~ x | z)
+  formulas <- list(model = y ~ x + w | z + w)
 
-  models <- estimate_2sls(dat, formulas, list())
-  first_stage <- estimate_first_stage(models, dat, list())
+  expect_no_warning({
+    models <- estimate_2sls(dat, formulas, list())
+    first_stage <- estimate_first_stage(models, dat, list())
+  })
 
   expect_identical(
     attr(models$model, "cluster_state"),
