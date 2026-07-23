@@ -135,20 +135,32 @@ format_gof_number <- function(value, digits = 3L, integer = FALSE) {
   if (isTRUE(integer)) sprintf("%.0f", value) else sprintf(paste0("%.", digits, "f"), value)
 }
 
-model_gof_rows <- function(model, outcome_label) {
+model_gof_frame <- function(model) {
   if (is.null(model) || is_model_status_payload(model)) return(data.frame())
   sm <- tryCatch(summary(model), error = function(e) NULL)
-  nobs <- tryCatch(stats::nobs(model), error = function(e) NA_real_)
-  r2 <- tryCatch(sm$r.squared, error = function(e) NA_real_)
-  adj_r2 <- tryCatch(sm$adj.r.squared, error = function(e) NA_real_)
-  fstat <- tryCatch(sm$fstatistic[[1]], error = function(e) NA_real_)
+  fstat <- first_finite_scalar(tryCatch(sm$fstatistic, error = function(e) NA_real_))
+  data.frame(
+    nobs = first_finite_scalar(tryCatch(stats::nobs(model), error = function(e) NA_real_)),
+    r.squared = first_finite_scalar(tryCatch(sm$r.squared, error = function(e) NA_real_)),
+    adj.r.squared = first_finite_scalar(tryCatch(sm$adj.r.squared, error = function(e) NA_real_)),
+    sigma = first_finite_scalar(tryCatch(sm$sigma, error = function(e) NA_real_)),
+    statistic = fstat,
+    waldtest = fstat,
+    check.names = FALSE,
+    stringsAsFactors = FALSE
+  )
+}
+
+model_gof_rows <- function(model, outcome_label) {
+  gof <- model_gof_frame(model)
+  if (!nrow(gof)) return(data.frame())
   data.frame(
     Term = c("Observations", "R-squared", "Adjusted R-squared", "Model's F-Statistic"),
     value = c(
-      format_gof_number(nobs, integer = TRUE),
-      format_gof_number(r2),
-      format_gof_number(adj_r2),
-      format_gof_number(fstat, digits = 2L)
+      format_gof_number(gof$nobs, integer = TRUE),
+      format_gof_number(gof$r.squared),
+      format_gof_number(gof$adj.r.squared),
+      format_gof_number(gof$statistic, digits = 2L)
     ),
     check.names = FALSE,
     stringsAsFactors = FALSE

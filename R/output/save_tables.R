@@ -530,25 +530,17 @@ modelsummary_payload <- function(model, vcov_matrix = NULL) {
 
   tidy <- data.frame(
     term = rownames(coefs),
-    estimate = suppressWarnings(as.numeric(coefs$Estimate)),
-    std.error = suppressWarnings(as.numeric(coefs[["Std. Error"]])),
-    statistic = suppressWarnings(as.numeric(coefs$statistic)),
-    p.value = suppressWarnings(as.numeric(coefs[["Pr(>|t|)"]])),
+    estimate = unname(suppressWarnings(as.numeric(coefs$Estimate))),
+    std.error = unname(suppressWarnings(as.numeric(coefs[["Std. Error"]]))),
+    statistic = unname(suppressWarnings(as.numeric(coefs$statistic))),
+    p.value = unname(suppressWarnings(as.numeric(coefs[["Pr(>|t|)"]]))),
     stringsAsFactors = FALSE
   )
 
-  sm <- tryCatch(summary(model), error = function(e) NULL)
-  glance <- data.frame(
-    nobs = tryCatch(stats::nobs(model), error = function(e) NA_real_),
-    r.squared = tryCatch(sm$r.squared, error = function(e) NA_real_),
-    adj.r.squared = tryCatch(sm$adj.r.squared, error = function(e) NA_real_),
-    sigma = tryCatch(sm$sigma, error = function(e) NA_real_),
-    statistic = tryCatch(sm$fstatistic[[1]], error = function(e) NA_real_),
-    waldtest = tryCatch(sm$fstatistic[[1]], error = function(e) NA_real_),
-    stringsAsFactors = FALSE
+  structure(
+    list(tidy = tidy, glance = model_gof_frame(model)),
+    class = "modelsummary_list"
   )
-
-  structure(list(tidy = tidy, glance = glance), class = "modelsummary_list")
 }
 
 public_modelsummary_table <- function(model, name, vcov_matrix = NULL, add_rows = NULL) {
