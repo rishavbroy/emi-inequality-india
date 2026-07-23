@@ -359,6 +359,23 @@ Evidence requests now include accepted current districts that still lack an
 accepted parent edge. Completing source identity therefore no longer hides the
 remaining administrative-lineage work.
 
+## Separate source-unit and identity-coverage gates
+
+SHRID transition coverage and accepted NSS identity coverage are distinct
+invariants. The former asks whether each Census-2011 source unit represented in
+the SHRID bridge has well-formed or reviewed allocation mass. The latter asks
+whether every accepted NSS identity appears in the connected sensitivity
+crosswalk.
+
+The migration readiness table now reports both gates. A complete SHRID
+allocation ledger cannot make the lineage plan complete while accepted survey
+identities remain in `downstream_unmapped_identity_queue.csv`. Completion step
+4 therefore refers only to SHRID source-unit coverage, while step 6 remains
+open until every accepted identity is mapped or explicitly excluded.
+
+Counts in tracked review metadata are intentionally not hard-coded; regenerated
+diagnostic queues are the authoritative current counts.
+
 ## Fitted-row cluster alignment
 
 Cluster vectors are aligned to the rows in each fitted model through model-frame
