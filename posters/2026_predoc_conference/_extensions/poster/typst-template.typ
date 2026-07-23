@@ -22,7 +22,7 @@
   footer_text_font_size: "40",
   body,
 ) = {
-  set text(font: "STIX Two Text", size: 16pt)
+  set text(size: 16pt)
 
   let sizes = size.split("x")
   let width = int(sizes.at(0)) * 1in
@@ -113,8 +113,7 @@
   )
 
   show: columns.with(num_columns, gutter: 64pt)
-  set par(justify: true, first-line-indent: 0em)
-  show par: set block(spacing: 0.65em)
+  set par(justify: true, first-line-indent: 0em, spacing: 0.65em)
 
   if keywords != () [
     #set text(24pt, weight: 400)
