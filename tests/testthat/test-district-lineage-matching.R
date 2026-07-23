@@ -396,8 +396,6 @@ test_that("NSS-64 district codes resolve only the documented code shape", {
 test_that("NSS-64 code resolution requires a known Census-2001 unit", {
   admin <- data.frame(
     unit_id = c("pc2001__07__01", "pc2001__35__02"),
-    state_code = c("07", "35"),
-    district_code = c("01", "02"),
     stringsAsFactors = FALSE
   )
 
@@ -407,5 +405,15 @@ test_that("NSS-64 code resolution requires a known Census-2001 unit", {
       admin
     ),
     c("pc2001__07__01", "pc2001__35__02", NA_character_, NA_character_)
+  )
+})
+
+test_that("NSS-64 code resolution declares its registry schema", {
+  expect_error(
+    resolve_nss64_census2001_unit_id_v2(
+      "07101",
+      data.frame(state_code = "07", district_code = "01")
+    ),
+    "missing required columns: unit_id"
   )
 })
