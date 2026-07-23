@@ -354,7 +354,14 @@ Census fields rather than treating the report only as a changed-unit list.
 
 Twenty-nine unresolved 2017-18 source rows are accepted where the normalized
 state and district names exactly match a report row with a nonzero
-Census-2011 district code. The accepted identity is `pc2011__SS__DDD`.
+Census-2011 district code. The accepted identity is looked up in the
+Census-2011 administrative registry by the nationally unique district code;
+it is not constructed from the report's current LGD state code.
+
+This distinction matters for Telangana. Telangana was created after the 2011
+Census, so Adilabad, Nizamabad, Hyderabad, Nalgonda, and Khammam retain
+Census-2011 units under undivided Andhra Pradesh state code 28 even though the
+LGD modification report lists their current Telangana state code 36.
 
 This evidence resolves source identity only. Deterministic transitions,
 reviewed high-coverage allocations, rejected allocations, and administrative
