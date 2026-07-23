@@ -260,6 +260,8 @@ test_that("changed-component roster retains every loaded administrative level", 
     district_name = "District",
     subdistrict_lgd_code = if (level == "subdistrict") code else "100",
     subdistrict_name = "Subdistrict",
+    census2001_code = "01",
+    census2011_code = "001",
     period_start = "2011-01-01",
     period_end = "2018-06-30",
     event_type = "unknown_modification",
@@ -576,7 +578,7 @@ test_that("reviewed geometry and source decisions satisfy evidence contracts", {
 
   expect_equal(nrow(carrybacks), 11L)
   expect_true(all(carrybacks$status == "accepted"))
-  expect_equal(nrow(adjudications), 691L)
+  expect_equal(nrow(adjudications), 720L)
   expect_true(all(adjudications$status == "accepted"))
   expect_setequal(
     unique(adjudications$method),
@@ -587,7 +589,8 @@ test_that("reviewed geometry and source decisions satisfy evidence contracts", {
       "official_nss75_exact_name_deterministic_2011_to_2001",
       "official_andaman_2006_reorganization",
       "official_andaman_2001_2011_lineage",
-      "official_census2011_alias_identity"
+      "official_census2011_alias_identity",
+      "official_lgd_modification_census2011_identity"
     )
   )
 
@@ -1004,4 +1007,46 @@ test_that("official Census aliases identify only reviewed source rows", {
       "Bhatinda->pc2011__03__046"
     )
   )
+})
+
+test_that("LGD modification rosters retain Census linkage codes", {
+  raw <- data.frame(
+    `District Code` = "233",
+    `District Name(In English)` = "Kurung Kumey",
+    `State Code` = "12",
+    `State Name (In English)` = "Arunachal Pradesh",
+    `Census 2001 Code` = "14",
+    `Census 2011 Code` = "256",
+    check.names = FALSE,
+    stringsAsFactors = FALSE
+  )
+
+  out <- standardize_lgd_modification_roster(raw, "district")
+
+  expect_equal(nrow(out), 1L)
+  expect_identical(out$census2001_code, "14")
+  expect_identical(out$census2011_code, "256")
+})
+
+test_that("tracked LGD modification identities use official Census codes", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
+  metadata <- read_adjudicated_source_matches_v2(
+    read.csv(
+      file.path(root, "data", "metadata", "district_adjudications_v2.csv"),
+      stringsAsFactors = FALSE
+    )
+  )
+  rows <- metadata[
+    metadata$method %in%
+      "official_lgd_modification_census2011_identity",
+    ,
+    drop = FALSE
+  ]
+
+  expect_equal(nrow(rows), 29L)
+  expect_true(all(rows$wave == "nss_2017_18"))
+  expect_true(all(rows$status == "accepted"))
+  expect_true(all(rows$source_id == "lgd_mod_districts_census_codes"))
+  expect_equal(anyDuplicated(rows$source_row_id), 0L)
+  expect_true(all(grepl("^pc2011__", rows$unit_id)))
 })
