@@ -177,6 +177,8 @@ The diagnostic now writes five additional completion artifacts:
 - `completion_status.csv`: one row for each of the nine remaining research
   steps, with observed progress and the next required action.
 
+A completion step passes only when its own evidence is complete. In particular, one accepted sensitivity allocation cannot clear unrelated coverage gaps, and production review passes only when every accepted v2 mapping has a corresponding `same_target` production comparison.
+
 The draft is intentionally generated rather than tracked. A researcher must
 verify administrative continuity and evidence, then copy only reviewed rows
 into `district_adjudications_v2.csv`. This preserves the distinction between a
