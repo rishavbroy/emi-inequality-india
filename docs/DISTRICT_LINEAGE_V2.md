@@ -388,6 +388,24 @@ source of inferential state. Coefficient comparisons expose
 `inference_available`, and a row cannot be marked comparable when either
 variant lacks a finite clustered standard error or p-value.
 
+## Aliased coefficients and clustered inference
+
+Clustered coefficient tables use `lmtest::coeftest()` with the covariance
+function returned by the shared cluster helper. This is the standard inference
+path already used elsewhere in the repository and correctly aligns covariance
+rows with estimable coefficients when the design matrix contains aliased
+regressors.
+
+The low-level coefficient-frame fallback also matches covariance rows by term
+instead of requiring the covariance matrix to have the same dimension as the
+full, potentially aliased coefficient vector. One aliased control therefore
+cannot erase inference for every estimable coefficient.
+
+The reported condition number is calculated on the QR-selected estimable
+regressor matrix. Rank deficiency remains visible through the model's aliased
+coefficients, while the report value remains a finite diagnostic for the
+identified column space.
+
 ## Cache-safe public clustered inference
 
 Public second-stage tables and report values pass the fitting district panel to
