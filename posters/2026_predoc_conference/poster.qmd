@@ -12,13 +12,6 @@ format:
     footer-url: "rishavbroy.github.io"
     footer-emails: "roybrishav@gmail.com"
     footer-color: "7a0019"
-    num-columns: 3
-    univ-logo-scale: 92
-    univ-logo-column-size: 6
-    title-font-size: 68
-    authors-font-size: 42
-    footer-url-font-size: 17
-    footer-text-font-size: 19
 execute:
   echo: false
   warning: false

@@ -1,53 +1,126 @@
-// Project-specific poster template function.
-// Keep the function in this Quarto template partial so project resources are
-// resolved by the generated document rather than by a separate Typst package.
+// Based on the documented Quarto poster template and pncnmnp/typst-poster.
+// The function stays in this template partial so the document body and project
+// resources are resolved in the generated Typst document.
 #let poster(
-  size: "36x24", title: "Paper Title", authors: "Author", departments: "Department",
-  univ_logo: none, footer_text: "", footer_url: "", footer_email_ids: "", footer_color: "c5050c",
-  num_columns: "3", univ_logo_column_size: "7",
-  title_font_size: "85", authors_font_size: "56",
-  footer_url_font_size: "20", footer_text_font_size: "24", body
+  size: "'36x24' or '48x36''",
+  title: "Paper Title",
+  authors: "Author Names (separated by commas)",
+  departments: "Department Name",
+  univ_logo: "Logo Path",
+  footer_text: "Footer Text",
+  footer_url: "Footer URL",
+  footer_email_ids: "Email IDs (separated by commas)",
+  footer_color: "Hex Color Code",
+  keywords: (),
+  num_columns: "3",
+  univ_logo_scale: "100",
+  univ_logo_column_size: "10",
+  title_column_size: "20",
+  title_font_size: "48",
+  authors_font_size: "36",
+  footer_url_font_size: "30",
+  footer_text_font_size: "40",
+  body,
 ) = {
-  let dims = size.split("x")
-  let width = int(dims.at(0)) * 1in
-  let height = int(dims.at(1)) * 1in
-  let ncols = int(num_columns)
+  set text(font: "STIX Two Text", size: 16pt)
+
+  let sizes = size.split("x")
+  let width = int(sizes.at(0)) * 1in
+  let height = int(sizes.at(1)) * 1in
+  univ_logo_scale = int(univ_logo_scale) * 1%
+  title_font_size = int(title_font_size) * 1pt
+  authors_font_size = int(authors_font_size) * 1pt
+  num_columns = int(num_columns)
+  univ_logo_column_size = int(univ_logo_column_size) * 1in
+  title_column_size = int(title_column_size) * 1in
+  footer_url_font_size = int(footer_url_font_size) * 1pt
+  footer_text_font_size = int(footer_text_font_size) * 1pt
+
   set page(
-    width: width, height: height,
-    margin: (top: 0.42in, left: 0.55in, right: 0.55in, bottom: 0.82in),
-    footer: block(
-      fill: rgb(footer_color), width: 100%, inset: 8pt, radius: 5pt,
-      grid(columns: (1fr, 1.3fr, 1fr),
-        align(left, text(size: int(footer_url_font_size) * 1pt, fill: white, footer_url)),
-        align(center, text(size: int(footer_text_font_size) * 1pt, weight: "bold", fill: white, footer_text)),
-        align(right, text(size: int(footer_url_font_size) * 1pt, fill: white, footer_email_ids))
+    width: width,
+    height: height,
+    margin: (top: 1in, left: 2in, right: 2in, bottom: 2in),
+    footer: [
+      #set align(center)
+      #block(
+        fill: rgb(footer_color),
+        width: 100%,
+        inset: 20pt,
+        radius: 10pt,
+        [
+          #text(font: "Courier", size: footer_url_font_size, footer_url)
+          #h(1fr)
+          #text(size: footer_text_font_size, smallcaps(footer_text))
+          #h(1fr)
+          #text(font: "Courier", size: footer_url_font_size, footer_email_ids)
+        ],
       )
-    )
+    ],
   )
-  set text(font: "Libertinus Serif", size: 20pt, fill: rgb("202020"))
-  set par(justify: false, leading: 0.58em, spacing: 0.42em)
-  show figure.caption: set text(size: 13pt)
-  set list(indent: 15pt, body-indent: 8pt, spacing: 5pt)
-  set enum(indent: 15pt, body-indent: 8pt, spacing: 5pt)
-  show heading: it => {
-    if it.level == 1 {
-      v(6pt, weak: true)
-      block(fill: rgb("f3f0ea"), inset: (x: 8pt, y: 5pt), radius: 4pt, width: 100%,
-        text(size: 30pt, weight: "bold", fill: rgb("7a0019"), it.body))
-      v(3pt)
-    } else {
-      text(size: 23pt, weight: "bold", fill: rgb("7a0019"), it.body)
-      v(3pt)
-    }
+
+  set math.equation(numbering: "(1)")
+  show math.equation: set block(spacing: 0.65em)
+  set enum(indent: 10pt, body-indent: 9pt)
+  set list(indent: 10pt, body-indent: 9pt)
+
+  set heading(numbering: "I.A.1.")
+  show heading: it => context {
+    let levels = counter(heading).get()
+    let deepest = if levels != () { levels.last() } else { 1 }
+
+    set text(24pt, weight: 400)
+    if it.level == 1 [
+      #set align(center)
+      #set text(32pt)
+      #show: smallcaps
+      #v(50pt, weak: true)
+      #if it.numbering != none {
+        numbering("I.", deepest)
+        h(7pt, weak: true)
+      }
+      #it.body
+      #v(35.75pt, weak: true)
+      #line(length: 100%)
+    ] else if it.level == 2 [
+      #set text(style: "italic")
+      #v(32pt, weak: true)
+      #if it.numbering != none {
+        numbering("i.", deepest)
+        h(7pt, weak: true)
+      }
+      #it.body
+      #v(10pt, weak: true)
+    ] else [
+      #if it.level == 3 {
+        numbering("1)", deepest)
+        [ ]
+      }
+      _#(it.body):_
+    ]
   }
-  let logo = univ_logo
-  grid(columns: (int(univ_logo_column_size) * 1in, 1fr), gutter: 0.35in,
-    align(center + horizon, logo),
-    align(center, [#text(size: int(title_font_size) * 1pt, weight: "bold", fill: rgb("7a0019"), title)
-      #v(10pt)
-      #text(size: int(authors_font_size) * 1pt, authors)
-      #v(3pt)
-      #text(size: 30pt, departments)]))
-  v(11pt)
-  columns(ncols, gutter: 0.35in)[body]
+
+  align(
+    center,
+    grid(
+      rows: 2,
+      columns: (univ_logo_column_size, title_column_size),
+      column-gutter: 0pt,
+      row-gutter: 50pt,
+      image(univ_logo, width: univ_logo_scale),
+      text(title_font_size, title + "\n\n")
+        + text(authors_font_size, emph(authors) + "   (" + departments + ") "),
+    ),
+  )
+
+  show: columns.with(num_columns, gutter: 64pt)
+  set par(justify: true, first-line-indent: 0em)
+  show par: set block(spacing: 0.65em)
+
+  if keywords != () [
+    #set text(24pt, weight: 400)
+    #show "Keywords": smallcaps
+    *Keywords* --- #keywords.join(", ")
+  ]
+
+  body
 }
