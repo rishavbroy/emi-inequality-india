@@ -432,7 +432,8 @@ test_that("poster Typst validation rejects unbalanced package source", {
     "typst-poster", "0.1.1", "poster.typ"
   )
   source <- readLines(entrypoint, warn = FALSE)
-  header_line <- grep("departments", source, fixed = TRUE)[1]
+  header_line <- grep("#text(size: 30pt, departments)", source, fixed = TRUE)
+  expect_length(header_line, 1L)
   source[header_line] <- sub("\\)$", "", source[header_line])
   writeLines(source, entrypoint)
 
