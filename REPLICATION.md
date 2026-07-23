@@ -37,7 +37,7 @@ The v2 system must remain parallel until source identities, administrative event
 
 ## System dependencies
 
-The R package dependencies are declared in [`DESCRIPTION`](DESCRIPTION), and [`renv.lock`](renv.lock) records exact package versions. Spatial packages such as `sf` and `spdep` may also require GDAL, GEOS, PROJ, and `pkg-config` system libraries. PDF text validation uses Poppler's `pdftotext` executable. On macOS, these are commonly available through Homebrew as `gdal`, `geos`, `proj`, `pkg-config`, and `poppler`.
+The R package dependencies are declared in [`DESCRIPTION`](DESCRIPTION), and [`renv.lock`](renv.lock) records exact package versions. Spatial packages such as `sf` and `spdep` may also require GDAL, GEOS, PROJ, and `pkg-config` system libraries. PDF text validation uses Poppler's `pdftotext` executable. The conference poster additionally requires Quarto 1.9.18 or newer for the bundled Typst custom format; its gathered `typst-poster` package is committed under [`posters/2026_predoc_conference/_extensions/poster/`](posters/2026_predoc_conference/_extensions/poster/) for offline, version-stable rendering. On macOS, these are commonly available through Homebrew as `gdal`, `geos`, `proj`, `pkg-config`, and `poppler`.
 The `testthat` development dependency in `Suggests` is intentionally locked. [`renv/settings.json`](renv/settings.json) records `snapshot.dev = true` and includes `Suggests` in `package.dependency.fields`. To avoid repeating the same synchronization scan in every child R process, [`.Rprofile`](.Rprofile) disables renv's activation-time check; [`scripts/check_source_syntax.sh`](scripts/check_source_syntax.sh) runs one explicit `renv::status(dev = TRUE)` gate instead.
 
 The setup script checks for `gdal-config`, `geos-config`, and `pkg-config` and prints this reminder if they are missing. Existing local installations may still work if binary R packages are already installed, but a fresh machine may need these system libraries before `make init-renv` can install spatial dependencies.
@@ -86,12 +86,13 @@ make init-renv
 make pipeline-draft
 make report
 make samples
+Rscript scripts/run_targets_checked.R poster
 make check-public-draft
 make check-public-final
 make check-public-final-no-samples
 ```
 
-`make check-public-draft` is the public-render smoke check. It tolerates explicitly deferred geometry/map work but still fails on scaffold prose, broken application-sample specs, render failures, and rendered placeholder phrases. `make check-public-final` uses [`config/final.yml`](config/final.yml), checks all current report quantities, audits final output artifacts, relies on cached `{targets}` render targets for the report, docs, and application samples, checks PDF text when the Poppler `pdftotext` executable is available, and fails on visible public-document cross-reference artifacts or incomplete report values/cross-references. `make check-public-final-no-samples` runs the same final checks but omits application-sample targets, text checks, and output requirements.
+`make check-public-draft` is the public-render smoke check. It tolerates explicitly deferred geometry/map work but still fails on scaffold prose, broken application-sample specs, render failures, and rendered placeholder phrases. `make check-public-final` uses [`config/final.yml`](config/final.yml), checks all current report quantities, audits final output artifacts, relies on cached `{targets}` render targets for the report, conference poster, docs, and application samples, checks PDF text when the Poppler `pdftotext` executable is available, and fails on visible public-document cross-reference artifacts or incomplete report values/cross-references. `make check-public-final-no-samples` runs the same final checks but omits application-sample targets, text checks, and output requirements.
 
 On Windows, run the same audit commands through WSL or Git Bash. From PowerShell, replace `tee` with `Tee-Object -FilePath full_output.txt`; from `cmd.exe`, redirect with `> full_output.txt 2>&1`.
 
