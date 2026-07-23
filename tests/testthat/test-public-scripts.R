@@ -416,6 +416,33 @@ test_that("poster Typst validation rejects imports that bypass package staging",
   )
 })
 
+
+test_that("poster Typst validation rejects unbalanced package source", {
+  fixture <- file.path(tempdir(), paste0("poster-typst-delimiters-", Sys.getpid()))
+  unlink(fixture, recursive = TRUE, force = TRUE)
+  dir.create(fixture, recursive = TRUE)
+  on.exit(unlink(fixture, recursive = TRUE, force = TRUE), add = TRUE)
+
+  source_dir <- repo_file("posters", "2026_predoc_conference")
+  source_files <- list.files(source_dir, full.names = TRUE, all.files = TRUE, no.. = TRUE)
+  expect_true(all(file.copy(source_files, fixture, recursive = TRUE)))
+
+  entrypoint <- file.path(
+    fixture, "_extensions", "poster", "typst", "packages", "local",
+    "typst-poster", "0.1.1", "poster.typ"
+  )
+  source <- readLines(entrypoint, warn = FALSE)
+  source[grep("departments", source, fixed = TRUE)[1]] <-
+    sub("\\)\\]\\)\\)$", ")])", source[grep("departments", source, fixed = TRUE)[1]])
+  writeLines(source, entrypoint)
+
+  expect_error(
+    poster_renderer_test_env()$validate_poster_typst_bundle(file.path(fixture, "poster.qmd")),
+    "unclosed",
+    fixed = TRUE
+  )
+})
+
 test_that("full audit refreshes lineage geometry before extended diagnostics", {
   audit <- paste(
     readLines(repo_file("scripts", "run_public_build_audit.sh"), warn = FALSE),

@@ -97,6 +97,33 @@ typst_manifest_value <- function(lines, field) {
   sub(pattern, "\\1", hit)
 }
 
+
+validate_typst_delimiters <- function(path) {
+  source <- paste(readLines(path, warn = FALSE), collapse = "\n")
+  source <- gsub("//[^\n]*", "", source, perl = TRUE)
+  source <- gsub('"(?:\\\\.|[^"\\\\])*"', '""', source, perl = TRUE)
+  chars <- strsplit(source, "", fixed = TRUE)[[1]]
+  opening <- c("(" = ")", "[" = "]", "{" = "}")
+  closing <- unname(opening)
+  stack <- character()
+
+  for (char in chars) {
+    if (char %in% names(opening)) {
+      stack <- c(stack, opening[[char]])
+    } else if (char %in% closing) {
+      if (!length(stack) || !identical(char, tail(stack, 1L))) {
+        stop("Typst source has a mismatched `", char, "` delimiter: ", path, call. = FALSE)
+      }
+      stack <- head(stack, -1L)
+    }
+  }
+
+  if (length(stack)) {
+    stop("Typst source has an unclosed `", tail(stack, 1L), "` delimiter: ", path, call. = FALSE)
+  }
+  invisible(path)
+}
+
 validate_poster_typst_bundle <- function(poster_qmd) {
   paths <- poster_typst_bundle_paths(poster_qmd)
   required <- c(paths$templates, paths$manifest, paths$entrypoint)
@@ -104,6 +131,7 @@ validate_poster_typst_bundle <- function(poster_qmd) {
   if (length(missing)) {
     stop("Poster Typst bundle file(s) missing: ", paste(missing, collapse = ", "), call. = FALSE)
   }
+  invisible(lapply(c(paths$templates, paths$entrypoint), validate_typst_delimiters))
 
   manifest <- readLines(paths$manifest, warn = FALSE)
   package_name <- typst_manifest_value(manifest, "name")
