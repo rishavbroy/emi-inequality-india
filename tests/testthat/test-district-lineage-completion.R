@@ -190,3 +190,113 @@ test_that("production review requires every accepted mapping to match", {
   expect_false(changed$complete[changed$step == 8L])
   expect_true(same$complete[same$step == 8L])
 })
+
+
+test_that("adjudication drafts pair evidence with the recommended source row", {
+  roster <- data.frame(
+    source_row_id = c("s1", "s2"),
+    wave = "nss_2007_08",
+    raw_state = "State",
+    raw_district = c("One", "Two"),
+    stringsAsFactors = FALSE
+  )
+  queue <- data.frame(
+    source_row_id = c("s1", "s2"),
+    recommended_unit = c("u1", "u2"),
+    recommended_method = "exact_normalized_name",
+    review_class = "cross_vintage_exact_candidate",
+    recommended_vintage = "2001",
+    adjudication_status = NA_character_,
+    stringsAsFactors = FALSE
+  )
+  candidates <- data.frame(
+    source_row_id = c("s1", "s1", "s2"),
+    candidate_unit = c("u1", "u2", "u2"),
+    candidate_source_id = c("source-for-s1", "wrong-pair", "source-for-s2"),
+    stringsAsFactors = FALSE
+  )
+
+  draft <- build_adjudication_draft_v2(roster, queue, candidates)
+
+  expect_identical(
+    draft$source_id[match(c("s1", "s2"), draft$source_row_id)],
+    c("source-for-s1", "source-for-s2")
+  )
+})
+
+test_that("resolved identities disappear from the generated review draft", {
+  roster <- data.frame(
+    source_row_id = c("s1", "s2"),
+    wave = "nss_2007_08",
+    raw_state = "State",
+    raw_district = c("One", "Two"),
+    stringsAsFactors = FALSE
+  )
+  queue <- data.frame(
+    source_row_id = c("s1", "s2"),
+    recommended_unit = c("u1", "u2"),
+    recommended_method = "exact_normalized_name",
+    review_class = "cross_vintage_exact_candidate",
+    recommended_vintage = "2001",
+    adjudication_status = c("accepted", NA_character_),
+    stringsAsFactors = FALSE
+  )
+  candidates <- data.frame(
+    source_row_id = c("s1", "s2"),
+    candidate_unit = c("u1", "u2"),
+    candidate_source_id = c("source-1", "source-2"),
+    stringsAsFactors = FALSE
+  )
+
+  draft <- build_adjudication_draft_v2(roster, queue, candidates)
+
+  expect_identical(draft$source_row_id, "s2")
+})
+
+test_that("production comparison flags ambiguous legacy mappings without row expansion", {
+  primary <- data.frame(
+    source_row_id = "s1", wave = "nss_2007_08", source_code = "101",
+    target_unit_2001 = "pc2001__01__01", stringsAsFactors = FALSE
+  )
+  panel <- data.frame(
+    district_code_0708 = c("101", "101"),
+    district_code_1718 = c("201", "202"),
+    district_panel_id = c("2001__01__01", "2001__01__02"),
+    stringsAsFactors = FALSE
+  )
+
+  out <- build_production_crosswalk_comparison_v2(primary, panel)
+
+  expect_equal(nrow(out), 1L)
+  expect_identical(out$comparison_status, "ambiguous_production_mapping")
+})
+
+test_that("accepted allocations may include resolved complete sources", {
+  status <- lineage_completion_steps_v2(
+    source_roster = data.frame(source_row_id = "s1"),
+    source_matches = data.frame(source_row_id = character(), status = character()),
+    adjudication_queue = data.frame(
+      review_class = "cross_vintage_exact_candidate",
+      adjudication_status = NA_character_
+    ),
+    evidence_requests = data.frame(),
+    allocation_validation = data.frame(
+      source_key = c("gap", "complete"),
+      coverage_complete = c(FALSE, TRUE)
+    ),
+    allocation_weights = data.frame(
+      source_unit = c("gap", "complete"),
+      status = c("accepted", "accepted")
+    ),
+    primary_crosswalk = data.frame(),
+    sensitivity_crosswalk = data.frame(),
+    production_comparison = data.frame(comparison_status = character()),
+    geometry_qa = data.frame(metric = "geometry_available", value = FALSE),
+    readiness = data.frame(
+      gate = "production_crosswalk_migration_ready", passed = FALSE
+    )
+  )
+
+  expect_true(status$complete[status$step == 4L])
+})
+

@@ -20,22 +20,32 @@ build_adjudication_draft_v2 <- function(source_roster, adjudication_queue, candi
   candidates <- safe_df(candidates)
   if (!nrow(roster)) return(empty_adjudication_draft_v2())
 
-  top <- candidates[
-    candidates$candidate_unit %in% queue$recommended_unit &
-      candidates$source_row_id %in% queue$source_row_id,
-    c("source_row_id", "candidate_unit", "candidate_source_id"),
+  unresolved_queue <- queue[
+    !(queue$adjudication_status %in% c("accepted", "excluded")),
+    c(
+      "source_row_id", "recommended_unit", "recommended_method",
+      "review_class", "recommended_vintage"
+    ),
     drop = FALSE
   ]
+  if (!nrow(unresolved_queue)) return(empty_adjudication_draft_v2())
+
+  top <- merge(
+    unresolved_queue[c("source_row_id", "recommended_unit")],
+    candidates[c("source_row_id", "candidate_unit", "candidate_source_id")],
+    by.x = c("source_row_id", "recommended_unit"),
+    by.y = c("source_row_id", "candidate_unit"),
+    all.x = TRUE,
+    sort = FALSE
+  )
   top <- top[!duplicated(top$source_row_id), , drop = FALSE]
+  top <- top[c("source_row_id", "recommended_unit", "candidate_source_id")]
   names(top) <- c("source_row_id", "unit_id", "source_id")
 
   out <- merge(
     roster[c("source_row_id", "wave", "raw_state", "raw_district")],
-    queue[c(
-      "source_row_id", "recommended_unit", "recommended_method",
-      "review_class", "recommended_vintage"
-    )],
-    by = "source_row_id", all.x = TRUE, sort = FALSE
+    unresolved_queue,
+    by = "source_row_id", all = FALSE, sort = FALSE
   )
   out <- merge(out, top, by = "source_row_id", all.x = TRUE, sort = FALSE)
   out$unit_id <- ifelse(
@@ -130,14 +140,41 @@ build_production_crosswalk_comparison_v2 <- function(primary_crosswalk, producti
       "district_code_1718"
     }
     if (!all(c(code_col, "district_panel_id") %in% names(panel))) {
-      return(data.frame(source_code = character(), production_target_unit_2001 = character()))
+      return(data.frame(
+        source_code = character(),
+        production_target_unit_2001 = character(),
+        production_mapping_count = integer(),
+        stringsAsFactors = FALSE
+      ))
     }
-    out <- unique(data.frame(
+    raw <- unique(data.frame(
       source_code = plain_chr(panel[[code_col]]),
-      production_target_unit_2001 = sub("^2001__", "pc2001__", plain_chr(panel$district_panel_id)),
+      production_target_unit_2001 =
+        sub("^2001__", "pc2001__", plain_chr(panel$district_panel_id)),
       stringsAsFactors = FALSE
     ))
-    out[!is.na(out$source_code) & nzchar(out$source_code), , drop = FALSE]
+    raw <- raw[!is.na(raw$source_code) & nzchar(raw$source_code), , drop = FALSE]
+    if (!nrow(raw)) {
+      return(data.frame(
+        source_code = character(),
+        production_target_unit_2001 = character(),
+        production_mapping_count = integer(),
+        stringsAsFactors = FALSE
+      ))
+    }
+    groups <- split(raw$production_target_unit_2001, raw$source_code)
+    data.frame(
+      source_code = names(groups),
+      production_target_unit_2001 = vapply(
+        groups,
+        function(z) if (length(unique(z)) == 1L) unique(z) else NA_character_,
+        character(1)
+      ),
+      production_mapping_count = vapply(
+        groups, function(z) length(unique(z)), integer(1)
+      ),
+      stringsAsFactors = FALSE
+    )
   }
 
   groups <- split(seq_len(nrow(x)), x$wave)
@@ -152,18 +189,61 @@ build_production_crosswalk_comparison_v2 <- function(primary_crosswalk, producti
       v2_target_unit_2001 = rows$target_unit_2001,
       production_target_unit_2001 = rows$production_target_unit_2001,
       comparison_status = ifelse(
-        is.na(rows$production_target_unit_2001),
-        "missing_from_production_panel",
+        rows$production_mapping_count > 1L,
+        "ambiguous_production_mapping",
         ifelse(
-          rows$target_unit_2001 == rows$production_target_unit_2001,
-          "same_target",
-          "changed_target"
+          is.na(rows$production_target_unit_2001),
+          "missing_from_production_panel",
+          ifelse(
+            rows$target_unit_2001 == rows$production_target_unit_2001,
+            "same_target",
+            "changed_target"
+          )
         )
       ),
       stringsAsFactors = FALSE
     )
   }))
   out
+}
+
+read_zipped_gpkg_v2 <- function(path) {
+  need_pkg("sf", "zipped SHRID geometry")
+  if (!file.exists(path)) {
+    stop("Missing SHRID geometry archive: ", path, call. = FALSE)
+  }
+  extract_dir <- tempfile("shrid-geometry-")
+  dir.create(extract_dir, recursive = TRUE)
+  on.exit(unlink(extract_dir, recursive = TRUE, force = TRUE), add = TRUE)
+  utils::unzip(path, exdir = extract_dir)
+  gpkg <- list.files(
+    extract_dir, pattern = "\\.gpkg$", recursive = TRUE,
+    full.names = TRUE, ignore.case = TRUE
+  )
+  if (length(gpkg) != 1L) {
+    stop(
+      "Expected exactly one GeoPackage in SHRID archive; found ",
+      length(gpkg), ".", call. = FALSE
+    )
+  }
+  sf::st_read(gpkg, quiet = TRUE)
+}
+
+save_lineage_geometry_2001_v2 <- function(
+  geometry_2001, admin_2001,
+  path = "outputs/derived/district_lineage_v2/district_2001.gpkg"
+) {
+  need_pkg("sf", "Census 2001 district geometry output")
+  if (!inherits(geometry_2001, "sf") || !nrow(geometry_2001)) {
+    stop("Census 2001 geometry is empty or not an sf object.", call. = FALSE)
+  }
+  dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
+  if (file.exists(path)) unlink(path)
+  sf::st_write(geometry_2001, path, quiet = TRUE)
+  qa <- geometry_qa_v2(geometry_2001, admin_2001)
+  qa_path <- file.path(dirname(path), "district_2001_qa.csv")
+  utils::write.csv(qa, qa_path, row.names = FALSE, na = "")
+  c(path, qa_path)
 }
 
 dissolve_shrid_geometry_2001_v2 <- function(shrid_geometry, bridge) {
@@ -246,10 +326,15 @@ lineage_completion_steps_v2 <- function(
   geometry_qa <- safe_df(geometry_qa)
   readiness <- safe_df(readiness)
 
-  resolved <- matches$status %in% c("accepted", "excluded")
-  fuzzy_open <- queue$review_class %in% c(
+  resolved_ids <- unique(matches$source_row_id[
+    matches$status %in% c("accepted", "excluded")
+  ])
+  roster_ids <- unique(roster$source_row_id)
+  fuzzy_class <- queue$review_class %in% c(
     "high_precision_fuzzy_candidate", "fuzzy_candidates", "no_candidate"
   )
+  fuzzy_open <- fuzzy_class &
+    !(queue$adjudication_status %in% c("accepted", "excluded"))
   incomplete_source_keys <- allocation_validation$source_key[
     !(allocation_validation$coverage_complete %in% TRUE)
   ]
@@ -259,7 +344,7 @@ lineage_completion_steps_v2 <- function(
   allocation_gaps_resolved <- nrow(allocation_validation) > 0L &&
     (
       !length(incomplete_source_keys) ||
-        setequal(incomplete_source_keys, accepted_allocation_keys)
+        !length(setdiff(incomplete_source_keys, accepted_allocation_keys))
     )
   geometry_complete <- nrow(geometry_qa) > 0L &&
     any(geometry_qa$metric == "geometry_available" & geometry_qa$value %in% TRUE) &&
@@ -285,7 +370,7 @@ lineage_completion_steps_v2 <- function(
       "Migrate the production crosswalk deliberately"
     ),
     complete = c(
-      nrow(roster) > 0L && length(unique(matches$source_row_id[resolved])) == nrow(roster),
+      length(roster_ids) > 0L && setequal(resolved_ids, roster_ids),
       !any(fuzzy_open & !(queue$adjudication_status %in% c("accepted", "excluded"))),
       nrow(evidence) == 0L,
       allocation_gaps_resolved,
@@ -297,14 +382,17 @@ lineage_completion_steps_v2 <- function(
       migration_ready
     ),
     observed = c(
-      paste0(length(unique(matches$source_row_id[resolved])), "/", nrow(roster), " resolved"),
+      paste0(length(intersect(resolved_ids, roster_ids)), "/", length(roster_ids), " resolved"),
       paste0(sum(fuzzy_open), " fuzzy or missing candidates open"),
       paste0(nrow(evidence), " targeted evidence requests"),
       paste0(sum(!allocation_validation$coverage_complete), " incomplete source allocations"),
       if (geometry_complete) "complete" else "not constructed from local SHRID polygons",
       paste0(nrow(primary), " preferred; ", nrow(sensitivity), " total sensitivity rows"),
       paste0(nrow(comparison), " source mappings compared"),
-      paste0(sum(comparison$comparison_status == "changed_target"), " changed targets available for review"),
+      paste0(
+        sum(comparison$comparison_status != "same_target"),
+        " changed, missing, or ambiguous mappings require review"
+      ),
       if (migration_ready) "all gates pass" else "migration gates remain blocked"
     ),
     next_action = c(
