@@ -353,6 +353,58 @@ test_that("evidence requests follow deterministic adjudication work", {
   expect_true(any(out$request_id == "event__beta_event"))
 })
 
+
+test_that("SHRID bridge summaries aggregate each status without dropping mass", {
+  bridge <- data.frame(
+    bridge_status = c("stable", "stable", "changed"),
+    shrid2 = c("a", "b", "c"),
+    population = c(10, 20, 5),
+    area = c(1, 2, 0.5),
+    stringsAsFactors = FALSE
+  )
+
+  out <- summarize_shrid_bridge_v2(bridge)
+
+  expect_named(out, c("bridge_status", "n_shrid", "population", "area"))
+  expect_setequal(out$bridge_status, c("stable", "changed"))
+  expect_equal(sum(out$n_shrid), 3L)
+  expect_equal(sum(out$population), 35)
+  expect_equal(sum(out$area), 3.5)
+})
+
+test_that("lineage summary preserves the complete diagnostic metric contract", {
+  summary <- lineage_v2_summary(
+    inventory = data.frame(exists = c(TRUE, FALSE)),
+    admin_2001 = data.frame(unit_id = "a"),
+    admin_2011 = data.frame(unit_id = c("b", "c")),
+    bridge = data.frame(deterministic = c(TRUE, FALSE)),
+    transition = data.frame(row = 1),
+    source_roster = data.frame(source_row_id = c("s1", "s2")),
+    source_matches = data.frame(source_row_id = "s1", status = "accepted"),
+    candidates = data.frame(row = 1:2),
+    adjudication_queue = data.frame(
+      review_class = c("cross_vintage_exact_candidate", "fuzzy_candidates")
+    ),
+    eligibility = data.frame(eligible_primary = c(TRUE, FALSE)),
+    events = data.frame(row = 1),
+    current_components = data.frame(row = 1:3),
+    urban_coverage = data.frame(row = 1:4),
+    changed_components = data.frame(row = 1:5),
+    evidence_requests = data.frame(row = 1:6)
+  )
+
+  expect_named(summary, c("metric", "value"))
+  expect_false(anyDuplicated(summary$metric))
+  expect_identical(
+    summary$value[summary$metric == "unadjudicated_source_rows"],
+    1
+  )
+  expect_identical(
+    summary$value[summary$metric == "targeted_evidence_requests"],
+    6
+  )
+})
+
 test_that("migration readiness is derived from prerequisite gates", {
   args <- list(
     missing_core = character(),
