@@ -37,7 +37,7 @@ district_match_candidate_thresholds <- function() {
 
 nss64_census2001_unit_id_v2 <- function(source_code) {
   source_code <- plain_chr(source_code)
-  matched <- regexec("^([0-9]{2})1([0-9]{2})$", source_code)
+  matched <- regexec("^([0-9]{2})[0-9]([0-9]{2})$", source_code)
   parts <- regmatches(source_code, matched)
   vapply(parts, function(part) {
     if (length(part) != 3L) return(NA_character_)
