@@ -183,6 +183,31 @@ test_that("poster EMIE grid uses observed percentiles", {
   expect_equal(grid$EMIE, c(5, 50, 95))
 })
 
+test_that("poster inference restores ivreg sandwich methods for serialized models", {
+  skip_if_not_installed("ivreg")
+  skip_if_not_installed("sandwich")
+
+  dat <- data.frame(
+    y = c(1.0, 2.2, 2.8, 4.1, 5.2, 5.9, 7.1, 8.2),
+    x = c(0.7, 1.3, 1.8, 2.5, 3.2, 3.7, 4.5, 5.1),
+    z = 1:8,
+    state = rep(c("a", "b"), each = 4)
+  )
+  model <- ivreg::ivreg(y ~ x | z, data = dat, model = TRUE, x = TRUE, y = TRUE)
+  attr(model, "cluster_state") <- dat$state
+  path <- tempfile(fileext = ".rds")
+  saveRDS(model, path)
+
+  try(unloadNamespace("ivreg"), silent = TRUE)
+  restored <- readRDS(path)
+  covariance <- poster_prediction_vcov(restored)
+
+  expect_true("ivreg" %in% loadedNamespaces())
+  expect_equal(dim(covariance), c(length(stats::coef(restored)), length(stats::coef(restored))))
+  expect_true(all(is.finite(covariance)))
+  expect_equal(covariance, t(covariance), tolerance = 1e-12)
+})
+
 test_that("poster expected-values figure is generated with the main figures", {
   cfg <- list(mode = "final", output_formats = list(figures = c("pdf", "png")))
   panel <- data.frame(
