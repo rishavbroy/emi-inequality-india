@@ -279,14 +279,8 @@ plain_model_coefficients <- function(model) {
 clustered_model_coefficients <- function(model, data = NULL) {
   tryCatch({
     vc_fun <- clustered_model_vcov(model, data)
-    if (is.null(vc_fun) || !requireNamespace("lmtest", quietly = TRUE)) {
-      return(data.frame())
-    }
-    as.data.frame(
-      lmtest::coeftest(model, vcov. = vc_fun),
-      check.names = FALSE,
-      stringsAsFactors = FALSE
-    )
+    if (is.null(vc_fun)) return(data.frame())
+    coefficient_frame(model, vc_fun(model))
   }, error = function(e) data.frame())
 }
 
