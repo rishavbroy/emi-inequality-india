@@ -1,6 +1,7 @@
 ---
 title: "Can English-Medium Instruction Raise Local Living Standards in India?"
 bibliography: ../../paper/references.bib
+citeproc: true
 format:
   poster-typst:
     size: "36x24"
@@ -31,7 +32,7 @@ execute:
 
 2. *English as human capital.* English fluency is associated with large wage premia, access to higher education, and employment in India's expanding service economy [@azam2013a; @chakraborty2016a].
 
-3. *EMI joins schooling and English.* English-medium instruction (EMI) teaches all subjects in English. Families often treat it as a route to mobility, but fees, school quality, and unequal access may limit its benefits [@lahoti2019a; @bhattacharya2013].
+3. *EMI joins schooling and English.* English-medium instruction (EMI) teaches all subjects in English. Families often treat it as a route to mobility, but fees, school quality, and unequal access may limit its benefits [@lahoti2019a; @bhattacharyaMediatingInequalitiesExploring2013].
 
 4. *The question.* When more children in a district attend EMI schools, does average household consumption grow faster over the next decade?
 
