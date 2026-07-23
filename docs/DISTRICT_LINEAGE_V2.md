@@ -55,6 +55,8 @@ The compact tracked ledgers are:
 
 Do not add columns unless they support a real decision, invariant, or citation. Git history records editors and dates; reviewer metadata need not be repeated in every row.
 
+The generated `source_adjudication_queue.csv` is the compact work queue for those ledgers. It emits one row per NSS source identity, selects the wave-preferred top candidate without accepting it, and classifies the row as a single exact candidate, multiple exact candidates, high-precision fuzzy candidate, ordinary fuzzy review, or no candidate. The full candidate ledger remains available for evidence review.
+
 ## Source hierarchy
 
 ### Primary official anchors
