@@ -348,9 +348,24 @@ test_that("evidence requests follow deterministic adjudication work", {
     effective_date = NA_character_, stringsAsFactors = FALSE
   )
 
-  out <- build_evidence_requests_v2(events, sources, queue)
+  eligibility <- data.frame(
+    source_row_id = c("exact", "fuzzy"),
+    status = "accepted",
+    exclusion_reason = c(
+      "geographic_lineage_no_accepted_parent_edge",
+      NA_character_
+    ),
+    stringsAsFactors = FALSE
+  )
 
-  expect_false(any(grepl("exact", out$request_id, fixed = TRUE)))
+  out <- build_evidence_requests_v2(
+    events,
+    sources,
+    queue,
+    eligibility
+  )
+
+  expect_true(any(out$request_id == "lineage__exact"))
   expect_true(any(out$request_id == "source__fuzzy"))
   expect_true(any(out$request_id == "event__beta_event"))
 })
@@ -1167,4 +1182,41 @@ test_that("reviewed NSS-75 aliases complete source identity without granting anc
     aliases$unit_id[aliases$raw_district == "Maharajganj"],
     "pc2011__09__187"
   )
+})
+
+test_that("tracked Telangana parentage records only single-parent ancestry", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
+  events <- read_admin_events_v2(
+    read.csv(
+      file.path(
+        root, "data", "metadata", "district_admin_events_v2.csv"
+      ),
+      stringsAsFactors = FALSE
+    )
+  )
+  rows <- events[
+    events$source_id %in% "telangana_2016_parent_district_review",
+    ,
+    drop = FALSE
+  ]
+
+  expect_equal(nrow(rows), 24L)
+  expect_true(all(rows$status == "accepted"))
+  expect_true(all(rows$effective_date == "2016-10-11"))
+  expect_true(all(grepl("^pc2011__28__", rows$from_unit)))
+  expect_true(all(grepl("^lgd_district__", rows$to_unit)))
+  expect_true(all(is.na(rows$share)))
+
+  expect_setequal(
+    rows$to_unit[rows$from_unit == "pc2011__28__532"],
+    c(
+      "lgd_district__680",
+      "lgd_district__684",
+      "lgd_district__699"
+    )
+  )
+  expect_false(any(rows$to_unit %in% c(
+    "lgd_district__688",
+    "lgd_district__698"
+  )))
 })
