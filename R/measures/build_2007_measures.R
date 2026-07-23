@@ -41,7 +41,7 @@ select_input_frame <- function(inputs, candidates) {
 
 district_group_vars_2007 <- function(df) {
   if ("district_code_0708" %in% names(df)) {
-    val <- as.character(df$district_code_0708)
+    val <- plain_chr(df$district_code_0708)
     if (any(!is.na(val) & nzchar(val))) return("district_code_0708")
   }
   if (all(c("state_std", "district_std") %in% names(df))) return(c("state_std", "district_std"))
@@ -54,8 +54,8 @@ merge_measure_2007 <- function(x, y) {
   if (!nrow(y)) return(x)
   key <- intersect(c("district_code_0708", "state_std", "district_std"), intersect(names(x), names(y)))
   if ("district_code_0708" %in% key) {
-    x_code <- as.character(x$district_code_0708)
-    y_code <- as.character(y$district_code_0708)
+    x_code <- plain_chr(x$district_code_0708)
+    y_code <- plain_chr(y$district_code_0708)
     if (!any(!is.na(x_code) & nzchar(x_code)) || !any(!is.na(y_code) & nzchar(y_code))) {
       key <- setdiff(key, "district_code_0708")
     }
@@ -71,7 +71,7 @@ standardize_nss_2007_district_code <- function(df) {
   if (!nrow(df)) return(df)
   district <- first_col(df, c("district_code_0708", "district_code", "District", "DISTRICT", "district"))
   if (!is.null(district)) {
-    raw <- gsub("[^0-9]", "", as.character(df[[district]]))
+    raw <- gsub("[^0-9]", "", plain_chr(df[[district]]))
     df$district_code_0708 <- raw
     df$district_code_0708[nchar(df$district_code_0708) == 0L] <- NA_character_
   }
@@ -288,7 +288,7 @@ compute_baseline_controls_2007 <- function(person_df, household_df = data.frame(
     z$pct_head_illiterate <- weighted_share_2007(edu_hh == 1, household_w)
     z$pct_head_lit_to_primary <- weighted_share_2007(edu_hh >= 2 & edu_hh <= 7, household_w)
     z$pct_head_secondary_plus <- weighted_share_2007(edu_hh >= 8, household_w)
-    region <- as.character(district_households$REGION %||% district_people$REGION %||% NA)
+    region <- plain_chr(district_households$REGION %||% district_people$REGION %||% NA)
     region <- region[!is.na(region) & nzchar(region)]
     z$region <- if (length(region)) region[[1]] else NA_character_
     z

@@ -280,3 +280,15 @@ test_that("district geometry matching uses the first unique boundary key", {
 
   expect_equal(as.numeric(sf::st_coordinates(out)[1, ]), c(0, 0))
 })
+
+test_that("2007 district identifiers accept haven labelled vectors", {
+  skip_if_not_installed("haven")
+  labelled_codes <- haven::labelled(c(101, 102), labels = c(first = 101, second = 102))
+  input <- data.frame(value = c(1, 2))
+  input$district_code_0708 <- labelled_codes
+
+  standardized <- standardize_nss_2007_district_code(input)
+
+  expect_identical(standardized$district_code_0708, c("101", "102"))
+  expect_identical(district_group_vars_2007(standardized), "district_code_0708")
+})
