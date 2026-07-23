@@ -382,3 +382,13 @@ test_that("source adjudication queue prioritizes deterministic review work", {
   expect_equal(out$exact_vintage_count[out$source_row_id == "multiple"], 2L)
   expect_true(all(diff(out$review_priority) >= 0))
 })
+
+test_that("NSS-64 district codes resolve only the documented code shape", {
+  expect_identical(
+    nss64_census2001_unit_id_v2(c("07101", "35102", "28111")),
+    c("pc2001__07__01", "pc2001__35__02", "pc2001__28__11")
+  )
+  expect_true(all(is.na(
+    nss64_census2001_unit_id_v2(c("0711", "071001", "07A01", NA))
+  )))
+})

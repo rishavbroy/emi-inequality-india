@@ -756,3 +756,24 @@ test_that("allocation summary counts source decisions rather than ledger rows", 
   expect_equal(values[["rejected_allocation_sources"]], 1)
   expect_equal(values[["remaining_incomplete_allocations"]], 0)
 })
+
+test_that("tracked NSS-64 identities require code and name agreement", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
+  adjudications <- read.csv(
+    file.path(root, "data", "metadata", "district_adjudications_v2.csv"),
+    stringsAsFactors = FALSE
+  )
+  rows <- adjudications[
+    adjudications$method %in%
+      "official_nss64_census2001_code_name_identity",
+    ,
+    drop = FALSE
+  ]
+
+  expect_equal(nrow(rows), 178L)
+  expect_true(all(rows$wave == "nss_2007_08"))
+  expect_true(all(rows$status == "accepted"))
+  expect_true(all(rows$source_id == "nss64_education_district_codes"))
+  expect_equal(anyDuplicated(rows$source_row_id), 0L)
+  expect_true(all(grepl("^pc2001__", rows$unit_id)))
+})
