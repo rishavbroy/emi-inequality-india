@@ -671,3 +671,27 @@ test_that("migration readiness counts valid reviewed sensitivity coverage", {
   ]
   expect_true(gate)
 })
+
+test_that("tracked high-coverage decisions leave only lower-coverage gaps", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
+  transition_path <- file.path(
+    root, "outputs", "diagnostics", "extended",
+    "district_lineage_v2", "district_transition_2001_2011.csv"
+  )
+  skip_if_not(file.exists(transition_path))
+  transition <- read.csv(transition_path, stringsAsFactors = FALSE)
+
+  generated <- validate_allocation_weights(transition)
+  weights <- read_adjudicated_allocation_weights_v2(read.csv(
+    file.path(
+      root, "data", "metadata", "district_allocation_weights_v2.csv"
+    ),
+    stringsAsFactors = FALSE
+  ))
+  reviewed <- validate_adjudicated_allocation_weights_v2(weights)
+  status <- allocation_coverage_status_v2(generated, reviewed)
+
+  expect_equal(status$n_reviewed_complete, 457L)
+  expect_equal(status$n_unresolved, 79L)
+  expect_false(status$coverage_resolved)
+})
