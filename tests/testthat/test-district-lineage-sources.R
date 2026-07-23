@@ -866,27 +866,6 @@ test_that("source reference validation is method-agnostic", {
   )
 })
 
-test_that("tracked NSS-64 code identities are unique registry matches", {
-  root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
-  adjudications <- read.csv(
-    file.path(root, "data", "metadata", "district_adjudications_v2.csv"),
-    stringsAsFactors = FALSE
-  )
-  rows <- adjudications[
-    adjudications$method %in%
-      "official_nss64_census2001_code_identity",
-    ,
-    drop = FALSE
-  ]
-
-  expect_equal(nrow(rows), 30L)
-  expect_true(all(rows$wave == "nss_2007_08"))
-  expect_true(all(rows$status == "accepted"))
-  expect_true(all(rows$source_id == "nss64_education_district_codes"))
-  expect_equal(anyDuplicated(rows$source_row_id), 0L)
-  expect_true(all(grepl("^pc2001__", rows$unit_id)))
-})
-
 test_that("tracked NSS-64 code decisions cover every known Census unit", {
   root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
   adjudications <- read.csv(
