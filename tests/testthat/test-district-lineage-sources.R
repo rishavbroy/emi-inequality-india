@@ -1440,4 +1440,9 @@ test_that("tracked production mapping reviews cover every changed target", {
   expect_true(all(mapping$decision == "accept_v2"))
   expect_equal(nrow(downstream), 1L)
   expect_identical(downstream$status, "needs_review")
+  expect_identical(
+    downstream$decision,
+    "analysis_complete_review_pending"
+  )
+  expect_match(downstream$note, "shared-support models have been rebuilt")
 })

@@ -410,7 +410,7 @@ migration_gate_actions_v2 <- function() {
     accepted_source_rows_present = "Accept at least one source identity for the preferred panel.",
     all_accepted_rows_primary_classified = "Classify every accepted identity as preferred-eligible or explicitly excluded.",
     all_changed_production_mappings_reviewed = "Review every changed production target and record whether v2 or production should prevail.",
-    downstream_results_reviewed = "Rebuild and review the panel, estimates, standard errors, and diagnostics."
+    downstream_results_reviewed = "Review the shared-support results and resolve the unmapped-identity and panel-nonoverlap queues before recording a downstream decision."
   )
 }
 
