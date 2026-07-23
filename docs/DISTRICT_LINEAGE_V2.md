@@ -328,6 +328,23 @@ Four source identities are accepted through this evidence: the previously
 unresolved 2007-08 North & Middle Andaman row and all three 2017-18 island
 district rows. This completes source-identity review for the 2007-08 wave.
 
+## Official Census-2011 aliases
+
+Five 2017-18 source labels are accepted as official Census-2011 district
+identities after review of Census handbooks and state district portals:
+
+- `Leh` -> `Leh (Ladakh)`;
+- `Sri Ganganagar` -> `Ganganagar`;
+- `Y.S.R. (Cuddapah)` -> `YSR`;
+- `Aizwal` -> `Aizawl`; and
+- `Bhatinda` -> `Bathinda`.
+
+These decisions resolve source identity only. They do not weaken the
+Census-2011-to-2001 bridge contract. Leh enters the preferred crosswalk through
+its complete deterministic transition. Ganganagar, YSR, and Bathinda remain
+sensitivity-only under their reviewed high-coverage allocations. Aizawl remains
+excluded because its reviewed bridge coverage is below the project threshold.
+
 ## First reviewed decisions
 
 The first accepted tranche is deliberately narrow:
