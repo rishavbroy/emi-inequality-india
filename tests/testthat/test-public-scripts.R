@@ -262,7 +262,8 @@ test_that("selected target runner uses the programmatic targets API and shared w
   expect_match(runner, "record_target_warnings", fixed = TRUE)
   expect_match(runner, "targets::tar_progress", fixed = TRUE)
   expect_match(runner, "target_run_metadata_scope", fixed = TRUE)
-  expect_false(grepl("meta_before <- target_metadata_snapshot", runner, fixed = TRUE))
+  expect_match(helper, "target_metadata_selection", fixed = TRUE)
+  expect_match(helper, "rlang::inject", fixed = TRUE)
   expect_match(helper, "targets" , fixed = TRUE)
   expect_match(helper, "target_warnings.csv", fixed = TRUE)
 })
@@ -280,6 +281,24 @@ test_that("selected target warning scope includes executed dependencies", {
 
   expect_setequal(scope, c("selected", "dependency"))
   expect_false("unrelated" %in% scope)
+})
+
+test_that("programmatic metadata selection stays inside tidyselect context", {
+  skip_if_not_installed("rlang")
+  skip_if_not_installed("tidyselect")
+
+  env <- new.env(parent = globalenv())
+  sys.source(repo_file("scripts", "target_metadata_helpers.R"), envir = env)
+  selection <- env$target_metadata_selection(c("selected", "missing"))
+  columns <- data.frame(
+    selected = logical(),
+    unrelated = logical(),
+    check.names = FALSE
+  )
+
+  resolved <- tidyselect::eval_select(selection, columns)
+
+  expect_identical(names(resolved), "selected")
 })
 
 test_that("target warning metadata normalizes list columns and consolidates runs", {
