@@ -250,8 +250,17 @@ lineage_completion_steps_v2 <- function(
   fuzzy_open <- queue$review_class %in% c(
     "high_precision_fuzzy_candidate", "fuzzy_candidates", "no_candidate"
   )
-  coverage_complete <- nrow(allocation_validation) > 0L &&
-    all(allocation_validation$coverage_complete)
+  incomplete_source_keys <- allocation_validation$source_key[
+    !(allocation_validation$coverage_complete %in% TRUE)
+  ]
+  accepted_allocation_keys <- unique(allocation_weights$source_unit[
+    allocation_weights$status %in% "accepted"
+  ])
+  allocation_gaps_resolved <- nrow(allocation_validation) > 0L &&
+    (
+      !length(incomplete_source_keys) ||
+        setequal(incomplete_source_keys, accepted_allocation_keys)
+    )
   geometry_complete <- nrow(geometry_qa) > 0L &&
     any(geometry_qa$metric == "geometry_available" & geometry_qa$value %in% TRUE) &&
     all(geometry_qa$value[geometry_qa$metric %in% c(
@@ -279,11 +288,12 @@ lineage_completion_steps_v2 <- function(
       nrow(roster) > 0L && length(unique(matches$source_row_id[resolved])) == nrow(roster),
       !any(fuzzy_open & !(queue$adjudication_status %in% c("accepted", "excluded"))),
       nrow(evidence) == 0L,
-      coverage_complete || any(allocation_weights$status %in% "accepted"),
+      allocation_gaps_resolved,
       geometry_complete,
       nrow(primary) > 0L && nrow(sensitivity) >= nrow(primary),
       nrow(primary) > 0L && nrow(comparison) == nrow(primary),
-      nrow(comparison) > 0L && !any(comparison$comparison_status == "changed_target"),
+      nrow(comparison) > 0L &&
+        all(comparison$comparison_status %in% "same_target"),
       migration_ready
     ),
     observed = c(
