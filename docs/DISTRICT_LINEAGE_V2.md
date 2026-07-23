@@ -359,6 +359,20 @@ Evidence requests now include accepted current districts that still lack an
 accepted parent edge. Completing source identity therefore no longer hides the
 remaining administrative-lineage work.
 
+## Downstream coverage gate
+
+The first parallel build produces 95 unique preferred-panel districts versus
+481 unique inherited production districts. This is not model attrition: the
+preferred crosswalk contains only 100 NSS-75 mappings and 95 two-wave
+Census-2001 targets. The resulting coefficient and first-stage differences are
+therefore descriptive outputs from different samples, not migration evidence.
+
+The downstream diagnostic now reports wave-level preferred coverage, duplicate
+panel units, and explicit review gates. It also identifies the inherited
+production duplicate at Census-2001 unit `pc2001__09__17`. Migration remains
+blocked until reviewed 2017-18 transitions restore comparable district support
+and both panels are unique by Census-2001 unit.
+
 ## Parallel downstream impact review
 
 Extended diagnostics now build a non-production `district_panel_v2` from the
