@@ -578,7 +578,7 @@ test_that("reviewed geometry and source decisions satisfy evidence contracts", {
 
   expect_equal(nrow(carrybacks), 11L)
   expect_true(all(carrybacks$status == "accepted"))
-  expect_equal(nrow(adjudications), 1218L)
+  expect_equal(nrow(adjudications), 1243L)
   expect_true(all(adjudications$status == "accepted"))
   expect_setequal(
     unique(adjudications$method),
@@ -591,7 +591,8 @@ test_that("reviewed geometry and source decisions satisfy evidence contracts", {
       "official_andaman_2001_2011_lineage",
       "official_census2011_alias_identity",
       "official_lgd_modification_census2011_identity",
-      "official_nss75_exact_census2011_identity"
+      "official_nss75_exact_census2011_identity",
+      "official_nss75_exact_contemporaneous_identity"
     )
   )
 
@@ -1091,4 +1092,37 @@ test_that("official NSS-75 exact identities remain separate from bridge eligibil
   ))
   expect_equal(anyDuplicated(rows$source_row_id), 0L)
   expect_true(all(grepl("^pc2011__", rows$unit_id)))
+})
+
+test_that("official NSS-75 exact current identities do not imply bridge eligibility", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
+  rows <- read_adjudicated_source_matches_v2(
+    read.csv(
+      file.path(
+        root, "data", "metadata", "district_adjudications_v2.csv"
+      ),
+      stringsAsFactors = FALSE
+    )
+  )
+  rows <- rows[
+    rows$method %in%
+      "official_nss75_exact_contemporaneous_identity",
+    ,
+    drop = FALSE
+  ]
+
+  expect_equal(nrow(rows), 25L)
+  expect_true(all(rows$wave == "nss_2017_18"))
+  expect_true(all(rows$status == "accepted"))
+  expect_true(all(
+    rows$source_id == "nss75_official_exact_current_identity"
+  ))
+  expect_equal(anyDuplicated(rows$source_row_id), 0L)
+  expect_true(all(grepl("^(pc2011|lgd_district)__", rows$unit_id)))
+  expect_setequal(
+    rows$unit_id[rows$raw_state %in% c(
+      "Daman & Diu", "Dadra & Nagar Haveli"
+    )],
+    c("pc2011__25__494", "pc2011__25__495", "pc2011__26__496")
+  )
 })

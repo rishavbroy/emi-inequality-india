@@ -296,6 +296,21 @@ requires the resulting `pc2001__SS__DD` identifier to exist in the
 Census-2001 administrative registry. Syntactically valid but unknown codes,
 ambiguous mappings, and all later-wave rows remain under review.
 
+## Historical state names and exact current identities
+
+Census-2011 district rows now obtain state names from the current LGD state
+registry when that registry still exposes the historical Census code, with the
+Census-2001 registry used as a fallback for codes whose present-day state was
+merged or renamed. This preserves the separate 2011 states `Daman & Diu`
+(code 25) and `Dadra & Nagar Haveli` (code 26) after their later union.
+
+Twenty-five additional NSS-75 rows are accepted where the official survey list
+and the reference registry yield exactly one contemporaneous district identity:
+22 current-LGD districts and the three Census-2011 districts Diu, Daman, and
+Dadra & Nagar Haveli. These decisions do not establish Census-2001 ancestry.
+Maharajganj remains under alias review because the Census-2011 handbook uses
+the spelling `Mahrajganj`.
+
 ## NSS-75 official exact Census-2011 identities
 
 The official NSS-75 district list covers all 671 source codes in the
