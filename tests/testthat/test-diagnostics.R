@@ -24,13 +24,15 @@ test_that("AME benchmark diagnostic is skipped unless enabled", {
   expect_equal(out$status, "skipped")
 })
 
-test_that("rendered PDF text checks skip only when no extractor is available", {
+test_that("rendered PDF text checks use the system extractor contract", {
   skipped <- c("paper/report.pdf", "docs/district-matching.pdf")
 
+  expect_false(pdf_text_extractor_available(""))
+  expect_true(is.na(extract_pdf_text(tempfile(fileext = ".pdf"), command = "")))
   expect_false(should_fail_pdf_text_skip(skipped, extractor_available = FALSE))
   expect_true(should_fail_pdf_text_skip(skipped, extractor_available = TRUE))
-  expect_match(pdf_text_skip_message(skipped), "PDF text extractor unavailable")
-  expect_match(pdf_text_failure_message(skipped), "PDF text extraction failed")
+  expect_match(pdf_text_skip_message(skipped), "Poppler/pdftotext", fixed = TRUE)
+  expect_match(pdf_text_failure_message(skipped), "pdftotext is available", fixed = TRUE)
 })
 
 test_that("Moran diagnostics compute legacy asymptotic p-values from spatial weights", {

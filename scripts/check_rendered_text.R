@@ -1,10 +1,8 @@
 # Check rendered/public files for placeholder value text and visible crossref
-# failures. PDF text is checked when an extractor is available; machines without
-# pdftotext/pdftools still run the HTML/TeX/Markdown/source checks.
+# failures. PDF text is checked when pdftotext is available; other text checks
+# still run when the system extractor is absent.
 
-if (file.exists("R/diagnostics/rendered_text_checks.R")) {
-  source("R/diagnostics/rendered_text_checks.R")
-}
+source("R/diagnostics/rendered_text_checks.R")
 
 args <- commandArgs(trailingOnly = TRUE)
 is_final_check <- "--final" %in% args ||
@@ -53,46 +51,6 @@ if (check_application_samples) {
   )
 }
 pdf_paths <- pdf_paths[file.exists(pdf_paths)]
-
-extract_pdf_text <- function(path) {
-  if (nzchar(Sys.which("pdftotext"))) {
-    out <- tempfile(fileext = ".txt")
-    status <- system2("pdftotext", c(path, out), stdout = FALSE, stderr = FALSE)
-    if (identical(status, 0L) && file.exists(out)) return(paste(readLines(out, warn = FALSE), collapse = "\n"))
-  }
-  if (requireNamespace("pdftools", quietly = TRUE)) return(paste(pdftools::pdf_text(path), collapse = "\n"))
-  NA_character_
-}
-
-if (!exists("pdf_text_extractor_available", mode = "function")) {
-  pdf_text_extractor_available <- function() {
-    nzchar(Sys.which("pdftotext")) || requireNamespace("pdftools", quietly = TRUE)
-  }
-}
-if (!exists("pdf_text_skip_message", mode = "function")) {
-  pdf_text_skip_message <- function(pdf_paths) {
-    paste0(
-      "PDF text extractor unavailable; skipped PDF text checks for: ",
-      paste(pdf_paths, collapse = ", "),
-      ". Install poppler/pdftotext or the R package pdftools to enable PDF text checks. ",
-      "HTML, TeX, Markdown, and source text checks still ran."
-    )
-  }
-}
-if (!exists("pdf_text_failure_message", mode = "function")) {
-  pdf_text_failure_message <- function(pdf_paths) {
-    paste0(
-      "PDF text extraction failed for: ",
-      paste(pdf_paths, collapse = ", "),
-      ". Because a PDF text extractor is available, this may indicate a corrupt or unreadable PDF."
-    )
-  }
-}
-if (!exists("should_fail_pdf_text_skip", mode = "function")) {
-  should_fail_pdf_text_skip <- function(pdf_paths, extractor_available) {
-    length(pdf_paths) > 0L && isTRUE(extractor_available)
-  }
-}
 
 fixed_patterns <- c(
   "not yet available",
