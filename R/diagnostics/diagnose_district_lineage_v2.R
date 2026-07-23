@@ -294,16 +294,38 @@ candidate_event_relevant_to_sources_v2 <- function(events, source_roster) {
   from_key %in% source_key | to_key %in% source_key
 }
 
-build_evidence_requests_v2 <- function(candidate_events, source_roster, adjudication_queue) {
+build_evidence_requests_v2 <- function(
+  candidate_events, source_roster, adjudication_queue,
+  primary_eligibility = data.frame()
+) {
   events <- safe_df(candidate_events)
   source_roster <- safe_df(source_roster)
   queue <- safe_df(adjudication_queue)
+  eligibility <- safe_df(primary_eligibility)
   evidence_classes <- c(
     "adjudicated_needs_review", "high_precision_fuzzy_candidate",
     "fuzzy_candidates", "no_candidate"
   )
-  evidence_ids <- queue$source_row_id[queue$review_class %in% evidence_classes]
-  unresolved_sources <- source_roster[source_roster$source_row_id %in% evidence_ids, , drop = FALSE]
+  identity_ids <- queue$source_row_id[
+    queue$review_class %in% evidence_classes
+  ]
+  lineage_ids <- if (all(c(
+    "source_row_id", "status", "exclusion_reason"
+  ) %in% names(eligibility))) {
+    eligibility$source_row_id[
+      eligibility$status %in% "accepted" &
+        eligibility$exclusion_reason %in%
+          "geographic_lineage_no_accepted_parent_edge"
+    ]
+  } else {
+    character()
+  }
+  evidence_ids <- unique(c(identity_ids, lineage_ids))
+  unresolved_sources <- source_roster[
+    source_roster$source_row_id %in% evidence_ids,
+    ,
+    drop = FALSE
+  ]
   relevant <- candidate_event_relevant_to_sources_v2(events, unresolved_sources)
   event_requests <- events[
     relevant & events$status %in% c("candidate_unadjudicated", "changed_unit_roster_only"),
@@ -331,7 +353,11 @@ build_evidence_requests_v2 <- function(candidate_events, source_roster, adjudica
     stringsAsFactors = FALSE
   ) else data.frame()
 
-  unresolved <- queue[queue$source_row_id %in% evidence_ids, , drop = FALSE]
+  unresolved <- queue[
+    queue$source_row_id %in% identity_ids,
+    ,
+    drop = FALSE
+  ]
   source_out <- if (nrow(unresolved)) data.frame(
     request_id = paste0("source__", unresolved$source_row_id),
     state = unresolved$state_std,
@@ -342,7 +368,30 @@ build_evidence_requests_v2 <- function(candidate_events, source_roster, adjudica
     requested_document = "Resolve from code, official alias, or dated lineage evidence; do not accept a fuzzy name alone.",
     stringsAsFactors = FALSE
   ) else data.frame()
-  unique(safe_bind_rows(list(event_out, source_out)))
+
+  lineage <- source_roster[
+    source_roster$source_row_id %in% lineage_ids,
+    ,
+    drop = FALSE
+  ]
+  lineage_out <- if (nrow(lineage)) data.frame(
+    request_id = paste0("lineage__", lineage$source_row_id),
+    state = lineage$state_std,
+    affected_units = lineage$district_std,
+    period = lineage$wave,
+    unresolved_question = paste0(
+      "Identify the accepted historical parent edge required to map ",
+      "this contemporaneous district toward Census 2001."
+    ),
+    sources_checked = "LGD modifications and candidate administrative events",
+    requested_document = paste0(
+      "Official district formation or reorganization record; record ",
+      "parentage separately from any population or territorial share."
+    ),
+    stringsAsFactors = FALSE
+  ) else data.frame()
+
+  unique(safe_bind_rows(list(event_out, source_out, lineage_out)))
 }
 
 migration_gate_actions_v2 <- function() {
@@ -585,7 +634,12 @@ build_district_lineage_v2 <- function(
     geometry_carrybacks
   )
   concordance <- build_concordance_candidates_v2(raw_sources)
-  evidence_requests <- build_evidence_requests_v2(candidate_events, source_roster, adjudication_queue)
+  evidence_requests <- build_evidence_requests_v2(
+    candidate_events,
+    source_roster,
+    adjudication_queue,
+    eligibility
+  )
   adjudication_draft <- build_adjudication_draft_v2(
     source_roster, adjudication_queue, candidates
   )

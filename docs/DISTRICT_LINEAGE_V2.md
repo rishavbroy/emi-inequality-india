@@ -311,6 +311,22 @@ Dadra & Nagar Haveli. These decisions do not establish Census-2001 ancestry.
 Maharajganj remains under alias review because the Census-2011 handbook uses
 the spelling `Mahrajganj`.
 
+## Telangana 2016 single-parent ancestry
+
+Twenty-four current Telangana district identities now have reviewed ancestry
+edges to one Census-2011 district in undivided Andhra Pradesh. The edges cover
+single-parent descendants or continuations of Adilabad, Nizamabad, Karimnagar,
+Medak, Ranga Reddy, Mahabubnagar, Nalgonda, Warangal, and Khammam.
+
+The edges establish parentage only. They contain no population or territorial
+share, and the existing Census-2011-to-2001 transition and allocation modules
+remain authoritative. Vikarabad and Mahabubabad remain open because available
+district histories describe components from more than one predecessor district.
+
+Evidence requests now include accepted current districts that still lack an
+accepted parent edge. Completing source identity therefore no longer hides the
+remaining administrative-lineage work.
+
 ## Completed NSS-75 alias review
 
 The remaining 16 NSS-75 source labels are accepted after manual review as
