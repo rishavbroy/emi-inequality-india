@@ -872,3 +872,73 @@ test_that("shared support excludes duplicate and non-overlapping units", {
     out$production$target_unit_2001 == "pc2001__01__02"
   ))
 })
+
+test_that("unmapped identity queue excludes already mapped accepted rows", {
+  eligibility <- data.frame(
+    source_row_id = c("mapped", "unmapped", "excluded"),
+    wave = "nss_2017_18",
+    source_code = c("101", "102", "103"),
+    raw_state = "State",
+    raw_district = c("Mapped", "Unmapped", "Excluded"),
+    state_std = "state",
+    district_std = c("mapped", "unmapped", "excluded"),
+    terminal_unit = c(
+      "pc2011__01__001", "pc2011__01__002", "pc2011__01__003"
+    ),
+    status = c("accepted", "accepted", "excluded"),
+    stringsAsFactors = FALSE
+  )
+  crosswalk <- data.frame(
+    source_row_id = "mapped",
+    target_unit_2001 = "pc2001__01__01",
+    stringsAsFactors = FALSE
+  )
+
+  out <- build_lineage_v2_unmapped_identity_queue(
+    eligibility, crosswalk
+  )
+
+  expect_identical(out$source_row_id, "unmapped")
+  expect_identical(
+    out$review_scope,
+    "accepted_identity_without_sensitivity_mapping"
+  )
+})
+
+test_that("non-overlap queue retains both panel-only directions", {
+  membership <- data.frame(
+    target_unit_2001 = c(
+      "pc2001__01__01", "pc2001__01__02", "pc2001__01__03"
+    ),
+    in_production = c(TRUE, TRUE, FALSE),
+    in_v2 = c(TRUE, FALSE, TRUE),
+    comparison_status = c("shared", "production_only", "v2_only"),
+    stringsAsFactors = FALSE
+  )
+  production <- data.frame(
+    district_panel_id = c("2001__01__01", "2001__01__02"),
+    state_std = "state",
+    district_std = c("shared", "production only"),
+    stringsAsFactors = FALSE
+  )
+  candidate <- data.frame(
+    target_unit_2001 = c("pc2001__01__01", "pc2001__01__03"),
+    state_std = "state",
+    district_std = c("shared", "v2 only"),
+    stringsAsFactors = FALSE
+  )
+
+  out <- build_lineage_v2_nonoverlap_queue(
+    membership, production, candidate
+  )
+
+  expect_setequal(
+    out$comparison_status,
+    c("production_only", "v2_only")
+  )
+  expect_setequal(
+    out$district_label,
+    c("production only", "v2 only")
+  )
+  expect_true(all(nzchar(out$next_action)))
+})

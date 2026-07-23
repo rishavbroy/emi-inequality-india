@@ -307,6 +307,162 @@ compare_lineage_v2_panels <- function(production_panel, v2_panel) {
 }
 
 
+
+lineage_v2_panel_labels <- function(panel, variant) {
+  panel <- safe_df(panel)
+  if (!nrow(panel)) {
+    return(data.frame(
+      target_unit_2001 = character(),
+      panel_variant = character(),
+      state_label = character(),
+      district_label = character(),
+      stringsAsFactors = FALSE
+    ))
+  }
+  panel$target_unit_2001 <- lineage_panel_unit_id(panel)
+  state_col <- first_col(
+    panel,
+    c("state_std", "state_20", "state_0708", "state_name_2001")
+  )
+  district_col <- first_col(
+    panel,
+    c(
+      "district_std", "district_20", "district_0708",
+      "district_name_2001"
+    )
+  )
+  groups <- split(
+    seq_len(nrow(panel)),
+    panel$target_unit_2001
+  )
+  safe_bind_rows(lapply(groups, function(i) {
+    rows <- panel[i, , drop = FALSE]
+    data.frame(
+      target_unit_2001 = rows$target_unit_2001[[1L]],
+      panel_variant = variant,
+      state_label = if (!is.null(state_col)) {
+        plain_chr(first_nonmissing_v2(rows[[state_col]]))
+      } else {
+        NA_character_
+      },
+      district_label = if (!is.null(district_col)) {
+        plain_chr(first_nonmissing_v2(rows[[district_col]]))
+      } else {
+        NA_character_
+      },
+      stringsAsFactors = FALSE
+    )
+  }))
+}
+
+build_lineage_v2_nonoverlap_queue <- function(
+  panel_membership, production_panel, v2_panel
+) {
+  membership <- safe_df(panel_membership)
+  membership <- membership[
+    membership$comparison_status %in% c("production_only", "v2_only"),
+    ,
+    drop = FALSE
+  ]
+  if (!nrow(membership)) return(data.frame())
+
+  labels <- safe_bind_rows(list(
+    lineage_v2_panel_labels(production_panel, "production"),
+    lineage_v2_panel_labels(v2_panel, "lineage_v2")
+  ))
+  labels <- labels[
+    labels$target_unit_2001 %in% membership$target_unit_2001,
+    ,
+    drop = FALSE
+  ]
+  labels <- labels[
+    order(
+      labels$target_unit_2001,
+      labels$panel_variant == "lineage_v2",
+      na.last = TRUE
+    ),
+    ,
+    drop = FALSE
+  ]
+  labels <- labels[!duplicated(labels$target_unit_2001), , drop = FALSE]
+
+  out <- merge(
+    membership,
+    labels[
+      c("target_unit_2001", "state_label", "district_label")
+    ],
+    by = "target_unit_2001",
+    all.x = TRUE,
+    sort = FALSE
+  )
+  codes <- lineage_v2_target_codes(out$target_unit_2001)
+  out$state_code_2001 <- codes$state_code_2001
+  out$district_code_2001 <- codes$district_code_2001
+  out$review_scope <- ifelse(
+    out$comparison_status == "production_only",
+    "inherited_panel_only",
+    "lineage_v2_panel_only"
+  )
+  out$next_action <- ifelse(
+    out$comparison_status == "production_only",
+    paste0(
+      "Check whether the inherited row is a duplicate, obsolete target, ",
+      "or a district missing from the reviewed v2 bridge."
+    ),
+    paste0(
+      "Confirm that the recovered v2 unit has valid two-wave measures and ",
+      "is not an allocation artifact."
+    )
+  )
+  out[
+    order(
+      out$comparison_status,
+      out$state_code_2001,
+      out$district_code_2001
+    ),
+    ,
+    drop = FALSE
+  ]
+}
+
+build_lineage_v2_unmapped_identity_queue <- function(
+  primary_eligibility, sensitivity_crosswalk
+) {
+  eligibility <- safe_df(primary_eligibility)
+  crosswalk <- safe_df(sensitivity_crosswalk)
+  if (!nrow(eligibility)) return(data.frame())
+
+  mapped_ids <- unique(stats::na.omit(crosswalk$source_row_id))
+  queue <- eligibility[
+    eligibility$status %in% "accepted" &
+      !(eligibility$source_row_id %in% mapped_ids),
+    ,
+    drop = FALSE
+  ]
+  if (!nrow(queue)) return(data.frame())
+
+  keep <- intersect(
+    c(
+      "source_row_id", "wave", "source_code",
+      "raw_state", "raw_district", "state_std", "district_std",
+      "terminal_unit", "terminal_vintage", "resolution_status",
+      "lineage_path", "mapping_class", "exclusion_reason"
+    ),
+    names(queue)
+  )
+  queue <- queue[keep]
+  queue$review_scope <- "accepted_identity_without_sensitivity_mapping"
+  queue$next_action <- paste0(
+    "Trace the accepted terminal district through reviewed LGD, SHRUG, ",
+    "tracker, and manual district-history evidence to Census 2001."
+  )
+  queue[
+    order(queue$wave, queue$state_std, queue$district_std),
+    ,
+    drop = FALSE
+  ]
+}
+
 lineage_v2_panel_duplicates <- function(panel, variant) {
   panel <- safe_df(panel)
   unit_id <- lineage_panel_unit_id(panel)
@@ -632,6 +788,17 @@ build_lineage_v2_downstream_review <- function(
   comparison$panel_membership <- compare_lineage_v2_panels(
     production_panel, v2_panel
   )
+  comparison$panel_nonoverlap_queue <-
+    build_lineage_v2_nonoverlap_queue(
+      comparison$panel_membership,
+      production_panel,
+      v2_panel
+    )
+  comparison$unmapped_identity_queue <-
+    build_lineage_v2_unmapped_identity_queue(
+      primary_eligibility,
+      primary_crosswalk
+    )
   comparison$crosswalk_coverage <-
     summarize_lineage_v2_downstream_coverage(
       primary_crosswalk,
@@ -687,6 +854,14 @@ save_lineage_v2_downstream_review <- function(
     downstream_panel_membership = write_diagnostic_csv(
       review$panel_membership %||% data.frame(),
       file.path(dir, "downstream_panel_membership.csv")
+    ),
+    downstream_panel_nonoverlap_queue = write_diagnostic_csv(
+      review$panel_nonoverlap_queue %||% data.frame(),
+      file.path(dir, "downstream_panel_nonoverlap_queue.csv")
+    ),
+    downstream_unmapped_identity_queue = write_diagnostic_csv(
+      review$unmapped_identity_queue %||% data.frame(),
+      file.path(dir, "downstream_unmapped_identity_queue.csv")
     ),
     downstream_coefficient_comparison = write_diagnostic_csv(
       review$coefficient_comparison %||% data.frame(),
