@@ -273,8 +273,9 @@ evidence-backed exclusion without fabricating geographic mass.
 The second source-identity tranche accepts 178 additional 2007-08 rows only
 when two independent fields agree:
 
-1. the official five-character NSS-64 source code has the `SS1DD` form used by
-   the project inputs and resolves to Census-2001 unit `pc2001__SS__DD`; and
+1. the official five-character NSS-64 source code has the `SSRDD` form used by
+   the project inputs, where `R` is the NSS region code, and resolves to
+   Census-2001 unit `pc2001__SS__DD`; and
 2. normalized state and district names match the Census-2001 registry exactly.
 
 Code-only and name-only agreements remain under review. The rule is limited to
