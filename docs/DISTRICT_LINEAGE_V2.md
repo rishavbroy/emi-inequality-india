@@ -345,6 +345,22 @@ its complete deterministic transition. Ganganagar, YSR, and Bathinda remain
 sensitivity-only under their reviewed high-coverage allocations. Aizawl remains
 excluded because its reviewed bridge coverage is below the project threshold.
 
+## LGD modification-report Census links
+
+The official LGD district modification report for 1 January 2011 through
+30 June 2018 contains LGD district codes alongside Census-2001 and
+Census-2011 district codes. The standardized modification roster retains both
+Census fields rather than treating the report only as a changed-unit list.
+
+Twenty-nine unresolved 2017-18 source rows are accepted where the normalized
+state and district names exactly match a report row with a nonzero
+Census-2011 district code. The accepted identity is `pc2011__SS__DDD`.
+
+This evidence resolves source identity only. Deterministic transitions,
+reviewed high-coverage allocations, rejected allocations, and administrative
+events continue to determine whether and how each Census-2011 identity enters
+the Census-2001 preferred or sensitivity crosswalk.
+
 ## First reviewed decisions
 
 The first accepted tranche is deliberately narrow:
