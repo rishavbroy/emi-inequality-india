@@ -1,3 +1,19 @@
+measure_test_project_env <- function() {
+  env <- new.env(parent = globalenv())
+  files <- c(
+    "R/io/utils_data_frame.R",
+    list.files("R/clean", pattern = "\\.R$", full.names = TRUE),
+    list.files("R/districts", pattern = "\\.R$", full.names = TRUE),
+    list.files("R/measures", pattern = "\\.R$", full.names = TRUE)
+  )
+  for (file in files) sys.source(file, envir = env)
+  env
+}
+
+if (!exists("build_2007_measures", mode = "function")) {
+  list2env(as.list(measure_test_project_env()), envir = environment())
+}
+
 test_that("2007 measures compute weighted EMIE by district", {
   edu <- list(block = data.frame(
     State = c("Bihar", "Bihar", "Bihar"),
