@@ -1,7 +1,0 @@
-[package]
-name = "emi-poster"
-version = "0.1.0"
-entrypoint = "poster.typ"
-authors = ["Rishav Roy", "Parth Parikh"]
-license = "MIT"
-description = "Project-specific academic poster template adapted from typst-poster"
