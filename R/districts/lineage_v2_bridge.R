@@ -346,39 +346,44 @@ build_admin_registry_2011 <- function(pc11_district_geometry) {
 
 canonical_allocation_source_key_v2 <- function(x) {
   if (!length(x)) return(character())
-
-  out <- rep(NA_character_, length(x))
-  numeric_input <- is.numeric(x)
-  if (numeric_input) {
-    finite <- is.finite(x)
-    state <- floor(x[finite] + 1e-10)
-    district <- round((x[finite] - state) * 1000)
-    valid <- state >= 0 & state <= 99 & district >= 0 & district <= 999
-    values <- rep(NA_character_, length(state))
-    values[valid] <- sprintf("%02d.%03d", state[valid], district[valid])
-    out[finite] <- values
-    return(out)
+  if (!is.character(x)) {
+    stop(
+      "Allocation source identifiers must be read as character values.",
+      call. = FALSE
+    )
   }
 
-  value <- trimws(as.character(x))
-  pc11 <- grepl("^pc2011__[0-9]{1,2}__[0-9]{1,3}$", value)
-  if (any(pc11)) {
-    parts <- strsplit(value[pc11], "__", fixed = TRUE)
-    out[pc11] <- vapply(parts, function(part) {
-      paste0(
-        pad_admin_code(part[[2]], 2L), ".",
-        pad_admin_code(part[[3]], 3L)
+  value <- trimws(x)
+  out <- rep(NA_character_, length(value))
+
+  canonical <- grepl(
+    "^pc2011__[0-9]{1,2}__[0-9]{1,3}$",
+    value
+  )
+  if (any(canonical)) {
+    parts <- strsplit(value[canonical], "__", fixed = TRUE)
+    out[canonical] <- vapply(parts, function(part) {
+      paste(
+        "pc2011",
+        pad_admin_code(part[[2]], 2L),
+        pad_admin_code(part[[3]], 3L),
+        sep = "__"
       )
     }, character(1))
   }
 
-  decimal <- !pc11 & grepl("^[0-9]{1,2}[.][0-9]{1,3}$", value)
-  if (any(decimal)) {
-    parts <- strsplit(value[decimal], ".", fixed = TRUE)
-    out[decimal] <- vapply(parts, function(part) {
-      paste0(
-        pad_admin_code(part[[1]], 2L), ".",
-        pad_admin_code(part[[2]], 3L)
+  legacy <- !canonical & grepl(
+    "^[0-9]{1,2}[.][0-9]{1,3}$",
+    value
+  )
+  if (any(legacy)) {
+    parts <- strsplit(value[legacy], ".", fixed = TRUE)
+    out[legacy] <- vapply(parts, function(part) {
+      paste(
+        "pc2011",
+        pad_admin_code(part[[1]], 2L),
+        pad_admin_code(part[[2]], 3L),
+        sep = "__"
       )
     }, character(1))
   }
@@ -387,9 +392,11 @@ canonical_allocation_source_key_v2 <- function(x) {
 }
 
 allocation_source_key_v2 <- function(state_code, district_code) {
-  paste0(
-    pad_admin_code(state_code, 2L), ".",
-    pad_admin_code(district_code, 3L)
+  paste(
+    "pc2011",
+    pad_admin_code(state_code, 2L),
+    pad_admin_code(district_code, 3L),
+    sep = "__"
   )
 }
 
@@ -499,8 +506,18 @@ read_adjudicated_allocation_weights_v2 <- function(x, admin_2001 = data.frame())
     "reference_year", "source_id", "status", "note"
   )
   for (nm in setdiff(required, names(x))) x[[nm]] <- rep(NA_character_, nrow(x))
-  x$source_unit <- canonical_allocation_source_key_v2(x$source_unit)
-  x <- x[!is.na(x$source_unit) & nzchar(x$source_unit), required, drop = FALSE]
+  source_unit_raw <- trimws(plain_chr(x$source_unit))
+  supplied <- !is.na(source_unit_raw) & nzchar(source_unit_raw)
+  source_unit <- canonical_allocation_source_key_v2(source_unit_raw)
+  if (any(supplied & is.na(source_unit))) {
+    stop(
+      "District-allocation metadata contains invalid Census-2011 source IDs: ",
+      paste(unique(source_unit_raw[supplied & is.na(source_unit)]), collapse = ", "),
+      call. = FALSE
+    )
+  }
+  x$source_unit <- source_unit
+  x <- x[supplied, required, drop = FALSE]
   if (!nrow(x)) {
     x$weight <- numeric()
     return(x)
