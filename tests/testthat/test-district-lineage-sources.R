@@ -650,7 +650,11 @@ test_that("migration readiness counts valid reviewed sensitivity coverage", {
 
   reviewed <- rbind(
     reviewed,
-    data.frame(source_key = "pc2011__01__002", coverage_complete = TRUE)
+    data.frame(
+      source_key = "pc2011__01__001",
+      coverage_complete = TRUE,
+      stringsAsFactors = FALSE
+    )
   )
   readiness <- build_migration_readiness_v2(
     missing_core = character(),
@@ -682,12 +686,15 @@ test_that("tracked high-coverage decisions leave only lower-coverage gaps", {
   transition <- read.csv(transition_path, stringsAsFactors = FALSE)
 
   generated <- validate_allocation_weights(transition)
-  weights <- read_adjudicated_allocation_weights_v2(read.csv(
-    file.path(
-      root, "data", "metadata", "district_allocation_weights_v2.csv"
-    ),
-    stringsAsFactors = FALSE
-  ))
+  weights <- read_adjudicated_allocation_weights_v2(
+    read_lineage_source(
+      file.path(
+        root, "data", "metadata", "district_allocation_weights_v2.csv"
+      ),
+      reader = "allocation_csv",
+      source_id = "lineage_allocation_weights"
+    )
+  )
   reviewed <- validate_adjudicated_allocation_weights_v2(weights)
   status <- allocation_coverage_status_v2(generated, reviewed)
 
