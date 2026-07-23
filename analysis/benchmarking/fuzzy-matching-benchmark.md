@@ -42,7 +42,7 @@ fuzzy_threshold <- analysis_target_csv("bench_fuzzy_matching", "fuzzy_matching_t
 fuzzy_reference <- analysis_target_csv("bench_fuzzy_matching", "fuzzy_matching_legacy_tuning_reference.csv")
 ```
 
-The current benchmark evaluates 333 candidate pairs across 10
+The current benchmark evaluates 487 candidate pairs across 20
 pair-source groups.
 
 ``` r
@@ -54,7 +54,7 @@ data.frame(
 ```
 
                        current_code_analog candidate_pairs pair_source_groups
-    1 sum(fuzzy_cov$n_pairs, na.rm = TRUE)             333                 10
+    1 sum(fuzzy_cov$n_pairs, na.rm = TRUE)             487                 20
 
 ``` r
 analysis_table(fuzzy_cov, "Benchmark candidate-pair coverage", max_rows = 30)
@@ -71,7 +71,17 @@ analysis_table(fuzzy_cov, "Benchmark candidate-pair coverage", max_rows = 30)
 | join_map_district_17_to_district_18 | 3 | active source/tracker candidate pair emitted by the current pipeline |
 | join_map_district_18_to_district_19 | 10 | active source/tracker candidate pair emitted by the current pipeline |
 | legacy_troublesome_comment | 9 | legacy hand-picked examples from Chunk 16 |
-| tracker_1991_to_2001 | 160 | active source/tracker candidate pair emitted by the current pipeline |
+| tracker_2001_to_2005 | 21 | active source/tracker candidate pair emitted by the current pipeline |
+| tracker_2001_to_2007 | 35 | active source/tracker candidate pair emitted by the current pipeline |
+| tracker_2005_to_2006 | 6 | active source/tracker candidate pair emitted by the current pipeline |
+| tracker_2006_to_2007 | 8 | active source/tracker candidate pair emitted by the current pipeline |
+| tracker_2007_to_2008 | 8 | active source/tracker candidate pair emitted by the current pipeline |
+| tracker_2007_to_2017 | 102 | active source/tracker candidate pair emitted by the current pipeline |
+| tracker_2008_to_2011 | 29 | active source/tracker candidate pair emitted by the current pipeline |
+| tracker_2011_to_2017 | 79 | active source/tracker candidate pair emitted by the current pipeline |
+| tracker_2017_to_2018 | 3 | active source/tracker candidate pair emitted by the current pipeline |
+| tracker_2017_to_2020 | 13 | active source/tracker candidate pair emitted by the current pipeline |
+| tracker_2018_to_2019 | 10 | active source/tracker candidate pair emitted by the current pipeline |
 
 Benchmark candidate-pair coverage
 
@@ -103,7 +113,17 @@ analysis_table(fuzzy_threshold, "Threshold sensitivity by method and pair source
 | soundex | 0 | join_map_district_17_to_district_18 | 3 | 0 | 0 |
 | soundex | 0 | join_map_district_18_to_district_19 | 10 | 1 | 0.1 |
 | soundex | 0 | legacy_troublesome_comment | 9 | 7 | 0.777777777777778 |
-| soundex | 0 | tracker_1991_to_2001 | 160 | 14 | 0.0875 |
+| soundex | 0 | tracker_2001_to_2005 | 21 | 1 | 0.0476190476190476 |
+| soundex | 0 | tracker_2001_to_2007 | 35 | 1 | 0.0285714285714286 |
+| soundex | 0 | tracker_2005_to_2006 | 6 | 0 | 0 |
+| soundex | 0 | tracker_2006_to_2007 | 8 | 0 | 0 |
+| soundex | 0 | tracker_2007_to_2008 | 8 | 0 | 0 |
+| soundex | 0 | tracker_2007_to_2017 | 102 | 4 | 0.0392156862745098 |
+| soundex | 0 | tracker_2008_to_2011 | 29 | 2 | 0.0689655172413793 |
+| soundex | 0 | tracker_2011_to_2017 | 79 | 2 | 0.0253164556962025 |
+| soundex | 0 | tracker_2017_to_2018 | 3 | 0 | 0 |
+| soundex | 0 | tracker_2017_to_2020 | 13 | 1 | 0.0769230769230769 |
+| soundex | 0 | tracker_2018_to_2019 | 10 | 1 | 0.1 |
 | qgram | 0 | join_map_district_01_to_district_05 | 21 | 0 | 0 |
 | qgram | 0 | join_map_district_05_to_district_06 | 6 | 0 | 0 |
 | qgram | 0 | join_map_district_06_to_district_07 | 8 | 0 | 0 |
@@ -113,27 +133,17 @@ analysis_table(fuzzy_threshold, "Threshold sensitivity by method and pair source
 | qgram | 0 | join_map_district_17_to_district_18 | 3 | 0 | 0 |
 | qgram | 0 | join_map_district_18_to_district_19 | 10 | 0 | 0 |
 | qgram | 0 | legacy_troublesome_comment | 9 | 3 | 0.333333333333333 |
-| qgram | 0 | tracker_1991_to_2001 | 160 | 0 | 0 |
-| qgram | 1 | join_map_district_01_to_district_05 | 21 | 0 | 0 |
-| qgram | 1 | join_map_district_05_to_district_06 | 6 | 0 | 0 |
-| qgram | 1 | join_map_district_06_to_district_07 | 8 | 0 | 0 |
-| qgram | 1 | join_map_district_07_to_district_08 | 8 | 0 | 0 |
-| qgram | 1 | join_map_district_08_to_district_11 | 29 | 1 | 0.0344827586206897 |
-| qgram | 1 | join_map_district_11_to_district_17 | 79 | 0 | 0 |
-| qgram | 1 | join_map_district_17_to_district_18 | 3 | 0 | 0 |
-| qgram | 1 | join_map_district_18_to_district_19 | 10 | 0 | 0 |
-| qgram | 1 | legacy_troublesome_comment | 9 | 4 | 0.444444444444444 |
-| qgram | 1 | tracker_1991_to_2001 | 160 | 6 | 0.0375 |
-| qgram | 2 | join_map_district_01_to_district_05 | 21 | 0 | 0 |
-| qgram | 2 | join_map_district_05_to_district_06 | 6 | 0 | 0 |
-| qgram | 2 | join_map_district_06_to_district_07 | 8 | 0 | 0 |
-| qgram | 2 | join_map_district_07_to_district_08 | 8 | 0 | 0 |
-| qgram | 2 | join_map_district_08_to_district_11 | 29 | 1 | 0.0344827586206897 |
-| qgram | 2 | join_map_district_11_to_district_17 | 79 | 0 | 0 |
-| qgram | 2 | join_map_district_17_to_district_18 | 3 | 0 | 0 |
-| qgram | 2 | join_map_district_18_to_district_19 | 10 | 1 | 0.1 |
-| qgram | 2 | legacy_troublesome_comment | 9 | 6 | 0.666666666666667 |
-| qgram | 2 | tracker_1991_to_2001 | 160 | 10 | 0.0625 |
-| Table truncated in rendered note; full CSV has 150 rows. |  |  |  |  |  |
+| qgram | 0 | tracker_2001_to_2005 | 21 | 0 | 0 |
+| qgram | 0 | tracker_2001_to_2007 | 35 | 0 | 0 |
+| qgram | 0 | tracker_2005_to_2006 | 6 | 0 | 0 |
+| qgram | 0 | tracker_2006_to_2007 | 8 | 0 | 0 |
+| qgram | 0 | tracker_2007_to_2008 | 8 | 0 | 0 |
+| qgram | 0 | tracker_2007_to_2017 | 102 | 0 | 0 |
+| qgram | 0 | tracker_2008_to_2011 | 29 | 0 | 0 |
+| qgram | 0 | tracker_2011_to_2017 | 79 | 0 | 0 |
+| qgram | 0 | tracker_2017_to_2018 | 3 | 0 | 0 |
+| qgram | 0 | tracker_2017_to_2020 | 13 | 0 | 0 |
+| qgram | 0 | tracker_2018_to_2019 | 10 | 0 | 0 |
+| Table truncated in rendered note; full CSV has 300 rows. |  |  |  |  |  |
 
 Threshold sensitivity by method and pair source

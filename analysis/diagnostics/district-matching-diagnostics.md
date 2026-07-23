@@ -29,7 +29,6 @@ rows. \*\*\*Why the gigantic discrepancy???
 
 ``` r
 analysis_deviation_note("The legacy helper objects no longer exist in the active architecture. The rendered current-code analog counts incomplete rows in target-backed tracker/panel, source-inventory, unmatched-row, and many-to-many outputs, renders the all-rows close-match search table as a bounded preview, and explicitly separates fallback source-key inventory from true legacy unmatched rows. This explanation is a prose deviation from the legacy comment because the legacy Rmd did not have a separate source-key-inventory object.")
-analysis_deviation_note("The legacy 454-district analysis sample and its reported first-stage estimate 2.945 (SE 0.949) and second-stage estimate 0.201 (SE 0.710) are historical comparison values, not validation targets. They were generated after an almost certainly flawed legacy district-matching procedure. The legacy partial F-statistic of 37.77 is known to be invalid because the legacy code computed it incorrectly. Future audits must evaluate the active pseudo-panel from row-level source assignments and current first-stage diagnostics rather than trying to reproduce these numbers.")
 ```
 
 **Deviation note.** The legacy helper objects no longer exist in the
@@ -41,15 +40,19 @@ inventory from true legacy unmatched rows. This explanation is a prose
 deviation from the legacy comment because the legacy Rmd did not have a
 separate source-key-inventory object.
 
+``` r
+analysis_deviation_note("The legacy 454-district analysis sample and its reported first-stage estimate 2.945 (SE 0.949) and second-stage estimate 0.201 (SE 0.710) are historical comparison values, not validation targets. They were generated after an almost certainly flawed legacy district-matching procedure. The legacy partial F-statistic of 37.77 is known to be invalid because the legacy code computed it incorrectly. Future audits must evaluate the active pseudo-panel from row-level source assignments and current first-stage diagnostics rather than trying to reproduce these numbers.")
+```
+
 **Deviation note.** The legacy 454-district analysis sample and its
 reported first-stage estimate 2.945 (SE 0.949) and second-stage estimate
 0.201 (SE 0.710) are historical comparison values, not validation
 targets. They were generated after an almost certainly flawed legacy
 district-matching procedure. The legacy partial F-statistic of 37.77 is
 known to be invalid because the legacy code computed it incorrectly.
-Future audits must evaluate the active pseudo-panel from row-level source
-assignments and current first-stage diagnostics rather than trying to
-reproduce these numbers.
+Future audits must evaluate the active pseudo-panel from row-level
+source assignments and current first-stage diagnostics rather than
+trying to reproduce these numbers.
 
 ``` r
 dm_summary <- analysis_target_csv("diag_ext_district_matching", "district_matching_summary.csv")

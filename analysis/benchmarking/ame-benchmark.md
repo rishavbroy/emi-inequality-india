@@ -28,7 +28,7 @@ full-data AME timing every public build. To reconcile the legacy
 20,000-row timing, the default tier now includes `num_samp = 20000` when
 the active model frame has that many rows; the largest sampled benchmark
 uses `num_samp =` 20,000, and the slowest recorded current run took
-0.042 seconds. This creates a documented deviation from the legacy
+0.035 seconds. This creates a documented deviation from the legacy
 prose: full-data AME timings are preserved only as legacy notes, not
 refreshed by the current pipeline.
 
@@ -43,7 +43,6 @@ observations \* 2 calls of `predict()` per observation per variable
 
 ``` r
 analysis_deviation_note("Legacy full-data timings are preserved in target notes, but the current pipeline deliberately no longer refreshes full-sample AME timings. The 20,000-row legacy timing remains part of the default benchmark tier when enough active model-frame rows are available; the missing full-data refresh is a marked deviation from the legacy timing prose.")
-analysis_deviation_note("The active benchmark now calls the same current marginaleffects::avg_slopes() wrapper as the production AME target, using observed model-frame rows, explicit averaging weights, response-scale estimates, uncertainty, and the documented numderiv choices. It no longer treats a failed legacy call plus an uncertainty-free fallback as a successful benchmark result.")
 ```
 
 **Deviation note.** Legacy full-data timings are preserved in target
@@ -53,10 +52,14 @@ the default benchmark tier when enough active model-frame rows are
 available; the missing full-data refresh is a marked deviation from the
 legacy timing prose.
 
+``` r
+analysis_deviation_note("The active benchmark now calls the same current marginaleffects::avg_slopes() wrapper as the production AME target, using observed model-frame rows, explicit averaging weights, response-scale estimates, uncertainty, and the documented numderiv choices. It no longer treats a failed legacy call plus an uncertainty-free fallback as a successful benchmark result.")
+```
+
 **Deviation note.** The active benchmark now calls the same current
-`marginaleffects::avg_slopes()` wrapper as the production AME target,
+marginaleffects::avg_slopes() wrapper as the production AME target,
 using observed model-frame rows, explicit averaging weights,
-response-scale estimates, uncertainty, and the documented `numderiv`
+response-scale estimates, uncertainty, and the documented numderiv
 choices. It no longer treats a failed legacy call plus an
 uncertainty-free fallback as a successful benchmark result.
 
@@ -89,12 +92,12 @@ analysis_table(
 
 | method | sample_size | n_observations | n_numeric_variables | centered_predict_calls_full_data | elapsed_seconds | status |
 |:---|---:|---:|---:|---:|---:|:---|
-| avg_slopes_centered_default | 200 | 114898 | 10 | 2297960 | 0.042 | current_version_incompatible |
-| avg_slopes_fdforward | 200 | 114898 | 10 | 2297960 | 0.014 | current_version_incompatible |
-| avg_slopes_centered_default | 2000 | 114898 | 10 | 2297960 | 0.014 | current_version_incompatible |
-| avg_slopes_fdforward | 2000 | 114898 | 10 | 2297960 | 0.014 | current_version_incompatible |
-| avg_slopes_centered_default | 20000 | 114898 | 10 | 2297960 | 0.015 | current_version_incompatible |
-| avg_slopes_fdforward | 20000 | 114898 | 10 | 2297960 | 0.014 | current_version_incompatible |
+| avg_slopes_centered_default | 200 | 114898 | 10 | 2297960 | 0.035 | failed |
+| avg_slopes_fdforward | 200 | 114898 | 10 | 2297960 | 0.010 | failed |
+| avg_slopes_centered_default | 2000 | 114898 | 10 | 2297960 | 0.008 | failed |
+| avg_slopes_fdforward | 2000 | 114898 | 10 | 2297960 | 0.007 | failed |
+| avg_slopes_centered_default | 20000 | 114898 | 10 | 2297960 | 0.007 | failed |
+| avg_slopes_fdforward | 20000 | 114898 | 10 | 2297960 | 0.007 | failed |
 
 Current AME benchmark attempts
 
@@ -102,20 +105,20 @@ Current AME benchmark attempts
 ame_methods[, intersect(c("method", "sample_size", "elapsed_seconds", "status", "reason"), names(ame_methods)), drop = FALSE]
 ```
 
-                           method sample_size elapsed_seconds
-    1 avg_slopes_centered_default         200           0.042
-    2        avg_slopes_fdforward         200           0.014
-    3 avg_slopes_centered_default        2000           0.014
-    4        avg_slopes_fdforward        2000           0.014
-    5 avg_slopes_centered_default       20000           0.015
-    6        avg_slopes_fdforward       20000           0.014
-                            status          reason
-    1 current_version_incompatible invalid formula
-    2 current_version_incompatible invalid formula
-    3 current_version_incompatible invalid formula
-    4 current_version_incompatible invalid formula
-    5 current_version_incompatible invalid formula
-    6 current_version_incompatible invalid formula
+                           method sample_size elapsed_seconds status
+    1 avg_slopes_centered_default         200           0.035 failed
+    2        avg_slopes_fdforward         200           0.010 failed
+    3 avg_slopes_centered_default        2000           0.008 failed
+    4        avg_slopes_fdforward        2000           0.007 failed
+    5 avg_slopes_centered_default       20000           0.007 failed
+    6        avg_slopes_fdforward       20000           0.007 failed
+               reason
+    1 invalid formula
+    2 invalid formula
+    3 invalid formula
+    4 invalid formula
+    5 invalid formula
+    6 invalid formula
 
 Method 2: Subsampling with forward differences. The legacy note was:
 calls `predict()` once per perturbation instead of twice (a la central
@@ -127,16 +130,16 @@ forward differences for continuous vars.
 
 ``` r
 analysis_table(
-  ame_methods[ame_methods$method == "avg_slopes_fdforward", intersect(c("method", "sample_size", "elapsed_seconds", "status", "reason", "fallback"), names(ame_methods)), drop = FALSE],
+  ame_methods[ame_methods$method == "avg_slopes_fdforward", intersect(c("method", "sample_size", "elapsed_seconds", "n_estimates", "status", "reason"), names(ame_methods)), drop = FALSE],
   "Forward-difference AME benchmark rows"
 )
 ```
 
-| method | sample_size | elapsed_seconds | status | reason | fallback |
+| method | sample_size | elapsed_seconds | n_estimates | status | reason |
 |:---|---:|---:|:---|:---|:---|
-| avg_slopes_fdforward | 200 | 0.014 | current_version_incompatible | invalid formula | vcov=FALSE fallback failed: invalid formula |
-| avg_slopes_fdforward | 2000 | 0.014 | current_version_incompatible | invalid formula | vcov=FALSE fallback failed: invalid formula |
-| avg_slopes_fdforward | 20000 | 0.014 | current_version_incompatible | invalid formula | vcov=FALSE fallback failed: invalid formula |
+| avg_slopes_fdforward | 200 | 0.010 | NA | failed | invalid formula |
+| avg_slopes_fdforward | 2000 | 0.007 | NA | failed | invalid formula |
+| avg_slopes_fdforward | 20000 | 0.007 | NA | failed | invalid formula |
 
 Forward-difference AME benchmark rows
 

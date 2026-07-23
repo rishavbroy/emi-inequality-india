@@ -48,7 +48,7 @@ analysis_table(fuzzy_summary, "Fuzzy matching diagnostic summary")
 
 | n_tracker_rows | n_join_rows | n_unmatched_rows | n_candidate_pairs | n_active_candidate_pairs |
 |---:|---:|---:|---:|---:|
-| 3477 | 734 | 0 | 333 | 324 |
+| 21534 | 734 | 0 | 487 | 478 |
 
 Fuzzy matching diagnostic summary
 
@@ -94,7 +94,17 @@ analysis_table(fuzzy_coverage, "Candidate-pair coverage", max_rows = 30)
 | join_map_district_17_to_district_18 | 3 | active source/tracker candidate pair emitted by the current pipeline |
 | join_map_district_18_to_district_19 | 10 | active source/tracker candidate pair emitted by the current pipeline |
 | legacy_troublesome_comment | 9 | legacy hand-picked examples from Chunk 16 |
-| tracker_1991_to_2001 | 160 | active source/tracker candidate pair emitted by the current pipeline |
+| tracker_2001_to_2005 | 21 | active source/tracker candidate pair emitted by the current pipeline |
+| tracker_2001_to_2007 | 35 | active source/tracker candidate pair emitted by the current pipeline |
+| tracker_2005_to_2006 | 6 | active source/tracker candidate pair emitted by the current pipeline |
+| tracker_2006_to_2007 | 8 | active source/tracker candidate pair emitted by the current pipeline |
+| tracker_2007_to_2008 | 8 | active source/tracker candidate pair emitted by the current pipeline |
+| tracker_2007_to_2017 | 102 | active source/tracker candidate pair emitted by the current pipeline |
+| tracker_2008_to_2011 | 29 | active source/tracker candidate pair emitted by the current pipeline |
+| tracker_2011_to_2017 | 79 | active source/tracker candidate pair emitted by the current pipeline |
+| tracker_2017_to_2018 | 3 | active source/tracker candidate pair emitted by the current pipeline |
+| tracker_2017_to_2020 | 13 | active source/tracker candidate pair emitted by the current pipeline |
+| tracker_2018_to_2019 | 10 | active source/tracker candidate pair emitted by the current pipeline |
 
 Candidate-pair coverage
 
