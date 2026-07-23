@@ -546,6 +546,40 @@ normalize_admin_lookup_v2 <- function(x) {
   x[required]
 }
 
+deterministic_transition_2011_to_2001_v2 <- function(transition) {
+  transition <- safe_df(transition)
+  required <- c(
+    "state_code_2011", "district_code_2011",
+    "state_code_2001", "district_code_2001",
+    "population_share_to_2001", "shrid_coverage", "mapping_class"
+  )
+  missing <- setdiff(required, names(transition))
+  if (length(missing)) {
+    stop(
+      "District transition is missing required columns: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+
+  keep <- transition$mapping_class %in% "deterministic_containment" &
+    suppressWarnings(as.numeric(transition$population_share_to_2001)) == 1 &
+    suppressWarnings(as.numeric(transition$shrid_coverage)) == 1
+  out <- transition[keep, required, drop = FALSE]
+  keys <- paste(
+    pad_admin_code(out$state_code_2011, 2L),
+    pad_admin_code(out$district_code_2011, 3L),
+    sep = "__"
+  )
+  if (anyDuplicated(keys)) {
+    stop(
+      "Deterministic Census-2011 transitions must have one target per source.",
+      call. = FALSE
+    )
+  }
+  out
+}
+
 build_primary_mapping_eligibility <- function(
   source_roster, source_matches, transition_2001_2011,
   admin_2001, admin_2011, admin_events = data.frame()
@@ -571,8 +605,9 @@ build_primary_mapping_eligibility <- function(
   a11 <- normalize_admin_lookup_v2(admin_2011)
   names(a11)[2:3] <- c("source_state_code_2011", "source_district_code_2011")
   out <- merge(out, a11, by.x = "terminal_unit", by.y = "unit_id", all.x = TRUE, sort = FALSE)
-  transition <- safe_df(transition_2001_2011)
-  deterministic <- transition[transition$mapping_class == "deterministic_containment", , drop = FALSE]
+  deterministic <- deterministic_transition_2011_to_2001_v2(
+    transition_2001_2011
+  )
   if (nrow(deterministic)) {
     out <- merge(
       out,
