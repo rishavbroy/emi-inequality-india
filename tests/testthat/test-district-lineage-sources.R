@@ -511,3 +511,14 @@ test_that("migration gates distinguish absent acceptances from ineligible accept
   )
 })
 
+
+test_that("derived Census 2001 geometry is an optional loaded source", {
+  specs <- district_lineage_v2_input_specs(build_paths())
+  row <- specs[specs$source_id == "lineage_geometry_2001", , drop = FALSE]
+
+  expect_equal(nrow(row), 1L)
+  expect_true(row$load_for_diagnostic)
+  expect_identical(row$reader, "gpkg")
+  expect_identical(row$role, "derived_2001_geometry")
+})
+

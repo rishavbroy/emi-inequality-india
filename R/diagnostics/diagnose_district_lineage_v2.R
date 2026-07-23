@@ -564,8 +564,9 @@ build_district_lineage_v2 <- function(
   production_comparison <- build_production_crosswalk_comparison_v2(
     primary_crosswalk, production_panel
   )
-  geometry_qa <- data.frame(
-    metric = "geometry_available", value = FALSE, stringsAsFactors = FALSE
+  geometry_qa <- geometry_qa_v2(
+    raw_sources$lineage_geometry_2001 %||% data.frame(),
+    admin_2001
   )
   gold <- score_gold_set_v2(raw_sources$lineage_gold %||% data.frame())
   gold_summary <- summarize_gold_set_v2(gold)

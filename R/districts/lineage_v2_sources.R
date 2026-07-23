@@ -50,6 +50,7 @@ district_lineage_v2_input_specs <- function(paths = build_paths()) {
     spec("shrug_pc11_state_geometry", "data/raw/shrug/open-polygons/shrug-pc11state-poly-gpkg/state.gpkg", "inventory_only", FALSE, "census_2011_geometry"),
     spec("shrug_pc11_village_geometry_zip", "data/raw/shrug/open-polygons/shrug-pc11-village-poly-gpkg.zip", "inventory_only", FALSE, "census_2011_geometry"),
     spec("shrug_shrid_geometry_zip", "data/raw/shrug/open-polygons/shrug-shrid-poly-gpkg.zip", "inventory_only", FALSE, "future_2001_geometry"),
+    spec("lineage_geometry_2001", "outputs/derived/district_lineage_v2/district_2001.gpkg", "gpkg", TRUE, "derived_2001_geometry"),
     spec("shrug_pca01_zip", "data/raw/shrug/census_2001/shrug-pca01-csv.zip", "inventory_only", FALSE, "census_locality_attributes"),
     spec("shrug_pca11_zip", "data/raw/shrug/census_2011/shrug-pca11-csv.zip", "inventory_only", FALSE, "census_locality_attributes"),
     spec("shrug_td01_zip", "data/raw/shrug/census_2001/shrug-td01-csv.zip", "inventory_only", FALSE, "census_locality_attributes"),
