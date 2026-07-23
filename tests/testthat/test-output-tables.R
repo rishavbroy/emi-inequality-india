@@ -444,7 +444,7 @@ test_that("modelsummary payload uses project-owned coefficient extraction", {
   expect_s3_class(out, "modelsummary_list")
   expect_equal(out$tidy$term, names(stats::coef(model)))
   expect_equal(out$tidy$estimate, unname(stats::coef(model)))
-  expect_equal(out$tidy$std.error, sqrt(diag(vc)), tolerance = 1e-12)
+  expect_equal(out$tidy$std.error, unname(sqrt(diag(vc))), tolerance = 1e-12)
   expect_equal(out$glance$nobs, stats::nobs(model))
 })
 
