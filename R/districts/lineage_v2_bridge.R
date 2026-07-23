@@ -376,6 +376,30 @@ allocation_coverage_status_v2 <- function(
   generated <- safe_df(generated_validation)
   adjudicated <- safe_df(adjudicated_validation)
 
+  require_coverage_columns <- function(x, label) {
+    if (!nrow(x)) return(invisible())
+    missing <- setdiff(c("source_key", "coverage_complete"), names(x))
+    if (length(missing)) {
+      stop(structure(
+        list(
+          message = paste0(
+            label, " is missing required columns: ",
+            paste(missing, collapse = ", ")
+          ),
+          call = NULL
+        ),
+        class = c(
+          "lineage_allocation_validation_error",
+          "error",
+          "condition"
+        )
+      ))
+    }
+    invisible()
+  }
+  require_coverage_columns(generated, "Generated allocation validation")
+  require_coverage_columns(adjudicated, "Reviewed allocation validation")
+
   generated_keys <- unique(plain_chr(generated$source_key))
   incomplete_keys <- unique(plain_chr(generated$source_key[
     !(generated$coverage_complete %in% TRUE)
