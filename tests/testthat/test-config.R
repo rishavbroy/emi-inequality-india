@@ -11,3 +11,9 @@ test_that("renv status includes development dependencies by default", {
   expect_true(isTRUE(settings[["snapshot.dev"]]))
   expect_true("Suggests" %in% settings[["package.dependency.fields"]])
 })
+
+
+test_that("renv startup defers synchronization to the explicit audit", {
+  profile <- readLines(file.path(Sys.getenv("EMI_PROJECT_ROOT", "."), ".Rprofile"), warn = FALSE)
+  expect_true(any(grepl("renv.config.synchronized.check = FALSE", profile, fixed = TRUE)))
+})

@@ -61,6 +61,13 @@ print(
 )
 PY
 
+echo "=== RENV SYNCHRONIZATION ==="
+Rscript - <<'RS'
+status <- renv::status(dev = TRUE)
+if (!isTRUE(status$synchronized)) quit(status = 1L)
+cat("renv library, lockfile, and development dependencies are synchronized.\n")
+RS
+
 echo "=== R SOURCE SYNTAX ==="
 Rscript - <<'RS'
 files <- unique(c(

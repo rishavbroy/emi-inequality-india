@@ -38,7 +38,7 @@ The v2 system must remain parallel until source identities, administrative event
 ## System dependencies
 
 The R package dependencies are declared in [`DESCRIPTION`](DESCRIPTION), and [`renv.lock`](renv.lock) records exact package versions. Spatial packages such as `sf` and `spdep` may also require GDAL, GEOS, PROJ, and `pkg-config` system libraries. On macOS, these are commonly available through Homebrew as `gdal`, `geos`, `proj`, and `pkg-config`.
- Development dependencies in `Suggests`, including `testthat`, are intentionally locked. [`renv/settings.json`](renv/settings.json) records `snapshot.dev = true` and includes `Suggests` in `package.dependency.fields`, so activation-time consistency checks and ordinary `renv::snapshot()` or `renv::status()` calls evaluate the same development environment used by the audit.
+Development dependencies in `Suggests`, including `testthat`, are intentionally locked. [`renv/settings.json`](renv/settings.json) records `snapshot.dev = true` and includes `Suggests` in `package.dependency.fields`. To avoid repeating the same synchronization scan in every child R process, [`.Rprofile`](.Rprofile) disables renv's activation-time check; [`scripts/check_source_syntax.sh`](scripts/check_source_syntax.sh) runs one explicit `renv::status(dev = TRUE)` gate instead.
 
 The setup script checks for `gdal-config`, `geos-config`, and `pkg-config` and prints this reminder if they are missing. Existing local installations may still work if binary R packages are already installed, but a fresh machine may need these system libraries before `make init-renv` can install spatial dependencies.
 
@@ -102,3 +102,6 @@ On Windows, run the same audit commands through WSL or Git Bash. From PowerShell
 ### Lineage-source execution
 
 Extended district-lineage diagnostics track and cache each loaded raw source independently. Large LGD SpreadsheetML changed-unit rosters are streamed into their canonical columns, and SHRUG key readers retain only columns needed by the bridge. Inventory-only geometry and locality-attribute archives remain visible in the source inventory without being loaded into the general lineage bundle. Incremental audits therefore reread only sources whose specification, reader, or file changed; village changed-unit coverage remains included.
+
+
+The project disables renv's automatic synchronization message at activation and runs one explicit development-aware `renv::status(dev = TRUE)` check during `scripts/check_source_syntax.sh`. This avoids repeating the same warning in every child R process while preserving a failing audit gate for genuine library/lockfile drift.
