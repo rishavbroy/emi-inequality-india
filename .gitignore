@@ -84,3 +84,6 @@ autorun.inf
 /.quarto/
 /.quarto-home/
 **/*.quarto_ipynb
+
+# Quarto Typst render intermediates
+posters/2026_predoc_conference/poster.typ
