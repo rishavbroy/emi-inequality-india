@@ -292,3 +292,37 @@ test_that("Census 2001 registry rejects unknown state codes", {
   )
 })
 
+test_that("reviewed allocations resolve only their corresponding coverage gaps", {
+  generated <- data.frame(
+    source_key = c("complete", "reviewed", "open"),
+    coverage_complete = c(TRUE, FALSE, FALSE),
+    stringsAsFactors = FALSE
+  )
+  reviewed <- data.frame(
+    source_key = "reviewed",
+    coverage_complete = TRUE,
+    stringsAsFactors = FALSE
+  )
+
+  status <- allocation_coverage_status_v2(generated, reviewed)
+
+  expect_equal(status$n_generated_sources, 3L)
+  expect_equal(status$n_reviewed_complete, 1L)
+  expect_equal(status$n_unresolved, 1L)
+  expect_false(status$coverage_resolved)
+})
+
+test_that("tracked high-coverage sensitivity allocations are normalized", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
+  path <- file.path(
+    root, "data", "metadata", "district_allocation_weights_v2.csv"
+  )
+  weights <- read.csv(path, stringsAsFactors = FALSE)
+  validation <- validate_adjudicated_allocation_weights_v2(weights)
+
+  expect_equal(nrow(weights), 503L)
+  expect_equal(length(unique(weights$source_unit)), 457L)
+  expect_true(all(weights$status == "accepted"))
+  expect_true(all(validation$coverage_complete))
+  expect_true(all(grepl("99pct", weights$basis, fixed = TRUE)))
+})

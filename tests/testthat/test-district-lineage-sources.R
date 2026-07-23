@@ -590,3 +590,60 @@ test_that("accepted primary eligibility ignores unrelated NA statuses", {
   ]
   expect_identical(gate, TRUE)
 })
+
+test_that("migration readiness counts valid reviewed sensitivity coverage", {
+  generated <- data.frame(
+    source_key = c("reviewed", "open"),
+    weights_well_formed = TRUE,
+    coverage_complete = FALSE,
+    stringsAsFactors = FALSE
+  )
+  reviewed <- data.frame(
+    source_key = "reviewed",
+    coverage_complete = TRUE,
+    stringsAsFactors = FALSE
+  )
+
+  readiness <- build_migration_readiness_v2(
+    missing_core = character(),
+    admin_2001 = data.frame(unit_id = "pc2001__01__01"),
+    admin_2011 = data.frame(unit_id = "pc2011__01__001"),
+    allocation_validation = generated,
+    source_roster = data.frame(source_row_id = "s1"),
+    source_matches = data.frame(source_row_id = "s1", status = "accepted"),
+    primary_eligibility = data.frame(
+      status = "accepted", eligible_primary = TRUE
+    ),
+    duplicate_keys = empty_duplicate_key_diagnostics_v2(),
+    adjudicated_allocation_validation = reviewed,
+    source_reference_issues = data.frame()
+  )
+
+  gate <- readiness$passed[
+    readiness$gate == "shrid_allocation_coverage_complete"
+  ]
+  expect_false(gate)
+
+  reviewed <- rbind(
+    reviewed,
+    data.frame(source_key = "open", coverage_complete = TRUE)
+  )
+  readiness <- build_migration_readiness_v2(
+    missing_core = character(),
+    admin_2001 = data.frame(unit_id = "pc2001__01__01"),
+    admin_2011 = data.frame(unit_id = "pc2011__01__001"),
+    allocation_validation = generated,
+    source_roster = data.frame(source_row_id = "s1"),
+    source_matches = data.frame(source_row_id = "s1", status = "accepted"),
+    primary_eligibility = data.frame(
+      status = "accepted", eligible_primary = TRUE
+    ),
+    duplicate_keys = empty_duplicate_key_diagnostics_v2(),
+    adjudicated_allocation_validation = reviewed,
+    source_reference_issues = data.frame()
+  )
+  gate <- readiness$passed[
+    readiness$gate == "shrid_allocation_coverage_complete"
+  ]
+  expect_true(gate)
+})

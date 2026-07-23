@@ -121,6 +121,8 @@ test_that("one accepted allocation cannot clear unrelated coverage gaps", {
     ),
     allocation_weights = data.frame(
       source_unit = "pc2011__01__001",
+      target_2001 = "pc2001__01__01",
+      weight = 1,
       status = "accepted"
     ),
     primary_crosswalk = data.frame(),
@@ -286,6 +288,8 @@ test_that("accepted allocations may include resolved complete sources", {
     ),
     allocation_weights = data.frame(
       source_unit = c("gap", "complete"),
+      target_2001 = c("pc2001__01__01", "pc2001__01__02"),
+      weight = c(1, 1),
       status = c("accepted", "accepted")
     ),
     primary_crosswalk = data.frame(),
