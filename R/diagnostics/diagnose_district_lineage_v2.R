@@ -364,7 +364,8 @@ migration_gate_actions_v2 <- function() {
 build_migration_readiness_v2 <- function(
   missing_core, admin_2001, admin_2011, allocation_validation,
   source_roster, source_matches, primary_eligibility, duplicate_keys,
-  adjudicated_allocation_validation, source_reference_issues
+  adjudicated_allocation_validation, source_reference_issues,
+  adjudicated_allocation_weights = data.frame()
 ) {
   source_matches <- safe_df(source_matches)
   resolved_ids <- source_matches$source_row_id[
@@ -373,7 +374,8 @@ build_migration_readiness_v2 <- function(
   duplicates <- safe_df(duplicate_keys)
   allocation_status <- allocation_coverage_status_v2(
     allocation_validation,
-    adjudicated_allocation_validation
+    adjudicated_allocation_validation,
+    allocation_decision_status_v2(adjudicated_allocation_weights)
   )
 
   gates <- c(
@@ -485,8 +487,8 @@ lineage_v2_summary <- function(
       "candidate_rows", "cross_vintage_exact_review_rows", "single_vintage_exact_review_rows",
       "fuzzy_review_rows", "no_candidate_rows", "primary_eligible_source_rows", "candidate_event_rows",
       "current_component_rows", "urban_coverage_rows", "changed_component_rows",
-      "targeted_evidence_requests", "reviewed_allocation_sources",
-      "remaining_incomplete_allocations"
+      "targeted_evidence_requests", "accepted_allocation_sources",
+      "rejected_allocation_sources", "remaining_incomplete_allocations"
     ),
     value = c(
       sum(inventory$exists), sum(!inventory$exists), nrow(admin_2001), nrow(admin_2011),
@@ -504,8 +506,13 @@ lineage_v2_summary <- function(
       length(unique(adjudicated_weights$source_unit[
         adjudicated_weights$status %in% "accepted"
       ])),
+      length(unique(adjudicated_weights$source_unit[
+        adjudicated_weights$status %in% "rejected"
+      ])),
       allocation_coverage_status_v2(
-        allocation_validation, adjudicated_weight_validation
+        allocation_validation,
+        adjudicated_weight_validation,
+        allocation_decision_status_v2(adjudicated_weights)
       )$n_unresolved[[1]]
     ),
     stringsAsFactors = FALSE
@@ -604,7 +611,8 @@ build_district_lineage_v2 <- function(
   readiness <- build_migration_readiness_v2(
     missing_core, admin_2001, admin_2011, allocation_validation,
     source_roster, source_matches, eligibility, duplicate_keys,
-    adjudicated_weight_validation, source_reference_issues
+    adjudicated_weight_validation, source_reference_issues,
+    adjudicated_weights
   )
   migration_blockers <- build_migration_blockers_v2(readiness)
   completion_status <- lineage_completion_steps_v2(

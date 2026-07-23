@@ -550,7 +550,8 @@ lineage_completion_steps_v2 <- function(
     validate_adjudicated_allocation_weights_v2(allocation_weights)
   allocation_status <- allocation_coverage_status_v2(
     allocation_validation,
-    adjudicated_allocation_validation
+    adjudicated_allocation_validation,
+    allocation_decision_status_v2(allocation_weights)
   )
   allocation_gaps_resolved <- allocation_status$coverage_resolved[[1]]
   geometry_value <- function(metric, default = NA_real_) {
