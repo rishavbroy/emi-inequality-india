@@ -17,14 +17,26 @@ repo_text <- function(...) {
 
 git_attribute <- function(path, attribute) {
   root <- dirname(repo_file(".gitattributes"))
-  output <- system2(
+  output <- suppressWarnings(system2(
     "git",
-    c("-C", root, "check-attr", attribute, "--", path),
+    c(
+      "-C", shQuote(root),
+      "check-attr", shQuote(attribute),
+      "--", shQuote(path)
+    ),
     stdout = TRUE,
     stderr = TRUE
-  )
-  if (!length(output)) {
-    stop("git check-attr returned no output for ", path, call. = FALSE)
+  ))
+  status <- attr(output, "status")
+  if (!is.null(status) && status != 0L) {
+    stop(
+      "git check-attr failed for ", path, ": ",
+      paste(output, collapse = "\n"),
+      call. = FALSE
+    )
+  }
+  if (length(output) != 1L) {
+    stop("git check-attr returned unexpected output for ", path, call. = FALSE)
   }
   sub("^.*: [^:]+: ", "", output[[1]])
 }
