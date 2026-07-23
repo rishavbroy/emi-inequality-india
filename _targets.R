@@ -164,8 +164,7 @@ extended_diagnostic_targets <- list(
   ),
   tar_target(
     diag_ext_district_lineage_v2,
-    save_district_lineage_v2(district_lineage_v2),
-    format = "file"
+    save_district_lineage_v2(district_lineage_v2)
   ),
   tar_target(
     district_panel_v2,
@@ -199,8 +198,7 @@ extended_diagnostic_targets <- list(
   ),
   tar_target(
     diag_ext_lineage_v2_downstream,
-    save_lineage_v2_downstream_review(lineage_v2_downstream_review),
-    format = "file"
+    save_lineage_v2_downstream_review(lineage_v2_downstream_review)
   ),
   tar_target(diag_ext_missingness, save_missingness_diagnostics(diagnose_missingness(selection_data, cfg))),
   tar_target(diag_ext_district_tracker_sources, save_tracker_source_diagnostics(diagnose_district_tracker_sources(raw_district_changes, district_tracker, cfg))),
