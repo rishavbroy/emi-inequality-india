@@ -316,7 +316,7 @@ test_that("dependency and target-worker contracts avoid unused attachment machin
   expect_false(grepl("tarchetypes", description, fixed = TRUE))
   expect_false(grepl("fuzzyjoin", description, fixed = TRUE))
   expect_match(description, "Suggests:", fixed = TRUE)
-  expect_match(description, "pdftools", fixed = TRUE)
+  expect_false(grepl("pdftools", description, fixed = TRUE))
   expect_match(description, "testthat", fixed = TRUE)
   expect_match(targets, "packages = character()", fixed = TRUE)
   expect_false(file.exists(file.path(root, "R", "packages.R")))
