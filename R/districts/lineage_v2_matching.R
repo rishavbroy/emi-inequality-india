@@ -45,6 +45,19 @@ nss64_census2001_unit_id_v2 <- function(source_code) {
   }, character(1))
 }
 
+resolve_nss64_census2001_unit_id_v2 <- function(source_code, admin_2001) {
+  admin_2001 <- safe_df(admin_2001)
+  require_columns(
+    admin_2001,
+    c("unit_id", "state_code", "district_code"),
+    "Census-2001 administrative registry"
+  )
+  parsed <- nss64_census2001_unit_id_v2(source_code)
+  known <- unique(plain_chr(admin_2001$unit_id))
+  parsed[!parsed %in% known] <- NA_character_
+  parsed
+}
+
 empty_nss_district_roster_v2 <- function() {
   data.frame(
     source_row_id = character(), source_key = character(), wave = character(),
