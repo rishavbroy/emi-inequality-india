@@ -296,3 +296,21 @@ test_that("blank tracked lineage ledgers retain zero-row schemas", {
   expect_equal(nrow(registry), 0L)
   expect_named(registry, c("source_id", "citation", "path_or_url", "accessed"))
 })
+
+
+test_that("lineage diagnostic writer preserves typed zero-row schemas", {
+  dir <- tempfile("lineage-v2-")
+  diagnostics <- list(
+    source_matches = empty_source_matches_v2(),
+    missing_core_inputs = data.frame(source_id = character(), stringsAsFactors = FALSE)
+  )
+
+  save_district_lineage_v2(diagnostics, dir)
+
+  matches <- utils::read.csv(file.path(dir, "source_matches.csv"), check.names = FALSE)
+  missing <- utils::read.csv(file.path(dir, "missing_core_inputs.csv"), check.names = FALSE)
+  expect_named(matches, names(empty_source_matches_v2()))
+  expect_named(missing, "source_id")
+  expect_equal(nrow(matches), 0L)
+  expect_equal(nrow(missing), 0L)
+})
