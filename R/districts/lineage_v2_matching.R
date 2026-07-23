@@ -62,6 +62,42 @@ resolve_nss64_census2001_unit_id_v2 <- function(source_code, admin_2001) {
   parsed
 }
 
+resolve_census2011_district_unit_v2 <- function(
+  census2011_code,
+  admin_2011
+) {
+  admin_2011 <- safe_df(admin_2011)
+  required <- c("unit_id", "district_code")
+  missing <- setdiff(required, names(admin_2011))
+  if (length(missing)) {
+    stop(
+      "Census-2011 administrative registry is missing required columns: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+
+  registry <- unique(data.frame(
+    unit_id = plain_chr(admin_2011$unit_id),
+    district_code = pad_admin_code(admin_2011$district_code, 3L),
+    stringsAsFactors = FALSE
+  ))
+  registry <- registry[
+    !is.na(registry$district_code) & nzchar(registry$district_code),
+    ,
+    drop = FALSE
+  ]
+  if (anyDuplicated(registry$district_code)) {
+    stop(
+      "Census-2011 district codes must identify one registry unit each.",
+      call. = FALSE
+    )
+  }
+
+  code <- pad_admin_code(census2011_code, 3L)
+  registry$unit_id[match(code, registry$district_code)]
+}
+
 empty_nss_district_roster_v2 <- function() {
   data.frame(
     source_row_id = character(), source_key = character(), wave = character(),

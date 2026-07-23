@@ -1049,4 +1049,17 @@ test_that("tracked LGD modification identities use official Census codes", {
   expect_true(all(rows$source_id == "lgd_mod_districts_census_codes"))
   expect_equal(anyDuplicated(rows$source_row_id), 0L)
   expect_true(all(grepl("^pc2011__", rows$unit_id)))
+
+  telangana <- rows[rows$raw_state == "Telangana", , drop = FALSE]
+  expect_setequal(
+    telangana$unit_id,
+    c(
+      "pc2011__28__532",
+      "pc2011__28__533",
+      "pc2011__28__536",
+      "pc2011__28__539",
+      "pc2011__28__541"
+    )
+  )
+  expect_false(any(grepl("^pc2011__36__", rows$unit_id)))
 })

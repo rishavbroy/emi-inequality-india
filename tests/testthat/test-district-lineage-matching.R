@@ -526,3 +526,37 @@ test_that("reviewed bifurcations resolve descendants to one parent", {
   expect_true(all(out$terminal_vintage == "2001"))
   expect_true(all(out$resolution_status == "resolved"))
 })
+
+test_that("Census-2011 district codes resolve through their historical registry", {
+  admin <- data.frame(
+    unit_id = c("pc2011__28__532", "pc2011__28__536"),
+    district_code = c("532", "536"),
+    stringsAsFactors = FALSE
+  )
+
+  expect_identical(
+    resolve_census2011_district_unit_v2(
+      c("532", "536", "999", NA),
+      admin
+    ),
+    c(
+      "pc2011__28__532",
+      "pc2011__28__536",
+      NA_character_,
+      NA_character_
+    )
+  )
+})
+
+test_that("Census-2011 district codes cannot map to multiple units", {
+  admin <- data.frame(
+    unit_id = c("pc2011__28__532", "pc2011__36__532"),
+    district_code = c("532", "532"),
+    stringsAsFactors = FALSE
+  )
+
+  expect_error(
+    resolve_census2011_district_unit_v2("532", admin),
+    "must identify one registry unit each"
+  )
+})
