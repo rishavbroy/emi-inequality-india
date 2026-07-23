@@ -177,7 +177,7 @@ The diagnostic now writes five additional completion artifacts:
 - `completion_status.csv`: one row for each of the nine remaining research
   steps, with observed progress and the next required action.
 
-A completion step passes only when its own evidence is complete. In particular, one accepted sensitivity allocation cannot clear unrelated coverage gaps, and production review passes only when every accepted v2 mapping has a corresponding `same_target` production comparison.
+A completion step passes only when its own evidence is complete. In particular, one accepted sensitivity allocation cannot clear unrelated coverage gaps, and production review passes only when every accepted v2 mapping has a corresponding `same_target` production comparison. Generated adjudication drafts omit already accepted or excluded identities, join evidence on the exact `(source_row_id, recommended_unit)` pair, and report only unresolved fuzzy rows. Production comparison also treats a legacy source code with multiple distinct targets as `ambiguous_production_mapping` rather than expanding the comparison table.
 
 The draft is intentionally generated rather than tracked. A researcher must
 verify administrative continuity and evidence, then copy only reviewed rows
@@ -190,6 +190,15 @@ unions polygons by code-based 2001 district ID. `geometry_qa_v2()` checks
 coverage against the canonical registry and counts unexpected, missing, and
 invalid geometries. The raw polygons remain local-only; the derived compact
 GeoPackage may be retained after review.
+
+Run `make lineage-geometry` once the local
+`data/raw/shrug/open-polygons/shrug-shrid-poly-gpkg.zip` archive is present.
+The command reuses the cached lineage sources, extracts the single GeoPackage,
+dissolves deterministic SHRID memberships, writes
+`outputs/derived/district_lineage_v2/district_2001.gpkg`, and reruns extended
+diagnostics so geometry QA and completion status update. The compact derived
+file is treated as a file dependency; routine diagnostics do not repeatedly
+read or union the 380 MB source archive.
 
 ## Immediate work plan
 
