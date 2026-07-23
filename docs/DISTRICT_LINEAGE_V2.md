@@ -152,7 +152,9 @@ The existing production crosswalk must not be replaced until all of the followin
 - no conflicting duplicate source key;
 - no unresolved or merely fuzzy candidate enters production;
 - primary mappings are deterministic containments or documented renames;
-- allocation weights are finite, nonnegative, and sum to one by source group;
+- generated SHRUG transition weights are finite, nonnegative, and never overallocate a source district;
+- complete mapped mass is tracked separately from weight validity, and any unmapped mass must be resolved or represented in a reviewed sensitivity allocation;
+- accepted sensitivity-allocation weights sum to one by source group;
 - every exclusion has a reason;
 - treatment, outcome, IV, and validated 2001 geometry are present for every included panel row;
 - production and diagnostics use the same adjudicated ledgers;
