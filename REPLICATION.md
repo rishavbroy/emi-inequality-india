@@ -106,3 +106,5 @@ Extended district-lineage diagnostics track and cache each loaded raw source ind
 
 
 The project disables renv's automatic synchronization message at activation and runs one explicit development-aware `renv::status(dev = TRUE)` check during `scripts/check_source_syntax.sh`. This avoids repeating the same warning in every child R process while preserving a failing audit gate for genuine library/lockfile drift.
+
+The poster document loads project images before passing them into the bundled Typst package, because package code cannot directly construct paths into the calling project.
