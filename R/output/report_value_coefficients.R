@@ -1,48 +1,21 @@
 # Model coefficient and first-stage helpers for public report values.
 
 report_coefficient_frame <- function(model) {
-  estimates <- tryCatch(stats::coef(model), error = function(e) NULL)
-  if (is.null(estimates) || !length(estimates)) return(data.frame())
-
-  terms <- names(estimates)
-  if (is.null(terms) || !length(terms)) terms <- paste0("term_", seq_along(estimates))
-  estimates <- suppressWarnings(as.numeric(estimates))
-
-  vc <- tryCatch(stats::vcov(model), error = function(e) NULL)
-  se <- rep(NA_real_, length(estimates))
-  if (!is.null(vc) && length(dim(vc)) == 2L && all(dim(vc) >= length(estimates))) {
-    diag_vc <- suppressWarnings(as.numeric(diag(vc)))
-    vc_terms <- rownames(vc)
-    if (!is.null(vc_terms) && length(vc_terms)) {
-      matched <- match(terms, vc_terms)
-      ok <- !is.na(matched) & matched <= length(diag_vc)
-      se[ok] <- sqrt(pmax(diag_vc[matched[ok]], 0))
-    } else {
-      se <- sqrt(pmax(diag_vc[seq_along(estimates)], 0))
-    }
-  }
-
-  statistic <- estimates / se
-  statistic[!is.finite(statistic)] <- NA_real_
-  df_resid <- tryCatch(stats::df.residual(model), error = function(e) NA_real_)
-  p_value <- if (is.finite(df_resid) && df_resid > 0) {
-    2 * stats::pt(abs(statistic), df = df_resid, lower.tail = FALSE)
-  } else {
-    2 * stats::pnorm(abs(statistic), lower.tail = FALSE)
-  }
-  p_value[!is.finite(p_value)] <- NA_real_
+  coefs <- clustered_model_coefficients(model)
+  if (!nrow(coefs)) coefs <- plain_model_coefficients(model)
+  if (!nrow(coefs)) return(data.frame())
 
   out <- data.frame(
-    Estimate = estimates,
-    estimate = estimates,
-    p.value = p_value,
-    `Pr(>|t|)` = p_value,
-    statistic = statistic,
-    std.error = se,
+    Estimate = coefs$Estimate,
+    estimate = coefs$Estimate,
+    p.value = coefs$`Pr(>|t|)`,
+    `Pr(>|t|)` = coefs$`Pr(>|t|)`,
+    statistic = coefs$statistic,
+    std.error = coefs$`Std. Error`,
     check.names = FALSE,
     stringsAsFactors = FALSE
   )
-  rownames(out) <- terms
+  rownames(out) <- rownames(coefs)
   out
 }
 
@@ -74,7 +47,11 @@ p_value <- function(model, terms, digits = NULL) {
 
 condition_number_value <- function(model) {
   out <- tryCatch({
-    X <- stats::model.matrix(model)
+    X <- if (inherits(model, "ivreg")) {
+      stats::model.matrix(model, component = "regressors")
+    } else {
+      stats::model.matrix(model)
+    }
     kappa(X, exact = TRUE)
   }, error = function(e) NA_real_)
   if (is.finite(out)) format(out, scientific = FALSE, digits = 7) else NA_character_
