@@ -191,8 +191,20 @@ coverage against the canonical registry and counts unexpected, missing, and
 invalid geometries. The raw polygons remain local-only; the derived compact
 GeoPackage may be retained after review.
 
-Run `make lineage-geometry` once the local
-`data/raw/shrug/open-polygons/shrug-shrid-poly-gpkg.zip` archive is present.
+The canonical public-build audit now runs the cached
+`lineage-geometry-build` stage immediately before extended diagnostics whenever
+`--with-extended-diagnostics` is enabled. Therefore, the preferred workflow is
+the usual `scripts/run_public_build_audit.sh` command; a separate
+`make lineage-geometry` call is unnecessary. The standalone target remains
+available for geometry-only debugging.
+
+The build is skipped when the optional raw archive is absent and is also skipped
+when the compact GeoPackage is newer than its material source, key, manifest,
+and implementation inputs. When rebuilding, invalid input and dissolved
+geometries are repaired with `sf::st_make_valid()` and then revalidated.
+
+Run `make lineage-geometry` directly only when debugging the local
+`data/raw/shrug/open-polygons/shrug-shrid-poly-gpkg.zip` archive.
 The command builds only the cached source targets needed by the geometry
 script, extracts the single GeoPackage, dissolves deterministic SHRID
 memberships, writes
