@@ -246,3 +246,15 @@ test_that("NSS roster preserves equivalent raw aliases without duplicating sourc
   expect_match(out$raw_district, "Lahul & Spiti", fixed = TRUE)
   expect_match(out$raw_district, "Lahaul and Spiti", fixed = TRUE)
 })
+
+
+test_that("blank source adjudications remain empty and typed", {
+  out <- read_adjudicated_source_matches_v2(data.frame())
+
+  expect_equal(nrow(out), 0L)
+  expect_named(
+    out,
+    c("source_row_id", "wave", "raw_state", "raw_district", "unit_id",
+      "method", "source_id", "status", "note")
+  )
+})

@@ -281,3 +281,18 @@ test_that("changed-component roster retains every loaded administrative level", 
   )
   expect_equal(nrow(out), 4L)
 })
+
+
+test_that("blank tracked lineage ledgers retain zero-row schemas", {
+  events <- read_admin_events_v2(data.frame())
+  registry <- read_lineage_source_registry_v2(data.frame())
+
+  expect_equal(nrow(events), 0L)
+  expect_named(
+    events,
+    c("event_id", "effective_date", "event_type", "from_unit", "to_unit",
+      "share", "source_id", "status", "note")
+  )
+  expect_equal(nrow(registry), 0L)
+  expect_named(registry, c("source_id", "citation", "path_or_url", "accessed"))
+})
