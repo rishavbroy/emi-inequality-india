@@ -471,7 +471,16 @@ test_that("migration readiness is derived from prerequisite gates", {
     ),
     source_roster = data.frame(source_row_id = "source-1"),
     source_matches = data.frame(source_row_id = "source-1", status = "accepted"),
-    primary_eligibility = data.frame(status = "accepted", eligible_primary = TRUE),
+    primary_eligibility = data.frame(
+      source_row_id = "source-1",
+      status = "accepted",
+      eligible_primary = TRUE
+    ),
+    sensitivity_crosswalk = data.frame(
+      source_row_id = "source-1",
+      target_unit_2001 = "pc2001__01__01",
+      stringsAsFactors = FALSE
+    ),
     duplicate_keys = empty_duplicate_key_diagnostics_v2(),
     adjudicated_allocation_validation = data.frame(
       source_key = character(),
@@ -500,9 +509,66 @@ test_that("migration readiness is derived from prerequisite gates", {
   args$allocation_validation$coverage_complete <- FALSE
   blocked <- do.call(build_migration_readiness_v2, args)
   expect_false(blocked$passed[blocked$gate == "production_crosswalk_migration_ready"])
+  blockers <- build_migration_blockers_v2(blocked)
   expect_identical(
-    build_migration_blockers_v2(blocked)$gate,
+    blockers$gate,
     "shrid_allocation_coverage_complete"
+  )
+  expect_true(nzchar(blockers$next_action))
+})
+
+test_that("missing accepted identity mappings produce their own blocker", {
+  args <- list(
+    missing_core = character(),
+    admin_2001 = data.frame(unit_id = "pc2001__01__01"),
+    admin_2011 = data.frame(unit_id = "pc2011__01__001"),
+    allocation_validation = data.frame(
+      source_key = "pc2011__01__001",
+      weights_well_formed = TRUE,
+      coverage_complete = TRUE
+    ),
+    source_roster = data.frame(source_row_id = "source-1"),
+    source_matches = data.frame(
+      source_row_id = "source-1",
+      status = "accepted"
+    ),
+    primary_eligibility = data.frame(
+      source_row_id = "source-1",
+      status = "accepted",
+      eligible_primary = TRUE
+    ),
+    duplicate_keys = empty_duplicate_key_diagnostics_v2(),
+    adjudicated_allocation_validation = data.frame(),
+    source_reference_issues = data.frame(),
+    production_comparison = data.frame(),
+    production_reviews = data.frame(
+      review_id = "downstream",
+      source_row_id = "",
+      review_scope = "downstream_results",
+      v2_target_unit_2001 = "",
+      production_target_unit_2001 = "",
+      decision = "reviewed",
+      source_id = "source",
+      status = "accepted",
+      note = "reviewed",
+      stringsAsFactors = FALSE
+    ),
+    sensitivity_crosswalk = data.frame()
+  )
+
+  readiness <- do.call(build_migration_readiness_v2, args)
+  blockers <- build_migration_blockers_v2(readiness)
+
+  expect_false(readiness$passed[
+    readiness$gate == "production_crosswalk_migration_ready"
+  ])
+  expect_identical(
+    blockers$gate,
+    "all_accepted_rows_sensitivity_mapped"
+  )
+  expect_match(
+    blockers$next_action,
+    "Map every accepted identity"
   )
 })
 
