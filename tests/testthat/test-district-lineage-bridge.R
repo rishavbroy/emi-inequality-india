@@ -445,3 +445,56 @@ test_that("allocation CSV reader preserves identifier columns as character", {
   expect_identical(raw$source_unit, "01.010")
   expect_identical(parsed$source_unit, "pc2011__01__010")
 })
+
+test_that("allocation decisions distinguish accepted weights from rejections", {
+  decisions <- allocation_decision_status_v2(data.frame(
+    source_unit = c(
+      "pc2011__01__001",
+      "pc2011__01__001",
+      "pc2011__01__002"
+    ),
+    status = c("accepted", "accepted", "rejected"),
+    stringsAsFactors = FALSE
+  ))
+
+  expect_equal(nrow(decisions), 2L)
+  expect_setequal(
+    decisions$decision_status,
+    c("accepted", "rejected")
+  )
+  expect_true(all(decisions$decision_complete))
+})
+
+test_that("rejected allocations cannot fabricate targets or weights", {
+  raw <- data.frame(
+    source_unit = "pc2011__01__001",
+    target_2001 = "pc2001__01__01",
+    weight = 1,
+    status = "rejected",
+    stringsAsFactors = FALSE
+  )
+
+  expect_error(
+    read_adjudicated_allocation_weights_v2(raw),
+    "must not carry targets or weights"
+  )
+})
+
+test_that("tracked allocation ledger completes every generated decision", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
+  weights <- read_adjudicated_allocation_weights_v2(
+    read_lineage_source(
+      file.path(
+        root, "data", "metadata",
+        "district_allocation_weights_v2.csv"
+      ),
+      reader = "allocation_csv",
+      source_id = "lineage_allocation_weights"
+    )
+  )
+  decisions <- allocation_decision_status_v2(weights)
+
+  expect_equal(sum(decisions$decision_status == "accepted"), 457L)
+  expect_equal(sum(decisions$decision_status == "rejected"), 79L)
+  expect_equal(nrow(decisions), 536L)
+})

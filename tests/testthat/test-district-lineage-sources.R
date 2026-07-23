@@ -696,9 +696,13 @@ test_that("tracked high-coverage decisions leave only lower-coverage gaps", {
     )
   )
   reviewed <- validate_adjudicated_allocation_weights_v2(weights)
-  status <- allocation_coverage_status_v2(generated, reviewed)
+  decisions <- allocation_decision_status_v2(weights)
+  status <- allocation_coverage_status_v2(
+    generated, reviewed, decisions
+  )
 
-  expect_equal(status$n_reviewed_complete, 457L)
-  expect_equal(status$n_unresolved, 79L)
-  expect_false(status$coverage_resolved)
+  expect_equal(status$n_reviewed_accepted, 457L)
+  expect_equal(status$n_reviewed_rejected, 79L)
+  expect_equal(status$n_unresolved, 0L)
+  expect_true(status$coverage_resolved)
 })
