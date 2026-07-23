@@ -413,8 +413,8 @@ test_that("lineage summary preserves the complete diagnostic metric contract", {
     "single_vintage_exact_review_rows", "fuzzy_review_rows",
     "no_candidate_rows", "primary_eligible_source_rows", "candidate_event_rows",
     "current_component_rows", "urban_coverage_rows", "changed_component_rows",
-    "targeted_evidence_requests", "reviewed_allocation_sources",
-    "remaining_incomplete_allocations"
+    "targeted_evidence_requests", "accepted_allocation_sources",
+    "rejected_allocation_sources", "remaining_incomplete_allocations"
   )
 
   expect_named(summary, c("metric", "value"))
@@ -429,8 +429,12 @@ test_that("lineage summary preserves the complete diagnostic metric contract", {
     6
   )
   expect_equal(
-    summary$value[summary$metric == "reviewed_allocation_sources"],
+    summary$value[summary$metric == "accepted_allocation_sources"],
     1
+  )
+  expect_equal(
+    summary$value[summary$metric == "rejected_allocation_sources"],
+    0
   )
   expect_equal(
     summary$value[summary$metric == "remaining_incomplete_allocations"],
@@ -705,4 +709,50 @@ test_that("tracked high-coverage decisions leave only lower-coverage gaps", {
   expect_equal(status$n_reviewed_rejected, 79L)
   expect_equal(status$n_unresolved, 0L)
   expect_true(status$coverage_resolved)
+})
+
+test_that("allocation summary counts source decisions rather than ledger rows", {
+  weights <- data.frame(
+    source_unit = c(
+      "pc2011__01__001",
+      "pc2011__01__001",
+      "pc2011__01__002"
+    ),
+    status = c("accepted", "accepted", "rejected"),
+    stringsAsFactors = FALSE
+  )
+  summary <- lineage_v2_summary(
+    inventory = data.frame(exists = logical()),
+    admin_2001 = data.frame(),
+    admin_2011 = data.frame(),
+    bridge = data.frame(deterministic = logical()),
+    transition = data.frame(),
+    source_roster = data.frame(source_row_id = character()),
+    source_matches = data.frame(
+      source_row_id = character(),
+      status = character()
+    ),
+    candidates = data.frame(),
+    adjudication_queue = data.frame(review_class = character()),
+    eligibility = data.frame(eligible_primary = logical()),
+    events = data.frame(),
+    current_components = data.frame(),
+    urban_coverage = data.frame(),
+    changed_components = data.frame(),
+    evidence_requests = data.frame(),
+    adjudicated_weights = weights,
+    adjudicated_weight_validation = data.frame(
+      source_key = "pc2011__01__001",
+      coverage_complete = TRUE
+    ),
+    allocation_validation = data.frame(
+      source_key = c("pc2011__01__001", "pc2011__01__002"),
+      coverage_complete = FALSE
+    )
+  )
+
+  values <- stats::setNames(summary$value, summary$metric)
+  expect_equal(values[["accepted_allocation_sources"]], 1)
+  expect_equal(values[["rejected_allocation_sources"]], 1)
+  expect_equal(values[["remaining_incomplete_allocations"]], 0)
 })
