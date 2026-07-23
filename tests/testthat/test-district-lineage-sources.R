@@ -422,13 +422,18 @@ test_that("migration readiness is derived from prerequisite gates", {
     missing_core = character(),
     admin_2001 = data.frame(unit_id = "pc2001__01__01"),
     admin_2011 = data.frame(unit_id = "pc2011__01__001"),
-    allocation_validation = data.frame(within_tolerance = TRUE),
+    allocation_validation = data.frame(
+      weights_well_formed = TRUE,
+      coverage_complete = TRUE
+    ),
     source_roster = data.frame(source_row_id = "source-1"),
     source_matches = data.frame(source_row_id = "source-1", status = "accepted"),
     primary_eligibility = data.frame(status = "accepted", eligible_primary = TRUE),
     duplicate_keys = empty_duplicate_key_diagnostics_v2(),
     adjudicated_allocation_validation = data.frame(
-      source_key = character(), within_tolerance = logical()
+      source_key = character(),
+      weights_well_formed = logical(),
+      coverage_complete = logical()
     ),
     source_reference_issues = data.frame()
   )
@@ -436,12 +441,12 @@ test_that("migration readiness is derived from prerequisite gates", {
   ready <- do.call(build_migration_readiness_v2, args)
   expect_true(ready$passed[ready$gate == "production_crosswalk_migration_ready"])
 
-  args$allocation_validation$within_tolerance <- FALSE
+  args$allocation_validation$coverage_complete <- FALSE
   blocked <- do.call(build_migration_readiness_v2, args)
   expect_false(blocked$passed[blocked$gate == "production_crosswalk_migration_ready"])
   expect_identical(
     build_migration_blockers_v2(blocked)$gate,
-    "allocation_weights_valid"
+    "shrid_allocation_coverage_complete"
   )
 })
 
@@ -461,5 +466,48 @@ test_that("migration blockers contain one actionable row per failed prerequisite
   expect_named(blockers, c("gate", "note", "next_action"))
   expect_identical(blockers$gate, "all_source_rows_adjudicated")
   expect_true(nzchar(blockers$next_action))
+})
+
+
+test_that("migration gates distinguish absent acceptances from ineligible acceptances", {
+  args <- list(
+    missing_core = character(),
+    admin_2001 = data.frame(unit_id = "pc2001__01__01"),
+    admin_2011 = data.frame(unit_id = "pc2011__01__001"),
+    allocation_validation = data.frame(
+      weights_well_formed = TRUE,
+      coverage_complete = TRUE
+    ),
+    source_roster = data.frame(source_row_id = "source-1"),
+    source_matches = data.frame(
+      source_row_id = "source-1",
+      status = "excluded"
+    ),
+    primary_eligibility = data.frame(
+      status = "excluded",
+      eligible_primary = FALSE
+    ),
+    duplicate_keys = empty_duplicate_key_diagnostics_v2(),
+    adjudicated_allocation_validation = data.frame(
+      source_key = character(),
+      weights_well_formed = logical(),
+      coverage_complete = logical()
+    ),
+    source_reference_issues = data.frame()
+  )
+
+  readiness <- do.call(build_migration_readiness_v2, args)
+  expect_false(readiness$passed[readiness$gate == "accepted_source_rows_present"])
+  expect_true(
+    readiness$passed[readiness$gate == "all_accepted_rows_primary_eligible"]
+  )
+
+  args$source_matches$status <- "accepted"
+  args$primary_eligibility$status <- "accepted"
+  readiness <- do.call(build_migration_readiness_v2, args)
+  expect_true(readiness$passed[readiness$gate == "accepted_source_rows_present"])
+  expect_false(
+    readiness$passed[readiness$gate == "all_accepted_rows_primary_eligible"]
+  )
 })
 

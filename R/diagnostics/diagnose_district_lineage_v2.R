@@ -349,11 +349,13 @@ migration_gate_actions_v2 <- function() {
     core_inputs_available = "Add or register every required locality key and the PC11 district geometry.",
     unique_2001_unit_ids = "Resolve duplicate Census 2001 unit identifiers.",
     unique_2011_unit_ids = "Resolve duplicate Census 2011 unit identifiers.",
-    allocation_weights_valid = "Resolve incomplete SHRUG coverage or document accepted sensitivity allocations.",
+    shrid_weights_well_formed = "Correct missing, negative, or overallocated SHRUG transition weights.",
+    shrid_allocation_coverage_complete = "Resolve unmatched SHRUG mass or document accepted sensitivity allocations.",
     adjudicated_allocation_weights_valid = "Correct accepted sensitivity weights so each source unit sums to one.",
     all_adjudication_sources_registered = "Register every source cited by accepted matches, events, and allocations.",
     no_conflicting_duplicate_keys = "Resolve conflicting source or registry keys.",
     all_source_rows_adjudicated = "Accept or exclude every NSS source identity in tracked metadata.",
+    accepted_source_rows_present = "Accept at least one source identity for the preferred panel.",
     all_accepted_rows_primary_eligible = "Exclude non-nested accepted rows or provide a deterministic 2001 mapping."
   )
 }
@@ -373,29 +375,36 @@ build_migration_readiness_v2 <- function(
     core_inputs_available = !length(missing_core),
     unique_2001_unit_ids = nrow(admin_2001) > 0L && !anyDuplicated(admin_2001$unit_id),
     unique_2011_unit_ids = nrow(admin_2011) > 0L && !anyDuplicated(admin_2011$unit_id),
-    allocation_weights_valid =
-      nrow(allocation_validation) > 0L && all(allocation_validation$within_tolerance),
+    shrid_weights_well_formed =
+      nrow(allocation_validation) > 0L &&
+        all(allocation_validation$weights_well_formed),
+    shrid_allocation_coverage_complete =
+      nrow(allocation_validation) > 0L &&
+        all(allocation_validation$coverage_complete),
     adjudicated_allocation_weights_valid =
       !nrow(adjudicated_allocation_validation) ||
-        all(adjudicated_allocation_validation$within_tolerance),
+        all(adjudicated_allocation_validation$coverage_complete),
     all_adjudication_sources_registered = !nrow(source_reference_issues),
     no_conflicting_duplicate_keys =
       !nrow(duplicates) || !any(duplicates$duplicate_type == "conflicting"),
     all_source_rows_adjudicated =
       nrow(source_roster) > 0L && all(source_roster$source_row_id %in% resolved_ids),
+    accepted_source_rows_present = any(source_matches$status %in% "accepted"),
     all_accepted_rows_primary_eligible =
-      any(source_matches$status %in% "accepted") &&
+      !any(source_matches$status %in% "accepted") ||
         all(primary_eligibility$eligible_primary[primary_eligibility$status == "accepted"])
   )
   notes <- c(
     core_inputs_available = "All locality keys and the PC11 district geometry are present.",
     unique_2001_unit_ids = "Census 2001 unit IDs are code-based and unique.",
     unique_2011_unit_ids = "Census 2011 unit IDs are code-based and unique.",
-    allocation_weights_valid = "Every SHRUG source-district allocation sums to one with no missing or negative weights.",
+    shrid_weights_well_formed = "Every SHRUG transition weight is finite, nonnegative, and does not overallocate its source district.",
+    shrid_allocation_coverage_complete = "Every SHRUG source district has complete mapped mass across 2001 targets.",
     adjudicated_allocation_weights_valid = "Every accepted tracked sensitivity allocation sums to one by source unit.",
     all_adjudication_sources_registered = "Every accepted source match, event, and allocation cites a registered evidence source.",
     no_conflicting_duplicate_keys = "Duplicate source or registry keys are either absent or identical.",
     all_source_rows_adjudicated = "Every NSS source row is explicitly accepted or excluded in tracked metadata.",
+    accepted_source_rows_present = "At least one source row is accepted for the preferred panel.",
     all_accepted_rows_primary_eligible = "Every accepted source row maps deterministically to a 2001 district."
   )
 
