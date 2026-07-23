@@ -1,7 +1,7 @@
 "metric","value"
 "geometry_available",1
-"geometry_rows",582
+"geometry_rows",593
 "expected_admin_units",593
-"missing_admin_units",11
+"missing_admin_units",0
 "unexpected_geometry_units",0
 "invalid_geometries",0

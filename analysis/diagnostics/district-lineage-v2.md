@@ -47,6 +47,7 @@ completion_status <- analysis_target_csv("diag_ext_district_lineage_v2", "comple
 sensitivity_crosswalk <- analysis_target_csv("diag_ext_district_lineage_v2", "sensitivity_source_crosswalk.csv")
 production_comparison <- analysis_target_csv("diag_ext_district_lineage_v2", "production_crosswalk_comparison.csv")
 geometry_qa <- analysis_target_csv("diag_ext_district_lineage_v2", "geometry_2001_qa.csv")
+geometry_coverage <- analysis_target_csv("diag_ext_district_lineage_v2", "geometry_2001_unit_coverage.csv")
 events <- analysis_target_csv("diag_ext_district_lineage_v2", "candidate_admin_events.csv")
 current_components <- analysis_target_csv("diag_ext_district_lineage_v2", "current_component_registry.csv")
 urban_coverage <- analysis_target_csv("diag_ext_district_lineage_v2", "current_urban_coverage.csv")
@@ -65,7 +66,7 @@ analysis_table(summary, "District-lineage v2 summary")
 
 | metric                           |  value |
 |:---------------------------------|-------:|
-| available_inputs                 |     49 |
+| available_inputs                 |     50 |
 | missing_inputs                   |      0 |
 | admin_units_2001                 |    593 |
 | admin_units_2011                 |    640 |
@@ -73,14 +74,14 @@ analysis_table(summary, "District-lineage v2 summary")
 | deterministic_shrid_rows         | 587155 |
 | district_transition_rows         |    696 |
 | nss_source_rows                  |   1259 |
-| accepted_source_matches          |      0 |
-| unadjudicated_source_rows        |   1259 |
-| candidate_rows                   |   4051 |
-| cross_vintage_exact_review_rows  |   1109 |
+| accepted_source_matches          |     18 |
+| unadjudicated_source_rows        |   1241 |
+| candidate_rows                   |   3997 |
+| cross_vintage_exact_review_rows  |   1091 |
 | single_vintage_exact_review_rows |     68 |
 | fuzzy_review_rows                |     82 |
 | no_candidate_rows                |      0 |
-| primary_eligible_source_rows     |      0 |
+| primary_eligible_source_rows     |     18 |
 | candidate_event_rows             |   1655 |
 | current_component_rows           |  19278 |
 | urban_coverage_rows              |  34012 |
@@ -101,10 +102,10 @@ analysis_table(readiness, "Production-migration gates")
 | shrid_weights_well_formed | TRUE | Every SHRUG transition weight is finite, nonnegative, and does not overallocate its source district. |
 | shrid_allocation_coverage_complete | FALSE | Every SHRUG source district has complete mapped mass across 2001 targets. |
 | adjudicated_allocation_weights_valid | TRUE | Every accepted tracked sensitivity allocation sums to one by source unit. |
-| all_adjudication_sources_registered | TRUE | Every accepted source match, event, and allocation cites a registered evidence source. |
+| all_adjudication_sources_registered | TRUE | Every accepted source match, event, allocation, and geometry carry-back cites a registered evidence source. |
 | no_conflicting_duplicate_keys | TRUE | Duplicate source or registry keys are either absent or identical. |
 | all_source_rows_adjudicated | FALSE | Every NSS source row is explicitly accepted or excluded in tracked metadata. |
-| accepted_source_rows_present | FALSE | At least one source row is accepted for the preferred panel. |
+| accepted_source_rows_present | TRUE | At least one source row is accepted for the preferred panel. |
 | all_accepted_rows_primary_eligible | TRUE | Every accepted source row maps deterministically to a 2001 district. |
 | production_crosswalk_migration_ready | FALSE | Passes only when every prerequisite gate passes; production replacement remains an explicit maintainer action. |
 
@@ -118,7 +119,6 @@ analysis_table(blockers, "Current migration blockers")
 |:---|:---|:---|
 | shrid_allocation_coverage_complete | Every SHRUG source district has complete mapped mass across 2001 targets. | Resolve unmatched SHRUG mass or document accepted sensitivity allocations. |
 | all_source_rows_adjudicated | Every NSS source row is explicitly accepted or excluded in tracked metadata. | Accept or exclude every NSS source identity in tracked metadata. |
-| accepted_source_rows_present | At least one source row is accepted for the preferred panel. | Accept at least one source identity for the preferred panel. |
 
 Current migration blockers
 
@@ -128,14 +128,14 @@ analysis_table(completion_status, "Nine-step completion status")
 
 | step | work_item | complete | observed | next_action |
 |---:|:---|:---|:---|:---|
-| 1 | Review deterministic identities and populate source adjudications | FALSE | 0/1259 resolved | Review adjudication_draft.csv and copy verified decisions into district_adjudications_v2.csv. |
+| 1 | Review deterministic identities and populate source adjudications | FALSE | 18/1259 resolved | Review adjudication_draft.csv and copy verified decisions into district_adjudications_v2.csv. |
 | 2 | Resolve fuzzy source identities | FALSE | 82 fuzzy or missing candidates open | Use official rename or boundary evidence; accept, exclude, or retain needs_review. |
 | 3 | Review targeted administrative-event evidence | FALSE | 115 targeted evidence requests | Record accepted or rejected edges in district_admin_events_v2.csv with registered source IDs. |
 | 4 | Resolve incomplete SHRID coverage and sensitivity allocations | FALSE | 536 incomplete source allocations | Investigate unmapped mass and enter reviewed allocations in district_allocation_weights_v2.csv. |
-| 5 | Construct and validate Census 2001 geometry | FALSE | 582/593 expected districts; 11 missing; 0 unexpected; 0 invalid | Load local SHRID polygons, dissolve with dissolve_shrid_geometry_2001_v2(), and save a derived GeoPackage. |
-| 6 | Build preferred and sensitivity source crosswalks | FALSE | 0 preferred; 0 total sensitivity rows | Regenerate the diagnostic after accepted source decisions and allocation weights are tracked. |
-| 7 | Compare v2 mappings with the production panel | FALSE | 0 source mappings compared | Inspect production_crosswalk_comparison.csv after preferred mappings exist. |
-| 8 | Review changed observations and estimates | FALSE | 0 changed, missing, or ambiguous mappings require review | Rebuild measures and models only after mapping comparisons are complete. |
+| 5 | Construct and validate Census 2001 geometry | TRUE | 593/593 expected districts; 0 missing; 0 unexpected; 0 invalid | Geometry construction and QA are complete. |
+| 6 | Build preferred and sensitivity source crosswalks | TRUE | 18 preferred; 18 total sensitivity rows | Regenerate the diagnostic after accepted source decisions and allocation weights are tracked. |
+| 7 | Compare v2 mappings with the production panel | TRUE | 18 source mappings compared | Inspect production_crosswalk_comparison.csv after preferred mappings exist. |
+| 8 | Review changed observations and estimates | FALSE | 16 changed, missing, or ambiguous mappings require review | Rebuild measures and models only after mapping comparisons are complete. |
 | 9 | Migrate the production crosswalk deliberately | FALSE | migration gates remain blocked | Replace the inherited crosswalk only after every migration gate passes and changes are reviewed. |
 
 Nine-step completion status
@@ -177,7 +177,7 @@ analysis_table(inventory, "Available and missing lineage inputs", max_rows = 60)
 | shrug_pc11_state_geometry | data/raw/shrug/open-polygons/shrug-pc11state-poly-gpkg/state.gpkg | inventory_only | census_2011_geometry | FALSE | TRUE | 8613888 |
 | shrug_pc11_village_geometry_zip | data/raw/shrug/open-polygons/shrug-pc11-village-poly-gpkg.zip | inventory_only | census_2011_geometry | FALSE | TRUE | 399235423 |
 | shrug_shrid_geometry_zip | data/raw/shrug/open-polygons/shrug-shrid-poly-gpkg.zip | inventory_only | future_2001_geometry | FALSE | TRUE | 379628892 |
-| lineage_geometry_2001 | outputs/derived/district_lineage_v2/district_2001.gpkg | gpkg | derived_2001_geometry | TRUE | TRUE | 64360448 |
+| lineage_geometry_2001 | outputs/derived/district_lineage_v2/district_2001.gpkg | gpkg | derived_2001_geometry | TRUE | TRUE | 64688128 |
 | shrug_pca01_zip | data/raw/shrug/census_2001/shrug-pca01-csv.zip | inventory_only | census_locality_attributes | FALSE | TRUE | 50359039 |
 | shrug_pca11_zip | data/raw/shrug/census_2011/shrug-pca11-csv.zip | inventory_only | census_locality_attributes | FALSE | TRUE | 66532473 |
 | shrug_td01_zip | data/raw/shrug/census_2001/shrug-td01-csv.zip | inventory_only | census_locality_attributes | FALSE | TRUE | 2473771 |
@@ -191,10 +191,11 @@ analysis_table(inventory, "Available and missing lineage inputs", max_rows = 60)
 | concordance_telangana | data/raw/concordance/telangana_plfs_districts.csv | csv | published_concordance | TRUE | TRUE | 695 |
 | concordance_census_region | data/raw/concordance/census_region.csv | csv | published_concordance | TRUE | TRUE | 21341 |
 | lineage_gold | data/metadata/district_match_gold.csv | csv | calibration | TRUE | TRUE | 7217 |
-| lineage_adjudications | data/metadata/district_adjudications_v2.csv | csv | adjudication | TRUE | TRUE | 79 |
+| lineage_adjudications | data/metadata/district_adjudications_v2.csv | csv | adjudication | TRUE | TRUE | 6842 |
 | lineage_events | data/metadata/district_admin_events_v2.csv | csv | event_adjudication | TRUE | TRUE | 81 |
 | lineage_allocation_weights | data/metadata/district_allocation_weights_v2.csv | csv | allocation_adjudication | TRUE | TRUE | 74 |
-| lineage_sources | data/metadata/district_sources_v2.csv | csv | source_registry | TRUE | TRUE | 4515 |
+| lineage_geometry_carrybacks | data/metadata/district_geometry_carrybacks_v2.csv | csv | geometry_adjudication | TRUE | TRUE | 2983 |
+| lineage_sources | data/metadata/district_sources_v2.csv | csv | source_registry | TRUE | TRUE | 5014 |
 
 Available and missing lineage inputs
 
@@ -234,6 +235,8 @@ analysis_table(source_registry, "District-lineage evidence registry", max_rows =
 | concordance_telangana | Deshpande Khanna and Walia Telangana district concordance | data/raw/concordance/telangana_plfs_districts.csv | 2026-07-22 |
 | concordance_census_region | Deshpande Khanna and Walia Census-region concordance | data/raw/concordance/census_region.csv | 2026-07-22 |
 | ipums_geo2_1987_2009 | IPUMS harmonized India second-level geography 1987-2009 | data/raw/ipums/geo2_in1987_2009 | 2026-07-22 |
+| census2011_delhi_admin_atlas | Office of the Registrar General & Census Commissioner, India, Census of India 2011 Administrative Atlas: NCT Delhi | https://censusindia.gov.in/nada/index.php/catalog/40/download/38/AA_2011_NCT_Delhi.pdf | 2026-07-23 |
+| census2011_maharashtra_admin_atlas | Directorate of Census Operations, Maharashtra, Census of India 2011 Administrative Atlas: Maharashtra, Volume II | https://censusindia.gov.in/nada/index.php/catalog/35/download/33/AA_2011_Maharashtra_vol2.pdf | 2026-07-23 |
 
 District-lineage evidence registry
 
@@ -488,6 +491,24 @@ analysis_table(eligibility, "Primary-panel source eligibility", max_rows = 50)
 
 | state_code_2001 | district_code_2001 | source_state_code_2011 | source_district_code_2011 | terminal_unit | unit_id | source_row_id | source_key | wave | source_code | raw_state | raw_district | state_std | district_std | reference_vintage | method | status | terminal_vintage | resolution_status | lineage_path | target_state_code_2001 | target_district_code_2001 | population_share_to_2001 | bridged_target_unit_2001 | mapping_class | eligible_primary | target_unit_2001 | exclusion_reason |
 |:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| NA | NA | NA | NA | pc2001\_\_07\_\_01 | pc2001\_\_07\_\_01 | nss_2007_08\_\_delhi\_\_07101\_\_north west | nss_2007_08\_\_delhi\_\_07101 | nss_2007_08 | 7101 | Delhi | North West | delhi | north west | 2001 | official_unchanged_boundary_carryback | accepted | 2001 | resolved | pc2001\_\_07\_\_01 | 7 | 1 | NA | NA | identity_or_documented_rename_to_2001 | TRUE | pc2001\_\_07\_\_01 | NA |
+| NA | NA | NA | NA | pc2001\_\_07\_\_02 | pc2001\_\_07\_\_02 | nss_2007_08\_\_delhi\_\_07102\_\_north | nss_2007_08\_\_delhi\_\_07102 | nss_2007_08 | 7102 | Delhi | North | delhi | north | 2001 | official_unchanged_boundary_carryback | accepted | 2001 | resolved | pc2001\_\_07\_\_02 | 7 | 2 | NA | NA | identity_or_documented_rename_to_2001 | TRUE | pc2001\_\_07\_\_02 | NA |
+| NA | NA | NA | NA | pc2001\_\_07\_\_03 | pc2001\_\_07\_\_03 | nss_2007_08\_\_delhi\_\_07103\_\_north east | nss_2007_08\_\_delhi\_\_07103 | nss_2007_08 | 7103 | Delhi | North East | delhi | north east | 2001 | official_unchanged_boundary_carryback | accepted | 2001 | resolved | pc2001\_\_07\_\_03 | 7 | 3 | NA | NA | identity_or_documented_rename_to_2001 | TRUE | pc2001\_\_07\_\_03 | NA |
+| NA | NA | NA | NA | pc2001\_\_07\_\_04 | pc2001\_\_07\_\_04 | nss_2007_08\_\_delhi\_\_07104\_\_east | nss_2007_08\_\_delhi\_\_07104 | nss_2007_08 | 7104 | Delhi | East | delhi | east | 2001 | official_unchanged_boundary_carryback | accepted | 2001 | resolved | pc2001\_\_07\_\_04 | 7 | 4 | NA | NA | identity_or_documented_rename_to_2001 | TRUE | pc2001\_\_07\_\_04 | NA |
+| NA | NA | NA | NA | pc2001\_\_07\_\_07 | pc2001\_\_07\_\_07 | nss_2007_08\_\_delhi\_\_07107\_\_west | nss_2007_08\_\_delhi\_\_07107 | nss_2007_08 | 7107 | Delhi | West | delhi | west | 2001 | official_unchanged_boundary_carryback | accepted | 2001 | resolved | pc2001\_\_07\_\_07 | 7 | 7 | NA | NA | identity_or_documented_rename_to_2001 | TRUE | pc2001\_\_07\_\_07 | NA |
+| NA | NA | NA | NA | pc2001\_\_07\_\_08 | pc2001\_\_07\_\_08 | nss_2007_08\_\_delhi\_\_07108\_\_south west | nss_2007_08\_\_delhi\_\_07108 | nss_2007_08 | 7108 | Delhi | South West | delhi | south west | 2001 | official_unchanged_boundary_carryback | accepted | 2001 | resolved | pc2001\_\_07\_\_08 | 7 | 8 | NA | NA | identity_or_documented_rename_to_2001 | TRUE | pc2001\_\_07\_\_08 | NA |
+| NA | NA | NA | NA | pc2001\_\_07\_\_09 | pc2001\_\_07\_\_09 | nss_2007_08\_\_delhi\_\_07109\_\_south | nss_2007_08\_\_delhi\_\_07109 | nss_2007_08 | 7109 | Delhi | South | delhi | south | 2001 | official_unchanged_boundary_carryback | accepted | 2001 | resolved | pc2001\_\_07\_\_09 | 7 | 9 | NA | NA | identity_or_documented_rename_to_2001 | TRUE | pc2001\_\_07\_\_09 | NA |
+| NA | NA | NA | NA | pc2001\_\_27\_\_22 | pc2001\_\_27\_\_22 | nss_2007_08\_\_maharashtra\_\_27122\_\_mumbai suburban | nss_2007_08\_\_maharashtra\_\_27122 | nss_2007_08 | 27122 | Maharastra | Mumbai Suburban | maharashtra | mumbai suburban | 2001 | official_unchanged_boundary_carryback | accepted | 2001 | resolved | pc2001\_\_27\_\_22 | 27 | 22 | NA | NA | identity_or_documented_rename_to_2001 | TRUE | pc2001\_\_27\_\_22 | NA |
+| NA | NA | NA | NA | pc2001\_\_07\_\_01 | pc2001\_\_07\_\_01 | nss_2017_18\_\_delhi\_\_07101\_\_north west | nss_2017_18\_\_delhi\_\_07101 | nss_2017_18 | 7101 | Delhi | North West | delhi | north west | 2001 | official_unchanged_boundary_carryback | accepted | 2001 | resolved | pc2001\_\_07\_\_01 | 7 | 1 | NA | NA | identity_or_documented_rename_to_2001 | TRUE | pc2001\_\_07\_\_01 | NA |
+| NA | NA | NA | NA | pc2001\_\_07\_\_02 | pc2001\_\_07\_\_02 | nss_2017_18\_\_delhi\_\_07102\_\_north | nss_2017_18\_\_delhi\_\_07102 | nss_2017_18 | 7102 | Delhi | North | delhi | north | 2001 | official_unchanged_boundary_carryback | accepted | 2001 | resolved | pc2001\_\_07\_\_02 | 7 | 2 | NA | NA | identity_or_documented_rename_to_2001 | TRUE | pc2001\_\_07\_\_02 | NA |
+| NA | NA | NA | NA | pc2001\_\_07\_\_03 | pc2001\_\_07\_\_03 | nss_2017_18\_\_delhi\_\_07103\_\_north east | nss_2017_18\_\_delhi\_\_07103 | nss_2017_18 | 7103 | Delhi | North East | delhi | north east | 2001 | official_unchanged_boundary_carryback | accepted | 2001 | resolved | pc2001\_\_07\_\_03 | 7 | 3 | NA | NA | identity_or_documented_rename_to_2001 | TRUE | pc2001\_\_07\_\_03 | NA |
+| NA | NA | NA | NA | pc2001\_\_07\_\_04 | pc2001\_\_07\_\_04 | nss_2017_18\_\_delhi\_\_07104\_\_east | nss_2017_18\_\_delhi\_\_07104 | nss_2017_18 | 7104 | Delhi | East | delhi | east | 2001 | official_unchanged_boundary_carryback | accepted | 2001 | resolved | pc2001\_\_07\_\_04 | 7 | 4 | NA | NA | identity_or_documented_rename_to_2001 | TRUE | pc2001\_\_07\_\_04 | NA |
+| NA | NA | NA | NA | pc2001\_\_07\_\_05 | pc2001\_\_07\_\_05 | nss_2017_18\_\_delhi\_\_07105\_\_new delhi | nss_2017_18\_\_delhi\_\_07105 | nss_2017_18 | 7105 | Delhi | New Delhi | delhi | new delhi | 2001 | official_unchanged_boundary_carryback | accepted | 2001 | resolved | pc2001\_\_07\_\_05 | 7 | 5 | NA | NA | identity_or_documented_rename_to_2001 | TRUE | pc2001\_\_07\_\_05 | NA |
+| NA | NA | NA | NA | pc2001\_\_07\_\_06 | pc2001\_\_07\_\_06 | nss_2017_18\_\_delhi\_\_07106\_\_central | nss_2017_18\_\_delhi\_\_07106 | nss_2017_18 | 7106 | Delhi | Central | delhi | central | 2001 | official_unchanged_boundary_carryback | accepted | 2001 | resolved | pc2001\_\_07\_\_06 | 7 | 6 | NA | NA | identity_or_documented_rename_to_2001 | TRUE | pc2001\_\_07\_\_06 | NA |
+| NA | NA | NA | NA | pc2001\_\_07\_\_07 | pc2001\_\_07\_\_07 | nss_2017_18\_\_delhi\_\_07107\_\_west | nss_2017_18\_\_delhi\_\_07107 | nss_2017_18 | 7107 | Delhi | West | delhi | west | 2001 | official_unchanged_boundary_carryback | accepted | 2001 | resolved | pc2001\_\_07\_\_07 | 7 | 7 | NA | NA | identity_or_documented_rename_to_2001 | TRUE | pc2001\_\_07\_\_07 | NA |
+| NA | NA | NA | NA | pc2001\_\_07\_\_08 | pc2001\_\_07\_\_08 | nss_2017_18\_\_delhi\_\_07108\_\_south west | nss_2017_18\_\_delhi\_\_07108 | nss_2017_18 | 7108 | Delhi | South West | delhi | south west | 2001 | official_unchanged_boundary_carryback | accepted | 2001 | resolved | pc2001\_\_07\_\_08 | 7 | 8 | NA | NA | identity_or_documented_rename_to_2001 | TRUE | pc2001\_\_07\_\_08 | NA |
+| NA | NA | NA | NA | pc2001\_\_07\_\_09 | pc2001\_\_07\_\_09 | nss_2017_18\_\_delhi\_\_07109\_\_south | nss_2017_18\_\_delhi\_\_07109 | nss_2017_18 | 7109 | Delhi | South | delhi | south | 2001 | official_unchanged_boundary_carryback | accepted | 2001 | resolved | pc2001\_\_07\_\_09 | 7 | 9 | NA | NA | identity_or_documented_rename_to_2001 | TRUE | pc2001\_\_07\_\_09 | NA |
+| NA | NA | NA | NA | pc2001\_\_27\_\_22 | pc2001\_\_27\_\_22 | nss_2017_18\_\_maharashtra\_\_27122\_\_mumbai suburban | nss_2017_18\_\_maharashtra\_\_27122 | nss_2017_18 | 27122 | Maharashtra | Mumbai Suburban | maharashtra | mumbai suburban | 2001 | official_unchanged_boundary_carryback | accepted | 2001 | resolved | pc2001\_\_27\_\_22 | 27 | 22 | NA | NA | identity_or_documented_rename_to_2001 | TRUE | pc2001\_\_27\_\_22 | NA |
 | NA | NA | NA | NA | NA | NA | nss_2007_08\_\_andaman and nicobar islands\_\_35101\_\_south andaman | nss_2007_08\_\_andaman and nicobar islands\_\_35101 | nss_2007_08 | 35101 | Andaman & Nicober | South Andaman | andaman and nicobar islands | south andaman | NA | NA | NA | NA | missing_source_unit | NA | NA | NA | NA | NA | unresolved_or_non_nested | FALSE | NA | source_identity_unadjudicated |
 | NA | NA | NA | NA | NA | NA | nss_2007_08\_\_andaman and nicobar islands\_\_35102\_\_nicobars | nss_2007_08\_\_andaman and nicobar islands\_\_35102 | nss_2007_08 | 35102 | Andaman & Nicober | Nicobars | andaman and nicobar islands | nicobars | NA | NA | NA | NA | missing_source_unit | NA | NA | NA | NA | NA | unresolved_or_non_nested | FALSE | NA | source_identity_unadjudicated |
 | NA | NA | NA | NA | NA | NA | nss_2007_08\_\_andaman and nicobar islands\_\_35103\_\_north and middle andaman | nss_2007_08\_\_andaman and nicobar islands\_\_35103 | nss_2007_08 | 35103 | Andaman & Nicober | North and Middle Andaman | andaman and nicobar islands | north and middle andaman | NA | NA | NA | NA | missing_source_unit | NA | NA | NA | NA | NA | unresolved_or_non_nested | FALSE | NA | source_identity_unadjudicated |
@@ -520,24 +541,6 @@ analysis_table(eligibility, "Primary-panel source eligibility", max_rows = 50)
 | NA | NA | NA | NA | NA | NA | nss_2007_08\_\_arunachal pradesh\_\_12104\_\_papum pare | nss_2007_08\_\_arunachal pradesh\_\_12104 | nss_2007_08 | 12104 | Arunachal Pradesh | Papum Pare | arunachal pradesh | papum pare | NA | NA | NA | NA | missing_source_unit | NA | NA | NA | NA | NA | unresolved_or_non_nested | FALSE | NA | source_identity_unadjudicated |
 | NA | NA | NA | NA | NA | NA | nss_2007_08\_\_arunachal pradesh\_\_12105\_\_lower subansiri | nss_2007_08\_\_arunachal pradesh\_\_12105 | nss_2007_08 | 12105 | Arunachal Pradesh | Lower Subansiri | arunachal pradesh | lower subansiri | NA | NA | NA | NA | missing_source_unit | NA | NA | NA | NA | NA | unresolved_or_non_nested | FALSE | NA | source_identity_unadjudicated |
 | NA | NA | NA | NA | NA | NA | nss_2007_08\_\_arunachal pradesh\_\_12106\_\_upper subansiri | nss_2007_08\_\_arunachal pradesh\_\_12106 | nss_2007_08 | 12106 | Arunachal Pradesh | Upper Subansiri | arunachal pradesh | upper subansiri | NA | NA | NA | NA | missing_source_unit | NA | NA | NA | NA | NA | unresolved_or_non_nested | FALSE | NA | source_identity_unadjudicated |
-| NA | NA | NA | NA | NA | NA | nss_2007_08\_\_arunachal pradesh\_\_12107\_\_west siang | nss_2007_08\_\_arunachal pradesh\_\_12107 | nss_2007_08 | 12107 | Arunachal Pradesh | West Siang | arunachal pradesh | west siang | NA | NA | NA | NA | missing_source_unit | NA | NA | NA | NA | NA | unresolved_or_non_nested | FALSE | NA | source_identity_unadjudicated |
-| NA | NA | NA | NA | NA | NA | nss_2007_08\_\_arunachal pradesh\_\_12108\_\_east siang | nss_2007_08\_\_arunachal pradesh\_\_12108 | nss_2007_08 | 12108 | Arunachal Pradesh | East Siang | arunachal pradesh | east siang | NA | NA | NA | NA | missing_source_unit | NA | NA | NA | NA | NA | unresolved_or_non_nested | FALSE | NA | source_identity_unadjudicated |
-| NA | NA | NA | NA | NA | NA | nss_2007_08\_\_arunachal pradesh\_\_12109\_\_upper siang | nss_2007_08\_\_arunachal pradesh\_\_12109 | nss_2007_08 | 12109 | Arunachal Pradesh | Upper Siang | arunachal pradesh | upper siang | NA | NA | NA | NA | missing_source_unit | NA | NA | NA | NA | NA | unresolved_or_non_nested | FALSE | NA | source_identity_unadjudicated |
-| NA | NA | NA | NA | NA | NA | nss_2007_08\_\_arunachal pradesh\_\_12110\_\_dibang valley | nss_2007_08\_\_arunachal pradesh\_\_12110 | nss_2007_08 | 12110 | Arunachal Pradesh | Dibang Valley | arunachal pradesh | dibang valley | NA | NA | NA | NA | missing_source_unit | NA | NA | NA | NA | NA | unresolved_or_non_nested | FALSE | NA | source_identity_unadjudicated |
-| NA | NA | NA | NA | NA | NA | nss_2007_08\_\_arunachal pradesh\_\_12111\_\_lohit | nss_2007_08\_\_arunachal pradesh\_\_12111 | nss_2007_08 | 12111 | Arunachal Pradesh | Lohit | arunachal pradesh | lohit | NA | NA | NA | NA | missing_source_unit | NA | NA | NA | NA | NA | unresolved_or_non_nested | FALSE | NA | source_identity_unadjudicated |
-| NA | NA | NA | NA | NA | NA | nss_2007_08\_\_arunachal pradesh\_\_12112\_\_changlang | nss_2007_08\_\_arunachal pradesh\_\_12112 | nss_2007_08 | 12112 | Arunachal Pradesh | Changlang | arunachal pradesh | changlang | NA | NA | NA | NA | missing_source_unit | NA | NA | NA | NA | NA | unresolved_or_non_nested | FALSE | NA | source_identity_unadjudicated |
-| NA | NA | NA | NA | NA | NA | nss_2007_08\_\_arunachal pradesh\_\_12113\_\_tirap | nss_2007_08\_\_arunachal pradesh\_\_12113 | nss_2007_08 | 12113 | Arunachal Pradesh | Tirap | arunachal pradesh | tirap | NA | NA | NA | NA | missing_source_unit | NA | NA | NA | NA | NA | unresolved_or_non_nested | FALSE | NA | source_identity_unadjudicated |
-| NA | NA | NA | NA | NA | NA | nss_2007_08\_\_assam\_\_18112\_\_lakhimpur | nss_2007_08\_\_assam\_\_18112 | nss_2007_08 | 18112 | Assam | Lakhimpur | assam | lakhimpur | NA | NA | NA | NA | missing_source_unit | NA | NA | NA | NA | NA | unresolved_or_non_nested | FALSE | NA | source_identity_unadjudicated |
-| NA | NA | NA | NA | NA | NA | nss_2007_08\_\_assam\_\_18113\_\_dhemaji | nss_2007_08\_\_assam\_\_18113 | nss_2007_08 | 18113 | Assam | Dhemaji | assam | dhemaji | NA | NA | NA | NA | missing_source_unit | NA | NA | NA | NA | NA | unresolved_or_non_nested | FALSE | NA | source_identity_unadjudicated |
-| NA | NA | NA | NA | NA | NA | nss_2007_08\_\_assam\_\_18114\_\_tinsukia | nss_2007_08\_\_assam\_\_18114 | nss_2007_08 | 18114 | Assam | Tinsukia | assam | tinsukia | NA | NA | NA | NA | missing_source_unit | NA | NA | NA | NA | NA | unresolved_or_non_nested | FALSE | NA | source_identity_unadjudicated |
-| NA | NA | NA | NA | NA | NA | nss_2007_08\_\_assam\_\_18115\_\_dibrugarh | nss_2007_08\_\_assam\_\_18115 | nss_2007_08 | 18115 | Assam | Dibrugarh | assam | dibrugarh | NA | NA | NA | NA | missing_source_unit | NA | NA | NA | NA | NA | unresolved_or_non_nested | FALSE | NA | source_identity_unadjudicated |
-| NA | NA | NA | NA | NA | NA | nss_2007_08\_\_assam\_\_18116\_\_sibsagar | nss_2007_08\_\_assam\_\_18116 | nss_2007_08 | 18116 | Assam | Sibsagar | assam | sibsagar | NA | NA | NA | NA | missing_source_unit | NA | NA | NA | NA | NA | unresolved_or_non_nested | FALSE | NA | source_identity_unadjudicated |
-| NA | NA | NA | NA | NA | NA | nss_2007_08\_\_assam\_\_18117\_\_jorhat | nss_2007_08\_\_assam\_\_18117 | nss_2007_08 | 18117 | Assam | Jorhat | assam | jorhat | NA | NA | NA | NA | missing_source_unit | NA | NA | NA | NA | NA | unresolved_or_non_nested | FALSE | NA | source_identity_unadjudicated |
-| NA | NA | NA | NA | NA | NA | nss_2007_08\_\_assam\_\_18118\_\_golaghat | nss_2007_08\_\_assam\_\_18118 | nss_2007_08 | 18118 | Assam | Golaghat | assam | golaghat | NA | NA | NA | NA | missing_source_unit | NA | NA | NA | NA | NA | unresolved_or_non_nested | FALSE | NA | source_identity_unadjudicated |
-| NA | NA | NA | NA | NA | NA | nss_2007_08\_\_assam\_\_18201\_\_kokrajhar | nss_2007_08\_\_assam\_\_18201 | nss_2007_08 | 18201 | Assam | Kokrajhar | assam | kokrajhar | NA | NA | NA | NA | missing_source_unit | NA | NA | NA | NA | NA | unresolved_or_non_nested | FALSE | NA | source_identity_unadjudicated |
-| NA | NA | NA | NA | NA | NA | nss_2007_08\_\_assam\_\_18202\_\_dhubri | nss_2007_08\_\_assam\_\_18202 | nss_2007_08 | 18202 | Assam | Dhubri | assam | dhubri | NA | NA | NA | NA | missing_source_unit | NA | NA | NA | NA | NA | unresolved_or_non_nested | FALSE | NA | source_identity_unadjudicated |
-| NA | NA | NA | NA | NA | NA | nss_2007_08\_\_assam\_\_18203\_\_goalpara | nss_2007_08\_\_assam\_\_18203 | nss_2007_08 | 18203 | Assam | Goalpara | assam | goalpara | NA | NA | NA | NA | missing_source_unit | NA | NA | NA | NA | NA | unresolved_or_non_nested | FALSE | NA | source_identity_unadjudicated |
-| NA | NA | NA | NA | NA | NA | nss_2007_08\_\_assam\_\_18204\_\_bongaigaon | nss_2007_08\_\_assam\_\_18204 | nss_2007_08 | 18204 | Assam | Bongaigaon | assam | bongaigaon | NA | NA | NA | NA | missing_source_unit | NA | NA | NA | NA | NA | unresolved_or_non_nested | FALSE | NA | source_identity_unadjudicated |
 | Table truncated in rendered note; full CSV has 1259 rows. |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 
 Primary-panel source eligibility
@@ -546,9 +549,26 @@ Primary-panel source eligibility
 analysis_table(primary_crosswalk, "Adjudicated deterministic source-to-2001 crosswalk", max_rows = 50)
 ```
 
-| note                               |
-|:-----------------------------------|
-| No rows in this diagnostic output. |
+| source_row_id | wave | source_code | raw_state | raw_district | state_std | district_std | target_unit_2001 | target_state_code_2001 | target_district_code_2001 | mapping_class |
+|:---|:---|---:|:---|:---|:---|:---|:---|---:|---:|:---|
+| nss_2007_08\_\_delhi\_\_07101\_\_north west | nss_2007_08 | 7101 | Delhi | North West | delhi | north west | pc2001\_\_07\_\_01 | 7 | 1 | identity_or_documented_rename_to_2001 |
+| nss_2007_08\_\_delhi\_\_07102\_\_north | nss_2007_08 | 7102 | Delhi | North | delhi | north | pc2001\_\_07\_\_02 | 7 | 2 | identity_or_documented_rename_to_2001 |
+| nss_2007_08\_\_delhi\_\_07103\_\_north east | nss_2007_08 | 7103 | Delhi | North East | delhi | north east | pc2001\_\_07\_\_03 | 7 | 3 | identity_or_documented_rename_to_2001 |
+| nss_2007_08\_\_delhi\_\_07104\_\_east | nss_2007_08 | 7104 | Delhi | East | delhi | east | pc2001\_\_07\_\_04 | 7 | 4 | identity_or_documented_rename_to_2001 |
+| nss_2007_08\_\_delhi\_\_07107\_\_west | nss_2007_08 | 7107 | Delhi | West | delhi | west | pc2001\_\_07\_\_07 | 7 | 7 | identity_or_documented_rename_to_2001 |
+| nss_2007_08\_\_delhi\_\_07108\_\_south west | nss_2007_08 | 7108 | Delhi | South West | delhi | south west | pc2001\_\_07\_\_08 | 7 | 8 | identity_or_documented_rename_to_2001 |
+| nss_2007_08\_\_delhi\_\_07109\_\_south | nss_2007_08 | 7109 | Delhi | South | delhi | south | pc2001\_\_07\_\_09 | 7 | 9 | identity_or_documented_rename_to_2001 |
+| nss_2007_08\_\_maharashtra\_\_27122\_\_mumbai suburban | nss_2007_08 | 27122 | Maharastra | Mumbai Suburban | maharashtra | mumbai suburban | pc2001\_\_27\_\_22 | 27 | 22 | identity_or_documented_rename_to_2001 |
+| nss_2017_18\_\_delhi\_\_07101\_\_north west | nss_2017_18 | 7101 | Delhi | North West | delhi | north west | pc2001\_\_07\_\_01 | 7 | 1 | identity_or_documented_rename_to_2001 |
+| nss_2017_18\_\_delhi\_\_07102\_\_north | nss_2017_18 | 7102 | Delhi | North | delhi | north | pc2001\_\_07\_\_02 | 7 | 2 | identity_or_documented_rename_to_2001 |
+| nss_2017_18\_\_delhi\_\_07103\_\_north east | nss_2017_18 | 7103 | Delhi | North East | delhi | north east | pc2001\_\_07\_\_03 | 7 | 3 | identity_or_documented_rename_to_2001 |
+| nss_2017_18\_\_delhi\_\_07104\_\_east | nss_2017_18 | 7104 | Delhi | East | delhi | east | pc2001\_\_07\_\_04 | 7 | 4 | identity_or_documented_rename_to_2001 |
+| nss_2017_18\_\_delhi\_\_07105\_\_new delhi | nss_2017_18 | 7105 | Delhi | New Delhi | delhi | new delhi | pc2001\_\_07\_\_05 | 7 | 5 | identity_or_documented_rename_to_2001 |
+| nss_2017_18\_\_delhi\_\_07106\_\_central | nss_2017_18 | 7106 | Delhi | Central | delhi | central | pc2001\_\_07\_\_06 | 7 | 6 | identity_or_documented_rename_to_2001 |
+| nss_2017_18\_\_delhi\_\_07107\_\_west | nss_2017_18 | 7107 | Delhi | West | delhi | west | pc2001\_\_07\_\_07 | 7 | 7 | identity_or_documented_rename_to_2001 |
+| nss_2017_18\_\_delhi\_\_07108\_\_south west | nss_2017_18 | 7108 | Delhi | South West | delhi | south west | pc2001\_\_07\_\_08 | 7 | 8 | identity_or_documented_rename_to_2001 |
+| nss_2017_18\_\_delhi\_\_07109\_\_south | nss_2017_18 | 7109 | Delhi | South | delhi | south | pc2001\_\_07\_\_09 | 7 | 9 | identity_or_documented_rename_to_2001 |
+| nss_2017_18\_\_maharashtra\_\_27122\_\_mumbai suburban | nss_2017_18 | 27122 | Maharashtra | Mumbai Suburban | maharashtra | mumbai suburban | pc2001\_\_27\_\_22 | 27 | 22 | identity_or_documented_rename_to_2001 |
 
 Adjudicated deterministic source-to-2001 crosswalk
 
@@ -608,7 +628,7 @@ analysis_table(excluded_sources, "Excluded or unresolved source rows", max_rows 
 | nss_2007_08\_\_assam\_\_18202\_\_dhubri | nss_2007_08 | 18202 | Assam | Dhubri | assam | dhubri | source_identity_unadjudicated |
 | nss_2007_08\_\_assam\_\_18203\_\_goalpara | nss_2007_08 | 18203 | Assam | Goalpara | assam | goalpara | source_identity_unadjudicated |
 | nss_2007_08\_\_assam\_\_18204\_\_bongaigaon | nss_2007_08 | 18204 | Assam | Bongaigaon | assam | bongaigaon | source_identity_unadjudicated |
-| Table truncated in rendered note; full CSV has 1259 rows. |  |  |  |  |  |  |  |
+| Table truncated in rendered note; full CSV has 1241 rows. |  |  |  |  |  |  |  |
 
 Excluded or unresolved source rows
 
@@ -618,6 +638,24 @@ analysis_table(adjudication_queue, "Prioritized source-adjudication queue", max_
 
 | source_row_id | wave | source_code | raw_state | raw_district | state_std | district_std | adjudication_status | candidate_count | candidate_name_count | exact_vintage_count | recommended_unit | recommended_name | recommended_vintage | recommended_method | recommended_score | high_precision_candidate | review_class | review_priority |
 |:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| nss_2007_08\_\_delhi\_\_07104\_\_east | nss_2007_08 | 7104 | Delhi | East | delhi | east | accepted | 0 | 0 | 0 | NA | NA | NA | NA | NA | FALSE | adjudicated_accepted | 0 |
+| nss_2007_08\_\_delhi\_\_07102\_\_north | nss_2007_08 | 7102 | Delhi | North | delhi | north | accepted | 0 | 0 | 0 | NA | NA | NA | NA | NA | FALSE | adjudicated_accepted | 0 |
+| nss_2007_08\_\_delhi\_\_07103\_\_north east | nss_2007_08 | 7103 | Delhi | North East | delhi | north east | accepted | 0 | 0 | 0 | NA | NA | NA | NA | NA | FALSE | adjudicated_accepted | 0 |
+| nss_2007_08\_\_delhi\_\_07101\_\_north west | nss_2007_08 | 7101 | Delhi | North West | delhi | north west | accepted | 0 | 0 | 0 | NA | NA | NA | NA | NA | FALSE | adjudicated_accepted | 0 |
+| nss_2007_08\_\_delhi\_\_07109\_\_south | nss_2007_08 | 7109 | Delhi | South | delhi | south | accepted | 0 | 0 | 0 | NA | NA | NA | NA | NA | FALSE | adjudicated_accepted | 0 |
+| nss_2007_08\_\_delhi\_\_07108\_\_south west | nss_2007_08 | 7108 | Delhi | South West | delhi | south west | accepted | 0 | 0 | 0 | NA | NA | NA | NA | NA | FALSE | adjudicated_accepted | 0 |
+| nss_2007_08\_\_delhi\_\_07107\_\_west | nss_2007_08 | 7107 | Delhi | West | delhi | west | accepted | 0 | 0 | 0 | NA | NA | NA | NA | NA | FALSE | adjudicated_accepted | 0 |
+| nss_2007_08\_\_maharashtra\_\_27122\_\_mumbai suburban | nss_2007_08 | 27122 | Maharastra | Mumbai Suburban | maharashtra | mumbai suburban | accepted | 0 | 0 | 0 | NA | NA | NA | NA | NA | FALSE | adjudicated_accepted | 0 |
+| nss_2017_18\_\_delhi\_\_07106\_\_central | nss_2017_18 | 7106 | Delhi | Central | delhi | central | accepted | 0 | 0 | 0 | NA | NA | NA | NA | NA | FALSE | adjudicated_accepted | 0 |
+| nss_2017_18\_\_delhi\_\_07104\_\_east | nss_2017_18 | 7104 | Delhi | East | delhi | east | accepted | 0 | 0 | 0 | NA | NA | NA | NA | NA | FALSE | adjudicated_accepted | 0 |
+| nss_2017_18\_\_delhi\_\_07105\_\_new delhi | nss_2017_18 | 7105 | Delhi | New Delhi | delhi | new delhi | accepted | 0 | 0 | 0 | NA | NA | NA | NA | NA | FALSE | adjudicated_accepted | 0 |
+| nss_2017_18\_\_delhi\_\_07102\_\_north | nss_2017_18 | 7102 | Delhi | North | delhi | north | accepted | 0 | 0 | 0 | NA | NA | NA | NA | NA | FALSE | adjudicated_accepted | 0 |
+| nss_2017_18\_\_delhi\_\_07103\_\_north east | nss_2017_18 | 7103 | Delhi | North East | delhi | north east | accepted | 0 | 0 | 0 | NA | NA | NA | NA | NA | FALSE | adjudicated_accepted | 0 |
+| nss_2017_18\_\_delhi\_\_07101\_\_north west | nss_2017_18 | 7101 | Delhi | North West | delhi | north west | accepted | 0 | 0 | 0 | NA | NA | NA | NA | NA | FALSE | adjudicated_accepted | 0 |
+| nss_2017_18\_\_delhi\_\_07109\_\_south | nss_2017_18 | 7109 | Delhi | South | delhi | south | accepted | 0 | 0 | 0 | NA | NA | NA | NA | NA | FALSE | adjudicated_accepted | 0 |
+| nss_2017_18\_\_delhi\_\_07108\_\_south west | nss_2017_18 | 7108 | Delhi | South West | delhi | south west | accepted | 0 | 0 | 0 | NA | NA | NA | NA | NA | FALSE | adjudicated_accepted | 0 |
+| nss_2017_18\_\_delhi\_\_07107\_\_west | nss_2017_18 | 7107 | Delhi | West | delhi | west | accepted | 0 | 0 | 0 | NA | NA | NA | NA | NA | FALSE | adjudicated_accepted | 0 |
+| nss_2017_18\_\_maharashtra\_\_27122\_\_mumbai suburban | nss_2017_18 | 27122 | Maharashtra | Mumbai Suburban | maharashtra | mumbai suburban | accepted | 0 | 0 | 0 | NA | NA | NA | NA | NA | FALSE | adjudicated_accepted | 0 |
 | nss_2007_08\_\_andaman and nicobar islands\_\_35102\_\_nicobars | nss_2007_08 | 35102 | Andaman & Nicober | Nicobars | andaman and nicobar islands | nicobars | NA | 3 | 1 | 3 | pc2001\_\_35\_\_02 | nicobars | 2001 | exact_normalized_name | 1 | FALSE | cross_vintage_exact_candidate | 1 |
 | nss_2007_08\_\_andaman and nicobar islands\_\_35103\_\_north and middle andaman | nss_2007_08 | 35103 | Andaman & Nicober | North and Middle Andaman | andaman and nicobar islands | north and middle andaman | NA | 2 | 1 | 2 | pc2011\_\_35\_\_639 | north and middle andaman | 2011 | exact_normalized_name | 1 | FALSE | cross_vintage_exact_candidate | 1 |
 | nss_2007_08\_\_andhra pradesh\_\_28301\_\_adilabad | nss_2007_08 | 28301 | Andhra Pardesh | Adilabad | andhra pradesh | adilabad | NA | 2 | 1 | 2 | pc2001\_\_28\_\_01 | adilabad | 2001 | exact_normalized_name | 1 | FALSE | cross_vintage_exact_candidate | 1 |
@@ -650,24 +688,6 @@ analysis_table(adjudication_queue, "Prioritized source-adjudication queue", max_
 | nss_2007_08\_\_arunachal pradesh\_\_12109\_\_upper siang | nss_2007_08 | 12109 | Arunachal Pradesh | Upper Siang | arunachal pradesh | upper siang | NA | 3 | 1 | 3 | pc2001\_\_12\_\_09 | upper siang | 2001 | exact_normalized_name | 1 | FALSE | cross_vintage_exact_candidate | 1 |
 | nss_2007_08\_\_arunachal pradesh\_\_12106\_\_upper subansiri | nss_2007_08 | 12106 | Arunachal Pradesh | Upper Subansiri | arunachal pradesh | upper subansiri | NA | 3 | 1 | 3 | pc2001\_\_12\_\_06 | upper subansiri | 2001 | exact_normalized_name | 1 | FALSE | cross_vintage_exact_candidate | 1 |
 | nss_2007_08\_\_arunachal pradesh\_\_12102\_\_west kameng | nss_2007_08 | 12102 | Arunachal Pradesh | West Kameng | arunachal pradesh | west kameng | NA | 3 | 1 | 3 | pc2001\_\_12\_\_02 | west kameng | 2001 | exact_normalized_name | 1 | FALSE | cross_vintage_exact_candidate | 1 |
-| nss_2007_08\_\_arunachal pradesh\_\_12107\_\_west siang | nss_2007_08 | 12107 | Arunachal Pradesh | West Siang | arunachal pradesh | west siang | NA | 3 | 1 | 3 | pc2001\_\_12\_\_07 | west siang | 2001 | exact_normalized_name | 1 | FALSE | cross_vintage_exact_candidate | 1 |
-| nss_2007_08\_\_assam\_\_18205\_\_barpeta | nss_2007_08 | 18205 | Assam | Barpeta | assam | barpeta | NA | 3 | 1 | 3 | pc2001\_\_18\_\_05 | barpeta | 2001 | exact_normalized_name | 1 | FALSE | cross_vintage_exact_candidate | 1 |
-| nss_2007_08\_\_assam\_\_18204\_\_bongaigaon | nss_2007_08 | 18204 | Assam | Bongaigaon | assam | bongaigaon | NA | 3 | 1 | 3 | pc2001\_\_18\_\_04 | bongaigaon | 2001 | exact_normalized_name | 1 | FALSE | cross_vintage_exact_candidate | 1 |
-| nss_2007_08\_\_assam\_\_18321\_\_cachar | nss_2007_08 | 18321 | Assam | Cachar | assam | cachar | NA | 3 | 1 | 3 | pc2001\_\_18\_\_21 | cachar | 2001 | exact_normalized_name | 1 | FALSE | cross_vintage_exact_candidate | 1 |
-| nss_2007_08\_\_assam\_\_18408\_\_darrang | nss_2007_08 | 18408 | Assam | Darrang | assam | darrang | NA | 3 | 1 | 3 | pc2001\_\_18\_\_08 | darrang | 2001 | exact_normalized_name | 1 | FALSE | cross_vintage_exact_candidate | 1 |
-| nss_2007_08\_\_assam\_\_18113\_\_dhemaji | nss_2007_08 | 18113 | Assam | Dhemaji | assam | dhemaji | NA | 3 | 1 | 3 | pc2001\_\_18\_\_13 | dhemaji | 2001 | exact_normalized_name | 1 | FALSE | cross_vintage_exact_candidate | 1 |
-| nss_2007_08\_\_assam\_\_18202\_\_dhubri | nss_2007_08 | 18202 | Assam | Dhubri | assam | dhubri | NA | 3 | 1 | 3 | pc2001\_\_18\_\_02 | dhubri | 2001 | exact_normalized_name | 1 | FALSE | cross_vintage_exact_candidate | 1 |
-| nss_2007_08\_\_assam\_\_18115\_\_dibrugarh | nss_2007_08 | 18115 | Assam | Dibrugarh | assam | dibrugarh | NA | 3 | 1 | 3 | pc2001\_\_18\_\_15 | dibrugarh | 2001 | exact_normalized_name | 1 | FALSE | cross_vintage_exact_candidate | 1 |
-| nss_2007_08\_\_assam\_\_18203\_\_goalpara | nss_2007_08 | 18203 | Assam | Goalpara | assam | goalpara | NA | 3 | 1 | 3 | pc2001\_\_18\_\_03 | goalpara | 2001 | exact_normalized_name | 1 | FALSE | cross_vintage_exact_candidate | 1 |
-| nss_2007_08\_\_assam\_\_18118\_\_golaghat | nss_2007_08 | 18118 | Assam | Golaghat | assam | golaghat | NA | 3 | 1 | 3 | pc2001\_\_18\_\_18 | golaghat | 2001 | exact_normalized_name | 1 | FALSE | cross_vintage_exact_candidate | 1 |
-| nss_2007_08\_\_assam\_\_18323\_\_hailakandi | nss_2007_08 | 18323 | Assam | Hailakandi | assam | hailakandi | NA | 3 | 1 | 3 | pc2001\_\_18\_\_23 | hailakandi | 2001 | exact_normalized_name | 1 | FALSE | cross_vintage_exact_candidate | 1 |
-| nss_2007_08\_\_assam\_\_18117\_\_jorhat | nss_2007_08 | 18117 | Assam | Jorhat | assam | jorhat | NA | 3 | 1 | 3 | pc2001\_\_18\_\_17 | jorhat | 2001 | exact_normalized_name | 1 | FALSE | cross_vintage_exact_candidate | 1 |
-| nss_2007_08\_\_assam\_\_18206\_\_kamrup | nss_2007_08 | 18206 | Assam | Kamrup | assam | kamrup | NA | 3 | 1 | 3 | pc2001\_\_18\_\_06 | kamrup | 2001 | exact_normalized_name | 1 | FALSE | cross_vintage_exact_candidate | 1 |
-| nss_2007_08\_\_assam\_\_18319\_\_karbi anglong | nss_2007_08 | 18319 | Assam | Karbi Anglong | assam | karbi anglong | NA | 3 | 1 | 3 | pc2001\_\_18\_\_19 | karbi anglong | 2001 | exact_normalized_name | 1 | FALSE | cross_vintage_exact_candidate | 1 |
-| nss_2007_08\_\_assam\_\_18201\_\_kokrajhar | nss_2007_08 | 18201 | Assam | Kokrajhar | assam | kokrajhar | NA | 3 | 1 | 3 | pc2001\_\_18\_\_01 | kokrajhar | 2001 | exact_normalized_name | 1 | FALSE | cross_vintage_exact_candidate | 1 |
-| nss_2007_08\_\_assam\_\_18112\_\_lakhimpur | nss_2007_08 | 18112 | Assam | Lakhimpur | assam | lakhimpur | NA | 3 | 1 | 3 | pc2001\_\_18\_\_12 | lakhimpur | 2001 | exact_normalized_name | 1 | FALSE | cross_vintage_exact_candidate | 1 |
-| nss_2007_08\_\_assam\_\_18409\_\_marigaon | nss_2007_08 | 18409 | Assam | Marigaon | assam | marigaon | NA | 2 | 1 | 2 | pc2001\_\_18\_\_09 | marigaon | 2001 | exact_normalized_name | 1 | FALSE | cross_vintage_exact_candidate | 1 |
-| nss_2007_08\_\_assam\_\_18410\_\_nagaon | nss_2007_08 | 18410 | Assam | Nagaon | assam | nagaon | NA | 3 | 1 | 3 | pc2001\_\_18\_\_10 | nagaon | 2001 | exact_normalized_name | 1 | FALSE | cross_vintage_exact_candidate | 1 |
 | Table truncated in rendered note; full CSV has 1259 rows. |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 
 Prioritized source-adjudication queue
@@ -728,7 +748,7 @@ analysis_table(adjudication_draft, "Review-ready adjudication draft; all rows re
 | nss_2007_08\_\_assam\_\_18202\_\_dhubri | nss_2007_08 | Assam | Dhubri | pc2001\_\_18\_\_02 | proposed_exact_normalized_name | census2001_c16 | needs_review | Generated review draft: cross_vintage_exact_candidate; preferred reference vintage=2001. Confirm administrative continuity and source evidence before changing status. |
 | nss_2007_08\_\_assam\_\_18203\_\_goalpara | nss_2007_08 | Assam | Goalpara | pc2001\_\_18\_\_03 | proposed_exact_normalized_name | census2001_c16 | needs_review | Generated review draft: cross_vintage_exact_candidate; preferred reference vintage=2001. Confirm administrative continuity and source evidence before changing status. |
 | nss_2007_08\_\_assam\_\_18204\_\_bongaigaon | nss_2007_08 | Assam | Bongaigaon | pc2001\_\_18\_\_04 | proposed_exact_normalized_name | census2001_c16 | needs_review | Generated review draft: cross_vintage_exact_candidate; preferred reference vintage=2001. Confirm administrative continuity and source evidence before changing status. |
-| Table truncated in rendered note; full CSV has 1259 rows. |  |  |  |  |  |  |  |  |
+| Table truncated in rendered note; full CSV has 1241 rows. |  |  |  |  |  |  |  |  |
 
 Review-ready adjudication draft; all rows remain needs_review
 
@@ -736,9 +756,26 @@ Review-ready adjudication draft; all rows remain needs_review
 analysis_table(sensitivity_crosswalk, "Preferred and accepted sensitivity crosswalk rows", max_rows = 50)
 ```
 
-| note                               |
-|:-----------------------------------|
-| No rows in this diagnostic output. |
+| source_row_id | wave | source_code | target_unit_2001 | weight | basis | source_id | panel_variant |
+|:---|:---|---:|:---|---:|:---|:---|:---|
+| nss_2007_08\_\_delhi\_\_07101\_\_north west | nss_2007_08 | 7101 | pc2001\_\_07\_\_01 | 1 | identity_or_documented_rename_to_2001 | NA | deterministic |
+| nss_2007_08\_\_delhi\_\_07102\_\_north | nss_2007_08 | 7102 | pc2001\_\_07\_\_02 | 1 | identity_or_documented_rename_to_2001 | NA | deterministic |
+| nss_2007_08\_\_delhi\_\_07103\_\_north east | nss_2007_08 | 7103 | pc2001\_\_07\_\_03 | 1 | identity_or_documented_rename_to_2001 | NA | deterministic |
+| nss_2007_08\_\_delhi\_\_07104\_\_east | nss_2007_08 | 7104 | pc2001\_\_07\_\_04 | 1 | identity_or_documented_rename_to_2001 | NA | deterministic |
+| nss_2007_08\_\_delhi\_\_07107\_\_west | nss_2007_08 | 7107 | pc2001\_\_07\_\_07 | 1 | identity_or_documented_rename_to_2001 | NA | deterministic |
+| nss_2007_08\_\_delhi\_\_07108\_\_south west | nss_2007_08 | 7108 | pc2001\_\_07\_\_08 | 1 | identity_or_documented_rename_to_2001 | NA | deterministic |
+| nss_2007_08\_\_delhi\_\_07109\_\_south | nss_2007_08 | 7109 | pc2001\_\_07\_\_09 | 1 | identity_or_documented_rename_to_2001 | NA | deterministic |
+| nss_2007_08\_\_maharashtra\_\_27122\_\_mumbai suburban | nss_2007_08 | 27122 | pc2001\_\_27\_\_22 | 1 | identity_or_documented_rename_to_2001 | NA | deterministic |
+| nss_2017_18\_\_delhi\_\_07101\_\_north west | nss_2017_18 | 7101 | pc2001\_\_07\_\_01 | 1 | identity_or_documented_rename_to_2001 | NA | deterministic |
+| nss_2017_18\_\_delhi\_\_07102\_\_north | nss_2017_18 | 7102 | pc2001\_\_07\_\_02 | 1 | identity_or_documented_rename_to_2001 | NA | deterministic |
+| nss_2017_18\_\_delhi\_\_07103\_\_north east | nss_2017_18 | 7103 | pc2001\_\_07\_\_03 | 1 | identity_or_documented_rename_to_2001 | NA | deterministic |
+| nss_2017_18\_\_delhi\_\_07104\_\_east | nss_2017_18 | 7104 | pc2001\_\_07\_\_04 | 1 | identity_or_documented_rename_to_2001 | NA | deterministic |
+| nss_2017_18\_\_delhi\_\_07105\_\_new delhi | nss_2017_18 | 7105 | pc2001\_\_07\_\_05 | 1 | identity_or_documented_rename_to_2001 | NA | deterministic |
+| nss_2017_18\_\_delhi\_\_07106\_\_central | nss_2017_18 | 7106 | pc2001\_\_07\_\_06 | 1 | identity_or_documented_rename_to_2001 | NA | deterministic |
+| nss_2017_18\_\_delhi\_\_07107\_\_west | nss_2017_18 | 7107 | pc2001\_\_07\_\_07 | 1 | identity_or_documented_rename_to_2001 | NA | deterministic |
+| nss_2017_18\_\_delhi\_\_07108\_\_south west | nss_2017_18 | 7108 | pc2001\_\_07\_\_08 | 1 | identity_or_documented_rename_to_2001 | NA | deterministic |
+| nss_2017_18\_\_delhi\_\_07109\_\_south | nss_2017_18 | 7109 | pc2001\_\_07\_\_09 | 1 | identity_or_documented_rename_to_2001 | NA | deterministic |
+| nss_2017_18\_\_maharashtra\_\_27122\_\_mumbai suburban | nss_2017_18 | 27122 | pc2001\_\_27\_\_22 | 1 | identity_or_documented_rename_to_2001 | NA | deterministic |
 
 Preferred and accepted sensitivity crosswalk rows
 
@@ -746,9 +783,26 @@ Preferred and accepted sensitivity crosswalk rows
 analysis_table(production_comparison, "Accepted v2 mappings compared with production", max_rows = 50)
 ```
 
-| note                               |
-|:-----------------------------------|
-| No rows in this diagnostic output. |
+| source_row_id | wave | source_code | v2_target_unit_2001 | production_target_unit_2001 | comparison_status |
+|:---|:---|---:|:---|:---|:---|
+| nss_2007_08\_\_maharashtra\_\_27122\_\_mumbai suburban | nss_2007_08 | 27122 | pc2001\_\_27\_\_22 | pc2001\_\_27\_\_22 | same_target |
+| nss_2007_08\_\_delhi\_\_07101\_\_north west | nss_2007_08 | 7101 | pc2001\_\_07\_\_01 | NA | missing_from_production_panel |
+| nss_2007_08\_\_delhi\_\_07102\_\_north | nss_2007_08 | 7102 | pc2001\_\_07\_\_02 | NA | missing_from_production_panel |
+| nss_2007_08\_\_delhi\_\_07103\_\_north east | nss_2007_08 | 7103 | pc2001\_\_07\_\_03 | NA | missing_from_production_panel |
+| nss_2007_08\_\_delhi\_\_07104\_\_east | nss_2007_08 | 7104 | pc2001\_\_07\_\_04 | NA | missing_from_production_panel |
+| nss_2007_08\_\_delhi\_\_07107\_\_west | nss_2007_08 | 7107 | pc2001\_\_07\_\_07 | NA | missing_from_production_panel |
+| nss_2007_08\_\_delhi\_\_07108\_\_south west | nss_2007_08 | 7108 | pc2001\_\_07\_\_08 | NA | missing_from_production_panel |
+| nss_2007_08\_\_delhi\_\_07109\_\_south | nss_2007_08 | 7109 | pc2001\_\_07\_\_09 | NA | missing_from_production_panel |
+| nss_2017_18\_\_maharashtra\_\_27122\_\_mumbai suburban | nss_2017_18 | 27122 | pc2001\_\_27\_\_22 | pc2001\_\_27\_\_22 | same_target |
+| nss_2017_18\_\_delhi\_\_07101\_\_north west | nss_2017_18 | 7101 | pc2001\_\_07\_\_01 | NA | missing_from_production_panel |
+| nss_2017_18\_\_delhi\_\_07102\_\_north | nss_2017_18 | 7102 | pc2001\_\_07\_\_02 | NA | missing_from_production_panel |
+| nss_2017_18\_\_delhi\_\_07103\_\_north east | nss_2017_18 | 7103 | pc2001\_\_07\_\_03 | NA | missing_from_production_panel |
+| nss_2017_18\_\_delhi\_\_07104\_\_east | nss_2017_18 | 7104 | pc2001\_\_07\_\_04 | NA | missing_from_production_panel |
+| nss_2017_18\_\_delhi\_\_07105\_\_new delhi | nss_2017_18 | 7105 | pc2001\_\_07\_\_05 | NA | missing_from_production_panel |
+| nss_2017_18\_\_delhi\_\_07106\_\_central | nss_2017_18 | 7106 | pc2001\_\_07\_\_06 | NA | missing_from_production_panel |
+| nss_2017_18\_\_delhi\_\_07107\_\_west | nss_2017_18 | 7107 | pc2001\_\_07\_\_07 | NA | missing_from_production_panel |
+| nss_2017_18\_\_delhi\_\_07108\_\_south west | nss_2017_18 | 7108 | pc2001\_\_07\_\_08 | NA | missing_from_production_panel |
+| nss_2017_18\_\_delhi\_\_07109\_\_south | nss_2017_18 | 7109 | pc2001\_\_07\_\_09 | NA | missing_from_production_panel |
 
 Accepted v2 mappings compared with production
 
@@ -759,13 +813,27 @@ analysis_table(geometry_qa, "Census 2001 geometry readiness and QA", max_rows = 
 | metric                    | value |
 |:--------------------------|------:|
 | geometry_available        |     1 |
-| geometry_rows             |   582 |
+| geometry_rows             |   593 |
 | expected_admin_units      |   593 |
-| missing_admin_units       |    11 |
+| missing_admin_units       |     0 |
 | unexpected_geometry_units |     0 |
 | invalid_geometries        |     0 |
 
 Census 2001 geometry readiness and QA
+
+``` r
+analysis_table(
+  geometry_coverage[geometry_coverage$coverage_status != "present", , drop = FALSE],
+  "Missing or unexpected Census 2001 district geometries",
+  max_rows = 50
+)
+```
+
+| note                               |
+|:-----------------------------------|
+| No rows in this diagnostic output. |
+
+Missing or unexpected Census 2001 district geometries
 
 ``` r
 analysis_table(candidates, "Top source-match candidates; never automatic adjudications", max_rows = 50)
@@ -823,7 +891,7 @@ analysis_table(candidates, "Top source-match candidates; never automatic adjudic
 | nss_2007_08\_\_andhra pradesh\_\_28520\_\_cuddapah | nss_2007_08 | 28520 | andhra pradesh | Cuddapah | cuddapah | pc2001\_\_28\_\_20 | cuddapah | census2001_c16 | 2001 | exact_normalized_name | 1 | 1 | 1 | 1 | 1 | 1 | NA | TRUE | FALSE |
 | nss_2007_08\_\_andhra pradesh\_\_28521\_\_kurnool | nss_2007_08 | 28521 | andhra pradesh | Kurnool | kurnool | pc2001\_\_28\_\_21 | kurnool | census2001_c16 | 2001 | exact_normalized_name | 1 | 1 | 1 | 1 | 1 | 1 | NA | FALSE | FALSE |
 | nss_2007_08\_\_andhra pradesh\_\_28521\_\_kurnool | nss_2007_08 | 28521 | andhra pradesh | Kurnool | kurnool | pc2011\_\_28\_\_552 | kurnool | shrug_pc11_district_geometry | 2011 | exact_normalized_name | 2 | 1 | 1 | 1 | 1 | 1 | NA | FALSE | FALSE |
-| Table truncated in rendered note; full CSV has 4051 rows. |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| Table truncated in rendered note; full CSV has 3997 rows. |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 
 Top source-match candidates; never automatic adjudications
 
