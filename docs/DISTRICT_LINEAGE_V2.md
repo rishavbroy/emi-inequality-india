@@ -390,16 +390,16 @@ variant lacks a finite clustered standard error or p-value.
 
 ## Aliased coefficients and clustered inference
 
-Clustered coefficient tables use `lmtest::coeftest()` with the covariance
-function returned by the shared cluster helper. This is the standard inference
-path already used elsewhere in the repository and correctly aligns covariance
-rows with estimable coefficients when the design matrix contains aliased
-regressors.
+Clustered coefficient tables use the repository's common
+`coefficient_frame()` normalizer with the covariance matrix returned by the
+shared cluster helper. This keeps one stable output schema for public tables,
+report values, serialized-model diagnostics, and downstream comparisons.
 
-The low-level coefficient-frame fallback also matches covariance rows by term
-instead of requiring the covariance matrix to have the same dimension as the
-full, potentially aliased coefficient vector. One aliased control therefore
-cannot erase inference for every estimable coefficient.
+The normalizer matches covariance rows by term instead of requiring the
+covariance matrix to have the same dimension as the full, potentially aliased
+coefficient vector. One aliased control therefore cannot erase inference for
+every estimable coefficient, while the aliased term remains explicitly
+unavailable.
 
 The reported condition number is calculated on the QR-selected estimable
 regressor matrix. Rank deficiency remains visible through the model's aliased
