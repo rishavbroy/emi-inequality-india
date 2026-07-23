@@ -331,23 +331,44 @@ test_that("reviewed allocations resolve only their corresponding coverage gaps",
   expect_false(status$coverage_resolved)
 })
 
-test_that("tracked high-coverage sensitivity allocations are normalized", {
+test_that("tracked allocation decisions preserve weights and rejections", {
   root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
   path <- file.path(
     root, "data", "metadata", "district_allocation_weights_v2.csv"
   )
-  weights <- read_lineage_source(
-    path,
-    reader = "allocation_csv",
-    source_id = "lineage_allocation_weights"
+  decisions <- read_adjudicated_allocation_weights_v2(
+    read_lineage_source(
+      path,
+      reader = "allocation_csv",
+      source_id = "lineage_allocation_weights"
+    )
   )
-  validation <- validate_adjudicated_allocation_weights_v2(weights)
+  accepted <- decisions[
+    decisions$status %in% "accepted",
+    ,
+    drop = FALSE
+  ]
+  rejected <- decisions[
+    decisions$status %in% "rejected",
+    ,
+    drop = FALSE
+  ]
+  validation <- validate_adjudicated_allocation_weights_v2(decisions)
 
-  expect_equal(nrow(weights), 503L)
-  expect_equal(length(unique(weights$source_unit)), 457L)
-  expect_true(all(weights$status == "accepted"))
+  expect_equal(nrow(decisions), 582L)
+  expect_equal(length(unique(decisions$source_unit)), 536L)
+
+  expect_equal(nrow(accepted), 503L)
+  expect_equal(length(unique(accepted$source_unit)), 457L)
+  expect_true(all(grepl("99pct", accepted$basis, fixed = TRUE)))
+  expect_equal(nrow(validation), 457L)
   expect_true(all(validation$coverage_complete))
-  expect_true(all(grepl("99pct", weights$basis, fixed = TRUE)))
+
+  expect_equal(nrow(rejected), 79L)
+  expect_equal(length(unique(rejected$source_unit)), 79L)
+  expect_true(all(is.na(rejected$target_2001) | !nzchar(rejected$target_2001)))
+  expect_true(all(is.na(rejected$weight)))
+  expect_true(all(grepl("rejected_below_99pct", rejected$basis, fixed = TRUE)))
 })
 
 test_that("allocation source keys use canonical Census unit IDs", {
