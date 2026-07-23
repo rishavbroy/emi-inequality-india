@@ -53,6 +53,8 @@ LINEAGE_GEOMETRY_OUTPUT := outputs/derived/district_lineage_v2/district_2001.gpk
 LINEAGE_GEOMETRY_INPUTS := \
 	$(LINEAGE_GEOMETRY_SOURCE) \
 	data/metadata/file_manifest.csv \
+	$(wildcard data/raw/census_2001_mother_tongue/PC01_C16_*.xls) \
+	R/clean/clean_census_2001_languages.R \
 	data/raw/shrug/shrug-pc-keys-csv/pc01r_shrid_key.csv \
 	data/raw/shrug/shrug-pc-keys-csv/pc01u_shrid_key.csv \
 	data/raw/shrug/shrug-pc-keys-csv/pc11r_shrid_key.csv \
