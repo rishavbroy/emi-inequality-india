@@ -574,7 +574,8 @@ geometry_qa_v2 <- function(geometry_2001, admin_2001) {
 lineage_completion_steps_v2 <- function(
   source_roster, source_matches, adjudication_queue, evidence_requests,
   allocation_validation, allocation_weights, primary_crosswalk,
-  sensitivity_crosswalk, production_comparison, geometry_qa, readiness
+  sensitivity_crosswalk, production_comparison, geometry_qa, readiness,
+  production_reviews = data.frame()
 ) {
   roster <- safe_df(source_roster)
   matches <- safe_df(source_matches)

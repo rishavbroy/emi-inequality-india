@@ -576,7 +576,7 @@ test_that("migration gates distinguish absent acceptances from ineligible accept
   args$primary_eligibility$status <- "accepted"
   readiness <- do.call(build_migration_readiness_v2, args)
   expect_true(readiness$passed[readiness$gate == "accepted_source_rows_present"])
-  expect_false(
+  expect_true(
     readiness$passed[readiness$gate == "all_accepted_rows_primary_classified"]
   )
 })

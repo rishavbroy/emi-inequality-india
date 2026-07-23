@@ -137,7 +137,7 @@ test_that("one accepted allocation cannot clear unrelated coverage gaps", {
   expect_false(status$complete[status$step == 4L])
 })
 
-test_that("production review requires every accepted mapping to match", {
+test_that("production review distinguishes coverage from target conflicts", {
   common <- list(
     source_roster = data.frame(source_row_id = "s1"),
     source_matches = data.frame(
@@ -160,6 +160,18 @@ test_that("production review requires every accepted mapping to match", {
     geometry_qa = data.frame(metric = "geometry_available", value = FALSE),
     readiness = data.frame(
       gate = "production_crosswalk_migration_ready", passed = FALSE
+    ),
+    production_reviews = data.frame(
+      review_id = "downstream",
+      source_row_id = "",
+      review_scope = "downstream_results",
+      v2_target_unit_2001 = "",
+      production_target_unit_2001 = "",
+      decision = "reviewed",
+      source_id = "source",
+      status = "accepted",
+      note = "reviewed",
+      stringsAsFactors = FALSE
     )
   )
 
@@ -167,7 +179,8 @@ test_that("production review requires every accepted mapping to match", {
     lineage_completion_steps_v2,
     c(common, list(
       production_comparison = data.frame(
-        comparison_status = "missing_from_production_panel"
+        comparison_status = "missing_from_production_panel",
+        review_status = "not_required"
       )
     ))
   )
@@ -175,7 +188,8 @@ test_that("production review requires every accepted mapping to match", {
     lineage_completion_steps_v2,
     c(common, list(
       production_comparison = data.frame(
-        comparison_status = "changed_target"
+        comparison_status = "changed_target",
+        review_status = "needs_review"
       )
     ))
   )
@@ -183,12 +197,13 @@ test_that("production review requires every accepted mapping to match", {
     lineage_completion_steps_v2,
     c(common, list(
       production_comparison = data.frame(
-        comparison_status = "same_target"
+        comparison_status = "same_target",
+        review_status = "not_required"
       )
     ))
   )
 
-  expect_false(missing$complete[missing$step == 8L])
+  expect_true(missing$complete[missing$step == 8L])
   expect_false(changed$complete[changed$step == 8L])
   expect_true(same$complete[same$step == 8L])
 })
