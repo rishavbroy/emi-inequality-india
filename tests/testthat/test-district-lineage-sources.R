@@ -20,15 +20,17 @@ test_that("wide Alluvial sources become adjacent-year lineage candidates", {
 })
 
 test_that("LGD SpreadsheetML readers locate the actual table header", {
-  skip_if_not_installed("xml2")
+  skip_if_not_installed("XML")
   path <- tempfile(fileext = ".xls")
   writeLines(c(
     '<?xml version="1.0" encoding="UTF-8"?>',
-    '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet">',
+    '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">',
     '<Worksheet><Table>',
     '<Row><Cell><Data>Local Government Directory</Data></Cell></Row>',
-    '<Row><Cell><Data>District Code</Data></Cell><Cell><Data>District Name(In English)</Data></Cell><Cell><Data>State Code</Data></Cell></Row>',
-    '<Row><Cell><Data>666</Data></Cell><Cell><Data>Longding</Data></Cell><Cell><Data>12</Data></Cell></Row>',
+    '<Row><Cell><Data>District Code</Data></Cell><Cell><Data>District Name(In English)</Data></Cell><Cell ss:Index="4"><Data>State Code</Data></Cell></Row>',
+    '<Row><Cell><Data>666</Data></Cell><Cell><Data>Longding</Data></Cell><Cell ss:Index="4"><Data>12</Data></Cell></Row>',
+    '<Row><Cell><Data>Total 1</Data></Cell></Row>',
+    '<Row><Cell><Data>Report Generated</Data></Cell></Row>',
     '</Table></Worksheet></Workbook>'
   ), path)
 
@@ -37,6 +39,7 @@ test_that("LGD SpreadsheetML readers locate the actual table header", {
   expect_equal(nrow(out), 1L)
   expect_equal(out[[first_col(out, "District Code")]], "666")
   expect_equal(out[[first_col(out, "District Name(In English)")]], "Longding")
+  expect_equal(out[[first_col(out, "State Code")]], "12")
 })
 
 test_that("empty LGD inputs remain empty after standardization", {
@@ -48,7 +51,7 @@ test_that("empty LGD inputs remain empty after standardization", {
   expect_true(all(c("district_lgd_code", "census2011_district_code") %in% names(out)))
 })
 
-test_that("large component files are inventoried without loading every audit", {
+test_that("changed-unit rosters remain complete while geometry stays inventory-only", {
   paths <- build_paths(tempdir())
   specs <- district_lineage_v2_input_specs(paths)
 
@@ -201,4 +204,80 @@ test_that("accepted lineage decisions cite registered evidence", {
   matches$source_id[[2]] <- NA_character_
   issues <- validate_lineage_source_references_v2(registry, matches)
   expect_equal(issues$issue, "missing_source_id")
+})
+
+
+test_that("source branches assemble by source ID rather than branch order", {
+  branches <- list(
+    list(source_id = "b", value = data.frame(x = 2)),
+    list(source_id = "a", value = data.frame(x = 1))
+  )
+
+  out <- assemble_district_lineage_v2_sources(branches)
+
+  expect_named(out, c("b", "a"))
+  expect_equal(out$a$x, 1)
+  expect_error(
+    assemble_district_lineage_v2_sources(c(branches, branches[1])),
+    "duplicate source IDs"
+  )
+  expect_error(
+    assemble_district_lineage_v2_sources(list(list(value = data.frame()))),
+    "must have a source_id"
+  )
+})
+
+test_that("source specifications split loaded inputs from the complete inventory", {
+  specs <- data.frame(
+    source_id = c("loaded", "missing", "inventory_only"),
+    relative_path = c("a", "b", "c"),
+    reader = c("csv", "csv", "inventory_only"),
+    role = c("candidate", "candidate", "geometry"),
+    load_for_diagnostic = c(TRUE, TRUE, FALSE),
+    exists = c(TRUE, FALSE, TRUE),
+    size_bytes = c(1, NA, 2),
+    absolute_path = c("a", "b", "c"),
+    stringsAsFactors = FALSE
+  )
+
+  inventory <- district_lineage_v2_source_inventory(specs)
+  branches <- split_district_lineage_v2_source_specs(specs)
+
+  expect_equal(inventory$source_id, specs$source_id)
+  expect_length(branches, 1L)
+  expect_equal(branches[[1]]$source_id, "loaded")
+})
+
+
+test_that("changed-component roster retains every loaded administrative level", {
+  canonical <- function(level, code) data.frame(
+    level = level,
+    entity_code = code,
+    entity_name = paste(level, code),
+    state_lgd_code = "1",
+    state_name = "State",
+    district_lgd_code = if (level == "district") code else "10",
+    district_name = "District",
+    subdistrict_lgd_code = if (level == "subdistrict") code else "100",
+    subdistrict_name = "Subdistrict",
+    period_start = "2011-01-01",
+    period_end = "2018-06-30",
+    event_type = "unknown_modification",
+    evidence_status = "changed_unit_roster_only",
+    stringsAsFactors = FALSE
+  )
+  sources <- list(
+    lgd_mod_districts = canonical("district", "10"),
+    lgd_mod_subdistricts = canonical("subdistrict", "100"),
+    lgd_mod_villages = canonical("village", "1000"),
+    lgd_mod_urban_local_bodies = canonical("urban_local_body", "10000")
+  )
+
+  out <- build_changed_component_roster_v2(sources)
+
+  expect_setequal(
+    out$level,
+    c("district", "subdistrict", "village", "urban_local_body")
+  )
+  expect_equal(nrow(out), 4L)
 })

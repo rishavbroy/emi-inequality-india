@@ -36,12 +36,12 @@ district_lineage_v2_input_specs <- function(paths = build_paths()) {
     spec("isded_admin_units_2025", "data/raw/district_changes/india_state_stories/isded/2025/admin_units_2025.xlsx", "xlsx", TRUE, "published_current_component_registry"),
     spec("iss_census_series_1901_2011", "data/raw/district_changes/india_state_stories/census_data_collection/1901-2011/1901-2011-State Districts-Population Time Series.xlsx", "inventory_only", FALSE, "historical_population_validation"),
     spec("iss_subdistricts_2026", "data/raw/district_changes/india_state_stories/census_data_collection/2026/2026_subdistricts_with_2011_census_pass2_loose.xlsx", "inventory_only", FALSE, "published_current_component_registry"),
-    spec("shrug_pc01r", "data/raw/shrug/shrug-pc-keys-csv/pc01r_shrid_key.csv", "csv", TRUE, "stable_locality_weight"),
-    spec("shrug_pc01u", "data/raw/shrug/shrug-pc-keys-csv/pc01u_shrid_key.csv", "csv", TRUE, "stable_locality_weight"),
-    spec("shrug_pc11r", "data/raw/shrug/shrug-pc-keys-csv/pc11r_shrid_key.csv", "csv", TRUE, "stable_locality_weight"),
-    spec("shrug_pc11u", "data/raw/shrug/shrug-pc-keys-csv/pc11u_shrid_key.csv", "csv", TRUE, "stable_locality_weight"),
-    spec("shrug_pc01dist", "data/raw/shrug/shrug-pc-keys-csv/shrid_pc01dist_key.csv", "csv", TRUE, "stable_locality_district_membership"),
-    spec("shrug_pc11dist", "data/raw/shrug/shrug-pc-keys-csv/shrid_pc11dist_key.csv", "csv", TRUE, "stable_locality_district_membership"),
+    spec("shrug_pc01r", "data/raw/shrug/shrug-pc-keys-csv/pc01r_shrid_key.csv", "shrug_locality_csv", TRUE, "stable_locality_weight"),
+    spec("shrug_pc01u", "data/raw/shrug/shrug-pc-keys-csv/pc01u_shrid_key.csv", "shrug_locality_csv", TRUE, "stable_locality_weight"),
+    spec("shrug_pc11r", "data/raw/shrug/shrug-pc-keys-csv/pc11r_shrid_key.csv", "shrug_locality_csv", TRUE, "stable_locality_weight"),
+    spec("shrug_pc11u", "data/raw/shrug/shrug-pc-keys-csv/pc11u_shrid_key.csv", "shrug_locality_csv", TRUE, "stable_locality_weight"),
+    spec("shrug_pc01dist", "data/raw/shrug/shrug-pc-keys-csv/shrid_pc01dist_key.csv", "shrug_district_csv", TRUE, "stable_locality_district_membership"),
+    spec("shrug_pc11dist", "data/raw/shrug/shrug-pc-keys-csv/shrid_pc11dist_key.csv", "shrug_district_csv", TRUE, "stable_locality_district_membership"),
     spec("shrug_pc01subdist", "data/raw/shrug/shrug-pc-keys-csv/shrid_pc01subdist_key.csv", "inventory_only", FALSE, "stable_locality_subdistrict_membership"),
     spec("shrug_pc11subdist", "data/raw/shrug/shrug-pc-keys-csv/shrid_pc11subdist_key.csv", "inventory_only", FALSE, "stable_locality_subdistrict_membership"),
     spec("shrug_pc11subdistu", "data/raw/shrug/shrug-pc-keys-csv/shrid_pc11subdistu_key.csv", "inventory_only", FALSE, "stable_locality_subdistrict_membership"),
@@ -76,12 +76,32 @@ district_lineage_v2_input_specs <- function(paths = build_paths()) {
   out
 }
 
-#' Existing district-lineage input files
+#' District-lineage source inventory
 #'
-#' @return Character vector suitable for a targets `format = "file"` target.
-district_lineage_v2_existing_files <- function(specs) {
+#' @return Compact inventory retained independently from loaded source values.
+district_lineage_v2_source_inventory <- function(specs) {
   specs <- safe_df(specs)
-  unique(specs$absolute_path[specs$exists & specs$load_for_diagnostic])
+  specs[c(
+    "source_id", "relative_path", "reader", "role",
+    "load_for_diagnostic", "exists", "size_bytes"
+  )]
+}
+
+#' Split available source specifications for dynamic branching
+#'
+#' @return List of one-row data frames, one per source loaded by the extended diagnostic.
+split_district_lineage_v2_source_specs <- function(specs) {
+  specs <- safe_df(specs)
+  specs <- specs[specs$exists & specs$load_for_diagnostic, , drop = FALSE]
+  lapply(seq_len(nrow(specs)), function(i) specs[i, , drop = FALSE])
+}
+
+district_lineage_v2_source_path <- function(spec) {
+  spec <- safe_df(spec)
+  if (nrow(spec) != 1L || is.na(spec$absolute_path[[1]]) || !nzchar(spec$absolute_path[[1]])) {
+    stop("A district-lineage source branch must contain exactly one path.", call. = FALSE)
+  }
+  spec$absolute_path[[1]]
 }
 
 read_lgd_json_records <- function(path) {
@@ -103,46 +123,108 @@ read_lgd_xlsx_table <- function(path) {
   drop_export_footer(out)
 }
 
-spreadsheetml_rows <- function(path) {
-  need_pkg("xml2", "LGD SpreadsheetML modification reports")
-  doc <- xml2::read_xml(path)
-  rows <- xml2::xml_find_all(doc, ".//*[local-name()='Row']")
-  lapply(rows, function(row) {
-    cells <- xml2::xml_find_all(row, "./*[local-name()='Cell']")
-    values <- character()
-    cursor <- 1L
-    for (cell in cells) {
-      attrs <- xml2::xml_attrs(cell)
-      index_attr <- attrs[grepl("(^|:)Index$", names(attrs))]
-      idx <- if (length(index_attr)) suppressWarnings(as.integer(index_attr[[1]])) else NA_integer_
-      if (is.finite(idx)) cursor <- idx
-      if (cursor > length(values) + 1L) values <- c(values, rep("", cursor - length(values) - 1L))
-      data <- xml2::xml_find_first(cell, "./*[local-name()='Data']")
-      value <- if (inherits(data, "xml_missing")) "" else xml2::xml_text(data)
-      values[[cursor]] <- value
-      cursor <- cursor + 1L
+spreadsheetml_index <- function(attrs) {
+  if (!length(attrs)) return(NA_integer_)
+  hit <- attrs[grepl("(^|:)Index$", names(attrs))]
+  if (!length(hit)) return(NA_integer_)
+  suppressWarnings(as.integer(hit[[1]]))
+}
+
+spreadsheetml_handlers <- function() {
+  state <- new.env(parent = emptyenv())
+  state$in_row <- FALSE
+  state$in_data <- FALSE
+  state$cursor <- 1L
+  state$current <- character()
+  state$text <- ""
+  state$header <- NULL
+  state$rows <- list()
+
+  local_name <- function(x) sub("^.*:", "", x)
+  append_row <- function(values) {
+    if (is.null(state$header)) {
+      keys <- canon(values)
+      is_header <- sum(nzchar(keys)) >= 3L &&
+        any(grepl("code", keys, fixed = TRUE)) &&
+        any(grepl("name", keys, fixed = TRUE))
+      if (is_header) state$header <- make.unique(keys)
+      return(invisible(NULL))
     }
-    values
-  })
+    width <- length(state$header)
+    values <- c(values, rep("", max(0L, width - length(values))))[seq_len(width)]
+    row_text <- paste(canon(values), collapse = " ")
+    if (!nzchar(trimws(row_text)) || grepl("^total ", row_text) ||
+        grepl("report generated", row_text, fixed = TRUE) ||
+        grepl("local government directory$", row_text)) {
+      return(invisible(NULL))
+    }
+    state$rows[[length(state$rows) + 1L]] <- values
+    invisible(NULL)
+  }
+
+  list(
+    startElement = function(name, attrs) {
+      tag <- local_name(name)
+      if (identical(tag, "Row")) {
+        state$in_row <- TRUE
+        state$cursor <- 1L
+        state$current <- character()
+      } else if (state$in_row && identical(tag, "Cell")) {
+        idx <- spreadsheetml_index(attrs)
+        if (is.finite(idx)) state$cursor <- idx
+      } else if (state$in_row && identical(tag, "Data")) {
+        state$in_data <- TRUE
+        state$text <- ""
+      }
+    },
+    text = function(x) {
+      if (state$in_data) state$text <- paste0(state$text, x)
+    },
+    endElement = function(name) {
+      tag <- local_name(name)
+      if (state$in_row && identical(tag, "Data")) {
+        if (state$cursor > length(state$current) + 1L) {
+          state$current <- c(
+            state$current,
+            rep("", state$cursor - length(state$current) - 1L)
+          )
+        }
+        state$current[[state$cursor]] <- state$text
+        state$cursor <- state$cursor + 1L
+        state$in_data <- FALSE
+      } else if (identical(tag, "Row")) {
+        append_row(state$current)
+        state$in_row <- FALSE
+      }
+    },
+    result = function() {
+      if (is.null(state$header)) return(NULL)
+      if (!length(state$rows)) {
+        out <- as.data.frame(matrix(character(), nrow = 0L, ncol = length(state$header)))
+      } else {
+        out <- as.data.frame(do.call(rbind, state$rows), stringsAsFactors = FALSE)
+      }
+      names(out) <- state$header
+      out[, nzchar(names(out)), drop = FALSE]
+    }
+  )
 }
 
 read_lgd_spreadsheetml <- function(path) {
-  rows <- spreadsheetml_rows(path)
-  if (!length(rows)) return(data.frame())
-  header_i <- which(vapply(rows, function(x) {
-    vals <- canon(x)
-    sum(nzchar(vals)) >= 3L && any(grepl("code", vals, fixed = TRUE)) && any(grepl("name", vals, fixed = TRUE))
-  }, logical(1)))[1]
-  if (!is.finite(header_i)) stop("Could not locate the data header in LGD modification report: ", path, call. = FALSE)
-
-  width <- max(vapply(rows[header_i:length(rows)], length, integer(1)))
-  pad <- function(x) c(x, rep("", width - length(x)))
-  matrix_rows <- do.call(rbind, lapply(rows[header_i:length(rows)], pad))
-  header <- make.unique(canon(matrix_rows[1, ]))
-  out <- as.data.frame(matrix_rows[-1, , drop = FALSE], stringsAsFactors = FALSE)
-  names(out) <- header
-  out <- out[, nzchar(names(out)), drop = FALSE]
-  drop_export_footer(out)
+  need_pkg("XML", "LGD SpreadsheetML modification reports")
+  handlers <- spreadsheetml_handlers()
+  XML::xmlEventParse(
+    path,
+    handlers = handlers[c("startElement", "text", "endElement")],
+    addContext = FALSE,
+    useTagName = FALSE,
+    trim = FALSE
+  )
+  out <- handlers$result()
+  if (is.null(out)) {
+    stop("Could not locate the data header in LGD modification report: ", path, call. = FALSE)
+  }
+  out
 }
 
 drop_export_footer <- function(x) {
@@ -156,12 +238,61 @@ drop_export_footer <- function(x) {
   x[keep, , drop = FALSE]
 }
 
-read_lineage_csv <- function(path) {
-  need_pkg("readr", "district-lineage CSV inputs")
-  safe_df(readr::read_csv(path, show_col_types = FALSE, progress = FALSE, name_repair = "minimal"))
+read_lineage_csv <- function(path, select = NULL) {
+  need_pkg("data.table", "district-lineage CSV inputs")
+  args <- list(
+    file = path,
+    data.table = FALSE,
+    check.names = FALSE,
+    showProgress = FALSE,
+    na.strings = c("", "NA")
+  )
+  if (!is.null(select)) args$select <- select
+  safe_df(do.call(data.table::fread, args))
 }
 
-read_lineage_source <- function(path, reader) {
+resolve_shrug_input_columns <- function(path, role) {
+  need_pkg("data.table", "SHRUG key inputs")
+  header <- names(data.table::fread(
+    path,
+    nrows = 0L,
+    data.table = FALSE,
+    check.names = FALSE,
+    showProgress = FALSE
+  ))
+  keys <- canon(header)
+  patterns <- if (identical(role, "locality")) {
+    c("shrid2", "shrid", "state id", "state code", "district id", "district code",
+      "subdistrict id", "sub district id", "town village id", "village id", "town id",
+      "pca tot p", "population", "pop total", "total population", "pop", "land area", "area")
+  } else {
+    c("shrid2", "shrid", "state id", "state code", "district id", "district code")
+  }
+  keep <- Reduce(`|`, lapply(patterns, function(pattern) grepl(pattern, keys, fixed = TRUE)))
+  selected <- header[keep]
+  if (!any(canon(selected) %in% c("shrid2", "shrid"))) {
+    stop("SHRUG key is missing shrid2: ", path, call. = FALSE)
+  }
+  selected
+}
+
+read_shrug_key <- function(path, role) {
+  read_lineage_csv(path, select = resolve_shrug_input_columns(path, role))
+}
+
+modification_level <- function(source_id) {
+  levels <- c(
+    lgd_mod_districts = "district",
+    lgd_mod_subdistricts = "subdistrict",
+    lgd_mod_villages = "village",
+    lgd_mod_urban_local_bodies = "urban_local_body"
+  )
+  level <- unname(levels[[source_id]])
+  if (is.null(level)) stop("Unknown LGD modification source: ", source_id, call. = FALSE)
+  level
+}
+
+read_lineage_source <- function(path, reader, source_id = NA_character_) {
   switch(
     reader,
     lgd_json = read_lgd_json_records(path),
@@ -170,8 +301,12 @@ read_lineage_source <- function(path, reader) {
       need_pkg("readxl", "district-lineage Excel inputs")
       safe_df(readxl::read_excel(path, .name_repair = "minimal"))
     },
-    spreadsheetml = read_lgd_spreadsheetml(path),
+    spreadsheetml = standardize_lgd_modification_roster(
+      read_lgd_spreadsheetml(path), modification_level(source_id)
+    ),
     csv = read_lineage_csv(path),
+    shrug_locality_csv = read_shrug_key(path, "locality"),
+    shrug_district_csv = read_shrug_key(path, "district"),
     gpkg = {
       need_pkg("sf", "district-lineage geometries")
       sf::st_read(path, quiet = TRUE)
@@ -181,22 +316,30 @@ read_lineage_source <- function(path, reader) {
   )
 }
 
-#' Read district-lineage v2 inputs
-#'
-#' Large locality attributes and SHRID geometry are deliberately inventoried
-#' without loading them into every extended-diagnostics run. Dedicated bridge
-#' and geometry functions consume them when needed.
-read_district_lineage_v2_sources <- function(specs, existing_files = character()) {
-  if (length(existing_files) && any(!file.exists(existing_files))) {
-    stop("A tracked district-lineage input disappeared before it could be read.", call. = FALSE)
+#' Read one district-lineage source branch
+read_district_lineage_v2_source <- function(spec, path) {
+  spec <- safe_df(spec)
+  if (nrow(spec) != 1L) stop("Each source branch must contain one specification row.", call. = FALSE)
+  if (!file.exists(path)) stop("A tracked district-lineage input disappeared before it could be read.", call. = FALSE)
+  list(
+    source_id = spec$source_id[[1]],
+    value = read_lineage_source(path, spec$reader[[1]], spec$source_id[[1]])
+  )
+}
+
+#' Assemble source branches by semantic source ID
+assemble_district_lineage_v2_sources <- function(branches) {
+  if (!length(branches)) return(list())
+  ids <- vapply(branches, function(x) x$source_id %||% NA_character_, character(1))
+  if (anyNA(ids) || any(!nzchar(ids))) {
+    stop("Every district-lineage source branch must have a source_id.", call. = FALSE)
   }
-  specs <- safe_df(specs)
-  available <- specs[specs$exists & specs$load_for_diagnostic, , drop = FALSE]
-  values <- stats::setNames(lapply(seq_len(nrow(available)), function(i) {
-    read_lineage_source(available$absolute_path[[i]], available$reader[[i]])
-  }), available$source_id)
-  attr(values, "source_inventory") <- specs[c("source_id", "relative_path", "reader", "role", "load_for_diagnostic", "exists", "size_bytes")]
-  values
+  if (anyDuplicated(ids)) {
+    duplicate <- unique(ids[duplicated(ids)])
+    stop("District-lineage source branches contain duplicate source IDs: ",
+         paste(duplicate, collapse = ", "), call. = FALSE)
+  }
+  stats::setNames(lapply(branches, `[[`, "value"), ids)
 }
 
 #' Standardize a current LGD registry table

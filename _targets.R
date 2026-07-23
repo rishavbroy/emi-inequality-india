@@ -115,13 +115,44 @@ core_pipeline_targets <- list(
 )
 
 extended_diagnostic_targets <- list(
-  tar_target(district_lineage_v2_specs, district_lineage_v2_input_specs(paths), cue = tar_cue(mode = "always")),
-  tar_target(district_lineage_v2_input_files, district_lineage_v2_existing_files(district_lineage_v2_specs), format = "file"),
-  tar_target(raw_district_lineage_v2, read_district_lineage_v2_sources(district_lineage_v2_specs, district_lineage_v2_input_files)),
+  tar_target(
+    district_lineage_v2_specs,
+    district_lineage_v2_input_specs(paths),
+    cue = tar_cue(mode = "always")
+  ),
+  tar_target(
+    district_lineage_v2_inventory,
+    district_lineage_v2_source_inventory(district_lineage_v2_specs)
+  ),
+  tar_target(
+    district_lineage_v2_source_specs,
+    split_district_lineage_v2_source_specs(district_lineage_v2_specs),
+    iteration = "list"
+  ),
+  tar_target(
+    district_lineage_v2_source_file,
+    district_lineage_v2_source_path(district_lineage_v2_source_specs),
+    pattern = map(district_lineage_v2_source_specs),
+    format = "file"
+  ),
+  tar_target(
+    district_lineage_v2_source,
+    read_district_lineage_v2_source(
+      district_lineage_v2_source_specs,
+      district_lineage_v2_source_file
+    ),
+    pattern = map(district_lineage_v2_source_specs, district_lineage_v2_source_file),
+    iteration = "list"
+  ),
+  tar_target(
+    district_lineage_v2_sources,
+    assemble_district_lineage_v2_sources(district_lineage_v2_source)
+  ),
   tar_target(
     diag_ext_district_lineage_v2,
     save_district_lineage_v2(build_district_lineage_v2(
-      raw_district_lineage_v2,
+      district_lineage_v2_sources,
+      district_lineage_v2_inventory,
       district_tracker,
       census_2001_languages,
       measures_2007,

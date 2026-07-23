@@ -91,9 +91,9 @@ build_candidate_admin_events_v2 <- function(district_tracker, raw_sources) {
     )
   } else data.frame()
 
-  district_mod <- raw_sources$lgd_mod_districts %||% data.frame()
-  lgd_events <- if (nrow(safe_df(district_mod))) {
-    roster <- standardize_lgd_modification_roster(district_mod, "district")
+  district_mod <- safe_df(raw_sources$lgd_mod_districts %||% data.frame())
+  lgd_events <- if (nrow(district_mod)) {
+    roster <- district_mod
     data.frame(
       event_id = paste0("lgd_changed__district__", roster$entity_code),
       effective_date = NA_character_,
@@ -159,15 +159,13 @@ build_current_urban_coverage_v2 <- function(raw_sources) {
 }
 
 build_changed_component_roster_v2 <- function(raw_sources) {
-  specs <- c(
-    lgd_mod_subdistricts = "subdistrict",
-    lgd_mod_villages = "village",
-    lgd_mod_urban_local_bodies = "urban_local_body"
+  source_ids <- c(
+    "lgd_mod_districts", "lgd_mod_subdistricts",
+    "lgd_mod_villages", "lgd_mod_urban_local_bodies"
   )
-  safe_bind_rows(lapply(names(specs), function(source_id) {
-    x <- raw_sources[[source_id]] %||% data.frame()
-    if (!nrow(safe_df(x))) return(data.frame())
-    out <- standardize_lgd_modification_roster(x, specs[[source_id]])
+  safe_bind_rows(lapply(source_ids, function(source_id) {
+    out <- safe_df(raw_sources[[source_id]] %||% data.frame())
+    if (!nrow(out)) return(data.frame())
     out$source_id <- source_id
     out
   }))
@@ -430,10 +428,10 @@ lineage_v2_summary <- function(
 
 #' Build district-lineage v2 diagnostic bundle
 build_district_lineage_v2 <- function(
-  raw_sources, district_tracker, census_2001_languages,
+  raw_sources, inventory, district_tracker, census_2001_languages,
   source_2007, source_2017
 ) {
-  inventory <- attr(raw_sources, "source_inventory") %||% data.frame()
+  inventory <- safe_df(inventory)
   needed <- c(
     "shrug_pc01r", "shrug_pc01u", "shrug_pc11r", "shrug_pc11u",
     "shrug_pc01dist", "shrug_pc11dist", "shrug_pc11_district_geometry"

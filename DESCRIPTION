@@ -32,7 +32,8 @@ Imports:
     broom,
     readODS,
     jsonlite,
-    xml2,
+    XML,
+    data.table,
     car,
     knitr
 Suggests:
