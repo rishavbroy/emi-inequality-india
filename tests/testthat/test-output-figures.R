@@ -174,3 +174,28 @@ test_that("main map legends use rounded publication bounds", {
   expect_equal(educ$labels, c("0-20", "20-40", "40-60", "60-80"))
   expect_equal(map_no_data_colour(), "#bdbdbd")
 })
+
+test_that("poster EMIE grid uses observed percentiles", {
+  panel <- data.frame(EMIE = 0:100)
+  grid <- poster_emie_percentiles(panel, probs = c(0.05, 0.50, 0.95))
+
+  expect_equal(grid$percentile, c(0.05, 0.50, 0.95))
+  expect_equal(grid$EMIE, c(5, 50, 95))
+})
+
+test_that("poster expected-values figure is generated with the main figures", {
+  cfg <- list(mode = "final", output_formats = list(figures = c("pdf", "png")))
+  panel <- data.frame(
+    EMIE = 1,
+    consumption_pct_change = 2,
+    pct_pucca = 3,
+    pct_head_secondary_plus = 4,
+    region = "North",
+    wavg_ling_degrees = 5
+  )
+
+  figures <- make_figures(panel, character(), cfg, iv_models = list())
+
+  expect_identical(figures$poster_emie_expected_values$kind, "emie_expected_values")
+  expect_identical(attr(figures, "iv_models"), list())
+})

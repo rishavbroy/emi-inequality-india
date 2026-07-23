@@ -439,6 +439,68 @@ save_collage <- function(spec, path_base, written, formats) {
   save_magick_formats(collage, path_base, formats)
 }
 
+
+poster_emie_percentiles <- function(district_panel, probs = seq(0.05, 0.95, by = 0.10)) {
+  values <- suppressWarnings(as.numeric(as.data.frame(district_panel)$EMIE))
+  values <- values[is.finite(values)]
+  if (!length(values)) return(data.frame())
+  data.frame(
+    percentile = probs,
+    EMIE = unname(stats::quantile(values, probs = probs, na.rm = TRUE, names = FALSE)),
+    stringsAsFactors = FALSE
+  )
+}
+
+first_estimable_iv_model <- function(iv_models) {
+  if (inherits(iv_models, "ivreg")) return(iv_models)
+  if (!is.list(iv_models)) return(NULL)
+  hits <- Filter(function(x) inherits(x, "ivreg"), iv_models)
+  if (length(hits)) hits[[1]] else NULL
+}
+
+save_emie_expected_values <- function(spec, path_base, formats, district_panel, iv_models) {
+  need_pkg("ggplot2", "poster expected-values figure")
+  need_pkg("marginaleffects", "poster expected-values figure")
+  model <- first_estimable_iv_model(iv_models)
+  grid <- poster_emie_percentiles(district_panel)
+  if (is.null(model) || !nrow(grid)) {
+    stop("Poster expected-values figure requires an estimated ivreg model and observed EMIE values.", call. = FALSE)
+  }
+
+  cluster <- attr(model, "cluster_state")
+  vcov_arg <- if (!is.null(cluster) && length(cluster) == stats::nobs(model)) {
+    sandwich::vcovCL(model, cluster = cluster, type = "HC1")
+  } else {
+    "HC1"
+  }
+  predictions <- marginaleffects::avg_predictions(
+    model,
+    variables = list(EMIE = grid$EMIE),
+    vcov = vcov_arg,
+    type = "response"
+  )
+  plot_data <- as.data.frame(predictions)
+  if (!"EMIE" %in% names(plot_data)) plot_data$EMIE <- grid$EMIE
+
+  p <- ggplot2::ggplot(plot_data, ggplot2::aes(x = EMIE, y = estimate)) +
+    ggplot2::geom_ribbon(ggplot2::aes(ymin = conf.low, ymax = conf.high), fill = "#c5050c", alpha = 0.14) +
+    ggplot2::geom_line(color = "#7a0019", linewidth = 1.15) +
+    ggplot2::geom_point(color = "#7a0019", size = 2.5) +
+    ggplot2::scale_x_continuous(labels = function(x) paste0(x, "%")) +
+    ggplot2::labs(
+      x = "District EMI exposure",
+      y = "Adjusted consumption growth (%)",
+      caption = "Points mark the 5th through 95th percentiles; ribbon shows 95% confidence intervals."
+    ) +
+    ggplot2::theme_minimal(base_size = 16) +
+    ggplot2::theme(
+      panel.grid.minor = ggplot2::element_blank(),
+      plot.caption = ggplot2::element_text(size = 10, hjust = 0),
+      axis.title = ggplot2::element_text(face = "bold")
+    )
+  save_plot_formats(p, path_base, formats, width = 7.4, height = 4.8, dpi = 300)
+}
+
 #' save figures
 #'
 #' @return A character vector of generated figure and manifest paths.
@@ -459,6 +521,7 @@ save_figures <- function(figures, cfg) {
       ilo_collage = save_ilo_collage(spec, path_base, formats),
       map = save_map_figure(spec, path_base, attr(figures, "district_panel") %||% data.frame(), formats, attr(figures, "boundaries_2020")),
       district_carveouts_shifts = save_district_carveouts_shifts(spec, path_base, formats),
+      emie_expected_values = save_emie_expected_values(spec, path_base, formats, attr(figures, "district_panel") %||% data.frame(), attr(figures, "iv_models")),
       status = save_status_figure(spec, format_path(path_base, "png")),
       save_distribution_figure(spec, format_path(path_base, "png"), attr(figures, "district_panel") %||% data.frame())
     )

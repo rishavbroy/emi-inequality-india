@@ -29,7 +29,7 @@ sf_geometry_coverage <- function(x) {
 #' make figures
 #'
 #' @return A named list of figure specifications consumed by save_figures().
-make_figures <- function(district_panel, raw_ilo_figures, cfg, boundaries_2020 = NULL) {
+make_figures <- function(district_panel, raw_ilo_figures, cfg, boundaries_2020 = NULL, iv_models = NULL) {
   required_variables <- c(
     "EMIE",
     "consumption_pct_change",
@@ -53,6 +53,13 @@ make_figures <- function(district_panel, raw_ilo_figures, cfg, boundaries_2020 =
       "district_carveouts_shifts.png",
       "District carve-outs and shifts",
       kind = "district_carveouts_shifts"
+    ),
+    poster_emie_expected_values = figure_spec(
+      "poster_emie_expected_values",
+      "poster_emie_expected_values.png",
+      "Adjusted consumption growth across EMI exposure",
+      "Average counterfactual predictions at observed EMIE percentiles.",
+      kind = "emie_expected_values"
     )
   )
 
@@ -104,6 +111,7 @@ make_figures <- function(district_panel, raw_ilo_figures, cfg, boundaries_2020 =
   }
   attr(out, "district_panel") <- district_panel
   attr(out, "boundaries_2020") <- boundaries_2020
+  attr(out, "iv_models") <- iv_models
   out
 }
 
