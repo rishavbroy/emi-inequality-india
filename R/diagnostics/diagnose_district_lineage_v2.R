@@ -438,7 +438,10 @@ build_district_lineage_v2 <- function(
   )
   missing_core <- needed[!needed %in% names(raw_sources)]
 
-  admin_2001 <- build_admin_registry_2001(census_2001_languages)
+  admin_2001 <- build_admin_registry_2001(
+    census_2001_languages,
+    raw_sources$lgd_states %||% data.frame()
+  )
   admin_2011 <- if ("shrug_pc11_district_geometry" %in% names(raw_sources)) {
     build_admin_registry_2011(raw_sources$shrug_pc11_district_geometry)
   } else data.frame()
@@ -556,7 +559,9 @@ save_district_lineage_v2 <- function(diagnostics, dir = "outputs/diagnostics/ext
     "duplicate_keys", "match_gold_scored", "match_gold_summary", "missing_core_inputs"
   )
   paths <- stats::setNames(vapply(names_to_write, function(nm) {
-    write_diagnostic_csv(diagnostics[[nm]] %||% data.frame(), file.path(dir, paste0(nm, ".csv")))
+    value <- diagnostics[[nm]]
+    if (is.null(value)) value <- data.frame()
+    write_diagnostic_csv(value, file.path(dir, paste0(nm, ".csv")))
   }, character(1)), names_to_write)
   output_manifest(paths)
 }

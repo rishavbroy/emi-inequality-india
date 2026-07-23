@@ -248,3 +248,38 @@ test_that("SHRUG bridge distinguishes ambiguous from absent district membership"
     2L
   )
 })
+
+
+test_that("Census 2001 registry uses district labels and mapped state names", {
+  census <- data.frame(
+    state_code = c("06", "06"),
+    district_code = c("01", "02"),
+    district_name = c("Panchkula", "Ambala"),
+    state_std = c("6", "6"),
+    district_std = c("1", "2"),
+    stringsAsFactors = FALSE
+  )
+  states <- data.frame(
+    state_name = "Haryana",
+    state_census2011_code = "06",
+    stringsAsFactors = FALSE
+  )
+
+  out <- build_admin_registry_2001(census, states)
+
+  expect_setequal(out$state_std, "haryana")
+  expect_setequal(out$district_std, c("panchkula", "ambala"))
+  expect_setequal(out$unit_id, c("pc2001__06__01", "pc2001__06__02"))
+})
+
+test_that("Census 2001 registry rejects unmapped state codes", {
+  census <- data.frame(
+    state_code = "99", district_code = "01", district_name = "Example",
+    stringsAsFactors = FALSE
+  )
+
+  expect_error(
+    build_admin_registry_2001(census, data.frame()),
+    "lack LGD state-name mappings"
+  )
+})
