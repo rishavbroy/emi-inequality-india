@@ -296,6 +296,20 @@ requires the resulting `pc2001__SS__DD` identifier to exist in the
 Census-2001 administrative registry. Syntactically valid but unknown codes,
 ambiguous mappings, and all later-wave rows remain under review.
 
+## NSS-75 official exact Census-2011 identities
+
+The official NSS-75 district list covers all 671 source codes in the
+2017-18 survey roster, with the same district label attached to every code.
+After prior reviewed tranches, 498 remaining rows have a normalized state and
+district name that identifies exactly one Census-2011 registry unit. These
+rows are accepted as contemporaneous source identities.
+
+Identity and analysis eligibility remain separate contracts. Accepting a
+Census-2011 identity does not imply unchanged Census-2001 geography. A row
+enters the preferred or sensitivity crosswalk only through an independently
+reviewed deterministic transition, allocation, or administrative event. This
+separation reduces the identity queue without weakening the migration gate.
+
 ## NSS-75 exact-name deterministic identities
 
 The first 2017-18 tranche accepts 85 source rows only when:
