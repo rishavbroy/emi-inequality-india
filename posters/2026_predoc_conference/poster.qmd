@@ -1,5 +1,5 @@
 ---
-title: "Can English-Medium Instruction Raise Local Living Standards in India?"
+title: "Escaping Inequality in India: The Role of English-Medium Instruction in Local Development"
 bibliography: ../../paper/references.bib
 citeproc: true
 format:
