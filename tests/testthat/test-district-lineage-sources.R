@@ -560,3 +560,33 @@ test_that("reviewed geometry and source decisions have registered evidence", {
   )
   expect_equal(nrow(issues), 0L)
 })
+
+test_that("accepted primary eligibility ignores unrelated NA statuses", {
+  readiness <- build_migration_readiness_v2(
+    missing_core = character(),
+    admin_2001 = data.frame(unit_id = "pc2001__01__01"),
+    admin_2011 = data.frame(unit_id = "pc2011__01__001"),
+    allocation_validation = data.frame(
+      weights_well_formed = TRUE,
+      coverage_complete = TRUE
+    ),
+    source_roster = data.frame(source_row_id = c("accepted", "unreviewed")),
+    source_matches = data.frame(source_row_id = "accepted", status = "accepted"),
+    primary_eligibility = data.frame(
+      status = c("accepted", NA_character_),
+      eligible_primary = c(TRUE, FALSE)
+    ),
+    duplicate_keys = empty_duplicate_key_diagnostics_v2(),
+    adjudicated_allocation_validation = data.frame(
+      source_key = character(),
+      weights_well_formed = logical(),
+      coverage_complete = logical()
+    ),
+    source_reference_issues = data.frame()
+  )
+
+  gate <- readiness$passed[
+    readiness$gate == "all_accepted_rows_primary_eligible"
+  ]
+  expect_identical(gate, TRUE)
+})

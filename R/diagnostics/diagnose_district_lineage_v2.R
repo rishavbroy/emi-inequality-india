@@ -393,7 +393,9 @@ build_migration_readiness_v2 <- function(
     accepted_source_rows_present = any(source_matches$status %in% "accepted"),
     all_accepted_rows_primary_eligible =
       !any(source_matches$status %in% "accepted") ||
-        all(primary_eligibility$eligible_primary[primary_eligibility$status == "accepted"])
+        all(primary_eligibility$eligible_primary[
+          primary_eligibility$status %in% "accepted"
+        ] %in% TRUE)
   )
   notes <- c(
     core_inputs_available = "All locality keys and the PC11 district geometry are present.",
@@ -402,7 +404,7 @@ build_migration_readiness_v2 <- function(
     shrid_weights_well_formed = "Every SHRUG transition weight is finite, nonnegative, and does not overallocate its source district.",
     shrid_allocation_coverage_complete = "Every SHRUG source district has complete mapped mass across 2001 targets.",
     adjudicated_allocation_weights_valid = "Every accepted tracked sensitivity allocation sums to one by source unit.",
-    all_adjudication_sources_registered = "Every accepted source match, event, and allocation cites a registered evidence source.",
+    all_adjudication_sources_registered = "Every accepted source match, event, allocation, and geometry carry-back cites a registered evidence source.",
     no_conflicting_duplicate_keys = "Duplicate source or registry keys are either absent or identical.",
     all_source_rows_adjudicated = "Every NSS source row is explicitly accepted or excluded in tracked metadata.",
     accepted_source_rows_present = "At least one source row is accepted for the preferred panel.",
