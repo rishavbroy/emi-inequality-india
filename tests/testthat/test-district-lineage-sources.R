@@ -522,3 +522,41 @@ test_that("derived Census 2001 geometry is an optional loaded source", {
   expect_identical(row$role, "derived_2001_geometry")
 })
 
+test_that("reviewed geometry and source decisions have registered evidence", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
+  metadata_path <- function(name) {
+    file.path(root, "data", "metadata", name)
+  }
+
+  carrybacks <- read_geometry_carrybacks_v2(
+    read.csv(
+      metadata_path("district_geometry_carrybacks_v2.csv"),
+      stringsAsFactors = FALSE
+    )
+  )
+  adjudications <- read_adjudicated_source_matches_v2(
+    read.csv(
+      metadata_path("district_adjudications_v2.csv"),
+      stringsAsFactors = FALSE
+    )
+  )
+  registry <- read_lineage_source_registry_v2(
+    read.csv(
+      metadata_path("district_sources_v2.csv"),
+      stringsAsFactors = FALSE
+    )
+  )
+
+  expect_equal(nrow(carrybacks), 11L)
+  expect_true(all(carrybacks$status == "accepted"))
+  expect_equal(nrow(adjudications), 18L)
+  expect_true(all(adjudications$status == "accepted"))
+  expect_true(all(adjudications$unit_id %in% carrybacks$target_unit_2001))
+
+  issues <- validate_lineage_source_references_v2(
+    registry,
+    source_matches = adjudications,
+    geometry_carrybacks = carrybacks
+  )
+  expect_equal(nrow(issues), 0L)
+})
