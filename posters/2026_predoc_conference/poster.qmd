@@ -2,6 +2,7 @@
 title: "Escaping Inequality in India: The Role of English-Medium Instruction in Local Development"
 bibliography: ../../paper/references.bib
 citeproc: true
+suppress-bibliography: true
 format:
   poster-typst:
     size: "36x24"
@@ -45,9 +46,6 @@ execute:
 
 ![District EMI exposure in 2007-08.](../../outputs/figures/main/map_emi_exposure.pdf){width=76%}
 
-```{=typst}
-#colbreak()
-```
 
 # Main result
 
@@ -70,9 +68,6 @@ Individual gains may still be important. Students can benefit without raising av
 
 The design assumes that, conditional on baseline characteristics and region, linguistic distance affects later consumption growth through EMI exposure rather than another channel.
 
-```{=typst}
-#colbreak()
-```
 
 # Why district histories matter
 
@@ -110,11 +105,4 @@ The project combines household surveys, Census language data, administrative his
     image("../../assets/repo-qr.svg", width: 1.2in)
   )
 ]
-```
-
-# Selected references
-
-```{=typst}
-#set text(size: 13pt)
-#set par(leading: 0.55em, spacing: 0.35em)
 ```
