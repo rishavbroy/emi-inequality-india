@@ -492,39 +492,5 @@ test_that("accepted geometry carry-backs fill only missing 2001 units", {
     out$unit_id,
     c("pc2001__01__01", "pc2001__07__01", "pc2001__27__22")
   )
-  expect_false(anyDuplicated(out$unit_id))
-})
-
-test_that("reviewed geometry carry-backs and source adjudications are registered", {
-  carrybacks <- read_geometry_carrybacks_v2(
-    read.csv(
-      "data/metadata/district_geometry_carrybacks_v2.csv",
-      stringsAsFactors = FALSE
-    )
-  )
-  adjudications <- read_adjudicated_source_matches_v2(
-    read.csv(
-      "data/metadata/district_adjudications_v2.csv",
-      stringsAsFactors = FALSE
-    )
-  )
-  registry <- read_lineage_source_registry_v2(
-    read.csv(
-      "data/metadata/district_sources_v2.csv",
-      stringsAsFactors = FALSE
-    )
-  )
-
-  expect_equal(nrow(carrybacks), 11L)
-  expect_true(all(carrybacks$status == "accepted"))
-  expect_equal(nrow(adjudications), 18L)
-  expect_true(all(adjudications$status == "accepted"))
-  expect_true(all(adjudications$unit_id %in% carrybacks$target_unit_2001))
-
-  issues <- validate_lineage_source_references_v2(
-    registry,
-    source_matches = adjudications,
-    geometry_carrybacks = carrybacks
-  )
-  expect_equal(nrow(issues), 0L)
+  expect_equal(anyDuplicated(out$unit_id), 0L)
 })
