@@ -294,7 +294,7 @@ fi
 
 current_stage="output-manifest"
 echo "=== OUTPUT MANIFEST ==="
-manifest_roots=(paper outputs docs)
+manifest_roots=(paper outputs docs posters)
 if [[ "$render_samples" == "true" ]]; then manifest_roots+=(application-samples/output); fi
 if [[ "$with_analysis_notes" == "true" ]]; then manifest_roots+=(analysis); fi
 find "${manifest_roots[@]}" \
