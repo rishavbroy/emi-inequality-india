@@ -359,6 +359,20 @@ Evidence requests now include accepted current districts that still lack an
 accepted parent edge. Completing source identity therefore no longer hides the
 remaining administrative-lineage work.
 
+## Production comparison review
+
+The seven changed preferred mappings are tracked as reviewed v2 corrections.
+They comprise reciprocal code swaps for Upper Subansiri/Upper Siang,
+Imphal West/Imphal East, and Firozabad/Farrukhabad, plus the inherited
+Kushinagar target pointing to Bijnor. Rows absent from the inherited production
+panel are classified as coverage additions rather than target conflicts.
+
+Migration readiness no longer requires every accepted identity to be
+deterministically eligible. It requires every accepted identity to have an
+explicit eligibility disposition, every changed production target to have a
+tracked review, and the rebuilt panel and estimates to be reviewed. The final
+downstream-results review intentionally remains `needs_review`.
+
 ## Completed NSS-75 alias review
 
 The remaining 16 NSS-75 source labels are accepted after manual review as

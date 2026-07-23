@@ -125,17 +125,48 @@ build_sensitivity_crosswalk_v2 <- function(primary_crosswalk, allocation_weights
   out
 }
 
+read_production_mapping_reviews_v2 <- function(x) {
+  x <- safe_df(x)
+  required <- c(
+    "review_id", "source_row_id", "review_scope",
+    "v2_target_unit_2001", "production_target_unit_2001",
+    "decision", "source_id", "status", "note"
+  )
+  for (nm in setdiff(required, names(x))) {
+    x[[nm]] <- rep(NA_character_, nrow(x))
+  }
+  x <- x[!is.na(x$review_id) & nzchar(x$review_id), required, drop = FALSE]
+  if (anyDuplicated(x$review_id)) {
+    stop("Production mapping reviews must have unique review_id values.", call. = FALSE)
+  }
+  invalid <- unique(x$status[!x$status %in% c(
+    "accepted", "excluded", "needs_review"
+  )])
+  if (length(invalid)) {
+    stop(
+      "Unknown production mapping review status: ",
+      paste(invalid, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  x
+}
+
 empty_production_comparison_v2 <- function() {
   data.frame(
     source_row_id = character(), wave = character(), source_code = character(),
     v2_target_unit_2001 = character(), production_target_unit_2001 = character(),
-    comparison_status = character(), stringsAsFactors = FALSE
+    comparison_status = character(), review_decision = character(),
+    review_status = character(), stringsAsFactors = FALSE
   )
 }
 
-build_production_crosswalk_comparison_v2 <- function(primary_crosswalk, production_panel) {
+build_production_crosswalk_comparison_v2 <- function(
+  primary_crosswalk, production_panel, reviews = data.frame()
+) {
   x <- safe_df(primary_crosswalk)
   panel <- safe_df(production_panel)
+  reviews <- read_production_mapping_reviews_v2(reviews)
   if (!nrow(x)) return(empty_production_comparison_v2())
 
   production_for_wave <- function(wave) {
@@ -212,6 +243,26 @@ build_production_crosswalk_comparison_v2 <- function(primary_crosswalk, producti
       stringsAsFactors = FALSE
     )
   }))
+  mapping_reviews <- reviews[
+    reviews$review_scope %in% "mapping_difference",
+    c("source_row_id", "decision", "status"),
+    drop = FALSE
+  ]
+  names(mapping_reviews) <- c(
+    "source_row_id", "review_decision", "review_status"
+  )
+  out <- merge(
+    out, mapping_reviews,
+    by = "source_row_id", all.x = TRUE, sort = FALSE
+  )
+  out$review_status[
+    out$comparison_status %in% c(
+      "same_target", "missing_from_production_panel"
+    )
+  ] <- "not_required"
+  out$review_decision[
+    out$comparison_status %in% "missing_from_production_panel"
+  ] <- "coverage_addition"
   out
 }
 
@@ -589,6 +640,13 @@ lineage_completion_steps_v2 <- function(
     readiness$gate == "production_crosswalk_migration_ready" &
       readiness$passed %in% TRUE
   )
+  production_reviews <- read_production_mapping_reviews_v2(
+    production_reviews
+  )
+  downstream_reviewed <- any(
+    production_reviews$review_scope %in% "downstream_results" &
+      production_reviews$status %in% "accepted"
+  )
 
   data.frame(
     step = seq_len(9L),
@@ -612,7 +670,11 @@ lineage_completion_steps_v2 <- function(
       nrow(primary) > 0L && nrow(sensitivity) >= nrow(primary),
       nrow(primary) > 0L && nrow(comparison) == nrow(primary),
       nrow(comparison) > 0L &&
-        all(comparison$comparison_status %in% "same_target"),
+        all(
+          comparison$comparison_status != "changed_target" |
+            comparison$review_status %in% "accepted"
+        ) &&
+        downstream_reviewed,
       migration_ready
     ),
     observed = c(
@@ -627,8 +689,11 @@ lineage_completion_steps_v2 <- function(
       paste0(nrow(primary), " preferred; ", nrow(sensitivity), " total sensitivity rows"),
       paste0(nrow(comparison), " source mappings compared"),
       paste0(
-        sum(comparison$comparison_status != "same_target"),
-        " changed, missing, or ambiguous mappings require review"
+        sum(comparison$comparison_status == "changed_target"),
+        " changed targets reviewed; ",
+        sum(comparison$comparison_status == "missing_from_production_panel"),
+        " coverage additions; downstream rebuild ",
+        if (downstream_reviewed) "reviewed" else "pending"
       ),
       if (migration_ready) "all gates pass" else "migration gates remain blocked"
     ),

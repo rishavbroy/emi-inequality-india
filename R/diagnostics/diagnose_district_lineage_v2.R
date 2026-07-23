@@ -201,7 +201,8 @@ read_lineage_source_registry_v2 <- function(x) {
 
 validate_lineage_source_references_v2 <- function(
   source_registry, source_matches = data.frame(), admin_events = data.frame(),
-  allocation_weights = data.frame(), geometry_carrybacks = data.frame()
+  allocation_weights = data.frame(), geometry_carrybacks = data.frame(),
+  production_reviews = data.frame()
 ) {
   registry_ids <- unique(plain_chr(safe_df(source_registry)$source_id %||% character()))
   collect <- function(x, object_type, id_col) {
@@ -220,7 +221,8 @@ validate_lineage_source_references_v2 <- function(
     collect(source_matches, "source_match", "source_row_id"),
     collect(admin_events, "admin_event", "event_id"),
     collect(allocation_weights, "allocation_weight", "source_unit"),
-    collect(geometry_carrybacks, "geometry_carryback", "target_unit_2001")
+    collect(geometry_carrybacks, "geometry_carryback", "target_unit_2001"),
+    collect(production_reviews, "production_review", "review_id")
   ))
   if (!nrow(refs)) {
     return(data.frame(
@@ -406,7 +408,9 @@ migration_gate_actions_v2 <- function() {
     no_conflicting_duplicate_keys = "Resolve conflicting source or registry keys.",
     all_source_rows_adjudicated = "Accept or exclude every NSS source identity in tracked metadata.",
     accepted_source_rows_present = "Accept at least one source identity for the preferred panel.",
-    all_accepted_rows_primary_eligible = "Exclude non-nested accepted rows or provide a deterministic 2001 mapping."
+    all_accepted_rows_primary_classified = "Classify every accepted identity as preferred-eligible or explicitly excluded.",
+    all_changed_production_mappings_reviewed = "Review every changed production target and record whether v2 or production should prevail.",
+    downstream_results_reviewed = "Rebuild and review the panel, estimates, standard errors, and diagnostics."
   )
 }
 
@@ -414,7 +418,9 @@ build_migration_readiness_v2 <- function(
   missing_core, admin_2001, admin_2011, allocation_validation,
   source_roster, source_matches, primary_eligibility, duplicate_keys,
   adjudicated_allocation_validation, source_reference_issues,
-  adjudicated_allocation_weights = data.frame()
+  adjudicated_allocation_weights = data.frame(),
+  production_comparison = data.frame(),
+  production_reviews = data.frame()
 ) {
   source_matches <- safe_df(source_matches)
   resolved_ids <- source_matches$source_row_id[
@@ -445,11 +451,27 @@ build_migration_readiness_v2 <- function(
     all_source_rows_adjudicated =
       nrow(source_roster) > 0L && all(source_roster$source_row_id %in% resolved_ids),
     accepted_source_rows_present = any(source_matches$status %in% "accepted"),
-    all_accepted_rows_primary_eligible =
+    all_accepted_rows_primary_classified =
       !any(source_matches$status %in% "accepted") ||
-        all(primary_eligibility$eligible_primary[
+        all(!is.na(primary_eligibility$eligible_primary[
           primary_eligibility$status %in% "accepted"
-        ] %in% TRUE)
+        ])),
+    all_changed_production_mappings_reviewed = {
+      changed <- safe_df(production_comparison)
+      changed <- changed[
+        changed$comparison_status %in% "changed_target",
+        ,
+        drop = FALSE
+      ]
+      !nrow(changed) || all(changed$review_status %in% "accepted")
+    },
+    downstream_results_reviewed = {
+      reviews <- read_production_mapping_reviews_v2(production_reviews)
+      any(
+        reviews$review_scope %in% "downstream_results" &
+          reviews$status %in% "accepted"
+      )
+    }
   )
   notes <- c(
     core_inputs_available = "All locality keys and the PC11 district geometry are present.",
@@ -465,8 +487,10 @@ build_migration_readiness_v2 <- function(
     all_adjudication_sources_registered = "Every accepted source match, event, allocation, and geometry carry-back cites a registered evidence source.",
     no_conflicting_duplicate_keys = "Duplicate source or registry keys are either absent or identical.",
     all_source_rows_adjudicated = "Every NSS source row is explicitly accepted or excluded in tracked metadata.",
-    accepted_source_rows_present = "At least one source row is accepted for the preferred panel.",
-    all_accepted_rows_primary_eligible = "Every accepted source row maps deterministically to a 2001 district."
+    accepted_source_rows_present = "At least one source row is accepted for lineage processing.",
+    all_accepted_rows_primary_classified = "Every accepted identity has an explicit preferred-panel eligibility disposition.",
+    all_changed_production_mappings_reviewed = "Every changed inherited production target has a tracked review decision.",
+    downstream_results_reviewed = "The rebuilt panel and model results have been reviewed before migration."
   )
 
   data.frame(
@@ -631,7 +655,10 @@ build_district_lineage_v2 <- function(
   )
   source_reference_issues <- validate_lineage_source_references_v2(
     source_registry, source_matches, adjudicated_events, adjudicated_weights,
-    geometry_carrybacks
+    geometry_carrybacks,
+    read_production_mapping_reviews_v2(
+      raw_sources$lineage_production_reviews %||% data.frame()
+    )
   )
   concordance <- build_concordance_candidates_v2(raw_sources)
   evidence_requests <- build_evidence_requests_v2(
@@ -646,8 +673,11 @@ build_district_lineage_v2 <- function(
   sensitivity_crosswalk <- build_sensitivity_crosswalk_v2(
     primary_crosswalk, adjudicated_weights
   )
+  production_reviews <- read_production_mapping_reviews_v2(
+    raw_sources$lineage_production_reviews %||% data.frame()
+  )
   production_comparison <- build_production_crosswalk_comparison_v2(
-    primary_crosswalk, production_panel
+    primary_crosswalk, production_panel, production_reviews
   )
   geometry_2001 <- raw_sources$lineage_geometry_2001 %||% data.frame()
   geometry_qa <- geometry_qa_v2(geometry_2001, admin_2001)
@@ -666,13 +696,14 @@ build_district_lineage_v2 <- function(
     missing_core, admin_2001, admin_2011, allocation_validation,
     source_roster, source_matches, eligibility, duplicate_keys,
     adjudicated_weight_validation, source_reference_issues,
-    adjudicated_weights
+    adjudicated_weights, production_comparison, production_reviews
   )
   migration_blockers <- build_migration_blockers_v2(readiness)
   completion_status <- lineage_completion_steps_v2(
     source_roster, source_matches, adjudication_queue, evidence_requests,
     allocation_validation, adjudicated_weights, primary_crosswalk,
-    sensitivity_crosswalk, production_comparison, geometry_qa, readiness
+    sensitivity_crosswalk, production_comparison, geometry_qa, readiness,
+    production_reviews
   )
   summary <- lineage_v2_summary(
     inventory, admin_2001, admin_2011, bridge, transition, source_roster,
@@ -705,6 +736,7 @@ build_district_lineage_v2 <- function(
     primary_source_crosswalk = primary_crosswalk,
     sensitivity_source_crosswalk = sensitivity_crosswalk,
     production_crosswalk_comparison = production_comparison,
+    production_mapping_reviews = production_reviews,
     geometry_2001_qa = geometry_qa,
     geometry_2001_unit_coverage = geometry_unit_coverage,
     completion_status = completion_status,
@@ -738,6 +770,7 @@ save_district_lineage_v2 <- function(diagnostics, dir = "outputs/diagnostics/ext
     "source_adjudication_queue", "adjudication_draft",
     "primary_mapping_eligibility", "primary_source_crosswalk",
     "sensitivity_source_crosswalk", "production_crosswalk_comparison",
+    "production_mapping_reviews",
     "geometry_2001_qa", "geometry_2001_unit_coverage",
     "completion_status", "excluded_source_rows",
     "candidate_admin_events", "current_component_registry",

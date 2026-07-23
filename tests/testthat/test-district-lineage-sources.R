@@ -478,7 +478,20 @@ test_that("migration readiness is derived from prerequisite gates", {
       weights_well_formed = logical(),
       coverage_complete = logical()
     ),
-    source_reference_issues = data.frame()
+    source_reference_issues = data.frame(),
+    production_comparison = data.frame(),
+    production_reviews = data.frame(
+      review_id = "downstream",
+      source_row_id = "",
+      review_scope = "downstream_results",
+      v2_target_unit_2001 = "",
+      production_target_unit_2001 = "",
+      decision = "reviewed",
+      source_id = "source",
+      status = "accepted",
+      note = "reviewed",
+      stringsAsFactors = FALSE
+    )
   )
 
   ready <- do.call(build_migration_readiness_v2, args)
@@ -537,13 +550,26 @@ test_that("migration gates distinguish absent acceptances from ineligible accept
       weights_well_formed = logical(),
       coverage_complete = logical()
     ),
-    source_reference_issues = data.frame()
+    source_reference_issues = data.frame(),
+    production_comparison = data.frame(),
+    production_reviews = data.frame(
+      review_id = "downstream",
+      source_row_id = "",
+      review_scope = "downstream_results",
+      v2_target_unit_2001 = "",
+      production_target_unit_2001 = "",
+      decision = "reviewed",
+      source_id = "source",
+      status = "accepted",
+      note = "reviewed",
+      stringsAsFactors = FALSE
+    )
   )
 
   readiness <- do.call(build_migration_readiness_v2, args)
   expect_false(readiness$passed[readiness$gate == "accepted_source_rows_present"])
   expect_true(
-    readiness$passed[readiness$gate == "all_accepted_rows_primary_eligible"]
+    readiness$passed[readiness$gate == "all_accepted_rows_primary_classified"]
   )
 
   args$source_matches$status <- "accepted"
@@ -551,7 +577,7 @@ test_that("migration gates distinguish absent acceptances from ineligible accept
   readiness <- do.call(build_migration_readiness_v2, args)
   expect_true(readiness$passed[readiness$gate == "accepted_source_rows_present"])
   expect_false(
-    readiness$passed[readiness$gate == "all_accepted_rows_primary_eligible"]
+    readiness$passed[readiness$gate == "all_accepted_rows_primary_classified"]
   )
 })
 
@@ -692,11 +718,24 @@ test_that("accepted primary eligibility ignores unrelated NA statuses", {
       weights_well_formed = logical(),
       coverage_complete = logical()
     ),
-    source_reference_issues = data.frame()
+    source_reference_issues = data.frame(),
+    production_comparison = data.frame(),
+    production_reviews = data.frame(
+      review_id = "downstream",
+      source_row_id = "",
+      review_scope = "downstream_results",
+      v2_target_unit_2001 = "",
+      production_target_unit_2001 = "",
+      decision = "reviewed",
+      source_id = "source",
+      status = "accepted",
+      note = "reviewed",
+      stringsAsFactors = FALSE
+    )
   )
 
   gate <- readiness$passed[
-    readiness$gate == "all_accepted_rows_primary_eligible"
+    readiness$gate == "all_accepted_rows_primary_classified"
   ]
   expect_identical(gate, TRUE)
 })
@@ -726,7 +765,20 @@ test_that("migration readiness counts valid reviewed sensitivity coverage", {
     ),
     duplicate_keys = empty_duplicate_key_diagnostics_v2(),
     adjudicated_allocation_validation = reviewed,
-    source_reference_issues = data.frame()
+    source_reference_issues = data.frame(),
+    production_comparison = data.frame(),
+    production_reviews = data.frame(
+      review_id = "downstream",
+      source_row_id = "",
+      review_scope = "downstream_results",
+      v2_target_unit_2001 = "",
+      production_target_unit_2001 = "",
+      decision = "reviewed",
+      source_id = "source",
+      status = "accepted",
+      note = "reviewed",
+      stringsAsFactors = FALSE
+    )
   )
 
   gate <- readiness$passed[
@@ -754,7 +806,20 @@ test_that("migration readiness counts valid reviewed sensitivity coverage", {
     ),
     duplicate_keys = empty_duplicate_key_diagnostics_v2(),
     adjudicated_allocation_validation = reviewed,
-    source_reference_issues = data.frame()
+    source_reference_issues = data.frame(),
+    production_comparison = data.frame(),
+    production_reviews = data.frame(
+      review_id = "downstream",
+      source_row_id = "",
+      review_scope = "downstream_results",
+      v2_target_unit_2001 = "",
+      production_target_unit_2001 = "",
+      decision = "reviewed",
+      source_id = "source",
+      status = "accepted",
+      note = "reviewed",
+      stringsAsFactors = FALSE
+    )
   )
   gate <- readiness$passed[
     readiness$gate == "shrid_allocation_coverage_complete"
@@ -1346,4 +1411,33 @@ test_that("tracked mixed-parent Telangana events remain non-deterministic", {
     resolved$resolution_status == "multiple_parent_non_nested"
   ))
   expect_true(all(is.na(resolved$terminal_unit)))
+})
+
+test_that("tracked production mapping reviews cover every changed target", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
+  reviews <- read_production_mapping_reviews_v2(
+    read.csv(
+      file.path(
+        root, "data", "metadata",
+        "district_production_mapping_reviews_v2.csv"
+      ),
+      stringsAsFactors = FALSE
+    )
+  )
+  mapping <- reviews[
+    reviews$review_scope %in% "mapping_difference",
+    ,
+    drop = FALSE
+  ]
+  downstream <- reviews[
+    reviews$review_scope %in% "downstream_results",
+    ,
+    drop = FALSE
+  ]
+
+  expect_equal(nrow(mapping), 7L)
+  expect_true(all(mapping$status == "accepted"))
+  expect_true(all(mapping$decision == "accept_v2"))
+  expect_equal(nrow(downstream), 1L)
+  expect_identical(downstream$status, "needs_review")
 })
