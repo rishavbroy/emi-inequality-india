@@ -359,6 +359,27 @@ Evidence requests now include accepted current districts that still lack an
 accepted parent edge. Completing source identity therefore no longer hides the
 remaining administrative-lineage work.
 
+## Actionable downstream review queues
+
+Extended diagnostics now write two finite review queues:
+
+- `downstream_unmapped_identity_queue.csv` contains accepted NSS identities
+  absent from the connected sensitivity crosswalk. These rows should be traced
+  through LGD modifications, SHRUG transitions, tracked district histories, and
+  targeted manual research.
+- `downstream_panel_nonoverlap_queue.csv` contains Census-2001 units present in
+  only the inherited production panel or only the allocation-weighted v2 panel.
+  It includes canonical codes, available state and district labels, review
+  scope, and the next methodological check.
+
+These files replace repeated manual joins across large diagnostic tables. They
+do not make adjudication decisions automatically and do not alter production.
+
+Unit tests use a nondegenerate IV fixture with an endogenous regressor, an
+included exogenous regressor, and multiple state clusters. The test explicitly
+requires silent execution so warnings from perfect fits or malformed IV
+specifications cannot become accepted test noise.
+
 ## Canonical shared-support clustering
 
 Shared-support models cluster inference by the Census-2001 state code parsed
