@@ -576,7 +576,7 @@ test_that("reviewed geometry and source decisions satisfy evidence contracts", {
 
   expect_equal(nrow(carrybacks), 11L)
   expect_true(all(carrybacks$status == "accepted"))
-  expect_equal(nrow(adjudications), 686L)
+  expect_equal(nrow(adjudications), 691L)
   expect_true(all(adjudications$status == "accepted"))
   expect_setequal(
     unique(adjudications$method),
@@ -586,7 +586,8 @@ test_that("reviewed geometry and source decisions satisfy evidence contracts", {
       "official_nss64_census2001_code_identity",
       "official_nss75_exact_name_deterministic_2011_to_2001",
       "official_andaman_2006_reorganization",
-      "official_andaman_2001_2011_lineage"
+      "official_andaman_2001_2011_lineage",
+      "official_census2011_alias_identity"
     )
   )
 
@@ -968,6 +969,39 @@ test_that("tracked Andaman decisions use reviewed official lineage", {
       "pc2001__35__02->pc2011__35__638",
       "pc2001__35__01->pc2011__35__639",
       "pc2001__35__01->pc2011__35__640"
+    )
+  )
+})
+
+test_that("official Census aliases identify only reviewed source rows", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
+  metadata <- read_adjudicated_source_matches_v2(
+    read.csv(
+      file.path(
+        root, "data", "metadata", "district_adjudications_v2.csv"
+      ),
+      stringsAsFactors = FALSE
+    )
+  )
+  rows <- metadata[
+    metadata$method %in% "official_census2011_alias_identity",
+    ,
+    drop = FALSE
+  ]
+
+  expect_equal(nrow(rows), 5L)
+  expect_true(all(rows$wave == "nss_2017_18"))
+  expect_true(all(rows$status == "accepted"))
+  expect_true(all(rows$source_id == "census2011_official_district_aliases"))
+  expect_equal(anyDuplicated(rows$source_row_id), 0L)
+  expect_setequal(
+    paste(rows$raw_district, rows$unit_id, sep = "->"),
+    c(
+      "Leh->pc2011__01__003",
+      "Sri Ganganagar->pc2011__08__099",
+      "Y.S.R. (Cuddapah)->pc2011__28__551",
+      "Aizwal->pc2011__15__283",
+      "Bhatinda->pc2011__03__046"
     )
   )
 })
