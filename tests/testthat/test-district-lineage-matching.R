@@ -121,6 +121,7 @@ test_that("primary eligibility accepts only adjudicated deterministic mappings",
     state_code_2011 = "01", district_code_2011 = "010",
     state_code_2001 = "01", district_code_2001 = "01",
     population_share_to_2001 = 1,
+    shrid_coverage = 1,
     mapping_class = "deterministic_containment"
   )
 
@@ -466,5 +467,19 @@ test_that("deterministic transitions reject duplicate source targets", {
   expect_error(
     deterministic_transition_2011_to_2001_v2(transition),
     "one target per source"
+  )
+})
+
+test_that("empty transition inputs yield no deterministic bridges", {
+  out <- deterministic_transition_2011_to_2001_v2(data.frame())
+
+  expect_equal(nrow(out), 0L)
+  expect_identical(
+    names(out),
+    c(
+      "state_code_2011", "district_code_2011",
+      "state_code_2001", "district_code_2001",
+      "population_share_to_2001", "shrid_coverage", "mapping_class"
+    )
   )
 })
