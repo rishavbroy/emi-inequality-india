@@ -24,20 +24,27 @@ normalize_target_metadata <- function(meta) {
 }
 
 
+target_metadata_selection <- function(target_names) {
+  target_names <- unique(as.character(target_names))
+  rlang::expr(tidyselect::any_of(!!target_names))
+}
+
 target_metadata_snapshot <- function(target_names = NULL) {
   if (!requireNamespace("targets", quietly = TRUE)) return(data.frame())
-  names_expr <- if (is.null(target_names)) {
-    NULL
-  } else {
-    tidyselect::any_of(unique(as.character(target_names)))
-  }
-  tryCatch(
-    targets::tar_meta(
-      names = names_expr,
+  if (is.null(target_names)) {
+    return(targets::tar_meta(
       fields = c("name", "time", "error", "warnings"),
       targets_only = TRUE
-    ),
-    error = function(e) data.frame()
+    ))
+  }
+
+  selection <- target_metadata_selection(target_names)
+  rlang::inject(
+    targets::tar_meta(
+      names = !!selection,
+      fields = c("name", "time", "error", "warnings"),
+      targets_only = TRUE
+    )
   )
 }
 
@@ -51,33 +58,6 @@ target_run_metadata_scope <- function(selected_target_names, progress) {
     character()
   }
   unique(c(as.character(selected_target_names), executed))
-}
-
-metadata_value_key <- function(x) {
-  if (inherits(x, "POSIXt")) return(format(x, tz = "UTC", usetz = TRUE))
-  if (is.list(x)) {
-    return(vapply(x, function(value) paste(as.character(value %||% character()), collapse = "; "), character(1)))
-  }
-  as.character(x)
-}
-
-changed_target_metadata_names <- function(before, after) {
-  before <- normalize_target_metadata(before)
-  after <- normalize_target_metadata(after)
-  if (!nrow(after) || !"name" %in% names(after)) return(character())
-  if (!nrow(before) || !"name" %in% names(before)) return(as.character(after$name))
-
-  fields <- intersect(c("time", "error", "warnings"), union(names(before), names(after)))
-  before_index <- match(as.character(after$name), as.character(before$name))
-  changed <- is.na(before_index)
-  for (field in fields) {
-    before_value <- if (field %in% names(before)) metadata_value_key(before[[field]]) else rep(NA_character_, nrow(before))
-    after_value <- if (field %in% names(after)) metadata_value_key(after[[field]]) else rep(NA_character_, nrow(after))
-    old <- before_value[before_index]
-    different <- xor(is.na(old), is.na(after_value)) | (!is.na(old) & !is.na(after_value) & old != after_value)
-    changed <- changed | different
-  }
-  as.character(after$name[changed])
 }
 
 select_target_metadata <- function(meta, target_names = NULL) {
