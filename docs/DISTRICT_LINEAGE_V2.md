@@ -406,6 +406,23 @@ regressor matrix. Rank deficiency remains visible through the model's aliased
 coefficients, while the report value remains a finite diagnostic for the
 identified column space.
 
+## Fit-time clustered inference
+
+Each `ivreg` target computes the state-clustered HC1 covariance matrix while
+the fitting panel and aligned cluster vector are in scope. The fitted model
+stores that matrix as `cluster_vcov`, together with an explicit status and
+reason. Public tables, report values, and downstream diagnostics reuse the
+stored covariance matrix; data-aware reconstruction remains a compatibility
+fallback for older cached models.
+
+Final-mode estimation fails at the model target when clustered inference cannot
+be constructed. It does not defer the failure until report rendering or replace
+standard errors and p-values with placeholders.
+
+The structural regressor matrix is read from the `x$regressors` component saved
+by `ivreg(..., x = TRUE)`. This avoids re-evaluating a serialized model call and
+is shared by condition-number and multicollinearity diagnostics.
+
 ## Cache-safe public clustered inference
 
 Public second-stage tables and report values pass the fitting district panel to
