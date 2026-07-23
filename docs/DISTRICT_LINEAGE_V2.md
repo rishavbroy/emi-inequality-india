@@ -193,10 +193,13 @@ GeoPackage may be retained after review.
 
 Run `make lineage-geometry` once the local
 `data/raw/shrug/open-polygons/shrug-shrid-poly-gpkg.zip` archive is present.
-The command reuses the cached lineage sources, extracts the single GeoPackage,
-dissolves deterministic SHRID memberships, writes
-`outputs/derived/district_lineage_v2/district_2001.gpkg`, and reruns extended
-diagnostics so geometry QA and completion status update. The compact derived
+The command builds only the cached source targets needed by the geometry
+script, extracts the single GeoPackage, dissolves deterministic SHRID
+memberships, writes
+`outputs/derived/district_lineage_v2/district_2001.gpkg`, and then runs
+extended diagnostics once so geometry QA and completion status update. The
+dissolve uses the active `sf` geometry column rather than assuming it is named
+`geometry`. The compact derived
 file is treated as a file dependency; routine diagnostics do not repeatedly
 read or union the 380 MB source archive.
 
