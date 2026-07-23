@@ -35,6 +35,16 @@ district_match_candidate_thresholds <- function() {
   c(jw = 0.90, dl = 0.70, trigram = 0.55, margin = 0.05)
 }
 
+nss64_census2001_unit_id_v2 <- function(source_code) {
+  source_code <- plain_chr(source_code)
+  matched <- regexec("^([0-9]{2})1([0-9]{2})$", source_code)
+  parts <- regmatches(source_code, matched)
+  vapply(parts, function(part) {
+    if (length(part) != 3L) return(NA_character_)
+    paste("pc2001", part[[2]], part[[3]], sep = "__")
+  }, character(1))
+}
+
 empty_nss_district_roster_v2 <- function() {
   data.frame(
     source_row_id = character(), source_key = character(), wave = character(),
