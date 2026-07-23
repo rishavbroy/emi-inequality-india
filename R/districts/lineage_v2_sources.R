@@ -455,6 +455,8 @@ standardize_lgd_modification_roster <- function(x, level, period_start = "2011-0
   district_name <- first_col(x, c("district name in english", "district name", "district_name_english"))
   subdistrict_code <- first_col(x, c("sub district code", "subdistrict code", "subdistrict_code"))
   subdistrict_name <- first_col(x, c("sub district name", "subdistrict name", "subdistrict_name"))
+  census2001_code <- first_col(x, c("census 2001 code", "census2001_code"))
+  census2011_code <- first_col(x, c("census 2011 code", "census2011_code"))
   entity_code <- switch(
     level,
     district = district_code,
@@ -481,6 +483,8 @@ standardize_lgd_modification_roster <- function(x, level, period_start = "2011-0
     district_name = if (!is.null(district_name)) plain_chr(x[[district_name]]) else missing_chr(),
     subdistrict_lgd_code = if (!is.null(subdistrict_code)) plain_chr(x[[subdistrict_code]]) else missing_chr(),
     subdistrict_name = if (!is.null(subdistrict_name)) plain_chr(x[[subdistrict_name]]) else missing_chr(),
+    census2001_code = if (!is.null(census2001_code)) plain_chr(x[[census2001_code]]) else missing_chr(),
+    census2011_code = if (!is.null(census2011_code)) plain_chr(x[[census2011_code]]) else missing_chr(),
     period_start = rep(period_start, n),
     period_end = rep(period_end, n),
     event_type = rep("unknown_modification", n),
