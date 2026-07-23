@@ -390,7 +390,19 @@ test_that("lineage summary preserves the complete diagnostic metric contract", {
     current_components = data.frame(row = 1:3),
     urban_coverage = data.frame(row = 1:4),
     changed_components = data.frame(row = 1:5),
-    evidence_requests = data.frame(row = 1:6)
+    evidence_requests = data.frame(row = 1:6),
+    adjudicated_weights = data.frame(
+      source_unit = c("reviewed", "reviewed"),
+      status = c("accepted", "accepted")
+    ),
+    adjudicated_weight_validation = data.frame(
+      source_key = "reviewed",
+      coverage_complete = TRUE
+    ),
+    allocation_validation = data.frame(
+      source_key = c("complete", "reviewed", "open"),
+      coverage_complete = c(TRUE, FALSE, FALSE)
+    )
   )
 
   expected_metrics <- c(
@@ -401,7 +413,8 @@ test_that("lineage summary preserves the complete diagnostic metric contract", {
     "single_vintage_exact_review_rows", "fuzzy_review_rows",
     "no_candidate_rows", "primary_eligible_source_rows", "candidate_event_rows",
     "current_component_rows", "urban_coverage_rows", "changed_component_rows",
-    "targeted_evidence_requests"
+    "targeted_evidence_requests", "reviewed_allocation_sources",
+    "remaining_incomplete_allocations"
   )
 
   expect_named(summary, c("metric", "value"))
@@ -415,6 +428,14 @@ test_that("lineage summary preserves the complete diagnostic metric contract", {
     summary$value[summary$metric == "targeted_evidence_requests"],
     6
   )
+  expect_equal(
+    summary$value[summary$metric == "reviewed_allocation_sources"],
+    1
+  )
+  expect_equal(
+    summary$value[summary$metric == "remaining_incomplete_allocations"],
+    1
+  )
 })
 
 test_that("migration readiness is derived from prerequisite gates", {
@@ -423,6 +444,7 @@ test_that("migration readiness is derived from prerequisite gates", {
     admin_2001 = data.frame(unit_id = "pc2001__01__01"),
     admin_2011 = data.frame(unit_id = "pc2011__01__001"),
     allocation_validation = data.frame(
+      source_key = "complete",
       weights_well_formed = TRUE,
       coverage_complete = TRUE
     ),
@@ -475,6 +497,7 @@ test_that("migration gates distinguish absent acceptances from ineligible accept
     admin_2001 = data.frame(unit_id = "pc2001__01__01"),
     admin_2011 = data.frame(unit_id = "pc2011__01__001"),
     allocation_validation = data.frame(
+      source_key = "complete",
       weights_well_formed = TRUE,
       coverage_complete = TRUE
     ),
@@ -567,6 +590,7 @@ test_that("accepted primary eligibility ignores unrelated NA statuses", {
     admin_2001 = data.frame(unit_id = "pc2001__01__01"),
     admin_2011 = data.frame(unit_id = "pc2011__01__001"),
     allocation_validation = data.frame(
+      source_key = "complete",
       weights_well_formed = TRUE,
       coverage_complete = TRUE
     ),
