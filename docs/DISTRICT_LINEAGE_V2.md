@@ -359,6 +359,19 @@ Evidence requests now include accepted current districts that still lack an
 accepted parent edge. Completing source identity therefore no longer hides the
 remaining administrative-lineage work.
 
+## Canonical shared-support clustering
+
+Shared-support models cluster inference by the Census-2001 state code parsed
+from the canonical `pc2001__SS__DD` district identifier. This avoids dependence
+on inherited state-name fields, which can be missing or differ across panel
+variants. Both production and lineage-v2 shared-support fits therefore use the
+same nonmissing cluster definition.
+
+The common IV cluster resolver prefers this canonical diagnostic field and then
+falls back to the existing production state fields. Cluster vectors containing
+missing values are not passed to `sandwich::vcovCL`; no cluster values are
+imputed.
+
 ## Shared-support model comparison
 
 The allocation-weighted panel contains 525 unique Census-2001 districts,
