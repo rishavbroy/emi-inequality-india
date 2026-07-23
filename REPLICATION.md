@@ -38,7 +38,7 @@ The v2 system must remain parallel until source identities, administrative event
 ## System dependencies
 
 The R package dependencies are declared in [`DESCRIPTION`](DESCRIPTION), and [`renv.lock`](renv.lock) records exact package versions. Spatial packages such as `sf` and `spdep` may also require GDAL, GEOS, PROJ, and `pkg-config` system libraries. On macOS, these are commonly available through Homebrew as `gdal`, `geos`, `proj`, and `pkg-config`.
- Development dependencies in `Suggests`, including `testthat`, are intentionally locked. [`renv/settings.json`](renv/settings.json) records `snapshot.dev = true`, and [`.Rprofile`](.Rprofile) sets the matching `renv.settings.snapshot.dev` option before activating `renv`, so startup consistency checks and ordinary `renv::snapshot()` or `renv::status()` calls evaluate the same development environment used by the audit.
+ Development dependencies in `Suggests`, including `testthat`, are intentionally locked. [`renv/settings.json`](renv/settings.json) records `snapshot.dev = true` and includes `Suggests` in `package.dependency.fields`, so activation-time consistency checks and ordinary `renv::snapshot()` or `renv::status()` calls evaluate the same development environment used by the audit.
 
 The setup script checks for `gdal-config`, `geos-config`, and `pkg-config` and prints this reminder if they are missing. Existing local installations may still work if binary R packages are already installed, but a fresh machine may need these system libraries before `make init-renv` can install spatial dependencies.
 

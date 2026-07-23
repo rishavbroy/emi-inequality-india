@@ -9,4 +9,5 @@ test_that("renv status includes development dependencies by default", {
   settings <- jsonlite::read_json(path, simplifyVector = TRUE)
 
   expect_true(isTRUE(settings[["snapshot.dev"]]))
+  expect_true("Suggests" %in% settings[["package.dependency.fields"]])
 })
