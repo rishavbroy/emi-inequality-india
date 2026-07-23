@@ -560,3 +560,51 @@ test_that("Census-2011 district codes cannot map to multiple units", {
     "must identify one registry unit each"
   )
 })
+
+test_that("Census-2011 registries retain historical state names after mergers", {
+  admin_2001 <- data.frame(
+    unit_id = c("pc2001__25__01", "pc2001__26__01"),
+    level = "district",
+    state_code = c("25", "26"),
+    district_code = "01",
+    state_std = c("daman and diu", "dadra and nagar haveli"),
+    district_std = c("diu", "dadra and nagar haveli"),
+    valid_from = "2001-03-01",
+    valid_to = NA_character_,
+    source_id = "census2001",
+    stringsAsFactors = FALSE
+  )
+  admin_2011 <- data.frame(
+    unit_id = c("pc2011__25__494", "pc2011__26__496"),
+    level = "district",
+    state_code = c("25", "26"),
+    district_code = c("494", "496"),
+    district_std = c("diu", "dadra and nagar haveli"),
+    valid_from = "2011-03-01",
+    valid_to = NA_character_,
+    source_id = "census2011",
+    stringsAsFactors = FALSE
+  )
+  lgd_states <- data.frame(
+    stateCode = "38",
+    stateNameEnglish = "The Dadra and Nagar Haveli and Daman and Diu",
+    census2011Code = NA_character_,
+    stringsAsFactors = FALSE
+  )
+
+  out <- build_reference_unit_registry_v2(
+    admin_2001,
+    admin_2011,
+    lgd_states,
+    data.frame()
+  )
+  rows <- out[out$reference_vintage == "2011", , drop = FALSE]
+
+  expect_setequal(
+    paste(rows$unit_id, rows$state_std, sep = "->"),
+    c(
+      "pc2011__25__494->daman and diu",
+      "pc2011__26__496->dadra and nagar haveli"
+    )
+  )
+})

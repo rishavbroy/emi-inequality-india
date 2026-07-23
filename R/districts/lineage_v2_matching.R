@@ -190,14 +190,44 @@ build_reference_units_v2 <- function(admin_2001, admin_2011, lgd_states = data.f
   a01 <- normalize_registry(admin_2001, "2001")
   a11 <- safe_df(admin_2011)
   if (nrow(a11)) {
+    historical_states <- unique(a01[c("state_code", "state_std")])
+    names(historical_states)[names(historical_states) == "state_std"] <-
+      "historical_state_std"
+
     states <- standardize_lgd_registry(lgd_states, "state")
-    state_lookup <- unique(states[c("census2011_state_code", "state_name")])
-    a11 <- merge(
-      a11, state_lookup,
-      by.x = "state_code", by.y = "census2011_state_code",
-      all.x = TRUE, sort = FALSE
+    current_states <- unique(states[c(
+      "census2011_state_code", "state_name"
+    )])
+    current_states$current_state_std <- canonicalize_state_name(
+      current_states$state_name
     )
-    a11$state_std <- canonicalize_state_name(a11$state_name)
+    current_states <- current_states[c(
+      "census2011_state_code", "current_state_std"
+    )]
+
+    a11 <- merge(
+      a11,
+      current_states,
+      by.x = "state_code",
+      by.y = "census2011_state_code",
+      all.x = TRUE,
+      sort = FALSE
+    )
+    a11 <- merge(
+      a11,
+      historical_states,
+      by = "state_code",
+      all.x = TRUE,
+      sort = FALSE
+    )
+    a11$state_std <- ifelse(
+      !is.na(a11$current_state_std) &
+        nzchar(a11$current_state_std),
+      a11$current_state_std,
+      a11$historical_state_std
+    )
+    a11$current_state_std <- NULL
+    a11$historical_state_std <- NULL
   }
   a11 <- normalize_registry(a11, "2011")
 
