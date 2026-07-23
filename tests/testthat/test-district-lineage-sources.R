@@ -1199,23 +1199,32 @@ test_that("tracked Telangana parentage records only single-parent ancestry", {
     ,
     drop = FALSE
   ]
+  parent_counts <- table(rows$to_unit)
+  single_parent_units <- names(parent_counts[parent_counts == 1L])
+  single_parent <- rows[
+    rows$to_unit %in% single_parent_units,
+    ,
+    drop = FALSE
+  ]
 
-  expect_equal(nrow(rows), 24L)
-  expect_true(all(rows$status == "accepted"))
-  expect_true(all(rows$effective_date == "2016-10-11"))
-  expect_true(all(grepl("^pc2011__28__", rows$from_unit)))
-  expect_true(all(grepl("^lgd_district__", rows$to_unit)))
-  expect_true(all(is.na(rows$share)))
+  expect_equal(nrow(single_parent), 24L)
+  expect_true(all(single_parent$status == "accepted"))
+  expect_true(all(single_parent$effective_date == "2016-10-11"))
+  expect_true(all(grepl("^pc2011__28__", single_parent$from_unit)))
+  expect_true(all(grepl("^lgd_district__", single_parent$to_unit)))
+  expect_true(all(is.na(single_parent$share)))
 
   expect_setequal(
-    rows$to_unit[rows$from_unit == "pc2011__28__532"],
+    single_parent$to_unit[
+      single_parent$from_unit == "pc2011__28__532"
+    ],
     c(
       "lgd_district__680",
       "lgd_district__684",
       "lgd_district__699"
     )
   )
-  expect_false(any(rows$to_unit %in% c(
+  expect_false(any(single_parent$to_unit %in% c(
     "lgd_district__688",
     "lgd_district__698"
   )))
@@ -1333,6 +1342,8 @@ test_that("tracked mixed-parent Telangana events remain non-deterministic", {
     )
   )
 
-  expect_true(all(resolved$resolution_status == "ambiguous"))
+  expect_true(all(
+    resolved$resolution_status == "multiple_parent_non_nested"
+  ))
   expect_true(all(is.na(resolved$terminal_unit)))
 })

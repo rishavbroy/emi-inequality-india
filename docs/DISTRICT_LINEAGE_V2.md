@@ -336,11 +336,12 @@ forced single-parent assignments. Vikarabad records ancestry from both
 Census-2011 Ranga Reddy and Mahabubnagar. Mahabubabad records ancestry from
 Census-2011 Warangal and Khammam.
 
-These four edges contain no shares. The lineage resolver therefore treats both
-districts as ambiguous rather than selecting one parent. They remain excluded
-from the preferred deterministic crosswalk until territorial or population
-allocation evidence is reviewed. Recording both parents completes the
-administrative-event evidence queue without weakening the mapping standard.
+These four edges contain no shares. The lineage resolver therefore returns
+`multiple_parent_non_nested` for both districts rather than selecting one
+parent. They remain excluded from the preferred deterministic crosswalk until
+territorial or population allocation evidence is reviewed. Recording both
+parents completes the administrative-event evidence queue without weakening
+the mapping standard.
 
 ## Telangana 2016 single-parent ancestry
 
