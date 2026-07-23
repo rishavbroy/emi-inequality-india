@@ -592,7 +592,7 @@ test_that("Census-2011 registries retain historical state names after mergers", 
     stringsAsFactors = FALSE
   )
 
-  out <- build_reference_unit_registry_v2(
+  out <- build_reference_units_v2(
     admin_2001,
     admin_2011,
     lgd_states,
