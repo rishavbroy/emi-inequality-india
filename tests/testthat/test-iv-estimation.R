@@ -194,3 +194,62 @@ test_that("cluster alignment follows complete-case model rows", {
   )
   expect_equal(length(attr(fit, "cluster_state")), stats::nobs(fit))
 })
+
+test_that("data-aware IV summaries recover clustered inference without cached attributes", {
+  skip_if_not_installed("ivreg")
+  skip_if_not_installed("sandwich")
+  set.seed(44)
+  n <- 72
+  dat <- data.frame(
+    y = rnorm(n),
+    x = rnorm(n),
+    w = rnorm(n),
+    z = rnorm(n),
+    state_20 = rep(LETTERS[1:8], each = 9),
+    stringsAsFactors = FALSE
+  )
+  dat$x <- 0.7 * dat$z + 0.3 * dat$w + rnorm(n)
+  dat$y <- 1.1 * dat$x + 0.4 * dat$w + rnorm(n)
+
+  fit <- estimate_2sls(
+    dat,
+    list(model = y ~ x + w | z + w),
+    list()
+  )$model
+  attr(fit, "cluster_state") <- NULL
+
+  out <- tidy_iv_models(list(model = fit), dat)
+
+  expect_true(all(out$status == "estimated"))
+  expect_true(all(is.finite(out$std.error)))
+  expect_true(all(is.finite(out$p.value)))
+})
+
+test_that("IV summaries expose unavailable inference instead of comparability", {
+  production <- list(
+    coefficients = data.frame(
+      model = "model", term = "x", estimate = 1,
+      std.error = NA_real_, p.value = NA_real_
+    ),
+    first_stage = data.frame(),
+    panel_summary = data.frame()
+  )
+  candidate <- list(
+    coefficients = data.frame(
+      model = "model", term = "x", estimate = 2,
+      std.error = 1, p.value = 0.1
+    ),
+    first_stage = data.frame(),
+    panel_summary = data.frame()
+  )
+
+  out <- compare_lineage_v2_model_summaries(
+    production,
+    candidate,
+    comparison_scope = "shared_unique_2001_support",
+    comparable = TRUE
+  )$coefficient_comparison
+
+  expect_false(out$inference_available)
+  expect_false(out$comparable)
+})

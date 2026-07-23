@@ -275,9 +275,9 @@ plain_model_coefficients <- function(model) {
   coefficient_frame(model)
 }
 
-clustered_model_coefficients <- function(model) {
+clustered_model_coefficients <- function(model, data = NULL) {
   tryCatch({
-    vc_fun <- clustered_model_vcov(model)
+    vc_fun <- clustered_model_vcov(model, data)
     if (is.null(vc_fun)) return(data.frame())
     vc <- vc_fun(model)
     coefficient_frame(model, vc)
@@ -303,14 +303,14 @@ model_status_reason <- function(x) {
   if (is.null(reason) || !length(reason) || all(is.na(reason))) NA_character_ else as.character(reason[[1]])
 }
 
-tidy_iv_models <- function(iv_models) {
+tidy_iv_models <- function(iv_models, data = NULL) {
   if (!is.list(iv_models) || inherits(iv_models, c("lm", "ivreg"))) iv_models <- list(model = iv_models)
   safe_bind_rows(lapply(names(iv_models), function(name) {
     model <- iv_models[[name]]
     if (is_model_status_payload(model)) {
       return(table_status_row(name, as.character(model$status[[1]]), model_status_reason(model)))
     }
-    coefs <- clustered_model_coefficients(model)
+    coefs <- clustered_model_coefficients(model, data)
     if (!nrow(coefs)) coefs <- plain_model_coefficients(model)
     if (!nrow(coefs)) {
       return(table_status_row(name, "unavailable", "Model coefficients are unavailable."))
@@ -339,8 +339,11 @@ tidy_iv_models <- function(iv_models) {
   }))
 }
 
-clustered_model_vcov <- function(model) {
+clustered_model_vcov <- function(model, data = NULL) {
   cluster <- attr(model, "cluster_state")
+  if (is.null(cluster) && !is.null(data)) {
+    cluster <- iv_model_cluster(model, data)
+  }
   if (is.null(cluster)) return(NULL)
   cluster <- as.vector(cluster)
   if (length(cluster) != stats::nobs(model) || anyNA(cluster)) return(NULL)

@@ -650,13 +650,21 @@ build_lineage_v2_shared_support <- function(production_panel, v2_panel) {
 }
 
 lineage_v2_model_summary <- function(iv_models, first_stage_tests, panel, variant) {
-  coefficients <- tidy_iv_models(iv_models)
+  panel_df <- safe_df(panel)
+  coefficients <- tidy_iv_models(iv_models, panel_df)
   if (nrow(coefficients)) coefficients$panel_variant <- variant
 
   first_stage <- safe_df(first_stage_tests)
   if (nrow(first_stage)) first_stage$panel_variant <- variant
 
-  panel_df <- safe_df(panel)
+  coefficient_inference_available <- if (nrow(coefficients)) {
+    all(
+      is.finite(coefficients$std.error[coefficients$status == "estimated"]) &
+        is.finite(coefficients$p.value[coefficients$status == "estimated"])
+    )
+  } else {
+    FALSE
+  }
   panel_summary <- data.frame(
     panel_variant = variant,
     panel_rows = nrow(panel_df),
@@ -675,6 +683,7 @@ lineage_v2_model_summary <- function(iv_models, first_stage_tests, panel, varian
     } else {
       0L
     },
+    coefficient_inference_available = coefficient_inference_available,
     stringsAsFactors = FALSE
   )
   list(
@@ -711,8 +720,14 @@ compare_lineage_v2_model_summaries <- function(
     coefficient_comparison$std_error_change <-
       coefficient_comparison$std.error_v2 -
       coefficient_comparison$std.error_production
+    coefficient_comparison$inference_available <-
+      is.finite(coefficient_comparison$std.error_production) &
+      is.finite(coefficient_comparison$p.value_production) &
+      is.finite(coefficient_comparison$std.error_v2) &
+      is.finite(coefficient_comparison$p.value_v2)
     coefficient_comparison$comparison_scope <- comparison_scope
-    coefficient_comparison$comparable <- comparable
+    coefficient_comparison$comparable <-
+      comparable & coefficient_comparison$inference_available
   }
 
   prod_fs <- safe_df(production$first_stage)
