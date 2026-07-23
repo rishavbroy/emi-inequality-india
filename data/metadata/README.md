@@ -23,7 +23,8 @@ The current crosswalk is not proof that its geographic assignments are correct. 
 - `district_adjudications_v2.csv`: one accepted, excluded, or needs-review source identity per source row.
 - `district_admin_events_v2.csv`: reviewed directed administrative-event edges.
 - `district_allocation_weights_v2.csv`: reviewed non-primary or sensitivity allocation shares.
+- `district_geometry_carrybacks_v2.csv`: reviewed cases where an official later-vintage polygon is carried back to an unchanged Census-2001 district.
 
-Blank ledgers are intentional. Generated candidates belong under `outputs/diagnostics/extended/district_lineage_v2/`; they must not be copied into tracked adjudications without review.
+Ledgers may begin blank, but accepted rows must remain narrow, source-backed decisions. Generated candidates belong under `outputs/diagnostics/extended/district_lineage_v2/`; they must not be copied into tracked adjudications without review.
 
 See [`docs/DISTRICT_LINEAGE_V2.md`](../../docs/DISTRICT_LINEAGE_V2.md) for authority rules, source caveats, schemas, invariants, and the implementation plan.
