@@ -201,7 +201,7 @@ read_lineage_source_registry_v2 <- function(x) {
 
 validate_lineage_source_references_v2 <- function(
   source_registry, source_matches = data.frame(), admin_events = data.frame(),
-  allocation_weights = data.frame()
+  allocation_weights = data.frame(), geometry_carrybacks = data.frame()
 ) {
   registry_ids <- unique(plain_chr(safe_df(source_registry)$source_id %||% character()))
   collect <- function(x, object_type, id_col) {
@@ -219,7 +219,8 @@ validate_lineage_source_references_v2 <- function(
   refs <- safe_bind_rows(list(
     collect(source_matches, "source_match", "source_row_id"),
     collect(admin_events, "admin_event", "event_id"),
-    collect(allocation_weights, "allocation_weight", "source_unit")
+    collect(allocation_weights, "allocation_weight", "source_unit"),
+    collect(geometry_carrybacks, "geometry_carryback", "target_unit_2001")
   ))
   if (!nrow(refs)) {
     return(data.frame(
@@ -550,8 +551,12 @@ build_district_lineage_v2 <- function(
   urban_coverage <- build_current_urban_coverage_v2(raw_sources)
   changed_components <- build_changed_component_roster_v2(raw_sources)
   source_registry <- read_lineage_source_registry_v2(raw_sources$lineage_sources %||% data.frame())
+  geometry_carrybacks <- read_geometry_carrybacks_v2(
+    raw_sources$lineage_geometry_carrybacks %||% data.frame()
+  )
   source_reference_issues <- validate_lineage_source_references_v2(
-    source_registry, source_matches, adjudicated_events, adjudicated_weights
+    source_registry, source_matches, adjudicated_events, adjudicated_weights,
+    geometry_carrybacks
   )
   concordance <- build_concordance_candidates_v2(raw_sources)
   evidence_requests <- build_evidence_requests_v2(candidate_events, source_roster, adjudication_queue)
@@ -601,6 +606,7 @@ build_district_lineage_v2 <- function(
     source_inventory = inventory,
     source_registry = source_registry,
     source_reference_issues = source_reference_issues,
+    adjudicated_geometry_carrybacks = geometry_carrybacks,
     admin_units_2001 = admin_2001,
     admin_units_2011 = admin_2011,
     shrid_bridge_summary = bridge_summary,
@@ -642,6 +648,7 @@ save_district_lineage_v2 <- function(diagnostics, dir = "outputs/diagnostics/ext
   names_to_write <- c(
     "summary", "migration_readiness", "migration_blockers",
     "source_inventory", "source_registry", "source_reference_issues",
+    "adjudicated_geometry_carrybacks",
     "admin_units_2001", "admin_units_2011",
     "shrid_bridge_summary", "shrid_bridge_qa",
     "district_transition_2001_2011", "allocation_weight_validation",

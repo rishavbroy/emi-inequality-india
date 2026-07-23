@@ -456,3 +456,75 @@ test_that("constructed incomplete geometry points to the coverage table", {
     fixed = TRUE
   )
 })
+
+test_that("accepted geometry carry-backs fill only missing 2001 units", {
+  skip_if_not_installed("sf")
+
+  geometry_2001 <- sf::st_sf(
+    unit_id = "pc2001__01__01",
+    geom = sf::st_sfc(sf::st_point(c(0, 0)), crs = 4326),
+    sf_column_name = "geom"
+  )
+  geometry_2011 <- sf::st_sf(
+    pc11_state_id = c("07", "27"),
+    pc11_district_id = c("090", "518"),
+    geom = sf::st_sfc(
+      sf::st_point(c(1, 1)),
+      sf::st_point(c(2, 2)),
+      crs = 4326
+    ),
+    sf_column_name = "geom"
+  )
+  carrybacks <- data.frame(
+    target_unit_2001 = c("pc2001__07__01", "pc2001__27__22"),
+    source_unit_2011 = c("pc2011__07__090", "pc2011__27__518"),
+    source_id = c("delhi_atlas", "maharashtra_atlas"),
+    status = "accepted",
+    note = "official unchanged-boundary decision",
+    stringsAsFactors = FALSE
+  )
+
+  out <- apply_geometry_carrybacks_v2(
+    geometry_2001, geometry_2011, carrybacks
+  )
+
+  expect_setequal(
+    out$unit_id,
+    c("pc2001__01__01", "pc2001__07__01", "pc2001__27__22")
+  )
+  expect_false(anyDuplicated(out$unit_id))
+})
+
+test_that("reviewed geometry carry-backs and source adjudications are registered", {
+  carrybacks <- read_geometry_carrybacks_v2(
+    read.csv(
+      "data/metadata/district_geometry_carrybacks_v2.csv",
+      stringsAsFactors = FALSE
+    )
+  )
+  adjudications <- read_adjudicated_source_matches_v2(
+    read.csv(
+      "data/metadata/district_adjudications_v2.csv",
+      stringsAsFactors = FALSE
+    )
+  )
+  registry <- read_lineage_source_registry_v2(
+    read.csv(
+      "data/metadata/district_sources_v2.csv",
+      stringsAsFactors = FALSE
+    )
+  )
+
+  expect_equal(nrow(carrybacks), 11L)
+  expect_true(all(carrybacks$status == "accepted"))
+  expect_equal(nrow(adjudications), 18L)
+  expect_true(all(adjudications$status == "accepted"))
+  expect_true(all(adjudications$unit_id %in% carrybacks$target_unit_2001))
+
+  issues <- validate_lineage_source_references_v2(
+    registry,
+    source_matches = adjudications,
+    geometry_carrybacks = carrybacks
+  )
+  expect_equal(nrow(issues), 0L)
+})
