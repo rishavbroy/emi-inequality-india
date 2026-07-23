@@ -1,7 +1,7 @@
 #let poster(
   size: "36x24", title: "Paper Title", authors: "Author", departments: "Department",
   univ_logo: none, footer_text: "", footer_url: "", footer_email_ids: "", footer_color: "c5050c",
-  num_columns: "3", univ_logo_scale: "100", univ_logo_column_size: "7",
+  num_columns: "3", univ_logo_column_size: "7",
   title_column_size: "25", title_font_size: "85", authors_font_size: "56",
   footer_url_font_size: "20", footer_text_font_size: "24", body
 ) = {
@@ -37,7 +37,7 @@
       v(3pt)
     }
   }
-  let logo = if univ_logo == none { none } else { image(univ_logo, width: int(univ_logo_scale) * 1%) }
+  let logo = univ_logo
   grid(columns: (int(univ_logo_column_size) * 1in, 1fr), gutter: 0.35in,
     align(center + horizon, logo),
     align(center, [#text(size: int(title_font_size) * 1pt, weight: "bold", fill: rgb("7a0019"), title)

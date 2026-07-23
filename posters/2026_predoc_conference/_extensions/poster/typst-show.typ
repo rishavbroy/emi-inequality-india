@@ -3,13 +3,12 @@
   $if(poster-authors)$ authors: [$poster-authors$], $endif$
   $if(departments)$ departments: [$departments$], $endif$
   $if(size)$ size: "$size$", $endif$
-  $if(institution-logo)$ univ_logo: "$institution-logo$", $endif$
+  $if(institution-logo)$ univ_logo: image("$institution-logo$"$if(univ-logo-scale)$, width: $univ-logo-scale$ * 1%$endif$), $endif$
   $if(footer-text)$ footer_text: [$footer-text$], $endif$
   $if(footer-url)$ footer_url: [$footer-url$], $endif$
   $if(footer-emails)$ footer_email_ids: [$footer-emails$], $endif$
   $if(footer-color)$ footer_color: "$footer-color$", $endif$
   $if(num-columns)$ num_columns: $num-columns$, $endif$
-  $if(univ-logo-scale)$ univ_logo_scale: $univ-logo-scale$, $endif$
   $if(univ-logo-column-size)$ univ_logo_column_size: $univ-logo-column-size$, $endif$
   $if(title-column-size)$ title_column_size: $title-column-size$, $endif$
   $if(title-font-size)$ title_font_size: $title-font-size$, $endif$
