@@ -381,3 +381,30 @@ test_that("conference poster is a first-class final output", {
   expect_match(poster, "map_emi_exposure.pdf", fixed = TRUE)
   expect_match(poster, "map_linguistic_distance.pdf", fixed = TRUE)
 })
+
+test_that("poster Typst templates resolve the gathered local package", {
+  poster_qmd <- repo_file("posters", "2026_predoc_conference", "poster.qmd")
+  paths <- validate_poster_typst_bundle(poster_qmd)
+
+  expect_true(all(file.exists(c(paths$templates, paths$manifest, paths$entrypoint))))
+})
+
+test_that("poster Typst validation rejects imports that bypass package staging", {
+  fixture <- file.path(tempdir(), paste0("poster-typst-", Sys.getpid()))
+  unlink(fixture, recursive = TRUE, force = TRUE)
+  dir.create(fixture, recursive = TRUE)
+  on.exit(unlink(fixture, recursive = TRUE, force = TRUE), add = TRUE)
+
+  source_dir <- repo_file("posters", "2026_predoc_conference")
+  source_files <- list.files(source_dir, full.names = TRUE, all.files = TRUE, no.. = TRUE)
+  expect_true(all(file.copy(source_files, fixture, recursive = TRUE)))
+
+  template <- file.path(fixture, "_extensions", "poster", "typst-template.typ")
+  writeLines('#import "typst/packages/local/typst-poster/0.1.1/poster.typ": poster', template)
+
+  expect_error(
+    validate_poster_typst_bundle(file.path(fixture, "poster.qmd")),
+    "must import the gathered package",
+    fixed = TRUE
+  )
+})
