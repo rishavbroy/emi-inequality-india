@@ -16,10 +16,7 @@ multicollinearity_formula <- function(model) {
 
 #' Structural-regressor design matrix
 multicollinearity_design_matrix <- function(model) {
-  if (inherits(model, "ivreg")) {
-    return(stats::model.matrix(model, component = "regressors"))
-  }
-  stats::model.matrix(model)
+  iv_structural_model_matrix(model)
 }
 
 #' Model used for term-aware VIF/GVIF diagnostics
@@ -31,9 +28,13 @@ multicollinearity_design_matrix <- function(model) {
 #' instrument matrix is deliberately outside this diagnostic.
 multicollinearity_vif_model <- function(model) {
   if (!inherits(model, "ivreg")) return(model)
+  model_data <- tryCatch(as.data.frame(model$model), error = function(e) NULL)
+  if (is.null(model_data) || !nrow(model_data)) {
+    model_data <- as.data.frame(stats::model.frame(model))
+  }
   stats::lm(
     multicollinearity_formula(model),
-    data = stats::model.frame(model),
+    data = model_data,
     weights = tryCatch(stats::weights(model), error = function(e) NULL),
     na.action = stats::na.exclude
   )
