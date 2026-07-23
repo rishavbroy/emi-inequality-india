@@ -394,6 +394,18 @@ The tracked downstream review now records
 are complete, while substantive adjudication and production migration remain
 blocked.
 
+## Canonical labels in review queues
+
+Every row in the panel non-overlap queue is labeled from the reviewed
+Census-2001 administrative-unit registry, not from production or lineage-v2
+panel fields. Later-wave panel names can describe successor or carved-out
+districts and must not be attached to a canonical Census-2001 key.
+
+The queue therefore exposes `state_label_2001`, `district_label_2001`,
+`label_source_id`, and `canonical_label_available`. A missing canonical label
+becomes its own review action. Duplicate canonical registry keys fail
+explicitly rather than selecting an arbitrary name.
+
 ## Actionable downstream review queues
 
 Extended diagnostics now write two finite review queues:
