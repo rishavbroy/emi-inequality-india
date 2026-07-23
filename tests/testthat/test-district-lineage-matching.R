@@ -600,6 +600,11 @@ test_that("Census-2011 registries retain historical state names after mergers", 
   )
   rows <- out[out$reference_vintage == "2011", , drop = FALSE]
 
+  expect_identical(names(out), c(
+    "unit_id", "level", "state_code", "district_code", "state_std",
+    "district_std", "valid_from", "valid_to", "source_id",
+    "reference_vintage"
+  ))
   expect_false(any(out$reference_vintage == "current_lgd"))
   expect_setequal(
     paste(rows$unit_id, rows$state_std, sep = "->"),
