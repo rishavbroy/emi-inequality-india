@@ -66,6 +66,73 @@ render_public_html <- function(qmd, dependencies = list()) {
   html_path
 }
 
+poster_typst_bundle_paths <- function(poster_qmd) {
+  poster_dir <- dirname(poster_qmd)
+  package_root <- file.path(
+    poster_dir, "_extensions", "poster", "typst", "packages",
+    "local", "typst-poster"
+  )
+  package_dirs <- list.dirs(package_root, recursive = FALSE, full.names = TRUE)
+  if (length(package_dirs) != 1L) {
+    stop("Poster Typst bundle must contain exactly one typst-poster version.", call. = FALSE)
+  }
+  package_dir <- package_dirs[[1L]]
+
+  list(
+    templates = c(
+      file.path(poster_dir, "typst-template.typ"),
+      file.path(poster_dir, "_extensions", "poster", "typst-template.typ")
+    ),
+    manifest = file.path(package_dir, "typst.toml"),
+    entrypoint = file.path(package_dir, "poster.typ")
+  )
+}
+
+typst_manifest_value <- function(lines, field) {
+  pattern <- paste0('^\\s*', field, '\\s*=\\s*"([^"]+)"\\s*$')
+  hit <- grep(pattern, lines, value = TRUE)
+  if (length(hit) != 1L) {
+    stop("Typst package manifest must define exactly one `", field, "` value.", call. = FALSE)
+  }
+  sub(pattern, "\\1", hit)
+}
+
+validate_poster_typst_bundle <- function(poster_qmd) {
+  paths <- poster_typst_bundle_paths(poster_qmd)
+  required <- c(paths$templates, paths$manifest, paths$entrypoint)
+  missing <- required[!file.exists(required)]
+  if (length(missing)) {
+    stop("Poster Typst bundle file(s) missing: ", paste(missing, collapse = ", "), call. = FALSE)
+  }
+
+  manifest <- readLines(paths$manifest, warn = FALSE)
+  package_name <- typst_manifest_value(manifest, "name")
+  package_version <- typst_manifest_value(manifest, "version")
+  entrypoint <- typst_manifest_value(manifest, "entrypoint")
+  if (!identical(basename(paths$entrypoint), entrypoint)) {
+    stop("Poster Typst package entrypoint does not match its manifest.", call. = FALSE)
+  }
+
+  package_reference <- paste0("@local/", package_name, ":", package_version)
+  imported_references <- vapply(paths$templates, function(path) {
+    template <- readLines(path, warn = FALSE)
+    imports <- grep('^#import\\s+"[^"]+"', template, value = TRUE)
+    if (length(imports) != 1L) {
+      stop("Poster Typst template must contain exactly one package import: ", path, call. = FALSE)
+    }
+    sub('^#import\\s+"([^"]+)".*$', '\\1', imports)
+  }, character(1))
+  if (any(imported_references != package_reference)) {
+    stop(
+      "Poster Typst templates must import the gathered package as `",
+      package_reference, "`.",
+      call. = FALSE
+    )
+  }
+
+  invisible(paths)
+}
+
 #' Render the conference poster PDF
 #'
 #' @param poster_qmd Path to the poster QMD.
@@ -75,6 +142,7 @@ render_poster_pdf <- function(poster_qmd, figure_files) {
   force(figure_files)
   if (!file.exists(poster_qmd)) stop("Poster source QMD does not exist: ", poster_qmd, call. = FALSE)
   if (!nzchar(Sys.which("quarto"))) stop("Quarto CLI was not found on PATH; cannot render ", poster_qmd, call. = FALSE)
+  validate_poster_typst_bundle(poster_qmd)
   required_assets <- c("assets/uw-logo-horizontal-full-color-print.pdf", "assets/repo-qr.svg")
   missing <- required_assets[!file.exists(required_assets)]
   if (length(missing)) stop("Poster asset(s) missing: ", paste(missing, collapse = ", "), call. = FALSE)
