@@ -233,17 +233,18 @@ build_reference_units_v2 <- function(admin_2001, admin_2011, lgd_states = data.f
 
   lgd <- standardize_lgd_registry(lgd_districts, "district")
   lgd <- lgd[!is.na(lgd$district_lgd_code) & !is.na(lgd$district_name), , drop = FALSE]
+  n_lgd <- nrow(lgd)
   current <- data.frame(
     unit_id = paste0("lgd_district__", lgd$district_lgd_code),
-    level = rep("district", nrow(lgd)),
+    level = rep("district", n_lgd),
     state_code = pad_admin_code(lgd$census2011_state_code, 2L),
     district_code = pad_admin_code(lgd$census2011_district_code, 3L),
     state_std = canonicalize_state_name(lgd$state_name),
     district_std = canonicalize_district_name(lgd$district_name),
-    valid_from = NA_character_,
-    valid_to = NA_character_,
-    source_id = rep("lgd_districts", nrow(lgd)),
-    reference_vintage = rep("current_lgd", nrow(lgd)),
+    valid_from = rep(NA_character_, n_lgd),
+    valid_to = rep(NA_character_, n_lgd),
+    source_id = rep("lgd_districts", n_lgd),
+    reference_vintage = rep("current_lgd", n_lgd),
     stringsAsFactors = FALSE
   )
 
