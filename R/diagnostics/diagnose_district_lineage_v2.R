@@ -495,7 +495,7 @@ lineage_v2_summary <- function(
 #' Build district-lineage v2 diagnostic bundle
 build_district_lineage_v2 <- function(
   raw_sources, inventory, district_tracker, census_2001_languages,
-  source_2007, source_2017
+  source_2007, source_2017, production_panel = data.frame()
 ) {
   inventory <- safe_df(inventory)
   needed <- c(
@@ -555,6 +555,18 @@ build_district_lineage_v2 <- function(
   )
   concordance <- build_concordance_candidates_v2(raw_sources)
   evidence_requests <- build_evidence_requests_v2(candidate_events, source_roster, adjudication_queue)
+  adjudication_draft <- build_adjudication_draft_v2(
+    source_roster, adjudication_queue, candidates
+  )
+  sensitivity_crosswalk <- build_sensitivity_crosswalk_v2(
+    primary_crosswalk, adjudicated_weights
+  )
+  production_comparison <- build_production_crosswalk_comparison_v2(
+    primary_crosswalk, production_panel
+  )
+  geometry_qa <- data.frame(
+    metric = "geometry_available", value = FALSE, stringsAsFactors = FALSE
+  )
   gold <- score_gold_set_v2(raw_sources$lineage_gold %||% data.frame())
   gold_summary <- summarize_gold_set_v2(gold)
 
@@ -569,6 +581,11 @@ build_district_lineage_v2 <- function(
     adjudicated_weight_validation, source_reference_issues
   )
   migration_blockers <- build_migration_blockers_v2(readiness)
+  completion_status <- lineage_completion_steps_v2(
+    source_roster, source_matches, adjudication_queue, evidence_requests,
+    allocation_validation, adjudicated_weights, primary_crosswalk,
+    sensitivity_crosswalk, production_comparison, geometry_qa, readiness
+  )
   summary <- lineage_v2_summary(
     inventory, admin_2001, admin_2011, bridge, transition, source_roster,
     source_matches, candidates, adjudication_queue, eligibility, candidate_events, current_components,
@@ -593,8 +610,13 @@ build_district_lineage_v2 <- function(
     source_matches = source_matches,
     source_match_candidates = candidates,
     source_adjudication_queue = adjudication_queue,
+    adjudication_draft = adjudication_draft,
     primary_mapping_eligibility = eligibility,
     primary_source_crosswalk = primary_crosswalk,
+    sensitivity_source_crosswalk = sensitivity_crosswalk,
+    production_crosswalk_comparison = production_comparison,
+    geometry_2001_qa = geometry_qa,
+    completion_status = completion_status,
     excluded_source_rows = excluded_sources,
     candidate_admin_events = candidate_events,
     current_component_registry = current_components,
@@ -621,8 +643,10 @@ save_district_lineage_v2 <- function(diagnostics, dir = "outputs/diagnostics/ext
     "shrid_bridge_summary", "shrid_bridge_qa",
     "district_transition_2001_2011", "allocation_weight_validation",
     "nss_source_roster", "reference_units", "source_matches", "source_match_candidates",
-    "source_adjudication_queue",
-    "primary_mapping_eligibility", "primary_source_crosswalk", "excluded_source_rows",
+    "source_adjudication_queue", "adjudication_draft",
+    "primary_mapping_eligibility", "primary_source_crosswalk",
+    "sensitivity_source_crosswalk", "production_crosswalk_comparison",
+    "geometry_2001_qa", "completion_status", "excluded_source_rows",
     "candidate_admin_events", "current_component_registry",
     "current_urban_coverage", "changed_component_roster",
     "adjudicated_admin_events", "adjudicated_allocation_weights",

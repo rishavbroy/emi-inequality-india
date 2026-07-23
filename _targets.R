@@ -156,7 +156,8 @@ extended_diagnostic_targets <- list(
       district_tracker,
       census_2001_languages,
       measures_2007,
-      measures_2017
+      measures_2017,
+      district_panel
     ))
   ),
   tar_target(diag_ext_missingness, save_missingness_diagnostics(diagnose_missingness(selection_data, cfg))),
