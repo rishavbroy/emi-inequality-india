@@ -293,11 +293,17 @@ candidate_event_relevant_to_sources_v2 <- function(events, source_roster) {
   from_key %in% source_key | to_key %in% source_key
 }
 
-build_evidence_requests_v2 <- function(candidate_events, source_roster, primary_eligibility) {
+build_evidence_requests_v2 <- function(candidate_events, source_roster, adjudication_queue) {
   events <- safe_df(candidate_events)
   source_roster <- safe_df(source_roster)
-  eligibility <- safe_df(primary_eligibility)
-  relevant <- candidate_event_relevant_to_sources_v2(events, source_roster)
+  queue <- safe_df(adjudication_queue)
+  evidence_classes <- c(
+    "adjudicated_needs_review", "high_precision_fuzzy_candidate",
+    "fuzzy_candidates", "no_candidate"
+  )
+  evidence_ids <- queue$source_row_id[queue$review_class %in% evidence_classes]
+  unresolved_sources <- source_roster[source_roster$source_row_id %in% evidence_ids, , drop = FALSE]
+  relevant <- candidate_event_relevant_to_sources_v2(events, unresolved_sources)
   event_requests <- events[
     relevant & events$status %in% c("candidate_unadjudicated", "changed_unit_roster_only"),
     , drop = FALSE
@@ -324,14 +330,14 @@ build_evidence_requests_v2 <- function(candidate_events, source_roster, primary_
     stringsAsFactors = FALSE
   ) else data.frame()
 
-  unresolved <- eligibility[!(eligibility$eligible_primary %in% TRUE), , drop = FALSE]
+  unresolved <- queue[queue$source_row_id %in% evidence_ids, , drop = FALSE]
   source_out <- if (nrow(unresolved)) data.frame(
     request_id = paste0("source__", unresolved$source_row_id),
     state = unresolved$state_std,
     affected_units = unresolved$district_std,
     period = unresolved$wave,
-    unresolved_question = unresolved$exclusion_reason,
-    sources_checked = ifelse(is.na(unresolved$method), "exact and fuzzy candidate ledgers", unresolved$method),
+    unresolved_question = paste0("Resolve ", unresolved$review_class, " before primary-panel inclusion."),
+    sources_checked = ifelse(is.na(unresolved$recommended_method), "candidate ledgers", unresolved$recommended_method),
     requested_document = "Resolve from code, official alias, or dated lineage evidence; do not accept a fuzzy name alone.",
     stringsAsFactors = FALSE
   ) else data.frame()
@@ -417,7 +423,7 @@ lineage_v2_summary <- function(
       "available_inputs", "missing_inputs", "admin_units_2001", "admin_units_2011",
       "shrid_bridge_rows", "deterministic_shrid_rows", "district_transition_rows",
       "nss_source_rows", "accepted_source_matches", "unadjudicated_source_rows",
-      "candidate_rows", "single_exact_review_rows", "multiple_exact_review_rows",
+      "candidate_rows", "cross_vintage_exact_review_rows", "single_vintage_exact_review_rows",
       "fuzzy_review_rows", "no_candidate_rows", "primary_eligible_source_rows", "candidate_event_rows",
       "current_component_rows", "urban_coverage_rows", "changed_component_rows",
       "targeted_evidence_requests"
@@ -428,8 +434,8 @@ lineage_v2_summary <- function(
       nrow(source_roster), sum(accepted),
       sum(!source_roster$source_row_id %in% source_matches$source_row_id[source_matches$status %in% c("accepted", "excluded")]),
       nrow(candidates),
-      sum(adjudication_queue$review_class == "single_exact_candidate"),
-      sum(adjudication_queue$review_class == "multiple_exact_candidates"),
+      sum(adjudication_queue$review_class == "cross_vintage_exact_candidate"),
+      sum(adjudication_queue$review_class == "single_vintage_exact_candidate"),
       sum(adjudication_queue$review_class %in% c("high_precision_fuzzy_candidate", "fuzzy_candidates")),
       sum(adjudication_queue$review_class == "no_candidate"),
       sum(eligibility$eligible_primary %in% TRUE), nrow(events),
@@ -502,7 +508,7 @@ build_district_lineage_v2 <- function(
     source_registry, source_matches, adjudicated_events, adjudicated_weights
   )
   concordance <- build_concordance_candidates_v2(raw_sources)
-  evidence_requests <- build_evidence_requests_v2(candidate_events, source_roster, eligibility)
+  evidence_requests <- build_evidence_requests_v2(candidate_events, source_roster, adjudication_queue)
   gold <- score_gold_set_v2(raw_sources$lineage_gold %||% data.frame())
   gold_summary <- summarize_gold_set_v2(gold)
 

@@ -322,3 +322,33 @@ test_that("empty duplicate diagnostics preserve their schema", {
   expect_equal(nrow(out), 0L)
   expect_named(out, names(empty_duplicate_key_diagnostics_v2()))
 })
+
+
+test_that("evidence requests follow deterministic adjudication work", {
+  sources <- data.frame(
+    source_row_id = c("exact", "fuzzy"), wave = "nss_2007_08",
+    state_std = "state", district_std = c("alpha", "beta"),
+    stringsAsFactors = FALSE
+  )
+  queue <- data.frame(
+    source_row_id = c("exact", "fuzzy"), wave = "nss_2007_08",
+    state_std = "state", district_std = c("alpha", "beta"),
+    review_class = c("cross_vintage_exact_candidate", "fuzzy_candidates"),
+    recommended_method = c("exact_normalized_name", "fuzzy_name_candidate"),
+    stringsAsFactors = FALSE
+  )
+  events <- data.frame(
+    event_id = c("alpha_event", "beta_event"),
+    from_state = "state", to_state = "state",
+    from_district = c("alpha", "beta"), to_district = c("alpha child", "beta child"),
+    status = "candidate_unadjudicated", source_id = "fixture",
+    reported_year = 2007L, source_year = NA_integer_, target_year = NA_integer_,
+    effective_date = NA_character_, stringsAsFactors = FALSE
+  )
+
+  out <- build_evidence_requests_v2(events, sources, queue)
+
+  expect_false(any(grepl("exact", out$request_id, fixed = TRUE)))
+  expect_true(any(out$request_id == "source__fuzzy"))
+  expect_true(any(out$request_id == "event__beta_event"))
+})

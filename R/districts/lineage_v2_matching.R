@@ -186,8 +186,8 @@ empty_source_adjudication_queue_v2 <- function() {
     source_row_id = character(), wave = character(), source_code = character(),
     raw_state = character(), raw_district = character(), state_std = character(),
     district_std = character(), adjudication_status = character(),
-    candidate_count = integer(), exact_candidate_count = integer(),
-    recommended_unit = character(), recommended_name = character(),
+    candidate_count = integer(), candidate_name_count = integer(),
+    exact_vintage_count = integer(), recommended_unit = character(), recommended_name = character(),
     recommended_vintage = character(), recommended_method = character(),
     recommended_score = numeric(), high_precision_candidate = logical(),
     review_class = character(), review_priority = integer(),
@@ -338,7 +338,8 @@ build_source_adjudication_queue_v2 <- function(source_roster, candidates, adjudi
     data.frame(
       source_row_id = source_row_id,
       candidate_count = nrow(x),
-      exact_candidate_count = sum(x$candidate_method == "exact_normalized_name"),
+      candidate_name_count = length(unique(x$candidate_name)),
+      exact_vintage_count = length(unique(x$reference_vintage[x$candidate_method == "exact_normalized_name"])),
       recommended_unit = top$candidate_unit,
       recommended_name = top$candidate_name,
       recommended_vintage = top$reference_vintage,
@@ -348,13 +349,21 @@ build_source_adjudication_queue_v2 <- function(source_roster, candidates, adjudi
       stringsAsFactors = FALSE
     )
   }))
+  if (!nrow(candidate_summary)) {
+    candidate_summary <- empty_source_adjudication_queue_v2()[c(
+      "source_row_id", "candidate_count", "candidate_name_count", "exact_vintage_count",
+      "recommended_unit", "recommended_name", "recommended_vintage", "recommended_method",
+      "recommended_score", "high_precision_candidate"
+    )]
+  }
 
   out <- merge(roster, candidate_summary, by = "source_row_id", all.x = TRUE, sort = FALSE)
   status <- adjudications[c("source_row_id", "status")]
   names(status)[[2]] <- "adjudication_status"
   out <- merge(out, status, by = "source_row_id", all.x = TRUE, sort = FALSE)
   out$candidate_count[is.na(out$candidate_count)] <- 0L
-  out$exact_candidate_count[is.na(out$exact_candidate_count)] <- 0L
+  out$candidate_name_count[is.na(out$candidate_name_count)] <- 0L
+  out$exact_vintage_count[is.na(out$exact_vintage_count)] <- 0L
   out$high_precision_candidate[is.na(out$high_precision_candidate)] <- FALSE
 
   adjudicated <- !is.na(out$adjudication_status) & nzchar(out$adjudication_status)
@@ -362,11 +371,11 @@ build_source_adjudication_queue_v2 <- function(source_roster, candidates, adjudi
     adjudicated,
     paste0("adjudicated_", out$adjudication_status),
     ifelse(
-      out$exact_candidate_count == 1L,
-      "single_exact_candidate",
+      out$exact_vintage_count >= 2L,
+      "cross_vintage_exact_candidate",
       ifelse(
-        out$exact_candidate_count > 1L,
-        "multiple_exact_candidates",
+        out$exact_vintage_count == 1L,
+        "single_vintage_exact_candidate",
         ifelse(
           out$high_precision_candidate,
           "high_precision_fuzzy_candidate",
@@ -377,7 +386,7 @@ build_source_adjudication_queue_v2 <- function(source_roster, candidates, adjudi
   )
   priority <- c(
     adjudicated_accepted = 0L, adjudicated_excluded = 0L, adjudicated_needs_review = 0L,
-    single_exact_candidate = 1L, multiple_exact_candidates = 2L,
+    cross_vintage_exact_candidate = 1L, single_vintage_exact_candidate = 2L,
     high_precision_fuzzy_candidate = 3L, fuzzy_candidates = 4L, no_candidate = 5L
   )
   out$review_priority <- unname(priority[out$review_class])
@@ -385,7 +394,7 @@ build_source_adjudication_queue_v2 <- function(source_roster, candidates, adjudi
   out[c(
     "source_row_id", "wave", "source_code", "raw_state", "raw_district",
     "state_std", "district_std", "adjudication_status", "candidate_count",
-    "exact_candidate_count", "recommended_unit", "recommended_name",
+    "candidate_name_count", "exact_vintage_count", "recommended_unit", "recommended_name",
     "recommended_vintage", "recommended_method", "recommended_score",
     "high_precision_candidate", "review_class", "review_priority"
   )]

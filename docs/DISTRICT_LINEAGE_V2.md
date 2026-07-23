@@ -55,7 +55,7 @@ The compact tracked ledgers are:
 
 Do not add columns unless they support a real decision, invariant, or citation. Git history records editors and dates; reviewer metadata need not be repeated in every row.
 
-The generated `source_adjudication_queue.csv` is the compact work queue for those ledgers. It emits one row per NSS source identity, selects the wave-preferred top candidate without accepting it, and classifies the row as a single exact candidate, multiple exact candidates, high-precision fuzzy candidate, ordinary fuzzy review, or no candidate. The full candidate ledger remains available for evidence review.
+The generated `source_adjudication_queue.csv` is the compact work queue for those ledgers. It emits one row per NSS source identity, selects the wave-preferred top representation without accepting it, and classifies the row as a cross-vintage exact candidate, single-vintage exact candidate, high-precision fuzzy candidate, ordinary fuzzy review, or no candidate. The full candidate ledger remains available for evidence review.
 
 ## Source hierarchy
 
@@ -227,4 +227,6 @@ Inspect every selected test file. Update production code, tests, metadata, and d
 
 Extended district-lineage diagnostics track and cache each loaded raw source independently. Large LGD SpreadsheetML changed-unit rosters are streamed into their canonical columns, and SHRUG key readers retain only columns needed by the bridge. Inventory-only geometry and locality-attribute archives remain visible in the source inventory without being loaded into the general lineage bundle. Incremental audits therefore reread only sources whose specification, reader, or file changed; village changed-unit coverage remains included.
 
-The Census-2001 lineage registry takes district labels from C-16 `district_name` and maps Census state codes through the LGD state registry; numeric production aliases are never administrative names.
+The Census-2001 lineage registry takes district labels from C-16 `district_name` and state labels from the project’s vintage-specific Census-2001 code table; numeric production aliases and current-LGD mergers are never substituted for historical administrative names.
+
+The adjudication queue distinguishes candidate representations from semantic alternatives. Repeated exact names across Census 2001, Census 2011, and current LGD are one name candidate with several vintage representations; they are classified as `cross_vintage_exact_candidate`, not as several competing exact names. A single-vintage exact name remains `single_vintage_exact_candidate`. External evidence requests are generated only after these deterministic exact-name cases have been reviewed, for fuzzy, missing, or explicitly `needs_review` identities and the events relevant to them.
