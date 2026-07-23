@@ -250,36 +250,41 @@ test_that("SHRUG bridge distinguishes ambiguous from absent district membership"
 })
 
 
-test_that("Census 2001 registry uses district labels and mapped state names", {
+test_that("Census 2001 registry uses vintage state names and district labels", {
   census <- data.frame(
-    state_code = c("06", "06"),
-    district_code = c("01", "02"),
-    district_name = c("Panchkula", "Ambala"),
-    state_std = c("6", "6"),
-    district_std = c("1", "2"),
-    stringsAsFactors = FALSE
-  )
-  states <- data.frame(
-    state_name = "Haryana",
-    state_census2011_code = "06",
+    state_code = c("06", "25", "26"),
+    district_code = c("01", "01", "01"),
+    district_name = c("Panchkula", "Daman", "Dadra & Nagar Haveli"),
+    state_std = c("6", "25", "26"),
+    district_std = c("1", "1", "1"),
     stringsAsFactors = FALSE
   )
 
-  out <- build_admin_registry_2001(census, states)
+  out <- build_admin_registry_2001(census)
 
-  expect_setequal(out$state_std, "haryana")
-  expect_setequal(out$district_std, c("panchkula", "ambala"))
-  expect_setequal(out$unit_id, c("pc2001__06__01", "pc2001__06__02"))
+  expect_equal(
+    out$state_std,
+    c("haryana", "daman and diu", "dadra and nagar haveli")
+  )
+  expect_equal(
+    out$district_std,
+    c("panchkula", "daman", "dadra and nagar haveli")
+  )
+  expect_equal(
+    out$unit_id,
+    c("pc2001__06__01", "pc2001__25__01", "pc2001__26__01")
+  )
 })
 
-test_that("Census 2001 registry rejects unmapped state codes", {
+test_that("Census 2001 registry rejects unknown state codes", {
   census <- data.frame(
     state_code = "99", district_code = "01", district_name = "Example",
     stringsAsFactors = FALSE
   )
 
   expect_error(
-    build_admin_registry_2001(census, data.frame()),
-    "lack LGD state-name mappings"
+    build_admin_registry_2001(census),
+    "Unknown Census 2001 state codes"
   )
 })
+

@@ -265,7 +265,7 @@ build_district_transition_2001_2011 <- function(shrid_bridge) {
 }
 
 #' Canonical Census 2001 district registry
-build_admin_registry_2001 <- function(census_2001_languages, lgd_states = data.frame()) {
+build_admin_registry_2001 <- function(census_2001_languages) {
   x <- safe_df(census_2001_languages)
   required <- c("state_code", "district_code", "district_name")
   missing <- setdiff(required, names(x))
@@ -287,25 +287,11 @@ build_admin_registry_2001 <- function(census_2001_languages, lgd_states = data.f
   ]
   if (!nrow(out)) return(empty_admin_registry_2001())
 
-  states <- standardize_lgd_registry(lgd_states, "state")
-  state_lookup <- unique(data.frame(
-    state_code = pad_admin_code(states$census2011_state_code, 2L),
-    state_std = canonicalize_state_name(states$state_name),
-    stringsAsFactors = FALSE
-  ))
-  state_lookup <- state_lookup[
-    !is.na(state_lookup$state_code) & nzchar(state_lookup$state_code) &
-      !is.na(state_lookup$state_std) & nzchar(state_lookup$state_std),
-    , drop = FALSE
-  ]
-  if (anyDuplicated(state_lookup$state_code)) {
-    stop("LGD state registry maps a Census state code to multiple names.", call. = FALSE)
-  }
-  out <- merge(out, state_lookup, by = "state_code", all.x = TRUE, sort = FALSE)
+  out$state_std <- canonicalize_state_name(census_2001_state_name(out$state_code))
   missing_states <- sort(unique(out$state_code[is.na(out$state_std) | !nzchar(out$state_std)]))
   if (length(missing_states)) {
     stop(
-      "Census 2001 state codes lack LGD state-name mappings: ",
+      "Unknown Census 2001 state codes: ",
       paste(missing_states, collapse = ", "),
       call. = FALSE
     )

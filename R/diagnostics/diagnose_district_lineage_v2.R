@@ -438,10 +438,7 @@ build_district_lineage_v2 <- function(
   )
   missing_core <- needed[!needed %in% names(raw_sources)]
 
-  admin_2001 <- build_admin_registry_2001(
-    census_2001_languages,
-    raw_sources$lgd_states %||% data.frame()
-  )
+  admin_2001 <- build_admin_registry_2001(census_2001_languages)
   admin_2011 <- if ("shrug_pc11_district_geometry" %in% names(raw_sources)) {
     build_admin_registry_2011(raw_sources$shrug_pc11_district_geometry)
   } else data.frame()
