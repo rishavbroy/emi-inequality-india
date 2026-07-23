@@ -411,8 +411,7 @@ test_that("poster Typst validation rejects imports that bypass package staging",
 
   expect_error(
     poster_renderer_test_env()$validate_poster_typst_bundle(file.path(fixture, "poster.qmd")),
-    "must import the gathered package",
-    fixed = TRUE
+    class = "poster_typst_bundle_error"
   )
 })
 
