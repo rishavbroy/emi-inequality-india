@@ -359,6 +359,24 @@ Evidence requests now include accepted current districts that still lack an
 accepted parent edge. Completing source identity therefore no longer hides the
 remaining administrative-lineage work.
 
+## Connected population-allocation panel
+
+Accepted Census-2011 allocation weights are now joined back to the accepted NSS
+source identity that resolves to each Census-2011 unit. The sensitivity
+crosswalk therefore contains wave, source code, source-row identity, target
+Census-2001 unit, and population weight on the same row.
+
+Extended diagnostics build `district_panel_v2_allocated` from this connected
+crosswalk. Extensive quantities are multiplied by allocation weights before
+aggregation. Intensive district measures are carried to each allocated target
+and combined using allocated household mass when several source districts
+contribute to one target. The deterministic-only panel remains available as a
+strict lower-bound diagnostic.
+
+Allocation is still sensitivity analysis rather than automatic production
+migration. In particular, district-level Ginis allocated from an aggregate
+source do not replace a Gini recomputed from pooled household microdata.
+
 ## Downstream coverage gate
 
 The first parallel build produces 95 unique preferred-panel districts versus
