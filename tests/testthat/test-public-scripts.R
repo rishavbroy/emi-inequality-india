@@ -418,6 +418,20 @@ test_that("poster Typst format supplies both standard template partials", {
   expect_true(all(file.exists(paths)))
 })
 
+test_that("poster PDF page count is parsed from Poppler metadata", {
+  renderer <- poster_renderer_test_env()
+
+  expect_identical(
+    renderer$parse_pdfinfo_page_count(c("Title: Poster", "Pages:          1", "Page size: 2592 x 1728 pts")),
+    1L
+  )
+  expect_error(
+    renderer$parse_pdfinfo_page_count(c("Title: Poster", "Page size: 2592 x 1728 pts")),
+    "Could not determine PDF page count",
+    fixed = TRUE
+  )
+})
+
 test_that("poster citations resolve through the project bibliography", {
   poster <- paste(
     readLines(repo_file("posters", "2026_predoc_conference", "poster.qmd"), warn = FALSE),

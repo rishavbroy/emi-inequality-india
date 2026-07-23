@@ -74,6 +74,28 @@ poster_typst_template_paths <- function(poster_qmd) {
   )
 }
 
+
+parse_pdfinfo_page_count <- function(lines) {
+  match <- grep("^Pages:[[:space:]]+[0-9]+$", lines, value = TRUE)
+  if (length(match) != 1L) {
+    stop("Could not determine PDF page count from pdfinfo output.", call. = FALSE)
+  }
+  as.integer(sub("^Pages:[[:space:]]+", "", match))
+}
+
+pdf_page_count <- function(path) {
+  pdfinfo <- Sys.which("pdfinfo")
+  if (!nzchar(pdfinfo)) {
+    stop("Poppler's pdfinfo executable is required to validate the poster PDF.", call. = FALSE)
+  }
+  output <- system2(pdfinfo, path, stdout = TRUE, stderr = TRUE)
+  status <- attr(output, "status")
+  if (!is.null(status) && !identical(status, 0L)) {
+    stop("pdfinfo failed for ", path, " with status ", status, call. = FALSE)
+  }
+  parse_pdfinfo_page_count(output)
+}
+
 validate_poster_typst_templates <- function(poster_qmd) {
   paths <- poster_typst_template_paths(poster_qmd)
   missing <- paths[!file.exists(paths)]
@@ -104,5 +126,9 @@ render_poster_pdf <- function(poster_qmd, figure_files) {
   status <- system2("quarto", c("render", poster_qmd))
   if (!identical(status, 0L)) stop("quarto render ", poster_qmd, " failed with status ", status, call. = FALSE)
   if (!file.exists(pdf_path) || file.info(pdf_path)$size <= 0L) stop("Poster render did not create a non-empty ", pdf_path, call. = FALSE)
+  pages <- pdf_page_count(pdf_path)
+  if (!identical(pages, 1L)) {
+    stop("Poster render must contain exactly one page; found ", pages, ": ", pdf_path, call. = FALSE)
+  }
   pdf_path
 }
