@@ -739,8 +739,8 @@ lineage_completion_steps_v2 <- function(
         sum(comparison$comparison_status == "changed_target"),
         " changed targets reviewed; ",
         sum(comparison$comparison_status == "missing_from_production_panel"),
-        " coverage additions; downstream rebuild ",
-        if (downstream_reviewed) "reviewed" else "pending"
+        " coverage additions; downstream review ",
+        if (downstream_reviewed) "accepted" else "pending"
       ),
       if (migration_ready) "all gates pass" else "migration gates remain blocked"
     ),
@@ -752,7 +752,7 @@ lineage_completion_steps_v2 <- function(
       geometry_next_action,
       "Regenerate the diagnostic after accepted source decisions and allocation weights are tracked.",
       "Inspect production_crosswalk_comparison.csv after preferred mappings exist.",
-      "Rebuild measures and models only after mapping comparisons are complete.",
+      "Inspect the shared-support results and the two downstream review queues; record an explicit downstream decision only after non-overlap and unmapped identities are resolved.",
       "Replace the inherited crosswalk only after every migration gate passes and changes are reviewed."
     ),
     stringsAsFactors = FALSE
