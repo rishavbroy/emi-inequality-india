@@ -96,6 +96,28 @@ pdf_page_count <- function(path) {
   parse_pdfinfo_page_count(output)
 }
 
+
+validate_poster_pdf_text <- function(text, required_sections = c(
+  "Why this matters",
+  "Research design",
+  "Main result",
+  "Why district histories matter",
+  "Contribution"
+)) {
+  if (length(text) != 1L || is.na(text) || !nzchar(text)) {
+    stop("Poster PDF text could not be extracted.", call. = FALSE)
+  }
+  missing <- required_sections[!vapply(required_sections, grepl, logical(1), x = text, fixed = TRUE)]
+  if (length(missing)) {
+    stop(
+      "Poster PDF is missing expected rendered section(s): ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  invisible(text)
+}
+
 validate_poster_typst_templates <- function(poster_qmd) {
   paths <- poster_typst_template_paths(poster_qmd)
   missing <- paths[!file.exists(paths)]
@@ -130,5 +152,6 @@ render_poster_pdf <- function(poster_qmd, figure_files) {
   if (!identical(pages, 1L)) {
     stop("Poster render must contain exactly one page; found ", pages, ": ", pdf_path, call. = FALSE)
   }
+  validate_poster_pdf_text(extract_pdf_text(pdf_path))
   pdf_path
 }
