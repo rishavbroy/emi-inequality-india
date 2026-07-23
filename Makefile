@@ -1,4 +1,4 @@
-.PHONY: init-renv restore snapshot pipeline-draft pipeline-final pipeline-final-no-samples diagnostics public-diagnostics extended-diagnostics benchmarking rerun-extended-diagnostics rerun-benchmarks rerun-analysis analysis-notes render-analysis clean clean-all clean-analysis clean-public-diagnostics clean-extended-diagnostics clean-benchmarking report samples check-report-values check-report-values-final audit-crossrefs audit-crossrefs-final audit-outputs-final public-build-audit public-build-audit-full public-build-audit-incremental public-build-audit-full-incremental public-build-audit-incremental-review public-build-audit-full-incremental-review public-build-audit-with-diagnostics public-build-audit-full-with-diagnostics public-build-audit-full-with-benchmarks check-public check-public-draft check-public-final check-public-final-no-samples check-public-text check-rendered-text check-sample-specs test tests test-affected test-inventory clean-targets clean-renders clean-renders-core clean-renders-no-samples
+.PHONY: init-renv restore snapshot pipeline-draft pipeline-final pipeline-final-no-samples diagnostics public-diagnostics extended-diagnostics lineage-geometry benchmarking rerun-extended-diagnostics rerun-benchmarks rerun-analysis analysis-notes render-analysis clean clean-all clean-analysis clean-public-diagnostics clean-extended-diagnostics clean-benchmarking report samples check-report-values check-report-values-final audit-crossrefs audit-crossrefs-final audit-outputs-final public-build-audit public-build-audit-full public-build-audit-incremental public-build-audit-full-incremental public-build-audit-incremental-review public-build-audit-full-incremental-review public-build-audit-with-diagnostics public-build-audit-full-with-diagnostics public-build-audit-full-with-benchmarks check-public check-public-draft check-public-final check-public-final-no-samples check-public-text check-rendered-text check-sample-specs test tests test-affected test-inventory clean-targets clean-renders clean-renders-core clean-renders-no-samples
 
 TEXCACHE_ROOT ?= /private/tmp/emi-inequality-india-texcache
 QUARTO_CACHE_ROOT ?= /private/tmp/emi-inequality-india-quarto-cache
@@ -47,6 +47,10 @@ public-diagnostics:
 
 extended-diagnostics:
 	EMI_CONFIG=config/final.yml EMI_RUN_EXTENDED_DIAGNOSTICS=true Rscript scripts/run_targets_checked.R --starts-with diag_ext_
+
+lineage-geometry: extended-diagnostics
+	Rscript scripts/build_lineage_geometry_v2.R
+	$(MAKE) extended-diagnostics
 
 benchmarking:
 	EMI_CONFIG=config/final.yml EMI_RUN_BENCHMARKS=true Rscript scripts/run_targets_checked.R --starts-with bench_
