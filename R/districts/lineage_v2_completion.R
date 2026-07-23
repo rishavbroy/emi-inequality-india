@@ -546,17 +546,13 @@ lineage_completion_steps_v2 <- function(
   )
   fuzzy_open <- fuzzy_class &
     !(queue$adjudication_status %in% c("accepted", "excluded"))
-  incomplete_source_keys <- allocation_validation$source_key[
-    !(allocation_validation$coverage_complete %in% TRUE)
-  ]
-  accepted_allocation_keys <- unique(allocation_weights$source_unit[
-    allocation_weights$status %in% "accepted"
-  ])
-  allocation_gaps_resolved <- nrow(allocation_validation) > 0L &&
-    (
-      !length(incomplete_source_keys) ||
-        !length(setdiff(incomplete_source_keys, accepted_allocation_keys))
-    )
+  adjudicated_allocation_validation <-
+    validate_adjudicated_allocation_weights_v2(allocation_weights)
+  allocation_status <- allocation_coverage_status_v2(
+    allocation_validation,
+    adjudicated_allocation_validation
+  )
+  allocation_gaps_resolved <- allocation_status$coverage_resolved[[1]]
   geometry_value <- function(metric, default = NA_real_) {
     value <- geometry_qa$value[geometry_qa$metric == metric]
     if (length(value)) value[[1]] else default
@@ -622,7 +618,10 @@ lineage_completion_steps_v2 <- function(
       paste0(length(intersect(resolved_ids, roster_ids)), "/", length(roster_ids), " resolved"),
       paste0(sum(fuzzy_open), " fuzzy or missing candidates open"),
       paste0(nrow(evidence), " targeted evidence requests"),
-      paste0(sum(!allocation_validation$coverage_complete), " incomplete source allocations"),
+      paste0(
+        allocation_status$n_unresolved[[1]],
+        " unresolved source allocations after reviewed sensitivity decisions"
+      ),
       geometry_observed,
       paste0(nrow(primary), " preferred; ", nrow(sensitivity), " total sensitivity rows"),
       paste0(nrow(comparison), " source mappings compared"),

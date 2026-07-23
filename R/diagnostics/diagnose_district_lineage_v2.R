@@ -371,6 +371,10 @@ build_migration_readiness_v2 <- function(
     source_matches$status %in% c("accepted", "excluded")
   ]
   duplicates <- safe_df(duplicate_keys)
+  allocation_status <- allocation_coverage_status_v2(
+    allocation_validation,
+    adjudicated_allocation_validation
+  )
 
   gates <- c(
     core_inputs_available = !length(missing_core),
@@ -380,8 +384,7 @@ build_migration_readiness_v2 <- function(
       nrow(allocation_validation) > 0L &&
         all(allocation_validation$weights_well_formed),
     shrid_allocation_coverage_complete =
-      nrow(allocation_validation) > 0L &&
-        all(allocation_validation$coverage_complete),
+      allocation_status$coverage_resolved[[1]],
     adjudicated_allocation_weights_valid =
       !nrow(adjudicated_allocation_validation) ||
         all(adjudicated_allocation_validation$coverage_complete),
@@ -402,7 +405,11 @@ build_migration_readiness_v2 <- function(
     unique_2001_unit_ids = "Census 2001 unit IDs are code-based and unique.",
     unique_2011_unit_ids = "Census 2011 unit IDs are code-based and unique.",
     shrid_weights_well_formed = "Every SHRUG transition weight is finite, nonnegative, and does not overallocate its source district.",
-    shrid_allocation_coverage_complete = "Every SHRUG source district has complete mapped mass across 2001 targets.",
+    shrid_allocation_coverage_complete = paste0(
+      "Every incomplete SHRUG source district is either fully mapped or ",
+      "covered by a valid reviewed sensitivity allocation; ",
+      allocation_status$n_unresolved[[1]], " remain unresolved."
+    ),
     adjudicated_allocation_weights_valid = "Every accepted tracked sensitivity allocation sums to one by source unit.",
     all_adjudication_sources_registered = "Every accepted source match, event, allocation, and geometry carry-back cites a registered evidence source.",
     no_conflicting_duplicate_keys = "Duplicate source or registry keys are either absent or identical.",
@@ -464,7 +471,10 @@ summarize_shrid_bridge_v2 <- function(bridge) {
 lineage_v2_summary <- function(
   inventory, admin_2001, admin_2011, bridge, transition, source_roster,
   source_matches, candidates, adjudication_queue, eligibility, events,
-  current_components, urban_coverage, changed_components, evidence_requests
+  current_components, urban_coverage, changed_components, evidence_requests,
+  adjudicated_weights = data.frame(),
+  adjudicated_weight_validation = data.frame(),
+  allocation_validation = data.frame()
 ) {
   accepted <- source_matches$status %in% "accepted"
   data.frame(
@@ -475,7 +485,8 @@ lineage_v2_summary <- function(
       "candidate_rows", "cross_vintage_exact_review_rows", "single_vintage_exact_review_rows",
       "fuzzy_review_rows", "no_candidate_rows", "primary_eligible_source_rows", "candidate_event_rows",
       "current_component_rows", "urban_coverage_rows", "changed_component_rows",
-      "targeted_evidence_requests"
+      "targeted_evidence_requests", "reviewed_allocation_sources",
+      "remaining_incomplete_allocations"
     ),
     value = c(
       sum(inventory$exists), sum(!inventory$exists), nrow(admin_2001), nrow(admin_2011),
@@ -489,7 +500,13 @@ lineage_v2_summary <- function(
       sum(adjudication_queue$review_class == "no_candidate"),
       sum(eligibility$eligible_primary %in% TRUE), nrow(events),
       nrow(current_components), nrow(urban_coverage), nrow(changed_components),
-      nrow(evidence_requests)
+      nrow(evidence_requests),
+      length(unique(adjudicated_weights$source_unit[
+        adjudicated_weights$status %in% "accepted"
+      ])),
+      allocation_coverage_status_v2(
+        allocation_validation, adjudicated_weight_validation
+      )$n_unresolved[[1]]
     ),
     stringsAsFactors = FALSE
   )
@@ -598,7 +615,8 @@ build_district_lineage_v2 <- function(
   summary <- lineage_v2_summary(
     inventory, admin_2001, admin_2011, bridge, transition, source_roster,
     source_matches, candidates, adjudication_queue, eligibility, candidate_events, current_components,
-    urban_coverage, changed_components, evidence_requests
+    urban_coverage, changed_components, evidence_requests,
+    adjudicated_weights, adjudicated_weight_validation, allocation_validation
   )
 
   list(
