@@ -370,6 +370,32 @@ validate_allocation_weights <- function(weights, source_cols = c("state_code_201
   }))
 }
 
+allocation_coverage_status_v2 <- function(
+  generated_validation, adjudicated_validation
+) {
+  generated <- safe_df(generated_validation)
+  adjudicated <- safe_df(adjudicated_validation)
+
+  generated_keys <- unique(plain_chr(generated$source_key))
+  incomplete_keys <- unique(plain_chr(generated$source_key[
+    !(generated$coverage_complete %in% TRUE)
+  ]))
+  reviewed_keys <- unique(plain_chr(adjudicated$source_key[
+    adjudicated$coverage_complete %in% TRUE
+  ]))
+  unresolved_keys <- setdiff(incomplete_keys, reviewed_keys)
+
+  data.frame(
+    n_generated_sources = length(generated_keys),
+    n_generated_complete = sum(generated$coverage_complete %in% TRUE),
+    n_reviewed_complete = length(intersect(incomplete_keys, reviewed_keys)),
+    n_unresolved = length(unresolved_keys),
+    coverage_resolved =
+      length(generated_keys) > 0L && !length(unresolved_keys),
+    stringsAsFactors = FALSE
+  )
+}
+
 read_adjudicated_allocation_weights_v2 <- function(x, admin_2001 = data.frame()) {
   x <- safe_df(x)
   required <- c(
