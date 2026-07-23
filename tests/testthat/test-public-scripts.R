@@ -402,6 +402,32 @@ test_that("poster Typst format supplies both standard template partials", {
   expect_true(all(file.exists(paths)))
 })
 
+test_that("poster citations resolve through the project bibliography", {
+  poster <- paste(
+    readLines(repo_file("posters", "2026_predoc_conference", "poster.qmd"), warn = FALSE),
+    collapse = "\n"
+  )
+  bibliography <- readLines(repo_file("paper", "references.bib"), warn = FALSE)
+
+  citation_groups <- regmatches(
+    poster,
+    gregexpr("\\[@[^]]+\\]", poster, perl = TRUE)
+  )[[1]]
+  citation_keys <- unique(unlist(regmatches(
+    citation_groups,
+    gregexpr("@[[:alnum:]_:.#$%&+?/-]+", citation_groups, perl = TRUE)
+  )))
+  citation_keys <- sub("^@", "", citation_keys)
+  bibliography_keys <- sub(
+    "^@[[:alpha:]]+\\{([^,]+),.*$",
+    "\\1",
+    grep("^@[[:alpha:]]+\\{[^,]+,", bibliography, value = TRUE)
+  )
+
+  expect_match(poster, "\nciteproc: true\n", fixed = TRUE)
+  expect_setequal(intersect(citation_keys, bibliography_keys), citation_keys)
+})
+
 
 test_that("full audit refreshes lineage geometry before extended diagnostics", {
   audit <- paste(
