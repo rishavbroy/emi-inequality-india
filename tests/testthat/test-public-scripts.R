@@ -393,7 +393,7 @@ test_that("poster Typst templates resolve the gathered local package", {
   renderer <- poster_renderer_test_env()
   paths <- renderer$validate_poster_typst_bundle(poster_qmd)
 
-  expect_true(all(file.exists(c(paths$template, paths$manifest, paths$entrypoint))))
+  expect_true(all(file.exists(c(paths$template, paths$show, paths$manifest, paths$entrypoint))))
 })
 
 test_that("poster Typst validation rejects imports that bypass package staging", {

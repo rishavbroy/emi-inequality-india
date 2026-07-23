@@ -93,6 +93,7 @@ poster_typst_bundle_paths <- function(poster_qmd) {
 
   list(
     template = file.path(poster_dir, "_extensions", "poster", "typst-template.typ"),
+    show = file.path(poster_dir, "_extensions", "poster", "typst-show.typ"),
     manifest = file.path(package_versions[[1L]], "typst.toml"),
     entrypoint = file.path(package_versions[[1L]], "poster.typ")
   )
