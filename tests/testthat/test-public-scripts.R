@@ -260,29 +260,26 @@ test_that("selected target runner uses the programmatic targets API and shared w
   expect_match(runner, "tidyselect::all_of(!!selected_target_names)", fixed = TRUE)
   expect_false(grepl("eval(parse", runner, fixed = TRUE))
   expect_match(runner, "record_target_warnings", fixed = TRUE)
+  expect_match(runner, "targets::tar_progress", fixed = TRUE)
+  expect_match(runner, "target_run_metadata_scope", fixed = TRUE)
+  expect_false(grepl("meta_before <- target_metadata_snapshot", runner, fixed = TRUE))
   expect_match(helper, "targets" , fixed = TRUE)
   expect_match(helper, "target_warnings.csv", fixed = TRUE)
 })
 
-test_that("selected target warning scope includes rebuilt dependencies", {
+test_that("selected target warning scope includes executed dependencies", {
   env <- new.env(parent = globalenv())
   sys.source(repo_file("scripts", "target_metadata_helpers.R"), envir = env)
-  before <- data.frame(
-    name = c("selected", "dependency"),
-    time = as.POSIXct(c("2026-01-01", "2026-01-01"), tz = "UTC"),
-    error = c(NA_character_, NA_character_),
-    warnings = c(NA_character_, NA_character_),
+  progress <- data.frame(
+    name = c("selected", "dependency", "unrelated"),
+    progress = c("skipped", "completed", "skipped"),
     stringsAsFactors = FALSE
   )
-  after <- before
-  after$time[[2]] <- as.POSIXct("2026-01-02", tz = "UTC")
-  after$warnings[[2]] <- "dependency warning"
 
-  changed <- env$changed_target_metadata_names(before, after)
+  scope <- env$target_run_metadata_scope("selected", progress)
 
-  expect_equal(changed, "dependency")
-  scoped <- env$select_target_metadata(after, unique(c("selected", changed)))
-  expect_setequal(scoped$name, c("selected", "dependency"))
+  expect_setequal(scope, c("selected", "dependency"))
+  expect_false("unrelated" %in% scope)
 })
 
 test_that("target warning metadata normalizes list columns and consolidates runs", {
