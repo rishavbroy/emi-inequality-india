@@ -343,3 +343,55 @@ test_that("tracked high-coverage sensitivity allocations are normalized", {
   expect_true(all(validation$coverage_complete))
   expect_true(all(grepl("99pct", weights$basis, fixed = TRUE)))
 })
+
+test_that("allocation source keys preserve Census code widths", {
+  expect_identical(
+    canonical_allocation_source_key_v2(
+      c("01.001", "1.001", "pc2011__01__001")
+    ),
+    rep("01.001", 3)
+  )
+  expect_identical(
+    canonical_allocation_source_key_v2(c(1.001, 1.01, 27.518)),
+    c("01.001", "01.010", "27.518")
+  )
+  expect_identical(
+    allocation_source_key_v2(c(1, 27), c(1, 518)),
+    c("01.001", "27.518")
+  )
+})
+
+test_that("reviewed allocation coverage matches canonicalized source keys", {
+  generated <- data.frame(
+    source_key = c("1.001", "1.010"),
+    coverage_complete = FALSE,
+    stringsAsFactors = FALSE
+  )
+  reviewed <- data.frame(
+    source_key = c(1.001, 1.01),
+    coverage_complete = TRUE,
+    stringsAsFactors = FALSE
+  )
+
+  status <- allocation_coverage_status_v2(generated, reviewed)
+
+  expect_equal(status$n_reviewed_complete, 2L)
+  expect_equal(status$n_unresolved, 0L)
+  expect_true(status$coverage_resolved)
+})
+
+test_that("tracked allocation decisions resolve 457 generated gaps", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
+  weights <- read.csv(
+    file.path(
+      root, "data", "metadata", "district_allocation_weights_v2.csv"
+    ),
+    stringsAsFactors = FALSE
+  )
+  reviewed <- validate_adjudicated_allocation_weights_v2(
+    read_adjudicated_allocation_weights_v2(weights)
+  )
+
+  expect_equal(length(unique(reviewed$source_key)), 457L)
+  expect_true(all(grepl("^[0-9]{2}[.][0-9]{3}$", reviewed$source_key)))
+})
