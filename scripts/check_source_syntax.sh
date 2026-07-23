@@ -84,7 +84,8 @@ qmds <- sort(unique(c(
   list.files("paper", "\\.qmd$", recursive = TRUE, full.names = TRUE),
   list.files("docs", "\\.qmd$", recursive = TRUE, full.names = TRUE),
   list.files("analysis", "\\.qmd$", recursive = TRUE, full.names = TRUE),
-  list.files("application-samples/cover-notes", "\\.qmd$", recursive = TRUE, full.names = TRUE)
+  list.files("application-samples/cover-notes", "\\.qmd$", recursive = TRUE, full.names = TRUE),
+  list.files("posters", "\\.qmd$", recursive = TRUE, full.names = TRUE)
 )))
 qmds <- qmds[file.exists(qmds)]
 for (path in qmds) {

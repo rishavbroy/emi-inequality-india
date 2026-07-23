@@ -5,7 +5,8 @@ public_qmd_sources <- function() {
     "paper/report.qmd",
     "paper/appendix.qmd",
     "docs/district-matching.qmd",
-    "docs/long-paths-and-8-3-filenames.qmd"
+    "docs/long-paths-and-8-3-filenames.qmd",
+    "posters/2026_predoc_conference/poster.qmd"
   )
 }
 
@@ -23,7 +24,12 @@ required_public_render_inputs <- function() {
     "outputs/tables/main/fs_cons.csv",
     "outputs/tables/main/cons_iv.csv",
     "outputs/figures/main/fig_ilo_trends.png",
-    "outputs/figures/main/district_carveouts_shifts.png"
+    "outputs/figures/main/district_carveouts_shifts.png",
+    "outputs/figures/main/poster_emie_expected_values.pdf",
+    "outputs/figures/main/map_emi_exposure.pdf",
+    "outputs/figures/main/map_linguistic_distance.pdf",
+    "assets/uw-logo-horizontal-full-color-print.pdf",
+    "assets/repo-qr.svg"
   )
 }
 
@@ -42,7 +48,8 @@ required_final_documents <- function(require_application_samples = TRUE) {
   files <- c(
     "paper/report.pdf",
     "docs/district-matching.html",
-    "docs/long-paths-and-8-3-filenames.html"
+    "docs/long-paths-and-8-3-filenames.html",
+    "posters/2026_predoc_conference/poster.pdf"
   )
   if (isTRUE(require_application_samples)) files <- c(files, application_sample_outputs())
   files
@@ -61,6 +68,8 @@ required_final_artifacts <- function() {
     "outputs/figures/main/district_carveouts_shifts.png",
     "outputs/figures/main/collage_main_maps.png",
     "outputs/figures/main/collage_iv_region_maps.png",
+    "outputs/figures/main/poster_emie_expected_values.pdf",
+    "posters/2026_predoc_conference/poster.pdf",
     "outputs/diagnostics/public/spatial_moran_tests.csv",
     "outputs/diagnostics/public/spatial_moran_mc_reference.csv"
   )

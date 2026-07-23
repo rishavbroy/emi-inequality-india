@@ -99,19 +99,21 @@ core_pipeline_targets <- list(
   tar_target(diag_public_spatial_autocorrelation_files, save_spatial_autocorrelation_diagnostics(diag_public_spatial_autocorrelation), format = "file"),
   tar_target(diag_public_multicollinearity, save_multicollinearity_diagnostics(diagnose_multicollinearity(district_panel, iv_models, cfg)), format = "file"),
 
-  tar_target(figures, make_figures(district_panel, raw_ilo_figures, cfg, boundaries_2020)),
+  tar_target(figures, make_figures(district_panel, raw_ilo_figures, cfg, boundaries_2020, iv_models)),
   tar_target(figure_files, save_figures(figures, cfg), format = "file"),
   tar_target(tables, make_tables(selection_data, ame_results, district_panel, iv_models, first_stage_tests, cfg, selection_model)),
   tar_target(diag_public_iv_panel, save_public_iv_panel_diagnostics(district_panel, tables), format = "file"),
   tar_target(table_files, save_tables(tables, cfg), format = "file"),
   tar_target(report_values, { diag_public_spatial_autocorrelation_files; build_report_values(ame_results, first_stage_tests, iv_models, selection_data, district_panel, diag_public_spatial_autocorrelation, cfg) }),
   tar_target(report_qmd, "paper/report.qmd", format = "file"),
+  tar_target(poster_qmd, "posters/2026_predoc_conference/poster.qmd", format = "file"),
   tar_target(district_matching_qmd, "docs/district-matching.qmd", format = "file"),
   tar_target(long_paths_qmd, "docs/long-paths-and-8-3-filenames.qmd", format = "file"),
 
   tar_target(district_matching_note, render_public_html(district_matching_qmd, dependencies = list(report_values)), format = "file"),
   tar_target(long_paths_note, render_public_html(long_paths_qmd), format = "file"),
-  tar_target(report, render_report_pdf(report_qmd, report_values, figure_files, table_files), format = "file")
+  tar_target(report, render_report_pdf(report_qmd, report_values, figure_files, table_files), format = "file"),
+  tar_target(poster, render_poster_pdf(poster_qmd, figure_files), format = "file")
 )
 
 extended_diagnostic_targets <- list(

@@ -367,3 +367,17 @@ test_that("target issue printer selects columns without data-frame drop warnings
   expect_match(paste(output, collapse = "\n"), "example failure", fixed = TRUE)
   expect_false(grepl("ignored", paste(output, collapse = "\n"), fixed = TRUE))
 })
+
+test_that("conference poster is a first-class final output", {
+  targets <- repo_text("_targets.R")
+  renderer <- repo_text("R", "output", "render_public_artifacts.R")
+  contract <- repo_text("scripts", "public_output_contract.R")
+  poster <- repo_text("posters", "2026_predoc_conference", "poster.qmd")
+
+  expect_match(targets, "tar_target(poster, render_poster_pdf", fixed = TRUE)
+  expect_match(renderer, "render_poster_pdf", fixed = TRUE)
+  expect_match(contract, "posters/2026_predoc_conference/poster.pdf", fixed = TRUE)
+  expect_match(poster, "poster_emie_expected_values.pdf", fixed = TRUE)
+  expect_match(poster, "map_emi_exposure.pdf", fixed = TRUE)
+  expect_match(poster, "map_linguistic_distance.pdf", fixed = TRUE)
+})

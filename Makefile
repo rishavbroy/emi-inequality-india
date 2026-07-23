@@ -212,6 +212,7 @@ clean-renders-core:
 	rm -f outputs/diagnostics/*.csv
 	mkdir -p outputs/diagnostics/build outputs/diagnostics/public
 	rm -f paper/report.pdf paper/report.html paper/report.tex paper/appendix.pdf paper/appendix.html paper/appendix.tex
+	rm -f posters/2026_predoc_conference/poster.pdf posters/2026_predoc_conference/poster.typ
 	rm -f docs/district-matching.html docs/district-matching.pdf docs/district-matching.tex
 	rm -f docs/long-paths-and-8-3-filenames.html docs/long-paths-and-8-3-filenames.pdf docs/long-paths-and-8-3-filenames.tex
 	rm -f .public-final-ok .pipeline-final-ok .pipeline-draft-ok
