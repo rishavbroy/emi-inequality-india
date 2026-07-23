@@ -59,7 +59,7 @@ Do not add columns unless they support a real decision, invariant, or citation. 
 
 ### Primary official anchors
 
-**Census 2001 C-16 Mother Tongue.** The 35 state/UT workbooks under `data/raw/census_2001_mother_tongue/` define the linguistic-composition input to the IV. The IV must be constructed directly on the final 2001 geography.
+**Census 2001 C-16 Mother Tongue.** The 35 state/UT workbooks under `data/raw/census_2001_mother_tongue/` define the linguistic-composition input to the IV. The IV must be constructed directly on the final 2001 geography. The 2001 registry uses the project’s Census-2001 state-code table rather than current LGD state names: historical codes 25 and 26 identify Daman & Diu and Dadra & Nagar Haveli separately, while current LGD represents their later merged union territory.
 
 **Census 2001 and 2011 locality data through SHRUG.** Population Census keys link `shrid2` to village/town, subdistrict, district, and state identifiers in 2001 and 2011. PCA files provide population and household denominators; Village and Town Directories provide area, facilities, and administrative attributes. These are the principal inputs for a locality-based 2001-2011 transition matrix.
 
