@@ -359,6 +359,25 @@ Evidence requests now include accepted current districts that still lack an
 accepted parent edge. Completing source identity therefore no longer hides the
 remaining administrative-lineage work.
 
+## Shared-support model comparison
+
+The allocation-weighted panel contains 525 unique Census-2001 districts,
+compared with 481 unique inherited production districts. The two panels share
+428 units; 53 are production-only and 97 are lineage-v2-only. Full-sample
+coefficient differences therefore remain descriptive.
+
+Extended diagnostics now construct both model samples on the same unique
+Census-2001 support. Units duplicated in either panel, including the inherited
+`pc2001__09__17` collision, are excluded rather than arbitrarily selected.
+The shared-support coefficient and first-stage outputs are the interpretable
+comparison of measure construction and mapping choices. They do not by
+themselves authorize production migration, because the non-overlapping units
+still require review.
+
+Coverage diagnostics count unique NSS source identities separately from
+crosswalk rows. This prevents one-to-many population allocations from producing
+coverage shares above 100 percent.
+
 ## Connected population-allocation panel
 
 Accepted Census-2011 allocation weights are now joined back to the accepted NSS
