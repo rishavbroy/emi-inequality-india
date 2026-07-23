@@ -553,6 +553,16 @@ deterministic_transition_2011_to_2001_v2 <- function(transition) {
     "state_code_2001", "district_code_2001",
     "population_share_to_2001", "shrid_coverage", "mapping_class"
   )
+  if (!nrow(transition)) {
+    return(as.data.frame(
+      setNames(
+        replicate(length(required), character(), simplify = FALSE),
+        required
+      ),
+      stringsAsFactors = FALSE
+    ))
+  }
+
   missing <- setdiff(required, names(transition))
   if (length(missing)) {
     stop(
