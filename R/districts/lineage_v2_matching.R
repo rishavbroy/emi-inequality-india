@@ -268,10 +268,14 @@ score_match_candidates_v2 <- function(source_roster, reference_units, excluded_s
 
   ranked <- safe_bind_rows(lapply(split(seq_len(nrow(pairs)), pairs$source_row_id), function(i) {
     x <- pairs[i, , drop = FALSE]
-    x <- x[order(-x$score, -x$jw, x$unit_id), , drop = FALSE]
-    x$rank <- seq_len(nrow(x))
-    second <- if (nrow(x) >= 2L) x$score[[2]] else -Inf
+    preference <- vintage_preference_v2(x$wave[[1]])
+    vintage_rank <- match(x$reference_vintage, preference, nomatch = length(preference) + 1L)
+    x <- x[order(-x$score, -x$jw, vintage_rank, x$unit_id), , drop = FALSE]
+    x$rank <- match(x$district_std_candidate, unique(x$district_std_candidate))
+    distinct_scores <- x$score[!duplicated(x$district_std_candidate)]
+    second <- if (length(distinct_scores) >= 2L) distinct_scores[[2]] else -Inf
     x$margin <- ifelse(x$rank == 1L, x$score - second, NA_real_)
+    x$preferred_vintage <- !duplicated(x$district_std_candidate)
     x
   }))
 
@@ -286,7 +290,8 @@ score_match_candidates_v2 <- function(source_roster, reference_units, excluded_s
   ranked$reciprocal_nearest <- ranked$rank == 1L &
     unname(best_by_candidate[ranked$unit_id]) == ranked$source_row_id
   threshold <- district_match_candidate_thresholds()
-  ranked$high_precision_candidate <- ranked$rank == 1L & ranked$reciprocal_nearest &
+  ranked$high_precision_candidate <- ranked$rank == 1L & ranked$preferred_vintage &
+    ranked$reciprocal_nearest &
     directional_tokens_compatible(ranked$district_std_source, ranked$district_std_candidate) &
     ranked$jw >= threshold[["jw"]] & ranked$dl >= threshold[["dl"]] &
     ranked$trigram >= threshold[["trigram"]] & ranked$margin >= threshold[["margin"]]
@@ -326,7 +331,9 @@ build_source_adjudication_queue_v2 <- function(source_roster, candidates, adjudi
   candidate_groups <- split(seq_len(nrow(candidates)), candidates$source_row_id)
   candidate_summary <- safe_bind_rows(lapply(names(candidate_groups), function(source_row_id) {
     x <- candidates[candidate_groups[[source_row_id]], , drop = FALSE]
-    x <- x[order(x$rank, x$candidate_unit), , drop = FALSE]
+    preference <- vintage_preference_v2(x$wave[[1]])
+    vintage_rank <- match(x$reference_vintage, preference, nomatch = length(preference) + 1L)
+    x <- x[order(x$rank, vintage_rank, x$candidate_unit), , drop = FALSE]
     top <- x[1, , drop = FALSE]
     data.frame(
       source_row_id = source_row_id,

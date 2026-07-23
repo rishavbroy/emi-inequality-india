@@ -285,6 +285,69 @@ test_that("blank source adjudications remain empty and typed", {
 })
 
 
+test_that("fuzzy ranking compares distinct names and prefers the survey-relevant vintage", {
+  skip_if_not_installed("stringdist")
+  roster <- data.frame(
+    source_row_id = "source",
+    wave = "nss_2007_08",
+    source_code = "1",
+    raw_state = "State",
+    raw_district = "Anantpur",
+    state_std = "state",
+    district_std = "anantpur",
+    stringsAsFactors = FALSE
+  )
+  references <- data.frame(
+    unit_id = c("lgd__1", "pc2011__1", "pc2001__1", "pc2001__2"),
+    reference_vintage = c("current_lgd", "2011", "2001", "2001"),
+    state_std = "state",
+    district_std = c("anantapur", "anantapur", "anantapur", "another"),
+    source_id = c("lgd", "pc2011", "pc2001", "pc2001"),
+    stringsAsFactors = FALSE
+  )
+
+  out <- score_match_candidates_v2(roster, references)
+  same_name <- out[out$candidate_name == "anantapur", , drop = FALSE]
+
+  expect_true(all(same_name$rank == 1L))
+  expect_equal(unique(same_name$margin), same_name$score[[1]] - out$score[out$rank == 2L][[1]])
+  expect_equal(
+    same_name$candidate_unit[same_name$high_precision_candidate],
+    "pc2001__1"
+  )
+})
+
+test_that("adjudication recommendations use wave-specific vintage preferences", {
+  roster <- data.frame(
+    source_row_id = c("early", "late"),
+    wave = c("nss_2007_08", "nss_2017_18"),
+    source_code = c("1", "2"),
+    raw_state = "State",
+    raw_district = "District",
+    state_std = "state",
+    district_std = "district",
+    stringsAsFactors = FALSE
+  )
+  candidates <- data.frame(
+    source_row_id = rep(c("early", "late"), each = 3),
+    wave = rep(c("nss_2007_08", "nss_2017_18"), each = 3),
+    candidate_unit = rep(c("lgd", "pc2011", "pc2001"), 2),
+    candidate_name = "district",
+    reference_vintage = rep(c("current_lgd", "2011", "2001"), 2),
+    candidate_method = "exact_normalized_name",
+    rank = 1L,
+    score = 1,
+    high_precision_candidate = FALSE,
+    stringsAsFactors = FALSE
+  )
+
+  out <- build_source_adjudication_queue_v2(roster, candidates)
+  recommended <- stats::setNames(out$recommended_unit, out$source_row_id)
+
+  expect_equal(recommended[["early"]], "pc2001")
+  expect_equal(recommended[["late"]], "pc2011")
+})
+
 test_that("source adjudication queue prioritizes deterministic review work", {
   roster <- data.frame(
     source_row_id = c("single", "multiple", "fuzzy", "none"),
