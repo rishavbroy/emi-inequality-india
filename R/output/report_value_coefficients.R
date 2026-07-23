@@ -1,7 +1,7 @@
 # Model coefficient and first-stage helpers for public report values.
 
-report_coefficient_frame <- function(model) {
-  coefs <- clustered_model_coefficients(model)
+report_coefficient_frame <- function(model, data = NULL) {
+  coefs <- clustered_model_coefficients(model, data)
   if (!nrow(coefs)) coefs <- plain_model_coefficients(model)
   if (!nrow(coefs)) return(data.frame())
 
@@ -19,9 +19,12 @@ report_coefficient_frame <- function(model) {
   out
 }
 
-coefficient_value <- function(model, terms, column = c("Estimate", "estimate"), digits = NULL) {
+coefficient_value <- function(
+  model, terms, column = c("Estimate", "estimate"), digits = NULL,
+  data = NULL
+) {
   out <- tryCatch({
-    coefs <- report_coefficient_frame(model)
+    coefs <- report_coefficient_frame(model, data)
     term <- first_matching_term(terms, rownames(coefs))
     if (is.na(term)) return(NA_real_)
     hit <- intersect(column, names(coefs))
@@ -32,9 +35,9 @@ coefficient_value <- function(model, terms, column = c("Estimate", "estimate"), 
   out
 }
 
-p_value <- function(model, terms, digits = NULL) {
+p_value <- function(model, terms, digits = NULL, data = NULL) {
   out <- tryCatch({
-    coefs <- report_coefficient_frame(model)
+    coefs <- report_coefficient_frame(model, data)
     term <- first_matching_term(terms, rownames(coefs))
     if (is.na(term)) return(NA_real_)
     hit <- intersect(c("Pr(>|t|)", "Pr(>|z|)", "p.value", "p_value"), names(coefs))

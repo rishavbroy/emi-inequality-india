@@ -253,3 +253,65 @@ test_that("IV summaries expose unavailable inference instead of comparability", 
   expect_false(out$inference_available)
   expect_false(out$comparable)
 })
+
+test_that("public report coefficients recover clusters from panel data", {
+  skip_if_not_installed("ivreg")
+  skip_if_not_installed("sandwich")
+  set.seed(45)
+  n <- 72
+  dat <- data.frame(
+    y = rnorm(n),
+    x = rnorm(n),
+    w = rnorm(n),
+    z = rnorm(n),
+    state_20 = rep(LETTERS[1:8], each = 9),
+    stringsAsFactors = FALSE
+  )
+  dat$x <- 0.8 * dat$z + 0.2 * dat$w + rnorm(n)
+  dat$y <- 1.1 * dat$x + 0.3 * dat$w + rnorm(n)
+
+  fit <- estimate_2sls(
+    dat,
+    list(consumption = y ~ x + w | z + w),
+    list()
+  )$consumption
+  attr(fit, "cluster_state") <- NULL
+
+  expect_true(is.finite(p_value(fit, "x", data = dat)))
+  expect_true(is.finite(
+    coefficient_value(fit, "x", data = dat)
+  ))
+})
+
+test_that("public second-stage tables recover clusters from panel data", {
+  skip_if_not_installed("ivreg")
+  skip_if_not_installed("sandwich")
+  set.seed(46)
+  n <- 72
+  dat <- data.frame(
+    y = rnorm(n),
+    x = rnorm(n),
+    w = rnorm(n),
+    z = rnorm(n),
+    state_20 = rep(LETTERS[1:8], each = 9),
+    stringsAsFactors = FALSE
+  )
+  dat$x <- 0.75 * dat$z + 0.25 * dat$w + rnorm(n)
+  dat$y <- dat$x + 0.4 * dat$w + rnorm(n)
+
+  models <- estimate_2sls(
+    dat,
+    list(consumption = y ~ x + w | z + w),
+    list()
+  )
+  attr(models$consumption, "cluster_state") <- NULL
+
+  tidy <- tidy_iv_models(models, dat)
+  table <- make_second_stage_table(models, dat)
+  model_info <- second_stage_table_model(models, dat)
+
+  expect_true(all(is.finite(tidy$std.error)))
+  expect_true(all(is.finite(tidy$p.value)))
+  expect_true(nrow(table) > 0L)
+  expect_false(is.null(model_info$vcov))
+})

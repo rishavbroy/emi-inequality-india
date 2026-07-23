@@ -357,7 +357,7 @@ clustered_model_vcov <- function(model, data = NULL) {
 #'
 #' @return A named list of data frames consumed by save_tables().
 make_tables <- function(selection_data, ame_results, district_panel, iv_models, first_stage_tests, cfg, selection_model = NULL) {
-  cons_iv <- tidy_iv_models(iv_models)
+  cons_iv <- tidy_iv_models(iv_models, district_panel)
   cons_iv_required <- filter_table_model(cons_iv, c("consumption", "baseline"))
   table_failures <- c(
     table_status_failures(ame_results, cfg, "average marginal effects"),
@@ -366,14 +366,14 @@ make_tables <- function(selection_data, ame_results, district_panel, iv_models, 
   )
 
   fs_cons <- make_first_stage_table(first_stage_tests, cfg)
-  cons_iv_table <- make_second_stage_table(iv_models)
+  cons_iv_table <- make_second_stage_table(iv_models, district_panel)
   fs_model <- first_stage_table_model(iv_models, district_panel)
   if (!is.null(fs_model$model)) {
     attr(fs_cons, "table_model") <- fs_model$model
     attr(fs_cons, "table_vcov") <- fs_model$vcov
     attr(fs_cons, "table_add_rows") <- fs_model$add_rows
   }
-  cons_model <- second_stage_table_model(iv_models)
+  cons_model <- second_stage_table_model(iv_models, district_panel)
   if (!is.null(cons_model$model)) {
     attr(cons_iv_table, "table_model") <- cons_model$model
     attr(cons_iv_table, "table_vcov") <- cons_model$vcov
@@ -605,7 +605,7 @@ first_stage_table_model <- function(iv_models, district_panel) {
   list(model = fit, vcov = vc, add_rows = add_rows)
 }
 
-second_stage_table_model <- function(iv_models) {
+second_stage_table_model <- function(iv_models, data = NULL) {
   model <- NULL
   if (is.list(iv_models) && !inherits(iv_models, c("lm", "ivreg"))) {
     hit <- intersect(c("consumption", "baseline"), names(iv_models))
@@ -614,13 +614,13 @@ second_stage_table_model <- function(iv_models) {
     model <- iv_models
   }
   if (is.null(model) || is_model_status_payload(model)) return(list(model = NULL, vcov = NULL))
-  vc_fun <- clustered_model_vcov(model)
+  vc_fun <- clustered_model_vcov(model, data)
   vc <- if (is.null(vc_fun)) NULL else tryCatch(vc_fun(model), error = function(e) NULL)
   list(model = model, vcov = vc)
 }
 
-make_second_stage_table <- function(iv_models) {
-  out <- tidy_iv_models(iv_models)
+make_second_stage_table <- function(iv_models, data = NULL) {
+  out <- tidy_iv_models(iv_models, data)
   out <- filter_table_model(out, c("consumption", "baseline"))
   if (!nrow(out)) return(data.frame(Term = character(), `Consumption Growth` = character(), check.names = FALSE))
   model <- NULL

@@ -70,13 +70,22 @@ build_report_values <- function(ame_results, first_stage_tests, iv_models, selec
     iv_pct_fem_head = "pct_fem_head"
   )
   for (name in names(iv_terms)) {
-    values[[paste0(name, "_estimate")]] <- value_or_status(coefficient_value(model, iv_terms[[name]], digits = 3), unavailable_iv)
-    values[[paste0(name, "_p")]] <- value_or_status(p_value(model, iv_terms[[name]], digits = 3), unavailable_iv)
+    values[[paste0(name, "_estimate")]] <- value_or_status(coefficient_value(
+      model, iv_terms[[name]], digits = 3, data = district_panel
+    ), unavailable_iv)
+    values[[paste0(name, "_p")]] <- value_or_status(p_value(model, iv_terms[[name]], digits = 3, data = district_panel), unavailable_iv)
   }
 
-  values$iv_emie_estimate_report <- value_or_status(coefficient_value(model, iv_terms$iv_emie, digits = 2), unavailable_iv)
-  values$iv_pct_urban_estimate_report <- value_or_status(coefficient_value(model, iv_terms$iv_pct_urban, digits = 2), unavailable_iv)
-  values$iv_pct_head_secondary_plus_estimate_report <- value_or_status(coefficient_value(model, iv_terms$iv_pct_head_secondary_plus, digits = 2), unavailable_iv)
+  values$iv_emie_estimate_report <- value_or_status(coefficient_value(
+    model, iv_terms$iv_emie, digits = 2, data = district_panel
+  ), unavailable_iv)
+  values$iv_pct_urban_estimate_report <- value_or_status(coefficient_value(
+    model, iv_terms$iv_pct_urban, digits = 2, data = district_panel
+  ), unavailable_iv)
+  values$iv_pct_head_secondary_plus_estimate_report <- value_or_status(coefficient_value(
+    model, iv_terms$iv_pct_head_secondary_plus, digits = 2,
+    data = district_panel
+  ), unavailable_iv)
 
   values
 }
