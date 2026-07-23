@@ -281,6 +281,20 @@ Code-only and name-only agreements remain under review. The rule is limited to
 the 2007-08 wave; it is not applied to 2017-18 because later administrative
 changes require explicit lineage evidence.
 
+## NSS-64 code-authoritative identities
+
+A third source-identity tranche accepts 30 additional 2007-08 rows whose
+official NSS-64 district code maps uniquely to a known Census-2001 unit even
+though the source and registry district names differ. The code is treated as
+the identifier and the name as descriptive metadata. The observed differences
+are spelling variants, abbreviations, directional short forms, or
+contemporaneous district names.
+
+The resolver first validates the five-character NSS-64 code shape and then
+requires the resulting `pc2001__SS__DD` identifier to exist in the
+Census-2001 administrative registry. Syntactically valid but unknown codes,
+ambiguous mappings, and all later-wave rows remain under review.
+
 ## First reviewed decisions
 
 The first accepted tranche is deliberately narrow:
