@@ -1220,3 +1220,58 @@ test_that("tracked Telangana parentage records only single-parent ancestry", {
     "lgd_district__698"
   )))
 })
+
+test_that("tracked Chhattisgarh and Punjab events complete single-parent ancestry", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
+  events <- read_admin_events_v2(
+    read.csv(
+      file.path(
+        root, "data", "metadata", "district_admin_events_v2.csv"
+      ),
+      stringsAsFactors = FALSE
+    )
+  )
+  rows <- events[
+    events$source_id %in% c(
+      "chhattisgarh_2012_parent_district_review",
+      "punjab_2011_parent_district_review"
+    ),
+    ,
+    drop = FALSE
+  ]
+
+  expect_equal(nrow(rows), 11L)
+  expect_true(all(rows$status == "accepted"))
+  expect_true(all(is.na(rows$share)))
+  expect_true(all(grepl("^pc2011__", rows$from_unit)))
+  expect_true(all(grepl("^lgd_district__", rows$to_unit)))
+
+  expect_setequal(
+    rows$to_unit[rows$from_unit == "pc2011__22__401"],
+    c("lgd_district__648", "lgd_district__649")
+  )
+  expect_setequal(
+    rows$to_unit[rows$from_unit == "pc2011__22__410"],
+    c("lgd_district__644", "lgd_district__645")
+  )
+  expect_setequal(
+    rows$to_unit[rows$from_unit == "pc2011__22__409"],
+    c("lgd_district__646", "lgd_district__650")
+  )
+  expect_setequal(
+    paste(rows$from_unit, rows$to_unit, sep = "->"),
+    c(
+      "pc2011__22__401->lgd_district__648",
+      "pc2011__22__401->lgd_district__649",
+      "pc2011__22__410->lgd_district__644",
+      "pc2011__22__410->lgd_district__645",
+      "pc2011__22__409->lgd_district__650",
+      "pc2011__22__409->lgd_district__646",
+      "pc2011__22__406->lgd_district__647",
+      "pc2011__22__414->lgd_district__643",
+      "pc2011__22__416->lgd_district__642",
+      "pc2011__03__035->lgd_district__662",
+      "pc2011__03__043->lgd_district__651"
+    )
+  )
+})
