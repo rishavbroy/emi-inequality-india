@@ -576,7 +576,7 @@ test_that("reviewed geometry and source decisions satisfy evidence contracts", {
 
   expect_equal(nrow(carrybacks), 11L)
   expect_true(all(carrybacks$status == "accepted"))
-  expect_equal(nrow(adjudications), 682L)
+  expect_equal(nrow(adjudications), 686L)
   expect_true(all(adjudications$status == "accepted"))
   expect_setequal(
     unique(adjudications$method),
@@ -584,7 +584,9 @@ test_that("reviewed geometry and source decisions satisfy evidence contracts", {
       "official_unchanged_boundary_carryback",
       "official_nss64_census2001_code_name_identity",
       "official_nss64_census2001_code_identity",
-      "official_nss75_exact_name_deterministic_2011_to_2001"
+      "official_nss75_exact_name_deterministic_2011_to_2001",
+      "official_andaman_2006_reorganization",
+      "official_andaman_2001_2011_lineage"
     )
   )
 
@@ -922,4 +924,50 @@ test_that("tracked NSS-75 identities use exact names and deterministic bridges",
   expect_true(all(rows$source_id == "nss75_shrug_exact_deterministic"))
   expect_equal(anyDuplicated(rows$source_row_id), 0L)
   expect_true(all(grepl("^pc2011__", rows$unit_id)))
+})
+
+test_that("tracked Andaman decisions use reviewed official lineage", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
+  metadata_path <- function(name) {
+    file.path(root, "data", "metadata", name)
+  }
+  adjudications <- read_adjudicated_source_matches_v2(
+    read.csv(
+      metadata_path("district_adjudications_v2.csv"),
+      stringsAsFactors = FALSE
+    )
+  )
+  events <- read_admin_events_v2(
+    read.csv(
+      metadata_path("district_admin_events_v2.csv"),
+      stringsAsFactors = FALSE
+    )
+  )
+  rows <- adjudications[
+    adjudications$source_id %in% "census2011_andaman_reorganization",
+    ,
+    drop = FALSE
+  ]
+  edges <- events[
+    events$source_id %in% "census2011_andaman_reorganization",
+    ,
+    drop = FALSE
+  ]
+
+  expect_equal(nrow(rows), 4L)
+  expect_setequal(
+    rows$unit_id,
+    c("pc2011__35__638", "pc2011__35__639", "pc2011__35__640")
+  )
+  expect_true(all(rows$status == "accepted"))
+  expect_equal(nrow(edges), 3L)
+  expect_true(all(edges$status == "accepted"))
+  expect_setequal(
+    paste(edges$from_unit, edges$to_unit, sep = "->"),
+    c(
+      "pc2001__35__02->pc2011__35__638",
+      "pc2001__35__01->pc2011__35__639",
+      "pc2001__35__01->pc2011__35__640"
+    )
+  )
 })

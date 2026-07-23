@@ -483,3 +483,46 @@ test_that("empty transition inputs yield no deterministic bridges", {
     )
   )
 })
+
+test_that("reviewed bifurcations resolve descendants to one parent", {
+  admin_2001 <- data.frame(
+    unit_id = c("pc2001__35__01", "pc2001__35__02"),
+    stringsAsFactors = FALSE
+  )
+  admin_2011 <- data.frame(
+    unit_id = c(
+      "pc2011__35__638",
+      "pc2011__35__639",
+      "pc2011__35__640"
+    ),
+    stringsAsFactors = FALSE
+  )
+  events <- data.frame(
+    from_unit = c(
+      "pc2001__35__02",
+      "pc2001__35__01",
+      "pc2001__35__01"
+    ),
+    to_unit = c(
+      "pc2011__35__638",
+      "pc2011__35__639",
+      "pc2011__35__640"
+    ),
+    status = rep("accepted", 3),
+    stringsAsFactors = FALSE
+  )
+
+  out <- resolve_lineage_terminals_v2(
+    admin_2011$unit_id,
+    events,
+    admin_2001,
+    admin_2011 = data.frame(unit_id = character())
+  )
+
+  expect_identical(
+    out$terminal_unit,
+    c("pc2001__35__02", "pc2001__35__01", "pc2001__35__01")
+  )
+  expect_true(all(out$terminal_vintage == "2001"))
+  expect_true(all(out$resolution_status == "resolved"))
+})
