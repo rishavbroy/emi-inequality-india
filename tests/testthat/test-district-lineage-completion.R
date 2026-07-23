@@ -613,3 +613,72 @@ test_that("panel membership comparison separates additions and removals", {
     )
   )
 })
+
+test_that("downstream coverage exposes incomplete 2017 lineage", {
+  crosswalk <- data.frame(
+    wave = c("nss_2007_08", "nss_2007_08", "nss_2017_18"),
+    target_unit_2001 = c(
+      "pc2001__01__01", "pc2001__01__02", "pc2001__01__01"
+    ),
+    stringsAsFactors = FALSE
+  )
+  eligibility <- data.frame(
+    wave = c(
+      "nss_2007_08", "nss_2007_08",
+      "nss_2017_18", "nss_2017_18"
+    ),
+    eligible_primary = c(TRUE, TRUE, TRUE, FALSE),
+    stringsAsFactors = FALSE
+  )
+  production <- data.frame(
+    district_panel_id = c("2001__01__01", "2001__01__02"),
+    stringsAsFactors = FALSE
+  )
+  candidate <- data.frame(
+    target_unit_2001 = "pc2001__01__01",
+    stringsAsFactors = FALSE
+  )
+
+  coverage <- summarize_lineage_v2_downstream_coverage(
+    crosswalk, eligibility, production, candidate
+  )
+  row_17 <- coverage[coverage$wave == "nss_2017_18", , drop = FALSE]
+  panel <- coverage[coverage$scope == "panel", , drop = FALSE]
+
+  expect_equal(row_17$accepted_identities, 2L)
+  expect_equal(row_17$preferred_mappings, 1L)
+  expect_equal(row_17$excluded_identities, 1L)
+  expect_equal(panel$preferred_targets, 1L)
+  expect_equal(panel$preferred_identity_share, 0.5)
+})
+
+test_that("downstream gates block unequal support and duplicate production units", {
+  coverage <- data.frame(
+    scope = "panel",
+    wave = "two_wave_overlap",
+    preferred_identity_share = 0.5,
+    stringsAsFactors = FALSE
+  )
+  production <- data.frame(
+    district_panel_id = c("2001__09__17", "2001__09__17"),
+    stringsAsFactors = FALSE
+  )
+  candidate <- data.frame(
+    target_unit_2001 = "pc2001__09__17",
+    stringsAsFactors = FALSE
+  )
+
+  gates <- lineage_v2_downstream_review_gates(
+    coverage, production, candidate
+  )
+
+  expect_false(gates$passed[
+    gates$gate == "production_panel_unique_by_2001_unit"
+  ])
+  expect_false(gates$passed[
+    gates$gate == "lineage_v2_panel_matches_production_coverage"
+  ])
+  expect_false(gates$passed[
+    gates$gate == "downstream_model_comparison_interpretable"
+  ])
+})

@@ -193,7 +193,9 @@ extended_diagnostic_targets <- list(
       iv_models,
       iv_models_v2,
       first_stage_tests,
-      first_stage_tests_v2
+      first_stage_tests_v2,
+      district_lineage_v2$primary_source_crosswalk,
+      district_lineage_v2$primary_mapping_eligibility
     )
   ),
   tar_target(
