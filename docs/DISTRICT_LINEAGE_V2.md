@@ -222,6 +222,25 @@ dissolve uses the active `sf` geometry column rather than assuming it is named
 file is treated as a file dependency; routine diagnostics do not repeatedly
 read or union the 380 MB source archive.
 
+## First reviewed decisions
+
+The first accepted tranche is deliberately narrow:
+
+- the nine NCT Delhi districts in the Census 2001 frame;
+- Mumbai and Mumbai Suburban in the Census 2001 frame.
+
+The Census 2011 NCT Delhi Administrative Atlas explicitly reports no change in
+the number of districts or tahsils during 2001–2011. The corresponding
+Maharashtra Administrative Atlas preserves Mumbai and Mumbai Suburban across
+the two census frames. Their 2011 polygons are therefore carried back to the
+same named Census 2001 units without interpolation. The decision is recorded in
+`district_geometry_carrybacks_v2.csv`, and only the corresponding exact-name
+NSS source identities are accepted in `district_adjudications_v2.csv`.
+
+This is not a general rule that repeated names imply unchanged geography.
+Other exact-name rows remain unresolved until their own boundary history or
+code-based continuity is reviewed.
+
 ## Immediate work plan
 
 ### 1. Make the parallel diagnostic green
