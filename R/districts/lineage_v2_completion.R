@@ -254,6 +254,19 @@ save_lineage_geometry_2001_v2 <- function(
   c(path, qa_path)
 }
 
+make_valid_sf_v2 <- function(x) {
+  need_pkg("sf", "district geometry validity repair")
+  if (!inherits(x, "sf") || !nrow(x)) return(x)
+
+  valid <- sf::st_is_valid(x)
+  invalid <- is.na(valid) | !valid
+  if (any(invalid)) {
+    repaired <- sf::st_make_valid(x[invalid, , drop = FALSE])
+    sf::st_geometry(x)[invalid] <- sf::st_geometry(repaired)
+  }
+  x
+}
+
 dissolve_shrid_geometry_2001_v2 <- function(shrid_geometry, bridge) {
   need_pkg("sf", "Census 2001 district geometry construction")
   geometry <- safe_df(shrid_geometry)
@@ -282,6 +295,7 @@ dissolve_shrid_geometry_2001_v2 <- function(shrid_geometry, bridge) {
   if (!nrow(joined)) {
     return(joined)
   }
+  joined <- make_valid_sf_v2(joined)
   joined$unit_id <- paste0(
     "pc2001__", joined$state_code_2001, "__", joined$district_code_2001
   )
@@ -293,6 +307,17 @@ dissolve_shrid_geometry_2001_v2 <- function(shrid_geometry, bridge) {
     do_union = TRUE
   )
   out$.member <- NULL
+  out <- make_valid_sf_v2(out)
+  valid <- sf::st_is_valid(out)
+  invalid <- is.na(valid) | !valid
+  if (any(invalid)) {
+    stop(
+      "Census 2001 dissolve produced ",
+      sum(invalid),
+      " invalid geometries after repair.",
+      call. = FALSE
+    )
+  }
   out["unit_id"]
 }
 
@@ -357,11 +382,30 @@ lineage_completion_steps_v2 <- function(
       !length(incomplete_source_keys) ||
         !length(setdiff(incomplete_source_keys, accepted_allocation_keys))
     )
-  geometry_complete <- nrow(geometry_qa) > 0L &&
-    any(geometry_qa$metric == "geometry_available" & geometry_qa$value %in% TRUE) &&
-    all(geometry_qa$value[geometry_qa$metric %in% c(
-      "missing_admin_units", "unexpected_geometry_units", "invalid_geometries"
-    )] == 0)
+  geometry_value <- function(metric, default = NA_real_) {
+    value <- geometry_qa$value[geometry_qa$metric == metric]
+    if (length(value)) value[[1]] else default
+  }
+  geometry_available <- isTRUE(as.logical(geometry_value(
+    "geometry_available", FALSE
+  )))
+  geometry_complete <- geometry_available &&
+    all(vapply(
+      c("missing_admin_units", "unexpected_geometry_units", "invalid_geometries"),
+      function(metric) isTRUE(as.numeric(geometry_value(metric, Inf)) == 0),
+      logical(1)
+    ))
+  geometry_observed <- if (!geometry_available) {
+    "not constructed from local SHRID polygons"
+  } else {
+    paste0(
+      geometry_value("geometry_rows", 0), "/",
+      geometry_value("expected_admin_units", 0), " expected districts; ",
+      geometry_value("missing_admin_units", 0), " missing; ",
+      geometry_value("unexpected_geometry_units", 0), " unexpected; ",
+      geometry_value("invalid_geometries", 0), " invalid"
+    )
+  }
   migration_ready <- any(
     readiness$gate == "production_crosswalk_migration_ready" &
       readiness$passed %in% TRUE
@@ -397,7 +441,7 @@ lineage_completion_steps_v2 <- function(
       paste0(sum(fuzzy_open), " fuzzy or missing candidates open"),
       paste0(nrow(evidence), " targeted evidence requests"),
       paste0(sum(!allocation_validation$coverage_complete), " incomplete source allocations"),
-      if (geometry_complete) "complete" else "not constructed from local SHRID polygons",
+      geometry_observed,
       paste0(nrow(primary), " preferred; ", nrow(sensitivity), " total sensitivity rows"),
       paste0(nrow(comparison), " source mappings compared"),
       paste0(

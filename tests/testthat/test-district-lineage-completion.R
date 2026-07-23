@@ -331,3 +331,57 @@ test_that("geometry dissolve is independent of the sf geometry-column name", {
   expect_equal(nrow(out), 1L)
   expect_true(sf::st_is_valid(out)[[1]])
 })
+
+test_that("geometry validity repair fixes an invalid polygon", {
+  skip_if_not_installed("sf")
+
+  bowtie <- sf::st_polygon(list(rbind(
+    c(0, 0), c(1, 1), c(1, 0), c(0, 1), c(0, 0)
+  )))
+  x <- sf::st_sf(
+    unit_id = "u1",
+    geom = sf::st_sfc(bowtie),
+    sf_column_name = "geom"
+  )
+
+  expect_false(sf::st_is_valid(x)[[1]])
+  repaired <- make_valid_sf_v2(x)
+  expect_true(sf::st_is_valid(repaired)[[1]])
+})
+
+test_that("geometry completion reports constructed but incomplete QA", {
+  status <- lineage_completion_steps_v2(
+    source_roster = data.frame(source_row_id = "s1"),
+    source_matches = data.frame(source_row_id = character(), status = character()),
+    adjudication_queue = data.frame(
+      review_class = "cross_vintage_exact_candidate",
+      adjudication_status = NA_character_
+    ),
+    evidence_requests = data.frame(),
+    allocation_validation = data.frame(
+      source_key = "source",
+      coverage_complete = TRUE
+    ),
+    allocation_weights = data.frame(
+      source_unit = character(), status = character()
+    ),
+    primary_crosswalk = data.frame(),
+    sensitivity_crosswalk = data.frame(),
+    production_comparison = data.frame(comparison_status = character()),
+    geometry_qa = data.frame(
+      metric = c(
+        "geometry_available", "geometry_rows", "expected_admin_units",
+        "missing_admin_units", "unexpected_geometry_units",
+        "invalid_geometries"
+      ),
+      value = c(TRUE, 582, 593, 11, 0, 0)
+    ),
+    readiness = data.frame(
+      gate = "production_crosswalk_migration_ready", passed = FALSE
+    )
+  )
+
+  expect_false(status$complete[status$step == 5L])
+  expect_match(status$observed[status$step == 5L], "582/593")
+  expect_match(status$observed[status$step == 5L], "11 missing")
+})
