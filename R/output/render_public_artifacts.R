@@ -69,22 +69,21 @@ render_public_html <- function(qmd, dependencies = list()) {
 poster_typst_bundle_paths <- function(poster_qmd) {
   poster_dir <- dirname(poster_qmd)
   package_root <- file.path(
-    poster_dir, "_extensions", "poster", "typst", "packages",
-    "local", "typst-poster"
+    poster_dir, "_extensions", "poster", "typst", "packages", "local"
   )
-  package_dirs <- list.dirs(package_root, recursive = FALSE, full.names = TRUE)
-  if (length(package_dirs) != 1L) {
-    stop("Poster Typst bundle must contain exactly one typst-poster version.", call. = FALSE)
+  package_names <- list.dirs(package_root, recursive = FALSE, full.names = TRUE)
+  if (length(package_names) != 1L) {
+    stop("Poster extension must bundle exactly one local Typst package.", call. = FALSE)
   }
-  package_dir <- package_dirs[[1L]]
+  package_versions <- list.dirs(package_names[[1L]], recursive = FALSE, full.names = TRUE)
+  if (length(package_versions) != 1L) {
+    stop("Poster local Typst package must contain exactly one version.", call. = FALSE)
+  }
 
   list(
-    templates = c(
-      file.path(poster_dir, "typst-template.typ"),
-      file.path(poster_dir, "_extensions", "poster", "typst-template.typ")
-    ),
-    manifest = file.path(package_dir, "typst.toml"),
-    entrypoint = file.path(package_dir, "poster.typ")
+    template = file.path(poster_dir, "_extensions", "poster", "typst-template.typ"),
+    manifest = file.path(package_versions[[1L]], "typst.toml"),
+    entrypoint = file.path(package_versions[[1L]], "poster.typ")
   )
 }
 
@@ -97,41 +96,13 @@ typst_manifest_value <- function(lines, field) {
   sub(pattern, "\\1", hit)
 }
 
-
-validate_typst_delimiters <- function(path) {
-  source <- paste(readLines(path, warn = FALSE), collapse = "\n")
-  source <- gsub("//[^\n]*", "", source, perl = TRUE)
-  source <- gsub('"(?:\\\\.|[^"\\\\])*"', '""', source, perl = TRUE)
-  chars <- strsplit(source, "", fixed = TRUE)[[1]]
-  opening <- c("(" = ")", "[" = "]", "{" = "}")
-  closing <- unname(opening)
-  stack <- character()
-
-  for (char in chars) {
-    if (char %in% names(opening)) {
-      stack <- c(stack, opening[[char]])
-    } else if (char %in% closing) {
-      if (!length(stack) || !identical(char, tail(stack, 1L))) {
-        stop("Typst source has a mismatched `", char, "` delimiter: ", path, call. = FALSE)
-      }
-      stack <- head(stack, -1L)
-    }
-  }
-
-  if (length(stack)) {
-    stop("Typst source has an unclosed `", tail(stack, 1L), "` delimiter: ", path, call. = FALSE)
-  }
-  invisible(path)
-}
-
 validate_poster_typst_bundle <- function(poster_qmd) {
   paths <- poster_typst_bundle_paths(poster_qmd)
-  required <- c(paths$templates, paths$manifest, paths$entrypoint)
+  required <- unlist(paths, use.names = FALSE)
   missing <- required[!file.exists(required)]
   if (length(missing)) {
     stop("Poster Typst bundle file(s) missing: ", paste(missing, collapse = ", "), call. = FALSE)
   }
-  invisible(lapply(c(paths$templates, paths$entrypoint), validate_typst_delimiters))
 
   manifest <- readLines(paths$manifest, warn = FALSE)
   package_name <- typst_manifest_value(manifest, "name")
@@ -142,23 +113,21 @@ validate_poster_typst_bundle <- function(poster_qmd) {
   }
 
   package_reference <- paste0("@local/", package_name, ":", package_version)
-  imported_references <- vapply(paths$templates, function(path) {
-    template <- readLines(path, warn = FALSE)
-    imports <- grep('^#import\\s+"[^"]+"', template, value = TRUE)
-    if (length(imports) != 1L) {
-      stop("Poster Typst template must contain exactly one package import: ", path, call. = FALSE)
-    }
-    sub('^#import\\s+"([^"]+)".*$', '\\1', imports)
-  }, character(1))
-  if (any(imported_references != package_reference)) {
+  template <- readLines(paths$template, warn = FALSE)
+  imports <- grep('^#import\\s+"[^"]+"', template, value = TRUE)
+  if (length(imports) != 1L) {
+    stop("Poster Typst template must contain exactly one package import.", call. = FALSE)
+  }
+  imported_reference <- sub('^#import\\s+"([^"]+)".*$', '\\1', imports)
+  if (!identical(imported_reference, package_reference)) {
     stop(
-      "Poster Typst templates must import the gathered package as `",
+      "Poster Typst template must import the bundled package as `",
       package_reference, "`.",
       call. = FALSE
     )
   }
 
-  invisible(paths)
+  invisible(c(paths, package_reference = package_reference))
 }
 
 #' Render the conference poster PDF
