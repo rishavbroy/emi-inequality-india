@@ -314,3 +314,11 @@ test_that("lineage diagnostic writer preserves typed zero-row schemas", {
   expect_equal(nrow(matches), 0L)
   expect_equal(nrow(missing), 0L)
 })
+
+
+test_that("empty duplicate diagnostics preserve their schema", {
+  out <- duplicate_key_diagnostics_v2(data.frame(id = "a"), "id", "fixture")
+
+  expect_equal(nrow(out), 0L)
+  expect_named(out, names(empty_duplicate_key_diagnostics_v2()))
+})
