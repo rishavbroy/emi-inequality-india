@@ -418,6 +418,25 @@ test_that("poster Typst format supplies both standard template partials", {
   expect_true(all(file.exists(paths)))
 })
 
+test_that("poster PDF must contain its substantive sections", {
+  renderer <- poster_renderer_test_env()
+  rendered <- paste(
+    "Why this matters",
+    "Research design",
+    "Main result",
+    "Why district histories matter",
+    "Contribution",
+    sep = "\n"
+  )
+
+  expect_no_error(renderer$validate_poster_pdf_text(rendered))
+  expect_error(
+    renderer$validate_poster_pdf_text("body"),
+    "missing expected rendered section",
+    fixed = TRUE
+  )
+})
+
 test_that("poster PDF page count is parsed from Poppler metadata", {
   renderer <- poster_renderer_test_env()
 
