@@ -1,7 +1,0 @@
-[package]
-name = "typst-poster"
-version = "0.1.1"
-entrypoint = "poster.typ"
-authors = ["Parth Parikh"]
-license = "MIT"
-description = "Academic poster template for Typst"
