@@ -181,6 +181,20 @@ empty_source_candidates_v2 <- function() {
   )
 }
 
+empty_source_adjudication_queue_v2 <- function() {
+  data.frame(
+    source_row_id = character(), wave = character(), source_code = character(),
+    raw_state = character(), raw_district = character(), state_std = character(),
+    district_std = character(), adjudication_status = character(),
+    candidate_count = integer(), exact_candidate_count = integer(),
+    recommended_unit = character(), recommended_name = character(),
+    recommended_vintage = character(), recommended_method = character(),
+    recommended_score = numeric(), high_precision_candidate = logical(),
+    review_class = character(), review_priority = integer(),
+    stringsAsFactors = FALSE
+  )
+}
+
 vintage_preference_v2 <- function(wave) {
   if (identical(wave, "nss_2007_08")) c("2001", "2011", "current_lgd") else c("2011", "current_lgd", "2001")
 }
@@ -301,6 +315,73 @@ score_match_candidates_v2 <- function(source_roster, reference_units, excluded_s
     high_precision_candidate = ranked$high_precision_candidate,
     stringsAsFactors = FALSE
   )
+}
+
+build_source_adjudication_queue_v2 <- function(source_roster, candidates, adjudications = data.frame()) {
+  roster <- safe_df(source_roster)
+  candidates <- safe_df(candidates)
+  adjudications <- read_adjudicated_source_matches_v2(adjudications)
+  if (!nrow(roster)) return(empty_source_adjudication_queue_v2())
+
+  candidate_groups <- split(seq_len(nrow(candidates)), candidates$source_row_id)
+  candidate_summary <- safe_bind_rows(lapply(names(candidate_groups), function(source_row_id) {
+    x <- candidates[candidate_groups[[source_row_id]], , drop = FALSE]
+    x <- x[order(x$rank, x$candidate_unit), , drop = FALSE]
+    top <- x[1, , drop = FALSE]
+    data.frame(
+      source_row_id = source_row_id,
+      candidate_count = nrow(x),
+      exact_candidate_count = sum(x$candidate_method == "exact_normalized_name"),
+      recommended_unit = top$candidate_unit,
+      recommended_name = top$candidate_name,
+      recommended_vintage = top$reference_vintage,
+      recommended_method = top$candidate_method,
+      recommended_score = top$score,
+      high_precision_candidate = any(x$high_precision_candidate %in% TRUE),
+      stringsAsFactors = FALSE
+    )
+  }))
+
+  out <- merge(roster, candidate_summary, by = "source_row_id", all.x = TRUE, sort = FALSE)
+  status <- adjudications[c("source_row_id", "status")]
+  names(status)[[2]] <- "adjudication_status"
+  out <- merge(out, status, by = "source_row_id", all.x = TRUE, sort = FALSE)
+  out$candidate_count[is.na(out$candidate_count)] <- 0L
+  out$exact_candidate_count[is.na(out$exact_candidate_count)] <- 0L
+  out$high_precision_candidate[is.na(out$high_precision_candidate)] <- FALSE
+
+  adjudicated <- !is.na(out$adjudication_status) & nzchar(out$adjudication_status)
+  out$review_class <- ifelse(
+    adjudicated,
+    paste0("adjudicated_", out$adjudication_status),
+    ifelse(
+      out$exact_candidate_count == 1L,
+      "single_exact_candidate",
+      ifelse(
+        out$exact_candidate_count > 1L,
+        "multiple_exact_candidates",
+        ifelse(
+          out$high_precision_candidate,
+          "high_precision_fuzzy_candidate",
+          ifelse(out$candidate_count > 0L, "fuzzy_candidates", "no_candidate")
+        )
+      )
+    )
+  )
+  priority <- c(
+    adjudicated_accepted = 0L, adjudicated_excluded = 0L, adjudicated_needs_review = 0L,
+    single_exact_candidate = 1L, multiple_exact_candidates = 2L,
+    high_precision_fuzzy_candidate = 3L, fuzzy_candidates = 4L, no_candidate = 5L
+  )
+  out$review_priority <- unname(priority[out$review_class])
+  out <- out[order(out$review_priority, out$wave, out$state_std, out$district_std), , drop = FALSE]
+  out[c(
+    "source_row_id", "wave", "source_code", "raw_state", "raw_district",
+    "state_std", "district_std", "adjudication_status", "candidate_count",
+    "exact_candidate_count", "recommended_unit", "recommended_name",
+    "recommended_vintage", "recommended_method", "recommended_score",
+    "high_precision_candidate", "review_class", "review_priority"
+  )]
 }
 
 build_source_candidate_ledger_v2 <- function(source_roster, reference_units, adjudications = data.frame()) {

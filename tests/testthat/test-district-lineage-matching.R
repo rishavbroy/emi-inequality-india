@@ -283,3 +283,37 @@ test_that("blank source adjudications remain empty and typed", {
       "method", "source_id", "status", "note")
   )
 })
+
+
+test_that("source adjudication queue prioritizes deterministic review work", {
+  roster <- data.frame(
+    source_row_id = c("single", "multiple", "fuzzy", "none"),
+    wave = "nss_2007_08", source_code = c("1", "2", "3", "4"),
+    raw_state = "State", raw_district = c("A", "B", "C", "D"),
+    state_std = "state", district_std = c("a", "b", "c", "d"),
+    stringsAsFactors = FALSE
+  )
+  candidates <- data.frame(
+    source_row_id = c("single", "multiple", "multiple", "fuzzy"),
+    candidate_unit = c("u1", "u2", "u3", "u4"),
+    candidate_name = c("a", "b", "b", "cee"),
+    reference_vintage = c("2001", "2001", "2011", "2001"),
+    candidate_method = c(
+      "exact_normalized_name", "exact_normalized_name",
+      "exact_normalized_name", "fuzzy_name_candidate"
+    ),
+    rank = c(1L, 1L, 2L, 1L), score = c(1, 1, 1, 0.9),
+    high_precision_candidate = c(FALSE, FALSE, FALSE, TRUE),
+    stringsAsFactors = FALSE
+  )
+
+  out <- build_source_adjudication_queue_v2(roster, candidates)
+  classes <- stats::setNames(out$review_class, out$source_row_id)
+
+  expect_equal(classes[["single"]], "single_exact_candidate")
+  expect_equal(classes[["multiple"]], "multiple_exact_candidates")
+  expect_equal(classes[["fuzzy"]], "high_precision_fuzzy_candidate")
+  expect_equal(classes[["none"]], "no_candidate")
+  expect_equal(out$recommended_unit[out$source_row_id == "multiple"], "u2")
+  expect_true(all(diff(out$review_priority) >= 0))
+})

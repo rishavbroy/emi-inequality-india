@@ -253,14 +253,22 @@ build_concordance_candidates_v2 <- function(raw_sources) {
   }))
 }
 
+empty_duplicate_key_diagnostics_v2 <- function() {
+  data.frame(
+    source_id = character(), key = character(), n_rows = integer(),
+    duplicate_type = character(), row_numbers = character(),
+    stringsAsFactors = FALSE
+  )
+}
+
 duplicate_key_diagnostics_v2 <- function(x, key_cols, source_id) {
   x <- safe_df(x)
   missing <- setdiff(key_cols, names(x))
-  if (length(missing) || !nrow(x)) return(data.frame())
+  if (length(missing) || !nrow(x)) return(empty_duplicate_key_diagnostics_v2())
   key <- do.call(interaction, c(lapply(x[key_cols], plain_chr), list(drop = TRUE, lex.order = TRUE)))
   groups <- split(seq_len(nrow(x)), key)
   duplicates <- groups[lengths(groups) > 1L]
-  if (!length(duplicates)) return(data.frame())
+  if (!length(duplicates)) return(empty_duplicate_key_diagnostics_v2())
   non_key <- setdiff(names(x), key_cols)
   safe_bind_rows(lapply(duplicates, function(i) {
     payload <- if (length(non_key)) apply(x[i, non_key, drop = FALSE], 1, function(z) paste(plain_chr(z), collapse = "\r")) else rep("", length(i))
@@ -400,8 +408,8 @@ summarize_shrid_bridge_v2 <- function(bridge) {
 
 lineage_v2_summary <- function(
   inventory, admin_2001, admin_2011, bridge, transition, source_roster,
-  source_matches, candidates, eligibility, events, current_components,
-  urban_coverage, changed_components, evidence_requests
+  source_matches, candidates, adjudication_queue, eligibility, events,
+  current_components, urban_coverage, changed_components, evidence_requests
 ) {
   accepted <- source_matches$status %in% "accepted"
   data.frame(
@@ -409,7 +417,8 @@ lineage_v2_summary <- function(
       "available_inputs", "missing_inputs", "admin_units_2001", "admin_units_2011",
       "shrid_bridge_rows", "deterministic_shrid_rows", "district_transition_rows",
       "nss_source_rows", "accepted_source_matches", "unadjudicated_source_rows",
-      "candidate_rows", "primary_eligible_source_rows", "candidate_event_rows",
+      "candidate_rows", "single_exact_review_rows", "multiple_exact_review_rows",
+      "fuzzy_review_rows", "no_candidate_rows", "primary_eligible_source_rows", "candidate_event_rows",
       "current_component_rows", "urban_coverage_rows", "changed_component_rows",
       "targeted_evidence_requests"
     ),
@@ -418,7 +427,12 @@ lineage_v2_summary <- function(
       nrow(bridge), sum(bridge$deterministic %in% TRUE), nrow(transition),
       nrow(source_roster), sum(accepted),
       sum(!source_roster$source_row_id %in% source_matches$source_row_id[source_matches$status %in% c("accepted", "excluded")]),
-      nrow(candidates), sum(eligibility$eligible_primary %in% TRUE), nrow(events),
+      nrow(candidates),
+      sum(adjudication_queue$review_class == "single_exact_candidate"),
+      sum(adjudication_queue$review_class == "multiple_exact_candidates"),
+      sum(adjudication_queue$review_class %in% c("high_precision_fuzzy_candidate", "fuzzy_candidates")),
+      sum(adjudication_queue$review_class == "no_candidate"),
+      sum(eligibility$eligible_primary %in% TRUE), nrow(events),
       nrow(current_components), nrow(urban_coverage), nrow(changed_components),
       nrow(evidence_requests)
     ),
@@ -470,6 +484,9 @@ build_district_lineage_v2 <- function(
   adjudicated_weight_validation <- validate_adjudicated_allocation_weights_v2(adjudicated_weights)
   source_matches <- build_adjudicated_source_matches_v2(adjudications, reference_units)
   candidates <- build_source_candidate_ledger_v2(source_roster, reference_units, adjudications)
+  adjudication_queue <- build_source_adjudication_queue_v2(
+    source_roster, candidates, adjudications
+  )
   eligibility <- build_primary_mapping_eligibility(
     source_roster, source_matches, transition, admin_2001, admin_2011, adjudicated_events
   )
@@ -501,7 +518,7 @@ build_district_lineage_v2 <- function(
   )
   summary <- lineage_v2_summary(
     inventory, admin_2001, admin_2011, bridge, transition, source_roster,
-    source_matches, candidates, eligibility, candidate_events, current_components,
+    source_matches, candidates, adjudication_queue, eligibility, candidate_events, current_components,
     urban_coverage, changed_components, evidence_requests
   )
 
@@ -521,6 +538,7 @@ build_district_lineage_v2 <- function(
     reference_units = reference_units,
     source_matches = source_matches,
     source_match_candidates = candidates,
+    source_adjudication_queue = adjudication_queue,
     primary_mapping_eligibility = eligibility,
     primary_source_crosswalk = primary_crosswalk,
     excluded_source_rows = excluded_sources,
@@ -548,6 +566,7 @@ save_district_lineage_v2 <- function(diagnostics, dir = "outputs/diagnostics/ext
     "shrid_bridge_summary", "shrid_bridge_qa",
     "district_transition_2001_2011", "allocation_weight_validation",
     "nss_source_roster", "reference_units", "source_matches", "source_match_candidates",
+    "source_adjudication_queue",
     "primary_mapping_eligibility", "primary_source_crosswalk", "excluded_source_rows",
     "candidate_admin_events", "current_component_registry",
     "current_urban_coverage", "changed_component_roster",
