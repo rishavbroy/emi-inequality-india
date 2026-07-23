@@ -315,3 +315,67 @@ test_that("public second-stage tables recover clusters from panel data", {
   expect_true(nrow(table) > 0L)
   expect_false(is.null(model_info$vcov))
 })
+
+test_that("clustered coefficient extraction tolerates aliased regressors", {
+  skip_if_not_installed("ivreg")
+  skip_if_not_installed("sandwich")
+  skip_if_not_installed("lmtest")
+  set.seed(47)
+  n <- 96
+  dat <- data.frame(
+    y = rnorm(n),
+    x = rnorm(n),
+    w = rnorm(n),
+    z = rnorm(n),
+    state_20 = rep(LETTERS[1:8], each = 12),
+    stringsAsFactors = FALSE
+  )
+  dat$duplicate_w <- dat$w
+  dat$x <- 0.8 * dat$z + 0.2 * dat$w + rnorm(n)
+  dat$y <- 1.1 * dat$x + 0.4 * dat$w + rnorm(n)
+
+  models <- estimate_2sls(
+    dat,
+    list(
+      consumption =
+        y ~ x + w + duplicate_w | z + w + duplicate_w
+    ),
+    list()
+  )
+  attr(models$consumption, "cluster_state") <- NULL
+
+  out <- tidy_iv_models(models, dat)
+  estimable <- out$status == "estimated" & is.finite(out$estimate)
+
+  expect_true(any(estimable))
+  expect_true(all(is.finite(out$std.error[estimable])))
+  expect_true(all(is.finite(out$p.value[estimable])))
+})
+
+test_that("condition number uses the estimable regressor matrix", {
+  skip_if_not_installed("ivreg")
+  set.seed(48)
+  n <- 80
+  dat <- data.frame(
+    y = rnorm(n),
+    x = rnorm(n),
+    w = rnorm(n),
+    z = rnorm(n),
+    stringsAsFactors = FALSE
+  )
+  dat$duplicate_w <- dat$w
+  dat$x <- 0.7 * dat$z + 0.3 * dat$w + rnorm(n)
+  dat$y <- dat$x + dat$w + rnorm(n)
+
+  fit <- ivreg::ivreg(
+    y ~ x + w + duplicate_w | z + w + duplicate_w,
+    data = dat,
+    model = TRUE,
+    x = TRUE,
+    y = TRUE
+  )
+
+  value <- suppressWarnings(as.numeric(condition_number_value(fit)))
+  expect_true(is.finite(value))
+  expect_gt(value, 0)
+})

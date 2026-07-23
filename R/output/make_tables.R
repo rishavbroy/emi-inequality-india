@@ -237,7 +237,7 @@ coefficient_frame <- function(model, vcov_matrix = NULL) {
   vc <- vcov_matrix
   if (is.null(vc)) vc <- tryCatch(stats::vcov(model), error = function(e) NULL)
   se <- rep(NA_real_, length(estimates))
-  if (!is.null(vc) && length(dim(vc)) == 2L && all(dim(vc) >= length(estimates))) {
+  if (!is.null(vc) && length(dim(vc)) == 2L) {
     diag_vc <- suppressWarnings(as.numeric(diag(vc)))
     vc_terms <- rownames(vc)
     if (!is.null(vc_terms) && length(vc_terms)) {
@@ -245,7 +245,8 @@ coefficient_frame <- function(model, vcov_matrix = NULL) {
       ok <- !is.na(matched) & matched <= length(diag_vc)
       se[ok] <- sqrt(pmax(diag_vc[matched[ok]], 0))
     } else {
-      se <- sqrt(pmax(diag_vc[seq_along(estimates)], 0))
+      n <- min(length(estimates), length(diag_vc))
+      if (n > 0L) se[seq_len(n)] <- sqrt(pmax(diag_vc[seq_len(n)], 0))
     }
   }
 
@@ -278,9 +279,14 @@ plain_model_coefficients <- function(model) {
 clustered_model_coefficients <- function(model, data = NULL) {
   tryCatch({
     vc_fun <- clustered_model_vcov(model, data)
-    if (is.null(vc_fun)) return(data.frame())
-    vc <- vc_fun(model)
-    coefficient_frame(model, vc)
+    if (is.null(vc_fun) || !requireNamespace("lmtest", quietly = TRUE)) {
+      return(data.frame())
+    }
+    as.data.frame(
+      lmtest::coeftest(model, vcov. = vc_fun),
+      check.names = FALSE,
+      stringsAsFactors = FALSE
+    )
   }, error = function(e) data.frame())
 }
 

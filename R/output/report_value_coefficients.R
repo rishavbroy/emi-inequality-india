@@ -55,7 +55,10 @@ condition_number_value <- function(model) {
     } else {
       stats::model.matrix(model)
     }
-    kappa(X, exact = TRUE)
+    qr_x <- qr(X)
+    if (!qr_x$rank) return(NA_real_)
+    estimable <- qr_x$pivot[seq_len(qr_x$rank)]
+    kappa(X[, estimable, drop = FALSE], exact = TRUE)
   }, error = function(e) NA_real_)
   if (is.finite(out)) format(out, scientific = FALSE, digits = 7) else NA_character_
 }
