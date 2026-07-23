@@ -329,6 +329,19 @@ These edges record parentage only and intentionally leave `share` blank.
 After this tranche, only the mixed-parent Telangana districts Vikarabad and
 Mahabubabad remain in the missing-parent evidence queue.
 
+## Telangana 2016 mixed-parent ancestry
+
+Vikarabad and Mahabubabad now have complete reviewed parent sets rather than
+forced single-parent assignments. Vikarabad records ancestry from both
+Census-2011 Ranga Reddy and Mahabubnagar. Mahabubabad records ancestry from
+Census-2011 Warangal and Khammam.
+
+These four edges contain no shares. The lineage resolver therefore treats both
+districts as ambiguous rather than selecting one parent. They remain excluded
+from the preferred deterministic crosswalk until territorial or population
+allocation evidence is reviewed. Recording both parents completes the
+administrative-event evidence queue without weakening the mapping standard.
+
 ## Telangana 2016 single-parent ancestry
 
 Twenty-four current Telangana district identities now have reviewed ancestry

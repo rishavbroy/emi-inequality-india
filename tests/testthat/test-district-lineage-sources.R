@@ -1275,3 +1275,64 @@ test_that("tracked Chhattisgarh and Punjab events complete single-parent ancestr
     )
   )
 })
+
+test_that("tracked mixed-parent Telangana events remain non-deterministic", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
+  events <- read_admin_events_v2(
+    read.csv(
+      file.path(
+        root, "data", "metadata", "district_admin_events_v2.csv"
+      ),
+      stringsAsFactors = FALSE
+    )
+  )
+  rows <- events[
+    events$event_id %in% c(
+      "telangana_2016_537_698",
+      "telangana_2016_538_698",
+      "telangana_2016_540_688",
+      "telangana_2016_541_688"
+    ),
+    ,
+    drop = FALSE
+  ]
+
+  expect_equal(nrow(rows), 4L)
+  expect_true(all(rows$status == "accepted"))
+  expect_true(all(rows$effective_date == "2016-10-11"))
+  expect_true(all(is.na(rows$share)))
+  expect_setequal(
+    rows$from_unit[rows$to_unit == "lgd_district__698"],
+    c("pc2011__28__537", "pc2011__28__538")
+  )
+  expect_setequal(
+    rows$from_unit[rows$to_unit == "lgd_district__688"],
+    c("pc2011__28__540", "pc2011__28__541")
+  )
+
+  resolved <- resolve_lineage_terminals_v2(
+    c("lgd_district__698", "lgd_district__688"),
+    events,
+    data.frame(
+      unit_id = c(
+        "pc2001__28__06",
+        "pc2001__28__07",
+        "pc2001__28__09",
+        "pc2001__28__10"
+      ),
+      stringsAsFactors = FALSE
+    ),
+    admin_2011 = data.frame(
+      unit_id = c(
+        "pc2011__28__537",
+        "pc2011__28__538",
+        "pc2011__28__540",
+        "pc2011__28__541"
+      ),
+      stringsAsFactors = FALSE
+    )
+  )
+
+  expect_true(all(resolved$resolution_status == "ambiguous"))
+  expect_true(all(is.na(resolved$terminal_unit)))
+})
