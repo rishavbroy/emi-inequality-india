@@ -34,6 +34,11 @@ bridge <- build_shrug_district_bridge(
 admin_2001 <- build_admin_registry_2001(census_2001_languages)
 shrid_geometry <- read_zipped_gpkg_v2(geometry_row$absolute_path[[1]])
 geometry_2001 <- dissolve_shrid_geometry_2001_v2(shrid_geometry, bridge)
+geometry_2001 <- apply_geometry_carrybacks_v2(
+  geometry_2001,
+  sources$shrug_pc11_district_geometry,
+  sources$lineage_geometry_carrybacks
+)
 paths <- save_lineage_geometry_2001_v2(geometry_2001, admin_2001)
 
 message("Wrote Census 2001 geometry outputs:")

@@ -215,6 +215,123 @@ build_production_crosswalk_comparison_v2 <- function(primary_crosswalk, producti
   out
 }
 
+empty_geometry_carrybacks_v2 <- function() {
+  data.frame(
+    target_unit_2001 = character(), source_unit_2011 = character(),
+    source_id = character(), status = character(), note = character(),
+    stringsAsFactors = FALSE
+  )
+}
+
+read_geometry_carrybacks_v2 <- function(x) {
+  x <- safe_df(x)
+  required <- c(
+    "target_unit_2001", "source_unit_2011", "source_id", "status", "note"
+  )
+  for (nm in setdiff(required, names(x))) x[[nm]] <- rep(NA_character_, nrow(x))
+  x <- x[
+    !is.na(x$target_unit_2001) & nzchar(x$target_unit_2001),
+    required,
+    drop = FALSE
+  ]
+  if (!nrow(x)) return(empty_geometry_carrybacks_v2())
+  if (anyDuplicated(x$target_unit_2001)) {
+    stop("Geometry carry-backs must have unique 2001 target units.", call. = FALSE)
+  }
+  if (anyDuplicated(x$source_unit_2011)) {
+    stop("Geometry carry-backs must have unique 2011 source units.", call. = FALSE)
+  }
+  invalid_status <- unique(x$status[!x$status %in% c(
+    "accepted", "excluded", "needs_review"
+  )])
+  if (length(invalid_status)) {
+    stop(
+      "Unknown geometry carry-back status: ",
+      paste(invalid_status, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  accepted <- x$status %in% "accepted"
+  incomplete <- accepted & (
+    is.na(x$source_unit_2011) | !nzchar(x$source_unit_2011) |
+      is.na(x$source_id) | !nzchar(x$source_id)
+  )
+  if (any(incomplete)) {
+    stop(
+      "Accepted geometry carry-backs require source_unit_2011 and source_id.",
+      call. = FALSE
+    )
+  }
+  x
+}
+
+district_geometry_unit_ids_2011_v2 <- function(geometry_2011) {
+  need_pkg("sf", "Census 2011 district geometry carry-backs")
+  if (!inherits(geometry_2011, "sf")) {
+    stop("Census 2011 district geometry must be an sf object.", call. = FALSE)
+  }
+  attributes <- sf::st_drop_geometry(geometry_2011)
+  state <- first_col(attributes, c("pc11_state_id", "state_code"))
+  district <- first_col(attributes, c("pc11_district_id", "district_code"))
+  if (is.null(state) || is.null(district)) {
+    stop(
+      "Census 2011 district geometry lacks state or district codes.",
+      call. = FALSE
+    )
+  }
+  paste(
+    "pc2011",
+    pad_admin_code(attributes[[state]], 2L),
+    pad_admin_code(attributes[[district]], 3L),
+    sep = "__"
+  )
+}
+
+apply_geometry_carrybacks_v2 <- function(
+  geometry_2001, geometry_2011, carrybacks
+) {
+  need_pkg("sf", "Census 2001 geometry carry-backs")
+  carrybacks <- read_geometry_carrybacks_v2(carrybacks)
+  carrybacks <- carrybacks[carrybacks$status %in% "accepted", , drop = FALSE]
+  if (!nrow(carrybacks)) return(geometry_2001)
+  if (!inherits(geometry_2001, "sf") || !inherits(geometry_2011, "sf")) {
+    stop("Both geometry inputs must be sf objects.", call. = FALSE)
+  }
+
+  existing <- unique(plain_chr(geometry_2001$unit_id))
+  carrybacks <- carrybacks[
+    !carrybacks$target_unit_2001 %in% existing,
+    ,
+    drop = FALSE
+  ]
+  if (!nrow(carrybacks)) return(geometry_2001)
+
+  source_ids <- district_geometry_unit_ids_2011_v2(geometry_2011)
+  source_rows <- match(carrybacks$source_unit_2011, source_ids)
+  if (anyNA(source_rows)) {
+    stop(
+      "Accepted geometry carry-backs reference unknown Census 2011 units: ",
+      paste(carrybacks$source_unit_2011[is.na(source_rows)], collapse = ", "),
+      call. = FALSE
+    )
+  }
+
+  additions <- geometry_2011[source_rows, , drop = FALSE]
+  additions$unit_id <- carrybacks$target_unit_2001
+  additions <- additions["unit_id"]
+  if (!is.na(sf::st_crs(geometry_2001)) &&
+      sf::st_crs(additions) != sf::st_crs(geometry_2001)) {
+    additions <- sf::st_transform(additions, sf::st_crs(geometry_2001))
+  }
+
+  out <- rbind(geometry_2001["unit_id"], additions)
+  out <- make_valid_sf_v2(out)
+  if (anyDuplicated(out$unit_id)) {
+    stop("Geometry carry-backs produced duplicate Census 2001 units.", call. = FALSE)
+  }
+  out
+}
+
 read_zipped_gpkg_v2 <- function(path) {
   need_pkg("sf", "zipped SHRID geometry")
   if (!file.exists(path)) {
