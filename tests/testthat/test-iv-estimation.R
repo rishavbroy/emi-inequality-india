@@ -97,3 +97,37 @@ test_that("spatial IV coefficient summaries fall back to point estimates", {
   expect_equal(out$term, c("(Intercept)", "x"))
   expect_equal(out$estimate, c(1, 2))
 })
+
+test_that("shared-support inference prefers canonical Census-2001 clusters", {
+  dat <- data.frame(
+    y = c(1, 2, 4, 5, 7, 8),
+    x = c(2, 3, 5, 6, 8, 9),
+    z = c(1, 1.5, 2.5, 3, 4, 4.5),
+    state_2001_cluster = rep(c("01", "02", "03"), each = 2),
+    state_std = NA_character_,
+    stringsAsFactors = FALSE
+  )
+  formulas <- list(model = y ~ x | z)
+
+  models <- estimate_2sls(dat, formulas, list())
+  first_stage <- estimate_first_stage(models, dat, list())
+
+  expect_identical(
+    attr(models$model, "cluster_state"),
+    dat$state_2001_cluster
+  )
+  expect_true(all(first_stage$status == "estimated"))
+  expect_true(all(is.finite(first_stage$std.error)))
+})
+
+test_that("first-stage covariance declines incomplete clusters without error", {
+  dat <- data.frame(
+    y = 1:4,
+    z = c(1, 2, 4, 5),
+    state_2001_cluster = c("01", NA, "02", "02"),
+    stringsAsFactors = FALSE
+  )
+  fit <- stats::lm(y ~ z, data = dat)
+
+  expect_null(first_stage_vcov(fit, dat))
+})

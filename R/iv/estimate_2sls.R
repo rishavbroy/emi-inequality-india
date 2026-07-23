@@ -1,6 +1,13 @@
 # This file is part of the EMI inequality research pipeline.
 # Functions are intentionally small enough to be tested and called by _targets.R.
 
+iv_cluster_column <- function(data) {
+  first_col(
+    as.data.frame(data),
+    c("state_2001_cluster", "state_20", "state_std", "state_0708")
+  )
+}
+
 #' estimate 2sls
 #'
 estimate_2sls <- function(district_panel, formulas, cfg) {
@@ -18,10 +25,13 @@ estimate_2sls <- function(district_panel, formulas, cfg) {
       x = TRUE,
       y = TRUE
     )
-    cluster_col <- first_col(district_panel, c("state_20", "state_std", "state_0708"))
+    cluster_col <- iv_cluster_column(district_panel)
     if (!is.null(cluster_col)) {
       mf_rows <- suppressWarnings(as.integer(rownames(stats::model.frame(fit))))
-      if (length(mf_rows) && all(!is.na(mf_rows))) attr(fit, "cluster_state") <- district_panel[[cluster_col]][mf_rows]
+      if (length(mf_rows) && all(!is.na(mf_rows))) {
+        cluster <- district_panel[[cluster_col]][mf_rows]
+        if (!anyNA(cluster)) attr(fit, "cluster_state") <- cluster
+      }
     }
     fit
   })
