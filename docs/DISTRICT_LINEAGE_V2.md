@@ -359,6 +359,24 @@ Evidence requests now include accepted current districts that still lack an
 accepted parent edge. Completing source identity therefore no longer hides the
 remaining administrative-lineage work.
 
+## Fitted-row cluster alignment
+
+Cluster vectors are aligned to the rows in each fitted model through model-frame
+row names matched against the source panel row names. This supports ordinary
+sequential row names, named district rows, and complete-case omission without
+assuming that row names can be coerced to integers.
+
+The aligned vector must have one value per fitted observation, no missing
+values, and at least two clusters. The same helper supplies second-stage table
+inference and first-stage covariance estimation. Diagnostic outputs therefore
+must not silently replace clustered standard errors with missing values merely
+because panel row names are nonnumeric.
+
+The tracked downstream review now records
+`analysis_complete_review_pending`: reconstruction and same-support estimation
+are complete, while substantive adjudication and production migration remain
+blocked.
+
 ## Actionable downstream review queues
 
 Extended diagnostics now write two finite review queues:
