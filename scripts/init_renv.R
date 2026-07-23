@@ -34,10 +34,18 @@ required <- read_description_packages()
 
 check_cmd <- function(cmd) nzchar(Sys.which(cmd))
 message("Checking common system tools...")
-system_checks <- c(R = TRUE, quarto = check_cmd("quarto"), gdal_config = check_cmd("gdal-config"), geos_config = check_cmd("geos-config"), pkg_config = check_cmd("pkg-config"))
+system_checks <- c(
+  R = TRUE,
+  quarto = check_cmd("quarto"),
+  pdftotext = check_cmd("pdftotext"),
+  gdal_config = check_cmd("gdal-config"),
+  geos_config = check_cmd("geos-config"),
+  pkg_config = check_cmd("pkg-config")
+)
 print(system_checks)
 
 if (!system_checks[["quarto"]]) message("Note: Quarto CLI was not found on PATH. The R package 'quarto' can still install, but rendering .qmd files requires the Quarto CLI.")
+if (!system_checks[["pdftotext"]]) message("Note: pdftotext was not found on PATH. Install Poppler to enable PDF text validation; non-PDF text checks will still run.")
 if (!system_checks[["gdal_config"]] || !system_checks[["geos_config"]]) message("Note: sf/spatial packages may require GDAL/GEOS/PROJ system libraries. On macOS, these are commonly installed with Homebrew: brew install gdal geos proj pkg-config.")
 
 if (!requireNamespace("renv", quietly = TRUE)) {
