@@ -199,9 +199,16 @@ the usual `scripts/run_public_build_audit.sh` command; a separate
 available for geometry-only debugging.
 
 The build is skipped when the optional raw archive is absent and is also skipped
-when the compact GeoPackage is newer than its material source, key, manifest,
-and implementation inputs. When rebuilding, invalid input and dissolved
-geometries are repaired with `sf::st_make_valid()` and then revalidated.
+when the compact GeoPackage is newer than its material SHRID keys, Census 2001
+registry inputs, manifest, and implementation files. When rebuilding, invalid
+input and dissolved geometries are repaired with `sf::st_make_valid()` and then
+revalidated.
+
+The generated GeoPackage is deliberately ignored by ordinary Git because it is
+locally reproducible and currently exceeds GitHub's 50 MiB warning threshold.
+It remains available to the review-archive workflow. The compact CSV QA and
+`geometry_2001_unit_coverage.csv` identify every expected, missing, or
+unexpected district without requiring reviewers to inspect the binary file.
 
 Run `make lineage-geometry` directly only when debugging the local
 `data/raw/shrug/open-polygons/shrug-shrid-poly-gpkg.zip` archive.

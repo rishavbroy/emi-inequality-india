@@ -48,6 +48,7 @@ completion_status <- analysis_target_csv("diag_ext_district_lineage_v2", "comple
 sensitivity_crosswalk <- analysis_target_csv("diag_ext_district_lineage_v2", "sensitivity_source_crosswalk.csv")
 production_comparison <- analysis_target_csv("diag_ext_district_lineage_v2", "production_crosswalk_comparison.csv")
 geometry_qa <- analysis_target_csv("diag_ext_district_lineage_v2", "geometry_2001_qa.csv")
+geometry_coverage <- analysis_target_csv("diag_ext_district_lineage_v2", "geometry_2001_unit_coverage.csv")
 events <- analysis_target_csv("diag_ext_district_lineage_v2", "candidate_admin_events.csv")
 current_components <- analysis_target_csv("diag_ext_district_lineage_v2", "current_component_registry.csv")
 urban_coverage <- analysis_target_csv("diag_ext_district_lineage_v2", "current_urban_coverage.csv")
@@ -100,6 +101,11 @@ analysis_table(adjudication_draft, "Review-ready adjudication draft; all rows re
 analysis_table(sensitivity_crosswalk, "Preferred and accepted sensitivity crosswalk rows", max_rows = 50)
 analysis_table(production_comparison, "Accepted v2 mappings compared with production", max_rows = 50)
 analysis_table(geometry_qa, "Census 2001 geometry readiness and QA", max_rows = 50)
+analysis_table(
+  geometry_coverage[geometry_coverage$coverage_status != "present", , drop = FALSE],
+  "Missing or unexpected Census 2001 district geometries",
+  max_rows = 50
+)
 analysis_table(candidates, "Top source-match candidates; never automatic adjudications", max_rows = 50)
 analysis_table(events, "Candidate administrative events", max_rows = 50)
 analysis_table(current_components, "Current LGD subdistrict and urban-local-body registry", max_rows = 50)
