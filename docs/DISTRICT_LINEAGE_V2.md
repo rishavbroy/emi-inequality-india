@@ -114,7 +114,7 @@ Matching proceeds within compatible state and date/lineage universes:
 
 Exact names are candidates rather than automatic acceptance because a stable name can conceal a boundary change. Fuzzy matching must never create an administrative lineage.
 
-The generated candidate ledger records Jaro-Winkler, normalized Damerau-Levenshtein, trigram cosine, token similarity, rank, best-versus-second-best margin, reciprocal-nearest status, and a high-precision-candidate flag. The provisional rule is a review aid only. It has not been validated on enough independent cases to support a 99.5% precision claim.
+The generated candidate ledger records Jaro-Winkler, normalized Damerau-Levenshtein, trigram cosine, token similarity, rank, best-versus-second-best margin, reciprocal-nearest status, and a high-precision-candidate flag. The provisional rule is a review aid only. It has not been validated on enough independent cases to support a 99.5% precision claim. Directional qualifiers are identity-bearing: candidates with incompatible north/south, east/west, central, upper, or lower tokens cannot receive the high-precision flag.
 
 The gold set deliberately contains:
 
