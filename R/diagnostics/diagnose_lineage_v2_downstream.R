@@ -308,58 +308,51 @@ compare_lineage_v2_panels <- function(production_panel, v2_panel) {
 
 
 
-lineage_v2_panel_labels <- function(panel, variant) {
-  panel <- safe_df(panel)
-  if (!nrow(panel)) {
+lineage_v2_admin_2001_labels <- function(admin_2001) {
+  admin <- safe_df(admin_2001)
+  required <- c("unit_id", "state_std", "district_std")
+  if (!nrow(admin) || !all(required %in% names(admin))) {
     return(data.frame(
       target_unit_2001 = character(),
-      panel_variant = character(),
-      state_label = character(),
-      district_label = character(),
+      state_label_2001 = character(),
+      district_label_2001 = character(),
+      label_source_id = character(),
       stringsAsFactors = FALSE
     ))
   }
-  panel$target_unit_2001 <- lineage_panel_unit_id(panel)
-  state_col <- first_col(
-    panel,
-    c(
-      "state_20", "state_0708", "state_1718",
-      "state_name_2001", "state_std"
-    )
+
+  admin <- admin[
+    is.na(admin$level) | admin$level %in% "district",
+    ,
+    drop = FALSE
+  ]
+  out <- data.frame(
+    target_unit_2001 = plain_chr(admin$unit_id),
+    state_label_2001 = plain_chr(admin$state_std),
+    district_label_2001 = plain_chr(admin$district_std),
+    label_source_id = if ("source_id" %in% names(admin)) {
+      plain_chr(admin$source_id)
+    } else {
+      NA_character_
+    },
+    stringsAsFactors = FALSE
   )
-  district_col <- first_col(
-    panel,
-    c(
-      "district_20", "district_0708", "district_1718",
-      "district_name", "district_name_2001", "district_std"
+  out <- out[
+    !is.na(out$target_unit_2001) & nzchar(out$target_unit_2001),
+    ,
+    drop = FALSE
+  ]
+  if (anyDuplicated(out$target_unit_2001)) {
+    stop(
+      "Canonical Census-2001 district labels must be unique by unit_id.",
+      call. = FALSE
     )
-  )
-  groups <- split(
-    seq_len(nrow(panel)),
-    panel$target_unit_2001
-  )
-  safe_bind_rows(lapply(groups, function(i) {
-    rows <- panel[i, , drop = FALSE]
-    data.frame(
-      target_unit_2001 = rows$target_unit_2001[[1L]],
-      panel_variant = variant,
-      state_label = if (!is.null(state_col)) {
-        plain_chr(first_nonmissing_v2(rows[[state_col]]))
-      } else {
-        NA_character_
-      },
-      district_label = if (!is.null(district_col)) {
-        plain_chr(first_nonmissing_v2(rows[[district_col]]))
-      } else {
-        NA_character_
-      },
-      stringsAsFactors = FALSE
-    )
-  }))
+  }
+  out
 }
 
 build_lineage_v2_nonoverlap_queue <- function(
-  panel_membership, production_panel, v2_panel
+  panel_membership, admin_2001
 ) {
   membership <- safe_df(panel_membership)
   membership <- membership[
@@ -369,31 +362,10 @@ build_lineage_v2_nonoverlap_queue <- function(
   ]
   if (!nrow(membership)) return(data.frame())
 
-  labels <- safe_bind_rows(list(
-    lineage_v2_panel_labels(production_panel, "production"),
-    lineage_v2_panel_labels(v2_panel, "lineage_v2")
-  ))
-  labels <- labels[
-    labels$target_unit_2001 %in% membership$target_unit_2001,
-    ,
-    drop = FALSE
-  ]
-  labels <- labels[
-    order(
-      labels$target_unit_2001,
-      labels$panel_variant == "lineage_v2",
-      na.last = TRUE
-    ),
-    ,
-    drop = FALSE
-  ]
-  labels <- labels[!duplicated(labels$target_unit_2001), , drop = FALSE]
-
+  labels <- lineage_v2_admin_2001_labels(admin_2001)
   out <- merge(
     membership,
-    labels[
-      c("target_unit_2001", "state_label", "district_label")
-    ],
+    labels,
     by = "target_unit_2001",
     all.x = TRUE,
     sort = FALSE
@@ -401,20 +373,29 @@ build_lineage_v2_nonoverlap_queue <- function(
   codes <- lineage_v2_target_codes(out$target_unit_2001)
   out$state_code_2001 <- codes$state_code_2001
   out$district_code_2001 <- codes$district_code_2001
+  out$canonical_label_available <-
+    !is.na(out$district_label_2001) & nzchar(out$district_label_2001)
   out$review_scope <- ifelse(
     out$comparison_status == "production_only",
     "inherited_panel_only",
     "lineage_v2_panel_only"
   )
   out$next_action <- ifelse(
-    out$comparison_status == "production_only",
+    !out$canonical_label_available,
     paste0(
-      "Check whether the inherited row is a duplicate, obsolete target, ",
-      "or a district missing from the reviewed v2 bridge."
+      "Resolve the canonical Census-2001 registry label before reviewing ",
+      "panel membership."
     ),
-    paste0(
-      "Confirm that the recovered v2 unit has valid two-wave measures and ",
-      "is not an allocation artifact."
+    ifelse(
+      out$comparison_status == "production_only",
+      paste0(
+        "Check whether the inherited row is a duplicate, obsolete target, ",
+        "or a district missing from the reviewed v2 bridge."
+      ),
+      paste0(
+        "Confirm that the recovered v2 unit has valid two-wave measures and ",
+        "is not an allocation artifact."
+      )
     )
   )
   out[
@@ -779,7 +760,8 @@ build_lineage_v2_downstream_review <- function(
   production_shared_first_stage = data.frame(),
   v2_shared_first_stage = data.frame(),
   production_shared_panel = data.frame(),
-  v2_shared_panel = data.frame()
+  v2_shared_panel = data.frame(),
+  admin_2001 = data.frame()
 ) {
   production <- lineage_v2_model_summary(
     production_models, production_first_stage, production_panel, "production"
@@ -794,8 +776,7 @@ build_lineage_v2_downstream_review <- function(
   comparison$panel_nonoverlap_queue <-
     build_lineage_v2_nonoverlap_queue(
       comparison$panel_membership,
-      production_panel,
-      v2_panel
+      admin_2001
     )
   comparison$unmapped_identity_queue <-
     build_lineage_v2_unmapped_identity_queue(

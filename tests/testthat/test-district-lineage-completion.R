@@ -915,21 +915,19 @@ test_that("non-overlap queue retains both panel-only directions", {
     comparison_status = c("shared", "production_only", "v2_only"),
     stringsAsFactors = FALSE
   )
-  production <- data.frame(
-    district_panel_id = c("2001__01__01", "2001__01__02"),
+  admin_2001 <- data.frame(
+    unit_id = c(
+      "pc2001__01__01", "pc2001__01__02", "pc2001__01__03"
+    ),
+    level = "district",
     state_std = "state",
-    district_std = c("shared", "production only"),
-    stringsAsFactors = FALSE
-  )
-  candidate <- data.frame(
-    target_unit_2001 = c("pc2001__01__01", "pc2001__01__03"),
-    state_std = "state",
-    district_std = c("shared", "v2 only"),
+    district_std = c("shared", "production only", "v2 only"),
+    source_id = "census2001",
     stringsAsFactors = FALSE
   )
 
   out <- build_lineage_v2_nonoverlap_queue(
-    membership, production, candidate
+    membership, admin_2001
   )
 
   expect_setequal(
@@ -937,37 +935,39 @@ test_that("non-overlap queue retains both panel-only directions", {
     c("production_only", "v2_only")
   )
   expect_setequal(
-    out$district_label,
+    out$district_label_2001,
     c("production only", "v2 only")
   )
+  expect_true(all(out$canonical_label_available))
   expect_true(all(nzchar(out$next_action)))
 })
 
-test_that("non-overlap queue prefers human-readable panel labels", {
+test_that("non-overlap queue uses canonical 2001 labels", {
   membership <- data.frame(
-    target_unit_2001 = "pc2001__09__17",
+    target_unit_2001 = "pc2001__17__01",
     in_production = TRUE,
     in_v2 = FALSE,
     comparison_status = "production_only",
     stringsAsFactors = FALSE
   )
-  production <- data.frame(
-    district_panel_id = "2001__09__17",
-    state_std = 9,
-    district_std = 17,
-    state_20 = "Uttar Pradesh",
-    district_20 = "Etah",
+  admin_2001 <- data.frame(
+    unit_id = "pc2001__17__01",
+    level = "district",
+    state_std = "meghalaya",
+    district_std = "west garo hills",
+    source_id = "census2001_c16",
     stringsAsFactors = FALSE
   )
 
   out <- build_lineage_v2_nonoverlap_queue(
     membership,
-    production,
-    data.frame()
+    admin_2001
   )
 
-  expect_identical(out$state_label, "Uttar Pradesh")
-  expect_identical(out$district_label, "Etah")
+  expect_identical(out$state_label_2001, "meghalaya")
+  expect_identical(out$district_label_2001, "west garo hills")
+  expect_identical(out$label_source_id, "census2001_c16")
+  expect_true(out$canonical_label_available)
 })
 
 test_that("accepted sensitivity coverage counts identities, not allocation rows", {
@@ -1014,4 +1014,19 @@ test_that("accepted sensitivity coverage completes only after every identity map
 
   expect_true(status$coverage_complete)
   expect_equal(status$n_mapped, status$n_accepted)
+})
+
+test_that("canonical 2001 labels reject duplicate registry units", {
+  admin_2001 <- data.frame(
+    unit_id = c("pc2001__01__01", "pc2001__01__01"),
+    level = "district",
+    state_std = "state",
+    district_std = c("district a", "district b"),
+    stringsAsFactors = FALSE
+  )
+
+  expect_error(
+    lineage_v2_admin_2001_labels(admin_2001),
+    "must be unique"
+  )
 })

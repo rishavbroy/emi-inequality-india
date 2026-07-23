@@ -263,7 +263,8 @@ extended_diagnostic_targets <- list(
       first_stage_tests_production_shared_v2,
       first_stage_tests_v2_allocated_shared,
       lineage_v2_shared_support$production,
-      lineage_v2_shared_support$lineage_v2
+      lineage_v2_shared_support$lineage_v2,
+      district_lineage_v2$admin_units_2001
     )
   ),
   tar_target(
