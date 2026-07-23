@@ -22,7 +22,7 @@ The current crosswalk is not proof that its geographic assignments are correct. 
 - `district_match_gold.csv`: manually reviewed positive, negative, and ambiguous name-match examples used to evaluate candidate rules.
 - `district_adjudications_v2.csv`: one accepted, excluded, or needs-review source identity per source row.
 - `district_admin_events_v2.csv`: reviewed directed administrative-event edges.
-- `district_allocation_weights_v2.csv`: reviewed non-primary or sensitivity allocation shares.
+- `district_allocation_weights_v2.csv`: reviewed non-primary or sensitivity allocation shares; current accepted rows renormalize mapped population shares only when at least 99 percent of the source population is covered.
 - `district_geometry_carrybacks_v2.csv`: reviewed cases where an official later-vintage polygon is carried back to an unchanged Census-2001 district.
 
 Ledgers may begin blank, but accepted rows must remain narrow, source-backed decisions. Generated candidates belong under `outputs/diagnostics/extended/district_lineage_v2/`; they must not be copied into tracked adjudications without review.

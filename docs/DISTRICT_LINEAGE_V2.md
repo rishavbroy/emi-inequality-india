@@ -222,6 +222,20 @@ dissolve uses the active `sf` geometry column rather than assuming it is named
 file is treated as a file dependency; routine diagnostics do not repeatedly
 read or union the 380 MB source archive.
 
+## Reviewed high-coverage sensitivity allocations
+
+The first allocation tranche addresses incomplete SHRID coverage without
+relaxing the preferred-panel rule. For a Census-2011 source district with at
+least 99 percent of its population represented in the SHRUG bridge, the mapped
+population shares are renormalized to sum to one and recorded as an accepted
+`sensitivity-only` allocation. This produces 503 source-target rows covering
+457 source districts.
+
+The threshold does not convert a non-nested transition into a deterministic
+identity. These rows appear only in the sensitivity crosswalk. Districts below
+99 percent mapped population remain unresolved, and the preferred panel
+continues to require direct Census-2001 identity or deterministic containment.
+
 ## First reviewed decisions
 
 The first accepted tranche is deliberately narrow:
