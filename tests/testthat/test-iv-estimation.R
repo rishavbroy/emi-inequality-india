@@ -134,3 +134,63 @@ test_that("first-stage covariance declines incomplete clusters without error", {
 
   expect_null(first_stage_vcov(fit, dat))
 })
+
+test_that("cluster alignment follows fitted model row names", {
+  skip_if_not_installed("ivreg")
+  skip_if_not_installed("sandwich")
+  set.seed(42)
+  n <- 60
+  dat <- data.frame(
+    y = rnorm(n),
+    x = rnorm(n),
+    w = rnorm(n),
+    z = rnorm(n),
+    state_20 = rep(LETTERS[1:6], each = 10),
+    stringsAsFactors = FALSE
+  )
+  dat$x <- 0.8 * dat$z + 0.3 * dat$w + rnorm(n)
+  dat$y <- 1.2 * dat$x + 0.4 * dat$w + rnorm(n)
+  rownames(dat) <- paste0("district_", seq_len(n))
+  formulas <- list(model = y ~ x + w | z + w)
+
+  fit <- estimate_2sls(dat, formulas, list())$model
+  clustered <- tidy_iv_models(list(model = fit))
+
+  expect_identical(attr(fit, "cluster_state"), dat$state_20)
+  expect_true(all(is.finite(clustered$std.error)))
+  expect_true(all(is.finite(clustered$p.value)))
+})
+
+test_that("cluster alignment follows complete-case model rows", {
+  skip_if_not_installed("ivreg")
+  set.seed(43)
+  n <- 48
+  dat <- data.frame(
+    y = rnorm(n),
+    x = rnorm(n),
+    w = rnorm(n),
+    z = rnorm(n),
+    state_20 = rep(LETTERS[1:6], each = 8),
+    stringsAsFactors = FALSE
+  )
+  dat$x <- 0.7 * dat$z + 0.2 * dat$w + rnorm(n)
+  dat$y <- dat$x + dat$w + rnorm(n)
+  dat$y[c(3, 17)] <- NA_real_
+  rownames(dat) <- paste0("unit_", seq_len(n))
+
+  fit <- estimate_2sls(
+    dat,
+    list(model = y ~ x + w | z + w),
+    list()
+  )$model
+  expected_rows <- match(
+    rownames(stats::model.frame(fit)),
+    rownames(dat)
+  )
+
+  expect_identical(
+    attr(fit, "cluster_state"),
+    dat$state_20[expected_rows]
+  )
+  expect_equal(length(attr(fit, "cluster_state")), stats::nobs(fit))
+})

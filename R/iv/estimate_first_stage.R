@@ -155,12 +155,8 @@ model_f_statistic <- function(fit) {
 
 first_stage_vcov <- function(fit, district_panel) {
   if (!requireNamespace("sandwich", quietly = TRUE)) return(NULL)
-  cluster_col <- iv_cluster_column(district_panel)
-  if (is.null(cluster_col)) return(NULL)
-  mf_rows <- suppressWarnings(as.integer(rownames(stats::model.frame(fit))))
-  if (!length(mf_rows) || any(is.na(mf_rows))) return(NULL)
-  cluster <- as.data.frame(district_panel)[[cluster_col]][mf_rows]
-  if (anyNA(cluster) || length(unique(cluster)) < 2L) return(NULL)
+  cluster <- iv_model_cluster(fit, district_panel)
+  if (is.null(cluster)) return(NULL)
   sandwich::vcovCL(fit, cluster = cluster)
 }
 

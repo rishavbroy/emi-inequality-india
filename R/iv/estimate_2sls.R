@@ -8,6 +8,41 @@ iv_cluster_column <- function(data) {
   )
 }
 
+iv_model_row_indices <- function(model, data) {
+  frame <- tryCatch(stats::model.frame(model), error = function(e) NULL)
+  data <- as.data.frame(data)
+  if (is.null(frame) || !nrow(frame) || !nrow(data)) return(integer())
+
+  frame_rows <- rownames(frame)
+  data_rows <- rownames(data)
+  if (!is.null(frame_rows) && !is.null(data_rows)) {
+    matched <- match(frame_rows, data_rows)
+    if (length(matched) == nrow(frame) && all(!is.na(matched))) {
+      return(as.integer(matched))
+    }
+  }
+
+  if (nrow(frame) == nrow(data)) seq_len(nrow(data)) else integer()
+}
+
+iv_model_cluster <- function(model, data) {
+  cluster_col <- iv_cluster_column(data)
+  if (is.null(cluster_col)) return(NULL)
+
+  rows <- iv_model_row_indices(model, data)
+  if (!length(rows)) return(NULL)
+
+  cluster <- as.data.frame(data)[[cluster_col]][rows]
+  if (
+    length(cluster) != stats::nobs(model) ||
+      anyNA(cluster) ||
+      length(unique(cluster)) < 2L
+  ) {
+    return(NULL)
+  }
+  as.vector(cluster)
+}
+
 #' estimate 2sls
 #'
 estimate_2sls <- function(district_panel, formulas, cfg) {
@@ -25,14 +60,8 @@ estimate_2sls <- function(district_panel, formulas, cfg) {
       x = TRUE,
       y = TRUE
     )
-    cluster_col <- iv_cluster_column(district_panel)
-    if (!is.null(cluster_col)) {
-      mf_rows <- suppressWarnings(as.integer(rownames(stats::model.frame(fit))))
-      if (length(mf_rows) && all(!is.na(mf_rows))) {
-        cluster <- district_panel[[cluster_col]][mf_rows]
-        if (!anyNA(cluster)) attr(fit, "cluster_state") <- cluster
-      }
-    }
+    cluster <- iv_model_cluster(fit, district_panel)
+    if (!is.null(cluster)) attr(fit, "cluster_state") <- cluster
     fit
   })
 }
