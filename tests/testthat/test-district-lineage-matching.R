@@ -383,13 +383,22 @@ test_that("source adjudication queue prioritizes deterministic review work", {
   expect_true(all(diff(out$review_priority) >= 0))
 })
 
-test_that("NSS-64 district codes resolve only the documented code shape", {
+test_that("NSS-64 compact codes separate region from district", {
   expect_identical(
-    nss64_census2001_unit_id_v2(c("07101", "35102", "28111")),
-    c("pc2001__07__01", "pc2001__35__02", "pc2001__28__11")
+    nss64_census2001_unit_id_v2(
+      c("07101", "28216", "35302", "56611")
+    ),
+    c(
+      "pc2001__07__01",
+      "pc2001__28__16",
+      "pc2001__35__02",
+      "pc2001__56__11"
+    )
   )
   expect_true(all(is.na(
-    nss64_census2001_unit_id_v2(c("0711", "071001", "07A01", NA))
+    nss64_census2001_unit_id_v2(
+      c("0711", "071001", "07A01", NA)
+    )
   )))
 })
 
@@ -401,10 +410,15 @@ test_that("NSS-64 code resolution requires a known Census-2001 unit", {
 
   expect_identical(
     resolve_nss64_census2001_unit_id_v2(
-      c("07101", "35102", "28111", "invalid"),
+      c("07101", "35302", "28211", "invalid"),
       admin
     ),
-    c("pc2001__07__01", "pc2001__35__02", NA_character_, NA_character_)
+    c(
+      "pc2001__07__01",
+      "pc2001__35__02",
+      NA_character_,
+      NA_character_
+    )
   )
 })
 

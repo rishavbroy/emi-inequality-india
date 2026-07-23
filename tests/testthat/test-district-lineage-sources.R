@@ -576,7 +576,7 @@ test_that("reviewed geometry and source decisions satisfy evidence contracts", {
 
   expect_equal(nrow(carrybacks), 11L)
   expect_true(all(carrybacks$status == "accepted"))
-  expect_equal(nrow(adjudications), 226L)
+  expect_equal(nrow(adjudications), 597L)
   expect_true(all(adjudications$status == "accepted"))
   expect_setequal(
     unique(adjudications$method),
@@ -616,7 +616,7 @@ test_that("reviewed geometry and source decisions satisfy evidence contracts", {
     ,
     drop = FALSE
   ]
-  expect_equal(nrow(nss64_code_matches), 30L)
+  expect_equal(nrow(nss64_code_matches), 401L)
   expect_true(all(nss64_code_matches$wave == "nss_2007_08"))
   expect_true(all(grepl("^pc2001__", nss64_code_matches$unit_id)))
   expect_true(all(
@@ -885,4 +885,25 @@ test_that("tracked NSS-64 code identities are unique registry matches", {
   expect_true(all(rows$source_id == "nss64_education_district_codes"))
   expect_equal(anyDuplicated(rows$source_row_id), 0L)
   expect_true(all(grepl("^pc2001__", rows$unit_id)))
+})
+
+test_that("tracked NSS-64 code decisions cover every known Census unit", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
+  adjudications <- read.csv(
+    file.path(
+      root, "data", "metadata", "district_adjudications_v2.csv"
+    ),
+    stringsAsFactors = FALSE
+  )
+  code_rows <- adjudications[
+    adjudications$method %in%
+      "official_nss64_census2001_code_identity",
+    ,
+    drop = FALSE
+  ]
+
+  expect_equal(nrow(code_rows), 401L)
+  expect_true(all(code_rows$wave == "nss_2007_08"))
+  expect_equal(anyDuplicated(code_rows$source_row_id), 0L)
+  expect_true(all(grepl("^pc2001__", code_rows$unit_id)))
 })
