@@ -969,3 +969,49 @@ test_that("non-overlap queue prefers human-readable panel labels", {
   expect_identical(out$state_label, "Uttar Pradesh")
   expect_identical(out$district_label, "Etah")
 })
+
+test_that("accepted sensitivity coverage counts identities, not allocation rows", {
+  eligibility <- data.frame(
+    source_row_id = c("a", "b", "c"),
+    status = "accepted",
+    stringsAsFactors = FALSE
+  )
+  sensitivity <- data.frame(
+    source_row_id = c("a", "b", "b"),
+    target_unit_2001 = c(
+      "pc2001__01__01", "pc2001__01__02", "pc2001__01__03"
+    ),
+    stringsAsFactors = FALSE
+  )
+
+  status <- accepted_sensitivity_mapping_status_v2(
+    eligibility, sensitivity
+  )
+
+  expect_equal(status$n_accepted, 3L)
+  expect_equal(status$n_mapped, 2L)
+  expect_equal(status$n_unmapped, 1L)
+  expect_false(status$coverage_complete)
+})
+
+test_that("accepted sensitivity coverage completes only after every identity maps", {
+  eligibility <- data.frame(
+    source_row_id = c("a", "b"),
+    status = "accepted",
+    stringsAsFactors = FALSE
+  )
+  sensitivity <- data.frame(
+    source_row_id = c("a", "b", "b"),
+    target_unit_2001 = c(
+      "pc2001__01__01", "pc2001__01__02", "pc2001__01__03"
+    ),
+    stringsAsFactors = FALSE
+  )
+
+  status <- accepted_sensitivity_mapping_status_v2(
+    eligibility, sensitivity
+  )
+
+  expect_true(status$coverage_complete)
+  expect_equal(status$n_mapped, status$n_accepted)
+})

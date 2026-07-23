@@ -409,6 +409,7 @@ migration_gate_actions_v2 <- function() {
     all_source_rows_adjudicated = "Accept or exclude every NSS source identity in tracked metadata.",
     accepted_source_rows_present = "Accept at least one source identity for the preferred panel.",
     all_accepted_rows_primary_classified = "Classify every accepted identity as preferred-eligible or explicitly excluded.",
+    all_accepted_rows_sensitivity_mapped = "Map every accepted identity in the connected sensitivity crosswalk or record an explicit exclusion.",
     all_changed_production_mappings_reviewed = "Review every changed production target and record whether v2 or production should prevail.",
     downstream_results_reviewed = "Review the shared-support results and resolve the unmapped-identity and panel-nonoverlap queues before recording a downstream decision."
   )
@@ -420,7 +421,8 @@ build_migration_readiness_v2 <- function(
   adjudicated_allocation_validation, source_reference_issues,
   adjudicated_allocation_weights = data.frame(),
   production_comparison = data.frame(),
-  production_reviews = data.frame()
+  production_reviews = data.frame(),
+  sensitivity_crosswalk = data.frame()
 ) {
   source_matches <- safe_df(source_matches)
   resolved_ids <- source_matches$source_row_id[
@@ -431,6 +433,9 @@ build_migration_readiness_v2 <- function(
     allocation_validation,
     adjudicated_allocation_validation,
     allocation_decision_status_v2(adjudicated_allocation_weights)
+  )
+  sensitivity_mapping_status <- accepted_sensitivity_mapping_status_v2(
+    primary_eligibility, sensitivity_crosswalk
   )
 
   gates <- c(
@@ -456,6 +461,8 @@ build_migration_readiness_v2 <- function(
         all(!is.na(primary_eligibility$eligible_primary[
           primary_eligibility$status %in% "accepted"
         ])),
+    all_accepted_rows_sensitivity_mapped =
+      sensitivity_mapping_status$coverage_complete[[1L]],
     all_changed_production_mappings_reviewed = {
       changed <- safe_df(production_comparison)
       changed <- changed[
@@ -489,6 +496,12 @@ build_migration_readiness_v2 <- function(
     all_source_rows_adjudicated = "Every NSS source row is explicitly accepted or excluded in tracked metadata.",
     accepted_source_rows_present = "At least one source row is accepted for lineage processing.",
     all_accepted_rows_primary_classified = "Every accepted identity has an explicit preferred-panel eligibility disposition.",
+    all_accepted_rows_sensitivity_mapped = paste0(
+      sensitivity_mapping_status$n_mapped[[1L]], "/",
+      sensitivity_mapping_status$n_accepted[[1L]],
+      " accepted identities appear in the connected sensitivity crosswalk; ",
+      sensitivity_mapping_status$n_unmapped[[1L]], " remain unmapped."
+    ),
     all_changed_production_mappings_reviewed = "Every changed inherited production target has a tracked review decision.",
     downstream_results_reviewed = "The rebuilt panel and model results have been reviewed before migration."
   )
@@ -696,14 +709,15 @@ build_district_lineage_v2 <- function(
     missing_core, admin_2001, admin_2011, allocation_validation,
     source_roster, source_matches, eligibility, duplicate_keys,
     adjudicated_weight_validation, source_reference_issues,
-    adjudicated_weights, production_comparison, production_reviews
+    adjudicated_weights, production_comparison, production_reviews,
+    sensitivity_crosswalk
   )
   migration_blockers <- build_migration_blockers_v2(readiness)
   completion_status <- lineage_completion_steps_v2(
     source_roster, source_matches, adjudication_queue, evidence_requests,
     allocation_validation, adjudicated_weights, primary_crosswalk,
     sensitivity_crosswalk, production_comparison, geometry_qa, readiness,
-    production_reviews
+    production_reviews, eligibility
   )
   summary <- lineage_v2_summary(
     inventory, admin_2001, admin_2011, bridge, transition, source_roster,

@@ -617,11 +617,33 @@ geometry_qa_v2 <- function(geometry_2001, admin_2001) {
   )
 }
 
+accepted_sensitivity_mapping_status_v2 <- function(
+  primary_eligibility, sensitivity_crosswalk
+) {
+  eligibility <- safe_df(primary_eligibility)
+  sensitivity <- safe_df(sensitivity_crosswalk)
+
+  accepted_ids <- unique(stats::na.omit(
+    eligibility$source_row_id[eligibility$status %in% "accepted"]
+  ))
+  mapped_ids <- unique(stats::na.omit(sensitivity$source_row_id))
+  unmapped_ids <- setdiff(accepted_ids, mapped_ids)
+
+  data.frame(
+    n_accepted = length(accepted_ids),
+    n_mapped = length(intersect(accepted_ids, mapped_ids)),
+    n_unmapped = length(unmapped_ids),
+    coverage_complete = length(accepted_ids) > 0L && !length(unmapped_ids),
+    stringsAsFactors = FALSE
+  )
+}
+
 lineage_completion_steps_v2 <- function(
   source_roster, source_matches, adjudication_queue, evidence_requests,
   allocation_validation, allocation_weights, primary_crosswalk,
   sensitivity_crosswalk, production_comparison, geometry_qa, readiness,
-  production_reviews = data.frame()
+  production_reviews = data.frame(),
+  primary_eligibility = data.frame()
 ) {
   roster <- safe_df(source_roster)
   matches <- safe_df(source_matches)
@@ -634,6 +656,9 @@ lineage_completion_steps_v2 <- function(
   comparison <- safe_df(production_comparison)
   geometry_qa <- safe_df(geometry_qa)
   readiness <- safe_df(readiness)
+  sensitivity_mapping_status <- accepted_sensitivity_mapping_status_v2(
+    primary_eligibility, sensitivity
+  )
 
   resolved_ids <- unique(matches$source_row_id[
     matches$status %in% c("accepted", "excluded")
@@ -701,7 +726,7 @@ lineage_completion_steps_v2 <- function(
       "Review deterministic identities and populate source adjudications",
       "Resolve fuzzy source identities",
       "Review targeted administrative-event evidence",
-      "Resolve incomplete SHRID coverage and sensitivity allocations",
+      "Resolve incomplete SHRID source-unit coverage",
       "Construct and validate Census 2001 geometry",
       "Build preferred and sensitivity source crosswalks",
       "Compare v2 mappings with the production panel",
@@ -714,7 +739,9 @@ lineage_completion_steps_v2 <- function(
       nrow(evidence) == 0L,
       allocation_gaps_resolved,
       geometry_complete,
-      nrow(primary) > 0L && nrow(sensitivity) >= nrow(primary),
+      nrow(primary) > 0L &&
+        nrow(sensitivity) >= nrow(primary) &&
+        sensitivity_mapping_status$coverage_complete[[1L]],
       nrow(primary) > 0L && nrow(comparison) == nrow(primary),
       nrow(comparison) > 0L &&
         all(
@@ -730,10 +757,16 @@ lineage_completion_steps_v2 <- function(
       paste0(nrow(evidence), " targeted evidence requests"),
       paste0(
         allocation_status$n_unresolved[[1]],
-        " unresolved source allocations after reviewed sensitivity decisions"
+        " unresolved SHRID source-unit allocations after reviewed decisions"
       ),
       geometry_observed,
-      paste0(nrow(primary), " preferred; ", nrow(sensitivity), " total sensitivity rows"),
+      paste0(
+        nrow(primary), " preferred rows; ",
+        nrow(sensitivity), " sensitivity rows; ",
+        sensitivity_mapping_status$n_mapped[[1L]], "/",
+        sensitivity_mapping_status$n_accepted[[1L]],
+        " accepted identities mapped"
+      ),
       paste0(nrow(comparison), " source mappings compared"),
       paste0(
         sum(comparison$comparison_status == "changed_target"),
@@ -748,9 +781,9 @@ lineage_completion_steps_v2 <- function(
       "Review adjudication_draft.csv and copy verified decisions into district_adjudications_v2.csv.",
       "Use official rename or boundary evidence; accept, exclude, or retain needs_review.",
       "Record accepted or rejected edges in district_admin_events_v2.csv with registered source IDs.",
-      "Investigate unmapped mass and enter reviewed allocations in district_allocation_weights_v2.csv.",
+      "Resolve only SHRID source units with incomplete or invalid transition mass in district_allocation_weights_v2.csv.",
       geometry_next_action,
-      "Regenerate the diagnostic after accepted source decisions and allocation weights are tracked.",
+      "Resolve accepted identities listed in downstream_unmapped_identity_queue.csv, then regenerate the connected sensitivity crosswalk.",
       "Inspect production_crosswalk_comparison.csv after preferred mappings exist.",
       "Inspect the shared-support results and the two downstream review queues; record an explicit downstream decision only after non-overlap and unmapped identities are resolved.",
       "Replace the inherited crosswalk only after every migration gate passes and changes are reviewed."

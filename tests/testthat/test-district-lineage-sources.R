@@ -1446,3 +1446,40 @@ test_that("tracked production mapping reviews cover every changed target", {
   )
   expect_match(downstream$note, "shared-support models have been rebuilt")
 })
+
+test_that("migration readiness distinguishes SHRID coverage from NSS identity coverage", {
+  readiness <- build_migration_readiness_v2(
+    missing_core = character(),
+    admin_2001 = data.frame(unit_id = "pc2001__01__01"),
+    admin_2011 = data.frame(unit_id = "pc2011__01__001"),
+    allocation_validation = data.frame(
+      source_key = "pc2011__01__001",
+      weights_well_formed = TRUE,
+      coverage_complete = TRUE
+    ),
+    source_roster = data.frame(source_row_id = c("a", "b")),
+    source_matches = data.frame(
+      source_row_id = c("a", "b"),
+      status = "accepted"
+    ),
+    primary_eligibility = data.frame(
+      source_row_id = c("a", "b"),
+      status = "accepted",
+      eligible_primary = c(TRUE, FALSE)
+    ),
+    duplicate_keys = data.frame(),
+    adjudicated_allocation_validation = data.frame(),
+    source_reference_issues = data.frame(),
+    sensitivity_crosswalk = data.frame(
+      source_row_id = "a",
+      target_unit_2001 = "pc2001__01__01"
+    )
+  )
+
+  expect_true(readiness$passed[
+    readiness$gate == "shrid_allocation_coverage_complete"
+  ])
+  expect_false(readiness$passed[
+    readiness$gate == "all_accepted_rows_sensitivity_mapped"
+  ])
+})
