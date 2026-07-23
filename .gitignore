@@ -35,6 +35,7 @@ relevant-literature/
 outputs/diagnostics/*.csv
 outputs/diagnostics/build/
 outputs/diagnostics/public/
+outputs/diagnostics/extended/district_lineage_v2/
 
 # generated caches and render byproducts
 Rplots.pdf
