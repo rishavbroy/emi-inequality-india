@@ -352,3 +352,50 @@ test_that("evidence requests follow deterministic adjudication work", {
   expect_true(any(out$request_id == "source__fuzzy"))
   expect_true(any(out$request_id == "event__beta_event"))
 })
+
+test_that("migration readiness is derived from prerequisite gates", {
+  args <- list(
+    missing_core = character(),
+    admin_2001 = data.frame(unit_id = "pc2001__01__01"),
+    admin_2011 = data.frame(unit_id = "pc2011__01__001"),
+    allocation_validation = data.frame(within_tolerance = TRUE),
+    source_roster = data.frame(source_row_id = "source-1"),
+    source_matches = data.frame(source_row_id = "source-1", status = "accepted"),
+    primary_eligibility = data.frame(status = "accepted", eligible_primary = TRUE),
+    duplicate_keys = empty_duplicate_key_diagnostics_v2(),
+    adjudicated_allocation_validation = data.frame(
+      source_key = character(), within_tolerance = logical()
+    ),
+    source_reference_issues = data.frame()
+  )
+
+  ready <- do.call(build_migration_readiness_v2, args)
+  expect_true(ready$passed[ready$gate == "production_crosswalk_migration_ready"])
+
+  args$allocation_validation$within_tolerance <- FALSE
+  blocked <- do.call(build_migration_readiness_v2, args)
+  expect_false(blocked$passed[blocked$gate == "production_crosswalk_migration_ready"])
+  expect_identical(
+    build_migration_blockers_v2(blocked)$gate,
+    "allocation_weights_valid"
+  )
+})
+
+test_that("migration blockers contain one actionable row per failed prerequisite", {
+  readiness <- data.frame(
+    gate = c(
+      "core_inputs_available",
+      "all_source_rows_adjudicated",
+      "production_crosswalk_migration_ready"
+    ),
+    passed = c(TRUE, FALSE, FALSE),
+    note = c("complete", "incomplete", "summary"),
+    stringsAsFactors = FALSE
+  )
+  blockers <- build_migration_blockers_v2(readiness)
+
+  expect_named(blockers, c("gate", "note", "next_action"))
+  expect_identical(blockers$gate, "all_source_rows_adjudicated")
+  expect_true(nzchar(blockers$next_action))
+})
+

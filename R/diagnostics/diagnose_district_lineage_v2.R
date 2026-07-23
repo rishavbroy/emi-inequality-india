@@ -344,109 +344,90 @@ build_evidence_requests_v2 <- function(candidate_events, source_roster, adjudica
   unique(safe_bind_rows(list(event_out, source_out)))
 }
 
+migration_gate_actions_v2 <- function() {
+  c(
+    core_inputs_available = "Add or register every required locality key and the PC11 district geometry.",
+    unique_2001_unit_ids = "Resolve duplicate Census 2001 unit identifiers.",
+    unique_2011_unit_ids = "Resolve duplicate Census 2011 unit identifiers.",
+    allocation_weights_valid = "Resolve incomplete SHRUG coverage or document accepted sensitivity allocations.",
+    adjudicated_allocation_weights_valid = "Correct accepted sensitivity weights so each source unit sums to one.",
+    all_adjudication_sources_registered = "Register every source cited by accepted matches, events, and allocations.",
+    no_conflicting_duplicate_keys = "Resolve conflicting source or registry keys.",
+    all_source_rows_adjudicated = "Accept or exclude every NSS source identity in tracked metadata.",
+    all_accepted_rows_primary_eligible = "Exclude non-nested accepted rows or provide a deterministic 2001 mapping."
+  )
+}
+
 build_migration_readiness_v2 <- function(
   missing_core, admin_2001, admin_2011, allocation_validation,
   source_roster, source_matches, primary_eligibility, duplicate_keys,
   adjudicated_allocation_validation, source_reference_issues
 ) {
   source_matches <- safe_df(source_matches)
-  accepted_or_excluded <- source_matches$status %in% c("accepted", "excluded")
-  resolved_ids <- source_matches$source_row_id[accepted_or_excluded]
+  resolved_ids <- source_matches$source_row_id[
+    source_matches$status %in% c("accepted", "excluded")
+  ]
   duplicates <- safe_df(duplicate_keys)
-  data.frame(
-    gate = c(
-      "core_inputs_available", "unique_2001_unit_ids", "unique_2011_unit_ids",
-      "allocation_weights_valid", "adjudicated_allocation_weights_valid",
-      "all_adjudication_sources_registered", "no_conflicting_duplicate_keys",
-      "all_source_rows_adjudicated",
-      "all_accepted_rows_primary_eligible",
-      "production_crosswalk_migration_ready"
-    ),
-    passed = c(
-      !length(missing_core),
-      nrow(admin_2001) > 0L && !anyDuplicated(admin_2001$unit_id),
-      nrow(admin_2011) > 0L && !anyDuplicated(admin_2011$unit_id),
+
+  gates <- c(
+    core_inputs_available = !length(missing_core),
+    unique_2001_unit_ids = nrow(admin_2001) > 0L && !anyDuplicated(admin_2001$unit_id),
+    unique_2011_unit_ids = nrow(admin_2011) > 0L && !anyDuplicated(admin_2011$unit_id),
+    allocation_weights_valid =
       nrow(allocation_validation) > 0L && all(allocation_validation$within_tolerance),
-      !nrow(adjudicated_allocation_validation) || all(adjudicated_allocation_validation$within_tolerance),
-      !nrow(source_reference_issues),
+    adjudicated_allocation_weights_valid =
+      !nrow(adjudicated_allocation_validation) ||
+        all(adjudicated_allocation_validation$within_tolerance),
+    all_adjudication_sources_registered = !nrow(source_reference_issues),
+    no_conflicting_duplicate_keys =
       !nrow(duplicates) || !any(duplicates$duplicate_type == "conflicting"),
+    all_source_rows_adjudicated =
       nrow(source_roster) > 0L && all(source_roster$source_row_id %in% resolved_ids),
+    all_accepted_rows_primary_eligible =
       any(source_matches$status %in% "accepted") &&
-        all(primary_eligibility$eligible_primary[primary_eligibility$status == "accepted"]),
-      FALSE
-    ),
+        all(primary_eligibility$eligible_primary[primary_eligibility$status == "accepted"])
+  )
+  notes <- c(
+    core_inputs_available = "All locality keys and the PC11 district geometry are present.",
+    unique_2001_unit_ids = "Census 2001 unit IDs are code-based and unique.",
+    unique_2011_unit_ids = "Census 2011 unit IDs are code-based and unique.",
+    allocation_weights_valid = "Every SHRUG source-district allocation sums to one with no missing or negative weights.",
+    adjudicated_allocation_weights_valid = "Every accepted tracked sensitivity allocation sums to one by source unit.",
+    all_adjudication_sources_registered = "Every accepted source match, event, and allocation cites a registered evidence source.",
+    no_conflicting_duplicate_keys = "Duplicate source or registry keys are either absent or identical.",
+    all_source_rows_adjudicated = "Every NSS source row is explicitly accepted or excluded in tracked metadata.",
+    all_accepted_rows_primary_eligible = "Every accepted source row maps deterministically to a 2001 district."
+  )
+
+  data.frame(
+    gate = c(names(gates), "production_crosswalk_migration_ready"),
+    passed = c(unname(gates), all(gates)),
     note = c(
-      "All locality keys and the PC11 district geometry are present.",
-      "Census 2001 unit IDs are code-based and unique.",
-      "Census 2011 unit IDs are code-based and unique.",
-      "Every SHRUG source-district allocation sums to one with no missing or negative weights.",
-      "Every accepted tracked sensitivity allocation sums to one by source unit.",
-      "Every accepted source match, event, and allocation cites a registered evidence source.",
-      "Duplicate source or registry keys are either absent or identical.",
-      "Every NSS source row is explicitly accepted or excluded in tracked metadata.",
-      "Every accepted source row maps deterministically to a 2001 district.",
-      "Remains false until the reviewed v2 ledgers replace the inherited production crosswalk."
+      unname(notes),
+      "Passes only when every prerequisite gate passes; production replacement remains an explicit maintainer action."
     ),
     stringsAsFactors = FALSE
   )
 }
 
-summarize_shrid_bridge_v2 <- function(bridge) {
-  bridge <- safe_df(bridge)
-  if (!nrow(bridge)) {
+build_migration_blockers_v2 <- function(readiness) {
+  readiness <- safe_df(readiness)
+  out <- readiness[
+    !(readiness$passed %in% TRUE) &
+      readiness$gate != "production_crosswalk_migration_ready",
+    c("gate", "note"),
+    drop = FALSE
+  ]
+  if (!nrow(out)) {
     return(data.frame(
-      bridge_status = character(), n_shrid = integer(), population = numeric(),
-      area = numeric(), stringsAsFactors = FALSE
+      gate = character(), note = character(), next_action = character(),
+      stringsAsFactors = FALSE
     ))
   }
-  status <- plain_chr(bridge$bridge_status)
-  groups <- split(seq_len(nrow(bridge)), status)
-  safe_bind_rows(lapply(groups, function(i) {
-    data.frame(
-      bridge_status = status[[i[[1]]]],
-      n_shrid = length(unique(bridge$shrid2[i])),
-      population = sum_finite_or_na(bridge$population[i]),
-      area = sum_finite_or_na(bridge$area[i]),
-      stringsAsFactors = FALSE
-    )
-  }))
+  out$next_action <- unname(migration_gate_actions_v2()[out$gate])
+  out
 }
 
-lineage_v2_summary <- function(
-  inventory, admin_2001, admin_2011, bridge, transition, source_roster,
-  source_matches, candidates, adjudication_queue, eligibility, events,
-  current_components, urban_coverage, changed_components, evidence_requests
-) {
-  accepted <- source_matches$status %in% "accepted"
-  data.frame(
-    metric = c(
-      "available_inputs", "missing_inputs", "admin_units_2001", "admin_units_2011",
-      "shrid_bridge_rows", "deterministic_shrid_rows", "district_transition_rows",
-      "nss_source_rows", "accepted_source_matches", "unadjudicated_source_rows",
-      "candidate_rows", "cross_vintage_exact_review_rows", "single_vintage_exact_review_rows",
-      "fuzzy_review_rows", "no_candidate_rows", "primary_eligible_source_rows", "candidate_event_rows",
-      "current_component_rows", "urban_coverage_rows", "changed_component_rows",
-      "targeted_evidence_requests"
-    ),
-    value = c(
-      sum(inventory$exists), sum(!inventory$exists), nrow(admin_2001), nrow(admin_2011),
-      nrow(bridge), sum(bridge$deterministic %in% TRUE), nrow(transition),
-      nrow(source_roster), sum(accepted),
-      sum(!source_roster$source_row_id %in% source_matches$source_row_id[source_matches$status %in% c("accepted", "excluded")]),
-      nrow(candidates),
-      sum(adjudication_queue$review_class == "cross_vintage_exact_candidate"),
-      sum(adjudication_queue$review_class == "single_vintage_exact_candidate"),
-      sum(adjudication_queue$review_class %in% c("high_precision_fuzzy_candidate", "fuzzy_candidates")),
-      sum(adjudication_queue$review_class == "no_candidate"),
-      sum(eligibility$eligible_primary %in% TRUE), nrow(events),
-      nrow(current_components), nrow(urban_coverage), nrow(changed_components),
-      nrow(evidence_requests)
-    ),
-    stringsAsFactors = FALSE
-  )
-}
-
-#' Build district-lineage v2 diagnostic bundle
 build_district_lineage_v2 <- function(
   raw_sources, inventory, district_tracker, census_2001_languages,
   source_2007, source_2017
@@ -522,6 +503,7 @@ build_district_lineage_v2 <- function(
     source_roster, source_matches, eligibility, duplicate_keys,
     adjudicated_weight_validation, source_reference_issues
   )
+  migration_blockers <- build_migration_blockers_v2(readiness)
   summary <- lineage_v2_summary(
     inventory, admin_2001, admin_2011, bridge, transition, source_roster,
     source_matches, candidates, adjudication_queue, eligibility, candidate_events, current_components,
@@ -531,6 +513,7 @@ build_district_lineage_v2 <- function(
   list(
     summary = summary,
     migration_readiness = readiness,
+    migration_blockers = migration_blockers,
     source_inventory = inventory,
     source_registry = source_registry,
     source_reference_issues = source_reference_issues,
@@ -567,7 +550,8 @@ build_district_lineage_v2 <- function(
 save_district_lineage_v2 <- function(diagnostics, dir = "outputs/diagnostics/extended/district_lineage_v2") {
   dir.create(dir, recursive = TRUE, showWarnings = FALSE)
   names_to_write <- c(
-    "summary", "migration_readiness", "source_inventory", "source_registry", "source_reference_issues",
+    "summary", "migration_readiness", "migration_blockers",
+    "source_inventory", "source_registry", "source_reference_issues",
     "admin_units_2001", "admin_units_2011",
     "shrid_bridge_summary", "shrid_bridge_qa",
     "district_transition_2001_2011", "allocation_weight_validation",
