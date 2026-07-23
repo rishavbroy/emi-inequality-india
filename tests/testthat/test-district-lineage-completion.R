@@ -462,18 +462,23 @@ test_that("accepted geometry carry-backs fill only missing 2001 units", {
 
   geometry_2001 <- sf::st_sf(
     unit_id = "pc2001__01__01",
-    geom = sf::st_sfc(sf::st_point(c(0, 0)), crs = 4326),
-    sf_column_name = "geom"
+    legacy_attribute = "base",
+    geometry_2001 = sf::st_sfc(
+      sf::st_point(c(0, 0)),
+      crs = 4326
+    ),
+    sf_column_name = "geometry_2001"
   )
   geometry_2011 <- sf::st_sf(
     pc11_state_id = c("07", "27"),
     pc11_district_id = c("090", "518"),
-    geom = sf::st_sfc(
+    later_attribute = c("delhi", "mumbai"),
+    geometry_2011 = sf::st_sfc(
       sf::st_point(c(1, 1)),
       sf::st_point(c(2, 2)),
       crs = 4326
     ),
-    sf_column_name = "geom"
+    sf_column_name = "geometry_2011"
   )
   carrybacks <- data.frame(
     target_unit_2001 = c("pc2001__07__01", "pc2001__27__22"),
@@ -493,4 +498,24 @@ test_that("accepted geometry carry-backs fill only missing 2001 units", {
     c("pc2001__01__01", "pc2001__07__01", "pc2001__27__22")
   )
   expect_equal(anyDuplicated(out$unit_id), 0L)
+  expect_identical(names(sf::st_drop_geometry(out)), "unit_id")
+  expect_identical(attr(out, "sf_column"), "geometry")
+})
+
+test_that("unit geometry normalization rejects mismatched identifiers", {
+  skip_if_not_installed("sf")
+
+  x <- sf::st_sf(
+    id = c("a", "b"),
+    geom = sf::st_sfc(
+      sf::st_point(c(0, 0)),
+      sf::st_point(c(1, 1))
+    ),
+    sf_column_name = "geom"
+  )
+
+  expect_error(
+    as_unit_geometry_v2(x, unit_id = "only-one"),
+    "one value per feature"
+  )
 })
