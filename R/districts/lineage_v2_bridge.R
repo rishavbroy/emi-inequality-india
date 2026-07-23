@@ -359,7 +359,12 @@ validate_allocation_weights <- function(weights, source_cols = c("state_code_201
       n_missing_weights = sum(!is.finite(value)),
       n_negative_weights = sum(is.finite(value) & value < 0),
       weight_sum = if (all(is.finite(value))) sum(value) else NA_real_,
-      within_tolerance = all(is.finite(value)) && all(value >= 0) && abs(sum(value) - 1) <= tolerance,
+      unmapped_share = if (all(is.finite(value))) max(0, 1 - sum(value)) else NA_real_,
+      weights_well_formed =
+        all(is.finite(value)) && all(value >= 0) && sum(value) <= 1 + tolerance,
+      coverage_complete =
+        all(is.finite(value)) && all(value >= 0) &&
+          abs(sum(value) - 1) <= tolerance,
       stringsAsFactors = FALSE
     )
   }))
@@ -412,7 +417,8 @@ validate_adjudicated_allocation_weights_v2 <- function(weights, tolerance = 1e-8
   if (!nrow(accepted)) {
     return(data.frame(
       source_key = character(), n_targets = integer(), n_missing_weights = integer(),
-      n_negative_weights = integer(), weight_sum = numeric(), within_tolerance = logical(),
+      n_negative_weights = integer(), weight_sum = numeric(), unmapped_share = numeric(),
+      weights_well_formed = logical(), coverage_complete = logical(),
       stringsAsFactors = FALSE
     ))
   }

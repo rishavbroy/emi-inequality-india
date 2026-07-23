@@ -107,9 +107,12 @@ test_that("allocation validation rejects incomplete or negative source weights",
   weights$population_share_to_2001 <- c(1.1, -0.1)
   negative <- validate_allocation_weights(weights)
 
-  expect_false(incomplete$within_tolerance)
+  expect_true(incomplete$weights_well_formed)
+  expect_false(incomplete$coverage_complete)
   expect_equal(incomplete$weight_sum, 0.9)
-  expect_false(negative$within_tolerance)
+  expect_equal(incomplete$unmapped_share, 0.1)
+  expect_false(negative$weights_well_formed)
+  expect_false(negative$coverage_complete)
   expect_equal(negative$n_negative_weights, 1L)
 })
 
@@ -131,14 +134,15 @@ test_that("tracked allocation weights require known targets and sum to one", {
   validation <- validate_adjudicated_allocation_weights_v2(out)
 
   expect_equal(validation$weight_sum, 1)
-  expect_true(validation$within_tolerance)
+  expect_true(validation$weights_well_formed)
+  expect_true(validation$coverage_complete)
 
   raw$weight <- c(0.25, 0.70)
-  expect_false(
-    validate_adjudicated_allocation_weights_v2(
-      read_adjudicated_allocation_weights_v2(raw, admin)
-    )$within_tolerance
+  incomplete <- validate_adjudicated_allocation_weights_v2(
+    read_adjudicated_allocation_weights_v2(raw, admin)
   )
+  expect_true(incomplete$weights_well_formed)
+  expect_false(incomplete$coverage_complete)
 
   raw$target_2001[[1]] <- "unknown"
   expect_error(
