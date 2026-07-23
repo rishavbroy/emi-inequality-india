@@ -224,6 +224,16 @@ read or union the 380 MB source archive.
 
 ## Reviewed high-coverage sensitivity allocations
 
+Allocation source keys use the same canonical unit identifier as the
+administrative registry: `pc2011__SS__DDD`, where `SS` is the two-digit
+Census-2011 state code and `DDD` is the three-digit district code. The tracked
+allocation CSV is read with identifier columns explicitly declared as
+character, following the CSV reader's standard `colClasses` contract.
+Legacy character values such as `01.010` may be normalized at the ingestion
+boundary, but numeric reconstruction is prohibited because it cannot recover
+lost leading or trailing zeros reliably.
+
+
 The first allocation tranche addresses incomplete SHRID coverage without
 relaxing the preferred-panel rule. For a Census-2011 source district with at
 least 99 percent of its population represented in the SHRUG bridge, the mapped
