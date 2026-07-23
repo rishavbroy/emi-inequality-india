@@ -20,8 +20,13 @@ build_adjudication_draft_v2 <- function(source_roster, adjudication_queue, candi
   candidates <- safe_df(candidates)
   if (!nrow(roster)) return(empty_adjudication_draft_v2())
 
+  adjudication_status <- if ("adjudication_status" %in% names(queue)) {
+    queue$adjudication_status
+  } else {
+    rep(NA_character_, nrow(queue))
+  }
   unresolved_queue <- queue[
-    !(queue$adjudication_status %in% c("accepted", "excluded")),
+    !(adjudication_status %in% c("accepted", "excluded")),
     c(
       "source_row_id", "recommended_unit", "recommended_method",
       "review_class", "recommended_vintage"
@@ -182,6 +187,9 @@ build_production_crosswalk_comparison_v2 <- function(primary_crosswalk, producti
     rows <- x[groups[[wave]], , drop = FALSE]
     current <- production_for_wave(wave)
     rows <- merge(rows, current, by = "source_code", all.x = TRUE, sort = FALSE)
+    rows$production_mapping_count[
+      is.na(rows$production_mapping_count)
+    ] <- 0L
     data.frame(
       source_row_id = rows$source_row_id,
       wave = rows$wave,
@@ -277,12 +285,15 @@ dissolve_shrid_geometry_2001_v2 <- function(shrid_geometry, bridge) {
   joined$unit_id <- paste0(
     "pc2001__", joined$state_code_2001, "__", joined$district_code_2001
   )
-  aggregate(
-    joined["geometry"],
+  joined$.member <- 1L
+  out <- aggregate(
+    joined[".member"],
     by = list(unit_id = joined$unit_id),
-    FUN = length,
+    FUN = sum,
     do_union = TRUE
-  )["unit_id"]
+  )
+  out$.member <- NULL
+  out["unit_id"]
 }
 
 geometry_qa_v2 <- function(geometry_2001, admin_2001) {

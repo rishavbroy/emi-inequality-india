@@ -300,3 +300,34 @@ test_that("accepted allocations may include resolved complete sources", {
   expect_true(status$complete[status$step == 4L])
 })
 
+test_that("geometry dissolve is independent of the sf geometry-column name", {
+  skip_if_not_installed("sf")
+
+  square <- function(xmin, ymin) {
+    sf::st_polygon(list(rbind(
+      c(xmin, ymin), c(xmin + 1, ymin),
+      c(xmin + 1, ymin + 1), c(xmin, ymin + 1),
+      c(xmin, ymin)
+    )))
+  }
+  polygons <- sf::st_sfc(square(0, 0), square(1, 0), crs = 4326)
+  geometry <- sf::st_sf(
+    shrid2 = c("a", "b"),
+    geom = polygons,
+    sf_column_name = "geom"
+  )
+  bridge <- data.frame(
+    shrid2 = c("a", "b"),
+    state_code_2001 = c("01", "01"),
+    district_code_2001 = c("001", "001"),
+    deterministic_2001 = TRUE,
+    stringsAsFactors = FALSE
+  )
+
+  out <- dissolve_shrid_geometry_2001_v2(geometry, bridge)
+
+  expect_s3_class(out, "sf")
+  expect_identical(out$unit_id, "pc2001__01__001")
+  expect_equal(nrow(out), 1L)
+  expect_true(sf::st_is_valid(out)[[1]])
+})
