@@ -66,7 +66,7 @@ district_lineage_v2_input_specs <- function(paths = build_paths()) {
     spec("lineage_gold", "data/metadata/district_match_gold.csv", "csv", TRUE, "calibration"),
     spec("lineage_adjudications", "data/metadata/district_adjudications_v2.csv", "csv", TRUE, "adjudication"),
     spec("lineage_events", "data/metadata/district_admin_events_v2.csv", "csv", TRUE, "event_adjudication"),
-    spec("lineage_allocation_weights", "data/metadata/district_allocation_weights_v2.csv", "csv", TRUE, "allocation_adjudication"),
+    spec("lineage_allocation_weights", "data/metadata/district_allocation_weights_v2.csv", "allocation_csv", TRUE, "allocation_adjudication"),
     spec("lineage_geometry_carrybacks", "data/metadata/district_geometry_carrybacks_v2.csv", "csv", TRUE, "geometry_adjudication"),
     spec("lineage_sources", "data/metadata/district_sources_v2.csv", "csv", TRUE, "source_registry")
   )
@@ -240,7 +240,7 @@ drop_export_footer <- function(x) {
   x[keep, , drop = FALSE]
 }
 
-read_lineage_csv <- function(path, select = NULL) {
+read_lineage_csv <- function(path, select = NULL, colClasses = NULL) {
   need_pkg("data.table", "district-lineage CSV inputs")
   args <- list(
     file = path,
@@ -250,6 +250,7 @@ read_lineage_csv <- function(path, select = NULL) {
     na.strings = c("", "NA")
   )
   if (!is.null(select)) args$select <- select
+  if (!is.null(colClasses)) args$colClasses <- colClasses
   safe_df(do.call(data.table::fread, args))
 }
 
@@ -307,6 +308,15 @@ read_lineage_source <- function(path, reader, source_id = NA_character_) {
       read_lgd_spreadsheetml(path), modification_level(source_id)
     ),
     csv = read_lineage_csv(path),
+    allocation_csv = read_lineage_csv(
+      path,
+      colClasses = list(
+        character = c(
+          "source_unit", "target_2001", "basis", "source_id",
+          "status", "note"
+        )
+      )
+    ),
     shrug_locality_csv = read_shrug_key(path, "locality"),
     shrug_district_csv = read_shrug_key(path, "district"),
     gpkg = {
