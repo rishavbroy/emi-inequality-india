@@ -8,6 +8,8 @@ The substantive goal is a district-level pseudo-panel whose analytical unit is a
 
 The v2 rebuild currently runs only as an extended diagnostic. The inherited [`data/metadata/district_harmonization_crosswalk.csv`](../data/metadata/district_harmonization_crosswalk.csv) remains the production authority until the new ledgers are adjudicated and all migration gates pass. Do not silently substitute v2 candidates into the paper.
 
+Migration readiness is derived from the prerequisite gates rather than held permanently false. Passing readiness means the v2 evidence is internally complete; replacing the production crosswalk remains an explicit maintainer action. Failed prerequisites are written to `migration_blockers.csv` with one concrete next action per gate.
+
 ## Non-negotiable warnings
 
 - The legacy 454-district count and the legacy first-stage estimate 2.945 (SE 0.949) and second-stage estimate 0.201 (SE 0.710) followed an almost certainly flawed district-matching procedure. They are historical comparisons, not parity targets.

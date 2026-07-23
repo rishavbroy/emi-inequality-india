@@ -28,6 +28,7 @@ accept a source identity.
 ```{r lineage-v2-inputs}
 summary <- analysis_target_csv("diag_ext_district_lineage_v2", "summary.csv")
 readiness <- analysis_target_csv("diag_ext_district_lineage_v2", "migration_readiness.csv")
+blockers <- analysis_target_csv("diag_ext_district_lineage_v2", "migration_blockers.csv")
 inventory <- analysis_target_csv("diag_ext_district_lineage_v2", "source_inventory.csv")
 source_registry <- analysis_target_csv("diag_ext_district_lineage_v2", "source_registry.csv")
 source_reference_issues <- analysis_target_csv("diag_ext_district_lineage_v2", "source_reference_issues.csv")
@@ -57,6 +58,7 @@ gold_summary <- analysis_target_csv("diag_ext_district_lineage_v2", "match_gold_
 ```{r lineage-v2-summary}
 analysis_table(summary, "District-lineage v2 summary")
 analysis_table(readiness, "Production-migration gates")
+analysis_table(blockers, "Current migration blockers")
 analysis_table(inventory, "Available and missing lineage inputs", max_rows = 60)
 analysis_table(source_registry, "District-lineage evidence registry", max_rows = 50)
 analysis_table(source_reference_issues, "Unregistered or missing adjudication evidence", max_rows = 50)
