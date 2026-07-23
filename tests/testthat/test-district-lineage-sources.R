@@ -549,7 +549,7 @@ test_that("derived Census 2001 geometry is an optional loaded source", {
   expect_identical(row$role, "derived_2001_geometry")
 })
 
-test_that("reviewed geometry and source decisions have registered evidence", {
+test_that("reviewed geometry and source decisions satisfy evidence contracts", {
   root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
   metadata_path <- function(name) {
     file.path(root, "data", "metadata", name)
@@ -576,9 +576,38 @@ test_that("reviewed geometry and source decisions have registered evidence", {
 
   expect_equal(nrow(carrybacks), 11L)
   expect_true(all(carrybacks$status == "accepted"))
-  expect_equal(nrow(adjudications), 18L)
+  expect_equal(nrow(adjudications), 196L)
   expect_true(all(adjudications$status == "accepted"))
-  expect_true(all(adjudications$unit_id %in% carrybacks$target_unit_2001))
+  expect_setequal(
+    unique(adjudications$method),
+    c(
+      "official_unchanged_boundary_carryback",
+      "official_nss64_census2001_code_name_identity"
+    )
+  )
+
+  geometry_matches <- adjudications[
+    adjudications$method %in% "official_unchanged_boundary_carryback",
+    ,
+    drop = FALSE
+  ]
+  expect_equal(nrow(geometry_matches), 18L)
+  expect_true(all(
+    geometry_matches$unit_id %in% carrybacks$target_unit_2001
+  ))
+
+  nss64_matches <- adjudications[
+    adjudications$method %in%
+      "official_nss64_census2001_code_name_identity",
+    ,
+    drop = FALSE
+  ]
+  expect_equal(nrow(nss64_matches), 178L)
+  expect_true(all(nss64_matches$wave == "nss_2007_08"))
+  expect_true(all(grepl("^pc2001__", nss64_matches$unit_id)))
+  expect_true(all(
+    nss64_matches$source_id == "nss64_education_district_codes"
+  ))
 
   issues <- validate_lineage_source_references_v2(
     registry,
@@ -776,4 +805,48 @@ test_that("tracked NSS-64 identities require code and name agreement", {
   expect_true(all(rows$source_id == "nss64_education_district_codes"))
   expect_equal(anyDuplicated(rows$source_row_id), 0L)
   expect_true(all(grepl("^pc2001__", rows$unit_id)))
+})
+
+test_that("source reference validation is method-agnostic", {
+  registry <- read_lineage_source_registry_v2(data.frame(
+    source_id = c("geometry_source", "survey_source"),
+    citation = c("Geometry evidence", "Survey evidence"),
+    path_or_url = c("geometry", "survey"),
+    accessed = c("2026-07-23", "2026-07-23"),
+    stringsAsFactors = FALSE
+  ))
+  matches <- read_adjudicated_source_matches_v2(data.frame(
+    source_row_id = c("geometry_row", "survey_row"),
+    wave = c("nss_2007_08", "nss_2007_08"),
+    raw_state = c("State", "State"),
+    raw_district = c("District A", "District B"),
+    unit_id = c("pc2001__01__01", "pc2001__02__02"),
+    method = c(
+      "official_unchanged_boundary_carryback",
+      "official_nss64_census2001_code_name_identity"
+    ),
+    source_id = c("geometry_source", "survey_source"),
+    status = c("accepted", "accepted"),
+    note = c("Geometry decision", "Survey decision"),
+    stringsAsFactors = FALSE
+  ))
+  carrybacks <- read_geometry_carrybacks_v2(data.frame(
+    target_unit_2001 = "pc2001__01__01",
+    source_unit_2011 = "pc2011__01__001",
+    source_id = "geometry_source",
+    status = "accepted",
+    note = "Geometry decision",
+    stringsAsFactors = FALSE
+  ))
+
+  issues <- validate_lineage_source_references_v2(
+    registry,
+    source_matches = matches,
+    geometry_carrybacks = carrybacks
+  )
+
+  expect_equal(nrow(issues), 0L)
+  expect_false(
+    matches$unit_id[[2]] %in% carrybacks$target_unit_2001
+  )
 })
