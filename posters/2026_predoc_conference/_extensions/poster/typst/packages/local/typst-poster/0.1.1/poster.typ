@@ -44,7 +44,7 @@
       #v(10pt)
       #text(size: int(authors_font_size) * 1pt, authors)
       #v(5pt)
-      #text(size: 30pt, departments)])
+      #text(size: 30pt, departments)]))
   v(18pt)
   show: columns.with(ncols, gutter: 0.45in)
   body
