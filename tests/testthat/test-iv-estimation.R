@@ -19,6 +19,40 @@ test_that("estimate_2sls fits a toy exactly identified IV model when possible", 
   out <- estimate_2sls(panel, formulas, list())
 
   expect_s3_class(out$toy, "ivreg")
+  expect_true(is.list(out$toy$x))
+  expect_true(all(c("regressors", "instruments", "projected") %in% names(out$toy$x)))
+  expect_equal(length(out$toy$y), nrow(panel))
+  expect_equal(nrow(out$toy$model), nrow(panel))
+})
+
+test_that("serialized IV models retain inputs required by diagnostics and clustered inference", {
+  skip_if_not_installed("ivreg")
+  skip_if_not_installed("sandwich")
+  set.seed(2)
+  n <- 80
+  state <- rep(LETTERS[1:8], each = 10)
+  z <- rnorm(n)
+  w <- rnorm(n)
+  x <- 0.8 * z + 0.3 * w + rnorm(n)
+  y <- 1 + 1.5 * x + 0.5 * w + rnorm(n)
+  panel <- data.frame(y = y, x = x, w = w, z = z, state_20 = state)
+  formulas <- list(toy = stats::as.formula("y ~ x + w | z + w"))
+
+  fit <- estimate_2sls(panel, formulas, list())$toy
+  restored <- unserialize(serialize(fit, NULL))
+  design <- multicollinearity_design_matrix(restored)
+  clustered <- clustered_model_coefficients(restored)
+  report <- report_coefficient_frame(restored)
+
+  expect_equal(nrow(design), n)
+  expect_true(ncol(design) >= 3L)
+  expect_true(all(is.finite(clustered$`Std. Error`)))
+  expect_true(all(is.finite(clustered$`Pr(>|t|)`)))
+  expect_true(all(is.finite(report$std.error)))
+  expect_true(all(is.finite(report$p.value)))
+  expect_equal(report$std.error, clustered$`Std. Error`)
+  expect_equal(report$p.value, clustered$`Pr(>|t|)`)
+  expect_true(is.finite(as.numeric(condition_number_value(restored))))
 })
 
 test_that("first-stage diagnostics preserve out-of-pipeline statuses", {
