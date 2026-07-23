@@ -134,10 +134,12 @@ full replication guide.
 ### Selected-target metadata checks
 
 `scripts/run_targets_checked.R` reads the most recent `tar_progress()` record to
-identify upstream dependencies that actually ran, then reads `tar_meta()` only
-for those targets and the explicitly selected targets. This preserves warning
-and error checks for rebuilt dependencies without scanning the full dynamic
-metadata store before and after every small selected-target run.
+identify upstream dependencies that actually ran, then injects a programmatic
+`tidyselect::any_of()` expression into one scoped `tar_meta()` call for those
+targets and the explicitly selected targets. This preserves warning and error
+checks for rebuilt dependencies without scanning the full dynamic metadata
+store before and after every small selected-target run. Metadata selection
+errors fail the run rather than silently yielding an empty warning table.
 
 ## Build Philosophy
 
