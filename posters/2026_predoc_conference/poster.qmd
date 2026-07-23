@@ -1,0 +1,139 @@
+---
+title: "Can English-Medium Instruction Raise Local Living Standards in India?"
+bibliography: ../../paper/references.bib
+format:
+  poster-typst:
+    size: "36x24"
+    poster-authors: "Rishav Roy"
+    departments: "Department of Economics, University of Wisconsin-Madison"
+    institution-logo: "../../assets/uw-logo-horizontal-full-color-print.pdf"
+    footer-text: "PREDOC.org Research Conference | Chicago Booth | July 30-31, 2026"
+    footer-url: "rishavbroy.github.io"
+    footer-emails: "roybrishav@gmail.com"
+    footer-color: "7a0019"
+    num-columns: 3
+    univ-logo-scale: 100
+    univ-logo-column-size: 7
+    title-column-size: 25
+    title-font-size: 85
+    authors-font-size: 56
+    footer-url-font-size: 20
+    footer-text-font-size: 22
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+# Why this matters
+
+1. *Jobless growth.* India's rapid GDP growth has coincided with weak wage growth, falling labor-force participation, and high unemployment among educated young people [@organization2024a].
+
+2. *English as human capital.* English fluency is associated with large wage premia, access to higher education, and employment in India's expanding service economy [@azam2013a; @chakraborty2016a].
+
+3. *EMI joins schooling and English.* English-medium instruction (EMI) teaches all subjects in English. Families often treat it as a route to mobility, but fees, school quality, and unequal access may limit its benefits [@lahoti2019a; @bhattacharya2013].
+
+4. *The question.* When more children in a district attend EMI schools, does average household consumption grow faster over the next decade?
+
+# Research design
+
+```{=typst}
+#block(fill: rgb("f3f0ea"), inset: 12pt, radius: 5pt, width: 100%)[
+  #grid(columns: (1fr, auto, 1fr, auto, 1fr), gutter: 10pt,
+    align(center)[*Census 2001*\ Mother tongues\ + district identities],
+    align(center)[#text(size: 30pt, fill: rgb("7a0019"))[→]],
+    align(center)[*NSS 2007-08*\ EMI exposure\ + baseline controls],
+    align(center)[#text(size: 30pt, fill: rgb("7a0019"))[→]],
+    align(center)[*NSS 2017-18*\ Consumption\ + inequality outcomes]
+  )
+  #v(10pt)
+  #align(center)[*Common unit:* Census 2001 districts]
+]
+```
+
+**Treatment.** District EMI exposure is the percentage of school-going children enrolled in English-medium instruction in 2007-08.
+
+**Outcome.** Percentage growth in district mean household consumption between 2007-08 and 2017-18.
+
+**Instrument.** Average linguistic distance between Hindi and the three most common mother tongues in each Census 2001 district. The first stage asks whether distance from Hindi predicts local EMI enrollment.
+
+**Controls.** Baseline consumption and inequality, urbanization, household structure, religion and social group shares, landholding, household-head education, and region fixed effects.
+
+![EMI exposure in 2007-08.](../../outputs/figures/main/map_emi_exposure.pdf){width=94%}
+
+```{=typst}
+#colbreak()
+```
+
+# Main result
+
+![Adjusted consumption growth across the observed distribution of district EMI exposure. The line averages counterfactual predictions at each displayed percentile; the ribbon shows 95% confidence intervals.](../../outputs/figures/main/poster_emie_expected_values.pdf){width=100%}
+
+The current estimate is small and imprecise: once baseline district conditions are accounted for, a higher EMI share does not clearly predict faster local consumption growth.
+
+This result is substantively important even without statistical precision. Household investments in English and schooling may improve individual opportunities without raising average living standards in the district where children were educated.
+
+# How should we interpret it?
+
+**Selection.** EMI enrollment reflects household income, parental education, urban access, school supply, and beliefs about school quality. These are also plausible causes of later consumption growth.
+
+**Migration.** Benefits may follow students who move to cities rather than remain in their childhood district. Local estimates would then miss part of EMI's return.
+
+**School quality.** An English label does not guarantee English instruction. In some settings, nominal EMI schools continue to teach mainly in the regional language [@lahoti2019a].
+
+**Local labor demand.** English skills are most valuable where firms and occupations reward them. Education alone cannot create enough suitable jobs.
+
+# Instrumental variation
+
+![Average linguistic distance from Hindi, constructed from Census 2001 mother-tongue composition.](../../outputs/figures/main/map_linguistic_distance.pdf){width=94%}
+
+Linguistic distance offers variation in the relative cost of acquiring Hindi rather than English. The design assumes that, conditional on baseline characteristics and region, this distance affects later consumption growth through EMI exposure rather than another channel.
+
+```{=typst}
+#colbreak()
+```
+
+# Why district histories matter
+
+India's district boundaries and names changed substantially between the three data vintages. A credible pseudo-panel must solve three distinct problems.
+
+## 1. Name resolution
+
+Names vary because of typographical errors, punctuation, “&” versus “and,” transliteration, shortening, and official renaming. Changes may affect either district or state names. Official changes include full replacements, nativization, prefixes or suffixes, and regional-language to English switches [@indiastatestories1HowDistricts2025].
+
+## 2. Geographical change
+
+- **Partition:** one district is replaced by two or more districts.
+- **Merger:** two or more districts become one.
+- **Carve-out:** a new district is formed from parts of two or three earlier districts.
+- **Boundary shift:** territory transfers between districts; analytically, this is a limited carve-out.
+
+These changes can also follow state reorganization. Equal names across years therefore do not prove equal territory [@indiastatestories1HowDistricts2025].
+
+## 3. Variable assignment
+
+Different quantities require different rules:
+
+- *Counts and totals:* sum additive components.
+- *Means and shares:* pool underlying records or numerators and denominators, then recompute.
+- *EMI exposure:* pool eligible children and recompute the enrollment share.
+- *Gini coefficients:* pool household consumption records and recompute; never average district Ginis.
+
+When a later district crosses more than one 2001 district and household locations are unavailable, exact assignment is impossible. The preferred analysis should retain deterministic histories and report alternative assumptions separately.
+
+# Contribution
+
+This project combines nationally representative household surveys, Census language data, administrative histories, and spatial data to study a question at the intersection of education, language, inequality, and local development.
+
+The present estimates are provisional while district histories are being strengthened. The central empirical question, data construction, and reproducible analysis are designed so that the poster updates with each improved district panel.
+
+```{=typst}
+#block(fill: rgb("f3f0ea"), inset: 12pt, radius: 5pt, width: 100%)[
+  #grid(columns: (1fr, auto), gutter: 16pt,
+    [*Code, paper, and updates*\ #link("https://git.new/FwmVaXq")[git.new/FwmVaXq]\ #link("https://rishavbroy.github.io")[rishavbroy.github.io]],
+    image("../../assets/repo-qr.svg", width: 1.45in)
+  )
+]
+```
+
+# Selected references

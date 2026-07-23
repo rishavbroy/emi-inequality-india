@@ -1,0 +1,3 @@
+rootdir = "_extensions/poster"
+destination = "typst/packages"
+discover = ["typst-template.typ", "typst-show.typ"]
