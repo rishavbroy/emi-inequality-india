@@ -386,13 +386,33 @@ test_that("reviewed allocation coverage matches canonicalized source keys", {
   expect_true(status$coverage_resolved)
 })
 
+test_that("duplicate reviewed rows cannot resolve another source gap", {
+  generated <- data.frame(
+    source_key = c("pc2011__01__001", "pc2011__01__002"),
+    coverage_complete = FALSE,
+    stringsAsFactors = FALSE
+  )
+  reviewed <- data.frame(
+    source_key = rep("pc2011__01__002", 2),
+    coverage_complete = TRUE,
+    stringsAsFactors = FALSE
+  )
+
+  status <- allocation_coverage_status_v2(generated, reviewed)
+
+  expect_equal(status$n_reviewed_complete, 1L)
+  expect_equal(status$n_unresolved, 1L)
+  expect_false(status$coverage_resolved)
+})
+
 test_that("tracked allocation decisions resolve 457 generated gaps", {
   root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
-  weights <- read.csv(
+  weights <- read_lineage_source(
     file.path(
       root, "data", "metadata", "district_allocation_weights_v2.csv"
     ),
-    stringsAsFactors = FALSE
+    reader = "allocation_csv",
+    source_id = "lineage_allocation_weights"
   )
   reviewed <- validate_adjudicated_allocation_weights_v2(
     read_adjudicated_allocation_weights_v2(weights)
