@@ -287,6 +287,25 @@ district_geometry_unit_ids_2011_v2 <- function(geometry_2011) {
   )
 }
 
+as_unit_geometry_v2 <- function(x, unit_id = x$unit_id) {
+  need_pkg("sf", "district geometry schema normalization")
+  if (!inherits(x, "sf")) {
+    stop("District geometry must be an sf object.", call. = FALSE)
+  }
+  unit_id <- plain_chr(unit_id)
+  if (length(unit_id) != nrow(x)) {
+    stop(
+      "District geometry unit IDs must have one value per feature.",
+      call. = FALSE
+    )
+  }
+  sf::st_sf(
+    unit_id = unit_id,
+    geometry = sf::st_geometry(x),
+    crs = sf::st_crs(x)
+  )
+}
+
 apply_geometry_carrybacks_v2 <- function(
   geometry_2001, geometry_2011, carrybacks
 ) {
@@ -317,14 +336,17 @@ apply_geometry_carrybacks_v2 <- function(
   }
 
   additions <- geometry_2011[source_rows, , drop = FALSE]
-  additions$unit_id <- carrybacks$target_unit_2001
-  additions <- additions["unit_id"]
   if (!is.na(sf::st_crs(geometry_2001)) &&
       sf::st_crs(additions) != sf::st_crs(geometry_2001)) {
     additions <- sf::st_transform(additions, sf::st_crs(geometry_2001))
   }
 
-  out <- rbind(geometry_2001["unit_id"], additions)
+  base <- as_unit_geometry_v2(geometry_2001)
+  additions <- as_unit_geometry_v2(
+    additions,
+    unit_id = carrybacks$target_unit_2001
+  )
+  out <- rbind(base, additions)
   out <- make_valid_sf_v2(out)
   if (anyDuplicated(out$unit_id)) {
     stop("Geometry carry-backs produced duplicate Census 2001 units.", call. = FALSE)
