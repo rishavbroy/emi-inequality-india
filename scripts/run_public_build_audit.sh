@@ -259,6 +259,11 @@ make "$check_target"
 checkpoint_archive "after-public-final-check"
 
 if [[ "$with_extended_diagnostics" == "true" ]]; then
+  current_stage="lineage-geometry"
+  echo "=== LINEAGE GEOMETRY ==="
+  make lineage-geometry-build
+  checkpoint_archive "after-lineage-geometry"
+
   current_stage="extended-diagnostics"
   echo "=== EXTENDED DIAGNOSTICS ==="
   make extended-diagnostics

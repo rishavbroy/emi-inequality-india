@@ -382,6 +382,18 @@ test_that("conference poster is a first-class final output", {
   expect_match(poster, "map_linguistic_distance.pdf", fixed = TRUE)
 })
 
+test_that("full audit refreshes lineage geometry before extended diagnostics", {
+  audit <- paste(
+    readLines(repo_file("scripts", "run_public_build_audit.sh"), warn = FALSE),
+    collapse = "\n"
+  )
+  geometry_pos <- regexpr("make lineage-geometry-build", audit, fixed = TRUE)[[1]]
+  diagnostics_pos <- regexpr("make extended-diagnostics", audit, fixed = TRUE)[[1]]
+
+  expect_gt(geometry_pos, 0)
+  expect_gt(diagnostics_pos, geometry_pos)
+})
+
 test_that("poster Typst templates resolve the gathered local package", {
   poster_qmd <- repo_file("posters", "2026_predoc_conference", "poster.qmd")
   paths <- validate_poster_typst_bundle(poster_qmd)
