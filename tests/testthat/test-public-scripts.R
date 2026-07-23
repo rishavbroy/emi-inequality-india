@@ -439,8 +439,8 @@ test_that("poster Typst validation rejects unbalanced package source", {
 
   expect_error(
     poster_renderer_test_env()$validate_poster_typst_bundle(file.path(fixture, "poster.qmd")),
-    "unclosed",
-    fixed = TRUE
+    "Typst source has a (mismatched|unclosed) `[])}]` delimiter",
+    perl = TRUE
   )
 })
 
