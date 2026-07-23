@@ -359,6 +359,25 @@ Evidence requests now include accepted current districts that still lack an
 accepted parent edge. Completing source identity therefore no longer hides the
 remaining administrative-lineage work.
 
+## Parallel downstream impact review
+
+Extended diagnostics now build a non-production `district_panel_v2` from the
+reviewed preferred source crosswalk. The branch reuses the active measure
+objects, IV formulas, 2SLS estimator, clustered coefficient extraction, and
+first-stage diagnostic code. It does not alter `district_panel`, public tables,
+figures, report values, or rendered outputs.
+
+The diagnostic writes panel membership, panel-size, coefficient, standard-error,
+and first-stage comparisons under
+`outputs/diagnostics/extended/district_lineage_v2/`. A source target represented
+by more than one survey district is explicitly marked
+`district_aggregate_weighted`; this is a review flag rather than an assertion
+that a district-level weighted Gini exactly reproduces pooled microdata.
+
+The tracked downstream review remains `needs_review`. It should be changed to
+accepted only after these outputs are inspected and any multi-source aggregation
+is rebuilt from pooled household microdata where necessary.
+
 ## Production comparison review
 
 The seven changed preferred mappings are tracked as reviewed v2 corrections.
