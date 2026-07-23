@@ -428,6 +428,62 @@ build_migration_blockers_v2 <- function(readiness) {
   out
 }
 
+summarize_shrid_bridge_v2 <- function(bridge) {
+  bridge <- safe_df(bridge)
+  if (!nrow(bridge)) {
+    return(data.frame(
+      bridge_status = character(), n_shrid = integer(), population = numeric(),
+      area = numeric(), stringsAsFactors = FALSE
+    ))
+  }
+  status <- plain_chr(bridge$bridge_status)
+  groups <- split(seq_len(nrow(bridge)), status)
+  safe_bind_rows(lapply(groups, function(i) {
+    data.frame(
+      bridge_status = status[[i[[1]]]],
+      n_shrid = length(unique(bridge$shrid2[i])),
+      population = sum_finite_or_na(bridge$population[i]),
+      area = sum_finite_or_na(bridge$area[i]),
+      stringsAsFactors = FALSE
+    )
+  }))
+}
+
+lineage_v2_summary <- function(
+  inventory, admin_2001, admin_2011, bridge, transition, source_roster,
+  source_matches, candidates, adjudication_queue, eligibility, events,
+  current_components, urban_coverage, changed_components, evidence_requests
+) {
+  accepted <- source_matches$status %in% "accepted"
+  data.frame(
+    metric = c(
+      "available_inputs", "missing_inputs", "admin_units_2001", "admin_units_2011",
+      "shrid_bridge_rows", "deterministic_shrid_rows", "district_transition_rows",
+      "nss_source_rows", "accepted_source_matches", "unadjudicated_source_rows",
+      "candidate_rows", "cross_vintage_exact_review_rows", "single_vintage_exact_review_rows",
+      "fuzzy_review_rows", "no_candidate_rows", "primary_eligible_source_rows", "candidate_event_rows",
+      "current_component_rows", "urban_coverage_rows", "changed_component_rows",
+      "targeted_evidence_requests"
+    ),
+    value = c(
+      sum(inventory$exists), sum(!inventory$exists), nrow(admin_2001), nrow(admin_2011),
+      nrow(bridge), sum(bridge$deterministic %in% TRUE), nrow(transition),
+      nrow(source_roster), sum(accepted),
+      sum(!source_roster$source_row_id %in% source_matches$source_row_id[source_matches$status %in% c("accepted", "excluded")]),
+      nrow(candidates),
+      sum(adjudication_queue$review_class == "cross_vintage_exact_candidate"),
+      sum(adjudication_queue$review_class == "single_vintage_exact_candidate"),
+      sum(adjudication_queue$review_class %in% c("high_precision_fuzzy_candidate", "fuzzy_candidates")),
+      sum(adjudication_queue$review_class == "no_candidate"),
+      sum(eligibility$eligible_primary %in% TRUE), nrow(events),
+      nrow(current_components), nrow(urban_coverage), nrow(changed_components),
+      nrow(evidence_requests)
+    ),
+    stringsAsFactors = FALSE
+  )
+}
+
+#' Build district-lineage v2 diagnostic bundle
 build_district_lineage_v2 <- function(
   raw_sources, inventory, district_tracker, census_2001_languages,
   source_2007, source_2017
