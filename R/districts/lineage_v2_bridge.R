@@ -344,12 +344,76 @@ build_admin_registry_2011 <- function(pc11_district_geometry) {
   out[c("unit_id", "level", "state_code", "district_code", "district_std", "valid_from", "valid_to", "source_id")]
 }
 
+canonical_allocation_source_key_v2 <- function(x) {
+  if (!length(x)) return(character())
+
+  out <- rep(NA_character_, length(x))
+  numeric_input <- is.numeric(x)
+  if (numeric_input) {
+    finite <- is.finite(x)
+    state <- floor(x[finite] + 1e-10)
+    district <- round((x[finite] - state) * 1000)
+    valid <- state >= 0 & state <= 99 & district >= 0 & district <= 999
+    values <- rep(NA_character_, length(state))
+    values[valid] <- sprintf("%02d.%03d", state[valid], district[valid])
+    out[finite] <- values
+    return(out)
+  }
+
+  value <- trimws(as.character(x))
+  pc11 <- grepl("^pc2011__[0-9]{1,2}__[0-9]{1,3}$", value)
+  if (any(pc11)) {
+    parts <- strsplit(value[pc11], "__", fixed = TRUE)
+    out[pc11] <- vapply(parts, function(part) {
+      paste0(
+        pad_admin_code(part[[2]], 2L), ".",
+        pad_admin_code(part[[3]], 3L)
+      )
+    }, character(1))
+  }
+
+  decimal <- !pc11 & grepl("^[0-9]{1,2}[.][0-9]{1,3}$", value)
+  if (any(decimal)) {
+    parts <- strsplit(value[decimal], ".", fixed = TRUE)
+    out[decimal] <- vapply(parts, function(part) {
+      paste0(
+        pad_admin_code(part[[1]], 2L), ".",
+        pad_admin_code(part[[2]], 3L)
+      )
+    }, character(1))
+  }
+
+  out
+}
+
+allocation_source_key_v2 <- function(state_code, district_code) {
+  paste0(
+    pad_admin_code(state_code, 2L), ".",
+    pad_admin_code(district_code, 3L)
+  )
+}
+
 validate_allocation_weights <- function(weights, source_cols = c("state_code_2011", "district_code_2011"), weight_col = "population_share_to_2001", tolerance = 1e-8) {
   weights <- safe_df(weights)
   if (!nrow(weights)) return(data.frame())
   missing <- setdiff(c(source_cols, weight_col), names(weights))
   if (length(missing)) stop("Allocation-weight table is missing: ", paste(missing, collapse = ", "), call. = FALSE)
-  key <- do.call(interaction, c(weights[source_cols], list(drop = TRUE)))
+  key <- if (identical(source_cols, c("state_code_2011", "district_code_2011"))) {
+    allocation_source_key_v2(
+      weights$state_code_2011,
+      weights$district_code_2011
+    )
+  } else if (identical(source_cols, "source_unit")) {
+    canonical_allocation_source_key_v2(weights$source_unit)
+  } else {
+    do.call(interaction, c(weights[source_cols], list(drop = TRUE)))
+  }
+  if (anyNA(key) || any(!nzchar(key))) {
+    stop(
+      "Allocation source keys could not be canonicalized.",
+      call. = FALSE
+    )
+  }
   groups <- split(seq_len(nrow(weights)), key)
   safe_bind_rows(lapply(groups, function(i) {
     value <- num(weights[[weight_col]][i])
@@ -400,13 +464,21 @@ allocation_coverage_status_v2 <- function(
   require_coverage_columns(generated, "Generated allocation validation")
   require_coverage_columns(adjudicated, "Reviewed allocation validation")
 
-  generated_keys <- unique(plain_chr(generated$source_key))
-  incomplete_keys <- unique(plain_chr(generated$source_key[
-    !(generated$coverage_complete %in% TRUE)
-  ]))
-  reviewed_keys <- unique(plain_chr(adjudicated$source_key[
-    adjudicated$coverage_complete %in% TRUE
-  ]))
+  generated_keys <- unique(canonical_allocation_source_key_v2(
+    generated$source_key
+  ))
+  incomplete_keys <- unique(canonical_allocation_source_key_v2(
+    generated$source_key[!(generated$coverage_complete %in% TRUE)]
+  ))
+  reviewed_keys <- unique(canonical_allocation_source_key_v2(
+    adjudicated$source_key[adjudicated$coverage_complete %in% TRUE]
+  ))
+  if (anyNA(c(generated_keys, incomplete_keys, reviewed_keys))) {
+    stop(
+      "Allocation coverage contains noncanonical source keys.",
+      call. = FALSE
+    )
+  }
   unresolved_keys <- setdiff(incomplete_keys, reviewed_keys)
 
   data.frame(
@@ -427,6 +499,7 @@ read_adjudicated_allocation_weights_v2 <- function(x, admin_2001 = data.frame())
     "reference_year", "source_id", "status", "note"
   )
   for (nm in setdiff(required, names(x))) x[[nm]] <- rep(NA_character_, nrow(x))
+  x$source_unit <- canonical_allocation_source_key_v2(x$source_unit)
   x <- x[!is.na(x$source_unit) & nzchar(x$source_unit), required, drop = FALSE]
   if (!nrow(x)) {
     x$weight <- numeric()
