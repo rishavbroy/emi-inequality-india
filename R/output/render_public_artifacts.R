@@ -66,6 +66,17 @@ render_public_html <- function(qmd, dependencies = list()) {
   html_path
 }
 
+poster_typst_bundle_error <- function(message) {
+  structure(
+    list(message = message, call = NULL),
+    class = c("poster_typst_bundle_error", "error", "condition")
+  )
+}
+
+abort_poster_typst_bundle <- function(...) {
+  stop(poster_typst_bundle_error(paste0(...)))
+}
+
 poster_typst_bundle_paths <- function(poster_qmd) {
   poster_dir <- dirname(poster_qmd)
   package_root <- file.path(
@@ -73,11 +84,11 @@ poster_typst_bundle_paths <- function(poster_qmd) {
   )
   package_names <- list.dirs(package_root, recursive = FALSE, full.names = TRUE)
   if (length(package_names) != 1L) {
-    stop("Poster extension must bundle exactly one local Typst package.", call. = FALSE)
+    abort_poster_typst_bundle("Poster extension must bundle exactly one local Typst package.")
   }
   package_versions <- list.dirs(package_names[[1L]], recursive = FALSE, full.names = TRUE)
   if (length(package_versions) != 1L) {
-    stop("Poster local Typst package must contain exactly one version.", call. = FALSE)
+    abort_poster_typst_bundle("Poster local Typst package must contain exactly one version.")
   }
 
   list(
@@ -91,7 +102,7 @@ typst_manifest_value <- function(lines, field) {
   pattern <- paste0('^\\s*', field, '\\s*=\\s*"([^"]+)"\\s*$')
   hit <- grep(pattern, lines, value = TRUE)
   if (length(hit) != 1L) {
-    stop("Typst package manifest must define exactly one `", field, "` value.", call. = FALSE)
+    abort_poster_typst_bundle("Typst package manifest must define exactly one `", field, "` value.")
   }
   sub(pattern, "\\1", hit)
 }
@@ -101,7 +112,7 @@ validate_poster_typst_bundle <- function(poster_qmd) {
   required <- unlist(paths, use.names = FALSE)
   missing <- required[!file.exists(required)]
   if (length(missing)) {
-    stop("Poster Typst bundle file(s) missing: ", paste(missing, collapse = ", "), call. = FALSE)
+    abort_poster_typst_bundle("Poster Typst bundle file(s) missing: ", paste(missing, collapse = ", "))
   }
 
   manifest <- readLines(paths$manifest, warn = FALSE)
@@ -109,21 +120,20 @@ validate_poster_typst_bundle <- function(poster_qmd) {
   package_version <- typst_manifest_value(manifest, "version")
   entrypoint <- typst_manifest_value(manifest, "entrypoint")
   if (!identical(basename(paths$entrypoint), entrypoint)) {
-    stop("Poster Typst package entrypoint does not match its manifest.", call. = FALSE)
+    abort_poster_typst_bundle("Poster Typst package entrypoint does not match its manifest.")
   }
 
   package_reference <- paste0("@local/", package_name, ":", package_version)
   template <- readLines(paths$template, warn = FALSE)
   imports <- grep('^#import\\s+"[^"]+"', template, value = TRUE)
   if (length(imports) != 1L) {
-    stop("Poster Typst template must contain exactly one package import.", call. = FALSE)
+    abort_poster_typst_bundle("Poster Typst template must contain exactly one package import.")
   }
   imported_reference <- sub('^#import\\s+"([^"]+)".*$', '\\1', imports)
   if (!identical(imported_reference, package_reference)) {
-    stop(
+    abort_poster_typst_bundle(
       "Poster Typst template must import the bundled package as `",
-      package_reference, "`.",
-      call. = FALSE
+      package_reference, "`."
     )
   }
 
