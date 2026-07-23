@@ -162,7 +162,7 @@ checkpoint_archive() {
 check_source_whitespace() {
   local tmp
   tmp="$(mktemp)"
-  find paper docs scripts R tests \
+  find paper docs scripts R tests posters config \
     -type f \
     \( -name '*.qmd' -o -name '*.R' -o -name '*.r' -o -name '*.sh' -o -name '*.md' \) \
     -print0 | xargs -0 grep -nH -E '[[:blank:]]+$' >"$tmp" || true

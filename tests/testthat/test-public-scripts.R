@@ -15,6 +15,33 @@ repo_text <- function(...) {
   paste(readLines(repo_file(...), warn = FALSE), collapse = "\n")
 }
 
+git_attribute <- function(path, attribute) {
+  root <- dirname(repo_file(".gitattributes"))
+  output <- system2(
+    "git",
+    c("-C", root, "check-attr", attribute, "--", path),
+    stdout = TRUE,
+    stderr = TRUE
+  )
+  if (!length(output)) {
+    stop("git check-attr returned no output for ", path, call. = FALSE)
+  }
+  sub("^.*: [^:]+: ", "", output[[1]])
+}
+
+test_that("rendered and archived artifacts are treated as binary by Git", {
+  artifacts <- c(
+    "posters/2026_predoc_conference/poster.pdf",
+    "outputs/figures/main/map_emi_exposure.png",
+    "docs/plan/TO-DO Research Paper ECON 623.docx"
+  )
+
+  expect_identical(
+    unname(vapply(artifacts, git_attribute, character(1), attribute = "diff")),
+    rep("unset", length(artifacts))
+  )
+})
+
 test_that("current public build helper scripts parse", {
   expect_silent(parse(repo_file("_targets.R")))
   expect_silent(parse(repo_file("scripts", "check_required_outputs.R")))

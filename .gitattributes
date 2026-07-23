@@ -1,0 +1,15 @@
+# Binary artifacts: keep Git from applying text diffs, merges, or line-ending rules.
+*.pdf binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.zip binary
+*.docx binary
+*.pptx binary
+*.xlsx binary
+*.ods binary
+*.gpkg binary
+*.rds binary
+*.RData binary
