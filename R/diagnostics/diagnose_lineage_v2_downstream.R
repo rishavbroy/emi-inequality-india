@@ -481,20 +481,29 @@ build_lineage_v2_shared_support <- function(production_panel, v2_panel) {
   production_unique <- names(production_counts[production_counts == 1L])
   candidate_unique <- names(candidate_counts[candidate_counts == 1L])
   shared <- sort(intersect(production_unique, candidate_unique))
+  production <- production[
+    production$target_unit_2001 %in% shared,
+    ,
+    drop = FALSE
+  ]
+  candidate <- candidate[
+    candidate$target_unit_2001 %in% shared,
+    ,
+    drop = FALSE
+  ]
+  production$state_2001_cluster <- lineage_v2_target_codes(
+    production$target_unit_2001
+  )$state_code_2001
+  candidate$state_2001_cluster <- lineage_v2_target_codes(
+    candidate$target_unit_2001
+  )$state_code_2001
 
   list(
-    production = production[
-      production$target_unit_2001 %in% shared,
-      ,
-      drop = FALSE
-    ],
-    lineage_v2 = candidate[
-      candidate$target_unit_2001 %in% shared,
-      ,
-      drop = FALSE
-    ],
+    production = production,
+    lineage_v2 = candidate,
     units = data.frame(
       target_unit_2001 = shared,
+      state_2001_cluster = lineage_v2_target_codes(shared)$state_code_2001,
       stringsAsFactors = FALSE
     )
   )

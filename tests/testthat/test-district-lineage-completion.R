@@ -863,8 +863,11 @@ test_that("shared support excludes duplicate and non-overlapping units", {
   out <- build_lineage_v2_shared_support(production, candidate)
 
   expect_identical(out$units$target_unit_2001, "pc2001__01__01")
+  expect_identical(out$units$state_2001_cluster, "01")
   expect_equal(nrow(out$production), 1L)
   expect_equal(nrow(out$lineage_v2), 1L)
+  expect_identical(out$production$state_2001_cluster, "01")
+  expect_identical(out$lineage_v2$state_2001_cluster, "01")
   expect_false(any(
     out$production$target_unit_2001 == "pc2001__01__02"
   ))
