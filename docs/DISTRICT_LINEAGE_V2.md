@@ -296,6 +296,21 @@ requires the resulting `pc2001__SS__DD` identifier to exist in the
 Census-2001 administrative registry. Syntactically valid but unknown codes,
 ambiguous mappings, and all later-wave rows remain under review.
 
+## NSS-75 exact-name deterministic identities
+
+The first 2017-18 tranche accepts 85 source rows only when:
+
+1. the normalized NSS-75 state and district names exactly match one
+   Census-2011 district; and
+2. the SHRUG settlement-level transition maps that Census-2011 district to
+   exactly one Census-2001 district with complete SHRID coverage and
+   population share equal to one.
+
+The accepted source identity remains the Census-2011 unit. The existing
+primary-eligibility module then applies the reviewed deterministic transition
+to obtain the Census-2001 analysis unit. Fuzzy names, partial coverage,
+one-to-many transitions, and non-nested transitions remain under review.
+
 ## First reviewed decisions
 
 The first accepted tranche is deliberately narrow:
