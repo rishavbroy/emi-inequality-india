@@ -82,9 +82,12 @@ empty_sensitivity_crosswalk_v2 <- function() {
   )
 }
 
-build_sensitivity_crosswalk_v2 <- function(primary_crosswalk, allocation_weights) {
+build_sensitivity_crosswalk_v2 <- function(
+  primary_crosswalk, allocation_weights, primary_eligibility = data.frame()
+) {
   primary <- safe_df(primary_crosswalk)
   allocations <- safe_df(allocation_weights)
+  eligibility <- safe_df(primary_eligibility)
   pieces <- list()
 
   if (nrow(primary)) {
@@ -102,25 +105,61 @@ build_sensitivity_crosswalk_v2 <- function(primary_crosswalk, allocation_weights
   }
 
   accepted <- allocations$status %in% "accepted"
-  if (nrow(allocations) && any(accepted)) {
-    a <- allocations[accepted, , drop = FALSE]
-    pieces[[length(pieces) + 1L]] <- data.frame(
-      source_row_id = a$source_unit,
-      wave = NA_character_,
-      source_code = NA_character_,
-      target_unit_2001 = a$target_2001,
-      weight = a$weight,
-      basis = a$basis,
-      source_id = a$source_id,
-      panel_variant = "population_allocation",
-      stringsAsFactors = FALSE
+  allocatable <- eligibility[
+    eligibility$status %in% "accepted" &
+      eligibility$eligible_primary %in% FALSE &
+      !is.na(eligibility$terminal_unit) &
+      nzchar(eligibility$terminal_unit),
+    c("source_row_id", "wave", "source_code", "terminal_unit"),
+    drop = FALSE
+  ]
+  if (nrow(allocations) && any(accepted) && nrow(allocatable)) {
+    a <- allocations[
+      accepted,
+      c(
+        "source_unit", "target_2001", "weight",
+        "basis", "source_id"
+      ),
+      drop = FALSE
+    ]
+    linked <- merge(
+      allocatable,
+      a,
+      by.x = "terminal_unit",
+      by.y = "source_unit",
+      all = FALSE,
+      sort = FALSE
     )
+    if (nrow(linked)) {
+      pieces[[length(pieces) + 1L]] <- data.frame(
+        source_row_id = linked$source_row_id,
+        wave = linked$wave,
+        source_code = linked$source_code,
+        target_unit_2001 = linked$target_2001,
+        weight = linked$weight,
+        basis = linked$basis,
+        source_id = linked$source_id,
+        panel_variant = "population_allocation",
+        stringsAsFactors = FALSE
+      )
+    }
   }
 
   out <- safe_bind_rows(pieces)
   if (!nrow(out)) return(empty_sensitivity_crosswalk_v2())
   if (any(!is.finite(out$weight) | out$weight < 0)) {
     stop("Sensitivity crosswalk weights must be finite and nonnegative.", call. = FALSE)
+  }
+  source_weight <- aggregate(
+    out$weight,
+    list(source_row_id = out$source_row_id),
+    sum
+  )
+  if (any(abs(source_weight$x - 1) > 1e-8)) {
+    stop(
+      "Sensitivity crosswalk weights must sum to one within source row.",
+      call. = FALSE
+    )
   }
   out
 }

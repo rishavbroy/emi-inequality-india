@@ -671,7 +671,7 @@ build_district_lineage_v2 <- function(
     source_roster, adjudication_queue, candidates
   )
   sensitivity_crosswalk <- build_sensitivity_crosswalk_v2(
-    primary_crosswalk, adjudicated_weights
+    primary_crosswalk, adjudicated_weights, eligibility
   )
   production_reviews <- read_production_mapping_reviews_v2(
     raw_sources$lineage_production_reviews %||% data.frame()

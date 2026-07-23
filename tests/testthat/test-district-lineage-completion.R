@@ -35,7 +35,7 @@ test_that("sensitivity crosswalk preserves deterministic and reviewed weights", 
     stringsAsFactors = FALSE
   )
 
-  out <- build_sensitivity_crosswalk_v2(primary, weights)
+  out <- build_sensitivity_crosswalk_v2(primary, weights, data.frame())
 
   expect_equal(sum(out$weight[out$source_row_id == "s1"]), 1)
   expect_equal(sum(out$weight[out$source_row_id == "s2"]), 1)
@@ -681,4 +681,80 @@ test_that("downstream gates block unequal support and duplicate production units
   expect_false(gates$passed[
     gates$gate == "downstream_model_comparison_interpretable"
   ])
+})
+
+test_that("sensitivity allocations remain linked to NSS source identities", {
+  primary <- data.frame(
+    source_row_id = "nss_2007_08__a",
+    wave = "nss_2007_08",
+    source_code = "10101",
+    target_unit_2001 = "pc2001__10__01",
+    mapping_class = "identity",
+    stringsAsFactors = FALSE
+  )
+  eligibility <- data.frame(
+    source_row_id = "nss_2017_18__b",
+    wave = "nss_2017_18",
+    source_code = "10202",
+    terminal_unit = "pc2011__10__202",
+    status = "accepted",
+    eligible_primary = FALSE,
+    stringsAsFactors = FALSE
+  )
+  weights <- data.frame(
+    source_unit = c("pc2011__10__202", "pc2011__10__202"),
+    target_2001 = c("pc2001__10__02", "pc2001__10__03"),
+    weight = c(0.75, 0.25),
+    basis = "population_allocation",
+    source_id = "shrid",
+    status = "accepted",
+    stringsAsFactors = FALSE
+  )
+
+  out <- build_sensitivity_crosswalk_v2(
+    primary, weights, eligibility
+  )
+  allocated <- out[out$panel_variant == "population_allocation", ]
+
+  expect_equal(nrow(allocated), 2L)
+  expect_true(all(allocated$source_row_id == "nss_2017_18__b"))
+  expect_true(all(allocated$wave == "nss_2017_18"))
+  expect_true(all(allocated$source_code == "10202"))
+  expect_equal(sum(allocated$weight), 1)
+})
+
+test_that("population allocation preserves counts and intensive values", {
+  measures <- data.frame(
+    district_code_1718 = "10202",
+    consumption_1718 = 200,
+    gini_cons_1718 = 0.4,
+    npeople_1718 = 1000,
+    nhouses_1718 = 200,
+    stringsAsFactors = FALSE
+  )
+  crosswalk <- data.frame(
+    source_row_id = c("source", "source"),
+    wave = "nss_2017_18",
+    source_code = "10202",
+    target_unit_2001 = c("pc2001__10__02", "pc2001__10__03"),
+    weight = c(0.75, 0.25),
+    basis = "population_allocation",
+    source_id = "shrid",
+    panel_variant = "population_allocation",
+    stringsAsFactors = FALSE
+  )
+
+  out <- map_lineage_v2_measures(
+    measures, crosswalk, "nss_2017_18"
+  )
+  out <- out[order(out$target_unit_2001), ]
+
+  expect_equal(out$npeople_1718, c(750, 250))
+  expect_equal(out$nhouses_1718, c(150, 50))
+  expect_equal(out$consumption_1718, c(200, 200))
+  expect_equal(out$gini_cons_1718, c(0.4, 0.4))
+  expect_true(all(
+    out$lineage_aggregation_status ==
+      "source_split_population_allocated"
+  ))
 })
