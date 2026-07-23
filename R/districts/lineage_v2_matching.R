@@ -47,11 +47,15 @@ nss64_census2001_unit_id_v2 <- function(source_code) {
 
 resolve_nss64_census2001_unit_id_v2 <- function(source_code, admin_2001) {
   admin_2001 <- safe_df(admin_2001)
-  require_columns(
-    admin_2001,
-    c("unit_id", "state_code", "district_code"),
-    "Census-2001 administrative registry"
-  )
+  missing <- setdiff("unit_id", names(admin_2001))
+  if (length(missing)) {
+    stop(
+      "Census-2001 administrative registry is missing required columns: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+
   parsed <- nss64_census2001_unit_id_v2(source_code)
   known <- unique(plain_chr(admin_2001$unit_id))
   parsed[!parsed %in% known] <- NA_character_
