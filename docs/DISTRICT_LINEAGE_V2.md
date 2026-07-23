@@ -220,3 +220,7 @@ make test
 ```
 
 Inspect every selected test file. Update production code, tests, metadata, and documentation in the same patch. The final user-facing verification remains the canonical public-build audit with extended diagnostics.
+
+### Lineage-source execution
+
+Extended district-lineage diagnostics track and cache each loaded raw source independently. Large LGD SpreadsheetML changed-unit rosters are streamed into their canonical columns, and SHRUG key readers retain only columns needed by the bridge. Inventory-only geometry and locality-attribute archives remain visible in the source inventory without being loaded into the general lineage bundle. Incremental audits therefore reread only sources whose specification, reader, or file changed; village changed-unit coverage remains included.

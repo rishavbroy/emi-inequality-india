@@ -39,3 +39,7 @@ existing reviewed crosswalk remains the production authority until every
 source match and event used by the preferred panel is adjudicated and the
 strict invariants pass. Fuzzy scores rank review candidates; they never approve
 production geography by themselves.
+
+### Lineage-source execution
+
+Extended district-lineage diagnostics track and cache each loaded raw source independently. Large LGD SpreadsheetML changed-unit rosters are streamed into their canonical columns, and SHRUG key readers retain only columns needed by the bridge. Inventory-only geometry and locality-attribute archives remain visible in the source inventory without being loaded into the general lineage bundle. Incremental audits therefore reread only sources whose specification, reader, or file changed; village changed-unit coverage remains included.
