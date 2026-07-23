@@ -48,6 +48,31 @@ test_that("fuzzy candidate scoring ranks close names but never adjudicates them"
   expect_false("status" %in% names(out))
 })
 
+
+test_that("directional district qualifiers cannot pass as interchangeable names", {
+  expect_true(directional_tokens_compatible("Imphal East", "Imphal East"))
+  expect_true(directional_tokens_compatible("Raigarh", "Raigad"))
+  expect_false(directional_tokens_compatible("Imphal East", "Imphal West"))
+  expect_false(directional_tokens_compatible("North District", "District"))
+
+  skip_if_not_installed("stringdist")
+  gold <- data.frame(
+    source_name = c("Imphal East", "Imphal East"),
+    reference_name = c("Imphal East", "Imphal West"),
+    label = c("match", "nonmatch"),
+    stringsAsFactors = FALSE
+  )
+  scored <- score_gold_set_v2(gold)
+
+  expect_identical(scored$passes_name_rule, c(TRUE, FALSE))
+  expect_equal(
+    summarize_gold_set_v2(scored)$value[
+      summarize_gold_set_v2(scored)$metric == "observed_nonmatch_acceptances"
+    ],
+    0
+  )
+})
+
 test_that("tracked adjudications are unique and reference known units", {
   reference <- data.frame(unit_id = "u1", reference_vintage = "2001")
   accepted <- data.frame(

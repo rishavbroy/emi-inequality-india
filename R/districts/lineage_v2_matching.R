@@ -19,6 +19,18 @@ token_jaccard_similarity <- function(x, y) {
   mapply(one, plain_chr(x), plain_chr(y), USE.NAMES = FALSE)
 }
 
+directional_tokens_compatible <- function(x, y) {
+  directions <- c("north", "south", "east", "west", "central", "upper", "lower")
+  one <- function(a, b) {
+    tokens <- function(value) {
+      words <- strsplit(normalize_match_text(value), " ", fixed = TRUE)[[1]]
+      sort(intersect(unique(words[nzchar(words)]), directions))
+    }
+    identical(tokens(a), tokens(b))
+  }
+  mapply(one, plain_chr(x), plain_chr(y), USE.NAMES = FALSE)
+}
+
 district_match_candidate_thresholds <- function() {
   c(jw = 0.90, dl = 0.70, trigram = 0.55, margin = 0.05)
 }
@@ -261,6 +273,7 @@ score_match_candidates_v2 <- function(source_roster, reference_units, excluded_s
     unname(best_by_candidate[ranked$unit_id]) == ranked$source_row_id
   threshold <- district_match_candidate_thresholds()
   ranked$high_precision_candidate <- ranked$rank == 1L & ranked$reciprocal_nearest &
+    directional_tokens_compatible(ranked$district_std_source, ranked$district_std_candidate) &
     ranked$jw >= threshold[["jw"]] & ranked$dl >= threshold[["dl"]] &
     ranked$trigram >= threshold[["trigram"]] & ranked$margin >= threshold[["margin"]]
   ranked <- ranked[ranked$rank <= 5L, , drop = FALSE]
@@ -547,7 +560,8 @@ score_gold_set_v2 <- function(gold) {
   gold$trigram <- stringdist::stringsim(gold$source_key, gold$reference_key, method = "cosine", q = 3)
   gold$token <- token_jaccard_similarity(gold$source_key, gold$reference_key)
   threshold <- district_match_candidate_thresholds()
-  gold$passes_name_rule <- gold$jw >= threshold[["jw"]] & gold$dl >= threshold[["dl"]] &
+  gold$passes_name_rule <- directional_tokens_compatible(gold$source_key, gold$reference_key) &
+    gold$jw >= threshold[["jw"]] & gold$dl >= threshold[["dl"]] &
     gold$trigram >= threshold[["trigram"]]
   gold
 }
