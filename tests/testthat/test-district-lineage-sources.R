@@ -393,13 +393,25 @@ test_that("lineage summary preserves the complete diagnostic metric contract", {
     evidence_requests = data.frame(row = 1:6)
   )
 
+  expected_metrics <- c(
+    "available_inputs", "missing_inputs", "admin_units_2001", "admin_units_2011",
+    "shrid_bridge_rows", "deterministic_shrid_rows", "district_transition_rows",
+    "nss_source_rows", "accepted_source_matches", "unadjudicated_source_rows",
+    "candidate_rows", "cross_vintage_exact_review_rows",
+    "single_vintage_exact_review_rows", "fuzzy_review_rows",
+    "no_candidate_rows", "primary_eligible_source_rows", "candidate_event_rows",
+    "current_component_rows", "urban_coverage_rows", "changed_component_rows",
+    "targeted_evidence_requests"
+  )
+
   expect_named(summary, c("metric", "value"))
-  expect_false(anyDuplicated(summary$metric))
-  expect_identical(
+  expect_setequal(summary$metric, expected_metrics)
+  expect_equal(anyDuplicated(summary$metric), 0L)
+  expect_equal(
     summary$value[summary$metric == "unadjudicated_source_rows"],
     1
   )
-  expect_identical(
+  expect_equal(
     summary$value[summary$metric == "targeted_evidence_requests"],
     6
   )
