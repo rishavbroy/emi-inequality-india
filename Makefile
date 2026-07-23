@@ -48,7 +48,8 @@ public-diagnostics:
 extended-diagnostics:
 	EMI_CONFIG=config/final.yml EMI_RUN_EXTENDED_DIAGNOSTICS=true Rscript scripts/run_targets_checked.R --starts-with diag_ext_
 
-lineage-geometry: extended-diagnostics
+lineage-geometry:
+	EMI_CONFIG=config/final.yml EMI_RUN_EXTENDED_DIAGNOSTICS=true Rscript scripts/run_targets_checked.R --targets district_lineage_v2_sources,census_2001_languages
 	Rscript scripts/build_lineage_geometry_v2.R
 	$(MAKE) extended-diagnostics
 

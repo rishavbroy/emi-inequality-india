@@ -11,7 +11,11 @@ if (!requireNamespace("sf", quietly = TRUE)) {
   stop("Package 'sf' is required. Run `make restore`.", call. = FALSE)
 }
 
-targets::tar_source()
+targets::tar_source(
+  list.files(
+    "R", pattern = "\\.[Rr]$", recursive = TRUE, full.names = TRUE
+  )
+)
 
 sources <- targets::tar_read(district_lineage_v2_sources)
 specs <- targets::tar_read(district_lineage_v2_specs)
