@@ -46,8 +46,6 @@ if (nzchar(starts_with_arg)) {
   run_label <- "selected_targets"
 }
 
-meta_before <- target_metadata_snapshot()
-
 status <- 0L
 tryCatch(
   rlang::inject(
@@ -59,11 +57,19 @@ tryCatch(
   }
 )
 
-meta <- target_metadata_snapshot()
-changed_target_names <- changed_target_metadata_names(meta_before, meta)
-metadata_scope <- unique(c(selected_target_names, changed_target_names))
-meta_selected <- select_target_metadata(meta, metadata_scope)
-write_target_run_metadata(meta_selected, run_label)
+progress <- tryCatch(
+  targets::tar_progress(fields = c("name", "progress")),
+  error = function(e) data.frame()
+)
+metadata_scope <- target_run_metadata_scope(selected_target_names, progress)
+message(
+  "Checking metadata for ",
+  length(metadata_scope),
+  " selected or executed target(s)."
+)
+meta_selected <- target_metadata_snapshot(metadata_scope)
+metadata_path <- write_target_run_metadata(meta_selected, run_label)
+message("Wrote target metadata: ", metadata_path)
 
 errors <- target_metadata_issue_rows(meta_selected, "error")
 warnings <- target_metadata_issue_rows(meta_selected, "warnings")

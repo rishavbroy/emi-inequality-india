@@ -24,12 +24,33 @@ normalize_target_metadata <- function(meta) {
 }
 
 
-target_metadata_snapshot <- function() {
+target_metadata_snapshot <- function(target_names = NULL) {
   if (!requireNamespace("targets", quietly = TRUE)) return(data.frame())
+  names_expr <- if (is.null(target_names)) {
+    NULL
+  } else {
+    tidyselect::any_of(unique(as.character(target_names)))
+  }
   tryCatch(
-    targets::tar_meta(fields = c("name", "time", "error", "warnings"), targets_only = TRUE),
+    targets::tar_meta(
+      names = names_expr,
+      fields = c("name", "time", "error", "warnings"),
+      targets_only = TRUE
+    ),
     error = function(e) data.frame()
   )
+}
+
+target_run_metadata_scope <- function(selected_target_names, progress) {
+  progress <- data.frame(progress, check.names = FALSE, stringsAsFactors = FALSE)
+  executed <- if (all(c("name", "progress") %in% names(progress))) {
+    as.character(progress$name[
+      progress$progress %in% c("dispatched", "completed", "errored", "canceled")
+    ])
+  } else {
+    character()
+  }
+  unique(c(as.character(selected_target_names), executed))
 }
 
 metadata_value_key <- function(x) {
