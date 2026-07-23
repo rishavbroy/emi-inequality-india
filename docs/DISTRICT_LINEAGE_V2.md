@@ -311,6 +311,23 @@ primary-eligibility module then applies the reviewed deterministic transition
 to obtain the Census-2001 analysis unit. Fuzzy names, partial coverage,
 one-to-many transitions, and non-nested transitions remain under review.
 
+## Andaman 2001-2011 reorganization
+
+The reviewed Andaman tranche records three official lineage edges:
+
+- Census-2001 Andamans to Census-2011 North & Middle Andaman;
+- Census-2001 Andamans to Census-2011 South Andaman; and
+- Census-2001 Nicobars to Census-2011 Nicobars.
+
+The two Andamans descendants reflect the August 2006 bifurcation of the former
+Andamans district. The edges record parentage, not fractional allocation.
+They therefore resolve source rows to the Census-2001 parent while leaving
+population or area allocation questions separate.
+
+Four source identities are accepted through this evidence: the previously
+unresolved 2007-08 North & Middle Andaman row and all three 2017-18 island
+district rows. This completes source-identity review for the 2007-08 wave.
+
 ## First reviewed decisions
 
 The first accepted tranche is deliberately narrow:
