@@ -178,6 +178,17 @@ extended_diagnostic_targets <- list(
     )
   ),
   tar_target(
+    district_panel_v2_allocated,
+    build_lineage_v2_district_panel(
+      district_lineage_v2$sensitivity_source_crosswalk,
+      measures_2007,
+      measures_2017,
+      linguistic_distance_iv,
+      district_lineage_v2_sources$lineage_geometry_2001 %||% data.frame(),
+      cfg
+    )
+  ),
+  tar_target(
     iv_models_v2,
     estimate_2sls(district_panel_v2, iv_formulas, cfg)
   ),
@@ -186,15 +197,27 @@ extended_diagnostic_targets <- list(
     estimate_first_stage(iv_models_v2, district_panel_v2, cfg)
   ),
   tar_target(
+    iv_models_v2_allocated,
+    estimate_2sls(district_panel_v2_allocated, iv_formulas, cfg)
+  ),
+  tar_target(
+    first_stage_tests_v2_allocated,
+    estimate_first_stage(
+      iv_models_v2_allocated,
+      district_panel_v2_allocated,
+      cfg
+    )
+  ),
+  tar_target(
     lineage_v2_downstream_review,
     build_lineage_v2_downstream_review(
       district_panel,
-      district_panel_v2,
+      district_panel_v2_allocated,
       iv_models,
-      iv_models_v2,
+      iv_models_v2_allocated,
       first_stage_tests,
-      first_stage_tests_v2,
-      district_lineage_v2$primary_source_crosswalk,
+      first_stage_tests_v2_allocated,
+      district_lineage_v2$sensitivity_source_crosswalk,
       district_lineage_v2$primary_mapping_eligibility
     )
   ),

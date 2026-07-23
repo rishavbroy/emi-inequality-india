@@ -60,37 +60,57 @@ weighted_mean_v2 <- function(x, w) {
 collapse_lineage_v2_measure_rows <- function(mapped, spec) {
   mapped <- safe_df(mapped)
   if (!nrow(mapped)) return(data.frame())
+  if (!"weight" %in% names(mapped)) mapped$weight <- 1
+  if (!"panel_variant" %in% names(mapped)) {
+    mapped$panel_variant <- "deterministic"
+  }
+
+  raw_households <- if (spec$weight_col %in% names(mapped)) {
+    suppressWarnings(as.numeric(mapped[[spec$weight_col]]))
+  } else {
+    rep(1, nrow(mapped))
+  }
+  mapped$.aggregation_mass <- raw_households * mapped$weight
+  for (nm in intersect(spec$count_cols, names(mapped))) {
+    if (is.numeric(mapped[[nm]])) {
+      mapped[[nm]] <- mapped[[nm]] * mapped$weight
+    }
+  }
+
   groups <- split(seq_len(nrow(mapped)), mapped$target_unit_2001)
   safe_bind_rows(lapply(groups, function(i) {
     rows <- mapped[i, , drop = FALSE]
     out <- rows[1L, c("target_unit_2001"), drop = FALSE]
-    out$lineage_source_count <- nrow(rows)
-    out$lineage_aggregation_status <- if (nrow(rows) == 1L) {
+    out$lineage_source_count <- length(unique(rows$source_row_id))
+    allocated <- any(
+      rows$panel_variant %in% "population_allocation" |
+        abs(rows$weight - 1) > 1e-8
+    )
+    out$lineage_aggregation_status <- if (
+      nrow(rows) == 1L && !allocated
+    ) {
       "one_to_one"
+    } else if (out$lineage_source_count == 1L) {
+      "source_split_population_allocated"
     } else {
-      "district_aggregate_weighted"
+      "district_aggregate_population_weighted"
     }
 
     value_cols <- setdiff(
       names(rows),
       c(
         "target_unit_2001", "source_code", "source_row_id", "wave",
-        "mapping_class", "lineage_source_count",
+        "mapping_class", "basis", "source_id", "panel_variant",
+        "weight", ".aggregation_mass", "lineage_source_count",
         "lineage_aggregation_status"
       )
     )
-    weight <- if (spec$weight_col %in% names(rows)) {
-      rows[[spec$weight_col]]
-    } else {
-      rep(1, nrow(rows))
-    }
-
     for (nm in value_cols) {
       x <- rows[[nm]]
       if (nm %in% spec$count_cols && is.numeric(x)) {
         out[[nm]] <- sum(x, na.rm = TRUE)
       } else if (is.numeric(x)) {
-        out[[nm]] <- if (nrow(rows) == 1L) x[[1L]] else weighted_mean_v2(x, weight)
+        out[[nm]] <- weighted_mean_v2(x, rows$.aggregation_mass)
       } else {
         out[[nm]] <- first_nonmissing_v2(x)
       }
@@ -121,10 +141,25 @@ map_lineage_v2_measures <- function(measures, crosswalk, wave) {
   map$source_code_key <- lineage_v2_source_code(map$source_code)
   measures$source_code_key <- lineage_v2_source_code(measures[[spec$code_col]])
 
-  if (anyDuplicated(map$source_code_key[!is.na(map$source_code_key)])) {
+  source_weight <- aggregate(
+    map$weight,
+    list(source_row_id = map$source_row_id),
+    sum
+  )
+  if (any(abs(source_weight$x - 1) > 1e-8)) {
     stop(
-      "The preferred lineage-v2 crosswalk must map each wave-specific source ",
-      "code once before measure construction.",
+      "Lineage-v2 crosswalk weights must sum to one within source row.",
+      call. = FALSE
+    )
+  }
+  source_code_rows <- unique(map[c("source_row_id", "source_code_key")])
+  if (anyDuplicated(
+    source_code_rows$source_code_key[
+      !is.na(source_code_rows$source_code_key)
+    ]
+  )) {
+    stop(
+      "Each wave-specific source code must identify one NSS source row.",
       call. = FALSE
     )
   }
