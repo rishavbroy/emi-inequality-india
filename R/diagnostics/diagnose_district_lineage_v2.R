@@ -174,7 +174,7 @@ build_changed_component_roster_v2 <- function(raw_sources) {
 read_admin_events_v2 <- function(x) {
   x <- safe_df(x)
   required <- c("event_id", "effective_date", "event_type", "from_unit", "to_unit", "share", "source_id", "status", "note")
-  for (nm in setdiff(required, names(x))) x[[nm]] <- NA
+  for (nm in setdiff(required, names(x))) x[[nm]] <- rep(NA_character_, nrow(x))
   x <- x[!is.na(x$event_id) & nzchar(x$event_id), required, drop = FALSE]
   if (anyDuplicated(x[c("event_id", "from_unit", "to_unit")])) {
     stop("Adjudicated district events contain duplicate event edges.", call. = FALSE)

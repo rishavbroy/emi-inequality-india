@@ -310,7 +310,7 @@ read_adjudicated_source_matches_v2 <- function(x) {
     "source_row_id", "wave", "raw_state", "raw_district", "unit_id",
     "method", "source_id", "status", "note"
   )
-  for (nm in setdiff(required, names(x))) x[[nm]] <- NA_character_
+  for (nm in setdiff(required, names(x))) x[[nm]] <- rep(NA_character_, nrow(x))
   x <- x[!is.na(x$source_row_id) & nzchar(x$source_row_id), required, drop = FALSE]
   if (anyDuplicated(x$source_row_id)) {
     stop("District source adjudications must contain at most one row per source_row_id.", call. = FALSE)
