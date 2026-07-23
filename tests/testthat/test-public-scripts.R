@@ -528,3 +528,23 @@ test_that("full audit refreshes lineage geometry before extended diagnostics", {
   expect_gt(geometry_pos, 0)
   expect_gt(diagnostics_pos, geometry_pos)
 })
+
+test_that("lineage-v2 downstream review remains extended-only", {
+  target_file <- readLines("_targets.R", warn = FALSE)
+  text <- paste(target_file, collapse = "\n")
+
+  expect_match(text, "diag_ext_lineage_v2_downstream", fixed = TRUE)
+  expect_match(text, "district_panel_v2", fixed = TRUE)
+  expect_false(grepl(
+    "tar_target\\(district_panel_v2",
+    paste(
+      target_file[
+        seq_len(min(
+          length(target_file),
+          grep("extended_diagnostic_targets", target_file, fixed = TRUE)[1] - 1L
+        ))
+      ],
+      collapse = "\n"
+    )
+  ))
+})

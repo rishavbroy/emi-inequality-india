@@ -538,3 +538,78 @@ test_that("unit geometry normalization rejects mismatched identifiers", {
     "one value per feature"
   )
 })
+
+test_that("lineage-v2 measure mapping preserves one-to-one values", {
+  measures <- data.frame(
+    district_code_0708 = c("10101", "10102"),
+    consumption_0708 = c(100, 200),
+    npeople_0708 = c(1000, 2000),
+    nhouses_0708 = c(100, 200),
+    stringsAsFactors = FALSE
+  )
+  crosswalk <- data.frame(
+    source_row_id = c("a", "b"),
+    wave = "nss_2007_08",
+    source_code = c("10101", "10102"),
+    target_unit_2001 = c("pc2001__10__01", "pc2001__10__02"),
+    mapping_class = "identity",
+    stringsAsFactors = FALSE
+  )
+
+  out <- map_lineage_v2_measures(
+    measures, crosswalk, "nss_2007_08"
+  )
+
+  expect_equal(nrow(out), 2L)
+  expect_setequal(out$consumption_0708, c(100, 200))
+  expect_true(all(out$lineage_source_count == 1L))
+  expect_true(all(out$lineage_aggregation_status == "one_to_one"))
+})
+
+test_that("lineage-v2 multi-source collapse is explicit and weighted", {
+  mapped <- data.frame(
+    target_unit_2001 = c("pc2001__20__16", "pc2001__20__16"),
+    consumption_1718 = c(100, 200),
+    gini_cons_1718 = c(0.2, 0.4),
+    npeople_1718 = c(1000, 3000),
+    nhouses_1718 = c(100, 300),
+    stringsAsFactors = FALSE
+  )
+
+  out <- collapse_lineage_v2_measure_rows(
+    mapped,
+    lineage_v2_wave_measure_spec("nss_2017_18")
+  )
+
+  expect_equal(nrow(out), 1L)
+  expect_equal(out$consumption_1718, 175)
+  expect_equal(out$npeople_1718, 4000)
+  expect_equal(out$nhouses_1718, 400)
+  expect_equal(out$lineage_source_count, 2L)
+  expect_identical(
+    out$lineage_aggregation_status,
+    "district_aggregate_weighted"
+  )
+})
+
+test_that("panel membership comparison separates additions and removals", {
+  production <- data.frame(
+    district_panel_id = c("2001__01__01", "2001__01__02"),
+    stringsAsFactors = FALSE
+  )
+  candidate <- data.frame(
+    target_unit_2001 = c("pc2001__01__02", "pc2001__01__03"),
+    stringsAsFactors = FALSE
+  )
+
+  out <- compare_lineage_v2_panels(production, candidate)
+
+  expect_setequal(
+    paste(out$target_unit_2001, out$comparison_status, sep = "->"),
+    c(
+      "pc2001__01__01->production_only",
+      "pc2001__01__02->shared",
+      "pc2001__01__03->v2_only"
+    )
+  )
+})
