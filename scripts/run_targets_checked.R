@@ -65,7 +65,7 @@ metadata_scope <- target_run_metadata_scope(selected_target_names, progress)
 message(
   "Checking metadata for ",
   length(metadata_scope),
-  " selected or executed target(s)."
+  " selected or executed target(s) using one scoped tar_meta() read."
 )
 meta_selected <- target_metadata_snapshot(metadata_scope)
 metadata_path <- write_target_run_metadata(meta_selected, run_label)
