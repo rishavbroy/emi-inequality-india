@@ -268,6 +268,19 @@ decision for that source. This keeps weight validation separate from decision
 completion: accepted groups must sum to one, while rejected groups record an
 evidence-backed exclusion without fabricating geographic mass.
 
+## NSS-64 code-and-name identities
+
+The second source-identity tranche accepts 178 additional 2007-08 rows only
+when two independent fields agree:
+
+1. the official five-character NSS-64 source code has the `SS1DD` form used by
+   the project inputs and resolves to Census-2001 unit `pc2001__SS__DD`; and
+2. normalized state and district names match the Census-2001 registry exactly.
+
+Code-only and name-only agreements remain under review. The rule is limited to
+the 2007-08 wave; it is not applied to 2017-18 because later administrative
+changes require explicit lineage evidence.
+
 ## First reviewed decisions
 
 The first accepted tranche is deliberately narrow:
