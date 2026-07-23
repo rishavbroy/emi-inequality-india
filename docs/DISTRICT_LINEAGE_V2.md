@@ -252,6 +252,22 @@ validation; this is necessary because base R type conversion can remove leading
 zeros and trailing zeros from values such as `01.010`. Generated and reviewed
 coverage are compared only after this normalization.
 
+## Completed allocation decisions
+
+The SHRID allocation review now distinguishes accepted weights from rejected
+renormalizations:
+
+- 457 source districts meet the established threshold of at least 99 percent
+  mapped population and have normalized sensitivity weights;
+- 79 source districts fall below that threshold and are explicitly rejected
+  for renormalized allocation.
+
+Rejected rows carry no target or weight and enter neither the preferred nor
+the sensitivity crosswalk. They nevertheless complete the allocation-review
+decision for that source. This keeps weight validation separate from decision
+completion: accepted groups must sum to one, while rejected groups record an
+evidence-backed exclusion without fabricating geographic mass.
+
 ## First reviewed decisions
 
 The first accepted tranche is deliberately narrow:
