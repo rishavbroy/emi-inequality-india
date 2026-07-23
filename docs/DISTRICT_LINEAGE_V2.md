@@ -233,7 +233,10 @@ The Census 2011 NCT Delhi Administrative Atlas explicitly reports no change in
 the number of districts or tahsils during 2001–2011. The corresponding
 Maharashtra Administrative Atlas preserves Mumbai and Mumbai Suburban across
 the two census frames. Their 2011 polygons are therefore carried back to the
-same named Census 2001 units without interpolation. The decision is recorded in
+same named Census 2001 units without interpolation. Before row binding, both
+the SHRID-derived and carried-back features are reduced to a common
+`unit_id + geometry` schema so differences in source attribute names or active
+`sf` geometry-column names cannot alter the result. The decision is recorded in
 `district_geometry_carrybacks_v2.csv`, and only the corresponding exact-name
 NSS source identities are accepted in `district_adjudications_v2.csv`.
 
