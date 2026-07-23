@@ -321,25 +321,61 @@ dissolve_shrid_geometry_2001_v2 <- function(shrid_geometry, bridge) {
   out["unit_id"]
 }
 
-geometry_qa_v2 <- function(geometry_2001, admin_2001) {
-  need_pkg("sf", "Census 2001 district geometry validation")
-  if (!inherits(geometry_2001, "sf")) {
-    return(data.frame(
-      metric = "geometry_available", value = FALSE, stringsAsFactors = FALSE
+geometry_unit_coverage_v2 <- function(geometry_2001, admin_2001) {
+  admin <- safe_df(admin_2001)
+  expected <- unique(admin[c(
+    "unit_id", "state_code", "district_code", "state_std", "district_std"
+  )])
+  observed <- if (inherits(geometry_2001, "sf") && nrow(geometry_2001)) {
+    unique(plain_chr(geometry_2001$unit_id))
+  } else {
+    character()
+  }
+
+  expected$expected <- TRUE
+  expected$observed <- expected$unit_id %in% observed
+  expected$coverage_status <- ifelse(
+    expected$observed, "present", "missing_geometry"
+  )
+
+  unexpected <- setdiff(observed, expected$unit_id)
+  if (length(unexpected)) {
+    expected <- safe_bind_rows(list(
+      expected,
+      data.frame(
+        unit_id = unexpected,
+        state_code = NA_character_,
+        district_code = NA_character_,
+        state_std = NA_character_,
+        district_std = NA_character_,
+        expected = FALSE,
+        observed = TRUE,
+        coverage_status = "unexpected_geometry",
+        stringsAsFactors = FALSE
+      )
     ))
   }
-  expected <- unique(plain_chr(safe_df(admin_2001)$unit_id))
-  observed <- unique(plain_chr(geometry_2001$unit_id))
-  valid <- sf::st_is_valid(geometry_2001)
+  expected
+}
+
+geometry_qa_v2 <- function(geometry_2001, admin_2001) {
+  need_pkg("sf", "Census 2001 district geometry validation")
+  coverage <- geometry_unit_coverage_v2(geometry_2001, admin_2001)
+  available <- inherits(geometry_2001, "sf") && nrow(geometry_2001) > 0L
+  valid <- if (available) sf::st_is_valid(geometry_2001) else logical()
+
   data.frame(
     metric = c(
       "geometry_available", "geometry_rows", "expected_admin_units",
       "missing_admin_units", "unexpected_geometry_units", "invalid_geometries"
     ),
     value = c(
-      TRUE, nrow(geometry_2001), length(expected),
-      length(setdiff(expected, observed)), length(setdiff(observed, expected)),
-      sum(!valid)
+      available,
+      if (available) nrow(geometry_2001) else 0L,
+      sum(coverage$expected %in% TRUE),
+      sum(coverage$coverage_status == "missing_geometry"),
+      sum(coverage$coverage_status == "unexpected_geometry"),
+      sum(is.na(valid) | !valid)
     ),
     stringsAsFactors = FALSE
   )
@@ -406,6 +442,13 @@ lineage_completion_steps_v2 <- function(
       geometry_value("invalid_geometries", 0), " invalid"
     )
   }
+  geometry_next_action <- if (!geometry_available) {
+    "Run the canonical audit with extended diagnostics to build the local derived GeoPackage."
+  } else if (!geometry_complete) {
+    "Inspect geometry_2001_unit_coverage.csv and resolve missing or unexpected district coverage."
+  } else {
+    "Geometry construction and QA are complete."
+  }
   migration_ready <- any(
     readiness$gate == "production_crosswalk_migration_ready" &
       readiness$passed %in% TRUE
@@ -455,7 +498,7 @@ lineage_completion_steps_v2 <- function(
       "Use official rename or boundary evidence; accept, exclude, or retain needs_review.",
       "Record accepted or rejected edges in district_admin_events_v2.csv with registered source IDs.",
       "Investigate unmapped mass and enter reviewed allocations in district_allocation_weights_v2.csv.",
-      "Load local SHRID polygons, dissolve with dissolve_shrid_geometry_2001_v2(), and save a derived GeoPackage.",
+      geometry_next_action,
       "Regenerate the diagnostic after accepted source decisions and allocation weights are tracked.",
       "Inspect production_crosswalk_comparison.csv after preferred mappings exist.",
       "Rebuild measures and models only after mapping comparisons are complete.",

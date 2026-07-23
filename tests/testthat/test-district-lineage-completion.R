@@ -385,3 +385,74 @@ test_that("geometry completion reports constructed but incomplete QA", {
   expect_match(status$observed[status$step == 5L], "582/593")
   expect_match(status$observed[status$step == 5L], "11 missing")
 })
+
+test_that("geometry coverage identifies missing and unexpected district IDs", {
+  skip_if_not_installed("sf")
+
+  geometry <- sf::st_sf(
+    unit_id = c("pc2001__01__01", "pc2001__99__99"),
+    geom = sf::st_sfc(
+      sf::st_point(c(0, 0)),
+      sf::st_point(c(1, 1))
+    ),
+    sf_column_name = "geom"
+  )
+  admin <- data.frame(
+    unit_id = c("pc2001__01__01", "pc2001__01__02"),
+    state_code = c("01", "01"),
+    district_code = c("01", "02"),
+    state_std = c("state", "state"),
+    district_std = c("one", "two"),
+    stringsAsFactors = FALSE
+  )
+
+  coverage <- geometry_unit_coverage_v2(geometry, admin)
+
+  expect_identical(
+    coverage$coverage_status[coverage$unit_id == "pc2001__01__02"],
+    "missing_geometry"
+  )
+  expect_identical(
+    coverage$coverage_status[coverage$unit_id == "pc2001__99__99"],
+    "unexpected_geometry"
+  )
+})
+
+test_that("constructed incomplete geometry points to the coverage table", {
+  status <- lineage_completion_steps_v2(
+    source_roster = data.frame(source_row_id = "s1"),
+    source_matches = data.frame(source_row_id = character(), status = character()),
+    adjudication_queue = data.frame(
+      review_class = "cross_vintage_exact_candidate",
+      adjudication_status = NA_character_
+    ),
+    evidence_requests = data.frame(),
+    allocation_validation = data.frame(
+      source_key = "source",
+      coverage_complete = TRUE
+    ),
+    allocation_weights = data.frame(
+      source_unit = character(), status = character()
+    ),
+    primary_crosswalk = data.frame(),
+    sensitivity_crosswalk = data.frame(),
+    production_comparison = data.frame(comparison_status = character()),
+    geometry_qa = data.frame(
+      metric = c(
+        "geometry_available", "geometry_rows", "expected_admin_units",
+        "missing_admin_units", "unexpected_geometry_units",
+        "invalid_geometries"
+      ),
+      value = c(TRUE, 582, 593, 11, 0, 0)
+    ),
+    readiness = data.frame(
+      gate = "production_crosswalk_migration_ready", passed = FALSE
+    )
+  )
+
+  expect_match(
+    status$next_action[status$step == 5L],
+    "geometry_2001_unit_coverage.csv",
+    fixed = TRUE
+  )
+})

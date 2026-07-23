@@ -564,9 +564,10 @@ build_district_lineage_v2 <- function(
   production_comparison <- build_production_crosswalk_comparison_v2(
     primary_crosswalk, production_panel
   )
-  geometry_qa <- geometry_qa_v2(
-    raw_sources$lineage_geometry_2001 %||% data.frame(),
-    admin_2001
+  geometry_2001 <- raw_sources$lineage_geometry_2001 %||% data.frame()
+  geometry_qa <- geometry_qa_v2(geometry_2001, admin_2001)
+  geometry_unit_coverage <- geometry_unit_coverage_v2(
+    geometry_2001, admin_2001
   )
   gold <- score_gold_set_v2(raw_sources$lineage_gold %||% data.frame())
   gold_summary <- summarize_gold_set_v2(gold)
@@ -617,6 +618,7 @@ build_district_lineage_v2 <- function(
     sensitivity_source_crosswalk = sensitivity_crosswalk,
     production_crosswalk_comparison = production_comparison,
     geometry_2001_qa = geometry_qa,
+    geometry_2001_unit_coverage = geometry_unit_coverage,
     completion_status = completion_status,
     excluded_source_rows = excluded_sources,
     candidate_admin_events = candidate_events,
@@ -647,7 +649,8 @@ save_district_lineage_v2 <- function(diagnostics, dir = "outputs/diagnostics/ext
     "source_adjudication_queue", "adjudication_draft",
     "primary_mapping_eligibility", "primary_source_crosswalk",
     "sensitivity_source_crosswalk", "production_crosswalk_comparison",
-    "geometry_2001_qa", "completion_status", "excluded_source_rows",
+    "geometry_2001_qa", "geometry_2001_unit_coverage",
+    "completion_status", "excluded_source_rows",
     "candidate_admin_events", "current_component_registry",
     "current_urban_coverage", "changed_component_roster",
     "adjudicated_admin_events", "adjudicated_allocation_weights",
