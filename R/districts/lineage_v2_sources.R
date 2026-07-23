@@ -68,6 +68,7 @@ district_lineage_v2_input_specs <- function(paths = build_paths()) {
     spec("lineage_events", "data/metadata/district_admin_events_v2.csv", "csv", TRUE, "event_adjudication"),
     spec("lineage_allocation_weights", "data/metadata/district_allocation_weights_v2.csv", "allocation_csv", TRUE, "allocation_adjudication"),
     spec("lineage_geometry_carrybacks", "data/metadata/district_geometry_carrybacks_v2.csv", "csv", TRUE, "geometry_adjudication"),
+    spec("lineage_production_reviews", "data/metadata/district_production_mapping_reviews_v2.csv", "csv", TRUE, "production_migration_review"),
     spec("lineage_sources", "data/metadata/district_sources_v2.csv", "csv", TRUE, "source_registry")
   )
   out <- do.call(rbind, rows)
