@@ -50,11 +50,7 @@ p_value <- function(model, terms, digits = NULL, data = NULL) {
 
 condition_number_value <- function(model) {
   out <- tryCatch({
-    X <- if (inherits(model, "ivreg")) {
-      stats::model.matrix(model, component = "regressors")
-    } else {
-      stats::model.matrix(model)
-    }
+    X <- iv_structural_model_matrix(model)
     qr_x <- qr(X)
     if (!qr_x$rank) return(NA_real_)
     estimable <- qr_x$pivot[seq_len(qr_x$rank)]

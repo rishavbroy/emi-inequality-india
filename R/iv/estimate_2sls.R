@@ -43,6 +43,50 @@ iv_model_cluster <- function(model, data) {
   as.vector(cluster)
 }
 
+
+iv_structural_model_matrix <- function(model) {
+  stored <- tryCatch(model$x$regressors, error = function(e) NULL)
+  if (!is.null(stored) && length(dim(stored)) == 2L) return(stored)
+  if (inherits(model, "ivreg")) {
+    return(stats::model.matrix(model, component = "regressors"))
+  }
+  stats::model.matrix(model)
+}
+
+iv_clustered_inference <- function(model, cluster) {
+  if (!requireNamespace("sandwich", quietly = TRUE)) {
+    return(list(
+      vcov = NULL,
+      status = "unavailable",
+      reason = "Package 'sandwich' is not installed."
+    ))
+  }
+  cluster <- as.vector(cluster)
+  if (
+    length(cluster) != stats::nobs(model) ||
+      anyNA(cluster) ||
+      length(unique(cluster)) < 2L
+  ) {
+    return(list(
+      vcov = NULL,
+      status = "unavailable",
+      reason = "Cluster vector is incomplete or not aligned to fitted observations."
+    ))
+  }
+  out <- tryCatch(
+    sandwich::vcovCL(model, cluster = cluster, type = "HC1"),
+    error = function(e) e
+  )
+  if (inherits(out, "error")) {
+    return(list(
+      vcov = NULL,
+      status = "unavailable",
+      reason = conditionMessage(out)
+    ))
+  }
+  list(vcov = out, status = "estimated", reason = NA_character_)
+}
+
 #' estimate 2sls
 #'
 estimate_2sls <- function(district_panel, formulas, cfg) {
@@ -61,7 +105,25 @@ estimate_2sls <- function(district_panel, formulas, cfg) {
       y = TRUE
     )
     cluster <- iv_model_cluster(fit, district_panel)
-    if (!is.null(cluster)) attr(fit, "cluster_state") <- cluster
+    if (!is.null(cluster)) {
+      inference <- iv_clustered_inference(fit, cluster)
+      attr(fit, "cluster_state") <- cluster
+      attr(fit, "cluster_vcov") <- inference$vcov
+      attr(fit, "cluster_inference_status") <- inference$status
+      attr(fit, "cluster_inference_reason") <- inference$reason
+      if (
+        identical(inference$status, "unavailable") &&
+          is_final_mode(cfg)
+      ) {
+        stop(
+          paste0(
+            "Clustered IV inference is unavailable: ",
+            inference$reason
+          ),
+          call. = FALSE
+        )
+      }
+    }
     fit
   })
 }

@@ -154,10 +154,9 @@ model_f_statistic <- function(fit) {
 }
 
 first_stage_vcov <- function(fit, district_panel) {
-  if (!requireNamespace("sandwich", quietly = TRUE)) return(NULL)
   cluster <- iv_model_cluster(fit, district_panel)
   if (is.null(cluster)) return(NULL)
-  sandwich::vcovCL(fit, cluster = cluster)
+  iv_clustered_inference(fit, cluster)$vcov
 }
 
 first_stage_wald_test <- function(fit, excluded_term, vc) {

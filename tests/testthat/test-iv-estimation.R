@@ -46,6 +46,9 @@ test_that("serialized IV models retain inputs required by diagnostics and cluste
 
   expect_equal(nrow(design), n)
   expect_true(ncol(design) >= 3L)
+  expect_identical(attr(restored, "cluster_inference_status"), "estimated")
+  expect_true(is.matrix(attr(restored, "cluster_vcov")))
+  expect_true(all(is.finite(diag(attr(restored, "cluster_vcov")))))
   expect_true(all(is.finite(clustered$`Std. Error`)))
   expect_true(all(is.finite(clustered$`Pr(>|t|)`)))
   expect_true(all(is.finite(report$std.error)))
@@ -217,6 +220,7 @@ test_that("data-aware IV summaries recover clustered inference without cached at
     list()
   )$model
   attr(fit, "cluster_state") <- NULL
+  attr(fit, "cluster_vcov") <- NULL
 
   out <- tidy_iv_models(list(model = fit), dat)
 
@@ -276,6 +280,7 @@ test_that("public report coefficients recover clusters from panel data", {
     list()
   )$consumption
   attr(fit, "cluster_state") <- NULL
+  attr(fit, "cluster_vcov") <- NULL
 
   expect_true(is.finite(p_value(fit, "x", data = dat)))
   expect_true(is.finite(
@@ -305,6 +310,7 @@ test_that("public second-stage tables recover clusters from panel data", {
     list()
   )
   attr(models$consumption, "cluster_state") <- NULL
+  attr(models$consumption, "cluster_vcov") <- NULL
 
   tidy <- tidy_iv_models(models, dat)
   table <- make_second_stage_table(models, dat)
@@ -314,6 +320,34 @@ test_that("public second-stage tables recover clusters from panel data", {
   expect_true(all(is.finite(tidy$p.value)))
   expect_true(nrow(table) > 0L)
   expect_false(is.null(model_info$vcov))
+})
+
+test_that("IV structural matrices survive serialization without call re-evaluation", {
+  skip_if_not_installed("ivreg")
+  set.seed(49)
+  n <- 64
+  dat <- data.frame(
+    y = rnorm(n),
+    x = rnorm(n),
+    w = rnorm(n),
+    z = rnorm(n),
+    state_20 = rep(LETTERS[1:8], each = 8),
+    stringsAsFactors = FALSE
+  )
+  dat$x <- 0.8 * dat$z + 0.2 * dat$w + rnorm(n)
+  dat$y <- dat$x + dat$w + rnorm(n)
+
+  fit <- estimate_2sls(
+    dat,
+    list(model = y ~ x + w | z + w),
+    list()
+  )$model
+  restored <- unserialize(serialize(fit, NULL))
+  X <- iv_structural_model_matrix(restored)
+
+  expect_equal(nrow(X), n)
+  expect_true(ncol(X) >= 3L)
+  expect_equal(qr(X)$rank, ncol(X))
 })
 
 test_that("coefficient frames preserve estimable inference with aliases", {

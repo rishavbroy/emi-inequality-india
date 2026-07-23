@@ -340,17 +340,23 @@ tidy_iv_models <- function(iv_models, data = NULL) {
 }
 
 clustered_model_vcov <- function(model, data = NULL) {
+  stored <- attr(model, "cluster_vcov")
+  if (!is.null(stored) && length(dim(stored)) == 2L) {
+    force(stored)
+    return(function(x) stored)
+  }
+
   cluster <- attr(model, "cluster_state")
   if (is.null(cluster) && !is.null(data)) {
     cluster <- iv_model_cluster(model, data)
   }
   if (is.null(cluster)) return(NULL)
-  cluster <- as.vector(cluster)
-  if (length(cluster) != stats::nobs(model) || anyNA(cluster)) return(NULL)
-  if (length(unique(cluster)) <= 1L) return(NULL)
-  if (!requireNamespace("sandwich", quietly = TRUE)) return(NULL)
-  force(cluster)
-  function(x) sandwich::vcovCL(x, cluster = cluster)
+
+  inference <- iv_clustered_inference(model, cluster)
+  if (is.null(inference$vcov)) return(NULL)
+  vc <- inference$vcov
+  force(vc)
+  function(x) vc
 }
 
 #' make tables
