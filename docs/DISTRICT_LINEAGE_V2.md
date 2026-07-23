@@ -376,6 +376,18 @@ open until every accepted identity is mapped or explicitly excluded.
 Counts in tracked review metadata are intentionally not hard-coded; regenerated
 diagnostic queues are the authoritative current counts.
 
+## Data-aware clustered diagnostic summaries
+
+Downstream model summaries receive both the fitted IV models and the panel used
+to fit them. If a serialized model does not retain the cached `cluster_state`
+attribute, the summary reconstructs the observation-aligned cluster vector from
+the supplied panel before calling `sandwich::vcovCL`.
+
+The cached attribute remains an optimization for public tables, not the sole
+source of inferential state. Coefficient comparisons expose
+`inference_available`, and a row cannot be marked comparable when either
+variant lacks a finite clustered standard error or p-value.
+
 ## Fitted-row cluster alignment
 
 Cluster vectors are aligned to the rows in each fitted model through model-frame
