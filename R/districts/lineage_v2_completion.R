@@ -88,6 +88,13 @@ build_sensitivity_crosswalk_v2 <- function(
   primary <- safe_df(primary_crosswalk)
   allocations <- safe_df(allocation_weights)
   eligibility <- safe_df(primary_eligibility)
+  eligibility_cols <- c(
+    "source_row_id", "wave", "source_code", "terminal_unit",
+    "status", "eligible_primary"
+  )
+  for (nm in setdiff(eligibility_cols, names(eligibility))) {
+    eligibility[[nm]] <- rep(NA, nrow(eligibility))
+  }
   pieces <- list()
 
   if (nrow(primary)) {

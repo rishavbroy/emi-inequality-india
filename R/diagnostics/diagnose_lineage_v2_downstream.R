@@ -81,7 +81,18 @@ collapse_lineage_v2_measure_rows <- function(mapped, spec) {
   safe_bind_rows(lapply(groups, function(i) {
     rows <- mapped[i, , drop = FALSE]
     out <- rows[1L, c("target_unit_2001"), drop = FALSE]
-    out$lineage_source_count <- length(unique(rows$source_row_id))
+    source_ids <- if ("source_row_id" %in% names(rows)) {
+      unique(rows$source_row_id[
+        !is.na(rows$source_row_id) & nzchar(rows$source_row_id)
+      ])
+    } else {
+      character()
+    }
+    out$lineage_source_count <- if (length(source_ids)) {
+      length(source_ids)
+    } else {
+      nrow(rows)
+    }
     allocated <- any(
       rows$panel_variant %in% "population_allocation" |
         abs(rows$weight - 1) > 1e-8
@@ -90,10 +101,12 @@ collapse_lineage_v2_measure_rows <- function(mapped, spec) {
       nrow(rows) == 1L && !allocated
     ) {
       "one_to_one"
-    } else if (out$lineage_source_count == 1L) {
+    } else if (allocated && out$lineage_source_count == 1L) {
       "source_split_population_allocated"
-    } else {
+    } else if (allocated) {
       "district_aggregate_population_weighted"
+    } else {
+      "district_aggregate_weighted"
     }
 
     value_cols <- setdiff(
@@ -132,12 +145,17 @@ map_lineage_v2_measures <- function(measures, crosswalk, wave) {
     intersect(
       c(
         "source_row_id", "wave", "source_code", "target_unit_2001",
-        "mapping_class"
+        "mapping_class", "weight", "basis", "source_id", "panel_variant"
       ),
       names(crosswalk)
     ),
     drop = FALSE
   ]
+  if (!nrow(map)) return(data.frame())
+  if (!"weight" %in% names(map)) map$weight <- 1
+  if (!"panel_variant" %in% names(map)) {
+    map$panel_variant <- "deterministic"
+  }
   map$source_code_key <- lineage_v2_source_code(map$source_code)
   measures$source_code_key <- lineage_v2_source_code(measures[[spec$code_col]])
 

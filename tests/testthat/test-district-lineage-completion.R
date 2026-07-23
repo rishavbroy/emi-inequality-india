@@ -27,15 +27,26 @@ test_that("sensitivity crosswalk preserves deterministic and reviewed weights", 
     target_unit_2001 = "pc2001__01__01", mapping_class = "one_to_one",
     stringsAsFactors = FALSE
   )
+  eligibility <- data.frame(
+    source_row_id = "s2",
+    wave = "nss_2017_18",
+    source_code = "202",
+    terminal_unit = "pc2011__01__002",
+    status = "accepted",
+    eligible_primary = FALSE,
+    stringsAsFactors = FALSE
+  )
   weights <- data.frame(
-    source_unit = c("s2", "s2"),
+    source_unit = c("pc2011__01__002", "pc2011__01__002"),
     target_2001 = c("pc2001__01__01", "pc2001__01__02"),
     weight = c(0.6, 0.4), basis = "population",
     source_id = "official_source", status = "accepted",
     stringsAsFactors = FALSE
   )
 
-  out <- build_sensitivity_crosswalk_v2(primary, weights, data.frame())
+  out <- build_sensitivity_crosswalk_v2(
+    primary, weights, eligibility
+  )
 
   expect_equal(sum(out$weight[out$source_row_id == "s1"]), 1)
   expect_equal(sum(out$weight[out$source_row_id == "s2"]), 1)
@@ -757,4 +768,26 @@ test_that("population allocation preserves counts and intensive values", {
     out$lineage_aggregation_status ==
       "source_split_population_allocated"
   ))
+})
+
+test_that("lineage-v2 measure mapping returns empty for an absent wave", {
+  measures <- data.frame(
+    district_code_1718 = "10202",
+    consumption_1718 = 200,
+    stringsAsFactors = FALSE
+  )
+  crosswalk <- data.frame(
+    source_row_id = "source",
+    wave = "nss_2007_08",
+    source_code = "10101",
+    target_unit_2001 = "pc2001__10__01",
+    stringsAsFactors = FALSE
+  )
+
+  out <- map_lineage_v2_measures(
+    measures, crosswalk, "nss_2017_18"
+  )
+
+  expect_s3_class(out, "data.frame")
+  expect_equal(nrow(out), 0L)
 })
