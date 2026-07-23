@@ -576,14 +576,15 @@ test_that("reviewed geometry and source decisions satisfy evidence contracts", {
 
   expect_equal(nrow(carrybacks), 11L)
   expect_true(all(carrybacks$status == "accepted"))
-  expect_equal(nrow(adjudications), 597L)
+  expect_equal(nrow(adjudications), 682L)
   expect_true(all(adjudications$status == "accepted"))
   expect_setequal(
     unique(adjudications$method),
     c(
       "official_unchanged_boundary_carryback",
       "official_nss64_census2001_code_name_identity",
-      "official_nss64_census2001_code_identity"
+      "official_nss64_census2001_code_identity",
+      "official_nss75_exact_name_deterministic_2011_to_2001"
     )
   )
 
@@ -622,6 +623,19 @@ test_that("reviewed geometry and source decisions satisfy evidence contracts", {
   expect_true(all(
     nss64_code_matches$source_id ==
       "nss64_education_district_codes"
+  ))
+
+  nss75_matches <- adjudications[
+    adjudications$method %in%
+      "official_nss75_exact_name_deterministic_2011_to_2001",
+    ,
+    drop = FALSE
+  ]
+  expect_equal(nrow(nss75_matches), 85L)
+  expect_true(all(nss75_matches$wave == "nss_2017_18"))
+  expect_true(all(grepl("^pc2011__", nss75_matches$unit_id)))
+  expect_true(all(
+    nss75_matches$source_id == "nss75_shrug_exact_deterministic"
   ))
 
   issues <- validate_lineage_source_references_v2(
