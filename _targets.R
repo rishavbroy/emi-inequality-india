@@ -151,8 +151,8 @@ extended_diagnostic_targets <- list(
     assemble_district_lineage_v2_sources(district_lineage_v2_source)
   ),
   tar_target(
-    diag_ext_district_lineage_v2,
-    save_district_lineage_v2(build_district_lineage_v2(
+    district_lineage_v2,
+    build_district_lineage_v2(
       district_lineage_v2_sources,
       district_lineage_v2_inventory,
       district_tracker,
@@ -160,7 +160,47 @@ extended_diagnostic_targets <- list(
       measures_2007,
       measures_2017,
       district_panel
-    ))
+    )
+  ),
+  tar_target(
+    diag_ext_district_lineage_v2,
+    save_district_lineage_v2(district_lineage_v2),
+    format = "file"
+  ),
+  tar_target(
+    district_panel_v2,
+    build_lineage_v2_district_panel(
+      district_lineage_v2$primary_source_crosswalk,
+      measures_2007,
+      measures_2017,
+      linguistic_distance_iv,
+      district_lineage_v2_sources$lineage_geometry_2001 %||% data.frame(),
+      cfg
+    )
+  ),
+  tar_target(
+    iv_models_v2,
+    estimate_2sls(district_panel_v2, iv_formulas, cfg)
+  ),
+  tar_target(
+    first_stage_tests_v2,
+    estimate_first_stage(iv_models_v2, district_panel_v2, cfg)
+  ),
+  tar_target(
+    lineage_v2_downstream_review,
+    build_lineage_v2_downstream_review(
+      district_panel,
+      district_panel_v2,
+      iv_models,
+      iv_models_v2,
+      first_stage_tests,
+      first_stage_tests_v2
+    )
+  ),
+  tar_target(
+    diag_ext_lineage_v2_downstream,
+    save_lineage_v2_downstream_review(lineage_v2_downstream_review),
+    format = "file"
   ),
   tar_target(diag_ext_missingness, save_missingness_diagnostics(diagnose_missingness(selection_data, cfg))),
   tar_target(diag_ext_district_tracker_sources, save_tracker_source_diagnostics(diagnose_district_tracker_sources(raw_district_changes, district_tracker, cfg))),
