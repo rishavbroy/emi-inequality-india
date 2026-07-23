@@ -132,7 +132,7 @@ analysis_table(completion_status, "Nine-step completion status")
 | 2 | Resolve fuzzy source identities | FALSE | 82 fuzzy or missing candidates open | Use official rename or boundary evidence; accept, exclude, or retain needs_review. |
 | 3 | Review targeted administrative-event evidence | FALSE | 115 targeted evidence requests | Record accepted or rejected edges in district_admin_events_v2.csv with registered source IDs. |
 | 4 | Resolve incomplete SHRID coverage and sensitivity allocations | FALSE | 536 incomplete source allocations | Investigate unmapped mass and enter reviewed allocations in district_allocation_weights_v2.csv. |
-| 5 | Construct and validate Census 2001 geometry | FALSE | not constructed from local SHRID polygons | Load local SHRID polygons, dissolve with dissolve_shrid_geometry_2001_v2(), and save a derived GeoPackage. |
+| 5 | Construct and validate Census 2001 geometry | FALSE | 582/593 expected districts; 11 missing; 0 unexpected; 0 invalid | Load local SHRID polygons, dissolve with dissolve_shrid_geometry_2001_v2(), and save a derived GeoPackage. |
 | 6 | Build preferred and sensitivity source crosswalks | FALSE | 0 preferred; 0 total sensitivity rows | Regenerate the diagnostic after accepted source decisions and allocation weights are tracked. |
 | 7 | Compare v2 mappings with the production panel | FALSE | 0 source mappings compared | Inspect production_crosswalk_comparison.csv after preferred mappings exist. |
 | 8 | Review changed observations and estimates | FALSE | 0 changed, missing, or ambiguous mappings require review | Rebuild measures and models only after mapping comparisons are complete. |
@@ -177,7 +177,7 @@ analysis_table(inventory, "Available and missing lineage inputs", max_rows = 60)
 | shrug_pc11_state_geometry | data/raw/shrug/open-polygons/shrug-pc11state-poly-gpkg/state.gpkg | inventory_only | census_2011_geometry | FALSE | TRUE | 8613888 |
 | shrug_pc11_village_geometry_zip | data/raw/shrug/open-polygons/shrug-pc11-village-poly-gpkg.zip | inventory_only | census_2011_geometry | FALSE | TRUE | 399235423 |
 | shrug_shrid_geometry_zip | data/raw/shrug/open-polygons/shrug-shrid-poly-gpkg.zip | inventory_only | future_2001_geometry | FALSE | TRUE | 379628892 |
-| lineage_geometry_2001 | outputs/derived/district_lineage_v2/district_2001.gpkg | gpkg | derived_2001_geometry | TRUE | TRUE | 73408512 |
+| lineage_geometry_2001 | outputs/derived/district_lineage_v2/district_2001.gpkg | gpkg | derived_2001_geometry | TRUE | TRUE | 64360448 |
 | shrug_pca01_zip | data/raw/shrug/census_2001/shrug-pca01-csv.zip | inventory_only | census_locality_attributes | FALSE | TRUE | 50359039 |
 | shrug_pca11_zip | data/raw/shrug/census_2011/shrug-pca11-csv.zip | inventory_only | census_locality_attributes | FALSE | TRUE | 66532473 |
 | shrug_td01_zip | data/raw/shrug/census_2001/shrug-td01-csv.zip | inventory_only | census_locality_attributes | FALSE | TRUE | 2473771 |
@@ -763,7 +763,7 @@ analysis_table(geometry_qa, "Census 2001 geometry readiness and QA", max_rows = 
 | expected_admin_units      |   593 |
 | missing_admin_units       |    11 |
 | unexpected_geometry_units |     0 |
-| invalid_geometries        |   279 |
+| invalid_geometries        |     0 |
 
 Census 2001 geometry readiness and QA
 
