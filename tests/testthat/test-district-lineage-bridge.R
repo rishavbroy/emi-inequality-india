@@ -292,6 +292,23 @@ test_that("Census 2001 registry rejects unknown state codes", {
   )
 })
 
+test_that("allocation coverage rejects malformed nonempty validation tables", {
+  expect_error(
+    allocation_coverage_status_v2(
+      data.frame(coverage_complete = TRUE),
+      data.frame()
+    ),
+    class = "lineage_allocation_validation_error"
+  )
+  expect_error(
+    allocation_coverage_status_v2(
+      data.frame(source_key = "complete", coverage_complete = TRUE),
+      data.frame(source_key = "reviewed")
+    ),
+    class = "lineage_allocation_validation_error"
+  )
+})
+
 test_that("reviewed allocations resolve only their corresponding coverage gaps", {
   generated <- data.frame(
     source_key = c("complete", "reviewed", "open"),
