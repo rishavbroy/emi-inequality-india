@@ -193,6 +193,147 @@ map_lineage_v2_measures <- function(measures, crosswalk, wave) {
   collapse_lineage_v2_measure_rows(mapped, spec)
 }
 
+lineage_v2_household_consumption <- function(inputs, wave) {
+  inputs <- as_input_list(inputs)
+  if (identical(wave, "nss_2007_08")) {
+    df <- standardize_nss_2007_district_code(std(safe_df(
+      select_input_frame(inputs, c("nss0708edu_block3", "block3"))
+    ), 2007L))
+    code_col <- "district_code_0708"
+    value_col <- first_col(df, c("MPCE", "mpce", "consumption_pc", "consumption_per_capita"))
+    total_col <- first_col(df, c("TOTAL", "total", "HH_Con_exp_rs", "consumption"))
+    size_col <- first_col(df, c("HH_SIZE", "HH_Size", "household_size"))
+    weight_col <- first_col(df, c("weight", "WEIGHT", "Multiplier", "multiplier"))
+    household_col <- first_col(df, c("HHID", "HH_ID", "household_id"))
+    value <- if (!is.null(value_col)) {
+      num(df[[value_col]])
+    } else if (!is.null(total_col) && !is.null(size_col)) {
+      num(df[[total_col]]) / num(df[[size_col]])
+    } else {
+      numeric()
+    }
+  } else if (identical(wave, "nss_2017_18")) {
+    df <- normalize_2017_district_code(std(safe_df(
+      select_input_frame_2017(inputs, c("nss1718edu_block3", "block3", "block"))
+    ), 2017L))
+    code_col <- "district_code_1718"
+    total_col <- first_col(df, c("HH_Con_exp_rs", "MPCE", "mpce", "consumption", "hh_cons"))
+    size_col <- first_col(df, c("Household_size", "HH_SIZE", "household_size"))
+    weight_col <- first_col(df, c("MULT_Combined", "weight", "WEIGHT", "multiplier"))
+    household_col <- first_col(df, c("HHID", "HH_ID", "household_id"))
+    value <- if (!is.null(total_col) && !is.null(size_col)) {
+      num(df[[total_col]]) / num(df[[size_col]])
+    } else if (!is.null(total_col)) {
+      num(df[[total_col]])
+    } else {
+      numeric()
+    }
+  } else {
+    stop("Unsupported lineage-v2 wave: ", wave, call. = FALSE)
+  }
+
+  if (!nrow(df) || !code_col %in% names(df) || is.null(weight_col) ||
+      length(value) != nrow(df)) {
+    return(data.frame())
+  }
+  out <- data.frame(
+    source_code_key = lineage_v2_source_code(df[[code_col]]),
+    consumption = value,
+    survey_weight = num(df[[weight_col]]),
+    stringsAsFactors = FALSE
+  )
+  if (!is.null(household_col)) {
+    out$household_key <- paste(
+      out$source_code_key, canon(df[[household_col]]), sep = "__"
+    )
+    out <- out[!duplicated(out$household_key), , drop = FALSE]
+  }
+  out[
+    !is.na(out$source_code_key) & is.finite(out$consumption) &
+      is.finite(out$survey_weight) & out$survey_weight > 0,
+    , drop = FALSE
+  ]
+}
+
+reconstruct_lineage_v2_pooled_ginis <- function(
+  panel, crosswalk, nss_2007_education, nss_2017_education
+) {
+  panel <- safe_df(panel)
+  crosswalk <- safe_df(crosswalk)
+  audit <- list()
+
+  for (wave in c("nss_2007_08", "nss_2017_18")) {
+    gini_col <- if (wave == "nss_2007_08") "gini_cons_0708" else "gini_cons_1718"
+    status_col <- paste0(gini_col, "_reconstruction_status")
+    panel[[status_col]] <- "not_required"
+    map <- crosswalk[crosswalk$wave %in% wave, , drop = FALSE]
+    if (!nrow(map)) next
+    if (!"weight" %in% names(map)) map$weight <- 1
+    map$source_code_key <- lineage_v2_source_code(map$source_code)
+    source_targets <- aggregate(
+      map$target_unit_2001,
+      list(source_row_id = map$source_row_id),
+      function(x) length(unique(x))
+    )
+    names(source_targets)[[2L]] <- "n_targets"
+    whole <- merge(map, source_targets, by = "source_row_id", all.x = TRUE, sort = FALSE)
+    whole <- whole[
+      is.finite(num(whole$weight)) & abs(num(whole$weight) - 1) <= 1e-8 &
+        whole$n_targets == 1L,
+      , drop = FALSE
+    ]
+    target_sources <- aggregate(
+      whole$source_row_id,
+      list(target_unit_2001 = whole$target_unit_2001),
+      function(x) length(unique(x))
+    )
+    names(target_sources)[[2L]] <- "source_count"
+    targets <- target_sources$target_unit_2001[target_sources$source_count > 1L]
+    if (!length(targets)) next
+
+    households <- lineage_v2_household_consumption(
+      if (wave == "nss_2007_08") nss_2007_education else nss_2017_education,
+      wave
+    )
+    mapped <- merge(
+      whole[whole$target_unit_2001 %in% targets,
+            c("source_code_key", "target_unit_2001", "source_row_id"), drop = FALSE],
+      households,
+      by = "source_code_key", all.x = TRUE, sort = FALSE
+    )
+    groups <- split(seq_len(nrow(mapped)), mapped$target_unit_2001)
+    rows <- safe_bind_rows(lapply(names(groups), function(target) {
+      x <- mapped[groups[[target]], , drop = FALSE]
+      valid <- is.finite(x$consumption) & is.finite(x$survey_weight) & x$survey_weight > 0
+      observed_sources <- unique(x$source_row_id[valid])
+      expected_sources <- unique(whole$source_row_id[whole$target_unit_2001 == target])
+      complete <- length(observed_sources) == length(expected_sources) &&
+        setequal(observed_sources, expected_sources)
+      data.frame(
+        target_unit_2001 = target,
+        wave = wave,
+        source_count = length(expected_sources),
+        household_count = sum(valid),
+        pooled_gini = if (complete && any(valid)) {
+          wgini(x$consumption[valid], x$survey_weight[valid])
+        } else {
+          NA_real_
+        },
+        status = if (complete && any(valid)) "reconstructed" else "missing_household_source",
+        stringsAsFactors = FALSE
+      )
+    }))
+    audit[[wave]] <- rows
+    hit <- match(panel$target_unit_2001, rows$target_unit_2001)
+    matched <- which(!is.na(hit))
+    reconstructed <- matched[rows$status[hit[matched]] %in% "reconstructed"]
+    panel[[gini_col]][reconstructed] <- rows$pooled_gini[hit[reconstructed]]
+    panel[[status_col]][matched] <- rows$status[hit[matched]]
+  }
+
+  list(panel = panel, audit = safe_bind_rows(audit))
+}
+
 attach_lineage_v2_instrument <- function(panel, linguistic_distance_iv) {
   panel <- safe_df(panel)
   iv <- safe_df(linguistic_distance_iv)
@@ -906,18 +1047,24 @@ build_lineage_v2_shared_support <- function(production_panel, v2_panel) {
 
 build_lineage_v2_gini_reconstruction_queue <- function(v2_panel) {
   panel <- safe_df(v2_panel)
-  required <- c(
-    "target_unit_2001", "lineage_source_count",
-    "lineage_aggregation_status"
-  )
+  required <- c("target_unit_2001", "lineage_source_count", "lineage_aggregation_status")
   if (!nrow(panel) || !all(required %in% names(panel))) return(data.frame())
 
-  gini_cols <- intersect(c("gini_cons_0708", "gini_cons_1718"), names(panel))
-  if (!length(gini_cols)) return(data.frame())
-
-  queue <- panel[num(panel$lineage_source_count) > 1, required, drop = FALSE]
+  status_cols <- intersect(
+    c("gini_cons_0708_reconstruction_status", "gini_cons_1718_reconstruction_status"),
+    names(panel)
+  )
+  if (!length(status_cols)) {
+    queue <- panel[num(panel$lineage_source_count) > 1, required, drop = FALSE]
+  } else {
+    needs <- Reduce(`|`, lapply(status_cols, function(nm) {
+      !panel[[nm]] %in% c("not_required", "reconstructed")
+    }))
+    queue <- panel[needs, c(required, status_cols), drop = FALSE]
+  }
   if (!nrow(queue)) return(data.frame())
   queue <- queue[!duplicated(queue$target_unit_2001), , drop = FALSE]
+  gini_cols <- intersect(c("gini_cons_0708", "gini_cons_1718"), names(panel))
   for (nm in gini_cols) {
     queue[[nm]] <- panel[[nm]][match(queue$target_unit_2001, panel$target_unit_2001)]
   }
@@ -1058,7 +1205,8 @@ build_lineage_v2_downstream_review <- function(
   production_shared_panel = data.frame(),
   v2_shared_panel = data.frame(),
   admin_2001 = data.frame(),
-  allocation_weights = data.frame()
+  allocation_weights = data.frame(),
+  gini_reconstruction_audit = data.frame()
 ) {
   production <- lineage_v2_model_summary(
     production_models, production_first_stage, production_panel, "production"
@@ -1110,6 +1258,7 @@ build_lineage_v2_downstream_review <- function(
       ],
       accepted_coverage$coverage_complete[[1L]]
     )
+  comparison$gini_reconstruction_audit <- safe_df(gini_reconstruction_audit)
   comparison$gini_reconstruction_queue <-
     build_lineage_v2_gini_reconstruction_queue(v2_panel)
   comparison$review_gates <- lineage_v2_downstream_review_gates(
@@ -1195,6 +1344,10 @@ save_lineage_v2_downstream_review <- function(
     downstream_review_gates = write_diagnostic_csv(
       review$review_gates %||% data.frame(),
       file.path(dir, "downstream_review_gates.csv")
+    ),
+    downstream_gini_reconstruction_audit = write_diagnostic_csv(
+      review$gini_reconstruction_audit %||% data.frame(),
+      file.path(dir, "downstream_gini_reconstruction_audit.csv")
     ),
     downstream_gini_reconstruction_queue = write_diagnostic_csv(
       review$gini_reconstruction_queue %||% data.frame(),
