@@ -1549,3 +1549,40 @@ test_that("migration readiness distinguishes SHRID coverage from NSS identity co
     readiness$gate == "all_accepted_rows_sensitivity_mapped"
   ])
 })
+
+test_that("terminal allocation decisions are complete and conservative", {
+  specs <- district_lineage_v2_source_specs()
+  allocations <- read_adjudicated_allocation_weights_v2(
+    read_lineage_v2_source(
+      specs[specs$name == "lineage_allocation_weights", , drop = FALSE],
+      project_root()
+    )
+  )
+  resolved_units <- c(
+    "pc2011__24__483",
+    "pc2011__21__371",
+    "pc2011__01__011",
+    "pc2011__18__315",
+    "pc2011__24__493",
+    "pc2011__20__361"
+  )
+  excluded_units <- c(
+    "pc2011__18__324",
+    "pc2011__18__326",
+    "pc2011__01__022"
+  )
+
+  expect_true(all(
+    resolved_units %in%
+      allocations$source_unit[allocations$status == "accepted"]
+  ))
+  expect_true(all(
+    excluded_units %in%
+      allocations$source_unit[allocations$status == "rejected"]
+  ))
+  expect_false(any(
+    allocations$status == "rejected" &
+      (!is.na(allocations$target_2001) &
+        nzchar(allocations$target_2001))
+  ))
+})
