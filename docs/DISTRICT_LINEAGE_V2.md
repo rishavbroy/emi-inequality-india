@@ -495,6 +495,16 @@ The generated `downstream_panel_membership_adjudication.csv` records these
 decisions and remains distinct from the later substantive review of model
 results.
 
+## Allocation-ledger test contract
+
+Tests treat the allocation ledger as reviewed data rather than freezing a
+temporary count split. They require one complete decision per source unit,
+well-formed and complete weights for every accepted source, target-free and
+weight-free rejected records, and the supported evidence-basis classes. This
+keeps the tests sensitive to methodological regressions while allowing reviewed
+decisions to replace provisional rejections without rewriting unrelated count
+assertions.
+
 ## Terminal-unit review normalization
 
 Accepted NSS identities remain the coverage denominator, but geographic
