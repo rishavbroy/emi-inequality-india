@@ -785,7 +785,7 @@ lineage_completion_steps_v2 <- function(
       geometry_next_action,
       "Resolve terminal units in downstream_unmapped_terminal_queue.csv; use downstream_unmapped_identity_queue.csv for identity-level traceability, then regenerate the connected sensitivity crosswalk.",
       "Inspect production_crosswalk_comparison.csv after preferred mappings exist.",
-      "Inspect the shared-support results and the two downstream review queues; record an explicit downstream decision only after non-overlap and unmapped identities are resolved.",
+      "Inspect the shared-support results and downstream_panel_membership_adjudication.csv; record an explicit downstream results decision after the automatically classified membership changes are reviewed.",
       "Replace the inherited crosswalk only after every migration gate passes and changes are reviewed."
     ),
     stringsAsFactors = FALSE
