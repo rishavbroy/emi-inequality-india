@@ -477,11 +477,11 @@ establishes a rename, label variant, state continuation, or single Census-2001
 parent. These decisions do not confer deterministic preferred-panel
 eligibility and do not assert unchanged boundaries.
 
-Second, Baksa, Udalguri, and Samba are explicitly excluded from the
-Census-2001 sensitivity panel because official histories establish
-post-2001 reorganizations and the retained sources do not provide defensible
-territorial or population weights. No equal split or arbitrary parent is
-fabricated.
+Second, Baksa, Udalguri, Samba, Vikarabad, and Mahabubabad are explicitly
+excluded from the Census-2001 sensitivity panel. The retained evidence
+establishes post-2001 or multiple-parent reorganizations but does not provide
+defensible territorial or population weights. No equal split or arbitrary
+parent is fabricated.
 
 After accepted-identity coverage is complete, panel membership is classified
 by a separate support invariant:
@@ -493,7 +493,17 @@ by a separate support invariant:
 
 The generated `downstream_panel_membership_adjudication.csv` records these
 decisions and remains distinct from the later substantive review of model
-results.
+results. Coverage additions do not need to reproduce inherited support: once
+all accepted identities are mapped or explicitly excluded, reviewed unique
+lineage-v2 additions are valid migration candidates. An inherited duplicate is
+a defect to identify and exclude, not a requirement that the old panel first be
+made unique.
+
+`downstream_gini_reconstruction_queue.csv` lists every rebuilt target assembled
+from more than one source district. District Ginis are non-additive, so these
+rows cannot inherit a weighted average of source-district Ginis. Their Ginis
+must be recomputed from pooled household microdata before the downstream review
+can be accepted and production migration can proceed.
 
 ## Allocation-ledger test contract
 

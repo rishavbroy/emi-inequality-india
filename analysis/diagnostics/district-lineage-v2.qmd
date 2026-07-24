@@ -57,6 +57,13 @@ evidence <- analysis_target_csv("diag_ext_district_lineage_v2", "evidence_reques
 duplicates <- analysis_target_csv("diag_ext_district_lineage_v2", "duplicate_keys.csv")
 gold <- analysis_target_csv("diag_ext_district_lineage_v2", "match_gold_scored.csv")
 gold_summary <- analysis_target_csv("diag_ext_district_lineage_v2", "match_gold_summary.csv")
+panel_membership_adjudication <- analysis_target_csv("diag_ext_lineage_v2_downstream", "downstream_panel_membership_adjudication.csv")
+panel_duplicates <- analysis_target_csv("diag_ext_lineage_v2_downstream", "downstream_panel_duplicates.csv")
+panel_nonoverlap <- analysis_target_csv("diag_ext_lineage_v2_downstream", "downstream_panel_nonoverlap_queue.csv")
+gini_reconstruction <- analysis_target_csv("diag_ext_lineage_v2_downstream", "downstream_gini_reconstruction_queue.csv")
+shared_coefficients <- analysis_target_csv("diag_ext_lineage_v2_downstream", "downstream_shared_coefficient_comparison.csv")
+shared_first_stage <- analysis_target_csv("diag_ext_lineage_v2_downstream", "downstream_shared_first_stage_comparison.csv")
+downstream_gates <- analysis_target_csv("diag_ext_lineage_v2_downstream", "downstream_review_gates.csv")
 ```
 
 ## Build and migration status
@@ -113,6 +120,26 @@ analysis_table(urban_coverage, "Current LGD urban coverage bridge", max_rows = 5
 analysis_table(components, "LGD changed-component roster", max_rows = 50)
 analysis_table(evidence, "Targeted official-evidence requests", max_rows = 50)
 ```
+
+
+## Downstream panel review
+
+```{r lineage-v2-downstream-review}
+analysis_table(panel_membership_adjudication, "Regenerated panel-membership adjudication", max_rows = 60)
+analysis_table(panel_duplicates, "Inherited and rebuilt panel duplicates", max_rows = 50)
+analysis_table(panel_nonoverlap, "Reviewed panel-support additions and exclusions", max_rows = 60)
+analysis_table(gini_reconstruction, "District Ginis requiring pooled-household reconstruction", max_rows = 50)
+analysis_table(shared_coefficients, "Shared-support IV coefficient comparison", max_rows = 60)
+analysis_table(shared_first_stage, "Shared-support first-stage comparison", max_rows = 60)
+analysis_table(downstream_gates, "Downstream migration-review gates", max_rows = 50)
+```
+
+Full-panel estimates use different district support and are descriptive rather
+than like-for-like comparisons. The shared-support estimates are the primary
+diagnostic for whether remapping changes estimates on common, unique
+Census-2001 units. Any target assembled from multiple source districts remains
+blocked from migration until its Gini is recomputed from pooled household
+microdata.
 
 ## Fuzzy-name calibration
 
