@@ -1,9 +1,16 @@
 # Escaping Inequality in India: English-Medium Instruction and Local Development
 
-This repository contains the code and derived data needed to replicate my paper, "Escaping Inequality in India: The Role of English-Medium Instruction," as well as the application samples built from it.
+This repository contains the code and derived data needed to replicate my paper, "Escaping Inequality in India: The Role of English-Medium Instruction," as well as the application samples and supplemental analysis notebooks built from it.
 
+THIS PROJECT IS STILL UNDERGOING A MAJOR RENOVATION, however. Key tasks I'm working on include:
+- Substantially improved tracking of district lineage.
+- Better construction of the response variable, inspired by [Deaton (2003)](http://piketty.pse.ens.fr/files/Deaton2003.pdf).
+- Far better justifications of the instrumental variable.
+- Richer tables and maps.
+- Multiple imputation in the enrollment probit.
+- Better incorporation of the enrollment probit into the district-level 2SLS.
 
-The legacy-to-Quarto refactor is complete. Active paper, analysis, and code changes now happen in the current source tree rather than by regenerating public documents from the archived R Markdown draft. The completed refactor proof is preserved through the `archive/refactoring-complete` tag/branch workflow described in [`archive/refactoring/README.md`](archive/refactoring/README.md).
+This project has also completed a major refactoring recently. To learn more about it, review [`archive/refactoring/README.md`](archive/refactoring/README.md) and the tag and branch mentioned therein.
 
 Use the ["Commands for running and auditing"](#commands-for-running-and-auditing) listed below to:
 
