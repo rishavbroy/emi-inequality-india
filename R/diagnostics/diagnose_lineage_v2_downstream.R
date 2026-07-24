@@ -448,6 +448,81 @@ build_lineage_v2_unmapped_identity_queue <- function(
 }
 
 
+
+build_lineage_v2_panel_membership_adjudication <- function(
+  panel_membership, production_duplicates = data.frame(),
+  identity_coverage_complete = FALSE
+) {
+  membership <- safe_df(panel_membership)
+  duplicates <- safe_df(production_duplicates)
+  if (!nrow(membership)) return(data.frame())
+
+  duplicate_units <- unique(plain_chr(
+    duplicates$target_unit_2001 %||% character()
+  ))
+  out <- membership
+  ready <- isTRUE(identity_coverage_complete)
+  out$decision <- if (!ready) {
+    "defer_until_identity_coverage_complete"
+  } else ifelse(
+    out$comparison_status == "shared",
+    "retain_shared_support",
+    ifelse(
+      out$comparison_status == "v2_only",
+      "accept_lineage_v2_coverage_addition",
+      ifelse(
+        out$target_unit_2001 %in% duplicate_units,
+        "exclude_inherited_duplicate",
+        "exclude_inherited_only_support"
+      )
+    )
+  )
+  out$status <- if (!ready) {
+    "needs_review"
+  } else ifelse(
+    out$comparison_status %in% c("shared", "v2_only"),
+    "accepted",
+    "excluded"
+  )
+  out$method <- if (!ready) {
+    "coverage_prerequisite"
+  } else {
+    "panel_support_invariant"
+  }
+  out$note <- if (!ready) {
+    paste0(
+      "Panel membership is not adjudicated until every accepted identity is ",
+      "mapped or explicitly excluded."
+    )
+  } else ifelse(
+    out$comparison_status == "shared",
+    "Retained because the canonical Census-2001 unit is present in both panels.",
+    ifelse(
+      out$comparison_status == "v2_only",
+      paste0(
+        "Accepted as a lineage-v2 coverage addition because the canonical ",
+        "Census-2001 unit has a unique rebuilt row and no inherited counterpart."
+      ),
+      ifelse(
+        out$target_unit_2001 %in% duplicate_units,
+        paste0(
+          "Excluded from migration because inherited support is duplicated and ",
+          "the rebuilt lineage-v2 panel does not retain this inherited-only row."
+        ),
+        paste0(
+          "Excluded from migration because the unit is supported only by the ",
+          "inherited panel after accepted-identity coverage is complete."
+        )
+      )
+    )
+  )
+  out[
+    order(out$status, out$comparison_status, out$target_unit_2001),
+    ,
+    drop = FALSE
+  ]
+}
+
 build_lineage_v2_unmapped_terminal_queue <- function(
   identity_queue, allocation_weights = data.frame()
 ) {
@@ -953,6 +1028,20 @@ build_lineage_v2_downstream_review <- function(
     lineage_v2_panel_duplicates(production_panel, "production"),
     lineage_v2_panel_duplicates(v2_panel, "lineage_v2")
   ))
+  accepted_coverage <- accepted_sensitivity_mapping_status_v2(
+    primary_eligibility,
+    primary_crosswalk
+  )
+  comparison$panel_membership_adjudication <-
+    build_lineage_v2_panel_membership_adjudication(
+      comparison$panel_membership,
+      comparison$panel_duplicates[
+        comparison$panel_duplicates$panel_variant %in% "production",
+        ,
+        drop = FALSE
+      ],
+      accepted_coverage$coverage_complete[[1L]]
+    )
   comparison$review_gates <- lineage_v2_downstream_review_gates(
     comparison$crosswalk_coverage,
     production_panel,
@@ -1001,6 +1090,10 @@ save_lineage_v2_downstream_review <- function(
     downstream_panel_nonoverlap_queue = write_diagnostic_csv(
       review$panel_nonoverlap_queue %||% data.frame(),
       file.path(dir, "downstream_panel_nonoverlap_queue.csv")
+    ),
+    downstream_panel_membership_adjudication = write_diagnostic_csv(
+      review$panel_membership_adjudication %||% data.frame(),
+      file.path(dir, "downstream_panel_membership_adjudication.csv")
     ),
     downstream_unmapped_identity_queue = write_diagnostic_csv(
       review$unmapped_identity_queue %||% data.frame(),

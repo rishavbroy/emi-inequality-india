@@ -1119,3 +1119,70 @@ test_that("accepted disconnected allocations receive highest priority", {
   expect_identical(out$review_priority, 1L)
   expect_match(out$next_action, "Repair the connected sensitivity crosswalk")
 })
+
+test_that("panel membership adjudication waits for identity coverage", {
+  membership <- data.frame(
+    target_unit_2001 = c("pc2001__01__01", "pc2001__01__02"),
+    in_production = c(TRUE, FALSE),
+    in_v2 = c(FALSE, TRUE),
+    comparison_status = c("production_only", "v2_only"),
+    stringsAsFactors = FALSE
+  )
+
+  out <- build_lineage_v2_panel_membership_adjudication(
+    membership,
+    identity_coverage_complete = FALSE
+  )
+
+  expect_true(all(out$status == "needs_review"))
+  expect_true(all(
+    out$decision == "defer_until_identity_coverage_complete"
+  ))
+})
+
+test_that("panel membership adjudication follows support invariants", {
+  membership <- data.frame(
+    target_unit_2001 = c(
+      "pc2001__01__01", "pc2001__01__02",
+      "pc2001__01__03", "pc2001__01__04"
+    ),
+    in_production = c(TRUE, FALSE, TRUE, TRUE),
+    in_v2 = c(TRUE, TRUE, FALSE, FALSE),
+    comparison_status = c(
+      "shared", "v2_only", "production_only", "production_only"
+    ),
+    stringsAsFactors = FALSE
+  )
+  duplicates <- data.frame(
+    target_unit_2001 = "pc2001__01__04",
+    panel_variant = "production",
+    stringsAsFactors = FALSE
+  )
+
+  out <- build_lineage_v2_panel_membership_adjudication(
+    membership,
+    duplicates,
+    identity_coverage_complete = TRUE
+  )
+
+  decision <- setNames(out$decision, out$target_unit_2001)
+  status <- setNames(out$status, out$target_unit_2001)
+  expect_identical(
+    decision[["pc2001__01__01"]],
+    "retain_shared_support"
+  )
+  expect_identical(
+    decision[["pc2001__01__02"]],
+    "accept_lineage_v2_coverage_addition"
+  )
+  expect_identical(
+    decision[["pc2001__01__03"]],
+    "exclude_inherited_only_support"
+  )
+  expect_identical(
+    decision[["pc2001__01__04"]],
+    "exclude_inherited_duplicate"
+  )
+  expect_identical(status[["pc2001__01__02"]], "accepted")
+  expect_identical(status[["pc2001__01__03"]], "excluded")
+})
