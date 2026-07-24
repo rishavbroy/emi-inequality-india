@@ -783,7 +783,7 @@ lineage_completion_steps_v2 <- function(
       "Record accepted or rejected edges in district_admin_events_v2.csv with registered source IDs.",
       "Resolve only SHRID source units with incomplete or invalid transition mass in district_allocation_weights_v2.csv.",
       geometry_next_action,
-      "Resolve accepted identities listed in downstream_unmapped_identity_queue.csv, then regenerate the connected sensitivity crosswalk.",
+      "Resolve terminal units in downstream_unmapped_terminal_queue.csv; use downstream_unmapped_identity_queue.csv for identity-level traceability, then regenerate the connected sensitivity crosswalk.",
       "Inspect production_crosswalk_comparison.csv after preferred mappings exist.",
       "Inspect the shared-support results and the two downstream review queues; record an explicit downstream decision only after non-overlap and unmapped identities are resolved.",
       "Replace the inherited crosswalk only after every migration gate passes and changes are reviewed."
