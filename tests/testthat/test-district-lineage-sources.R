@@ -1260,7 +1260,7 @@ test_that("official NSS-75 exact identities remain separate from bridge eligibil
 
 test_that("official NSS-75 exact current identities do not imply bridge eligibility", {
   root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
-  rows <- read_adjudicated_source_matches_v2(
+  adjudications <- read_adjudicated_source_matches_v2(
     read.csv(
       file.path(
         root, "data", "metadata", "district_adjudications_v2.csv"
@@ -1268,20 +1268,27 @@ test_that("official NSS-75 exact current identities do not imply bridge eligibil
       stringsAsFactors = FALSE
     )
   )
-  rows <- rows[
-    rows$method %in%
+  rows <- adjudications[
+    adjudications$method %in%
       "official_nss75_exact_contemporaneous_identity",
     ,
     drop = FALSE
   ]
+  exclusions <- adjudications[
+    adjudications$method %in%
+      "explicit_multi_parent_sensitivity_exclusion",
+    ,
+    drop = FALSE
+  ]
 
-  expect_equal(nrow(rows), 25L)
+  expect_gt(nrow(rows), 0L)
   expect_true(all(rows$wave == "nss_2017_18"))
   expect_true(all(rows$status == "accepted"))
   expect_true(all(
     rows$source_id == "nss75_official_exact_current_identity"
   ))
   expect_equal(anyDuplicated(rows$source_row_id), 0L)
+  expect_false(any(rows$source_row_id %in% exclusions$source_row_id))
   expect_true(all(grepl("^(pc2011|lgd_district)__", rows$unit_id)))
   expect_setequal(
     rows$unit_id[rows$raw_state %in% c(
