@@ -563,18 +563,22 @@ imputed.
 
 ## Shared-support model comparison
 
-The allocation-weighted panel contains 525 unique Census-2001 districts,
-compared with 481 unique inherited production districts. The two panels share
-428 units; 53 are production-only and 97 are lineage-v2-only. Full-sample
-coefficient differences therefore remain descriptive.
+Extended diagnostics recompute the unique Census-2001 support of the inherited
+and allocation-weighted panels on every run. The resulting shared,
+production-only, and lineage-v2-only counts belong in the generated panel
+coverage and non-overlap diagnostics; they are not frozen documentation
+contracts. Full-sample coefficient differences remain descriptive whenever the
+two panels have different support.
 
-Extended diagnostics now construct both model samples on the same unique
-Census-2001 support. Units duplicated in either panel, including the inherited
-`pc2001__09__17` collision, are excluded rather than arbitrarily selected.
-The shared-support coefficient and first-stage outputs are the interpretable
-comparison of measure construction and mapping choices. They do not by
-themselves authorize production migration, because the non-overlapping units
-still require review.
+The diagnostic also constructs both model samples on the same unique
+Census-2001 support. Units duplicated in either panel are excluded rather than
+arbitrarily selected. The generated duplicate diagnostics determine whether the
+previously inherited `pc2001__09__17` collision remains relevant after each
+rebuild; the documentation does not presume that it persists. Shared-support
+coefficient and first-stage outputs are the interpretable comparison of measure
+construction and mapping choices. They do not by themselves authorize
+production migration, because regenerated non-overlapping units still require
+review.
 
 Coverage diagnostics count unique NSS source identities separately from
 crosswalk rows. This prevents one-to-many population allocations from producing
