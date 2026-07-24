@@ -764,6 +764,21 @@ test_that("an empty Gini queue retains a stable output schema", {
   ) %in% names(queue)))
 })
 
+test_that("an empty Gini queue writes a header-only diagnostic", {
+  queue <- empty_lineage_v2_gini_reconstruction_queue()
+  dir <- tempfile("lineage-v2-downstream-")
+
+  save_lineage_v2_downstream_review(
+    list(gini_reconstruction_queue = queue),
+    dir = dir
+  )
+
+  path <- file.path(dir, "downstream_gini_reconstruction_queue.csv")
+  expect_true(file.exists(path))
+  expect_match(readLines(path, n = 1L), "target_unit_2001")
+  expect_equal(length(readLines(path)), 1L)
+})
+
 test_that("sensitivity allocations remain linked to NSS source identities", {
   primary <- data.frame(
     source_row_id = "nss_2007_08__a",

@@ -1324,6 +1324,10 @@ save_lineage_v2_downstream_review <- function(
   review, dir = "outputs/diagnostics/extended/district_lineage_v2"
 ) {
   dir.create(dir, recursive = TRUE, showWarnings = FALSE)
+  gini_queue <- review$gini_reconstruction_queue
+  if (is.null(gini_queue)) {
+    gini_queue <- empty_lineage_v2_gini_reconstruction_queue()
+  }
   output_manifest(c(
     downstream_panel_summary = write_diagnostic_csv(
       review$panel_summary %||% data.frame(),
@@ -1374,7 +1378,7 @@ save_lineage_v2_downstream_review <- function(
       file.path(dir, "downstream_gini_reconstruction_audit.csv")
     ),
     downstream_gini_reconstruction_queue = write_diagnostic_csv(
-      review$gini_reconstruction_queue %||% data.frame(),
+      gini_queue,
       file.path(dir, "downstream_gini_reconstruction_queue.csv")
     ),
     downstream_shared_panel_summary = write_diagnostic_csv(
