@@ -466,6 +466,28 @@ The queue therefore exposes `state_label_2001`, `district_label_2001`,
 becomes its own review action. Duplicate canonical registry keys fail
 explicitly rather than selecting an arbitrary name.
 
+## Terminal-unit review normalization
+
+Accepted NSS identities remain the coverage denominator, but geographic
+allocation decisions are reviewed at the unique terminal administrative unit.
+`downstream_unmapped_terminal_queue.csv` therefore collapses repeated NSS
+identities that resolve to the same Census-2011 district while retaining the
+identity count, source codes, and source-row IDs needed for traceability.
+
+The queue joins the tracked allocation ledger and distinguishes:
+
+- terminal units with no allocation record;
+- accepted allocations that failed to enter the connected crosswalk;
+- records still awaiting review;
+- conflicting records; and
+- explicitly rejected proposals that require replacement evidence or an
+  identity-level exclusion.
+
+This prevents repeated research on the same terminal district and surfaces
+existing evidence instead of presenting every unmapped identity as a fresh
+case. `downstream_unmapped_identity_queue.csv` remains the authoritative
+identity-level audit trail.
+
 ## Actionable downstream review queues
 
 Extended diagnostics now write two finite review queues:
