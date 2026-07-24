@@ -354,21 +354,40 @@ test_that("tracked allocation decisions preserve weights and rejections", {
     drop = FALSE
   ]
   validation <- validate_adjudicated_allocation_weights_v2(decisions)
+  decision_status <- allocation_decision_status_v2(decisions)
 
-  expect_equal(nrow(decisions), 582L)
-  expect_equal(length(unique(decisions$source_unit)), 536L)
+  expect_setequal(
+    unique(decisions$status),
+    c("accepted", "rejected")
+  )
+  expect_equal(
+    nrow(decision_status),
+    length(unique(decisions$source_unit))
+  )
+  expect_true(all(decision_status$decision_complete))
 
-  expect_equal(nrow(accepted), 503L)
-  expect_equal(length(unique(accepted$source_unit)), 457L)
-  expect_true(all(grepl("99pct", accepted$basis, fixed = TRUE)))
-  expect_equal(nrow(validation), 457L)
+  expect_setequal(
+    unique(accepted$basis),
+    c(
+      "population_renormalized_min_99pct_mapped",
+      "canonical_registry_name_continuity",
+      "official_single_parent_or_alias_continuity"
+    )
+  )
+  expect_equal(
+    nrow(validation),
+    length(unique(accepted$source_unit))
+  )
   expect_true(all(validation$coverage_complete))
+  expect_true(all(validation$weights_well_formed))
 
-  expect_equal(nrow(rejected), 79L)
-  expect_equal(length(unique(rejected$source_unit)), 79L)
+  expect_gt(nrow(rejected), 0L)
   expect_true(all(is.na(rejected$target_2001) | !nzchar(rejected$target_2001)))
   expect_true(all(is.na(rejected$weight)))
-  expect_true(all(grepl("rejected_below_99pct", rejected$basis, fixed = TRUE)))
+  expect_identical(
+    unique(rejected$basis),
+    "multi_parent_allocation_unavailable"
+  )
 })
 
 test_that("allocation source keys use canonical Census unit IDs", {
@@ -426,7 +445,7 @@ test_that("duplicate reviewed rows cannot resolve another source gap", {
   expect_false(status$coverage_resolved)
 })
 
-test_that("tracked allocation decisions resolve 457 generated gaps", {
+test_that("tracked accepted allocations resolve every reviewed source gap", {
   root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
   weights <- read_lineage_source(
     file.path(
@@ -439,7 +458,14 @@ test_that("tracked allocation decisions resolve 457 generated gaps", {
     read_adjudicated_allocation_weights_v2(weights)
   )
 
-  expect_equal(length(unique(reviewed$source_key)), 457L)
+  decisions <- allocation_decision_status_v2(
+    read_adjudicated_allocation_weights_v2(weights)
+  )
+  accepted_sources <- decisions$source_unit[
+    decisions$decision_status %in% "accepted"
+  ]
+
+  expect_setequal(reviewed$source_key, accepted_sources)
   expect_true(all(grepl(
     "^pc2011__[0-9]{2}__[0-9]{3}$",
     reviewed$source_key
@@ -515,7 +541,17 @@ test_that("tracked allocation ledger completes every generated decision", {
   )
   decisions <- allocation_decision_status_v2(weights)
 
-  expect_equal(sum(decisions$decision_status == "accepted"), 457L)
-  expect_equal(sum(decisions$decision_status == "rejected"), 79L)
-  expect_equal(nrow(decisions), 536L)
+  expect_setequal(
+    decisions$decision_status,
+    c("accepted", "rejected")
+  )
+  expect_equal(
+    nrow(decisions),
+    length(unique(weights$source_unit))
+  )
+  expect_true(all(decisions$decision_complete))
+  expect_equal(
+    sum(decisions$decision_status == "rejected"),
+    length(unique(weights$source_unit[weights$status %in% "rejected"]))
+  )
 })

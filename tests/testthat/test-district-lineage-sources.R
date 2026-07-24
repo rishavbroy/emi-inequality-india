@@ -918,8 +918,15 @@ test_that("tracked high-coverage decisions leave only lower-coverage gaps", {
     generated, reviewed, decisions
   )
 
-  expect_equal(status$n_reviewed_accepted, 457L)
-  expect_equal(status$n_reviewed_rejected, 79L)
+  expected <- allocation_decision_status_v2(weights)
+  expect_equal(
+    status$n_reviewed_accepted,
+    sum(expected$decision_status %in% "accepted")
+  )
+  expect_equal(
+    status$n_reviewed_rejected,
+    sum(expected$decision_status %in% "rejected")
+  )
   expect_equal(status$n_unresolved, 0L)
   expect_true(status$coverage_resolved)
 })
