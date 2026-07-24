@@ -1529,12 +1529,12 @@ test_that("tracked production mapping reviews cover every changed target", {
   expect_true(all(mapping$status == "accepted"))
   expect_true(all(mapping$decision == "accept_v2"))
   expect_equal(nrow(downstream), 1L)
-  expect_identical(downstream$status, "needs_review")
+  expect_identical(downstream$status, "excluded")
   expect_identical(
     downstream$decision,
-    "analysis_complete_review_pending"
+    "do_not_migrate_insufficient_preferred_support"
   )
-  expect_match(downstream$note, "shared-support models have been rebuilt")
+  expect_match(downstream$note, "preferred panel retains only")
 })
 
 test_that("migration readiness distinguishes SHRID coverage from NSS identity coverage", {
