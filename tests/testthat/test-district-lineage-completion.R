@@ -669,12 +669,12 @@ test_that("downstream coverage exposes incomplete 2017 lineage", {
   expect_equal(panel$candidate_only_units, 0L)
 })
 
-test_that("downstream gates distinguish shared review from migration", {
+test_that("downstream gates use adjudication rather than identical support", {
   coverage <- data.frame(
     scope = "panel",
     wave = "two_wave_panel",
-    production_only_units = 1L,
-    candidate_only_units = 0L,
+    production_only_units = 0L,
+    candidate_only_units = 1L,
     shared_unique_units = 1L,
     stringsAsFactors = FALSE
   )
@@ -683,26 +683,52 @@ test_that("downstream gates distinguish shared review from migration", {
     stringsAsFactors = FALSE
   )
   candidate <- data.frame(
-    target_unit_2001 = "pc2001__09__17",
+    target_unit_2001 = c("pc2001__09__17", "pc2001__09__18"),
+    stringsAsFactors = FALSE
+  )
+  adjudication <- data.frame(
+    target_unit_2001 = c("pc2001__09__17", "pc2001__09__18"),
+    decision = c("exclude_inherited_duplicate", "accept_lineage_v2_coverage_addition"),
+    status = c("excluded", "accepted"),
     stringsAsFactors = FALSE
   )
 
   gates <- lineage_v2_downstream_review_gates(
-    coverage, production, candidate
+    coverage, production, candidate, adjudication,
+    identity_coverage_complete = TRUE
   )
 
-  expect_false(gates$passed[
-    gates$gate == "production_panel_unique_by_2001_unit"
+  expect_true(gates$passed[
+    gates$gate == "inherited_production_duplicates_identified"
   ])
-  expect_false(gates$passed[
-    gates$gate == "full_panels_have_identical_support"
+  expect_true(gates$passed[
+    gates$gate == "panel_membership_adjudicated"
   ])
   expect_true(gates$passed[
     gates$gate == "shared_support_comparison_available"
   ])
-  expect_false(gates$passed[
+  expect_true(gates$passed[
     gates$gate == "production_migration_reviewable"
   ])
+})
+
+test_that("multi-source Ginis require pooled household reconstruction", {
+  panel <- data.frame(
+    target_unit_2001 = c("pc2001__01__01", "pc2001__01__02"),
+    lineage_source_count = c(1L, 2L),
+    lineage_aggregation_status = c(
+      "one_to_one", "district_aggregate_weighted"
+    ),
+    gini_cons_0708 = c(0.25, 0.30),
+    gini_cons_1718 = c(0.27, 0.34),
+    stringsAsFactors = FALSE
+  )
+
+  queue <- build_lineage_v2_gini_reconstruction_queue(panel)
+
+  expect_identical(queue$target_unit_2001, "pc2001__01__02")
+  expect_identical(queue$status, "needs_reconstruction")
+  expect_match(queue$next_action, "Pool the contributing household records")
 })
 
 test_that("sensitivity allocations remain linked to NSS source identities", {

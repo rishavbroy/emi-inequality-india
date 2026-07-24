@@ -465,15 +465,19 @@ build_lineage_v2_panel_membership_adjudication <- function(
   out$decision <- if (!ready) {
     "defer_until_identity_coverage_complete"
   } else ifelse(
-    out$comparison_status == "shared",
-    "retain_shared_support",
+    out$target_unit_2001 %in% duplicate_units & out$in_v2 %in% TRUE,
+    "replace_inherited_duplicate_with_unique_v2",
     ifelse(
-      out$comparison_status == "v2_only",
-      "accept_lineage_v2_coverage_addition",
+      out$comparison_status == "shared",
+      "retain_shared_support",
       ifelse(
-        out$target_unit_2001 %in% duplicate_units,
-        "exclude_inherited_duplicate",
-        "exclude_inherited_only_support"
+        out$comparison_status == "v2_only",
+        "accept_lineage_v2_coverage_addition",
+        ifelse(
+          out$target_unit_2001 %in% duplicate_units,
+          "exclude_inherited_duplicate",
+          "exclude_inherited_only_support"
+        )
       )
     )
   )
@@ -495,23 +499,30 @@ build_lineage_v2_panel_membership_adjudication <- function(
       "mapped or explicitly excluded."
     )
   } else ifelse(
-    out$comparison_status == "shared",
-    "Retained because the canonical Census-2001 unit is present in both panels.",
+    out$target_unit_2001 %in% duplicate_units & out$in_v2 %in% TRUE,
+    paste0(
+      "Retained once through the unique lineage-v2 row, replacing duplicated ",
+      "support in the inherited production panel."
+    ),
     ifelse(
-      out$comparison_status == "v2_only",
-      paste0(
-        "Accepted as a lineage-v2 coverage addition because the canonical ",
-        "Census-2001 unit has a unique rebuilt row and no inherited counterpart."
-      ),
+      out$comparison_status == "shared",
+      "Retained because the canonical Census-2001 unit is present in both panels.",
       ifelse(
-        out$target_unit_2001 %in% duplicate_units,
+        out$comparison_status == "v2_only",
         paste0(
-          "Excluded from migration because inherited support is duplicated and ",
-          "the rebuilt lineage-v2 panel does not retain this inherited-only row."
+          "Accepted as a lineage-v2 coverage addition because the canonical ",
+          "Census-2001 unit has a unique rebuilt row and no inherited counterpart."
         ),
-        paste0(
-          "Excluded from migration because the unit is supported only by the ",
-          "inherited panel after accepted-identity coverage is complete."
+        ifelse(
+          out$target_unit_2001 %in% duplicate_units,
+          paste0(
+            "Excluded from migration because inherited support is duplicated and ",
+            "the rebuilt lineage-v2 panel does not retain this inherited-only row."
+          ),
+          paste0(
+            "Excluded from migration because the unit is supported only by the ",
+            "inherited panel after accepted-identity coverage is complete."
+          )
         )
       )
     )
@@ -768,7 +779,10 @@ summarize_lineage_v2_downstream_coverage <- function(
 }
 
 lineage_v2_downstream_review_gates <- function(
-  coverage, production_panel, v2_panel
+  coverage, production_panel, v2_panel,
+  panel_membership_adjudication = data.frame(),
+  gini_reconstruction_queue = data.frame(),
+  identity_coverage_complete = FALSE
 ) {
   coverage <- safe_df(coverage)
   production_duplicates <- lineage_v2_panel_duplicates(
@@ -785,38 +799,65 @@ lineage_v2_downstream_review_gates <- function(
     panel_row$production_only_units[[1L]] == 0L &&
     panel_row$candidate_only_units[[1L]] == 0L
 
+  adjudication <- safe_df(panel_membership_adjudication)
+  gini_queue <- safe_df(gini_reconstruction_queue)
+  membership_complete <-
+    isTRUE(identity_coverage_complete) &&
+    nrow(adjudication) == nrow(safe_df(compare_lineage_v2_panels(
+      production_panel, v2_panel
+    ))) &&
+    nrow(adjudication) > 0L &&
+    all(adjudication$status %in% c("accepted", "excluded"))
+  shared_available <- nrow(panel_row) &&
+    panel_row$shared_unique_units[[1L]] > 0L
+
   data.frame(
     gate = c(
-      "production_panel_unique_by_2001_unit",
+      "inherited_production_duplicates_identified",
       "lineage_v2_panel_unique_by_2001_unit",
-      "full_panels_have_identical_support",
+      "panel_membership_adjudicated",
       "shared_support_comparison_available",
+      "multi_source_ginis_reconstructed",
       "production_migration_reviewable"
     ),
     passed = c(
-      nrow(production_duplicates) == 0L,
+      nrow(production_duplicates) == 0L || all(
+        production_duplicates$target_unit_2001 %in%
+          adjudication$target_unit_2001[
+            adjudication$decision %in% c(
+              "replace_inherited_duplicate_with_unique_v2",
+              "exclude_inherited_duplicate"
+            ) & adjudication$status %in% c("accepted", "excluded")
+          ]
+      ),
       nrow(v2_duplicates) == 0L,
-      same_support,
-      nrow(panel_row) &&
-        panel_row$shared_unique_units[[1L]] > 0L,
-      same_support &&
-        nrow(production_duplicates) == 0L &&
-        nrow(v2_duplicates) == 0L
+      membership_complete,
+      shared_available,
+      nrow(gini_queue) == 0L,
+      membership_complete && shared_available &&
+        nrow(v2_duplicates) == 0L && nrow(gini_queue) == 0L
     ),
     next_action = c(
-      "Resolve duplicated Census-2001 units in the inherited production panel.",
+      paste0(
+        "Confirm every inherited duplicate is explicitly excluded from the ",
+        "migration candidate."
+      ),
       "Resolve duplicated Census-2001 units in the lineage-v2 panel.",
       paste0(
-        "Review production-only and lineage-v2-only units before full-panel ",
-        "migration."
+        "Complete accepted-identity coverage and review the generated panel-",
+        "membership adjudication."
       ),
       paste0(
         "Use the shared, unique Census-2001 support for interpretable model ",
         "comparisons."
       ),
       paste0(
-        "Keep downstream_results as needs_review until coverage and duplicate ",
-        "gates pass."
+        "Recompute every queued Gini from pooled household microdata before ",
+        "migration."
+      ),
+      paste0(
+        "Record the downstream-results decision only after membership and ",
+        "pooled-Gini gates pass."
       )
     ),
     stringsAsFactors = FALSE
@@ -860,6 +901,33 @@ build_lineage_v2_shared_support <- function(production_panel, v2_panel) {
       stringsAsFactors = FALSE
     )
   )
+}
+
+
+build_lineage_v2_gini_reconstruction_queue <- function(v2_panel) {
+  panel <- safe_df(v2_panel)
+  required <- c(
+    "target_unit_2001", "lineage_source_count",
+    "lineage_aggregation_status"
+  )
+  if (!nrow(panel) || !all(required %in% names(panel))) return(data.frame())
+
+  gini_cols <- intersect(c("gini_cons_0708", "gini_cons_1718"), names(panel))
+  if (!length(gini_cols)) return(data.frame())
+
+  queue <- panel[num(panel$lineage_source_count) > 1, required, drop = FALSE]
+  if (!nrow(queue)) return(data.frame())
+  queue <- queue[!duplicated(queue$target_unit_2001), , drop = FALSE]
+  for (nm in gini_cols) {
+    queue[[nm]] <- panel[[nm]][match(queue$target_unit_2001, panel$target_unit_2001)]
+  }
+  queue$review_scope <- "pooled_household_gini_reconstruction"
+  queue$status <- "needs_reconstruction"
+  queue$next_action <- paste0(
+    "Pool the contributing household records for each wave and recompute the ",
+    "survey-weighted Gini; do not average source-district Ginis."
+  )
+  queue[order(queue$target_unit_2001), , drop = FALSE]
 }
 
 lineage_v2_model_summary <- function(iv_models, first_stage_tests, panel, variant) {
@@ -1042,10 +1110,15 @@ build_lineage_v2_downstream_review <- function(
       ],
       accepted_coverage$coverage_complete[[1L]]
     )
+  comparison$gini_reconstruction_queue <-
+    build_lineage_v2_gini_reconstruction_queue(v2_panel)
   comparison$review_gates <- lineage_v2_downstream_review_gates(
     comparison$crosswalk_coverage,
     production_panel,
-    v2_panel
+    v2_panel,
+    comparison$panel_membership_adjudication,
+    comparison$gini_reconstruction_queue,
+    accepted_coverage$coverage_complete[[1L]]
   )
 
   if (!is.null(production_shared_models) && !is.null(v2_shared_models)) {
@@ -1122,6 +1195,10 @@ save_lineage_v2_downstream_review <- function(
     downstream_review_gates = write_diagnostic_csv(
       review$review_gates %||% data.frame(),
       file.path(dir, "downstream_review_gates.csv")
+    ),
+    downstream_gini_reconstruction_queue = write_diagnostic_csv(
+      review$gini_reconstruction_queue %||% data.frame(),
+      file.path(dir, "downstream_gini_reconstruction_queue.csv")
     ),
     downstream_shared_panel_summary = write_diagnostic_csv(
       review$shared_panel_summary %||% data.frame(),
