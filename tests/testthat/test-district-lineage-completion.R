@@ -1030,3 +1030,92 @@ test_that("canonical 2001 labels reject duplicate registry units", {
     "must be unique"
   )
 })
+
+test_that("terminal review queue deduplicates identities and reuses evidence", {
+  identities <- data.frame(
+    source_row_id = c("row-1", "row-2", "row-3"),
+    source_code = c("101", "102", "103"),
+    wave = "nss_2017_18",
+    terminal_unit = c(
+      "pc2011__01__001",
+      "pc2011__01__001",
+      "pc2011__01__002"
+    ),
+    state_std = "state",
+    district_std = c("district a", "district a", "district b"),
+    stringsAsFactors = FALSE
+  )
+  allocations <- data.frame(
+    source_unit = "pc2011__01__001",
+    target_2001 = NA_character_,
+    weight = 0,
+    basis = "unresolved",
+    source_id = "source-a",
+    status = "rejected",
+    note = "Unsupported proposal",
+    stringsAsFactors = FALSE
+  )
+
+  out <- build_lineage_v2_unmapped_terminal_queue(
+    identities, allocations
+  )
+
+  expect_equal(nrow(out), 2L)
+  expect_equal(
+    out$identity_count[out$terminal_unit == "pc2011__01__001"],
+    2L
+  )
+  expect_identical(
+    out$evidence_class[
+      out$terminal_unit == "pc2011__01__001"
+    ],
+    "rejected_allocation_record"
+  )
+  expect_identical(
+    out$evidence_class[
+      out$terminal_unit == "pc2011__01__002"
+    ],
+    "no_allocation_record"
+  )
+  expect_lt(
+    out$review_priority[
+      out$terminal_unit == "pc2011__01__002"
+    ],
+    out$review_priority[
+      out$terminal_unit == "pc2011__01__001"
+    ]
+  )
+})
+
+test_that("accepted disconnected allocations receive highest priority", {
+  identities <- data.frame(
+    source_row_id = "row-1",
+    source_code = "101",
+    wave = "nss_2017_18",
+    terminal_unit = "pc2011__01__001",
+    state_std = "state",
+    district_std = "district",
+    stringsAsFactors = FALSE
+  )
+  allocations <- data.frame(
+    source_unit = "pc2011__01__001",
+    target_2001 = "pc2001__01__01",
+    weight = 1,
+    basis = "reviewed",
+    source_id = "source-a",
+    status = "accepted",
+    note = "Accepted allocation",
+    stringsAsFactors = FALSE
+  )
+
+  out <- build_lineage_v2_unmapped_terminal_queue(
+    identities, allocations
+  )
+
+  expect_identical(
+    out$evidence_class,
+    "accepted_allocation_not_connected"
+  )
+  expect_identical(out$review_priority, 1L)
+  expect_match(out$next_action, "Repair the connected sensitivity crosswalk")
+})

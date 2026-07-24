@@ -447,6 +447,144 @@ build_lineage_v2_unmapped_identity_queue <- function(
   ]
 }
 
+
+build_lineage_v2_unmapped_terminal_queue <- function(
+  identity_queue, allocation_weights = data.frame()
+) {
+  identities <- safe_df(identity_queue)
+  allocations <- safe_df(allocation_weights)
+  if (!nrow(identities)) return(data.frame())
+
+  for (nm in setdiff(
+    c(
+      "source_row_id", "source_code", "wave", "terminal_unit",
+      "state_std", "district_std"
+    ),
+    names(identities)
+  )) {
+    identities[[nm]] <- rep(NA_character_, nrow(identities))
+  }
+  identities <- identities[
+    !is.na(identities$terminal_unit) &
+      nzchar(identities$terminal_unit),
+    ,
+    drop = FALSE
+  ]
+  if (!nrow(identities)) return(data.frame())
+
+  for (nm in setdiff(
+    c(
+      "source_unit", "target_2001", "weight", "basis",
+      "source_id", "status", "note"
+    ),
+    names(allocations)
+  )) {
+    allocations[[nm]] <- rep(NA_character_, nrow(allocations))
+  }
+
+  collapse_values <- function(x) {
+    x <- unique(plain_chr(x))
+    x <- x[!is.na(x) & nzchar(x)]
+    if (length(x)) paste(sort(x), collapse = " | ") else NA_character_
+  }
+
+  groups <- split(
+    seq_len(nrow(identities)),
+    identities$terminal_unit
+  )
+  safe_bind_rows(lapply(groups, function(i) {
+    rows <- identities[i, , drop = FALSE]
+    terminal <- rows$terminal_unit[[1L]]
+    evidence <- allocations[
+      allocations$source_unit %in% terminal,
+      ,
+      drop = FALSE
+    ]
+    statuses <- unique(plain_chr(evidence$status))
+    statuses <- statuses[!is.na(statuses) & nzchar(statuses)]
+    accepted <- sum(statuses %in% "accepted")
+    rejected <- sum(statuses %in% "rejected")
+    needs_review <- sum(statuses %in% "needs_review")
+    evidence_class <- if (!nrow(evidence)) {
+      "no_allocation_record"
+    } else if (length(statuses) == 1L && rejected == 1L) {
+      "rejected_allocation_record"
+    } else if (length(statuses) == 1L && accepted == 1L) {
+      "accepted_allocation_not_connected"
+    } else if (needs_review > 0L) {
+      "allocation_record_needs_review"
+    } else {
+      "mixed_allocation_records"
+    }
+    priority <- switch(
+      evidence_class,
+      no_allocation_record = 1L,
+      accepted_allocation_not_connected = 1L,
+      allocation_record_needs_review = 2L,
+      mixed_allocation_records = 2L,
+      rejected_allocation_record = 3L,
+      3L
+    )
+    action <- switch(
+      evidence_class,
+      no_allocation_record = paste0(
+        "Create and source a Census-2011-to-2001 allocation decision for ",
+        "this terminal unit."
+      ),
+      accepted_allocation_not_connected = paste0(
+        "Repair the connected sensitivity crosswalk: an accepted allocation ",
+        "exists but these identities remain unmapped."
+      ),
+      allocation_record_needs_review = paste0(
+        "Resolve the tracked allocation review, then regenerate the ",
+        "sensitivity crosswalk."
+      ),
+      mixed_allocation_records = paste0(
+        "Reconcile conflicting allocation records before regenerating the ",
+        "sensitivity crosswalk."
+      ),
+      rejected_allocation_record = paste0(
+        "Replace the rejected zero-weight proposal with supported allocation ",
+        "evidence or explicitly exclude the affected identities."
+      ),
+      paste0(
+        "Review the terminal-unit allocation evidence and regenerate the ",
+        "sensitivity crosswalk."
+      )
+    )
+    data.frame(
+      terminal_unit = terminal,
+      wave = collapse_values(rows$wave),
+      state_std = plain_chr(first_nonmissing_v2(rows$state_std)),
+      district_std = plain_chr(first_nonmissing_v2(rows$district_std)),
+      identity_count = nrow(rows),
+      source_codes = collapse_values(rows$source_code),
+      source_row_ids = collapse_values(rows$source_row_id),
+      allocation_record_count = nrow(evidence),
+      allocation_statuses = collapse_values(evidence$status),
+      proposed_targets = collapse_values(evidence$target_2001),
+      allocation_basis = collapse_values(evidence$basis),
+      allocation_source_ids = collapse_values(evidence$source_id),
+      allocation_notes = collapse_values(evidence$note),
+      evidence_class = evidence_class,
+      review_priority = priority,
+      review_scope = "unmapped_terminal_unit",
+      next_action = action,
+      stringsAsFactors = FALSE
+    )
+  })) |>
+    (\(out) out[
+      order(
+        out$review_priority,
+        out$state_std,
+        out$district_std,
+        out$terminal_unit
+      ),
+      ,
+      drop = FALSE
+    ])()
+}
+
 lineage_v2_panel_duplicates <- function(panel, variant) {
   panel <- safe_df(panel)
   unit_id <- lineage_panel_unit_id(panel)
@@ -776,7 +914,8 @@ build_lineage_v2_downstream_review <- function(
   v2_shared_first_stage = data.frame(),
   production_shared_panel = data.frame(),
   v2_shared_panel = data.frame(),
-  admin_2001 = data.frame()
+  admin_2001 = data.frame(),
+  allocation_weights = data.frame()
 ) {
   production <- lineage_v2_model_summary(
     production_models, production_first_stage, production_panel, "production"
@@ -797,6 +936,11 @@ build_lineage_v2_downstream_review <- function(
     build_lineage_v2_unmapped_identity_queue(
       primary_eligibility,
       primary_crosswalk
+    )
+  comparison$unmapped_terminal_queue <-
+    build_lineage_v2_unmapped_terminal_queue(
+      comparison$unmapped_identity_queue,
+      allocation_weights
     )
   comparison$crosswalk_coverage <-
     summarize_lineage_v2_downstream_coverage(
@@ -861,6 +1005,10 @@ save_lineage_v2_downstream_review <- function(
     downstream_unmapped_identity_queue = write_diagnostic_csv(
       review$unmapped_identity_queue %||% data.frame(),
       file.path(dir, "downstream_unmapped_identity_queue.csv")
+    ),
+    downstream_unmapped_terminal_queue = write_diagnostic_csv(
+      review$unmapped_terminal_queue %||% data.frame(),
+      file.path(dir, "downstream_unmapped_terminal_queue.csv")
     ),
     downstream_coefficient_comparison = write_diagnostic_csv(
       review$coefficient_comparison %||% data.frame(),
