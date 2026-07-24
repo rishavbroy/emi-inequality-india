@@ -167,7 +167,7 @@ extended_diagnostic_targets <- list(
     save_district_lineage_v2(district_lineage_v2)
   ),
   tar_target(
-    district_panel_v2,
+    district_panel_v2_provisional,
     build_lineage_v2_district_panel(
       district_lineage_v2$primary_source_crosswalk,
       measures_2007,
@@ -177,6 +177,16 @@ extended_diagnostic_targets <- list(
       cfg
     )
   ),
+  tar_target(
+    lineage_v2_gini_reconstruction,
+    reconstruct_lineage_v2_pooled_ginis(
+      district_panel_v2_provisional,
+      district_lineage_v2$primary_source_crosswalk,
+      nss_2007_education,
+      nss_2017_education
+    )
+  ),
+  tar_target(district_panel_v2, lineage_v2_gini_reconstruction$panel),
   tar_target(
     district_panel_v2_allocated,
     build_lineage_v2_district_panel(
@@ -212,7 +222,7 @@ extended_diagnostic_targets <- list(
     lineage_v2_shared_support,
     build_lineage_v2_shared_support(
       district_panel,
-      district_panel_v2_allocated
+      district_panel_v2
     )
   ),
   tar_target(
@@ -251,11 +261,11 @@ extended_diagnostic_targets <- list(
     lineage_v2_downstream_review,
     build_lineage_v2_downstream_review(
       district_panel,
-      district_panel_v2_allocated,
+      district_panel_v2,
       iv_models,
-      iv_models_v2_allocated,
+      iv_models_v2,
       first_stage_tests,
-      first_stage_tests_v2_allocated,
+      first_stage_tests_v2,
       district_lineage_v2$sensitivity_source_crosswalk,
       district_lineage_v2$primary_mapping_eligibility,
       iv_models_production_shared_v2,
@@ -265,7 +275,8 @@ extended_diagnostic_targets <- list(
       lineage_v2_shared_support$production,
       lineage_v2_shared_support$lineage_v2,
       district_lineage_v2$admin_units_2001,
-      district_lineage_v2$adjudicated_allocation_weights
+      district_lineage_v2$adjudicated_allocation_weights,
+      lineage_v2_gini_reconstruction$audit
     )
   ),
   tar_target(
