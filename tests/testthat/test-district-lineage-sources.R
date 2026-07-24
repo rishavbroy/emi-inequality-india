@@ -649,7 +649,8 @@ test_that("migration gates distinguish absent acceptances from ineligible accept
 
 
 test_that("derived Census 2001 geometry is an optional loaded source", {
-  specs <- district_lineage_v2_input_specs(build_paths())
+  root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
+  specs <- district_lineage_v2_input_specs(build_paths(root))
   row <- specs[specs$source_id == "lineage_geometry_2001", , drop = FALSE]
 
   expect_equal(nrow(row), 1L)
@@ -1567,7 +1568,8 @@ test_that("migration readiness distinguishes SHRID coverage from NSS identity co
 })
 
 test_that("terminal allocation decisions are complete and conservative", {
-  specs <- district_lineage_v2_input_specs(build_paths())
+  root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
+  specs <- district_lineage_v2_input_specs(build_paths(root))
   spec <- specs[
     specs$source_id == "lineage_allocation_weights",
     ,
