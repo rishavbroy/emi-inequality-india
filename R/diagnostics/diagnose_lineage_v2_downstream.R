@@ -936,9 +936,8 @@ lineage_v2_downstream_review_gates <- function(
     ,
     drop = FALSE
   ]
-  same_support <- nrow(panel_row) &&
-    panel_row$production_only_units[[1L]] == 0L &&
-    panel_row$candidate_only_units[[1L]] == 0L
+  production_support_retained <- nrow(panel_row) &&
+    panel_row$production_only_units[[1L]] == 0L
 
   adjudication <- safe_df(panel_membership_adjudication)
   gini_queue <- safe_df(gini_reconstruction_queue)
@@ -957,6 +956,7 @@ lineage_v2_downstream_review_gates <- function(
       "inherited_production_duplicates_identified",
       "lineage_v2_panel_unique_by_2001_unit",
       "panel_membership_adjudicated",
+      "preferred_panel_retains_production_support",
       "shared_support_comparison_available",
       "multi_source_ginis_reconstructed",
       "production_migration_reviewable"
@@ -973,9 +973,10 @@ lineage_v2_downstream_review_gates <- function(
       ),
       nrow(v2_duplicates) == 0L,
       membership_complete,
+      production_support_retained,
       shared_available,
       nrow(gini_queue) == 0L,
-      membership_complete && shared_available &&
+      membership_complete && production_support_retained && shared_available &&
         nrow(v2_duplicates) == 0L && nrow(gini_queue) == 0L
     ),
     next_action = c(
@@ -987,6 +988,11 @@ lineage_v2_downstream_review_gates <- function(
       paste0(
         "Complete accepted-identity coverage and review the generated panel-",
         "membership adjudication."
+      ),
+      paste0(
+        "Resolve every production-only Census-2001 unit through a reviewed ",
+        "source-level correction or restore it to the preferred panel; do not ",
+        "migrate by silently discarding inherited analytical support."
       ),
       paste0(
         "Use the shared, unique Census-2001 support for interpretable model ",
@@ -1045,10 +1051,28 @@ build_lineage_v2_shared_support <- function(production_panel, v2_panel) {
 }
 
 
+empty_lineage_v2_gini_reconstruction_queue <- function() {
+  data.frame(
+    target_unit_2001 = character(),
+    lineage_source_count = integer(),
+    lineage_aggregation_status = character(),
+    gini_cons_0708_reconstruction_status = character(),
+    gini_cons_1718_reconstruction_status = character(),
+    gini_cons_0708 = numeric(),
+    gini_cons_1718 = numeric(),
+    review_scope = character(),
+    status = character(),
+    next_action = character(),
+    stringsAsFactors = FALSE
+  )
+}
+
 build_lineage_v2_gini_reconstruction_queue <- function(v2_panel) {
   panel <- safe_df(v2_panel)
   required <- c("target_unit_2001", "lineage_source_count", "lineage_aggregation_status")
-  if (!nrow(panel) || !all(required %in% names(panel))) return(data.frame())
+  if (!nrow(panel) || !all(required %in% names(panel))) {
+    return(empty_lineage_v2_gini_reconstruction_queue())
+  }
 
   status_cols <- intersect(
     c("gini_cons_0708_reconstruction_status", "gini_cons_1718_reconstruction_status"),
@@ -1062,7 +1086,7 @@ build_lineage_v2_gini_reconstruction_queue <- function(v2_panel) {
     }))
     queue <- panel[needs, c(required, status_cols), drop = FALSE]
   }
-  if (!nrow(queue)) return(data.frame())
+  if (!nrow(queue)) return(empty_lineage_v2_gini_reconstruction_queue())
   queue <- queue[!duplicated(queue$target_unit_2001), , drop = FALSE]
   gini_cols <- intersect(c("gini_cons_0708", "gini_cons_1718"), names(panel))
   for (nm in gini_cols) {

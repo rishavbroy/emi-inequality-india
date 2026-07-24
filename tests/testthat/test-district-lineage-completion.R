@@ -669,7 +669,7 @@ test_that("downstream coverage exposes incomplete 2017 lineage", {
   expect_equal(panel$candidate_only_units, 0L)
 })
 
-test_that("downstream gates use adjudication rather than identical support", {
+test_that("downstream gates allow additions but forbid silent support loss", {
   coverage <- data.frame(
     scope = "panel",
     wave = "two_wave_panel",
@@ -705,10 +705,25 @@ test_that("downstream gates use adjudication rather than identical support", {
     gates$gate == "panel_membership_adjudicated"
   ])
   expect_true(gates$passed[
+    gates$gate == "preferred_panel_retains_production_support"
+  ])
+  expect_true(gates$passed[
     gates$gate == "shared_support_comparison_available"
   ])
   expect_true(gates$passed[
     gates$gate == "production_migration_reviewable"
+  ])
+
+  coverage$production_only_units <- 1L
+  blocked <- lineage_v2_downstream_review_gates(
+    coverage, production, candidate, adjudication,
+    identity_coverage_complete = TRUE
+  )
+  expect_false(blocked$passed[
+    blocked$gate == "preferred_panel_retains_production_support"
+  ])
+  expect_false(blocked$passed[
+    blocked$gate == "production_migration_reviewable"
   ])
 })
 
@@ -729,6 +744,24 @@ test_that("multi-source Ginis require pooled household reconstruction", {
   expect_identical(queue$target_unit_2001, "pc2001__01__02")
   expect_identical(queue$status, "needs_reconstruction")
   expect_match(queue$next_action, "Pool the contributing household records")
+})
+
+test_that("an empty Gini queue retains a stable output schema", {
+  queue <- build_lineage_v2_gini_reconstruction_queue(data.frame(
+    target_unit_2001 = "pc2001__01__01",
+    lineage_source_count = 1L,
+    lineage_aggregation_status = "one_to_one",
+    gini_cons_0708_reconstruction_status = "not_required",
+    gini_cons_1718_reconstruction_status = "not_required",
+    gini_cons_0708 = 0.2,
+    gini_cons_1718 = 0.3,
+    stringsAsFactors = FALSE
+  ))
+
+  expect_equal(nrow(queue), 0L)
+  expect_true(all(c(
+    "target_unit_2001", "status", "next_action"
+  ) %in% names(queue)))
 })
 
 test_that("sensitivity allocations remain linked to NSS source identities", {
