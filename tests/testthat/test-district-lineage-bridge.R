@@ -461,7 +461,7 @@ test_that("tracked accepted allocations resolve every reviewed source gap", {
   decisions <- allocation_decision_status_v2(
     read_adjudicated_allocation_weights_v2(weights)
   )
-  accepted_sources <- decisions$source_unit[
+  accepted_sources <- decisions$source_key[
     decisions$decision_status %in% "accepted"
   ]
 

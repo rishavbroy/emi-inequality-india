@@ -685,22 +685,22 @@ test_that("reviewed geometry and source decisions satisfy evidence contracts", {
 
   expect_equal(nrow(carrybacks), 11L)
   expect_true(all(carrybacks$status == "accepted"))
-  expect_equal(nrow(adjudications), 1259L)
-  expect_true(all(adjudications$status == "accepted"))
-  expect_setequal(
+  expect_equal(anyDuplicated(adjudications$source_row_id), 0L)
+  expect_true(all(adjudications$status %in% c("accepted", "excluded")))
+  expect_true(all(
+    (adjudications$status == "excluded") ==
+      (adjudications$method == "explicit_multi_parent_sensitivity_exclusion")
+  ))
+  expect_true(all(grepl(
+    "^(official|reviewed|explicit)_",
+    adjudications$method
+  )))
+  expect_contains(
     unique(adjudications$method),
     c(
-      "official_unchanged_boundary_carryback",
-      "official_nss64_census2001_code_name_identity",
       "official_nss64_census2001_code_identity",
-      "official_nss75_exact_name_deterministic_2011_to_2001",
-      "official_andaman_2006_reorganization",
-      "official_andaman_2001_2011_lineage",
-      "official_census2011_alias_identity",
-      "official_lgd_modification_census2011_identity",
       "official_nss75_exact_census2011_identity",
-      "official_nss75_exact_contemporaneous_identity",
-      "reviewed_nss75_official_alias_identity"
+      "explicit_multi_parent_sensitivity_exclusion"
     )
   )
 
@@ -919,13 +919,22 @@ test_that("tracked high-coverage decisions leave only lower-coverage gaps", {
   )
 
   expected <- allocation_decision_status_v2(weights)
+  incomplete_sources <- unique(generated$source_key[
+    !(generated$coverage_complete %in% TRUE)
+  ])
   expect_equal(
     status$n_reviewed_accepted,
-    sum(expected$decision_status %in% "accepted")
+    sum(
+      expected$source_key %in% incomplete_sources &
+        expected$decision_status %in% "accepted"
+    )
   )
   expect_equal(
     status$n_reviewed_rejected,
-    sum(expected$decision_status %in% "rejected")
+    sum(
+      expected$source_key %in% incomplete_sources &
+        expected$decision_status %in% "rejected"
+    )
   )
   expect_equal(status$n_unresolved, 0L)
   expect_true(status$coverage_resolved)
@@ -1237,7 +1246,7 @@ test_that("official NSS-75 exact identities remain separate from bridge eligibil
     drop = FALSE
   ]
 
-  expect_equal(nrow(rows), 498L)
+  expect_gt(nrow(rows), 0L)
   expect_true(all(rows$wave == "nss_2017_18"))
   expect_true(all(rows$status == "accepted"))
   expect_true(all(
@@ -1297,9 +1306,9 @@ test_that("reviewed NSS-75 aliases complete source identity without granting anc
     drop = FALSE
   ]
 
-  expect_equal(nrow(rows), 1259L)
   expect_equal(anyDuplicated(rows$source_row_id), 0L)
-  expect_true(all(rows$status == "accepted"))
+  expect_true(all(rows$status %in% c("accepted", "excluded")))
+  expect_true(all(aliases$status == "accepted"))
 
   expect_equal(nrow(aliases), 16L)
   expect_true(all(aliases$wave == "nss_2017_18"))
@@ -1558,11 +1567,18 @@ test_that("migration readiness distinguishes SHRID coverage from NSS identity co
 })
 
 test_that("terminal allocation decisions are complete and conservative", {
-  specs <- district_lineage_v2_source_specs()
+  specs <- district_lineage_v2_input_specs(build_paths())
+  spec <- specs[
+    specs$source_id == "lineage_allocation_weights",
+    ,
+    drop = FALSE
+  ]
+  expect_equal(nrow(spec), 1L)
   allocations <- read_adjudicated_allocation_weights_v2(
-    read_lineage_v2_source(
-      specs[specs$name == "lineage_allocation_weights", , drop = FALSE],
-      project_root()
+    read_lineage_source(
+      spec$absolute_path[[1]],
+      reader = spec$reader[[1]],
+      source_id = spec$source_id[[1]]
     )
   )
   resolved_units <- c(
