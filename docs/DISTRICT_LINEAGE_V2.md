@@ -466,6 +466,35 @@ The queue therefore exposes `state_label_2001`, `district_label_2001`,
 becomes its own review action. Duplicate canonical registry keys fail
 explicitly rather than selecting an arbitrary name.
 
+## Terminal-unit adjudication decisions
+
+The reviewed terminal-unit backlog is resolved with two conservative rules.
+
+First, a Census-2011 terminal district receives a sensitivity-only one-to-one
+allocation when the canonical Census-2001 and Census-2011 registries establish
+the same normalized state and district identity, or when official history
+establishes a rename, label variant, state continuation, or single Census-2001
+parent. These decisions do not confer deterministic preferred-panel
+eligibility and do not assert unchanged boundaries.
+
+Second, Baksa, Udalguri, and Samba are explicitly excluded from the
+Census-2001 sensitivity panel because official histories establish
+post-2001 reorganizations and the retained sources do not provide defensible
+territorial or population weights. No equal split or arbitrary parent is
+fabricated.
+
+After accepted-identity coverage is complete, panel membership is classified
+by a separate support invariant:
+
+- shared canonical units are retained;
+- unique lineage-v2 additions are accepted as recovered coverage;
+- inherited-only units are excluded from migration; and
+- inherited duplicates are excluded explicitly.
+
+The generated `downstream_panel_membership_adjudication.csv` records these
+decisions and remains distinct from the later substantive review of model
+results.
+
 ## Terminal-unit review normalization
 
 Accepted NSS identities remain the coverage denominator, but geographic
