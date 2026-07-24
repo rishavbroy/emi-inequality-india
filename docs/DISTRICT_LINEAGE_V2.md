@@ -450,9 +450,14 @@ must not silently replace clustered standard errors with missing values merely
 because panel row names are nonnumeric.
 
 The tracked downstream review now records
-`analysis_complete_review_pending`: reconstruction and same-support estimation
-are complete, while substantive adjudication and production migration remain
-blocked.
+`do_not_migrate_insufficient_preferred_support`. Pooled-Gini reconstruction is
+complete and the shared-support estimates are stable, but the deterministic
+preferred panel retains only 72 of 481 unique inherited production districts.
+The migration gate permits reviewed coverage additions but forbids silently
+dropping production-only support. Each such unit must be restored or resolved
+through a source-level review before production can move to lineage v2. The
+population-allocation panel remains a sensitivity specification and cannot be
+used to bypass this gate.
 
 ## Canonical labels in review queues
 
