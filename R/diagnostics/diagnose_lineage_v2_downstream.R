@@ -936,8 +936,7 @@ lineage_v2_downstream_review_gates <- function(
     ,
     drop = FALSE
   ]
-  production_support_retained <- nrow(panel_row) &&
-    panel_row$production_only_units[[1L]] == 0L
+  preferred_panel_available <- nrow(safe_df(v2_panel)) > 0L
 
   adjudication <- safe_df(panel_membership_adjudication)
   gini_queue <- safe_df(gini_reconstruction_queue)
@@ -956,7 +955,7 @@ lineage_v2_downstream_review_gates <- function(
       "inherited_production_duplicates_identified",
       "lineage_v2_panel_unique_by_2001_unit",
       "panel_membership_adjudicated",
-      "preferred_panel_retains_production_support",
+      "preferred_panel_constructed_from_reviewed_sources",
       "shared_support_comparison_available",
       "multi_source_ginis_reconstructed",
       "production_migration_reviewable"
@@ -973,10 +972,10 @@ lineage_v2_downstream_review_gates <- function(
       ),
       nrow(v2_duplicates) == 0L,
       membership_complete,
-      production_support_retained,
+      preferred_panel_available && isTRUE(identity_coverage_complete),
       shared_available,
       nrow(gini_queue) == 0L,
-      membership_complete && production_support_retained && shared_available &&
+      membership_complete && preferred_panel_available && shared_available &&
         nrow(v2_duplicates) == 0L && nrow(gini_queue) == 0L
     ),
     next_action = c(
@@ -990,9 +989,9 @@ lineage_v2_downstream_review_gates <- function(
         "membership adjudication."
       ),
       paste0(
-        "Resolve every production-only Census-2001 unit through a reviewed ",
-        "source-level correction or restore it to the preferred panel; do not ",
-        "migrate by silently discarding inherited analytical support."
+        "Require a nonempty preferred panel constructed only from adjudicated ",
+        "NSS source identities and reviewed Census-2001 mappings. Differences ",
+        "from the inherited v1 support are diagnostic, not vetoes."
       ),
       paste0(
         "Use the shared, unique Census-2001 support for interpretable model ",

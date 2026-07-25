@@ -705,7 +705,7 @@ test_that("downstream gates allow additions but forbid silent support loss", {
     gates$gate == "panel_membership_adjudicated"
   ])
   expect_true(gates$passed[
-    gates$gate == "preferred_panel_retains_production_support"
+    gates$gate == "preferred_panel_constructed_from_reviewed_sources"
   ])
   expect_true(gates$passed[
     gates$gate == "shared_support_comparison_available"
@@ -715,15 +715,25 @@ test_that("downstream gates allow additions but forbid silent support loss", {
   ])
 
   coverage$production_only_units <- 1L
-  blocked <- lineage_v2_downstream_review_gates(
+  not_blocked_by_v1 <- lineage_v2_downstream_review_gates(
     coverage, production, candidate, adjudication,
     identity_coverage_complete = TRUE
   )
-  expect_false(blocked$passed[
-    blocked$gate == "preferred_panel_retains_production_support"
+  expect_true(not_blocked_by_v1$passed[
+    not_blocked_by_v1$gate ==
+      "preferred_panel_constructed_from_reviewed_sources"
   ])
-  expect_false(blocked$passed[
-    blocked$gate == "production_migration_reviewable"
+  expect_true(not_blocked_by_v1$passed[
+    not_blocked_by_v1$gate == "production_migration_reviewable"
+  ])
+
+  no_candidate <- lineage_v2_downstream_review_gates(
+    coverage, production, candidate[0, , drop = FALSE], adjudication,
+    identity_coverage_complete = TRUE
+  )
+  expect_false(no_candidate$passed[
+    no_candidate$gate ==
+      "preferred_panel_constructed_from_reviewed_sources"
   ])
 })
 
