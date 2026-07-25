@@ -197,3 +197,44 @@ test_that("final table generation records incomplete first-stage diagnostics wit
   expect_true(any(grepl("first-stage regression", attr(tables, "table_input_failures"), fixed = TRUE)))
   expect_true(any(grepl("wavg_ling_degrees", attr(tables, "table_input_failures"), fixed = TRUE)))
 })
+
+
+test_that("processed panel export drops active and residual geometry columns", {
+  skip_if_not_installed("sf")
+
+  points <- sf::st_sfc(
+    sf::st_point(c(0, 0)),
+    sf::st_point(c(1, 1)),
+    crs = 4326
+  )
+  panel <- sf::st_sf(
+    district_panel_id = c("a", "b"),
+    value = c(1, 2),
+    geom = points
+  )
+
+  flattened <- flatten_processed_output(panel)
+  expect_s3_class(flattened, "data.frame")
+  expect_false(inherits(flattened, "sf"))
+  expect_false(any(vapply(
+    flattened,
+    function(column) inherits(column, c("sfc", "sfg")),
+    logical(1)
+  )))
+  expect_named(flattened, c("district_panel_id", "value"))
+
+  residual <- as.data.frame(panel)
+  attr(residual, "sf_column") <- NULL
+  class(residual) <- "data.frame"
+  residual_flattened <- flatten_processed_output(residual)
+  expect_named(residual_flattened, c("district_panel_id", "value"))
+
+  path <- tempfile(fileext = ".csv")
+  on.exit(unlink(path), add = TRUE)
+  save_processed_district_panel(panel, path)
+
+  lines <- readLines(path, warn = FALSE)
+  expect_equal(length(lines), nrow(panel) + 1L)
+  expect_false(any(grepl("[[:blank:]]+$", lines)))
+  expect_false(any(grepl("POINT|list\\(", lines)))
+})

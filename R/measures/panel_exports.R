@@ -13,10 +13,20 @@ save_processed_district_panel <- function(district_panel, path = "data/processed
 }
 
 flatten_processed_output <- function(x) {
-  if (inherits(x, "sf") && requireNamespace("sf", quietly = TRUE)) {
+  if (inherits(x, "sf")) {
     x <- sf::st_drop_geometry(x)
   }
   x <- as.data.frame(x, stringsAsFactors = FALSE)
+
+  geometry_columns <- vapply(
+    x,
+    function(column) inherits(column, c("sfc", "sfg")),
+    logical(1)
+  )
+  if (any(geometry_columns)) {
+    x <- x[!geometry_columns]
+  }
+
   if (!nrow(x) && !length(names(x))) return(data.frame())
   for (nm in names(x)) {
     if (inherits(x[[nm]], "POSIXt")) x[[nm]] <- format(x[[nm]], usetz = TRUE)
