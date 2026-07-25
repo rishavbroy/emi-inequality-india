@@ -659,7 +659,8 @@ build_district_lineage_v2 <- function(
     source_roster, candidates, adjudications
   )
   eligibility <- build_primary_mapping_eligibility(
-    source_roster, source_matches, transition, admin_2001, admin_2011, adjudicated_events
+    source_roster, source_matches, transition, admin_2001, admin_2011,
+    adjudicated_events, adjudicated_weights
   )
   primary_crosswalk <- build_primary_source_crosswalk_v2(eligibility)
   excluded_sources <- build_excluded_source_rows_v2(eligibility)

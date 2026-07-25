@@ -665,7 +665,8 @@ deterministic_transition_2011_to_2001_v2 <- function(transition) {
 
 build_primary_mapping_eligibility <- function(
   source_roster, source_matches, transition_2001_2011,
-  admin_2001, admin_2011, admin_events = data.frame()
+  admin_2001, admin_2011, admin_events = data.frame(),
+  allocation_weights = data.frame()
 ) {
   source_roster <- safe_df(source_roster)
   matches <- safe_df(source_matches)
@@ -716,18 +717,74 @@ build_primary_mapping_eligibility <- function(
     all.x = TRUE, sort = FALSE
   )
 
+  reviewed_primary <- safe_df(allocation_weights)
+  if (nrow(reviewed_primary)) {
+    reviewed_primary <- reviewed_primary[
+      reviewed_primary$status %in% "accepted" &
+        reviewed_primary$basis %in% "official_single_parent_pre_2001_parentage" &
+        suppressWarnings(as.numeric(reviewed_primary$weight)) == 1,
+      c("source_unit", "target_2001"),
+      drop = FALSE
+    ]
+    if (anyDuplicated(reviewed_primary$source_unit)) {
+      stop(
+        "Preferred single-parent allocations must have one target per source.",
+        call. = FALSE
+      )
+    }
+    names(reviewed_primary) <- c(
+      "terminal_unit", "reviewed_target_unit_2001"
+    )
+    out <- merge(
+      out, reviewed_primary,
+      by = "terminal_unit", all.x = TRUE, sort = FALSE
+    )
+  } else {
+    out$reviewed_target_unit_2001 <- NA_character_
+  }
+  reviewed_parts <- strsplit(
+    plain_chr(out$reviewed_target_unit_2001), "__", fixed = TRUE
+  )
+  reviewed_state_code <- vapply(
+    reviewed_parts,
+    function(part) if (length(part) == 3L) part[[2L]] else NA_character_,
+    character(1)
+  )
+  reviewed_district_code <- vapply(
+    reviewed_parts,
+    function(part) if (length(part) == 3L) part[[3L]] else NA_character_,
+    character(1)
+  )
+
   accepted <- out$status %in% "accepted"
   direct <- accepted & out$terminal_vintage %in% "2001"
-  bridged <- accepted & out$terminal_vintage %in% "2011" & !is.na(out$bridged_target_unit_2001)
+  bridged <- accepted & out$terminal_vintage %in% "2011" &
+    (!is.na(out$bridged_target_unit_2001) |
+      !is.na(out$reviewed_target_unit_2001))
   out$mapping_class <- ifelse(
     direct,
     "identity_or_documented_rename_to_2001",
     ifelse(bridged, "deterministic_2011_to_2001", "unresolved_or_non_nested")
   )
   out$eligible_primary <- direct | bridged
-  out$target_unit_2001 <- ifelse(direct, out$terminal_unit, out$bridged_target_unit_2001)
-  out$target_state_code_2001 <- ifelse(direct, out$target_state_code_2001, out$state_code_2001)
-  out$target_district_code_2001 <- ifelse(direct, out$target_district_code_2001, out$district_code_2001)
+  transition_target <- ifelse(
+    !is.na(out$reviewed_target_unit_2001),
+    out$reviewed_target_unit_2001,
+    out$bridged_target_unit_2001
+  )
+  transition_state <- ifelse(
+    !is.na(out$reviewed_target_unit_2001),
+    reviewed_state_code,
+    out$state_code_2001
+  )
+  transition_district <- ifelse(
+    !is.na(out$reviewed_target_unit_2001),
+    reviewed_district_code,
+    out$district_code_2001
+  )
+  out$target_unit_2001 <- ifelse(direct, out$terminal_unit, transition_target)
+  out$target_state_code_2001 <- ifelse(direct, out$target_state_code_2001, transition_state)
+  out$target_district_code_2001 <- ifelse(direct, out$target_district_code_2001, transition_district)
   out$exclusion_reason <- ifelse(
     out$eligible_primary,
     NA_character_,

@@ -607,3 +607,50 @@ test_that("official LGD transitions override incomplete SHRUG transitions", {
   expect_equal(out$mapping_class[key == "35__640"], "official_lgd_census_code_bridge")
   expect_equal(sum(key == "35__641"), 1L)
 })
+
+test_that("reviewed single-parent ancestry can enter the preferred panel", {
+  source_roster <- data.frame(
+    source_row_id = "nss_2017_18__jharkhand__20122__simdega",
+    source_key = "nss_2017_18__jharkhand__20122",
+    wave = "nss_2017_18",
+    source_code = "20122",
+    raw_state = "Jharkhand",
+    raw_district = "Simdega",
+    state_std = "jharkhand",
+    district_std = "simdega",
+    stringsAsFactors = FALSE
+  )
+  source_matches <- data.frame(
+    source_row_id = source_roster$source_row_id,
+    unit_id = "pc2011__20__367",
+    reference_vintage = "2011",
+    method = "official_nss75_exact_name_deterministic_2011_to_2001",
+    status = "accepted",
+    stringsAsFactors = FALSE
+  )
+  admin_2001 <- data.frame(
+    unit_id = "pc2001__20__16", state_code = "20",
+    district_code = "16", stringsAsFactors = FALSE
+  )
+  admin_2011 <- data.frame(
+    unit_id = "pc2011__20__367", state_code = "20",
+    district_code = "367", stringsAsFactors = FALSE
+  )
+  weights <- data.frame(
+    source_unit = "pc2011__20__367",
+    target_2001 = "pc2001__20__16",
+    weight = 1,
+    basis = "official_single_parent_pre_2001_parentage",
+    status = "accepted",
+    stringsAsFactors = FALSE
+  )
+
+  out <- build_primary_mapping_eligibility(
+    source_roster, source_matches, data.frame(), admin_2001, admin_2011,
+    allocation_weights = weights
+  )
+
+  expect_true(out$eligible_primary)
+  expect_identical(out$target_unit_2001, "pc2001__20__16")
+  expect_identical(out$mapping_class, "deterministic_2011_to_2001")
+})
