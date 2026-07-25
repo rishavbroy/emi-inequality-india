@@ -203,7 +203,36 @@ core_pipeline_targets <- list(
 extended_diagnostic_targets <- list(
   tar_target(
     diag_ext_district_lineage_v2,
-    save_district_lineage_v2(district_lineage_v2)
+    {
+      district_panel_v2_dominant
+      iv_models_v2_dominant
+      first_stage_tests_v2_dominant
+      save_district_lineage_v2(district_lineage_v2)
+    }
+  ),
+  tar_target(
+    district_panel_v2_dominant_provisional,
+    build_lineage_v2_district_panel(
+      district_lineage_v2$dominant_parent_source_crosswalk,
+      measures_2007,
+      measures_2017,
+      linguistic_distance_iv,
+      district_lineage_v2_sources$lineage_geometry_2001 %||% data.frame(),
+      cfg
+    )
+  ),
+  tar_target(
+    lineage_v2_dominant_gini_reconstruction,
+    reconstruct_lineage_v2_pooled_ginis(
+      district_panel_v2_dominant_provisional,
+      district_lineage_v2$dominant_parent_source_crosswalk,
+      nss_2007_education,
+      nss_2017_education
+    )
+  ),
+  tar_target(
+    district_panel_v2_dominant,
+    lineage_v2_dominant_gini_reconstruction$panel
   ),
   tar_target(
     district_panel_v2_allocated,
@@ -223,6 +252,14 @@ extended_diagnostic_targets <- list(
   tar_target(
     first_stage_tests_v2,
     estimate_first_stage(iv_models_v2, district_panel_v2, cfg)
+  ),
+  tar_target(
+    iv_models_v2_dominant,
+    estimate_2sls(district_panel_v2_dominant, iv_formulas, cfg)
+  ),
+  tar_target(
+    first_stage_tests_v2_dominant,
+    estimate_first_stage(iv_models_v2_dominant, district_panel_v2_dominant, cfg)
   ),
   tar_target(
     iv_models_v2_allocated,
