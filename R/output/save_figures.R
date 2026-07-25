@@ -300,6 +300,15 @@ map_overlay_rows <- function(plot_data, fill_column = ".map_fill") {
   !is.na(fill) & nzchar(fill) & fill != "No data"
 }
 
+map_legend_override <- function(colors) {
+  list(
+    fill = unname(colors),
+    color = rep("grey35", length(colors)),
+    linewidth = rep(0.25, length(colors)),
+    alpha = rep(1, length(colors))
+  )
+}
+
 build_public_ggplot_map <- function(plot_data, spec) {
   need_pkg("ggplot2", "classified choropleth maps")
   style <- public_map_style(spec$variable)
@@ -320,7 +329,11 @@ build_public_ggplot_map <- function(plot_data, spec) {
       na.translate = TRUE,
       na.value = map_no_data_colour()
     ) +
-    ggplot2::guides(fill = ggplot2::guide_legend(override.aes = list(color = "grey35", linewidth = 0.25))) +
+    ggplot2::guides(
+      fill = ggplot2::guide_legend(
+        override.aes = map_legend_override(fill$colors)
+      )
+    ) +
     ggplot2::coord_sf(datum = NA) +
     ggplot2::labs(fill = fill$title) +
     ggplot2::theme_void(base_size = 10) +

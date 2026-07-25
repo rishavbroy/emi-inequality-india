@@ -155,10 +155,12 @@ test_that("public map range labels do not contain padded spaces", {
 })
 
 test_that("No data is mapped through the fill scale so its legend key is grey", {
-  src <- paste(deparse(build_public_ggplot_map), collapse = "\n")
-  expect_match(src, "geom_sf(data = plot_data, ggplot2::aes(fill = .data[[fill$fill]])", fixed = TRUE)
-  expect_match(src, "guide_legend", fixed = TRUE)
-  expect_match(src, "map_no_data_colour()", fixed = TRUE)
+  colors <- c("0-20" = "#123456", "No data" = map_no_data_colour())
+  override <- map_legend_override(colors)
+
+  expect_equal(override$fill, unname(colors))
+  expect_equal(tail(override$fill, 1L), map_no_data_colour())
+  expect_equal(override$alpha, rep(1, length(colors)))
 })
 
 
