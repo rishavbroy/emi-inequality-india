@@ -196,6 +196,60 @@ weighted_share <- function(x, group_total) {
   ifelse(is.finite(x) & is.finite(group_total) & group_total > 0, x / group_total, NA_real_)
 }
 
+
+#' Build an official Census-2011 to Census-2001 district-code bridge
+#'
+#' LGD's historical district modification report carries both Census codes for
+#' districts existing in the 2001--2011 interval. Rows without a Census-2001
+#' code are newly created districts and are intentionally left to the reviewed
+#' event/allocation machinery.
+build_lgd_district_transition_2001_2011 <- function(lgd_mod_districts) {
+  x <- safe_df(lgd_mod_districts)
+  required <- c("state_lgd_code", "census2001_code", "census2011_code")
+  missing <- setdiff(required, names(x))
+  if (length(missing)) return(data.frame())
+  out <- unique(data.frame(
+    state_code_2011 = pad_admin_code(x$state_lgd_code, 2L),
+    district_code_2011 = pad_admin_code(x$census2011_code, 3L),
+    state_code_2001 = pad_admin_code(x$state_lgd_code, 2L),
+    district_code_2001 = pad_admin_code(x$census2001_code, 2L),
+    population_share_to_2001 = 1,
+    area_share_to_2001 = 1,
+    shrid_coverage = 1,
+    mapping_class = "official_lgd_census_code_bridge",
+    source_id = "lgd_mod_districts_2001_2011",
+    stringsAsFactors = FALSE
+  ))
+  keep <- !is.na(out$state_code_2011) & nzchar(out$state_code_2011) &
+    !is.na(out$district_code_2011) & nzchar(out$district_code_2011) &
+    !is.na(out$district_code_2001) & nzchar(out$district_code_2001)
+  out <- out[keep, , drop = FALSE]
+  key <- paste(out$state_code_2011, out$district_code_2011, sep = "__")
+  conflicting <- key %in% key[duplicated(key) | duplicated(key, fromLast = TRUE)]
+  if (any(conflicting)) {
+    target <- paste(out$state_code_2001, out$district_code_2001, sep = "__")
+    bad <- vapply(split(target[conflicting], key[conflicting]), function(z) length(unique(z)) > 1L, logical(1))
+    if (any(bad)) stop("LGD Census-code bridge has conflicting targets.", call. = FALSE)
+    out <- out[!duplicated(key), , drop = FALSE]
+  }
+  out
+}
+
+#' Prefer official Census-code links over locality-derived transitions
+combine_district_transitions_2001_2011 <- function(shrug_transition, lgd_transition) {
+  shrug <- safe_df(shrug_transition)
+  lgd <- safe_df(lgd_transition)
+  if (!nrow(lgd)) return(shrug)
+  source_key <- function(x) paste(
+    pad_admin_code(x$state_code_2011, 2L),
+    pad_admin_code(x$district_code_2011, 3L), sep = "__"
+  )
+  if (!nrow(shrug)) return(lgd)
+  lgd_keys <- source_key(lgd)
+  shrug <- shrug[!source_key(shrug) %in% lgd_keys, , drop = FALSE]
+  safe_bind_rows(list(lgd, shrug))
+}
+
 #' Aggregate deterministic SHRID mappings to district transition weights
 #'
 #' Shares use the full 2011 source-district denominator. Consequently, excluded

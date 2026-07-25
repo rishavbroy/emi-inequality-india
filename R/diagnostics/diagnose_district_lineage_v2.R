@@ -628,7 +628,13 @@ build_district_lineage_v2 <- function(
       raw_sources$shrug_pc01dist, raw_sources$shrug_pc11dist
     )
   } else data.frame()
-  transition <- build_district_transition_2001_2011(bridge)
+  transition_shrug <- build_district_transition_2001_2011(bridge)
+  transition_lgd <- build_lgd_district_transition_2001_2011(
+    raw_sources$lgd_mod_districts_2001_2011 %||% data.frame()
+  )
+  transition <- combine_district_transitions_2001_2011(
+    transition_shrug, transition_lgd
+  )
   bridge_summary <- summarize_shrid_bridge_v2(bridge)
   bridge_df <- safe_df(bridge)
   bridge_qa <- bridge_df[!(bridge_df$deterministic %in% TRUE), , drop = FALSE]

@@ -555,3 +555,55 @@ test_that("tracked allocation ledger completes every generated decision", {
     length(unique(weights$source_unit[weights$status %in% "rejected"]))
   )
 })
+
+test_that("LGD Census-code bridge supplies official deterministic transitions", {
+  lgd <- data.frame(
+    state_lgd_code = c("35", "35", "12"),
+    census2001_code = c("01", "", "09"),
+    census2011_code = c("640", "639", "252"),
+    stringsAsFactors = FALSE
+  )
+
+  out <- build_lgd_district_transition_2001_2011(lgd)
+
+  expect_equal(nrow(out), 2L)
+  expect_setequal(
+    paste(out$state_code_2011, out$district_code_2011, sep = "__"),
+    c("35__640", "12__252")
+  )
+  expect_true(all(out$mapping_class == "official_lgd_census_code_bridge"))
+  expect_true(all(out$population_share_to_2001 == 1))
+})
+
+test_that("official LGD transitions override incomplete SHRUG transitions", {
+  shrug <- data.frame(
+    state_code_2011 = c("35", "35"),
+    district_code_2011 = c("640", "641"),
+    state_code_2001 = c("35", "35"),
+    district_code_2001 = c("01", "02"),
+    population_share_to_2001 = c(0.99, 1),
+    area_share_to_2001 = c(0.99, 1),
+    shrid_coverage = c(0.99, 1),
+    mapping_class = c("non_nested_or_incomplete", "deterministic_containment"),
+    stringsAsFactors = FALSE
+  )
+  lgd <- data.frame(
+    state_code_2011 = "35",
+    district_code_2011 = "640",
+    state_code_2001 = "35",
+    district_code_2001 = "01",
+    population_share_to_2001 = 1,
+    area_share_to_2001 = 1,
+    shrid_coverage = 1,
+    mapping_class = "official_lgd_census_code_bridge",
+    source_id = "lgd_mod_districts_2001_2011",
+    stringsAsFactors = FALSE
+  )
+
+  out <- combine_district_transitions_2001_2011(shrug, lgd)
+  key <- paste(out$state_code_2011, out$district_code_2011, sep = "__")
+
+  expect_equal(sum(key == "35__640"), 1L)
+  expect_equal(out$mapping_class[key == "35__640"], "official_lgd_census_code_bridge")
+  expect_equal(sum(key == "35__641"), 1L)
+})

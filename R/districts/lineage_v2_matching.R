@@ -643,7 +643,9 @@ deterministic_transition_2011_to_2001_v2 <- function(transition) {
     )
   }
 
-  keep <- transition$mapping_class %in% "deterministic_containment" &
+  keep <- transition$mapping_class %in% c(
+    "deterministic_containment", "official_lgd_census_code_bridge"
+  ) &
     suppressWarnings(as.numeric(transition$population_share_to_2001)) == 1 &
     suppressWarnings(as.numeric(transition$shrid_coverage)) == 1
   out <- transition[keep, required, drop = FALSE]
