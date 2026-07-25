@@ -1395,3 +1395,65 @@ test_that("recovery gates reject generic exclusions and preferred multi-parent m
 
   expect_true(all(gates$passed))
 })
+
+
+test_that("dominant-parent reviews create a separate one-parent crosswalk", {
+  primary <- data.frame(
+    source_row_id = "p07", wave = "nss_2007_08", source_code = "1",
+    target_unit_2001 = "pc2001__01__01", weight = 1,
+    basis = "preferred", source_id = "official", panel_variant = "preferred",
+    stringsAsFactors = FALSE
+  )
+  sensitivity <- rbind(
+    primary,
+    data.frame(
+      source_row_id = "d17", wave = "nss_2017_18", source_code = "2",
+      target_unit_2001 = "pc2001__01__01", weight = 1,
+      basis = "population_renormalized_min_99pct_mapped",
+      source_id = "shrug_pc_keys", panel_variant = "allocated",
+      stringsAsFactors = FALSE
+    )
+  )
+  reviews <- data.frame(
+    source_row_id = "d17", wave = "nss_2017_18", source_code = "2",
+    raw_state = "State", raw_district = "District",
+    terminal_unit = "pc2011__01__001", target_unit_2001 = "pc2001__01__01",
+    review_status = "accepted_dominant_parent", reviewed_panel = "dominant_parent",
+    evidence_basis = "iss_2001_2011_continuity_and_shrug_min_99pct_single_parent",
+    evidence_source_ids = "alluvial|shrug_pc_keys", notes = "reviewed",
+    stringsAsFactors = FALSE
+  )
+
+  out <- build_dominant_parent_source_crosswalk_v2(primary, sensitivity, reviews)
+
+  expect_setequal(out$source_row_id, c("p07", "d17"))
+  expect_false(anyDuplicated(out$source_row_id))
+  expect_true(all(out$panel_variant == "dominant_parent"))
+})
+
+test_that("dominant-parent reviews cannot admit multi-parent allocations", {
+  primary <- data.frame(
+    source_row_id = character(), wave = character(), source_code = character(),
+    target_unit_2001 = character(), weight = numeric(), basis = character(),
+    source_id = character(), panel_variant = character(), stringsAsFactors = FALSE
+  )
+  sensitivity <- data.frame(
+    source_row_id = c("d17", "d17"), wave = "nss_2017_18", source_code = "2",
+    target_unit_2001 = c("pc2001__01__01", "pc2001__01__02"),
+    weight = c(.9, .1), basis = "population_share", source_id = "shrug_pc_keys",
+    panel_variant = "allocated", stringsAsFactors = FALSE
+  )
+  reviews <- data.frame(
+    source_row_id = "d17", wave = "nss_2017_18", source_code = "2",
+    raw_state = "State", raw_district = "District",
+    terminal_unit = "pc2011__01__001", target_unit_2001 = "pc2001__01__01",
+    review_status = "accepted_dominant_parent", reviewed_panel = "dominant_parent",
+    evidence_basis = "reviewed", evidence_source_ids = "alluvial|shrug_pc_keys",
+    notes = "reviewed", stringsAsFactors = FALSE
+  )
+
+  expect_error(
+    build_dominant_parent_source_crosswalk_v2(primary, sensitivity, reviews),
+    "do not match an eligible single-target allocation"
+  )
+})

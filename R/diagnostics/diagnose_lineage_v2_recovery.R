@@ -161,3 +161,115 @@ build_lineage_v2_recovery_gates <- function(loss_audit, reclassification) {
     stringsAsFactors = FALSE
   )
 }
+
+
+empty_dominant_parent_reviews_v2 <- function() {
+  data.frame(
+    source_row_id = character(), wave = character(), source_code = character(),
+    raw_state = character(), raw_district = character(), terminal_unit = character(),
+    target_unit_2001 = character(), review_status = character(),
+    reviewed_panel = character(), evidence_basis = character(),
+    evidence_source_ids = character(), notes = character(),
+    stringsAsFactors = FALSE
+  )
+}
+
+read_dominant_parent_reviews_v2 <- function(x) {
+  x <- safe_df(x)
+  if (!nrow(x)) return(empty_dominant_parent_reviews_v2())
+  required <- names(empty_dominant_parent_reviews_v2())
+  missing <- setdiff(required, names(x))
+  if (length(missing)) {
+    stop("Dominant-parent reviews are missing: ", paste(missing, collapse = ", "), call. = FALSE)
+  }
+  x <- x[required]
+  if (anyDuplicated(x$source_row_id)) {
+    stop("Dominant-parent reviews must contain one row per source identity.", call. = FALSE)
+  }
+  accepted <- x$review_status %in% "accepted_dominant_parent"
+  invalid <- accepted & (
+    !(x$wave %in% "nss_2017_18") |
+      !grepl("^pc2011__", x$terminal_unit) |
+      !grepl("^pc2001__", x$target_unit_2001) |
+      !nzchar(x$evidence_source_ids)
+  )
+  if (any(invalid)) {
+    stop("Accepted dominant-parent reviews require 2017-18 source identities, 2011 and 2001 unit IDs, and evidence sources.", call. = FALSE)
+  }
+  x
+}
+
+build_dominant_parent_source_crosswalk_v2 <- function(
+  primary_crosswalk, sensitivity_crosswalk, reviews
+) {
+  primary <- safe_df(primary_crosswalk)
+  sensitivity <- safe_df(sensitivity_crosswalk)
+  reviews <- read_dominant_parent_reviews_v2(reviews)
+  accepted <- reviews[reviews$review_status %in% "accepted_dominant_parent", c(
+    "source_row_id", "target_unit_2001"
+  ), drop = FALSE]
+  if (!nrow(accepted)) return(primary)
+
+  reviewed <- merge(
+    sensitivity, accepted,
+    by = c("source_row_id", "target_unit_2001"),
+    all = FALSE, sort = FALSE
+  )
+  reviewed <- reviewed[
+    reviewed$wave %in% "nss_2017_18" &
+      reviewed$basis %in% "population_renormalized_min_99pct_mapped" &
+      abs(suppressWarnings(as.numeric(reviewed$weight)) - 1) < 1e-8,
+    names(primary), drop = FALSE
+  ]
+  missing_reviews <- setdiff(accepted$source_row_id, reviewed$source_row_id)
+  if (length(missing_reviews)) {
+    stop(
+      "Accepted dominant-parent reviews do not match an eligible single-target allocation: ",
+      paste(missing_reviews, collapse = ", "), call. = FALSE
+    )
+  }
+  out <- unique(rbind(primary, reviewed))
+  if (anyDuplicated(out$source_row_id)) {
+    stop("Dominant-parent crosswalk must contain one row per source identity.", call. = FALSE)
+  }
+  out$panel_variant <- "dominant_parent"
+  out
+}
+
+build_lineage_v2_panel_variant_summary <- function(
+  primary_crosswalk, dominant_crosswalk, sensitivity_crosswalk,
+  dominant_reviews
+) {
+  variants <- list(
+    conservative_preferred = safe_df(primary_crosswalk),
+    dominant_parent = safe_df(dominant_crosswalk),
+    full_reviewed_sensitivity = safe_df(sensitivity_crosswalk)
+  )
+  descriptions <- c(
+    conservative_preferred = "Deterministic official, registry, alias, and reviewed single-parent mappings only.",
+    dominant_parent = "Conservative mappings plus reviewed 2017-18 single-parent allocations with at least 99 percent SHRUG coverage and corroborating LGD or India State Stories evidence.",
+    full_reviewed_sensitivity = "Dominant-parent mappings plus reviewed multi-parent fractional allocations; robustness specification only."
+  )
+  safe_bind_rows(lapply(names(variants), function(name) {
+    x <- variants[[name]]
+    wave_targets <- unique(x[c("wave", "target_unit_2001")])
+    targets <- split(wave_targets, wave_targets$wave)
+    target_sets <- lapply(targets, function(z) unique(z$target_unit_2001))
+    overlap <- if (all(c("nss_2007_08", "nss_2017_18") %in% names(target_sets))) {
+      length(intersect(target_sets$nss_2007_08, target_sets$nss_2017_18))
+    } else 0L
+    data.frame(
+      panel_variant = name,
+      source_rows_2007_08 = sum(x$wave %in% "nss_2007_08"),
+      source_rows_2017_18 = sum(x$wave %in% "nss_2017_18"),
+      target_districts_2007_08 = length(target_sets$nss_2007_08 %||% character()),
+      target_districts_2017_18 = length(target_sets$nss_2017_18 %||% character()),
+      two_wave_target_districts = overlap,
+      accepted_dominant_parent_reviews = if (name == "dominant_parent") {
+        sum(safe_df(dominant_reviews)$review_status %in% "accepted_dominant_parent")
+      } else 0L,
+      description = descriptions[[name]],
+      stringsAsFactors = FALSE
+    )
+  }))
+}

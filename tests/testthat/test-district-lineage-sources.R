@@ -1620,3 +1620,9 @@ test_that("terminal allocation decisions are complete and conservative", {
         nzchar(allocations$target_2001))
   ))
 })
+
+
+test_that("dominant-parent review ledger is registered", {
+  specs <- district_lineage_v2_input_specs(build_paths())
+  expect_true("lineage_dominant_parent_reviews" %in% specs$source_id)
+})

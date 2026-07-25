@@ -693,6 +693,12 @@ build_district_lineage_v2 <- function(
   sensitivity_crosswalk <- build_sensitivity_crosswalk_v2(
     primary_crosswalk, adjudicated_weights, eligibility
   )
+  dominant_parent_reviews <- read_dominant_parent_reviews_v2(
+    raw_sources$lineage_dominant_parent_reviews %||% data.frame()
+  )
+  dominant_parent_crosswalk <- build_dominant_parent_source_crosswalk_v2(
+    primary_crosswalk, sensitivity_crosswalk, dominant_parent_reviews
+  )
   identity_reclassification <- build_lineage_v2_identity_reclassification(eligibility)
   district_loss_audit <- build_lineage_v2_district_loss_audit(
     admin_2001, source_roster, eligibility, primary_crosswalk,
@@ -700,6 +706,10 @@ build_district_lineage_v2 <- function(
   )
   mapping_rule_sensitivity <- build_lineage_v2_rule_sensitivity(
     primary_crosswalk, sensitivity_crosswalk, eligibility
+  )
+  panel_variant_summary <- build_lineage_v2_panel_variant_summary(
+    primary_crosswalk, dominant_parent_crosswalk, sensitivity_crosswalk,
+    dominant_parent_reviews
   )
   recovery_gates <- build_lineage_v2_recovery_gates(
     district_loss_audit, identity_reclassification
@@ -766,7 +776,10 @@ build_district_lineage_v2 <- function(
     adjudication_draft = adjudication_draft,
     primary_mapping_eligibility = eligibility,
     primary_source_crosswalk = primary_crosswalk,
+    dominant_parent_source_crosswalk = dominant_parent_crosswalk,
     sensitivity_source_crosswalk = sensitivity_crosswalk,
+    dominant_parent_reviews = dominant_parent_reviews,
+    panel_variant_summary = panel_variant_summary,
     district_loss_audit = district_loss_audit,
     identity_reclassification = identity_reclassification,
     mapping_rule_sensitivity = mapping_rule_sensitivity,
@@ -805,7 +818,8 @@ save_district_lineage_v2 <- function(diagnostics, dir = "outputs/diagnostics/ext
     "nss_source_roster", "reference_units", "source_matches", "source_match_candidates",
     "source_adjudication_queue", "adjudication_draft",
     "primary_mapping_eligibility", "primary_source_crosswalk",
-    "sensitivity_source_crosswalk", "district_loss_audit",
+    "dominant_parent_source_crosswalk", "sensitivity_source_crosswalk",
+    "dominant_parent_reviews", "panel_variant_summary", "district_loss_audit",
     "identity_reclassification", "mapping_rule_sensitivity", "recovery_gates",
     "production_crosswalk_comparison",
     "production_mapping_reviews",
