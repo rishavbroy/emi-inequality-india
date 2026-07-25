@@ -463,7 +463,7 @@ because panel row names are nonnumeric.
 The tracked downstream review now records
 `do_not_migrate_insufficient_preferred_support`. Pooled-Gini reconstruction is
 complete and the shared-support estimates are stable, but the deterministic
-preferred panel retains only 72 of 481 unique inherited production districts.
+inherited and lineage-v2 support differ because the inherited methodology is not authoritative.
 The migration gate permits reviewed coverage additions but forbids silently
 dropping production-only support. Each such unit must be restored or resolved
 through a source-level review before production can move to lineage v2. The
@@ -639,7 +639,7 @@ therefore descriptive outputs from different samples, not migration evidence.
 The downstream diagnostic now reports wave-level preferred coverage, duplicate
 panel units, and explicit review gates. It also identifies the inherited
 production duplicate at Census-2001 unit `pc2001__09__17`. Migration remains
-blocked until reviewed 2017-18 transitions restore comparable district support
+blocked only by unresolved NSS identities, unreviewed mappings, duplicate target units, unreconstructed pooled Ginis, or an unrecorded downstream decision
 and both panels are unique by Census-2001 unit.
 
 ## Parallel downstream impact review
