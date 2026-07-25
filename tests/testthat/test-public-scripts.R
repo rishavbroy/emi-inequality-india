@@ -529,23 +529,19 @@ test_that("full audit refreshes lineage geometry before extended diagnostics", {
   expect_gt(diagnostics_pos, geometry_pos)
 })
 
-test_that("lineage-v2 downstream review remains extended-only", {
+test_that("lineage-v2 is the production panel and v1 remains diagnostic-only", {
   target_file <- readLines(repo_file("_targets.R"), warn = FALSE)
-  targets <- paste(target_file, collapse = "\n")
+  core_start <- match(TRUE, grepl("core_pipeline_targets <- list(", target_file, fixed = TRUE))
   extended_start <- match(
     TRUE,
     grepl("extended_diagnostic_targets <- list(", target_file, fixed = TRUE)
   )
+  core <- paste(target_file[core_start:(extended_start - 1L)], collapse = "\n")
+  extended <- paste(target_file[extended_start:length(target_file)], collapse = "\n")
 
-  expect_match(
-    targets,
-    "diag_ext_lineage_v2_downstream",
-    fixed = TRUE
-  )
-  expect_match(targets, "district_panel_v2", fixed = TRUE)
-  expect_false(is.na(extended_start))
-  expect_false(grepl(
-    "tar_target\\(district_panel_v2",
-    paste(target_file[seq_len(extended_start - 1L)], collapse = "\n")
-  ))
+  expect_match(core, "tar_target(district_panel, district_panel_v2)", fixed = TRUE)
+  expect_match(core, "save_processed_district_panel(district_panel)", fixed = TRUE)
+  expect_match(core, "estimate_2sls(district_panel, iv_formulas, cfg)", fixed = TRUE)
+  expect_match(extended, "estimate_2sls(district_panel_v1, iv_formulas, cfg)", fixed = TRUE)
+  expect_match(extended, "diag_ext_lineage_v2_downstream", fixed = TRUE)
 })
