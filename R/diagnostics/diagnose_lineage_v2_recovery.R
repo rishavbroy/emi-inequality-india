@@ -208,7 +208,6 @@ build_dominant_parent_source_crosswalk_v2 <- function(
   accepted <- reviews[reviews$review_status %in% "accepted_dominant_parent", c(
     "source_row_id", "target_unit_2001"
   ), drop = FALSE]
-  if (!nrow(accepted)) return(primary)
 
   reviewed <- merge(
     sensitivity, accepted,
@@ -219,7 +218,7 @@ build_dominant_parent_source_crosswalk_v2 <- function(
     reviewed$wave %in% "nss_2017_18" &
       reviewed$basis %in% "population_renormalized_min_99pct_mapped" &
       abs(suppressWarnings(as.numeric(reviewed$weight)) - 1) < 1e-8,
-    names(primary), drop = FALSE
+    , drop = FALSE
   ]
   missing_reviews <- setdiff(accepted$source_row_id, reviewed$source_row_id)
   if (length(missing_reviews)) {
@@ -228,7 +227,13 @@ build_dominant_parent_source_crosswalk_v2 <- function(
       paste(missing_reviews, collapse = ", "), call. = FALSE
     )
   }
-  out <- unique(rbind(primary, reviewed))
+
+  keep <- unique(c(primary$source_row_id, reviewed$source_row_id))
+  out <- sensitivity[sensitivity$source_row_id %in% keep, , drop = FALSE]
+  missing_primary <- setdiff(primary$source_row_id, out$source_row_id)
+  if (length(missing_primary)) {
+    stop("Sensitivity crosswalk is missing conservative source identities.", call. = FALSE)
+  }
   if (anyDuplicated(out$source_row_id)) {
     stop("Dominant-parent crosswalk must contain one row per source identity.", call. = FALSE)
   }

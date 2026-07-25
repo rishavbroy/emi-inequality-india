@@ -1428,6 +1428,7 @@ test_that("dominant-parent reviews create a separate one-parent crosswalk", {
 
   expect_setequal(out$source_row_id, c("p07", "d17"))
   expect_identical(anyDuplicated(out$source_row_id), 0L)
+  expect_named(out, names(sensitivity))
   expect_true(all(out$panel_variant == "dominant_parent"))
 })
 
