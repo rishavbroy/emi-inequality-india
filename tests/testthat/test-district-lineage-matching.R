@@ -132,7 +132,7 @@ test_that("primary eligibility accepts only adjudicated deterministic mappings",
     out$target_unit_2001[match(c("a", "b"), out$source_row_id)],
     c("pc2001__01__01", "pc2001__01__01")
   )
-  expect_equal(out$exclusion_reason[out$source_row_id == "c"], "geographic_transition_non_nested_or_incomplete")
+  expect_equal(out$exclusion_reason[out$source_row_id == "c"], "geographic_transition_unresolved")
 })
 
 test_that("duplicate diagnostics distinguish identical from conflicting rows", {
@@ -613,4 +613,43 @@ test_that("Census-2011 registries retain historical state names after mergers", 
       "pc2011__26__496->dadra and nagar haveli"
     )
   )
+})
+
+test_that("reviewed single-target source evidence enters the preferred crosswalk", {
+  weights <- data.frame(
+    source_unit = c("a", "b", "c"),
+    target_2001 = c("x", "y", "z"),
+    weight = 1,
+    basis = c(
+      "canonical_registry_name_continuity",
+      "official_single_parent_or_alias_continuity",
+      "population_renormalized_min_99pct_mapped"
+    ),
+    source_id = c("registry", "lgd_mod_districts", "shrug_pc_keys"),
+    status = "accepted",
+    stringsAsFactors = FALSE
+  )
+
+  preferred <- preferred_single_target_allocations_v2(weights)
+
+  expect_setequal(preferred$source_unit, c("a", "b"))
+  expect_false("c" %in% preferred$source_unit)
+})
+
+test_that("allocation summaries distinguish dominant and multi-parent cases", {
+  weights <- data.frame(
+    source_unit = c("one", "many", "many"),
+    target_2001 = c("a", "a", "b"),
+    weight = c(1, 0.7, 0.3),
+    basis = "population_renormalized_min_99pct_mapped",
+    source_id = "shrug_pc_keys",
+    status = "accepted",
+    stringsAsFactors = FALSE
+  )
+
+  out <- summarize_reviewed_allocations_v2(weights)
+
+  expect_equal(out$allocation_target_count[out$source_unit == "one"], 1L)
+  expect_equal(out$allocation_target_count[out$source_unit == "many"], 2L)
+  expect_equal(out$allocation_weight_sum[out$source_unit == "many"], 1)
 })

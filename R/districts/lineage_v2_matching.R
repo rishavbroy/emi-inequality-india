@@ -663,6 +663,54 @@ deterministic_transition_2011_to_2001_v2 <- function(transition) {
   out
 }
 
+preferred_single_target_bases_v2 <- function() {
+  c(
+    "canonical_registry_name_continuity",
+    "official_single_parent_or_alias_continuity",
+    "official_single_parent_pre_2001_parentage"
+  )
+}
+
+summarize_reviewed_allocations_v2 <- function(allocation_weights) {
+  x <- safe_df(allocation_weights)
+  required <- c("source_unit", "target_2001", "weight", "basis", "source_id", "status")
+  if (!nrow(x)) {
+    return(data.frame(
+      source_unit = character(), allocation_target_count = integer(),
+      allocation_weight_sum = numeric(), allocation_basis = character(),
+      allocation_source_id = character(), stringsAsFactors = FALSE
+    ))
+  }
+  missing <- setdiff(required, names(x))
+  if (length(missing)) stop("Allocation weights are missing: ", paste(missing, collapse = ", "), call. = FALSE)
+  x <- x[x$status %in% "accepted", required, drop = FALSE]
+  if (!nrow(x)) return(summarize_reviewed_allocations_v2(data.frame()))
+  split_x <- split(x, x$source_unit)
+  safe_bind_rows(lapply(split_x, function(part) data.frame(
+    source_unit = part$source_unit[[1]],
+    allocation_target_count = length(unique(part$target_2001)),
+    allocation_weight_sum = sum(suppressWarnings(as.numeric(part$weight)), na.rm = TRUE),
+    allocation_basis = paste(sort(unique(plain_chr(part$basis))), collapse = "|"),
+    allocation_source_id = paste(sort(unique(plain_chr(part$source_id))), collapse = "|"),
+    stringsAsFactors = FALSE
+  )))
+}
+
+preferred_single_target_allocations_v2 <- function(allocation_weights) {
+  x <- safe_df(allocation_weights)
+  if (!nrow(x)) return(data.frame(source_unit = character(), target_2001 = character(), stringsAsFactors = FALSE))
+  x <- x[
+    x$status %in% "accepted" &
+      x$basis %in% preferred_single_target_bases_v2() &
+      suppressWarnings(as.numeric(x$weight)) == 1,
+    c("source_unit", "target_2001"), drop = FALSE
+  ]
+  counts <- table(x$source_unit)
+  x <- x[x$source_unit %in% names(counts[counts == 1L]), , drop = FALSE]
+  unique(x)
+}
+
+
 build_primary_mapping_eligibility <- function(
   source_roster, source_matches, transition_2001_2011,
   admin_2001, admin_2011, admin_events = data.frame(),
@@ -717,28 +765,21 @@ build_primary_mapping_eligibility <- function(
     all.x = TRUE, sort = FALSE
   )
 
-  reviewed_primary <- safe_df(allocation_weights)
+  allocation_summary <- summarize_reviewed_allocations_v2(allocation_weights)
+  if (nrow(allocation_summary)) {
+    names(allocation_summary)[names(allocation_summary) == "source_unit"] <- "terminal_unit"
+    out <- merge(out, allocation_summary, by = "terminal_unit", all.x = TRUE, sort = FALSE)
+  } else {
+    out$allocation_target_count <- NA_integer_
+    out$allocation_weight_sum <- NA_real_
+    out$allocation_basis <- NA_character_
+    out$allocation_source_id <- NA_character_
+  }
+
+  reviewed_primary <- preferred_single_target_allocations_v2(allocation_weights)
   if (nrow(reviewed_primary)) {
-    reviewed_primary <- reviewed_primary[
-      reviewed_primary$status %in% "accepted" &
-        reviewed_primary$basis %in% "official_single_parent_pre_2001_parentage" &
-        suppressWarnings(as.numeric(reviewed_primary$weight)) == 1,
-      c("source_unit", "target_2001"),
-      drop = FALSE
-    ]
-    if (anyDuplicated(reviewed_primary$source_unit)) {
-      stop(
-        "Preferred single-parent allocations must have one target per source.",
-        call. = FALSE
-      )
-    }
-    names(reviewed_primary) <- c(
-      "terminal_unit", "reviewed_target_unit_2001"
-    )
-    out <- merge(
-      out, reviewed_primary,
-      by = "terminal_unit", all.x = TRUE, sort = FALSE
-    )
+    names(reviewed_primary) <- c("terminal_unit", "reviewed_target_unit_2001")
+    out <- merge(out, reviewed_primary, by = "terminal_unit", all.x = TRUE, sort = FALSE)
   } else {
     out$reviewed_target_unit_2001 <- NA_character_
   }
@@ -795,9 +836,18 @@ build_primary_mapping_eligibility <- function(
         !(out$status %in% "accepted"),
         "source_identity_unadjudicated",
         ifelse(
-          out$resolution_status != "resolved",
-          paste0("geographic_lineage_", out$resolution_status),
-          "geographic_transition_non_nested_or_incomplete"
+          suppressWarnings(as.integer(out$allocation_target_count)) > 1L,
+          "multi_parent_allocation_sensitivity_only",
+          ifelse(
+            suppressWarnings(as.integer(out$allocation_target_count)) == 1L &
+              grepl("population_renormalized_min_99pct_mapped", plain_chr(out$allocation_basis), fixed = TRUE),
+            "dominant_parent_near_complete_requires_review",
+            ifelse(
+              out$resolution_status != "resolved",
+              paste0("geographic_lineage_", out$resolution_status),
+              "geographic_transition_unresolved"
+            )
+          )
         )
       )
     )
