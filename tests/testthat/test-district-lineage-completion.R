@@ -1458,3 +1458,35 @@ test_that("dominant-parent reviews cannot admit multi-parent allocations", {
     "do not match an eligible single-target allocation"
   )
 })
+
+test_that("panel-variant review stacks the same model contract across panels", {
+  panel <- data.frame(
+    target_unit_2001 = c("a", "b"),
+    consumption_growth = c(1, 2),
+    EMIE_d = c(3, 4),
+    wavg_ling_degrees = c(5, 6),
+    stringsAsFactors = FALSE
+  )
+  empty_models <- list()
+  first_stage <- data.frame()
+
+  out <- build_lineage_v2_panel_variant_review(
+    panels = list(conservative_preferred = panel, dominant_parent = panel),
+    models = list(conservative_preferred = empty_models, dominant_parent = empty_models),
+    first_stage_tests = list(
+      conservative_preferred = first_stage,
+      dominant_parent = first_stage
+    ),
+    gini_audits = list(
+      conservative_preferred = data.frame(status = "not_required"),
+      dominant_parent = data.frame(status = "reconstructed")
+    )
+  )
+
+  expect_setequal(
+    out$panel_summary$panel_variant,
+    c("conservative_preferred", "dominant_parent")
+  )
+  expect_true(all(out$panel_summary$unique_districts == 2L))
+  expect_setequal(out$gini_reconstruction$panel_variant, out$panel_summary$panel_variant)
+})

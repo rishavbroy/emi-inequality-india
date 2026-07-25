@@ -1392,3 +1392,65 @@ save_lineage_v2_downstream_review <- function(
     )
   ))
 }
+
+build_lineage_v2_panel_variant_review <- function(
+  panels, models, first_stage_tests, gini_audits
+) {
+  variants <- names(panels)
+  variant_sets <- lapply(
+    list(models, first_stage_tests, gini_audits),
+    function(x) sort(names(x))
+  )
+  if (
+    !length(variants) || anyDuplicated(variants) ||
+      !all(vapply(variant_sets, identical, logical(1), sort(variants)))
+  ) {
+    stop(
+      "Panel-variant review requires the same unique names for panels, models, first stages, and Gini audits.",
+      call. = FALSE
+    )
+  }
+  summaries <- lapply(variants, function(variant) {
+    lineage_v2_model_summary(
+      models[[variant]], first_stage_tests[[variant]], panels[[variant]], variant
+    )
+  })
+  names(summaries) <- variants
+  gini <- safe_bind_rows(lapply(variants, function(variant) {
+    x <- safe_df(gini_audits[[variant]])
+    if (nrow(x)) x$panel_variant <- variant
+    x
+  }))
+  list(
+    panel_summary = safe_bind_rows(lapply(summaries, `[[`, "panel_summary")),
+    coefficients = safe_bind_rows(lapply(summaries, `[[`, "coefficients")),
+    first_stage = safe_bind_rows(lapply(summaries, `[[`, "first_stage")),
+    gini_reconstruction = gini
+  )
+}
+
+save_lineage_v2_panel_variant_review <- function(
+  review,
+  dir = "outputs/diagnostics/extended/district_lineage_v2"
+) {
+  dir.create(dir, recursive = TRUE, showWarnings = FALSE)
+  paths <- c(
+    panel_variant_model_summary = write_diagnostic_csv(
+      review$panel_summary %||% data.frame(),
+      file.path(dir, "panel_variant_model_summary.csv")
+    ),
+    panel_variant_coefficients = write_diagnostic_csv(
+      review$coefficients %||% data.frame(),
+      file.path(dir, "panel_variant_coefficients.csv")
+    ),
+    panel_variant_first_stage = write_diagnostic_csv(
+      review$first_stage %||% data.frame(),
+      file.path(dir, "panel_variant_first_stage.csv")
+    ),
+    panel_variant_gini_reconstruction = write_diagnostic_csv(
+      review$gini_reconstruction %||% data.frame(),
+      file.path(dir, "panel_variant_gini_reconstruction.csv")
+    )
+  )
+  output_manifest(paths)
+}
