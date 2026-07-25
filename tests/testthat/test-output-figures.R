@@ -100,31 +100,30 @@ test_that("public no-data map colour is a visible ggplot2 scale na.value", {
   expect_equal(map_no_data_colour(), "#bdbdbd")
 })
 
-test_that("complete map geometry keeps grey boundaries and non-missing overlay rows", {
+test_that("public maps retain the production panel's Census-2001 geometry and attributes", {
   skip_if_not_installed("sf")
   geometry <- sf::st_sfc(
     sf::st_polygon(list(rbind(c(0, 0), c(1, 0), c(1, 1), c(0, 1), c(0, 0)))),
-    sf::st_polygon(list(rbind(c(1, 0), c(2, 0), c(2, 1), c(1, 1), c(1, 0)))),
     crs = 4326
   )
-  boundaries <- sf::st_sf(
-    state_20 = c("A", "A"),
-    district_20 = c("matched", "unmatched"),
+  panel <- sf::st_sf(
+    target_unit_2001 = "pc2001__01__01",
+    EMIE = 10,
     geometry = geometry
   )
-  panel <- sf::st_sf(
-    state_20 = "A",
-    district_20 = "matched",
-    EMIE = 10,
-    geometry = geometry[1]
+  spec <- figure_spec(
+    "map_emi_exposure",
+    "map_emi_exposure.png",
+    "EMI Exposure",
+    kind = "map",
+    variable = "EMIE"
   )
 
-  out <- complete_map_geometry(panel, boundaries, "EMIE")
-  fill <- public_map_fill(out, "EMIE", public_map_style("EMIE"))
-
-  expect_equal(nrow(out), 2L)
-  expect_true("No data" %in% as.character(fill$data$.map_fill))
+  fill <- public_map_fill(panel, "EMIE", public_map_style("EMIE"))
+  expect_s3_class(fill$data, "sf")
+  expect_identical(fill$data$target_unit_2001, panel$target_unit_2001)
   expect_equal(sum(map_overlay_rows(fill$data, ".map_fill")), 1L)
+  expect_equal(sf::st_geometry(fill$data), sf::st_geometry(panel))
 })
 
 test_that("public map rendering refuses all-grey data layers", {

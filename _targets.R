@@ -176,7 +176,7 @@ core_pipeline_targets <- list(
   tar_target(diag_public_spatial_autocorrelation_files, save_spatial_autocorrelation_diagnostics(diag_public_spatial_autocorrelation), format = "file"),
   tar_target(diag_public_multicollinearity, save_multicollinearity_diagnostics(diagnose_multicollinearity(district_panel, iv_models, cfg)), format = "file"),
 
-  tar_target(figures, make_figures(district_panel, raw_ilo_figures, cfg, boundaries_2020, iv_models)),
+  tar_target(figures, make_figures(district_panel, raw_ilo_figures, cfg, iv_models = iv_models)),
   tar_target(figure_files, save_figures(figures, cfg), format = "file"),
   tar_target(tables, make_tables(selection_data, ame_results, district_panel, iv_models, first_stage_tests, cfg, selection_model)),
   tar_target(diag_public_iv_panel, save_public_iv_panel_diagnostics(district_panel, tables), format = "file"),

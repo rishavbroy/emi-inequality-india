@@ -191,48 +191,6 @@ public_map_style <- function(variable) {
   )
 }
 
-complete_map_geometry <- function(district_panel, boundaries_2020, variable) {
-  panel <- district_panel
-  if (!has_sf_geometry(panel)) return(panel)
-  if (!inherits(boundaries_2020, "sf")) return(panel)
-  b <- boundaries_2020
-  geom_col <- attr(b, "sf_column")
-  if (is.null(geom_col) || !geom_col %in% names(b)) return(panel)
-
-  panel_df <- if (inherits(panel, "sf")) sf::st_drop_geometry(panel) else as.data.frame(panel)
-  if (all(c("state_20", "district_20") %in% names(panel_df)) && all(c("state_20", "district_20") %in% names(b))) {
-    panel_df$.map_state_key <- canon(panel_df$state_20)
-    panel_df$.map_district_key <- canon(panel_df$district_20)
-    b$.map_state_key <- canon(b$state_20)
-    b$.map_district_key <- canon(b$district_20)
-    keys <- c(".map_state_key", ".map_district_key")
-  } else if (all(c("state_std", "district_std") %in% names(panel_df)) && all(c("state_std", "district_std") %in% names(b))) {
-    panel_df$.map_state_key <- canon(panel_df$state_std)
-    panel_df$.map_district_key <- canon(panel_df$district_std)
-    b$.map_state_key <- canon(b$state_std)
-    b$.map_district_key <- canon(b$district_std)
-    keys <- c(".map_state_key", ".map_district_key")
-  } else {
-    return(panel)
-  }
-
-  keep <- unique(c(keys, variable, "region"))
-  keep <- intersect(keep, names(panel_df))
-  panel_df <- panel_df[!duplicated(panel_df[keys]), keep, drop = FALSE]
-  out <- merge(b, panel_df, by = keys, all.x = TRUE, sort = FALSE)
-  out$.map_state_key <- NULL
-  out$.map_district_key <- NULL
-  out <- sf::st_as_sf(out, sf_column_name = geom_col)
-
-  # Always keep the full boundary frame once a reliable boundary source is
-  # available.  The previous fallback returned the matched panel when many
-  # boundary rows lacked data; those absent geometries rendered as literal white
-  # holes and bypassed ggplot2's missing-value scale.  Keeping all boundaries
-  # lets the map encode unmatched or variable-missing districts explicitly as
-  # "No data" polygons.
-  out
-}
-
 prepare_public_map_data <- function(plot_data, variable) {
   if (!variable %in% names(plot_data)) plot_data[[variable]] <- NA
   if (identical(variable, "region")) {
@@ -378,7 +336,7 @@ save_map_plot_formats <- function(map_plot, path_base, formats, width = 8, heigh
   save_plot_formats(map_plot, path_base, formats, width = width, height = height, dpi = dpi)
 }
 
-save_map_figure <- function(spec, path_base, district_panel, formats, boundaries_2020 = NULL) {
+save_map_figure <- function(spec, path_base, district_panel, formats) {
   if (!has_sf_geometry(district_panel)) {
     stop("Map figure '", spec$name, "' requires an sf district_panel with validated geometry.", call. = FALSE)
   }
@@ -386,7 +344,7 @@ save_map_figure <- function(spec, path_base, district_panel, formats, boundaries
     stop("Map figure '", spec$name, "' is missing variable '", spec$variable, "'.", call. = FALSE)
   }
 
-  plot_data <- complete_map_geometry(district_panel, boundaries_2020, spec$variable)
+  plot_data <- district_panel
   plot_data <- prepare_public_map_data(plot_data, spec$variable)
   p <- build_public_ggplot_map(plot_data, spec)
   save_map_plot_formats(p, path_base, formats, width = 7.2, height = 5.2, dpi = 300)
@@ -531,7 +489,7 @@ save_figures <- function(figures, cfg) {
     paths <- switch(
       spec$kind,
       ilo_collage = save_ilo_collage(spec, path_base, formats),
-      map = save_map_figure(spec, path_base, attr(figures, "district_panel") %||% data.frame(), formats, attr(figures, "boundaries_2020")),
+      map = save_map_figure(spec, path_base, attr(figures, "district_panel") %||% data.frame(), formats),
       district_carveouts_shifts = save_district_carveouts_shifts(spec, path_base, formats),
       emie_expected_values = save_emie_expected_values(spec, path_base, formats, attr(figures, "district_panel") %||% data.frame(), attr(figures, "iv_models")),
       status = save_status_figure(spec, format_path(path_base, "png")),
