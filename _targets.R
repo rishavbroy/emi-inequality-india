@@ -205,8 +205,12 @@ extended_diagnostic_targets <- list(
     diag_ext_district_lineage_v2,
     {
       district_panel_v2_dominant
+      district_panel_v2_full_reviewed
       iv_models_v2_dominant
+      iv_models_v2_full_reviewed
       first_stage_tests_v2_dominant
+      first_stage_tests_v2_full_reviewed
+      diag_ext_lineage_v2_panel_variants
       save_district_lineage_v2(district_lineage_v2)
     }
   ),
@@ -235,7 +239,7 @@ extended_diagnostic_targets <- list(
     lineage_v2_dominant_gini_reconstruction$panel
   ),
   tar_target(
-    district_panel_v2_allocated,
+    district_panel_v2_full_reviewed_provisional,
     build_lineage_v2_district_panel(
       district_lineage_v2$sensitivity_source_crosswalk,
       measures_2007,
@@ -244,6 +248,19 @@ extended_diagnostic_targets <- list(
       district_lineage_v2_sources$lineage_geometry_2001 %||% data.frame(),
       cfg
     )
+  ),
+  tar_target(
+    lineage_v2_full_reviewed_gini_reconstruction,
+    reconstruct_lineage_v2_pooled_ginis(
+      district_panel_v2_full_reviewed_provisional,
+      district_lineage_v2$sensitivity_source_crosswalk,
+      nss_2007_education,
+      nss_2017_education
+    )
+  ),
+  tar_target(
+    district_panel_v2_full_reviewed,
+    lineage_v2_full_reviewed_gini_reconstruction$panel
   ),
   tar_target(
     iv_models_v2,
@@ -262,16 +279,45 @@ extended_diagnostic_targets <- list(
     estimate_first_stage(iv_models_v2_dominant, district_panel_v2_dominant, cfg)
   ),
   tar_target(
-    iv_models_v2_allocated,
-    estimate_2sls(district_panel_v2_allocated, iv_formulas, cfg)
+    iv_models_v2_full_reviewed,
+    estimate_2sls(district_panel_v2_full_reviewed, iv_formulas, cfg)
   ),
   tar_target(
-    first_stage_tests_v2_allocated,
+    first_stage_tests_v2_full_reviewed,
     estimate_first_stage(
-      iv_models_v2_allocated,
-      district_panel_v2_allocated,
+      iv_models_v2_full_reviewed,
+      district_panel_v2_full_reviewed,
       cfg
     )
+  ),
+  tar_target(
+    lineage_v2_panel_variant_review,
+    build_lineage_v2_panel_variant_review(
+      panels = list(
+        conservative_preferred = district_panel_v2,
+        dominant_parent = district_panel_v2_dominant,
+        full_reviewed_sensitivity = district_panel_v2_full_reviewed
+      ),
+      models = list(
+        conservative_preferred = iv_models_v2,
+        dominant_parent = iv_models_v2_dominant,
+        full_reviewed_sensitivity = iv_models_v2_full_reviewed
+      ),
+      first_stage_tests = list(
+        conservative_preferred = first_stage_tests_v2,
+        dominant_parent = first_stage_tests_v2_dominant,
+        full_reviewed_sensitivity = first_stage_tests_v2_full_reviewed
+      ),
+      gini_audits = list(
+        conservative_preferred = lineage_v2_gini_reconstruction$audit,
+        dominant_parent = lineage_v2_dominant_gini_reconstruction$audit,
+        full_reviewed_sensitivity = lineage_v2_full_reviewed_gini_reconstruction$audit
+      )
+    )
+  ),
+  tar_target(
+    diag_ext_lineage_v2_panel_variants,
+    save_lineage_v2_panel_variant_review(lineage_v2_panel_variant_review)
   ),
   tar_target(
     iv_models_v1,
@@ -305,7 +351,7 @@ extended_diagnostic_targets <- list(
     )
   ),
   tar_target(
-    iv_models_v2_allocated_shared,
+    iv_models_lineage_v2_shared,
     estimate_2sls(
       lineage_v2_shared_support$lineage_v2,
       iv_formulas,
@@ -313,9 +359,9 @@ extended_diagnostic_targets <- list(
     )
   ),
   tar_target(
-    first_stage_tests_v2_allocated_shared,
+    first_stage_tests_lineage_v2_shared,
     estimate_first_stage(
-      iv_models_v2_allocated_shared,
+      iv_models_lineage_v2_shared,
       lineage_v2_shared_support$lineage_v2,
       cfg
     )
@@ -332,9 +378,9 @@ extended_diagnostic_targets <- list(
       district_lineage_v2$sensitivity_source_crosswalk,
       district_lineage_v2$primary_mapping_eligibility,
       iv_models_production_shared_v2,
-      iv_models_v2_allocated_shared,
+      iv_models_lineage_v2_shared,
       first_stage_tests_production_shared_v2,
-      first_stage_tests_v2_allocated_shared,
+      first_stage_tests_lineage_v2_shared,
       lineage_v2_shared_support$production,
       lineage_v2_shared_support$lineage_v2,
       district_lineage_v2$admin_units_2001,
