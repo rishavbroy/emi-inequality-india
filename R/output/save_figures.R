@@ -345,11 +345,30 @@ build_public_ggplot_map <- function(plot_data, spec) {
     )
 }
 
+complete_public_map_geometry <- function(district_panel, map_geometry) {
+  if (!has_sf_geometry(map_geometry)) {
+    stop("Public maps require the complete Census-2001 district geometry.", call. = FALSE)
+  }
+  key <- "target_unit_2001"
+  if (!key %in% names(map_geometry) && "unit_id" %in% names(map_geometry)) {
+    map_geometry[[key]] <- map_geometry$unit_id
+  }
+  if (!key %in% names(map_geometry) || !key %in% names(district_panel)) {
+    stop("Public map geometry and panel must contain a Census-2001 unit key.", call. = FALSE)
+  }
+  if (anyDuplicated(map_geometry[[key]])) {
+    stop("Complete Census-2001 map geometry must contain one row per district.", call. = FALSE)
+  }
+  attributes <- if (inherits(district_panel, "sf")) sf::st_drop_geometry(district_panel) else safe_df(district_panel)
+  attributes <- attributes[!duplicated(attributes[[key]]), , drop = FALSE]
+  merge(map_geometry, attributes, by = key, all.x = TRUE, sort = FALSE)
+}
+
 save_map_plot_formats <- function(map_plot, path_base, formats, width = 8, height = 6, dpi = 300) {
   save_plot_formats(map_plot, path_base, formats, width = width, height = height, dpi = dpi)
 }
 
-save_map_figure <- function(spec, path_base, district_panel, formats) {
+save_map_figure <- function(spec, path_base, district_panel, map_geometry, formats) {
   if (!has_sf_geometry(district_panel)) {
     stop("Map figure '", spec$name, "' requires an sf district_panel with validated geometry.", call. = FALSE)
   }
@@ -357,7 +376,7 @@ save_map_figure <- function(spec, path_base, district_panel, formats) {
     stop("Map figure '", spec$name, "' is missing variable '", spec$variable, "'.", call. = FALSE)
   }
 
-  plot_data <- district_panel
+  plot_data <- complete_public_map_geometry(district_panel, map_geometry)
   plot_data <- prepare_public_map_data(plot_data, spec$variable)
   p <- build_public_ggplot_map(plot_data, spec)
   save_map_plot_formats(p, path_base, formats, width = 7.2, height = 5.2, dpi = 300)
@@ -502,7 +521,12 @@ save_figures <- function(figures, cfg) {
     paths <- switch(
       spec$kind,
       ilo_collage = save_ilo_collage(spec, path_base, formats),
-      map = save_map_figure(spec, path_base, attr(figures, "district_panel") %||% data.frame(), formats),
+      map = save_map_figure(
+        spec, path_base,
+        attr(figures, "district_panel") %||% data.frame(),
+        attr(figures, "map_geometry") %||% data.frame(),
+        formats
+      ),
       district_carveouts_shifts = save_district_carveouts_shifts(spec, path_base, formats),
       emie_expected_values = save_emie_expected_values(spec, path_base, formats, attr(figures, "district_panel") %||% data.frame(), attr(figures, "iv_models")),
       status = save_status_figure(spec, format_path(path_base, "png")),

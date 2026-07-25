@@ -29,7 +29,7 @@ sf_geometry_coverage <- function(x) {
 #' make figures
 #'
 #' @return A named list of figure specifications consumed by save_figures().
-make_figures <- function(district_panel, raw_ilo_figures, cfg, iv_models = NULL) {
+make_figures <- function(district_panel, raw_ilo_figures, cfg, iv_models = NULL, map_geometry = NULL) {
   required_variables <- c(
     "EMIE",
     "consumption_pct_change",
@@ -110,6 +110,7 @@ make_figures <- function(district_panel, raw_ilo_figures, cfg, iv_models = NULL)
     attr(out, "map_input_failures") <- map_input_failures
   }
   attr(out, "district_panel") <- district_panel
+  attr(out, "map_geometry") <- map_geometry
   attr(out, "iv_models") <- iv_models
   out
 }

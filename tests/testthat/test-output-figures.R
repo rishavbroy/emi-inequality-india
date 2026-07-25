@@ -225,3 +225,29 @@ test_that("poster expected-values figure is generated with the main figures", {
   expect_identical(figures$poster_emie_expected_values$kind, "emie_expected_values")
   expect_identical(attr(figures, "iv_models"), list())
 })
+
+test_that("complete Census-2001 map geometry shows missing panel districts as grey polygons", {
+  skip_if_not_installed("sf")
+  geometry <- sf::st_sfc(
+    sf::st_polygon(list(rbind(c(0, 0), c(1, 0), c(1, 1), c(0, 1), c(0, 0)))),
+    sf::st_polygon(list(rbind(c(1, 0), c(2, 0), c(2, 1), c(1, 1), c(1, 0)))),
+    crs = 4326
+  )
+  universe <- sf::st_sf(
+    target_unit_2001 = c("pc2001__01__01", "pc2001__01__02"),
+    geometry = geometry
+  )
+  panel <- sf::st_sf(
+    target_unit_2001 = "pc2001__01__01",
+    EMIE = 10,
+    geometry = geometry[1]
+  )
+
+  complete <- complete_public_map_geometry(panel, universe)
+  fill <- public_map_fill(complete, "EMIE", public_map_style("EMIE"))
+
+  expect_equal(nrow(fill$data), 2L)
+  expect_equal(as.character(fill$data$.map_fill), c("2.5-10", "No data"))
+  expect_equal(unname(fill$colors[["No data"]]), map_no_data_colour())
+  expect_true(all(!sf::st_is_empty(fill$data)))
+})
