@@ -1,5 +1,16 @@
 # District-lineage rebuild: data, method, and work plan
 
+
+### Official LGD Census-code bridge
+
+The preferred 2011-to-2001 bridge first uses the LGD modification report for
+1 January 2001 through 1 January 2011. District rows with both Census-2011 and
+Census-2001 codes are treated as official deterministic code links. Rows with
+a blank Census-2001 code are post-2001 creations and remain subject to the
+reviewed event or allocation workflow. The locality-derived SHRUG bridge is
+retained for districts absent from the LGD code roster and for QA, rather than
+requiring exact locality-key coverage when an official paired code exists.
+
 ## Status and purpose
 
 This document is the durable handoff for the parallel district-lineage-v2 rebuild. It is written for researchers and coding agents who may not have access to the local raw files.
