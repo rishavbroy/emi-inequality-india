@@ -1313,3 +1313,44 @@ test_that("multi-source district Ginis are reconstructed from pooled households"
   expect_equal(nrow(build_lineage_v2_gini_reconstruction_queue(out$panel)), 0L)
 })
 
+test_that("pooled Gini reconstruction preserves sf geometry", {
+  testthat::skip_if_not_installed("sf")
+
+  panel <- sf::st_sf(
+    target_unit_2001 = "pc2001__35__01",
+    gini_cons_0708 = 0.2,
+    gini_cons_1718 = 0.9,
+    geometry = sf::st_sfc(
+      sf::st_polygon(list(rbind(
+        c(0, 0), c(1, 0), c(1, 1), c(0, 1), c(0, 0)
+      ))),
+      crs = 4326
+    )
+  )
+  crosswalk <- data.frame(
+    source_row_id = c("a", "b"),
+    wave = "nss_2017_18",
+    source_code = c("35102", "35103"),
+    target_unit_2001 = "pc2001__35__01",
+    weight = 1,
+    stringsAsFactors = FALSE
+  )
+  block3 <- data.frame(
+    NSS_Region = c(35, 35),
+    District = c(102, 103),
+    HHID = c("a1", "b1"),
+    HH_Con_exp_rs = c(100, 400),
+    Household_size = 1,
+    MULT_Combined = 1,
+    stringsAsFactors = FALSE
+  )
+
+  out <- reconstruct_lineage_v2_pooled_ginis(
+    panel, crosswalk, list(), list(nss1718edu_block3 = block3)
+  )
+
+  expect_s3_class(out$panel, "sf")
+  expect_identical(sf::st_crs(out$panel), sf::st_crs(panel))
+  expect_true(sf::st_equals(out$panel, panel, sparse = FALSE)[1, 1])
+})
+

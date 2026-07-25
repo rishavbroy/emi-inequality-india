@@ -1,7 +1,5 @@
 # This file is part of the EMI inequality research pipeline.
-# It builds a diagnostic-only panel from the reviewed lineage-v2 crosswalk.
-# Public targets continue to use the inherited production panel until migration
-# is explicitly reviewed and accepted.
+# It builds the reviewed lineage-v2 panel used by production and diagnostics.
 
 lineage_v2_source_code <- function(x) {
   raw <- gsub("[^0-9]", "", plain_chr(x))
@@ -258,7 +256,7 @@ lineage_v2_household_consumption <- function(inputs, wave) {
 reconstruct_lineage_v2_pooled_ginis <- function(
   panel, crosswalk, nss_2007_education, nss_2017_education
 ) {
-  panel <- safe_df(panel)
+  if (!is.data.frame(panel)) panel <- safe_df(panel)
   crosswalk <- safe_df(crosswalk)
   audit <- list()
 
