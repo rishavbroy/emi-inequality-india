@@ -85,38 +85,17 @@ core_pipeline_targets <- list(
   tar_target(measures_2007, build_2007_measures(nss_2007_education, nss_2007_consumption, cfg)),
   tar_target(measures_2017, build_2017_measures(nss_2017_education, cfg)),
   tar_target(linguistic_distance_iv, build_linguistic_distance_iv(census_2001_languages, cfg)),
-  tar_target(district_panel, build_district_panel(district_join_map, measures_2007, measures_2017, linguistic_distance_iv, boundaries_2020, cfg)),
-  tar_target(processed_district_panel_file, save_processed_district_panel(district_panel), format = "file"),
-
-  tar_target(iv_formulas, build_iv_formulas(cfg)),
-  tar_target(iv_models, estimate_2sls(district_panel, iv_formulas, cfg)),
-  tar_target(first_stage_tests, estimate_first_stage(iv_models, district_panel, cfg)),
-  tar_target(diag_public_weak_instruments, diagnose_weak_instruments(iv_models, district_panel, cfg)),
-  tar_target(diag_public_overidentification, diagnose_overidentification(iv_models, iv_formulas, cfg)),
-
-  tar_target(spatial_weights, build_spatial_weights(district_panel, cfg)),
-  tar_target(diag_public_spatial_autocorrelation, diagnose_spatial_autocorrelation(district_panel, iv_models, spatial_weights, cfg)),
-  tar_target(diag_public_spatial_autocorrelation_files, save_spatial_autocorrelation_diagnostics(diag_public_spatial_autocorrelation), format = "file"),
-  tar_target(diag_public_multicollinearity, save_multicollinearity_diagnostics(diagnose_multicollinearity(district_panel, iv_models, cfg)), format = "file"),
-
-  tar_target(figures, make_figures(district_panel, raw_ilo_figures, cfg, boundaries_2020, iv_models)),
-  tar_target(figure_files, save_figures(figures, cfg), format = "file"),
-  tar_target(tables, make_tables(selection_data, ame_results, district_panel, iv_models, first_stage_tests, cfg, selection_model)),
-  tar_target(diag_public_iv_panel, save_public_iv_panel_diagnostics(district_panel, tables), format = "file"),
-  tar_target(table_files, save_tables(tables, cfg), format = "file"),
-  tar_target(report_values, { diag_public_spatial_autocorrelation_files; build_report_values(ame_results, first_stage_tests, iv_models, selection_data, district_panel, diag_public_spatial_autocorrelation, cfg) }),
-  tar_target(report_qmd, "paper/report.qmd", format = "file"),
-  tar_target(poster_qmd, "posters/2026_predoc_conference/poster.qmd", format = "file"),
-  tar_target(district_matching_qmd, "docs/district-matching.qmd", format = "file"),
-  tar_target(long_paths_qmd, "docs/long-paths-and-8-3-filenames.qmd", format = "file"),
-
-  tar_target(district_matching_note, render_public_html(district_matching_qmd, dependencies = list(report_values)), format = "file"),
-  tar_target(long_paths_note, render_public_html(long_paths_qmd), format = "file"),
-  tar_target(report, render_report_pdf(report_qmd, report_values, figure_files, table_files), format = "file"),
-  tar_target(poster, render_poster_pdf(poster_qmd, figure_files), format = "file")
-)
-
-extended_diagnostic_targets <- list(
+  tar_target(
+    district_panel_v1,
+    build_district_panel(
+      district_join_map,
+      measures_2007,
+      measures_2017,
+      linguistic_distance_iv,
+      boundaries_2020,
+      cfg
+    )
+  ),
   tar_target(
     district_lineage_v2_specs,
     district_lineage_v2_input_specs(paths),
@@ -159,12 +138,8 @@ extended_diagnostic_targets <- list(
       census_2001_languages,
       measures_2007,
       measures_2017,
-      district_panel
+      district_panel_v1
     )
-  ),
-  tar_target(
-    diag_ext_district_lineage_v2,
-    save_district_lineage_v2(district_lineage_v2)
   ),
   tar_target(
     district_panel_v2_provisional,
@@ -187,6 +162,42 @@ extended_diagnostic_targets <- list(
     )
   ),
   tar_target(district_panel_v2, lineage_v2_gini_reconstruction$panel),
+  tar_target(district_panel, district_panel_v2),
+  tar_target(processed_district_panel_file, save_processed_district_panel(district_panel), format = "file"),
+
+  tar_target(iv_formulas, build_iv_formulas(cfg)),
+  tar_target(iv_models, estimate_2sls(district_panel, iv_formulas, cfg)),
+  tar_target(first_stage_tests, estimate_first_stage(iv_models, district_panel, cfg)),
+  tar_target(diag_public_weak_instruments, diagnose_weak_instruments(iv_models, district_panel, cfg)),
+  tar_target(diag_public_overidentification, diagnose_overidentification(iv_models, iv_formulas, cfg)),
+
+  tar_target(spatial_weights, build_spatial_weights(district_panel, cfg)),
+  tar_target(diag_public_spatial_autocorrelation, diagnose_spatial_autocorrelation(district_panel, iv_models, spatial_weights, cfg)),
+  tar_target(diag_public_spatial_autocorrelation_files, save_spatial_autocorrelation_diagnostics(diag_public_spatial_autocorrelation), format = "file"),
+  tar_target(diag_public_multicollinearity, save_multicollinearity_diagnostics(diagnose_multicollinearity(district_panel, iv_models, cfg)), format = "file"),
+
+  tar_target(figures, make_figures(district_panel, raw_ilo_figures, cfg, boundaries_2020, iv_models)),
+  tar_target(figure_files, save_figures(figures, cfg), format = "file"),
+  tar_target(tables, make_tables(selection_data, ame_results, district_panel, iv_models, first_stage_tests, cfg, selection_model)),
+  tar_target(diag_public_iv_panel, save_public_iv_panel_diagnostics(district_panel, tables), format = "file"),
+  tar_target(table_files, save_tables(tables, cfg), format = "file"),
+  tar_target(report_values, { diag_public_spatial_autocorrelation_files; build_report_values(ame_results, first_stage_tests, iv_models, selection_data, district_panel, diag_public_spatial_autocorrelation, cfg) }),
+  tar_target(report_qmd, "paper/report.qmd", format = "file"),
+  tar_target(poster_qmd, "posters/2026_predoc_conference/poster.qmd", format = "file"),
+  tar_target(district_matching_qmd, "docs/district-matching.qmd", format = "file"),
+  tar_target(long_paths_qmd, "docs/long-paths-and-8-3-filenames.qmd", format = "file"),
+
+  tar_target(district_matching_note, render_public_html(district_matching_qmd, dependencies = list(report_values)), format = "file"),
+  tar_target(long_paths_note, render_public_html(long_paths_qmd), format = "file"),
+  tar_target(report, render_report_pdf(report_qmd, report_values, figure_files, table_files), format = "file"),
+  tar_target(poster, render_poster_pdf(poster_qmd, figure_files), format = "file")
+)
+
+extended_diagnostic_targets <- list(
+  tar_target(
+    diag_ext_district_lineage_v2,
+    save_district_lineage_v2(district_lineage_v2)
+  ),
   tar_target(
     district_panel_v2_allocated,
     build_lineage_v2_district_panel(
@@ -219,9 +230,17 @@ extended_diagnostic_targets <- list(
     )
   ),
   tar_target(
+    iv_models_v1,
+    estimate_2sls(district_panel_v1, iv_formulas, cfg)
+  ),
+  tar_target(
+    first_stage_tests_v1,
+    estimate_first_stage(iv_models_v1, district_panel_v1, cfg)
+  ),
+  tar_target(
     lineage_v2_shared_support,
     build_lineage_v2_shared_support(
-      district_panel,
+      district_panel_v1,
       district_panel_v2
     )
   ),
@@ -260,11 +279,11 @@ extended_diagnostic_targets <- list(
   tar_target(
     lineage_v2_downstream_review,
     build_lineage_v2_downstream_review(
-      district_panel,
+      district_panel_v1,
       district_panel_v2,
-      iv_models,
+      iv_models_v1,
       iv_models_v2,
-      first_stage_tests,
+      first_stage_tests_v1,
       first_stage_tests_v2,
       district_lineage_v2$sensitivity_source_crosswalk,
       district_lineage_v2$primary_mapping_eligibility,
