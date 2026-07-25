@@ -366,13 +366,29 @@ test_that("tracked allocation decisions preserve weights and rejections", {
   )
   expect_true(all(decision_status$decision_complete))
 
-  expect_setequal(
-    unique(accepted$basis),
-    c(
+  accepted_bases <- unique(accepted$basis)
+  expect_true(all(nzchar(accepted_bases)))
+  expect_true(all(
+    accepted_bases %in% c(
       "population_renormalized_min_99pct_mapped",
       "canonical_registry_name_continuity",
-      "official_single_parent_or_alias_continuity"
+      "official_single_parent_or_alias_continuity",
+      "official_single_parent_pre_2001_parentage"
     )
+  ))
+  expect_true(
+    "official_single_parent_pre_2001_parentage" %in% accepted_bases
+  )
+  deterministic_parentage <- accepted[
+    accepted$basis %in% "official_single_parent_pre_2001_parentage",
+    ,
+    drop = FALSE
+  ]
+  expect_gt(nrow(deterministic_parentage), 0L)
+  expect_true(all(deterministic_parentage$weight == 1))
+  expect_equal(
+    length(unique(deterministic_parentage$source_unit)),
+    nrow(deterministic_parentage)
   )
   expect_equal(
     nrow(validation),

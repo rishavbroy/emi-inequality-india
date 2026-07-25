@@ -1529,12 +1529,14 @@ test_that("tracked production mapping reviews cover every changed target", {
   expect_true(all(mapping$status == "accepted"))
   expect_true(all(mapping$decision == "accept_v2"))
   expect_equal(nrow(downstream), 1L)
-  expect_identical(downstream$status, "excluded")
+  expect_identical(downstream$status, "accepted")
   expect_identical(
     downstream$decision,
-    "do_not_migrate_insufficient_preferred_support"
+    "accept_v2_complete_source_panel"
   )
-  expect_match(downstream$note, "preferred panel retains only")
+  expect_match(downstream$note, "not treated as an authoritative support universe")
+  expect_match(downstream$note, "every NSS source identity is adjudicated")
+  expect_match(downstream$note, "pooled multi-source Ginis are reconstructed")
 })
 
 test_that("migration readiness distinguishes SHRID coverage from NSS identity coverage", {
