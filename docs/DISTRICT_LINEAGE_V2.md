@@ -461,14 +461,14 @@ must not silently replace clustered standard errors with missing values merely
 because panel row names are nonnumeric.
 
 The tracked downstream review now records
-`do_not_migrate_insufficient_preferred_support`. Pooled-Gini reconstruction is
-complete and the shared-support estimates are stable, but the deterministic
-inherited and lineage-v2 support differ because the inherited methodology is not authoritative.
-The migration gate permits reviewed coverage additions but forbids silently
-dropping production-only support. Each such unit must be restored or resolved
-through a source-level review before production can move to lineage v2. The
-population-allocation panel remains a sensitivity specification and cannot be
-used to bypass this gate.
+`accept_v2_complete_source_panel`. Pooled-Gini reconstruction is complete, the
+shared-support estimates are stable, and every NSS source identity is either
+mapped through reviewed evidence or explicitly excluded. The inherited v1 and
+legacy panels are retained as diagnostics, not as authoritative support
+universes: production-only v1 units do not veto migration unless independent
+evidence shows that lineage v2 omitted a valid NSS identity or Census-2001
+mapping. The population-allocation panel remains a sensitivity specification
+and cannot substitute for the deterministic preferred panel.
 
 ## Canonical labels in review queues
 
@@ -486,12 +486,16 @@ explicitly rather than selecting an arbitrary name.
 
 The reviewed terminal-unit backlog is resolved with two conservative rules.
 
-First, a Census-2011 terminal district receives a sensitivity-only one-to-one
-allocation when the canonical Census-2001 and Census-2011 registries establish
-the same normalized state and district identity, or when official history
+First, a Census-2011 terminal district may receive a reviewed one-to-one
+mapping when the canonical Census-2001 and Census-2011 registries establish the
+same normalized state and district identity, or when official history
 establishes a rename, label variant, state continuation, or single Census-2001
-parent. These decisions do not confer deterministic preferred-panel
-eligibility and do not assert unchanged boundaries.
+parent. Registry continuity and ordinary reviewed aliases remain sensitivity
+inputs unless independently promoted. A weight-one mapping with the explicit
+`official_single_parent_pre_2001_parentage` basis is eligible for the preferred
+panel because it records complete ancestry to one Census-2001 parent; it does
+not assert unchanged later boundaries. Fractional, renormalized, and
+multi-parent allocations remain sensitivity-only.
 
 Second, Baksa, Udalguri, Samba, Vikarabad, and Mahabubabad are explicitly
 excluded from the Census-2001 sensitivity panel. The retained evidence
