@@ -871,3 +871,16 @@ Extended district-lineage diagnostics track and cache each loaded raw source ind
 The Census-2001 lineage registry takes district labels from C-16 `district_name` and state labels from the project’s vintage-specific Census-2001 code table; numeric production aliases and current-LGD mergers are never substituted for historical administrative names.
 
 The adjudication queue distinguishes candidate representations from semantic alternatives. Repeated exact names across Census 2001, Census 2011, and current LGD are one name candidate with several vintage representations; they are classified as `cross_vintage_exact_candidate`, not as several competing exact names. A single-vintage exact name remains `single_vintage_exact_candidate`. External evidence requests are generated only after these deterministic exact-name cases have been reviewed, for fuzzy, missing, or explicitly `needs_review` identities and the events relevant to them.
+
+## District-recovery audit
+
+The production crosswalk is accompanied by four recovery diagnostics:
+
+- `district_loss_audit.csv` accounts for every Census-2001 district and shows whether it is present under the preferred and broader reviewed mappings in each NSS wave.
+- `identity_reclassification.csv` replaces the former catch-all transition exclusion with specific classes: documented exclusion, unresolved identity, dominant-parent near-complete mapping, multi-parent fractional mapping, or preferred mapping.
+- `mapping_rule_sensitivity.csv` reports wave coverage and two-wave district counts under the preferred rule, a dominant-parent sensitivity, and all reviewed allocation weights.
+- `recovery_gates.csv` verifies that all 593 Census-2001 districts are accounted for, no old generic exclusion remains, every source identity has a recovery class, and multi-parent mappings stay out of the preferred panel.
+
+The 2011-2018 LGD modification rosters are part of this evidence workflow. They identify districts and lower-level units modified during the NSS-75 interval and support source-identity and continuity review. Because the modification export does not itself state the predecessor, action, date, or territorial share, it cannot by itself justify a fractional allocation. The paired 2001-2011 LGD Census-code report remains the direct official code bridge; the 2011-2018 district, subdistrict, village, and urban-local-body reports are used with the India State Stories and SHRUG records to review later changes.
+
+Accepted, weight-one, single-target mappings supported by registry continuity or official single-parent evidence enter the preferred panel. Near-complete dominant-parent mappings based only on renormalized SHRUG coverage remain a named sensitivity rule until their missing localities and district histories are reviewed. Multi-parent mappings remain sensitivity-only unless defensible source-based weights are documented.
