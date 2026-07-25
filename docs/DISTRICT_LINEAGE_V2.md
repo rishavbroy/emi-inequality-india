@@ -614,23 +614,41 @@ Coverage diagnostics count unique NSS source identities separately from
 crosswalk rows. This prevents one-to-many population allocations from producing
 coverage shares above 100 percent.
 
-## Connected population-allocation panel
+## Three explicit analysis panels
 
-Accepted Census-2011 allocation weights are now joined back to the accepted NSS
-source identity that resolves to each Census-2011 unit. The sensitivity
-crosswalk therefore contains wave, source code, source-row identity, target
-Census-2001 unit, and population weight on the same row.
+The lineage pipeline retains three named panel specifications. They share the
+same Census-2001 target geography, panel builder, pooled-household Gini
+reconstruction, 2SLS estimator, and first-stage diagnostics. They differ only
+in which reviewed source-to-target mappings are admitted.
 
-Extended diagnostics build `district_panel_v2_allocated` from this connected
-crosswalk. Extensive quantities are multiplied by allocation weights before
-aggregation. Intensive district measures are carried to each allocated target
-and combined using allocated household mass when several source districts
-contribute to one target. The deterministic-only panel remains available as a
-strict lower-bound diagnostic.
+1. `district_panel_v2` is the conservative preferred panel. It uses official,
+   registry, alias, and other accepted deterministic evidence.
+2. `district_panel_v2_dominant` adds the 208 reviewed NSS 2017-18
+   near-complete single-parent mappings. Each has at least 99 percent SHRUG
+   locality coverage and corroborating LGD or India State Stories evidence.
+3. `district_panel_v2_full_reviewed` adds the reviewed multi-parent fractional
+   allocations. It is the broadest sensitivity specification and is not a
+   candidate for automatic production migration.
 
-Allocation is still sensitivity analysis rather than automatic production
-migration. In particular, district-level Ginis allocated from an aggregate
-source do not replace a Gini recomputed from pooled household microdata.
+The corresponding model targets are `iv_models_v2`,
+`iv_models_v2_dominant`, and `iv_models_v2_full_reviewed`. Extended
+diagnostics write a common panel summary, coefficient table, and first-stage
+table so differences can be compared without maintaining three parallel
+reporting implementations.
+
+Extensive quantities are multiplied by allocation weights before aggregation.
+Intensive district measures are combined using allocated household mass when
+several source districts contribute to one target. For every panel, district
+Ginis are recomputed from pooled household microdata rather than averaged from
+source-district Ginis. This is essential for the full reviewed panel, where
+multiple source districts or fractional allocations can contribute to one
+Census-2001 target.
+
+The current crosswalk supports 408 conservative, 573 dominant-parent, and 587
+full reviewed two-wave Census-2001 districts. These are geography counts, not
+guarantees that every model has 587 complete rows after outcome and covariate
+missingness. The generated `panel_variant_model_summary.csv` reports the actual
+analysis rows for each specification.
 
 ## Downstream coverage gate
 
