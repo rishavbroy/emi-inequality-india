@@ -221,7 +221,11 @@ write_audit_status "running" "$current_stage" 0 "pending"
 current_stage="source-whitespace-check"
 echo "=== READ-ONLY SOURCE WHITESPACE CHECK ==="
 check_source_whitespace
-git diff --check -- . ':(exclude)*.html' ':(exclude)outputs/**' ':(exclude)application-samples/output/**'
+git diff --check -- . \
+  ':(exclude)*.html' \
+  ':(exclude)outputs/**' \
+  ':(exclude)data/processed/**' \
+  ':(exclude)application-samples/output/**'
 
 if [[ "$incremental" == "true" ]]; then
   echo "=== PUBLIC BUILD AUDIT MODE: ${sample_mode} (incremental/cache-preserving) ==="
