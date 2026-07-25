@@ -693,6 +693,17 @@ build_district_lineage_v2 <- function(
   sensitivity_crosswalk <- build_sensitivity_crosswalk_v2(
     primary_crosswalk, adjudicated_weights, eligibility
   )
+  identity_reclassification <- build_lineage_v2_identity_reclassification(eligibility)
+  district_loss_audit <- build_lineage_v2_district_loss_audit(
+    admin_2001, source_roster, eligibility, primary_crosswalk,
+    sensitivity_crosswalk
+  )
+  mapping_rule_sensitivity <- build_lineage_v2_rule_sensitivity(
+    primary_crosswalk, sensitivity_crosswalk, eligibility
+  )
+  recovery_gates <- build_lineage_v2_recovery_gates(
+    district_loss_audit, identity_reclassification
+  )
   production_reviews <- read_production_mapping_reviews_v2(
     raw_sources$lineage_production_reviews %||% data.frame()
   )
@@ -756,6 +767,10 @@ build_district_lineage_v2 <- function(
     primary_mapping_eligibility = eligibility,
     primary_source_crosswalk = primary_crosswalk,
     sensitivity_source_crosswalk = sensitivity_crosswalk,
+    district_loss_audit = district_loss_audit,
+    identity_reclassification = identity_reclassification,
+    mapping_rule_sensitivity = mapping_rule_sensitivity,
+    recovery_gates = recovery_gates,
     production_crosswalk_comparison = production_comparison,
     production_mapping_reviews = production_reviews,
     geometry_2001_qa = geometry_qa,
@@ -790,7 +805,9 @@ save_district_lineage_v2 <- function(diagnostics, dir = "outputs/diagnostics/ext
     "nss_source_roster", "reference_units", "source_matches", "source_match_candidates",
     "source_adjudication_queue", "adjudication_draft",
     "primary_mapping_eligibility", "primary_source_crosswalk",
-    "sensitivity_source_crosswalk", "production_crosswalk_comparison",
+    "sensitivity_source_crosswalk", "district_loss_audit",
+    "identity_reclassification", "mapping_rule_sensitivity", "recovery_gates",
+    "production_crosswalk_comparison",
     "production_mapping_reviews",
     "geometry_2001_qa", "geometry_2001_unit_coverage",
     "completion_status", "excluded_source_rows",

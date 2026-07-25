@@ -1354,3 +1354,44 @@ test_that("pooled Gini reconstruction preserves sf geometry", {
   expect_true(sf::st_equals(out$panel, panel, sparse = FALSE)[1, 1])
 })
 
+
+test_that("district recovery audit accounts for the full 2001 universe", {
+  admin <- data.frame(
+    unit_id = c("a", "b"), state_code = "01", district_code = c("01", "02")
+  )
+  roster <- data.frame(source_row_id = character())
+  eligibility <- data.frame(source_row_id = character())
+  preferred <- data.frame(
+    source_row_id = c("p07", "p17"),
+    wave = c("nss_2007_08", "nss_2017_18"),
+    target_unit_2001 = c("a", "a")
+  )
+  sensitivity <- rbind(
+    preferred,
+    data.frame(source_row_id = c("s07", "s17"), wave = c("nss_2007_08", "nss_2017_18"), target_unit_2001 = c("b", "b"))
+  )
+
+  out <- build_lineage_v2_district_loss_audit(
+    admin, roster, eligibility, preferred, sensitivity
+  )
+
+  expect_equal(nrow(out), 2L)
+  expect_true(out$preferred_two_wave[out$target_unit_2001 == "a"])
+  expect_equal(
+    out$loss_stage[out$target_unit_2001 == "b"],
+    "available_only_under_sensitivity_rule"
+  )
+})
+
+test_that("recovery gates reject generic exclusions and preferred multi-parent mappings", {
+  loss <- data.frame(target_unit_2001 = sprintf("d%03d", 1:593))
+  rec <- data.frame(
+    exclusion_reason = c("dominant_parent_near_complete_requires_review", "multi_parent_allocation_sensitivity_only"),
+    recovery_class = c("dominant_parent_near_complete", "multi_parent_fractional_mapping"),
+    eligible_primary = c(FALSE, FALSE)
+  )
+
+  gates <- build_lineage_v2_recovery_gates(loss, rec)
+
+  expect_true(all(gates$passed))
+})
