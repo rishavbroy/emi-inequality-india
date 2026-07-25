@@ -673,7 +673,7 @@ preferred_single_target_bases_v2 <- function() {
 
 summarize_reviewed_allocations_v2 <- function(allocation_weights) {
   x <- safe_df(allocation_weights)
-  required <- c("source_unit", "target_2001", "weight", "basis", "source_id", "status")
+  required <- c("source_unit", "target_2001", "weight", "basis", "status")
   if (!nrow(x)) {
     return(data.frame(
       source_unit = character(), allocation_target_count = integer(),
@@ -683,15 +683,21 @@ summarize_reviewed_allocations_v2 <- function(allocation_weights) {
   }
   missing <- setdiff(required, names(x))
   if (length(missing)) stop("Allocation weights are missing: ", paste(missing, collapse = ", "), call. = FALSE)
-  x <- x[x$status %in% "accepted", required, drop = FALSE]
+  if (!"source_id" %in% names(x)) x$source_id <- NA_character_
+  x <- x[x$status %in% "accepted", c(required, "source_id"), drop = FALSE]
   if (!nrow(x)) return(summarize_reviewed_allocations_v2(data.frame()))
+  collapse_metadata <- function(value) {
+    value <- unique(plain_chr(value))
+    value <- sort(value[!is.na(value) & nzchar(value)])
+    if (length(value)) paste(value, collapse = "|") else NA_character_
+  }
   split_x <- split(x, x$source_unit)
   safe_bind_rows(lapply(split_x, function(part) data.frame(
     source_unit = part$source_unit[[1]],
     allocation_target_count = length(unique(part$target_2001)),
     allocation_weight_sum = sum(suppressWarnings(as.numeric(part$weight)), na.rm = TRUE),
-    allocation_basis = paste(sort(unique(plain_chr(part$basis))), collapse = "|"),
-    allocation_source_id = paste(sort(unique(plain_chr(part$source_id))), collapse = "|"),
+    allocation_basis = collapse_metadata(part$basis),
+    allocation_source_id = collapse_metadata(part$source_id),
     stringsAsFactors = FALSE
   )))
 }
@@ -826,32 +832,32 @@ build_primary_mapping_eligibility <- function(
   out$target_unit_2001 <- ifelse(direct, out$terminal_unit, transition_target)
   out$target_state_code_2001 <- ifelse(direct, out$target_state_code_2001, transition_state)
   out$target_district_code_2001 <- ifelse(direct, out$target_district_code_2001, transition_district)
-  out$exclusion_reason <- ifelse(
-    out$eligible_primary,
-    NA_character_,
-    ifelse(
-      out$status %in% "excluded",
-      "documented_exclusion",
-      ifelse(
-        !(out$status %in% "accepted"),
-        "source_identity_unadjudicated",
-        ifelse(
-          suppressWarnings(as.integer(out$allocation_target_count)) > 1L,
-          "multi_parent_allocation_sensitivity_only",
-          ifelse(
-            suppressWarnings(as.integer(out$allocation_target_count)) == 1L &
-              grepl("population_renormalized_min_99pct_mapped", plain_chr(out$allocation_basis), fixed = TRUE),
-            "dominant_parent_near_complete_requires_review",
-            ifelse(
-              out$resolution_status != "resolved",
-              paste0("geographic_lineage_", out$resolution_status),
-              "geographic_transition_unresolved"
-            )
-          )
-        )
+  out$exclusion_reason <- NA_character_
+  unresolved <- !out$eligible_primary
+  out$exclusion_reason[unresolved & out$status %in% "excluded"] <-
+    "documented_exclusion"
+  out$exclusion_reason[unresolved & !(out$status %in% c("accepted", "excluded"))] <-
+    "source_identity_unadjudicated"
+  out$exclusion_reason[
+    unresolved & is.na(out$exclusion_reason) &
+      suppressWarnings(as.integer(out$allocation_target_count)) > 1L
+  ] <- "multi_parent_allocation_sensitivity_only"
+  out$exclusion_reason[
+    unresolved & is.na(out$exclusion_reason) &
+      suppressWarnings(as.integer(out$allocation_target_count)) == 1L &
+      grepl(
+        "population_renormalized_min_99pct_mapped",
+        plain_chr(out$allocation_basis),
+        fixed = TRUE
       )
-    )
+  ] <- "dominant_parent_near_complete_requires_review"
+  has_resolution_failure <- unresolved & is.na(out$exclusion_reason) &
+    !is.na(out$resolution_status) & out$resolution_status != "resolved"
+  out$exclusion_reason[has_resolution_failure] <- paste0(
+    "geographic_lineage_", out$resolution_status[has_resolution_failure]
   )
+  out$exclusion_reason[unresolved & is.na(out$exclusion_reason)] <-
+    "geographic_transition_unresolved"
   out <- out[order(out$row_order), , drop = FALSE]
   out$row_order <- NULL
   out

@@ -135,6 +135,21 @@ test_that("primary eligibility accepts only adjudicated deterministic mappings",
   expect_equal(out$exclusion_reason[out$source_row_id == "c"], "geographic_transition_unresolved")
 })
 
+test_that("allocation summaries do not require provenance metadata", {
+  out <- summarize_reviewed_allocations_v2(data.frame(
+    source_unit = "pc2011__20__367",
+    target_2001 = "pc2001__20__16",
+    weight = 1,
+    basis = "official_single_parent_pre_2001_parentage",
+    status = "accepted",
+    stringsAsFactors = FALSE
+  ))
+
+  expect_equal(out$allocation_target_count, 1L)
+  expect_equal(out$allocation_weight_sum, 1)
+  expect_true(is.na(out$allocation_source_id))
+})
+
 test_that("duplicate diagnostics distinguish identical from conflicting rows", {
   x <- data.frame(id = c("a", "a", "b", "b"), value = c("x", "x", "y", "z"))
   out <- duplicate_key_diagnostics_v2(x, "id", "fixture")
