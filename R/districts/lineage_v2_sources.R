@@ -27,6 +27,7 @@ district_lineage_v2_input_specs <- function(paths = build_paths()) {
     spec("lgd_urban_coverage", "data/raw/local_government_directory/urbanLocalBody-coverage.xlsx", "lgd_xlsx", TRUE, "urban_component_registry"),
     spec("lgd_village_categories", "data/raw/local_government_directory/villages-category-urbanLocalBody.xlsx", "lgd_xlsx", FALSE, "urban_component_registry"),
     spec("lgd_development_blocks", "data/raw/local_government_directory/developmentBlocks-coveredVillages.xlsx", "lgd_xlsx", FALSE, "component_registry"),
+    spec("lgd_mod_districts_2001_2011", "data/raw/local_government_directory/modifications_01-01-2001_01-01-2011/districts.xls", "spreadsheetml", TRUE, "official_census_code_bridge_2001_2011"),
     spec("lgd_mod_districts", "data/raw/local_government_directory/modifications_01-01-2011_30-06-2018/districts.xls", "spreadsheetml", TRUE, "changed_unit_roster_2011_2018"),
     spec("lgd_mod_subdistricts", "data/raw/local_government_directory/modifications_01-01-2011_30-06-2018/subdistricts.xls", "spreadsheetml", TRUE, "changed_unit_roster_2011_2018"),
     spec("lgd_mod_villages", "data/raw/local_government_directory/modifications_01-01-2011_30-06-2018/villages.xls", "spreadsheetml", TRUE, "changed_unit_roster_2011_2018"),
@@ -286,6 +287,7 @@ read_shrug_key <- function(path, role) {
 
 modification_level <- function(source_id) {
   levels <- c(
+    lgd_mod_districts_2001_2011 = "district",
     lgd_mod_districts = "district",
     lgd_mod_subdistricts = "subdistrict",
     lgd_mod_villages = "village",
@@ -305,9 +307,17 @@ read_lineage_source <- function(path, reader, source_id = NA_character_) {
       need_pkg("readxl", "district-lineage Excel inputs")
       safe_df(readxl::read_excel(path, .name_repair = "minimal"))
     },
-    spreadsheetml = standardize_lgd_modification_roster(
-      read_lgd_spreadsheetml(path), modification_level(source_id)
-    ),
+    spreadsheetml = {
+      period <- if (identical(source_id, "lgd_mod_districts_2001_2011")) {
+        c("2001-01-01", "2011-01-01")
+      } else {
+        c("2011-01-01", "2018-06-30")
+      }
+      standardize_lgd_modification_roster(
+        read_lgd_spreadsheetml(path), modification_level(source_id),
+        period_start = period[[1]], period_end = period[[2]]
+      )
+    },
     csv = read_lineage_csv(path),
     allocation_csv = read_lineage_csv(
       path,
