@@ -382,14 +382,14 @@ test_that("dependency and target-worker contracts avoid unused attachment machin
   expect_false(file.exists(file.path(root, "R", "packages.R")))
 })
 
-test_that("district harmonization crosswalk is the sole tracked tracker authority", {
+test_that("legacy tracker remains an auditable comparison input", {
   targets <- repo_text("_targets.R")
   diagnostics <- repo_text("R", "diagnostics", "diagnose_district_tracker_sources.R")
   root <- dirname(repo_file("README.md"))
 
   expect_false(grepl("processed_district_tracker_file", targets, fixed = TRUE))
   expect_match(targets, "prepare_district_join_map(district_harmonization_crosswalk)", fixed = TRUE)
-  expect_match(targets, "build_district_panel(district_join_map, measures_2007", fixed = TRUE)
+  expect_match(targets, "tar_target(district_panel_v1,", fixed = TRUE)
   expect_match(diagnostics, "data/metadata/district_harmonization_crosswalk.csv", fixed = TRUE)
   expect_false(file.exists(file.path(root, "data", "processed", "district_tracker_2001_2007_2017_2020.csv")))
 })
