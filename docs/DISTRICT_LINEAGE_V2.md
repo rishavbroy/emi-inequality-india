@@ -838,9 +838,9 @@ Use local SHRID polygons to dissolve by the accepted 2001 registry. Save a compa
 
 Construct the deterministic panel and compare it with the inherited production panel row by row. Explain every changed inclusion, treatment, outcome, IV, and geometry. Do not optimize the crosswalk to recover legacy coefficients or the invalid legacy F-statistic.
 
-### 10. Add sensitivity panels and migrate deliberately
+### 10. Keep sensitivity panels separate from production
 
-Estimate deterministic, population-allocation, stable-composite, IPUMS, and NSS-region variants. Switch production only after review and strict gates pass.
+The reviewed deterministic lineage-v2 panel is now the production `district_panel`. The inherited crosswalk remains available only as `district_panel_v1` for extended comparison diagnostics, and the population-allocation panel remains a sensitivity specification. Public models, tables, figures, diagnostics, and rendered documents must all depend on the production alias rather than directly on either implementation-specific panel target.
 
 ## Generated review outputs
 

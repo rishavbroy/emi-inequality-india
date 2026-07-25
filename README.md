@@ -3,12 +3,12 @@
 This repository contains the code and derived data needed to replicate my paper, "Escaping Inequality in India: The Role of English-Medium Instruction," as well as the application samples and supplemental analysis notebooks built from it.
 
 THIS PROJECT IS STILL UNDERGOING A MAJOR RENOVATION, however. Key tasks I'm working on include:
-- Substantially improved tracking of district lineage.
-- Better construction of the response variable, inspired by [Deaton (2003)](http://piketty.pse.ens.fr/files/Deaton2003.pdf).
-- Far better justifications of the instrumental variable.
+- Response variable construction, inspired by [Deaton (2003)](http://piketty.pse.ens.fr/files/Deaton2003.pdf).
+- Justifying the instrumental variable.
 - Richer tables and maps.
 - Multiple imputation in the enrollment probit.
-- Better incorporation of the enrollment probit into the district-level 2SLS.
+- More cohesively incorporating the enrollment probit alongside the district-level 2SLS.
+- Application samples' cover notes.
 
 This project has also completed a major refactoring recently. To learn more about it, review [`archive/refactoring/README.md`](archive/refactoring/README.md) and the tag and branch mentioned therein.
 
@@ -27,8 +27,8 @@ Use the ["Commands for running and auditing"](#commands-for-running-and-auditing
 - [`DATA_AVAILABILITY.md`](DATA_AVAILABILITY.md): Source-by-source data availability and redistribution notes.
 
 - [`docs/plan/roadmap.md`](docs/plan/roadmap.md): My plan going forward, after this refactoring is done.
-- [`application-samples/output/RishavRoy_WritingSample.pdf`](application-samples/output/RishavRoy_WritingSample.pdf): Reviewer-facing writing sample generated from [marked excerpts](application-samples/specs/writing-10pg.yml) in the [paper](paper/report.qmd). Cover note under active review.
-- [`application-samples/output/RishavRoy_CodingSample.pdf`](application-samples/output/RishavRoy_CodingSample.pdf):  Reviewer-facing coding sample generated from [marked excerpts](application-samples/specs/coding-full.yml) in the [code](R). Cover note under active review.
+- [`application-samples/output/RishavRoy_WritingSample.pdf`](application-samples/output/RishavRoy_WritingSample.pdf): Reviewer-facing writing sample generated from [marked excerpts](application-samples/specs/writing-10pg.yml) in the [paper](paper/report.qmd). Cover note updates are still pending.
+- [`application-samples/output/RishavRoy_CodingSample.pdf`](application-samples/output/RishavRoy_CodingSample.pdf):  Reviewer-facing coding sample generated from [marked excerpts](application-samples/specs/coding-full.yml) in the [code](R). Cover note updates are still pending.
 
 ## Research question
 
