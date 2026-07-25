@@ -883,4 +883,12 @@ The production crosswalk is accompanied by four recovery diagnostics:
 
 The 2011-2018 LGD modification rosters are part of this evidence workflow. They identify districts and lower-level units modified during the NSS-75 interval and support source-identity and continuity review. Because the modification export does not itself state the predecessor, action, date, or territorial share, it cannot by itself justify a fractional allocation. The paired 2001-2011 LGD Census-code report remains the direct official code bridge; the 2011-2018 district, subdistrict, village, and urban-local-body reports are used with the India State Stories and SHRUG records to review later changes.
 
-Accepted, weight-one, single-target mappings supported by registry continuity or official single-parent evidence enter the preferred panel. Near-complete dominant-parent mappings based only on renormalized SHRUG coverage remain a named sensitivity rule until their missing localities and district histories are reviewed. Multi-parent mappings remain sensitivity-only unless defensible source-based weights are documented.
+Accepted, weight-one, single-target mappings supported by registry continuity or official single-parent evidence enter the conservative preferred panel. The separate dominant-parent panel adds 208 NSS-75 mappings whose SHRUG allocation reaches one Census-2001 parent with at least 99 percent mapped population and whose 2001-to-2011 continuity is corroborated in the tracked LGD modification reports or India State Stories alluvial history. The review ledger records the source identity, 2011 unit, 2001 target, evidence basis, and evidence-source IDs for every added mapping. These mappings do not alter the conservative production panel. Multi-parent mappings remain confined to the full reviewed sensitivity panel unless defensible source-based fractional weights are documented.
+
+The three explicit panel variants are:
+
+1. `conservative_preferred`: deterministic official, registry, alias, and reviewed single-parent mappings; currently 408 two-wave Census-2001 districts.
+2. `dominant_parent`: the conservative panel plus the 208 reviewed near-complete NSS-75 single-parent mappings; currently up to 573 two-wave districts.
+3. `full_reviewed_sensitivity`: the dominant-parent panel plus 21 reviewed multi-parent fractional mappings; currently up to 587 two-wave districts.
+
+The five documented NSS-75 exclusions remain outside all three panels. `panel_variant_summary.csv`, `dominant_parent_reviews.csv`, and `dominant_parent_source_crosswalk.csv` make these distinctions explicit in the extended diagnostics.
