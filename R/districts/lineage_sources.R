@@ -215,8 +215,31 @@ attach_lineage_geometry_source <- function(sources, geometry_2001) {
 #' District-lineage source inventory
 #'
 #' @return Compact inventory retained independently from loaded source values.
-district_lineage_source_inventory <- function(specs) {
+normalize_lineage_source_specs <- function(specs) {
   specs <- safe_df(specs)
+  defaults <- list(
+    required = FALSE,
+    load_for_diagnostic = FALSE,
+    exists = FALSE,
+    size_bytes = NA_real_
+  )
+  for (name in names(defaults)) {
+    if (!name %in% names(specs)) {
+      specs[[name]] <- rep(defaults[[name]], nrow(specs))
+    }
+  }
+  specs$required <- as.logical(specs$required)
+  specs$load_for_diagnostic <- as.logical(specs$load_for_diagnostic)
+  specs$exists <- as.logical(specs$exists)
+  specs$size_bytes <- as.numeric(specs$size_bytes)
+  specs
+}
+
+#' District-lineage source inventory
+#'
+#' @return Compact inventory retained independently from loaded source values.
+district_lineage_source_inventory <- function(specs) {
+  specs <- normalize_lineage_source_specs(specs)
   specs[c(
     "source_id", "relative_path", "reader", "role", "required",
     "load_for_diagnostic", "exists", "size_bytes"
@@ -227,7 +250,7 @@ district_lineage_source_inventory <- function(specs) {
 #'
 #' @return List of one-row data frames, one per source loaded by the extended diagnostic.
 split_district_lineage_source_specs <- function(specs) {
-  specs <- safe_df(specs)
+  specs <- normalize_lineage_source_specs(specs)
   specs <- specs[specs$exists & specs$load_for_diagnostic, , drop = FALSE]
   lapply(seq_len(nrow(specs)), function(i) specs[i, , drop = FALSE])
 }
