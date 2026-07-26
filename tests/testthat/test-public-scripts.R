@@ -89,30 +89,42 @@ test_that("public render targets own final report, notes, and sample rendering",
   expect_false(grepl("tar_render\\(report|tar_quarto\\(report", targets, perl = TRUE))
 })
 
-test_that("public audit clean preserves extended diagnostics and benchmarks", {
-  src <- repo_text("scripts", "run_public_build_audit.sh")
-  makefile <- repo_text("Makefile")
-  gitignore <- repo_text(".gitignore")
+test_that("audit workspace cleanup removes transient state and preserves optional outputs", {
+  root <- tempfile("audit-clean-")
+  on.exit(unlink(root, recursive = TRUE, force = TRUE), add = TRUE)
 
-  expect_match(src, "--with-extended-diagnostics", fixed = TRUE)
-  expect_match(src, "--with-benchmarks", fixed = TRUE)
-  expect_match(src, "rm -rf outputs/diagnostics/build outputs/diagnostics/public", fixed = TRUE)
-  expect_match(src, "rm -f outputs/diagnostics/*.csv", fixed = TRUE)
-  expect_false(grepl("rm -rf outputs/diagnostics/\\*", src))
-  expect_match(makefile, "clean:\n\t$(MAKE) clean-renders", fixed = TRUE)
-  expect_match(makefile, "clean-all: clean clean-targets", fixed = TRUE)
-  expect_match(makefile, "rm -rf outputs/figures/* outputs/tables/* outputs/diagnostics/build outputs/diagnostics/public", fixed = TRUE)
-  expect_match(makefile, "rm -f outputs/diagnostics/*.csv", fixed = TRUE)
-  expect_match(makefile, "clean-extended-diagnostics", fixed = TRUE)
-  expect_match(makefile, "clean-benchmarking", fixed = TRUE)
-  expect_match(gitignore, "outputs/diagnostics/*.csv", fixed = TRUE)
-  expect_match(gitignore, "outputs/diagnostics/build/", fixed = TRUE)
-  expect_match(gitignore, "outputs/diagnostics/public/", fixed = TRUE)
-  expect_match(
-    gitignore,
-    "posters/2026_predoc_conference/poster.typ",
-    fixed = TRUE
+  transient <- c(
+    "outputs/diagnostics/build/build.csv",
+    "outputs/diagnostics/public/public.csv",
+    "outputs/diagnostics/root.csv",
+    "outputs/diagnostics/extended/district_lineage_v2/stale.csv",
+    "outputs/derived/district_lineage_v2/stale.gpkg"
   )
+  preserved <- c(
+    "outputs/diagnostics/extended/current.csv",
+    "outputs/benchmarking/current.csv",
+    "outputs/derived/district_lineage/current.gpkg"
+  )
+
+  for (path in c(transient, preserved)) {
+    full <- file.path(root, path)
+    dir.create(dirname(full), recursive = TRUE, showWarnings = FALSE)
+    writeLines("fixture", full)
+  }
+
+  status <- system2(
+    "bash",
+    c(repo_file("scripts", "clean_audit_workspace.sh"), root),
+    stdout = TRUE,
+    stderr = TRUE
+  )
+  expect_null(attr(status, "status"))
+  expect_false(any(file.exists(file.path(root, transient))))
+  expect_true(all(file.exists(file.path(root, preserved))))
+  expect_true(dir.exists(file.path(root, "outputs/diagnostics/build")))
+  expect_true(dir.exists(file.path(root, "outputs/diagnostics/public")))
+  expect_true(dir.exists(file.path(root, "outputs/diagnostics/extended")))
+  expect_true(dir.exists(file.path(root, "outputs/benchmarking")))
 })
 
 
