@@ -114,7 +114,10 @@ test_that("audit workspace cleanup removes transient state and preserves optiona
 
   status <- system2(
     "bash",
-    c(repo_file("scripts", "clean_audit_workspace.sh"), root),
+    c(
+      shQuote(repo_file("scripts", "clean_audit_workspace.sh")),
+      shQuote(root)
+    ),
     stdout = TRUE,
     stderr = TRUE
   )
