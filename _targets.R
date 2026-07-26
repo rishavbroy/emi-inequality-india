@@ -77,6 +77,15 @@ core_pipeline_targets <- list(
   tar_target(measures_2017, build_2017_measures(nss_2017_education, cfg)),
   tar_target(linguistic_distance_iv, build_linguistic_distance_iv(census_2001_languages, cfg)),
   tar_target(
+    lineage_geometry_2001_file,
+    lineage_geometry_2001_path(paths),
+    format = "file"
+  ),
+  tar_target(
+    lineage_geometry_2001,
+    read_lineage_geometry_2001(lineage_geometry_2001_file)
+  ),
+  tar_target(
     district_lineage_specs,
     district_lineage_input_specs(paths),
     cue = tar_cue(mode = "always")
@@ -106,8 +115,15 @@ core_pipeline_targets <- list(
     iteration = "list"
   ),
   tar_target(
-    district_lineage_sources,
+    district_lineage_raw_sources,
     assemble_district_lineage_sources(district_lineage_source)
+  ),
+  tar_target(
+    district_lineage_sources,
+    attach_lineage_geometry_source(
+      district_lineage_raw_sources,
+      lineage_geometry_2001
+    )
   ),
   tar_target(
     district_lineage,
@@ -126,7 +142,7 @@ core_pipeline_targets <- list(
       measures_2007,
       measures_2017,
       linguistic_distance_iv,
-      district_lineage_sources$lineage_geometry_2001 %||% data.frame(),
+      lineage_geometry_2001,
       cfg
     )
   ),
@@ -147,7 +163,7 @@ core_pipeline_targets <- list(
       measures_2007,
       measures_2017,
       linguistic_distance_iv,
-      district_lineage_sources$lineage_geometry_2001 %||% data.frame(),
+      lineage_geometry_2001,
       cfg
     )
   ),
@@ -183,7 +199,7 @@ core_pipeline_targets <- list(
     make_figures(
       district_panel, raw_ilo_figures, cfg,
       iv_models = iv_models,
-      map_geometry = district_lineage_sources$lineage_geometry_2001
+      map_geometry = lineage_geometry_2001
     )
   ),
   tar_target(figure_files, save_figures(figures, cfg), format = "file"),
@@ -263,7 +279,7 @@ extended_diagnostic_targets <- list(
       measures_2007,
       measures_2017,
       linguistic_distance_iv,
-      district_lineage_sources$lineage_geometry_2001 %||% data.frame(),
+      lineage_geometry_2001,
       cfg
     )
   ),

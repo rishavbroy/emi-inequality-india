@@ -17,7 +17,7 @@ targets::tar_source(
   )
 )
 
-sources <- targets::tar_read(district_lineage_sources)
+sources <- targets::tar_read(district_lineage_raw_sources)
 specs <- targets::tar_read(district_lineage_specs)
 census_2001_languages <- targets::tar_read(census_2001_languages)
 

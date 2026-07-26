@@ -50,7 +50,6 @@ district_lineage_input_specs <- function(paths = build_paths()) {
     spec("shrug_pc11_state_geometry", "data/raw/shrug/open-polygons/shrug-pc11state-poly-gpkg/state.gpkg", "inventory_only", FALSE, "census_2011_geometry"),
     spec("shrug_pc11_village_geometry_zip", "data/raw/shrug/open-polygons/shrug-pc11-village-poly-gpkg.zip", "inventory_only", FALSE, "census_2011_geometry"),
     spec("shrug_shrid_geometry_zip", "data/raw/shrug/open-polygons/shrug-shrid-poly-gpkg.zip", "inventory_only", FALSE, "future_2001_geometry"),
-    spec("lineage_geometry_2001", "outputs/derived/district_lineage/district_2001.gpkg", "gpkg", TRUE, "derived_2001_geometry"),
     spec("shrug_pca01_zip", "data/raw/shrug/census_2001/shrug-pca01-csv.zip", "inventory_only", FALSE, "census_locality_attributes"),
     spec("shrug_pca11_zip", "data/raw/shrug/census_2011/shrug-pca11-csv.zip", "inventory_only", FALSE, "census_locality_attributes"),
     spec("shrug_td01_zip", "data/raw/shrug/census_2001/shrug-td01-csv.zip", "inventory_only", FALSE, "census_locality_attributes"),
@@ -77,6 +76,64 @@ district_lineage_input_specs <- function(paths = build_paths()) {
   out$size_bytes <- ifelse(out$exists, file.info(out$absolute_path)$size, NA_real_)
   rownames(out) <- NULL
   out
+}
+
+
+#' Path to the tracked Census-2001 district geometry
+#'
+#' This derived GeoPackage is a required production input because public maps,
+#' spatial weights, and Moran diagnostics all use the same reviewed district
+#' geometry as the main panel.
+lineage_geometry_2001_path <- function(paths = build_paths()) {
+  path_project(
+    paths,
+    "outputs/derived/district_lineage/district_2001.gpkg"
+  )
+}
+
+#' Read and validate the production Census-2001 district geometry
+#'
+#' @return An `sf` object with one row per canonical Census-2001 district unit.
+read_lineage_geometry_2001 <- function(path) {
+  if (!file.exists(path)) {
+    stop(
+      "Missing production Census-2001 district geometry: ", path,
+      ". Run `make lineage-geometry-build` first.",
+      call. = FALSE
+    )
+  }
+  need_pkg("sf", "production Census-2001 district geometry")
+  geometry <- sf::st_read(path, quiet = TRUE)
+  if (!inherits(geometry, "sf") || !nrow(geometry)) {
+    stop("Production Census-2001 geometry is empty or not an sf object.", call. = FALSE)
+  }
+  if (!"unit_id" %in% names(geometry)) {
+    stop("Production Census-2001 geometry is missing unit_id.", call. = FALSE)
+  }
+  unit_id <- plain_chr(geometry$unit_id)
+  if (anyNA(unit_id) || any(!nzchar(unit_id)) || anyDuplicated(unit_id)) {
+    stop(
+      "Production Census-2001 geometry must have unique nonmissing unit_id values.",
+      call. = FALSE
+    )
+  }
+  geometry
+}
+
+#' Add production geometry to the assembled lineage source bundle
+#'
+#' Geometry is tracked as its own file target rather than hidden inside the
+#' dynamic raw-source inventory, so changes to the GeoPackage invalidate every
+#' spatial downstream target directly.
+attach_lineage_geometry_source <- function(sources, geometry_2001) {
+  if (!is.list(sources)) {
+    stop("District-lineage sources must be a named list.", call. = FALSE)
+  }
+  if (!inherits(geometry_2001, "sf")) {
+    stop("Production Census-2001 geometry must be an sf object.", call. = FALSE)
+  }
+  sources$lineage_geometry_2001 <- geometry_2001
+  sources
 }
 
 #' District-lineage source inventory

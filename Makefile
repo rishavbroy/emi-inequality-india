@@ -69,14 +69,17 @@ LINEAGE_GEOMETRY_INPUTS := \
 	scripts/build_lineage_geometry.R
 
 lineage-geometry-build:
-	@if [[ ! -f "$(LINEAGE_GEOMETRY_SOURCE)" ]]; then \
-		echo "=== LINEAGE GEOMETRY: skipped; optional SHRID polygon archive is unavailable ==="; \
-	elif [[ ! -f "$(LINEAGE_GEOMETRY_OUTPUT)" ]] || \
-		find $(LINEAGE_GEOMETRY_INPUTS) -newer "$(LINEAGE_GEOMETRY_OUTPUT)" -print -quit | grep -q .; then \
+	@if [[ ! -f "$(LINEAGE_GEOMETRY_OUTPUT)" && ! -f "$(LINEAGE_GEOMETRY_SOURCE)" ]]; then \
+		echo "Missing both $(LINEAGE_GEOMETRY_OUTPUT) and its SHRID source archive."; \
+		echo "Restore the raw geometry archive or the reviewed derived GeoPackage."; \
+		exit 1; \
+	elif [[ -f "$(LINEAGE_GEOMETRY_SOURCE)" ]] && \
+		{ [[ ! -f "$(LINEAGE_GEOMETRY_OUTPUT)" ]] || \
+		find $(LINEAGE_GEOMETRY_INPUTS) -newer "$(LINEAGE_GEOMETRY_OUTPUT)" -print -quit | grep -q .; }; then \
 		echo "=== LINEAGE GEOMETRY: building compact Census 2001 GeoPackage ==="; \
-		EMI_CONFIG=config/final.yml EMI_RUN_EXTENDED_DIAGNOSTICS=true \
+		EMI_CONFIG=config/final.yml EMI_RUN_EXTENDED_DIAGNOSTICS=false \
 			Rscript scripts/run_targets_checked.R \
-			--targets district_lineage_sources,census_2001_languages; \
+			--targets district_lineage_raw_sources,census_2001_languages; \
 		Rscript scripts/build_lineage_geometry.R; \
 	else \
 		echo "=== LINEAGE GEOMETRY: up to date ==="; \
