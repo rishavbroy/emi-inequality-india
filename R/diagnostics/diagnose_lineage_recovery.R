@@ -3,7 +3,7 @@ lineage_recovery_class <- function(eligibility) {
   if (!nrow(x)) return(character())
   ifelse(
     x$eligible_conservative %in% TRUE,
-    "preferred_mapping",
+    "conservative_mapping",
     ifelse(
       x$exclusion_reason %in% "documented_exclusion",
       "documented_survey_or_lineage_exclusion",
@@ -35,11 +35,15 @@ build_lineage_identity_reclassification <- function(eligibility) {
   x <- ensure_columns(x, required)
   x$recovery_class <- lineage_recovery_class(x)
   x$recommended_panel <- ifelse(
-    x$recovery_class %in% "preferred_mapping", "preferred",
+    x$recovery_class %in% "conservative_mapping", "conservative",
     ifelse(
-      x$recovery_class %in% c("primary_near_complete", "multi_parent_fractional_mapping"),
-      "sensitivity",
-      "excluded"
+      x$recovery_class %in% "primary_near_complete",
+      "primary",
+      ifelse(
+        x$recovery_class %in% "multi_parent_fractional_mapping",
+        "full_reviewed",
+        "excluded"
+      )
     )
   )
   out <- x[c(
@@ -52,10 +56,10 @@ build_lineage_identity_reclassification <- function(eligibility) {
 }
 
 build_lineage_multi_parent_review_queue <- function(
-  reclassification, sensitivity_crosswalk
+  reclassification, full_reviewed_crosswalk
 ) {
   rec <- safe_df(reclassification)
-  crosswalk <- safe_df(sensitivity_crosswalk)
+  crosswalk <- safe_df(full_reviewed_crosswalk)
   ids <- unique(rec$source_row_id[
     rec$recovery_class %in% "multi_parent_fractional_mapping"
   ])
@@ -161,7 +165,7 @@ build_lineage_rule_sensitivity <- function(
       abs(suppressWarnings(as.numeric(eligibility$allocation_weight_sum)) - 1) < 1e-8,
     , drop = FALSE
   ]
-  dominant_ids <- accepted_single$source_row_id[
+  primary_ids <- accepted_single$source_row_id[
     grepl("population_renormalized_min_99pct_mapped", plain_chr(accepted_single$allocation_basis), fixed = TRUE)
   ]
   variants <- list(
@@ -169,7 +173,7 @@ build_lineage_rule_sensitivity <- function(
     primary = unique(rbind(
       conservative_min,
       full_reviewed_min[
-        full_reviewed_min$source_row_id %in% dominant_ids,
+        full_reviewed_min$source_row_id %in% primary_ids,
         ,
         drop = FALSE
       ]
@@ -203,8 +207,8 @@ build_lineage_recovery_gates <- function(loss_audit, reclassification) {
     gate = c(
       "all_2001_districts_accounted_for",
       "no_generic_transition_exclusions",
-      "all_nonpreferred_identities_classified",
-      "multi_parent_cases_remain_out_of_preferred"
+      "all_nonprimary_identities_classified",
+      "multi_parent_cases_remain_out_of_primary"
     ),
     passed = c(
       nrow(loss) == 593L && !anyDuplicated(loss$target_unit_2001),
@@ -234,11 +238,11 @@ read_primary_reviews <- function(x) {
   required <- names(empty_primary_reviews())
   missing <- setdiff(required, names(x))
   if (length(missing)) {
-    stop("Dominant-parent reviews are missing: ", paste(missing, collapse = ", "), call. = FALSE)
+    stop("Primary-panel reviews are missing: ", paste(missing, collapse = ", "), call. = FALSE)
   }
   x <- x[required]
   if (anyDuplicated(x$source_row_id)) {
-    stop("Dominant-parent reviews must contain one row per source identity.", call. = FALSE)
+    stop("Primary-panel reviews must contain one row per source identity.", call. = FALSE)
   }
   accepted <- x$review_status %in% "accepted_primary"
   invalid <- accepted & (
@@ -248,7 +252,7 @@ read_primary_reviews <- function(x) {
       !nzchar(x$evidence_source_ids)
   )
   if (any(invalid)) {
-    stop("Accepted dominant-parent reviews require 2017-18 source identities, 2011 and 2001 unit IDs, and evidence sources.", call. = FALSE)
+    stop("Accepted primary-panel reviews require 2017-18 source identities, 2011 and 2001 unit IDs, and evidence sources.", call. = FALSE)
   }
   x
 }
@@ -277,7 +281,7 @@ build_primary_source_crosswalk <- function(
   missing_reviews <- setdiff(accepted$source_row_id, reviewed$source_row_id)
   if (length(missing_reviews)) {
     stop(
-      "Accepted dominant-parent reviews do not match an eligible single-target allocation: ",
+      "Accepted primary-panel reviews do not match an eligible single-target allocation: ",
       paste(missing_reviews, collapse = ", "), call. = FALSE
     )
   }
@@ -286,28 +290,28 @@ build_primary_source_crosswalk <- function(
   out <- full_reviewed[full_reviewed$source_row_id %in% keep, , drop = FALSE]
   missing_primary <- setdiff(conservative$source_row_id, out$source_row_id)
   if (length(missing_primary)) {
-    stop("Sensitivity crosswalk is missing conservative source identities.", call. = FALSE)
+    stop("Full-reviewed crosswalk is missing conservative source identities.", call. = FALSE)
   }
   if (anyDuplicated(out$source_row_id)) {
-    stop("Dominant-parent crosswalk must contain one row per source identity.", call. = FALSE)
+    stop("Primary crosswalk must contain one row per source identity.", call. = FALSE)
   }
   out$panel_variant <- "primary"
   out
 }
 
 build_lineage_panel_variant_summary <- function(
-  primary_crosswalk, dominant_crosswalk, sensitivity_crosswalk,
-  dominant_reviews
+  conservative_crosswalk, primary_crosswalk, full_reviewed_crosswalk,
+  primary_reviews
 ) {
   variants <- list(
-    conservative_preferred = safe_df(primary_crosswalk),
-    primary = safe_df(dominant_crosswalk),
-    full_reviewed_sensitivity = safe_df(sensitivity_crosswalk)
+    conservative = safe_df(conservative_crosswalk),
+    primary = safe_df(primary_crosswalk),
+    full_reviewed = safe_df(full_reviewed_crosswalk)
   )
   descriptions <- c(
-    conservative_preferred = "Deterministic official, registry, alias, and reviewed single-parent mappings only.",
+    conservative = "Deterministic official, registry, alias, and accepted single-parent mappings only.",
     primary = "Conservative mappings plus reviewed 2017-18 single-parent allocations with at least 99 percent SHRUG coverage and corroborating LGD or India State Stories evidence.",
-    full_reviewed_sensitivity = "Dominant-parent mappings plus reviewed multi-parent fractional allocations; robustness specification only."
+    full_reviewed = "Primary mappings plus reviewed multi-parent fractional allocations; robustness specification only."
   )
   safe_bind_rows(lapply(names(variants), function(name) {
     x <- variants[[name]]
@@ -325,7 +329,7 @@ build_lineage_panel_variant_summary <- function(
       target_districts_2017_18 = length(target_sets$nss_2017_18 %||% character()),
       two_wave_target_districts = overlap,
       accepted_primary_reviews = if (name == "primary") {
-        sum(safe_df(dominant_reviews)$review_status %in% "accepted_primary")
+        sum(safe_df(primary_reviews)$review_status %in% "accepted_primary")
       } else 0L,
       description = descriptions[[name]],
       stringsAsFactors = FALSE

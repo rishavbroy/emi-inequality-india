@@ -1,7 +1,7 @@
 # Completion workflow for district lineage.
 #
 # This module converts diagnostic candidates into review-ready artifacts,
-# assembles preferred and sensitivity crosswalks from accepted metadata, and
+# assembles conservative and full-reviewed crosswalks from accepted metadata, and
 # reports the remaining methodological work. It never promotes a candidate to
 # accepted status without a tracked adjudication.
 
@@ -73,7 +73,7 @@ build_adjudication_draft <- function(source_roster, adjudication_queue, candidat
   )]
 }
 
-empty_sensitivity_crosswalk <- function() {
+empty_full_reviewed_source_crosswalk <- function() {
   data.frame(
     source_row_id = character(), wave = character(), source_code = character(),
     target_unit_2001 = character(), weight = numeric(), basis = character(),
@@ -82,10 +82,10 @@ empty_sensitivity_crosswalk <- function() {
   )
 }
 
-build_sensitivity_crosswalk <- function(
-  primary_crosswalk, allocation_weights, conservative_eligibility = data.frame()
+build_full_reviewed_source_crosswalk <- function(
+  conservative_crosswalk, allocation_weights, conservative_eligibility = data.frame()
 ) {
-  primary <- safe_df(primary_crosswalk)
+  conservative <- safe_df(conservative_crosswalk)
   allocations <- safe_df(allocation_weights)
   eligibility <- safe_df(conservative_eligibility)
   eligibility_cols <- c(
@@ -97,14 +97,14 @@ build_sensitivity_crosswalk <- function(
   }
   pieces <- list()
 
-  if (nrow(primary)) {
+  if (nrow(conservative)) {
     pieces[[length(pieces) + 1L]] <- data.frame(
-      source_row_id = primary$source_row_id,
-      wave = primary$wave,
-      source_code = primary$source_code,
-      target_unit_2001 = primary$target_unit_2001,
+      source_row_id = conservative$source_row_id,
+      wave = conservative$wave,
+      source_code = conservative$source_code,
+      target_unit_2001 = conservative$target_unit_2001,
       weight = 1,
-      basis = primary$mapping_class,
+      basis = conservative$mapping_class,
       source_id = NA_character_,
       panel_variant = "deterministic",
       stringsAsFactors = FALSE
@@ -153,9 +153,9 @@ build_sensitivity_crosswalk <- function(
   }
 
   out <- safe_bind_rows(pieces)
-  if (!nrow(out)) return(empty_sensitivity_crosswalk())
+  if (!nrow(out)) return(empty_full_reviewed_source_crosswalk())
   if (any(!is.finite(out$weight) | out$weight < 0)) {
-    stop("Sensitivity crosswalk weights must be finite and nonnegative.", call. = FALSE)
+    stop("Full-reviewed crosswalk weights must be finite and nonnegative.", call. = FALSE)
   }
   source_weight <- aggregate(
     out$weight,
@@ -164,7 +164,7 @@ build_sensitivity_crosswalk <- function(
   )
   if (any(abs(source_weight$x - 1) > 1e-8)) {
     stop(
-      "Sensitivity crosswalk weights must sum to one within source row.",
+      "Full-reviewed crosswalk weights must sum to one within source row.",
       call. = FALSE
     )
   }
@@ -617,16 +617,16 @@ geometry_qa <- function(geometry_2001, admin_2001) {
   )
 }
 
-accepted_sensitivity_mapping_status <- function(
-  conservative_eligibility, sensitivity_crosswalk
+accepted_mapping_status <- function(
+  conservative_eligibility, full_reviewed_crosswalk
 ) {
   eligibility <- safe_df(conservative_eligibility)
-  sensitivity <- safe_df(sensitivity_crosswalk)
+  full_reviewed <- safe_df(full_reviewed_crosswalk)
 
   accepted_ids <- unique(stats::na.omit(
     eligibility$source_row_id[eligibility$status %in% "accepted"]
   ))
-  mapped_ids <- unique(stats::na.omit(sensitivity$source_row_id))
+  mapped_ids <- unique(stats::na.omit(full_reviewed$source_row_id))
   unmapped_ids <- setdiff(accepted_ids, mapped_ids)
 
   data.frame(
@@ -664,7 +664,7 @@ lineage_completion_steps <- function(
     allocation_validation, reviewed_validation,
     allocation_decision_status(allocation_weights)
   )
-  mapping_status <- accepted_sensitivity_mapping_status(
+  mapping_status <- accepted_mapping_status(
     conservative_eligibility, full_reviewed
   )
   geometry_value <- function(metric, default = NA_real_) {

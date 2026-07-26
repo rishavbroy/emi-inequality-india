@@ -425,7 +425,7 @@ build_lineage_readiness <- function(
     allocation_validation, adjudicated_allocation_validation,
     allocation_decision_status(adjudicated_allocation_weights)
   )
-  mapping_status <- accepted_sensitivity_mapping_status(
+  mapping_status <- accepted_mapping_status(
     conservative_eligibility, full_reviewed_crosswalk
   )
   gates <- c(
@@ -623,7 +623,7 @@ build_district_lineage <- function(
   adjudication_draft <- build_adjudication_draft(
     source_roster, adjudication_queue, candidates
   )
-  full_reviewed_crosswalk <- build_sensitivity_crosswalk(
+  full_reviewed_crosswalk <- build_full_reviewed_source_crosswalk(
     conservative_crosswalk, adjudicated_weights, eligibility
   )
   primary_reviews <- read_primary_reviews(
