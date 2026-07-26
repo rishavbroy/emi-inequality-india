@@ -494,7 +494,7 @@ test_that("production geometry is attached without losing sf semantics", {
   expect_named(out, c("example", "lineage_geometry_2001"))
   expect_s3_class(out$lineage_geometry_2001, "sf")
   expect_identical(out$lineage_geometry_2001$unit_id, geometry$unit_id)
-  expect_identical(sf::st_crs(out$lineage_geometry_2001), sf::st_crs(geometry))
+  expect_true(sf::st_crs(out$lineage_geometry_2001) == sf::st_crs(geometry))
 })
 
 test_that("production geometry reader enforces unit identity invariants", {
@@ -516,7 +516,7 @@ test_that("production geometry reader enforces unit identity invariants", {
 
   expect_s3_class(out, "sf")
   expect_identical(out$unit_id, geometry$unit_id)
-  expect_identical(sf::st_crs(out), sf::st_crs(geometry))
+  expect_true(sf::st_crs(out) == sf::st_crs(geometry))
 })
 
 test_that("reviewed geometry and source decisions satisfy evidence contracts", {

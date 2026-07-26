@@ -259,7 +259,7 @@ test_that("district geometry attachment keeps an sf contract when no keys match"
   expect_s3_class(out, "sf")
   expect_identical(out$district_panel_id, panel$district_panel_id)
   expect_true(all(sf::st_is_empty(sf::st_geometry(out))))
-  expect_identical(sf::st_crs(out), sf::st_crs(boundaries))
+  expect_true(sf::st_crs(out) == sf::st_crs(boundaries))
 })
 
 test_that("district geometry matching uses the first unique boundary key", {

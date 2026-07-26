@@ -1107,7 +1107,7 @@ test_that("pooled Gini reconstruction preserves sf geometry", {
   )
 
   expect_s3_class(out$panel, "sf")
-  expect_identical(sf::st_crs(out$panel), sf::st_crs(panel))
+  expect_true(sf::st_crs(out$panel) == sf::st_crs(panel))
   expect_true(sf::st_equals(out$panel, panel, sparse = FALSE)[1, 1])
 })
 
@@ -1342,7 +1342,7 @@ test_that("lineage geometry attachment preserves sf class and panel order", {
 
   expect_s3_class(out, "sf")
   expect_identical(out$target_unit_2001, panel$target_unit_2001)
-  expect_equal(sf::st_crs(out), sf::st_crs(geometry))
+  expect_true(sf::st_crs(out) == sf::st_crs(geometry))
   expect_false(any(sf::st_is_empty(sf::st_geometry(out)[c(1, 3)])))
   expect_true(sf::st_is_empty(sf::st_geometry(out)[2]))
 })
