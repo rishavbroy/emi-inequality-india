@@ -52,7 +52,7 @@ iv_notes <- analysis_target_csv("diag_ext_instrument_exploration", "instrument_e
 
 The current analog of the legacy
 `ggplot(..., aes(x = district_code_0708, y = EMIE, color = district_prefix)) + geom_point()`
-check uses 482 active district-panel rows.
+check uses 573 active district-panel rows.
 
 ``` r
 instrument_dotplot_rows <- iv_dotplot[, intersect(c("district_order", "district_code", "state", "district", "EMIE", "wavg_ling_degrees", "state_prefix"), names(iv_dotplot)), drop = FALSE]
@@ -68,7 +68,7 @@ analysis_table(emie_scale_summary, "Current EMIE scale check")
 
 | current_scale | min_EMIE | median_EMIE | max_EMIE | legacy_scale_note |
 |:---|---:|---:|---:|:---|
-| 0-100 percentage scale | 0 | 8.544 | 100 | legacy prose values 1 and 0.4-0.1 correspond to 100 and 40-10 on the current scale |
+| 0-100 percentage scale | 0 | 8.355 | 100 | legacy prose values 1 and 0.4-0.1 correspond to 100 and 40-10 on the current scale |
 
 Current EMIE scale check
 
@@ -78,37 +78,37 @@ analysis_table(instrument_dotplot_rows, "Current EMIE-by-district dotplot data",
 
 | district_order | district_code | state | district | EMIE | wavg_ling_degrees | state_prefix |
 |:---|:---|:---|:---|:---|:---|:---|
-| 1 | 1113 | Jammu and Kashmir | Jammu | 55.9373478876879 | 4.10472406351803 | 1 |
-| 2 | 1114 | Jammu and Kashmir | Kathua | 44.1686433398463 | 4.47509586442914 | 1 |
-| 3 | 1209 | Jammu and Kashmir | Doda | 100 | 2.80978436598451 | 1 |
-| 4 | 1210 | Jammu and Kashmir | Udhampur | 100 | 3.89551856807832 | 1 |
-| 5 | 1301 | Jammu and Kashmir | Kupwara | 35.3856881455635 | 3.03277502974141 | 1 |
-| 6 | 1303 | Jammu and Kashmir | Srinagar | 85.077782419044 | 3.68960681829044 | 1 |
-| 7 | 1305 | Jammu and Kashmir | Pulwama | 90.3661939188381 | 3.77674113819634 | 1 |
-| 8 | 1306 | Jammu and Kashmir | Anantnag | 85.3633724175985 | 3.53093067678782 | 1 |
-| 9 | 2102 | Himachal Pradesh | Kangra | 23.0964013292776 | 0.0511254204156725 | 2 |
-| 10 | 2104 | Himachal Pradesh | Kullu | 2.16035948115958 | 1.93095942551585 | 2 |
-| 11 | 2105 | Himachal Pradesh | Mandi | 13.1015338642775 | 0.0223237688187754 | 2 |
-| 12 | 2106 | Himachal Pradesh | Hamirpur | 16.4639133923992 | 0.0486081824586379 | 2 |
-| 13 | 2107 | Himachal Pradesh | Una | 14.6258166762162 | 0.226245237822633 | 2 |
-| 14 | 2201 | Himachal Pradesh | Chamba | 11.6242446239474 | 0.11429443132082 | 2 |
-| 15 | 2208 | Himachal Pradesh | Bilaspur | 16.8181705232738 | 0.559565764910242 | 2 |
-| 16 | 2209 | Himachal Pradesh | Solan | 17.8837636459365 | 0.187361916175475 | 2 |
-| 17 | 2210 | Himachal Pradesh | Sirmaur | 17.7238270927478 | 0.0939557639834032 | 2 |
-| 18 | 2211 | Himachal Pradesh | Shimla | 41.7306051009988 | 0.163964926837157 | 2 |
-| 19 | 2212 | Himachal Pradesh | Kinnaur | 5.15399235250357 | 4.43059659051503 | 2 |
-| 20 | 3101 | Punjab | Gurdaspur | 34.4063148539354 | 0.978981869361082 | 3 |
-| 21 | 3102 | Punjab | Amritsar | 32.9079601779732 | 0.95674459915501 | 3 |
-| 22 | 3103 | Punjab | Kapurthala | 43.9577396007221 | 0.936608167186548 | 3 |
-| 23 | 3104 | Punjab | Jalandhar | 39.7958708417419 | 0.918986609063724 | 3 |
-| 24 | 3105 | Punjab | Hoshiarpur | 14.6471262784023 | 0.952338796474347 | 3 |
-| 25 | 3106 | Punjab | Nawanshahr | 39.073688061125 | 0.966297335658519 | 3 |
-| 26 | 3107 | Punjab | Rupnagar | 37.1008378309431 | 0.903243078071297 | 3 |
-| 27 | 3208 | Punjab | Fatehgarh Sahib | 26.1747306686159 | 0.935136464132648 | 3 |
-| 28 | 3209 | Punjab | Ludhiana | 28.2453355709974 | 0.824173864209363 | 3 |
-| 29 | 3210 | Punjab | Moga | 13.648210472959 | 0.974371536656354 | 3 |
-| 30 | 3211 | Punjab | Firozpur | 26.704471925114 | 0.883867895594906 | 3 |
-| Table truncated in rendered note; full CSV has 482 rows. |  |  |  |  |  |  |
+| 1 | 1113 | Jammu & Kashmir | Jammu | 55.9373478876879 | 4.10472406351803 | 1 |
+| 2 | 1114 | Jammu & Kashmir | Kathus | 44.1686433398463 | 4.47509586442914 | 1 |
+| 3 | 1209 | Jammu & Kashmir | Doda | 100 | 2.80978436598451 | 1 |
+| 4 | 1210 | Jammu & Kashmir | Udhampur | 100 | 3.89551856807832 | 1 |
+| 5 | 1212 | Jammu & Kashmir | Rajauri | 19.1220027592448 | 0.480199300877297 | 1 |
+| 6 | 1301 | Jammu & Kashmir | Kupwara | 35.3856881455635 | 3.03277502974141 | 1 |
+| 7 | 1302 | Jammu & Kashmir | Baramula | 50.1462484103989 | 3.54776816308471 | 1 |
+| 8 | 1303 | Jammu & Kashmir | Srinagar | 85.077782419044 | 3.68960681829044 | 1 |
+| 9 | 1304 | Jammu & Kashmir | Badgam | 63.7323207233014 | 3.84258254745327 | 1 |
+| 10 | 1305 | Jammu & Kashmir | Pulwama | 90.3661939188381 | 3.77674113819634 | 1 |
+| 11 | 1306 | Jammu & Kashmir | Anantnag | 85.3633724175985 | 3.53093067678782 | 1 |
+| 12 | 2102 | Himachal Pradesh | Kangra | 23.0964013292776 | 0.0511254204156725 | 2 |
+| 13 | 2104 | Himachal Pradesh | Kullu | 2.16035948115958 | 1.93095942551585 | 2 |
+| 14 | 2105 | Himachal Pradesh | Mandi | 13.1015338642775 | 0.0223237688187754 | 2 |
+| 15 | 2106 | Himachal Pradesh | Hamirpur | 16.4639133923992 | 0.0486081824586379 | 2 |
+| 16 | 2107 | Himachal Pradesh | Una | 14.6258166762162 | 0.226245237822633 | 2 |
+| 17 | 2201 | Himachal Pradesh | Chamba | 11.6242446239474 | 0.11429443132082 | 2 |
+| 18 | 2203 | Himachal Pradesh | Lahul & Spiti | 6.31027748728387 | 4.18331171638565 | 2 |
+| 19 | 2208 | Himachal Pradesh | Bilaspur | 16.8181705232738 | 0.559565764910242 | 2 |
+| 20 | 2209 | Himachal Pradesh | Solan | 17.8837636459365 | 0.187361916175475 | 2 |
+| 21 | 2210 | Himachal Pradesh | Sirmapur | 17.7238270927478 | 0.0939557639834032 | 2 |
+| 22 | 2211 | Himachal Pradesh | Shimla | 41.7306051009988 | 0.163964926837157 | 2 |
+| 23 | 2212 | Himachal Pradesh | Kinnaur | 5.15399235250357 | 4.43059659051503 | 2 |
+| 24 | 3101 | Punjab | Gurdaspur | 34.4063148539354 | 0.978981869361082 | 3 |
+| 25 | 3102 | Punjab | Amritsar | 32.9079601779732 | 0.95674459915501 | 3 |
+| 26 | 3103 | Punjab | Kapurthala | 43.9577396007221 | 0.936608167186548 | 3 |
+| 27 | 3104 | Punjab | Jalandhar | 39.7958708417419 | 0.918986609063724 | 3 |
+| 28 | 3106 | Punjab | Nawanshahr | 39.073688061125 | 0.966297335658519 | 3 |
+| 29 | 3107 | Punjab | Rupnagar | 37.1008378309431 | 0.903243078071297 | 3 |
+| 30 | 3208 | Punjab | Fatehgarh Sahib | 26.1747306686159 | 0.935136464132648 | 3 |
+| Table truncated in rendered note; full CSV has 573 rows. |  |  |  |  |  |  |
 
 Current EMIE-by-district dotplot data
 
@@ -123,9 +123,9 @@ dotplot](../../outputs/diagnostics/extended/instrument_exploration/emie_by_distr
 analysis_table(iv_match, "Current IV-panel match summary")
 ```
 
-| .matched_2001 | .matched_2007 | .matched_2017 | n_rows | mean_EMIE | mean_wavg_ling_degrees | mean_npeople_0708 | mean_consumption_0708 | mean_dependency_ratio |
-|:---|:---|:---|---:|---:|---:|---:|---:|---:|
-| TRUE | TRUE | TRUE | 482 | 18.973 | 2.013 | 1700682 | 850.209 | 60.264 |
+| n_rows |
+|-------:|
+|    573 |
 
 Current IV-panel match summary
 
@@ -135,37 +135,37 @@ analysis_table(iv_state, "Current IV-panel state summary", max_rows = 30)
 
 | state | n_rows | mean_EMIE | mean_wavg_ling_degrees | mean_npeople_0708 | mean_consumption_0708 | mean_dependency_ratio |
 |:---|:---|:---|:---|:---|:---|:---|
-| Andhra Pradesh | 11 | 23.6439637582659 | 4.73743652602561 | 3565363.77909091 | 858.689956070715 | 47.5979753626463 |
+| Andaman & Nicobar Islands | 2 | 28.9337363688688 | 3.555900590902 | 114699.0625 | 1876.7627890843 | 39.9965239648858 |
+| Andhra Pradesh | 13 | 24.4802289280157 | 4.68834038721984 | 3406138.48653846 | 865.403384123275 | 46.8784465840865 |
 | Arunachal Pradesh | 13 | 95.0157164422056 | 4.6472947467219 | 76279.7523076923 | 906.331252948571 | 61.0798056117889 |
-| Assam | 20 | 4.86270886719062 | 3.07232885430867 | 1147553.4215 | 801.401484912825 | 57.1510363005785 |
-| Bihar | 34 | 3.50846184019296 | 0.737018650699089 | 1981686.42544118 | 602.665280317918 | 84.8703028532982 |
+| Assam | 22 | 5.3275500840982 | 3.13755149089939 | 1070667.90886364 | 803.234906099672 | 58.0450186320867 |
+| Bihar | 37 | 3.38601239299322 | 0.6784276793522 | 2052743.65324324 | 599.798542271148 | 84.7022490469553 |
 | Chandigarh | 1 | 58.3318564651552 | 0.28986403537111 | 837516.24 | 2923.13632837881 | 36.7830442420546 |
-| Chhattisgarh | 13 | 3.36951744303005 | 0.591175404554623 | 1626488.72307692 | 588.203351810108 | 57.6972398610473 |
+| Chhattisgarh | 16 | 3.2273017372452 | 0.825123850855922 | 1455306.785 | 561.201507459237 | 59.4295625174172 |
+| Dadra & Nagar Haveli | 1 | 5.45838437776184 | 2.85327585515039 | 204832.69 | 1005.32744354631 | 55.2790526851351 |
+| Daman & Diu | 2 | 22.0521469070064 | 0.900756561674745 | 69690.93 | 1505.79610737489 | 51.6253036614033 |
+| Delhi | 7 | 32.8114108555629 | 0.0800754690740823 | 1802076.03428571 | 1377.86559751405 | 51.9338015790853 |
 | Goa | 2 | 62.2874081579816 | 2 | 698016.255 | 1427.58012410047 | 35.7209708999027 |
-| Gujarat | 16 | 4.43578715526743 | 1.27061155203841 | 1824361.856875 | 994.490052799496 | 49.8057766561105 |
+| Gujarat | 25 | 4.42406172844767 | 1.39840030769189 | 2038854.0708 | 950.628629395387 | 53.6880918495208 |
 | Haryana | 19 | 20.170112602026 | 0.126072481752038 | 1142009.75631579 | 1056.35388556882 | 53.1686777255239 |
-| Himachal Pradesh | 11 | 16.3984207347944 | 0.711727402615791 | 564285.269545455 | 1133.8732701979 | 54.6766535198146 |
-| Jammu and Kashmir | 8 | 74.5373785160723 | 3.66439706562825 | 789480.136875 | 959.896462458858 | 51.214728623363 |
-| Jharkhand | 14 | 5.8563339754116 | 1.02388506566692 | 1454029.05785714 | 671.740893305257 | 71.0616880045961 |
-| Karnataka | 16 | 14.0909379283582 | 4.3457335311984 | 1430983.1028125 | 831.971046438564 | 50.7501404266105 |
+| Himachal Pradesh | 12 | 15.5577421308352 | 1.00102609542995 | 519885.804583333 | 1116.2584647989 | 53.7694561219673 |
+| Jammu & Kashmir | 11 | 66.2999636383203 | 3.38052059422194 | 735654.508181818 | 961.24108632186 | 52.1863851221851 |
+| Jharkhand | 18 | 6.48227701539392 | 1.35216904499632 | 1395211.16555556 | 691.596072974349 | 67.2780276872427 |
+| Karnataka | 27 | 16.0376594835309 | 4.38737818600313 | 1844944.73574074 | 859.871286034099 | 49.7504147543725 |
 | Kerala | 14 | 43.4497857986853 | 4.99840467097412 | 2129849.7675 | 1206.28675381536 | 48.0392820929302 |
 | Lakshadweep | 1 | 32.4512530246271 | 5 | 57165.375 | 1535.93748293089 | 47.3127675768181 |
-| Madhya Pradesh | 42 | 6.24753868906339 | 0.573042893579146 | 1314874.12678571 | 653.244273348503 | 63.8122407105126 |
-| Maharashtra | 29 | 11.4830410179425 | 1.9522032273927 | 2841016.72137931 | 889.465463343876 | 52.3245091519967 |
-| Manipur | 8 | 63.66891346626 | 4.98569769201453 | 227265.8075 | 870.903630397952 | 49.6512299191417 |
-| Meghalaya | 6 | 63.742626422972 | 4.85968082738316 | 344808.693333333 | 941.600385292216 | 64.6291546365286 |
-| Mizoram | 7 | 49.8826321870426 | 4.70967863891981 | 81444.7335714286 | 1150.98277228436 | 62.853899929227 |
+| Madhya Pradesh | 44 | 6.54482431274942 | 0.624772804479957 | 1333711.54318182 | 655.499190713482 | 63.7789027840119 |
+| Maharashtra | 33 | 10.5268081957616 | 1.93039803292807 | 2757972.46242424 | 882.321778049425 | 52.2534100830016 |
+| Manipur | 9 | 67.5987809704474 | 4.98728683734625 | 220217.051666667 | 843.622256256101 | 50.0165633266468 |
+| Meghalaya | 7 | 64.4926264200829 | 4.77483391291109 | 325151.725 | 946.017920296636 | 63.5951262270377 |
+| Mizoram | 8 | 51.9549916295876 | 4.74053974211294 | 104185.15875 | 1198.66428882497 | 61.7142451234391 |
 | Nagaland | 8 | 99.7003154183167 | 4.74309513846195 | 118572.34625 | 1235.27747750873 | 41.5966283338895 |
-| Odisha | 23 | 7.07565238642496 | 3.11402429671511 | 1244504.71978261 | 619.200310362183 | 52.6753535020323 |
+| Odisha | 29 | 6.83880120777512 | 3.08393406232459 | 1205721.18155172 | 606.805301034576 | 53.2755205864839 |
 | Puducherry | 4 | 53.7704148434607 | 4.97028095100957 | 207733.7475 | 1333.56765439781 | 44.4357277807352 |
-| Punjab | 15 | 30.8110849018846 | 0.932472555964024 | 1503356.93366667 | 1237.25188924923 | 49.5760252064197 |
-| Rajasthan | 27 | 5.38824408462306 | 0.369378246090727 | 1861619.5487037 | 818.178496919533 | 68.8613716717374 |
-| Tamil Nadu | 27 | 22.6959611165765 | 4.98566486057399 | 2169276.71055556 | 976.785681331315 | 45.8385046057772 |
-| Telangana | 8 | 28.758822497895 | 4.01688425665652 | 2923324.4025 | 991.440731095913 | 46.7537202937939 |
-| Tripura | 4 | 3.2389135004614 | 3.58325060830235 | 883489.59875 | 789.774624079622 | 50.5183950560216 |
-| Uttar Pradesh | 62 | 5.68861643327111 | 0.0179480043464079 | 2518112.50258065 | 700.163262177421 | 76.9319368762913 |
-| Uttarakhand | 11 | 14.6636310855265 | 0.0624887381832764 | 589312.001363636 | 924.281162141684 | 66.6122123387273 |
-| Table truncated in rendered note; full CSV has 31 rows. |  |  |  |  |  |  |
+| Punjab | 16 | 30.8770654405604 | 0.932931207974935 | 1452066.4490625 | 1223.43785027676 | 50.1406819071539 |
+| Rajasthan | 27 | 4.93754820082534 | 0.360060963705563 | 1755742.01925926 | 805.797817032219 | 70.0862133128767 |
+| Sikkim | 4 | 99.6822052368016 | 4.78724906042476 | 129015.62625 | 906.254711120454 | 55.1816987031961 |
+| Table truncated in rendered note; full CSV has 36 rows. |  |  |  |  |  |  |
 
 Current IV-panel state summary
 
@@ -175,33 +175,33 @@ analysis_table(iv_rows, "Current keyed IV summary rows", max_rows = 30)
 
 | group | variable | var | label | N | Min | 1Q | Med | 3Q | Max | Mean | SD | desc |
 |:---|:---|:---|:---|---:|:---|:---|:---|:---|:---|:---|:---|:---|
-| From 2001 | wavg_ling_degrees | wavg_ling_degrees | Ling. Distance | 482 | 0.00 | 0.04 | 1.44 | 4.02 | 5.00 | 2.01 | 1.98 | Average linguistic distance of mother tongue from Hindi |
-| From 2007-08 | EMIE | EMIE | EMIE | 482 | 0.00 | 2.02 | 8.54 | 22.89 | 100.00 | 18.97 | 25.27 | EMI exposure |
-| From 2007-08 | npeople_0708 | npeople_0708 | Population | 482 | 12,285 | 823,676 | 1,396,516 | 2,317,118 | 9,922,640 | 1,700,682 | 1,307,716 | Estimated via NSS sample weights |
-| From 2007-08 | consumption_0708 | consumption_0708 | Consumption | 482 | 330.09 | 626.88 | 768.60 | 999.13 | 2923.14 | 850.21 | 319.75 | Average household monthly consumption expenditures (Rs.) |
-| From 2007-08 | gini_cons_0708 | gini_cons_0708 | Gini of Consumption | 482 | 0.06 | 0.22 | 0.26 | 0.30 | 0.56 | 0.26 | 0.07 | Gini coefficient of consumption |
-| From 2007-08 | pct_urban | pct_urban | Pct. Urban | 482 | 0.00 | 9.25 | 16.59 | 30.31 | 100.00 | 22.00 | 18.21 | Percentage of people in an urban area |
-| From 2007-08 | avg_hh_size | avg_hh_size | Avg. HH Size | 482 | 3.15 | 4.27 | 4.70 | 5.12 | 6.44 | 4.68 | 0.65 | Average household size |
-| From 2007-08 | dependency_ratio | dependency_ratio | Dependency Ratio × 100 | 482 | 23.69 | 48.43 | 57.43 | 71.22 | 110.65 | 60.26 | 15.45 | Ratio of dependents (0-14, 65+) to labor force (15-64), × 100 |
-| From 2007-08 | pct_fem_head | pct_fem_head | Pct. Female Head | 482 | 50.44 | 85.57 | 90.22 | 93.95 | 100.00 | 88.84 | 7.09 | Percentage of households with a female head |
-| From 2007-08 | pct_hindu | pct_hindu | Pct. Hindu | 482 | 0.00 | 72.83 | 88.62 | 95.14 | 100.00 | 77.60 | 27.27 | Percentage of Hindus |
-| From 2007-08 | pct_muslim | pct_muslim | Pct. Muslim | 482 | 0.00 | 1.67 | 5.70 | 12.20 | 100.00 | 10.26 | 15.13 | Percentage of Muslims |
-| From 2007-08 | pct_other_religion | pct_other_religion | Pct. Other | 482 | 0.00 | 0.00 | 1.21 | 7.29 | 100.00 | 12.14 | 26.20 | Percentage not Hindu/Muslim |
-| From 2007-08 | pct_st | pct_st | Pct. ST | 482 | 0.00 | 0.00 | 2.88 | 19.26 | 100.00 | 17.03 | 27.84 | Scheduled Tribe |
-| From 2007-08 | pct_sc | pct_sc | Pct. SC | 482 | 0.00 | 9.97 | 17.67 | 25.78 | 46.72 | 17.77 | 10.88 | Scheduled Caste |
-| From 2007-08 | pct_obc | pct_obc | Pct. OBC | 482 | 0.00 | 18.24 | 41.83 | 57.45 | 96.60 | 38.74 | 23.76 | Other Backward Class |
-| From 2007-08 | pct_small_land | pct_small_land | Pct. Small Land-Owner | 482 | 5.03 | 33.21 | 47.07 | 60.52 | 94.20 | 47.22 | 18.29 | Owns 0.005–0.40 hectares |
-| From 2007-08 | pct_medium_land | pct_medium_land | Pct. Med. Land-Owner | 482 | 0.00 | 17.39 | 28.41 | 40.77 | 90.73 | 30.30 | 16.86 | Owns 0.41–3.00 hectares |
-| From 2007-08 | pct_large_land | pct_large_land | Pct. Large Land-Owner | 482 | 0.00 | 0.00 | 1.30 | 4.73 | 34.94 | 3.35 | 4.96 | Owns $\geq$ 3.01 hectares |
-| From 2007-08 | pct_head_illiterate | pct_head_illiterate | Pct. Head Educ., Illiterate | 482 | 0.00 | 24.07 | 34.35 | 46.16 | 78.68 | 34.90 | 15.88 | Percentage of household heads with educ. level: illiterate |
-| From 2007-08 | pct_head_lit_to_primary | pct_head_lit_to_primary | Pct. Head Educ., Lit.-Primary | 482 | 3.28 | 19.67 | 26.46 | 33.77 | 77.63 | 27.76 | 11.05 | Percentage of heads with educ. level: literate-primary |
-| From 2007-08 | pct_head_secondary_plus | pct_head_secondary_plus | Pct. Head Educ., Secondary+ | 482 | 0.58 | 26.90 | 35.20 | 46.43 | 79.43 | 37.34 | 14.40 | Percentage of heads with educ. level: above secondary |
-| From 2007-08 | pct_pucca | pct_pucca | Pct. Pucca | 482 | 0.00 | 27.51 | 55.63 | 80.92 | 100.00 | 53.95 | 29.42 | Percentage in pucca (permanent) homes |
-| From 2017-18 | npeople_1718 | npeople_1718 | Population | 482 | 30,094 | 807,081 | 1,481,289 | 2,342,633 | 12,274,837 | 1,788,321 | 1,476,278 | Estimated via NSS sample weights |
-| From 2017-18 | consumption_1718 | consumption_1718 | Consumption | 482 | 850.53 | 1544.12 | 2038.39 | 2618.70 | 6764.46 | 2214.82 | 902.80 | Average household monthly consumption expenditures (Rs.) |
-| From 2017-18 | gini_cons_1718 | gini_cons_1718 | Gini of Consumption | 482 | 0.11 | 0.20 | 0.24 | 0.29 | 0.55 | 0.25 | 0.07 | Gini coefficient of consumption |
-| From 2007-08 to 2017-18 | consumption_pct_change | consumption_pct_change | Percent change in consumption | 482 | 12.25 | 124.22 | 157.62 | 192.18 | 446.24 | 164.61 | 61.56 | Percent change in consumption |
-| From 2007-08 to 2017-18 | gini_change | gini_change | Change in Gini of consumption | 482 | -0.30 | -0.07 | -0.02 | 0.03 | 0.29 | -0.02 | 0.08 | Change in the Gini coefficient of consumption |
+| From 2001 | wavg_ling_degrees | wavg_ling_degrees | Ling. Distance | 573 | 0.00 | 0.05 | 1.70 | 4.13 | 5.00 | 2.09 | 1.96 | Average linguistic distance of mother tongue from Hindi |
+| From 2007-08 | EMIE | EMIE | EMIE | 573 | 0.00 | 2.14 | 8.36 | 23.10 | 100.00 | 19.04 | 25.37 | EMI exposure |
+| From 2007-08 | npeople_0708 | npeople_0708 | Population | 573 | 12,285 | 773,322 | 1,400,593 | 2,319,260 | 9,922,640 | 1,712,255 | 1,409,894 | Estimated via NSS sample weights |
+| From 2007-08 | consumption_0708 | consumption_0708 | Consumption | 573 | 330.09 | 625.37 | 771.51 | 997.67 | 2923.14 | 855.39 | 328.58 | Average household monthly consumption expenditures (Rs.) |
+| From 2007-08 | gini_cons_0708 | gini_cons_0708 | Gini of Consumption | 573 | 0.06 | 0.22 | 0.26 | 0.30 | 0.56 | 0.26 | 0.07 | Gini coefficient of consumption |
+| From 2007-08 | pct_urban | pct_urban | Pct. Urban | 573 | 0.00 | 8.82 | 16.44 | 29.86 | 100.00 | 22.12 | 19.12 | Percentage of people in an urban area |
+| From 2007-08 | avg_hh_size | avg_hh_size | Avg. HH Size | 573 | 3.15 | 4.24 | 4.67 | 5.12 | 6.49 | 4.67 | 0.66 | Average household size |
+| From 2007-08 | dependency_ratio | dependency_ratio | Dependency Ratio × 100 | 573 | 23.69 | 48.26 | 56.69 | 70.87 | 110.65 | 59.72 | 15.27 | Ratio of dependents (0-14, 65+) to labor force (15-64), × 100 |
+| From 2007-08 | pct_fem_head | pct_fem_head | Pct. Female Head | 573 | 50.44 | 85.56 | 90.09 | 93.72 | 100.00 | 88.93 | 6.86 | Percentage of households with a female head |
+| From 2007-08 | pct_hindu | pct_hindu | Pct. Hindu | 573 | 0.00 | 74.19 | 88.54 | 94.79 | 100.00 | 77.89 | 26.75 | Percentage of Hindus |
+| From 2007-08 | pct_muslim | pct_muslim | Pct. Muslim | 573 | 0.00 | 1.66 | 5.80 | 12.21 | 100.00 | 10.28 | 15.22 | Percentage of Muslims |
+| From 2007-08 | pct_other_religion | pct_other_religion | Pct. Other | 573 | 0.00 | 0.00 | 1.15 | 7.04 | 100.00 | 11.83 | 25.53 | Percentage not Hindu/Muslim |
+| From 2007-08 | pct_st | pct_st | Pct. ST | 573 | 0.00 | 0.08 | 3.27 | 21.16 | 100.00 | 17.29 | 27.70 | Scheduled Tribe |
+| From 2007-08 | pct_sc | pct_sc | Pct. SC | 573 | 0.00 | 9.16 | 17.69 | 25.34 | 63.90 | 17.69 | 11.29 | Scheduled Caste |
+| From 2007-08 | pct_obc | pct_obc | Pct. OBC | 573 | 0.00 | 16.06 | 40.87 | 57.27 | 96.60 | 37.93 | 23.88 | Other Backward Class |
+| From 2007-08 | pct_small_land | pct_small_land | Pct. Small Land-Owner | 573 | 1.48 | 31.81 | 46.61 | 60.61 | 94.20 | 46.83 | 18.39 | Owns 0.005–0.40 hectares |
+| From 2007-08 | pct_medium_land | pct_medium_land | Pct. Med. Land-Owner | 573 | 0.00 | 17.24 | 28.41 | 39.71 | 90.73 | 29.87 | 17.08 | Owns 0.41–3.00 hectares |
+| From 2007-08 | pct_large_land | pct_large_land | Pct. Large Land-Owner | 573 | 0.00 | 0.00 | 1.22 | 4.32 | 34.94 | 3.13 | 4.67 | Owns $\geq$ 3.01 hectares |
+| From 2007-08 | pct_head_illiterate | pct_head_illiterate | Pct. Head Educ., Illiterate | 573 | 0.00 | 23.83 | 34.38 | 46.54 | 78.68 | 34.85 | 15.94 | Percentage of household heads with educ. level: illiterate |
+| From 2007-08 | pct_head_lit_to_primary | pct_head_lit_to_primary | Pct. Head Educ., Lit.-Primary | 573 | 3.28 | 19.76 | 26.44 | 33.86 | 77.63 | 27.90 | 11.11 | Percentage of heads with educ. level: literate-primary |
+| From 2007-08 | pct_head_secondary_plus | pct_head_secondary_plus | Pct. Head Educ., Secondary+ | 573 | 0.58 | 26.84 | 34.86 | 46.02 | 81.49 | 37.24 | 14.53 | Percentage of heads with educ. level: above secondary |
+| From 2007-08 | pct_pucca | pct_pucca | Pct. Pucca | 573 | 0.00 | 27.75 | 55.76 | 80.68 | 100.00 | 54.28 | 29.35 | Percentage in pucca (permanent) homes |
+| From 2017-18 | npeople_1718 | npeople_1718 | Population | 573 | 18,689 | 860,228 | 1,559,713 | 2,488,207 | 12,274,837 | 1,889,535 | 1,599,341 | Estimated via NSS sample weights |
+| From 2017-18 | consumption_1718 | consumption_1718 | Consumption | 573 | 850.53 | 1543.87 | 2045.35 | 2611.09 | 11031.46 | 2239.13 | 975.12 | Average household monthly consumption expenditures (Rs.) |
+| From 2017-18 | gini_cons_1718 | gini_cons_1718 | Gini of Consumption | 573 | 0.11 | 0.20 | 0.24 | 0.29 | 0.57 | 0.25 | 0.07 | Gini coefficient of consumption |
+| From 2007-08 to 2017-18 | consumption_pct_change | consumption_pct_change | Percent change in consumption | 573 | 12.25 | 124.11 | 158.71 | 193.14 | 542.70 | 165.15 | 61.48 | Percent change in consumption |
+| From 2007-08 to 2017-18 | gini_change | gini_change | Change in Gini of consumption | 573 | -0.30 | -0.06 | -0.02 | 0.03 | 0.29 | -0.02 | 0.07 | Change in the Gini coefficient of consumption |
 
 Current keyed IV summary rows
 

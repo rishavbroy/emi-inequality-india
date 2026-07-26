@@ -105,7 +105,7 @@ analysis_table(dm_summary, "District-matching diagnostic summary")
 
 | n_panel_rows | n_join_rows | n_unmatched_rows | n_source_key_inventory_rows | n_many_to_many_cases | n_panel_unmatched_by_key | n_join_unmatched_by_key |
 |---:|---:|---:|---:|---:|---:|---:|
-| 482 | 734 | 0 | 0 | 0 | 0 | 252 |
+| 573 | 734 | 0 | 0 | 0 | 85 | 246 |
 
 District-matching diagnostic summary
 
@@ -128,13 +128,13 @@ analysis_table(dm_tracker_panel, "Tracker/panel/intermediate row-count compariso
 
 | object                         | n_rows | n_complete_rows |
 |:-------------------------------|-------:|----------------:|
-| district_panel                 |    482 |             482 |
+| district_panel                 |    573 |             573 |
 | district_join_map              |    734 |             734 |
 | unmatched_rows                 |      0 |              NA |
 | source_key_inventory           |      0 |              NA |
 | many_to_many_cases             |      0 |              NA |
-| key_role:requires_review       |    252 |              NA |
-| key_role:shared_panel_join_key |    482 |              NA |
+| key_role:requires_review       |    331 |              NA |
+| key_role:shared_panel_join_key |    488 |              NA |
 
 Tracker/panel/intermediate row-count comparison
 
@@ -172,8 +172,10 @@ if (all(c("panel_key_status", "join_key_status") %in% names(dm_key_comparison)))
 
 | panel_key_status | join_key_status | Freq |
 |:-----------------|:----------------|-----:|
-| in_panel         | in_join_map     |  482 |
-| not_in_panel     | in_join_map     |  252 |
+| in_panel         | in_join_map     |  488 |
+| not_in_panel     | in_join_map     |  246 |
+| in_panel         | not_in_join_map |   85 |
+| not_in_panel     | not_in_join_map |    0 |
 
 Panel-vs-join key-status summary
 
@@ -183,8 +185,8 @@ analysis_table(dm_key_roles, "Panel/join key roles and interpretation")
 
 | key_role              | n_keys | interpretation                             |
 |:----------------------|-------:|:-------------------------------------------|
-| requires_review       |    252 | Requires manual review.                    |
-| shared_panel_join_key |    482 | Shared by active final panel and join map. |
+| requires_review       |    331 | Requires manual review.                    |
+| shared_panel_join_key |    488 | Shared by active final panel and join map. |
 
 Panel/join key roles and interpretation
 
@@ -222,38 +224,38 @@ Many-to-many cases from current matching diagnostics
 analysis_table(dm_all_rows, "All-rows close-match search table", max_rows = 30)
 ```
 
-| state | district | source |
-|:---|:---|:---|
-| Andhra Pradesh | Anantapur | panel |
-| Andhra Pradesh | Chittoor | panel |
-| Andhra Pradesh | East Godavari | panel |
-| Andhra Pradesh | Guntur | panel |
-| Andhra Pradesh | Krishna | panel |
-| Andhra Pradesh | Kurnool | panel |
-| Andhra Pradesh | Prakasam | panel |
-| Andhra Pradesh | Srikakulam | panel |
-| Andhra Pradesh | Visakhapatnam | panel |
-| Andhra Pradesh | Vizianagaram | panel |
-| Andhra Pradesh | West Godavari | panel |
-| Arunachal Pradesh | Changlang | panel |
-| Arunachal Pradesh | East Kameng | panel |
-| Arunachal Pradesh | East Siang | panel |
-| Arunachal Pradesh | Lohit | panel |
-| Arunachal Pradesh | Tirap | panel |
-| Arunachal Pradesh | Dibang Valley | panel |
-| Arunachal Pradesh | Lower Subansiri | panel |
-| Arunachal Pradesh | Papum Pare | panel |
-| Arunachal Pradesh | Tawang | panel |
-| Arunachal Pradesh | Upper Siang | panel |
-| Arunachal Pradesh | Upper Subansiri | panel |
-| Arunachal Pradesh | West Kameng | panel |
-| Arunachal Pradesh | West Siang | panel |
-| Assam | Barpeta | panel |
-| Assam | Darrang | panel |
-| Assam | Bongaigaon | panel |
-| Assam | Cachar | panel |
-| Assam | Dhemaji | panel |
-| Assam | Dhubri | panel |
-| Table truncated in rendered note; full CSV has 1216 rows. |  |  |
+| state                                                     | district | source |
+|:----------------------------------------------------------|:---------|:-------|
+| 01                                                        | 01       | panel  |
+| 01                                                        | 02       | panel  |
+| 01                                                        | 03       | panel  |
+| 01                                                        | 04       | panel  |
+| 01                                                        | 05       | panel  |
+| 01                                                        | 06       | panel  |
+| 01                                                        | 09       | panel  |
+| 01                                                        | 10       | panel  |
+| 01                                                        | 12       | panel  |
+| 01                                                        | 13       | panel  |
+| 01                                                        | 14       | panel  |
+| 02                                                        | 01       | panel  |
+| 02                                                        | 02       | panel  |
+| 02                                                        | 03       | panel  |
+| 02                                                        | 04       | panel  |
+| 02                                                        | 05       | panel  |
+| 02                                                        | 06       | panel  |
+| 02                                                        | 07       | panel  |
+| 02                                                        | 08       | panel  |
+| 02                                                        | 09       | panel  |
+| 02                                                        | 10       | panel  |
+| 02                                                        | 11       | panel  |
+| 02                                                        | 12       | panel  |
+| 03                                                        | 01       | panel  |
+| 03                                                        | 02       | panel  |
+| 03                                                        | 03       | panel  |
+| 03                                                        | 04       | panel  |
+| 03                                                        | 06       | panel  |
+| 03                                                        | 07       | panel  |
+| 03                                                        | 08       | panel  |
+| Table truncated in rendered note; full CSV has 1307 rows. |          |        |
 
 All-rows close-match search table
