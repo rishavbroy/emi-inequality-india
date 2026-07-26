@@ -51,6 +51,50 @@ build_lineage_v2_identity_reclassification <- function(eligibility) {
   out[order(out$wave, out$raw_state, out$raw_district), , drop = FALSE]
 }
 
+build_lineage_v2_multi_parent_review_queue <- function(
+  reclassification, sensitivity_crosswalk
+) {
+  rec <- safe_df(reclassification)
+  crosswalk <- safe_df(sensitivity_crosswalk)
+  ids <- unique(rec$source_row_id[
+    rec$recovery_class %in% "multi_parent_fractional_mapping"
+  ])
+  out <- crosswalk[crosswalk$source_row_id %in% ids, , drop = FALSE]
+  if (!nrow(out)) return(data.frame())
+
+  metadata <- rec[rec$source_row_id %in% ids, c(
+    "source_row_id", "wave", "source_code", "raw_state", "raw_district",
+    "allocation_target_count", "allocation_weight_sum", "allocation_basis",
+    "allocation_source_id"
+  ), drop = FALSE]
+  metadata <- metadata[!duplicated(metadata$source_row_id), , drop = FALSE]
+  out <- merge(
+    out,
+    metadata,
+    by = c("source_row_id", "wave", "source_code"),
+    all.x = TRUE,
+    sort = FALSE
+  )
+  out <- out[order(out$raw_state, out$raw_district, -out$weight), , drop = FALSE]
+  out$allocation_rank <- ave(
+    out$weight,
+    out$source_row_id,
+    FUN = function(x) rank(-x, ties.method = "first")
+  )
+  out$review_status <- "needs_fractional_validation"
+  out$required_evidence <- paste(
+    "Confirm predecessor districts and territorial shares with an official",
+    "district history, Gazette or atlas schedule, LGD changed-locality record,",
+    "or a validated locality-level crosswalk before considering primary use."
+  )
+  out[c(
+    "source_row_id", "wave", "source_code", "raw_state", "raw_district",
+    "target_unit_2001", "weight", "allocation_rank",
+    "allocation_target_count", "allocation_weight_sum", "basis", "source_id",
+    "review_status", "required_evidence"
+  )]
+}
+
 build_lineage_v2_district_loss_audit <- function(
   admin_2001, source_roster, eligibility, primary_crosswalk,
   sensitivity_crosswalk

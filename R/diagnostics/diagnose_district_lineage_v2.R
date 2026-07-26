@@ -700,6 +700,9 @@ build_district_lineage_v2 <- function(
     primary_crosswalk, sensitivity_crosswalk, dominant_parent_reviews
   )
   identity_reclassification <- build_lineage_v2_identity_reclassification(eligibility)
+  multi_parent_review_queue <- build_lineage_v2_multi_parent_review_queue(
+    identity_reclassification, sensitivity_crosswalk
+  )
   district_loss_audit <- build_lineage_v2_district_loss_audit(
     admin_2001, source_roster, eligibility, primary_crosswalk,
     sensitivity_crosswalk
@@ -782,6 +785,7 @@ build_district_lineage_v2 <- function(
     panel_variant_summary = panel_variant_summary,
     district_loss_audit = district_loss_audit,
     identity_reclassification = identity_reclassification,
+    multi_parent_review_queue = multi_parent_review_queue,
     mapping_rule_sensitivity = mapping_rule_sensitivity,
     recovery_gates = recovery_gates,
     production_crosswalk_comparison = production_comparison,
@@ -820,7 +824,8 @@ save_district_lineage_v2 <- function(diagnostics, dir = "outputs/diagnostics/ext
     "primary_mapping_eligibility", "primary_source_crosswalk",
     "dominant_parent_source_crosswalk", "sensitivity_source_crosswalk",
     "dominant_parent_reviews", "panel_variant_summary", "district_loss_audit",
-    "identity_reclassification", "mapping_rule_sensitivity", "recovery_gates",
+    "identity_reclassification", "multi_parent_review_queue",
+    "mapping_rule_sensitivity", "recovery_gates",
     "production_crosswalk_comparison",
     "production_mapping_reviews",
     "geometry_2001_qa", "geometry_2001_unit_coverage",

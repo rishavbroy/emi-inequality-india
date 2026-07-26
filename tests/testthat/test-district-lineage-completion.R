@@ -1490,3 +1490,29 @@ test_that("panel-variant review stacks the same model contract across panels", {
   expect_true(all(out$panel_summary$unique_districts == 2L))
   expect_setequal(out$gini_reconstruction$panel_variant, out$panel_summary$panel_variant)
 })
+
+test_that("multi-parent review queue preserves every fractional target", {
+  rec <- data.frame(
+    source_row_id = "d17", wave = "nss_2017_18", source_code = "2",
+    raw_state = "State", raw_district = "District",
+    recovery_class = "multi_parent_fractional_mapping",
+    allocation_target_count = 2, allocation_weight_sum = 1,
+    allocation_basis = "population_renormalized_min_99pct_mapped",
+    allocation_source_id = "shrug_pc_keys",
+    stringsAsFactors = FALSE
+  )
+  crosswalk <- data.frame(
+    source_row_id = c("d17", "d17"), wave = "nss_2017_18",
+    source_code = "2", target_unit_2001 = c("a", "b"),
+    weight = c(.8, .2), basis = "population_renormalized_min_99pct_mapped",
+    source_id = "shrug_pc_keys", panel_variant = "population_allocation",
+    stringsAsFactors = FALSE
+  )
+
+  out <- build_lineage_v2_multi_parent_review_queue(rec, crosswalk)
+
+  expect_equal(nrow(out), 2L)
+  expect_equal(sum(out$weight), 1)
+  expect_setequal(out$allocation_rank, c(1, 2))
+  expect_true(all(out$review_status == "needs_fractional_validation"))
+})
