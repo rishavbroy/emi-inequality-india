@@ -48,38 +48,30 @@ public-diagnostics:
 extended-diagnostics:
 	EMI_CONFIG=config/final.yml EMI_RUN_EXTENDED_DIAGNOSTICS=true Rscript scripts/run_targets_checked.R --starts-with diag_ext_
 
-LINEAGE_GEOMETRY_SOURCE := data/raw/shrug/open-polygons/shrug-shrid-poly-gpkg.zip
+LINEAGE_GEOMETRY_SOURCE := data/raw/datameet/Districts/Census_2001/2001_Dist.shp
 LINEAGE_GEOMETRY_OUTPUT := outputs/derived/district_lineage/district_2001.gpkg
 LINEAGE_GEOMETRY_INPUTS := \
 	$(LINEAGE_GEOMETRY_SOURCE) \
-	data/metadata/file_manifest.csv \
-	data/metadata/district_geometry_carrybacks.csv \
-	data/metadata/district_lineage_sources.csv \
+	data/raw/datameet/Districts/Census_2001/2001_Dist.dbf \
+	data/raw/datameet/Districts/Census_2001/2001_Dist.shx \
+	data/raw/datameet/Districts/Census_2001/2001_Dist.prj \
 	$(wildcard data/raw/census_2001_mother_tongue/PC01_C16_*.xls) \
 	R/clean/clean_census_2001_languages.R \
-	data/raw/shrug/shrug-pc-keys-csv/pc01r_shrid_key.csv \
-	data/raw/shrug/shrug-pc-keys-csv/pc01u_shrid_key.csv \
-	data/raw/shrug/shrug-pc-keys-csv/pc11r_shrid_key.csv \
-	data/raw/shrug/shrug-pc-keys-csv/pc11u_shrid_key.csv \
-	data/raw/shrug/shrug-pc-keys-csv/shrid_pc01dist_key.csv \
-	data/raw/shrug/shrug-pc-keys-csv/shrid_pc11dist_key.csv \
-	R/districts/lineage_bridge.R \
 	R/districts/lineage_completion.R \
 	R/districts/lineage_sources.R \
 	scripts/build_lineage_geometry.R
 
 lineage-geometry-build:
 	@if [[ ! -f "$(LINEAGE_GEOMETRY_OUTPUT)" && ! -f "$(LINEAGE_GEOMETRY_SOURCE)" ]]; then \
-		echo "Missing both $(LINEAGE_GEOMETRY_OUTPUT) and its SHRID source archive."; \
-		echo "Restore the raw geometry archive or the reviewed derived GeoPackage."; \
+		echo "Missing both $(LINEAGE_GEOMETRY_OUTPUT) and its DataMeet Census-2001 shapefile."; \
+		echo "Restore the raw DataMeet boundary files or the reviewed derived GeoPackage."; \
 		exit 1; \
 	elif [[ -f "$(LINEAGE_GEOMETRY_SOURCE)" ]] && \
 		{ [[ ! -f "$(LINEAGE_GEOMETRY_OUTPUT)" ]] || \
 		find $(LINEAGE_GEOMETRY_INPUTS) -newer "$(LINEAGE_GEOMETRY_OUTPUT)" -print -quit | grep -q .; }; then \
-		echo "=== LINEAGE GEOMETRY: building compact Census 2001 GeoPackage ==="; \
+		echo "=== LINEAGE GEOMETRY: building DataMeet Census 2001 GeoPackage ==="; \
 		EMI_CONFIG=config/final.yml EMI_RUN_EXTENDED_DIAGNOSTICS=false \
-			Rscript scripts/run_targets_checked.R \
-			--targets district_lineage_raw_sources,census_2001_languages; \
+			Rscript scripts/run_targets_checked.R --targets census_2001_languages; \
 		Rscript scripts/build_lineage_geometry.R; \
 	else \
 		echo "=== LINEAGE GEOMETRY: up to date ==="; \

@@ -36,6 +36,7 @@ district_lineage_input_specs <- function(paths = build_paths()) {
     spec("isded_admin_units_2025", "data/raw/district_changes/india_state_stories/isded/2025/admin_units_2025.xlsx", "xlsx", TRUE, "published_current_component_registry"),
     spec("iss_census_series_1901_2011", "data/raw/district_changes/india_state_stories/census_data_collection/1901-2011/1901-2011-State Districts-Population Time Series.xlsx", "inventory_only", FALSE, "historical_population_validation"),
     spec("iss_subdistricts_2026", "data/raw/district_changes/india_state_stories/census_data_collection/2026/2026_subdistricts_with_2011_census_pass2_loose.xlsx", "inventory_only", FALSE, "published_current_component_registry"),
+    spec("datameet_census_2001_districts", "data/raw/datameet/Districts/Census_2001/2001_Dist.shp", "inventory_only", TRUE, "production_census_2001_geometry"),
     spec("shrug_pc01r", "data/raw/shrug/shrug-pc-keys-csv/pc01r_shrid_key.csv", "shrug_locality_csv", TRUE, "stable_locality_weight"),
     spec("shrug_pc01u", "data/raw/shrug/shrug-pc-keys-csv/pc01u_shrid_key.csv", "shrug_locality_csv", TRUE, "stable_locality_weight"),
     spec("shrug_pc11r", "data/raw/shrug/shrug-pc-keys-csv/pc11r_shrid_key.csv", "shrug_locality_csv", TRUE, "stable_locality_weight"),
@@ -78,6 +79,69 @@ district_lineage_input_specs <- function(paths = build_paths()) {
   out
 }
 
+
+
+#' Path to the raw DataMeet Census-2001 district shapefile
+#'
+#' DataMeet publishes Census-2001 state and district codes in `ST_CEN_CD` and
+#' `DT_CEN_CD`. Those codes map directly to the project's canonical unit IDs.
+datameet_census_2001_geometry_path <- function(paths = build_paths()) {
+  path_project(
+    paths,
+    "data/raw/datameet/Districts/Census_2001/2001_Dist.shp"
+  )
+}
+
+#' Read DataMeet Census-2001 district boundaries
+#'
+#' The source contains one noncanonical 99/99 national aggregate. This reader
+#' keeps only units in the Census-2001 administrative registry and requires
+#' exact, one-to-one coverage of that registry.
+read_datameet_census_2001_geometry <- function(path, admin_2001) {
+  need_pkg("sf", "DataMeet Census-2001 district geometry")
+  if (!file.exists(path)) {
+    stop("Missing DataMeet Census-2001 district shapefile: ", path, call. = FALSE)
+  }
+  geometry <- sf::st_read(path, quiet = TRUE, stringsAsFactors = FALSE)
+  required <- c("ST_CEN_CD", "DT_CEN_CD", "geometry")
+  missing <- setdiff(required, names(geometry))
+  if (length(missing)) {
+    stop(
+      "DataMeet Census-2001 geometry is missing: ",
+      paste(missing, collapse = ", "), call. = FALSE
+    )
+  }
+  admin <- safe_df(admin_2001)
+  if (!all(c("unit_id", "state_code", "district_code") %in% names(admin))) {
+    stop("Census-2001 registry lacks canonical unit codes.", call. = FALSE)
+  }
+  geometry$unit_id <- paste0(
+    "pc2001__",
+    pad_admin_code(geometry$ST_CEN_CD, 2L), "__",
+    pad_admin_code(geometry$DT_CEN_CD, 2L)
+  )
+  expected <- unique(plain_chr(admin$unit_id))
+  geometry <- geometry[geometry$unit_id %in% expected, , drop = FALSE]
+  if (anyDuplicated(geometry$unit_id)) {
+    stop("DataMeet Census-2001 geometry has duplicate canonical units.", call. = FALSE)
+  }
+  missing_units <- setdiff(expected, plain_chr(geometry$unit_id))
+  extra_units <- setdiff(plain_chr(geometry$unit_id), expected)
+  if (length(missing_units) || length(extra_units)) {
+    stop(
+      "DataMeet Census-2001 geometry does not exactly cover the registry: ",
+      length(missing_units), " missing and ", length(extra_units), " unexpected.",
+      call. = FALSE
+    )
+  }
+  geometry <- geometry[match(expected, geometry$unit_id), , drop = FALSE]
+  geometry <- make_valid_sf(geometry)
+  valid <- sf::st_is_valid(geometry)
+  if (any(is.na(valid) | !valid) || any(sf::st_is_empty(geometry))) {
+    stop("DataMeet Census-2001 geometry contains invalid or empty features.", call. = FALSE)
+  }
+  geometry["unit_id"]
+}
 
 #' Path to the tracked Census-2001 district geometry
 #'
