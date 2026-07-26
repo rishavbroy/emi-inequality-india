@@ -320,24 +320,24 @@ extended_diagnostic_targets <- list(
     lineage_panel_variant_review,
     build_lineage_panel_variant_review(
       panels = list(
-        conservative_preferred = district_panel_conservative,
+        conservative = district_panel_conservative,
         primary = district_panel_primary,
-        full_reviewed_sensitivity = district_panel_full_reviewed
+        full_reviewed = district_panel_full_reviewed
       ),
       models = list(
-        conservative_preferred = iv_models_conservative,
+        conservative = iv_models_conservative,
         primary = iv_models,
-        full_reviewed_sensitivity = iv_models_full_reviewed
+        full_reviewed = iv_models_full_reviewed
       ),
       first_stage_tests = list(
-        conservative_preferred = first_stage_tests_conservative,
+        conservative = first_stage_tests_conservative,
         primary = first_stage_tests,
-        full_reviewed_sensitivity = first_stage_tests_full_reviewed
+        full_reviewed = first_stage_tests_full_reviewed
       ),
       gini_audits = list(
-        conservative_preferred = conservative_gini_reconstruction$audit,
+        conservative = conservative_gini_reconstruction$audit,
         primary = primary_gini_reconstruction$audit,
-        full_reviewed_sensitivity = full_reviewed_gini_reconstruction$audit
+        full_reviewed = full_reviewed_gini_reconstruction$audit
       )
     )
   ),

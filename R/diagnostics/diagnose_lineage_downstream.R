@@ -560,10 +560,10 @@ build_lineage_nonoverlap_queue <- function(
 }
 
 build_lineage_unmapped_identity_queue <- function(
-  conservative_eligibility, sensitivity_crosswalk
+  conservative_eligibility, full_reviewed_crosswalk
 ) {
   eligibility <- safe_df(conservative_eligibility)
-  crosswalk <- safe_df(sensitivity_crosswalk)
+  crosswalk <- safe_df(full_reviewed_crosswalk)
   if (!nrow(eligibility)) return(data.frame())
 
   mapped_ids <- unique(stats::na.omit(crosswalk$source_row_id))
@@ -585,7 +585,7 @@ build_lineage_unmapped_identity_queue <- function(
     names(queue)
   )
   queue <- queue[keep]
-  queue$review_scope <- "accepted_identity_without_sensitivity_mapping"
+  queue$review_scope <- "accepted_identity_without_full_reviewed_mapping"
   queue$next_action <- paste0(
     "Trace the accepted terminal district through reviewed LGD, SHRUG, ",
     "tracker, and manual district-history evidence to Census 2001."
@@ -768,16 +768,16 @@ build_lineage_unmapped_terminal_queue <- function(
         "this terminal unit."
       ),
       accepted_allocation_not_connected = paste0(
-        "Repair the connected sensitivity crosswalk: an accepted allocation ",
+        "Repair the connected full-reviewed crosswalk: an accepted allocation ",
         "exists but these identities remain unmapped."
       ),
       allocation_record_needs_review = paste0(
         "Resolve the tracked allocation review, then regenerate the ",
-        "sensitivity crosswalk."
+        "full-reviewed crosswalk."
       ),
       mixed_allocation_records = paste0(
         "Reconcile conflicting allocation records before regenerating the ",
-        "sensitivity crosswalk."
+        "full-reviewed crosswalk."
       ),
       rejected_allocation_record = paste0(
         "Replace the rejected zero-weight proposal with supported allocation ",
@@ -785,7 +785,7 @@ build_lineage_unmapped_terminal_queue <- function(
       ),
       paste0(
         "Review the terminal-unit allocation evidence and regenerate the ",
-        "sensitivity crosswalk."
+        "full-reviewed crosswalk."
       )
     )
     data.frame(
@@ -843,9 +843,9 @@ lineage_panel_duplicates <- function(panel, variant) {
 }
 
 summarize_lineage_downstream_coverage <- function(
-  primary_crosswalk, conservative_eligibility, legacy_panel, lineage_panel
+  full_reviewed_crosswalk, conservative_eligibility, legacy_panel, lineage_panel
 ) {
-  crosswalk <- safe_df(primary_crosswalk)
+  crosswalk <- safe_df(full_reviewed_crosswalk)
   eligibility <- safe_df(conservative_eligibility)
   for (nm in setdiff(
     c("source_row_id", "wave", "target_unit_2001"),
@@ -945,7 +945,7 @@ lineage_downstream_review_gates <- function(
     ,
     drop = FALSE
   ]
-  preferred_panel_available <- nrow(safe_df(lineage_panel)) > 0L
+  primary_panel_available <- nrow(safe_df(lineage_panel)) > 0L
 
   adjudication <- safe_df(panel_membership_adjudication)
   gini_queue <- safe_df(gini_reconstruction_queue)
@@ -964,7 +964,7 @@ lineage_downstream_review_gates <- function(
       "inherited_legacy_duplicates_identified",
       "lineage_panel_unique_by_2001_unit",
       "panel_membership_adjudicated",
-      "preferred_panel_constructed_from_reviewed_sources",
+      "primary_panel_constructed_from_reviewed_sources",
       "shared_support_comparison_available",
       "multi_source_ginis_reconstructed",
       "legacy_reviewable"
@@ -981,10 +981,10 @@ lineage_downstream_review_gates <- function(
       ),
       nrow(lineage_duplicates) == 0L,
       membership_complete,
-      preferred_panel_available && isTRUE(identity_coverage_complete),
+      primary_panel_available && isTRUE(identity_coverage_complete),
       shared_available,
       nrow(gini_queue) == 0L,
-      membership_complete && preferred_panel_available && shared_available &&
+      membership_complete && primary_panel_available && shared_available &&
         nrow(lineage_duplicates) == 0L && nrow(gini_queue) == 0L
     ),
     next_action = c(
@@ -998,9 +998,9 @@ lineage_downstream_review_gates <- function(
         "membership adjudication."
       ),
       paste0(
-        "Require a nonempty preferred panel constructed only from adjudicated ",
+        "Require a nonempty primary panel constructed only from adjudicated ",
         "NSS source identities and reviewed Census-2001 mappings. Differences ",
-        "from the inherited v1 support are diagnostic, not vetoes."
+        "from the legacy-panel support are diagnostic, not vetoes."
       ),
       paste0(
         "Use the shared, unique Census-2001 support for interpretable model ",
@@ -1228,7 +1228,7 @@ compare_lineage_model_summaries <- function(
 build_lineage_downstream_review <- function(
   legacy_panel, lineage_panel, legacy_models, lineage_models,
   legacy_first_stage, lineage_first_stage,
-  primary_crosswalk = data.frame(),
+  full_reviewed_crosswalk = data.frame(),
   conservative_eligibility = data.frame(),
   legacy_shared_models = NULL,
   lineage_shared_models = NULL,
@@ -1258,7 +1258,7 @@ build_lineage_downstream_review <- function(
   comparison$unmapped_identity_queue <-
     build_lineage_unmapped_identity_queue(
       conservative_eligibility,
-      primary_crosswalk
+      full_reviewed_crosswalk
     )
   comparison$unmapped_terminal_queue <-
     build_lineage_unmapped_terminal_queue(
@@ -1267,7 +1267,7 @@ build_lineage_downstream_review <- function(
     )
   comparison$crosswalk_coverage <-
     summarize_lineage_downstream_coverage(
-      primary_crosswalk,
+      full_reviewed_crosswalk,
       conservative_eligibility,
       legacy_panel,
       lineage_panel
@@ -1276,9 +1276,9 @@ build_lineage_downstream_review <- function(
     lineage_panel_duplicates(legacy_panel, "legacy"),
     lineage_panel_duplicates(lineage_panel, "lineage")
   ))
-  accepted_coverage <- accepted_sensitivity_mapping_status(
+  accepted_coverage <- accepted_mapping_status(
     conservative_eligibility,
-    primary_crosswalk
+    full_reviewed_crosswalk
   )
   comparison$panel_membership_adjudication <-
     build_lineage_panel_membership_adjudication(
