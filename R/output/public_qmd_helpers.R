@@ -75,20 +75,6 @@ render_public_tex <- function(path) {
   knitr::asis_output(paste0("\n\n", tex, "\n\n"))
 }
 
-cell_string <- function(x) {
-  if (length(x) == 0L) return("")
-  if (is.list(x)) x <- unlist(x, recursive = TRUE, use.names = FALSE)
-  if (length(x) == 0L || all(is.na(x))) return("")
-  paste(as.character(x), collapse = "; ")
-}
-
-column_strings <- function(x) {
-  if (is.factor(x)) x <- as.character(x)
-  if (is.list(x)) out <- vapply(x, cell_string, character(1)) else out <- as.character(x)
-  out[is.na(out)] <- ""
-  out
-}
-
 wrap_table_text <- function(df) as.data.frame(df, check.names = FALSE, stringsAsFactors = FALSE)
 
 render_regression_table <- function(df, name) {

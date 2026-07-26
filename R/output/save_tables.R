@@ -46,34 +46,15 @@ wrap_table_text_columns <- function(df, name = NULL) {
 }
 
 
-table_cell_to_string <- function(value) {
-  if (length(value) == 0L) return("")
-  if (is.data.frame(value)) value <- unlist(value, recursive = TRUE, use.names = FALSE)
-  if (is.list(value)) value <- unlist(value, recursive = TRUE, use.names = FALSE)
-  if (length(value) == 0L || all(is.na(value))) return("")
-  paste(as.character(value), collapse = "; ")
-}
-
-table_column_to_strings <- function(col) {
-  if (is.factor(col)) col <- as.character(col)
-  if (is.list(col)) {
-    out <- vapply(col, table_cell_to_string, character(1))
-  } else {
-    out <- as.character(col)
-  }
-  out[is.na(out)] <- ""
-  out
-}
-
 table_column_or_default <- function(df, column, default) {
   if (!column %in% names(df)) return(rep(default, nrow(df)))
-  out <- table_column_to_strings(df[[column]])
+  out <- table_contract_column_strings(df[[column]])
   out[!nzchar(out)] <- default
   out
 }
 
 is_blank_table_column <- function(col) {
-  values <- table_column_to_strings(col)
+  values <- table_contract_column_strings(col)
   all(!nzchar(values))
 }
 
@@ -86,7 +67,7 @@ drop_empty_output_columns <- function(out) {
 format_public_summary_columns <- function(out) {
   if (all(c("var", "label") %in% names(out))) {
     out$Variable <- out$label
-    group <- startsWith(table_column_to_strings(out$var), ".group_")
+    group <- startsWith(table_contract_column_strings(out$var), ".group_")
     out$var <- NULL
     out$label <- NULL
     if ("desc" %in% names(out)) names(out)[names(out) == "desc"] <- "Description"
@@ -109,7 +90,7 @@ is_status_only_table <- function(out) {
   if (!nrow(out) || !"status" %in% names(out)) return(FALSE)
   substantive <- setdiff(names(out), c("status", "reason", "method", "model"))
   if (!length(substantive)) return(TRUE)
-  all(vapply(out[substantive], function(col) all(!nzchar(table_column_to_strings(col))), logical(1)))
+  all(vapply(out[substantive], function(col) all(!nzchar(table_contract_column_strings(col))), logical(1)))
 }
 
 format_status_table_for_output <- function(out, public = TRUE) {
@@ -193,9 +174,9 @@ modelsummary_align_string <- function(df, name) {
 stack_estimate_se_rows <- function(df, estimate_col = "Estimate", se_col = "Std. Error") {
   df <- as.data.frame(df, check.names = FALSE, stringsAsFactors = FALSE)
   if (!all(c("Term", estimate_col, se_col) %in% names(df))) return(df)
-  terms <- table_column_to_strings(df$Term)
-  estimates <- table_column_to_strings(df[[estimate_col]])
-  ses <- table_column_to_strings(df[[se_col]])
+  terms <- table_contract_column_strings(df$Term)
+  estimates <- table_contract_column_strings(df[[estimate_col]])
+  ses <- table_contract_column_strings(df[[se_col]])
 
   out <- data.frame(
     Term = rep(terms, each = 2L),
@@ -473,8 +454,8 @@ public_modelsummary_table <- function(model, name, vcov_matrix = NULL, add_rows 
 
 regression_standard_error_rows <- function(df) {
   if (!"Term" %in% names(df) || ncol(df) < 2L) return(integer())
-  terms <- table_column_to_strings(df$Term)
-  vals <- table_column_to_strings(df[[2]])
+  terms <- table_contract_column_strings(df$Term)
+  vals <- table_contract_column_strings(df[[2]])
   which((is.na(terms) | !nzchar(terms)) & grepl("^\\(", vals))
 }
 
@@ -483,14 +464,14 @@ sanitize_table_for_kable <- function(df) {
   if (!nrow(df)) df <- data.frame(Note = "No rows to display.", stringsAsFactors = FALSE)
   if (!length(names(df))) df <- data.frame(Note = rep("No displayable columns.", nrow(df)), stringsAsFactors = FALSE)
   for (nm in names(df)) {
-    df[[nm]] <- table_column_to_strings(df[[nm]])
+    df[[nm]] <- table_contract_column_strings(df[[nm]])
   }
   render_table_math_labels(df)
 }
 
 regression_summary_start <- function(df) {
   if (!"Term" %in% names(df)) return(NA_integer_)
-  terms <- table_column_to_strings(df$Term)
+  terms <- table_contract_column_strings(df$Term)
   hit <- which(terms %in% c("Observations", "R-squared", "Adjusted R-squared", "Instrument's F-Statistic", "Model's F-Statistic", "F-Statistic"))
   if (length(hit)) hit[[1]] else NA_integer_
 }
@@ -531,7 +512,7 @@ save_table_csv <- function(table, path, public = TRUE) {
 
 is_formatted_status_table <- function(df) {
   all(c("Term", "Estimate", "Std. Error") %in% names(df)) &&
-    any(table_column_to_strings(df$Estimate) %in% c("out_of_active_pipeline", "unavailable", "not_run", "failed"))
+    any(table_contract_column_strings(df$Estimate) %in% c("out_of_active_pipeline", "unavailable", "not_run", "failed"))
 }
 
 suppress_modelsummary_latex_preamble_warning <- function(expr) {

@@ -27,7 +27,7 @@ public_table_note <- function(name) {
     sum_tbl_probit_quant = "Min. = minimum; 1Q = first quartile; Med. = median; 3Q = third quartile; Max. = maximum; Mean = arithmetic mean; SD = standard deviation; N = number of observations.",
     sum_tbl_iv = "Min. = minimum; 1Q = first quartile; Med. = median; 3Q = third quartile; Max. = maximum; Mean = arithmetic mean; SD = standard deviation; N = number of observations.",
     sum_tbl_probit_cat = "Values = all possible values; Mode = most frequent value; Pct. Mode = percent of observations taking the modal value; Least Freq. = least frequent value; Pct. Least Freq. = percent of observations taking the least frequent value; N = number of observations.",
-    probit_mfx = "Data from the NSS 64th round, Participation and Expenditure in Education, 2007-08. Standard errors are design based.",
+    probit_mfx = "NSS 64th round; design-based SEs in parentheses.",
     fs_cons = "Standard errors clustered by state in parentheses.",
     cons_iv = "Standard errors clustered by state in parentheses.",
     NULL
