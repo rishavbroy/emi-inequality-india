@@ -43,7 +43,7 @@ district_lineage_input_specs <- function(paths = build_paths()) {
     spec(
       "datameet_census_2001_districts",
       "data/raw/datameet/Districts/Census_2001/2001_Dist.shp",
-      "inventory_only", TRUE, "production_census_2001_geometry",
+      "inventory_only", FALSE, "production_census_2001_geometry",
       required = TRUE
     ),
     spec("shrug_pc01r", "data/raw/shrug/shrug-pc-keys-csv/pc01r_shrid_key.csv", "shrug_locality_csv", TRUE, "stable_locality_weight"),
@@ -59,7 +59,7 @@ district_lineage_input_specs <- function(paths = build_paths()) {
     spec("shrug_pc11_subdistrict_geometry", "data/raw/shrug/open-polygons/shrug-pc11subdist-poly-gpkg/subdistrict.gpkg", "inventory_only", FALSE, "census_2011_geometry"),
     spec("shrug_pc11_state_geometry", "data/raw/shrug/open-polygons/shrug-pc11state-poly-gpkg/state.gpkg", "inventory_only", FALSE, "census_2011_geometry"),
     spec("shrug_pc11_village_geometry_zip", "data/raw/shrug/open-polygons/shrug-pc11-village-poly-gpkg.zip", "inventory_only", FALSE, "census_2011_geometry"),
-    spec("shrug_shrid_geometry_zip", "data/raw/shrug/open-polygons/shrug-shrid-poly-gpkg.zip", "inventory_only", FALSE, "future_2001_geometry"),
+    spec("shrug_shrid_geometry_zip", "data/raw/shrug/open-polygons/shrug-shrid-poly-gpkg.zip", "inventory_only", FALSE, "legacy_2001_geometry_reconstruction"),
     spec("shrug_pca01_zip", "data/raw/shrug/census_2001/shrug-pca01-csv.zip", "inventory_only", FALSE, "census_locality_attributes"),
     spec("shrug_pca11_zip", "data/raw/shrug/census_2011/shrug-pca11-csv.zip", "inventory_only", FALSE, "census_locality_attributes"),
     spec("shrug_td01_zip", "data/raw/shrug/census_2001/shrug-td01-csv.zip", "inventory_only", FALSE, "census_locality_attributes"),

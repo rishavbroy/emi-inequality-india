@@ -57,6 +57,7 @@ test_that("changed-unit rosters remain complete while geometry stays inventory-o
 
   expect_true(specs$load_for_diagnostic[specs$source_id == "lgd_mod_villages"])
   expect_false(specs$load_for_diagnostic[specs$source_id == "shrug_shrid_geometry_zip"])
+  expect_false(specs$load_for_diagnostic[specs$source_id == "datameet_census_2001_districts"])
   expect_true(specs$load_for_diagnostic[specs$source_id == "lgd_mod_districts"])
   expect_true(specs$load_for_diagnostic[specs$source_id == "lgd_mod_urban_local_bodies"])
   expect_true(specs$load_for_diagnostic[specs$source_id == "lgd_urban_coverage"])
@@ -476,7 +477,13 @@ test_that("production Census 2001 geometry has an explicit tracked path", {
   specs <- district_lineage_input_specs(paths)
   expect_false("lineage_geometry_2001" %in% specs$source_id)
   expect_true("datameet_census_2001_districts" %in% specs$source_id)
-  expect_true(specs$required[specs$source_id == "datameet_census_2001_districts"])
+  datameet <- specs[specs$source_id == "datameet_census_2001_districts", , drop = FALSE]
+  expect_true(datameet$required)
+  expect_false(datameet$load_for_diagnostic)
+
+  loaded <- split_district_lineage_source_specs(specs)
+  loaded_ids <- vapply(loaded, function(x) x$source_id[[1]], character(1))
+  expect_false("datameet_census_2001_districts" %in% loaded_ids)
 })
 
 test_that("DataMeet Census-2001 geometry maps exactly to the registry", {
