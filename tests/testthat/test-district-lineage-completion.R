@@ -752,7 +752,7 @@ test_that("non-overlap queue retains both panel-only directions", {
       "pc2001__01__01", "pc2001__01__02", "pc2001__01__03"
     ),
     in_legacy = c(TRUE, TRUE, FALSE),
-    in = c(TRUE, FALSE, TRUE),
+    in_lineage = c(TRUE, FALSE, TRUE),
     comparison_status = c("shared", "legacy_only", "lineage_only"),
     stringsAsFactors = FALSE
   )
@@ -787,7 +787,7 @@ test_that("non-overlap queue uses canonical 2001 labels", {
   membership <- data.frame(
     target_unit_2001 = "pc2001__17__01",
     in_legacy = TRUE,
-    in = FALSE,
+    in_lineage = FALSE,
     comparison_status = "legacy_only",
     stringsAsFactors = FALSE
   )
@@ -965,7 +965,7 @@ test_that("panel membership adjudication waits for identity coverage", {
   membership <- data.frame(
     target_unit_2001 = c("pc2001__01__01", "pc2001__01__02"),
     in_legacy = c(TRUE, FALSE),
-    in = c(FALSE, TRUE),
+    in_lineage = c(FALSE, TRUE),
     comparison_status = c("legacy_only", "lineage_only"),
     stringsAsFactors = FALSE
   )
@@ -988,7 +988,7 @@ test_that("panel membership adjudication follows support invariants", {
       "pc2001__01__03", "pc2001__01__04"
     ),
     in_legacy = c(TRUE, FALSE, TRUE, TRUE),
-    in = c(TRUE, TRUE, FALSE, FALSE),
+    in_lineage = c(TRUE, TRUE, FALSE, FALSE),
     comparison_status = c(
       "shared", "lineage_only", "legacy_only", "legacy_only"
     ),
