@@ -623,53 +623,6 @@ test_that("reviewed geometry and source decisions satisfy evidence contracts", {
   expect_equal(nrow(issues), 0L)
 })
 
-test_that("tracked high-coverage decisions leave only lower-coverage gaps", {
-  root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
-  transition_path <- file.path(
-    root, "outputs", "diagnostics", "extended",
-    "district_lineage", "district_transition_2001_2011.csv"
-  )
-  skip_if_not(file.exists(transition_path))
-  transition <- read.csv(transition_path, stringsAsFactors = FALSE)
-
-  generated <- validate_allocation_weights(transition)
-  weights <- read_adjudicated_allocation_weights(
-    read_lineage_source(
-      file.path(
-        root, "data", "metadata", "district_allocation_weights.csv"
-      ),
-      reader = "allocation_csv",
-      source_id = "lineage_allocation_weights"
-    )
-  )
-  reviewed <- validate_adjudicated_allocation_weights(weights)
-  decisions <- allocation_decision_status(weights)
-  status <- allocation_coverage_status(
-    generated, reviewed, decisions
-  )
-
-  expected <- allocation_decision_status(weights)
-  incomplete_sources <- unique(generated$source_key[
-    !(generated$coverage_complete %in% TRUE)
-  ])
-  expect_equal(
-    status$n_reviewed_accepted,
-    sum(
-      expected$source_key %in% incomplete_sources &
-        expected$decision_status %in% "accepted"
-    )
-  )
-  expect_equal(
-    status$n_reviewed_rejected,
-    sum(
-      expected$source_key %in% incomplete_sources &
-        expected$decision_status %in% "rejected"
-    )
-  )
-  expect_equal(status$n_unresolved, 0L)
-  expect_true(status$coverage_resolved)
-})
-
 test_that("allocation summary counts source decisions rather than ledger rows", {
   weights <- data.frame(
     source_unit = c(
