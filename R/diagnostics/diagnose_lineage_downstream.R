@@ -1,13 +1,13 @@
 # This file is part of the EMI inequality research pipeline.
-# It builds the reviewed lineage-v2 panel used by production and diagnostics.
+# It builds the reviewed district lineage panel used by legacy and diagnostics.
 
-lineage_v2_source_code <- function(x) {
+lineage_source_code <- function(x) {
   raw <- gsub("[^0-9]", "", plain_chr(x))
   raw[nchar(raw) == 0L] <- NA_character_
   suppressWarnings(as.character(as.integer(raw)))
 }
 
-lineage_v2_target_codes <- function(unit_id) {
+lineage_target_codes <- function(unit_id) {
   parts <- strsplit(plain_chr(unit_id), "__", fixed = TRUE)
   data.frame(
     state_code_2001 = vapply(
@@ -22,7 +22,7 @@ lineage_v2_target_codes <- function(unit_id) {
   )
 }
 
-lineage_v2_wave_measure_spec <- function(wave) {
+lineage_wave_measure_spec <- function(wave) {
   if (identical(wave, "nss_2007_08")) {
     return(list(
       code_col = "district_code_0708",
@@ -37,17 +37,17 @@ lineage_v2_wave_measure_spec <- function(wave) {
       weight_col = "nhouses_1718"
     ))
   }
-  stop("Unsupported lineage-v2 wave: ", wave, call. = FALSE)
+  stop("Unsupported district lineage wave: ", wave, call. = FALSE)
 }
 
-first_nonmissing_v2 <- function(x) {
+first_nonmissing <- function(x) {
   keep <- !is.na(x)
   if (is.character(x)) keep <- keep & nzchar(x)
   hit <- which(keep)
   if (length(hit)) x[[hit[[1L]]]] else x[[1L]][NA_integer_]
 }
 
-weighted_mean_v2 <- function(x, w) {
+weighted_mean <- function(x, w) {
   x <- suppressWarnings(as.numeric(x))
   w <- suppressWarnings(as.numeric(w))
   keep <- is.finite(x) & is.finite(w) & w > 0
@@ -55,7 +55,7 @@ weighted_mean_v2 <- function(x, w) {
   sum(x[keep] * w[keep]) / sum(w[keep])
 }
 
-collapse_lineage_v2_measure_rows <- function(mapped, spec) {
+collapse_lineage_measure_rows <- function(mapped, spec) {
   mapped <- safe_df(mapped)
   if (!nrow(mapped)) return(data.frame())
   if (!"weight" %in% names(mapped)) mapped$weight <- 1
@@ -121,19 +121,19 @@ collapse_lineage_v2_measure_rows <- function(mapped, spec) {
       if (nm %in% spec$count_cols && is.numeric(x)) {
         out[[nm]] <- sum(x, na.rm = TRUE)
       } else if (is.numeric(x)) {
-        out[[nm]] <- weighted_mean_v2(x, rows$.aggregation_mass)
+        out[[nm]] <- weighted_mean(x, rows$.aggregation_mass)
       } else {
-        out[[nm]] <- first_nonmissing_v2(x)
+        out[[nm]] <- first_nonmissing(x)
       }
     }
     out
   }))
 }
 
-map_lineage_v2_measures <- function(measures, crosswalk, wave) {
+map_lineage_measures <- function(measures, crosswalk, wave) {
   measures <- safe_df(measures)
   crosswalk <- safe_df(crosswalk)
-  spec <- lineage_v2_wave_measure_spec(wave)
+  spec <- lineage_wave_measure_spec(wave)
   if (!nrow(measures) || !nrow(crosswalk) || !spec$code_col %in% names(measures)) {
     return(data.frame())
   }
@@ -154,8 +154,8 @@ map_lineage_v2_measures <- function(measures, crosswalk, wave) {
   if (!"panel_variant" %in% names(map)) {
     map$panel_variant <- "deterministic"
   }
-  map$source_code_key <- lineage_v2_source_code(map$source_code)
-  measures$source_code_key <- lineage_v2_source_code(measures[[spec$code_col]])
+  map$source_code_key <- lineage_source_code(map$source_code)
+  measures$source_code_key <- lineage_source_code(measures[[spec$code_col]])
 
   source_weight <- aggregate(
     map$weight,
@@ -164,7 +164,7 @@ map_lineage_v2_measures <- function(measures, crosswalk, wave) {
   )
   if (any(abs(source_weight$x - 1) > 1e-8)) {
     stop(
-      "Lineage-v2 crosswalk weights must sum to one within source row.",
+      "District lineage crosswalk weights must sum to one within source row.",
       call. = FALSE
     )
   }
@@ -188,10 +188,10 @@ map_lineage_v2_measures <- function(measures, crosswalk, wave) {
     sort = FALSE
   )
   mapped$source_code_key <- NULL
-  collapse_lineage_v2_measure_rows(mapped, spec)
+  collapse_lineage_measure_rows(mapped, spec)
 }
 
-lineage_v2_household_consumption <- function(inputs, wave) {
+lineage_household_consumption <- function(inputs, wave) {
   inputs <- as_input_list(inputs)
   if (identical(wave, "nss_2007_08")) {
     df <- standardize_nss_2007_district_code(std(safe_df(
@@ -227,7 +227,7 @@ lineage_v2_household_consumption <- function(inputs, wave) {
       numeric()
     }
   } else {
-    stop("Unsupported lineage-v2 wave: ", wave, call. = FALSE)
+    stop("Unsupported district lineage wave: ", wave, call. = FALSE)
   }
 
   if (!nrow(df) || !code_col %in% names(df) || is.null(weight_col) ||
@@ -235,7 +235,7 @@ lineage_v2_household_consumption <- function(inputs, wave) {
     return(data.frame())
   }
   out <- data.frame(
-    source_code_key = lineage_v2_source_code(df[[code_col]]),
+    source_code_key = lineage_source_code(df[[code_col]]),
     consumption = value,
     survey_weight = num(df[[weight_col]]),
     stringsAsFactors = FALSE
@@ -253,7 +253,7 @@ lineage_v2_household_consumption <- function(inputs, wave) {
   ]
 }
 
-reconstruct_lineage_v2_pooled_ginis <- function(
+reconstruct_lineage_pooled_ginis <- function(
   panel, crosswalk, nss_2007_education, nss_2017_education
 ) {
   if (!is.data.frame(panel)) panel <- safe_df(panel)
@@ -267,7 +267,7 @@ reconstruct_lineage_v2_pooled_ginis <- function(
     map <- crosswalk[crosswalk$wave %in% wave, , drop = FALSE]
     if (!nrow(map)) next
     if (!"weight" %in% names(map)) map$weight <- 1
-    map$source_code_key <- lineage_v2_source_code(map$source_code)
+    map$source_code_key <- lineage_source_code(map$source_code)
     source_targets <- aggregate(
       map$target_unit_2001,
       list(source_row_id = map$source_row_id),
@@ -289,7 +289,7 @@ reconstruct_lineage_v2_pooled_ginis <- function(
     targets <- target_sources$target_unit_2001[target_sources$source_count > 1L]
     if (!length(targets)) next
 
-    households <- lineage_v2_household_consumption(
+    households <- lineage_household_consumption(
       if (wave == "nss_2007_08") nss_2007_education else nss_2017_education,
       wave
     )
@@ -332,12 +332,12 @@ reconstruct_lineage_v2_pooled_ginis <- function(
   list(panel = panel, audit = safe_bind_rows(audit))
 }
 
-attach_lineage_v2_instrument <- function(panel, linguistic_distance_iv) {
+attach_lineage_instrument <- function(panel, linguistic_distance_iv) {
   panel <- safe_df(panel)
   iv <- safe_df(linguistic_distance_iv)
   if (!nrow(panel) || !nrow(iv)) return(panel)
 
-  codes <- lineage_v2_target_codes(panel$target_unit_2001)
+  codes <- lineage_target_codes(panel$target_unit_2001)
   panel$state_code_2001 <- codes$state_code_2001
   panel$district_code_2001 <- codes$district_code_2001
 
@@ -361,7 +361,7 @@ attach_lineage_v2_instrument <- function(panel, linguistic_distance_iv) {
   )
 }
 
-attach_lineage_v2_geometry <- function(panel, geometry_2001) {
+attach_lineage_geometry <- function(panel, geometry_2001) {
   panel <- safe_df(panel)
   if (!inherits(geometry_2001, "sf") || !nrow(geometry_2001) ||
       !"unit_id" %in% names(geometry_2001)) {
@@ -376,14 +376,14 @@ attach_lineage_v2_geometry <- function(panel, geometry_2001) {
   merge(geometry, panel, by = "target_unit_2001", all.y = TRUE, sort = FALSE)
 }
 
-build_lineage_v2_district_panel <- function(
+build_lineage_district_panel <- function(
   primary_crosswalk, measures_2007, measures_2017,
   linguistic_distance_iv, geometry_2001 = data.frame(), cfg = list()
 ) {
-  m07 <- map_lineage_v2_measures(
+  m07 <- map_lineage_measures(
     measures_2007, primary_crosswalk, "nss_2007_08"
   )
-  m17 <- map_lineage_v2_measures(
+  m17 <- map_lineage_measures(
     measures_2017, primary_crosswalk, "nss_2017_18"
   )
   if (!nrow(m07) || !nrow(m17)) return(empty_panel())
@@ -394,7 +394,7 @@ build_lineage_v2_district_panel <- function(
   )
   m17 <- m17[setdiff(names(m17), duplicate)]
   panel <- merge(m07, m17, by = "target_unit_2001", all = FALSE, sort = FALSE)
-  panel <- attach_lineage_v2_instrument(panel, linguistic_distance_iv)
+  panel <- attach_lineage_instrument(panel, linguistic_distance_iv)
   panel$district_panel_id <- sub(
     "^pc2001__", "2001__", panel$target_unit_2001
   )
@@ -406,7 +406,7 @@ build_lineage_v2_district_panel <- function(
   panel <- panel[panel_has_analysis_core(panel), , drop = FALSE]
   rownames(panel) <- NULL
   validate_analysis_district_panel(
-    attach_lineage_v2_geometry(panel, geometry_2001),
+    attach_lineage_geometry(panel, geometry_2001),
     cfg,
     strict = FALSE
   )
@@ -423,23 +423,23 @@ lineage_panel_unit_id <- function(panel) {
   rep(NA_character_, nrow(panel))
 }
 
-compare_lineage_v2_panels <- function(production_panel, v2_panel) {
-  production <- safe_df(production_panel)
-  candidate <- safe_df(v2_panel)
-  production$target_unit_2001 <- lineage_panel_unit_id(production)
+compare_lineage_panels <- function(legacy_panel, lineage_panel) {
+  legacy <- safe_df(legacy_panel)
+  candidate <- safe_df(lineage_panel)
+  legacy$target_unit_2001 <- lineage_panel_unit_id(legacy)
   candidate$target_unit_2001 <- lineage_panel_unit_id(candidate)
 
-  production_units <- unique(stats::na.omit(production$target_unit_2001))
+  legacy_units <- unique(stats::na.omit(legacy$target_unit_2001))
   candidate_units <- unique(stats::na.omit(candidate$target_unit_2001))
-  units <- sort(unique(c(production_units, candidate_units)))
+  units <- sort(unique(c(legacy_units, candidate_units)))
   data.frame(
     target_unit_2001 = units,
-    in_production = units %in% production_units,
-    in_v2 = units %in% candidate_units,
+    in_legacy = units %in% legacy_units,
+    in = units %in% candidate_units,
     comparison_status = ifelse(
-      units %in% production_units & units %in% candidate_units,
+      units %in% legacy_units & units %in% candidate_units,
       "shared",
-      ifelse(units %in% candidate_units, "v2_only", "production_only")
+      ifelse(units %in% candidate_units, "lineage_only", "legacy_only")
     ),
     stringsAsFactors = FALSE
   )
@@ -447,7 +447,7 @@ compare_lineage_v2_panels <- function(production_panel, v2_panel) {
 
 
 
-lineage_v2_admin_2001_labels <- function(admin_2001) {
+lineage_admin_2001_labels <- function(admin_2001) {
   admin <- safe_df(admin_2001)
   required <- c("unit_id", "state_std", "district_std")
   if (!nrow(admin) || !all(required %in% names(admin))) {
@@ -490,18 +490,18 @@ lineage_v2_admin_2001_labels <- function(admin_2001) {
   out
 }
 
-build_lineage_v2_nonoverlap_queue <- function(
+build_lineage_nonoverlap_queue <- function(
   panel_membership, admin_2001
 ) {
   membership <- safe_df(panel_membership)
   membership <- membership[
-    membership$comparison_status %in% c("production_only", "v2_only"),
+    membership$comparison_status %in% c("legacy_only", "lineage_only"),
     ,
     drop = FALSE
   ]
   if (!nrow(membership)) return(data.frame())
 
-  labels <- lineage_v2_admin_2001_labels(admin_2001)
+  labels <- lineage_admin_2001_labels(admin_2001)
   out <- merge(
     membership,
     labels,
@@ -509,15 +509,15 @@ build_lineage_v2_nonoverlap_queue <- function(
     all.x = TRUE,
     sort = FALSE
   )
-  codes <- lineage_v2_target_codes(out$target_unit_2001)
+  codes <- lineage_target_codes(out$target_unit_2001)
   out$state_code_2001 <- codes$state_code_2001
   out$district_code_2001 <- codes$district_code_2001
   out$canonical_label_available <-
     !is.na(out$district_label_2001) & nzchar(out$district_label_2001)
   out$review_scope <- ifelse(
-    out$comparison_status == "production_only",
+    out$comparison_status == "legacy_only",
     "inherited_panel_only",
-    "lineage_v2_panel_only"
+    "lineage_panel_only"
   )
   out$next_action <- ifelse(
     !out$canonical_label_available,
@@ -526,13 +526,13 @@ build_lineage_v2_nonoverlap_queue <- function(
       "panel membership."
     ),
     ifelse(
-      out$comparison_status == "production_only",
+      out$comparison_status == "legacy_only",
       paste0(
         "Check whether the inherited row is a duplicate, obsolete target, ",
-        "or a district missing from the reviewed v2 bridge."
+        "or a district missing from the reviewed lineage bridge."
       ),
       paste0(
-        "Confirm that the recovered v2 unit has valid two-wave measures and ",
+        "Confirm that the recovered lineage unit has valid two-wave measures and ",
         "is not an allocation artifact."
       )
     )
@@ -548,10 +548,10 @@ build_lineage_v2_nonoverlap_queue <- function(
   ]
 }
 
-build_lineage_v2_unmapped_identity_queue <- function(
-  primary_eligibility, sensitivity_crosswalk
+build_lineage_unmapped_identity_queue <- function(
+  conservative_eligibility, sensitivity_crosswalk
 ) {
-  eligibility <- safe_df(primary_eligibility)
+  eligibility <- safe_df(conservative_eligibility)
   crosswalk <- safe_df(sensitivity_crosswalk)
   if (!nrow(eligibility)) return(data.frame())
 
@@ -588,12 +588,12 @@ build_lineage_v2_unmapped_identity_queue <- function(
 
 
 
-build_lineage_v2_panel_membership_adjudication <- function(
-  panel_membership, production_duplicates = data.frame(),
+build_lineage_panel_membership_adjudication <- function(
+  panel_membership, legacy_duplicates = data.frame(),
   identity_coverage_complete = FALSE
 ) {
   membership <- safe_df(panel_membership)
-  duplicates <- safe_df(production_duplicates)
+  duplicates <- safe_df(legacy_duplicates)
   if (!nrow(membership)) return(data.frame())
 
   duplicate_units <- unique(plain_chr(
@@ -604,14 +604,14 @@ build_lineage_v2_panel_membership_adjudication <- function(
   out$decision <- if (!ready) {
     "defer_until_identity_coverage_complete"
   } else ifelse(
-    out$target_unit_2001 %in% duplicate_units & out$in_v2 %in% TRUE,
-    "replace_inherited_duplicate_with_unique_v2",
+    out$target_unit_2001 %in% duplicate_units & out$in %in% TRUE,
+    "replace_inherited_duplicate_with_unique",
     ifelse(
       out$comparison_status == "shared",
       "retain_shared_support",
       ifelse(
-        out$comparison_status == "v2_only",
-        "accept_lineage_v2_coverage_addition",
+        out$comparison_status == "lineage_only",
+        "accept_lineage_coverage_addition",
         ifelse(
           out$target_unit_2001 %in% duplicate_units,
           "exclude_inherited_duplicate",
@@ -623,7 +623,7 @@ build_lineage_v2_panel_membership_adjudication <- function(
   out$status <- if (!ready) {
     "needs_review"
   } else ifelse(
-    out$comparison_status %in% c("shared", "v2_only"),
+    out$comparison_status %in% c("shared", "lineage_only"),
     "accepted",
     "excluded"
   )
@@ -638,28 +638,28 @@ build_lineage_v2_panel_membership_adjudication <- function(
       "mapped or explicitly excluded."
     )
   } else ifelse(
-    out$target_unit_2001 %in% duplicate_units & out$in_v2 %in% TRUE,
+    out$target_unit_2001 %in% duplicate_units & out$in %in% TRUE,
     paste0(
-      "Retained once through the unique lineage-v2 row, replacing duplicated ",
-      "support in the inherited production panel."
+      "Retained once through the unique district lineage row, replacing duplicated ",
+      "support in the inherited legacy panel."
     ),
     ifelse(
       out$comparison_status == "shared",
       "Retained because the canonical Census-2001 unit is present in both panels.",
       ifelse(
-        out$comparison_status == "v2_only",
+        out$comparison_status == "lineage_only",
         paste0(
-          "Accepted as a lineage-v2 coverage addition because the canonical ",
+          "Accepted as a district lineage coverage addition because the canonical ",
           "Census-2001 unit has a unique rebuilt row and no inherited counterpart."
         ),
         ifelse(
           out$target_unit_2001 %in% duplicate_units,
           paste0(
-            "Excluded from migration because inherited support is duplicated and ",
-            "the rebuilt lineage-v2 panel does not retain this inherited-only row."
+            "Excluded from review because inherited support is duplicated and ",
+            "the rebuilt district lineage panel does not retain this inherited-only row."
           ),
           paste0(
-            "Excluded from migration because the unit is supported only by the ",
+            "Excluded from review because the unit is supported only by the ",
             "inherited panel after accepted-identity coverage is complete."
           )
         )
@@ -673,7 +673,7 @@ build_lineage_v2_panel_membership_adjudication <- function(
   ]
 }
 
-build_lineage_v2_unmapped_terminal_queue <- function(
+build_lineage_unmapped_terminal_queue <- function(
   identity_queue, allocation_weights = data.frame()
 ) {
   identities <- safe_df(identity_queue)
@@ -780,8 +780,8 @@ build_lineage_v2_unmapped_terminal_queue <- function(
     data.frame(
       terminal_unit = terminal,
       wave = collapse_values(rows$wave),
-      state_std = plain_chr(first_nonmissing_v2(rows$state_std)),
-      district_std = plain_chr(first_nonmissing_v2(rows$district_std)),
+      state_std = plain_chr(first_nonmissing(rows$state_std)),
+      district_std = plain_chr(first_nonmissing(rows$district_std)),
       identity_count = nrow(rows),
       source_codes = collapse_values(rows$source_code),
       source_row_ids = collapse_values(rows$source_row_id),
@@ -810,7 +810,7 @@ build_lineage_v2_unmapped_terminal_queue <- function(
     ])()
 }
 
-lineage_v2_panel_duplicates <- function(panel, variant) {
+lineage_panel_duplicates <- function(panel, variant) {
   panel <- safe_df(panel)
   unit_id <- lineage_panel_unit_id(panel)
   duplicate <- !is.na(unit_id) & (duplicated(unit_id) | duplicated(unit_id, fromLast = TRUE))
@@ -831,11 +831,11 @@ lineage_v2_panel_duplicates <- function(panel, variant) {
   )
 }
 
-summarize_lineage_v2_downstream_coverage <- function(
-  primary_crosswalk, primary_eligibility, production_panel, v2_panel
+summarize_lineage_downstream_coverage <- function(
+  primary_crosswalk, conservative_eligibility, legacy_panel, lineage_panel
 ) {
   crosswalk <- safe_df(primary_crosswalk)
-  eligibility <- safe_df(primary_eligibility)
+  eligibility <- safe_df(conservative_eligibility)
   for (nm in setdiff(
     c("source_row_id", "wave", "target_unit_2001"),
     names(crosswalk)
@@ -883,32 +883,32 @@ summarize_lineage_v2_downstream_coverage <- function(
     )
   }))
 
-  production_units <- unique(stats::na.omit(
-    lineage_panel_unit_id(production_panel)
+  legacy_units <- unique(stats::na.omit(
+    lineage_panel_unit_id(legacy_panel)
   ))
-  v2_units <- unique(stats::na.omit(lineage_panel_unit_id(v2_panel)))
-  shared_units <- intersect(production_units, v2_units)
+  lineage_units <- unique(stats::na.omit(lineage_panel_unit_id(lineage_panel)))
+  shared_units <- intersect(legacy_units, lineage_units)
   overall <- data.frame(
     scope = "panel",
     wave = "two_wave_panel",
     accepted_identities = NA_integer_,
     mapped_identities = NA_integer_,
     crosswalk_rows = NA_integer_,
-    mapped_targets = length(v2_units),
+    mapped_targets = length(lineage_units),
     unmapped_identities = NA_integer_,
     identity_coverage_share = NA_real_,
-    production_unique_units = length(production_units),
-    candidate_unique_units = length(v2_units),
+    legacy_unique_units = length(legacy_units),
+    candidate_unique_units = length(lineage_units),
     shared_unique_units = length(shared_units),
-    production_only_units = length(setdiff(production_units, v2_units)),
-    candidate_only_units = length(setdiff(v2_units, production_units)),
-    shared_share_of_production = if (length(production_units)) {
-      length(shared_units) / length(production_units)
+    legacy_only_units = length(setdiff(legacy_units, lineage_units)),
+    candidate_only_units = length(setdiff(lineage_units, legacy_units)),
+    shared_share_of_legacy = if (length(legacy_units)) {
+      length(shared_units) / length(legacy_units)
     } else {
       NA_real_
     },
-    shared_share_of_candidate = if (length(v2_units)) {
-      length(shared_units) / length(v2_units)
+    shared_share_of_candidate = if (length(lineage_units)) {
+      length(shared_units) / length(lineage_units)
     } else {
       NA_real_
     },
@@ -917,31 +917,31 @@ summarize_lineage_v2_downstream_coverage <- function(
   safe_bind_rows(list(wave_rows, overall))
 }
 
-lineage_v2_downstream_review_gates <- function(
-  coverage, production_panel, v2_panel,
+lineage_downstream_review_gates <- function(
+  coverage, legacy_panel, lineage_panel,
   panel_membership_adjudication = data.frame(),
   gini_reconstruction_queue = data.frame(),
   identity_coverage_complete = FALSE
 ) {
   coverage <- safe_df(coverage)
-  production_duplicates <- lineage_v2_panel_duplicates(
-    production_panel, "production"
+  legacy_duplicates <- lineage_panel_duplicates(
+    legacy_panel, "legacy"
   )
-  v2_duplicates <- lineage_v2_panel_duplicates(v2_panel, "lineage_v2")
+  lineage_duplicates <- lineage_panel_duplicates(lineage_panel, "lineage")
   panel_row <- coverage[
     coverage$scope %in% "panel" &
       coverage$wave %in% "two_wave_panel",
     ,
     drop = FALSE
   ]
-  preferred_panel_available <- nrow(safe_df(v2_panel)) > 0L
+  preferred_panel_available <- nrow(safe_df(lineage_panel)) > 0L
 
   adjudication <- safe_df(panel_membership_adjudication)
   gini_queue <- safe_df(gini_reconstruction_queue)
   membership_complete <-
     isTRUE(identity_coverage_complete) &&
-    nrow(adjudication) == nrow(safe_df(compare_lineage_v2_panels(
-      production_panel, v2_panel
+    nrow(adjudication) == nrow(safe_df(compare_lineage_panels(
+      legacy_panel, lineage_panel
     ))) &&
     nrow(adjudication) > 0L &&
     all(adjudication$status %in% c("accepted", "excluded"))
@@ -950,38 +950,38 @@ lineage_v2_downstream_review_gates <- function(
 
   data.frame(
     gate = c(
-      "inherited_production_duplicates_identified",
-      "lineage_v2_panel_unique_by_2001_unit",
+      "inherited_legacy_duplicates_identified",
+      "lineage_panel_unique_by_2001_unit",
       "panel_membership_adjudicated",
       "preferred_panel_constructed_from_reviewed_sources",
       "shared_support_comparison_available",
       "multi_source_ginis_reconstructed",
-      "production_migration_reviewable"
+      "legacy_reviewable"
     ),
     passed = c(
-      nrow(production_duplicates) == 0L || all(
-        production_duplicates$target_unit_2001 %in%
+      nrow(legacy_duplicates) == 0L || all(
+        legacy_duplicates$target_unit_2001 %in%
           adjudication$target_unit_2001[
             adjudication$decision %in% c(
-              "replace_inherited_duplicate_with_unique_v2",
+              "replace_inherited_duplicate_with_unique",
               "exclude_inherited_duplicate"
             ) & adjudication$status %in% c("accepted", "excluded")
           ]
       ),
-      nrow(v2_duplicates) == 0L,
+      nrow(lineage_duplicates) == 0L,
       membership_complete,
       preferred_panel_available && isTRUE(identity_coverage_complete),
       shared_available,
       nrow(gini_queue) == 0L,
       membership_complete && preferred_panel_available && shared_available &&
-        nrow(v2_duplicates) == 0L && nrow(gini_queue) == 0L
+        nrow(lineage_duplicates) == 0L && nrow(gini_queue) == 0L
     ),
     next_action = c(
       paste0(
         "Confirm every inherited duplicate is explicitly excluded from the ",
-        "migration candidate."
+        "review candidate."
       ),
-      "Resolve duplicated Census-2001 units in the lineage-v2 panel.",
+      "Resolve duplicated Census-2001 units in the district lineage panel.",
       paste0(
         "Complete accepted-identity coverage and review the generated panel-",
         "membership adjudication."
@@ -997,7 +997,7 @@ lineage_v2_downstream_review_gates <- function(
       ),
       paste0(
         "Recompute every queued Gini from pooled household microdata before ",
-        "migration."
+        "review."
       ),
       paste0(
         "Record the downstream-results decision only after membership and ",
@@ -1008,19 +1008,19 @@ lineage_v2_downstream_review_gates <- function(
   )
 }
 
-build_lineage_v2_shared_support <- function(production_panel, v2_panel) {
-  production <- safe_df(production_panel)
-  candidate <- safe_df(v2_panel)
-  production$target_unit_2001 <- lineage_panel_unit_id(production)
+build_lineage_shared_support <- function(legacy_panel, lineage_panel) {
+  legacy <- safe_df(legacy_panel)
+  candidate <- safe_df(lineage_panel)
+  legacy$target_unit_2001 <- lineage_panel_unit_id(legacy)
   candidate$target_unit_2001 <- lineage_panel_unit_id(candidate)
 
-  production_counts <- table(production$target_unit_2001)
+  legacy_counts <- table(legacy$target_unit_2001)
   candidate_counts <- table(candidate$target_unit_2001)
-  production_unique <- names(production_counts[production_counts == 1L])
+  legacy_unique <- names(legacy_counts[legacy_counts == 1L])
   candidate_unique <- names(candidate_counts[candidate_counts == 1L])
-  shared <- sort(intersect(production_unique, candidate_unique))
-  production <- production[
-    production$target_unit_2001 %in% shared,
+  shared <- sort(intersect(legacy_unique, candidate_unique))
+  legacy <- legacy[
+    legacy$target_unit_2001 %in% shared,
     ,
     drop = FALSE
   ]
@@ -1029,26 +1029,26 @@ build_lineage_v2_shared_support <- function(production_panel, v2_panel) {
     ,
     drop = FALSE
   ]
-  production$state_2001_cluster <- lineage_v2_target_codes(
-    production$target_unit_2001
+  legacy$state_2001_cluster <- lineage_target_codes(
+    legacy$target_unit_2001
   )$state_code_2001
-  candidate$state_2001_cluster <- lineage_v2_target_codes(
+  candidate$state_2001_cluster <- lineage_target_codes(
     candidate$target_unit_2001
   )$state_code_2001
 
   list(
-    production = production,
-    lineage_v2 = candidate,
+    legacy = legacy,
+    lineage = candidate,
     units = data.frame(
       target_unit_2001 = shared,
-      state_2001_cluster = lineage_v2_target_codes(shared)$state_code_2001,
+      state_2001_cluster = lineage_target_codes(shared)$state_code_2001,
       stringsAsFactors = FALSE
     )
   )
 }
 
 
-empty_lineage_v2_gini_reconstruction_queue <- function() {
+empty_lineage_gini_reconstruction_queue <- function() {
   data.frame(
     target_unit_2001 = character(),
     lineage_source_count = integer(),
@@ -1064,11 +1064,11 @@ empty_lineage_v2_gini_reconstruction_queue <- function() {
   )
 }
 
-build_lineage_v2_gini_reconstruction_queue <- function(v2_panel) {
-  panel <- safe_df(v2_panel)
+build_lineage_gini_reconstruction_queue <- function(lineage_panel) {
+  panel <- safe_df(lineage_panel)
   required <- c("target_unit_2001", "lineage_source_count", "lineage_aggregation_status")
   if (!nrow(panel) || !all(required %in% names(panel))) {
-    return(empty_lineage_v2_gini_reconstruction_queue())
+    return(empty_lineage_gini_reconstruction_queue())
   }
 
   status_cols <- intersect(
@@ -1083,7 +1083,7 @@ build_lineage_v2_gini_reconstruction_queue <- function(v2_panel) {
     }))
     queue <- panel[needs, c(required, status_cols), drop = FALSE]
   }
-  if (!nrow(queue)) return(empty_lineage_v2_gini_reconstruction_queue())
+  if (!nrow(queue)) return(empty_lineage_gini_reconstruction_queue())
   queue <- queue[!duplicated(queue$target_unit_2001), , drop = FALSE]
   gini_cols <- intersect(c("gini_cons_0708", "gini_cons_1718"), names(panel))
   for (nm in gini_cols) {
@@ -1098,7 +1098,7 @@ build_lineage_v2_gini_reconstruction_queue <- function(v2_panel) {
   queue[order(queue$target_unit_2001), , drop = FALSE]
 }
 
-lineage_v2_model_summary <- function(iv_models, first_stage_tests, panel, variant) {
+lineage_model_summary <- function(iv_models, first_stage_tests, panel, variant) {
   panel_df <- safe_df(panel)
   coefficients <- tidy_iv_models(iv_models, panel_df)
   if (nrow(coefficients)) coefficients$panel_variant <- variant
@@ -1142,12 +1142,12 @@ lineage_v2_model_summary <- function(iv_models, first_stage_tests, panel, varian
   )
 }
 
-compare_lineage_v2_model_summaries <- function(
-  production, candidate,
+compare_lineage_model_summaries <- function(
+  legacy, candidate,
   comparison_scope = "different_panel_composition",
   comparable = FALSE
 ) {
-  prod_coef <- safe_df(production$coefficients)
+  prod_coef <- safe_df(legacy$coefficients)
   cand_coef <- safe_df(candidate$coefficients)
   keys <- intersect(c("model", "term"), intersect(names(prod_coef), names(cand_coef)))
   coefficient_comparison <- if (length(keys) == 2L) {
@@ -1156,7 +1156,7 @@ compare_lineage_v2_model_summaries <- function(
       cand_coef[c(keys, "estimate", "std.error", "p.value")],
       by = keys,
       all = TRUE,
-      suffixes = c("_production", "_v2"),
+      suffixes = c("_legacy", ""),
       sort = FALSE
     )
   } else {
@@ -1164,22 +1164,22 @@ compare_lineage_v2_model_summaries <- function(
   }
   if (nrow(coefficient_comparison)) {
     coefficient_comparison$estimate_change <-
-      coefficient_comparison$estimate_v2 -
-      coefficient_comparison$estimate_production
+      coefficient_comparison$estimate -
+      coefficient_comparison$estimate_legacy
     coefficient_comparison$std_error_change <-
-      coefficient_comparison$std.error_v2 -
-      coefficient_comparison$std.error_production
+      coefficient_comparison$std.error -
+      coefficient_comparison$std.error_legacy
     coefficient_comparison$inference_available <-
-      is.finite(coefficient_comparison$std.error_production) &
-      is.finite(coefficient_comparison$p.value_production) &
-      is.finite(coefficient_comparison$std.error_v2) &
-      is.finite(coefficient_comparison$p.value_v2)
+      is.finite(coefficient_comparison$std.error_legacy) &
+      is.finite(coefficient_comparison$p.value_legacy) &
+      is.finite(coefficient_comparison$std.error) &
+      is.finite(coefficient_comparison$p.value)
     coefficient_comparison$comparison_scope <- comparison_scope
     coefficient_comparison$comparable <-
       comparable & coefficient_comparison$inference_available
   }
 
-  prod_fs <- safe_df(production$first_stage)
+  prod_fs <- safe_df(legacy$first_stage)
   cand_fs <- safe_df(candidate$first_stage)
   fs_keys <- intersect(c("model", "term"), intersect(names(prod_fs), names(cand_fs)))
   first_stage_comparison <- if (length(fs_keys) == 2L) {
@@ -1192,7 +1192,7 @@ compare_lineage_v2_model_summaries <- function(
       )],
       by = fs_keys,
       all = TRUE,
-      suffixes = c("_production", "_v2"),
+      suffixes = c("_legacy", ""),
       sort = FALSE
     )
   } else {
@@ -1206,7 +1206,7 @@ compare_lineage_v2_model_summaries <- function(
 
   list(
     panel_summary = safe_bind_rows(list(
-      production$panel_summary,
+      legacy$panel_summary,
       candidate$panel_summary
     )),
     coefficient_comparison = coefficient_comparison,
@@ -1214,66 +1214,66 @@ compare_lineage_v2_model_summaries <- function(
   )
 }
 
-build_lineage_v2_downstream_review <- function(
-  production_panel, v2_panel, production_models, v2_models,
-  production_first_stage, v2_first_stage,
+build_lineage_downstream_review <- function(
+  legacy_panel, lineage_panel, legacy_models, lineage_models,
+  legacy_first_stage, lineage_first_stage,
   primary_crosswalk = data.frame(),
-  primary_eligibility = data.frame(),
-  production_shared_models = NULL,
-  v2_shared_models = NULL,
-  production_shared_first_stage = data.frame(),
-  v2_shared_first_stage = data.frame(),
-  production_shared_panel = data.frame(),
-  v2_shared_panel = data.frame(),
+  conservative_eligibility = data.frame(),
+  legacy_shared_models = NULL,
+  lineage_shared_models = NULL,
+  legacy_shared_first_stage = data.frame(),
+  lineage_shared_first_stage = data.frame(),
+  legacy_shared_panel = data.frame(),
+  lineage_shared_panel = data.frame(),
   admin_2001 = data.frame(),
   allocation_weights = data.frame(),
   gini_reconstruction_audit = data.frame()
 ) {
-  production <- lineage_v2_model_summary(
-    production_models, production_first_stage, production_panel, "production"
+  legacy <- lineage_model_summary(
+    legacy_models, legacy_first_stage, legacy_panel, "legacy"
   )
-  candidate <- lineage_v2_model_summary(
-    v2_models, v2_first_stage, v2_panel, "lineage_v2"
+  candidate <- lineage_model_summary(
+    lineage_models, lineage_first_stage, lineage_panel, "lineage"
   )
-  comparison <- compare_lineage_v2_model_summaries(production, candidate)
-  comparison$panel_membership <- compare_lineage_v2_panels(
-    production_panel, v2_panel
+  comparison <- compare_lineage_model_summaries(legacy, candidate)
+  comparison$panel_membership <- compare_lineage_panels(
+    legacy_panel, lineage_panel
   )
   comparison$panel_nonoverlap_queue <-
-    build_lineage_v2_nonoverlap_queue(
+    build_lineage_nonoverlap_queue(
       comparison$panel_membership,
       admin_2001
     )
   comparison$unmapped_identity_queue <-
-    build_lineage_v2_unmapped_identity_queue(
-      primary_eligibility,
+    build_lineage_unmapped_identity_queue(
+      conservative_eligibility,
       primary_crosswalk
     )
   comparison$unmapped_terminal_queue <-
-    build_lineage_v2_unmapped_terminal_queue(
+    build_lineage_unmapped_terminal_queue(
       comparison$unmapped_identity_queue,
       allocation_weights
     )
   comparison$crosswalk_coverage <-
-    summarize_lineage_v2_downstream_coverage(
+    summarize_lineage_downstream_coverage(
       primary_crosswalk,
-      primary_eligibility,
-      production_panel,
-      v2_panel
+      conservative_eligibility,
+      legacy_panel,
+      lineage_panel
     )
   comparison$panel_duplicates <- safe_bind_rows(list(
-    lineage_v2_panel_duplicates(production_panel, "production"),
-    lineage_v2_panel_duplicates(v2_panel, "lineage_v2")
+    lineage_panel_duplicates(legacy_panel, "legacy"),
+    lineage_panel_duplicates(lineage_panel, "lineage")
   ))
-  accepted_coverage <- accepted_sensitivity_mapping_status_v2(
-    primary_eligibility,
+  accepted_coverage <- accepted_sensitivity_mapping_status(
+    conservative_eligibility,
     primary_crosswalk
   )
   comparison$panel_membership_adjudication <-
-    build_lineage_v2_panel_membership_adjudication(
+    build_lineage_panel_membership_adjudication(
       comparison$panel_membership,
       comparison$panel_duplicates[
-        comparison$panel_duplicates$panel_variant %in% "production",
+        comparison$panel_duplicates$panel_variant %in% "legacy",
         ,
         drop = FALSE
       ],
@@ -1281,31 +1281,31 @@ build_lineage_v2_downstream_review <- function(
     )
   comparison$gini_reconstruction_audit <- safe_df(gini_reconstruction_audit)
   comparison$gini_reconstruction_queue <-
-    build_lineage_v2_gini_reconstruction_queue(v2_panel)
-  comparison$review_gates <- lineage_v2_downstream_review_gates(
+    build_lineage_gini_reconstruction_queue(lineage_panel)
+  comparison$review_gates <- lineage_downstream_review_gates(
     comparison$crosswalk_coverage,
-    production_panel,
-    v2_panel,
+    legacy_panel,
+    lineage_panel,
     comparison$panel_membership_adjudication,
     comparison$gini_reconstruction_queue,
     accepted_coverage$coverage_complete[[1L]]
   )
 
-  if (!is.null(production_shared_models) && !is.null(v2_shared_models)) {
-    shared_production <- lineage_v2_model_summary(
-      production_shared_models,
-      production_shared_first_stage,
-      production_shared_panel,
-      "production_shared"
+  if (!is.null(legacy_shared_models) && !is.null(lineage_shared_models)) {
+    shared_legacy <- lineage_model_summary(
+      legacy_shared_models,
+      legacy_shared_first_stage,
+      legacy_shared_panel,
+      "legacy_shared"
     )
-    shared_candidate <- lineage_v2_model_summary(
-      v2_shared_models,
-      v2_shared_first_stage,
-      v2_shared_panel,
-      "lineage_v2_shared"
+    shared_candidate <- lineage_model_summary(
+      lineage_shared_models,
+      lineage_shared_first_stage,
+      lineage_shared_panel,
+      "lineage_shared"
     )
-    shared <- compare_lineage_v2_model_summaries(
-      shared_production,
+    shared <- compare_lineage_model_summaries(
+      shared_legacy,
       shared_candidate,
       comparison_scope = "shared_unique_2001_support",
       comparable = TRUE
@@ -1317,13 +1317,13 @@ build_lineage_v2_downstream_review <- function(
   comparison
 }
 
-save_lineage_v2_downstream_review <- function(
-  review, dir = "outputs/diagnostics/extended/district_lineage_v2"
+save_lineage_downstream_review <- function(
+  review, dir = "outputs/diagnostics/extended/district_lineage"
 ) {
   dir.create(dir, recursive = TRUE, showWarnings = FALSE)
   gini_queue <- review$gini_reconstruction_queue
   if (is.null(gini_queue)) {
-    gini_queue <- empty_lineage_v2_gini_reconstruction_queue()
+    gini_queue <- empty_lineage_gini_reconstruction_queue()
   }
   output_manifest(c(
     downstream_panel_summary = write_diagnostic_csv(
@@ -1393,7 +1393,7 @@ save_lineage_v2_downstream_review <- function(
   ))
 }
 
-build_lineage_v2_panel_variant_review <- function(
+build_lineage_panel_variant_review <- function(
   panels, models, first_stage_tests, gini_audits
 ) {
   variants <- names(panels)
@@ -1411,7 +1411,7 @@ build_lineage_v2_panel_variant_review <- function(
     )
   }
   summaries <- lapply(variants, function(variant) {
-    lineage_v2_model_summary(
+    lineage_model_summary(
       models[[variant]], first_stage_tests[[variant]], panels[[variant]], variant
     )
   })
@@ -1429,9 +1429,9 @@ build_lineage_v2_panel_variant_review <- function(
   )
 }
 
-save_lineage_v2_panel_variant_review <- function(
+save_lineage_panel_variant_review <- function(
   review,
-  dir = "outputs/diagnostics/extended/district_lineage_v2"
+  dir = "outputs/diagnostics/extended/district_lineage"
 ) {
   dir.create(dir, recursive = TRUE, showWarnings = FALSE)
   paths <- c(

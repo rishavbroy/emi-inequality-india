@@ -14,17 +14,19 @@ This directory contains tracked descriptions, manifests, checksums, crosswalks, 
 - `district_harmonization_crosswalk.csv`: inherited reviewed crosswalk used by the present paper pipeline.
 - `manual_district_corrections.csv`: tracked correction interface for the current pipeline.
 
-The current crosswalk is not proof that its geographic assignments are correct. It remains active only while district-lineage v2 is built and adjudicated in parallel.
+The legacy harmonization crosswalk is retained only for historical comparison. Current public analysis uses the reviewed district-lineage crosswalks described below.
 
-## District-lineage v2
+## District-lineage
 
-- `district_sources_v2.csv`: compact source IDs that can be cited by accepted matches, events, and weights.
+- `district_lineage_sources.csv`: compact source IDs that can be cited by accepted matches, events, and weights.
 - `district_match_gold.csv`: manually reviewed positive, negative, and ambiguous name-match examples used to evaluate candidate rules.
-- `district_adjudications_v2.csv`: one accepted, excluded, or needs-review source identity per source row.
-- `district_admin_events_v2.csv`: reviewed directed administrative-event edges.
-- `district_allocation_weights_v2.csv`: reviewed non-primary or sensitivity allocation shares; current accepted rows renormalize mapped population shares only when at least 99 percent of the source population is covered. `source_unit` is canonicalized as the zero-padded `SS.DDD` Census-2011 code.
-- `district_geometry_carrybacks_v2.csv`: reviewed cases where an official later-vintage polygon is carried back to an unchanged Census-2001 district.
+- `district_adjudications.csv`: one accepted, excluded, or needs-review source identity per source row.
+- `district_admin_events.csv`: reviewed directed administrative-event edges.
+- `district_allocation_weights.csv`: reviewed non-primary or sensitivity allocation shares; current accepted rows renormalize mapped population shares only when at least 99 percent of the source population is covered. `source_unit` is canonicalized as the zero-padded `SS.DDD` Census-2011 code.
+- `district_geometry_carrybacks.csv`: reviewed cases where an official later-vintage polygon is carried back to an unchanged Census-2001 district.
+- `district_primary_reviews.csv`: reviewed near-complete single-parent mappings admitted to the 573-district primary panel.
+- `district_legacy_mapping_reviews.csv`: archived provenance for comparisons with the inherited pre-lineage panel; loaded only by extended legacy-comparison targets.
 
-Ledgers may begin blank, but accepted rows must remain narrow, source-backed decisions. Generated candidates belong under `outputs/diagnostics/extended/district_lineage_v2/`; they must not be copied into tracked adjudications without review.
+Ledgers may begin blank, but accepted rows must remain narrow, source-backed decisions. Generated candidates belong under `outputs/diagnostics/extended/district_lineage/`; they must not be copied into tracked adjudications without review.
 
-See [`docs/DISTRICT_LINEAGE_V2.md`](../../docs/DISTRICT_LINEAGE_V2.md) for authority rules, source caveats, schemas, invariants, and the implementation plan.
+See [`docs/DISTRICT_LINEAGE.md`](../../docs/DISTRICT_LINEAGE.md) for authority rules, source caveats, schemas, invariants, and the implementation plan.

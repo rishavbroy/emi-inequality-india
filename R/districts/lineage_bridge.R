@@ -398,7 +398,7 @@ build_admin_registry_2011 <- function(pc11_district_geometry) {
   out[c("unit_id", "level", "state_code", "district_code", "district_std", "valid_from", "valid_to", "source_id")]
 }
 
-canonical_allocation_source_key_v2 <- function(x) {
+canonical_allocation_source_key <- function(x) {
   if (!length(x)) return(character())
   if (!is.character(x)) {
     stop(
@@ -445,7 +445,7 @@ canonical_allocation_source_key_v2 <- function(x) {
   out
 }
 
-allocation_source_key_v2 <- function(state_code, district_code) {
+allocation_source_key <- function(state_code, district_code) {
   paste(
     "pc2011",
     pad_admin_code(state_code, 2L),
@@ -460,12 +460,12 @@ validate_allocation_weights <- function(weights, source_cols = c("state_code_201
   missing <- setdiff(c(source_cols, weight_col), names(weights))
   if (length(missing)) stop("Allocation-weight table is missing: ", paste(missing, collapse = ", "), call. = FALSE)
   key <- if (identical(source_cols, c("state_code_2011", "district_code_2011"))) {
-    allocation_source_key_v2(
+    allocation_source_key(
       weights$state_code_2011,
       weights$district_code_2011
     )
   } else if (identical(source_cols, "source_unit")) {
-    canonical_allocation_source_key_v2(weights$source_unit)
+    canonical_allocation_source_key(weights$source_unit)
   } else {
     do.call(interaction, c(weights[source_cols], list(drop = TRUE)))
   }
@@ -495,7 +495,7 @@ validate_allocation_weights <- function(weights, source_cols = c("state_code_201
   }))
 }
 
-allocation_decision_status_v2 <- function(weights) {
+allocation_decision_status <- function(weights) {
   weights <- safe_df(weights)
   required <- c("source_unit", "status")
   if (!nrow(weights)) {
@@ -515,7 +515,7 @@ allocation_decision_status_v2 <- function(weights) {
     )
   }
 
-  source_key <- canonical_allocation_source_key_v2(
+  source_key <- canonical_allocation_source_key(
     plain_chr(weights$source_unit)
   )
   if (anyNA(source_key)) {
@@ -545,7 +545,7 @@ allocation_decision_status_v2 <- function(weights) {
   }))
 }
 
-allocation_coverage_status_v2 <- function(
+allocation_coverage_status <- function(
   generated_validation, adjudicated_validation,
   adjudicated_decisions = data.frame()
 ) {
@@ -577,13 +577,13 @@ allocation_coverage_status_v2 <- function(
   require_coverage_columns(generated, "Generated allocation validation")
   require_coverage_columns(adjudicated, "Reviewed allocation validation")
 
-  generated_keys <- unique(canonical_allocation_source_key_v2(
+  generated_keys <- unique(canonical_allocation_source_key(
     generated$source_key
   ))
-  incomplete_keys <- unique(canonical_allocation_source_key_v2(
+  incomplete_keys <- unique(canonical_allocation_source_key(
     generated$source_key[!(generated$coverage_complete %in% TRUE)]
   ))
-  accepted_keys <- unique(canonical_allocation_source_key_v2(
+  accepted_keys <- unique(canonical_allocation_source_key(
     adjudicated$source_key[adjudicated$coverage_complete %in% TRUE]
   ))
   rejected_keys <- if (
@@ -591,7 +591,7 @@ allocation_coverage_status_v2 <- function(
       all(c("source_key", "decision_status", "decision_complete") %in%
           names(decisions))
   ) {
-    unique(canonical_allocation_source_key_v2(
+    unique(canonical_allocation_source_key(
       decisions$source_key[
         decisions$decision_complete %in% TRUE &
           decisions$decision_status %in% "rejected"
@@ -624,7 +624,7 @@ allocation_coverage_status_v2 <- function(
   )
 }
 
-read_adjudicated_allocation_weights_v2 <- function(x, admin_2001 = data.frame()) {
+read_adjudicated_allocation_weights <- function(x, admin_2001 = data.frame()) {
   x <- safe_df(x)
   required <- c(
     "source_unit", "target_2001", "weight", "basis",
@@ -633,7 +633,7 @@ read_adjudicated_allocation_weights_v2 <- function(x, admin_2001 = data.frame())
   for (nm in setdiff(required, names(x))) x[[nm]] <- rep(NA_character_, nrow(x))
   source_unit_raw <- trimws(plain_chr(x$source_unit))
   supplied <- !is.na(source_unit_raw) & nzchar(source_unit_raw)
-  source_unit <- canonical_allocation_source_key_v2(source_unit_raw)
+  source_unit <- canonical_allocation_source_key(source_unit_raw)
   if (any(supplied & is.na(source_unit))) {
     stop(
       "District-allocation metadata contains invalid Census-2011 source IDs: ",
@@ -687,7 +687,7 @@ read_adjudicated_allocation_weights_v2 <- function(x, admin_2001 = data.frame())
   x
 }
 
-validate_adjudicated_allocation_weights_v2 <- function(weights, tolerance = 1e-8) {
+validate_adjudicated_allocation_weights <- function(weights, tolerance = 1e-8) {
   weights <- safe_df(weights)
   accepted <- weights[weights$status %in% "accepted", , drop = FALSE]
   if (!nrow(accepted)) {

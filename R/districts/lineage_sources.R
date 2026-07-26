@@ -1,13 +1,12 @@
-# Source discovery and explicit readers for the district-lineage v2 diagnostic.
-# This pipeline runs in parallel with the reviewed production crosswalk until
-# the new source-match and administrative-event ledgers are fully adjudicated.
+# Source discovery and explicit readers for the production district-lineage pipeline.
+# Historical geography and legacy comparisons are loaded only by extended targets.
 
-#' District-lineage v2 input specification
+#' District-lineage input specification
 #'
 #' @return Data frame describing supported raw and metadata inputs. Missing
 #'   optional files are reported in diagnostics rather than failing the public
-#'   production pipeline.
-district_lineage_v2_input_specs <- function(paths = build_paths()) {
+#'   lineage pipeline.
+district_lineage_input_specs <- function(paths = build_paths()) {
   spec <- function(source_id, relative_path, reader, load_for_diagnostic, role) {
     data.frame(
       source_id = source_id,
@@ -51,7 +50,7 @@ district_lineage_v2_input_specs <- function(paths = build_paths()) {
     spec("shrug_pc11_state_geometry", "data/raw/shrug/open-polygons/shrug-pc11state-poly-gpkg/state.gpkg", "inventory_only", FALSE, "census_2011_geometry"),
     spec("shrug_pc11_village_geometry_zip", "data/raw/shrug/open-polygons/shrug-pc11-village-poly-gpkg.zip", "inventory_only", FALSE, "census_2011_geometry"),
     spec("shrug_shrid_geometry_zip", "data/raw/shrug/open-polygons/shrug-shrid-poly-gpkg.zip", "inventory_only", FALSE, "future_2001_geometry"),
-    spec("lineage_geometry_2001", "outputs/derived/district_lineage_v2/district_2001.gpkg", "gpkg", TRUE, "derived_2001_geometry"),
+    spec("lineage_geometry_2001", "outputs/derived/district_lineage/district_2001.gpkg", "gpkg", TRUE, "derived_2001_geometry"),
     spec("shrug_pca01_zip", "data/raw/shrug/census_2001/shrug-pca01-csv.zip", "inventory_only", FALSE, "census_locality_attributes"),
     spec("shrug_pca11_zip", "data/raw/shrug/census_2011/shrug-pca11-csv.zip", "inventory_only", FALSE, "census_locality_attributes"),
     spec("shrug_td01_zip", "data/raw/shrug/census_2001/shrug-td01-csv.zip", "inventory_only", FALSE, "census_locality_attributes"),
@@ -65,13 +64,12 @@ district_lineage_v2_input_specs <- function(paths = build_paths()) {
     spec("concordance_telangana", "data/raw/concordance/telangana_plfs_districts.csv", "csv", TRUE, "published_concordance"),
     spec("concordance_census_region", "data/raw/concordance/census_region.csv", "csv", TRUE, "published_concordance"),
     spec("lineage_gold", "data/metadata/district_match_gold.csv", "csv", TRUE, "calibration"),
-    spec("lineage_adjudications", "data/metadata/district_adjudications_v2.csv", "csv", TRUE, "adjudication"),
-    spec("lineage_events", "data/metadata/district_admin_events_v2.csv", "csv", TRUE, "event_adjudication"),
-    spec("lineage_allocation_weights", "data/metadata/district_allocation_weights_v2.csv", "allocation_csv", TRUE, "allocation_adjudication"),
-    spec("lineage_geometry_carrybacks", "data/metadata/district_geometry_carrybacks_v2.csv", "csv", TRUE, "geometry_adjudication"),
-    spec("lineage_production_reviews", "data/metadata/district_production_mapping_reviews_v2.csv", "csv", TRUE, "production_migration_review"),
-    spec("lineage_dominant_parent_reviews", "data/metadata/district_dominant_parent_reviews_v2.csv", "csv", TRUE, "dominant_parent_review"),
-    spec("lineage_sources", "data/metadata/district_sources_v2.csv", "csv", TRUE, "source_registry")
+    spec("lineage_adjudications", "data/metadata/district_adjudications.csv", "csv", TRUE, "adjudication"),
+    spec("lineage_events", "data/metadata/district_admin_events.csv", "csv", TRUE, "event_adjudication"),
+    spec("lineage_allocation_weights", "data/metadata/district_allocation_weights.csv", "allocation_csv", TRUE, "allocation_adjudication"),
+    spec("lineage_geometry_carrybacks", "data/metadata/district_geometry_carrybacks.csv", "csv", TRUE, "geometry_adjudication"),
+    spec("lineage_primary_reviews", "data/metadata/district_primary_reviews.csv", "csv", TRUE, "primary_review"),
+    spec("lineage_sources", "data/metadata/district_lineage_sources.csv", "csv", TRUE, "source_registry")
   )
   out <- do.call(rbind, rows)
   out$absolute_path <- path_project(paths, out$relative_path)
@@ -84,7 +82,7 @@ district_lineage_v2_input_specs <- function(paths = build_paths()) {
 #' District-lineage source inventory
 #'
 #' @return Compact inventory retained independently from loaded source values.
-district_lineage_v2_source_inventory <- function(specs) {
+district_lineage_source_inventory <- function(specs) {
   specs <- safe_df(specs)
   specs[c(
     "source_id", "relative_path", "reader", "role",
@@ -95,13 +93,13 @@ district_lineage_v2_source_inventory <- function(specs) {
 #' Split available source specifications for dynamic branching
 #'
 #' @return List of one-row data frames, one per source loaded by the extended diagnostic.
-split_district_lineage_v2_source_specs <- function(specs) {
+split_district_lineage_source_specs <- function(specs) {
   specs <- safe_df(specs)
   specs <- specs[specs$exists & specs$load_for_diagnostic, , drop = FALSE]
   lapply(seq_len(nrow(specs)), function(i) specs[i, , drop = FALSE])
 }
 
-district_lineage_v2_source_path <- function(spec) {
+district_lineage_source_path <- function(spec) {
   spec <- safe_df(spec)
   if (nrow(spec) != 1L || is.na(spec$absolute_path[[1]]) || !nzchar(spec$absolute_path[[1]])) {
     stop("A district-lineage source branch must contain exactly one path.", call. = FALSE)
@@ -341,7 +339,7 @@ read_lineage_source <- function(path, reader, source_id = NA_character_) {
 }
 
 #' Read one district-lineage source branch
-read_district_lineage_v2_source <- function(spec, path) {
+read_district_lineage_source <- function(spec, path) {
   spec <- safe_df(spec)
   if (nrow(spec) != 1L) stop("Each source branch must contain one specification row.", call. = FALSE)
   if (!file.exists(path)) stop("A tracked district-lineage input disappeared before it could be read.", call. = FALSE)
@@ -352,7 +350,7 @@ read_district_lineage_v2_source <- function(spec, path) {
 }
 
 #' Assemble source branches by semantic source ID
-assemble_district_lineage_v2_sources <- function(branches) {
+assemble_district_lineage_sources <- function(branches) {
   if (!length(branches)) return(list())
   ids <- vapply(branches, function(x) x$source_id %||% NA_character_, character(1))
   if (anyNA(ids) || any(!nzchar(ids))) {

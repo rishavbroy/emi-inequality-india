@@ -58,25 +58,16 @@ core_pipeline_targets <- list(
   tar_target(raw_nss_2007_consumption, { raw_data_preflight; read_nss_2007_consumption(paths) }),
   tar_target(raw_nss_2017_education, { raw_data_preflight; read_nss_2017_education(paths) }),
   tar_target(raw_census_2001, { raw_data_preflight; read_census_2001_mother_tongue(paths) }),
-  tar_target(raw_boundaries_2020, { raw_data_preflight; read_district_boundaries_2020(paths) }),
-  tar_target(raw_district_changes, { raw_data_preflight; read_district_change_sources(paths) }),
   tar_target(raw_ilo_figures, { raw_data_preflight; list_ilo_figure_paths(paths) }, format = "file"),
 
   tar_target(nss_2007_education, clean_nss_2007_education(raw_nss_2007_education)),
   tar_target(nss_2007_consumption, clean_nss_2007_consumption(raw_nss_2007_consumption)),
   tar_target(nss_2017_education, clean_nss_2017_education(raw_nss_2017_education)),
   tar_target(census_2001_languages, clean_census_2001_languages(raw_census_2001)),
-  tar_target(boundaries_2020, clean_district_boundaries(raw_boundaries_2020)),
 
   tar_target(district_keys_2001, build_district_keys_2001(census_2001_languages)),
   tar_target(district_keys_2007, build_district_keys_2007(nss_2007_education, nss_2007_consumption)),
   tar_target(district_keys_2017, build_district_keys_2017(nss_2017_education)),
-  tar_target(district_keys_2020, build_district_keys_2020(boundaries_2020)),
-  tar_target(district_tracker_raw, build_district_tracker(raw_district_changes)),
-  tar_target(district_harmonization_crosswalk_file, "data/metadata/district_harmonization_crosswalk.csv", format = "file"),
-  tar_target(district_harmonization_crosswalk, read_district_harmonization_crosswalk(district_harmonization_crosswalk_file)),
-  tar_target(district_tracker, apply_manual_district_corrections(district_tracker_raw)),
-  tar_target(district_join_map, prepare_district_join_map(district_harmonization_crosswalk)),
 
   tar_target(selection_data, build_selection_data(nss_2007_education, district_keys_2007, cfg)),
   tar_target(selection_model, estimate_selection_probit(selection_data, cfg)),
@@ -86,107 +77,94 @@ core_pipeline_targets <- list(
   tar_target(measures_2017, build_2017_measures(nss_2017_education, cfg)),
   tar_target(linguistic_distance_iv, build_linguistic_distance_iv(census_2001_languages, cfg)),
   tar_target(
-    district_panel_v1,
-    build_district_panel(
-      district_join_map,
-      measures_2007,
-      measures_2017,
-      linguistic_distance_iv,
-      boundaries_2020,
-      cfg
-    )
-  ),
-  tar_target(
-    district_lineage_v2_specs,
-    district_lineage_v2_input_specs(paths),
+    district_lineage_specs,
+    district_lineage_input_specs(paths),
     cue = tar_cue(mode = "always")
   ),
   tar_target(
-    district_lineage_v2_inventory,
-    district_lineage_v2_source_inventory(district_lineage_v2_specs)
+    district_lineage_inventory,
+    district_lineage_source_inventory(district_lineage_specs)
   ),
   tar_target(
-    district_lineage_v2_source_specs,
-    split_district_lineage_v2_source_specs(district_lineage_v2_specs),
+    district_lineage_source_specs,
+    split_district_lineage_source_specs(district_lineage_specs),
     iteration = "list"
   ),
   tar_target(
-    district_lineage_v2_source_file,
-    district_lineage_v2_source_path(district_lineage_v2_source_specs),
-    pattern = map(district_lineage_v2_source_specs),
+    district_lineage_source_file,
+    district_lineage_source_path(district_lineage_source_specs),
+    pattern = map(district_lineage_source_specs),
     format = "file"
   ),
   tar_target(
-    district_lineage_v2_source,
-    read_district_lineage_v2_source(
-      district_lineage_v2_source_specs,
-      district_lineage_v2_source_file
+    district_lineage_source,
+    read_district_lineage_source(
+      district_lineage_source_specs,
+      district_lineage_source_file
     ),
-    pattern = map(district_lineage_v2_source_specs, district_lineage_v2_source_file),
+    pattern = map(district_lineage_source_specs, district_lineage_source_file),
     iteration = "list"
   ),
   tar_target(
-    district_lineage_v2_sources,
-    assemble_district_lineage_v2_sources(district_lineage_v2_source)
+    district_lineage_sources,
+    assemble_district_lineage_sources(district_lineage_source)
   ),
   tar_target(
-    district_lineage_v2,
-    build_district_lineage_v2(
-      district_lineage_v2_sources,
-      district_lineage_v2_inventory,
-      district_tracker,
+    district_lineage,
+    build_district_lineage(
+      district_lineage_sources,
+      district_lineage_inventory,
       census_2001_languages,
       measures_2007,
-      measures_2017,
-      district_panel_v1
+      measures_2017
     )
   ),
   tar_target(
-    district_panel_v2_provisional,
-    build_lineage_v2_district_panel(
-      district_lineage_v2$primary_source_crosswalk,
+    district_panel_conservative_provisional,
+    build_lineage_district_panel(
+      district_lineage$conservative_source_crosswalk,
       measures_2007,
       measures_2017,
       linguistic_distance_iv,
-      district_lineage_v2_sources$lineage_geometry_2001 %||% data.frame(),
+      district_lineage_sources$lineage_geometry_2001 %||% data.frame(),
       cfg
     )
   ),
   tar_target(
-    lineage_v2_gini_reconstruction,
-    reconstruct_lineage_v2_pooled_ginis(
-      district_panel_v2_provisional,
-      district_lineage_v2$primary_source_crosswalk,
+    conservative_gini_reconstruction,
+    reconstruct_lineage_pooled_ginis(
+      district_panel_conservative_provisional,
+      district_lineage$conservative_source_crosswalk,
       nss_2007_education,
       nss_2017_education
     )
   ),
-  tar_target(district_panel_v2, lineage_v2_gini_reconstruction$panel),
+  tar_target(district_panel_conservative, conservative_gini_reconstruction$panel),
   tar_target(
-    district_panel_v2_dominant_provisional,
-    build_lineage_v2_district_panel(
-      district_lineage_v2$dominant_parent_source_crosswalk,
+    district_panel_primary_provisional,
+    build_lineage_district_panel(
+      district_lineage$primary_source_crosswalk,
       measures_2007,
       measures_2017,
       linguistic_distance_iv,
-      district_lineage_v2_sources$lineage_geometry_2001 %||% data.frame(),
+      district_lineage_sources$lineage_geometry_2001 %||% data.frame(),
       cfg
     )
   ),
   tar_target(
-    lineage_v2_dominant_gini_reconstruction,
-    reconstruct_lineage_v2_pooled_ginis(
-      district_panel_v2_dominant_provisional,
-      district_lineage_v2$dominant_parent_source_crosswalk,
+    primary_gini_reconstruction,
+    reconstruct_lineage_pooled_ginis(
+      district_panel_primary_provisional,
+      district_lineage$primary_source_crosswalk,
       nss_2007_education,
       nss_2017_education
     )
   ),
   tar_target(
-    district_panel_v2_dominant,
-    lineage_v2_dominant_gini_reconstruction$panel
+    district_panel_primary,
+    primary_gini_reconstruction$panel
   ),
-  tar_target(district_panel, district_panel_v2_dominant),
+  tar_target(district_panel, district_panel_primary),
   tar_target(processed_district_panel_file, save_processed_district_panel(district_panel), format = "file"),
 
   tar_target(iv_formulas, build_iv_formulas(cfg)),
@@ -205,7 +183,7 @@ core_pipeline_targets <- list(
     make_figures(
       district_panel, raw_ilo_figures, cfg,
       iv_models = iv_models,
-      map_geometry = district_lineage_v2_sources$lineage_geometry_2001
+      map_geometry = district_lineage_sources$lineage_geometry_2001
     )
   ),
   tar_target(figure_files, save_figures(figures, cfg), format = "file"),
@@ -224,165 +202,205 @@ core_pipeline_targets <- list(
   tar_target(poster, render_poster_pdf(poster_qmd, figure_files), format = "file")
 )
 
+legacy_geography_targets <- list(
+  tar_target(raw_boundaries_2020, { raw_data_preflight; read_district_boundaries_2020(paths) }),
+  tar_target(raw_district_changes, { raw_data_preflight; read_district_change_sources(paths) }),
+  tar_target(boundaries_2020, clean_district_boundaries(raw_boundaries_2020)),
+  tar_target(district_keys_2020, build_district_keys_2020(boundaries_2020)),
+  tar_target(district_tracker_raw, build_district_tracker(raw_district_changes)),
+  tar_target(district_tracker, apply_manual_district_corrections(district_tracker_raw)),
+  tar_target(district_harmonization_crosswalk_file, "data/metadata/district_harmonization_crosswalk.csv", format = "file"),
+  tar_target(district_harmonization_crosswalk, read_district_harmonization_crosswalk(district_harmonization_crosswalk_file)),
+  tar_target(district_join_map, prepare_district_join_map(district_harmonization_crosswalk)),
+  tar_target(
+    district_panel_legacy,
+    build_district_panel(
+      district_join_map, measures_2007, measures_2017,
+      linguistic_distance_iv, boundaries_2020, cfg
+    )
+  )
+)
+
+legacy_comparison_targets <- list(
+  tar_target(legacy_mapping_reviews_file, "data/metadata/district_legacy_mapping_reviews.csv", format = "file"),
+  tar_target(legacy_mapping_reviews, read_legacy_mapping_reviews(read.csv(legacy_mapping_reviews_file, stringsAsFactors = FALSE, check.names = FALSE))),
+  tar_target(
+    legacy_crosswalk_comparison,
+    build_legacy_crosswalk_comparison(
+      district_lineage$conservative_source_crosswalk,
+      district_panel_legacy,
+      legacy_mapping_reviews
+    )
+  ),
+  tar_target(
+    diag_ext_legacy_crosswalk_comparison,
+    write_diagnostic_csv(
+      legacy_crosswalk_comparison,
+      "outputs/diagnostics/extended/district_lineage/legacy_crosswalk_comparison.csv"
+    ),
+    format = "file"
+  )
+)
+
 extended_diagnostic_targets <- list(
   tar_target(
-    diag_ext_district_lineage_v2,
+    diag_ext_district_lineage,
     {
-      district_panel_v2_dominant
-      district_panel_v2_full_reviewed
+      district_panel_primary
+      district_panel_full_reviewed
       iv_models
-      iv_models_v2_full_reviewed
+      iv_models_full_reviewed
       first_stage_tests
-      first_stage_tests_v2_full_reviewed
-      diag_ext_lineage_v2_panel_variants
-      save_district_lineage_v2(district_lineage_v2)
+      first_stage_tests_full_reviewed
+      diag_ext_lineage_panel_variants
+      save_district_lineage(district_lineage)
     }
   ),
   tar_target(
-    district_panel_v2_full_reviewed_provisional,
-    build_lineage_v2_district_panel(
-      district_lineage_v2$sensitivity_source_crosswalk,
+    district_panel_full_reviewed_provisional,
+    build_lineage_district_panel(
+      district_lineage$full_reviewed_source_crosswalk,
       measures_2007,
       measures_2017,
       linguistic_distance_iv,
-      district_lineage_v2_sources$lineage_geometry_2001 %||% data.frame(),
+      district_lineage_sources$lineage_geometry_2001 %||% data.frame(),
       cfg
     )
   ),
   tar_target(
-    lineage_v2_full_reviewed_gini_reconstruction,
-    reconstruct_lineage_v2_pooled_ginis(
-      district_panel_v2_full_reviewed_provisional,
-      district_lineage_v2$sensitivity_source_crosswalk,
+    full_reviewed_gini_reconstruction,
+    reconstruct_lineage_pooled_ginis(
+      district_panel_full_reviewed_provisional,
+      district_lineage$full_reviewed_source_crosswalk,
       nss_2007_education,
       nss_2017_education
     )
   ),
   tar_target(
-    district_panel_v2_full_reviewed,
-    lineage_v2_full_reviewed_gini_reconstruction$panel
+    district_panel_full_reviewed,
+    full_reviewed_gini_reconstruction$panel
   ),
   tar_target(
-    iv_models_v2,
-    estimate_2sls(district_panel_v2, iv_formulas, cfg)
+    iv_models_conservative,
+    estimate_2sls(district_panel_conservative, iv_formulas, cfg)
   ),
   tar_target(
-    first_stage_tests_v2,
-    estimate_first_stage(iv_models_v2, district_panel_v2, cfg)
+    first_stage_tests_conservative,
+    estimate_first_stage(iv_models_conservative, district_panel_conservative, cfg)
   ),
   tar_target(
-    iv_models_v2_full_reviewed,
-    estimate_2sls(district_panel_v2_full_reviewed, iv_formulas, cfg)
+    iv_models_full_reviewed,
+    estimate_2sls(district_panel_full_reviewed, iv_formulas, cfg)
   ),
   tar_target(
-    first_stage_tests_v2_full_reviewed,
+    first_stage_tests_full_reviewed,
     estimate_first_stage(
-      iv_models_v2_full_reviewed,
-      district_panel_v2_full_reviewed,
+      iv_models_full_reviewed,
+      district_panel_full_reviewed,
       cfg
     )
   ),
   tar_target(
-    lineage_v2_panel_variant_review,
-    build_lineage_v2_panel_variant_review(
+    lineage_panel_variant_review,
+    build_lineage_panel_variant_review(
       panels = list(
-        conservative_preferred = district_panel_v2,
-        dominant_parent = district_panel_v2_dominant,
-        full_reviewed_sensitivity = district_panel_v2_full_reviewed
+        conservative_preferred = district_panel_conservative,
+        primary = district_panel_primary,
+        full_reviewed_sensitivity = district_panel_full_reviewed
       ),
       models = list(
-        conservative_preferred = iv_models_v2,
-        dominant_parent = iv_models,
-        full_reviewed_sensitivity = iv_models_v2_full_reviewed
+        conservative_preferred = iv_models_conservative,
+        primary = iv_models,
+        full_reviewed_sensitivity = iv_models_full_reviewed
       ),
       first_stage_tests = list(
-        conservative_preferred = first_stage_tests_v2,
-        dominant_parent = first_stage_tests,
-        full_reviewed_sensitivity = first_stage_tests_v2_full_reviewed
+        conservative_preferred = first_stage_tests_conservative,
+        primary = first_stage_tests,
+        full_reviewed_sensitivity = first_stage_tests_full_reviewed
       ),
       gini_audits = list(
-        conservative_preferred = lineage_v2_gini_reconstruction$audit,
-        dominant_parent = lineage_v2_dominant_gini_reconstruction$audit,
-        full_reviewed_sensitivity = lineage_v2_full_reviewed_gini_reconstruction$audit
+        conservative_preferred = conservative_gini_reconstruction$audit,
+        primary = primary_gini_reconstruction$audit,
+        full_reviewed_sensitivity = full_reviewed_gini_reconstruction$audit
       )
     )
   ),
   tar_target(
-    diag_ext_lineage_v2_panel_variants,
-    save_lineage_v2_panel_variant_review(lineage_v2_panel_variant_review)
+    diag_ext_lineage_panel_variants,
+    save_lineage_panel_variant_review(lineage_panel_variant_review)
   ),
   tar_target(
-    iv_models_v1,
-    estimate_2sls(district_panel_v1, iv_formulas, cfg)
+    iv_models_legacy,
+    estimate_2sls(district_panel_legacy, iv_formulas, cfg)
   ),
   tar_target(
-    first_stage_tests_v1,
-    estimate_first_stage(iv_models_v1, district_panel_v1, cfg)
+    first_stage_tests_legacy,
+    estimate_first_stage(iv_models_legacy, district_panel_legacy, cfg)
   ),
   tar_target(
-    lineage_v2_shared_support,
-    build_lineage_v2_shared_support(
-      district_panel_v1,
-      district_panel_v2
+    lineage_shared_support,
+    build_lineage_shared_support(
+      district_panel_legacy,
+      district_panel_conservative
     )
   ),
   tar_target(
-    iv_models_production_shared_v2,
+    iv_models_legacy_shared,
     estimate_2sls(
-      lineage_v2_shared_support$production,
+      lineage_shared_support$legacy,
       iv_formulas,
       cfg
     )
   ),
   tar_target(
-    first_stage_tests_production_shared_v2,
+    first_stage_tests_legacy_shared,
     estimate_first_stage(
-      iv_models_production_shared_v2,
-      lineage_v2_shared_support$production,
+      iv_models_legacy_shared,
+      lineage_shared_support$legacy,
       cfg
     )
   ),
   tar_target(
-    iv_models_lineage_v2_shared,
+    iv_models_lineage_shared,
     estimate_2sls(
-      lineage_v2_shared_support$lineage_v2,
+      lineage_shared_support$lineage,
       iv_formulas,
       cfg
     )
   ),
   tar_target(
-    first_stage_tests_lineage_v2_shared,
+    first_stage_tests_lineage_shared,
     estimate_first_stage(
-      iv_models_lineage_v2_shared,
-      lineage_v2_shared_support$lineage_v2,
+      iv_models_lineage_shared,
+      lineage_shared_support$lineage,
       cfg
     )
   ),
   tar_target(
-    lineage_v2_downstream_review,
-    build_lineage_v2_downstream_review(
-      district_panel_v1,
-      district_panel_v2,
-      iv_models_v1,
-      iv_models_v2,
-      first_stage_tests_v1,
-      first_stage_tests_v2,
-      district_lineage_v2$sensitivity_source_crosswalk,
-      district_lineage_v2$primary_mapping_eligibility,
-      iv_models_production_shared_v2,
-      iv_models_lineage_v2_shared,
-      first_stage_tests_production_shared_v2,
-      first_stage_tests_lineage_v2_shared,
-      lineage_v2_shared_support$production,
-      lineage_v2_shared_support$lineage_v2,
-      district_lineage_v2$admin_units_2001,
-      district_lineage_v2$adjudicated_allocation_weights,
-      lineage_v2_gini_reconstruction$audit
+    lineage_downstream_review,
+    build_lineage_downstream_review(
+      district_panel_legacy,
+      district_panel_conservative,
+      iv_models_legacy,
+      iv_models_conservative,
+      first_stage_tests_legacy,
+      first_stage_tests_conservative,
+      district_lineage$full_reviewed_source_crosswalk,
+      district_lineage$conservative_mapping_eligibility,
+      iv_models_legacy_shared,
+      iv_models_lineage_shared,
+      first_stage_tests_legacy_shared,
+      first_stage_tests_lineage_shared,
+      lineage_shared_support$legacy,
+      lineage_shared_support$lineage,
+      district_lineage$admin_units_2001,
+      district_lineage$adjudicated_allocation_weights,
+      conservative_gini_reconstruction$audit
     )
   ),
   tar_target(
-    diag_ext_lineage_v2_downstream,
-    save_lineage_v2_downstream_review(lineage_v2_downstream_review)
+    diag_ext_lineage_downstream,
+    save_lineage_downstream_review(lineage_downstream_review)
   ),
   tar_target(diag_ext_missingness, save_missingness_diagnostics(diagnose_missingness(selection_data, cfg))),
   tar_target(diag_ext_district_tracker_sources, save_tracker_source_diagnostics(diagnose_district_tracker_sources(raw_district_changes, district_tracker, cfg))),
@@ -410,8 +428,12 @@ application_sample_targets <- list(
 
 selected_targets <- core_pipeline_targets
 
+if (extended_diagnostics_enabled() || benchmarks_enabled()) {
+  selected_targets <- c(selected_targets, legacy_geography_targets)
+}
+
 if (extended_diagnostics_enabled()) {
-  selected_targets <- c(selected_targets, extended_diagnostic_targets)
+  selected_targets <- c(selected_targets, legacy_comparison_targets, extended_diagnostic_targets)
 } else {
   message("EMI_RUN_EXTENDED_DIAGNOSTICS=false: omitting extended diagnostic targets from this targets run.")
 }

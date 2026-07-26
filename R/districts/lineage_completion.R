@@ -1,11 +1,11 @@
-# Completion workflow for district-lineage v2.
+# Completion workflow for district lineage.
 #
 # This module converts diagnostic candidates into review-ready artifacts,
 # assembles preferred and sensitivity crosswalks from accepted metadata, and
 # reports the remaining methodological work. It never promotes a candidate to
 # accepted status without a tracked adjudication.
 
-empty_adjudication_draft_v2 <- function() {
+empty_adjudication_draft <- function() {
   data.frame(
     source_row_id = character(), wave = character(), raw_state = character(),
     raw_district = character(), unit_id = character(), method = character(),
@@ -14,11 +14,11 @@ empty_adjudication_draft_v2 <- function() {
   )
 }
 
-build_adjudication_draft_v2 <- function(source_roster, adjudication_queue, candidates) {
+build_adjudication_draft <- function(source_roster, adjudication_queue, candidates) {
   roster <- safe_df(source_roster)
   queue <- safe_df(adjudication_queue)
   candidates <- safe_df(candidates)
-  if (!nrow(roster)) return(empty_adjudication_draft_v2())
+  if (!nrow(roster)) return(empty_adjudication_draft())
 
   adjudication_status <- if ("adjudication_status" %in% names(queue)) {
     queue$adjudication_status
@@ -33,7 +33,7 @@ build_adjudication_draft_v2 <- function(source_roster, adjudication_queue, candi
     ),
     drop = FALSE
   ]
-  if (!nrow(unresolved_queue)) return(empty_adjudication_draft_v2())
+  if (!nrow(unresolved_queue)) return(empty_adjudication_draft())
 
   top <- merge(
     unresolved_queue[c("source_row_id", "recommended_unit")],
@@ -73,7 +73,7 @@ build_adjudication_draft_v2 <- function(source_roster, adjudication_queue, candi
   )]
 }
 
-empty_sensitivity_crosswalk_v2 <- function() {
+empty_sensitivity_crosswalk <- function() {
   data.frame(
     source_row_id = character(), wave = character(), source_code = character(),
     target_unit_2001 = character(), weight = numeric(), basis = character(),
@@ -82,15 +82,15 @@ empty_sensitivity_crosswalk_v2 <- function() {
   )
 }
 
-build_sensitivity_crosswalk_v2 <- function(
-  primary_crosswalk, allocation_weights, primary_eligibility = data.frame()
+build_sensitivity_crosswalk <- function(
+  primary_crosswalk, allocation_weights, conservative_eligibility = data.frame()
 ) {
   primary <- safe_df(primary_crosswalk)
   allocations <- safe_df(allocation_weights)
-  eligibility <- safe_df(primary_eligibility)
+  eligibility <- safe_df(conservative_eligibility)
   eligibility_cols <- c(
     "source_row_id", "wave", "source_code", "terminal_unit",
-    "status", "eligible_primary"
+    "status", "eligible_conservative"
   )
   for (nm in setdiff(eligibility_cols, names(eligibility))) {
     eligibility[[nm]] <- rep(NA, nrow(eligibility))
@@ -114,7 +114,7 @@ build_sensitivity_crosswalk_v2 <- function(
   accepted <- allocations$status %in% "accepted"
   allocatable <- eligibility[
     eligibility$status %in% "accepted" &
-      eligibility$eligible_primary %in% FALSE &
+      eligibility$eligible_conservative %in% FALSE &
       !is.na(eligibility$terminal_unit) &
       nzchar(eligibility$terminal_unit),
     c("source_row_id", "wave", "source_code", "terminal_unit"),
@@ -153,7 +153,7 @@ build_sensitivity_crosswalk_v2 <- function(
   }
 
   out <- safe_bind_rows(pieces)
-  if (!nrow(out)) return(empty_sensitivity_crosswalk_v2())
+  if (!nrow(out)) return(empty_sensitivity_crosswalk())
   if (any(!is.finite(out$weight) | out$weight < 0)) {
     stop("Sensitivity crosswalk weights must be finite and nonnegative.", call. = FALSE)
   }
@@ -171,11 +171,11 @@ build_sensitivity_crosswalk_v2 <- function(
   out
 }
 
-read_production_mapping_reviews_v2 <- function(x) {
+read_legacy_mapping_reviews <- function(x) {
   x <- safe_df(x)
   required <- c(
     "review_id", "source_row_id", "review_scope",
-    "v2_target_unit_2001", "production_target_unit_2001",
+    "conservative_target_unit_2001", "legacy_target_unit_2001",
     "decision", "source_id", "status", "note"
   )
   for (nm in setdiff(required, names(x))) {
@@ -183,14 +183,14 @@ read_production_mapping_reviews_v2 <- function(x) {
   }
   x <- x[!is.na(x$review_id) & nzchar(x$review_id), required, drop = FALSE]
   if (anyDuplicated(x$review_id)) {
-    stop("Production mapping reviews must have unique review_id values.", call. = FALSE)
+    stop("Legacy mapping reviews must have unique review_id values.", call. = FALSE)
   }
   invalid <- unique(x$status[!x$status %in% c(
     "accepted", "excluded", "needs_review"
   )])
   if (length(invalid)) {
     stop(
-      "Unknown production mapping review status: ",
+      "Unknown legacy mapping review status: ",
       paste(invalid, collapse = ", "),
       call. = FALSE
     )
@@ -198,24 +198,24 @@ read_production_mapping_reviews_v2 <- function(x) {
   x
 }
 
-empty_production_comparison_v2 <- function() {
+empty_legacy_comparison <- function() {
   data.frame(
     source_row_id = character(), wave = character(), source_code = character(),
-    v2_target_unit_2001 = character(), production_target_unit_2001 = character(),
+    conservative_target_unit_2001 = character(), legacy_target_unit_2001 = character(),
     comparison_status = character(), review_decision = character(),
     review_status = character(), stringsAsFactors = FALSE
   )
 }
 
-build_production_crosswalk_comparison_v2 <- function(
-  primary_crosswalk, production_panel, reviews = data.frame()
+build_legacy_crosswalk_comparison <- function(
+  primary_crosswalk, legacy_panel, reviews = data.frame()
 ) {
   x <- safe_df(primary_crosswalk)
-  panel <- safe_df(production_panel)
-  reviews <- read_production_mapping_reviews_v2(reviews)
-  if (!nrow(x)) return(empty_production_comparison_v2())
+  panel <- safe_df(legacy_panel)
+  reviews <- read_legacy_mapping_reviews(reviews)
+  if (!nrow(x)) return(empty_legacy_comparison())
 
-  production_for_wave <- function(wave) {
+  legacy_for_wave <- function(wave) {
     code_col <- if (identical(wave, "nss_2007_08")) {
       "district_code_0708"
     } else {
@@ -224,14 +224,14 @@ build_production_crosswalk_comparison_v2 <- function(
     if (!all(c(code_col, "district_panel_id") %in% names(panel))) {
       return(data.frame(
         source_code = character(),
-        production_target_unit_2001 = character(),
-        production_mapping_count = integer(),
+        legacy_target_unit_2001 = character(),
+        legacy_mapping_count = integer(),
         stringsAsFactors = FALSE
       ))
     }
     raw <- unique(data.frame(
       source_code = plain_chr(panel[[code_col]]),
-      production_target_unit_2001 =
+      legacy_target_unit_2001 =
         sub("^2001__", "pc2001__", plain_chr(panel$district_panel_id)),
       stringsAsFactors = FALSE
     ))
@@ -239,20 +239,20 @@ build_production_crosswalk_comparison_v2 <- function(
     if (!nrow(raw)) {
       return(data.frame(
         source_code = character(),
-        production_target_unit_2001 = character(),
-        production_mapping_count = integer(),
+        legacy_target_unit_2001 = character(),
+        legacy_mapping_count = integer(),
         stringsAsFactors = FALSE
       ))
     }
-    groups <- split(raw$production_target_unit_2001, raw$source_code)
+    groups <- split(raw$legacy_target_unit_2001, raw$source_code)
     data.frame(
       source_code = names(groups),
-      production_target_unit_2001 = vapply(
+      legacy_target_unit_2001 = vapply(
         groups,
         function(z) if (length(unique(z)) == 1L) unique(z) else NA_character_,
         character(1)
       ),
-      production_mapping_count = vapply(
+      legacy_mapping_count = vapply(
         groups, function(z) length(unique(z)), integer(1)
       ),
       stringsAsFactors = FALSE
@@ -262,25 +262,25 @@ build_production_crosswalk_comparison_v2 <- function(
   groups <- split(seq_len(nrow(x)), x$wave)
   out <- safe_bind_rows(lapply(names(groups), function(wave) {
     rows <- x[groups[[wave]], , drop = FALSE]
-    current <- production_for_wave(wave)
+    current <- legacy_for_wave(wave)
     rows <- merge(rows, current, by = "source_code", all.x = TRUE, sort = FALSE)
-    rows$production_mapping_count[
-      is.na(rows$production_mapping_count)
+    rows$legacy_mapping_count[
+      is.na(rows$legacy_mapping_count)
     ] <- 0L
     data.frame(
       source_row_id = rows$source_row_id,
       wave = rows$wave,
       source_code = rows$source_code,
-      v2_target_unit_2001 = rows$target_unit_2001,
-      production_target_unit_2001 = rows$production_target_unit_2001,
+      conservative_target_unit_2001 = rows$target_unit_2001,
+      legacy_target_unit_2001 = rows$legacy_target_unit_2001,
       comparison_status = ifelse(
-        rows$production_mapping_count > 1L,
-        "ambiguous_production_mapping",
+        rows$legacy_mapping_count > 1L,
+        "ambiguous_legacy_mapping",
         ifelse(
-          is.na(rows$production_target_unit_2001),
-          "missing_from_production_panel",
+          is.na(rows$legacy_target_unit_2001),
+          "missing_from_legacy_panel",
           ifelse(
-            rows$target_unit_2001 == rows$production_target_unit_2001,
+            rows$target_unit_2001 == rows$legacy_target_unit_2001,
             "same_target",
             "changed_target"
           )
@@ -303,16 +303,16 @@ build_production_crosswalk_comparison_v2 <- function(
   )
   out$review_status[
     out$comparison_status %in% c(
-      "same_target", "missing_from_production_panel"
+      "same_target", "missing_from_legacy_panel"
     )
   ] <- "not_required"
   out$review_decision[
-    out$comparison_status %in% "missing_from_production_panel"
+    out$comparison_status %in% "missing_from_legacy_panel"
   ] <- "coverage_addition"
   out
 }
 
-empty_geometry_carrybacks_v2 <- function() {
+empty_geometry_carrybacks <- function() {
   data.frame(
     target_unit_2001 = character(), source_unit_2011 = character(),
     source_id = character(), status = character(), note = character(),
@@ -320,7 +320,7 @@ empty_geometry_carrybacks_v2 <- function() {
   )
 }
 
-read_geometry_carrybacks_v2 <- function(x) {
+read_geometry_carrybacks <- function(x) {
   x <- safe_df(x)
   required <- c(
     "target_unit_2001", "source_unit_2011", "source_id", "status", "note"
@@ -331,7 +331,7 @@ read_geometry_carrybacks_v2 <- function(x) {
     required,
     drop = FALSE
   ]
-  if (!nrow(x)) return(empty_geometry_carrybacks_v2())
+  if (!nrow(x)) return(empty_geometry_carrybacks())
   if (anyDuplicated(x$target_unit_2001)) {
     stop("Geometry carry-backs must have unique 2001 target units.", call. = FALSE)
   }
@@ -362,7 +362,7 @@ read_geometry_carrybacks_v2 <- function(x) {
   x
 }
 
-district_geometry_unit_ids_2011_v2 <- function(geometry_2011) {
+district_geometry_unit_ids_2011 <- function(geometry_2011) {
   need_pkg("sf", "Census 2011 district geometry carry-backs")
   if (!inherits(geometry_2011, "sf")) {
     stop("Census 2011 district geometry must be an sf object.", call. = FALSE)
@@ -384,7 +384,7 @@ district_geometry_unit_ids_2011_v2 <- function(geometry_2011) {
   )
 }
 
-as_unit_geometry_v2 <- function(x, unit_id = x$unit_id) {
+as_unit_geometry <- function(x, unit_id = x$unit_id) {
   need_pkg("sf", "district geometry schema normalization")
   if (!inherits(x, "sf")) {
     stop("District geometry must be an sf object.", call. = FALSE)
@@ -403,11 +403,11 @@ as_unit_geometry_v2 <- function(x, unit_id = x$unit_id) {
   )
 }
 
-apply_geometry_carrybacks_v2 <- function(
+apply_geometry_carrybacks <- function(
   geometry_2001, geometry_2011, carrybacks
 ) {
   need_pkg("sf", "Census 2001 geometry carry-backs")
-  carrybacks <- read_geometry_carrybacks_v2(carrybacks)
+  carrybacks <- read_geometry_carrybacks(carrybacks)
   carrybacks <- carrybacks[carrybacks$status %in% "accepted", , drop = FALSE]
   if (!nrow(carrybacks)) return(geometry_2001)
   if (!inherits(geometry_2001, "sf") || !inherits(geometry_2011, "sf")) {
@@ -422,7 +422,7 @@ apply_geometry_carrybacks_v2 <- function(
   ]
   if (!nrow(carrybacks)) return(geometry_2001)
 
-  source_ids <- district_geometry_unit_ids_2011_v2(geometry_2011)
+  source_ids <- district_geometry_unit_ids_2011(geometry_2011)
   source_rows <- match(carrybacks$source_unit_2011, source_ids)
   if (anyNA(source_rows)) {
     stop(
@@ -438,20 +438,20 @@ apply_geometry_carrybacks_v2 <- function(
     additions <- sf::st_transform(additions, sf::st_crs(geometry_2001))
   }
 
-  base <- as_unit_geometry_v2(geometry_2001)
-  additions <- as_unit_geometry_v2(
+  base <- as_unit_geometry(geometry_2001)
+  additions <- as_unit_geometry(
     additions,
     unit_id = carrybacks$target_unit_2001
   )
   out <- rbind(base, additions)
-  out <- make_valid_sf_v2(out)
+  out <- make_valid_sf(out)
   if (anyDuplicated(out$unit_id)) {
     stop("Geometry carry-backs produced duplicate Census 2001 units.", call. = FALSE)
   }
   out
 }
 
-read_zipped_gpkg_v2 <- function(path) {
+read_zipped_gpkg <- function(path) {
   need_pkg("sf", "zipped SHRID geometry")
   if (!file.exists(path)) {
     stop("Missing SHRID geometry archive: ", path, call. = FALSE)
@@ -473,9 +473,9 @@ read_zipped_gpkg_v2 <- function(path) {
   sf::st_read(gpkg, quiet = TRUE)
 }
 
-save_lineage_geometry_2001_v2 <- function(
+save_lineage_geometry_2001 <- function(
   geometry_2001, admin_2001,
-  path = "outputs/derived/district_lineage_v2/district_2001.gpkg"
+  path = "outputs/derived/district_lineage/district_2001.gpkg"
 ) {
   need_pkg("sf", "Census 2001 district geometry output")
   if (!inherits(geometry_2001, "sf") || !nrow(geometry_2001)) {
@@ -484,13 +484,13 @@ save_lineage_geometry_2001_v2 <- function(
   dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
   if (file.exists(path)) unlink(path)
   sf::st_write(geometry_2001, path, quiet = TRUE)
-  qa <- geometry_qa_v2(geometry_2001, admin_2001)
+  qa <- geometry_qa(geometry_2001, admin_2001)
   qa_path <- file.path(dirname(path), "district_2001_qa.csv")
   utils::write.csv(qa, qa_path, row.names = FALSE, na = "")
   c(path, qa_path)
 }
 
-make_valid_sf_v2 <- function(x) {
+make_valid_sf <- function(x) {
   need_pkg("sf", "district geometry validity repair")
   if (!inherits(x, "sf") || !nrow(x)) return(x)
 
@@ -503,7 +503,7 @@ make_valid_sf_v2 <- function(x) {
   x
 }
 
-dissolve_shrid_geometry_2001_v2 <- function(shrid_geometry, bridge) {
+dissolve_shrid_geometry_2001 <- function(shrid_geometry, bridge) {
   need_pkg("sf", "Census 2001 district geometry construction")
   geometry <- safe_df(shrid_geometry)
   bridge <- safe_df(bridge)
@@ -531,7 +531,7 @@ dissolve_shrid_geometry_2001_v2 <- function(shrid_geometry, bridge) {
   if (!nrow(joined)) {
     return(joined)
   }
-  joined <- make_valid_sf_v2(joined)
+  joined <- make_valid_sf(joined)
   joined$unit_id <- paste0(
     "pc2001__", joined$state_code_2001, "__", joined$district_code_2001
   )
@@ -543,7 +543,7 @@ dissolve_shrid_geometry_2001_v2 <- function(shrid_geometry, bridge) {
     do_union = TRUE
   )
   out$.member <- NULL
-  out <- make_valid_sf_v2(out)
+  out <- make_valid_sf(out)
   valid <- sf::st_is_valid(out)
   invalid <- is.na(valid) | !valid
   if (any(invalid)) {
@@ -557,7 +557,7 @@ dissolve_shrid_geometry_2001_v2 <- function(shrid_geometry, bridge) {
   out["unit_id"]
 }
 
-geometry_unit_coverage_v2 <- function(geometry_2001, admin_2001) {
+geometry_unit_coverage <- function(geometry_2001, admin_2001) {
   admin <- safe_df(admin_2001)
   expected <- unique(admin[c(
     "unit_id", "state_code", "district_code", "state_std", "district_std"
@@ -594,9 +594,9 @@ geometry_unit_coverage_v2 <- function(geometry_2001, admin_2001) {
   expected
 }
 
-geometry_qa_v2 <- function(geometry_2001, admin_2001) {
+geometry_qa <- function(geometry_2001, admin_2001) {
   need_pkg("sf", "Census 2001 district geometry validation")
-  coverage <- geometry_unit_coverage_v2(geometry_2001, admin_2001)
+  coverage <- geometry_unit_coverage(geometry_2001, admin_2001)
   available <- inherits(geometry_2001, "sf") && nrow(geometry_2001) > 0L
   valid <- if (available) sf::st_is_valid(geometry_2001) else logical()
 
@@ -617,10 +617,10 @@ geometry_qa_v2 <- function(geometry_2001, admin_2001) {
   )
 }
 
-accepted_sensitivity_mapping_status_v2 <- function(
-  primary_eligibility, sensitivity_crosswalk
+accepted_sensitivity_mapping_status <- function(
+  conservative_eligibility, sensitivity_crosswalk
 ) {
-  eligibility <- safe_df(primary_eligibility)
+  eligibility <- safe_df(conservative_eligibility)
   sensitivity <- safe_df(sensitivity_crosswalk)
 
   accepted_ids <- unique(stats::na.omit(
@@ -638,155 +638,86 @@ accepted_sensitivity_mapping_status_v2 <- function(
   )
 }
 
-lineage_completion_steps_v2 <- function(
+lineage_completion_steps <- function(
   source_roster, source_matches, adjudication_queue, evidence_requests,
-  allocation_validation, allocation_weights, primary_crosswalk,
-  sensitivity_crosswalk, production_comparison, geometry_qa, readiness,
-  production_reviews = data.frame(),
-  primary_eligibility = data.frame()
+  allocation_validation, allocation_weights, conservative_crosswalk,
+  primary_crosswalk, full_reviewed_crosswalk, geometry_qa,
+  conservative_eligibility = data.frame()
 ) {
   roster <- safe_df(source_roster)
   matches <- safe_df(source_matches)
   queue <- safe_df(adjudication_queue)
   evidence <- safe_df(evidence_requests)
-  allocation_validation <- safe_df(allocation_validation)
-  allocation_weights <- safe_df(allocation_weights)
+  conservative <- safe_df(conservative_crosswalk)
   primary <- safe_df(primary_crosswalk)
-  sensitivity <- safe_df(sensitivity_crosswalk)
-  comparison <- safe_df(production_comparison)
+  full_reviewed <- safe_df(full_reviewed_crosswalk)
   geometry_qa <- safe_df(geometry_qa)
-  readiness <- safe_df(readiness)
-  sensitivity_mapping_status <- accepted_sensitivity_mapping_status_v2(
-    primary_eligibility, sensitivity
-  )
 
-  resolved_ids <- unique(matches$source_row_id[
-    matches$status %in% c("accepted", "excluded")
-  ])
+  resolved_ids <- unique(matches$source_row_id[matches$status %in% c("accepted", "excluded")])
   roster_ids <- unique(roster$source_row_id)
-  fuzzy_class <- queue$review_class %in% c(
+  fuzzy_open <- queue$review_class %in% c(
     "high_precision_fuzzy_candidate", "fuzzy_candidates", "no_candidate"
+  ) & !(queue$adjudication_status %in% c("accepted", "excluded"))
+
+  reviewed_validation <- validate_adjudicated_allocation_weights(allocation_weights)
+  allocation_status <- allocation_coverage_status(
+    allocation_validation, reviewed_validation,
+    allocation_decision_status(allocation_weights)
   )
-  fuzzy_open <- fuzzy_class &
-    !(queue$adjudication_status %in% c("accepted", "excluded"))
-  adjudicated_allocation_validation <-
-    validate_adjudicated_allocation_weights_v2(allocation_weights)
-  allocation_status <- allocation_coverage_status_v2(
-    allocation_validation,
-    adjudicated_allocation_validation,
-    allocation_decision_status_v2(allocation_weights)
+  mapping_status <- accepted_sensitivity_mapping_status(
+    conservative_eligibility, full_reviewed
   )
-  allocation_gaps_resolved <- allocation_status$coverage_resolved[[1]]
   geometry_value <- function(metric, default = NA_real_) {
     value <- geometry_qa$value[geometry_qa$metric == metric]
     if (length(value)) value[[1]] else default
   }
-  geometry_available <- isTRUE(as.logical(geometry_value(
-    "geometry_available", FALSE
-  )))
-  geometry_complete <- geometry_available &&
-    all(vapply(
-      c("missing_admin_units", "unexpected_geometry_units", "invalid_geometries"),
-      function(metric) isTRUE(as.numeric(geometry_value(metric, Inf)) == 0),
-      logical(1)
-    ))
-  geometry_observed <- if (!geometry_available) {
-    "not constructed from local SHRID polygons"
-  } else {
-    paste0(
-      geometry_value("geometry_rows", 0), "/",
-      geometry_value("expected_admin_units", 0), " expected districts; ",
-      geometry_value("missing_admin_units", 0), " missing; ",
-      geometry_value("unexpected_geometry_units", 0), " unexpected; ",
-      geometry_value("invalid_geometries", 0), " invalid"
-    )
-  }
-  geometry_next_action <- if (!geometry_available) {
-    "Run the canonical audit with extended diagnostics to build the local derived GeoPackage."
-  } else if (!geometry_complete) {
-    "Inspect geometry_2001_unit_coverage.csv and resolve missing or unexpected district coverage."
-  } else {
-    "Geometry construction and QA are complete."
-  }
-  migration_ready <- any(
-    readiness$gate == "production_crosswalk_migration_ready" &
-      readiness$passed %in% TRUE
-  )
-  production_reviews <- read_production_mapping_reviews_v2(
-    production_reviews
-  )
-  downstream_reviewed <- any(
-    production_reviews$review_scope %in% "downstream_results" &
-      production_reviews$status %in% "accepted"
-  )
+  geometry_available <- isTRUE(as.logical(geometry_value("geometry_available", FALSE)))
+  geometry_complete <- geometry_available && all(vapply(
+    c("missing_admin_units", "unexpected_geometry_units", "invalid_geometries"),
+    function(metric) isTRUE(as.numeric(geometry_value(metric, Inf)) == 0),
+    logical(1)
+  ))
 
   data.frame(
-    step = seq_len(9L),
+    step = seq_len(6L),
     work_item = c(
-      "Review deterministic identities and populate source adjudications",
-      "Resolve fuzzy source identities",
-      "Review targeted administrative-event evidence",
-      "Resolve incomplete SHRID source-unit coverage",
+      "Adjudicate every NSS district identity",
+      "Resolve open fuzzy identities and evidence requests",
+      "Validate reviewed allocation weights",
       "Construct and validate Census 2001 geometry",
-      "Build preferred and sensitivity source crosswalks",
-      "Compare v2 mappings with the production panel",
-      "Review changed observations and estimates",
-      "Migrate the production crosswalk deliberately"
+      "Build the conservative, primary, and full reviewed crosswalks",
+      "Verify complete accepted-identity coverage"
     ),
     complete = c(
       length(roster_ids) > 0L && setequal(resolved_ids, roster_ids),
-      !any(fuzzy_open & !(queue$adjudication_status %in% c("accepted", "excluded"))),
-      nrow(evidence) == 0L,
-      allocation_gaps_resolved,
+      !any(fuzzy_open) && nrow(evidence) == 0L,
+      allocation_status$coverage_resolved[[1]],
       geometry_complete,
-      nrow(primary) > 0L &&
-        nrow(sensitivity) >= nrow(primary) &&
-        sensitivity_mapping_status$coverage_complete[[1L]],
-      nrow(primary) > 0L && nrow(comparison) == nrow(primary),
-      nrow(comparison) > 0L &&
-        all(
-          comparison$comparison_status != "changed_target" |
-            comparison$review_status %in% "accepted"
-        ) &&
-        downstream_reviewed,
-      migration_ready
+      nrow(conservative) > 0L && nrow(primary) >= nrow(conservative) &&
+        nrow(full_reviewed) >= nrow(primary),
+      mapping_status$coverage_complete[[1L]]
     ),
     observed = c(
       paste0(length(intersect(resolved_ids, roster_ids)), "/", length(roster_ids), " resolved"),
-      paste0(sum(fuzzy_open), " fuzzy or missing candidates open"),
-      paste0(nrow(evidence), " targeted evidence requests"),
-      paste0(
-        allocation_status$n_unresolved[[1]],
-        " unresolved SHRID source-unit allocations after reviewed decisions"
-      ),
-      geometry_observed,
-      paste0(
-        nrow(primary), " preferred rows; ",
-        nrow(sensitivity), " sensitivity rows; ",
-        sensitivity_mapping_status$n_mapped[[1L]], "/",
-        sensitivity_mapping_status$n_accepted[[1L]],
-        " accepted identities mapped"
-      ),
-      paste0(nrow(comparison), " source mappings compared"),
-      paste0(
-        sum(comparison$comparison_status == "changed_target"),
-        " changed targets reviewed; ",
-        sum(comparison$comparison_status == "missing_from_production_panel"),
-        " coverage additions; downstream review ",
-        if (downstream_reviewed) "accepted" else "pending"
-      ),
-      if (migration_ready) "all gates pass" else "migration gates remain blocked"
+      paste0(sum(fuzzy_open), " fuzzy identities and ", nrow(evidence), " evidence requests open"),
+      paste0(allocation_status$n_unresolved[[1]], " unresolved source-unit allocations"),
+      if (geometry_available) paste0(
+        geometry_value("geometry_rows", 0), "/",
+        geometry_value("expected_admin_units", 0), " expected districts; ",
+        geometry_value("missing_admin_units", 0), " missing; ",
+        geometry_value("unexpected_geometry_units", 0), " unexpected; ",
+        geometry_value("invalid_geometries", 0), " invalid"
+      ) else "geometry not constructed",
+      paste0(nrow(conservative), " conservative; ", nrow(primary), " primary; ", nrow(full_reviewed), " full reviewed rows"),
+      paste0(mapping_status$n_mapped[[1L]], "/", mapping_status$n_accepted[[1L]], " accepted identities mapped")
     ),
     next_action = c(
-      "Review adjudication_draft.csv and copy verified decisions into district_adjudications_v2.csv.",
-      "Use official rename or boundary evidence; accept, exclude, or retain needs_review.",
-      "Record accepted or rejected edges in district_admin_events_v2.csv with registered source IDs.",
-      "Resolve only SHRID source units with incomplete or invalid transition mass in district_allocation_weights_v2.csv.",
-      geometry_next_action,
-      "Resolve terminal units in downstream_unmapped_terminal_queue.csv; use downstream_unmapped_identity_queue.csv for identity-level traceability, then regenerate the connected sensitivity crosswalk.",
-      "Inspect production_crosswalk_comparison.csv after preferred mappings exist.",
-      "Inspect the shared-support results and downstream_panel_membership_adjudication.csv; record an explicit downstream results decision after the automatically classified membership changes are reviewed.",
-      "Replace the inherited crosswalk only after every migration gate passes and changes are reviewed."
+      "Resolve any remaining rows in the adjudication ledger.",
+      "Use registered official evidence to close the remaining review queue.",
+      "Correct or explicitly reject any incomplete allocation.",
+      "Inspect geometry_2001_unit_coverage.csv for missing, unexpected, or invalid units.",
+      "Keep panel-role definitions monotone and evidence based.",
+      "Record an explicit exclusion for any accepted identity that cannot be mapped."
     ),
     stringsAsFactors = FALSE
   )

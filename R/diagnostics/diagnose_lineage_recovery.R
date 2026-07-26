@@ -1,15 +1,15 @@
-lineage_v2_recovery_class <- function(eligibility) {
+lineage_recovery_class <- function(eligibility) {
   x <- safe_df(eligibility)
   if (!nrow(x)) return(character())
   ifelse(
-    x$eligible_primary %in% TRUE,
+    x$eligible_conservative %in% TRUE,
     "preferred_mapping",
     ifelse(
       x$exclusion_reason %in% "documented_exclusion",
       "documented_survey_or_lineage_exclusion",
       ifelse(
-        x$exclusion_reason %in% "dominant_parent_near_complete_requires_review",
-        "dominant_parent_near_complete",
+        x$exclusion_reason %in% "primary_near_complete_requires_review",
+        "primary_near_complete",
         ifelse(
           x$exclusion_reason %in% "multi_parent_allocation_sensitivity_only",
           "multi_parent_fractional_mapping",
@@ -24,34 +24,34 @@ lineage_v2_recovery_class <- function(eligibility) {
   )
 }
 
-build_lineage_v2_identity_reclassification <- function(eligibility) {
+build_lineage_identity_reclassification <- function(eligibility) {
   x <- safe_df(eligibility)
   required <- c(
     "source_row_id", "wave", "source_code", "raw_state", "raw_district",
-    "status", "eligible_primary", "target_unit_2001", "exclusion_reason",
+    "status", "eligible_conservative", "target_unit_2001", "exclusion_reason",
     "allocation_target_count", "allocation_weight_sum", "allocation_basis",
     "allocation_source_id"
   )
-  x <- ensure_columns_v2(x, required)
-  x$recovery_class <- lineage_v2_recovery_class(x)
+  x <- ensure_columns(x, required)
+  x$recovery_class <- lineage_recovery_class(x)
   x$recommended_panel <- ifelse(
     x$recovery_class %in% "preferred_mapping", "preferred",
     ifelse(
-      x$recovery_class %in% c("dominant_parent_near_complete", "multi_parent_fractional_mapping"),
+      x$recovery_class %in% c("primary_near_complete", "multi_parent_fractional_mapping"),
       "sensitivity",
       "excluded"
     )
   )
   out <- x[c(
     "source_row_id", "wave", "source_code", "raw_state", "raw_district",
-    "status", "eligible_primary", "target_unit_2001", "exclusion_reason",
+    "status", "eligible_conservative", "target_unit_2001", "exclusion_reason",
     "recovery_class", "recommended_panel", "allocation_target_count",
     "allocation_weight_sum", "allocation_basis", "allocation_source_id"
   )]
   out[order(out$wave, out$raw_state, out$raw_district), , drop = FALSE]
 }
 
-build_lineage_v2_multi_parent_review_queue <- function(
+build_lineage_multi_parent_review_queue <- function(
   reclassification, sensitivity_crosswalk
 ) {
   rec <- safe_df(reclassification)
@@ -95,17 +95,17 @@ build_lineage_v2_multi_parent_review_queue <- function(
   )]
 }
 
-build_lineage_v2_district_loss_audit <- function(
+build_lineage_district_loss_audit <- function(
   admin_2001, source_roster, eligibility, primary_crosswalk,
   sensitivity_crosswalk
 ) {
   admin <- safe_df(admin_2001)
   roster <- safe_df(source_roster)
   eligibility <- safe_df(eligibility)
-  primary <- safe_df(primary_crosswalk)
-  sensitivity <- safe_df(sensitivity_crosswalk)
+  conservative <- safe_df(conservative_crosswalk)
+  full_reviewed <- safe_df(full_reviewed_crosswalk)
   required <- c("unit_id", "state_code", "district_code")
-  admin <- ensure_columns_v2(admin, required)
+  admin <- ensure_columns(admin, required)
   out <- admin[required]
   names(out)[1] <- "target_unit_2001"
 
@@ -143,7 +143,7 @@ build_lineage_v2_district_loss_audit <- function(
   out
 }
 
-build_lineage_v2_rule_sensitivity <- function(primary_crosswalk, sensitivity_crosswalk, eligibility) {
+build_lineage_rule_sensitivity <- function(primary_crosswalk, sensitivity_crosswalk, eligibility) {
   primary <- safe_df(primary_crosswalk)
   sensitivity <- safe_df(sensitivity_crosswalk)
   eligibility <- safe_df(eligibility)
@@ -160,7 +160,7 @@ build_lineage_v2_rule_sensitivity <- function(primary_crosswalk, sensitivity_cro
   ]
   variants <- list(
     preferred = primary_min,
-    preferred_plus_dominant_parent = unique(rbind(
+    preferred_plus_primary = unique(rbind(
       primary_min,
       sensitivity_min[sensitivity_min$source_row_id %in% dominant_ids, , drop = FALSE]
     )),
@@ -186,7 +186,7 @@ build_lineage_v2_rule_sensitivity <- function(primary_crosswalk, sensitivity_cro
   }))
 }
 
-build_lineage_v2_recovery_gates <- function(loss_audit, reclassification) {
+build_lineage_recovery_gates <- function(loss_audit, reclassification) {
   loss <- safe_df(loss_audit)
   rec <- safe_df(reclassification)
   data.frame(
@@ -200,14 +200,14 @@ build_lineage_v2_recovery_gates <- function(loss_audit, reclassification) {
       nrow(loss) == 593L && !anyDuplicated(loss$target_unit_2001),
       !any(rec$exclusion_reason %in% "geographic_transition_non_nested_or_incomplete", na.rm = TRUE),
       all(!is.na(rec$recovery_class) & nzchar(rec$recovery_class)),
-      all(!(rec$recovery_class %in% "multi_parent_fractional_mapping") | !(rec$eligible_primary %in% TRUE))
+      all(!(rec$recovery_class %in% "multi_parent_fractional_mapping") | !(rec$eligible_conservative %in% TRUE))
     ),
     stringsAsFactors = FALSE
   )
 }
 
 
-empty_dominant_parent_reviews_v2 <- function() {
+empty_primary_reviews <- function() {
   data.frame(
     source_row_id = character(), wave = character(), source_code = character(),
     raw_state = character(), raw_district = character(), terminal_unit = character(),
@@ -218,10 +218,10 @@ empty_dominant_parent_reviews_v2 <- function() {
   )
 }
 
-read_dominant_parent_reviews_v2 <- function(x) {
+read_primary_reviews <- function(x) {
   x <- safe_df(x)
-  if (!nrow(x)) return(empty_dominant_parent_reviews_v2())
-  required <- names(empty_dominant_parent_reviews_v2())
+  if (!nrow(x)) return(empty_primary_reviews())
+  required <- names(empty_primary_reviews())
   missing <- setdiff(required, names(x))
   if (length(missing)) {
     stop("Dominant-parent reviews are missing: ", paste(missing, collapse = ", "), call. = FALSE)
@@ -230,7 +230,7 @@ read_dominant_parent_reviews_v2 <- function(x) {
   if (anyDuplicated(x$source_row_id)) {
     stop("Dominant-parent reviews must contain one row per source identity.", call. = FALSE)
   }
-  accepted <- x$review_status %in% "accepted_dominant_parent"
+  accepted <- x$review_status %in% "accepted_primary"
   invalid <- accepted & (
     !(x$wave %in% "nss_2017_18") |
       !grepl("^pc2011__", x$terminal_unit) |
@@ -243,18 +243,18 @@ read_dominant_parent_reviews_v2 <- function(x) {
   x
 }
 
-build_dominant_parent_source_crosswalk_v2 <- function(
-  primary_crosswalk, sensitivity_crosswalk, reviews
+build_primary_source_crosswalk <- function(
+  conservative_crosswalk, full_reviewed_crosswalk, reviews
 ) {
   primary <- safe_df(primary_crosswalk)
   sensitivity <- safe_df(sensitivity_crosswalk)
-  reviews <- read_dominant_parent_reviews_v2(reviews)
-  accepted <- reviews[reviews$review_status %in% "accepted_dominant_parent", c(
+  reviews <- read_primary_reviews(reviews)
+  accepted <- reviews[reviews$review_status %in% "accepted_primary", c(
     "source_row_id", "target_unit_2001"
   ), drop = FALSE]
 
   reviewed <- merge(
-    sensitivity, accepted,
+    full_reviewed, accepted,
     by = c("source_row_id", "target_unit_2001"),
     all = FALSE, sort = FALSE
   )
@@ -272,31 +272,31 @@ build_dominant_parent_source_crosswalk_v2 <- function(
     )
   }
 
-  keep <- unique(c(primary$source_row_id, reviewed$source_row_id))
-  out <- sensitivity[sensitivity$source_row_id %in% keep, , drop = FALSE]
-  missing_primary <- setdiff(primary$source_row_id, out$source_row_id)
+  keep <- unique(c(conservative$source_row_id, reviewed$source_row_id))
+  out <- full_reviewed[full_reviewed$source_row_id %in% keep, , drop = FALSE]
+  missing_primary <- setdiff(conservative$source_row_id, out$source_row_id)
   if (length(missing_primary)) {
     stop("Sensitivity crosswalk is missing conservative source identities.", call. = FALSE)
   }
   if (anyDuplicated(out$source_row_id)) {
     stop("Dominant-parent crosswalk must contain one row per source identity.", call. = FALSE)
   }
-  out$panel_variant <- "dominant_parent"
+  out$panel_variant <- "primary"
   out
 }
 
-build_lineage_v2_panel_variant_summary <- function(
+build_lineage_panel_variant_summary <- function(
   primary_crosswalk, dominant_crosswalk, sensitivity_crosswalk,
   dominant_reviews
 ) {
   variants <- list(
     conservative_preferred = safe_df(primary_crosswalk),
-    dominant_parent = safe_df(dominant_crosswalk),
+    primary = safe_df(dominant_crosswalk),
     full_reviewed_sensitivity = safe_df(sensitivity_crosswalk)
   )
   descriptions <- c(
     conservative_preferred = "Deterministic official, registry, alias, and reviewed single-parent mappings only.",
-    dominant_parent = "Conservative mappings plus reviewed 2017-18 single-parent allocations with at least 99 percent SHRUG coverage and corroborating LGD or India State Stories evidence.",
+    primary = "Conservative mappings plus reviewed 2017-18 single-parent allocations with at least 99 percent SHRUG coverage and corroborating LGD or India State Stories evidence.",
     full_reviewed_sensitivity = "Dominant-parent mappings plus reviewed multi-parent fractional allocations; robustness specification only."
   )
   safe_bind_rows(lapply(names(variants), function(name) {
@@ -314,8 +314,8 @@ build_lineage_v2_panel_variant_summary <- function(
       target_districts_2007_08 = length(target_sets$nss_2007_08 %||% character()),
       target_districts_2017_18 = length(target_sets$nss_2017_18 %||% character()),
       two_wave_target_districts = overlap,
-      accepted_dominant_parent_reviews = if (name == "dominant_parent") {
-        sum(safe_df(dominant_reviews)$review_status %in% "accepted_dominant_parent")
+      accepted_primary_reviews = if (name == "primary") {
+        sum(safe_df(dominant_reviews)$review_status %in% "accepted_primary")
       } else 0L,
       description = descriptions[[name]],
       stringsAsFactors = FALSE

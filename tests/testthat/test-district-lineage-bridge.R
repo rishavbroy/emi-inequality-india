@@ -130,23 +130,23 @@ test_that("tracked allocation weights require known targets and sum to one", {
     stringsAsFactors = FALSE
   )
 
-  out <- read_adjudicated_allocation_weights_v2(raw, admin)
-  validation <- validate_adjudicated_allocation_weights_v2(out)
+  out <- read_adjudicated_allocation_weights(raw, admin)
+  validation <- validate_adjudicated_allocation_weights(out)
 
   expect_equal(validation$weight_sum, 1)
   expect_true(validation$weights_well_formed)
   expect_true(validation$coverage_complete)
 
   raw$weight <- c(0.25, 0.70)
-  incomplete <- validate_adjudicated_allocation_weights_v2(
-    read_adjudicated_allocation_weights_v2(raw, admin)
+  incomplete <- validate_adjudicated_allocation_weights(
+    read_adjudicated_allocation_weights(raw, admin)
   )
   expect_true(incomplete$weights_well_formed)
   expect_false(incomplete$coverage_complete)
 
   raw$target_2001[[1]] <- "unknown"
   expect_error(
-    read_adjudicated_allocation_weights_v2(raw, admin),
+    read_adjudicated_allocation_weights(raw, admin),
     "unknown 2001 units"
   )
 })
@@ -161,7 +161,7 @@ test_that("accepted tracked allocations reject negative or missing weights", {
   )
 
   expect_error(
-    read_adjudicated_allocation_weights_v2(raw, admin),
+    read_adjudicated_allocation_weights(raw, admin),
     "nonnegative finite weight"
   )
 })
@@ -294,14 +294,14 @@ test_that("Census 2001 registry rejects unknown state codes", {
 
 test_that("allocation coverage rejects malformed nonempty validation tables", {
   expect_error(
-    allocation_coverage_status_v2(
+    allocation_coverage_status(
       data.frame(coverage_complete = TRUE),
       data.frame()
     ),
     class = "lineage_allocation_validation_error"
   )
   expect_error(
-    allocation_coverage_status_v2(
+    allocation_coverage_status(
       data.frame(source_key = "pc2011__01__001", coverage_complete = TRUE),
       data.frame(source_key = "pc2011__01__002")
     ),
@@ -323,7 +323,7 @@ test_that("reviewed allocations resolve only their corresponding coverage gaps",
     stringsAsFactors = FALSE
   )
 
-  status <- allocation_coverage_status_v2(generated, reviewed)
+  status <- allocation_coverage_status(generated, reviewed)
 
   expect_equal(status$n_generated_sources, 3L)
   expect_equal(status$n_reviewed_complete, 1L)
@@ -334,9 +334,9 @@ test_that("reviewed allocations resolve only their corresponding coverage gaps",
 test_that("tracked allocation decisions preserve weights and rejections", {
   root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
   path <- file.path(
-    root, "data", "metadata", "district_allocation_weights_v2.csv"
+    root, "data", "metadata", "district_allocation_weights.csv"
   )
-  decisions <- read_adjudicated_allocation_weights_v2(
+  decisions <- read_adjudicated_allocation_weights(
     read_lineage_source(
       path,
       reader = "allocation_csv",
@@ -353,8 +353,8 @@ test_that("tracked allocation decisions preserve weights and rejections", {
     ,
     drop = FALSE
   ]
-  validation <- validate_adjudicated_allocation_weights_v2(decisions)
-  decision_status <- allocation_decision_status_v2(decisions)
+  validation <- validate_adjudicated_allocation_weights(decisions)
+  decision_status <- allocation_decision_status(decisions)
 
   expect_setequal(
     unique(decisions$status),
@@ -408,17 +408,17 @@ test_that("tracked allocation decisions preserve weights and rejections", {
 
 test_that("allocation source keys use canonical Census unit IDs", {
   expect_identical(
-    canonical_allocation_source_key_v2(
+    canonical_allocation_source_key(
       c("01.001", "1.001", "pc2011__01__001")
     ),
     rep("pc2011__01__001", 3)
   )
   expect_error(
-    canonical_allocation_source_key_v2(c(1.001, 1.01)),
+    canonical_allocation_source_key(c(1.001, 1.01)),
     "must be read as character"
   )
   expect_identical(
-    allocation_source_key_v2(c(1, 27), c(1, 518)),
+    allocation_source_key(c(1, 27), c(1, 518)),
     c("pc2011__01__001", "pc2011__27__518")
   )
 })
@@ -435,7 +435,7 @@ test_that("reviewed allocation coverage matches canonicalized source keys", {
     stringsAsFactors = FALSE
   )
 
-  status <- allocation_coverage_status_v2(generated, reviewed)
+  status <- allocation_coverage_status(generated, reviewed)
 
   expect_equal(status$n_reviewed_complete, 2L)
   expect_equal(status$n_unresolved, 0L)
@@ -454,7 +454,7 @@ test_that("duplicate reviewed rows cannot resolve another source gap", {
     stringsAsFactors = FALSE
   )
 
-  status <- allocation_coverage_status_v2(generated, reviewed)
+  status <- allocation_coverage_status(generated, reviewed)
 
   expect_equal(status$n_reviewed_complete, 1L)
   expect_equal(status$n_unresolved, 1L)
@@ -465,17 +465,17 @@ test_that("tracked accepted allocations resolve every reviewed source gap", {
   root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
   weights <- read_lineage_source(
     file.path(
-      root, "data", "metadata", "district_allocation_weights_v2.csv"
+      root, "data", "metadata", "district_allocation_weights.csv"
     ),
     reader = "allocation_csv",
     source_id = "lineage_allocation_weights"
   )
-  reviewed <- validate_adjudicated_allocation_weights_v2(
-    read_adjudicated_allocation_weights_v2(weights)
+  reviewed <- validate_adjudicated_allocation_weights(
+    read_adjudicated_allocation_weights(weights)
   )
 
-  decisions <- allocation_decision_status_v2(
-    read_adjudicated_allocation_weights_v2(weights)
+  decisions <- allocation_decision_status(
+    read_adjudicated_allocation_weights(weights)
   )
   accepted_sources <- decisions$source_key[
     decisions$decision_status %in% "accepted"
@@ -502,7 +502,7 @@ test_that("allocation CSV reader preserves identifier columns as character", {
     reader = "allocation_csv",
     source_id = "lineage_allocation_weights"
   )
-  parsed <- read_adjudicated_allocation_weights_v2(raw)
+  parsed <- read_adjudicated_allocation_weights(raw)
 
   expect_type(raw$source_unit, "character")
   expect_identical(raw$source_unit, "01.010")
@@ -510,7 +510,7 @@ test_that("allocation CSV reader preserves identifier columns as character", {
 })
 
 test_that("allocation decisions distinguish accepted weights from rejections", {
-  decisions <- allocation_decision_status_v2(data.frame(
+  decisions <- allocation_decision_status(data.frame(
     source_unit = c(
       "pc2011__01__001",
       "pc2011__01__001",
@@ -538,24 +538,24 @@ test_that("rejected allocations cannot fabricate targets or weights", {
   )
 
   expect_error(
-    read_adjudicated_allocation_weights_v2(raw),
+    read_adjudicated_allocation_weights(raw),
     "must not carry targets or weights"
   )
 })
 
 test_that("tracked allocation ledger completes every generated decision", {
   root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
-  weights <- read_adjudicated_allocation_weights_v2(
+  weights <- read_adjudicated_allocation_weights(
     read_lineage_source(
       file.path(
         root, "data", "metadata",
-        "district_allocation_weights_v2.csv"
+        "district_allocation_weights.csv"
       ),
       reader = "allocation_csv",
       source_id = "lineage_allocation_weights"
     )
   )
-  decisions <- allocation_decision_status_v2(weights)
+  decisions <- allocation_decision_status(weights)
 
   expect_setequal(
     decisions$decision_status,
@@ -661,12 +661,12 @@ test_that("reviewed single-parent ancestry can enter the preferred panel", {
     stringsAsFactors = FALSE
   )
 
-  out <- build_primary_mapping_eligibility(
+  out <- build_conservative_mapping_eligibility(
     source_roster, source_matches, data.frame(), admin_2001, admin_2011,
     allocation_weights = weights
   )
 
-  expect_true(out$eligible_primary)
+  expect_true(out$eligible_conservative)
   expect_identical(out$target_unit_2001, "pc2001__20__16")
   expect_identical(out$mapping_class, "deterministic_2011_to_2001")
 })

@@ -1,6 +1,6 @@
-# Review-first source matching and primary-panel eligibility for lineage v2.
+# Review-first source matching and primary-panel eligibility for lineage.
 # Names generate candidates. Only the tracked adjudication ledger can accept a
-# source identity for production migration.
+# source identity for conservative mapping.
 
 normalize_match_text <- function(x) {
   canonicalize_district_name(x)
@@ -35,7 +35,7 @@ district_match_candidate_thresholds <- function() {
   c(jw = 0.90, dl = 0.70, trigram = 0.55, margin = 0.05)
 }
 
-nss64_census2001_unit_id_v2 <- function(source_code) {
+nss64_census2001_unit_id <- function(source_code) {
   source_code <- plain_chr(source_code)
   matched <- regexec("^([0-9]{2})[0-9]([0-9]{2})$", source_code)
   parts <- regmatches(source_code, matched)
@@ -45,7 +45,7 @@ nss64_census2001_unit_id_v2 <- function(source_code) {
   }, character(1))
 }
 
-resolve_nss64_census2001_unit_id_v2 <- function(source_code, admin_2001) {
+resolve_nss64_census2001_unit_id <- function(source_code, admin_2001) {
   admin_2001 <- safe_df(admin_2001)
   missing <- setdiff("unit_id", names(admin_2001))
   if (length(missing)) {
@@ -56,13 +56,13 @@ resolve_nss64_census2001_unit_id_v2 <- function(source_code, admin_2001) {
     )
   }
 
-  parsed <- nss64_census2001_unit_id_v2(source_code)
+  parsed <- nss64_census2001_unit_id(source_code)
   known <- unique(plain_chr(admin_2001$unit_id))
   parsed[!parsed %in% known] <- NA_character_
   parsed
 }
 
-resolve_census2011_district_unit_v2 <- function(
+resolve_census2011_district_unit <- function(
   census2011_code,
   admin_2011
 ) {
@@ -98,7 +98,7 @@ resolve_census2011_district_unit_v2 <- function(
   registry$unit_id[match(code, registry$district_code)]
 }
 
-empty_nss_district_roster_v2 <- function() {
+empty_nss_district_roster <- function() {
   data.frame(
     source_row_id = character(), source_key = character(), wave = character(),
     source_code = character(), raw_state = character(), raw_district = character(),
@@ -111,11 +111,11 @@ empty_nss_district_roster_v2 <- function() {
 #' The roster preserves the wave-specific NSS code when available. Those codes
 #' are useful source-row identifiers, but they are not assumed to be Census or
 #' LGD codes.
-build_nss_district_roster_v2 <- function(source_2007, source_2017) {
+build_nss_district_roster <- function(source_2007, source_2017) {
   one <- function(x, wave, code_candidates, state_candidates, district_candidates) {
     x <- safe_df(x)
     required <- c("state_std", "district_std")
-    if (!all(required %in% names(x))) return(empty_nss_district_roster_v2())
+    if (!all(required %in% names(x))) return(empty_nss_district_roster())
     code_col <- first_col(x, code_candidates)
     state_col <- first_col(x, state_candidates)
     district_col <- first_col(x, district_candidates)
@@ -171,10 +171,10 @@ build_nss_district_roster_v2 <- function(source_2007, source_2017) {
       c("district_1718", "district_17", "district_18", "district")
     )
   ))
-  if (!nrow(out)) empty_nss_district_roster_v2() else out
+  if (!nrow(out)) empty_nss_district_roster() else out
 }
 
-build_reference_units_v2 <- function(admin_2001, admin_2011, lgd_states = data.frame(), lgd_districts = data.frame()) {
+build_reference_units <- function(admin_2001, admin_2011, lgd_states = data.frame(), lgd_districts = data.frame()) {
   wanted <- c(
     "unit_id", "level", "state_code", "district_code", "state_std", "district_std",
     "valid_from", "valid_to", "source_id", "reference_vintage"
@@ -260,7 +260,7 @@ build_reference_units_v2 <- function(admin_2001, admin_2011, lgd_states = data.f
   ]
 }
 
-empty_source_matches_v2 <- function() {
+empty_source_matches <- function() {
   data.frame(
     source_row_id = character(), wave = character(), raw_state = character(), raw_district = character(),
     unit_id = character(), reference_vintage = character(), method = character(), source_id = character(),
@@ -268,7 +268,7 @@ empty_source_matches_v2 <- function() {
   )
 }
 
-empty_source_candidates_v2 <- function() {
+empty_source_candidates <- function() {
   data.frame(
     source_row_id = character(), wave = character(), source_code = character(), state_std = character(),
     source_name_raw = character(), source_name = character(), candidate_unit = character(), candidate_name = character(),
@@ -279,7 +279,7 @@ empty_source_candidates_v2 <- function() {
   )
 }
 
-empty_source_adjudication_queue_v2 <- function() {
+empty_source_adjudication_queue <- function() {
   data.frame(
     source_row_id = character(), wave = character(), source_code = character(),
     raw_state = character(), raw_district = character(), state_std = character(),
@@ -293,7 +293,7 @@ empty_source_adjudication_queue_v2 <- function() {
   )
 }
 
-vintage_preference_v2 <- function(wave) {
+vintage_preference <- function(wave) {
   if (identical(wave, "nss_2007_08")) c("2001", "2011", "current_lgd") else c("2011", "current_lgd", "2001")
 }
 
@@ -301,7 +301,7 @@ vintage_preference_v2 <- function(wave) {
 #'
 #' Exact names are not accepted automatically because unchanged names can hide
 #' boundary changes. The output joins the same candidate ledger as fuzzy scores.
-exact_source_candidates_v2 <- function(source_roster, reference_units) {
+exact_source_candidates <- function(source_roster, reference_units) {
   source_roster <- safe_df(source_roster)
   reference_units <- safe_df(reference_units)
   if (!"raw_district" %in% names(source_roster)) source_roster$raw_district <- source_roster$district_std
@@ -310,12 +310,12 @@ exact_source_candidates_v2 <- function(source_roster, reference_units) {
     by = c("state_std", "district_std"),
     all = FALSE, sort = FALSE
   )
-  if (!nrow(pairs)) return(empty_source_candidates_v2())
+  if (!nrow(pairs)) return(empty_source_candidates())
 
   groups <- split(seq_len(nrow(pairs)), pairs$source_row_id)
   safe_bind_rows(lapply(groups, function(i) {
     x <- pairs[i, , drop = FALSE]
-    preference <- vintage_preference_v2(x$wave[[1]])
+    preference <- vintage_preference(x$wave[[1]])
     vintage_rank <- match(x$reference_vintage, preference, nomatch = length(preference) + 1L)
     x <- x[order(vintage_rank, x$unit_id), , drop = FALSE]
     data.frame(
@@ -340,20 +340,20 @@ exact_source_candidates_v2 <- function(source_roster, reference_units) {
   }))
 }
 
-score_match_candidates_v2 <- function(source_roster, reference_units, excluded_source_ids = character()) {
+score_match_candidates <- function(source_roster, reference_units, excluded_source_ids = character()) {
   need_pkg("stringdist", "district-lineage candidate scores")
   source_roster <- safe_df(source_roster)
   reference_units <- safe_df(reference_units)
   if (!"raw_district" %in% names(source_roster)) source_roster$raw_district <- source_roster$district_std
   source_open <- source_roster[!source_roster$source_row_id %in% excluded_source_ids, , drop = FALSE]
-  if (!nrow(source_open)) return(empty_source_candidates_v2())
+  if (!nrow(source_open)) return(empty_source_candidates())
 
   pairs <- merge(
     source_open, reference_units,
     by = "state_std", all = FALSE, sort = FALSE,
     suffixes = c("_source", "_candidate")
   )
-  if (!nrow(pairs)) return(empty_source_candidates_v2())
+  if (!nrow(pairs)) return(empty_source_candidates())
   source_name <- pairs$district_std_source
   candidate_name <- pairs$district_std_candidate
   pairs$jw <- 1 - stringdist::stringdist(source_name, candidate_name, method = "jw", p = 0.1)
@@ -366,7 +366,7 @@ score_match_candidates_v2 <- function(source_roster, reference_units, excluded_s
 
   ranked <- safe_bind_rows(lapply(split(seq_len(nrow(pairs)), pairs$source_row_id), function(i) {
     x <- pairs[i, , drop = FALSE]
-    preference <- vintage_preference_v2(x$wave[[1]])
+    preference <- vintage_preference(x$wave[[1]])
     vintage_rank <- match(x$reference_vintage, preference, nomatch = length(preference) + 1L)
     x <- x[order(-x$score, -x$jw, vintage_rank, x$unit_id), , drop = FALSE]
     x$rank <- match(x$district_std_candidate, unique(x$district_std_candidate))
@@ -420,16 +420,16 @@ score_match_candidates_v2 <- function(source_roster, reference_units, excluded_s
   )
 }
 
-build_source_adjudication_queue_v2 <- function(source_roster, candidates, adjudications = data.frame()) {
+build_source_adjudication_queue <- function(source_roster, candidates, adjudications = data.frame()) {
   roster <- safe_df(source_roster)
   candidates <- safe_df(candidates)
-  adjudications <- read_adjudicated_source_matches_v2(adjudications)
-  if (!nrow(roster)) return(empty_source_adjudication_queue_v2())
+  adjudications <- read_adjudicated_source_matches(adjudications)
+  if (!nrow(roster)) return(empty_source_adjudication_queue())
 
   candidate_groups <- split(seq_len(nrow(candidates)), candidates$source_row_id)
   candidate_summary <- safe_bind_rows(lapply(names(candidate_groups), function(source_row_id) {
     x <- candidates[candidate_groups[[source_row_id]], , drop = FALSE]
-    preference <- vintage_preference_v2(x$wave[[1]])
+    preference <- vintage_preference(x$wave[[1]])
     vintage_rank <- match(x$reference_vintage, preference, nomatch = length(preference) + 1L)
     x <- x[order(x$rank, vintage_rank, x$candidate_unit), , drop = FALSE]
     top <- x[1, , drop = FALSE]
@@ -448,7 +448,7 @@ build_source_adjudication_queue_v2 <- function(source_roster, candidates, adjudi
     )
   }))
   if (!nrow(candidate_summary)) {
-    candidate_summary <- empty_source_adjudication_queue_v2()[c(
+    candidate_summary <- empty_source_adjudication_queue()[c(
       "source_row_id", "candidate_count", "candidate_name_count", "exact_vintage_count",
       "recommended_unit", "recommended_name", "recommended_vintage", "recommended_method",
       "recommended_score", "high_precision_candidate"
@@ -498,13 +498,13 @@ build_source_adjudication_queue_v2 <- function(source_roster, candidates, adjudi
   )]
 }
 
-build_source_candidate_ledger_v2 <- function(source_roster, reference_units, adjudications = data.frame()) {
-  adjudications <- read_adjudicated_source_matches_v2(adjudications)
+build_source_candidate_ledger <- function(source_roster, reference_units, adjudications = data.frame()) {
+  adjudications <- read_adjudicated_source_matches(adjudications)
   resolved <- adjudications$source_row_id[adjudications$status %in% c("accepted", "excluded")]
-  exact <- exact_source_candidates_v2(source_roster, reference_units)
+  exact <- exact_source_candidates(source_roster, reference_units)
   exact_open <- exact[!exact$source_row_id %in% resolved, , drop = FALSE]
   exact_ids <- unique(exact_open$source_row_id)
-  fuzzy <- score_match_candidates_v2(
+  fuzzy <- score_match_candidates(
     source_roster,
     reference_units,
     excluded_source_ids = union(resolved, exact_ids)
@@ -512,7 +512,7 @@ build_source_candidate_ledger_v2 <- function(source_roster, reference_units, adj
   safe_bind_rows(list(exact_open, fuzzy))
 }
 
-read_adjudicated_source_matches_v2 <- function(x) {
+read_adjudicated_source_matches <- function(x) {
   x <- safe_df(x)
   required <- c(
     "source_row_id", "wave", "raw_state", "raw_district", "unit_id",
@@ -529,9 +529,9 @@ read_adjudicated_source_matches_v2 <- function(x) {
   x
 }
 
-build_adjudicated_source_matches_v2 <- function(adjudications, reference_units) {
-  adjudications <- read_adjudicated_source_matches_v2(adjudications)
-  if (!nrow(adjudications)) return(empty_source_matches_v2())
+build_adjudicated_source_matches <- function(adjudications, reference_units) {
+  adjudications <- read_adjudicated_source_matches(adjudications)
+  if (!nrow(adjudications)) return(empty_source_matches())
   reference <- unique(safe_df(reference_units)[c("unit_id", "reference_vintage")])
   accepted <- adjudications$status %in% "accepted"
   missing_unit <- accepted & (!adjudications$unit_id %in% reference$unit_id)
@@ -549,7 +549,7 @@ build_adjudicated_source_matches_v2 <- function(adjudications, reference_units) 
   )]
 }
 
-resolve_lineage_terminals_v2 <- function(unit_ids, admin_events, admin_2001, admin_2011, max_depth = 30L) {
+resolve_lineage_terminals <- function(unit_ids, admin_events, admin_2001, admin_2011, max_depth = 30L) {
   events <- safe_df(admin_events)
   if (!nrow(events)) {
     events <- data.frame(from_unit = character(), to_unit = character(), status = character(), stringsAsFactors = FALSE)
@@ -610,14 +610,14 @@ resolve_lineage_terminals_v2 <- function(unit_ids, admin_events, admin_2001, adm
   out[c("source_unit", "terminal_unit", "terminal_vintage", "resolution_status", "lineage_path")]
 }
 
-normalize_admin_lookup_v2 <- function(x) {
+normalize_admin_lookup <- function(x) {
   x <- safe_df(x)
   required <- c("unit_id", "state_code", "district_code")
   for (nm in setdiff(required, names(x))) x[[nm]] <- rep(NA_character_, nrow(x))
   x[required]
 }
 
-deterministic_transition_2011_to_2001_v2 <- function(transition) {
+deterministic_transition_2011_to_2001 <- function(transition) {
   transition <- safe_df(transition)
   required <- c(
     "state_code_2011", "district_code_2011",
@@ -663,7 +663,7 @@ deterministic_transition_2011_to_2001_v2 <- function(transition) {
   out
 }
 
-preferred_single_target_bases_v2 <- function() {
+preferred_single_target_bases <- function() {
   c(
     "canonical_registry_name_continuity",
     "official_single_parent_or_alias_continuity",
@@ -671,7 +671,7 @@ preferred_single_target_bases_v2 <- function() {
   )
 }
 
-summarize_reviewed_allocations_v2 <- function(allocation_weights) {
+summarize_reviewed_allocations <- function(allocation_weights) {
   x <- safe_df(allocation_weights)
   required <- c("source_unit", "target_2001", "weight", "basis", "status")
   if (!nrow(x)) {
@@ -685,7 +685,7 @@ summarize_reviewed_allocations_v2 <- function(allocation_weights) {
   if (length(missing)) stop("Allocation weights are missing: ", paste(missing, collapse = ", "), call. = FALSE)
   if (!"source_id" %in% names(x)) x$source_id <- NA_character_
   x <- x[x$status %in% "accepted", c(required, "source_id"), drop = FALSE]
-  if (!nrow(x)) return(summarize_reviewed_allocations_v2(data.frame()))
+  if (!nrow(x)) return(summarize_reviewed_allocations(data.frame()))
   collapse_metadata <- function(value) {
     value <- unique(plain_chr(value))
     value <- sort(value[!is.na(value) & nzchar(value)])
@@ -702,12 +702,12 @@ summarize_reviewed_allocations_v2 <- function(allocation_weights) {
   )))
 }
 
-preferred_single_target_allocations_v2 <- function(allocation_weights) {
+preferred_single_target_allocations <- function(allocation_weights) {
   x <- safe_df(allocation_weights)
   if (!nrow(x)) return(data.frame(source_unit = character(), target_2001 = character(), stringsAsFactors = FALSE))
   x <- x[
     x$status %in% "accepted" &
-      x$basis %in% preferred_single_target_bases_v2() &
+      x$basis %in% preferred_single_target_bases() &
       suppressWarnings(as.numeric(x$weight)) == 1,
     c("source_unit", "target_2001"), drop = FALSE
   ]
@@ -717,33 +717,33 @@ preferred_single_target_allocations_v2 <- function(allocation_weights) {
 }
 
 
-build_primary_mapping_eligibility <- function(
+build_conservative_mapping_eligibility <- function(
   source_roster, source_matches, transition_2001_2011,
   admin_2001, admin_2011, admin_events = data.frame(),
   allocation_weights = data.frame()
 ) {
   source_roster <- safe_df(source_roster)
   matches <- safe_df(source_matches)
-  if (!nrow(matches)) matches <- empty_source_matches_v2()
+  if (!nrow(matches)) matches <- empty_source_matches()
   out <- merge(
     source_roster,
     matches[c("source_row_id", "unit_id", "reference_vintage", "method", "status")],
     by = "source_row_id", all.x = TRUE, sort = FALSE
   )
 
-  resolution <- resolve_lineage_terminals_v2(out$unit_id, admin_events, admin_2001, admin_2011)
+  resolution <- resolve_lineage_terminals(out$unit_id, admin_events, admin_2001, admin_2011)
   resolution$row_order <- seq_len(nrow(resolution))
   out$row_order <- seq_len(nrow(out))
   out <- merge(out, resolution, by.x = c("unit_id", "row_order"), by.y = c("source_unit", "row_order"), all.x = TRUE, sort = FALSE)
 
-  a01 <- normalize_admin_lookup_v2(admin_2001)
+  a01 <- normalize_admin_lookup(admin_2001)
   names(a01)[2:3] <- c("target_state_code_2001", "target_district_code_2001")
   out <- merge(out, a01, by.x = "terminal_unit", by.y = "unit_id", all.x = TRUE, sort = FALSE)
 
-  a11 <- normalize_admin_lookup_v2(admin_2011)
+  a11 <- normalize_admin_lookup(admin_2011)
   names(a11)[2:3] <- c("source_state_code_2011", "source_district_code_2011")
   out <- merge(out, a11, by.x = "terminal_unit", by.y = "unit_id", all.x = TRUE, sort = FALSE)
-  deterministic <- deterministic_transition_2011_to_2001_v2(
+  deterministic <- deterministic_transition_2011_to_2001(
     transition_2001_2011
   )
   if (nrow(deterministic)) {
@@ -763,7 +763,7 @@ build_primary_mapping_eligibility <- function(
     out$population_share_to_2001 <- NA_real_
   }
 
-  target_lookup <- normalize_admin_lookup_v2(admin_2001)
+  target_lookup <- normalize_admin_lookup(admin_2001)
   names(target_lookup) <- c("bridged_target_unit_2001", "state_code_2001", "district_code_2001")
   out <- merge(
     out, target_lookup,
@@ -771,7 +771,7 @@ build_primary_mapping_eligibility <- function(
     all.x = TRUE, sort = FALSE
   )
 
-  allocation_summary <- summarize_reviewed_allocations_v2(allocation_weights)
+  allocation_summary <- summarize_reviewed_allocations(allocation_weights)
   if (nrow(allocation_summary)) {
     names(allocation_summary)[names(allocation_summary) == "source_unit"] <- "terminal_unit"
     out <- merge(out, allocation_summary, by = "terminal_unit", all.x = TRUE, sort = FALSE)
@@ -782,7 +782,7 @@ build_primary_mapping_eligibility <- function(
     out$allocation_source_id <- NA_character_
   }
 
-  reviewed_primary <- preferred_single_target_allocations_v2(allocation_weights)
+  reviewed_primary <- preferred_single_target_allocations(allocation_weights)
   if (nrow(reviewed_primary)) {
     names(reviewed_primary) <- c("terminal_unit", "reviewed_target_unit_2001")
     out <- merge(out, reviewed_primary, by = "terminal_unit", all.x = TRUE, sort = FALSE)
@@ -813,7 +813,7 @@ build_primary_mapping_eligibility <- function(
     "identity_or_documented_rename_to_2001",
     ifelse(bridged, "deterministic_2011_to_2001", "unresolved_or_non_nested")
   )
-  out$eligible_primary <- direct | bridged
+  out$eligible_conservative <- direct | bridged
   transition_target <- ifelse(
     !is.na(out$reviewed_target_unit_2001),
     out$reviewed_target_unit_2001,
@@ -833,7 +833,7 @@ build_primary_mapping_eligibility <- function(
   out$target_state_code_2001 <- ifelse(direct, out$target_state_code_2001, transition_state)
   out$target_district_code_2001 <- ifelse(direct, out$target_district_code_2001, transition_district)
   out$exclusion_reason <- NA_character_
-  unresolved <- !out$eligible_primary
+  unresolved <- !out$eligible_conservative
   out$exclusion_reason[unresolved & out$status %in% "excluded"] <-
     "documented_exclusion"
   out$exclusion_reason[unresolved & !(out$status %in% c("accepted", "excluded"))] <-
@@ -850,7 +850,7 @@ build_primary_mapping_eligibility <- function(
         plain_chr(out$allocation_basis),
         fixed = TRUE
       )
-  ] <- "dominant_parent_near_complete_requires_review"
+  ] <- "primary_near_complete_requires_review"
   has_resolution_failure <- unresolved & is.na(out$exclusion_reason) &
     !is.na(out$resolution_status) & out$resolution_status != "resolved"
   out$exclusion_reason[has_resolution_failure] <- paste0(
@@ -863,19 +863,19 @@ build_primary_mapping_eligibility <- function(
   out
 }
 
-build_primary_source_crosswalk_v2 <- function(primary_eligibility) {
-  x <- safe_df(primary_eligibility)
+build_conservative_source_crosswalk <- function(conservative_eligibility) {
+  x <- safe_df(conservative_eligibility)
   required <- c(
     "source_row_id", "wave", "source_code", "raw_state", "raw_district",
     "state_std", "district_std", "target_unit_2001",
     "target_state_code_2001", "target_district_code_2001",
-    "mapping_class", "eligible_primary"
+    "mapping_class", "eligible_conservative"
   )
   missing <- setdiff(required, names(x))
   if (length(missing)) {
     stop("Primary mapping eligibility is missing: ", paste(missing, collapse = ", "), call. = FALSE)
   }
-  out <- x[x$eligible_primary %in% TRUE, required, drop = FALSE]
+  out <- x[x$eligible_conservative %in% TRUE, required, drop = FALSE]
   if (!nrow(out)) return(out)
   if (anyDuplicated(out$source_row_id)) {
     stop("Primary district source crosswalk must contain one row per source_row_id.", call. = FALSE)
@@ -884,26 +884,26 @@ build_primary_source_crosswalk_v2 <- function(primary_eligibility) {
   if (any(incomplete)) {
     stop("Primary district source crosswalk contains missing 2001 targets.", call. = FALSE)
   }
-  out$eligible_primary <- NULL
+  out$eligible_conservative <- NULL
   out
 }
 
-build_excluded_source_rows_v2 <- function(primary_eligibility) {
-  x <- safe_df(primary_eligibility)
+build_excluded_source_rows <- function(conservative_eligibility) {
+  x <- safe_df(conservative_eligibility)
   required <- c(
     "source_row_id", "wave", "source_code", "raw_state", "raw_district",
-    "state_std", "district_std", "exclusion_reason", "eligible_primary"
+    "state_std", "district_std", "exclusion_reason", "eligible_conservative"
   )
   missing <- setdiff(required, names(x))
   if (length(missing)) {
     stop("Primary mapping eligibility is missing: ", paste(missing, collapse = ", "), call. = FALSE)
   }
-  out <- x[!(x$eligible_primary %in% TRUE), required, drop = FALSE]
-  out$eligible_primary <- NULL
+  out <- x[!(x$eligible_conservative %in% TRUE), required, drop = FALSE]
+  out$eligible_conservative <- NULL
   out
 }
 
-score_gold_set_v2 <- function(gold) {
+score_gold_set <- function(gold) {
   gold <- safe_df(gold)
   if (!nrow(gold)) return(gold)
   need_pkg("stringdist", "district match gold-set scoring")
@@ -921,7 +921,7 @@ score_gold_set_v2 <- function(gold) {
   gold
 }
 
-summarize_gold_set_v2 <- function(scored_gold) {
+summarize_gold_set <- function(scored_gold) {
   x <- safe_df(scored_gold)
   if (!nrow(x)) return(data.frame())
   positive <- x$label == "match"

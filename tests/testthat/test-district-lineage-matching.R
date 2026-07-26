@@ -11,7 +11,7 @@ test_that("exact names remain review candidates rather than accepted matches", {
     reference_vintage = "2011", stringsAsFactors = FALSE
   )
 
-  out <- exact_source_candidates_v2(source, reference)
+  out <- exact_source_candidates(source, reference)
 
   expect_equal(out$candidate_unit, "u1")
   expect_equal(out$candidate_method, "exact_normalized_name")
@@ -39,7 +39,7 @@ test_that("fuzzy candidate scoring ranks close names but never adjudicates them"
     reference_vintage = "2011", stringsAsFactors = FALSE
   )
 
-  out <- score_match_candidates_v2(source, reference)
+  out <- score_match_candidates(source, reference)
   best <- out[out$rank == 1L, , drop = FALSE]
 
   expect_equal(best$candidate_name[best$source_row_id == "s1"], "farrukhabad")
@@ -62,12 +62,12 @@ test_that("directional district qualifiers cannot pass as interchangeable names"
     label = c("match", "nonmatch"),
     stringsAsFactors = FALSE
   )
-  scored <- score_gold_set_v2(gold)
+  scored <- score_gold_set(gold)
 
   expect_identical(scored$passes_name_rule, c(TRUE, FALSE))
   expect_equal(
-    summarize_gold_set_v2(scored)$value[
-      summarize_gold_set_v2(scored)$metric == "observed_nonmatch_acceptances"
+    summarize_gold_set(scored)$value[
+      summarize_gold_set(scored)$metric == "observed_nonmatch_acceptances"
     ],
     0
   )
@@ -81,16 +81,16 @@ test_that("tracked adjudications are unique and reference known units", {
     source_id = "official", status = "accepted", note = NA_character_
   )
 
-  out <- build_adjudicated_source_matches_v2(accepted, reference)
+  out <- build_adjudicated_source_matches(accepted, reference)
 
   expect_equal(out$reference_vintage, "2001")
   expect_error(
-    read_adjudicated_source_matches_v2(rbind(accepted, accepted)),
+    read_adjudicated_source_matches(rbind(accepted, accepted)),
     "at most one row"
   )
   accepted$unit_id <- "unknown"
   expect_error(
-    build_adjudicated_source_matches_v2(accepted, reference),
+    build_adjudicated_source_matches(accepted, reference),
     "unknown units"
   )
 })
@@ -125,9 +125,9 @@ test_that("primary eligibility accepts only adjudicated deterministic mappings",
     mapping_class = "deterministic_containment"
   )
 
-  out <- build_primary_mapping_eligibility(roster, matches, transition, a01, a11)
+  out <- build_conservative_mapping_eligibility(roster, matches, transition, a01, a11)
 
-  expect_identical(out$eligible_primary[match(c("a", "b", "c"), out$source_row_id)], c(TRUE, TRUE, FALSE))
+  expect_identical(out$eligible_conservative[match(c("a", "b", "c"), out$source_row_id)], c(TRUE, TRUE, FALSE))
   expect_equal(
     out$target_unit_2001[match(c("a", "b"), out$source_row_id)],
     c("pc2001__01__01", "pc2001__01__01")
@@ -136,7 +136,7 @@ test_that("primary eligibility accepts only adjudicated deterministic mappings",
 })
 
 test_that("allocation summaries do not require provenance metadata", {
-  out <- summarize_reviewed_allocations_v2(data.frame(
+  out <- summarize_reviewed_allocations(data.frame(
     source_unit = "pc2011__20__367",
     target_2001 = "pc2001__20__16",
     weight = 1,
@@ -152,7 +152,7 @@ test_that("allocation summaries do not require provenance metadata", {
 
 test_that("duplicate diagnostics distinguish identical from conflicting rows", {
   x <- data.frame(id = c("a", "a", "b", "b"), value = c("x", "x", "y", "z"))
-  out <- duplicate_key_diagnostics_v2(x, "id", "fixture")
+  out <- duplicate_key_diagnostics(x, "id", "fixture")
 
   expect_equal(out$duplicate_type[out$key == "a"], "identical")
   expect_equal(out$duplicate_type[out$key == "b"], "conflicting")
@@ -167,8 +167,8 @@ test_that("NSS roster IDs distinguish conflicting labels on one source key", {
     stringsAsFactors = FALSE
   )
 
-  out <- build_nss_district_roster_v2(data.frame(), raw)
-  duplicate <- duplicate_key_diagnostics_v2(out, "source_key", "fixture")
+  out <- build_nss_district_roster(data.frame(), raw)
+  duplicate <- duplicate_key_diagnostics(out, "source_key", "fixture")
 
   expect_equal(length(unique(out$source_row_id)), 2L)
   expect_equal(length(unique(out$source_key)), 1L)
@@ -183,11 +183,11 @@ test_that("unadjudicated sources are explicitly ineligible", {
   a01 <- data.frame(unit_id = "u1", state_code = "01", district_code = "01")
   a11 <- data.frame(unit_id = "u2", state_code = "01", district_code = "001")
 
-  out <- build_primary_mapping_eligibility(
-    roster, empty_source_matches_v2(), data.frame(), a01, a11
+  out <- build_conservative_mapping_eligibility(
+    roster, empty_source_matches(), data.frame(), a01, a11
   )
 
-  expect_false(out$eligible_primary)
+  expect_false(out$eligible_conservative)
   expect_equal(out$exclusion_reason, "source_identity_unadjudicated")
 })
 
@@ -200,7 +200,7 @@ test_that("accepted administrative edges resolve later units backward", {
     status = "accepted", stringsAsFactors = FALSE
   )
 
-  out <- resolve_lineage_terminals_v2("lgd_district__900", events, a01, a11)
+  out <- resolve_lineage_terminals("lgd_district__900", events, a01, a11)
 
   expect_equal(out$terminal_unit, "pc2011__01__010")
   expect_equal(out$terminal_vintage, "2011")
@@ -215,7 +215,7 @@ test_that("multiple accepted parents block deterministic backward mapping", {
     status = c("accepted", "accepted"), stringsAsFactors = FALSE
   )
 
-  out <- resolve_lineage_terminals_v2("child", events, a01, a11)
+  out <- resolve_lineage_terminals("child", events, a01, a11)
 
   expect_equal(out$resolution_status, "multiple_parent_non_nested")
   expect_true(is.na(out$terminal_unit))
@@ -235,11 +235,11 @@ test_that("needs-review identities remain ineligible even when a candidate unit 
   )
   admin <- data.frame(unit_id = "pc2001__01__01", state_code = "01", district_code = "01")
 
-  out <- build_primary_mapping_eligibility(
+  out <- build_conservative_mapping_eligibility(
     roster, matches, data.frame(), admin, data.frame()
   )
 
-  expect_false(out$eligible_primary)
+  expect_false(out$eligible_conservative)
   expect_equal(out$exclusion_reason, "source_identity_unadjudicated")
 })
 
@@ -257,13 +257,13 @@ test_that("primary crosswalk exports only complete deterministic mappings", {
     target_state_code_2001 = c("01", NA),
     target_district_code_2001 = c("01", NA),
     mapping_class = c("identity_or_documented_rename_to_2001", "unresolved_or_non_nested"),
-    eligible_primary = c(TRUE, FALSE),
+    eligible_conservative = c(TRUE, FALSE),
     exclusion_reason = c(NA, "source_identity_unadjudicated"),
     stringsAsFactors = FALSE
   )
 
-  crosswalk <- build_primary_source_crosswalk_v2(eligibility)
-  excluded <- build_excluded_source_rows_v2(eligibility)
+  crosswalk <- build_conservative_source_crosswalk(eligibility)
+  excluded <- build_excluded_source_rows(eligibility)
 
   expect_equal(crosswalk$source_row_id, "accepted")
   expect_equal(crosswalk$target_unit_2001, "pc2001__01__01")
@@ -281,7 +281,7 @@ test_that("NSS roster preserves equivalent raw aliases without duplicating sourc
     stringsAsFactors = FALSE
   )
 
-  out <- build_nss_district_roster_v2(data.frame(), raw)
+  out <- build_nss_district_roster(data.frame(), raw)
 
   expect_equal(nrow(out), 1L)
   expect_match(out$raw_district, "Lahul & Spiti", fixed = TRUE)
@@ -290,7 +290,7 @@ test_that("NSS roster preserves equivalent raw aliases without duplicating sourc
 
 
 test_that("blank source adjudications remain empty and typed", {
-  out <- read_adjudicated_source_matches_v2(data.frame())
+  out <- read_adjudicated_source_matches(data.frame())
 
   expect_equal(nrow(out), 0L)
   expect_named(
@@ -322,7 +322,7 @@ test_that("fuzzy ranking compares distinct names and prefers the survey-relevant
     stringsAsFactors = FALSE
   )
 
-  out <- score_match_candidates_v2(roster, references)
+  out <- score_match_candidates(roster, references)
   same_name <- out[out$candidate_name == "anantapur", , drop = FALSE]
 
   expect_true(all(same_name$rank == 1L))
@@ -357,7 +357,7 @@ test_that("adjudication recommendations use wave-specific vintage preferences", 
     stringsAsFactors = FALSE
   )
 
-  out <- build_source_adjudication_queue_v2(roster, candidates)
+  out <- build_source_adjudication_queue(roster, candidates)
   recommended <- stats::setNames(out$recommended_unit, out$source_row_id)
 
   expect_equal(recommended[["early"]], "pc2001")
@@ -386,7 +386,7 @@ test_that("source adjudication queue prioritizes deterministic review work", {
     stringsAsFactors = FALSE
   )
 
-  out <- build_source_adjudication_queue_v2(roster, candidates)
+  out <- build_source_adjudication_queue(roster, candidates)
   classes <- stats::setNames(out$review_class, out$source_row_id)
 
   expect_equal(classes[["single"]], "single_vintage_exact_candidate")
@@ -401,7 +401,7 @@ test_that("source adjudication queue prioritizes deterministic review work", {
 
 test_that("NSS-64 compact codes separate region from district", {
   expect_identical(
-    nss64_census2001_unit_id_v2(
+    nss64_census2001_unit_id(
       c("07101", "28216", "35302", "56611")
     ),
     c(
@@ -412,7 +412,7 @@ test_that("NSS-64 compact codes separate region from district", {
     )
   )
   expect_true(all(is.na(
-    nss64_census2001_unit_id_v2(
+    nss64_census2001_unit_id(
       c("0711", "071001", "07A01", NA)
     )
   )))
@@ -425,7 +425,7 @@ test_that("NSS-64 code resolution requires a known Census-2001 unit", {
   )
 
   expect_identical(
-    resolve_nss64_census2001_unit_id_v2(
+    resolve_nss64_census2001_unit_id(
       c("07101", "35302", "28211", "invalid"),
       admin
     ),
@@ -440,7 +440,7 @@ test_that("NSS-64 code resolution requires a known Census-2001 unit", {
 
 test_that("NSS-64 code resolution declares its registry schema", {
   expect_error(
-    resolve_nss64_census2001_unit_id_v2(
+    resolve_nss64_census2001_unit_id(
       "07101",
       data.frame(state_code = "07", district_code = "01")
     ),
@@ -460,7 +460,7 @@ test_that("deterministic transitions require complete one-to-one coverage", {
     stringsAsFactors = FALSE
   )
 
-  out <- deterministic_transition_2011_to_2001_v2(transition)
+  out <- deterministic_transition_2011_to_2001(transition)
 
   expect_equal(nrow(out), 1L)
   expect_identical(out$district_code_2011, "001")
@@ -480,13 +480,13 @@ test_that("deterministic transitions reject duplicate source targets", {
   )
 
   expect_error(
-    deterministic_transition_2011_to_2001_v2(transition),
+    deterministic_transition_2011_to_2001(transition),
     "one target per source"
   )
 })
 
 test_that("empty transition inputs yield no deterministic bridges", {
-  out <- deterministic_transition_2011_to_2001_v2(data.frame())
+  out <- deterministic_transition_2011_to_2001(data.frame())
 
   expect_equal(nrow(out), 0L)
   expect_identical(
@@ -527,7 +527,7 @@ test_that("reviewed bifurcations resolve descendants to one parent", {
     stringsAsFactors = FALSE
   )
 
-  out <- resolve_lineage_terminals_v2(
+  out <- resolve_lineage_terminals(
     admin_2011$unit_id,
     events,
     admin_2001,
@@ -550,7 +550,7 @@ test_that("Census-2011 district codes resolve through their historical registry"
   )
 
   expect_identical(
-    resolve_census2011_district_unit_v2(
+    resolve_census2011_district_unit(
       c("532", "536", "999", NA),
       admin
     ),
@@ -571,7 +571,7 @@ test_that("Census-2011 district codes cannot map to multiple units", {
   )
 
   expect_error(
-    resolve_census2011_district_unit_v2("532", admin),
+    resolve_census2011_district_unit("532", admin),
     "must identify one registry unit each"
   )
 })
@@ -607,7 +607,7 @@ test_that("Census-2011 registries retain historical state names after mergers", 
     stringsAsFactors = FALSE
   )
 
-  out <- build_reference_units_v2(
+  out <- build_reference_units(
     admin_2001,
     admin_2011,
     lgd_states,
@@ -645,7 +645,7 @@ test_that("reviewed single-target source evidence enters the preferred crosswalk
     stringsAsFactors = FALSE
   )
 
-  preferred <- preferred_single_target_allocations_v2(weights)
+  preferred <- preferred_single_target_allocations(weights)
 
   expect_setequal(preferred$source_unit, c("a", "b"))
   expect_false("c" %in% preferred$source_unit)
@@ -662,7 +662,7 @@ test_that("allocation summaries distinguish dominant and multi-parent cases", {
     stringsAsFactors = FALSE
   )
 
-  out <- summarize_reviewed_allocations_v2(weights)
+  out <- summarize_reviewed_allocations(weights)
 
   expect_equal(out$allocation_target_count[out$source_unit == "one"], 1L)
   expect_equal(out$allocation_target_count[out$source_unit == "many"], 2L)

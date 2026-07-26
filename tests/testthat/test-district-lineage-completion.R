@@ -14,7 +14,7 @@ test_that("adjudication drafts never auto-accept candidates", {
     candidate_source_id = "census_2001_c16", stringsAsFactors = FALSE
   )
 
-  draft <- build_adjudication_draft_v2(roster, queue, candidates)
+  draft <- build_adjudication_draft(roster, queue, candidates)
 
   expect_identical(draft$status, "needs_review")
   expect_identical(draft$unit_id, "pc2001__01__01")
@@ -33,7 +33,7 @@ test_that("sensitivity crosswalk preserves deterministic and reviewed weights", 
     source_code = "202",
     terminal_unit = "pc2011__01__002",
     status = "accepted",
-    eligible_primary = FALSE,
+    eligible_conservative = FALSE,
     stringsAsFactors = FALSE
   )
   weights <- data.frame(
@@ -44,7 +44,7 @@ test_that("sensitivity crosswalk preserves deterministic and reviewed weights", 
     stringsAsFactors = FALSE
   )
 
-  out <- build_sensitivity_crosswalk_v2(
+  out <- build_sensitivity_crosswalk(
     primary, weights, eligibility
   )
 
@@ -53,7 +53,7 @@ test_that("sensitivity crosswalk preserves deterministic and reviewed weights", 
   expect_setequal(out$panel_variant, c("deterministic", "population_allocation"))
 })
 
-test_that("production comparison reports same, changed, and missing targets", {
+test_that("legacy comparison reports same, changed, and missing targets", {
   primary <- data.frame(
     source_row_id = c("s1", "s2", "s3"),
     wave = c("nss_2007_08", "nss_2007_08", "nss_2017_18"),
@@ -68,7 +68,7 @@ test_that("production comparison reports same, changed, and missing targets", {
     stringsAsFactors = FALSE
   )
 
-  out <- build_production_crosswalk_comparison_v2(primary, panel)
+  out <- build_legacy_crosswalk_comparison(primary, panel)
 
   expect_identical(
     out$comparison_status[match("s1", out$source_row_id)],
@@ -80,145 +80,9 @@ test_that("production comparison reports same, changed, and missing targets", {
   )
   expect_identical(
     out$comparison_status[match("s3", out$source_row_id)],
-    "missing_from_production_panel"
+    "missing_from_legacy_panel"
   )
 })
-
-test_that("completion status remains blocked without reviewed evidence", {
-  status <- lineage_completion_steps_v2(
-    source_roster = data.frame(source_row_id = "s1"),
-    source_matches = data.frame(
-      source_row_id = character(), status = character()
-    ),
-    adjudication_queue = data.frame(
-      review_class = "cross_vintage_exact_candidate",
-      adjudication_status = NA_character_
-    ),
-    evidence_requests = data.frame(event_id = "e1"),
-    allocation_validation = data.frame(
-      source_key = "pc2011__01__001",
-      coverage_complete = FALSE
-    ),
-    allocation_weights = data.frame(status = character()),
-    primary_crosswalk = data.frame(),
-    sensitivity_crosswalk = data.frame(),
-    production_comparison = data.frame(comparison_status = character()),
-    geometry_qa = data.frame(metric = "geometry_available", value = FALSE),
-    readiness = data.frame(
-      gate = "production_crosswalk_migration_ready", passed = FALSE
-    )
-  )
-
-  expect_identical(status$step, seq_len(9L))
-  expect_true(status$complete[status$step == 2L])
-  expect_false(any(status$complete[status$step != 2L]))
-  expect_true(all(nzchar(status$next_action)))
-})
-
-test_that("one accepted allocation cannot clear unrelated coverage gaps", {
-  status <- lineage_completion_steps_v2(
-    source_roster = data.frame(source_row_id = "s1"),
-    source_matches = data.frame(
-      source_row_id = character(), status = character()
-    ),
-    adjudication_queue = data.frame(
-      review_class = "cross_vintage_exact_candidate",
-      adjudication_status = NA_character_
-    ),
-    evidence_requests = data.frame(),
-    allocation_validation = data.frame(
-      source_key = c("pc2011__01__001", "pc2011__01__002"),
-      coverage_complete = c(FALSE, FALSE)
-    ),
-    allocation_weights = data.frame(
-      source_unit = "pc2011__01__001",
-      target_2001 = "pc2001__01__01",
-      weight = 1,
-      status = "accepted"
-    ),
-    primary_crosswalk = data.frame(),
-    sensitivity_crosswalk = data.frame(),
-    production_comparison = data.frame(comparison_status = character()),
-    geometry_qa = data.frame(metric = "geometry_available", value = FALSE),
-    readiness = data.frame(
-      gate = "production_crosswalk_migration_ready", passed = FALSE
-    )
-  )
-
-  expect_false(status$complete[status$step == 4L])
-})
-
-test_that("production review distinguishes coverage from target conflicts", {
-  common <- list(
-    source_roster = data.frame(source_row_id = "s1"),
-    source_matches = data.frame(
-      source_row_id = "s1", status = "accepted"
-    ),
-    adjudication_queue = data.frame(
-      review_class = "cross_vintage_exact_candidate",
-      adjudication_status = "accepted"
-    ),
-    evidence_requests = data.frame(),
-    allocation_validation = data.frame(
-      source_key = "pc2011__01__001",
-      coverage_complete = TRUE
-    ),
-    allocation_weights = data.frame(
-      source_unit = character(), status = character()
-    ),
-    primary_crosswalk = data.frame(source_row_id = "s1"),
-    sensitivity_crosswalk = data.frame(source_row_id = "s1"),
-    geometry_qa = data.frame(metric = "geometry_available", value = FALSE),
-    readiness = data.frame(
-      gate = "production_crosswalk_migration_ready", passed = FALSE
-    ),
-    production_reviews = data.frame(
-      review_id = "downstream",
-      source_row_id = "",
-      review_scope = "downstream_results",
-      v2_target_unit_2001 = "",
-      production_target_unit_2001 = "",
-      decision = "reviewed",
-      source_id = "source",
-      status = "accepted",
-      note = "reviewed",
-      stringsAsFactors = FALSE
-    )
-  )
-
-  missing <- do.call(
-    lineage_completion_steps_v2,
-    c(common, list(
-      production_comparison = data.frame(
-        comparison_status = "missing_from_production_panel",
-        review_status = "not_required"
-      )
-    ))
-  )
-  changed <- do.call(
-    lineage_completion_steps_v2,
-    c(common, list(
-      production_comparison = data.frame(
-        comparison_status = "changed_target",
-        review_status = "needs_review"
-      )
-    ))
-  )
-  same <- do.call(
-    lineage_completion_steps_v2,
-    c(common, list(
-      production_comparison = data.frame(
-        comparison_status = "same_target",
-        review_status = "not_required"
-      )
-    ))
-  )
-
-  expect_true(missing$complete[missing$step == 8L])
-  expect_false(changed$complete[changed$step == 8L])
-  expect_true(same$complete[same$step == 8L])
-})
-
 
 test_that("adjudication drafts pair evidence with the recommended source row", {
   roster <- data.frame(
@@ -244,7 +108,7 @@ test_that("adjudication drafts pair evidence with the recommended source row", {
     stringsAsFactors = FALSE
   )
 
-  draft <- build_adjudication_draft_v2(roster, queue, candidates)
+  draft <- build_adjudication_draft(roster, queue, candidates)
 
   expect_identical(
     draft$source_id[match(c("s1", "s2"), draft$source_row_id)],
@@ -276,12 +140,12 @@ test_that("resolved identities disappear from the generated review draft", {
     stringsAsFactors = FALSE
   )
 
-  draft <- build_adjudication_draft_v2(roster, queue, candidates)
+  draft <- build_adjudication_draft(roster, queue, candidates)
 
   expect_identical(draft$source_row_id, "s2")
 })
 
-test_that("production comparison flags ambiguous legacy mappings without row expansion", {
+test_that("legacy comparison flags ambiguous legacy mappings without row expansion", {
   primary <- data.frame(
     source_row_id = "s1", wave = "nss_2007_08", source_code = "101",
     target_unit_2001 = "pc2001__01__01", stringsAsFactors = FALSE
@@ -293,41 +157,10 @@ test_that("production comparison flags ambiguous legacy mappings without row exp
     stringsAsFactors = FALSE
   )
 
-  out <- build_production_crosswalk_comparison_v2(primary, panel)
+  out <- build_legacy_crosswalk_comparison(primary, panel)
 
   expect_equal(nrow(out), 1L)
-  expect_identical(out$comparison_status, "ambiguous_production_mapping")
-})
-
-test_that("accepted allocations may include resolved complete sources", {
-  status <- lineage_completion_steps_v2(
-    source_roster = data.frame(source_row_id = "s1"),
-    source_matches = data.frame(source_row_id = character(), status = character()),
-    adjudication_queue = data.frame(
-      review_class = "cross_vintage_exact_candidate",
-      adjudication_status = NA_character_
-    ),
-    evidence_requests = data.frame(),
-    allocation_validation = data.frame(
-      source_key = c("pc2011__01__001", "pc2011__01__002"),
-      coverage_complete = c(FALSE, TRUE)
-    ),
-    allocation_weights = data.frame(
-      source_unit = c("pc2011__01__001", "pc2011__01__002"),
-      target_2001 = c("pc2001__01__01", "pc2001__01__02"),
-      weight = c(1, 1),
-      status = c("accepted", "accepted")
-    ),
-    primary_crosswalk = data.frame(),
-    sensitivity_crosswalk = data.frame(),
-    production_comparison = data.frame(comparison_status = character()),
-    geometry_qa = data.frame(metric = "geometry_available", value = FALSE),
-    readiness = data.frame(
-      gate = "production_crosswalk_migration_ready", passed = FALSE
-    )
-  )
-
-  expect_true(status$complete[status$step == 4L])
+  expect_identical(out$comparison_status, "ambiguous_legacy_mapping")
 })
 
 test_that("geometry dissolve is independent of the sf geometry-column name", {
@@ -354,7 +187,7 @@ test_that("geometry dissolve is independent of the sf geometry-column name", {
     stringsAsFactors = FALSE
   )
 
-  out <- dissolve_shrid_geometry_2001_v2(geometry, bridge)
+  out <- dissolve_shrid_geometry_2001(geometry, bridge)
 
   expect_s3_class(out, "sf")
   expect_identical(out$unit_id, "pc2001__01__001")
@@ -375,45 +208,8 @@ test_that("geometry validity repair fixes an invalid polygon", {
   )
 
   expect_false(sf::st_is_valid(x)[[1]])
-  repaired <- make_valid_sf_v2(x)
+  repaired <- make_valid_sf(x)
   expect_true(sf::st_is_valid(repaired)[[1]])
-})
-
-test_that("geometry completion reports constructed but incomplete QA", {
-  status <- lineage_completion_steps_v2(
-    source_roster = data.frame(source_row_id = "s1"),
-    source_matches = data.frame(source_row_id = character(), status = character()),
-    adjudication_queue = data.frame(
-      review_class = "cross_vintage_exact_candidate",
-      adjudication_status = NA_character_
-    ),
-    evidence_requests = data.frame(),
-    allocation_validation = data.frame(
-      source_key = "pc2011__01__001",
-      coverage_complete = TRUE
-    ),
-    allocation_weights = data.frame(
-      source_unit = character(), status = character()
-    ),
-    primary_crosswalk = data.frame(),
-    sensitivity_crosswalk = data.frame(),
-    production_comparison = data.frame(comparison_status = character()),
-    geometry_qa = data.frame(
-      metric = c(
-        "geometry_available", "geometry_rows", "expected_admin_units",
-        "missing_admin_units", "unexpected_geometry_units",
-        "invalid_geometries"
-      ),
-      value = c(TRUE, 582, 593, 11, 0, 0)
-    ),
-    readiness = data.frame(
-      gate = "production_crosswalk_migration_ready", passed = FALSE
-    )
-  )
-
-  expect_false(status$complete[status$step == 5L])
-  expect_match(status$observed[status$step == 5L], "582/593")
-  expect_match(status$observed[status$step == 5L], "11 missing")
 })
 
 test_that("geometry coverage identifies missing and unexpected district IDs", {
@@ -436,7 +232,7 @@ test_that("geometry coverage identifies missing and unexpected district IDs", {
     stringsAsFactors = FALSE
   )
 
-  coverage <- geometry_unit_coverage_v2(geometry, admin)
+  coverage <- geometry_unit_coverage(geometry, admin)
 
   expect_identical(
     coverage$coverage_status[coverage$unit_id == "pc2001__01__02"],
@@ -445,45 +241,6 @@ test_that("geometry coverage identifies missing and unexpected district IDs", {
   expect_identical(
     coverage$coverage_status[coverage$unit_id == "pc2001__99__99"],
     "unexpected_geometry"
-  )
-})
-
-test_that("constructed incomplete geometry points to the coverage table", {
-  status <- lineage_completion_steps_v2(
-    source_roster = data.frame(source_row_id = "s1"),
-    source_matches = data.frame(source_row_id = character(), status = character()),
-    adjudication_queue = data.frame(
-      review_class = "cross_vintage_exact_candidate",
-      adjudication_status = NA_character_
-    ),
-    evidence_requests = data.frame(),
-    allocation_validation = data.frame(
-      source_key = "pc2011__01__001",
-      coverage_complete = TRUE
-    ),
-    allocation_weights = data.frame(
-      source_unit = character(), status = character()
-    ),
-    primary_crosswalk = data.frame(),
-    sensitivity_crosswalk = data.frame(),
-    production_comparison = data.frame(comparison_status = character()),
-    geometry_qa = data.frame(
-      metric = c(
-        "geometry_available", "geometry_rows", "expected_admin_units",
-        "missing_admin_units", "unexpected_geometry_units",
-        "invalid_geometries"
-      ),
-      value = c(TRUE, 582, 593, 11, 0, 0)
-    ),
-    readiness = data.frame(
-      gate = "production_crosswalk_migration_ready", passed = FALSE
-    )
-  )
-
-  expect_match(
-    status$next_action[status$step == 5L],
-    "geometry_2001_unit_coverage.csv",
-    fixed = TRUE
   )
 })
 
@@ -519,7 +276,7 @@ test_that("accepted geometry carry-backs fill only missing 2001 units", {
     stringsAsFactors = FALSE
   )
 
-  out <- apply_geometry_carrybacks_v2(
+  out <- apply_geometry_carrybacks(
     geometry_2001, geometry_2011, carrybacks
   )
 
@@ -545,12 +302,12 @@ test_that("unit geometry normalization rejects mismatched identifiers", {
   )
 
   expect_error(
-    as_unit_geometry_v2(x, unit_id = "only-one"),
+    as_unit_geometry(x, unit_id = "only-one"),
     "one value per feature"
   )
 })
 
-test_that("lineage-v2 measure mapping preserves one-to-one values", {
+test_that("district-lineage measure mapping preserves one-to-one values", {
   measures <- data.frame(
     district_code_0708 = c("10101", "10102"),
     consumption_0708 = c(100, 200),
@@ -567,7 +324,7 @@ test_that("lineage-v2 measure mapping preserves one-to-one values", {
     stringsAsFactors = FALSE
   )
 
-  out <- map_lineage_v2_measures(
+  out <- map_lineage_measures(
     measures, crosswalk, "nss_2007_08"
   )
 
@@ -577,7 +334,7 @@ test_that("lineage-v2 measure mapping preserves one-to-one values", {
   expect_true(all(out$lineage_aggregation_status == "one_to_one"))
 })
 
-test_that("lineage-v2 multi-source collapse is explicit and weighted", {
+test_that("district-lineage multi-source collapse is explicit and weighted", {
   mapped <- data.frame(
     target_unit_2001 = c("pc2001__20__16", "pc2001__20__16"),
     consumption_1718 = c(100, 200),
@@ -587,9 +344,9 @@ test_that("lineage-v2 multi-source collapse is explicit and weighted", {
     stringsAsFactors = FALSE
   )
 
-  out <- collapse_lineage_v2_measure_rows(
+  out <- collapse_lineage_measure_rows(
     mapped,
-    lineage_v2_wave_measure_spec("nss_2017_18")
+    lineage_wave_measure_spec("nss_2017_18")
   )
 
   expect_equal(nrow(out), 1L)
@@ -604,7 +361,7 @@ test_that("lineage-v2 multi-source collapse is explicit and weighted", {
 })
 
 test_that("panel membership comparison separates additions and removals", {
-  production <- data.frame(
+  legacy <- data.frame(
     district_panel_id = c("2001__01__01", "2001__01__02"),
     stringsAsFactors = FALSE
   )
@@ -613,14 +370,14 @@ test_that("panel membership comparison separates additions and removals", {
     stringsAsFactors = FALSE
   )
 
-  out <- compare_lineage_v2_panels(production, candidate)
+  out <- compare_lineage_panels(legacy, candidate)
 
   expect_setequal(
     paste(out$target_unit_2001, out$comparison_status, sep = "->"),
     c(
-      "pc2001__01__01->production_only",
+      "pc2001__01__01->legacy_only",
       "pc2001__01__02->shared",
-      "pc2001__01__03->v2_only"
+      "pc2001__01__03->lineage_only"
     )
   )
 })
@@ -643,7 +400,7 @@ test_that("downstream coverage exposes incomplete 2017 lineage", {
     status = "accepted",
     stringsAsFactors = FALSE
   )
-  production <- data.frame(
+  legacy <- data.frame(
     district_panel_id = c("2001__01__01", "2001__01__02"),
     stringsAsFactors = FALSE
   )
@@ -652,8 +409,8 @@ test_that("downstream coverage exposes incomplete 2017 lineage", {
     stringsAsFactors = FALSE
   )
 
-  coverage <- summarize_lineage_v2_downstream_coverage(
-    crosswalk, eligibility, production, candidate
+  coverage <- summarize_lineage_downstream_coverage(
+    crosswalk, eligibility, legacy, candidate
   )
   row_17 <- coverage[coverage$wave == "nss_2017_18", , drop = FALSE]
   panel <- coverage[coverage$scope == "panel", , drop = FALSE]
@@ -665,7 +422,7 @@ test_that("downstream coverage exposes incomplete 2017 lineage", {
   expect_equal(row_17$identity_coverage_share, 0.5)
   expect_equal(panel$mapped_targets, 1L)
   expect_equal(panel$shared_unique_units, 1L)
-  expect_equal(panel$production_only_units, 1L)
+  expect_equal(panel$legacy_only_units, 1L)
   expect_equal(panel$candidate_only_units, 0L)
 })
 
@@ -673,12 +430,12 @@ test_that("downstream gates allow additions but forbid silent support loss", {
   coverage <- data.frame(
     scope = "panel",
     wave = "two_wave_panel",
-    production_only_units = 0L,
+    legacy_only_units = 0L,
     candidate_only_units = 1L,
     shared_unique_units = 1L,
     stringsAsFactors = FALSE
   )
-  production <- data.frame(
+  legacy <- data.frame(
     district_panel_id = c("2001__09__17", "2001__09__17"),
     stringsAsFactors = FALSE
   )
@@ -688,18 +445,18 @@ test_that("downstream gates allow additions but forbid silent support loss", {
   )
   adjudication <- data.frame(
     target_unit_2001 = c("pc2001__09__17", "pc2001__09__18"),
-    decision = c("exclude_inherited_duplicate", "accept_lineage_v2_coverage_addition"),
+    decision = c("exclude_inherited_duplicate", "accept_lineage_coverage_addition"),
     status = c("excluded", "accepted"),
     stringsAsFactors = FALSE
   )
 
-  gates <- lineage_v2_downstream_review_gates(
-    coverage, production, candidate, adjudication,
+  gates <- lineage_downstream_review_gates(
+    coverage, legacy, candidate, adjudication,
     identity_coverage_complete = TRUE
   )
 
   expect_true(gates$passed[
-    gates$gate == "inherited_production_duplicates_identified"
+    gates$gate == "inherited_legacy_duplicates_identified"
   ])
   expect_true(gates$passed[
     gates$gate == "panel_membership_adjudicated"
@@ -711,12 +468,12 @@ test_that("downstream gates allow additions but forbid silent support loss", {
     gates$gate == "shared_support_comparison_available"
   ])
   expect_true(gates$passed[
-    gates$gate == "production_migration_reviewable"
+    gates$gate == "legacy_comparison_reviewable"
   ])
 
-  coverage$production_only_units <- 1L
-  not_blocked_by_v1 <- lineage_v2_downstream_review_gates(
-    coverage, production, candidate, adjudication,
+  coverage$legacy_only_units <- 1L
+  not_blocked_by_v1 <- lineage_downstream_review_gates(
+    coverage, legacy, candidate, adjudication,
     identity_coverage_complete = TRUE
   )
   expect_true(not_blocked_by_v1$passed[
@@ -724,11 +481,11 @@ test_that("downstream gates allow additions but forbid silent support loss", {
       "preferred_panel_constructed_from_reviewed_sources"
   ])
   expect_true(not_blocked_by_v1$passed[
-    not_blocked_by_v1$gate == "production_migration_reviewable"
+    not_blocked_by_v1$gate == "legacy_comparison_reviewable"
   ])
 
-  no_candidate <- lineage_v2_downstream_review_gates(
-    coverage, production, candidate[0, , drop = FALSE], adjudication,
+  no_candidate <- lineage_downstream_review_gates(
+    coverage, legacy, candidate[0, , drop = FALSE], adjudication,
     identity_coverage_complete = TRUE
   )
   expect_false(no_candidate$passed[
@@ -749,7 +506,7 @@ test_that("multi-source Ginis require pooled household reconstruction", {
     stringsAsFactors = FALSE
   )
 
-  queue <- build_lineage_v2_gini_reconstruction_queue(panel)
+  queue <- build_conservative_gini_reconstruction_queue(panel)
 
   expect_identical(queue$target_unit_2001, "pc2001__01__02")
   expect_identical(queue$status, "needs_reconstruction")
@@ -757,7 +514,7 @@ test_that("multi-source Ginis require pooled household reconstruction", {
 })
 
 test_that("an empty Gini queue retains a stable output schema", {
-  queue <- build_lineage_v2_gini_reconstruction_queue(data.frame(
+  queue <- build_conservative_gini_reconstruction_queue(data.frame(
     target_unit_2001 = "pc2001__01__01",
     lineage_source_count = 1L,
     lineage_aggregation_status = "one_to_one",
@@ -775,10 +532,10 @@ test_that("an empty Gini queue retains a stable output schema", {
 })
 
 test_that("an empty Gini queue writes a header-only diagnostic", {
-  queue <- empty_lineage_v2_gini_reconstruction_queue()
-  dir <- tempfile("lineage-v2-downstream-")
+  queue <- empty_conservative_gini_reconstruction_queue()
+  dir <- tempfile("district-lineage-downstream-")
 
-  save_lineage_v2_downstream_review(
+  save_lineage_downstream_review(
     list(gini_reconstruction_queue = queue),
     dir = dir
   )
@@ -804,7 +561,7 @@ test_that("sensitivity allocations remain linked to NSS source identities", {
     source_code = "10202",
     terminal_unit = "pc2011__10__202",
     status = "accepted",
-    eligible_primary = FALSE,
+    eligible_conservative = FALSE,
     stringsAsFactors = FALSE
   )
   weights <- data.frame(
@@ -817,7 +574,7 @@ test_that("sensitivity allocations remain linked to NSS source identities", {
     stringsAsFactors = FALSE
   )
 
-  out <- build_sensitivity_crosswalk_v2(
+  out <- build_sensitivity_crosswalk(
     primary, weights, eligibility
   )
   allocated <- out[out$panel_variant == "population_allocation", ]
@@ -850,7 +607,7 @@ test_that("population allocation preserves counts and intensive values", {
     stringsAsFactors = FALSE
   )
 
-  out <- map_lineage_v2_measures(
+  out <- map_lineage_measures(
     measures, crosswalk, "nss_2017_18"
   )
   out <- out[order(out$target_unit_2001), ]
@@ -865,7 +622,7 @@ test_that("population allocation preserves counts and intensive values", {
   ))
 })
 
-test_that("lineage-v2 measure mapping returns empty for an absent wave", {
+test_that("district-lineage measure mapping returns empty for an absent wave", {
   measures <- data.frame(
     district_code_1718 = "10202",
     consumption_1718 = 200,
@@ -879,7 +636,7 @@ test_that("lineage-v2 measure mapping returns empty for an absent wave", {
     stringsAsFactors = FALSE
   )
 
-  out <- map_lineage_v2_measures(
+  out <- map_lineage_measures(
     measures, crosswalk, "nss_2017_18"
   )
 
@@ -902,7 +659,7 @@ test_that("allocation coverage counts identities separately from crosswalk rows"
     status = "accepted",
     stringsAsFactors = FALSE
   )
-  production <- data.frame(
+  legacy <- data.frame(
     district_panel_id = c("2001__01__01", "2001__01__02"),
     stringsAsFactors = FALSE
   )
@@ -911,8 +668,8 @@ test_that("allocation coverage counts identities separately from crosswalk rows"
     stringsAsFactors = FALSE
   )
 
-  out <- summarize_lineage_v2_downstream_coverage(
-    crosswalk, eligibility, production, candidate
+  out <- summarize_lineage_downstream_coverage(
+    crosswalk, eligibility, legacy, candidate
   )
   wave <- out[out$scope == "wave", , drop = FALSE]
   panel <- out[out$scope == "panel", , drop = FALSE]
@@ -923,12 +680,12 @@ test_that("allocation coverage counts identities separately from crosswalk rows"
   expect_equal(wave$unmapped_identities, 1L)
   expect_equal(wave$identity_coverage_share, 2 / 3)
   expect_equal(panel$shared_unique_units, 1L)
-  expect_equal(panel$production_only_units, 1L)
+  expect_equal(panel$legacy_only_units, 1L)
   expect_equal(panel$candidate_only_units, 1L)
 })
 
 test_that("shared support excludes duplicate and non-overlapping units", {
-  production <- data.frame(
+  legacy <- data.frame(
     district_panel_id = c(
       "2001__01__01", "2001__01__02",
       "2001__01__02", "2001__01__03"
@@ -944,16 +701,16 @@ test_that("shared support excludes duplicate and non-overlapping units", {
     stringsAsFactors = FALSE
   )
 
-  out <- build_lineage_v2_shared_support(production, candidate)
+  out <- build_lineage_shared_support(legacy, candidate)
 
   expect_identical(out$units$target_unit_2001, "pc2001__01__01")
   expect_identical(out$units$state_2001_cluster, "01")
-  expect_equal(nrow(out$production), 1L)
-  expect_equal(nrow(out$lineage_v2), 1L)
-  expect_identical(out$production$state_2001_cluster, "01")
-  expect_identical(out$lineage_v2$state_2001_cluster, "01")
+  expect_equal(nrow(out$legacy), 1L)
+  expect_equal(nrow(out$lineage), 1L)
+  expect_identical(out$legacy$state_2001_cluster, "01")
+  expect_identical(out$lineage$state_2001_cluster, "01")
   expect_false(any(
-    out$production$target_unit_2001 == "pc2001__01__02"
+    out$legacy$target_unit_2001 == "pc2001__01__02"
   ))
 })
 
@@ -978,7 +735,7 @@ test_that("unmapped identity queue excludes already mapped accepted rows", {
     stringsAsFactors = FALSE
   )
 
-  out <- build_lineage_v2_unmapped_identity_queue(
+  out <- build_lineage_unmapped_identity_queue(
     eligibility, crosswalk
   )
 
@@ -994,9 +751,9 @@ test_that("non-overlap queue retains both panel-only directions", {
     target_unit_2001 = c(
       "pc2001__01__01", "pc2001__01__02", "pc2001__01__03"
     ),
-    in_production = c(TRUE, TRUE, FALSE),
-    in_v2 = c(TRUE, FALSE, TRUE),
-    comparison_status = c("shared", "production_only", "v2_only"),
+    in_legacy = c(TRUE, TRUE, FALSE),
+    in = c(TRUE, FALSE, TRUE),
+    comparison_status = c("shared", "legacy_only", "lineage_only"),
     stringsAsFactors = FALSE
   )
   admin_2001 <- data.frame(
@@ -1005,22 +762,22 @@ test_that("non-overlap queue retains both panel-only directions", {
     ),
     level = "district",
     state_std = "state",
-    district_std = c("shared", "production only", "v2 only"),
+    district_std = c("shared", "production only", "lineage only"),
     source_id = "census2001",
     stringsAsFactors = FALSE
   )
 
-  out <- build_lineage_v2_nonoverlap_queue(
+  out <- build_lineage_nonoverlap_queue(
     membership, admin_2001
   )
 
   expect_setequal(
     out$comparison_status,
-    c("production_only", "v2_only")
+    c("legacy_only", "lineage_only")
   )
   expect_setequal(
     out$district_label_2001,
-    c("production only", "v2 only")
+    c("production only", "lineage only")
   )
   expect_true(all(out$canonical_label_available))
   expect_true(all(nzchar(out$next_action)))
@@ -1029,9 +786,9 @@ test_that("non-overlap queue retains both panel-only directions", {
 test_that("non-overlap queue uses canonical 2001 labels", {
   membership <- data.frame(
     target_unit_2001 = "pc2001__17__01",
-    in_production = TRUE,
-    in_v2 = FALSE,
-    comparison_status = "production_only",
+    in_legacy = TRUE,
+    in = FALSE,
+    comparison_status = "legacy_only",
     stringsAsFactors = FALSE
   )
   admin_2001 <- data.frame(
@@ -1043,7 +800,7 @@ test_that("non-overlap queue uses canonical 2001 labels", {
     stringsAsFactors = FALSE
   )
 
-  out <- build_lineage_v2_nonoverlap_queue(
+  out <- build_lineage_nonoverlap_queue(
     membership,
     admin_2001
   )
@@ -1068,7 +825,7 @@ test_that("accepted sensitivity coverage counts identities, not allocation rows"
     stringsAsFactors = FALSE
   )
 
-  status <- accepted_sensitivity_mapping_status_v2(
+  status <- accepted_sensitivity_mapping_status(
     eligibility, sensitivity
   )
 
@@ -1092,7 +849,7 @@ test_that("accepted sensitivity coverage completes only after every identity map
     stringsAsFactors = FALSE
   )
 
-  status <- accepted_sensitivity_mapping_status_v2(
+  status <- accepted_sensitivity_mapping_status(
     eligibility, sensitivity
   )
 
@@ -1110,7 +867,7 @@ test_that("canonical 2001 labels reject duplicate registry units", {
   )
 
   expect_error(
-    lineage_v2_admin_2001_labels(admin_2001),
+    lineage_admin_2001_labels(admin_2001),
     "must be unique"
   )
 })
@@ -1140,7 +897,7 @@ test_that("terminal review queue deduplicates identities and reuses evidence", {
     stringsAsFactors = FALSE
   )
 
-  out <- build_lineage_v2_unmapped_terminal_queue(
+  out <- build_lineage_unmapped_terminal_queue(
     identities, allocations
   )
 
@@ -1192,7 +949,7 @@ test_that("accepted disconnected allocations receive highest priority", {
     stringsAsFactors = FALSE
   )
 
-  out <- build_lineage_v2_unmapped_terminal_queue(
+  out <- build_lineage_unmapped_terminal_queue(
     identities, allocations
   )
 
@@ -1207,13 +964,13 @@ test_that("accepted disconnected allocations receive highest priority", {
 test_that("panel membership adjudication waits for identity coverage", {
   membership <- data.frame(
     target_unit_2001 = c("pc2001__01__01", "pc2001__01__02"),
-    in_production = c(TRUE, FALSE),
-    in_v2 = c(FALSE, TRUE),
-    comparison_status = c("production_only", "v2_only"),
+    in_legacy = c(TRUE, FALSE),
+    in = c(FALSE, TRUE),
+    comparison_status = c("legacy_only", "lineage_only"),
     stringsAsFactors = FALSE
   )
 
-  out <- build_lineage_v2_panel_membership_adjudication(
+  out <- build_lineage_panel_membership_adjudication(
     membership,
     identity_coverage_complete = FALSE
   )
@@ -1230,20 +987,20 @@ test_that("panel membership adjudication follows support invariants", {
       "pc2001__01__01", "pc2001__01__02",
       "pc2001__01__03", "pc2001__01__04"
     ),
-    in_production = c(TRUE, FALSE, TRUE, TRUE),
-    in_v2 = c(TRUE, TRUE, FALSE, FALSE),
+    in_legacy = c(TRUE, FALSE, TRUE, TRUE),
+    in = c(TRUE, TRUE, FALSE, FALSE),
     comparison_status = c(
-      "shared", "v2_only", "production_only", "production_only"
+      "shared", "lineage_only", "legacy_only", "legacy_only"
     ),
     stringsAsFactors = FALSE
   )
   duplicates <- data.frame(
     target_unit_2001 = "pc2001__01__04",
-    panel_variant = "production",
+    panel_variant = "legacy",
     stringsAsFactors = FALSE
   )
 
-  out <- build_lineage_v2_panel_membership_adjudication(
+  out <- build_lineage_panel_membership_adjudication(
     membership,
     duplicates,
     identity_coverage_complete = TRUE
@@ -1257,7 +1014,7 @@ test_that("panel membership adjudication follows support invariants", {
   )
   expect_identical(
     decision[["pc2001__01__02"]],
-    "accept_lineage_v2_coverage_addition"
+    "accept_lineage_coverage_addition"
   )
   expect_identical(
     decision[["pc2001__01__03"]],
@@ -1298,7 +1055,7 @@ test_that("multi-source district Ginis are reconstructed from pooled households"
     stringsAsFactors = FALSE
   )
 
-  out <- reconstruct_lineage_v2_pooled_ginis(
+  out <- reconstruct_lineage_pooled_ginis(
     panel, crosswalk, list(), list(nss1718edu_block3 = block3)
   )
 
@@ -1310,7 +1067,7 @@ test_that("multi-source district Ginis are reconstructed from pooled households"
   expect_identical(out$audit$status, "reconstructed")
   expect_equal(out$audit$source_count, 2L)
   expect_equal(out$audit$household_count, 4L)
-  expect_equal(nrow(build_lineage_v2_gini_reconstruction_queue(out$panel)), 0L)
+  expect_equal(nrow(build_conservative_gini_reconstruction_queue(out$panel)), 0L)
 })
 
 test_that("pooled Gini reconstruction preserves sf geometry", {
@@ -1345,7 +1102,7 @@ test_that("pooled Gini reconstruction preserves sf geometry", {
     stringsAsFactors = FALSE
   )
 
-  out <- reconstruct_lineage_v2_pooled_ginis(
+  out <- reconstruct_lineage_pooled_ginis(
     panel, crosswalk, list(), list(nss1718edu_block3 = block3)
   )
 
@@ -1371,7 +1128,7 @@ test_that("district recovery audit accounts for the full 2001 universe", {
     data.frame(source_row_id = c("s07", "s17"), wave = c("nss_2007_08", "nss_2017_18"), target_unit_2001 = c("b", "b"))
   )
 
-  out <- build_lineage_v2_district_loss_audit(
+  out <- build_lineage_district_loss_audit(
     admin, roster, eligibility, preferred, sensitivity
   )
 
@@ -1386,12 +1143,12 @@ test_that("district recovery audit accounts for the full 2001 universe", {
 test_that("recovery gates reject generic exclusions and preferred multi-parent mappings", {
   loss <- data.frame(target_unit_2001 = sprintf("d%03d", 1:593))
   rec <- data.frame(
-    exclusion_reason = c("dominant_parent_near_complete_requires_review", "multi_parent_allocation_sensitivity_only"),
-    recovery_class = c("dominant_parent_near_complete", "multi_parent_fractional_mapping"),
-    eligible_primary = c(FALSE, FALSE)
+    exclusion_reason = c("primary_near_complete_requires_review", "multi_parent_allocation_sensitivity_only"),
+    recovery_class = c("primary_near_complete", "multi_parent_fractional_mapping"),
+    eligible_conservative = c(FALSE, FALSE)
   )
 
-  gates <- build_lineage_v2_recovery_gates(loss, rec)
+  gates <- build_lineage_recovery_gates(loss, rec)
 
   expect_true(all(gates$passed))
 })
@@ -1418,18 +1175,18 @@ test_that("dominant-parent reviews create a separate one-parent crosswalk", {
     source_row_id = "d17", wave = "nss_2017_18", source_code = "2",
     raw_state = "State", raw_district = "District",
     terminal_unit = "pc2011__01__001", target_unit_2001 = "pc2001__01__01",
-    review_status = "accepted_dominant_parent", reviewed_panel = "dominant_parent",
+    review_status = "accepted_primary", reviewed_panel = "primary",
     evidence_basis = "iss_2001_2011_continuity_and_shrug_min_99pct_single_parent",
     evidence_source_ids = "alluvial|shrug_pc_keys", notes = "reviewed",
     stringsAsFactors = FALSE
   )
 
-  out <- build_dominant_parent_source_crosswalk_v2(primary, sensitivity, reviews)
+  out <- build_conservative_source_crosswalk(primary, sensitivity, reviews)
 
   expect_setequal(out$source_row_id, c("p07", "d17"))
   expect_identical(anyDuplicated(out$source_row_id), 0L)
   expect_named(out, names(sensitivity))
-  expect_true(all(out$panel_variant == "dominant_parent"))
+  expect_true(all(out$panel_variant == "primary"))
 })
 
 test_that("dominant-parent reviews cannot admit multi-parent allocations", {
@@ -1448,13 +1205,13 @@ test_that("dominant-parent reviews cannot admit multi-parent allocations", {
     source_row_id = "d17", wave = "nss_2017_18", source_code = "2",
     raw_state = "State", raw_district = "District",
     terminal_unit = "pc2011__01__001", target_unit_2001 = "pc2001__01__01",
-    review_status = "accepted_dominant_parent", reviewed_panel = "dominant_parent",
+    review_status = "accepted_primary", reviewed_panel = "primary",
     evidence_basis = "reviewed", evidence_source_ids = "alluvial|shrug_pc_keys",
     notes = "reviewed", stringsAsFactors = FALSE
   )
 
   expect_error(
-    build_dominant_parent_source_crosswalk_v2(primary, sensitivity, reviews),
+    build_conservative_source_crosswalk(primary, sensitivity, reviews),
     "do not match an eligible single-target allocation"
   )
 })
@@ -1470,22 +1227,22 @@ test_that("panel-variant review stacks the same model contract across panels", {
   empty_models <- list()
   first_stage <- data.frame()
 
-  out <- build_lineage_v2_panel_variant_review(
-    panels = list(conservative_preferred = panel, dominant_parent = panel),
-    models = list(conservative_preferred = empty_models, dominant_parent = empty_models),
+  out <- build_lineage_panel_variant_review(
+    panels = list(conservative_preferred = panel, primary = panel),
+    models = list(conservative_preferred = empty_models, primary = empty_models),
     first_stage_tests = list(
       conservative_preferred = first_stage,
-      dominant_parent = first_stage
+      primary = first_stage
     ),
     gini_audits = list(
       conservative_preferred = data.frame(status = "not_required"),
-      dominant_parent = data.frame(status = "reconstructed")
+      primary = data.frame(status = "reconstructed")
     )
   )
 
   expect_setequal(
     out$panel_summary$panel_variant,
-    c("conservative_preferred", "dominant_parent")
+    c("conservative_preferred", "primary")
   )
   expect_true(all(out$panel_summary$unique_districts == 2L))
   expect_setequal(out$gini_reconstruction$panel_variant, out$panel_summary$panel_variant)
@@ -1509,10 +1266,55 @@ test_that("multi-parent review queue preserves every fractional target", {
     stringsAsFactors = FALSE
   )
 
-  out <- build_lineage_v2_multi_parent_review_queue(rec, crosswalk)
+  out <- build_lineage_multi_parent_review_queue(rec, crosswalk)
 
   expect_equal(nrow(out), 2L)
   expect_equal(sum(out$weight), 1)
   expect_setequal(out$allocation_rank, c(1, 2))
   expect_true(all(out$review_status == "needs_fractional_validation"))
+})
+
+test_that("lineage completion tracks current six-step invariants", {
+  geometry <- data.frame(
+    metric = c("geometry_available", "geometry_rows", "expected_admin_units",
+               "missing_admin_units", "unexpected_geometry_units", "invalid_geometries"),
+    value = c(TRUE, 593, 593, 0, 0, 0)
+  )
+  status <- lineage_completion_steps(
+    source_roster = data.frame(source_row_id = "s1"),
+    source_matches = data.frame(source_row_id = "s1", status = "accepted"),
+    adjudication_queue = data.frame(review_class = character(), adjudication_status = character()),
+    evidence_requests = data.frame(),
+    allocation_validation = data.frame(source_key = "u1", weights_well_formed = TRUE, coverage_complete = TRUE),
+    allocation_weights = data.frame(source_unit = character(), status = character()),
+    conservative_crosswalk = data.frame(source_row_id = "s1"),
+    primary_crosswalk = data.frame(source_row_id = "s1"),
+    full_reviewed_crosswalk = data.frame(source_row_id = "s1"),
+    geometry_qa = geometry,
+    conservative_eligibility = data.frame(source_row_id = "s1", status = "accepted", eligible_conservative = TRUE)
+  )
+  expect_identical(status$step, seq_len(6L))
+  expect_true(all(status$complete))
+  expect_true(all(nzchar(status$next_action)))
+})
+
+test_that("panel roles remain monotone", {
+  geometry <- data.frame(
+    metric = c("geometry_available", "missing_admin_units", "unexpected_geometry_units", "invalid_geometries"),
+    value = c(TRUE, 0, 0, 0)
+  )
+  status <- lineage_completion_steps(
+    source_roster = data.frame(source_row_id = "s1"),
+    source_matches = data.frame(source_row_id = "s1", status = "accepted"),
+    adjudication_queue = data.frame(review_class = character(), adjudication_status = character()),
+    evidence_requests = data.frame(),
+    allocation_validation = data.frame(source_key = "u1", weights_well_formed = TRUE, coverage_complete = TRUE),
+    allocation_weights = data.frame(source_unit = character(), status = character()),
+    conservative_crosswalk = data.frame(source_row_id = c("s1", "s2")),
+    primary_crosswalk = data.frame(source_row_id = "s1"),
+    full_reviewed_crosswalk = data.frame(source_row_id = "s1"),
+    geometry_qa = geometry,
+    conservative_eligibility = data.frame(source_row_id = "s1", status = "accepted", eligible_conservative = TRUE)
+  )
+  expect_false(status$complete[status$work_item == "Build the conservative, primary, and full reviewed crosswalks"])
 })

@@ -1,14 +1,14 @@
-# Parallel district-lineage v2 diagnostic. The output is reviewable and does not
-# replace the production crosswalk until all source identities and events are
-# adjudicated and the migration-readiness invariants pass.
+# Parallel district-lineage diagnostic. The output is reviewable and does not
+# build the reviewed lineage crosswalks after all source identities and events are
+# adjudicated and the lineage-readiness invariants pass.
 
-ensure_columns_v2 <- function(x, columns, value = NA) {
+ensure_columns <- function(x, columns, value = NA) {
   x <- safe_df(x)
   for (nm in setdiff(columns, names(x))) x[[nm]] <- rep(value, nrow(x))
   x
 }
 
-build_isded_candidate_events_v2 <- function(raw_sources) {
+build_isded_candidate_events <- function(raw_sources) {
   x <- clean_source_names(safe_df(raw_sources$isded_1951_2024 %||% data.frame()))
   source_district <- first_col(x, c("source district", "source_district"))
   dest_district <- first_col(x, c("dest district", "destination district", "dest_district"))
@@ -53,13 +53,13 @@ build_isded_candidate_events_v2 <- function(raw_sources) {
   )
 }
 
-build_candidate_admin_events_v2 <- function(district_tracker, raw_sources) {
+build_candidate_admin_events <- function(district_tracker, raw_sources) {
   required <- c(
     "source_file_id", ".row_in_source", "source_state_raw", "source_district_raw",
     "target_state_raw", "target_district_raw", "source_year", "target_year",
     "event_year", "change_type"
   )
-  tracker <- ensure_columns_v2(district_tracker, required)
+  tracker <- ensure_columns(district_tracker, required)
   if (nrow(tracker)) {
     changed <- is.na(tracker$change_type) | tracker$change_type != "continuity"
     event_year <- num(tracker$event_year)
@@ -113,11 +113,11 @@ build_candidate_admin_events_v2 <- function(district_tracker, raw_sources) {
     )
   } else data.frame()
 
-  isded_events <- build_isded_candidate_events_v2(raw_sources)
+  isded_events <- build_isded_candidate_events(raw_sources)
   unique(safe_bind_rows(list(tracker_events, lgd_events, isded_events)))
 }
 
-build_current_component_registry_v2 <- function(raw_sources) {
+build_current_component_registry <- function(raw_sources) {
   subdistricts <- standardize_lgd_registry(
     raw_sources$lgd_subdistricts %||% data.frame(),
     "subdistrict"
@@ -150,7 +150,7 @@ build_current_component_registry_v2 <- function(raw_sources) {
   unique(safe_bind_rows(list(subdistricts, ulbs, iss)))
 }
 
-build_current_urban_coverage_v2 <- function(raw_sources) {
+build_current_urban_coverage <- function(raw_sources) {
   coverage <- standardize_lgd_urban_coverage(
     raw_sources$lgd_urban_coverage %||% data.frame()
   )
@@ -158,7 +158,7 @@ build_current_urban_coverage_v2 <- function(raw_sources) {
   coverage
 }
 
-build_changed_component_roster_v2 <- function(raw_sources) {
+build_changed_component_roster <- function(raw_sources) {
   source_ids <- c(
     "lgd_mod_districts", "lgd_mod_subdistricts",
     "lgd_mod_villages", "lgd_mod_urban_local_bodies"
@@ -171,7 +171,7 @@ build_changed_component_roster_v2 <- function(raw_sources) {
   }))
 }
 
-read_admin_events_v2 <- function(x) {
+read_admin_events <- function(x) {
   x <- safe_df(x)
   required <- c("event_id", "effective_date", "event_type", "from_unit", "to_unit", "share", "source_id", "status", "note")
   for (nm in setdiff(required, names(x))) x[[nm]] <- rep(NA_character_, nrow(x))
@@ -188,7 +188,7 @@ read_admin_events_v2 <- function(x) {
   x
 }
 
-read_lineage_source_registry_v2 <- function(x) {
+read_lineage_source_registry <- function(x) {
   x <- safe_df(x)
   required <- c("source_id", "citation", "path_or_url", "accessed")
   for (nm in setdiff(required, names(x))) x[[nm]] <- rep(NA_character_, nrow(x))
@@ -199,10 +199,9 @@ read_lineage_source_registry_v2 <- function(x) {
   x
 }
 
-validate_lineage_source_references_v2 <- function(
+validate_lineage_source_references <- function(
   source_registry, source_matches = data.frame(), admin_events = data.frame(),
-  allocation_weights = data.frame(), geometry_carrybacks = data.frame(),
-  production_reviews = data.frame()
+  allocation_weights = data.frame(), geometry_carrybacks = data.frame()
 ) {
   registry_ids <- unique(plain_chr(safe_df(source_registry)$source_id %||% character()))
   collect <- function(x, object_type, id_col) {
@@ -221,8 +220,7 @@ validate_lineage_source_references_v2 <- function(
     collect(source_matches, "source_match", "source_row_id"),
     collect(admin_events, "admin_event", "event_id"),
     collect(allocation_weights, "allocation_weight", "source_unit"),
-    collect(geometry_carrybacks, "geometry_carryback", "target_unit_2001"),
-    collect(production_reviews, "production_review", "review_id")
+    collect(geometry_carrybacks, "geometry_carryback", "target_unit_2001")
   ))
   if (!nrow(refs)) {
     return(data.frame(
@@ -238,7 +236,7 @@ validate_lineage_source_references_v2 <- function(
   refs[!is.na(refs$issue), , drop = FALSE]
 }
 
-build_concordance_candidates_v2 <- function(raw_sources) {
+build_concordance_candidates <- function(raw_sources) {
   ids <- c(
     "concordance_plfs_nss", "concordance_census_plfs", "concordance_nrlm_plfs",
     "concordance_telangana", "concordance_census_region"
@@ -256,7 +254,7 @@ build_concordance_candidates_v2 <- function(raw_sources) {
   }))
 }
 
-empty_duplicate_key_diagnostics_v2 <- function() {
+empty_duplicate_key_diagnostics <- function() {
   data.frame(
     source_id = character(), key = character(), n_rows = integer(),
     duplicate_type = character(), row_numbers = character(),
@@ -264,14 +262,14 @@ empty_duplicate_key_diagnostics_v2 <- function() {
   )
 }
 
-duplicate_key_diagnostics_v2 <- function(x, key_cols, source_id) {
+duplicate_key_diagnostics <- function(x, key_cols, source_id) {
   x <- safe_df(x)
   missing <- setdiff(key_cols, names(x))
-  if (length(missing) || !nrow(x)) return(empty_duplicate_key_diagnostics_v2())
+  if (length(missing) || !nrow(x)) return(empty_duplicate_key_diagnostics())
   key <- do.call(interaction, c(lapply(x[key_cols], plain_chr), list(drop = TRUE, lex.order = TRUE)))
   groups <- split(seq_len(nrow(x)), key)
   duplicates <- groups[lengths(groups) > 1L]
-  if (!length(duplicates)) return(empty_duplicate_key_diagnostics_v2())
+  if (!length(duplicates)) return(empty_duplicate_key_diagnostics())
   non_key <- setdiff(names(x), key_cols)
   safe_bind_rows(lapply(duplicates, function(i) {
     payload <- if (length(non_key)) apply(x[i, non_key, drop = FALSE], 1, function(z) paste(plain_chr(z), collapse = "\r")) else rep("", length(i))
@@ -286,7 +284,7 @@ duplicate_key_diagnostics_v2 <- function(x, key_cols, source_id) {
   }))
 }
 
-candidate_event_relevant_to_sources_v2 <- function(events, source_roster) {
+candidate_event_relevant_to_sources <- function(events, source_roster) {
   events <- safe_df(events)
   sources <- safe_df(source_roster)
   if (!nrow(events) || !nrow(sources)) return(rep(FALSE, nrow(events)))
@@ -296,14 +294,14 @@ candidate_event_relevant_to_sources_v2 <- function(events, source_roster) {
   from_key %in% source_key | to_key %in% source_key
 }
 
-build_evidence_requests_v2 <- function(
+build_evidence_requests <- function(
   candidate_events, source_roster, adjudication_queue,
-  primary_eligibility = data.frame()
+  conservative_eligibility = data.frame()
 ) {
   events <- safe_df(candidate_events)
   source_roster <- safe_df(source_roster)
   queue <- safe_df(adjudication_queue)
-  eligibility <- safe_df(primary_eligibility)
+  eligibility <- safe_df(conservative_eligibility)
   evidence_classes <- c(
     "adjudicated_needs_review", "high_precision_fuzzy_candidate",
     "fuzzy_candidates", "no_candidate"
@@ -328,12 +326,12 @@ build_evidence_requests_v2 <- function(
     ,
     drop = FALSE
   ]
-  relevant <- candidate_event_relevant_to_sources_v2(events, unresolved_sources)
+  relevant <- candidate_event_relevant_to_sources(events, unresolved_sources)
   event_requests <- events[
     relevant & events$status %in% c("candidate_unadjudicated", "changed_unit_roster_only"),
     , drop = FALSE
   ]
-  event_requests <- ensure_columns_v2(
+  event_requests <- ensure_columns(
     event_requests, c("reported_year", "source_year", "target_year", "effective_date"), NA
   )
   event_out <- if (nrow(event_requests)) data.frame(
@@ -396,146 +394,85 @@ build_evidence_requests_v2 <- function(
   unique(safe_bind_rows(list(event_out, source_out, lineage_out)))
 }
 
-migration_gate_actions_v2 <- function() {
+lineage_gate_actions <- function() {
   c(
-    core_inputs_available = "Add or register every required locality key and the PC11 district geometry.",
+    core_inputs_available = "Add or register every required locality key and the Census 2011 district geometry.",
     unique_2001_unit_ids = "Resolve duplicate Census 2001 unit identifiers.",
     unique_2011_unit_ids = "Resolve duplicate Census 2011 unit identifiers.",
     shrid_weights_well_formed = "Correct missing, negative, or overallocated SHRUG transition weights.",
-    shrid_allocation_coverage_complete = "Resolve unmatched SHRUG mass or document accepted sensitivity allocations.",
-    adjudicated_allocation_weights_valid = "Correct accepted sensitivity weights so each source unit sums to one.",
-    all_adjudication_sources_registered = "Register every source cited by accepted matches, events, and allocations.",
+    shrid_allocation_coverage_complete = "Resolve unmatched SHRUG mass or document reviewed allocations.",
+    adjudicated_allocation_weights_valid = "Correct accepted allocation weights so each source unit sums to one.",
+    all_adjudication_sources_registered = "Register every source cited by accepted matches, events, allocations, and geometry carry-backs.",
     no_conflicting_duplicate_keys = "Resolve conflicting source or registry keys.",
     all_source_rows_adjudicated = "Accept or exclude every NSS source identity in tracked metadata.",
-    accepted_source_rows_present = "Accept at least one source identity for the preferred panel.",
-    all_accepted_rows_primary_classified = "Classify every accepted identity as preferred-eligible or explicitly excluded.",
-    all_accepted_rows_sensitivity_mapped = "Map every accepted identity in the connected sensitivity crosswalk or record an explicit exclusion.",
-    all_changed_production_mappings_reviewed = "Review every changed production target and record whether v2 or production should prevail.",
-    downstream_results_reviewed = "Review the shared-support results and resolve the unmapped-identity and panel-nonoverlap queues before recording a downstream decision."
+    accepted_source_rows_present = "Accept at least one source identity for panel construction.",
+    all_accepted_rows_conservative_classified = "Classify every accepted identity for the conservative panel.",
+    all_accepted_rows_full_reviewed_mapped = "Map every accepted identity in the full reviewed crosswalk or record an explicit exclusion."
   )
 }
 
-build_migration_readiness_v2 <- function(
+build_lineage_readiness <- function(
   missing_core, admin_2001, admin_2011, allocation_validation,
-  source_roster, source_matches, primary_eligibility, duplicate_keys,
+  source_roster, source_matches, conservative_eligibility, duplicate_keys,
   adjudicated_allocation_validation, source_reference_issues,
   adjudicated_allocation_weights = data.frame(),
-  production_comparison = data.frame(),
-  production_reviews = data.frame(),
-  sensitivity_crosswalk = data.frame()
+  full_reviewed_crosswalk = data.frame()
 ) {
   source_matches <- safe_df(source_matches)
-  resolved_ids <- source_matches$source_row_id[
-    source_matches$status %in% c("accepted", "excluded")
-  ]
+  resolved_ids <- source_matches$source_row_id[source_matches$status %in% c("accepted", "excluded")]
   duplicates <- safe_df(duplicate_keys)
-  allocation_status <- allocation_coverage_status_v2(
-    allocation_validation,
-    adjudicated_allocation_validation,
-    allocation_decision_status_v2(adjudicated_allocation_weights)
+  allocation_status <- allocation_coverage_status(
+    allocation_validation, adjudicated_allocation_validation,
+    allocation_decision_status(adjudicated_allocation_weights)
   )
-  sensitivity_mapping_status <- accepted_sensitivity_mapping_status_v2(
-    primary_eligibility, sensitivity_crosswalk
+  mapping_status <- accepted_sensitivity_mapping_status(
+    conservative_eligibility, full_reviewed_crosswalk
   )
-
   gates <- c(
     core_inputs_available = !length(missing_core),
     unique_2001_unit_ids = nrow(admin_2001) > 0L && !anyDuplicated(admin_2001$unit_id),
     unique_2011_unit_ids = nrow(admin_2011) > 0L && !anyDuplicated(admin_2011$unit_id),
-    shrid_weights_well_formed =
-      nrow(allocation_validation) > 0L &&
-        all(allocation_validation$weights_well_formed),
-    shrid_allocation_coverage_complete =
-      allocation_status$coverage_resolved[[1]],
-    adjudicated_allocation_weights_valid =
-      !nrow(adjudicated_allocation_validation) ||
-        all(adjudicated_allocation_validation$coverage_complete),
+    shrid_weights_well_formed = nrow(allocation_validation) > 0L && all(allocation_validation$weights_well_formed),
+    shrid_allocation_coverage_complete = allocation_status$coverage_resolved[[1]],
+    adjudicated_allocation_weights_valid = !nrow(adjudicated_allocation_validation) || all(adjudicated_allocation_validation$coverage_complete),
     all_adjudication_sources_registered = !nrow(source_reference_issues),
-    no_conflicting_duplicate_keys =
-      !nrow(duplicates) || !any(duplicates$duplicate_type == "conflicting"),
-    all_source_rows_adjudicated =
-      nrow(source_roster) > 0L && all(source_roster$source_row_id %in% resolved_ids),
+    no_conflicting_duplicate_keys = !nrow(duplicates) || !any(duplicates$duplicate_type == "conflicting"),
+    all_source_rows_adjudicated = nrow(source_roster) > 0L && all(source_roster$source_row_id %in% resolved_ids),
     accepted_source_rows_present = any(source_matches$status %in% "accepted"),
-    all_accepted_rows_primary_classified =
-      !any(source_matches$status %in% "accepted") ||
-        all(!is.na(primary_eligibility$eligible_primary[
-          primary_eligibility$status %in% "accepted"
-        ])),
-    all_accepted_rows_sensitivity_mapped =
-      sensitivity_mapping_status$coverage_complete[[1L]],
-    all_changed_production_mappings_reviewed = {
-      changed <- safe_df(production_comparison)
-      changed <- changed[
-        changed$comparison_status %in% "changed_target",
-        ,
-        drop = FALSE
-      ]
-      !nrow(changed) || all(changed$review_status %in% "accepted")
-    },
-    downstream_results_reviewed = {
-      reviews <- read_production_mapping_reviews_v2(production_reviews)
-      any(
-        reviews$review_scope %in% "downstream_results" &
-          reviews$status %in% "accepted"
-      )
-    }
+    all_accepted_rows_conservative_classified = !any(source_matches$status %in% "accepted") || all(!is.na(conservative_eligibility$eligible_conservative[conservative_eligibility$status %in% "accepted"])),
+    all_accepted_rows_full_reviewed_mapped = mapping_status$coverage_complete[[1L]]
   )
   notes <- c(
-    core_inputs_available = "All locality keys and the PC11 district geometry are present.",
-    unique_2001_unit_ids = "Census 2001 unit IDs are code-based and unique.",
-    unique_2011_unit_ids = "Census 2011 unit IDs are code-based and unique.",
+    core_inputs_available = "All locality keys and Census 2011 district geometry are present.",
+    unique_2001_unit_ids = "Census 2001 unit IDs are unique.",
+    unique_2011_unit_ids = "Census 2011 unit IDs are unique.",
     shrid_weights_well_formed = "Every SHRUG transition weight is finite, nonnegative, and does not overallocate its source district.",
-    shrid_allocation_coverage_complete = paste0(
-      "Every incomplete SHRUG source district is either fully mapped or ",
-      "covered by a valid reviewed sensitivity allocation; ",
-      allocation_status$n_unresolved[[1]], " remain unresolved."
-    ),
-    adjudicated_allocation_weights_valid = "Every accepted tracked sensitivity allocation sums to one by source unit.",
-    all_adjudication_sources_registered = "Every accepted source match, event, allocation, and geometry carry-back cites a registered evidence source.",
-    no_conflicting_duplicate_keys = "Duplicate source or registry keys are either absent or identical.",
-    all_source_rows_adjudicated = "Every NSS source row is explicitly accepted or excluded in tracked metadata.",
-    accepted_source_rows_present = "At least one source row is accepted for lineage processing.",
-    all_accepted_rows_primary_classified = "Every accepted identity has an explicit preferred-panel eligibility disposition.",
-    all_accepted_rows_sensitivity_mapped = paste0(
-      sensitivity_mapping_status$n_mapped[[1L]], "/",
-      sensitivity_mapping_status$n_accepted[[1L]],
-      " accepted identities appear in the connected sensitivity crosswalk; ",
-      sensitivity_mapping_status$n_unmapped[[1L]], " remain unmapped."
-    ),
-    all_changed_production_mappings_reviewed = "Every changed inherited production target has a tracked review decision.",
-    downstream_results_reviewed = "The rebuilt panel and model results have been reviewed before migration."
+    shrid_allocation_coverage_complete = paste0(allocation_status$n_unresolved[[1]], " source-unit allocations remain unresolved."),
+    adjudicated_allocation_weights_valid = "Every accepted tracked allocation sums to one by source unit.",
+    all_adjudication_sources_registered = "Every accepted lineage decision cites a registered evidence source.",
+    no_conflicting_duplicate_keys = "Duplicate source or registry keys are absent or identical.",
+    all_source_rows_adjudicated = "Every NSS source identity is explicitly accepted or excluded.",
+    accepted_source_rows_present = "At least one source identity is accepted.",
+    all_accepted_rows_conservative_classified = "Every accepted identity has an explicit conservative-panel disposition.",
+    all_accepted_rows_full_reviewed_mapped = paste0(mapping_status$n_mapped[[1L]], "/", mapping_status$n_accepted[[1L]], " accepted identities are represented in the full reviewed crosswalk.")
   )
-
   data.frame(
-    gate = c(names(gates), "production_crosswalk_migration_ready"),
+    gate = c(names(gates), "lineage_ready"),
     passed = c(unname(gates), all(gates)),
-    note = c(
-      unname(notes),
-      "Passes only when every prerequisite gate passes; production replacement remains an explicit maintainer action."
-    ),
+    note = c(unname(notes), "All production lineage invariants pass."),
     stringsAsFactors = FALSE
   )
 }
 
-build_migration_blockers_v2 <- function(readiness) {
+build_lineage_blockers <- function(readiness) {
   readiness <- safe_df(readiness)
-  out <- readiness[
-    !(readiness$passed %in% TRUE) &
-      readiness$gate != "production_crosswalk_migration_ready",
-    c("gate", "note"),
-    drop = FALSE
-  ]
-  if (!nrow(out)) {
-    return(data.frame(
-      gate = character(), note = character(), next_action = character(),
-      stringsAsFactors = FALSE
-    ))
-  }
-  out$next_action <- unname(migration_gate_actions_v2()[out$gate])
+  out <- readiness[!(readiness$passed %in% TRUE) & readiness$gate != "lineage_ready", c("gate", "note"), drop = FALSE]
+  if (!nrow(out)) return(data.frame(gate = character(), note = character(), next_action = character(), stringsAsFactors = FALSE))
+  out$next_action <- unname(lineage_gate_actions()[out$gate])
   out
 }
 
-summarize_shrid_bridge_v2 <- function(bridge) {
+summarize_shrid_bridge <- function(bridge) {
   bridge <- safe_df(bridge)
   if (!nrow(bridge)) {
     return(data.frame(
@@ -556,7 +493,7 @@ summarize_shrid_bridge_v2 <- function(bridge) {
   }))
 }
 
-lineage_v2_summary <- function(
+lineage_summary <- function(
   inventory, admin_2001, admin_2011, bridge, transition, source_roster,
   source_matches, candidates, adjudication_queue, eligibility, events,
   current_components, urban_coverage, changed_components, evidence_requests,
@@ -586,7 +523,7 @@ lineage_v2_summary <- function(
       sum(adjudication_queue$review_class == "single_vintage_exact_candidate"),
       sum(adjudication_queue$review_class %in% c("high_precision_fuzzy_candidate", "fuzzy_candidates")),
       sum(adjudication_queue$review_class == "no_candidate"),
-      sum(eligibility$eligible_primary %in% TRUE), nrow(events),
+      sum(eligibility$eligible_conservative %in% TRUE), nrow(events),
       nrow(current_components), nrow(urban_coverage), nrow(changed_components),
       nrow(evidence_requests),
       length(unique(adjudicated_weights$source_unit[
@@ -595,20 +532,19 @@ lineage_v2_summary <- function(
       length(unique(adjudicated_weights$source_unit[
         adjudicated_weights$status %in% "rejected"
       ])),
-      allocation_coverage_status_v2(
+      allocation_coverage_status(
         allocation_validation,
         adjudicated_weight_validation,
-        allocation_decision_status_v2(adjudicated_weights)
+        allocation_decision_status(adjudicated_weights)
       )$n_unresolved[[1]]
     ),
     stringsAsFactors = FALSE
   )
 }
 
-#' Build district-lineage v2 diagnostic bundle
-build_district_lineage_v2 <- function(
-  raw_sources, inventory, district_tracker, census_2001_languages,
-  source_2007, source_2017, production_panel = data.frame()
+#' Build district-lineage diagnostic bundle
+build_district_lineage <- function(
+  raw_sources, inventory, census_2001_languages, source_2007, source_2017
 ) {
   inventory <- safe_df(inventory)
   needed <- c(
@@ -635,122 +571,111 @@ build_district_lineage_v2 <- function(
   transition <- combine_district_transitions_2001_2011(
     transition_shrug, transition_lgd
   )
-  bridge_summary <- summarize_shrid_bridge_v2(bridge)
+  bridge_summary <- summarize_shrid_bridge(bridge)
   bridge_df <- safe_df(bridge)
   bridge_qa <- bridge_df[!(bridge_df$deterministic %in% TRUE), , drop = FALSE]
   allocation_validation <- validate_allocation_weights(transition)
 
-  source_roster <- build_nss_district_roster_v2(source_2007, source_2017)
-  reference_units <- build_reference_units_v2(
+  source_roster <- build_nss_district_roster(source_2007, source_2017)
+  reference_units <- build_reference_units(
     admin_2001, admin_2011,
     raw_sources$lgd_states %||% data.frame(),
     raw_sources$lgd_districts %||% data.frame()
   )
   adjudications <- raw_sources$lineage_adjudications %||% data.frame()
-  adjudicated_events <- read_admin_events_v2(raw_sources$lineage_events %||% data.frame())
-  adjudicated_weights <- read_adjudicated_allocation_weights_v2(
+  adjudicated_events <- read_admin_events(raw_sources$lineage_events %||% data.frame())
+  adjudicated_weights <- read_adjudicated_allocation_weights(
     raw_sources$lineage_allocation_weights %||% data.frame(),
     admin_2001
   )
-  adjudicated_weight_validation <- validate_adjudicated_allocation_weights_v2(adjudicated_weights)
-  source_matches <- build_adjudicated_source_matches_v2(adjudications, reference_units)
-  candidates <- build_source_candidate_ledger_v2(source_roster, reference_units, adjudications)
-  adjudication_queue <- build_source_adjudication_queue_v2(
+  adjudicated_weight_validation <- validate_adjudicated_allocation_weights(adjudicated_weights)
+  source_matches <- build_adjudicated_source_matches(adjudications, reference_units)
+  candidates <- build_source_candidate_ledger(source_roster, reference_units, adjudications)
+  adjudication_queue <- build_source_adjudication_queue(
     source_roster, candidates, adjudications
   )
-  eligibility <- build_primary_mapping_eligibility(
+  eligibility <- build_conservative_mapping_eligibility(
     source_roster, source_matches, transition, admin_2001, admin_2011,
     adjudicated_events, adjudicated_weights
   )
-  primary_crosswalk <- build_primary_source_crosswalk_v2(eligibility)
-  excluded_sources <- build_excluded_source_rows_v2(eligibility)
+  conservative_crosswalk <- build_conservative_source_crosswalk(eligibility)
+  excluded_sources <- build_excluded_source_rows(eligibility)
 
-  candidate_events <- build_candidate_admin_events_v2(district_tracker, raw_sources)
-  current_components <- build_current_component_registry_v2(raw_sources)
-  urban_coverage <- build_current_urban_coverage_v2(raw_sources)
-  changed_components <- build_changed_component_roster_v2(raw_sources)
-  source_registry <- read_lineage_source_registry_v2(raw_sources$lineage_sources %||% data.frame())
-  geometry_carrybacks <- read_geometry_carrybacks_v2(
+  candidate_events <- data.frame()
+  current_components <- build_current_component_registry(raw_sources)
+  urban_coverage <- build_current_urban_coverage(raw_sources)
+  changed_components <- build_changed_component_roster(raw_sources)
+  source_registry <- read_lineage_source_registry(raw_sources$lineage_sources %||% data.frame())
+  geometry_carrybacks <- read_geometry_carrybacks(
     raw_sources$lineage_geometry_carrybacks %||% data.frame()
   )
-  source_reference_issues <- validate_lineage_source_references_v2(
+  source_reference_issues <- validate_lineage_source_references(
     source_registry, source_matches, adjudicated_events, adjudicated_weights,
-    geometry_carrybacks,
-    read_production_mapping_reviews_v2(
-      raw_sources$lineage_production_reviews %||% data.frame()
-    )
+    geometry_carrybacks
   )
-  concordance <- build_concordance_candidates_v2(raw_sources)
-  evidence_requests <- build_evidence_requests_v2(
+  concordance <- build_concordance_candidates(raw_sources)
+  evidence_requests <- build_evidence_requests(
     candidate_events,
     source_roster,
     adjudication_queue,
     eligibility
   )
-  adjudication_draft <- build_adjudication_draft_v2(
+  adjudication_draft <- build_adjudication_draft(
     source_roster, adjudication_queue, candidates
   )
-  sensitivity_crosswalk <- build_sensitivity_crosswalk_v2(
-    primary_crosswalk, adjudicated_weights, eligibility
+  full_reviewed_crosswalk <- build_sensitivity_crosswalk(
+    conservative_crosswalk, adjudicated_weights, eligibility
   )
-  dominant_parent_reviews <- read_dominant_parent_reviews_v2(
-    raw_sources$lineage_dominant_parent_reviews %||% data.frame()
+  primary_reviews <- read_primary_reviews(
+    raw_sources$lineage_primary_reviews %||% data.frame()
   )
-  dominant_parent_crosswalk <- build_dominant_parent_source_crosswalk_v2(
-    primary_crosswalk, sensitivity_crosswalk, dominant_parent_reviews
+  primary_crosswalk <- build_primary_source_crosswalk(
+    conservative_crosswalk, full_reviewed_crosswalk, primary_reviews
   )
-  identity_reclassification <- build_lineage_v2_identity_reclassification(eligibility)
-  multi_parent_review_queue <- build_lineage_v2_multi_parent_review_queue(
-    identity_reclassification, sensitivity_crosswalk
+  identity_reclassification <- build_lineage_identity_reclassification(eligibility)
+  multi_parent_review_queue <- build_lineage_multi_parent_review_queue(
+    identity_reclassification, full_reviewed_crosswalk
   )
-  district_loss_audit <- build_lineage_v2_district_loss_audit(
-    admin_2001, source_roster, eligibility, primary_crosswalk,
-    sensitivity_crosswalk
+  district_loss_audit <- build_lineage_district_loss_audit(
+    admin_2001, source_roster, eligibility, conservative_crosswalk,
+    full_reviewed_crosswalk
   )
-  mapping_rule_sensitivity <- build_lineage_v2_rule_sensitivity(
-    primary_crosswalk, sensitivity_crosswalk, eligibility
+  mapping_rule_sensitivity <- build_lineage_rule_sensitivity(
+    conservative_crosswalk, full_reviewed_crosswalk, eligibility
   )
-  panel_variant_summary <- build_lineage_v2_panel_variant_summary(
-    primary_crosswalk, dominant_parent_crosswalk, sensitivity_crosswalk,
-    dominant_parent_reviews
+  panel_variant_summary <- build_lineage_panel_variant_summary(
+    conservative_crosswalk, primary_crosswalk, full_reviewed_crosswalk,
+    primary_reviews
   )
-  recovery_gates <- build_lineage_v2_recovery_gates(
+  recovery_gates <- build_lineage_recovery_gates(
     district_loss_audit, identity_reclassification
   )
-  production_reviews <- read_production_mapping_reviews_v2(
-    raw_sources$lineage_production_reviews %||% data.frame()
-  )
-  production_comparison <- build_production_crosswalk_comparison_v2(
-    primary_crosswalk, production_panel, production_reviews
-  )
   geometry_2001 <- raw_sources$lineage_geometry_2001 %||% data.frame()
-  geometry_qa <- geometry_qa_v2(geometry_2001, admin_2001)
-  geometry_unit_coverage <- geometry_unit_coverage_v2(
+  geometry_qa <- geometry_qa(geometry_2001, admin_2001)
+  geometry_unit_coverage <- geometry_unit_coverage(
     geometry_2001, admin_2001
   )
-  gold <- score_gold_set_v2(raw_sources$lineage_gold %||% data.frame())
-  gold_summary <- summarize_gold_set_v2(gold)
+  gold <- score_gold_set(raw_sources$lineage_gold %||% data.frame())
+  gold_summary <- summarize_gold_set(gold)
 
   duplicate_keys <- safe_bind_rows(list(
-    duplicate_key_diagnostics_v2(source_roster, "source_key", "nss_source_roster"),
-    duplicate_key_diagnostics_v2(reference_units, "unit_id", "reference_units"),
-    duplicate_key_diagnostics_v2(candidate_events, "event_id", "candidate_admin_events")
+    duplicate_key_diagnostics(source_roster, "source_key", "nss_source_roster"),
+    duplicate_key_diagnostics(reference_units, "unit_id", "reference_units"),
+    duplicate_key_diagnostics(candidate_events, "event_id", "candidate_admin_events")
   ))
-  readiness <- build_migration_readiness_v2(
+  readiness <- build_lineage_readiness(
     missing_core, admin_2001, admin_2011, allocation_validation,
     source_roster, source_matches, eligibility, duplicate_keys,
     adjudicated_weight_validation, source_reference_issues,
-    adjudicated_weights, production_comparison, production_reviews,
-    sensitivity_crosswalk
+    adjudicated_weights, full_reviewed_crosswalk
   )
-  migration_blockers <- build_migration_blockers_v2(readiness)
-  completion_status <- lineage_completion_steps_v2(
+  blockers <- build_lineage_blockers(readiness)
+  completion_status <- lineage_completion_steps(
     source_roster, source_matches, adjudication_queue, evidence_requests,
-    allocation_validation, adjudicated_weights, primary_crosswalk,
-    sensitivity_crosswalk, production_comparison, geometry_qa, readiness,
-    production_reviews, eligibility
+    allocation_validation, adjudicated_weights, conservative_crosswalk,
+    primary_crosswalk, full_reviewed_crosswalk, geometry_qa, eligibility
   )
-  summary <- lineage_v2_summary(
+  summary <- lineage_summary(
     inventory, admin_2001, admin_2011, bridge, transition, source_roster,
     source_matches, candidates, adjudication_queue, eligibility, candidate_events, current_components,
     urban_coverage, changed_components, evidence_requests,
@@ -759,8 +684,8 @@ build_district_lineage_v2 <- function(
 
   list(
     summary = summary,
-    migration_readiness = readiness,
-    migration_blockers = migration_blockers,
+    readiness = readiness,
+    blockers = blockers,
     source_inventory = inventory,
     source_registry = source_registry,
     source_reference_issues = source_reference_issues,
@@ -777,19 +702,17 @@ build_district_lineage_v2 <- function(
     source_match_candidates = candidates,
     source_adjudication_queue = adjudication_queue,
     adjudication_draft = adjudication_draft,
-    primary_mapping_eligibility = eligibility,
+    conservative_mapping_eligibility = eligibility,
+    conservative_source_crosswalk = conservative_crosswalk,
     primary_source_crosswalk = primary_crosswalk,
-    dominant_parent_source_crosswalk = dominant_parent_crosswalk,
-    sensitivity_source_crosswalk = sensitivity_crosswalk,
-    dominant_parent_reviews = dominant_parent_reviews,
+    full_reviewed_source_crosswalk = full_reviewed_crosswalk,
+    primary_reviews = primary_reviews,
     panel_variant_summary = panel_variant_summary,
     district_loss_audit = district_loss_audit,
     identity_reclassification = identity_reclassification,
     multi_parent_review_queue = multi_parent_review_queue,
     mapping_rule_sensitivity = mapping_rule_sensitivity,
     recovery_gates = recovery_gates,
-    production_crosswalk_comparison = production_comparison,
-    production_mapping_reviews = production_reviews,
     geometry_2001_qa = geometry_qa,
     geometry_2001_unit_coverage = geometry_unit_coverage,
     completion_status = completion_status,
@@ -810,10 +733,10 @@ build_district_lineage_v2 <- function(
   )
 }
 
-save_district_lineage_v2 <- function(diagnostics, dir = "outputs/diagnostics/extended/district_lineage_v2") {
+save_district_lineage <- function(diagnostics, dir = "outputs/diagnostics/extended/district_lineage") {
   dir.create(dir, recursive = TRUE, showWarnings = FALSE)
   names_to_write <- c(
-    "summary", "migration_readiness", "migration_blockers",
+    "summary", "readiness", "blockers",
     "source_inventory", "source_registry", "source_reference_issues",
     "adjudicated_geometry_carrybacks",
     "admin_units_2001", "admin_units_2011",
@@ -821,13 +744,11 @@ save_district_lineage_v2 <- function(diagnostics, dir = "outputs/diagnostics/ext
     "district_transition_2001_2011", "allocation_weight_validation",
     "nss_source_roster", "reference_units", "source_matches", "source_match_candidates",
     "source_adjudication_queue", "adjudication_draft",
-    "primary_mapping_eligibility", "primary_source_crosswalk",
-    "dominant_parent_source_crosswalk", "sensitivity_source_crosswalk",
-    "dominant_parent_reviews", "panel_variant_summary", "district_loss_audit",
+    "conservative_mapping_eligibility", "conservative_source_crosswalk",
+    "primary_source_crosswalk", "full_reviewed_source_crosswalk",
+    "primary_reviews", "panel_variant_summary", "district_loss_audit",
     "identity_reclassification", "multi_parent_review_queue",
     "mapping_rule_sensitivity", "recovery_gates",
-    "production_crosswalk_comparison",
-    "production_mapping_reviews",
     "geometry_2001_qa", "geometry_2001_unit_coverage",
     "completion_status", "excluded_source_rows",
     "candidate_admin_events", "current_component_registry",

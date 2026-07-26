@@ -247,7 +247,7 @@ test_that("IV summaries expose unavailable inference instead of comparability", 
     panel_summary = data.frame()
   )
 
-  out <- compare_lineage_v2_model_summaries(
+  out <- compare_lineage_model_summaries(
     production,
     candidate,
     comparison_scope = "shared_unique_2001_support",

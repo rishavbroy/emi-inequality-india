@@ -53,7 +53,7 @@ test_that("empty LGD inputs remain empty after standardization", {
 
 test_that("changed-unit rosters remain complete while geometry stays inventory-only", {
   paths <- build_paths(tempdir())
-  specs <- district_lineage_v2_input_specs(paths)
+  specs <- district_lineage_input_specs(paths)
 
   expect_true(specs$load_for_diagnostic[specs$source_id == "lgd_mod_villages"])
   expect_false(specs$load_for_diagnostic[specs$source_id == "shrug_shrid_geometry_zip"])
@@ -134,7 +134,7 @@ test_that("ISDED anchor links are deduplicated and remain candidate evidence", {
     stringsAsFactors = FALSE
   ))
 
-  out <- build_isded_candidate_events_v2(raw)
+  out <- build_isded_candidate_events(raw)
 
   expect_equal(nrow(out), 1L)
   expect_equal(out$from_district, "Old")
@@ -165,7 +165,7 @@ test_that("lineage evidence registry requires stable unique source IDs", {
     path_or_url = c("x", "y"), accessed = c("2026-01-01", "2026-01-02")
   )
 
-  expect_error(read_lineage_source_registry_v2(registry), "unique source_id")
+  expect_error(read_lineage_source_registry(registry), "unique source_id")
 })
 
 test_that("candidate event years are not promoted to fabricated exact dates", {
@@ -177,7 +177,7 @@ test_that("candidate event years are not promoted to fabricated exact dates", {
     change_type = "split_or_carveout", stringsAsFactors = FALSE
   )
 
-  out <- build_candidate_admin_events_v2(tracker, list())
+  out <- build_candidate_admin_events(tracker, list())
 
   expect_true(is.na(out$effective_date))
   expect_equal(out$reported_year, 2015L)
@@ -196,13 +196,13 @@ test_that("accepted lineage decisions cite registered evidence", {
     status = c("accepted", "accepted"), stringsAsFactors = FALSE
   )
 
-  issues <- validate_lineage_source_references_v2(registry, matches)
+  issues <- validate_lineage_source_references(registry, matches)
 
   expect_equal(issues$object_id, "b")
   expect_equal(issues$issue, "unregistered_source_id")
 
   matches$source_id[[2]] <- NA_character_
-  issues <- validate_lineage_source_references_v2(registry, matches)
+  issues <- validate_lineage_source_references(registry, matches)
   expect_equal(issues$issue, "missing_source_id")
 })
 
@@ -213,16 +213,16 @@ test_that("source branches assemble by source ID rather than branch order", {
     list(source_id = "a", value = data.frame(x = 1))
   )
 
-  out <- assemble_district_lineage_v2_sources(branches)
+  out <- assemble_district_lineage_sources(branches)
 
   expect_named(out, c("b", "a"))
   expect_equal(out$a$x, 1)
   expect_error(
-    assemble_district_lineage_v2_sources(c(branches, branches[1])),
+    assemble_district_lineage_sources(c(branches, branches[1])),
     "duplicate source IDs"
   )
   expect_error(
-    assemble_district_lineage_v2_sources(list(list(value = data.frame()))),
+    assemble_district_lineage_sources(list(list(value = data.frame()))),
     "must have a source_id"
   )
 })
@@ -240,8 +240,8 @@ test_that("source specifications split loaded inputs from the complete inventory
     stringsAsFactors = FALSE
   )
 
-  inventory <- district_lineage_v2_source_inventory(specs)
-  branches <- split_district_lineage_v2_source_specs(specs)
+  inventory <- district_lineage_source_inventory(specs)
+  branches <- split_district_lineage_source_specs(specs)
 
   expect_equal(inventory$source_id, specs$source_id)
   expect_length(branches, 1L)
@@ -275,7 +275,7 @@ test_that("changed-component roster retains every loaded administrative level", 
     lgd_mod_urban_local_bodies = canonical("urban_local_body", "10000")
   )
 
-  out <- build_changed_component_roster_v2(sources)
+  out <- build_changed_component_roster(sources)
 
   expect_setequal(
     out$level,
@@ -286,8 +286,8 @@ test_that("changed-component roster retains every loaded administrative level", 
 
 
 test_that("blank tracked lineage ledgers retain zero-row schemas", {
-  events <- read_admin_events_v2(data.frame())
-  registry <- read_lineage_source_registry_v2(data.frame())
+  events <- read_admin_events(data.frame())
+  registry <- read_lineage_source_registry(data.frame())
 
   expect_equal(nrow(events), 0L)
   expect_named(
@@ -301,17 +301,17 @@ test_that("blank tracked lineage ledgers retain zero-row schemas", {
 
 
 test_that("lineage diagnostic writer preserves typed zero-row schemas", {
-  dir <- tempfile("lineage-v2-")
+  dir <- tempfile("district-lineage-")
   diagnostics <- list(
-    source_matches = empty_source_matches_v2(),
+    source_matches = empty_source_matches(),
     missing_core_inputs = data.frame(source_id = character(), stringsAsFactors = FALSE)
   )
 
-  save_district_lineage_v2(diagnostics, dir)
+  save_district_lineage(diagnostics, dir)
 
   matches <- utils::read.csv(file.path(dir, "source_matches.csv"), check.names = FALSE)
   missing <- utils::read.csv(file.path(dir, "missing_core_inputs.csv"), check.names = FALSE)
-  expect_named(matches, names(empty_source_matches_v2()))
+  expect_named(matches, names(empty_source_matches()))
   expect_named(missing, "source_id")
   expect_equal(nrow(matches), 0L)
   expect_equal(nrow(missing), 0L)
@@ -319,10 +319,10 @@ test_that("lineage diagnostic writer preserves typed zero-row schemas", {
 
 
 test_that("empty duplicate diagnostics preserve their schema", {
-  out <- duplicate_key_diagnostics_v2(data.frame(id = "a"), "id", "fixture")
+  out <- duplicate_key_diagnostics(data.frame(id = "a"), "id", "fixture")
 
   expect_equal(nrow(out), 0L)
-  expect_named(out, names(empty_duplicate_key_diagnostics_v2()))
+  expect_named(out, names(empty_duplicate_key_diagnostics()))
 })
 
 
@@ -358,7 +358,7 @@ test_that("evidence requests follow deterministic adjudication work", {
     stringsAsFactors = FALSE
   )
 
-  out <- build_evidence_requests_v2(
+  out <- build_evidence_requests(
     events,
     sources,
     queue,
@@ -380,7 +380,7 @@ test_that("SHRID bridge summaries aggregate each status without dropping mass", 
     stringsAsFactors = FALSE
   )
 
-  out <- summarize_shrid_bridge_v2(bridge)
+  out <- summarize_shrid_bridge(bridge)
 
   expect_named(out, c("bridge_status", "n_shrid", "population", "area"))
   expect_setequal(out$bridge_status, c("stable", "changed"))
@@ -390,7 +390,7 @@ test_that("SHRID bridge summaries aggregate each status without dropping mass", 
 })
 
 test_that("lineage summary preserves the complete diagnostic metric contract", {
-  summary <- lineage_v2_summary(
+  summary <- lineage_summary(
     inventory = data.frame(exists = c(TRUE, FALSE)),
     admin_2001 = data.frame(unit_id = "a"),
     admin_2011 = data.frame(unit_id = c("b", "c")),
@@ -402,7 +402,7 @@ test_that("lineage summary preserves the complete diagnostic metric contract", {
     adjudication_queue = data.frame(
       review_class = c("cross_vintage_exact_candidate", "fuzzy_candidates")
     ),
-    eligibility = data.frame(eligible_primary = c(TRUE, FALSE)),
+    eligibility = data.frame(eligible_conservative = c(TRUE, FALSE)),
     events = data.frame(row = 1),
     current_components = data.frame(row = 1:3),
     urban_coverage = data.frame(row = 1:4),
@@ -459,198 +459,9 @@ test_that("lineage summary preserves the complete diagnostic metric contract", {
   )
 })
 
-test_that("migration readiness is derived from prerequisite gates", {
-  args <- list(
-    missing_core = character(),
-    admin_2001 = data.frame(unit_id = "pc2001__01__01"),
-    admin_2011 = data.frame(unit_id = "pc2011__01__001"),
-    allocation_validation = data.frame(
-      source_key = "pc2011__01__001",
-      weights_well_formed = TRUE,
-      coverage_complete = TRUE
-    ),
-    source_roster = data.frame(source_row_id = "source-1"),
-    source_matches = data.frame(source_row_id = "source-1", status = "accepted"),
-    primary_eligibility = data.frame(
-      source_row_id = "source-1",
-      status = "accepted",
-      eligible_primary = TRUE
-    ),
-    sensitivity_crosswalk = data.frame(
-      source_row_id = "source-1",
-      target_unit_2001 = "pc2001__01__01",
-      stringsAsFactors = FALSE
-    ),
-    duplicate_keys = empty_duplicate_key_diagnostics_v2(),
-    adjudicated_allocation_validation = data.frame(
-      source_key = character(),
-      weights_well_formed = logical(),
-      coverage_complete = logical()
-    ),
-    source_reference_issues = data.frame(),
-    production_comparison = data.frame(),
-    production_reviews = data.frame(
-      review_id = "downstream",
-      source_row_id = "",
-      review_scope = "downstream_results",
-      v2_target_unit_2001 = "",
-      production_target_unit_2001 = "",
-      decision = "reviewed",
-      source_id = "source",
-      status = "accepted",
-      note = "reviewed",
-      stringsAsFactors = FALSE
-    )
-  )
-
-  ready <- do.call(build_migration_readiness_v2, args)
-  expect_true(ready$passed[ready$gate == "production_crosswalk_migration_ready"])
-
-  args$allocation_validation$coverage_complete <- FALSE
-  blocked <- do.call(build_migration_readiness_v2, args)
-  expect_false(blocked$passed[blocked$gate == "production_crosswalk_migration_ready"])
-  blockers <- build_migration_blockers_v2(blocked)
-  expect_identical(
-    blockers$gate,
-    "shrid_allocation_coverage_complete"
-  )
-  expect_true(nzchar(blockers$next_action))
-})
-
-test_that("missing accepted identity mappings produce their own blocker", {
-  args <- list(
-    missing_core = character(),
-    admin_2001 = data.frame(unit_id = "pc2001__01__01"),
-    admin_2011 = data.frame(unit_id = "pc2011__01__001"),
-    allocation_validation = data.frame(
-      source_key = "pc2011__01__001",
-      weights_well_formed = TRUE,
-      coverage_complete = TRUE
-    ),
-    source_roster = data.frame(source_row_id = "source-1"),
-    source_matches = data.frame(
-      source_row_id = "source-1",
-      status = "accepted"
-    ),
-    primary_eligibility = data.frame(
-      source_row_id = "source-1",
-      status = "accepted",
-      eligible_primary = TRUE
-    ),
-    duplicate_keys = empty_duplicate_key_diagnostics_v2(),
-    adjudicated_allocation_validation = data.frame(),
-    source_reference_issues = data.frame(),
-    production_comparison = data.frame(),
-    production_reviews = data.frame(
-      review_id = "downstream",
-      source_row_id = "",
-      review_scope = "downstream_results",
-      v2_target_unit_2001 = "",
-      production_target_unit_2001 = "",
-      decision = "reviewed",
-      source_id = "source",
-      status = "accepted",
-      note = "reviewed",
-      stringsAsFactors = FALSE
-    ),
-    sensitivity_crosswalk = data.frame()
-  )
-
-  readiness <- do.call(build_migration_readiness_v2, args)
-  blockers <- build_migration_blockers_v2(readiness)
-
-  expect_false(readiness$passed[
-    readiness$gate == "production_crosswalk_migration_ready"
-  ])
-  expect_identical(
-    blockers$gate,
-    "all_accepted_rows_sensitivity_mapped"
-  )
-  expect_match(
-    blockers$next_action,
-    "Map every accepted identity"
-  )
-})
-
-test_that("migration blockers contain one actionable row per failed prerequisite", {
-  readiness <- data.frame(
-    gate = c(
-      "core_inputs_available",
-      "all_source_rows_adjudicated",
-      "production_crosswalk_migration_ready"
-    ),
-    passed = c(TRUE, FALSE, FALSE),
-    note = c("complete", "incomplete", "summary"),
-    stringsAsFactors = FALSE
-  )
-  blockers <- build_migration_blockers_v2(readiness)
-
-  expect_named(blockers, c("gate", "note", "next_action"))
-  expect_identical(blockers$gate, "all_source_rows_adjudicated")
-  expect_true(nzchar(blockers$next_action))
-})
-
-
-test_that("migration gates distinguish absent acceptances from ineligible acceptances", {
-  args <- list(
-    missing_core = character(),
-    admin_2001 = data.frame(unit_id = "pc2001__01__01"),
-    admin_2011 = data.frame(unit_id = "pc2011__01__001"),
-    allocation_validation = data.frame(
-      source_key = "pc2011__01__001",
-      weights_well_formed = TRUE,
-      coverage_complete = TRUE
-    ),
-    source_roster = data.frame(source_row_id = "source-1"),
-    source_matches = data.frame(
-      source_row_id = "source-1",
-      status = "excluded"
-    ),
-    primary_eligibility = data.frame(
-      status = "excluded",
-      eligible_primary = FALSE
-    ),
-    duplicate_keys = empty_duplicate_key_diagnostics_v2(),
-    adjudicated_allocation_validation = data.frame(
-      source_key = character(),
-      weights_well_formed = logical(),
-      coverage_complete = logical()
-    ),
-    source_reference_issues = data.frame(),
-    production_comparison = data.frame(),
-    production_reviews = data.frame(
-      review_id = "downstream",
-      source_row_id = "",
-      review_scope = "downstream_results",
-      v2_target_unit_2001 = "",
-      production_target_unit_2001 = "",
-      decision = "reviewed",
-      source_id = "source",
-      status = "accepted",
-      note = "reviewed",
-      stringsAsFactors = FALSE
-    )
-  )
-
-  readiness <- do.call(build_migration_readiness_v2, args)
-  expect_false(readiness$passed[readiness$gate == "accepted_source_rows_present"])
-  expect_true(
-    readiness$passed[readiness$gate == "all_accepted_rows_primary_classified"]
-  )
-
-  args$source_matches$status <- "accepted"
-  args$primary_eligibility$status <- "accepted"
-  readiness <- do.call(build_migration_readiness_v2, args)
-  expect_true(readiness$passed[readiness$gate == "accepted_source_rows_present"])
-  expect_true(
-    readiness$passed[readiness$gate == "all_accepted_rows_primary_classified"]
-  )
-})
-
-
 test_that("derived Census 2001 geometry is an optional loaded source", {
   root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
-  specs <- district_lineage_v2_input_specs(build_paths(root))
+  specs <- district_lineage_input_specs(build_paths(root))
   row <- specs[specs$source_id == "lineage_geometry_2001", , drop = FALSE]
 
   expect_equal(nrow(row), 1L)
@@ -665,21 +476,21 @@ test_that("reviewed geometry and source decisions satisfy evidence contracts", {
     file.path(root, "data", "metadata", name)
   }
 
-  carrybacks <- read_geometry_carrybacks_v2(
+  carrybacks <- read_geometry_carrybacks(
     read.csv(
-      metadata_path("district_geometry_carrybacks_v2.csv"),
+      metadata_path("district_geometry_carrybacks.csv"),
       stringsAsFactors = FALSE
     )
   )
-  adjudications <- read_adjudicated_source_matches_v2(
+  adjudications <- read_adjudicated_source_matches(
     read.csv(
-      metadata_path("district_adjudications_v2.csv"),
+      metadata_path("district_adjudications.csv"),
       stringsAsFactors = FALSE
     )
   )
-  registry <- read_lineage_source_registry_v2(
+  registry <- read_lineage_source_registry(
     read.csv(
-      metadata_path("district_sources_v2.csv"),
+      metadata_path("district_lineage_sources.csv"),
       stringsAsFactors = FALSE
     )
   )
@@ -755,7 +566,7 @@ test_that("reviewed geometry and source decisions satisfy evidence contracts", {
     nss75_matches$source_id == "nss75_shrug_exact_deterministic"
   ))
 
-  issues <- validate_lineage_source_references_v2(
+  issues <- validate_lineage_source_references(
     registry,
     source_matches = adjudications,
     geometry_carrybacks = carrybacks
@@ -763,163 +574,32 @@ test_that("reviewed geometry and source decisions satisfy evidence contracts", {
   expect_equal(nrow(issues), 0L)
 })
 
-test_that("accepted primary eligibility ignores unrelated NA statuses", {
-  readiness <- build_migration_readiness_v2(
-    missing_core = character(),
-    admin_2001 = data.frame(unit_id = "pc2001__01__01"),
-    admin_2011 = data.frame(unit_id = "pc2011__01__001"),
-    allocation_validation = data.frame(
-      source_key = "pc2011__01__001",
-      weights_well_formed = TRUE,
-      coverage_complete = TRUE
-    ),
-    source_roster = data.frame(source_row_id = c("accepted", "unreviewed")),
-    source_matches = data.frame(source_row_id = "accepted", status = "accepted"),
-    primary_eligibility = data.frame(
-      status = c("accepted", NA_character_),
-      eligible_primary = c(TRUE, FALSE)
-    ),
-    duplicate_keys = empty_duplicate_key_diagnostics_v2(),
-    adjudicated_allocation_validation = data.frame(
-      source_key = character(),
-      weights_well_formed = logical(),
-      coverage_complete = logical()
-    ),
-    source_reference_issues = data.frame(),
-    production_comparison = data.frame(),
-    production_reviews = data.frame(
-      review_id = "downstream",
-      source_row_id = "",
-      review_scope = "downstream_results",
-      v2_target_unit_2001 = "",
-      production_target_unit_2001 = "",
-      decision = "reviewed",
-      source_id = "source",
-      status = "accepted",
-      note = "reviewed",
-      stringsAsFactors = FALSE
-    )
-  )
-
-  gate <- readiness$passed[
-    readiness$gate == "all_accepted_rows_primary_classified"
-  ]
-  expect_identical(gate, TRUE)
-})
-
-test_that("migration readiness counts valid reviewed sensitivity coverage", {
-  generated <- data.frame(
-    source_key = c("pc2011__01__001", "pc2011__01__002"),
-    weights_well_formed = TRUE,
-    coverage_complete = FALSE,
-    stringsAsFactors = FALSE
-  )
-  reviewed <- data.frame(
-    source_key = "pc2011__01__002",
-    coverage_complete = TRUE,
-    stringsAsFactors = FALSE
-  )
-
-  readiness <- build_migration_readiness_v2(
-    missing_core = character(),
-    admin_2001 = data.frame(unit_id = "pc2001__01__01"),
-    admin_2011 = data.frame(unit_id = "pc2011__01__001"),
-    allocation_validation = generated,
-    source_roster = data.frame(source_row_id = "s1"),
-    source_matches = data.frame(source_row_id = "s1", status = "accepted"),
-    primary_eligibility = data.frame(
-      status = "accepted", eligible_primary = TRUE
-    ),
-    duplicate_keys = empty_duplicate_key_diagnostics_v2(),
-    adjudicated_allocation_validation = reviewed,
-    source_reference_issues = data.frame(),
-    production_comparison = data.frame(),
-    production_reviews = data.frame(
-      review_id = "downstream",
-      source_row_id = "",
-      review_scope = "downstream_results",
-      v2_target_unit_2001 = "",
-      production_target_unit_2001 = "",
-      decision = "reviewed",
-      source_id = "source",
-      status = "accepted",
-      note = "reviewed",
-      stringsAsFactors = FALSE
-    )
-  )
-
-  gate <- readiness$passed[
-    readiness$gate == "shrid_allocation_coverage_complete"
-  ]
-  expect_false(gate)
-
-  reviewed <- rbind(
-    reviewed,
-    data.frame(
-      source_key = "pc2011__01__001",
-      coverage_complete = TRUE,
-      stringsAsFactors = FALSE
-    )
-  )
-  readiness <- build_migration_readiness_v2(
-    missing_core = character(),
-    admin_2001 = data.frame(unit_id = "pc2001__01__01"),
-    admin_2011 = data.frame(unit_id = "pc2011__01__001"),
-    allocation_validation = generated,
-    source_roster = data.frame(source_row_id = "s1"),
-    source_matches = data.frame(source_row_id = "s1", status = "accepted"),
-    primary_eligibility = data.frame(
-      status = "accepted", eligible_primary = TRUE
-    ),
-    duplicate_keys = empty_duplicate_key_diagnostics_v2(),
-    adjudicated_allocation_validation = reviewed,
-    source_reference_issues = data.frame(),
-    production_comparison = data.frame(),
-    production_reviews = data.frame(
-      review_id = "downstream",
-      source_row_id = "",
-      review_scope = "downstream_results",
-      v2_target_unit_2001 = "",
-      production_target_unit_2001 = "",
-      decision = "reviewed",
-      source_id = "source",
-      status = "accepted",
-      note = "reviewed",
-      stringsAsFactors = FALSE
-    )
-  )
-  gate <- readiness$passed[
-    readiness$gate == "shrid_allocation_coverage_complete"
-  ]
-  expect_true(gate)
-})
-
 test_that("tracked high-coverage decisions leave only lower-coverage gaps", {
   root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
   transition_path <- file.path(
     root, "outputs", "diagnostics", "extended",
-    "district_lineage_v2", "district_transition_2001_2011.csv"
+    "district_lineage", "district_transition_2001_2011.csv"
   )
   skip_if_not(file.exists(transition_path))
   transition <- read.csv(transition_path, stringsAsFactors = FALSE)
 
   generated <- validate_allocation_weights(transition)
-  weights <- read_adjudicated_allocation_weights_v2(
+  weights <- read_adjudicated_allocation_weights(
     read_lineage_source(
       file.path(
-        root, "data", "metadata", "district_allocation_weights_v2.csv"
+        root, "data", "metadata", "district_allocation_weights.csv"
       ),
       reader = "allocation_csv",
       source_id = "lineage_allocation_weights"
     )
   )
-  reviewed <- validate_adjudicated_allocation_weights_v2(weights)
-  decisions <- allocation_decision_status_v2(weights)
-  status <- allocation_coverage_status_v2(
+  reviewed <- validate_adjudicated_allocation_weights(weights)
+  decisions <- allocation_decision_status(weights)
+  status <- allocation_coverage_status(
     generated, reviewed, decisions
   )
 
-  expected <- allocation_decision_status_v2(weights)
+  expected <- allocation_decision_status(weights)
   incomplete_sources <- unique(generated$source_key[
     !(generated$coverage_complete %in% TRUE)
   ])
@@ -951,7 +631,7 @@ test_that("allocation summary counts source decisions rather than ledger rows", 
     status = c("accepted", "accepted", "rejected"),
     stringsAsFactors = FALSE
   )
-  summary <- lineage_v2_summary(
+  summary <- lineage_summary(
     inventory = data.frame(exists = logical()),
     admin_2001 = data.frame(),
     admin_2011 = data.frame(),
@@ -964,7 +644,7 @@ test_that("allocation summary counts source decisions rather than ledger rows", 
     ),
     candidates = data.frame(),
     adjudication_queue = data.frame(review_class = character()),
-    eligibility = data.frame(eligible_primary = logical()),
+    eligibility = data.frame(eligible_conservative = logical()),
     events = data.frame(),
     current_components = data.frame(),
     urban_coverage = data.frame(),
@@ -990,7 +670,7 @@ test_that("allocation summary counts source decisions rather than ledger rows", 
 test_that("tracked NSS-64 identities require code and name agreement", {
   root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
   adjudications <- read.csv(
-    file.path(root, "data", "metadata", "district_adjudications_v2.csv"),
+    file.path(root, "data", "metadata", "district_adjudications.csv"),
     stringsAsFactors = FALSE
   )
   rows <- adjudications[
@@ -1009,14 +689,14 @@ test_that("tracked NSS-64 identities require code and name agreement", {
 })
 
 test_that("source reference validation is method-agnostic", {
-  registry <- read_lineage_source_registry_v2(data.frame(
+  registry <- read_lineage_source_registry(data.frame(
     source_id = c("geometry_source", "survey_source"),
     citation = c("Geometry evidence", "Survey evidence"),
     path_or_url = c("geometry", "survey"),
     accessed = c("2026-07-23", "2026-07-23"),
     stringsAsFactors = FALSE
   ))
-  matches <- read_adjudicated_source_matches_v2(data.frame(
+  matches <- read_adjudicated_source_matches(data.frame(
     source_row_id = c("geometry_row", "survey_row"),
     wave = c("nss_2007_08", "nss_2007_08"),
     raw_state = c("State", "State"),
@@ -1031,7 +711,7 @@ test_that("source reference validation is method-agnostic", {
     note = c("Geometry decision", "Survey decision"),
     stringsAsFactors = FALSE
   ))
-  carrybacks <- read_geometry_carrybacks_v2(data.frame(
+  carrybacks <- read_geometry_carrybacks(data.frame(
     target_unit_2001 = "pc2001__01__01",
     source_unit_2011 = "pc2011__01__001",
     source_id = "geometry_source",
@@ -1040,7 +720,7 @@ test_that("source reference validation is method-agnostic", {
     stringsAsFactors = FALSE
   ))
 
-  issues <- validate_lineage_source_references_v2(
+  issues <- validate_lineage_source_references(
     registry,
     source_matches = matches,
     geometry_carrybacks = carrybacks
@@ -1056,7 +736,7 @@ test_that("tracked NSS-64 code decisions cover every known Census unit", {
   root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
   adjudications <- read.csv(
     file.path(
-      root, "data", "metadata", "district_adjudications_v2.csv"
+      root, "data", "metadata", "district_adjudications.csv"
     ),
     stringsAsFactors = FALSE
   )
@@ -1077,7 +757,7 @@ test_that("tracked NSS-75 identities use exact names and deterministic bridges",
   root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
   metadata <- read.csv(
     file.path(
-      root, "data", "metadata", "district_adjudications_v2.csv"
+      root, "data", "metadata", "district_adjudications.csv"
     ),
     stringsAsFactors = FALSE
   )
@@ -1101,15 +781,15 @@ test_that("tracked Andaman decisions use reviewed official lineage", {
   metadata_path <- function(name) {
     file.path(root, "data", "metadata", name)
   }
-  adjudications <- read_adjudicated_source_matches_v2(
+  adjudications <- read_adjudicated_source_matches(
     read.csv(
-      metadata_path("district_adjudications_v2.csv"),
+      metadata_path("district_adjudications.csv"),
       stringsAsFactors = FALSE
     )
   )
-  events <- read_admin_events_v2(
+  events <- read_admin_events(
     read.csv(
-      metadata_path("district_admin_events_v2.csv"),
+      metadata_path("district_admin_events.csv"),
       stringsAsFactors = FALSE
     )
   )
@@ -1144,10 +824,10 @@ test_that("tracked Andaman decisions use reviewed official lineage", {
 
 test_that("official Census aliases identify only reviewed source rows", {
   root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
-  metadata <- read_adjudicated_source_matches_v2(
+  metadata <- read_adjudicated_source_matches(
     read.csv(
       file.path(
-        root, "data", "metadata", "district_adjudications_v2.csv"
+        root, "data", "metadata", "district_adjudications.csv"
       ),
       stringsAsFactors = FALSE
     )
@@ -1196,9 +876,9 @@ test_that("LGD modification rosters retain Census linkage codes", {
 
 test_that("tracked LGD modification identities use official Census codes", {
   root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
-  metadata <- read_adjudicated_source_matches_v2(
+  metadata <- read_adjudicated_source_matches(
     read.csv(
-      file.path(root, "data", "metadata", "district_adjudications_v2.csv"),
+      file.path(root, "data", "metadata", "district_adjudications.csv"),
       stringsAsFactors = FALSE
     )
   )
@@ -1232,10 +912,10 @@ test_that("tracked LGD modification identities use official Census codes", {
 
 test_that("official NSS-75 exact identities remain separate from bridge eligibility", {
   root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
-  adjudications <- read_adjudicated_source_matches_v2(
+  adjudications <- read_adjudicated_source_matches(
     read.csv(
       file.path(
-        root, "data", "metadata", "district_adjudications_v2.csv"
+        root, "data", "metadata", "district_adjudications.csv"
       ),
       stringsAsFactors = FALSE
     )
@@ -1260,10 +940,10 @@ test_that("official NSS-75 exact identities remain separate from bridge eligibil
 
 test_that("official NSS-75 exact current identities do not imply bridge eligibility", {
   root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
-  adjudications <- read_adjudicated_source_matches_v2(
+  adjudications <- read_adjudicated_source_matches(
     read.csv(
       file.path(
-        root, "data", "metadata", "district_adjudications_v2.csv"
+        root, "data", "metadata", "district_adjudications.csv"
       ),
       stringsAsFactors = FALSE
     )
@@ -1300,10 +980,10 @@ test_that("official NSS-75 exact current identities do not imply bridge eligibil
 
 test_that("reviewed NSS-75 aliases complete source identity without granting ancestry", {
   root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
-  rows <- read_adjudicated_source_matches_v2(
+  rows <- read_adjudicated_source_matches(
     read.csv(
       file.path(
-        root, "data", "metadata", "district_adjudications_v2.csv"
+        root, "data", "metadata", "district_adjudications.csv"
       ),
       stringsAsFactors = FALSE
     )
@@ -1341,10 +1021,10 @@ test_that("reviewed NSS-75 aliases complete source identity without granting anc
 
 test_that("tracked Telangana parentage records only single-parent ancestry", {
   root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
-  events <- read_admin_events_v2(
+  events <- read_admin_events(
     read.csv(
       file.path(
-        root, "data", "metadata", "district_admin_events_v2.csv"
+        root, "data", "metadata", "district_admin_events.csv"
       ),
       stringsAsFactors = FALSE
     )
@@ -1387,10 +1067,10 @@ test_that("tracked Telangana parentage records only single-parent ancestry", {
 
 test_that("tracked Chhattisgarh and Punjab events complete single-parent ancestry", {
   root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
-  events <- read_admin_events_v2(
+  events <- read_admin_events(
     read.csv(
       file.path(
-        root, "data", "metadata", "district_admin_events_v2.csv"
+        root, "data", "metadata", "district_admin_events.csv"
       ),
       stringsAsFactors = FALSE
     )
@@ -1442,10 +1122,10 @@ test_that("tracked Chhattisgarh and Punjab events complete single-parent ancestr
 
 test_that("tracked mixed-parent Telangana events remain non-deterministic", {
   root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
-  events <- read_admin_events_v2(
+  events <- read_admin_events(
     read.csv(
       file.path(
-        root, "data", "metadata", "district_admin_events_v2.csv"
+        root, "data", "metadata", "district_admin_events.csv"
       ),
       stringsAsFactors = FALSE
     )
@@ -1474,7 +1154,7 @@ test_that("tracked mixed-parent Telangana events remain non-deterministic", {
     c("pc2011__28__540", "pc2011__28__541")
   )
 
-  resolved <- resolve_lineage_terminals_v2(
+  resolved <- resolve_lineage_terminals(
     c("lgd_district__698", "lgd_district__688"),
     events,
     data.frame(
@@ -1503,13 +1183,13 @@ test_that("tracked mixed-parent Telangana events remain non-deterministic", {
   expect_true(all(is.na(resolved$terminal_unit)))
 })
 
-test_that("tracked production mapping reviews cover every changed target", {
+test_that("archived legacy mapping reviews cover every historical difference", {
   root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
-  reviews <- read_production_mapping_reviews_v2(
+  reviews <- read_legacy_mapping_reviews(
     read.csv(
       file.path(
         root, "data", "metadata",
-        "district_production_mapping_reviews_v2.csv"
+        "district_legacy_mapping_reviews.csv"
       ),
       stringsAsFactors = FALSE
     )
@@ -1527,65 +1207,28 @@ test_that("tracked production mapping reviews cover every changed target", {
 
   expect_equal(nrow(mapping), 7L)
   expect_true(all(mapping$status == "accepted"))
-  expect_true(all(mapping$decision == "accept_v2"))
+  expect_true(all(mapping$decision == "accept"))
   expect_equal(nrow(downstream), 1L)
   expect_identical(downstream$status, "accepted")
   expect_identical(
     downstream$decision,
-    "accept_v2_complete_source_panel"
+    "accept_complete_source_panel"
   )
   expect_match(downstream$note, "not treated as an authoritative support universe")
   expect_match(downstream$note, "every NSS source identity is adjudicated")
   expect_match(downstream$note, "pooled multi-source Ginis are reconstructed")
 })
 
-test_that("migration readiness distinguishes SHRID coverage from NSS identity coverage", {
-  readiness <- build_migration_readiness_v2(
-    missing_core = character(),
-    admin_2001 = data.frame(unit_id = "pc2001__01__01"),
-    admin_2011 = data.frame(unit_id = "pc2011__01__001"),
-    allocation_validation = data.frame(
-      source_key = "pc2011__01__001",
-      weights_well_formed = TRUE,
-      coverage_complete = TRUE
-    ),
-    source_roster = data.frame(source_row_id = c("a", "b")),
-    source_matches = data.frame(
-      source_row_id = c("a", "b"),
-      status = "accepted"
-    ),
-    primary_eligibility = data.frame(
-      source_row_id = c("a", "b"),
-      status = "accepted",
-      eligible_primary = c(TRUE, FALSE)
-    ),
-    duplicate_keys = data.frame(),
-    adjudicated_allocation_validation = data.frame(),
-    source_reference_issues = data.frame(),
-    sensitivity_crosswalk = data.frame(
-      source_row_id = "a",
-      target_unit_2001 = "pc2001__01__01"
-    )
-  )
-
-  expect_true(readiness$passed[
-    readiness$gate == "shrid_allocation_coverage_complete"
-  ])
-  expect_false(readiness$passed[
-    readiness$gate == "all_accepted_rows_sensitivity_mapped"
-  ])
-})
-
 test_that("terminal allocation decisions are complete and conservative", {
   root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
-  specs <- district_lineage_v2_input_specs(build_paths(root))
+  specs <- district_lineage_input_specs(build_paths(root))
   spec <- specs[
     specs$source_id == "lineage_allocation_weights",
     ,
     drop = FALSE
   ]
   expect_equal(nrow(spec), 1L)
-  allocations <- read_adjudicated_allocation_weights_v2(
+  allocations <- read_adjudicated_allocation_weights(
     read_lineage_source(
       spec$absolute_path[[1]],
       reader = spec$reader[[1]],
@@ -1622,7 +1265,32 @@ test_that("terminal allocation decisions are complete and conservative", {
 })
 
 
-test_that("dominant-parent review ledger is registered", {
-  specs <- district_lineage_v2_input_specs(build_paths())
-  expect_true("lineage_dominant_parent_reviews" %in% specs$source_id)
+test_that("primary review ledger is registered", {
+  specs <- district_lineage_input_specs(build_paths())
+  expect_true("lineage_primary_reviews" %in% specs$source_id)
+})
+
+test_that("production lineage specs exclude archived legacy reviews", {
+  specs <- district_lineage_input_specs(build_paths(Sys.getenv("EMI_PROJECT_ROOT", ".")))
+  expect_false("lineage_legacy_reviews" %in% specs$source_id)
+  expect_false(any(grepl("district_legacy_mapping_reviews.csv", specs$relative_path, fixed = TRUE)))
+})
+
+test_that("lineage readiness contains only current invariants", {
+  readiness <- build_lineage_readiness(
+    missing_core = character(),
+    admin_2001 = data.frame(unit_id = "pc2001__01__01"),
+    admin_2011 = data.frame(unit_id = "pc2011__01__001"),
+    allocation_validation = data.frame(source_key = "u1", weights_well_formed = TRUE, coverage_complete = TRUE),
+    source_roster = data.frame(source_row_id = "s1"),
+    source_matches = data.frame(source_row_id = "s1", status = "accepted"),
+    conservative_eligibility = data.frame(source_row_id = "s1", status = "accepted", eligible_conservative = TRUE),
+    duplicate_keys = data.frame(),
+    adjudicated_allocation_validation = data.frame(),
+    source_reference_issues = data.frame(),
+    full_reviewed_crosswalk = data.frame(source_row_id = "s1")
+  )
+  expect_true(readiness$passed[readiness$gate == "lineage_ready"])
+  expect_false(any(grepl("migration|production|legacy", readiness$gate)))
+  expect_equal(nrow(build_lineage_blockers(readiness)), 0L)
 })
