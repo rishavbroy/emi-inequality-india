@@ -533,7 +533,7 @@ test_that("full audit refreshes lineage geometry before extended diagnostics", {
   expect_gt(diagnostics_pos, geometry_pos)
 })
 
-test_that("lineage-v2 is the production panel and v1 remains diagnostic-only", {
+test_that("reviewed dominant-parent lineage is public and alternatives remain diagnostic", {
   target_file <- readLines(repo_file("_targets.R"), warn = FALSE)
   core_start <- match(TRUE, grepl("core_pipeline_targets <- list(", target_file, fixed = TRUE))
   extended_start <- match(
@@ -543,9 +543,14 @@ test_that("lineage-v2 is the production panel and v1 remains diagnostic-only", {
   core <- paste(target_file[core_start:(extended_start - 1L)], collapse = "\n")
   extended <- paste(target_file[extended_start:length(target_file)], collapse = "\n")
 
-  expect_match(core, "tar_target(district_panel, district_panel_v2)", fixed = TRUE)
+  expect_match(
+    core,
+    "tar_target(district_panel, district_panel_v2_dominant)",
+    fixed = TRUE
+  )
   expect_match(core, "save_processed_district_panel(district_panel)", fixed = TRUE)
   expect_match(core, "estimate_2sls(district_panel, iv_formulas, cfg)", fixed = TRUE)
+  expect_match(extended, "estimate_2sls(district_panel_v2, iv_formulas, cfg)", fixed = TRUE)
   expect_match(extended, "estimate_2sls(district_panel_v1, iv_formulas, cfg)", fixed = TRUE)
   expect_match(extended, "diag_ext_lineage_v2_downstream", fixed = TRUE)
 })
