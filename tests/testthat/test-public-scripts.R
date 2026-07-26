@@ -230,7 +230,12 @@ test_that("optional diagnostics and benchmarking targets use checked targets wra
   expect_match(strict, "tar_make", fixed = TRUE)
   expect_match(strict, "--starts-with", fixed = TRUE)
   expect_match(targets, "if (extended_diagnostics_enabled())", fixed = TRUE)
-  expect_match(targets, "selected_targets <- c(selected_targets, extended_diagnostic_targets)", fixed = TRUE)
+  expect_match(targets, "legacy_comparison_targets <- list(", fixed = TRUE)
+  expect_match(
+    targets,
+    "legacy_comparison_targets, extended_diagnostic_targets",
+    fixed = TRUE
+  )
   expect_match(targets, "if (benchmarks_enabled())", fixed = TRUE)
   expect_match(targets, "selected_targets <- c(selected_targets, benchmark_targets)", fixed = TRUE)
   expect_false(grepl("rerun.*flag", targets))
