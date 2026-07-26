@@ -27,13 +27,13 @@ The canonical raw source directories are:
 - `data/raw/district_boundaries_2020/`
 - `data/raw/district_changes/`
 
-## Optional district-lineage v2 inputs
+## Optional district-lineage inputs
 
-The extended-diagnostics audit discovers the local LGD, SHRUG, Census-locality, boundary, literature-derived, and published-concordance files described by `district_lineage_v2_input_specs()`. They are intentionally not required for the existing production report and are not part of the main raw-file manifest. Their source catalog and acquisition routes are recorded in [`data/metadata/data_sources.csv`](data/metadata/data_sources.csv); the full methodology and work plan are in [`docs/DISTRICT_LINEAGE_V2.md`](docs/DISTRICT_LINEAGE_V2.md).
+The production lineage reads its tracked source registry and reviewed metadata directly. Extended diagnostics additionally discover local LGD, SHRUG, Census-locality, historical boundary, literature-derived, and published-concordance files. Their source catalog and acquisition routes are recorded in [`data/metadata/data_sources.csv`](data/metadata/data_sources.csv); the final methodology and bounded follow-up work are documented in [`docs/DISTRICT_LINEAGE.md`](docs/DISTRICT_LINEAGE.md).
 
-When present, `--with-extended-diagnostics` writes a reviewable parallel rebuild under `outputs/diagnostics/extended/district_lineage_v2/`. Current LGD registries, compact modification rosters, SHRUG keys, Census-2011 district geometry, candidate trackers, and tracked adjudication ledgers are loaded for review. Large village/Census attribute tables, post-2018 LGD change history, and SHRID/village polygon archives are inventoried but are not loaded during every audit. A later dedicated geography target should dissolve local SHRID polygons into a compact, validated 2001-district GeoPackage.
+When present, `--with-extended-diagnostics` writes a reviewable parallel rebuild under `outputs/diagnostics/extended/district_lineage/`. Current LGD registries, compact modification rosters, SHRUG keys, Census-2011 district geometry, candidate trackers, and tracked adjudication ledgers are loaded for review. Large village/Census attribute tables, post-2018 LGD change history, and SHRID/village polygon archives are inventoried but are not loaded during every audit. A later dedicated geography target should dissolve local SHRID polygons into a compact, validated 2001-district GeoPackage.
 
-The v2 system must remain parallel until source identities, administrative events, exclusions, and any sensitivity weights are adjudicated. Exact or fuzzy name matches are review candidates, not production geography.
+The 573-district reviewed primary panel is the production geography. Exact or fuzzy name matches remain review candidates unless they are recorded in tracked adjudication or review metadata; the 408-district conservative and 587-district full-reviewed panels remain explicit robustness specifications.
 
 ## System dependencies
 

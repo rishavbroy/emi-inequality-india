@@ -17,7 +17,7 @@ This table covers the active current-pipeline sources and tracked processed outp
 
 ## District-lineage rebuild inputs
 
-The current paper still uses the production sources in the table above. A larger, local-only collection supports the parallel district-lineage-v2 rebuild. Its complete methodology, source roles, caveats, and work plan are documented in [`docs/DISTRICT_LINEAGE_V2.md`](docs/DISTRICT_LINEAGE_V2.md); tracked schema guidance is in [`data/metadata/README.md`](data/metadata/README.md).
+The current paper uses the reviewed 573-district lineage panel. A larger local-only source collection supports validation, historical comparison, and future resolution of the bounded multi-parent and missing-support cases. Methodology and source roles are documented in [`docs/DISTRICT_LINEAGE.md`](docs/DISTRICT_LINEAGE.md); tracked schema guidance is in [`data/metadata/README.md`](data/metadata/README.md).
 
 The principal additional source families are:
 
@@ -34,11 +34,11 @@ The principal additional source families are:
 | IPUMS GEO2_IN | `data/raw/ipums/geo2_in1987_2009/` | [IPUMS International](https://international.ipums.org/international-action/variables/GEO2_IN) | Stable-geography sensitivity analysis | Harmonized combined units, not exact Census 2001 districts. |
 | Administrative Atlas and official orders | `data/raw_future/Administrative Atlas/` and targeted local evidence | Census Atlas portal and state gazettes | Resolve consequential event dates and component membership | Download only when an unresolved event requires it. |
 
-Large locality attributes and village/SHRID polygon archives are intentionally not required by the existing production manifest. The v2 diagnostic inventories them and a later dedicated geography target should reduce them to compact derived products rather than loading them during every ordinary audit.
+Large locality attributes and village/SHRID polygon archives are not ordinary public-build inputs. Dedicated lineage targets reduce them to compact reviewed crosswalks and geometry products; historical and exploratory sources are loaded only by extended diagnostics or benchmarks.
 
 ## Redistribution and provenance policy
 
 - Do not commit raw NSS microdata or other raw files whose redistribution terms are not established.
 - Preserve original filenames and downloaded formats. Derived UTF-8 or normalized tables belong under processed/interim outputs, not over the raw original.
 - Record the acquisition URL, access date, local path, and methodological role in [`data/metadata/data_sources.csv`](data/metadata/data_sources.csv).
-- A source's presence does not make it authoritative. Candidate sources must be corroborated according to [`docs/DISTRICT_LINEAGE_V2.md`](docs/DISTRICT_LINEAGE_V2.md).
+- A source's presence does not make it authoritative. Candidate sources must be corroborated according to [`docs/DISTRICT_LINEAGE.md`](docs/DISTRICT_LINEAGE.md).

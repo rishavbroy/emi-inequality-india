@@ -1,153 +1,71 @@
 # Architecture
 
-This is a living document. Update it whenever the codebase’s structure, pipeline contracts, public outputs, or contribution rules change. Its goal is to help future contributors and agents understand the project quickly enough to make safe, well-scoped changes from day one.
+This repository builds the EMI and inequality paper, diagnostics, application samples, and replication artifacts. Current source files are authoritative; historical refactor evidence remains under `archive/refactoring/` and is not active build machinery.
 
-## Purpose
+## Project structure
 
-This repository builds the English-medium instruction and inequality paper, supporting diagnostics, application samples, and replication artifacts. The active codebase is current-source-first: edit current R modules, current QMDs, tests, and documentation directly. Historical refactor evidence lives under `archive/refactoring/` and should not drive active builds.
+- `_targets.R` — thin orchestration and target-group selection.
+- `R/io/` — raw-data readers and path handling.
+- `R/districts/` — district identities, lineage, crosswalks, and panel construction contracts.
+- `R/measures/` — analysis measures and survey-weighted aggregation.
+- `R/iv/` and `R/selection/` — estimation logic.
+- `R/diagnostics/` — public and extended diagnostics.
+- `R/benchmarking/` — optional benchmarks.
+- `R/output/` — figures, tables, shared table contracts, report values, and render helpers.
+- `paper/`, `docs/`, `analysis/` — current prose and rendering sources.
+- `tests/testthat/` — behavioral and output-contract tests.
+- `archive/refactoring/` — historical proof only.
 
-## Project Structure
+## Dependency layers
 
-- `_targets.R` — central pipeline definition. Describes the active data,
-  diagnostics, table, figure, document, sample, and analysis-note targets.
-- `R/` — source modules used by the pipeline.
-  - `R/config.R` — configuration helpers.
-  - `R/io/` — raw data readers and file/path handling.
-  - `R/districts/` — district keys, tracker parsing, current harmonization,
-    and the parallel district-lineage v2 source/bridge/matching modules.
-  - `R/measures/` — construction of analysis measures and district panels.
-  - `R/models/` — model estimation and IV formulas.
-  - `R/selection/` — selection/probit sample construction and AMEs.
-  - `R/diagnostics/` — public and extended diagnostics.
-  - `R/benchmarking/` — optional benchmark targets.
-  - `R/output/` — tables, figures, report values, public QMD helpers, and
-    rendering helpers.
-  - `R/application_samples/` — writing/coding sample extraction and rendering.
-- `paper/` — current paper sources and rendered paper outputs.
-  - `paper/report.qmd` — main paper source.
-  - `paper/appendix.qmd` — appendix source.
-  - `paper/references.bib` — bibliography used by public QMDs.
-- `docs/` — public notes, project documentation, and architecture docs.
-  - `docs/district-matching.qmd` — current district matching/spatial note.
-  - `docs/long-paths-and-8-3-filenames.qmd` — replication technical note.
-  - `docs/ARCHITECTURE.md` — this document.
-- `analysis/` — rendered analysis notebooks and their QMD sources. These
-  support diagnostics and benchmarks; prose-preservation tests may apply.
-- `outputs/` — generated current outputs used by papers, docs, diagnostics,
-  and analysis notes.
-  - `outputs/tables/main/`
-  - `outputs/figures/main/`
-  - `outputs/diagnostics/public/`
-  - `outputs/diagnostics/extended/`
-  - `outputs/benchmarking/`
-- `application-samples/` — rendered application writing/coding samples.
-- `scripts/` — command-line audit/check/render helpers.
-- `tests/testthat/` — unit and contract tests.
-- `archive/refactoring/` — historical proof and one-off migration scripts from
-  the completed refactor. Do not use this archive as active build machinery.
+1. Readers normalize raw data and tracked metadata.
+2. District lineage maps both NSS waves to Census-2001 districts.
+3. Measures and pooled household records construct the three panel variants.
+4. The public alias selects the reviewed primary panel.
+5. Estimation and diagnostics consume the public alias or an explicitly named comparison panel.
+6. Output modules generate tables, figures, report values, and rendered documents.
 
-## System Diagram
+Reusable logic belongs in `R/`; `_targets.R`, scripts, and Make targets should coordinate rather than duplicate it. Public QMDs should contain prose and small rendering calls only.
 
-```mermaid
-flowchart TD
-  raw[Raw data and metadata] --> io[R/io readers]
-  io --> districts[R/districts keys, tracker, matching]
-  districts --> measures[R/measures district and selection data]
-  measures --> models[R/models IV and selection models]
-  models --> diagnostics[R/diagnostics public and extended checks]
-  models --> output[R/output tables, figures, report values]
-  diagnostics --> output
-  output --> paper[paper/report.qmd and appendix.qmd]
-  output --> docs[docs/*.qmd public notes]
-  output --> samples[application samples]
-  output --> analysis[analysis/*.qmd rendered notes]
-  paper --> public_outputs[paper/report.pdf]
-  docs --> public_outputs
-  samples --> public_outputs
-  analysis --> public_outputs
-  tests[tests/testthat contracts] --> io
-  tests --> districts
-  tests --> measures
-  tests --> models
-  tests --> output
-```
+## District-panel roles
 
-## Data Flow
+- `district_panel_conservative`: 408 deterministic districts.
+- `district_panel_primary`: 573 reviewed districts and the public production specification.
+- `district_panel_full_reviewed`: 587-district fractional-allocation sensitivity specification.
+- `district_panel`: public alias to `district_panel_primary`.
+- `district_panel_legacy`: inherited harmonization panel used only in historical comparison diagnostics.
 
-1. Raw files and metadata are read through `R/io/`.
-2. District source names, tracker records, boundaries, manual corrections, and
-   harmonized keys are built in `R/districts/`. The reviewed wide crosswalk
-   remains the production authority while the v2 lineage diagnostic builds
-   code-based Census registries, SHRUG transition weights, LGD subdistrict and
-   urban-coverage registries, source-match candidates, and administrative-event
-   review queues in parallel.
-3. Analysis-ready measures and panels are built in `R/measures/`.
-4. Estimation happens in `R/models/` and `R/selection/`.
-5. Public diagnostics and optional diagnostics/benchmarks are built in
-   `R/diagnostics/` and `R/benchmarking/`.
-6. Tables, figures, named report values, public QMD helpers, and render helpers
-   live in `R/output/`.
-7. Current QMDs in `paper/`, `docs/`, and `analysis/` consume target-backed
-   outputs. They are not regenerated from legacy sources.
-8. Tests check both low-level functions and high-level output contracts.
+The lineage object uses matching names: `conservative_source_crosswalk`, `primary_source_crosswalk`, and `full_reviewed_source_crosswalk`.
 
-## Layering Rules
+## Production and legacy separation
 
-* `_targets.R` orchestrates; it should not contain heavy data manipulation.
-* `R/io/` reads and normalizes inputs; it should not estimate models.
-* `R/districts/` owns district harmonization and matching.
-* `R/measures/` owns analysis-ready measures and panels.
-* `R/models/` and `R/selection/` own estimation logic.
-* `R/output/` owns presentation outputs, report values, and rendering helpers.
-* `paper/` and `docs/` QMDs should contain prose and small rendering calls, not
-  large reusable helper functions.
-* `scripts/` should orchestrate checks and audits, not duplicate core R logic.
-* `archive/refactoring/` is historical. Active code must not depend on it.
+`core_pipeline_targets` contains only production dependencies. Legacy boundaries, the inherited harmonization crosswalk, district tracker comparisons, legacy panel, and archived review ledger live in `legacy_geography_targets` and `legacy_comparison_targets`. Those groups are included only for extended diagnostics or benchmarks.
 
+The production lineage does not load `data/metadata/district_legacy_mapping_reviews.csv`, does not evaluate migration gates, and does not depend on the inherited panel.
 
-## District-lineage production rule
+## Output contracts
 
-The public `district_panel` alias uses the reviewed lineage-v2 dominant-parent
-panel. It admits deterministic mappings plus tracked, weight-one NSS-75
-mappings with at least 99 percent SHRUG locality coverage and corroborating LGD
-or India State Stories evidence. The 408-district conservative panel and the
-587-district fractional-allocation panel remain explicit diagnostic and
-sensitivity targets. Fuzzy candidates, undocumented LGD changes, and unresolved
-multi-parent shares cannot enter public production. Durable decisions live in
-tracked metadata; generated review queues and panel comparisons live under
-`outputs/diagnostics/extended/district_lineage_v2/`.
+`R/output/table_contract.R` is the single source of public table captions and notes. It is sourced both by the targets table writer and by standalone Quarto helpers. Generated CSVs retain machine-readable schemas; public rendering applies presentation labels without changing stored data.
 
-## Updating This Document
+All public models, tables, maps, diagnostics, processed data, paper outputs, poster outputs, and application samples depend on the generic production targets rather than an implementation-specific comparison target.
 
-Update this file when:
+## Strict final mode
 
-* directories or major modules are added, moved, renamed, or removed;
-* target groups or public output contracts change;
-* QMD rendering or report-value conventions change;
-* tests begin enforcing a new architectural rule;
-* old refactor-era compatibility code is archived or deleted;
-* major modeling, district-matching, diagnostic, or output layers change.
+`config/final.yml` enables strict district-panel and analysis-panel validation. Final builds fail on duplicated panel units, incomplete analysis rows, placeholder model output, missing report values, unresolved cross-references, or missing required artifacts.
 
-Prefer concise updates. Do not duplicate function-level documentation or the
-full replication guide.
+## Target groups
 
-### Selected-target metadata checks
+- `core_pipeline_targets` — production data, models, outputs, and documents.
+- `legacy_geography_targets` — inherited geometry and harmonization inputs for optional diagnostics.
+- `legacy_comparison_targets` — archived historical reviews and crosswalk comparisons.
+- `extended_diagnostic_targets` — three-panel, lineage, missingness, spatial, and matching diagnostics.
+- `benchmark_targets` — optional benchmarks.
+- `analysis_note_targets` and `application_sample_targets` — optional rendered derivatives.
 
-`scripts/run_targets_checked.R` reads the most recent `tar_progress()` record to
-identify upstream dependencies that actually ran, then injects a programmatic
-`tidyselect::any_of()` expression into one scoped `tar_meta()` call for those
-targets and the explicitly selected targets. This preserves warning and error
-checks for rebuilt dependencies without scanning the full dynamic metadata
-store before and after every small selected-target run. Metadata selection
-errors fail the run rather than silently yielding an empty warning table.
+Legacy geography is appended once when either extended diagnostics or benchmarks are enabled.
 
-## Build Philosophy
+## Build philosophy
 
-`{targets}` is the source of build truth. Add durable computation as functions used by targets, and add generated public artifacts as explicit file targets when later steps read them from disk. Avoid untracked side effects: if a QMD, diagnostic, or check reads a generated CSV, PDF, HTML, or Markdown file, that file should be produced by a target or by a documented render/check script.
+`{targets}` is the build source of truth. Durable computation should be represented by functions and explicit targets. Avoid untracked side effects, compatibility aliases, source-text tests, and parallel implementations of the same contract. Tests should protect behavioral and methodological invariants.
 
-Keep orchestration thin. `_targets.R`, Makefile targets, and scripts should coordinate work; reusable logic should live in `R/` modules with tests. Public QMDs should contain prose and small rendering calls, not large helper implementations.
-
-Use tests as architecture guards. Unit tests should cover low-level behavior, while contract tests should protect public output structure, required artifacts, report-value keys, and retired build machinery.
-## District-lineage migration boundary
-
-The existing reviewed crosswalk remains the production authority. The parallel lineage-v2 modules under `R/districts/lineage_v2_*` and `R/diagnostics/diagnose_district_lineage_v2.R` ingest candidate sources, build Census registries and a SHRID bridge, generate review candidates, and evaluate migration gates. They must not alter the paper panel until tracked adjudications are complete. See [`docs/DISTRICT_LINEAGE_V2.md`](DISTRICT_LINEAGE_V2.md) for source authority, statistical rules, invariants, and the ordered work plan.
+Update this document when target groups, panel roles, public-output contracts, directory ownership, or strict validation rules change.
