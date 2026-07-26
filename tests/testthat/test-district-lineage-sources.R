@@ -491,7 +491,8 @@ test_that("DataMeet Census-2001 geometry maps exactly to the registry", {
   source <- sf::st_sf(
     ST_CEN_CD = c("01", "01", "99"),
     DT_CEN_CD = c("01", "02", "99"),
-    geometry = sf::st_sfc(square(0), square(1), square(2), crs = 4326)
+    boundary = sf::st_sfc(square(0), square(1), square(2), crs = 4326),
+    sf_column_name = "boundary"
   )
   sf::st_write(source, path, quiet = TRUE)
   admin <- data.frame(
@@ -518,7 +519,8 @@ test_that("DataMeet geometry fails closed on incomplete registry coverage", {
   )))
   sf::st_write(sf::st_sf(
     ST_CEN_CD = "01", DT_CEN_CD = "01",
-    geometry = sf::st_sfc(polygon, crs = 4326)
+    boundary = sf::st_sfc(polygon, crs = 4326),
+    sf_column_name = "boundary"
   ), path, quiet = TRUE)
   admin <- data.frame(
     unit_id = c("pc2001__01__01", "pc2001__01__02"),
