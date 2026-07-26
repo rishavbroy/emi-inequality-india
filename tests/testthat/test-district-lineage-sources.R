@@ -475,6 +475,60 @@ test_that("production Census 2001 geometry has an explicit tracked path", {
   )
   specs <- district_lineage_input_specs(paths)
   expect_false("lineage_geometry_2001" %in% specs$source_id)
+  expect_true("datameet_census_2001_districts" %in% specs$source_id)
+  expect_true(specs$required[specs$source_id == "datameet_census_2001_districts"])
+})
+
+test_that("DataMeet Census-2001 geometry maps exactly to the registry", {
+  skip_if_not_installed("sf")
+  root <- tempfile("datameet geometry ")
+  dir.create(root, recursive = TRUE)
+  path <- file.path(root, "districts.gpkg")
+  square <- function(x) sf::st_polygon(list(matrix(
+    c(x, 0, x + 1, 0, x + 1, 1, x, 1, x, 0),
+    ncol = 2, byrow = TRUE
+  )))
+  source <- sf::st_sf(
+    ST_CEN_CD = c("01", "01", "99"),
+    DT_CEN_CD = c("01", "02", "99"),
+    geometry = sf::st_sfc(square(0), square(1), square(2), crs = 4326)
+  )
+  sf::st_write(source, path, quiet = TRUE)
+  admin <- data.frame(
+    unit_id = c("pc2001__01__01", "pc2001__01__02"),
+    state_code = "01", district_code = c("01", "02"),
+    stringsAsFactors = FALSE
+  )
+
+  out <- read_datameet_census_2001_geometry(path, admin)
+
+  expect_s3_class(out, "sf")
+  expect_identical(out$unit_id, admin$unit_id)
+  expect_equal(nrow(out), nrow(admin))
+  expect_true(all(sf::st_is_valid(out)))
+  expect_false(any(sf::st_is_empty(out)))
+  expect_true(sf::st_crs(out) == sf::st_crs(source))
+})
+
+test_that("DataMeet geometry fails closed on incomplete registry coverage", {
+  skip_if_not_installed("sf")
+  path <- tempfile(fileext = ".gpkg")
+  polygon <- sf::st_polygon(list(matrix(
+    c(0, 0, 1, 0, 1, 1, 0, 1, 0, 0), ncol = 2, byrow = TRUE
+  )))
+  sf::st_write(sf::st_sf(
+    ST_CEN_CD = "01", DT_CEN_CD = "01",
+    geometry = sf::st_sfc(polygon, crs = 4326)
+  ), path, quiet = TRUE)
+  admin <- data.frame(
+    unit_id = c("pc2001__01__01", "pc2001__01__02"),
+    state_code = "01", district_code = c("01", "02")
+  )
+
+  expect_error(
+    read_datameet_census_2001_geometry(path, admin),
+    "does not exactly cover the registry"
+  )
 })
 
 test_that("production geometry is attached without losing sf semantics", {
