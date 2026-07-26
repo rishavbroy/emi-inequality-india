@@ -59,7 +59,7 @@ analysis_table(summary, "District-lineage summary")
 
 | metric                           |  value |
 |:---------------------------------|-------:|
-| available_inputs                 |     51 |
+| available_inputs                 |     52 |
 | missing_inputs                   |      0 |
 | admin_units_2001                 |    593 |
 | admin_units_2011                 |    640 |
@@ -137,59 +137,60 @@ Six-step completion status
 analysis_table(inventory, "Input inventory", max_rows = 60)
 ```
 
-| source_id | relative_path | reader | role | load_for_diagnostic | exists | size_bytes |
-|:---|:---|:---|:---|:---|:---|---:|
-| lgd_states | data/raw/local_government_directory/states.json | lgd_json | current_registry | TRUE | TRUE | 12323 |
-| lgd_districts | data/raw/local_government_directory/districts.json | lgd_json | current_registry | TRUE | TRUE | 343242 |
-| lgd_subdistricts | data/raw/local_government_directory/subdistricts.json | lgd_json | current_registry | TRUE | TRUE | 4867226 |
-| lgd_villages | data/raw/local_government_directory/villages.xlsx | lgd_xlsx | current_component_registry | FALSE | TRUE | 48621654 |
-| lgd_urban_local_bodies | data/raw/local_government_directory/urbanLocalBody.xlsx | lgd_xlsx | current_urban_registry | TRUE | TRUE | 267634 |
-| lgd_urban_coverage | data/raw/local_government_directory/urbanLocalBody-coverage.xlsx | lgd_xlsx | urban_component_registry | TRUE | TRUE | 1876288 |
-| lgd_village_categories | data/raw/local_government_directory/villages-category-urbanLocalBody.xlsx | lgd_xlsx | urban_component_registry | FALSE | TRUE | 46605315 |
-| lgd_development_blocks | data/raw/local_government_directory/developmentBlocks-coveredVillages.xlsx | lgd_xlsx | component_registry | FALSE | TRUE | 35697270 |
-| lgd_mod_districts_2001_2011 | data/raw/local_government_directory/modifications_01-01-2001_01-01-2011/districts.xls | spreadsheetml | official_census_code_bridge_2001_2011 | TRUE | TRUE | 215754 |
-| lgd_mod_districts | data/raw/local_government_directory/modifications_01-01-2011_30-06-2018/districts.xls | spreadsheetml | changed_unit_roster_2011_2018 | TRUE | TRUE | 55743 |
-| lgd_mod_subdistricts | data/raw/local_government_directory/modifications_01-01-2011_30-06-2018/subdistricts.xls | spreadsheetml | changed_unit_roster_2011_2018 | TRUE | TRUE | 1059238 |
-| lgd_mod_villages | data/raw/local_government_directory/modifications_01-01-2011_30-06-2018/villages.xls | spreadsheetml | changed_unit_roster_2011_2018 | TRUE | TRUE | 34056792 |
-| lgd_mod_urban_local_bodies | data/raw/local_government_directory/modifications_01-01-2011_30-06-2018/urbanLocalBody.xls | spreadsheetml | changed_unit_roster_2011_2018 | TRUE | TRUE | 296172 |
-| lgd_changes_post_2018 | data/raw/local_government_directory/changes.csv | inventory_only | post_2018_validation | FALSE | TRUE | 150427025 |
-| isded_1951_2024 | data/raw/district_changes/india_state_stories/isded/1951-2024/district_proliferation_1951_2024.xlsx | xlsx | candidate_lineage | TRUE | TRUE | 152349 |
-| isded_admin_units_2025 | data/raw/district_changes/india_state_stories/isded/2025/admin_units_2025.xlsx | xlsx | published_current_component_registry | TRUE | TRUE | 1432373 |
-| iss_census_series_1901_2011 | data/raw/district_changes/india_state_stories/census_data_collection/1901-2011/1901-2011-State Districts-Population Time Series.xlsx | inventory_only | historical_population_validation | FALSE | TRUE | 1389673 |
-| iss_subdistricts_2026 | data/raw/district_changes/india_state_stories/census_data_collection/2026/2026_subdistricts_with_2011_census_pass2_loose.xlsx | inventory_only | published_current_component_registry | FALSE | TRUE | 3309901 |
-| shrug_pc01r | data/raw/shrug/shrug-pc-keys-csv/pc01r_shrid_key.csv | shrug_locality_csv | stable_locality_weight | TRUE | TRUE | 32554823 |
-| shrug_pc01u | data/raw/shrug/shrug-pc-keys-csv/pc01u_shrid_key.csv | shrug_locality_csv | stable_locality_weight | TRUE | TRUE | 289671 |
-| shrug_pc11r | data/raw/shrug/shrug-pc-keys-csv/pc11r_shrid_key.csv | shrug_locality_csv | stable_locality_weight | TRUE | TRUE | 33663741 |
-| shrug_pc11u | data/raw/shrug/shrug-pc-keys-csv/pc11u_shrid_key.csv | shrug_locality_csv | stable_locality_weight | TRUE | TRUE | 451746 |
-| shrug_pc01dist | data/raw/shrug/shrug-pc-keys-csv/shrid_pc01dist_key.csv | shrug_district_csv | stable_locality_district_membership | TRUE | TRUE | 17222200 |
-| shrug_pc11dist | data/raw/shrug/shrug-pc-keys-csv/shrid_pc11dist_key.csv | shrug_district_csv | stable_locality_district_membership | TRUE | TRUE | 17895273 |
-| shrug_pc01subdist | data/raw/shrug/shrug-pc-keys-csv/shrid_pc01subdist_key.csv | inventory_only | stable_locality_subdistrict_membership | FALSE | TRUE | 20220170 |
-| shrug_pc11subdist | data/raw/shrug/shrug-pc-keys-csv/shrid_pc11subdist_key.csv | inventory_only | stable_locality_subdistrict_membership | FALSE | TRUE | 21506484 |
-| shrug_pc11subdistu | data/raw/shrug/shrug-pc-keys-csv/shrid_pc11subdistu_key.csv | inventory_only | stable_locality_subdistrict_membership | FALSE | TRUE | 281686 |
-| shrug_pc11_district_geometry | data/raw/shrug/open-polygons/shrug-pc11dist-poly-gpkg/district.gpkg | gpkg | census_2011_geometry | TRUE | TRUE | 31633408 |
-| shrug_pc11_subdistrict_geometry | data/raw/shrug/open-polygons/shrug-pc11subdist-poly-gpkg/subdistrict.gpkg | inventory_only | census_2011_geometry | FALSE | TRUE | 91037696 |
-| shrug_pc11_state_geometry | data/raw/shrug/open-polygons/shrug-pc11state-poly-gpkg/state.gpkg | inventory_only | census_2011_geometry | FALSE | TRUE | 8613888 |
-| shrug_pc11_village_geometry_zip | data/raw/shrug/open-polygons/shrug-pc11-village-poly-gpkg.zip | inventory_only | census_2011_geometry | FALSE | TRUE | 399235423 |
-| shrug_shrid_geometry_zip | data/raw/shrug/open-polygons/shrug-shrid-poly-gpkg.zip | inventory_only | future_2001_geometry | FALSE | TRUE | 379628892 |
-| shrug_pca01_zip | data/raw/shrug/census_2001/shrug-pca01-csv.zip | inventory_only | census_locality_attributes | FALSE | TRUE | 50359039 |
-| shrug_pca11_zip | data/raw/shrug/census_2011/shrug-pca11-csv.zip | inventory_only | census_locality_attributes | FALSE | TRUE | 66532473 |
-| shrug_td01_zip | data/raw/shrug/census_2001/shrug-td01-csv.zip | inventory_only | census_locality_attributes | FALSE | TRUE | 2473771 |
-| shrug_td11_zip | data/raw/shrug/census_2011/shrug-td11-csv.zip | inventory_only | census_locality_attributes | FALSE | TRUE | 4754266 |
-| shrug_vd01_zip | data/raw/shrug/census_2001/shrug-vd01-csv.zip | inventory_only | census_locality_attributes | FALSE | TRUE | 32905413 |
-| shrug_vd11_zip | data/raw/shrug/census_2011/shrug-vd11-csv.zip | inventory_only | census_locality_attributes | FALSE | TRUE | 69981752 |
-| ipums_geo2_1987_2009 | data/raw/ipums/geo2_in1987_2009/geo2_in1987_2009.shp | inventory_only | stable_geography_sensitivity | FALSE | TRUE | 6941364 |
-| concordance_plfs_nss | data/raw/concordance/plfs_nss_distcodes.csv | csv | published_concordance | TRUE | TRUE | 13452 |
-| concordance_census_plfs | data/raw/concordance/census_plfs_distcodes.csv | csv | published_concordance | TRUE | TRUE | 18775 |
-| concordance_nrlm_plfs | data/raw/concordance/nrlm_plfs_distcodes.csv | csv | published_concordance | TRUE | TRUE | 18601 |
-| concordance_telangana | data/raw/concordance/telangana_plfs_districts.csv | csv | published_concordance | TRUE | TRUE | 695 |
-| concordance_census_region | data/raw/concordance/census_region.csv | csv | published_concordance | TRUE | TRUE | 21341 |
-| lineage_gold | data/metadata/district_match_gold.csv | csv | calibration | TRUE | TRUE | 7217 |
-| lineage_adjudications | data/metadata/district_adjudications.csv | csv | adjudication | TRUE | TRUE | 653364 |
-| lineage_events | data/metadata/district_admin_events.csv | csv | event_adjudication | TRUE | TRUE | 14139 |
-| lineage_allocation_weights | data/metadata/district_allocation_weights.csv | allocation_csv | allocation_adjudication | TRUE | TRUE | 226672 |
-| lineage_geometry_carrybacks | data/metadata/district_geometry_carrybacks.csv | csv | geometry_adjudication | TRUE | TRUE | 2983 |
-| lineage_primary_reviews | data/metadata/district_primary_reviews.csv | csv | primary_review | TRUE | TRUE | 78552 |
-| lineage_sources | data/metadata/district_lineage_sources.csv | csv | source_registry | TRUE | TRUE | 11587 |
+| source_id | relative_path | reader | role | required | load_for_diagnostic | exists | size_bytes |
+|:---|:---|:---|:---|:---|:---|:---|---:|
+| lgd_states | data/raw/local_government_directory/states.json | lgd_json | current_registry | FALSE | TRUE | TRUE | 12323 |
+| lgd_districts | data/raw/local_government_directory/districts.json | lgd_json | current_registry | FALSE | TRUE | TRUE | 343242 |
+| lgd_subdistricts | data/raw/local_government_directory/subdistricts.json | lgd_json | current_registry | FALSE | TRUE | TRUE | 4867226 |
+| lgd_villages | data/raw/local_government_directory/villages.xlsx | lgd_xlsx | current_component_registry | FALSE | FALSE | TRUE | 48621654 |
+| lgd_urban_local_bodies | data/raw/local_government_directory/urbanLocalBody.xlsx | lgd_xlsx | current_urban_registry | FALSE | TRUE | TRUE | 267634 |
+| lgd_urban_coverage | data/raw/local_government_directory/urbanLocalBody-coverage.xlsx | lgd_xlsx | urban_component_registry | FALSE | TRUE | TRUE | 1876288 |
+| lgd_village_categories | data/raw/local_government_directory/villages-category-urbanLocalBody.xlsx | lgd_xlsx | urban_component_registry | FALSE | FALSE | TRUE | 46605315 |
+| lgd_development_blocks | data/raw/local_government_directory/developmentBlocks-coveredVillages.xlsx | lgd_xlsx | component_registry | FALSE | FALSE | TRUE | 35697270 |
+| lgd_mod_districts_2001_2011 | data/raw/local_government_directory/modifications_01-01-2001_01-01-2011/districts.xls | spreadsheetml | official_census_code_bridge_2001_2011 | FALSE | TRUE | TRUE | 215754 |
+| lgd_mod_districts | data/raw/local_government_directory/modifications_01-01-2011_30-06-2018/districts.xls | spreadsheetml | changed_unit_roster_2011_2018 | FALSE | TRUE | TRUE | 55743 |
+| lgd_mod_subdistricts | data/raw/local_government_directory/modifications_01-01-2011_30-06-2018/subdistricts.xls | spreadsheetml | changed_unit_roster_2011_2018 | FALSE | TRUE | TRUE | 1059238 |
+| lgd_mod_villages | data/raw/local_government_directory/modifications_01-01-2011_30-06-2018/villages.xls | spreadsheetml | changed_unit_roster_2011_2018 | FALSE | TRUE | TRUE | 34056792 |
+| lgd_mod_urban_local_bodies | data/raw/local_government_directory/modifications_01-01-2011_30-06-2018/urbanLocalBody.xls | spreadsheetml | changed_unit_roster_2011_2018 | FALSE | TRUE | TRUE | 296172 |
+| lgd_changes_post_2018 | data/raw/local_government_directory/changes.csv | inventory_only | post_2018_validation | FALSE | FALSE | TRUE | 150427025 |
+| isded_1951_2024 | data/raw/district_changes/india_state_stories/isded/1951-2024/district_proliferation_1951_2024.xlsx | xlsx | candidate_lineage | FALSE | TRUE | TRUE | 152349 |
+| isded_admin_units_2025 | data/raw/district_changes/india_state_stories/isded/2025/admin_units_2025.xlsx | xlsx | published_current_component_registry | FALSE | TRUE | TRUE | 1432373 |
+| iss_census_series_1901_2011 | data/raw/district_changes/india_state_stories/census_data_collection/1901-2011/1901-2011-State Districts-Population Time Series.xlsx | inventory_only | historical_population_validation | FALSE | FALSE | TRUE | 1389673 |
+| iss_subdistricts_2026 | data/raw/district_changes/india_state_stories/census_data_collection/2026/2026_subdistricts_with_2011_census_pass2_loose.xlsx | inventory_only | published_current_component_registry | FALSE | FALSE | TRUE | 3309901 |
+| datameet_census_2001_districts | data/raw/datameet/Districts/Census_2001/2001_Dist.shp | inventory_only | production_census_2001_geometry | TRUE | FALSE | TRUE | 10088504 |
+| shrug_pc01r | data/raw/shrug/shrug-pc-keys-csv/pc01r_shrid_key.csv | shrug_locality_csv | stable_locality_weight | FALSE | TRUE | TRUE | 32554823 |
+| shrug_pc01u | data/raw/shrug/shrug-pc-keys-csv/pc01u_shrid_key.csv | shrug_locality_csv | stable_locality_weight | FALSE | TRUE | TRUE | 289671 |
+| shrug_pc11r | data/raw/shrug/shrug-pc-keys-csv/pc11r_shrid_key.csv | shrug_locality_csv | stable_locality_weight | FALSE | TRUE | TRUE | 33663741 |
+| shrug_pc11u | data/raw/shrug/shrug-pc-keys-csv/pc11u_shrid_key.csv | shrug_locality_csv | stable_locality_weight | FALSE | TRUE | TRUE | 451746 |
+| shrug_pc01dist | data/raw/shrug/shrug-pc-keys-csv/shrid_pc01dist_key.csv | shrug_district_csv | stable_locality_district_membership | FALSE | TRUE | TRUE | 17222200 |
+| shrug_pc11dist | data/raw/shrug/shrug-pc-keys-csv/shrid_pc11dist_key.csv | shrug_district_csv | stable_locality_district_membership | FALSE | TRUE | TRUE | 17895273 |
+| shrug_pc01subdist | data/raw/shrug/shrug-pc-keys-csv/shrid_pc01subdist_key.csv | inventory_only | stable_locality_subdistrict_membership | FALSE | FALSE | TRUE | 20220170 |
+| shrug_pc11subdist | data/raw/shrug/shrug-pc-keys-csv/shrid_pc11subdist_key.csv | inventory_only | stable_locality_subdistrict_membership | FALSE | FALSE | TRUE | 21506484 |
+| shrug_pc11subdistu | data/raw/shrug/shrug-pc-keys-csv/shrid_pc11subdistu_key.csv | inventory_only | stable_locality_subdistrict_membership | FALSE | FALSE | TRUE | 281686 |
+| shrug_pc11_district_geometry | data/raw/shrug/open-polygons/shrug-pc11dist-poly-gpkg/district.gpkg | gpkg | census_2011_geometry | FALSE | TRUE | TRUE | 31633408 |
+| shrug_pc11_subdistrict_geometry | data/raw/shrug/open-polygons/shrug-pc11subdist-poly-gpkg/subdistrict.gpkg | inventory_only | census_2011_geometry | FALSE | FALSE | TRUE | 91037696 |
+| shrug_pc11_state_geometry | data/raw/shrug/open-polygons/shrug-pc11state-poly-gpkg/state.gpkg | inventory_only | census_2011_geometry | FALSE | FALSE | TRUE | 8613888 |
+| shrug_pc11_village_geometry_zip | data/raw/shrug/open-polygons/shrug-pc11-village-poly-gpkg.zip | inventory_only | census_2011_geometry | FALSE | FALSE | TRUE | 399235423 |
+| shrug_shrid_geometry_zip | data/raw/shrug/open-polygons/shrug-shrid-poly-gpkg.zip | inventory_only | legacy_2001_geometry_reconstruction | FALSE | FALSE | TRUE | 379628892 |
+| shrug_pca01_zip | data/raw/shrug/census_2001/shrug-pca01-csv.zip | inventory_only | census_locality_attributes | FALSE | FALSE | TRUE | 50359039 |
+| shrug_pca11_zip | data/raw/shrug/census_2011/shrug-pca11-csv.zip | inventory_only | census_locality_attributes | FALSE | FALSE | TRUE | 66532473 |
+| shrug_td01_zip | data/raw/shrug/census_2001/shrug-td01-csv.zip | inventory_only | census_locality_attributes | FALSE | FALSE | TRUE | 2473771 |
+| shrug_td11_zip | data/raw/shrug/census_2011/shrug-td11-csv.zip | inventory_only | census_locality_attributes | FALSE | FALSE | TRUE | 4754266 |
+| shrug_vd01_zip | data/raw/shrug/census_2001/shrug-vd01-csv.zip | inventory_only | census_locality_attributes | FALSE | FALSE | TRUE | 32905413 |
+| shrug_vd11_zip | data/raw/shrug/census_2011/shrug-vd11-csv.zip | inventory_only | census_locality_attributes | FALSE | FALSE | TRUE | 69981752 |
+| ipums_geo2_1987_2009 | data/raw/ipums/geo2_in1987_2009/geo2_in1987_2009.shp | inventory_only | stable_geography_sensitivity | FALSE | FALSE | TRUE | 6941364 |
+| concordance_plfs_nss | data/raw/concordance/plfs_nss_distcodes.csv | csv | published_concordance | FALSE | TRUE | TRUE | 13452 |
+| concordance_census_plfs | data/raw/concordance/census_plfs_distcodes.csv | csv | published_concordance | FALSE | TRUE | TRUE | 18775 |
+| concordance_nrlm_plfs | data/raw/concordance/nrlm_plfs_distcodes.csv | csv | published_concordance | FALSE | TRUE | TRUE | 18601 |
+| concordance_telangana | data/raw/concordance/telangana_plfs_districts.csv | csv | published_concordance | FALSE | TRUE | TRUE | 695 |
+| concordance_census_region | data/raw/concordance/census_region.csv | csv | published_concordance | FALSE | TRUE | TRUE | 21341 |
+| lineage_gold | data/metadata/district_match_gold.csv | csv | calibration | FALSE | TRUE | TRUE | 7217 |
+| lineage_adjudications | data/metadata/district_adjudications.csv | csv | adjudication | FALSE | TRUE | TRUE | 653364 |
+| lineage_events | data/metadata/district_admin_events.csv | csv | event_adjudication | FALSE | TRUE | TRUE | 14139 |
+| lineage_allocation_weights | data/metadata/district_allocation_weights.csv | allocation_csv | allocation_adjudication | FALSE | TRUE | TRUE | 226672 |
+| lineage_geometry_carrybacks | data/metadata/district_geometry_carrybacks.csv | csv | geometry_adjudication | FALSE | TRUE | TRUE | 2983 |
+| lineage_primary_reviews | data/metadata/district_primary_reviews.csv | csv | primary_review | FALSE | TRUE | TRUE | 78552 |
+| lineage_sources | data/metadata/district_lineage_sources.csv | csv | source_registry | FALSE | TRUE | TRUE | 11737 |
 
 Input inventory
 
@@ -200,6 +201,7 @@ analysis_table(registry, "Evidence registry", max_rows = 60)
 | source_id | citation | path_or_url | accessed |
 |:---|:---|:---|:---|
 | census2001_c16 | Census of India 2001 C-16 mother-tongue tables | data/raw/census_2001_mother_tongue | 2026-07-22 |
+| datameet_census_2001_districts | DataMeet maps; Census of India Administrative Atlas | data/raw/datameet/Districts/Census_2001/2001_Dist.shp | 2026-07-26 |
 | shrug_pc_keys | Development Data Lab SHRUG Population Census location keys | data/raw/shrug/shrug-pc-keys-csv | 2026-07-22 |
 | shrug_pc11_district_geometry | Development Data Lab SHRUG PC11 district polygons | data/raw/shrug/open-polygons/shrug-pc11dist-poly-gpkg/district.gpkg | 2026-07-22 |
 | shrug_open_polygons | Development Data Lab SHRUG open polygons | data/raw/shrug/open-polygons | 2026-07-22 |
@@ -555,7 +557,7 @@ analysis_table(panel_variants, "Panel definitions", max_rows = 10)
 
 | panel_variant | source_rows_2007_08 | source_rows_2017_18 | target_districts_2007_08 | target_districts_2017_18 | two_wave_target_districts | accepted_primary_reviews | description |
 |:---|---:|---:|---:|---:|---:|---:|:---|
-| conservative | 587 | 437 | 587 | 413 | 408 | 0 | Deterministic official, registry, alias, and reviewed single-parent mappings only. |
+| conservative | 587 | 437 | 587 | 413 | 408 | 0 | Deterministic official, registry, alias, and accepted single-parent mappings only. |
 | primary | 587 | 645 | 587 | 578 | 573 | 208 | Conservative mappings plus reviewed 2017-18 single-parent allocations with at least 99 percent SHRUG coverage and corroborating LGD or India State Stories evidence. |
 | full_reviewed | 588 | 691 | 587 | 592 | 587 | 0 | Primary mappings plus reviewed multi-parent fractional allocations; robustness specification only. |
 
@@ -1042,7 +1044,7 @@ analysis_table(reclassification, "NSS-75 identity classes", max_rows = 60)
 | source_row_id | wave | source_code | raw_state | raw_district | status | eligible_conservative | target_unit_2001 | exclusion_reason | recovery_class | recommended_panel | allocation_target_count | allocation_weight_sum | allocation_basis | allocation_source_id |
 |:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|
 | nss_2007_08\_\_andaman and nicobar islands\_\_35102\_\_nicobars | nss_2007_08 | 35102 | Andaman & Nicober | Nicobars | accepted | TRUE | pc2001\_\_35\_\_02 | NA | conservative_mapping | conservative | NA | NA | NA | NA |
-| nss_2007_08\_\_andaman and nicobar islands\_\_35103\_\_north and middle andaman | nss_2007_08 | 35103 | Andaman & Nicober | North and Middle Andaman | accepted | FALSE | NA | primary_near_complete_requires_review | primary_near_complete | full_reviewed | 1 | 1 | population_renormalized_min_99pct_mapped | shrug_pc_keys |
+| nss_2007_08\_\_andaman and nicobar islands\_\_35103\_\_north and middle andaman | nss_2007_08 | 35103 | Andaman & Nicober | North and Middle Andaman | accepted | FALSE | NA | primary_near_complete_requires_review | primary_near_complete | primary | 1 | 1 | population_renormalized_min_99pct_mapped | shrug_pc_keys |
 | nss_2007_08\_\_andaman and nicobar islands\_\_35101\_\_south andaman | nss_2007_08 | 35101 | Andaman & Nicober | South Andaman | accepted | TRUE | pc2001\_\_35\_\_01 | NA | conservative_mapping | conservative | NA | NA | NA | NA |
 | nss_2007_08\_\_andhra pradesh\_\_28301\_\_adilabad | nss_2007_08 | 28301 | Andhra Pardesh | Adilabad | accepted | TRUE | pc2001\_\_28\_\_01 | NA | conservative_mapping | conservative | NA | NA | NA | NA |
 | nss_2007_08\_\_andhra pradesh\_\_28522\_\_anantpur | nss_2007_08 | 28522 | Andhra Pardesh | Anantpur | accepted | TRUE | pc2001\_\_28\_\_22 | NA | conservative_mapping | conservative | NA | NA | NA | NA |
