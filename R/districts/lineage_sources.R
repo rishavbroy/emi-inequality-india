@@ -7,13 +7,17 @@
 #'   optional files are reported in diagnostics rather than failing the public
 #'   lineage pipeline.
 district_lineage_input_specs <- function(paths = build_paths()) {
-  spec <- function(source_id, relative_path, reader, load_for_diagnostic, role) {
+  spec <- function(
+    source_id, relative_path, reader, load_for_diagnostic, role,
+    required = FALSE
+  ) {
     data.frame(
       source_id = source_id,
       relative_path = relative_path,
       reader = reader,
       load_for_diagnostic = load_for_diagnostic,
       role = role,
+      required = isTRUE(required),
       stringsAsFactors = FALSE
     )
   }
@@ -36,7 +40,12 @@ district_lineage_input_specs <- function(paths = build_paths()) {
     spec("isded_admin_units_2025", "data/raw/district_changes/india_state_stories/isded/2025/admin_units_2025.xlsx", "xlsx", TRUE, "published_current_component_registry"),
     spec("iss_census_series_1901_2011", "data/raw/district_changes/india_state_stories/census_data_collection/1901-2011/1901-2011-State Districts-Population Time Series.xlsx", "inventory_only", FALSE, "historical_population_validation"),
     spec("iss_subdistricts_2026", "data/raw/district_changes/india_state_stories/census_data_collection/2026/2026_subdistricts_with_2011_census_pass2_loose.xlsx", "inventory_only", FALSE, "published_current_component_registry"),
-    spec("datameet_census_2001_districts", "data/raw/datameet/Districts/Census_2001/2001_Dist.shp", "inventory_only", TRUE, "production_census_2001_geometry"),
+    spec(
+      "datameet_census_2001_districts",
+      "data/raw/datameet/Districts/Census_2001/2001_Dist.shp",
+      "inventory_only", TRUE, "production_census_2001_geometry",
+      required = TRUE
+    ),
     spec("shrug_pc01r", "data/raw/shrug/shrug-pc-keys-csv/pc01r_shrid_key.csv", "shrug_locality_csv", TRUE, "stable_locality_weight"),
     spec("shrug_pc01u", "data/raw/shrug/shrug-pc-keys-csv/pc01u_shrid_key.csv", "shrug_locality_csv", TRUE, "stable_locality_weight"),
     spec("shrug_pc11r", "data/raw/shrug/shrug-pc-keys-csv/pc11r_shrid_key.csv", "shrug_locality_csv", TRUE, "stable_locality_weight"),
@@ -103,7 +112,10 @@ read_datameet_census_2001_geometry <- function(path, admin_2001) {
     stop("Missing DataMeet Census-2001 district shapefile: ", path, call. = FALSE)
   }
   geometry <- sf::st_read(path, quiet = TRUE, stringsAsFactors = FALSE)
-  required <- c("ST_CEN_CD", "DT_CEN_CD", "geometry")
+  if (!inherits(geometry, "sf")) {
+    stop("DataMeet Census-2001 geometry is not an sf object.", call. = FALSE)
+  }
+  required <- c("ST_CEN_CD", "DT_CEN_CD")
   missing <- setdiff(required, names(geometry))
   if (length(missing)) {
     stop(
@@ -206,7 +218,7 @@ attach_lineage_geometry_source <- function(sources, geometry_2001) {
 district_lineage_source_inventory <- function(specs) {
   specs <- safe_df(specs)
   specs[c(
-    "source_id", "relative_path", "reader", "role",
+    "source_id", "relative_path", "reader", "role", "required",
     "load_for_diagnostic", "exists", "size_bytes"
   )]
 }
