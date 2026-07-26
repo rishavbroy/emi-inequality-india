@@ -367,13 +367,24 @@ attach_lineage_geometry <- function(panel, geometry_2001) {
       !"unit_id" %in% names(geometry_2001)) {
     return(panel)
   }
-  geometry <- geometry_2001[
-    !duplicated(plain_chr(geometry_2001$unit_id)),
-    c("unit_id", attr(geometry_2001, "sf_column")),
-    drop = FALSE
-  ]
-  names(geometry)[names(geometry) == "unit_id"] <- "target_unit_2001"
-  merge(geometry, panel, by = "target_unit_2001", all.y = TRUE, sort = FALSE)
+
+  unit_id <- plain_chr(geometry_2001$unit_id)
+  if (anyDuplicated(unit_id)) {
+    stop("Census-2001 geometry must be unique by unit_id.", call. = FALSE)
+  }
+  if (!"target_unit_2001" %in% names(panel)) {
+    stop("Lineage panel is missing target_unit_2001.", call. = FALSE)
+  }
+
+  match_index <- match(plain_chr(panel$target_unit_2001), unit_id)
+  source_geometry <- sf::st_geometry(geometry_2001)
+  panel_geometry <- sf::st_sfc(
+    lapply(match_index, function(i) {
+      if (is.na(i)) sf::st_geometrycollection() else source_geometry[[i]]
+    }),
+    crs = sf::st_crs(geometry_2001)
+  )
+  sf::st_sf(panel, geometry = panel_geometry)
 }
 
 build_lineage_district_panel <- function(
@@ -435,7 +446,7 @@ compare_lineage_panels <- function(legacy_panel, lineage_panel) {
   data.frame(
     target_unit_2001 = units,
     in_legacy = units %in% legacy_units,
-    in = units %in% candidate_units,
+    in_lineage = units %in% candidate_units,
     comparison_status = ifelse(
       units %in% legacy_units & units %in% candidate_units,
       "shared",
@@ -604,7 +615,7 @@ build_lineage_panel_membership_adjudication <- function(
   out$decision <- if (!ready) {
     "defer_until_identity_coverage_complete"
   } else ifelse(
-    out$target_unit_2001 %in% duplicate_units & out$in %in% TRUE,
+    out$target_unit_2001 %in% duplicate_units & out$in_lineage %in% TRUE,
     "replace_inherited_duplicate_with_unique",
     ifelse(
       out$comparison_status == "shared",
@@ -638,7 +649,7 @@ build_lineage_panel_membership_adjudication <- function(
       "mapped or explicitly excluded."
     )
   } else ifelse(
-    out$target_unit_2001 %in% duplicate_units & out$in %in% TRUE,
+    out$target_unit_2001 %in% duplicate_units & out$in_lineage %in% TRUE,
     paste0(
       "Retained once through the unique district lineage row, replacing duplicated ",
       "support in the inherited legacy panel."

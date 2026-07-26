@@ -1318,3 +1318,31 @@ test_that("panel roles remain monotone", {
   )
   expect_false(status$complete[status$work_item == "Build the conservative, primary, and full reviewed crosswalks"])
 })
+
+test_that("lineage geometry attachment preserves sf class and panel order", {
+  testthat::skip_if_not_installed("sf")
+
+  square <- function(xmin, ymin) {
+    sf::st_polygon(list(rbind(
+      c(xmin, ymin), c(xmin + 1, ymin), c(xmin + 1, ymin + 1),
+      c(xmin, ymin + 1), c(xmin, ymin)
+    )))
+  }
+  geometry <- sf::st_sf(
+    unit_id = c("pc2001__01__01", "pc2001__01__02"),
+    geometry = sf::st_sfc(square(0, 0), square(1, 0), crs = 4326)
+  )
+  panel <- data.frame(
+    target_unit_2001 = c("pc2001__01__02", "pc2001__01__03", "pc2001__01__01"),
+    value = 1:3,
+    stringsAsFactors = FALSE
+  )
+
+  out <- attach_lineage_geometry(panel, geometry)
+
+  expect_s3_class(out, "sf")
+  expect_identical(out$target_unit_2001, panel$target_unit_2001)
+  expect_equal(sf::st_crs(out), sf::st_crs(geometry))
+  expect_false(any(sf::st_is_empty(sf::st_geometry(out)[c(1, 3)])))
+  expect_true(sf::st_is_empty(sf::st_geometry(out)[2]))
+})
