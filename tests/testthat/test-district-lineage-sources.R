@@ -459,15 +459,64 @@ test_that("lineage summary preserves the complete diagnostic metric contract", {
   )
 })
 
-test_that("derived Census 2001 geometry is an optional loaded source", {
+test_that("production Census 2001 geometry has an explicit tracked path", {
   root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
-  specs <- district_lineage_input_specs(build_paths(root))
-  row <- specs[specs$source_id == "lineage_geometry_2001", , drop = FALSE]
+  paths <- build_paths(root)
 
-  expect_equal(nrow(row), 1L)
-  expect_true(row$load_for_diagnostic)
-  expect_identical(row$reader, "gpkg")
-  expect_identical(row$role, "derived_2001_geometry")
+  expect_identical(
+    normalizePath(lineage_geometry_2001_path(paths), mustWork = FALSE),
+    normalizePath(
+      file.path(
+        root, "outputs", "derived", "district_lineage",
+        "district_2001.gpkg"
+      ),
+      mustWork = FALSE
+    )
+  )
+  specs <- district_lineage_input_specs(paths)
+  expect_false("lineage_geometry_2001" %in% specs$source_id)
+})
+
+test_that("production geometry is attached without losing sf semantics", {
+  skip_if_not_installed("sf")
+  polygon <- sf::st_polygon(list(matrix(
+    c(0, 0, 1, 0, 1, 1, 0, 1, 0, 0),
+    ncol = 2,
+    byrow = TRUE
+  )))
+  geometry <- sf::st_sf(
+    unit_id = "pc2001__01__01",
+    geometry = sf::st_sfc(polygon, crs = 4326)
+  )
+
+  out <- attach_lineage_geometry_source(list(example = data.frame(x = 1)), geometry)
+
+  expect_named(out, c("example", "lineage_geometry_2001"))
+  expect_s3_class(out$lineage_geometry_2001, "sf")
+  expect_identical(out$lineage_geometry_2001$unit_id, geometry$unit_id)
+  expect_identical(sf::st_crs(out$lineage_geometry_2001), sf::st_crs(geometry))
+})
+
+test_that("production geometry reader enforces unit identity invariants", {
+  skip_if_not_installed("sf")
+  path <- tempfile(fileext = ".gpkg")
+  on.exit(unlink(path), add = TRUE)
+  polygon <- sf::st_polygon(list(matrix(
+    c(0, 0, 1, 0, 1, 1, 0, 1, 0, 0),
+    ncol = 2,
+    byrow = TRUE
+  )))
+  geometry <- sf::st_sf(
+    unit_id = "pc2001__01__01",
+    geometry = sf::st_sfc(polygon, crs = 4326)
+  )
+  sf::st_write(geometry, path, quiet = TRUE)
+
+  out <- read_lineage_geometry_2001(path)
+
+  expect_s3_class(out, "sf")
+  expect_identical(out$unit_id, geometry$unit_id)
+  expect_identical(sf::st_crs(out), sf::st_crs(geometry))
 })
 
 test_that("reviewed geometry and source decisions satisfy evidence contracts", {
