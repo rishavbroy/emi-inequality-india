@@ -32,13 +32,13 @@ data/interim/
 relevant-literature/
 
 # locally reproducible large derived geometry
-outputs/derived/district_lineage_v2/*.gpkg
+outputs/derived/district_lineage/*.gpkg
 
 # short-lived target/build diagnostics
 outputs/diagnostics/*.csv
 outputs/diagnostics/build/
 outputs/diagnostics/public/
-outputs/diagnostics/extended/district_lineage_v2/
+outputs/diagnostics/extended/district_lineage/
 
 # generated caches and render byproducts
 Rplots.pdf

@@ -213,7 +213,11 @@ trap dump_diagnostics EXIT
 current_stage="initialize-diagnostics"
 echo "=== START: git state ==="
 git status --short
-rm -rf outputs/diagnostics/build outputs/diagnostics/public
+rm -rf \
+  outputs/diagnostics/build \
+  outputs/diagnostics/public \
+  outputs/diagnostics/extended/district_lineage_v2 \
+  outputs/derived/district_lineage_v2
 rm -f outputs/diagnostics/*.csv
 mkdir -p outputs/diagnostics/build outputs/diagnostics/public outputs/diagnostics/extended outputs/benchmarking
 write_audit_status "running" "$current_stage" 0 "pending"
