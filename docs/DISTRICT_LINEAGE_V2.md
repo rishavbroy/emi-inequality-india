@@ -621,56 +621,37 @@ same Census-2001 target geography, panel builder, pooled-household Gini
 reconstruction, 2SLS estimator, and first-stage diagnostics. They differ only
 in which reviewed source-to-target mappings are admitted.
 
-1. `district_panel_v2` is the conservative preferred panel. It uses official,
-   registry, alias, and other accepted deterministic evidence.
-2. `district_panel_v2_dominant` adds the 208 reviewed NSS 2017-18
-   near-complete single-parent mappings. Each has at least 99 percent SHRUG
-   locality coverage and corroborating LGD or India State Stories evidence.
+1. `district_panel_v2_dominant` is the public production panel. It adds the 208
+   reviewed NSS 2017-18 near-complete single-parent mappings to the conservative
+   evidence base. Each added mapping has at least 99 percent SHRUG locality
+   coverage and corroborating LGD or India State Stories evidence.
+2. `district_panel_v2` retains the 408-district conservative specification for
+   diagnostics and robustness checks.
 3. `district_panel_v2_full_reviewed` adds the reviewed multi-parent fractional
    allocations. It is the broadest sensitivity specification and is not a
    candidate for automatic production migration.
 
-The corresponding model targets are `iv_models_v2`,
-`iv_models_v2_dominant`, and `iv_models_v2_full_reviewed`. Extended
-diagnostics write a common panel summary, coefficient table, and first-stage
-table so differences can be compared without maintaining three parallel
-reporting implementations.
+The public model targets `iv_models` and `first_stage_tests` use the
+reviewed dominant-parent panel. The conservative comparison targets are
+`iv_models_v2` and `first_stage_tests_v2`; the broad sensitivity targets are
+`iv_models_v2_full_reviewed` and `first_stage_tests_v2_full_reviewed`. Extended
+diagnostics write one common panel summary, coefficient table, and first-stage
+table rather than maintaining three reporting implementations.
 
 Extensive quantities are multiplied by allocation weights before aggregation.
 Intensive district measures are combined using allocated household mass when
 several source districts contribute to one target. For every panel, district
 Ginis are recomputed from pooled household microdata rather than averaged from
-source-district Ginis. This is essential for the full reviewed panel, where
-multiple source districts or fractional allocations can contribute to one
-Census-2001 target.
+source-district Ginis.
 
 The current crosswalk supports 408 conservative, 573 dominant-parent, and 587
 full reviewed two-wave Census-2001 districts. These are geography counts, not
-guarantees that every model has 587 complete rows after outcome and covariate
-missingness. The generated `panel_variant_model_summary.csv` reports the actual
-analysis rows for each specification.
-
-## Downstream coverage gate
-
-The first parallel build produces 95 unique preferred-panel districts versus
-481 unique inherited production districts. This is not model attrition: the
-preferred crosswalk contains only 100 NSS-75 mappings and 95 two-wave
-Census-2001 targets. The resulting coefficient and first-stage differences are
-therefore descriptive outputs from different samples, not migration evidence.
-
-The downstream diagnostic now reports wave-level preferred coverage, duplicate
-panel units, and explicit review gates. It also identifies the inherited
-production duplicate at Census-2001 unit `pc2001__09__17`. Migration remains
-blocked only by unresolved NSS identities, unreviewed mappings, duplicate target units, unreconstructed pooled Ginis, or an unrecorded downstream decision
-and both panels are unique by Census-2001 unit.
+guarantees that every model has the same number of complete rows. The generated
+`panel_variant_model_summary.csv` reports the actual analysis rows.
 
 ## Parallel downstream impact review
 
-Extended diagnostics now build a non-production `district_panel_v2` from the
-reviewed preferred source crosswalk. The branch reuses the active measure
-objects, IV formulas, 2SLS estimator, clustered coefficient extraction, and
-first-stage diagnostic code. It does not alter `district_panel`, public tables,
-figures, report values, or rendered outputs.
+The public `district_panel` alias uses `district_panel_v2_dominant`. Public models, tables, summary tables, maps, diagnostics, processed data, report values, the paper, and the poster therefore share the 573-district reviewed dominant-parent specification. Extended diagnostics retain the 408-district conservative panel and the 587-district full reviewed panel for like-for-like implementation and sensitivity comparisons through the same measure, Gini-reconstruction, IV, and first-stage code.
 
 The diagnostic writes panel membership, panel-size, coefficient, standard-error,
 and first-stage comparisons under
@@ -901,7 +882,7 @@ The production crosswalk is accompanied by four recovery diagnostics:
 
 The 2011-2018 LGD modification rosters are part of this evidence workflow. They identify districts and lower-level units modified during the NSS-75 interval and support source-identity and continuity review. Because the modification export does not itself state the predecessor, action, date, or territorial share, it cannot by itself justify a fractional allocation. The paired 2001-2011 LGD Census-code report remains the direct official code bridge; the 2011-2018 district, subdistrict, village, and urban-local-body reports are used with the India State Stories and SHRUG records to review later changes.
 
-Accepted, weight-one, single-target mappings supported by registry continuity or official single-parent evidence enter the conservative preferred panel. The separate dominant-parent panel adds 208 NSS-75 mappings whose SHRUG allocation reaches one Census-2001 parent with at least 99 percent mapped population and whose 2001-to-2011 continuity is corroborated in the tracked LGD modification reports or India State Stories alluvial history. The review ledger records the source identity, 2011 unit, 2001 target, evidence basis, and evidence-source IDs for every added mapping. These mappings do not alter the conservative production panel. Multi-parent mappings remain confined to the full reviewed sensitivity panel unless defensible source-based fractional weights are documented.
+Accepted, weight-one, single-target mappings supported by registry continuity or official single-parent evidence form the 408-district conservative panel. The public production panel adds 208 NSS-75 mappings whose SHRUG allocation reaches one Census-2001 parent with at least 99 percent mapped population and whose 2001-to-2011 continuity is corroborated in the tracked LGD modification reports or India State Stories alluvial history. The review ledger records the source identity, 2011 unit, 2001 target, evidence basis, and evidence-source IDs for every added mapping. Multi-parent mappings remain confined to the full reviewed sensitivity panel unless defensible source-based fractional weights are documented.
 
 The three explicit panel variants are:
 
@@ -909,4 +890,4 @@ The three explicit panel variants are:
 2. `dominant_parent`: the conservative panel plus the 208 reviewed near-complete NSS-75 single-parent mappings; currently up to 573 two-wave districts.
 3. `full_reviewed_sensitivity`: the dominant-parent panel plus 21 reviewed multi-parent fractional mappings; currently up to 587 two-wave districts.
 
-The five documented NSS-75 exclusions remain outside all three panels. `panel_variant_summary.csv`, `dominant_parent_reviews.csv`, and `dominant_parent_source_crosswalk.csv` make these distinctions explicit in the extended diagnostics.
+The five documented NSS-75 exclusions remain outside all three panels. `panel_variant_summary.csv`, `dominant_parent_reviews.csv`, and `dominant_parent_source_crosswalk.csv` make these distinctions explicit in the extended diagnostics. `multi_parent_review_queue.csv` lists every target share for the 21 multi-parent NSS-75 identities, ranks the shares within each source district, and records the official territorial evidence still needed before any fractional mapping could be considered for primary use.

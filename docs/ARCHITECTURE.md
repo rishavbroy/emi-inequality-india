@@ -105,17 +105,17 @@ flowchart TD
 * `archive/refactoring/` is historical. Active code must not depend on it.
 
 
-## District-lineage migration rule
+## District-lineage production rule
 
-The current production panel and the lineage-v2 rebuild are intentionally
-separate. `data/metadata/district_harmonization_crosswalk.csv` remains the
-production authority until the v2 ledgers are fully adjudicated. The v2 modules
-must not silently promote fuzzy candidates or unknown LGD modifications into
-production. Their durable interfaces are compact tracked metadata tables plus
-CSV diagnostics under `outputs/diagnostics/extended/district_lineage_v2/`.
-Production migration requires unique 2001 IDs, valid source-date identities,
-allocation weights summing to one, documented exclusions, and no unresolved
-production match.
+The public `district_panel` alias uses the reviewed lineage-v2 dominant-parent
+panel. It admits deterministic mappings plus tracked, weight-one NSS-75
+mappings with at least 99 percent SHRUG locality coverage and corroborating LGD
+or India State Stories evidence. The 408-district conservative panel and the
+587-district fractional-allocation panel remain explicit diagnostic and
+sensitivity targets. Fuzzy candidates, undocumented LGD changes, and unresolved
+multi-parent shares cannot enter public production. Durable decisions live in
+tracked metadata; generated review queues and panel comparisons live under
+`outputs/diagnostics/extended/district_lineage_v2/`.
 
 ## Updating This Document
 
