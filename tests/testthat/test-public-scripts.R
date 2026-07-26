@@ -561,7 +561,7 @@ test_that("public audit prepares production geometry before public outputs", {
   expect_lt(public_line, diagnostics_line)
 })
 
-test_that("reviewed dominant-parent lineage is public and alternatives remain diagnostic", {
+test_that("reviewed primary lineage is public and alternatives remain diagnostic", {
   target_file <- readLines(repo_file("_targets.R"), warn = FALSE)
   core_start <- match(TRUE, grepl("core_pipeline_targets <- list(", target_file, fixed = TRUE))
   extended_start <- match(

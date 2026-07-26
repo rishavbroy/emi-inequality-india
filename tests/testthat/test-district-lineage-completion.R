@@ -21,8 +21,8 @@ test_that("adjudication drafts never auto-accept candidates", {
   expect_match(draft$note, "Confirm administrative continuity")
 })
 
-test_that("sensitivity crosswalk preserves deterministic and reviewed weights", {
-  primary <- data.frame(
+test_that("full-reviewed crosswalk preserves deterministic and reviewed weights", {
+  conservative <- data.frame(
     source_row_id = "s1", wave = "nss_2007_08", source_code = "101",
     target_unit_2001 = "pc2001__01__01", mapping_class = "one_to_one",
     stringsAsFactors = FALSE
@@ -44,8 +44,8 @@ test_that("sensitivity crosswalk preserves deterministic and reviewed weights", 
     stringsAsFactors = FALSE
   )
 
-  out <- build_sensitivity_crosswalk(
-    primary, weights, eligibility
+  out <- build_full_reviewed_source_crosswalk(
+    conservative, weights, eligibility
   )
 
   expect_equal(sum(out$weight[out$source_row_id == "s1"]), 1)
@@ -462,7 +462,7 @@ test_that("downstream gates allow additions but forbid silent support loss", {
     gates$gate == "panel_membership_adjudicated"
   ])
   expect_true(gates$passed[
-    gates$gate == "preferred_panel_constructed_from_reviewed_sources"
+    gates$gate == "primary_panel_constructed_from_reviewed_sources"
   ])
   expect_true(gates$passed[
     gates$gate == "shared_support_comparison_available"
@@ -472,16 +472,16 @@ test_that("downstream gates allow additions but forbid silent support loss", {
   ])
 
   coverage$legacy_only_units <- 1L
-  not_blocked_by_v1 <- lineage_downstream_review_gates(
+  not_blocked_by_legacy <- lineage_downstream_review_gates(
     coverage, legacy, candidate, adjudication,
     identity_coverage_complete = TRUE
   )
-  expect_true(not_blocked_by_v1$passed[
-    not_blocked_by_v1$gate ==
-      "preferred_panel_constructed_from_reviewed_sources"
+  expect_true(not_blocked_by_legacy$passed[
+    not_blocked_by_legacy$gate ==
+      "primary_panel_constructed_from_reviewed_sources"
   ])
-  expect_true(not_blocked_by_v1$passed[
-    not_blocked_by_v1$gate == "legacy_reviewable"
+  expect_true(not_blocked_by_legacy$passed[
+    not_blocked_by_legacy$gate == "legacy_reviewable"
   ])
 
   no_candidate <- lineage_downstream_review_gates(
@@ -490,7 +490,7 @@ test_that("downstream gates allow additions but forbid silent support loss", {
   )
   expect_false(no_candidate$passed[
     no_candidate$gate ==
-      "preferred_panel_constructed_from_reviewed_sources"
+      "primary_panel_constructed_from_reviewed_sources"
   ])
 })
 
@@ -546,8 +546,8 @@ test_that("an empty Gini queue writes a header-only diagnostic", {
   expect_equal(length(readLines(path)), 1L)
 })
 
-test_that("sensitivity allocations remain linked to NSS source identities", {
-  primary <- data.frame(
+test_that("full-reviewed allocations remain linked to NSS source identities", {
+  conservative <- data.frame(
     source_row_id = "nss_2007_08__a",
     wave = "nss_2007_08",
     source_code = "10101",
@@ -574,8 +574,8 @@ test_that("sensitivity allocations remain linked to NSS source identities", {
     stringsAsFactors = FALSE
   )
 
-  out <- build_sensitivity_crosswalk(
-    primary, weights, eligibility
+  out <- build_full_reviewed_source_crosswalk(
+    conservative, weights, eligibility
   )
   allocated <- out[out$panel_variant == "population_allocation", ]
 
@@ -742,7 +742,7 @@ test_that("unmapped identity queue excludes already mapped accepted rows", {
   expect_identical(out$source_row_id, "unmapped")
   expect_identical(
     out$review_scope,
-    "accepted_identity_without_sensitivity_mapping"
+    "accepted_identity_without_full_reviewed_mapping"
   )
 })
 
@@ -811,13 +811,13 @@ test_that("non-overlap queue uses canonical 2001 labels", {
   expect_true(out$canonical_label_available)
 })
 
-test_that("accepted sensitivity coverage counts identities, not allocation rows", {
+test_that("accepted mapping coverage counts identities, not allocation rows", {
   eligibility <- data.frame(
     source_row_id = c("a", "b", "c"),
     status = "accepted",
     stringsAsFactors = FALSE
   )
-  sensitivity <- data.frame(
+  full_reviewed <- data.frame(
     source_row_id = c("a", "b", "b"),
     target_unit_2001 = c(
       "pc2001__01__01", "pc2001__01__02", "pc2001__01__03"
@@ -825,8 +825,8 @@ test_that("accepted sensitivity coverage counts identities, not allocation rows"
     stringsAsFactors = FALSE
   )
 
-  status <- accepted_sensitivity_mapping_status(
-    eligibility, sensitivity
+  status <- accepted_mapping_status(
+    eligibility, full_reviewed
   )
 
   expect_equal(status$n_accepted, 3L)
@@ -835,13 +835,13 @@ test_that("accepted sensitivity coverage counts identities, not allocation rows"
   expect_false(status$coverage_complete)
 })
 
-test_that("accepted sensitivity coverage completes only after every identity maps", {
+test_that("accepted mapping coverage completes only after every identity maps", {
   eligibility <- data.frame(
     source_row_id = c("a", "b"),
     status = "accepted",
     stringsAsFactors = FALSE
   )
-  sensitivity <- data.frame(
+  full_reviewed <- data.frame(
     source_row_id = c("a", "b", "b"),
     target_unit_2001 = c(
       "pc2001__01__01", "pc2001__01__02", "pc2001__01__03"
@@ -849,8 +849,8 @@ test_that("accepted sensitivity coverage completes only after every identity map
     stringsAsFactors = FALSE
   )
 
-  status <- accepted_sensitivity_mapping_status(
-    eligibility, sensitivity
+  status <- accepted_mapping_status(
+    eligibility, full_reviewed
   )
 
   expect_true(status$coverage_complete)
@@ -958,7 +958,7 @@ test_that("accepted disconnected allocations receive highest priority", {
     "accepted_allocation_not_connected"
   )
   expect_identical(out$review_priority, 1L)
-  expect_match(out$next_action, "Repair the connected sensitivity crosswalk")
+  expect_match(out$next_action, "Repair the connected full-reviewed crosswalk")
 })
 
 test_that("panel membership adjudication waits for identity coverage", {
@@ -1118,18 +1118,18 @@ test_that("district recovery audit accounts for the full 2001 universe", {
   )
   roster <- data.frame(source_row_id = character())
   eligibility <- data.frame(source_row_id = character())
-  preferred <- data.frame(
+  conservative <- data.frame(
     source_row_id = c("p07", "p17"),
     wave = c("nss_2007_08", "nss_2017_18"),
     target_unit_2001 = c("a", "a")
   )
-  sensitivity <- rbind(
-    preferred,
+  full_reviewed <- rbind(
+    conservative,
     data.frame(source_row_id = c("s07", "s17"), wave = c("nss_2007_08", "nss_2017_18"), target_unit_2001 = c("b", "b"))
   )
 
   out <- build_lineage_district_loss_audit(
-    admin, roster, eligibility, preferred, sensitivity
+    admin, roster, eligibility, conservative, full_reviewed
   )
 
   expect_equal(nrow(out), 2L)
@@ -1140,7 +1140,7 @@ test_that("district recovery audit accounts for the full 2001 universe", {
   )
 })
 
-test_that("recovery gates reject generic exclusions and preferred multi-parent mappings", {
+test_that("recovery gates reject generic exclusions and primary multi-parent mappings", {
   loss <- data.frame(target_unit_2001 = sprintf("d%03d", 1:593))
   rec <- data.frame(
     exclusion_reason = c("primary_near_complete_requires_review", "multi_parent_allocation_sensitivity_only"),
@@ -1154,15 +1154,15 @@ test_that("recovery gates reject generic exclusions and preferred multi-parent m
 })
 
 
-test_that("dominant-parent reviews create a separate one-parent crosswalk", {
-  primary <- data.frame(
+test_that("primary reviews create a separate one-parent crosswalk", {
+  conservative <- data.frame(
     source_row_id = "p07", wave = "nss_2007_08", source_code = "1",
     target_unit_2001 = "pc2001__01__01", weight = 1,
-    basis = "preferred", source_id = "official", panel_variant = "preferred",
+    basis = "conservative", source_id = "official", panel_variant = "conservative",
     stringsAsFactors = FALSE
   )
-  sensitivity <- rbind(
-    primary,
+  full_reviewed <- rbind(
+    conservative,
     data.frame(
       source_row_id = "d17", wave = "nss_2017_18", source_code = "2",
       target_unit_2001 = "pc2001__01__01", weight = 1,
@@ -1181,21 +1181,21 @@ test_that("dominant-parent reviews create a separate one-parent crosswalk", {
     stringsAsFactors = FALSE
   )
 
-  out <- build_primary_source_crosswalk(primary, sensitivity, reviews)
+  out <- build_primary_source_crosswalk(conservative, full_reviewed, reviews)
 
   expect_setequal(out$source_row_id, c("p07", "d17"))
   expect_identical(anyDuplicated(out$source_row_id), 0L)
-  expect_named(out, names(sensitivity))
+  expect_named(out, names(full_reviewed))
   expect_true(all(out$panel_variant == "primary"))
 })
 
-test_that("dominant-parent reviews cannot admit multi-parent allocations", {
-  primary <- data.frame(
+test_that("primary reviews cannot admit multi-parent allocations", {
+  conservative <- data.frame(
     source_row_id = character(), wave = character(), source_code = character(),
     target_unit_2001 = character(), weight = numeric(), basis = character(),
     source_id = character(), panel_variant = character(), stringsAsFactors = FALSE
   )
-  sensitivity <- data.frame(
+  full_reviewed <- data.frame(
     source_row_id = c("d17", "d17"), wave = "nss_2017_18", source_code = "2",
     target_unit_2001 = c("pc2001__01__01", "pc2001__01__02"),
     weight = c(.9, .1), basis = "population_share", source_id = "shrug_pc_keys",
@@ -1211,7 +1211,7 @@ test_that("dominant-parent reviews cannot admit multi-parent allocations", {
   )
 
   expect_error(
-    build_primary_source_crosswalk(primary, sensitivity, reviews),
+    build_primary_source_crosswalk(conservative, full_reviewed, reviews),
     "do not match an eligible single-target allocation"
   )
 })
@@ -1228,21 +1228,21 @@ test_that("panel-variant review stacks the same model contract across panels", {
   first_stage <- data.frame()
 
   out <- build_lineage_panel_variant_review(
-    panels = list(conservative_preferred = panel, primary = panel),
-    models = list(conservative_preferred = empty_models, primary = empty_models),
+    panels = list(conservative = panel, primary = panel),
+    models = list(conservative = empty_models, primary = empty_models),
     first_stage_tests = list(
-      conservative_preferred = first_stage,
+      conservative = first_stage,
       primary = first_stage
     ),
     gini_audits = list(
-      conservative_preferred = data.frame(status = "not_required"),
+      conservative = data.frame(status = "not_required"),
       primary = data.frame(status = "reconstructed")
     )
   )
 
   expect_setequal(
     out$panel_summary$panel_variant,
-    c("conservative_preferred", "primary")
+    c("conservative", "primary")
   )
   expect_true(all(out$panel_summary$unique_districts == 2L))
   expect_setequal(out$gini_reconstruction$panel_variant, out$panel_summary$panel_variant)
