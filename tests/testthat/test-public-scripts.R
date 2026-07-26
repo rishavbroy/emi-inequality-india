@@ -526,16 +526,24 @@ test_that("poster citations resolve through the project bibliography", {
 })
 
 
-test_that("full audit refreshes lineage geometry before extended diagnostics", {
-  audit <- paste(
-    readLines(repo_file("scripts", "run_public_build_audit.sh"), warn = FALSE),
-    collapse = "\n"
+test_that("public audit prepares production geometry before public outputs", {
+  audit <- readLines(
+    repo_file("scripts", "run_public_build_audit.sh"),
+    warn = FALSE
   )
-  geometry_pos <- regexpr("make lineage-geometry-build", audit, fixed = TRUE)[[1]]
-  diagnostics_pos <- regexpr("make extended-diagnostics", audit, fixed = TRUE)[[1]]
+  geometry_line <- match(TRUE, grepl(
+    "make lineage-geometry-build", audit, fixed = TRUE
+  ))
+  public_line <- match(TRUE, grepl(
+    'make "$check_target"', audit, fixed = TRUE
+  ))
+  diagnostics_line <- match(TRUE, grepl(
+    "make extended-diagnostics", audit, fixed = TRUE
+  ))
 
-  expect_gt(geometry_pos, 0)
-  expect_gt(diagnostics_pos, geometry_pos)
+  expect_true(all(is.finite(c(geometry_line, public_line, diagnostics_line))))
+  expect_lt(geometry_line, public_line)
+  expect_lt(public_line, diagnostics_line)
 })
 
 test_that("reviewed dominant-parent lineage is public and alternatives remain diagnostic", {
