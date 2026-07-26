@@ -1,5 +1,6 @@
 source_id,citation,path_or_url,accessed
 census2001_c16,Census of India 2001 C-16 mother-tongue tables,data/raw/census_2001_mother_tongue,2026-07-22
+datameet_census_2001_districts,"DataMeet maps; Census of India Administrative Atlas",data/raw/datameet/Districts/Census_2001/2001_Dist.shp,2026-07-26
 shrug_pc_keys,Development Data Lab SHRUG Population Census location keys,data/raw/shrug/shrug-pc-keys-csv,2026-07-22
 shrug_pc11_district_geometry,Development Data Lab SHRUG PC11 district polygons,data/raw/shrug/open-polygons/shrug-pc11dist-poly-gpkg/district.gpkg,2026-07-22
 shrug_open_polygons,Development Data Lab SHRUG open polygons,data/raw/shrug/open-polygons,2026-07-22

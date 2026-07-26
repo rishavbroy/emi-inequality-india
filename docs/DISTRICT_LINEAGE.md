@@ -38,7 +38,7 @@ The production lineage is ready only when all of the following hold:
 - duplicate source and registry keys are absent or identical;
 - every accepted identity has a conservative-panel disposition;
 - every accepted identity appears in the full reviewed crosswalk or has an explicit exclusion;
-- Census-2001 geometry has no missing, unexpected, or invalid units.
+- DataMeet Census-2001 geometry has no missing, unexpected, duplicate, empty, or invalid units after excluding its noncanonical 99/99 national aggregate.
 
 These invariants are reported in `readiness.csv` and `completion_status.csv` under `outputs/diagnostics/extended/district_lineage/`.
 
@@ -80,7 +80,7 @@ District tracking is complete for the current analysis. Remaining work is limite
 
 - `multi_parent_review_queue.csv` contains 46 proposed target shares for 21 NSS-75 identities that require official territorial validation before primary use;
 - six Census-2001 districts lack 2007–08 support and therefore cannot enter the current two-wave panel without new source evidence;
-- official Census-2001 polygons may replace the derived geometry if a complete authoritative boundary file becomes available.
+- a more authoritative code-complete Census-2001 boundary release may replace DataMeet through the same validated geometry interface.
 
 These items do not block use of the 573-district production panel.
 
