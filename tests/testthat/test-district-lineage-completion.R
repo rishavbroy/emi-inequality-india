@@ -468,7 +468,7 @@ test_that("downstream gates allow additions but forbid silent support loss", {
     gates$gate == "shared_support_comparison_available"
   ])
   expect_true(gates$passed[
-    gates$gate == "legacy_comparison_reviewable"
+    gates$gate == "legacy_reviewable"
   ])
 
   coverage$legacy_only_units <- 1L
@@ -481,7 +481,7 @@ test_that("downstream gates allow additions but forbid silent support loss", {
       "preferred_panel_constructed_from_reviewed_sources"
   ])
   expect_true(not_blocked_by_v1$passed[
-    not_blocked_by_v1$gate == "legacy_comparison_reviewable"
+    not_blocked_by_v1$gate == "legacy_reviewable"
   ])
 
   no_candidate <- lineage_downstream_review_gates(
@@ -506,7 +506,7 @@ test_that("multi-source Ginis require pooled household reconstruction", {
     stringsAsFactors = FALSE
   )
 
-  queue <- build_conservative_gini_reconstruction_queue(panel)
+  queue <- build_lineage_gini_reconstruction_queue(panel)
 
   expect_identical(queue$target_unit_2001, "pc2001__01__02")
   expect_identical(queue$status, "needs_reconstruction")
@@ -514,7 +514,7 @@ test_that("multi-source Ginis require pooled household reconstruction", {
 })
 
 test_that("an empty Gini queue retains a stable output schema", {
-  queue <- build_conservative_gini_reconstruction_queue(data.frame(
+  queue <- build_lineage_gini_reconstruction_queue(data.frame(
     target_unit_2001 = "pc2001__01__01",
     lineage_source_count = 1L,
     lineage_aggregation_status = "one_to_one",
@@ -532,7 +532,7 @@ test_that("an empty Gini queue retains a stable output schema", {
 })
 
 test_that("an empty Gini queue writes a header-only diagnostic", {
-  queue <- empty_conservative_gini_reconstruction_queue()
+  queue <- empty_lineage_gini_reconstruction_queue()
   dir <- tempfile("district-lineage-downstream-")
 
   save_lineage_downstream_review(
@@ -1067,7 +1067,7 @@ test_that("multi-source district Ginis are reconstructed from pooled households"
   expect_identical(out$audit$status, "reconstructed")
   expect_equal(out$audit$source_count, 2L)
   expect_equal(out$audit$household_count, 4L)
-  expect_equal(nrow(build_conservative_gini_reconstruction_queue(out$panel)), 0L)
+  expect_equal(nrow(build_lineage_gini_reconstruction_queue(out$panel)), 0L)
 })
 
 test_that("pooled Gini reconstruction preserves sf geometry", {
@@ -1133,10 +1133,10 @@ test_that("district recovery audit accounts for the full 2001 universe", {
   )
 
   expect_equal(nrow(out), 2L)
-  expect_true(out$preferred_two_wave[out$target_unit_2001 == "a"])
+  expect_true(out$conservative_two_wave[out$target_unit_2001 == "a"])
   expect_equal(
     out$loss_stage[out$target_unit_2001 == "b"],
-    "available_only_under_sensitivity_rule"
+    "available_only_under_full_reviewed_rule"
   )
 })
 
@@ -1181,7 +1181,7 @@ test_that("dominant-parent reviews create a separate one-parent crosswalk", {
     stringsAsFactors = FALSE
   )
 
-  out <- build_conservative_source_crosswalk(primary, sensitivity, reviews)
+  out <- build_primary_source_crosswalk(primary, sensitivity, reviews)
 
   expect_setequal(out$source_row_id, c("p07", "d17"))
   expect_identical(anyDuplicated(out$source_row_id), 0L)
@@ -1211,7 +1211,7 @@ test_that("dominant-parent reviews cannot admit multi-parent allocations", {
   )
 
   expect_error(
-    build_conservative_source_crosswalk(primary, sensitivity, reviews),
+    build_primary_source_crosswalk(primary, sensitivity, reviews),
     "do not match an eligible single-target allocation"
   )
 })
@@ -1285,7 +1285,7 @@ test_that("lineage completion tracks current six-step invariants", {
     source_matches = data.frame(source_row_id = "s1", status = "accepted"),
     adjudication_queue = data.frame(review_class = character(), adjudication_status = character()),
     evidence_requests = data.frame(),
-    allocation_validation = data.frame(source_key = "u1", weights_well_formed = TRUE, coverage_complete = TRUE),
+    allocation_validation = data.frame(source_key = "pc2011__01__001", weights_well_formed = TRUE, coverage_complete = TRUE),
     allocation_weights = data.frame(source_unit = character(), status = character()),
     conservative_crosswalk = data.frame(source_row_id = "s1"),
     primary_crosswalk = data.frame(source_row_id = "s1"),
@@ -1308,7 +1308,7 @@ test_that("panel roles remain monotone", {
     source_matches = data.frame(source_row_id = "s1", status = "accepted"),
     adjudication_queue = data.frame(review_class = character(), adjudication_status = character()),
     evidence_requests = data.frame(),
-    allocation_validation = data.frame(source_key = "u1", weights_well_formed = TRUE, coverage_complete = TRUE),
+    allocation_validation = data.frame(source_key = "pc2011__01__001", weights_well_formed = TRUE, coverage_complete = TRUE),
     allocation_weights = data.frame(source_unit = character(), status = character()),
     conservative_crosswalk = data.frame(source_row_id = c("s1", "s2")),
     primary_crosswalk = data.frame(source_row_id = "s1"),

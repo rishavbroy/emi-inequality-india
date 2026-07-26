@@ -96,8 +96,8 @@ build_lineage_multi_parent_review_queue <- function(
 }
 
 build_lineage_district_loss_audit <- function(
-  admin_2001, source_roster, eligibility, primary_crosswalk,
-  sensitivity_crosswalk
+  admin_2001, source_roster, eligibility, conservative_crosswalk,
+  full_reviewed_crosswalk
 ) {
   admin <- safe_df(admin_2001)
   roster <- safe_df(source_roster)
@@ -120,35 +120,41 @@ build_lineage_district_loss_audit <- function(
     })
     Reduce(function(a, b) merge(a, b, by = "target_unit_2001", all = TRUE), parts)
   }
-  out <- merge(out, count_targets(primary, "preferred"), by = "target_unit_2001", all.x = TRUE, sort = FALSE)
-  out <- merge(out, count_targets(sensitivity, "sensitivity"), by = "target_unit_2001", all.x = TRUE, sort = FALSE)
+  out <- merge(out, count_targets(conservative, "conservative"), by = "target_unit_2001", all.x = TRUE, sort = FALSE)
+  out <- merge(out, count_targets(full_reviewed, "full_reviewed"), by = "target_unit_2001", all.x = TRUE, sort = FALSE)
   count_cols <- grep("_source_count$", names(out), value = TRUE)
   for (nm in count_cols) out[[nm]][is.na(out[[nm]])] <- 0L
-  p07 <- out$preferred_nss_2007_08_source_count %||% rep(0L, nrow(out))
-  p17 <- out$preferred_nss_2017_18_source_count %||% rep(0L, nrow(out))
-  s07 <- out$sensitivity_nss_2007_08_source_count %||% rep(0L, nrow(out))
-  s17 <- out$sensitivity_nss_2017_18_source_count %||% rep(0L, nrow(out))
-  out$preferred_two_wave <- p07 > 0 & p17 > 0
-  out$sensitivity_two_wave <- s07 > 0 & s17 > 0
+  p07 <- out$conservative_nss_2007_08_source_count %||% rep(0L, nrow(out))
+  p17 <- out$conservative_nss_2017_18_source_count %||% rep(0L, nrow(out))
+  s07 <- out$full_reviewed_nss_2007_08_source_count %||% rep(0L, nrow(out))
+  s17 <- out$full_reviewed_nss_2017_18_source_count %||% rep(0L, nrow(out))
+  out$conservative_two_wave <- p07 > 0 & p17 > 0
+  out$full_reviewed_two_wave <- s07 > 0 & s17 > 0
   out$loss_stage <- ifelse(
-    out$preferred_two_wave, "retained_preferred_two_wave",
+    out$conservative_two_wave, "retained_conservative_two_wave",
     ifelse(
       s07 == 0, "no_2007_08_source_mapping",
       ifelse(
         s17 == 0, "no_2017_18_source_mapping",
-        "available_only_under_sensitivity_rule"
+        "available_only_under_full_reviewed_rule"
       )
     )
   )
   out
 }
 
-build_lineage_rule_sensitivity <- function(primary_crosswalk, sensitivity_crosswalk, eligibility) {
-  primary <- safe_df(primary_crosswalk)
-  sensitivity <- safe_df(sensitivity_crosswalk)
+build_lineage_rule_sensitivity <- function(
+  conservative_crosswalk, full_reviewed_crosswalk, eligibility
+) {
+  conservative <- safe_df(conservative_crosswalk)
+  full_reviewed <- safe_df(full_reviewed_crosswalk)
   eligibility <- safe_df(eligibility)
-  primary_min <- primary[c("source_row_id", "wave", "target_unit_2001")]
-  sensitivity_min <- sensitivity[c("source_row_id", "wave", "target_unit_2001")]
+  conservative_min <- conservative[c(
+    "source_row_id", "wave", "target_unit_2001"
+  )]
+  full_reviewed_min <- full_reviewed[c(
+    "source_row_id", "wave", "target_unit_2001"
+  )]
   accepted_single <- eligibility[
     eligibility$status %in% "accepted" &
       suppressWarnings(as.integer(eligibility$allocation_target_count)) == 1L &
@@ -159,12 +165,16 @@ build_lineage_rule_sensitivity <- function(primary_crosswalk, sensitivity_crossw
     grepl("population_renormalized_min_99pct_mapped", plain_chr(accepted_single$allocation_basis), fixed = TRUE)
   ]
   variants <- list(
-    preferred = primary_min,
-    preferred_plus_primary = unique(rbind(
-      primary_min,
-      sensitivity_min[sensitivity_min$source_row_id %in% dominant_ids, , drop = FALSE]
+    conservative = conservative_min,
+    primary = unique(rbind(
+      conservative_min,
+      full_reviewed_min[
+        full_reviewed_min$source_row_id %in% dominant_ids,
+        ,
+        drop = FALSE
+      ]
     )),
-    all_reviewed_sensitivity = sensitivity_min
+    full_reviewed = full_reviewed_min
   )
   safe_bind_rows(lapply(names(variants), function(name) {
     x <- variants[[name]]
@@ -246,8 +256,8 @@ read_primary_reviews <- function(x) {
 build_primary_source_crosswalk <- function(
   conservative_crosswalk, full_reviewed_crosswalk, reviews
 ) {
-  primary <- safe_df(primary_crosswalk)
-  sensitivity <- safe_df(sensitivity_crosswalk)
+  conservative <- safe_df(conservative_crosswalk)
+  full_reviewed <- safe_df(full_reviewed_crosswalk)
   reviews <- read_primary_reviews(reviews)
   accepted <- reviews[reviews$review_status %in% "accepted_primary", c(
     "source_row_id", "target_unit_2001"
