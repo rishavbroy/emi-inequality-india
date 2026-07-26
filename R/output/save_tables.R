@@ -24,50 +24,12 @@ quarto_table_label <- function(name) {
   paste0("tbl-", table_label(name))
 }
 
-regression_star_note <- function() "* p < 0.05, ** p < 0.01, *** p < 0.001"
-
-public_table_caption_text <- function(name) {
-  captions <- c(
-    selection_n = "Enrollment Participation Model Sample Size",
-    sum_tbl_probit_quant = "Summary Statistics for Enrollment Participation Model (Numeric Variables)",
-    sum_tbl_probit_cat = "Summary Statistics for Enrollment Participation Model (Categorical Variables)",
-    probit_mfx = "Average Marginal Effects and Counterfactual Comparisons for Enrollment Probit",
-    sum_tbl_iv = "Summary Statistics for 2SLS Model",
-    fs_cons = "First-Stage Regression: EMI Exposure on Linguistic Distance",
-    cons_iv = "Second-Stage Regression: Consumption Growth on EMIE (Fitted)",
-    ame_results = "Average Marginal Effects Results",
-    first_stage = "First-Stage Diagnostic Results"
-  )
-  captions[[name]] %||% name
-}
-
-regression_caption <- function(cap) {
-  cap
-}
-
-table_caption <- function(name) {
-  cap <- public_table_caption_text(name)
-  cap
-}
-
 nice_column_name <- function(x) {
   x <- gsub("\\.", " ", x)
   x <- gsub("_", " ", x)
   x <- gsub("p value", "p-value", x, ignore.case = TRUE)
   x <- gsub("std error", "Std. Error", x, ignore.case = TRUE)
   tools::toTitleCase(x)
-}
-
-public_table_note <- function(name) {
-  switch(name,
-    sum_tbl_probit_quant = "Min. = minimum; 1Q = first quartile; Med. = median; 3Q = third quartile; Max. = maximum; Mean = arithmetic mean; SD = standard deviation; N = number of observations.",
-    sum_tbl_iv = "Min. = minimum; 1Q = first quartile; Med. = median; 3Q = third quartile; Max. = maximum; Mean = arithmetic mean; SD = standard deviation; N = number of observations.",
-    sum_tbl_probit_cat = "Values = all possible values; Mode = most frequent value; Pct. Mode = percent of observations taking the modal value; Least Freq. = least frequent value; Pct. Least Freq. = percent of observations taking the least frequent value; N = number of observations.",
-    probit_mfx = "NSS 64th round; design-based SEs in parentheses.",
-    fs_cons = "Standard errors clustered by state in parentheses.",
-    cons_iv = "Standard errors clustered by state in parentheses.",
-    NULL
-  )
 }
 
 public_modelsummary_notes <- function(name) {
@@ -207,37 +169,6 @@ format_table_for_output <- function(table, public = TRUE) {
 }
 
 
-summary_table_groups <- function(df) {
-  df <- as.data.frame(df, check.names = FALSE, stringsAsFactors = FALSE)
-  if (!nrow(df) || !length(names(df))) return(list(data = df, groups = data.frame()))
-  empty_rest <- if (ncol(df) > 1L) {
-    apply(df[-1], 1, function(x) all(!nzchar(table_column_to_strings(x))))
-  } else {
-    rep(TRUE, nrow(df))
-  }
-  first_col <- table_column_to_strings(df[[1]])
-  group_row <- grepl(":$", first_col) & empty_rest
-  group_idx <- which(group_row)
-  if (!length(group_idx)) return(list(data = df, groups = data.frame()))
-
-  groups <- lapply(seq_along(group_idx), function(i) {
-    start_orig <- group_idx[[i]] + 1L
-    end_orig <- if (i < length(group_idx)) group_idx[[i + 1L]] - 1L else nrow(df)
-    start <- start_orig - sum(group_idx < start_orig)
-    end <- end_orig - sum(group_idx <= end_orig)
-    if (start > end) return(NULL)
-    data.frame(
-      label = first_col[[group_idx[[i]]]],
-      start = start,
-      end = end,
-      stringsAsFactors = FALSE
-    )
-  })
-  groups <- do.call(rbind, Filter(Negate(is.null), groups))
-  if (is.null(groups)) groups <- data.frame()
-  list(data = df[!group_row, , drop = FALSE], groups = groups)
-}
-
 render_table_math_labels <- function(df) {
   df <- as.data.frame(df, check.names = FALSE, stringsAsFactors = FALSE)
   for (nm in names(df)) {
@@ -249,29 +180,6 @@ render_table_math_labels <- function(df) {
   df
 }
 
-table_header_labels <- function(df, name) {
-  labels <- names(df)
-  # Table 2 is now wide enough to keep these compact legacy headers on one
-  # line.  Continue wrapping only where a table genuinely needs it.
-  wrap <- if (identical(name, "sum_tbl_probit_cat")) {
-    c("Adjusted R-squared" = "Adjusted\nR-squared")
-  } else {
-    c(
-      "Pct. Mode" = "Pct.\nMode",
-      "Least Freq." = "Least\nFreq.",
-      "Pct. Least Freq." = "Pct. Least\nFreq.",
-      "Adjusted R-squared" = "Adjusted\nR-squared"
-    )
-  }
-  labels <- ifelse(labels %in% names(wrap), unname(wrap[labels]), labels)
-  if (name == "sum_tbl_iv") {
-    labels <- ifelse(labels == "Description", "Description", labels)
-  }
-  vapply(labels, function(x) {
-    if (grepl("\n", x, fixed = TRUE)) kableExtra::linebreak(x, align = "c") else x
-  }, character(1))
-}
-
 table_alignments <- function(df, name) {
   if (name %in% c("probit_mfx", "fs_cons", "cons_iv")) return(c("l", rep("c", max(0, ncol(df) - 1L))))
   if (ncol(df) <= 1L) return("l")
@@ -280,20 +188,6 @@ table_alignments <- function(df, name) {
 
 modelsummary_align_string <- function(df, name) {
   paste(table_alignments(df, name), collapse = "")
-}
-
-caption_for_latex <- function(name) {
-  # Do not run full captions through kableExtra::linebreak().  That helper is
-  # intended for table cells/headers and can corrupt kable captions by
-  # repeatedly injecting caption fragments separated by alignment markers.
-  # Caption wrapping is handled globally by the LaTeX caption package.
-  table_caption(name)
-}
-
-latex_escape_text <- function(x) {
-  # modelsummary/tinytable handle LaTeX escaping.  The helper exists only to
-  # standardize list/factor columns before handing them to that renderer.
-  table_column_to_strings(x)
 }
 
 stack_estimate_se_rows <- function(df, estimate_col = "Estimate", se_col = "Std. Error") {

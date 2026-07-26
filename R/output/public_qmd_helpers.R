@@ -4,6 +4,26 @@ if (!exists("%||%", mode = "function")) {
   `%||%` <- function(x, y) if (is.null(x)) y else x
 }
 
+
+source_table_contract <- function(start = getwd(), env = parent.frame()) {
+  here <- normalizePath(start, mustWork = TRUE)
+  repeat {
+    candidate <- file.path(here, "R", "output", "table_contract.R")
+    if (file.exists(candidate)) {
+      sys.source(candidate, envir = env)
+      sys.source(file.path(here, "R", "output", "report_value_core.R"), envir = env)
+      return(invisible(candidate))
+    }
+    parent <- dirname(here)
+    if (identical(parent, here)) stop("Cannot locate R/output/table_contract.R", call. = FALSE)
+    here <- parent
+  }
+}
+
+if (!exists("public_table_caption_text", mode = "function")) {
+  source_table_contract(env = environment())
+}
+
 find_targets_store <- function(start = getwd()) {
   here <- normalizePath(start, mustWork = TRUE)
   repeat {
@@ -24,10 +44,6 @@ initialize_public_qmd_helpers <- function(env = parent.frame()) {
   invisible(TRUE)
 }
 
-is_report_value_status <- function(value) {
-  is.list(value) && !is.null(value$status) && !is.null(value$reason)
-}
-
 report_value <- function(key) {
   value <- report_values[[key]]
   if (is.null(value)) value <- NA
@@ -39,38 +55,6 @@ report_value <- function(key) {
   }
   if (length(value) == 0L || all(is.na(value))) return("—")
   paste(value, collapse = ", ")
-}
-
-regression_star_note <- function() "* p < 0.05, ** p < 0.01, *** p < 0.001"
-
-public_table_caption_text <- function(name) {
-  captions <- c(
-    sum_tbl_probit_quant = "Summary Statistics for Enrollment Participation Model (Numeric Variables)",
-    sum_tbl_probit_cat = "Summary Statistics for Enrollment Participation Model (Categorical Variables)",
-    probit_mfx = "Average Marginal Effects and Counterfactual Comparisons for Enrollment Probit",
-    sum_tbl_iv = "Summary Statistics for 2SLS Model",
-    fs_cons = "First-Stage Regression: EMI Exposure on Linguistic Distance",
-    cons_iv = "Second-Stage Regression: Consumption Growth on EMIE (Fitted)"
-  )
-  captions[[name]] %||% name
-}
-
-regression_caption <- function(cap) cap
-
-table_caption <- function(name) {
-  public_table_caption_text(name)
-}
-
-table_note <- function(name) {
-  switch(name,
-    sum_tbl_probit_quant = "Min. = minimum; 1Q = first quartile; Med. = median; 3Q = third quartile; Max. = maximum; Mean = arithmetic mean; SD = standard deviation; N = number of observations.",
-    sum_tbl_iv = "Min. = minimum; 1Q = first quartile; Med. = median; 3Q = third quartile; Max. = maximum; Mean = arithmetic mean; SD = standard deviation; N = number of observations.",
-    sum_tbl_probit_cat = "Values = all possible values; Mode = most frequent value; Pct. Mode = percent of observations taking the modal value; Least Freq. = least frequent value; Pct. Least Freq. = percent of observations taking the least frequent value; N = number of observations.",
-    probit_mfx = "Data from the 64th round of the NSS, \"Participation and Expenditure in Education\" in 2007-08. All standard errors are design-based (clustered and nested within strata).",
-    fs_cons = "Standard errors clustered by state in parentheses.",
-    cons_iv = "Standard errors clustered by state in parentheses.",
-    NULL
-  )
 }
 
 resolve_public_output_path <- function(path) {
@@ -105,44 +89,7 @@ column_strings <- function(x) {
   out
 }
 
-summary_table_groups <- function(df) {
-  if (!nrow(df) || !length(names(df))) return(list(data = df, groups = data.frame()))
-  empty_rest <- if (ncol(df) > 1L) apply(df[-1], 1, function(x) all(!nzchar(column_strings(x)))) else rep(TRUE, nrow(df))
-  first_col <- column_strings(df[[1]])
-  group_row <- grepl(":$", first_col) & empty_rest
-  group_idx <- which(group_row)
-  if (!length(group_idx)) return(list(data = df, groups = data.frame()))
-  groups <- lapply(seq_along(group_idx), function(i) {
-    start_orig <- group_idx[[i]] + 1L
-    end_orig <- if (i < length(group_idx)) group_idx[[i + 1L]] - 1L else nrow(df)
-    start <- start_orig - sum(group_idx < start_orig)
-    end <- end_orig - sum(group_idx <= end_orig)
-    if (start > end) return(NULL)
-    data.frame(label = first_col[[group_idx[[i]]]], start = start, end = end, stringsAsFactors = FALSE)
-  })
-  groups <- do.call(rbind, Filter(Negate(is.null), groups))
-  if (is.null(groups)) groups <- data.frame()
-  list(data = df[!group_row, , drop = FALSE], groups = groups)
-}
-
 wrap_table_text <- function(df) as.data.frame(df, check.names = FALSE, stringsAsFactors = FALSE)
-
-table_header_labels <- function(df, name) {
-  labels <- names(df)
-  wrap <- c("Pct. Mode" = "Pct.\nMode", "Least Freq." = "Least\nFreq.", "Pct. Least Freq." = "Pct. Least\nFreq.", "Adjusted R-squared" = "Adjusted\nR-squared")
-  labels <- ifelse(labels %in% names(wrap), unname(wrap[labels]), labels)
-  vapply(labels, function(x) if (grepl("\n", x, fixed = TRUE)) kableExtra::linebreak(x, align = "c") else x, character(1))
-}
-
-caption_for_latex <- function(name) {
-  # Keep captions as plain text. Caption wrapping is handled by the LaTeX caption package;
-  # kableExtra::linebreak() is for cells/headers and corrupts full kable captions.
-  table_caption(name)
-}
-
-latex_escape_text <- function(x) {
-  column_strings(x)
-}
 
 render_regression_table <- function(df, name) {
   if (!requireNamespace("modelsummary", quietly = TRUE)) stop("modelsummary is required for regression table rendering.", call. = FALSE)
