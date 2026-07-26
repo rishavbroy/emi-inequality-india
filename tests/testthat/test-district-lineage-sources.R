@@ -1281,7 +1281,7 @@ test_that("lineage readiness contains only current invariants", {
     missing_core = character(),
     admin_2001 = data.frame(unit_id = "pc2001__01__01"),
     admin_2011 = data.frame(unit_id = "pc2011__01__001"),
-    allocation_validation = data.frame(source_key = "u1", weights_well_formed = TRUE, coverage_complete = TRUE),
+    allocation_validation = data.frame(source_key = "pc2011__01__001", weights_well_formed = TRUE, coverage_complete = TRUE),
     source_roster = data.frame(source_row_id = "s1"),
     source_matches = data.frame(source_row_id = "s1", status = "accepted"),
     conservative_eligibility = data.frame(source_row_id = "s1", status = "accepted", eligible_conservative = TRUE),
