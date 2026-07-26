@@ -32,11 +32,11 @@ Do not use the legacy 454-district count, first-stage estimate 2.945 (SE 0.949),
 
 ## District-lineage
 
-[`analysis/diagnostics/district-lineage.qmd`](diagnostics/district-lineage.qmd) reports the parallel rebuild of
+[`analysis/diagnostics/district-lineage.qmd`](diagnostics/district-lineage.qmd) reports the production district-lineage system and its diagnostic variants. The
 source identity, Census 2001/2011 locality transitions, administrative-event
 candidates, and primary-panel eligibility. It is intentionally diagnostic: the
 existing reviewed crosswalk remains the production authority until every
-source match and event used by the preferred panel is adjudicated and the
+source match and event used by the primary panel is adjudicated and the
 strict invariants pass. Fuzzy scores rank review candidates; they never approve
 production geography by themselves.
 
