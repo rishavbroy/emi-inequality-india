@@ -48,3 +48,67 @@ test_that("revised formulas use state fixed effects and predetermined controls",
   expect_match(text, "urban_share_2001")
   expect_false(grepl("gini_cons_0708", text, fixed = TRUE))
 })
+
+test_that("RBI state rural and urban CPI extracts use the general index only", {
+  path <- tempfile(fileext = ".csv")
+  utils::write.csv(data.frame(
+    DATAFLOW = "RBI:CPI_RUC_ST_RN(1.0)", BASE_PER = "BY_2012",
+    COMD_ITEM = c("C_GIAG", "C_GIAG", "C_GIAG", "C_GIAG_FBT"),
+    COVERAGE_GEO_RN = c("RUR", "URB", "ALL_INDIA", "RUR"),
+    STATE_CODE = "ANP", TIME_PERIOD = "2013-01-31", OBS_VALUE = c(101, 102, 103, 104)
+  ), path, row.names = FALSE)
+  out <- read_cpi_ruc_state(path, expected_base = 2012)
+  expect_equal(out$sector, c("rural", "urban"))
+  expect_equal(out$index, c(101, 102))
+  expect_equal(out$period, as.Date(c("2013-01-01", "2013-01-01")))
+})
+
+test_that("RBI CPI-AL and CPI-RL rows are distinguished explicitly", {
+  path <- tempfile(fileext = ".csv")
+  utils::write.csv(data.frame(
+    DATAFLOW = "RBI:CPI_ALRL_ST_RN(1.0)",
+    ELEMENT = c("Consumer Price Index - Agricultural Labourers", "Consumer Price Index - Rural Labourers"),
+    STATE_CODE = "ANP", TIME_PERIOD = "2007-07-31", OBS_VALUE = c(410, 415)
+  ), path, row.names = FALSE)
+  out <- read_cpi_alrl_state(path)
+  expect_equal(out$labour_series, c("agricultural_labour", "rural_labour"))
+  expect_equal(out$sector, c("rural", "rural"))
+})
+
+test_that("CPI-IW state indices use official centre weights", {
+  path <- tempfile(fileext = ".csv")
+  utils::write.csv(data.frame(
+    BASE_PER = "BY_2001", COMD_ITEM = "GENERAL INDEX",
+    CENTRE = rep(c("Guntur", "Vijayawada"), each = 2),
+    TIME_PERIOD = rep(c("2007-07-31", "2007-08-31"), 2),
+    OBS_VALUE = c(100, 110, 200, 220)
+  ), path, row.names = FALSE)
+  centre <- read_cpi_iw_centres(path)
+  weights <- data.frame(
+    centre_key = normalise_cpi_iw_centre(c("Guntur", "Vijaywada")),
+    state_code = "ANP", weight = c(25, 75)
+  )
+  out <- aggregate_cpi_iw_to_state(centre, weights)
+  expect_equal(out$index, c(175, 192.5))
+  expect_equal(out$centre_count, c(2L, 2L))
+})
+
+test_that("CPI-IW aggregation rejects incomplete centre coverage", {
+  centre <- data.frame(
+    centre_key = normalise_cpi_iw_centre(c("Guntur", "Vijaywada", "Guntur")),
+    period = as.Date(c("2007-07-01", "2007-07-01", "2007-08-01")),
+    index = c(100, 200, 110)
+  )
+  weights <- data.frame(
+    centre_key = normalise_cpi_iw_centre(c("Guntur", "Vijaywada")),
+    state_code = "ANP", weight = c(25, 75)
+  )
+  expect_error(aggregate_cpi_iw_to_state(centre, weights), "incomplete centre coverage")
+})
+
+test_that("tracked CPI-IW weights reproduce the 78-centre system", {
+  weights <- read_cpi_iw_weights("data/metadata/cpi_iw_centres_2001.csv")
+  expect_equal(nrow(weights), 78L)
+  expect_equal(sum(weights$weight), 100, tolerance = 1e-10)
+  expect_equal(weights$state_code[weights$centre == "Hyderabad"], "ANP")
+})
