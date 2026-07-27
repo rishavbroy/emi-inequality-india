@@ -17,7 +17,7 @@ test_that("selection joins use household keys rather than many-to-many HHID join
   expect_equal(length(unique(proxy$.nss_2007_household_key)), 2L)
 })
 
-test_that("2007 household measures use weighted population rather than sample counts", {
+test_that("2007 household measures distinguish person- and household-weighted consumption", {
   households <- data.frame(
     district_code = c("01001", "01001"),
     HHID = c("h1", "h2"),
@@ -31,7 +31,11 @@ test_that("2007 household measures use weighted population rather than sample co
 
   expect_equal(out$npeople_0708, 110)
   expect_equal(out$nhouses_0708, 30)
-  expect_equal(out$consumption_0708, weighted.mean(c(100, 250), c(10, 20)))
+  expect_equal(out$consumption_0708, (10 * 300 + 20 * 1000) / 110)
+  expect_equal(
+    out$consumption_0708_household_weighted,
+    weighted.mean(c(100, 250), c(10, 20))
+  )
   expect_gt(out$gini_cons_0708, 0)
 })
 
@@ -49,7 +53,7 @@ test_that("2007 EMIE treats NSS Block 5 medium code 02 as English-medium", {
   expect_equal(out$EMIE, 25)
 })
 
-test_that("2017 measures use household-weighted per-capita consumption and population", {
+test_that("2017 measures distinguish person- and household-weighted consumption", {
   block3 <- data.frame(
     NSS_Region = c("01", "01"),
     District = c("001", "001"),
@@ -64,7 +68,11 @@ test_that("2017 measures use household-weighted per-capita consumption and popul
 
   expect_equal(out$npeople_1718, 110)
   expect_equal(out$nhouses_1718, 30)
-  expect_equal(out$consumption_1718, weighted.mean(c(100, 250), c(10, 20)))
+  expect_equal(out$consumption_1718, (10 * 300 + 20 * 1000) / 110)
+  expect_equal(
+    out$consumption_1718_household_weighted,
+    weighted.mean(c(100, 250), c(10, 20))
+  )
 })
 
 test_that("first-stage table rejects numeric coefficient terms in final mode", {
