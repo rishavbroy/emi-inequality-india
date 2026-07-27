@@ -1,0 +1,6 @@
+series_id,source_file,population,geography,sector,start_date,end_date,base_period,production_role,fallback_priority
+cpi_rl_state,data/raw/prices/cpi_alrl_st_rn_26_7_2026.csv,rural labour,state,rural,1995-11,2025-05,1986-87,pre-2013 rural temporal index,1
+cpi_iw_centre,data/raw/prices/cpi_iw_aisc_rn_26_7_2026.csv,industrial workers,centre,urban,1990-01,2026-05,2001,pre-2013 urban temporal index,1
+cpi_ruc_2010,data/raw/prices/cpi_ruc_st_rn_26_7_2026_2011-2014_base-2010.csv,general population,state,rural and urban,2011-01,2014-12,2010,overlap validation,2
+cpi_ruc_2012,data/raw/prices/cpi_ruc_st_rn_26_7_2026_2013-2025_base-2012.csv,general population,state,rural and urban,2013-01,2025-12,2012,post-2012 temporal index,1
+tendulkar_2011_12,data/raw/prices/poverty-lines/press-note-poverty-2011-12-23-08-16.pdf,general population,state,rural and urban,2011-07,2012-06,2011-12,spatial price relative,1
