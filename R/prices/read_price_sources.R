@@ -135,7 +135,7 @@ read_cpi_alrl_state <- function(path) {
 }
 
 normalise_cpi_iw_centre <- function(x) {
-  key <- toupper(gsub("[^A-Z0-9]+", "", trimws(as.character(x))))
+  key <- gsub("[^A-Z0-9]+", "", toupper(trimws(as.character(x))))
   aliases <- c(
     VIJAYAWADA = "VIJAYWADA",
     VIZAG = "VISAKHAPATNAM",

@@ -113,6 +113,17 @@ test_that("tracked CPI-IW weights reproduce the 78-centre system", {
   expect_equal(weights$state_code[weights$centre == "Hyderabad"], "ANP")
 })
 
+test_that("CPI-IW centre normalization is case and punctuation invariant", {
+  expect_equal(
+    normalise_cpi_iw_centre(c("Centre One", "CENTRE-ONE", "centre_one")),
+    rep("CENTREONE", 3)
+  )
+  expect_equal(
+    normalise_cpi_iw_centre(c("Vijayawada", "Vijaywada")),
+    rep("VIJAYWADA", 2)
+  )
+})
+
 test_that("CPI-IW validation permits equal weights for different centres", {
   weights <- data.frame(
     state_code = c("A", "A"),
