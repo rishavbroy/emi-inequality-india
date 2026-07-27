@@ -147,12 +147,14 @@ compute_education_household_measures_2007 <- function(df) {
     cons_pc <- if (!is.null(mpce)) num(df[[mpce]][i]) else num(df[[total]][i]) / size
     z <- df[i[[1]], key, drop = FALSE]
     z <- z[rep(1L, 1L), , drop = FALSE]
+    total_value <- cons_pc * size
     data.frame(
       z,
       npeople_0708 = sum(w * size, na.rm = TRUE),
       nhouses_0708 = sum(w, na.rm = TRUE),
-      consumption_0708 = wmean(cons_pc, w),
-      gini_cons_0708 = wgini(cons_pc, w),
+      consumption_0708 = mean_expenditure_per_person(total_value, size, w),
+      consumption_0708_household_weighted = mean_household_mpce(total_value, size, w),
+      gini_cons_0708 = person_weighted_mpce_gini(total_value, size, w),
       stringsAsFactors = FALSE
     )
   }))

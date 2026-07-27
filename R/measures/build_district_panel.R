@@ -27,6 +27,7 @@ build_district_panel <- function(district_join_map, measures_2007, measures_2017
   if (!"district_panel_id" %in% names(out)) out$district_panel_id <- make_district_key(out$state_std, out$district_std, 2007L)
   out <- compute_consumption_pct_change(out)
   out <- compute_log_consumption_difference(out)
+  out <- compute_real_consumption_outcomes(out)
   out <- compute_gini_change(out)
   validate_analysis_district_panel(attach_panel_geometry(out, boundaries_2020), cfg, join_map = district_join_map)
 }
@@ -86,6 +87,7 @@ build_tracker_based_district_panel <- function(tracker, measures_2007, measures_
   out <- add_panel_regions(out)
   out <- compute_consumption_pct_change(out)
   out <- compute_log_consumption_difference(out)
+  out <- compute_real_consumption_outcomes(out)
   out <- compute_gini_change(out)
   if (!"district_panel_id" %in% names(out)) out$district_panel_id <- paste0("harmonization_tracker_", out$.tracker_row)
   out <- attach_panel_geometry(out, boundaries_2020)
@@ -144,6 +146,18 @@ compute_log_consumption_difference <- function(panel) {
   if (all(c("consumption_1718", "consumption_0708") %in% names(panel))) {
     panel$log_consumption_difference <-
       log(num(panel$consumption_1718)) - log(num(panel$consumption_0708))
+  }
+  panel
+}
+
+compute_real_consumption_outcomes <- function(panel) {
+  if (all(c("real_consumption_0708", "real_consumption_1718") %in% names(panel))) {
+    baseline <- num(panel$real_consumption_0708)
+    endpoint <- num(panel$real_consumption_1718)
+    valid <- positive_finite(baseline) & positive_finite(endpoint)
+    panel$real_log_consumption_change <- NA_real_
+    panel$real_log_consumption_change[valid] <- log(endpoint[valid]) - log(baseline[valid])
+    panel$real_consumption_level_change <- endpoint - baseline
   }
   panel
 }

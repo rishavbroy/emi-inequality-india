@@ -33,10 +33,12 @@ build_2017_measures <- function(nss_2017_education, cfg) {
     size <- if (!is.null(hh_size)) num(df[[hh_size]][i]) else rep(1, length(i))
     z <- df[i[[1]], key, drop = FALSE]
     z <- z[rep(1L, 1L), , drop = FALSE]
+    total_value <- df$consumption_pc_2017[i] * size
     data.frame(
       z,
-      consumption_1718 = wmean(df$consumption_pc_2017[i], w),
-      gini_cons_1718 = wgini(df$consumption_pc_2017[i], w),
+      consumption_1718 = mean_expenditure_per_person(total_value, size, w),
+      consumption_1718_household_weighted = mean_household_mpce(total_value, size, w),
+      gini_cons_1718 = person_weighted_mpce_gini(total_value, size, w),
       npeople_1718 = sum(w * size, na.rm = TRUE),
       nhouses_1718 = sum(w, na.rm = TRUE),
       stringsAsFactors = FALSE
