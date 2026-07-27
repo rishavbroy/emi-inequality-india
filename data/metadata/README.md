@@ -30,3 +30,10 @@ The legacy harmonization crosswalk is retained only for historical comparison. C
 Ledgers may begin blank, but accepted rows must remain narrow, source-backed decisions. Generated candidates belong under `outputs/diagnostics/extended/district_lineage/`; they must not be copied into tracked adjudications without review.
 
 See [`docs/DISTRICT_LINEAGE.md`](../../docs/DISTRICT_LINEAGE.md) for authority rules, source caveats, schemas, invariants, and the implementation plan.
+
+## Consumption prices and Census 2001 controls
+
+`price_series_registry.csv` records the role of each price source.
+`census_2001_control_registry.csv` records denominators and whether a variable is
+planned for the main paper or appendix. The construction rules are described in
+`docs/CONSUMPTION_AND_PRICES.md` and `docs/CENSUS_2001_CONTROLS.md`.

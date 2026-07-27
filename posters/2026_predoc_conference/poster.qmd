@@ -1,5 +1,5 @@
 ---
-title: "Escaping Inequality in India: The Role of English-Medium Instruction in Local Development"
+title: "Escaping Inequality in India: English-Medium Instruction & Local Development"
 bibliography: ../../paper/references.bib
 citeproc: true
 suppress-bibliography: true
@@ -18,7 +18,7 @@ format:
     univ-logo-column-size: 7
     title-column-size: 25
     title-font-size: 85
-    authors-font-size: 56
+    authors-font-size: 50
     department-font-size: 30
     body-font-size: 24
     heading-font-size: 36
@@ -56,7 +56,7 @@ execute:
 ]
 ```
 
-**Treatment:** district EMI enrollment among school-going children in 2007-08. **Outcome:** growth in mean household consumption through 2017-18. **Instrument:** linguistic distance from Hindi, based on each district's three leading mother tongues. **Controls:** baseline living standards, demography, social composition, landholding, head education, and region fixed effects.
+**Treatment:** district EMI enrollment among school-going children in 2007-08. **Current outcome:** nominal growth in the education surveys' short household-expenditure measures. **Planned main outcome:** person-weighted real log consumption growth, using state-sector price adjustment. **Instrument:** linguistic distance from Hindi, based on each district's three leading mother tongues. **Planned controls:** a compact Census 2001 set and state fixed effects.
 
 ![District EMI exposure in 2007-08.](../../outputs/figures/main/map_emi_exposure.pdf){width=76%}
 
@@ -65,7 +65,7 @@ execute:
 
 ![Adjusted consumption growth across observed district EMI exposure. Points mark exposure percentiles; the ribbon shows 95% confidence intervals.](../../outputs/figures/main/poster_emie_expected_values.pdf){width=92%}
 
-The estimate is small and imprecise: higher EMI exposure does not clearly predict faster local consumption growth after baseline adjustment. Individual gains may still matter without raising average living standards in students' home districts.
+The current estimate is small and imprecise. It uses nominal expenditure proxies and should not be read as the final welfare estimate. The next revision will adjust for state, rural/urban, and temporal price differences and will average consumption over represented people rather than represented households.
 
 # Interpretation
 
@@ -78,7 +78,7 @@ The estimate is small and imprecise: higher EMI exposure does not clearly predic
 
 ![Average linguistic distance from Hindi, constructed from Census 2001 mother-tongue composition.](../../outputs/figures/main/map_linguistic_distance.pdf){width=72%}
 
-Conditional on baseline characteristics and region, the design assumes linguistic distance affects later consumption only through EMI exposure.
+The revised specification will compare districts within states and condition on Census 2001 population, urbanization, education, social composition, employment structure, age structure, electricity access, and population density.
 
 
 # Why district histories matter
@@ -105,7 +105,7 @@ Where exact assignment is impossible, retain deterministic histories and report 
 
 # Contribution
 
-The project integrates household surveys, Census language data, administrative histories, and spatial data in a reproducible district panel. Estimates remain provisional while district histories are strengthened.
+The project combines household surveys, Census language data, district histories, and price indices at the Census 2001 district level. The displayed estimate remains provisional until the price and Census-control checks are complete.
 
 ```{=typst}
 #block(fill: rgb("f3f0ea"), inset: 6pt, radius: 5pt, width: 100%)[
