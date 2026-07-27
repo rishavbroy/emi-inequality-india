@@ -20,7 +20,21 @@ price_column <- function(df, candidates, required = TRUE) {
   NULL
 }
 
+resolve_price_path <- function(path) {
+  path <- as.character(path)[[1]]
+  if (file.exists(path)) return(path)
+
+  project_root <- Sys.getenv("EMI_PROJECT_ROOT", unset = "")
+  if (nzchar(project_root)) {
+    project_path <- file.path(project_root, path)
+    if (file.exists(project_path)) return(project_path)
+  }
+
+  path
+}
+
 read_rbi_price_csv <- function(path) {
+  path <- resolve_price_path(path)
   if (!file.exists(path)) stop("Price file does not exist: ", path, call. = FALSE)
   out <- utils::read.csv(path, check.names = FALSE, stringsAsFactors = FALSE)
   names(out) <- price_column_names(names(out))
@@ -177,6 +191,8 @@ read_cpi_iw_centres <- function(path, base_year = 2001) {
 }
 
 read_cpi_iw_weights <- function(path) {
+  path <- resolve_price_path(path)
+  if (!file.exists(path)) stop("CPI-IW weights file does not exist: ", path, call. = FALSE)
   weights <- utils::read.csv(path, stringsAsFactors = FALSE, check.names = FALSE)
   required <- c("state_code", "state_name", "centre", "weight")
   missing <- setdiff(required, names(weights))
