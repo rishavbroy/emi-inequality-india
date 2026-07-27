@@ -362,9 +362,12 @@ clustered_model_vcov <- function(model, data = NULL) {
 #' make tables
 #'
 #' @return A named list of data frames consumed by save_tables().
-make_tables <- function(selection_data, ame_results, district_panel, iv_models, first_stage_tests, cfg, selection_model = NULL) {
+make_tables <- function(
+  selection_data, ame_results, district_panel, iv_models, first_stage_tests,
+  cfg, selection_model = NULL, price_deflator_summary = data.frame()
+) {
   cons_iv <- tidy_iv_models(iv_models, district_panel)
-  cons_iv_required <- filter_table_model(cons_iv, c("consumption", "baseline"))
+  cons_iv_required <- filter_table_model(cons_iv, "consumption")
   table_failures <- c(
     table_status_failures(ame_results, cfg, "average marginal effects"),
     table_status_failures(first_stage_tests, cfg, "first-stage regression"),
@@ -393,6 +396,8 @@ make_tables <- function(selection_data, ame_results, district_panel, iv_models, 
     sum_tbl_iv = make_iv_summary_table(district_panel),
     fs_cons = fs_cons,
     cons_iv = cons_iv_table,
+    cons_iv_appendix = make_appendix_consumption_model_table(iv_models, district_panel),
+    price_deflator_summary = as.data.frame(price_deflator_summary),
     ame_results = as.data.frame(ame_results),
     first_stage = as.data.frame(first_stage_tests)
   )
@@ -449,60 +454,104 @@ make_iv_summary_table <- function(district_panel) {
   meta <- data.frame(
     var = c(
       "wavg_ling_degrees", "EMIE",
-      "npeople_0708", "consumption_0708", "gini_cons_0708", "pct_urban", "avg_hh_size",
-      "dependency_ratio", "pct_fem_head", "pct_hindu", "pct_muslim", "pct_other_religion",
-      "pct_st", "pct_sc", "pct_obc", "pct_small_land", "pct_medium_land", "pct_large_land",
-      "pct_head_illiterate", "pct_head_lit_to_primary", "pct_head_secondary_plus", "pct_pucca",
-      "npeople_1718", "consumption_1718", "gini_cons_1718",
-      "consumption_pct_change", "gini_change"
+      "census2001_population", "census2001_urban_share",
+      "census2001_adult_secondary_plus_share", "census2001_sc_share",
+      "census2001_st_share", "census2001_muslim_share",
+      "census2001_agricultural_worker_share", "census2001_dependency_ratio",
+      "census2001_electricity_share", "census2001_primary_schools_per_1000_children",
+      "npeople_0708", "real_consumption_0708", "consumption_0708",
+      "schedule1_real_mpce_0708", "schedule1_real_gini_0708",
+      "npeople_1718", "real_consumption_1718", "consumption_1718",
+      "real_log_consumption_change", "real_consumption_level_change"
     ),
     label = c(
-      "Ling. Distance",
-      "EMIE", "Population", "Consumption", "Gini of Consumption", "Pct. Urban", "Avg. HH Size",
-      "Dependency Ratio × 100", "Pct. Female Head", "Pct. Hindu", "Pct. Muslim", "Pct. Other",
-      "Pct. ST", "Pct. SC", "Pct. OBC", "Pct. Small Land-Owner", "Pct. Med. Land-Owner", "Pct. Large Land-Owner",
-      "Pct. Head Educ., Illiterate", "Pct. Head Educ., Lit.-Primary", "Pct. Head Educ., Secondary+", "Pct. Pucca",
-      "Population", "Consumption", "Gini of Consumption",
-      "Percent change in consumption", "Change in Gini of consumption"
+      "Linguistic distance", "EMI exposure",
+      "Population", "Urban population share", "Adults age 25+ with secondary education or more",
+      "Scheduled Caste share", "Scheduled Tribe share", "Muslim share",
+      "Agricultural-worker share", "Dependency ratio", "Households with electricity",
+      "Primary schools per 1,000 children age 5-14",
+      "Represented people", "Real consumption per person", "Nominal consumption per person",
+      "Detailed Schedule 1.0 real MPCE", "Detailed Schedule 1.0 real MPCE Gini",
+      "Represented people", "Real UMPCE per person", "Nominal UMPCE per person",
+      "Change in log real consumption", "Change in real consumption per person"
     ),
     desc = c(
-      "Average linguistic distance of mother tongue from Hindi",
-      "EMI exposure",
-      "Estimated via NSS sample weights",
-      "Average household monthly consumption expenditures (Rs.)",
-      "Gini coefficient of consumption",
-      "Percentage of people in an urban area",
-      "Average household size",
-      "Ratio of dependents (0-14, 65+) to labor force (15-64), × 100",
-      "Percentage of households with a female head",
-      "Percentage of Hindus",
-      "Percentage of Muslims",
-      "Percentage not Hindu/Muslim",
-      "Scheduled Tribe",
-      "Scheduled Caste",
-      "Other Backward Class",
-      "Owns 0.005–0.40 hectares",
-      "Owns 0.41–3.00 hectares",
-      "Owns $\\geq$ 3.01 hectares",
-      "Percentage of household heads with educ. level: illiterate",
-      "Percentage of heads with educ. level: literate-primary",
-      "Percentage of heads with educ. level: above secondary",
-      "Percentage in pucca (permanent) homes",
-      "Estimated via NSS sample weights",
-      "Average household monthly consumption expenditures (Rs.)",
-      "Gini coefficient of consumption",
-      "Percent change in consumption",
-      "Change in the Gini coefficient of consumption"
+      "Population-weighted distance from Hindi among the district's three leading mother tongues",
+      "Percentage of school-going children enrolled in English-medium instruction",
+      "Census 2001 population", "Census 2001 urban share",
+      "Census 2001 adult educational attainment", "Census 2001 Scheduled Caste share",
+      "Census 2001 Scheduled Tribe share", "Census 2001 Muslim share",
+      "Census 2001 share of workers who were cultivators or agricultural labourers",
+      "Population ages 0-14 and 65+ divided by population ages 15-64",
+      "Census 2001 electricity access", "Census 2001 school supply",
+      "NSS person-weighted population", "Education-schedule consumption divided by the state-sector price index",
+      "Education-schedule consumption", "Schedule 1.0 MPCE divided by the state-sector price index",
+      "Person-weighted Gini from detailed Schedule 1.0 MPCE", "NSS person-weighted population",
+      "Single-question UMPCE divided by the state-sector price index", "Single-question UMPCE",
+      "Log real consumption in 2017-18 minus log real consumption in 2007-08",
+      "Real consumption in 2017-18 minus real consumption in 2007-08"
     ),
     stringsAsFactors = FALSE
   )
-  out <- public_numeric_stats(district_panel, meta, count_vars = c("npeople_0708", "npeople_1718"))
-  out <- insert_summary_group(out, "From 2001:", "wavg_ling_degrees")
-  out <- insert_summary_group(out, "From 2007-08:", "EMIE")
-  out <- insert_summary_group(out, "From 2017-18:", "npeople_1718")
-  out <- insert_summary_group(out, "From 2007-08 to 2017-18:", "consumption_pct_change")
-  out
+  cost_vars <- c(
+    "real_consumption_0708", "consumption_0708", "schedule1_real_mpce_0708",
+    "real_consumption_1718", "consumption_1718", "real_consumption_level_change"
+  )
+  out <- public_numeric_stats(
+    district_panel, meta, cost_vars = cost_vars,
+    count_vars = c("census2001_population", "npeople_0708", "npeople_1718")
+  )
+  out <- insert_summary_group(out, "From Census 2001:", "wavg_ling_degrees")
+  out <- insert_summary_group(out, "From NSS 2007-08:", "EMIE")
+  out <- insert_summary_group(out, "From NSS 2017-18:", "npeople_1718")
+  insert_summary_group(out, "Changes from 2007-08 to 2017-18:", "real_log_consumption_change")
 }
+
+appendix_consumption_model_labels <- function() {
+  c(
+    consumption_ancova = "Endpoint ANCOVA",
+    consumption_household_mean = "Household-weighted real log change",
+    consumption_nominal = "Nominal log change",
+    consumption_legacy_controls = "Real log change with 2007-08 controls"
+  )
+}
+
+make_appendix_consumption_model_table <- function(iv_models, district_panel) {
+  labels <- appendix_consumption_model_labels()
+  rows <- safe_bind_rows(lapply(names(labels), function(model_name) {
+    model <- iv_models[[model_name]]
+    if (is.null(model)) return(NULL)
+    tidy <- tidy_iv_models(stats::setNames(list(model), model_name), district_panel)
+    emie <- tidy[tidy$term == "EMIE", , drop = FALSE]
+    if (!nrow(emie)) {
+      status <- if (nrow(tidy)) tidy$status[[1L]] else "unavailable"
+      reason <- if (nrow(tidy)) tidy$reason[[1L]] else "Model was not returned."
+      return(data.frame(
+        Specification = unname(labels[[model_name]]), Estimate = NA_character_,
+        `Std. Error` = NA_character_, `p-value` = NA_character_, Observations = NA_character_,
+        Status = status, Reason = reason, check.names = FALSE, stringsAsFactors = FALSE
+      ))
+    }
+    data.frame(
+      Specification = unname(labels[[model_name]]),
+      Estimate = sprintf("%.3f", num(emie$estimate[[1L]])),
+      `Std. Error` = sprintf("%.3f", num(emie$std.error[[1L]])),
+      `p-value` = sprintf("%.3f", num(emie$p.value[[1L]])),
+      Observations = if (is_model_status_payload(model)) NA_character_ else sprintf("%.0f", stats::nobs(model)),
+      Status = emie$status[[1L]], Reason = emie$reason[[1L]],
+      check.names = FALSE, stringsAsFactors = FALSE
+    )
+  }))
+  if (!nrow(rows)) {
+    return(data.frame(
+      Specification = character(), Estimate = character(), `Std. Error` = character(),
+      `p-value` = character(), Observations = character(), Status = character(), Reason = character(),
+      check.names = FALSE
+    ))
+  }
+  rows
+}
+
 make_first_stage_table <- function(first_stage_tests, cfg = list()) {
   fs <- as.data.frame(first_stage_tests, stringsAsFactors = FALSE)
   required_cols <- c("model", "term", "estimate", "std.error", "p.value", "partial_f", "partial_p", "status")
@@ -534,11 +583,7 @@ make_first_stage_table <- function(first_stage_tests, cfg = list()) {
     return(table_status_row("first_stage", "unavailable", msg))
   }
   term_order <- c(
-    "wavg_ling_degrees", "consumption_0708", "gini_cons_0708",
-    "pct_urban", "avg_hh_size", "dependency_ratio", "pct_fem_head",
-    "pct_hindu", "pct_muslim", "pct_st", "pct_sc", "pct_obc",
-    "pct_small_land", "pct_medium_land", "pct_large_land",
-    "pct_head_lit_to_primary", "pct_head_secondary_plus", "(Intercept)"
+    "wavg_ling_degrees", main_census_2001_controls(), "(Intercept)"
   )
   fs <- fs[order(match(fs$term, term_order), fs$term), , drop = FALSE]
   fs <- fs[!is.na(match(fs$term, term_order)), , drop = FALSE]
@@ -614,7 +659,7 @@ first_stage_table_model <- function(iv_models, district_panel) {
 second_stage_table_model <- function(iv_models, data = NULL) {
   model <- NULL
   if (is.list(iv_models) && !inherits(iv_models, c("lm", "ivreg"))) {
-    hit <- intersect(c("consumption", "baseline"), names(iv_models))
+    hit <- intersect("consumption", names(iv_models))
     if (length(hit)) model <- iv_models[[hit[[1]]]]
   } else {
     model <- iv_models
@@ -627,11 +672,11 @@ second_stage_table_model <- function(iv_models, data = NULL) {
 
 make_second_stage_table <- function(iv_models, data = NULL) {
   out <- tidy_iv_models(iv_models, data)
-  out <- filter_table_model(out, c("consumption", "baseline"))
-  if (!nrow(out)) return(data.frame(Term = character(), `Consumption Growth` = character(), check.names = FALSE))
+  out <- filter_table_model(out, "consumption")
+  if (!nrow(out)) return(data.frame(Term = character(), `Real Log Consumption Growth` = character(), check.names = FALSE))
   model <- NULL
   if (is.list(iv_models) && !inherits(iv_models, c("lm", "ivreg"))) {
-    hit <- intersect(c("consumption", "baseline"), names(iv_models))
+    hit <- intersect("consumption", names(iv_models))
     if (length(hit)) model <- iv_models[[hit[[1]]]]
   } else {
     model <- iv_models
@@ -641,8 +686,8 @@ make_second_stage_table <- function(iv_models, data = NULL) {
     estimates = suppressWarnings(as.numeric(out$estimate)),
     std_errors = suppressWarnings(as.numeric(out$std.error)),
     p_values = suppressWarnings(as.numeric(out$p.value)),
-    outcome_label = "Consumption Growth",
-    gof = model_gof_rows(model, "Consumption Growth")
+    outcome_label = "Real Log Consumption Growth",
+    gof = model_gof_rows(model, "Real Log Consumption Growth")
   )
 }
 
@@ -651,6 +696,17 @@ iv_table_term_label <- function(term) {
     "(Intercept)" = "Constant",
     EMIE = "EMIE",
     wavg_ling_degrees = "Linguistic distance",
+    census2001_log_population = "Log population, 2001",
+    census2001_urban_share = "Urban share, 2001",
+    census2001_adult_secondary_plus_share = "Adults with secondary education or more, 2001",
+    census2001_sc_share = "Scheduled Caste share, 2001",
+    census2001_st_share = "Scheduled Tribe share, 2001",
+    census2001_muslim_share = "Muslim share, 2001",
+    census2001_agricultural_worker_share = "Agricultural-worker share, 2001",
+    census2001_dependency_ratio = "Dependency ratio, 2001",
+    census2001_electricity_share = "Electricity share, 2001",
+    census2001_log_population_density = "Log population density, 2001",
+    census2001_native_hindi_share = "Native Hindi/Urdu share, 2001",
     consumption_0708 = "Consumption, 2007-08",
     gini_cons_0708 = "Gini consumption, 2007-08",
     pct_urban = "Pct. urban",

@@ -11,7 +11,9 @@ public_table_caption_text <- function(name) {
     probit_mfx = "Average Marginal Effects and Counterfactual Comparisons for Enrollment Probit",
     sum_tbl_iv = "Summary Statistics for 2SLS Model",
     fs_cons = "First-Stage Regression: EMI Exposure on Linguistic Distance",
-    cons_iv = "Second-Stage Regression: Consumption Growth on EMIE (Fitted)",
+    cons_iv = "Second-Stage Regression: Real Consumption Growth on EMIE (Fitted)",
+    cons_iv_appendix = "Alternative Consumption Specifications",
+    price_deflator_summary = "Price-Series Coverage and Fallbacks",
     ame_results = "Average Marginal Effects Results",
     first_stage = "First-Stage Diagnostic Results"
   )
@@ -29,7 +31,9 @@ public_table_note <- function(name) {
     sum_tbl_probit_cat = "Values = all possible values; Mode = most frequent value; Pct. Mode = percent of observations taking the modal value; Least Freq. = least frequent value; Pct. Least Freq. = percent of observations taking the least frequent value; N = number of observations.",
     probit_mfx = "NSS 64th round; design-based SEs in parentheses.",
     fs_cons = "Standard errors clustered by state in parentheses.",
-    cons_iv = "Standard errors clustered by state in parentheses.",
+    cons_iv = "The dependent variable is the change in log real consumption per person from 2007-08 to 2017-18. Standard errors are clustered by state.",
+    cons_iv_appendix = "Each row reports the EMIE coefficient from a separate 2SLS specification. Standard errors are clustered by state.",
+    price_deflator_summary = "The temporal index uses CPI-RL for rural households and an official-weighted state aggregate of CPI-IW centres for urban households before 2013, then state CPI-Rural and CPI-Urban. Tendulkar state-sector poverty lines provide 2011-12 spatial price relatives.",
     NULL
   )
 }
