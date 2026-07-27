@@ -61,11 +61,21 @@ core_pipeline_targets <- list(
   tar_target(raw_nss_2017_education, { raw_data_preflight; read_nss_2017_education(paths) }),
   tar_target(raw_census_2001, { raw_data_preflight; read_census_2001_mother_tongue(paths) }),
   tar_target(raw_ilo_figures, { raw_data_preflight; list_ilo_figure_paths(paths) }, format = "file"),
+  tar_target(raw_price_sources, { raw_data_preflight; read_price_sources(price_source_paths(paths)) }),
 
   tar_target(nss_2007_education, clean_nss_2007_education(raw_nss_2007_education)),
   tar_target(nss_2007_consumption, clean_nss_2007_consumption(raw_nss_2007_consumption)),
   tar_target(nss_2017_education, clean_nss_2017_education(raw_nss_2017_education)),
   tar_target(census_2001_languages, clean_census_2001_languages(raw_census_2001)),
+  tar_target(temporal_price_series, build_temporal_price_series(raw_price_sources)),
+  tar_target(
+    state_sector_price_deflators,
+    build_state_sector_price_deflators(
+      temporal_price_series,
+      start_period = as.Date("2007-07-01"),
+      end_period = as.Date("2018-06-01")
+    )
+  ),
 
   tar_target(district_keys_2001, build_district_keys_2001(census_2001_languages)),
   tar_target(district_keys_2007, build_district_keys_2007(nss_2007_education, nss_2007_consumption)),
@@ -75,8 +85,22 @@ core_pipeline_targets <- list(
   tar_target(selection_model, estimate_selection_probit(selection_data, cfg)),
   tar_target(ame_results, compute_average_marginal_effects(selection_model, selection_data, cfg)),
 
-  tar_target(measures_2007, build_2007_measures(nss_2007_education, nss_2007_consumption, cfg)),
-  tar_target(measures_2017, build_2017_measures(nss_2017_education, cfg)),
+  tar_target(
+    consumption_households_2007,
+    prepare_2007_consumption_households(nss_2007_education, state_sector_price_deflators)
+  ),
+  tar_target(
+    consumption_households_2017,
+    prepare_2017_consumption_households(nss_2017_education, state_sector_price_deflators)
+  ),
+  tar_target(
+    measures_2007,
+    build_2007_measures(nss_2007_education, nss_2007_consumption, cfg, consumption_households_2007)
+  ),
+  tar_target(
+    measures_2017,
+    build_2017_measures(nss_2017_education, cfg, consumption_households_2017)
+  ),
   tar_target(linguistic_distance_iv, build_linguistic_distance_iv(census_2001_languages, cfg)),
   tar_target(
     lineage_geometry_2001_file,

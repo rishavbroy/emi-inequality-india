@@ -337,3 +337,85 @@ test_that("household attachment preserves input row order and fallback provenanc
   expect_equal(out$price_deflator, c(2, 1))
   expect_equal(out$state_rule, c("fallback", "direct"))
 })
+
+test_that("NSS sub-rounds map to consecutive survey-quarter price months", {
+  expect_equal(
+    nss_subround_for_month(as.Date(c("2007-07-01", "2007-09-01", "2007-10-01", "2008-06-01")), 2007),
+    c(1L, 1L, 2L, 4L)
+  )
+  expect_equal(
+    nss_subround_for_month(as.Date(c("2017-07-01", "2018-01-01", "2018-06-01")), 2017),
+    c(1L, 3L, 4L)
+  )
+})
+
+test_that("NSS sub-round deflators average exactly three monthly indices", {
+  months <- seq(as.Date("2007-07-01"), as.Date("2007-09-01"), by = "month")
+  d <- data.frame(
+    state_code = "BIH", sector = "rural", period = months,
+    price_deflator = c(1, 2, 3), spatial_price_relative = 1,
+    price_source = "cpi_rl_state", temporal_state_source = "BIH",
+    state_rule = "direct", fallback_reason = NA_character_
+  )
+  out <- build_nss_subround_deflators(d, 2007)
+  expect_equal(out$price_deflator, 2)
+  expect_equal(out$period_start, as.Date("2007-07-01"))
+  expect_equal(out$period_end, as.Date("2007-09-01"))
+})
+
+test_that("NSS state resolution accepts names, survey codes, and price codes", {
+  poverty <- data.frame(
+    state_code = c("BIH", "TEL"), state_name = c("Bihar", "Telangana"),
+    sector = "rural", poverty_line_rupees = 1
+  )
+  expect_equal(
+    resolve_nss_price_state(c("Bihar", "10", "TEL", "36"), poverty),
+    c("BIH", "BIH", "TEL", "TEL")
+  )
+})
+
+test_that("household deflation occurs before district aggregation", {
+  months <- seq(as.Date("2017-07-01"), as.Date("2017-09-01"), by = "month")
+  deflators <- data.frame(
+    state_code = "BIH", sector = "rural", period = months,
+    price_deflator = c(2, 2, 2), spatial_price_relative = 1,
+    price_source = "cpi_rural_2012", temporal_state_source = "BIH",
+    state_rule = "direct", fallback_reason = NA_character_
+  )
+  households <- data.frame(
+    State = c("Bihar", "Bihar"), Sector = 1, Sub_Round = 1,
+    District = c("Patna", "Patna"), HHID = c("a", "b"),
+    HH_Con_exp_rs = c(200, 600), Household_size = c(2, 3),
+    MULT_Combined = c(1, 1)
+  )
+  prepared <- prepare_2017_consumption_households(list(block = households), deflators)
+  expect_equal(prepared$consumption_real_pc, c(50, 100))
+
+  out <- build_2017_measures(list(block = households), list(), prepared)
+  expect_equal(out$consumption_1718, 160)
+  expect_equal(out$real_consumption_1718, 80)
+  expect_equal(out$price_fallback_household_share_1718, 0)
+})
+
+test_that("real district means use person rather than household weights", {
+  households <- data.frame(
+    district_code_0708 = c("1001", "1001"),
+    consumption_nominal_total = c(100, 900),
+    consumption_real_total = c(50, 450),
+    household_size_price = c(1, 3), survey_weight_price = c(1, 1),
+    price_deflator = c(2, 2), state_rule = c("direct", "fallback")
+  )
+  out <- aggregate_consumption_households(households, "district_code_0708", "0708")
+  expect_equal(out$consumption_0708, 250)
+  expect_equal(out$real_consumption_0708, 125)
+  expect_equal(out$consumption_0708_household_weighted, 200)
+  expect_equal(out$price_fallback_household_share_0708, 50)
+})
+
+test_that("price manifest exposes the four production CPI inputs", {
+  manifest <- read_manifest(build_paths(Sys.getenv("EMI_PROJECT_ROOT")))
+  ids <- c("price_cpi_alrl_state", "price_cpi_iw_centres", "price_cpi_ruc_2010", "price_cpi_ruc_2012")
+  rows <- manifest[manifest$file_id %in% ids, , drop = FALSE]
+  expect_equal(nrow(rows), 4L)
+  expect_true(all(tolower(rows$required_for_current_pipeline) == "true"))
+})

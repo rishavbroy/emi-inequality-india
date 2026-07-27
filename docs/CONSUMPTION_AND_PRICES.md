@@ -79,7 +79,7 @@ the code does not silently reweight an incomplete set of centres.
 
 These readers construct validated source tables only. `R/prices/build_temporal_price_series.R` then joins the direct state series without changing reported estimates. It rescales pre-2013 CPI-RL and state CPI-IW to the 2012-base CPI-R/U scale using the median state-sector ratio over common months, uses the older sources only through December 2012, and uses state CPI-Rural or CPI-Urban from January 2013 onward. A state-sector chain is rejected when it has fewer than the required number of common months; no link is inferred from another state. The base-2010 and base-2012 CPI-R/U overlap is retained as a separate validation result rather than inserted into the production chain.
 
-Household deflation and replacement of the current reported outcome remain separate changes, so a raw price-file problem cannot alter the paper's estimates without an explicit change to `_targets.R`.
+The production target graph now reads the four CPI files, constructs the monthly state-sector deflator, converts each NSS sub-round to its three survey months, and attaches the arithmetic mean of those monthly deflators to Block 3 household records before district aggregation. The public headline formula remains unchanged until the fixed-sample comparison stage.
 
 ## State inheritance, union-territory fallbacks, and the spatial anchor
 
@@ -114,3 +114,16 @@ direct, inherited, or a fallback, the fallback reason, and the poverty-line
 source state. Household attachment preserves these fields so later coverage
 tables can report the number and survey-weighted share of households using
 each rule.
+
+
+## NSS timing and household consumption
+
+Both NSS 64 (July 2007-June 2008) and NSS 75 (July 2017-June 2018) divide the annual field period into four three-month sub-rounds. `R/prices/nss_period_deflators.R` maps sub-rounds 1-4 to July-September, October-December, January-March, and April-June, respectively. A sub-round deflator is the arithmetic mean of exactly three monthly state-sector deflators; incomplete quarters fail rather than being averaged over the available months.
+
+`prepare_2007_consumption_households()` and `prepare_2017_consumption_households()` deduplicate Block 3 household records, resolve NSS state and rural/urban codes, attach the sub-round price object, and retain nominal and real household totals and per-capita values. Deflation occurs before district aggregation. District real consumption is therefore
+
+\[
+\bar c^{real}_{dt}=\frac{\sum_h w_h X^{real}_h}{\sum_h w_h n_h},
+\]
+
+with the household-weighted mean retained separately. The district outputs also record the person-weighted mean deflator and the survey-weighted household share using inheritance or fallback rules.

@@ -56,10 +56,10 @@ district_changes_splits,district_changes,true,data/raw/district_changes/District
 ilo_real_earnings,ilo_figures,true,assets/ilo_figures/average_monthly_real_earnings_total.png,194963,png,magick::image_read,raw_ilo_figures,Static ILO image asset
 ilo_lfpr_wpr_unemp,ilo_figures,true,assets/ilo_figures/lfpr_wpr_unemployment_all.png,127346,png,magick::image_read,raw_ilo_figures,Static ILO image asset
 ilo_unemp_education,ilo_figures,true,assets/ilo_figures/unemployment_rate_by_general_education.png,137572,png,magick::image_read,raw_ilo_figures,Static ILO image asset
-price_cpi_alrl_state,prices,false,data/raw/prices/cpi_alrl_st_rn_26_7_2026.csv,,csv,utils::read.csv,price_sources,State CPI-AL and CPI-RL series
-price_cpi_iw_centres,prices,false,data/raw/prices/cpi_iw_aisc_rn_26_7_2026.csv,,csv,utils::read.csv,price_sources,CPI-IW All India and centre series
-price_cpi_ruc_2010,prices,false,data/raw/prices/cpi_ruc_st_rn_26_7_2026_2011-2014_base-2010.csv,,csv,utils::read.csv,price_sources,State rural and urban CPI base 2010
-price_cpi_ruc_2012,prices,false,data/raw/prices/cpi_ruc_st_rn_26_7_2026_2013-2025_base-2012.csv,,csv,utils::read.csv,price_sources,State rural and urban CPI base 2012
+price_cpi_alrl_state,prices,true,data/raw/prices/cpi_alrl_st_rn_26_7_2026.csv,,csv,utils::read.csv,price_sources,State CPI-AL and CPI-RL series
+price_cpi_iw_centres,prices,true,data/raw/prices/cpi_iw_aisc_rn_26_7_2026.csv,,csv,utils::read.csv,price_sources,CPI-IW All India and centre series
+price_cpi_ruc_2010,prices,true,data/raw/prices/cpi_ruc_st_rn_26_7_2026_2011-2014_base-2010.csv,,csv,utils::read.csv,price_sources,State rural and urban CPI base 2010
+price_cpi_ruc_2012,prices,true,data/raw/prices/cpi_ruc_st_rn_26_7_2026_2013-2025_base-2012.csv,,csv,utils::read.csv,price_sources,State rural and urban CPI base 2012
 price_tendulkar_2011_12,prices,false,data/raw/prices/poverty-lines/press-note-poverty-2011-12-23-08-16.pdf,,pdf,pdftools::pdf_text,price_sources,Tendulkar state-sector poverty lines
 census2001_c01,census_2001_controls,false,data/raw/census_2001/religion/C01,,directory,custom,raw_census_2001_controls,Census 2001 religion tables
 census2001_c08,census_2001_controls,false,data/raw/census_2001/education/C08,,directory,custom,raw_census_2001_controls,Census 2001 educational attainment tables

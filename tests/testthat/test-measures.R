@@ -306,3 +306,16 @@ test_that("household deflation requires positive price relatives", {
   expect_equal(deflate_household_expenditure(c(100, 200), c(2, 4)), c(50, 50))
   expect_true(is.na(deflate_household_expenditure(100, 0)))
 })
+
+test_that("district panel constructs real log change from deflated district means", {
+  panel <- data.frame(
+    state_std = "bihar", district_std = "patna", district_panel_id = "id1",
+    EMIE = 10, consumption_0708 = 100, consumption_1718 = 200,
+    real_consumption_0708 = 80, real_consumption_1718 = 120,
+    npeople_0708 = 1, gini_cons_0708 = 0.1, gini_cons_1718 = 0.2,
+    wavg_ling_degrees = 1
+  )
+  out <- build_district_panel(data.frame(), panel, data.frame(), data.frame(), data.frame(), list())
+  expect_equal(out$real_log_consumption_change, log(120) - log(80))
+  expect_equal(out$real_consumption_level_change, 40)
+})
