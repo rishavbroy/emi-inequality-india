@@ -148,3 +148,87 @@ test_that("CPI-IW validation rejects duplicate normalized centre identities", {
     "identities must be unique after name normalization"
   )
 })
+
+test_that("temporal price series uses CPI-RL and CPI-IW before 2013", {
+  months <- as.Date(c("2012-11-01", "2012-12-01", "2013-01-01", "2013-02-01"))
+  sources <- list(
+    cpi_alrl = data.frame(
+      state_code = "A", labour_series = "rural_labour", sector = "rural",
+      period = months, index = c(100, 102, 104, 106)
+    ),
+    cpi_iw_states = data.frame(
+      state_code = "A", sector = "urban", period = months,
+      index = c(200, 204, 208, 212)
+    ),
+    cpi_ruc_2012 = rbind(
+      data.frame(state_code = "A", sector = "rural", period = months[3:4], index = c(52, 53)),
+      data.frame(state_code = "A", sector = "urban", period = months[3:4], index = c(104, 106))
+    )
+  )
+
+  out <- build_temporal_price_series(
+    sources,
+    overlap_start = as.Date("2013-01-01"),
+    overlap_end = as.Date("2013-02-01"),
+    minimum_link_months = 2
+  )$index
+
+  expect_equal(out$price_source[out$period < as.Date("2013-01-01")], c("cpi_rl_state", "cpi_rl_state", "cpi_iw_state", "cpi_iw_state"))
+  expect_true(all(out$price_source[out$period >= as.Date("2013-01-01")] %in% c("cpi_rural_2012", "cpi_urban_2012")))
+  expect_equal(out$index[out$sector == "rural"], c(50, 51, 52, 53))
+  expect_equal(out$index[out$sector == "urban"], c(100, 102, 104, 106))
+})
+
+test_that("temporal price links use state-sector overlap medians", {
+  months <- as.Date(c("2013-01-01", "2013-02-01", "2013-03-01"))
+  old <- rbind(
+    data.frame(state_code = "A", sector = "rural", period = months, index = c(100, 110, 120)),
+    data.frame(state_code = "A", sector = "urban", period = months, index = c(200, 220, 240))
+  )
+  new <- rbind(
+    data.frame(state_code = "A", sector = "rural", period = months, index = c(200, 220, 360)),
+    data.frame(state_code = "A", sector = "urban", period = months, index = c(100, 110, 120))
+  )
+  links <- summarise_price_links(old, new, months[1], months[3])
+  expect_equal(links$link_factor, c(2, 0.5))
+  expect_equal(links$link_months, c(3L, 3L))
+})
+
+test_that("temporal price construction rejects weak or missing direct links", {
+  months <- as.Date(c("2012-12-01", "2013-01-01"))
+  sources <- list(
+    cpi_alrl = data.frame(
+      state_code = "A", labour_series = "rural_labour", sector = "rural",
+      period = months, index = c(100, 101)
+    ),
+    cpi_iw_states = data.frame(
+      state_code = "A", sector = "urban", period = months, index = c(100, 101)
+    ),
+    cpi_ruc_2012 = rbind(
+      data.frame(state_code = "A", sector = "rural", period = months[2], index = 100),
+      data.frame(state_code = "A", sector = "urban", period = months[2], index = 100)
+    )
+  )
+  expect_error(
+    build_temporal_price_series(
+      sources,
+      overlap_start = months[2], overlap_end = months[2], minimum_link_months = 2
+    ),
+    "sufficient direct link"
+  )
+})
+
+test_that("base-2010 and base-2012 CPI-R/U overlap remains a validation result", {
+  months <- as.Date(c("2013-01-01", "2013-02-01"))
+  sources <- list(
+    cpi_ruc_2010 = data.frame(
+      state_code = "A", sector = c("rural", "rural"), period = months, index = c(100, 110)
+    ),
+    cpi_ruc_2012 = data.frame(
+      state_code = "A", sector = c("rural", "rural"), period = months, index = c(200, 220)
+    )
+  )
+  out <- summarise_ruc_base_overlap(sources)
+  expect_equal(out$link_factor, 2)
+  expect_equal(out$link_months, 2L)
+})
