@@ -1,0 +1,18 @@
+variable,role,source,denominator,main_paper
+log_population_2001,scale,SHRUG Census 2001 PCA,none,true
+urban_share_2001,urbanization,SHRUG Census 2001 PCA,total population,true
+adult_secondary_plus_share_2001,human capital,Census 2001 C-08,population age 7 plus,true
+sc_share_2001,social composition,SHRUG Census 2001 PCA,total population,true
+st_share_2001,social composition,SHRUG Census 2001 PCA,total population,true
+muslim_share_2001,religion,Census 2001 C-01,total population,true
+agricultural_worker_share_2001,economic structure,SHRUG Census 2001 PCA,total workers,true
+dependency_ratio_2001,demography,Census 2001 C-14,population age 15-64,true
+electricity_access_share_2001,infrastructure,Census 2001 H-09,total households,true
+log_population_density_2001,density,SHRUG PCA and Census 2001 geometry,none,true
+literacy_share_2001,human capital,SHRUG Census 2001 PCA,population age 7 plus,false
+worker_share_2001,economic structure,SHRUG Census 2001 PCA,total population,false
+hindu_share_2001,religion,Census 2001 C-01,total population,false
+banking_access_share_2001,assets,Census 2001 H-13,total households,false
+television_ownership_share_2001,assets,Census 2001 H-13,total households,false
+telephone_ownership_share_2001,assets,Census 2001 H-13,total households,false
+primary_schools_per_1000_children_2001,school supply,SHRUG Village and Town Directories,population age 5-14,false
