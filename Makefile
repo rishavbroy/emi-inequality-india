@@ -55,7 +55,7 @@ LINEAGE_GEOMETRY_INPUTS := \
 	data/raw/datameet/Districts/Census_2001/2001_Dist.dbf \
 	data/raw/datameet/Districts/Census_2001/2001_Dist.shx \
 	data/raw/datameet/Districts/Census_2001/2001_Dist.prj \
-	$(wildcard data/raw/census_2001_mother_tongue/PC01_C16_*.xls) \
+	$(wildcard data/raw/census_2001/languages/C16/PC01_C16_*.xls) \
 	R/clean/clean_census_2001_languages.R \
 	R/districts/lineage_completion.R \
 	R/districts/lineage_sources.R \

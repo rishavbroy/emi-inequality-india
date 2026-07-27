@@ -13,7 +13,7 @@ test_that("manifest and data_sources use canonical raw-data directories", {
     "data/raw/nss_2007_education_64",
     "data/raw/nss_2007_consumption_64",
     "data/raw/nss_2017_education_75",
-    "data/raw/census_2001_mother_tongue",
+    "data/raw/census_2001/languages/C16",
     "data/raw/district_boundaries_2020",
     "data/raw/district_changes"
   )
