@@ -91,6 +91,65 @@ test_that("CPI-IW reader retains the published All-India series for explicit fal
   expect_equal(out$index, 125)
 })
 
+
+
+test_that("CPI-IW readers use CENTER_RN rather than the state code in RBI exports", {
+  path <- tempfile(fileext = ".csv")
+  utils::write.csv(data.frame(
+    DATAFLOW = "RBI:CPI_IW_AISC_RN(1.0)",
+    BASE_PER = "BY_2001",
+    CENTER_RN = c("AL_INDIA", "GUNTUR", "VIJAYAWADA"),
+    STATE_CODE = c("N_A", "ANP", "ANP"),
+    TIME_PERIOD = "2007-07-31",
+    OBS_VALUE = c(125, 100, 200)
+  ), path, row.names = FALSE)
+
+  all_india <- read_cpi_iw_all_india(path)
+  centres <- read_cpi_iw_centres(path)
+  expect_equal(all_india$index, 125)
+  expect_equal(centres$centre_key, c("GUNTUR", "VIJAYWADA"))
+  expect_false(any(centres$centre_key == "ANP"))
+})
+
+test_that("CPI-IW reader collapses identical rows but rejects conflicting values", {
+  path <- tempfile(fileext = ".csv")
+  rows <- data.frame(
+    BASE_PER = "BY_2001", CENTER_RN = "GUNTUR", STATE_CODE = "ANP",
+    TIME_PERIOD = "2007-07-31", OBS_VALUE = c(100, 100)
+  )
+  utils::write.csv(rows, path, row.names = FALSE)
+  expect_equal(nrow(read_cpi_iw_centres(path)), 1L)
+
+  rows$OBS_VALUE[[2]] <- 101
+  utils::write.csv(rows, path, row.names = FALSE)
+  expect_error(read_cpi_iw_centres(path), "conflicting duplicate")
+})
+
+test_that("CPI-IW aliases match the names used by the RBI extract", {
+  source_names <- c(
+    "ALWAYE_ERNAKULAM", "COONOR", "DM_TINSUKIA", "HALDI",
+    "MONGHYR_JAMALPUR", "OTHERS-GOA", "OTHERS_HIMACHAL_PRADESH",
+    "OTHERS-TRIPURA", "PONDICHERRY", "QUILLON", "SHOLAPUR",
+    "TEZPUR_RANGAPARA", "TRICHIRAPALLY"
+  )
+  metadata_names <- c(
+    "Ernakulam", "Coonoor", "D.D.Tinsukia", "Haldia",
+    "Monger-Jamalpur", "Goa", "Himachal Pradesh", "Tripura",
+    "Puducherry", "Quilon", "Solapur", "Rangapara-Tezpur",
+    "Tiruchirapally"
+  )
+  expect_equal(normalise_cpi_iw_centre(source_names), normalise_cpi_iw_centre(metadata_names))
+})
+
+test_that("CPI-IW state aggregation is limited to estimation and link windows", {
+  periods <- cpi_iw_state_periods()
+  expect_equal(min(periods), as.Date("2007-07-01"))
+  expect_equal(max(periods), as.Date("2014-12-01"))
+  expect_true(all(seq(as.Date("2007-07-01"), as.Date("2008-06-01"), by = "month") %in% periods))
+  expect_true(all(seq(as.Date("2013-01-01"), as.Date("2014-12-01"), by = "month") %in% periods))
+  expect_false(as.Date("2012-06-01") %in% periods)
+})
+
 test_that("CPI-IW state indices use official centre weights", {
   path <- tempfile(fileext = ".csv")
   utils::write.csv(data.frame(
@@ -444,4 +503,92 @@ test_that("price-source adapters return one named path per production series", {
   expect_named(out, names(paths))
   expect_equal(unlist(out, use.names = FALSE), unname(paths))
   expect_error(validate_price_source_paths(unname(paths)), "must be named")
+})
+
+
+test_that("production temporal series retains only the requested pre-switch window", {
+  months <- seq(as.Date("2007-07-01"), as.Date("2013-02-01"), by = "month")
+  old <- data.frame(state_code = "A", period = months, index = seq_along(months))
+  sources <- list(
+    cpi_alrl = transform(old, labour_series = "rural_labour", sector = "rural"),
+    cpi_iw_states = transform(old, sector = "urban"),
+    cpi_ruc_2012 = rbind(
+      data.frame(state_code = "A", sector = "rural", period = months[months >= as.Date("2013-01-01")], index = c(100, 101)),
+      data.frame(state_code = "A", sector = "urban", period = months[months >= as.Date("2013-01-01")], index = c(100, 101))
+    )
+  )
+  out <- build_temporal_price_series(
+    sources,
+    overlap_start = as.Date("2013-01-01"), overlap_end = as.Date("2013-02-01"),
+    minimum_link_months = 2L,
+    pre_switch_start = as.Date("2007-07-01"), pre_switch_end = as.Date("2008-06-01")
+  )$index
+  pre <- out[out$period < as.Date("2013-01-01"), ]
+  expect_equal(range(pre$period), as.Date(c("2007-07-01", "2008-06-01")))
+})
+
+test_that("R/U reference index uses all requested months and the overlap link", {
+  reference <- seq(as.Date("2011-07-01"), as.Date("2012-06-01"), by = "month")
+  overlap <- as.Date(c("2013-01-01", "2013-02-01"))
+  old <- rbind(
+    data.frame(state_code = "A", sector = "rural", period = c(reference, overlap), index = c(rep(50, 12), 50, 50)),
+    data.frame(state_code = "A", sector = "urban", period = c(reference, overlap), index = c(rep(80, 12), 80, 80))
+  )
+  new <- rbind(
+    data.frame(state_code = "A", sector = "rural", period = overlap, index = c(100, 100)),
+    data.frame(state_code = "A", sector = "urban", period = overlap, index = c(120, 120))
+  )
+  poverty <- data.frame(state_code = "A", sector = c("rural", "urban"))
+  rules <- data.frame(
+    target_state_code = character(), source_state_code = character(), sector = character(),
+    valid_from = as.Date(character()), valid_to = as.Date(character()),
+    rule_type = character(), reason = character()
+  )
+  out <- build_ruc_reference_index(
+    list(cpi_ruc_2010 = old, cpi_ruc_2012 = new), reference,
+    state_rules = rules, poverty_lines = poverty
+  )
+  expect_equal(out$reference_index, c(100, 120))
+  expect_equal(out$reference_months, c(12L, 12L))
+})
+
+test_that("reference prices inherit the documented poverty-line source when direct history is absent", {
+  index <- data.frame(
+    state_code = "TEL", sector = "urban", period = as.Date("2017-07-01"), index = 150
+  )
+  spatial <- data.frame(
+    state_code = "TEL", sector = "urban", spatial_price_relative = 1.2,
+    source_state_code = "ANP"
+  )
+  reference <- data.frame(state_code = "ANP", sector = "urban", reference_index = 100)
+  out <- build_state_sector_deflator(index, spatial, reference_index = reference)
+  expect_equal(out$temporal_price_relative, 1.5)
+  expect_equal(out$price_deflator, 1.8)
+})
+
+
+test_that("R/U reference index uses a documented donor for incomplete state history", {
+  reference <- seq(as.Date("2011-07-01"), as.Date("2012-06-01"), by = "month")
+  overlap <- as.Date(c("2013-01-01", "2013-02-01"))
+  old <- data.frame(
+    state_code = "ALL_INDIA", sector = "urban", period = c(reference, overlap),
+    index = c(rep(80, 12), 80, 80)
+  )
+  new <- data.frame(
+    state_code = "ALL_INDIA", sector = "urban", period = overlap, index = c(120, 120)
+  )
+  poverty <- data.frame(state_code = c("ALL_INDIA", "ARP"), sector = "urban")
+  rules <- data.frame(
+    target_state_code = "ARP", source_state_code = "ALL_INDIA", sector = "urban",
+    valid_from = as.Date("1900-01-01"), valid_to = as.Date("2012-12-01"),
+    rule_type = "fallback", reason = "No complete state reference series"
+  )
+  out <- build_ruc_reference_index(
+    list(cpi_ruc_2010 = old, cpi_ruc_2012 = new), reference,
+    state_rules = rules, poverty_lines = poverty
+  )
+  arunachal <- out[out$state_code == "ARP", ]
+  expect_equal(arunachal$reference_index, 120)
+  expect_equal(arunachal$reference_state_source, "ALL_INDIA")
+  expect_equal(arunachal$reference_rule, "fallback")
 })

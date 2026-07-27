@@ -74,10 +74,13 @@ from the two CPI-R/U files, distinguishes CPI-AL from CPI-RL, and selects the
 2001-base centre series from CPI-IW. The CPI-IW state series is a weighted mean
 of centre indices using the Labour Bureau's 78 centre weights. For the 2007-08
 series, Godavarikhani, Hyderabad, and Warangal are assigned to undivided Andhra
-Pradesh. A state-month is rejected when one of its expected centres is absent;
-the code does not silently reweight an incomplete set of centres.
+Pradesh. State CPI-IW aggregation is limited to the 2007-08 estimation months
+and the 2013-14 overlap used to link CPI-IW to CPI-Urban. A required state-month
+is rejected when one of its expected centres is absent; the code does not
+silently reweight an incomplete set of centres. The full centre table remains
+available for source diagnostics.
 
-These readers construct validated source tables only. `R/prices/build_temporal_price_series.R` then joins the direct state series without changing reported estimates. It rescales pre-2013 CPI-RL and state CPI-IW to the 2012-base CPI-R/U scale using the median state-sector ratio over common months, uses the older sources only through December 2012, and uses state CPI-Rural or CPI-Urban from January 2013 onward. A state-sector chain is rejected when it has fewer than the required number of common months; no link is inferred from another state. The base-2010 and base-2012 CPI-R/U overlap is retained as a separate validation result rather than inserted into the production chain.
+These readers construct validated source tables only. `R/prices/build_temporal_price_series.R` rescales CPI-RL and state CPI-IW to the 2012-base CPI-R/U scale using the median state-sector ratio over common 2013-14 months. The production chain retains the older sources only for the July 2007-June 2008 survey period and uses state CPI-Rural or CPI-Urban from January 2013 onward. A state-sector chain is rejected when it has fewer than the required number of common months; no link is inferred from another state. The base-2010 CPI-R/U observations for July 2011-June 2012 are converted to the 2012-base scale with the observed 2013-14 overlap and supply the common reference index. This avoids deriving the spatial anchor from incomplete CPI-IW centre coverage in isolated 2012 months.
 
 The production target graph now reads the four CPI files, constructs the monthly state-sector deflator, converts each NSS sub-round to its three survey months, and attaches the arithmetic mean of those monthly deflators to Block 3 household records before district aggregation. The public headline formula remains unchanged until the fixed-sample comparison stage.
 
