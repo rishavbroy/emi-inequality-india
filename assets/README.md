@@ -1,12 +1,5 @@
 # Poster assets
 
-`uw-logo-horizontal-full-color-print.svg` is a flattened copy of the University of Wisconsin wordmark PDF used by the conference poster. The supplied Illustrator PDF contained optional-content groups, which Typst warns may render incorrectly. It was exported as plain SVG with Inkscape, removing the PDF optional-content groups while preserving vector content:
-
-```sh
-inkscape path/to/source-logo.pdf \
-  --pdf-poppler \
-  --export-plain-svg \
-  --export-filename=uw-logo-horizontal-full-color-print.svg
-```
+`uw-logo-horizontal-color-web-digital.svg` is the University of Wisconsin–Madison horizontal wordmark used by the conference poster. The poster references the checked-in SVG directly so Typst receives a standard vector image without a separate conversion step.
 
 `repo-qr.svg` links to the repository landing page used on the poster.

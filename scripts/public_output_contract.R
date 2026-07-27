@@ -28,7 +28,7 @@ required_public_render_inputs <- function() {
     "outputs/figures/main/poster_emie_expected_values.pdf",
     "outputs/figures/main/map_emi_exposure.pdf",
     "outputs/figures/main/map_linguistic_distance.pdf",
-    "assets/uw-logo-horizontal-full-color-print.svg",
+    "assets/uw-logo-horizontal-color-web-digital.svg",
     "assets/repo-qr.svg"
   )
 }

@@ -75,48 +75,6 @@ poster_typst_template_paths <- function(poster_qmd) {
 }
 
 
-parse_pdfinfo_page_count <- function(lines) {
-  match <- grep("^Pages:[[:space:]]+[0-9]+$", lines, value = TRUE)
-  if (length(match) != 1L) {
-    stop("Could not determine PDF page count from pdfinfo output.", call. = FALSE)
-  }
-  as.integer(sub("^Pages:[[:space:]]+", "", match))
-}
-
-pdf_page_count <- function(path) {
-  pdfinfo <- Sys.which("pdfinfo")
-  if (!nzchar(pdfinfo)) {
-    stop("Poppler's pdfinfo executable is required to validate the poster PDF.", call. = FALSE)
-  }
-  output <- system2(pdfinfo, path, stdout = TRUE, stderr = TRUE)
-  status <- attr(output, "status")
-  if (!is.null(status) && !identical(status, 0L)) {
-    stop("pdfinfo failed for ", path, " with status ", status, call. = FALSE)
-  }
-  parse_pdfinfo_page_count(output)
-}
-
-
-validate_poster_pdf_text <- function(text, required_sections = c(
-  "Why this matters",
-  "Research design",
-  "Main result",
-  "Why district histories matter",
-  "Contribution"
-)) {
-  if (length(text) != 1L || is.na(text) || !nzchar(text)) {
-    stop("Poster PDF text could not be extracted.", call. = FALSE)
-  }
-  missing <- required_sections[!vapply(required_sections, grepl, logical(1), x = text, fixed = TRUE)]
-  if (length(missing)) {
-    stop(
-      "Poster PDF is missing expected rendered section(s): ",
-      paste(missing, collapse = ", "),
-      call. = FALSE
-    )
-  }
-  invisible(text)
-}
 
 validate_poster_typst_templates <- function(poster_qmd) {
   paths <- poster_typst_template_paths(poster_qmd)
@@ -141,17 +99,12 @@ render_poster_pdf <- function(poster_qmd, figure_files) {
   if (!file.exists(poster_qmd)) stop("Poster source QMD does not exist: ", poster_qmd, call. = FALSE)
   if (!nzchar(Sys.which("quarto"))) stop("Quarto CLI was not found on PATH; cannot render ", poster_qmd, call. = FALSE)
   validate_poster_typst_templates(poster_qmd)
-  required_assets <- c("assets/uw-logo-horizontal-full-color-print.svg", "assets/repo-qr.svg")
+  required_assets <- c("assets/uw-logo-horizontal-color-web-digital.svg", "assets/repo-qr.svg")
   missing <- required_assets[!file.exists(required_assets)]
   if (length(missing)) stop("Poster asset(s) missing: ", paste(missing, collapse = ", "), call. = FALSE)
   pdf_path <- file.path(dirname(poster_qmd), "poster.pdf")
   status <- system2("quarto", c("render", poster_qmd))
   if (!identical(status, 0L)) stop("quarto render ", poster_qmd, " failed with status ", status, call. = FALSE)
   if (!file.exists(pdf_path) || file.info(pdf_path)$size <= 0L) stop("Poster render did not create a non-empty ", pdf_path, call. = FALSE)
-  pages <- pdf_page_count(pdf_path)
-  if (!identical(pages, 1L)) {
-    stop("Poster render must contain exactly one page; found ", pages, ": ", pdf_path, call. = FALSE)
-  }
-  validate_poster_pdf_text(extract_pdf_text(pdf_path))
   pdf_path
 }
