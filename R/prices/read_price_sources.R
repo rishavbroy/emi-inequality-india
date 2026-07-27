@@ -320,10 +320,25 @@ aggregate_cpi_iw_to_state <- function(centre_index, centre_weights) {
   out[order(out$state_code, out$period), , drop = FALSE]
 }
 
-read_price_sources <- function(paths, cpi_iw_weights_file = "data/metadata/cpi_iw_centres_2001.csv") {
+validate_price_source_paths <- function(paths) {
   required <- c("cpi_alrl", "cpi_iw", "cpi_ruc_2010", "cpi_ruc_2012")
+  if (is.null(names(paths))) {
+    stop("Price-source paths must be named.", call. = FALSE)
+  }
   missing <- setdiff(required, names(paths))
-  if (length(missing)) stop("Price-source paths are missing: ", paste(missing, collapse = ", "), call. = FALSE)
+  if (length(missing)) {
+    stop("Price-source paths are missing: ", paste(missing, collapse = ", "), call. = FALSE)
+  }
+  out <- as.list(paths[required])
+  bad <- !vapply(out, function(x) length(x) == 1L && !is.na(x) && nzchar(as.character(x)), logical(1))
+  if (any(bad)) {
+    stop("Price-source paths must contain one nonempty path per source.", call. = FALSE)
+  }
+  lapply(out, as.character)
+}
+
+read_price_sources <- function(paths, cpi_iw_weights_file = "data/metadata/cpi_iw_centres_2001.csv") {
+  paths <- validate_price_source_paths(paths)
   weights <- read_cpi_iw_weights(cpi_iw_weights_file)
   iw_centres <- read_cpi_iw_centres(paths$cpi_iw, base_year = 2001)
   list(
@@ -347,5 +362,5 @@ price_source_paths <- function(paths) {
   )
   found <- match(unname(wanted), rows$file_id)
   if (anyNA(found)) stop("The price manifest does not register all four production CPI files.", call. = FALSE)
-  stats::setNames(rows$absolute_path[found], names(wanted))
+  validate_price_source_paths(stats::setNames(rows$absolute_path[found], names(wanted)))
 }

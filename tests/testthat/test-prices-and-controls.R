@@ -430,3 +430,18 @@ test_that("price manifest exposes the four production CPI inputs", {
   expect_equal(nrow(rows), 4L)
   expect_true(all(tolower(rows$required_for_current_pipeline) == "true"))
 })
+
+
+test_that("price-source adapters return one named path per production series", {
+  paths <- c(
+    cpi_alrl = "alrl.csv",
+    cpi_iw = "iw.csv",
+    cpi_ruc_2010 = "ruc2010.csv",
+    cpi_ruc_2012 = "ruc2012.csv"
+  )
+  out <- validate_price_source_paths(paths)
+  expect_type(out, "list")
+  expect_named(out, names(paths))
+  expect_equal(unlist(out, use.names = FALSE), unname(paths))
+  expect_error(validate_price_source_paths(unname(paths)), "must be named")
+})
