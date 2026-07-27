@@ -125,6 +125,9 @@ clean-benchmarking:
 	mkdir -p outputs/benchmarking
 	find outputs/benchmarking -mindepth 1 ! -name README.md -exec rm -rf {} +
 
+poster: $(QUARTO_CACHE_DIRS)
+	EMI_CONFIG=config/final.yml Rscript scripts/run_targets_checked.R --targets poster
+
 report: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
 	EMI_CONFIG=config/final.yml Rscript scripts/run_targets_checked.R --targets report
 
