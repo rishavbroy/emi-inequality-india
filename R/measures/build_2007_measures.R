@@ -9,7 +9,7 @@
 
 #' build 2007 measures
 #'
-build_2007_measures <- function(nss_2007_education, nss_2007_consumption, cfg) {
+build_2007_measures <- function(nss_2007_education, nss_2007_consumption, cfg, consumption_households = NULL) {
   edu <- as_input_list(nss_2007_education)
   cons <- as_input_list(nss_2007_consumption)
 
@@ -20,7 +20,8 @@ build_2007_measures <- function(nss_2007_education, nss_2007_consumption, cfg) {
 
   out <- compute_emie_2007(b5)
   if (!nrow(out)) return(empty_panel())
-  out <- merge_measure_2007(out, compute_education_household_measures_2007(b3))
+  if (is.null(consumption_households)) consumption_households <- prepare_2007_consumption_households(b3)
+  out <- merge_measure_2007(out, aggregate_consumption_households(consumption_households, district_group_vars_2007(consumption_households), "0708"))
   out <- merge_measure_2007(out, compute_baseline_controls_2007(b4, b3))
   out <- merge_measure_2007(out, compute_housing_controls_2007(cons_hh))
   out <- attach_2007_district_names(out, nss_2007_education)
@@ -123,41 +124,35 @@ english_medium_indicator <- function(x, column_name = NULL) {
   as.numeric(code == "02")
 }
 
+#' Prepare one row per 2007 education household for consumption aggregation
+#'
+prepare_2007_consumption_households <- function(nss_2007_education, deflators = NULL) {
+  df <- if (inherits(nss_2007_education, "data.frame")) {
+    safe_df(nss_2007_education)
+  } else {
+    inputs <- as_input_list(nss_2007_education)
+    safe_df(select_input_frame(inputs, c("nss0708edu_block3", "block3", "block")))
+  }
+  df <- standardize_nss_2007_district_code(std(df, 2007L))
+  key <- district_group_vars_2007(df)
+  if (!nrow(df) || !length(key)) return(data.frame())
+  prepare_consumption_households(
+    df = df, wave = 2007L, district_keys = key,
+    value_candidates = c("TOTAL", "total", "HH_Con_exp_rs", "consumption", "MPCE", "mpce", "consumption_pc", "consumption_per_capita"),
+    size_candidates = c("HH_SIZE", "HH_Size", "household_size"),
+    weight_candidates = c("weight", "WEIGHT", "Multiplier", "multiplier"),
+    state_candidates = c("state_code", "State", "STATE", "state", "state_std"),
+    sector_candidates = c("Sector", "SECTOR", "sector", "Location_sector"),
+    subround_candidates = c("Sub_Round", "Sub Round", "sub_round", "subround", "Subround"),
+    deflators = deflators
+  )
+}
+
 #' compute education household measures 2007
 #'
 compute_education_household_measures_2007 <- function(df) {
-  df <- standardize_nss_2007_district_code(std(df, 2007L))
-  key <- district_group_vars_2007(df)
-  if (!nrow(df) || !length(key)) return(data.frame(district_code_0708 = character(), state_std = character(), district_std = character()))
-  weight <- first_col(df, c("weight", "WEIGHT", "Multiplier", "multiplier"))
-  hh_size <- first_col(df, c("HH_SIZE", "HH_Size", "household_size"))
-  total <- first_col(df, c("TOTAL", "total", "HH_Con_exp_rs", "consumption"))
-  mpce <- first_col(df, c("MPCE", "mpce", "consumption_pc", "consumption_per_capita"))
-  if (is.null(weight) || (is.null(mpce) && (is.null(hh_size) || is.null(total)))) return(data.frame(district_code_0708 = character()))
-  hh_key <- first_col(df, c("HHID", "HH_ID", "household_id"))
-  if (!is.null(hh_key)) {
-    df$.hh_distinct_key <- paste(do.call(paste, c(df[district_group_vars_2007(df)], sep = "__")), canon(df[[hh_key]]), sep = "__")
-    df <- df[!duplicated(df$.hh_distinct_key), , drop = FALSE]
-  }
-  idx <- which(stats::complete.cases(df[key]))
-  split_i <- split(idx, interaction(df[idx, key, drop = FALSE], drop = TRUE, sep = "__"))
-  safe_bind_rows(lapply(split_i, function(i) {
-    w <- num(df[[weight]][i])
-    size <- if (!is.null(hh_size)) num(df[[hh_size]][i]) else rep(1, length(i))
-    cons_pc <- if (!is.null(mpce)) num(df[[mpce]][i]) else num(df[[total]][i]) / size
-    z <- df[i[[1]], key, drop = FALSE]
-    z <- z[rep(1L, 1L), , drop = FALSE]
-    total_value <- cons_pc * size
-    data.frame(
-      z,
-      npeople_0708 = sum(w * size, na.rm = TRUE),
-      nhouses_0708 = sum(w, na.rm = TRUE),
-      consumption_0708 = mean_expenditure_per_person(total_value, size, w),
-      consumption_0708_household_weighted = mean_household_mpce(total_value, size, w),
-      gini_cons_0708 = person_weighted_mpce_gini(total_value, size, w),
-      stringsAsFactors = FALSE
-    )
-  }))
+  households <- prepare_2007_consumption_households(df)
+  aggregate_consumption_households(households, district_group_vars_2007(households), "0708")
 }
 
 

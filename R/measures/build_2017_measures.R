@@ -3,52 +3,38 @@
 
 #' build 2017 measures
 #'
-build_2017_measures <- function(nss_2017_education, cfg) {
+build_2017_measures <- function(nss_2017_education, cfg, consumption_households = NULL) {
   inputs <- as_input_list(nss_2017_education)
-  df <- std(safe_df(select_input_frame_2017(inputs, c("nss1718edu_block3", "block3", "block"))), 2017L)
-  df <- normalize_2017_district_code(df)
-  key <- district_group_vars_2017(df)
-  if (!length(key) || !nrow(df)) return(empty_panel())
+  if (is.null(consumption_households)) consumption_households <- prepare_2017_consumption_households(inputs)
+  key <- district_group_vars_2017(consumption_households)
+  if (!length(key) || !nrow(consumption_households)) return(empty_panel())
 
-  value <- first_col(df, c("HH_Con_exp_rs", "MPCE", "mpce", "consumption", "hh_cons"))
-  hh_size <- first_col(df, c("Household_size", "HH_SIZE", "household_size"))
-  weight <- first_col(df, c("MULT_Combined", "weight", "WEIGHT", "multiplier"))
-  if (is.null(value) || is.null(weight)) return(empty_panel())
-
-  hh_key <- first_col(df, c("HHID", "HH_ID", "household_id"))
-  if (!is.null(hh_key)) {
-    df$.hh_distinct_key <- paste(do.call(paste, c(df[key], sep = "__")), canon(df[[hh_key]]), sep = "__")
-    df <- df[!duplicated(df$.hh_distinct_key), , drop = FALSE]
-  }
-  if (!is.null(hh_size)) {
-    df$consumption_pc_2017 <- num(df[[value]]) / num(df[[hh_size]])
-  } else {
-    df$consumption_pc_2017 <- num(df[[value]])
-  }
-
-  idx <- which(stats::complete.cases(df[key]))
-  split_i <- split(idx, interaction(df[idx, key, drop = FALSE], drop = TRUE, sep = "__"))
-  out <- safe_bind_rows(lapply(split_i, function(i) {
-    w <- num(df[[weight]][i])
-    size <- if (!is.null(hh_size)) num(df[[hh_size]][i]) else rep(1, length(i))
-    z <- df[i[[1]], key, drop = FALSE]
-    z <- z[rep(1L, 1L), , drop = FALSE]
-    total_value <- df$consumption_pc_2017[i] * size
-    data.frame(
-      z,
-      consumption_1718 = mean_expenditure_per_person(total_value, size, w),
-      consumption_1718_household_weighted = mean_household_mpce(total_value, size, w),
-      gini_cons_1718 = person_weighted_mpce_gini(total_value, size, w),
-      npeople_1718 = sum(w * size, na.rm = TRUE),
-      nhouses_1718 = sum(w, na.rm = TRUE),
-      stringsAsFactors = FALSE
-    )
-  }))
+  out <- aggregate_consumption_households(consumption_households, key, "1718")
   out <- attach_2017_district_names(out, inputs)
   if (all(c("state_std", "district_std") %in% names(out))) {
     out$district_panel_id <- make_district_key(out$state_std, out$district_std, 2017L)
   }
   out
+}
+
+#' Prepare one row per 2017 education household for consumption aggregation
+#'
+prepare_2017_consumption_households <- function(nss_2017_education, deflators = NULL) {
+  inputs <- as_input_list(nss_2017_education)
+  df <- std(safe_df(select_input_frame_2017(inputs, c("nss1718edu_block3", "block3", "block"))), 2017L)
+  df <- normalize_2017_district_code(df)
+  key <- district_group_vars_2017(df)
+  if (!nrow(df) || !length(key)) return(data.frame())
+  prepare_consumption_households(
+    df = df, wave = 2017L, district_keys = key,
+    value_candidates = c("HH_Con_exp_rs", "MPCE", "mpce", "consumption", "hh_cons"),
+    size_candidates = c("Household_size", "HH_SIZE", "household_size"),
+    weight_candidates = c("MULT_Combined", "weight", "WEIGHT", "multiplier"),
+    state_candidates = c("State_Code", "state_code", "State", "STATE", "state", "state_std"),
+    sector_candidates = c("Sector", "SECTOR", "sector", "Location_sector"),
+    subround_candidates = c("Sub_Round", "Sub Round", "sub_round", "subround", "Subround"),
+    deflators = deflators
+  )
 }
 
 select_input_frame_2017 <- function(inputs, candidates) {

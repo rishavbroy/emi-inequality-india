@@ -1,0 +1,91 @@
+# Household-level real-consumption construction shared by NSS 64 and NSS 75.
+
+prepare_consumption_households <- function(
+    df, wave, district_keys, value_candidates, size_candidates, weight_candidates,
+    state_candidates, sector_candidates, subround_candidates, deflators = NULL) {
+  df <- safe_df(df)
+  if (!nrow(df)) return(df)
+  value_col <- first_col(df, value_candidates)
+  size_col <- first_col(df, size_candidates)
+  weight_col <- first_col(df, weight_candidates)
+  if (is.null(value_col) || is.null(weight_col)) return(data.frame())
+
+  hh_key <- first_col(df, c("HHID", "HH_ID", "household_id", "HHID_key"))
+  if (!is.null(hh_key)) {
+    district_key <- do.call(paste, c(df[district_keys], sep = "__"))
+    df$.hh_distinct_key <- paste(district_key, canon(df[[hh_key]]), sep = "__")
+    df <- df[!duplicated(df$.hh_distinct_key), , drop = FALSE]
+  }
+
+  size <- if (is.null(size_col)) rep(1, nrow(df)) else num(df[[size_col]])
+  nominal_value <- num(df[[value_col]])
+  value_is_total <- tolower(value_col) %in% tolower(c("TOTAL", "HH_Con_exp_rs", "consumption", "hh_cons"))
+  nominal_total <- if (value_is_total) nominal_value else nominal_value * size
+  nominal_pc <- nominal_total / size
+  weight <- num(df[[weight_col]])
+  valid <- positive_finite(size) & positive_finite(nominal_total) & positive_finite(weight)
+  df <- df[valid, , drop = FALSE]
+  size <- size[valid]
+  nominal_total <- nominal_total[valid]
+  nominal_pc <- nominal_pc[valid]
+  weight <- weight[valid]
+  if (!nrow(df)) return(df)
+
+  df$consumption_nominal_total <- nominal_total
+  df$consumption_nominal_pc <- nominal_pc
+  df$household_size_price <- size
+  df$survey_weight_price <- weight
+
+  if (!is.null(deflators)) {
+    state_col <- first_col(df, state_candidates)
+    sector_col <- first_col(df, sector_candidates)
+    subround_col <- first_col(df, subround_candidates)
+    missing <- c(state = is.null(state_col), sector = is.null(sector_col), subround = is.null(subround_col))
+    if (any(missing)) stop("NSS household file lacks price keys: ", paste(names(missing)[missing], collapse = ", "), call. = FALSE)
+    df <- attach_nss_subround_deflator(df, deflators, wave, state_col, sector_col, subround_col)
+    df$consumption_real_total <- df$consumption_nominal_total / df$price_deflator
+    df$consumption_real_pc <- df$consumption_nominal_pc / df$price_deflator
+  }
+  df
+}
+
+aggregate_consumption_households <- function(households, district_keys, suffix) {
+  df <- safe_df(households)
+  if (!nrow(df) || !length(district_keys)) return(data.frame())
+  idx <- which(stats::complete.cases(df[district_keys]))
+  split_i <- split(idx, interaction(df[idx, district_keys, drop = FALSE], drop = TRUE, sep = "__"))
+  safe_bind_rows(lapply(split_i, function(i) {
+    z <- df[i[[1]], district_keys, drop = FALSE]
+    w <- num(df$survey_weight_price[i])
+    size <- num(df$household_size_price[i])
+    nominal <- num(df$consumption_nominal_total[i])
+    out <- data.frame(
+      z,
+      stringsAsFactors = FALSE
+    )
+    out[[paste0("consumption_", suffix)]] <- mean_expenditure_per_person(nominal, size, w)
+    out[[paste0("consumption_", suffix, "_household_weighted")]] <- mean_household_mpce(nominal, size, w)
+    out[[paste0("gini_cons_", suffix)]] <- person_weighted_mpce_gini(nominal, size, w)
+    out[[paste0("npeople_", suffix)]] <- sum(w * size, na.rm = TRUE)
+    out[[paste0("nhouses_", suffix)]] <- sum(w, na.rm = TRUE)
+    if ("consumption_real_total" %in% names(df)) {
+      real <- num(df$consumption_real_total[i])
+      out[[paste0("real_consumption_", suffix)]] <- mean_expenditure_per_person(real, size, w)
+      out[[paste0("real_consumption_", suffix, "_household_weighted")]] <- mean_household_mpce(real, size, w)
+      out[[paste0("gini_cons_", suffix, "_real")]] <- person_weighted_mpce_gini(real, size, w)
+      out[[paste0("price_deflator_", suffix, "_person_weighted")]] <- stats::weighted.mean(
+        num(df$price_deflator[i]), w * size, na.rm = TRUE
+      )
+      out[[paste0("price_fallback_household_share_", suffix)]] <- weighted_fallback_share(df$state_rule[i], w)
+    }
+    out
+  }))
+}
+
+weighted_fallback_share <- function(rule, weight) {
+  rule <- as.character(rule)
+  weight <- num(weight)
+  keep <- positive_finite(weight) & !is.na(rule)
+  if (!any(keep)) return(NA_real_)
+  100 * sum(weight[keep] * (rule[keep] != "direct")) / sum(weight[keep])
+}

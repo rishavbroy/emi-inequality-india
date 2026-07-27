@@ -336,3 +336,16 @@ read_price_sources <- function(paths, cpi_iw_weights_file = "data/metadata/cpi_i
     cpi_iw_weights = weights
   )
 }
+
+price_source_paths <- function(paths) {
+  rows <- require_manifest_files(paths, source_id = "prices")
+  wanted <- c(
+    cpi_alrl = "price_cpi_alrl_state",
+    cpi_iw = "price_cpi_iw_centres",
+    cpi_ruc_2010 = "price_cpi_ruc_2010",
+    cpi_ruc_2012 = "price_cpi_ruc_2012"
+  )
+  found <- match(unname(wanted), rows$file_id)
+  if (anyNA(found)) stop("The price manifest does not register all four production CPI files.", call. = FALSE)
+  stats::setNames(rows$absolute_path[found], names(wanted))
+}
