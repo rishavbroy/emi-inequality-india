@@ -93,8 +93,23 @@ read_cpi_ruc_state <- function(path, expected_base = NULL) {
 }
 
 classify_alrl_series <- function(raw) {
+  type_col <- price_column(
+    raw,
+    c("TYPE_LABOU_RN", "TYPE_LABOUR_RN", "LABOUR_TYPE", "LABOURER_TYPE"),
+    required = FALSE
+  )
+  if (!is.null(type_col)) {
+    value <- toupper(trimws(as.character(raw[[type_col]])))
+    out <- rep(NA_character_, length(value))
+    out[value %in% c("AL", "AGRICULTURAL LABOUR", "AGRICULTURAL LABOURER", "AGRICULTURAL LABOURERS")] <-
+      "agricultural_labour"
+    out[value %in% c("RL", "RURAL LABOUR", "RURAL LABOURER", "RURAL LABOURERS")] <-
+      "rural_labour"
+    return(out)
+  }
+
   candidates <- intersect(
-    c("ELEMENT", "DATAFLOW", "COMD_ITEM", "COMMODITY", "COVERAGE_GEO_RN", "SERIES_NAME"),
+    c("ELEMENT", "COMD_ITEM", "COMMODITY", "COVERAGE_GEO_RN", "SERIES_NAME"),
     names(raw)
   )
   text <- if (length(candidates)) {
@@ -103,8 +118,8 @@ classify_alrl_series <- function(raw) {
     rep("", nrow(raw))
   }
   out <- rep(NA_character_, length(text))
-  out[grepl("AGRICULTURAL LABOUR|CPI[_ -]?AL|AGRL", text)] <- "agricultural_labour"
-  out[grepl("RURAL LABOUR|CPI[_ -]?RL", text)] <- "rural_labour"
+  out[grepl("AGRICULTURAL LABOUR", text, fixed = TRUE)] <- "agricultural_labour"
+  out[grepl("RURAL LABOUR", text, fixed = TRUE)] <- "rural_labour"
   out
 }
 
@@ -114,10 +129,10 @@ read_cpi_alrl_state <- function(path) {
   date_col <- price_column(raw, c("TIME_PERIOD", "TIME"))
   value_col <- price_column(raw, c("OBS_VALUE", "VALUE_IN_ACTUALS", "VALUE"))
   series <- classify_alrl_series(raw)
-  if (all(is.na(series))) {
-    stop("Could not distinguish CPI-AL from CPI-RL rows in the RBI file.", call. = FALSE)
+  if (anyNA(series)) {
+    stop("Could not distinguish CPI-AL from CPI-RL for every row in the RBI file.", call. = FALSE)
   }
-  keep <- !is.na(series)
+  keep <- rep(TRUE, length(series))
   out <- data.frame(
     state_code = as.character(raw[[state_col]][keep]),
     labour_series = series[keep],

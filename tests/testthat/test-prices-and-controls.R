@@ -76,6 +76,37 @@ test_that("RBI CPI-AL and CPI-RL rows are distinguished explicitly", {
 })
 
 
+test_that("RBI CPI-AL/RL reader uses the export's labour-type dimension", {
+  path <- tempfile(fileext = ".csv")
+  utils::write.csv(data.frame(
+    DATAFLOW = "RBI:CPI_ALRL_ST_RN(1.0)",
+    TYPE_LABOU_RN = c("AL", "RL"),
+    STATE_CODE = "ANP", TIME_PERIOD = "2007-07-31", OBS_VALUE = c(410, 415)
+  ), path, row.names = FALSE)
+
+  out <- read_cpi_alrl_state(path)
+  expect_equal(out$labour_series, c("agricultural_labour", "rural_labour"))
+  expect_equal(out$index, c(410, 415))
+  expect_false(anyDuplicated(out[c("state_code", "labour_series", "year", "month")]) > 0L)
+})
+
+
+test_that("generic ALRL dataflow labels do not classify rows without a labour type", {
+  raw <- data.frame(DATAFLOW = rep("RBI:CPI_ALRL_ST_RN(1.0)", 2))
+  expect_true(all(is.na(classify_alrl_series(raw))))
+})
+
+
+test_that("CPI-AL/RL reader rejects unrecognized labour-type values", {
+  path <- tempfile(fileext = ".csv")
+  utils::write.csv(data.frame(
+    TYPE_LABOU_RN = c("AL", "OTHER"), STATE_CODE = "ANP",
+    TIME_PERIOD = "2007-07-31", OBS_VALUE = c(410, 415)
+  ), path, row.names = FALSE)
+  expect_error(read_cpi_alrl_state(path), "for every row")
+})
+
+
 test_that("CPI-IW reader retains the published All-India series for explicit fallbacks", {
   path <- tempfile(fileext = ".csv")
   utils::write.csv(data.frame(
