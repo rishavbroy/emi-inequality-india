@@ -573,7 +573,10 @@ test_that("coding-sample specifications use one valid nonempty marker pair", {
         repo_file(excerpt$file),
         excerpt$id
       )
-      expect_gt(sum(nzchar(trimws(lines))), 1L, info = excerpt$id)
+      expect_true(
+        sum(nzchar(trimws(lines))) > 1L,
+        info = excerpt$id
+      )
     }
   }
 })
