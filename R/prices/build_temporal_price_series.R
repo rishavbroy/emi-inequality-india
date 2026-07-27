@@ -20,6 +20,9 @@ select_pre_2013_price_series <- function(price_sources) {
 
   rural <- safe_df(price_sources$cpi_alrl)
   urban <- safe_df(price_sources$cpi_iw_states)
+  if ("cpi_iw_all_india" %in% names(price_sources)) {
+    urban <- rbind(urban, safe_df(price_sources$cpi_iw_all_india))
+  }
 
   rural <- rural[rural$labour_series == "rural_labour", , drop = FALSE]
   if (!nrow(rural)) stop("CPI-RL has no rural-labour observations.", call. = FALSE)

@@ -157,6 +157,44 @@ normalise_cpi_iw_centre <- function(x) {
   key
 }
 
+read_cpi_iw_all_india <- function(path, base_year = 2001) {
+  raw <- read_rbi_price_csv(path)
+  coverage_col <- price_column(raw, c(
+    "CENTRE", "CENTER", "CENTRE_NAME", "CENTER_NAME", "CENTRE_CODE",
+    "CENTER_CODE", "GEOGRAPHICAL_COVERAGE", "GEOGRAPHICAL_COVERAGE_RN",
+    "STATE_CODE"
+  ))
+  date_col <- price_column(raw, c("TIME_PERIOD", "TIME"))
+  value_col <- price_column(raw, c("OBS_VALUE", "VALUE_IN_ACTUALS", "VALUE"))
+  base_col <- price_column(raw, c("BASE_PER", "BASE_PERIOD", "BASE_YEAR"), required = FALSE)
+  item_col <- price_column(raw, c("COMD_ITEM", "COMMODITY", "ELEMENT", "SERIES_NAME"), required = FALSE)
+
+  coverage <- toupper(trimws(as.character(raw[[coverage_col]])))
+  keep <- coverage %in% c("ALL INDIA", "ALL_INDIA", "ALL-INDIA")
+  if (!is.null(base_col)) {
+    keep <- keep & grepl(as.character(base_year), as.character(raw[[base_col]]), fixed = TRUE)
+  }
+  if (!is.null(item_col)) {
+    item <- toupper(as.character(raw[[item_col]]))
+    general <- grepl("GENERAL|CPI.IW|CPI_IW", item)
+    if (any(general)) keep <- keep & general
+  }
+  if (!any(keep)) stop("CPI-IW file has no All-India general-index rows on the requested base.", call. = FALSE)
+
+  out <- data.frame(
+    state_code = "ALL_INDIA",
+    sector = "urban",
+    period = price_month(raw[[date_col]][keep]),
+    index = price_numeric(raw[[value_col]][keep]),
+    stringsAsFactors = FALSE
+  )
+  out$year <- as.integer(format(out$period, "%Y"))
+  out$month <- as.integer(format(out$period, "%m"))
+  out$source_file <- basename(path)
+  validate_price_index(out)
+  out[order(out$period), , drop = FALSE]
+}
+
 read_cpi_iw_centres <- function(path, base_year = 2001) {
   raw <- read_rbi_price_csv(path)
   centre_col <- price_column(raw, c(
@@ -292,6 +330,7 @@ read_price_sources <- function(paths, cpi_iw_weights_file = "data/metadata/cpi_i
     cpi_alrl = read_cpi_alrl_state(paths$cpi_alrl),
     cpi_iw_centres = iw_centres,
     cpi_iw_states = aggregate_cpi_iw_to_state(iw_centres, weights),
+    cpi_iw_all_india = read_cpi_iw_all_india(paths$cpi_iw, base_year = 2001),
     cpi_ruc_2010 = read_cpi_ruc_state(paths$cpi_ruc_2010, expected_base = 2010),
     cpi_ruc_2012 = read_cpi_ruc_state(paths$cpi_ruc_2012, expected_base = 2012),
     cpi_iw_weights = weights
