@@ -13,3 +13,7 @@
 "data/metadata/district_geometry_carrybacks.csv","5d7397f323de63f6443268d5eda512f9"
 "data/metadata/district_legacy_mapping_reviews.csv","4fbfce199389482b990b9aa222cd6462"
 "data/metadata/district_primary_reviews.csv","018048cf3613dc57f96867002f3a965b"
+"data/metadata/cpi_iw_centres_2001.csv","b8884cd71775ee149cb9edf50a8ec420"
+"data/metadata/price_series_registry.csv","72c9c181b2b37810919b374513e61485"
+"data/metadata/price_state_crosswalk.csv","4ece77f7b1078fe52cc32ad75d7d5515"
+"data/metadata/tendulkar_poverty_lines_2011_12.csv","1aecfc0672041a59a7bce9ff21b084b7"

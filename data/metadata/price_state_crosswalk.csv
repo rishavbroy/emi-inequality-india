@@ -1,0 +1,30 @@
+target_state_code,target_state_name,sector,source_state_code,valid_from,valid_to,rule_type,reason,source
+ANN,Andaman and Nicobar Islands,rural,TN,1900-01-01,,fallback,Use Tamil Nadu when direct CPI-RL is unavailable; mirrors the official Tendulkar substitution,Planning Commission press note Table 2 note 2
+ANN,Andaman and Nicobar Islands,urban,TN,1900-01-01,,fallback,Use Tamil Nadu when direct CPI-IW is unavailable; mirrors the official Tendulkar substitution,Planning Commission press note Table 2 note 2
+CHD,Chandigarh,rural,PUN,1900-01-01,,fallback,Use Punjab when direct CPI-RL is unavailable; the official poverty-line rule uses Punjab urban for both sectors,Planning Commission press note Table 2 note 3
+CHD,Chandigarh,urban,PUN,1900-01-01,,fallback,Use Punjab when direct CPI-IW is unavailable; the official poverty-line rule uses Punjab urban for both sectors,Planning Commission press note Table 2 note 3
+DNHA,Dadra and Nagar Haveli,rural,MAH,1900-01-01,,fallback,Use Maharashtra when direct CPI-RL is unavailable; mirrors the official Tendulkar substitution,Planning Commission press note Table 2 note 4
+DNHA,Dadra and Nagar Haveli,urban,MAH,1900-01-01,,fallback,Use Maharashtra when direct CPI-IW is unavailable; mirrors the official Tendulkar substitution,Planning Commission press note Table 2 note 4
+DADI,Daman and Diu,rural,GOA,1900-01-01,,fallback,Use Goa when direct CPI-RL is unavailable; mirrors the official Tendulkar substitution,Planning Commission press note Table 2 note 5
+DADI,Daman and Diu,urban,GOA,1900-01-01,,fallback,Use Goa when direct CPI-IW is unavailable; mirrors the official Tendulkar substitution,Planning Commission press note Table 2 note 5
+LAK,Lakshadweep,rural,KER,1900-01-01,,fallback,Use Kerala when direct CPI-RL is unavailable; mirrors the official Tendulkar substitution,Planning Commission press note Table 2 note 6
+LAK,Lakshadweep,urban,KER,1900-01-01,,fallback,Use Kerala when direct CPI-IW is unavailable; mirrors the official Tendulkar substitution,Planning Commission press note Table 2 note 6
+TEL,Telangana,rural,ANP,1900-01-01,2012-12-01,inheritance,Use undivided Andhra Pradesh before the post-2012 state CPI-R/U series,Andhra Pradesh Reorganisation Act 2014
+TEL,Telangana,urban,ANP,1900-01-01,2012-12-01,inheritance,Use undivided Andhra Pradesh before the post-2012 state CPI-R/U series,Andhra Pradesh Reorganisation Act 2014
+ARP,Arunachal Pradesh,rural,ALL_INDIA,1900-01-01,2012-12-01,fallback,No state CPI-RL exists in the 20-state series; use the published All-India CPI-RL,Labour Bureau CPI-AL/RL scheme
+CHHT,Chhattisgarh,rural,ALL_INDIA,1900-01-01,2012-12-01,fallback,No state CPI-RL exists in the 20-state series; use the published All-India CPI-RL,Labour Bureau CPI-AL/RL scheme
+DEL,Delhi,rural,ALL_INDIA,1900-01-01,2012-12-01,fallback,No state CPI-RL exists in the 20-state series; use the published All-India CPI-RL,Labour Bureau CPI-AL/RL scheme
+GOA,Goa,rural,ALL_INDIA,1900-01-01,2012-12-01,fallback,No state CPI-RL exists in the 20-state series; use the published All-India CPI-RL,Labour Bureau CPI-AL/RL scheme
+JHK,Jharkhand,rural,ALL_INDIA,1900-01-01,2012-12-01,fallback,No state CPI-RL exists in the 20-state series; use the published All-India CPI-RL,Labour Bureau CPI-AL/RL scheme
+MIZO,Mizoram,rural,ALL_INDIA,1900-01-01,2012-12-01,fallback,No state CPI-RL exists in the 20-state series; use the published All-India CPI-RL,Labour Bureau CPI-AL/RL scheme
+NAGA,Nagaland,rural,ALL_INDIA,1900-01-01,2012-12-01,fallback,No state CPI-RL exists in the 20-state series; use the published All-India CPI-RL,Labour Bureau CPI-AL/RL scheme
+PY,Puducherry,rural,ALL_INDIA,1900-01-01,2012-12-01,fallback,No state CPI-RL exists in the 20-state series; use the published All-India CPI-RL,Labour Bureau CPI-AL/RL scheme
+SIKK,Sikkim,rural,ALL_INDIA,1900-01-01,2012-12-01,fallback,No state CPI-RL exists in the 20-state series; use the published All-India CPI-RL,Labour Bureau CPI-AL/RL scheme
+UK,Uttarakhand,rural,ALL_INDIA,1900-01-01,2012-12-01,fallback,No state CPI-RL exists in the 20-state series; use the published All-India CPI-RL,Labour Bureau CPI-AL/RL scheme
+ARP,Arunachal Pradesh,urban,ALL_INDIA,1900-01-01,2012-12-01,fallback,No CPI-IW centre exists in the 78-centre system; use the published All-India CPI-IW,Labour Bureau CPI-IW 2001-base compendium
+MANI,Manipur,urban,ALL_INDIA,1900-01-01,2012-12-01,fallback,No CPI-IW centre exists in the 78-centre system; use the published All-India CPI-IW,Labour Bureau CPI-IW 2001-base compendium
+MEG,Meghalaya,urban,ALL_INDIA,1900-01-01,2012-12-01,fallback,No CPI-IW centre exists in the 78-centre system; use the published All-India CPI-IW,Labour Bureau CPI-IW 2001-base compendium
+MIZO,Mizoram,urban,ALL_INDIA,1900-01-01,2012-12-01,fallback,No CPI-IW centre exists in the 78-centre system; use the published All-India CPI-IW,Labour Bureau CPI-IW 2001-base compendium
+NAGA,Nagaland,urban,ALL_INDIA,1900-01-01,2012-12-01,fallback,No CPI-IW centre exists in the 78-centre system; use the published All-India CPI-IW,Labour Bureau CPI-IW 2001-base compendium
+SIKK,Sikkim,urban,ALL_INDIA,1900-01-01,2012-12-01,fallback,No CPI-IW centre exists in the 78-centre system; use the published All-India CPI-IW,Labour Bureau CPI-IW 2001-base compendium
+UK,Uttarakhand,urban,ALL_INDIA,1900-01-01,2012-12-01,fallback,No CPI-IW centre exists in the 78-centre system; use the published All-India CPI-IW,Labour Bureau CPI-IW 2001-base compendium

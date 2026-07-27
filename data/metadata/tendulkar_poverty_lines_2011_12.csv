@@ -1,0 +1,73 @@
+state_code,state_name,sector,poverty_line_rupees,source_state_code,fallback_reason,source_page,source_table
+ANP,Andhra Pradesh,rural,860,ANP,,5,Table 1
+ANP,Andhra Pradesh,urban,1009,ANP,,5,Table 1
+ARP,Arunachal Pradesh,rural,930,ARP,,5,Table 1
+ARP,Arunachal Pradesh,urban,1060,ARP,,5,Table 1
+ASM,Assam,rural,828,ASM,,5,Table 1
+ASM,Assam,urban,1008,ASM,,5,Table 1
+BIH,Bihar,rural,778,BIH,,5,Table 1
+BIH,Bihar,urban,923,BIH,,5,Table 1
+CHHT,Chhattisgarh,rural,738,CHHT,,5,Table 1
+CHHT,Chhattisgarh,urban,849,CHHT,,5,Table 1
+DEL,Delhi,rural,1145,DEL,,5,Table 1
+DEL,Delhi,urban,1134,DEL,,5,Table 1
+GOA,Goa,rural,1090,GOA,,5,Table 1
+GOA,Goa,urban,1134,GOA,,5,Table 1
+GUJ,Gujarat,rural,932,GUJ,,5,Table 1
+GUJ,Gujarat,urban,1152,GUJ,,5,Table 1
+HAR,Haryana,rural,1015,HAR,,5,Table 1
+HAR,Haryana,urban,1169,HAR,,5,Table 1
+HP,Himachal Pradesh,rural,913,HP,,5,Table 1
+HP,Himachal Pradesh,urban,1064,HP,,5,Table 1
+JNK,Jammu and Kashmir,rural,891,JNK,,5,Table 1
+JNK,Jammu and Kashmir,urban,988,JNK,,5,Table 1
+JHK,Jharkhand,rural,748,JHK,,5,Table 1
+JHK,Jharkhand,urban,974,JHK,,5,Table 1
+KAR,Karnataka,rural,902,KAR,,5,Table 1
+KAR,Karnataka,urban,1089,KAR,,5,Table 1
+KER,Kerala,rural,1018,KER,,5,Table 1
+KER,Kerala,urban,987,KER,,5,Table 1
+MP,Madhya Pradesh,rural,771,MP,,5,Table 1
+MP,Madhya Pradesh,urban,897,MP,,5,Table 1
+MAH,Maharashtra,rural,967,MAH,,5,Table 1
+MAH,Maharashtra,urban,1126,MAH,,5,Table 1
+MANI,Manipur,rural,1118,MANI,,5,Table 1
+MANI,Manipur,urban,1170,MANI,,5,Table 1
+MEG,Meghalaya,rural,888,MEG,,5,Table 1
+MEG,Meghalaya,urban,1154,MEG,,5,Table 1
+MIZO,Mizoram,rural,1066,MIZO,,5,Table 1
+MIZO,Mizoram,urban,1155,MIZO,,5,Table 1
+NAGA,Nagaland,rural,1270,NAGA,,5,Table 1
+NAGA,Nagaland,urban,1302,NAGA,,5,Table 1
+OD,Odisha,rural,695,OD,,5,Table 1
+OD,Odisha,urban,861,OD,,5,Table 1
+PUN,Punjab,rural,1054,PUN,,5,Table 1
+PUN,Punjab,urban,1155,PUN,,5,Table 1
+RAJA,Rajasthan,rural,905,RAJA,,5,Table 1
+RAJA,Rajasthan,urban,1002,RAJA,,5,Table 1
+SIKK,Sikkim,rural,930,SIKK,,5,Table 1
+SIKK,Sikkim,urban,1226,SIKK,,5,Table 1
+TN,Tamil Nadu,rural,880,TN,,5,Table 1
+TN,Tamil Nadu,urban,937,TN,,5,Table 1
+TRI,Tripura,rural,798,TRI,,5,Table 1
+TRI,Tripura,urban,920,TRI,,5,Table 1
+UK,Uttarakhand,rural,880,UK,,5,Table 1
+UK,Uttarakhand,urban,1082,UK,,5,Table 1
+UP,Uttar Pradesh,rural,768,UP,,5,Table 1
+UP,Uttar Pradesh,urban,941,UP,,5,Table 1
+WB,West Bengal,rural,783,WB,,5,Table 1
+WB,West Bengal,urban,981,WB,,5,Table 1
+PY,Puducherry,rural,1301,PY,,5,Table 1
+PY,Puducherry,urban,1309,PY,,5,Table 1
+ANN,Andaman and Nicobar Islands,rural,880,TN,Tamil Nadu poverty line used officially,6,Table 2 note 2
+ANN,Andaman and Nicobar Islands,urban,937,TN,Tamil Nadu poverty line used officially,6,Table 2 note 2
+CHD,Chandigarh,rural,1155,PUN,Punjab urban poverty line used for both sectors,6,Table 2 note 3
+CHD,Chandigarh,urban,1155,PUN,Punjab urban poverty line used for both sectors,6,Table 2 note 3
+DNHA,Dadra and Nagar Haveli,rural,967,MAH,Maharashtra poverty line used officially,6,Table 2 note 4
+DNHA,Dadra and Nagar Haveli,urban,1126,MAH,Maharashtra poverty line used officially,6,Table 2 note 4
+DADI,Daman and Diu,rural,1090,GOA,Goa poverty line used officially,6,Table 2 note 5
+DADI,Daman and Diu,urban,1134,GOA,Goa poverty line used officially,6,Table 2 note 5
+LAK,Lakshadweep,rural,1018,KER,Kerala poverty line used officially,6,Table 2 note 6
+LAK,Lakshadweep,urban,987,KER,Kerala poverty line used officially,6,Table 2 note 6
+TEL,Telangana,rural,860,ANP,Inherited undivided Andhra Pradesh 2011-12 spatial anchor,5,Table 1
+TEL,Telangana,urban,1009,ANP,Inherited undivided Andhra Pradesh 2011-12 spatial anchor,5,Table 1
