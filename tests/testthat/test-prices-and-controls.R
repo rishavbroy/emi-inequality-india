@@ -75,6 +75,22 @@ test_that("RBI CPI-AL and CPI-RL rows are distinguished explicitly", {
   expect_equal(out$sector, c("rural", "rural"))
 })
 
+
+test_that("CPI-IW reader retains the published All-India series for explicit fallbacks", {
+  path <- tempfile(fileext = ".csv")
+  utils::write.csv(data.frame(
+    BASE_PER = "BY_2001", COMD_ITEM = "GENERAL INDEX",
+    CENTRE = c("All India", "Guntur"),
+    TIME_PERIOD = c("2007-07-31", "2007-07-31"),
+    OBS_VALUE = c(125, 130)
+  ), path, row.names = FALSE)
+
+  out <- read_cpi_iw_all_india(path)
+  expect_equal(out$state_code, "ALL_INDIA")
+  expect_equal(out$sector, "urban")
+  expect_equal(out$index, 125)
+})
+
 test_that("CPI-IW state indices use official centre weights", {
   path <- tempfile(fileext = ".csv")
   utils::write.csv(data.frame(
@@ -231,4 +247,93 @@ test_that("base-2010 and base-2012 CPI-R/U overlap remains a validation result",
   out <- summarise_ruc_base_overlap(sources)
   expect_equal(out$link_factor, 2)
   expect_equal(out$link_months, 2L)
+})
+
+test_that("official price metadata covers every current state and sector", {
+  poverty <- read_tendulkar_poverty_lines()
+  rules <- read_price_state_crosswalk()
+
+  expect_equal(nrow(poverty), 72L)
+  expect_equal(sort(unique(poverty$sector)), c("rural", "urban"))
+  expect_equal(length(unique(poverty$state_code)), 36L)
+  expect_equal(nrow(rules), 29L)
+  expect_true(all(rules$target_state_code %in% poverty$state_code))
+
+  chandigarh <- poverty[poverty$state_code == "CHD", ]
+  expect_equal(chandigarh$poverty_line_rupees, c(1155, 1155))
+  expect_true(all(chandigarh$source_state_code == "PUN"))
+
+  telangana <- poverty[poverty$state_code == "TEL", ]
+  expect_equal(telangana$poverty_line_rupees, c(860, 1009))
+  expect_true(all(telangana$source_state_code == "ANP"))
+})
+
+test_that("state rules prefer direct observations and use documented donors only when needed", {
+  months <- as.Date(c("2012-12-01", "2013-01-01"))
+  temporal <- rbind(
+    data.frame(state_code = "ANP", sector = "rural", period = months, index = c(100, 101), price_source = "source"),
+    data.frame(state_code = "ANP", sector = "urban", period = months, index = c(200, 202), price_source = "source"),
+    data.frame(state_code = "TEL", sector = "rural", period = months[2], index = 111, price_source = "source"),
+    data.frame(state_code = "TEL", sector = "urban", period = months[2], index = 222, price_source = "source")
+  )
+  rules <- data.frame(
+    target_state_code = "TEL", source_state_code = "ANP", sector = c("rural", "urban"),
+    valid_from = as.Date("1900-01-01"), valid_to = as.Date("2012-12-01"),
+    rule_type = "inheritance", reason = "undivided state"
+  )
+
+  out <- apply_price_state_rules(temporal, rules)
+  tel <- out[out$state_code == "TEL", ]
+  expect_equal(tel$index, c(100, 111, 200, 222))
+  expect_equal(tel$temporal_state_source, c("ANP", "TEL", "ANP", "TEL"))
+  expect_equal(tel$state_rule, c("inheritance", "direct", "inheritance", "direct"))
+})
+
+test_that("state rules fail rather than inventing an undocumented temporal fallback", {
+  temporal <- rbind(
+    data.frame(state_code = "A", sector = "rural", period = as.Date("2012-01-01"), index = 100),
+    data.frame(state_code = "A", sector = "urban", period = as.Date("2012-01-01"), index = 100)
+  )
+  rules <- data.frame(
+    target_state_code = "B", source_state_code = "C", sector = c("rural", "urban"),
+    valid_from = as.Date("1900-01-01"), valid_to = as.Date(NA_character_),
+    rule_type = "fallback", reason = "documented donor"
+  )
+  expect_error(apply_price_state_rules(temporal, rules), "No direct or documented fallback")
+})
+
+test_that("state-sector deflators combine temporal change with a common spatial anchor", {
+  months <- as.Date(c("2011-07-01", "2011-08-01", "2012-07-01"))
+  temporal <- rbind(
+    data.frame(state_code = "A", sector = "rural", period = months, index = c(100, 100, 120)),
+    data.frame(state_code = "A", sector = "urban", period = months, index = c(200, 200, 220))
+  )
+  spatial <- build_tendulkar_spatial_relatives(data.frame(
+    state_code = c("A", "A"), sector = c("rural", "urban"),
+    poverty_line_rupees = c(816, 1000)
+  ))
+  out <- build_state_sector_deflator(temporal, spatial, months[1:2])
+
+  expect_equal(out$price_deflator[out$sector == "rural"], c(1, 1, 1.2))
+  expect_equal(
+    out$price_deflator[out$sector == "urban"],
+    c(1000 / 816, 1000 / 816, (1000 / 816) * 1.1)
+  )
+})
+
+test_that("household attachment preserves input row order and fallback provenance", {
+  households <- data.frame(
+    household_id = c("second", "first"), state = c("B", "A"),
+    sector = c("urban", "rural"), period = as.Date(c("2012-01-01", "2012-01-01"))
+  )
+  deflators <- data.frame(
+    state_code = c("A", "B"), sector = c("rural", "urban"),
+    period = as.Date(c("2012-01-01", "2012-01-01")), price_deflator = c(1, 2),
+    price_source = c("direct", "donor"), temporal_state_source = c("A", "C"),
+    state_rule = c("direct", "fallback"), fallback_reason = c(NA, "documented")
+  )
+  out <- attach_household_deflator(households, deflators, "state", "sector", "period")
+  expect_equal(out$household_id, households$household_id)
+  expect_equal(out$price_deflator, c(2, 1))
+  expect_equal(out$state_rule, c("fallback", "direct"))
 })

@@ -80,3 +80,37 @@ the code does not silently reweight an incomplete set of centres.
 These readers construct validated source tables only. `R/prices/build_temporal_price_series.R` then joins the direct state series without changing reported estimates. It rescales pre-2013 CPI-RL and state CPI-IW to the 2012-base CPI-R/U scale using the median state-sector ratio over common months, uses the older sources only through December 2012, and uses state CPI-Rural or CPI-Urban from January 2013 onward. A state-sector chain is rejected when it has fewer than the required number of common months; no link is inferred from another state. The base-2010 and base-2012 CPI-R/U overlap is retained as a separate validation result rather than inserted into the production chain.
 
 Household deflation and replacement of the current reported outcome remain separate changes, so a raw price-file problem cannot alter the paper's estimates without an explicit change to `_targets.R`.
+
+## State inheritance, union-territory fallbacks, and the spatial anchor
+
+The tracked `price_state_crosswalk.csv` is deliberately narrow. A direct
+state-sector-month observation always wins. A donor is used only when the
+direct temporal series is absent and the target month falls within a dated,
+sector-specific rule. The five small-UT donor states match the official
+Planning Commission substitutions used for the 2011-12 Tendulkar estimates:
+Tamil Nadu for Andaman and Nicobar Islands, Punjab for Chandigarh,
+Maharashtra for Dadra and Nagar Haveli, Goa for Daman and Diu, and Kerala for
+Lakshadweep. Telangana inherits undivided Andhra Pradesh only for months before
+the post-2012 state CPI-R/U series. The code does not use an undocumented
+nearest-state or all-India fallback.
+
+`tendulkar_poverty_lines_2011_12.csv` resolves Table 1 and the five Table 2
+notes to one rural and one urban line for every analysis state/UT. Telangana
+uses the 2011-12 Andhra Pradesh line because it did not yet exist as a separate
+state. Spatial relatives divide every line by the common all-India rural line
+of Rs. 816. This retains both interstate differences and the national
+rural-urban price-level gap; using separate rural and urban denominators would
+remove the latter by construction.
+
+For state `s`, sector `r`, and month `t`, the combined deflator is
+
+\[
+D_{srt}=\frac{PL_{sr}}{816}\times
+\frac{CPI_{srt}}{\overline{CPI}_{sr,2011\text{-}12}}.
+\]
+
+The output records the temporal source state, whether the observation is
+direct, inherited, or a fallback, the fallback reason, and the poverty-line
+source state. Household attachment preserves these fields so later coverage
+tables can report the number and survey-weighted share of households using
+each rule.

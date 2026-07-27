@@ -103,6 +103,8 @@ def path_tests(path):
         tests.update({"test-config.R", "test-current-output-contract.R"})
     if re.search(r"^data/metadata/(file_manifest|data_sources|checksums)\.csv$", path):
         tests.add("test-raw-file-manifest.R")
+    if re.search(r"^data/metadata/(cpi_iw_centres_2001|price_series_registry|price_state_crosswalk|tendulkar_poverty_lines_2011_12)\.csv$", path):
+        tests.add("test-prices-and-controls.R")
     if re.search(r"^data/metadata/(district_harmonization_crosswalk|manual_district_corrections)\.csv$", path):
         tests.update({
             "test-district-join-map.R", "test-district-keys.R",
