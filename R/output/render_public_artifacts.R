@@ -99,7 +99,7 @@ render_poster_pdf <- function(poster_qmd, figure_files) {
   if (!file.exists(poster_qmd)) stop("Poster source QMD does not exist: ", poster_qmd, call. = FALSE)
   if (!nzchar(Sys.which("quarto"))) stop("Quarto CLI was not found on PATH; cannot render ", poster_qmd, call. = FALSE)
   validate_poster_typst_templates(poster_qmd)
-  required_assets <- c("assets/uw-logo-horizontal-color-web-digital.svg", "assets/repo-qr.svg")
+  required_assets <- c("assets/uw-logo-horizontal-full-color-print.pdf", "assets/repo-qr.svg")
   missing <- required_assets[!file.exists(required_assets)]
   if (length(missing)) stop("Poster asset(s) missing: ", paste(missing, collapse = ", "), call. = FALSE)
   pdf_path <- file.path(dirname(poster_qmd), "poster.pdf")
