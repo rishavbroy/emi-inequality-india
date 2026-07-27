@@ -233,7 +233,8 @@ apply_price_state_rules <- function(temporal_index, state_rules, start_period = 
   direct
 }
 
-build_state_sector_deflator <- function(temporal_index, spatial_relatives, reference_period) {
+build_state_sector_deflator <- function(
+    temporal_index, spatial_relatives, reference_period = NULL, reference_index = NULL) {
   idx <- safe_df(temporal_index)
   spatial <- safe_df(spatial_relatives)
   validate_price_index(idx, keys = c("state_code", "sector", "period"))
@@ -249,17 +250,40 @@ build_state_sector_deflator <- function(temporal_index, spatial_relatives, refer
     stop("Spatial price relatives must be positive and finite.", call. = FALSE)
   }
 
-  reference_period <- as.Date(reference_period)
-  ref <- idx[idx$period %in% reference_period, , drop = FALSE]
-  if (!nrow(ref)) stop("No observations fall in the requested price reference period.", call. = FALSE)
-  ref_mean <- stats::aggregate(index ~ state_code + sector, ref, function(x) mean(num(x), na.rm = TRUE))
-  names(ref_mean)[names(ref_mean) == "index"] <- "reference_index"
-  out <- merge(idx, ref_mean, by = c("state_code", "sector"), all.x = TRUE, sort = FALSE)
+  if (is.null(reference_index)) {
+    if (is.null(reference_period)) stop("A price reference period or reference-index table is required.", call. = FALSE)
+    reference_period <- as.Date(reference_period)
+    ref <- idx[idx$period %in% reference_period, , drop = FALSE]
+    if (!nrow(ref)) stop("No observations fall in the requested price reference period.", call. = FALSE)
+    ref_mean <- stats::aggregate(index ~ state_code + sector, ref, function(x) mean(num(x), na.rm = TRUE))
+    names(ref_mean)[names(ref_mean) == "index"] <- "reference_index"
+  } else {
+    ref_mean <- safe_df(reference_index)
+    required_reference <- c("state_code", "sector", "reference_index")
+    missing_reference <- setdiff(required_reference, names(ref_mean))
+    if (length(missing_reference)) {
+      stop("Reference-price table is missing columns: ", paste(missing_reference, collapse = ", "), call. = FALSE)
+    }
+    if (anyDuplicated(ref_mean[c("state_code", "sector")]) || any(!positive_finite(ref_mean$reference_index))) {
+      stop("Reference-price table must have one positive row per state-sector.", call. = FALSE)
+    }
+    ref_mean <- ref_mean[required_reference]
+  }
   out <- merge(
-    out,
+    idx,
     spatial,
     by = c("state_code", "sector"), all.x = TRUE, sort = FALSE
   )
+  out <- merge(out, ref_mean, by = c("state_code", "sector"), all.x = TRUE, sort = FALSE)
+  if ("source_state_code" %in% names(out) && any(!positive_finite(out$reference_index))) {
+    donor_reference <- ref_mean
+    names(donor_reference)[names(donor_reference) == "state_code"] <- "source_state_code"
+    names(donor_reference)[names(donor_reference) == "reference_index"] <- "donor_reference_index"
+    out <- merge(out, donor_reference, by = c("source_state_code", "sector"), all.x = TRUE, sort = FALSE)
+    missing_reference <- !positive_finite(out$reference_index)
+    out$reference_index[missing_reference] <- out$donor_reference_index[missing_reference]
+    out$donor_reference_index <- NULL
+  }
   out$temporal_price_relative <- num(out$index) / num(out$reference_index)
   out$price_deflator <- num(out$spatial_price_relative) * num(out$temporal_price_relative)
   if (any(!positive_finite(out$price_deflator))) {
@@ -275,6 +299,7 @@ build_state_sector_price_deflators <- function(
     state_rules = read_price_state_crosswalk(),
     poverty_lines = read_tendulkar_poverty_lines(),
     reference_period = seq(as.Date("2011-07-01"), as.Date("2012-06-01"), by = "month"),
+    reference_index = NULL,
     start_period = NULL,
     end_period = NULL,
     reference_rupees = 816) {
@@ -297,7 +322,12 @@ build_state_sector_price_deflators <- function(
   if (length(missing_spatial)) {
     stop("Tendulkar metadata does not cover every temporal state-sector series.", call. = FALSE)
   }
-  build_state_sector_deflator(expanded, spatial, reference_period)
+  build_state_sector_deflator(
+    expanded,
+    spatial,
+    reference_period = reference_period,
+    reference_index = reference_index
+  )
 }
 
 attach_household_deflator <- function(households, deflators, state_col, sector_col, period_col) {

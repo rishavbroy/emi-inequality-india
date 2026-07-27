@@ -141,14 +141,27 @@ normalise_cpi_iw_centre <- function(x) {
     VIZAG = "VISAKHAPATNAM",
     VISHAKHAPATNAM = "VISAKHAPATNAM",
     DOOMDOOMATINSUKIA = "DDTINSUKIA",
+    DMTINSUKIA = "DDTINSUKIA",
     MUNGERJAMALPUR = "MONGERJAMALPUR",
+    MONGHYRJAMALPUR = "MONGERJAMALPUR",
     BHILAI = "BHILLAI",
     VADODARA = "VADODRA",
     BANGALORE = "BENGALURU",
     MADIKERI = "MERCARA",
     KOLLAM = "QUILON",
+    QUILLON = "QUILON",
+    ALWAYEERNAKULAM = "ERNAKULAM",
+    COONOR = "COONOOR",
+    HALDI = "HALDIA",
+    OTHERSGOA = "GOA",
+    OTHERSHIMACHALPRADESH = "HIMACHALPRADESH",
+    OTHERSTRIPURA = "TRIPURA",
+    PONDICHERRY = "PUDUCHERRY",
+    SHOLAPUR = "SOLAPUR",
+    TEZPURRANGAPARA = "RANGAPARATEZPUR",
     TIRUCHIRAPPALLI = "TIRUCHIRAPALLY",
     TRICHY = "TIRUCHIRAPALLY",
+    TRICHIRAPALLY = "TIRUCHIRAPALLY",
     WARANGAL = "WARRANGAL"
   )
   alias_i <- match(key, names(aliases))
@@ -157,20 +170,43 @@ normalise_cpi_iw_centre <- function(x) {
   key
 }
 
+cpi_iw_geography_column <- function(raw) {
+  centre_candidates <- c(
+    "CENTER_RN", "CENTRE_RN", "CENTRE", "CENTER", "CENTRE_NAME", "CENTER_NAME",
+    "CENTRE_CODE", "CENTER_CODE", "GEOGRAPHICAL_COVERAGE", "GEOGRAPHICAL_COVERAGE_RN"
+  )
+  hit <- intersect(centre_candidates, names(raw))
+  if (length(hit)) return(hit[[1]])
+  price_column(raw, "STATE_CODE")
+}
+
+cpi_iw_all_india <- function(x) {
+  key <- gsub("[^A-Z0-9]+", "", toupper(trimws(as.character(x))))
+  key %in% c("ALLINDIA", "ALINDIA")
+}
+
+collapse_identical_price_rows <- function(out, keys, label) {
+  duplicate <- duplicated(out[keys]) | duplicated(out[keys], fromLast = TRUE)
+  if (!any(duplicate)) return(out)
+
+  groups <- split(which(duplicate), interaction(out[duplicate, keys, drop = FALSE], drop = TRUE, sep = "\r"))
+  conflict <- vapply(groups, function(i) length(unique(num(out$index[i]))) != 1L, logical(1))
+  if (any(conflict)) {
+    stop(label, " has conflicting duplicate observations after filtering.", call. = FALSE)
+  }
+  out[!duplicated(out[keys]), , drop = FALSE]
+}
+
 read_cpi_iw_all_india <- function(path, base_year = 2001) {
   raw <- read_rbi_price_csv(path)
-  coverage_col <- price_column(raw, c(
-    "CENTRE", "CENTER", "CENTRE_NAME", "CENTER_NAME", "CENTRE_CODE",
-    "CENTER_CODE", "GEOGRAPHICAL_COVERAGE", "GEOGRAPHICAL_COVERAGE_RN",
-    "STATE_CODE"
-  ))
+  coverage_col <- cpi_iw_geography_column(raw)
   date_col <- price_column(raw, c("TIME_PERIOD", "TIME"))
   value_col <- price_column(raw, c("OBS_VALUE", "VALUE_IN_ACTUALS", "VALUE"))
   base_col <- price_column(raw, c("BASE_PER", "BASE_PERIOD", "BASE_YEAR"), required = FALSE)
   item_col <- price_column(raw, c("COMD_ITEM", "COMMODITY", "ELEMENT", "SERIES_NAME"), required = FALSE)
 
   coverage <- toupper(trimws(as.character(raw[[coverage_col]])))
-  keep <- coverage %in% c("ALL INDIA", "ALL_INDIA", "ALL-INDIA")
+  keep <- cpi_iw_all_india(coverage)
   if (!is.null(base_col)) {
     keep <- keep & grepl(as.character(base_year), as.character(raw[[base_col]]), fixed = TRUE)
   }
@@ -197,11 +233,7 @@ read_cpi_iw_all_india <- function(path, base_year = 2001) {
 
 read_cpi_iw_centres <- function(path, base_year = 2001) {
   raw <- read_rbi_price_csv(path)
-  centre_col <- price_column(raw, c(
-    "CENTRE", "CENTER", "CENTRE_NAME", "CENTER_NAME", "CENTRE_CODE",
-    "CENTER_CODE", "GEOGRAPHICAL_COVERAGE", "GEOGRAPHICAL_COVERAGE_RN",
-    "STATE_CODE"
-  ))
+  centre_col <- cpi_iw_geography_column(raw)
   date_col <- price_column(raw, c("TIME_PERIOD", "TIME"))
   value_col <- price_column(raw, c("OBS_VALUE", "VALUE_IN_ACTUALS", "VALUE"))
   base_col <- price_column(raw, c("BASE_PER", "BASE_PERIOD", "BASE_YEAR"), required = FALSE)
@@ -217,7 +249,7 @@ read_cpi_iw_centres <- function(path, base_year = 2001) {
     if (any(general)) keep <- keep & general
   }
   centre_raw <- trimws(as.character(raw[[centre_col]]))
-  keep <- keep & !toupper(centre_raw) %in% c("ALL INDIA", "ALL_INDIA", "ALL-INDIA")
+  keep <- keep & !cpi_iw_all_india(centre_raw)
 
   out <- data.frame(
     centre = centre_raw[keep],
@@ -230,9 +262,11 @@ read_cpi_iw_centres <- function(path, base_year = 2001) {
   out$month <- as.integer(format(out$period, "%m"))
   out$base_period <- if (is.null(base_col)) NA_character_ else as.character(raw[[base_col]][keep])
   out$source_file <- basename(path)
-  if (anyDuplicated(out[c("centre_key", "year", "month")])) {
-    stop("CPI-IW file has duplicate centre-month observations after filtering.", call. = FALSE)
-  }
+  out <- collapse_identical_price_rows(
+    out,
+    keys = c("centre_key", "year", "month"),
+    label = "CPI-IW file"
+  )
   out[order(out$centre_key, out$period), , drop = FALSE]
 }
 
@@ -337,14 +371,22 @@ validate_price_source_paths <- function(paths) {
   lapply(out, as.character)
 }
 
+cpi_iw_state_periods <- function() {
+  c(
+    seq(as.Date("2007-07-01"), as.Date("2008-06-01"), by = "month"),
+    seq(as.Date("2013-01-01"), as.Date("2014-12-01"), by = "month")
+  )
+}
+
 read_price_sources <- function(paths, cpi_iw_weights_file = "data/metadata/cpi_iw_centres_2001.csv") {
   paths <- validate_price_source_paths(paths)
   weights <- read_cpi_iw_weights(cpi_iw_weights_file)
   iw_centres <- read_cpi_iw_centres(paths$cpi_iw, base_year = 2001)
+  iw_state_input <- iw_centres[iw_centres$period %in% cpi_iw_state_periods(), , drop = FALSE]
   list(
     cpi_alrl = read_cpi_alrl_state(paths$cpi_alrl),
     cpi_iw_centres = iw_centres,
-    cpi_iw_states = aggregate_cpi_iw_to_state(iw_centres, weights),
+    cpi_iw_states = aggregate_cpi_iw_to_state(iw_state_input, weights),
     cpi_iw_all_india = read_cpi_iw_all_india(paths$cpi_iw, base_year = 2001),
     cpi_ruc_2010 = read_cpi_ruc_state(paths$cpi_ruc_2010, expected_base = 2010),
     cpi_ruc_2012 = read_cpi_ruc_state(paths$cpi_ruc_2012, expected_base = 2012),

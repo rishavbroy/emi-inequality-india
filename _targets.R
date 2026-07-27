@@ -67,11 +67,20 @@ core_pipeline_targets <- list(
   tar_target(nss_2007_consumption, clean_nss_2007_consumption(raw_nss_2007_consumption)),
   tar_target(nss_2017_education, clean_nss_2017_education(raw_nss_2017_education)),
   tar_target(census_2001_languages, clean_census_2001_languages(raw_census_2001)),
-  tar_target(temporal_price_series, build_temporal_price_series(raw_price_sources)),
+  tar_target(
+    temporal_price_series,
+    build_temporal_price_series(
+      raw_price_sources,
+      pre_switch_start = as.Date("2007-07-01"),
+      pre_switch_end = as.Date("2008-06-01")
+    )
+  ),
+  tar_target(price_reference_index, build_ruc_reference_index(raw_price_sources)),
   tar_target(
     state_sector_price_deflators,
     build_state_sector_price_deflators(
       temporal_price_series,
+      reference_index = price_reference_index,
       start_period = as.Date("2007-07-01"),
       end_period = as.Date("2018-06-01")
     )

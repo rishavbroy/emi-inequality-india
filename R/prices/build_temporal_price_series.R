@@ -112,7 +112,9 @@ build_temporal_price_series <- function(
     switch_date = as.Date("2013-01-01"),
     overlap_start = as.Date("2013-01-01"),
     overlap_end = as.Date("2014-12-01"),
-    minimum_link_months = 6L) {
+    minimum_link_months = 6L,
+    pre_switch_start = NULL,
+    pre_switch_end = NULL) {
   switch_date <- price_boundary(switch_date)
   old <- select_pre_2013_price_series(price_sources)
   new <- select_post_2013_price_series(price_sources)
@@ -138,6 +140,17 @@ build_temporal_price_series <- function(
 
   old <- merge(old, links, by = c("state_code", "sector"), all.x = TRUE, sort = FALSE)
   old <- old[old$period < switch_date, , drop = FALSE]
+  if (!is.null(pre_switch_start) || !is.null(pre_switch_end)) {
+    if (is.null(pre_switch_start) || is.null(pre_switch_end)) {
+      stop("Both pre_switch_start and pre_switch_end are required when trimming the old price series.", call. = FALSE)
+    }
+    pre_switch_start <- price_boundary(pre_switch_start)
+    pre_switch_end <- price_boundary(pre_switch_end)
+    if (pre_switch_end < pre_switch_start || pre_switch_end >= switch_date) {
+      stop("The pre-switch production window must end before the switch date.", call. = FALSE)
+    }
+    old <- old[old$period >= pre_switch_start & old$period <= pre_switch_end, , drop = FALSE]
+  }
   old$index_unlinked <- old$index
   old$index <- num(old$index) * num(old$link_factor)
 
@@ -177,4 +190,91 @@ summarise_ruc_base_overlap <- function(price_sources) {
   start <- max(min(old$period), min(new$period))
   end <- min(max(old$period), max(new$period))
   summarise_price_links(old, new, start, end)
+}
+
+
+build_ruc_reference_index <- function(
+    price_sources,
+    reference_period = seq(as.Date("2011-07-01"), as.Date("2012-06-01"), by = "month"),
+    state_rules = read_price_state_crosswalk(),
+    poverty_lines = read_tendulkar_poverty_lines()) {
+  required <- c("cpi_ruc_2010", "cpi_ruc_2012")
+  missing <- setdiff(required, names(price_sources))
+  if (length(missing)) {
+    stop("Price sources are missing CPI-R/U tables for the reference index: ", paste(missing, collapse = ", "), call. = FALSE)
+  }
+
+  old <- safe_df(price_sources$cpi_ruc_2010)
+  links <- summarise_ruc_base_overlap(price_sources)
+  reference_period <- price_month_start(reference_period)
+  old <- old[old$period %in% reference_period, , drop = FALSE]
+  if (!nrow(old)) stop("The base-2010 CPI-R/U file has no observations in the reference period.", call. = FALSE)
+
+  old <- merge(old, links[c("state_code", "sector", "link_factor")],
+    by = c("state_code", "sector"), all.x = TRUE, sort = FALSE
+  )
+  old$index_2012_base <- num(old$index) * num(old$link_factor)
+  split_i <- split(seq_len(nrow(old)), interaction(old$state_code, old$sector, drop = TRUE))
+  direct <- safe_bind_rows(lapply(split_i, function(i) {
+    months <- unique(old$period[i])
+    if (length(months) != length(reference_period) || any(!positive_finite(old$link_factor[i]))) {
+      return(NULL)
+    }
+    data.frame(
+      state_code = old$state_code[i[1]],
+      sector = old$sector[i[1]],
+      reference_index = mean(num(old$index_2012_base[i])),
+      reference_months = length(months),
+      reference_state_source = old$state_code[i[1]],
+      reference_rule = "direct",
+      reference_fallback_reason = NA_character_,
+      stringsAsFactors = FALSE
+    )
+  }))
+
+  desired <- unique(safe_df(poverty_lines)[c("state_code", "sector")])
+  desired$sector <- price_sector(desired$sector)
+  out <- merge(desired, direct, by = c("state_code", "sector"), all.x = TRUE, sort = FALSE)
+  missing_rows <- which(!positive_finite(out$reference_index))
+  if (length(missing_rows)) {
+    rules <- safe_df(state_rules)
+    rules$valid_from <- as.Date(rules$valid_from)
+    rules$valid_to <- as.Date(rules$valid_to)
+    applicable <- rules$valid_from <= min(reference_period) &
+      (is.na(rules$valid_to) | rules$valid_to >= max(reference_period))
+    rules <- rules[applicable, , drop = FALSE]
+
+    requested <- out[missing_rows, c("state_code", "sector"), drop = FALSE]
+    names(requested)[names(requested) == "state_code"] <- "target_state_code"
+    candidates <- merge(requested, rules, by = c("target_state_code", "sector"), all.x = TRUE, sort = FALSE)
+    if (anyDuplicated(candidates[c("target_state_code", "sector")])) {
+      stop("More than one price-state rule applies to a reference state-sector.", call. = FALSE)
+    }
+    donor <- direct
+    names(donor)[names(donor) == "state_code"] <- "source_state_code"
+    candidates <- merge(candidates, donor, by = c("source_state_code", "sector"), all.x = TRUE, sort = FALSE)
+    candidate_key <- paste(candidates$target_state_code, candidates$sector, sep = "\r")
+    requested_key <- paste(out$state_code[missing_rows], out$sector[missing_rows], sep = "\r")
+    matched <- match(requested_key, candidate_key)
+    found <- !is.na(matched) & positive_finite(candidates$reference_index[matched])
+    if (any(found)) {
+      target <- missing_rows[found]
+      source <- matched[found]
+      out$reference_index[target] <- candidates$reference_index[source]
+      out$reference_months[target] <- candidates$reference_months[source]
+      out$reference_state_source[target] <- candidates$source_state_code[source]
+      out$reference_rule[target] <- candidates$rule_type[source]
+      out$reference_fallback_reason[target] <- candidates$reason[source]
+    }
+  }
+
+  if (anyDuplicated(out[c("state_code", "sector")]) || any(!positive_finite(out$reference_index))) {
+    bad <- out[!positive_finite(out$reference_index), c("state_code", "sector"), drop = FALSE]
+    stop(
+      "The CPI-R/U reference index is unresolved for: ",
+      paste(paste(bad$state_code, bad$sector, sep = "/"), collapse = ", "),
+      call. = FALSE
+    )
+  }
+  out[order(out$state_code, out$sector), , drop = FALSE]
 }
