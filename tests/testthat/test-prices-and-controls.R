@@ -112,3 +112,28 @@ test_that("tracked CPI-IW weights reproduce the 78-centre system", {
   expect_equal(sum(weights$weight), 100, tolerance = 1e-10)
   expect_equal(weights$state_code[weights$centre == "Hyderabad"], "ANP")
 })
+
+test_that("CPI-IW validation permits equal weights for different centres", {
+  weights <- data.frame(
+    state_code = c("A", "A"),
+    state_name = c("State A", "State A"),
+    centre = c("Centre One", "Centre Two"),
+    weight = c(50, 50)
+  )
+  out <- validate_cpi_iw_weights(weights)
+  expect_equal(out$weight, c(50, 50))
+  expect_equal(out$centre_key, c("CENTREONE", "CENTRETWO"))
+})
+
+test_that("CPI-IW validation rejects duplicate normalized centre identities", {
+  weights <- data.frame(
+    state_code = c("A", "A"),
+    state_name = c("State A", "State A"),
+    centre = c("Vijayawada", "Vijaywada"),
+    weight = c(50, 50)
+  )
+  expect_error(
+    validate_cpi_iw_weights(weights),
+    "identities must be unique after name normalization"
+  )
+})

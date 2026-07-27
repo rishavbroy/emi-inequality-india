@@ -137,15 +137,23 @@ read_cpi_alrl_state <- function(path) {
 normalise_cpi_iw_centre <- function(x) {
   key <- toupper(gsub("[^A-Z0-9]+", "", trimws(as.character(x))))
   aliases <- c(
-    VIJAYAWADA = "VIJAYWADA", VIZAG = "VISAKHAPATNAM",
-    VISHAKHAPATNAM = "VISAKHAPATNAM", DOOMDOOMATINSUKIA = "DDTINSUKIA",
-    DOOMDOOMATINSUKIA = "DDTINSUKIA", MUNGERJAMALPUR = "MONGERJAMALPUR",
-    BHILAI = "BHILLAI", VADODARA = "VADODRA", BANGALORE = "BENGALURU",
-    MADIKERI = "MERCARA", KOLLAM = "QUILON", TIRUCHIRAPPALLI = "TIRUCHIRAPALLY",
-    TRICHY = "TIRUCHIRAPALLY", WARANGAL = "WARRANGAL"
+    VIJAYAWADA = "VIJAYWADA",
+    VIZAG = "VISAKHAPATNAM",
+    VISHAKHAPATNAM = "VISAKHAPATNAM",
+    DOOMDOOMATINSUKIA = "DDTINSUKIA",
+    MUNGERJAMALPUR = "MONGERJAMALPUR",
+    BHILAI = "BHILLAI",
+    VADODARA = "VADODRA",
+    BANGALORE = "BENGALURU",
+    MADIKERI = "MERCARA",
+    KOLLAM = "QUILON",
+    TIRUCHIRAPPALLI = "TIRUCHIRAPALLY",
+    TRICHY = "TIRUCHIRAPALLY",
+    WARANGAL = "WARRANGAL"
   )
-  replace <- key %in% names(aliases)
-  key[replace] <- unname(aliases[key[replace]])
+  alias_i <- match(key, names(aliases))
+  replace <- !is.na(alias_i)
+  key[replace] <- unname(aliases[alias_i[replace]])
   key
 }
 
@@ -190,24 +198,47 @@ read_cpi_iw_centres <- function(path, base_year = 2001) {
   out[order(out$centre_key, out$period), , drop = FALSE]
 }
 
-read_cpi_iw_weights <- function(path) {
-  path <- resolve_price_path(path)
-  if (!file.exists(path)) stop("CPI-IW weights file does not exist: ", path, call. = FALSE)
-  weights <- utils::read.csv(path, stringsAsFactors = FALSE, check.names = FALSE)
+validate_cpi_iw_weights <- function(weights, expected_total = 100, tolerance = 1e-8) {
+  weights <- safe_df(weights)
   required <- c("state_code", "state_name", "centre", "weight")
   missing <- setdiff(required, names(weights))
   if (length(missing)) {
     stop("CPI-IW weights are missing columns: ", paste(missing, collapse = ", "), call. = FALSE)
   }
+
+  weights$state_code <- trimws(as.character(weights$state_code))
+  weights$state_name <- trimws(as.character(weights$state_name))
+  weights$centre <- trimws(as.character(weights$centre))
   weights$centre_key <- normalise_cpi_iw_centre(weights$centre)
-  weights$weight <- num(weights$weight)
-  if (any(!positive_finite(weights$weight)) || anyDuplicated(weights$centre_key)) {
-    stop("CPI-IW centre weights must be positive and unique.", call. = FALSE)
+  weights$weight <- suppressWarnings(as.numeric(weights$weight))
+
+  blank_identity <- !nzchar(weights$state_code) | !nzchar(weights$state_name) |
+    !nzchar(weights$centre) | !nzchar(weights$centre_key)
+  if (any(blank_identity | is.na(blank_identity))) {
+    stop("CPI-IW centre weights contain a missing centre or state identity.", call. = FALSE)
   }
-  if (abs(sum(weights$weight) - 100) > 1e-8) {
-    stop("CPI-IW centre weights must sum to 100.", call. = FALSE)
+  if (anyNA(weights$weight) || any(!is.finite(weights$weight)) || any(weights$weight <= 0)) {
+    stop("CPI-IW centre weights must be finite and positive.", call. = FALSE)
+  }
+  duplicate <- duplicated(weights$centre_key) | duplicated(weights$centre_key, fromLast = TRUE)
+  if (any(duplicate)) {
+    stop(
+      "CPI-IW centre identities must be unique after name normalization: ",
+      paste(unique(weights$centre[duplicate]), collapse = ", "),
+      call. = FALSE
+    )
+  }
+  if (abs(sum(weights$weight) - expected_total) > tolerance) {
+    stop("CPI-IW centre weights must sum to ", expected_total, ".", call. = FALSE)
   }
   weights
+}
+
+read_cpi_iw_weights <- function(path) {
+  path <- resolve_price_path(path)
+  if (!file.exists(path)) stop("CPI-IW weights file does not exist: ", path, call. = FALSE)
+  weights <- utils::read.csv(path, stringsAsFactors = FALSE, check.names = FALSE)
+  validate_cpi_iw_weights(weights)
 }
 
 aggregate_cpi_iw_to_state <- function(centre_index, centre_weights) {
