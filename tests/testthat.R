@@ -9,7 +9,7 @@ source("R/paths.R")
 # Source all project functions in the same broad order as _targets.R while
 # avoiding a hard dependency on targets itself.
 source_dirs <- c(
-  "R/io", "R/clean", "R/districts", "R/measures", "R/selection",
+  "R/io", "R/clean", "R/districts", "R/measures", "R/prices", "R/controls", "R/selection",
   "R/iv", "R/diagnostics", "R/benchmarking", "R/output", "R/application_samples"
 )
 for (dir in source_dirs) {

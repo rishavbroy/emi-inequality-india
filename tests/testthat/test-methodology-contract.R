@@ -67,7 +67,8 @@ test_that("2007 household measures retain the district-HHID de-duplication corre
 
   expect_equal(out$npeople_0708, 10)
   expect_equal(out$nhouses_0708, 3)
-  expect_equal(out$consumption_0708, (1 * 100 + 2 * 200) / 3)
+  expect_equal(out$consumption_0708, (1 * 200 + 2 * 800) / (1 * 2 + 2 * 4))
+  expect_equal(out$consumption_0708_household_weighted, (1 * 100 + 2 * 200) / 3)
 })
 
 test_that("baseline controls use household weights for household concepts", {

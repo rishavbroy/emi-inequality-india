@@ -23,6 +23,7 @@ test_that("2017 measures compute weighted consumption by district", {
   out <- build_2017_measures(edu, list())
 
   expect_equal(out$consumption_1718, 175)
+  expect_equal(out$consumption_1718_household_weighted, 175)
 })
 
 test_that("2017 district lookup recovers headerless Tabula CSV rows", {
@@ -291,4 +292,17 @@ test_that("2007 district identifiers accept haven labelled vectors", {
 
   expect_identical(standardized$district_code_0708, c("101", "102"))
   expect_identical(district_group_vars_2007(standardized), "district_code_0708")
+})
+
+test_that("person-weighted consumption differs from the mean household MPCE", {
+  total <- c(2000, 5000)
+  size <- c(1, 5)
+  weight <- c(1, 1)
+  expect_equal(mean_household_mpce(total, size, weight), 1500)
+  expect_equal(mean_expenditure_per_person(total, size, weight), 7000 / 6)
+})
+
+test_that("household deflation requires positive price relatives", {
+  expect_equal(deflate_household_expenditure(c(100, 200), c(2, 4)), c(50, 50))
+  expect_true(is.na(deflate_household_expenditure(100, 0)))
 })
