@@ -1,129 +1,116 @@
-// Based on the documented Quarto poster template and pncnmnp/typst-poster.
-// The function stays in this template partial so the document body and project
-// resources are resolved in the generated Typst document.
+// Based on Quarto's documented poster format and pncnmnp/typst-poster.
+// Content and routine theme settings enter through poster.qmd metadata; this
+// partial owns the reusable page, header, heading, footer, and column layout.
 #let poster(
-  size: "'36x24' or '48x36''",
+  size: "36x24",
   title: "Paper Title",
-  authors: "Author Names (separated by commas)",
+  authors: "Author Names",
   departments: "Department Name",
   univ_logo: "Logo Path",
   footer_text: "Footer Text",
   footer_url: "Footer URL",
-  footer_email_ids: "Email IDs (separated by commas)",
-  footer_color: "Hex Color Code",
+  footer_email_ids: "Email IDs",
+  footer_color: "7a0019",
   accent_color: none,
   section_fill: "f3f0ea",
   keywords: (),
   num_columns: "3",
   univ_logo_scale: "100",
-  univ_logo_column_size: "10",
-  title_column_size: "20",
-  title_font_size: "48",
-  authors_font_size: "36",
-  footer_url_font_size: "30",
-  footer_text_font_size: "40",
-  body_font_size: "16",
-  heading_font_size: "32",
-  subheading_font_size: "22",
+  univ_logo_column_size: "7",
+  title_column_size: "25",
+  title_font_size: "85",
+  authors_font_size: "56",
+  department_font_size: "30",
+  footer_url_font_size: "20",
+  footer_text_font_size: "24",
+  body_font_size: "24",
+  heading_font_size: "36",
+  subheading_font_size: "28",
+  logo_y_offset: "-10",
+  title_y_offset: "10",
   body,
 ) = {
-
-  let sizes = size.split("x")
-  let width = int(sizes.at(0)) * 1in
-  let height = int(sizes.at(1)) * 1in
-  univ_logo_scale = int(univ_logo_scale) * 1%
-  title_font_size = int(title_font_size) * 1pt
-  authors_font_size = int(authors_font_size) * 1pt
-  num_columns = int(num_columns)
-  univ_logo_column_size = int(univ_logo_column_size) * 1in
-  title_column_size = int(title_column_size) * 1in
-  footer_url_font_size = int(footer_url_font_size) * 1pt
-  footer_text_font_size = int(footer_text_font_size) * 1pt
-  body_font_size = int(body_font_size) * 1pt
-  heading_font_size = int(heading_font_size) * 1pt
-  subheading_font_size = int(subheading_font_size) * 1pt
+  let dims = size.split("x")
+  let width = int(dims.at(0)) * 1in
+  let height = int(dims.at(1)) * 1in
+  let ncols = int(num_columns)
+  let logo_width = int(univ_logo_column_size) * 1in
+  let title_width = int(title_column_size) * 1in
+  let logo_scale = int(univ_logo_scale) * 1%
+  let title_size = int(title_font_size) * 1pt
+  let author_size = int(authors_font_size) * 1pt
+  let department_size = int(department_font_size) * 1pt
+  let footer_side_size = int(footer_url_font_size) * 1pt
+  let footer_center_size = int(footer_text_font_size) * 1pt
+  let body_size = int(body_font_size) * 1pt
+  let heading_size = int(heading_font_size) * 1pt
+  let subheading_size = int(subheading_font_size) * 1pt
+  let logo_shift = int(logo_y_offset) * 1pt
+  let title_shift = int(title_y_offset) * 1pt
   let accent = if accent_color == none { rgb(footer_color) } else { rgb(accent_color) }
   let section_background = rgb(section_fill)
-
-  set text(size: body_font_size)
 
   set page(
     width: width,
     height: height,
-    margin: (top: 1in, left: 2in, right: 2in, bottom: 2in),
-    footer: [
-      #set align(center)
-      #block(
-        fill: rgb(footer_color),
-        width: 100%,
-        inset: 20pt,
-        radius: 10pt,
-        [
-          #text(font: "Courier", size: footer_url_font_size, footer_url)
-          #h(1fr)
-          #text(size: footer_text_font_size, smallcaps(footer_text))
-          #h(1fr)
-          #text(font: "Courier", size: footer_url_font_size, footer_email_ids)
-        ],
-      )
-    ],
-  )
-
-  set math.equation(numbering: "(1)")
-  show math.equation: set block(spacing: 0.65em)
-  set enum(indent: 10pt, body-indent: 9pt)
-  set list(indent: 10pt, body-indent: 9pt)
-
-  set heading(numbering: none)
-  show heading: it => {
-    if it.level == 1 {
-      block(
-        width: 100%,
-        fill: section_background,
-        inset: (x: 7pt, y: 2pt),
-        radius: 3pt,
-        above: 20pt,
-        below: 8pt,
-        text(heading_font_size, fill: accent, weight: "bold", it.body),
-      )
-    } else if it.level == 2 {
-      block(
-        above: 12pt,
-        below: 4pt,
-        text(
-          subheading_font_size,
-          fill: accent,
-          weight: "bold",
-          style: "italic",
-          it.body,
-        ),
-      )
-    } else {
-      text(18pt, fill: accent, weight: "bold", it.body)
-    }
-  }
-
-  align(
-    center,
-    grid(
-      rows: 2,
-      columns: (univ_logo_column_size, title_column_size),
-      column-gutter: 0pt,
-      row-gutter: 50pt,
-      image(univ_logo, width: univ_logo_scale),
-      text(title_font_size, fill: accent, weight: "bold", title + "\n\n")
-        + text(authors_font_size, authors + "   (" + departments + ") "),
+    margin: (top: 0.55in, left: 0.65in, right: 0.65in, bottom: 1.05in),
+    footer: block(
+      fill: rgb(footer_color),
+      width: 100%,
+      inset: 10pt,
+      radius: 5pt,
+      grid(
+        columns: (1fr, 1.3fr, 1fr),
+        align(left, text(size: footer_side_size, fill: white, footer_url)),
+        align(center, text(size: footer_center_size, weight: "bold", fill: white, footer_text)),
+        align(right, text(size: footer_side_size, fill: white, footer_email_ids)),
+      ),
     ),
   )
 
-  show: columns.with(num_columns, gutter: 64pt)
-  set par(justify: true, first-line-indent: 0em, spacing: 0.65em)
+  set text(font: "Libertinus Serif", size: body_size, fill: rgb("202020"))
+  set par(justify: false, leading: 0.62em, spacing: 0.55em)
+  show figure.caption: set text(size: 18pt)
+  set list(indent: 18pt, body-indent: 10pt, spacing: 9pt)
+  set enum(indent: 18pt, body-indent: 10pt, spacing: 9pt)
+  set heading(numbering: none)
+  show heading: it => {
+    if it.level == 1 {
+      v(9pt, weak: true)
+      block(
+        fill: section_background,
+        inset: (x: 10pt, y: 7pt),
+        radius: 4pt,
+        width: 100%,
+        text(size: heading_size, weight: "bold", fill: accent, it.body),
+      )
+      v(5pt)
+    } else {
+      text(size: subheading_size, weight: "bold", fill: accent, it.body)
+      v(3pt)
+    }
+  }
 
-  if keywords != () [
-    #set text(24pt, weight: 400)
-    #show "Keywords": smallcaps
-    *Keywords* --- #keywords.join(", ")
-  ]
+  grid(
+    columns: (logo_width, title_width),
+    gutter: 0.35in,
+    align(center + horizon, move(dy: logo_shift, image(univ_logo, width: logo_scale))),
+    align(
+      center,
+      move(
+        dy: title_shift,
+        [
+          #text(size: title_size, weight: "bold", fill: accent, title)
+          #v(10pt)
+          #text(size: author_size, authors)
+          #h(14pt)
+          #text(size: department_size, departments)
+        ],
+      ),
+    ),
+  )
+  v(18pt)
 
+  show: columns.with(ncols, gutter: 0.45in)
   body
 }

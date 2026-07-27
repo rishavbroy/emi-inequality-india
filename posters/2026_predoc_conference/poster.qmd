@@ -8,22 +8,25 @@ format:
     size: "36x24"
     poster-authors: "Rishav Roy"
     departments: "Department of Economics, University of Wisconsin-Madison"
-    institution-logo: "../../assets/uw-logo-horizontal-color-web-digital.svg"
+    institution-logo: "../../assets/uw-logo-horizontal-full-color-print.pdf"
     footer-text: "PREDOC.org Research Conference | Chicago Booth | July 30-31, 2026"
     footer-url: "rishavbroy.github.io"
     footer-emails: "roybrishav@gmail.com"
     footer-color: "7a0019"
     accent-color: "7a0019"
     section-fill: "f3f0ea"
-    univ-logo-column-size: 8
-    title-column-size: 20
-    title-font-size: 48
-    authors-font-size: 30
-    body-font-size: 16
-    heading-font-size: 32
-    subheading-font-size: 22
+    univ-logo-column-size: 7
+    title-column-size: 25
+    title-font-size: 85
+    authors-font-size: 56
+    department-font-size: 30
+    body-font-size: 24
+    heading-font-size: 36
+    subheading-font-size: 28
     footer-url-font-size: 20
     footer-text-font-size: 24
+    logo-y-offset: -10
+    title-y-offset: 10
 execute:
   echo: false
   warning: false
