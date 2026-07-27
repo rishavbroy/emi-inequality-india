@@ -13,10 +13,15 @@ format:
     footer-url: "rishavbroy.github.io"
     footer-emails: "roybrishav@gmail.com"
     footer-color: "7a0019"
+    accent-color: "7a0019"
+    section-fill: "f3f0ea"
     univ-logo-column-size: 8
-    title-column-size: 22
-    title-font-size: 42
-    authors-font-size: 28
+    title-column-size: 20
+    title-font-size: 48
+    authors-font-size: 30
+    body-font-size: 16
+    heading-font-size: 32
+    subheading-font-size: 22
     footer-url-font-size: 20
     footer-text-font-size: 24
 execute:

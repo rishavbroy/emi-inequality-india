@@ -11,6 +11,8 @@
   footer_url: "Footer URL",
   footer_email_ids: "Email IDs (separated by commas)",
   footer_color: "Hex Color Code",
+  accent_color: none,
+  section_fill: "f3f0ea",
   keywords: (),
   num_columns: "3",
   univ_logo_scale: "100",
@@ -20,9 +22,11 @@
   authors_font_size: "36",
   footer_url_font_size: "30",
   footer_text_font_size: "40",
+  body_font_size: "16",
+  heading_font_size: "32",
+  subheading_font_size: "22",
   body,
 ) = {
-  set text(size: 16pt)
 
   let sizes = size.split("x")
   let width = int(sizes.at(0)) * 1in
@@ -35,6 +39,13 @@
   title_column_size = int(title_column_size) * 1in
   footer_url_font_size = int(footer_url_font_size) * 1pt
   footer_text_font_size = int(footer_text_font_size) * 1pt
+  body_font_size = int(body_font_size) * 1pt
+  heading_font_size = int(heading_font_size) * 1pt
+  subheading_font_size = int(subheading_font_size) * 1pt
+  let accent = if accent_color == none { rgb(footer_color) } else { rgb(accent_color) }
+  let section_background = rgb(section_fill)
+
+  set text(size: body_font_size)
 
   set page(
     width: width,
@@ -63,40 +74,33 @@
   set enum(indent: 10pt, body-indent: 9pt)
   set list(indent: 10pt, body-indent: 9pt)
 
-  set heading(numbering: "I.A.1.")
-  show heading: it => context {
-    let levels = counter(heading).get()
-    let deepest = if levels != () { levels.last() } else { 1 }
-
-    set text(24pt, weight: 400)
-    if it.level == 1 [
-      #set align(center)
-      #set text(32pt)
-      #show: smallcaps
-      #v(50pt, weak: true)
-      #if it.numbering != none {
-        numbering("I.", deepest)
-        h(7pt, weak: true)
-      }
-      #it.body
-      #v(35.75pt, weak: true)
-      #line(length: 100%)
-    ] else if it.level == 2 [
-      #set text(style: "italic")
-      #v(32pt, weak: true)
-      #if it.numbering != none {
-        numbering("i.", deepest)
-        h(7pt, weak: true)
-      }
-      #it.body
-      #v(10pt, weak: true)
-    ] else [
-      #if it.level == 3 {
-        numbering("1)", deepest)
-        [ ]
-      }
-      _#(it.body):_
-    ]
+  set heading(numbering: none)
+  show heading: it => {
+    if it.level == 1 {
+      block(
+        width: 100%,
+        fill: section_background,
+        inset: (x: 7pt, y: 2pt),
+        radius: 3pt,
+        above: 20pt,
+        below: 8pt,
+        text(heading_font_size, fill: accent, weight: "bold", it.body),
+      )
+    } else if it.level == 2 {
+      block(
+        above: 12pt,
+        below: 4pt,
+        text(
+          subheading_font_size,
+          fill: accent,
+          weight: "bold",
+          style: "italic",
+          it.body,
+        ),
+      )
+    } else {
+      text(18pt, fill: accent, weight: "bold", it.body)
+    }
   }
 
   align(
@@ -107,8 +111,8 @@
       column-gutter: 0pt,
       row-gutter: 50pt,
       image(univ_logo, width: univ_logo_scale),
-      text(title_font_size, title + "\n\n")
-        + text(authors_font_size, emph(authors) + "   (" + departments + ") "),
+      text(title_font_size, fill: accent, weight: "bold", title + "\n\n")
+        + text(authors_font_size, authors + "   (" + departments + ") "),
     ),
   )
 

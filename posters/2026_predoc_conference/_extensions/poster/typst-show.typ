@@ -8,6 +8,8 @@
   $if(footer-url)$ footer_url: [$footer-url$], $endif$
   $if(footer-emails)$ footer_email_ids: [$footer-emails$], $endif$
   $if(footer-color)$ footer_color: "$footer-color$", $endif$
+  $if(accent-color)$ accent_color: "$accent-color$", $endif$
+  $if(section-fill)$ section_fill: "$section-fill$", $endif$
   $if(keywords)$ keywords: ($for(keywords)$"$it$"$sep$, $endfor$), $endif$
   $if(num-columns)$ num_columns: $num-columns$, $endif$
   $if(univ-logo-scale)$ univ_logo_scale: $univ-logo-scale$, $endif$
@@ -17,5 +19,8 @@
   $if(authors-font-size)$ authors_font_size: $authors-font-size$, $endif$
   $if(footer-url-font-size)$ footer_url_font_size: $footer-url-font-size$, $endif$
   $if(footer-text-font-size)$ footer_text_font_size: $footer-text-font-size$, $endif$
+  $if(body-font-size)$ body_font_size: $body-font-size$, $endif$
+  $if(heading-font-size)$ heading_font_size: $heading-font-size$, $endif$
+  $if(subheading-font-size)$ subheading_font_size: $subheading-font-size$, $endif$
   doc,
 )
