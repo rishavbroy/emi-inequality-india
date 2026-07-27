@@ -97,3 +97,6 @@ for (path in qmds) {
 }
 cat("Parsed R chunks from", length(qmds), "active QMD source(s).\n")
 RS
+
+echo "=== APPLICATION-SAMPLE SPECS ==="
+Rscript scripts/check_sample_specs.R

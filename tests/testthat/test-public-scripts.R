@@ -549,3 +549,31 @@ test_that("reviewed primary lineage is public and alternatives remain diagnostic
   expect_match(extended, "estimate_2sls(district_panel_legacy, iv_formulas, cfg)", fixed = TRUE)
   expect_match(extended, "diag_ext_lineage_downstream", fixed = TRUE)
 })
+
+
+test_that("source checks validate application-sample excerpt markers", {
+  checker <- repo_text("scripts", "check_source_syntax.sh")
+  expect_match(checker, "Rscript scripts/check_sample_specs.R", fixed = TRUE)
+})
+
+test_that("coding-sample specifications use one valid nonempty marker pair", {
+  env <- new.env(parent = globalenv())
+  sys.source(repo_file("R", "application_samples", "extract_code_excerpts.R"), envir = env)
+  specs <- list.files(
+    repo_file("application-samples", "specs"),
+    pattern = "^coding-.*\\.yml$",
+    full.names = TRUE
+  )
+  expect_gt(length(specs), 0L)
+
+  for (spec_path in specs) {
+    spec <- yaml::read_yaml(spec_path)
+    for (excerpt in spec$excerpts) {
+      lines <- env$extract_between_sample_markers(
+        repo_file(excerpt$file),
+        excerpt$id
+      )
+      expect_gt(sum(nzchar(trimws(lines))), 1L, info = excerpt$id)
+    }
+  }
+})

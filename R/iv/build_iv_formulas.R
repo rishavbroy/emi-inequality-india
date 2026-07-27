@@ -1,5 +1,7 @@
 # IV formula definitions.
 
+# sample-start: code-iv-formula-estimation
+
 make_iv_formula <- function(dep, endog, instruments, controls = NULL, fixed_effects = NULL) {
   stats::as.formula(paste(
     dep, '~', paste(c(endog, controls, fixed_effects), collapse = ' + '), '|',
@@ -52,3 +54,4 @@ build_revised_iv_formulas <- function() {
     )
   )
 }
+# sample-end: code-iv-formula-estimation

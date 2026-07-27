@@ -25,7 +25,7 @@ excerpts:
     title: Contiguity-based spatial weights
   - file: R/iv/build_iv_formulas.R
     id: code-iv-formula-estimation
-    title: Reusable IV specification and estimation
+    title: Reusable IV specification definitions
   - file: R/diagnostics/diagnose_multicollinearity.R
     id: code-multicollinearity-spatial-autocorrelation
     title: Multicollinearity and spatial autocorrelation diagnostics
