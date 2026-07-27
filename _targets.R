@@ -10,9 +10,9 @@ tar_source_r <- function(path) {
 tar_source_r("R/io")
 tar_source_r("R/clean")
 tar_source_r("R/districts")
+tar_source_r("R/measures")
 tar_source_r("R/prices")
 tar_source_r("R/controls")
-tar_source_r("R/measures")
 tar_source_r("R/selection")
 tar_source_r("R/iv")
 tar_source_r("R/diagnostics")
@@ -61,18 +61,6 @@ core_pipeline_targets <- list(
   tar_target(raw_nss_2017_education, { raw_data_preflight; read_nss_2017_education(paths) }),
   tar_target(raw_census_2001, { raw_data_preflight; read_census_2001_mother_tongue(paths) }),
   tar_target(raw_ilo_figures, { raw_data_preflight; list_ilo_figure_paths(paths) }, format = "file"),
-  tar_target(price_inputs, { raw_data_preflight; read_price_inputs(paths) }),
-  tar_target(monthly_price_deflators, build_monthly_price_deflators(price_inputs)),
-  tar_target(price_deflator_summary, summarize_price_deflators(monthly_price_deflators)),
-  tar_target(
-    price_deflators_2007,
-    build_nss_subround_deflators(monthly_price_deflators, "2007_08")
-  ),
-  tar_target(
-    price_deflators_2017,
-    build_nss_subround_deflators(monthly_price_deflators, "2017_18")
-  ),
-  tar_target(census_2001_controls, { raw_data_preflight; build_census_2001_controls(paths) }),
 
   tar_target(nss_2007_education, clean_nss_2007_education(raw_nss_2007_education)),
   tar_target(nss_2007_consumption, clean_nss_2007_consumption(raw_nss_2007_consumption)),
@@ -87,16 +75,8 @@ core_pipeline_targets <- list(
   tar_target(selection_model, estimate_selection_probit(selection_data, cfg)),
   tar_target(ame_results, compute_average_marginal_effects(selection_model, selection_data, cfg)),
 
-  tar_target(
-    measures_2007,
-    build_2007_measures(
-      nss_2007_education, nss_2007_consumption, cfg, price_deflators_2007
-    )
-  ),
-  tar_target(
-    measures_2017,
-    build_2017_measures(nss_2017_education, cfg, price_deflators_2017)
-  ),
+  tar_target(measures_2007, build_2007_measures(nss_2007_education, nss_2007_consumption, cfg)),
+  tar_target(measures_2017, build_2017_measures(nss_2017_education, cfg)),
   tar_target(linguistic_distance_iv, build_linguistic_distance_iv(census_2001_languages, cfg)),
   tar_target(
     lineage_geometry_2001_file,
@@ -165,8 +145,7 @@ core_pipeline_targets <- list(
       measures_2017,
       linguistic_distance_iv,
       lineage_geometry_2001,
-      cfg,
-      census_2001_controls
+      cfg
     )
   ),
   tar_target(
@@ -175,9 +154,7 @@ core_pipeline_targets <- list(
       district_panel_conservative_provisional,
       district_lineage$conservative_source_crosswalk,
       nss_2007_education,
-      nss_2017_education,
-      price_deflators_2007,
-      price_deflators_2017
+      nss_2017_education
     )
   ),
   tar_target(district_panel_conservative, conservative_gini_reconstruction$panel),
@@ -189,8 +166,7 @@ core_pipeline_targets <- list(
       measures_2017,
       linguistic_distance_iv,
       lineage_geometry_2001,
-      cfg,
-      census_2001_controls
+      cfg
     )
   ),
   tar_target(
@@ -199,9 +175,7 @@ core_pipeline_targets <- list(
       district_panel_primary_provisional,
       district_lineage$primary_source_crosswalk,
       nss_2007_education,
-      nss_2017_education,
-      price_deflators_2007,
-      price_deflators_2017
+      nss_2017_education
     )
   ),
   tar_target(
@@ -231,13 +205,7 @@ core_pipeline_targets <- list(
     )
   ),
   tar_target(figure_files, save_figures(figures, cfg), format = "file"),
-  tar_target(
-    tables,
-    make_tables(
-      selection_data, ame_results, district_panel, iv_models,
-      first_stage_tests, cfg, selection_model, price_deflator_summary
-    )
-  ),
+  tar_target(tables, make_tables(selection_data, ame_results, district_panel, iv_models, first_stage_tests, cfg, selection_model)),
   tar_target(diag_public_iv_panel, save_public_iv_panel_diagnostics(district_panel, tables), format = "file"),
   tar_target(table_files, save_tables(tables, cfg), format = "file"),
   tar_target(report_values, { diag_public_spatial_autocorrelation_files; build_report_values(ame_results, first_stage_tests, iv_models, selection_data, district_panel, diag_public_spatial_autocorrelation, cfg) }),
@@ -314,8 +282,7 @@ extended_diagnostic_targets <- list(
       measures_2017,
       linguistic_distance_iv,
       lineage_geometry_2001,
-      cfg,
-      census_2001_controls
+      cfg
     )
   ),
   tar_target(
@@ -324,9 +291,7 @@ extended_diagnostic_targets <- list(
       district_panel_full_reviewed_provisional,
       district_lineage$full_reviewed_source_crosswalk,
       nss_2007_education,
-      nss_2017_education,
-      price_deflators_2007,
-      price_deflators_2017
+      nss_2017_education
     )
   ),
   tar_target(

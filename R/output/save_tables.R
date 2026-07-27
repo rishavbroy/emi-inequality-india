@@ -344,7 +344,7 @@ modelsummary_regression_table <- function(df, name) {
   model_col <- switch(name,
     probit_mfx = "Enrolled (1 = yes)",
     fs_cons = "EMI Exposure",
-    cons_iv = "Real Log Consumption Growth",
+    cons_iv = "Consumption Growth",
     names(df)[[2]]
   )
   names(df) <- c("Term", model_col)
@@ -358,17 +358,6 @@ public_regression_coef_map <- function() {
   c(
     "EMIE" = "EMI exposure (fitted)",
     "wavg_ling_degrees" = "Linguistic distance",
-    "census2001_log_population" = "Log population (2001)",
-    "census2001_urban_share" = "Urban share (2001)",
-    "census2001_adult_secondary_plus_share" = "Adults with secondary education or more (2001)",
-    "census2001_sc_share" = "Scheduled Caste share (2001)",
-    "census2001_st_share" = "Scheduled Tribe share (2001)",
-    "census2001_muslim_share" = "Muslim share (2001)",
-    "census2001_agricultural_worker_share" = "Agricultural-worker share (2001)",
-    "census2001_dependency_ratio" = "Dependency ratio (2001)",
-    "census2001_electricity_share" = "Electricity share (2001)",
-    "census2001_log_population_density" = "Log population density (2001)",
-    "census2001_native_hindi_share" = "Native Hindi/Urdu share (2001)",
     "consumption_0708" = "Consumption (2007-08)",
     "gini_cons_0708" = "Gini of Consumption (2007-08)",
     "pct_urban" = "Pct. Urban (ref: Rural)",
@@ -458,7 +447,7 @@ public_modelsummary_table <- function(model, name, vcov_matrix = NULL, add_rows 
   )
   header <- switch(name,
     fs_cons = c(" " = 1, "EMI Exposure" = 1),
-    cons_iv = c(" " = 1, "Real Log Consumption Growth" = 1)
+    cons_iv = c(" " = 1, "Consumption Growth" = 1)
   )
   kableExtra::add_header_above(tex, header)
 }
@@ -654,7 +643,7 @@ save_table_tex <- function(table, path, name, public = TRUE) {
     header <- switch(name,
       probit_mfx = c(" " = 1, "Enrolled (1 = yes)" = 1),
       fs_cons = c(" " = 1, "EMI Exposure" = 1),
-      cons_iv = c(" " = 1, "Real Log Consumption Growth" = 1)
+      cons_iv = c(" " = 1, "Consumption Growth" = 1)
     )
     tex <- kableExtra::add_header_above(tex, header, escape = FALSE)
     tex <- tex |>

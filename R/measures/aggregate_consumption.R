@@ -1,51 +1,59 @@
-# Household consumption summaries for household and person estimands.
+# Household-consumption aggregation rules.
 
-consumption_aggregate <- function(
-  total_consumption, household_size, survey_weight, deflator = NULL
-) {
-  total <- num(total_consumption)
-  size <- num(household_size)
-  weight <- num(survey_weight)
-  if (is.null(deflator)) {
-    deflator <- rep(1, length(total))
-  } else {
-    deflator <- num(deflator)
-  }
-
-  valid <- is.finite(total) & is.finite(size) & size > 0 &
-    is.finite(weight) & weight > 0 & is.finite(deflator) & deflator > 0
-  total <- total[valid]
-  size <- size[valid]
-  weight <- weight[valid]
-  deflator <- deflator[valid]
-  if (!length(total)) {
-    return(list(
-      nominal_person_mean = NA_real_,
-      nominal_household_mean = NA_real_,
-      real_person_mean = NA_real_,
-      real_household_mean = NA_real_,
-      nominal_person_gini = NA_real_,
-      real_person_gini = NA_real_,
-      weighted_people = 0,
-      weighted_households = 0
-    ))
-  }
-
-  nominal_pc <- total / size
-  real_pc <- nominal_pc / deflator
-  person_weight <- weight * size
-  list(
-    nominal_person_mean = wmean(nominal_pc, person_weight),
-    nominal_household_mean = wmean(nominal_pc, weight),
-    real_person_mean = wmean(real_pc, person_weight),
-    real_household_mean = wmean(real_pc, weight),
-    nominal_person_gini = wgini(nominal_pc, person_weight),
-    real_person_gini = wgini(real_pc, person_weight),
-    weighted_people = sum(person_weight),
-    weighted_households = sum(weight)
-  )
+positive_finite <- function(x) {
+  x <- num(x)
+  is.finite(x) & x > 0
 }
 
-consumption_total_from_per_capita <- function(per_capita, household_size) {
-  num(per_capita) * num(household_size)
+#' Mean monthly per-capita expenditure among represented people
+#'
+#' @param household_total Total monthly household expenditure.
+#' @param household_size Number of household members.
+#' @param household_weight NSS household multiplier.
+#' @return Person-weighted mean monthly per-capita expenditure.
+mean_expenditure_per_person <- function(household_total, household_size, household_weight) {
+  total <- num(household_total)
+  size <- num(household_size)
+  weight <- num(household_weight)
+  keep <- is.finite(total) & positive_finite(size) & positive_finite(weight)
+  if (!any(keep)) return(NA_real_)
+  sum(weight[keep] * total[keep], na.rm = TRUE) /
+    sum(weight[keep] * size[keep], na.rm = TRUE)
+}
+
+#' Mean household MPCE
+#'
+#' Each represented household receives its NSS household multiplier. This is
+#' retained for sensitivity analysis; it is not the preferred population-welfare
+#' estimand.
+mean_household_mpce <- function(household_total, household_size, household_weight) {
+  total <- num(household_total)
+  size <- num(household_size)
+  weight <- num(household_weight)
+  keep <- is.finite(total) & positive_finite(size) & positive_finite(weight)
+  if (!any(keep)) return(NA_real_)
+  stats::weighted.mean(total[keep] / size[keep], weight[keep])
+}
+
+#' Person-weighted Gini of household MPCE
+person_weighted_mpce_gini <- function(household_total, household_size, household_weight) {
+  total <- num(household_total)
+  size <- num(household_size)
+  weight <- num(household_weight)
+  keep <- is.finite(total) & positive_finite(size) & positive_finite(weight)
+  if (!any(keep)) return(NA_real_)
+  wgini(total[keep] / size[keep], weight[keep] * size[keep])
+}
+
+#' Deflate monthly household expenditure
+#'
+#' The deflator must be positive and expressed relative to the chosen common
+#' state-sector price reference.
+deflate_household_expenditure <- function(household_total, price_deflator) {
+  total <- num(household_total)
+  deflator <- num(price_deflator)
+  out <- rep(NA_real_, length(total))
+  keep <- is.finite(total) & positive_finite(deflator)
+  out[keep] <- total[keep] / deflator[keep]
+  out
 }

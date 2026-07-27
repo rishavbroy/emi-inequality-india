@@ -1,14 +1,23 @@
 # Consumption and price adjustment
 
-## Main-paper specification
+## Main-paper specification after the revision gate
 
-The main specification uses the person-weighted mean of real monthly
+The next main specification will use the person-weighted mean of real monthly
 per-capita household expenditure in each Census 2001 district. Household
 expenditure is adjusted before district aggregation using a state, rural/urban,
 and survey-period price index. The outcome is the difference in log real
 consumption between 2007-08 and 2017-18.
 
-The build stops when a household lacks a positive price deflator, when a state-sector series cannot be linked, or when Census controls are not unique by district. Alternative specifications are reported separately rather than replacing the main estimate according to statistical significance.
+The switch is conditional on four checks:
+
+1. every household receives a positive price deflator;
+2. all state and union-territory substitutions are recorded;
+3. the Census 2001 control table has one row per district;
+4. current and revised estimates are compared on one common sample.
+
+Until those checks pass, `build_iv_formulas()` continues to reproduce the
+current paper. `build_revised_iv_formulas()` defines the proposed replacement
+without changing reported estimates prematurely.
 
 ## Consumption estimands
 
@@ -30,7 +39,7 @@ Price adjustment does not remove that measurement limitation.
 
 ## Price sources
 
-The temporal series are:
+The intended temporal series are:
 
 - CPI-RL for rural households before 2013;
 - a state aggregate of CPI-IW centres for urban households before 2013;
@@ -46,7 +55,7 @@ code must stop when a household lacks a valid state-sector-period deflator.
 
 ## Appendix results
 
-The appendix tables produced by the code report:
+The appendix will report:
 
 - endpoint ANCOVA using real log consumption;
 - nominal log change;

@@ -80,7 +80,7 @@ wrap_table_text <- function(df) as.data.frame(df, check.names = FALSE, stringsAs
 render_regression_table <- function(df, name) {
   if (!requireNamespace("modelsummary", quietly = TRUE)) stop("modelsummary is required for regression table rendering.", call. = FALSE)
   if (ncol(df) < 2L) return(knitr::kable(df, row.names = FALSE))
-  model_col <- switch(name, probit_mfx = "Enrolled (1 = yes)", fs_cons = "EMI Exposure", cons_iv = "Real Log Consumption Growth", names(df)[[2]])
+  model_col <- switch(name, probit_mfx = "Enrolled (1 = yes)", fs_cons = "EMI Exposure", cons_iv = "Consumption Growth", names(df)[[2]])
   out <- data.frame(Term = latex_escape_text(df[[1]]), stringsAsFactors = FALSE, check.names = FALSE)
   out[[model_col]] <- latex_escape_text(df[[2]])
   out$Term[!nzchar(out$Term)] <- "~"

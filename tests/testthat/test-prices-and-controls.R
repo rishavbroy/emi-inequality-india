@@ -1,67 +1,50 @@
-test_that("price links use the median overlap ratio", {
-  old <- data.frame(month = as.Date(c("2013-01-01", "2013-02-01", "2013-03-01")), index = c(100, 110, 120))
-  new <- data.frame(month = old$month, index = c(200, 220, 360))
-  out <- bridge_new_index(new, old)
-  expect_equal(unique(out$link_ratio_2010_to_2012), 2)
-})
-
-test_that("sub-round deflators are unique and average three months", {
-  month <- seq.Date(as.Date("2007-07-01"), by = "month", length.out = 12)
-  x <- expand.grid(
-    nss_state_code = sprintf("%02d", 1:36),
-    sector = c("rural", "urban"),
-    month = month,
-    stringsAsFactors = FALSE
-  )
-  x$price_deflator <- seq_len(nrow(x)) / 100 + 1
-  x$spatial_relative <- 1
-  x$temporal_relative <- x$price_deflator
-  x$temporal_source <- "test"
-  out <- build_nss_subround_deflators(x, "2007_08")
-  expect_equal(nrow(out), 36L * 2L * 4L)
-  expect_false(anyDuplicated(out[c("nss_state_code", "sector", "subround")]) > 0L)
-})
-
-test_that("household deflator attachment preserves row order", {
-  hh <- data.frame(
-    STATE = c("02", "01"), SECTOR = c(2, 1), SUB_ROUND = c(1, 2), value = c("a", "b")
-  )
-  d <- data.frame(
-    nss_state_code = c("01", "02"), sector = c("rural", "urban"),
-    subround = c(2, 1), price_deflator = c(1.5, 2),
-    spatial_relative = c(1, 1), temporal_relative = c(1.5, 2),
-    temporal_source = c("rural", "urban")
-  )
-  out <- attach_household_deflator(hh, d)
-  expect_identical(out$value, c("a", "b"))
-  expect_equal(out$price_deflator, c(2, 1.5))
-})
-
-test_that("Census control shares are calculated from district totals", {
+test_that("Tendulkar relatives preserve a common price reference", {
   x <- data.frame(
-    target_unit_2001 = "pc2001__10__01",
-    census2001_population = 1000,
-    census2001_log_population = log(1000),
-    census2001_urban_share = .2,
-    census2001_adult_secondary_plus_share = .3,
-    census2001_sc_share = .1,
-    census2001_st_share = .05,
-    census2001_muslim_share = .15,
-    census2001_agricultural_worker_share = .5,
-    census2001_dependency_ratio = 2 / 3,
-    census2001_electricity_share = .6
+    state_code = c("00", "00", "10"),
+    sector = c("rural", "urban", "rural"),
+    poverty_line_rupees = c(816, 1000, 778)
   )
-  expect_false(anyDuplicated(x$target_unit_2001) > 0L)
-  expect_equal(x$census2001_agricultural_worker_share, .5)
-  expect_equal(x$census2001_dependency_ratio, 2 / 3)
+  out <- build_tendulkar_spatial_relatives(x)
+  expect_equal(out$spatial_price_relative, c(1, 1000 / 816, 778 / 816))
 })
 
-test_that("main formulas use real consumption, Census controls, and state effects", {
-  f <- build_iv_formulas(list())
+test_that("price links use the median overlap ratio", {
+  expect_equal(price_link_factor(c(100, 110, 120), c(200, 220, 360)), 2)
+})
+
+test_that("Census control ratios are built from totals", {
+  x <- data.frame(
+    district_code_2001 = "001",
+    population_total = 1000,
+    population_urban = 200,
+    population_age_7_plus = 800,
+    adult_secondary_plus = 160,
+    sc_population = 100,
+    st_population = 50,
+    muslim_population = 150,
+    workers_total = 400,
+    cultivators = 100,
+    agricultural_labourers = 100,
+    population_age_0_14 = 300,
+    population_age_15_64 = 600,
+    population_age_65_plus = 100,
+    households_total = 200,
+    households_electricity = 120,
+    area_sq_km = 10
+  )
+  out <- build_census_2001_controls(x)
+  expect_equal(out$urban_share_2001, 20)
+  expect_equal(out$adult_secondary_plus_share_2001, 20)
+  expect_equal(out$agricultural_worker_share_2001, 50)
+  expect_equal(out$dependency_ratio_2001, 100 * 400 / 600)
+  expect_equal(out$electricity_access_share_2001, 60)
+})
+
+test_that("revised formulas use state fixed effects and predetermined controls", {
+  f <- build_revised_iv_formulas()
   text <- paste(deparse(f$consumption), collapse = " ")
   expect_match(text, "real_log_consumption_change")
-  expect_match(text, "factor\\(state_2001_cluster\\)")
-  expect_match(text, "census2001_urban_share")
+  expect_match(text, "state_2001")
+  expect_match(text, "urban_share_2001")
   expect_false(grepl("gini_cons_0708", text, fixed = TRUE))
-  expect_true("consumption_ancova" %in% names(f))
 })

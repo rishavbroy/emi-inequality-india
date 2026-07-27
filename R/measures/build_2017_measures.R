@@ -3,54 +3,44 @@
 
 #' build 2017 measures
 #'
-build_2017_measures <- function(
-  nss_2017_education, cfg, price_deflators_2017 = data.frame()
-) {
+build_2017_measures <- function(nss_2017_education, cfg) {
   inputs <- as_input_list(nss_2017_education)
-  df <- std(safe_df(select_input_frame_2017(
-    inputs, c("nss1718edu_block3", "block3", "block")
-  )), 2017L)
+  df <- std(safe_df(select_input_frame_2017(inputs, c("nss1718edu_block3", "block3", "block"))), 2017L)
   df <- normalize_2017_district_code(df)
-  if (nrow(safe_df(price_deflators_2017))) {
-    df <- attach_household_deflator(df, price_deflators_2017)
-  }
   key <- district_group_vars_2017(df)
   if (!length(key) || !nrow(df)) return(empty_panel())
 
-  value <- first_col(df, c("HH_Con_exp_rs", "hh_con_exp_rs"))
+  value <- first_col(df, c("HH_Con_exp_rs", "MPCE", "mpce", "consumption", "hh_cons"))
   hh_size <- first_col(df, c("Household_size", "HH_SIZE", "household_size"))
   weight <- first_col(df, c("MULT_Combined", "weight", "WEIGHT", "multiplier"))
   if (is.null(value) || is.null(weight)) return(empty_panel())
-  if (is.null(hh_size)) {
-    stop("NSS 2017 household size is required for UMPCE and person weighting.", call. = FALSE)
-  }
 
   hh_key <- first_col(df, c("HHID", "HH_ID", "household_id"))
   if (!is.null(hh_key)) {
-    df$.hh_distinct_key <- paste(
-      do.call(paste, c(df[key], sep = "__")), canon(df[[hh_key]]), sep = "__"
-    )
+    df$.hh_distinct_key <- paste(do.call(paste, c(df[key], sep = "__")), canon(df[[hh_key]]), sep = "__")
     df <- df[!duplicated(df$.hh_distinct_key), , drop = FALSE]
   }
+  if (!is.null(hh_size)) {
+    df$consumption_pc_2017 <- num(df[[value]]) / num(df[[hh_size]])
+  } else {
+    df$consumption_pc_2017 <- num(df[[value]])
+  }
+
   idx <- which(stats::complete.cases(df[key]))
-  split_i <- split(idx, interaction(df[idx, key, drop = TRUE, sep = "__"))
+  split_i <- split(idx, interaction(df[idx, key, drop = FALSE], drop = TRUE, sep = "__"))
   out <- safe_bind_rows(lapply(split_i, function(i) {
-    size <- num(df[[hh_size]][i])
-    total_value <- num(df[[value]][i])
-    deflator <- if ("price_deflator" %in% names(df)) df$price_deflator[i] else NULL
-    aggregate <- consumption_aggregate(total_value, size, df[[weight]][i], deflator)
-    z <- df[i[[1L]], key, drop = FALSE]
+    w <- num(df[[weight]][i])
+    size <- if (!is.null(hh_size)) num(df[[hh_size]][i]) else rep(1, length(i))
+    z <- df[i[[1]], key, drop = FALSE]
+    z <- z[rep(1L, 1L), , drop = FALSE]
+    total_value <- df$consumption_pc_2017[i] * size
     data.frame(
       z,
-      consumption_1718 = aggregate$nominal_person_mean,
-      consumption_1718_household_mean = aggregate$nominal_household_mean,
-      consumption_1718_household_weighted = aggregate$nominal_household_mean,
-      real_consumption_1718 = aggregate$real_person_mean,
-      real_consumption_1718_household_mean = aggregate$real_household_mean,
-      gini_cons_1718 = aggregate$nominal_person_gini,
-      real_gini_cons_1718 = aggregate$real_person_gini,
-      npeople_1718 = aggregate$weighted_people,
-      nhouses_1718 = aggregate$weighted_households,
+      consumption_1718 = mean_expenditure_per_person(total_value, size, w),
+      consumption_1718_household_weighted = mean_household_mpce(total_value, size, w),
+      gini_cons_1718 = person_weighted_mpce_gini(total_value, size, w),
+      npeople_1718 = sum(w * size, na.rm = TRUE),
+      nhouses_1718 = sum(w, na.rm = TRUE),
       stringsAsFactors = FALSE
     )
   }))

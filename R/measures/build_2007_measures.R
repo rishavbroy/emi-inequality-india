@@ -9,34 +9,18 @@
 
 #' build 2007 measures
 #'
-build_2007_measures <- function(
-  nss_2007_education, nss_2007_consumption, cfg,
-  price_deflators_2007 = data.frame()
-) {
+build_2007_measures <- function(nss_2007_education, nss_2007_consumption, cfg) {
   edu <- as_input_list(nss_2007_education)
   cons <- as_input_list(nss_2007_consumption)
 
-  b3 <- standardize_nss_2007_district_code(std(safe_df(
-    select_input_frame(edu, c("nss0708edu_block3", "block3"))
-  ), 2007L))
-  b4 <- standardize_nss_2007_district_code(std(safe_df(
-    select_input_frame(edu, c("nss0708edu_block4", "block4"))
-  ), 2007L))
-  b5 <- standardize_nss_2007_district_code(std(safe_df(
-    select_input_frame(edu, c("nss0708edu_block5", "block5", "block"))
-  ), 2007L))
-  cons_hh <- standardize_nss_2007_district_code(std(safe_df(
-    select_input_frame(cons, c("nss0708cons_hhchar", "hhchar", "block"))
-  ), 2007L))
-  if (nrow(safe_df(price_deflators_2007))) {
-    b3 <- attach_household_deflator(b3, price_deflators_2007)
-    cons_hh <- attach_household_deflator(cons_hh, price_deflators_2007)
-  }
+  b3 <- standardize_nss_2007_district_code(std(safe_df(select_input_frame(edu, c("nss0708edu_block3", "block3"))), 2007L))
+  b4 <- standardize_nss_2007_district_code(std(safe_df(select_input_frame(edu, c("nss0708edu_block4", "block4"))), 2007L))
+  b5 <- standardize_nss_2007_district_code(std(safe_df(select_input_frame(edu, c("nss0708edu_block5", "block5", "block"))), 2007L))
+  cons_hh <- standardize_nss_2007_district_code(std(safe_df(select_input_frame(cons, c("nss0708cons_hhchar", "hhchar", "block"))), 2007L))
 
   out <- compute_emie_2007(b5)
   if (!nrow(out)) return(empty_panel())
   out <- merge_measure_2007(out, compute_education_household_measures_2007(b3))
-  out <- merge_measure_2007(out, compute_schedule1_household_measures_2007(cons_hh))
   out <- merge_measure_2007(out, compute_baseline_controls_2007(b4, b3))
   out <- merge_measure_2007(out, compute_housing_controls_2007(cons_hh))
   out <- attach_2007_district_names(out, nss_2007_education)
@@ -144,85 +128,33 @@ english_medium_indicator <- function(x, column_name = NULL) {
 compute_education_household_measures_2007 <- function(df) {
   df <- standardize_nss_2007_district_code(std(df, 2007L))
   key <- district_group_vars_2007(df)
-  if (!nrow(df) || !length(key)) {
-    return(data.frame(district_code_0708 = character()))
-  }
+  if (!nrow(df) || !length(key)) return(data.frame(district_code_0708 = character(), state_std = character(), district_std = character()))
   weight <- first_col(df, c("weight", "WEIGHT", "Multiplier", "multiplier"))
   hh_size <- first_col(df, c("HH_SIZE", "HH_Size", "household_size"))
-  total <- first_col(df, c("TOTAL", "total"))
-  mpce <- first_col(df, c("MPCE", "mpce"))
-  if (is.null(weight) || is.null(hh_size) || (is.null(mpce) && is.null(total))) {
-    return(data.frame(district_code_0708 = character()))
-  }
+  total <- first_col(df, c("TOTAL", "total", "HH_Con_exp_rs", "consumption"))
+  mpce <- first_col(df, c("MPCE", "mpce", "consumption_pc", "consumption_per_capita"))
+  if (is.null(weight) || (is.null(mpce) && (is.null(hh_size) || is.null(total)))) return(data.frame(district_code_0708 = character()))
   hh_key <- first_col(df, c("HHID", "HH_ID", "household_id"))
   if (!is.null(hh_key)) {
-    df$.hh_distinct_key <- paste(
-      do.call(paste, c(df[key], sep = "__")), canon(df[[hh_key]]), sep = "__"
-    )
+    df$.hh_distinct_key <- paste(do.call(paste, c(df[district_group_vars_2007(df)], sep = "__")), canon(df[[hh_key]]), sep = "__")
     df <- df[!duplicated(df$.hh_distinct_key), , drop = FALSE]
   }
   idx <- which(stats::complete.cases(df[key]))
   split_i <- split(idx, interaction(df[idx, key, drop = FALSE], drop = TRUE, sep = "__"))
   safe_bind_rows(lapply(split_i, function(i) {
-    size <- num(df[[hh_size]][i])
-    total_value <- if (!is.null(total)) {
-      num(df[[total]][i])
-    } else {
-      consumption_total_from_per_capita(df[[mpce]][i], size)
-    }
-    deflator <- if ("price_deflator" %in% names(df)) df$price_deflator[i] else NULL
-    aggregate <- consumption_aggregate(total_value, size, df[[weight]][i], deflator)
-    z <- df[i[[1L]], key, drop = FALSE]
+    w <- num(df[[weight]][i])
+    size <- if (!is.null(hh_size)) num(df[[hh_size]][i]) else rep(1, length(i))
+    cons_pc <- if (!is.null(mpce)) num(df[[mpce]][i]) else num(df[[total]][i]) / size
+    z <- df[i[[1]], key, drop = FALSE]
+    z <- z[rep(1L, 1L), , drop = FALSE]
+    total_value <- cons_pc * size
     data.frame(
       z,
-      npeople_0708 = aggregate$weighted_people,
-      nhouses_0708 = aggregate$weighted_households,
-      consumption_0708 = aggregate$nominal_person_mean,
-      consumption_0708_household_mean = aggregate$nominal_household_mean,
-      consumption_0708_household_weighted = aggregate$nominal_household_mean,
-      real_consumption_0708 = aggregate$real_person_mean,
-      real_consumption_0708_household_mean = aggregate$real_household_mean,
-      gini_cons_0708 = aggregate$nominal_person_gini,
-      real_gini_cons_0708 = aggregate$real_person_gini,
-      stringsAsFactors = FALSE
-    )
-  }))
-}
-
-compute_schedule1_household_measures_2007 <- function(df) {
-  df <- standardize_nss_2007_district_code(std(df, 2007L))
-  key <- district_group_vars_2007(df)
-  if (!nrow(df) || !length(key)) return(data.frame(district_code_0708 = character()))
-  weight <- first_col(df, c("Multiplier", "weight", "WEIGHT", "multiplier"))
-  hh_size <- first_col(df, c("HH_SIZE", "HH_Size", "household_size"))
-  mpce <- first_col(df, c("MPCE_VAL", "mpce_val"))
-  if (is.null(weight) || is.null(hh_size) || is.null(mpce)) {
-    return(data.frame(district_code_0708 = character()))
-  }
-  hh_key <- first_col(df, c("HH_ID", "HHID", "household_id"))
-  if (!is.null(hh_key)) {
-    df$.hh_distinct_key <- paste(
-      do.call(paste, c(df[key], sep = "__")), canon(df[[hh_key]]), sep = "__"
-    )
-    df <- df[!duplicated(df$.hh_distinct_key), , drop = FALSE]
-  }
-  idx <- which(stats::complete.cases(df[key]))
-  split_i <- split(
-    idx,
-    interaction(df[idx, key, drop = FALSE], drop = TRUE, sep = "__")
-  )
-  safe_bind_rows(lapply(split_i, function(i) {
-    size <- num(df[[hh_size]][i])
-    total_value <- consumption_total_from_per_capita(df[[mpce]][i], size)
-    deflator <- if ("price_deflator" %in% names(df)) df$price_deflator[i] else NULL
-    aggregate <- consumption_aggregate(total_value, size, df[[weight]][i], deflator)
-    z <- df[i[[1L]], key, drop = FALSE]
-    data.frame(
-      z,
-      schedule1_mpce_0708 = aggregate$nominal_person_mean,
-      schedule1_real_mpce_0708 = aggregate$real_person_mean,
-      schedule1_gini_0708 = aggregate$nominal_person_gini,
-      schedule1_real_gini_0708 = aggregate$real_person_gini,
+      npeople_0708 = sum(w * size, na.rm = TRUE),
+      nhouses_0708 = sum(w, na.rm = TRUE),
+      consumption_0708 = mean_expenditure_per_person(total_value, size, w),
+      consumption_0708_household_weighted = mean_household_mpce(total_value, size, w),
+      gini_cons_0708 = person_weighted_mpce_gini(total_value, size, w),
       stringsAsFactors = FALSE
     )
   }))

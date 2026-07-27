@@ -53,12 +53,7 @@ harmonized_named_measures_available <- function(...) {
 }
 
 panel_has_analysis_core <- function(out) {
-  outcome_pair <- if (all(c("real_consumption_0708", "real_consumption_1718") %in% names(out))) {
-    c("real_consumption_0708", "real_consumption_1718")
-  } else {
-    c("consumption_0708", "consumption_1718")
-  }
-  required <- c("EMIE", "wavg_ling_degrees", outcome_pair)
+  required <- c("EMIE", "wavg_ling_degrees", "consumption_0708", "consumption_1718")
   present <- intersect(required, names(out))
   if (!length(present)) return(rep(TRUE, nrow(out)))
   vals <- lapply(out[present], function(x) {
@@ -156,32 +151,13 @@ compute_log_consumption_difference <- function(panel) {
 }
 
 compute_real_consumption_outcomes <- function(panel) {
-  if (all(c("real_consumption_1718", "real_consumption_0708") %in% names(panel))) {
+  if (all(c("real_consumption_0708", "real_consumption_1718") %in% names(panel))) {
     baseline <- num(panel$real_consumption_0708)
     endpoint <- num(panel$real_consumption_1718)
-    valid <- is.finite(baseline) & baseline > 0 & is.finite(endpoint) & endpoint > 0
-    panel$real_log_consumption_change <- ifelse(
-      valid, log(endpoint) - log(baseline), NA_real_
-    )
+    valid <- positive_finite(baseline) & positive_finite(endpoint)
+    panel$real_log_consumption_change <- NA_real_
+    panel$real_log_consumption_change[valid] <- log(endpoint[valid]) - log(baseline[valid])
     panel$real_consumption_level_change <- endpoint - baseline
-    panel$log_real_consumption_0708 <- ifelse(
-      is.finite(baseline) & baseline > 0, log(baseline), NA_real_
-    )
-    panel$log_real_consumption_1718 <- ifelse(
-      is.finite(endpoint) & endpoint > 0, log(endpoint), NA_real_
-    )
-  }
-  household_columns <- c(
-    "real_consumption_1718_household_mean",
-    "real_consumption_0708_household_mean"
-  )
-  if (all(household_columns %in% names(panel))) {
-    baseline <- num(panel$real_consumption_0708_household_mean)
-    endpoint <- num(panel$real_consumption_1718_household_mean)
-    valid <- is.finite(baseline) & baseline > 0 & is.finite(endpoint) & endpoint > 0
-    panel$real_log_consumption_change_household_mean <- ifelse(
-      valid, log(endpoint) - log(baseline), NA_real_
-    )
   }
   panel
 }
@@ -198,11 +174,7 @@ analysis_panel_validation_failures <- function(out) {
   failures <- character()
   add <- function(...) failures <<- c(failures, paste0(...))
 
-  required <- c(
-    "EMIE", "wavg_ling_degrees", "npeople_0708",
-    "real_consumption_0708", "real_consumption_1718",
-    "real_log_consumption_change"
-  )
+  required <- c("EMIE", "wavg_ling_degrees", "npeople_0708", "consumption_0708", "gini_cons_0708", "consumption_1718", "gini_cons_1718", "consumption_pct_change", "gini_change")
   missing <- setdiff(required, names(df))
   if (length(missing)) add("district_panel is missing required analysis columns: ", paste(missing, collapse = ", "))
 

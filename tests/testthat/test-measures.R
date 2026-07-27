@@ -16,15 +16,14 @@ test_that("2017 measures compute weighted consumption by district", {
   edu <- list(block = data.frame(
     State = c("Bihar", "Bihar"),
     District = c("Patna", "Patna"),
-    HH_Con_exp_rs = c(200, 800),
-    Household_size = c(2, 4),
-    MULT_Combined = c(1, 3)
+    MPCE = c(100, 200),
+    weight = c(1, 3)
   ))
 
   out <- build_2017_measures(edu, list())
 
-  expect_equal(out$consumption_1718, (1 * 200 + 3 * 800) / (1 * 2 + 3 * 4))
-  expect_equal(out$consumption_1718_household_weighted, weighted.mean(c(100, 200), c(1, 3)))
+  expect_equal(out$consumption_1718, 175)
+  expect_equal(out$consumption_1718_household_weighted, 175)
 })
 
 test_that("2017 district lookup recovers headerless Tabula CSV rows", {

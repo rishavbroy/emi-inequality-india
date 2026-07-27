@@ -146,12 +146,12 @@ public_map_style <- function(variable) {
       breaks = c(0, 2.5, 10, 25, 50, 100),
       labels = c("0-2.5", "2.5-10", "10-25", "25-50", "50-100")
     ),
-    real_log_consumption_change = list(
+    consumption_pct_change = list(
       palette = "brewer.reds",
-      title = "Change in Log Real Consumption",
-      style = NULL,
-      breaks = NULL,
-      labels = NULL
+      title = "Consumption Growth (%)",
+      style = "fixed",
+      breaks = c(10, 100, 200, 300, 400, 450),
+      labels = c("10-100", "100-200", "200-300", "300-400", "400-450")
     ),
     pct_pucca = list(
       palette = "brown",
