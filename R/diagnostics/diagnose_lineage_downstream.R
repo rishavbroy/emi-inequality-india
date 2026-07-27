@@ -27,14 +27,14 @@ lineage_wave_measure_spec <- function(wave) {
     return(list(
       code_col = "district_code_0708",
       count_cols = c("npeople_0708", "nhouses_0708", "n"),
-      weight_col = "nhouses_0708"
+      weight_col = "npeople_0708"
     ))
   }
   if (identical(wave, "nss_2017_18")) {
     return(list(
       code_col = "district_code_1718",
       count_cols = c("npeople_1718", "nhouses_1718", "n"),
-      weight_col = "nhouses_1718"
+      weight_col = "npeople_1718"
     ))
   }
   stop("Unsupported district lineage wave: ", wave, call. = FALSE)
@@ -120,6 +120,8 @@ collapse_lineage_measure_rows <- function(mapped, spec) {
       x <- rows[[nm]]
       if (nm %in% spec$count_cols && is.numeric(x)) {
         out[[nm]] <- sum(x, na.rm = TRUE)
+      } else if (grepl("gini", nm, ignore.case = TRUE) && is.numeric(x)) {
+        out[[nm]] <- if (nrow(rows) == 1L && !allocated) x[[1L]] else NA_real_
       } else if (is.numeric(x)) {
         out[[nm]] <- weighted_mean(x, rows$.aggregation_mass)
       } else {
@@ -191,53 +193,60 @@ map_lineage_measures <- function(measures, crosswalk, wave) {
   collapse_lineage_measure_rows(mapped, spec)
 }
 
-lineage_household_consumption <- function(inputs, wave) {
+lineage_household_consumption <- function(
+  inputs, wave, price_deflators = data.frame()
+) {
   inputs <- as_input_list(inputs)
   if (identical(wave, "nss_2007_08")) {
     df <- standardize_nss_2007_district_code(std(safe_df(
       select_input_frame(inputs, c("nss0708edu_block3", "block3"))
     ), 2007L))
     code_col <- "district_code_0708"
-    value_col <- first_col(df, c("MPCE", "mpce", "consumption_pc", "consumption_per_capita"))
-    total_col <- first_col(df, c("TOTAL", "total", "HH_Con_exp_rs", "consumption"))
+    value_col <- first_col(df, c("MPCE", "mpce"))
+    total_col <- first_col(df, c("TOTAL", "total"))
     size_col <- first_col(df, c("HH_SIZE", "HH_Size", "household_size"))
     weight_col <- first_col(df, c("weight", "WEIGHT", "Multiplier", "multiplier"))
     household_col <- first_col(df, c("HHID", "HH_ID", "household_id"))
-    value <- if (!is.null(value_col)) {
-      num(df[[value_col]])
-    } else if (!is.null(total_col) && !is.null(size_col)) {
-      num(df[[total_col]]) / num(df[[size_col]])
-    } else {
-      numeric()
-    }
   } else if (identical(wave, "nss_2017_18")) {
     df <- normalize_2017_district_code(std(safe_df(
       select_input_frame_2017(inputs, c("nss1718edu_block3", "block3", "block"))
     ), 2017L))
     code_col <- "district_code_1718"
-    total_col <- first_col(df, c("HH_Con_exp_rs", "MPCE", "mpce", "consumption", "hh_cons"))
+    value_col <- NULL
+    total_col <- first_col(df, c("HH_Con_exp_rs", "hh_con_exp_rs"))
     size_col <- first_col(df, c("Household_size", "HH_SIZE", "household_size"))
     weight_col <- first_col(df, c("MULT_Combined", "weight", "WEIGHT", "multiplier"))
     household_col <- first_col(df, c("HHID", "HH_ID", "household_id"))
-    value <- if (!is.null(total_col) && !is.null(size_col)) {
-      num(df[[total_col]]) / num(df[[size_col]])
-    } else if (!is.null(total_col)) {
-      num(df[[total_col]])
-    } else {
-      numeric()
-    }
   } else {
     stop("Unsupported district lineage wave: ", wave, call. = FALSE)
   }
 
-  if (!nrow(df) || !code_col %in% names(df) || is.null(weight_col) ||
-      length(value) != nrow(df)) {
+  if (
+    !nrow(df) || !code_col %in% names(df) || is.null(weight_col) ||
+      is.null(size_col) || (is.null(value_col) && is.null(total_col))
+  ) {
     return(data.frame())
   }
+  if (nrow(safe_df(price_deflators))) {
+    df <- attach_household_deflator(df, price_deflators)
+  }
+  size <- num(df[[size_col]])
+  nominal_pc <- if (!is.null(value_col)) {
+    num(df[[value_col]])
+  } else {
+    num(df[[total_col]]) / size
+  }
+  deflator <- if ("price_deflator" %in% names(df)) {
+    num(df$price_deflator)
+  } else {
+    rep(1, nrow(df))
+  }
+  survey_weight <- num(df[[weight_col]])
   out <- data.frame(
     source_code_key = lineage_source_code(df[[code_col]]),
-    consumption = value,
-    survey_weight = num(df[[weight_col]]),
+    consumption = nominal_pc,
+    real_consumption = nominal_pc / deflator,
+    person_weight = survey_weight * size,
     stringsAsFactors = FALSE
   )
   if (!is.null(household_col)) {
@@ -248,37 +257,51 @@ lineage_household_consumption <- function(inputs, wave) {
   }
   out[
     !is.na(out$source_code_key) & is.finite(out$consumption) &
-      is.finite(out$survey_weight) & out$survey_weight > 0,
-    , drop = FALSE
+      is.finite(out$real_consumption) & is.finite(out$person_weight) &
+      out$person_weight > 0,
+    ,
+    drop = FALSE
   ]
 }
 
 reconstruct_lineage_pooled_ginis <- function(
-  panel, crosswalk, nss_2007_education, nss_2017_education
+  panel, crosswalk, nss_2007_education, nss_2017_education,
+  price_deflators_2007 = data.frame(), price_deflators_2017 = data.frame()
 ) {
-  if (!is.data.frame(panel)) panel <- safe_df(panel)
+  panel_was_sf <- inherits(panel, "sf")
+  geometry <- if (panel_was_sf) sf::st_geometry(panel) else NULL
+  panel <- safe_df(panel)
   crosswalk <- safe_df(crosswalk)
   audit <- list()
 
   for (wave in c("nss_2007_08", "nss_2017_18")) {
-    gini_col <- if (wave == "nss_2007_08") "gini_cons_0708" else "gini_cons_1718"
+    suffix <- if (wave == "nss_2007_08") "0708" else "1718"
+    gini_col <- paste0("gini_cons_", suffix)
+    real_gini_col <- paste0("real_gini_cons_", suffix)
     status_col <- paste0(gini_col, "_reconstruction_status")
-    panel[[status_col]] <- "not_required"
-    map <- crosswalk[crosswalk$wave %in% wave, , drop = FALSE]
-    if (!nrow(map)) next
-    if (!"weight" %in% names(map)) map$weight <- 1
-    map$source_code_key <- lineage_source_code(map$source_code)
+    if (!gini_col %in% names(panel)) panel[[gini_col]] <- NA_real_
+    if (!real_gini_col %in% names(panel)) panel[[real_gini_col]] <- NA_real_
+    panel[[status_col]] <- ifelse(
+      is.finite(num(panel[[gini_col]])), "not_required", "not_reconstructable"
+    )
+    mapping <- crosswalk[crosswalk$wave %in% wave, , drop = FALSE]
+    if (!nrow(mapping)) next
+    if (!"weight" %in% names(mapping)) mapping$weight <- 1
+    mapping$source_code_key <- lineage_source_code(mapping$source_code)
     source_targets <- aggregate(
-      map$target_unit_2001,
-      list(source_row_id = map$source_row_id),
+      mapping$target_unit_2001,
+      list(source_row_id = mapping$source_row_id),
       function(x) length(unique(x))
     )
     names(source_targets)[[2L]] <- "n_targets"
-    whole <- merge(map, source_targets, by = "source_row_id", all.x = TRUE, sort = FALSE)
+    whole <- merge(
+      mapping, source_targets, by = "source_row_id", all.x = TRUE, sort = FALSE
+    )
     whole <- whole[
       is.finite(num(whole$weight)) & abs(num(whole$weight) - 1) <= 1e-8 &
         whole$n_targets == 1L,
-      , drop = FALSE
+      ,
+      drop = FALSE
     ]
     target_sources <- aggregate(
       whole$source_row_id,
@@ -291,18 +314,25 @@ reconstruct_lineage_pooled_ginis <- function(
 
     households <- lineage_household_consumption(
       if (wave == "nss_2007_08") nss_2007_education else nss_2017_education,
-      wave
+      wave,
+      if (wave == "nss_2007_08") price_deflators_2007 else price_deflators_2017
     )
     mapped <- merge(
-      whole[whole$target_unit_2001 %in% targets,
-            c("source_code_key", "target_unit_2001", "source_row_id"), drop = FALSE],
+      whole[
+        whole$target_unit_2001 %in% targets,
+        c("source_code_key", "target_unit_2001", "source_row_id"),
+        drop = FALSE
+      ],
       households,
-      by = "source_code_key", all.x = TRUE, sort = FALSE
+      by = "source_code_key",
+      all.x = TRUE,
+      sort = FALSE
     )
     groups <- split(seq_len(nrow(mapped)), mapped$target_unit_2001)
     rows <- safe_bind_rows(lapply(names(groups), function(target) {
       x <- mapped[groups[[target]], , drop = FALSE]
-      valid <- is.finite(x$consumption) & is.finite(x$survey_weight) & x$survey_weight > 0
+      valid <- is.finite(x$consumption) & is.finite(x$real_consumption) &
+        is.finite(x$person_weight) & x$person_weight > 0
       observed_sources <- unique(x$source_row_id[valid])
       expected_sources <- unique(whole$source_row_id[whole$target_unit_2001 == target])
       complete <- length(observed_sources) == length(expected_sources) &&
@@ -313,11 +343,20 @@ reconstruct_lineage_pooled_ginis <- function(
         source_count = length(expected_sources),
         household_count = sum(valid),
         pooled_gini = if (complete && any(valid)) {
-          wgini(x$consumption[valid], x$survey_weight[valid])
+          wgini(x$consumption[valid], x$person_weight[valid])
         } else {
           NA_real_
         },
-        status = if (complete && any(valid)) "reconstructed" else "missing_household_source",
+        pooled_real_gini = if (complete && any(valid)) {
+          wgini(x$real_consumption[valid], x$person_weight[valid])
+        } else {
+          NA_real_
+        },
+        status = if (complete && any(valid)) {
+          "reconstructed"
+        } else {
+          "missing_household_source"
+        },
         stringsAsFactors = FALSE
       )
     }))
@@ -326,9 +365,11 @@ reconstruct_lineage_pooled_ginis <- function(
     matched <- which(!is.na(hit))
     reconstructed <- matched[rows$status[hit[matched]] %in% "reconstructed"]
     panel[[gini_col]][reconstructed] <- rows$pooled_gini[hit[reconstructed]]
+    panel[[real_gini_col]][reconstructed] <- rows$pooled_real_gini[hit[reconstructed]]
     panel[[status_col]][matched] <- rows$status[hit[matched]]
   }
 
+  if (panel_was_sf) panel <- sf::st_sf(panel, geometry = geometry)
   list(panel = panel, audit = safe_bind_rows(audit))
 }
 
@@ -340,6 +381,7 @@ attach_lineage_instrument <- function(panel, linguistic_distance_iv) {
   codes <- lineage_target_codes(panel$target_unit_2001)
   panel$state_code_2001 <- codes$state_code_2001
   panel$district_code_2001 <- codes$district_code_2001
+  panel$state_2001_cluster <- codes$state_code_2001
 
   state_col <- first_col(iv, c("state_code", "state"))
   district_col <- first_col(iv, c("district_code", "district"))
@@ -389,7 +431,8 @@ attach_lineage_geometry <- function(panel, geometry_2001) {
 
 build_lineage_district_panel <- function(
   primary_crosswalk, measures_2007, measures_2017,
-  linguistic_distance_iv, geometry_2001 = data.frame(), cfg = list()
+  linguistic_distance_iv, geometry_2001 = data.frame(), cfg = list(),
+  census_2001_controls = data.frame()
 ) {
   m07 <- map_lineage_measures(
     measures_2007, primary_crosswalk, "nss_2007_08"
@@ -400,12 +443,13 @@ build_lineage_district_panel <- function(
   if (!nrow(m07) || !nrow(m17)) return(empty_panel())
 
   duplicate <- intersect(
-    setdiff(names(m17), c("target_unit_2001")),
+    setdiff(names(m17), "target_unit_2001"),
     names(m07)
   )
   m17 <- m17[setdiff(names(m17), duplicate)]
   panel <- merge(m07, m17, by = "target_unit_2001", all = FALSE, sort = FALSE)
   panel <- attach_lineage_instrument(panel, linguistic_distance_iv)
+  panel <- attach_census_2001_controls(panel, census_2001_controls)
   panel$district_panel_id <- sub(
     "^pc2001__", "2001__", panel$target_unit_2001
   )
@@ -413,14 +457,13 @@ build_lineage_district_panel <- function(
   panel <- add_panel_regions(panel)
   panel <- compute_consumption_pct_change(panel)
   panel <- compute_log_consumption_difference(panel)
+  panel <- compute_real_consumption_outcomes(panel)
   panel <- compute_gini_change(panel)
   panel <- panel[panel_has_analysis_core(panel), , drop = FALSE]
   rownames(panel) <- NULL
-  validate_analysis_district_panel(
-    attach_lineage_geometry(panel, geometry_2001),
-    cfg,
-    strict = FALSE
-  )
+  panel <- attach_lineage_geometry(panel, geometry_2001)
+  panel <- add_census_2001_density(panel)
+  validate_analysis_district_panel(panel, cfg, strict = FALSE)
 }
 
 lineage_panel_unit_id <- function(panel) {
