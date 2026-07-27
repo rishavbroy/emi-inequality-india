@@ -37,3 +37,10 @@ See [`docs/DISTRICT_LINEAGE.md`](../../docs/DISTRICT_LINEAGE.md) for authority r
 `census_2001_control_registry.csv` records denominators and whether a variable is
 planned for the main paper or appendix. The construction rules are described in
 `docs/CONSUMPTION_AND_PRICES.md` and `docs/CENSUS_2001_CONTROLS.md`.
+
+- `cpi_iw_centres_2001.csv`: the 78 Labour Bureau CPI-IW centres and their
+  All-India weights on the 2001=100 base. The three centres later assigned to
+  Telangana are assigned to undivided Andhra Pradesh for the 2007-08 price
+  series. `R/prices/read_price_sources.R` normalizes known spelling variants,
+  requires complete centre coverage by state and month, and renormalizes the
+  official weights within each state through `weighted.mean()`.

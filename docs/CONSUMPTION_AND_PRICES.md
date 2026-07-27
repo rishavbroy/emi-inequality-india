@@ -65,3 +65,19 @@ The appendix will report:
 - sensitivity to CPI-AL in place of CPI-RL;
 - alternative overlap-period links;
 - the number and weighted share of households using each fallback.
+
+## RBI price readers
+
+`R/prices/read_price_sources.R` reads the four RBI DBIE extracts named in
+`price_series_registry.csv`. It retains only the general rural and urban index
+from the two CPI-R/U files, distinguishes CPI-AL from CPI-RL, and selects the
+2001-base centre series from CPI-IW. The CPI-IW state series is a weighted mean
+of centre indices using the Labour Bureau's 78 centre weights. For the 2007-08
+series, Godavarikhani, Hyderabad, and Warangal are assigned to undivided Andhra
+Pradesh. A state-month is rejected when one of its expected centres is absent;
+the code does not silently reweight an incomplete set of centres.
+
+These readers construct validated source tables only. Household deflation and
+replacement of the current reported outcome remain separate changes, so a raw
+price-file problem cannot alter the paper's estimates without an explicit
+change to `_targets.R`.
