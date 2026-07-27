@@ -77,7 +77,6 @@ series, Godavarikhani, Hyderabad, and Warangal are assigned to undivided Andhra
 Pradesh. A state-month is rejected when one of its expected centres is absent;
 the code does not silently reweight an incomplete set of centres.
 
-These readers construct validated source tables only. Household deflation and
-replacement of the current reported outcome remain separate changes, so a raw
-price-file problem cannot alter the paper's estimates without an explicit
-change to `_targets.R`.
+These readers construct validated source tables only. `R/prices/build_temporal_price_series.R` then joins the direct state series without changing reported estimates. It rescales pre-2013 CPI-RL and state CPI-IW to the 2012-base CPI-R/U scale using the median state-sector ratio over common months, uses the older sources only through December 2012, and uses state CPI-Rural or CPI-Urban from January 2013 onward. A state-sector chain is rejected when it has fewer than the required number of common months; no link is inferred from another state. The base-2010 and base-2012 CPI-R/U overlap is retained as a separate validation result rather than inserted into the production chain.
+
+Household deflation and replacement of the current reported outcome remain separate changes, so a raw price-file problem cannot alter the paper's estimates without an explicit change to `_targets.R`.

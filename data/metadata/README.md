@@ -44,3 +44,5 @@ planned for the main paper or appendix. The construction rules are described in
   series. `R/prices/read_price_sources.R` normalizes known spelling variants,
   requires complete centre coverage by state and month, and renormalizes the
   official weights within each state through `weighted.mean()`.
+
+- `R/prices/build_temporal_price_series.R` constructs the direct monthly temporal chain: CPI-RL for rural areas and state-weighted CPI-IW for urban areas before January 2013, followed by the state CPI-R/U 2012-base series. State-sector median overlap ratios place the older observations on the newer scale; insufficient links stop construction rather than invoking an undocumented fallback.
