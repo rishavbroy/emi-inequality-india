@@ -338,6 +338,17 @@ test_that("household attachment preserves input row order and fallback provenanc
   expect_equal(out$state_rule, c("fallback", "direct"))
 })
 
+
+
+test_that("price month normalization is vectorized while boundaries stay scalar", {
+  expect_equal(
+    price_month_start(as.Date(c("2007-07-31", "2007-08-15"))),
+    as.Date(c("2007-07-01", "2007-08-01"))
+  )
+  expect_error(price_month_start(c("2007-07-01", NA)), "valid dates")
+  expect_error(price_boundary(as.Date(c("2007-07-01", "2007-08-01"))), "one valid date")
+})
+
 test_that("NSS sub-rounds map to consecutive survey-quarter price months", {
   expect_equal(
     nss_subround_for_month(as.Date(c("2007-07-01", "2007-09-01", "2007-10-01", "2008-06-01")), 2007),

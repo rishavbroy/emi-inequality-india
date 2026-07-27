@@ -147,8 +147,8 @@ apply_price_state_rules <- function(temporal_index, state_rules, start_period = 
   rules$valid_to <- as.Date(rules$valid_to)
   if (is.null(start_period)) start_period <- min(idx$period)
   if (is.null(end_period)) end_period <- max(idx$period)
-  start_period <- price_month_start(start_period)
-  end_period <- price_month_start(end_period)
+  start_period <- price_boundary(start_period)
+  end_period <- price_boundary(end_period)
   if (end_period < start_period) stop("Price-state range ends before it begins.", call. = FALSE)
 
   periods <- sort(unique(idx$period[idx$period >= start_period & idx$period <= end_period]))

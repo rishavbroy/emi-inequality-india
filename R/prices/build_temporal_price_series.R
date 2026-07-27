@@ -5,10 +5,18 @@
 
 price_month_start <- function(x) {
   out <- as.Date(x)
-  if (length(out) != 1L || is.na(out)) {
-    stop("Price-series boundary must be one valid date.", call. = FALSE)
+  if (anyNA(out)) {
+    stop("Price periods must be valid dates.", call. = FALSE)
   }
   as.Date(format(out, "%Y-%m-01"))
+}
+
+price_boundary <- function(x) {
+  out <- price_month_start(x)
+  if (length(out) != 1L) {
+    stop("Price-series boundary must be one valid date.", call. = FALSE)
+  }
+  out
 }
 
 select_pre_2013_price_series <- function(price_sources) {
@@ -53,8 +61,8 @@ select_post_2013_price_series <- function(price_sources) {
 summarise_price_links <- function(old_index, new_index, overlap_start, overlap_end) {
   old <- safe_df(old_index)
   new <- safe_df(new_index)
-  overlap_start <- price_month_start(overlap_start)
-  overlap_end <- price_month_start(overlap_end)
+  overlap_start <- price_boundary(overlap_start)
+  overlap_end <- price_boundary(overlap_end)
   if (overlap_end < overlap_start) stop("Price-link overlap end precedes its start.", call. = FALSE)
 
   old <- old[old$period >= overlap_start & old$period <= overlap_end, , drop = FALSE]
@@ -88,7 +96,7 @@ summarise_price_links <- function(old_index, new_index, overlap_start, overlap_e
 validate_temporal_price_chain <- function(index, switch_date) {
   out <- safe_df(index)
   validate_price_index(out, keys = c("state_code", "sector", "period"))
-  switch_date <- price_month_start(switch_date)
+  switch_date <- price_boundary(switch_date)
 
   wrong_pre <- out$period < switch_date & !out$price_source %in% c("cpi_rl_state", "cpi_iw_state")
   wrong_post <- out$period >= switch_date & !out$price_source %in% c("cpi_rural_2012", "cpi_urban_2012")
@@ -105,7 +113,7 @@ build_temporal_price_series <- function(
     overlap_start = as.Date("2013-01-01"),
     overlap_end = as.Date("2014-12-01"),
     minimum_link_months = 6L) {
-  switch_date <- price_month_start(switch_date)
+  switch_date <- price_boundary(switch_date)
   old <- select_pre_2013_price_series(price_sources)
   new <- select_post_2013_price_series(price_sources)
   links <- summarise_price_links(old, new, overlap_start, overlap_end)
