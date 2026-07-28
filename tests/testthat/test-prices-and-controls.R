@@ -805,3 +805,26 @@ test_that("Census district validation enforces the declared universe size", {
     "2 districts; expected 3"
   )
 })
+
+
+test_that("Census geometry derives standardized keys from canonical unit IDs", {
+  geometry <- data.frame(
+    unit_id = c("pc2001__01__02", "pc2001__20__16"),
+    stringsAsFactors = FALSE
+  )
+  out <- census_geometry_keys(geometry)
+  expect_equal(out$state_code_2001, c("01", "20"))
+  expect_equal(out$district_code_2001, c("02", "16"))
+})
+
+
+test_that("Census geometry rejects malformed or duplicate canonical unit IDs", {
+  expect_error(
+    census_geometry_keys(data.frame(unit_id = "pc2001__1__02")),
+    "malformed"
+  )
+  expect_error(
+    census_geometry_keys(data.frame(unit_id = rep("pc2001__01__02", 2L))),
+    "not unique"
+  )
+})

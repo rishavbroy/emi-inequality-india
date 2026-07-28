@@ -156,13 +156,48 @@ clean_census_h09_district <- function(x) {
   validate_census_district_rows(out, "Census H-09")
 }
 
+census_geometry_keys <- function(geometry) {
+  x <- safe_df(geometry)
+  keys <- census_2001_keys()
+  if (all(keys %in% names(x))) {
+    out <- x[keys]
+  } else {
+    if (!"unit_id" %in% names(x)) {
+      stop(
+        "Census geometry lacks both standardized district keys and canonical unit_id.",
+        call. = FALSE
+      )
+    }
+    unit_id <- trimws(plain_chr(x$unit_id))
+    valid <- grepl("^pc2001__[0-9]{2}__[0-9]{2}$", unit_id)
+    if (any(!valid)) {
+      stop("Census geometry contains malformed Census-2001 unit_id values.", call. = FALSE)
+    }
+    parts <- strsplit(unit_id, "__", fixed = TRUE)
+    out <- data.frame(
+      state_code_2001 = vapply(parts, `[[`, character(1), 2L),
+      district_code_2001 = vapply(parts, `[[`, character(1), 3L),
+      stringsAsFactors = FALSE
+    )
+  }
+  out$state_code_2001 <- pad_census_code(out$state_code_2001, 2L)
+  out$district_code_2001 <- pad_census_code(out$district_code_2001, 2L)
+  if (any(!stats::complete.cases(out[keys]))) {
+    stop("Census geometry contains missing standardized district keys.", call. = FALSE)
+  }
+  if (anyDuplicated(out[keys])) {
+    stop("Census geometry is not unique by district.", call. = FALSE)
+  }
+  out
+}
+
 census_geometry_area <- function(geometry) {
   need_pkg("sf", "Census 2001 district area")
-  required <- census_2001_keys()
-  if (!inherits(geometry, "sf") || !all(required %in% names(geometry))) stop("Census geometry lacks standardized district keys.", call. = FALSE)
-  out <- sf::st_drop_geometry(geometry[required])
+  if (!inherits(geometry, "sf")) {
+    stop("Census geometry is not an sf object.", call. = FALSE)
+  }
+  out <- census_geometry_keys(geometry)
   out$area_sq_km <- as.numeric(sf::st_area(sf::st_transform(geometry, 6933))) / 1e6
-  if (anyDuplicated(out[required])) stop("Census geometry is not unique by district.", call. = FALSE)
   out
 }
 
