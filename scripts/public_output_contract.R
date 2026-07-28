@@ -27,6 +27,8 @@ required_public_render_inputs <- function() {
     "outputs/figures/main/district_carveouts_shifts.png",
     "outputs/figures/main/poster_emie_expected_values.pdf",
     "outputs/figures/main/poster_first_stage_specs.pdf",
+    "outputs/figures/main/poster_second_stage_specs.pdf",
+    "outputs/figures/main/map_preferred_linguistic_distance.pdf",
     "outputs/figures/main/map_emi_exposure.pdf",
     "outputs/figures/main/map_residual_emi_exposure.pdf",
     "outputs/figures/main/map_linguistic_distance.pdf",
@@ -54,7 +56,7 @@ required_final_documents <- function(require_application_samples = TRUE) {
     "docs/district-matching.html",
     "docs/long-paths-and-8-3-filenames.html",
     "posters/2026_predoc_conference/poster.pdf",
-    "posters/2026_predoc_conference/poster.png"
+    "posters/2026_predoc_conference/RishavRoy-Education.png"
   )
   if (isTRUE(require_application_samples)) files <- c(files, application_sample_outputs())
   files
@@ -75,7 +77,7 @@ required_final_artifacts <- function() {
     "outputs/figures/main/collage_iv_region_maps.png",
     "outputs/figures/main/poster_emie_expected_values.pdf",
     "posters/2026_predoc_conference/poster.pdf",
-    "posters/2026_predoc_conference/poster.png",
+    "posters/2026_predoc_conference/RishavRoy-Education.png",
     "outputs/diagnostics/public/spatial_moran_tests.csv",
     "outputs/diagnostics/public/spatial_moran_mc_reference.csv"
   )

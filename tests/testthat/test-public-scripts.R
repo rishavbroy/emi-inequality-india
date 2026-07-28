@@ -485,8 +485,10 @@ test_that("conference poster is a first-class final output", {
   expect_match(renderer, "render_poster_pdf", fixed = TRUE)
   expect_match(renderer, "render_poster_png", fixed = TRUE)
   expect_match(contract, "posters/2026_predoc_conference/poster.pdf", fixed = TRUE)
-  expect_match(contract, "posters/2026_predoc_conference/poster.png", fixed = TRUE)
+  expect_match(contract, "posters/2026_predoc_conference/RishavRoy-Education.png", fixed = TRUE)
   expect_match(poster, "poster_first_stage_specs.pdf", fixed = TRUE)
+  expect_match(poster, "poster_second_stage_specs.pdf", fixed = TRUE)
+  expect_match(poster, "map_preferred_linguistic_distance.pdf", fixed = TRUE)
   expect_match(poster, "map_residual_emi_exposure.pdf", fixed = TRUE)
   expect_match(poster, "map_residual_linguistic_distance.pdf", fixed = TRUE)
 })
@@ -684,4 +686,19 @@ test_that("poster PNG rendering supports paths containing spaces", {
   expect_identical(out, png)
   expect_true(file.exists(png))
   expect_gt(file.info(png)$size, 0)
+})
+
+
+test_that("poster source uses title-case section headings and the named PNG output", {
+  poster <- repo_text("posters", "2026_predoc_conference", "poster.qmd")
+  renderer <- repo_text("R", "output", "render_public_artifacts.R")
+  template <- repo_text("posters", "2026_predoc_conference", "_extensions", "poster", "typst-template.typ")
+
+  headings <- sub("^# ", "", grep("^# ", strsplit(poster, "\n", fixed = TRUE)[[1]], value = TRUE))
+  expect_setequal(headings, c("Why This Matters", "Research Design", "First Stage", "Second Stage", "Interpretation", "Next Steps"))
+  expect_match(renderer, "RishavRoy-Education.png", fixed = TRUE)
+  expect_match(template, 'weight: "bold", fill: white, footer_url', fixed = TRUE)
+  expect_match(template, 'weight: "bold", fill: white, footer_email_ids', fixed = TRUE)
+  expect_match(template, "v(16pt, weak: true)", fixed = TRUE)
+  expect_match(template, "v(1pt)", fixed = TRUE)
 })

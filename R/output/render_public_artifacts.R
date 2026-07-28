@@ -157,7 +157,7 @@ render_poster_pdf <- function(poster_qmd, figure_files, poster_logo_pdf) {
   status <- system2("quarto", c("render", poster_qmd))
   if (!identical(status, 0L)) stop("quarto render ", poster_qmd, " failed with status ", status, call. = FALSE)
   if (!file.exists(pdf_path) || file.info(pdf_path)$size <= 0L) stop("Poster render did not create a non-empty ", pdf_path, call. = FALSE)
-  png_path <- render_poster_png(pdf_path)
+  png_path <- render_poster_png(pdf_path, file.path(dirname(pdf_path), "RishavRoy-Education.png"))
   c(pdf_path, png_path)
 }
 
