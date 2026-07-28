@@ -31,8 +31,9 @@ data/interim/
 # locally stored literature PDFs
 relevant-literature/
 
-# locally reproducible large derived geometry
+# locally reproducible derived artifacts
 outputs/derived/district_lineage/*.gpkg
+outputs/derived/poster/
 
 # short-lived target/build diagnostics
 outputs/diagnostics/*.csv
