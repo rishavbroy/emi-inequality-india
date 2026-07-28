@@ -508,6 +508,14 @@ test_that("first-stage absorption registry is ordered and exhausts main Census c
   expect_true(all(vapply(registry$controls[8:nrow(registry)], function(x) {
     identical(x, order_first_stage_controls(x))
   }, logical(1))))
+  expect_identical(
+    first_stage_included_control_blocks(census_2001_main_controls()),
+    names(first_stage_control_blocks())
+  )
+  expect_identical(
+    first_stage_included_control_blocks(census_2001_absorption_controls()),
+    names(first_stage_control_blocks())
+  )
 })
 
 test_that("first-stage absorption diagnostics use fixed support and report requested statistics", {
@@ -537,6 +545,10 @@ test_that("first-stage absorption diagnostics use fixed support and report reque
     "estimate", "std.error", "partial_r_squared", "excluded_instrument_f",
     "residual_instrument_sd", "n"
   ) %in% names(out$summary)))
+  expect_identical(
+    out$summary$control_blocks[out$summary$specification_id == "state_fe_census_controls"],
+    paste(names(first_stage_control_blocks()), collapse = ";")
+  )
   expect_gt(out$summary$partial_r_squared[1], 0.9)
   expect_equal(nrow(out$state_deletion), length(unique(states)))
   expect_equal(nrow(out$district_influence), nrow(panel))

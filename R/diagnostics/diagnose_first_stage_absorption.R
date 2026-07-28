@@ -16,6 +16,19 @@ first_stage_control_blocks <- function() {
   )
 }
 
+first_stage_control_block_membership <- function() {
+  blocks <- first_stage_control_blocks()
+  blocks$economic_structure <- unique(c(
+    "agricultural_worker_share_2001", blocks$economic_structure
+  ))
+  blocks
+}
+
+first_stage_included_control_blocks <- function(controls) {
+  blocks <- first_stage_control_block_membership()
+  names(blocks)[vapply(blocks, function(block) any(block %in% controls), logical(1))]
+}
+
 order_first_stage_controls <- function(controls, canonical = census_2001_absorption_controls()) {
   canonical[canonical %in% unique(controls)]
 }
@@ -161,9 +174,7 @@ estimate_first_stage_absorption_spec <- function(data, specification, treatment,
     treatment = treatment,
     instrument = instrument,
     fixed_effect = fixed_effect,
-    control_blocks = paste(names(first_stage_control_blocks())[vapply(
-      first_stage_control_blocks(), function(block) all(block %in% controls), logical(1)
-    )], collapse = ";"),
+    control_blocks = paste(first_stage_included_control_blocks(controls), collapse = ";"),
     n_controls = length(controls),
     estimate = unname(stats::coef(fit)[instrument]),
     std.error = unname(inference[["std.error"]]),
