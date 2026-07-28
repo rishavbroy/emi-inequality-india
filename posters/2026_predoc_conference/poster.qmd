@@ -66,7 +66,7 @@ $$
 \mathrm{EMIE}_d = \Pr(\text{enrolled})_d \times \Pr(\text{EMI} \mid \text{enrolled})_d.
 $$
 
-The first is the extensive enrollment margin; the second is the medium-of-instruction margin among enrolled children. Families choose among higher-cost private EMI, low-cost private EMI that may absorb 7-20% of a poor household's monthly income, and free or negatively priced government schooling that usually teaches in the mother tongue [@endow2019a; @muralidharan2019a]. Private schooling remains more accessible to richer households [@muralidharan2015a]. School access and instructional quality differ, while recorded EMI enrollment does not establish that children actually learn in English [@lahoti2019a].
+The first is the extensive enrollment margin; the second is the medium-of-instruction margin among enrolled children. Families choose among higher-cost private EMI, low-cost private EMI (that may absorb 7-20% of a poor household's monthly income), and free/negatively priced government schooling usually taught in the mother tongue [@endow2019a; @muralidharan2019a]. Private schooling remains more accessible to richer households [@muralidharan2015a]. School access and instructional quality differ, meaning recorded EMI enrollment does not establish that children actually learn in English [@lahoti2019a].
 
 ![Linguistic distance after the same adjustment.](../../outputs/figures/main/map_residual_linguistic_distance.pdf){width=62%}
 
@@ -85,20 +85,19 @@ The first is the extensive enrollment margin; the second is the medium-of-instru
 
 ![First-stage relationship before adjustment, after region adjustment, and after state adjustment.](../../outputs/figures/main/poster_first_stage_specs.pdf){width=96%}
 
-Greater distance from Hindi can raise the relative appeal of English rather than Hindi as a common language. For families, this can increase demand for English-medium schooling. For schools, it can increase the incentive to offer English instruction. The first stage asks whether these two forces raise district EMI exposure [@clingingsmith2008; @shastry2012a].
+Greater distance from Hindi can raise the relative appeal of English rather than Hindi as *lingua franca*. For families, this can increase demand for EMI. For schools, it can increase the incentive to offer EMI. I test if these forces raise district EMI exposure [@clingingsmith2008; @shastry2012a].
 
 # Second Stage
 
 ![Estimated consumption response across three IV specifications.](../../outputs/figures/main/poster_second_stage_specs.pdf){width=96%}
 
-The second stage asks whether greater EMI exposure translates into faster local consumption growth. It therefore extends the individual wage-premium question to district development over the following decade.
+I test if greater EMI exposure translates into faster local consumption growth.
 
 # Next Steps
 
-- Separate changes in school supply from changes in household demand.
-- Test whether EMI raises productive labor demand enough to absorb a growing supply of workers with English skills.
-- Distinguish gains through better employment and income from better-educated unemployment or underemployment when labor supply grows faster than suitable jobs [@organization2024a; @graddol2010a].
-- Study who gains from EMI across schooling, work, occupations, and migration.
+- Does EMI translate into welfare growth for the district where the educaiton occurred? What determines the absorption of EMI graduates and thus of English human capital into the local economy?
+- Does EMI create employment in a context where labor demand is exceeded by a nominally overqualified but technically underskilled supply? 
+- Does EMI democratize access to higher wages, or does it exacerbate inequality by privileging the already advantaged?
 
 ```{=typst}
 #block(fill: rgb("f3f0ea"), inset: 6pt, radius: 5pt, width: 100%)[
