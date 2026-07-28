@@ -492,7 +492,7 @@ extended_diagnostic_targets <- list(
   tar_target(diag_ext_spatial_weights, save_spatial_weight_diagnostics(diagnose_spatial_weights(district_panel, spatial_weights, cfg))),
   tar_target(diag_ext_instrument_exploration, save_instrument_exploration_diagnostics(diagnose_instrument_exploration(district_panel, cfg))),
   tar_target(first_stage_absorption_diagnostics, diagnose_first_stage_absorption(district_panel)),
-  tar_target(diag_ext_first_stage_absorption, save_first_stage_absorption_diagnostics(first_stage_absorption_diagnostics), format = "file"),
+  tar_target(diag_ext_first_stage_absorption, save_first_stage_absorption_diagnostics(first_stage_absorption_diagnostics)),
   tar_target(
     census_2001_control_diagnostics,
     diagnose_census_2001_controls(
