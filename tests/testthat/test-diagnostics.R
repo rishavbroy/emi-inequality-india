@@ -491,3 +491,86 @@ test_that("binomial fit issues detect boundary probabilities deterministically",
     c("captured warning", "fitted probabilities are numerically near 0 or 1")
   )
 })
+
+test_that("first-stage absorption registry is ordered and exhausts main Census controls", {
+  registry <- first_stage_absorption_registry()
+
+  expect_identical(registry$specification_id[1:5], c(
+    "instrument_only", "region_fe", "state_fe", "census_controls",
+    "state_fe_census_controls"
+  ))
+  expect_identical(registry$sequence, seq_len(nrow(registry)))
+  expect_setequal(unlist(first_stage_control_blocks(), use.names = FALSE), census_2001_main_controls())
+  expect_identical(unlist(tail(registry$controls, 1)[[1]], use.names = FALSE), census_2001_main_controls())
+})
+
+test_that("first-stage absorption diagnostics use fixed support and report requested statistics", {
+  set.seed(42)
+  states <- rep(sprintf("%02d", 1:12), each = 8)
+  regions <- rep(panel_region_levels(), each = 16)
+  z <- rep(seq(-1, 1, length.out = 8), 12) + rep(seq(-2, 2, length.out = 12), each = 8)
+  panel <- data.frame(
+    state_code_2001 = states,
+    region = factor(regions, levels = panel_region_levels()),
+    ling_distance_nonzero_mean = z,
+    emi_exposure_all_children_0708 = 12 + 3 * z + stats::rnorm(length(z), sd = 0.2),
+    stringsAsFactors = FALSE
+  )
+  for (i in seq_along(census_2001_main_controls())) {
+    panel[[census_2001_main_controls()[i]]] <- stats::rnorm(nrow(panel)) + i / 10
+  }
+
+  out <- diagnose_first_stage_absorption(panel)
+
+  expect_s3_class(out, "emi_first_stage_absorption")
+  expect_equal(nrow(out$summary), nrow(first_stage_absorption_registry()))
+  expect_true(all(out$summary$n == nrow(panel)))
+  expect_true(all(out$summary$n_regions == 6L))
+  expect_true(all(c(
+    "estimate", "std.error", "partial_r_squared", "excluded_instrument_f",
+    "residual_instrument_sd", "n"
+  ) %in% names(out$summary)))
+  expect_gt(out$summary$partial_r_squared[1], 0.9)
+})
+
+test_that("first-stage absorption diagnostics fail rather than changing support silently", {
+  panel <- data.frame(
+    state_code_2001 = rep(sprintf("%02d", 1:6), each = 2),
+    region = rep(panel_region_levels(), each = 2),
+    ling_distance_nonzero_mean = seq_len(12),
+    emi_exposure_all_children_0708 = seq_len(12),
+    stringsAsFactors = FALSE
+  )
+  for (variable in census_2001_main_controls()) panel[[variable]] <- 1
+  panel$st_share_2001[1] <- NA_real_
+
+  prepared <- prepare_first_stage_absorption_panel(panel)
+  expect_equal(nrow(prepared), 11L)
+  expect_error(
+    prepare_first_stage_absorption_panel(transform(panel, region = "Northern")),
+    "all six panel regions"
+  )
+})
+
+test_that("first-stage absorption diagnostics save a compact manifest", {
+  set.seed(1)
+  panel <- data.frame(
+    state_code_2001 = rep(sprintf("%02d", 1:6), each = 4),
+    region = rep(panel_region_levels(), each = 4),
+    ling_distance_nonzero_mean = stats::rnorm(24),
+    emi_exposure_all_children_0708 = stats::rnorm(24),
+    stringsAsFactors = FALSE
+  )
+  for (variable in census_2001_main_controls()) panel[[variable]] <- stats::rnorm(24)
+  out <- diagnose_first_stage_absorption(panel)
+  dir <- tempfile("first-stage-absorption-")
+  on.exit(unlink(dir, recursive = TRUE, force = TRUE), add = TRUE)
+
+  manifest <- save_first_stage_absorption_diagnostics(out, dir)
+
+  expect_setequal(basename(manifest$path), c(
+    "first_stage_absorption_ladder.csv", "first_stage_absorption_registry.csv",
+    "first_stage_absorption_common_support.csv"
+  ))
+  expect_true(all(file.exists(manifest$path)))
+})
