@@ -105,7 +105,7 @@ test_that("Census 2001 cleaner parses mutually exclusive district language rows"
   expect_setequal(out$canonical_language, c("Assamese", "Hindi", "Punjabi"))
   expect_equal(unique(out$state_std), "01")
   expect_equal(unique(out$district_std), "02")
-  expect_setequal(out$ling_degrees, c(0, 1, 3))
+  expect_false("ling_degrees" %in% names(out))
 })
 
 test_that("linguistic distance IV does not invent placeholder values", {
