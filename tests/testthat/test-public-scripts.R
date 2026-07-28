@@ -472,6 +472,15 @@ poster_renderer_test_env <- function() {
   env
 }
 
+test_that("poster renderer uses warning-free vector assets", {
+  renderer <- poster_renderer_test_env()
+  assets <- renderer$poster_required_assets()
+
+  expect_true(all(file.exists(vapply(assets, repo_file, character(1)))))
+  expect_true(any(grepl("uw-logo-horizontal-full-color-print\\.svg$", assets)))
+  expect_false(any(grepl("uw-logo-horizontal-full-color-print\\.pdf$", assets)))
+})
+
 test_that("poster Typst format supplies both standard template partials", {
   poster_qmd <- repo_file("posters", "2026_predoc_conference", "poster.qmd")
   renderer <- poster_renderer_test_env()
@@ -579,4 +588,54 @@ test_that("coding-sample specifications use one valid nonempty marker pair", {
       )
     }
   }
+})
+
+test_that("poster logo preprocessing preserves the official PDF source contract", {
+  renderer <- poster_renderer_test_env()
+  root <- tempfile("poster logo path with spaces ")
+  dir.create(root, recursive = TRUE)
+  source <- file.path(root, "official print logo.pdf")
+  output <- file.path(root, "derived", "flattened print logo.pdf")
+  writeBin(charToRaw("%PDF-1.7\nsource\n"), source)
+
+  fake_gs <- file.path(root, "fake gs")
+  writeLines(c(
+    "#!/usr/bin/env bash",
+    "set -euo pipefail",
+    "out=''",
+    "input=''",
+    "for arg in \"$@\"; do",
+    "  case \"$arg\" in",
+    "    -sOutputFile=*) out=${arg#-sOutputFile=} ;;",
+    "    *.pdf) input=$arg ;;",
+    "  esac",
+    "done",
+    "test -n \"$out\"",
+    "test -n \"$input\"",
+    "cp \"$input\" \"$out\""
+  ), fake_gs)
+  Sys.chmod(fake_gs, mode = "0755")
+
+  result <- renderer$flatten_poster_logo_pdf(source, output, ghostscript = fake_gs)
+  expect_identical(result, output)
+  expect_true(file.exists(output))
+  expect_gt(file.info(output)$size, 0)
+})
+
+test_that("poster consumes the flattened official print PDF derivative", {
+  poster <- repo_text("posters", "2026_predoc_conference", "poster.qmd")
+  targets <- repo_text("_targets.R")
+
+  expect_match(
+    poster,
+    "outputs/derived/poster/uw-logo-horizontal-full-color-print-flat.pdf",
+    fixed = TRUE
+  )
+  expect_false(grepl(
+    "../../assets/uw-logo-horizontal-full-color-print.pdf",
+    poster,
+    fixed = TRUE
+  ))
+  expect_match(targets, "tar_target(poster_logo_source", fixed = TRUE)
+  expect_match(targets, "flatten_poster_logo_pdf(poster_logo_source)", fixed = TRUE)
 })

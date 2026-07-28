@@ -29,6 +29,7 @@ required_public_render_inputs <- function() {
     "outputs/figures/main/map_emi_exposure.pdf",
     "outputs/figures/main/map_linguistic_distance.pdf",
     "assets/uw-logo-horizontal-full-color-print.pdf",
+    "outputs/derived/poster/uw-logo-horizontal-full-color-print-flat.pdf",
     "assets/repo-qr.svg"
   )
 }
