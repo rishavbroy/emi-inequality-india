@@ -25,5 +25,6 @@
   $if(subheading-font-size)$ subheading_font_size: $subheading-font-size$, $endif$
   $if(logo-y-offset)$ logo_y_offset: $logo-y-offset$, $endif$
   $if(title-y-offset)$ title_y_offset: $title-y-offset$, $endif$
+  $if(author-y-offset)$ author_y_offset: $author-y-offset$, $endif$
   doc,
 )

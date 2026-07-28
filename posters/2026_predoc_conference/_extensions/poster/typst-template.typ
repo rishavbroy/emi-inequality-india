@@ -28,6 +28,7 @@
   subheading_font_size: "28",
   logo_y_offset: "-10",
   title_y_offset: "10",
+  author_y_offset: "-8",
   body,
 ) = {
   let dims = size.split("x")
@@ -47,6 +48,7 @@
   let subheading_size = int(subheading_font_size) * 1pt
   let logo_shift = int(logo_y_offset) * 1pt
   let title_shift = int(title_y_offset) * 1pt
+  let author_shift = int(author_y_offset) * 1pt
   let accent = if accent_color == none { rgb(footer_color) } else { rgb(accent_color) }
   let section_background = rgb(section_fill)
 
@@ -61,9 +63,9 @@
       radius: 5pt,
       grid(
         columns: (1fr, 1.3fr, 1fr),
-        align(left, text(size: footer_side_size, fill: white, footer_url)),
+        align(left, text(size: footer_side_size, weight: "bold", fill: white, footer_url)),
         align(center, text(size: footer_center_size, weight: "bold", fill: white, footer_text)),
-        align(right, text(size: footer_side_size, fill: white, footer_email_ids)),
+        align(right, text(size: footer_side_size, weight: "bold", fill: white, footer_email_ids)),
       ),
     ),
   )
@@ -76,15 +78,15 @@
   set heading(numbering: none)
   show heading: it => {
     if it.level == 1 {
-      v(9pt, weak: true)
+      v(16pt, weak: true)
       block(
         fill: section_background,
-        inset: (x: 10pt, y: 7pt),
+        inset: (x: 10pt, y: 5pt),
         radius: 4pt,
         width: 100%,
         text(size: heading_size, weight: "bold", fill: accent, it.body),
       )
-      v(5pt)
+      v(1pt)
     } else {
       text(size: subheading_size, weight: "bold", fill: accent, it.body)
       v(3pt)
@@ -101,10 +103,12 @@
         dy: title_shift,
         [
           #text(size: title_size, weight: "bold", fill: accent, title)
-          #v(10pt)
-          #text(size: author_size, authors)
-          #h(14pt)
-          #text(size: department_size, departments)
+          #v(8pt)
+          #move(dy: author_shift, [
+            #text(size: author_size, authors)
+            #h(14pt)
+            #text(size: department_size, departments)
+          ])
         ],
       ),
     ),
