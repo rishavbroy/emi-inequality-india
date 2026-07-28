@@ -148,10 +148,25 @@ test_that("public summary tables use documented display names and grouping rows"
   expect_true(all(!nzchar(as.character(out[2, -1]))))
 })
 
+
+revised_iv_summary_fixture <- function() {
+  controls <- census_2001_main_controls()
+  out <- data.frame(
+    wavg_ling_degrees = c(0, 2),
+    EMIE = c(0, 10),
+    real_consumption_0708 = c(700, 900),
+    real_consumption_1718 = c(800, 1000),
+    real_log_consumption_change = log(c(800, 1000)) - log(c(700, 900)),
+    stringsAsFactors = FALSE
+  )
+  for (i in seq_along(controls)) out[[controls[[i]]]] <- c(i, i + 1)
+  out
+}
+
 test_that("regression public tables place standard errors below estimates", {
   first_stage <- data.frame(
     model = rep("consumption", 3),
-    term = c("wavg_ling_degrees", "pct_urban", "(Intercept)"),
+    term = c("wavg_ling_degrees", "urban_share_2001", "(Intercept)"),
     estimate = c(3.825, 1.2, 17.7),
     std.error = c(1.237, 0.4, 23.5),
     statistic = c(3.1, 3, 0.75),
@@ -171,38 +186,21 @@ test_that("regression public tables place standard errors below estimates", {
   expect_equal(out$Term[1:2], c("Linguistic distance", ""))
   expect_match(out$`EMI Exposure`[[1]], "3.825", fixed = TRUE)
   expect_equal(out$`EMI Exposure`[[2]], "(1.237)")
-  expect_true("Pct. urban" %in% out$Term)
+  expect_true("Urban population share" %in% out$Term)
   expect_true("Instrument's F-Statistic" %in% out$Term)
   expect_false("Model's F-Statistic" %in% out$Term)
 })
 
 test_that("IV summary table retains its description column", {
-  panel <- data.frame(
-    EMIE = c(0, 10),
-    wavg_ling_degrees = c(0, 2),
-    npeople_0708 = c(1000, 2000),
-    consumption_0708 = c(700, 900),
-    gini_cons_0708 = c(.2, .3),
-    pct_urban = c(10, 20),
-    avg_hh_size = c(5, 6),
-    dependency_ratio = c(50, 60),
-    pct_fem_head = c(18, 20),
-    pct_hindu = c(80, 70),
-    pct_muslim = c(10, 20),
-    pct_other_religion = c(10, 10),
-    pct_st = c(1, 2), pct_sc = c(10, 15), pct_obc = c(40, 45),
-    pct_small_land = c(50, 55), pct_medium_land = c(30, 25), pct_large_land = c(2, 3),
-    pct_head_illiterate = c(30, 40), pct_head_lit_to_primary = c(30, 20), pct_head_secondary_plus = c(40, 40),
-    pct_pucca = c(50, 60),
-    npeople_1718 = c(1200, 2100), consumption_1718 = c(800, 1000), gini_cons_1718 = c(.25, .35),
-    consumption_pct_change = c(10, 20), gini_change = c(.01, .02)
-  )
-
+  panel <- revised_iv_summary_fixture()
   out <- make_iv_summary_table(panel)
   public <- format_table_for_output(out, public = TRUE)
 
   expect_true("Description" %in% names(public))
-  expect_equal(public$Description[public$Variable == "EMIE"][[1]], "EMI exposure")
+  expect_equal(
+    public$Description[public$Variable == "EMI exposure"][[1]],
+    "Share of school-going children enrolled in English-medium instruction"
+  )
 })
 
 
@@ -289,27 +287,24 @@ test_that("public table wrapping does not inject literal LaTeX line breaks", {
 })
 
 test_that("IV summary descriptions follow documented prose and grouping order", {
-  panel <- data.frame(
-    EMIE = c(0, 10), wavg_ling_degrees = c(0, 2),
-    npeople_0708 = c(1000, 2000), consumption_0708 = c(700, 900), gini_cons_0708 = c(.2, .3),
-    pct_urban = c(10, 20), avg_hh_size = c(5, 6), dependency_ratio = c(50, 60), pct_fem_head = c(18, 20),
-    pct_hindu = c(80, 70), pct_muslim = c(10, 20), pct_other_religion = c(10, 10),
-    pct_st = c(1, 2), pct_sc = c(10, 15), pct_obc = c(40, 45),
-    pct_small_land = c(50, 55), pct_medium_land = c(30, 25), pct_large_land = c(2, 3),
-    pct_head_illiterate = c(30, 40), pct_head_lit_to_primary = c(30, 20), pct_head_secondary_plus = c(40, 40), pct_pucca = c(50, 60),
-    npeople_1718 = c(1200, 2100), consumption_1718 = c(800, 1000), gini_cons_1718 = c(.25, .35),
-    consumption_pct_change = c(10, 20), gini_change = c(.01, .02)
-  )
+  panel <- revised_iv_summary_fixture()
   public <- format_table_for_output(make_iv_summary_table(panel), public = TRUE)
-  expect_equal(public$Variable[[1]], "From 2001:")
-  expect_equal(public$Variable[[3]], "From 2007-08:")
-  expect_equal(public$Description[public$Variable == "EMIE"][[1]], "EMI exposure")
-  expect_equal(public$Description[public$Variable == "Ling. Distance"][[1]], "Average linguistic distance of mother tongue from Hindi")
+  expect_equal(public$Variable[[1]], "Treatment and instrument:")
+  expect_equal(public$Variable[[4]], "Consumption outcomes:")
+  expect_equal(public$Variable[[8]], "Census 2001 controls:")
+  expect_equal(
+    public$Description[public$Variable == "EMI exposure"][[1]],
+    "Share of school-going children enrolled in English-medium instruction"
+  )
+  expect_equal(
+    public$Description[public$Variable == "Linguistic distance"][[1]],
+    "Population-weighted linguistic distance of district mother tongues from Hindi"
+  )
 })
 
 test_that("regression captions use plain public titles", {
   expect_equal(table_caption("fs_cons"), "First-Stage Regression: EMI Exposure on Linguistic Distance")
-  expect_equal(table_caption("cons_iv"), "Second-Stage Regression: Consumption Growth on EMIE (Fitted)")
+  expect_equal(table_caption("cons_iv"), "Second-Stage Regression: Real Log Consumption Growth on EMIE (Fitted)")
   expect_equal(table_caption("probit_mfx"), "Average Marginal Effects and Counterfactual Comparisons for Enrollment Probit")
   expect_false(grepl("\\* p < 0.05", table_caption("fs_cons")))
   expect_false(grepl("\\n", table_caption("fs_cons"), fixed = TRUE))
@@ -430,7 +425,7 @@ test_that("fallback regression TeX output does not expose placeholder term rows"
   save_tables(list(cons_iv = table), list(output_formats = list(tables = "tex")))
   tex <- paste(readLines(file.path("outputs", "tables", "main", "cons_iv.tex"), warn = FALSE), collapse = "\n")
 
-  expect_match(tex, "Second-Stage Regression: Consumption Growth on EMIE", fixed = TRUE)
+  expect_match(tex, "Second-Stage Regression: Real Log Consumption Growth on EMIE", fixed = TRUE)
   expect_match(tex, "Standard errors clustered by state", fixed = TRUE)
   expect_false(grepl(">~<|& ~ &|^~$", tex))
 })

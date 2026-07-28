@@ -168,9 +168,10 @@ test_that("main map legends use rounded publication bounds", {
   cons <- public_map_style("real_log_consumption_change")
   educ <- public_map_style("pct_head_secondary_plus")
 
-  expect_equal(cons$title, "Consumption Growth (%)")
-  expect_equal(cons$breaks, c(10, 100, 200, 300, 400, 450))
-  expect_equal(cons$labels, c("10-100", "100-200", "200-300", "300-400", "400-450"))
+  expect_equal(cons$title, "Real Log Consumption Change")
+  expect_equal(cons$style, "quantile")
+  expect_null(cons$breaks)
+  expect_null(cons$labels)
   expect_equal(educ$breaks, c(0, 20, 40, 60, 80))
   expect_equal(educ$labels, c("0-20", "20-40", "40-60", "60-80"))
   expect_equal(map_no_data_colour(), "#bdbdbd")

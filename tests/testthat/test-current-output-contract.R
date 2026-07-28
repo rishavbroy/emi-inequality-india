@@ -98,7 +98,7 @@ test_that("first-stage table rejects numeric coefficient terms in final mode", {
 test_that("first-stage table reports full coefficients with standard errors beneath estimates", {
   fs <- data.frame(
     model = "consumption",
-    term = c("wavg_ling_degrees", "consumption_0708", "(Intercept)"),
+    term = c("wavg_ling_degrees", "log_population_2001", "(Intercept)"),
     estimate = c(1.234, -0.111, 2.345),
     std.error = c(0.456, 0.025, 0.500),
     p.value = c(0.004, 0.02, 0.1),
@@ -114,7 +114,7 @@ test_that("first-stage table reports full coefficients with standard errors bene
   value_col <- setdiff(names(out), "Term")[[1]]
 
   expect_true(all(c(
-    "Linguistic distance", "Consumption, 2007-08", "Constant",
+    "Linguistic distance", "Log population", "Constant",
     "Observations", "Instrument's F-Statistic"
   ) %in% out$Term))
   expect_false("Model's F-Statistic" %in% out$Term)
