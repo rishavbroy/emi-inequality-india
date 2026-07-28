@@ -458,7 +458,21 @@ extended_diagnostic_targets <- list(
   tar_target(diag_ext_district_matching, save_district_matching_diagnostics(diagnose_district_matching(district_panel, district_join_map, cfg))),
   tar_target(diag_ext_fuzzy_matching, save_fuzzy_matching_diagnostics(diagnose_fuzzy_matching(district_tracker, district_join_map, cfg))),
   tar_target(diag_ext_spatial_weights, save_spatial_weight_diagnostics(diagnose_spatial_weights(district_panel, spatial_weights, cfg))),
-  tar_target(diag_ext_instrument_exploration, save_instrument_exploration_diagnostics(diagnose_instrument_exploration(district_panel, cfg)))
+  tar_target(diag_ext_instrument_exploration, save_instrument_exploration_diagnostics(diagnose_instrument_exploration(district_panel, cfg))),
+  tar_target(
+    consumption_outcome_comparison,
+    compare_consumption_outcomes(district_panel, cfg)
+  ),
+  tar_target(
+    diag_ext_consumption_prices,
+    save_consumption_price_diagnostics(
+      consumption_outcome_comparison,
+      consumption_households_2007,
+      consumption_households_2017,
+      district_panel
+    ),
+    format = "file"
+  )
 )
 
 benchmark_targets <- list(

@@ -55,7 +55,7 @@ test_that("revised formulas use state fixed effects and predetermined controls",
   f <- build_revised_iv_formulas()
   text <- paste(deparse(f$consumption), collapse = " ")
   expect_match(text, "real_log_consumption_change")
-  expect_match(text, "state_2001")
+  expect_match(text, "state_code_2001")
   expect_match(text, "urban_share_2001")
   expect_false(grepl("gini_cons_0708", text, fixed = TRUE))
 })
@@ -688,4 +688,44 @@ test_that("R/U reference index uses a documented donor for incomplete state hist
   expect_equal(arunachal$reference_index, 120)
   expect_equal(arunachal$reference_state_source, "ALL_INDIA")
   expect_equal(arunachal$reference_rule, "fallback")
+})
+
+test_that("consumption comparison formulas define the planned fixed-sample outcomes", {
+  formulas <- build_consumption_outcome_comparison_formulas()
+  expect_equal(names(formulas), c(
+    "nominal_log_change", "real_log_change_preferred", "real_ancova"
+  ))
+  expect_match(paste(deparse(formulas$nominal_log_change), collapse = " "), "log_consumption_difference")
+  expect_match(paste(deparse(formulas$real_log_change_preferred), collapse = " "), "real_log_consumption_change")
+  ancova <- paste(deparse(formulas$real_ancova), collapse = " ")
+  expect_match(ancova, "log_real_consumption_1718")
+  expect_match(ancova, "log_real_consumption_0708")
+  expect_true(all(vapply(formulas, function(x) "state_code_2001" %in% all.vars(x), logical(1))))
+})
+
+test_that("consumption comparison sample is common across all specifications", {
+  formulas <- list(
+    nominal = y1 ~ x | z,
+    real = y2 ~ x | z,
+    ancova = y3 ~ x + y0 | z + y0
+  )
+  panel <- data.frame(
+    y0 = c(1, 1, 1), y1 = c(1, 2, 3), y2 = c(1, NA, 3),
+    y3 = c(2, 3, 4), x = 1:3, z = 2:4
+  )
+  out <- consumption_outcome_common_sample(panel, formulas)
+  expect_equal(nrow(out), 2L)
+  expect_equal(out$x, c(1, 3))
+})
+
+test_that("household price diagnostics report direct and fallback weighted shares", {
+  households <- data.frame(
+    .price_state_code = c("A", "A"), .price_sector = c("rural", "rural"),
+    .price_subround = c(1L, 1L), survey_weight_price = c(1, 3),
+    price_deflator = c(1, 2), state_rule = c("direct", "fallback"),
+    temporal_state_source = c("A", "B")
+  )
+  out <- summarise_household_price_assignments(households, 2007)
+  expect_equal(sum(out$survey_weight_share_pct), 100)
+  expect_equal(out$survey_weight_share_pct[out$assignment_type == "fallback_or_inheritance"], 75)
 })
