@@ -445,11 +445,22 @@ test_that("poster second-stage specifications use preferred variables and one sa
   skip_if_not_installed("ivreg")
   skip_if_not_installed("marginaleffects")
   skip_if_not_installed("sandwich")
+
+  set.seed(623)
   panel <- poster_map_fixture(120L)
-  panel$real_log_consumption_change <- 0.02 * panel$emi_exposure_all_children_0708 + rnorm(nrow(panel), sd = 0.2)
   panel$state_code_2001 <- rep(sprintf("%02d", 1:12), each = 10)
   panel$region <- rep(panel_region_levels(), length.out = nrow(panel))
-  out <- poster_second_stage_spec_data(panel)
+  controls <- census_2001_absorption_controls()
+  for (control in controls) panel[[control]] <- stats::rnorm(nrow(panel))
+  panel$ling_distance_nonzero_mean <- stats::rnorm(nrow(panel))
+  panel$emi_exposure_all_children_0708 <-
+    4 + 2 * panel$ling_distance_nonzero_mean + 0.5 * panel[[controls[[1]]]] +
+    stats::rnorm(nrow(panel), sd = 0.5)
+  panel$real_log_consumption_change <-
+    0.02 * panel$emi_exposure_all_children_0708 + 0.1 * panel[[controls[[2]]]] +
+    stats::rnorm(nrow(panel), sd = 0.2)
+
+  expect_warning(out <- poster_second_stage_spec_data(panel), NA)
   expect_setequal(unique(out$specification_id), c("raw", "region", "state"))
   expect_length(unique(out$n), 1L)
   expect_true(all(is.finite(out$estimate)))
