@@ -33,79 +33,68 @@ execute:
   message: false
 ---
 
-# Why this matters
+# Big question
 
-1. *Jobless growth.* Rapid GDP growth has coincided with weak wage growth and poor employment prospects for educated young people [@organization2024a].
-2. *English as human capital.* English fluency is associated with wage premia, higher education, and service-sector employment [@azam2013a; @chakraborty2016a].
-3. *EMI joins schooling and English.* English-medium instruction (EMI) may expand opportunity, but fees, school quality, and unequal access may limit its benefits [@lahoti2019a; @bhattacharyaMediatingInequalitiesExploring2013].
-4. *Question.* Does greater district EMI enrollment predict faster household-consumption growth over the next decade?
+India's growth has not reliably translated into strong employment and wage growth for educated young people [@organization2024a]. English-medium instruction (EMI) is often framed as a way out: it bundles schooling, English exposure, and access to service-sector work [@azam2013a; @chakraborty2016a].
 
-# Research design
+**Question:** do districts with greater early EMI exposure experience faster welfare growth over the next decade?
+
+# Design and variables
 
 ```{=typst}
 #block(fill: rgb("f3f0ea"), inset: 10pt, radius: 5pt, width: 100%)[
   #grid(columns: (1fr, auto, 1fr, auto, 1fr), gutter: 7pt,
-    align(center)[*Census 2001*\ Mother tongues\ + district identities],
+    align(center)[*Census 2001*\ Mother tongues\ + predetermined controls],
     align(center)[#text(size: 24pt, fill: rgb("7a0019"))[→]],
-    align(center)[*NSS 2007-08*\ EMI exposure\ + baseline controls],
+    align(center)[*NSS 2007-08*\ Enrollment\ + EMI exposure],
     align(center)[#text(size: 24pt, fill: rgb("7a0019"))[→]],
-    align(center)[*NSS 2017-18*\ Consumption\ + inequality outcomes]
+    align(center)[*NSS 2017-18*\ Real consumption\ growth]
   )
   #v(7pt)
   #align(center)[*Common unit:* Census 2001 districts]
 ]
 ```
 
-**Treatment:** district EMI enrollment among school-going children in 2007-08. **Outcome:** person-weighted real log consumption growth, using state-sector temporal price indices and Tendulkar state-sector spatial adjustment. **Instrument:** linguistic distance from Hindi, based on each district's three leading mother tongues. **Controls:** a compact predetermined Census 2001 set and state fixed effects.
+**Treatment:** unconditional EMI exposure: the survey-weighted share of children ages 5-19 who are enrolled and in English medium.
 
-![District EMI exposure in 2007-08.](../../outputs/figures/main/map_emi_exposure.pdf){width=76%}
+**Instrument:** full-distribution mean linguistic distance from Hindi among mapped nonzero-distance speakers.
 
+**Poster residualization:** six region fixed effects plus expanded Census 2001 controls, estimated on one common district sample for the treatment and instrument.
 
-# Main result
+**Outcome:** person-weighted real log consumption growth with state-sector CPI deflation and Tendulkar spatial adjustment.
 
-![Adjusted consumption growth across observed district EMI exposure. Points mark exposure percentiles; the ribbon shows 95% confidence intervals.](../../outputs/figures/main/poster_emie_expected_values.pdf){width=92%}
+**First stage:** $EMI_d = \pi Z_d + X_d'\gamma + \lambda_{r(d)} + u_d$, with standard errors clustered by state.
 
-The real-consumption estimate is imprecise, and the instrument is extremely weak after conditioning on Census controls and state fixed effects. The estimate therefore should not be interpreted as credible evidence of a causal effect.
+# Where the variation is
+
+![Residualized preferred EMI exposure after six region fixed effects and expanded Census controls.](../../outputs/figures/main/map_residual_emi_exposure.pdf){width=48%}
+![Residualized preferred linguistic distance after the same adjustment.](../../outputs/figures/main/map_residual_linguistic_distance.pdf){width=48%}
+
+# First stage: raw, regional, and within-state variation
+
+![First-stage relationship across raw, region-adjusted, and state-adjusted specifications.](../../outputs/figures/main/poster_first_stage_specs.pdf){width=96%}
+
+Linguistic distance predicts EMI exposure in the raw cross-section and under broad regional adjustment. The relationship weakens sharply when identification is forced within states.
+
+# Welfare outcome
+
+![Person-weighted real log consumption growth, 2007-08 to 2017-18.](../../outputs/figures/main/map_consumption_growth.pdf){width=70%}
+
+The evidence separates a broad geographic relationship from the much weaker within-state relationship. The substantive question is whether EMI can connect schooling to local development, rather than merely tracking districts that were already richer.
 
 # Interpretation
 
-- **Selection:** EMI enrollment reflects family resources, access, and school supply.
-- **Migration:** gains may follow students who leave their childhood districts.
-- **School quality:** an English label need not imply English instruction [@lahoti2019a].
-- **Labor demand:** returns depend on local firms and occupations.
+- **Supply and demand:** EMI exposure reflects school availability, household demand, and fees.
+- **Selection:** families choosing EMI may differ before treatment.
+- **Quality:** an English-medium label need not imply high-quality English instruction [@lahoti2019a].
+- **Mobility:** gains may follow students who leave their childhood districts.
 
-# Instrumental variation
+# Next steps
 
-![Average linguistic distance from Hindi, constructed from Census 2001 mother-tongue composition.](../../outputs/figures/main/map_linguistic_distance.pdf){width=72%}
-
-The specification compares districts within states and conditions on Census 2001 population, urbanization, education, social composition, employment structure, age structure, electricity access, and population density.
-
-
-# Why district histories matter
-
-## Name resolution
-
-Resolve typographical errors, punctuation, transliteration, shortening, and official renaming for both district and state names [@indiastatestories1HowDistricts2025].
-
-## Geographical change
-
-- **Partition:** one district becomes two or more.
-- **Merger:** two or more districts become one.
-- **Carve-out or boundary shift:** territory is reassigned across districts.
-
-Equal names across years do not prove equal territory.
-
-## Variable assignment
-
-- *Counts:* sum additive components.
-- *Means and shares, including EMI:* pool records or numerators and denominators, then recompute.
-- *Gini coefficients:* pool household records and recompute; never average district Ginis.
-
-Where exact assignment is impossible, retain deterministic histories and report alternative assumptions.
-
-# Contribution
-
-The project combines household surveys, Census language and control tables, district histories, and price indices at the Census 2001 district level. The data pipeline is complete; identification remains limited by the weak conditional first stage.
+- Separate the supply and household-demand channels behind EMI expansion.
+- Study who gains from EMI and whether gains persist across schooling and work transitions.
+- Test whether EMI changes local employment, occupational mobility, and migration.
+- Extend the design to comparable education and labor-market settings beyond India.
 
 ```{=typst}
 #block(fill: rgb("f3f0ea"), inset: 6pt, radius: 5pt, width: 100%)[
