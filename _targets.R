@@ -62,6 +62,7 @@ core_pipeline_targets <- list(
   tar_target(raw_census_2001, { raw_data_preflight; read_census_2001_mother_tongue(paths) }),
   tar_target(raw_ilo_figures, { raw_data_preflight; list_ilo_figure_paths(paths) }, format = "file"),
   tar_target(raw_price_sources, { raw_data_preflight; read_price_sources(price_source_paths(paths)) }),
+  tar_target(raw_census_2001_controls, { raw_data_preflight; read_census_2001_control_sources(paths) }),
 
   tar_target(nss_2007_education, clean_nss_2007_education(raw_nss_2007_education)),
   tar_target(nss_2007_consumption, clean_nss_2007_consumption(raw_nss_2007_consumption)),
@@ -119,6 +120,14 @@ core_pipeline_targets <- list(
   tar_target(
     lineage_geometry_2001,
     read_lineage_geometry_2001(lineage_geometry_2001_file)
+  ),
+  tar_target(
+    census_2001_district_totals,
+    build_census_2001_district_totals(raw_census_2001_controls, lineage_geometry_2001)
+  ),
+  tar_target(
+    census_2001_controls,
+    build_census_2001_controls(census_2001_district_totals)
   ),
   tar_target(
     district_lineage_specs,
@@ -190,7 +199,6 @@ core_pipeline_targets <- list(
       nss_2017_education
     )
   ),
-  tar_target(district_panel_conservative, conservative_gini_reconstruction$panel),
   tar_target(
     district_panel_primary_provisional,
     build_lineage_district_panel(
@@ -213,13 +221,20 @@ core_pipeline_targets <- list(
   ),
   tar_target(
     district_panel_primary,
-    primary_gini_reconstruction$panel
+    attach_census_2001_controls(primary_gini_reconstruction$panel, census_2001_controls)
+  ),
+  tar_target(
+    district_panel_conservative,
+    attach_census_2001_controls(conservative_gini_reconstruction$panel, census_2001_controls)
   ),
   tar_target(district_panel, district_panel_primary),
   tar_target(processed_district_panel_file, save_processed_district_panel(district_panel), format = "file"),
 
   tar_target(iv_formulas, build_iv_formulas(cfg)),
   tar_target(iv_models, estimate_2sls(district_panel, iv_formulas, cfg)),
+  tar_target(revised_iv_formulas, build_revised_iv_formulas()),
+  tar_target(revised_iv_models, estimate_2sls(district_panel, revised_iv_formulas, cfg)),
+  tar_target(revised_first_stage_tests, estimate_first_stage(revised_iv_models, district_panel, cfg)),
   tar_target(first_stage_tests, estimate_first_stage(iv_models, district_panel, cfg)),
   tar_target(diag_public_weak_instruments, diagnose_weak_instruments(iv_models, district_panel, cfg)),
   tar_target(diag_public_overidentification, diagnose_overidentification(iv_models, iv_formulas, cfg)),
@@ -459,6 +474,15 @@ extended_diagnostic_targets <- list(
   tar_target(diag_ext_fuzzy_matching, save_fuzzy_matching_diagnostics(diagnose_fuzzy_matching(district_tracker, district_join_map, cfg))),
   tar_target(diag_ext_spatial_weights, save_spatial_weight_diagnostics(diagnose_spatial_weights(district_panel, spatial_weights, cfg))),
   tar_target(diag_ext_instrument_exploration, save_instrument_exploration_diagnostics(diagnose_instrument_exploration(district_panel, cfg))),
+  tar_target(
+    census_2001_control_diagnostics,
+    diagnose_census_2001_controls(district_panel, revised_iv_models, revised_first_stage_tests)
+  ),
+  tar_target(
+    diag_ext_census_2001_controls,
+    save_census_2001_control_diagnostics(census_2001_control_diagnostics),
+    format = "file"
+  ),
   tar_target(
     consumption_outcome_comparison,
     compare_consumption_outcomes(district_panel, cfg)
