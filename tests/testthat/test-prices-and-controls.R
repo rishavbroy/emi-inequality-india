@@ -537,6 +537,29 @@ test_that("price-source adapters return one named path per production series", {
 })
 
 
+test_that("pre-2013 selector binds state and All-India CPI-IW schemas by contract", {
+  sources <- list(
+    cpi_alrl = data.frame(
+      state_code = "A", labour_series = "rural_labour", sector = "rural",
+      period = as.Date("2007-07-01"), index = 90, source_file = "alrl.csv"
+    ),
+    cpi_iw_states = data.frame(
+      state_code = "A", sector = "urban", period = as.Date("2007-07-01"),
+      index = 100, centre_count = 2L
+    ),
+    cpi_iw_all_india = data.frame(
+      state_code = "ALL_INDIA", sector = "urban", period = as.Date("2007-07-01"),
+      index = 105, year = 2007L, month = 7L, source_file = "iw.csv"
+    )
+  )
+
+  out <- select_pre_2013_price_series(sources)
+
+  expect_named(out, c("state_code", "sector", "period", "index", "price_source"))
+  expect_equal(out$state_code, c("A", "A", "ALL_INDIA"))
+  expect_equal(out$price_source, c("cpi_rl_state", "cpi_iw_state", "cpi_iw_state"))
+})
+
 test_that("production temporal series retains only the requested pre-switch window", {
   months <- seq(as.Date("2007-07-01"), as.Date("2013-02-01"), by = "month")
   old <- data.frame(state_code = "A", period = months, index = seq_along(months))

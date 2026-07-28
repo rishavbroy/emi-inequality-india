@@ -27,10 +27,22 @@ select_pre_2013_price_series <- function(price_sources) {
   }
 
   rural <- safe_df(price_sources$cpi_alrl)
-  urban <- safe_df(price_sources$cpi_iw_states)
+  urban_sources <- list(safe_df(price_sources$cpi_iw_states))
   if ("cpi_iw_all_india" %in% names(price_sources)) {
-    urban <- rbind(urban, safe_df(price_sources$cpi_iw_all_india))
+    urban_sources <- c(urban_sources, list(safe_df(price_sources$cpi_iw_all_india)))
   }
+  urban_columns <- c("state_code", "sector", "period", "index")
+  urban <- safe_bind_rows(lapply(urban_sources, function(x) {
+    missing <- setdiff(urban_columns, names(x))
+    if (length(missing)) {
+      stop(
+        "CPI-IW state series is missing columns: ",
+        paste(missing, collapse = ", "),
+        call. = FALSE
+      )
+    }
+    x[urban_columns]
+  }))
 
   rural <- rural[rural$labour_series == "rural_labour", , drop = FALSE]
   if (!nrow(rural)) stop("CPI-RL has no rural-labour observations.", call. = FALSE)
