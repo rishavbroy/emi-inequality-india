@@ -510,11 +510,9 @@ make_first_stage_table <- function(first_stage_tests, cfg = list()) {
     return(table_status_row("first_stage", "unavailable", msg))
   }
   term_order <- c(
-    "wavg_ling_degrees", "consumption_0708", "gini_cons_0708",
-    "pct_urban", "avg_hh_size", "dependency_ratio", "pct_fem_head",
-    "pct_hindu", "pct_muslim", "pct_st", "pct_sc", "pct_obc",
-    "pct_small_land", "pct_medium_land", "pct_large_land",
-    "pct_head_lit_to_primary", "pct_head_secondary_plus", "(Intercept)"
+    "wavg_ling_degrees",
+    census_2001_main_controls(),
+    "(Intercept)"
   )
   fs <- fs[order(match(fs$term, term_order), fs$term), , drop = FALSE]
   fs <- fs[!is.na(match(fs$term, term_order)), , drop = FALSE]
@@ -604,7 +602,7 @@ second_stage_table_model <- function(iv_models, data = NULL) {
 make_second_stage_table <- function(iv_models, data = NULL) {
   out <- tidy_iv_models(iv_models, data)
   out <- filter_table_model(out, c("consumption", "baseline"))
-  if (!nrow(out)) return(data.frame(Term = character(), `Consumption Growth` = character(), check.names = FALSE))
+  if (!nrow(out)) return(data.frame(Term = character(), `Real Log Consumption Growth` = character(), check.names = FALSE))
   model <- NULL
   if (is.list(iv_models) && !inherits(iv_models, c("lm", "ivreg"))) {
     hit <- intersect(c("consumption", "baseline"), names(iv_models))
@@ -617,32 +615,18 @@ make_second_stage_table <- function(iv_models, data = NULL) {
     estimates = suppressWarnings(as.numeric(out$estimate)),
     std_errors = suppressWarnings(as.numeric(out$std.error)),
     p_values = suppressWarnings(as.numeric(out$p.value)),
-    outcome_label = "Consumption Growth",
-    gof = model_gof_rows(model, "Consumption Growth")
+    outcome_label = "Real Log Consumption Growth",
+    gof = model_gof_rows(model, "Real Log Consumption Growth")
   )
 }
 
 iv_table_term_label <- function(term) {
+  control_meta <- census_2001_control_metadata()
   labels <- c(
     "(Intercept)" = "Constant",
     EMIE = "EMIE",
     wavg_ling_degrees = "Linguistic distance",
-    consumption_0708 = "Consumption, 2007-08",
-    gini_cons_0708 = "Gini consumption, 2007-08",
-    pct_urban = "Pct. urban",
-    avg_hh_size = "Avg. HH size",
-    dependency_ratio = "Dependency ratio",
-    pct_fem_head = "Pct. female head",
-    pct_hindu = "Pct. Hindu",
-    pct_muslim = "Pct. Muslim",
-    pct_st = "Pct. ST",
-    pct_sc = "Pct. SC",
-    pct_obc = "Pct. OBC",
-    pct_small_land = "Pct. small land",
-    pct_medium_land = "Pct. medium land",
-    pct_large_land = "Pct. large land",
-    pct_head_lit_to_primary = "Pct. head literate-primary",
-    pct_head_secondary_plus = "Pct. head secondary+"
+    stats::setNames(control_meta$label, control_meta$variable)
   )
   out <- unname(labels[term])
   out[is.na(out)] <- term[is.na(out)]

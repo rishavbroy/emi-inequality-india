@@ -355,25 +355,11 @@ modelsummary_regression_table <- function(df, name) {
 }
 
 public_regression_coef_map <- function() {
+  control_meta <- census_2001_control_metadata()
   c(
     "EMIE" = "EMI exposure (fitted)",
     "wavg_ling_degrees" = "Linguistic distance",
-    "consumption_0708" = "Consumption (2007-08)",
-    "gini_cons_0708" = "Gini of Consumption (2007-08)",
-    "pct_urban" = "Pct. Urban (ref: Rural)",
-    "avg_hh_size" = "Average HH size",
-    "dependency_ratio" = "Dependency ratio x 100",
-    "pct_fem_head" = "Pct. Female head",
-    "pct_hindu" = "Pct. Hindu  (ref: Other)",
-    "pct_muslim" = "Pct. Muslim",
-    "pct_st" = "Pct. Scheduled Tribe (ref: Other)",
-    "pct_sc" = "Pct. Scheduled Caste",
-    "pct_obc" = "Pct. OBC",
-    "pct_small_land" = "Pct. Small Land-owner (ref: No Land)",
-    "pct_medium_land" = "Pct. Medium Land-owner",
-    "pct_large_land" = "Pct. Large Land-owner",
-    "pct_head_lit_to_primary" = "Pct. Head Educ., Lit.-Primary (ref: Illiterate)",
-    "pct_head_secondary_plus" = "Pct. Head Educ., Secondary+",
+    stats::setNames(control_meta$label, control_meta$variable),
     "(Intercept)" = "Intercept"
   )
 }
