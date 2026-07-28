@@ -13,15 +13,22 @@ first_stage_control_blocks <- function() {
   )
 }
 
+order_first_stage_controls <- function(controls) {
+  canonical <- census_2001_main_controls()
+  canonical[canonical %in% unique(controls)]
+}
+
 first_stage_absorption_registry <- function() {
   blocks <- first_stage_control_blocks()
-  cumulative <- lapply(seq_along(blocks), function(i) unname(unlist(blocks[seq_len(i)], use.names = FALSE)))
+  cumulative <- lapply(seq_along(blocks), function(i) {
+    order_first_stage_controls(unlist(blocks[seq_len(i)], use.names = FALSE))
+  })
   block_rows <- data.frame(
     specification_id = paste0("state_fe_plus_", names(blocks)),
     label = paste0("State FE + through ", gsub("_", " ", names(blocks))),
     fixed_effect = "state",
     controls = I(cumulative),
-    sequence = 6L + seq_along(blocks),
+    sequence = 5L + seq_along(blocks),
     stringsAsFactors = FALSE
   )
   base <- data.frame(
