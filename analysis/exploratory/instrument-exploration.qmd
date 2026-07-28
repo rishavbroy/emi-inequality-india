@@ -31,6 +31,8 @@ iv_state <- read_analysis_csv("diagnostics", "public", "iv_panel_state_summary.c
 iv_rows <- read_analysis_csv("diagnostics", "public", "iv_summary_keyed_rows.csv")
 iv_dotplot <- analysis_target_csv("diag_ext_instrument_exploration", "instrument_strength_dotplot_data.csv")
 iv_notes <- analysis_target_csv("diag_ext_instrument_exploration", "instrument_exploration_legacy_notes.csv")
+first_stage_absorption <- analysis_target_csv("diag_ext_first_stage_absorption", "first_stage_absorption_ladder.csv")
+first_stage_support <- analysis_target_csv("diag_ext_first_stage_absorption", "first_stage_absorption_common_support.csv")
 ```
 
 The current analog of the legacy `ggplot(..., aes(x = district_code_0708, y = EMIE, color = district_prefix)) + geom_point()` check uses `r analysis_format_number(nrow(iv_dotplot), 0)` active district-panel rows.
@@ -57,4 +59,6 @@ analysis_table(iv_match, "Current IV-panel match summary")
 analysis_table(iv_state, "Current IV-panel state summary", max_rows = 30)
 analysis_table(iv_rows, "Current keyed IV summary rows", max_rows = 30)
 analysis_table(iv_notes, "Legacy instrument-exploration notes retained as target output")
+analysis_table(first_stage_support, "Fixed common support for first-stage absorption diagnostics")
+analysis_table(first_stage_absorption, "First-stage absorption ladder", max_rows = 20)
 ```
