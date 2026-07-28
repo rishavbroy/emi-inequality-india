@@ -201,10 +201,10 @@ public_map_style <- function(variable) {
 prepare_public_map_data <- function(plot_data, variable) {
   if (!variable %in% names(plot_data)) plot_data[[variable]] <- NA
   if (identical(variable, "region")) {
-    valid_regions <- c("North", "Central", "East", "West", "South")
+    levels <- panel_region_levels()
     value <- as.character(plot_data[[variable]])
-    value[!value %in% valid_regions] <- NA_character_
-    plot_data[[variable]] <- factor(value, levels = valid_regions)
+    value[!value %in% levels] <- NA_character_
+    plot_data[[variable]] <- factor(value, levels = levels)
   }
   plot_data
 }
