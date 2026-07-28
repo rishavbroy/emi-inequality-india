@@ -107,30 +107,56 @@ add_panel_standardized_names <- function(out) {
   out
 }
 
+panel_region_levels <- function() {
+  c("Northern", "North Eastern", "Central", "Eastern", "Western", "Southern")
+}
+
+panel_state_region_crosswalk <- function() {
+  groups <- list(
+    Northern = c(
+      "Jammu & Kashmir", "Himachal Pradesh", "Punjab", "Chandigarh",
+      "Haryana", "Delhi", "Rajasthan"
+    ),
+    `North Eastern` = c(
+      "Arunachal Pradesh", "Assam", "Manipur", "Meghalaya", "Mizoram",
+      "Nagaland", "Sikkim", "Tripura"
+    ),
+    Central = c("Chhattisgarh", "Madhya Pradesh", "Uttar Pradesh", "Uttarakhand"),
+    Eastern = c("Bihar", "Jharkhand", "Odisha", "West Bengal", "Andaman & Nicobar Islands"),
+    Western = c("Dadra & Nagar Haveli", "Daman & Diu", "Goa", "Gujarat", "Maharashtra"),
+    Southern = c(
+      "Andhra Pradesh", "Karnataka", "Kerala", "Tamil Nadu", "Telangana",
+      "Puducherry", "Lakshadweep"
+    )
+  )
+  data.frame(
+    state_key = canonicalize_state_name(unlist(groups, use.names = FALSE)),
+    region = rep(names(groups), lengths(groups)),
+    stringsAsFactors = FALSE
+  )
+}
+
 add_panel_regions <- function(out) {
-  valid_regions <- c("North", "Central", "East", "West", "South")
+  levels <- panel_region_levels()
   if ("region" %in% names(out)) {
     current <- as.character(out$region)
     current_nonmissing <- stats::na.omit(current)
-    if (length(current_nonmissing) && all(current_nonmissing %in% valid_regions)) return(out)
+    if (length(current_nonmissing) && all(current_nonmissing %in% levels)) {
+      out$region <- factor(current, levels = levels)
+      return(out)
+    }
   }
 
-  state <- NULL
-  for (nm in c("state_20", "state_17", "state_07", "state_01", "state_std")) {
-    if (nm %in% names(out)) { state <- canon(out[[nm]]); break }
-  }
-  if (is.null(state)) return(out)
-  north <- canon(c("Jammu & Kashmir", "Himachal Pradesh", "Punjab", "Chandigarh", "Uttarakhand", "Haryana", "Delhi", "Rajasthan"))
-  central <- canon(c("Uttar Pradesh", "Chhattisgarh", "Madhya Pradesh"))
-  east <- canon(c("Bihar", "Sikkim", "Arunachal Pradesh", "Nagaland", "Manipur", "Mizoram", "Tripura", "Meghalaya", "Assam", "West Bengal", "Jharkhand", "Odisha"))
-  west <- canon(c("Gujarat", "Daman & Diu", "Dadra & Nagar Haveli", "Maharashtra", "Goa"))
-  south <- canon(c("Andhra Pradesh", "Karnataka", "Lakshadweep", "Kerala", "Tamil Nadu", "Puducherry", "Andaman & Nicobar Islands", "Telangana"))
-  out$region <- ifelse(state %in% north, "North",
-    ifelse(state %in% central, "Central",
-      ifelse(state %in% east, "East",
-        ifelse(state %in% west, "West",
-          ifelse(state %in% south, "South", NA_character_)))))
-  out$region <- factor(out$region, levels = valid_regions)
+  state_col <- first_col(
+    as.data.frame(out),
+    c("state_20", "state_17", "state_07", "state_01", "state_std")
+  )
+  if (is.null(state_col)) return(out)
+
+  lookup <- panel_state_region_crosswalk()
+  state_key <- canonicalize_state_name(out[[state_col]])
+  region <- lookup$region[match(state_key, lookup$state_key)]
+  out$region <- factor(region, levels = levels)
   out
 }
 
