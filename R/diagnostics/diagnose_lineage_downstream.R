@@ -413,6 +413,7 @@ build_lineage_district_panel <- function(
   panel <- add_panel_regions(panel)
   panel <- compute_consumption_pct_change(panel)
   panel <- compute_log_consumption_difference(panel)
+  panel <- compute_real_consumption_outcomes(panel)
   panel <- compute_gini_change(panel)
   panel <- panel[panel_has_analysis_core(panel), , drop = FALSE]
   rownames(panel) <- NULL

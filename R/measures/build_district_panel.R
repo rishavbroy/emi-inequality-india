@@ -155,8 +155,11 @@ compute_real_consumption_outcomes <- function(panel) {
     baseline <- num(panel$real_consumption_0708)
     endpoint <- num(panel$real_consumption_1718)
     valid <- positive_finite(baseline) & positive_finite(endpoint)
+    panel$log_real_consumption_0708 <- ifelse(positive_finite(baseline), log(baseline), NA_real_)
+    panel$log_real_consumption_1718 <- ifelse(positive_finite(endpoint), log(endpoint), NA_real_)
     panel$real_log_consumption_change <- NA_real_
-    panel$real_log_consumption_change[valid] <- log(endpoint[valid]) - log(baseline[valid])
+    panel$real_log_consumption_change[valid] <-
+      panel$log_real_consumption_1718[valid] - panel$log_real_consumption_0708[valid]
     panel$real_consumption_level_change <- endpoint - baseline
   }
   panel

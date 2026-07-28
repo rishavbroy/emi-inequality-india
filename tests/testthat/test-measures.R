@@ -319,3 +319,11 @@ test_that("district panel constructs real log change from deflated district mean
   expect_equal(out$real_log_consumption_change, log(120) - log(80))
   expect_equal(out$real_consumption_level_change, 40)
 })
+
+test_that("lineage panels construct real outcomes and ANCOVA levels", {
+  panel <- data.frame(real_consumption_0708 = 80, real_consumption_1718 = 120)
+  out <- compute_real_consumption_outcomes(panel)
+  expect_equal(out$log_real_consumption_0708, log(80))
+  expect_equal(out$log_real_consumption_1718, log(120))
+  expect_equal(out$real_log_consumption_change, log(120) - log(80))
+})

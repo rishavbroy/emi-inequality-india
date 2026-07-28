@@ -34,7 +34,7 @@ build_iv_formulas <- function(cfg) {
 # price series or Census table cannot silently change the current estimates.
 build_revised_iv_formulas <- function() {
   controls <- census_2001_main_controls()
-  state_fe <- 'state_2001'
+  state_fe <- 'factor(state_code_2001)'
   list(
     consumption = make_iv_formula(
       'real_log_consumption_change', 'EMIE', 'wavg_ling_degrees',
