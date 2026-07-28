@@ -1,13 +1,23 @@
+poster_map_fixture <- function(n = 2L) {
+  out <- data.frame(
+    EMIE = seq_len(n),
+    emi_exposure_all_children_0708 = seq_len(n),
+    ling_distance_nonzero_mean = seq_len(n),
+    real_log_consumption_change = seq_len(n) + 1,
+    pct_pucca = seq_len(n) + 2,
+    pct_head_secondary_plus = seq_len(n) + 3,
+    region = rep("Northern", n),
+    state_code_2001 = sprintf("%02d", seq_len(n)),
+    wavg_ling_degrees = seq_len(n) + 4,
+    stringsAsFactors = FALSE
+  )
+  for (v in census_2001_absorption_controls()) out[[v]] <- seq_len(n)
+  out
+}
+
 test_that("final figures degrade to status specs without real sf geometry", {
   cfg <- list(mode = "final", output_formats = list(figures = "png"))
-  panel <- data.frame(
-    EMIE = 1,
-    real_log_consumption_change = 2,
-    pct_pucca = 3,
-    pct_head_secondary_plus = 4,
-    region = "Northern",
-    wavg_ling_degrees = 5
-  )
+  panel <- poster_map_fixture(1L)
 
   figures <- make_figures(panel, character(), cfg)
   expect_identical(figures$map_emi_exposure$kind, "status")
@@ -22,18 +32,11 @@ test_that("final figures include public map collages when geometry is validated"
     sf::st_polygon(list(rbind(c(1, 0), c(2, 0), c(2, 1), c(1, 1), c(1, 0)))),
     crs = 4326
   )
-  panel <- sf::st_sf(
-    EMIE = c(1, 2),
-    real_log_consumption_change = c(2, 3),
-    pct_pucca = c(3, 4),
-    pct_head_secondary_plus = c(4, 5),
-    region = c("Northern", "Northern"),
-    wavg_ling_degrees = c(5, 6),
-    geometry = geometry
-  )
+  panel_df <- poster_map_fixture(2L)
+  panel <- sf::st_sf(panel_df, geometry = geometry)
 
   figures <- make_figures(panel, character(), cfg)
-  expect_true(all(c("map_emi_exposure", "map_consumption_growth", "collage_main_maps", "collage_iv_region_maps") %in% names(figures)))
+  expect_true(all(c("map_emi_exposure", "map_consumption_growth", "map_residual_emi_exposure", "map_residual_linguistic_distance", "collage_main_maps", "collage_iv_region_maps") %in% names(figures)))
 })
 
 test_that("district carve-out figure data uses pct_91in01 values", {
@@ -81,19 +84,15 @@ test_that("RBI region crosswalk covers every Census-2001 state and union territo
 
 test_that("map collage order matches public captions", {
   cfg <- list(mode = "final", output_formats = list(figures = "png"))
-  panel <- data.frame(
-    EMIE = 1,
-    real_log_consumption_change = 2,
-    pct_pucca = 3,
-    pct_head_secondary_plus = 4,
-    region = "Northern",
-    wavg_ling_degrees = 5
-  )
+  panel <- poster_map_fixture(1L)
 
   figs <- make_figures(panel, character(), cfg)
 
   expect_equal(figs$collage_main_maps$inputs, c("map_emi_exposure", "map_consumption_growth", "map_pucca", "map_education"))
-  expect_equal(figs$collage_iv_region_maps$inputs, c("map_region", "map_linguistic_distance"))
+  expect_equal(
+    figs$collage_iv_region_maps$inputs,
+    c("map_region", "map_linguistic_distance", "map_residual_linguistic_distance", "map_residual_emi_exposure")
+  )
 })
 
 test_that("linguistic-distance map labels begin at zero and no-data uses visible grey", {
@@ -186,12 +185,70 @@ test_that("main map legends use rounded publication bounds", {
   educ <- public_map_style("pct_head_secondary_plus")
 
   expect_equal(cons$title, "Real Log Consumption Change")
-  expect_equal(cons$style, "quantile")
+  expect_equal(cons$style, "continuous")
   expect_null(cons$breaks)
   expect_null(cons$labels)
   expect_equal(educ$breaks, c(0, 20, 40, 60, 80))
   expect_equal(educ$labels, c("0-20", "20-40", "40-60", "60-80"))
   expect_equal(map_no_data_colour(), "#bdbdbd")
+})
+
+test_that("continuous and diverging map styles keep numeric fills", {
+  df <- data.frame(real_log_consumption_change = c(-0.5, 0, 0.5, NA))
+  fill <- public_map_fill(df, "real_log_consumption_change", public_map_style("real_log_consumption_change"))
+
+  expect_true(isTRUE(fill$continuous))
+  expect_true(is.numeric(fill$data$.map_value))
+  expect_equal(grDevices::col2rgb(unname(fill$colors[1])), grDevices::col2rgb("#f7fbff"))
+
+  residual <- data.frame(resid_emi_exposure_region_expanded = c(-2, 0, 3, NA))
+  resid_fill <- public_map_fill(residual, "resid_emi_exposure_region_expanded", public_map_style("resid_emi_exposure_region_expanded"))
+  expect_true(isTRUE(resid_fill$continuous))
+  expect_equal(resid_fill$limits[1], -resid_fill$limits[2])
+})
+
+
+
+test_that("poster residual maps use one common complete-case sample", {
+  panel <- poster_map_fixture(30L)
+  panel$emi_exposure_all_children_0708[[2]] <- NA_real_
+  panel$ling_distance_nonzero_mean[[3]] <- NA_real_
+
+  out <- add_poster_residual_variables(panel)
+  emi_observed <- is.finite(out$resid_emi_exposure_region_expanded)
+  iv_observed <- is.finite(out$resid_ling_distance_region_expanded)
+
+  expect_identical(emi_observed, iv_observed)
+  expect_false(emi_observed[[2]])
+  expect_false(emi_observed[[3]])
+})
+
+
+test_that("poster first-stage ribbons remain ordered for negative residualized values", {
+  skip_if_not_installed("sandwich")
+  set.seed(24)
+  panel <- poster_map_fixture(90L)
+  panel$state_code_2001 <- rep(sprintf("%02d", 1:9), each = 10L)
+  panel$region <- factor(rep(panel_region_levels()[1:6], length.out = 90L), levels = panel_region_levels())
+  panel$ling_distance_nonzero_mean <- stats::rnorm(90L)
+  panel$emi_exposure_all_children_0708 <- 4 * panel$ling_distance_nonzero_mean + stats::rnorm(90L)
+  for (v in census_2001_absorption_controls()) panel[[v]] <- stats::rnorm(90L)
+
+  plot_data <- poster_first_stage_spec_data(panel)
+
+  expect_true(any(plot_data$z_resid < 0))
+  expect_true(all(plot_data$conf.low <= plot_data$estimate))
+  expect_true(all(plot_data$estimate <= plot_data$conf.high))
+})
+
+
+test_that("continuous map limits use rounded central quantiles rather than extreme outliers", {
+  values <- c(seq(-1, 1, length.out = 100L), 1000)
+  limits <- map_continuous_limits(values, public_map_style("real_log_consumption_change"))
+
+  expect_true(limits[[2]] < 1000)
+  expect_true(limits[[1]] <= stats::quantile(values, 0.02))
+  expect_true(limits[[2]] >= stats::quantile(values, 0.98))
 })
 
 test_that("poster EMIE grid uses observed percentiles", {
@@ -262,18 +319,12 @@ test_that("poster expected-value predictions preserve serialized state fixed-eff
 
 test_that("poster expected-values figure is generated with the main figures", {
   cfg <- list(mode = "final", output_formats = list(figures = c("pdf", "png")))
-  panel <- data.frame(
-    EMIE = 1,
-    real_log_consumption_change = 2,
-    pct_pucca = 3,
-    pct_head_secondary_plus = 4,
-    region = "Northern",
-    wavg_ling_degrees = 5
-  )
+  panel <- poster_map_fixture(1L)
 
   figures <- make_figures(panel, character(), cfg, iv_models = list())
 
   expect_identical(figures$poster_emie_expected_values$kind, "emie_expected_values")
+  expect_identical(figures$poster_first_stage_specs$kind, "poster_first_stage_specs")
   expect_identical(attr(figures, "iv_models"), list())
 })
 
