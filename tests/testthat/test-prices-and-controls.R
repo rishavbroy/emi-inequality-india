@@ -740,3 +740,37 @@ test_that("household price diagnostics report direct and fallback weighted share
   expect_equal(sum(out$survey_weight_share_pct), 100)
   expect_equal(out$survey_weight_share_pct[out$assignment_type == "fallback_or_inheritance"], 75)
 })
+
+test_that("Census source cleaners use standardized state-district keys", {
+  pca <- data.frame(
+    pc01_state_id = 1, pc01_district_id = 2, pc01_pca_no_hh = 10,
+    pc01_pca_tot_p = 100, pc01_pca_p_06 = 20, pc01_pca_p_sc = 5,
+    pc01_pca_p_st = 7, pc01_pca_p_lit = 60, pc01_pca_tot_work_p = 40,
+    pc01_pca_main_cl_p = 5, pc01_pca_main_al_p = 6,
+    pc01_pca_marg_cl_p = 1, pc01_pca_marg_al_p = 2
+  )
+  out <- clean_shrug_pca_2001_district(pca)
+  expect_equal(out$state_code_2001, "01")
+  expect_equal(out$district_code_2001, "02")
+  expect_equal(out$cultivators, 6)
+  expect_equal(out$agricultural_labourers, 8)
+})
+
+test_that("Census controls attach without changing panel rows", {
+  totals <- data.frame(
+    state_code_2001 = c("01", "01"), district_code_2001 = c("01", "02"),
+    population_total = c(100, 200), population_urban = c(20, 50),
+    population_age_7_plus = c(80, 150), adult_secondary_plus = c(10, 30),
+    sc_population = c(5, 10), st_population = c(2, 4), muslim_population = c(8, 20),
+    workers_total = c(40, 80), cultivators = c(10, 20), agricultural_labourers = c(5, 10),
+    population_age_0_14 = c(30, 60), population_age_15_64 = c(60, 120),
+    population_age_65_plus = c(10, 20), households_total = c(20, 40),
+    households_electricity = c(15, 30), area_sq_km = c(10, 20)
+  )
+  controls <- build_census_2001_controls(totals)
+  panel <- data.frame(state_code_2001 = c("01", "01"), district_code_2001 = c("02", "01"), y = 1:2)
+  out <- attach_census_2001_controls(panel, controls)
+  expect_equal(out$district_code_2001, panel$district_code_2001)
+  expect_equal(nrow(out), nrow(panel))
+  expect_true(all(census_2001_main_controls() %in% names(out)))
+})
