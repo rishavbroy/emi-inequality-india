@@ -859,3 +859,17 @@ test_that("Census geometry rejects malformed or duplicate canonical unit IDs", {
     "not unique"
   )
 })
+
+
+test_that("preferred public outcome is real log consumption growth", {
+  panel <- data.frame(
+    EMIE = c(10, 20),
+    wavg_ling_degrees = c(1, 2),
+    real_log_consumption_change = c(0.1, 0.2),
+    real_consumption_0708 = c(100, 110),
+    real_consumption_1718 = c(111, 134),
+    stringsAsFactors = FALSE
+  )
+  figures <- make_figures(panel, character(), list(mode = "draft"))
+  expect_identical(figures$map_consumption_growth$variable, "real_log_consumption_change")
+})

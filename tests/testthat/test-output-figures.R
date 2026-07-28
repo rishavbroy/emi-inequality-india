@@ -2,7 +2,7 @@ test_that("final figures degrade to status specs without real sf geometry", {
   cfg <- list(mode = "final", output_formats = list(figures = "png"))
   panel <- data.frame(
     EMIE = 1,
-    consumption_pct_change = 2,
+    real_log_consumption_change = 2,
     pct_pucca = 3,
     pct_head_secondary_plus = 4,
     region = "North",
@@ -24,7 +24,7 @@ test_that("final figures include public map collages when geometry is validated"
   )
   panel <- sf::st_sf(
     EMIE = c(1, 2),
-    consumption_pct_change = c(2, 3),
+    real_log_consumption_change = c(2, 3),
     pct_pucca = c(3, 4),
     pct_head_secondary_plus = c(4, 5),
     region = c("North", "North"),
@@ -66,7 +66,7 @@ test_that("map collage order matches public captions", {
   cfg <- list(mode = "final", output_formats = list(figures = "png"))
   panel <- data.frame(
     EMIE = 1,
-    consumption_pct_change = 2,
+    real_log_consumption_change = 2,
     pct_pucca = 3,
     pct_head_secondary_plus = 4,
     region = "North",
@@ -165,7 +165,7 @@ test_that("No data is mapped through the fill scale so its legend key is grey", 
 
 
 test_that("main map legends use rounded publication bounds", {
-  cons <- public_map_style("consumption_pct_change")
+  cons <- public_map_style("real_log_consumption_change")
   educ <- public_map_style("pct_head_secondary_plus")
 
   expect_equal(cons$title, "Consumption Growth (%)")
@@ -213,7 +213,7 @@ test_that("poster expected-values figure is generated with the main figures", {
   cfg <- list(mode = "final", output_formats = list(figures = c("pdf", "png")))
   panel <- data.frame(
     EMIE = 1,
-    consumption_pct_change = 2,
+    real_log_consumption_change = 2,
     pct_pucca = 3,
     pct_head_secondary_plus = 4,
     region = "North",

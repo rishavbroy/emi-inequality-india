@@ -137,7 +137,7 @@ test_that("final district panel validation enforces structural IV-panel contract
     gini_cons_0708 = c(0.2, 0.3),
     consumption_1718 = c(2000, 2001),
     gini_cons_1718 = c(0.2, 0.3),
-    consumption_pct_change = c(100, 100),
+    real_log_consumption_change = c(0.1, 0.1),
     gini_change = c(0, 0),
     dependency_ratio = c(97, 96),
     pct_fem_head = c(12, 11),
@@ -185,7 +185,7 @@ test_that("final table generation records incomplete first-stage diagnostics wit
     partial_f = NA_real_,
     partial_p = NA_real_,
     status = "out_of_active_pipeline",
-    reason = "Missing first-stage variables: consumption_pct_change, wavg_ling_degrees",
+    reason = "Missing first-stage variables: real_log_consumption_change, wavg_ling_degrees",
     stringsAsFactors = FALSE
   )
 
@@ -198,7 +198,7 @@ test_that("final table generation records incomplete first-stage diagnostics wit
     selection_data = data.frame(AGE = 10, HH_SIZE = 4),
     ame_results = data.frame(term = "AGE", estimate = 0, std.error = 1, p.value = 1, status = "estimated"),
     district_panel = data.frame(EMIE = 10, consumption_0708 = 100, gini_cons_0708 = 0.3),
-    iv_models = list(consumption = list(status = "out_of_active_pipeline", reason = "Missing variables: consumption_pct_change")),
+    iv_models = list(consumption = list(status = "out_of_active_pipeline", reason = "Missing variables: real_log_consumption_change")),
     first_stage_tests = first_stage,
     cfg = list(mode = "final")
   )
