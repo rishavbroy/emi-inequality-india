@@ -176,8 +176,22 @@ apply_price_state_rules <- function(temporal_index, state_rules, start_period = 
   direct$state_rule <- ifelse(!is.na(direct$index), "direct", NA_character_)
   direct$fallback_reason <- NA_character_
 
-  missing_rows <- which(!positive_finite(num(direct$index)))
-  if (length(missing_rows)) {
+  source_columns <- setdiff(names(idx), c("state_code", "sector", "period"))
+  combine_price_fallback_reasons <- function(current, upstream) {
+    current <- trimws(as.character(current))
+    upstream <- trimws(as.character(upstream))
+    has_upstream <- !is.na(upstream) & nzchar(upstream)
+    current[has_upstream] <- paste(current[has_upstream], upstream[has_upstream], sep = " -> ")
+    current
+  }
+
+  # Resolve documented fallback chains one link at a time. This matters when an
+  # official territorial donor (for example, Goa for Daman and Diu) itself lacks
+  # the historical sector index and therefore uses a second documented donor.
+  repeat {
+    missing_rows <- which(!positive_finite(num(direct$index)))
+    if (!length(missing_rows)) break
+
     requested <- direct[missing_rows, c(".price_row", "state_code", "sector", "period"), drop = FALSE]
     names(requested)[names(requested) == "state_code"] <- "target_state_code"
     candidates <- merge(
@@ -193,27 +207,46 @@ apply_price_state_rules <- function(temporal_index, state_rules, start_period = 
       stop("More than one price-state rule applies to the same state-sector-month.", call. = FALSE)
     }
 
-    donor <- idx
+    donor_columns <- c("state_code", "sector", "period", source_columns,
+      "temporal_state_source", "fallback_reason")
+    donor <- direct[donor_columns]
+    all_india <- idx[idx$state_code == "ALL_INDIA",
+      c("state_code", "sector", "period", source_columns), drop = FALSE
+    ]
+    if (nrow(all_india)) {
+      all_india$temporal_state_source <- "ALL_INDIA"
+      all_india$fallback_reason <- NA_character_
+      donor <- safe_bind_rows(list(donor, all_india[donor_columns]))
+    }
     names(donor)[names(donor) == "state_code"] <- "source_state_code"
+    names(donor)[names(donor) == "temporal_state_source"] <- "donor_temporal_state_source"
+    names(donor)[names(donor) == "fallback_reason"] <- "donor_fallback_reason"
     candidates <- merge(
       candidates,
       donor,
       by = c("source_state_code", "sector", "period"),
       all.x = TRUE,
-      sort = FALSE,
-      suffixes = c("", "_donor")
+      sort = FALSE
     )
     candidate_by_row <- match(direct$.price_row[missing_rows], candidates$.price_row)
-    found <- !is.na(candidate_by_row)
-    if (any(found)) {
-      target_rows <- missing_rows[found]
-      source_rows <- candidate_by_row[found]
-      source_columns <- setdiff(names(idx), c("state_code", "sector", "period"))
-      for (column in source_columns) direct[[column]][target_rows] <- candidates[[column]][source_rows]
-      direct$temporal_state_source[target_rows] <- candidates$source_state_code[source_rows]
-      direct$state_rule[target_rows] <- candidates$rule_type[source_rows]
-      direct$fallback_reason[target_rows] <- candidates$reason[source_rows]
+    found <- !is.na(candidate_by_row) &
+      positive_finite(num(candidates$index[candidate_by_row]))
+    if (!any(found)) break
+
+    target_rows <- missing_rows[found]
+    source_rows <- candidate_by_row[found]
+    for (column in source_columns) {
+      direct[[column]][target_rows] <- candidates[[column]][source_rows]
     }
+    ultimate_source <- candidates$donor_temporal_state_source[source_rows]
+    use_immediate <- is.na(ultimate_source) | !nzchar(ultimate_source)
+    ultimate_source[use_immediate] <- candidates$source_state_code[source_rows][use_immediate]
+    direct$temporal_state_source[target_rows] <- ultimate_source
+    direct$state_rule[target_rows] <- candidates$rule_type[source_rows]
+    direct$fallback_reason[target_rows] <- combine_price_fallback_reasons(
+      candidates$reason[source_rows],
+      candidates$donor_fallback_reason[source_rows]
+    )
   }
 
   unresolved <- !positive_finite(num(direct$index))
