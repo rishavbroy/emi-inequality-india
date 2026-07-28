@@ -502,6 +502,9 @@ test_that("first-stage absorption registry is ordered and exhausts main Census c
   expect_identical(registry$sequence, seq_len(nrow(registry)))
   expect_setequal(unlist(first_stage_control_blocks(), use.names = FALSE), census_2001_main_controls())
   expect_identical(unlist(tail(registry$controls, 1)[[1]], use.names = FALSE), census_2001_main_controls())
+  expect_true(all(vapply(registry$controls[6:nrow(registry)], function(x) {
+    identical(x, order_first_stage_controls(x))
+  }, logical(1))))
 })
 
 test_that("first-stage absorption diagnostics use fixed support and report requested statistics", {
