@@ -44,3 +44,19 @@ the human-capital step can be compared directly with the preceding specification
 All coefficient standard errors and joint excluded-instrument tests cluster by
 Census 2001 state. These remain diagnostic specifications and do not change the
 public IV model.
+
+## Mapping coverage and Shastry comparability
+
+`ling_mapped_speaker_share` is the percentage of a district's mutually exclusive C-16 speaker mass whose canonical language can be assigned to one of Shastry's degree categories using the auditable concordance. It is a classification-coverage measure, not Census response coverage and not district-panel match coverage.
+
+The project preserves unmapped mass rather than silently assigning it a degree. It now reports three complementary nonlinear specifications:
+
+- all-speaker distance shares, with unmapped mass left visible;
+- all-speaker distance shares with unmapped share included as a control, so distance zero is the omitted mapped category;
+- mapped-speaker shares renormalized to sum to 100, used only as a sensitivity because renormalization hides unmapped mass.
+
+Results are repeated with minimum mapped-speaker shares of 0, 90, 95, and 99 percent. Distance-four results are decomposed by underlying canonical language and repeated after removing each distance-four language contribution.
+
+Shastry used the 1991 Census classification of 114 languages, assigned all non-Indo-European languages to degree five, and assigned unlisted Indo-European languages the value of the closest language on a language tree. She explicitly preferred 1991 to 1961 because the latter listed 1,652 languages that were difficult to classify. The present project uses the more detailed Census 2001 C-16 hierarchy but only the published degree categories from Shastry's article; consequently, its conservative concordance leaves some detailed categories unmapped instead of reconstructing her unpublished closest-language-tree assignments.
+
+The exploratory outcome output reports conventional clustered 2SLS alongside the reduced-form joint test and an Anderson-Rubin test of a zero treatment effect. Because the scalar state-fixed-effect first stages and the five-share joint first stages are weak, the conventional 2SLS coefficient is not treated as decisive.

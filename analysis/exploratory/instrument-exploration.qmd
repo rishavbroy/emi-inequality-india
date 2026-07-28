@@ -40,6 +40,11 @@ first_stage_vif <- analysis_target_csv("diag_ext_first_stage_absorption", "first
 alternative_distance_summary <- analysis_target_csv("diag_ext_alternative_distance_first_stages", "alternative_distance_first_stage_summary.csv")
 alternative_distance_coefficients <- analysis_target_csv("diag_ext_alternative_distance_first_stages", "alternative_distance_first_stage_coefficients.csv")
 alternative_distance_support <- analysis_target_csv("diag_ext_alternative_distance_first_stages", "alternative_distance_first_stage_common_support.csv")
+mapping_coverage_sensitivity <- analysis_target_csv("diag_ext_alternative_distance_first_stages", "alternative_distance_mapping_coverage_sensitivity.csv")
+distance4_languages <- analysis_target_csv("diag_ext_alternative_distance_first_stages", "distance4_language_decomposition.csv")
+unmapped_languages <- analysis_target_csv("diag_ext_alternative_distance_first_stages", "unmapped_language_decomposition.csv")
+distance4_leave_one_out <- analysis_target_csv("diag_ext_alternative_distance_first_stages", "distance4_leave_one_language_out.csv")
+weak_iv_outcomes <- analysis_target_csv("diag_ext_alternative_distance_first_stages", "alternative_distance_weak_iv_outcomes.csv")
 ```
 
 ## Legacy top-three and EMI-among-enrolled compatibility check
@@ -71,8 +76,31 @@ analysis_table(iv_notes, "Legacy instrument-exploration notes retained as target
 analysis_table(first_stage_support, "Fixed common support for first-stage absorption diagnostics")
 analysis_table(first_stage_absorption, "First-stage absorption ladder", max_rows = 30)
 analysis_table(alternative_distance_support, "Fixed support for alternative linguistic-distance first stages")
-analysis_table(alternative_distance_summary, "Alternative linguistic-distance first stages", max_rows = 40)
-analysis_table(alternative_distance_coefficients, "Alternative-distance first-stage coefficients", max_rows = 50)
+analysis_table(
+  alternative_distance_summary[alternative_distance_summary$adjustment_id %in% c("region_expanded", "state_expanded"), ],
+  "Alternative linguistic-distance first stages: preferred adjustment sets",
+  max_rows = 30
+)
+analysis_table(
+  mapping_coverage_sensitivity[
+    mapping_coverage_sensitivity$adjustment_id == "state_expanded" &
+      mapping_coverage_sensitivity$construction_id %in% c("nonzero_mean", "distance_shares_all_unmapped", "distance_shares_mapped"),
+  ],
+  "Mapping-coverage sensitivity under state fixed effects and expanded controls",
+  max_rows = 30
+)
+analysis_table(unmapped_languages, "Largest unmapped C-16 language-state cells", max_rows = 20)
+analysis_table(distance4_languages, "Distance-four speaker composition by language and state", max_rows = 20)
+analysis_table(distance4_leave_one_out, "Distance-four leave-one-language-out joint tests", max_rows = 15)
+analysis_table(weak_iv_outcomes, "Weak-IV-aware exploratory outcome estimates", max_rows = 10)
+analysis_table(
+  alternative_distance_coefficients[
+    grepl("distance_shares", alternative_distance_coefficients$specification_id) &
+      grepl("state_expanded", alternative_distance_coefficients$specification_id),
+  ],
+  "State-expanded distance-share coefficients",
+  max_rows = 20
+)
 analysis_table(first_stage_vif, "Main and expanded-control VIF/GVIF diagnostics", max_rows = 40)
 analysis_table(first_stage_state_ranges, "State-by-state residual ranges", max_rows = 40)
 analysis_table(first_stage_state_deletion[order(abs(first_stage_state_deletion$estimate_change), decreasing = TRUE), ], "Leave-one-state-out influence", max_rows = 30)
