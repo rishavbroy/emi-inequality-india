@@ -1,0 +1,4 @@
+"model","instrument","estimate","std.error","partial_f","partial_p","nobs","status","reason"
+"nominal_log_change","wavg_ling_degrees",-0.284302476259297,1.07853985197895,0.0694846526751863,0.792192630995981,573,"estimated",NA
+"real_log_change_preferred","wavg_ling_degrees",-0.284302476259297,1.07853985197895,0.0694846526751863,0.792192630995981,573,"estimated",NA
+"real_ancova","wavg_ling_degrees",-0.146527709572288,1.07828550586838,0.0184659641050256,0.891961101201736,573,"estimated",NA

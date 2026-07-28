@@ -1,0 +1,5 @@
+"model","status","nobs","reason"
+"consumption","estimated",573,
+"consumption_ancova","estimated",573,
+"consumption_nominal","estimated",573,
+"consumption_legacy_controls","estimated",573,

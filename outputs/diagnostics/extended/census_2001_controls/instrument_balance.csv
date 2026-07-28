@@ -1,0 +1,11 @@
+"variable","n","correlation_with_instrument"
+"log_population_2001",573,-0.216975256603317
+"urban_share_2001",573,0.0822303907693907
+"adult_secondary_plus_share_2001",573,0.120633408778173
+"sc_share_2001",573,-0.328966724850409
+"st_share_2001",573,0.310405123392379
+"muslim_share_2001",573,0.0313143922702963
+"agricultural_worker_share_2001",573,-0.207536936032923
+"dependency_ratio_2001",573,-0.55451774584084
+"electricity_access_share_2001",573,0.144632179365004
+"log_population_density_2001",573,-0.21464211486353

@@ -1,0 +1,15 @@
+"variable","present","n","missing","missing_pct"
+"log_population_2001",TRUE,573,0,0
+"urban_share_2001",TRUE,573,0,0
+"adult_secondary_plus_share_2001",TRUE,573,0,0
+"sc_share_2001",TRUE,573,0,0
+"st_share_2001",TRUE,573,0,0
+"muslim_share_2001",TRUE,573,0,0
+"agricultural_worker_share_2001",TRUE,573,0,0
+"dependency_ratio_2001",TRUE,573,0,0
+"electricity_access_share_2001",TRUE,573,0,0
+"log_population_density_2001",TRUE,573,0,0
+"literacy_share_2001",TRUE,573,0,0
+"worker_share_2001",TRUE,573,0,0
+"cultivator_share_workers_2001",TRUE,573,0,0
+"agricultural_labourer_share_workers_2001",TRUE,573,0,0
