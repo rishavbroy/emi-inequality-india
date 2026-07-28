@@ -495,9 +495,12 @@ test_that("binomial fit issues detect boundary probabilities deterministically",
 test_that("first-stage absorption registry is ordered and exhausts main Census controls", {
   registry <- first_stage_absorption_registry()
 
-  expect_identical(registry$specification_id[1:7], c(
+  expect_identical(registry$specification_id[1:13], c(
     "instrument_only", "region_fe", "state_fe", "census_controls",
-    "state_fe_census_controls", "expanded_controls", "state_fe_expanded_controls"
+    "region_fe_census_controls", "state_fe_census_controls", "expanded_controls",
+    "region_fe_expanded_controls", "state_fe_expanded_controls",
+    "region_fe_main_without_human_capital", "state_fe_main_without_human_capital",
+    "region_fe_expanded_without_human_capital", "state_fe_expanded_without_human_capital"
   ))
   expect_identical(registry$sequence, seq_len(nrow(registry)))
   expect_setequal(unlist(first_stage_control_blocks(), use.names = FALSE), census_2001_absorption_controls())
@@ -505,7 +508,7 @@ test_that("first-stage absorption registry is ordered and exhausts main Census c
     unlist(registry$controls[registry$specification_id == "state_fe_expanded_controls"][[1]], use.names = FALSE),
     census_2001_absorption_controls()
   )
-  expect_true(all(vapply(registry$controls[8:nrow(registry)], function(x) {
+  expect_true(all(vapply(registry$controls[14:nrow(registry)], function(x) {
     identical(x, order_first_stage_controls(x))
   }, logical(1))))
   expect_identical(
@@ -549,6 +552,16 @@ test_that("first-stage absorption diagnostics use fixed support and report reque
     out$summary$control_blocks[out$summary$specification_id == "state_fe_census_controls"],
     paste(names(first_stage_control_blocks()), collapse = ";")
   )
+  expect_true(all(c(
+    "region_fe_census_controls", "region_fe_expanded_controls",
+    paste0("region_fe_plus_", names(first_stage_control_blocks()))
+  ) %in% out$summary$specification_id))
+  expect_true(all(c(
+    "region_fe_main_without_human_capital", "state_fe_main_without_human_capital",
+    "region_fe_expanded_without_human_capital", "state_fe_expanded_without_human_capital"
+  ) %in% out$summary$specification_id))
+  no_hc <- out$registry$controls[out$registry$specification_id == "region_fe_expanded_without_human_capital"][[1]]
+  expect_length(intersect(no_hc, first_stage_control_blocks()$human_capital), 0L)
   expect_gt(out$summary$partial_r_squared[1], 0.9)
   expect_equal(nrow(out$state_deletion), length(unique(states)))
   expect_equal(nrow(out$district_influence), nrow(panel))
@@ -598,6 +611,101 @@ test_that("first-stage absorption diagnostics save a compact manifest", {
     "first_stage_absorption_common_support.csv", "first_stage_state_residual_ranges.csv",
     "first_stage_state_deletion.csv", "first_stage_district_influence.csv",
     "first_stage_vif.csv"
+  ))
+  expect_true(all(file.exists(manifest$path)))
+})
+
+
+test_that("alternative linguistic-distance registry covers scalar, nonlinear, and joint constructions", {
+  registry <- alternative_distance_registry()
+
+  expect_equal(nrow(registry),
+    length(alternative_distance_adjustments()) * length(alternative_distance_constructions()))
+  expect_true(all(c(
+    "nonzero_mean", "distant_share", "top3_legacy", "nonzero_mean_hindi_urdu",
+    "nonzero_mean_hindi_urdu_separate", "distance_shares"
+  ) %in% registry$construction_id))
+  joint <- registry[registry$construction_id == "distance_shares", , drop = FALSE]
+  expect_true(all(vapply(joint$excluded_instruments, function(x) {
+    identical(x, linguistic_distance_excluded_instruments())
+  }, logical(1))))
+  combined <- registry[registry$construction_id == "nonzero_mean_hindi_urdu", , drop = FALSE]
+  expect_true(all(vapply(combined$included_language_controls, identical, logical(1), "hindi_urdu_share")))
+})
+
+test_that("alternative linguistic-distance first stages use fixed support and joint clustered tests", {
+  set.seed(19)
+  states <- rep(sprintf("%02d", 1:12), each = 8)
+  regions <- rep(panel_region_levels(), each = 16)
+  n <- length(states)
+  shares <- matrix(stats::runif(n * 6), ncol = 6)
+  shares <- 100 * shares / rowSums(shares)
+  panel <- data.frame(
+    state_code_2001 = states,
+    district_code_2001 = sprintf("%03d", seq_len(n)),
+    region = factor(regions, levels = panel_region_levels()),
+    ling_distance_nonzero_mean = rowSums(shares[, 2:6, drop = FALSE] * rep(1:5, each = n)) /
+      rowSums(shares[, 2:6, drop = FALSE]),
+    ling_share_distance_ge3 = rowSums(shares[, 4:6, drop = FALSE]),
+    ling_distance_top3_legacy = stats::runif(n, 0, 5),
+    hindi_share = 0.8 * shares[, 1],
+    urdu_share = 0.2 * shares[, 1],
+    hindi_urdu_share = shares[, 1],
+    stringsAsFactors = FALSE
+  )
+  for (degree in 0:5) panel[[paste0("ling_share_distance_", degree)]] <- shares[, degree + 1]
+  panel$emi_exposure_all_children_0708 <- 5 + 0.15 * panel$ling_share_distance_5 +
+    0.08 * panel$ling_share_distance_4 + stats::rnorm(n)
+  for (variable in census_2001_diagnostic_controls()) panel[[variable]] <- stats::rnorm(n)
+
+  out <- diagnose_alternative_distance_first_stages(panel)
+
+  expect_s3_class(out, "emi_alternative_distance_first_stages")
+  expect_equal(nrow(out$summary), nrow(alternative_distance_registry()))
+  expect_true(all(out$summary$n == n))
+  expect_true(all(c("joint_excluded_f", "joint_excluded_p", "partial_r_squared") %in% names(out$summary)))
+  expect_equal(
+    out$summary$n_excluded_instruments[out$summary$construction_id == "distance_shares"],
+    rep(5L, length(alternative_distance_adjustments()))
+  )
+  expect_true(any(is.finite(out$summary$joint_excluded_f[out$summary$construction_id == "distance_shares"])))
+  expect_equal(
+    nrow(out$coefficients[out$coefficients$term %in% linguistic_distance_excluded_instruments(), ]),
+    5L * length(alternative_distance_adjustments())
+  )
+})
+
+test_that("alternative linguistic-distance diagnostics save four explicit outputs", {
+  set.seed(23)
+  n <- 48
+  panel <- data.frame(
+    state_code_2001 = rep(sprintf("%02d", 1:12), each = 4),
+    district_code_2001 = sprintf("%03d", seq_len(n)),
+    region = rep(panel_region_levels(), each = 8),
+    emi_exposure_all_children_0708 = stats::rnorm(n),
+    ling_distance_nonzero_mean = stats::runif(n, 1, 5),
+    ling_share_distance_ge3 = stats::runif(n, 0, 100),
+    ling_distance_top3_legacy = stats::runif(n, 0, 5),
+    hindi_share = stats::runif(n, 0, 60),
+    urdu_share = stats::runif(n, 0, 20),
+    stringsAsFactors = FALSE
+  )
+  panel$hindi_urdu_share <- panel$hindi_share + panel$urdu_share
+  distance_shares <- matrix(stats::runif(n * 6), ncol = 6)
+  distance_shares <- 100 * distance_shares / rowSums(distance_shares)
+  for (degree in 0:5) panel[[paste0("ling_share_distance_", degree)]] <- distance_shares[, degree + 1]
+  for (variable in census_2001_diagnostic_controls()) panel[[variable]] <- stats::rnorm(n)
+  out <- diagnose_alternative_distance_first_stages(panel)
+  dir <- tempfile("alternative-distance-")
+  on.exit(unlink(dir, recursive = TRUE, force = TRUE), add = TRUE)
+
+  manifest <- save_alternative_distance_first_stages(out, dir)
+
+  expect_setequal(basename(manifest$path), c(
+    "alternative_distance_first_stage_summary.csv",
+    "alternative_distance_first_stage_coefficients.csv",
+    "alternative_distance_first_stage_registry.csv",
+    "alternative_distance_first_stage_common_support.csv"
   ))
   expect_true(all(file.exists(manifest$path)))
 })
