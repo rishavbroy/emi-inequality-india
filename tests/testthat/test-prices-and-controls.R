@@ -33,6 +33,7 @@ test_that("Census control ratios are built from totals", {
     adult_secondary_plus = 160,
     sc_population = 100,
     st_population = 50,
+    religion_population_total = 1000,
     muslim_population = 150,
     workers_total = 400,
     cultivators = 100,
@@ -47,9 +48,48 @@ test_that("Census control ratios are built from totals", {
   out <- build_census_2001_controls(x)
   expect_equal(out$urban_share_2001, 20)
   expect_equal(out$adult_secondary_plus_share_2001, 20)
+  expect_equal(out$muslim_share_2001, 15)
   expect_equal(out$agricultural_worker_share_2001, 50)
   expect_equal(out$dependency_ratio_2001, 100 * 400 / 600)
   expect_equal(out$electricity_access_share_2001, 60)
+})
+
+
+
+test_that("religion shares use the matching C-01 universe", {
+  x <- data.frame(
+    state_code_2001 = "01", district_code_2001 = "04",
+    population_total = 950, population_urban = 100,
+    population_age_7_plus = 700, adult_secondary_plus = 140,
+    sc_population = 50, st_population = 20,
+    religion_population_total = 1000, muslim_population = 990,
+    workers_total = 400, cultivators = 100, agricultural_labourers = 100,
+    population_age_0_14 = 300, population_age_15_64 = 600,
+    population_age_65_plus = 100, households_total = 200,
+    households_electricity = 120, area_sq_km = 10
+  )
+
+  out <- build_census_2001_controls(x)
+  expect_equal(out$muslim_share_2001, 99)
+})
+
+test_that("bounded Census shares cannot exceed their universes", {
+  x <- data.frame(
+    state_code_2001 = "01", district_code_2001 = "04",
+    population_total = 1000, population_urban = 100,
+    population_age_7_plus = 700, adult_secondary_plus = 140,
+    sc_population = 50, st_population = 20,
+    religion_population_total = 900, muslim_population = 950,
+    workers_total = 400, cultivators = 100, agricultural_labourers = 100,
+    population_age_0_14 = 300, population_age_15_64 = 600,
+    population_age_65_plus = 100, households_total = 200,
+    households_electricity = 120, area_sq_km = 10
+  )
+
+  expect_error(
+    build_census_2001_controls(x),
+    "muslim_share_2001"
+  )
 })
 
 test_that("revised formulas use state fixed effects and predetermined controls", {

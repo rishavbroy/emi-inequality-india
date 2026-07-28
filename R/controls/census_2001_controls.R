@@ -66,7 +66,7 @@ build_census_2001_controls <- function(district_totals) {
   required <- c(
     census_2001_keys(), "population_total", "population_urban",
     "population_age_7_plus", "adult_secondary_plus", "sc_population",
-    "st_population", "muslim_population", "workers_total", "cultivators",
+    "st_population", "religion_population_total", "muslim_population", "workers_total", "cultivators",
     "agricultural_labourers", "population_age_0_14", "population_age_15_64",
     "population_age_65_plus", "households_total", "households_electricity",
     "area_sq_km"
@@ -85,7 +85,7 @@ build_census_2001_controls <- function(district_totals) {
   out$adult_secondary_plus_share_2001 <- safe_share(x$adult_secondary_plus, x$population_age_7_plus)
   out$sc_share_2001 <- safe_share(x$sc_population, x$population_total)
   out$st_share_2001 <- safe_share(x$st_population, x$population_total)
-  out$muslim_share_2001 <- safe_share(x$muslim_population, x$population_total)
+  out$muslim_share_2001 <- safe_share(x$muslim_population, x$religion_population_total)
   out$agricultural_worker_share_2001 <- safe_share(
     num(x$cultivators) + num(x$agricultural_labourers), x$workers_total
   )
@@ -95,6 +95,24 @@ build_census_2001_controls <- function(district_totals) {
   out$electricity_access_share_2001 <- safe_share(x$households_electricity, x$households_total)
   density <- num(x$population_total) / num(x$area_sq_km)
   out$log_population_density_2001 <- ifelse(positive_finite(density), log(density), NA_real_)
+
+  bounded_shares <- c(
+    "urban_share_2001", "adult_secondary_plus_share_2001",
+    "sc_share_2001", "st_share_2001", "muslim_share_2001",
+    "agricultural_worker_share_2001", "electricity_access_share_2001"
+  )
+  invalid_share <- vapply(bounded_shares, function(variable) {
+    value <- num(out[[variable]])
+    any(is.finite(value) & (value < 0 | value > 100))
+  }, logical(1))
+  if (any(invalid_share)) {
+    stop(
+      "Census 2001 controls contain bounded shares outside [0, 100]: ",
+      paste(bounded_shares[invalid_share], collapse = ", "),
+      call. = FALSE
+    )
+  }
+
   keys <- census_2001_keys()
   if (any(!stats::complete.cases(out[keys]))) {
     stop("Census 2001 controls contain missing state-district keys.", call. = FALSE)
