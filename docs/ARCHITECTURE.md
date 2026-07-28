@@ -69,3 +69,17 @@ Legacy geography is appended once when either extended diagnostics or benchmarks
 `{targets}` is the build source of truth. Durable computation should be represented by functions and explicit targets. Avoid untracked side effects, compatibility aliases, source-text tests, and parallel implementations of the same contract. Tests should protect behavioral and methodological invariants.
 
 Update this document when target groups, panel roles, public-output contracts, directory ownership, or strict validation rules change.
+
+
+## Public map regions
+
+The public region map uses the Reserve Bank of India six-region classification,
+not the former five-way ad hoc grouping. The categories are `Northern`,
+`North Eastern`, `Central`, `Eastern`, `Western`, and `Southern`.
+`panel_state_region_crosswalk()` is the single state-to-region contract used by
+panel construction and map preparation. Historical state names are resolved
+through the project's canonical state aliases before classification. The small
+union territories omitted from some RBI state lists follow the corresponding
+RBI/Zonal-Council geography used by the project: Delhi, Chandigarh, and Jammu
+and Kashmir are Northern; Andaman and Nicobar Islands is Eastern; and
+Puducherry and Lakshadweep are Southern.
