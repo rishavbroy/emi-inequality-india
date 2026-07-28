@@ -68,10 +68,10 @@ test_that("2007 household aggregation computes a weighted Gini through the canon
 
 test_that("linguistic distance IV uses real columns when present", {
   census <- data.frame(
-    State = c("Bihar", "Bihar"),
-    District = c("Patna", "Patna"),
-    ling_degrees = c(0, 5),
-    spkr_tot = c(3, 1)
+    state_std = c("bihar", "bihar"), district_std = c("patna", "patna"),
+    canonical_language = c("Hindi", "Tamil"),
+    ling_degrees = c(0, 5), spkr_tot = c(3, 1),
+    mother_tongue_code = c("006001", "020001")
   )
 
   out <- build_linguistic_distance_iv(census, list())
@@ -89,23 +89,20 @@ test_that("Census 2001 state codes map to tracker state names", {
   ))
 })
 
-test_that("Census 2001 cleaner parses district language rows", {
+test_that("Census 2001 cleaner parses mutually exclusive district language rows", {
   raw <- data.frame(
-    `C-16 POPULATION BY MOTHER TONGUE` = rep("C0116", 5),
-    ...2 = rep("01", 5),
-    ...3 = rep("02", 5),
-    ...4 = rep("0000", 5),
-    ...5 = rep("District - Baramula  02", 5),
-    ...6 = c("001000", "006000", "016000", "004000", "001999"),
-    ...7 = c("1 ASSAMESE", "2 HINDI", "3 PUNJABI", "4 DOGRI", "1 Others"),
-    ...8 = c(100, 200, 50, 10, 500),
-    check.names = FALSE
+    `C-16 POPULATION BY MOTHER TONGUE` = rep("C0116", 6),
+    ...2 = rep("01", 6), ...3 = rep("02", 6), ...4 = rep("0000", 6),
+    ...5 = rep("District - Baramula  02", 6),
+    ...6 = c("001000", "001002", "006000", "006001", "016000", "016001"),
+    ...7 = c("1 ASSAMESE", "1 ASSAMESE", "6 HINDI", "1 HINDI", "16 PUNJABI", "1 PUNJABI"),
+    ...8 = c(100, 100, 200, 200, 50, 50), check.names = FALSE
   )
 
   out <- clean_census_2001_languages(list(raw))
 
-  expect_equal(nrow(out), 3)
-  expect_setequal(out$mother_tongue, c("Assamese", "Hindi", "Punjabi"))
+  expect_equal(nrow(out), 3L)
+  expect_setequal(out$canonical_language, c("Assamese", "Hindi", "Punjabi"))
   expect_equal(unique(out$state_std), "01")
   expect_equal(unique(out$district_std), "02")
   expect_setequal(out$ling_degrees, c(0, 1, 3))
@@ -326,4 +323,85 @@ test_that("lineage panels construct real outcomes and ANCOVA levels", {
   expect_equal(out$log_real_consumption_0708, log(80))
   expect_equal(out$log_real_consumption_1718, log(120))
   expect_equal(out$real_log_consumption_change, log(120) - log(80))
+})
+
+test_that("C-16 cleaner removes group subtotals and carries parent language to leaves", {
+  raw <- data.frame(
+    `C-16 POPULATION BY MOTHER TONGUE` = rep("C0116", 6),
+    ...2 = rep("10", 6),
+    ...3 = rep("01", 6),
+    ...4 = rep("0000", 6),
+    ...5 = rep("District - Patna  01", 6),
+    ...6 = c("002000", "002004", "002007", "002999", "006000", "006001"),
+    ...7 = c("2 BENGALI", "1 BENGALI", "2 CHAKMA", "2 Others", "6 HINDI", "1 HINDI"),
+    ...8 = c(100, 70, 20, 10, 200, 200),
+    check.names = FALSE
+  )
+
+  out <- clean_census_2001_languages(list(raw))
+
+  expect_equal(nrow(out), 4L)
+  expect_false(any(grepl("000$", out$mother_tongue_code)))
+  expect_equal(unique(out$canonical_language[out$language_group_code == "002"]), "Bengali")
+  expect_true(all(out$ling_degrees[out$language_group_code == "002"] == 3))
+  expect_equal(sum(out$spkr_tot[out$language_group_code == "002"]), 100)
+})
+
+test_that("linguistic constructions use the full distribution and expose mapping coverage", {
+  census <- data.frame(
+    state_std = rep("10", 5), district_std = rep("01", 5),
+    canonical_language = c("Hindi", "Urdu", "Bengali", "Tamil", "Dogri"),
+    ling_degrees = c(0, 0, 3, 5, NA),
+    spkr_tot = c(40, 10, 20, 20, 10),
+    mother_tongue_code = sprintf("%06d", 1:5),
+    stringsAsFactors = FALSE
+  )
+
+  out <- build_linguistic_distance_iv(census)
+
+  expect_equal(out$ling_distance_nonzero_mean, 4)
+  expect_equal(out$ling_share_distance_ge3, 40)
+  expect_equal(out$ling_share_distance_0, 50)
+  expect_equal(out$hindi_share, 40)
+  expect_equal(out$urdu_share, 10)
+  expect_equal(out$hindi_urdu_share, 50)
+  expect_equal(out$ling_mapped_speaker_share, 90)
+  expect_equal(out$ling_unmapped_speaker_share, 10)
+  expect_equal(out$wavg_ling_degrees, out$ling_distance_top3_legacy)
+  expect_equal(linguistic_distance_excluded_instruments(), paste0("ling_share_distance_", 1:5))
+})
+
+test_that("education exposure margins share one weighted child universe", {
+  children <- data.frame(
+    district_code_0708 = rep("01001", 4),
+    AGE = c(5, 6, 14, 18),
+    enrolled = factor(c("Yes", "Yes", "No", "Yes"), levels = c("No", "Yes")),
+    MEDIUM_INSTRUCTION = c("02", "01", NA, "02"),
+    weight = c(1, 1, 2, 2),
+    stringsAsFactors = FALSE
+  )
+
+  out <- build_education_exposure_2007(children)
+
+  expect_equal(out$enrollment_rate_0708, 100 * 4 / 6)
+  expect_equal(out$emi_share_enrolled_0708, 75)
+  expect_equal(out$emi_exposure_all_children_0708, 50)
+  expect_equal(out$emi_exposure_all_children_0708 / 100,
+               out$enrollment_rate_0708 / 100 * out$emi_share_enrolled_0708 / 100)
+  expect_equal(out$eligible_child_weight_0708_age6_17, 3)
+  expect_equal(out$eligible_child_weight_0708_age6_14, 3)
+})
+
+test_that("unknown medium is reported rather than classified as non-EMI", {
+  children <- data.frame(
+    district_code_0708 = rep("01001", 3), AGE = c(10, 11, 12),
+    enrolled = factor(rep("Yes", 3), levels = c("No", "Yes")),
+    MEDIUM_INSTRUCTION = c("02", "01", NA), weight = rep(1, 3)
+  )
+
+  out <- build_education_exposure_2007(children)
+
+  expect_equal(out$unknown_medium_share_enrolled_0708, 100 / 3)
+  expect_equal(out$emi_share_enrolled_0708, 50)
+  expect_equal(out$emi_exposure_all_children_0708, 100 / 3)
 })
