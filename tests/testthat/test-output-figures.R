@@ -15,6 +15,23 @@ poster_map_fixture <- function(n = 2L) {
   out
 }
 
+test_that("poster residualization resolves factor terms to source columns", {
+  panel <- poster_map_fixture(20L)
+  panel$region <- rep(panel_region_levels()[1:2], each = 10L)
+  panel$emi_exposure_all_children_0708 <- seq_len(20L)
+  panel$ling_distance_nonzero_mean <- rev(seq_len(20L))
+
+  residuals <- poster_residual_pair(panel, fixed_effect = "region")
+
+  expect_equal(dim(residuals), c(20L, 2L))
+  expect_true(all(is.finite(residuals)))
+  expect_identical(
+    colnames(residuals),
+    c("emi_exposure_all_children_0708", "ling_distance_nonzero_mean")
+  )
+})
+
+
 test_that("final figures degrade to status specs without real sf geometry", {
   cfg <- list(mode = "final", output_formats = list(figures = "png"))
   panel <- poster_map_fixture(1L)

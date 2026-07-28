@@ -40,7 +40,7 @@ poster_residual_pair <- function(
 ) {
   df <- as.data.frame(panel)
   terms <- poster_residual_terms(fixed_effect, controls)
-  required <- unique(c(variables, gsub("^factor\((.*)\)$", "\1", terms)))
+  required <- unique(c(variables, gsub("^factor\\((.*)\\)$", "\\1", terms)))
   out <- matrix(NA_real_, nrow = nrow(df), ncol = length(variables), dimnames = list(NULL, variables))
   if (length(setdiff(required, names(df)))) return(out)
 
