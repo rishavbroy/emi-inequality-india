@@ -167,7 +167,10 @@ render_poster_png <- function(pdf_path, png_path = sub("\\.pdf$", ".png", pdf_pa
   }
   if (nzchar(Sys.which("pdftoppm"))) {
     prefix <- sub("\\.png$", "", png_path)
-    status <- system2("pdftoppm", c("-singlefile", "-png", "-r", as.character(dpi), pdf_path, prefix))
+    status <- system2(
+      "pdftoppm",
+      c("-singlefile", "-png", "-r", as.character(dpi), shQuote(pdf_path), shQuote(prefix))
+    )
     if (!identical(status, 0L)) stop("pdftoppm failed to create poster PNG with status ", status, call. = FALSE)
   } else {
     need_pkg("magick", "poster PNG preview rendering")

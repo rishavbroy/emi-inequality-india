@@ -666,3 +666,22 @@ test_that("poster consumes the flattened official print PDF derivative", {
   expect_match(targets, "tar_target(poster_logo_source", fixed = TRUE)
   expect_match(targets, "flatten_poster_logo_pdf(poster_logo_source)", fixed = TRUE)
 })
+
+test_that("poster PNG rendering supports paths containing spaces", {
+  skip_if(!nzchar(Sys.which("pdftoppm")), "pdftoppm is unavailable")
+  renderer <- poster_renderer_test_env()
+  dir <- file.path(tempdir(), "poster preview with spaces")
+  dir.create(dir, recursive = TRUE, showWarnings = FALSE)
+  pdf <- file.path(dir, "poster source.pdf")
+  png <- file.path(dir, "poster preview.png")
+  grDevices::pdf(pdf, width = 2, height = 2)
+  graphics::plot.new()
+  graphics::text(0.5, 0.5, "poster")
+  grDevices::dev.off()
+
+  out <- renderer$render_poster_png(pdf, png, dpi = 72)
+
+  expect_identical(out, png)
+  expect_true(file.exists(png))
+  expect_gt(file.info(png)$size, 0)
+})
