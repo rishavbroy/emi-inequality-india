@@ -8,7 +8,7 @@ format:
     size: "36x24"
     poster-authors: "Rishav Roy"
     departments: "Department of Economics, University of Wisconsin-Madison"
-    institution-logo: "../../assets/uw-logo-horizontal-full-color-print.svg"
+    institution-logo: "../../outputs/derived/poster/uw-logo-horizontal-full-color-print-flat.pdf"
     footer-text: "PREDOC.org Research Conference | Chicago Booth | July 30-31, 2026"
     footer-url: "rishavbroy.github.io"
     footer-emails: "roybrishav@gmail.com"
