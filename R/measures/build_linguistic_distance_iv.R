@@ -73,9 +73,9 @@ build_district_language_constructions <- function(df) {
   mapped_total <- sum(speakers[mapped], na.rm = TRUE)
   nonzero <- mapped & distance > 0
 
-  share <- function(condition) {
-    if (!is.finite(total) || total <= 0) return(NA_real_)
-    100 * sum(speakers[valid_speakers & condition], na.rm = TRUE) / total
+  share <- function(condition, denominator = total) {
+    if (!is.finite(denominator) || denominator <= 0) return(NA_real_)
+    100 * sum(speakers[valid_speakers & condition], na.rm = TRUE) / denominator
   }
   weighted_distance <- function(index) {
     denom <- sum(speakers[index], na.rm = TRUE)
@@ -90,7 +90,13 @@ build_district_language_constructions <- function(df) {
   out <- df[1, c("state_std", "district_std"), drop = FALSE]
   out$ling_distance_nonzero_mean <- weighted_distance(nonzero)
   out$ling_share_distance_ge3 <- share(mapped & distance >= 3)
-  for (degree in 0:5) out[[paste0("ling_share_distance_", degree)]] <- share(mapped & distance == degree)
+  for (degree in 0:5) {
+    out[[paste0("ling_share_distance_", degree)]] <- share(mapped & distance == degree)
+    out[[paste0("ling_mapped_share_distance_", degree)]] <- share(
+      mapped & distance == degree,
+      denominator = mapped_total
+    )
+  }
   out$hindi_share <- share(language == "Hindi")
   out$urdu_share <- share(language == "Urdu")
   out$hindi_urdu_share <- share(language %in% c("Hindi", "Urdu"))
@@ -105,8 +111,10 @@ build_district_language_constructions <- function(df) {
   out
 }
 
-linguistic_distance_excluded_instruments <- function() {
-  paste0("ling_share_distance_", 1:5)
+linguistic_distance_excluded_instruments <- function(denominator = c("all", "mapped")) {
+  denominator <- match.arg(denominator)
+  prefix <- if (identical(denominator, "mapped")) "ling_mapped_share_distance_" else "ling_share_distance_"
+  paste0(prefix, 1:5)
 }
 
 linguistic_distance_language_controls <- function() {
@@ -121,7 +129,7 @@ validate_linguistic_distance_ranges <- function(df) {
     value <- num(df[[nm]])
     if (any(is.finite(value) & (value < 0 | value > 5))) stop(nm, " must be in the 0-5 range.", call. = FALSE)
   }
-  share_cols <- grep("(^ling_share_distance_|_share$|speaker_coverage$)", names(df), value = TRUE)
+  share_cols <- grep("(^ling_(mapped_)?share_distance_|_share$|speaker_coverage$)", names(df), value = TRUE)
   for (nm in share_cols) {
     value <- num(df[[nm]])
     if (any(is.finite(value) & (value < 0 | value > 100))) stop(nm, " must be in the 0-100 range.", call. = FALSE)

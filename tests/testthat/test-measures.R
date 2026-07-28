@@ -405,3 +405,19 @@ test_that("unknown medium is reported rather than classified as non-EMI", {
   expect_equal(out$emi_share_enrolled_0708, 50)
   expect_equal(out$emi_exposure_all_children_0708, 100 / 3)
 })
+
+
+test_that("mapped linguistic-distance shares form a genuine composition", {
+  census <- data.frame(
+    state_std = "01", district_std = "001",
+    spkr_tot = c(40, 30, 20, 10),
+    canonical_language = c("Hindi", "Punjabi", "Bengali", "Unmapped language"),
+    ling_degrees = c(0, 1, 3, NA_real_),
+    stringsAsFactors = FALSE
+  )
+  out <- build_linguistic_distance_iv(census, list())
+  mapped <- unlist(out[paste0("ling_mapped_share_distance_", 0:5)], use.names = FALSE)
+  all_speaker <- unlist(out[paste0("ling_share_distance_", 0:5)], use.names = FALSE)
+  expect_equal(sum(mapped), 100, tolerance = 1e-8)
+  expect_equal(sum(all_speaker) + out$ling_unmapped_speaker_share, 100, tolerance = 1e-8)
+})
