@@ -623,11 +623,12 @@ test_that("alternative linguistic-distance registry covers scalar, nonlinear, an
     length(alternative_distance_adjustments()) * length(alternative_distance_constructions()))
   expect_true(all(c(
     "nonzero_mean", "distant_share", "top3_legacy", "nonzero_mean_hindi_urdu",
-    "nonzero_mean_hindi_urdu_separate", "distance_shares"
+    "nonzero_mean_hindi_urdu_separate", "distance_shares_all",
+    "distance_shares_all_unmapped", "distance_shares_mapped"
   ) %in% registry$construction_id))
-  joint <- registry[registry$construction_id == "distance_shares", , drop = FALSE]
+  joint <- registry[registry$construction_id == "distance_shares_all", , drop = FALSE]
   expect_true(all(vapply(joint$excluded_instruments, function(x) {
-    identical(x, linguistic_distance_excluded_instruments())
+    identical(x, linguistic_distance_excluded_instruments("all"))
   }, logical(1))))
   combined <- registry[registry$construction_id == "nonzero_mean_hindi_urdu", , drop = FALSE]
   expect_true(all(vapply(combined$included_language_controls, identical, logical(1), "hindi_urdu_share")))
@@ -653,7 +654,12 @@ test_that("alternative linguistic-distance first stages use fixed support and jo
     hindi_urdu_share = shares[, 1],
     stringsAsFactors = FALSE
   )
-  for (degree in 0:5) panel[[paste0("ling_share_distance_", degree)]] <- shares[, degree + 1]
+  for (degree in 0:5) {
+    panel[[paste0("ling_share_distance_", degree)]] <- shares[, degree + 1]
+    panel[[paste0("ling_mapped_share_distance_", degree)]] <- shares[, degree + 1]
+  }
+  panel$ling_mapped_speaker_share <- 100
+  panel$ling_unmapped_speaker_share <- 0
   panel$emi_exposure_all_children_0708 <- 5 + 0.15 * panel$ling_share_distance_5 +
     0.08 * panel$ling_share_distance_4 + stats::rnorm(n)
   for (variable in census_2001_diagnostic_controls()) panel[[variable]] <- stats::rnorm(n)
@@ -665,13 +671,14 @@ test_that("alternative linguistic-distance first stages use fixed support and jo
   expect_true(all(out$summary$n == n))
   expect_true(all(c("joint_excluded_f", "joint_excluded_p", "partial_r_squared") %in% names(out$summary)))
   expect_equal(
-    out$summary$n_excluded_instruments[out$summary$construction_id == "distance_shares"],
+    out$summary$n_excluded_instruments[out$summary$construction_id == "distance_shares_all"],
     rep(5L, length(alternative_distance_adjustments()))
   )
-  expect_true(any(is.finite(out$summary$joint_excluded_f[out$summary$construction_id == "distance_shares"])))
+  expect_true(any(is.finite(out$summary$joint_excluded_f[out$summary$construction_id == "distance_shares_all"])))
+  expect_setequal(unique(out$coverage_sensitivity$minimum_mapped_share), linguistic_mapping_coverage_thresholds())
   expect_equal(
-    nrow(out$coefficients[out$coefficients$term %in% linguistic_distance_excluded_instruments(), ]),
-    5L * length(alternative_distance_adjustments())
+    nrow(out$coefficients[out$coefficients$term %in% linguistic_distance_excluded_instruments("all"), ]),
+    10L * length(alternative_distance_adjustments())
   )
 })
 
@@ -693,7 +700,12 @@ test_that("alternative linguistic-distance diagnostics save four explicit output
   panel$hindi_urdu_share <- panel$hindi_share + panel$urdu_share
   distance_shares <- matrix(stats::runif(n * 6), ncol = 6)
   distance_shares <- 100 * distance_shares / rowSums(distance_shares)
-  for (degree in 0:5) panel[[paste0("ling_share_distance_", degree)]] <- distance_shares[, degree + 1]
+  for (degree in 0:5) {
+    panel[[paste0("ling_share_distance_", degree)]] <- distance_shares[, degree + 1]
+    panel[[paste0("ling_mapped_share_distance_", degree)]] <- distance_shares[, degree + 1]
+  }
+  panel$ling_mapped_speaker_share <- 100
+  panel$ling_unmapped_speaker_share <- 0
   for (variable in census_2001_diagnostic_controls()) panel[[variable]] <- stats::rnorm(n)
   out <- diagnose_alternative_distance_first_stages(panel)
   dir <- tempfile("alternative-distance-")
@@ -705,7 +717,13 @@ test_that("alternative linguistic-distance diagnostics save four explicit output
     "alternative_distance_first_stage_summary.csv",
     "alternative_distance_first_stage_coefficients.csv",
     "alternative_distance_first_stage_registry.csv",
-    "alternative_distance_first_stage_common_support.csv"
+    "alternative_distance_first_stage_common_support.csv",
+    "alternative_distance_mapping_coverage_sensitivity.csv",
+    "distance4_language_decomposition.csv",
+    "unmapped_language_decomposition.csv",
+    "distance4_leave_one_language_out.csv",
+    "alternative_distance_weak_iv_outcomes.csv",
+    "alternative_distance_anderson_rubin_grid.csv"
   ))
   expect_true(all(file.exists(manifest$path)))
 })
