@@ -51,6 +51,25 @@ census_key_frame <- function(state, district) {
   )
 }
 
+validate_census_source_shape <- function(x, minimum_columns, source) {
+  x <- safe_df(x)
+  if (ncol(x) < minimum_columns) {
+    stop(source, " has ", ncol(x), " columns; expected at least ", minimum_columns, ".", call. = FALSE)
+  }
+  x
+}
+
+validate_census_district_rows <- function(x, source, expected_n = NULL) {
+  keys <- census_2001_keys()
+  if (!all(keys %in% names(x))) stop(source, " lacks standardized state-district keys.", call. = FALSE)
+  if (any(!stats::complete.cases(x[keys]))) stop(source, " contains missing state-district keys.", call. = FALSE)
+  if (anyDuplicated(x[keys])) stop(source, " contains duplicate state-district rows.", call. = FALSE)
+  if (!is.null(expected_n) && nrow(x) != expected_n) {
+    stop(source, " contains ", nrow(x), " districts; expected ", expected_n, ".", call. = FALSE)
+  }
+  x
+}
+
 clean_shrug_pca_2001_district <- function(x) {
   x <- safe_df(x)
   required <- c("pc01_state_id", "pc01_district_id", "pc01_pca_no_hh", "pc01_pca_tot_p",
@@ -70,11 +89,11 @@ clean_shrug_pca_2001_district <- function(x) {
   out$workers_total <- num(x$pc01_pca_tot_work_p)
   out$cultivators <- num(x$pc01_pca_main_cl_p) + num(x$pc01_pca_marg_cl_p)
   out$agricultural_labourers <- num(x$pc01_pca_main_al_p) + num(x$pc01_pca_marg_al_p)
-  out
+  validate_census_district_rows(out, "SHRUG PCA")
 }
 
 clean_census_c01_district <- function(x) {
-  x <- safe_df(x)
+  x <- validate_census_source_shape(x, 14L, "Census C-01")
   keep <- pad_census_code(x[[3]], 2L) != "00" & pad_census_code(x[[4]], 4L) == "0000" &
     pad_census_code(x[[5]], 8L) == "00000000" & canon(x[[7]]) == "total"
   x <- x[keep %in% TRUE, , drop = FALSE]
@@ -82,11 +101,11 @@ clean_census_c01_district <- function(x) {
   out$religion_population_total <- num(x[[8]])
   out$hindu_population <- num(x[[11]])
   out$muslim_population <- num(x[[14]])
-  out
+  validate_census_district_rows(out, "Census C-01")
 }
 
 clean_census_c08_district <- function(x) {
-  x <- safe_df(x)
+  x <- validate_census_source_shape(x, 41L, "Census C-08")
   district <- pad_census_code(x[[3]], 2L) != "00" & pad_census_code(x[[4]], 4L) == "0000" & canon(x[[6]]) == "total"
   all_age <- x[district %in% TRUE & canon(x[[7]]) == "all ages", , drop = FALSE]
   child <- x[district %in% TRUE & canon(x[[7]]) == "0 6", , drop = FALSE]
@@ -97,11 +116,11 @@ clean_census_c08_district <- function(x) {
   child_out$education_population_0_6 <- num(child[[8]])
   out <- merge(all_out, child_out, by = c("state_code_2001", "district_code_2001"), all = TRUE, sort = FALSE)
   out$education_population_age_7_plus <- out$education_population_all - out$education_population_0_6
-  out
+  validate_census_district_rows(out, "Census C-08")
 }
 
 clean_census_c14_district <- function(x) {
-  x <- safe_df(x)
+  x <- validate_census_source_shape(x, 13L, "Census C-14")
   district <- pad_census_code(x[[3]], 2L) != "00" & pad_census_code(x[[4]], 8L) == "00000000"
   x <- x[district %in% TRUE, , drop = FALSE]
   age <- canon(x[[6]])
@@ -123,22 +142,23 @@ clean_census_c14_district <- function(x) {
   })
   all_age <- x[age == "all ages", c("state_code_2001", "district_code_2001", ".urban_population"), drop = FALSE]
   names(all_age)[[3]] <- "population_urban"
-  combine_census_2001_count_sources(c(pieces, list(all_age)), keys = c("state_code_2001", "district_code_2001"))
+  out <- combine_census_2001_count_sources(c(pieces, list(all_age)), keys = census_2001_keys(), require_same_keys = TRUE)
+  validate_census_district_rows(out, "Census C-14")
 }
 
 clean_census_h09_district <- function(x) {
-  x <- safe_df(x)
+  x <- validate_census_source_shape(x, 8L, "Census H-09")
   keep <- pad_census_code(x[[3]], 2L) != "00" & pad_census_code(x[[4]], 4L) == "0000" & canon(x[[6]]) == "total"
   x <- x[keep %in% TRUE, , drop = FALSE]
   out <- census_key_frame(x[[2]], x[[3]])
   out$lighting_households_total <- num(x[[7]])
   out$households_electricity <- num(x[[8]])
-  out
+  validate_census_district_rows(out, "Census H-09")
 }
 
 census_geometry_area <- function(geometry) {
   need_pkg("sf", "Census 2001 district area")
-  required <- c("state_code_2001", "district_code_2001")
+  required <- census_2001_keys()
   if (!inherits(geometry, "sf") || !all(required %in% names(geometry))) stop("Census geometry lacks standardized district keys.", call. = FALSE)
   out <- sf::st_drop_geometry(geometry[required])
   out$area_sq_km <- as.numeric(sf::st_area(sf::st_transform(geometry, 6933))) / 1e6
@@ -147,15 +167,59 @@ census_geometry_area <- function(geometry) {
 }
 
 build_census_2001_district_totals <- function(raw_sources, geometry) {
-  out <- combine_census_2001_count_sources(list(
-    clean_shrug_pca_2001_district(raw_sources$shrug_pca),
-    clean_census_c01_district(raw_sources$c01),
-    clean_census_c08_district(raw_sources$c08),
-    clean_census_c14_district(raw_sources$c14),
-    clean_census_h09_district(raw_sources$h09),
-    census_geometry_area(geometry)
-  ), keys = c("state_code_2001", "district_code_2001"))
-  out$population_age_7_plus <- ifelse(is.finite(out$education_population_age_7_plus), out$education_population_age_7_plus, out$population_age_7_plus)
-  out$households_total <- ifelse(is.finite(out$lighting_households_total), out$lighting_households_total, out$households_total)
-  out
+  count_sources <- list(
+    shrug_pca = clean_shrug_pca_2001_district(raw_sources$shrug_pca),
+    c01 = clean_census_c01_district(raw_sources$c01),
+    c08 = clean_census_c08_district(raw_sources$c08),
+    c14 = clean_census_c14_district(raw_sources$c14),
+    h09 = clean_census_h09_district(raw_sources$h09)
+  )
+  count_sources <- Map(
+    function(x, source) validate_census_district_rows(x, source, expected_n = 593L),
+    count_sources,
+    names(count_sources)
+  )
+  out <- combine_census_2001_count_sources(
+    count_sources,
+    keys = census_2001_keys(),
+    require_same_keys = TRUE
+  )
+  area <- census_geometry_area(geometry)
+  out <- merge(out, area, by = census_2001_keys(), all.x = TRUE, sort = FALSE)
+  out$population_age_7_plus <- ifelse(
+    is.finite(out$education_population_age_7_plus),
+    out$education_population_age_7_plus,
+    out$population_age_7_plus
+  )
+  out$households_total <- ifelse(
+    is.finite(out$lighting_households_total),
+    out$lighting_households_total,
+    out$households_total
+  )
+  validate_census_district_rows(out, "Combined Census controls", expected_n = 593L)
+}
+
+summarise_census_2001_source_coverage <- function(raw_sources, geometry) {
+  sources <- list(
+    shrug_pca = clean_shrug_pca_2001_district(raw_sources$shrug_pca),
+    c01 = clean_census_c01_district(raw_sources$c01),
+    c08 = clean_census_c08_district(raw_sources$c08),
+    c14 = clean_census_c14_district(raw_sources$c14),
+    h09 = clean_census_h09_district(raw_sources$h09),
+    geometry = census_geometry_area(geometry)
+  )
+  reference <- sources$shrug_pca[census_2001_keys()]
+  reference_key <- do.call(paste, c(reference, sep = "__"))
+  safe_bind_rows(lapply(names(sources), function(source) {
+    x <- sources[[source]]
+    observed_key <- do.call(paste, c(x[census_2001_keys()], sep = "__"))
+    data.frame(
+      source = source,
+      rows = nrow(x),
+      unique_districts = length(unique(observed_key)),
+      missing_from_reference = length(setdiff(reference_key, observed_key)),
+      unexpected_vs_reference = length(setdiff(observed_key, reference_key)),
+      stringsAsFactors = FALSE
+    )
+  }))
 }

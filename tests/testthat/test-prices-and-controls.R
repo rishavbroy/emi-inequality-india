@@ -25,7 +25,8 @@ test_that("price-sector parsing accepts haven-labelled NSS fields", {
 
 test_that("Census control ratios are built from totals", {
   x <- data.frame(
-    district_code_2001 = "001",
+    state_code_2001 = "01",
+    district_code_2001 = "01",
     population_total = 1000,
     population_urban = 200,
     population_age_7_plus = 800,
@@ -773,4 +774,34 @@ test_that("Census controls attach without changing panel rows", {
   expect_equal(out$district_code_2001, panel$district_code_2001)
   expect_equal(nrow(out), nrow(panel))
   expect_true(all(census_2001_main_controls() %in% names(out)))
+})
+
+
+test_that("Census count sources must share the same district universe", {
+  a <- data.frame(
+    state_code_2001 = c("01", "01"),
+    district_code_2001 = c("01", "02"),
+    population_total = c(10, 20)
+  )
+  b <- data.frame(
+    state_code_2001 = "01",
+    district_code_2001 = "01",
+    muslim_population = 2
+  )
+  expect_error(
+    combine_census_2001_count_sources(list(a, b), require_same_keys = TRUE),
+    "same state-district universe"
+  )
+})
+
+
+test_that("Census district validation enforces the declared universe size", {
+  x <- data.frame(
+    state_code_2001 = c("01", "01"),
+    district_code_2001 = c("01", "02")
+  )
+  expect_error(
+    validate_census_district_rows(x, "test source", expected_n = 3L),
+    "2 districts; expected 3"
+  )
 })

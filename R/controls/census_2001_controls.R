@@ -1,5 +1,7 @@
 # Predetermined district controls from Census 2001.
 
+census_2001_keys <- function() c("state_code_2001", "district_code_2001")
+
 census_2001_main_controls <- function() {
   c(
     "log_population_2001", "urban_share_2001",
@@ -30,7 +32,7 @@ safe_share <- function(numerator, denominator, scale = 100) {
 build_census_2001_controls <- function(district_totals) {
   x <- safe_df(district_totals)
   required <- c(
-    "state_code_2001", "district_code_2001", "population_total", "population_urban",
+    census_2001_keys(), "population_total", "population_urban",
     "population_age_7_plus", "adult_secondary_plus", "sc_population",
     "st_population", "muslim_population", "workers_total", "cultivators",
     "agricultural_labourers", "population_age_0_14", "population_age_15_64",
@@ -61,14 +63,18 @@ build_census_2001_controls <- function(district_totals) {
   out$electricity_access_share_2001 <- safe_share(x$households_electricity, x$households_total)
   density <- num(x$population_total) / num(x$area_sq_km)
   out$log_population_density_2001 <- ifelse(positive_finite(density), log(density), NA_real_)
-  if (anyDuplicated(out[c("state_code_2001", "district_code_2001")])) {
+  keys <- census_2001_keys()
+  if (any(!stats::complete.cases(out[keys]))) {
+    stop("Census 2001 controls contain missing state-district keys.", call. = FALSE)
+  }
+  if (anyDuplicated(out[keys])) {
     stop("Census 2001 controls contain duplicate state-district keys.", call. = FALSE)
   }
   out
 }
 
 
-aggregate_census_2001_counts <- function(data, count_columns, keys = c("state_code_2001", "district_code_2001")) {
+aggregate_census_2001_counts <- function(data, count_columns, keys = census_2001_keys()) {
   x <- safe_df(data)
   missing <- setdiff(c(keys, count_columns), names(x))
   if (length(missing)) stop("Census count source is missing columns: ", paste(missing, collapse = ", "), call. = FALSE)
@@ -87,13 +93,20 @@ aggregate_census_2001_counts <- function(data, count_columns, keys = c("state_co
   out
 }
 
-combine_census_2001_count_sources <- function(sources, keys = c("state_code_2001", "district_code_2001")) {
+combine_census_2001_count_sources <- function(sources, keys = census_2001_keys(), require_same_keys = FALSE) {
   sources <- Filter(function(x) !is.null(x) && nrow(safe_df(x)) > 0L, sources)
   if (!length(sources)) stop("No Census 2001 count sources were supplied.", call. = FALSE)
   sources <- lapply(sources, safe_df)
   for (x in sources) {
     if (!all(keys %in% names(x))) stop("Census source is missing standardized keys.", call. = FALSE)
+    if (any(!stats::complete.cases(x[keys]))) stop("Census source contains missing standardized keys.", call. = FALSE)
     if (anyDuplicated(x[keys])) stop("Census source is not unique by standardized keys.", call. = FALSE)
+  }
+  if (isTRUE(require_same_keys)) {
+    key_sets <- lapply(sources, function(x) sort(do.call(paste, c(x[keys], sep = "__"))))
+    if (!all(vapply(key_sets[-1L], identical, logical(1), key_sets[[1L]]))) {
+      stop("Census count sources do not cover the same state-district universe.", call. = FALSE)
+    }
   }
   nonkeys <- lapply(sources, function(x) setdiff(names(x), keys))
   duplicated_columns <- unique(unlist(nonkeys, use.names = FALSE)[duplicated(unlist(nonkeys, use.names = FALSE))])
@@ -103,7 +116,7 @@ combine_census_2001_count_sources <- function(sources, keys = c("state_code_2001
 
 validate_census_2001_controls <- function(controls, expected_keys = NULL) {
   x <- safe_df(controls)
-  keys <- c("state_code_2001", "district_code_2001")
+  keys <- census_2001_keys()
   missing <- setdiff(c(keys, census_2001_main_controls()), names(x))
   if (length(missing)) stop("Census controls are missing columns: ", paste(missing, collapse = ", "), call. = FALSE)
   if (anyDuplicated(x[keys])) stop("Census controls are not unique by state-district.", call. = FALSE)
@@ -117,7 +130,7 @@ validate_census_2001_controls <- function(controls, expected_keys = NULL) {
 
 attach_census_2001_controls <- function(panel, controls) {
   p <- safe_df(panel)
-  keys <- c("state_code_2001", "district_code_2001")
+  keys <- census_2001_keys()
   if (!all(keys %in% names(p))) stop("District panel lacks standardized Census keys.", call. = FALSE)
   validate_census_2001_controls(controls)
   before <- do.call(paste, c(p[keys], sep = "__"))
