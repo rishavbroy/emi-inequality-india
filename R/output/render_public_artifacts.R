@@ -138,12 +138,12 @@ flatten_poster_logo_pdf <- function(
   output_pdf
 }
 
-#' Render the conference poster PDF
+#' Render the conference poster PDF and a PNG preview
 #'
 #' @param poster_qmd Path to the poster QMD.
 #' @param figure_files Generated figure dependencies.
 #' @param poster_logo_pdf Flattened print-logo dependency.
-#' @return Rendered poster PDF path.
+#' @return Rendered poster paths.
 render_poster_pdf <- function(poster_qmd, figure_files, poster_logo_pdf) {
   force(figure_files)
   force(poster_logo_pdf)
@@ -157,5 +157,26 @@ render_poster_pdf <- function(poster_qmd, figure_files, poster_logo_pdf) {
   status <- system2("quarto", c("render", poster_qmd))
   if (!identical(status, 0L)) stop("quarto render ", poster_qmd, " failed with status ", status, call. = FALSE)
   if (!file.exists(pdf_path) || file.info(pdf_path)$size <= 0L) stop("Poster render did not create a non-empty ", pdf_path, call. = FALSE)
-  pdf_path
+  png_path <- render_poster_png(pdf_path)
+  c(pdf_path, png_path)
+}
+
+render_poster_png <- function(pdf_path, png_path = sub("\\.pdf$", ".png", pdf_path), dpi = 220) {
+  if (!file.exists(pdf_path) || file.info(pdf_path)$size <= 0L) {
+    stop("Poster PDF does not exist or is empty: ", pdf_path, call. = FALSE)
+  }
+  if (nzchar(Sys.which("pdftoppm"))) {
+    prefix <- sub("\\.png$", "", png_path)
+    status <- system2("pdftoppm", c("-singlefile", "-png", "-r", as.character(dpi), pdf_path, prefix))
+    if (!identical(status, 0L)) stop("pdftoppm failed to create poster PNG with status ", status, call. = FALSE)
+  } else {
+    need_pkg("magick", "poster PNG preview rendering")
+    image <- magick::image_read_pdf(pdf_path, density = dpi)
+    image <- magick::image_background(image[[1]], "white", flatten = TRUE)
+    magick::image_write(image, path = png_path, format = "png")
+  }
+  if (!file.exists(png_path) || file.info(png_path)$size <= 0L) {
+    stop("Poster PNG preview was not created: ", png_path, call. = FALSE)
+  }
+  png_path
 }

@@ -483,10 +483,12 @@ test_that("conference poster is a first-class final output", {
 
   expect_match(targets, "tar_target(poster, render_poster_pdf", fixed = TRUE)
   expect_match(renderer, "render_poster_pdf", fixed = TRUE)
+  expect_match(renderer, "render_poster_png", fixed = TRUE)
   expect_match(contract, "posters/2026_predoc_conference/poster.pdf", fixed = TRUE)
-  expect_match(poster, "poster_emie_expected_values.pdf", fixed = TRUE)
-  expect_match(poster, "map_emi_exposure.pdf", fixed = TRUE)
-  expect_match(poster, "map_linguistic_distance.pdf", fixed = TRUE)
+  expect_match(contract, "posters/2026_predoc_conference/poster.png", fixed = TRUE)
+  expect_match(poster, "poster_first_stage_specs.pdf", fixed = TRUE)
+  expect_match(poster, "map_residual_emi_exposure.pdf", fixed = TRUE)
+  expect_match(poster, "map_residual_linguistic_distance.pdf", fixed = TRUE)
 })
 
 poster_renderer_test_env <- function() {
