@@ -127,7 +127,19 @@ core_pipeline_targets <- list(
   ),
   tar_target(
     census_2001_controls,
-    build_census_2001_controls(census_2001_district_totals)
+    {
+      controls <- build_census_2001_controls(census_2001_district_totals)
+      expected_keys <- clean_shrug_pca_2001_district(raw_census_2001_controls$shrug_pca)
+      validate_census_2001_controls(
+        controls,
+        expected_keys = expected_keys[census_2001_keys()]
+      )
+      controls
+    }
+  ),
+  tar_target(
+    census_2001_source_coverage,
+    summarise_census_2001_source_coverage(raw_census_2001_controls, lineage_geometry_2001)
   ),
   tar_target(
     district_lineage_specs,
@@ -476,7 +488,9 @@ extended_diagnostic_targets <- list(
   tar_target(diag_ext_instrument_exploration, save_instrument_exploration_diagnostics(diagnose_instrument_exploration(district_panel, cfg))),
   tar_target(
     census_2001_control_diagnostics,
-    diagnose_census_2001_controls(district_panel, revised_iv_models, revised_first_stage_tests)
+    diagnose_census_2001_controls(
+      district_panel, revised_iv_models, revised_first_stage_tests, census_2001_source_coverage
+    )
   ),
   tar_target(
     diag_ext_census_2001_controls,
