@@ -45,6 +45,12 @@ poster_estimable_residual_terms <- function(data, terms) {
   terms[keep]
 }
 
+poster_residualize <- function(data, variable, terms) {
+  estimable_terms <- poster_estimable_residual_terms(data, terms)
+  fit <- stats::lm(stats::reformulate(estimable_terms, response = variable), data = data)
+  stats::residuals(fit)
+}
+
 poster_residual_pair <- function(
   panel,
   variables = c("emi_exposure_all_children_0708", "ling_distance_nonzero_mean"),
@@ -58,12 +64,10 @@ poster_residual_pair <- function(
   if (length(setdiff(required, names(df)))) return(out)
 
   keep <- stats::complete.cases(df[, required, drop = FALSE])
-  if (sum(keep) <= length(required) + 2L) return(out)
+  if (!any(keep)) return(out)
   dat <- df[keep, , drop = FALSE]
-  estimable_terms <- poster_estimable_residual_terms(dat, terms)
   for (variable in variables) {
-    fit <- stats::lm(stats::reformulate(estimable_terms, response = variable), data = dat)
-    out[keep, variable] <- stats::residuals(fit)
+    out[keep, variable] <- poster_residualize(dat, variable, terms)
   }
   out
 }

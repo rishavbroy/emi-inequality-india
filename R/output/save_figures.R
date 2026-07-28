@@ -566,12 +566,17 @@ poster_first_stage_specs <- function() {
   )
 }
 
+poster_first_stage_common_sample <- function(data, specs, treatment, instrument) {
+  controls <- unique(unlist(lapply(specs, `[[`, "controls"), use.names = FALSE))
+  required <- unique(c(treatment, instrument, "state_code_2001", "region", controls))
+  if (length(setdiff(required, names(data)))) return(data.frame())
+  out <- data[stats::complete.cases(data[, required, drop = FALSE]), required, drop = FALSE]
+  rownames(out) <- NULL
+  out
+}
+
 poster_residualize_for_spec <- function(data, variable, fixed_effect, controls) {
-  terms <- controls
-  if (identical(fixed_effect, "region")) terms <- c("factor(region)", terms)
-  if (identical(fixed_effect, "state")) terms <- c("factor(state_code_2001)", terms)
-  if (!length(terms)) return(as.numeric(data[[variable]]) - mean(as.numeric(data[[variable]]), na.rm = TRUE))
-  stats::residuals(stats::lm(stats::reformulate(terms, variable), data = data))
+  poster_residualize(data, variable, poster_residual_terms(fixed_effect, controls))
 }
 
 poster_first_stage_spec_data <- function(district_panel) {
@@ -580,13 +585,11 @@ poster_first_stage_spec_data <- function(district_panel) {
   y <- "emi_exposure_all_children_0708"
   z <- "ling_distance_nonzero_mean"
   specs <- poster_first_stage_specs()
+  dat <- poster_first_stage_common_sample(df, specs, y, z)
+  if (nrow(dat) < 25L || length(unique(dat$state_code_2001)) < 2L) return(data.frame())
+
   out <- lapply(names(specs), function(id) {
     spec <- specs[[id]]
-    cols <- unique(c(y, z, "state_code_2001", "region", spec$controls))
-    if (length(setdiff(cols, names(df)))) return(data.frame())
-    keep <- stats::complete.cases(df[, cols, drop = FALSE])
-    dat <- df[keep, cols, drop = FALSE]
-    if (nrow(dat) < 25L) return(data.frame())
     y_resid <- poster_residualize_for_spec(dat, y, spec$fixed_effect, spec$controls)
     z_resid <- poster_residualize_for_spec(dat, z, spec$fixed_effect, spec$controls)
     fit <- stats::lm(y_resid ~ 0 + z_resid)
@@ -606,6 +609,7 @@ poster_first_stage_spec_data <- function(district_panel) {
       beta = beta,
       se = se,
       f_stat = (beta / se)^2,
+      n = nrow(dat),
       stringsAsFactors = FALSE
     )
   })

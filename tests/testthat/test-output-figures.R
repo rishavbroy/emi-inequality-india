@@ -249,7 +249,42 @@ test_that("poster residualization omits fixed effects with one observed level", 
 
   expect_equal(nrow(residuals), nrow(panel))
   expect_true(all(is.finite(residuals)))
-  expect_equal(colMeans(residuals), c(0, 0), tolerance = 1e-10)
+  expect_equal(unname(colMeans(residuals)), c(0, 0), tolerance = 1e-10)
+})
+
+
+test_that("poster first-stage specifications use one common sample", {
+  skip_if_not_installed("sandwich")
+  set.seed(23)
+  panel <- poster_map_fixture(90L)
+  panel$state_code_2001 <- rep(sprintf("%02d", 1:9), each = 10L)
+  panel$region <- factor(rep(panel_region_levels()[1:6], length.out = 90L), levels = panel_region_levels())
+  panel$ling_distance_nonzero_mean <- stats::rnorm(90L)
+  panel$emi_exposure_all_children_0708 <- 3 * panel$ling_distance_nonzero_mean + stats::rnorm(90L)
+  for (v in census_2001_absorption_controls()) panel[[v]] <- stats::rnorm(90L)
+  panel[[census_2001_absorption_controls()[[1]]]][[1]] <- NA_real_
+
+  plot_data <- poster_first_stage_spec_data(panel)
+
+  expect_equal(unique(plot_data$n), 89L)
+  expect_equal(length(unique(plot_data$specification_id)), length(poster_first_stage_specs()))
+})
+
+
+test_that("poster first-stage residualization omits one-level fixed effects", {
+  panel <- poster_map_fixture(30L)
+  panel$region <- factor(rep(panel_region_levels()[[1]], nrow(panel)), levels = panel_region_levels())
+
+  residuals <- poster_residualize_for_spec(
+    panel,
+    "ling_distance_nonzero_mean",
+    fixed_effect = "region",
+    controls = census_2001_absorption_controls()
+  )
+
+  expect_equal(length(residuals), nrow(panel))
+  expect_true(all(is.finite(residuals)))
+  expect_equal(unname(mean(residuals)), 0, tolerance = 1e-10)
 })
 
 
