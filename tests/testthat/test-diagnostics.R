@@ -495,14 +495,17 @@ test_that("binomial fit issues detect boundary probabilities deterministically",
 test_that("first-stage absorption registry is ordered and exhausts main Census controls", {
   registry <- first_stage_absorption_registry()
 
-  expect_identical(registry$specification_id[1:5], c(
+  expect_identical(registry$specification_id[1:7], c(
     "instrument_only", "region_fe", "state_fe", "census_controls",
-    "state_fe_census_controls"
+    "state_fe_census_controls", "expanded_controls", "state_fe_expanded_controls"
   ))
   expect_identical(registry$sequence, seq_len(nrow(registry)))
-  expect_setequal(unlist(first_stage_control_blocks(), use.names = FALSE), census_2001_main_controls())
-  expect_identical(unlist(tail(registry$controls, 1)[[1]], use.names = FALSE), census_2001_main_controls())
-  expect_true(all(vapply(registry$controls[6:nrow(registry)], function(x) {
+  expect_setequal(unlist(first_stage_control_blocks(), use.names = FALSE), census_2001_absorption_controls())
+  expect_identical(
+    unlist(registry$controls[registry$specification_id == "state_fe_expanded_controls"][[1]], use.names = FALSE),
+    census_2001_absorption_controls()
+  )
+  expect_true(all(vapply(registry$controls[8:nrow(registry)], function(x) {
     identical(x, order_first_stage_controls(x))
   }, logical(1))))
 })
@@ -514,13 +517,14 @@ test_that("first-stage absorption diagnostics use fixed support and report reque
   z <- rep(seq(-1, 1, length.out = 8), 12) + rep(seq(-2, 2, length.out = 12), each = 8)
   panel <- data.frame(
     state_code_2001 = states,
+    district_code_2001 = sprintf("%02d", seq_along(states)),
     region = factor(regions, levels = panel_region_levels()),
     ling_distance_nonzero_mean = z,
     emi_exposure_all_children_0708 = 12 + 3 * z + stats::rnorm(length(z), sd = 0.2),
     stringsAsFactors = FALSE
   )
-  for (i in seq_along(census_2001_main_controls())) {
-    panel[[census_2001_main_controls()[i]]] <- stats::rnorm(nrow(panel)) + i / 10
+  for (i in seq_along(census_2001_diagnostic_controls())) {
+    panel[[census_2001_diagnostic_controls()[i]]] <- stats::rnorm(nrow(panel)) + i / 10
   }
 
   out <- diagnose_first_stage_absorption(panel)
@@ -534,6 +538,10 @@ test_that("first-stage absorption diagnostics use fixed support and report reque
     "residual_instrument_sd", "n"
   ) %in% names(out$summary)))
   expect_gt(out$summary$partial_r_squared[1], 0.9)
+  expect_equal(nrow(out$state_deletion), length(unique(states)))
+  expect_equal(nrow(out$district_influence), nrow(panel))
+  expect_true(all(c("instrument_range", "treatment_range") %in% names(out$state_residual_ranges)))
+  expect_true(all(c("leverage", "cooks_distance", "instrument_dfbeta") %in% names(out$district_influence)))
 })
 
 test_that("first-stage absorption diagnostics fail rather than changing support silently", {
@@ -544,7 +552,8 @@ test_that("first-stage absorption diagnostics fail rather than changing support 
     emi_exposure_all_children_0708 = seq_len(12),
     stringsAsFactors = FALSE
   )
-  for (variable in census_2001_main_controls()) panel[[variable]] <- 1
+  panel$district_code_2001 <- sprintf("%02d", seq_len(nrow(panel)))
+  for (variable in census_2001_diagnostic_controls()) panel[[variable]] <- 1
   panel$st_share_2001[1] <- NA_real_
 
   prepared <- prepare_first_stage_absorption_panel(panel)
@@ -564,7 +573,8 @@ test_that("first-stage absorption diagnostics save a compact manifest", {
     emi_exposure_all_children_0708 = stats::rnorm(24),
     stringsAsFactors = FALSE
   )
-  for (variable in census_2001_main_controls()) panel[[variable]] <- stats::rnorm(24)
+  panel$district_code_2001 <- sprintf("%02d", seq_len(nrow(panel)))
+  for (variable in census_2001_diagnostic_controls()) panel[[variable]] <- stats::rnorm(24)
   out <- diagnose_first_stage_absorption(panel)
   dir <- tempfile("first-stage-absorption-")
   on.exit(unlink(dir, recursive = TRUE, force = TRUE), add = TRUE)
@@ -573,7 +583,9 @@ test_that("first-stage absorption diagnostics save a compact manifest", {
 
   expect_setequal(basename(manifest$path), c(
     "first_stage_absorption_ladder.csv", "first_stage_absorption_registry.csv",
-    "first_stage_absorption_common_support.csv"
+    "first_stage_absorption_common_support.csv", "first_stage_state_residual_ranges.csv",
+    "first_stage_state_deletion.csv", "first_stage_district_influence.csv",
+    "first_stage_vif.csv"
   ))
   expect_true(all(file.exists(manifest$path)))
 })

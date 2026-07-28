@@ -6,15 +6,17 @@ first_stage_control_blocks <- function() {
       "log_population_2001", "urban_share_2001", "log_population_density_2001"
     ),
     social_composition = c("sc_share_2001", "st_share_2001", "muslim_share_2001"),
-    human_capital = "adult_secondary_plus_share_2001",
+    human_capital = c("adult_secondary_plus_share_2001", "literacy_share_2001"),
     demography = "dependency_ratio_2001",
-    economic_structure = "agricultural_worker_share_2001",
+    economic_structure = c(
+      "worker_share_2001", "cultivator_share_workers_2001",
+      "agricultural_labourer_share_workers_2001"
+    ),
     basic_development = "electricity_access_share_2001"
   )
 }
 
-order_first_stage_controls <- function(controls) {
-  canonical <- census_2001_main_controls()
+order_first_stage_controls <- function(controls, canonical = census_2001_absorption_controls()) {
   canonical[canonical %in% unique(controls)]
 }
 
@@ -23,29 +25,31 @@ first_stage_absorption_registry <- function() {
   cumulative <- lapply(seq_along(blocks), function(i) {
     order_first_stage_controls(unlist(blocks[seq_len(i)], use.names = FALSE))
   })
+  base <- data.frame(
+    specification_id = c(
+      "instrument_only", "region_fe", "state_fe", "census_controls",
+      "state_fe_census_controls", "expanded_controls", "state_fe_expanded_controls"
+    ),
+    label = c(
+      "Instrument only", "Six-region fixed effects", "State fixed effects",
+      "Main Census controls", "State fixed effects + main Census controls",
+      "Expanded Census controls", "State fixed effects + expanded Census controls"
+    ),
+    fixed_effect = c("none", "region", "state", "none", "state", "none", "state"),
+    controls = I(list(
+      character(), character(), character(), census_2001_main_controls(),
+      census_2001_main_controls(), census_2001_absorption_controls(),
+      census_2001_absorption_controls()
+    )),
+    sequence = seq_len(7L),
+    stringsAsFactors = FALSE
+  )
   block_rows <- data.frame(
     specification_id = paste0("state_fe_plus_", names(blocks)),
     label = paste0("State FE + through ", gsub("_", " ", names(blocks))),
     fixed_effect = "state",
     controls = I(cumulative),
-    sequence = 5L + seq_along(blocks),
-    stringsAsFactors = FALSE
-  )
-  base <- data.frame(
-    specification_id = c(
-      "instrument_only", "region_fe", "state_fe", "census_controls",
-      "state_fe_census_controls"
-    ),
-    label = c(
-      "Instrument only", "Six-region fixed effects", "State fixed effects",
-      "Census controls", "State fixed effects + Census controls"
-    ),
-    fixed_effect = c("none", "region", "state", "none", "state"),
-    controls = I(list(
-      character(), character(), character(), census_2001_main_controls(),
-      census_2001_main_controls()
-    )),
-    sequence = 1:5,
+    sequence = 7L + seq_along(blocks),
     stringsAsFactors = FALSE
   )
   out <- rbind(base, block_rows)
@@ -57,8 +61,8 @@ first_stage_absorption_variables <- function(
   instrument = "ling_distance_nonzero_mean"
 ) {
   unique(c(
-    treatment, instrument, "state_code_2001", "region",
-    unlist(first_stage_control_blocks(), use.names = FALSE)
+    treatment, instrument, "state_code_2001", "district_code_2001", "region",
+    census_2001_diagnostic_controls()
   ))
 }
 
@@ -72,11 +76,13 @@ prepare_first_stage_absorption_panel <- function(
   missing <- setdiff(needed, names(x))
   if (length(missing)) stop("First-stage absorption panel is missing columns: ", paste(missing, collapse = ", "), call. = FALSE)
 
-  numeric_vars <- unique(c(treatment, instrument, unlist(first_stage_control_blocks(), use.names = FALSE)))
+  numeric_vars <- unique(c(treatment, instrument, census_2001_diagnostic_controls()))
   for (variable in numeric_vars) x[[variable]] <- num(x[[variable]])
   x$state_code_2001 <- plain_chr(x$state_code_2001)
+  x$district_code_2001 <- plain_chr(x$district_code_2001)
   x$region <- as.character(x$region)
-  keep <- stats::complete.cases(x[needed]) & nzchar(x$state_code_2001) & nzchar(x$region)
+  keep <- stats::complete.cases(x[needed]) & nzchar(x$state_code_2001) &
+    nzchar(x$district_code_2001) & nzchar(x$region)
   x <- x[keep, , drop = FALSE]
   rownames(x) <- NULL
   if (!nrow(x)) stop("No complete common support is available for first-stage absorption diagnostics.", call. = FALSE)
@@ -93,10 +99,15 @@ first_stage_absorption_formula <- function(treatment, instrument, controls = cha
   stats::reformulate(rhs, response = treatment)
 }
 
-residualize_first_stage_variable <- function(data, variable, controls = character(), fixed_effect = "none") {
+first_stage_nuisance_terms <- function(controls = character(), fixed_effect = "none") {
   rhs <- controls
   if (identical(fixed_effect, "region")) rhs <- c(rhs, "factor(region)")
   if (identical(fixed_effect, "state")) rhs <- c(rhs, "factor(state_code_2001)")
+  rhs
+}
+
+residualize_first_stage_variable <- function(data, variable, controls = character(), fixed_effect = "none") {
+  rhs <- first_stage_nuisance_terms(controls, fixed_effect)
   if (!length(rhs)) return(num(data[[variable]]) - mean(num(data[[variable]])))
   stats::residuals(stats::lm(stats::reformulate(rhs, response = variable), data = data))
 }
@@ -123,9 +134,7 @@ clustered_first_stage_inference <- function(fit, instrument, cluster) {
 }
 
 partial_r_squared_first_stage <- function(data, treatment, instrument, controls = character(), fixed_effect = "none") {
-  restricted_rhs <- controls
-  if (identical(fixed_effect, "region")) restricted_rhs <- c(restricted_rhs, "factor(region)")
-  if (identical(fixed_effect, "state")) restricted_rhs <- c(restricted_rhs, "factor(state_code_2001)")
+  restricted_rhs <- first_stage_nuisance_terms(controls, fixed_effect)
   restricted <- if (length(restricted_rhs)) {
     stats::lm(stats::reformulate(restricted_rhs, response = treatment), data = data)
   } else {
@@ -144,7 +153,6 @@ estimate_first_stage_absorption_spec <- function(data, specification, treatment,
   inference <- clustered_first_stage_inference(fit, instrument, data$state_code_2001)
   z_resid <- residualize_first_stage_variable(data, instrument, controls, fixed_effect)
   d_resid <- residualize_first_stage_variable(data, treatment, controls, fixed_effect)
-  estimate <- unname(stats::coef(fit)[instrument])
 
   data.frame(
     specification_id = specification$specification_id,
@@ -153,9 +161,11 @@ estimate_first_stage_absorption_spec <- function(data, specification, treatment,
     treatment = treatment,
     instrument = instrument,
     fixed_effect = fixed_effect,
-    control_blocks = paste(names(first_stage_control_blocks())[vapply(first_stage_control_blocks(), function(block) all(block %in% controls), logical(1))], collapse = ";"),
+    control_blocks = paste(names(first_stage_control_blocks())[vapply(
+      first_stage_control_blocks(), function(block) all(block %in% controls), logical(1)
+    )], collapse = ";"),
     n_controls = length(controls),
-    estimate = estimate,
+    estimate = unname(stats::coef(fit)[instrument]),
     std.error = unname(inference[["std.error"]]),
     statistic = unname(inference[["statistic"]]),
     p.value = unname(inference[["p.value"]]),
@@ -174,6 +184,74 @@ estimate_first_stage_absorption_spec <- function(data, specification, treatment,
   )
 }
 
+first_stage_state_residual_ranges <- function(data, registry, treatment, instrument) {
+  safe_bind_rows(lapply(seq_len(nrow(registry)), function(i) {
+    spec <- registry[i, , drop = FALSE]
+    controls <- unlist(spec$controls[[1]], use.names = FALSE)
+    fixed_effect <- spec$fixed_effect[[1]]
+    z <- residualize_first_stage_variable(data, instrument, controls, fixed_effect)
+    d <- residualize_first_stage_variable(data, treatment, controls, fixed_effect)
+    tmp <- data.frame(state_code_2001 = data$state_code_2001, z = z, d = d)
+    safe_bind_rows(lapply(split(tmp, tmp$state_code_2001), function(x) {
+      data.frame(
+        specification_id = spec$specification_id,
+        state_code_2001 = x$state_code_2001[[1]],
+        n_districts = nrow(x),
+        instrument_min = min(x$z), instrument_max = max(x$z),
+        instrument_range = diff(range(x$z)), instrument_sd = stats::sd(x$z),
+        treatment_min = min(x$d), treatment_max = max(x$d),
+        treatment_range = diff(range(x$d)), treatment_sd = stats::sd(x$d),
+        stringsAsFactors = FALSE
+      )
+    }))
+  }))
+}
+
+first_stage_full_specification <- function(registry) {
+  registry[registry$specification_id == "state_fe_expanded_controls", , drop = FALSE]
+}
+
+first_stage_state_deletion <- function(data, specification, treatment, instrument) {
+  full <- estimate_first_stage_absorption_spec(data, specification, treatment, instrument)
+  safe_bind_rows(lapply(sort(unique(data$state_code_2001)), function(state) {
+    reduced <- data[data$state_code_2001 != state, , drop = FALSE]
+    row <- estimate_first_stage_absorption_spec(reduced, specification, treatment, instrument)
+    row$omitted_state <- state
+    row$estimate_change <- row$estimate - full$estimate
+    row$f_change <- row$excluded_instrument_f - full$excluded_instrument_f
+    row
+  }))
+}
+
+first_stage_district_influence <- function(data, specification, treatment, instrument) {
+  controls <- unlist(specification$controls[[1]], use.names = FALSE)
+  fixed_effect <- specification$fixed_effect[[1]]
+  fit <- stats::lm(first_stage_absorption_formula(treatment, instrument, controls, fixed_effect), data = data)
+  dfb <- stats::dfbeta(fit)
+  instrument_dfbeta <- if (instrument %in% colnames(dfb)) dfb[, instrument] else rep(NA_real_, nrow(data))
+  data.frame(
+    state_code_2001 = data$state_code_2001,
+    district_code_2001 = data$district_code_2001,
+    leverage = stats::hatvalues(fit),
+    cooks_distance = stats::cooks.distance(fit),
+    studentized_residual = stats::rstudent(fit),
+    instrument_dfbeta = instrument_dfbeta,
+    stringsAsFactors = FALSE
+  )
+}
+
+first_stage_vif_diagnostics <- function(data, registry, treatment, instrument) {
+  ids <- c("state_fe_census_controls", "state_fe_expanded_controls")
+  safe_bind_rows(lapply(ids, function(id) {
+    spec <- registry[registry$specification_id == id, , drop = FALSE]
+    controls <- unlist(spec$controls[[1]], use.names = FALSE)
+    fit <- stats::lm(first_stage_absorption_formula(treatment, instrument, controls, "state"), data = data)
+    out <- compute_vif_if_applicable(fit)
+    out$specification_id <- id
+    out
+  }))
+}
+
 #' Estimate a fixed-support first-stage absorption ladder
 #'
 #' The preferred Phase 1 treatment and full-distribution scalar instrument are
@@ -188,12 +266,21 @@ diagnose_first_stage_absorption <- function(
   summary <- safe_bind_rows(lapply(seq_len(nrow(registry)), function(i) {
     estimate_first_stage_absorption_spec(data, registry[i, , drop = FALSE], treatment, instrument)
   }))
+  full_spec <- first_stage_full_specification(registry)
   structure(
-    list(summary = summary, registry = registry, common_support = data.frame(
-      treatment = treatment, instrument = instrument, n = nrow(data),
-      n_states = length(unique(data$state_code_2001)),
-      n_regions = length(unique(data$region)), stringsAsFactors = FALSE
-    )),
+    list(
+      summary = summary,
+      registry = registry,
+      common_support = data.frame(
+        treatment = treatment, instrument = instrument, n = nrow(data),
+        n_states = length(unique(data$state_code_2001)),
+        n_regions = length(unique(data$region)), stringsAsFactors = FALSE
+      ),
+      state_residual_ranges = first_stage_state_residual_ranges(data, registry, treatment, instrument),
+      state_deletion = first_stage_state_deletion(data, full_spec, treatment, instrument),
+      district_influence = first_stage_district_influence(data, full_spec, treatment, instrument),
+      vif = first_stage_vif_diagnostics(data, registry, treatment, instrument)
+    ),
     class = "emi_first_stage_absorption"
   )
 }
@@ -208,6 +295,10 @@ save_first_stage_absorption_diagnostics <- function(
   output_manifest(c(
     specification_ladder = write_diagnostic_csv(diagnostics$summary, file.path(dir, "first_stage_absorption_ladder.csv")),
     specification_registry = write_diagnostic_csv(registry, file.path(dir, "first_stage_absorption_registry.csv")),
-    common_support = write_diagnostic_csv(diagnostics$common_support, file.path(dir, "first_stage_absorption_common_support.csv"))
+    common_support = write_diagnostic_csv(diagnostics$common_support, file.path(dir, "first_stage_absorption_common_support.csv")),
+    state_residual_ranges = write_diagnostic_csv(diagnostics$state_residual_ranges, file.path(dir, "first_stage_state_residual_ranges.csv")),
+    state_deletion = write_diagnostic_csv(diagnostics$state_deletion, file.path(dir, "first_stage_state_deletion.csv")),
+    district_influence = write_diagnostic_csv(diagnostics$district_influence, file.path(dir, "first_stage_district_influence.csv")),
+    vif = write_diagnostic_csv(diagnostics$vif, file.path(dir, "first_stage_vif.csv"))
   ))
 }
