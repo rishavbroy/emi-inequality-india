@@ -104,6 +104,17 @@ estimate_2sls <- function(district_panel, formulas, cfg) {
       x = TRUE,
       y = TRUE
     )
+    fitted_rows <- iv_model_row_indices(fit, district_panel)
+    if (!length(fitted_rows)) {
+      stop("Could not align fitted IV observations to the district panel.", call. = FALSE)
+    }
+    prediction_vars <- unique(all.vars(formula))
+    prediction_data <- as.data.frame(district_panel)[
+      fitted_rows, prediction_vars, drop = FALSE
+    ]
+    rownames(prediction_data) <- NULL
+    attr(fit, "prediction_data") <- prediction_data
+
     cluster <- iv_model_cluster(fit, district_panel)
     if (!is.null(cluster)) {
       inference <- iv_clustered_inference(fit, cluster)
