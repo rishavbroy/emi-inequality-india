@@ -13,16 +13,16 @@ helper <- if (file.exists("analysis/_analysis_helpers.R")) "analysis/_analysis_h
 source(helper)
 ```
 
-## Legacy prose retained with current results
+## Current instrument and treatment diagnostics
 
-Preliminary test of IV strength: Dotplot of EMIE values by `district_code`. These are the current target-backed instrument-strength plots for the legacy exploratory check.
+The active Phase 1 construction uses the full mutually exclusive Census 2001 C-16 mother-tongue distribution. Language-group subtotal rows are removed before aggregation, linguistic distances are attached from the documented Shastry concordance, and unmapped speaker mass remains visible. The preferred exploratory scalar is `ling_distance_nonzero_mean`, the speaker-weighted mean distance among mapped languages with distance greater than zero. Hindi and Urdu are treated as distance zero and their shares are reported separately.
 
-EMIE has three peaks: in Jammu and Kashmir; in Sikkim, Arunachal Pradesh, Nagaland, Manipur, Mizoran, Tripura, maybe Meghalaya; and in Andhra Pradesh, Karnataka, Goa, Lakshadweep, Kerala, Tamil Nadu, Pondicheri, and Andaman & Nicobar! The regions which historically were the furthest from Hindi! The legacy prose used a 0-1 scale: many districts in the second group seem to have EMIE around 1, and the range of EMIE outside peaks is between 0.4 and 0.1. The current target output stores the same exposure as a 0-100 percentage scale, so those legacy reference values correspond to about 100 and 40-10. Justification for looking at smaller units of analysis?
+The preferred exploratory treatment is `emi_exposure_all_children_0708`, the survey-weighted share of all children ages 5-19 who are both enrolled and studying in English medium. The historical `EMIE` field remains a compatibility measure of EMI among enrolled children and is shown below only in the legacy dotplot section.
 
-Process the dataframe and compute the weighted average `ling_distance` for each `(state, district)` group. Group by state and district to ensure that same district names in different states are treated separately. For each group, keep only the top three rows by `spkr_tot`. Create the `ling_degrees` column based on the mother tongue values and @shastry2012a's 0-5 measure of degrees of linguistic distance. Calculate the weighted average linguistic distance for each group.
+The Phase 2 and Phase 3 tables diagnose how the preferred exploratory first stage changes with six-region fixed effects, state fixed effects, main and expanded Census control sets, sequential thematic blocks, VIF/GVIF, state deletion, and district influence. These diagnostics do not change the public IV specification.
 
 ```{r instrument-prose-deviation-note, results='asis'}
-analysis_deviation_note("The active note renders the current EMIE dotplot target and IV-panel diagnostics, while preserving the legacy interpretation of the peaks as prose rather than copied static output. EMIE scale language is minimally updated because current outputs use a 0-100 percentage scale while the legacy comments described the same concept on a 0-1 scale.")
+analysis_deviation_note("The active note now describes the full-distribution linguistic-distance construction and all-child EMI exposure used by the Phase 2-3 diagnostics. The historical top-three/EMIE dotplot is retained below as an explicitly labeled compatibility check rather than as the current instrument definition.")
 ```
 
 ```{r instrument-targets}
@@ -39,7 +39,9 @@ first_stage_district_influence <- analysis_target_csv("diag_ext_first_stage_abso
 first_stage_vif <- analysis_target_csv("diag_ext_first_stage_absorption", "first_stage_vif.csv")
 ```
 
-The current analog of the legacy `ggplot(..., aes(x = district_code_0708, y = EMIE, color = district_prefix)) + geom_point()` check uses `r analysis_format_number(nrow(iv_dotplot), 0)` active district-panel rows.
+## Legacy top-three and EMI-among-enrolled compatibility check
+
+The current analog of the historical `ggplot(..., aes(x = district_code_0708, y = EMIE, color = district_prefix)) + geom_point()` check uses `r analysis_format_number(nrow(iv_dotplot), 0)` active district-panel rows. It is retained to make earlier drafts reproducible, not as the preferred Phase 1 definition.
 
 ```{r instrument-current-code-analog}
 instrument_dotplot_rows <- iv_dotplot[, intersect(c("district_order", "district_code", "state", "district", "EMIE", "wavg_ling_degrees", "state_prefix"), names(iv_dotplot)), drop = FALSE]
