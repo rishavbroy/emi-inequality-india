@@ -2,13 +2,13 @@
 
 ## Main-paper specification after the revision gate
 
-The next main specification will use the person-weighted mean of real monthly
+The preferred specification uses the person-weighted mean of real monthly
 per-capita household expenditure in each Census 2001 district. Household
 expenditure is adjusted before district aggregation using a state, rural/urban,
 and survey-period price index. The outcome is the difference in log real
 consumption between 2007-08 and 2017-18.
 
-The switch is conditional on four checks:
+The public headline switch remains conditional on four checks:
 
 1. every household receives a positive price deflator;
 2. all state and union-territory substitutions are recorded;
@@ -130,3 +130,19 @@ Both NSS 64 (July 2007-June 2008) and NSS 75 (July 2017-June 2018) divide the an
 \]
 
 with the household-weighted mean retained separately. The district outputs also record the person-weighted mean deflator and the survey-weighted household share using inheritance or fallback rules.
+
+## Implemented fixed-sample comparison
+
+The extended-diagnostics graph now estimates three 2SLS specifications on one
+common district sample: nominal log change, person-weighted real log change,
+and real endpoint ANCOVA. All three retain the current control set and state
+fixed effects so the diagnostic isolates the consequences of the outcome
+construction before the unfinished Census 2001 control pipeline changes the
+conditioning set. The person-weighted real log-change specification is marked
+as preferred; the public headline model remains unchanged until the Census
+controls and revision gate are complete.
+
+The same diagnostic target writes household price-assignment coverage by wave,
+state, sector, sub-round, assignment type, and donor state, together with a
+district-level comparison of nominal, real, household-weighted, and
+person-weighted consumption constructions.
