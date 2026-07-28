@@ -66,7 +66,13 @@ $$
 \mathrm{EMIE}_d = \Pr(\text{enrolled})_d \times \Pr(\text{EMI} \mid \text{enrolled})_d.
 $$
 
-The first is the extensive enrollment margin; the second is the medium-of-instruction margin among enrolled children. Families choose among higher-cost private EMI, low-cost private EMI (that may absorb 7-20% of a poor household's monthly income), and free/negatively priced government schooling usually taught in the mother tongue [@endow2019a; @muralidharan2019a]. Private schooling remains more accessible to richer households [@muralidharan2015a]. School access and instructional quality differ, meaning recorded EMI enrollment does not establish that children actually learn in English [@lahoti2019a].
+The first is the extensive enrollment margin; the second is the medium-of-instruction margin among enrolled children. Families choose among higher-cost private EMI, low-cost private EMI (that may absorb 7-20% of a poor household's monthly income), and free/negatively priced government schooling usually taught in the mother tongue [@endow2019a; @muralidharan2019a].
+
+```{=typst}
+#v(7pt)
+```
+
+Private schooling remains more accessible to richer households [@muralidharan2015a]. School access and instructional quality differ, meaning recorded EMI enrollment does not establish that children actually learn in English [@lahoti2019a].
 
 ![Linguistic distance after the same adjustment.](../../outputs/figures/main/map_residual_linguistic_distance.pdf){width=62%}
 
@@ -79,7 +85,7 @@ The first is the extensive enrollment margin; the second is the medium-of-instru
 ![Unadjusted linguistic distance.](../../outputs/figures/main/map_preferred_linguistic_distance.pdf){width=48%}
 ![Six-region classification.](../../outputs/figures/main/map_region.pdf){width=48%}
 
-**Controls:** Scale/geography, social composition, human capital, demography, economic structure, basic development, and unless otherwise specified, region FEs.
+**Controls:** Scale/geography, social composition, human capital, demography, economic structure, basic development, and region or state FEs.
 
 # First Stage
 
@@ -96,10 +102,11 @@ I test if greater EMI exposure translates into faster local consumption growth.
 # Next Steps
 
 - Does EMI translate into welfare growth for the district where the educaiton occurred? What determines the absorption of EMI graduates and thus of English human capital into the local economy?
-- Does EMI create employment in a context where labor demand is exceeded by a nominally overqualified but technically underskilled supply? 
+- Does EMI create employment in a context where labor demand is exceeded by a nominally overqualified but technically underskilled supply?
 - Does EMI democratize access to higher wages, or does it exacerbate inequality by privileging the already advantaged?
 
 ```{=typst}
+#v(10pt)
 #block(fill: rgb("f3f0ea"), inset: 6pt, radius: 5pt, width: 100%)[
   #grid(columns: (1fr, auto), gutter: 14pt,
     [*Code, paper, and updates*\ #link("https://git.new/FwmVaXq")[git.new/FwmVaXq]\ #link("https://rishavbroy.github.io")[rishavbroy.github.io]],
