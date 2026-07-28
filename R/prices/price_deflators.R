@@ -152,14 +152,27 @@ apply_price_state_rules <- function(temporal_index, state_rules, start_period = 
   if (end_period < start_period) stop("Price-state range ends before it begins.", call. = FALSE)
 
   periods <- sort(unique(idx$period[idx$period >= start_period & idx$period <= end_period]))
-  states <- sort(unique(c(
-    setdiff(as.character(idx$state_code), "ALL_INDIA"),
-    as.character(rules$target_state_code)
-  )))
-  sectors <- c("rural", "urban")
-  grid <- expand.grid(
-    state_code = states, sector = sectors, period = periods,
-    KEEP.OUT.ATTRS = FALSE, stringsAsFactors = FALSE
+  direct_pairs <- unique(idx[idx$state_code != "ALL_INDIA", c("state_code", "sector"), drop = FALSE])
+  rule_pairs <- unique(rules[c("target_state_code", "sector")])
+  names(rule_pairs)[names(rule_pairs) == "target_state_code"] <- "state_code"
+  state_sector_pairs <- unique(safe_bind_rows(list(direct_pairs, rule_pairs)))
+  state_sector_pairs <- state_sector_pairs[
+    nzchar(as.character(state_sector_pairs$state_code)) &
+      !is.na(price_sector(state_sector_pairs$sector)),
+    c("state_code", "sector"),
+    drop = FALSE
+  ]
+  state_sector_pairs$sector <- price_sector(state_sector_pairs$sector)
+  state_sector_pairs <- state_sector_pairs[order(
+    state_sector_pairs$state_code, state_sector_pairs$sector
+  ), , drop = FALSE]
+
+  grid <- merge(
+    state_sector_pairs,
+    data.frame(period = periods),
+    by = NULL,
+    all = TRUE,
+    sort = FALSE
   )
   grid$.price_row <- seq_len(nrow(grid))
 
