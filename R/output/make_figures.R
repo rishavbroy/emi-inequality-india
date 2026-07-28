@@ -129,6 +129,13 @@ make_figures <- function(district_panel, raw_ilo_figures, cfg, iv_models = NULL,
       "First-stage relationship across specifications",
       "Residualized EMI exposure on residualized linguistic distance.",
       kind = "poster_first_stage_specs"
+    ),
+    poster_second_stage_specs = figure_spec(
+      "poster_second_stage_specs",
+      "poster_second_stage_specs.png",
+      "Consumption response across IV specifications",
+      "Preferred EMI exposure instrumented with preferred linguistic distance.",
+      kind = "poster_second_stage_specs"
     )
   )
 
@@ -143,6 +150,13 @@ make_figures <- function(district_panel, raw_ilo_figures, cfg, iv_models = NULL,
     map_education = figure_spec("map_education", "map_education.png", "% HH Head w/ Sec.+", kind = if (maps_available) "map" else "status", variable = "pct_head_secondary_plus"),
     map_region = figure_spec("map_region", "map_region.png", "Region", kind = if (maps_available) "map" else "status", variable = "region"),
     map_linguistic_distance = figure_spec("map_linguistic_distance", "map_linguistic_distance.png", "Linguistic Distance", kind = if (maps_available) "map" else "status", variable = "wavg_ling_degrees"),
+    map_preferred_linguistic_distance = figure_spec(
+      "map_preferred_linguistic_distance",
+      "map_preferred_linguistic_distance.png",
+      "Preferred Linguistic Distance",
+      kind = if (maps_available) "map" else "status",
+      variable = "ling_distance_nonzero_mean"
+    ),
     map_residual_emi_exposure = figure_spec(
       "map_residual_emi_exposure",
       "map_residual_emi_exposure.png",

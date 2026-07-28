@@ -389,6 +389,8 @@ test_that("poster expected-values figure is generated with the main figures", {
 
   expect_identical(figures$poster_emie_expected_values$kind, "emie_expected_values")
   expect_identical(figures$poster_first_stage_specs$kind, "poster_first_stage_specs")
+  expect_identical(figures$poster_second_stage_specs$kind, "poster_second_stage_specs")
+  expect_identical(figures$map_preferred_linguistic_distance$variable, "ling_distance_nonzero_mean")
   expect_identical(attr(figures, "iv_models"), list())
 })
 
@@ -416,4 +418,30 @@ test_that("complete Census-2001 map geometry shows missing panel districts as gr
   expect_equal(as.character(fill$data$.map_fill), c("2.5-10", "No data"))
   expect_equal(unname(fill$colors[["No data"]]), map_no_data_colour())
   expect_true(all(!sf::st_is_empty(fill$data)))
+})
+
+
+test_that("poster map legends reserve readable vertical space", {
+  skip_if_not_installed("ggplot2")
+  skip_if_not_installed("sf")
+  panel <- poster_map_fixture(6L)
+  panel$ling_distance_nonzero_mean <- seq(0.5, 3, length.out = nrow(panel))
+  plot <- build_public_ggplot_map(panel, list(name = "test", variable = "ling_distance_nonzero_mean"))
+  guide <- plot$scales$get_scales("fill")$guide
+  expect_s3_class(guide, "GuideColourbar")
+  expect_equal(as.numeric(guide$params$barheight), 92)
+})
+
+test_that("poster second-stage specifications use preferred variables and one sample", {
+  skip_if_not_installed("ivreg")
+  skip_if_not_installed("marginaleffects")
+  skip_if_not_installed("sandwich")
+  panel <- poster_map_fixture(120L)
+  panel$real_log_consumption_change <- 0.02 * panel$emi_exposure_all_children_0708 + rnorm(nrow(panel), sd = 0.2)
+  panel$state_code_2001 <- rep(sprintf("%02d", 1:12), each = 10)
+  panel$region <- rep(panel_region_levels(), length.out = nrow(panel))
+  out <- poster_second_stage_spec_data(panel)
+  expect_setequal(unique(out$specification_id), c("raw", "region", "state"))
+  expect_length(unique(out$n), 1L)
+  expect_true(all(is.finite(out$estimate)))
 })

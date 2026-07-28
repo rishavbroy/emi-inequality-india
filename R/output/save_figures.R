@@ -188,15 +188,22 @@ public_map_style <- function(variable) {
       breaks = NULL,
       labels = NULL
     ),
+    ling_distance_nonzero_mean = list(
+      palette = "carto.emrld",
+      title = "Linguistic Distance",
+      style = "continuous",
+      breaks = NULL,
+      labels = NULL
+    ),
     resid_emi_exposure_region_expanded = list(
-      palette = "poster.diverging",
+      palette = "poster.diverging.emi",
       title = "Residual EMI Exposure",
       style = "diverging",
       breaks = NULL,
       labels = NULL
     ),
     resid_ling_distance_region_expanded = list(
-      palette = "poster.diverging",
+      palette = "poster.diverging.iv",
       title = "Residual Linguistic Distance",
       style = "diverging",
       breaks = NULL,
@@ -231,11 +238,12 @@ map_palette_values <- function(palette, n) {
     brewer.reds = c("#fee5d9", "#fcae91", "#fb6a4a", "#de2d26", "#a50f15"),
     brewer.greens = c("#edf8e9", "#bae4b3", "#74c476", "#31a354", "#006d2c"),
     brewer.dark2 = c("#1b9e77", "#d95f02", "#7570b3", "#e7298a", "#66a61e"),
-    poster.region = c("#1b9e77", "#d95f02", "#7570b3", "#e7298a", "#66a61e", "#e6ab02"),
+    poster.region = c("#0072B2", "#D55E00", "#009E73", "#CC79A7", "#E69F00", "#6A3D9A"),
     brown = c("#f6eee3", "#dfc29d", "#bf8f59", "#8c5a2b", "#543005"),
     carto.emrld = c("#d3f2a3", "#97e196", "#6cc08b", "#4c9b82", "#217a79"),
     poster.consumption = c("#f7fbff", "#c6dbef", "#6baed6", "#2171b5", "#08306b"),
-    poster.diverging = c("#762a83", "#af8dc3", "#f7f7f7", "#7fbf7b", "#1b7837"),
+    poster.diverging.emi = c("#2166ac", "#92c5de", "#f7f7f7", "#f4a582", "#b2182b"),
+    poster.diverging.iv = c("#762a83", "#af8dc3", "#f7f7f7", "#7fbf7b", "#1b7837"),
     c("#eff3ff", "#bdd7e7", "#6baed6", "#3182bd", "#08519c")
   )
   if (n == length(base)) return(base)
@@ -382,8 +390,10 @@ build_public_ggplot_map <- function(plot_data, spec) {
     ggplot2::theme_void(base_size = 10) +
     ggplot2::theme(
       legend.position = "right",
-      legend.title = ggplot2::element_text(size = 12),
+      legend.title = ggplot2::element_text(size = 12, face = "bold"),
       legend.text = ggplot2::element_text(size = 10),
+      legend.key.height = grid::unit(16, "pt"),
+      legend.spacing.y = grid::unit(4, "pt"),
       plot.margin = grid::unit(c(2, 2, 2, 2), "pt")
     )
 
@@ -392,7 +402,12 @@ build_public_ggplot_map <- function(plot_data, spec) {
       colours = fill$colors,
       limits = fill$limits,
       na.value = map_no_data_colour(),
-      guide = ggplot2::guide_colorbar(barheight = grid::unit(36, "pt"))
+      guide = ggplot2::guide_colorbar(
+        barheight = grid::unit(92, "pt"),
+        barwidth = grid::unit(10, "pt"),
+        title.position = "top",
+        label.position = "right"
+      )
     ))
   }
 
@@ -561,8 +576,8 @@ poster_expected_value_predictions <- function(model, grid) {
 poster_first_stage_specs <- function() {
   list(
     raw = list(label = "Raw", fixed_effect = NULL, controls = character()),
-    region_expanded = list(label = "Region FE + expanded controls", fixed_effect = "region", controls = census_2001_absorption_controls()),
-    state_expanded = list(label = "State FE + expanded controls", fixed_effect = "state", controls = census_2001_absorption_controls())
+    region_expanded = list(label = "Region FE + Census controls", fixed_effect = "region", controls = census_2001_absorption_controls()),
+    state_expanded = list(label = "State FE + Census controls", fixed_effect = "state", controls = census_2001_absorption_controls())
   )
 }
 
@@ -630,7 +645,91 @@ save_poster_first_stage_specs <- function(spec, path_base, formats, district_pan
     ggplot2::labs(
       x = "Residualized linguistic distance",
       y = "Predicted residual EMI exposure",
-      caption = "Treatment is unconditional EMI exposure among children ages 5-19; expanded controls are predetermined Census 2001 controls."
+      caption = "Treatment is unconditional EMI exposure among children ages 5-19; controls are measured in Census 2001."
+    ) +
+    ggplot2::theme_minimal(base_size = 14) +
+    ggplot2::theme(
+      panel.grid.minor = ggplot2::element_blank(),
+      strip.text = ggplot2::element_text(face = "bold", size = 11),
+      plot.caption = ggplot2::element_text(size = 9, hjust = 0),
+      axis.title = ggplot2::element_text(face = "bold")
+    )
+  save_plot_formats(p, path_base, formats, width = 9.6, height = 3.9, dpi = 300)
+}
+
+
+poster_second_stage_specs <- function() {
+  list(
+    raw = list(label = "Raw", fixed_effect = NULL, controls = character()),
+    region = list(label = "Region FE + Census controls", fixed_effect = "region", controls = census_2001_absorption_controls()),
+    state = list(label = "State FE + Census controls", fixed_effect = "state", controls = census_2001_absorption_controls())
+  )
+}
+
+poster_second_stage_spec_data <- function(district_panel) {
+  need_pkg("ivreg", "poster second-stage specifications")
+  need_pkg("marginaleffects", "poster second-stage predictions")
+  need_pkg("sandwich", "poster second-stage clustered covariance")
+  data <- as.data.frame(district_panel)
+  outcome <- "real_log_consumption_change"
+  treatment <- "emi_exposure_all_children_0708"
+  instrument <- "ling_distance_nonzero_mean"
+  specs <- poster_second_stage_specs()
+  controls <- unique(unlist(lapply(specs, `[[`, "controls"), use.names = FALSE))
+  required <- unique(c(outcome, treatment, instrument, "state_code_2001", "region", controls))
+  if (length(setdiff(required, names(data)))) return(data.frame())
+  data <- data[stats::complete.cases(data[, required, drop = FALSE]), required, drop = FALSE]
+  if (nrow(data) < 25L || length(unique(data$state_code_2001)) < 2L) return(data.frame())
+  grid <- data.frame(
+    emi_exposure_all_children_0708 = unname(stats::quantile(
+      data[[treatment]], probs = seq(0.05, 0.95, by = 0.10), names = FALSE
+    ))
+  )
+
+  out <- lapply(names(specs), function(id) {
+    spec <- specs[[id]]
+    fe <- switch(spec$fixed_effect, region = "factor(region)", state = "factor(state_code_2001)", NULL)
+    rhs <- c(treatment, spec$controls, fe)
+    iv_rhs <- c(instrument, spec$controls, fe)
+    fit <- ivreg::ivreg(
+      stats::as.formula(paste(outcome, "~", paste(rhs, collapse = " + "), "|", paste(iv_rhs, collapse = " + "))),
+      data = data,
+      model = TRUE,
+      x = TRUE,
+      y = TRUE
+    )
+    vcov <- sandwich::vcovCL(fit, cluster = data$state_code_2001, type = "HC1")
+    pred <- marginaleffects::avg_predictions(
+      fit,
+      newdata = data,
+      variables = stats::setNames(list(grid[[treatment]]), treatment),
+      vcov = vcov,
+      type = "response"
+    )
+    pred <- as.data.frame(pred)
+    if (!treatment %in% names(pred)) pred[[treatment]] <- grid[[treatment]]
+    pred$specification <- spec$label
+    pred$specification_id <- id
+    pred$n <- stats::nobs(fit)
+    pred
+  })
+  safe_bind_rows(out)
+}
+
+save_poster_second_stage_specs <- function(spec, path_base, formats, district_panel) {
+  need_pkg("ggplot2", "poster second-stage specification plot")
+  plot_data <- poster_second_stage_spec_data(district_panel)
+  if (!nrow(plot_data)) stop("Poster second-stage figure could not build any specification ribbons.", call. = FALSE)
+  treatment <- "emi_exposure_all_children_0708"
+  p <- ggplot2::ggplot(plot_data, ggplot2::aes(x = .data[[treatment]], y = estimate)) +
+    ggplot2::geom_ribbon(ggplot2::aes(ymin = conf.low, ymax = conf.high), fill = "#9b59b6", alpha = 0.16) +
+    ggplot2::geom_line(color = "#6a3d9a", linewidth = 1.05) +
+    ggplot2::facet_wrap(~ specification, scales = "free_y", nrow = 1) +
+    ggplot2::scale_x_continuous(labels = function(x) paste0(x, "%")) +
+    ggplot2::labs(
+      x = "District EMI exposure",
+      y = "Predicted real log consumption change",
+      caption = "Ribbons show 95% confidence intervals; all specifications use the same complete district sample."
     ) +
     ggplot2::theme_minimal(base_size = 14) +
     ggplot2::theme(
@@ -700,6 +799,7 @@ save_figures <- function(figures, cfg) {
       district_carveouts_shifts = save_district_carveouts_shifts(spec, path_base, formats),
       emie_expected_values = save_emie_expected_values(spec, path_base, formats, attr(figures, "district_panel") %||% data.frame(), attr(figures, "iv_models")),
       poster_first_stage_specs = save_poster_first_stage_specs(spec, path_base, formats, attr(figures, "district_panel") %||% data.frame()),
+      poster_second_stage_specs = save_poster_second_stage_specs(spec, path_base, formats, attr(figures, "district_panel") %||% data.frame()),
       status = save_status_figure(spec, format_path(path_base, "png")),
       save_distribution_figure(spec, format_path(path_base, "png"), attr(figures, "district_panel") %||% data.frame())
     )
