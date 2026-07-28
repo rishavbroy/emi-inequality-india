@@ -154,9 +154,9 @@ public_map_style <- function(variable) {
       labels = c("10-100", "100-200", "200-300", "300-400", "400-450")
     ),
     real_log_consumption_change = list(
-      palette = "brewer.reds",
+      palette = "poster.consumption",
       title = "Real Log Consumption Change",
-      style = "quantile",
+      style = "continuous",
       breaks = NULL,
       labels = NULL
     ),
@@ -175,7 +175,7 @@ public_map_style <- function(variable) {
       labels = c("0-20", "20-40", "40-60", "60-80")
     ),
     region = list(
-      palette = "brewer.dark2",
+      palette = "poster.region",
       title = "Region",
       style = "cat",
       breaks = NULL,
@@ -185,6 +185,20 @@ public_map_style <- function(variable) {
       palette = "carto.emrld",
       title = "Linguistic Distance",
       style = NULL,
+      breaks = NULL,
+      labels = NULL
+    ),
+    resid_emi_exposure_region_expanded = list(
+      palette = "poster.diverging",
+      title = "Residual EMI Exposure",
+      style = "diverging",
+      breaks = NULL,
+      labels = NULL
+    ),
+    resid_ling_distance_region_expanded = list(
+      palette = "poster.diverging",
+      title = "Residual Linguistic Distance",
+      style = "diverging",
       breaks = NULL,
       labels = NULL
     ),
@@ -217,8 +231,11 @@ map_palette_values <- function(palette, n) {
     brewer.reds = c("#fee5d9", "#fcae91", "#fb6a4a", "#de2d26", "#a50f15"),
     brewer.greens = c("#edf8e9", "#bae4b3", "#74c476", "#31a354", "#006d2c"),
     brewer.dark2 = c("#1b9e77", "#d95f02", "#7570b3", "#e7298a", "#66a61e"),
+    poster.region = c("#1b9e77", "#d95f02", "#7570b3", "#e7298a", "#66a61e", "#e6ab02"),
     brown = c("#f6eee3", "#dfc29d", "#bf8f59", "#8c5a2b", "#543005"),
     carto.emrld = c("#d3f2a3", "#97e196", "#6cc08b", "#4c9b82", "#217a79"),
+    poster.consumption = c("#f7fbff", "#c6dbef", "#6baed6", "#2171b5", "#08306b"),
+    poster.diverging = c("#762a83", "#af8dc3", "#f7f7f7", "#7fbf7b", "#1b7837"),
     c("#eff3ff", "#bdd7e7", "#6baed6", "#3182bd", "#08519c")
   )
   if (n == length(base)) return(base)
@@ -261,8 +278,38 @@ map_cut_labels <- function(breaks) {
 
 map_no_data_colour <- function() "#bdbdbd"
 
+map_squish <- function(x, limits) {
+  if (is.null(limits) || length(limits) != 2L || !all(is.finite(limits))) return(x)
+  pmax(pmin(x, limits[[2]]), limits[[1]])
+}
+
+map_continuous_limits <- function(values, style) {
+  values <- values[is.finite(values)]
+  if (!length(values)) return(NULL)
+  if (identical(style$style, "diverging")) {
+    lim <- suppressWarnings(stats::quantile(abs(values), 0.98, na.rm = TRUE, names = FALSE))
+    if (!is.finite(lim) || lim <= 0) lim <- max(abs(values), na.rm = TRUE)
+    lim <- signif(lim, 2)
+    return(c(-lim, lim))
+  }
+  limits <- suppressWarnings(stats::quantile(values, c(0.02, 0.98), na.rm = TRUE, names = FALSE))
+  if (!all(is.finite(limits)) || limits[[1]] >= limits[[2]]) limits <- range(values, na.rm = TRUE)
+  rounded <- pretty(limits, n = 4L)
+  range(rounded, na.rm = TRUE)
+}
+
 public_map_fill <- function(plot_data, variable, style) {
   values <- plot_data[[variable]]
+  if (identical(style$style, "continuous") || identical(style$style, "diverging")) {
+    values <- suppressWarnings(as.numeric(values))
+    limits <- map_continuous_limits(values, style)
+    plot_data$.map_value <- map_squish(values, limits)
+    return(list(
+      data = plot_data, fill = ".map_value",
+      colors = map_palette_values(style$palette, 7L), title = style$title,
+      continuous = TRUE, limits = limits, diverging = identical(style$style, "diverging")
+    ))
+  }
   if (is.factor(values) || is.character(values) || identical(style$style, "cat")) {
     fac <- as.factor(values)
     levels <- levels(fac)
@@ -303,7 +350,9 @@ public_map_fill <- function(plot_data, variable, style) {
 
 map_overlay_rows <- function(plot_data, fill_column = ".map_fill") {
   if (!fill_column %in% names(plot_data)) return(rep(FALSE, nrow(plot_data)))
-  fill <- as.character(plot_data[[fill_column]])
+  fill <- plot_data[[fill_column]]
+  if (is.numeric(fill)) return(is.finite(fill))
+  fill <- as.character(fill)
   !is.na(fill) & nzchar(fill) & fill != "No data"
 }
 
@@ -326,8 +375,28 @@ build_public_ggplot_map <- function(plot_data, spec) {
     stop("Map figure '", spec$name, "' has no non-missing overlay districts for variable '", spec$variable, "'.", call. = FALSE)
   }
 
-  ggplot2::ggplot() +
+  base <- ggplot2::ggplot() +
     ggplot2::geom_sf(data = plot_data, ggplot2::aes(fill = .data[[fill$fill]]), color = "grey35", linewidth = 0.05) +
+    ggplot2::coord_sf(datum = NA) +
+    ggplot2::labs(fill = fill$title) +
+    ggplot2::theme_void(base_size = 10) +
+    ggplot2::theme(
+      legend.position = "right",
+      legend.title = ggplot2::element_text(size = 12),
+      legend.text = ggplot2::element_text(size = 10),
+      plot.margin = grid::unit(c(2, 2, 2, 2), "pt")
+    )
+
+  if (isTRUE(fill$continuous)) {
+    return(base + ggplot2::scale_fill_gradientn(
+      colours = fill$colors,
+      limits = fill$limits,
+      na.value = map_no_data_colour(),
+      guide = ggplot2::guide_colorbar(barheight = grid::unit(36, "pt"))
+    ))
+  }
+
+  base +
     ggplot2::scale_fill_manual(
       values = fill$colors,
       breaks = names(fill$colors),
@@ -340,15 +409,6 @@ build_public_ggplot_map <- function(plot_data, spec) {
       fill = ggplot2::guide_legend(
         override.aes = map_legend_override(fill$colors)
       )
-    ) +
-    ggplot2::coord_sf(datum = NA) +
-    ggplot2::labs(fill = fill$title) +
-    ggplot2::theme_void(base_size = 10) +
-    ggplot2::theme(
-      legend.position = "right",
-      legend.title = ggplot2::element_text(size = 12),
-      legend.text = ggplot2::element_text(size = 10),
-      plot.margin = grid::unit(c(2, 2, 2, 2), "pt")
     )
 }
 
@@ -498,6 +558,86 @@ poster_expected_value_predictions <- function(model, grid) {
   )
 }
 
+poster_first_stage_specs <- function() {
+  list(
+    raw = list(label = "Raw", fixed_effect = NULL, controls = character()),
+    region_expanded = list(label = "Region FE + expanded controls", fixed_effect = "region", controls = census_2001_absorption_controls()),
+    state_expanded = list(label = "State FE + expanded controls", fixed_effect = "state", controls = census_2001_absorption_controls())
+  )
+}
+
+poster_residualize_for_spec <- function(data, variable, fixed_effect, controls) {
+  terms <- controls
+  if (identical(fixed_effect, "region")) terms <- c("factor(region)", terms)
+  if (identical(fixed_effect, "state")) terms <- c("factor(state_code_2001)", terms)
+  if (!length(terms)) return(as.numeric(data[[variable]]) - mean(as.numeric(data[[variable]]), na.rm = TRUE))
+  stats::residuals(stats::lm(stats::reformulate(terms, variable), data = data))
+}
+
+poster_first_stage_spec_data <- function(district_panel) {
+  need_pkg("sandwich", "poster first-stage specifications")
+  df <- as.data.frame(district_panel)
+  y <- "emi_exposure_all_children_0708"
+  z <- "ling_distance_nonzero_mean"
+  specs <- poster_first_stage_specs()
+  out <- lapply(names(specs), function(id) {
+    spec <- specs[[id]]
+    cols <- unique(c(y, z, "state_code_2001", "region", spec$controls))
+    if (length(setdiff(cols, names(df)))) return(data.frame())
+    keep <- stats::complete.cases(df[, cols, drop = FALSE])
+    dat <- df[keep, cols, drop = FALSE]
+    if (nrow(dat) < 25L) return(data.frame())
+    y_resid <- poster_residualize_for_spec(dat, y, spec$fixed_effect, spec$controls)
+    z_resid <- poster_residualize_for_spec(dat, z, spec$fixed_effect, spec$controls)
+    fit <- stats::lm(y_resid ~ 0 + z_resid)
+    vcov <- sandwich::vcovCL(fit, cluster = dat$state_code_2001, type = "HC1")
+    beta <- unname(stats::coef(fit)[[1]])
+    se <- sqrt(vcov[1, 1])
+    xs <- seq(stats::quantile(z_resid, 0.05, na.rm = TRUE), stats::quantile(z_resid, 0.95, na.rm = TRUE), length.out = 80L)
+    estimate <- beta * xs
+    margin <- 1.96 * abs(xs) * se
+    data.frame(
+      specification_id = id,
+      specification = spec$label,
+      z_resid = xs,
+      estimate = estimate,
+      conf.low = estimate - margin,
+      conf.high = estimate + margin,
+      beta = beta,
+      se = se,
+      f_stat = (beta / se)^2,
+      stringsAsFactors = FALSE
+    )
+  })
+  safe_bind_rows(out)
+}
+
+save_poster_first_stage_specs <- function(spec, path_base, formats, district_panel) {
+  need_pkg("ggplot2", "poster first-stage specification plot")
+  plot_data <- poster_first_stage_spec_data(district_panel)
+  if (!nrow(plot_data)) stop("Poster first-stage figure could not build any specification lines.", call. = FALSE)
+  label_data <- plot_data[!duplicated(plot_data$specification), c("specification", "f_stat"), drop = FALSE]
+  label_data$label <- paste0(label_data$specification, " (F=", formatC(label_data$f_stat, format = "f", digits = 1), ")")
+  plot_data$label <- label_data$label[match(plot_data$specification, label_data$specification)]
+  p <- ggplot2::ggplot(plot_data, ggplot2::aes(x = z_resid, y = estimate)) +
+    ggplot2::geom_ribbon(ggplot2::aes(ymin = conf.low, ymax = conf.high), fill = "#c5050c", alpha = 0.14) +
+    ggplot2::geom_line(color = "#7a0019", linewidth = 1.05) +
+    ggplot2::facet_wrap(~ label, scales = "free", nrow = 1) +
+    ggplot2::labs(
+      x = "Residualized linguistic distance",
+      y = "Predicted residual EMI exposure",
+      caption = "Treatment is unconditional EMI exposure among children ages 5-19; expanded controls are predetermined Census 2001 controls."
+    ) +
+    ggplot2::theme_minimal(base_size = 14) +
+    ggplot2::theme(
+      panel.grid.minor = ggplot2::element_blank(),
+      strip.text = ggplot2::element_text(face = "bold", size = 11),
+      plot.caption = ggplot2::element_text(size = 9, hjust = 0),
+      axis.title = ggplot2::element_text(face = "bold")
+    )
+  save_plot_formats(p, path_base, formats, width = 9.6, height = 3.9, dpi = 300)
+}
+
 save_emie_expected_values <- function(spec, path_base, formats, district_panel, iv_models) {
   need_pkg("ggplot2", "poster expected-values figure")
   model <- first_estimable_iv_model(iv_models)
@@ -555,6 +695,7 @@ save_figures <- function(figures, cfg) {
       ),
       district_carveouts_shifts = save_district_carveouts_shifts(spec, path_base, formats),
       emie_expected_values = save_emie_expected_values(spec, path_base, formats, attr(figures, "district_panel") %||% data.frame(), attr(figures, "iv_models")),
+      poster_first_stage_specs = save_poster_first_stage_specs(spec, path_base, formats, attr(figures, "district_panel") %||% data.frame()),
       status = save_status_figure(spec, format_path(path_base, "png")),
       save_distribution_figure(spec, format_path(path_base, "png"), attr(figures, "district_panel") %||% data.frame())
     )

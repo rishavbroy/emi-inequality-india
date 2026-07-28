@@ -25,18 +25,62 @@ sf_geometry_coverage <- function(x) {
   mean(!sf::st_is_empty(sf::st_geometry(x)))
 }
 
+poster_residual_terms <- function(fixed_effect = "region", controls = census_2001_absorption_controls()) {
+  terms <- controls
+  if (identical(fixed_effect, "region")) terms <- c("factor(region)", terms)
+  if (identical(fixed_effect, "state")) terms <- c("factor(state_code_2001)", terms)
+  terms
+}
+
+poster_residual_pair <- function(
+  panel,
+  variables = c("emi_exposure_all_children_0708", "ling_distance_nonzero_mean"),
+  fixed_effect = "region",
+  controls = census_2001_absorption_controls()
+) {
+  df <- as.data.frame(panel)
+  terms <- poster_residual_terms(fixed_effect, controls)
+  required <- unique(c(variables, gsub("^factor\((.*)\)$", "\1", terms)))
+  out <- matrix(NA_real_, nrow = nrow(df), ncol = length(variables), dimnames = list(NULL, variables))
+  if (length(setdiff(required, names(df)))) return(out)
+
+  keep <- stats::complete.cases(df[, required, drop = FALSE])
+  if (sum(keep) <= length(required) + 2L) return(out)
+  dat <- df[keep, , drop = FALSE]
+  for (variable in variables) {
+    fit <- stats::lm(stats::reformulate(terms, response = variable), data = dat)
+    out[keep, variable] <- stats::residuals(fit)
+  }
+  out
+}
+
+add_poster_residual_variables <- function(district_panel) {
+  if (!nrow(as.data.frame(district_panel))) return(district_panel)
+  out <- district_panel
+  residuals <- poster_residual_pair(out, fixed_effect = "region")
+  out$resid_emi_exposure_region_expanded <- residuals[, "emi_exposure_all_children_0708"]
+  out$resid_ling_distance_region_expanded <- residuals[, "ling_distance_nonzero_mean"]
+  out
+}
+
 
 #' make figures
 #'
 #' @return A named list of figure specifications consumed by save_figures().
 make_figures <- function(district_panel, raw_ilo_figures, cfg, iv_models = NULL, map_geometry = NULL) {
+  district_panel <- add_poster_residual_variables(district_panel)
+
   required_variables <- c(
     "EMIE",
+    "emi_exposure_all_children_0708",
+    "ling_distance_nonzero_mean",
     "real_log_consumption_change",
     "pct_pucca",
     "pct_head_secondary_plus",
     "region",
-    "wavg_ling_degrees"
+    "wavg_ling_degrees",
+    "resid_emi_exposure_region_expanded",
+    "resid_ling_distance_region_expanded"
   )
 
   out <- list(
@@ -60,6 +104,13 @@ make_figures <- function(district_panel, raw_ilo_figures, cfg, iv_models = NULL,
       "Adjusted real consumption growth across EMI exposure",
       "Average counterfactual predictions at observed EMIE percentiles.",
       kind = "emie_expected_values"
+    ),
+    poster_first_stage_specs = figure_spec(
+      "poster_first_stage_specs",
+      "poster_first_stage_specs.png",
+      "First-stage relationship across specifications",
+      "Residualized EMI exposure on residualized linguistic distance.",
+      kind = "poster_first_stage_specs"
     )
   )
 
@@ -74,6 +125,20 @@ make_figures <- function(district_panel, raw_ilo_figures, cfg, iv_models = NULL,
     map_education = figure_spec("map_education", "map_education.png", "% HH Head w/ Sec.+", kind = if (maps_available) "map" else "status", variable = "pct_head_secondary_plus"),
     map_region = figure_spec("map_region", "map_region.png", "Region", kind = if (maps_available) "map" else "status", variable = "region"),
     map_linguistic_distance = figure_spec("map_linguistic_distance", "map_linguistic_distance.png", "Linguistic Distance", kind = if (maps_available) "map" else "status", variable = "wavg_ling_degrees"),
+    map_residual_emi_exposure = figure_spec(
+      "map_residual_emi_exposure",
+      "map_residual_emi_exposure.png",
+      "Residual EMI Exposure",
+      kind = if (maps_available) "map" else "status",
+      variable = "resid_emi_exposure_region_expanded"
+    ),
+    map_residual_linguistic_distance = figure_spec(
+      "map_residual_linguistic_distance",
+      "map_residual_linguistic_distance.png",
+      "Residual Linguistic Distance",
+      kind = if (maps_available) "map" else "status",
+      variable = "resid_ling_distance_region_expanded"
+    ),
     collage_main_maps = figure_spec(
       "collage_main_maps",
       "collage_main_maps.png",
@@ -86,7 +151,7 @@ make_figures <- function(district_panel, raw_ilo_figures, cfg, iv_models = NULL,
       "collage_iv_region_maps.png",
       "Instrument and region map inputs",
       kind = "collage",
-      inputs = c("map_region", "map_linguistic_distance")
+      inputs = c("map_region", "map_linguistic_distance", "map_residual_linguistic_distance", "map_residual_emi_exposure")
     )
   )
 
