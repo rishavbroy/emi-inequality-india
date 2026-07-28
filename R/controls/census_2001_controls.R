@@ -44,11 +44,25 @@ census_2001_control_metadata <- function() {
   )
 }
 
+census_2001_absorption_controls <- function() {
+  c(
+    setdiff(census_2001_main_controls(), "agricultural_worker_share_2001"),
+    "literacy_share_2001", "worker_share_2001",
+    "cultivator_share_workers_2001", "agricultural_labourer_share_workers_2001"
+  )
+}
+
+census_2001_diagnostic_controls <- function() {
+  unique(c(census_2001_main_controls(), census_2001_absorption_controls()))
+}
+
 census_2001_appendix_controls <- function() {
   c(
-    "literacy_share_2001", "worker_share_2001", "hindu_share_2001",
-    "banking_access_share_2001", "television_ownership_share_2001",
-    "telephone_ownership_share_2001", "primary_schools_per_1000_children_2001"
+    "literacy_share_2001", "worker_share_2001",
+    "cultivator_share_workers_2001", "agricultural_labourer_share_workers_2001",
+    "hindu_share_2001", "banking_access_share_2001",
+    "television_ownership_share_2001", "telephone_ownership_share_2001",
+    "primary_schools_per_1000_children_2001"
   )
 }
 
@@ -65,7 +79,7 @@ build_census_2001_controls <- function(district_totals) {
   x <- safe_df(district_totals)
   required <- c(
     census_2001_keys(), "population_total", "population_urban",
-    "population_age_7_plus", "adult_secondary_plus", "sc_population",
+    "population_age_7_plus", "adult_secondary_plus", "literate_population", "sc_population",
     "st_population", "religion_population_total", "muslim_population", "workers_total", "cultivators",
     "agricultural_labourers", "population_age_0_14", "population_age_15_64",
     "population_age_65_plus", "households_total", "households_electricity",
@@ -89,6 +103,12 @@ build_census_2001_controls <- function(district_totals) {
   out$agricultural_worker_share_2001 <- safe_share(
     num(x$cultivators) + num(x$agricultural_labourers), x$workers_total
   )
+  out$literacy_share_2001 <- safe_share(x$literate_population, x$population_age_7_plus)
+  out$worker_share_2001 <- safe_share(x$workers_total, x$population_total)
+  out$cultivator_share_workers_2001 <- safe_share(x$cultivators, x$workers_total)
+  out$agricultural_labourer_share_workers_2001 <- safe_share(
+    x$agricultural_labourers, x$workers_total
+  )
   out$dependency_ratio_2001 <- safe_share(
     num(x$population_age_0_14) + num(x$population_age_65_plus), x$population_age_15_64
   )
@@ -99,7 +119,9 @@ build_census_2001_controls <- function(district_totals) {
   bounded_shares <- c(
     "urban_share_2001", "adult_secondary_plus_share_2001",
     "sc_share_2001", "st_share_2001", "muslim_share_2001",
-    "agricultural_worker_share_2001", "electricity_access_share_2001"
+    "agricultural_worker_share_2001", "literacy_share_2001",
+    "worker_share_2001", "cultivator_share_workers_2001",
+    "agricultural_labourer_share_workers_2001", "electricity_access_share_2001"
   )
   invalid_share <- vapply(bounded_shares, function(variable) {
     value <- num(out[[variable]])
@@ -210,7 +232,7 @@ attach_census_2001_controls <- function(panel, controls) {
 
 summarise_census_2001_control_coverage <- function(panel) {
   x <- safe_df(panel)
-  safe_bind_rows(lapply(census_2001_main_controls(), function(variable) {
+  safe_bind_rows(lapply(census_2001_diagnostic_controls(), function(variable) {
     present <- variable %in% names(x)
     missing <- if (present) sum(!is.finite(num(x[[variable]]))) else nrow(x)
     data.frame(variable = variable, present = present, n = nrow(x), missing = missing, missing_pct = 100 * missing / max(1, nrow(x)), stringsAsFactors = FALSE)

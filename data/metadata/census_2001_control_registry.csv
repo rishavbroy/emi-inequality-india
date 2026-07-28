@@ -11,6 +11,8 @@ electricity_access_share_2001,infrastructure,Census 2001 H-09,total households,t
 log_population_density_2001,density,SHRUG PCA and Census 2001 geometry,none,true
 literacy_share_2001,human capital,SHRUG Census 2001 PCA,population age 7 plus,false
 worker_share_2001,economic structure,SHRUG Census 2001 PCA,total population,false
+cultivator_share_workers_2001,economic structure,SHRUG Census 2001 PCA,total workers,false
+agricultural_labourer_share_workers_2001,economic structure,SHRUG Census 2001 PCA,total workers,false
 hindu_share_2001,religion,Census 2001 C-01,total population,false
 banking_access_share_2001,assets,Census 2001 H-13,total households,false
 television_ownership_share_2001,assets,Census 2001 H-13,total households,false

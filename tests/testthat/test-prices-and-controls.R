@@ -31,6 +31,7 @@ test_that("Census control ratios are built from totals", {
     population_urban = 200,
     population_age_7_plus = 800,
     adult_secondary_plus = 160,
+    literate_population = 640,
     sc_population = 100,
     st_population = 50,
     religion_population_total = 1000,
@@ -50,6 +51,10 @@ test_that("Census control ratios are built from totals", {
   expect_equal(out$adult_secondary_plus_share_2001, 20)
   expect_equal(out$muslim_share_2001, 15)
   expect_equal(out$agricultural_worker_share_2001, 50)
+  expect_equal(out$literacy_share_2001, 80)
+  expect_equal(out$worker_share_2001, 40)
+  expect_equal(out$cultivator_share_workers_2001, 25)
+  expect_equal(out$agricultural_labourer_share_workers_2001, 25)
   expect_equal(out$dependency_ratio_2001, 100 * 400 / 600)
   expect_equal(out$electricity_access_share_2001, 60)
 })
@@ -60,7 +65,7 @@ test_that("religion shares use the matching C-01 universe", {
   x <- data.frame(
     state_code_2001 = "01", district_code_2001 = "04",
     population_total = 950, population_urban = 100,
-    population_age_7_plus = 700, adult_secondary_plus = 140,
+    population_age_7_plus = 700, adult_secondary_plus = 140, literate_population = 560,
     sc_population = 50, st_population = 20,
     religion_population_total = 1000, muslim_population = 990,
     workers_total = 400, cultivators = 100, agricultural_labourers = 100,
@@ -77,7 +82,7 @@ test_that("bounded Census shares cannot exceed their universes", {
   x <- data.frame(
     state_code_2001 = "01", district_code_2001 = "04",
     population_total = 1000, population_urban = 100,
-    population_age_7_plus = 700, adult_secondary_plus = 140,
+    population_age_7_plus = 700, adult_secondary_plus = 140, literate_population = 560,
     sc_population = 50, st_population = 20,
     religion_population_total = 900, muslim_population = 950,
     workers_total = 400, cultivators = 100, agricultural_labourers = 100,
@@ -802,6 +807,7 @@ test_that("Census controls attach without changing panel rows", {
     state_code_2001 = c("01", "01"), district_code_2001 = c("01", "02"),
     population_total = c(100, 200), population_urban = c(20, 50),
     population_age_7_plus = c(80, 150), adult_secondary_plus = c(10, 30),
+    literate_population = c(60, 120),
     sc_population = c(5, 10), st_population = c(2, 4),
     religion_population_total = c(100, 200), muslim_population = c(8, 20),
     workers_total = c(40, 80), cultivators = c(10, 20), agricultural_labourers = c(5, 10),
@@ -825,6 +831,7 @@ test_that("Census controls preserve sf geometry and CRS", {
     state_code_2001 = c("01", "01"), district_code_2001 = c("01", "02"),
     population_total = c(100, 200), population_urban = c(20, 50),
     population_age_7_plus = c(80, 150), adult_secondary_plus = c(10, 30),
+    literate_population = c(60, 120),
     sc_population = c(5, 10), st_population = c(2, 4),
     religion_population_total = c(100, 200), muslim_population = c(8, 20),
     workers_total = c(40, 80), cultivators = c(10, 20), agricultural_labourers = c(5, 10),
