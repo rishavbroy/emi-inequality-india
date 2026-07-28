@@ -27,3 +27,20 @@ All district education-exposure margins are derived from the same weighted NSS c
 - `unknown_medium_share_enrolled_0708`: enrolled children whose medium is unavailable.
 
 The historical field `EMIE` remains a compatibility alias for EMI among enrolled children during Phase 1. The preferred future treatment is `emi_exposure_all_children_0708`. The exact decomposition into enrollment and the intensive EMI margin is validated only when medium is fully observed; unknown medium is reported rather than classified as non-English.
+
+## Alternative first-stage specifications
+
+Extended diagnostics estimate the preferred all-child EMI treatment against every
+Phase 1 distance construction on one common district support. The registry covers
+the nonzero weighted mean, the share at distance three or higher, the legacy
+top-three mean, scalar specifications with combined or separate Hindi and Urdu
+composition controls, and a joint first stage for the five nonzero distance shares.
+Distance zero is the omitted compositional reference in the joint specification.
+
+Each construction is estimated unadjusted and with six-region or state fixed effects
+combined with the main and expanded Census control sets. The absorption ladder also
+repeats every sequential thematic control block under six-region fixed effects, so
+the human-capital step can be compared directly with the preceding specification.
+All coefficient standard errors and joint excluded-instrument tests cluster by
+Census 2001 state. These remain diagnostic specifications and do not change the
+public IV model.
