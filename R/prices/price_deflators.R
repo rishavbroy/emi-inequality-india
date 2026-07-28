@@ -1,7 +1,7 @@
 # Shared construction and validation for state-sector price deflators.
 
 price_sector <- function(x) {
-  value <- tolower(trimws(as.character(x)))
+  value <- tolower(trimws(plain_chr(x)))
   ifelse(value %in% c("1", "r", "rur", "rural"), "rural",
     ifelse(value %in% c("2", "u", "urb", "urban"), "urban", NA_character_)
   )

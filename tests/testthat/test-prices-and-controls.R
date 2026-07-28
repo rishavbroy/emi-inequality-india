@@ -12,6 +12,17 @@ test_that("price links use the median overlap ratio", {
   expect_equal(price_link_factor(c(100, 110, 120), c(200, 220, 360)), 2)
 })
 
+
+test_that("price-sector parsing accepts haven-labelled NSS fields", {
+  labelled_sector <- structure(
+    c(1, 2),
+    labels = c(Rural = 1, Urban = 2),
+    class = c("haven_labelled", "vctrs_vctr", "double")
+  )
+
+  expect_equal(price_sector(labelled_sector), c("rural", "urban"))
+})
+
 test_that("Census control ratios are built from totals", {
   x <- data.frame(
     district_code_2001 = "001",
