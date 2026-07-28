@@ -21,15 +21,18 @@ test_that("NSS consumption and 2017 education cleaners tolerate empty inputs", {
 
 test_that("Census language cleaner parses area and mother-tongue labels", {
   raw <- list(c16 = data.frame(
-    area_name = "District - Patna 2001",
-    Language = "001 hindi",
-    spkr_tot = 10
+    table = c("C0116", "C0116"), state_code = c("10", "10"),
+    district_code = c("01", "01"), tehsil_code = c("0000", "0000"),
+    area_name = c("District - Patna  01", "District - Patna  01"),
+    mother_tongue_code = c("006000", "006001"),
+    mother_tongue = c("6 HINDI", "1 HINDI"), spkr_tot = c(10, 10)
   ))
 
   out <- clean_census_2001_languages(raw)
 
-  expect_equal(out$district_std, "patna")
+  expect_equal(out$district_std, "01")
   expect_equal(out$mother_tongue, "Hindi")
+  expect_equal(out$canonical_language, "Hindi")
   expect_equal(out$source_year, 2001L)
 })
 
