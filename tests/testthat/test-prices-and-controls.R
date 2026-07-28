@@ -379,6 +379,38 @@ test_that("state rules prefer direct observations and use documented donors only
   expect_equal(tel$state_rule, c("inheritance", "direct", "inheritance", "direct"))
 })
 
+test_that("state rules resolve documented fallback chains", {
+  period <- as.Date("2007-07-01")
+  temporal <- rbind(
+    data.frame(state_code = "ALL_INDIA", sector = "rural", period = period, index = 100, price_source = "all_india"),
+    data.frame(state_code = "GOA", sector = "urban", period = period, index = 110, price_source = "direct")
+  )
+  rules <- data.frame(
+    target_state_code = c("GOA", "DADI"),
+    source_state_code = c("ALL_INDIA", "GOA"),
+    sector = c("rural", "rural"),
+    valid_from = as.Date(c("1900-01-01", "1900-01-01")),
+    valid_to = as.Date(c(NA_character_, NA_character_)),
+    rule_type = c("fallback", "fallback"),
+    reason = c("Goa rural uses All India", "Daman and Diu uses Goa")
+  )
+
+  out <- apply_price_state_rules(temporal, rules, period, period)
+  dadi <- out[out$state_code == "DADI" & out$sector == "rural", ]
+  expect_equal(dadi$index, 100)
+  expect_equal(dadi$temporal_state_source, "ALL_INDIA")
+  expect_equal(dadi$state_rule, "fallback")
+  expect_match(dadi$fallback_reason, "Daman and Diu uses Goa -> Goa rural uses All India", fixed = TRUE)
+})
+
+test_that("Arunachal urban fallback remains available when later state CPI is missing", {
+  rules <- read_price_state_crosswalk()
+  rule <- rules[rules$target_state_code == "ARP" & rules$sector == "urban", ]
+  expect_equal(nrow(rule), 1L)
+  expect_true(is.na(rule$valid_to))
+  expect_equal(rule$source_state_code, "ALL_INDIA")
+})
+
 test_that("state rules fail rather than inventing an undocumented temporal fallback", {
   temporal <- rbind(
     data.frame(state_code = "A", sector = "rural", period = as.Date("2012-01-01"), index = 100),

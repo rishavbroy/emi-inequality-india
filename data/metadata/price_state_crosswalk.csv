@@ -21,7 +21,7 @@ NAGA,Nagaland,rural,ALL_INDIA,1900-01-01,2012-12-01,fallback,No state CPI-RL exi
 PY,Puducherry,rural,ALL_INDIA,1900-01-01,2012-12-01,fallback,No state CPI-RL exists in the 20-state series; use the published All-India CPI-RL,Labour Bureau CPI-AL/RL scheme
 SIKK,Sikkim,rural,ALL_INDIA,1900-01-01,2012-12-01,fallback,No state CPI-RL exists in the 20-state series; use the published All-India CPI-RL,Labour Bureau CPI-AL/RL scheme
 UK,Uttarakhand,rural,ALL_INDIA,1900-01-01,2012-12-01,fallback,No state CPI-RL exists in the 20-state series; use the published All-India CPI-RL,Labour Bureau CPI-AL/RL scheme
-ARP,Arunachal Pradesh,urban,ALL_INDIA,1900-01-01,2012-12-01,fallback,No CPI-IW centre exists in the 78-centre system; use the published All-India CPI-IW,Labour Bureau CPI-IW 2001-base compendium
+ARP,Arunachal Pradesh,urban,ALL_INDIA,1900-01-01,,fallback,No CPI-IW centre exists in the 78-centre system and the state CPI-Urban series is unavailable for some months; use the published All-India urban index for missing observations,Labour Bureau CPI-IW 2001-base compendium and MoSPI state CPI-R/U coverage
 MANI,Manipur,urban,ALL_INDIA,1900-01-01,2012-12-01,fallback,No CPI-IW centre exists in the 78-centre system; use the published All-India CPI-IW,Labour Bureau CPI-IW 2001-base compendium
 MEG,Meghalaya,urban,ALL_INDIA,1900-01-01,2012-12-01,fallback,No CPI-IW centre exists in the 78-centre system; use the published All-India CPI-IW,Labour Bureau CPI-IW 2001-base compendium
 MIZO,Mizoram,urban,ALL_INDIA,1900-01-01,2012-12-01,fallback,No CPI-IW centre exists in the 78-centre system; use the published All-India CPI-IW,Labour Bureau CPI-IW 2001-base compendium
