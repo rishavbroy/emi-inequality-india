@@ -61,8 +61,10 @@ price_cpi_iw_centres,prices,true,data/raw/prices/cpi_iw_aisc_rn_26_7_2026.csv,,c
 price_cpi_ruc_2010,prices,true,data/raw/prices/cpi_ruc_st_rn_26_7_2026_2011-2014_base-2010.csv,,csv,utils::read.csv,price_sources,State rural and urban CPI base 2010
 price_cpi_ruc_2012,prices,true,data/raw/prices/cpi_ruc_st_rn_26_7_2026_2013-2025_base-2012.csv,,csv,utils::read.csv,price_sources,State rural and urban CPI base 2012
 price_tendulkar_2011_12,prices,false,data/raw/prices/poverty-lines/press-note-poverty-2011-12-23-08-16.pdf,,pdf,pdftools::pdf_text,price_sources,Tendulkar state-sector poverty lines
-census2001_c01,census_2001_controls,false,data/raw/census_2001/religion/C01,,directory,custom,raw_census_2001_controls,Census 2001 religion tables
-census2001_c08,census_2001_controls,false,data/raw/census_2001/education/C08,,directory,custom,raw_census_2001_controls,Census 2001 educational attainment tables
-census2001_c14,census_2001_controls,false,data/raw/census_2001/age/C14,,directory,custom,raw_census_2001_controls,Census 2001 age tables
-census2001_h09,census_2001_controls,false,data/raw/census_2001/housing/H09,,directory,custom,raw_census_2001_controls,Census 2001 lighting tables
+census2001_c01,census_2001_controls,true,data/raw/census_2001/religion/C01,,directory,custom,raw_census_2001_controls,Census 2001 religion tables
+census2001_c08,census_2001_controls,true,data/raw/census_2001/education/C08,,directory,custom,raw_census_2001_controls,Census 2001 educational attainment tables
+census2001_c14,census_2001_controls,true,data/raw/census_2001/age/C14,,directory,custom,raw_census_2001_controls,Census 2001 age tables
+census2001_h09,census_2001_controls,true,data/raw/census_2001/housing/H09,,directory,custom,raw_census_2001_controls,Census 2001 lighting tables
 census2001_h13,census_2001_controls,false,data/raw/census_2001/housing/H13,,directory,custom,raw_census_2001_controls,Census 2001 banking and asset tables
+
+shrug_pca01_controls,census_2001_controls,true,data/raw/shrug/census_2001/shrug-pca01-csv.zip,,zip,custom,raw_census_2001_controls,SHRUG district-level Census 2001 PCA archive
