@@ -18,7 +18,7 @@ format:
     univ-logo-column-size: 7
     title-column-size: 25
     title-font-size: 85
-    authors-font-size: 50
+    authors-font-size: 30
     department-font-size: 30
     body-font-size: 24
     heading-font-size: 36
@@ -57,28 +57,35 @@ execute:
 ]
 ```
 
-**Treatment:** the survey-weighted share of children ages 5-19 who are both enrolled and studying in English medium.
 
 ![EMI exposure after removing six-region effects and expanded Census 2001 controls.](../../outputs/figures/main/map_residual_emi_exposure.pdf){width=62%}
 
-**Instrument:** the mean linguistic distance from Hindi among mapped speakers whose language has positive distance.
+**Treatment:** Survey-weighted share of school-age (5-19) children enrolled in EMI. It combines two decisions:
+
+$$
+\mathrm{EMIE}_d = \Pr(\text{enrolled})_d \times \Pr(\text{EMI} \mid \text{enrolled})_d.
+$$
+
+The first is the extensive enrollment margin; the second is the medium-of-instruction margin among enrolled children. Families choose among higher-cost private EMI, low-cost private EMI that may absorb 7-20% of a poor household's monthly income, and free or negatively priced government schooling that usually teaches in the mother tongue [@endow2019a; @muralidharan2019a]. Private schooling remains more accessible to richer households [@muralidharan2015a]. School access and instructional quality differ, while recorded EMI enrollment does not establish that children actually learn in English [@lahoti2019a].
 
 ![Linguistic distance after the same adjustment.](../../outputs/figures/main/map_residual_linguistic_distance.pdf){width=62%}
 
-**Outcome:** person-weighted change in log real consumption from 2007-08 to 2017-18, using state-sector CPI deflation and Tendulkar spatial adjustment.
+**Instrument:** Weighted average linguistic distance of mother tongue from Hindi.
 
 ![Person-weighted change in log real consumption.](../../outputs/figures/main/map_consumption_growth.pdf){width=62%}
 
-**Controls:** scale and geography; social composition; human capital; demography; economic structure; and basic development. Region fixed effects are included in the poster specification.
+**Outcome:** Person-weighted change in log real consumption from 2007-08 to 2017-18. Temporal deflation by linking multiple state+sector-level CPI series. Spatial deflation by using state+sector-level Tendulkar poverty lines as baseline.
 
 ![Unadjusted linguistic distance.](../../outputs/figures/main/map_preferred_linguistic_distance.pdf){width=48%}
 ![Six-region classification.](../../outputs/figures/main/map_region.pdf){width=48%}
+
+**Controls:** Scale/geography, social composition, human capital, demography, economic structure, basic development, and unless otherwise specified, region FEs.
 
 # First Stage
 
 ![First-stage relationship before adjustment, after region adjustment, and after state adjustment.](../../outputs/figures/main/poster_first_stage_specs.pdf){width=96%}
 
-Greater distance from Hindi can raise the relative appeal of English rather than Hindi as a common language. For families, this can increase demand for English-medium schooling. For schools, it can increase the incentive to offer English instruction. The first stage asks whether these two forces raise district EMI exposure [@shastry2012a].
+Greater distance from Hindi can raise the relative appeal of English rather than Hindi as a common language. For families, this can increase demand for English-medium schooling. For schools, it can increase the incentive to offer English instruction. The first stage asks whether these two forces raise district EMI exposure [@clingingsmith2008; @shastry2012a].
 
 # Second Stage
 
@@ -86,19 +93,12 @@ Greater distance from Hindi can raise the relative appeal of English rather than
 
 The second stage asks whether greater EMI exposure translates into faster local consumption growth. It therefore extends the individual wage-premium question to district development over the following decade.
 
-# Interpretation
-
-- Linguistic distance can affect EMI through both household demand and school supply [@shastry2012a].
-- EMI combines school participation with medium choice. Its economic value depends on instructional quality and affordability.
-- English may improve access to higher education and service-sector work, but district consumption rises only when those gains reach households and local labor markets.
-- The contrast between region and state specifications shows how much of the relationship reflects broad language geography rather than differences among districts within the same state.
-
 # Next Steps
 
 - Separate changes in school supply from changes in household demand.
-- Study who gains from EMI across schooling and work transitions.
-- Test whether EMI affects employment, occupations, and migration.
-- Extend the research to other settings where language shapes access to education and work.
+- Test whether EMI raises productive labor demand enough to absorb a growing supply of workers with English skills.
+- Distinguish gains through better employment and income from better-educated unemployment or underemployment when labor supply grows faster than suitable jobs [@organization2024a; @graddol2010a].
+- Study who gains from EMI across schooling, work, occupations, and migration.
 
 ```{=typst}
 #block(fill: rgb("f3f0ea"), inset: 6pt, radius: 5pt, width: 100%)[
