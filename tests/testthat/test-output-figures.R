@@ -423,13 +423,22 @@ test_that("complete Census-2001 map geometry shows missing panel districts as gr
 
 test_that("poster map legends reserve readable vertical space", {
   skip_if_not_installed("ggplot2")
-  skip_if_not_installed("sf")
-  panel <- poster_map_fixture(6L)
-  panel$ling_distance_nonzero_mean <- seq(0.5, 3, length.out = nrow(panel))
-  plot <- build_public_ggplot_map(panel, list(name = "test", variable = "ling_distance_nonzero_mean"))
-  guide <- plot$scales$get_scales("fill")$guide
-  expect_s3_class(guide, "GuideColourbar")
-  expect_equal(as.numeric(guide$params$barheight), 92)
+  dimensions <- public_map_colorbar_dimensions()
+  expect_s3_class(dimensions$height, "unit")
+  expect_s3_class(dimensions$width, "unit")
+  expect_equal(grid::convertHeight(dimensions$height, "pt", valueOnly = TRUE), 92)
+  expect_equal(grid::convertWidth(dimensions$width, "pt", valueOnly = TRUE), 10)
+  expect_s3_class(public_map_colorbar_guide(), "GuideColourbar")
+})
+
+test_that("poster model specifications share fixed-effect definitions", {
+  specs <- poster_model_specs()
+  expect_identical(poster_first_stage_specs(), specs)
+  expect_identical(poster_second_stage_specs(), specs)
+  expect_identical(poster_fixed_effect_term("none"), character())
+  expect_identical(poster_fixed_effect_term("region"), "factor(region)")
+  expect_identical(poster_fixed_effect_term("state"), "factor(state_code_2001)")
+  expect_error(poster_fixed_effect_term("district"), "Unknown poster fixed-effect")
 })
 
 test_that("poster second-stage specifications use preferred variables and one sample", {

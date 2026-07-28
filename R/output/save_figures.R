@@ -364,6 +364,25 @@ map_overlay_rows <- function(plot_data, fill_column = ".map_fill") {
   !is.na(fill) & nzchar(fill) & fill != "No data"
 }
 
+public_map_colorbar_dimensions <- function() {
+  list(
+    height = grid::unit(92, "pt"),
+    width = grid::unit(10, "pt")
+  )
+}
+
+public_map_colorbar_guide <- function() {
+  dimensions <- public_map_colorbar_dimensions()
+  ggplot2::guide_colorbar(
+    title.position = "top",
+    label.position = "right",
+    theme = ggplot2::theme(
+      legend.key.height = dimensions$height,
+      legend.key.width = dimensions$width
+    )
+  )
+}
+
 map_legend_override <- function(colors) {
   list(
     fill = unname(colors),
@@ -402,12 +421,7 @@ build_public_ggplot_map <- function(plot_data, spec) {
       colours = fill$colors,
       limits = fill$limits,
       na.value = map_no_data_colour(),
-      guide = ggplot2::guide_colorbar(
-        barheight = grid::unit(92, "pt"),
-        barwidth = grid::unit(10, "pt"),
-        title.position = "top",
-        label.position = "right"
-      )
+      guide = public_map_colorbar_guide()
     ))
   }
 
@@ -573,13 +587,15 @@ poster_expected_value_predictions <- function(model, grid) {
   )
 }
 
-poster_first_stage_specs <- function() {
+poster_model_specs <- function() {
   list(
-    raw = list(label = "Raw", fixed_effect = NULL, controls = character()),
-    region_expanded = list(label = "Region FE + Census controls", fixed_effect = "region", controls = census_2001_absorption_controls()),
-    state_expanded = list(label = "State FE + Census controls", fixed_effect = "state", controls = census_2001_absorption_controls())
+    raw = list(label = "Raw", fixed_effect = "none", controls = character()),
+    region = list(label = "Region FE + Census controls", fixed_effect = "region", controls = census_2001_absorption_controls()),
+    state = list(label = "State FE + Census controls", fixed_effect = "state", controls = census_2001_absorption_controls())
   )
 }
+
+poster_first_stage_specs <- poster_model_specs
 
 poster_first_stage_common_sample <- function(data, specs, treatment, instrument) {
   controls <- unique(unlist(lapply(specs, `[[`, "controls"), use.names = FALSE))
@@ -658,13 +674,7 @@ save_poster_first_stage_specs <- function(spec, path_base, formats, district_pan
 }
 
 
-poster_second_stage_specs <- function() {
-  list(
-    raw = list(label = "Raw", fixed_effect = NULL, controls = character()),
-    region = list(label = "Region FE + Census controls", fixed_effect = "region", controls = census_2001_absorption_controls()),
-    state = list(label = "State FE + Census controls", fixed_effect = "state", controls = census_2001_absorption_controls())
-  )
-}
+poster_second_stage_specs <- poster_model_specs
 
 poster_second_stage_spec_data <- function(district_panel) {
   need_pkg("ivreg", "poster second-stage specifications")
@@ -688,7 +698,7 @@ poster_second_stage_spec_data <- function(district_panel) {
 
   out <- lapply(names(specs), function(id) {
     spec <- specs[[id]]
-    fe <- switch(spec$fixed_effect, region = "factor(region)", state = "factor(state_code_2001)", NULL)
+    fe <- poster_fixed_effect_term(spec$fixed_effect)
     rhs <- c(treatment, spec$controls, fe)
     iv_rhs <- c(instrument, spec$controls, fe)
     fit <- ivreg::ivreg(

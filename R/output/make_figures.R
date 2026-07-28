@@ -25,11 +25,18 @@ sf_geometry_coverage <- function(x) {
   mean(!sf::st_is_empty(sf::st_geometry(x)))
 }
 
+poster_fixed_effect_term <- function(fixed_effect) {
+  switch(
+    fixed_effect,
+    none = character(),
+    region = "factor(region)",
+    state = "factor(state_code_2001)",
+    stop("Unknown poster fixed-effect specification: ", fixed_effect, call. = FALSE)
+  )
+}
+
 poster_residual_terms <- function(fixed_effect = "region", controls = census_2001_absorption_controls()) {
-  terms <- controls
-  if (identical(fixed_effect, "region")) terms <- c("factor(region)", terms)
-  if (identical(fixed_effect, "state")) terms <- c("factor(state_code_2001)", terms)
-  terms
+  c(poster_fixed_effect_term(fixed_effect), controls)
 }
 
 poster_estimable_residual_terms <- function(data, terms) {
