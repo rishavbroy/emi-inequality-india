@@ -239,7 +239,7 @@ clean-targets:
 	Rscript -e 'targets::tar_destroy(destroy = "all")'
 
 clean-renders-core:
-	rm -rf outputs/figures/* outputs/tables/* outputs/diagnostics/build outputs/diagnostics/public paper/output/*
+	rm -rf outputs/figures/* outputs/tables/* outputs/diagnostics/build outputs/diagnostics/public outputs/derived/poster paper/output/*
 	rm -f outputs/diagnostics/*.csv
 	mkdir -p outputs/diagnostics/build outputs/diagnostics/public
 	rm -f paper/report.pdf paper/report.html paper/report.tex paper/appendix.pdf paper/appendix.html paper/appendix.tex
