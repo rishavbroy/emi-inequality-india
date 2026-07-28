@@ -135,7 +135,11 @@ test_that("generated poster logo follows the render-clean lifecycle", {
   ignore <- readLines(repo_file(".gitignore"), warn = FALSE)
   dry_run <- system2(
     "make",
-    c("-n", "clean-renders-core"),
+    c(
+      "-n",
+      "-f", shQuote(repo_file("Makefile")),
+      "clean-renders-core"
+    ),
     stdout = TRUE,
     stderr = TRUE
   )
