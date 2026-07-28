@@ -5,7 +5,7 @@ test_that("final figures degrade to status specs without real sf geometry", {
     real_log_consumption_change = 2,
     pct_pucca = 3,
     pct_head_secondary_plus = 4,
-    region = "North",
+    region = "Northern",
     wavg_ling_degrees = 5
   )
 
@@ -27,7 +27,7 @@ test_that("final figures include public map collages when geometry is validated"
     real_log_consumption_change = c(2, 3),
     pct_pucca = c(3, 4),
     pct_head_secondary_plus = c(4, 5),
-    region = c("North", "North"),
+    region = c("Northern", "Northern"),
     wavg_ling_degrees = c(5, 6),
     geometry = geometry
   )
@@ -50,16 +50,33 @@ test_that("district carve-out figure data uses pct_91in01 values", {
   expect_equal(carveouts$pct_91in01, c(75.5, 24.5))
 })
 
-test_that("public-map regions overwrite numeric source codes with named categories", {
+test_that("public-map regions use the six-region RBI classification", {
   panel <- data.frame(
-    state_20 = c("Punjab", "Tamil Nadu"),
-    region = c(1, 5),
+    state_20 = c(
+      "Punjab", "Assam", "Uttaranchal", "Orissa", "Maharashtra",
+      "Pondicherry", "Delhi", "Andaman & Nicobar Islands"
+    ),
+    region = seq_len(8),
     stringsAsFactors = FALSE
   )
 
   out <- add_panel_regions(panel)
 
-  expect_equal(as.character(out$region), c("North", "South"))
+  expect_equal(
+    as.character(out$region),
+    c("Northern", "North Eastern", "Central", "Eastern", "Western", "Southern", "Northern", "Eastern")
+  )
+  expect_identical(levels(out$region), panel_region_levels())
+})
+
+
+test_that("RBI region crosswalk covers every Census-2001 state and union territory", {
+  states <- census_2001_state_name(sprintf("%02d", 1:35))
+  mapped <- add_panel_regions(data.frame(state_01 = states, stringsAsFactors = FALSE))
+
+  expect_false(anyNA(mapped$region))
+  expect_setequal(as.character(unique(mapped$region)), panel_region_levels())
+  expect_false(anyDuplicated(panel_state_region_crosswalk()$state_key))
 })
 
 test_that("map collage order matches public captions", {
@@ -69,7 +86,7 @@ test_that("map collage order matches public captions", {
     real_log_consumption_change = 2,
     pct_pucca = 3,
     pct_head_secondary_plus = 4,
-    region = "North",
+    region = "Northern",
     wavg_ling_degrees = 5
   )
 
@@ -250,7 +267,7 @@ test_that("poster expected-values figure is generated with the main figures", {
     real_log_consumption_change = 2,
     pct_pucca = 3,
     pct_head_secondary_plus = 4,
-    region = "North",
+    region = "Northern",
     wavg_ling_degrees = 5
   )
 

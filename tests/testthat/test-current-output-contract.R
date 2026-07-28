@@ -165,7 +165,7 @@ test_that("final figure specs degrade to status outputs instead of aborting when
     EMIE = c(10, 20),
     pct_pucca = c(30, 40),
     pct_head_secondary_plus = c(5, 6),
-    region = c("North", "South")
+    region = c("Northern", "Southern")
   )
   figs <- make_figures(panel, character(), list(mode = "final"))
   expect_true("map_consumption_growth" %in% names(figs))

@@ -286,7 +286,7 @@ test_that("instrument exploration diagnostics render target-backed dotplot artif
     district_07 = c("One", "Two", "Three"),
     EMIE = c(0, 10, 80),
     wavg_ling_degrees = c(0, 1, 5),
-    region = c("North", "North", "South")
+    region = c("Northern", "Northern", "Southern")
   )
 
   out <- diagnose_instrument_exploration(panel, list())
