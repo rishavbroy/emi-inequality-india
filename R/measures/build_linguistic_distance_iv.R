@@ -1,12 +1,51 @@
 # This file is part of the EMI inequality research pipeline.
 
+#' Read the auditable Shastry language-distance concordance
+read_shastry_language_distance <- function(path = NULL) {
+  if (is.null(path)) {
+    root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
+    path <- file.path(root, "data", "metadata", "shastry_language_distance.csv")
+  }
+  if (!file.exists(path)) stop("Missing Shastry language-distance concordance: ", path, call. = FALSE)
+  out <- utils::read.csv(path, stringsAsFactors = FALSE, check.names = FALSE)
+  required <- c("canonical_language", "distance_from_hindi")
+  if (!all(required %in% names(out))) stop("Language-distance concordance has an invalid schema.", call. = FALSE)
+  out$canonical_language <- tools::toTitleCase(tolower(trimws(out$canonical_language)))
+  out$distance_from_hindi <- num(out$distance_from_hindi)
+  if (anyDuplicated(out$canonical_language)) stop("Language-distance concordance has duplicate language rows.", call. = FALSE)
+  if (any(!is.finite(out$distance_from_hindi) | out$distance_from_hindi < 0 | out$distance_from_hindi > 5)) {
+    stop("Language-distance concordance values must be finite integers from zero through five.", call. = FALSE)
+  }
+  out
+}
+
+linguistic_distance_degrees <- function(mother_tongue, concordance = read_shastry_language_distance()) {
+  key <- tools::toTitleCase(tolower(trimws(plain_chr(mother_tongue))))
+  concordance$distance_from_hindi[match(key, concordance$canonical_language)]
+}
+
+validate_supplied_linguistic_distances <- function(x) {
+  value <- num(x)
+  if (any(is.finite(value) & (value < 0 | value > 5))) {
+    stop("ling_degrees must be in the 0-5 range.", call. = FALSE)
+  }
+  invisible(value)
+}
+
 #' Build the complete suite of Census 2001 linguistic-distance constructions
 build_linguistic_distance_iv <- function(census_2001_languages, cfg = list()) {
   df <- std(safe_df(census_2001_languages), 2001L)
-  required <- c("state_std", "district_std", "spkr_tot", "ling_degrees", "canonical_language")
+  if ("ling_degrees" %in% names(df)) validate_supplied_linguistic_distances(df$ling_degrees)
+
+  required <- c("state_std", "district_std", "spkr_tot", "canonical_language")
   if (!nrow(df) || !all(required %in% names(df))) {
-    return(linguistic_distance_out_of_pipeline("The full cleaned C-16 language distribution was unavailable."))
+    return(linguistic_distance_out_of_pipeline("No real linguistic-distance column or full cleaned C-16 distribution was available."))
   }
+
+  if (!"ling_degrees" %in% names(df)) {
+    df$ling_degrees <- linguistic_distance_degrees(df$canonical_language)
+  }
+  df$distance_mapping_status <- ifelse(is.finite(num(df$ling_degrees)), "mapped", "unmapped")
 
   split_i <- split(seq_len(nrow(df)), interaction(df[c("state_std", "district_std")], drop = TRUE))
   out <- safe_bind_rows(lapply(split_i, function(i) build_district_language_constructions(df[i, , drop = FALSE])))

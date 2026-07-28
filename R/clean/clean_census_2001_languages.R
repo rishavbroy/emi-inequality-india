@@ -69,10 +69,6 @@ clean_census_2001_language_file <- function(x) {
   leaves$state <- leaves$state_code
   leaves$district <- leaves$district_code
   leaves$district_name <- clean_census_area_name(leaves$area_name)
-  leaves$ling_degrees <- linguistic_distance_degrees(leaves$canonical_language)
-  leaves$distance_mapping_status <- ifelse(
-    is.finite(leaves$ling_degrees), "mapped", "unmapped"
-  )
   std(leaves, 2001L)
 }
 
@@ -89,30 +85,7 @@ clean_census_2001_language_fallback <- function(x) {
   if (!"canonical_language" %in% names(x) && "mother_tongue" %in% names(x)) {
     x$canonical_language <- x$mother_tongue
   }
-  if ("canonical_language" %in% names(x)) {
-    x$ling_degrees <- linguistic_distance_degrees(x$canonical_language)
-    x$distance_mapping_status <- ifelse(is.finite(x$ling_degrees), "mapped", "unmapped")
-  }
   std(x, 2001L)
-}
-
-read_shastry_language_distance <- function(path = "data/metadata/shastry_language_distance.csv") {
-  if (!file.exists(path)) stop("Missing Shastry language-distance concordance: ", path, call. = FALSE)
-  out <- utils::read.csv(path, stringsAsFactors = FALSE, check.names = FALSE)
-  required <- c("canonical_language", "distance_from_hindi")
-  if (!all(required %in% names(out))) stop("Language-distance concordance has an invalid schema.", call. = FALSE)
-  out$canonical_language <- tools::toTitleCase(tolower(trimws(out$canonical_language)))
-  out$distance_from_hindi <- num(out$distance_from_hindi)
-  if (anyDuplicated(out$canonical_language)) stop("Language-distance concordance has duplicate language rows.", call. = FALSE)
-  if (any(!is.finite(out$distance_from_hindi) | out$distance_from_hindi < 0 | out$distance_from_hindi > 5)) {
-    stop("Language-distance concordance values must be finite integers from zero through five.", call. = FALSE)
-  }
-  out
-}
-
-linguistic_distance_degrees <- function(mother_tongue, concordance = read_shastry_language_distance()) {
-  key <- tools::toTitleCase(tolower(trimws(plain_chr(mother_tongue))))
-  concordance$distance_from_hindi[match(key, concordance$canonical_language)]
 }
 
 validate_census_2001_language_distribution <- function(df) {
