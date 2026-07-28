@@ -472,13 +472,15 @@ poster_renderer_test_env <- function() {
   env
 }
 
-test_that("poster renderer uses warning-free vector assets", {
+test_that("poster renderer validates the generated print-logo dependency", {
   renderer <- poster_renderer_test_env()
-  assets <- renderer$poster_required_assets()
+  logo <- tempfile(fileext = ".pdf")
+  writeBin(charToRaw("%PDF-1.3\n"), logo)
+  assets <- renderer$poster_required_assets(logo)
 
-  expect_true(all(file.exists(vapply(assets, repo_file, character(1)))))
-  expect_true(any(grepl("uw-logo-horizontal-full-color-print\\.svg$", assets)))
-  expect_false(any(grepl("uw-logo-horizontal-full-color-print\\.pdf$", assets)))
+  expect_identical(assets, c(logo, "assets/repo-qr.svg"))
+  expect_true(file.exists(assets[[1]]))
+  expect_true(file.exists(repo_file(assets[[2]])))
 })
 
 test_that("poster Typst format supplies both standard template partials", {
