@@ -493,6 +493,8 @@ extended_diagnostic_targets <- list(
   tar_target(diag_ext_instrument_exploration, save_instrument_exploration_diagnostics(diagnose_instrument_exploration(district_panel, cfg))),
   tar_target(first_stage_absorption_diagnostics, diagnose_first_stage_absorption(district_panel)),
   tar_target(diag_ext_first_stage_absorption, save_first_stage_absorption_diagnostics(first_stage_absorption_diagnostics)),
+  tar_target(alternative_distance_first_stages, diagnose_alternative_distance_first_stages(district_panel)),
+  tar_target(diag_ext_alternative_distance_first_stages, save_alternative_distance_first_stages(alternative_distance_first_stages)),
   tar_target(
     census_2001_control_diagnostics,
     diagnose_census_2001_controls(
