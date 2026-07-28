@@ -472,22 +472,41 @@ poster_prediction_vcov <- function(model) {
   sandwich::vcovHC(model, type = "HC1")
 }
 
+poster_prediction_data <- function(model) {
+  data <- attr(model, "prediction_data", exact = TRUE)
+  if (is.null(data)) {
+    stop(
+      "Poster expected-values inference requires fitted-sample prediction data stored with the IV model.",
+      call. = FALSE
+    )
+  }
+  data <- as.data.frame(data)
+  if (!nrow(data) || !"EMIE" %in% names(data)) {
+    stop("Stored IV prediction data are empty or missing EMIE.", call. = FALSE)
+  }
+  data
+}
+
+poster_expected_value_predictions <- function(model, grid) {
+  need_pkg("marginaleffects", "poster expected-values figure")
+  marginaleffects::avg_predictions(
+    model,
+    newdata = poster_prediction_data(model),
+    variables = list(EMIE = grid$EMIE),
+    vcov = poster_prediction_vcov(model),
+    type = "response"
+  )
+}
+
 save_emie_expected_values <- function(spec, path_base, formats, district_panel, iv_models) {
   need_pkg("ggplot2", "poster expected-values figure")
-  need_pkg("marginaleffects", "poster expected-values figure")
   model <- first_estimable_iv_model(iv_models)
   grid <- poster_emie_percentiles(district_panel)
   if (is.null(model) || !nrow(grid)) {
     stop("Poster expected-values figure requires an estimated ivreg model and observed EMIE values.", call. = FALSE)
   }
 
-  vcov_arg <- poster_prediction_vcov(model)
-  predictions <- marginaleffects::avg_predictions(
-    model,
-    variables = list(EMIE = grid$EMIE),
-    vcov = vcov_arg,
-    type = "response"
-  )
+  predictions <- poster_expected_value_predictions(model, grid)
   plot_data <- as.data.frame(predictions)
   if (!"EMIE" %in% names(plot_data)) plot_data$EMIE <- grid$EMIE
 

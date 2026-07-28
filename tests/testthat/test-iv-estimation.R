@@ -23,6 +23,7 @@ test_that("estimate_2sls fits a toy exactly identified IV model when possible", 
   expect_true(all(c("regressors", "instruments", "projected") %in% names(out$toy$x)))
   expect_equal(length(out$toy$y), nrow(panel))
   expect_equal(nrow(out$toy$model), nrow(panel))
+  expect_equal(attr(out$toy, "prediction_data"), panel[c("y", "x", "z")])
 })
 
 test_that("serialized IV models retain inputs required by diagnostics and clustered inference", {

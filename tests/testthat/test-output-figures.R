@@ -210,6 +210,39 @@ test_that("poster inference restores ivreg sandwich methods for serialized model
   expect_equal(covariance, t(covariance), tolerance = 1e-12)
 })
 
+test_that("poster expected-value predictions preserve serialized state fixed-effect levels", {
+  skip_if_not_installed("ivreg")
+  skip_if_not_installed("sandwich")
+  skip_if_not_installed("marginaleffects")
+
+  set.seed(27)
+  n <- 36L
+  state_code_2001 <- rep(c("01", "02", "10"), each = 12L)
+  z <- stats::rnorm(n)
+  EMIE <- 15 + 4 * z + stats::rnorm(n)
+  y <- 2 + 0.3 * EMIE + as.numeric(factor(state_code_2001)) + stats::rnorm(n)
+  panel <- data.frame(
+    y = y, EMIE = EMIE, z = z, state_code_2001 = state_code_2001,
+    state_2001_cluster = state_code_2001, stringsAsFactors = FALSE
+  )
+  formula <- stats::as.formula(
+    "y ~ EMIE + factor(state_code_2001) | z + factor(state_code_2001)"
+  )
+  model <- estimate_2sls(panel, list(model = formula), list())$model
+  restored <- unserialize(serialize(model, NULL))
+  grid <- data.frame(EMIE = stats::quantile(panel$EMIE, c(0.25, 0.75), names = FALSE))
+
+  predictions <- poster_expected_value_predictions(restored, grid)
+
+  expect_equal(nrow(predictions), 2L)
+  expect_equal(as.numeric(predictions$EMIE), grid$EMIE)
+  expect_true(all(is.finite(predictions$estimate)))
+  expect_identical(
+    unique(attr(restored, "prediction_data")$state_code_2001),
+    c("01", "02", "10")
+  )
+})
+
 test_that("poster expected-values figure is generated with the main figures", {
   cfg <- list(mode = "final", output_formats = list(figures = c("pdf", "png")))
   panel <- data.frame(
