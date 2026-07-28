@@ -135,8 +135,8 @@ with the household-weighted mean retained separately. The district outputs also 
 
 The extended-diagnostics graph now estimates three 2SLS specifications on one
 common district sample: nominal log change, person-weighted real log change,
-and real endpoint ANCOVA. All three retain the current control set and state
-fixed effects so the diagnostic isolates the consequences of the outcome
+and real endpoint ANCOVA. All three retain the same non-outcome legacy controls
+and state fixed effects so the diagnostic isolates the consequences of the outcome
 construction before the unfinished Census 2001 control pipeline changes the
 conditioning set. The person-weighted real log-change specification is marked
 as preferred; the public headline model remains unchanged until the Census
@@ -146,3 +146,14 @@ The same diagnostic target writes household price-assignment coverage by wave,
 state, sector, sub-round, assignment type, and donor state, together with a
 district-level comparison of nominal, real, household-weighted, and
 person-weighted consumption constructions.
+
+The public headline model remains gated until the Census-control revision is complete.
+
+The fixed-sample outcome comparison deliberately removes the legacy nominal
+`consumption_0708` level from the common control vector. The change-score models
+therefore do not condition on their own baseline outcome, while the ANCOVA model
+adds exactly one baseline term, `log_real_consumption_0708`. This keeps the
+comparison interpretable and avoids including both nominal baseline consumption
+and its logged real counterpart in the ANCOVA first and second stages. The
+extended diagnostics also export the excluded-instrument first-stage statistic
+for each specification and the estimated ANCOVA baseline coefficient.

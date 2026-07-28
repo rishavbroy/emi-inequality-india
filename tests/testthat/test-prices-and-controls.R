@@ -700,7 +700,18 @@ test_that("consumption comparison formulas define the planned fixed-sample outco
   ancova <- paste(deparse(formulas$real_ancova), collapse = " ")
   expect_match(ancova, "log_real_consumption_1718")
   expect_match(ancova, "log_real_consumption_0708")
+  expect_false(any(vapply(formulas, function(x) "consumption_0708" %in% all.vars(x), logical(1))))
+  expect_equal(
+    sum(all.vars(formulas$real_ancova) == "log_real_consumption_0708"),
+    1L
+  )
   expect_true(all(vapply(formulas, function(x) "state_code_2001" %in% all.vars(x), logical(1))))
+})
+
+test_that("consumption outcome comparison excludes the legacy baseline level control", {
+  controls <- consumption_outcome_comparison_controls()
+  expect_false("consumption_0708" %in% controls)
+  expect_true(all(setdiff(legacy_2007_iv_controls(), "consumption_0708") %in% controls))
 })
 
 test_that("consumption comparison sample is common across all specifications", {
