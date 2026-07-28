@@ -76,7 +76,7 @@ test_that("RBI region crosswalk covers every Census-2001 state and union territo
 
   expect_false(anyNA(mapped$region))
   expect_setequal(as.character(unique(mapped$region)), panel_region_levels())
-  expect_false(anyDuplicated(panel_state_region_crosswalk()$state_key))
+  expect_equal(anyDuplicated(panel_state_region_crosswalk()$state_key), 0L)
 })
 
 test_that("map collage order matches public captions", {
