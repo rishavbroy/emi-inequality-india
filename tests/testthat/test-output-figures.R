@@ -241,6 +241,18 @@ test_that("poster residual maps use one common complete-case sample", {
 })
 
 
+test_that("poster residualization omits fixed effects with one observed level", {
+  panel <- poster_map_fixture(30L)
+  panel$region <- factor(rep(panel_region_levels()[[1]], nrow(panel)), levels = panel_region_levels())
+
+  residuals <- poster_residual_pair(panel, fixed_effect = "region")
+
+  expect_equal(nrow(residuals), nrow(panel))
+  expect_true(all(is.finite(residuals)))
+  expect_equal(colMeans(residuals), c(0, 0), tolerance = 1e-10)
+})
+
+
 test_that("poster first-stage ribbons remain ordered for negative residualized values", {
   skip_if_not_installed("sandwich")
   set.seed(24)

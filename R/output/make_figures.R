@@ -32,6 +32,19 @@ poster_residual_terms <- function(fixed_effect = "region", controls = census_200
   terms
 }
 
+poster_estimable_residual_terms <- function(data, terms) {
+  keep <- vapply(terms, function(term) {
+    variable <- sub("^factor\\((.*)\\)$", "\\1", term)
+    if (!variable %in% names(data)) return(FALSE)
+    values <- data[[variable]]
+    if (grepl("^factor\\(", term)) {
+      return(length(unique(values[!is.na(values)])) >= 2L)
+    }
+    TRUE
+  }, logical(1))
+  terms[keep]
+}
+
 poster_residual_pair <- function(
   panel,
   variables = c("emi_exposure_all_children_0708", "ling_distance_nonzero_mean"),
@@ -47,8 +60,9 @@ poster_residual_pair <- function(
   keep <- stats::complete.cases(df[, required, drop = FALSE])
   if (sum(keep) <= length(required) + 2L) return(out)
   dat <- df[keep, , drop = FALSE]
+  estimable_terms <- poster_estimable_residual_terms(dat, terms)
   for (variable in variables) {
-    fit <- stats::lm(stats::reformulate(terms, response = variable), data = dat)
+    fit <- stats::lm(stats::reformulate(estimable_terms, response = variable), data = dat)
     out[keep, variable] <- stats::residuals(fit)
   }
   out
