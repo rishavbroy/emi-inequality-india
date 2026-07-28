@@ -131,6 +131,25 @@ test_that("audit workspace cleanup removes transient state and preserves optiona
 })
 
 
+test_that("generated poster logo follows the render-clean lifecycle", {
+  ignore <- readLines(repo_file(".gitignore"), warn = FALSE)
+  dry_run <- system2(
+    "make",
+    c("-n", "clean-renders-core"),
+    stdout = TRUE,
+    stderr = TRUE
+  )
+
+  expect_true("outputs/derived/poster/" %in% trimws(ignore))
+  expect_null(attr(dry_run, "status"))
+  expect_match(
+    paste(dry_run, collapse = "\n"),
+    "outputs/derived/poster",
+    fixed = TRUE
+  )
+})
+
+
 test_that("targets graph separates public diagnostics, extended diagnostics, and benchmarks", {
   src <- repo_text("_targets.R")
 
