@@ -65,6 +65,7 @@ construct_child_level_selection_sample <- function(blocks) {
     RECD_TXT_BOOKS = nss_yes_no_indicator(selection_df$RECD_TXT_BOOKS, yes = c(1, 2), no = c(3, NA)),
     RECD_STATIONERY = nss_yes_no_indicator(selection_df$RECD_STATIONERY, yes = c(1, 2), no = c(3, NA)),
     MID_DAY_MEAL_ETC_RECD = nss_yes_no_indicator(selection_df$MID_DAY_MEAL_ETC_RECD, yes = c(1), no = c(2)),
+    MEDIUM_INSTRUCTION = selection_df$MEDIUM_INSTRUCTION %||% NA,
     stringsAsFactors = FALSE
   )
 

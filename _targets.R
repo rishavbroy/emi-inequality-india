@@ -105,7 +105,10 @@ core_pipeline_targets <- list(
   ),
   tar_target(
     measures_2007,
-    build_2007_measures(nss_2007_education, nss_2007_consumption, cfg, consumption_households_2007)
+    build_2007_measures(
+      nss_2007_education, nss_2007_consumption, cfg,
+      consumption_households_2007, selection_data
+    )
   ),
   tar_target(
     measures_2017,

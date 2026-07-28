@@ -9,7 +9,7 @@
 
 #' build 2007 measures
 #'
-build_2007_measures <- function(nss_2007_education, nss_2007_consumption, cfg, consumption_households = NULL) {
+build_2007_measures <- function(nss_2007_education, nss_2007_consumption, cfg, consumption_households = NULL, selection_data = NULL) {
   edu <- as_input_list(nss_2007_education)
   cons <- as_input_list(nss_2007_consumption)
 
@@ -20,6 +20,13 @@ build_2007_measures <- function(nss_2007_education, nss_2007_consumption, cfg, c
 
   out <- compute_emie_2007(b5)
   if (!nrow(out)) return(empty_panel())
+  if (!is.null(selection_data)) {
+    exposure <- build_education_exposure_2007(selection_data)
+    if (nrow(exposure)) {
+      exposure <- validate_education_exposure_identity(exposure, "0708")
+      out <- merge_measure_2007(out, exposure)
+    }
+  }
   if (is.null(consumption_households)) consumption_households <- prepare_2007_consumption_households(b3)
   out <- merge_measure_2007(out, aggregate_consumption_households(consumption_households, district_group_vars_2007(consumption_households), "0708"))
   out <- merge_measure_2007(out, compute_baseline_controls_2007(b4, b3))
@@ -99,8 +106,10 @@ by_district_code_2007 <- function(df, value = NULL, weight = NULL, name = "value
   }))
 }
 
-#' compute emie 2007
+#' Compute legacy EMI share among enrolled children
 #'
+#' This compatibility measure remains for existing public outputs during Phase 1.
+#' New work should use emi_share_enrolled_0708 and emi_exposure_all_children_0708.
 compute_emie_2007 <- function(df) {
   df <- standardize_nss_2007_district_code(std(df, 2007L))
   weight <- first_col(df, c("weight", "WEIGHT", "multiplier"))
