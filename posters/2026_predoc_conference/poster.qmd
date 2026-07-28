@@ -91,13 +91,13 @@ Private schooling remains more accessible to richer households [@muralidharan201
 
 ![First-stage relationship before adjustment, after region adjustment, and after state adjustment.](../../outputs/figures/main/poster_first_stage_specs.pdf){width=96%}
 
-Greater distance from Hindi can raise the relative appeal of English rather than Hindi as *lingua franca*. For families, this can increase demand for EMI. For schools, it can increase the incentive to offer EMI. I test if these forces raise district EMI exposure [@clingingsmith2008; @shastry2012a].
+Greater distance from Hindi can raise the relative appeal of English over Hindi as the learned *lingua franca*. For families, this can increase demand for EMI. For schools, it can increase the incentive to offer EMI. The first stage tests if these forces raise district EMI exposure [@clingingsmith2008; @shastry2012a].
 
 # Second Stage
 
 ![Estimated consumption response across three IV specifications.](../../outputs/figures/main/poster_second_stage_specs.pdf){width=96%}
 
-I test if greater EMI exposure translates into faster local consumption growth.
+The second stage tests if more EMI exposure raises local consumption growth.
 
 # Next Steps
 
@@ -110,7 +110,7 @@ I test if greater EMI exposure translates into faster local consumption growth.
 #block(fill: rgb("f3f0ea"), inset: 6pt, radius: 5pt, width: 100%)[
   #grid(columns: (1fr, auto), gutter: 14pt,
     [*Code, paper, and updates*\ #link("https://git.new/FwmVaXq")[git.new/FwmVaXq]\ #link("https://rishavbroy.github.io")[rishavbroy.github.io]],
-    image("../../assets/repo-qr.svg", width: 1.05in)
+    image("../../assets/repo-qr.svg", width: 1.15in)
   )
 ]
 ```
