@@ -1,7 +1,14 @@
 # Fixed-sample diagnostics for the alternative district-consumption outcomes.
 
+consumption_outcome_comparison_controls <- function() {
+  # Hold the non-outcome conditioning set fixed across specifications. Baseline
+  # consumption is the dependent-variable pretest in ANCOVA, not an additional
+  # legacy level control in every model.
+  setdiff(legacy_2007_iv_controls(), "consumption_0708")
+}
+
 build_consumption_outcome_comparison_formulas <- function() {
-  controls <- legacy_2007_iv_controls()
+  controls <- consumption_outcome_comparison_controls()
   state_fe <- "factor(state_code_2001)"
   list(
     nominal_log_change = make_iv_formula(
@@ -38,8 +45,8 @@ consumption_outcome_common_sample <- function(panel, formulas = build_consumptio
 }
 
 consumption_outcome_model_rows <- function(models, common_sample) {
-  tidy <- tidy_iv_models(models, common_sample)
-  tidy <- tidy[tidy$term == "EMIE", , drop = FALSE]
+  all_terms <- tidy_iv_models(models, common_sample)
+  tidy <- all_terms[all_terms$term == "EMIE", , drop = FALSE]
   model_order <- c("nominal_log_change", "real_log_change_preferred", "real_ancova")
   labels <- c(
     nominal_log_change = "Nominal log change",
@@ -49,11 +56,64 @@ consumption_outcome_model_rows <- function(models, common_sample) {
   tidy$outcome_specification <- unname(labels[tidy$model])
   tidy$preferred <- tidy$model == "real_log_change_preferred"
   tidy$common_sample_n <- nrow(common_sample)
+
+  baseline <- all_terms[
+    all_terms$model == "real_ancova" &
+      all_terms$term == "log_real_consumption_0708",
+    c("estimate", "std.error", "p.value"), drop = FALSE
+  ]
+  tidy$ancova_baseline_estimate <- NA_real_
+  tidy$ancova_baseline_std_error <- NA_real_
+  tidy$ancova_baseline_p_value <- NA_real_
+  if (nrow(baseline) == 1L) {
+    row <- tidy$model == "real_ancova"
+    tidy$ancova_baseline_estimate[row] <- baseline$estimate
+    tidy$ancova_baseline_std_error[row] <- baseline$std.error
+    tidy$ancova_baseline_p_value[row] <- baseline$p.value
+  }
+
   tidy$model <- factor(tidy$model, levels = model_order)
   tidy <- tidy[order(tidy$model), , drop = FALSE]
   tidy$model <- as.character(tidy$model)
   rownames(tidy) <- NULL
   tidy
+}
+
+
+consumption_outcome_first_stage_rows <- function(models, common_sample, cfg) {
+  stages <- estimate_first_stage(models, common_sample, cfg)
+  model_order <- c("nominal_log_change", "real_log_change_preferred", "real_ancova")
+  rows <- safe_bind_rows(lapply(model_order, function(model_name) {
+    x <- stages[stages$model == model_name, , drop = FALSE]
+    if (!nrow(x)) {
+      return(data.frame(
+        model = model_name, instrument = "wavg_ling_degrees",
+        estimate = NA_real_, std.error = NA_real_, partial_f = NA_real_,
+        partial_p = NA_real_, nobs = NA_real_, status = "unavailable",
+        reason = "No first-stage result was returned.", stringsAsFactors = FALSE
+      ))
+    }
+    instrument <- x[x$term == "wavg_ling_degrees", , drop = FALSE]
+    if (!nrow(instrument)) instrument <- x[1L, , drop = FALSE]
+    instrument <- instrument[1L, , drop = FALSE]
+    data.frame(
+      model = model_name,
+      instrument = "wavg_ling_degrees",
+      estimate = instrument$estimate,
+      std.error = instrument$std.error,
+      partial_f = instrument$partial_f,
+      partial_p = instrument$partial_p,
+      nobs = instrument$nobs,
+      status = instrument$status,
+      reason = instrument$reason,
+      stringsAsFactors = FALSE
+    )
+  }))
+  rows$model <- factor(rows$model, levels = model_order)
+  rows <- rows[order(rows$model), , drop = FALSE]
+  rows$model <- as.character(rows$model)
+  rownames(rows) <- NULL
+  rows
 }
 
 summarise_consumption_outcome_sample <- function(common_sample) {
@@ -84,6 +144,7 @@ compare_consumption_outcomes <- function(panel, cfg) {
   models <- estimate_2sls(common_sample, formulas, cfg)
   list(
     coefficients = consumption_outcome_model_rows(models, common_sample),
+    first_stage = consumption_outcome_first_stage_rows(models, common_sample, cfg),
     sample_summary = summarise_consumption_outcome_sample(common_sample),
     common_sample = common_sample,
     models = models,
@@ -165,6 +226,10 @@ save_consumption_price_diagnostics <- function(comparison, households_2007, hous
     outcome_coefficients = write_diagnostic_csv(
       comparison$coefficients,
       file.path(dir, "outcome_fixed_sample_coefficients.csv")
+    ),
+    outcome_first_stage = write_diagnostic_csv(
+      comparison$first_stage,
+      file.path(dir, "outcome_fixed_sample_first_stage.csv")
     ),
     outcome_sample = write_diagnostic_csv(
       comparison$sample_summary,
