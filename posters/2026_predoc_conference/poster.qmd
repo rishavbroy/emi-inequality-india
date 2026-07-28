@@ -56,7 +56,7 @@ execute:
 ]
 ```
 
-**Treatment:** district EMI enrollment among school-going children in 2007-08. **Current outcome:** nominal growth in the education surveys' short household-expenditure measures. **Planned main outcome:** person-weighted real log consumption growth, using state-sector price adjustment. **Instrument:** linguistic distance from Hindi, based on each district's three leading mother tongues. **Planned controls:** a compact Census 2001 set and state fixed effects.
+**Treatment:** district EMI enrollment among school-going children in 2007-08. **Outcome:** person-weighted real log consumption growth, using state-sector temporal price indices and Tendulkar state-sector spatial adjustment. **Instrument:** linguistic distance from Hindi, based on each district's three leading mother tongues. **Controls:** a compact predetermined Census 2001 set and state fixed effects.
 
 ![District EMI exposure in 2007-08.](../../outputs/figures/main/map_emi_exposure.pdf){width=76%}
 
@@ -65,7 +65,7 @@ execute:
 
 ![Adjusted consumption growth across observed district EMI exposure. Points mark exposure percentiles; the ribbon shows 95% confidence intervals.](../../outputs/figures/main/poster_emie_expected_values.pdf){width=92%}
 
-The current estimate is small and imprecise. It uses nominal expenditure proxies and should not be read as the final welfare estimate. The next revision will adjust for state, rural/urban, and temporal price differences and will average consumption over represented people rather than represented households.
+The real-consumption estimate is imprecise, and the instrument is extremely weak after conditioning on Census controls and state fixed effects. The estimate therefore should not be interpreted as credible evidence of a causal effect.
 
 # Interpretation
 
@@ -78,7 +78,7 @@ The current estimate is small and imprecise. It uses nominal expenditure proxies
 
 ![Average linguistic distance from Hindi, constructed from Census 2001 mother-tongue composition.](../../outputs/figures/main/map_linguistic_distance.pdf){width=72%}
 
-The revised specification will compare districts within states and condition on Census 2001 population, urbanization, education, social composition, employment structure, age structure, electricity access, and population density.
+The specification compares districts within states and conditions on Census 2001 population, urbanization, education, social composition, employment structure, age structure, electricity access, and population density.
 
 
 # Why district histories matter
@@ -105,7 +105,7 @@ Where exact assignment is impossible, retain deterministic histories and report 
 
 # Contribution
 
-The project combines household surveys, Census language data, district histories, and price indices at the Census 2001 district level. The displayed estimate remains provisional until the price and Census-control checks are complete.
+The project combines household surveys, Census language and control tables, district histories, and price indices at the Census 2001 district level. The data pipeline is complete; identification remains limited by the weak conditional first stage.
 
 ```{=typst}
 #block(fill: rgb("f3f0ea"), inset: 6pt, radius: 5pt, width: 100%)[

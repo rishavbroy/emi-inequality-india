@@ -157,3 +157,8 @@ comparison interpretable and avoids including both nominal baseline consumption
 and its logged real counterpart in the ANCOVA first and second stages. The
 extended diagnostics also export the excluded-instrument first-stage statistic
 for each specification and the estimated ANCOVA baseline coefficient.
+
+
+## Public specification
+
+The public tables, figures, report values, and spatial diagnostics use the person-weighted real log consumption change model with the predetermined Census 2001 controls and state fixed effects. Nominal log change, ANCOVA, and legacy-control variants remain diagnostic comparisons. Because the conditional excluded-instrument first stage is extremely weak, the public interpretation is explicitly non-causal.
