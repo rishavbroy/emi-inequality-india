@@ -777,6 +777,37 @@ test_that("Census controls attach without changing panel rows", {
 })
 
 
+test_that("Census controls preserve sf geometry and CRS", {
+  testthat::skip_if_not_installed("sf")
+
+  totals <- data.frame(
+    state_code_2001 = c("01", "01"), district_code_2001 = c("01", "02"),
+    population_total = c(100, 200), population_urban = c(20, 50),
+    population_age_7_plus = c(80, 150), adult_secondary_plus = c(10, 30),
+    sc_population = c(5, 10), st_population = c(2, 4), muslim_population = c(8, 20),
+    workers_total = c(40, 80), cultivators = c(10, 20), agricultural_labourers = c(5, 10),
+    population_age_0_14 = c(30, 60), population_age_15_64 = c(60, 120),
+    population_age_65_plus = c(10, 20), households_total = c(20, 40),
+    households_electricity = c(15, 30), area_sq_km = c(10, 20)
+  )
+  controls <- build_census_2001_controls(totals)
+  geometry <- sf::st_sfc(sf::st_point(c(1, 1)), sf::st_point(c(2, 2)), crs = 4326)
+  panel <- sf::st_sf(
+    state_code_2001 = c("01", "01"),
+    district_code_2001 = c("02", "01"),
+    y = 1:2,
+    geometry = geometry
+  )
+
+  out <- attach_census_2001_controls(panel, controls)
+
+  expect_s3_class(out, "sf")
+  expect_identical(sf::st_crs(out), sf::st_crs(panel))
+  expect_identical(sf::st_geometry(out), sf::st_geometry(panel))
+  expect_equal(out$district_code_2001, panel$district_code_2001)
+  expect_equal(nrow(out), nrow(panel))
+})
+
 test_that("Census count sources must share the same district universe", {
   a <- data.frame(
     state_code_2001 = c("01", "01"),

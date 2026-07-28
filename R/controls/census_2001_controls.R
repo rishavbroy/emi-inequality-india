@@ -129,7 +129,17 @@ validate_census_2001_controls <- function(controls, expected_keys = NULL) {
 }
 
 attach_census_2001_controls <- function(panel, controls) {
-  p <- safe_df(panel)
+  is_spatial <- inherits(panel, "sf")
+  if (is_spatial) {
+    need_pkg("sf", "Census control attachment")
+    geometry <- sf::st_geometry(panel)
+    geometry_column <- attr(panel, "sf_column") %||% "geometry"
+    panel_crs <- sf::st_crs(panel)
+    p <- as.data.frame(sf::st_drop_geometry(panel), stringsAsFactors = FALSE)
+  } else {
+    p <- safe_df(panel)
+  }
+
   keys <- census_2001_keys()
   if (!all(keys %in% names(p))) stop("District panel lacks standardized Census keys.", call. = FALSE)
   validate_census_2001_controls(controls)
@@ -137,7 +147,14 @@ attach_census_2001_controls <- function(panel, controls) {
   out <- merge(p, controls, by = keys, all.x = TRUE, sort = FALSE)
   out <- out[match(before, do.call(paste, c(out[keys], sep = "__"))), , drop = FALSE]
   rownames(out) <- NULL
-  if (nrow(out) != nrow(p) || !identical(do.call(paste, c(out[keys], sep = "__")), before)) stop("Attaching Census controls changed panel rows or ordering.", call. = FALSE)
+  if (nrow(out) != nrow(p) || !identical(do.call(paste, c(out[keys], sep = "__")), before)) {
+    stop("Attaching Census controls changed panel rows or ordering.", call. = FALSE)
+  }
+
+  if (is_spatial) {
+    out[[geometry_column]] <- geometry
+    out <- sf::st_as_sf(out, sf_column_name = geometry_column, crs = panel_crs)
+  }
   out
 }
 
