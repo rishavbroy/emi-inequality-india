@@ -249,16 +249,17 @@ Inspired by the measures of public school exposure in @chakraborty2016a, we cons
 $$\text{EMIE}_d = 100\times\frac{\text{Num.  children enrolled in EMI}}{\text{Num. children enrolled in school}}\,\,\, \text{in district }d.$$
 
 
-We are interested in how changes in this intensive margin,^[Future work will likely add school enrollment in general as another endogenous regressor in our model, to reflect the extensive margin of selection into school.] affects changes in $\%\Delta\mathrm{Consumption}_d$,^[Which is a flawed measure of consumption growth on two fronts: 1) it is only a nominal measure, meaning local variations in inflation are not accounted for, and 2) by using a ratio it creates the potential for spurious correlations [@kronmalSpuriousCorrelationFallacy1993]; see @sec-alty for more. Future work will deflate all monetary measures and will either use equations of the form Kronmal proposes, or will replace this measure with standard, simple log differences.] the growth rate of average household consumption expenditures from 2007-08 to 2017-18. To ensure an exogenous error term, we will be using $\mathrm{LingDistance}_d$ as an instrument for $\mathrm{EMIE}_d$ (see @sec-iv-iv for more information). To identify this effect, two-stage least squares (2SLS) estimation will be performed on the following model:
+We are interested in how changes in this intensive margin,^[Future work may add school enrollment itself as another endogenous regressor to represent the extensive margin of selection into school.] affect district real consumption growth from 2007-08 to 2017-18. Our preferred outcome is the log difference in person-weighted real monthly consumption. Nominal household expenditures are first deflated using state-sector temporal indices and Tendulkar spatial relatives, then aggregated to districts with household survey weights and household size. We use $\mathrm{LingDistance}_d$ as an instrument for $\mathrm{EMIE}_d$ (see @sec-iv-iv). The public 2SLS specification is
 $$
 \begin{aligned}
 \mathrm{EMIE}_d
-&= \gamma_0 + \gamma_1\,\mathrm{LingDistance}_d + \sum_{k=1}^{K}\gamma_{k+1}\,X_{kd}
+&= \gamma_0 + \gamma_1\,\mathrm{LingDistance}_d + X_d'\gamma + \alpha_s + v_d,
 \\
-\%\Delta\mathrm{Consumption}_d
-&= \beta_0 + \beta_1\,\widehat{\mathrm{EMIE}}_d + \sum_{k=1}^{K}\beta_{k+1}\,X_{kd}.
+\Delta\log C^{real}_d
+&= \beta_0 + \beta_1\,\widehat{\mathrm{EMIE}}_d + X_d'\beta + \alpha_s + u_d,
 \end{aligned}
 $$ {#eq-iv-eq}
+where $X_d$ contains predetermined Census 2001 controls and $\alpha_s$ denotes Census-2001 state fixed effects.
 Summary statistics for all variables in this model, including the controls $k$ in the vector $X_{kd}$, are provided in @tbl-sum-tbl-iv. Maps of these variables, created using 2001 boundaries, are presented in @fig-map1-fig and @fig-map2-fig.
 
 ![(Clockwise from top left) EMI exposure, consumption growth, pucca (permanent) housing, and household heads with secondary education or more. Data from the 64th round of the NSS 2007-08, "Participation and Expenditure in Education" and "Household Consumer Expenditure."](../outputs/figures/main/collage_main_maps.pdf){#fig-map1-fig fig-pos="H" width="100%"}

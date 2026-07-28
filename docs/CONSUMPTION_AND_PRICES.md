@@ -133,21 +133,17 @@ with the household-weighted mean retained separately. The district outputs also 
 
 ## Implemented fixed-sample comparison
 
-The extended-diagnostics graph now estimates three 2SLS specifications on one
-common district sample: nominal log change, person-weighted real log change,
-and real endpoint ANCOVA. All three retain the same non-outcome legacy controls
-and state fixed effects so the diagnostic isolates the consequences of the outcome
-construction before the unfinished Census 2001 control pipeline changes the
-conditioning set. The person-weighted real log-change specification is marked
-as preferred; the public headline model remains unchanged until the Census
-controls and revision gate are complete.
+The extended-diagnostics graph estimates nominal log change, person-weighted
+real log change, and real endpoint ANCOVA on one common district sample. These
+diagnostic models retain the same non-outcome legacy controls and state fixed
+effects to isolate the consequences of changing the outcome construction. The
+public model is separate: it uses person-weighted real log consumption change,
+the predetermined Census 2001 controls, and state fixed effects.
 
 The same diagnostic target writes household price-assignment coverage by wave,
 state, sector, sub-round, assignment type, and donor state, together with a
 district-level comparison of nominal, real, household-weighted, and
 person-weighted consumption constructions.
-
-The public headline model remains gated until the Census-control revision is complete.
 
 The fixed-sample outcome comparison deliberately removes the legacy nominal
 `consumption_0708` level from the common control vector. The change-score models
