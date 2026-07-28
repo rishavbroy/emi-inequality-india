@@ -32,7 +32,7 @@ sf_geometry_coverage <- function(x) {
 make_figures <- function(district_panel, raw_ilo_figures, cfg, iv_models = NULL, map_geometry = NULL) {
   required_variables <- c(
     "EMIE",
-    "consumption_pct_change",
+    "real_log_consumption_change",
     "pct_pucca",
     "pct_head_secondary_plus",
     "region",
@@ -57,7 +57,7 @@ make_figures <- function(district_panel, raw_ilo_figures, cfg, iv_models = NULL,
     poster_emie_expected_values = figure_spec(
       "poster_emie_expected_values",
       "poster_emie_expected_values.png",
-      "Adjusted consumption growth across EMI exposure",
+      "Adjusted real consumption growth across EMI exposure",
       "Average counterfactual predictions at observed EMIE percentiles.",
       kind = "emie_expected_values"
     )
@@ -69,7 +69,7 @@ make_figures <- function(district_panel, raw_ilo_figures, cfg, iv_models = NULL,
 
   map_specs <- list(
     map_emi_exposure = figure_spec("map_emi_exposure", "map_emi_exposure.png", "EMI Exposure", kind = if (maps_available) "map" else "status", variable = "EMIE"),
-    map_consumption_growth = figure_spec("map_consumption_growth", "map_consumption_growth.png", "% Change in Consumption", kind = if (maps_available) "map" else "status", variable = "consumption_pct_change"),
+    map_consumption_growth = figure_spec("map_consumption_growth", "map_consumption_growth.png", "Real Log Consumption Change", kind = if (maps_available) "map" else "status", variable = "real_log_consumption_change"),
     map_pucca = figure_spec("map_pucca", "map_pucca.png", "% Pucca Homes", kind = if (maps_available) "map" else "status", variable = "pct_pucca"),
     map_education = figure_spec("map_education", "map_education.png", "% HH Head w/ Sec.+", kind = if (maps_available) "map" else "status", variable = "pct_head_secondary_plus"),
     map_region = figure_spec("map_region", "map_region.png", "Region", kind = if (maps_available) "map" else "status", variable = "region"),

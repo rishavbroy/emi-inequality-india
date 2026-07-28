@@ -144,7 +144,7 @@ format_table_for_output <- function(table, public = TRUE) {
   out <- format_public_summary_columns(out)
   out <- drop_empty_output_columns(out)
   if (!length(names(out))) return(data.frame(Note = "No displayable columns.", stringsAsFactors = FALSE))
-  already_polished <- any(names(out) %in% c("Term", "Estimate", "Std. Error", "N", "Min", "1Q", "Med", "3Q", "Max", "Mean", "SD", "Variable", "Description", "Consumption Growth", "EMI Exposure", "Enrolled (1 = yes)"))
+  already_polished <- any(names(out) %in% c("Term", "Estimate", "Std. Error", "N", "Min", "1Q", "Med", "3Q", "Max", "Mean", "SD", "Variable", "Description", "Real Log Consumption Growth", "EMI Exposure", "Enrolled (1 = yes)"))
   if (!already_polished) names(out) <- vapply(names(out), nice_column_name, character(1))
   out
 }
@@ -344,7 +344,7 @@ modelsummary_regression_table <- function(df, name) {
   model_col <- switch(name,
     probit_mfx = "Enrolled (1 = yes)",
     fs_cons = "EMI Exposure",
-    cons_iv = "Consumption Growth",
+    cons_iv = "Real Log Consumption Growth",
     names(df)[[2]]
   )
   names(df) <- c("Term", model_col)
@@ -447,7 +447,7 @@ public_modelsummary_table <- function(model, name, vcov_matrix = NULL, add_rows 
   )
   header <- switch(name,
     fs_cons = c(" " = 1, "EMI Exposure" = 1),
-    cons_iv = c(" " = 1, "Consumption Growth" = 1)
+    cons_iv = c(" " = 1, "Real Log Consumption Growth" = 1)
   )
   kableExtra::add_header_above(tex, header)
 }
@@ -643,7 +643,7 @@ save_table_tex <- function(table, path, name, public = TRUE) {
     header <- switch(name,
       probit_mfx = c(" " = 1, "Enrolled (1 = yes)" = 1),
       fs_cons = c(" " = 1, "EMI Exposure" = 1),
-      cons_iv = c(" " = 1, "Consumption Growth" = 1)
+      cons_iv = c(" " = 1, "Real Log Consumption Growth" = 1)
     )
     tex <- kableExtra::add_header_above(tex, header, escape = FALSE)
     tex <- tex |>

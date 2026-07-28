@@ -41,7 +41,7 @@ build_report_values <- function(ame_results, first_stage_tests, iv_models, selec
   values <- set_report_value(
     values,
     "moran_consumption_growth_p",
-    spatial_p_value(diag_spatial_autocorrelation, legacy_name = "m_cons", pattern = "consumption.*growth|consumption_pct_change"),
+    spatial_p_value(diag_spatial_autocorrelation, legacy_name = "m_cons", pattern = "real.*consumption.*growth|real_log_consumption_change"),
     morans_unavailable
   )
 

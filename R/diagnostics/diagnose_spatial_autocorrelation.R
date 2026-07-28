@@ -77,7 +77,7 @@ diagnose_spatial_autocorrelation <- function(district_panel, iv_models, spatial_
 
   out <- c(out, list(compute_moran_tests(panel$EMIE, weights, legacy_name = "m_EMIE", estimand = "emie", variable = "EMIE", source = "treatment")))
   out <- c(out, list(compute_moran_tests(panel$wavg_ling_degrees, weights, legacy_name = "m_wavg_ling_degrees", estimand = "linguistic_distance", variable = "wavg_ling_degrees", source = "instrument")))
-  out <- c(out, list(compute_moran_tests(panel$consumption_pct_change, weights, legacy_name = "m_cons", estimand = "consumption_growth", variable = "consumption_pct_change", source = "outcome")))
+  out <- c(out, list(compute_moran_tests(panel$real_log_consumption_change, weights, legacy_name = "m_cons", estimand = "real_consumption_growth", variable = "real_log_consumption_change", source = "outcome")))
   out <- c(out, list(compute_moran_tests(panel$gini_change, weights, legacy_name = "m_gini", estimand = "gini_change", variable = "gini_change", source = "outcome")))
 
   out <- safe_bind_rows(out)

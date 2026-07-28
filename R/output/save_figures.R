@@ -153,6 +153,13 @@ public_map_style <- function(variable) {
       breaks = c(10, 100, 200, 300, 400, 450),
       labels = c("10-100", "100-200", "200-300", "300-400", "400-450")
     ),
+    real_log_consumption_change = list(
+      palette = "brewer.reds",
+      title = "Real Log Consumption Change",
+      style = "quantile",
+      breaks = NULL,
+      labels = NULL
+    ),
     pct_pucca = list(
       palette = "brown",
       title = "% Pucca Homes",
