@@ -446,63 +446,39 @@ make_probit_ame_table <- function(ame_results, n = NA_integer_, selection_model 
 }
 
 make_iv_summary_table <- function(district_panel) {
+  controls <- census_2001_control_metadata()
   meta <- data.frame(
     var = c(
       "wavg_ling_degrees", "EMIE",
-      "npeople_0708", "consumption_0708", "gini_cons_0708", "pct_urban", "avg_hh_size",
-      "dependency_ratio", "pct_fem_head", "pct_hindu", "pct_muslim", "pct_other_religion",
-      "pct_st", "pct_sc", "pct_obc", "pct_small_land", "pct_medium_land", "pct_large_land",
-      "pct_head_illiterate", "pct_head_lit_to_primary", "pct_head_secondary_plus", "pct_pucca",
-      "npeople_1718", "consumption_1718", "gini_cons_1718",
-      "consumption_pct_change", "gini_change"
+      "real_consumption_0708", "real_consumption_1718",
+      "real_log_consumption_change",
+      controls$variable
     ),
     label = c(
-      "Ling. Distance",
-      "EMIE", "Population", "Consumption", "Gini of Consumption", "Pct. Urban", "Avg. HH Size",
-      "Dependency Ratio × 100", "Pct. Female Head", "Pct. Hindu", "Pct. Muslim", "Pct. Other",
-      "Pct. ST", "Pct. SC", "Pct. OBC", "Pct. Small Land-Owner", "Pct. Med. Land-Owner", "Pct. Large Land-Owner",
-      "Pct. Head Educ., Illiterate", "Pct. Head Educ., Lit.-Primary", "Pct. Head Educ., Secondary+", "Pct. Pucca",
-      "Population", "Consumption", "Gini of Consumption",
-      "Percent change in consumption", "Change in Gini of consumption"
+      "Linguistic distance",
+      "EMI exposure",
+      "Real consumption, 2007-08",
+      "Real consumption, 2017-18",
+      "Real log consumption change",
+      controls$label
     ),
     desc = c(
-      "Average linguistic distance of mother tongue from Hindi",
-      "EMI exposure",
-      "Estimated via NSS sample weights",
-      "Average household monthly consumption expenditures (Rs.)",
-      "Gini coefficient of consumption",
-      "Percentage of people in an urban area",
-      "Average household size",
-      "Ratio of dependents (0-14, 65+) to labor force (15-64), × 100",
-      "Percentage of households with a female head",
-      "Percentage of Hindus",
-      "Percentage of Muslims",
-      "Percentage not Hindu/Muslim",
-      "Scheduled Tribe",
-      "Scheduled Caste",
-      "Other Backward Class",
-      "Owns 0.005–0.40 hectares",
-      "Owns 0.41–3.00 hectares",
-      "Owns $\\geq$ 3.01 hectares",
-      "Percentage of household heads with educ. level: illiterate",
-      "Percentage of heads with educ. level: literate-primary",
-      "Percentage of heads with educ. level: above secondary",
-      "Percentage in pucca (permanent) homes",
-      "Estimated via NSS sample weights",
-      "Average household monthly consumption expenditures (Rs.)",
-      "Gini coefficient of consumption",
-      "Percent change in consumption",
-      "Change in the Gini coefficient of consumption"
+      "Population-weighted linguistic distance of district mother tongues from Hindi",
+      "Share of school-going children enrolled in English-medium instruction",
+      "Person-weighted monthly consumption in common prices",
+      "Person-weighted monthly consumption in common prices",
+      "Log real consumption in 2017-18 minus log real consumption in 2007-08",
+      controls$description
     ),
     stringsAsFactors = FALSE
   )
-  out <- public_numeric_stats(district_panel, meta, count_vars = c("npeople_0708", "npeople_1718"))
-  out <- insert_summary_group(out, "From 2001:", "wavg_ling_degrees")
-  out <- insert_summary_group(out, "From 2007-08:", "EMIE")
-  out <- insert_summary_group(out, "From 2017-18:", "npeople_1718")
-  out <- insert_summary_group(out, "From 2007-08 to 2017-18:", "consumption_pct_change")
+  out <- public_numeric_stats(district_panel, meta)
+  out <- insert_summary_group(out, "Treatment and instrument:", "wavg_ling_degrees")
+  out <- insert_summary_group(out, "Consumption outcomes:", "real_consumption_0708")
+  out <- insert_summary_group(out, "Census 2001 controls:", controls$variable[[1]])
   out
 }
+
 make_first_stage_table <- function(first_stage_tests, cfg = list()) {
   fs <- as.data.frame(first_stage_tests, stringsAsFactors = FALSE)
   required_cols <- c("model", "term", "estimate", "std.error", "p.value", "partial_f", "partial_p", "status")

@@ -12,6 +12,38 @@ census_2001_main_controls <- function() {
   )
 }
 
+
+census_2001_control_metadata <- function() {
+  data.frame(
+    variable = census_2001_main_controls(),
+    label = c(
+      "Log population",
+      "Urban population share",
+      "Secondary-plus share, age 7+",
+      "Scheduled Caste share",
+      "Scheduled Tribe share",
+      "Muslim share",
+      "Agricultural worker share",
+      "Dependency ratio",
+      "Electricity access share",
+      "Log population density"
+    ),
+    description = c(
+      "Natural log of Census 2001 district population",
+      "Urban population as a percentage of total population",
+      "Population age 7 and above with matric or higher attainment",
+      "Scheduled Caste population as a percentage of total population",
+      "Scheduled Tribe population as a percentage of total population",
+      "Muslim population as a percentage of total population",
+      "Cultivators and agricultural labourers as a percentage of workers",
+      "Population age 0-14 and 65+ as a percentage of population age 15-64",
+      "Households using electricity for lighting as a percentage of households",
+      "Natural log of persons per square kilometre"
+    ),
+    stringsAsFactors = FALSE
+  )
+}
+
 census_2001_appendix_controls <- function() {
   c(
     "literacy_share_2001", "worker_share_2001", "hindu_share_2001",
