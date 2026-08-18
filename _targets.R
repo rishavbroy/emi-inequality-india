@@ -293,17 +293,29 @@ legacy_geography_targets <- list(
   tar_target(district_tracker, apply_manual_district_corrections(district_tracker_raw)),
   tar_target(district_harmonization_crosswalk_file, "data/metadata/district_harmonization_crosswalk.csv", format = "file"),
   tar_target(district_harmonization_crosswalk, read_district_harmonization_crosswalk(district_harmonization_crosswalk_file)),
-  tar_target(district_join_map, prepare_district_join_map(district_harmonization_crosswalk)),
   tar_target(
-    district_panel_legacy,
-    build_district_panel(
-      district_join_map, measures_2007, measures_2017,
-      linguistic_distance_iv, boundaries_2020, cfg
-    )
+    district_join_map,
+    prepare_district_join_map(district_harmonization_crosswalk)
   )
 )
 
 legacy_comparison_targets <- list(
+  tar_target(
+    district_panel_legacy,
+    {
+      legacy_cfg <- utils::modifyList(
+        cfg,
+        list(
+          strict_district_panel_validation = FALSE,
+          strict_analysis_panel_validation = FALSE
+        )
+      )
+      build_district_panel(
+        district_join_map, measures_2007, measures_2017,
+        linguistic_distance_iv, boundaries_2020, legacy_cfg
+      )
+    }
+  ),
   tar_target(legacy_mapping_reviews_file, "data/metadata/district_legacy_mapping_reviews.csv", format = "file"),
   tar_target(legacy_mapping_reviews, read_legacy_mapping_reviews(read.csv(legacy_mapping_reviews_file, stringsAsFactors = FALSE, check.names = FALSE))),
   tar_target(

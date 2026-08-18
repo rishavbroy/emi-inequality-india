@@ -403,18 +403,23 @@ test_that("dependency and target-worker contracts avoid unused attachment machin
   expect_false(file.exists(file.path(root, "R", "packages.R")))
 })
 
-test_that("legacy tracker remains an auditable comparison input", {
-  targets <- repo_text("_targets.R")
+test_that("legacy tracker and panel remain optional comparison inputs", {
+  target_lines <- readLines(repo_file("_targets.R"), warn = FALSE)
+  targets <- paste(target_lines, collapse = "\n")
   diagnostics <- repo_text("R", "diagnostics", "diagnose_district_tracker_sources.R")
   root <- dirname(repo_file("README.md"))
+  geography_start <- match(TRUE, grepl("legacy_geography_targets <- list(", target_lines, fixed = TRUE))
+  comparison_start <- match(TRUE, grepl("legacy_comparison_targets <- list(", target_lines, fixed = TRUE))
+  extended_start <- match(TRUE, grepl("extended_diagnostic_targets <- list(", target_lines, fixed = TRUE))
+  geography <- paste(target_lines[geography_start:(comparison_start - 1L)], collapse = "\n")
+  comparison <- paste(target_lines[comparison_start:(extended_start - 1L)], collapse = "\n")
 
   expect_false(grepl("processed_district_tracker_file", targets, fixed = TRUE))
   expect_match(targets, "prepare_district_join_map(district_harmonization_crosswalk)", fixed = TRUE)
-  expect_match(
-    targets,
-    "tar_target\\(\\s*district_panel_legacy\\s*,",
-    perl = TRUE
-  )
+  expect_false(grepl("district_panel_legacy", geography, fixed = TRUE))
+  expect_match(comparison, "district_panel_legacy", fixed = TRUE)
+  expect_match(comparison, "strict_district_panel_validation = FALSE", fixed = TRUE)
+  expect_match(comparison, "strict_analysis_panel_validation = FALSE", fixed = TRUE)
   expect_match(diagnostics, "data/metadata/district_harmonization_crosswalk.csv", fixed = TRUE)
   expect_false(file.exists(file.path(root, "data", "processed", "district_tracker_2001_2007_2017_2020.csv")))
 })
