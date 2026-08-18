@@ -12,10 +12,18 @@ validate_district_panel <- function(panel, join_map = NULL, strict = FALSE) {
     check_panel_variable_ranges(panel)
   ))
   attr(panel, "district_panel_validation") <- issues
-  if (nrow(issues) && isTRUE(strict)) {
-    stop(paste(issues$message, collapse = "\n"), call. = FALSE)
+  blocking <- district_panel_blocking_issues(issues)
+  if (nrow(blocking) && isTRUE(strict)) {
+    stop(paste(blocking$message, collapse = "\n"), call. = FALSE)
   }
   panel
+}
+
+
+district_panel_blocking_issues <- function(issues) {
+  issues <- safe_df(issues)
+  if (!nrow(issues) || !"severity" %in% names(issues)) return(data.frame())
+  issues[issues$severity %in% "error", , drop = FALSE]
 }
 
 validation_issue <- function(check, severity, message, n = NA_integer_) {

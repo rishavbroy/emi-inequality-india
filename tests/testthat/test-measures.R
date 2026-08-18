@@ -175,6 +175,59 @@ test_that("district panel validation records duplicate and range issues", {
 })
 
 
+test_that("strict district-panel validation distinguishes warnings from errors", {
+  panel <- data.frame(
+    district_panel_id = c("a", "b"),
+    EMIE = c(10, 20),
+    wavg_ling_degrees = c(1, 2),
+    state_17 = c("state", "state"),
+    district_17 = c("district", "district"),
+    stringsAsFactors = FALSE
+  )
+
+  expect_silent(out <- validate_district_panel(panel, strict = TRUE))
+  issues <- attr(out, "district_panel_validation")
+  expect_true(any(issues$severity == "warning"))
+  expect_equal(nrow(district_panel_blocking_issues(issues)), 0L)
+
+  panel$district_panel_id[[2]] <- "a"
+  expect_error(
+    validate_district_panel(panel, strict = TRUE),
+    "district_panel_id is not unique",
+    fixed = TRUE
+  )
+})
+
+
+test_that("final analysis validation does not promote district warnings to errors", {
+  panel <- data.frame(
+    district_panel_id = c("a", "b"),
+    EMIE = c(20, 100),
+    wavg_ling_degrees = c(1, 2),
+    npeople_0708 = c(20000, 25000),
+    consumption_0708 = c(1000, 1100),
+    gini_cons_0708 = c(0.3, 0.31),
+    consumption_1718 = c(1500, 1600),
+    gini_cons_1718 = c(0.32, 0.33),
+    consumption_pct_change = c(50, 45),
+    gini_change = c(0.02, 0.02),
+    state_17 = c("state", "state"),
+    district_17 = c("district", "district"),
+    stringsAsFactors = FALSE
+  )
+  cfg <- list(
+    mode = "final",
+    strict_district_panel_validation = TRUE,
+    strict_analysis_panel_validation = TRUE
+  )
+
+  expect_silent(out <- validate_analysis_district_panel(panel, cfg))
+  expect_length(attr(out, "analysis_panel_validation_failures"), 0L)
+  issues <- attr(out, "district_panel_validation")
+  expect_true(any(issues$severity == "warning"))
+})
+
+
 test_that("analysis district-panel validation inspects join-map many-to-many flags", {
   panel <- data.frame(
     district_panel_id = "a",
