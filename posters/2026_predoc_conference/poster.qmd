@@ -3,15 +3,6 @@ title: "Escaping Inequality in India: English-Medium Instruction & Local Develop
 bibliography: ../../paper/references.bib
 citeproc: true
 suppress-bibliography: true
-brand:
-  logo:
-    images:
-      institution:
-        path: ../../assets/uw-logo-horizontal-full-color-print.pdf
-        alt: University of Wisconsin-Madison
-      repo_qr:
-        path: ../../assets/repo-qr.svg
-        alt: QR code linking to the project repository
 format:
   poster-typst:
     size: "36x24"
@@ -118,7 +109,7 @@ The second stage tests if more EMI exposure raises local consumption growth.
 #block(fill: rgb("f3f0ea"), inset: 6pt, radius: 5pt, width: 100%)[
   #grid(columns: (1fr, auto), gutter: 14pt,
     [*Code, paper, and updates*\ #link("https://git.new/FwmVaXq")[git.new/FwmVaXq]\ #link("https://rishavbroy.github.io")[rishavbroy.github.io]],
-    image(brand-logo-images.repo_qr.path, width: 1.15in, alt: brand-logo-images.repo_qr.alt)
+    image("/assets/repo-qr.svg", width: 1.15in, alt: "QR code linking to the project repository")
   )
 ]
 ```

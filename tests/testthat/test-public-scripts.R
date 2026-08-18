@@ -131,28 +131,6 @@ test_that("audit workspace cleanup removes transient state and preserves optiona
 })
 
 
-test_that("generated poster logo follows the render-clean lifecycle", {
-  ignore <- readLines(repo_file(".gitignore"), warn = FALSE)
-  dry_run <- system2(
-    "make",
-    c(
-      "-n",
-      "-f", shQuote(repo_file("Makefile")),
-      "clean-renders-core"
-    ),
-    stdout = TRUE,
-    stderr = TRUE
-  )
-
-  expect_true("outputs/derived/poster/" %in% trimws(ignore))
-  expect_null(attr(dry_run, "status"))
-  expect_match(
-    paste(dry_run, collapse = "\n"),
-    "outputs/derived/poster",
-    fixed = TRUE
-  )
-})
-
 
 test_that("targets graph separates public diagnostics, extended diagnostics, and benchmarks", {
   src <- repo_text("_targets.R")
@@ -651,27 +629,27 @@ test_that("coding-sample specifications use one valid nonempty marker pair", {
   }
 })
 
-test_that("poster uses Quarto-resolved image resources", {
+test_that("poster Typst assets resolve from the repository root", {
   poster <- repo_text("posters", "2026_predoc_conference", "poster.qmd")
   template <- repo_text(
     "posters", "2026_predoc_conference", "_extensions", "poster",
     "typst-template.typ"
   )
-  show <- repo_text(
-    "posters", "2026_predoc_conference", "_extensions", "poster",
-    "typst-show.typ"
-  )
+  renderer_text <- repo_text("R", "output", "render_public_artifacts.R")
+  renderer <- poster_renderer_test_env()
   targets <- repo_text("_targets.R")
+  source <- paste(poster, template)
+  root_relative_assets <- paste0("/", renderer$poster_required_assets())
 
-  expect_match(poster, "path: ../../assets/uw-logo-horizontal-full-color-print.pdf", fixed = TRUE)
-  expect_match(poster, "path: ../../assets/repo-qr.svg", fixed = TRUE)
-  expect_match(template, "brand-logo-images.institution.path", fixed = TRUE)
-  expect_match(poster, "brand-logo-images.repo_qr.path", fixed = TRUE)
-  expect_false(grepl("institution-logo:", poster, fixed = TRUE))
-  expect_false(grepl("univ_logo.replace", template, fixed = TRUE))
-  expect_false(grepl("institution-logo", show, fixed = TRUE))
-  expect_match(targets, "tar_target(poster_assets, poster_required_assets()", fixed = TRUE)
-  expect_false(grepl("flatten_poster_logo_pdf", targets, fixed = TRUE))
+  expect_true(all(vapply(
+    root_relative_assets,
+    function(path) grepl(path, source, fixed = TRUE),
+    logical(1)
+  )))
+  expect_match(renderer_text, 'env = paste0("TYPST_ROOT=", shQuote(typst_root))', fixed = TRUE)
+  expect_match(targets, "render_poster_pdf(poster_qmd, figure_files, poster_assets, paths$root)", fixed = TRUE)
+  expect_false(grepl("brand-logo-images", source, fixed = TRUE))
+  expect_false(grepl("outputs/derived/poster", source, fixed = TRUE))
 })
 
 

@@ -33,7 +33,6 @@ relevant-literature/
 
 # locally reproducible derived artifacts
 outputs/derived/district_lineage/*.gpkg
-outputs/derived/poster/
 
 # short-lived target/build diagnostics
 outputs/diagnostics/*.csv

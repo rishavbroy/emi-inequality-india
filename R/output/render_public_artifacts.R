@@ -102,18 +102,24 @@ poster_required_assets <- function() {
 #' @param poster_qmd Path to the poster QMD.
 #' @param figure_files Generated figure dependencies.
 #' @param poster_assets Poster image dependencies.
+#' @param project_root Repository root used as Typst's project root.
 #' @return Rendered poster paths.
-render_poster_pdf <- function(poster_qmd, figure_files, poster_assets) {
+render_poster_pdf <- function(poster_qmd, figure_files, poster_assets, project_root = ".") {
   force(figure_files)
   force(poster_assets)
   if (!file.exists(poster_qmd)) stop("Poster source QMD does not exist: ", poster_qmd, call. = FALSE)
   if (!nzchar(Sys.which("quarto"))) stop("Quarto CLI was not found on PATH; cannot render ", poster_qmd, call. = FALSE)
   validate_poster_typst_templates(poster_qmd)
+  typst_root <- normalizePath(project_root, winslash = "/", mustWork = TRUE)
   required_assets <- poster_required_assets()
-  missing <- required_assets[!file.exists(required_assets)]
+  missing <- required_assets[!file.exists(file.path(typst_root, required_assets))]
   if (length(missing)) stop("Poster asset(s) missing: ", paste(missing, collapse = ", "), call. = FALSE)
   pdf_path <- file.path(dirname(poster_qmd), "poster.pdf")
-  status <- system2("quarto", c("render", poster_qmd))
+  status <- system2(
+    "quarto",
+    c("render", poster_qmd),
+    env = paste0("TYPST_ROOT=", shQuote(typst_root))
+  )
   if (!identical(status, 0L)) stop("quarto render ", poster_qmd, " failed with status ", status, call. = FALSE)
   if (!file.exists(pdf_path) || file.info(pdf_path)$size <= 0L) stop("Poster render did not create a non-empty ", pdf_path, call. = FALSE)
   png_path <- render_poster_png(pdf_path, file.path(dirname(pdf_path), "RishavRoy-Education.png"))

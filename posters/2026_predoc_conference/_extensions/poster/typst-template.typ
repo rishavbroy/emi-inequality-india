@@ -100,9 +100,9 @@
       move(
         dy: logo_shift,
         image(
-          brand-logo-images.institution.path,
+          "/assets/uw-logo-horizontal-full-color-print.pdf",
           width: logo_scale,
-          alt: brand-logo-images.institution.alt,
+          alt: "University of Wisconsin-Madison",
         ),
       ),
     ),

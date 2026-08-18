@@ -281,7 +281,7 @@ core_pipeline_targets <- list(
   tar_target(district_matching_note, render_public_html(district_matching_qmd, dependencies = list(report_values)), format = "file"),
   tar_target(long_paths_note, render_public_html(long_paths_qmd), format = "file"),
   tar_target(report, render_report_pdf(report_qmd, report_values, figure_files, table_files), format = "file"),
-  tar_target(poster, render_poster_pdf(poster_qmd, figure_files, poster_assets), format = "file")
+  tar_target(poster, render_poster_pdf(poster_qmd, figure_files, poster_assets, paths$root), format = "file")
 )
 
 legacy_geography_targets <- list(
