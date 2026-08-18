@@ -8,16 +8,7 @@ expenditure is adjusted before district aggregation using a state, rural/urban,
 and survey-period price index. The outcome is the difference in log real
 consumption between 2007-08 and 2017-18.
 
-The public headline switch remains conditional on four checks:
-
-1. every household receives a positive price deflator;
-2. all state and union-territory substitutions are recorded;
-3. the Census 2001 control table has one row per district;
-4. current and revised estimates are compared on one common sample.
-
-Until those checks pass, `build_iv_formulas()` continues to reproduce the
-current paper. `build_revised_iv_formulas()` defines the proposed replacement
-without changing reported estimates prematurely.
+The revision gate has passed: the public model now uses this real-consumption outcome together with the predetermined Census 2001 controls, state fixed effects, all-child EMI exposure, and the preferred scalar linguistic-distance instrument. `build_revised_iv_formulas()` defines the public specification used by the production and conservative/primary/full-reviewed lineage-sensitivity models. `build_legacy_iv_formulas()` is confined to the optional inherited-geography comparison.
 
 ## Consumption estimands
 
@@ -82,7 +73,7 @@ available for source diagnostics.
 
 These readers construct validated source tables only. `R/prices/build_temporal_price_series.R` rescales CPI-RL and state CPI-IW to the 2012-base CPI-R/U scale using the median state-sector ratio over common 2013-14 months. The production chain retains the older sources only for the July 2007-June 2008 survey period and uses state CPI-Rural or CPI-Urban from January 2013 onward. A state-sector chain is rejected when it has fewer than the required number of common months; no link is inferred from another state. The base-2010 CPI-R/U observations for July 2011-June 2012 are converted to the 2012-base scale with the observed 2013-14 overlap and supply the common reference index. This avoids deriving the spatial anchor from incomplete CPI-IW centre coverage in isolated 2012 months.
 
-The production target graph now reads the four CPI files, constructs the monthly state-sector deflator, converts each NSS sub-round to its three survey months, and attaches the arithmetic mean of those monthly deflators to Block 3 household records before district aggregation. The public headline formula remains unchanged until the fixed-sample comparison stage.
+The production target graph reads the four CPI files, constructs the monthly state-sector deflator, converts each NSS sub-round to its three survey months, and attaches the arithmetic mean of those monthly deflators to Block 3 household records before district aggregation. The resulting real-consumption measure is used by the active public model.
 
 ## State inheritance, union-territory fallbacks, and the spatial anchor
 

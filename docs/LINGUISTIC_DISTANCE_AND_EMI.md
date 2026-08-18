@@ -1,6 +1,6 @@
 # Linguistic-distance and EMI constructions
 
-## Phase 1 status
+## Public specification
 
 The pipeline now preserves the full mutually exclusive Census 2001 C-16 mother-tongue distribution. C-16 language-group rows whose codes end in `000` are subtotals and are not observations in the analytical distribution. Their labels are carried to the child mother-tongue rows so that the group-level classifications reported by Shastry (2012, pp. 294–295) can be applied without double counting.
 
@@ -15,7 +15,7 @@ District constructions include:
 - mapped and unmapped speaker coverage;
 - `ling_distance_top3_legacy` and its retained-speaker coverage for descriptive comparison.
 
-The five nonzero distance shares are the proposed excluded-instrument set, with distance zero omitted as the compositional reference. Phase 1 does not yet promote any alternative construction to the public model. The compatibility field `wavg_ling_degrees` remains an alias for the top-three legacy construction until the Phase 2 relevance comparisons are complete.
+The public scalar instrument is `ling_distance_nonzero_mean`, the speaker-weighted mean Shastry distance among mapped speakers with positive distance from Hindi. The five nonzero distance shares remain an extended diagnostic set, with distance zero omitted as the compositional reference. `wavg_ling_degrees` is retained only as a compatibility alias for the top-three legacy construction used in historical comparisons.
 
 ## Education exposure
 
@@ -26,12 +26,12 @@ All district education-exposure margins are derived from the same weighted NSS c
 - `emi_exposure_all_children_0708`: English-medium enrolled children divided by all age-eligible children;
 - `unknown_medium_share_enrolled_0708`: enrolled children whose medium is unavailable.
 
-The historical field `EMIE` remains a compatibility alias for EMI among enrolled children during Phase 1. The preferred future treatment is `emi_exposure_all_children_0708`. The exact decomposition into enrollment and the intensive EMI margin is validated only when medium is fully observed; unknown medium is reported rather than classified as non-English.
+The public treatment is `emi_exposure_all_children_0708`, the survey-weighted share of children ages 5-19 who are both enrolled and observed in English-medium instruction. The historical field `EMIE` remains only for compatibility with legacy comparisons and measures EMI among enrolled children. The exact decomposition into enrollment and the intensive EMI margin is validated only when medium is fully observed; unknown medium is reported rather than classified as non-English.
 
 ## Alternative first-stage specifications
 
 Extended diagnostics estimate the preferred all-child EMI treatment against every
-Phase 1 distance construction on one common district support. The registry covers
+Distance constructions on one common district support. The registry covers
 the nonzero weighted mean, the share at distance three or higher, the legacy
 top-three mean, scalar specifications with combined or separate Hindi and Urdu
 composition controls, and a joint first stage for the five nonzero distance shares.

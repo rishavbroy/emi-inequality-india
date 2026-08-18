@@ -59,7 +59,7 @@ The names describe analysis roles rather than implementation history. Production
 - Gini coefficients are reconstructed from pooled household microdata; district Ginis are never averaged.
 - Multi-parent allocations use tracked weights whose source-unit total is one.
 
-All three panel variants use the same panel builder, pooled-Gini reconstruction, IV formulas, 2SLS estimator, and first-stage diagnostics.
+All three panel variants use the same panel builder, pooled-Gini reconstruction, preferred public IV formulas, 2SLS estimator, and first-stage diagnostics. The lineage sensitivity therefore changes the geography while holding the current treatment, instrument, outcome, controls, and fixed effects fixed.
 
 ## Tracked metadata
 
@@ -88,7 +88,7 @@ These items do not block use of the 573-district production panel.
 
 The inherited harmonization crosswalk and 2020 boundaries are constructed only when extended diagnostics or benchmarks require them. The legacy panel and historical review ledger are constructed only for extended historical comparisons. None is an upstream dependency of the production district panel, models, tables, maps, paper, poster, or application samples.
 
-Historical outputs are written separately, including `legacy_crosswalk_comparison.csv`. They provide provenance and regression comparison, not production gates. The inherited legacy panel is therefore constructed with strict panel validation disabled: duplicated historical split/merge rows remain visible for comparison instead of aborting the optional diagnostic build.
+Historical outputs are written separately, including `legacy_crosswalk_comparison.csv`. They provide provenance and regression comparison, not production gates. The inherited legacy panel is therefore constructed with strict panel validation disabled: duplicated historical split/merge rows remain visible for comparison instead of aborting the optional diagnostic build. Historical regression comparisons use `build_legacy_iv_formulas()` on both the inherited and lineage panels so that those diagnostics isolate geography under the archived specification; the conservative/primary/full-reviewed panel-variant review instead uses the preferred public formulas.
 
 ## Main diagnostics
 
