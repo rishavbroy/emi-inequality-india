@@ -83,7 +83,7 @@ This repository, on the other hand, is intended to signal more than just one PDF
 ## Quickstart using Makefile
 
 ```bash
-make init-renv   # first local setup; creates/updates renv.lock
+make restore     # first local setup on a new machine; restores renv.lock
 make test        # unit tests and input/output contracts; should pass without raw data
 make pipeline-draft
 make report

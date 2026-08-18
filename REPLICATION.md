@@ -40,7 +40,7 @@ The 573-district reviewed primary panel is the production geography. Exact or fu
 The R package dependencies are declared in [`DESCRIPTION`](DESCRIPTION), and [`renv.lock`](renv.lock) records exact package versions. Spatial packages such as `sf` and `spdep` may also require GDAL, GEOS, PROJ, and `pkg-config` system libraries. PDF text checks use Poppler's `pdftotext` executable. The conference poster additionally requires Quarto 1.9.18 or newer for its Typst custom format. The format follows Quarto's standard two-part template structure: `typst-template.typ` defines the poster function and `typst-show.typ` passes document metadata and body content to it. On macOS, these are commonly available through Homebrew as `gdal`, `geos`, `proj`, `pkg-config`, and `poppler`.
 The `testthat` development dependency in `Suggests` is intentionally locked. [`renv/settings.json`](renv/settings.json) records `snapshot.dev = true` and includes `Suggests` in `package.dependency.fields`. To avoid repeating the same synchronization scan in every child R process, [`.Rprofile`](.Rprofile) disables renv's activation-time check; [`scripts/check_source_syntax.sh`](scripts/check_source_syntax.sh) runs one explicit `renv::status(dev = TRUE)` gate instead.
 
-The setup script checks for `gdal-config`, `geos-config`, and `pkg-config` and prints this reminder if they are missing. Existing local installations may still work if binary R packages are already installed, but a fresh machine may need these system libraries before `make init-renv` can install spatial dependencies.
+On a new machine, restore the project library from the tracked lockfile with `make restore`. This delegates directly to `renv::restore()` and does not modify `renv.lock`. If renv must build packages from source, the corresponding system requirements must already be installed. In this lockfile, `s2` declares CMake and OpenSSL requirements, while the spatial stack may also require GDAL, GEOS, PROJ, and `pkg-config`. On macOS, use the standard CRAN R toolchain for the installed R version; Homebrew provides `cmake` and `pkgconf` (which supplies `pkg-config`).
 
 ## Public processed outputs
 
@@ -82,7 +82,7 @@ bash scripts/run_public_build_audit.sh --with-samples --incremental --archive-on
 Useful lower-level Makefile targets are:
 
 ```bash
-make init-renv
+make restore
 make pipeline-draft
 make report
 make samples
