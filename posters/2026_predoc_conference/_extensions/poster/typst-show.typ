@@ -3,7 +3,6 @@
   $if(poster-authors)$ authors: [$poster-authors$], $endif$
   $if(departments)$ departments: [$departments$], $endif$
   $if(size)$ size: "$size$", $endif$
-  $if(institution-logo)$ univ_logo: "$institution-logo$", $endif$
   $if(footer-text)$ footer_text: [$footer-text$], $endif$
   $if(footer-url)$ footer_url: [$footer-url$], $endif$
   $if(footer-emails)$ footer_email_ids: [$footer-emails$], $endif$

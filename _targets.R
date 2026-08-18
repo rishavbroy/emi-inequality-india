@@ -274,15 +274,14 @@ core_pipeline_targets <- list(
   tar_target(report_values, { diag_public_spatial_autocorrelation_files; build_report_values(ame_results, revised_first_stage_tests, revised_iv_models, selection_data, district_panel, diag_public_spatial_autocorrelation, cfg) }),
   tar_target(report_qmd, "paper/report.qmd", format = "file"),
   tar_target(poster_qmd, "posters/2026_predoc_conference/poster.qmd", format = "file"),
-  tar_target(poster_logo_source, "assets/uw-logo-horizontal-full-color-print.pdf", format = "file"),
-  tar_target(poster_logo_pdf, flatten_poster_logo_pdf(poster_logo_source), format = "file"),
+  tar_target(poster_assets, poster_required_assets(), format = "file"),
   tar_target(district_matching_qmd, "docs/district-matching.qmd", format = "file"),
   tar_target(long_paths_qmd, "docs/long-paths-and-8-3-filenames.qmd", format = "file"),
 
   tar_target(district_matching_note, render_public_html(district_matching_qmd, dependencies = list(report_values)), format = "file"),
   tar_target(long_paths_note, render_public_html(long_paths_qmd), format = "file"),
   tar_target(report, render_report_pdf(report_qmd, report_values, figure_files, table_files), format = "file"),
-  tar_target(poster, render_poster_pdf(poster_qmd, figure_files, poster_logo_pdf), format = "file")
+  tar_target(poster, render_poster_pdf(poster_qmd, figure_files, poster_assets), format = "file")
 )
 
 legacy_geography_targets <- list(
