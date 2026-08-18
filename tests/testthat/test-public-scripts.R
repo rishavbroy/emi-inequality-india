@@ -516,15 +516,18 @@ poster_renderer_test_env <- function() {
   env
 }
 
-test_that("poster renderer validates the generated print-logo dependency", {
+test_that("poster renderer declares source assets under assets", {
   renderer <- poster_renderer_test_env()
-  logo <- tempfile(fileext = ".pdf")
-  writeBin(charToRaw("%PDF-1.3\n"), logo)
-  assets <- renderer$poster_required_assets(logo)
+  assets <- renderer$poster_required_assets()
 
-  expect_identical(assets, c(logo, "assets/repo-qr.svg"))
-  expect_true(file.exists(assets[[1]]))
-  expect_true(file.exists(repo_file(assets[[2]])))
+  expect_identical(
+    assets,
+    c(
+      "assets/uw-logo-horizontal-full-color-print.pdf",
+      "assets/repo-qr.svg"
+    )
+  )
+  expect_true(all(file.exists(vapply(assets, repo_file, character(1)))))
 })
 
 test_that("poster Typst format supplies both standard template partials", {
@@ -648,67 +651,29 @@ test_that("coding-sample specifications use one valid nonempty marker pair", {
   }
 })
 
-test_that("poster logo preprocessing preserves the official PDF source contract", {
-  renderer <- poster_renderer_test_env()
-  root <- tempfile("poster logo path with spaces ")
-  dir.create(root, recursive = TRUE)
-  source <- file.path(root, "official print logo.pdf")
-  output <- file.path(root, "derived", "flattened print logo.pdf")
-  writeBin(charToRaw("%PDF-1.7\nsource\n"), source)
-
-  fake_gs <- file.path(root, "fake gs")
-  writeLines(c(
-    "#!/usr/bin/env bash",
-    "set -euo pipefail",
-    "out=''",
-    "input=''",
-    "for arg in \"$@\"; do",
-    "  case \"$arg\" in",
-    "    -sOutputFile=*) out=${arg#-sOutputFile=} ;;",
-    "    *.pdf) input=$arg ;;",
-    "  esac",
-    "done",
-    "test -n \"$out\"",
-    "test -n \"$input\"",
-    "cp \"$input\" \"$out\""
-  ), fake_gs)
-  Sys.chmod(fake_gs, mode = "0755")
-
-  result <- renderer$flatten_poster_logo_pdf(source, output, ghostscript = fake_gs)
-  expect_identical(result, output)
-  expect_true(file.exists(output))
-  expect_gt(file.info(output)$size, 0)
-})
-
-test_that("poster consumes the flattened official print PDF derivative", {
+test_that("poster uses Quarto-resolved image resources", {
   poster <- repo_text("posters", "2026_predoc_conference", "poster.qmd")
-  targets <- repo_text("_targets.R")
-
-  expect_match(
-    poster,
-    "outputs/derived/poster/uw-logo-horizontal-full-color-print-flat.pdf",
-    fixed = TRUE
-  )
-  expect_false(grepl(
-    "../../assets/uw-logo-horizontal-full-color-print.pdf",
-    poster,
-    fixed = TRUE
-  ))
-  expect_match(targets, "tar_target(poster_logo_source", fixed = TRUE)
-  expect_match(targets, "flatten_poster_logo_pdf(poster_logo_source)", fixed = TRUE)
-})
-
-
-test_that("poster template normalizes logo path separators before image loading", {
   template <- repo_text(
     "posters", "2026_predoc_conference", "_extensions", "poster",
     "typst-template.typ"
   )
+  show <- repo_text(
+    "posters", "2026_predoc_conference", "_extensions", "poster",
+    "typst-show.typ"
+  )
+  targets <- repo_text("_targets.R")
 
-  expect_match(template, 'univ_logo.replace("\\\\", "/")', fixed = TRUE)
-  expect_match(template, "image(logo_path, width: logo_scale)", fixed = TRUE)
-  expect_false(grepl("image(univ_logo,", template, fixed = TRUE))
+  expect_match(poster, "path: ../../assets/uw-logo-horizontal-full-color-print.pdf", fixed = TRUE)
+  expect_match(poster, "path: ../../assets/repo-qr.svg", fixed = TRUE)
+  expect_match(template, "brand-logo-images.institution.path", fixed = TRUE)
+  expect_match(poster, "brand-logo-images.repo_qr.path", fixed = TRUE)
+  expect_false(grepl("institution-logo:", poster, fixed = TRUE))
+  expect_false(grepl("univ_logo.replace", template, fixed = TRUE))
+  expect_false(grepl("institution-logo", show, fixed = TRUE))
+  expect_match(targets, "tar_target(poster_assets, poster_required_assets()", fixed = TRUE)
+  expect_false(grepl("flatten_poster_logo_pdf", targets, fixed = TRUE))
 })
+
 
 test_that("poster PNG rendering supports paths containing spaces", {
   skip_if(!nzchar(Sys.which("pdftoppm")), "pdftoppm is unavailable")
