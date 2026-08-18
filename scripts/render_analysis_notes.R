@@ -9,7 +9,7 @@ Sys.setenv(
 )
 
 if (!requireNamespace("targets", quietly = TRUE)) {
-  stop("Package 'targets' is required. Run `make init-renv`.", call. = FALSE)
+  stop("Package 'targets' is required. Run `make restore`.", call. = FALSE)
 }
 
 targets::tar_make(names = tidyselect::all_of("analysis_markdown_files"))

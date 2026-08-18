@@ -11,7 +11,7 @@ if (is_final) unlink(".public-final-ok")
 unlink("outputs/diagnostics/build/target_warnings.csv")
 
 if (!requireNamespace("targets", quietly = TRUE)) {
-  stop("Package 'targets' is required. Run `make init-renv`.", call. = FALSE)
+  stop("Package 'targets' is required. Run `make restore`.", call. = FALSE)
 }
 
 active_manifest <- tryCatch(

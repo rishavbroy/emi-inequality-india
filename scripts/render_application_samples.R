@@ -4,7 +4,7 @@
 # script directly. Public render caching and invalidation are owned by targets.
 
 if (!requireNamespace("targets", quietly = TRUE)) {
-  stop("Package 'targets' is required. Run `make init-renv`.", call. = FALSE)
+  stop("Package 'targets' is required. Run `make restore`.", call. = FALSE)
 }
 
 if (!nzchar(Sys.getenv("EMI_CONFIG"))) {

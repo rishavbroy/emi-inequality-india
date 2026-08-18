@@ -441,6 +441,18 @@ test_that("legacy tracker remains an auditable comparison input", {
   expect_false(file.exists(file.path(root, "data", "processed", "district_tracker_2001_2007_2017_2020.csv")))
 })
 
+test_that("new-machine setup restores the tracked renv lockfile without rewriting it", {
+  skip_if(Sys.which("make") == "")
+  output <- system2("make", c("-n", "init-renv"), stdout = TRUE, stderr = TRUE)
+  expect_identical(attr(output, "status") %||% 0L, 0L)
+  expect_true(any(grepl("renv::restore", output, fixed = TRUE)))
+  expect_false(any(grepl("renv::snapshot|renv::install|renv::init", output)))
+
+  scripts <- list.files("scripts", pattern = "\\.[Rr]$", full.names = TRUE)
+  guidance <- unlist(lapply(scripts, readLines, warn = FALSE), use.names = FALSE)
+  expect_false(any(grepl("make init-renv", guidance, fixed = TRUE)))
+})
+
 test_that("source syntax preflight is centralized and read-only", {
   helper <- repo_text("scripts", "check_source_syntax.sh")
   audit <- repo_text("scripts", "run_public_build_audit.sh")

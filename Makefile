@@ -18,8 +18,8 @@ $(TEXCACHE_DIRS):
 $(QUARTO_CACHE_DIRS):
 	mkdir -p $@
 
-init-renv:
-	Rscript scripts/init_renv.R
+init-renv: restore
+	@echo "init-renv is an alias for restore; renv.lock is not modified."
 
 restore:
 	Rscript -e 'renv::restore(prompt = FALSE)'

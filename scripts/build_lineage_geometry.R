@@ -5,7 +5,7 @@
 # source; it is no longer used to draw production district boundaries.
 
 if (!requireNamespace("targets", quietly = TRUE)) {
-  stop("Package 'targets' is required. Run `make init-renv`.", call. = FALSE)
+  stop("Package 'targets' is required. Run `make restore`.", call. = FALSE)
 }
 if (!requireNamespace("sf", quietly = TRUE)) {
   stop("Package 'sf' is required. Run `make restore`.", call. = FALSE)

@@ -6,7 +6,7 @@ source("R/application_samples/extract_code_excerpts.R")
 `%||%` <- function(x, y) if (is.null(x) || length(x) == 0L) y else x
 
 if (!requireNamespace("yaml", quietly = TRUE)) {
-  stop("Package 'yaml' is required for application-sample specs. Run `make init-renv`.", call. = FALSE)
+  stop("Package 'yaml' is required for application-sample specs. Run `make restore`.", call. = FALSE)
 }
 
 failures <- character()

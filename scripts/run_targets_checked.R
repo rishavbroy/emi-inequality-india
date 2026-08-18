@@ -18,13 +18,13 @@ if (nzchar(starts_with_arg) && nzchar(targets_arg)) {
   stop("Use either --starts-with or --targets, not both.", call. = FALSE)
 }
 if (!requireNamespace("targets", quietly = TRUE)) {
-  stop("Package 'targets' is required. Run `make init-renv`.", call. = FALSE)
+  stop("Package 'targets' is required. Run `make restore`.", call. = FALSE)
 }
 if (!requireNamespace("tidyselect", quietly = TRUE)) {
-  stop("Package 'tidyselect' is required. Run `make init-renv`.", call. = FALSE)
+  stop("Package 'tidyselect' is required. Run `make restore`.", call. = FALSE)
 }
 if (!requireNamespace("rlang", quietly = TRUE)) {
-  stop("Package 'rlang' is required. Run `make init-renv`.", call. = FALSE)
+  stop("Package 'rlang' is required. Run `make restore`.", call. = FALSE)
 }
 
 manifest <- tryCatch(
