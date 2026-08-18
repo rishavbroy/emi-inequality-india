@@ -443,7 +443,12 @@ test_that("legacy tracker remains an auditable comparison input", {
 
 test_that("new-machine setup restores the tracked renv lockfile without rewriting it", {
   skip_if(Sys.which("make") == "")
-  output <- system2("make", c("-n", "init-renv"), stdout = TRUE, stderr = TRUE)
+  output <- system2(
+    "make",
+    c("-n", "-f", shQuote(repo_file("Makefile")), "init-renv"),
+    stdout = TRUE,
+    stderr = TRUE
+  )
   expect_identical(attr(output, "status") %||% 0L, 0L)
   expect_true(any(grepl("renv::restore", output, fixed = TRUE)))
   expect_false(any(grepl("renv::snapshot|renv::install|renv::init", output)))
