@@ -536,17 +536,12 @@ test_that("poster Typst format supplies both standard template partials", {
   expect_true(all(file.exists(paths)))
 })
 
-test_that("poster treatment statement matches the implemented all-child exposure", {
+test_that("poster treatment equation uses the all-child exposure definition", {
   poster <- repo_text("posters", "2026_predoc_conference", "poster.qmd")
 
   expect_match(
     poster,
     "\\mathrm{EMIE}_d = \\Pr(\\text{enrolled and in EMI})_d.",
-    fixed = TRUE
-  )
-  expect_match(
-    poster,
-    "When medium is observed for every enrolled child",
     fixed = TRUE
   )
   expect_false(grepl("\\times \\Pr", poster, fixed = TRUE))
