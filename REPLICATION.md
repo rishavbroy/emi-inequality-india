@@ -42,6 +42,8 @@ The `testthat` development dependency in the project's `Suggests` field is inten
 
 On a new machine, restore the project library from the tracked lockfile with `make restore`. This delegates directly to `renv::restore()` and does not modify `renv.lock`. If renv must build packages from source, the corresponding system requirements must already be installed. In this lockfile, `s2` declares CMake and OpenSSL requirements, while the spatial stack may also require GDAL, GEOS, PROJ, and `pkg-config`. On macOS, use the standard CRAN R toolchain for the installed R version; Homebrew provides `cmake` and `pkgconf` (which supplies `pkg-config`).
 
+Project paths are relative to the repository root by default. Moving or renaming the project directory should therefore not require edits to tracked configuration or deletion of the `{targets}` store. Functions that are explicitly given another root still resolve paths under that root, which keeps temporary-directory tests and external callers predictable.
+
 ## Public processed outputs
 
 The only public district data products intended to be tracked at this stage are:
