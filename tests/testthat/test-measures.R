@@ -162,8 +162,8 @@ test_that("district panel preserves sf geometry when boundary keys match", {
 test_that("district panel validation records duplicate and range issues", {
   panel <- data.frame(
     district_panel_id = c("a", "a"),
-    EMIE = c(10, 120),
-    wavg_ling_degrees = c(1, 2)
+    emi_exposure_all_children_0708 = c(10, 120),
+    ling_distance_nonzero_mean = c(1, 2)
   )
 
   out <- validate_district_panel(panel)
@@ -178,8 +178,8 @@ test_that("district panel validation records duplicate and range issues", {
 test_that("strict district-panel validation distinguishes warnings from errors", {
   panel <- data.frame(
     district_panel_id = c("a", "b"),
-    EMIE = c(10, 20),
-    wavg_ling_degrees = c(1, 2),
+    emi_exposure_all_children_0708 = c(10, 20),
+    ling_distance_nonzero_mean = c(1, 2),
     state_17 = c("state", "state"),
     district_17 = c("district", "district"),
     stringsAsFactors = FALSE
@@ -202,14 +202,14 @@ test_that("strict district-panel validation distinguishes warnings from errors",
 test_that("final analysis validation does not promote district warnings to errors", {
   panel <- data.frame(
     district_panel_id = c("a", "b"),
-    EMIE = c(20, 100),
-    wavg_ling_degrees = c(1, 2),
+    emi_exposure_all_children_0708 = c(20, 100),
+    ling_distance_nonzero_mean = c(1, 2),
     npeople_0708 = c(20000, 25000),
     consumption_0708 = c(1000, 1100),
     gini_cons_0708 = c(0.3, 0.31),
     consumption_1718 = c(1500, 1600),
     gini_cons_1718 = c(0.32, 0.33),
-    consumption_pct_change = c(50, 45),
+    real_log_consumption_change = log(c(1500, 1600)) - log(c(1000, 1100)),
     gini_change = c(0.02, 0.02),
     state_17 = c("state", "state"),
     district_17 = c("district", "district"),

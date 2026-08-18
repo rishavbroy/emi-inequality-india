@@ -357,8 +357,10 @@ modelsummary_regression_table <- function(df, name) {
 public_regression_coef_map <- function() {
   control_meta <- census_2001_control_metadata()
   c(
-    "EMIE" = "EMI exposure (fitted)",
-    "wavg_ling_degrees" = "Linguistic distance",
+    "emi_exposure_all_children_0708" = "EMI exposure (fitted)",
+    "ling_distance_nonzero_mean" = "Linguistic distance",
+    "EMIE" = "EMI share among enrolled (legacy)",
+    "wavg_ling_degrees" = "Linguistic distance (legacy)",
     stats::setNames(control_meta$label, control_meta$variable),
     "(Intercept)" = "Intercept"
   )

@@ -103,6 +103,10 @@ test_that("revised formulas use state fixed effects and predetermined controls",
   expect_match(text, "real_log_consumption_change")
   expect_match(text, "state_code_2001")
   expect_match(text, "urban_share_2001")
+  expect_match(text, "emi_exposure_all_children_0708", fixed = TRUE)
+  expect_match(text, "ling_distance_nonzero_mean", fixed = TRUE)
+  expect_false(grepl("EMIE", text, fixed = TRUE))
+  expect_false(grepl("wavg_ling_degrees", text, fixed = TRUE))
   expect_false(grepl("gini_cons_0708", text, fixed = TRUE))
 })
 

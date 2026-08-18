@@ -1,6 +1,6 @@
 # Overidentification diagnostics for IV specifications.
-# The current baseline is exactly identified: one endogenous variable (EMIE) and
-# one excluded instrument (linguistic distance). The diagnostic therefore reports
+# The preferred public specification is exactly identified: one endogenous EMI-exposure variable and
+# one excluded linguistic-distance instrument. The diagnostic therefore reports
 # exact-identification status from the active IV formulas instead of exposing
 # unimplemented Sargan/GMM placeholders.
 
@@ -8,7 +8,7 @@
 #'
 #' @param iv_models A fitted model or named list of fitted models. Retained for
 #'   target compatibility; identification status is inferred from `model_specs`.
-#' @param model_specs IV formulas from `build_iv_formulas()` or explicit spec
+#' @param model_specs IV formulas or explicit spec
 #'   lists with `endogenous_vars` and `excluded_instruments`.
 #' @param cfg Project config list.
 #' @return Tibble with one row per model/specification.

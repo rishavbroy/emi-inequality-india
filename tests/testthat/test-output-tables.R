@@ -80,7 +80,7 @@ test_that("status-only public tables write stable csv and tex outputs", {
     statistic = NA_real_,
     p.value = NA_real_,
     status = "out_of_active_pipeline",
-    reason = "Missing variables: consumption_pct_change, wavg_ling_degrees",
+    reason = "Missing variables: real_log_consumption_change, ling_distance_nonzero_mean",
     stringsAsFactors = FALSE
   )
 
@@ -92,7 +92,7 @@ test_that("status-only public tables write stable csv and tex outputs", {
   expect_setequal(tools::file_ext(paths), c("csv", "tex"))
   csv <- utils::read.csv(file.path("outputs", "tables", "main", "fs_cons.csv"), check.names = FALSE)
   expect_true(all(c("Term", "Estimate", "Std. Error") %in% names(csv)))
-  expect_match(csv$`Std. Error`[[1]], "wavg_ling_degrees", fixed = TRUE)
+  expect_match(csv$`Std. Error`[[1]], "ling_distance_nonzero_mean", fixed = TRUE)
   tex <- paste(readLines(file.path("outputs", "tables", "main", "fs_cons.tex"), warn = FALSE), collapse = "\n")
   expect_match(tex, "Missing variables", fixed = TRUE)
 })
@@ -101,7 +101,7 @@ test_that("status-only public tables write stable csv and tex outputs", {
 test_that("first-stage public table reports instrument partial F before model F", {
   first_stage <- data.frame(
     model = rep("consumption", 2),
-    term = c("wavg_ling_degrees", "(Intercept)"),
+    term = c("ling_distance_nonzero_mean", "(Intercept)"),
     estimate = c(3.8386, 17.1288),
     std.error = c(1.2477, 23.6954),
     statistic = c(3.0765, 0.7229),
@@ -152,8 +152,8 @@ test_that("public summary tables use documented display names and grouping rows"
 revised_iv_summary_fixture <- function() {
   controls <- census_2001_main_controls()
   out <- data.frame(
-    wavg_ling_degrees = c(0, 2),
-    EMIE = c(0, 10),
+    ling_distance_nonzero_mean = c(0, 2),
+    emi_exposure_all_children_0708 = c(0, 10),
     real_consumption_0708 = c(700, 900),
     real_consumption_1718 = c(800, 1000),
     real_log_consumption_change = log(c(800, 1000)) - log(c(700, 900)),
@@ -166,7 +166,7 @@ revised_iv_summary_fixture <- function() {
 test_that("regression public tables place standard errors below estimates", {
   first_stage <- data.frame(
     model = rep("consumption", 3),
-    term = c("wavg_ling_degrees", "urban_share_2001", "(Intercept)"),
+    term = c("ling_distance_nonzero_mean", "urban_share_2001", "(Intercept)"),
     estimate = c(3.825, 1.2, 17.7),
     std.error = c(1.237, 0.4, 23.5),
     statistic = c(3.1, 3, 0.75),
@@ -199,7 +199,7 @@ test_that("IV summary table retains its description column", {
   expect_true("Description" %in% names(public))
   expect_equal(
     public$Description[public$Variable == "EMI exposure"][[1]],
-    "Share of school-going children enrolled in English-medium instruction"
+    "Share of children ages 5-19 enrolled in English-medium instruction"
   )
 })
 
@@ -255,7 +255,7 @@ test_that("GOF number formatting returns one cell for empty statistics", {
 test_that("regression GOF map includes residual standard error", {
   first_stage <- data.frame(
     model = rep("consumption", 2),
-    term = c("wavg_ling_degrees", "(Intercept)"),
+    term = c("ling_distance_nonzero_mean", "(Intercept)"),
     estimate = c(3.825, 17.7),
     std.error = c(1.237, 23.5),
     statistic = c(3.1, 0.75),
@@ -294,17 +294,17 @@ test_that("IV summary descriptions follow documented prose and grouping order", 
   expect_equal(public$Variable[[8]], "Census 2001 controls:")
   expect_equal(
     public$Description[public$Variable == "EMI exposure"][[1]],
-    "Share of school-going children enrolled in English-medium instruction"
+    "Share of children ages 5-19 enrolled in English-medium instruction"
   )
   expect_equal(
     public$Description[public$Variable == "Linguistic distance"][[1]],
-    "Population-weighted linguistic distance of district mother tongues from Hindi"
+    "Population-weighted mean linguistic distance among mapped speakers with positive distance from Hindi"
   )
 })
 
 test_that("regression captions use plain public titles", {
   expect_equal(table_caption("fs_cons"), "First-Stage Regression: EMI Exposure on Linguistic Distance")
-  expect_equal(table_caption("cons_iv"), "Second-Stage Regression: Real Log Consumption Growth on EMIE (Fitted)")
+  expect_equal(table_caption("cons_iv"), "Second-Stage Regression: Real Log Consumption Growth on EMI Exposure (Fitted)")
   expect_equal(table_caption("probit_mfx"), "Average Marginal Effects and Counterfactual Comparisons for Enrollment Probit")
   expect_false(grepl("\\* p < 0.05", table_caption("fs_cons")))
   expect_false(grepl("\\n", table_caption("fs_cons"), fixed = TRUE))
@@ -425,7 +425,7 @@ test_that("fallback regression TeX output does not expose placeholder term rows"
   save_tables(list(cons_iv = table), list(output_formats = list(tables = "tex")))
   tex <- paste(readLines(file.path("outputs", "tables", "main", "cons_iv.tex"), warn = FALSE), collapse = "\n")
 
-  expect_match(tex, "Second-Stage Regression: Real Log Consumption Growth on EMIE", fixed = TRUE)
+  expect_match(tex, "Second-Stage Regression: Real Log Consumption Growth on EMI Exposure", fixed = TRUE)
   expect_match(tex, "Standard errors clustered by state", fixed = TRUE)
   expect_false(grepl(">~<|& ~ &|^~$", tex))
 })

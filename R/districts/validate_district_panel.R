@@ -80,7 +80,8 @@ check_no_unintended_many_to_many <- function(panel, join_map = NULL) {
 #' check core variables present
 #'
 check_core_variables_present <- function(panel) {
-  required <- c("EMIE", "wavg_ling_degrees")
+  spec <- preferred_iv_variables()
+  required <- unname(unlist(spec, use.names = FALSE))
   missing <- setdiff(required, names(panel))
   if (length(missing)) {
     return(validation_issue("core_variables_present", "warning", paste("Panel missing variables:", paste(missing, collapse = ", ")), length(missing)))
@@ -93,9 +94,17 @@ check_core_variables_present <- function(panel) {
 check_panel_variable_ranges <- function(panel) {
   panel <- as.data.frame(if (inherits(panel, "sf")) sf::st_drop_geometry(panel) else panel, stringsAsFactors = FALSE)
   issues <- list()
-  if ("EMIE" %in% names(panel)) {
-    bad <- is.finite(num(panel$EMIE)) & (num(panel$EMIE) < 0 | num(panel$EMIE) > 100)
-    if (any(bad, na.rm = TRUE)) issues[[length(issues) + 1L]] <- validation_issue("panel_variable_ranges", "error", "EMIE must be on a 0-100 percentage scale.", sum(bad, na.rm = TRUE))
+  treatment <- preferred_iv_variables()$treatment
+  if (treatment %in% names(panel)) {
+    value <- num(panel[[treatment]])
+    bad <- is.finite(value) & (value < 0 | value > 100)
+    if (any(bad, na.rm = TRUE)) {
+      issues[[length(issues) + 1L]] <- validation_issue(
+        "panel_variable_ranges", "error",
+        paste0(treatment, " must be on a 0-100 percentage scale."),
+        sum(bad, na.rm = TRUE)
+      )
+    }
   }
   if ("dependency_ratio" %in% names(panel)) {
     bad <- is.finite(num(panel$dependency_ratio)) & num(panel$dependency_ratio) < 0

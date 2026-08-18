@@ -53,7 +53,8 @@ harmonized_named_measures_available <- function(...) {
 }
 
 panel_has_analysis_core <- function(out) {
-  required <- c("EMIE", "wavg_ling_degrees", "consumption_0708", "consumption_1718")
+  spec <- preferred_iv_variables()
+  required <- c(spec$treatment, spec$instrument, "consumption_0708", "consumption_1718")
   present <- intersect(required, names(out))
   if (!length(present)) return(rep(TRUE, nrow(out)))
   vals <- lapply(out[present], function(x) {
@@ -203,7 +204,8 @@ analysis_panel_validation_failures <- function(out) {
   failures <- character()
   add <- function(...) failures <<- c(failures, paste0(...))
 
-  required <- c("EMIE", "wavg_ling_degrees", "npeople_0708", "consumption_0708", "gini_cons_0708", "consumption_1718", "gini_cons_1718", "consumption_pct_change", "gini_change")
+  spec <- preferred_iv_variables()
+  required <- c(spec$treatment, spec$instrument, "npeople_0708", "consumption_0708", "gini_cons_0708", "consumption_1718", "gini_cons_1718", "real_log_consumption_change", "gini_change")
   missing <- setdiff(required, names(df))
   if (length(missing)) add("district_panel is missing required analysis columns: ", paste(missing, collapse = ", "))
 
@@ -229,9 +231,12 @@ analysis_panel_validation_failures <- function(out) {
     }
   }
 
-  if ("EMIE" %in% names(df)) {
-    emie <- num(df$EMIE)
-    if (mean(emie, na.rm = TRUE) < 10 || max(emie, na.rm = TRUE) < 90) add("EMIE scale is inconsistent with the expected 0-100 percentage scale.")
+  treatment <- spec$treatment
+  if (treatment %in% names(df)) {
+    exposure <- num(df[[treatment]])
+    if (any(is.finite(exposure) & (exposure < 0 | exposure > 100))) {
+      add(treatment, " is inconsistent with the expected 0-100 percentage scale.")
+    }
   }
   if ("npeople_0708" %in% names(df) && mean(num(df$npeople_0708), na.rm = TRUE) < 10000) {
     add("npeople_0708 looks like a sample count rather than weighted population.")

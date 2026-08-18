@@ -245,12 +245,9 @@ core_pipeline_targets <- list(
   tar_target(district_panel, district_panel_primary),
   tar_target(processed_district_panel_file, save_processed_district_panel(district_panel), format = "file"),
 
-  tar_target(iv_formulas, build_iv_formulas(cfg)),
-  tar_target(iv_models, estimate_2sls(district_panel, iv_formulas, cfg)),
   tar_target(revised_iv_formulas, build_revised_iv_formulas()),
   tar_target(revised_iv_models, estimate_2sls(district_panel, revised_iv_formulas, cfg)),
   tar_target(revised_first_stage_tests, estimate_first_stage(revised_iv_models, district_panel, cfg)),
-  tar_target(first_stage_tests, estimate_first_stage(iv_models, district_panel, cfg)),
   tar_target(diag_public_weak_instruments, diagnose_weak_instruments(revised_iv_models, district_panel, cfg)),
   tar_target(diag_public_overidentification, diagnose_overidentification(revised_iv_models, revised_iv_formulas, cfg)),
 
@@ -342,9 +339,9 @@ extended_diagnostic_targets <- list(
     {
       district_panel_primary
       district_panel_full_reviewed
-      iv_models
+      revised_iv_models
       iv_models_full_reviewed
-      first_stage_tests
+      revised_first_stage_tests
       first_stage_tests_full_reviewed
       diag_ext_lineage_panel_variants
       save_district_lineage(district_lineage)
@@ -372,11 +369,14 @@ extended_diagnostic_targets <- list(
   ),
   tar_target(
     district_panel_full_reviewed,
-    full_reviewed_gini_reconstruction$panel
+    attach_census_2001_controls(
+      full_reviewed_gini_reconstruction$panel,
+      census_2001_controls
+    )
   ),
   tar_target(
     iv_models_conservative,
-    estimate_2sls(district_panel_conservative, iv_formulas, cfg)
+    estimate_2sls(district_panel_conservative, revised_iv_formulas, cfg)
   ),
   tar_target(
     first_stage_tests_conservative,
@@ -384,7 +384,7 @@ extended_diagnostic_targets <- list(
   ),
   tar_target(
     iv_models_full_reviewed,
-    estimate_2sls(district_panel_full_reviewed, iv_formulas, cfg)
+    estimate_2sls(district_panel_full_reviewed, revised_iv_formulas, cfg)
   ),
   tar_target(
     first_stage_tests_full_reviewed,
@@ -404,12 +404,12 @@ extended_diagnostic_targets <- list(
       ),
       models = list(
         conservative = iv_models_conservative,
-        primary = iv_models,
+        primary = revised_iv_models,
         full_reviewed = iv_models_full_reviewed
       ),
       first_stage_tests = list(
         conservative = first_stage_tests_conservative,
-        primary = first_stage_tests,
+        primary = revised_first_stage_tests,
         full_reviewed = first_stage_tests_full_reviewed
       ),
       gini_audits = list(
@@ -423,13 +423,26 @@ extended_diagnostic_targets <- list(
     diag_ext_lineage_panel_variants,
     save_lineage_panel_variant_review(lineage_panel_variant_review)
   ),
+  tar_target(legacy_iv_formulas, build_legacy_iv_formulas()),
   tar_target(
     iv_models_legacy,
-    estimate_2sls(district_panel_legacy, iv_formulas, cfg)
+    estimate_2sls(district_panel_legacy, legacy_iv_formulas, cfg)
+  ),
+  tar_target(
+    iv_models_conservative_legacy_spec,
+    estimate_2sls(district_panel_conservative, legacy_iv_formulas, cfg)
   ),
   tar_target(
     first_stage_tests_legacy,
     estimate_first_stage(iv_models_legacy, district_panel_legacy, cfg)
+  ),
+  tar_target(
+    first_stage_tests_conservative_legacy_spec,
+    estimate_first_stage(
+      iv_models_conservative_legacy_spec,
+      district_panel_conservative,
+      cfg
+    )
   ),
   tar_target(
     lineage_shared_support,
@@ -442,7 +455,7 @@ extended_diagnostic_targets <- list(
     iv_models_legacy_shared,
     estimate_2sls(
       lineage_shared_support$legacy,
-      iv_formulas,
+      legacy_iv_formulas,
       cfg
     )
   ),
@@ -458,7 +471,7 @@ extended_diagnostic_targets <- list(
     iv_models_lineage_shared,
     estimate_2sls(
       lineage_shared_support$lineage,
-      iv_formulas,
+      legacy_iv_formulas,
       cfg
     )
   ),
@@ -476,9 +489,9 @@ extended_diagnostic_targets <- list(
       district_panel_legacy,
       district_panel_conservative,
       iv_models_legacy,
-      iv_models_conservative,
+      iv_models_conservative_legacy_spec,
       first_stage_tests_legacy,
-      first_stage_tests_conservative,
+      first_stage_tests_conservative_legacy_spec,
       district_lineage$full_reviewed_source_crosswalk,
       district_lineage$conservative_mapping_eligibility,
       iv_models_legacy_shared,

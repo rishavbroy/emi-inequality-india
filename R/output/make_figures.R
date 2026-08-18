@@ -95,15 +95,14 @@ add_poster_residual_variables <- function(district_panel) {
 make_figures <- function(district_panel, raw_ilo_figures, cfg, iv_models = NULL, map_geometry = NULL) {
   district_panel <- add_poster_residual_variables(district_panel)
 
+  spec <- preferred_iv_variables()
   required_variables <- c(
-    "EMIE",
-    "emi_exposure_all_children_0708",
-    "ling_distance_nonzero_mean",
+    spec$treatment,
+    spec$instrument,
     "real_log_consumption_change",
     "pct_pucca",
     "pct_head_secondary_plus",
     "region",
-    "wavg_ling_degrees",
     "resid_emi_exposure_region_expanded",
     "resid_ling_distance_region_expanded"
   )
@@ -127,7 +126,7 @@ make_figures <- function(district_panel, raw_ilo_figures, cfg, iv_models = NULL,
       "poster_emie_expected_values",
       "poster_emie_expected_values.png",
       "Adjusted real consumption growth across EMI exposure",
-      "Average counterfactual predictions at observed EMIE percentiles.",
+      "Average counterfactual predictions at observed EMI-exposure percentiles.",
       kind = "emie_expected_values"
     ),
     poster_first_stage_specs = figure_spec(
@@ -151,19 +150,12 @@ make_figures <- function(district_panel, raw_ilo_figures, cfg, iv_models = NULL,
   maps_available <- !length(missing_vars) && geometry_ok
 
   map_specs <- list(
-    map_emi_exposure = figure_spec("map_emi_exposure", "map_emi_exposure.png", "EMI Exposure", kind = if (maps_available) "map" else "status", variable = "EMIE"),
+    map_emi_exposure = figure_spec("map_emi_exposure", "map_emi_exposure.png", "EMI Exposure", kind = if (maps_available) "map" else "status", variable = spec$treatment),
     map_consumption_growth = figure_spec("map_consumption_growth", "map_consumption_growth.png", "Real Log Consumption Change", kind = if (maps_available) "map" else "status", variable = "real_log_consumption_change"),
     map_pucca = figure_spec("map_pucca", "map_pucca.png", "% Pucca Homes", kind = if (maps_available) "map" else "status", variable = "pct_pucca"),
     map_education = figure_spec("map_education", "map_education.png", "% HH Head w/ Sec.+", kind = if (maps_available) "map" else "status", variable = "pct_head_secondary_plus"),
     map_region = figure_spec("map_region", "map_region.png", "Region", kind = if (maps_available) "map" else "status", variable = "region"),
-    map_linguistic_distance = figure_spec("map_linguistic_distance", "map_linguistic_distance.png", "Linguistic Distance", kind = if (maps_available) "map" else "status", variable = "wavg_ling_degrees"),
-    map_preferred_linguistic_distance = figure_spec(
-      "map_preferred_linguistic_distance",
-      "map_preferred_linguistic_distance.png",
-      "Preferred Linguistic Distance",
-      kind = if (maps_available) "map" else "status",
-      variable = "ling_distance_nonzero_mean"
-    ),
+    map_linguistic_distance = figure_spec("map_linguistic_distance", "map_linguistic_distance.png", "Linguistic Distance", kind = if (maps_available) "map" else "status", variable = spec$instrument),
     map_residual_emi_exposure = figure_spec(
       "map_residual_emi_exposure",
       "map_residual_emi_exposure.png",

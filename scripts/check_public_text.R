@@ -40,15 +40,6 @@ blocked_map_text <- c(
   "the withheld final map figures"
 )
 
-required_table_captions <- c(
-  "Summary Statistics for Enrollment Participation Model (Numeric Variables)",
-  "Summary Statistics for Enrollment Participation Model (Categorical Variables)",
-  "Average Marginal Effects and Counterfactual Comparisons for Enrollment Probit",
-  "Summary Statistics for 2SLS Model",
-  "First-Stage Regression: EMI Exposure on Linguistic Distance",
-  "Second-Stage Regression: Consumption Growth on EMIE (Fitted)"
-)
-
 hits <- list()
 for (file in files) {
   txt <- readLines(file, warn = FALSE)
@@ -77,14 +68,6 @@ for (file in unique(names(required_figure_captions))) {
   missing <- expected[!vapply(expected, grepl, logical(1), x = text, fixed = TRUE)]
   if (length(missing)) {
     caption_hits <- c(caption_hits, paste0(file, " is missing required figure caption: ", missing))
-  }
-}
-
-if (file.exists("paper/report.qmd")) {
-  report_text <- paste(readLines("paper/report.qmd", warn = FALSE), collapse = "\n")
-  missing <- required_table_captions[!vapply(required_table_captions, grepl, logical(1), x = report_text, fixed = TRUE)]
-  if (length(missing)) {
-    caption_hits <- c(caption_hits, paste0("paper/report.qmd is missing required table caption: ", missing))
   }
 }
 

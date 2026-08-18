@@ -298,8 +298,8 @@ first_stage_vif_diagnostics <- function(data, registry, treatment, instrument) {
 
 #' Estimate a fixed-support first-stage absorption ladder
 #'
-#' The preferred Phase 1 treatment and full-distribution scalar instrument are
-#' defaults. Public IV outputs remain unchanged until these diagnostics are reviewed.
+#' The preferred public treatment and full-distribution scalar instrument are
+#' defaults. These diagnostics decompose the same first stage used by the public IV outputs.
 diagnose_first_stage_absorption <- function(
   panel,
   treatment = "emi_exposure_all_children_0708",

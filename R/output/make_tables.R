@@ -446,10 +446,11 @@ make_probit_ame_table <- function(ame_results, n = NA_integer_, selection_model 
 }
 
 make_iv_summary_table <- function(district_panel) {
+  spec <- preferred_iv_variables()
   controls <- census_2001_control_metadata()
   meta <- data.frame(
     var = c(
-      "wavg_ling_degrees", "EMIE",
+      spec$instrument, spec$treatment,
       "real_consumption_0708", "real_consumption_1718",
       "real_log_consumption_change",
       controls$variable
@@ -463,8 +464,8 @@ make_iv_summary_table <- function(district_panel) {
       controls$label
     ),
     desc = c(
-      "Population-weighted linguistic distance of district mother tongues from Hindi",
-      "Share of school-going children enrolled in English-medium instruction",
+      "Population-weighted mean linguistic distance among mapped speakers with positive distance from Hindi",
+      "Share of children ages 5-19 enrolled in English-medium instruction",
       "Person-weighted monthly consumption in common prices",
       "Person-weighted monthly consumption in common prices",
       "Log real consumption in 2017-18 minus log real consumption in 2007-08",
@@ -473,7 +474,7 @@ make_iv_summary_table <- function(district_panel) {
     stringsAsFactors = FALSE
   )
   out <- public_numeric_stats(district_panel, meta)
-  out <- insert_summary_group(out, "Treatment and instrument:", "wavg_ling_degrees")
+  out <- insert_summary_group(out, "Treatment and instrument:", spec$instrument)
   out <- insert_summary_group(out, "Consumption outcomes:", "real_consumption_0708")
   out <- insert_summary_group(out, "Census 2001 controls:", controls$variable[[1]])
   out
@@ -496,7 +497,8 @@ make_first_stage_table <- function(first_stage_tests, cfg = list()) {
   }
   status_reasons <- unique(stats::na.omit(as.character(fs$reason[!is.na(fs$status) & fs$status != "estimated"])))
   fs <- fs[fs$status == "estimated" & !is.na(fs$term), , drop = FALSE]
-  required_terms <- c("wavg_ling_degrees", "(Intercept)")
+  instrument <- preferred_iv_variables()$instrument
+  required_terms <- c(instrument, "(Intercept)")
   missing_terms <- setdiff(required_terms, fs$term)
   if (length(missing_terms)) {
     if (length(status_reasons)) {
@@ -510,14 +512,14 @@ make_first_stage_table <- function(first_stage_tests, cfg = list()) {
     return(table_status_row("first_stage", "unavailable", msg))
   }
   term_order <- c(
-    "wavg_ling_degrees",
+    instrument,
     census_2001_main_controls(),
     "(Intercept)"
   )
   fs <- fs[order(match(fs$term, term_order), fs$term), , drop = FALSE]
   fs <- fs[!is.na(match(fs$term, term_order)), , drop = FALSE]
 
-  stat <- fs[fs$term == "wavg_ling_degrees", , drop = FALSE]
+  stat <- fs[fs$term == instrument, , drop = FALSE]
   f_value <- if (nrow(stat)) first_finite_value(stat, c("partial_f", "model_f")) else NA_real_
   f_p <- if (nrow(stat)) first_finite_value(stat, c("partial_p", "model_p")) else NA_real_
   f_row <- data.frame(
@@ -624,8 +626,10 @@ iv_table_term_label <- function(term) {
   control_meta <- census_2001_control_metadata()
   labels <- c(
     "(Intercept)" = "Constant",
-    EMIE = "EMIE",
-    wavg_ling_degrees = "Linguistic distance",
+    emi_exposure_all_children_0708 = "EMI exposure",
+    ling_distance_nonzero_mean = "Linguistic distance",
+    EMIE = "EMI share among enrolled",
+    wavg_ling_degrees = "Legacy linguistic distance",
     stats::setNames(control_meta$label, control_meta$variable)
   )
   out <- unname(labels[term])

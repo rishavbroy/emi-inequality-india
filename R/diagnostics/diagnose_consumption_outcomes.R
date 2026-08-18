@@ -8,19 +8,20 @@ consumption_outcome_comparison_controls <- function() {
 }
 
 build_consumption_outcome_comparison_formulas <- function() {
+  spec <- preferred_iv_variables()
   controls <- consumption_outcome_comparison_controls()
   state_fe <- "factor(state_code_2001)"
   list(
     nominal_log_change = make_iv_formula(
-      "log_consumption_difference", "EMIE", "wavg_ling_degrees",
+      "log_consumption_difference", spec$treatment, spec$instrument,
       controls = controls, fixed_effects = state_fe
     ),
     real_log_change_preferred = make_iv_formula(
-      "real_log_consumption_change", "EMIE", "wavg_ling_degrees",
+      "real_log_consumption_change", spec$treatment, spec$instrument,
       controls = controls, fixed_effects = state_fe
     ),
     real_ancova = make_iv_formula(
-      "log_real_consumption_1718", "EMIE", "wavg_ling_degrees",
+      "log_real_consumption_1718", spec$treatment, spec$instrument,
       controls = c("log_real_consumption_0708", controls), fixed_effects = state_fe
     )
   )
@@ -45,8 +46,9 @@ consumption_outcome_common_sample <- function(panel, formulas = build_consumptio
 }
 
 consumption_outcome_model_rows <- function(models, common_sample) {
+  treatment <- preferred_iv_variables()$treatment
   all_terms <- tidy_iv_models(models, common_sample)
-  tidy <- all_terms[all_terms$term == "EMIE", , drop = FALSE]
+  tidy <- all_terms[all_terms$term == treatment, , drop = FALSE]
   model_order <- c("nominal_log_change", "real_log_change_preferred", "real_ancova")
   labels <- c(
     nominal_log_change = "Nominal log change",
@@ -81,24 +83,25 @@ consumption_outcome_model_rows <- function(models, common_sample) {
 
 
 consumption_outcome_first_stage_rows <- function(models, common_sample, cfg) {
+  instrument_name <- preferred_iv_variables()$instrument
   stages <- estimate_first_stage(models, common_sample, cfg)
   model_order <- c("nominal_log_change", "real_log_change_preferred", "real_ancova")
   rows <- safe_bind_rows(lapply(model_order, function(model_name) {
     x <- stages[stages$model == model_name, , drop = FALSE]
     if (!nrow(x)) {
       return(data.frame(
-        model = model_name, instrument = "wavg_ling_degrees",
+        model = model_name, instrument = instrument_name,
         estimate = NA_real_, std.error = NA_real_, partial_f = NA_real_,
         partial_p = NA_real_, nobs = NA_real_, status = "unavailable",
         reason = "No first-stage result was returned.", stringsAsFactors = FALSE
       ))
     }
-    instrument <- x[x$term == "wavg_ling_degrees", , drop = FALSE]
+    instrument <- x[x$term == instrument_name, , drop = FALSE]
     if (!nrow(instrument)) instrument <- x[1L, , drop = FALSE]
     instrument <- instrument[1L, , drop = FALSE]
     data.frame(
       model = model_name,
-      instrument = "wavg_ling_degrees",
+      instrument = instrument_name,
       estimate = instrument$estimate,
       std.error = instrument$std.error,
       partial_f = instrument$partial_f,

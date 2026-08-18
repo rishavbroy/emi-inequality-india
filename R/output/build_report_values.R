@@ -52,39 +52,19 @@ build_report_values <- function(ame_results, first_stage_tests, iv_models, selec
   values$partial_f_report <- format_report_value(values$partial_f, function(x) round(x, 2))
   values$partial_p_report <- format_report_value(values$partial_p, function(x) signif(x, 2))
 
-  values <- set_report_value(values, "first_stage_linguistic_distance_estimate", first_stage_report_value(first_stage_tests, iv_models, district_panel, c("wavg_ling_degrees", "linguistic_distance", "ling_degrees"), "estimate", 2), unavailable_first_stage)
-  values$first_stage_linguistic_distance_p <- value_or_status(first_stage_report_value(first_stage_tests, iv_models, district_panel, c("wavg_ling_degrees", "linguistic_distance", "ling_degrees"), "p.value", 3), unavailable_first_stage)
-  values <- set_report_value(values, "first_stage_gini_estimate", first_stage_report_value(first_stage_tests, iv_models, district_panel, "gini_cons_0708", "estimate", 2), unavailable_first_stage)
-  values$first_stage_gini_p <- value_or_status(first_stage_report_value(first_stage_tests, iv_models, district_panel, "gini_cons_0708", "p.value", 3), unavailable_first_stage)
+  spec <- preferred_iv_variables()
+  instrument_terms <- c(spec$instrument, "linguistic_distance", "ling_degrees")
+  values <- set_report_value(values, "first_stage_linguistic_distance_estimate", first_stage_report_value(first_stage_tests, iv_models, district_panel, instrument_terms, "estimate", 2), unavailable_first_stage)
+  values$first_stage_linguistic_distance_p <- value_or_status(first_stage_report_value(first_stage_tests, iv_models, district_panel, instrument_terms, "p.value", 3), unavailable_first_stage)
 
-  iv_terms <- list(
-    iv_emie = "EMIE",
-    iv_pct_urban = "pct_urban",
-    iv_pct_head_secondary_plus = "pct_head_secondary_plus",
-    iv_pct_muslim = "pct_muslim",
-    iv_pct_st = "pct_st",
-    iv_pct_obc = "pct_obc",
-    iv_pct_medium_land = "pct_medium_land",
-    iv_pct_large_land = "pct_large_land",
-    iv_gini_cons_0708 = "gini_cons_0708",
-    iv_pct_fem_head = "pct_fem_head"
-  )
-  for (name in names(iv_terms)) {
-    values[[paste0(name, "_estimate")]] <- value_or_status(coefficient_value(
-      model, iv_terms[[name]], digits = 3, data = district_panel
-    ), unavailable_iv)
-    values[[paste0(name, "_p")]] <- value_or_status(p_value(model, iv_terms[[name]], digits = 3, data = district_panel), unavailable_iv)
-  }
-
+  values$iv_emie_estimate <- value_or_status(coefficient_value(
+    model, spec$treatment, digits = 3, data = district_panel
+  ), unavailable_iv)
+  values$iv_emie_p <- value_or_status(p_value(
+    model, spec$treatment, digits = 3, data = district_panel
+  ), unavailable_iv)
   values$iv_emie_estimate_report <- value_or_status(coefficient_value(
-    model, iv_terms$iv_emie, digits = 2, data = district_panel
-  ), unavailable_iv)
-  values$iv_pct_urban_estimate_report <- value_or_status(coefficient_value(
-    model, iv_terms$iv_pct_urban, digits = 2, data = district_panel
-  ), unavailable_iv)
-  values$iv_pct_head_secondary_plus_estimate_report <- value_or_status(coefficient_value(
-    model, iv_terms$iv_pct_head_secondary_plus, digits = 2,
-    data = district_panel
+    model, spec$treatment, digits = 2, data = district_panel
   ), unavailable_iv)
 
   values

@@ -15,11 +15,12 @@ save_public_iv_panel_diagnostics <- function(district_panel, tables = NULL, dir 
 }
 
 public_iv_panel_diagnostic_columns <- function(panel) {
+  spec <- preferred_iv_variables()
   present_cols(panel, c(
     "district_panel_id", "state_20", "district_20", "state_17", "district_17",
     "state_07", "district_07", "state_01", "district_01", "state_std", "district_std",
-    "EMIE", "wavg_ling_degrees", "npeople_0708", "consumption_0708",
-    "dependency_ratio", "consumption_1718", "consumption_pct_change",
+    spec$treatment, spec$instrument, "npeople_0708", "consumption_0708",
+    "dependency_ratio", "consumption_1718", "real_log_consumption_change",
     ".matched_2001", ".matched_2007", ".matched_2017"
   ))
 }
@@ -32,7 +33,8 @@ public_iv_panel_rows <- function(panel) {
 }
 
 public_iv_panel_numeric_vars <- function(panel) {
-  present_cols(panel, c("EMIE", "wavg_ling_degrees", "npeople_0708", "consumption_0708", "dependency_ratio"))
+  spec <- preferred_iv_variables()
+  present_cols(panel, c(spec$treatment, spec$instrument, "npeople_0708", "consumption_0708", "dependency_ratio"))
 }
 
 public_iv_panel_match_summary <- function(panel) {
@@ -72,7 +74,8 @@ public_iv_panel_extreme_rows <- function(panel) {
   panel <- as.data.frame(panel)
   if (!nrow(panel)) return(data.frame())
   row_cols <- public_iv_panel_diagnostic_columns(panel)
-  vars <- present_cols(panel, c("EMIE", "wavg_ling_degrees", "npeople_0708"))
+  spec <- preferred_iv_variables()
+  vars <- present_cols(panel, c(spec$treatment, spec$instrument, "npeople_0708"))
   rows <- list()
   for (var in vars) {
     value <- num(panel[[var]])

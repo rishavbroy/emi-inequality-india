@@ -12,9 +12,10 @@ diagnose_census_2001_controls <- function(panel, revised_models, revised_first_s
       stringsAsFactors = FALSE
     )
   }))
+  instrument_name <- preferred_iv_variables()$instrument
   balance <- safe_bind_rows(lapply(census_2001_main_controls(), function(variable) {
     value <- num(panel[[variable]])
-    instrument <- num(panel$wavg_ling_degrees)
+    instrument <- num(panel[[instrument_name]])
     keep <- is.finite(value) & is.finite(instrument)
     data.frame(
       variable = variable,

@@ -112,14 +112,6 @@ test_that("map collage order matches public captions", {
   )
 })
 
-test_that("linguistic-distance map labels begin at zero and no-data uses visible grey", {
-  df <- data.frame(wavg_ling_degrees = c(0.0001089, 1.5, 5, NA))
-  fill <- public_map_fill(df, "wavg_ling_degrees", public_map_style("wavg_ling_degrees"))
-
-  expect_true(startsWith(levels(fill$data$.map_fill)[[1]], "0-"))
-  expect_equal(unname(fill$colors[["No data"]]), "#bdbdbd")
-})
-
 test_that("district carve-out figure uses unbordered bars", {
   path <- file.path("R", "output", "save_figures.R")
   if (!file.exists(path)) path <- file.path("..", "..", "R", "output", "save_figures.R")
@@ -141,7 +133,7 @@ test_that("public maps retain the production panel's Census-2001 geometry and at
   )
   panel <- sf::st_sf(
     target_unit_2001 = "pc2001__01__01",
-    EMIE = 10,
+    emi_exposure_all_children_0708 = 10,
     geometry = geometry
   )
   spec <- figure_spec(
@@ -149,10 +141,10 @@ test_that("public maps retain the production panel's Census-2001 geometry and at
     "map_emi_exposure.png",
     "EMI Exposure",
     kind = "map",
-    variable = "EMIE"
+    variable = "emi_exposure_all_children_0708"
   )
 
-  fill <- public_map_fill(panel, "EMIE", public_map_style("EMIE"))
+  fill <- public_map_fill(panel, "emi_exposure_all_children_0708", public_map_style("emi_exposure_all_children_0708"))
   expect_s3_class(fill$data, "sf")
   expect_identical(fill$data$target_unit_2001, panel$target_unit_2001)
   expect_equal(sum(map_overlay_rows(fill$data, ".map_fill")), 1L)
@@ -168,10 +160,10 @@ test_that("public map rendering refuses all-grey data layers", {
   panel <- sf::st_sf(
     state_20 = "A",
     district_20 = "missing",
-    EMIE = NA_real_,
+    emi_exposure_all_children_0708 = NA_real_,
     geometry = geometry
   )
-  spec <- figure_spec("map_emi_exposure", "map_emi_exposure.png", "EMI Exposure", kind = "map", variable = "EMIE")
+  spec <- figure_spec("map_emi_exposure", "map_emi_exposure.png", "EMI Exposure", kind = "map", variable = "emi_exposure_all_children_0708")
 
   expect_error(
     build_public_ggplot_map(panel, spec),
@@ -315,12 +307,12 @@ test_that("continuous map limits use rounded central quantiles rather than extre
   expect_true(limits[[2]] >= stats::quantile(values, 0.98))
 })
 
-test_that("poster EMIE grid uses observed percentiles", {
-  panel <- data.frame(EMIE = 0:100)
+test_that("poster EMI-exposure grid uses observed percentiles", {
+  panel <- data.frame(emi_exposure_all_children_0708 = 0:100)
   grid <- poster_emie_percentiles(panel, probs = c(0.05, 0.50, 0.95))
 
   expect_equal(grid$percentile, c(0.05, 0.50, 0.95))
-  expect_equal(grid$EMIE, c(5, 50, 95))
+  expect_equal(grid$emi_exposure_all_children_0708, c(5, 50, 95))
 })
 
 test_that("poster inference restores ivreg sandwich methods for serialized models", {
@@ -357,23 +349,23 @@ test_that("poster expected-value predictions preserve serialized state fixed-eff
   n <- 36L
   state_code_2001 <- rep(c("01", "02", "10"), each = 12L)
   z <- stats::rnorm(n)
-  EMIE <- 15 + 4 * z + stats::rnorm(n)
-  y <- 2 + 0.3 * EMIE + as.numeric(factor(state_code_2001)) + stats::rnorm(n)
+  exposure <- 15 + 4 * z + stats::rnorm(n)
+  y <- 2 + 0.3 * exposure + as.numeric(factor(state_code_2001)) + stats::rnorm(n)
   panel <- data.frame(
-    y = y, EMIE = EMIE, z = z, state_code_2001 = state_code_2001,
+    y = y, emi_exposure_all_children_0708 = exposure, z = z, state_code_2001 = state_code_2001,
     state_2001_cluster = state_code_2001, stringsAsFactors = FALSE
   )
   formula <- stats::as.formula(
-    "y ~ EMIE + factor(state_code_2001) | z + factor(state_code_2001)"
+    "y ~ emi_exposure_all_children_0708 + factor(state_code_2001) | z + factor(state_code_2001)"
   )
   model <- estimate_2sls(panel, list(model = formula), list())$model
   restored <- unserialize(serialize(model, NULL))
-  grid <- data.frame(EMIE = stats::quantile(panel$EMIE, c(0.25, 0.75), names = FALSE))
+  grid <- data.frame(emi_exposure_all_children_0708 = stats::quantile(panel$emi_exposure_all_children_0708, c(0.25, 0.75), names = FALSE))
 
   predictions <- poster_expected_value_predictions(restored, grid)
 
   expect_equal(nrow(predictions), 2L)
-  expect_equal(as.numeric(predictions$EMIE), grid$EMIE)
+  expect_equal(as.numeric(predictions$emi_exposure_all_children_0708), grid$emi_exposure_all_children_0708)
   expect_true(all(is.finite(predictions$estimate)))
   expect_identical(
     unique(attr(restored, "prediction_data")$state_code_2001),
@@ -390,7 +382,8 @@ test_that("poster expected-values figure is generated with the main figures", {
   expect_identical(figures$poster_emie_expected_values$kind, "emie_expected_values")
   expect_identical(figures$poster_first_stage_specs$kind, "poster_first_stage_specs")
   expect_identical(figures$poster_second_stage_specs$kind, "poster_second_stage_specs")
-  expect_identical(figures$map_preferred_linguistic_distance$variable, "ling_distance_nonzero_mean")
+  expect_identical(figures$map_linguistic_distance$variable, "ling_distance_nonzero_mean")
+  expect_false("map_preferred_linguistic_distance" %in% names(figures))
   expect_identical(attr(figures, "iv_models"), list())
 })
 
@@ -407,12 +400,16 @@ test_that("complete Census-2001 map geometry shows missing panel districts as gr
   )
   panel <- sf::st_sf(
     target_unit_2001 = "pc2001__01__01",
-    EMIE = 10,
+    emi_exposure_all_children_0708 = 10,
     geometry = geometry[1]
   )
 
   complete <- complete_public_map_geometry(panel, universe)
-  fill <- public_map_fill(complete, "EMIE", public_map_style("EMIE"))
+  fill <- public_map_fill(
+    complete,
+    "emi_exposure_all_children_0708",
+    public_map_style("emi_exposure_all_children_0708")
+  )
 
   expect_equal(nrow(fill$data), 2L)
   expect_equal(as.character(fill$data$.map_fill), c("2.5-10", "No data"))

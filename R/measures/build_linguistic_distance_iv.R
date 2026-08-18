@@ -106,7 +106,7 @@ build_district_language_constructions <- function(df) {
   out$ling_unmapped_speaker_share <- if (is.finite(total) && total > 0) 100 * (total - mapped_total) / total else NA_real_
   out$ling_total_speakers <- total
 
-  # Compatibility aliases remain explicit and temporary during Phase 1.
+  # Historical compatibility aliases remain explicit for archived comparisons and benchmarks.
   out$wavg_ling_degrees <- out$ling_distance_top3_legacy
   out
 }

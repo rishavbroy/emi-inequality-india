@@ -98,7 +98,7 @@ test_that("first-stage table rejects numeric coefficient terms in final mode", {
 test_that("first-stage table reports full coefficients with standard errors beneath estimates", {
   fs <- data.frame(
     model = "consumption",
-    term = c("wavg_ling_degrees", "log_population_2001", "(Intercept)"),
+    term = c("ling_distance_nonzero_mean", "log_population_2001", "(Intercept)"),
     estimate = c(1.234, -0.111, 2.345),
     std.error = c(0.456, 0.025, 0.500),
     p.value = c(0.004, 0.02, 0.1),
@@ -130,8 +130,8 @@ test_that("first-stage table reports full coefficients with standard errors bene
 test_that("final district panel validation enforces structural IV-panel contract", {
   bad <- data.frame(
     district_panel_id = c("a", "a"),
-    EMIE = c(4, NA),
-    wavg_ling_degrees = c(1, 2),
+    emi_exposure_all_children_0708 = c(4, NA),
+    ling_distance_nonzero_mean = c(1, 2),
     npeople_0708 = c(500, 600),
     consumption_0708 = c(1000, 1001),
     gini_cons_0708 = c(0.2, 0.3),
@@ -162,7 +162,7 @@ test_that("final district panel validation enforces structural IV-panel contract
 
 test_that("final figure specs degrade to status outputs instead of aborting when map inputs are incomplete", {
   panel <- data.frame(
-    EMIE = c(10, 20),
+    emi_exposure_all_children_0708 = c(10, 20),
     pct_pucca = c(30, 40),
     pct_head_secondary_plus = c(5, 6),
     region = c("Northern", "Southern")
@@ -170,7 +170,7 @@ test_that("final figure specs degrade to status outputs instead of aborting when
   figs <- make_figures(panel, character(), list(mode = "final"))
   expect_true("map_consumption_growth" %in% names(figs))
   expect_identical(figs$map_consumption_growth$kind, "status")
-  expect_true(any(grepl("wavg_ling_degrees", attr(figs, "map_input_failures"), fixed = TRUE)))
+  expect_true(any(grepl("ling_distance_nonzero_mean", attr(figs, "map_input_failures"), fixed = TRUE)))
 })
 
 
@@ -185,25 +185,25 @@ test_that("final table generation records incomplete first-stage diagnostics wit
     partial_f = NA_real_,
     partial_p = NA_real_,
     status = "out_of_active_pipeline",
-    reason = "Missing first-stage variables: real_log_consumption_change, wavg_ling_degrees",
+    reason = "Missing first-stage variables: real_log_consumption_change, ling_distance_nonzero_mean",
     stringsAsFactors = FALSE
   )
 
   fs_table <- make_first_stage_table(first_stage, list(mode = "final"))
   expect_identical(fs_table$status, "out_of_active_pipeline")
-  expect_match(fs_table$reason, "wavg_ling_degrees", fixed = TRUE)
-  expect_true(any(grepl("wavg_ling_degrees", attr(fs_table, "table_input_failures"), fixed = TRUE)))
+  expect_match(fs_table$reason, "ling_distance_nonzero_mean", fixed = TRUE)
+  expect_true(any(grepl("ling_distance_nonzero_mean", attr(fs_table, "table_input_failures"), fixed = TRUE)))
 
   tables <- make_tables(
     selection_data = data.frame(AGE = 10, HH_SIZE = 4),
     ame_results = data.frame(term = "AGE", estimate = 0, std.error = 1, p.value = 1, status = "estimated"),
-    district_panel = data.frame(EMIE = 10, consumption_0708 = 100, gini_cons_0708 = 0.3),
+    district_panel = data.frame(emi_exposure_all_children_0708 = 10, consumption_0708 = 100, gini_cons_0708 = 0.3),
     iv_models = list(consumption = list(status = "out_of_active_pipeline", reason = "Missing variables: real_log_consumption_change")),
     first_stage_tests = first_stage,
     cfg = list(mode = "final")
   )
   expect_true(any(grepl("first-stage regression", attr(tables, "table_input_failures"), fixed = TRUE)))
-  expect_true(any(grepl("wavg_ling_degrees", attr(tables, "table_input_failures"), fixed = TRUE)))
+  expect_true(any(grepl("ling_distance_nonzero_mean", attr(tables, "table_input_failures"), fixed = TRUE)))
 })
 
 

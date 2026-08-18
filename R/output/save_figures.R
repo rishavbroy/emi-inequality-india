@@ -139,19 +139,12 @@ primary_figure_path <- function(paths) {
 public_map_style <- function(variable) {
   switch(
     variable,
-    EMIE = list(
+    emi_exposure_all_children_0708 = list(
       palette = "brewer.blues",
       title = "EMI Exposure",
       style = "fixed",
       breaks = c(0, 2.5, 10, 25, 50, 100),
       labels = c("0-2.5", "2.5-10", "10-25", "25-50", "50-100")
-    ),
-    consumption_pct_change = list(
-      palette = "brewer.reds",
-      title = "Consumption Growth (%)",
-      style = "fixed",
-      breaks = c(10, 100, 200, 300, 400, 450),
-      labels = c("10-100", "100-200", "200-300", "300-400", "400-450")
     ),
     real_log_consumption_change = list(
       palette = "poster.consumption",
@@ -178,13 +171,6 @@ public_map_style <- function(variable) {
       palette = "poster.region",
       title = "Region",
       style = "cat",
-      breaks = NULL,
-      labels = NULL
-    ),
-    wavg_ling_degrees = list(
-      palette = "carto.emrld",
-      title = "Linguistic Distance",
-      style = NULL,
       breaks = NULL,
       labels = NULL
     ),
@@ -332,13 +318,7 @@ public_map_fill <- function(plot_data, variable, style) {
   breaks <- style$breaks
   labels <- style$labels
   if (is.null(breaks)) {
-    if (identical(variable, "wavg_ling_degrees")) {
-      vmax <- suppressWarnings(max(values, na.rm = TRUE))
-      breaks <- map_pretty_breaks(c(0, vmax), n = 5L)
-      if (length(breaks)) breaks[[1]] <- 0
-    } else {
-      breaks <- map_pretty_breaks(values, n = 5L)
-    }
+    breaks <- map_pretty_breaks(values, n = 5L)
     labels <- map_cut_labels(breaks)
   }
   if (is.null(breaks) || length(breaks) < 2L) {
@@ -527,14 +507,17 @@ save_collage <- function(spec, path_base, written, formats) {
 
 
 poster_emie_percentiles <- function(district_panel, probs = seq(0.05, 0.95, by = 0.10)) {
-  values <- suppressWarnings(as.numeric(as.data.frame(district_panel)$EMIE))
+  treatment <- preferred_iv_variables()$treatment
+  values <- suppressWarnings(as.numeric(as.data.frame(district_panel)[[treatment]]))
   values <- values[is.finite(values)]
   if (!length(values)) return(data.frame())
-  data.frame(
+  out <- data.frame(
     percentile = probs,
-    EMIE = unname(stats::quantile(values, probs = probs, na.rm = TRUE, names = FALSE)),
+    value = unname(stats::quantile(values, probs = probs, na.rm = TRUE, names = FALSE)),
     stringsAsFactors = FALSE
   )
+  names(out)[names(out) == "value"] <- treatment
+  out
 }
 
 first_estimable_iv_model <- function(iv_models) {
@@ -570,18 +553,20 @@ poster_prediction_data <- function(model) {
     )
   }
   data <- as.data.frame(data)
-  if (!nrow(data) || !"EMIE" %in% names(data)) {
-    stop("Stored IV prediction data are empty or missing EMIE.", call. = FALSE)
+  treatment <- preferred_iv_variables()$treatment
+  if (!nrow(data) || !treatment %in% names(data)) {
+    stop("Stored IV prediction data are empty or missing the preferred EMI exposure.", call. = FALSE)
   }
   data
 }
 
 poster_expected_value_predictions <- function(model, grid) {
   need_pkg("marginaleffects", "poster expected-values figure")
+  treatment <- preferred_iv_variables()$treatment
   marginaleffects::avg_predictions(
     model,
     newdata = poster_prediction_data(model),
-    variables = list(EMIE = grid$EMIE),
+    variables = stats::setNames(list(grid[[treatment]]), treatment),
     vcov = poster_prediction_vcov(model),
     type = "response"
   )
@@ -756,14 +741,15 @@ save_emie_expected_values <- function(spec, path_base, formats, district_panel, 
   model <- first_estimable_iv_model(iv_models)
   grid <- poster_emie_percentiles(district_panel)
   if (is.null(model) || !nrow(grid)) {
-    stop("Poster expected-values figure requires an estimated ivreg model and observed EMIE values.", call. = FALSE)
+    stop("Poster expected-values figure requires an estimated ivreg model and observed preferred EMI exposure.", call. = FALSE)
   }
 
+  treatment <- preferred_iv_variables()$treatment
   predictions <- poster_expected_value_predictions(model, grid)
   plot_data <- as.data.frame(predictions)
-  if (!"EMIE" %in% names(plot_data)) plot_data$EMIE <- grid$EMIE
+  if (!treatment %in% names(plot_data)) plot_data[[treatment]] <- grid[[treatment]]
 
-  p <- ggplot2::ggplot(plot_data, ggplot2::aes(x = EMIE, y = estimate)) +
+  p <- ggplot2::ggplot(plot_data, ggplot2::aes(x = .data[[treatment]], y = estimate)) +
     ggplot2::geom_ribbon(ggplot2::aes(ymin = conf.low, ymax = conf.high), fill = "#c5050c", alpha = 0.14) +
     ggplot2::geom_line(color = "#7a0019", linewidth = 1.15) +
     ggplot2::geom_point(color = "#7a0019", size = 2.5) +

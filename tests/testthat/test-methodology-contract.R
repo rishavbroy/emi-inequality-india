@@ -119,8 +119,8 @@ test_that("baseline controls use household weights for household concepts", {
 
 test_that("district pseudo-panel analysis core requires the IV instrument, treatment, and outcomes", {
   panel <- data.frame(
-    EMIE = c(10, 20, 30),
-    wavg_ling_degrees = c(1, 2, NA),
+    emi_exposure_all_children_0708 = c(10, 20, 30),
+    ling_distance_nonzero_mean = c(1, 2, NA),
     consumption_0708 = c(100, NA, 300),
     consumption_1718 = c(150, 250, 350)
   )

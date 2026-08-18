@@ -108,7 +108,7 @@ by_district_code_2007 <- function(df, value = NULL, weight = NULL, name = "value
 
 #' Compute legacy EMI share among enrolled children
 #'
-#' This compatibility measure remains for existing public outputs during Phase 1.
+#' This historical compatibility measure is retained for archived comparisons and benchmarks.
 #' New work should use emi_share_enrolled_0708 and emi_exposure_all_children_0708.
 compute_emie_2007 <- function(df) {
   df <- standardize_nss_2007_district_code(std(df, 2007L))

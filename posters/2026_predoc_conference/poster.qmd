@@ -81,7 +81,7 @@ Private schooling remains more accessible to richer households [@muralidharan201
 
 **Outcome:** Person-weighted change in log real consumption from 2007-08 to 2017-18. Temporal deflation by linking multiple state+sector-level CPI series. Spatial deflation by using state+sector-level Tendulkar poverty lines as baseline.
 
-![Unadjusted linguistic distance.](../../outputs/figures/main/map_preferred_linguistic_distance.pdf){width=48%}
+![Unadjusted linguistic distance.](../../outputs/figures/main/map_linguistic_distance.pdf){width=48%}
 ![Six-region classification.](../../outputs/figures/main/map_region.pdf){width=48%}
 
 **Controls:** Scale/geography, social composition, human capital, demography, economic structure, basic development, and region or state FEs.

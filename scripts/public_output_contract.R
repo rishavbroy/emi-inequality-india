@@ -28,7 +28,6 @@ required_public_render_inputs <- function() {
     "outputs/figures/main/poster_emie_expected_values.pdf",
     "outputs/figures/main/poster_first_stage_specs.pdf",
     "outputs/figures/main/poster_second_stage_specs.pdf",
-    "outputs/figures/main/map_preferred_linguistic_distance.pdf",
     "outputs/figures/main/map_emi_exposure.pdf",
     "outputs/figures/main/map_residual_emi_exposure.pdf",
     "outputs/figures/main/map_linguistic_distance.pdf",

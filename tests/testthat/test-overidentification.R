@@ -1,10 +1,10 @@
 test_that("baseline exactly identified model is not overidentified", {
-  spec <- list(endogenous_vars = "EMIE", excluded_instruments = "wavg_ling_degrees")
+  spec <- list(endogenous_vars = "emi_exposure_all_children_0708", excluded_instruments = "ling_distance_nonzero_mean")
   expect_false(is_overidentified(spec))
 })
 
 test_that("overidentification diagnostics infer exact identification from active formulas", {
-  formulas <- build_iv_formulas(list())
+  formulas <- build_revised_iv_formulas()
   out <- diagnose_overidentification(list(), formulas, list())
 
   expect_true(all(out$status == "not_applicable"))

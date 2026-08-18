@@ -284,8 +284,8 @@ test_that("instrument exploration diagnostics render target-backed dotplot artif
     district_code_0708 = c(101L, 102L, 201L),
     state_07 = c("A", "A", "B"),
     district_07 = c("One", "Two", "Three"),
-    EMIE = c(0, 10, 80),
-    wavg_ling_degrees = c(0, 1, 5),
+    emi_exposure_all_children_0708 = c(0, 10, 80),
+    ling_distance_nonzero_mean = c(0, 1, 5),
     region = c("Northern", "Northern", "Southern")
   )
 
@@ -293,7 +293,7 @@ test_that("instrument exploration diagnostics render target-backed dotplot artif
 
   expect_true(is.list(out))
   expect_equal(nrow(out$dotplot_data), 3L)
-  expect_true(all(c("district_order", "district_code", "EMIE", "state_prefix") %in% names(out$dotplot_data)))
+  expect_true(all(c("district_order", "district_code", "emi_exposure_all_children_0708", "ling_distance_nonzero_mean", "state_prefix") %in% names(out$dotplot_data)))
   expect_s3_class(out$legacy_notes, "data.frame")
   expect_true(all(c("diagnostic", "legacy_note") %in% names(out$legacy_notes)))
   expect_gt(nrow(out$legacy_notes), 0L)
@@ -353,8 +353,8 @@ test_that("public IV-panel diagnostics return file paths for targets", {
     district_panel_id = c("a", "b"),
     state_20 = c("State A", "State B"),
     district_20 = c("District A", "District B"),
-    EMIE = c(1, 2),
-    wavg_ling_degrees = c(3, 4),
+    emi_exposure_all_children_0708 = c(1, 2),
+    ling_distance_nonzero_mean = c(3, 4),
     npeople_0708 = c(10, 20),
     consumption_0708 = c(100, 200),
     dependency_ratio = c(50, 60),

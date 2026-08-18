@@ -18,38 +18,48 @@ legacy_2007_iv_controls <- function() {
   )
 }
 
-baseline_iv_controls <- function() legacy_2007_iv_controls()
 
-# Current paper formulas remain available until the price and Census-control
-# targets have passed their completeness checks.
-build_iv_formulas <- function(cfg) {
-  controls <- baseline_iv_controls()
+preferred_iv_variables <- function() {
   list(
-    consumption = make_iv_formula('consumption_pct_change', 'EMIE', 'wavg_ling_degrees', controls),
-    gini = make_iv_formula('gini_change', 'EMIE', 'wavg_ling_degrees', controls)
+    treatment = "emi_exposure_all_children_0708",
+    instrument = "ling_distance_nonzero_mean"
   )
 }
 
-# Formulas for the next paper revision. These are kept separate so that a missing
-# price series or Census table cannot silently change the current estimates.
+# Historical specification retained only for the optional legacy-geography comparison.
+build_legacy_iv_formulas <- function() {
+  controls <- legacy_2007_iv_controls()
+  list(
+    consumption = make_iv_formula(
+      "consumption_pct_change", "EMIE", "wavg_ling_degrees", controls
+    ),
+    gini = make_iv_formula(
+      "gini_change", "EMIE", "wavg_ling_degrees", controls
+    )
+  )
+}
+
+# Preferred public formulas: all-child EMI exposure, the full-distribution
+# nonzero linguistic-distance scalar, predetermined Census controls, and state FE.
 build_revised_iv_formulas <- function() {
+  spec <- preferred_iv_variables()
   controls <- census_2001_main_controls()
   state_fe <- 'factor(state_code_2001)'
   list(
     consumption = make_iv_formula(
-      'real_log_consumption_change', 'EMIE', 'wavg_ling_degrees',
+      'real_log_consumption_change', spec$treatment, spec$instrument,
       controls = controls, fixed_effects = state_fe
     ),
     consumption_ancova = make_iv_formula(
-      'log_real_consumption_1718', 'EMIE', 'wavg_ling_degrees',
+      'log_real_consumption_1718', spec$treatment, spec$instrument,
       controls = c('log_real_consumption_0708', controls), fixed_effects = state_fe
     ),
     consumption_nominal = make_iv_formula(
-      'log_consumption_difference', 'EMIE', 'wavg_ling_degrees',
+      'log_consumption_difference', spec$treatment, spec$instrument,
       controls = controls, fixed_effects = state_fe
     ),
     consumption_legacy_controls = make_iv_formula(
-      'log_consumption_difference', 'EMIE', 'wavg_ling_degrees',
+      'log_consumption_difference', spec$treatment, spec$instrument,
       controls = legacy_2007_iv_controls(), fixed_effects = state_fe
     )
   )

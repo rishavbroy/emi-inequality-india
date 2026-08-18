@@ -11,7 +11,7 @@ public_table_caption_text <- function(name) {
     probit_mfx = "Average Marginal Effects and Counterfactual Comparisons for Enrollment Probit",
     sum_tbl_iv = "Summary Statistics for 2SLS Model",
     fs_cons = "First-Stage Regression: EMI Exposure on Linguistic Distance",
-    cons_iv = "Second-Stage Regression: Real Log Consumption Growth on EMIE (Fitted)",
+    cons_iv = "Second-Stage Regression: Real Log Consumption Growth on EMI Exposure (Fitted)",
     ame_results = "Average Marginal Effects Results",
     first_stage = "First-Stage Diagnostic Results"
   )
