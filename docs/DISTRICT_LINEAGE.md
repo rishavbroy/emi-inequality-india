@@ -35,7 +35,7 @@ The production lineage is ready only when all of the following hold:
 - SHRUG transition weights are finite, nonnegative, and do not overallocate a source unit;
 - accepted allocation weights sum to one within source unit;
 - every accepted decision cites a registered source;
-- duplicate source and registry keys are absent or identical;
+- duplicate registry keys are absent or identical; repeated source district keys created by documented split/merge allocations remain warning-severity review information rather than fatal panel errors;
 - every accepted identity has a conservative-panel disposition;
 - every accepted identity appears in the full reviewed crosswalk or has an explicit exclusion;
 - DataMeet Census-2001 geometry has no missing, unexpected, duplicate, empty, or invalid units after excluding its noncanonical 99/99 national aggregate.

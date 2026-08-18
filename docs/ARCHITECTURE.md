@@ -51,7 +51,7 @@ All public models, tables, maps, diagnostics, processed data, paper outputs, pos
 
 ## Strict final mode
 
-`config/final.yml` enables strict district-panel and analysis-panel validation for production panels. Final builds fail on duplicated production panel units, incomplete analysis rows, placeholder model output, missing report values, unresolved cross-references, or missing required artifacts. The inherited legacy panel is exempt from those production uniqueness gates only in its optional historical-comparison target because inherited duplicate split/merge rows are themselves an object of that review.
+`config/final.yml` enables strict district-panel and analysis-panel validation for production panels. Strict validation stops on error-severity panel issues, including duplicated production panel units, but retains warning-severity source-key reuse for documented split/merge allocations. Final builds also fail on incomplete analysis rows, placeholder model output, missing report values, unresolved cross-references, or missing required artifacts. The inherited legacy panel is exempt from production uniqueness gates only in its optional historical-comparison target because inherited duplicate split/merge rows are themselves an object of that review.
 
 ## Target groups
 
