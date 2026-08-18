@@ -39,7 +39,7 @@ The lineage object uses matching names: `conservative_source_crosswalk`, `primar
 
 ## Production and legacy separation
 
-`core_pipeline_targets` contains only production dependencies. Legacy boundaries, the inherited harmonization crosswalk, district tracker comparisons, legacy panel, and archived review ledger live in `legacy_geography_targets` and `legacy_comparison_targets`. Those groups are included only for extended diagnostics or benchmarks.
+`core_pipeline_targets` contains only production dependencies. Legacy boundaries, the inherited harmonization crosswalk, and district tracker inputs live in `legacy_geography_targets`; the inherited legacy panel and archived review ledger live in `legacy_comparison_targets`. The geography group is available to extended diagnostics and benchmarks, while the legacy panel is constructed only for extended historical comparisons.
 
 The production lineage does not load `data/metadata/district_legacy_mapping_reviews.csv`, does not evaluate migration gates, and does not depend on the inherited panel.
 
@@ -51,13 +51,13 @@ All public models, tables, maps, diagnostics, processed data, paper outputs, pos
 
 ## Strict final mode
 
-`config/final.yml` enables strict district-panel and analysis-panel validation. Final builds fail on duplicated panel units, incomplete analysis rows, placeholder model output, missing report values, unresolved cross-references, or missing required artifacts.
+`config/final.yml` enables strict district-panel and analysis-panel validation for production panels. Final builds fail on duplicated production panel units, incomplete analysis rows, placeholder model output, missing report values, unresolved cross-references, or missing required artifacts. The inherited legacy panel is exempt from those production uniqueness gates only in its optional historical-comparison target because inherited duplicate split/merge rows are themselves an object of that review.
 
 ## Target groups
 
 - `core_pipeline_targets` — production data, models, outputs, and documents.
-- `legacy_geography_targets` — inherited geometry and harmonization inputs for optional diagnostics.
-- `legacy_comparison_targets` — archived historical reviews and crosswalk comparisons.
+- `legacy_geography_targets` — inherited geometry and harmonization inputs shared by optional diagnostics and benchmarks.
+- `legacy_comparison_targets` — the inherited legacy panel, archived historical reviews, and crosswalk comparisons used only by extended diagnostics.
 - `extended_diagnostic_targets` — three-panel, lineage, missingness, spatial, and matching diagnostics.
 - `benchmark_targets` — optional benchmarks.
 - `analysis_note_targets` and `application_sample_targets` — optional rendered derivatives.

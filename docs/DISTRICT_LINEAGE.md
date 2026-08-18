@@ -86,9 +86,9 @@ These items do not block use of the 573-district production panel.
 
 ## Legacy comparison isolation
 
-The inherited harmonization crosswalk, 2020 boundaries, legacy panel, and historical review ledger are constructed only when extended diagnostics or benchmarks require them. They are not upstream dependencies of the production district panel, public models, tables, maps, paper, poster, or application samples.
+The inherited harmonization crosswalk and 2020 boundaries are constructed only when extended diagnostics or benchmarks require them. The legacy panel and historical review ledger are constructed only for extended historical comparisons. None is an upstream dependency of the production district panel, models, tables, maps, paper, poster, or application samples.
 
-Historical outputs are written separately, including `legacy_crosswalk_comparison.csv`. They provide provenance and regression comparison, not production gates.
+Historical outputs are written separately, including `legacy_crosswalk_comparison.csv`. They provide provenance and regression comparison, not production gates. The inherited legacy panel is therefore constructed with strict panel validation disabled: duplicated historical split/merge rows remain visible for comparison instead of aborting the optional diagnostic build.
 
 ## Main diagnostics
 
