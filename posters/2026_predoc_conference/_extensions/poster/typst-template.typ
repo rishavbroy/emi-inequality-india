@@ -38,6 +38,7 @@
   let logo_width = int(univ_logo_column_size) * 1in
   let title_width = int(title_column_size) * 1in
   let logo_scale = int(univ_logo_scale) * 1%
+  let logo_path = univ_logo.replace("\\", "/")
   let title_size = int(title_font_size) * 1pt
   let author_size = int(authors_font_size) * 1pt
   let department_size = int(department_font_size) * 1pt
@@ -96,7 +97,7 @@
   grid(
     columns: (logo_width, title_width),
     gutter: 0.35in,
-    align(center + horizon, move(dy: logo_shift, image(univ_logo, width: logo_scale))),
+    align(center + horizon, move(dy: logo_shift, image(logo_path, width: logo_scale))),
     align(
       center,
       move(

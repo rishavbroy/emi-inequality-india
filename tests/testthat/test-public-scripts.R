@@ -698,6 +698,18 @@ test_that("poster consumes the flattened official print PDF derivative", {
   expect_match(targets, "flatten_poster_logo_pdf(poster_logo_source)", fixed = TRUE)
 })
 
+
+test_that("poster template normalizes logo path separators before image loading", {
+  template <- repo_text(
+    "posters", "2026_predoc_conference", "_extensions", "poster",
+    "typst-template.typ"
+  )
+
+  expect_match(template, 'univ_logo.replace("\\\\", "/")', fixed = TRUE)
+  expect_match(template, "image(logo_path, width: logo_scale)", fixed = TRUE)
+  expect_false(grepl("image(univ_logo,", template, fixed = TRUE))
+})
+
 test_that("poster PNG rendering supports paths containing spaces", {
   skip_if(!nzchar(Sys.which("pdftoppm")), "pdftoppm is unavailable")
   renderer <- poster_renderer_test_env()
