@@ -63,7 +63,7 @@ execute:
 **Treatment:** Survey-weighted share of school-age (5-19) children enrolled in EMI. It combines two decisions:
 
 $$
-\mathrm{EMIE}_d = \Pr(\text{enrolled})_d \times \Pr(\text{EMI} \mid \text{enrolled})_d.
+\mathrm{EMIE}_d = \Pr(\text{enrolled and in EMI})_d.
 $$
 
 The first is the extensive enrollment margin; the second is the medium-of-instruction margin among enrolled children. Families choose among higher-cost private EMI, low-cost private EMI (that may absorb 7-20% of a poor household's monthly income), and free/negatively priced government schooling usually taught in the mother tongue [@endow2019a; @muralidharan2019a].
@@ -101,7 +101,7 @@ The second stage tests if more EMI exposure raises local consumption growth.
 
 # Next Steps
 
-- Does EMI translate into welfare growth for the district where the educaiton occurred? What determines the absorption of EMI graduates and thus of English human capital into the local economy?
+- Does EMI translate into welfare growth for the district where the education occurred? What determines the absorption of EMI graduates and thus of English human capital into the local economy?
 - Does EMI create employment in a context where labor demand is exceeded by a nominally overqualified but technically underskilled supply?
 - Does EMI democratize access to higher wages, or does it exacerbate inequality by privileging the already advantaged?
 
