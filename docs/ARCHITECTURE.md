@@ -8,7 +8,7 @@ This repository builds the EMI and inequality paper, diagnostics, application sa
 - `R/io/` — raw-data readers and path handling.
 - `R/districts/` — district identities, lineage, crosswalks, and panel construction contracts.
 - `R/measures/` — analysis measures and survey-weighted aggregation.
-- `R/iv/` and `R/selection/` — estimation logic.
+- `R/iv/` and `R/selection/` — estimation logic; `R/iv/specification_registry.R` is the shared contract for extended IV specifications and diagnostic applicability.
 - `R/diagnostics/` — public and extended diagnostics.
 - `R/benchmarking/` — optional benchmarks.
 - `R/output/` — figures, tables, shared table contracts, report values, and render helpers.
