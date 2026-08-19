@@ -39,11 +39,7 @@ estimate_anderson_rubin_spec <- function(data, specification, level = 0.95, poin
   outcome <- specification$outcome[[1]]
   treatment <- specification$treatment[[1]]
   fixed_effect <- specification$fixed_effect[[1]]
-  model_formula <- stats::reformulate(
-    unique(c(excluded, included, controls, iv_fixed_effect_terms(fixed_effect))),
-    response = outcome
-  )
-  needed <- unique(c(all.vars(model_formula), treatment, "state_code_2001"))
+  needed <- iv_specification_variables(specification)
   missing <- setdiff(needed, names(data))
   if (length(missing)) {
     return(list(

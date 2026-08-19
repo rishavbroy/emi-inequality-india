@@ -138,6 +138,12 @@ iv_specification_formula <- function(specification) {
   )
 }
 
+iv_specification_variables <- function(specification) {
+  cluster <- plain_chr(specification$cluster[[1]] %||% "")
+  cluster <- cluster[nzchar(cluster)]
+  unique(c(all.vars(iv_specification_formula(specification)), cluster))
+}
+
 iv_diagnostic_registry <- function() {
   data.frame(
     diagnostic_id = c(

@@ -273,7 +273,7 @@ estimate_weak_iv_outcomes <- function(
     included <- unlist(spec$included_language_controls[[1]], use.names = FALSE)
     excluded <- unlist(spec$excluded_instruments[[1]], use.names = FALSE)
     fixed <- iv_fixed_effect_terms(spec$fixed_effect[[1]])
-    needed <- unique(c(outcome, treatment, controls, included, excluded, fixed, "state_code_2001"))
+    needed <- iv_specification_variables(spec)
     missing <- setdiff(needed, names(data))
     if (length(missing)) {
       stop(

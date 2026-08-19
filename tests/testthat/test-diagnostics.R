@@ -769,6 +769,33 @@ test_that("diagnostic applicability follows identification structure", {
   expect_false(any(applicability$will_run[applicability$diagnostic_id == "monotonicity_shape"]))
 })
 
+test_that("IV specification variables resolve transformed fixed-effect terms", {
+  registry <- iv_specification_registry()
+
+  region_spec <- registry[
+    registry$adjustment_id == "region_main" &
+      registry$construction_id == "nonzero_mean",
+    , drop = FALSE
+  ]
+  state_spec <- registry[
+    registry$adjustment_id == "state_main" &
+      registry$construction_id == "nonzero_mean",
+    , drop = FALSE
+  ]
+
+  region_vars <- iv_specification_variables(region_spec)
+  state_vars <- iv_specification_variables(state_spec)
+
+  expect_true("region" %in% region_vars)
+  expect_false("factor(region)" %in% region_vars)
+  expect_true("state_code_2001" %in% state_vars)
+  expect_false("factor(state_code_2001)" %in% state_vars)
+  expect_true(region_spec$outcome[[1]] %in% region_vars)
+  expect_true(region_spec$treatment[[1]] %in% region_vars)
+  expect_true(all(unlist(region_spec$excluded_instruments[[1]]) %in% region_vars))
+  expect_true(region_spec$cluster[[1]] %in% region_vars)
+})
+
 test_that("conditional balance removes the tested covariate from nuisance controls", {
   spec <- iv_specification_registry()
   spec <- spec[spec$adjustment_id == "state_main" & spec$construction_id == "nonzero_mean", , drop = FALSE]
