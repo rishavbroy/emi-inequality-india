@@ -750,7 +750,12 @@ test_that("Census downloader skips present files and fetches only missing files"
   }, add = TRUE)
   Sys.setenv(EMI_PROJECT_ROOT = root, CURL_BIN = fake_curl, FAKE_CURL_LOG = log_path)
 
-  output <- system2("bash", repo_file("scripts", "download_census_tables.sh"), stdout = TRUE, stderr = TRUE)
+  output <- system2(
+    "bash",
+    shQuote(repo_file("scripts", "download_census_tables.sh")),
+    stdout = TRUE,
+    stderr = TRUE
+  )
 
   expect_null(attr(output, "status"))
   expect_identical(readLines(present), "existing")
