@@ -14,7 +14,9 @@ prepare_consumption_households <- function(
   if (!is.null(hh_key)) {
     district_key <- do.call(paste, c(df[district_keys], sep = "__"))
     df$.hh_distinct_key <- paste(district_key, canon(df[[hh_key]]), sep = "__")
-    df <- df[!duplicated(df$.hh_distinct_key), , drop = FALSE]
+    df <- collapse_identical_key_rows(
+      df, ".hh_distinct_key", context = paste(wave, "consumption households")
+    )
   }
 
   size <- if (is.null(size_col)) rep(1, nrow(df)) else num(df[[size_col]])

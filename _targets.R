@@ -236,11 +236,15 @@ core_pipeline_targets <- list(
   ),
   tar_target(
     district_panel_primary,
-    attach_census_2001_controls(primary_gini_reconstruction$panel, census_2001_controls)
+    finalize_analysis_panel(
+      primary_gini_reconstruction$panel, census_2001_controls, cfg
+    )
   ),
   tar_target(
     district_panel_conservative,
-    attach_census_2001_controls(conservative_gini_reconstruction$panel, census_2001_controls)
+    finalize_analysis_panel(
+      conservative_gini_reconstruction$panel, census_2001_controls, cfg
+    )
   ),
   tar_target(district_panel, district_panel_primary),
   tar_target(processed_district_panel_file, save_processed_district_panel(district_panel), format = "file"),

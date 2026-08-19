@@ -29,3 +29,17 @@ test_that("weighted mean and gini handle weights and invalid values", {
   expect_equal(wgini(c(1, 1), c(1, 1)), 0)
   expect_gt(wgini(c(1, 3), c(1, 1)), 0)
 })
+
+test_that("duplicate-key collapsing permits exact repeats and rejects conflicts", {
+  exact <- data.frame(id = c("a", "a", "b"), value = c(1, 1, 2), stringsAsFactors = FALSE)
+  conflict <- data.frame(id = c("a", "a"), value = c(1, 2), stringsAsFactors = FALSE)
+
+  collapsed <- collapse_identical_key_rows(exact, "id", context = "fixture")
+
+  expect_equal(nrow(collapsed), 2L)
+  expect_identical(collapsed$id, c("a", "b"))
+  expect_error(
+    collapse_identical_key_rows(conflict, "id", context = "fixture"),
+    "fixture has duplicate keys with non-identical rows"
+  )
+})

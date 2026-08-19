@@ -1049,8 +1049,8 @@ test_that("multi-source district Ginis are reconstructed from pooled households"
     NSS_Region = c(35, 35, 35, 35),
     District = c(102, 102, 103, 103),
     HHID = c("a1", "a2", "b1", "b2"),
-    HH_Con_exp_rs = c(100, 200, 400, 800),
-    Household_size = 1,
+    HH_Con_exp_rs = c(100, 400, 400, 1600),
+    Household_size = c(1, 2, 1, 2),
     MULT_Combined = c(1, 1, 1, 1),
     stringsAsFactors = FALSE
   )
@@ -1059,7 +1059,10 @@ test_that("multi-source district Ginis are reconstructed from pooled households"
     panel, crosswalk, list(), list(nss1718edu_block3 = block3)
   )
 
-  expect_equal(out$panel$gini_cons_1718, wgini(c(100, 200, 400, 800), rep(1, 4)))
+  expect_equal(
+    out$panel$gini_cons_1718,
+    wgini(c(100, 200, 400, 800), c(1, 2, 1, 2))
+  )
   expect_identical(
     out$panel$gini_cons_1718_reconstruction_status,
     "reconstructed"

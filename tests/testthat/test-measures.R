@@ -474,3 +474,24 @@ test_that("mapped linguistic-distance shares form a genuine composition", {
   expect_equal(sum(mapped), 100, tolerance = 1e-8)
   expect_equal(sum(all_speaker) + out$ling_unmapped_speaker_share, 100, tolerance = 1e-8)
 })
+
+
+test_that("finalize analysis panel enforces final-mode analysis validation", {
+  panel <- data.frame(
+    state_code_2001 = "01", district_code_2001 = "01", district_panel_id = "2001__01__01",
+    emi_exposure_all_children_0708 = 20, ling_distance_nonzero_mean = 1,
+    npeople_0708 = 20000, consumption_0708 = 1000, gini_cons_0708 = 0.3,
+    consumption_1718 = 1500, gini_cons_1718 = NA_real_,
+    real_log_consumption_change = log(1.5), gini_change = NA_real_,
+    stringsAsFactors = FALSE
+  )
+  controls <- data.frame(state_code_2001 = "01", district_code_2001 = "01")
+  for (v in census_2001_main_controls()) controls[[v]] <- 1
+  cfg <- list(mode = "final", strict_district_panel_validation = FALSE, strict_analysis_panel_validation = TRUE)
+
+  expect_error(
+    finalize_analysis_panel(panel, controls, cfg),
+    "missing core IV analysis values",
+    fixed = TRUE
+  )
+})

@@ -237,6 +237,7 @@ lineage_household_consumption <- function(inputs, wave) {
   out <- data.frame(
     source_code_key = lineage_source_code(df[[code_col]]),
     consumption = value,
+    household_size = if (!is.null(size_col)) num(df[[size_col]]) else NA_real_,
     survey_weight = num(df[[weight_col]]),
     stringsAsFactors = FALSE
   )
@@ -244,10 +245,13 @@ lineage_household_consumption <- function(inputs, wave) {
     out$household_key <- paste(
       out$source_code_key, canon(df[[household_col]]), sep = "__"
     )
-    out <- out[!duplicated(out$household_key), , drop = FALSE]
+    out <- collapse_identical_key_rows(
+      out, "household_key", context = paste(wave, "lineage household consumption")
+    )
   }
   out[
     !is.na(out$source_code_key) & is.finite(out$consumption) &
+      is.finite(out$household_size) & out$household_size > 0 &
       is.finite(out$survey_weight) & out$survey_weight > 0,
     , drop = FALSE
   ]
@@ -302,7 +306,8 @@ reconstruct_lineage_pooled_ginis <- function(
     groups <- split(seq_len(nrow(mapped)), mapped$target_unit_2001)
     rows <- safe_bind_rows(lapply(names(groups), function(target) {
       x <- mapped[groups[[target]], , drop = FALSE]
-      valid <- is.finite(x$consumption) & is.finite(x$survey_weight) & x$survey_weight > 0
+      valid <- is.finite(x$consumption) & is.finite(x$household_size) & x$household_size > 0 &
+        is.finite(x$survey_weight) & x$survey_weight > 0
       observed_sources <- unique(x$source_row_id[valid])
       expected_sources <- unique(whole$source_row_id[whole$target_unit_2001 == target])
       complete <- length(observed_sources) == length(expected_sources) &&
@@ -313,7 +318,10 @@ reconstruct_lineage_pooled_ginis <- function(
         source_count = length(expected_sources),
         household_count = sum(valid),
         pooled_gini = if (complete && any(valid)) {
-          wgini(x$consumption[valid], x$survey_weight[valid])
+          wgini(
+            x$consumption[valid],
+            x$survey_weight[valid] * x$household_size[valid]
+          )
         } else {
           NA_real_
         },

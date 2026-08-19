@@ -139,3 +139,48 @@ nss_2007_household_key <- function(df) {
   for (nm in key_cols) if (!nm %in% names(df)) df[[nm]] <- NA_character_
   do.call(paste, c(lapply(df[key_cols], function(x) canon(plain_chr(x))), sep = "__"))
 }
+
+rows_identical_except_key <- function(df) {
+  if (!nrow(df) || nrow(df) == 1L) return(TRUE)
+  normalized <- lapply(df, function(x) {
+    if (is.factor(x)) x <- as.character(x)
+    if (is.list(x)) {
+      vapply(x, function(value) paste(as.character(value), collapse = "\r"), character(1))
+    } else {
+      as.character(x)
+    }
+  })
+  normalized <- as.data.frame(normalized, stringsAsFactors = FALSE)
+  all(vapply(
+    normalized,
+    function(col) {
+      first <- col[[1]]
+      same <- (is.na(col) & is.na(first)) |
+        (!is.na(col) & !is.na(first) & col == first)
+      all(same)
+    },
+    logical(1)
+  ))
+}
+
+collapse_identical_key_rows <- function(df, by, context = "data") {
+  df <- safe_df(df)
+  by <- intersect(by, names(df))
+  if (!nrow(df) || !length(by)) return(df)
+  key <- do.call(paste, c(lapply(df[by], function(x) canon(plain_chr(x))), sep = "\r"))
+  dup_keys <- unique(key[duplicated(key)])
+  if (!length(dup_keys)) return(df)
+
+  keep <- rep(TRUE, nrow(df))
+  non_key <- setdiff(names(df), by)
+  for (k in dup_keys) {
+    idx <- which(key == k)
+    if (!rows_identical_except_key(df[idx, non_key, drop = FALSE])) {
+      stop(context, " has duplicate keys with non-identical rows: ", k, call. = FALSE)
+    }
+    keep[idx[-1L]] <- FALSE
+  }
+  out <- df[keep, , drop = FALSE]
+  rownames(out) <- NULL
+  out
+}

@@ -262,3 +262,10 @@ validate_analysis_district_panel <- function(out, cfg = list(), join_map = NULL,
   }
   out
 }
+
+finalize_analysis_panel <- function(panel, census_controls, cfg = list()) {
+  validate_analysis_district_panel(
+    attach_census_2001_controls(panel, census_controls),
+    cfg
+  )
+}

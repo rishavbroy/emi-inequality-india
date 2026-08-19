@@ -180,7 +180,9 @@ household_controls_frame_2007 <- function(person_df, household_df = data.frame()
 
   if (nrow(households)) {
     households$.nss_2007_household_key <- nss_2007_household_key(households)
-    households <- households[!duplicated(households$.nss_2007_household_key), , drop = FALSE]
+    households <- collapse_identical_key_rows(
+      households, ".nss_2007_household_key", context = "2007 household controls"
+    )
   }
 
   if (nrow(people)) {
@@ -200,7 +202,9 @@ household_controls_frame_2007 <- function(person_df, household_df = data.frame()
       names(people)
     }
     heads <- people[head_rows, head_columns, drop = FALSE]
-    heads <- heads[!duplicated(heads$.nss_2007_household_key), , drop = FALSE]
+    heads <- collapse_identical_key_rows(
+      heads, ".nss_2007_household_key", context = "2007 household-head controls"
+    )
   } else {
     heads <- data.frame(.nss_2007_household_key = character())
   }
@@ -313,7 +317,9 @@ compute_housing_controls_2007 <- function(df) {
   hh <- first_col(df, c("HH_ID", "HHID", "household_id"))
   if (!is.null(hh)) {
     df$.hh_distinct_key <- paste(do.call(paste, c(df[district_group_vars_2007(df)], sep = "__")), canon(df[[hh]]), sep = "__")
-    df <- df[!duplicated(df$.hh_distinct_key), , drop = FALSE]
+    df <- collapse_identical_key_rows(
+      df, ".hh_distinct_key", context = "2007 housing controls"
+    )
   }
   by_district_code_2007(df, type, weight, "pct_pucca", function(x, w) 100 * wmean(as.numeric(num(x) == 1), w))
 }
