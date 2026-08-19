@@ -1,0 +1,7 @@
+"missing_var","n_missing","pct_missing","scope"
+"IS_EDU_FREE",0,0,"enrolled_children"
+"TUTION_FEE_WAIVED",0,0,"enrolled_children"
+"RECD_SCHOLARSHIP_STIPEND",0,0,"enrolled_children"
+"RECD_TXT_BOOKS",77,0.000857690251292105,"enrolled_children"
+"RECD_STATIONERY",141,0.00157057565496346,"enrolled_children"
+"MID_DAY_MEAL_ETC_RECD",2,2.227766886473e-05,"enrolled_children"
