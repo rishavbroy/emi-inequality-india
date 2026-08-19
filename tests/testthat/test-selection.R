@@ -220,3 +220,59 @@ test_that("selection sample leaves single-course inputs unchanged", {
 
   expect_identical(select_primary_education_course(b5), b5)
 })
+
+test_that("NSS yes-no coding preserves unknown values as missing", {
+  out <- nss_yes_no_indicator(c(1, 2, 9, NA), yes = 1, no = 2)
+
+  expect_identical(as.character(out), c("Yes", "No", NA_character_, NA_character_))
+})
+
+test_that("NSS schooling-benefit coding follows documented categories", {
+  textbooks <- nss_yes_no_indicator(c(1, 2, 3, 4, 5, 6, NA), yes = c(1, 2), no = c(3, 4, 5, 6))
+  waiver <- nss_tuition_waiver_indicator(
+    waiver_code = c(NA, 1, 2, 3, 0, NA),
+    free_education_code = c(1, 2, 2, 2, 2, 2)
+  )
+
+  expect_identical(
+    as.character(textbooks),
+    c("Yes", "Yes", "No", "No", "No", "No", NA_character_)
+  )
+  expect_identical(
+    as.character(waiver),
+    c("No", "Yes", "Yes", "No", NA_character_, NA_character_)
+  )
+})
+
+test_that("district schooling context omits missing benefit responses rather than recoding them", {
+  df <- data.frame(
+    district_code_0708 = c("001", "001", "001"),
+    enrolled = factor(rep("Yes", 3), levels = c("No", "Yes")),
+    weight = c(1, 1, 2),
+    RECD_TXT_BOOKS = factor(c("Yes", "No", NA), levels = c("Yes", "No"))
+  )
+
+  out <- district_enrolled_means(df, vars = "RECD_TXT_BOOKS")
+
+  expect_equal(out$dmean_num_RECD_TXT_BOOKS, 0.5)
+})
+
+
+test_that("missingness diagnostics report enrolled schooling-benefit missingness", {
+  df <- data.frame(
+    enrolled = factor(c("Yes", "Yes", "No"), levels = c("No", "Yes")),
+    AGE = c(10, 11, 12),
+    HH_SIZE = c(4, 5, 4),
+    SEX = c("Female", "Male", "Female"),
+    state_0708 = c("A", "A", "B"),
+    RECD_TXT_BOOKS = factor(c("Yes", NA, NA), levels = c("Yes", "No")),
+    RECD_STATIONERY = factor(c("No", "Yes", NA), levels = c("Yes", "No"))
+  )
+
+  out <- diagnose_missingness(df, list())
+  benefits <- out$schooling_benefit_missingness
+
+  expect_setequal(benefits$missing_var, c("RECD_TXT_BOOKS", "RECD_STATIONERY"))
+  expect_equal(benefits$n_missing[benefits$missing_var == "RECD_TXT_BOOKS"], 1L)
+  expect_true(all(benefits$scope == "enrolled_children"))
+})

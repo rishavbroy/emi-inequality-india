@@ -7,6 +7,10 @@ missingness_variables <- function(selection_data) {
   df <- as.data.frame(selection_data, stringsAsFactors = FALSE)
   all_child_missing_vars <- c("DIST_FROM_NEAREST_PRIMARY_CLASS", "dmean_num_ENROLLMENT_COST", "father_educ")
   enrolled_only_missing_vars <- c("TUTION_FEE", "EXAMINATION_FEE", "OTHER_FEES_PAYMENTS", "BOOKS", "STATIONERY", "UNIFORM", "TRANSPORT")
+  schooling_benefit_vars <- c(
+    "IS_EDU_FREE", "TUTION_FEE_WAIVED", "RECD_SCHOLARSHIP_STIPEND",
+    "RECD_TXT_BOOKS", "RECD_STATIONERY", "MID_DAY_MEAL_ETC_RECD"
+  )
 
   # Legacy Chunk 8 distinguished variables used in the probit from
   # enrolled-only expenditure variables.  Keep that distinction so the total
@@ -23,6 +27,7 @@ missingness_variables <- function(selection_data) {
     probit_vars = probit_vars,
     miss_vars_all = intersect(all_child_missing_vars, names(df)),
     miss_vars_enrolled = intersect(enrolled_only_missing_vars, names(df)),
+    schooling_benefit_vars = intersect(schooling_benefit_vars, names(df)),
     group_vars = intersect(c("SECTOR", "SEX", "RELIGION", "SOCIAL_GROUP", "state_0708"), names(df)),
     cts_vars = intersect(c("AGE", "HH_SIZE"), names(df)),
     regional_vars = intersect(c("state_0708", "region_0708"), names(df))
@@ -58,6 +63,10 @@ diagnose_missingness <- function(selection_data, cfg) {
   corr_all <- missingness_correlation_matrix(df, vars$miss_vars_all, vars$group_vars, vars$cts_vars)
   enrolled_rows <- enrolled_schooling_rows(df)
   corr_enrolled <- missingness_correlation_matrix(df[enrolled_rows, , drop = FALSE], vars$miss_vars_enrolled, vars$group_vars, vars$cts_vars)
+  benefit_missingness <- summarize_missingness_by_variable(
+    df[enrolled_rows, vars$schooling_benefit_vars, drop = FALSE]
+  )
+  if (nrow(benefit_missingness)) benefit_missingness$scope <- "enrolled_children"
 
   covars <- intersect(c("SECTOR", "SEX", "AGE", "HH_SIZE", "RELIGION", "SOCIAL_GROUP", "state_0708"), names(df))
   miss_all <- intersect(vars$miss_vars_all, names(df))
@@ -96,6 +105,7 @@ diagnose_missingness <- function(selection_data, cfg) {
     logit_summary = logit_summary,
     case_study = case_study,
     chi_square = chi_square,
+    schooling_benefit_missingness = benefit_missingness,
     notes = notes
   )
   class(out) <- c("emi_missingness_diagnostics", class(out))
@@ -465,6 +475,10 @@ save_missingness_diagnostics <- function(diagnostics, dir = "outputs/diagnostics
     logit_summary = write_diagnostic_csv(diagnostics$logit_summary %||% data.frame(), file.path(dir, "missingness_logit_summary.csv")),
     case_study = write_diagnostic_csv(diagnostics$case_study %||% data.frame(), file.path(dir, "missingness_rajasthan_southern_case_study.csv")),
     chi_square = write_diagnostic_csv(diagnostics$chi_square %||% data.frame(), file.path(dir, "missingness_chi_square_tests.csv")),
+    schooling_benefits = write_diagnostic_csv(
+      diagnostics$schooling_benefit_missingness %||% data.frame(),
+      file.path(dir, "missingness_schooling_benefits_enrolled.csv")
+    ),
     notes = write_diagnostic_csv(diagnostics$notes %||% data.frame(), file.path(dir, "missingness_legacy_notes.csv"))
   )
   if (length(diagnostics$corr_all)) {

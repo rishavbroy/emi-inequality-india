@@ -45,6 +45,7 @@ regional_father <- analysis_target_csv("diag_ext_missingness", "regional_missing
 logit_summary <- analysis_target_csv("diag_ext_missingness", "missingness_logit_summary.csv")
 case_study <- analysis_target_csv("diag_ext_missingness", "missingness_rajasthan_southern_case_study.csv")
 chi_square <- analysis_target_csv("diag_ext_missingness", "missingness_chi_square_tests.csv")
+schooling_benefits <- analysis_target_csv("diag_ext_missingness", "missingness_schooling_benefits_enrolled.csv")
 legacy_notes <- analysis_target_csv("diag_ext_missingness", "missingness_legacy_notes.csv")
 corr_all_pairs <- analysis_target_csv("diag_ext_missingness", "missingness_correlation_all_top_pairs.csv")
 corr_enrolled_pairs <- analysis_target_csv("diag_ext_missingness", "missingness_correlation_enrolled_top_pairs.csv")
@@ -58,6 +59,7 @@ missing_counts[order(-missing_counts$n_missing), c("missing_var", "n_missing", "
 
 ```{r missingness-counts}
 analysis_table(missing_counts, "Current missingness counts")
+analysis_table(schooling_benefits, "Missingness in enrolled-child schooling-benefit fields")
 ```
 
 ```{r missingness-regions}

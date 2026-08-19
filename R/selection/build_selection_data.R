@@ -59,12 +59,18 @@ construct_child_level_selection_sample <- function(blocks) {
     STATE = selection_df$STATE,
     STRATUM = selection_df$STRATUM,
     SUB_STRATUM_NO = selection_df$SUB_STRATUM_NO,
-    IS_EDU_FREE = nss_yes_no_indicator(selection_df$IS_EDU_FREE, yes = c(1), no = c(2)),
-    TUTION_FEE_WAIVED = nss_yes_no_indicator(selection_df$TUTION_FEE_WAIVED, yes = c(1, 2), no = c(3, NA)),
-    RECD_SCHOLARSHIP_STIPEND = nss_yes_no_indicator(selection_df$RECD_SCHOLARSHIP_STIPEND, yes = c(1), no = c(2)),
-    RECD_TXT_BOOKS = nss_yes_no_indicator(selection_df$RECD_TXT_BOOKS, yes = c(1, 2), no = c(3, NA)),
-    RECD_STATIONERY = nss_yes_no_indicator(selection_df$RECD_STATIONERY, yes = c(1, 2), no = c(3, NA)),
-    MID_DAY_MEAL_ETC_RECD = nss_yes_no_indicator(selection_df$MID_DAY_MEAL_ETC_RECD, yes = c(1), no = c(2)),
+    IS_EDU_FREE = nss_yes_no_indicator(selection_df$IS_EDU_FREE, yes = 1, no = 2),
+    TUTION_FEE_WAIVED = nss_tuition_waiver_indicator(
+      selection_df$TUTION_FEE_WAIVED,
+      selection_df$IS_EDU_FREE
+    ),
+    RECD_SCHOLARSHIP_STIPEND = nss_yes_no_indicator(selection_df$RECD_SCHOLARSHIP_STIPEND, yes = 1, no = 2),
+    # Preserve the legacy free-benefit construct: codes 1/2 are all/some free;
+    # subsidized or mixed free/subsidized categories remain outside that construct.
+    # Genuine system missing values now remain missing instead of becoming "No".
+    RECD_TXT_BOOKS = nss_yes_no_indicator(selection_df$RECD_TXT_BOOKS, yes = c(1, 2), no = c(3, 4, 5, 6)),
+    RECD_STATIONERY = nss_yes_no_indicator(selection_df$RECD_STATIONERY, yes = c(1, 2), no = c(3, 4, 5, 6)),
+    MID_DAY_MEAL_ETC_RECD = nss_yes_no_indicator(selection_df$MID_DAY_MEAL_ETC_RECD, yes = 1, no = 2),
     MEDIUM_INSTRUCTION = selection_df$MEDIUM_INSTRUCTION %||% NA,
     stringsAsFactors = FALSE
   )
@@ -231,44 +237,26 @@ dedupe_selection_join_rows <- function(df, by) {
 }
 
 collapse_identical_selection_join_rows <- function(df, by, context = "selection join") {
-  df <- safe_df(df)
-  by <- intersect(by, names(df))
-  if (!nrow(df) || !length(by)) return(df)
-  key <- do.call(paste, c(lapply(df[by], function(x) canon(plain_chr(x))), sep = "\r"))
-  dup_keys <- unique(key[duplicated(key)])
-  if (!length(dup_keys)) return(df)
-
-  keep <- rep(TRUE, nrow(df))
-  non_key <- setdiff(names(df), by)
-  for (k in dup_keys) {
-    idx <- which(key == k)
-    if (!selection_duplicate_rows_identical(df[idx, non_key, drop = FALSE])) {
-      stop(context, " has duplicate keys with non-identical rows: ", k, call. = FALSE)
-    }
-    keep[idx[-1L]] <- FALSE
-  }
-  out <- df[keep, , drop = FALSE]
-  rownames(out) <- NULL
-  out
+  collapse_identical_key_rows(df, by, context = context)
 }
 
-selection_duplicate_rows_identical <- function(df) {
-  if (!nrow(df) || nrow(df) == 1L) return(TRUE)
-  normalized <- lapply(df, function(x) {
-    if (is.factor(x)) x <- as.character(x)
-    if (is.list(x)) {
-      vapply(x, function(value) paste(as.character(value), collapse = "\r"), character(1))
-    } else {
-      as.character(x)
-    }
-  })
-  normalized <- as.data.frame(normalized, stringsAsFactors = FALSE)
-  all(vapply(normalized, function(col) all(col == col[[1]] | (is.na(col) & is.na(col[[1]]))), logical(1)))
-}
 
-nss_yes_no_indicator <- function(x, yes = c(1), no = c(2)) {
+nss_yes_no_indicator <- function(x, yes = 1, no = 2) {
   val <- num(x)
-  out <- ifelse(val %in% yes, "Yes", "No")
+  out <- rep(NA_character_, length(val))
+  out[val %in% yes] <- "Yes"
+  out[val %in% no] <- "No"
+  factor(out, levels = c("Yes", "No"))
+}
+
+nss_tuition_waiver_indicator <- function(waiver_code, free_education_code) {
+  waiver <- num(waiver_code)
+  free <- num(free_education_code)
+  out <- rep(NA_character_, length(waiver))
+  out[free == 1] <- "No"
+  nonfree <- free == 2
+  out[nonfree & waiver %in% c(1, 2)] <- "Yes"
+  out[nonfree & waiver == 3] <- "No"
   factor(out, levels = c("Yes", "No"))
 }
 
