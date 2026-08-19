@@ -456,6 +456,22 @@ test_that("source syntax preflight is centralized and read-only", {
   expect_false(grepl("renv::snapshot", helper, fixed = TRUE))
 })
 
+test_that("public build audit owns mandatory syntax and full-test gates", {
+  audit <- readLines(repo_file("scripts", "run_public_build_audit.sh"), warn = FALSE)
+
+  syntax_line <- grep("bash scripts/check_source_syntax.sh", audit, fixed = TRUE)
+  test_line <- grep("  make test", audit, fixed = TRUE)
+  pipeline_line <- grep('current_stage="public-final-check"', audit, fixed = TRUE)
+
+  expect_length(syntax_line, 1L)
+  expect_length(test_line, 1L)
+  expect_length(pipeline_line, 1L)
+  expect_lt(syntax_line, test_line)
+  expect_lt(test_line, pipeline_line)
+  expect_true(any(grepl('trap dump_diagnostics EXIT', audit, fixed = TRUE)))
+  expect_true(any(grepl('make_debug_archive "error-${current_stage}"', audit, fixed = TRUE)))
+})
+
 test_that("target issue printer selects columns without data-frame drop warnings", {
   env <- new.env(parent = globalenv())
   sys.source(repo_file("scripts", "target_metadata_helpers.R"), envir = env)
