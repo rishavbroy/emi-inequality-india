@@ -14,6 +14,7 @@ The active manifest currently covers:
 - NSS 2007-08 Household Consumer Expenditure Survey, 64th Round;
 - NSS 2017-18 Household Social Consumption: Education, 75th Round;
 - Census of India 2001 C-16 mother-tongue files, `PC01_C16_01.xls` through `PC01_C16_35.xls`;
+- Census of India 2001 C-01, C-08, C-14, and H-09 state/UT control-table directories;
 - District Boundaries 2020 shapefile components;
 - district-change tracker and validation sources;
 - static ILO image assets used in the paper.
@@ -24,8 +25,20 @@ The canonical raw source directories are:
 - `data/raw/nss_2007_consumption_64/`
 - `data/raw/nss_2017_education_75/`
 - `data/raw/census_2001/languages/C16/`
+- `data/raw/census_2001/religion/C01/`
+- `data/raw/census_2001/education/C08/`
+- `data/raw/census_2001/age/C14/`
+- `data/raw/census_2001/housing/H09/`
 - `data/raw/district_boundaries_2020/`
 - `data/raw/district_changes/`
+
+Census 2001 state/UT workbooks can be restored from the tracked acquisition manifest without redownloading files already present:
+
+```bash
+make download-census-tables
+```
+
+The downloader reads `data/metadata/census_2001_download_manifest.tsv`, checks each destination with a local file stat, and contacts Census of India only for missing or empty files. The acquisition manifest also inventories Census tables reserved for planned controls and diagnostics, so it is intentionally broader than the production `data/metadata/file_manifest.csv`.
 
 ## Optional district-lineage inputs
 
