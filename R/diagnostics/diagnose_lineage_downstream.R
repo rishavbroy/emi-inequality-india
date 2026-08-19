@@ -212,7 +212,7 @@ lineage_household_consumption <- function(inputs, wave) {
     }
   } else if (identical(wave, "nss_2017_18")) {
     df <- normalize_2017_district_code(std(safe_df(
-      select_input_frame_2017(inputs, c("nss1718edu_block3", "block3", "block"))
+      select_input_frame(inputs, c("nss1718edu_block3", "block3", "block"))
     ), 2017L))
     code_col <- "district_code_1718"
     total_col <- first_col(df, c("HH_Con_exp_rs", "MPCE", "mpce", "consumption", "hh_cons"))

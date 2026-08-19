@@ -38,15 +38,6 @@ build_2007_measures <- function(nss_2007_education, nss_2007_consumption, cfg, c
   out
 }
 
-select_input_frame <- function(inputs, candidates) {
-  inputs <- as_input_list(inputs)
-  for (nm in candidates) {
-    if (!is.null(inputs[[nm]]) && nrow(safe_df(inputs[[nm]]))) return(inputs[[nm]])
-  }
-  if (length(inputs) == 1L) return(inputs[[1L]])
-  data.frame()
-}
-
 district_group_vars_2007 <- function(df) {
   if ("district_code_0708" %in% names(df)) {
     val <- plain_chr(df$district_code_0708)

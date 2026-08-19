@@ -140,6 +140,20 @@ nss_2007_household_key <- function(df) {
   do.call(paste, c(lapply(df[key_cols], function(x) canon(plain_chr(x))), sep = "__"))
 }
 
+select_input_frame <- function(inputs, candidates) {
+  inputs <- as_input_list(inputs)
+  for (name in candidates) {
+    frame <- inputs[[name]]
+    if (!is.null(frame) && nrow(safe_df(frame))) return(frame)
+  }
+
+  input_names <- names(inputs)
+  unnamed_singleton <- length(inputs) == 1L &&
+    (is.null(input_names) || !nzchar(input_names[[1]] %||% ""))
+  if (unnamed_singleton) return(inputs[[1L]])
+  data.frame()
+}
+
 rows_identical_except_key <- function(df) {
   if (!nrow(df) || nrow(df) == 1L) return(TRUE)
   normalized <- lapply(df, function(x) {

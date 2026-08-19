@@ -21,7 +21,7 @@ build_2017_measures <- function(nss_2017_education, cfg, consumption_households 
 #'
 prepare_2017_consumption_households <- function(nss_2017_education, deflators = NULL) {
   inputs <- as_input_list(nss_2017_education)
-  df <- std(safe_df(select_input_frame_2017(inputs, c("nss1718edu_block3", "block3", "block"))), 2017L)
+  df <- std(safe_df(select_input_frame(inputs, c("nss1718edu_block3", "block3", "block"))), 2017L)
   df <- normalize_2017_district_code(df)
   key <- district_group_vars_2017(df)
   if (!nrow(df) || !length(key)) return(data.frame())
@@ -35,15 +35,6 @@ prepare_2017_consumption_households <- function(nss_2017_education, deflators = 
     subround_candidates = c("Sub_Round", "Sub Round", "sub_round", "subround", "Subround"),
     deflators = deflators
   )
-}
-
-select_input_frame_2017 <- function(inputs, candidates) {
-  inputs <- as_input_list(inputs)
-  for (nm in candidates) {
-    if (!is.null(inputs[[nm]]) && nrow(safe_df(inputs[[nm]]))) return(inputs[[nm]])
-  }
-  if (length(inputs) == 1L) return(inputs[[1L]])
-  data.frame()
 }
 
 district_group_vars_2017 <- function(df) {

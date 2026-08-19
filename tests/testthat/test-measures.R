@@ -12,6 +12,17 @@ test_that("2007 measures compute weighted EMIE by district", {
   expect_true(all(!duplicated(out$district_panel_id)))
 })
 
+test_that("named NSS blocks never masquerade as another block", {
+  block5 <- data.frame(State = "Bihar", District = "Patna", EMI = 1)
+  inputs <- list(nss0708edu_block5 = block5)
+
+  expect_equal(nrow(select_input_frame(inputs, c("nss0708edu_block3", "block3"))), 0L)
+  expect_identical(select_input_frame(inputs, c("nss0708edu_block5", "block5")), block5)
+
+  unnamed <- as_input_list(block5)
+  expect_identical(select_input_frame(unnamed, "not_named"), block5)
+})
+
 test_that("2017 measures compute weighted consumption by district", {
   edu <- list(block = data.frame(
     State = c("Bihar", "Bihar"),
