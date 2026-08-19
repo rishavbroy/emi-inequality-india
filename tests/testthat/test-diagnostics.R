@@ -723,7 +723,131 @@ test_that("alternative linguistic-distance diagnostics save four explicit output
     "unmapped_language_decomposition.csv",
     "distance4_leave_one_language_out.csv",
     "alternative_distance_weak_iv_outcomes.csv",
-    "alternative_distance_anderson_rubin_grid.csv"
+    "alternative_distance_anderson_rubin_grid.csv",
+    "iv_diagnostic_applicability.csv"
   ))
   expect_true(all(file.exists(manifest$path)))
+})
+
+test_that("canonical IV registry drives alternative-distance specifications", {
+  registry <- iv_specification_registry()
+
+  expect_identical(alternative_distance_registry(), registry)
+  expect_equal(nrow(registry), length(iv_adjustment_sets()) * length(iv_instrument_constructions()))
+  expect_true(all(c(
+    "outcome", "treatment", "fixed_effect", "controls", "excluded_instruments",
+    "n_endogenous", "n_excluded_instruments", "panel_variant", "sample_rule",
+    "cluster", "tier"
+  ) %in% names(registry)))
+  expect_true(all(registry$n_endogenous == 1L))
+  expect_true(all(registry$cluster == "state_code_2001"))
+})
+
+test_that("diagnostic applicability follows identification structure", {
+  registry <- iv_specification_registry()
+  applicability <- iv_diagnostic_applicability(registry)
+  scalar_id <- registry$specification_id[registry$construction_id == "nonzero_mean" & registry$adjustment_id == "state_main"][[1]]
+  multi_id <- registry$specification_id[registry$construction_id == "distance_shares_all" & registry$adjustment_id == "state_main"][[1]]
+
+  scalar_overid <- applicability[
+    applicability$specification_id == scalar_id & applicability$diagnostic_id == "overidentification", , drop = FALSE
+  ]
+  multi_overid <- applicability[
+    applicability$specification_id == multi_id & applicability$diagnostic_id == "overidentification", , drop = FALSE
+  ]
+
+  expect_false(scalar_overid$applicable)
+  expect_identical(scalar_overid$reason, "exactly_identified")
+  expect_true(multi_overid$applicable)
+  expect_false(multi_overid$implemented)
+  expect_false(multi_overid$will_run)
+  expect_true(all(applicability$applicable[applicability$diagnostic_id == "balance_joint"]))
+  expect_false(any(applicability$will_run[applicability$diagnostic_id == "balance_joint"]))
+  expect_true(all(applicability$applicable[applicability$diagnostic_id == "anderson_rubin"]))
+  expect_true(all(applicability$will_run[applicability$diagnostic_id == "anderson_rubin"]))
+  expect_true(all(applicability$applicable[applicability$diagnostic_id == "monotonicity_shape"]))
+  expect_false(any(applicability$will_run[applicability$diagnostic_id == "monotonicity_shape"]))
+})
+
+test_that("conditional balance removes the tested covariate from nuisance controls", {
+  spec <- iv_specification_registry()
+  spec <- spec[spec$adjustment_id == "state_main" & spec$construction_id == "nonzero_mean", , drop = FALSE]
+  tested <- census_2001_main_controls()[[1]]
+
+  expect_false(tested %in% balance_nuisance_controls(spec, tested))
+  expect_setequal(
+    balance_nuisance_controls(spec, tested),
+    setdiff(census_2001_main_controls(), tested)
+  )
+})
+
+test_that("conditional balance uses specification fixed effects and clustered joint tests", {
+  set.seed(902)
+  n <- 120L
+  panel <- data.frame(
+    state_code_2001 = rep(sprintf("%02d", 1:12), each = 10),
+    region = rep(panel_region_levels(), each = 20),
+    ling_distance_nonzero_mean = stats::rnorm(n),
+    stringsAsFactors = FALSE
+  )
+  panel$emi_exposure_all_children_0708 <- 2 * panel$ling_distance_nonzero_mean + stats::rnorm(n)
+  for (v in census_2001_diagnostic_controls()) panel[[v]] <- stats::rnorm(n)
+  tested <- census_2001_main_controls()[[1]]
+  panel[[tested]] <- 0.5 * panel$ling_distance_nonzero_mean + stats::rnorm(n)
+  spec <- iv_specification_registry()
+  spec <- spec[spec$adjustment_id == "state_main" & spec$construction_id == "nonzero_mean", , drop = FALSE]
+
+  out <- estimate_iv_balance_spec(panel, spec, tested)
+
+  expect_equal(out$status, "estimated")
+  expect_equal(out$fixed_effect, "state")
+  expect_equal(out$n_excluded_instruments, 1L)
+  expect_true(is.finite(out$joint_f))
+  expect_true(is.finite(out$standardized_effect))
+})
+
+test_that("Anderson-Rubin inference accepts scalar and multi-instrument registry specifications", {
+  set.seed(904)
+  n <- 120L
+  panel <- data.frame(
+    state_code_2001 = rep(sprintf("%02d", 1:12), each = 10),
+    region = rep(panel_region_levels(), each = 20),
+    real_log_consumption_change = stats::rnorm(n),
+    emi_exposure_all_children_0708 = stats::rnorm(n),
+    ling_distance_nonzero_mean = stats::rnorm(n),
+    stringsAsFactors = FALSE
+  )
+  shares <- matrix(stats::runif(n * 6), ncol = 6)
+  shares <- 100 * shares / rowSums(shares)
+  for (degree in 0:5) {
+    panel[[paste0("ling_share_distance_", degree)]] <- shares[, degree + 1]
+    panel[[paste0("ling_mapped_share_distance_", degree)]] <- shares[, degree + 1]
+  }
+  panel$ling_share_distance_ge3 <- rowSums(shares[, 4:6, drop = FALSE])
+  panel$ling_distance_top3_legacy <- stats::runif(n, 0, 5)
+  panel$hindi_share <- stats::runif(n, 0, 60)
+  panel$urdu_share <- stats::runif(n, 0, 20)
+  panel$hindi_urdu_share <- panel$hindi_share + panel$urdu_share
+  panel$ling_unmapped_speaker_share <- 0
+  panel$ling_mapped_speaker_share <- 100
+  for (variable in census_2001_diagnostic_controls()) panel[[variable]] <- stats::rnorm(n)
+
+  registry <- iv_specification_registry()
+  scalar <- registry[
+    registry$adjustment_id == "state_main" & registry$construction_id == "nonzero_mean",
+    , drop = FALSE
+  ]
+  multi <- registry[
+    registry$adjustment_id == "state_main" & registry$construction_id == "distance_shares_all",
+    , drop = FALSE
+  ]
+
+  scalar_ar <- estimate_anderson_rubin_spec(panel, scalar, points = 21L)
+  multi_ar <- estimate_anderson_rubin_spec(panel, multi, points = 21L)
+
+  expect_equal(scalar_ar$summary$status, "estimated")
+  expect_equal(multi_ar$summary$status, "estimated")
+  expect_equal(nrow(scalar_ar$grid), 21L)
+  expect_equal(nrow(multi_ar$grid), 21L)
+  expect_true(all(c("anderson_rubin_f_beta0", "anderson_rubin_p_beta0") %in% names(multi_ar$summary)))
 })

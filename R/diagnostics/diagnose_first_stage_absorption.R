@@ -30,7 +30,7 @@ first_stage_included_control_blocks <- function(controls) {
 }
 
 order_first_stage_controls <- function(controls, canonical = census_2001_diagnostic_controls()) {
-  canonical[canonical %in% unique(controls)]
+  order_iv_controls(controls, canonical)
 }
 
 first_stage_block_registry_rows <- function(fixed_effect, start_sequence) {
@@ -134,23 +134,18 @@ prepare_first_stage_absorption_panel <- function(
 }
 
 first_stage_absorption_formula <- function(treatment, instrument, controls = character(), fixed_effect = "none") {
-  rhs <- c(instrument, controls)
-  if (identical(fixed_effect, "region")) rhs <- c(rhs, "factor(region)")
-  if (identical(fixed_effect, "state")) rhs <- c(rhs, "factor(state_code_2001)")
-  stats::reformulate(rhs, response = treatment)
+  stats::reformulate(
+    c(instrument, iv_nuisance_terms(controls, fixed_effect)),
+    response = treatment
+  )
 }
 
 first_stage_nuisance_terms <- function(controls = character(), fixed_effect = "none") {
-  rhs <- controls
-  if (identical(fixed_effect, "region")) rhs <- c(rhs, "factor(region)")
-  if (identical(fixed_effect, "state")) rhs <- c(rhs, "factor(state_code_2001)")
-  rhs
+  iv_nuisance_terms(controls, fixed_effect)
 }
 
 residualize_first_stage_variable <- function(data, variable, controls = character(), fixed_effect = "none") {
-  rhs <- first_stage_nuisance_terms(controls, fixed_effect)
-  if (!length(rhs)) return(num(data[[variable]]) - mean(num(data[[variable]])))
-  stats::residuals(stats::lm(stats::reformulate(rhs, response = variable), data = data))
+  residualize_iv_variable(data, variable, controls, fixed_effect)
 }
 
 clustered_first_stage_inference <- function(fit, instrument, cluster) {

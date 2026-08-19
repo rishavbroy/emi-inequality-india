@@ -18,5 +18,3 @@ output_formats:
   tables: ["csv", "tex", "html"]
 overidentification:
   run: auto
-  sargan: false
-  robust_gmm: true

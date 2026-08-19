@@ -1,55 +1,10 @@
 # Alternative linguistic-distance first stages and coverage diagnostics.
 
-alternative_distance_adjustments <- function() {
-  list(
-    unadjusted = list(label = "Unadjusted", fixed_effect = "none", controls = character()),
-    region_main = list(label = "Six-region FE + main controls", fixed_effect = "region", controls = census_2001_main_controls()),
-    region_expanded = list(label = "Six-region FE + expanded controls", fixed_effect = "region", controls = census_2001_absorption_controls()),
-    state_main = list(label = "State FE + main controls", fixed_effect = "state", controls = census_2001_main_controls()),
-    state_expanded = list(label = "State FE + expanded controls", fixed_effect = "state", controls = census_2001_absorption_controls())
-  )
-}
+alternative_distance_adjustments <- function() iv_adjustment_sets()
 
-alternative_distance_constructions <- function() {
-  list(
-    nonzero_mean = list(label = "Mean distance among speakers above zero", excluded = "ling_distance_nonzero_mean", included = character()),
-    distant_share = list(label = "Share speaking languages at distance three or higher", excluded = "ling_share_distance_ge3", included = character()),
-    top3_legacy = list(label = "Legacy top-three weighted mean", excluded = "ling_distance_top3_legacy", included = character()),
-    nonzero_mean_hindi_urdu = list(label = "Nonzero mean with combined Hindi-Urdu share", excluded = "ling_distance_nonzero_mean", included = "hindi_urdu_share"),
-    nonzero_mean_hindi_urdu_separate = list(label = "Nonzero mean with separate Hindi and Urdu shares", excluded = "ling_distance_nonzero_mean", included = c("hindi_share", "urdu_share")),
-    distance_shares_all = list(label = "Five distance shares; all-speaker denominator", excluded = linguistic_distance_excluded_instruments("all"), included = character()),
-    distance_shares_all_unmapped = list(label = "Five distance shares with unmapped share controlled", excluded = linguistic_distance_excluded_instruments("all"), included = "ling_unmapped_speaker_share"),
-    distance_shares_mapped = list(label = "Five distance shares; mapped-speaker denominator", excluded = linguistic_distance_excluded_instruments("mapped"), included = character())
-  )
-}
+alternative_distance_constructions <- function() iv_instrument_constructions()
 
-alternative_distance_registry <- function() {
-  adjustments <- alternative_distance_adjustments()
-  constructions <- alternative_distance_constructions()
-  rows <- list()
-  sequence <- 0L
-  for (adjustment_id in names(adjustments)) {
-    for (construction_id in names(constructions)) {
-      sequence <- sequence + 1L
-      adjustment <- adjustments[[adjustment_id]]
-      construction <- constructions[[construction_id]]
-      rows[[sequence]] <- data.frame(
-        specification_id = paste(adjustment_id, construction_id, sep = "__"),
-        adjustment_id = adjustment_id,
-        adjustment = adjustment$label,
-        construction_id = construction_id,
-        construction = construction$label,
-        fixed_effect = adjustment$fixed_effect,
-        controls = I(list(order_first_stage_controls(adjustment$controls))),
-        included_language_controls = I(list(construction$included)),
-        excluded_instruments = I(list(construction$excluded)),
-        sequence = sequence,
-        stringsAsFactors = FALSE
-      )
-    }
-  }
-  do.call(rbind, rows)
-}
+alternative_distance_registry <- function() iv_specification_registry()
 
 alternative_distance_variables <- function() {
   constructions <- alternative_distance_constructions()
@@ -60,29 +15,9 @@ alternative_distance_variables <- function() {
   ))
 }
 
-clustered_joint_wald_test <- function(fit, terms, cluster) {
-  inference <- tryCatch(iv_clustered_inference(fit, cluster), error = function(e) NULL)
-  if (is.null(inference) || is.null(inference$vcov) || !requireNamespace("car", quietly = TRUE)) {
-    return(c(statistic = NA_real_, p.value = NA_real_, df = length(terms)))
-  }
-  hypotheses <- paste0(terms, " = 0")
-  test <- tryCatch(
-    car::linearHypothesis(fit, hypotheses, vcov. = inference$vcov, test = "F"),
-    error = function(e) NULL
-  )
-  if (is.null(test) || nrow(test) < 2L || !all(c("F", "Pr(>F)") %in% names(test))) {
-    return(c(statistic = NA_real_, p.value = NA_real_, df = length(terms)))
-  }
-  c(
-    statistic = suppressWarnings(as.numeric(test[["F"]][[2]])),
-    p.value = suppressWarnings(as.numeric(test[["Pr(>F)"]][[2]])),
-    df = length(terms)
-  )
-}
-
 partial_r_squared_instrument_set <- function(data, treatment, excluded, included, controls, fixed_effect) {
   nuisance <- unique(c(controls, included))
-  restricted_rhs <- first_stage_nuisance_terms(nuisance, fixed_effect)
+  restricted_rhs <- iv_nuisance_terms(nuisance, fixed_effect)
   restricted <- if (length(restricted_rhs)) {
     stats::lm(stats::reformulate(restricted_rhs, response = treatment), data = data)
   } else {
@@ -241,6 +176,10 @@ save_alternative_distance_first_stages <- function(
     ),
     anderson_rubin_grid = write_diagnostic_csv(
       diagnostics$anderson_rubin_grid, file.path(dir, "alternative_distance_anderson_rubin_grid.csv")
+    ),
+    diagnostic_applicability = write_diagnostic_csv(
+      diagnostics$diagnostic_applicability %||% iv_diagnostic_applicability(diagnostics$registry),
+      file.path(dir, "iv_diagnostic_applicability.csv")
     )
   ))
 }
@@ -320,43 +259,6 @@ unmapped_language_decomposition <- function(census_2001_languages, panel) {
   out[order(out$unmapped_speakers, decreasing = TRUE), , drop = FALSE]
 }
 
-weak_iv_outcome_registry <- function() {
-  data.frame(
-    specification_id = c("scalar_nonzero_mean", "distance_shares_all_unmapped", "distance_shares_mapped"),
-    excluded = I(list(
-      "ling_distance_nonzero_mean",
-      linguistic_distance_excluded_instruments("all"),
-      linguistic_distance_excluded_instruments("mapped")
-    )),
-    included = I(list(character(), "ling_unmapped_speaker_share", character())),
-    stringsAsFactors = FALSE
-  )
-}
-
-anderson_rubin_test <- function(data, outcome, treatment, excluded, included, controls, fixed_effect, beta0 = 0) {
-  transformed <- ".ar_outcome"
-  data[[transformed]] <- num(data[[outcome]]) - beta0 * num(data[[treatment]])
-  rhs <- unique(c(excluded, included, controls))
-  if (identical(fixed_effect, "region")) rhs <- c(rhs, "factor(region)")
-  if (identical(fixed_effect, "state")) rhs <- c(rhs, "factor(state_code_2001)")
-  fit <- stats::lm(stats::reformulate(rhs, response = transformed), data = data)
-  test <- clustered_joint_wald_test(fit, excluded, data$state_code_2001)
-  c(statistic = test[["statistic"]], p.value = test[["p.value"]])
-}
-
-
-anderson_rubin_grid <- function(data, outcome, treatment, excluded, included, controls, fixed_effect, level = 0.95, points = 401L) {
-  scale <- stats::sd(num(data[[outcome]])) / stats::sd(num(data[[treatment]]))
-  if (!is.finite(scale) || scale <= 0) scale <- 1
-  beta <- seq(-10 * scale, 10 * scale, length.out = points)
-  rows <- safe_bind_rows(lapply(beta, function(value) {
-    test <- anderson_rubin_test(data, outcome, treatment, excluded, included, controls, fixed_effect, value)
-    data.frame(beta = value, statistic = test[["statistic"]], p.value = test[["p.value"]], stringsAsFactors = FALSE)
-  }))
-  rows$accepted <- is.finite(rows$p.value) & rows$p.value >= 1 - level
-  rows
-}
-
 estimate_weak_iv_outcomes <- function(
   panel,
   outcome = "real_log_consumption_change",
@@ -364,48 +266,58 @@ estimate_weak_iv_outcomes <- function(
 ) {
   data <- prepare_alternative_distance_panel(panel, treatment)
   if (!outcome %in% names(data)) stop("Weak-IV outcome panel is missing ", outcome, ".", call. = FALSE)
-  data <- data[is.finite(num(data[[outcome]])), , drop = FALSE]
-  registry <- weak_iv_outcome_registry()
-  controls <- census_2001_absorption_controls()
+  registry <- iv_specification_registry(outcome = outcome, treatment = treatment)
   estimated <- lapply(seq_len(nrow(registry)), function(i) {
-    excluded <- unlist(registry$excluded[[i]], use.names = FALSE)
-    included <- unlist(registry$included[[i]], use.names = FALSE)
-    rhs_structural <- c(treatment, included, controls, "factor(state_code_2001)")
-    rhs_instruments <- c(excluded, included, controls, "factor(state_code_2001)")
-    formula <- stats::as.formula(paste(
-      outcome, "~", paste(rhs_structural, collapse = " + "), "|", paste(rhs_instruments, collapse = " + ")
-    ))
-    fit <- ivreg::ivreg(formula, data = data, model = TRUE, x = TRUE, y = TRUE)
-    cluster <- iv_model_cluster(fit, data)
+    spec <- registry[i, , drop = FALSE]
+    controls <- unlist(spec$controls[[1]], use.names = FALSE)
+    included <- unlist(spec$included_language_controls[[1]], use.names = FALSE)
+    excluded <- unlist(spec$excluded_instruments[[1]], use.names = FALSE)
+    fixed <- iv_fixed_effect_terms(spec$fixed_effect[[1]])
+    needed <- unique(c(outcome, treatment, controls, included, excluded, fixed, "state_code_2001"))
+    missing <- setdiff(needed, names(data))
+    if (length(missing)) {
+      stop(
+        "Weak-IV specification ", spec$specification_id,
+        " is missing columns: ", paste(missing, collapse = ", "),
+        call. = FALSE
+      )
+    }
+    x <- data[stats::complete.cases(data[needed]), , drop = FALSE]
+    if (!nrow(x)) return(NULL)
+
+    fit <- ivreg::ivreg(iv_specification_formula(spec), data = x, model = TRUE, x = TRUE, y = TRUE)
+    cluster <- iv_model_cluster(fit, x)
     inference <- iv_clustered_inference(fit, cluster)
     ct <- lmtest::coeftest(fit, vcov. = inference$vcov)
     row <- match(treatment, rownames(ct))
-    reduced <- stats::lm(stats::reformulate(
-      c(excluded, included, controls, "factor(state_code_2001)"), response = outcome
-    ), data = data)
-    reduced_test <- clustered_joint_wald_test(reduced, excluded, data$state_code_2001)
-    ar0 <- anderson_rubin_test(data, outcome, treatment, excluded, included, controls, "state", 0)
-    grid <- anderson_rubin_grid(data, outcome, treatment, excluded, included, controls, "state")
-    accepted <- grid$beta[grid$accepted]
-    summary <- data.frame(
-      specification_id = registry$specification_id[[i]],
-      estimate_2sls = unname(stats::coef(fit)[treatment]),
-      std_error_clustered = ct[row, 2], p_value_clustered = ct[row, 4],
-      reduced_form_joint_f = reduced_test[["statistic"]], reduced_form_joint_p = reduced_test[["p.value"]],
-      anderson_rubin_f_beta0 = ar0[["statistic"]], anderson_rubin_p_beta0 = ar0[["p.value"]],
-      ar_95_lower = if (length(accepted)) min(accepted) else NA_real_,
-      ar_95_upper = if (length(accepted)) max(accepted) else NA_real_,
-      ar_95_empty = !length(accepted),
-      ar_95_left_truncated = length(accepted) && min(accepted) == min(grid$beta),
-      ar_95_right_truncated = length(accepted) && max(accepted) == max(grid$beta),
-      n = stats::nobs(fit), stringsAsFactors = FALSE
+    reduced <- stats::lm(
+      stats::reformulate(unique(c(excluded, included, controls, fixed)), response = outcome),
+      data = x
     )
-    grid$specification_id <- registry$specification_id[[i]]
-    list(summary = summary, grid = grid)
+    reduced_test <- clustered_joint_wald_test(reduced, excluded, x$state_code_2001)
+    ar <- estimate_anderson_rubin_spec(x, spec)
+    summary <- cbind(
+      data.frame(
+        specification_id = spec$specification_id,
+        adjustment_id = spec$adjustment_id,
+        construction_id = spec$construction_id,
+        estimate_2sls = unname(stats::coef(fit)[treatment]),
+        std_error_clustered = ct[row, 2],
+        p_value_clustered = ct[row, 4],
+        reduced_form_joint_f = reduced_test[["statistic"]],
+        reduced_form_joint_p = reduced_test[["p.value"]],
+        stringsAsFactors = FALSE
+      ),
+      ar$summary[setdiff(names(ar$summary), "specification_id")]
+    )
+    list(summary = summary, grid = ar$grid)
   })
+  estimated <- Filter(Negate(is.null), estimated)
   list(
     summary = safe_bind_rows(lapply(estimated, `[[`, "summary")),
-    ar_grid = safe_bind_rows(lapply(estimated, `[[`, "grid"))
+    ar_grid = safe_bind_rows(lapply(estimated, `[[`, "grid")),
+    registry = registry,
+    applicability = iv_diagnostic_applicability(registry)
   )
 }
 
@@ -458,5 +370,6 @@ augment_alternative_distance_diagnostics <- function(diagnostics, panel, census_
   )
   diagnostics$weak_iv_outcomes <- weak_iv$summary
   diagnostics$anderson_rubin_grid <- weak_iv$ar_grid
+  diagnostics$diagnostic_applicability <- weak_iv$applicability
   diagnostics
 }

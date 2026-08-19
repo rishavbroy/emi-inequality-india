@@ -405,3 +405,12 @@ test_that("condition number uses the estimable regressor matrix", {
   expect_true(is.finite(value))
   expect_gt(value, 0)
 })
+
+test_that("IV clustering prefers the canonical Census 2001 state code", {
+  data <- data.frame(
+    state_code_2001 = c("01", "02"),
+    state_std = c("legacy-a", "legacy-b")
+  )
+
+  expect_identical(iv_cluster_column(data), "state_code_2001")
+})

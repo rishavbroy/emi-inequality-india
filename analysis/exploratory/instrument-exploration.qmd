@@ -45,6 +45,7 @@ distance4_languages <- analysis_target_csv("diag_ext_alternative_distance_first_
 unmapped_languages <- analysis_target_csv("diag_ext_alternative_distance_first_stages", "unmapped_language_decomposition.csv")
 distance4_leave_one_out <- analysis_target_csv("diag_ext_alternative_distance_first_stages", "distance4_leave_one_language_out.csv")
 weak_iv_outcomes <- analysis_target_csv("diag_ext_alternative_distance_first_stages", "alternative_distance_weak_iv_outcomes.csv")
+iv_diagnostic_applicability <- analysis_target_csv("diag_ext_alternative_distance_first_stages", "iv_diagnostic_applicability.csv")
 ```
 
 ## District-level treatment and instrument check
@@ -92,6 +93,7 @@ analysis_table(unmapped_languages, "Largest unmapped C-16 language-state cells",
 analysis_table(distance4_languages, "Distance-four speaker composition by language and state", max_rows = 20)
 analysis_table(distance4_leave_one_out, "Distance-four leave-one-language-out joint tests", max_rows = 15)
 analysis_table(weak_iv_outcomes, "Weak-IV-aware exploratory outcome estimates", max_rows = 10)
+analysis_table(iv_diagnostic_applicability, "IV diagnostic applicability and implementation status", max_rows = 30)
 analysis_table(
   alternative_distance_coefficients[
     grepl("distance_shares", alternative_distance_coefficients$specification_id) &

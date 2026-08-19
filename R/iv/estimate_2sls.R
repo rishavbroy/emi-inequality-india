@@ -4,7 +4,7 @@
 iv_cluster_column <- function(data) {
   first_col(
     as.data.frame(data),
-    c("state_2001_cluster", "state_20", "state_std", "state_0708")
+    c("state_code_2001", "state_2001_cluster", "state_20", "state_std", "state_0708")
   )
 }
 

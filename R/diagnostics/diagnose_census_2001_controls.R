@@ -12,18 +12,7 @@ diagnose_census_2001_controls <- function(panel, revised_models, revised_first_s
       stringsAsFactors = FALSE
     )
   }))
-  instrument_name <- preferred_iv_variables()$instrument
-  balance <- safe_bind_rows(lapply(census_2001_main_controls(), function(variable) {
-    value <- num(panel[[variable]])
-    instrument <- num(panel[[instrument_name]])
-    keep <- is.finite(value) & is.finite(instrument)
-    data.frame(
-      variable = variable,
-      n = sum(keep),
-      correlation_with_instrument = if (sum(keep) > 2L) stats::cor(value[keep], instrument[keep]) else NA_real_,
-      stringsAsFactors = FALSE
-    )
-  }))
+  balance <- run_iv_balance_diagnostics(panel)
   list(source_coverage = source_coverage, coverage = coverage, balance = balance, models = model_rows, first_stage = revised_first_stage)
 }
 

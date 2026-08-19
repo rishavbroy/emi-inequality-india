@@ -8,36 +8,35 @@ source(helper)
 
 ## Current instrument and treatment diagnostics
 
-The active Phase 1 construction uses the full mutually exclusive Census
-2001 C-16 mother-tongue distribution. Language-group subtotal rows are
+The active construction uses the full mutually exclusive Census 2001
+C-16 mother-tongue distribution. Language-group subtotal rows are
 removed before aggregation, linguistic distances are attached from the
 documented Shastry concordance, and unmapped speaker mass remains
-visible. The preferred exploratory scalar is
-`ling_distance_nonzero_mean`, the speaker-weighted mean distance among
-mapped languages with distance greater than zero. Hindi and Urdu are
-treated as distance zero and their shares are reported separately.
+visible. The preferred public scalar is `ling_distance_nonzero_mean`,
+the speaker-weighted mean distance among mapped languages with distance
+greater than zero. Hindi and Urdu are treated as distance zero and their
+shares are reported separately.
 
-The preferred exploratory treatment is `emi_exposure_all_children_0708`,
-the survey-weighted share of all children ages 5-19 who are both
-enrolled and studying in English medium. The historical `EMIE` field
-remains a compatibility measure of EMI among enrolled children and is
-shown below only in the legacy dotplot section.
+The preferred public treatment is `emi_exposure_all_children_0708`, the
+survey-weighted share of all children ages 5-19 who are both enrolled
+and studying in English medium. The historical `EMIE` field remains a
+compatibility measure of EMI among enrolled children but is not used in
+the current district-level dotplot.
 
-The Phase 2 and Phase 3 tables diagnose how the preferred exploratory
-first stage changes with six-region fixed effects, state fixed effects,
-main and expanded Census control sets, sequential thematic blocks,
-VIF/GVIF, state deletion, and district influence. These diagnostics do
-not change the public IV specification.
+The tables below diagnose how the preferred exploratory first stage
+changes with six-region fixed effects, state fixed effects, main and
+expanded Census control sets, sequential thematic blocks, VIF/GVIF,
+state deletion, and district influence. These diagnostics do not change
+the public IV specification.
 
 ``` r
-analysis_deviation_note("The active note now describes the full-distribution linguistic-distance construction and all-child EMI exposure used by the Phase 2-3 diagnostics. The historical top-three/EMIE dotplot is retained below as an explicitly labeled compatibility check rather than as the current instrument definition.")
+analysis_deviation_note("The active note describes the same all-child EMI exposure and full-distribution linguistic-distance scalar used by the public IV specification. Historical comments are retained only as provenance.")
 ```
 
-**Deviation note.** The active note now describes the full-distribution
-linguistic-distance construction and all-child EMI exposure used by the
-Phase 2-3 diagnostics. The historical top-three/EMIE dotplot is retained
-below as an explicitly labeled compatibility check rather than as the
-current instrument definition.
+**Deviation note.** The active note describes the same all-child EMI
+exposure and full-distribution linguistic-distance scalar used by the
+public IV specification. Historical comments are retained only as
+provenance.
 
 ``` r
 iv_match <- read_analysis_csv("diagnostics", "public", "iv_panel_match_summary.csv")
@@ -59,79 +58,79 @@ distance4_languages <- analysis_target_csv("diag_ext_alternative_distance_first_
 unmapped_languages <- analysis_target_csv("diag_ext_alternative_distance_first_stages", "unmapped_language_decomposition.csv")
 distance4_leave_one_out <- analysis_target_csv("diag_ext_alternative_distance_first_stages", "distance4_leave_one_language_out.csv")
 weak_iv_outcomes <- analysis_target_csv("diag_ext_alternative_distance_first_stages", "alternative_distance_weak_iv_outcomes.csv")
+iv_diagnostic_applicability <- analysis_target_csv("diag_ext_alternative_distance_first_stages", "iv_diagnostic_applicability.csv")
 ```
 
-## Legacy top-three and EMI-among-enrolled compatibility check
+## District-level treatment and instrument check
 
-The current analog of the historical
-`ggplot(..., aes(x = district_code_0708, y = EMIE, color = district_prefix)) + geom_point()`
-check uses 573 active district-panel rows. It is retained to make
-earlier drafts reproducible, not as the preferred Phase 1 definition.
+The district-level dotplot uses 573 active panel rows and the same
+all-child EMI exposure used in the public IV specification. The
+accompanying table keeps the preferred linguistic-distance scalar
+visible alongside the treatment.
 
 ``` r
-instrument_dotplot_rows <- iv_dotplot[, intersect(c("district_order", "district_code", "state", "district", "EMIE", "wavg_ling_degrees", "state_prefix"), names(iv_dotplot)), drop = FALSE]
-emie_scale_summary <- data.frame(
+instrument_dotplot_rows <- iv_dotplot[, intersect(c("district_order", "district_code", "state", "district", "emi_exposure_all_children_0708", "ling_distance_nonzero_mean", "state_prefix"), names(iv_dotplot)), drop = FALSE]
+exposure_scale_summary <- data.frame(
   current_scale = "0-100 percentage scale",
-  min_EMIE = min(iv_dotplot$EMIE, na.rm = TRUE),
-  median_EMIE = stats::median(iv_dotplot$EMIE, na.rm = TRUE),
-  max_EMIE = max(iv_dotplot$EMIE, na.rm = TRUE),
-  legacy_scale_note = "legacy prose values 1 and 0.4-0.1 correspond to 100 and 40-10 on the current scale"
+  min_exposure = min(iv_dotplot$emi_exposure_all_children_0708, na.rm = TRUE),
+  median_exposure = stats::median(iv_dotplot$emi_exposure_all_children_0708, na.rm = TRUE),
+  max_exposure = max(iv_dotplot$emi_exposure_all_children_0708, na.rm = TRUE)
 )
-analysis_table(emie_scale_summary, "Current EMIE scale check")
+analysis_table(exposure_scale_summary, "All-child EMI-exposure scale check")
 ```
 
-| current_scale | min_EMIE | median_EMIE | max_EMIE | legacy_scale_note |
-|:---|---:|---:|---:|:---|
-| 0-100 percentage scale | 0 | 8.355 | 100 | legacy prose values 1 and 0.4-0.1 correspond to 100 and 40-10 on the current scale |
+| current_scale          | min_exposure | median_exposure | max_exposure |
+|:-----------------------|-------------:|----------------:|-------------:|
+| 0-100 percentage scale |            0 |           6.232 |       95.975 |
 
-Current EMIE scale check
+All-child EMI-exposure scale check
 
 ``` r
-analysis_table(instrument_dotplot_rows, "Current EMIE-by-district dotplot data", max_rows = 30)
+analysis_table(instrument_dotplot_rows, "Current treatment and instrument by district", max_rows = 30)
 ```
 
-| district_order | district_code | state | district | EMIE | wavg_ling_degrees | state_prefix |
+| district_order | district_code | state | district | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state_prefix |
 |:---|:---|:---|:---|:---|:---|:---|
-| 1 | 1113 | Jammu & Kashmir | Jammu | 55.9373478876879 | 1.65578136240385 | 1 |
-| 2 | 1114 | Jammu & Kashmir | Kathus | 44.1686433398463 | 0.935837739720622 | 1 |
-| 3 | 1209 | Jammu & Kashmir | Doda | 100 | 2.78172518661874 | 1 |
-| 4 | 1210 | Jammu & Kashmir | Udhampur | 100 | 1.69984110612438 | 1 |
-| 5 | 1212 | Jammu & Kashmir | Rajauri | 19.1220027592448 | 0.129961284174162 | 1 |
-| 6 | 1301 | Jammu & Kashmir | Kupwara | 35.3856881455635 | 3.11420512358161 | 1 |
-| 7 | 1302 | Jammu & Kashmir | Baramula | 50.1462484103989 | 3.56535491706951 | 1 |
-| 8 | 1303 | Jammu & Kashmir | Srinagar | 85.077782419044 | 3.75747237390968 | 1 |
-| 9 | 1304 | Jammu & Kashmir | Badgam | 63.7323207233014 | 3.90722054947655 | 1 |
-| 10 | 1305 | Jammu & Kashmir | Pulwama | 90.3661939188381 | 3.83193189231301 | 1 |
-| 11 | 1306 | Jammu & Kashmir | Anantnag | 85.3633724175985 | 3.60288643704987 | 1 |
-| 12 | 2102 | Himachal Pradesh | Kangra | 23.0964013292776 | 0 | 2 |
-| 13 | 2104 | Himachal Pradesh | Kullu | 2.16035948115958 | 0.522908063394834 | 2 |
-| 14 | 2105 | Himachal Pradesh | Mandi | 13.1015338642775 | 0 | 2 |
-| 15 | 2106 | Himachal Pradesh | Hamirpur | 16.4639133923992 | 0 | 2 |
-| 16 | 2107 | Himachal Pradesh | Una | 14.6258166762162 | 0.170456319147959 | 2 |
-| 17 | 2201 | Himachal Pradesh | Chamba | 11.6242446239474 | 0 | 2 |
-| 18 | 2203 | Himachal Pradesh | Lahul & Spiti | 6.31027748728387 | 4.54177723124717 | 2 |
-| 19 | 2208 | Himachal Pradesh | Bilaspur | 16.8181705232738 | 0.556767522862926 | 2 |
-| 20 | 2209 | Himachal Pradesh | Solan | 17.8837636459365 | 0.0460922743841225 | 2 |
-| 21 | 2210 | Himachal Pradesh | Sirmapur | 17.7238270927478 | 0 | 2 |
-| 22 | 2211 | Himachal Pradesh | Shimla | 41.7306051009988 | 0.0176638462227771 | 2 |
-| 23 | 2212 | Himachal Pradesh | Kinnaur | 5.15399235250357 | 2.24336178283547 | 2 |
-| 24 | 3101 | Punjab | Gurdaspur | 34.4063148539354 | 0.962116231873792 | 3 |
-| 25 | 3102 | Punjab | Amritsar | 32.9079601779732 | 0.958142335350402 | 3 |
-| 26 | 3103 | Punjab | Kapurthala | 43.9577396007221 | 0.939462953235953 | 3 |
-| 27 | 3104 | Punjab | Jalandhar | 39.7958708417419 | 0.922250230613504 | 3 |
-| 28 | 3106 | Punjab | Nawanshahr | 39.073688061125 | 0.968443709289662 | 3 |
-| 29 | 3107 | Punjab | Rupnagar | 37.1008378309431 | 0.897755374045511 | 3 |
-| 30 | 3208 | Punjab | Fatehgarh Sahib | 26.1747306686159 | 0.935960701335744 | 3 |
+| 1 | 1113 | Jammu & Kashmir | Jammu | 48.3960192416473 | 2.37106387927776 | 1 |
+| 2 | 1114 | Jammu & Kashmir | Kathus | 33.5921008544035 | 2.71284727930298 | 1 |
+| 3 | 1209 | Jammu & Kashmir | Doda | 78.5237035453088 | 3.9943185393193 | 1 |
+| 4 | 1210 | Jammu & Kashmir | Udhampur | 72.6236337161995 | 3.68266891069835 | 1 |
+| 5 | 1212 | Jammu & Kashmir | Rajauri | 13.1705037832309 | 3.51482393235577 | 1 |
+| 6 | 1301 | Jammu & Kashmir | Kupwara | 31.8657493187537 | 3.98010042245708 | 1 |
+| 7 | 1302 | Jammu & Kashmir | Baramula | 39.0896349502222 | 3.98043759195197 | 1 |
+| 8 | 1303 | Jammu & Kashmir | Srinagar | 73.6252335167284 | 3.96930579486673 | 1 |
+| 9 | 1304 | Jammu & Kashmir | Badgam | 50.3440453344655 | 3.98018342125992 | 1 |
+| 10 | 1305 | Jammu & Kashmir | Pulwama | 73.7864106740856 | 3.96122222060843 | 1 |
+| 11 | 1306 | Jammu & Kashmir | Anantnag | 72.0857411304068 | 3.98303814819404 | 1 |
+| 12 | 2102 | Himachal Pradesh | Kangra | 21.4320768227842 | 2.25314792510676 | 2 |
+| 13 | 2104 | Himachal Pradesh | Kullu | 1.77293606029376 | 3.95511276549157 | 2 |
+| 14 | 2105 | Himachal Pradesh | Mandi | 11.914923634052 | 1.86593155893536 | 2 |
+| 15 | 2106 | Himachal Pradesh | Hamirpur | 15.9566958650642 | 1.72932330827068 | 2 |
+| 16 | 2107 | Himachal Pradesh | Una | 13.2443116562273 | 1.01657940663176 | 2 |
+| 17 | 2201 | Himachal Pradesh | Chamba | 9.99246785718507 | 2.68250377073906 | 2 |
+| 18 | 2203 | Himachal Pradesh | Lahul & Spiti | 5.80506231778363 | 4.51860131842935 | 2 |
+| 19 | 2208 | Himachal Pradesh | Bilaspur | 15.5006331251223 | 1.01065304047727 | 2 |
+| 20 | 2209 | Himachal Pradesh | Solan | 14.0781014588688 | 1.48349134909802 | 2 |
+| 21 | 2210 | Himachal Pradesh | Sirmapur | 14.511327515228 | 1.53199712385404 | 2 |
+| 22 | 2211 | Himachal Pradesh | Shimla | 37.7841107395915 | 1.92892068557311 | 2 |
+| 23 | 2212 | Himachal Pradesh | Kinnaur | 4.0754499392593 | 4.27128302538422 | 2 |
+| 24 | 3101 | Punjab | Gurdaspur | 25.9349887876681 | 1.02308775617026 | 3 |
+| 25 | 3102 | Punjab | Amritsar | 21.8804829341996 | 1.00801524327818 | 3 |
+| 26 | 3103 | Punjab | Kapurthala | 35.3165001044135 | 1.00845349867139 | 3 |
+| 27 | 3104 | Punjab | Jalandhar | 31.317678667039 | 1.01759751041724 | 3 |
+| 28 | 3106 | Punjab | Nawanshahr | 28.3822720514065 | 1.00441976088141 | 3 |
+| 29 | 3107 | Punjab | Rupnagar | 30.4238156299204 | 1.01258610050619 | 3 |
+| 30 | 3208 | Punjab | Fatehgarh Sahib | 19.5810353849101 | 1.00393552438769 | 3 |
 | Table truncated in rendered note; full CSV has 573 rows. |  |  |  |  |  |  |
 
-Current EMIE-by-district dotplot data
+Current treatment and instrument by district
 
 ``` r
-analysis_image("diag_ext_instrument_exploration", "emie_by_district_dotplot.png", "Current EMIE-by-district exploratory dotplot")
+analysis_image("diag_ext_instrument_exploration", "emie_by_district_dotplot.png", "All-child EMI exposure by district")
 ```
 
-![Current EMIE-by-district exploratory
-dotplot](../../outputs/diagnostics/extended/instrument_exploration/emie_by_district_dotplot.png)
+![All-child EMI exposure by
+district](../../outputs/diagnostics/extended/instrument_exploration/emie_by_district_dotplot.png)
 
 ``` r
 analysis_table(iv_match, "Current IV-panel match summary")
@@ -147,38 +146,38 @@ Current IV-panel match summary
 analysis_table(iv_state, "Current IV-panel state summary", max_rows = 30)
 ```
 
-| state | n_rows | mean_EMIE | mean_wavg_ling_degrees | mean_npeople_0708 | mean_consumption_0708 | mean_dependency_ratio |
+| state | n_rows | mean_emi_exposure_all_children_0708 | mean_ling_distance_nonzero_mean | mean_npeople_0708 | mean_consumption_0708 | mean_dependency_ratio |
 |:---|:---|:---|:---|:---|:---|:---|
-| Andaman & Nicobar Islands | 2 | 28.9337363688688 | 3.18043264711969 | 114699.0625 | 1716.59345353575 | 39.9965239648858 |
-| Andhra Pradesh | 13 | 24.4802289280157 | 4.65706249020543 | 3406138.48653846 | 806.038478947683 | 46.8784465840865 |
-| Arunachal Pradesh | 13 | 95.0157164422056 | 3.82326257358283 | 76279.7523076923 | 821.925150923097 | 61.0798056117889 |
-| Assam | 22 | 5.3275500840982 | 3.00248252326762 | 1070667.90886364 | 762.436038575419 | 58.0450186320867 |
-| Bihar | 37 | 3.38601239299322 | 0.383274378072781 | 2051830.32918919 | 559.316304711329 | 84.7022490469553 |
-| Chandigarh | 1 | 58.3318564651552 | 0.300674842660398 | 837516.24 | 2237.62405162436 | 36.7830442420546 |
-| Chhattisgarh | 16 | 3.2273017372452 | 0.783474808060863 | 1455306.785 | 519.343724642298 | 59.4295625174172 |
-| Dadra & Nagar Haveli | 1 | 5.45838437776184 | 0.969649054764959 | 204832.69 | 878.890652903109 | 55.2790526851351 |
-| Daman & Diu | 2 | 22.0521469070064 | 0.903703932246381 | 69690.93 | 1391.7018118573 | 51.6253036614033 |
-| Delhi | 7 | 32.8114108555629 | 0.0755856765623703 | 1802076.03428571 | 1274.45536408576 | 51.9338015790853 |
-| Goa | 2 | 62.2874081579816 | 2.20277678783885 | 698016.255 | 1277.6412702353 | 35.7209708999027 |
-| Gujarat | 25 | 4.42406172844767 | 1.06293855831635 | 2038854.0708 | 858.757699979292 | 53.6880918495208 |
-| Haryana | 19 | 20.170112602026 | 0.113451216367665 | 1142009.75631579 | 974.810008859313 | 53.1686777255239 |
-| Himachal Pradesh | 12 | 15.5577421308352 | 0.674918920007938 | 519885.804583333 | 932.211852792387 | 53.7694561219673 |
-| Jammu & Kashmir | 11 | 66.2999636383203 | 2.63474708840382 | 735654.508181818 | 917.231422452719 | 52.1863851221851 |
-| Jharkhand | 18 | 6.48227701539392 | 1.42000990212625 | 1395211.16555556 | 632.040527265219 | 67.2780276872427 |
-| Karnataka | 27 | 16.0376594835309 | 4.37519387186768 | 1844944.73574074 | 753.91460740765 | 49.7504147543725 |
-| Kerala | 14 | 43.4497857986853 | 4.99645393900026 | 2129849.7675 | 1061.81342032626 | 48.0392820929302 |
-| Lakshadweep | 1 | 32.4512530246271 | 4.9822009569378 | 57165.375 | 1258.92789866243 | 47.3127675768181 |
-| Madhya Pradesh | 44 | 6.54482431274942 | 0.125803453485055 | 1333711.54318182 | 598.39039835291 | 63.7789027840119 |
-| Maharashtra | 33 | 10.5268081957616 | 1.76886396762953 | 2757972.46242424 | 790.791751568391 | 52.2534100830016 |
-| Manipur | 9 | 67.5987809704474 | 4.86239997201659 | 220217.051666667 | 819.916168102988 | 50.0165633266468 |
-| Meghalaya | 7 | 64.4926264200829 | 4.76974083074187 | 325151.725 | 889.075788565463 | 63.5951262270377 |
-| Mizoram | 8 | 51.9549916295876 | 4.69164932951452 | 104185.15875 | 1154.1292730263 | 61.7142451234391 |
-| Nagaland | 8 | 99.7003154183167 | 3.73615265860392 | 118572.34625 | 1183.08745343988 | 41.5966283338895 |
-| Odisha | 29 | 6.83880120777512 | 3.07904877017756 | 1205721.18155172 | 530.726549256539 | 53.2755205864839 |
-| Puducherry | 4 | 53.7704148434607 | 4.95950894257703 | 207733.7475 | 1172.67173441507 | 44.4357277807352 |
-| Punjab | 16 | 30.8770654405604 | 0.932128859706136 | 1452066.4490625 | 1116.02721196292 | 50.1406819071539 |
-| Rajasthan | 27 | 4.93754820082534 | 0.0361302136656299 | 1755742.01925926 | 730.020097099085 | 70.0862133128767 |
-| Sikkim | 4 | 99.6822052368016 | 3.56386538281542 | 129015.62625 | 773.645294969817 | 55.1816987031961 |
+| Andaman & Nicobar Islands | 2 | 24.4068340671691 | 4.36874469706007 | 114699.0625 | 1716.59345353575 | 39.9965239648858 |
+| Andhra Pradesh | 13 | 17.50329470393 | 4.979381417228 | 3406138.48653846 | 806.038478947683 | 46.8784465840865 |
+| Arunachal Pradesh | 13 | 72.0167035742077 | 4.36561188090261 | 76279.7523076923 | 821.925150923097 | 61.0798056117889 |
+| Assam | 22 | 4.05362607555326 | 3.25842757278221 | 1070667.90886364 | 762.436038575419 | 58.0450186320867 |
+| Bihar | 37 | 2.27384573509356 | 3.4504348031418 | 2051830.32918919 | 559.316304711329 | 84.7022490469553 |
+| Chandigarh | 1 | 43.9877594163667 | 1.2429229376526 | 837516.24 | 2237.62405162436 | 36.7830442420546 |
+| Chhattisgarh | 16 | 2.44891352706489 | 3.7062821508302 | 1455306.785 | 519.343724642298 | 59.4295625174172 |
+| Dadra & Nagar Haveli | 1 | 4.31608528371716 | 1.6214233077166 | 204832.69 | 878.890652903109 | 55.2790526851351 |
+| Daman & Diu | 2 | 20.0968799371822 | 1.16818847062481 | 69690.93 | 1391.7018118573 | 51.6253036614033 |
+| Delhi | 7 | 26.6421146024289 | 2.19595583855424 | 1802076.03428571 | 1274.45536408576 | 51.9338015790853 |
+| Goa | 2 | 46.9931655099055 | 2.28323807229004 | 698016.255 | 1277.6412702353 | 35.7209708999027 |
+| Gujarat | 25 | 3.29157078968408 | 1.13380993069443 | 2038854.0708 | 858.757699979292 | 53.6880918495208 |
+| Haryana | 19 | 15.4550600433681 | 1.3168094426959 | 1142009.75631579 | 974.810008859313 | 53.1686777255239 |
+| Himachal Pradesh | 12 | 13.8390080826217 | 2.35396210649927 | 519885.804583333 | 932.211852792387 | 53.7694561219673 |
+| Jammu & Kashmir | 11 | 53.3729796423138 | 3.64818274002658 | 735654.508181818 | 917.231422452719 | 52.1863851221851 |
+| Jharkhand | 18 | 4.87131622223234 | 4.4326828791716 | 1395211.16555556 | 632.040527265219 | 67.2780276872427 |
+| Karnataka | 27 | 12.5522398616991 | 4.81990590632138 | 1844944.73574074 | 753.91460740765 | 49.7504147543725 |
+| Kerala | 14 | 37.8847415252017 | 4.9854378745229 | 2129849.7675 | 1061.81342032626 | 48.0392820929302 |
+| Lakshadweep | 1 | 27.693093915454 | 4.96883626187439 | 57165.375 | 1258.92789866243 | 47.3127675768181 |
+| Madhya Pradesh | 44 | 4.8124959319002 | 2.85251318024406 | 1333711.54318182 | 598.39039835291 | 63.7789027840119 |
+| Maharashtra | 33 | 8.0006130127011 | 2.13576340235499 | 2757972.46242424 | 790.791751568391 | 52.2534100830016 |
+| Manipur | 9 | 54.3931471021197 | 4.94684335092403 | 220217.051666667 | 819.916168102988 | 50.0165633266468 |
+| Meghalaya | 7 | 46.5401931358657 | 4.73938076756495 | 325151.725 | 889.075788565463 | 63.5951262270377 |
+| Mizoram | 8 | 43.4928512499453 | 4.71618566629543 | 104185.15875 | 1154.1292730263 | 61.7142451234391 |
+| Nagaland | 8 | 80.5294327657661 | 4.39772043730242 | 118572.34625 | 1183.08745343988 | 41.5966283338895 |
+| Odisha | 29 | 4.48207369404672 | 3.22899303105019 | 1205721.18155172 | 530.726549256539 | 53.2755205864839 |
+| Puducherry | 4 | 46.1645721489379 | 4.99375031211973 | 207733.7475 | 1172.67173441507 | 44.4357277807352 |
+| Punjab | 16 | 22.8096522536849 | 1.00981642560685 | 1452066.4490625 | 1116.02721196292 | 50.1406819071539 |
+| Rajasthan | 27 | 3.67185054785357 | 2.62807544017798 | 1755742.01925926 | 730.020097099085 | 70.0862133128767 |
+| Sikkim | 4 | 80.4287978097929 | 4.71958237654858 | 129015.62625 | 773.645294969817 | 55.1816987031961 |
 | Table truncated in rendered note; full CSV has 36 rows. |  |  |  |  |  |  |
 
 Current IV-panel state summary
@@ -189,8 +188,8 @@ analysis_table(iv_rows, "Current keyed IV summary rows", max_rows = 30)
 
 | group | variable | var | label | N | Min | 1Q | Med | 3Q | Max | Mean | SD | desc |
 |:---|:---|:---|:---|---:|---:|---:|---:|---:|---:|---:|---:|:---|
-| Treatment and instrument | wavg_ling_degrees | wavg_ling_degrees | Linguistic distance | 573 | 0.00 | 0.00 | 1.22 | 3.72 | 5.00 | 1.92 | 1.92 | Population-weighted linguistic distance of district mother tongues from Hindi |
-| Treatment and instrument | EMIE | EMIE | EMI exposure | 573 | 0.00 | 2.14 | 8.36 | 23.10 | 100.00 | 19.04 | 25.37 | Share of school-going children enrolled in English-medium instruction |
+| Treatment and instrument | ling_distance_nonzero_mean | ling_distance_nonzero_mean | Linguistic distance | 573 | 1.00 | 2.14 | 3.13 | 4.55 | 5.00 | 3.22 | 1.31 | Population-weighted mean linguistic distance among mapped speakers with positive distance from Hindi |
+| Treatment and instrument | emi_exposure_all_children_0708 | emi_exposure_all_children_0708 | EMI exposure | 573 | 0.00 | 1.42 | 6.23 | 17.91 | 95.98 | 14.90 | 20.35 | Share of children ages 5-19 enrolled in English-medium instruction |
 | Consumption outcomes | real_consumption_0708 | real_consumption_0708 | Real consumption, 2007-08 | 573 | 439.46 | 826.48 | 986.00 | 1179.91 | 2945.06 | 1035.78 | 295.72 | Person-weighted monthly consumption in common prices |
 | Consumption outcomes | real_consumption_1718 | real_consumption_1718 | Real consumption, 2017-18 | 573 | 561.61 | 996.59 | 1174.29 | 1418.34 | 4170.07 | 1261.98 | 398.55 | Person-weighted monthly consumption in common prices |
 | Consumption outcomes | real_log_consumption_change | real_log_consumption_change | Real log consumption change | 573 | -0.86 | 0.07 | 0.20 | 0.34 | 0.98 | 0.19 | 0.22 | Log real consumption in 2017-18 minus log real consumption in 2007-08 |
@@ -213,9 +212,9 @@ analysis_table(iv_notes, "Legacy instrument-exploration notes retained as target
 
 | diagnostic | legacy_note | current_status |
 |:---|:---|:---|
-| emie_dotplot | Dotplot of EMIE values by district_code. | rendered from active district_panel as a target-backed figure |
-| legacy_peak_comment | EMIE had visible peaks in Jammu and Kashmir; in several Northeast states; and in southern/coastal districts historically furthest from Hindi. | use current dotplot/table rather than the legacy hard-coded visual impression |
-| smaller_units_question | Many districts outside peaks had low EMIE values; legacy comments asked whether smaller units of analysis would be useful. | retained as exploratory rationale, not a final-paper claim |
+| legacy_emie_dotplot | The historical code plotted EMI among enrolled children by district code. | the current plot uses all-child EMI exposure from the active district panel |
+| legacy_peak_comment | Legacy notes described high EMI-among-enrolled values in several geographically distant regions. | use current treatment and instrument diagnostics rather than the legacy visual impression |
+| smaller_units_question | Legacy comments asked whether smaller units of analysis would be useful. | retained as exploratory rationale, not a final-paper claim |
 | district_count_check | Legacy code checked that the number of districts did not change while constructing weighted linguistic distance. | final panel match summaries are rendered in this analysis note |
 
 Legacy instrument-exploration notes retained as target output
@@ -405,6 +404,7 @@ Distance-four leave-one-language-out joint tests
 
 ``` r
 analysis_table(weak_iv_outcomes, "Weak-IV-aware exploratory outcome estimates", max_rows = 10)
+analysis_table(iv_diagnostic_applicability, "IV diagnostic applicability and implementation status", max_rows = 30)
 ```
 
 | specification_id | estimate_2sls | std_error_clustered | p_value_clustered | reduced_form_joint_f | reduced_form_joint_p | anderson_rubin_f_beta0 | anderson_rubin_p_beta0 | ar_95_lower | ar_95_upper | ar_95_empty | ar_95_left_truncated | ar_95_right_truncated | n |
@@ -452,46 +452,46 @@ analysis_table(first_stage_vif, "Main and expanded-control VIF/GVIF diagnostics"
 
 | term | model_scope | df | vif | gvif | gvif_scaled | status | reason | specification_id |
 |:---|:---|:---|:---|:---|:---|:---|:---|:---|
-| ling_distance_nonzero_mean | model_regressors | 1 | 4.19094118596823 | 4.19094118596823 | 2.04717883585392 | estimated | NA | region_fe_census_controls |
-| log_population_2001 | model_regressors | 1 | 2.43965647174677 | 2.43965647174677 | 1.56193997059643 | estimated | NA | region_fe_census_controls |
-| urban_share_2001 | model_regressors | 1 | 3.25621839824171 | 3.25621839824171 | 1.80449948690536 | estimated | NA | region_fe_census_controls |
-| adult_secondary_plus_share_2001 | model_regressors | 1 | 4.07903451652192 | 4.07903451652192 | 2.01966198075864 | estimated | NA | region_fe_census_controls |
+| ling_distance_nonzero_mean | model_regressors | 1 | 4.19094118596821 | 4.19094118596821 | 2.04717883585392 | estimated | NA | region_fe_census_controls |
+| log_population_2001 | model_regressors | 1 | 2.4396564717468 | 2.4396564717468 | 1.56193997059644 | estimated | NA | region_fe_census_controls |
+| urban_share_2001 | model_regressors | 1 | 3.25621839824172 | 3.25621839824172 | 1.80449948690536 | estimated | NA | region_fe_census_controls |
+| adult_secondary_plus_share_2001 | model_regressors | 1 | 4.07903451652194 | 4.07903451652194 | 2.01966198075865 | estimated | NA | region_fe_census_controls |
 | sc_share_2001 | model_regressors | 1 | 2.6474332899362 | 2.6474332899362 | 1.62709350989309 | estimated | NA | region_fe_census_controls |
 | st_share_2001 | model_regressors | 1 | 3.19436972218934 | 3.19436972218934 | 1.78727997867971 | estimated | NA | region_fe_census_controls |
-| muslim_share_2001 | model_regressors | 1 | 1.6646175970965 | 1.6646175970965 | 1.29020060343208 | estimated | NA | region_fe_census_controls |
-| agricultural_worker_share_2001 | model_regressors | 1 | 4.45908681339414 | 4.45908681339414 | 2.1116549939311 | estimated | NA | region_fe_census_controls |
+| muslim_share_2001 | model_regressors | 1 | 1.66461759709651 | 1.66461759709651 | 1.29020060343208 | estimated | NA | region_fe_census_controls |
+| agricultural_worker_share_2001 | model_regressors | 1 | 4.45908681339413 | 4.45908681339413 | 2.11165499393109 | estimated | NA | region_fe_census_controls |
 | dependency_ratio_2001 | model_regressors | 1 | 3.88702831941567 | 3.88702831941567 | 1.97155479746713 | estimated | NA | region_fe_census_controls |
 | electricity_access_share_2001 | model_regressors | 1 | 4.53696374496203 | 4.53696374496203 | 2.13001496355355 | estimated | NA | region_fe_census_controls |
-| log_population_density_2001 | model_regressors | 1 | 3.6486049625845 | 3.6486049625845 | 1.91013218458423 | estimated | NA | region_fe_census_controls |
-| factor(region) | model_regressors | 5 | NA | 32.655476638836 | 1.41708402667471 | estimated | NA | region_fe_census_controls |
+| log_population_density_2001 | model_regressors | 1 | 3.64860496258455 | 3.64860496258455 | 1.91013218458424 | estimated | NA | region_fe_census_controls |
+| factor(region) | model_regressors | 5 | NA | 32.6554766388361 | 1.41708402667471 | estimated | NA | region_fe_census_controls |
 | ling_distance_nonzero_mean | model_regressors | 1 | 4.43089985336262 | 4.43089985336262 | 2.10497027374797 | estimated | NA | region_fe_expanded_controls |
-| log_population_2001 | model_regressors | 1 | 2.48046664834596 | 2.48046664834596 | 1.57494972883136 | estimated | NA | region_fe_expanded_controls |
-| urban_share_2001 | model_regressors | 1 | 3.28580468067789 | 3.28580468067789 | 1.81267886860246 | estimated | NA | region_fe_expanded_controls |
-| adult_secondary_plus_share_2001 | model_regressors | 1 | 4.85579412959077 | 4.85579412959077 | 2.20358665125535 | estimated | NA | region_fe_expanded_controls |
-| sc_share_2001 | model_regressors | 1 | 2.73691673166291 | 2.73691673166291 | 1.65436293831278 | estimated | NA | region_fe_expanded_controls |
-| st_share_2001 | model_regressors | 1 | 3.23989043615113 | 3.23989043615113 | 1.79996956534024 | estimated | NA | region_fe_expanded_controls |
-| muslim_share_2001 | model_regressors | 1 | 1.8646685745115 | 1.8646685745115 | 1.36552867949066 | estimated | NA | region_fe_expanded_controls |
-| dependency_ratio_2001 | model_regressors | 1 | 5.29570665734401 | 5.29570665734401 | 2.30124024329143 | estimated | NA | region_fe_expanded_controls |
-| electricity_access_share_2001 | model_regressors | 1 | 4.93331643527213 | 4.93331643527213 | 2.22110702922487 | estimated | NA | region_fe_expanded_controls |
-| log_population_density_2001 | model_regressors | 1 | 3.78734443538457 | 3.78734443538457 | 1.94611007792071 | estimated | NA | region_fe_expanded_controls |
-| literacy_share_2001 | model_regressors | 1 | 3.28597929786626 | 3.28597929786626 | 1.81272703346816 | estimated | NA | region_fe_expanded_controls |
-| worker_share_2001 | model_regressors | 1 | 3.53430183205489 | 3.53430183205489 | 1.87997389132267 | estimated | NA | region_fe_expanded_controls |
-| cultivator_share_workers_2001 | model_regressors | 1 | 5.19801994309919 | 5.19801994309919 | 2.279916652665 | estimated | NA | region_fe_expanded_controls |
+| log_population_2001 | model_regressors | 1 | 2.48046664834599 | 2.48046664834599 | 1.57494972883137 | estimated | NA | region_fe_expanded_controls |
+| urban_share_2001 | model_regressors | 1 | 3.28580468067791 | 3.28580468067791 | 1.81267886860246 | estimated | NA | region_fe_expanded_controls |
+| adult_secondary_plus_share_2001 | model_regressors | 1 | 4.8557941295908 | 4.8557941295908 | 2.20358665125536 | estimated | NA | region_fe_expanded_controls |
+| sc_share_2001 | model_regressors | 1 | 2.73691673166293 | 2.73691673166293 | 1.65436293831279 | estimated | NA | region_fe_expanded_controls |
+| st_share_2001 | model_regressors | 1 | 3.23989043615114 | 3.23989043615114 | 1.79996956534024 | estimated | NA | region_fe_expanded_controls |
+| muslim_share_2001 | model_regressors | 1 | 1.86466857451151 | 1.86466857451151 | 1.36552867949066 | estimated | NA | region_fe_expanded_controls |
+| dependency_ratio_2001 | model_regressors | 1 | 5.29570665734403 | 5.29570665734403 | 2.30124024329144 | estimated | NA | region_fe_expanded_controls |
+| electricity_access_share_2001 | model_regressors | 1 | 4.93331643527214 | 4.93331643527214 | 2.22110702922487 | estimated | NA | region_fe_expanded_controls |
+| log_population_density_2001 | model_regressors | 1 | 3.78734443538462 | 3.78734443538462 | 1.94611007792073 | estimated | NA | region_fe_expanded_controls |
+| literacy_share_2001 | model_regressors | 1 | 3.28597929786627 | 3.28597929786627 | 1.81272703346816 | estimated | NA | region_fe_expanded_controls |
+| worker_share_2001 | model_regressors | 1 | 3.53430183205488 | 3.53430183205488 | 1.87997389132267 | estimated | NA | region_fe_expanded_controls |
+| cultivator_share_workers_2001 | model_regressors | 1 | 5.19801994309921 | 5.19801994309921 | 2.27991665266501 | estimated | NA | region_fe_expanded_controls |
 | agricultural_labourer_share_workers_2001 | model_regressors | 1 | 3.81842927354898 | 3.81842927354898 | 1.95408016047167 | estimated | NA | region_fe_expanded_controls |
-| factor(region) | model_regressors | 5 | NA | 55.5491506570224 | 1.49440303981321 | estimated | NA | region_fe_expanded_controls |
-| ling_distance_nonzero_mean | model_regressors | 1 | 6.9378651596392 | 6.9378651596392 | 2.6339827561393 | estimated | NA | state_fe_census_controls |
+| factor(region) | model_regressors | 5 | NA | 55.5491506570227 | 1.49440303981321 | estimated | NA | region_fe_expanded_controls |
+| ling_distance_nonzero_mean | model_regressors | 1 | 6.93786515963915 | 6.93786515963915 | 2.63398275613929 | estimated | NA | state_fe_census_controls |
 | log_population_2001 | model_regressors | 1 | 5.61993575138572 | 5.61993575138572 | 2.37064036736611 | estimated | NA | state_fe_census_controls |
-| urban_share_2001 | model_regressors | 1 | 5.96091872436069 | 5.96091872436069 | 2.44149927797669 | estimated | NA | state_fe_census_controls |
+| urban_share_2001 | model_regressors | 1 | 5.96091872436052 | 5.96091872436052 | 2.44149927797665 | estimated | NA | state_fe_census_controls |
 | adult_secondary_plus_share_2001 | model_regressors | 1 | 8.0967736081637 | 8.0967736081637 | 2.84548301842828 | estimated | NA | state_fe_census_controls |
-| sc_share_2001 | model_regressors | 1 | 4.12756112485302 | 4.12756112485302 | 2.031640008676 | estimated | NA | state_fe_census_controls |
-| st_share_2001 | model_regressors | 1 | 5.54013209347615 | 5.54013209347615 | 2.35374851959086 | estimated | NA | state_fe_census_controls |
+| sc_share_2001 | model_regressors | 1 | 4.12756112485299 | 4.12756112485299 | 2.03164000867599 | estimated | NA | state_fe_census_controls |
+| st_share_2001 | model_regressors | 1 | 5.54013209347623 | 5.54013209347623 | 2.35374851959087 | estimated | NA | state_fe_census_controls |
 | muslim_share_2001 | model_regressors | 1 | 3.46112413849601 | 3.46112413849601 | 1.86040966953411 | estimated | NA | state_fe_census_controls |
-| agricultural_worker_share_2001 | model_regressors | 1 | 7.72526491195096 | 7.72526491195096 | 2.7794360780473 | estimated | NA | state_fe_census_controls |
-| dependency_ratio_2001 | model_regressors | 1 | 7.72895950960168 | 7.72895950960168 | 2.78010062940205 | estimated | NA | state_fe_census_controls |
-| electricity_access_share_2001 | model_regressors | 1 | 10.4421661398941 | 10.4421661398941 | 3.23143406862868 | estimated | NA | state_fe_census_controls |
-| log_population_density_2001 | model_regressors | 1 | 6.94735358026745 | 6.94735358026745 | 2.63578329539199 | estimated | NA | state_fe_census_controls |
-| factor(state_code_2001) | model_regressors | 34 | NA | 64373.4820786059 | 1.17683690567705 | estimated | NA | state_fe_census_controls |
-| ling_distance_nonzero_mean | model_regressors | 1 | 7.14809303270608 | 7.14809303270608 | 2.67359178497879 | estimated | NA | state_fe_expanded_controls |
+| agricultural_worker_share_2001 | model_regressors | 1 | 7.72526491195113 | 7.72526491195113 | 2.77943607804733 | estimated | NA | state_fe_census_controls |
+| dependency_ratio_2001 | model_regressors | 1 | 7.72895950960147 | 7.72895950960147 | 2.78010062940201 | estimated | NA | state_fe_census_controls |
+| electricity_access_share_2001 | model_regressors | 1 | 10.442166139894 | 10.442166139894 | 3.23143406862867 | estimated | NA | state_fe_census_controls |
+| log_population_density_2001 | model_regressors | 1 | 6.9473535802674 | 6.9473535802674 | 2.63578329539198 | estimated | NA | state_fe_census_controls |
+| factor(state_code_2001) | model_regressors | 34 | NA | 64373.4820786063 | 1.17683690567705 | estimated | NA | state_fe_census_controls |
+| ling_distance_nonzero_mean | model_regressors | 1 | 7.14809303270603 | 7.14809303270603 | 2.67359178497878 | estimated | NA | state_fe_expanded_controls |
 | Table truncated in rendered note; full CSV has 54 rows. |  |  |  |  |  |  |  |  |
 
 Main and expanded-control VIF/GVIF diagnostics
@@ -552,36 +552,36 @@ analysis_table(first_stage_state_deletion[order(abs(first_stage_state_deletion$e
 
 | specification_id | specification | sequence | treatment | instrument | fixed_effect | control_blocks | n_controls | estimate | std.error | statistic | p.value | excluded_instrument_f | partial_r_squared | residual_instrument_sd | residual_treatment_sd | residual_correlation | instrument_variance_remaining | n | n_states | n_regions | status | reason | omitted_state | estimate_change | f_change |
 |:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|
-| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 1.04536023915947 | 0.608357746847152 | 1.71833143339937 | 0.0864134790556959 | 2.95266291500832 | 0.0046527500425917 | 0.451041809073527 | 6.91238496655029 | 0.0682110697951087 | 0.115101756331154 | 505 | 34 | 6 | estimated | NA | 9 | 0.404812213282407 | 1.60345387571659 |
-| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.366540582729044 | 0.485152671239072 | 0.755515952932725 | 0.450285534143993 | 0.570804355135844 | 0.000887849542649693 | 0.487143535229738 | 5.99251764935849 | 0.0297968042355139 | 0.13690398021908 | 562 | 34 | 6 | estimated | NA | 1 | -0.274007443148022 | -0.778404684155883 |
-| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.884531418609376 | 0.608959399769941 | 1.45252937871317 | 0.14696581911988 | 2.10984159602486 | 0.00413235092459641 | 0.478694278524369 | 6.58677612679421 | 0.0642833642912101 | 0.134844189977506 | 561 | 34 | 6 | estimated | NA | 2 | 0.243983392732309 | 0.760632556733132 |
-| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.811860218216229 | 0.715733970864239 | 1.13430443609644 | 0.257231846420281 | 1.28664655374807 | 0.00289037200219964 | 0.447549246048394 | 6.75842066518466 | 0.0537621800358021 | 0.113108453164729 | 529 | 34 | 6 | estimated | NA | 23 | 0.171312192339162 | -0.0625624855436555 |
-| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.480972473802103 | 0.52853863846776 | 0.910004375832291 | 0.36324839157785 | 0.828107964033918 | 0.00133856283871816 | 0.486147500802096 | 6.39100118075541 | 0.0365863750420791 | 0.138115614504892 | 560 | 34 | 6 | estimated | NA | 12 | -0.159575552074964 | -0.521101075257809 |
-| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.516085172292304 | 0.520938160620375 | 0.990684137398781 | 0.322322875573981 | 0.981455060093567 | 0.00153873384311865 | 0.499805352166119 | 6.57567788875021 | 0.0392266980909382 | 0.153636781954329 | 544 | 34 | 6 | estimated | NA | 33 | -0.124462853584763 | -0.36775397919816 |
-| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.56356978479451 | 0.543043869816266 | 1.03779789464374 | 0.299849284773033 | 1.07702447012698 | 0.00175084733442709 | 0.489076807916145 | 6.58719667093322 | 0.0418431276845787 | 0.139918645723862 | 565 | 34 | 6 | estimated | NA | 13 | -0.0769782410825574 | -0.27218456916475 |
-| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.568468880977032 | 0.521464376475379 | 1.09013943544785 | 0.276178923675638 | 1.18840398871855 | 0.00185815848556228 | 0.493047784490863 | 6.50211027432719 | 0.0431063624719495 | 0.146605848132122 | 546 | 34 | 6 | estimated | NA | 29 | -0.0720791449000351 | -0.16080505057318 |
-| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.569615456080675 | 0.631548803502125 | 0.9019341861183 | 0.367527834760057 | 0.813485276088879 | 0.00159836346122615 | 0.469415884942514 | 6.68808486934522 | 0.0399795380316729 | 0.126453535201679 | 546 | 34 | 6 | estimated | NA | 8 | -0.070932569796392 | -0.535723763202847 |
-| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.710502189207658 | 0.563674508053625 | 1.26048309628376 | 0.208076082274748 | 1.58881763601709 | 0.0028570779365013 | 0.494322972208026 | 6.57075342661725 | 0.0534516411020242 | 0.149521858764732 | 554 | 34 | 6 | estimated | NA | 6 | 0.0699541633305915 | 0.239608596725366 |
-| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.578483714914436 | 0.574854246646902 | 1.00631371915352 | 0.314749487456079 | 1.01266730135658 | 0.00187968095827772 | 0.497516069422358 | 6.63828936107293 | 0.0433552875469334 | 0.149939570808186 | 550 | 34 | 6 | estimated | NA | 28 | -0.062064310962631 | -0.336541737935146 |
-| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.699350134965062 | 0.511784767073979 | 1.36649267418303 | 0.172385341618863 | 1.8673022285959 | 0.00279854708059083 | 0.494026185939345 | 6.53097954635572 | 0.0529012956418986 | 0.14594522143916 | 559 | 34 | 6 | estimated | NA | 32 | 0.0588021090879954 | 0.518093189304173 |
-| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.697054081654159 | 0.574039219104903 | 1.21429696518136 | 0.225188703659085 | 1.47451711964865 | 0.00280723618103596 | 0.49067895859659 | 6.45541895527418 | 0.0529833575855093 | 0.141683237895786 | 565 | 34 | 6 | estimated | NA | 15 | 0.0565060557770919 | 0.125308080356924 |
-| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.696028524384538 | 0.552145371181103 | 1.26058925912147 | 0.208036696670661 | 1.58908528021243 | 0.00270149650766413 | 0.495973736648217 | 6.64176511390238 | 0.0519759223839684 | 0.139438915762341 | 555 | 34 | 6 | estimated | NA | 19 | 0.0554804985074711 | 0.239876240920701 |
-| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.693329238818892 | 0.554017942347552 | 1.25145629017182 | 0.21135794932347 | 1.56614284621061 | 0.00263273250570672 | 0.497658232056348 | 6.72461368487802 | 0.0513101598682911 | 0.137991662424956 | 544 | 34 | 6 | estimated | NA | 21 | 0.0527812129418247 | 0.216933806918882 |
-| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.590900683234182 | 0.547082102345324 | 1.08009507293514 | 0.280613374360257 | 1.16660536657876 | 0.00189819028713623 | 0.490654328446144 | 6.65457391299376 | 0.043568225659726 | 0.140872590594245 | 555 | 34 | 6 | estimated | NA | 20 | -0.0496473426428851 | -0.182603672712963 |
-| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.59753286643916 | 0.532648923984554 | 1.12181371168317 | 0.262463412316236 | 1.25846600372037 | 0.00219625229318403 | 0.491451313401681 | 6.26615573125466 | 0.0468641898808023 | 0.143053608930677 | 564 | 34 | 6 | estimated | NA | 14 | -0.043015159437907 | -0.0907430355713521 |
-| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.598060988090983 | 0.551796186719705 | 1.08384400342871 | 0.278953211833765 | 1.17471782376838 | 0.00197984173512435 | 0.495073748992202 | 6.65426565900795 | 0.0444954125177387 | 0.138134786747926 | 551 | 34 | 6 | estimated | NA | 18 | -0.042487037786084 | -0.174491215523346 |
-| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.677103557527242 | 0.629563080366662 | 1.07551344518629 | 0.282676361508625 | 1.15672917077649 | 0.00235986821712568 | 0.486228794389683 | 6.77722484255781 | 0.0485784748332436 | 0.131331206405759 | 536 | 34 | 6 | estimated | NA | 10 | 0.0365555316501752 | -0.192479868515241 |
-| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.607220596958666 | 0.547205833796129 | 1.10967493300683 | 0.267654009534462 | 1.23137845694371 | 0.00211634145735997 | 0.489871344236908 | 6.46599940296906 | 0.0460037113433506 | 0.139914234712322 | 566 | 34 | 6 | estimated | NA | 7 | -0.0333274289184009 | -0.117830582348015 |
-| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.608633562506643 | 0.57487454255229 | 1.05872415188968 | 0.290244929472313 | 1.12089682979453 | 0.00203313590244549 | 0.498073311750306 | 6.72304416536261 | 0.045090308298416 | 0.143016560227478 | 540 | 34 | 6 | estimated | NA | 27 | -0.0319144633704239 | -0.228312209497197 |
-| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.672456670732533 | 0.57467275021678 | 1.17015583300038 | 0.242485856667417 | 1.3692646735048 | 0.00242424568130875 | 0.487836209258438 | 6.66269638456613 | 0.049236629467407 | 0.136669707622233 | 557 | 34 | 6 | estimated | NA | 22 | 0.0319086448554663 | 0.0200556342130771 |
-| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.656585077260133 | 0.580559892836947 | 1.13095149244927 | 0.258603944972513 | 1.27905127827323 | 0.0023323230972253 | 0.483217474210599 | 6.56960536429702 | 0.0482941310846853 | 0.135373703873901 | 561 | 34 | 6 | estimated | NA | 5 | 0.0160370513830661 | -0.070157761018496 |
-| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.653860103693436 | 0.550825139484088 | 1.18705566762231 | 0.235749750494249 | 1.40910115803425 | 0.00236532802144931 | 0.491114503842614 | 6.60270525423945 | 0.0486346380828819 | 0.141823326440371 | 566 | 34 | 6 | estimated | NA | 17 | 0.0133120778163694 | 0.0598921187425234 |
-| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.653155989472323 | 0.542080992528045 | 1.20490479923723 | 0.228799963066572 | 1.45179557522491 | 0.00240767288142689 | 0.495692914831564 | 6.59828218000912 | 0.0490680433828898 | 0.152270417055732 | 557 | 34 | 6 | estimated | NA | 3 | 0.0126079635952565 | 0.102586535933186 |
-| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.648697040302001 | 0.548590695926009 | 1.18247911442795 | 0.237552947532108 | 1.39825685605832 | 0.00233685034933572 | 0.489858765873438 | 6.57351033127072 | 0.0483409800204372 | 0.141118525110296 | 571 | 34 | 6 | estimated | NA | 25 | 0.00814901442493454 | 0.0490478167665915 |
-| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.633784924643036 | 0.557784182140734 | 1.13625474679224 | 0.256394266012245 | 1.29107484960789 | 0.00225560056159897 | 0.497084073161468 | 6.63346826921502 | 0.0474931633142755 | 0.156798867009659 | 548 | 34 | 6 | estimated | NA | 24 | -0.00676310123403123 | -0.0581341896838321 |
-| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.634810381966768 | 0.566017040685949 | 1.12153934658478 | 0.262574997398523 | 1.25785050593781 | 0.0022984168088729 | 0.490634048406956 | 6.49661768136127 | 0.0479418064831939 | 0.141671857164894 | 569 | 34 | 6 | estimated | NA | 34 | -0.0057376439102993 | -0.0913585333539191 |
-| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.63487313036113 | 0.57070446042937 | 1.11243765272744 | 0.266461088983205 | 1.23751753120574 | 0.00226224985593101 | 0.489870172323193 | 6.53879405054279 | 0.0475631144473117 | 0.140281266615707 | 571 | 34 | 6 | estimated | NA | 35 | -0.00567489551593747 | -0.111691508085989 |
-| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.637013736228626 | 0.553549336973388 | 1.15078041590943 | 0.250348446747178 | 1.32429556564069 | 0.00227015514264359 | 0.489871524470971 | 6.54942576020169 | 0.0476461450974066 | 0.140151480257875 | 571 | 34 | 6 | estimated | NA | 30 | -0.00353428964844116 | -0.0249134736510408 |
+| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 1.04536023915945 | 0.608357746847161 | 1.71833143339929 | 0.0864134790557091 | 2.95266291500807 | 0.00465275004259441 | 0.451041809073526 | 6.9123849665503 | 0.0682110697951074 | 0.115101756331154 | 505 | 34 | 6 | estimated | NA | 9 | 0.404812213282416 | 1.6034538757165 |
+| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.366540582729035 | 0.485152671239069 | 0.75551595293271 | 0.450285534144002 | 0.57080435513582 | 0.000887849542649871 | 0.487143535229738 | 5.9925176493585 | 0.0297968042355124 | 0.136903980219079 | 562 | 34 | 6 | estimated | NA | 1 | -0.274007443147996 | -0.778404684155744 |
+| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.884531418609361 | 0.608959399769941 | 1.45252937871314 | 0.146965819119886 | 2.10984159602479 | 0.00413235092459746 | 0.478694278524368 | 6.58677612679421 | 0.064283364291209 | 0.134844189977506 | 561 | 34 | 6 | estimated | NA | 2 | 0.24398339273233 | 0.760632556733228 |
+| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.811860218216198 | 0.715733970864245 | 1.13430443609639 | 0.257231846420304 | 1.28664655374795 | 0.0028903720022025 | 0.447549246048394 | 6.75842066518467 | 0.053762180035801 | 0.113108453164729 | 529 | 34 | 6 | estimated | NA | 23 | 0.171312192339167 | -0.0625624855436151 |
+| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.480972473802074 | 0.528538638467758 | 0.910004375832239 | 0.363248391577877 | 0.828107964033823 | 0.00133856283871879 | 0.486147500802096 | 6.39100118075541 | 0.0365863750420771 | 0.138115614504892 | 560 | 34 | 6 | estimated | NA | 12 | -0.159575552074957 | -0.521101075257741 |
+| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.51608517229226 | 0.520938160620373 | 0.9906841373987 | 0.32232287557402 | 0.981455060093407 | 0.00153873384312097 | 0.499805352166118 | 6.57567788875022 | 0.0392266980909356 | 0.153636781954329 | 544 | 34 | 6 | estimated | NA | 33 | -0.124462853584771 | -0.367753979198157 |
+| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.563569784794472 | 0.543043869816273 | 1.03779789464366 | 0.299849284773071 | 1.07702447012681 | 0.00175084733442783 | 0.489076807916145 | 6.58719667093323 | 0.0418431276845772 | 0.139918645723861 | 565 | 34 | 6 | estimated | NA | 13 | -0.0769782410825595 | -0.272184569164758 |
+| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.56846888097701 | 0.521464376475378 | 1.0901394354478 | 0.276178923675656 | 1.18840398871846 | 0.00185815848556085 | 0.493047784490862 | 6.50211027432719 | 0.0431063624719478 | 0.146605848132121 | 546 | 34 | 6 | estimated | NA | 29 | -0.0720791449000212 | -0.160805050573106 |
+| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.569615456080683 | 0.631548803502133 | 0.9019341861183 | 0.367527834760056 | 0.81348527608888 | 0.0015983634612254 | 0.469415884942513 | 6.68808486934522 | 0.0399795380316729 | 0.126453535201678 | 546 | 34 | 6 | estimated | NA | 8 | -0.0709325697963485 | -0.535723763202685 |
+| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.710502189207657 | 0.56367450805363 | 1.26048309628375 | 0.208076082274752 | 1.58881763601706 | 0.00285707793649932 | 0.494322972208026 | 6.57075342661725 | 0.0534516411020237 | 0.149521858764732 | 554 | 34 | 6 | estimated | NA | 6 | 0.069954163330626 | 0.239608596725498 |
+| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.57848371491442 | 0.574854246646908 | 1.00631371915348 | 0.314749487456097 | 1.0126673013565 | 0.00187968095827983 | 0.497516069422357 | 6.63828936107294 | 0.0433552875469318 | 0.149939570808186 | 550 | 34 | 6 | estimated | NA | 28 | -0.062064310962611 | -0.33654173793506 |
+| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.699350134965036 | 0.511784767073986 | 1.36649267418296 | 0.172385341618885 | 1.86730222859571 | 0.00279854708059144 | 0.494026185939344 | 6.53097954635572 | 0.0529012956418972 | 0.14594522143916 | 559 | 34 | 6 | estimated | NA | 32 | 0.0588021090880045 | 0.518093189304143 |
+| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.697054081654121 | 0.574039219104907 | 1.21429696518128 | 0.225188703659114 | 1.47451711964847 | 0.00280723618103379 | 0.490678958596589 | 6.45541895527418 | 0.0529833575855077 | 0.141683237895786 | 565 | 34 | 6 | estimated | NA | 15 | 0.0565060557770901 | 0.125308080356906 |
+| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.696028524384511 | 0.552145371181105 | 1.26058925912142 | 0.20803669667068 | 1.58908528021229 | 0.00270149650766487 | 0.495973736648217 | 6.64176511390238 | 0.0519759223839666 | 0.139438915762341 | 555 | 34 | 6 | estimated | NA | 19 | 0.0554804985074796 | 0.23987624092073 |
+| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.693329238818862 | 0.554017942347555 | 1.25145629017176 | 0.211357949323492 | 1.56614284621046 | 0.00263273250570524 | 0.497658232056348 | 6.72461368487802 | 0.0513101598682898 | 0.137991662424956 | 544 | 34 | 6 | estimated | NA | 21 | 0.0527812129418312 | 0.216933806918894 |
+| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.590900683234156 | 0.547082102345328 | 1.08009507293508 | 0.280613374360281 | 1.16660536657865 | 0.00189819028713608 | 0.490654328446144 | 6.65457391299376 | 0.0435682256597254 | 0.140872590594244 | 555 | 34 | 6 | estimated | NA | 20 | -0.0496473426428747 | -0.182603672712918 |
+| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.597532866439166 | 0.532648923984561 | 1.12181371168317 | 0.262463412316238 | 1.25846600372037 | 0.00219625229318321 | 0.491451313401679 | 6.26615573125466 | 0.0468641898808023 | 0.143053608930676 | 564 | 34 | 6 | estimated | NA | 14 | -0.043015159437865 | -0.0907430355711989 |
+| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.598060988090996 | 0.551796186719714 | 1.08384400342872 | 0.278953211833763 | 1.17471782376839 | 0.00197984173512346 | 0.495073748992202 | 6.65426565900795 | 0.0444954125177397 | 0.138134786747926 | 551 | 34 | 6 | estimated | NA | 18 | -0.0424870377860354 | -0.174491215523172 |
+| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.677103557527217 | 0.629563080366664 | 1.07551344518625 | 0.282676361508645 | 1.15672917077639 | 0.00235986821712449 | 0.486228794389683 | 6.77722484255781 | 0.048578474833242 | 0.131331206405759 | 536 | 34 | 6 | estimated | NA | 10 | 0.0365555316501858 | -0.192479868515173 |
+| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.607220596958657 | 0.547205833796134 | 1.1096749330068 | 0.267654009534473 | 1.23137845694365 | 0.00211634145736028 | 0.489871344236908 | 6.46599940296906 | 0.0460037113433496 | 0.139914234712322 | 566 | 34 | 6 | estimated | NA | 7 | -0.0333274289183741 | -0.117830582347911 |
+| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.608633562506632 | 0.574874542552296 | 1.05872415188965 | 0.290244929472326 | 1.12089682979447 | 0.00203313590244653 | 0.498073311750306 | 6.72304416536262 | 0.045090308298415 | 0.143016560227478 | 540 | 34 | 6 | estimated | NA | 27 | -0.0319144633703992 | -0.228312209497098 |
+| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.672456670732515 | 0.574672750216785 | 1.17015583300033 | 0.242485856667434 | 1.36926467350471 | 0.00242424568131022 | 0.487836209258437 | 6.66269638456613 | 0.0492366294674055 | 0.136669707622233 | 557 | 34 | 6 | estimated | NA | 22 | 0.031908644855484 | 0.0200556342131417 |
+| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.6565850772601 | 0.580559892836952 | 1.1309514924492 | 0.258603944972541 | 1.27905127827308 | 0.0023323230972262 | 0.483217474210599 | 6.56960536429703 | 0.0482941310846837 | 0.135373703873901 | 561 | 34 | 6 | estimated | NA | 5 | 0.0160370513830684 | -0.0701577610184854 |
+| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.653860103693417 | 0.550825139484093 | 1.18705566762227 | 0.235749750494267 | 1.40910115803414 | 0.00236532802144901 | 0.491114503842614 | 6.60270525423945 | 0.0486346380828809 | 0.141823326440371 | 566 | 34 | 6 | estimated | NA | 17 | 0.0133120778163862 | 0.0598921187425794 |
+| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.653155989472328 | 0.542080992528049 | 1.20490479923723 | 0.228799963066571 | 1.45179557522491 | 0.00240767288142704 | 0.495692914831563 | 6.59828218000912 | 0.0490680433828888 | 0.152270417055731 | 557 | 34 | 6 | estimated | NA | 3 | 0.0126079635952966 | 0.102586535933349 |
+| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.648697040301966 | 0.54859069592601 | 1.18247911442789 | 0.237552947532134 | 1.39825685605816 | 0.00233685034933602 | 0.489858765873438 | 6.57351033127072 | 0.0483409800204345 | 0.141118525110296 | 571 | 34 | 6 | estimated | NA | 25 | 0.0081490144249351 | 0.0490478167665969 |
+| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.633784924643011 | 0.557784182140739 | 1.13625474679218 | 0.256394266012268 | 1.29107484960777 | 0.00225560056159776 | 0.497084073161467 | 6.63346826921502 | 0.0474931633142748 | 0.156798867009658 | 548 | 34 | 6 | estimated | NA | 24 | -0.00676310123402013 | -0.0581341896837955 |
+| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.634810381966715 | 0.566017040685947 | 1.12153934658469 | 0.262574997398561 | 1.25785050593761 | 0.00229841680887184 | 0.490634048406956 | 6.49661768136128 | 0.0479418064831905 | 0.141671857164893 | 569 | 34 | 6 | estimated | NA | 34 | -0.00573764391031628 | -0.0913585333539593 |
+| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.634873130361138 | 0.570704460429381 | 1.11243765272744 | 0.266461088983207 | 1.23751753120573 | 0.00226224985593071 | 0.489870172323192 | 6.53879405054279 | 0.0475631144473132 | 0.140281266615707 | 571 | 34 | 6 | estimated | NA | 35 | -0.00567489551589273 | -0.111691508085837 |
+| state_fe_expanded_controls | State fixed effects + expanded Census controls | 9 | emi_exposure_all_children_0708 | ling_distance_nonzero_mean | state | basic_scale_geography;social_composition;human_capital;demography;economic_structure;basic_development | 13 | 0.6370137362286 | 0.553549336973393 | 1.15078041590938 | 0.250348446747201 | 1.32429556564056 | 0.00227015514264165 | 0.489871524470971 | 6.54942576020169 | 0.0476461450974056 | 0.140151480257875 | 571 | 34 | 6 | estimated | NA | 30 | -0.00353428964843072 | -0.0249134736510082 |
 | Table truncated in rendered note; full CSV has 35 rows. |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 
 Leave-one-state-out influence
@@ -592,36 +592,36 @@ analysis_table(first_stage_district_influence[order(first_stage_district_influen
 
 | state_code_2001 | district_code_2001 | leverage | cooks_distance | studentized_residual | instrument_dfbeta |
 |:---|:---|:---|:---|:---|:---|
-| 35 | 1 | 0.538090329737038 | 0.209519859870667 | 2.99109331594167 | 0.00567489551594094 |
-| 35 | 2 | 0.538090329737038 | 0.209519859870666 | -2.99109331594167 | 0.005674895515941 |
-| 30 | 1 | 0.502240505677491 | 0.147034100425157 | -2.68797688535658 | 0.003534289648452 |
-| 30 | 2 | 0.502240505677491 | 0.147034100425157 | 2.68797688535657 | 0.00353428964845226 |
-| 34 | 3 | 0.29516307301641 | 0.119437799347976 | 3.78562451421137 | -0.00561808490280292 |
-| 14 | 1 | 0.127683972409338 | 0.112290125910298 | 6.35751308041319 | -0.00586775978107184 |
-| 25 | 2 | 0.540840317994956 | 0.0809344301313283 | 1.83906456659715 | -0.00814901442494214 |
-| 25 | 1 | 0.540840317994955 | 0.080934430131328 | -1.83906456659715 | -0.00814901442494238 |
-| 1 | 12 | 0.116620690537195 | 0.0789030204883662 | -5.56422192367221 | 0.0799141976948671 |
-| 34 | 1 | 0.300093783509674 | 0.0730058865855134 | -2.9089677674344 | 0.0254208749035548 |
-| 1 | 9 | 0.119869126338463 | 0.0658114262338778 | 4.9750163348057 | -0.0435342390832671 |
-| 7 | 2 | 0.152214547133261 | 0.0586001521053615 | -4.05768401705154 | 0.037900515049122 |
-| 1 | 10 | 0.144540719406203 | 0.0497317012081583 | 3.8473788825101 | -0.0252212389226669 |
-| 15 | 8 | 0.157105924114544 | 0.0466950452638215 | 3.54206475924403 | 0.0119780613459828 |
-| 7 | 4 | 0.149809798190035 | 0.0379072939409814 | 3.27676624768501 | 0.0299390945440826 |
-| 14 | 2 | 0.150071464192017 | 0.0357550127695975 | -3.17720446233958 | 0.0390317703467473 |
-| 12 | 6 | 0.0997196350068979 | 0.0320814460533775 | 3.81567280787858 | 0.0917940472355212 |
-| 1 | 5 | 0.13524714507256 | 0.0295106137543799 | 3.06492568527572 | 0.0914801118992478 |
-| 1 | 14 | 0.175902696255641 | 0.026184717182233 | -2.46357380030907 | 0.0924279496535883 |
-| 1 | 1 | 0.122850340002193 | 0.0249976497479466 | -2.97945144901987 | -0.0362344302295137 |
-| 15 | 7 | 0.205730667243197 | 0.0249529094451183 | 2.18043558774969 | -0.0897100465290975 |
-| 1 | 6 | 0.115886637646315 | 0.0232929456345275 | 2.97283968519047 | 0.0586460642195708 |
-| 32 | 10 | 0.100712909427964 | 0.0224040593668981 | 3.15757635966706 | -0.0130661640035522 |
-| 14 | 5 | 0.173532848923126 | 0.0216303264722026 | -2.25547852998507 | -0.0303483453993635 |
-| 5 | 5 | 0.123750432117897 | 0.0201983059448016 | 2.6625941845049 | -0.0887885192205904 |
-| 1 | 13 | 0.198510941722141 | 0.0196819055194565 | -1.97875955364339 | 0.111326595411678 |
-| 29 | 20 | 0.0937891297154694 | 0.0189081058447679 | 3.01500080103961 | 0.0205058942300132 |
-| 6 | 8 | 0.0595607796686901 | 0.018294848694735 | 3.81047564062454 | -0.0195896088530533 |
-| 28 | 5 | 0.179660088698327 | 0.0174292975163325 | 1.98023321626959 | 0.0502225148751727 |
-| 11 | 4 | 0.261132968349567 | 0.016994726950042 | -1.53699074653729 | -0.00253572964627045 |
+| 35 | 1 | 0.538090329737042 | 0.209519859870683 | 2.99109331594176 | 0.00567489551591337 |
+| 35 | 2 | 0.538090329737043 | 0.209519859870683 | -2.99109331594176 | 0.00567489551591332 |
+| 30 | 1 | 0.502240505677492 | 0.147034100425159 | -2.68797688535659 | 0.00353428964844677 |
+| 30 | 2 | 0.502240505677491 | 0.147034100425158 | 2.68797688535659 | 0.00353428964844666 |
+| 34 | 3 | 0.295163073016413 | 0.119437799347975 | 3.78562451421133 | -0.00561808490278036 |
+| 14 | 1 | 0.127683972409339 | 0.112290125910301 | 6.35751308041325 | -0.00586775978110531 |
+| 25 | 2 | 0.540840317994955 | 0.0809344301313226 | 1.83906456659709 | -0.00814901442492961 |
+| 25 | 1 | 0.540840317994956 | 0.0809344301313224 | -1.83906456659709 | -0.00814901442492995 |
+| 1 | 12 | 0.116620690537195 | 0.0789030204883659 | -5.5642219236722 | 0.079914197694868 |
+| 34 | 1 | 0.300093783509675 | 0.0730058865855125 | -2.90896776743438 | 0.0254208749035618 |
+| 1 | 9 | 0.119869126338462 | 0.0658114262338769 | 4.97501633480567 | -0.0435342390832683 |
+| 7 | 2 | 0.152214547133261 | 0.05860015210536 | -4.0576840170515 | 0.0379005150491323 |
+| 1 | 10 | 0.144540719406203 | 0.0497317012081586 | 3.84737888251011 | -0.025221238922672 |
+| 15 | 8 | 0.157105924114545 | 0.0466950452638223 | 3.54206475924405 | 0.0119780613459743 |
+| 7 | 4 | 0.149809798190033 | 0.0379072939409818 | 3.27676624768505 | 0.0299390945440727 |
+| 14 | 2 | 0.150071464192018 | 0.0357550127695976 | -3.17720446233956 | 0.0390317703467568 |
+| 12 | 6 | 0.099719635006898 | 0.0320814460533777 | 3.81567280787859 | 0.091794047235518 |
+| 1 | 5 | 0.13524714507256 | 0.0295106137543802 | 3.06492568527574 | 0.0914801118992487 |
+| 1 | 14 | 0.175902696255642 | 0.0261847171822336 | -2.46357380030909 | 0.0924279496535832 |
+| 1 | 1 | 0.122850340002193 | 0.024997649747947 | -2.97945144901989 | -0.0362344302295203 |
+| 15 | 7 | 0.205730667243197 | 0.0249529094451174 | 2.18043558774964 | -0.0897100465290863 |
+| 1 | 6 | 0.115886637646315 | 0.0232929456345272 | 2.97283968519046 | 0.0586460642195707 |
+| 32 | 10 | 0.100712909427964 | 0.022404059366898 | 3.15757635966705 | -0.0130661640035524 |
+| 14 | 5 | 0.17353284892313 | 0.021630326472204 | -2.25547852998512 | -0.0303483453993761 |
+| 5 | 5 | 0.123750432117897 | 0.0201983059448013 | 2.66259418450489 | -0.0887885192205887 |
+| 1 | 13 | 0.198510941722141 | 0.0196819055194561 | -1.97875955364337 | 0.11132659541168 |
+| 29 | 20 | 0.0937891297154707 | 0.018908105844768 | 3.01500080103961 | 0.0205058942300201 |
+| 6 | 8 | 0.0595607796686903 | 0.0182948486947351 | 3.81047564062454 | -0.0195896088530562 |
+| 28 | 5 | 0.17966008869833 | 0.0174292975163335 | 1.98023321626962 | 0.0502225148751772 |
+| 11 | 4 | 0.261132968349567 | 0.0169947269500415 | -1.53699074653727 | -0.00253572964626976 |
 | Table truncated in rendered note; full CSV has 573 rows. |  |  |  |  |  |
 
 Most influential districts in the expanded first stage
