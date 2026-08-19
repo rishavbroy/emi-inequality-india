@@ -696,3 +696,65 @@ test_that("poster delivery and typography contracts remain stable during draftin
   expect_match(template, "v(16pt, weak: true)", fixed = TRUE)
   expect_match(template, "v(1pt)", fixed = TRUE)
 })
+
+test_that("Census downloader skips present files and fetches only missing files", {
+  root <- tempfile("census-download-")
+  on.exit(unlink(root, recursive = TRUE, force = TRUE), add = TRUE)
+  dir.create(file.path(root, "data", "metadata"), recursive = TRUE)
+
+  manifest <- data.frame(
+    table = c("C01", "C01"),
+    state_code = c("01", "02"),
+    relative_path = c(
+      "data/raw/census_2001/religion/C01/PC01_C01_01.xls",
+      "data/raw/census_2001/religion/C01/PC01_C01_02.xls"
+    ),
+    url = c(
+      "https://censusindia.gov.in/one.xls",
+      "https://censusindia.gov.in/two.xls"
+    ),
+    stringsAsFactors = FALSE
+  )
+  manifest_path <- file.path(root, "data", "metadata", "census_2001_download_manifest.tsv")
+  write.table(manifest, manifest_path, sep = "\t", quote = FALSE, row.names = FALSE)
+
+  present <- file.path(root, manifest$relative_path[[1]])
+  dir.create(dirname(present), recursive = TRUE)
+  writeLines("existing", present)
+
+  log_path <- file.path(root, "curl.log")
+  fake_curl <- file.path(root, "curl")
+  writeLines(c(
+    "#!/usr/bin/env bash",
+    "set -euo pipefail",
+    "out=''",
+    "url=''",
+    "while [[ $# -gt 0 ]]; do",
+    "  case \"$1\" in",
+    "    --output) out=\"$2\"; shift 2 ;;",
+    "    --retry|--retry-delay|--connect-timeout) shift 2 ;;",
+    "    --fail|--location) shift ;;",
+    "    *) url=\"$1\"; shift ;;",
+    "  esac",
+    "done",
+    "printf '%s\\n' \"$url\" >> \"$FAKE_CURL_LOG\"",
+    "printf 'downloaded\\n' > \"$out\""
+  ), fake_curl)
+  Sys.chmod(fake_curl, mode = "0755")
+
+  old <- Sys.getenv(c("EMI_PROJECT_ROOT", "CURL_BIN", "FAKE_CURL_LOG"), unset = NA_character_)
+  on.exit({
+    for (name in names(old)) {
+      if (is.na(old[[name]])) Sys.unsetenv(name) else do.call(Sys.setenv, setNames(list(old[[name]]), name))
+    }
+  }, add = TRUE)
+  Sys.setenv(EMI_PROJECT_ROOT = root, CURL_BIN = fake_curl, FAKE_CURL_LOG = log_path)
+
+  output <- system2("bash", repo_file("scripts", "download_census_tables.sh"), stdout = TRUE, stderr = TRUE)
+
+  expect_null(attr(output, "status"))
+  expect_identical(readLines(present), "existing")
+  expect_identical(readLines(file.path(root, manifest$relative_path[[2]])), "downloaded")
+  expect_identical(readLines(log_path), manifest$url[[2]])
+  expect_true(any(grepl("1 downloaded, 1 already present", output, fixed = TRUE)))
+})

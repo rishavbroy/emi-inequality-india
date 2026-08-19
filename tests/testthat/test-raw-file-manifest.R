@@ -198,3 +198,25 @@ test_that("post-period LGD history is inventory-only lineage evidence", {
   expect_equal(row$reader, "inventory_only")
   expect_equal(row$role, "post_2018_validation")
 })
+
+test_that("Census download manifest is canonical acquisition metadata", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
+  path <- file.path(root, "data", "metadata", "census_2001_download_manifest.tsv")
+  manifest <- read.delim(path, stringsAsFactors = FALSE, check.names = FALSE)
+
+  expect_identical(names(manifest), c("table", "state_code", "relative_path", "url"))
+  expect_equal(anyDuplicated(manifest$relative_path), 0L)
+  expect_equal(anyDuplicated(manifest$url), 0L)
+  expect_true(all(startsWith(manifest$relative_path, "data/raw/census_2001/")))
+  expect_true(all(startsWith(manifest$url, "https://censusindia.gov.in/")))
+  expect_true(all(file.path("data", "raw", "census_2001", "languages", "C16", sprintf("PC01_C16_%02d.xls", 1:35)) %in% manifest$relative_path))
+  expect_true(all(vapply(split(manifest$state_code, manifest$table), function(x) {
+    identical(sort(unique(sprintf("%02d", as.integer(x)))), sprintf("%02d", 1:35))
+  }, logical(1))))
+})
+
+test_that("tracked checksum inventory includes the Census acquisition manifest", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
+  checksums <- read.csv(file.path(root, "data", "metadata", "checksums.csv"), stringsAsFactors = FALSE)
+  expect_true("data/metadata/census_2001_download_manifest.tsv" %in% checksums$path)
+})

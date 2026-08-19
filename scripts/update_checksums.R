@@ -1,7 +1,7 @@
 # Update checksums for tracked metadata and processed data files.
 
 paths <- c(
-  list.files("data/metadata", pattern = "\\.csv$", full.names = TRUE),
+  list.files("data/metadata", pattern = "\\.(csv|tsv)$", full.names = TRUE),
   list.files("data/processed", pattern = "\\.csv$", full.names = TRUE)
 )
 
