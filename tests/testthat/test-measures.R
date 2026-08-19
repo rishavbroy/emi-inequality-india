@@ -1,5 +1,5 @@
 test_that("2007 measures compute weighted EMIE by district", {
-  edu <- list(block = data.frame(
+  edu <- list(nss0708edu_block5 = data.frame(
     State = c("Bihar", "Bihar", "Bihar"),
     District = c("Patna", "Patna", "Gaya"),
     EMI = c(1, 0, 1),
