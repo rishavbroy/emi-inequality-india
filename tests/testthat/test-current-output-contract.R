@@ -146,6 +146,10 @@ test_that("final district panel validation enforces structural IV-panel contract
     .matched_2017 = c(TRUE, TRUE)
   )
 
+  for (v in census_2001_main_controls()) {
+    if (!v %in% names(bad)) bad[[v]] <- 1
+  }
+
   expect_silent(checked <- validate_analysis_district_panel(bad, list(mode = "final")))
   failures <- attr(checked, "analysis_panel_validation_failures")
   expect_true(any(grepl("missing core IV analysis values", failures, fixed = TRUE)))

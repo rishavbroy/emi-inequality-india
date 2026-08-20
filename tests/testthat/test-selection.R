@@ -276,3 +276,26 @@ test_that("missingness diagnostics report enrolled schooling-benefit missingness
   expect_equal(benefits$n_missing[benefits$missing_var == "RECD_TXT_BOOKS"], 1L)
   expect_true(all(benefits$scope == "enrolled_children"))
 })
+
+
+test_that("survey selection estimation restores lonely-PSU option", {
+  testthat::skip_if_not_installed("survey")
+  old <- getOption("survey.lonely.psu")
+  on.exit(options(survey.lonely.psu = old), add = TRUE)
+  options(survey.lonely.psu = "fail")
+
+  n <- 24L
+  dat <- data.frame(
+    enrolled = factor(rep(c("Yes", "No"), 12), levels = c("Yes", "No")),
+    AGE = rep(8:13, 4),
+    FSU_SL_NO = rep(1:12, each = 2),
+    weight = 1,
+    STATE = rep(c("01", "02"), each = 12),
+    STRATUM = rep(1:4, each = 6),
+    SUB_STRATUM_NO = rep(1:2, 12),
+    stringsAsFactors = FALSE
+  )
+
+  expect_silent(estimate_selection_probit(dat, list(mode = "final")))
+  expect_identical(getOption("survey.lonely.psu"), "fail")
+})

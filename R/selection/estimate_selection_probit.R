@@ -27,6 +27,10 @@ estimate_selection_probit <- function(selection_data, cfg) {
   }
   f_probit <- stats::reformulate(covars, response = "enrolled")
   if (identical(cfg$mode, "final") && requireNamespace("survey", quietly = TRUE)) {
+    old_lonely_psu <- getOption("survey.lonely.psu")
+    options(survey.lonely.psu = "average")
+    on.exit(options(survey.lonely.psu = old_lonely_psu), add = TRUE)
+
     design <- build_survey_design_selection(selection_data)
     if (!is.null(design)) {
       out <- fit_selection_probit(design, f_probit)
@@ -59,7 +63,6 @@ build_survey_design_selection <- function(selection_df) {
   weight <- first_col(selection_df, c("weight", "WEIGHT", "Multiplier", "multiplier"))
   strata_cols <- intersect(c("STATE", "STRATUM", "SUB_STRATUM_NO"), names(selection_df))
   if (is.null(psu) || is.null(weight) || !length(strata_cols)) return(NULL)
-  options(survey.lonely.psu = "average")
   selection_df$.survey_strata <- interaction(selection_df[strata_cols], drop = TRUE)
   survey::svydesign(
     ids = stats::as.formula(paste0("~", psu)),

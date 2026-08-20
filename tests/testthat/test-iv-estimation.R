@@ -59,6 +59,25 @@ test_that("serialized IV models retain inputs required by diagnostics and cluste
   expect_true(is.finite(as.numeric(condition_number_value(restored))))
 })
 
+test_that("final IV estimation fails when required state clusters are unavailable", {
+  skip_if_not_installed("ivreg")
+  set.seed(5)
+  n <- 40L
+  z <- stats::rnorm(n)
+  x <- z + stats::rnorm(n)
+  y <- x + stats::rnorm(n)
+  panel <- data.frame(y = y, x = x, z = z)
+
+  expect_error(
+    estimate_2sls(
+      panel,
+      list(toy = make_iv_formula("y", "x", "z")),
+      list(mode = "final")
+    ),
+    "State-clustered IV inference is required"
+  )
+})
+
 test_that("first-stage diagnostics preserve out-of-pipeline statuses", {
   models <- list(baseline = list(status = "out_of_active_pipeline", reason = "Missing variables: z"))
 

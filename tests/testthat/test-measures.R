@@ -226,6 +226,9 @@ test_that("final analysis validation does not promote district warnings to error
     district_17 = c("district", "district"),
     stringsAsFactors = FALSE
   )
+  for (v in census_2001_main_controls()) {
+    if (!v %in% names(panel)) panel[[v]] <- 1
+  }
   cfg <- list(
     mode = "final",
     strict_district_panel_validation = TRUE,
@@ -500,9 +503,9 @@ test_that("finalize analysis panel enforces final-mode analysis validation", {
   for (v in census_2001_main_controls()) controls[[v]] <- 1
   cfg <- list(mode = "final", strict_district_panel_validation = FALSE, strict_analysis_panel_validation = TRUE)
 
-  expect_error(
-    finalize_analysis_panel(panel, controls, cfg),
-    "missing core IV analysis values",
-    fixed = TRUE
+  expect_silent(
+    finalized <- finalize_analysis_panel(panel, controls, cfg)
   )
+  expect_true(is.na(finalized$gini_cons_1718))
+  expect_true(is.na(finalized$gini_change))
 })

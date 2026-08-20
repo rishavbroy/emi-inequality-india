@@ -116,6 +116,12 @@ estimate_2sls <- function(district_panel, formulas, cfg) {
     attr(fit, "prediction_data") <- prediction_data
 
     cluster <- iv_model_cluster(fit, district_panel)
+    if (is.null(cluster) && is_final_mode(cfg)) {
+      stop(
+        "State-clustered IV inference is required in final mode, but no complete aligned state cluster was available.",
+        call. = FALSE
+      )
+    }
     if (!is.null(cluster)) {
       inference <- iv_clustered_inference(fit, cluster)
       attr(fit, "cluster_state") <- cluster

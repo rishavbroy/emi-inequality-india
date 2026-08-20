@@ -205,7 +205,12 @@ analysis_panel_validation_failures <- function(out) {
   add <- function(...) failures <<- c(failures, paste0(...))
 
   spec <- preferred_iv_variables()
-  required <- c(spec$treatment, spec$instrument, "npeople_0708", "consumption_0708", "gini_cons_0708", "consumption_1718", "gini_cons_1718", "real_log_consumption_change", "gini_change")
+  required <- unique(c(
+    spec$treatment, spec$instrument,
+    "npeople_0708", "consumption_0708", "consumption_1718",
+    "real_log_consumption_change",
+    census_2001_main_controls()
+  ))
   missing <- setdiff(required, names(df))
   if (length(missing)) add("district_panel is missing required analysis columns: ", paste(missing, collapse = ", "))
 
