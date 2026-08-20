@@ -56,6 +56,35 @@ census_2001_diagnostic_controls <- function() {
   unique(c(census_2001_main_controls(), census_2001_absorption_controls()))
 }
 
+census_2001_control_identity_groups <- function() {
+  list(
+    agricultural_worker_composition = c(
+      "agricultural_worker_share_2001",
+      "cultivator_share_workers_2001",
+      "agricultural_labourer_share_workers_2001"
+    )
+  )
+}
+
+census_2001_balance_linked_controls <- function(variable) {
+  groups <- census_2001_control_identity_groups()
+  linked <- unlist(
+    groups[vapply(groups, function(group) variable %in% group, logical(1))],
+    use.names = FALSE
+  )
+  setdiff(unique(linked), variable)
+}
+
+census_2001_joint_balance_controls <- function(
+  variables = census_2001_diagnostic_controls()
+) {
+  out <- unique(variables)
+  for (group in census_2001_control_identity_groups()) {
+    if (all(group %in% out)) out <- setdiff(out, group[[1]])
+  }
+  out
+}
+
 census_2001_appendix_controls <- function() {
   c(
     "literacy_share_2001", "worker_share_2001",

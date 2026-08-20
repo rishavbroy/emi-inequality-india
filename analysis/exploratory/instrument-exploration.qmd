@@ -46,6 +46,10 @@ unmapped_languages <- analysis_target_csv("diag_ext_alternative_distance_first_s
 distance4_leave_one_out <- analysis_target_csv("diag_ext_alternative_distance_first_stages", "distance4_leave_one_language_out.csv")
 weak_iv_outcomes <- analysis_target_csv("diag_ext_alternative_distance_first_stages", "alternative_distance_weak_iv_outcomes.csv")
 iv_diagnostic_applicability <- analysis_target_csv("diag_ext_alternative_distance_first_stages", "iv_diagnostic_applicability.csv")
+iv_specification_registry <- analysis_target_csv("diag_ext_alternative_distance_first_stages", "iv_specification_registry.csv")
+iv_overidentification <- analysis_target_csv("diag_ext_alternative_distance_first_stages", "iv_overidentification.csv")
+iv_monotonicity <- analysis_target_csv("diag_ext_alternative_distance_first_stages", "iv_monotonicity_summary.csv")
+iv_joint_balance <- analysis_target_csv("diag_ext_census_2001_controls", "instrument_balance_joint.csv")
 ```
 
 ## District-level treatment and instrument check
@@ -94,6 +98,18 @@ analysis_table(distance4_languages, "Distance-four speaker composition by langua
 analysis_table(distance4_leave_one_out, "Distance-four leave-one-language-out joint tests", max_rows = 15)
 analysis_table(weak_iv_outcomes, "Weak-IV-aware exploratory outcome estimates", max_rows = 10)
 analysis_table(iv_diagnostic_applicability, "IV diagnostic applicability and implementation status", max_rows = 30)
+analysis_table(iv_joint_balance, "Joint holdout-covariate balance tests", max_rows = 30)
+analysis_table(iv_specification_registry, "De-duplicated IV diagnostic specification registry", max_rows = 30)
+analysis_table(
+  iv_overidentification[iv_overidentification$status != "not_applicable", ],
+  "Overidentifying-restrictions diagnostics for multi-instrument specifications",
+  max_rows = 30
+)
+analysis_table(
+  iv_monotonicity[iv_monotonicity$adjustment_id %in% c("region_main", "state_main", "state_expanded"), ],
+  "Residualized scalar first-stage shape diagnostics",
+  max_rows = 30
+)
 analysis_table(
   alternative_distance_coefficients[
     grepl("distance_shares", alternative_distance_coefficients$specification_id) &

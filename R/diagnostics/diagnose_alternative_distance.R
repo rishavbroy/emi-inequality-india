@@ -129,7 +129,11 @@ diagnose_alternative_distance_first_stages <- function(
       unmapped_languages = data.frame(status = character()),
       distance4_leave_one_out = data.frame(status = character()),
       weak_iv_outcomes = data.frame(status = character()),
-      anderson_rubin_grid = data.frame(status = character())
+      anderson_rubin_grid = data.frame(status = character()),
+      overidentification = data.frame(status = character()),
+      monotonicity_summary = data.frame(status = character()),
+      monotonicity_bins = data.frame(status = character()),
+      monotonicity_state_slopes = data.frame(status = character())
     ),
     class = "emi_alternative_distance_first_stages"
   )
@@ -143,8 +147,12 @@ save_alternative_distance_first_stages <- function(
     stop("Expected alternative-distance first-stage diagnostics.", call. = FALSE)
   }
   registry <- diagnostics$registry
+  diagnostic_specifications <- diagnostics$diagnostic_specifications %||% iv_diagnostic_specification_registry()
   for (column in c("controls", "included_language_controls", "excluded_instruments")) {
     registry[[column]] <- vapply(registry[[column]], paste, collapse = ";", FUN.VALUE = character(1))
+    diagnostic_specifications[[column]] <- vapply(
+      diagnostic_specifications[[column]], paste, collapse = ";", FUN.VALUE = character(1)
+    )
   }
   output_manifest(c(
     alternative_summary = write_diagnostic_csv(
@@ -180,6 +188,30 @@ save_alternative_distance_first_stages <- function(
     diagnostic_applicability = write_diagnostic_csv(
       diagnostics$diagnostic_applicability %||% iv_diagnostic_applicability(diagnostics$registry),
       file.path(dir, "iv_diagnostic_applicability.csv")
+    ),
+    diagnostic_registry = write_diagnostic_csv(
+      diagnostics$diagnostic_registry %||% iv_diagnostic_registry(),
+      file.path(dir, "iv_diagnostic_registry.csv")
+    ),
+    diagnostic_specifications = write_diagnostic_csv(
+      diagnostic_specifications,
+      file.path(dir, "iv_specification_registry.csv")
+    ),
+    overidentification = write_diagnostic_csv(
+      diagnostics$overidentification,
+      file.path(dir, "iv_overidentification.csv")
+    ),
+    monotonicity_summary = write_diagnostic_csv(
+      diagnostics$monotonicity_summary,
+      file.path(dir, "iv_monotonicity_summary.csv")
+    ),
+    monotonicity_bins = write_diagnostic_csv(
+      diagnostics$monotonicity_bins,
+      file.path(dir, "iv_monotonicity_bins.csv")
+    ),
+    monotonicity_state_slopes = write_diagnostic_csv(
+      diagnostics$monotonicity_state_slopes,
+      file.path(dir, "iv_monotonicity_state_slopes.csv")
     )
   ))
 }
@@ -266,7 +298,7 @@ estimate_weak_iv_outcomes <- function(
 ) {
   data <- prepare_alternative_distance_panel(panel, treatment)
   if (!outcome %in% names(data)) stop("Weak-IV outcome panel is missing ", outcome, ".", call. = FALSE)
-  registry <- iv_specification_registry(outcome = outcome, treatment = treatment)
+  registry <- iv_diagnostic_specification_registry(outcome = outcome, treatment = treatment)
   estimated <- lapply(seq_len(nrow(registry)), function(i) {
     spec <- registry[i, , drop = FALSE]
     controls <- unlist(spec$controls[[1]], use.names = FALSE)
@@ -296,6 +328,31 @@ estimate_weak_iv_outcomes <- function(
     )
     reduced_test <- clustered_joint_wald_test(reduced, excluded, x$state_code_2001)
     ar <- estimate_anderson_rubin_spec(x, spec)
+    overidentification <- if (spec$n_excluded_instruments[[1]] > spec$n_endogenous[[1]]) {
+      result <- ivreg_sargan_diagnostic(fit)
+      cbind(
+        data.frame(
+          specification_id = spec$specification_id,
+          n_endogenous = spec$n_endogenous,
+          n_excluded_instruments = spec$n_excluded_instruments,
+          stringsAsFactors = FALSE
+        ),
+        result
+      )
+    } else {
+      data.frame(
+        specification_id = spec$specification_id,
+        n_endogenous = spec$n_endogenous,
+        n_excluded_instruments = spec$n_excluded_instruments,
+        test = "sargan",
+        status = "not_applicable",
+        statistic = NA_real_,
+        df = NA_real_,
+        p.value = NA_real_,
+        reason = "Exactly identified.",
+        stringsAsFactors = FALSE
+      )
+    }
     summary <- cbind(
       data.frame(
         specification_id = spec$specification_id,
@@ -310,12 +367,13 @@ estimate_weak_iv_outcomes <- function(
       ),
       ar$summary[setdiff(names(ar$summary), "specification_id")]
     )
-    list(summary = summary, grid = ar$grid)
+    list(summary = summary, grid = ar$grid, overidentification = overidentification)
   })
   estimated <- Filter(Negate(is.null), estimated)
   list(
     summary = safe_bind_rows(lapply(estimated, `[[`, "summary")),
     ar_grid = safe_bind_rows(lapply(estimated, `[[`, "grid")),
+    overidentification = safe_bind_rows(lapply(estimated, `[[`, "overidentification")),
     registry = registry,
     applicability = iv_diagnostic_applicability(registry)
   )
@@ -370,6 +428,15 @@ augment_alternative_distance_diagnostics <- function(diagnostics, panel, census_
   )
   diagnostics$weak_iv_outcomes <- weak_iv$summary
   diagnostics$anderson_rubin_grid <- weak_iv$ar_grid
+  diagnostics$overidentification <- weak_iv$overidentification
   diagnostics$diagnostic_applicability <- weak_iv$applicability
+  diagnostics$diagnostic_registry <- iv_diagnostic_registry()
+  diagnostics$diagnostic_specifications <- weak_iv$registry
+  monotonicity <- run_iv_monotonicity_diagnostics(
+    panel, specifications = weak_iv$registry
+  )
+  diagnostics$monotonicity_summary <- monotonicity$summary
+  diagnostics$monotonicity_bins <- monotonicity$bins
+  diagnostics$monotonicity_state_slopes <- monotonicity$state_slopes
   diagnostics
 }

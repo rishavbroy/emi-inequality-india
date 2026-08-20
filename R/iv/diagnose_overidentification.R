@@ -1,8 +1,104 @@
-# Overidentification diagnostics for IV specifications.
-# The preferred public specification is exactly identified: one endogenous EMI-exposure variable and
-# one excluded linguistic-distance instrument. The diagnostic therefore reports
-# exact-identification status from the active IV formulas instead of exposing
-# unimplemented Sargan/GMM placeholders.
+# Overidentifying-restrictions diagnostics for IV specifications.
+# Exactly identified specifications are reported as not applicable. Overidentified
+# ivreg specifications use the package's standard Sargan diagnostic; this is a
+# conventional homoskedastic diagnostic and is not a weak-IV validity test.
+
+ivreg_sargan_diagnostic <- function(model) {
+  if (!inherits(model, "ivreg")) {
+    return(data.frame(
+      test = "sargan",
+      status = "not_estimated",
+      statistic = NA_real_,
+      df = NA_real_,
+      p.value = NA_real_,
+      reason = "No fitted ivreg model was supplied.",
+      stringsAsFactors = FALSE
+    ))
+  }
+  diagnostics <- summary(model, diagnostics = TRUE)$diagnostics
+  row <- grep("^Sargan$", rownames(diagnostics), ignore.case = TRUE)
+  if (!length(row)) {
+    return(data.frame(
+      test = "sargan",
+      status = "not_applicable",
+      statistic = NA_real_,
+      df = NA_real_,
+      p.value = NA_real_,
+      reason = "The fitted model is not overidentified.",
+      stringsAsFactors = FALSE
+    ))
+  }
+  row <- row[[1]]
+  data.frame(
+    test = "sargan",
+    status = if (is.finite(diagnostics[row, "statistic"])) "estimated" else "not_applicable",
+    statistic = unname(diagnostics[row, "statistic"]),
+    df = unname(diagnostics[row, "df1"]),
+    p.value = unname(diagnostics[row, "p-value"]),
+    reason = if (is.finite(diagnostics[row, "statistic"])) NA_character_ else "The fitted model is not overidentified.",
+    stringsAsFactors = FALSE
+  )
+}
+
+estimate_overidentification_spec <- function(data, specification) {
+  if (specification$n_excluded_instruments[[1]] <= specification$n_endogenous[[1]]) {
+    return(data.frame(
+      specification_id = specification$specification_id,
+      test = "sargan",
+      status = "not_applicable",
+      n_endogenous = specification$n_endogenous[[1]],
+      n_excluded_instruments = specification$n_excluded_instruments[[1]],
+      statistic = NA_real_,
+      df = NA_real_,
+      p.value = NA_real_,
+      reason = "Excluded instruments do not outnumber endogenous variables.",
+      stringsAsFactors = FALSE
+    ))
+  }
+  needed <- iv_specification_variables(specification)
+  missing <- setdiff(needed, names(data))
+  if (length(missing)) {
+    return(data.frame(
+      specification_id = specification$specification_id,
+      test = "sargan",
+      status = "not_estimated",
+      n_endogenous = specification$n_endogenous[[1]],
+      n_excluded_instruments = specification$n_excluded_instruments[[1]],
+      statistic = NA_real_,
+      df = NA_real_,
+      p.value = NA_real_,
+      reason = paste0("Missing columns: ", paste(missing, collapse = ", ")),
+      stringsAsFactors = FALSE
+    ))
+  }
+  x <- data[stats::complete.cases(data[needed]), , drop = FALSE]
+  fit <- ivreg::ivreg(iv_specification_formula(specification), data = x)
+  result <- ivreg_sargan_diagnostic(fit)
+  cbind(
+    data.frame(
+      specification_id = specification$specification_id,
+      n_endogenous = specification$n_endogenous[[1]],
+      n_excluded_instruments = specification$n_excluded_instruments[[1]],
+      stringsAsFactors = FALSE
+    ),
+    result
+  )
+}
+
+run_iv_overidentification_diagnostics <- function(
+  panel,
+  specifications = iv_diagnostic_specification_registry()
+) {
+  data <- if (inherits(panel, "sf")) sf::st_drop_geometry(panel) else as.data.frame(panel, stringsAsFactors = FALSE)
+  applicable <- iv_diagnostic_applicability(specifications)
+  ids <- applicable$specification_id[
+    applicable$diagnostic_id == "overidentification" & applicable$will_run
+  ]
+  specs <- specifications[specifications$specification_id %in% ids, , drop = FALSE]
+  safe_bind_rows(lapply(seq_len(nrow(specs)), function(i) {
+    estimate_overidentification_spec(data, specs[i, , drop = FALSE])
+  }))
+}
 
 #' Diagnose whether active IV specifications are overidentified
 #'
@@ -51,16 +147,25 @@ diagnose_overidentification <- function(iv_models, model_specs, cfg = list()) {
       ))
     }
 
-    if (identical(mode, "force")) {
-      stop("Overidentification diagnostics were forced, but no overidentification test is implemented for the active IV estimator.", call. = FALSE)
+    model <- if (is.list(iv_models) && !inherits(iv_models, "ivreg")) {
+      iv_models[[model_name]]
+    } else {
+      iv_models
+    }
+    result <- ivreg_sargan_diagnostic(model)
+    if (identical(mode, "force") && !identical(result$status[[1]], "estimated")) {
+      stop("Overidentification diagnostics were forced, but the Sargan diagnostic could not be estimated.", call. = FALSE)
     }
     tibble::tibble(
       model = model_name,
-      test = "overidentification",
-      status = "requires_overidentified_estimator",
+      test = result$test,
+      status = result$status,
       n_endogenous = n_endog,
       n_excluded_instruments = n_inst,
-      reason = "Specification is overidentified, but the current project has not selected a robust overidentification-test estimator."
+      statistic = result$statistic,
+      df = result$df,
+      p.value = result$p.value,
+      reason = result$reason
     )
   })
 }

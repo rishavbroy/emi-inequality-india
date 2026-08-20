@@ -724,7 +724,13 @@ test_that("alternative linguistic-distance diagnostics save four explicit output
     "distance4_leave_one_language_out.csv",
     "alternative_distance_weak_iv_outcomes.csv",
     "alternative_distance_anderson_rubin_grid.csv",
-    "iv_diagnostic_applicability.csv"
+    "iv_diagnostic_applicability.csv",
+    "iv_diagnostic_registry.csv",
+    "iv_specification_registry.csv",
+    "iv_overidentification.csv",
+    "iv_monotonicity_summary.csv",
+    "iv_monotonicity_bins.csv",
+    "iv_monotonicity_state_slopes.csv"
   ))
   expect_true(all(file.exists(manifest$path)))
 })
@@ -759,14 +765,17 @@ test_that("diagnostic applicability follows identification structure", {
   expect_false(scalar_overid$applicable)
   expect_identical(scalar_overid$reason, "exactly_identified")
   expect_true(multi_overid$applicable)
-  expect_false(multi_overid$implemented)
-  expect_false(multi_overid$will_run)
+  expect_true(multi_overid$implemented)
+  expect_true(multi_overid$will_run)
   expect_true(all(applicability$applicable[applicability$diagnostic_id == "balance_joint"]))
-  expect_false(any(applicability$will_run[applicability$diagnostic_id == "balance_joint"]))
+  expect_true(all(applicability$will_run[applicability$diagnostic_id == "balance_joint"]))
   expect_true(all(applicability$applicable[applicability$diagnostic_id == "anderson_rubin"]))
   expect_true(all(applicability$will_run[applicability$diagnostic_id == "anderson_rubin"]))
-  expect_true(all(applicability$applicable[applicability$diagnostic_id == "monotonicity_shape"]))
-  expect_false(any(applicability$will_run[applicability$diagnostic_id == "monotonicity_shape"]))
+
+  monotonicity <- applicability[applicability$diagnostic_id == "monotonicity_shape", , drop = FALSE]
+  scalar_specs <- registry$n_excluded_instruments == 1L
+  expect_true(all(monotonicity$applicable == scalar_specs))
+  expect_true(all(monotonicity$will_run == scalar_specs))
 })
 
 test_that("IV specification variables resolve transformed fixed-effect terms", {
@@ -796,16 +805,71 @@ test_that("IV specification variables resolve transformed fixed-effect terms", {
   expect_true(region_spec$cluster[[1]] %in% region_vars)
 })
 
-test_that("conditional balance removes the tested covariate from nuisance controls", {
-  spec <- iv_specification_registry()
-  spec <- spec[spec$adjustment_id == "state_main" & spec$construction_id == "nonzero_mean", , drop = FALSE]
-  tested <- census_2001_main_controls()[[1]]
+test_that("conditional balance removes tested and accounting-linked controls", {
+  registry <- iv_specification_registry()
 
-  expect_false(tested %in% balance_nuisance_controls(spec, tested))
+  main_spec <- registry[
+    registry$adjustment_id == "state_main" &
+      registry$construction_id == "nonzero_mean",
+    , drop = FALSE
+  ]
+  ordinary <- census_2001_main_controls()[[1]]
+  expect_false(ordinary %in% balance_nuisance_controls(main_spec, ordinary))
   expect_setequal(
-    balance_nuisance_controls(spec, tested),
-    setdiff(census_2001_main_controls(), tested)
+    balance_nuisance_controls(main_spec, ordinary),
+    setdiff(census_2001_main_controls(), ordinary)
   )
+
+  expanded_spec <- registry[
+    registry$adjustment_id == "state_expanded" &
+      registry$construction_id == "nonzero_mean",
+    , drop = FALSE
+  ]
+  aggregate <- "agricultural_worker_share_2001"
+  nuisance <- balance_nuisance_controls(expanded_spec, aggregate)
+
+  expect_false(any(c(
+    aggregate,
+    "cultivator_share_workers_2001",
+    "agricultural_labourer_share_workers_2001"
+  ) %in% nuisance))
+})
+
+test_that("conditional balance does not fit an accounting identity as an outcome", {
+  set.seed(901)
+  n <- 120L
+  panel <- data.frame(
+    state_code_2001 = rep(sprintf("%02d", 1:12), each = 10),
+    region = rep(panel_region_levels(), each = 20),
+    ling_distance_nonzero_mean = stats::rnorm(n),
+    stringsAsFactors = FALSE
+  )
+  for (variable in census_2001_diagnostic_controls()) {
+    panel[[variable]] <- stats::rnorm(n)
+  }
+  panel$cultivator_share_workers_2001 <- stats::runif(n, 0, 60)
+  panel$agricultural_labourer_share_workers_2001 <- stats::runif(n, 0, 40)
+  panel$agricultural_worker_share_2001 <-
+    panel$cultivator_share_workers_2001 +
+    panel$agricultural_labourer_share_workers_2001
+
+  spec <- iv_specification_registry()
+  spec <- spec[
+    spec$adjustment_id == "state_expanded" &
+      spec$construction_id == "nonzero_mean",
+    , drop = FALSE
+  ]
+
+  expect_warning(
+    out <- estimate_iv_balance_spec(
+      panel,
+      spec,
+      "agricultural_worker_share_2001"
+    ),
+    NA
+  )
+  expect_equal(out$status, "estimated")
+  expect_true(is.finite(out$joint_f))
 })
 
 test_that("conditional balance uses specification fixed effects and clustered joint tests", {
@@ -831,6 +895,62 @@ test_that("conditional balance uses specification fixed effects and clustered jo
   expect_equal(out$n_excluded_instruments, 1L)
   expect_true(is.finite(out$joint_f))
   expect_true(is.finite(out$standardized_effect))
+})
+
+test_that("diagnostic specification registry absorbs the control-block ladder without duplicates", {
+  registry <- iv_diagnostic_specification_registry()
+  signatures <- vapply(seq_len(nrow(registry)), function(i) {
+    iv_specification_signature(registry[i, , drop = FALSE])
+  }, character(1))
+
+  expect_false(anyDuplicated(signatures) > 0L)
+  expect_true(any(grepl("^absorption__", registry$specification_id)))
+  expect_true(all(iv_specification_registry()$specification_id %in% registry$specification_id))
+  expect_true(all(registry$cluster == "state_code_2001"))
+})
+
+test_that("joint balance tests only predetermined covariates not already conditioned on", {
+  registry <- iv_specification_registry()
+  spec <- registry[
+    registry$adjustment_id == "state_main" &
+      registry$construction_id == "nonzero_mean",
+    , drop = FALSE
+  ]
+  tested <- joint_balance_test_variables(spec)
+
+  expect_setequal(tested, setdiff(
+    census_2001_diagnostic_controls(),
+    census_2001_main_controls()
+  ))
+})
+
+test_that("monotonicity shape diagnostic recognizes an increasing residual first stage", {
+  set.seed(903)
+  n <- 180L
+  panel <- data.frame(
+    state_code_2001 = rep(sprintf("%02d", 1:18), each = 10),
+    region = rep(panel_region_levels(), each = 30),
+    ling_distance_nonzero_mean = stats::rnorm(n),
+    stringsAsFactors = FALSE
+  )
+  panel$emi_exposure_all_children_0708 <-
+    2 * panel$ling_distance_nonzero_mean + stats::rnorm(n, sd = 0.2)
+  for (variable in census_2001_diagnostic_controls()) panel[[variable]] <- stats::rnorm(n)
+
+  registry <- iv_specification_registry()
+  spec <- registry[
+    registry$adjustment_id == "state_main" &
+      registry$construction_id == "nonzero_mean",
+    , drop = FALSE
+  ]
+  out <- estimate_iv_monotonicity_shape(panel, spec, bins = 8L)
+
+  expect_equal(out$summary$status, "estimated")
+  expect_gt(out$summary$linear_slope, 0)
+  expect_gt(out$summary$spearman_rho, 0)
+  expect_gt(out$summary$share_nondecreasing_bin_steps, 0.5)
+  expect_true(all(c("bin", "instrument", "treatment", "n") %in% names(out$bins)))
+  expect_true(all(c("state_code_2001", "slope", "status") %in% names(out$state_slopes)))
 })
 
 test_that("Anderson-Rubin inference accepts scalar and multi-instrument registry specifications", {

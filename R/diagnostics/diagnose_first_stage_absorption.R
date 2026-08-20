@@ -1,100 +1,27 @@
 # Diagnose where the preferred linguistic-distance first stage loses relevance.
 
-first_stage_control_blocks <- function() {
-  list(
-    basic_scale_geography = c(
-      "log_population_2001", "urban_share_2001", "log_population_density_2001"
-    ),
-    social_composition = c("sc_share_2001", "st_share_2001", "muslim_share_2001"),
-    human_capital = c("adult_secondary_plus_share_2001", "literacy_share_2001"),
-    demography = "dependency_ratio_2001",
-    economic_structure = c(
-      "worker_share_2001", "cultivator_share_workers_2001",
-      "agricultural_labourer_share_workers_2001"
-    ),
-    basic_development = "electricity_access_share_2001"
-  )
-}
+first_stage_control_blocks <- function() iv_control_blocks()
 
-first_stage_control_block_membership <- function() {
-  blocks <- first_stage_control_blocks()
-  blocks$economic_structure <- unique(c(
-    "agricultural_worker_share_2001", blocks$economic_structure
-  ))
-  blocks
-}
+first_stage_control_block_membership <- function() iv_control_block_membership()
 
-first_stage_included_control_blocks <- function(controls) {
-  blocks <- first_stage_control_block_membership()
-  names(blocks)[vapply(blocks, function(block) any(block %in% controls), logical(1))]
-}
+first_stage_included_control_blocks <- function(controls) iv_included_control_blocks(controls)
 
 order_first_stage_controls <- function(controls, canonical = census_2001_diagnostic_controls()) {
   order_iv_controls(controls, canonical)
 }
 
-first_stage_block_registry_rows <- function(fixed_effect, start_sequence) {
-  blocks <- first_stage_control_blocks()
-  cumulative <- lapply(seq_along(blocks), function(i) {
-    order_first_stage_controls(unlist(blocks[seq_len(i)], use.names = FALSE))
-  })
-  prefix <- paste0(fixed_effect, "_fe_plus_")
-  data.frame(
-    specification_id = paste0(prefix, names(blocks)),
-    label = paste0(
-      if (identical(fixed_effect, "region")) "Six-region FE" else "State FE",
-      " + through ", gsub("_", " ", names(blocks))
-    ),
-    fixed_effect = fixed_effect,
-    controls = I(cumulative),
-    sequence = start_sequence + seq_along(blocks),
-    stringsAsFactors = FALSE
-  )
-}
-
-first_stage_without_human_capital <- function(controls) {
-  setdiff(controls, first_stage_control_blocks()$human_capital)
-}
+first_stage_without_human_capital <- function(controls) iv_without_human_capital(controls)
 
 first_stage_absorption_registry <- function() {
-  main <- census_2001_main_controls()
-  expanded <- census_2001_absorption_controls()
-  base <- data.frame(
-    specification_id = c(
-      "instrument_only", "region_fe", "state_fe", "census_controls",
-      "region_fe_census_controls", "state_fe_census_controls",
-      "expanded_controls", "region_fe_expanded_controls", "state_fe_expanded_controls",
-      "region_fe_main_without_human_capital", "state_fe_main_without_human_capital",
-      "region_fe_expanded_without_human_capital", "state_fe_expanded_without_human_capital"
-    ),
-    label = c(
-      "Instrument only", "Six-region fixed effects", "State fixed effects",
-      "Main Census controls", "Six-region fixed effects + main Census controls",
-      "State fixed effects + main Census controls", "Expanded Census controls",
-      "Six-region fixed effects + expanded Census controls",
-      "State fixed effects + expanded Census controls",
-      "Six-region FE + main controls without human capital",
-      "State FE + main controls without human capital",
-      "Six-region FE + expanded controls without human capital",
-      "State FE + expanded controls without human capital"
-    ),
-    fixed_effect = c(
-      "none", "region", "state", "none", "region", "state", "none", "region", "state",
-      "region", "state", "region", "state"
-    ),
-    controls = I(list(
-      character(), character(), character(), main, main, main,
-      expanded, expanded, expanded,
-      first_stage_without_human_capital(main), first_stage_without_human_capital(main),
-      first_stage_without_human_capital(expanded), first_stage_without_human_capital(expanded)
-    )),
-    sequence = seq_len(13L),
+  registry <- iv_absorption_specification_registry()
+  data.frame(
+    specification_id = sub("^absorption__", "", registry$specification_id),
+    label = registry$adjustment,
+    fixed_effect = registry$fixed_effect,
+    controls = I(registry$controls),
+    sequence = seq_len(nrow(registry)),
     stringsAsFactors = FALSE
   )
-  region_rows <- first_stage_block_registry_rows("region", 13L)
-  state_rows <- first_stage_block_registry_rows("state", 13L + nrow(region_rows))
-  out <- rbind(base, region_rows, state_rows)
-  out[order(out$sequence), , drop = FALSE]
 }
 
 first_stage_absorption_variables <- function(

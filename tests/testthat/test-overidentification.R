@@ -12,10 +12,26 @@ test_that("overidentification diagnostics infer exact identification from active
   expect_true(all(out$n_excluded_instruments == 1L))
 })
 
-test_that("overidentification diagnostics do not expose TODO branches", {
-  spec <- list(endogenous_vars = "x", excluded_instruments = c("z1", "z2"))
-  out <- diagnose_overidentification(list(), spec, list(overidentification = list(run = "auto")))
+test_that("overidentification diagnostics estimate the standard Sargan statistic when applicable", {
+  testthat::skip_if_not_installed("ivreg")
+  set.seed(51)
+  n <- 300L
+  z1 <- stats::rnorm(n)
+  z2 <- stats::rnorm(n)
+  x <- 0.8 * z1 + 0.5 * z2 + stats::rnorm(n)
+  y <- 1.5 * x + stats::rnorm(n)
+  fit <- ivreg::ivreg(y ~ x | z1 + z2)
 
-  expect_equal(out$status, "requires_overidentified_estimator")
-  expect_false(any(grepl("todo", tolower(unlist(out)), fixed = TRUE)))
+  spec <- list(endogenous_vars = "x", excluded_instruments = c("z1", "z2"))
+  out <- diagnose_overidentification(
+    list(model = fit),
+    list(model = spec),
+    list(overidentification = list(run = "auto"))
+  )
+
+  expect_equal(out$status, "estimated")
+  expect_equal(out$test, "sargan")
+  expect_equal(out$df, 1)
+  expect_true(is.finite(out$statistic))
+  expect_true(is.finite(out$p.value))
 })

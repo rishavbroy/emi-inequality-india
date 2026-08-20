@@ -14,6 +14,39 @@ iv_fixed_effect_terms <- function(fixed_effect = "none") {
   )
 }
 
+iv_control_blocks <- function() {
+  list(
+    basic_scale_geography = c(
+      "log_population_2001", "urban_share_2001", "log_population_density_2001"
+    ),
+    social_composition = c("sc_share_2001", "st_share_2001", "muslim_share_2001"),
+    human_capital = c("adult_secondary_plus_share_2001", "literacy_share_2001"),
+    demography = "dependency_ratio_2001",
+    economic_structure = c(
+      "worker_share_2001", "cultivator_share_workers_2001",
+      "agricultural_labourer_share_workers_2001"
+    ),
+    basic_development = "electricity_access_share_2001"
+  )
+}
+
+iv_control_block_membership <- function() {
+  blocks <- iv_control_blocks()
+  blocks$economic_structure <- unique(c(
+    "agricultural_worker_share_2001", blocks$economic_structure
+  ))
+  blocks
+}
+
+iv_included_control_blocks <- function(controls) {
+  blocks <- iv_control_block_membership()
+  names(blocks)[vapply(blocks, function(block) any(block %in% controls), logical(1))]
+}
+
+iv_without_human_capital <- function(controls) {
+  setdiff(controls, iv_control_blocks()$human_capital)
+}
+
 iv_instrument_constructions <- function() {
   list(
     nonzero_mean = list(
@@ -83,6 +116,47 @@ iv_adjustment_sets <- function() {
   )
 }
 
+iv_specification_row <- function(
+  specification_id,
+  adjustment_id,
+  adjustment,
+  construction_id,
+  construction,
+  outcome,
+  treatment,
+  fixed_effect,
+  controls,
+  included_language_controls,
+  excluded_instruments,
+  panel_variant,
+  sample_rule,
+  cluster = "state_code_2001",
+  tier = "B",
+  sequence = NA_integer_
+) {
+  data.frame(
+    specification_id = specification_id,
+    adjustment_id = adjustment_id,
+    adjustment = adjustment,
+    construction_id = construction_id,
+    construction = construction,
+    outcome = outcome,
+    treatment = treatment,
+    fixed_effect = fixed_effect,
+    controls = I(list(order_iv_controls(controls))),
+    included_language_controls = I(list(included_language_controls)),
+    excluded_instruments = I(list(excluded_instruments)),
+    n_endogenous = 1L,
+    n_excluded_instruments = length(excluded_instruments),
+    panel_variant = panel_variant,
+    sample_rule = sample_rule,
+    cluster = cluster,
+    tier = tier,
+    sequence = sequence,
+    stringsAsFactors = FALSE
+  )
+}
+
 iv_specification_registry <- function(
   outcome = "real_log_consumption_change",
   treatment = preferred_iv_variables()$treatment,
@@ -98,7 +172,7 @@ iv_specification_registry <- function(
       sequence <- sequence + 1L
       adjustment <- adjustments[[adjustment_id]]
       construction <- constructions[[construction_id]]
-      rows[[sequence]] <- data.frame(
+      rows[[sequence]] <- iv_specification_row(
         specification_id = paste(adjustment_id, construction_id, sep = "__"),
         adjustment_id = adjustment_id,
         adjustment = adjustment$label,
@@ -107,21 +181,128 @@ iv_specification_registry <- function(
         outcome = outcome,
         treatment = treatment,
         fixed_effect = adjustment$fixed_effect,
-        controls = I(list(order_iv_controls(adjustment$controls))),
-        included_language_controls = I(list(construction$included)),
-        excluded_instruments = I(list(construction$excluded)),
-        n_endogenous = 1L,
-        n_excluded_instruments = length(construction$excluded),
+        controls = adjustment$controls,
+        included_language_controls = construction$included,
+        excluded_instruments = construction$excluded,
         panel_variant = panel_variant,
         sample_rule = sample_rule,
-        cluster = "state_code_2001",
         tier = adjustment$tier,
-        sequence = sequence,
-        stringsAsFactors = FALSE
+        sequence = sequence
       )
     }
   }
-  do.call(rbind, rows)
+  safe_bind_rows(rows)
+}
+
+iv_absorption_adjustments <- function() {
+  main <- census_2001_main_controls()
+  expanded <- census_2001_absorption_controls()
+  base <- list(
+    instrument_only = list("Instrument only", "none", character()),
+    region_fe = list("Six-region fixed effects", "region", character()),
+    state_fe = list("State fixed effects", "state", character()),
+    census_controls = list("Main Census controls", "none", main),
+    region_fe_census_controls = list("Six-region fixed effects + main Census controls", "region", main),
+    state_fe_census_controls = list("State fixed effects + main Census controls", "state", main),
+    expanded_controls = list("Expanded Census controls", "none", expanded),
+    region_fe_expanded_controls = list("Six-region fixed effects + expanded Census controls", "region", expanded),
+    state_fe_expanded_controls = list("State fixed effects + expanded Census controls", "state", expanded),
+    region_fe_main_without_human_capital = list(
+      "Six-region FE + main controls without human capital", "region", iv_without_human_capital(main)
+    ),
+    state_fe_main_without_human_capital = list(
+      "State FE + main controls without human capital", "state", iv_without_human_capital(main)
+    ),
+    region_fe_expanded_without_human_capital = list(
+      "Six-region FE + expanded controls without human capital", "region", iv_without_human_capital(expanded)
+    ),
+    state_fe_expanded_without_human_capital = list(
+      "State FE + expanded controls without human capital", "state", iv_without_human_capital(expanded)
+    )
+  )
+  blocks <- iv_control_blocks()
+  cumulative <- lapply(seq_along(blocks), function(i) {
+    order_iv_controls(unlist(blocks[seq_len(i)], use.names = FALSE))
+  })
+  for (fixed_effect in c("region", "state")) {
+    fixed_label <- if (identical(fixed_effect, "region")) "Six-region FE" else "State FE"
+    for (i in seq_along(blocks)) {
+      id <- paste0(fixed_effect, "_fe_plus_", names(blocks)[[i]])
+      base[[id]] <- list(
+        paste0(fixed_label, " + through ", gsub("_", " ", names(blocks)[[i]])),
+        fixed_effect,
+        cumulative[[i]]
+      )
+    }
+  }
+  base
+}
+
+iv_absorption_specification_registry <- function(
+  outcome = "real_log_consumption_change",
+  treatment = preferred_iv_variables()$treatment,
+  panel_variant = "primary",
+  sample_rule = "alternative_distance_common_support"
+) {
+  construction <- iv_instrument_constructions()$nonzero_mean
+  adjustments <- iv_absorption_adjustments()
+  rows <- lapply(seq_along(adjustments), function(i) {
+    id <- names(adjustments)[[i]]
+    adjustment <- adjustments[[i]]
+    iv_specification_row(
+      specification_id = paste0("absorption__", id),
+      adjustment_id = id,
+      adjustment = adjustment[[1]],
+      construction_id = "nonzero_mean",
+      construction = construction$label,
+      outcome = outcome,
+      treatment = treatment,
+      fixed_effect = adjustment[[2]],
+      controls = adjustment[[3]],
+      included_language_controls = construction$included,
+      excluded_instruments = construction$excluded,
+      panel_variant = panel_variant,
+      sample_rule = sample_rule,
+      tier = "B",
+      sequence = i
+    )
+  })
+  safe_bind_rows(rows)
+}
+
+iv_specification_signature <- function(specification) {
+  paste(
+    specification$outcome[[1]],
+    specification$treatment[[1]],
+    specification$fixed_effect[[1]],
+    paste(sort(unlist(specification$controls[[1]], use.names = FALSE)), collapse = ";"),
+    paste(sort(unlist(specification$included_language_controls[[1]], use.names = FALSE)), collapse = ";"),
+    paste(sort(unlist(specification$excluded_instruments[[1]], use.names = FALSE)), collapse = ";"),
+    specification$panel_variant[[1]],
+    specification$sample_rule[[1]],
+    sep = "|"
+  )
+}
+
+iv_diagnostic_specification_registry <- function(
+  outcome = "real_log_consumption_change",
+  treatment = preferred_iv_variables()$treatment,
+  panel_variant = "primary",
+  sample_rule = "alternative_distance_common_support"
+) {
+  base <- iv_specification_registry(outcome, treatment, panel_variant, sample_rule)
+  absorption <- iv_absorption_specification_registry(outcome, treatment, panel_variant, sample_rule)
+  base_signatures <- vapply(seq_len(nrow(base)), function(i) {
+    iv_specification_signature(base[i, , drop = FALSE])
+  }, character(1))
+  absorption_signatures <- vapply(seq_len(nrow(absorption)), function(i) {
+    iv_specification_signature(absorption[i, , drop = FALSE])
+  }, character(1))
+  absorption <- absorption[!absorption_signatures %in% base_signatures, , drop = FALSE]
+  out <- safe_bind_rows(list(base, absorption))
+  out$sequence <- seq_len(nrow(out))
+  rownames(out) <- NULL
+  out
 }
 
 iv_specification_formula <- function(specification) {
@@ -138,10 +319,25 @@ iv_specification_formula <- function(specification) {
   )
 }
 
-iv_specification_variables <- function(specification) {
+iv_first_stage_formula <- function(specification) {
+  controls <- unlist(specification$controls[[1]], use.names = FALSE)
+  included <- unlist(specification$included_language_controls[[1]], use.names = FALSE)
+  excluded <- unlist(specification$excluded_instruments[[1]], use.names = FALSE)
+  stats::reformulate(
+    unique(c(excluded, included, controls, iv_fixed_effect_terms(specification$fixed_effect[[1]]))),
+    response = specification$treatment[[1]]
+  )
+}
+
+iv_specification_variables <- function(specification, include_outcome = TRUE) {
+  formula <- if (isTRUE(include_outcome)) {
+    iv_specification_formula(specification)
+  } else {
+    iv_first_stage_formula(specification)
+  }
   cluster <- plain_chr(specification$cluster[[1]] %||% "")
   cluster <- cluster[nzchar(cluster)]
-  unique(c(all.vars(iv_specification_formula(specification)), cluster))
+  unique(c(all.vars(formula), cluster))
 }
 
 iv_diagnostic_registry <- function() {
@@ -157,12 +353,15 @@ iv_diagnostic_registry <- function() {
     requires_outcome = c(FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, TRUE),
     requires_overidentified = c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE),
     min_instruments = c(1L, 1L, 1L, 1L, 1L, 1L, 2L),
-    implemented = c(TRUE, TRUE, TRUE, FALSE, TRUE, FALSE, FALSE),
+    max_instruments = c(Inf, Inf, Inf, Inf, Inf, 1L, Inf),
+    implemented = rep(TRUE, 7L),
     stringsAsFactors = FALSE
   )
 }
 
-iv_diagnostic_applicability <- function(specifications = iv_specification_registry()) {
+iv_diagnostic_applicability <- function(
+  specifications = iv_diagnostic_specification_registry()
+) {
   diagnostics <- iv_diagnostic_registry()
   rows <- lapply(seq_len(nrow(specifications)), function(i) {
     spec <- specifications[i, , drop = FALSE]
@@ -172,12 +371,15 @@ iv_diagnostic_applicability <- function(specifications = iv_specification_regist
       n_endog <- spec$n_endogenous[[1]]
       has_outcome <- nzchar(spec$outcome[[1]])
       applicable <- n_inst >= diagnostic$min_instruments[[1]] &&
+        n_inst <= diagnostic$max_instruments[[1]] &&
         (!diagnostic$requires_outcome[[1]] || has_outcome) &&
         (!diagnostic$requires_overidentified[[1]] || n_inst > n_endog)
       reason <- if (applicable) {
         NA_character_
       } else if (diagnostic$requires_overidentified[[1]] && n_inst <= n_endog) {
         "exactly_identified"
+      } else if (n_inst > diagnostic$max_instruments[[1]]) {
+        "multi_instrument_shape_not_defined"
       } else if (diagnostic$requires_outcome[[1]] && !has_outcome) {
         "outcome_not_defined"
       } else {
