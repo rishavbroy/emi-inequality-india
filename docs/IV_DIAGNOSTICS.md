@@ -40,7 +40,7 @@ For each registered specification and predetermined Census variable, the covaria
 
 The omnibus balance diagnostic asks whether predetermined covariates that are *not already conditioned on by the specification* jointly predict each excluded instrument, conditional on the specification's fixed effects, included language controls, and remaining nuisance controls. This avoids mechanically "testing" covariates that the specification has already partialled out. The test uses the same state-clustered Wald machinery as the other linear diagnostics.
 
-`instrument_balance.csv` contains the conditional specification-by-variable diagnostics. `instrument_balance_joint.csv` contains the omnibus holdout-covariate tests.
+`instrument_balance.csv` contains the conditional specification-by-variable diagnostics and jointly tests all excluded instruments for each tested covariate. `instrument_balance_joint.csv` contains the complementary omnibus reverse-regression test for scalar instruments: the instrument is regressed on all predetermined holdout covariates and the holdout coefficients are tested jointly with state-clustered covariance. Multi-instrument specifications remain covered by the covariate-by-covariate joint-instrument tests; no scalar reverse-regression omnibus is reported for them.
 
 ## Anderson-Rubin contract
 

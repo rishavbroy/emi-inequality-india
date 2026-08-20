@@ -357,7 +357,7 @@ iv_diagnostic_registry <- function() {
     requires_outcome = c(FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, TRUE),
     requires_overidentified = c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE),
     min_instruments = c(1L, 1L, 1L, 1L, 1L, 1L, 2L),
-    max_instruments = c(Inf, Inf, Inf, Inf, Inf, 1L, Inf),
+    max_instruments = c(Inf, Inf, Inf, 1L, Inf, 1L, Inf),
     implemented = rep(TRUE, 7L),
     stringsAsFactors = FALSE
   )
@@ -383,7 +383,7 @@ iv_diagnostic_applicability <- function(
       } else if (diagnostic$requires_overidentified[[1]] && n_inst <= n_endog) {
         "exactly_identified"
       } else if (n_inst > diagnostic$max_instruments[[1]]) {
-        "multi_instrument_shape_not_defined"
+        paste0("multi_instrument_", diagnostic$diagnostic_id, "_not_defined")
       } else if (diagnostic$requires_outcome[[1]] && !has_outcome) {
         "outcome_not_defined"
       } else {

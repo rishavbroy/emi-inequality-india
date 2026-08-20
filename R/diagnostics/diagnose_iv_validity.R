@@ -137,25 +137,35 @@ estimate_iv_joint_balance_spec <- function(
     ))
   }
 
-  safe_bind_rows(lapply(excluded, function(instrument) {
-    fit <- stats::lm(stats::reformulate(rhs, response = instrument), data = x)
-    joint <- clustered_joint_wald_test(fit, tested, x$state_code_2001)
-    data.frame(
+  if (length(excluded) != 1L) {
+    return(data.frame(
       specification_id = specification$specification_id,
-      adjustment_id = specification$adjustment_id,
-      construction_id = specification$construction_id,
-      fixed_effect = fixed_effect,
-      instrument = instrument,
-      tested_covariates = paste(tested, collapse = ";"),
+      instrument = NA_character_,
       n_tested_covariates = length(tested),
-      joint_f = unname(joint[["statistic"]]),
-      joint_p = unname(joint[["p.value"]]),
-      n = stats::nobs(fit),
-      status = "estimated",
-      reason = NA_character_,
+      status = "not_applicable",
+      reason = "Omnibus reverse-regression balance is defined only for scalar instruments.",
       stringsAsFactors = FALSE
-    )
-  }))
+    ))
+  }
+
+  instrument <- excluded[[1]]
+  fit <- stats::lm(stats::reformulate(rhs, response = instrument), data = x)
+  joint <- clustered_joint_wald_test(fit, tested, x$state_code_2001)
+  data.frame(
+    specification_id = specification$specification_id,
+    adjustment_id = specification$adjustment_id,
+    construction_id = specification$construction_id,
+    fixed_effect = fixed_effect,
+    instrument = instrument,
+    tested_covariates = paste(tested, collapse = ";"),
+    n_tested_covariates = length(tested),
+    joint_f = unname(joint[["statistic"]]),
+    joint_p = unname(joint[["p.value"]]),
+    n = stats::nobs(fit),
+    status = "estimated",
+    reason = NA_character_,
+    stringsAsFactors = FALSE
+  )
 }
 
 run_iv_joint_balance_diagnostics <- function(
@@ -175,7 +185,12 @@ run_iv_joint_balance_diagnostics <- function(
   if (length(missing)) {
     stop("IV joint-balance diagnostics are missing columns: ", paste(missing, collapse = ", "), call. = FALSE)
   }
-  safe_bind_rows(lapply(seq_len(nrow(specifications)), function(i) {
-    estimate_iv_joint_balance_spec(data, specifications[i, , drop = FALSE], variables)
+  applicability <- iv_diagnostic_applicability(specifications)
+  ids <- applicability$specification_id[
+    applicability$diagnostic_id == "balance_joint" & applicability$will_run
+  ]
+  specs <- specifications[specifications$specification_id %in% ids, , drop = FALSE]
+  safe_bind_rows(lapply(seq_len(nrow(specs)), function(i) {
+    estimate_iv_joint_balance_spec(data, specs[i, , drop = FALSE], variables)
   }))
 }
