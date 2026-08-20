@@ -424,8 +424,13 @@ test_that("IV VIF diagnostics load the ivreg namespace for cached model objects"
   skip_if_not_installed("car")
   skip_if_not_installed("ivreg")
   set.seed(430)
-  df <- data.frame(y = rnorm(90), x = rnorm(90), z = rnorm(90))
-  model <- ivreg::ivreg(y ~ x | z, data = df)
+  df <- data.frame(
+    y = rnorm(90),
+    x = rnorm(90),
+    w = rnorm(90),
+    z = rnorm(90)
+  )
+  model <- ivreg::ivreg(y ~ x + w | z + w, data = df)
   path <- tempfile(fileext = ".rds")
   on.exit(unlink(path), add = TRUE)
   saveRDS(model, path)
@@ -436,8 +441,9 @@ test_that("IV VIF diagnostics load the ivreg namespace for cached model objects"
   out <- compute_vif_if_applicable(cached)
 
   expect_true("ivreg" %in% loadedNamespaces())
-  expect_true(nrow(out) >= 1L)
+  expect_setequal(out$term, c("x", "w"))
   expect_true(all(out$status == "estimated"))
+  expect_true(all(is.finite(out$gvif_scaled)))
 })
 
 test_that("preferred public Anderson-Rubin diagnostic is registry-backed", {
