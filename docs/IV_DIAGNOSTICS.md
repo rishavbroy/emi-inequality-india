@@ -50,6 +50,8 @@ The grid inversion is a numerical summary of the acceptance region over the reco
 
 The preferred state-FE/main-control specification is also saved to `outputs/diagnostics/public/anderson_rubin_preferred.csv`, so weak-identification-robust inference for the headline design is part of the strict public build rather than only an extended diagnostic. The full specification grid remains extended-only.
 
+The AR confidence set is obtained by inverting the clustered AR test over the saved beta grid. Because weak-IV confidence sets can be disconnected or extend beyond the search grid, `ar_95_lower` and `ar_95_upper` are populated only when the accepted grid points form one bounded interior component. Otherwise those interval fields are `NA`, while `ar_95_n_components`, `ar_95_disconnected`, `ar_95_contains_zero`, the grid-edge truncation flags, and `ar_95_components` describe the observed acceptance set. A grid-edge flag means that the corresponding endpoint is unresolved by the finite search grid; it must not be read as a confidence bound.
+
 ## Overidentifying-restrictions contract
 
 Overidentified specifications use the Sargan statistic provided by `summary.ivreg(..., diagnostics = TRUE)`. The statistic is reported as an **overidentifying-restrictions diagnostic**, not as proof that the instruments are exogenous.

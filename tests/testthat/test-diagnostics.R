@@ -446,6 +446,66 @@ test_that("IV VIF diagnostics load the ivreg namespace for cached model objects"
   expect_true(all(is.finite(out$gvif_scaled)))
 })
 
+test_that("Anderson-Rubin inversion preserves disconnected confidence sets", {
+  grid <- data.frame(
+    beta = -3:3,
+    p.value = c(0.20, 0.10, 0.01, 0.01, 0.01, 0.10, 0.20),
+    stringsAsFactors = FALSE
+  )
+  grid$accepted <- grid$p.value >= 0.05
+
+  components <- anderson_rubin_acceptance_components(grid)
+
+  expect_equal(nrow(components), 2L)
+  expect_equal(components$lower, c(-3, 2))
+  expect_equal(components$upper, c(-2, 3))
+  expect_true(components$touches_left_grid_edge[[1]])
+  expect_true(components$touches_right_grid_edge[[2]])
+  expect_false(any(components$contains_zero))
+})
+
+test_that("Anderson-Rubin summaries do not collapse noninterval sets to min-max bounds", {
+  set.seed(451)
+  n <- 180L
+  z <- stats::rnorm(n)
+  treatment <- 0.05 * z + stats::rnorm(n)
+  outcome <- 0.45 * z + stats::rnorm(n)
+  panel <- data.frame(
+    y = outcome,
+    d = treatment,
+    z = z,
+    state_code_2001 = rep(sprintf("%02d", 1:18), each = 10),
+    stringsAsFactors = FALSE
+  )
+  spec <- data.frame(
+    specification_id = "ar_test",
+    outcome = "y",
+    treatment = "d",
+    fixed_effect = "none",
+    cluster = "state_code_2001",
+    stringsAsFactors = FALSE
+  )
+  spec$controls <- I(list(character()))
+  spec$included_language_controls <- I(list(character()))
+  spec$excluded_instruments <- I(list("z"))
+
+  out <- estimate_anderson_rubin_spec(panel, spec, points = 101L)
+  summary <- out$summary
+
+  expect_equal(summary$status, "estimated")
+  expect_identical(
+    summary$ar_95_contains_zero[[1]],
+    summary$anderson_rubin_p_beta0[[1]] >= 0.05
+  )
+  if (summary$ar_95_disconnected[[1]] ||
+      summary$ar_95_left_truncated[[1]] ||
+      summary$ar_95_right_truncated[[1]]) {
+    expect_true(is.na(summary$ar_95_lower[[1]]))
+    expect_true(is.na(summary$ar_95_upper[[1]]))
+  }
+  expect_true("acceptance_component" %in% names(out$grid))
+})
+
 test_that("preferred public Anderson-Rubin diagnostic is registry-backed", {
   spec <- preferred_iv_diagnostic_specification()
   expect_equal(nrow(spec), 1L)

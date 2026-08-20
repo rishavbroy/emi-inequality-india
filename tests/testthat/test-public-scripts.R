@@ -238,6 +238,8 @@ test_that("public-output checks share one file contract", {
   expect_match(audit, "required_final_artifacts()", fixed = TRUE)
   expect_match(audit, "Public VIF/GVIF diagnostics are unavailable", fixed = TRUE)
   expect_match(audit, "Preferred Anderson-Rubin diagnostic is unavailable", fixed = TRUE)
+  expect_match(audit, "confidence-set inversion disagrees", fixed = TRUE)
+  expect_match(audit, "disconnected or grid-truncated confidence set", fixed = TRUE)
 })
 
 test_that("public documentation and samples do not advertise superseded methods work", {

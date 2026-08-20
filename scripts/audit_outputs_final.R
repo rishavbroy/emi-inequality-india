@@ -96,11 +96,27 @@ if (file.exists(anderson_rubin_path)) {
     utils::read.csv(anderson_rubin_path, stringsAsFactors = FALSE, check.names = FALSE),
     error = function(e) data.frame()
   )
-  if (!nrow(ar) || !all(c("status", "anderson_rubin_p_beta0") %in% names(ar))) {
+  required_ar <- c(
+    "status", "anderson_rubin_p_beta0", "ar_95_lower", "ar_95_upper",
+    "ar_95_n_components", "ar_95_disconnected", "ar_95_contains_zero",
+    "ar_95_left_truncated", "ar_95_right_truncated", "ar_95_components"
+  )
+  if (!nrow(ar) || !all(required_ar %in% names(ar))) {
     add_failure("Preferred Anderson-Rubin diagnostic is malformed.")
   } else if (!identical(ar$status[[1]], "estimated") || !is.finite(ar$anderson_rubin_p_beta0[[1]])) {
     reason <- if ("reason" %in% names(ar) && !is.na(ar$reason[[1]])) paste0(" Reason: ", ar$reason[[1]]) else ""
     add_failure("Preferred Anderson-Rubin diagnostic is unavailable in final mode.", reason)
+  } else {
+    null_accepted <- ar$anderson_rubin_p_beta0[[1]] >= 0.05
+    if (!identical(as.logical(ar$ar_95_contains_zero[[1]]), null_accepted)) {
+      add_failure("Preferred Anderson-Rubin confidence-set inversion disagrees with the beta=0 test.")
+    }
+    noninterval <- isTRUE(ar$ar_95_disconnected[[1]]) ||
+      isTRUE(ar$ar_95_left_truncated[[1]]) ||
+      isTRUE(ar$ar_95_right_truncated[[1]])
+    if (noninterval && (is.finite(ar$ar_95_lower[[1]]) || is.finite(ar$ar_95_upper[[1]]))) {
+      add_failure("Preferred Anderson-Rubin output reports ordinary interval bounds for a disconnected or grid-truncated confidence set.")
+    }
   }
 }
 
