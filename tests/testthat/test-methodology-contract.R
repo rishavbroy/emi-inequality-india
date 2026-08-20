@@ -14,10 +14,10 @@ test_that("selection probit uses the documented active covariate set", {
   expect_equal(selection_probit_variables(selection_data), expected_vars)
 })
 
-test_that("selection survey design preserves documented stratification and lonely-PSU policy", {
+test_that("selection survey design preserves documented stratification without global side effects", {
   skip_if_not_installed("survey")
-  old_lonely <- getOption("survey.lonely.psu")
-  on.exit(options(survey.lonely.psu = old_lonely), add = TRUE)
+  old_options <- options(survey.lonely.psu = "fail")
+  on.exit(options(old_options), add = TRUE)
 
   selection_data <- data.frame(
     enrolled = factor(c("No", "Yes", "No", "Yes"), levels = c("No", "Yes")),
@@ -33,7 +33,7 @@ test_that("selection survey design preserves documented stratification and lonel
   design <- build_survey_design_selection(selection_data)
 
   expect_true(any(c("survey.design", "survey.design2") %in% class(design)))
-  expect_equal(getOption("survey.lonely.psu"), "average")
+  expect_identical(getOption("survey.lonely.psu"), "fail")
   expect_true(".survey_strata" %in% names(design$variables))
   expect_equal(length(unique(design$variables$.survey_strata)), 2L)
 })

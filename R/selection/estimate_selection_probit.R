@@ -27,9 +27,8 @@ estimate_selection_probit <- function(selection_data, cfg) {
   }
   f_probit <- stats::reformulate(covars, response = "enrolled")
   if (identical(cfg$mode, "final") && requireNamespace("survey", quietly = TRUE)) {
-    old_lonely_psu <- getOption("survey.lonely.psu")
-    options(survey.lonely.psu = "average")
-    on.exit(options(survey.lonely.psu = old_lonely_psu), add = TRUE)
+    old_options <- options(survey.lonely.psu = "average")
+    on.exit(options(old_options), add = TRUE)
 
     design <- build_survey_design_selection(selection_data)
     if (!is.null(design)) {
