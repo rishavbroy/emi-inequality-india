@@ -50,6 +50,14 @@ normalize_vif_output <- function(x, model_scope) {
 #' Compute term-aware VIF/GVIF diagnostics
 compute_vif_if_applicable <- function(model) {
   scope <- if (inherits(model, "ivreg")) "ivreg_structural_regressors" else "model_regressors"
+  if (inherits(model, "ivreg") && !requireNamespace("ivreg", quietly = TRUE)) {
+    return(data.frame(
+      term = NA_character_, model_scope = scope, df = NA_integer_,
+      vif = NA_real_, gvif = NA_real_, gvif_scaled = NA_real_,
+      status = "unavailable", reason = "Package 'ivreg' is not installed.",
+      stringsAsFactors = FALSE
+    ))
+  }
   if (!requireNamespace("car", quietly = TRUE)) {
     return(data.frame(
       term = NA_character_, model_scope = scope, df = NA_integer_,

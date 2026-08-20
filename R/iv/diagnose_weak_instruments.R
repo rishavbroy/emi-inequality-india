@@ -8,6 +8,35 @@ diagnose_weak_instruments <- function(iv_models, district_panel, cfg) {
   estimate_first_stage(iv_models, district_panel, cfg)
 }
 
+preferred_iv_diagnostic_specification <- function() {
+  registry <- iv_diagnostic_specification_registry()
+  preferred <- registry[
+    registry$adjustment_id == "state_main" &
+      registry$construction_id == "nonzero_mean",
+    , drop = FALSE
+  ]
+  if (nrow(preferred) != 1L) {
+    stop("Expected exactly one preferred state-main nonzero-mean IV specification.", call. = FALSE)
+  }
+  preferred
+}
+
+diagnose_preferred_anderson_rubin <- function(district_panel, level = 0.95, points = 401L) {
+  estimate_anderson_rubin_spec(
+    as.data.frame(district_panel),
+    preferred_iv_diagnostic_specification(),
+    level = level,
+    points = points
+  )$summary
+}
+
+save_preferred_anderson_rubin <- function(
+  diagnostic,
+  path = "outputs/diagnostics/public/anderson_rubin_preferred.csv"
+) {
+  write_diagnostic_csv(diagnostic, path)
+}
+
 #' diagnose instrument exploration
 #'
 #' Build a district-level view of the preferred public treatment and instrument,

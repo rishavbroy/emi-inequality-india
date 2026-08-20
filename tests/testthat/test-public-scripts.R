@@ -231,9 +231,23 @@ test_that("public-output checks share one file contract", {
   expect_match(contract, "required_final_artifacts", fixed = TRUE)
   expect_match(contract, "spatial_moran_tests.csv", fixed = TRUE)
   expect_match(contract, "spatial_moran_mc_reference.csv", fixed = TRUE)
+  expect_match(contract, "multicollinearity_diagnostics.csv", fixed = TRUE)
+  expect_match(contract, "anderson_rubin_preferred.csv", fixed = TRUE)
   expect_match(required, "required_public_render_inputs()", fixed = TRUE)
   expect_match(final, "required_final_documents(require_application_samples)", fixed = TRUE)
   expect_match(audit, "required_final_artifacts()", fixed = TRUE)
+  expect_match(audit, "Public VIF/GVIF diagnostics are unavailable", fixed = TRUE)
+  expect_match(audit, "Preferred Anderson-Rubin diagnostic is unavailable", fixed = TRUE)
+})
+
+test_that("public documentation and samples do not advertise superseded methods work", {
+  docs_note <- repo_text("docs", "district-matching.qmd")
+  samples <- repo_text("R", "application_samples", "render_writing_sample.R")
+
+  expect_false(grepl("depending on the results of LM tests", docs_note, fixed = TRUE))
+  expect_match(docs_note, "do not by themselves determine which causal spatial model", fixed = TRUE)
+  expect_false(grepl("pending a validated district-geometry join", samples, fixed = TRUE))
+  expect_match(samples, "weakly identified", fixed = TRUE)
 })
 
 test_that("optional diagnostics and benchmarking targets use checked targets wrapper", {

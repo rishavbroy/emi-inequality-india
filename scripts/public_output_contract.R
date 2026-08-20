@@ -77,7 +77,9 @@ required_final_artifacts <- function() {
     "posters/2026_predoc_conference/poster.pdf",
     "posters/2026_predoc_conference/RishavRoy-Education.png",
     "outputs/diagnostics/public/spatial_moran_tests.csv",
-    "outputs/diagnostics/public/spatial_moran_mc_reference.csv"
+    "outputs/diagnostics/public/spatial_moran_mc_reference.csv",
+    "outputs/diagnostics/public/multicollinearity_diagnostics.csv",
+    "outputs/diagnostics/public/anderson_rubin_preferred.csv"
   )
 }
 

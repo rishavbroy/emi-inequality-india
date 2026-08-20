@@ -48,6 +48,8 @@ Anderson-Rubin inference is implemented once in `R/iv/weak_identification.R` and
 
 The grid inversion is a numerical summary of the acceptance region over the recorded search range. Truncation flags identify cases where the accepted set reaches either edge of the grid; those should not be read as finite confidence-set endpoints.
 
+The preferred state-FE/main-control specification is also saved to `outputs/diagnostics/public/anderson_rubin_preferred.csv`, so weak-identification-robust inference for the headline design is part of the strict public build rather than only an extended diagnostic. The full specification grid remains extended-only.
+
 ## Overidentifying-restrictions contract
 
 Overidentified specifications use the Sargan statistic provided by `summary.ivreg(..., diagnostics = TRUE)`. The statistic is reported as an **overidentifying-restrictions diagnostic**, not as proof that the instruments are exogenous.
@@ -69,3 +71,7 @@ For each applicable specification the diagnostic:
 The multi-instrument distance-share constructions do not have a unique scalar ordering, so this shape diagnostic is marked inapplicable to them. Their individual and joint first-stage coefficients remain in the relevance outputs, and the language-decomposition/leave-one-language-out diagnostics continue to provide instrument-composition evidence.
 
 These shape summaries are diagnostics for plausibility. Negative local slopes or non-monotone bins can challenge a simple monotone-response story, but noisy signs do not identify latent "defiers."
+
+## Public multicollinearity contract
+
+Public multicollinearity diagnostics operate on the structural-regressor matrix. The condition number excludes the intercept and standardizes nonconstant regressors before calculation, so it is invariant to arbitrary regressor units. Term-level VIF/GVIF diagnostics use `car::vif()` on the fitted `ivreg` object after explicitly loading the `ivreg` namespace so its S3 covariance methods are registered even when a cached fitted model is read in a fresh targets process. The final-output audit requires finite, estimated GVIF diagnostics rather than silently accepting an unavailable diagnostic.

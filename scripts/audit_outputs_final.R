@@ -68,6 +68,42 @@ if (dir.exists(table_dir)) {
   }
 }
 
+multicollinearity_path <- "outputs/diagnostics/public/multicollinearity_diagnostics.csv"
+if (file.exists(multicollinearity_path)) {
+  multi <- tryCatch(
+    utils::read.csv(multicollinearity_path, stringsAsFactors = FALSE, check.names = FALSE),
+    error = function(e) data.frame()
+  )
+  vif <- if (all(c("diagnostic", "status") %in% names(multi))) {
+    multi[multi$diagnostic == "vif", , drop = FALSE]
+  } else {
+    data.frame()
+  }
+  if (!nrow(vif)) {
+    add_failure("Public multicollinearity diagnostics contain no VIF/GVIF rows.")
+  } else if (any(vif$status != "estimated" | is.na(vif$status))) {
+    reasons <- if ("reason" %in% names(vif)) unique(stats::na.omit(vif$reason[vif$status != "estimated" | is.na(vif$status)])) else character()
+    suffix <- if (length(reasons)) paste0(" Reasons: ", paste(reasons, collapse = "; ")) else ""
+    add_failure("Public VIF/GVIF diagnostics are unavailable for one or more final IV models.", suffix)
+  } else if (!"gvif_scaled" %in% names(vif) || any(!is.finite(vif$gvif_scaled))) {
+    add_failure("Public VIF/GVIF diagnostics contain non-finite scaled GVIF values.")
+  }
+}
+
+anderson_rubin_path <- "outputs/diagnostics/public/anderson_rubin_preferred.csv"
+if (file.exists(anderson_rubin_path)) {
+  ar <- tryCatch(
+    utils::read.csv(anderson_rubin_path, stringsAsFactors = FALSE, check.names = FALSE),
+    error = function(e) data.frame()
+  )
+  if (!nrow(ar) || !all(c("status", "anderson_rubin_p_beta0") %in% names(ar))) {
+    add_failure("Preferred Anderson-Rubin diagnostic is malformed.")
+  } else if (!identical(ar$status[[1]], "estimated") || !is.finite(ar$anderson_rubin_p_beta0[[1]])) {
+    reason <- if ("reason" %in% names(ar) && !is.na(ar$reason[[1]])) paste0(" Reason: ", ar$reason[[1]]) else ""
+    add_failure("Preferred Anderson-Rubin diagnostic is unavailable in final mode.", reason)
+  }
+}
+
 
 if (length(failures)) {
   cat(paste0("- ", failures, collapse = "\n"), "\n")

@@ -420,6 +420,36 @@ test_that("IV VIF diagnostics use structural regressors rather than instruments"
   expect_true(all(out$status == "estimated"))
 })
 
+test_that("IV VIF diagnostics load the ivreg namespace for cached model objects", {
+  skip_if_not_installed("car")
+  skip_if_not_installed("ivreg")
+  set.seed(430)
+  df <- data.frame(y = rnorm(90), x = rnorm(90), z = rnorm(90))
+  model <- ivreg::ivreg(y ~ x | z, data = df)
+  path <- tempfile(fileext = ".rds")
+  on.exit(unlink(path), add = TRUE)
+  saveRDS(model, path)
+  rm(model)
+  try(unloadNamespace("ivreg"), silent = TRUE)
+
+  cached <- readRDS(path)
+  out <- compute_vif_if_applicable(cached)
+
+  expect_true("ivreg" %in% loadedNamespaces())
+  expect_true(nrow(out) >= 1L)
+  expect_true(all(out$status == "estimated"))
+})
+
+test_that("preferred public Anderson-Rubin diagnostic is registry-backed", {
+  spec <- preferred_iv_diagnostic_specification()
+  expect_equal(nrow(spec), 1L)
+  expect_identical(spec$adjustment_id[[1]], "state_main")
+  expect_identical(spec$construction_id[[1]], "nonzero_mean")
+  expect_identical(spec$outcome[[1]], "real_log_consumption_change")
+  expect_identical(spec$treatment[[1]], preferred_iv_variables()$treatment)
+  expect_identical(spec$excluded_instruments[[1]], preferred_iv_variables()$instrument)
+})
+
 test_that("condition number is invariant to regressor units and excludes the intercept", {
   set.seed(45)
   x1 <- stats::rnorm(100)

@@ -253,6 +253,11 @@ core_pipeline_targets <- list(
   tar_target(revised_iv_models, estimate_2sls(district_panel, revised_iv_formulas, cfg)),
   tar_target(revised_first_stage_tests, estimate_first_stage(revised_iv_models, district_panel, cfg)),
   tar_target(diag_public_weak_instruments, diagnose_weak_instruments(revised_iv_models, district_panel, cfg)),
+  tar_target(
+    diag_public_anderson_rubin,
+    save_preferred_anderson_rubin(diagnose_preferred_anderson_rubin(district_panel)),
+    format = "file"
+  ),
   tar_target(diag_public_overidentification, diagnose_overidentification(revised_iv_models, revised_iv_formulas, cfg)),
 
   tar_target(spatial_weights, build_spatial_weights(district_panel, cfg)),
