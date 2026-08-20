@@ -220,3 +220,25 @@ test_that("tracked checksum inventory includes the Census acquisition manifest",
   checksums <- read.csv(file.path(root, "data", "metadata", "checksums.csv"), stringsAsFactors = FALSE)
   expect_true("data/metadata/census_2001_download_manifest.tsv" %in% checksums$path)
 })
+
+test_that("Glottolog 5.3 source bundle is versioned and complete", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
+  manifest <- read.csv(file.path(root, "data", "metadata", "file_manifest.csv"), stringsAsFactors = FALSE)
+  sources <- read.csv(file.path(root, "data", "metadata", "data_sources.csv"), stringsAsFactors = FALSE)
+
+  direct <- manifest[manifest$source_id == "glottolog_5_3", , drop = FALSE]
+  cldf <- manifest[manifest$source_id == "glottolog_cldf_5_3", , drop = FALSE]
+  expect_setequal(direct$file_id, c("glottolog53_languoids", "glottolog53_newick", "glottolog53_geo"))
+  expect_identical(cldf$file_id, "glottolog53_cldf")
+  rows <- rbind(direct, cldf)
+  expect_true(all(tolower(as.character(rows$required_for_current_pipeline)) == "true"))
+  expect_true(all(startsWith(rows$relative_path, "data/raw/glottolog_5_3/")))
+  expect_equal(anyDuplicated(rows$relative_path), 0L)
+
+  direct_source <- sources[sources$source_id == "glottolog_5_3", , drop = FALSE]
+  cldf_source <- sources[sources$source_id == "glottolog_cldf_5_3", , drop = FALSE]
+  expect_equal(nrow(direct_source), 1L)
+  expect_equal(nrow(cldf_source), 1L)
+  expect_match(direct_source$license_or_terms_notes, "CC BY 4.0", fixed = TRUE)
+  expect_match(cldf_source$source_url, "18840967", fixed = TRUE)
+})

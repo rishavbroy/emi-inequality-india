@@ -43,6 +43,10 @@ census2001_c16_32,census_2001_mother_tongue,true,data/raw/census_2001/languages/
 census2001_c16_33,census_2001_mother_tongue,true,data/raw/census_2001/languages/C16/PC01_C16_33.xls,,xls,readxl::read_excel,raw_census_2001,Census C-16 mother tongue file
 census2001_c16_34,census_2001_mother_tongue,true,data/raw/census_2001/languages/C16/PC01_C16_34.xls,,xls,readxl::read_excel,raw_census_2001,Census C-16 mother tongue file
 census2001_c16_35,census_2001_mother_tongue,true,data/raw/census_2001/languages/C16/PC01_C16_35.xls,,xls,readxl::read_excel,raw_census_2001,Census C-16 mother tongue file
+glottolog53_languoids,glottolog_5_3,true,data/raw/glottolog_5_3/glottolog_languoid.csv.zip,589571,zip,read_glottolog_5_3,glottolog_5_3,Glottolog 5.3 languoid genealogy; canonical parent graph for language-distance construction.
+glottolog53_newick,glottolog_5_3,true,data/raw/glottolog_5_3/tree_glottolog_newick.txt,772419,txt,read_glottolog_5_3,glottolog_5_3,Glottolog 5.3 top-level family trees; retained as an independent genealogy representation for validation.
+glottolog53_geo,glottolog_5_3,true,data/raw/glottolog_5_3/languages_and_dialects_geo.csv,1072964,csv,read_glottolog_5_3,glottolog_5_3,"Glottolog 5.3 language/dialect geography; disambiguation only, never the distance source."
+glottolog53_cldf,glottolog_cldf_5_3,true,data/raw/glottolog_5_3/glottolog-cldf-v5.3.zip,49646070,zip,read_glottolog_5_3,glottolog_5_3,Glottolog 5.3 CLDF release from Zenodo record 18840967; aliases and reviewed Census-language crosswalk support.
 district_boundaries_2020_shp,district_boundaries_2020,true,data/raw/district_boundaries_2020/district/in_district.shp,59238080,shp,sf::st_read,raw_boundaries_2020,District shapefile component
 district_boundaries_2020_shx,district_boundaries_2020,true,data/raw/district_boundaries_2020/district/in_district.shx,,shx,sf::st_read,raw_boundaries_2020,District shapefile component
 district_boundaries_2020_dbf,district_boundaries_2020,true,data/raw/district_boundaries_2020/district/in_district.dbf,,dbf,sf::st_read,raw_boundaries_2020,District shapefile component

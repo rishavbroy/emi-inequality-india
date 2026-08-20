@@ -60,6 +60,7 @@ core_pipeline_targets <- list(
   tar_target(raw_nss_2007_consumption, { raw_data_preflight; read_nss_2007_consumption(paths) }),
   tar_target(raw_nss_2017_education, { raw_data_preflight; read_nss_2017_education(paths) }),
   tar_target(raw_census_2001, { raw_data_preflight; read_census_2001_mother_tongue(paths) }),
+  tar_target(glottolog_5_3, { raw_data_preflight; read_glottolog_5_3(paths) }),
   tar_target(raw_ilo_figures, { raw_data_preflight; list_ilo_figure_paths(paths) }, format = "file"),
   tar_target(raw_price_sources, { raw_data_preflight; read_price_sources(price_source_paths(paths)) }),
   tar_target(raw_census_2001_controls, { raw_data_preflight; read_census_2001_control_sources(paths) }),

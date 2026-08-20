@@ -45,7 +45,13 @@ build_linguistic_distance_iv <- function(census_2001_languages, cfg = list()) {
   if (!"ling_degrees" %in% names(df)) {
     df$ling_degrees <- linguistic_distance_degrees(df$canonical_language)
   }
-  df$distance_mapping_status <- ifelse(is.finite(num(df$ling_degrees)), "mapped", "unmapped")
+  language <- tools::toTitleCase(tolower(trimws(plain_chr(df$canonical_language))))
+  is_english <- language == "English"
+  df$distance_mapping_status <- ifelse(
+    is_english,
+    "special_english",
+    ifelse(is.finite(num(df$ling_degrees)), "mapped", "unmapped")
+  )
 
   split_i <- split(seq_len(nrow(df)), interaction(df[c("state_std", "district_std")], drop = TRUE))
   out <- safe_bind_rows(lapply(split_i, function(i) build_district_language_constructions(df[i, , drop = FALSE])))
@@ -69,7 +75,9 @@ build_district_language_constructions <- function(df) {
   language <- tools::toTitleCase(tolower(trimws(plain_chr(df$canonical_language))))
   valid_speakers <- is.finite(speakers) & speakers >= 0
   total <- sum(speakers[valid_speakers], na.rm = TRUE)
-  mapped <- valid_speakers & is.finite(distance)
+  english <- valid_speakers & language == "English"
+  mapped <- valid_speakers & is.finite(distance) & !english
+  unmapped <- valid_speakers & !is.finite(distance) & !english
   mapped_total <- sum(speakers[mapped], na.rm = TRUE)
   nonzero <- mapped & distance > 0
 
@@ -100,10 +108,11 @@ build_district_language_constructions <- function(df) {
   out$hindi_share <- share(language == "Hindi")
   out$urdu_share <- share(language == "Urdu")
   out$hindi_urdu_share <- share(language %in% c("Hindi", "Urdu"))
+  out$native_english_share <- share(english)
   out$ling_distance_top3_legacy <- top3_distance
   out$ling_top3_speaker_coverage <- top3_coverage
   out$ling_mapped_speaker_share <- if (is.finite(total) && total > 0) 100 * mapped_total / total else NA_real_
-  out$ling_unmapped_speaker_share <- if (is.finite(total) && total > 0) 100 * (total - mapped_total) / total else NA_real_
+  out$ling_unmapped_speaker_share <- share(unmapped)
   out$ling_total_speakers <- total
 
   # Historical compatibility aliases remain explicit for archived comparisons and benchmarks.
@@ -118,7 +127,7 @@ linguistic_distance_excluded_instruments <- function(denominator = c("all", "map
 }
 
 linguistic_distance_language_controls <- function() {
-  c("hindi_share", "urdu_share", "hindi_urdu_share")
+  c("hindi_share", "urdu_share", "hindi_urdu_share", "native_english_share")
 }
 
 validate_linguistic_distance_ranges <- function(df) {

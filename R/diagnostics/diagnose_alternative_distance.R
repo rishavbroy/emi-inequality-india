@@ -275,7 +275,12 @@ unmapped_language_decomposition <- function(census_2001_languages, panel) {
   if (!"ling_degrees" %in% names(rows)) rows$ling_degrees <- linguistic_distance_degrees(rows$canonical_language)
   rows$district_panel_id <- make_district_key(rows$state_std, rows$district_std, 2001L)
   panel_df <- if (inherits(panel, "sf")) sf::st_drop_geometry(panel) else as.data.frame(panel)
-  rows <- rows[rows$district_panel_id %in% plain_chr(panel_df$district_panel_id) & !is.finite(num(rows$ling_degrees)), , drop = FALSE]
+  language <- tools::toTitleCase(tolower(trimws(plain_chr(rows$canonical_language))))
+  rows <- rows[
+    rows$district_panel_id %in% plain_chr(panel_df$district_panel_id) &
+      !is.finite(num(rows$ling_degrees)) & language != "English",
+    , drop = FALSE
+  ]
   if (!nrow(rows)) return(data.frame())
   out <- aggregate(
     num(rows$spkr_tot),

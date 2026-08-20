@@ -11,11 +11,17 @@ District constructions include:
 - `ling_distance_nonzero_mean`: speaker-weighted mean distance among mapped speakers with distance above zero;
 - `ling_share_distance_0` through `ling_share_distance_5`;
 - `ling_share_distance_ge3`;
-- `hindi_share`, `urdu_share`, and `hindi_urdu_share`;
-- mapped and unmapped speaker coverage;
+- `hindi_share`, `urdu_share`, `hindi_urdu_share`, and `native_english_share`;
+- mapped and unresolved non-English speaker coverage, with native English speakers reported separately;
 - `ling_distance_top3_legacy` and its retained-speaker coverage for descriptive comparison.
 
 The public scalar instrument is `ling_distance_nonzero_mean`, the speaker-weighted mean Shastry distance among mapped speakers with positive distance from Hindi. The five nonzero distance shares remain an extended diagnostic set, with distance zero omitted as the compositional reference. `wavg_ling_degrees` is retained only as a compatibility alias for the top-three legacy construction used in historical comparisons.
+
+Native English speakers are an intentional special category rather than unresolved language mass. They do not enter the numerator or denominator of Shastry-style weighted-distance means, even if a genealogical distance is available from Glottolog, and their district share is reported separately for composition adjustment. Hindi and Urdu remain the zero-distance reference categories.
+
+## Glottolog 5.3 source layer
+
+The versioned Glottolog 5.3 source bundle is validated before downstream language-crosswalk work. The direct `languoid.csv` parent graph is the canonical genealogy source because it supplies stable Glottocodes, parent IDs, family IDs, and languoid levels without requiring a Newick parser. The CLDF archive is retained for reviewed aliases, `languages_and_dialects_geo.csv` is disambiguation-only, and `tree_glottolog_newick.txt` is an independent representation for later validation. The pipeline anchors Hindi at Glottocode `hind1269`/ISO `hin`, rejects missing parents or parent cycles, resolves dialects to language-level nodes, and defines cross-family robustness distance through one synthetic super-root. No Glottolog taxonomy row automatically overrides the maintained Shastry/Jasanoff concordance.
 
 ## Education exposure
 
@@ -34,7 +40,8 @@ Extended diagnostics estimate the preferred all-child EMI treatment against ever
 Distance constructions on one common district support. The registry covers
 the nonzero weighted mean, the share at distance three or higher, the legacy
 top-three mean, scalar specifications with combined or separate Hindi and Urdu
-composition controls, and a joint first stage for the five nonzero distance shares.
+composition controls, a Shastry-adjusted scalar specification that also controls
+for native-English share, and a joint first stage for the five nonzero distance shares.
 Distance zero is the omitted compositional reference in the joint specification.
 
 Each construction is estimated unadjusted and with six-region or state fixed effects
@@ -52,7 +59,7 @@ public IV model.
 The project preserves unmapped mass rather than silently assigning it a degree. It now reports three complementary nonlinear specifications:
 
 - all-speaker distance shares, with unmapped mass left visible;
-- all-speaker distance shares with unmapped share included as a control, so distance zero is the omitted mapped category;
+- all-speaker distance shares with unresolved non-English and native-English shares included as controls, so distance zero is the omitted mapped category;
 - mapped-speaker shares renormalized to sum to 100, used only as a sensitivity because renormalization hides unmapped mass.
 
 Results are repeated with minimum mapped-speaker shares of 0, 90, 95, and 99 percent. Distance-four results are decomposed by underlying canonical language and repeated after removing each distance-four language contribution.

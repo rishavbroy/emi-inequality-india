@@ -432,6 +432,7 @@ test_that("linguistic constructions use the full distribution and expose mapping
   expect_equal(out$hindi_share, 40)
   expect_equal(out$urdu_share, 10)
   expect_equal(out$hindi_urdu_share, 50)
+  expect_equal(out$native_english_share, 0)
   expect_equal(out$ling_mapped_speaker_share, 90)
   expect_equal(out$ling_unmapped_speaker_share, 10)
   expect_equal(out$wavg_ling_degrees, out$ling_distance_top3_legacy)
@@ -486,7 +487,10 @@ test_that("mapped linguistic-distance shares form a genuine composition", {
   mapped <- unlist(out[paste0("ling_mapped_share_distance_", 0:5)], use.names = FALSE)
   all_speaker <- unlist(out[paste0("ling_share_distance_", 0:5)], use.names = FALSE)
   expect_equal(sum(mapped), 100, tolerance = 1e-8)
-  expect_equal(sum(all_speaker) + out$ling_unmapped_speaker_share, 100, tolerance = 1e-8)
+  expect_equal(
+    sum(all_speaker) + out$ling_unmapped_speaker_share + out$native_english_share,
+    100, tolerance = 1e-8
+  )
 })
 
 
@@ -508,4 +512,58 @@ test_that("finalize analysis panel enforces final-mode analysis validation", {
   )
   expect_true(is.na(finalized$gini_cons_1718))
   expect_true(is.na(finalized$gini_change))
+})
+
+test_that("Glottolog genealogy resolves language nodes and tree distances", {
+  g <- data.frame(
+    id = c("rootfam", "branch_a", "hindi", "punjabi", "otherfam", "english", "dialect"),
+    family_id = c("", "rootfam", "rootfam", "rootfam", "", "otherfam", "rootfam"),
+    parent_id = c("", "rootfam", "branch_a", "branch_a", "", "otherfam", "punjabi"),
+    name = c("Family A", "Branch A", "Hindi", "Punjabi", "Family B", "English", "Punjabi dialect"),
+    bookkeeping = FALSE,
+    level = c("family", "family", "language", "language", "family", "language", "dialect"),
+    iso639P3code = c("", "", "hin", "pan", "", "eng", ""),
+    stringsAsFactors = FALSE
+  )
+
+  expect_true(validate_glottolog_genealogy(g))
+  expect_identical(glottolog_language_node("dialect", g), "punjabi")
+  expect_equal(glottolog_edge_distance("hindi", "hindi", g), 0)
+  expect_equal(glottolog_edge_distance("hindi", "punjabi", g), 2)
+  expect_equal(glottolog_edge_distance("punjabi", "hindi", g), 2)
+  expect_equal(glottolog_edge_distance("hindi", "english", g), 5)
+})
+
+test_that("Glottolog genealogy rejects unresolved parents and cycles", {
+  bad_parent <- data.frame(
+    id = "hindi", family_id = "family", parent_id = "missing", name = "Hindi",
+    bookkeeping = FALSE, level = "language", iso639P3code = "hin", stringsAsFactors = FALSE
+  )
+  expect_error(validate_glottolog_genealogy(bad_parent), "unresolved parent IDs", fixed = TRUE)
+
+  cycle <- data.frame(
+    id = c("a", "b"), family_id = "fam", parent_id = c("b", "a"), name = c("A", "B"),
+    bookkeeping = FALSE, level = c("language", "language"), iso639P3code = c("aaa", "bbb"),
+    stringsAsFactors = FALSE
+  )
+  expect_error(validate_glottolog_genealogy(cycle), "parent cycle", fixed = TRUE)
+})
+
+test_that("native English is explicit rather than unresolved distance mass", {
+  df <- data.frame(
+    state_std = "toy", district_std = "one",
+    canonical_language = c("Hindi", "Gujarati", "English", "Unknown"),
+    spkr_tot = c(50, 30, 10, 10),
+    ling_degrees = c(0, 1, 5, NA),
+    stringsAsFactors = FALSE
+  )
+
+  out <- build_linguistic_distance_iv(df)
+
+  expect_equal(out$ling_distance_nonzero_mean, 1)
+  expect_equal(out$native_english_share, 10)
+  expect_equal(out$ling_mapped_speaker_share, 80)
+  expect_equal(out$ling_unmapped_speaker_share, 10)
+  expect_equal(out$hindi_urdu_share, 50)
+  expect_true("native_english_share" %in% linguistic_distance_language_controls())
 })

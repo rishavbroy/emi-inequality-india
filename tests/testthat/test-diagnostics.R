@@ -729,6 +729,22 @@ test_that("first-stage absorption diagnostics save a compact manifest", {
 })
 
 
+test_that("unmapped-language diagnostics exclude intentional native English mass", {
+  census <- data.frame(
+    state_std = rep("01", 3), district_std = rep("001", 3),
+    canonical_language = c("English", "Dogri", "Hindi"),
+    spkr_tot = c(10, 20, 70),
+    ling_degrees = c(NA, NA, 0),
+    stringsAsFactors = FALSE
+  )
+  panel <- data.frame(district_panel_id = "2001__01__001", stringsAsFactors = FALSE)
+
+  out <- unmapped_language_decomposition(census, panel)
+
+  expect_identical(out$canonical_language, "Dogri")
+  expect_equal(out$unmapped_speakers, 20)
+})
+
 test_that("alternative linguistic-distance registry covers scalar, nonlinear, and joint constructions", {
   registry <- alternative_distance_registry()
 
@@ -736,7 +752,7 @@ test_that("alternative linguistic-distance registry covers scalar, nonlinear, an
     length(alternative_distance_adjustments()) * length(alternative_distance_constructions()))
   expect_true(all(c(
     "nonzero_mean", "distant_share", "top3_legacy", "nonzero_mean_hindi_urdu",
-    "nonzero_mean_hindi_urdu_separate", "distance_shares_all",
+    "nonzero_mean_shastry", "nonzero_mean_hindi_urdu_separate", "distance_shares_all",
     "distance_shares_all_unmapped", "distance_shares_mapped"
   ) %in% registry$construction_id))
   joint <- registry[registry$construction_id == "distance_shares_all", , drop = FALSE]
@@ -745,6 +761,16 @@ test_that("alternative linguistic-distance registry covers scalar, nonlinear, an
   }, logical(1))))
   combined <- registry[registry$construction_id == "nonzero_mean_hindi_urdu", , drop = FALSE]
   expect_true(all(vapply(combined$included_language_controls, identical, logical(1), "hindi_urdu_share")))
+  shastry <- registry[registry$construction_id == "nonzero_mean_shastry", , drop = FALSE]
+  expect_true(all(vapply(
+    shastry$included_language_controls,
+    identical, logical(1), c("hindi_urdu_share", "native_english_share")
+  )))
+  shares <- registry[registry$construction_id == "distance_shares_all_unmapped", , drop = FALSE]
+  expect_true(all(vapply(
+    shares$included_language_controls,
+    identical, logical(1), c("ling_unmapped_speaker_share", "native_english_share")
+  )))
 })
 
 test_that("alternative linguistic-distance first stages use fixed support and joint clustered tests", {
@@ -811,6 +837,7 @@ test_that("alternative linguistic-distance diagnostics save four explicit output
     stringsAsFactors = FALSE
   )
   panel$hindi_urdu_share <- panel$hindi_share + panel$urdu_share
+  panel$native_english_share <- 0
   distance_shares <- matrix(stats::runif(n * 6), ncol = 6)
   distance_shares <- 100 * distance_shares / rowSums(distance_shares)
   for (degree in 0:5) {
@@ -819,6 +846,7 @@ test_that("alternative linguistic-distance diagnostics save four explicit output
   }
   panel$ling_mapped_speaker_share <- 100
   panel$ling_unmapped_speaker_share <- 0
+  panel$native_english_share <- 0
   for (variable in census_2001_diagnostic_controls()) panel[[variable]] <- stats::rnorm(n)
   out <- diagnose_alternative_distance_first_stages(panel)
   dir <- tempfile("alternative-distance-")
@@ -1193,6 +1221,7 @@ test_that("Anderson-Rubin inference accepts scalar and multi-instrument registry
   panel$hindi_share <- stats::runif(n, 0, 60)
   panel$urdu_share <- stats::runif(n, 0, 20)
   panel$hindi_urdu_share <- panel$hindi_share + panel$urdu_share
+  panel$native_english_share <- 0
   panel$ling_unmapped_speaker_share <- 0
   panel$ling_mapped_speaker_share <- 100
   for (variable in census_2001_diagnostic_controls()) panel[[variable]] <- stats::rnorm(n)

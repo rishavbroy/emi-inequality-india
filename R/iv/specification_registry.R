@@ -69,6 +69,11 @@ iv_instrument_constructions <- function() {
       excluded = "ling_distance_nonzero_mean",
       included = "hindi_urdu_share"
     ),
+    nonzero_mean_shastry = list(
+      label = "Nonzero mean with Shastry composition controls",
+      excluded = "ling_distance_nonzero_mean",
+      included = c("hindi_urdu_share", "native_english_share")
+    ),
     nonzero_mean_hindi_urdu_separate = list(
       label = "Nonzero mean with separate Hindi and Urdu shares",
       excluded = "ling_distance_nonzero_mean",
@@ -80,9 +85,9 @@ iv_instrument_constructions <- function() {
       included = character()
     ),
     distance_shares_all_unmapped = list(
-      label = "Five distance shares with unmapped share controlled",
+      label = "Five distance shares with unresolved and English shares controlled",
       excluded = linguistic_distance_excluded_instruments("all"),
-      included = "ling_unmapped_speaker_share"
+      included = c("ling_unmapped_speaker_share", "native_english_share")
     ),
     distance_shares_mapped = list(
       label = "Five distance shares; mapped-speaker denominator",
