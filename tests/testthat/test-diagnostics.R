@@ -417,6 +417,23 @@ test_that("IV VIF diagnostics use structural regressors rather than instruments"
   expect_true(all(out$model_scope == "ivreg_structural_regressors"))
   expect_true("group" %in% out$term)
   expect_false("z" %in% out$term)
+  expect_true(all(out$status == "estimated"))
+})
+
+test_that("condition number is invariant to regressor units and excludes the intercept", {
+  set.seed(45)
+  x1 <- stats::rnorm(100)
+  x2 <- 0.8 * x1 + stats::rnorm(100, sd = 0.4)
+  X <- cbind(`(Intercept)` = 1, x1 = x1, x2 = x2)
+  X_rescaled <- X
+  X_rescaled[, "x1"] <- 1000000 * X_rescaled[, "x1"]
+
+  expect_equal(
+    standardized_design_condition_number(X),
+    standardized_design_condition_number(X_rescaled),
+    tolerance = 1e-10
+  )
+  expect_lt(standardized_design_condition_number(X), kappa(X_rescaled, exact = TRUE))
 })
 
 test_that("multicollinearity diagnostics save one tracked public CSV", {
@@ -801,8 +818,10 @@ test_that("diagnostic applicability follows identification structure", {
   expect_true(multi_overid$applicable)
   expect_true(multi_overid$implemented)
   expect_true(multi_overid$will_run)
-  expect_true(all(applicability$applicable[applicability$diagnostic_id == "balance_joint"]))
-  expect_true(all(applicability$will_run[applicability$diagnostic_id == "balance_joint"]))
+  balance_joint <- applicability[applicability$diagnostic_id == "balance_joint", , drop = FALSE]
+  n_inst <- registry$n_excluded_instruments[match(balance_joint$specification_id, registry$specification_id)]
+  expect_true(all(balance_joint$applicable == (n_inst == 1L)))
+  expect_true(all(balance_joint$will_run == (n_inst == 1L)))
   expect_true(all(applicability$applicable[applicability$diagnostic_id == "anderson_rubin"]))
   expect_true(all(applicability$will_run[applicability$diagnostic_id == "anderson_rubin"]))
 
@@ -956,6 +975,41 @@ test_that("joint balance tests only predetermined covariates not already conditi
     census_2001_diagnostic_controls(),
     census_2001_main_controls()
   ))
+})
+
+test_that("joint balance is one omnibus test per scalar specification", {
+  set.seed(904)
+  n <- 120L
+  panel <- data.frame(
+    state_code_2001 = rep(sprintf("%02d", 1:12), each = 10),
+    region = rep(panel_region_levels(), each = 20),
+    ling_distance_nonzero_mean = stats::rnorm(n),
+    stringsAsFactors = FALSE
+  )
+  panel$emi_exposure_all_children_0708 <- stats::rnorm(n)
+  for (variable in census_2001_diagnostic_controls()) panel[[variable]] <- stats::rnorm(n)
+
+  registry <- iv_specification_registry()
+  scalar <- registry[
+    registry$adjustment_id == "state_main" &
+      registry$construction_id == "nonzero_mean",
+    , drop = FALSE
+  ]
+  multi <- registry[
+    registry$adjustment_id == "state_main" &
+      registry$construction_id == "distance_shares_all",
+    , drop = FALSE
+  ]
+  for (instrument in unlist(multi$excluded_instruments[[1]], use.names = FALSE)) {
+    panel[[instrument]] <- stats::rnorm(n)
+  }
+
+  out <- run_iv_joint_balance_diagnostics(panel, rbind(scalar, multi))
+
+  expect_equal(nrow(out), 1L)
+  expect_identical(out$specification_id[[1]], scalar$specification_id[[1]])
+  expect_identical(out$status[[1]], "estimated")
+  expect_true(is.finite(out$joint_f[[1]]))
 })
 
 test_that("monotonicity shape diagnostic recognizes an increasing residual first stage", {

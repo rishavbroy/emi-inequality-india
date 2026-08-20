@@ -19,27 +19,6 @@ multicollinearity_design_matrix <- function(model) {
   iv_structural_model_matrix(model)
 }
 
-#' Model used for term-aware VIF/GVIF diagnostics
-#'
-#' `car::vif()` reports ordinary VIFs for one-degree-of-freedom terms and
-#' generalized VIFs for factors or other multi-column terms. For an IV model,
-#' fit an auxiliary OLS model with the same response and structural regressors.
-#' VIFs describe collinearity in that regressor design, so the excluded
-#' instrument matrix is deliberately outside this diagnostic.
-multicollinearity_vif_model <- function(model) {
-  if (!inherits(model, "ivreg")) return(model)
-  model_data <- tryCatch(as.data.frame(model$model), error = function(e) NULL)
-  if (is.null(model_data) || !nrow(model_data)) {
-    model_data <- as.data.frame(stats::model.frame(model))
-  }
-  stats::lm(
-    multicollinearity_formula(model),
-    data = model_data,
-    weights = tryCatch(stats::weights(model), error = function(e) NULL),
-    na.action = stats::na.exclude
-  )
-}
-
 #' Normalize `car::vif()` output to a stable data-frame contract
 normalize_vif_output <- function(x, model_scope) {
   if (is.null(x) || !length(x)) return(data.frame())
@@ -80,7 +59,7 @@ compute_vif_if_applicable <- function(model) {
     ))
   }
   tryCatch(
-    normalize_vif_output(car::vif(multicollinearity_vif_model(model)), scope),
+    normalize_vif_output(car::vif(model), scope),
     error = function(e) data.frame(
       term = NA_character_, model_scope = scope, df = NA_integer_,
       vif = NA_real_, gvif = NA_real_, gvif_scaled = NA_real_,
@@ -88,6 +67,28 @@ compute_vif_if_applicable <- function(model) {
       stringsAsFactors = FALSE
     )
   )
+}
+
+
+#' Scale-free structural-regressor condition number
+#'
+#' The raw condition number is dominated by the intercept and arbitrary units.
+#' Following the IV diagnostics guidance, diagnose numerical collinearity on
+#' centered, unit-variance non-intercept structural regressors instead.
+standardized_design_condition_number <- function(X) {
+  X <- as.matrix(X)
+  if (!nrow(X) || !ncol(X)) return(NA_real_)
+  keep <- colnames(X) != "(Intercept)"
+  X <- X[, keep, drop = FALSE]
+  if (!ncol(X)) return(NA_real_)
+  sds <- apply(X, 2L, stats::sd)
+  X <- X[, is.finite(sds) & sds > 0, drop = FALSE]
+  if (!ncol(X)) return(NA_real_)
+  X <- scale(X)
+  qr_x <- qr(X)
+  if (!qr_x$rank) return(NA_real_)
+  estimable <- qr_x$pivot[seq_len(qr_x$rank)]
+  kappa(X[, estimable, drop = FALSE], exact = TRUE)
 }
 
 multicollinearity_model_names <- function(iv_models) {
@@ -112,7 +113,7 @@ single_model_multicollinearity <- function(model, model_name) {
       n = nrow(X),
       rank = qr(X)$rank,
       columns = ncol(X),
-      kappa = kappa(X, exact = TRUE),
+      kappa = standardized_design_condition_number(X),
       df = NA_integer_,
       vif = NA_real_,
       gvif = NA_real_,

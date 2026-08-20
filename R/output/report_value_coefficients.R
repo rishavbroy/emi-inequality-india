@@ -49,13 +49,10 @@ p_value <- function(model, terms, digits = NULL, data = NULL) {
 }
 
 condition_number_value <- function(model) {
-  out <- tryCatch({
-    X <- iv_structural_model_matrix(model)
-    qr_x <- qr(X)
-    if (!qr_x$rank) return(NA_real_)
-    estimable <- qr_x$pivot[seq_len(qr_x$rank)]
-    kappa(X[, estimable, drop = FALSE], exact = TRUE)
-  }, error = function(e) NA_real_)
+  out <- tryCatch(
+    standardized_design_condition_number(iv_structural_model_matrix(model)),
+    error = function(e) NA_real_
+  )
   if (is.finite(out)) format(out, scientific = FALSE, digits = 7) else NA_character_
 }
 
