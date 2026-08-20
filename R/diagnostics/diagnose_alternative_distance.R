@@ -41,9 +41,10 @@ estimate_alternative_distance_spec <- function(data, specification, treatment) {
   if (identical(fixed_effect, "region")) rhs <- c(rhs, "factor(region)")
   if (identical(fixed_effect, "state")) rhs <- c(rhs, "factor(state_code_2001)")
   fit <- stats::lm(stats::reformulate(rhs, response = treatment), data = data)
-  joint <- clustered_joint_wald_test(fit, excluded, data$state_code_2001)
+  cluster <- iv_specification_cluster(data, specification)
+  joint <- clustered_joint_wald_test(fit, excluded, cluster)
   coefficients <- safe_bind_rows(lapply(excluded, function(term) {
-    inference <- clustered_first_stage_inference(fit, term, data$state_code_2001)
+    inference <- clustered_first_stage_inference(fit, term, cluster)
     data.frame(
       specification_id = specification$specification_id,
       term = term,
@@ -318,7 +319,7 @@ estimate_weak_iv_outcomes <- function(
     if (!nrow(x)) return(NULL)
 
     fit <- ivreg::ivreg(iv_specification_formula(spec), data = x, model = TRUE, x = TRUE, y = TRUE)
-    cluster <- iv_model_cluster(fit, x)
+    cluster <- iv_specification_cluster(x, spec)
     inference <- iv_clustered_inference(fit, cluster)
     ct <- lmtest::coeftest(fit, vcov. = inference$vcov)
     row <- match(treatment, rownames(ct))
@@ -326,7 +327,7 @@ estimate_weak_iv_outcomes <- function(
       stats::reformulate(unique(c(excluded, included, controls, fixed)), response = outcome),
       data = x
     )
-    reduced_test <- clustered_joint_wald_test(reduced, excluded, x$state_code_2001)
+    reduced_test <- clustered_joint_wald_test(reduced, excluded, cluster)
     ar <- estimate_anderson_rubin_spec(x, spec)
     overidentification <- if (spec$n_excluded_instruments[[1]] > spec$n_endogenous[[1]]) {
       result <- ivreg_sargan_diagnostic(fit)

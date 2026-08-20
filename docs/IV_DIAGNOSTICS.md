@@ -14,6 +14,8 @@ The extended IV diagnostics use one canonical specification layer rather than re
 
 The registry is intentionally not the Cartesian product of every imaginable project option. It contains theoretically motivated designs already used by the project. Specifications that are algebraically identical are de-duplicated before the general diagnostic suite runs.
 
+The `cluster` field is part of that self-describing specification contract. Registry-driven relevance, balance, reduced-form, and Anderson-Rubin inference use the declared cluster variable directly rather than substituting a hard-coded state column. The current registry declares `state_code_2001` throughout, so this is a structural invariant rather than a change to the preferred inference.
+
 ## Diagnostic families
 
 The current registry distinguishes:

@@ -1021,6 +1021,40 @@ test_that("conditional balance does not fit an accounting identity as an outcome
   expect_true(is.finite(out$joint_f))
 })
 
+test_that("registry-driven clustered diagnostics honor the declared cluster variable", {
+  set.seed(905)
+  n <- 120L
+  panel <- data.frame(
+    cluster_id = rep(sprintf("c%02d", 1:12), each = 10),
+    real_log_consumption_change = stats::rnorm(n),
+    emi_exposure_all_children_0708 = stats::rnorm(n),
+    ling_distance_nonzero_mean = stats::rnorm(n),
+    log_population_2001 = stats::rnorm(n),
+    stringsAsFactors = FALSE
+  )
+
+  registry <- iv_specification_registry()
+  spec <- registry[
+    registry$adjustment_id == "unadjusted" &
+      registry$construction_id == "nonzero_mean",
+    , drop = FALSE
+  ]
+  spec$cluster <- "cluster_id"
+
+  expect_identical(iv_specification_cluster_variable(spec), "cluster_id")
+  expect_identical(iv_specification_cluster(panel, spec), panel$cluster_id)
+  expect_true("cluster_id" %in% iv_specification_variables(spec))
+  expect_false("state_code_2001" %in% iv_specification_variables(spec))
+
+  balance <- estimate_iv_balance_spec(panel, spec, "log_population_2001")
+  expect_identical(balance$status[[1]], "estimated")
+  expect_true(is.finite(balance$joint_f[[1]]))
+
+  ar <- estimate_anderson_rubin_spec(panel, spec, points = 41L)
+  expect_identical(ar$summary$status[[1]], "estimated")
+  expect_true(is.finite(ar$summary$anderson_rubin_p_beta0[[1]]))
+})
+
 test_that("conditional balance uses specification fixed effects and clustered joint tests", {
   set.seed(902)
   n <- 120L

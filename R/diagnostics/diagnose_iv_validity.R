@@ -15,8 +15,11 @@ estimate_iv_balance_spec <- function(data, specification, tested_variable) {
   excluded <- unlist(specification$excluded_instruments[[1]], use.names = FALSE)
   fixed_effect <- specification$fixed_effect[[1]]
   rhs <- unique(c(excluded, included, controls, iv_fixed_effect_terms(fixed_effect)))
-  needed <- all.vars(stats::reformulate(rhs, response = tested_variable))
-  needed <- unique(c(needed, "state_code_2001"))
+  cluster_variable <- iv_specification_cluster_variable(specification)
+  needed <- unique(c(
+    all.vars(stats::reformulate(rhs, response = tested_variable)),
+    cluster_variable
+  ))
   x <- data[stats::complete.cases(data[needed]), , drop = FALSE]
   if (!nrow(x)) {
     return(data.frame(
@@ -28,9 +31,10 @@ estimate_iv_balance_spec <- function(data, specification, tested_variable) {
     ))
   }
   fit <- stats::lm(stats::reformulate(rhs, response = tested_variable), data = x)
-  joint <- clustered_joint_wald_test(fit, excluded, x$state_code_2001)
+  cluster <- iv_specification_cluster(x, specification)
+  joint <- clustered_joint_wald_test(fit, excluded, cluster)
   scalar <- length(excluded) == 1L
-  coefficient <- if (scalar) clustered_first_stage_inference(fit, excluded[[1]], x$state_code_2001) else NULL
+  coefficient <- if (scalar) clustered_first_stage_inference(fit, excluded[[1]], cluster) else NULL
   estimate <- if (scalar) unname(stats::coef(fit)[excluded[[1]]]) else NA_real_
   standardized_effect <- NA_real_
   if (scalar) {
@@ -71,7 +75,7 @@ run_iv_balance_diagnostics <- function(
   data <- if (inherits(panel, "sf")) sf::st_drop_geometry(panel) else as.data.frame(panel, stringsAsFactors = FALSE)
   needed <- unique(c(
     variables,
-    "state_code_2001", "region",
+    plain_chr(specifications$cluster), "region",
     unlist(specifications$controls, use.names = FALSE),
     unlist(specifications$included_language_controls, use.names = FALSE),
     unlist(specifications$excluded_instruments, use.names = FALSE)
@@ -123,7 +127,7 @@ estimate_iv_joint_balance_spec <- function(
   needed <- unique(c(
     all.vars(stats::reformulate(rhs, response = excluded[[1]])),
     excluded,
-    "state_code_2001"
+    iv_specification_cluster_variable(specification)
   ))
   x <- data[stats::complete.cases(data[needed]), , drop = FALSE]
   if (!nrow(x)) {
@@ -150,7 +154,9 @@ estimate_iv_joint_balance_spec <- function(
 
   instrument <- excluded[[1]]
   fit <- stats::lm(stats::reformulate(rhs, response = instrument), data = x)
-  joint <- clustered_joint_wald_test(fit, tested, x$state_code_2001)
+  joint <- clustered_joint_wald_test(
+    fit, tested, iv_specification_cluster(x, specification)
+  )
   data.frame(
     specification_id = specification$specification_id,
     adjustment_id = specification$adjustment_id,
@@ -176,7 +182,7 @@ run_iv_joint_balance_diagnostics <- function(
   data <- if (inherits(panel, "sf")) sf::st_drop_geometry(panel) else as.data.frame(panel, stringsAsFactors = FALSE)
   needed <- unique(c(
     variables,
-    "state_code_2001", "region",
+    plain_chr(specifications$cluster), "region",
     unlist(specifications$controls, use.names = FALSE),
     unlist(specifications$included_language_controls, use.names = FALSE),
     unlist(specifications$excluded_instruments, use.names = FALSE)

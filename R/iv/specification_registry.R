@@ -333,15 +333,30 @@ iv_first_stage_formula <- function(specification) {
   )
 }
 
+iv_specification_cluster_variable <- function(specification) {
+  cluster <- plain_chr(specification$cluster[[1]] %||% "")
+  cluster <- cluster[nzchar(cluster)]
+  if (length(cluster) != 1L) {
+    stop("IV specification must declare exactly one cluster variable.", call. = FALSE)
+  }
+  cluster
+}
+
+iv_specification_cluster <- function(data, specification) {
+  variable <- iv_specification_cluster_variable(specification)
+  if (!variable %in% names(data)) {
+    stop("IV specification cluster variable is missing: ", variable, call. = FALSE)
+  }
+  data[[variable]]
+}
+
 iv_specification_variables <- function(specification, include_outcome = TRUE) {
   formula <- if (isTRUE(include_outcome)) {
     iv_specification_formula(specification)
   } else {
     iv_first_stage_formula(specification)
   }
-  cluster <- plain_chr(specification$cluster[[1]] %||% "")
-  cluster <- cluster[nzchar(cluster)]
-  unique(c(all.vars(formula), cluster))
+  unique(c(all.vars(formula), iv_specification_cluster_variable(specification)))
 }
 
 iv_diagnostic_registry <- function() {

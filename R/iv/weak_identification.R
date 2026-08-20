@@ -2,13 +2,13 @@
 
 anderson_rubin_test <- function(
   data, outcome, treatment, excluded, included = character(),
-  controls = character(), fixed_effect = "none", beta0 = 0
+  controls = character(), fixed_effect = "none", cluster, beta0 = 0
 ) {
   transformed <- ".ar_outcome"
   data[[transformed]] <- num(data[[outcome]]) - beta0 * num(data[[treatment]])
   rhs <- unique(c(excluded, included, controls, iv_fixed_effect_terms(fixed_effect)))
   fit <- stats::lm(stats::reformulate(rhs, response = transformed), data = data)
-  test <- clustered_joint_wald_test(fit, excluded, data$state_code_2001)
+  test <- clustered_joint_wald_test(fit, excluded, cluster)
   c(statistic = test[["statistic"]], p.value = test[["p.value"]])
 }
 
@@ -58,14 +58,16 @@ format_anderson_rubin_components <- function(components) {
 
 anderson_rubin_grid <- function(
   data, outcome, treatment, excluded, included = character(),
-  controls = character(), fixed_effect = "none", level = 0.95, points = 401L
+  controls = character(), fixed_effect = "none", cluster,
+  level = 0.95, points = 401L
 ) {
   scale <- stats::sd(num(data[[outcome]])) / stats::sd(num(data[[treatment]]))
   if (!is.finite(scale) || scale <= 0) scale <- 1
   beta <- seq(-10 * scale, 10 * scale, length.out = points)
   rows <- safe_bind_rows(lapply(beta, function(value) {
     test <- anderson_rubin_test(
-      data, outcome, treatment, excluded, included, controls, fixed_effect, value
+      data, outcome, treatment, excluded, included, controls, fixed_effect,
+      cluster = cluster, beta0 = value
     )
     data.frame(
       beta = value, statistic = test[["statistic"]], p.value = test[["p.value"]],
@@ -117,12 +119,14 @@ estimate_anderson_rubin_spec <- function(data, specification, level = 0.95, poin
       grid = data.frame()
     ))
   }
+  cluster <- iv_specification_cluster(x, specification)
   ar0 <- anderson_rubin_test(
-    x, outcome, treatment, excluded, included, controls, fixed_effect, beta0 = 0
+    x, outcome, treatment, excluded, included, controls, fixed_effect,
+    cluster = cluster, beta0 = 0
   )
   grid <- anderson_rubin_grid(
     x, outcome, treatment, excluded, included, controls, fixed_effect,
-    level = level, points = points
+    cluster = cluster, level = level, points = points
   )
   components <- anderson_rubin_acceptance_components(grid)
   grid$specification_id <- specification$specification_id

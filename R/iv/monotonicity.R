@@ -60,7 +60,10 @@ estimate_iv_monotonicity_shape <- function(data, specification, bins = 10L) {
     ))
   }
 
-  needed <- iv_specification_variables(specification, include_outcome = FALSE)
+  needed <- unique(c(
+    iv_specification_variables(specification, include_outcome = FALSE),
+    "state_code_2001"
+  ))
   missing <- setdiff(needed, names(data))
   if (length(missing)) {
     return(list(
