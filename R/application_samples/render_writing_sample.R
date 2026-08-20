@@ -64,7 +64,7 @@ inject_cover_note_values <- function(lines) {
   new_line <- paste0(
     "4. **Main result**: Current generated first-stage ($F=", f,
     "$) and second-stage estimates ($", beta, "$ pp, $p=", p,
-    "$) are reported in the included tables. Estimates are provisional pending a validated district-geometry join, repaired district matching, and state-FE/FD-2SLS redesign."
+    "$) are reported in the included tables. The preferred state-FE design is weakly identified, so the 2SLS point estimate is descriptive rather than credible causal evidence; weak-IV-robust diagnostics are retained with the replication outputs."
   )
   idx <- grep("^4[.] [*][*]Main result[*][*]:", lines)
   if (length(idx)) lines[idx] <- new_line
