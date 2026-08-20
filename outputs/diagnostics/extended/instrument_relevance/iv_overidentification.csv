@@ -1,0 +1,59 @@
+"specification_id","n_endogenous","n_excluded_instruments","test","status","statistic","df","p.value","reason"
+"unadjusted__nonzero_mean",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
+"unadjusted__distant_share",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
+"unadjusted__top3_legacy",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
+"unadjusted__nonzero_mean_hindi_urdu",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
+"unadjusted__nonzero_mean_hindi_urdu_separate",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
+"unadjusted__distance_shares_all",1,5,"sargan","estimated",12.7507311775643,4,0.0125602261010946,NA
+"unadjusted__distance_shares_all_unmapped",1,5,"sargan","estimated",14.9549975589321,4,0.0047954710946092,NA
+"unadjusted__distance_shares_mapped",1,5,"sargan","estimated",17.3693086194027,4,0.00163827453001907,NA
+"region_main__nonzero_mean",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
+"region_main__distant_share",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
+"region_main__top3_legacy",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
+"region_main__nonzero_mean_hindi_urdu",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
+"region_main__nonzero_mean_hindi_urdu_separate",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
+"region_main__distance_shares_all",1,5,"sargan","estimated",12.0626938338917,4,0.0168910964376018,NA
+"region_main__distance_shares_all_unmapped",1,5,"sargan","estimated",12.5565375920025,4,0.0136587386941112,NA
+"region_main__distance_shares_mapped",1,5,"sargan","estimated",12.4462312694787,4,0.0143238507488084,NA
+"region_expanded__nonzero_mean",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
+"region_expanded__distant_share",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
+"region_expanded__top3_legacy",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
+"region_expanded__nonzero_mean_hindi_urdu",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
+"region_expanded__nonzero_mean_hindi_urdu_separate",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
+"region_expanded__distance_shares_all",1,5,"sargan","estimated",13.323570375066,4,0.00979836074975111,NA
+"region_expanded__distance_shares_all_unmapped",1,5,"sargan","estimated",14.9995319884738,4,0.00470218793166898,NA
+"region_expanded__distance_shares_mapped",1,5,"sargan","estimated",15.0645213131633,4,0.00456924952186082,NA
+"state_main__nonzero_mean",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
+"state_main__distant_share",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
+"state_main__top3_legacy",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
+"state_main__nonzero_mean_hindi_urdu",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
+"state_main__nonzero_mean_hindi_urdu_separate",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
+"state_main__distance_shares_all",1,5,"sargan","estimated",16.4121543928876,4,0.00251316248272933,NA
+"state_main__distance_shares_all_unmapped",1,5,"sargan","estimated",15.3182827882155,4,0.00408462308645142,NA
+"state_main__distance_shares_mapped",1,5,"sargan","estimated",10.0954396865349,4,0.0388503370055647,NA
+"state_expanded__nonzero_mean",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
+"state_expanded__distant_share",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
+"state_expanded__top3_legacy",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
+"state_expanded__nonzero_mean_hindi_urdu",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
+"state_expanded__nonzero_mean_hindi_urdu_separate",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
+"state_expanded__distance_shares_all",1,5,"sargan","estimated",15.206935652168,4,0.00429071253177505,NA
+"state_expanded__distance_shares_all_unmapped",1,5,"sargan","estimated",14.4792931181739,4,0.0059124847207237,NA
+"state_expanded__distance_shares_mapped",1,5,"sargan","estimated",9.33234018583657,4,0.0533086500008387,NA
+"absorption__region_fe",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
+"absorption__state_fe",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
+"absorption__census_controls",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
+"absorption__expanded_controls",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
+"absorption__region_fe_main_without_human_capital",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
+"absorption__state_fe_main_without_human_capital",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
+"absorption__region_fe_expanded_without_human_capital",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
+"absorption__state_fe_expanded_without_human_capital",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
+"absorption__region_fe_plus_basic_scale_geography",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
+"absorption__region_fe_plus_social_composition",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
+"absorption__region_fe_plus_human_capital",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
+"absorption__region_fe_plus_demography",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
+"absorption__region_fe_plus_economic_structure",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
+"absorption__state_fe_plus_basic_scale_geography",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
+"absorption__state_fe_plus_social_composition",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
+"absorption__state_fe_plus_human_capital",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
+"absorption__state_fe_plus_demography",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
+"absorption__state_fe_plus_economic_structure",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
