@@ -2,7 +2,7 @@
 "first_stage_joint_f","relevance",FALSE,FALSE,1,Inf,TRUE
 "partial_r_squared","relevance",FALSE,FALSE,1,Inf,TRUE
 "balance_covariates","independence",FALSE,FALSE,1,Inf,TRUE
-"balance_joint","independence",FALSE,FALSE,1,Inf,TRUE
+"balance_joint","independence",FALSE,FALSE,1,1,TRUE
 "anderson_rubin","weak_identification",TRUE,FALSE,1,Inf,TRUE
 "monotonicity_shape","monotonicity",FALSE,FALSE,1,1,TRUE
 "overidentification","overidentification",TRUE,TRUE,2,Inf,TRUE

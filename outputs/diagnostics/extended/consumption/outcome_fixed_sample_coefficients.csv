@@ -1,4 +1,4 @@
 "model","term","estimate","std.error","statistic","p.value","status","reason","outcome_specification","preferred","common_sample_n","ancova_baseline_estimate","ancova_baseline_std_error","ancova_baseline_p_value"
-"nominal_log_change","EMIE",-0.0377475882165679,0.141714716003694,-0.266363220990994,0.790064668493736,"estimated",NA,"Nominal log change",FALSE,573,NA,NA,NA
-"real_log_change_preferred","EMIE",-0.0474944109470295,0.17917380071558,-0.265074529631829,0.791056688911077,"estimated",NA,"Person-weighted real log change",TRUE,573,NA,NA,NA
-"real_ancova","EMIE",-0.00145447482376881,0.0639894180742556,-0.0227299273464401,0.981874406008497,"estimated",NA,"Real endpoint ANCOVA",FALSE,573,0.316805265707691,0.468563768008807,0.499264570421237
+"nominal_log_change","emi_exposure_all_children_0708",-1.17301659450496,23.445404674524,-0.0500318339900341,0.96011615810122,"estimated",NA,"Nominal log change",FALSE,573,NA,NA,NA
+"real_log_change_preferred","emi_exposure_all_children_0708",-1.30180286385609,26.0269754671629,-0.0500174469176611,0.960127617452995,"estimated",NA,"Person-weighted real log change",TRUE,573,NA,NA,NA
+"real_ancova","emi_exposure_all_children_0708",-0.00767487517074046,0.0392276109699537,-0.195649823707567,0.84496054113737,"estimated",NA,"Real endpoint ANCOVA",FALSE,573,0.360035449726704,0.280181553993903,0.199360569887442

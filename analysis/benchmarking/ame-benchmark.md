@@ -28,7 +28,7 @@ full-data AME timing every public build. To reconcile the legacy
 20,000-row timing, the default tier now includes `num_samp = 20000` when
 the active model frame has that many rows; the largest sampled benchmark
 uses `num_samp =` 20,000, and the slowest recorded current run took
-0.036 seconds. This creates a documented deviation from the legacy
+0.033 seconds. This creates a documented deviation from the legacy
 prose: full-data AME timings are preserved only as legacy notes, not
 refreshed by the current pipeline.
 
@@ -92,12 +92,12 @@ analysis_table(
 
 | method | sample_size | n_observations | n_numeric_variables | centered_predict_calls_full_data | elapsed_seconds | status |
 |:---|---:|---:|---:|---:|---:|:---|
-| avg_slopes_centered_default | 200 | 114898 | 10 | 2297960 | 0.036 | failed |
-| avg_slopes_fdforward | 200 | 114898 | 10 | 2297960 | 0.010 | failed |
-| avg_slopes_centered_default | 2000 | 114898 | 10 | 2297960 | 0.007 | failed |
-| avg_slopes_fdforward | 2000 | 114898 | 10 | 2297960 | 0.007 | failed |
-| avg_slopes_centered_default | 20000 | 114898 | 10 | 2297960 | 0.007 | failed |
-| avg_slopes_fdforward | 20000 | 114898 | 10 | 2297960 | 0.007 | failed |
+| avg_slopes_centered_default | 200 | 114898 | 10 | 2297960 | 0.033 | failed |
+| avg_slopes_fdforward | 200 | 114898 | 10 | 2297960 | 0.008 | failed |
+| avg_slopes_centered_default | 2000 | 114898 | 10 | 2297960 | 0.005 | failed |
+| avg_slopes_fdforward | 2000 | 114898 | 10 | 2297960 | 0.005 | failed |
+| avg_slopes_centered_default | 20000 | 114898 | 10 | 2297960 | 0.005 | failed |
+| avg_slopes_fdforward | 20000 | 114898 | 10 | 2297960 | 0.005 | failed |
 
 Current AME benchmark attempts
 
@@ -106,12 +106,12 @@ ame_methods[, intersect(c("method", "sample_size", "elapsed_seconds", "status", 
 ```
 
                            method sample_size elapsed_seconds status
-    1 avg_slopes_centered_default         200           0.036 failed
-    2        avg_slopes_fdforward         200           0.010 failed
-    3 avg_slopes_centered_default        2000           0.007 failed
-    4        avg_slopes_fdforward        2000           0.007 failed
-    5 avg_slopes_centered_default       20000           0.007 failed
-    6        avg_slopes_fdforward       20000           0.007 failed
+    1 avg_slopes_centered_default         200           0.033 failed
+    2        avg_slopes_fdforward         200           0.008 failed
+    3 avg_slopes_centered_default        2000           0.005 failed
+    4        avg_slopes_fdforward        2000           0.005 failed
+    5 avg_slopes_centered_default       20000           0.005 failed
+    6        avg_slopes_fdforward       20000           0.005 failed
                reason
     1 invalid formula
     2 invalid formula
@@ -137,9 +137,9 @@ analysis_table(
 
 | method | sample_size | elapsed_seconds | n_estimates | status | reason |
 |:---|---:|---:|:---|:---|:---|
-| avg_slopes_fdforward | 200 | 0.010 | NA | failed | invalid formula |
-| avg_slopes_fdforward | 2000 | 0.007 | NA | failed | invalid formula |
-| avg_slopes_fdforward | 20000 | 0.007 | NA | failed | invalid formula |
+| avg_slopes_fdforward | 200 | 0.008 | NA | failed | invalid formula |
+| avg_slopes_fdforward | 2000 | 0.005 | NA | failed | invalid formula |
+| avg_slopes_fdforward | 20000 | 0.005 | NA | failed | invalid formula |
 
 Forward-difference AME benchmark rows
 

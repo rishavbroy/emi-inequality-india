@@ -21,8 +21,6 @@
 "outputs/figures/main/map_region.png","map_region","png"
 "outputs/figures/main/map_linguistic_distance.pdf","map_linguistic_distance","pdf"
 "outputs/figures/main/map_linguistic_distance.png","map_linguistic_distance","png"
-"outputs/figures/main/map_preferred_linguistic_distance.pdf","map_preferred_linguistic_distance","pdf"
-"outputs/figures/main/map_preferred_linguistic_distance.png","map_preferred_linguistic_distance","png"
 "outputs/figures/main/map_residual_emi_exposure.pdf","map_residual_emi_exposure","pdf"
 "outputs/figures/main/map_residual_emi_exposure.png","map_residual_emi_exposure","png"
 "outputs/figures/main/map_residual_linguistic_distance.pdf","map_residual_linguistic_distance","pdf"

@@ -91,7 +91,6 @@ missing_counts[order(-missing_counts$n_missing), c("missing_var", "n_missing", "
 
 ``` r
 analysis_table(missing_counts, "Current missingness counts")
-analysis_table(schooling_benefits, "Missingness in enrolled-child schooling-benefit fields")
 ```
 
 | missing_var                     | n_missing | pct_missing |
@@ -112,6 +111,21 @@ analysis_table(schooling_benefits, "Missingness in enrolled-child schooling-bene
 | Total probit-model with no NA   |    114898 |       0.903 |
 
 Current missingness counts
+
+``` r
+analysis_table(schooling_benefits, "Missingness in enrolled-child schooling-benefit fields")
+```
+
+| missing_var              | n_missing | pct_missing | scope             |
+|:-------------------------|----------:|------------:|:------------------|
+| IS_EDU_FREE              |         0 |       0.000 | enrolled_children |
+| TUTION_FEE_WAIVED        |         0 |       0.000 | enrolled_children |
+| RECD_SCHOLARSHIP_STIPEND |         0 |       0.000 | enrolled_children |
+| RECD_TXT_BOOKS           |        77 |       0.001 | enrolled_children |
+| RECD_STATIONERY          |       141 |       0.002 | enrolled_children |
+| MID_DAY_MEAL_ETC_RECD    |         2 |       0.000 | enrolled_children |
+
+Missingness in enrolled-child schooling-benefit fields
 
 ``` r
 analysis_table(regional_cost, "Regions with the most cost-variable missingness", max_rows = 20)
