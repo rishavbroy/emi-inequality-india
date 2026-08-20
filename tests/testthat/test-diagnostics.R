@@ -749,6 +749,40 @@ test_that("canonical IV registry drives alternative-distance specifications", {
   expect_true(all(registry$cluster == "state_code_2001"))
 })
 
+test_that("canonical IV registries preserve vector-valued specification fields", {
+  registry <- iv_specification_registry()
+  absorption <- iv_absorption_specification_registry()
+  combined <- iv_diagnostic_specification_registry()
+
+  expect_true(is.list(registry$controls))
+  expect_true(is.list(registry$included_language_controls))
+  expect_true(is.list(registry$excluded_instruments))
+  expect_true(is.list(absorption$controls))
+  expect_true(is.list(combined$controls))
+
+  main <- registry[
+    registry$adjustment_id == "state_main" &
+      registry$construction_id == "nonzero_mean",
+    , drop = FALSE
+  ]
+  expanded <- absorption[
+    absorption$adjustment_id == "state_fe_expanded_controls",
+    , drop = FALSE
+  ]
+  joint <- registry[
+    registry$adjustment_id == "state_main" &
+      registry$construction_id == "distance_shares_all",
+    , drop = FALSE
+  ]
+
+  expect_identical(main$controls[[1]], census_2001_main_controls())
+  expect_identical(expanded$controls[[1]], census_2001_absorption_controls())
+  expect_identical(
+    joint$excluded_instruments[[1]],
+    linguistic_distance_excluded_instruments("all")
+  )
+})
+
 test_that("diagnostic applicability follows identification structure", {
   registry <- iv_specification_registry()
   applicability <- iv_diagnostic_applicability(registry)

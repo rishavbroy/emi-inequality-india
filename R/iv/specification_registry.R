@@ -191,7 +191,9 @@ iv_specification_registry <- function(
       )
     }
   }
-  safe_bind_rows(rows)
+  out <- do.call(rbind, rows)
+  rownames(out) <- NULL
+  out
 }
 
 iv_absorption_adjustments <- function() {
@@ -267,7 +269,9 @@ iv_absorption_specification_registry <- function(
       sequence = i
     )
   })
-  safe_bind_rows(rows)
+  out <- do.call(rbind, rows)
+  rownames(out) <- NULL
+  out
 }
 
 iv_specification_signature <- function(specification) {
@@ -299,7 +303,7 @@ iv_diagnostic_specification_registry <- function(
     iv_specification_signature(absorption[i, , drop = FALSE])
   }, character(1))
   absorption <- absorption[!absorption_signatures %in% base_signatures, , drop = FALSE]
-  out <- safe_bind_rows(list(base, absorption))
+  out <- rbind(base, absorption)
   out$sequence <- seq_len(nrow(out))
   rownames(out) <- NULL
   out
