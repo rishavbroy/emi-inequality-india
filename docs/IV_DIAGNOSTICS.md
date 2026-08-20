@@ -1,45 +1,71 @@
 # Instrumental-variable diagnostic architecture
 
-The extended IV diagnostics use one canonical specification registry rather than reconstructing fixed effects, controls, language adjustments, and excluded instruments inside each diagnostic.
+The extended IV diagnostics use one canonical specification layer rather than reconstructing fixed effects, controls, language adjustments, and excluded instruments inside each diagnostic.
 
 `R/iv/specification_registry.R` defines:
 
-- the admissible fixed-effect terms;
-- the main and expanded Census-2001 adjustment sets;
-- the alternative linguistic-distance constructions;
-- a specification registry with treatment, outcome, excluded instruments, included language controls, clustering variable, and diagnostic tier;
-- a diagnostic registry and a saved applicability relation.
+- admissible fixed-effect terms;
+- Census-2001 control blocks and the first-stage absorption ladder;
+- the main and expanded adjustment sets;
+- alternative linguistic-distance constructions;
+- structural specification metadata with treatment, outcome, excluded instruments, included language controls, clustering variable, sample rule, panel variant, and diagnostic tier;
+- a de-duplicated diagnostic specification registry combining the alternative-instrument grid with the additional absorption/control-block specifications;
+- a diagnostic registry and saved applicability relation.
 
-The registry is intentionally not the Cartesian product of every imaginable project option. It contains the theoretically motivated adjustment and instrument constructions used by the current extended identification analysis.
+The registry is intentionally not the Cartesian product of every imaginable project option. It contains theoretically motivated designs already used by the project. Specifications that are algebraically identical are de-duplicated before the general diagnostic suite runs.
 
 ## Diagnostic families
 
 The current registry distinguishes:
 
-- **relevance**: joint excluded-instrument tests and partial R-squared;
-- **independence evidence**: specification-matched balance regressions for predetermined Census controls; an omnibus joint-balance test is recorded as pending rather than silently implied;
+- **relevance**: joint excluded-instrument tests, individual first-stage coefficients, and partial R-squared;
+- **independence evidence**: specification-matched covariate balance plus an omnibus holdout-covariate balance test;
 - **weak-identification-robust inference**: Anderson-Rubin tests and inverted grids for structural IV specifications;
-- **monotonicity**: applicability is recorded, while shape diagnostics remain pending;
-- **overidentification**: applicability is recorded when excluded instruments outnumber endogenous regressors, while a clustered robust test remains pending.
+- **monotonicity evidence**: residualized scalar first-stage shape, isotonic fit, binned means, and state-specific slopes;
+- **overidentification**: the standard Sargan overidentifying-restrictions diagnostic for specifications with more excluded instruments than endogenous regressors.
 
-Applicability and implementation are separate fields. `will_run` is true only when a diagnostic is both methodologically applicable and implemented, so a missing diagnostic is visible rather than silently skipped.
+Applicability and implementation are separate fields. `will_run` is true only when a diagnostic is methodologically applicable and implemented. Scalar first-stage shape is explicitly inapplicable to multi-instrument constructions rather than being silently coerced into a one-dimensional ordering.
 
 Balance is evidence about the independence argument, not a separate IV identifying assumption. Exogeneity and exclusion are not directly testable from observed data; historical balance, placebo outcomes, migration, geography, and related exercises provide cumulative evidence rather than proof.
 
+## Relevance and specification contract
+
+The alternative linguistic-distance grid and the richer first-stage absorption ladder now obtain their specification metadata from the same IV registry layer. Historical output files are retained where useful for compatibility, but fixed effects, controls, instrument sets, and control-block definitions are no longer independently declared inside the two diagnostic modules.
+
+The de-duplicated `iv_specification_registry.csv` records the general diagnostic universe. `iv_diagnostic_registry.csv` records diagnostic capabilities, and `iv_diagnostic_applicability.csv` records which specification-diagnostic pairs run and why others do not.
+
 ## Balance contract
 
-For each registered specification and predetermined Census variable, the balance diagnostic uses the same fixed effects, language controls, and nuisance controls as the IV specification, except that the variable being tested is removed from its own nuisance-control set. Excluded instruments are tested jointly with state-clustered covariance. Scalar-instrument specifications additionally report a standardized partial association.
+For each registered specification and predetermined Census variable, the covariate-level balance diagnostic uses the same fixed effects, language controls, and nuisance controls as the IV specification, except that the variable being tested is removed from its own nuisance-control set. Controls linked to the tested variable by an exact Census accounting identity are removed as well. For example, agricultural-worker share equals cultivator share plus agricultural-labourer share when all three use workers as the denominator, so the component shares are not conditioned on when agricultural-worker share is the balance outcome.
 
-The generated `instrument_balance.csv` is therefore a conditional specification-by-variable diagnostic, not a table of national raw correlations. An omnibus test of all balance covariates is not yet implemented and is marked explicitly in the applicability registry.
+The omnibus balance diagnostic asks whether predetermined covariates that are *not already conditioned on by the specification* jointly predict each excluded instrument, conditional on the specification's fixed effects, included language controls, and remaining nuisance controls. This avoids mechanically "testing" covariates that the specification has already partialled out. The test uses the same state-clustered Wald machinery as the other linear diagnostics.
+
+`instrument_balance.csv` contains the conditional specification-by-variable diagnostics. `instrument_balance_joint.csv` contains the omnibus holdout-covariate tests.
 
 ## Anderson-Rubin contract
 
-Anderson-Rubin inference is implemented once in `R/iv/weak_identification.R` and applied to all registered structural IV specifications. The alternative-distance outputs retain their historical filenames for compatibility, but the implementation is no longer tied to a single linguistic-distance diagnostic.
+Anderson-Rubin inference is implemented once in `R/iv/weak_identification.R` and applied to the de-duplicated structural diagnostic registry. Historical alternative-distance filenames are retained for compatibility, but the implementation is not tied to a single linguistic-distance construction.
 
-## Overidentification limitation
+The grid inversion is a numerical summary of the acceptance region over the recorded search range. Truncation flags identify cases where the accepted set reaches either edge of the grid; those should not be read as finite confidence-set endpoints.
 
-The applicability registry marks multi-instrument specifications as overidentified, but the project does not yet report a robust overidentifying-restrictions statistic. The built-in `ivreg` Sargan diagnostic is not used as a substitute because the production design relies on clustered inference and currently weak first stages. A future implementation should select and document an overidentification procedure whose covariance assumptions match the production design.
+## Overidentifying-restrictions contract
 
-## Monotonicity limitation
+Overidentified specifications use the Sargan statistic provided by `summary.ivreg(..., diagnostics = TRUE)`. The statistic is reported as an **overidentifying-restrictions diagnostic**, not as proof that the instruments are exogenous.
 
-Monotonicity/first-stage-shape diagnostics are not yet centralized. Planned diagnostics include residualized first-stage shape plots, state-specific slopes, ordered distance-share responses, and theoretically motivated instrument-subset checks. These are diagnostics for the plausibility of monotone treatment response; they cannot observe counterfactual district treatment responses directly.
+The Sargan statistic is the conventional homoskedastic diagnostic and is not state-cluster-robust or weak-identification-robust. That limitation is material in this project because several first stages are weak. Results therefore belong in the extended validity evidence alongside first-stage strength and Anderson-Rubin inference, not as a pass/fail validity gate. Exactly identified specifications are marked `not_applicable`.
+
+## Monotonicity / first-stage-shape contract
+
+Counterfactual monotonicity cannot be observed directly in this continuous district-level design. For scalar instruments the code therefore reports empirical implications of a monotone first stage rather than claiming to test the LATE assumption itself.
+
+For each applicable specification the diagnostic:
+
+1. residualizes the scalar excluded instrument and EMI exposure on the specification's included language controls, Census controls, and fixed effects;
+2. reports the residualized linear slope and Spearman rank correlation;
+3. fits base R's increasing isotonic regression and reports its fit relative to a constant;
+4. reports equal-count binned residualized first-stage means and the share of adjacent bin changes that are non-decreasing;
+5. reports state-specific residualized slopes where there is enough within-state variation.
+
+The multi-instrument distance-share constructions do not have a unique scalar ordering, so this shape diagnostic is marked inapplicable to them. Their individual and joint first-stage coefficients remain in the relevance outputs, and the language-decomposition/leave-one-language-out diagnostics continue to provide instrument-composition evidence.
+
+These shape summaries are diagnostics for plausibility. Negative local slopes or non-monotone bins can challenge a simple monotone-response story, but noisy signs do not identify latent "defiers."
