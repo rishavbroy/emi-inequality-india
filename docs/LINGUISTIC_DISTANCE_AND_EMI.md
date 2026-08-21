@@ -100,3 +100,12 @@ The pipeline now implements Shastry's second historical robustness construction 
 At district level, `ling_distance_dyen_noncognate_pct` is the Census-speaker-weighted mean among mapped non-Hindi/Urdu, non-English mother tongues. `ling_dyen_mapped_speaker_share` and `ling_dyen_unmapped_speaker_share` use the same nonreference population as their denominator. This construction has its own registry entries and coverage sensitivity, so it is evaluated by the same first-stage, weak-IV, Anderson--Rubin, balance, and monotonicity machinery as the Shastry 0--5 and Glottolog bases.
 
 Kogan (2017) remains review/tie-breaking evidence and is not numerically spliced into this Dyen variable. ASJP likewise remains a separate possible phonetic-distance diagnostic rather than a cognate-percentage substitute.
+
+
+## Reviewed Shastry/Jasanoff adjudication ledger
+
+`data/metadata/shastry_language_adjudications.csv` is the production review layer for identifiable Indo-European C-16 leaves that are absent from the published 0--5 concordance. Accepted rows require a mother-tongue code, an integer degree, a named Shastry anchor, an LSI classification, volume/year/page information, a stable source URL, an evidence summary, decision basis, and confidence. Rows whose historical classification is clear but whose corresponding Shastry anchor is not are retained as `review_required` with explicit sensitivity degrees and do not enter the preferred construction.
+
+The first accepted tranche deliberately covers cases where the historical classification is strong and agrees with the historical-Ethnologue review proxy: Bhojpuri, Magahi and Sadri inherit the published Bihari degree; Marwari, Malvi, Mewari, Mewati and Harauti inherit the published Rajasthani degree; Haryanvi, Bundeli and Khari Boli inherit the Hindi/Western-Hindi anchor. Eastern-Hindi varieties (including Awadhi, Bagheli and Chhattisgarhi), the Bhil transition complex, and Nimadi remain unresolved where the evidence does not identify one unique Figure-5/Table-1 anchor.
+
+`resolve_shastry_language_degrees()` is the single production resolver. The district builder, decomposition diagnostics, and extension review queue all call it, so accepted manual decisions cannot silently diverge across downstream analyses.

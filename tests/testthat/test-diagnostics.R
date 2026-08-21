@@ -1301,3 +1301,21 @@ test_that("linguistic basis comparison remains pairwise under partial lexical co
     1
   )
 })
+
+
+test_that("language decomposition uses the same adjudicated Shastry resolver as production", {
+  census <- data.frame(
+    state_std = "01",
+    district_std = "001",
+    mother_tongue_code = c("000001", "006045"),
+    mother_tongue = c("Hindi", "Bhojpuri"),
+    canonical_language = c("Hindi", "Hindi"),
+    spkr_tot = c(50, 50),
+    stringsAsFactors = FALSE
+  )
+  panel <- data.frame(district_panel_id = make_district_key("01", "001", 2001L))
+
+  rows <- prepare_language_rows_for_decomposition(census, panel)
+
+  expect_equal(rows$ling_degrees[rows$language_identity == "Bhojpuri"], 3)
+})

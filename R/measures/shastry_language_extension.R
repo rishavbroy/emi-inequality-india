@@ -1,11 +1,11 @@
 # This file is part of the EMI inequality research pipeline.
 
-crosswalk_direct_shastry_degree <- function(crosswalk, concordance = read_shastry_language_distance()) {
-  linguistic_distance_degrees(
-    crosswalk$mother_tongue,
-    crosswalk$canonical_language,
-    concordance
-  )
+crosswalk_direct_shastry_degree <- function(
+  crosswalk,
+  concordance = read_shastry_language_distance(),
+  adjudications = read_shastry_language_adjudications()
+) {
+  resolve_shastry_language_degrees(crosswalk, concordance, adjudications)
 }
 
 ethnologue_proxy_plain_labels <- function(ethnologue_proxy) {
@@ -32,11 +32,12 @@ build_shastry_extension_candidates <- function(
   glottolog,
   historical_linguistics,
   concordance = read_shastry_language_distance(),
-  lexical_index = read_lexical_language_index()
+  lexical_index = read_lexical_language_index(),
+  adjudications = read_shastry_language_adjudications()
 ) {
   validate_census_glottolog_crosswalk(crosswalk, glottolog$languoids)
   accepted <- grepl("^accepted_", plain_chr(crosswalk$review_status))
-  direct <- crosswalk_direct_shastry_degree(crosswalk, concordance)
+  direct <- crosswalk_direct_shastry_degree(crosswalk, concordance, adjudications)
   targets <- crosswalk[accepted & !is.finite(direct), , drop = FALSE]
   if (!nrow(targets)) return(data.frame())
 

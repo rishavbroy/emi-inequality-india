@@ -63,6 +63,7 @@ core_pipeline_targets <- list(
   tar_target(glottolog_5_3, { raw_data_preflight; read_glottolog_5_3(paths) }),
   tar_target(historical_linguistic_sources, { raw_data_preflight; read_historical_linguistic_sources(paths) }),
   tar_target(census_glottolog_crosswalk, read_census_language_glottolog_crosswalk()),
+  tar_target(shastry_language_adjudications, read_shastry_language_adjudications()),
   tar_target(raw_ilo_figures, { raw_data_preflight; list_ilo_figure_paths(paths) }, format = "file"),
   tar_target(raw_price_sources, { raw_data_preflight; read_price_sources(price_source_paths(paths)) }),
   tar_target(raw_census_2001_controls, { raw_data_preflight; read_census_2001_control_sources(paths) }),
@@ -124,7 +125,8 @@ core_pipeline_targets <- list(
       cfg,
       glottolog_5_3,
       census_glottolog_crosswalk,
-      historical_linguistic_sources
+      historical_linguistic_sources,
+      shastry_language_adjudications
     )
   ),
   tar_target(
@@ -558,7 +560,8 @@ extended_diagnostic_targets <- list(
     build_shastry_extension_candidates(
       census_glottolog_crosswalk,
       glottolog_5_3,
-      historical_linguistic_sources
+      historical_linguistic_sources,
+      adjudications = shastry_language_adjudications
     )
   ),
   tar_target(

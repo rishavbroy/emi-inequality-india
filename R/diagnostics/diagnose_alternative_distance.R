@@ -249,7 +249,7 @@ prepare_language_rows_for_decomposition <- function(census_2001_languages, panel
   if (!all(needed %in% names(rows))) stop("C-16 decomposition requires cleaned district-language rows.", call. = FALSE)
   rows$language_identity <- census_mother_tongue_identity(rows)
   if (!"ling_degrees" %in% names(rows)) {
-    rows$ling_degrees <- linguistic_distance_degrees(rows$language_identity, rows$canonical_language)
+    rows$ling_degrees <- resolve_shastry_language_degrees(rows)
   }
   rows$district_panel_id <- make_district_key(rows$state_std, rows$district_std, 2001L)
   panel_df <- if (inherits(panel, "sf")) sf::st_drop_geometry(panel) else as.data.frame(panel)
@@ -288,7 +288,7 @@ unmapped_language_decomposition <- function(census_2001_languages, panel) {
   rows <- std(safe_df(census_2001_languages), 2001L)
   rows$language_identity <- census_mother_tongue_identity(rows)
   if (!"ling_degrees" %in% names(rows)) {
-    rows$ling_degrees <- linguistic_distance_degrees(rows$language_identity, rows$canonical_language)
+    rows$ling_degrees <- resolve_shastry_language_degrees(rows)
   }
   rows$district_panel_id <- make_district_key(rows$state_std, rows$district_std, 2001L)
   panel_df <- if (inherits(panel, "sf")) sf::st_drop_geometry(panel) else as.data.frame(panel)

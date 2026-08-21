@@ -68,7 +68,8 @@ build_linguistic_distance_iv <- function(
   cfg = list(),
   glottolog = NULL,
   glottolog_crosswalk = NULL,
-  historical_linguistics = NULL
+  historical_linguistics = NULL,
+  shastry_adjudications = read_shastry_language_adjudications()
 ) {
   df <- std(safe_df(census_2001_languages), 2001L)
   if ("ling_degrees" %in% names(df)) validate_supplied_linguistic_distances(df$ling_degrees)
@@ -80,7 +81,7 @@ build_linguistic_distance_iv <- function(
 
   language <- census_mother_tongue_identity(df)
   if (!"ling_degrees" %in% names(df)) {
-    df$ling_degrees <- linguistic_distance_degrees(language, df$canonical_language)
+    df$ling_degrees <- resolve_shastry_language_degrees(df, adjudications = shastry_adjudications)
   }
   if (!is.null(glottolog) && !is.null(glottolog_crosswalk)) {
     df <- attach_glottolog_language_distance(df, glottolog, glottolog_crosswalk)

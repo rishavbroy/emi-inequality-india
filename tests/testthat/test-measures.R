@@ -1027,3 +1027,64 @@ test_that("Dyen district construction uses its own nonreference coverage denomin
   expect_equal(out$ling_dyen_mapped_speaker_share, 50)
   expect_equal(out$ling_dyen_unmapped_speaker_share, 50)
 })
+
+
+test_that("reviewed Shastry adjudications fill only previously unresolved mother tongues", {
+  rows <- data.frame(
+    mother_tongue_code = c("006045", "000001", "006008"),
+    mother_tongue = c("Bhojpuri", "Hindi", "Awadhi"),
+    canonical_language = c("Hindi", "Hindi", "Hindi"),
+    stringsAsFactors = FALSE
+  )
+  concordance <- data.frame(
+    canonical_language = "Hindi",
+    distance_from_hindi = 0,
+    stringsAsFactors = FALSE
+  )
+  adjudications <- data.frame(
+    mother_tongue_code = c("006045", "006008"),
+    mother_tongue = c("Bhojpuri", "Awadhi"),
+    assigned_shastry_degree = c(3, NA),
+    shastry_anchor = c("Bihari", ""),
+    lsi_classification = c("Bihari / Bhojpuri", "Eastern Hindi / Awadhi"),
+    lsi_volume = c("V(II)", "VI"),
+    lsi_year = c(1903, 1904),
+    lsi_pages = c("1; 186", "1-3"),
+    lsi_url = c("https://example.test/bhojpuri", "https://example.test/awadhi"),
+    lsi_evidence = c("Bhojpuri is Bihari", "Awadhi is Eastern Hindi"),
+    decision_basis = c("lsi", "ambiguous"),
+    confidence = c("high", "medium"),
+    sensitivity_degrees = c("", "0;2;3"),
+    review_status = c("accepted", "review_required"),
+    notes = "",
+    stringsAsFactors = FALSE
+  )
+
+  out <- resolve_shastry_language_degrees(rows, concordance, adjudications)
+
+  expect_equal(out, c(3, 0, NA))
+})
+
+test_that("accepted Shastry adjudications require auditable source evidence", {
+  path <- tempfile(fileext = ".csv")
+  x <- read_shastry_language_adjudications()
+  x <- x[x$review_status == "accepted", , drop = FALSE][1, , drop = FALSE]
+  x$lsi_url <- ""
+  utils::write.csv(x, path, row.names = FALSE)
+
+  expect_error(read_shastry_language_adjudications(path), "require lsi_url")
+})
+
+test_that("production Shastry adjudications are source-complete and conservative", {
+  x <- read_shastry_language_adjudications()
+  accepted <- x[x$review_status == "accepted", , drop = FALSE]
+  unresolved <- x[x$review_status == "review_required", , drop = FALSE]
+
+  expect_true(nrow(accepted) >= 10)
+  expect_true(all(is.finite(accepted$assigned_shastry_degree)))
+  expect_true(all(nzchar(accepted$lsi_url)))
+  expect_true(all(nzchar(accepted$lsi_pages)))
+  expect_true(all(nzchar(accepted$lsi_evidence)))
+  expect_true(all(!is.finite(unresolved$assigned_shastry_degree)))
+  expect_true(all(nzchar(unresolved$sensitivity_degrees)))
+})
