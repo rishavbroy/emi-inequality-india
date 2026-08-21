@@ -49,6 +49,28 @@ find_dise_machine_header_row <- function(preview) {
   hits[[1]]
 }
 
+repair_dise_machine_names <- function(names) {
+  names <- tolower(trimws(plain_chr(names)))
+  positions <- which(grepl("^enr_med[0-9]+_[0-9]+$", names))
+  if (length(positions)) {
+    categories <- suppressWarnings(as.integer(sub("^.*_", "", names[positions])))
+    if (any(!is.finite(categories))) {
+      stop("Could not decode DISE medium-enrollment category suffixes.", call. = FALSE)
+    }
+    new_block <- c(
+      TRUE,
+      diff(positions) != 1L |
+        categories[-1L] <= categories[-length(categories)]
+    )
+    slots <- cumsum(new_block)
+    if (max(slots) > 5L) {
+      stop("DISE enrollment sheet contains more than five ordered medium blocks.", call. = FALSE)
+    }
+    names[positions] <- paste0("enr_med", slots, "_", categories)
+  }
+  make.unique(names)
+}
+
 read_dise_machine_sheet <- function(path, sheet) {
   need_pkg("readxl", "archived DISE district-report-card workbooks")
   if (!sheet %in% readxl::excel_sheets(path)) {
@@ -61,7 +83,7 @@ read_dise_machine_sheet <- function(path, sheet) {
   out <- safe_df(readxl::read_excel(
     path, sheet = sheet, skip = header_row - 1L, .name_repair = "minimal"
   ))
-  names(out) <- make.unique(tolower(trimws(names(out))))
+  names(out) <- repair_dise_machine_names(names(out))
   required <- c("statecd", "statename", "distcd", "distname")
   missing <- setdiff(required, names(out))
   if (length(missing)) stop("DISE sheet is missing key columns: ", paste(missing, collapse = ", "), call. = FALSE)

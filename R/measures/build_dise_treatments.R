@@ -40,33 +40,57 @@ attach_dise_medium_identities <- function(district_year, crosswalk) {
 
   summarize_language <- function(row_id, language) {
     part <- slot_rows[slot_rows$.row == row_id, , drop = FALSE]
-    if (any(positive[slot_rows$.row == row_id] & !part$identity_known)) return(NA_real_)
-    sum(part$slot_enrollment[part$language_label == language], na.rm = TRUE)
+    language_rows <- part$identity_known & part$language_label == language
+    if (any(language_rows)) {
+      values <- part$slot_enrollment[language_rows]
+      if (any(!is.finite(values))) return(NA_real_)
+      return(sum(values))
+    }
+    unresolved_positive <- is.finite(part$slot_enrollment) &
+      part$slot_enrollment > 0 &
+      !part$identity_known
+    if (any(unresolved_positive)) return(NA_real_)
+    0
   }
   x$dise_medium_identity_complete <- vapply(seq_len(nrow(x)), function(i) {
     part <- slot_rows[slot_rows$.row == i, , drop = FALSE]
     !any(is.finite(part$slot_enrollment) & part$slot_enrollment > 0 & !part$identity_known)
   }, logical(1))
-  x$dise_english_enrollment <- vapply(seq_len(nrow(x)), summarize_language, numeric(1), language = "English")
-  x$dise_hindi_enrollment <- vapply(seq_len(nrow(x)), summarize_language, numeric(1), language = "Hindi")
+  x$dise_english_enrollment <- vapply(
+    seq_len(nrow(x)), summarize_language, numeric(1), language = "English"
+  )
+  x$dise_hindi_enrollment <- vapply(
+    seq_len(nrow(x)), summarize_language, numeric(1), language = "Hindi"
+  )
+  x$dise_english_identity_resolved <- is.finite(x$dise_english_enrollment)
+  x$dise_hindi_identity_resolved <- is.finite(x$dise_hindi_enrollment)
   x$dise_emi_enrollment_share_total <- ifelse(
-    x$dise_medium_identity_complete & is.finite(x$dise_total_enrollment) & x$dise_total_enrollment > 0,
+    x$dise_english_identity_resolved &
+      is.finite(x$dise_total_enrollment) &
+      x$dise_total_enrollment > 0,
     100 * x$dise_english_enrollment / x$dise_total_enrollment,
     NA_real_
   )
   x$dise_emi_enrollment_share_reported <- ifelse(
-    x$dise_medium_identity_complete & is.finite(x$dise_medium_reported_enrollment) & x$dise_medium_reported_enrollment > 0,
+    x$dise_english_identity_resolved &
+      is.finite(x$dise_medium_reported_enrollment) &
+      x$dise_medium_reported_enrollment > 0,
     100 * x$dise_english_enrollment / x$dise_medium_reported_enrollment,
     NA_real_
   )
   x$dise_hindi_enrollment_share_total <- ifelse(
-    x$dise_medium_identity_complete & is.finite(x$dise_total_enrollment) & x$dise_total_enrollment > 0,
+    x$dise_hindi_identity_resolved &
+      is.finite(x$dise_total_enrollment) &
+      x$dise_total_enrollment > 0,
     100 * x$dise_hindi_enrollment / x$dise_total_enrollment,
     NA_real_
   )
   eh <- x$dise_english_enrollment + x$dise_hindi_enrollment
   x$dise_english_share_english_hindi <- ifelse(
-    x$dise_medium_identity_complete & is.finite(eh) & eh > 0,
+    x$dise_english_identity_resolved &
+      x$dise_hindi_identity_resolved &
+      is.finite(eh) &
+      eh > 0,
     100 * x$dise_english_enrollment / eh,
     NA_real_
   )
@@ -91,7 +115,8 @@ build_dise_baseline_treatments <- function(district_year, medium_crosswalk) {
     "dise_emi_enrollment_share_total", "dise_emi_enrollment_share_reported",
     "dise_hindi_enrollment_share_total", "dise_english_share_english_hindi",
     "dise_private_enrollment_share", "dise_private_school_share",
-    "dise_medium_reporting_share", "dise_medium_identity_complete"
+    "dise_medium_reporting_share", "dise_medium_identity_complete",
+    "dise_english_identity_resolved", "dise_hindi_identity_resolved"
   )]
   names(out)[names(out) == "dise_emi_enrollment_share_total"] <- "dise_emi_enrollment_share_total_0708"
   names(out)[names(out) == "dise_emi_enrollment_share_reported"] <- "dise_emi_enrollment_share_reported_0708"
@@ -101,12 +126,14 @@ build_dise_baseline_treatments <- function(district_year, medium_crosswalk) {
   names(out)[names(out) == "dise_private_school_share"] <- "dise_private_school_share_0708"
   names(out)[names(out) == "dise_medium_reporting_share"] <- "dise_medium_reporting_share_0708"
   names(out)[names(out) == "dise_medium_identity_complete"] <- "dise_medium_identity_complete_0708"
+  names(out)[names(out) == "dise_english_identity_resolved"] <- "dise_english_identity_resolved_0708"
+  names(out)[names(out) == "dise_hindi_identity_resolved"] <- "dise_hindi_identity_resolved_0708"
 
   pool <- x[x$academic_year %in% c("2005-06", "2006-07", "2007-08"), , drop = FALSE]
   pool$state_key <- canonicalize_state_name(pool$state_name_dise)
   pool$district_key <- canonicalize_district_name(pool$district_name_dise)
   pool <- pool[
-    pool$dise_medium_identity_complete &
+    pool$dise_english_identity_resolved &
       stats::complete.cases(pool[c(
         "dise_english_enrollment", "dise_total_enrollment", "dise_medium_reported_enrollment"
       )]),

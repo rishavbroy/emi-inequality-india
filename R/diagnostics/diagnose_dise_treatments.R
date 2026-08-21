@@ -125,6 +125,8 @@ diagnose_dise_archive <- function(district_year, treatments, publication_checks 
       academic_year = x$academic_year[[1]],
       n_districts = nrow(x),
       n_identity_complete = sum(x$dise_medium_identity_complete %||% FALSE, na.rm = TRUE),
+      n_english_resolved = sum(x$dise_english_identity_resolved %||% FALSE, na.rm = TRUE),
+      n_hindi_resolved = sum(x$dise_hindi_identity_resolved %||% FALSE, na.rm = TRUE),
       median_medium_reporting_share = stats::median(num(x$dise_medium_reporting_share), na.rm = TRUE),
       stringsAsFactors = FALSE
     )

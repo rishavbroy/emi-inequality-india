@@ -8,6 +8,8 @@ The extended diagnostic pipeline uses archived NIEPA/NUEPA DISE district report-
 
 The raw 2005-06 through 2007-08 workbooks store five ordered medium-of-instruction enrollment slots but do not name the languages in the machine-readable field names. The corresponding published district report cards do name those ordered slots. `data/metadata/dise_medium_slot_crosswalk.csv` therefore records the report-derived district-year slot identities with PDF/page provenance. The pipeline never assumes that slot 1 is English nationally.
 
+The 2005-06 workbook also contains a duplicated machine-header block: the third ordered medium block is mislabeled as a second `enr_med2_*` block. The reader repairs medium names from their ordered column blocks before applying ordinary uniqueness repair, so the duplicated header cannot silently erase the third medium. This is a source-schema repair only; the report-card crosswalk still supplies the language identity.
+
 The 2009-10 `DRC 2009-10.pdf` is a provisional 635-district combined report. Its pages overlapping the final Volume I reproduce the published numeric report-card values and it is retained as a fallback/validation source for the otherwise unavailable Volume II; final Volume I remains preferred wherever both exist.
 
 ## Baseline administrative measures
@@ -26,11 +28,15 @@ The first four English-medium measures are genuine alternative treatment definit
 
 The extended diagnostic output also compares the 2007-08 administrative EMI shares with the NSS district measures on the common 0-100 scale, reporting raw Pearson/Spearman agreement, mean difference, RMSE, and correlation after residualizing both measurements by 2001 state.
 
+The DISE diagnostic saver follows the repository-wide diagnostic-manifest convention: it returns a data-frame manifest of written outputs rather than pretending that manifest itself is a `targets` file target. The individual CSVs are still written explicitly and are discoverable by the analysis-note helpers.
+
 All shares are constructed from counts and stored on the repository's established 0-100 percentage scale, matching the NSS EMI measures. Multi-year EMI is the ratio of pooled English enrollment to pooled denominator, never an unweighted average of annual shares.
 
 ## Medium reporting and missingness
 
-DISE publications warn that classificatory totals can differ because schools do not always answer every item. Accordingly, the pipeline preserves both total-enrollment and medium-reported denominators and records the medium-reporting share. English/Hindi measures are `NA` when a positive medium slot lacks a validated report-card identity; unknown language identity is never silently treated as zero English enrollment.
+DISE publications warn that classificatory totals can differ because schools do not always answer every item. Accordingly, the pipeline preserves both total-enrollment and medium-reported denominators and records the medium-reporting share.
+
+Language resolution is deliberately language-specific. If a report card explicitly identifies an English slot, English enrollment is usable even when some different positive medium slot remains unidentified. Conversely, English is coded as zero only when every positive slot is decoded and none is English. The same rule is applied separately to Hindi. `dise_medium_identity_complete` remains a stricter diagnostic describing whether every positive medium slot is known; it is not unnecessarily imposed on the English treatment.
 
 ## Geography
 

@@ -629,8 +629,7 @@ extended_diagnostic_targets <- list(
       dise_iv_permutations,
       dise_baseline_district_year,
       dise_baseline_treatments
-    ),
-    format = "file"
+    )
   ),
 
   tar_target(

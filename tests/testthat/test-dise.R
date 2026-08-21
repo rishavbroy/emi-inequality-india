@@ -21,6 +21,25 @@ test_that("DISE metadata registries are unique and baseline reports decode order
   expect_identical(kupwara$language_label[match(1:3, kupwara$medium_slot)], c("English", "Others", "Urdu"))
 })
 
+test_that("DISE machine-name repair recovers ordered medium blocks from duplicated archival headers", {
+  names <- c(
+    "statecd", "distcd",
+    paste0("enr_med1_", 1:5),
+    paste0("enr_med2_", 1:5),
+    paste0("enr_med2_", 1:5),
+    paste0("enr_med4_", 1:5),
+    paste0("enr_med5_", 1:5)
+  )
+
+  repaired <- repair_dise_machine_names(names)
+
+  expect_identical(
+    repaired[13:17],
+    paste0("enr_med3_", 1:5)
+  )
+  expect_equal(anyDuplicated(repaired), 0L)
+})
+
 test_that("DISE count extraction preserves denominator and medium-slot identities", {
   data <- data.frame(
     statecd = "01", statename = "JAMMU & KASHMIR",
@@ -34,6 +53,7 @@ test_that("DISE count extraction preserves denominator and medium-slot identitie
   expect_equal(extracted$dise_total_enrollment, 100)
   expect_equal(extracted$dise_private_enrollment_share, 30)
   expect_equal(extracted$dise_medium_slot_1_enrollment, 80)
+  expect_equal(extracted$dise_medium_slot_3_enrollment, 5)
   expect_equal(extracted$dise_medium_reported_enrollment, 100)
 
   crosswalk <- data.frame(
@@ -73,16 +93,43 @@ test_that("DISE percentage constructs use the same 0-100 scale as NSS EMI exposu
   expect_equal(labeled$dise_english_share_english_hindi, 40)
 })
 
+test_that("known English remains usable when an unrelated positive medium is unresolved", {
+  data <- data.frame(
+    academic_year = "2007-08",
+    state_name_dise = "Example State", district_name_dise = "Example District",
+    state_code_dise = "99", district_code_dise = "9901",
+    dise_total_enrollment = 100, dise_private_enrollment_share = 20,
+    dise_medium_slot_1_enrollment = 80, dise_medium_slot_2_enrollment = 20,
+    dise_medium_slot_3_enrollment = 0, dise_medium_slot_4_enrollment = 0,
+    dise_medium_slot_5_enrollment = 0, dise_medium_reported_enrollment = 100,
+    dise_medium_reporting_share = 100, stringsAsFactors = FALSE
+  )
+  crosswalk <- data.frame(
+    academic_year = "2007-08", state_report = "Example State",
+    district_report = "Example District", medium_slot = 1,
+    language_label = "English", stringsAsFactors = FALSE
+  )
+
+  out <- attach_dise_medium_identities(data, crosswalk)
+
+  expect_false(out$dise_medium_identity_complete)
+  expect_true(out$dise_english_identity_resolved)
+  expect_false(out$dise_hindi_identity_resolved)
+  expect_equal(out$dise_english_enrollment, 80)
+  expect_equal(out$dise_emi_enrollment_share_total, 80)
+  expect_true(is.na(out$dise_hindi_enrollment_share_total))
+})
+
 test_that("unknown positive DISE medium slots never become zero English enrollment", {
   data <- data.frame(
     academic_year = "2007-08",
     state_name_dise = "Example State", district_name_dise = "Example District",
     state_code_dise = "99", district_code_dise = "9901",
-    dise_total_enrollment = 100, dise_private_enrollment_share = 0.2,
+    dise_total_enrollment = 100, dise_private_enrollment_share = 20,
     dise_medium_slot_1_enrollment = 80, dise_medium_slot_2_enrollment = 20,
     dise_medium_slot_3_enrollment = 0, dise_medium_slot_4_enrollment = 0,
     dise_medium_slot_5_enrollment = 0, dise_medium_reported_enrollment = 100,
-    dise_medium_reporting_share = 1, stringsAsFactors = FALSE
+    dise_medium_reporting_share = 100, stringsAsFactors = FALSE
   )
   crosswalk <- data.frame(
     academic_year = "2007-08", state_report = "Example State",
@@ -91,6 +138,7 @@ test_that("unknown positive DISE medium slots never become zero English enrollme
   )
   out <- attach_dise_medium_identities(data, crosswalk)
   expect_false(out$dise_medium_identity_complete)
+  expect_false(out$dise_english_identity_resolved)
   expect_true(is.na(out$dise_english_enrollment))
   expect_true(is.na(out$dise_emi_enrollment_share_total))
 })
@@ -196,4 +244,36 @@ test_that("DISE publication checks compare parsed raw counts rather than replaci
   expect_true(out$matches)
   expect_equal(out$difference, 0)
   expect_equal(district_year$dise_medium_slot_1_enrollment, 92642)
+})
+
+test_that("DISE diagnostic saver returns the repository-standard output manifest", {
+  empty <- data.frame()
+  archive <- list(
+    year_summary = empty,
+    treatment_summary = empty,
+    publication_checks = empty
+  )
+  permutations <- list(
+    construct_registry = empty,
+    nss_validation = empty,
+    first_stage = empty,
+    first_stage_coefficients = empty,
+    weak_iv_outcomes = empty,
+    anderson_rubin_grid = empty,
+    overidentification = empty,
+    monotonicity_summary = empty,
+    monotonicity_bins = empty,
+    monotonicity_state_slopes = empty,
+    balance = empty,
+    joint_balance = empty
+  )
+  dir <- tempfile("dise-diagnostics-")
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+
+  manifest <- save_dise_diagnostics(archive, permutations, empty, empty, dir = dir)
+
+  expect_s3_class(manifest, "data.frame")
+  expect_setequal(names(manifest), c("path", "description"))
+  expect_equal(nrow(manifest), 17L)
+  expect_true(all(file.exists(manifest$path)))
 })
