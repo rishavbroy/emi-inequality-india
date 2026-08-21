@@ -29,7 +29,7 @@ census_language_match_terms <- function(mother_tongue, canonical_language) {
   out[!duplicated(out[c("normalized_name", "term_source")]), , drop = FALSE]
 }
 
-glottolog_alias_index <- function(glottolog, cldf) {
+glottolog_alias_index <- function(languoids, cldf) {
   if (!all(c("languages", "names") %in% names(cldf))) {
     stop("Glottolog CLDF bundle lacks language/name tables required for matching.", call. = FALSE)
   }
@@ -53,12 +53,12 @@ glottolog_alias_index <- function(glottolog, cldf) {
   out$language_glottocode <- vapply(
     out$source_glottocode,
     glottolog_language_node,
-    languoids = glottolog$languoids,
+    languoids = languoids,
     FUN.VALUE = character(1)
   )
   out <- out[!is.na(out$language_glottocode) & nzchar(out$language_glottocode), , drop = FALSE]
 
-  language_rows <- glottolog$languages[match(out$language_glottocode, cldf$languages$ID), , drop = FALSE]
+  language_rows <- cldf$languages[match(out$language_glottocode, cldf$languages$ID), , drop = FALSE]
   out$glottolog_name <- plain_chr(language_rows$Name)
   out$family_id <- plain_chr(language_rows$Family_ID)
   out$countries <- plain_chr(language_rows$Countries)
@@ -148,7 +148,7 @@ match_census_language_identity <- function(identity, aliases) {
 #' mapping without a separately reviewed metadata decision.
 build_census_glottolog_match_candidates <- function(census_2001_languages, glottolog, cldf) {
   identities <- census_language_identities(census_2001_languages)
-  aliases <- glottolog_alias_index(glottolog, cldf)
+  aliases <- glottolog_alias_index(glottolog$languoids, cldf)
   out <- safe_bind_rows(lapply(seq_len(nrow(identities)), function(i) {
     match_census_language_identity(identities[i, , drop = FALSE], aliases)
   }))
