@@ -53,3 +53,11 @@ planned for the main paper or appendix. The construction rules are described in
 - `R/prices/price_deflators.R` applies direct observations first, uses only dated rules from the crosswalk when a direct month is absent, and then multiplies temporal relatives by the Tendulkar spatial relative. Missing or overlapping rules are fatal, and provenance is retained through household attachment.
 
 - `R/prices/nss_period_deflators.R` converts NSS 64 and NSS 75 sub-rounds into their three constituent survey months and averages the validated monthly state-sector deflator. `R/measures/build_real_consumption.R` attaches that object to household Block 3 records before person-weighted district aggregation.
+
+## Archived DISE/UDISE district data
+
+- `dise_archive_registry.csv` inventories annual raw workbooks and report-card PDFs.
+- `dise_medium_slot_crosswalk.csv` records report-derived medium-of-instruction slot identities for 2005-06 through 2007-08.
+- `dise_publication_checks.csv` records small raw-to-publication validation anchors.
+
+See `docs/DISE_TREATMENTS.md` for construction and scope.

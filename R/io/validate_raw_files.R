@@ -14,11 +14,11 @@ read_manifest <- function(paths = build_paths()) {
 #' filter manifest rows for source or target
 #'
 #' @return Data frame of required manifest rows with absolute paths and existence status.
-manifest_rows <- function(paths, source_id = NULL, target_name = NULL) {
+manifest_rows <- function(paths, source_id = NULL, target_name = NULL, required_only = TRUE) {
   manifest <- read_manifest(paths)
   if (!is.null(source_id)) manifest <- manifest[manifest$source_id %in% source_id, , drop = FALSE]
   if (!is.null(target_name)) manifest <- manifest[manifest$target_name %in% target_name, , drop = FALSE]
-  if ("required_for_current_pipeline" %in% names(manifest)) {
+  if (isTRUE(required_only) && "required_for_current_pipeline" %in% names(manifest)) {
     manifest <- manifest[tolower(as.character(manifest$required_for_current_pipeline)) == "true", , drop = FALSE]
   }
   manifest$absolute_path <- path_project(paths, manifest$relative_path)
@@ -58,8 +58,12 @@ validate_raw_files <- function(paths = build_paths()) {
 #' require manifest files before reading raw data
 #'
 #' @return Data frame of matching manifest rows, invisibly if all required files exist.
-require_manifest_files <- function(paths, source_id = NULL, target_name = NULL) {
-  rows <- manifest_rows(paths, source_id = source_id, target_name = target_name)
+require_manifest_files <- function(
+  paths, source_id = NULL, target_name = NULL, required_only = TRUE
+) {
+  rows <- manifest_rows(
+    paths, source_id = source_id, target_name = target_name, required_only = required_only
+  )
   if (!nrow(rows)) stop("No matching rows in file_manifest.csv.", call. = FALSE)
   if (any(!rows$exists)) stop(missing_data_message(rows, source_id %||% target_name), call. = FALSE)
   rows

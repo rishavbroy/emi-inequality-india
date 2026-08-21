@@ -1,0 +1,15 @@
+academic_year,raw_file,zip_member,enrollment_sheet,school_sheet,analytic_role,report_primary,report_secondary,known_issue
+2002-03,raw_data/DRC Raw Data 2002-03.zip,rep-card(02-03).xls,,,inventory_only,,,
+2003-04,raw_data/Rawdata_2003-04.zip,Rawdata_2004/Raw2.xls,,,inventory_only,,,
+2004-05,raw_data/RawDataDistrict 2004-05.zip,RawDataDistrict2005/RawData2005.xls,,,inventory_only,,,
+2005-06,raw_data/rawdata 2005-06.zip,rawdata06.xls,Enrolment,School,baseline_treatment,reports/District report card 2005-06 vol-1.pdf,reports/District report card 2005-06 vol-2.pdf,
+2006-07,raw_data/DRCRawdata2006-07.zip,DRC_Rawdata_2006-07.xls,Enrolment,School,baseline_treatment,reports/DRC-06-07(Vol-I).pdf,reports/DRC06-07(Vol-II).pdf,
+2007-08,raw_data/DRC_Raw_0708.zip,DRC_Raw_0708.xls,Enrolment,School,baseline_treatment,reports/DRC 2007-08 (Vol-I).pdf,reports/DRC 2007-08 (Vol-II).pdf,
+2008-09,raw_data/DRC_Raw_Data 2008-09.xls,,Enrolment,School,dynamic_future,reports/DRC 2008-09 Volume I.pdf,reports/DRC 2008-09 Volume II.pdf,
+2009-10,raw_data/DRC_Raw_Data 2009-10.xls,,Enrolment,School,dynamic_future,reports/DRC2009-10-Vol-I_final-from_press.pdf,reports/DRC 2009-10.pdf,secondary_report_is_provisional_combined_all_district_file
+2010-11,raw_data/DRC_Raw_Data2010-11.xls,,Enrolment,School,dynamic_future,reports/I-District Report Card-2010-11-Final-1.pdf,reports/II-District Report Card-2010-11-Final-1.pdf,header_data_collision_kupwara_enrollment
+2011-12,raw_data/DRC_Raw_Data 2011-12.xlsx,,Enrolment,School,dynamic_future,reports/DistrictReportCards2011-12I.pdf,reports/DistrictReportCards2011-12II.pdf,
+2012-13,raw_data/DRC_Raw_Data 2012-13.xlsx,,Enrolment,School,dynamic_future,reports/DistrictReport-2012-13-I.pdf,reports/DistrictReport-2012-13-II.pdf,
+2013-14,raw_data/DRC_Raw_Data 2013-14.xlsx,,Enrolment,School,dynamic_future,reports/DistrictReport-2013-14-I.pdf,reports/DistrictReport-2013-14-II.pdf,
+2014-15,raw_data/DRC_Raw_Data 2015-16_new.xlsx,,2014-15_PY,2014-15_PY,dynamic_future,reports/DistrictReport-2014-15-I.pdf,reports/DistrictReport-2014-15-II.pdf,
+2015-16,raw_data/DRC_Raw_Data 2015-16_new.xlsx,,2015-16_1,2015-16_2,dynamic_future,reports/District_Report_Cards-2015-16-Vol-I.pdf,reports/District_Report_Cards-2015-16-Vol-II.pdf,

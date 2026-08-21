@@ -37,6 +37,28 @@ test_that("manifest and data_sources use canonical raw-data directories", {
   expect_true(all(canonical_dirs %in% sources$local_raw_path))
 })
 
+test_that("optional manifest rows can be requested without entering the public preflight", {
+  root <- tempfile("emi-optional-root-")
+  dir.create(file.path(root, "data", "metadata"), recursive = TRUE)
+  dir.create(file.path(root, "data", "raw", "optional"), recursive = TRUE)
+  manifest <- data.frame(
+    file_id = c("required", "optional"), source_id = c("required_source", "optional_source"),
+    required_for_current_pipeline = c("true", "false"),
+    relative_path = c("data/raw/required.csv", "data/raw/optional"),
+    expected_size_bytes = NA_real_, file_type = c("csv", "directory"),
+    reader_function = "reader", target_name = "target", notes = "",
+    stringsAsFactors = FALSE
+  )
+  utils::write.csv(manifest, file.path(root, "data", "metadata", "file_manifest.csv"), row.names = FALSE, na = "")
+
+  public <- manifest_rows(build_paths(root))
+  optional <- manifest_rows(build_paths(root), source_id = "optional_source", required_only = FALSE)
+
+  expect_identical(public$file_id, "required")
+  expect_identical(optional$file_id, "optional")
+  expect_true(optional$exists)
+})
+
 test_that("validate_raw_files resolves manifest paths from project root", {
   root <- tempfile("emi-manifest-root-")
   dir.create(file.path(root, "data", "metadata"), recursive = TRUE)
@@ -305,4 +327,20 @@ test_that("historical linguistic review sources are versioned with exact local c
   expect_match(sources$source_url[sources$source_id == "kogan_2017"], "10.31826/jlr-2017-143-411", fixed = TRUE)
   expect_match(sources$source_url[sources$source_id == "asjp_v21"], "10.5281/zenodo.16736409", fixed = TRUE)
   expect_match(sources$license_or_terms_notes[sources$source_id == "asjp_v21"], "CC BY 4.0", fixed = TRUE)
+})
+
+test_that("DISE archive is optional but fully documented", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
+  manifest <- read.csv(file.path(root, "data", "metadata", "file_manifest.csv"), stringsAsFactors = FALSE)
+  sources <- read.csv(file.path(root, "data", "metadata", "data_sources.csv"), stringsAsFactors = FALSE)
+  row <- manifest[manifest$source_id == "dise_district_report_cards", , drop = FALSE]
+  source <- sources[sources$source_id == "dise_district_report_cards", , drop = FALSE]
+
+  expect_equal(nrow(row), 1L)
+  expect_identical(tolower(as.character(row$required_for_current_pipeline)), "false")
+  expect_identical(row$relative_path, "data/raw/dise_internet_archive")
+  expect_equal(nrow(source), 1L)
+  expect_false(as.logical(source$used_in_current_pipeline))
+  expect_match(source$license_or_terms_notes, "redistribution rights are not asserted", ignore.case = TRUE)
+  expect_true(file.exists(file.path(root, "docs", "DISE_TREATMENTS.md")))
 })

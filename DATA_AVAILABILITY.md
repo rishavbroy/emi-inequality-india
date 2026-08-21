@@ -43,3 +43,7 @@ Large locality attributes and village/SHRID polygon archives are not ordinary pu
 - Preserve original filenames and downloaded formats. Derived UTF-8 or normalized tables belong under processed/interim outputs, not over the raw original.
 - Record the acquisition URL, access date, local path, and methodological role in [`data/metadata/data_sources.csv`](data/metadata/data_sources.csv).
 - A source's presence does not make it authoritative. Candidate sources must be corroborated according to [`docs/DISTRICT_LINEAGE.md`](docs/DISTRICT_LINEAGE.md).
+
+## DISE/UDISE district report-card archive
+
+Historical NIEPA/NUEPA DISE raw workbooks and report-card PDFs are local research inputs under `data/raw/dise_internet_archive/`. Redistribution rights are not asserted, so the raw archive is excluded from repository/Zenodo deposits. The repository tracks only provenance/decoding metadata and derived diagnostic outputs.
