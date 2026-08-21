@@ -1,0 +1,38 @@
+language,dyen_list_name,kogan_code,match_basis,source_note
+Hindi,Hindi,HND,direct,Kogan appendix p. 238; Dyen list name is exact.
+English,English ST,,direct_alias,Dyen standard English list.
+Assamese,,ASS,direct,Kogan appendix p. 238.
+Awadhi,,AWD,direct,Kogan appendix p. 238.
+Bengali,Bengali,BNG,direct,Kogan appendix p. 238; Dyen list name is exact.
+Lamani/Lambadi,,BNJ,documented_alias,Kogan BNJ is Banjari/Lambadi.
+Braj Bhasha,,BRJ,documented_alias,Kogan BRJ is Braj.
+Dogri,,DGR,direct,Kogan appendix p. 238.
+Dakhini,,DKH,direct,Kogan appendix p. 238.
+Domaaki,,DUM,direct,Kogan appendix p. 238.
+Gojri,,GJR,direct,Kogan appendix p. 238.
+Garhwali,,GRH,direct,Kogan appendix p. 238.
+Gujarati,Gujarati,GUJ,direct,Kogan appendix p. 238; Dyen list name is exact.
+Himachali,,HIM,direct,Kogan appendix p. 238.
+Hindko,,HNK,direct,Kogan appendix p. 238.
+Kachchi,,KCH,direct,Kogan appendix p. 238.
+Kashmiri,Kashmiri,,direct,Dyen list name is exact.
+Konkani,,KNK,direct,Kogan appendix p. 238.
+Kotgarhi,,KOT,direct,Kogan appendix p. 238.
+Kului,,KUL,direct,Kogan appendix p. 238.
+Kumauni,,KUM,direct,Kogan appendix p. 238.
+Multani,Lahnda,LHD,documented_alias,Kogan identifies LHD as Lahnda (Multani); Dyen list is Lahnda.
+Maithili,,MAI,direct,Kogan appendix p. 238.
+Maldivian,,MAL,direct,Kogan appendix p. 238.
+Marathi,Marathi,MAR,direct,Kogan appendix p. 238; Dyen list name is exact.
+Mewati,,MEW,direct,Kogan appendix p. 238.
+Mandeali,,MND,direct,Kogan appendix p. 238.
+Nepali,Nepali List,NEP,direct_alias,Kogan appendix p. 238; Dyen source calls the list Nepali List.
+Oriya,,ORY,direct,Kogan appendix p. 238.
+Punjabi,Panjabi ST,PNJ,spelling_alias,Kogan appendix p. 238; Dyen source spells Panjabi.
+Pothohari,,PTH,direct,Kogan appendix p. 238.
+Parya,,PRY,direct,Kogan appendix p. 238.
+Rajasthani,,RAJ,direct,Kogan RAJ is Rajasthani (Marwari).
+Romany,,ROM,direct,Kogan appendix p. 238.
+Sindhi,,SND,direct,Kogan appendix p. 238.
+Sinhalese,Singhalese,SNG,spelling_alias,Kogan SNG is Sin(g)halese; Dyen source spells Singhalese.
+Wagdi,,WGD,direct,Kogan appendix p. 238.

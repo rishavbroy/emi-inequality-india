@@ -70,5 +70,7 @@ census2001_c08,census_2001_controls,true,data/raw/census_2001/education/C08,,dir
 census2001_c14,census_2001_controls,true,data/raw/census_2001/age/C14,,directory,custom,raw_census_2001_controls,Census 2001 age tables
 census2001_h09,census_2001_controls,true,data/raw/census_2001/housing/H09,,directory,custom,raw_census_2001_controls,Census 2001 lighting tables
 census2001_h13,census_2001_controls,false,data/raw/census_2001/housing/H13,,directory,custom,raw_census_2001_controls,Census 2001 banking and asset tables
-
 shrug_pca01_controls,census_2001_controls,true,data/raw/shrug/census_2001/shrug-pca01-csv.zip,,zip,custom,raw_census_2001_controls,SHRUG district-level Census 2001 PCA archive
+ethnologue_newick_proxy,ethnologue_newick_proxy,true,data/raw/ethnologue/ethnologue-newick-proportional=1.00.csv,464107,tsv,read_historical_linguistic_sources,historical_linguistic_sources,"Dediu lgfam-newick Ethnologue export. Despite .csv suffix it is tab-separated; use as a later Ethnologue review proxy, not as the exact 2008 Figure 6 topology."
+dyen1997_raw,dyen_1997,true,data/raw/cognates/dyen_kruskal_black_1997.txt,849705,txt,read_historical_linguistic_sources,historical_linguistic_sources,Archived 1997 Comparative Indo-European database with 200 meanings and explicit cognate/doubtful/not-cognate judgments.
+kogan2017_pdf,kogan_2017,true,data/raw/cognates/koganGenealogicalClassificationNew2017.pdf,400620,pdf,read_historical_linguistic_sources,historical_linguistic_sources,Kogan 2017 lexicostatistical paper and 35-language Swadesh appendix; retained as review evidence rather than parsed from PDF in production.

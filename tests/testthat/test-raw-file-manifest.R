@@ -242,3 +242,24 @@ test_that("Glottolog 5.3 source bundle is versioned and complete", {
   expect_match(direct_source$license_or_terms_notes, "CC BY 4.0", fixed = TRUE)
   expect_match(cldf_source$source_url, "18840967", fixed = TRUE)
 })
+
+
+test_that("historical linguistic review sources are versioned with exact local contracts", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
+  manifest <- read.csv(file.path(root, "data", "metadata", "file_manifest.csv"), stringsAsFactors = FALSE)
+  sources <- read.csv(file.path(root, "data", "metadata", "data_sources.csv"), stringsAsFactors = FALSE)
+
+  rows <- manifest[manifest$source_id %in% c("ethnologue_newick_proxy", "dyen_1997", "kogan_2017"), , drop = FALSE]
+  expect_setequal(rows$file_id, c("ethnologue_newick_proxy", "dyen1997_raw", "kogan2017_pdf"))
+  expect_true(all(tolower(as.character(rows$required_for_current_pipeline)) == "true"))
+  expect_equal(
+    rows$expected_size_bytes[match(c("ethnologue_newick_proxy", "dyen1997_raw", "kogan2017_pdf"), rows$file_id)],
+    c(464107, 849705, 400620)
+  )
+  expect_true(all(startsWith(rows$relative_path, "data/raw/")))
+  expect_equal(anyDuplicated(rows$relative_path), 0L)
+
+  proxy <- sources[sources$source_id == "ethnologue_newick_proxy", , drop = FALSE]
+  expect_match(proxy$notes, "not asserted to reproduce the exact Ethnologue vintage", fixed = TRUE)
+  expect_match(sources$source_url[sources$source_id == "kogan_2017"], "10.31826/jlr-2017-143-411", fixed = TRUE)
+})

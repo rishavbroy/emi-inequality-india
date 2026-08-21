@@ -61,6 +61,7 @@ core_pipeline_targets <- list(
   tar_target(raw_nss_2017_education, { raw_data_preflight; read_nss_2017_education(paths) }),
   tar_target(raw_census_2001, { raw_data_preflight; read_census_2001_mother_tongue(paths) }),
   tar_target(glottolog_5_3, { raw_data_preflight; read_glottolog_5_3(paths) }),
+  tar_target(historical_linguistic_sources, { raw_data_preflight; read_historical_linguistic_sources(paths) }),
   tar_target(census_glottolog_crosswalk, read_census_language_glottolog_crosswalk()),
   tar_target(raw_ilo_figures, { raw_data_preflight; list_ilo_figure_paths(paths) }, format = "file"),
   tar_target(raw_price_sources, { raw_data_preflight; read_price_sources(price_source_paths(paths)) }),
@@ -550,7 +551,16 @@ extended_diagnostic_targets <- list(
   ),
   tar_target(
     shastry_extension_candidates,
-    build_shastry_extension_candidates(census_glottolog_crosswalk, glottolog_5_3)
+    build_shastry_extension_candidates(
+      census_glottolog_crosswalk,
+      glottolog_5_3,
+      historical_linguistic_sources
+    )
+  ),
+  tar_target(
+    diag_ext_dyen_hindi_cognates,
+    save_dyen_hindi_cognates(historical_linguistic_sources$dyen_hindi),
+    format = "file"
   ),
   tar_target(
     diag_ext_shastry_extension_candidates,

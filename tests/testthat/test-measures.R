@@ -818,24 +818,24 @@ test_that("accepted non-Indo-European mappings apply Shastry degree five only", 
   expect_equal(out$ling_mapped_speaker_share, 100)
 })
 
-test_that("Indo-European nearest-anchor degrees remain review candidates", {
-  # The extension rule keys the pinned Glottolog Indo-European family indo1319.
+test_that("Indo-European extensions require historical review rather than Glottolog degree inference", {
   g <- data.frame(
-    id = c("indo1319", "hind1269", "target"),
+    id = c("indo1319", "hind1269", "nepal"),
     family_id = c("", "indo1319", "indo1319"),
     parent_id = c("", "indo1319", "indo1319"),
-    name = c("Indo-European", "Hindi", "Target"),
+    name = c("Indo-European", "Hindi", "Nepali"),
     bookkeeping = FALSE,
     level = c("family", "language", "language"),
-    iso639P3code = c("", "hin", "tar"),
+    iso639P3code = c("", "hin", "nep"),
     stringsAsFactors = FALSE
   )
   crosswalk <- data.frame(
     mother_tongue_code = c("000001", "000002"),
-    mother_tongue = c("Hindi", "Target"),
-    canonical_language = c("Hindi", "Target"),
-    language_glottocode = c("hind1269", "target"),
+    mother_tongue = c("Hindi", "Nepali"),
+    canonical_language = c("Hindi", "Nepali"),
+    language_glottocode = c("hind1269", "nepal"),
     family_id = "indo1319",
+    iso639P3code = c("hin", "nep"),
     match_basis = "manual",
     review_status = "accepted_manual",
     stringsAsFactors = FALSE
@@ -845,11 +845,78 @@ test_that("Indo-European nearest-anchor degrees remain review candidates", {
     distance_from_hindi = 0,
     stringsAsFactors = FALSE
   )
+  historical <- list(
+    ethnologue_proxy = list(
+      indo_european_tree = "('Hindi [i-hin]':1,'Nepali [i-nep]':1)'Indo-Aryan [i-]':1;"
+    ),
+    dyen_hindi = data.frame(
+      list_name = "Nepali List",
+      percent_cognates_with_hindi = 64.2,
+      stringsAsFactors = FALSE
+    )
+  )
+  lexical_index <- data.frame(
+    language = "Nepali", dyen_list_name = "Nepali List", kogan_code = "NEP",
+    match_basis = "direct", source_note = "test", stringsAsFactors = FALSE
+  )
 
   out <- build_shastry_extension_candidates(
-    crosswalk, list(languoids = g), concordance
+    crosswalk, list(languoids = g), historical, concordance, lexical_index
   )
+
+  expect_true(is.na(out$candidate_degree))
+  expect_identical(out$candidate_basis, "figure6_lsi_lexical_review")
+  expect_identical(out$ethnologue_proxy_status, "exact_mother_tongue")
+  expect_equal(out$dyen_cognate_pct_hindi, 64.2)
+  expect_identical(out$kogan_code, "NEP")
   expect_identical(out$review_status, "review_required")
-  expect_equal(out$candidate_degree, 0)
-  expect_identical(out$candidate_basis, "glottolog_nearest_shastry_anchor")
+})
+
+
+test_that("Dyen percentages exclude doubtful judgments from the denominator", {
+  lines <- c(
+    "COMPARATIVE INDOEUROPEAN DATABASE COLLECTED BY ISIDORE DYEN",
+    "a 001 ALL",
+    "b                      002",
+    "  001 01 Hindi           H",
+    "  001 02 Target          T",
+    "a 002 ASHES",
+    "b                      100",
+    "  002 01 Hindi           H",
+    "  002 02 Target          T",
+    "a 003 BARK",
+    "b                      002",
+    "  003 01 Hindi           H",
+    "b                      003",
+    "  003 02 Target          T"
+  )
+  parsed <- parse_dyen_1997_lines(lines)
+  parsed$lists <- unique(parsed$forms[c("list_number", "list_name")])
+
+  judgments <- dyen_pairwise_cognacy(parsed, "Hindi", "Target")
+  expect_setequal(judgments$status, c("cognate", "doubtful", "not_cognate"))
+  expect_equal(dyen_pairwise_cognate_percent(parsed, "Hindi", "Target"), 50)
+})
+
+test_that("Dyen Shastry benchmarks are an explicit methodological invariant", {
+  benchmark <- dyen_shastry_benchmarks()
+  x <- data.frame(
+    list_name = benchmark$list_name,
+    percent_cognates_with_hindi = benchmark$expected_percent,
+    stringsAsFactors = FALSE
+  )
+  expect_true(validate_dyen_shastry_benchmarks(x))
+  x$percent_cognates_with_hindi[x$list_name == "Punjabi ST"] <- 70
+  expect_error(validate_dyen_shastry_benchmarks(x), "do not reproduce Shastry")
+})
+
+test_that("Ethnologue proxy reader treats the downloaded CSV as tab-separated", {
+  path <- tempfile(fileext = ".csv")
+  writeLines(c(
+    "Family\tSuccess\tComments\tTree",
+    "Indo-European\tSUCCESS\tPath length proportional to the number of splits with atomic branch length = 1\t('Hindi [i-hin]':1);"
+  ), path)
+  out <- read_ethnologue_newick_proxy(path)
+  expect_identical(names(out$table), c("Family", "Success", "Comments", "Tree"))
+  expect_match(out$indo_european_tree, "Hindi", fixed = TRUE)
 })
