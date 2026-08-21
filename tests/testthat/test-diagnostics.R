@@ -784,13 +784,28 @@ test_that("alternative linguistic-distance registry covers scalar, nonlinear, an
     shares$included_language_controls,
     identical, logical(1), c("ling_unmapped_speaker_share", "native_english_share")
   )))
-  glottolog <- registry[registry$construction_id == "glottolog_mean", , drop = FALSE]
-  expect_true(all(glottolog$mapping_coverage_variable == "ling_glottolog_mapped_speaker_share"))
-  dyen <- registry[registry$construction_id == "dyen_noncognate", , drop = FALSE]
-  expect_true(all(dyen$mapping_coverage_variable == "ling_dyen_mapped_speaker_share"))
+  expected_coverage <- c(
+    nonzero_mean_sensitivity_low = "ling_sensitivity_mapped_speaker_share",
+    nonzero_mean_sensitivity_high = "ling_sensitivity_mapped_speaker_share",
+    glottolog_mean = "ling_glottolog_mapped_speaker_share",
+    glottolog_mean_shastry = "ling_glottolog_mapped_speaker_share",
+    dyen_noncognate = "ling_dyen_mapped_speaker_share",
+    dyen_noncognate_shastry = "ling_dyen_mapped_speaker_share"
+  )
+  for (construction_id in names(expected_coverage)) {
+    rows <- registry[registry$construction_id == construction_id, , drop = FALSE]
+    expect_true(all(
+      rows$mapping_coverage_variable == expected_coverage[[construction_id]]
+    ))
+  }
+
+  default_ids <- setdiff(
+    unique(registry$construction_id),
+    names(expected_coverage)
+  )
   expect_true(all(
     registry$mapping_coverage_variable[
-      !grepl("^(glottolog_|dyen_)", registry$construction_id)
+      registry$construction_id %in% default_ids
     ] == "ling_mapped_speaker_share"
   ))
 })
@@ -851,6 +866,7 @@ test_that("alternative linguistic-distance first stages use fixed support and jo
     unique(out$coverage_sensitivity$coverage_variable),
     c(
       "ling_mapped_speaker_share",
+      "ling_sensitivity_mapped_speaker_share",
       "ling_glottolog_mapped_speaker_share",
       "ling_dyen_mapped_speaker_share"
     )
