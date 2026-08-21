@@ -591,8 +591,23 @@ test_that("Glottolog bookkeeping branches are not valid distance endpoints", {
   )
 
   expect_true(validate_glottolog_genealogy(g))
+  expect_identical(glottolog_lineage("unclassified", g), character())
   expect_true(is.na(glottolog_language_node("unclassified", g)))
   expect_true(is.na(glottolog_edge_distance("unclassified", "hindi", g)))
+
+  cldf <- list(
+    languages = data.frame(
+      ID = g$id, Name = g$name, Glottocode = g$id, ISO639P3code = g$iso639P3code,
+      Level = g$level, Countries = c("", "IN", "IN", ""), Family_ID = g$family_id,
+      Language_ID = "", stringsAsFactors = FALSE
+    ),
+    names = data.frame(
+      ID = 1L, Language_ID = "unclassified", Name = "Test Alias", Provider = "test",
+      stringsAsFactors = FALSE
+    )
+  )
+  aliases <- glottolog_alias_index(g, cldf)
+  expect_false("unclassified" %in% aliases$language_glottocode)
 })
 
 test_that("native English is explicit rather than unresolved distance mass", {

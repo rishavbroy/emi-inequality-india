@@ -28,30 +28,17 @@ validate_glottolog_genealogy <- function(languoids) {
   invisible(TRUE)
 }
 
-#' Resolve a Glottolog dialect or language to its language-level node
-#'
-#' Family nodes are not valid Census-language endpoints.
-glottolog_language_node <- function(glottocode, languoids) {
+# Return the endpoint-to-root lineage only when it is genealogically usable.
+# Bookkeeping branches are administrative placeholders, not linguistic ancestry.
+glottolog_lineage <- function(glottocode, languoids) {
   id <- trimws(plain_chr(glottocode))
   if (length(id) != 1L || is.na(id) || !nzchar(id) || !id %in% languoids$id) {
-    return(NA_character_)
+    return(character())
   }
-  node <- id
-  while (nzchar(node)) {
-    row <- languoids[match(node, languoids$id), , drop = FALSE]
-    if ("bookkeeping" %in% names(row) && isTRUE(row$bookkeeping[[1]])) return(NA_character_)
-    if (identical(row$level[[1]], "language")) return(node)
-    if (identical(row$level[[1]], "family")) return(NA_character_)
-    node <- row$parent_id[[1]] %||% ""
-  }
-  NA_character_
-}
 
-glottolog_ancestor_path <- function(glottocode, languoids) {
-  node <- glottolog_language_node(glottocode, languoids)
-  if (is.na(node)) return(character())
   parent_by_id <- stats::setNames(languoids$parent_id, languoids$id)
   path <- character()
+  node <- id
   while (nzchar(node)) {
     row <- languoids[match(node, languoids$id), , drop = FALSE]
     if ("bookkeeping" %in% names(row) && isTRUE(row$bookkeeping[[1]])) return(character())
@@ -59,6 +46,28 @@ glottolog_ancestor_path <- function(glottocode, languoids) {
     node <- parent_by_id[[node]] %||% ""
   }
   path
+}
+
+#' Resolve a Glottolog dialect or language to its language-level node
+#'
+#' Family nodes and any descendants of bookkeeping branches are not valid
+#' Census-language endpoints.
+glottolog_language_node <- function(glottocode, languoids) {
+  path <- glottolog_lineage(glottocode, languoids)
+  if (!length(path)) return(NA_character_)
+  levels <- languoids$level[match(path, languoids$id)]
+  language <- which(levels == "language")
+  if (!length(language)) return(NA_character_)
+  path[[language[[1]]]]
+}
+
+glottolog_ancestor_path <- function(glottocode, languoids) {
+  path <- glottolog_lineage(glottocode, languoids)
+  if (!length(path)) return(character())
+  levels <- languoids$level[match(path, languoids$id)]
+  language <- which(levels == "language")
+  if (!length(language)) return(character())
+  path[language[[1]]:length(path)]
 }
 
 #' Unweighted Glottolog tree distance between two language-level nodes
