@@ -876,6 +876,8 @@ test_that("Indo-European extensions require historical review rather than Glotto
 test_that("Dyen parser ignores documentation examples and uses the data section", {
   lines <- c(
     "COMPARATIVE INDOEUROPEAN DATABASE COLLECTED BY ISIDORE DYEN",
+    "5. THE DATA",
+    "2. HISTORY OF THE DATA IN THIS FILE",
     "a 003 ANIMAL",
     "b                      207",
     "  003 01 Example         FORM",
@@ -904,6 +906,26 @@ test_that("Dyen parser ignores documentation examples and uses the data section"
   judgments <- dyen_pairwise_cognacy(parsed, "Hindi", "Target")
   expect_setequal(judgments$status, c("cognate", "doubtful", "not_cognate"))
   expect_equal(dyen_pairwise_cognate_percent(parsed, "Hindi", "Target"), 50)
+})
+
+test_that("Dyen data section uses the final exact marker after the table of contents", {
+  lines <- c(
+    "5. THE DATA",
+    "table-of-contents material",
+    "a 099 WRONG",
+    "b                      002",
+    "  099 01 Wrong           X",
+    "5. THE DATA",
+    "-----------",
+    "a 001 ALL",
+    "b                      002",
+    "  001 01 Hindi           H"
+  )
+
+  data <- dyen_data_lines(lines)
+
+  expect_identical(data[[1]], "a 001 ALL")
+  expect_false(any(grepl("WRONG", data, fixed = TRUE)))
 })
 
 test_that("Dyen record grammar does not mistake prose for data records", {

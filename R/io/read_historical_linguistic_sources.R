@@ -36,11 +36,15 @@ read_ethnologue_newick_proxy <- function(path) {
 }
 
 dyen_data_lines <- function(lines) {
-  marker <- which(trimws(lines) == "5. THE DATA")
-  if (length(marker) != 1L) {
-    stop("Dyen source must contain exactly one '5. THE DATA' section.", call. = FALSE)
+  markers <- which(trimws(lines) == "5. THE DATA")
+  if (!length(markers)) {
+    stop("Dyen source is missing the '5. THE DATA' section.", call. = FALSE)
   }
-  data <- lines[seq.int(marker[[1]] + 1L, length(lines))]
+
+  # The archived file repeats the section title in its table of contents.
+  # The final exact marker introduces the observations themselves.
+  marker <- tail(markers, 1L)
+  data <- lines[seq.int(marker + 1L, length(lines))]
   first_header <- which(grepl("^a [0-9]{3} ", data))[1]
   if (!is.finite(first_header)) stop("Dyen data section contains no meaning header.", call. = FALSE)
   data[seq.int(first_header, length(data))]
