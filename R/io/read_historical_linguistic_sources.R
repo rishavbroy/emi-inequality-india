@@ -35,6 +35,25 @@ read_ethnologue_newick_proxy <- function(path) {
   list(table = out, indo_european_tree = indo$Tree[[1]])
 }
 
+dyen_data_lines <- function(lines) {
+  marker <- which(trimws(lines) == "5. THE DATA")
+  if (length(marker) != 1L) {
+    stop("Dyen source must contain exactly one '5. THE DATA' section.", call. = FALSE)
+  }
+  data <- lines[seq.int(marker[[1]] + 1L, length(lines))]
+  first_header <- which(grepl("^a [0-9]{3} ", data))[1]
+  if (!is.finite(first_header)) stop("Dyen data section contains no meaning header.", call. = FALSE)
+  data[seq.int(first_header, length(data))]
+}
+
+dyen_record_type <- function(line) {
+  if (grepl("^a [0-9]{3} ", line)) return("header")
+  if (grepl("^b\\s+[0-9]{3}\\s*$", line)) return("subheader")
+  if (grepl("^c\\s+[0-9]{3}\\s+[23]\\s+[0-9]{3}\\s*$", line)) return("relationship")
+  if (grepl("^  [0-9]{3} [0-9]{2} ", line)) return("form")
+  "other"
+}
+
 parse_dyen_1997_lines <- function(lines) {
   current_meaning <- NA_integer_
   current_ccn <- NA_integer_
@@ -43,36 +62,41 @@ parse_dyen_1997_lines <- function(lines) {
   form_i <- 0L
   relationship_i <- 0L
 
-  for (line in lines) {
-    if (grepl("^a\\s+[0-9]{3}\\s", line)) {
-      current_meaning <- suppressWarnings(as.integer(substr(line, 3L, 5L)))
+  for (line in dyen_data_lines(lines)) {
+    type <- dyen_record_type(line)
+
+    if (identical(type, "header")) {
+      current_meaning <- as.integer(substr(line, 3L, 5L))
       current_ccn <- NA_integer_
       next
     }
-    if (grepl("^b", line) && is.finite(current_meaning)) {
-      match <- regmatches(line, regexpr("[0-9]{3}\\s*$", line))
-      current_ccn <- suppressWarnings(as.integer(trimws(match)))
+
+    if (identical(type, "subheader")) {
+      current_ccn <- as.integer(substr(line, 24L, 26L))
       next
     }
-    if (grepl("^c", line) && is.finite(current_meaning)) {
-      numbers <- regmatches(line, gregexpr("[0-9]+", line))[[1]]
-      if (length(numbers) >= 3L) {
-        values <- as.integer(tail(numbers, 3L))
-        relationship_i <- relationship_i + 1L
-        relationship_rows[[relationship_i]] <- data.frame(
-          meaning = current_meaning,
-          ccn1 = min(values[[1]], values[[3]]),
-          relationship = values[[2]],
-          ccn2 = max(values[[1]], values[[3]]),
-          stringsAsFactors = FALSE
-        )
+
+    if (identical(type, "relationship")) {
+      if (!is.finite(current_meaning)) {
+        stop("Dyen relationship row appears before a meaning header.", call. = FALSE)
       }
+      relationship_i <- relationship_i + 1L
+      relationship_rows[[relationship_i]] <- data.frame(
+        meaning = current_meaning,
+        ccn1 = as.integer(substr(line, 27L, 29L)),
+        relationship = as.integer(substr(line, 32L, 32L)),
+        ccn2 = as.integer(substr(line, 35L, 37L)),
+        stringsAsFactors = FALSE
+      )
       next
     }
-    if (startsWith(line, "  ") && is.finite(current_meaning) && is.finite(current_ccn)) {
-      meaning <- suppressWarnings(as.integer(trimws(substr(line, 3L, 5L))))
-      list_number <- suppressWarnings(as.integer(trimws(substr(line, 7L, 8L))))
-      if (!is.finite(meaning) || !is.finite(list_number)) next
+
+    if (identical(type, "form")) {
+      if (!is.finite(current_meaning) || !is.finite(current_ccn)) {
+        stop("Dyen form row appears before a complete header/subheader pair.", call. = FALSE)
+      }
+      meaning <- as.integer(substr(line, 3L, 5L))
+      list_number <- as.integer(substr(line, 7L, 8L))
       if (!identical(meaning, current_meaning)) {
         stop("Dyen form row does not match its current meaning header.", call. = FALSE)
       }
@@ -88,7 +112,7 @@ parse_dyen_1997_lines <- function(lines) {
   }
 
   forms <- safe_bind_rows(form_rows)
-  relationships <- safe_bind_rows(relationship_rows)
+  relationships <- unique(safe_bind_rows(relationship_rows))
   if (!nrow(forms)) stop("Dyen source contains no parsed form rows.", call. = FALSE)
   if (anyDuplicated(forms[c("meaning", "list_number")])) {
     stop("Dyen source contains duplicate meaning/list form rows.", call. = FALSE)
@@ -103,6 +127,15 @@ read_dyen_1997 <- function(path) {
   }
   parsed <- parse_dyen_1997_lines(lines)
   parsed$lists <- unique(parsed$forms[c("list_number", "list_name")])
+  if (!identical(sort(unique(parsed$forms$meaning)), seq_len(200L))) {
+    stop("Dyen source must contain exactly the 200 documented Swadesh meanings.", call. = FALSE)
+  }
+  if (nrow(parsed$lists) != 95L || length(unique(parsed$lists$list_number)) != 95L) {
+    stop("Dyen source must contain exactly the 95 documented speech-variety lists.", call. = FALSE)
+  }
+  if (nrow(parsed$forms) != 19000L) {
+    stop("Dyen source must contain one form record for each of 200 meanings x 95 lists.", call. = FALSE)
+  }
   parsed$path <- path
   parsed
 }

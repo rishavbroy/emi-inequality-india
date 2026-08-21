@@ -873,9 +873,16 @@ test_that("Indo-European extensions require historical review rather than Glotto
 })
 
 
-test_that("Dyen percentages exclude doubtful judgments from the denominator", {
+test_that("Dyen parser ignores documentation examples and uses the data section", {
   lines <- c(
     "COMPARATIVE INDOEUROPEAN DATABASE COLLECTED BY ISIDORE DYEN",
+    "a 003 ANIMAL",
+    "b                      207",
+    "  003 01 Example         FORM",
+    "both of the varieties have an unbroken history",
+    "classification (in Appendices 1 and 5 and Figure 1)",
+    "5. THE DATA",
+    "-----------",
     "a 001 ALL",
     "b                      002",
     "  001 01 Hindi           H",
@@ -893,9 +900,19 @@ test_that("Dyen percentages exclude doubtful judgments from the denominator", {
   parsed <- parse_dyen_1997_lines(lines)
   parsed$lists <- unique(parsed$forms[c("list_number", "list_name")])
 
+  expect_false(any(parsed$forms$list_name == "Example"))
   judgments <- dyen_pairwise_cognacy(parsed, "Hindi", "Target")
   expect_setequal(judgments$status, c("cognate", "doubtful", "not_cognate"))
   expect_equal(dyen_pairwise_cognate_percent(parsed, "Hindi", "Target"), 50)
+})
+
+test_that("Dyen record grammar does not mistake prose for data records", {
+  expect_identical(dyen_record_type("a 001 ALL"), "header")
+  expect_identical(dyen_record_type("b                      207"), "subheader")
+  expect_identical(dyen_record_type("c                         207  3  209"), "relationship")
+  expect_identical(dyen_record_type("  003 01 Irish A         FORM"), "form")
+  expect_identical(dyen_record_type("both of the varieties have an unbroken history"), "other")
+  expect_identical(dyen_record_type("classification (in Appendices 1 and 5 and Figure 1)"), "other")
 })
 
 test_that("Dyen Shastry benchmarks are an explicit methodological invariant", {

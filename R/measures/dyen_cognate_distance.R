@@ -39,9 +39,13 @@ dyen_pairwise_cognacy <- function(dyen, list_a, list_b) {
       (out$ccn_a >= 400L & out$ccn_a <= 499L)
   )
 
+  relationship_known <- !is.na(out$relationship)
+  related <- !same & relationship_known & out$relationship == 2L
+  doubtful_related <- !same & relationship_known & out$relationship == 3L
+
   out$status <- "not_cognate"
-  out$status[positive_same | (!same & out$relationship == 2L)] <- "cognate"
-  out$status[doubtful_same | (!same & out$relationship == 3L)] <- "doubtful"
+  out$status[positive_same | related] <- "cognate"
+  out$status[doubtful_same | doubtful_related] <- "doubtful"
   out
 }
 
