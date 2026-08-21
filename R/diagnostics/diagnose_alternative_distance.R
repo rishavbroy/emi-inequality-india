@@ -4,7 +4,10 @@ alternative_distance_adjustments <- function() iv_adjustment_sets()
 
 alternative_distance_constructions <- function() iv_instrument_constructions()
 
-alternative_distance_registry <- function() iv_specification_registry()
+alternative_distance_registry <- function(
+  outcome = "real_log_consumption_change",
+  treatment = preferred_iv_variables()$treatment
+) iv_specification_registry(outcome = outcome, treatment = treatment)
 
 alternative_distance_variables <- function() {
   constructions <- alternative_distance_constructions()
@@ -111,7 +114,7 @@ diagnose_alternative_distance_first_stages <- function(
   treatment = "emi_exposure_all_children_0708"
 ) {
   data <- prepare_alternative_distance_panel(panel, treatment)
-  registry <- alternative_distance_registry()
+  registry <- alternative_distance_registry(treatment = treatment)
   estimated <- lapply(seq_len(nrow(registry)), function(i) {
     estimate_alternative_distance_spec(data, registry[i, , drop = FALSE], treatment)
   })

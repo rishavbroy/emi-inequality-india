@@ -50,6 +50,45 @@ iv_specification_registry <- analysis_target_csv("diag_ext_alternative_distance_
 iv_overidentification <- analysis_target_csv("diag_ext_alternative_distance_first_stages", "iv_overidentification.csv")
 iv_monotonicity <- analysis_target_csv("diag_ext_alternative_distance_first_stages", "iv_monotonicity_summary.csv")
 iv_joint_balance <- analysis_target_csv("diag_ext_census_2001_controls", "instrument_balance_joint.csv")
+dise_treatment_summary <- analysis_target_csv("diag_ext_dise", "dise_treatment_summary.csv")
+dise_publication_checks <- analysis_target_csv("diag_ext_dise", "dise_publication_checks.csv")
+dise_nss_validation <- analysis_target_csv("diag_ext_dise", "dise_nss_validation.csv")
+dise_first_stage <- analysis_target_csv("diag_ext_dise", "dise_first_stage_permutations.csv")
+dise_weak_iv <- analysis_target_csv("diag_ext_dise", "dise_weak_iv_outcomes.csv")
+```
+
+## Administrative DISE treatment validation
+
+Archived DISE district report-card data provide an administrative measurement of English-medium enrollment that is independent of the NSS household treatment. Medium identities for the 2005-06 through 2007-08 raw enrollment slots come from the corresponding published district report cards rather than from slot position. The full diagnostic CSVs retain every registered instrument construction, fixed-effect choice, and control/absorption specification; the rendered tables below show the main nonzero-mean-distance comparisons compactly.
+
+```{r dise-treatment-validation}
+analysis_table(dise_publication_checks, "DISE raw-to-published report validation anchors", max_rows = 20)
+analysis_table(dise_treatment_summary, "DISE baseline treatment coverage and scale")
+analysis_table(dise_nss_validation, "NSS-DISE district EMI measurement agreement")
+dise_main_first_stage <- dise_first_stage[
+  dise_first_stage$construction_id == "nonzero_mean" &
+    dise_first_stage$adjustment_id %in% c(
+      "unadjusted", "region_main", "region_expanded", "state_main", "state_expanded"
+    ),
+  , drop = FALSE
+]
+analysis_table(
+  dise_main_first_stage,
+  "DISE constructs: preferred-distance first stages across fixed effects and controls",
+  max_rows = 50
+)
+dise_main_weak_iv <- dise_weak_iv[
+  dise_weak_iv$construction_id == "nonzero_mean" &
+    dise_weak_iv$adjustment_id %in% c(
+      "unadjusted", "region_main", "region_expanded", "state_main", "state_expanded"
+    ),
+  , drop = FALSE
+]
+analysis_table(
+  dise_main_weak_iv,
+  "Administrative EMI treatments: weak-IV-aware outcome estimates",
+  max_rows = 40
+)
 ```
 
 ## District-level treatment and instrument check

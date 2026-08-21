@@ -596,6 +596,43 @@ extended_diagnostic_targets <- list(
     save_census_glottolog_match_candidates(census_glottolog_match_candidates),
     format = "file"
   ),
+  tar_target(dise_archive_registry, read_dise_archive_registry(paths)),
+  tar_target(dise_medium_slot_crosswalk, read_dise_medium_slot_crosswalk(paths)),
+  tar_target(dise_publication_checks, read_dise_publication_checks(paths)),
+  tar_target(raw_dise_baseline, read_dise_baseline_archive(paths, dise_archive_registry)),
+  tar_target(
+    dise_baseline_district_year,
+    attach_dise_medium_identities(raw_dise_baseline, dise_medium_slot_crosswalk)
+  ),
+  tar_target(
+    dise_baseline_treatments,
+    build_dise_baseline_treatments(raw_dise_baseline, dise_medium_slot_crosswalk)
+  ),
+  tar_target(
+    district_panel_with_dise,
+    attach_dise_treatments_to_panel(district_panel, dise_baseline_treatments)
+  ),
+  tar_target(
+    dise_archive_diagnostics,
+    diagnose_dise_archive(
+      dise_baseline_district_year, dise_baseline_treatments, dise_publication_checks
+    )
+  ),
+  tar_target(
+    dise_iv_permutations,
+    diagnose_dise_iv_permutations(district_panel_with_dise)
+  ),
+  tar_target(
+    diag_ext_dise,
+    save_dise_diagnostics(
+      dise_archive_diagnostics,
+      dise_iv_permutations,
+      dise_baseline_district_year,
+      dise_baseline_treatments
+    ),
+    format = "file"
+  ),
+
   tar_target(
     alternative_distance_first_stages,
     augment_alternative_distance_diagnostics(

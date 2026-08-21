@@ -1,0 +1,199 @@
+test_that("DISE metadata registries are unique and baseline reports decode ordered slots", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
+  registry <- read.csv(file.path(root, "data", "metadata", "dise_archive_registry.csv"), stringsAsFactors = FALSE)
+  crosswalk <- read.csv(file.path(root, "data", "metadata", "dise_medium_slot_crosswalk.csv"), stringsAsFactors = FALSE)
+
+  expect_equal(anyDuplicated(registry$academic_year), 0L)
+  expect_setequal(
+    registry$academic_year[registry$analytic_role == "baseline_treatment"],
+    c("2005-06", "2006-07", "2007-08")
+  )
+  expect_true(all(crosswalk$medium_slot %in% 1:5))
+  expect_true(all(c("English", "Hindi") %in% crosswalk$language_label))
+  key <- with(crosswalk, paste(academic_year, state_report, district_report, medium_slot, sep = "|"))
+  expect_equal(anyDuplicated(key), 0L)
+
+  kupwara <- crosswalk[
+    crosswalk$academic_year == "2005-06" &
+      grepl("KUPWARA", crosswalk$district_report, fixed = TRUE),
+    , drop = FALSE
+  ]
+  expect_identical(kupwara$language_label[match(1:3, kupwara$medium_slot)], c("English", "Others", "Urdu"))
+})
+
+test_that("DISE count extraction preserves denominator and medium-slot identities", {
+  data <- data.frame(
+    statecd = "01", statename = "JAMMU & KASHMIR",
+    distcd = "0101", distname = "KUPWARA",
+    enr_govt1 = 70, enr_pvt1 = 30, enr_govt9 = 0, enr_pvt9 = 0,
+    enr_med1_1 = 60, enr_med1_2 = 20, enr_med2_1 = 10, enr_med2_2 = 5,
+    enr_med3_1 = 3, enr_med3_2 = 2,
+    stringsAsFactors = FALSE
+  )
+  extracted <- extract_dise_enrollment_measures(data, "2005-06")
+  expect_equal(extracted$dise_total_enrollment, 100)
+  expect_equal(extracted$dise_private_enrollment_share, 30)
+  expect_equal(extracted$dise_medium_slot_1_enrollment, 80)
+  expect_equal(extracted$dise_medium_reported_enrollment, 100)
+
+  crosswalk <- data.frame(
+    academic_year = rep("2005-06", 3),
+    state_report = rep("JAMMU & KASHMIR", 3),
+    district_report = rep("KUPWARA", 3),
+    medium_slot = 1:3,
+    language_label = c("English", "Others", "Urdu"),
+    stringsAsFactors = FALSE
+  )
+  labeled <- attach_dise_medium_identities(extracted, crosswalk)
+  expect_true(labeled$dise_medium_identity_complete)
+  expect_equal(labeled$dise_english_enrollment, 80)
+  expect_equal(labeled$dise_hindi_enrollment, 0)
+  expect_equal(labeled$dise_emi_enrollment_share_total, 80)
+})
+
+test_that("DISE percentage constructs use the same 0-100 scale as NSS EMI exposure", {
+  data <- data.frame(
+    statecd = "01", statename = "State", distcd = "0101", distname = "District",
+    enr_govt1 = 75, enr_pvt1 = 25,
+    enr_med1_1 = 40, enr_med2_1 = 60,
+    stringsAsFactors = FALSE
+  )
+  extracted <- extract_dise_enrollment_measures(data, "2007-08")
+  crosswalk <- data.frame(
+    academic_year = "2007-08", state_report = "State", district_report = "District",
+    medium_slot = 1:2, language_label = c("English", "Hindi"),
+    stringsAsFactors = FALSE
+  )
+  labeled <- attach_dise_medium_identities(extracted, crosswalk)
+
+  expect_equal(extracted$dise_private_enrollment_share, 25)
+  expect_equal(extracted$dise_medium_reporting_share, 100)
+  expect_equal(labeled$dise_emi_enrollment_share_total, 40)
+  expect_equal(labeled$dise_hindi_enrollment_share_total, 60)
+  expect_equal(labeled$dise_english_share_english_hindi, 40)
+})
+
+test_that("unknown positive DISE medium slots never become zero English enrollment", {
+  data <- data.frame(
+    academic_year = "2007-08",
+    state_name_dise = "Example State", district_name_dise = "Example District",
+    state_code_dise = "99", district_code_dise = "9901",
+    dise_total_enrollment = 100, dise_private_enrollment_share = 0.2,
+    dise_medium_slot_1_enrollment = 80, dise_medium_slot_2_enrollment = 20,
+    dise_medium_slot_3_enrollment = 0, dise_medium_slot_4_enrollment = 0,
+    dise_medium_slot_5_enrollment = 0, dise_medium_reported_enrollment = 100,
+    dise_medium_reporting_share = 1, stringsAsFactors = FALSE
+  )
+  crosswalk <- data.frame(
+    academic_year = "2007-08", state_report = "Example State",
+    district_report = "Example District", medium_slot = 1,
+    language_label = "Hindi", stringsAsFactors = FALSE
+  )
+  out <- attach_dise_medium_identities(data, crosswalk)
+  expect_false(out$dise_medium_identity_complete)
+  expect_true(is.na(out$dise_english_enrollment))
+  expect_true(is.na(out$dise_emi_enrollment_share_total))
+})
+
+test_that("pooled DISE EMI is a ratio of pooled counts and requires all three baseline years", {
+  years <- c("2005-06", "2006-07", "2007-08")
+  data <- data.frame(
+    academic_year = years,
+    state_name_dise = "State", district_name_dise = "District",
+    state_code_dise = "01", district_code_dise = "0101",
+    dise_government_enrollment = c(90, 180, 270),
+    dise_private_enrollment = c(10, 20, 30),
+    dise_total_enrollment = c(100, 200, 300),
+    dise_private_enrollment_share = c(.1, .1, .1),
+    dise_medium_slot_1_enrollment = c(20, 80, 180),
+    dise_medium_slot_2_enrollment = c(80, 120, 120),
+    dise_medium_slot_3_enrollment = 0, dise_medium_slot_4_enrollment = 0,
+    dise_medium_slot_5_enrollment = 0,
+    dise_medium_reported_enrollment = c(100, 200, 300),
+    dise_medium_reporting_share = 1,
+    dise_government_schools = 9, dise_private_schools = 1,
+    dise_total_schools = 10, dise_private_school_share = .1,
+    stringsAsFactors = FALSE
+  )
+  crosswalk <- do.call(rbind, lapply(years, function(year) data.frame(
+    academic_year = year, state_report = "State", district_report = "District",
+    medium_slot = 1:2, language_label = c("English", "Hindi"), stringsAsFactors = FALSE
+  )))
+  out <- build_dise_baseline_treatments(data, crosswalk)
+  expect_equal(out$dise_baseline_years_observed, 3L)
+  expect_equal(out$dise_emi_enrollment_share_total_0508_pooled, 100 * 280 / 600)
+  expect_false(isTRUE(all.equal(out$dise_emi_enrollment_share_total_0508_pooled, mean(c(20, 40, 60)))))
+})
+
+test_that("DISE construct registry separates treatments from mechanism outcomes", {
+  registry <- dise_construct_registry()
+  structural <- registry[registry$analysis_scope == "structural_iv", , drop = FALSE]
+  relevance <- registry[registry$analysis_scope == "relevance_only", , drop = FALSE]
+  expect_equal(nrow(structural), 4L)
+  expect_true(all(grepl("dise_emi_", structural$variable, fixed = TRUE)))
+  expect_setequal(
+    relevance$construct_id,
+    c("hindi_share_0708", "english_hindi_share_0708", "private_enrollment_share_0708", "private_school_share_0708")
+  )
+})
+
+test_that("DISE-NSS validation compares like-scaled enrolled measures and residualizes states", {
+  panel <- data.frame(
+    state_code_2001 = rep(c("01", "02"), each = 3),
+    dise_emi_enrollment_share_total_0708 = c(10, 20, 30, 40, 50, 60),
+    dise_emi_enrollment_share_reported_0708 = c(10, 20, 30, 40, 50, 60),
+    emi_share_enrolled_0708 = c(12, 18, 31, 39, 52, 58),
+    emi_exposure_all_children_0708 = c(8, 15, 25, 30, 42, 48),
+    stringsAsFactors = FALSE
+  )
+  out <- diagnose_dise_nss_validation(panel)
+  enrolled <- out[out$comparison == "enrolled_total_denominator", , drop = FALSE]
+
+  expect_equal(nrow(out), 3L)
+  expect_identical(enrolled$status[[1]], "estimated")
+  expect_equal(enrolled$n[[1]], 6L)
+  expect_gt(enrolled$pearson[[1]], 0.9)
+  expect_true(is.finite(enrolled$state_residual_pearson[[1]]))
+  expect_equal(enrolled$mean_difference[[1]], mean(
+    panel$dise_emi_enrollment_share_total_0708 - panel$emi_share_enrolled_0708
+  ))
+})
+
+test_that("alternative-distance registry carries the requested treatment through every permutation", {
+  registry <- alternative_distance_registry(treatment = "dise_emi_enrollment_share_total_0708")
+  expect_true(all(registry$treatment == "dise_emi_enrollment_share_total_0708"))
+  expect_setequal(unique(registry$fixed_effect), c("none", "region", "state"))
+  expect_setequal(unique(registry$construction_id), names(iv_instrument_constructions()))
+})
+
+
+test_that("DISE publication-check metadata references parsed DISE metric names", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
+  checks <- read.csv(
+    file.path(root, "data", "metadata", "dise_publication_checks.csv"),
+    stringsAsFactors = FALSE
+  )
+  expect_true(all(startsWith(checks$metric, "dise_")))
+  expect_setequal(
+    checks$metric,
+    paste0("dise_medium_slot_", 1:3, "_enrollment")
+  )
+})
+
+test_that("DISE publication checks compare parsed raw counts rather than replacing them", {
+  district_year <- data.frame(
+    academic_year = "2005-06", state_name_dise = "JAMMU & KASHMIR",
+    district_name_dise = "KUPWARA", dise_medium_slot_1_enrollment = 92642,
+    stringsAsFactors = FALSE
+  )
+  checks <- data.frame(
+    academic_year = "2005-06", state = "JAMMU & KASHMIR", district = "KUPWARA",
+    metric = "dise_medium_slot_1_enrollment", expected_value = 92642,
+    source_pdf = "report.pdf", source_page = 1, note = "anchor",
+    stringsAsFactors = FALSE
+  )
+  out <- dise_publication_check_values(district_year, checks)
+  expect_true(out$matches)
+  expect_equal(out$difference, 0)
+  expect_equal(district_year$dise_medium_slot_1_enrollment, 92642)
+})
