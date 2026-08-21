@@ -1248,3 +1248,52 @@ test_that("final high-mass adjudications distinguish accepted from irreducible a
   expect_equal(out[1:9], c(1, 1, 0, 0, 0, 1, 2, 2, 2))
   expect_true(all(is.na(out[10:13])))
 })
+
+
+test_that("ASJP reader gives the same forms from text and Zenodo-style archive", {
+  root <- tempfile("asjp-archive-")
+  dir.create(file.path(root, "lexibank-asjp-test", "raw"), recursive = TRUE)
+  text_path <- file.path(root, "lexibank-asjp-test", "raw", "lists.txt")
+  metadata <- sprintf(
+    " 1%8.2f%8.2f%12d   %3s   %3s",
+    27.50, 81.50, 4714000L, "awd", "awa"
+  )
+  writeLines(c(
+    "     2    28  1700     1    92    72",
+    "(I4,20X,10A1)",
+    "   1                    I",
+    "                                     ",
+    "a",
+    "                                     ",
+    "                                     ",
+    "AWADHI{IE.INDO|Indo-European,Indo-Aryan@Indo-European,Indo-Aryan}",
+    metadata,
+    "1 I\tmai //"
+  ), text_path)
+
+  zip_path <- tempfile(fileext = ".zip")
+  old <- setwd(root)
+  on.exit(setwd(old), add = TRUE)
+  utils::zip(
+    zipfile = zip_path,
+    files = file.path("lexibank-asjp-test", "raw", "lists.txt"),
+    flags = "-q"
+  )
+
+  from_text <- read_asjp_v21(text_path, list_names = "AWADHI", iso_codes = "awa")
+  from_zip <- read_asjp_v21(zip_path, list_names = "AWADHI", iso_codes = "awa")
+
+  expect_equal(from_zip, from_text)
+})
+
+test_that("ASJP archive requires exactly one raw lists member", {
+  root <- tempfile("asjp-bad-archive-")
+  dir.create(root)
+  writeLines("x", file.path(root, "not-lists.txt"))
+  zip_path <- tempfile(fileext = ".zip")
+  old <- setwd(root)
+  on.exit(setwd(old), add = TRUE)
+  utils::zip(zipfile = zip_path, files = "not-lists.txt", flags = "-q")
+
+  expect_error(asjp_source_lines(zip_path), "exactly one raw/lists.txt")
+})

@@ -159,7 +159,7 @@ read_historical_linguistic_sources <- function(paths = build_paths()) {
   asjp_index <- read_asjp_language_index()
   anchors <- asjp_shastry_anchors()
   asjp_forms <- read_asjp_v21(
-    historical_linguistic_file(rows, "asjp_v21_lists"),
+    historical_linguistic_file(rows, "asjp_v21_archive"),
     list_names = asjp_index$asjp_list_name,
     iso_codes = unique(c(asjp_index$asjp_iso639P3code, anchors$asjp_iso639P3code))
   )

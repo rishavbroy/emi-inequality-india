@@ -65,6 +65,43 @@ test_that("validate_raw_files resolves manifest paths from project root", {
   expect_true(all(grepl(paths$root, status$absolute_path, fixed = TRUE)))
 })
 
+test_that("multi-source missing-data messages are scalar and list paths once", {
+  root <- tempfile("emi-multi-source-root-")
+  dir.create(file.path(root, "data", "metadata"), recursive = TRUE)
+  dir.create(file.path(root, "data", "raw"), recursive = TRUE)
+  writeLines("ok", file.path(root, "data", "raw", "present-a.csv"))
+  manifest <- data.frame(
+    file_id = c("present_a", "missing_b"),
+    source_id = c("source_a", "source_b"),
+    required_for_current_pipeline = "true",
+    relative_path = c("data/raw/present-a.csv", "data/raw/missing-b.csv"),
+    expected_size_bytes = NA_real_,
+    file_type = "csv",
+    reader_function = "reader",
+    target_name = "target",
+    notes = "",
+    stringsAsFactors = FALSE
+  )
+  utils::write.csv(
+    manifest,
+    file.path(root, "data", "metadata", "file_manifest.csv"),
+    row.names = FALSE,
+    na = ""
+  )
+
+  error <- tryCatch(
+    require_manifest_files(build_paths(root), c("source_a", "source_b")),
+    error = identity
+  )
+  message <- conditionMessage(error)
+
+  expect_match(message, "source_a, source_b", fixed = TRUE)
+  expect_equal(
+    lengths(regmatches(message, gregexpr("data/raw/missing-b.csv", message, fixed = TRUE))),
+    1L
+  )
+})
+
 test_that("missing raw data fails through file_manifest message", {
   root <- tempfile("emi-missing-root-")
   dir.create(file.path(root, "data", "metadata"), recursive = TRUE)
@@ -250,11 +287,11 @@ test_that("historical linguistic review sources are versioned with exact local c
   sources <- read.csv(file.path(root, "data", "metadata", "data_sources.csv"), stringsAsFactors = FALSE)
 
   rows <- manifest[manifest$source_id %in% c("ethnologue_newick_proxy", "dyen_1997", "kogan_2017", "asjp_v21"), , drop = FALSE]
-  expect_setequal(rows$file_id, c("ethnologue_newick_proxy", "dyen1997_raw", "kogan2017_pdf", "asjp_v21_lists"))
+  expect_setequal(rows$file_id, c("ethnologue_newick_proxy", "dyen1997_raw", "kogan2017_pdf", "asjp_v21_archive"))
   expect_true(all(tolower(as.character(rows$required_for_current_pipeline)) == "true"))
   expect_equal(
-    rows$expected_size_bytes[match(c("ethnologue_newick_proxy", "dyen1997_raw", "kogan2017_pdf", "asjp_v21_lists"), rows$file_id)],
-    c(464107, 849705, 400620, 14302624)
+    rows$expected_size_bytes[match(c("ethnologue_newick_proxy", "dyen1997_raw", "kogan2017_pdf", "asjp_v21_archive"), rows$file_id)],
+    c(464107, 849705, 400620, 16238442)
   )
   expect_true(all(startsWith(rows$relative_path, "data/raw/")))
   expect_equal(anyDuplicated(rows$relative_path), 0L)

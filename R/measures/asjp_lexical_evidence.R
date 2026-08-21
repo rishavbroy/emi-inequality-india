@@ -89,8 +89,25 @@ asjp_parse_transcription <- function(line) {
   head(words, 2L)
 }
 
+asjp_source_lines <- function(path) {
+  if (!file.exists(path)) stop("Missing ASJP source: ", path, call. = FALSE)
+
+  if (tolower(tools::file_ext(path)) != "zip") {
+    return(readLines(path, warn = FALSE, encoding = "UTF-8"))
+  }
+
+  members <- utils::unzip(path, list = TRUE)$Name
+  lists <- members[grepl("(^|/)raw/lists[.]txt$", members)]
+  if (length(lists) != 1L) {
+    stop("ASJP archive must contain exactly one raw/lists.txt member.", call. = FALSE)
+  }
+  connection <- unz(path, lists[[1]], open = "r")
+  on.exit(close(connection), add = TRUE)
+  readLines(connection, warn = FALSE, encoding = "UTF-8")
+}
+
 read_asjp_v21 <- function(path, list_names = NULL, iso_codes = NULL) {
-  lines <- readLines(path, warn = FALSE, encoding = "UTF-8")
+  lines <- asjp_source_lines(path)
   if (!length(lines) || !grepl("^\\s*2\\s", lines[[1]])) {
     stop("ASJP v21 text file does not have the expected software header.", call. = FALSE)
   }

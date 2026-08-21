@@ -31,8 +31,10 @@ manifest_rows <- function(paths, source_id = NULL, target_name = NULL) {
 #' @return Character scalar suitable for an error message.
 missing_data_message <- function(rows, label = NULL) {
   missing <- rows[!rows$exists, , drop = FALSE]
+  label <- label %||% unique(rows$source_id)
+  label <- paste(unique(plain_chr(label)), collapse = ", ")
   paste0(
-    "Missing raw data for ", label %||% paste(unique(rows$source_id), collapse = ", "), ".\n",
+    "Missing raw data for ", label, ".\n",
     "The pipeline checks data/metadata/file_manifest.csv before reading raw data.\n",
     "Place these files at the listed paths, or edit the manifest if your local layout differs:\n",
     paste0("  - ", missing$relative_path, collapse = "\n"),
