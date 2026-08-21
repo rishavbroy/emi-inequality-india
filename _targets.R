@@ -570,6 +570,18 @@ extended_diagnostic_targets <- list(
     format = "file"
   ),
   tar_target(
+    diag_ext_asjp_review_anchor_distances,
+    save_asjp_review_anchor_distances(
+      historical_linguistic_sources$asjp_review_anchor_distances
+    ),
+    format = "file"
+  ),
+  tar_target(
+    diag_ext_asjp_review_summary,
+    save_asjp_review_summary(historical_linguistic_sources$asjp_review_summary),
+    format = "file"
+  ),
+  tar_target(
     diag_ext_shastry_extension_candidates,
     save_shastry_extension_candidates(shastry_extension_candidates),
     format = "file"

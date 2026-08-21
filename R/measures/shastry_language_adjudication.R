@@ -24,7 +24,12 @@ read_shastry_language_adjudications <- function(path = NULL) {
   out$mother_tongue_code <- sprintf("%06d", suppressWarnings(as.integer(out$mother_tongue_code)))
   if (anyDuplicated(out$mother_tongue_code)) stop("Shastry adjudication ledger has duplicate mother-tongue codes.", call. = FALSE)
 
-  accepted <- plain_chr(out$review_status) == "accepted"
+  status <- plain_chr(out$review_status)
+  if (any(!status %in% c("accepted", "frozen_unresolved"))) {
+    stop("Shastry adjudication ledger must be frozen: use accepted or frozen_unresolved.", call. = FALSE)
+  }
+  accepted <- status == "accepted"
+  frozen <- status == "frozen_unresolved"
   degree <- num(out$assigned_shastry_degree)
   if (any(accepted & (!is.finite(degree) | degree < 0 | degree > 5 | degree != round(degree)))) {
     stop("Accepted Shastry adjudications require an integer degree from zero through five.", call. = FALSE)
@@ -44,6 +49,14 @@ read_shastry_language_adjudications <- function(path = NULL) {
     if (any(lexical_required & missing)) {
       stop("Kogan-adjudicated Shastry rows require ", field, ".", call. = FALSE)
     }
+  }
+
+  if (any(frozen & is.finite(degree))) {
+    stop("Frozen unresolved Shastry adjudications cannot carry a production degree.", call. = FALSE)
+  }
+  frozen_notes <- plain_chr(out$notes)
+  if (any(frozen & (is.na(frozen_notes) | !nzchar(trimws(frozen_notes))))) {
+    stop("Frozen unresolved Shastry adjudications require an explicit reason.", call. = FALSE)
   }
 
   out$assigned_shastry_degree <- degree

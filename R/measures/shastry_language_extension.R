@@ -38,7 +38,9 @@ build_shastry_extension_candidates <- function(
   validate_census_glottolog_crosswalk(crosswalk, glottolog$languoids)
   accepted <- grepl("^accepted_", plain_chr(crosswalk$review_status))
   direct <- crosswalk_direct_shastry_degree(crosswalk, concordance, adjudications)
-  targets <- crosswalk[accepted & !is.finite(direct), , drop = FALSE]
+  reviewed <- plain_chr(crosswalk$mother_tongue_code) %in%
+    plain_chr(adjudications$mother_tongue_code)
+  targets <- crosswalk[accepted & !is.finite(direct) & !reviewed, , drop = FALSE]
   if (!nrow(targets)) return(data.frame())
 
   proxy_labels <- ethnologue_proxy_plain_labels(historical_linguistics$ethnologue_proxy)
@@ -47,9 +49,17 @@ build_shastry_extension_candidates <- function(
     historical_linguistics$dyen_hindi,
     lexical_index
   )
+  asjp <- historical_linguistics$asjp_review_summary
+  kogan <- historical_linguistics$kogan_anchor_similarity
 
   safe_bind_rows(lapply(seq_len(nrow(targets)), function(i) {
     row <- targets[i, , drop = FALSE]
+    kogan_row <- kogan_anchor_summary(kogan, evidence$kogan_code[[i]])
+    asjp_row <- asjp[
+      match(row$mother_tongue_code[[1]], asjp$mother_tongue_code),
+      ,
+      drop = FALSE
+    ]
     data.frame(
       mother_tongue_code = row$mother_tongue_code,
       mother_tongue = row$mother_tongue,
@@ -63,6 +73,15 @@ build_shastry_extension_candidates <- function(
       dyen_list_name = evidence$dyen_list_name[[i]],
       dyen_cognate_pct_hindi = evidence$dyen_cognate_pct_hindi[[i]],
       kogan_code = evidence$kogan_code[[i]],
+      kogan_nearest_anchor = kogan_row$nearest_anchor[[1]],
+      kogan_nearest_degree = kogan_row$nearest_degree[[1]],
+      kogan_nearest_similarity = kogan_row$nearest_similarity[[1]],
+      kogan_margin_pct = kogan_row$margin_pct[[1]],
+      asjp_nearest_anchor = if (nrow(asjp_row)) asjp_row$nearest_anchor[[1]] else NA_character_,
+      asjp_nearest_degree = if (nrow(asjp_row)) asjp_row$nearest_degree[[1]] else NA_real_,
+      asjp_nearest_ldnd = if (nrow(asjp_row)) asjp_row$nearest_ldnd[[1]] else NA_real_,
+      asjp_margin_ldnd = if (nrow(asjp_row)) asjp_row$margin_ldnd[[1]] else NA_real_,
+      asjp_status = if (nrow(asjp_row)) asjp_row$status[[1]] else "not_indexed",
       review_status = "review_required",
       stringsAsFactors = FALSE
     )

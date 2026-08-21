@@ -249,11 +249,11 @@ test_that("historical linguistic review sources are versioned with exact local c
   manifest <- read.csv(file.path(root, "data", "metadata", "file_manifest.csv"), stringsAsFactors = FALSE)
   sources <- read.csv(file.path(root, "data", "metadata", "data_sources.csv"), stringsAsFactors = FALSE)
 
-  rows <- manifest[manifest$source_id %in% c("ethnologue_newick_proxy", "dyen_1997", "kogan_2017"), , drop = FALSE]
-  expect_setequal(rows$file_id, c("ethnologue_newick_proxy", "dyen1997_raw", "kogan2017_pdf"))
+  rows <- manifest[manifest$source_id %in% c("ethnologue_newick_proxy", "dyen_1997", "kogan_2017", "asjp_v21"), , drop = FALSE]
+  expect_setequal(rows$file_id, c("ethnologue_newick_proxy", "dyen1997_raw", "kogan2017_pdf", "asjp_v21_lists"))
   expect_true(all(tolower(as.character(rows$required_for_current_pipeline)) == "true"))
   expect_equal(
-    rows$expected_size_bytes[match(c("ethnologue_newick_proxy", "dyen1997_raw", "kogan2017_pdf"), rows$file_id)],
+    rows$expected_size_bytes[match(c("ethnologue_newick_proxy", "dyen1997_raw", "kogan2017_pdf", "asjp_v21_lists"), rows$file_id)],
     c(464107, 849705, 400620)
   )
   expect_true(all(startsWith(rows$relative_path, "data/raw/")))

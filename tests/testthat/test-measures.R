@@ -1064,7 +1064,7 @@ test_that("reviewed Shastry adjudications fill only previously unresolved mother
     decision_basis = c("lsi", "ambiguous"),
     confidence = c("high", "medium"),
     sensitivity_degrees = c("", "0;2;3"),
-    review_status = c("accepted", "review_required"),
+    review_status = c("accepted", "frozen_unresolved"),
     notes = "",
     stringsAsFactors = FALSE
   )
@@ -1090,7 +1090,7 @@ test_that("accepted Shastry adjudications require auditable source evidence", {
 test_that("production Shastry adjudications are source-complete and conservative", {
   x <- read_shastry_language_adjudications()
   accepted <- x[x$review_status == "accepted", , drop = FALSE]
-  unresolved <- x[x$review_status == "review_required", , drop = FALSE]
+  unresolved <- x[x$review_status == "frozen_unresolved", , drop = FALSE]
 
   expect_true(nrow(accepted) >= 10)
   expect_true(all(is.finite(accepted$assigned_shastry_degree)))
@@ -1147,4 +1147,65 @@ test_that("second-tranche reviewed languages resolve to source-supported Shastry
     resolve_shastry_language_degrees(rows),
     c(3, 3, 1, 1, 1, 1, 1)
   )
+})
+
+
+test_that("Kogan anchor evidence reproduces published Table 1 cells", {
+  x <- read_kogan_2017_anchor_similarity()
+  expect_equal(x$similarity_pct[x$language_code == "AWD" & x$anchor_code == "HND"], 92)
+  expect_equal(x$similarity_pct[x$language_code == "AWD" & x$anchor_code == "PNJ"], 91)
+  expect_equal(x$similarity_pct[x$language_code == "DGR" & x$anchor_code == "PNJ"], 93)
+  expect_equal(x$similarity_pct[x$language_code == "WGD" & x$anchor_code == "GUJ"], 77)
+})
+
+test_that("ASJP transcription parser excludes loans, missing forms, and caps synonyms", {
+  expect_identical(asjp_parse_transcription("1 I\\t%loan, keep //"), "keep")
+  expect_length(asjp_parse_transcription("1 I\\ta, b, c //"), 2L)
+  expect_length(asjp_parse_transcription("1 I\\tXXX //"), 0L)
+})
+
+test_that("ASJP LDND is symmetric and respects the official 28-item threshold", {
+  make_list <- function(prefix, n = 30L) {
+    data.frame(
+      list_name = prefix, iso639P3code = prefix,
+      concept = asjp_core_meanings()[seq_len(n)],
+      form = paste0(prefix, seq_len(n)), stringsAsFactors = FALSE
+    )
+  }
+  a <- make_list("a")
+  b <- make_list("b")
+  expect_equal(asjp_ldnd(a, b)$ldnd, asjp_ldnd(b, a)$ldnd)
+  expect_true(is.finite(asjp_ldnd(a, b)$ldnd))
+  expect_true(is.na(asjp_ldnd(a[1:20, ], b)$ldnd))
+})
+
+test_that("preferred Shastry review ledger is frozen", {
+  x <- read_shastry_language_adjudications()
+  expect_setequal(unique(x$review_status), c("accepted", "frozen_unresolved"))
+  frozen <- x$review_status == "frozen_unresolved"
+  expect_true(all(!is.finite(x$assigned_shastry_degree[frozen])))
+  expect_true(all(nzchar(x$notes[frozen])))
+})
+
+test_that("final high-mass adjudications distinguish accepted from irreducible ambiguity", {
+  rows <- data.frame(
+    mother_tongue_code = c(
+      "006017", "006084", "006008", "006016", "006072",
+      "030007", "030006", "053006", "053002",
+      "006095", "006162", "006213", "006999"
+    ),
+    mother_tongue = c(
+      "Bagri Rajasthani", "Dhundhari", "Awadhi", "Bagheli/Baghel Khandi",
+      "Chhattisgarhi", "Bhili/Bhilodi", "Bhilali", "Khandeshi", "Ahirani",
+      "Garhwali", "Kumauni", "Pahari", "Others"
+    ),
+    canonical_language = c(
+      rep("Hindi", 5), "Bhili/Bhilodi", "Bhili/Bhilodi", "Khandeshi",
+      "Khandeshi", "Hindi", "Hindi", "Hindi", "Hindi"
+    ),
+    stringsAsFactors = FALSE
+  )
+  out <- resolve_shastry_language_degrees(rows)
+  expect_equal(out[1:9], c(1, 1, 0, 0, 0, 1, 2, 2, 2))
+  expect_true(all(is.na(out[10:13])))
 })

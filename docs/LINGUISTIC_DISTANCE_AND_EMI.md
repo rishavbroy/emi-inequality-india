@@ -118,3 +118,14 @@ The first accepted tranche deliberately covers cases where the historical classi
 The second conservative tranche adds Khortha/Khotta and Nagpuria to the Bihari degree-three anchor; Dogri and Multani to the Punjabi degree-one anchor; Gojri to degree one because its historical Mewati/Rajasthani and Kogan Hindko/Punjabi classifications disagree genealogically but imply the same Shastry degree; and Banjari/Lamani/Lambadi to degree one because Kogan's lexical matrix places the shared Banjari/Lambadi list closest among published anchors to Rajasthani and Gujarati. Eastern Hindi (Awadhi, Bagheli, Chhattisgarhi), the Bhil transition complex, Nimadi, and broad/composite labels remain unresolved unless evidence distinguishes their adjacent plausible degrees.
 
 The extension queue now contains only unresolved Indo-European rows. Non-Indo-European rows with accepted Glottolog identities are resolved centrally to degree five and therefore cannot simultaneously appear as production-mapped and diagnostic-unmapped.
+
+
+## Frozen preferred 0--5 mapping and ASJP v21
+
+The preferred Shastry/Jasanoff 0--5 mapping is now frozen. The adjudication ledger has only `accepted` and `frozen_unresolved` production states. A frozen unresolved row carries no degree and records why no unique published anchor is defensible. The extension queue excludes both states, so a nonempty queue now denotes a genuinely unreviewed accepted identity.
+
+ASJP v21 is read from the canonical Zenodo `raw/lists.txt` ASJP text format. The review module uses the 40 Holman core meanings, excludes `%`-marked loans and `XXX` missing forms, retains at most two synonyms, and applies the ASJP minimum of 28 attested core items. LDND is the average normalized Levenshtein distance for same-meaning forms divided by the different-meaning baseline. `asjp_review_anchor_distances.csv` preserves candidate-to-published-anchor comparisons and `asjp_review_summary.csv` reports the nearest and runner-up anchors. ASJP is evidence only: it never enters the district IV and never fills Dyen observations.
+
+The attached Kogan article is represented by `data/metadata/kogan_2017_anchor_similarity.csv`, a transcription of only the Table 1 candidate-to-published-anchor cells needed for adjudication. Production therefore does not parse a PDF and does not pretend the extracted table is a new lexical series.
+
+The final mapping accepts direct Rajasthani classifications (Bagri, Dhundhari, Nimadi); uses concordant Kogan/ASJP evidence from Awadhi to anchor the LSI Eastern-Hindi branch to Hindi while retaining degree 1 as the adjacent branch sensitivity; and uses historical classification plus clear ASJP tie-breaks for Bhili, Bhilali, and Khandeshi/Ahirani. Pahari aggregates, close Hindi/Punjabi/Nepali ties, Wagdi, Shina, Sanskrit, Halabi without an exact historical adjudication, and identity-ambiguous labels are deliberately frozen unresolved. Literal 100-percent row coverage is not a target.

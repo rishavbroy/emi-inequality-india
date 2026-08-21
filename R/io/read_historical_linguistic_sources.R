@@ -147,7 +147,7 @@ read_dyen_1997 <- function(path) {
 read_historical_linguistic_sources <- function(paths = build_paths()) {
   rows <- require_manifest_files(
     paths,
-    source_id = c("ethnologue_newick_proxy", "dyen_1997", "kogan_2017")
+    source_id = c("ethnologue_newick_proxy", "dyen_1997", "kogan_2017", "asjp_v21")
   )
   ethnologue <- read_ethnologue_newick_proxy(
     historical_linguistic_file(rows, "ethnologue_newick_proxy")
@@ -156,10 +156,22 @@ read_historical_linguistic_sources <- function(paths = build_paths()) {
   dyen_hindi <- dyen_hindi_cognate_table(dyen)
   validate_dyen_shastry_benchmarks(dyen_hindi)
 
+  asjp_index <- read_asjp_language_index()
+  anchors <- asjp_shastry_anchors()
+  asjp_forms <- read_asjp_v21(
+    historical_linguistic_file(rows, "asjp_v21_lists"),
+    list_names = asjp_index$asjp_list_name,
+    iso_codes = unique(c(asjp_index$asjp_iso639P3code, anchors$asjp_iso639P3code))
+  )
+  asjp_distances <- asjp_review_anchor_distances(asjp_forms, asjp_index)
+
   list(
     ethnologue_proxy = ethnologue,
     dyen = dyen,
     dyen_hindi = dyen_hindi,
-    kogan_pdf = historical_linguistic_file(rows, "kogan2017_pdf")
+    kogan_pdf = historical_linguistic_file(rows, "kogan2017_pdf"),
+    kogan_anchor_similarity = read_kogan_2017_anchor_similarity(),
+    asjp_review_anchor_distances = asjp_distances,
+    asjp_review_summary = asjp_review_summary(asjp_distances)
   )
 }
