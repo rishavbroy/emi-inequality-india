@@ -892,8 +892,7 @@ test_that("alternative linguistic-distance diagnostics save four explicit output
     "iv_monotonicity_summary.csv",
     "iv_monotonicity_bins.csv",
     "iv_monotonicity_state_slopes.csv",
-    "linguistic_distance_basis_comparison.csv",
-    "dyen_hindi_cognates.csv"
+    "linguistic_distance_basis_comparison.csv"
   ))
   expect_true(all(file.exists(manifest$path)))
 })

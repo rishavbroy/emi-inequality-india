@@ -906,7 +906,7 @@ test_that("Dyen Shastry benchmarks are an explicit methodological invariant", {
     stringsAsFactors = FALSE
   )
   expect_true(validate_dyen_shastry_benchmarks(x))
-  x$percent_cognates_with_hindi[x$list_name == "Punjabi ST"] <- 70
+  x$percent_cognates_with_hindi[x$list_name == "Panjabi ST"] <- 70
   expect_error(validate_dyen_shastry_benchmarks(x), "do not reproduce Shastry")
 })
 
@@ -919,4 +919,24 @@ test_that("Ethnologue proxy reader treats the downloaded CSV as tab-separated", 
   out <- read_ethnologue_newick_proxy(path)
   expect_identical(names(out$table), c("Family", "Success", "Comments", "Tree"))
   expect_match(out$indo_european_tree, "Hindi", fixed = TRUE)
+})
+
+
+test_that("Dyen Hindi cognates have an independent diagnostic writer", {
+  x <- data.frame(
+    list_number = 1:2,
+    list_name = c("Hindi", "Panjabi ST"),
+    percent_cognates_with_hindi = c(100, 74.5),
+    stringsAsFactors = FALSE
+  )
+  dir <- tempfile("dyen-diagnostic-")
+  dir.create(dir)
+  on.exit(unlink(dir, recursive = TRUE, force = TRUE), add = TRUE)
+  path <- file.path(dir, "dyen_hindi_cognates.csv")
+
+  written <- save_dyen_hindi_cognates(x, path)
+
+  expect_identical(normalizePath(written, mustWork = TRUE), normalizePath(path, mustWork = TRUE))
+  round_trip <- utils::read.csv(written, stringsAsFactors = FALSE)
+  expect_equal(round_trip$percent_cognates_with_hindi, c(100, 74.5))
 })
