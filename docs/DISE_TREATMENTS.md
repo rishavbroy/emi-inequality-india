@@ -39,6 +39,8 @@ For that reason, the sum of the five medium slots is retained only as a quality-
 
 Total elementary enrolment is taken from the direct grade-I-VIII totals when available, with the government-plus-private school-category total retained as an independent cross-check. `dise_management_enrollment_difference` exposes any disagreement between those two denominator representations.
 
+Parser-level quality-control fields such as `dise_medium_classification_ratio` are not required inputs to treatment construction. When present they are carried into the 2007-08 baseline treatment table for review, but the English-medium treatment and pooled baseline measure depend only on the validated language counts and elementary-enrolment denominator.
+
 Language resolution is deliberately language-specific. If a report card explicitly identifies an English slot, English enrollment is usable even when some different positive medium slot remains unidentified. Conversely, English is coded as zero only when every positive slot is decoded and none is English. The same rule is applied separately to Hindi. `dise_medium_identity_complete` remains a stricter diagnostic describing whether every positive medium slot is known; it is not unnecessarily imposed on the English treatment.
 
 ## Geography

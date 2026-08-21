@@ -103,20 +103,28 @@ build_dise_baseline_treatments <- function(district_year, medium_crosswalk) {
   x <- attach_dise_medium_identities(district_year, medium_crosswalk)
   anchor <- dise_baseline_anchor(x)
 
-  out <- anchor[c(
+  treatment_columns <- c(
     "state_name_dise", "district_name_dise", "state_07_key", "district_07_key",
     "dise_emi_enrollment_share_total",
     "dise_hindi_enrollment_share_total", "dise_english_share_english_hindi",
     "dise_private_enrollment_share", "dise_private_school_share",
-    "dise_medium_classification_ratio", "dise_medium_identity_complete",
+    "dise_medium_identity_complete",
     "dise_english_identity_resolved", "dise_hindi_identity_resolved"
-  )]
+  )
+  qa_columns <- intersect(
+    c("dise_medium_classification_ratio"),
+    names(anchor)
+  )
+  out <- anchor[c(treatment_columns, qa_columns)]
   names(out)[names(out) == "dise_emi_enrollment_share_total"] <- "dise_emi_enrollment_share_total_0708"
   names(out)[names(out) == "dise_hindi_enrollment_share_total"] <- "dise_hindi_enrollment_share_total_0708"
   names(out)[names(out) == "dise_english_share_english_hindi"] <- "dise_english_share_english_hindi_0708"
   names(out)[names(out) == "dise_private_enrollment_share"] <- "dise_private_enrollment_share_0708"
   names(out)[names(out) == "dise_private_school_share"] <- "dise_private_school_share_0708"
-  names(out)[names(out) == "dise_medium_classification_ratio"] <- "dise_medium_classification_ratio_0708"
+  if ("dise_medium_classification_ratio" %in% names(out)) {
+    names(out)[names(out) == "dise_medium_classification_ratio"] <-
+      "dise_medium_classification_ratio_0708"
+  }
   names(out)[names(out) == "dise_medium_identity_complete"] <- "dise_medium_identity_complete_0708"
   names(out)[names(out) == "dise_english_identity_resolved"] <- "dise_english_identity_resolved_0708"
   names(out)[names(out) == "dise_hindi_identity_resolved"] <- "dise_hindi_identity_resolved_0708"
