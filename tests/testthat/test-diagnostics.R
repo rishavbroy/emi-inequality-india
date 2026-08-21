@@ -729,22 +729,30 @@ test_that("first-stage absorption diagnostics save a compact manifest", {
 })
 
 
-test_that("unmapped-language diagnostics exclude intentional native English mass", {
+test_that("shared language preparation preserves mapped and unmapped rows for downstream diagnostics", {
   census <- data.frame(
-    state_std = rep("01", 4), district_std = rep("001", 4),
-    mother_tongue = c("English", "Dogri", "Hindi", "Bhojpuri"),
-    canonical_language = c("English", "Dogri", "Hindi", "Hindi"),
-    spkr_tot = c(10, 20, 60, 10),
-    ling_degrees = c(NA, NA, 0, NA),
+    state_std = rep("01", 5), district_std = rep("001", 5),
+    mother_tongue = c("English", "Dogri", "Hindi", "Bhojpuri", "Kashmiri"),
+    canonical_language = c("English", "Dogri", "Hindi", "Hindi", "Kashmiri"),
+    spkr_tot = c(10, 20, 60, 10, 5),
+    ling_degrees = c(NA, NA, 0, NA, 4),
     stringsAsFactors = FALSE
   )
   panel <- data.frame(district_panel_id = "2001__01__001", stringsAsFactors = FALSE)
 
-  out <- unmapped_language_decomposition(census, panel)
+  prepared <- prepare_language_rows_for_decomposition(census, panel)
+  expect_equal(nrow(prepared), 5)
+  expect_true(any(!is.finite(num(prepared$ling_degrees))))
+  expect_true(any(is.finite(num(prepared$ling_degrees))))
 
-  expect_setequal(out$mother_tongue, c("Dogri", "Bhojpuri"))
-  expect_false(any(out$mother_tongue == "English"))
-  expect_equal(sum(out$unmapped_speakers), 30)
+  unmapped <- unmapped_language_decomposition(census, panel)
+  expect_setequal(unmapped$mother_tongue, c("Dogri", "Bhojpuri"))
+  expect_false(any(unmapped$mother_tongue == "English"))
+  expect_equal(sum(unmapped$unmapped_speakers), 30)
+
+  distance4 <- distance_four_language_decomposition(census, panel)
+  expect_identical(distance4$mother_tongue, "Kashmiri")
+  expect_equal(sum(distance4$speakers), 5)
 })
 
 test_that("alternative linguistic-distance registry covers scalar, nonlinear, and joint constructions", {

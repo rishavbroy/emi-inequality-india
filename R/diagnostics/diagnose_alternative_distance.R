@@ -259,8 +259,7 @@ prepare_language_rows_for_decomposition <- function(
   rows$district_panel_id <- make_district_key(rows$state_std, rows$district_std, 2001L)
   panel_df <- if (inherits(panel, "sf")) sf::st_drop_geometry(panel) else as.data.frame(panel)
   keep_ids <- unique(plain_chr(panel_df$district_panel_id))
-  rows <- rows[rows$district_panel_id %in% keep_ids & is.finite(num(rows$ling_degrees)), , drop = FALSE]
-  rows
+  rows[rows$district_panel_id %in% keep_ids, , drop = FALSE]
 }
 
 distance_four_language_decomposition <- function(
