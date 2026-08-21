@@ -45,16 +45,20 @@ test_that("DISE count extraction preserves denominator and medium-slot identitie
     statecd = "01", statename = "JAMMU & KASHMIR",
     distcd = "0101", distname = "KUPWARA",
     enr_govt1 = 70, enr_pvt1 = 30, enr_govt9 = 0, enr_pvt9 = 0,
+    enr_cy_c1 = 55, enr_cy_c2 = 45,
     enr_med1_1 = 60, enr_med1_2 = 20, enr_med2_1 = 10, enr_med2_2 = 5,
     enr_med3_1 = 3, enr_med3_2 = 2,
     stringsAsFactors = FALSE
   )
   extracted <- extract_dise_enrollment_measures(data, "2005-06")
   expect_equal(extracted$dise_total_enrollment, 100)
+  expect_equal(extracted$dise_management_enrollment, 100)
+  expect_equal(extracted$dise_management_enrollment_difference, 0)
   expect_equal(extracted$dise_private_enrollment_share, 30)
   expect_equal(extracted$dise_medium_slot_1_enrollment, 80)
   expect_equal(extracted$dise_medium_slot_3_enrollment, 5)
-  expect_equal(extracted$dise_medium_reported_enrollment, 100)
+  expect_equal(extracted$dise_medium_classified_enrollment, 100)
+  expect_equal(extracted$dise_medium_classification_ratio, 100)
 
   crosswalk <- data.frame(
     academic_year = rep("2005-06", 3),
@@ -75,6 +79,7 @@ test_that("DISE percentage constructs use the same 0-100 scale as NSS EMI exposu
   data <- data.frame(
     statecd = "01", statename = "State", distcd = "0101", distname = "District",
     enr_govt1 = 75, enr_pvt1 = 25,
+    enr_cy_c1 = 60, enr_cy_c2 = 40,
     enr_med1_1 = 40, enr_med2_1 = 60,
     stringsAsFactors = FALSE
   )
@@ -87,10 +92,33 @@ test_that("DISE percentage constructs use the same 0-100 scale as NSS EMI exposu
   labeled <- attach_dise_medium_identities(extracted, crosswalk)
 
   expect_equal(extracted$dise_private_enrollment_share, 25)
-  expect_equal(extracted$dise_medium_reporting_share, 100)
+  expect_equal(extracted$dise_medium_classification_ratio, 100)
   expect_equal(labeled$dise_emi_enrollment_share_total, 40)
   expect_equal(labeled$dise_hindi_enrollment_share_total, 60)
   expect_equal(labeled$dise_english_share_english_hindi, 40)
+})
+
+test_that("medium-classification totals are diagnostics, never alternative denominators", {
+  data <- data.frame(
+    statecd = "01", statename = "State", distcd = "0101", distname = "District",
+    enr_govt1 = 75, enr_pvt1 = 25,
+    enr_cy_c1 = 60, enr_cy_c2 = 40,
+    enr_med1_1 = 40, enr_med2_1 = 80,
+    stringsAsFactors = FALSE
+  )
+  extracted <- extract_dise_enrollment_measures(data, "2007-08")
+  crosswalk <- data.frame(
+    academic_year = "2007-08", state_report = "State", district_report = "District",
+    medium_slot = 1:2, language_label = c("English", "Hindi"),
+    stringsAsFactors = FALSE
+  )
+  labeled <- attach_dise_medium_identities(extracted, crosswalk)
+
+  expect_equal(extracted$dise_total_enrollment, 100)
+  expect_equal(extracted$dise_medium_classified_enrollment, 120)
+  expect_equal(extracted$dise_medium_classification_ratio, 120)
+  expect_equal(labeled$dise_emi_enrollment_share_total, 40)
+  expect_false("dise_emi_enrollment_share_reported" %in% names(labeled))
 })
 
 test_that("known English remains usable when an unrelated positive medium is unresolved", {
@@ -101,8 +129,7 @@ test_that("known English remains usable when an unrelated positive medium is unr
     dise_total_enrollment = 100, dise_private_enrollment_share = 20,
     dise_medium_slot_1_enrollment = 80, dise_medium_slot_2_enrollment = 20,
     dise_medium_slot_3_enrollment = 0, dise_medium_slot_4_enrollment = 0,
-    dise_medium_slot_5_enrollment = 0, dise_medium_reported_enrollment = 100,
-    dise_medium_reporting_share = 100, stringsAsFactors = FALSE
+    dise_medium_slot_5_enrollment = 0, stringsAsFactors = FALSE
   )
   crosswalk <- data.frame(
     academic_year = "2007-08", state_report = "Example State",
@@ -128,8 +155,7 @@ test_that("unknown positive DISE medium slots never become zero English enrollme
     dise_total_enrollment = 100, dise_private_enrollment_share = 20,
     dise_medium_slot_1_enrollment = 80, dise_medium_slot_2_enrollment = 20,
     dise_medium_slot_3_enrollment = 0, dise_medium_slot_4_enrollment = 0,
-    dise_medium_slot_5_enrollment = 0, dise_medium_reported_enrollment = 100,
-    dise_medium_reporting_share = 100, stringsAsFactors = FALSE
+    dise_medium_slot_5_enrollment = 0, stringsAsFactors = FALSE
   )
   crosswalk <- data.frame(
     academic_year = "2007-08", state_report = "Example State",
@@ -152,15 +178,13 @@ test_that("pooled DISE EMI is a ratio of pooled counts and requires all three ba
     dise_government_enrollment = c(90, 180, 270),
     dise_private_enrollment = c(10, 20, 30),
     dise_total_enrollment = c(100, 200, 300),
-    dise_private_enrollment_share = c(.1, .1, .1),
+    dise_private_enrollment_share = c(10, 10, 10),
     dise_medium_slot_1_enrollment = c(20, 80, 180),
     dise_medium_slot_2_enrollment = c(80, 120, 120),
     dise_medium_slot_3_enrollment = 0, dise_medium_slot_4_enrollment = 0,
     dise_medium_slot_5_enrollment = 0,
-    dise_medium_reported_enrollment = c(100, 200, 300),
-    dise_medium_reporting_share = 1,
     dise_government_schools = 9, dise_private_schools = 1,
-    dise_total_schools = 10, dise_private_school_share = .1,
+    dise_total_schools = 10, dise_private_school_share = 10,
     stringsAsFactors = FALSE
   )
   crosswalk <- do.call(rbind, lapply(years, function(year) data.frame(
@@ -177,19 +201,20 @@ test_that("DISE construct registry separates treatments from mechanism outcomes"
   registry <- dise_construct_registry()
   structural <- registry[registry$analysis_scope == "structural_iv", , drop = FALSE]
   relevance <- registry[registry$analysis_scope == "relevance_only", , drop = FALSE]
-  expect_equal(nrow(structural), 4L)
+  expect_equal(nrow(structural), 2L)
   expect_true(all(grepl("dise_emi_", structural$variable, fixed = TRUE)))
+  expect_setequal(structural$construct_id, c("emi_total_0708", "emi_total_0508_pooled"))
   expect_setequal(
     relevance$construct_id,
     c("hindi_share_0708", "english_hindi_share_0708", "private_enrollment_share_0708", "private_school_share_0708")
   )
+  expect_false(any(grepl("reported", registry$construct_id, fixed = TRUE)))
 })
 
 test_that("DISE-NSS validation compares like-scaled enrolled measures and residualizes states", {
   panel <- data.frame(
     state_code_2001 = rep(c("01", "02"), each = 3),
     dise_emi_enrollment_share_total_0708 = c(10, 20, 30, 40, 50, 60),
-    dise_emi_enrollment_share_reported_0708 = c(10, 20, 30, 40, 50, 60),
     emi_share_enrolled_0708 = c(12, 18, 31, 39, 52, 58),
     emi_exposure_all_children_0708 = c(8, 15, 25, 30, 42, 48),
     stringsAsFactors = FALSE
@@ -197,7 +222,7 @@ test_that("DISE-NSS validation compares like-scaled enrolled measures and residu
   out <- diagnose_dise_nss_validation(panel)
   enrolled <- out[out$comparison == "enrolled_total_denominator", , drop = FALSE]
 
-  expect_equal(nrow(out), 3L)
+  expect_equal(nrow(out), 2L)
   expect_identical(enrolled$status[[1]], "estimated")
   expect_equal(enrolled$n[[1]], 6L)
   expect_gt(enrolled$pearson[[1]], 0.9)

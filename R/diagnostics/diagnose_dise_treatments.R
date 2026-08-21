@@ -13,17 +13,14 @@ dise_nss_validation_registry <- function() {
   data.frame(
     dise_variable = c(
       "dise_emi_enrollment_share_total_0708",
-      "dise_emi_enrollment_share_reported_0708",
       "dise_emi_enrollment_share_total_0708"
     ),
     nss_variable = c(
-      "emi_share_enrolled_0708",
       "emi_share_enrolled_0708",
       "emi_exposure_all_children_0708"
     ),
     comparison = c(
       "enrolled_total_denominator",
-      "enrolled_reported_medium_denominator",
       "all_child_context"
     ),
     stringsAsFactors = FALSE
@@ -127,7 +124,21 @@ diagnose_dise_archive <- function(district_year, treatments, publication_checks 
       n_identity_complete = sum(x$dise_medium_identity_complete %||% FALSE, na.rm = TRUE),
       n_english_resolved = sum(x$dise_english_identity_resolved %||% FALSE, na.rm = TRUE),
       n_hindi_resolved = sum(x$dise_hindi_identity_resolved %||% FALSE, na.rm = TRUE),
-      median_medium_reporting_share = stats::median(num(x$dise_medium_reporting_share), na.rm = TRUE),
+      median_medium_classification_ratio = stats::median(
+        num(x$dise_medium_classification_ratio), na.rm = TRUE
+      ),
+      n_medium_classification_above_total = sum(
+        num(x$dise_medium_classification_ratio) > 100, na.rm = TRUE
+      ),
+      max_medium_classification_ratio = max(
+        num(x$dise_medium_classification_ratio), na.rm = TRUE
+      ),
+      median_abs_medium_classification_gap = stats::median(
+        abs(num(x$dise_medium_classification_ratio) - 100), na.rm = TRUE
+      ),
+      max_abs_management_enrollment_difference = max(
+        abs(num(x$dise_management_enrollment_difference)), na.rm = TRUE
+      ),
       stringsAsFactors = FALSE
     )
   }))

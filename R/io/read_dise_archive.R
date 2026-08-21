@@ -105,6 +105,10 @@ dise_slot_columns <- function(data, slot) {
   grep(paste0("^enr_med", slot, "_[1-5]$"), names(data), value = TRUE)
 }
 
+dise_grade_columns <- function(data) {
+  intersect(paste0("enr_cy_c", 1:8), names(data))
+}
+
 dise_management_columns <- function(data, prefix) {
   intersect(paste0(prefix, c(1:5, 9)), names(data))
 }
@@ -120,10 +124,18 @@ extract_dise_enrollment_measures <- function(data, academic_year) {
   )
   out$dise_government_enrollment <- row_sum_available(data, dise_management_columns(data, "enr_govt"))
   out$dise_private_enrollment <- row_sum_available(data, dise_management_columns(data, "enr_pvt"))
-  out$dise_total_enrollment <- out$dise_government_enrollment + out$dise_private_enrollment
+  out$dise_management_enrollment <- out$dise_government_enrollment + out$dise_private_enrollment
+  out$dise_grade_enrollment <- row_sum_available(data, dise_grade_columns(data))
+  out$dise_total_enrollment <- ifelse(
+    is.finite(out$dise_grade_enrollment),
+    out$dise_grade_enrollment,
+    out$dise_management_enrollment
+  )
+  out$dise_management_enrollment_difference <-
+    out$dise_management_enrollment - out$dise_total_enrollment
   out$dise_private_enrollment_share <- ifelse(
-    is.finite(out$dise_total_enrollment) & out$dise_total_enrollment > 0,
-    100 * out$dise_private_enrollment / out$dise_total_enrollment,
+    is.finite(out$dise_management_enrollment) & out$dise_management_enrollment > 0,
+    100 * out$dise_private_enrollment / out$dise_management_enrollment,
     NA_real_
   )
   for (slot in 1:5) {
@@ -131,12 +143,14 @@ extract_dise_enrollment_measures <- function(data, academic_year) {
       row_sum_available(data, dise_slot_columns(data, slot))
   }
   slot_cols <- paste0("dise_medium_slot_", 1:5, "_enrollment")
-  out$dise_medium_reported_enrollment <- row_sum_available(out, slot_cols)
-  out$dise_medium_reporting_share <- ifelse(
+  out$dise_medium_classified_enrollment <- row_sum_available(out, slot_cols)
+  out$dise_medium_classification_ratio <- ifelse(
     is.finite(out$dise_total_enrollment) & out$dise_total_enrollment > 0,
-    100 * out$dise_medium_reported_enrollment / out$dise_total_enrollment,
+    100 * out$dise_medium_classified_enrollment / out$dise_total_enrollment,
     NA_real_
   )
+  out$dise_medium_classification_difference <-
+    out$dise_medium_classified_enrollment - out$dise_total_enrollment
   out
 }
 

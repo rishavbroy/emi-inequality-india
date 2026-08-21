@@ -17,24 +17,27 @@ The 2009-10 `DRC 2009-10.pdf` is a provisional 635-district combined report. Its
 The first implementation deliberately limits treatment construction to 2005-06 through 2007-08, the baseline period required to diagnose the current IV relevance problem. It constructs:
 
 - 2007-08 English-medium enrollment / total elementary enrollment;
-- 2007-08 English-medium enrollment / enrollment with a reported medium;
-- pooled 2005-06 to 2007-08 analogues, requiring all three years;
+- the pooled 2005-06 to 2007-08 analogue, requiring all three years;
 - 2007-08 Hindi-medium enrollment share;
 - English share among English + Hindi enrollment;
 - private enrollment share;
 - private-school share.
 
-The first four English-medium measures are genuine alternative treatment definitions and enter the full structural-IV diagnostic specification universe. Hindi, English-versus-Hindi, and private-sector shares are relevance/mechanism outcomes: they enter the same first-stage specification permutations but are not mislabeled as causal EMI treatments.
+The two English-medium measures are genuine alternative treatment definitions and enter the full structural-IV diagnostic specification universe. Hindi, English-versus-Hindi, and private-sector shares are relevance/mechanism outcomes: they enter the same first-stage specification permutations but are not mislabeled as causal EMI treatments.
 
-The extended diagnostic output also compares the 2007-08 administrative EMI shares with the NSS district measures on the common 0-100 scale, reporting raw Pearson/Spearman agreement, mean difference, RMSE, and correlation after residualizing both measurements by 2001 state.
+The extended diagnostic output also compares the 2007-08 administrative EMI share with the NSS district measures on the common 0-100 scale, reporting raw Pearson/Spearman agreement, mean difference, RMSE, and correlation after residualizing both measurements by 2001 state.
 
 The DISE diagnostic saver follows the repository-wide diagnostic-manifest convention: it returns a data-frame manifest of written outputs rather than pretending that manifest itself is a `targets` file target. The individual CSVs are still written explicitly and are discoverable by the analysis-note helpers.
 
 All shares are constructed from counts and stored on the repository's established 0-100 percentage scale, matching the NSS EMI measures. Multi-year EMI is the ratio of pooled English enrollment to pooled denominator, never an unweighted average of annual shares.
 
-## Medium reporting and missingness
+## Medium classification and missingness
 
-DISE publications warn that classificatory totals can differ because schools do not always answer every item. Accordingly, the pipeline preserves both total-enrollment and medium-reported denominators and records the medium-reporting share.
+The district report cards explicitly warn that classificatory totals, including enrolment by medium of instruction, may not match district totals because item response is incomplete and some inconsistencies remain unresolved. The archived raw data confirm that warning: summed medium-classification counts can be below or above independently reported total enrolment, with a small number of extreme discrepancies.
+
+For that reason, the sum of the five medium slots is retained only as a quality-control quantity (`dise_medium_classified_enrollment`). `dise_medium_classification_ratio` compares it with total grade-I-VIII enrolment, but it is not a response-rate estimate and is never used as an alternative treatment denominator. The former reported-medium-denominator EMI variants were removed rather than stabilized with an arbitrary trimming rule.
+
+Total elementary enrolment is taken from the direct grade-I-VIII totals when available, with the government-plus-private school-category total retained as an independent cross-check. `dise_management_enrollment_difference` exposes any disagreement between those two denominator representations.
 
 Language resolution is deliberately language-specific. If a report card explicitly identifies an English slot, English enrollment is usable even when some different positive medium slot remains unidentified. Conversely, English is coded as zero only when every positive slot is decoded and none is English. The same rule is applied separately to Hindi. `dise_medium_identity_complete` remains a stricter diagnostic describing whether every positive medium slot is known; it is not unnecessarily imposed on the English treatment.
 
