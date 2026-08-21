@@ -49,17 +49,13 @@ build_shastry_extension_candidates <- function(
     historical_linguistics$dyen_hindi,
     lexical_index
   )
-  asjp <- historical_linguistics$asjp_review_summary
-  kogan <- historical_linguistics$kogan_anchor_similarity
+  asjp <- historical_linguistics$asjp_review_summary %||% NULL
+  kogan <- historical_linguistics$kogan_anchor_similarity %||% NULL
 
   safe_bind_rows(lapply(seq_len(nrow(targets)), function(i) {
     row <- targets[i, , drop = FALSE]
     kogan_row <- kogan_anchor_summary(kogan, evidence$kogan_code[[i]])
-    asjp_row <- asjp[
-      match(row$mother_tongue_code[[1]], asjp$mother_tongue_code),
-      ,
-      drop = FALSE
-    ]
+    asjp_row <- asjp_review_summary_row(asjp, row$mother_tongue_code[[1]])
     data.frame(
       mother_tongue_code = row$mother_tongue_code,
       mother_tongue = row$mother_tongue,
@@ -77,11 +73,11 @@ build_shastry_extension_candidates <- function(
       kogan_nearest_degree = kogan_row$nearest_degree[[1]],
       kogan_nearest_similarity = kogan_row$nearest_similarity[[1]],
       kogan_margin_pct = kogan_row$margin_pct[[1]],
-      asjp_nearest_anchor = if (nrow(asjp_row)) asjp_row$nearest_anchor[[1]] else NA_character_,
-      asjp_nearest_degree = if (nrow(asjp_row)) asjp_row$nearest_degree[[1]] else NA_real_,
-      asjp_nearest_ldnd = if (nrow(asjp_row)) asjp_row$nearest_ldnd[[1]] else NA_real_,
-      asjp_margin_ldnd = if (nrow(asjp_row)) asjp_row$margin_ldnd[[1]] else NA_real_,
-      asjp_status = if (nrow(asjp_row)) asjp_row$status[[1]] else "not_indexed",
+      asjp_nearest_anchor = asjp_row$nearest_anchor[[1]],
+      asjp_nearest_degree = asjp_row$nearest_degree[[1]],
+      asjp_nearest_ldnd = asjp_row$nearest_ldnd[[1]],
+      asjp_margin_ldnd = asjp_row$margin_ldnd[[1]],
+      asjp_status = asjp_row$status[[1]],
       review_status = "review_required",
       stringsAsFactors = FALSE
     )

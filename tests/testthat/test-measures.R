@@ -1158,10 +1158,49 @@ test_that("Kogan anchor evidence reproduces published Table 1 cells", {
   expect_equal(x$similarity_pct[x$language_code == "WGD" & x$anchor_code == "GUJ"], 77)
 })
 
-test_that("ASJP transcription parser excludes loans, missing forms, and caps synonyms", {
-  expect_identical(asjp_parse_transcription("1 I\\t%loan, keep //"), "keep")
-  expect_length(asjp_parse_transcription("1 I\\ta, b, c //"), 2L)
-  expect_length(asjp_parse_transcription("1 I\\tXXX //"), 0L)
+test_that("ASJP transcription parser follows the actual tab-delimited form contract", {
+  expect_identical(asjp_parse_transcription("1 I\t%loan, keep //"), "keep")
+  expect_identical(asjp_parse_transcription("1 I\ta, b, c //"), c("a", "b"))
+  expect_length(asjp_parse_transcription("1 I\tXXX //"), 0L)
+})
+
+test_that("ASJP reader parses a minimal real-format wordlist", {
+  path <- tempfile(fileext = ".txt")
+  metadata <- sprintf(
+    " 1%8.2f%8.2f%12d   %3s   %3s",
+    27.50, 81.50, 4714000L, "awd", "awa"
+  )
+  writeLines(c(
+    "     2    28  1700     1    92    72",
+    "(I4,20X,10A1)",
+    "   1                    I",
+    "   2                    you",
+    "                                     ",
+    "a",
+    "                                     ",
+    "                                     ",
+    "AWADHI{IE.INDO|Indo-European,Indo-Aryan@Indo-European,Indo-Aryan}",
+    metadata,
+    "1 I\tmai, ham //",
+    "2 you\t%loan, tum //"
+  ), path)
+
+  out <- read_asjp_v21(path, list_names = "AWADHI", iso_codes = "awa")
+
+  expect_identical(unique(out$list_name), "AWADHI")
+  expect_identical(unique(out$iso639P3code), "awa")
+  expect_setequal(out$concept, c(1L, 2L))
+  expect_false(any(startsWith(out$form, "%")))
+})
+
+test_that("optional Kogan and ASJP review evidence does not determine candidate eligibility", {
+  expect_equal(
+    kogan_anchor_summary(NULL, "NEP"),
+    empty_kogan_anchor_summary()
+  )
+  asjp <- asjp_review_summary_row(NULL, "014009")
+  expect_identical(asjp$status, "not_available")
+  expect_true(is.na(asjp$nearest_degree))
 })
 
 test_that("ASJP LDND is symmetric and respects the official 28-item threshold", {

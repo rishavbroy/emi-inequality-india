@@ -254,7 +254,7 @@ test_that("historical linguistic review sources are versioned with exact local c
   expect_true(all(tolower(as.character(rows$required_for_current_pipeline)) == "true"))
   expect_equal(
     rows$expected_size_bytes[match(c("ethnologue_newick_proxy", "dyen1997_raw", "kogan2017_pdf", "asjp_v21_lists"), rows$file_id)],
-    c(464107, 849705, 400620)
+    c(464107, 849705, 400620, 14302624)
   )
   expect_true(all(startsWith(rows$relative_path, "data/raw/")))
   expect_equal(anyDuplicated(rows$relative_path), 0L)
@@ -262,4 +262,6 @@ test_that("historical linguistic review sources are versioned with exact local c
   proxy <- sources[sources$source_id == "ethnologue_newick_proxy", , drop = FALSE]
   expect_match(proxy$notes, "not asserted to reproduce the exact Ethnologue vintage", fixed = TRUE)
   expect_match(sources$source_url[sources$source_id == "kogan_2017"], "10.31826/jlr-2017-143-411", fixed = TRUE)
+  expect_match(sources$source_url[sources$source_id == "asjp_v21"], "10.5281/zenodo.16736409", fixed = TRUE)
+  expect_match(sources$license_or_terms_notes[sources$source_id == "asjp_v21"], "CC BY 4.0", fixed = TRUE)
 })

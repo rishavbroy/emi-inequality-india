@@ -43,16 +43,24 @@ read_kogan_2017_anchor_similarity <- function(path = NULL) {
   out
 }
 
+empty_kogan_anchor_summary <- function() {
+  data.frame(
+    nearest_anchor = NA_character_, nearest_degree = NA_real_,
+    nearest_similarity = NA_real_, runner_up_anchor = NA_character_,
+    runner_up_degree = NA_real_, runner_up_similarity = NA_real_,
+    margin_pct = NA_real_, stringsAsFactors = FALSE
+  )
+}
+
 kogan_anchor_summary <- function(evidence, language_code) {
-  x <- evidence[evidence$language_code == language_code, , drop = FALSE]
-  if (!nrow(x)) {
-    return(data.frame(
-      nearest_anchor = NA_character_, nearest_degree = NA_real_,
-      nearest_similarity = NA_real_, runner_up_anchor = NA_character_,
-      runner_up_degree = NA_real_, runner_up_similarity = NA_real_,
-      margin_pct = NA_real_
-    ))
+  required <- c("language_code", "anchor", "shastry_degree", "similarity_pct")
+  if (is.null(evidence) || !is.data.frame(evidence) ||
+      !all(required %in% names(evidence)) ||
+      is.na(language_code) || !nzchar(plain_chr(language_code))) {
+    return(empty_kogan_anchor_summary())
   }
+  x <- evidence[evidence$language_code == language_code, , drop = FALSE]
+  if (!nrow(x)) return(empty_kogan_anchor_summary())
   x <- x[order(num(x$similarity_pct), decreasing = TRUE), , drop = FALSE]
   runner <- if (nrow(x) >= 2L) x[2L, , drop = FALSE] else x[1L, , drop = FALSE]
   data.frame(
@@ -228,6 +236,41 @@ asjp_review_anchor_distances <- function(forms, index = read_asjp_language_index
     }
   }
   safe_bind_rows(rows)
+}
+
+empty_asjp_review_summary_row <- function(mother_tongue_code = NA_character_) {
+  data.frame(
+    mother_tongue_code = mother_tongue_code,
+    mother_tongue = NA_character_,
+    asjp_list_name = NA_character_,
+    nearest_anchor = NA_character_,
+    nearest_degree = NA_real_,
+    nearest_ldnd = NA_real_,
+    runner_up_anchor = NA_character_,
+    runner_up_degree = NA_real_,
+    runner_up_ldnd = NA_real_,
+    margin_ldnd = NA_real_,
+    status = "not_available",
+    stringsAsFactors = FALSE
+  )
+}
+
+asjp_review_summary_row <- function(summary, mother_tongue_code) {
+  required <- c(
+    "mother_tongue_code", "nearest_anchor", "nearest_degree",
+    "nearest_ldnd", "margin_ldnd", "status"
+  )
+  if (is.null(summary) || !is.data.frame(summary) ||
+      !all(required %in% names(summary))) {
+    return(empty_asjp_review_summary_row(mother_tongue_code))
+  }
+  hit <- summary[
+    plain_chr(summary$mother_tongue_code) == plain_chr(mother_tongue_code),
+    ,
+    drop = FALSE
+  ]
+  if (!nrow(hit)) return(empty_asjp_review_summary_row(mother_tongue_code))
+  hit[1L, , drop = FALSE]
 }
 
 asjp_review_summary <- function(distances) {
