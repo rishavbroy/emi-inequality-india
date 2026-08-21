@@ -528,6 +528,21 @@ extended_diagnostic_targets <- list(
   tar_target(first_stage_absorption_diagnostics, diagnose_first_stage_absorption(district_panel)),
   tar_target(diag_ext_first_stage_absorption, save_first_stage_absorption_diagnostics(first_stage_absorption_diagnostics)),
   tar_target(
+    glottolog_cldf_5_3,
+    read_glottolog_cldf_5_3(glottolog_5_3$cldf_zip)
+  ),
+  tar_target(
+    census_glottolog_match_candidates,
+    build_census_glottolog_match_candidates(
+      census_2001_languages, glottolog_5_3, glottolog_cldf_5_3
+    )
+  ),
+  tar_target(
+    diag_ext_census_glottolog_match_candidates,
+    save_census_glottolog_match_candidates(census_glottolog_match_candidates),
+    format = "file"
+  ),
+  tar_target(
     alternative_distance_first_stages,
     augment_alternative_distance_diagnostics(
       diagnose_alternative_distance_first_stages(district_panel),

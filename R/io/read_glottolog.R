@@ -20,12 +20,7 @@ read_glottolog_5_3 <- function(paths = build_paths()) {
 
   languoids <- read_glottolog_languoids(path_for("glottolog53_languoids"))
   cldf_metadata <- read_glottolog_cldf_metadata(path_for("glottolog53_cldf"))
-  if (!identical(as.character(cldf_metadata$title), "glottolog/glottolog: Glottolog database 5.3 as CLDF")) {
-    stop("Glottolog CLDF archive does not identify itself as release 5.3.", call. = FALSE)
-  }
-  if (!identical(as.character(cldf_metadata$license), "CC-BY-4.0")) {
-    stop("Glottolog CLDF archive does not declare the expected CC-BY-4.0 license.", call. = FALSE)
-  }
+  validate_glottolog_cldf_release(cldf_metadata)
 
   validate_glottolog_genealogy(languoids)
   hindi <- languoids[languoids$id == "hind1269", , drop = FALSE]
@@ -82,5 +77,70 @@ read_glottolog_cldf_metadata <- function(path) {
   jsonlite::fromJSON(
     paste(readLines(unz(path, member), warn = FALSE), collapse = "\n"),
     simplifyVector = TRUE
+  )
+}
+
+
+validate_glottolog_cldf_release <- function(metadata) {
+  if (!identical(as.character(metadata$title), "glottolog/glottolog: Glottolog database 5.3 as CLDF")) {
+    stop("Glottolog CLDF archive does not identify itself as release 5.3.", call. = FALSE)
+  }
+  if (!identical(as.character(metadata$license), "CC-BY-4.0")) {
+    stop("Glottolog CLDF archive does not declare the expected CC-BY-4.0 license.", call. = FALSE)
+  }
+  invisible(TRUE)
+}
+
+read_glottolog_cldf_table <- function(path, filename) {
+  members <- utils::unzip(path, list = TRUE)$Name
+  member <- members[basename(members) == filename & grepl("/cldf/", members, fixed = TRUE)]
+  if (length(member) != 1L) {
+    stop("Glottolog CLDF archive must contain exactly one ", filename, ".", call. = FALSE)
+  }
+  utils::read.csv(
+    unz(path, member),
+    stringsAsFactors = FALSE,
+    check.names = FALSE,
+    na.strings = c("", "NA")
+  )
+}
+
+validate_glottolog_cldf_languages <- function(x) {
+  required <- c("ID", "Name", "Glottocode", "ISO639P3code", "Level", "Countries", "Family_ID", "Language_ID")
+  if (!all(required %in% names(x))) {
+    stop("Glottolog CLDF languages.csv has an invalid schema.", call. = FALSE)
+  }
+  character_columns <- c("ID", "Name", "Glottocode", "ISO639P3code", "Level", "Countries", "Family_ID", "Language_ID")
+  for (nm in character_columns) {
+    x[[nm]] <- trimws(plain_chr(x[[nm]]))
+    x[[nm]][is.na(x[[nm]])] <- ""
+  }
+  x$ISO639P3code <- tolower(x$ISO639P3code)
+  x$Level <- tolower(x$Level)
+  if (anyDuplicated(x$ID) || any(!x$Level %in% c("family", "language", "dialect"))) {
+    stop("Glottolog CLDF languages.csv contains invalid languoid identities.", call. = FALSE)
+  }
+  x
+}
+
+validate_glottolog_cldf_names <- function(x) {
+  required <- c("ID", "Language_ID", "Name", "Provider")
+  if (!all(required %in% names(x))) {
+    stop("Glottolog CLDF names.csv has an invalid schema.", call. = FALSE)
+  }
+  for (nm in c("Language_ID", "Name", "Provider")) {
+    x[[nm]] <- trimws(plain_chr(x[[nm]]))
+    x[[nm]][is.na(x[[nm]])] <- ""
+  }
+  x
+}
+
+#' Read the CLDF lookup tables only when reviewed language matching is requested
+read_glottolog_cldf_5_3 <- function(path) {
+  metadata <- read_glottolog_cldf_metadata(path)
+  validate_glottolog_cldf_release(metadata)
+  list(
+    languages = validate_glottolog_cldf_languages(read_glottolog_cldf_table(path, "languages.csv")),
+    names = validate_glottolog_cldf_names(read_glottolog_cldf_table(path, "names.csv"))
   )
 }

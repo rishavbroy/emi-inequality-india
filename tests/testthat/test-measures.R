@@ -567,3 +567,79 @@ test_that("native English is explicit rather than unresolved distance mass", {
   expect_equal(out$hindi_urdu_share, 50)
   expect_true("native_english_share" %in% linguistic_distance_language_controls())
 })
+
+
+test_that("Census-Glottolog candidates are exact, leaf-aware, and review-only", {
+  languoids <- data.frame(
+    id = c("indo", "sino", "hindi", "bhili", "bilaspuri", "mising"),
+    family_id = c("", "", "indo", "indo", "indo", "sino"),
+    parent_id = c("", "", "indo", "indo", "indo", "sino"),
+    name = c("Indo-European", "Sino-Tibetan", "Hindi", "Bhili", "Bilaspuri", "Mising"),
+    bookkeeping = FALSE,
+    level = c("family", "family", "language", "language", "language", "language"),
+    iso639P3code = c("", "", "hin", "bhb", "kfs", "mrg"),
+    stringsAsFactors = FALSE
+  )
+  languages <- data.frame(
+    ID = languoids$id,
+    Name = languoids$name,
+    Glottocode = languoids$id,
+    ISO639P3code = languoids$iso639P3code,
+    Level = languoids$level,
+    Countries = c("", "", "IN", "IN", "IN", "IN"),
+    Family_ID = languoids$family_id,
+    Language_ID = "",
+    stringsAsFactors = FALSE
+  )
+  names <- data.frame(
+    ID = 1:3,
+    Language_ID = c("bhili", "mising", "bilaspuri"),
+    Name = c("Bhilodi", "Mishing", "Bhili"),
+    Provider = "test",
+    stringsAsFactors = FALSE
+  )
+  glottolog <- list(languoids = languoids)
+  cldf <- list(languages = languages, names = names)
+  census <- data.frame(
+    state_std = c("01", "02", "03"),
+    district_std = c("01", "01", "01"),
+    mother_tongue_code = c("101001", "102001", "103001"),
+    mother_tongue = c("Bhilodi", "Mishing", "No Such Language"),
+    canonical_language = c("Bhili/Bhilodi", "Miri/Mishing", "Unknown"),
+    spkr_tot = c(100, 50, 25),
+    stringsAsFactors = FALSE
+  )
+
+  out <- build_census_glottolog_match_candidates(census, glottolog, cldf)
+
+  bhili <- out[out$mother_tongue_code == "101001", , drop = FALSE]
+  expect_equal(bhili$candidate_status, c("exact_ambiguous", "exact_ambiguous"))
+  expect_setequal(bhili$language_glottocode, c("bhili", "bilaspuri"))
+  expect_true(all(bhili$review_status == "unreviewed"))
+
+  mising <- out[out$mother_tongue_code == "102001", , drop = FALSE]
+  expect_identical(mising$candidate_status, "exact_unique")
+  expect_identical(mising$language_glottocode, "mising")
+  expect_identical(mising$term_source, "mother_tongue")
+
+  missing <- out[out$mother_tongue_code == "103001", , drop = FALSE]
+  expect_identical(missing$candidate_status, "no_exact_match")
+  expect_true(is.na(missing$language_glottocode))
+})
+
+test_that("Census-Glottolog identity aggregation preserves national speaker mass", {
+  census <- data.frame(
+    state_std = c("01", "01", "02"),
+    district_std = c("01", "02", "01"),
+    mother_tongue_code = "101001",
+    mother_tongue = "Bhilodi",
+    canonical_language = "Bhili/Bhilodi",
+    spkr_tot = c(10, 20, 30),
+    stringsAsFactors = FALSE
+  )
+
+  out <- census_language_identities(census)
+
+  expect_equal(out$national_speakers, 60)
+  expect_equal(out$n_districts, 3)
+})

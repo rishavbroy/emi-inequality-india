@@ -799,6 +799,7 @@ test_that("alternative linguistic-distance first stages use fixed support and jo
   }
   panel$ling_mapped_speaker_share <- 100
   panel$ling_unmapped_speaker_share <- 0
+  panel$native_english_share <- 0
   panel$emi_exposure_all_children_0708 <- 5 + 0.15 * panel$ling_share_distance_5 +
     0.08 * panel$ling_share_distance_4 + stats::rnorm(n)
   for (variable in census_2001_diagnostic_controls()) panel[[variable]] <- stats::rnorm(n)
