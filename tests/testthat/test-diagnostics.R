@@ -731,18 +731,20 @@ test_that("first-stage absorption diagnostics save a compact manifest", {
 
 test_that("unmapped-language diagnostics exclude intentional native English mass", {
   census <- data.frame(
-    state_std = rep("01", 3), district_std = rep("001", 3),
-    canonical_language = c("English", "Dogri", "Hindi"),
-    spkr_tot = c(10, 20, 70),
-    ling_degrees = c(NA, NA, 0),
+    state_std = rep("01", 4), district_std = rep("001", 4),
+    mother_tongue = c("English", "Dogri", "Hindi", "Bhojpuri"),
+    canonical_language = c("English", "Dogri", "Hindi", "Hindi"),
+    spkr_tot = c(10, 20, 60, 10),
+    ling_degrees = c(NA, NA, 0, NA),
     stringsAsFactors = FALSE
   )
   panel <- data.frame(district_panel_id = "2001__01__001", stringsAsFactors = FALSE)
 
   out <- unmapped_language_decomposition(census, panel)
 
-  expect_identical(out$canonical_language, "Dogri")
-  expect_equal(out$unmapped_speakers, 20)
+  expect_setequal(out$mother_tongue, c("Dogri", "Bhojpuri"))
+  expect_false(any(out$mother_tongue == "English"))
+  expect_equal(sum(out$unmapped_speakers), 30)
 })
 
 test_that("alternative linguistic-distance registry covers scalar, nonlinear, and joint constructions", {

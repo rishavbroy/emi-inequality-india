@@ -237,7 +237,10 @@ prepare_language_rows_for_decomposition <- function(census_2001_languages, panel
   rows <- std(safe_df(census_2001_languages), 2001L)
   needed <- c("state_std", "district_std", "spkr_tot", "canonical_language")
   if (!all(needed %in% names(rows))) stop("C-16 decomposition requires cleaned district-language rows.", call. = FALSE)
-  if (!"ling_degrees" %in% names(rows)) rows$ling_degrees <- linguistic_distance_degrees(rows$canonical_language)
+  rows$language_identity <- census_mother_tongue_identity(rows)
+  if (!"ling_degrees" %in% names(rows)) {
+    rows$ling_degrees <- linguistic_distance_degrees(rows$language_identity, rows$canonical_language)
+  }
   rows$district_panel_id <- make_district_key(rows$state_std, rows$district_std, 2001L)
   panel_df <- if (inherits(panel, "sf")) sf::st_drop_geometry(panel) else as.data.frame(panel)
   keep_ids <- unique(plain_chr(panel_df$district_panel_id))
@@ -252,47 +255,54 @@ distance_four_language_decomposition <- function(census_2001_languages, panel) {
   by_language_state <- aggregate(
     num(rows$spkr_tot),
     list(
+      mother_tongue = plain_chr(rows$language_identity),
       canonical_language = plain_chr(rows$canonical_language),
       state_code_2001 = plain_chr(rows$state_std)
     ),
     sum,
     na.rm = TRUE
   )
-  names(by_language_state)[3] <- "speakers"
+  names(by_language_state)[4] <- "speakers"
   by_language_state$n_districts <- mapply(function(language, state) {
-    index <- plain_chr(rows$canonical_language) == language & plain_chr(rows$state_std) == state
+    index <- plain_chr(rows$language_identity) == language & plain_chr(rows$state_std) == state
     length(unique(rows$district_panel_id[index]))
-  }, by_language_state$canonical_language, by_language_state$state_code_2001)
-  national <- aggregate(by_language_state$speakers, list(by_language_state$canonical_language), sum)
-  names(national) <- c("canonical_language", "national_language_speakers")
-  out <- merge(by_language_state, national, by = "canonical_language", all.x = TRUE)
+  }, by_language_state$mother_tongue, by_language_state$state_code_2001)
+  national <- aggregate(by_language_state$speakers, list(by_language_state$mother_tongue), sum)
+  names(national) <- c("mother_tongue", "national_language_speakers")
+  out <- merge(by_language_state, national, by = "mother_tongue", all.x = TRUE)
   out$speaker_share_of_distance4 <- 100 * out$speakers / sum(out$speakers)
   out[order(out$speakers, decreasing = TRUE), , drop = FALSE]
 }
 
 unmapped_language_decomposition <- function(census_2001_languages, panel) {
   rows <- std(safe_df(census_2001_languages), 2001L)
-  if (!"ling_degrees" %in% names(rows)) rows$ling_degrees <- linguistic_distance_degrees(rows$canonical_language)
+  rows$language_identity <- census_mother_tongue_identity(rows)
+  if (!"ling_degrees" %in% names(rows)) {
+    rows$ling_degrees <- linguistic_distance_degrees(rows$language_identity, rows$canonical_language)
+  }
   rows$district_panel_id <- make_district_key(rows$state_std, rows$district_std, 2001L)
   panel_df <- if (inherits(panel, "sf")) sf::st_drop_geometry(panel) else as.data.frame(panel)
-  language <- tools::toTitleCase(tolower(trimws(plain_chr(rows$canonical_language))))
   rows <- rows[
     rows$district_panel_id %in% plain_chr(panel_df$district_panel_id) &
-      !is.finite(num(rows$ling_degrees)) & language != "English",
+      !is.finite(num(rows$ling_degrees)) & rows$language_identity != "English",
     , drop = FALSE
   ]
   if (!nrow(rows)) return(data.frame())
   out <- aggregate(
     num(rows$spkr_tot),
-    list(canonical_language = plain_chr(rows$canonical_language), state_code_2001 = plain_chr(rows$state_std)),
+    list(
+      mother_tongue = plain_chr(rows$language_identity),
+      canonical_language = plain_chr(rows$canonical_language),
+      state_code_2001 = plain_chr(rows$state_std)
+    ),
     sum,
     na.rm = TRUE
   )
-  names(out)[3] <- "unmapped_speakers"
+  names(out)[4] <- "unmapped_speakers"
   out$n_districts <- mapply(function(language, state) {
-    index <- plain_chr(rows$canonical_language) == language & plain_chr(rows$state_std) == state
+    index <- plain_chr(rows$language_identity) == language & plain_chr(rows$state_std) == state
     length(unique(rows$district_panel_id[index]))
-  }, out$canonical_language, out$state_code_2001)
+  }, out$mother_tongue, out$state_code_2001)
   out$share_of_unmapped_speakers <- 100 * out$unmapped_speakers / sum(out$unmapped_speakers)
   out[order(out$unmapped_speakers, decreasing = TRUE), , drop = FALSE]
 }
@@ -393,11 +403,11 @@ distance_four_leave_one_language_out <- function(census_2001_languages, panel, t
   total <- aggregate(num(prepare_language_rows_for_decomposition(census_2001_languages, panel)$spkr_tot),
     list(prepare_language_rows_for_decomposition(census_2001_languages, panel)$district_panel_id), sum, na.rm = TRUE)
   names(total) <- c("district_panel_id", "all_speakers")
-  languages <- sort(unique(plain_chr(rows$canonical_language)))
+  languages <- sort(unique(plain_chr(rows$language_identity)))
   spec <- alternative_distance_registry()
   spec <- spec[spec$adjustment_id == "state_expanded" & spec$construction_id == "distance_shares_all_unmapped", , drop = FALSE]
   safe_bind_rows(lapply(languages, function(language) {
-    lang <- rows[plain_chr(rows$canonical_language) == language, , drop = FALSE]
+    lang <- rows[plain_chr(rows$language_identity) == language, , drop = FALSE]
     amount <- aggregate(num(lang$spkr_tot), list(lang$district_panel_id), sum, na.rm = TRUE)
     names(amount) <- c("district_panel_id", "language_speakers")
     share <- merge(total, amount, by = "district_panel_id", all.x = TRUE)

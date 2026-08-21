@@ -19,9 +19,39 @@ read_shastry_language_distance <- function(path = NULL) {
   out
 }
 
-linguistic_distance_degrees <- function(mother_tongue, concordance = read_shastry_language_distance()) {
-  key <- tools::toTitleCase(tolower(trimws(plain_chr(mother_tongue))))
-  concordance$distance_from_hindi[match(key, concordance$canonical_language)]
+normalize_language_label <- function(x) {
+  tools::toTitleCase(tolower(trimws(plain_chr(x))))
+}
+
+census_mother_tongue_identity <- function(df) {
+  canonical <- normalize_language_label(df$canonical_language)
+  if (!"mother_tongue" %in% names(df)) return(canonical)
+  mother <- normalize_language_label(df$mother_tongue)
+  missing <- is.na(mother) | !nzchar(mother)
+  mother[missing] <- canonical[missing]
+  mother
+}
+
+linguistic_distance_degrees <- function(
+  mother_tongue,
+  canonical_language = mother_tongue,
+  concordance = read_shastry_language_distance()
+) {
+  mother <- normalize_language_label(mother_tongue)
+  canonical <- normalize_language_label(canonical_language)
+  distance <- concordance$distance_from_hindi[
+    match(mother, concordance$canonical_language)
+  ]
+
+  # C-16's Hindi/Urdu language groups contain distinct mother tongues. A child
+  # row must not inherit zero distance solely from that group subtotal.
+  protected_zero_group <- canonical %in% c("Hindi", "Urdu") &
+    !is.na(mother) & nzchar(mother) & mother != canonical
+  fallback <- !is.finite(distance) & !protected_zero_group
+  distance[fallback] <- concordance$distance_from_hindi[
+    match(canonical[fallback], concordance$canonical_language)
+  ]
+  distance
 }
 
 validate_supplied_linguistic_distances <- function(x) {
@@ -42,10 +72,10 @@ build_linguistic_distance_iv <- function(census_2001_languages, cfg = list()) {
     return(linguistic_distance_out_of_pipeline("No real linguistic-distance column or full cleaned C-16 distribution was available."))
   }
 
+  language <- census_mother_tongue_identity(df)
   if (!"ling_degrees" %in% names(df)) {
-    df$ling_degrees <- linguistic_distance_degrees(df$canonical_language)
+    df$ling_degrees <- linguistic_distance_degrees(language, df$canonical_language)
   }
-  language <- tools::toTitleCase(tolower(trimws(plain_chr(df$canonical_language))))
   is_english <- language == "English"
   df$distance_mapping_status <- ifelse(
     is_english,
@@ -72,7 +102,7 @@ build_linguistic_distance_iv <- function(census_2001_languages, cfg = list()) {
 build_district_language_constructions <- function(df) {
   speakers <- num(df$spkr_tot)
   distance <- num(df$ling_degrees)
-  language <- tools::toTitleCase(tolower(trimws(plain_chr(df$canonical_language))))
+  language <- census_mother_tongue_identity(df)
   valid_speakers <- is.finite(speakers) & speakers >= 0
   total <- sum(speakers[valid_speakers], na.rm = TRUE)
   english <- valid_speakers & language == "English"

@@ -2,9 +2,9 @@
 
 ## Public specification
 
-The pipeline now preserves the full mutually exclusive Census 2001 C-16 mother-tongue distribution. C-16 language-group rows whose codes end in `000` are subtotals and are not observations in the analytical distribution. Their labels are carried to the child mother-tongue rows so that the group-level classifications reported by Shastry (2012, pp. 294–295) can be applied without double counting.
+The pipeline preserves the full mutually exclusive Census 2001 C-16 mother-tongue distribution. C-16 language-group rows whose codes end in `000` are subtotals and are not observations in the analytical distribution. Their labels are carried to child rows as contextual Census group metadata, but distance assignment is mother-tongue-first. This distinction is essential for the Census `Hindi` group, which contains many distinct mother tongues: a Bhojpuri, Rajasthani, or other non-Hindi leaf never inherits Hindi's zero distance merely because its parent Census group is `Hindi`.
 
-`data/metadata/shastry_language_distance.csv` is the sole maintained concordance. It records the explicit zero-to-four categories shown in Shastry's Table 1, treats Hindi and Urdu as the same zero-distance language for the primary convention, assigns degree five only to languages explicitly classified as non-Indo-European, and leaves unsupported Indo-European groups unmapped. Unmapped speaker mass remains in share denominators and is reported; it is never silently assigned to degree five or renormalized away.
+`data/metadata/shastry_language_distance.csv` is the maintained published-category concordance. A mother tongue is matched to that concordance first. Its broader Census language group is used only as a fallback when doing so cannot turn a distinct leaf inside the Census Hindi/Urdu umbrellas into a false zero-distance observation. The concordance records the explicit zero-to-four categories shown by Shastry, treats native Hindi and Urdu as the zero-distance reference, assigns degree five only to supported non-Indo-European classifications, and leaves unsupported leaves unmapped. Unmapped speaker mass remains in share denominators and is reported; it is never silently assigned to degree five or renormalized away.
 
 District constructions include:
 
@@ -23,7 +23,7 @@ Native English speakers are an intentional special category rather than unresolv
 
 The versioned Glottolog 5.3 source bundle is validated before downstream language-crosswalk work. The direct `languoid.csv` parent graph is the canonical genealogy source because it supplies stable Glottocodes, parent IDs, family IDs, and languoid levels without requiring a Newick parser. The CLDF archive supplies `languages.csv` and `names.csv` for primary and alternative names; `languages_and_dialects_geo.csv` is disambiguation-only, and `tree_glottolog_newick.txt` is an independent representation for later validation. The pipeline anchors Hindi at Glottocode `hind1269`/ISO `hin`, rejects missing parents or parent cycles, resolves dialects to language-level nodes, and defines cross-family robustness distance through one synthetic super-root. No Glottolog taxonomy row automatically overrides the maintained Shastry/Jasanoff concordance.
 
-Extended diagnostics generate `census_glottolog_match_candidates.csv`, a non-authoritative review queue keyed to Census mother-tongue leaf identities. Candidate generation uses exact normalized primary or alternative Glottolog names, plus slash-delimited Census label components; it does not use fuzzy similarity and never promotes a candidate into production automatically. Ambiguous exact matches remain ambiguous, and every candidate remains `unreviewed` until a separate reviewed metadata decision is made. National speaker mass and district coverage are attached to the queue so manual adjudication can prioritize consequential languages rather than alphabetical convenience.
+Extended diagnostics generate `census_glottolog_match_candidates.csv`, a non-authoritative review queue keyed to Census mother-tongue leaf identities. Candidate generation uses an explicit evidence hierarchy: full mother-tongue primary names, mother-tongue components, mother-tongue aliases, and only then broader Census-group names/aliases. Only candidates from the strongest nonempty tier survive. It does not use fuzzy similarity and never promotes a candidate into production automatically. Ambiguous candidates within the same strongest tier remain ambiguous, and every candidate remains `unreviewed` until a separate reviewed metadata decision is made. National speaker mass and district coverage are attached to the queue so manual adjudication can prioritize consequential languages rather than alphabetical convenience.
 
 ## Education exposure
 
@@ -56,7 +56,7 @@ public IV model.
 
 ## Mapping coverage and Shastry comparability
 
-`ling_mapped_speaker_share` is the percentage of a district's mutually exclusive C-16 speaker mass whose canonical language can be assigned to one of Shastry's degree categories using the auditable concordance. It is a classification-coverage measure, not Census response coverage and not district-panel match coverage.
+`ling_mapped_speaker_share` is the percentage of a district's mutually exclusive C-16 speaker mass whose mother-tongue leaf can be assigned to one of Shastry's degree categories under the mother-tongue-first resolver. It is a classification-coverage measure, not Census response coverage and not district-panel match coverage.
 
 The project preserves unmapped mass rather than silently assigning it a degree. It now reports three complementary nonlinear specifications:
 
@@ -64,7 +64,7 @@ The project preserves unmapped mass rather than silently assigning it a degree. 
 - all-speaker distance shares with unresolved non-English and native-English shares included as controls, so distance zero is the omitted mapped category;
 - mapped-speaker shares renormalized to sum to 100, used only as a sensitivity because renormalization hides unmapped mass.
 
-Results are repeated with minimum mapped-speaker shares of 0, 90, 95, and 99 percent. Distance-four results are decomposed by underlying canonical language and repeated after removing each distance-four language contribution.
+Results are repeated with minimum mapped-speaker shares of 0, 90, 95, and 99 percent. Distance-four and unmapped-language diagnostics are decomposed by mother-tongue leaf, with the parent Census language group retained as context.
 
 Shastry used the 1991 Census classification of 114 languages, assigned all non-Indo-European languages to degree five, and assigned unlisted Indo-European languages the value of the closest language on a language tree. She explicitly preferred 1991 to 1961 because the latter listed 1,652 languages that were difficult to classify. The present project uses the more detailed Census 2001 C-16 hierarchy but only the published degree categories from Shastry's article; consequently, its conservative concordance leaves some detailed categories unmapped instead of reconstructing her unpublished closest-language-tree assignments.
 

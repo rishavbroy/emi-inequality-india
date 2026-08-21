@@ -15,7 +15,7 @@ source(helper)
 
 ## Current instrument and treatment diagnostics
 
-The active construction uses the full mutually exclusive Census 2001 C-16 mother-tongue distribution. Language-group subtotal rows are removed before aggregation, linguistic distances are attached from the documented Shastry concordance, and unmapped speaker mass remains visible. The preferred public scalar is `ling_distance_nonzero_mean`, the speaker-weighted mean distance among mapped languages with distance greater than zero. Hindi and Urdu are treated as distance zero and their shares are reported separately.
+The active construction uses the full mutually exclusive Census 2001 C-16 mother-tongue distribution. Language-group subtotal rows are removed before aggregation, linguistic distances are resolved mother-tongue-first from the documented Shastry concordance, and unmapped speaker mass remains visible. The preferred public scalar is `ling_distance_nonzero_mean`, the speaker-weighted mean distance among mapped languages with distance greater than zero. Native Hindi and Urdu are treated as the zero-distance reference and their mother-tongue shares are reported separately; distinct leaves inside the Census Hindi language group do not inherit zero distance.
 
 The preferred public treatment is `emi_exposure_all_children_0708`, the survey-weighted share of all children ages 5-19 who are both enrolled and studying in English medium. The historical `EMIE` field remains a compatibility measure of EMI among enrolled children but is not used in the current district-level dotplot.
 

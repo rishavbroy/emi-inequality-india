@@ -39,6 +39,7 @@ glottolog_language_node <- function(glottocode, languoids) {
   node <- id
   while (nzchar(node)) {
     row <- languoids[match(node, languoids$id), , drop = FALSE]
+    if ("bookkeeping" %in% names(row) && isTRUE(row$bookkeeping[[1]])) return(NA_character_)
     if (identical(row$level[[1]], "language")) return(node)
     if (identical(row$level[[1]], "family")) return(NA_character_)
     node <- row$parent_id[[1]] %||% ""
@@ -52,6 +53,8 @@ glottolog_ancestor_path <- function(glottocode, languoids) {
   parent_by_id <- stats::setNames(languoids$parent_id, languoids$id)
   path <- character()
   while (nzchar(node)) {
+    row <- languoids[match(node, languoids$id), , drop = FALSE]
+    if ("bookkeeping" %in% names(row) && isTRUE(row$bookkeeping[[1]])) return(character())
     path <- c(path, node)
     node <- parent_by_id[[node]] %||% ""
   }

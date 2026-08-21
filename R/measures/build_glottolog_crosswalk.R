@@ -99,11 +99,20 @@ census_language_identities <- function(census_2001_languages) {
   merge(speakers, districts, by = key, all = TRUE, sort = FALSE)
 }
 
+glottolog_candidate_tier <- function(term_source, alias_basis) {
+  term_rank <- match(
+    plain_chr(term_source),
+    c("mother_tongue", "mother_tongue_component",
+      "canonical_language", "canonical_language_component")
+  )
+  alias_rank <- match(plain_chr(alias_basis), c("primary_name", "alternate_name"))
+  2L * (term_rank - 1L) + alias_rank
+}
+
 glottolog_candidate_order <- function(hit) {
   order(
+    glottolog_candidate_tier(hit$term_source, hit$alias_basis),
     !hit$is_india_language,
-    hit$alias_basis != "primary_name",
-    hit$term_source != "mother_tongue",
     hit$language_glottocode
   )
 }
@@ -128,6 +137,8 @@ match_census_language_identity <- function(identity, aliases) {
     return(out)
   }
 
+  hit$candidate_tier <- glottolog_candidate_tier(hit$term_source, hit$alias_basis)
+  hit <- hit[hit$candidate_tier == min(hit$candidate_tier, na.rm = TRUE), , drop = FALSE]
   hit <- hit[glottolog_candidate_order(hit), , drop = FALSE]
   hit <- hit[!duplicated(hit$language_glottocode), , drop = FALSE]
   out <- identity[rep(1L, nrow(hit)), , drop = FALSE]

@@ -414,6 +414,35 @@ test_that("C-16 cleaner removes group subtotals and carries parent language to l
   expect_equal(sum(out$spkr_tot[out$language_group_code == "002"]), 100)
 })
 
+test_that("Hindi Census-group leaves do not inherit Hindi zero distance", {
+  census <- data.frame(
+    state_std = rep("10", 3),
+    district_std = rep("01", 3),
+    mother_tongue = c("Hindi", "Bhojpuri", "Rajasthani"),
+    canonical_language = rep("Hindi", 3),
+    spkr_tot = c(60, 30, 10),
+    mother_tongue_code = c("006118", "006045", "006242"),
+    stringsAsFactors = FALSE
+  )
+
+  out <- build_linguistic_distance_iv(census)
+
+  expect_equal(
+    linguistic_distance_degrees(
+      c("Hindi", "Bhojpuri", "Rajasthani"),
+      rep("Hindi", 3)
+    ),
+    c(0, NA, 1)
+  )
+  expect_equal(out$hindi_share, 60)
+  expect_equal(out$hindi_urdu_share, 60)
+  expect_equal(out$ling_share_distance_0, 60)
+  expect_equal(out$ling_share_distance_1, 10)
+  expect_equal(out$ling_unmapped_speaker_share, 30)
+  expect_equal(out$ling_mapped_speaker_share, 70)
+  expect_equal(out$ling_distance_nonzero_mean, 1)
+})
+
 test_that("linguistic constructions use the full distribution and expose mapping coverage", {
   census <- data.frame(
     state_std = rep("10", 5), district_std = rep("01", 5),
@@ -549,6 +578,23 @@ test_that("Glottolog genealogy rejects unresolved parents and cycles", {
   expect_error(validate_glottolog_genealogy(cycle), "parent cycle", fixed = TRUE)
 })
 
+test_that("Glottolog bookkeeping branches are not valid distance endpoints", {
+  g <- data.frame(
+    id = c("book", "unclassified", "hindi", "indo"),
+    family_id = c("", "book", "indo", ""),
+    parent_id = c("", "book", "indo", ""),
+    name = c("Bookkeeping", "Unclassified", "Hindi", "Indo-European"),
+    bookkeeping = c(TRUE, FALSE, FALSE, FALSE),
+    level = c("family", "language", "language", "family"),
+    iso639P3code = c("", "zzz", "hin", ""),
+    stringsAsFactors = FALSE
+  )
+
+  expect_true(validate_glottolog_genealogy(g))
+  expect_true(is.na(glottolog_language_node("unclassified", g)))
+  expect_true(is.na(glottolog_edge_distance("unclassified", "hindi", g)))
+})
+
 test_that("native English is explicit rather than unresolved distance mass", {
   df <- data.frame(
     state_std = "toy", district_std = "one",
@@ -613,8 +659,9 @@ test_that("Census-Glottolog candidates are exact, leaf-aware, and review-only", 
   out <- build_census_glottolog_match_candidates(census, glottolog, cldf)
 
   bhili <- out[out$mother_tongue_code == "101001", , drop = FALSE]
-  expect_equal(bhili$candidate_status, c("exact_ambiguous", "exact_ambiguous"))
-  expect_setequal(bhili$language_glottocode, c("bhili", "bilaspuri"))
+  expect_identical(bhili$candidate_status, "exact_unique")
+  expect_identical(bhili$language_glottocode, "bhili")
+  expect_identical(bhili$term_source, "mother_tongue")
   expect_true(all(bhili$review_status == "unreviewed"))
 
   mising <- out[out$mother_tongue_code == "102001", , drop = FALSE]
