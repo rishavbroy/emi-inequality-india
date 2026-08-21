@@ -979,3 +979,51 @@ test_that("Dyen Hindi cognates have an independent diagnostic writer", {
   round_trip <- utils::read.csv(written, stringsAsFactors = FALSE)
   expect_equal(round_trip$percent_cognates_with_hindi, c(100, 74.5))
 })
+
+
+test_that("Dyen distance preserves Shastry reference and non-Indo-European conventions", {
+  dyen_hindi <- data.frame(
+    list_name = c("Hindi", "Panjabi ST"),
+    percent_cognates_with_hindi = c(100, 74.5),
+    stringsAsFactors = FALSE
+  )
+  index <- data.frame(
+    language = c("Hindi", "Punjabi"),
+    dyen_list_name = c("Hindi", "Panjabi ST"),
+    kogan_code = c("HND", "PNJ"),
+    match_basis = "direct",
+    source_note = "test",
+    stringsAsFactors = FALSE
+  )
+
+  out <- dyen_noncognate_distance(
+    mother_tongue = c("Hindi", "Punjabi", "Korku", "Bhojpuri", "English"),
+    canonical_language = c("Hindi", "Punjabi", "Korku", "Hindi", "English"),
+    dyen_hindi = dyen_hindi,
+    family_id = c("indo1319", "indo1319", "aust1307", "indo1319", "indo1319"),
+    lexical_index = index
+  )
+
+  expect_equal(out[1:3], c(0, 25.5, 95))
+  expect_true(is.na(out[[4]]))
+  expect_true(is.na(out[[5]]))
+})
+
+test_that("Dyen district construction uses its own nonreference coverage denominator", {
+  census <- data.frame(
+    state_std = rep("01", 5),
+    district_std = rep("001", 5),
+    mother_tongue = c("Hindi", "Urdu", "English", "Punjabi", "Bhojpuri"),
+    canonical_language = c("Hindi", "Urdu", "English", "Punjabi", "Hindi"),
+    spkr_tot = c(40, 10, 10, 20, 20),
+    ling_degrees = c(0, 0, NA, 1, NA),
+    dyen_noncognate_pct = c(0, 0, NA, 25.5, NA),
+    stringsAsFactors = FALSE
+  )
+
+  out <- build_linguistic_distance_iv(census)
+
+  expect_equal(out$ling_distance_dyen_noncognate_pct, 25.5)
+  expect_equal(out$ling_dyen_mapped_speaker_share, 50)
+  expect_equal(out$ling_dyen_unmapped_speaker_share, 50)
+})

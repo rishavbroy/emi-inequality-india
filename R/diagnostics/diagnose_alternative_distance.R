@@ -440,21 +440,34 @@ distance_four_leave_one_language_out <- function(census_2001_languages, panel, t
 
 compare_linguistic_distance_bases <- function(panel) {
   x <- if (inherits(panel, "sf")) sf::st_drop_geometry(panel) else as.data.frame(panel)
-  variables <- c("ling_distance_nonzero_mean", "ling_distance_glottolog_nonhindi_mean")
-  if (!all(variables %in% names(x))) return(data.frame())
-  keep <- stats::complete.cases(x[variables])
-  x <- x[keep, variables, drop = FALSE]
-  if (!nrow(x)) return(data.frame())
-  data.frame(
-    shastry_variable = variables[[1]],
-    glottolog_variable = variables[[2]],
-    n = nrow(x),
-    pearson_correlation = stats::cor(x[[1]], x[[2]], method = "pearson"),
-    spearman_correlation = stats::cor(x[[1]], x[[2]], method = "spearman"),
-    shastry_mean = mean(x[[1]]),
-    glottolog_mean = mean(x[[2]]),
-    stringsAsFactors = FALSE
+  variables <- c(
+    shastry = "ling_distance_nonzero_mean",
+    glottolog = "ling_distance_glottolog_nonhindi_mean",
+    dyen = "ling_distance_dyen_noncognate_pct"
   )
+  available <- variables[variables %in% names(x)]
+  if (length(available) < 2L) return(data.frame())
+
+  pairs <- utils::combn(names(available), 2L, simplify = FALSE)
+  safe_bind_rows(lapply(pairs, function(pair) {
+    a <- available[[pair[[1]]]]
+    b <- available[[pair[[2]]]]
+    keep <- stats::complete.cases(x[c(a, b)])
+    values <- x[keep, c(a, b), drop = FALSE]
+    if (!nrow(values)) return(NULL)
+    data.frame(
+      basis_a = pair[[1]],
+      variable_a = a,
+      basis_b = pair[[2]],
+      variable_b = b,
+      n = nrow(values),
+      pearson_correlation = stats::cor(values[[a]], values[[b]], method = "pearson"),
+      spearman_correlation = stats::cor(values[[a]], values[[b]], method = "spearman"),
+      mean_a = mean(values[[a]]),
+      mean_b = mean(values[[b]]),
+      stringsAsFactors = FALSE
+    )
+  }))
 }
 
 augment_alternative_distance_diagnostics <- function(diagnostics, panel, census_2001_languages, outcome = "real_log_consumption_change") {

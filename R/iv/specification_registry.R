@@ -106,6 +106,18 @@ iv_instrument_constructions <- function() {
       excluded = "ling_distance_glottolog_nonhindi_mean",
       included = c("hindi_urdu_share", "native_english_share"),
       coverage = "ling_glottolog_mapped_speaker_share"
+    ),
+    dyen_noncognate = list(
+      label = "Dyen/Shastry noncognate percentage among non-Hindi/Urdu speakers",
+      excluded = "ling_distance_dyen_noncognate_pct",
+      included = character(),
+      coverage = "ling_dyen_mapped_speaker_share"
+    ),
+    dyen_noncognate_shastry = list(
+      label = "Dyen/Shastry noncognate percentage with composition controls",
+      excluded = "ling_distance_dyen_noncognate_pct",
+      included = c("hindi_urdu_share", "native_english_share"),
+      coverage = "ling_dyen_mapped_speaker_share"
     )
   ) |>
     lapply(function(x) {

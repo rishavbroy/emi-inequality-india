@@ -120,7 +120,11 @@ core_pipeline_targets <- list(
   tar_target(
     linguistic_distance_iv,
     build_linguistic_distance_iv(
-      census_2001_languages, cfg, glottolog_5_3, census_glottolog_crosswalk
+      census_2001_languages,
+      cfg,
+      glottolog_5_3,
+      census_glottolog_crosswalk,
+      historical_linguistic_sources
     )
   ),
   tar_target(

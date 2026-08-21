@@ -756,7 +756,8 @@ test_that("alternative linguistic-distance registry covers scalar, nonlinear, an
     "nonzero_mean", "distant_share", "top3_legacy", "nonzero_mean_hindi_urdu",
     "nonzero_mean_shastry", "nonzero_mean_hindi_urdu_separate", "distance_shares_all",
     "distance_shares_all_unmapped", "distance_shares_mapped",
-    "glottolog_mean", "glottolog_mean_shastry"
+    "glottolog_mean", "glottolog_mean_shastry",
+    "dyen_noncognate", "dyen_noncognate_shastry"
   ) %in% registry$construction_id))
   joint <- registry[registry$construction_id == "distance_shares_all", , drop = FALSE]
   expect_true(all(vapply(joint$excluded_instruments, function(x) {
@@ -776,9 +777,12 @@ test_that("alternative linguistic-distance registry covers scalar, nonlinear, an
   )))
   glottolog <- registry[registry$construction_id == "glottolog_mean", , drop = FALSE]
   expect_true(all(glottolog$mapping_coverage_variable == "ling_glottolog_mapped_speaker_share"))
+  dyen <- registry[registry$construction_id == "dyen_noncognate", , drop = FALSE]
+  expect_true(all(dyen$mapping_coverage_variable == "ling_dyen_mapped_speaker_share"))
   expect_true(all(
-    registry$mapping_coverage_variable[!grepl("^glottolog_", registry$construction_id)] ==
-      "ling_mapped_speaker_share"
+    registry$mapping_coverage_variable[
+      !grepl("^(glottolog_|dyen_)", registry$construction_id)
+    ] == "ling_mapped_speaker_share"
   ))
 })
 
@@ -811,6 +815,9 @@ test_that("alternative linguistic-distance first stages use fixed support and jo
   panel$ling_distance_glottolog_nonhindi_mean <- panel$ling_distance_nonzero_mean + 1
   panel$ling_glottolog_mapped_speaker_share <- 100
   panel$ling_glottolog_unmapped_speaker_share <- 0
+  panel$ling_distance_dyen_noncognate_pct <- 100 - 10 * panel$ling_distance_nonzero_mean
+  panel$ling_dyen_mapped_speaker_share <- 100
+  panel$ling_dyen_unmapped_speaker_share <- 0
   panel$native_english_share <- 0
   panel$emi_exposure_all_children_0708 <- 5 + 0.15 * panel$ling_share_distance_5 +
     0.08 * panel$ling_share_distance_4 + stats::rnorm(n)
@@ -830,7 +837,11 @@ test_that("alternative linguistic-distance first stages use fixed support and jo
   expect_setequal(unique(out$coverage_sensitivity$minimum_mapped_share), linguistic_mapping_coverage_thresholds())
   expect_setequal(
     unique(out$coverage_sensitivity$coverage_variable),
-    c("ling_mapped_speaker_share", "ling_glottolog_mapped_speaker_share")
+    c(
+      "ling_mapped_speaker_share",
+      "ling_glottolog_mapped_speaker_share",
+      "ling_dyen_mapped_speaker_share"
+    )
   )
   expect_equal(
     nrow(out$coefficients[out$coefficients$term %in% linguistic_distance_excluded_instruments("all"), ]),
@@ -866,6 +877,9 @@ test_that("alternative linguistic-distance diagnostics save four explicit output
   panel$ling_distance_glottolog_nonhindi_mean <- panel$ling_distance_nonzero_mean + 1
   panel$ling_glottolog_mapped_speaker_share <- 100
   panel$ling_glottolog_unmapped_speaker_share <- 0
+  panel$ling_distance_dyen_noncognate_pct <- 100 - 10 * panel$ling_distance_nonzero_mean
+  panel$ling_dyen_mapped_speaker_share <- 100
+  panel$ling_dyen_unmapped_speaker_share <- 0
   panel$native_english_share <- 0
   for (variable in census_2001_diagnostic_controls()) panel[[variable]] <- stats::rnorm(n)
   out <- diagnose_alternative_distance_first_stages(panel)
@@ -1265,4 +1279,25 @@ test_that("Anderson-Rubin inference accepts scalar and multi-instrument registry
   expect_equal(nrow(scalar_ar$grid), 21L)
   expect_equal(nrow(multi_ar$grid), 21L)
   expect_true(all(c("anderson_rubin_f_beta0", "anderson_rubin_p_beta0") %in% names(multi_ar$summary)))
+})
+
+
+test_that("linguistic basis comparison remains pairwise under partial lexical coverage", {
+  panel <- data.frame(
+    ling_distance_nonzero_mean = c(1, 2, 3, 4),
+    ling_distance_glottolog_nonhindi_mean = c(2, 4, 6, 8),
+    ling_distance_dyen_noncognate_pct = c(20, 30, NA, 50)
+  )
+
+  out <- compare_linguistic_distance_bases(panel)
+
+  expect_setequal(
+    paste(out$basis_a, out$basis_b, sep = "__"),
+    c("shastry__glottolog", "shastry__dyen", "glottolog__dyen")
+  )
+  expect_equal(out$n[out$basis_b == "dyen"], c(3, 3))
+  expect_equal(
+    out$pearson_correlation[out$basis_a == "shastry" & out$basis_b == "glottolog"],
+    1
+  )
 })

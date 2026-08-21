@@ -122,6 +122,67 @@ lexical_language_evidence <- function(language, dyen_hindi, index = read_lexical
   )
 }
 
+
+dyen_noncognate_distance <- function(
+  mother_tongue,
+  canonical_language,
+  dyen_hindi,
+  family_id = NULL,
+  lexical_index = read_lexical_language_index()
+) {
+  mother <- normalize_language_label(mother_tongue)
+  canonical <- normalize_language_label(canonical_language)
+  evidence <- lexical_language_evidence(mother, dyen_hindi, lexical_index)
+  similarity <- num(evidence$dyen_cognate_pct_hindi)
+
+  # The Census Hindi/Urdu umbrellas cannot assign a distinct leaf the
+  # reference-language value merely because the parent group is Hindi/Urdu.
+  protected_reference_group <- canonical %in% c("Hindi", "Urdu") &
+    !is.na(mother) & nzchar(mother) & mother != canonical
+
+  missing <- !is.finite(similarity) & !protected_reference_group
+  if (any(missing)) {
+    fallback <- lexical_language_evidence(canonical[missing], dyen_hindi, lexical_index)
+    similarity[missing] <- num(fallback$dyen_cognate_pct_hindi)
+  }
+
+  if (!is.null(family_id)) {
+    family <- plain_chr(family_id)
+    non_ie <- !is.finite(similarity) &
+      !is.na(family) & nzchar(family) & family != "indo1319" &
+      !mother %in% c("English", "Hindi", "Urdu")
+    # Shastry (2008), footnote 20: languages outside the Dyen Indo-European
+    # universe are assigned 5 percent common words with Hindi.
+    similarity[non_ie] <- 5
+  }
+
+  distance <- 100 - similarity
+  distance[mother %in% c("Hindi", "Urdu")] <- 0
+  distance[mother == "English"] <- NA_real_
+  distance
+}
+
+attach_dyen_language_distance <- function(
+  census_2001_languages,
+  historical_linguistics,
+  lexical_index = read_lexical_language_index()
+) {
+  rows <- safe_df(census_2001_languages)
+  required <- c("mother_tongue", "canonical_language")
+  if (!all(required %in% names(rows))) {
+    stop("Dyen distance attachment requires mother_tongue and canonical_language.", call. = FALSE)
+  }
+  family <- if ("glottolog_family_id" %in% names(rows)) rows$glottolog_family_id else NULL
+  rows$dyen_noncognate_pct <- dyen_noncognate_distance(
+    rows$mother_tongue,
+    rows$canonical_language,
+    historical_linguistics$dyen_hindi,
+    family_id = family,
+    lexical_index = lexical_index
+  )
+  rows
+}
+
 save_dyen_hindi_cognates <- function(
   x,
   path = "outputs/diagnostics/extended/instrument_relevance/dyen_hindi_cognates.csv"
