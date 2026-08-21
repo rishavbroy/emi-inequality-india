@@ -735,10 +735,11 @@ test_that("reviewed Census-Glottolog crosswalk rejects unknown or bookkeeping en
 })
 
 test_that("Glottolog district mean excludes Hindi, Urdu, and English by construction", {
+  # Production distance is anchored to Glottolog's persistent Hindi ID hind1269.
   g <- data.frame(
-    id = c("indo", "hindi", "urdu", "other"),
-    family_id = c("", "indo", "indo", "indo"),
-    parent_id = c("", "indo", "indo", "indo"),
+    id = c("indo1319", "hind1269", "urdu", "other"),
+    family_id = c("", "indo1319", "indo1319", "indo1319"),
+    parent_id = c("", "indo1319", "indo1319", "indo1319"),
     name = c("Indo-European", "Hindi", "Urdu", "Other"),
     bookkeeping = FALSE,
     level = c("family", "language", "language", "language"),
@@ -749,8 +750,8 @@ test_that("Glottolog district mean excludes Hindi, Urdu, and English by construc
     mother_tongue_code = sprintf("%06d", 1:4),
     mother_tongue = c("Hindi", "Urdu", "English", "Other"),
     canonical_language = c("Hindi", "Urdu", "English", "Other"),
-    language_glottocode = c("hindi", "urdu", "", "other"),
-    family_id = c("indo", "indo", "", "indo"),
+    language_glottocode = c("hind1269", "urdu", "", "other"),
+    family_id = c("indo1319", "indo1319", "", "indo1319"),
     match_basis = c("manual", "manual", "", "manual"),
     review_status = c("accepted_manual", "accepted_manual", "unresolved", "accepted_manual"),
     stringsAsFactors = FALSE
@@ -772,7 +773,10 @@ test_that("Glottolog district mean excludes Hindi, Urdu, and English by construc
 
   expect_equal(out$ling_glottolog_mapped_speaker_share, 100)
   expect_equal(out$ling_glottolog_unmapped_speaker_share, 0)
-  expect_equal(out$ling_distance_glottolog_nonhindi_mean, glottolog_edge_distance("other", "hindi", g))
+  expect_equal(
+    out$ling_distance_glottolog_nonhindi_mean,
+    glottolog_edge_distance("other", "hind1269", g)
+  )
 })
 
 
@@ -815,10 +819,11 @@ test_that("accepted non-Indo-European mappings apply Shastry degree five only", 
 })
 
 test_that("Indo-European nearest-anchor degrees remain review candidates", {
+  # The extension rule keys the pinned Glottolog Indo-European family indo1319.
   g <- data.frame(
-    id = c("indo", "hindi", "target"),
-    family_id = c("", "indo", "indo"),
-    parent_id = c("", "indo", "indo"),
+    id = c("indo1319", "hind1269", "target"),
+    family_id = c("", "indo1319", "indo1319"),
+    parent_id = c("", "indo1319", "indo1319"),
     name = c("Indo-European", "Hindi", "Target"),
     bookkeeping = FALSE,
     level = c("family", "language", "language"),
@@ -829,8 +834,8 @@ test_that("Indo-European nearest-anchor degrees remain review candidates", {
     mother_tongue_code = c("000001", "000002"),
     mother_tongue = c("Hindi", "Target"),
     canonical_language = c("Hindi", "Target"),
-    language_glottocode = c("hindi", "target"),
-    family_id = "indo",
+    language_glottocode = c("hind1269", "target"),
+    family_id = "indo1319",
     match_basis = "manual",
     review_status = "accepted_manual",
     stringsAsFactors = FALSE
