@@ -293,6 +293,10 @@ test_that("historical linguistic review sources are versioned with exact local c
     rows$expected_size_bytes[match(c("ethnologue_newick_proxy", "dyen1997_raw", "kogan2017_pdf", "asjp_v21_archive"), rows$file_id)],
     c(464107, 849705, 400620, 16238442)
   )
+  expect_identical(
+    rows$relative_path[rows$file_id == "asjp_v21_archive"],
+    "data/raw/cognates/asjp-v21.zip"
+  )
   expect_true(all(startsWith(rows$relative_path, "data/raw/")))
   expect_equal(anyDuplicated(rows$relative_path), 0L)
 
