@@ -69,3 +69,15 @@ Results are repeated with minimum mapped-speaker shares of 0, 90, 95, and 99 per
 Shastry used the 1991 Census classification of 114 languages, assigned all non-Indo-European languages to degree five, and assigned unlisted Indo-European languages the value of the closest language on a language tree. She explicitly preferred 1991 to 1961 because the latter listed 1,652 languages that were difficult to classify. The present project uses the more detailed Census 2001 C-16 hierarchy but only the published degree categories from Shastry's article; consequently, its conservative concordance leaves some detailed categories unmapped instead of reconstructing her unpublished closest-language-tree assignments.
 
 The exploratory outcome output reports conventional clustered 2SLS alongside the reduced-form joint test and an Anderson-Rubin test of a zero treatment effect. Because the scalar state-fixed-effect first stages and the five-share joint first stages are weak, the conventional 2SLS coefficient is not treated as decisive.
+
+
+## Reviewed Glottolog crosswalk and alternative distance basis
+
+`data/metadata/census_language_glottolog_crosswalk.csv` is the production identity layer for the Glottolog robustness basis. It contains one row per Census mother-tongue code. A deterministic row is accepted only when the strongest candidate is a unique Glottolog primary-name match, the candidate is documented for India, and the full ancestry is non-bookkeeping. Ambiguous, alias-only, generic, foreign-only, or bookkeeping-derived candidates remain unresolved unless a reviewed manual row documents the disambiguation.
+
+The district robustness variable `ling_distance_glottolog_nonhindi_mean` is an unweighted Glottolog-5.3 edge-distance construction, aggregated with Census speaker weights. Native Hindi, Urdu, and English are reference/special categories and do not enter this weighted-mean denominator. `ling_glottolog_mapped_speaker_share` measures coverage among the remaining distance-bearing speaker mass. The Glottolog measure is never rescaled to the Shastry 0–5 scale and is never described as the historical Ethnologue node count.
+
+The canonical IV registry now carries a construction-specific mapping-coverage variable. Existing Shastry specifications use `ling_mapped_speaker_share`; Glottolog specifications use `ling_glottolog_mapped_speaker_share`. The same first-stage, weak-IV, balance, overidentification, and monotonicity machinery therefore operates on both distance bases without a parallel estimation implementation.
+
+
+For the Shastry 0–5 basis, accepted Glottolog identities outside Indo-European receive degree five directly because this is Shastry's stated family-level convention. Indo-European languages without a published 0–5 assignment are different: `shastry_extension_candidates.csv` reports their nearest accepted Shastry anchors in the Glottolog 5.3 graph, but those candidate degrees remain review-only. Raw node depth varies across Glottolog branches, so the pipeline does not silently convert a nearest-edge result into a published Shastry/Jasanoff degree.

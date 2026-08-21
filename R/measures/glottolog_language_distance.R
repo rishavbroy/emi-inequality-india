@@ -90,3 +90,85 @@ glottolog_edge_distance <- function(a, b, languoids) {
   # Each top-level family root is one edge from the synthetic super-root.
   length(path_a) + length(path_b)
 }
+
+
+read_census_language_glottolog_crosswalk <- function(path = NULL) {
+  if (is.null(path)) {
+    root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
+    path <- file.path(root, "data", "metadata", "census_language_glottolog_crosswalk.csv")
+  }
+  if (!file.exists(path)) stop("Missing Census-Glottolog crosswalk: ", path, call. = FALSE)
+  out <- utils::read.csv(path, stringsAsFactors = FALSE, check.names = FALSE)
+  required <- c(
+    "mother_tongue_code", "mother_tongue", "canonical_language",
+    "language_glottocode", "family_id", "match_basis", "review_status"
+  )
+  if (!all(required %in% names(out))) stop("Census-Glottolog crosswalk has an invalid schema.", call. = FALSE)
+  out$mother_tongue_code <- sprintf("%06d", suppressWarnings(as.integer(out$mother_tongue_code)))
+  if (anyDuplicated(out$mother_tongue_code)) stop("Census-Glottolog crosswalk has duplicate mother-tongue codes.", call. = FALSE)
+  accepted <- grepl("^accepted_", plain_chr(out$review_status))
+  if (any(accepted & !nzchar(trimws(plain_chr(out$language_glottocode))))) {
+    stop("Accepted Census-Glottolog rows must contain a Glottocode.", call. = FALSE)
+  }
+  out
+}
+
+validate_census_glottolog_crosswalk <- function(crosswalk, languoids) {
+  accepted <- grepl("^accepted_", plain_chr(crosswalk$review_status))
+  codes <- plain_chr(crosswalk$language_glottocode[accepted])
+  missing <- setdiff(unique(codes), languoids$id)
+  if (length(missing)) stop("Accepted Census-Glottolog rows contain unknown Glottocodes.", call. = FALSE)
+  invalid <- codes[!vapply(codes, function(code) length(glottolog_ancestor_path(code, languoids)) > 0L, logical(1))]
+  if (length(invalid)) stop("Accepted Census-Glottolog rows contain invalid genealogy endpoints.", call. = FALSE)
+  invisible(TRUE)
+}
+
+glottolog_distance_from_hindi <- function(glottocode, languoids, hindi = "hind1269") {
+  vapply(
+    plain_chr(glottocode),
+    function(code) {
+      if (is.na(code) || !nzchar(code)) return(NA_real_)
+      glottolog_edge_distance(code, hindi, languoids)
+    },
+    numeric(1)
+  )
+}
+
+attach_glottolog_language_distance <- function(census_2001_languages, glottolog, crosswalk) {
+  rows <- safe_df(census_2001_languages)
+  if (!"mother_tongue_code" %in% names(rows)) {
+    stop("Glottolog distance attachment requires Census mother_tongue_code.", call. = FALSE)
+  }
+  validate_census_glottolog_crosswalk(crosswalk, glottolog$languoids)
+  code <- sprintf("%06d", suppressWarnings(as.integer(rows$mother_tongue_code)))
+  index <- match(code, crosswalk$mother_tongue_code)
+  accepted <- !is.na(index) & grepl("^accepted_", plain_chr(crosswalk$review_status[index]))
+  rows$glottolog_language_glottocode <- NA_character_
+  rows$glottolog_family_id <- NA_character_
+  rows$glottolog_language_glottocode[accepted] <- plain_chr(crosswalk$language_glottocode[index[accepted]])
+  rows$glottolog_family_id[accepted] <- plain_chr(crosswalk$family_id[index[accepted]])
+  rows$glottolog_edge_distance <- glottolog_distance_from_hindi(
+    rows$glottolog_language_glottocode,
+    glottolog$languoids
+  )
+  rows
+}
+
+glottolog_language_distance_table <- function(crosswalk, glottolog) {
+  validate_census_glottolog_crosswalk(crosswalk, glottolog$languoids)
+  out <- crosswalk
+  accepted <- grepl("^accepted_", plain_chr(out$review_status))
+  out$glottolog_edge_distance_from_hindi <- NA_real_
+  out$glottolog_edge_distance_from_hindi[accepted] <- glottolog_distance_from_hindi(
+    out$language_glottocode[accepted],
+    glottolog$languoids
+  )
+  out
+}
+
+save_glottolog_language_distance_table <- function(
+  x,
+  path = "outputs/diagnostics/extended/instrument_relevance/glottolog_linguistic_distance.csv"
+) {
+  write_diagnostic_csv(x, path)
+}

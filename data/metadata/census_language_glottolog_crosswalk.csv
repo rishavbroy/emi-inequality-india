@@ -1,0 +1,323 @@
+mother_tongue_code,mother_tongue,canonical_language,language_glottocode,glottolog_name,family_id,iso639P3code,glottolog_level,match_basis,review_status,notes
+001002,Assamese,Assamese,assa1263,Assamese,indo1319,asm,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+001999,Others,Assamese,,,,,,,unresolved,
+002004,Bengali,Bengali,beng1280,Bengali,indo1319,ben,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+002007,Chakma,Bengali,chak1266,Chakma,indo1319,ccp,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+002009,Haijong/Hajong,Bengali,hajo1238,Hajong,indo1319,haj,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+002023,Rajbangsi,Bengali,,,,,,,unresolved,
+002999,Others,Bengali,,,,,,,unresolved,
+003001,Bodo,Bodo,bodo1269,Bodo-Mech,sino1245,brx,language,manual_disambiguation,accepted_manual,Indian Bodo/Mech language (ISO brx); disambiguates unrelated Bodo aliases.
+003999,Others,Bodo,,,,,,,unresolved,
+004001,Dogri,Dogri,dogr1250,Dogri,indo1319,dgo,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+004999,Others,Dogri,,,,,,,unresolved,
+005011,Gujarati,Gujarati,guja1252,Gujarati,indo1319,guj,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+005012,Gujrao/Gujrau,Gujarati,,,,,,,unresolved,
+005036,Saurashtra/Saurashtri,Gujarati,saur1248,Saurashtra,indo1319,saz,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+005999,Others,Gujarati,,,,,,,unresolved,
+006008,Awadhi,Hindi,awad1243,Awadhi,indo1319,awa,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+006016,Bagheli/Baghel Khandi,Hindi,bagh1251,Bagheli,indo1319,bfy,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+006017,Bagri Rajasthani,Hindi,,,,,,,unresolved,
+006026,Banjari,Hindi,,,,,,,unresolved,
+006038,Bhadrawahi,Hindi,bhad1241,Bhadrawahi,indo1319,bhd,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+006042,Bharmauri/Gaddi,Hindi,gadd1242,Gaddi,indo1319,gbk,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+006045,Bhojpuri,Hindi,bhoj1244,Bhojpuri,indo1319,bho,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+006059,Brajbhasha,Hindi,,,,,,,unresolved,
+006060,Bundeli/Bundelkhandi,Hindi,bund1253,Bundeli,indo1319,bns,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+006064,Chambeali,Hindi,cham1307,Chambeali,indo1319,cdh,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+006072,Chhattisgarhi,Hindi,chha1249,Chhattisgarhi,indo1319,hne,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+006074,Churahi,Hindi,chur1258,Churahi,indo1319,cdj,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+006084,Dhundhari,Hindi,,,,,,,unresolved,
+006095,Garhwali,Hindi,garh1243,Garhwali,indo1319,gbm,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+006103,Gojri,Hindi,,,,,,,unresolved,
+006116,Harauti,Hindi,hado1235,Hadothi,indo1319,hoj,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+006117,Haryanvi,Hindi,hary1238,Haryanvi,indo1319,bgc,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+006118,Hindi,Hindi,hind1269,Hindi,indo1319,hin,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+006127,Jaunsari,Hindi,jaun1243,Jaunsari,indo1319,jns,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+006138,Kangri,Hindi,kang1280,Kangri,indo1319,xnr,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+006145,Khairari,Hindi,mewa1249,Mewari,indo1319,mtr,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+006148,Khari Boli,Hindi,hind1269,Hindi,indo1319,hin,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+006153,Khortha/Khotta,Hindi,,,,,,,unresolved,
+006160,Kulvi,Hindi,,,,,,,unresolved,
+006162,Kumauni,Hindi,,,,,,,unresolved,
+006165,Kurmali Thar,Hindi,,,,,,,unresolved,
+006167,Labani,Hindi,,,,,,,unresolved,
+006171,Lamani/Lambadi,Hindi,lamb1269,Lambadi,indo1319,lmn,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+006172,Laria,Hindi,,,,,,,unresolved,
+006174,Lodhi,Hindi,lodh1246,Lodhi,indo1319,lbm,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+006179,Magadhi/Magahi,Hindi,maga1260,Magahi,indo1319,mag,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+006187,Malvi,Hindi,malv1243,Malvi,indo1319,mup,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+006188,Mandeali,Hindi,mand1409,Mandeali,indo1319,mjl,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+006192,Marwari,Hindi,marw1260,Marwari (India),indo1319,rwr,language,manual_country_disambiguation,accepted_manual,"Indian Marwari (ISO rwr), not Pakistan Marwari or Shekhawati."
+006195,Mewari,Hindi,mewa1249,Mewari,indo1319,mtr,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+006196,Mewati,Hindi,mewa1250,Mewati,indo1319,wtm,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+006204,Nagpuria,Hindi,,,,,,,unresolved,
+006210,Nimadi,Hindi,nima1243,Nimadi,indo1319,noe,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+006213,Pahari,Hindi,,,,,,,unresolved,
+006224,Panch Pargania,Hindi,,,,,,,unresolved,
+006227,Pangwali,Hindi,pang1282,Pangwali,indo1319,pgg,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+006234,Pawari/Powari,Hindi,,,,,,,unresolved,
+006242,Rajasthani,Hindi,,,,,,,unresolved,
+006251,Sadan/Sadri,Hindi,sadr1248,Sadri,indo1319,sck,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+006259,Sirmauri,Hindi,sirm1239,Sirmauri,indo1319,srx,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+006260,Sondwari,Hindi,,,,,,,unresolved,
+006262,Sugali,Hindi,,,,,,,unresolved,
+006264,Surgujia,Hindi,chha1249,Chhattisgarhi,indo1319,hne,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+006265,Surjapuri,Hindi,surj1235,Surjapuri,indo1319,sjp,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+006999,Others,Hindi,,,,,,,unresolved,
+007002,Badaga,Kannada,bada1257,Badaga,drav1251,bfq,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+007013,Kannada,Kannada,nucl1305,Kannada,drav1251,kan,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+007021,Kuruba/Kurumba,Kannada,,,,,,,unresolved,
+007999,Others,Kannada,,,,,,,unresolved,
+008002,Kashmiri,Kashmiri,kash1277,Kashmiri,indo1319,kas,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+008004,Kishtwari,Kashmiri,kash1277,Kashmiri,indo1319,kas,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+008009,Siraji,Kashmiri,,,,,,,unresolved,
+008999,Others,Kashmiri,,,,,,,unresolved,
+009010,Konkani,Konkani,goan1235,Goan Konkani,indo1319,gom,language,manual_disambiguation,accepted_manual,"Goan Konkani (ISO gom), the Indian Konkani language; rejects Konkan Marathi alias."
+009011,Kudubi/Kudumbi,Konkani,,,,,,,unresolved,
+009013,Malwani,Konkani,,,,,,,unresolved,
+009999,Others,Konkani,,,,,,,unresolved,
+010006,Maithili,Maithili,mait1250,Maithili,indo1319,mai,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+010999,Others,Maithili,,,,,,,unresolved,
+011013,Malayalam,Malayalam,mala1464,Malayalam,drav1251,mal,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+011022,Yerava,Malayalam,,,,,,,unresolved,
+011999,Others,Malayalam,,,,,,,unresolved,
+012002,Manipuri,Manipuri,mani1292,Manipuri,sino1245,mni,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+012999,Others,Manipuri,,,,,,,unresolved,
+013048,Marathi,Marathi,mara1378,Marathi,indo1319,mar,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+013999,Others,Marathi,,,,,,,unresolved,
+014009,Nepali,Nepali,nepa1254,Nepali,indo1319,npi,language,manual_exact_primary_country_context,accepted_manual,Exact Glottolog primary name; Census language is Nepali although the Glottolog country list is Nepal-only.
+014999,Others,Nepali,,,,,,,unresolved,
+015006,Bhatri,Oriya,bhat1265,Bhatri,indo1319,bgw,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+015031,Oriya,Oriya,oriy1255,Odia,indo1319,ory,language,manual_modern_name,accepted_manual,Glottolog primary name Odia (ISO ory); Census 2001 uses Oriya.
+015039,Proja,Oriya,,,,,,,unresolved,
+015040,Relli,Oriya,,,,,,,unresolved,
+015042,Sambalpuri,Oriya,samb1325,Sambalpuri,indo1319,spv,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+015999,Others,Oriya,,,,,,,unresolved,
+016001,Bagri,Punjabi,bagr1243,Bagri,indo1319,bgq,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+016004,Bilaspuri  Kahluri,Punjabi,,,,,,,unresolved,
+016018,Punjabi,Punjabi,panj1256,Eastern Panjabi,indo1319,pan,language,manual_alias_iso,accepted_manual,Eastern Panjabi (ISO pan); Punjabi is a documented alternate name in Glottolog.
+016999,Others,Punjabi,,,,,,,unresolved,
+017002,Sanskrit,Sanskrit,sans1269,Sanskrit,indo1319,san,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+017999,Others,Sanskrit,,,,,,,unresolved,
+018009,Karmali,Santali,sant1410,Santali,aust1305,sat,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+018013,Santali,Santali,sant1410,Santali,aust1305,sat,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+018999,Others,Santali,,,,,,,unresolved,
+019008,Kachchhi,Sindhi,,,,,,,unresolved,
+019013,Sindhi,Sindhi,sind1272,Sindhi,indo1319,snd,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+019999,Others,Sindhi,,,,,,,unresolved,
+020007,Kaikadi,Tamil,kaik1244,Kaikadi,drav1251,kep,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+020020,Tamil,Tamil,tami1289,Tamil,drav1251,tam,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+020022,Yerukala/Yerukula,Tamil,yeru1240,Yerukula,drav1251,yeu,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+020999,Others,Tamil,,,,,,,unresolved,
+021035,Telugu,Telugu,telu1262,Telugu,drav1251,tel,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+021037,Vadari,Telugu,telu1262,Telugu,drav1251,tel,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+021999,Others,Telugu,,,,,,,unresolved,
+022014,Urdu,Urdu,urdu1245,Urdu,indo1319,urd,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+022999,Others,Urdu,,,,,,,unresolved,
+023002,Adi,Adi,,,,,,,unresolved,
+023005,Adi Gallong/Gallong,Adi,,,,,,,unresolved,
+023009,Adi Miniyong/Miniyong,Adi,,,,,,,unresolved,
+023999,Others,Adi,,,,,,,unresolved,
+024001,Afghani/Kabuli/Pashto,Afghani/Kabuli/Pashto,,,,,,,unresolved,
+025001,Anal,Anal,anal1239,Anal,sino1245,anm,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+025999,Others,Anal,,,,,,,unresolved,
+026002,Angami,Angami,,,,,,,unresolved,
+026999,Others,Angami,,,,,,,unresolved,
+027001,Ao,Ao,,,,,,,unresolved,
+027999,Others,Ao,,,,,,,unresolved,
+028001,Arabic/Arbi,Arabic/Arbi,,,,,,,unresolved,
+028999,Others,Arabic/Arbi,,,,,,,unresolved,
+029002,Balti,Balti,balt1258,Balti,sino1245,bft,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+029999,Others,Balti,,,,,,,unresolved,
+030002,Baori,Bhili/Bhilodi,,,,,,,unresolved,
+030003,Barel,Bhili/Bhilodi,,,,,,,unresolved,
+030006,Bhilali,Bhili/Bhilodi,bhil1253,Bhilali,indo1319,bhi,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+030007,Bhili/Bhilodi,Bhili/Bhilodi,bhil1251,Bhili,indo1319,bhb,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+030010,Chodhari,Bhili/Bhilodi,,,,,,,unresolved,
+030013,Dhodia,Bhili/Bhilodi,,,,,,,unresolved,
+030018,Gamti/Gavit,Bhili/Bhilodi,mawc1242,Mawchi,indo1319,mke,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+030019,Garasia,Bhili/Bhilodi,,,,,,,unresolved,
+030027,Kokna/Kokni/Kukna,Bhili/Bhilodi,,,,,,,unresolved,
+030032,Mawchi,Bhili/Bhilodi,mawc1242,Mawchi,indo1319,mke,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+030044,Paradhi,Bhili/Bhilodi,,,,,,,unresolved,
+030046,Pawri,Bhili/Bhilodi,,,,,,,unresolved,
+030048,Rathi,Bhili/Bhilodi,garh1243,Garhwali,indo1319,gbm,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+030050,Tadavi,Bhili/Bhilodi,,,,,,,unresolved,
+030052,Varli,Bhili/Bhilodi,,,,,,,unresolved,
+030053,Vasava,Bhili/Bhilodi,,,,,,,unresolved,
+030055,Wagdi,Bhili/Bhilodi,wagd1238,Wagdi,indo1319,wbr,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+030999,Others,Bhili/Bhilodi,,,,,,,unresolved,
+031001,Bhotia,Bhotia,,,,,,,unresolved,
+031005,Zanskari,Bhotia,,,,,,,unresolved,
+031999,Others,Bhotia,,,,,,,unresolved,
+032002,Bhumij,Bhumij,mund1320,Mundari,aust1305,unr,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+032999,Others,Bhumij,,,,,,,unresolved,
+033001,Bishnupriya Manipuri/Manipuri Bishnupriya,Bishnupuriya,bish1244,Bishnupriya Manipuri,indo1319,bpy,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+033999,Others,Bishnupuriya,,,,,,,unresolved,
+034001,Chakhesang,Chakhesang,,,,,,,unresolved,
+035001,Chakru/Chokri,Chakru/Chokri,,,,,,,unresolved,
+036001,Chang,Chang,,,,,,,unresolved,
+037001,Coorgi/Kodagu,Coorgi/Kodagu,koda1255,Kodava,drav1251,kfa,language,manual_modern_name,accepted_manual,Glottolog Kodava (ISO kfa); Census label Coorgi/Kodagu.
+038001,Deori,Deori,deor1238,Deori,sino1245,der,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+039002,Dimasa,Dimasa,dima1251,Dimasa,sino1245,dis,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+039999,Others,Dimasa,,,,,,,unresolved,
+040001,English,English,,,,,,,unresolved,
+041001,Gadaba,Gadaba,,,,,,,unresolved,
+041999,Others,Gadaba,,,,,,,unresolved,
+042001,Gangte,Gangte,gang1266,Gangte,sino1245,gnb,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+042999,Others,Gangte,,,,,,,unresolved,
+043005,Garo,Garo,garo1247,Garo,sino1245,grt,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+043999,Others,Garo,,,,,,,unresolved,
+044002,Dorli,Gondi,koya1251,Koya,drav1251,kff,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+044006,Gondi,Gondi,,,,,,,unresolved,
+044012,Kalari,Gondi,,,,,,,unresolved,
+044016,Maria,Gondi,,,,,,,unresolved,
+044017,Muria,Gondi,,,,,,,unresolved,
+044999,Others,Gondi,,,,,,,unresolved,
+045001,Halabi,Halabi,halb1244,Halbi,indo1319,hlb,language,manual_spelling_alias,accepted_manual,Glottolog primary name Halbi (ISO hlb); Census label uses Halabi.
+045999,Others,Halabi,,,,,,,unresolved,
+046003,Halam,Halam,rang1267,Halam,sino1245,rnl,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+046999,Others,Halam,,,,,,,unresolved,
+047001,Hmar,Hmar,hmar1241,Hmar,sino1245,hmr,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+048002,Ho,Ho,hooo1248,Ho,aust1305,hoc,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+048999,Others,Ho,,,,,,,unresolved,
+049002,Jatapu,Jatapu,,,,,,,unresolved,
+049999,Others,Jatapu,,,,,,,unresolved,
+050001,Juang,Juang,juan1238,Juang,aust1305,jun,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+051003,Kabui,Kabui,,,,,,,unresolved,
+051004,Rongmei,Kabui,,,,,,,unresolved,
+051999,Others,Kabui,,,,,,,unresolved,
+052002,Karbi,Karbi / Mikir,karb1241,Hills Karbi,sino1245,mjw,language,manual_disambiguation,accepted_manual,"Hills Karbi (ISO mjw), the Indian Karbi language; rejects unrelated same-name aliases."
+052999,Others,Karbi / Mikir,,,,,,,unresolved,
+053002,Ahirani,Khandeshi,,,,,,,unresolved,
+053004,Dangi,Khandeshi,braj1242,Braj,indo1319,bra,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+053005,Gujari,Khandeshi,guja1253,Gujari,indo1319,gju,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+053006,Khandeshi,Khandeshi,khan1272,Khandesi,indo1319,khn,language,manual_spelling_alias,accepted_manual,Glottolog primary name Khandesi (ISO khn); Census label uses Khandeshi.
+053999,Others,Khandeshi,,,,,,,unresolved,
+054004,Kharia,Kharia,khar1287,Kharia,aust1305,khr,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+054999,Others,Kharia,,,,,,,unresolved,
+055004,Bhoi Khasi,Khasi,khas1269,Khasi,aust1305,kha,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+055006,Khasi,Khasi,khas1269,Khasi,aust1305,kha,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+055008,Pnar/Synteng,Khasi,pnar1238,Pnar,aust1305,pbv,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+055009,War,Khasi,,,,,,,unresolved,
+055999,Others,Khasi,,,,,,,unresolved,
+056001,Khezha,Khezha,,,,,,,unresolved,
+056999,Others,Khezha,,,,,,,unresolved,
+057001,Khiemnungan,Khiemnungan,,,,,,,unresolved,
+058001,Khond/Kondh,Khond/Kondh,,,,,,,unresolved,
+058999,Others,Khond/Kondh,,,,,,,unresolved,
+059003,Kinnauri,Kinnauri,kinn1249,Kinnauri,sino1245,kfk,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+059999,Others,Kinnauri,,,,,,,unresolved,
+060001,Kisan,Kisan,sadr1248,Sadri,indo1319,sck,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+061002,Koch,Koch,koch1250,Koch,sino1245,kdq,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+061999,Others,Koch,,,,,,,unresolved,
+062003,Koda/Kora,Koda/Kora,,,,,,,unresolved,
+062999,Others,Koda/Kora,,,,,,,unresolved,
+063001,Kolami,Kolami,,,,,,,unresolved,
+064001,Kom,Kom,,,,,,,unresolved,
+065002,Kodu,Konda,,,,,,,unresolved,
+065999,Others,Konda,,,,,,,unresolved,
+066001,Konyak,Konyak,,,,,,,unresolved,
+067001,Korku,Korku,kork1243,Korku,aust1305,kfq,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+067004,Muwasi,Korku,,,,,,,unresolved,
+067999,Others,Korku,,,,,,,unresolved,
+068003,Koraku,Korwa,,,,,,,unresolved,
+068999,Others,Korwa,,,,,,,unresolved,
+069001,Koya,Koya,koya1251,Koya,drav1251,kff,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+070001,Kui,Kui,,,,,,,unresolved,
+070999,Others,Kui,,,,,,,unresolved,
+071007,Kuki,Kuki,,,,,,,unresolved,
+071999,Others,Kuki,,,,,,,unresolved,
+072009,Kurukh/Oraon,Kurukh/Oraon,kuru1301,Kurukh,drav1251,kru,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+072999,Others,Kurukh/Oraon,,,,,,,unresolved,
+073002,Ladakhi,Ladakhi,,,,,,,unresolved,
+073999,Others,Ladakhi,,,,,,,unresolved,
+074002,Lahauli,Lahauli,,,,,,,unresolved,
+074999,Others,Lahauli,,,,,,,unresolved,
+075001,Bahawal Puri,Lahnda,,,,,,,unresolved,
+075012,Multani,Lahnda,sera1259,Saraiki,indo1319,skr,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+075015,Punchhi,Lahnda,paha1251,Pahari Potwari,indo1319,phr,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+075999,Others,Lahnda,,,,,,,unresolved,
+076001,Lakher,Lakher,,,,,,,unresolved,
+077001,Lalung,Lalung,,,,,,,unresolved,
+078001,Lepcha,Lepcha,lepc1244,Lepcha,sino1245,lep,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+079002,Liangmei,Liangmei,,,,,,,unresolved,
+079999,Others,Liangmei,,,,,,,unresolved,
+080002,Limbu,Limbu,limb1266,Limbu,sino1245,lif,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+080999,Others,Limbu,,,,,,,unresolved,
+081001,Lotha,Lotha,,,,,,,unresolved,
+082003,Lushai/Mizo,Lushai/Mizo,lush1249,Mizo,sino1245,lus,language,manual_alias,accepted_manual,Glottolog primary name Mizo (ISO lus); Census label explicitly includes Mizo.
+082999,Others,Lushai/Mizo,,,,,,,unresolved,
+083002,Pahariya,Malto,,,,,,,unresolved,
+083999,Others,Malto,,,,,,,unresolved,
+084001,Maram,Maram,,,,,,,unresolved,
+085001,Maring,Maring,,,,,,,unresolved,
+086003,Miri/Mishing,Miri/Mishing,misi1242,Mising-Padam-Miri-Minyong,sino1245,mrg,language,manual_modern_name,accepted_manual,Mising-Padam-Miri-Minyong (ISO mrg); Census label Miri/Mishing refers to Mising.
+086999,Others,Miri/Mishing,,,,,,,unresolved,
+087005,Mishmi,Mishmi,,,,,,,unresolved,
+087999,Others,Mishmi,,,,,,,unresolved,
+088002,Mogh,Mogh,,,,,,,unresolved,
+088999,Others,Mogh,,,,,,,unresolved,
+089003,Monpa,Monpa,,,,,,,unresolved,
+089999,Others,Monpa,,,,,,,unresolved,
+090003,Kol,Munda,,,,,,,unresolved,
+090006,Munda,Munda,,,,,,,unresolved,
+090999,Others,Munda,,,,,,,unresolved,
+091004,Mundari,Mundari,mund1320,Mundari,aust1305,unr,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+091005,Mura,Mundari,,,,,,,unresolved,
+091999,Others,Mundari,,,,,,,unresolved,
+092001,Nicobarese,Nicobarese,,,,,,,unresolved,
+093001,Apatani,Nissi/Dafla,apat1240,Apatani,sino1245,apt,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+093002,Bangni,Nissi/Dafla,naaa1245,Na,sino1245,nbt,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+093007,Nissi,Nissi/Dafla,,,,,,,unresolved,
+093008,Tagin,Nissi/Dafla,tagi1241,Tagin,sino1245,tgj,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+093999,Others,Nissi/Dafla,,,,,,,unresolved,
+094003,Nocte,Nocte,,,,,,,unresolved,
+094999,Others,Nocte,,,,,,,unresolved,
+095002,Paite,Paite,,,,,,,unresolved,
+095999,Others,Paite,,,,,,,unresolved,
+096001,Dhurwa,Parji,,,,,,,unresolved,
+096999,Others,Parji,,,,,,,unresolved,
+097001,Pawi,Pawi,,,,,,,unresolved,
+098001,Persian,Persian,,,,,,,unresolved,
+099001,Phom,Phom,,,,,,,unresolved,
+100005,Pochury,Pochury,,,,,,,unresolved,
+100999,Others,Pochury,,,,,,,unresolved,
+101002,Rabha,Rabha,rabh1238,Rabha,sino1245,rah,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+101999,Others,Rabha,,,,,,,unresolved,
+102002,Rai,Rai,,,,,,,unresolved,
+102999,Others,Rai,,,,,,,unresolved,
+103001,Rengma,Rengma,,,,,,,unresolved,
+104003,Sangtam,Sangtam,,,,,,,unresolved,
+104999,Others,Sangtam,,,,,,,unresolved,
+105002,Savara,Savara,,,,,,,unresolved,
+105999,Others,Savara,,,,,,,unresolved,
+106001,Sema,Sema,,,,,,,unresolved,
+107001,Sherpa,Sherpa,,,,,,,unresolved,
+108005,Shina,Shina,shin1264,Shina,indo1319,scl,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+108999,Others,Shina,,,,,,,unresolved,
+109001,Simte,Simte,simt1238,Simte,sino1245,smt,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+110001,Tamang,Tamang,,,,,,,unresolved,
+111005,Tangkhul,Tangkhul,,,,,,,unresolved,
+111999,Others,Tangkhul,,,,,,,unresolved,
+112017,Tangsa,Tangsa,,,,,,,unresolved,
+112999,Others,Tangsa,,,,,,,unresolved,
+113015,Thado,Thado,,,,,,,unresolved,
+113999,Others,Thado,,,,,,,unresolved,
+114008,Tibetan,Tibetan,tibe1272,Tibetan,sino1245,bod,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+114999,Others,Tibetan,,,,,,,unresolved,
+115002,Kok Barak,Tripuri,,,,,,,unresolved,
+115005,Reang,Tripuri,,,,,,,unresolved,
+115006,Tripuri,Tripuri,,,,,,,unresolved,
+115999,Others,Tripuri,,,,,,,unresolved,
+116009,Tulu,Tulu,tulu1258,Tulu,drav1251,tcy,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+116999,Others,Tulu,,,,,,,unresolved,
+117001,Vaiphei,Vaiphei,vaip1239,Vaiphei,sino1245,vap,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+118001,Wancho,Wancho,,,,,,,unresolved,
+119003,Tikhir,Yimchungre,yimc1240,Yimchungru Naga,sino1245,yim,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.
+119004,Yimchungre,Yimchungre,,,,,,,unresolved,
+119999,Others,Yimchungre,,,,,,,unresolved,
+120001,Zeliang,Zeliang,,,,,,,unresolved,
+121002,Zemi,Zemi,,,,,,,unresolved,
+121999,Others,Zemi,,,,,,,unresolved,
+122001,Zou,Zou,zouu1235,Zou,sino1245,zom,language,deterministic_exact_primary,accepted_deterministic,Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.

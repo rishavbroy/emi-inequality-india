@@ -61,6 +61,7 @@ core_pipeline_targets <- list(
   tar_target(raw_nss_2017_education, { raw_data_preflight; read_nss_2017_education(paths) }),
   tar_target(raw_census_2001, { raw_data_preflight; read_census_2001_mother_tongue(paths) }),
   tar_target(glottolog_5_3, { raw_data_preflight; read_glottolog_5_3(paths) }),
+  tar_target(census_glottolog_crosswalk, read_census_language_glottolog_crosswalk()),
   tar_target(raw_ilo_figures, { raw_data_preflight; list_ilo_figure_paths(paths) }, format = "file"),
   tar_target(raw_price_sources, { raw_data_preflight; read_price_sources(price_source_paths(paths)) }),
   tar_target(raw_census_2001_controls, { raw_data_preflight; read_census_2001_control_sources(paths) }),
@@ -115,7 +116,12 @@ core_pipeline_targets <- list(
     measures_2017,
     build_2017_measures(nss_2017_education, cfg, consumption_households_2017)
   ),
-  tar_target(linguistic_distance_iv, build_linguistic_distance_iv(census_2001_languages, cfg)),
+  tar_target(
+    linguistic_distance_iv,
+    build_linguistic_distance_iv(
+      census_2001_languages, cfg, glottolog_5_3, census_glottolog_crosswalk
+    )
+  ),
   tar_target(
     lineage_geometry_2001_file,
     lineage_geometry_2001_path(paths),
@@ -534,8 +540,27 @@ extended_diagnostic_targets <- list(
   tar_target(
     census_glottolog_match_candidates,
     build_census_glottolog_match_candidates(
-      census_2001_languages, glottolog_5_3, glottolog_cldf_5_3
+      census_2001_languages, glottolog_5_3, glottolog_cldf_5_3,
+      reviews = census_glottolog_crosswalk
     )
+  ),
+  tar_target(
+    glottolog_language_distances,
+    glottolog_language_distance_table(census_glottolog_crosswalk, glottolog_5_3)
+  ),
+  tar_target(
+    shastry_extension_candidates,
+    build_shastry_extension_candidates(census_glottolog_crosswalk, glottolog_5_3)
+  ),
+  tar_target(
+    diag_ext_shastry_extension_candidates,
+    save_shastry_extension_candidates(shastry_extension_candidates),
+    format = "file"
+  ),
+  tar_target(
+    diag_ext_glottolog_language_distances,
+    save_glottolog_language_distance_table(glottolog_language_distances),
+    format = "file"
   ),
   tar_target(
     diag_ext_census_glottolog_match_candidates,

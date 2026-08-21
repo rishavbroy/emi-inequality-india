@@ -705,3 +705,146 @@ test_that("Census-Glottolog identity aggregation preserves national speaker mass
   expect_equal(out$national_speakers, 60)
   expect_equal(out$n_districts, 3)
 })
+
+
+test_that("reviewed Census-Glottolog crosswalk rejects unknown or bookkeeping endpoints", {
+  g <- data.frame(
+    id = c("indo", "hindi", "valid", "book", "invalid"),
+    family_id = c("", "indo", "indo", "", "book"),
+    parent_id = c("", "indo", "indo", "", "book"),
+    name = c("Indo-European", "Hindi", "Valid", "Bookkeeping", "Invalid"),
+    bookkeeping = c(FALSE, FALSE, FALSE, TRUE, FALSE),
+    level = c("family", "language", "language", "family", "language"),
+    iso639P3code = c("", "hin", "val", "", "inv"),
+    stringsAsFactors = FALSE
+  )
+  crosswalk <- data.frame(
+    mother_tongue_code = c("000001", "000002"),
+    mother_tongue = c("Valid", "Invalid"),
+    canonical_language = c("Valid", "Invalid"),
+    language_glottocode = c("valid", "invalid"),
+    family_id = c("indo", "book"),
+    match_basis = "manual",
+    review_status = c("accepted_manual", "unresolved"),
+    stringsAsFactors = FALSE
+  )
+
+  expect_true(validate_census_glottolog_crosswalk(crosswalk, g))
+  crosswalk$review_status[[2]] <- "accepted_manual"
+  expect_error(validate_census_glottolog_crosswalk(crosswalk, g), "invalid genealogy")
+})
+
+test_that("Glottolog district mean excludes Hindi, Urdu, and English by construction", {
+  g <- data.frame(
+    id = c("indo", "hindi", "urdu", "other"),
+    family_id = c("", "indo", "indo", "indo"),
+    parent_id = c("", "indo", "indo", "indo"),
+    name = c("Indo-European", "Hindi", "Urdu", "Other"),
+    bookkeeping = FALSE,
+    level = c("family", "language", "language", "language"),
+    iso639P3code = c("", "hin", "urd", "oth"),
+    stringsAsFactors = FALSE
+  )
+  crosswalk <- data.frame(
+    mother_tongue_code = sprintf("%06d", 1:4),
+    mother_tongue = c("Hindi", "Urdu", "English", "Other"),
+    canonical_language = c("Hindi", "Urdu", "English", "Other"),
+    language_glottocode = c("hindi", "urdu", "", "other"),
+    family_id = c("indo", "indo", "", "indo"),
+    match_basis = c("manual", "manual", "", "manual"),
+    review_status = c("accepted_manual", "accepted_manual", "unresolved", "accepted_manual"),
+    stringsAsFactors = FALSE
+  )
+  census <- data.frame(
+    state_std = "01", district_std = "001",
+    mother_tongue_code = sprintf("%06d", 1:4),
+    mother_tongue = c("Hindi", "Urdu", "English", "Other"),
+    canonical_language = c("Hindi", "Urdu", "English", "Other"),
+    spkr_tot = c(50, 20, 10, 20),
+    ling_degrees = c(0, 0, NA, 3),
+    stringsAsFactors = FALSE
+  )
+  out <- build_linguistic_distance_iv(
+    census,
+    glottolog = list(languoids = g),
+    glottolog_crosswalk = crosswalk
+  )
+
+  expect_equal(out$ling_glottolog_mapped_speaker_share, 100)
+  expect_equal(out$ling_glottolog_unmapped_speaker_share, 0)
+  expect_equal(out$ling_distance_glottolog_nonhindi_mean, glottolog_edge_distance("other", "hindi", g))
+})
+
+
+test_that("accepted non-Indo-European mappings apply Shastry degree five only", {
+  g <- data.frame(
+    id = c("indo", "otherfam", "hindi", "other"),
+    family_id = c("", "", "indo", "otherfam"),
+    parent_id = c("", "", "indo", "otherfam"),
+    name = c("Indo-European", "Other family", "Hindi", "Other"),
+    bookkeeping = FALSE,
+    level = c("family", "family", "language", "language"),
+    iso639P3code = c("", "", "hin", "oth"),
+    stringsAsFactors = FALSE
+  )
+  crosswalk <- data.frame(
+    mother_tongue_code = "000001",
+    mother_tongue = "Other",
+    canonical_language = "Other",
+    language_glottocode = "other",
+    family_id = "otherfam",
+    match_basis = "manual",
+    review_status = "accepted_manual",
+    stringsAsFactors = FALSE
+  )
+  census <- data.frame(
+    state_std = "01", district_std = "001",
+    mother_tongue_code = "000001",
+    mother_tongue = "Other", canonical_language = "Other",
+    spkr_tot = 100, stringsAsFactors = FALSE
+  )
+
+  out <- build_linguistic_distance_iv(
+    census,
+    glottolog = list(languoids = g),
+    glottolog_crosswalk = crosswalk
+  )
+
+  expect_equal(out$ling_share_distance_5, 100)
+  expect_equal(out$ling_mapped_speaker_share, 100)
+})
+
+test_that("Indo-European nearest-anchor degrees remain review candidates", {
+  g <- data.frame(
+    id = c("indo", "hindi", "target"),
+    family_id = c("", "indo", "indo"),
+    parent_id = c("", "indo", "indo"),
+    name = c("Indo-European", "Hindi", "Target"),
+    bookkeeping = FALSE,
+    level = c("family", "language", "language"),
+    iso639P3code = c("", "hin", "tar"),
+    stringsAsFactors = FALSE
+  )
+  crosswalk <- data.frame(
+    mother_tongue_code = c("000001", "000002"),
+    mother_tongue = c("Hindi", "Target"),
+    canonical_language = c("Hindi", "Target"),
+    language_glottocode = c("hindi", "target"),
+    family_id = "indo",
+    match_basis = "manual",
+    review_status = "accepted_manual",
+    stringsAsFactors = FALSE
+  )
+  concordance <- data.frame(
+    canonical_language = "Hindi",
+    distance_from_hindi = 0,
+    stringsAsFactors = FALSE
+  )
+
+  out <- build_shastry_extension_candidates(
+    crosswalk, list(languoids = g), concordance
+  )
+  expect_identical(out$review_status, "review_required")
+  expect_equal(out$candidate_degree, 0)
+  expect_identical(out$candidate_basis, "glottolog_nearest_shastry_anchor")
+})

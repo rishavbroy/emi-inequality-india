@@ -63,7 +63,12 @@ validate_supplied_linguistic_distances <- function(x) {
 }
 
 #' Build the complete suite of Census 2001 linguistic-distance constructions
-build_linguistic_distance_iv <- function(census_2001_languages, cfg = list()) {
+build_linguistic_distance_iv <- function(
+  census_2001_languages,
+  cfg = list(),
+  glottolog = NULL,
+  glottolog_crosswalk = NULL
+) {
   df <- std(safe_df(census_2001_languages), 2001L)
   if ("ling_degrees" %in% names(df)) validate_supplied_linguistic_distances(df$ling_degrees)
 
@@ -75,6 +80,17 @@ build_linguistic_distance_iv <- function(census_2001_languages, cfg = list()) {
   language <- census_mother_tongue_identity(df)
   if (!"ling_degrees" %in% names(df)) {
     df$ling_degrees <- linguistic_distance_degrees(language, df$canonical_language)
+  }
+  if (!is.null(glottolog) && !is.null(glottolog_crosswalk)) {
+    df <- attach_glottolog_language_distance(df, glottolog, glottolog_crosswalk)
+    non_ie_extension <- !is.finite(num(df$ling_degrees)) &
+      language != "English" &
+      !is.na(df$glottolog_family_id) &
+      nzchar(df$glottolog_family_id) &
+      df$glottolog_family_id != "indo1319"
+    df$ling_degrees[non_ie_extension] <- 5
+  } else if (!"glottolog_edge_distance" %in% names(df)) {
+    df$glottolog_edge_distance <- NA_real_
   }
   is_english <- language == "English"
   df$distance_mapping_status <- ifelse(
@@ -102,6 +118,7 @@ build_linguistic_distance_iv <- function(census_2001_languages, cfg = list()) {
 build_district_language_constructions <- function(df) {
   speakers <- num(df$spkr_tot)
   distance <- num(df$ling_degrees)
+  glottolog_distance <- num(df$glottolog_edge_distance %||% rep(NA_real_, nrow(df)))
   language <- census_mother_tongue_identity(df)
   valid_speakers <- is.finite(speakers) & speakers >= 0
   total <- sum(speakers[valid_speakers], na.rm = TRUE)
@@ -115,10 +132,10 @@ build_district_language_constructions <- function(df) {
     if (!is.finite(denominator) || denominator <= 0) return(NA_real_)
     100 * sum(speakers[valid_speakers & condition], na.rm = TRUE) / denominator
   }
-  weighted_distance <- function(index) {
+  weighted_value <- function(index, value) {
     denom <- sum(speakers[index], na.rm = TRUE)
     if (!is.finite(denom) || denom <= 0) return(NA_real_)
-    sum(speakers[index] * distance[index], na.rm = TRUE) / denom
+    sum(speakers[index] * value[index], na.rm = TRUE) / denom
   }
 
   top3 <- select_top_mother_tongues(df[mapped, , drop = FALSE], 3L)
@@ -126,7 +143,7 @@ build_district_language_constructions <- function(df) {
   top3_coverage <- if (is.finite(total) && total > 0 && nrow(top3)) 100 * sum(num(top3$spkr_tot), na.rm = TRUE) / total else NA_real_
 
   out <- df[1, c("state_std", "district_std"), drop = FALSE]
-  out$ling_distance_nonzero_mean <- weighted_distance(nonzero)
+  out$ling_distance_nonzero_mean <- weighted_value(nonzero, distance)
   out$ling_share_distance_ge3 <- share(mapped & distance >= 3)
   for (degree in 0:5) {
     out[[paste0("ling_share_distance_", degree)]] <- share(mapped & distance == degree)
@@ -139,6 +156,24 @@ build_district_language_constructions <- function(df) {
   out$urdu_share <- share(language == "Urdu")
   out$hindi_urdu_share <- share(language %in% c("Hindi", "Urdu"))
   out$native_english_share <- share(english)
+
+  glottolog_reference <- valid_speakers & language %in% c("Hindi", "Urdu", "English")
+  glottolog_eligible <- valid_speakers & !glottolog_reference
+  glottolog_mapped <- glottolog_eligible & is.finite(glottolog_distance)
+  glottolog_unmapped <- glottolog_eligible & !is.finite(glottolog_distance)
+  glottolog_eligible_total <- sum(speakers[glottolog_eligible], na.rm = TRUE)
+  out$ling_distance_glottolog_nonhindi_mean <- weighted_value(glottolog_mapped, glottolog_distance)
+  out$ling_glottolog_mapped_speaker_share <- if (is.finite(glottolog_eligible_total) && glottolog_eligible_total > 0) {
+    100 * sum(speakers[glottolog_mapped], na.rm = TRUE) / glottolog_eligible_total
+  } else {
+    NA_real_
+  }
+  out$ling_glottolog_unmapped_speaker_share <- if (is.finite(glottolog_eligible_total) && glottolog_eligible_total > 0) {
+    100 * sum(speakers[glottolog_unmapped], na.rm = TRUE) / glottolog_eligible_total
+  } else {
+    NA_real_
+  }
+
   out$ling_distance_top3_legacy <- top3_distance
   out$ling_top3_speaker_coverage <- top3_coverage
   out$ling_mapped_speaker_share <- if (is.finite(total) && total > 0) 100 * mapped_total / total else NA_real_
@@ -162,11 +197,16 @@ linguistic_distance_language_controls <- function() {
 
 validate_linguistic_distance_ranges <- function(df) {
   distance_cols <- intersect(c(
-    "ling_distance_nonzero_mean", "ling_distance_top3_legacy", "wavg_ling_degrees"
+    "ling_distance_nonzero_mean", "ling_distance_top3_legacy", "wavg_ling_degrees",
+    "ling_distance_glottolog_nonhindi_mean"
   ), names(df))
-  for (nm in distance_cols) {
+  for (nm in setdiff(distance_cols, "ling_distance_glottolog_nonhindi_mean")) {
     value <- num(df[[nm]])
     if (any(is.finite(value) & (value < 0 | value > 5))) stop(nm, " must be in the 0-5 range.", call. = FALSE)
+  }
+  if ("ling_distance_glottolog_nonhindi_mean" %in% names(df)) {
+    value <- num(df$ling_distance_glottolog_nonhindi_mean)
+    if (any(is.finite(value) & value < 0)) stop("Glottolog distance must be non-negative.", call. = FALSE)
   }
   share_cols <- grep("(^ling_(mapped_)?share_distance_|_share$|speaker_coverage$)", names(df), value = TRUE)
   for (nm in share_cols) {

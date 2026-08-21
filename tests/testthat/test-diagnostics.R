@@ -755,7 +755,8 @@ test_that("alternative linguistic-distance registry covers scalar, nonlinear, an
   expect_true(all(c(
     "nonzero_mean", "distant_share", "top3_legacy", "nonzero_mean_hindi_urdu",
     "nonzero_mean_shastry", "nonzero_mean_hindi_urdu_separate", "distance_shares_all",
-    "distance_shares_all_unmapped", "distance_shares_mapped"
+    "distance_shares_all_unmapped", "distance_shares_mapped",
+    "glottolog_mean", "glottolog_mean_shastry"
   ) %in% registry$construction_id))
   joint <- registry[registry$construction_id == "distance_shares_all", , drop = FALSE]
   expect_true(all(vapply(joint$excluded_instruments, function(x) {
@@ -773,6 +774,12 @@ test_that("alternative linguistic-distance registry covers scalar, nonlinear, an
     shares$included_language_controls,
     identical, logical(1), c("ling_unmapped_speaker_share", "native_english_share")
   )))
+  glottolog <- registry[registry$construction_id == "glottolog_mean", , drop = FALSE]
+  expect_true(all(glottolog$mapping_coverage_variable == "ling_glottolog_mapped_speaker_share"))
+  expect_true(all(
+    registry$mapping_coverage_variable[!grepl("^glottolog_", registry$construction_id)] ==
+      "ling_mapped_speaker_share"
+  ))
 })
 
 test_that("alternative linguistic-distance first stages use fixed support and joint clustered tests", {
@@ -801,6 +808,9 @@ test_that("alternative linguistic-distance first stages use fixed support and jo
   }
   panel$ling_mapped_speaker_share <- 100
   panel$ling_unmapped_speaker_share <- 0
+  panel$ling_distance_glottolog_nonhindi_mean <- panel$ling_distance_nonzero_mean + 1
+  panel$ling_glottolog_mapped_speaker_share <- 100
+  panel$ling_glottolog_unmapped_speaker_share <- 0
   panel$native_english_share <- 0
   panel$emi_exposure_all_children_0708 <- 5 + 0.15 * panel$ling_share_distance_5 +
     0.08 * panel$ling_share_distance_4 + stats::rnorm(n)
@@ -818,6 +828,10 @@ test_that("alternative linguistic-distance first stages use fixed support and jo
   )
   expect_true(any(is.finite(out$summary$joint_excluded_f[out$summary$construction_id == "distance_shares_all"])))
   expect_setequal(unique(out$coverage_sensitivity$minimum_mapped_share), linguistic_mapping_coverage_thresholds())
+  expect_setequal(
+    unique(out$coverage_sensitivity$coverage_variable),
+    c("ling_mapped_speaker_share", "ling_glottolog_mapped_speaker_share")
+  )
   expect_equal(
     nrow(out$coefficients[out$coefficients$term %in% linguistic_distance_excluded_instruments("all"), ]),
     10L * length(alternative_distance_adjustments())
@@ -849,6 +863,9 @@ test_that("alternative linguistic-distance diagnostics save four explicit output
   }
   panel$ling_mapped_speaker_share <- 100
   panel$ling_unmapped_speaker_share <- 0
+  panel$ling_distance_glottolog_nonhindi_mean <- panel$ling_distance_nonzero_mean + 1
+  panel$ling_glottolog_mapped_speaker_share <- 100
+  panel$ling_glottolog_unmapped_speaker_share <- 0
   panel$native_english_share <- 0
   for (variable in census_2001_diagnostic_controls()) panel[[variable]] <- stats::rnorm(n)
   out <- diagnose_alternative_distance_first_stages(panel)
@@ -874,7 +891,8 @@ test_that("alternative linguistic-distance diagnostics save four explicit output
     "iv_overidentification.csv",
     "iv_monotonicity_summary.csv",
     "iv_monotonicity_bins.csv",
-    "iv_monotonicity_state_slopes.csv"
+    "iv_monotonicity_state_slopes.csv",
+    "linguistic_distance_basis_comparison.csv"
   ))
   expect_true(all(file.exists(manifest$path)))
 })
@@ -887,7 +905,7 @@ test_that("canonical IV registry drives alternative-distance specifications", {
   expect_true(all(c(
     "outcome", "treatment", "fixed_effect", "controls", "excluded_instruments",
     "n_endogenous", "n_excluded_instruments", "panel_variant", "sample_rule",
-    "cluster", "tier"
+    "cluster", "tier", "mapping_coverage_variable"
   ) %in% names(registry)))
   expect_true(all(registry$n_endogenous == 1L))
   expect_true(all(registry$cluster == "state_code_2001"))

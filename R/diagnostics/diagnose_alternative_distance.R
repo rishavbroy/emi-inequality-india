@@ -11,7 +11,7 @@ alternative_distance_variables <- function() {
   unique(c(
     unlist(lapply(constructions, `[[`, "excluded"), use.names = FALSE),
     unlist(lapply(constructions, `[[`, "included"), use.names = FALSE),
-    "ling_mapped_speaker_share"
+    unlist(lapply(constructions, `[[`, "coverage"), use.names = FALSE)
   ))
 }
 
@@ -134,7 +134,8 @@ diagnose_alternative_distance_first_stages <- function(
       overidentification = data.frame(status = character()),
       monotonicity_summary = data.frame(status = character()),
       monotonicity_bins = data.frame(status = character()),
-      monotonicity_state_slopes = data.frame(status = character())
+      monotonicity_state_slopes = data.frame(status = character()),
+      basis_comparison = data.frame(status = character())
     ),
     class = "emi_alternative_distance_first_stages"
   )
@@ -213,6 +214,10 @@ save_alternative_distance_first_stages <- function(
     monotonicity_state_slopes = write_diagnostic_csv(
       diagnostics$monotonicity_state_slopes,
       file.path(dir, "iv_monotonicity_state_slopes.csv")
+    ),
+    basis_comparison = write_diagnostic_csv(
+      diagnostics$basis_comparison,
+      file.path(dir, "linguistic_distance_basis_comparison.csv")
     )
   ))
 }
@@ -220,16 +225,21 @@ save_alternative_distance_first_stages <- function(
 linguistic_mapping_coverage_thresholds <- function() c(0, 90, 95, 99)
 
 estimate_alternative_distance_by_coverage <- function(data, registry, treatment) {
-  safe_bind_rows(lapply(linguistic_mapping_coverage_thresholds(), function(threshold) {
-    sample <- data[num(data$ling_mapped_speaker_share) >= threshold, , drop = FALSE]
-    if (!nrow(sample)) return(NULL)
-    rows <- lapply(seq_len(nrow(registry)), function(i) {
-      estimate_alternative_distance_spec(sample, registry[i, , drop = FALSE], treatment)$summary
-    })
-    out <- safe_bind_rows(rows)
-    out$minimum_mapped_share <- threshold
-    out$coverage_sample_n <- nrow(sample)
-    out
+  safe_bind_rows(lapply(seq_len(nrow(registry)), function(i) {
+    specification <- registry[i, , drop = FALSE]
+    coverage_variable <- specification$mapping_coverage_variable[[1]]
+    safe_bind_rows(lapply(linguistic_mapping_coverage_thresholds(), function(threshold) {
+      sample <- data[
+        is.finite(num(data[[coverage_variable]])) & num(data[[coverage_variable]]) >= threshold,
+        , drop = FALSE
+      ]
+      if (!nrow(sample)) return(NULL)
+      out <- estimate_alternative_distance_spec(sample, specification, treatment)$summary
+      out$minimum_mapped_share <- threshold
+      out$coverage_variable <- coverage_variable
+      out$coverage_sample_n <- nrow(sample)
+      out
+    }))
   }))
 }
 
@@ -428,6 +438,25 @@ distance_four_leave_one_language_out <- function(census_2001_languages, panel, t
   }))
 }
 
+compare_linguistic_distance_bases <- function(panel) {
+  x <- if (inherits(panel, "sf")) sf::st_drop_geometry(panel) else as.data.frame(panel)
+  variables <- c("ling_distance_nonzero_mean", "ling_distance_glottolog_nonhindi_mean")
+  if (!all(variables %in% names(x))) return(data.frame())
+  keep <- stats::complete.cases(x[variables])
+  x <- x[keep, variables, drop = FALSE]
+  if (!nrow(x)) return(data.frame())
+  data.frame(
+    shastry_variable = variables[[1]],
+    glottolog_variable = variables[[2]],
+    n = nrow(x),
+    pearson_correlation = stats::cor(x[[1]], x[[2]], method = "pearson"),
+    spearman_correlation = stats::cor(x[[1]], x[[2]], method = "spearman"),
+    shastry_mean = mean(x[[1]]),
+    glottolog_mean = mean(x[[2]]),
+    stringsAsFactors = FALSE
+  )
+}
+
 augment_alternative_distance_diagnostics <- function(diagnostics, panel, census_2001_languages, outcome = "real_log_consumption_change") {
   if (!inherits(diagnostics, "emi_alternative_distance_first_stages")) stop("Expected alternative-distance diagnostics.", call. = FALSE)
   data <- prepare_alternative_distance_panel(panel, diagnostics$common_support$treatment[[1]])
@@ -454,5 +483,6 @@ augment_alternative_distance_diagnostics <- function(diagnostics, panel, census_
   diagnostics$monotonicity_summary <- monotonicity$summary
   diagnostics$monotonicity_bins <- monotonicity$bins
   diagnostics$monotonicity_state_slopes <- monotonicity$state_slopes
+  diagnostics$basis_comparison <- compare_linguistic_distance_bases(panel)
   diagnostics
 }

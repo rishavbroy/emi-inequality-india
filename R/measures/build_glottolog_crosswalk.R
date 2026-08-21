@@ -157,7 +157,7 @@ match_census_language_identity <- function(identity, aliases) {
 #' This queue is deliberately non-authoritative. It never mutates the maintained
 #' Shastry concordance and never turns an exact candidate into a production
 #' mapping without a separately reviewed metadata decision.
-build_census_glottolog_match_candidates <- function(census_2001_languages, glottolog, cldf) {
+build_census_glottolog_match_candidates <- function(census_2001_languages, glottolog, cldf, reviews = NULL) {
   identities <- census_language_identities(census_2001_languages)
   aliases <- glottolog_alias_index(glottolog$languoids, cldf)
   out <- safe_bind_rows(lapply(seq_len(nrow(identities)), function(i) {
@@ -165,6 +165,16 @@ build_census_glottolog_match_candidates <- function(census_2001_languages, glott
   }))
   if (!nrow(out)) return(out)
   out$review_status <- "unreviewed"
+  out$reviewed_glottocode <- NA_character_
+  if (!is.null(reviews) && nrow(reviews)) {
+    review_index <- match(
+      sprintf("%06d", suppressWarnings(as.integer(out$mother_tongue_code))),
+      reviews$mother_tongue_code
+    )
+    found <- !is.na(review_index)
+    out$review_status[found] <- plain_chr(reviews$review_status[review_index[found]])
+    out$reviewed_glottocode[found] <- plain_chr(reviews$language_glottocode[review_index[found]])
+  }
   out <- out[order(-num(out$national_speakers), out$mother_tongue_code, out$language_glottocode), , drop = FALSE]
   rownames(out) <- NULL
   out

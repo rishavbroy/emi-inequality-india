@@ -52,7 +52,8 @@ iv_instrument_constructions <- function() {
     nonzero_mean = list(
       label = "Mean distance among speakers above zero",
       excluded = "ling_distance_nonzero_mean",
-      included = character()
+      included = character(),
+      coverage = "ling_mapped_speaker_share"
     ),
     distant_share = list(
       label = "Share speaking languages at distance three or higher",
@@ -93,8 +94,24 @@ iv_instrument_constructions <- function() {
       label = "Five distance shares; mapped-speaker denominator",
       excluded = linguistic_distance_excluded_instruments("mapped"),
       included = character()
+    ),
+    glottolog_mean = list(
+      label = "Glottolog edge-distance mean among non-Hindi/Urdu speakers",
+      excluded = "ling_distance_glottolog_nonhindi_mean",
+      included = character(),
+      coverage = "ling_glottolog_mapped_speaker_share"
+    ),
+    glottolog_mean_shastry = list(
+      label = "Glottolog edge-distance mean with Shastry composition controls",
+      excluded = "ling_distance_glottolog_nonhindi_mean",
+      included = c("hindi_urdu_share", "native_english_share"),
+      coverage = "ling_glottolog_mapped_speaker_share"
     )
-  )
+  ) |>
+    lapply(function(x) {
+      if (is.null(x$coverage)) x$coverage <- "ling_mapped_speaker_share"
+      x
+    })
 }
 
 iv_adjustment_sets <- function() {
@@ -133,6 +150,7 @@ iv_specification_row <- function(
   controls,
   included_language_controls,
   excluded_instruments,
+  mapping_coverage_variable,
   panel_variant,
   sample_rule,
   cluster = "state_code_2001",
@@ -151,6 +169,7 @@ iv_specification_row <- function(
     controls = I(list(order_iv_controls(controls))),
     included_language_controls = I(list(included_language_controls)),
     excluded_instruments = I(list(excluded_instruments)),
+    mapping_coverage_variable = mapping_coverage_variable,
     n_endogenous = 1L,
     n_excluded_instruments = length(excluded_instruments),
     panel_variant = panel_variant,
@@ -189,6 +208,7 @@ iv_specification_registry <- function(
         controls = adjustment$controls,
         included_language_controls = construction$included,
         excluded_instruments = construction$excluded,
+        mapping_coverage_variable = construction$coverage,
         panel_variant = panel_variant,
         sample_rule = sample_rule,
         tier = adjustment$tier,
@@ -268,6 +288,7 @@ iv_absorption_specification_registry <- function(
       controls = adjustment[[3]],
       included_language_controls = construction$included,
       excluded_instruments = construction$excluded,
+      mapping_coverage_variable = construction$coverage,
       panel_variant = panel_variant,
       sample_rule = sample_rule,
       tier = "B",
