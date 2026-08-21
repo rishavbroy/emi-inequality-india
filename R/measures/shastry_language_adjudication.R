@@ -30,7 +30,9 @@ read_shastry_language_adjudications <- function(path = NULL) {
   }
   evidence_fields <- c("lsi_volume", "lsi_pages", "lsi_url", "lsi_evidence", "decision_basis", "confidence")
   for (field in evidence_fields) {
-    if (any(accepted & !nzchar(trimws(plain_chr(out[[field]]))))) {
+    value <- plain_chr(out[[field]])
+    missing <- is.na(value) | !nzchar(trimws(value))
+    if (any(accepted & missing)) {
       stop("Accepted Shastry adjudications require ", field, ".", call. = FALSE)
     }
   }

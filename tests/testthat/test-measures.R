@@ -414,7 +414,7 @@ test_that("C-16 cleaner removes group subtotals and carries parent language to l
   expect_equal(sum(out$spkr_tot[out$language_group_code == "002"]), 100)
 })
 
-test_that("Hindi Census-group leaves do not inherit Hindi zero distance", {
+test_that("Hindi Census-group leaves require leaf evidence rather than inheriting Hindi zero", {
   census <- data.frame(
     state_std = rep("10", 3),
     district_std = rep("01", 3),
@@ -425,8 +425,6 @@ test_that("Hindi Census-group leaves do not inherit Hindi zero distance", {
     stringsAsFactors = FALSE
   )
 
-  out <- build_linguistic_distance_iv(census)
-
   expect_equal(
     linguistic_distance_degrees(
       c("Hindi", "Bhojpuri", "Rajasthani"),
@@ -434,13 +432,24 @@ test_that("Hindi Census-group leaves do not inherit Hindi zero distance", {
     ),
     c(0, NA, 1)
   )
-  expect_equal(out$hindi_share, 60)
-  expect_equal(out$hindi_urdu_share, 60)
-  expect_equal(out$ling_share_distance_0, 60)
-  expect_equal(out$ling_share_distance_1, 10)
-  expect_equal(out$ling_unmapped_speaker_share, 30)
-  expect_equal(out$ling_mapped_speaker_share, 70)
-  expect_equal(out$ling_distance_nonzero_mean, 1)
+
+  without_review <- build_linguistic_distance_iv(
+    census,
+    shastry_adjudications = data.frame()
+  )
+  expect_equal(without_review$ling_unmapped_speaker_share, 30)
+  expect_equal(without_review$ling_mapped_speaker_share, 70)
+  expect_equal(without_review$ling_distance_nonzero_mean, 1)
+
+  reviewed <- build_linguistic_distance_iv(census)
+  expect_equal(reviewed$hindi_share, 60)
+  expect_equal(reviewed$hindi_urdu_share, 60)
+  expect_equal(reviewed$ling_share_distance_0, 60)
+  expect_equal(reviewed$ling_share_distance_1, 10)
+  expect_equal(reviewed$ling_share_distance_3, 30)
+  expect_equal(reviewed$ling_unmapped_speaker_share, 0)
+  expect_equal(reviewed$ling_mapped_speaker_share, 100)
+  expect_equal(reviewed$ling_distance_nonzero_mean, 2.5)
 })
 
 test_that("linguistic constructions use the full distribution and expose mapping coverage", {
@@ -1066,13 +1075,16 @@ test_that("reviewed Shastry adjudications fill only previously unresolved mother
 })
 
 test_that("accepted Shastry adjudications require auditable source evidence", {
-  path <- tempfile(fileext = ".csv")
   x <- read_shastry_language_adjudications()
   x <- x[x$review_status == "accepted", , drop = FALSE][1, , drop = FALSE]
-  x$lsi_url <- ""
-  utils::write.csv(x, path, row.names = FALSE)
 
-  expect_error(read_shastry_language_adjudications(path), "require lsi_url")
+  for (missing_value in list("", NA_character_)) {
+    path <- tempfile(fileext = ".csv")
+    candidate <- x
+    candidate$lsi_url <- missing_value
+    utils::write.csv(candidate, path, row.names = FALSE)
+    expect_error(read_shastry_language_adjudications(path), "require lsi_url")
+  }
 })
 
 test_that("production Shastry adjudications are source-complete and conservative", {
