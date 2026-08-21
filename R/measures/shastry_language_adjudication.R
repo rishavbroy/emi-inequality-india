@@ -15,8 +15,9 @@ read_shastry_language_adjudications <- function(path = NULL) {
   required <- c(
     "mother_tongue_code", "mother_tongue", "assigned_shastry_degree",
     "shastry_anchor", "lsi_classification", "lsi_volume", "lsi_year",
-    "lsi_pages", "lsi_url", "lsi_evidence", "decision_basis",
-    "confidence", "sensitivity_degrees", "review_status", "notes"
+    "lsi_pages", "lsi_url", "lsi_evidence",
+    "lexical_source", "lexical_pages", "lexical_url", "lexical_evidence",
+    "decision_basis", "confidence", "sensitivity_degrees", "review_status", "notes"
   )
   if (!identical(names(out), required)) stop("Shastry adjudication ledger has an invalid schema.", call. = FALSE)
 
@@ -36,6 +37,15 @@ read_shastry_language_adjudications <- function(path = NULL) {
       stop("Accepted Shastry adjudications require ", field, ".", call. = FALSE)
     }
   }
+  lexical_required <- accepted & grepl("kogan", plain_chr(out$decision_basis), fixed = TRUE)
+  for (field in c("lexical_source", "lexical_pages", "lexical_url", "lexical_evidence")) {
+    value <- plain_chr(out[[field]])
+    missing <- is.na(value) | !nzchar(trimws(value))
+    if (any(lexical_required & missing)) {
+      stop("Kogan-adjudicated Shastry rows require ", field, ".", call. = FALSE)
+    }
+  }
+
   out$assigned_shastry_degree <- degree
   out
 }
@@ -59,5 +69,34 @@ resolve_shastry_language_degrees <- function(
 ) {
   language <- census_mother_tongue_identity(rows)
   degree <- linguistic_distance_degrees(language, rows$canonical_language, concordance)
-  apply_shastry_language_adjudications(rows, degree, adjudications)
+  degree <- apply_shastry_language_adjudications(rows, degree, adjudications)
+
+  family <- if ("glottolog_family_id" %in% names(rows)) {
+    plain_chr(rows$glottolog_family_id)
+  } else if ("family_id" %in% names(rows)) {
+    plain_chr(rows$family_id)
+  } else {
+    rep(NA_character_, nrow(rows))
+  }
+  non_ie <- !is.finite(degree) &
+    language != "English" &
+    !is.na(family) & nzchar(family) &
+    family != "indo1319"
+  degree[non_ie] <- 5
+  degree
+}
+
+prepare_shastry_language_rows <- function(
+  rows,
+  glottolog = NULL,
+  glottolog_crosswalk = NULL,
+  concordance = read_shastry_language_distance(),
+  adjudications = read_shastry_language_adjudications()
+) {
+  out <- safe_df(rows)
+  if (!is.null(glottolog) && !is.null(glottolog_crosswalk)) {
+    out <- attach_glottolog_language_distance(out, glottolog, glottolog_crosswalk)
+  }
+  out$ling_degrees <- resolve_shastry_language_degrees(out, concordance, adjudications)
+  out
 }

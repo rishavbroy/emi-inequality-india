@@ -1100,3 +1100,51 @@ test_that("production Shastry adjudications are source-complete and conservative
   expect_true(all(!is.finite(unresolved$assigned_shastry_degree)))
   expect_true(all(nzchar(unresolved$sensitivity_degrees)))
 })
+
+
+test_that("central Shastry resolver applies the non-Indo-European rule when family identity is known", {
+  rows <- data.frame(
+    mother_tongue_code = c("000001", "000002"),
+    mother_tongue = c("Other IE", "Other non-IE"),
+    canonical_language = c("Other IE", "Other non-IE"),
+    family_id = c("indo1319", "aust1307"),
+    stringsAsFactors = FALSE
+  )
+  concordance <- data.frame(
+    canonical_language = "Hindi",
+    distance_from_hindi = 0,
+    stringsAsFactors = FALSE
+  )
+
+  out <- resolve_shastry_language_degrees(
+    rows, concordance, adjudications = data.frame()
+  )
+
+  expect_true(is.na(out[[1]]))
+  expect_equal(out[[2]], 5)
+})
+
+test_that("Kogan-based accepted adjudications require lexical evidence", {
+  x <- read_shastry_language_adjudications()
+  x <- x[x$decision_basis == "lsi_plus_kogan_tiebreak", , drop = FALSE][1, , drop = FALSE]
+  expect_gt(nrow(x), 0)
+
+  path <- tempfile(fileext = ".csv")
+  x$lexical_evidence <- NA_character_
+  utils::write.csv(x, path, row.names = FALSE)
+  expect_error(read_shastry_language_adjudications(path), "require lexical_evidence")
+})
+
+test_that("second-tranche reviewed languages resolve to source-supported Shastry anchors", {
+  rows <- data.frame(
+    mother_tongue_code = c("006153", "006204", "004001", "075012", "006103", "006171", "006026"),
+    mother_tongue = c("Khortha/Khotta", "Nagpuria", "Dogri", "Multani", "Gojri", "Lamani/Lambadi", "Banjari"),
+    canonical_language = c("Hindi", "Hindi", "Dogri", "Multani", "Hindi", "Hindi", "Hindi"),
+    stringsAsFactors = FALSE
+  )
+
+  expect_equal(
+    resolve_shastry_language_degrees(rows),
+    c(3, 3, 1, 1, 1, 1, 1)
+  )
+})

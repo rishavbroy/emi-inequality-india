@@ -50,25 +50,20 @@ build_shastry_extension_candidates <- function(
 
   safe_bind_rows(lapply(seq_len(nrow(targets)), function(i) {
     row <- targets[i, , drop = FALSE]
-    non_ie <- !identical(row$family_id[[1]], "indo1319")
     data.frame(
       mother_tongue_code = row$mother_tongue_code,
       mother_tongue = row$mother_tongue,
       canonical_language = row$canonical_language,
       language_glottocode = row$language_glottocode,
-      candidate_degree = if (non_ie) 5 else NA_real_,
-      candidate_basis = if (non_ie) {
-        "shastry_non_indo_european_rule"
-      } else {
-        "figure6_lsi_lexical_review"
-      },
+      candidate_degree = NA_real_,
+      candidate_basis = "figure6_lsi_lexical_review",
       ethnologue_proxy_status = ethnologue_proxy_match_status(
         row$mother_tongue[[1]], row$canonical_language[[1]], proxy_labels
       ),
       dyen_list_name = evidence$dyen_list_name[[i]],
       dyen_cognate_pct_hindi = evidence$dyen_cognate_pct_hindi[[i]],
       kogan_code = evidence$kogan_code[[i]],
-      review_status = if (non_ie) "rule_supported" else "review_required",
+      review_status = "review_required",
       stringsAsFactors = FALSE
     )
   }))

@@ -243,13 +243,18 @@ estimate_alternative_distance_by_coverage <- function(data, registry, treatment)
   }))
 }
 
-prepare_language_rows_for_decomposition <- function(census_2001_languages, panel) {
+prepare_language_rows_for_decomposition <- function(
+  census_2001_languages,
+  panel,
+  glottolog = NULL,
+  glottolog_crosswalk = NULL
+) {
   rows <- std(safe_df(census_2001_languages), 2001L)
   needed <- c("state_std", "district_std", "spkr_tot", "canonical_language")
   if (!all(needed %in% names(rows))) stop("C-16 decomposition requires cleaned district-language rows.", call. = FALSE)
   rows$language_identity <- census_mother_tongue_identity(rows)
   if (!"ling_degrees" %in% names(rows)) {
-    rows$ling_degrees <- resolve_shastry_language_degrees(rows)
+    rows <- prepare_shastry_language_rows(rows, glottolog, glottolog_crosswalk)
   }
   rows$district_panel_id <- make_district_key(rows$state_std, rows$district_std, 2001L)
   panel_df <- if (inherits(panel, "sf")) sf::st_drop_geometry(panel) else as.data.frame(panel)
@@ -258,8 +263,12 @@ prepare_language_rows_for_decomposition <- function(census_2001_languages, panel
   rows
 }
 
-distance_four_language_decomposition <- function(census_2001_languages, panel) {
-  rows <- prepare_language_rows_for_decomposition(census_2001_languages, panel)
+distance_four_language_decomposition <- function(
+  census_2001_languages, panel, glottolog = NULL, glottolog_crosswalk = NULL
+) {
+  rows <- prepare_language_rows_for_decomposition(
+    census_2001_languages, panel, glottolog, glottolog_crosswalk
+  )
   rows <- rows[num(rows$ling_degrees) == 4, , drop = FALSE]
   if (!nrow(rows)) return(data.frame())
   by_language_state <- aggregate(
@@ -284,17 +293,14 @@ distance_four_language_decomposition <- function(census_2001_languages, panel) {
   out[order(out$speakers, decreasing = TRUE), , drop = FALSE]
 }
 
-unmapped_language_decomposition <- function(census_2001_languages, panel) {
-  rows <- std(safe_df(census_2001_languages), 2001L)
-  rows$language_identity <- census_mother_tongue_identity(rows)
-  if (!"ling_degrees" %in% names(rows)) {
-    rows$ling_degrees <- resolve_shastry_language_degrees(rows)
-  }
-  rows$district_panel_id <- make_district_key(rows$state_std, rows$district_std, 2001L)
-  panel_df <- if (inherits(panel, "sf")) sf::st_drop_geometry(panel) else as.data.frame(panel)
+unmapped_language_decomposition <- function(
+  census_2001_languages, panel, glottolog = NULL, glottolog_crosswalk = NULL
+) {
+  rows <- prepare_language_rows_for_decomposition(
+    census_2001_languages, panel, glottolog, glottolog_crosswalk
+  )
   rows <- rows[
-    rows$district_panel_id %in% plain_chr(panel_df$district_panel_id) &
-      !is.finite(num(rows$ling_degrees)) & rows$language_identity != "English",
+    !is.finite(num(rows$ling_degrees)) & rows$language_identity != "English",
     , drop = FALSE
   ]
   if (!nrow(rows)) return(data.frame())
@@ -405,13 +411,25 @@ estimate_weak_iv_outcomes <- function(
   )
 }
 
-distance_four_leave_one_language_out <- function(census_2001_languages, panel, treatment = "emi_exposure_all_children_0708") {
-  rows <- prepare_language_rows_for_decomposition(census_2001_languages, panel)
-  rows <- rows[num(rows$ling_degrees) == 4, , drop = FALSE]
+distance_four_leave_one_language_out <- function(
+  census_2001_languages,
+  panel,
+  treatment = "emi_exposure_all_children_0708",
+  glottolog = NULL,
+  glottolog_crosswalk = NULL
+) {
+  prepared <- prepare_language_rows_for_decomposition(
+    census_2001_languages, panel, glottolog, glottolog_crosswalk
+  )
+  rows <- prepared[num(prepared$ling_degrees) == 4, , drop = FALSE]
   if (!nrow(rows)) return(data.frame())
   panel_data <- prepare_alternative_distance_panel(panel, treatment)
-  total <- aggregate(num(prepare_language_rows_for_decomposition(census_2001_languages, panel)$spkr_tot),
-    list(prepare_language_rows_for_decomposition(census_2001_languages, panel)$district_panel_id), sum, na.rm = TRUE)
+  total <- aggregate(
+    num(prepared$spkr_tot),
+    list(prepared$district_panel_id),
+    sum,
+    na.rm = TRUE
+  )
   names(total) <- c("district_panel_id", "all_speakers")
   languages <- sort(unique(plain_chr(rows$language_identity)))
   spec <- alternative_distance_registry()
@@ -470,16 +488,31 @@ compare_linguistic_distance_bases <- function(panel) {
   }))
 }
 
-augment_alternative_distance_diagnostics <- function(diagnostics, panel, census_2001_languages, outcome = "real_log_consumption_change") {
+augment_alternative_distance_diagnostics <- function(
+  diagnostics,
+  panel,
+  census_2001_languages,
+  outcome = "real_log_consumption_change",
+  glottolog = NULL,
+  glottolog_crosswalk = NULL
+) {
   if (!inherits(diagnostics, "emi_alternative_distance_first_stages")) stop("Expected alternative-distance diagnostics.", call. = FALSE)
   data <- prepare_alternative_distance_panel(panel, diagnostics$common_support$treatment[[1]])
   diagnostics$coverage_sensitivity <- estimate_alternative_distance_by_coverage(
     data, diagnostics$registry, diagnostics$common_support$treatment[[1]]
   )
-  diagnostics$distance4_languages <- distance_four_language_decomposition(census_2001_languages, panel)
-  diagnostics$unmapped_languages <- unmapped_language_decomposition(census_2001_languages, panel)
+  diagnostics$distance4_languages <- distance_four_language_decomposition(
+    census_2001_languages, panel, glottolog, glottolog_crosswalk
+  )
+  diagnostics$unmapped_languages <- unmapped_language_decomposition(
+    census_2001_languages, panel, glottolog, glottolog_crosswalk
+  )
   diagnostics$distance4_leave_one_out <- distance_four_leave_one_language_out(
-    census_2001_languages, panel, diagnostics$common_support$treatment[[1]]
+    census_2001_languages,
+    panel,
+    diagnostics$common_support$treatment[[1]],
+    glottolog,
+    glottolog_crosswalk
   )
   weak_iv <- estimate_weak_iv_outcomes(
     panel, outcome = outcome, treatment = diagnostics$common_support$treatment[[1]]

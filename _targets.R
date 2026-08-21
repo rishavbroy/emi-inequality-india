@@ -589,7 +589,9 @@ extended_diagnostic_targets <- list(
     augment_alternative_distance_diagnostics(
       diagnose_alternative_distance_first_stages(district_panel),
       district_panel,
-      census_2001_languages
+      census_2001_languages,
+      glottolog = glottolog_5_3,
+      glottolog_crosswalk = census_glottolog_crosswalk
     )
   ),
   tar_target(diag_ext_alternative_distance_first_stages, save_alternative_distance_first_stages(alternative_distance_first_stages)),

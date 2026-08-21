@@ -1319,3 +1319,47 @@ test_that("language decomposition uses the same adjudicated Shastry resolver as 
 
   expect_equal(rows$ling_degrees[rows$language_identity == "Bhojpuri"], 3)
 })
+
+
+test_that("language decomposition can use the same non-Indo-European resolution as production", {
+  census <- data.frame(
+    state_std = "01",
+    district_std = "001",
+    mother_tongue_code = "000001",
+    mother_tongue = "Korku",
+    canonical_language = "Korku",
+    spkr_tot = 100,
+    stringsAsFactors = FALSE
+  )
+  panel <- data.frame(district_panel_id = make_district_key("01", "001", 2001L))
+  g <- data.frame(
+    id = c("aust1307", "korku"),
+    family_id = c("", "aust1307"),
+    parent_id = c("", "aust1307"),
+    name = c("Austroasiatic", "Korku"),
+    bookkeeping = FALSE,
+    level = c("family", "language"),
+    iso639P3code = c("", "kfq"),
+    stringsAsFactors = FALSE
+  )
+  crosswalk <- data.frame(
+    mother_tongue_code = "000001",
+    mother_tongue = "Korku",
+    canonical_language = "Korku",
+    language_glottocode = "korku",
+    family_id = "aust1307",
+    iso639P3code = "kfq",
+    match_basis = "manual",
+    review_status = "accepted_manual",
+    stringsAsFactors = FALSE
+  )
+
+  prepared <- prepare_language_rows_for_decomposition(
+    census, panel, list(languoids = g), crosswalk
+  )
+
+  expect_equal(prepared$ling_degrees, 5)
+  expect_equal(nrow(unmapped_language_decomposition(
+    census, panel, list(languoids = g), crosswalk
+  )), 0)
+})

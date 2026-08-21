@@ -80,19 +80,16 @@ build_linguistic_distance_iv <- function(
   }
 
   language <- census_mother_tongue_identity(df)
-  if (!"ling_degrees" %in% names(df)) {
-    df$ling_degrees <- resolve_shastry_language_degrees(df, adjudications = shastry_adjudications)
-  }
   if (!is.null(glottolog) && !is.null(glottolog_crosswalk)) {
     df <- attach_glottolog_language_distance(df, glottolog, glottolog_crosswalk)
-    non_ie_extension <- !is.finite(num(df$ling_degrees)) &
-      language != "English" &
-      !is.na(df$glottolog_family_id) &
-      nzchar(df$glottolog_family_id) &
-      df$glottolog_family_id != "indo1319"
-    df$ling_degrees[non_ie_extension] <- 5
   } else if (!"glottolog_edge_distance" %in% names(df)) {
     df$glottolog_edge_distance <- NA_real_
+  }
+  if (!"ling_degrees" %in% names(df)) {
+    df$ling_degrees <- resolve_shastry_language_degrees(
+      df,
+      adjudications = shastry_adjudications
+    )
   }
 
   if (!is.null(historical_linguistics)) {

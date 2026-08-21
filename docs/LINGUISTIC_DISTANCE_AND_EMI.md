@@ -109,3 +109,12 @@ Kogan (2017) remains review/tie-breaking evidence and is not numerically spliced
 The first accepted tranche deliberately covers cases where the historical classification is strong and agrees with the historical-Ethnologue review proxy: Bhojpuri, Magahi and Sadri inherit the published Bihari degree; Marwari, Malvi, Mewari, Mewati and Harauti inherit the published Rajasthani degree; Haryanvi, Bundeli and Khari Boli inherit the Hindi/Western-Hindi anchor. Eastern-Hindi varieties (including Awadhi, Bagheli and Chhattisgarhi), the Bhil transition complex, and Nimadi remain unresolved where the evidence does not identify one unique Figure-5/Table-1 anchor.
 
 `resolve_shastry_language_degrees()` is the single production resolver. The district builder, decomposition diagnostics, and extension review queue all call it, so accepted manual decisions cannot silently diverge across downstream analyses.
+
+
+### Reviewed Indo-European adjudication ledger
+
+`data/metadata/shastry_language_adjudications.csv` is the sole manual override layer for the preferred 0--5 basis. Accepted rows must record exact classification evidence; rows whose decision basis uses Kogan must additionally record the Kogan page, URL, and lexical comparison. The resolver applies published Shastry/Jasanoff scores first, accepted mother-tongue adjudications second, and Shastry's non-Indo-European degree-five rule last when a reviewed Glottolog family identity is available.
+
+The second conservative tranche adds Khortha/Khotta and Nagpuria to the Bihari degree-three anchor; Dogri and Multani to the Punjabi degree-one anchor; Gojri to degree one because its historical Mewati/Rajasthani and Kogan Hindko/Punjabi classifications disagree genealogically but imply the same Shastry degree; and Banjari/Lamani/Lambadi to degree one because Kogan's lexical matrix places the shared Banjari/Lambadi list closest among published anchors to Rajasthani and Gujarati. Eastern Hindi (Awadhi, Bagheli, Chhattisgarhi), the Bhil transition complex, Nimadi, and broad/composite labels remain unresolved unless evidence distinguishes their adjacent plausible degrees.
+
+The extension queue now contains only unresolved Indo-European rows. Non-Indo-European rows with accepted Glottolog identities are resolved centrally to degree five and therefore cannot simultaneously appear as production-mapped and diagnostic-unmapped.
