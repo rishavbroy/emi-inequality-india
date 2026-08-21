@@ -87,8 +87,17 @@ build_linguistic_distance_iv <- function(
   }
   if (!"ling_degrees" %in% names(df)) {
     df$ling_degrees <- resolve_shastry_language_degrees(
-      df,
-      adjudications = shastry_adjudications
+      df, adjudications = shastry_adjudications, scenario = "preferred"
+    )
+  }
+  if (!"ling_degrees_sensitivity_low" %in% names(df)) {
+    df$ling_degrees_sensitivity_low <- resolve_shastry_language_degrees(
+      df, adjudications = shastry_adjudications, scenario = "sensitivity_low"
+    )
+  }
+  if (!"ling_degrees_sensitivity_high" %in% names(df)) {
+    df$ling_degrees_sensitivity_high <- resolve_shastry_language_degrees(
+      df, adjudications = shastry_adjudications, scenario = "sensitivity_high"
     )
   }
 
@@ -124,6 +133,11 @@ build_linguistic_distance_iv <- function(
 build_district_language_constructions <- function(df) {
   speakers <- num(df$spkr_tot)
   distance <- num(df$ling_degrees)
+  distance_low <- num(df$ling_degrees_sensitivity_low %||% distance)
+  distance_high <- num(df$ling_degrees_sensitivity_high %||% distance)
+  if (!identical(is.finite(distance_low), is.finite(distance_high))) {
+    stop("Shastry low/high sensitivity mappings must have identical mapped support.", call. = FALSE)
+  }
   glottolog_distance <- num(df$glottolog_edge_distance %||% rep(NA_real_, nrow(df)))
   dyen_distance <- num(df$dyen_noncognate_pct %||% rep(NA_real_, nrow(df)))
   language <- census_mother_tongue_identity(df)
@@ -151,6 +165,22 @@ build_district_language_constructions <- function(df) {
 
   out <- df[1, c("state_std", "district_std"), drop = FALSE]
   out$ling_distance_nonzero_mean <- weighted_value(nonzero, distance)
+
+  sensitivity_mapped <- valid_speakers & is.finite(distance_low) & !english
+  sensitivity_nonzero_low <- sensitivity_mapped & distance_low > 0
+  sensitivity_nonzero_high <- sensitivity_mapped & distance_high > 0
+  out$ling_distance_nonzero_mean_sensitivity_low <- weighted_value(
+    sensitivity_nonzero_low, distance_low
+  )
+  out$ling_distance_nonzero_mean_sensitivity_high <- weighted_value(
+    sensitivity_nonzero_high, distance_high
+  )
+  sensitivity_total <- sum(speakers[sensitivity_mapped], na.rm = TRUE)
+  out$ling_sensitivity_mapped_speaker_share <- if (is.finite(total) && total > 0) {
+    100 * sensitivity_total / total
+  } else {
+    NA_real_
+  }
   out$ling_share_distance_ge3 <- share(mapped & distance >= 3)
   for (degree in 0:5) {
     out[[paste0("ling_share_distance_", degree)]] <- share(mapped & distance == degree)
@@ -221,7 +251,10 @@ linguistic_distance_language_controls <- function() {
 
 validate_linguistic_distance_ranges <- function(df) {
   distance_cols <- intersect(c(
-    "ling_distance_nonzero_mean", "ling_distance_top3_legacy", "wavg_ling_degrees",
+    "ling_distance_nonzero_mean",
+    "ling_distance_nonzero_mean_sensitivity_low",
+    "ling_distance_nonzero_mean_sensitivity_high",
+    "ling_distance_top3_legacy", "wavg_ling_degrees",
     "ling_distance_glottolog_nonhindi_mean", "ling_distance_dyen_noncognate_pct"
   ), names(df))
   for (nm in setdiff(distance_cols, c(

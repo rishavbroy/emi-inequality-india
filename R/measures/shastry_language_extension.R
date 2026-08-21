@@ -27,6 +27,32 @@ ethnologue_proxy_match_status <- function(mother_tongue, canonical_language, lab
   "canonical_fallback"
 }
 
+shastry_extension_candidate_schema <- function() {
+  data.frame(
+    mother_tongue_code = character(),
+    mother_tongue = character(),
+    canonical_language = character(),
+    language_glottocode = character(),
+    candidate_degree = numeric(),
+    candidate_basis = character(),
+    ethnologue_proxy_status = character(),
+    dyen_list_name = character(),
+    dyen_cognate_pct_hindi = numeric(),
+    kogan_code = character(),
+    kogan_nearest_anchor = character(),
+    kogan_nearest_degree = numeric(),
+    kogan_nearest_similarity = numeric(),
+    kogan_margin_pct = numeric(),
+    asjp_nearest_anchor = character(),
+    asjp_nearest_degree = numeric(),
+    asjp_nearest_ldnd = numeric(),
+    asjp_margin_ldnd = numeric(),
+    asjp_status = character(),
+    review_status = character(),
+    stringsAsFactors = FALSE
+  )
+}
+
 build_shastry_extension_candidates <- function(
   crosswalk,
   glottolog,
@@ -41,7 +67,7 @@ build_shastry_extension_candidates <- function(
   reviewed <- plain_chr(crosswalk$mother_tongue_code) %in%
     plain_chr(adjudications$mother_tongue_code)
   targets <- crosswalk[accepted & !is.finite(direct) & !reviewed, , drop = FALSE]
-  if (!nrow(targets)) return(data.frame())
+  if (!nrow(targets)) return(shastry_extension_candidate_schema())
 
   proxy_labels <- ethnologue_proxy_plain_labels(historical_linguistics$ethnologue_proxy)
   evidence <- lexical_language_evidence(
@@ -52,7 +78,7 @@ build_shastry_extension_candidates <- function(
   asjp <- historical_linguistics$asjp_review_summary %||% NULL
   kogan <- historical_linguistics$kogan_anchor_similarity %||% NULL
 
-  safe_bind_rows(lapply(seq_len(nrow(targets)), function(i) {
+  out <- safe_bind_rows(lapply(seq_len(nrow(targets)), function(i) {
     row <- targets[i, , drop = FALSE]
     kogan_row <- kogan_anchor_summary(kogan, evidence$kogan_code[[i]])
     asjp_row <- asjp_review_summary_row(asjp, row$mother_tongue_code[[1]])
@@ -82,6 +108,7 @@ build_shastry_extension_candidates <- function(
       stringsAsFactors = FALSE
     )
   }))
+  out[names(shastry_extension_candidate_schema())]
 }
 
 save_shastry_extension_candidates <- function(

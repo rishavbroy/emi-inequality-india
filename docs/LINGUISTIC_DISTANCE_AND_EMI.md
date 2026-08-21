@@ -129,3 +129,27 @@ ASJP v21 is retained as the untouched Zenodo archive `data/raw/cognates/asjp-v21
 The attached Kogan article is represented by `data/metadata/kogan_2017_anchor_similarity.csv`, a transcription of only the Table 1 candidate-to-published-anchor cells needed for adjudication. Production therefore does not parse a PDF and does not pretend the extracted table is a new lexical series.
 
 The final mapping accepts direct Rajasthani classifications (Bagri, Dhundhari, Nimadi); uses concordant Kogan/ASJP evidence from Awadhi to anchor the LSI Eastern-Hindi branch to Hindi while retaining degree 1 as the adjacent branch sensitivity; and uses historical classification plus clear ASJP tie-breaks for Bhili, Bhilali, and Khandeshi/Ahirani. Pahari aggregates, close Hindi/Punjabi/Nepali ties, Wagdi, Shina, Sanskrit, Halabi without an exact historical adjudication, and identity-ambiguous labels are deliberately frozen unresolved. Literal 100-percent row coverage is not a target.
+
+
+### Frozen-adjudication sensitivity scenarios
+
+The preferred 0--5 construction remains the published Shastry/Jasanoff mapping
+plus accepted reviewed adjudications; `frozen_unresolved` rows remain missing
+there. The ledger's `sensitivity_degrees` field is now operational rather than
+descriptive. Two deliberately joint stress tests are constructed:
+
+- `ling_distance_nonzero_mean_sensitivity_low` assigns each reviewed ambiguous
+  mother tongue the minimum finite value among its accepted primary degree (if
+  any) and its recorded sensitivity degrees.
+- `ling_distance_nonzero_mean_sensitivity_high` analogously assigns the maximum.
+
+Frozen-unresolved rows therefore enter only these stress tests, never the
+preferred instrument. The two scenarios use identical mapped support and are
+registered in the same first-stage, weak-IV, Anderson--Rubin, monotonicity, and
+coverage machinery as the preferred scalar. They are bounding stress tests, not
+additional preferred linguistic-distance measures and not tuned to first-stage
+strength.
+
+An empty `shastry_extension_candidates.csv` now has a stable typed header rather
+than a one-column empty CSV. This is the expected release state: every accepted
+crosswalk identity is either assigned or explicitly frozen unresolved.

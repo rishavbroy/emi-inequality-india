@@ -1297,3 +1297,79 @@ test_that("ASJP archive requires exactly one raw lists member", {
 
   expect_error(asjp_source_lines(zip_path), "exactly one raw/lists.txt")
 })
+
+
+test_that("Shastry sensitivity degree parser rejects malformed values", {
+  expect_equal(parse_shastry_sensitivity_degrees(c("", "0;2;2;3")), list(numeric(), c(0, 2, 3)))
+  expect_error(parse_shastry_sensitivity_degrees("0;6"), "zero through five")
+  expect_error(parse_shastry_sensitivity_degrees("0;1.5"), "zero through five")
+})
+
+test_that("frozen Shastry ambiguity stays missing in preferred mapping but enters bounded sensitivities", {
+  rows <- data.frame(
+    mother_tongue_code = c("006095", "030055"),
+    mother_tongue = c("Garhwali", "Wagdi"),
+    canonical_language = c("Hindi", "Bhili/Bhilodi"),
+    stringsAsFactors = FALSE
+  )
+  preferred <- resolve_shastry_language_degrees(rows, scenario = "preferred")
+  low <- resolve_shastry_language_degrees(rows, scenario = "sensitivity_low")
+  high <- resolve_shastry_language_degrees(rows, scenario = "sensitivity_high")
+
+  expect_true(all(is.na(preferred)))
+  expect_equal(low, c(0, 0))
+  expect_equal(high, c(1, 1))
+})
+
+test_that("accepted Shastry ambiguity keeps preferred degree and exposes adjacent sensitivity", {
+  rows <- data.frame(
+    mother_tongue_code = c("006008", "030007"),
+    mother_tongue = c("Awadhi", "Bhili/Bhilodi"),
+    canonical_language = c("Hindi", "Bhili/Bhilodi"),
+    stringsAsFactors = FALSE
+  )
+
+  expect_equal(resolve_shastry_language_degrees(rows, scenario = "preferred"), c(0, 1))
+  expect_equal(resolve_shastry_language_degrees(rows, scenario = "sensitivity_low"), c(0, 1))
+  expect_equal(resolve_shastry_language_degrees(rows, scenario = "sensitivity_high"), c(1, 2))
+})
+
+test_that("district Shastry sensitivity scenarios share mapped support", {
+  census <- data.frame(
+    state_std = rep("01", 4),
+    district_std = rep("001", 4),
+    mother_tongue_code = c("006118", "006008", "006095", "006242"),
+    mother_tongue = c("Hindi", "Awadhi", "Garhwali", "Rajasthani"),
+    canonical_language = c("Hindi", "Hindi", "Hindi", "Rajasthani"),
+    spkr_tot = c(50, 20, 20, 10),
+    stringsAsFactors = FALSE
+  )
+
+  out <- build_linguistic_distance_iv(census)
+
+  expect_equal(out$ling_mapped_speaker_share, 80)
+  expect_equal(out$ling_sensitivity_mapped_speaker_share, 100)
+  expect_true(is.finite(out$ling_distance_nonzero_mean_sensitivity_low))
+  expect_true(is.finite(out$ling_distance_nonzero_mean_sensitivity_high))
+})
+
+test_that("empty Shastry extension queue retains the published diagnostic schema", {
+  schema <- shastry_extension_candidate_schema()
+  expect_equal(nrow(schema), 0)
+  expect_gt(ncol(schema), 1)
+  expect_true(all(c(
+    "mother_tongue_code", "kogan_nearest_anchor",
+    "asjp_nearest_anchor", "review_status"
+  ) %in% names(schema)))
+})
+
+test_that("lexically adjudicated Shastry rows require lexical provenance", {
+  x <- read_shastry_language_adjudications()
+  x <- x[x$review_status == "accepted" & grepl("asjp", x$decision_basis, ignore.case = TRUE), , drop = FALSE]
+  expect_gt(nrow(x), 0)
+
+  path <- tempfile(fileext = ".csv")
+  x$lexical_url[[1]] <- NA_character_
+  utils::write.csv(x, path, row.names = FALSE)
+  expect_error(read_shastry_language_adjudications(path), "Lexically adjudicated")
+})

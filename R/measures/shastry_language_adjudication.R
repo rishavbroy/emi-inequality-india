@@ -42,12 +42,13 @@ read_shastry_language_adjudications <- function(path = NULL) {
       stop("Accepted Shastry adjudications require ", field, ".", call. = FALSE)
     }
   }
-  lexical_required <- accepted & grepl("kogan", plain_chr(out$decision_basis), fixed = TRUE)
+  lexical_required <- accepted &
+    grepl("kogan|asjp", plain_chr(out$decision_basis), ignore.case = TRUE)
   for (field in c("lexical_source", "lexical_pages", "lexical_url", "lexical_evidence")) {
     value <- plain_chr(out[[field]])
     missing <- is.na(value) | !nzchar(trimws(value))
     if (any(lexical_required & missing)) {
-      stop("Kogan-adjudicated Shastry rows require ", field, ".", call. = FALSE)
+      stop("Lexically adjudicated Shastry rows require ", field, ".", call. = FALSE)
     }
   }
 
@@ -63,26 +64,70 @@ read_shastry_language_adjudications <- function(path = NULL) {
   out
 }
 
-apply_shastry_language_adjudications <- function(rows, degree, adjudications = read_shastry_language_adjudications()) {
+parse_shastry_sensitivity_degrees <- function(x) {
+  values <- plain_chr(x)
+  lapply(values, function(value) {
+    if (is.na(value) || !nzchar(trimws(value))) return(numeric())
+    pieces <- trimws(strsplit(value, ";", fixed = TRUE)[[1]])
+    degree <- suppressWarnings(as.numeric(pieces))
+    if (any(!is.finite(degree) | degree < 0 | degree > 5 | degree != round(degree))) {
+      stop("Shastry sensitivity degrees must be semicolon-separated integers from zero through five.", call. = FALSE)
+    }
+    sort(unique(degree))
+  })
+}
+
+shastry_adjudication_scenario_degree <- function(
+  adjudications,
+  scenario = c("preferred", "sensitivity_low", "sensitivity_high")
+) {
+  scenario <- match.arg(scenario)
+  primary <- num(adjudications$assigned_shastry_degree)
+  if (scenario == "preferred") return(primary)
+
+  sensitivity <- parse_shastry_sensitivity_degrees(adjudications$sensitivity_degrees)
+  vapply(seq_len(nrow(adjudications)), function(i) {
+    candidates <- c(primary[[i]], sensitivity[[i]])
+    candidates <- candidates[is.finite(candidates)]
+    if (!length(candidates)) return(NA_real_)
+    if (scenario == "sensitivity_low") min(candidates) else max(candidates)
+  }, numeric(1))
+}
+
+apply_shastry_language_adjudications <- function(
+  rows,
+  degree,
+  adjudications = read_shastry_language_adjudications(),
+  scenario = c("preferred", "sensitivity_low", "sensitivity_high")
+) {
+  scenario <- match.arg(scenario)
   out <- num(degree)
   if (!"mother_tongue_code" %in% names(rows) || !nrow(adjudications)) return(out)
 
   code <- sprintf("%06d", suppressWarnings(as.integer(rows$mother_tongue_code)))
   idx <- match(code, adjudications$mother_tongue_code)
-  accepted <- !is.na(idx) & plain_chr(adjudications$review_status[idx]) == "accepted"
-  fill <- accepted & !is.finite(out)
-  out[fill] <- num(adjudications$assigned_shastry_degree[idx[fill]])
+  scenario_degree <- shastry_adjudication_scenario_degree(adjudications, scenario)
+  eligible <- !is.na(idx) & is.finite(scenario_degree[idx])
+  if (scenario == "preferred") {
+    eligible <- eligible & plain_chr(adjudications$review_status[idx]) == "accepted"
+  }
+  fill <- eligible & !is.finite(out)
+  out[fill] <- scenario_degree[idx[fill]]
   out
 }
 
 resolve_shastry_language_degrees <- function(
   rows,
   concordance = read_shastry_language_distance(),
-  adjudications = read_shastry_language_adjudications()
+  adjudications = read_shastry_language_adjudications(),
+  scenario = c("preferred", "sensitivity_low", "sensitivity_high")
 ) {
+  scenario <- match.arg(scenario)
   language <- census_mother_tongue_identity(rows)
   degree <- linguistic_distance_degrees(language, rows$canonical_language, concordance)
-  degree <- apply_shastry_language_adjudications(rows, degree, adjudications)
+  degree <- apply_shastry_language_adjudications(
+    rows, degree, adjudications, scenario = scenario
+  )
 
   family <- if ("glottolog_family_id" %in% names(rows)) {
     plain_chr(rows$glottolog_family_id)
@@ -110,6 +155,14 @@ prepare_shastry_language_rows <- function(
   if (!is.null(glottolog) && !is.null(glottolog_crosswalk)) {
     out <- attach_glottolog_language_distance(out, glottolog, glottolog_crosswalk)
   }
-  out$ling_degrees <- resolve_shastry_language_degrees(out, concordance, adjudications)
+  out$ling_degrees <- resolve_shastry_language_degrees(
+    out, concordance, adjudications, scenario = "preferred"
+  )
+  out$ling_degrees_sensitivity_low <- resolve_shastry_language_degrees(
+    out, concordance, adjudications, scenario = "sensitivity_low"
+  )
+  out$ling_degrees_sensitivity_high <- resolve_shastry_language_degrees(
+    out, concordance, adjudications, scenario = "sensitivity_high"
+  )
   out
 }

@@ -765,7 +765,8 @@ test_that("alternative linguistic-distance registry covers scalar, nonlinear, an
     "nonzero_mean_shastry", "nonzero_mean_hindi_urdu_separate", "distance_shares_all",
     "distance_shares_all_unmapped", "distance_shares_mapped",
     "glottolog_mean", "glottolog_mean_shastry",
-    "dyen_noncognate", "dyen_noncognate_shastry"
+    "dyen_noncognate", "dyen_noncognate_shastry",
+    "nonzero_mean_sensitivity_low", "nonzero_mean_sensitivity_high"
   ) %in% registry$construction_id))
   joint <- registry[registry$construction_id == "distance_shares_all", , drop = FALSE]
   expect_true(all(vapply(joint$excluded_instruments, function(x) {
@@ -825,6 +826,9 @@ test_that("alternative linguistic-distance first stages use fixed support and jo
   panel$ling_glottolog_unmapped_speaker_share <- 0
   panel$ling_distance_dyen_noncognate_pct <- 100 - 10 * panel$ling_distance_nonzero_mean
   panel$ling_dyen_mapped_speaker_share <- 100
+  panel$ling_distance_nonzero_mean_sensitivity_low <- panel$ling_distance_nonzero_mean
+  panel$ling_distance_nonzero_mean_sensitivity_high <- panel$ling_distance_nonzero_mean
+  panel$ling_sensitivity_mapped_speaker_share <- 100
   panel$ling_dyen_unmapped_speaker_share <- 0
   panel$native_english_share <- 0
   panel$emi_exposure_all_children_0708 <- 5 + 0.15 * panel$ling_share_distance_5 +
@@ -887,6 +891,9 @@ test_that("alternative linguistic-distance diagnostics save four explicit output
   panel$ling_glottolog_unmapped_speaker_share <- 0
   panel$ling_distance_dyen_noncognate_pct <- 100 - 10 * panel$ling_distance_nonzero_mean
   panel$ling_dyen_mapped_speaker_share <- 100
+  panel$ling_distance_nonzero_mean_sensitivity_low <- panel$ling_distance_nonzero_mean
+  panel$ling_distance_nonzero_mean_sensitivity_high <- panel$ling_distance_nonzero_mean
+  panel$ling_sensitivity_mapped_speaker_share <- 100
   panel$ling_dyen_unmapped_speaker_share <- 0
   panel$native_english_share <- 0
   for (variable in census_2001_diagnostic_controls()) panel[[variable]] <- stats::rnorm(n)
@@ -1370,4 +1377,23 @@ test_that("language decomposition can use the same non-Indo-European resolution 
   expect_equal(nrow(unmapped_language_decomposition(
     census, panel, list(languoids = g), crosswalk
   )), 0)
+})
+
+
+test_that("Shastry adjudication sensitivities reuse the canonical IV registry machinery", {
+  registry <- iv_specification_registry()
+  rows <- registry[
+    registry$construction_id %in%
+      c("nonzero_mean_sensitivity_low", "nonzero_mean_sensitivity_high"),
+    ,
+    drop = FALSE
+  ]
+
+  expect_equal(nrow(rows), 2L * length(iv_adjustment_sets()))
+  expect_true(all(rows$mapping_coverage_variable == "ling_sensitivity_mapped_speaker_share"))
+  expect_true(all(vapply(
+    rows$included_language_controls,
+    function(x) setequal(x, c("hindi_urdu_share", "native_english_share")),
+    logical(1)
+  )))
 })

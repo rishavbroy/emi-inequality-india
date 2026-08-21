@@ -75,6 +75,18 @@ iv_instrument_constructions <- function() {
       excluded = "ling_distance_nonzero_mean",
       included = c("hindi_urdu_share", "native_english_share")
     ),
+    nonzero_mean_sensitivity_low = list(
+      label = "Shastry nonzero mean under joint lower-degree adjudication sensitivity",
+      excluded = "ling_distance_nonzero_mean_sensitivity_low",
+      included = c("hindi_urdu_share", "native_english_share"),
+      coverage = "ling_sensitivity_mapped_speaker_share"
+    ),
+    nonzero_mean_sensitivity_high = list(
+      label = "Shastry nonzero mean under joint upper-degree adjudication sensitivity",
+      excluded = "ling_distance_nonzero_mean_sensitivity_high",
+      included = c("hindi_urdu_share", "native_english_share"),
+      coverage = "ling_sensitivity_mapped_speaker_share"
+    ),
     nonzero_mean_hindi_urdu_separate = list(
       label = "Nonzero mean with separate Hindi and Urdu shares",
       excluded = "ling_distance_nonzero_mean",
