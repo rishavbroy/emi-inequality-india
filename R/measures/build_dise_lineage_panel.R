@@ -253,3 +253,38 @@ attach_dise_treatments_to_panel_2001 <- function(panel, treatments) {
   rownames(out) <- NULL
   if (geometry) sf::st_set_geometry(out, sf::st_geometry(panel)) else out
 }
+
+build_dise_longitudinal_panel <- function(
+  baseline_district_year,
+  dynamic_district_year,
+  nss_source_roster,
+  full_reviewed_source_crosswalk,
+  admin_units_2001,
+  district_panel
+) {
+  district_year <- safe_bind_rows(list(baseline_district_year, dynamic_district_year))
+  bridge <- build_dise_deterministic_lineage_bridge(
+    district_year,
+    nss_source_roster,
+    full_reviewed_source_crosswalk,
+    admin_units_2001
+  )
+  harmonized <- harmonize_dise_counts_to_2001(district_year, bridge)
+  panel <- if (inherits(district_panel, "sf")) sf::st_drop_geometry(district_panel) else safe_df(district_panel)
+  design_vars <- unique(c(
+    "target_unit_2001", "state_code_2001", "region",
+    alternative_distance_variables()
+  ))
+  missing <- setdiff(design_vars, names(panel))
+  if (length(missing)) {
+    stop("District panel lacks longitudinal DISE design variables: ",
+         paste(missing, collapse = ", "), call. = FALSE)
+  }
+  design <- panel[design_vars]
+  if (anyDuplicated(design$target_unit_2001)) {
+    stop("District panel is not unique by Census-2001 target for DISE dynamics.", call. = FALSE)
+  }
+  out <- merge(harmonized, design, by = "target_unit_2001", all.x = TRUE, sort = FALSE)
+  out$academic_year <- plain_chr(out$academic_year)
+  out
+}

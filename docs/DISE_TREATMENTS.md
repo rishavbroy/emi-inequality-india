@@ -43,13 +43,18 @@ Parser-level quality-control fields such as `dise_medium_classification_ratio` a
 
 Language resolution is deliberately language-specific. If a report card explicitly identifies an English slot, English enrollment is usable even when some different positive medium slot remains unidentified. Conversely, English is coded as zero only when every positive slot is decoded and none is English. The same rule is applied separately to Hindi. `dise_medium_identity_complete` remains a stricter diagnostic describing whether every positive medium slot is known; it is not unnecessarily imposed on the English treatment.
 
-## Geography
 
-The 2007-08 administrative measures attach to the active analysis panel using the reviewed 2007 district names already carried by the lineage panel. The pooled 2005-08 measure is restricted to canonical district names observed consistently in all three annual files. This is intentionally conservative: non-nested pre-2007 district changes are not allocated from district aggregates without evidence about within-district enrollment locations.
+## Longitudinal administrative EMI
+
+The extended pipeline now constructs a 2005-06 through 2015-16 district-year EMI panel on Census-2001 geography. Baseline years use validated raw medium slots; 2008-09 through 2014-15 combine raw administrative enrollment denominators with report-card-derived English/Hindi counts; 2015-16 uses the workbook's explicit medium codes and enrollment blocks. The official UDISE coding convention identifies Hindi as 04 and English as 19.
+
+Dynamic relevance is estimated only for distinct scalar excluded-distance variables. Instrument constructions that differ only by time-invariant included language controls are algebraically equivalent after district fixed effects and are represented once, with equivalent construction IDs retained as metadata. Five-share vector instruments remain outside this event-study diagnostic because they do not define one scalar distance trajectory.
+
+The event-study reference year is 2007-08. Two models are reported: district FE plus academic-year FE, and the more demanding district FE plus state-by-academic-year FE. In both cases the coefficients are changes in the EMI-distance gradient relative to 2007-08, with inference clustered by Census-2001 district. A joint clustered Wald test evaluates whether all distance-by-year changes are zero.
 
 ## Deferred extensions
 
-Later DISE years remain inventoried for a district-year dynamic treatment panel, teacher/school-quality mechanisms, and a future HCES endpoint. An all-school-age DISE EMI exposure is also deferred until a defensible age-specific Census denominator is added. Historical school-level medium availability and language-taught-as-subject measures require school-level DISE/UDISE data rather than these district report-card aggregates.
+Teacher/school-quality mechanisms and a future HCES endpoint remain deferred. An all-school-age DISE EMI exposure is also deferred until a defensible age-specific Census denominator is added. Historical school-level medium availability and language-taught-as-subject measures require school-level DISE/UDISE data rather than these district report-card aggregates.
 
 ## Census-2001 geographic harmonization
 

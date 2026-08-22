@@ -61,3 +61,5 @@ planned for the main paper or appendix. The construction rules are described in
 - `dise_publication_checks.csv` records small raw-to-publication validation anchors.
 
 See `docs/DISE_TREATMENTS.md` for construction and scope.
+
+- `dise_report_language_enrollment.csv` stores report-card-derived English/Hindi district enrollment for 2008-09 through 2014-15 with PDF/page provenance. It is a compact, tracked extraction from the archived DISE district report cards and is used only where the raw district workbook does not expose a stable language identity.
