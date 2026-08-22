@@ -764,6 +764,23 @@ test_that("2015 positive enrollment under an unidentified medium remains unresol
   expect_true(is.na(out$dise_hindi_enrollment))
 })
 
+test_that("2015 missing enrollment blocks are harmless only for absent medium codes", {
+  data <- data.frame(
+    distcd = c("0101", "0102"),
+    m1 = c(19, 19), m2 = c(4, 4),
+    m3 = c(NA, 7), m4 = NA, m5 = NA,
+    enre11 = c(40, 40), enre21 = c(30, 30),
+    stringsAsFactors = FALSE
+  )
+
+  out <- extract_dise_2015_medium_counts(data)
+
+  expect_equal(out$dise_english_enrollment[[1]], 40)
+  expect_equal(out$dise_hindi_enrollment[[1]], 30)
+  expect_true(is.na(out$dise_english_enrollment[[2]]))
+  expect_true(is.na(out$dise_hindi_enrollment[[2]]))
+})
+
 test_that("2015 medium schema fails explicitly when a code slot is absent", {
   data <- data.frame(
     distcd = "0101",

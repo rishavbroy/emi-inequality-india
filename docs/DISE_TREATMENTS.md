@@ -75,3 +75,5 @@ The bridge treats an empty candidate source as an ordinary no-evidence condition
 When multiple DISE districts deterministically map to the same Census-2001 parent, the pipeline sums English enrollment and total enrollment first and recomputes EMI from those pooled counts. It never averages child-district percentages. The pooled 2005-06 to 2007-08 treatment is then constructed from the harmonized annual counts and still requires all three academic years.
 
 The extended DISE output writes both `dise_lineage_bridge.csv` and `dise_district_year_2001.csv` so the geographic recovery is reviewable independently of the regression results.
+
+For 2015-16, language-specific counts are resolved only when every positive-enrollment medium slot has an identified positive code. Empty enrollment blocks are allowed for absent medium-code slots; a positive code without observed enrollment remains unresolved rather than becoming zero.

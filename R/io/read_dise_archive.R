@@ -374,13 +374,6 @@ dise_2015_medium_schema <- function(data) {
       names(data),
       value = TRUE
     )
-    if (!length(enrollment_columns)) {
-      stop(
-        "DISE 2015-16 medium slot ", slot,
-        " has no enrollment columns.",
-        call. = FALSE
-      )
-    }
     data.frame(
       slot = slot,
       code_column = code_column,
@@ -416,11 +409,15 @@ extract_dise_2015_medium_counts <- function(data) {
         numeric(1)
       )
       identified <- is.finite(codes) & codes > 0
-      hit <- identified & codes == code
-      if (any(hit)) return(sum(counts[hit], na.rm = TRUE))
       unresolved_positive <- !identified & is.finite(counts) & counts > 0
       if (any(unresolved_positive)) return(NA_real_)
-      0
+
+      hit <- identified & codes == code
+      if (!any(hit)) return(0)
+
+      matched <- counts[hit]
+      if (any(!is.finite(matched))) return(NA_real_)
+      sum(matched)
     }, numeric(1))
   }
   out$dise_english_enrollment <- language_count(19)
