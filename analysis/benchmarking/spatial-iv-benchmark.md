@@ -52,8 +52,8 @@ analysis_table(spatial_iv_status[setdiff(names(spatial_iv_status), "formula")], 
 
 | model | status | methodological_success | reason | nobs | diagnostics_status | cluster_se_status |
 |:---|:---|:---|:---|---:|:---|:---|
-| model_sdm2sls_cons | estimated | FALSE | Legacy comments said these attempts did not work; current status only means ivreg returned an object. A model is marked as methodologically successful only when diagnostics and clustered-SE extraction also succeed. | 573 | failed: system is computationally singular: reciprocal condition number = 7.76419e-18 | estimated |
-| model_sdm2sls_gini | estimated | FALSE | Legacy comments said these attempts did not work; current status only means ivreg returned an object. A model is marked as methodologically successful only when diagnostics and clustered-SE extraction also succeed. | 573 | failed: system is computationally singular: reciprocal condition number = 2.54894e-18 | estimated |
+| model_sdm2sls_cons | estimated | FALSE | Legacy comments said these attempts did not work; current status only means ivreg returned an object. A model is marked as methodologically successful only when diagnostics and clustered-SE extraction also succeed. | 573 | failed: system is computationally singular: reciprocal condition number = 2.39256e-17 | estimated |
+| model_sdm2sls_gini | estimated | FALSE | Legacy comments said these attempts did not work; current status only means ivreg returned an object. A model is marked as methodologically successful only when diagnostics and clustered-SE extraction also succeed. | 573 | failed: system is computationally singular: reciprocal condition number = 3.32268e-18 | estimated |
 
 Spatial-IV model status
 
@@ -74,8 +74,8 @@ analysis_table(spatial_iv_diag, "IV diagnostic summaries")
 
 | model | status | reason |
 |:---|:---|:---|
-| model_sdm2sls_cons | failed | system is computationally singular: reciprocal condition number = 7.76419e-18 |
-| model_sdm2sls_gini | failed | system is computationally singular: reciprocal condition number = 2.54894e-18 |
+| model_sdm2sls_cons | failed | system is computationally singular: reciprocal condition number = 2.39256e-17 |
+| model_sdm2sls_gini | failed | system is computationally singular: reciprocal condition number = 3.32268e-18 |
 
 IV diagnostic summaries
 
@@ -83,48 +83,48 @@ IV diagnostic summaries
 analysis_table(spatial_iv_coef, "Default coefficient summaries")
 ```
 
-| model              | vcov_type     | term                    |  estimate |
-|:-------------------|:--------------|:------------------------|----------:|
-| model_sdm2sls_cons | model_default | (Intercept)             |  -483.335 |
-| model_sdm2sls_cons | model_default | W_consY                 |     4.586 |
-| model_sdm2sls_cons | model_default | EMIE                    |     1.911 |
-| model_sdm2sls_cons | model_default | W_EMIE                  |    -3.699 |
-| model_sdm2sls_cons | model_default | npeople_0708            |     0.000 |
-| model_sdm2sls_cons | model_default | nhouses_0708            |     0.000 |
-| model_sdm2sls_cons | model_default | consumption_0708        |    -0.106 |
-| model_sdm2sls_cons | model_default | gini_cons_0708          |    11.944 |
-| model_sdm2sls_cons | model_default | pct_urban               |    -0.282 |
-| model_sdm2sls_cons | model_default | pct_head_secondary_plus |     1.442 |
-| model_sdm2sls_cons | model_default | pct_muslim              |     0.713 |
-| model_sdm2sls_cons | model_default | pct_st                  |     1.531 |
-| model_sdm2sls_cons | model_default | pct_obc                 |     0.475 |
-| model_sdm2sls_cons | model_default | pct_fem_head            |     0.984 |
-| model_sdm2sls_cons | model_default | pct_medium_land         |     1.250 |
-| model_sdm2sls_cons | model_default | pct_large_land          |    -4.230 |
-| model_sdm2sls_cons | model_default | W_npeople_0708          |     0.000 |
-| model_sdm2sls_cons | model_default | W_nhouses_0708          |     0.000 |
-| model_sdm2sls_cons | model_default | W_consumption_0708      |     0.173 |
-| model_sdm2sls_cons | model_default | W_gini_cons_0708        | -1358.480 |
-| model_sdm2sls_gini | model_default | (Intercept)             |     0.076 |
-| model_sdm2sls_gini | model_default | W_giniY                 |     0.670 |
-| model_sdm2sls_gini | model_default | EMIE                    |     0.000 |
-| model_sdm2sls_gini | model_default | W_EMIE                  |     0.000 |
-| model_sdm2sls_gini | model_default | npeople_0708            |     0.000 |
-| model_sdm2sls_gini | model_default | nhouses_0708            |     0.000 |
-| model_sdm2sls_gini | model_default | consumption_0708        |     0.000 |
-| model_sdm2sls_gini | model_default | gini_cons_0708          |    -0.767 |
-| model_sdm2sls_gini | model_default | pct_urban               |     0.000 |
-| model_sdm2sls_gini | model_default | pct_head_secondary_plus |     0.000 |
-| model_sdm2sls_gini | model_default | pct_muslim              |     0.000 |
-| model_sdm2sls_gini | model_default | pct_st                  |     0.000 |
-| model_sdm2sls_gini | model_default | pct_obc                 |     0.000 |
-| model_sdm2sls_gini | model_default | pct_fem_head            |     0.000 |
-| model_sdm2sls_gini | model_default | pct_medium_land         |     0.000 |
-| model_sdm2sls_gini | model_default | pct_large_land          |     0.000 |
-| model_sdm2sls_gini | model_default | W_npeople_0708          |     0.000 |
-| model_sdm2sls_gini | model_default | W_nhouses_0708          |     0.000 |
-| model_sdm2sls_gini | model_default | W_consumption_0708      |     0.000 |
-| model_sdm2sls_gini | model_default | W_gini_cons_0708        |     0.596 |
+| model              | vcov_type     | term                    | estimate |
+|:-------------------|:--------------|:------------------------|---------:|
+| model_sdm2sls_cons | model_default | (Intercept)             | -140.717 |
+| model_sdm2sls_cons | model_default | W_consY                 |    2.492 |
+| model_sdm2sls_cons | model_default | EMIE                    |    3.031 |
+| model_sdm2sls_cons | model_default | W_EMIE                  |   -4.314 |
+| model_sdm2sls_cons | model_default | npeople_0708            |    0.000 |
+| model_sdm2sls_cons | model_default | nhouses_0708            |    0.000 |
+| model_sdm2sls_cons | model_default | consumption_0708        |   -0.144 |
+| model_sdm2sls_cons | model_default | gini_cons_0708          |    8.431 |
+| model_sdm2sls_cons | model_default | pct_urban               |   -0.166 |
+| model_sdm2sls_cons | model_default | pct_head_secondary_plus |    0.524 |
+| model_sdm2sls_cons | model_default | pct_muslim              |    0.361 |
+| model_sdm2sls_cons | model_default | pct_st                  |    0.447 |
+| model_sdm2sls_cons | model_default | pct_obc                 |    0.066 |
+| model_sdm2sls_cons | model_default | pct_fem_head            |    0.376 |
+| model_sdm2sls_cons | model_default | pct_medium_land         |    0.715 |
+| model_sdm2sls_cons | model_default | pct_large_land          |   -1.925 |
+| model_sdm2sls_cons | model_default | W_npeople_0708          |    0.000 |
+| model_sdm2sls_cons | model_default | W_nhouses_0708          |    0.000 |
+| model_sdm2sls_cons | model_default | W_consumption_0708      |    0.192 |
+| model_sdm2sls_cons | model_default | W_gini_cons_0708        | -773.427 |
+| model_sdm2sls_gini | model_default | (Intercept)             |    0.085 |
+| model_sdm2sls_gini | model_default | W_giniY                 |    0.773 |
+| model_sdm2sls_gini | model_default | EMIE                    |    0.000 |
+| model_sdm2sls_gini | model_default | W_EMIE                  |    0.000 |
+| model_sdm2sls_gini | model_default | npeople_0708            |    0.000 |
+| model_sdm2sls_gini | model_default | nhouses_0708            |    0.000 |
+| model_sdm2sls_gini | model_default | consumption_0708        |    0.000 |
+| model_sdm2sls_gini | model_default | gini_cons_0708          |   -0.778 |
+| model_sdm2sls_gini | model_default | pct_urban               |    0.001 |
+| model_sdm2sls_gini | model_default | pct_head_secondary_plus |    0.000 |
+| model_sdm2sls_gini | model_default | pct_muslim              |    0.000 |
+| model_sdm2sls_gini | model_default | pct_st                  |    0.000 |
+| model_sdm2sls_gini | model_default | pct_obc                 |    0.000 |
+| model_sdm2sls_gini | model_default | pct_fem_head            |    0.000 |
+| model_sdm2sls_gini | model_default | pct_medium_land         |    0.000 |
+| model_sdm2sls_gini | model_default | pct_large_land          |    0.000 |
+| model_sdm2sls_gini | model_default | W_npeople_0708          |    0.000 |
+| model_sdm2sls_gini | model_default | W_nhouses_0708          |    0.000 |
+| model_sdm2sls_gini | model_default | W_consumption_0708      |    0.000 |
+| model_sdm2sls_gini | model_default | W_gini_cons_0708        |    0.639 |
 
 Default coefficient summaries
 
@@ -134,46 +134,46 @@ analysis_table(spatial_iv_cluster, "Clustered-SE coeftest attempt")
 
 | model | status | cluster_column | term | estimate | std.\_error | t_value | pr(\>\|t\|) |
 |:---|:---|:---|:---|---:|---:|---:|---:|
-| model_sdm2sls_cons | estimated | region | (Intercept) | -483.335 | 792.605 | -0.610 | 0.542 |
-| model_sdm2sls_cons | estimated | region | W_consY | 4.586 | 4.412 | 1.039 | 0.299 |
-| model_sdm2sls_cons | estimated | region | EMIE | 1.911 | 4.982 | 0.384 | 0.701 |
-| model_sdm2sls_cons | estimated | region | W_EMIE | -3.699 | 6.840 | -0.541 | 0.589 |
-| model_sdm2sls_cons | estimated | region | npeople_0708 | 0.000 | 0.000 | 0.814 | 0.416 |
-| model_sdm2sls_cons | estimated | region | nhouses_0708 | 0.000 | 0.000 | -0.764 | 0.445 |
-| model_sdm2sls_cons | estimated | region | consumption_0708 | -0.106 | 0.094 | -1.126 | 0.261 |
-| model_sdm2sls_cons | estimated | region | gini_cons_0708 | 11.944 | 158.901 | 0.075 | 0.940 |
-| model_sdm2sls_cons | estimated | region | pct_urban | -0.282 | 2.378 | -0.119 | 0.906 |
-| model_sdm2sls_cons | estimated | region | pct_head_secondary_plus | 1.442 | 2.462 | 0.586 | 0.558 |
-| model_sdm2sls_cons | estimated | region | pct_muslim | 0.713 | 1.593 | 0.448 | 0.654 |
-| model_sdm2sls_cons | estimated | region | pct_st | 1.531 | 2.964 | 0.516 | 0.606 |
-| model_sdm2sls_cons | estimated | region | pct_obc | 0.475 | 1.039 | 0.457 | 0.648 |
-| model_sdm2sls_cons | estimated | region | pct_fem_head | 0.984 | 2.492 | 0.395 | 0.693 |
-| model_sdm2sls_cons | estimated | region | pct_medium_land | 1.250 | 1.082 | 1.155 | 0.249 |
-| model_sdm2sls_cons | estimated | region | pct_large_land | -4.230 | 6.774 | -0.624 | 0.533 |
-| model_sdm2sls_cons | estimated | region | W_npeople_0708 | 0.000 | 0.000 | -0.762 | 0.447 |
-| model_sdm2sls_cons | estimated | region | W_nhouses_0708 | 0.000 | 0.000 | 0.660 | 0.510 |
-| model_sdm2sls_cons | estimated | region | W_consumption_0708 | 0.173 | 0.206 | 0.838 | 0.402 |
-| model_sdm2sls_cons | estimated | region | W_gini_cons_0708 | -1358.480 | 1473.704 | -0.922 | 0.357 |
-| model_sdm2sls_gini | estimated | region | (Intercept) | 0.076 | 0.053 | 1.440 | 0.151 |
-| model_sdm2sls_gini | estimated | region | W_giniY | 0.670 | 0.635 | 1.056 | 0.292 |
-| model_sdm2sls_gini | estimated | region | EMIE | 0.000 | 0.002 | 0.227 | 0.821 |
-| model_sdm2sls_gini | estimated | region | W_EMIE | 0.000 | 0.002 | -0.226 | 0.821 |
-| model_sdm2sls_gini | estimated | region | npeople_0708 | 0.000 | 0.000 | 0.651 | 0.515 |
-| model_sdm2sls_gini | estimated | region | nhouses_0708 | 0.000 | 0.000 | -0.348 | 0.728 |
-| model_sdm2sls_gini | estimated | region | consumption_0708 | 0.000 | 0.000 | 0.166 | 0.868 |
-| model_sdm2sls_gini | estimated | region | gini_cons_0708 | -0.767 | 0.057 | -13.367 | 0.000 |
-| model_sdm2sls_gini | estimated | region | pct_urban | 0.000 | 0.001 | 0.645 | 0.519 |
-| model_sdm2sls_gini | estimated | region | pct_head_secondary_plus | 0.000 | 0.000 | 0.672 | 0.502 |
-| model_sdm2sls_gini | estimated | region | pct_muslim | 0.000 | 0.000 | -0.246 | 0.805 |
-| model_sdm2sls_gini | estimated | region | pct_st | 0.000 | 0.000 | 0.074 | 0.941 |
-| model_sdm2sls_gini | estimated | region | pct_obc | 0.000 | 0.000 | -2.851 | 0.005 |
-| model_sdm2sls_gini | estimated | region | pct_fem_head | 0.000 | 0.001 | -0.142 | 0.887 |
-| model_sdm2sls_gini | estimated | region | pct_medium_land | 0.000 | 0.000 | -0.561 | 0.575 |
-| model_sdm2sls_gini | estimated | region | pct_large_land | 0.000 | 0.001 | 0.104 | 0.917 |
-| model_sdm2sls_gini | estimated | region | W_npeople_0708 | 0.000 | 0.000 | -0.259 | 0.796 |
-| model_sdm2sls_gini | estimated | region | W_nhouses_0708 | 0.000 | 0.000 | -0.135 | 0.893 |
-| model_sdm2sls_gini | estimated | region | W_consumption_0708 | 0.000 | 0.000 | -1.023 | 0.307 |
-| model_sdm2sls_gini | estimated | region | W_gini_cons_0708 | 0.596 | 0.265 | 2.254 | 0.025 |
+| model_sdm2sls_cons | estimated | region | (Intercept) | -140.717 | 210.678 | -0.668 | 0.504 |
+| model_sdm2sls_cons | estimated | region | W_consY | 2.492 | 1.229 | 2.028 | 0.043 |
+| model_sdm2sls_cons | estimated | region | EMIE | 3.031 | 4.050 | 0.748 | 0.455 |
+| model_sdm2sls_cons | estimated | region | W_EMIE | -4.314 | 5.048 | -0.855 | 0.393 |
+| model_sdm2sls_cons | estimated | region | npeople_0708 | 0.000 | 0.000 | 1.160 | 0.247 |
+| model_sdm2sls_cons | estimated | region | nhouses_0708 | 0.000 | 0.000 | -1.076 | 0.282 |
+| model_sdm2sls_cons | estimated | region | consumption_0708 | -0.144 | 0.032 | -4.518 | 0.000 |
+| model_sdm2sls_cons | estimated | region | gini_cons_0708 | 8.431 | 102.689 | 0.082 | 0.935 |
+| model_sdm2sls_cons | estimated | region | pct_urban | -0.166 | 1.574 | -0.106 | 0.916 |
+| model_sdm2sls_cons | estimated | region | pct_head_secondary_plus | 0.524 | 0.901 | 0.582 | 0.561 |
+| model_sdm2sls_cons | estimated | region | pct_muslim | 0.361 | 0.646 | 0.559 | 0.576 |
+| model_sdm2sls_cons | estimated | region | pct_st | 0.447 | 0.992 | 0.451 | 0.652 |
+| model_sdm2sls_cons | estimated | region | pct_obc | 0.066 | 0.312 | 0.212 | 0.832 |
+| model_sdm2sls_cons | estimated | region | pct_fem_head | 0.376 | 0.984 | 0.382 | 0.703 |
+| model_sdm2sls_cons | estimated | region | pct_medium_land | 0.715 | 0.427 | 1.675 | 0.094 |
+| model_sdm2sls_cons | estimated | region | pct_large_land | -1.925 | 2.174 | -0.885 | 0.376 |
+| model_sdm2sls_cons | estimated | region | W_npeople_0708 | 0.000 | 0.000 | -1.238 | 0.216 |
+| model_sdm2sls_cons | estimated | region | W_nhouses_0708 | 0.000 | 0.000 | 1.078 | 0.281 |
+| model_sdm2sls_cons | estimated | region | W_consumption_0708 | 0.192 | 0.127 | 1.504 | 0.133 |
+| model_sdm2sls_cons | estimated | region | W_gini_cons_0708 | -773.427 | 473.714 | -1.633 | 0.103 |
+| model_sdm2sls_gini | estimated | region | (Intercept) | 0.085 | 0.049 | 1.733 | 0.084 |
+| model_sdm2sls_gini | estimated | region | W_giniY | 0.773 | 0.408 | 1.894 | 0.059 |
+| model_sdm2sls_gini | estimated | region | EMIE | 0.000 | 0.001 | -0.060 | 0.952 |
+| model_sdm2sls_gini | estimated | region | W_EMIE | 0.000 | 0.001 | 0.063 | 0.949 |
+| model_sdm2sls_gini | estimated | region | npeople_0708 | 0.000 | 0.000 | 0.674 | 0.501 |
+| model_sdm2sls_gini | estimated | region | nhouses_0708 | 0.000 | 0.000 | -0.255 | 0.798 |
+| model_sdm2sls_gini | estimated | region | consumption_0708 | 0.000 | 0.000 | 0.441 | 0.660 |
+| model_sdm2sls_gini | estimated | region | gini_cons_0708 | -0.778 | 0.047 | -16.535 | 0.000 |
+| model_sdm2sls_gini | estimated | region | pct_urban | 0.001 | 0.001 | 0.879 | 0.380 |
+| model_sdm2sls_gini | estimated | region | pct_head_secondary_plus | 0.000 | 0.000 | 1.107 | 0.269 |
+| model_sdm2sls_gini | estimated | region | pct_muslim | 0.000 | 0.000 | -0.215 | 0.829 |
+| model_sdm2sls_gini | estimated | region | pct_st | 0.000 | 0.000 | 0.279 | 0.780 |
+| model_sdm2sls_gini | estimated | region | pct_obc | 0.000 | 0.000 | -2.544 | 0.011 |
+| model_sdm2sls_gini | estimated | region | pct_fem_head | 0.000 | 0.001 | -0.400 | 0.689 |
+| model_sdm2sls_gini | estimated | region | pct_medium_land | 0.000 | 0.000 | -0.851 | 0.395 |
+| model_sdm2sls_gini | estimated | region | pct_large_land | 0.000 | 0.001 | 0.246 | 0.806 |
+| model_sdm2sls_gini | estimated | region | W_npeople_0708 | 0.000 | 0.000 | -0.111 | 0.912 |
+| model_sdm2sls_gini | estimated | region | W_nhouses_0708 | 0.000 | 0.000 | -0.298 | 0.766 |
+| model_sdm2sls_gini | estimated | region | W_consumption_0708 | 0.000 | 0.000 | -1.335 | 0.182 |
+| model_sdm2sls_gini | estimated | region | W_gini_cons_0708 | 0.639 | 0.190 | 3.370 | 0.001 |
 
 Clustered-SE coeftest attempt
 

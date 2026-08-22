@@ -1,0 +1,4 @@
+"academic_year","n_districts","n_identity_complete","n_english_resolved","n_hindi_resolved","median_medium_classification_ratio","n_medium_classification_above_total","max_medium_classification_ratio","median_abs_medium_classification_gap","max_abs_management_enrollment_difference"
+"2005-06",604,503,553,545,99.7530758371283,81,1069.57986172664,0.361355326649104,0
+"2006-07",609,501,582,547,99.7379645903888,91,243.236043095005,0.378594851685804,1128
+"2007-08",624,480,609,567,99.8238395396343,88,249.643835616438,0.285216897968105,0

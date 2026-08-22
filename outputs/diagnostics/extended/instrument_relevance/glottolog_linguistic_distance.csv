@@ -1,0 +1,323 @@
+"mother_tongue_code","mother_tongue","canonical_language","language_glottocode","glottolog_name","family_id","iso639P3code","glottolog_level","match_basis","review_status","notes","glottolog_edge_distance_from_hindi"
+"001002","Assamese","Assamese","assa1263","Assamese","indo1319","asm","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",12
+"001999","Others","Assamese","","","","","","","unresolved","",NA
+"002004","Bengali","Bengali","beng1280","Bengali","indo1319","ben","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",11
+"002007","Chakma","Bengali","chak1266","Chakma","indo1319","ccp","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",12
+"002009","Haijong/Hajong","Bengali","hajo1238","Hajong","indo1319","haj","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",12
+"002023","Rajbangsi","Bengali","","","","","","","unresolved","",NA
+"002999","Others","Bengali","","","","","","","unresolved","",NA
+"003001","Bodo","Bodo","bodo1269","Bodo-Mech","sino1245","brx","language","manual_disambiguation","accepted_manual","Indian Bodo/Mech language (ISO brx); disambiguates unrelated Bodo aliases.",19
+"003999","Others","Bodo","","","","","","","unresolved","",NA
+"004001","Dogri","Dogri","dogr1250","Dogri","indo1319","dgo","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",12
+"004999","Others","Dogri","","","","","","","unresolved","",NA
+"005011","Gujarati","Gujarati","guja1252","Gujarati","indo1319","guj","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",9
+"005012","Gujrao/Gujrau","Gujarati","","","","","","","unresolved","",NA
+"005036","Saurashtra/Saurashtri","Gujarati","saur1248","Saurashtra","indo1319","saz","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",9
+"005999","Others","Gujarati","","","","","","","unresolved","",NA
+"006008","Awadhi","Hindi","awad1243","Awadhi","indo1319","awa","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",7
+"006016","Bagheli/Baghel Khandi","Hindi","bagh1251","Bagheli","indo1319","bfy","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",7
+"006017","Bagri Rajasthani","Hindi","","","","","","","unresolved","",NA
+"006026","Banjari","Hindi","","","","","","","unresolved","",NA
+"006038","Bhadrawahi","Hindi","bhad1241","Bhadrawahi","indo1319","bhd","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",14
+"006042","Bharmauri/Gaddi","Hindi","gadd1242","Gaddi","indo1319","gbk","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",12
+"006045","Bhojpuri","Hindi","bhoj1244","Bhojpuri","indo1319","bho","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",8
+"006059","Brajbhasha","Hindi","","","","","","","unresolved","",NA
+"006060","Bundeli/Bundelkhandi","Hindi","bund1253","Bundeli","indo1319","bns","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",4
+"006064","Chambeali","Hindi","cham1307","Chambeali","indo1319","cdh","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",12
+"006072","Chhattisgarhi","Hindi","chha1249","Chhattisgarhi","indo1319","hne","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",6
+"006074","Churahi","Hindi","chur1258","Churahi","indo1319","cdj","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",13
+"006084","Dhundhari","Hindi","","","","","","","unresolved","",NA
+"006095","Garhwali","Hindi","garh1243","Garhwali","indo1319","gbm","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",8
+"006103","Gojri","Hindi","","","","","","","unresolved","",NA
+"006116","Harauti","Hindi","hado1235","Hadothi","indo1319","hoj","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",10
+"006117","Haryanvi","Hindi","hary1238","Haryanvi","indo1319","bgc","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",4
+"006118","Hindi","Hindi","hind1269","Hindi","indo1319","hin","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",0
+"006127","Jaunsari","Hindi","jaun1243","Jaunsari","indo1319","jns","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",10
+"006138","Kangri","Hindi","kang1280","Kangri","indo1319","xnr","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",12
+"006145","Khairari","Hindi","mewa1249","Mewari","indo1319","mtr","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",10
+"006148","Khari Boli","Hindi","hind1269","Hindi","indo1319","hin","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",0
+"006153","Khortha/Khotta","Hindi","","","","","","","unresolved","",NA
+"006160","Kulvi","Hindi","","","","","","","unresolved","",NA
+"006162","Kumauni","Hindi","","","","","","","unresolved","",NA
+"006165","Kurmali Thar","Hindi","","","","","","","unresolved","",NA
+"006167","Labani","Hindi","","","","","","","unresolved","",NA
+"006171","Lamani/Lambadi","Hindi","lamb1269","Lambadi","indo1319","lmn","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",10
+"006172","Laria","Hindi","","","","","","","unresolved","",NA
+"006174","Lodhi","Hindi","lodh1246","Lodhi","indo1319","lbm","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",11
+"006179","Magadhi/Magahi","Hindi","maga1260","Magahi","indo1319","mag","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",7
+"006187","Malvi","Hindi","malv1243","Malvi","indo1319","mup","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",7
+"006188","Mandeali","Hindi","mand1409","Mandeali","indo1319","mjl","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",10
+"006192","Marwari","Hindi","marw1260","Marwari (India)","indo1319","rwr","language","manual_country_disambiguation","accepted_manual","Indian Marwari (ISO rwr), not Pakistan Marwari or Shekhawati.",10
+"006195","Mewari","Hindi","mewa1249","Mewari","indo1319","mtr","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",10
+"006196","Mewati","Hindi","mewa1250","Mewati","indo1319","wtm","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",10
+"006204","Nagpuria","Hindi","","","","","","","unresolved","",NA
+"006210","Nimadi","Hindi","nima1243","Nimadi","indo1319","noe","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",7
+"006213","Pahari","Hindi","","","","","","","unresolved","",NA
+"006224","Panch Pargania","Hindi","","","","","","","unresolved","",NA
+"006227","Pangwali","Hindi","pang1282","Pangwali","indo1319","pgg","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",12
+"006234","Pawari/Powari","Hindi","","","","","","","unresolved","",NA
+"006242","Rajasthani","Hindi","","","","","","","unresolved","",NA
+"006251","Sadan/Sadri","Hindi","sadr1248","Sadri","indo1319","sck","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",10
+"006259","Sirmauri","Hindi","sirm1239","Sirmauri","indo1319","srx","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",11
+"006260","Sondwari","Hindi","","","","","","","unresolved","",NA
+"006262","Sugali","Hindi","","","","","","","unresolved","",NA
+"006264","Surgujia","Hindi","chha1249","Chhattisgarhi","indo1319","hne","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",6
+"006265","Surjapuri","Hindi","surj1235","Surjapuri","indo1319","sjp","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",13
+"006999","Others","Hindi","","","","","","","unresolved","",NA
+"007002","Badaga","Kannada","bada1257","Badaga","drav1251","bfq","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",18
+"007013","Kannada","Kannada","nucl1305","Kannada","drav1251","kan","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",20
+"007021","Kuruba/Kurumba","Kannada","","","","","","","unresolved","",NA
+"007999","Others","Kannada","","","","","","","unresolved","",NA
+"008002","Kashmiri","Kashmiri","kash1277","Kashmiri","indo1319","kas","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",10
+"008004","Kishtwari","Kashmiri","kash1277","Kashmiri","indo1319","kas","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",10
+"008009","Siraji","Kashmiri","","","","","","","unresolved","",NA
+"008999","Others","Kashmiri","","","","","","","unresolved","",NA
+"009010","Konkani","Konkani","goan1235","Goan Konkani","indo1319","gom","language","manual_disambiguation","accepted_manual","Goan Konkani (ISO gom), the Indian Konkani language; rejects Konkan Marathi alias.",10
+"009011","Kudubi/Kudumbi","Konkani","","","","","","","unresolved","",NA
+"009013","Malwani","Konkani","","","","","","","unresolved","",NA
+"009999","Others","Konkani","","","","","","","unresolved","",NA
+"010006","Maithili","Maithili","mait1250","Maithili","indo1319","mai","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",7
+"010999","Others","Maithili","","","","","","","unresolved","",NA
+"011013","Malayalam","Malayalam","mala1464","Malayalam","drav1251","mal","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",23
+"011022","Yerava","Malayalam","","","","","","","unresolved","",NA
+"011999","Others","Malayalam","","","","","","","unresolved","",NA
+"012002","Manipuri","Manipuri","mani1292","Manipuri","sino1245","mni","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",15
+"012999","Others","Manipuri","","","","","","","unresolved","",NA
+"013048","Marathi","Marathi","mara1378","Marathi","indo1319","mar","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",12
+"013999","Others","Marathi","","","","","","","unresolved","",NA
+"014009","Nepali","Nepali","nepa1254","Nepali","indo1319","npi","language","manual_exact_primary_country_context","accepted_manual","Exact Glottolog primary name; Census language is Nepali although the Glottolog country list is Nepal-only.",8
+"014999","Others","Nepali","","","","","","","unresolved","",NA
+"015006","Bhatri","Oriya","bhat1265","Bhatri","indo1319","bgw","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",9
+"015031","Oriya","Oriya","oriy1255","Odia","indo1319","ory","language","manual_modern_name","accepted_manual","Glottolog primary name Odia (ISO ory); Census 2001 uses Oriya.",10
+"015039","Proja","Oriya","","","","","","","unresolved","",NA
+"015040","Relli","Oriya","","","","","","","unresolved","",NA
+"015042","Sambalpuri","Oriya","samb1325","Sambalpuri","indo1319","spv","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",10
+"015999","Others","Oriya","","","","","","","unresolved","",NA
+"016001","Bagri","Punjabi","bagr1243","Bagri","indo1319","bgq","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",10
+"016004","Bilaspuri  Kahluri","Punjabi","","","","","","","unresolved","",NA
+"016018","Punjabi","Punjabi","panj1256","Eastern Panjabi","indo1319","pan","language","manual_alias_iso","accepted_manual","Eastern Panjabi (ISO pan); Punjabi is a documented alternate name in Glottolog.",11
+"016999","Others","Punjabi","","","","","","","unresolved","",NA
+"017002","Sanskrit","Sanskrit","sans1269","Sanskrit","indo1319","san","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",9
+"017999","Others","Sanskrit","","","","","","","unresolved","",NA
+"018009","Karmali","Santali","sant1410","Santali","aust1305","sat","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",18
+"018013","Santali","Santali","sant1410","Santali","aust1305","sat","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",18
+"018999","Others","Santali","","","","","","","unresolved","",NA
+"019008","Kachchhi","Sindhi","","","","","","","unresolved","",NA
+"019013","Sindhi","Sindhi","sind1272","Sindhi","indo1319","snd","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",11
+"019999","Others","Sindhi","","","","","","","unresolved","",NA
+"020007","Kaikadi","Tamil","kaik1244","Kaikadi","drav1251","kep","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",24
+"020020","Tamil","Tamil","tami1289","Tamil","drav1251","tam","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",24
+"020022","Yerukala/Yerukula","Tamil","yeru1240","Yerukula","drav1251","yeu","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",24
+"020999","Others","Tamil","","","","","","","unresolved","",NA
+"021035","Telugu","Telugu","telu1262","Telugu","drav1251","tel","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",17
+"021037","Vadari","Telugu","telu1262","Telugu","drav1251","tel","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",17
+"021999","Others","Telugu","","","","","","","unresolved","",NA
+"022014","Urdu","Urdu","urdu1245","Urdu","indo1319","urd","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",2
+"022999","Others","Urdu","","","","","","","unresolved","",NA
+"023002","Adi","Adi","","","","","","","unresolved","",NA
+"023005","Adi Gallong/Gallong","Adi","","","","","","","unresolved","",NA
+"023009","Adi Miniyong/Miniyong","Adi","","","","","","","unresolved","",NA
+"023999","Others","Adi","","","","","","","unresolved","",NA
+"024001","Afghani/Kabuli/Pashto","Afghani/Kabuli/Pashto","","","","","","","unresolved","",NA
+"025001","Anal","Anal","anal1239","Anal","sino1245","anm","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",19
+"025999","Others","Anal","","","","","","","unresolved","",NA
+"026002","Angami","Angami","","","","","","","unresolved","",NA
+"026999","Others","Angami","","","","","","","unresolved","",NA
+"027001","Ao","Ao","","","","","","","unresolved","",NA
+"027999","Others","Ao","","","","","","","unresolved","",NA
+"028001","Arabic/Arbi","Arabic/Arbi","","","","","","","unresolved","",NA
+"028999","Others","Arabic/Arbi","","","","","","","unresolved","",NA
+"029002","Balti","Balti","balt1258","Balti","sino1245","bft","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",19
+"029999","Others","Balti","","","","","","","unresolved","",NA
+"030002","Baori","Bhili/Bhilodi","","","","","","","unresolved","",NA
+"030003","Barel","Bhili/Bhilodi","","","","","","","unresolved","",NA
+"030006","Bhilali","Bhili/Bhilodi","bhil1253","Bhilali","indo1319","bhi","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",8
+"030007","Bhili/Bhilodi","Bhili/Bhilodi","bhil1251","Bhili","indo1319","bhb","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",7
+"030010","Chodhari","Bhili/Bhilodi","","","","","","","unresolved","",NA
+"030013","Dhodia","Bhili/Bhilodi","","","","","","","unresolved","",NA
+"030018","Gamti/Gavit","Bhili/Bhilodi","mawc1242","Mawchi","indo1319","mke","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",7
+"030019","Garasia","Bhili/Bhilodi","","","","","","","unresolved","",NA
+"030027","Kokna/Kokni/Kukna","Bhili/Bhilodi","","","","","","","unresolved","",NA
+"030032","Mawchi","Bhili/Bhilodi","mawc1242","Mawchi","indo1319","mke","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",7
+"030044","Paradhi","Bhili/Bhilodi","","","","","","","unresolved","",NA
+"030046","Pawri","Bhili/Bhilodi","","","","","","","unresolved","",NA
+"030048","Rathi","Bhili/Bhilodi","garh1243","Garhwali","indo1319","gbm","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",8
+"030050","Tadavi","Bhili/Bhilodi","","","","","","","unresolved","",NA
+"030052","Varli","Bhili/Bhilodi","","","","","","","unresolved","",NA
+"030053","Vasava","Bhili/Bhilodi","","","","","","","unresolved","",NA
+"030055","Wagdi","Bhili/Bhilodi","wagd1238","Wagdi","indo1319","wbr","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",7
+"030999","Others","Bhili/Bhilodi","","","","","","","unresolved","",NA
+"031001","Bhotia","Bhotia","","","","","","","unresolved","",NA
+"031005","Zanskari","Bhotia","","","","","","","unresolved","",NA
+"031999","Others","Bhotia","","","","","","","unresolved","",NA
+"032002","Bhumij","Bhumij","mund1320","Mundari","aust1305","unr","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",19
+"032999","Others","Bhumij","","","","","","","unresolved","",NA
+"033001","Bishnupriya Manipuri/Manipuri Bishnupriya","Bishnupuriya","bish1244","Bishnupriya Manipuri","indo1319","bpy","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",11
+"033999","Others","Bishnupuriya","","","","","","","unresolved","",NA
+"034001","Chakhesang","Chakhesang","","","","","","","unresolved","",NA
+"035001","Chakru/Chokri","Chakru/Chokri","","","","","","","unresolved","",NA
+"036001","Chang","Chang","","","","","","","unresolved","",NA
+"037001","Coorgi/Kodagu","Coorgi/Kodagu","koda1255","Kodava","drav1251","kfa","language","manual_modern_name","accepted_manual","Glottolog Kodava (ISO kfa); Census label Coorgi/Kodagu.",21
+"038001","Deori","Deori","deor1238","Deori","sino1245","der","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",16
+"039002","Dimasa","Dimasa","dima1251","Dimasa","sino1245","dis","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",18
+"039999","Others","Dimasa","","","","","","","unresolved","",NA
+"040001","English","English","","","","","","","unresolved","",NA
+"041001","Gadaba","Gadaba","","","","","","","unresolved","",NA
+"041999","Others","Gadaba","","","","","","","unresolved","",NA
+"042001","Gangte","Gangte","gang1266","Gangte","sino1245","gnb","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",20
+"042999","Others","Gangte","","","","","","","unresolved","",NA
+"043005","Garo","Garo","garo1247","Garo","sino1245","grt","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",16
+"043999","Others","Garo","","","","","","","unresolved","",NA
+"044002","Dorli","Gondi","koya1251","Koya","drav1251","kff","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",19
+"044006","Gondi","Gondi","","","","","","","unresolved","",NA
+"044012","Kalari","Gondi","","","","","","","unresolved","",NA
+"044016","Maria","Gondi","","","","","","","unresolved","",NA
+"044017","Muria","Gondi","","","","","","","unresolved","",NA
+"044999","Others","Gondi","","","","","","","unresolved","",NA
+"045001","Halabi","Halabi","halb1244","Halbi","indo1319","hlb","language","manual_spelling_alias","accepted_manual","Glottolog primary name Halbi (ISO hlb); Census label uses Halabi.",9
+"045999","Others","Halabi","","","","","","","unresolved","",NA
+"046003","Halam","Halam","rang1267","Halam","sino1245","rnl","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",18
+"046999","Others","Halam","","","","","","","unresolved","",NA
+"047001","Hmar","Hmar","hmar1241","Hmar","sino1245","hmr","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",20
+"048002","Ho","Ho","hooo1248","Ho","aust1305","hoc","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",19
+"048999","Others","Ho","","","","","","","unresolved","",NA
+"049002","Jatapu","Jatapu","","","","","","","unresolved","",NA
+"049999","Others","Jatapu","","","","","","","unresolved","",NA
+"050001","Juang","Juang","juan1238","Juang","aust1305","jun","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",15
+"051003","Kabui","Kabui","","","","","","","unresolved","",NA
+"051004","Rongmei","Kabui","","","","","","","unresolved","",NA
+"051999","Others","Kabui","","","","","","","unresolved","",NA
+"052002","Karbi","Karbi / Mikir","karb1241","Hills Karbi","sino1245","mjw","language","manual_disambiguation","accepted_manual","Hills Karbi (ISO mjw), the Indian Karbi language; rejects unrelated same-name aliases.",16
+"052999","Others","Karbi / Mikir","","","","","","","unresolved","",NA
+"053002","Ahirani","Khandeshi","","","","","","","unresolved","",NA
+"053004","Dangi","Khandeshi","braj1242","Braj","indo1319","bra","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",4
+"053005","Gujari","Khandeshi","guja1253","Gujari","indo1319","gju","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",10
+"053006","Khandeshi","Khandeshi","khan1272","Khandesi","indo1319","khn","language","manual_spelling_alias","accepted_manual","Glottolog primary name Khandesi (ISO khn); Census label uses Khandeshi.",7
+"053999","Others","Khandeshi","","","","","","","unresolved","",NA
+"054004","Kharia","Kharia","khar1287","Kharia","aust1305","khr","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",15
+"054999","Others","Kharia","","","","","","","unresolved","",NA
+"055004","Bhoi Khasi","Khasi","khas1269","Khasi","aust1305","kha","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",18
+"055006","Khasi","Khasi","khas1269","Khasi","aust1305","kha","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",18
+"055008","Pnar/Synteng","Khasi","pnar1238","Pnar","aust1305","pbv","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",18
+"055009","War","Khasi","","","","","","","unresolved","",NA
+"055999","Others","Khasi","","","","","","","unresolved","",NA
+"056001","Khezha","Khezha","","","","","","","unresolved","",NA
+"056999","Others","Khezha","","","","","","","unresolved","",NA
+"057001","Khiemnungan","Khiemnungan","","","","","","","unresolved","",NA
+"058001","Khond/Kondh","Khond/Kondh","","","","","","","unresolved","",NA
+"058999","Others","Khond/Kondh","","","","","","","unresolved","",NA
+"059003","Kinnauri","Kinnauri","kinn1249","Kinnauri","sino1245","kfk","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",18
+"059999","Others","Kinnauri","","","","","","","unresolved","",NA
+"060001","Kisan","Kisan","sadr1248","Sadri","indo1319","sck","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",10
+"061002","Koch","Koch","koch1250","Koch","sino1245","kdq","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",17
+"061999","Others","Koch","","","","","","","unresolved","",NA
+"062003","Koda/Kora","Koda/Kora","","","","","","","unresolved","",NA
+"062999","Others","Koda/Kora","","","","","","","unresolved","",NA
+"063001","Kolami","Kolami","","","","","","","unresolved","",NA
+"064001","Kom","Kom","","","","","","","unresolved","",NA
+"065002","Kodu","Konda","","","","","","","unresolved","",NA
+"065999","Others","Konda","","","","","","","unresolved","",NA
+"066001","Konyak","Konyak","","","","","","","unresolved","",NA
+"067001","Korku","Korku","kork1243","Korku","aust1305","kfq","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",16
+"067004","Muwasi","Korku","","","","","","","unresolved","",NA
+"067999","Others","Korku","","","","","","","unresolved","",NA
+"068003","Koraku","Korwa","","","","","","","unresolved","",NA
+"068999","Others","Korwa","","","","","","","unresolved","",NA
+"069001","Koya","Koya","koya1251","Koya","drav1251","kff","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",19
+"070001","Kui","Kui","","","","","","","unresolved","",NA
+"070999","Others","Kui","","","","","","","unresolved","",NA
+"071007","Kuki","Kuki","","","","","","","unresolved","",NA
+"071999","Others","Kuki","","","","","","","unresolved","",NA
+"072009","Kurukh/Oraon","Kurukh/Oraon","kuru1301","Kurukh","drav1251","kru","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",16
+"072999","Others","Kurukh/Oraon","","","","","","","unresolved","",NA
+"073002","Ladakhi","Ladakhi","","","","","","","unresolved","",NA
+"073999","Others","Ladakhi","","","","","","","unresolved","",NA
+"074002","Lahauli","Lahauli","","","","","","","unresolved","",NA
+"074999","Others","Lahauli","","","","","","","unresolved","",NA
+"075001","Bahawal Puri","Lahnda","","","","","","","unresolved","",NA
+"075012","Multani","Lahnda","sera1259","Saraiki","indo1319","skr","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",12
+"075015","Punchhi","Lahnda","paha1251","Pahari Potwari","indo1319","phr","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",11
+"075999","Others","Lahnda","","","","","","","unresolved","",NA
+"076001","Lakher","Lakher","","","","","","","unresolved","",NA
+"077001","Lalung","Lalung","","","","","","","unresolved","",NA
+"078001","Lepcha","Lepcha","lepc1244","Lepcha","sino1245","lep","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",15
+"079002","Liangmei","Liangmei","","","","","","","unresolved","",NA
+"079999","Others","Liangmei","","","","","","","unresolved","",NA
+"080002","Limbu","Limbu","limb1266","Limbu","sino1245","lif","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",19
+"080999","Others","Limbu","","","","","","","unresolved","",NA
+"081001","Lotha","Lotha","","","","","","","unresolved","",NA
+"082003","Lushai/Mizo","Lushai/Mizo","lush1249","Mizo","sino1245","lus","language","manual_alias","accepted_manual","Glottolog primary name Mizo (ISO lus); Census label explicitly includes Mizo.",19
+"082999","Others","Lushai/Mizo","","","","","","","unresolved","",NA
+"083002","Pahariya","Malto","","","","","","","unresolved","",NA
+"083999","Others","Malto","","","","","","","unresolved","",NA
+"084001","Maram","Maram","","","","","","","unresolved","",NA
+"085001","Maring","Maring","","","","","","","unresolved","",NA
+"086003","Miri/Mishing","Miri/Mishing","misi1242","Mising-Padam-Miri-Minyong","sino1245","mrg","language","manual_modern_name","accepted_manual","Mising-Padam-Miri-Minyong (ISO mrg); Census label Miri/Mishing refers to Mising.",17
+"086999","Others","Miri/Mishing","","","","","","","unresolved","",NA
+"087005","Mishmi","Mishmi","","","","","","","unresolved","",NA
+"087999","Others","Mishmi","","","","","","","unresolved","",NA
+"088002","Mogh","Mogh","","","","","","","unresolved","",NA
+"088999","Others","Mogh","","","","","","","unresolved","",NA
+"089003","Monpa","Monpa","","","","","","","unresolved","",NA
+"089999","Others","Monpa","","","","","","","unresolved","",NA
+"090003","Kol","Munda","","","","","","","unresolved","",NA
+"090006","Munda","Munda","","","","","","","unresolved","",NA
+"090999","Others","Munda","","","","","","","unresolved","",NA
+"091004","Mundari","Mundari","mund1320","Mundari","aust1305","unr","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",19
+"091005","Mura","Mundari","","","","","","","unresolved","",NA
+"091999","Others","Mundari","","","","","","","unresolved","",NA
+"092001","Nicobarese","Nicobarese","","","","","","","unresolved","",NA
+"093001","Apatani","Nissi/Dafla","apat1240","Apatani","sino1245","apt","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",18
+"093002","Bangni","Nissi/Dafla","naaa1245","Na","sino1245","nbt","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",20
+"093007","Nissi","Nissi/Dafla","","","","","","","unresolved","",NA
+"093008","Tagin","Nissi/Dafla","tagi1241","Tagin","sino1245","tgj","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",20
+"093999","Others","Nissi/Dafla","","","","","","","unresolved","",NA
+"094003","Nocte","Nocte","","","","","","","unresolved","",NA
+"094999","Others","Nocte","","","","","","","unresolved","",NA
+"095002","Paite","Paite","","","","","","","unresolved","",NA
+"095999","Others","Paite","","","","","","","unresolved","",NA
+"096001","Dhurwa","Parji","","","","","","","unresolved","",NA
+"096999","Others","Parji","","","","","","","unresolved","",NA
+"097001","Pawi","Pawi","","","","","","","unresolved","",NA
+"098001","Persian","Persian","","","","","","","unresolved","",NA
+"099001","Phom","Phom","","","","","","","unresolved","",NA
+"100005","Pochury","Pochury","","","","","","","unresolved","",NA
+"100999","Others","Pochury","","","","","","","unresolved","",NA
+"101002","Rabha","Rabha","rabh1238","Rabha","sino1245","rah","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",17
+"101999","Others","Rabha","","","","","","","unresolved","",NA
+"102002","Rai","Rai","","","","","","","unresolved","",NA
+"102999","Others","Rai","","","","","","","unresolved","",NA
+"103001","Rengma","Rengma","","","","","","","unresolved","",NA
+"104003","Sangtam","Sangtam","","","","","","","unresolved","",NA
+"104999","Others","Sangtam","","","","","","","unresolved","",NA
+"105002","Savara","Savara","","","","","","","unresolved","",NA
+"105999","Others","Savara","","","","","","","unresolved","",NA
+"106001","Sema","Sema","","","","","","","unresolved","",NA
+"107001","Sherpa","Sherpa","","","","","","","unresolved","",NA
+"108005","Shina","Shina","shin1264","Shina","indo1319","scl","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",11
+"108999","Others","Shina","","","","","","","unresolved","",NA
+"109001","Simte","Simte","simt1238","Simte","sino1245","smt","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",19
+"110001","Tamang","Tamang","","","","","","","unresolved","",NA
+"111005","Tangkhul","Tangkhul","","","","","","","unresolved","",NA
+"111999","Others","Tangkhul","","","","","","","unresolved","",NA
+"112017","Tangsa","Tangsa","","","","","","","unresolved","",NA
+"112999","Others","Tangsa","","","","","","","unresolved","",NA
+"113015","Thado","Thado","","","","","","","unresolved","",NA
+"113999","Others","Thado","","","","","","","unresolved","",NA
+"114008","Tibetan","Tibetan","tibe1272","Tibetan","sino1245","bod","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",20
+"114999","Others","Tibetan","","","","","","","unresolved","",NA
+"115002","Kok Barak","Tripuri","","","","","","","unresolved","",NA
+"115005","Reang","Tripuri","","","","","","","unresolved","",NA
+"115006","Tripuri","Tripuri","","","","","","","unresolved","",NA
+"115999","Others","Tripuri","","","","","","","unresolved","",NA
+"116009","Tulu","Tulu","tulu1258","Tulu","drav1251","tcy","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",18
+"116999","Others","Tulu","","","","","","","unresolved","",NA
+"117001","Vaiphei","Vaiphei","vaip1239","Vaiphei","sino1245","vap","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",20
+"118001","Wancho","Wancho","","","","","","","unresolved","",NA
+"119003","Tikhir","Yimchungre","yimc1240","Yimchungru Naga","sino1245","yim","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",18
+"119004","Yimchungre","Yimchungre","","","","","","","unresolved","",NA
+"119999","Others","Yimchungre","","","","","","","unresolved","",NA
+"120001","Zeliang","Zeliang","","","","","","","unresolved","",NA
+"121002","Zemi","Zemi","","","","","","","unresolved","",NA
+"121999","Others","Zemi","","","","","","","unresolved","",NA
+"122001","Zou","Zou","zouu1235","Zou","sino1245","zom","language","deterministic_exact_primary","accepted_deterministic","Unique strongest-tier Glottolog primary-name match for an India language; accepted by deterministic review rule.",19

@@ -1,0 +1,4 @@
+"academic_year","state","district","metric","expected_value","actual_value","difference","matches","source_pdf","source_page","note"
+"2005-06","JAMMU & KASHMIR","KUPWARA","dise_medium_slot_1_enrollment",92642,92642,0,TRUE,"District report card 2005-06 vol-1.pdf",219,"Published medium table labels slot 1 English."
+"2005-06","JAMMU & KASHMIR","KUPWARA","dise_medium_slot_2_enrollment",711,711,0,TRUE,"District report card 2005-06 vol-1.pdf",219,"Published medium table labels slot 2 Others."
+"2005-06","JAMMU & KASHMIR","KUPWARA","dise_medium_slot_3_enrollment",65,65,0,TRUE,"District report card 2005-06 vol-1.pdf",219,"Published medium table labels slot 3 Urdu."

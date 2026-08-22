@@ -1,4 +1,4 @@
 "model","instrument","estimate","std.error","partial_f","partial_p","nobs","status","reason"
-"nominal_log_change","ling_distance_nonzero_mean",-0.0297802848067179,0.598668735430636,0.00247448335597573,0.960345277746401,573,"estimated",NA
-"real_log_change_preferred","ling_distance_nonzero_mean",-0.0297802848067179,0.598668735430636,0.00247448335597573,0.960345277746401,573,"estimated",NA
-"real_ancova","ling_distance_nonzero_mean",0.409771132349238,0.618933335475122,0.438323718003899,0.508225364513161,573,"estimated",NA
+"nominal_log_change","ling_distance_nonzero_mean",0.37449549182507,0.82199493428176,0.207565373761808,0.648871821201177,573,"estimated",NA
+"real_log_change_preferred","ling_distance_nonzero_mean",0.37449549182507,0.82199493428176,0.207565373761808,0.648871821201177,573,"estimated",NA
+"real_ancova","ling_distance_nonzero_mean",0.969582165902959,0.774341472190099,1.56784887118378,0.211081491467054,573,"estimated",NA

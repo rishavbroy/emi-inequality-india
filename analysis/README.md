@@ -18,7 +18,7 @@ The notebooks render to GitHub-flavored Markdown (`.md`) rather than PDF/HTML so
 
 Notebook coverage currently includes the legacy comments and diagnostic/exploratory outputs from Chunks 3, 6, 8, 10, 15, 16, 20, 24, 29, and 30. The QMDs keep prose in the notebooks themselves, show current-code analog chunks with `echo: true` and `output: true`, and read current target-backed tables and figures rather than relying on manually pasted legacy results.
 
-Additional notebooks can be added when helpful for documentation and justifying technical choices to future readers, so long as it is clear the contents (e.g., the prose and results) are not from legacy.
+Additional notebooks can be added, and indeed should be added, when they would be helpful for documentation and justifying technical choices to future readers so long as it is clear the contents (e.g., the prose and results) are not from legacy.
 
 Do not add `--with-samples` unless the changes may affect application-sample PDFs or the sample extraction/rendering code.
 

@@ -1,0 +1,805 @@
+"state_key","district_key","target_unit_2001","n_candidate_targets","bridge_status","bridge_sources"
+"andaman and nicobar islands","andamans","pc2001__35__01",1,"deterministic_to_2001","exact_census_2001_identity"
+"andaman and nicobar islands","middle and north andamans",NA,0,"unresolved_no_deterministic_lineage",NA
+"andaman and nicobar islands","nicobar",NA,0,"unresolved_no_deterministic_lineage",NA
+"andaman and nicobar islands","nicobars","pc2001__35__02",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"andaman and nicobar islands","south andamans",NA,0,"unresolved_no_deterministic_lineage",NA
+"andhra pradesh","adilabad","pc2001__28__01",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"andhra pradesh","anantapur","pc2001__28__22",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"andhra pradesh","belgaum",NA,0,"unresolved_no_deterministic_lineage",NA
+"andhra pradesh","chittoor","pc2001__28__23",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"andhra pradesh","cuddapah","pc2001__28__20",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"andhra pradesh","east godavari","pc2001__28__14",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"andhra pradesh","guntur","pc2001__28__17",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"andhra pradesh","hyderabad","pc2001__28__05",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"andhra pradesh","kadapa",NA,0,"unresolved_no_deterministic_lineage",NA
+"andhra pradesh","karimnagar","pc2001__28__03",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"andhra pradesh","khammam","pc2001__28__10",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"andhra pradesh","krishna","pc2001__28__16",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"andhra pradesh","kurnool","pc2001__28__21",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"andhra pradesh","mahbubnagar","pc2001__28__07",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"andhra pradesh","medak","pc2001__28__04",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"andhra pradesh","nalgonda","pc2001__28__08",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"andhra pradesh","nellore","pc2001__28__19",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"andhra pradesh","nizamabad","pc2001__28__02",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"andhra pradesh","prakasam","pc2001__28__18",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"andhra pradesh","rangareddi","pc2001__28__06",1,"deterministic_to_2001","exact_census_2001_identity"
+"andhra pradesh","srikakulam","pc2001__28__11",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"andhra pradesh","visakhapatnam","pc2001__28__13",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"andhra pradesh","vizianagaram","pc2001__28__12",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"andhra pradesh","warangal","pc2001__28__09",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"andhra pradesh","west godavari","pc2001__28__15",1,"deterministic_to_2001","exact_census_2001_identity"
+"arunachal pradesh","anjaw",NA,0,"unresolved_no_deterministic_lineage",NA
+"arunachal pradesh","changlang","pc2001__12__12",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"arunachal pradesh","dibang valley","pc2001__12__10",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"arunachal pradesh","east kameng","pc2001__12__03",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"arunachal pradesh","east siang","pc2001__12__08",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"arunachal pradesh","kra dadi",NA,0,"unresolved_no_deterministic_lineage",NA
+"arunachal pradesh","kurung kumey","pc2001__12__05",1,"deterministic_to_2001","reviewed_deterministic_nss_lineage"
+"arunachal pradesh","lohit","pc2001__12__11",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"arunachal pradesh","longding",NA,0,"unresolved_no_deterministic_lineage",NA
+"arunachal pradesh","lower dibang valley","pc2001__12__10",1,"deterministic_to_2001","reviewed_deterministic_nss_lineage"
+"arunachal pradesh","lower subansiri","pc2001__12__05",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"arunachal pradesh","mon",NA,0,"unresolved_no_deterministic_lineage",NA
+"arunachal pradesh","namsai",NA,0,"unresolved_no_deterministic_lineage",NA
+"arunachal pradesh","papum pare","pc2001__12__04",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"arunachal pradesh","siang",NA,0,"unresolved_no_deterministic_lineage",NA
+"arunachal pradesh","tawang","pc2001__12__01",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"arunachal pradesh","tirap","pc2001__12__13",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"arunachal pradesh","upper siang","pc2001__12__09",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"arunachal pradesh","upper subansiri","pc2001__12__06",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"arunachal pradesh","west kameng","pc2001__12__02",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"arunachal pradesh","west siang","pc2001__12__07",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"assam","baksa",NA,0,"unresolved_no_deterministic_lineage",NA
+"assam","barpeta","pc2001__18__05",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"assam","bongaigaon","pc2001__18__04",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"assam","cachar","pc2001__18__21",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"assam","chirang",NA,0,"unresolved_no_deterministic_lineage",NA
+"assam","darjiling",NA,0,"unresolved_no_deterministic_lineage",NA
+"assam","darrang","pc2001__18__08",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"assam","dhemaji","pc2001__18__13",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"assam","dhubri","pc2001__18__02",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"assam","dibrugarh","pc2001__18__15",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"assam","dima hasao","pc2001__18__20",1,"deterministic_to_2001","reviewed_deterministic_nss_lineage"
+"assam","goalpara","pc2001__18__03",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"assam","golaghat","pc2001__18__18",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"assam","hailakandi","pc2001__18__23",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"assam","jorhat","pc2001__18__17",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"assam","kamrup","pc2001__18__06",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"assam","kamrup metro",NA,0,"unresolved_no_deterministic_lineage",NA
+"assam","kamrup rural",NA,0,"unresolved_no_deterministic_lineage",NA
+"assam","karbi anglong","pc2001__18__19",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"assam","karimganj","pc2001__18__22",1,"deterministic_to_2001","exact_census_2001_identity"
+"assam","kokrajhar","pc2001__18__01",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"assam","lakhimpur","pc2001__18__12",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"assam","marigaon","pc2001__18__09",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"assam","morigaon",NA,0,"unresolved_no_deterministic_lineage",NA
+"assam","nagaon","pc2001__18__10",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"assam","nalbari","pc2001__18__07",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"assam","nc hills",NA,0,"unresolved_no_deterministic_lineage",NA
+"assam","north cachar hills","pc2001__18__20",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"assam","sibsagar","pc2001__18__16",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"assam","sonitpur","pc2001__18__11",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"assam","tinsukia","pc2001__18__14",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"assam","udalguri",NA,0,"unresolved_no_deterministic_lineage",NA
+"bihar","araria","pc2001__10__07",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"bihar","arwal",NA,0,"unresolved_no_deterministic_lineage",NA
+"bihar","aurangabad bihar",NA,0,"unresolved_no_deterministic_lineage",NA
+"bihar","banka","pc2001__10__23",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"bihar","begusarai","pc2001__10__20",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"bihar","bhagalpur","pc2001__10__22",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"bihar","bhojpur","pc2001__10__29",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"bihar","buxar","pc2001__10__30",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"bihar","darbhanga","pc2001__10__13",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"bihar","gaya","pc2001__10__35",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"bihar","gopalganj","pc2001__10__15",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"bihar","jamui","pc2001__10__37",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"bihar","jehanabad","pc2001__10__33",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"bihar","kaimur bhabua","pc2001__10__31",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"bihar","katihar","pc2001__10__10",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"bihar","khagaria","pc2001__10__21",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"bihar","kishanganj","pc2001__10__08",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"bihar","lakhisarai","pc2001__10__25",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"bihar","madhepura","pc2001__10__11",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"bihar","madhubani","pc2001__10__05",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"bihar","munger","pc2001__10__24",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"bihar","muzaffarpur","pc2001__10__14",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"bihar","nalanda","pc2001__10__27",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"bihar","nawada","pc2001__10__36",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"bihar","north sikkim",NA,0,"unresolved_no_deterministic_lineage",NA
+"bihar","pashchim champaran","pc2001__10__01",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"bihar","patna","pc2001__10__28",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"bihar","purba champaran","pc2001__10__02",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"bihar","purnia","pc2001__10__09",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"bihar","rohtas","pc2001__10__32",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"bihar","saharsa","pc2001__10__12",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"bihar","samastipur","pc2001__10__19",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"bihar","saran","pc2001__10__17",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"bihar","sheikhpura","pc2001__10__26",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"bihar","sheohar","pc2001__10__03",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"bihar","sitamarhi","pc2001__10__04",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"bihar","siwan","pc2001__10__16",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"bihar","supaul","pc2001__10__06",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"bihar","vaishali","pc2001__10__18",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"chandigarh","chandigarh","pc2001__04__01",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"chandigarh","chandigarh u t",NA,0,"unresolved_no_deterministic_lineage",NA
+"chandigarh","uttarkashi",NA,0,"unresolved_no_deterministic_lineage",NA
+"chhatisgarh","baster",NA,0,"unresolved_no_deterministic_lineage",NA
+"chhatisgarh","bilaspur chhattisgarh",NA,0,"unresolved_no_deterministic_lineage",NA
+"chhatisgarh","dantewada",NA,0,"unresolved_no_deterministic_lineage",NA
+"chhatisgarh","dhamtari",NA,0,"unresolved_no_deterministic_lineage",NA
+"chhatisgarh","durg",NA,0,"unresolved_no_deterministic_lineage",NA
+"chhatisgarh","janjgir champa",NA,0,"unresolved_no_deterministic_lineage",NA
+"chhatisgarh","jashpur",NA,0,"unresolved_no_deterministic_lineage",NA
+"chhatisgarh","kanker",NA,0,"unresolved_no_deterministic_lineage",NA
+"chhatisgarh","kawardha",NA,0,"unresolved_no_deterministic_lineage",NA
+"chhatisgarh","korba",NA,0,"unresolved_no_deterministic_lineage",NA
+"chhatisgarh","koriya",NA,0,"unresolved_no_deterministic_lineage",NA
+"chhatisgarh","mahasamund",NA,0,"unresolved_no_deterministic_lineage",NA
+"chhatisgarh","raigarh chhattisgarh",NA,0,"unresolved_no_deterministic_lineage",NA
+"chhatisgarh","raipur",NA,0,"unresolved_no_deterministic_lineage",NA
+"chhatisgarh","rajnandgaon",NA,0,"unresolved_no_deterministic_lineage",NA
+"chhatisgarh","surguja",NA,0,"unresolved_no_deterministic_lineage",NA
+"chhattisgarh","balod","pc2001__22__10",1,"deterministic_to_2001","reviewed_deterministic_nss_lineage"
+"chhattisgarh","balodabazar","pc2001__22__11",1,"deterministic_to_2001","reviewed_deterministic_nss_lineage"
+"chhattisgarh","balrampur",NA,0,"unresolved_no_deterministic_lineage",NA
+"chhattisgarh","baster",NA,0,"unresolved_no_deterministic_lineage",NA
+"chhattisgarh","bemetara","pc2001__22__10",1,"deterministic_to_2001","reviewed_deterministic_nss_lineage"
+"chhattisgarh","bijapur","pc2001__22__16",1,"deterministic_to_2001","reviewed_deterministic_nss_lineage"
+"chhattisgarh","bilaspur","pc2001__22__07",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"chhattisgarh","bilaspur chhattisgarh",NA,0,"unresolved_no_deterministic_lineage",NA
+"chhattisgarh","dantewada","pc2001__22__16",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"chhattisgarh","dhamtari","pc2001__22__13",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"chhattisgarh","durg","pc2001__22__10",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"chhattisgarh","gariaband",NA,0,"unresolved_no_deterministic_lineage",NA
+"chhattisgarh","janjgir champa","pc2001__22__06",1,"deterministic_to_2001","exact_census_2001_identity"
+"chhattisgarh","jashpur","pc2001__22__03",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"chhattisgarh","kanker","pc2001__22__14",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"chhattisgarh","kawardha","pc2001__22__08",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"chhattisgarh","kondagaon","pc2001__22__15",1,"deterministic_to_2001","reviewed_deterministic_nss_lineage"
+"chhattisgarh","korba","pc2001__22__05",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"chhattisgarh","koriya","pc2001__22__01",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"chhattisgarh","mahasamund","pc2001__22__12",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"chhattisgarh","mungeli","pc2001__22__07",1,"deterministic_to_2001","reviewed_deterministic_nss_lineage"
+"chhattisgarh","narayanpur",NA,0,"unresolved_no_deterministic_lineage",NA
+"chhattisgarh","raigarh","pc2001__22__04",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"chhattisgarh","raigarh chhattisgarh",NA,0,"unresolved_no_deterministic_lineage",NA
+"chhattisgarh","raipur","pc2001__22__11",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"chhattisgarh","rajnandgaon","pc2001__22__09",1,"deterministic_to_2001","exact_census_2001_identity"
+"chhattisgarh","sheopur",NA,0,"unresolved_no_deterministic_lineage",NA
+"chhattisgarh","sukma",NA,0,"unresolved_no_deterministic_lineage",NA
+"chhattisgarh","surajpur",NA,0,"unresolved_no_deterministic_lineage",NA
+"chhattisgarh","surguja","pc2001__22__02",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"dadra and nagar haveli","dadra and nagar haveli","pc2001__26__01",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"dadra and nagar haveli","dadra and nagar haveli ut",NA,0,"unresolved_no_deterministic_lineage",NA
+"dadra and nagar haveli","nandurbar",NA,0,"unresolved_no_deterministic_lineage",NA
+"dadra and nagar haveli","silvassa",NA,0,"unresolved_no_deterministic_lineage",NA
+"daman and diu","dadra and nagar haveli",NA,0,"unresolved_no_deterministic_lineage",NA
+"daman and diu","daman","pc2001__25__02",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"daman and diu","diu","pc2001__25__01",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"delhi","central delhi",NA,0,"unresolved_no_deterministic_lineage",NA
+"delhi","east delhi",NA,0,"unresolved_no_deterministic_lineage",NA
+"delhi","ganganagar",NA,0,"unresolved_no_deterministic_lineage",NA
+"delhi","new delhi","pc2001__07__05",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"delhi","north delhi",NA,0,"unresolved_no_deterministic_lineage",NA
+"delhi","north east delhi",NA,0,"unresolved_no_deterministic_lineage",NA
+"delhi","north west delhi",NA,0,"unresolved_no_deterministic_lineage",NA
+"delhi","south delhi",NA,0,"unresolved_no_deterministic_lineage",NA
+"delhi","south west delhi",NA,0,"unresolved_no_deterministic_lineage",NA
+"delhi","west delhi",NA,0,"unresolved_no_deterministic_lineage",NA
+"goa","lakshadweep",NA,0,"unresolved_no_deterministic_lineage",NA
+"goa","north goa","pc2001__30__01",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"goa","south goa","pc2001__30__02",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"gujarat","ahmadabad","pc2001__24__07",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"gujarat","ahmedabad","pc2001__24__07",1,"deterministic_to_2001","reviewed_deterministic_nss_lineage"
+"gujarat","amreli","pc2001__24__13",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"gujarat","anand","pc2001__24__15",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"gujarat","aravalli",NA,0,"unresolved_no_deterministic_lineage",NA
+"gujarat","banas kantha","pc2001__24__02",1,"deterministic_to_2001","exact_census_2001_identity"
+"gujarat","bharuch","pc2001__24__21",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"gujarat","bhavnagar","pc2001__24__14",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"gujarat","botad",NA,0,"unresolved_no_deterministic_lineage",NA
+"gujarat","chhotaudepur",NA,0,"unresolved_no_deterministic_lineage",NA
+"gujarat","devbhoomi dwarka",NA,0,"unresolved_no_deterministic_lineage",NA
+"gujarat","diu",NA,0,"unresolved_no_deterministic_lineage",NA
+"gujarat","dohad","pc2001__24__18",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"gujarat","gandhinagar","pc2001__24__06",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"gujarat","gir somnath",NA,0,"unresolved_no_deterministic_lineage",NA
+"gujarat","jamnagar","pc2001__24__10",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"gujarat","junagadh","pc2001__24__12",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"gujarat","kachchh","pc2001__24__01",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"gujarat","kheda","pc2001__24__16",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"gujarat","mahesana","pc2001__24__04",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"gujarat","mahisagar",NA,0,"unresolved_no_deterministic_lineage",NA
+"gujarat","morbi",NA,0,"unresolved_no_deterministic_lineage",NA
+"gujarat","narmada","pc2001__24__20",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"gujarat","navsari","pc2001__24__24",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"gujarat","panch mahals","pc2001__24__17",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"gujarat","patan","pc2001__24__03",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"gujarat","porbandar","pc2001__24__11",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"gujarat","rajkot","pc2001__24__09",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"gujarat","sabar kantha","pc2001__24__05",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"gujarat","surat","pc2001__24__22",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"gujarat","surendranagar","pc2001__24__08",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"gujarat","tapi","pc2001__24__22",1,"deterministic_to_2001","reviewed_deterministic_nss_lineage"
+"gujarat","the dangs","pc2001__24__23",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"gujarat","vadodara","pc2001__24__19",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"gujarat","valsad","pc2001__24__25",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"haryana","ambala","pc2001__06__02",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"haryana","bhiwani","pc2001__06__13",1,"deterministic_to_2001","exact_census_2001_identity"
+"haryana","faridabad","pc2001__06__19",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"haryana","fatehabad","pc2001__06__10",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"haryana","gurgaon","pc2001__06__18",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"haryana","hisar","pc2001__06__12",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"haryana","jhajjar","pc2001__06__15",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"haryana","jind","pc2001__06__09",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"haryana","kaithal","pc2001__06__05",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"haryana","karnal","pc2001__06__06",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"haryana","kurukshetra","pc2001__06__04",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"haryana","mahendragarh","pc2001__06__16",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"haryana","mewat",NA,0,"unresolved_no_deterministic_lineage",NA
+"haryana","north west delhi",NA,0,"unresolved_no_deterministic_lineage",NA
+"haryana","palwal",NA,0,"unresolved_no_deterministic_lineage",NA
+"haryana","panchkula","pc2001__06__01",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"haryana","panipat","pc2001__06__07",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"haryana","rewari","pc2001__06__17",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"haryana","rohtak","pc2001__06__14",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"haryana","sirsa","pc2001__06__11",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"haryana","sonipat","pc2001__06__08",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"haryana","yamunanagar","pc2001__06__03",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"himachal pradesh","bilaspur h p",NA,0,"unresolved_no_deterministic_lineage",NA
+"himachal pradesh","chamba","pc2001__02__01",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"himachal pradesh","gurdaspur",NA,0,"unresolved_no_deterministic_lineage",NA
+"himachal pradesh","hamirpur h p",NA,0,"unresolved_no_deterministic_lineage",NA
+"himachal pradesh","kangra","pc2001__02__02",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"himachal pradesh","kinnaur","pc2001__02__12",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"himachal pradesh","kullu","pc2001__02__04",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"himachal pradesh","lahul and spiti","pc2001__02__03",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"himachal pradesh","mandi","pc2001__02__05",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"himachal pradesh","shimla","pc2001__02__11",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"himachal pradesh","sirmaur","pc2001__02__10",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"himachal pradesh","solan","pc2001__02__09",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"himachal pradesh","una","pc2001__02__07",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"jammu and kashmir","anantnag","pc2001__01__06",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"jammu and kashmir","badgam","pc2001__01__04",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"jammu and kashmir","bandipora",NA,0,"unresolved_no_deterministic_lineage",NA
+"jammu and kashmir","baramula","pc2001__01__02",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"jammu and kashmir","chamba",NA,0,"unresolved_no_deterministic_lineage",NA
+"jammu and kashmir","doda","pc2001__01__09",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"jammu and kashmir","ganderbal","pc2001__01__03",1,"deterministic_to_2001","reviewed_deterministic_nss_lineage"
+"jammu and kashmir","jammu","pc2001__01__13",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"jammu and kashmir","kargil","pc2001__01__08",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"jammu and kashmir","kathua","pc2001__01__14",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"jammu and kashmir","kishtwar","pc2001__01__09",1,"deterministic_to_2001","reviewed_deterministic_nss_lineage"
+"jammu and kashmir","kulgam","pc2001__01__06",1,"deterministic_to_2001","reviewed_deterministic_nss_lineage"
+"jammu and kashmir","kupwara","pc2001__01__01",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"jammu and kashmir","leh ladakh","pc2001__01__07",1,"deterministic_to_2001","exact_census_2001_identity"
+"jammu and kashmir","pulwama","pc2001__01__05",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"jammu and kashmir","punch","pc2001__01__11",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"jammu and kashmir","rajauri","pc2001__01__12",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"jammu and kashmir","ramban",NA,0,"unresolved_no_deterministic_lineage",NA
+"jammu and kashmir","reasi",NA,0,"unresolved_no_deterministic_lineage",NA
+"jammu and kashmir","samba",NA,0,"unresolved_no_deterministic_lineage",NA
+"jammu and kashmir","shopian",NA,0,"unresolved_no_deterministic_lineage",NA
+"jammu and kashmir","srinagar","pc2001__01__03",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"jammu and kashmir","udhampur","pc2001__01__10",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"jharkhand","bargarh",NA,0,"unresolved_no_deterministic_lineage",NA
+"jharkhand","bokaro","pc2001__20__13",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"jharkhand","chatra","pc2001__20__03",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"jharkhand","deoghar","pc2001__20__07",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"jharkhand","dhanbad","pc2001__20__12",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"jharkhand","dumka","pc2001__20__11",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"jharkhand","garhwa","pc2001__20__01",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"jharkhand","giridih","pc2001__20__06",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"jharkhand","godda","pc2001__20__08",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"jharkhand","gumla","pc2001__20__16",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"jharkhand","hazaribag",NA,0,"unresolved_no_deterministic_lineage",NA
+"jharkhand","jamtara",NA,0,"unresolved_no_deterministic_lineage",NA
+"jharkhand","khunti","pc2001__20__14",1,"deterministic_to_2001","reviewed_deterministic_nss_lineage"
+"jharkhand","kodarma","pc2001__20__05",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"jharkhand","latehar","pc2001__20__02",1,"deterministic_to_2001","reviewed_deterministic_nss_lineage"
+"jharkhand","lohardaga","pc2001__20__15",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"jharkhand","pakaur","pc2001__20__10",1,"deterministic_to_2001","exact_census_2001_identity"
+"jharkhand","palamu","pc2001__20__02",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"jharkhand","pashchimi singhbhum","pc2001__20__17",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"jharkhand","purbi singhbhum","pc2001__20__18",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"jharkhand","ramgarh","pc2001__20__04",1,"deterministic_to_2001","reviewed_deterministic_nss_lineage"
+"jharkhand","ranchi","pc2001__20__14",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"jharkhand","sahibganj","pc2001__20__09",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"jharkhand","saraikela kharsawan","pc2001__20__17",1,"deterministic_to_2001","reviewed_deterministic_nss_lineage"
+"jharkhand","simdega","pc2001__20__16",1,"deterministic_to_2001","reviewed_deterministic_nss_lineage"
+"karnataka","bagalkot","pc2001__29__02",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"karnataka","bangalore","pc2001__29__20",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"karnataka","bangalore north",NA,0,"unresolved_no_deterministic_lineage",NA
+"karnataka","bangalore rural","pc2001__29__21",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"karnataka","bangalore south",NA,0,"unresolved_no_deterministic_lineage",NA
+"karnataka","bangalore u north",NA,0,"unresolved_no_deterministic_lineage",NA
+"karnataka","bangalore u south",NA,0,"unresolved_no_deterministic_lineage",NA
+"karnataka","belgaum","pc2001__29__01",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"karnataka","belgaum chikkodi",NA,0,"unresolved_no_deterministic_lineage",NA
+"karnataka","bellary","pc2001__29__12",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"karnataka","bidar","pc2001__29__05",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"karnataka","bijapur","pc2001__29__03",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"karnataka","bijapur karnataka",NA,0,"unresolved_no_deterministic_lineage",NA
+"karnataka","chamarajanagar","pc2001__29__27",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"karnataka","chamarajanagara",NA,0,"unresolved_no_deterministic_lineage",NA
+"karnataka","chamrajnagar",NA,0,"unresolved_no_deterministic_lineage",NA
+"karnataka","chikballapur",NA,0,"unresolved_no_deterministic_lineage",NA
+"karnataka","chikkaballapura",NA,0,"unresolved_no_deterministic_lineage",NA
+"karnataka","chikkamangalore",NA,0,"unresolved_no_deterministic_lineage",NA
+"karnataka","chikkodi",NA,0,"unresolved_no_deterministic_lineage",NA
+"karnataka","chikmagalur","pc2001__29__17",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"karnataka","chitradurga","pc2001__29__13",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"karnataka","dakshina kannada","pc2001__29__24",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"karnataka","davanagere","pc2001__29__14",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"karnataka","davangere",NA,0,"unresolved_no_deterministic_lineage",NA
+"karnataka","dharwad","pc2001__29__09",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"karnataka","gadag","pc2001__29__08",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"karnataka","gulbarga","pc2001__29__04",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"karnataka","hassan","pc2001__29__23",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"karnataka","haveri","pc2001__29__11",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"karnataka","kodagu","pc2001__29__25",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"karnataka","kolar","pc2001__29__19",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"karnataka","koppal","pc2001__29__07",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"karnataka","madhugiri",NA,0,"unresolved_no_deterministic_lineage",NA
+"karnataka","mandya","pc2001__29__22",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"karnataka","mysore","pc2001__29__26",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"karnataka","north goa",NA,0,"unresolved_no_deterministic_lineage",NA
+"karnataka","raichur","pc2001__29__06",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"karnataka","ramanagara",NA,0,"unresolved_no_deterministic_lineage",NA
+"karnataka","ramnagara",NA,0,"unresolved_no_deterministic_lineage",NA
+"karnataka","shimoga","pc2001__29__15",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"karnataka","tumkur","pc2001__29__18",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"karnataka","tumkur madhugiri",NA,0,"unresolved_no_deterministic_lineage",NA
+"karnataka","udupi","pc2001__29__16",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"karnataka","uttara kannada","pc2001__29__10",1,"deterministic_to_2001","exact_census_2001_identity"
+"karnataka","uttara kannada sirsi",NA,0,"unresolved_no_deterministic_lineage",NA
+"karnataka","uttarkannada",NA,0,"unresolved_no_deterministic_lineage",NA
+"karnataka","yadagiri",NA,0,"unresolved_no_deterministic_lineage",NA
+"karnataka","yadgiri",NA,0,"unresolved_no_deterministic_lineage",NA
+"kerala","alappuzha","pc2001__32__11",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"kerala","ernakulam","pc2001__32__08",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"kerala","idukki","pc2001__32__09",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"kerala","kannur","pc2001__32__02",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"kerala","kasaragod","pc2001__32__01",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"kerala","kollam","pc2001__32__13",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"kerala","kottayam","pc2001__32__10",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"kerala","kozhikode","pc2001__32__04",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"kerala","malappuram","pc2001__32__05",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"kerala","palakkad","pc2001__32__06",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"kerala","pathanamthitta","pc2001__32__12",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"kerala","thiruvallur",NA,0,"unresolved_no_deterministic_lineage",NA
+"kerala","thiruvananthapuram","pc2001__32__14",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"kerala","thrissur","pc2001__32__07",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"kerala","wayanad","pc2001__32__03",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"lakshadweep","kasaragod",NA,0,"unresolved_no_deterministic_lineage",NA
+"lakshadweep","lakshadweep","pc2001__31__01",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"madhya pradesh","agar malwa",NA,0,"unresolved_no_deterministic_lineage",NA
+"madhya pradesh","alirajpur","pc2001__23__24",1,"deterministic_to_2001","reviewed_deterministic_nss_lineage"
+"madhya pradesh","anup pur",NA,0,"unresolved_no_deterministic_lineage",NA
+"madhya pradesh","anuppur","pc2001__23__16",1,"deterministic_to_2001","reviewed_deterministic_nss_lineage"
+"madhya pradesh","ashok nagar",NA,0,"unresolved_no_deterministic_lineage",NA
+"madhya pradesh","ashoknagar",NA,0,"unresolved_no_deterministic_lineage",NA
+"madhya pradesh","balaghat","pc2001__23__45",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"madhya pradesh","barwani","pc2001__23__28",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"madhya pradesh","betul","pc2001__23__35",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"madhya pradesh","bhind","pc2001__23__03",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"madhya pradesh","bhopal","pc2001__23__32",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"madhya pradesh","burhanpur","pc2001__23__29",1,"deterministic_to_2001","reviewed_deterministic_nss_lineage"
+"madhya pradesh","chhatarpur","pc2001__23__09",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"madhya pradesh","chhindwara","pc2001__23__43",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"madhya pradesh","damoh","pc2001__23__12",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"madhya pradesh","datia","pc2001__23__05",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"madhya pradesh","dewas","pc2001__23__23",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"madhya pradesh","dhar","pc2001__23__25",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"madhya pradesh","dindori","pc2001__23__41",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"madhya pradesh","guna","pc2001__23__07",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"madhya pradesh","gwalior","pc2001__23__04",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"madhya pradesh","harda","pc2001__23__36",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"madhya pradesh","hoshangabad","pc2001__23__37",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"madhya pradesh","indore","pc2001__23__26",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"madhya pradesh","jabalpur","pc2001__23__39",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"madhya pradesh","jhabua","pc2001__23__24",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"madhya pradesh","kachchh",NA,0,"unresolved_no_deterministic_lineage",NA
+"madhya pradesh","katni","pc2001__23__38",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"madhya pradesh","khandwa",NA,0,"unresolved_no_deterministic_lineage",NA
+"madhya pradesh","khargone",NA,0,"unresolved_no_deterministic_lineage",NA
+"madhya pradesh","mandla","pc2001__23__42",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"madhya pradesh","mandsaur","pc2001__23__19",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"madhya pradesh","morena","pc2001__23__02",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"madhya pradesh","narsimhapur","pc2001__23__40",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"madhya pradesh","narsinghpur",NA,0,"unresolved_no_deterministic_lineage",NA
+"madhya pradesh","neemuch","pc2001__23__18",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"madhya pradesh","panna","pc2001__23__10",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"madhya pradesh","raisen","pc2001__23__34",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"madhya pradesh","rajgarh","pc2001__23__30",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"madhya pradesh","ratlam","pc2001__23__20",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"madhya pradesh","rewa","pc2001__23__14",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"madhya pradesh","sagar","pc2001__23__11",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"madhya pradesh","satna","pc2001__23__13",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"madhya pradesh","sehore","pc2001__23__33",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"madhya pradesh","seoni","pc2001__23__44",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"madhya pradesh","shahdol","pc2001__23__16",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"madhya pradesh","shajapur","pc2001__23__22",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"madhya pradesh","sheopur","pc2001__23__01",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"madhya pradesh","shivpuri","pc2001__23__06",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"madhya pradesh","sidhi","pc2001__23__17",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"madhya pradesh","singrauli",NA,0,"unresolved_no_deterministic_lineage",NA
+"madhya pradesh","tikamgarh","pc2001__23__08",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"madhya pradesh","ujjain","pc2001__23__21",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"madhya pradesh","umaria","pc2001__23__15",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"madhya pradesh","vidisha","pc2001__23__31",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"maharashtra","adilabad",NA,0,"unresolved_no_deterministic_lineage",NA
+"maharashtra","ahmadnagar","pc2001__27__26",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"maharashtra","akola","pc2001__27__05",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"maharashtra","amravati","pc2001__27__07",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"maharashtra","aurangabad maharashtra",NA,0,"unresolved_no_deterministic_lineage",NA
+"maharashtra","bhandara","pc2001__27__10",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"maharashtra","bid","pc2001__27__27",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"maharashtra","buldana","pc2001__27__04",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"maharashtra","chandrapur","pc2001__27__13",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"maharashtra","dhule","pc2001__27__02",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"maharashtra","gadchiroli","pc2001__27__12",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"maharashtra","gondiya","pc2001__27__11",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"maharashtra","hingoli","pc2001__27__16",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"maharashtra","jalgaon","pc2001__27__03",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"maharashtra","jalna","pc2001__27__18",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"maharashtra","kolhapur","pc2001__27__34",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"maharashtra","latur","pc2001__27__28",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"maharashtra","mumbai","pc2001__27__23",1,"deterministic_to_2001","exact_census_2001_identity"
+"maharashtra","mumbai ii",NA,0,"unresolved_no_deterministic_lineage",NA
+"maharashtra","mumbai suburban","pc2001__27__22",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"maharashtra","nagpur","pc2001__27__09",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"maharashtra","nanded","pc2001__27__15",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"maharashtra","nandurbar","pc2001__27__01",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"maharashtra","nashik","pc2001__27__20",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"maharashtra","osmanabad","pc2001__27__29",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"maharashtra","palghar",NA,0,"unresolved_no_deterministic_lineage",NA
+"maharashtra","parbhani","pc2001__27__17",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"maharashtra","pune","pc2001__27__25",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"maharashtra","raigarh maharashtra",NA,0,"unresolved_no_deterministic_lineage",NA
+"maharashtra","ratnagiri","pc2001__27__32",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"maharashtra","sangli","pc2001__27__35",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"maharashtra","satara","pc2001__27__31",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"maharashtra","sindhudurg","pc2001__27__33",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"maharashtra","solapur","pc2001__27__30",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"maharashtra","thane","pc2001__27__21",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"maharashtra","wardha","pc2001__27__08",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"maharashtra","washim","pc2001__27__06",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"maharashtra","yavatmal","pc2001__27__14",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"manipur","bishnupur","pc2001__14__04",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"manipur","chandel","pc2001__14__09",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"manipur","churachandpur","pc2001__14__03",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"manipur","imphal east","pc2001__14__07",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"manipur","imphal west","pc2001__14__06",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"manipur","mamit",NA,0,"unresolved_no_deterministic_lineage",NA
+"manipur","senapati","pc2001__14__01",1,"deterministic_to_2001","reviewed_deterministic_nss_lineage"
+"manipur","tamenglong","pc2001__14__02",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"manipur","thoubal","pc2001__14__05",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"manipur","ukhrul","pc2001__14__08",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"meghalaya","east garo hills","pc2001__17__02",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"meghalaya","east jaintia hills",NA,0,"unresolved_no_deterministic_lineage",NA
+"meghalaya","east khasi hills","pc2001__17__06",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"meghalaya","jaintia hills","pc2001__17__07",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"meghalaya","kokrajhar",NA,0,"unresolved_no_deterministic_lineage",NA
+"meghalaya","north garo hills",NA,0,"unresolved_no_deterministic_lineage",NA
+"meghalaya","ri bhoi","pc2001__17__05",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"meghalaya","south garo hills","pc2001__17__03",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"meghalaya","south west garo hills",NA,0,"unresolved_no_deterministic_lineage",NA
+"meghalaya","south west khasi hills",NA,0,"unresolved_no_deterministic_lineage",NA
+"meghalaya","west garo hills","pc2001__17__01",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"meghalaya","west khasi hills","pc2001__17__04",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"mizoram","aizawl","pc2001__15__03",1,"deterministic_to_2001","exact_census_2001_identity"
+"mizoram","champhai","pc2001__15__04",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"mizoram","kolasib","pc2001__15__02",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"mizoram","lawngtlai","pc2001__15__07",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"mizoram","lunglei","pc2001__15__06",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"mizoram","mamit","pc2001__15__01",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"mizoram","saiha","pc2001__15__08",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"mizoram","serchhip","pc2001__15__05",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"mizoram","west tripura",NA,0,"unresolved_no_deterministic_lineage",NA
+"nagaland","dimapur","pc2001__13__06",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"nagaland","kiphere",NA,0,"unresolved_no_deterministic_lineage",NA
+"nagaland","kiphire",NA,0,"unresolved_no_deterministic_lineage",NA
+"nagaland","kohima","pc2001__13__07",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"nagaland","longleng","pc2001__13__02",1,"deterministic_to_2001","reviewed_deterministic_nss_lineage"
+"nagaland","mokokchung","pc2001__13__03",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"nagaland","mon","pc2001__13__01",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"nagaland","peren","pc2001__13__07",1,"deterministic_to_2001","reviewed_deterministic_nss_lineage"
+"nagaland","phek","pc2001__13__08",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"nagaland","senapati",NA,0,"unresolved_no_deterministic_lineage",NA
+"nagaland","tuensang","pc2001__13__02",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"nagaland","wokha","pc2001__13__05",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"nagaland","zunheboto","pc2001__13__04",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"odisha","angul",NA,0,"unresolved_no_deterministic_lineage",NA
+"odisha","anugul","pc2001__21__15",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"odisha","balangir","pc2001__21__24",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"odisha","balasore",NA,0,"unresolved_no_deterministic_lineage",NA
+"odisha","baleshwar","pc2001__21__08",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"odisha","bargarh","pc2001__21__01",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"odisha","baudh","pc2001__21__22",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"odisha","bhadrak","pc2001__21__09",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"odisha","bolangir","pc2001__21__24",1,"deterministic_to_2001","reviewed_deterministic_nss_lineage"
+"odisha","boudh",NA,0,"unresolved_no_deterministic_lineage",NA
+"odisha","cuttack","pc2001__21__12",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"odisha","debagarh","pc2001__21__04",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"odisha","deogarh",NA,0,"unresolved_no_deterministic_lineage",NA
+"odisha","dhenkanal","pc2001__21__14",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"odisha","gajapati","pc2001__21__20",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"odisha","ganjam","pc2001__21__19",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"odisha","jagatsinghapur","pc2001__21__11",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"odisha","jagatsinghpur",NA,0,"unresolved_no_deterministic_lineage",NA
+"odisha","jajapur","pc2001__21__13",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"odisha","jajpur",NA,0,"unresolved_no_deterministic_lineage",NA
+"odisha","jharsuguda","pc2001__21__02",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"odisha","kalahandi","pc2001__21__26",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"odisha","kandhamal","pc2001__21__21",1,"deterministic_to_2001","exact_census_2001_identity"
+"odisha","kendrapara","pc2001__21__10",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"odisha","kendujhar","pc2001__21__06",1,"deterministic_to_2001","exact_census_2001_identity"
+"odisha","keonjhar","pc2001__21__06",1,"deterministic_to_2001","reviewed_deterministic_nss_lineage"
+"odisha","khordha","pc2001__21__17",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"odisha","koraput","pc2001__21__29",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"odisha","koriya",NA,0,"unresolved_no_deterministic_lineage",NA
+"odisha","malkangiri","pc2001__21__30",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"odisha","mayurbhanj","pc2001__21__07",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"odisha","mayurbhanja",NA,0,"unresolved_no_deterministic_lineage",NA
+"odisha","nabarangapur","pc2001__21__28",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"odisha","nabarangpur",NA,0,"unresolved_no_deterministic_lineage",NA
+"odisha","nawarangapur",NA,0,"unresolved_no_deterministic_lineage",NA
+"odisha","nayagarh","pc2001__21__16",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"odisha","nuapada","pc2001__21__25",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"odisha","puri","pc2001__21__18",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"odisha","rayagada","pc2001__21__27",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"odisha","sambalpur","pc2001__21__03",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"odisha","sonapur","pc2001__21__23",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"odisha","sonepur",NA,0,"unresolved_no_deterministic_lineage",NA
+"odisha","sundargarh","pc2001__21__05",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"odisha","sundergarh",NA,0,"unresolved_no_deterministic_lineage",NA
+"puducherry","karaikal","pc2001__34__04",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"puducherry","mahe","pc2001__34__03",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"puducherry","pondicherry","pc2001__34__02",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"puducherry","pondicherry ut",NA,0,"unresolved_no_deterministic_lineage",NA
+"puducherry","puducherry","pc2001__34__02",1,"deterministic_to_2001","reviewed_deterministic_nss_lineage"
+"puducherry","puducherry district",NA,0,"unresolved_no_deterministic_lineage",NA
+"puducherry","south andamans",NA,0,"unresolved_no_deterministic_lineage",NA
+"puducherry","yanam","pc2001__34__01",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"punjab","amritsar","pc2001__03__02",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"punjab","barnala",NA,0,"unresolved_no_deterministic_lineage",NA
+"punjab","bathinda","pc2001__03__14",1,"deterministic_to_2001","exact_census_2001_identity"
+"punjab","chandigarh u t",NA,0,"unresolved_no_deterministic_lineage",NA
+"punjab","faridkot","pc2001__03__13",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"punjab","fatehgarh sahib","pc2001__03__08",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"punjab","fazilka",NA,0,"unresolved_no_deterministic_lineage",NA
+"punjab","ferozepur",NA,0,"unresolved_no_deterministic_lineage",NA
+"punjab","firozpur","pc2001__03__11",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"punjab","gurdaspur","pc2001__03__01",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"punjab","hoshiarpur","pc2001__03__05",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"punjab","jalandhar","pc2001__03__04",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"punjab","kapurthala","pc2001__03__03",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"punjab","ludhiana","pc2001__03__09",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"punjab","mansa","pc2001__03__15",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"punjab","moga","pc2001__03__10",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"punjab","mohali",NA,0,"unresolved_no_deterministic_lineage",NA
+"punjab","muktsar","pc2001__03__12",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"punjab","nawanshahr","pc2001__03__06",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"punjab","pathankot","pc2001__03__01",1,"deterministic_to_2001","reviewed_deterministic_nss_lineage"
+"punjab","patiala","pc2001__03__17",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"punjab","ropar",NA,0,"unresolved_no_deterministic_lineage",NA
+"punjab","rupnagar","pc2001__03__07",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"punjab","sangrur","pc2001__03__16",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"punjab","taran taran",NA,0,"unresolved_no_deterministic_lineage",NA
+"rajasthan","ajmer","pc2001__08__21",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"rajasthan","alwar","pc2001__08__06",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"rajasthan","banswara","pc2001__08__28",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"rajasthan","baran","pc2001__08__31",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"rajasthan","barmer","pc2001__08__17",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"rajasthan","bharatpur","pc2001__08__07",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"rajasthan","bhilwara","pc2001__08__24",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"rajasthan","bikaner","pc2001__08__03",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"rajasthan","bundi","pc2001__08__23",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"rajasthan","chittaurgarh","pc2001__08__29",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"rajasthan","churu","pc2001__08__04",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"rajasthan","dausa","pc2001__08__11",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"rajasthan","dhaulpur","pc2001__08__08",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"rajasthan","dungarpur","pc2001__08__27",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"rajasthan","ganganagar","pc2001__08__01",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"rajasthan","hanumangarh","pc2001__08__02",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"rajasthan","jaipur","pc2001__08__12",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"rajasthan","jaisalmer","pc2001__08__16",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"rajasthan","jalor","pc2001__08__18",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"rajasthan","jhalawar","pc2001__08__32",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"rajasthan","jhunjhunun","pc2001__08__05",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"rajasthan","jodhpur","pc2001__08__15",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"rajasthan","karauli","pc2001__08__09",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"rajasthan","kota","pc2001__08__30",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"rajasthan","nagaur","pc2001__08__14",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"rajasthan","pali","pc2001__08__20",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"rajasthan","pratapgarh raj",NA,0,"unresolved_no_deterministic_lineage",NA
+"rajasthan","pratapgarh rajasthan",NA,0,"unresolved_no_deterministic_lineage",NA
+"rajasthan","rajsamand","pc2001__08__25",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"rajasthan","saharanpur",NA,0,"unresolved_no_deterministic_lineage",NA
+"rajasthan","sawai madhopur","pc2001__08__10",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"rajasthan","sikar","pc2001__08__13",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"rajasthan","sirohi","pc2001__08__19",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"rajasthan","tonk","pc2001__08__22",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"rajasthan","udaipur","pc2001__08__26",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"sikkim","east sikkim",NA,0,"unresolved_no_deterministic_lineage",NA
+"sikkim","north sikkim",NA,0,"unresolved_no_deterministic_lineage",NA
+"sikkim","south sikkim",NA,0,"unresolved_no_deterministic_lineage",NA
+"sikkim","tawang",NA,0,"unresolved_no_deterministic_lineage",NA
+"sikkim","west sikkim",NA,0,"unresolved_no_deterministic_lineage",NA
+"state name","distname",NA,0,"unresolved_no_deterministic_lineage",NA
+"statname","distname",NA,0,"unresolved_no_deterministic_lineage",NA
+"tamil nadu","chennai","pc2001__33__02",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"tamil nadu","coimbatore","pc2001__33__12",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"tamil nadu","cuddalore","pc2001__33__18",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"tamil nadu","dharmapuri","pc2001__33__05",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"tamil nadu","dindigul","pc2001__33__13",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"tamil nadu","erode","pc2001__33__10",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"tamil nadu","kancheepuram","pc2001__33__03",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"tamil nadu","kanniyakumari","pc2001__33__30",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"tamil nadu","karur","pc2001__33__14",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"tamil nadu","krishanagiri",NA,0,"unresolved_no_deterministic_lineage",NA
+"tamil nadu","madurai","pc2001__33__24",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"tamil nadu","nagapattinam","pc2001__33__19",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"tamil nadu","namakkal","pc2001__33__09",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"tamil nadu","perambalur","pc2001__33__16",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"tamil nadu","pudukkottai","pc2001__33__22",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"tamil nadu","ramanathapuram","pc2001__33__27",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"tamil nadu","salem","pc2001__33__08",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"tamil nadu","sivaganga","pc2001__33__23",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"tamil nadu","thanjavur","pc2001__33__21",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"tamil nadu","the nilgiris","pc2001__33__11",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"tamil nadu","theni","pc2001__33__25",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"tamil nadu","thiruvallur","pc2001__33__01",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"tamil nadu","thiruvarur","pc2001__33__20",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"tamil nadu","thoothukkudi","pc2001__33__28",1,"deterministic_to_2001","exact_census_2001_identity"
+"tamil nadu","tiruchirappalli","pc2001__33__15",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"tamil nadu","tirunelveli","pc2001__33__29",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"tamil nadu","tiruvannamalai","pc2001__33__06",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"tamil nadu","vellore","pc2001__33__04",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"tamil nadu","viluppuram","pc2001__33__07",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"tamil nadu","virudhunagar","pc2001__33__26",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"tamil nadu","yanam",NA,0,"unresolved_no_deterministic_lineage",NA
+"telangana","adilabad",NA,0,"unresolved_no_deterministic_lineage",NA
+"telangana","hyderabad","pc2001__28__05",1,"deterministic_to_2001","reviewed_deterministic_nss_lineage"
+"telangana","karimnagar",NA,0,"unresolved_no_deterministic_lineage",NA
+"telangana","khammam",NA,0,"unresolved_no_deterministic_lineage",NA
+"telangana","mahbubnagar",NA,0,"unresolved_no_deterministic_lineage",NA
+"telangana","medak","pc2001__28__04",1,"deterministic_to_2001","reviewed_deterministic_nss_lineage"
+"telangana","nalgonda",NA,0,"unresolved_no_deterministic_lineage",NA
+"telangana","nizamabad",NA,0,"unresolved_no_deterministic_lineage",NA
+"telangana","ranga reddy",NA,0,"unresolved_no_deterministic_lineage",NA
+"telangana","warangal",NA,0,"unresolved_no_deterministic_lineage",NA
+"tripura","dhalai","pc2001__16__03",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"tripura","gomati",NA,0,"unresolved_no_deterministic_lineage",NA
+"tripura","khowai",NA,0,"unresolved_no_deterministic_lineage",NA
+"tripura","north",NA,0,"unresolved_no_deterministic_lineage",NA
+"tripura","north tripura","pc2001__16__04",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"tripura","sepahijala",NA,0,"unresolved_no_deterministic_lineage",NA
+"tripura","south",NA,0,"unresolved_no_deterministic_lineage",NA
+"tripura","south tripura","pc2001__16__02",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"tripura","unakoti",NA,0,"unresolved_no_deterministic_lineage",NA
+"tripura","west",NA,0,"unresolved_no_deterministic_lineage",NA
+"tripura","west garo hills",NA,0,"unresolved_no_deterministic_lineage",NA
+"tripura","west tripura","pc2001__16__01",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","agra","pc2001__09__15",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","aligarh","pc2001__09__12",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","allahabad","pc2001__09__45",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","ambedkar nagar","pc2001__09__48",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","amethi csm nagar",NA,0,"unresolved_no_deterministic_lineage",NA
+"uttar pradesh","auraiya","pc2001__09__32",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","azamgarh","pc2001__09__61",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","baghpat","pc2001__09__08",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","bahraich","pc2001__09__50",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","ballia","pc2001__09__63",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","balrampur","pc2001__09__52",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","balrampur u p",NA,0,"unresolved_no_deterministic_lineage",NA
+"uttar pradesh","banda","pc2001__09__40",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","barabanki","pc2001__09__46",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","bareilly","pc2001__09__20",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","basti","pc2001__09__55",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","bhadohi",NA,0,"unresolved_no_deterministic_lineage",NA
+"uttar pradesh","bhadoi",NA,0,"unresolved_no_deterministic_lineage",NA
+"uttar pradesh","bijnor","pc2001__09__03",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","budaun","pc2001__09__19",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","bulandshahr","pc2001__09__11",1,"deterministic_to_2001","reviewed_deterministic_nss_lineage"
+"uttar pradesh","chandauli","pc2001__09__66",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","chitrakoot","pc2001__09__41",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","csmaharaj nagar",NA,0,"unresolved_no_deterministic_lineage",NA
+"uttar pradesh","deoria","pc2001__09__60",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","etah","pc2001__09__17",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","etawah","pc2001__09__31",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","faizabad","pc2001__09__47",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","farrukhabad","pc2001__09__29",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","fatehpur","pc2001__09__42",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","firozabad","pc2001__09__16",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","gautam buddha nagar","pc2001__09__10",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","ghaziabad","pc2001__09__09",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","ghazipur","pc2001__09__65",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","gonda","pc2001__09__53",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","gorakhpur","pc2001__09__58",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","hamirpur","pc2001__09__38",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","hamirpur u p",NA,0,"unresolved_no_deterministic_lineage",NA
+"uttar pradesh","hapur panchsheel nagar",NA,0,"unresolved_no_deterministic_lineage",NA
+"uttar pradesh","hardoi","pc2001__09__25",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","hathras","pc2001__09__13",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","jalaun","pc2001__09__35",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","jaunpur","pc2001__09__64",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","jhansi","pc2001__09__36",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","jyotiba phule nagar","pc2001__09__06",1,"deterministic_to_2001","exact_census_2001_identity"
+"uttar pradesh","kannauj","pc2001__09__30",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","kanpur dehat","pc2001__09__33",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","kanpur nagar","pc2001__09__34",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","kanshiram nagar",NA,0,"unresolved_no_deterministic_lineage",NA
+"uttar pradesh","kashiram nagar",NA,0,"unresolved_no_deterministic_lineage",NA
+"uttar pradesh","kaushambi","pc2001__09__44",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","kheri","pc2001__09__23",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","kushinagar","pc2001__09__59",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","lalitpur","pc2001__09__37",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","lucknow","pc2001__09__27",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","maharajganj","pc2001__09__57",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","mahoba","pc2001__09__39",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","mainpuri","pc2001__09__18",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","mathura","pc2001__09__14",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","mau","pc2001__09__62",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","meerut","pc2001__09__07",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","mirzapur","pc2001__09__69",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","moradabad","pc2001__09__04",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","muzaffarnagar","pc2001__09__02",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","pashchim champaran",NA,0,"unresolved_no_deterministic_lineage",NA
+"uttar pradesh","pilibhit","pc2001__09__21",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","pratapgarh","pc2001__09__43",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","rae bareli","pc2001__09__28",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","rampur","pc2001__09__05",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","saharanpur","pc2001__09__01",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","sambhal bhim nagar",NA,0,"unresolved_no_deterministic_lineage",NA
+"uttar pradesh","sant kabir nagar","pc2001__09__56",1,"deterministic_to_2001","exact_census_2001_identity"
+"uttar pradesh","shahjahanpur","pc2001__09__22",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","shamli prabudh nagar",NA,0,"unresolved_no_deterministic_lineage",NA
+"uttar pradesh","shrawasti","pc2001__09__51",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","siddharthnagar","pc2001__09__54",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","sitapur","pc2001__09__24",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","sonbhadra","pc2001__09__70",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","sultanpur","pc2001__09__49",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","unnao","pc2001__09__26",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttar pradesh","varanasi","pc2001__09__67",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttarakhand","almora","pc2001__05__09",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttarakhand","bageshwar","pc2001__05__08",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttarakhand","chamoli","pc2001__05__02",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttarakhand","champawat","pc2001__05__10",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttarakhand","dehradun","pc2001__05__05",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttarakhand","garhwal","pc2001__05__06",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttarakhand","hardwar","pc2001__05__13",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttarakhand","nainital","pc2001__05__11",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttarakhand","panchkula",NA,0,"unresolved_no_deterministic_lineage",NA
+"uttarakhand","pauri garhwal",NA,0,"unresolved_no_deterministic_lineage",NA
+"uttarakhand","pithoragarh","pc2001__05__07",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttarakhand","rudraprayag","pc2001__05__03",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttarakhand","tehri garhwal","pc2001__05__04",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"uttarakhand","udham singh nagar","pc2001__05__12",1,"deterministic_to_2001","exact_census_2001_identity"
+"uttarakhand","uttarkashi","pc2001__05__01",1,"deterministic_to_2001","exact_census_2001_identity"
+"west bengal","alipurduar",NA,0,"unresolved_no_deterministic_lineage",NA
+"west bengal","bankura","pc2001__19__13",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"west bengal","barddhaman","pc2001__19__09",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"west bengal","birbhum","pc2001__19__08",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"west bengal","dakshin dinajpur","pc2001__19__05",1,"deterministic_to_2001","exact_census_2001_identity"
+"west bengal","darjiling","pc2001__19__01",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"west bengal","garhwa",NA,0,"unresolved_no_deterministic_lineage",NA
+"west bengal","haora","pc2001__19__16",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"west bengal","hugli","pc2001__19__12",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"west bengal","jalpaiguri","pc2001__19__02",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"west bengal","koch bihar","pc2001__19__03",1,"deterministic_to_2001","exact_census_2001_identity"
+"west bengal","kolkata","pc2001__19__17",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"west bengal","maldah","pc2001__19__06",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"west bengal","murshidabad","pc2001__19__07",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"west bengal","nadia","pc2001__19__10",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"west bengal","north twenty four pargana",NA,0,"unresolved_no_deterministic_lineage",NA
+"west bengal","north twenty four parganas","pc2001__19__11",1,"deterministic_to_2001","exact_census_2001_identity"
+"west bengal","paschim medinipur",NA,0,"unresolved_no_deterministic_lineage",NA
+"west bengal","purba medinipur",NA,0,"unresolved_no_deterministic_lineage",NA
+"west bengal","puruliya","pc2001__19__14",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
+"west bengal","siliguri",NA,0,"unresolved_no_deterministic_lineage",NA
+"west bengal","south twenty four pargan",NA,0,"unresolved_no_deterministic_lineage",NA
+"west bengal","south twenty four parganas","pc2001__19__18",1,"deterministic_to_2001","exact_census_2001_identity"
+"west bengal","uttar dinajpur","pc2001__19__04",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"

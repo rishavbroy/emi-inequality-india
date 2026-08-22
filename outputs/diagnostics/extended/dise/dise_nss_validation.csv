@@ -1,0 +1,3 @@
+"dise_variable","nss_variable","comparison","n","pearson","spearman","mean_dise","mean_nss","mean_difference","rmse","state_residual_pearson","status"
+"dise_emi_enrollment_share_total_0708","emi_share_enrolled_0708","enrolled_total_denominator",520,0.896323939358072,0.752743316856826,12.6265267946236,18.8938062379898,-6.26727944336616,12.8407612685101,0.607280729993297,"estimated"
+"dise_emi_enrollment_share_total_0708","emi_exposure_all_children_0708","all_child_context",520,0.881783164937642,0.758693491577896,12.6265267946236,14.7702361602174,-2.14370936559374,11.4248250077813,0.561993326537586,"estimated"
