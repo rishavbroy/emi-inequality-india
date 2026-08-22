@@ -605,12 +605,25 @@ extended_diagnostic_targets <- list(
     attach_dise_medium_identities(raw_dise_baseline, dise_medium_slot_crosswalk)
   ),
   tar_target(
+    dise_lineage_bridge,
+    build_dise_deterministic_lineage_bridge(
+      dise_baseline_district_year,
+      district_lineage$nss_source_roster,
+      district_lineage$full_reviewed_source_crosswalk,
+      district_lineage$admin_units_2001
+    )
+  ),
+  tar_target(
+    dise_baseline_district_year_2001,
+    harmonize_dise_counts_to_2001(dise_baseline_district_year, dise_lineage_bridge)
+  ),
+  tar_target(
     dise_baseline_treatments,
-    build_dise_baseline_treatments(raw_dise_baseline, dise_medium_slot_crosswalk)
+    build_dise_baseline_treatments_2001(dise_baseline_district_year_2001)
   ),
   tar_target(
     district_panel_with_dise,
-    attach_dise_treatments_to_panel(district_panel, dise_baseline_treatments)
+    attach_dise_treatments_to_panel_2001(district_panel, dise_baseline_treatments)
   ),
   tar_target(
     dise_archive_diagnostics,
@@ -628,7 +641,9 @@ extended_diagnostic_targets <- list(
       dise_archive_diagnostics,
       dise_iv_permutations,
       dise_baseline_district_year,
-      dise_baseline_treatments
+      dise_baseline_treatments,
+      lineage_bridge = dise_lineage_bridge,
+      harmonized_district_year = dise_baseline_district_year_2001
     )
   ),
 

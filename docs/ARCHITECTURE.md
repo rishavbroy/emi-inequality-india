@@ -83,3 +83,7 @@ union territories omitted from some RBI state lists follow the corresponding
 RBI/Zonal-Council geography used by the project: Delhi, Chandigarh, and Jammu
 and Kashmir are Northern; Andaman and Nicobar Islands is Eastern; and
 Puducherry and Lakshadweep are Southern.
+
+## DISE geographic harmonization
+
+Archived DISE district counts are harmonized to Census-2001 analysis units through a deterministic bridge derived from the reviewed district-lineage registry. Only exact Census-2001 identities and reviewed weight-one lineage mappings are eligible; fractional population allocations are excluded from administrative school counts. Count variables are aggregated before shares are recomputed.

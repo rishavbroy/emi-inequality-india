@@ -50,3 +50,13 @@ The 2007-08 administrative measures attach to the active analysis panel using th
 ## Deferred extensions
 
 Later DISE years remain inventoried for a district-year dynamic treatment panel, teacher/school-quality mechanisms, and a future HCES endpoint. An all-school-age DISE EMI exposure is also deferred until a defensible age-specific Census denominator is added. Historical school-level medium availability and language-taught-as-subject measures require school-level DISE/UDISE data rather than these district report-card aggregates.
+
+## Census-2001 geographic harmonization
+
+Baseline DISE counts are harmonized to the same Census-2001 district units used by the main analysis before EMI shares are constructed. The bridge reuses reviewed district-lineage evidence rather than maintaining a DISE-specific district history.
+
+A DISE district is eligible when its canonical state/district identity either matches a Census-2001 district directly or appears in the reviewed NSS lineage with a deterministic weight-one mapping to exactly one Census-2001 target. Conflicting candidate targets and mappings that require fractional allocation remain unresolved. Population-allocation weights are never applied to school counts.
+
+When multiple DISE districts deterministically map to the same Census-2001 parent, the pipeline sums English enrollment and total enrollment first and recomputes EMI from those pooled counts. It never averages child-district percentages. The pooled 2005-06 to 2007-08 treatment is then constructed from the harmonized annual counts and still requires all three academic years.
+
+The extended DISE output writes both `dise_lineage_bridge.csv` and `dise_district_year_2001.csv` so the geographic recovery is reviewable independently of the regression results.

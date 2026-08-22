@@ -242,6 +242,8 @@ save_dise_diagnostics <- function(
   permutations,
   district_year,
   treatments,
+  lineage_bridge = data.frame(),
+  harmonized_district_year = data.frame(),
   dir = "outputs/diagnostics/extended/dise"
 ) {
   dir.create(dir, recursive = TRUE, showWarnings = FALSE)
@@ -262,7 +264,11 @@ save_dise_diagnostics <- function(
     monotonicity_bins = write_diagnostic_csv(permutations$monotonicity_bins, file.path(dir, "dise_monotonicity_bins.csv")),
     monotonicity_state = write_diagnostic_csv(permutations$monotonicity_state_slopes, file.path(dir, "dise_monotonicity_state_slopes.csv")),
     balance = write_diagnostic_csv(permutations$balance, file.path(dir, "dise_instrument_balance.csv")),
-    joint_balance = write_diagnostic_csv(permutations$joint_balance, file.path(dir, "dise_instrument_balance_joint.csv"))
+    joint_balance = write_diagnostic_csv(permutations$joint_balance, file.path(dir, "dise_instrument_balance_joint.csv")),
+    lineage_bridge = write_diagnostic_csv(lineage_bridge, file.path(dir, "dise_lineage_bridge.csv")),
+    harmonized_district_year = write_diagnostic_csv(
+      harmonized_district_year, file.path(dir, "dise_district_year_2001.csv")
+    )
   )
   output_manifest(outputs)
 }

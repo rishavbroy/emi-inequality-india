@@ -335,6 +335,154 @@ test_that("DISE diagnostic saver returns the repository-standard output manifest
 
   expect_s3_class(manifest, "data.frame")
   expect_setequal(names(manifest), c("path", "description"))
-  expect_equal(nrow(manifest), 17L)
+  expect_equal(nrow(manifest), 19L)
   expect_true(all(file.exists(manifest$path)))
+})
+
+test_that("DISE deterministic lineage bridge accepts only one weight-one Census-2001 target", {
+  dise <- data.frame(
+    academic_year = c("2007-08", "2007-08", "2007-08"),
+    state_name_dise = "State",
+    district_name_dise = c("Parent", "Child", "Ambiguous"),
+    stringsAsFactors = FALSE
+  )
+  admin <- data.frame(
+    unit_id = "pc2001__01__01",
+    state_std = "State",
+    district_std = "Parent",
+    stringsAsFactors = FALSE
+  )
+  roster <- data.frame(
+    source_row_id = c("r1", "r2", "r3"),
+    state_std = "State",
+    district_std = c("Child", "Ambiguous", "Ambiguous"),
+    stringsAsFactors = FALSE
+  )
+  reviewed <- data.frame(
+    source_row_id = c("r1", "r2", "r3"),
+    target_unit_2001 = c("pc2001__01__01", "pc2001__01__01", "pc2001__01__02"),
+    weight = 1,
+    panel_variant = "deterministic",
+    stringsAsFactors = FALSE
+  )
+
+  bridge <- build_dise_deterministic_lineage_bridge(dise, roster, reviewed, admin)
+  expect_identical(
+    bridge$target_unit_2001[bridge$district_key == "parent"][[1]],
+    "pc2001__01__01"
+  )
+  expect_identical(
+    bridge$target_unit_2001[bridge$district_key == "child"][[1]],
+    "pc2001__01__01"
+  )
+  ambiguous <- bridge[bridge$district_key == "ambiguous", , drop = FALSE]
+  expect_true(is.na(ambiguous$target_unit_2001[[1]]))
+  expect_identical(ambiguous$bridge_status[[1]], "ambiguous_reviewed_lineage")
+})
+
+test_that("DISE harmonization sums child counts before recomputing EMI", {
+  district_year <- data.frame(
+    academic_year = c("2007-08", "2007-08"),
+    state_name_dise = "State",
+    district_name_dise = c("Child A", "Child B"),
+    dise_english_enrollment = c(20, 80),
+    dise_hindi_enrollment = c(80, 20),
+    dise_total_enrollment = c(100, 300),
+    dise_government_enrollment = c(80, 210),
+    dise_private_enrollment = c(20, 90),
+    dise_government_schools = c(8, 21),
+    dise_private_schools = c(2, 9),
+    dise_total_schools = c(10, 30),
+    stringsAsFactors = FALSE
+  )
+  bridge <- data.frame(
+    state_key = "state",
+    district_key = c("child a", "child b"),
+    target_unit_2001 = "pc2001__01__01",
+    n_candidate_targets = 1L,
+    bridge_status = "deterministic_to_2001",
+    bridge_sources = "reviewed",
+    stringsAsFactors = FALSE
+  )
+
+  out <- harmonize_dise_counts_to_2001(district_year, bridge)
+  expect_equal(nrow(out), 1L)
+  expect_equal(out$dise_source_district_count, 2L)
+  expect_equal(out$dise_english_enrollment, 100)
+  expect_equal(out$dise_total_enrollment, 400)
+  expect_equal(out$dise_emi_enrollment_share_total, 25)
+  expect_false(isTRUE(all.equal(out$dise_emi_enrollment_share_total, mean(c(20, 100 * 80 / 300)))))
+})
+
+test_that("DISE harmonization never uses fractional reviewed lineage weights", {
+  dise <- data.frame(
+    academic_year = "2007-08",
+    state_name_dise = "State",
+    district_name_dise = "Split",
+    stringsAsFactors = FALSE
+  )
+  roster <- data.frame(
+    source_row_id = "r1",
+    state_std = "State",
+    district_std = "Split",
+    stringsAsFactors = FALSE
+  )
+  reviewed <- data.frame(
+    source_row_id = c("r1", "r1"),
+    target_unit_2001 = c("pc2001__01__01", "pc2001__01__02"),
+    weight = c(0.6, 0.4),
+    panel_variant = "population_allocation",
+    stringsAsFactors = FALSE
+  )
+  admin <- data.frame(
+    unit_id = character(), state_std = character(), district_std = character(),
+    stringsAsFactors = FALSE
+  )
+
+  bridge <- build_dise_deterministic_lineage_bridge(dise, roster, reviewed, admin)
+  expect_true(is.na(bridge$target_unit_2001[[1]]))
+  expect_identical(bridge$bridge_status[[1]], "unresolved_no_deterministic_lineage")
+})
+
+test_that("Census-2001 DISE baseline pooling preserves annual count aggregation", {
+  years <- c("2005-06", "2006-07", "2007-08")
+  x <- data.frame(
+    academic_year = years,
+    target_unit_2001 = "pc2001__01__01",
+    dise_source_district_count = c(1L, 2L, 2L),
+    dise_english_enrollment = c(20, 80, 180),
+    dise_hindi_enrollment = c(80, 120, 120),
+    dise_total_enrollment = c(100, 200, 300),
+    dise_english_identity_resolved = TRUE,
+    dise_hindi_identity_resolved = TRUE,
+    dise_emi_enrollment_share_total = c(20, 40, 60),
+    dise_hindi_enrollment_share_total = c(80, 60, 40),
+    dise_english_share_english_hindi = c(20, 40, 60),
+    dise_private_enrollment_share = 10,
+    dise_private_school_share = 10,
+    stringsAsFactors = FALSE
+  )
+
+  out <- build_dise_baseline_treatments_2001(x)
+  expect_identical(out$target_unit_2001[[1]], "pc2001__01__01")
+  expect_equal(out$dise_source_district_count_0708, 2L)
+  expect_equal(out$dise_emi_enrollment_share_total_0708, 60)
+  expect_equal(out$dise_baseline_years_observed, 3L)
+  expect_equal(out$dise_emi_enrollment_share_total_0508_pooled, 100 * 280 / 600)
+})
+
+test_that("Census-2001 DISE attachment is one-to-one and preserves panel order", {
+  panel <- data.frame(
+    target_unit_2001 = c("pc2001__01__02", "pc2001__01__01"),
+    y = c(2, 1),
+    stringsAsFactors = FALSE
+  )
+  treatments <- data.frame(
+    target_unit_2001 = c("pc2001__01__01", "pc2001__01__02"),
+    dise_emi_enrollment_share_total_0708 = c(10, 20),
+    stringsAsFactors = FALSE
+  )
+  out <- attach_dise_treatments_to_panel_2001(panel, treatments)
+  expect_identical(out$y, c(2, 1))
+  expect_identical(out$dise_emi_enrollment_share_total_0708, c(20, 10))
 })
