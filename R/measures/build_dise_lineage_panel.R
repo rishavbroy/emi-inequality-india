@@ -152,19 +152,7 @@ harmonize_dise_counts_to_2001 <- function(district_year, bridge) {
   }))
   out$dise_english_identity_resolved <- is.finite(out$dise_english_enrollment)
   out$dise_hindi_identity_resolved <- is.finite(out$dise_hindi_enrollment)
-  out$dise_emi_enrollment_share_total <- ifelse(
-    out$dise_english_identity_resolved & is.finite(out$dise_total_enrollment) & out$dise_total_enrollment > 0,
-    100 * out$dise_english_enrollment / out$dise_total_enrollment, NA_real_
-  )
-  out$dise_hindi_enrollment_share_total <- ifelse(
-    out$dise_hindi_identity_resolved & is.finite(out$dise_total_enrollment) & out$dise_total_enrollment > 0,
-    100 * out$dise_hindi_enrollment / out$dise_total_enrollment, NA_real_
-  )
-  eh <- out$dise_english_enrollment + out$dise_hindi_enrollment
-  out$dise_english_share_english_hindi <- ifelse(
-    out$dise_english_identity_resolved & out$dise_hindi_identity_resolved & is.finite(eh) & eh > 0,
-    100 * out$dise_english_enrollment / eh, NA_real_
-  )
+  out <- finalize_dise_language_measure(out)
   if (all(c("dise_private_enrollment", "dise_government_enrollment") %in% names(out))) {
     management <- out$dise_private_enrollment + out$dise_government_enrollment
     out$dise_private_enrollment_share <- ifelse(

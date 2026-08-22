@@ -485,6 +485,34 @@ test_that("DISE harmonization sums child counts before recomputing EMI", {
   expect_false(isTRUE(all.equal(out$dise_emi_enrollment_share_total, mean(c(20, 100 * 80 / 300)))))
 })
 
+test_that("DISE harmonization reapplies language-count validity after aggregation", {
+  district_year <- data.frame(
+    academic_year = "2010-11",
+    state_name_dise = "State",
+    district_name_dise = "District",
+    dise_english_enrollment = 120,
+    dise_hindi_enrollment = 10,
+    dise_total_enrollment = 100,
+    stringsAsFactors = FALSE
+  )
+  bridge <- data.frame(
+    state_key = "state",
+    district_key = "district",
+    target_unit_2001 = "pc2001__01__01",
+    n_candidate_targets = 1L,
+    bridge_status = "deterministic_to_2001",
+    bridge_sources = "reviewed",
+    stringsAsFactors = FALSE
+  )
+
+  out <- harmonize_dise_counts_to_2001(district_year, bridge)
+
+  expect_equal(out$dise_english_enrollment, 120)
+  expect_false(out$dise_english_count_valid)
+  expect_false(out$dise_english_identity_resolved)
+  expect_true(is.na(out$dise_emi_enrollment_share_total))
+})
+
 test_that("DISE harmonization never uses fractional reviewed lineage weights", {
   dise <- data.frame(
     academic_year = "2007-08",
@@ -854,7 +882,8 @@ test_that("dynamic event study recovers changes relative to the reference-year g
     stringsAsFactors = FALSE
   )
   z <- setNames(seq(-1, 1, length.out = length(districts)), districts)
-  base$state_code_2001 <- rep(rep(c("01", "02"), each = 20), each = length(years))
+  state <- setNames(rep(c("01", "02"), each = 20), districts)
+  base$state_code_2001 <- state[base$target_unit_2001]
   base$ling_distance_nonzero_mean <- z[base$target_unit_2001]
   gradient <- c("2006-07" = 1, "2007-08" = 2, "2008-09" = 4)
   district_fe <- setNames(seq(-2, 2, length.out = length(districts)), districts)
@@ -873,10 +902,16 @@ test_that("dynamic event study recovers changes relative to the reference-year g
   expect_equal(fit$summary$n_years, 3L)
   expect_identical(fit$summary$cluster_status[[1]], "estimated")
   expect_true(all(is.finite(fit$coefficients$std.error)))
-  if (requireNamespace("car", quietly = TRUE)) {
-    expect_true(is.finite(fit$summary$joint_distance_year_f[[1]]))
-    expect_true(is.finite(fit$summary$joint_distance_year_p[[1]]))
-  }
+  expect_true(is.finite(fit$summary$joint_distance_year_f[[1]]))
+  expect_true(is.finite(fit$summary$joint_distance_year_p[[1]]))
+
+  state_year_fit <- estimate_dise_dynamic_spec(
+    base, "ling_distance_nonzero_mean", "district_state_year", "2007-08"
+  )
+  expect_identical(state_year_fit$summary$cluster_status[[1]], "estimated")
+  expect_true(all(is.finite(state_year_fit$coefficients$std.error)))
+  expect_true(is.finite(state_year_fit$summary$joint_distance_year_f[[1]]))
+  expect_true(is.finite(state_year_fit$summary$joint_distance_year_p[[1]]))
 })
 
 test_that("DISE diagnostic saver includes longitudinal outputs", {
