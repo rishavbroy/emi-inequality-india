@@ -719,6 +719,34 @@ test_that("report-derived DISE language metadata is unique and spans dynamic rep
   expect_true(all(c("source_pdf", "source_page", "report_priority") %in% names(x)))
 })
 
+test_that("later DISE language counts cannot exceed the elementary denominator", {
+  data <- data.frame(
+    academic_year = "2010-11",
+    state_name_dise = "State",
+    district_name_dise = "District",
+    dise_total_enrollment = 100,
+    stringsAsFactors = FALSE
+  )
+  report <- data.frame(
+    academic_year = "2010-11",
+    state_report = "State",
+    district_report = "District",
+    english_enrollment = 120,
+    hindi_enrollment = 10,
+    source_pdf = "report.pdf",
+    source_page = 1L,
+    report_priority = 1L,
+    stringsAsFactors = FALSE
+  )
+
+  out <- attach_dise_report_language_counts(data, report)
+
+  expect_false(out$dise_english_count_valid)
+  expect_false(out$dise_english_identity_resolved)
+  expect_true(is.na(out$dise_emi_enrollment_share_total))
+  expect_true(out$dise_hindi_count_valid)
+})
+
 test_that("later report attachment never interprets absent English as zero", {
   data <- data.frame(
     academic_year = "2012-13",
@@ -833,6 +861,7 @@ test_that("dynamic event study recovers changes relative to the reference-year g
   base$dise_emi_enrollment_share_total <-
     district_fe[base$target_unit_2001] +
     gradient[base$academic_year] * base$ling_distance_nonzero_mean
+  rownames(base) <- seq(101L, by = 2L, length.out = nrow(base))
 
   fit <- estimate_dise_dynamic_spec(
     base, "ling_distance_nonzero_mean", "district_year", "2007-08"
@@ -841,6 +870,12 @@ test_that("dynamic event study recovers changes relative to the reference-year g
   expect_equal(unname(b["2006-07"]), -1, tolerance = 1e-7)
   expect_equal(unname(b["2008-09"]), 2, tolerance = 1e-7)
   expect_equal(fit$summary$n_years, 3L)
+  expect_identical(fit$summary$cluster_status[[1]], "estimated")
+  expect_true(all(is.finite(fit$coefficients$std.error)))
+  if (requireNamespace("car", quietly = TRUE)) {
+    expect_true(is.finite(fit$summary$joint_distance_year_f[[1]]))
+    expect_true(is.finite(fit$summary$joint_distance_year_p[[1]]))
+  }
 })
 
 test_that("DISE diagnostic saver includes longitudinal outputs", {

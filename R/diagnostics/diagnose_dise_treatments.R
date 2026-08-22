@@ -353,6 +353,7 @@ estimate_dise_dynamic_spec <- function(
     "state_code_2001", "academic_year", instrument
   )
   x <- x[stats::complete.cases(x[required]), , drop = FALSE]
+  rownames(x) <- NULL
   if (!nrow(x)) return(list(summary = data.frame(), coefficients = data.frame()))
   terms <- dise_year_interaction_terms(x$academic_year, instrument, reference_year)
   for (i in seq_len(nrow(terms))) {
@@ -371,8 +372,10 @@ estimate_dise_dynamic_spec <- function(
     stats::reformulate(c(fixed, terms$term), response = "dise_emi_enrollment_share_total"),
     data = x
   )
-  fitted_rows <- as.integer(rownames(stats::model.frame(fit)))
-  cluster <- x$target_unit_2001[fitted_rows]
+  cluster <- x$target_unit_2001
+  if (length(cluster) != stats::nobs(fit)) {
+    stop("Dynamic DISE cluster vector is not aligned to fitted observations.", call. = FALSE)
+  }
   inf <- iv_clustered_inference(fit, cluster)
   vc <- inf$vcov
   coef_rows <- safe_bind_rows(lapply(seq_len(nrow(terms)), function(i) {

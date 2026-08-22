@@ -335,6 +335,58 @@ extract_dise_direct_total <- function(data, academic_year) {
   out
 }
 
+finalize_dise_language_measure <- function(data) {
+  out <- safe_df(data)
+  total <- num(out$dise_total_enrollment)
+  english <- num(out$dise_english_enrollment)
+  hindi <- num(out$dise_hindi_enrollment)
+
+  within_total <- function(count) {
+    is.finite(count) &
+      is.finite(total) &
+      total > 0 &
+      count >= 0 &
+      count <= total + 1e-8
+  }
+
+  english_previously_resolved <- if ("dise_english_identity_resolved" %in% names(out)) {
+    out$dise_english_identity_resolved %in% TRUE
+  } else {
+    is.finite(english)
+  }
+  hindi_previously_resolved <- if ("dise_hindi_identity_resolved" %in% names(out)) {
+    out$dise_hindi_identity_resolved %in% TRUE
+  } else {
+    is.finite(hindi)
+  }
+
+  out$dise_english_count_valid <- within_total(english)
+  out$dise_hindi_count_valid <- within_total(hindi)
+  out$dise_english_identity_resolved <-
+    english_previously_resolved & out$dise_english_count_valid
+  out$dise_hindi_identity_resolved <-
+    hindi_previously_resolved & out$dise_hindi_count_valid
+
+  out$dise_emi_enrollment_share_total <- ifelse(
+    out$dise_english_identity_resolved,
+    100 * english / total,
+    NA_real_
+  )
+  out$dise_hindi_enrollment_share_total <- ifelse(
+    out$dise_hindi_identity_resolved,
+    100 * hindi / total,
+    NA_real_
+  )
+  both <- out$dise_english_identity_resolved & out$dise_hindi_identity_resolved
+  english_hindi <- english + hindi
+  out$dise_english_share_english_hindi <- ifelse(
+    both & is.finite(english_hindi) & english_hindi > 0,
+    100 * english / english_hindi,
+    NA_real_
+  )
+  out
+}
+
 attach_dise_report_language_counts <- function(data, report) {
   x <- safe_df(data)
   r <- safe_df(report)
@@ -355,16 +407,7 @@ attach_dise_report_language_counts <- function(data, report) {
   )
   out$dise_english_enrollment <- num(out$english_enrollment)
   out$dise_hindi_enrollment <- num(out$hindi_enrollment)
-  out$dise_english_identity_resolved <- is.finite(out$dise_english_enrollment)
-  out$dise_hindi_identity_resolved <- is.finite(out$dise_hindi_enrollment)
-  out$dise_emi_enrollment_share_total <- ifelse(
-    out$dise_english_identity_resolved &
-      is.finite(num(out$dise_total_enrollment)) &
-      num(out$dise_total_enrollment) > 0,
-    100 * out$dise_english_enrollment / num(out$dise_total_enrollment),
-    NA_real_
-  )
-  out
+  finalize_dise_language_measure(out)
 }
 
 extract_dise_2015_medium_counts <- function(data) {
@@ -433,14 +476,7 @@ read_dise_dynamic_year <- function(paths, registry_row, report_languages) {
     out <- merge(totals, medium, by = "district_code_dise", all.x = TRUE, sort = FALSE)
     out$dise_english_identity_resolved <- is.finite(out$dise_english_enrollment)
     out$dise_hindi_identity_resolved <- is.finite(out$dise_hindi_enrollment)
-    out$dise_emi_enrollment_share_total <- ifelse(
-      out$dise_english_identity_resolved &
-        is.finite(out$dise_total_enrollment) &
-        out$dise_total_enrollment > 0,
-      100 * out$dise_english_enrollment / out$dise_total_enrollment,
-      NA_real_
-    )
-    return(out)
+    return(finalize_dise_language_measure(out))
   }
   sheet <- registry_row$enrollment_sheet[[1]]
   if (identical(year, "2014-15")) sheet <- "2014-15_PY"

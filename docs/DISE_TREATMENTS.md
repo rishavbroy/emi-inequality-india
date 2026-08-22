@@ -58,7 +58,9 @@ The extended pipeline now constructs a 2005-06 through 2015-16 district-year EMI
 
 Dynamic relevance is estimated only for distinct scalar excluded-distance variables. Instrument constructions that differ only by time-invariant included language controls are algebraically equivalent after district fixed effects and are represented once, with equivalent construction IDs retained as metadata. Five-share vector instruments remain outside this event-study diagnostic because they do not define one scalar distance trajectory.
 
-The event-study reference year is 2007-08. Two models are reported: district FE plus academic-year FE, and the more demanding district FE plus state-by-academic-year FE. In both cases the coefficients are changes in the EMI-distance gradient relative to 2007-08, with inference clustered by Census-2001 district. A joint clustered Wald test evaluates whether all distance-by-year changes are zero.
+The event-study reference year is 2007-08. Two models are reported: district FE plus academic-year FE, and the more demanding district FE plus state-by-academic-year FE. In both cases the coefficients are changes in the EMI-distance gradient relative to 2007-08, with inference clustered by Census-2001 district. The cluster vector is aligned directly to the complete-case model data rather than reconstructed from retained row names. A joint clustered Wald test evaluates whether all distance-by-year changes are zero.
+
+Later-year language counts are also checked against the independently read elementary-enrollment denominator before EMI is constructed. A language count below zero, above the district total, or paired with a missing/nonpositive denominator is retained for source QA but is not treated as a resolved treatment count; the resulting EMI share is `NA` rather than capped or winsorized.
 
 ## Deferred extensions
 
