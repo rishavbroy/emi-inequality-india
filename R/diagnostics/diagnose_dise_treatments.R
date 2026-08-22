@@ -270,6 +270,21 @@ save_dise_diagnostics <- function(
     lineage_bridge = write_diagnostic_csv(lineage_bridge, file.path(dir, "dise_lineage_bridge.csv")),
     harmonized_district_year = write_diagnostic_csv(
       harmonized_district_year, file.path(dir, "dise_district_year_2001.csv")
+    ),
+    dynamic_panel = write_diagnostic_csv(
+      dynamic_panel, file.path(dir, "dise_dynamic_district_year_2001.csv")
+    ),
+    dynamic_registry = write_diagnostic_csv(
+      dynamic_relevance$registry,
+      file.path(dir, "dise_dynamic_specification_registry.csv")
+    ),
+    dynamic_summary = write_diagnostic_csv(
+      dynamic_relevance$summary,
+      file.path(dir, "dise_dynamic_first_stage_summary.csv")
+    ),
+    dynamic_coefficients = write_diagnostic_csv(
+      dynamic_relevance$coefficients,
+      file.path(dir, "dise_dynamic_first_stage_event_study.csv")
     )
   )
   output_manifest(outputs)

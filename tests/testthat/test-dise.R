@@ -686,4 +686,13 @@ test_that("DISE diagnostic saver includes longitudinal outputs", {
   )
   expect_equal(nrow(manifest), 23L)
   expect_true(all(file.exists(manifest$path)))
+  expect_setequal(
+    basename(manifest$path)[grepl("dise_dynamic_", basename(manifest$path))],
+    c(
+      "dise_dynamic_district_year_2001.csv",
+      "dise_dynamic_specification_registry.csv",
+      "dise_dynamic_first_stage_summary.csv",
+      "dise_dynamic_first_stage_event_study.csv"
+    )
+  )
 })
