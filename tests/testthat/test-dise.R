@@ -335,7 +335,7 @@ test_that("DISE diagnostic saver returns the repository-standard output manifest
 
   expect_s3_class(manifest, "data.frame")
   expect_setequal(names(manifest), c("path", "description"))
-  expect_equal(nrow(manifest), 19L)
+  expect_equal(nrow(manifest), 23L)
   expect_true(all(file.exists(manifest$path)))
 })
 
@@ -556,4 +556,134 @@ test_that("Census-2001 DISE attachment is one-to-one and preserves panel order",
   out <- attach_dise_treatments_to_panel_2001(panel, treatments)
   expect_identical(out$y, c(2, 1))
   expect_identical(out$dise_emi_enrollment_share_total_0708, c(20, 10))
+})
+
+test_that("DISE state aliases used by archived reports canonicalize to lineage states", {
+  expect_identical(
+    canonicalize_state_name(c("A & N Islands", "D & N Haveli")),
+    c("andaman and nicobar islands", "dadra and nagar haveli")
+  )
+})
+
+test_that("DISE machine-name normalization handles later workbook labels", {
+  repaired <- repair_dise_machine_names(c(
+    "State Code", "State Name", "District Code", "District Name",
+    "enr cy c1", "enr govt6", "M1", "ENRE11"
+  ))
+  expect_identical(
+    repaired,
+    c("statecd", "statename", "distcd", "distname",
+      "enr_cy_c1", "enr_govt6", "m1", "enre11")
+  )
+})
+
+test_that("report-derived DISE language metadata is unique and spans dynamic report years", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
+  path <- file.path(root, "data", "metadata", "dise_report_language_enrollment.csv")
+  x <- read.csv(path, stringsAsFactors = FALSE)
+  key <- paste(x$academic_year, canonicalize_state_name(x$state_report),
+               canonicalize_district_name(x$district_report), sep = "|")
+  expect_equal(anyDuplicated(key), 0L)
+  expect_setequal(
+    unique(x$academic_year),
+    c("2008-09", "2009-10", "2010-11", "2011-12", "2012-13", "2013-14", "2014-15")
+  )
+  expect_true(all(c("source_pdf", "source_page", "report_priority") %in% names(x)))
+})
+
+test_that("later report attachment never interprets absent English as zero", {
+  data <- data.frame(
+    academic_year = "2012-13",
+    state_name_dise = "State",
+    district_name_dise = "District",
+    dise_total_enrollment = 100,
+    stringsAsFactors = FALSE
+  )
+  report <- data.frame(
+    academic_year = "2012-13",
+    state_report = "State",
+    district_report = "District",
+    english_enrollment = NA_real_,
+    hindi_enrollment = 80,
+    source_pdf = "report.pdf",
+    source_page = 1L,
+    report_priority = 1L,
+    stringsAsFactors = FALSE
+  )
+  out <- attach_dise_report_language_counts(data, report)
+  expect_false(out$dise_english_identity_resolved)
+  expect_true(is.na(out$dise_emi_enrollment_share_total))
+  expect_equal(out$dise_hindi_enrollment, 80)
+})
+
+test_that("2015 coded media use official Hindi and English codes", {
+  data <- data.frame(
+    distcd = "0101",
+    m1 = 19, m2 = 4, m3 = NA, m4 = NA, m5 = NA,
+    enre11 = 40, enre12 = 10,
+    enre21 = 30, enre22 = 20,
+    stringsAsFactors = FALSE
+  )
+  out <- extract_dise_2015_medium_counts(data)
+  expect_equal(out$dise_english_enrollment, 50)
+  expect_equal(out$dise_hindi_enrollment, 50)
+})
+
+test_that("dynamic instrument registry removes district-FE algebraic duplicates", {
+  registry <- dise_dynamic_instrument_registry()
+  expect_equal(anyDuplicated(registry$excluded_instrument), 0L)
+  preferred <- registry[registry$excluded_instrument == "ling_distance_nonzero_mean", , drop = FALSE]
+  expect_equal(nrow(preferred), 1L)
+  expect_match(preferred$equivalent_construction_ids, "nonzero_mean")
+  expect_match(preferred$equivalent_construction_ids, "nonzero_mean_shastry")
+  expect_false(any(grepl("distance_shares", registry$construction_id)))
+})
+
+test_that("dynamic event study recovers changes relative to the reference-year gradient", {
+  set.seed(1)
+  districts <- paste0("d", 1:40)
+  years <- c("2006-07", "2007-08", "2008-09")
+  base <- expand.grid(
+    target_unit_2001 = districts,
+    academic_year = years,
+    stringsAsFactors = FALSE
+  )
+  z <- setNames(seq(-1, 1, length.out = length(districts)), districts)
+  base$state_code_2001 <- rep(rep(c("01", "02"), each = 20), each = length(years))
+  base$ling_distance_nonzero_mean <- z[base$target_unit_2001]
+  gradient <- c("2006-07" = 1, "2007-08" = 2, "2008-09" = 4)
+  district_fe <- setNames(seq(-2, 2, length.out = length(districts)), districts)
+  base$dise_emi_enrollment_share_total <-
+    district_fe[base$target_unit_2001] +
+    gradient[base$academic_year] * base$ling_distance_nonzero_mean
+
+  fit <- estimate_dise_dynamic_spec(
+    base, "ling_distance_nonzero_mean", "district_year", "2007-08"
+  )
+  b <- setNames(fit$coefficients$estimate, fit$coefficients$academic_year)
+  expect_equal(unname(b["2006-07"]), -1, tolerance = 1e-7)
+  expect_equal(unname(b["2008-09"]), 2, tolerance = 1e-7)
+  expect_equal(fit$summary$n_years, 3L)
+})
+
+test_that("DISE diagnostic saver includes longitudinal outputs", {
+  empty <- data.frame()
+  archive <- list(year_summary = empty, treatment_summary = empty, publication_checks = empty)
+  permutations <- list(
+    construct_registry = empty, nss_validation = empty,
+    first_stage = empty, first_stage_coefficients = empty,
+    weak_iv_outcomes = empty, anderson_rubin_grid = empty,
+    overidentification = empty, monotonicity_summary = empty,
+    monotonicity_bins = empty, monotonicity_state_slopes = empty,
+    balance = empty, joint_balance = empty
+  )
+  dynamic <- list(registry = empty, summary = empty, coefficients = empty)
+  dir <- tempfile("dise-longitudinal-")
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  manifest <- save_dise_diagnostics(
+    archive, permutations, empty, empty,
+    dynamic_panel = empty, dynamic_relevance = dynamic, dir = dir
+  )
+  expect_equal(nrow(manifest), 23L)
+  expect_true(all(file.exists(manifest$path)))
 })

@@ -244,6 +244,8 @@ save_dise_diagnostics <- function(
   treatments,
   lineage_bridge = data.frame(),
   harmonized_district_year = data.frame(),
+  dynamic_panel = data.frame(),
+  dynamic_relevance = list(registry = data.frame(), summary = data.frame(), coefficients = data.frame()),
   dir = "outputs/diagnostics/extended/dise"
 ) {
   dir.create(dir, recursive = TRUE, showWarnings = FALSE)
@@ -271,4 +273,153 @@ save_dise_diagnostics <- function(
     )
   )
   output_manifest(outputs)
+}
+
+dise_dynamic_instrument_registry <- function() {
+  constructions <- alternative_distance_constructions()
+  rows <- lapply(names(constructions), function(id) {
+    x <- constructions[[id]]
+    excluded <- unlist(x$excluded, use.names = FALSE)
+    if (length(excluded) != 1L) return(NULL)
+    data.frame(
+      construction_id = id,
+      construction = x$label,
+      excluded_instrument = excluded[[1]],
+      stringsAsFactors = FALSE
+    )
+  })
+  out <- safe_bind_rows(rows)
+  groups <- split(seq_len(nrow(out)), out$excluded_instrument)
+  dedup <- safe_bind_rows(lapply(groups, function(i) {
+    part <- out[i, , drop = FALSE]
+    data.frame(
+      construction_id = part$construction_id[[1]],
+      construction = part$construction[[1]],
+      excluded_instrument = part$excluded_instrument[[1]],
+      equivalent_construction_ids = paste(sort(part$construction_id), collapse = ";"),
+      stringsAsFactors = FALSE
+    )
+  }))
+  rownames(dedup) <- NULL
+  dedup
+}
+
+dise_dynamic_fe_registry <- function() {
+  data.frame(
+    dynamic_fe = c("district_year", "district_state_year"),
+    label = c(
+      "District FE + academic-year FE",
+      "District FE + state-by-academic-year FE"
+    ),
+    stringsAsFactors = FALSE
+  )
+}
+
+dise_year_interaction_terms <- function(years, instrument, reference_year = "2007-08") {
+  years <- setdiff(sort(unique(plain_chr(years))), reference_year)
+  safe <- gsub("[^0-9A-Za-z]+", "_", years)
+  data.frame(
+    academic_year = years,
+    term = paste0("dise_distance_year_", safe),
+    instrument = instrument,
+    stringsAsFactors = FALSE
+  )
+}
+
+estimate_dise_dynamic_spec <- function(
+  data,
+  instrument,
+  dynamic_fe,
+  reference_year = "2007-08"
+) {
+  x <- safe_df(data)
+  required <- c(
+    "dise_emi_enrollment_share_total", "target_unit_2001",
+    "state_code_2001", "academic_year", instrument
+  )
+  x <- x[stats::complete.cases(x[required]), , drop = FALSE]
+  if (!nrow(x)) return(list(summary = data.frame(), coefficients = data.frame()))
+  terms <- dise_year_interaction_terms(x$academic_year, instrument, reference_year)
+  for (i in seq_len(nrow(terms))) {
+    x[[terms$term[[i]]]] <- ifelse(
+      x$academic_year == terms$academic_year[[i]],
+      num(x[[instrument]]),
+      0
+    )
+  }
+  fixed <- if (identical(dynamic_fe, "district_state_year")) {
+    c("factor(target_unit_2001)", "interaction(state_code_2001, academic_year, drop = TRUE)")
+  } else {
+    c("factor(target_unit_2001)", "factor(academic_year)")
+  }
+  fit <- stats::lm(
+    stats::reformulate(c(fixed, terms$term), response = "dise_emi_enrollment_share_total"),
+    data = x
+  )
+  fitted_rows <- as.integer(rownames(stats::model.frame(fit)))
+  cluster <- x$target_unit_2001[fitted_rows]
+  inf <- iv_clustered_inference(fit, cluster)
+  vc <- inf$vcov
+  coef_rows <- safe_bind_rows(lapply(seq_len(nrow(terms)), function(i) {
+    term <- terms$term[[i]]
+    estimate <- unname(stats::coef(fit)[term])
+    se <- if (!is.null(vc) && term %in% rownames(vc)) sqrt(vc[term, term]) else NA_real_
+    statistic <- estimate / se
+    data.frame(
+      academic_year = terms$academic_year[[i]],
+      reference_year = reference_year,
+      estimate = estimate,
+      std.error = se,
+      statistic = statistic,
+      p.value = if (is.finite(statistic)) 2 * stats::pnorm(abs(statistic), lower.tail = FALSE) else NA_real_,
+      stringsAsFactors = FALSE
+    )
+  }))
+  joint <- clustered_joint_wald_test(fit, terms$term, cluster)
+  summary <- data.frame(
+    instrument = instrument,
+    dynamic_fe = dynamic_fe,
+    reference_year = reference_year,
+    n = stats::nobs(fit),
+    n_districts = length(unique(x$target_unit_2001)),
+    n_years = length(unique(x$academic_year)),
+    joint_distance_year_f = unname(joint[["statistic"]]),
+    joint_distance_year_p = unname(joint[["p.value"]]),
+    cluster_status = inf$status,
+    stringsAsFactors = FALSE
+  )
+  list(summary = summary, coefficients = coef_rows)
+}
+
+diagnose_dise_dynamic_relevance <- function(data, reference_year = "2007-08") {
+  instruments <- dise_dynamic_instrument_registry()
+  fes <- dise_dynamic_fe_registry()
+  results <- list()
+  k <- 1L
+  for (i in seq_len(nrow(instruments))) {
+    for (j in seq_len(nrow(fes))) {
+      result <- estimate_dise_dynamic_spec(
+        data,
+        instruments$excluded_instrument[[i]],
+        fes$dynamic_fe[[j]],
+        reference_year
+      )
+      if (nrow(result$summary)) {
+        result$summary$construction_id <- instruments$construction_id[[i]]
+        result$summary$equivalent_construction_ids <- instruments$equivalent_construction_ids[[i]]
+      }
+      if (nrow(result$coefficients)) {
+        result$coefficients$construction_id <- instruments$construction_id[[i]]
+        result$coefficients$instrument <- instruments$excluded_instrument[[i]]
+        result$coefficients$dynamic_fe <- fes$dynamic_fe[[j]]
+      }
+      results[[k]] <- result
+      k <- k + 1L
+    }
+  }
+  list(
+    registry = merge(instruments, fes, by = NULL),
+    summary = safe_bind_rows(lapply(results, `[[`, "summary")),
+    coefficients = safe_bind_rows(lapply(results, `[[`, "coefficients"))
+  )
 }

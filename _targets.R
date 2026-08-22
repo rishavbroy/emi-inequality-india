@@ -599,15 +599,24 @@ extended_diagnostic_targets <- list(
   tar_target(dise_archive_registry, read_dise_archive_registry(paths)),
   tar_target(dise_medium_slot_crosswalk, read_dise_medium_slot_crosswalk(paths)),
   tar_target(dise_publication_checks, read_dise_publication_checks(paths)),
+  tar_target(dise_report_language_enrollment, read_dise_report_language_enrollment(paths)),
   tar_target(raw_dise_baseline, read_dise_baseline_archive(paths, dise_archive_registry)),
+  tar_target(
+    raw_dise_dynamic,
+    read_dise_dynamic_archive(paths, dise_archive_registry, dise_report_language_enrollment)
+  ),
   tar_target(
     dise_baseline_district_year,
     attach_dise_medium_identities(raw_dise_baseline, dise_medium_slot_crosswalk)
   ),
   tar_target(
+    dise_all_district_year,
+    safe_bind_rows(list(dise_baseline_district_year, raw_dise_dynamic))
+  ),
+  tar_target(
     dise_lineage_bridge,
     build_dise_deterministic_lineage_bridge(
-      dise_baseline_district_year,
+      dise_all_district_year,
       district_lineage$nss_source_roster,
       district_lineage$full_reviewed_source_crosswalk,
       district_lineage$admin_units_2001
@@ -624,6 +633,21 @@ extended_diagnostic_targets <- list(
   tar_target(
     district_panel_with_dise,
     attach_dise_treatments_to_panel_2001(district_panel, dise_baseline_treatments)
+  ),
+  tar_target(
+    dise_dynamic_panel,
+    build_dise_longitudinal_panel(
+      dise_baseline_district_year,
+      raw_dise_dynamic,
+      district_lineage$nss_source_roster,
+      district_lineage$full_reviewed_source_crosswalk,
+      district_lineage$admin_units_2001,
+      district_panel
+    )
+  ),
+  tar_target(
+    dise_dynamic_relevance,
+    diagnose_dise_dynamic_relevance(dise_dynamic_panel)
   ),
   tar_target(
     dise_archive_diagnostics,
@@ -643,7 +667,9 @@ extended_diagnostic_targets <- list(
       dise_baseline_district_year,
       dise_baseline_treatments,
       lineage_bridge = dise_lineage_bridge,
-      harmonized_district_year = dise_baseline_district_year_2001
+      harmonized_district_year = dise_baseline_district_year_2001,
+      dynamic_panel = dise_dynamic_panel,
+      dynamic_relevance = dise_dynamic_relevance
     )
   ),
 
