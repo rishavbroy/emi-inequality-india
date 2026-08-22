@@ -350,27 +350,75 @@ attach_dise_report_language_counts <- function(data, report) {
   out
 }
 
+dise_unique_machine_column <- function(data, pattern, label) {
+  hits <- grep(pattern, names(data), value = TRUE)
+  if (length(hits) != 1L) {
+    stop(
+      "Expected exactly one DISE ", label, " column matching '", pattern,
+      "'; found ", length(hits), ".",
+      call. = FALSE
+    )
+  }
+  hits[[1]]
+}
+
+dise_2015_medium_schema <- function(data) {
+  safe_bind_rows(lapply(1:5, function(slot) {
+    code_column <- dise_unique_machine_column(
+      data,
+      paste0("^m", slot, "($|[._][0-9]+$)"),
+      paste0("2015-16 medium-code slot ", slot)
+    )
+    enrollment_columns <- grep(
+      paste0("^enre", slot, "[1-7]($|[._][0-9]+$)"),
+      names(data),
+      value = TRUE
+    )
+    if (!length(enrollment_columns)) {
+      stop(
+        "DISE 2015-16 medium slot ", slot,
+        " has no enrollment columns.",
+        call. = FALSE
+      )
+    }
+    data.frame(
+      slot = slot,
+      code_column = code_column,
+      enrollment_columns = paste(enrollment_columns, collapse = ";"),
+      stringsAsFactors = FALSE
+    )
+  }))
+}
+
 extract_dise_2015_medium_counts <- function(data) {
+  data <- safe_df(data)
+  schema <- dise_2015_medium_schema(data)
   out <- data.frame(
     district_code_dise = plain_chr(data$distcd),
     stringsAsFactors = FALSE
   )
-  slot_count <- function(slot) {
-    cols <- grep(paste0("^enre", slot, "[1-7]$"), names(data), value = TRUE)
-    row_sum_available(data, cols)
-  }
-  for (slot in 1:5) {
-    out[[paste0("medium_code_", slot)]] <- num(data[[paste0("m", slot)]])
-    out[[paste0("medium_enrollment_", slot)]] <- slot_count(slot)
+  for (slot in schema$slot) {
+    row <- schema[schema$slot == slot, , drop = FALSE]
+    count_columns <- strsplit(row$enrollment_columns[[1]], ";", fixed = TRUE)[[1]]
+    out[[paste0("medium_code_", slot)]] <- num(data[[row$code_column[[1]]]])
+    out[[paste0("medium_enrollment_", slot)]] <- row_sum_available(data, count_columns)
   }
   language_count <- function(code) {
     vapply(seq_len(nrow(out)), function(i) {
-      codes <- vapply(1:5, function(slot) out[[paste0("medium_code_", slot)]][[i]], numeric(1))
-      counts <- vapply(1:5, function(slot) out[[paste0("medium_enrollment_", slot)]][[i]], numeric(1))
-      known <- is.finite(codes)
-      hit <- known & codes == code
+      codes <- vapply(
+        1:5,
+        function(slot) out[[paste0("medium_code_", slot)]][[i]],
+        numeric(1)
+      )
+      counts <- vapply(
+        1:5,
+        function(slot) out[[paste0("medium_enrollment_", slot)]][[i]],
+        numeric(1)
+      )
+      identified <- is.finite(codes) & codes > 0
+      hit <- identified & codes == code
       if (any(hit)) return(sum(counts[hit], na.rm = TRUE))
-      unresolved_positive <- !known & is.finite(counts) & counts > 0
+      unresolved_positive <- !identified & is.finite(counts) & counts > 0
       if (any(unresolved_positive)) return(NA_real_)
       0
     }, numeric(1))

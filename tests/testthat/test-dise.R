@@ -729,6 +729,55 @@ test_that("later report attachment never interprets absent English as zero", {
   expect_equal(out$dise_hindi_enrollment, 80)
 })
 
+test_that("2015 medium schema resolves readxl-style unique-name suffixes", {
+  data <- data.frame(
+    distcd = "0101",
+    m1.1 = 19, m2.1 = 4, m3.1 = 0, m4.1 = 0, m5.1 = 0,
+    enre11.1 = 40, enre12.1 = 10,
+    enre21.1 = 30, enre22.1 = 20,
+    enre31.1 = 0, enre41.1 = 0, enre51.1 = 0,
+    check.names = FALSE,
+    stringsAsFactors = FALSE
+  )
+
+  schema <- dise_2015_medium_schema(data)
+  out <- extract_dise_2015_medium_counts(data)
+
+  expect_identical(schema$slot, 1:5)
+  expect_identical(schema$code_column, paste0("m", 1:5, ".1"))
+  expect_equal(out$dise_english_enrollment, 50)
+  expect_equal(out$dise_hindi_enrollment, 50)
+})
+
+test_that("2015 positive enrollment under an unidentified medium remains unresolved", {
+  data <- data.frame(
+    distcd = "0101",
+    m1 = 19, m2 = 0, m3 = 0, m4 = 0, m5 = 0,
+    enre11 = 40, enre21 = 10,
+    enre31 = 0, enre41 = 0, enre51 = 0,
+    stringsAsFactors = FALSE
+  )
+
+  out <- extract_dise_2015_medium_counts(data)
+
+  expect_true(is.na(out$dise_english_enrollment))
+  expect_true(is.na(out$dise_hindi_enrollment))
+})
+
+test_that("2015 medium schema fails explicitly when a code slot is absent", {
+  data <- data.frame(
+    distcd = "0101",
+    m1 = 19, m2 = 4, m3 = 0, m4 = 0,
+    enre11 = 1, enre21 = 1, enre31 = 0, enre41 = 0, enre51 = 0,
+    stringsAsFactors = FALSE
+  )
+
+  expect_error(
+    dise_2015_medium_schema(data),
+    "medium-code slot 5"
+  )
+})
+
 test_that("2015 coded media use official Hindi and English codes", {
   data <- data.frame(
     distcd = "0101",

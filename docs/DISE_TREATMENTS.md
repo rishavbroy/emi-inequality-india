@@ -52,6 +52,8 @@ Language resolution is deliberately language-specific. If a report card explicit
 
 ## Longitudinal administrative EMI
 
+For 2015-16, the reader resolves the five medium-code/enrollment slot families from the normalized machine schema rather than assuming unsuffixed column names. Official UDISE codes identify Hindi as `04` and English as `19`. Code `0` is not a language identity: any positive enrollment attached to an unidentified/zero-coded slot keeps English/Hindi enrollment unresolved.
+
 The extended pipeline now constructs a 2005-06 through 2015-16 district-year EMI panel on Census-2001 geography. Baseline years use validated raw medium slots; 2008-09 through 2014-15 combine raw administrative enrollment denominators with report-card-derived English/Hindi counts; 2015-16 uses the workbook's explicit medium codes and enrollment blocks. The official UDISE coding convention identifies Hindi as 04 and English as 19.
 
 Dynamic relevance is estimated only for distinct scalar excluded-distance variables. Instrument constructions that differ only by time-invariant included language controls are algebraically equivalent after district fixed effects and are represented once, with equivalent construction IDs retained as metadata. Five-share vector instruments remain outside this event-study diagnostic because they do not define one scalar distance trajectory.
