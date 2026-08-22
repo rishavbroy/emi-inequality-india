@@ -55,6 +55,9 @@ dise_publication_checks <- analysis_target_csv("diag_ext_dise", "dise_publicatio
 dise_nss_validation <- analysis_target_csv("diag_ext_dise", "dise_nss_validation.csv")
 dise_first_stage <- analysis_target_csv("diag_ext_dise", "dise_first_stage_permutations.csv")
 dise_weak_iv <- analysis_target_csv("diag_ext_dise", "dise_weak_iv_outcomes.csv")
+dise_dynamic_panel <- analysis_target_csv("diag_ext_dise", "dise_dynamic_district_year_2001.csv")
+dise_dynamic_summary <- analysis_target_csv("diag_ext_dise", "dise_dynamic_first_stage_summary.csv")
+dise_dynamic_event <- analysis_target_csv("diag_ext_dise", "dise_dynamic_first_stage_event_study.csv")
 ```
 
 ## Administrative DISE treatment validation
@@ -88,6 +91,40 @@ analysis_table(
   dise_main_weak_iv,
   "Administrative EMI treatments: weak-IV-aware outcome estimates",
   max_rows = 40
+)
+```
+
+## Longitudinal DISE relevance
+
+The dynamic panel asks whether the EMI-distance gradient changes over time within Census-2001 districts. The first model absorbs district and academic-year fixed effects; the second replaces common year effects with state-by-academic-year effects. Coefficients are relative to 2007-08 and inference is clustered by Census-2001 district.
+
+```{r dise-dynamic-relevance}
+dise_dynamic_qa <- do.call(
+  rbind,
+  lapply(split(dise_dynamic_panel, dise_dynamic_panel$academic_year), function(x) {
+    data.frame(
+      academic_year = x$academic_year[[1]],
+      n_rows = nrow(x),
+      n_emi = sum(is.finite(x$dise_emi_enrollment_share_total)),
+      n_invalid_english_count = if ("dise_english_count_valid" %in% names(x)) {
+        sum(x$dise_english_count_valid %in% FALSE, na.rm = TRUE)
+      } else {
+        0L
+      },
+      stringsAsFactors = FALSE
+    )
+  })
+)
+analysis_table(dise_dynamic_qa, "Longitudinal DISE EMI coverage and count-validity checks", max_rows = 20)
+analysis_table(
+  dise_dynamic_summary[dise_dynamic_summary$construction_id == "nonzero_mean", ],
+  "Preferred linguistic-distance trajectory: joint clustered tests",
+  max_rows = 10
+)
+analysis_table(
+  dise_dynamic_event[dise_dynamic_event$construction_id == "nonzero_mean", ],
+  "Preferred linguistic-distance trajectory: year coefficients relative to 2007-08",
+  max_rows = 30
 )
 ```
 
