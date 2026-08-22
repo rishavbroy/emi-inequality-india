@@ -89,19 +89,32 @@ find_dise_machine_header_row <- function(preview) {
   hits[[1]]
 }
 
-repair_dise_key_names_from_preview <- function(names, preview, header_row) {
-  required <- c("statename", "distcd", "distname")
-  if (all(required %in% names)) return(names)
-  prior_rows <- seq_len(max(0L, header_row - 1L))
-  if (!length(prior_rows)) return(names)
-  for (i in rev(prior_rows)) {
-    prior <- repair_dise_machine_names(
+dise_key_positions_from_preview <- function(preview, header_row) {
+  key_names <- c("statecd", "statename", "distcd", "distname")
+  rows <- rev(seq_len(header_row))
+  positions <- setNames(rep(NA_integer_, length(key_names)), key_names)
+
+  for (i in rows) {
+    row <- repair_dise_machine_names(
       plain_chr(unlist(preview[i, , drop = FALSE], use.names = FALSE))
     )
-    key_positions <- which(prior %in% c("statecd", "statename", "distcd", "distname"))
-    if (!length(key_positions)) next
-    names[key_positions] <- prior[key_positions]
-    if (all(required %in% names)) break
+    for (key in key_names) {
+      if (is.finite(positions[[key]])) next
+      hits <- which(row == key)
+      if (length(hits) == 1L) positions[[key]] <- hits[[1]]
+    }
+    if (all(is.finite(positions[c("statename", "distcd", "distname")]))) break
+  }
+  positions
+}
+
+repair_dise_key_names_from_preview <- function(names, preview, header_row) {
+  positions <- dise_key_positions_from_preview(preview, header_row)
+  for (key in names(positions)) {
+    position <- positions[[key]]
+    if (is.finite(position) && position <= length(names)) {
+      names[[position]] <- key
+    }
   }
   make.unique(names)
 }
@@ -156,7 +169,14 @@ read_dise_machine_sheet <- function(path, sheet) {
   )
   required <- c("statename", "distcd", "distname")
   missing <- setdiff(required, names(out))
-  if (length(missing)) stop("DISE sheet is missing key columns: ", paste(missing, collapse = ", "), call. = FALSE)
+  if (length(missing)) {
+    stop(
+      "DISE sheet is missing key columns after header-block repair: ",
+      paste(missing, collapse = ", "),
+      " [sheet=", sheet, ", header_row=", header_row, ", path=", path, "].",
+      call. = FALSE
+    )
+  }
   if (!"statecd" %in% names(out)) out$statecd <- NA_character_
   keep <- nzchar(trimws(plain_chr(out$statename))) & nzchar(trimws(plain_chr(out$distname)))
   out[keep, , drop = FALSE]
@@ -398,6 +418,18 @@ read_dise_dynamic_archive <- function(
   rows <- registry[registry$analytic_role == "dynamic_future", , drop = FALSE]
   if (!nrow(rows)) stop("DISE archive registry has no dynamic years.", call. = FALSE)
   safe_bind_rows(lapply(seq_len(nrow(rows)), function(i) {
-    read_dise_dynamic_year(paths, rows[i, , drop = FALSE], report_languages)
+    row <- rows[i, , drop = FALSE]
+    tryCatch(
+      read_dise_dynamic_year(paths, row, report_languages),
+      error = function(e) {
+        stop(
+          "DISE dynamic year ",
+          row$academic_year[[1]],
+          " failed: ",
+          conditionMessage(e),
+          call. = FALSE
+        )
+      }
+    )
   }))
 }

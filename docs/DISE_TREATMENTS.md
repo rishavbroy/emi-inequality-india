@@ -14,6 +14,8 @@ Historical workbooks also contain a human-readable header row immediately above 
 
 The 2010-11 enrollment workbook has two independent archival defects. First, `DRC_Raw_Data2010-11.xls` is named with a legacy `.xls` extension but has an OOXML/XLSX file signature. The materializer uses `readxl::format_from_signature()` and creates an extension-correct temporary view when the filename disagrees with the file bytes; the raw archive is never renamed or modified. Second, the machine-name row contains `statecd` and the enrollment field names while the district-code/name cells contain Kupwara data. The reader repairs only those key column names from the preceding human header row so later district rows remain machine-readable; it does not reconstruct or impute the lost Kupwara enrollment row.
 
+Key columns are recovered positionally from the local header block (the selected machine row plus preceding human-label rows). This supports the documented 2010-11 collision as well as later sheets that omit a state-code column, while leaving substantive variable names untouched.
+
 The 2009-10 `DRC 2009-10.pdf` is a provisional 635-district combined report. Its pages overlapping the final Volume I reproduce the published numeric report-card values and it is retained as a fallback/validation source for the otherwise unavailable Volume II; final Volume I remains preferred wherever both exist.
 
 ## Baseline administrative measures

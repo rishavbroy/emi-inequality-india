@@ -605,6 +605,56 @@ test_that("DISE machine-header selection prefers machine fields over human label
   expect_identical(find_dise_machine_header_row(preview), 2L)
 })
 
+test_that("DISE key repair uses the local header block when machine key labels are lost", {
+  preview <- data.frame(
+    V1 = c("State Code", "statecd"),
+    V2 = c("State Name", "Jammu & Kashmir"),
+    V3 = c("District Code", "101"),
+    V4 = c("District Name", "Kupwara"),
+    V5 = c("Primary", "enr_govt1"),
+    stringsAsFactors = FALSE
+  )
+  names <- repair_dise_machine_names(unlist(preview[2, ], use.names = FALSE))
+
+  repaired <- repair_dise_key_names_from_preview(names, preview, 2L)
+  positions <- dise_key_positions_from_preview(preview, 2L)
+
+  expect_identical(
+    unname(positions[c("statecd", "statename", "distcd", "distname")]),
+    1:4
+  )
+  expect_identical(
+    repaired[1:4],
+    c("statecd", "statename", "distcd", "distname")
+  )
+  expect_identical(repaired[[5]], "enr_govt1")
+})
+
+test_that("DISE key-position inference supports later sheets without state codes", {
+  preview <- data.frame(
+    V1 = c("Year", "2014_15"),
+    V2 = c("District Code", "DISTCD"),
+    V3 = c("State Name", "State Name"),
+    V4 = c("District Name", "DISTNAME"),
+    V5 = c("Schools", "SCH1"),
+    stringsAsFactors = FALSE
+  )
+
+  positions <- dise_key_positions_from_preview(preview, 2L)
+  repaired <- repair_dise_key_names_from_preview(
+    repair_dise_machine_names(unlist(preview[2, ], use.names = FALSE)),
+    preview,
+    2L
+  )
+
+  expect_true(is.na(positions[["statecd"]]))
+  expect_identical(
+    unname(positions[c("statename", "distcd", "distname")]),
+    c(3L, 2L, 4L)
+  )
+  expect_identical(repaired[c(2, 3, 4)], c("distcd", "statename", "distname"))
+})
+
 test_that("DISE key repair handles the documented 2010-11 header-data collision", {
   preview <- data.frame(
     V1 = c("State Code", "statecd"),
