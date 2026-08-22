@@ -21,12 +21,32 @@ read_dise_medium_slot_crosswalk <- function(paths = build_paths()) {
   out
 }
 
+normalize_dise_workbook_extension <- function(path) {
+  need_pkg("readxl", "archived DISE district-report-card workbooks")
+  format <- readxl::format_from_signature(path)
+  if (is.na(format) || !format %in% c("xls", "xlsx")) return(path)
+
+  extension <- tolower(tools::file_ext(path))
+  if (identical(extension, format)) return(path)
+
+  normalized <- tempfile("dise-workbook-", fileext = paste0(".", format))
+  if (!file.copy(path, normalized, overwrite = TRUE)) {
+    stop(
+      "Could not create extension-correct DISE workbook view for ",
+      path,
+      ".",
+      call. = FALSE
+    )
+  }
+  normalized
+}
+
 materialize_dise_workbook <- function(paths, registry_row) {
   root <- path_project(paths, "data", "raw", "dise_internet_archive")
   source <- file.path(root, registry_row$raw_file[[1]])
   if (!file.exists(source)) stop("Missing DISE archive file: ", source, call. = FALSE)
   member <- plain_chr(registry_row$zip_member[[1]] %||% "")
-  if (!nzchar(member)) return(source)
+  if (!nzchar(member)) return(normalize_dise_workbook_extension(source))
 
   listing <- utils::unzip(source, list = TRUE)$Name
   if (!member %in% listing) {
@@ -35,7 +55,7 @@ materialize_dise_workbook <- function(paths, registry_row) {
   exdir <- tempfile("dise-workbook-")
   dir.create(exdir, recursive = TRUE)
   utils::unzip(source, files = member, exdir = exdir)
-  file.path(exdir, member)
+  normalize_dise_workbook_extension(file.path(exdir, member))
 }
 
 dise_machine_header_score <- function(values) {

@@ -565,6 +565,31 @@ test_that("DISE state aliases used by archived reports canonicalize to lineage s
   )
 })
 
+test_that("DISE workbook materialization follows file signature over a wrong extension", {
+  need_pkg("readxl", "DISE workbook-format test")
+  source <- tempfile(fileext = ".xls")
+  writeBin(
+    as.raw(c(0x50, 0x4B, 0x03, 0x04, rep(0x00, 12))),
+    source
+  )
+
+  normalized <- normalize_dise_workbook_extension(source)
+
+  expect_identical(readxl::format_from_signature(normalized), "xlsx")
+  expect_identical(tolower(tools::file_ext(normalized)), "xlsx")
+  expect_identical(readBin(normalized, "raw", n = 16L), readBin(source, "raw", n = 16L))
+})
+
+test_that("DISE workbook materialization leaves extension-correct files alone", {
+  source <- tempfile(fileext = ".xlsx")
+  writeBin(
+    as.raw(c(0x50, 0x4B, 0x03, 0x04, rep(0x00, 12))),
+    source
+  )
+
+  expect_identical(normalize_dise_workbook_extension(source), source)
+})
+
 test_that("DISE machine-header selection prefers machine fields over human labels", {
   preview <- data.frame(
     V1 = c("State Code", "statecd"),
