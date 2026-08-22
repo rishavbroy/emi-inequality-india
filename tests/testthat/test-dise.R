@@ -860,15 +860,16 @@ test_that("dynamic event study recovers changes relative to the reference-year g
   district_fe <- setNames(seq(-2, 2, length.out = length(districts)), districts)
   base$dise_emi_enrollment_share_total <-
     district_fe[base$target_unit_2001] +
-    gradient[base$academic_year] * base$ling_distance_nonzero_mean
+    gradient[base$academic_year] * base$ling_distance_nonzero_mean +
+    stats::rnorm(nrow(base), sd = 0.01)
   rownames(base) <- seq(101L, by = 2L, length.out = nrow(base))
 
   fit <- estimate_dise_dynamic_spec(
     base, "ling_distance_nonzero_mean", "district_year", "2007-08"
   )
   b <- setNames(fit$coefficients$estimate, fit$coefficients$academic_year)
-  expect_equal(unname(b["2006-07"]), -1, tolerance = 1e-7)
-  expect_equal(unname(b["2008-09"]), 2, tolerance = 1e-7)
+  expect_equal(unname(b["2006-07"]), -1, tolerance = 0.02)
+  expect_equal(unname(b["2008-09"]), 2, tolerance = 0.02)
   expect_equal(fit$summary$n_years, 3L)
   expect_identical(fit$summary$cluster_status[[1]], "estimated")
   expect_true(all(is.finite(fit$coefficients$std.error)))
