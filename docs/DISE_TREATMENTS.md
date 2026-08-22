@@ -57,6 +57,8 @@ Baseline DISE counts are harmonized to the same Census-2001 district units used 
 
 A DISE district is eligible when its canonical state/district identity either matches a Census-2001 district directly or appears in the reviewed NSS lineage with a deterministic weight-one mapping to exactly one Census-2001 target. Conflicting candidate targets and mappings that require fractional allocation remain unresolved. Population-allocation weights are never applied to school counts.
 
+The bridge treats an empty candidate source as an ordinary no-evidence condition: an empty Census registry slice or an empty deterministic reviewed-lineage slice yields a typed zero-row candidate table, not an error. A DISE identity with no surviving candidate is explicitly labeled `unresolved_no_deterministic_lineage`.
+
 When multiple DISE districts deterministically map to the same Census-2001 parent, the pipeline sums English enrollment and total enrollment first and recomputes EMI from those pooled counts. It never averages child-district percentages. The pooled 2005-06 to 2007-08 treatment is then constructed from the harmonized annual counts and still requires all three academic years.
 
 The extended DISE output writes both `dise_lineage_bridge.csv` and `dise_district_year_2001.csv` so the geographic recovery is reviewable independently of the regression results.

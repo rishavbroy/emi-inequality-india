@@ -339,6 +339,77 @@ test_that("DISE diagnostic saver returns the repository-standard output manifest
   expect_true(all(file.exists(manifest$path)))
 })
 
+test_that("DISE lineage candidate constructors preserve empty schemas", {
+  admin <- data.frame(
+    unit_id = character(),
+    state_std = character(),
+    district_std = character(),
+    stringsAsFactors = FALSE
+  )
+  roster <- data.frame(
+    source_row_id = character(),
+    state_std = character(),
+    district_std = character(),
+    stringsAsFactors = FALSE
+  )
+  reviewed <- data.frame(
+    source_row_id = character(),
+    target_unit_2001 = character(),
+    weight = numeric(),
+    panel_variant = character(),
+    stringsAsFactors = FALSE
+  )
+
+  admin_candidates <- dise_admin_2001_candidates(admin)
+  reviewed_candidates <- dise_reviewed_lineage_candidates(roster, reviewed)
+
+  expect_equal(nrow(admin_candidates), 0L)
+  expect_equal(nrow(reviewed_candidates), 0L)
+  expect_identical(
+    names(admin_candidates),
+    c("state_key", "district_key", "target_unit_2001", "bridge_source")
+  )
+  expect_identical(names(reviewed_candidates), names(admin_candidates))
+})
+
+test_that("DISE lineage bridge permits absent candidate sources", {
+  dise <- data.frame(
+    academic_year = "2007-08",
+    state_name_dise = "State",
+    district_name_dise = "Unmatched",
+    stringsAsFactors = FALSE
+  )
+  admin <- data.frame(
+    unit_id = character(),
+    state_std = character(),
+    district_std = character(),
+    stringsAsFactors = FALSE
+  )
+  roster <- data.frame(
+    source_row_id = character(),
+    state_std = character(),
+    district_std = character(),
+    stringsAsFactors = FALSE
+  )
+  reviewed <- data.frame(
+    source_row_id = character(),
+    target_unit_2001 = character(),
+    weight = numeric(),
+    panel_variant = character(),
+    stringsAsFactors = FALSE
+  )
+
+  bridge <- build_dise_deterministic_lineage_bridge(dise, roster, reviewed, admin)
+
+  expect_equal(nrow(bridge), 1L)
+  expect_true(is.na(bridge$target_unit_2001[[1]]))
+  expect_equal(bridge$n_candidate_targets[[1]], 0L)
+  expect_identical(
+    bridge$bridge_status[[1]],
+    "unresolved_no_deterministic_lineage"
+  )
+})
+
 test_that("DISE deterministic lineage bridge accepts only one weight-one Census-2001 target", {
   dise <- data.frame(
     academic_year = c("2007-08", "2007-08", "2007-08"),

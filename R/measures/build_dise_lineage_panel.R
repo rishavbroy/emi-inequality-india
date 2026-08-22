@@ -16,6 +16,29 @@ dise_identity_table <- function(district_year) {
   out
 }
 
+dise_lineage_candidates <- function(state, district, target, source) {
+  n <- length(target)
+  if (!length(state) && !length(district) && !n) {
+    return(data.frame(
+      state_key = character(),
+      district_key = character(),
+      target_unit_2001 = character(),
+      bridge_source = character(),
+      stringsAsFactors = FALSE
+    ))
+  }
+  if (length(state) != n || length(district) != n) {
+    stop("DISE lineage candidate fields must have equal lengths.", call. = FALSE)
+  }
+  data.frame(
+    state_key = canonicalize_state_name(state),
+    district_key = canonicalize_district_name(district),
+    target_unit_2001 = plain_chr(target),
+    bridge_source = rep(source, n),
+    stringsAsFactors = FALSE
+  )
+}
+
 dise_reviewed_lineage_candidates <- function(nss_source_roster, full_reviewed_source_crosswalk) {
   roster <- safe_df(nss_source_roster)
   crosswalk <- safe_df(full_reviewed_source_crosswalk)
@@ -31,12 +54,11 @@ dise_reviewed_lineage_candidates <- function(nss_source_roster, full_reviewed_so
     c("source_row_id", "target_unit_2001"), drop = FALSE
   ]
   out <- merge(roster[required_roster], deterministic, by = "source_row_id", all = FALSE, sort = FALSE)
-  unique(data.frame(
-    state_key = canonicalize_state_name(out$state_std),
-    district_key = canonicalize_district_name(out$district_std),
-    target_unit_2001 = plain_chr(out$target_unit_2001),
-    bridge_source = "reviewed_deterministic_nss_lineage",
-    stringsAsFactors = FALSE
+  unique(dise_lineage_candidates(
+    out$state_std,
+    out$district_std,
+    out$target_unit_2001,
+    "reviewed_deterministic_nss_lineage"
   ))
 }
 
@@ -46,12 +68,11 @@ dise_admin_2001_candidates <- function(admin_units_2001) {
   if (!all(required %in% names(admin))) {
     stop("Census-2001 administrative registry lacks required DISE bridge fields.", call. = FALSE)
   }
-  unique(data.frame(
-    state_key = canonicalize_state_name(admin$state_std),
-    district_key = canonicalize_district_name(admin$district_std),
-    target_unit_2001 = plain_chr(admin$unit_id),
-    bridge_source = "exact_census_2001_identity",
-    stringsAsFactors = FALSE
+  unique(dise_lineage_candidates(
+    admin$state_std,
+    admin$district_std,
+    admin$unit_id,
+    "exact_census_2001_identity"
   ))
 }
 
