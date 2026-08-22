@@ -52,7 +52,7 @@ Language resolution is deliberately language-specific. If a report card explicit
 
 ## Longitudinal administrative EMI
 
-For 2015-16, the reader resolves the five medium-code/enrollment slot families from the normalized machine schema rather than assuming unsuffixed column names. Official UDISE codes identify Hindi as `04` and English as `19`. A slot is harmlessly absent only when both its medium identity and enrollment are absent. Any positive enrollment under an unidentified/zero-coded slot, or any identified positive medium code whose enrollment is unobserved, makes the district's language-specific counts unresolved.
+For 2015-16, the shared workbook reader treats the selected machine-header row as the canonical column schema; downstream medium decoding therefore uses the normalized `m1`-`m5` and `enre*` names directly instead of rediscovering them through a second schema layer. Official UDISE codes identify Hindi as `04` and English as `19`. A slot is harmlessly absent only when both its medium identity and enrollment are absent. Any positive enrollment under an unidentified/zero-coded slot, or any identified positive medium code whose enrollment is unobserved, makes the district's language-specific counts unresolved.
 
 The extended pipeline now constructs a 2005-06 through 2015-16 district-year EMI panel on Census-2001 geography. Baseline years use validated raw medium slots; 2008-09 through 2014-15 combine raw administrative enrollment denominators with report-card-derived English/Hindi counts; 2015-16 uses the workbook's explicit medium codes and enrollment blocks. The official UDISE coding convention identifies Hindi as 04 and English as 19.
 

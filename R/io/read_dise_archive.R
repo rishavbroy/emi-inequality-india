@@ -150,6 +150,15 @@ repair_dise_machine_names <- function(names) {
   make.unique(names)
 }
 
+dise_machine_names_from_preview <- function(preview, header_row) {
+  raw_names <- plain_chr(unlist(preview[header_row, , drop = FALSE], use.names = FALSE))
+  repair_dise_key_names_from_preview(
+    repair_dise_machine_names(raw_names),
+    preview,
+    header_row
+  )
+}
+
 read_dise_machine_sheet <- function(path, sheet) {
   need_pkg("readxl", "archived DISE district-report-card workbooks")
   if (!sheet %in% readxl::excel_sheets(path)) {
@@ -159,14 +168,22 @@ read_dise_machine_sheet <- function(path, sheet) {
     path, sheet = sheet, col_names = FALSE, n_max = 40L, .name_repair = "minimal"
   )
   header_row <- find_dise_machine_header_row(preview)
+  machine_names <- dise_machine_names_from_preview(preview, header_row)
   out <- safe_df(readxl::read_excel(
-    path, sheet = sheet, skip = header_row - 1L, .name_repair = "minimal"
+    path,
+    sheet = sheet,
+    skip = header_row,
+    col_names = FALSE,
+    .name_repair = "minimal"
   ))
-  names(out) <- repair_dise_key_names_from_preview(
-    repair_dise_machine_names(names(out)),
-    preview,
-    header_row
-  )
+  if (ncol(out) > length(machine_names)) {
+    stop(
+      "DISE data rows contain more columns than the selected machine header ",
+      "[sheet=", sheet, ", header_row=", header_row, ", path=", path, "].",
+      call. = FALSE
+    )
+  }
+  names(out) <- machine_names[seq_len(ncol(out))]
   required <- c("statename", "distcd", "distname")
   missing <- setdiff(required, names(out))
   if (length(missing)) {
@@ -350,51 +367,28 @@ attach_dise_report_language_counts <- function(data, report) {
   out
 }
 
-dise_unique_machine_column <- function(data, pattern, label) {
-  hits <- grep(pattern, names(data), value = TRUE)
-  if (length(hits) != 1L) {
+extract_dise_2015_medium_counts <- function(data) {
+  data <- safe_df(data)
+  code_columns <- paste0("m", 1:5)
+  missing <- setdiff(c("distcd", code_columns), names(data))
+  if (length(missing)) {
     stop(
-      "Expected exactly one DISE ", label, " column matching '", pattern,
-      "'; found ", length(hits), ".",
+      "DISE 2015-16 medium sheet is missing canonical columns: ",
+      paste(missing, collapse = ", "),
+      ".",
       call. = FALSE
     )
   }
-  hits[[1]]
-}
 
-dise_2015_medium_schema <- function(data) {
-  safe_bind_rows(lapply(1:5, function(slot) {
-    code_column <- dise_unique_machine_column(
-      data,
-      paste0("^m", slot, "($|[._][0-9]+$)"),
-      paste0("2015-16 medium-code slot ", slot)
-    )
-    enrollment_columns <- grep(
-      paste0("^enre", slot, "[1-7]($|[._][0-9]+$)"),
-      names(data),
-      value = TRUE
-    )
-    data.frame(
-      slot = slot,
-      code_column = code_column,
-      enrollment_columns = paste(enrollment_columns, collapse = ";"),
-      stringsAsFactors = FALSE
-    )
-  }))
-}
-
-extract_dise_2015_medium_counts <- function(data) {
-  data <- safe_df(data)
-  schema <- dise_2015_medium_schema(data)
   out <- data.frame(
     district_code_dise = plain_chr(data$distcd),
     stringsAsFactors = FALSE
   )
-  for (slot in schema$slot) {
-    row <- schema[schema$slot == slot, , drop = FALSE]
-    count_columns <- strsplit(row$enrollment_columns[[1]], ";", fixed = TRUE)[[1]]
-    out[[paste0("medium_code_", slot)]] <- num(data[[row$code_column[[1]]]])
-    out[[paste0("medium_enrollment_", slot)]] <- row_sum_available(data, count_columns)
+  for (slot in 1:5) {
+    count_columns <- intersect(paste0("enre", slot, 1:7), names(data))
+    out[[paste0("medium_code_", slot)]] <- num(data[[code_columns[[slot]]]])
+    out[[paste0("medium_enrollment_", slot)]] <-
+      row_sum_available(data, count_columns)
   }
   language_count <- function(code) {
     vapply(seq_len(nrow(out)), function(i) {

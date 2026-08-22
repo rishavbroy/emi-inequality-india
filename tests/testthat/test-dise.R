@@ -590,6 +590,21 @@ test_that("DISE workbook materialization leaves extension-correct files alone", 
   expect_identical(normalize_dise_workbook_extension(source), source)
 })
 
+test_that("DISE machine-sheet names come from the selected machine header", {
+  preview <- as.data.frame(
+    rbind(
+      c("District Code", "State Name", "District Name", "Medium 1", "Enrollment"),
+      c("DISTCD", "STATNAME", "DISTNAME", "M1", "ENRE11")
+    ),
+    stringsAsFactors = FALSE
+  )
+
+  expect_identical(
+    dise_machine_names_from_preview(preview, 2L),
+    c("distcd", "statename", "distname", "m1", "enre11")
+  )
+})
+
 test_that("DISE machine-header selection prefers machine fields over human labels", {
   preview <- data.frame(
     V1 = c("State Code", "statecd"),
@@ -729,26 +744,6 @@ test_that("later report attachment never interprets absent English as zero", {
   expect_equal(out$dise_hindi_enrollment, 80)
 })
 
-test_that("2015 medium schema resolves readxl-style unique-name suffixes", {
-  data <- data.frame(
-    distcd = "0101",
-    m1.1 = 19, m2.1 = 4, m3.1 = 0, m4.1 = 0, m5.1 = 0,
-    enre11.1 = 40, enre12.1 = 10,
-    enre21.1 = 30, enre22.1 = 20,
-    enre31.1 = 0, enre41.1 = 0, enre51.1 = 0,
-    check.names = FALSE,
-    stringsAsFactors = FALSE
-  )
-
-  schema <- dise_2015_medium_schema(data)
-  out <- extract_dise_2015_medium_counts(data)
-
-  expect_identical(schema$slot, 1:5)
-  expect_identical(schema$code_column, paste0("m", 1:5, ".1"))
-  expect_equal(out$dise_english_enrollment, 50)
-  expect_equal(out$dise_hindi_enrollment, 50)
-})
-
 test_that("2015 positive enrollment under an unidentified medium remains unresolved", {
   data <- data.frame(
     distcd = "0101",
@@ -784,7 +779,7 @@ test_that("2015 missing enrollment blocks are harmless only for absent medium co
   expect_true(is.na(out$dise_hindi_enrollment[[2]]))
 })
 
-test_that("2015 medium schema fails explicitly when a code slot is absent", {
+test_that("2015 medium decoder requires canonical code columns", {
   data <- data.frame(
     distcd = "0101",
     m1 = 19, m2 = 4, m3 = 0, m4 = 0,
@@ -793,8 +788,8 @@ test_that("2015 medium schema fails explicitly when a code slot is absent", {
   )
 
   expect_error(
-    dise_2015_medium_schema(data),
-    "medium-code slot 5"
+    extract_dise_2015_medium_counts(data),
+    "missing canonical columns: m5"
   )
 })
 
