@@ -777,6 +777,9 @@ test_that("2015 missing enrollment blocks are harmless only for absent medium co
 
   expect_equal(out$dise_english_enrollment[[1]], 40)
   expect_equal(out$dise_hindi_enrollment[[1]], 30)
+  expect_false(is.na(out$dise_english_enrollment[[1]]))
+  expect_false(is.na(out$dise_hindi_enrollment[[1]]))
+
   expect_true(is.na(out$dise_english_enrollment[[2]]))
   expect_true(is.na(out$dise_hindi_enrollment[[2]]))
 })

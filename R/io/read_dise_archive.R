@@ -410,7 +410,10 @@ extract_dise_2015_medium_counts <- function(data) {
       )
       identified <- is.finite(codes) & codes > 0
       unresolved_positive <- !identified & is.finite(counts) & counts > 0
-      if (any(unresolved_positive)) return(NA_real_)
+      unresolved_identified <- identified & !is.finite(counts)
+      if (any(unresolved_positive) || any(unresolved_identified)) {
+        return(NA_real_)
+      }
 
       hit <- identified & codes == code
       if (!any(hit)) return(0)

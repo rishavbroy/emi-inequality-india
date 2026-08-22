@@ -52,7 +52,7 @@ Language resolution is deliberately language-specific. If a report card explicit
 
 ## Longitudinal administrative EMI
 
-For 2015-16, the reader resolves the five medium-code/enrollment slot families from the normalized machine schema rather than assuming unsuffixed column names. Official UDISE codes identify Hindi as `04` and English as `19`. Code `0` is not a language identity: any positive enrollment attached to an unidentified/zero-coded slot keeps English/Hindi enrollment unresolved.
+For 2015-16, the reader resolves the five medium-code/enrollment slot families from the normalized machine schema rather than assuming unsuffixed column names. Official UDISE codes identify Hindi as `04` and English as `19`. A slot is harmlessly absent only when both its medium identity and enrollment are absent. Any positive enrollment under an unidentified/zero-coded slot, or any identified positive medium code whose enrollment is unobserved, makes the district's language-specific counts unresolved.
 
 The extended pipeline now constructs a 2005-06 through 2015-16 district-year EMI panel on Census-2001 geography. Baseline years use validated raw medium slots; 2008-09 through 2014-15 combine raw administrative enrollment denominators with report-card-derived English/Hindi counts; 2015-16 uses the workbook's explicit medium codes and enrollment blocks. The official UDISE coding convention identifies Hindi as 04 and English as 19.
 
@@ -75,5 +75,3 @@ The bridge treats an empty candidate source as an ordinary no-evidence condition
 When multiple DISE districts deterministically map to the same Census-2001 parent, the pipeline sums English enrollment and total enrollment first and recomputes EMI from those pooled counts. It never averages child-district percentages. The pooled 2005-06 to 2007-08 treatment is then constructed from the harmonized annual counts and still requires all three academic years.
 
 The extended DISE output writes both `dise_lineage_bridge.csv` and `dise_district_year_2001.csv` so the geographic recovery is reviewable independently of the regression results.
-
-For 2015-16, language-specific counts are resolved only when every positive-enrollment medium slot has an identified positive code. Empty enrollment blocks are allowed for absent medium-code slots; a positive code without observed enrollment remains unresolved rather than becoming zero.
