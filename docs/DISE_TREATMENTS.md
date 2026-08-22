@@ -10,6 +10,10 @@ The raw 2005-06 through 2007-08 workbooks store five ordered medium-of-instructi
 
 The 2005-06 workbook also contains a duplicated machine-header block: the third ordered medium block is mislabeled as a second `enr_med2_*` block. The reader repairs medium names from their ordered column blocks before applying ordinary uniqueness repair, so the duplicated header cannot silently erase the third medium. This is a source-schema repair only; the report-card crosswalk still supplies the language identity.
 
+Historical workbooks also contain a human-readable header row immediately above the machine-name row. The reader therefore selects the unique highest-scoring machine row rather than requiring only one row to contain district/state labels. This matters after normalizing aliases such as `State Code` to `statecd`: both human and machine rows can otherwise look superficially valid.
+
+The 2010-11 enrollment workbook has the documented Kupwara header/data collision: the machine-name row contains `statecd` and the enrollment field names, while the district-code/name cells contain Kupwara data. The reader repairs only those key column names from the preceding human header row so later district rows remain machine-readable; it does not reconstruct or impute the lost Kupwara enrollment row.
+
 The 2009-10 `DRC 2009-10.pdf` is a provisional 635-district combined report. Its pages overlapping the final Volume I reproduce the published numeric report-card values and it is retained as a fallback/validation source for the otherwise unavailable Volume II; final Volume I remains preferred wherever both exist.
 
 ## Baseline administrative measures

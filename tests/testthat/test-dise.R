@@ -565,6 +565,44 @@ test_that("DISE state aliases used by archived reports canonicalize to lineage s
   )
 })
 
+test_that("DISE machine-header selection prefers machine fields over human labels", {
+  preview <- data.frame(
+    V1 = c("State Code", "statecd"),
+    V2 = c("State Name", "statename"),
+    V3 = c("District Code", "distcd"),
+    V4 = c("District Name", "distname"),
+    V5 = c("Primary", "enr_govt1"),
+    V6 = c("Upper Primary", "enr_govt2"),
+    V7 = c("Girls", "enr_cy_c1"),
+    stringsAsFactors = FALSE
+  )
+
+  expect_identical(find_dise_machine_header_row(preview), 2L)
+})
+
+test_that("DISE key repair handles the documented 2010-11 header-data collision", {
+  preview <- data.frame(
+    V1 = c("State Code", "statecd"),
+    V2 = c("State Name", "State Name"),
+    V3 = c("District Code", "101"),
+    V4 = c("District Name", "Kupwara"),
+    V5 = c("Primary", "enr_govt1"),
+    V6 = c("Upper Primary", "enr_govt2"),
+    stringsAsFactors = FALSE
+  )
+  repaired <- repair_dise_key_names_from_preview(
+    repair_dise_machine_names(unlist(preview[2, ], use.names = FALSE)),
+    preview,
+    2L
+  )
+
+  expect_identical(
+    repaired[1:4],
+    c("statecd", "statename", "distcd", "distname")
+  )
+  expect_identical(repaired[5:6], c("enr_govt1", "enr_govt2"))
+})
+
 test_that("DISE machine-name normalization handles later workbook labels", {
   repaired <- repair_dise_machine_names(c(
     "State Code", "State Name", "District Code", "District Name",

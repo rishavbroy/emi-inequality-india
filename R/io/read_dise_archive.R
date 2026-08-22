@@ -38,18 +38,52 @@ materialize_dise_workbook <- function(paths, registry_row) {
   file.path(exdir, member)
 }
 
+dise_machine_header_score <- function(values) {
+  row <- repair_dise_machine_names(values)
+  key_score <- sum(row %in% c("statecd", "statename", "distcd", "distname"))
+  machine_score <- sum(grepl(
+    "^(enr_|sch[0-9]|m[1-5]$|enre[0-9]|c[0-9]+_[bg]$)",
+    row
+  ))
+  key_score + machine_score
+}
+
 find_dise_machine_header_row <- function(preview) {
-  hits <- which(vapply(seq_len(nrow(preview)), function(i) {
-    row <- repair_dise_machine_names(
+  scores <- vapply(seq_len(nrow(preview)), function(i) {
+    dise_machine_header_score(
       plain_chr(unlist(preview[i, , drop = FALSE], use.names = FALSE))
     )
-    "distcd" %in% row && "distname" %in% row &&
-      any(c("statecd", "statename") %in% row)
-  }, logical(1)))
+  }, numeric(1))
+  best <- max(scores, na.rm = TRUE)
+  hits <- which(scores == best & scores > 4)
   if (length(hits) != 1L) {
-    stop("Expected exactly one DISE machine-name header row; found ", length(hits), ".", call. = FALSE)
+    stop(
+      "Expected one highest-scoring DISE machine-name header row; found ",
+      length(hits),
+      " (best score = ",
+      best,
+      ").",
+      call. = FALSE
+    )
   }
   hits[[1]]
+}
+
+repair_dise_key_names_from_preview <- function(names, preview, header_row) {
+  required <- c("statename", "distcd", "distname")
+  if (all(required %in% names)) return(names)
+  prior_rows <- seq_len(max(0L, header_row - 1L))
+  if (!length(prior_rows)) return(names)
+  for (i in rev(prior_rows)) {
+    prior <- repair_dise_machine_names(
+      plain_chr(unlist(preview[i, , drop = FALSE], use.names = FALSE))
+    )
+    key_positions <- which(prior %in% c("statecd", "statename", "distcd", "distname"))
+    if (!length(key_positions)) next
+    names[key_positions] <- prior[key_positions]
+    if (all(required %in% names)) break
+  }
+  make.unique(names)
 }
 
 repair_dise_machine_names <- function(names) {
@@ -95,7 +129,11 @@ read_dise_machine_sheet <- function(path, sheet) {
   out <- safe_df(readxl::read_excel(
     path, sheet = sheet, skip = header_row - 1L, .name_repair = "minimal"
   ))
-  names(out) <- repair_dise_machine_names(names(out))
+  names(out) <- repair_dise_key_names_from_preview(
+    repair_dise_machine_names(names(out)),
+    preview,
+    header_row
+  )
   required <- c("statename", "distcd", "distname")
   missing <- setdiff(required, names(out))
   if (length(missing)) stop("DISE sheet is missing key columns: ", paste(missing, collapse = ", "), call. = FALSE)
