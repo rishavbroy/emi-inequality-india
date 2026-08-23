@@ -28,8 +28,8 @@ The canonical raw source directories are:
 - `data/raw/census_2001/religion/C01/`
 - `data/raw/census_2001/education/C08/`
 - `data/raw/census_2001/age/C14/`
-- `data/raw/census_2001/age/C13/` (planned elementary-age exposure)
-- `data/raw/census_2011/age/C13/` (planned elementary-age exposure)
+- `data/raw/census_2001/age/C13/` (elementary-age DISE exposure denominator)
+- `data/raw/census_2011/age/C13/` (elementary-age DISE exposure denominator)
 - `data/raw/census_2001/housing/H09/`
 - `data/raw/district_boundaries_2020/`
 - `data/raw/district_changes/`
@@ -42,7 +42,7 @@ make download-census-tables
 
 This runs `bash scripts/download_census_tables.sh`, which processes both `data/metadata/census_2001_download_manifest.tsv` and `data/metadata/census_2011_download_manifest.tsv` by default. The downloader creates missing destination directories, contacts Census of India only for missing or empty files, and writes through a temporary `.part` file before the final rename. A specific manifest can still be supplied explicitly as a script argument.
 
-The 2001 C-13 workbooks are stored under `data/raw/census_2001/age/C13/`; the 2011 C-13 workbooks are stored under `data/raw/census_2011/age/C13/`. These acquisition manifests are intentionally broader than the production `data/metadata/file_manifest.csv`: downloading a planned table does not make it a current build dependency.
+The 2001 C-13 workbooks are stored under `data/raw/census_2001/age/C13/`; the 2011 C-13 workbooks are stored under `data/raw/census_2011/age/C13/`. They are required by the extended DISE diagnostics that construct the ages-6-13 administrative exposure denominator. The acquisition manifests remain separate from the production `data/metadata/file_manifest.csv` because the public core pipeline does not require these workbooks unless extended diagnostics are enabled.
 
 ## Optional district-lineage inputs
 
