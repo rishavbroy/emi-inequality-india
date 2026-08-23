@@ -18,6 +18,8 @@ Key columns are recovered positionally from the local header block (the selected
 
 The 2009-10 `DRC 2009-10.pdf` is a provisional 635-district combined report. Its pages overlapping the final Volume I reproduce the published numeric report-card values and it is retained as a fallback/validation source for the otherwise unavailable Volume II; final Volume I remains preferred wherever both exist.
 
+The tracked 2008-09 through 2014-15 report-language CSV has an offline maintainer at `scripts/build_dise_report_language_enrollment.py`. The script deliberately treats the CSV's reviewed PDF/page fields as provenance rather than attempting to rediscover district pages heuristically. It validates every source PDF against `dise_archive_registry.csv`, extracts one registered page at a time with `pdftotext -layout`, supports the two documented medium-of-instruction table orientations, and refuses to infer a total when the page lacks an explicit total row/column. With no `--output` argument it verifies the rebuilt numeric counts against the tracked CSV; `--output` writes a candidate extraction for review. This maintainer is not part of `_targets.R`, so ordinary replication does not acquire a Poppler dependency.
+
 ## Baseline administrative measures
 
 The first implementation deliberately limits treatment construction to 2005-06 through 2007-08, the baseline period required to diagnose the current IV relevance problem. It constructs:
