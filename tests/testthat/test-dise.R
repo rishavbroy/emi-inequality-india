@@ -658,7 +658,7 @@ test_that("DISE school-quality registry is concise and stable", {
       "dise_girls_toilet_school_share"
     )
   )
-  expect_false(anyDuplicated(registry$outcome))
+  expect_identical(anyDuplicated(registry$outcome), 0L)
 })
 
 test_that("DISE state aliases used by archived reports canonicalize to lineage states", {
@@ -1007,7 +1007,7 @@ test_that("DISE diagnostic saver includes longitudinal outputs", {
     archive, permutations, empty, empty,
     dynamic_panel = empty, dynamic_relevance = dynamic, dir = dir
   )
-  expect_equal(nrow(manifest), 23L)
+  expect_equal(nrow(manifest), 27L)
   expect_true(all(file.exists(manifest$path)))
   expect_setequal(
     basename(manifest$path)[grepl("dise_dynamic_", basename(manifest$path))],

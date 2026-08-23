@@ -151,9 +151,13 @@ harmonize_dise_counts_to_2001 <- function(district_year, bridge) {
     for (nm in count_columns) row[[nm]] <- sum_complete_counts(part[[nm]])
     row
   }))
-  out$dise_english_identity_resolved <- is.finite(out$dise_english_enrollment)
-  out$dise_hindi_identity_resolved <- is.finite(out$dise_hindi_enrollment)
-  out <- finalize_dise_language_measure(out)
+  if (all(c(
+    "dise_english_enrollment", "dise_hindi_enrollment", "dise_total_enrollment"
+  ) %in% names(out))) {
+    out$dise_english_identity_resolved <- is.finite(out$dise_english_enrollment)
+    out$dise_hindi_identity_resolved <- is.finite(out$dise_hindi_enrollment)
+    out <- finalize_dise_language_measure(out)
+  }
   if (all(c("dise_private_enrollment", "dise_government_enrollment") %in% names(out))) {
     management <- out$dise_private_enrollment + out$dise_government_enrollment
     out$dise_private_enrollment_share <- ifelse(
