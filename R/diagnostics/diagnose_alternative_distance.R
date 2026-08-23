@@ -90,13 +90,19 @@ estimate_alternative_distance_spec <- function(data, specification, treatment) {
   list(summary = summary, coefficients = coefficients)
 }
 
-prepare_alternative_distance_panel <- function(panel, treatment = "emi_exposure_all_children_0708") {
+prepare_alternative_distance_panel <- function(
+  panel,
+  treatment = "emi_exposure_all_children_0708",
+  retain = character()
+) {
   x <- if (inherits(panel, "sf")) sf::st_drop_geometry(panel) else as.data.frame(panel, stringsAsFactors = FALSE)
   needed <- unique(c(
     treatment, "state_code_2001", "district_code_2001", "region",
     census_2001_diagnostic_controls(), alternative_distance_variables()
   ))
-  missing <- setdiff(needed, names(x))
+  retain <- setdiff(unique(plain_chr(retain)), needed)
+  required <- unique(c(needed, retain))
+  missing <- setdiff(required, names(x))
   if (length(missing)) stop("Alternative-distance panel is missing columns: ", paste(missing, collapse = ", "), call. = FALSE)
   numeric_vars <- setdiff(needed, c("state_code_2001", "district_code_2001", "region"))
   for (variable in numeric_vars) x[[variable]] <- num(x[[variable]])
@@ -106,7 +112,7 @@ prepare_alternative_distance_panel <- function(panel, treatment = "emi_exposure_
     x$district_panel_id <- make_district_key(x$state_code_2001, x$district_code_2001, 2001L)
   }
   x$region <- as.character(x$region)
-  x <- x[unique(c(needed, "district_panel_id"))]
+  x <- x[unique(c(needed, retain, "district_panel_id"))]
   keep <- stats::complete.cases(x[needed]) & nzchar(x$state_code_2001) &
     nzchar(x$district_code_2001) & nzchar(x$region)
   x <- x[keep, , drop = FALSE]
@@ -384,8 +390,11 @@ estimate_weak_iv_outcomes <- function(
   outcome = "real_log_consumption_change",
   treatment = "emi_exposure_all_children_0708"
 ) {
-  data <- prepare_alternative_distance_panel(panel, treatment)
-  if (!outcome %in% names(data)) stop("Weak-IV outcome panel is missing ", outcome, ".", call. = FALSE)
+  data <- prepare_alternative_distance_panel(
+    panel,
+    treatment,
+    retain = outcome
+  )
   registry <- iv_diagnostic_specification_registry(outcome = outcome, treatment = treatment)
   estimated <- lapply(seq_len(nrow(registry)), function(i) {
     spec <- registry[i, , drop = FALSE]
@@ -553,7 +562,6 @@ augment_alternative_distance_diagnostics <- function(
   glottolog_crosswalk = NULL
 ) {
   if (!inherits(diagnostics, "emi_alternative_distance_first_stages")) stop("Expected alternative-distance diagnostics.", call. = FALSE)
-  data <- prepare_alternative_distance_panel(panel, diagnostics$common_support$treatment[[1]])
   diagnostics$distance4_languages <- distance_four_language_decomposition(
     census_2001_languages, panel, glottolog, glottolog_crosswalk
   )
