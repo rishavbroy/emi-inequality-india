@@ -274,10 +274,33 @@ test_that("Census download manifest is canonical acquisition metadata", {
   }, logical(1))))
 })
 
-test_that("tracked checksum inventory includes the Census acquisition manifest", {
+test_that("tracked checksum inventory is complete and current", {
   root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
-  checksums <- read.csv(file.path(root, "data", "metadata", "checksums.csv"), stringsAsFactors = FALSE)
-  expect_true("data/metadata/census_2001_download_manifest.tsv" %in% checksums$path)
+  metadata <- list.files(
+    file.path(root, "data", "metadata"),
+    pattern = "\\.(csv|tsv)$",
+    full.names = TRUE
+  )
+  processed <- list.files(
+    file.path(root, "data", "processed"),
+    pattern = "\\.csv$",
+    full.names = TRUE
+  )
+  tracked <- sort(unique(c(metadata, processed)))
+  tracked <- setdiff(tracked, file.path(root, "data", "metadata", "checksums.csv"))
+  relative <- substring(tracked, nchar(root) + 2L)
+
+  checksums <- read.csv(
+    file.path(root, "data", "metadata", "checksums.csv"),
+    stringsAsFactors = FALSE
+  )
+
+  expect_equal(anyDuplicated(checksums$path), 0L)
+  expect_setequal(checksums$path, relative)
+  expect_identical(
+    unname(tools::md5sum(tracked[match(checksums$path, relative)])),
+    checksums$md5
+  )
 })
 
 test_that("Glottolog 5.3 source bundle is versioned and complete", {
