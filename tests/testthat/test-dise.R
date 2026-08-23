@@ -1225,13 +1225,14 @@ test_that("DISE school-quality diagnostics combine predetermined raw and later r
   ))
   report <- do.call(rbind, lapply(seq_along(c("2011-12", "2012-13", "2013-14", "2014-15")), function(i) {
     year <- c("2011-12", "2012-13", "2013-14", "2014-15")[[i]]
+    residual <- 0.2 * sin(seq_along(districts) + 1.7 * i)
     data.frame(
       target_unit_2001 = districts,
       academic_year = year,
       dise_report_school_quality_status = "one_to_one_report_ratio",
-      dise_report_pupils_per_teacher = 25 + i * distance,
-      dise_report_single_teacher_school_share = 10 + 2 * i * distance,
-      dise_report_girls_toilet_school_share = 60 + 3 * i * distance,
+      dise_report_pupils_per_teacher = 25 + i * distance + residual,
+      dise_report_single_teacher_school_share = 10 + 2 * i * distance + residual,
+      dise_report_girls_toilet_school_share = 60 + 3 * i * distance + residual,
       girls_toilet_definition = ifelse(
         year == "2011-12", "all_schools", "girls_and_coeducational_schools"
       ),
@@ -1357,6 +1358,31 @@ test_that("later DISE ENRTOT cannot override complete grade-I-VIII counts", {
   expect_equal(out$dise_direct_enrollment, 100000)
   expect_equal(out$dise_total_enrollment, 10000)
   expect_identical(out$dise_total_enrollment_source, "grade_i_viii_sum")
+})
+
+test_that("DISE count harmonization does not require diagnostic bridge provenance", {
+  district_year <- data.frame(
+    academic_year = "2007-08",
+    state_name_dise = "State",
+    district_name_dise = "District",
+    dise_english_enrollment = 25,
+    dise_hindi_enrollment = 25,
+    dise_total_enrollment = 100,
+    stringsAsFactors = FALSE
+  )
+  bridge <- data.frame(
+    state_key = "state",
+    district_key = "district",
+    target_unit_2001 = "pc2001__01__01",
+    bridge_status = "deterministic_to_2001",
+    stringsAsFactors = FALSE
+  )
+
+  out <- harmonize_dise_counts_to_2001(district_year, bridge)
+
+  expect_equal(nrow(out), 1L)
+  expect_identical(out$target_unit_2001, "pc2001__01__01")
+  expect_equal(out$dise_emi_enrollment_share_total, 25)
 })
 
 test_that("published 2010-11 report totals remain authoritative after lineage pooling", {

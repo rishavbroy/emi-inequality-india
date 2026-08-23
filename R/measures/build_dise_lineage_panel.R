@@ -176,11 +176,22 @@ harmonize_dise_report_school_quality_to_2001 <- function(report_quality, bridge)
 harmonize_dise_counts_to_2001 <- function(district_year, bridge) {
   x <- safe_df(district_year)
   bridge <- safe_df(bridge)
+  required_bridge <- c(
+    "state_key", "district_key", "target_unit_2001", "bridge_status"
+  )
+  missing_bridge <- setdiff(required_bridge, names(bridge))
+  if (length(missing_bridge)) {
+    stop(
+      "DISE lineage bridge is missing required columns: ",
+      paste(missing_bridge, collapse = ", "),
+      call. = FALSE
+    )
+  }
   x$state_key <- canonicalize_state_name(x$state_name_dise)
   x$district_key <- canonicalize_district_name(x$district_name_dise)
   x <- merge(
     x,
-    bridge[c("state_key", "district_key", "target_unit_2001", "bridge_status", "bridge_sources")],
+    bridge[required_bridge],
     by = c("state_key", "district_key"), all.x = TRUE, sort = FALSE
   )
   mapped <- x[
