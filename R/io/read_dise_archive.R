@@ -680,6 +680,7 @@ attach_dise_report_total_enrollment <- function(data, report_totals) {
   use_report <- is.finite(report_total) & report_total >= 0
   out$dise_total_enrollment_raw <- num(out$dise_total_enrollment)
   out$dise_total_enrollment_source_raw <- plain_chr(out$dise_total_enrollment_source)
+  out$dise_report_total_matched <- use_report
   out$dise_report_to_raw_total_ratio <- ifelse(
     use_report &
       is.finite(out$dise_total_enrollment_raw) &
@@ -689,6 +690,15 @@ attach_dise_report_total_enrollment <- function(data, report_totals) {
   )
   out$dise_total_enrollment[use_report] <- report_total[use_report]
   out$dise_total_enrollment_source[use_report] <- "report_card_current_year_total"
+
+  # The archived 2010-11 workbook has district-row alignment corruption, so a
+  # raw total is not a defensible fallback when the published district total
+  # cannot be matched. Preserve raw values above for QA but exclude them from
+  # treatment and mechanism construction.
+  missing_report <- !use_report
+  out$dise_total_enrollment[missing_report] <- NA_real_
+  out$dise_total_enrollment_source[missing_report] <-
+    "unavailable_without_report_total"
   out
 }
 

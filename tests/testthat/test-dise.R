@@ -985,6 +985,66 @@ test_that("2010-11 published totals override corrupt raw enrollment but preserve
   expect_equal(out$dise_report_to_raw_total_ratio, 7482 / 138158)
 })
 
+test_that("2010-11 report totals match historical state spelling variants", {
+  data <- data.frame(
+    academic_year = "2010-11",
+    state_name_dise = "Chhattisgarh",
+    district_name_dise = "Mahasamund",
+    dise_total_enrollment = 731540,
+    dise_total_enrollment_source = "grade_i_viii_sum",
+    stringsAsFactors = FALSE
+  )
+  report <- data.frame(
+    academic_year = "2010-11",
+    state_report = "Chhatisgarh",
+    district_report = "MAHASAMUND",
+    report_total_enrollment = 189286,
+    source_pdf = "report.pdf",
+    source_page = 1L,
+    report_priority = 1L,
+    stringsAsFactors = FALSE
+  )
+
+  out <- attach_dise_report_total_enrollment(data, report)
+
+  expect_true(out$dise_report_total_matched)
+  expect_equal(out$dise_total_enrollment, 189286)
+  expect_identical(out$dise_total_enrollment_source, "report_card_current_year_total")
+  expect_equal(out$dise_total_enrollment_raw, 731540)
+})
+
+test_that("2010-11 corrupt raw totals are never fallback production denominators", {
+  data <- data.frame(
+    academic_year = "2010-11",
+    state_name_dise = "Haryana",
+    district_name_dise = "Ambala",
+    dise_total_enrollment = 76827,
+    dise_total_enrollment_source = "grade_i_viii_sum",
+    stringsAsFactors = FALSE
+  )
+  report <- data.frame(
+    academic_year = character(),
+    state_report = character(),
+    district_report = character(),
+    report_total_enrollment = numeric(),
+    source_pdf = character(),
+    source_page = integer(),
+    report_priority = integer(),
+    stringsAsFactors = FALSE
+  )
+
+  out <- attach_dise_report_total_enrollment(data, report)
+
+  expect_false(out$dise_report_total_matched)
+  expect_true(is.na(out$dise_total_enrollment))
+  expect_identical(
+    out$dise_total_enrollment_source,
+    "unavailable_without_report_total"
+  )
+  expect_equal(out$dise_total_enrollment_raw, 76827)
+  expect_identical(out$dise_total_enrollment_source_raw, "grade_i_viii_sum")
+})
+
 test_that("later report attachment never interprets absent English as zero", {
   data <- data.frame(
     academic_year = "2012-13",
