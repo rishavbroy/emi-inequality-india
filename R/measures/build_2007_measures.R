@@ -126,7 +126,7 @@ english_medium_indicator <- function(x, column_name = NULL) {
 
 #' Prepare one row per 2007 education household for consumption aggregation
 #'
-prepare_2007_consumption_households <- function(nss_2007_education, deflators = NULL) {
+prepare_2007_consumption_households <- function(nss_2007_education, deflators = NULL, survey_spec = NULL) {
   df <- if (inherits(nss_2007_education, "data.frame")) {
     safe_df(nss_2007_education)
   } else {
@@ -144,7 +144,8 @@ prepare_2007_consumption_households <- function(nss_2007_education, deflators = 
     state_candidates = c("state_code", "State", "STATE", "state", "state_std"),
     sector_candidates = c("Sector", "SECTOR", "sector", "Location_sector"),
     subround_candidates = c("Sub_Round", "Sub Round", "sub_round", "subround", "Subround"),
-    deflators = deflators
+    deflators = deflators,
+    survey_spec = survey_spec
   )
 }
 

@@ -55,6 +55,23 @@ core_pipeline_targets <- list(
   tar_target(paths, build_paths()),
   tar_target(raw_manifest, validate_raw_files(paths)),
   tar_target(raw_data_preflight, stop_if_required_files_missing(raw_manifest)),
+  tar_target(
+    consumption_survey_registry_file,
+    consumption_survey_registry_path(paths),
+    format = "file"
+  ),
+  tar_target(
+    consumption_survey_registry,
+    read_consumption_survey_registry_file(consumption_survey_registry_file)
+  ),
+  tar_target(
+    consumption_price_spec_2007_legacy,
+    consumption_survey_spec(consumption_survey_registry, "nss_2007_08_education")
+  ),
+  tar_target(
+    consumption_price_spec_2017_legacy,
+    consumption_survey_spec(consumption_survey_registry, "nss_2017_18_education")
+  ),
 
   tar_target(raw_nss_2007_education, { raw_data_preflight; read_nss_2007_education(paths) }),
   tar_target(raw_nss_2007_consumption, { raw_data_preflight; read_nss_2007_consumption(paths) }),
@@ -101,11 +118,15 @@ core_pipeline_targets <- list(
 
   tar_target(
     consumption_households_2007,
-    prepare_2007_consumption_households(nss_2007_education, state_sector_price_deflators)
+    prepare_2007_consumption_households(
+      nss_2007_education, state_sector_price_deflators, consumption_price_spec_2007_legacy
+    )
   ),
   tar_target(
     consumption_households_2017,
-    prepare_2017_consumption_households(nss_2017_education, state_sector_price_deflators)
+    prepare_2017_consumption_households(
+      nss_2017_education, state_sector_price_deflators, consumption_price_spec_2017_legacy
+    )
   ),
   tar_target(
     measures_2007,

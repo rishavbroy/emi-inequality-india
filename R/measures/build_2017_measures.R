@@ -19,7 +19,7 @@ build_2017_measures <- function(nss_2017_education, cfg, consumption_households 
 
 #' Prepare one row per 2017 education household for consumption aggregation
 #'
-prepare_2017_consumption_households <- function(nss_2017_education, deflators = NULL) {
+prepare_2017_consumption_households <- function(nss_2017_education, deflators = NULL, survey_spec = NULL) {
   inputs <- as_input_list(nss_2017_education)
   df <- std(safe_df(select_input_frame(inputs, c("nss1718edu_block3", "block3", "block"))), 2017L)
   df <- normalize_2017_district_code(df)
@@ -33,7 +33,8 @@ prepare_2017_consumption_households <- function(nss_2017_education, deflators = 
     state_candidates = c("State_Code", "state_code", "State", "STATE", "state", "state_std"),
     sector_candidates = c("Sector", "SECTOR", "sector", "Location_sector"),
     subround_candidates = c("Sub_Round", "Sub Round", "sub_round", "subround", "Subround"),
-    deflators = deflators
+    deflators = deflators,
+    survey_spec = survey_spec
   )
 }
 

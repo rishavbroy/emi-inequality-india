@@ -1,5 +1,27 @@
 # Consumption and price adjustment
 
+## Consumption-survey architecture
+
+`data/metadata/consumption_survey_registry.csv` is the canonical metadata contract for
+consumption-survey timing and intended analytical role. It distinguishes the current
+legacy short-form education-survey consumption measures from the detailed Schedule
+1.0 and HCES sources planned for the welfare revision. Downstream code must not infer
+a survey period from a year label when the registry already declares it.
+
+The first migration step is deliberately behavior-preserving. Generic
+`survey_period_months()`, `survey_subround_for_month()`, and
+`build_survey_subround_deflators()` functions now own the quarterly survey-period
+logic. The historical `nss_*` functions are compatibility wrappers backed by the
+registry, so the current 2007-08 and 2017-18 public outputs remain unchanged while
+later phases add canonical Schedule 1.0 and three-visit HCES household readers. HCES
+three-visit price timing is declared in the registry but is intentionally not forced
+through the quarterly NSS sub-round implementation.
+
+The registry also records that the active 2007-08 outcome currently comes from the
+education survey's household consumption question, whereas the planned 2007-08
+Schedule 1.0 source is a distinct survey contract. This distinction must remain
+explicit during the welfare migration.
+
 ## Main-paper specification after the revision gate
 
 The preferred specification uses the person-weighted mean of real monthly

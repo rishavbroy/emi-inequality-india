@@ -533,13 +533,20 @@ test_that("price month normalization is vectorized while boundaries stay scalar"
 })
 
 test_that("NSS sub-rounds map to consecutive survey-quarter price months", {
+  registry <- read_consumption_survey_registry(build_paths(Sys.getenv("EMI_PROJECT_ROOT", ".")))
+  spec <- consumption_survey_spec(registry, "nss_2007_08_education")
+  periods <- as.Date(c("2007-07-01", "2007-09-01", "2007-10-01", "2008-06-01"))
+
+  expect_equal(survey_subround_for_month(periods, spec), c(1L, 1L, 2L, 4L))
+  expect_equal(nss_subround_for_month(periods, 2007, registry), survey_subround_for_month(periods, spec))
   expect_equal(
-    nss_subround_for_month(as.Date(c("2007-07-01", "2007-09-01", "2007-10-01", "2008-06-01")), 2007),
-    c(1L, 1L, 2L, 4L)
-  )
-  expect_equal(
-    nss_subround_for_month(as.Date(c("2017-07-01", "2018-01-01", "2018-06-01")), 2017),
+    nss_subround_for_month(as.Date(c("2017-07-01", "2018-01-01", "2018-06-01")), 2017, registry),
     c(1L, 3L, 4L)
+  )
+  modern <- consumption_survey_spec(registry, "hces_2022_23")
+  expect_error(
+    survey_subround_for_month(as.Date("2022-08-01"), modern),
+    "does not use quarterly NSS sub-round price timing"
   )
 })
 

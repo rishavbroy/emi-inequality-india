@@ -1,8 +1,9 @@
-# Household-level real-consumption construction shared by NSS 64 and NSS 75.
+# Household-level real-consumption construction shared by registered survey adapters.
 
 prepare_consumption_households <- function(
     df, wave, district_keys, value_candidates, size_candidates, weight_candidates,
-    state_candidates, sector_candidates, subround_candidates, deflators = NULL) {
+    state_candidates, sector_candidates, subround_candidates, deflators = NULL,
+    survey_spec = NULL) {
   df <- safe_df(df)
   if (!nrow(df)) return(df)
   value_col <- first_col(df, value_candidates)
@@ -43,8 +44,11 @@ prepare_consumption_households <- function(
     sector_col <- first_col(df, sector_candidates)
     subround_col <- first_col(df, subround_candidates)
     missing <- c(state = is.null(state_col), sector = is.null(sector_col), subround = is.null(subround_col))
-    if (any(missing)) stop("NSS household file lacks price keys: ", paste(names(missing)[missing], collapse = ", "), call. = FALSE)
-    df <- attach_nss_subround_deflator(df, deflators, wave, state_col, sector_col, subround_col)
+    if (any(missing)) stop("Survey household file lacks price keys: ", paste(names(missing)[missing], collapse = ", "), call. = FALSE)
+    if (is.null(survey_spec)) {
+      survey_spec <- consumption_survey_spec_for_wave(read_consumption_survey_registry(), wave)
+    }
+    df <- attach_survey_subround_deflator(df, deflators, survey_spec, state_col, sector_col, subround_col)
     df$consumption_real_total <- df$consumption_nominal_total / df$price_deflator
     df$consumption_real_pc <- df$consumption_nominal_pc / df$price_deflator
   }
