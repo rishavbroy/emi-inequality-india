@@ -26,7 +26,11 @@ build_census_2011_to_2001_age_bridge <- function(district_transition_2001_2011) 
   coverage <- num(transition$shrid_coverage)
   deterministic <- transition[
     !is.na(transition$mapping_class) &
-      transition$mapping_class %in% c("official_lgd_census_code_bridge", "deterministic_containment") &
+      transition$mapping_class %in% c(
+        "official_lgd_census_code_bridge",
+        "deterministic_containment",
+        "reviewed_single_parent_ancestry"
+      ) &
       is.finite(population_share) & abs(population_share - 1) < 1e-8 &
       is.finite(area_share) & abs(area_share - 1) < 1e-8 &
       is.finite(coverage) & abs(coverage - 1) < 1e-8,

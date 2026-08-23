@@ -66,7 +66,7 @@ test_that("2011 C-13 counts are summed only through deterministic 2001 containme
     shrid_coverage = 1,
     mapping_class = c(
       "official_lgd_census_code_bridge",
-      "deterministic_containment",
+      "reviewed_single_parent_ancestry",
       "non_nested_or_incomplete"
     ),
     stringsAsFactors = FALSE
