@@ -729,28 +729,37 @@ test_that("poster delivery and typography contracts remain stable during draftin
   expect_match(template, "v(1pt)", fixed = TRUE)
 })
 
-test_that("Census downloader skips present files and fetches only missing files", {
+test_that("Census downloader processes both manifests and skips present files", {
   root <- tempfile("census-download-")
   on.exit(unlink(root, recursive = TRUE, force = TRUE), add = TRUE)
   dir.create(file.path(root, "data", "metadata"), recursive = TRUE)
 
-  manifest <- data.frame(
-    table = c("C01", "C01"),
-    state_code = c("01", "02"),
-    relative_path = c(
-      "data/raw/census_2001/religion/C01/PC01_C01_01.xls",
-      "data/raw/census_2001/religion/C01/PC01_C01_02.xls"
+  manifests <- list(
+    data.frame(
+      table = "C13", state_code = "01",
+      relative_path = "data/raw/census_2001/age/C13/PC01_C13_01.xls",
+      url = "https://censusindia.gov.in/one.xls",
+      stringsAsFactors = FALSE
     ),
-    url = c(
-      "https://censusindia.gov.in/one.xls",
-      "https://censusindia.gov.in/two.xls"
-    ),
-    stringsAsFactors = FALSE
+    data.frame(
+      table = "C13", state_code = "01",
+      relative_path = "data/raw/census_2011/age/C13/DDW-0100C-13.xls",
+      url = "https://censusindia.gov.in/two.xls",
+      stringsAsFactors = FALSE
+    )
   )
-  manifest_path <- file.path(root, "data", "metadata", "census_2001_download_manifest.tsv")
-  write.table(manifest, manifest_path, sep = "\t", quote = FALSE, row.names = FALSE)
+  for (i in seq_along(manifests)) {
+    write.table(
+      manifests[[i]],
+      file.path(
+        root, "data", "metadata",
+        sprintf("census_%d_download_manifest.tsv", c(2001, 2011)[[i]])
+      ),
+      sep = "\t", quote = FALSE, row.names = FALSE
+    )
+  }
 
-  present <- file.path(root, manifest$relative_path[[1]])
+  present <- file.path(root, manifests[[1]]$relative_path)
   dir.create(dirname(present), recursive = TRUE)
   writeLines("existing", present)
 
@@ -777,7 +786,11 @@ test_that("Census downloader skips present files and fetches only missing files"
   old <- Sys.getenv(c("EMI_PROJECT_ROOT", "CURL_BIN", "FAKE_CURL_LOG"), unset = NA_character_)
   on.exit({
     for (name in names(old)) {
-      if (is.na(old[[name]])) Sys.unsetenv(name) else do.call(Sys.setenv, setNames(list(old[[name]]), name))
+      if (is.na(old[[name]])) {
+        Sys.unsetenv(name)
+      } else {
+        do.call(Sys.setenv, setNames(list(old[[name]]), name))
+      }
     }
   }, add = TRUE)
   Sys.setenv(EMI_PROJECT_ROOT = root, CURL_BIN = fake_curl, FAKE_CURL_LOG = log_path)
@@ -791,7 +804,8 @@ test_that("Census downloader skips present files and fetches only missing files"
 
   expect_null(attr(output, "status"))
   expect_identical(readLines(present), "existing")
-  expect_identical(readLines(file.path(root, manifest$relative_path[[2]])), "downloaded")
-  expect_identical(readLines(log_path), manifest$url[[2]])
+  downloaded <- file.path(root, manifests[[2]]$relative_path)
+  expect_identical(readLines(downloaded), "downloaded")
+  expect_identical(readLines(log_path), manifests[[2]]$url)
   expect_true(any(grepl("1 downloaded, 1 already present", output, fixed = TRUE)))
 })
