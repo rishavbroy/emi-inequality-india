@@ -200,9 +200,18 @@ diagnose_dise_iv_construct <- function(
   construct,
   outcome = "real_log_consumption_change"
 ) {
-  construct <- safe_df(construct)
+  construct <- as.data.frame(construct, stringsAsFactors = FALSE)
   if (nrow(construct) != 1L) {
     stop("DISE diagnostic branch requires exactly one construct.", call. = FALSE)
+  }
+  required <- c("construct_id", "variable", "analysis_scope")
+  missing <- setdiff(required, names(construct))
+  if (length(missing)) {
+    stop(
+      "DISE diagnostic construct is missing columns: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
   }
   variable <- construct$variable[[1]]
   if (!variable %in% names(panel)) {

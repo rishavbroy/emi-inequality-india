@@ -123,9 +123,21 @@ diagnose_alternative_distance_specification <- function(
   specification,
   treatment = "emi_exposure_all_children_0708"
 ) {
-  specification <- safe_df(specification)
+  specification <- as.data.frame(specification, stringsAsFactors = FALSE)
   if (nrow(specification) != 1L) {
     stop("Alternative-distance branch requires exactly one specification.", call. = FALSE)
+  }
+  required <- c(
+    "controls", "included_language_controls", "excluded_instruments",
+    "fixed_effect", "specification_id"
+  )
+  missing <- setdiff(required, names(specification))
+  if (length(missing)) {
+    stop(
+      "Alternative-distance specification is missing columns: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
   }
   estimate <- estimate_alternative_distance_spec(data, specification, treatment)
   list(

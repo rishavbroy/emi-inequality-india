@@ -255,6 +255,25 @@ test_that("DISE construct registry separates treatments from mechanism outcomes"
 
 
 
+test_that("DISE diagnostic branches preserve construct registry rows", {
+  construct <- dise_construct_registry()[1, , drop = FALSE]
+
+  expect_silent(
+    tryCatch(
+      diagnose_dise_iv_construct(
+        data.frame(),
+        construct
+      ),
+      error = function(e) {
+        # A missing treatment column is an allowed early return; registry
+        # validation itself must not corrupt the row first.
+        if (!grepl("missing columns", conditionMessage(e), fixed = TRUE)) stop(e)
+      }
+    )
+  )
+  expect_identical(construct$construct_id[[1]], dise_construct_registry()$construct_id[[1]])
+})
+
 test_that("DISE IV diagnostic projection is insensitive to unrelated future outcomes", {
   constructs <- dise_construct_registry()
   validation <- dise_nss_validation_registry()

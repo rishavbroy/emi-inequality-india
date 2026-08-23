@@ -854,6 +854,18 @@ test_that("alternative linguistic-distance first stages use fixed support and jo
   panel$future_hces_outcome <- seq_len(nrow(panel))
   projected <- prepare_alternative_distance_panel(panel)
   registry <- alternative_distance_registry()
+  branch_specification <- registry[
+    registry$construction_id == "distance_shares_all" &
+      registry$adjustment_id == "state_main",
+    ,
+    drop = FALSE
+  ]
+  expect_true(is.list(branch_specification$excluded_instruments))
+  expect_equal(
+    unlist(branch_specification$excluded_instruments[[1]], use.names = FALSE),
+    linguistic_distance_excluded_instruments("all")
+  )
+
   branches <- lapply(seq_len(nrow(registry)), function(i) {
     diagnose_alternative_distance_specification(
       projected, registry[i, , drop = FALSE]
