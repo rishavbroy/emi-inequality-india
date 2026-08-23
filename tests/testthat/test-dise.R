@@ -1148,3 +1148,59 @@ test_that("DISE school-quality baseline diagnostics use predetermined years and 
   expect_false("2007-08" %in% out$baseline_association$academic_year)
   expect_true(all(out$baseline_association$cluster_variable == "state_code_2001"))
 })
+
+test_that("DISE total enrollment uses one grade-first hierarchy in all workbook generations", {
+  data <- data.frame(
+    enr_cy_c1 = c(60, NA, NA),
+    enr_cy_c2 = c(40, NA, NA),
+    enrtot = c(1000, 120, NA),
+    enr_govt1 = c(70, 80, 75),
+    enr_pvt1 = c(30, 20, 25),
+    stringsAsFactors = FALSE
+  )
+  totals <- dise_enrollment_total_candidates(data)
+  expect_equal(totals$dise_total_enrollment, c(100, 120, 100))
+  expect_identical(
+    totals$dise_total_enrollment_source,
+    c("grade_i_viii_sum", "direct_enrtot", "government_private_sum")
+  )
+  expect_equal(totals$dise_direct_to_grade_enrollment_ratio[[1]], 10)
+})
+
+test_that("later DISE ENRTOT cannot override complete grade-I-VIII counts", {
+  data <- data.frame(
+    statecd = "01", statename = "State", distcd = "0101", distname = "District",
+    enr_cy_c1 = 6000, enr_cy_c2 = 4000, enrtot = 100000,
+    stringsAsFactors = FALSE
+  )
+  out <- extract_dise_total_enrollment(data, "2010-11")
+  expect_equal(out$dise_grade_enrollment, 10000)
+  expect_equal(out$dise_direct_enrollment, 100000)
+  expect_equal(out$dise_total_enrollment, 10000)
+  expect_identical(out$dise_total_enrollment_source, "grade_i_viii_sum")
+})
+
+test_that("DISE lineage aggregation reapplies denominator precedence after pooling counts", {
+  district_year <- data.frame(
+    academic_year = c("2010-11", "2010-11"),
+    state_name_dise = "State", district_name_dise = c("Child A", "Child B"),
+    dise_english_enrollment = c(10, 20), dise_hindi_enrollment = c(50, 70),
+    dise_grade_enrollment = c(100, 200),
+    dise_direct_enrollment = c(1000, 2000),
+    dise_management_enrollment = c(100, 200),
+    dise_total_enrollment = c(100, 200),
+    stringsAsFactors = FALSE
+  )
+  bridge <- data.frame(
+    state_key = "state", district_key = c("child a", "child b"),
+    target_unit_2001 = "pc2001__01__01", n_candidate_targets = 1L,
+    bridge_status = "deterministic_to_2001", bridge_sources = "reviewed",
+    stringsAsFactors = FALSE
+  )
+  out <- harmonize_dise_counts_to_2001(district_year, bridge)
+  expect_equal(out$dise_grade_enrollment, 300)
+  expect_equal(out$dise_direct_enrollment, 3000)
+  expect_equal(out$dise_total_enrollment, 300)
+  expect_identical(out$dise_total_enrollment_source, "grade_i_viii_sum")
+  expect_equal(out$dise_emi_enrollment_share_total, 10)
+})

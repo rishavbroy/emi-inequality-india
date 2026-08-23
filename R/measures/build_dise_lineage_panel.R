@@ -132,8 +132,13 @@ harmonize_dise_counts_to_2001 <- function(district_year, bridge) {
     , drop = FALSE
   ]
   if (!nrow(mapped)) return(data.frame())
+  total_candidate_columns <- intersect(c(
+    "dise_grade_enrollment", "dise_direct_enrollment", "dise_management_enrollment"
+  ), names(mapped))
   count_columns <- intersect(c(
-    "dise_english_enrollment", "dise_hindi_enrollment", "dise_total_enrollment",
+    "dise_english_enrollment", "dise_hindi_enrollment",
+    total_candidate_columns,
+    if (!length(total_candidate_columns)) "dise_total_enrollment" else character(),
     "dise_government_enrollment", "dise_private_enrollment",
     "dise_government_schools", "dise_private_schools", "dise_total_schools",
     "dise_total_teachers", "dise_single_teacher_schools", "dise_girls_toilet_schools"
@@ -151,6 +156,23 @@ harmonize_dise_counts_to_2001 <- function(district_year, bridge) {
     for (nm in count_columns) row[[nm]] <- sum_complete_counts(part[[nm]])
     row
   }))
+  if (length(total_candidate_columns)) {
+    n <- nrow(out)
+    grade <- if ("dise_grade_enrollment" %in% names(out)) out$dise_grade_enrollment else rep(NA_real_, n)
+    direct <- if ("dise_direct_enrollment" %in% names(out)) out$dise_direct_enrollment else rep(NA_real_, n)
+    management <- if ("dise_management_enrollment" %in% names(out)) out$dise_management_enrollment else rep(NA_real_, n)
+    preferred <- choose_dise_total_enrollment(grade, direct, management)
+    out$dise_total_enrollment <- preferred$dise_total_enrollment
+    out$dise_total_enrollment_source <- preferred$dise_total_enrollment_source
+    out$dise_direct_to_grade_enrollment_ratio <- ifelse(
+      is.finite(direct) & direct >= 0 & is.finite(grade) & grade > 0, direct / grade, NA_real_
+    )
+    out$dise_management_to_grade_enrollment_ratio <- ifelse(
+      is.finite(management) & management >= 0 & is.finite(grade) & grade > 0,
+      management / grade,
+      NA_real_
+    )
+  }
   if (all(c(
     "dise_english_enrollment", "dise_hindi_enrollment", "dise_total_enrollment"
   ) %in% names(out))) {

@@ -227,6 +227,65 @@ dise_management_columns <- function(data, prefix) {
   intersect(paste0(prefix, c(1:7, 9)), names(data))
 }
 
+choose_dise_total_enrollment <- function(grade_enrollment, direct_enrollment, management_enrollment) {
+  grade_enrollment <- num(grade_enrollment)
+  direct_enrollment <- num(direct_enrollment)
+  management_enrollment <- num(management_enrollment)
+  total <- rep(NA_real_, length(grade_enrollment))
+  source <- rep(NA_character_, length(grade_enrollment))
+
+  use_grade <- is.finite(grade_enrollment)
+  total[use_grade] <- grade_enrollment[use_grade]
+  source[use_grade] <- "grade_i_viii_sum"
+
+  use_direct <- !use_grade & is.finite(direct_enrollment)
+  total[use_direct] <- direct_enrollment[use_direct]
+  source[use_direct] <- "direct_enrtot"
+
+  use_management <- !use_grade & !use_direct & is.finite(management_enrollment)
+  total[use_management] <- management_enrollment[use_management]
+  source[use_management] <- "government_private_sum"
+
+  data.frame(
+    dise_total_enrollment = total,
+    dise_total_enrollment_source = source,
+    stringsAsFactors = FALSE
+  )
+}
+
+dise_enrollment_total_candidates <- function(data) {
+  government <- row_sum_available(data, dise_management_columns(data, "enr_govt"))
+  private <- row_sum_available(data, dise_management_columns(data, "enr_pvt"))
+  management <- ifelse(
+    is.finite(government) | is.finite(private),
+    rowSums(cbind(government, private), na.rm = TRUE),
+    NA_real_
+  )
+  grade <- row_sum_available(data, dise_grade_columns(data))
+  direct <- if ("enrtot" %in% names(data)) num(data$enrtot) else rep(NA_real_, nrow(data))
+  preferred <- choose_dise_total_enrollment(grade, direct, management)
+
+  out <- data.frame(
+    dise_government_enrollment = government,
+    dise_private_enrollment = private,
+    dise_management_enrollment = management,
+    dise_grade_enrollment = grade,
+    dise_direct_enrollment = direct,
+    stringsAsFactors = FALSE
+  )
+  out$dise_total_enrollment <- preferred$dise_total_enrollment
+  out$dise_total_enrollment_source <- preferred$dise_total_enrollment_source
+  out$dise_direct_to_grade_enrollment_ratio <- ifelse(
+    is.finite(direct) & direct >= 0 & is.finite(grade) & grade > 0, direct / grade, NA_real_
+  )
+  out$dise_management_to_grade_enrollment_ratio <- ifelse(
+    is.finite(management) & management >= 0 & is.finite(grade) & grade > 0,
+    management / grade,
+    NA_real_
+  )
+  out
+}
+
 extract_dise_enrollment_measures <- function(data, academic_year) {
   out <- data.frame(
     academic_year = academic_year,
@@ -236,15 +295,8 @@ extract_dise_enrollment_measures <- function(data, academic_year) {
     district_name_dise = trimws(plain_chr(data$distname)),
     stringsAsFactors = FALSE
   )
-  out$dise_government_enrollment <- row_sum_available(data, dise_management_columns(data, "enr_govt"))
-  out$dise_private_enrollment <- row_sum_available(data, dise_management_columns(data, "enr_pvt"))
-  out$dise_management_enrollment <- out$dise_government_enrollment + out$dise_private_enrollment
-  out$dise_grade_enrollment <- row_sum_available(data, dise_grade_columns(data))
-  out$dise_total_enrollment <- ifelse(
-    is.finite(out$dise_grade_enrollment),
-    out$dise_grade_enrollment,
-    out$dise_management_enrollment
-  )
+  totals <- dise_enrollment_total_candidates(data)
+  for (name in names(totals)) out[[name]] <- totals[[name]]
   out$dise_management_enrollment_difference <-
     out$dise_management_enrollment - out$dise_total_enrollment
   out$dise_private_enrollment_share <- ifelse(
@@ -422,7 +474,7 @@ read_dise_report_language_enrollment <- function(
   out
 }
 
-extract_dise_direct_total <- function(data, academic_year) {
+extract_dise_total_enrollment <- function(data, academic_year) {
   out <- data.frame(
     academic_year = academic_year,
     state_code_dise = plain_chr(data$statecd),
@@ -431,14 +483,8 @@ extract_dise_direct_total <- function(data, academic_year) {
     district_name_dise = trimws(plain_chr(data$distname)),
     stringsAsFactors = FALSE
   )
-  if ("enrtot" %in% names(data)) {
-    out$dise_total_enrollment <- num(data$enrtot)
-  } else {
-    grade <- row_sum_available(data, dise_grade_columns(data))
-    management <- row_sum_available(data, dise_management_columns(data, "enr_govt")) +
-      row_sum_available(data, dise_management_columns(data, "enr_pvt"))
-    out$dise_total_enrollment <- ifelse(is.finite(grade), grade, management)
-  }
+  totals <- dise_enrollment_total_candidates(data)
+  for (name in names(totals)) out[[name]] <- totals[[name]]
   out
 }
 
@@ -580,7 +626,7 @@ read_dise_dynamic_year <- function(paths, registry_row, report_languages) {
     sheet <- if (identical(year, "2015-16")) "2015-16_1" else "2014-15_PY"
     base <- read_dise_machine_sheet(workbook, sheet)
     out <- merge(
-      extract_dise_direct_total(base, year),
+      extract_dise_total_enrollment(base, year),
       extract_dise_school_measures(base),
       by = "district_code_dise", all.x = TRUE, sort = FALSE
     )
@@ -606,7 +652,7 @@ read_dise_dynamic_year <- function(paths, registry_row, report_languages) {
   }
 
   out <- merge(
-    extract_dise_direct_total(
+    extract_dise_total_enrollment(
       read_dise_machine_sheet(workbook, registry_row$enrollment_sheet[[1]]),
       year
     ),
