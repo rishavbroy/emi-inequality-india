@@ -1503,3 +1503,37 @@ test_that("DISE lineage aggregation reapplies denominator precedence after pooli
   expect_identical(out$dise_total_enrollment_source, "grade_i_viii_sum")
   expect_equal(out$dise_emi_enrollment_share_total, 10)
 })
+
+test_that("2010-11 unavailable report totals remain unavailable after lineage pooling", {
+  district_year <- data.frame(
+    academic_year = c("2010-11", "2010-11"),
+    state_name_dise = "State",
+    district_name_dise = c("Child A", "Child B"),
+    dise_english_enrollment = c(10, 20),
+    dise_hindi_enrollment = c(20, 30),
+    report_total_enrollment = c(100, NA),
+    dise_grade_enrollment = c(1000, 2000),
+    dise_direct_enrollment = c(900, 1900),
+    dise_management_enrollment = c(950, 1950),
+    dise_total_enrollment = c(100, NA),
+    dise_total_enrollment_source = c(
+      "report_card_current_year_total",
+      "unavailable_without_report_total"
+    ),
+    stringsAsFactors = FALSE
+  )
+  bridge <- data.frame(
+    state_key = "state",
+    district_key = c("child a", "child b"),
+    target_unit_2001 = "pc2001__01__01",
+    bridge_status = "deterministic_to_2001",
+    stringsAsFactors = FALSE
+  )
+
+  out <- harmonize_dise_counts_to_2001(district_year, bridge)
+
+  expect_true(is.na(out$report_total_enrollment))
+  expect_true(is.na(out$dise_grade_enrollment))
+  expect_true(is.na(out$dise_total_enrollment))
+  expect_true(is.na(out$dise_emi_enrollment_share_total))
+})

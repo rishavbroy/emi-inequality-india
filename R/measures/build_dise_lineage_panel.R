@@ -200,6 +200,22 @@ harmonize_dise_counts_to_2001 <- function(district_year, bridge) {
     , drop = FALSE
   ]
   if (!nrow(mapped)) return(data.frame())
+
+  # A source-level exclusion from the known-corrupt 2010-11 enrollment workbook
+  # must survive geographic pooling. Otherwise the aggregation hierarchy could
+  # resurrect the raw grade/direct/management counts that were deliberately
+  # excluded when no reviewed report-card total was available.
+  if ("dise_total_enrollment_source" %in% names(mapped)) {
+    unusable_total <- plain_chr(mapped$dise_total_enrollment_source) ==
+      "unavailable_without_report_total"
+    for (name in c(
+      "dise_grade_enrollment", "dise_direct_enrollment",
+      "dise_management_enrollment"
+    )) {
+      if (name %in% names(mapped)) mapped[[name]][unusable_total] <- NA_real_
+    }
+  }
+
   total_candidate_columns <- intersect(c(
     "report_total_enrollment",
     "dise_grade_enrollment",
