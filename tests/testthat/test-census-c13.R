@@ -77,6 +77,34 @@ test_that("2011 C-13 counts are summed only through deterministic 2001 containme
   expect_identical(out$target_unit_2001[[1]], "pc2001__09__01")
   expect_equal(out$census_age_6_13_population_2011, 300)
   expect_equal(out$census_2011_source_district_count, 2L)
+  expect_true(out$census_2011_parent_reconstruction_complete)
+})
+
+test_that("2011 C-13 parent anchors are withheld when deterministic children reconstruct only part of a 2001 district", {
+  age_2011 <- data.frame(
+    state_code = c("01", "01"),
+    district_code = c("008", "009"),
+    district_name = c("Retained child", "New child"),
+    census_age_6_13_population = c(200, 100),
+    stringsAsFactors = FALSE
+  )
+  transition <- data.frame(
+    state_code_2011 = c("01", "01"),
+    district_code_2011 = c("008", "009"),
+    state_code_2001 = c("01", "01"),
+    district_code_2001 = c("02", "02"),
+    population_share_to_2001 = c(0.9995, 1),
+    area_share_to_2001 = c(0.995, 1),
+    shrid_coverage = c(0.996, 1),
+    mapping_class = c("non_nested_or_incomplete", "deterministic_containment"),
+    stringsAsFactors = FALSE
+  )
+
+  bridge <- build_census_2011_to_2001_age_bridge(transition)
+  out <- harmonize_census_2011_age_6_13_to_2001(age_2011, transition)
+
+  expect_equal(nrow(bridge), 0L)
+  expect_equal(nrow(out), 0L)
 })
 
 test_that("age-6-13 population uses log-linear Census-anchor interpolation and explicit extrapolation", {

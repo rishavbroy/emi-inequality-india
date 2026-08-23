@@ -10,6 +10,17 @@ build_census_2011_to_2001_age_bridge <- function(district_transition_2001_2011) 
   if (length(missing)) {
     stop("District transition table lacks C-13 bridge fields: ", paste(missing, collapse = ", "), call. = FALSE)
   }
+  transition$source_unit_2011 <- paste0(
+    "pc2011__",
+    normalize_census_code(transition$state_code_2011, 2L), "__",
+    normalize_census_code(transition$district_code_2011, 3L)
+  )
+  transition$target_unit_2001 <- paste0(
+    "pc2001__",
+    normalize_census_code(transition$state_code_2001, 2L), "__",
+    normalize_census_code(transition$district_code_2001, 2L)
+  )
+
   population_share <- num(transition$population_share_to_2001)
   area_share <- num(transition$area_share_to_2001)
   coverage <- num(transition$shrid_coverage)
@@ -22,18 +33,9 @@ build_census_2011_to_2001_age_bridge <- function(district_transition_2001_2011) 
     , drop = FALSE
   ]
   if (!nrow(deterministic)) return(data.frame())
-  deterministic$source_unit_2011 <- paste0(
-    "pc2011__",
-    normalize_census_code(deterministic$state_code_2011, 2L), "__",
-    normalize_census_code(deterministic$district_code_2011, 3L)
-  )
-  deterministic$target_unit_2001 <- paste0(
-    "pc2001__",
-    normalize_census_code(deterministic$state_code_2001, 2L), "__",
-    normalize_census_code(deterministic$district_code_2001, 2L)
-  )
-  groups <- split(seq_len(nrow(deterministic)), deterministic$source_unit_2011)
-  out <- safe_bind_rows(lapply(groups, function(index) {
+
+  source_groups <- split(seq_len(nrow(deterministic)), deterministic$source_unit_2011)
+  source_bridge <- safe_bind_rows(lapply(source_groups, function(index) {
     part <- deterministic[index, , drop = FALSE]
     targets <- unique(part$target_unit_2001)
     if (length(targets) != 1L) return(NULL)
@@ -44,9 +46,50 @@ build_census_2011_to_2001_age_bridge <- function(district_transition_2001_2011) 
       stringsAsFactors = FALSE
     )
   }))
-  if (nrow(out) && anyDuplicated(out$source_unit_2011)) {
+  if (!nrow(source_bridge)) return(data.frame())
+  if (anyDuplicated(source_bridge$source_unit_2011)) {
     stop("Deterministic Census-2011 age bridge is not unique by source district.", call. = FALSE)
   }
+
+  # A Census-2001 parent is usable only when every 2011 source district that
+  # contributes territory to that parent is itself deterministically assigned
+  # back to that same parent. Otherwise summing only the deterministic children
+  # would create a partial-parent population anchor.
+  contributors <- unique(transition[c("source_unit_2011", "target_unit_2001")])
+  contributors <- contributors[
+    !is.na(contributors$source_unit_2011) & nzchar(contributors$source_unit_2011) &
+      !is.na(contributors$target_unit_2001) & nzchar(contributors$target_unit_2001),
+    , drop = FALSE
+  ]
+  names(source_bridge)[names(source_bridge) == "target_unit_2001"] <- "deterministic_target_2001"
+  contributors <- merge(
+    contributors,
+    source_bridge[c("source_unit_2011", "deterministic_target_2001")],
+    by = "source_unit_2011",
+    all.x = TRUE,
+    sort = FALSE
+  )
+  contributors$is_complete_source <- !is.na(contributors$deterministic_target_2001) &
+    contributors$deterministic_target_2001 == contributors$target_unit_2001
+  target_groups <- split(seq_len(nrow(contributors)), contributors$target_unit_2001)
+  target_status <- safe_bind_rows(lapply(target_groups, function(index) {
+    part <- contributors[index, , drop = FALSE]
+    data.frame(
+      target_unit_2001 = part$target_unit_2001[[1]],
+      census_2011_contributing_source_count = length(unique(part$source_unit_2011)),
+      census_2011_deterministic_source_count = sum(part$is_complete_source),
+      census_2011_parent_reconstruction_complete = all(part$is_complete_source),
+      stringsAsFactors = FALSE
+    )
+  }))
+
+  names(source_bridge)[names(source_bridge) == "deterministic_target_2001"] <- "target_unit_2001"
+  out <- merge(source_bridge, target_status, by = "target_unit_2001", all.x = TRUE, sort = FALSE)
+  out <- out[out$census_2011_parent_reconstruction_complete %in% TRUE, , drop = FALSE]
+  if (nrow(out) && anyDuplicated(out$source_unit_2011)) {
+    stop("Complete Census-2011 age bridge is not unique by source district.", call. = FALSE)
+  }
+  rownames(out) <- NULL
   out
 }
 
@@ -68,6 +111,9 @@ harmonize_census_2011_age_6_13_to_2001 <- function(age_2011, district_transition
       census_age_6_13_population_2011 = sum_complete_counts(part$census_age_6_13_population),
       census_2011_source_district_count = nrow(part),
       census_2011_source_districts = paste(sort(unique(part$district_name)), collapse = ";"),
+      census_2011_parent_reconstruction_complete = all(
+        part$census_2011_parent_reconstruction_complete %in% TRUE
+      ),
       stringsAsFactors = FALSE
     )
   }))
@@ -102,15 +148,17 @@ build_census_age_6_13_anchors <- function(
       census_age_6_13_population_2011 = numeric(),
       census_2011_source_district_count = integer(),
       census_2011_source_districts = character(),
+      census_2011_parent_reconstruction_complete = logical(),
       stringsAsFactors = FALSE
     )
   }
   out <- merge(x2001, x2011, by = "target_unit_2001", all.x = TRUE, sort = FALSE)
   out$census_age_6_13_anchor_status <- ifelse(
     is.finite(out$census_age_6_13_population_2001) & out$census_age_6_13_population_2001 > 0 &
-      is.finite(out$census_age_6_13_population_2011) & out$census_age_6_13_population_2011 > 0,
+      is.finite(out$census_age_6_13_population_2011) & out$census_age_6_13_population_2011 > 0 &
+      out$census_2011_parent_reconstruction_complete %in% TRUE,
     "two_census_anchors",
-    "missing_deterministic_2011_anchor"
+    "missing_complete_2011_parent_reconstruction"
   )
   out$census_age_6_13_annual_log_growth_2001_2011 <- ifelse(
     out$census_age_6_13_anchor_status == "two_census_anchors",
