@@ -134,7 +134,7 @@ analysis_table(
 
 ## DISE school-quality mechanisms
 
-These diagnostics preserve additive administrative counts through Census-2001 harmonization and construct ratios only afterward. The 2005-06 and 2006-07 associations are predetermined school-system diagnostics estimated with state fixed effects and state-clustered inference. Dynamic coefficients use the preferred scalar linguistic-distance measure and the same two fixed-effect structures as the EMI trajectory, with 2007-08 retained only as the event-study reference year. The joint summaries separate pre-reference and post-reference distance×year tests, because the full-period omnibus statistic alone cannot distinguish pre-existing gradient changes from later divergence.
+The 2005-06 and 2006-07 associations are predetermined school-system diagnostics estimated with state fixed effects and state-clustered inference after count-preserving Census-2001 harmonization. Later raw School/Teacher sheets are not currently used for trajectories: comparison with the published district report cards reveals district-row alignment failures and cross-year field-definition discontinuities. The dynamic registry therefore records a deferred-reconstruction status rather than reporting coefficients from a non-comparable panel.
 
 ```{r dise-school-quality-mechanisms}
 analysis_table(dise_school_quality_registry, "DISE school-quality mechanism registry")
@@ -145,12 +145,12 @@ analysis_table(
 )
 analysis_table(
   dise_school_quality_summary,
-  "School-quality trajectories: joint clustered tests",
+  "School-quality trajectories: reconstruction status",
   max_rows = 10
 )
 analysis_table(
   dise_school_quality_event,
-  "School-quality trajectories: year coefficients relative to 2007-08",
+  "School-quality trajectories: coefficients (empty until reconstruction)",
   max_rows = 40
 )
 ```

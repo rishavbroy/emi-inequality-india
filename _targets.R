@@ -645,6 +645,11 @@ extended_diagnostic_targets <- list(
     format = "file"
   ),
   tar_target(
+    dise_report_total_enrollment_2010_file,
+    path_metadata(paths, "dise_report_total_enrollment_2010_11.csv"),
+    format = "file"
+  ),
+  tar_target(
     dise_archive_registry,
     read_dise_archive_registry(paths, dise_archive_registry_file)
   ),
@@ -660,6 +665,13 @@ extended_diagnostic_targets <- list(
     dise_report_language_enrollment,
     read_dise_report_language_enrollment(paths, dise_report_language_enrollment_file)
   ),
+  tar_target(
+    dise_report_total_enrollment_2010,
+    read_dise_report_total_enrollment_2010(
+      paths,
+      dise_report_total_enrollment_2010_file
+    )
+  ),
   tar_target(raw_dise_baseline, read_dise_baseline_archive(paths, dise_archive_registry)),
   tar_target(
     raw_dise_baseline_teachers,
@@ -667,7 +679,12 @@ extended_diagnostic_targets <- list(
   ),
   tar_target(
     raw_dise_dynamic,
-    read_dise_dynamic_archive(paths, dise_archive_registry, dise_report_language_enrollment)
+    read_dise_dynamic_archive(
+      paths,
+      dise_archive_registry,
+      dise_report_language_enrollment,
+      dise_report_total_enrollment_2010
+    )
   ),
   tar_target(
     dise_baseline_district_year,

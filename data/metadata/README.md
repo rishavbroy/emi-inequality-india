@@ -63,6 +63,7 @@ planned for the main paper or appendix. The construction rules are described in
 See `docs/DISE_TREATMENTS.md` for construction and scope.
 
 - `dise_report_language_enrollment.csv` stores report-card-derived English/Hindi district enrollment for 2008-09 through 2014-15 with reviewed PDF/page provenance. `scripts/build_dise_report_language_enrollment.py` uses that provenance as an extraction manifest and re-reads the registered pages with Poppler `pdftotext -layout`; it can verify the tracked numeric counts or write a candidate rebuilt CSV. Page discovery remains a reviewed metadata decision rather than an untested PDF heuristic. The normal R/targets pipeline never invokes Poppler.
+- `dise_report_total_enrollment_2010_11.csv` stores published current-year elementary enrollment (`Total Pr.` + `Total U.P.`) for every reviewed 2010-11 district page. It repairs the archived 2010-11 enrollment workbook's district-row alignment corruption without guessing from neighboring rows. `scripts/build_dise_report_total_enrollment_2010.py` verifies the tracked counts from the same reviewed page provenance; it is a maintainer command and is not part of the targets runtime graph.
 
 `dise_archive_registry.csv` records the round-specific Teacher sheet for 2005-06 through 2013-14. The 2014-15 and 2015-16 summary sheets co-locate teacher and school-quality counts, so those rows intentionally leave `teacher_sheet` blank.
 

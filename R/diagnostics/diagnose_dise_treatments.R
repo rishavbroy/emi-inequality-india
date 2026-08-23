@@ -479,6 +479,7 @@ dise_school_quality_registry <- function() {
       "Schools with girls' toilet (%)"
     ),
     direction = c("lower_is_better", "lower_is_better", "higher_is_better"),
+    dynamic_status = "deferred_report_reconstruction",
     stringsAsFactors = FALSE
   )
 }
@@ -539,21 +540,23 @@ diagnose_dise_school_quality_mechanisms <- function(
       estimate_dise_school_quality_baseline(data, outcome, instrument, academic_year)
     }))
   }))
-  results <- list()
-  k <- 1L
-  for (outcome in registry$outcome) {
-    for (dynamic_fe in fes$dynamic_fe) {
-      results[[k]] <- estimate_dise_dynamic_spec(
-        data, instrument, dynamic_fe, reference_year, outcome = outcome
-      )
-      k <- k + 1L
-    }
-  }
+  dynamic_status <- merge(
+    registry[c("outcome", "label", "dynamic_status")],
+    fes,
+    by = NULL,
+    sort = FALSE
+  )
+  dynamic_status$reference_year <- reference_year
+  dynamic_status$reason <- paste(
+    "Later raw DISE school/teacher sheets have unresolved district-row alignment",
+    "and cross-year schema inconsistencies; reconstruct from published report cards",
+    "before estimating trajectories."
+  )
   list(
     registry = registry,
     baseline_association = baseline,
-    summary = safe_bind_rows(lapply(results, `[[`, "summary")),
-    coefficients = safe_bind_rows(lapply(results, `[[`, "coefficients"))
+    summary = dynamic_status,
+    coefficients = data.frame()
   )
 }
 

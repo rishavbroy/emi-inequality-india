@@ -876,6 +876,7 @@ test_that("DISE report-language maintainer stays outside the targets runtime gra
     collapse = "\n"
   )
   expect_false(grepl("build_dise_report_language_enrollment.py", targets_text, fixed = TRUE))
+  expect_false(grepl("build_dise_report_total_enrollment_2010.py", targets_text, fixed = TRUE))
 })
 
 test_that("report-derived DISE language metadata is unique and spans dynamic report years", {
@@ -890,6 +891,39 @@ test_that("report-derived DISE language metadata is unique and spans dynamic rep
     c("2008-09", "2009-10", "2010-11", "2011-12", "2012-13", "2013-14", "2014-15")
   )
   expect_true(all(c("source_pdf", "source_page", "report_priority") %in% names(x)))
+})
+
+test_that("DISE 2010-11 published enrollment totals are complete and reproducible", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
+  path <- file.path(
+    root, "data", "metadata", "dise_report_total_enrollment_2010_11.csv"
+  )
+  x <- read.csv(path, stringsAsFactors = FALSE)
+  expect_true(nrow(x) > 600L)
+  expect_true(all(x$academic_year == "2010-11"))
+  expect_true(all(is.finite(x$report_total_enrollment)))
+  expect_true(all(x$report_total_enrollment >= 0))
+  key <- paste(
+    x$academic_year,
+    canonicalize_state_name(x$state_report),
+    canonicalize_district_name(x$district_report),
+    sep = "|"
+  )
+  expect_equal(anyDuplicated(key), 0L)
+
+  python <- Sys.which("python3")
+  skip_if(!nzchar(python), "python3 is required for the maintainer self-test")
+  script <- file.path(root, "scripts", "build_dise_report_total_enrollment_2010.py")
+  expect_true(file.exists(script))
+  status <- system2(
+    python,
+    c(shQuote(script), "--self-test"),
+    stdout = TRUE,
+    stderr = TRUE
+  )
+  status_code <- attr(status, "status")
+  if (is.null(status_code)) status_code <- 0L
+  expect_equal(status_code, 0L)
 })
 
 test_that("later DISE language counts cannot exceed the elementary denominator", {
@@ -918,6 +952,35 @@ test_that("later DISE language counts cannot exceed the elementary denominator",
   expect_false(out$dise_english_identity_resolved)
   expect_true(is.na(out$dise_emi_enrollment_share_total))
   expect_true(out$dise_hindi_count_valid)
+})
+
+test_that("2010-11 published totals override corrupt raw enrollment but preserve QA", {
+  data <- data.frame(
+    academic_year = "2010-11",
+    state_name_dise = "Puducherry",
+    district_name_dise = "Mahe",
+    dise_total_enrollment = 138158,
+    dise_total_enrollment_source = "grade_i_viii_sum",
+    stringsAsFactors = FALSE
+  )
+  report <- data.frame(
+    academic_year = "2010-11",
+    state_report = "Puducherry",
+    district_report = "Mahe",
+    report_total_enrollment = 7482,
+    source_pdf = "report.pdf",
+    source_page = 94L,
+    report_priority = 2L,
+    stringsAsFactors = FALSE
+  )
+
+  out <- attach_dise_report_total_enrollment(data, report)
+
+  expect_equal(out$dise_total_enrollment, 7482)
+  expect_identical(out$dise_total_enrollment_source, "report_card_current_year_total")
+  expect_equal(out$dise_total_enrollment_raw, 138158)
+  expect_identical(out$dise_total_enrollment_source_raw, "grade_i_viii_sum")
+  expect_equal(out$dise_report_to_raw_total_ratio, 7482 / 138158)
 })
 
 test_that("later report attachment never interprets absent English as zero", {
@@ -1147,6 +1210,9 @@ test_that("DISE school-quality baseline diagnostics use predetermined years and 
   expect_setequal(unique(out$baseline_association$academic_year), c("2005-06", "2006-07"))
   expect_false("2007-08" %in% out$baseline_association$academic_year)
   expect_true(all(out$baseline_association$cluster_variable == "state_code_2001"))
+  expect_true(all(out$registry$dynamic_status == "deferred_report_reconstruction"))
+  expect_true(all(out$summary$dynamic_status == "deferred_report_reconstruction"))
+  expect_equal(nrow(out$coefficients), 0L)
 })
 
 test_that("DISE total enrollment uses one grade-first hierarchy in all workbook generations", {

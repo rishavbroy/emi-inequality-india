@@ -474,6 +474,36 @@ read_dise_report_language_enrollment <- function(
   out
 }
 
+
+read_dise_report_total_enrollment_2010 <- function(
+  paths = build_paths(),
+  path = path_metadata(paths, "dise_report_total_enrollment_2010_11.csv")
+) {
+  if (!file.exists(path)) stop("Missing DISE 2010-11 report-total metadata: ", path, call. = FALSE)
+  out <- utils::read.csv(path, stringsAsFactors = FALSE, na.strings = c("", "NA"))
+  required <- c(
+    "academic_year", "state_report", "district_report",
+    "source_pdf", "source_page", "report_priority", "report_total_enrollment"
+  )
+  missing <- setdiff(required, names(out))
+  if (length(missing)) {
+    stop("DISE 2010-11 report-total metadata is missing columns: ",
+         paste(missing, collapse = ", "), call. = FALSE)
+  }
+  if (!all(out$academic_year == "2010-11")) {
+    stop("DISE report-total metadata must contain only academic year 2010-11.", call. = FALSE)
+  }
+  if (any(!is.finite(num(out$report_total_enrollment)) | num(out$report_total_enrollment) < 0)) {
+    stop("DISE 2010-11 report totals must be finite nonnegative counts.", call. = FALSE)
+  }
+  key <- paste(out$academic_year, canonicalize_state_name(out$state_report),
+               canonicalize_district_name(out$district_report), sep = "|")
+  if (anyDuplicated(key)) {
+    stop("DISE 2010-11 report-total metadata contains duplicate district-year keys.", call. = FALSE)
+  }
+  out
+}
+
 extract_dise_total_enrollment <- function(data, academic_year) {
   out <- data.frame(
     academic_year = academic_year,
@@ -563,6 +593,44 @@ attach_dise_report_language_counts <- function(data, report) {
   finalize_dise_language_measure(out)
 }
 
+
+attach_dise_report_total_enrollment <- function(data, report_totals) {
+  x <- safe_df(data)
+  r <- safe_df(report_totals)
+  x$state_key <- canonicalize_state_name(x$state_name_dise)
+  x$district_key <- canonicalize_district_name(x$district_name_dise)
+  r$state_key <- canonicalize_state_name(r$state_report)
+  r$district_key <- canonicalize_district_name(r$district_report)
+  keep <- c(
+    "academic_year", "state_key", "district_key",
+    "report_total_enrollment", "source_pdf", "source_page", "report_priority"
+  )
+  r <- r[keep]
+  names(r)[names(r) == "source_pdf"] <- "report_total_source_pdf"
+  names(r)[names(r) == "source_page"] <- "report_total_source_page"
+  names(r)[names(r) == "report_priority"] <- "report_total_priority"
+  out <- merge(
+    x, r,
+    by = c("academic_year", "state_key", "district_key"),
+    all.x = TRUE, sort = FALSE
+  )
+
+  report_total <- num(out$report_total_enrollment)
+  use_report <- is.finite(report_total) & report_total >= 0
+  out$dise_total_enrollment_raw <- num(out$dise_total_enrollment)
+  out$dise_total_enrollment_source_raw <- plain_chr(out$dise_total_enrollment_source)
+  out$dise_report_to_raw_total_ratio <- ifelse(
+    use_report &
+      is.finite(out$dise_total_enrollment_raw) &
+      out$dise_total_enrollment_raw > 0,
+    report_total / out$dise_total_enrollment_raw,
+    NA_real_
+  )
+  out$dise_total_enrollment[use_report] <- report_total[use_report]
+  out$dise_total_enrollment_source[use_report] <- "report_card_current_year_total"
+  out
+}
+
 extract_dise_2015_medium_counts <- function(data) {
   data <- safe_df(data)
   code_columns <- paste0("m", 1:5)
@@ -618,7 +686,12 @@ extract_dise_2015_medium_counts <- function(data) {
   out
 }
 
-read_dise_dynamic_year <- function(paths, registry_row, report_languages) {
+read_dise_dynamic_year <- function(
+  paths,
+  registry_row,
+  report_languages,
+  report_totals_2010
+) {
   workbook <- materialize_dise_workbook(paths, registry_row)
   year <- registry_row$academic_year[[1]]
 
@@ -668,6 +741,9 @@ read_dise_dynamic_year <- function(paths, registry_row, report_languages) {
     ),
     by = "district_code_dise", all.x = TRUE, sort = FALSE
   )
+  if (identical(year, "2010-11")) {
+    out <- attach_dise_report_total_enrollment(out, report_totals_2010)
+  }
   out <- attach_dise_report_language_counts(
     out,
     report_languages[report_languages$academic_year == year, , drop = FALSE]
@@ -678,7 +754,8 @@ read_dise_dynamic_year <- function(paths, registry_row, report_languages) {
 read_dise_dynamic_archive <- function(
   paths = build_paths(),
   registry = read_dise_archive_registry(paths),
-  report_languages = read_dise_report_language_enrollment(paths)
+  report_languages = read_dise_report_language_enrollment(paths),
+  report_totals_2010 = read_dise_report_total_enrollment_2010(paths)
 ) {
   require_manifest_files(paths, source_id = "dise_district_report_cards", required_only = FALSE)
   rows <- registry[registry$analytic_role == "dynamic_future", , drop = FALSE]
@@ -686,7 +763,7 @@ read_dise_dynamic_archive <- function(
   safe_bind_rows(lapply(seq_len(nrow(rows)), function(i) {
     row <- rows[i, , drop = FALSE]
     tryCatch(
-      read_dise_dynamic_year(paths, row, report_languages),
+      read_dise_dynamic_year(paths, row, report_languages, report_totals_2010),
       error = function(e) {
         stop(
           "DISE dynamic year ",
