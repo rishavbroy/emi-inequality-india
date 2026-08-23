@@ -650,6 +650,11 @@ extended_diagnostic_targets <- list(
     format = "file"
   ),
   tar_target(
+    dise_report_school_quality_file,
+    path_metadata(paths, "dise_report_school_quality_2011_15.csv"),
+    format = "file"
+  ),
+  tar_target(
     dise_archive_registry,
     read_dise_archive_registry(paths, dise_archive_registry_file)
   ),
@@ -670,6 +675,13 @@ extended_diagnostic_targets <- list(
     read_dise_report_total_enrollment_2010(
       paths,
       dise_report_total_enrollment_2010_file
+    )
+  ),
+  tar_target(
+    dise_report_school_quality,
+    read_dise_report_school_quality(
+      paths,
+      dise_report_school_quality_file
     )
   ),
   tar_target(raw_dise_baseline, read_dise_baseline_archive(paths, dise_archive_registry)),
@@ -711,6 +723,13 @@ extended_diagnostic_targets <- list(
       district_lineage$nss_source_roster,
       district_lineage$full_reviewed_source_crosswalk,
       district_lineage$admin_units_2001
+    )
+  ),
+  tar_target(
+    dise_report_school_quality_2001,
+    harmonize_dise_report_school_quality_to_2001(
+      dise_report_school_quality,
+      dise_lineage_bridge
     )
   ),
   tar_target(
@@ -770,7 +789,10 @@ extended_diagnostic_targets <- list(
   ),
   tar_target(
     dise_school_quality_mechanisms,
-    diagnose_dise_school_quality_mechanisms(dise_dynamic_panel)
+    diagnose_dise_school_quality_mechanisms(
+      dise_dynamic_panel,
+      dise_report_school_quality_2001
+    )
   ),
   tar_target(
     dise_archive_diagnostics,

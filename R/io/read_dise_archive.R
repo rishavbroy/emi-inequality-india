@@ -227,22 +227,32 @@ dise_management_columns <- function(data, prefix) {
   intersect(paste0(prefix, c(1:7, 9)), names(data))
 }
 
-choose_dise_total_enrollment <- function(grade_enrollment, direct_enrollment, management_enrollment) {
+choose_dise_total_enrollment <- function(
+  grade_enrollment,
+  direct_enrollment,
+  management_enrollment,
+  report_enrollment = rep(NA_real_, length(grade_enrollment))
+) {
   grade_enrollment <- num(grade_enrollment)
   direct_enrollment <- num(direct_enrollment)
   management_enrollment <- num(management_enrollment)
+  report_enrollment <- num(report_enrollment)
   total <- rep(NA_real_, length(grade_enrollment))
   source <- rep(NA_character_, length(grade_enrollment))
 
-  use_grade <- is.finite(grade_enrollment)
+  use_report <- is.finite(report_enrollment)
+  total[use_report] <- report_enrollment[use_report]
+  source[use_report] <- "report_card_current_year_total"
+
+  use_grade <- !use_report & is.finite(grade_enrollment)
   total[use_grade] <- grade_enrollment[use_grade]
   source[use_grade] <- "grade_i_viii_sum"
 
-  use_direct <- !use_grade & is.finite(direct_enrollment)
+  use_direct <- !use_report & !use_grade & is.finite(direct_enrollment)
   total[use_direct] <- direct_enrollment[use_direct]
   source[use_direct] <- "direct_enrtot"
 
-  use_management <- !use_grade & !use_direct & is.finite(management_enrollment)
+  use_management <- !use_report & !use_grade & !use_direct & is.finite(management_enrollment)
   total[use_management] <- management_enrollment[use_management]
   source[use_management] <- "government_private_sum"
 
@@ -500,6 +510,57 @@ read_dise_report_total_enrollment_2010 <- function(
                canonicalize_district_name(out$district_report), sep = "|")
   if (anyDuplicated(key)) {
     stop("DISE 2010-11 report-total metadata contains duplicate district-year keys.", call. = FALSE)
+  }
+  out
+}
+
+
+read_dise_report_school_quality <- function(
+  paths = build_paths(),
+  path = path_metadata(paths, "dise_report_school_quality_2011_15.csv")
+) {
+  if (!file.exists(path)) stop("Missing DISE report school-quality metadata: ", path, call. = FALSE)
+  out <- utils::read.csv(path, stringsAsFactors = FALSE, na.strings = c("", "NA"))
+  required <- c(
+    "academic_year", "state_report", "district_report", "source_pdf", "source_page",
+    "report_pupils_per_teacher", "report_single_teacher_school_share",
+    "report_girls_toilet_school_share", "girls_toilet_definition"
+  )
+  missing <- setdiff(required, names(out))
+  if (length(missing)) {
+    stop("DISE report school-quality metadata is missing columns: ",
+         paste(missing, collapse = ", "), call. = FALSE)
+  }
+  expected_years <- c("2011-12", "2012-13", "2013-14", "2014-15")
+  if (!all(out$academic_year %in% expected_years)) {
+    stop("DISE report school-quality metadata contains unsupported years.", call. = FALSE)
+  }
+  ptr <- num(out$report_pupils_per_teacher)
+  single <- num(out$report_single_teacher_school_share)
+  toilet <- num(out$report_girls_toilet_school_share)
+  if (any(!is.finite(ptr) | ptr < 0)) {
+    stop("DISE report PTR values must be finite and nonnegative.", call. = FALSE)
+  }
+  if (any(!is.finite(single) | single < 0 | single > 100) ||
+      any(!is.finite(toilet) | toilet < 0 | toilet > 100)) {
+    stop("DISE report school-share values must lie in [0, 100].", call. = FALSE)
+  }
+  expected_definition <- ifelse(
+    out$academic_year == "2011-12",
+    "all_schools",
+    "girls_and_coeducational_schools"
+  )
+  if (any(out$girls_toilet_definition != expected_definition)) {
+    stop("DISE girls'-toilet metadata do not match the documented year-specific definition.", call. = FALSE)
+  }
+  key <- paste(
+    out$academic_year,
+    canonicalize_state_name(out$state_report),
+    canonicalize_district_name(out$district_report),
+    sep = "|"
+  )
+  if (anyDuplicated(key)) {
+    stop("DISE report school-quality metadata contains duplicate district-year keys.", call. = FALSE)
   }
   out
 }

@@ -248,7 +248,7 @@ save_dise_diagnostics <- function(
   dynamic_relevance = list(registry = data.frame(), summary = data.frame(), coefficients = data.frame()),
   school_quality = list(
     registry = data.frame(), baseline_association = data.frame(),
-    summary = data.frame(), coefficients = data.frame()
+    report_panel = data.frame(), summary = data.frame(), coefficients = data.frame()
   ),
   age_exposure = list(
     anchors = data.frame(), population = data.frame(),
@@ -300,6 +300,10 @@ save_dise_diagnostics <- function(
     school_quality_baseline = write_diagnostic_csv(
       school_quality$baseline_association,
       file.path(dir, "dise_school_quality_baseline_association.csv")
+    ),
+    school_quality_report_panel = write_diagnostic_csv(
+      school_quality$report_panel,
+      file.path(dir, "dise_school_quality_report_2001.csv")
     ),
     school_quality_summary = write_diagnostic_csv(
       school_quality$summary, file.path(dir, "dise_school_quality_dynamic_summary.csv")
@@ -473,13 +477,29 @@ dise_school_quality_registry <- function() {
       "dise_single_teacher_school_share",
       "dise_girls_toilet_school_share"
     ),
+    dynamic_outcome = c(
+      "dise_report_pupils_per_teacher",
+      "dise_report_single_teacher_school_share",
+      "dise_report_girls_toilet_school_share"
+    ),
     label = c(
       "Pupils per teacher",
       "Single-teacher schools (%)",
       "Schools with girls' toilet (%)"
     ),
     direction = c("lower_is_better", "lower_is_better", "higher_is_better"),
-    dynamic_status = "deferred_report_reconstruction",
+    dynamic_start_year = c("2011-12", "2011-12", "2012-13"),
+    dynamic_reference_year = c("2011-12", "2011-12", "2012-13"),
+    dynamic_status = "estimated_report_cards",
+    definition_note = c(
+      "Published all-school PTR.",
+      "Published all-school single-teacher-school percentage.",
+      paste(
+        "Published all-school eligible-school percentage; 2011-12 is excluded",
+        "because the report-card denominator changes from all schools to",
+        "girls'/coeducational schools in 2012-13."
+      )
+    ),
     stringsAsFactors = FALSE
   )
 }
@@ -527,9 +547,49 @@ estimate_dise_school_quality_baseline <- function(
   )
 }
 
+dise_school_quality_dynamic_rows <- function(
+  data,
+  registry_row,
+  instrument,
+  fes
+) {
+  start_year <- registry_row$dynamic_start_year[[1]]
+  reference_year <- registry_row$dynamic_reference_year[[1]]
+  x <- safe_df(data)
+  years <- sort(unique(plain_chr(x$academic_year)))
+  keep_years <- years[years >= start_year]
+  x <- x[x$academic_year %in% keep_years, , drop = FALSE]
+  results <- lapply(seq_len(nrow(fes)), function(j) {
+    result <- estimate_dise_dynamic_spec(
+      x,
+      instrument,
+      fes$dynamic_fe[[j]],
+      reference_year = reference_year,
+      outcome = registry_row$dynamic_outcome[[1]]
+    )
+    if (nrow(result$summary)) {
+      result$summary$label <- registry_row$label[[1]]
+      result$summary$dynamic_status <- registry_row$dynamic_status[[1]]
+      result$summary$definition_note <- registry_row$definition_note[[1]]
+    }
+    if (nrow(result$coefficients)) {
+      result$coefficients$label <- registry_row$label[[1]]
+      result$coefficients$dynamic_status <- registry_row$dynamic_status[[1]]
+      result$coefficients$definition_note <- registry_row$definition_note[[1]]
+      result$coefficients$dynamic_fe <- fes$dynamic_fe[[j]]
+      result$coefficients$instrument <- instrument
+    }
+    result
+  })
+  list(
+    summary = safe_bind_rows(lapply(results, `[[`, "summary")),
+    coefficients = safe_bind_rows(lapply(results, `[[`, "coefficients"))
+  )
+}
+
 diagnose_dise_school_quality_mechanisms <- function(
   data,
-  reference_year = "2007-08",
+  report_quality = data.frame(),
   baseline_years = c("2005-06", "2006-07"),
   instrument = "ling_distance_nonzero_mean"
 ) {
@@ -540,23 +600,29 @@ diagnose_dise_school_quality_mechanisms <- function(
       estimate_dise_school_quality_baseline(data, outcome, instrument, academic_year)
     }))
   }))
-  dynamic_status <- merge(
-    registry[c("outcome", "label", "dynamic_status")],
-    fes,
-    by = NULL,
+
+  report <- safe_df(report_quality)
+  dynamic_data <- merge(
+    safe_df(data),
+    report,
+    by = c("target_unit_2001", "academic_year"),
+    all.x = TRUE,
     sort = FALSE
   )
-  dynamic_status$reference_year <- reference_year
-  dynamic_status$reason <- paste(
-    "Later raw DISE school/teacher sheets have unresolved district-row alignment",
-    "and cross-year schema inconsistencies; reconstruct from published report cards",
-    "before estimating trajectories."
-  )
+  dynamics <- lapply(seq_len(nrow(registry)), function(i) {
+    dise_school_quality_dynamic_rows(
+      dynamic_data,
+      registry[i, , drop = FALSE],
+      instrument,
+      fes
+    )
+  })
   list(
     registry = registry,
     baseline_association = baseline,
-    summary = dynamic_status,
-    coefficients = data.frame()
+    report_panel = report,
+    summary = safe_bind_rows(lapply(dynamics, `[[`, "summary")),
+    coefficients = safe_bind_rows(lapply(dynamics, `[[`, "coefficients"))
   )
 }
 

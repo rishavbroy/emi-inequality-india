@@ -341,7 +341,7 @@ test_that("DISE diagnostic saver returns the repository-standard output manifest
 
   expect_s3_class(manifest, "data.frame")
   expect_setequal(names(manifest), c("path", "description"))
-  expect_equal(nrow(manifest), 31L)
+  expect_equal(nrow(manifest), 32L)
   expect_true(all(file.exists(manifest$path)))
   expect_setequal(
     basename(manifest$path)[grepl("age_6_13|elementary_age_exposure", basename(manifest$path))],
@@ -357,6 +357,7 @@ test_that("DISE diagnostic saver returns the repository-standard output manifest
     c(
       "dise_school_quality_registry.csv",
       "dise_school_quality_baseline_association.csv",
+      "dise_school_quality_report_2001.csv",
       "dise_school_quality_dynamic_summary.csv",
       "dise_school_quality_dynamic_event_study.csv"
     )
@@ -877,6 +878,7 @@ test_that("DISE report-language maintainer stays outside the targets runtime gra
   )
   expect_false(grepl("build_dise_report_language_enrollment.py", targets_text, fixed = TRUE))
   expect_false(grepl("build_dise_report_total_enrollment_2010.py", targets_text, fixed = TRUE))
+  expect_false(grepl("build_dise_report_school_quality.py", targets_text, fixed = TRUE))
 })
 
 test_that("report-derived DISE language metadata is unique and spans dynamic report years", {
@@ -1144,7 +1146,7 @@ test_that("DISE diagnostic saver includes longitudinal outputs", {
     archive, permutations, empty, empty,
     dynamic_panel = empty, dynamic_relevance = dynamic, dir = dir
   )
-  expect_equal(nrow(manifest), 31L)
+  expect_equal(nrow(manifest), 32L)
   expect_true(all(file.exists(manifest$path)))
   expect_setequal(
     basename(manifest$path)[grepl("dise_dynamic_", basename(manifest$path))],
@@ -1187,33 +1189,144 @@ test_that("pooled baseline age exposure sums person-year counts before forming t
   )
 })
 
-test_that("DISE school-quality baseline diagnostics use predetermined years and state clustering", {
+test_that("DISE school-quality diagnostics combine predetermined raw and later report measures", {
   set.seed(42)
   states <- sprintf("%02d", 1:5)
   districts <- paste0(
     "pc2001__", rep(states, each = 8), "__", sprintf("%02d", rep(1:8, 5))
   )
-  rows <- do.call(rbind, lapply(c("2005-06", "2006-07", "2007-08"), function(year) {
+  distance <- rep(seq(0.1, 0.8, length.out = 8), 5)
+  baseline <- do.call(rbind, lapply(c("2005-06", "2006-07"), function(year) {
     data.frame(
       target_unit_2001 = districts,
       state_code_2001 = rep(states, each = 8),
       academic_year = year,
-      ling_distance_nonzero_mean = rep(seq(0.1, 0.8, length.out = 8), 5),
+      ling_distance_nonzero_mean = distance,
       dise_pupils_per_teacher = stats::rnorm(40, 30, 2),
       dise_single_teacher_school_share = stats::runif(40, 0, 20),
       dise_girls_toilet_school_share = stats::runif(40, 20, 80),
       stringsAsFactors = FALSE
     )
   }))
-  out <- diagnose_dise_school_quality_mechanisms(rows)
+  dynamic_design <- do.call(rbind, lapply(
+    c("2011-12", "2012-13", "2013-14", "2014-15"),
+    function(year) {
+      data.frame(
+        target_unit_2001 = districts,
+        state_code_2001 = rep(states, each = 8),
+        academic_year = year,
+        ling_distance_nonzero_mean = distance,
+        dise_pupils_per_teacher = NA_real_,
+        dise_single_teacher_school_share = NA_real_,
+        dise_girls_toilet_school_share = NA_real_,
+        stringsAsFactors = FALSE
+      )
+    }
+  ))
+  report <- do.call(rbind, lapply(seq_along(c("2011-12", "2012-13", "2013-14", "2014-15")), function(i) {
+    year <- c("2011-12", "2012-13", "2013-14", "2014-15")[[i]]
+    data.frame(
+      target_unit_2001 = districts,
+      academic_year = year,
+      dise_report_school_quality_status = "one_to_one_report_ratio",
+      dise_report_pupils_per_teacher = 25 + i * distance,
+      dise_report_single_teacher_school_share = 10 + 2 * i * distance,
+      dise_report_girls_toilet_school_share = 60 + 3 * i * distance,
+      girls_toilet_definition = ifelse(
+        year == "2011-12", "all_schools", "girls_and_coeducational_schools"
+      ),
+      stringsAsFactors = FALSE
+    )
+  }))
+  out <- diagnose_dise_school_quality_mechanisms(
+    safe_bind_rows(list(baseline, dynamic_design)),
+    report
+  )
 
   expect_setequal(unique(out$baseline_association$academic_year), c("2005-06", "2006-07"))
-  expect_false("2007-08" %in% out$baseline_association$academic_year)
   expect_true(all(out$baseline_association$cluster_variable == "state_code_2001"))
-  expect_true(all(out$registry$dynamic_status == "deferred_report_reconstruction"))
-  expect_true(all(out$summary$dynamic_status == "deferred_report_reconstruction"))
-  expect_equal(nrow(out$coefficients), 0L)
+  expect_true(all(out$registry$dynamic_status == "estimated_report_cards"))
+  expect_true(nrow(out$summary) > 0L)
+  expect_true(nrow(out$coefficients) > 0L)
+  ptr_summary <- out$summary[
+    out$summary$outcome == "dise_report_pupils_per_teacher",
+    , drop = FALSE
+  ]
+  toilet_summary <- out$summary[
+    out$summary$outcome == "dise_report_girls_toilet_school_share",
+    , drop = FALSE
+  ]
+  expect_true(all(ptr_summary$reference_year == "2011-12"))
+  expect_true(all(toilet_summary$reference_year == "2012-13"))
 })
+
+test_that("report school-quality ratios are not averaged across later child districts", {
+  report <- data.frame(
+    academic_year = c("2013-14", "2013-14", "2013-14"),
+    state_report = "State",
+    district_report = c("Single", "Child A", "Child B"),
+    report_pupils_per_teacher = c(20, 25, 35),
+    report_single_teacher_school_share = c(5, 10, 20),
+    report_girls_toilet_school_share = c(80, 70, 60),
+    girls_toilet_definition = "girls_and_coeducational_schools",
+    source_pdf = "report.pdf",
+    source_page = 1:3,
+    stringsAsFactors = FALSE
+  )
+  bridge <- data.frame(
+    state_key = "state",
+    district_key = c("single", "child a", "child b"),
+    target_unit_2001 = c("pc2001__01__01", "pc2001__01__02", "pc2001__01__02"),
+    bridge_status = "deterministic_to_2001",
+    stringsAsFactors = FALSE
+  )
+
+  out <- harmonize_dise_report_school_quality_to_2001(report, bridge)
+  single <- out[out$target_unit_2001 == "pc2001__01__01", , drop = FALSE]
+  split <- out[out$target_unit_2001 == "pc2001__01__02", , drop = FALSE]
+
+  expect_equal(single$dise_report_pupils_per_teacher, 20)
+  expect_identical(single$dise_report_school_quality_status, "one_to_one_report_ratio")
+  expect_true(is.na(split$dise_report_pupils_per_teacher))
+  expect_true(is.na(split$dise_report_single_teacher_school_share))
+  expect_identical(
+    split$dise_report_school_quality_status,
+    "multiple_source_districts_not_aggregated"
+  )
+})
+
+test_that("tracked DISE report school-quality metadata has valid ranges and definitions", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
+  path <- file.path(root, "data", "metadata", "dise_report_school_quality_2011_15.csv")
+  x <- read.csv(path, stringsAsFactors = FALSE)
+  expect_setequal(unique(x$academic_year), c("2011-12", "2012-13", "2013-14", "2014-15"))
+  expect_true(all(x$report_pupils_per_teacher >= 0))
+  expect_true(all(x$report_single_teacher_school_share >= 0 & x$report_single_teacher_school_share <= 100))
+  expect_true(all(x$report_girls_toilet_school_share >= 0 & x$report_girls_toilet_school_share <= 100))
+  expect_true(all(
+    x$girls_toilet_definition[x$academic_year == "2011-12"] == "all_schools"
+  ))
+  expect_true(all(
+    x$girls_toilet_definition[x$academic_year != "2011-12"] ==
+      "girls_and_coeducational_schools"
+  ))
+  key <- paste(
+    x$academic_year,
+    canonicalize_state_name(x$state_report),
+    canonicalize_district_name(x$district_report),
+    sep = "|"
+  )
+  expect_equal(anyDuplicated(key), 0L)
+
+  python <- Sys.which("python3")
+  skip_if(!nzchar(python), "python3 is required for the maintainer self-test")
+  script <- file.path(root, "scripts", "build_dise_report_school_quality.py")
+  status <- system2(python, c(shQuote(script), "--self-test"), stdout = TRUE, stderr = TRUE)
+  code <- attr(status, "status")
+  if (is.null(code)) code <- 0L
+  expect_equal(code, 0L)
+})
+
 
 test_that("DISE total enrollment uses one grade-first hierarchy in all workbook generations", {
   data <- data.frame(
@@ -1244,6 +1357,40 @@ test_that("later DISE ENRTOT cannot override complete grade-I-VIII counts", {
   expect_equal(out$dise_direct_enrollment, 100000)
   expect_equal(out$dise_total_enrollment, 10000)
   expect_identical(out$dise_total_enrollment_source, "grade_i_viii_sum")
+})
+
+test_that("published 2010-11 report totals remain authoritative after lineage pooling", {
+  district_year <- data.frame(
+    academic_year = c("2010-11", "2010-11"),
+    state_name_dise = "State",
+    district_name_dise = c("Child A", "Child B"),
+    dise_english_enrollment = c(10, 20),
+    dise_hindi_enrollment = c(20, 30),
+    report_total_enrollment = c(100, 200),
+    dise_grade_enrollment = c(1000, 2000),
+    dise_direct_enrollment = c(900, 1900),
+    dise_management_enrollment = c(950, 1950),
+    dise_total_enrollment = c(100, 200),
+    stringsAsFactors = FALSE
+  )
+  bridge <- data.frame(
+    state_key = "state",
+    district_key = c("child a", "child b"),
+    target_unit_2001 = "pc2001__01__01",
+    bridge_status = "deterministic_to_2001",
+    stringsAsFactors = FALSE
+  )
+
+  out <- harmonize_dise_counts_to_2001(district_year, bridge)
+
+  expect_equal(out$report_total_enrollment, 300)
+  expect_equal(out$dise_grade_enrollment, 3000)
+  expect_equal(out$dise_total_enrollment, 300)
+  expect_identical(
+    out$dise_total_enrollment_source,
+    "report_card_current_year_total"
+  )
+  expect_equal(out$dise_emi_enrollment_share_total, 10)
 })
 
 test_that("DISE lineage aggregation reapplies denominator precedence after pooling counts", {

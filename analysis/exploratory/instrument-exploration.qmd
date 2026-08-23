@@ -60,6 +60,7 @@ dise_dynamic_summary <- analysis_target_csv("diag_ext_dise", "dise_dynamic_first
 dise_dynamic_event <- analysis_target_csv("diag_ext_dise", "dise_dynamic_first_stage_event_study.csv")
 dise_school_quality_registry <- analysis_target_csv("diag_ext_dise", "dise_school_quality_registry.csv")
 dise_school_quality_baseline <- analysis_target_csv("diag_ext_dise", "dise_school_quality_baseline_association.csv")
+dise_school_quality_report <- analysis_target_csv("diag_ext_dise", "dise_school_quality_report_2001.csv")
 dise_school_quality_summary <- analysis_target_csv("diag_ext_dise", "dise_school_quality_dynamic_summary.csv")
 dise_school_quality_event <- analysis_target_csv("diag_ext_dise", "dise_school_quality_dynamic_event_study.csv")
 ```
@@ -134,7 +135,7 @@ analysis_table(
 
 ## DISE school-quality mechanisms
 
-The 2005-06 and 2006-07 associations are predetermined school-system diagnostics estimated with state fixed effects and state-clustered inference after count-preserving Census-2001 harmonization. Later raw School/Teacher sheets are not currently used for trajectories: comparison with the published district report cards reveals district-row alignment failures and cross-year field-definition discontinuities. The dynamic registry therefore records a deferred-reconstruction status rather than reporting coefficients from a non-comparable panel.
+The 2005-06 and 2006-07 associations are predetermined school-system diagnostics estimated with state fixed effects and state-clustered inference after count-preserving Census-2001 harmonization. Later mechanism trajectories are reconstructed from the published district report cards rather than the corrupted raw School/Teacher sheets. Because the publication values are already ratios, only one-to-one deterministic later-district mappings are retained on Census-2001 geography; split parents are not averaged. PTR and single-teacher trajectories begin in 2011-12, while the girls'-toilet trajectory begins in 2012-13 because the report-card denominator changes after 2011-12.
 
 ```{r dise-school-quality-mechanisms}
 analysis_table(dise_school_quality_registry, "DISE school-quality mechanism registry")
@@ -143,14 +144,33 @@ analysis_table(
   "Predetermined 2005-06/2006-07 school-quality associations with preferred linguistic distance",
   max_rows = 10
 )
+school_quality_coverage <- do.call(
+  rbind,
+  lapply(split(dise_school_quality_report, dise_school_quality_report$academic_year), function(x) {
+    data.frame(
+      academic_year = x$academic_year[[1]],
+      n_targets = nrow(x),
+      n_one_to_one = sum(x$dise_report_school_quality_status == "one_to_one_report_ratio"),
+      n_ptr = sum(is.finite(x$dise_report_pupils_per_teacher)),
+      n_single_teacher = sum(is.finite(x$dise_report_single_teacher_school_share)),
+      n_girls_toilet = sum(is.finite(x$dise_report_girls_toilet_school_share)),
+      stringsAsFactors = FALSE
+    )
+  })
+)
 analysis_table(
-  dise_school_quality_summary,
-  "School-quality trajectories: reconstruction status",
+  school_quality_coverage,
+  "Publication-derived school-quality coverage on Census-2001 geography",
   max_rows = 10
 )
 analysis_table(
+  dise_school_quality_summary,
+  "Publication-derived school-quality trajectories: joint clustered tests",
+  max_rows = 20
+)
+analysis_table(
   dise_school_quality_event,
-  "School-quality trajectories: coefficients (empty until reconstruction)",
+  "Publication-derived school-quality trajectories: year coefficients",
   max_rows = 40
 )
 ```

@@ -116,6 +116,63 @@ sum_complete_counts <- function(x) {
   sum(x)
 }
 
+harmonize_dise_report_school_quality_to_2001 <- function(report_quality, bridge) {
+  x <- safe_df(report_quality)
+  bridge <- safe_df(bridge)
+  x$state_key <- canonicalize_state_name(x$state_report)
+  x$district_key <- canonicalize_district_name(x$district_report)
+  x <- merge(
+    x,
+    bridge[c("state_key", "district_key", "target_unit_2001", "bridge_status")],
+    by = c("state_key", "district_key"),
+    all.x = TRUE,
+    sort = FALSE
+  )
+  x <- x[
+    x$bridge_status == "deterministic_to_2001" &
+      !is.na(x$target_unit_2001) & nzchar(x$target_unit_2001),
+    , drop = FALSE
+  ]
+  if (!nrow(x)) return(data.frame())
+
+  groups <- split(
+    seq_len(nrow(x)),
+    paste(x$academic_year, x$target_unit_2001, sep = "|")
+  )
+  out <- safe_bind_rows(lapply(groups, function(i) {
+    part <- x[i, , drop = FALSE]
+    unique_sources <- unique(paste(part$state_key, part$district_key, sep = "|"))
+    usable <- length(unique_sources) == 1L && nrow(part) == 1L
+    data.frame(
+      academic_year = part$academic_year[[1]],
+      target_unit_2001 = part$target_unit_2001[[1]],
+      dise_report_school_quality_source_districts = length(unique_sources),
+      dise_report_school_quality_status = if (usable) {
+        "one_to_one_report_ratio"
+      } else {
+        "multiple_source_districts_not_aggregated"
+      },
+      dise_report_pupils_per_teacher = if (usable) {
+        num(part$report_pupils_per_teacher[[1]])
+      } else NA_real_,
+      dise_report_single_teacher_school_share = if (usable) {
+        num(part$report_single_teacher_school_share[[1]])
+      } else NA_real_,
+      dise_report_girls_toilet_school_share = if (usable) {
+        num(part$report_girls_toilet_school_share[[1]])
+      } else NA_real_,
+      girls_toilet_definition = if (usable) {
+        plain_chr(part$girls_toilet_definition[[1]])
+      } else NA_character_,
+      source_pdf = if (usable) plain_chr(part$source_pdf[[1]]) else NA_character_,
+      source_page = if (usable) num(part$source_page[[1]]) else NA_real_,
+      stringsAsFactors = FALSE
+    )
+  }))
+  rownames(out) <- NULL
+  out
+}
+
 harmonize_dise_counts_to_2001 <- function(district_year, bridge) {
   x <- safe_df(district_year)
   bridge <- safe_df(bridge)
@@ -133,7 +190,10 @@ harmonize_dise_counts_to_2001 <- function(district_year, bridge) {
   ]
   if (!nrow(mapped)) return(data.frame())
   total_candidate_columns <- intersect(c(
-    "dise_grade_enrollment", "dise_direct_enrollment", "dise_management_enrollment"
+    "report_total_enrollment",
+    "dise_grade_enrollment",
+    "dise_direct_enrollment",
+    "dise_management_enrollment"
   ), names(mapped))
   count_columns <- intersect(c(
     "dise_english_enrollment", "dise_hindi_enrollment",
@@ -158,10 +218,15 @@ harmonize_dise_counts_to_2001 <- function(district_year, bridge) {
   }))
   if (length(total_candidate_columns)) {
     n <- nrow(out)
+    report <- if ("report_total_enrollment" %in% names(out)) {
+      out$report_total_enrollment
+    } else rep(NA_real_, n)
     grade <- if ("dise_grade_enrollment" %in% names(out)) out$dise_grade_enrollment else rep(NA_real_, n)
     direct <- if ("dise_direct_enrollment" %in% names(out)) out$dise_direct_enrollment else rep(NA_real_, n)
     management <- if ("dise_management_enrollment" %in% names(out)) out$dise_management_enrollment else rep(NA_real_, n)
-    preferred <- choose_dise_total_enrollment(grade, direct, management)
+    preferred <- choose_dise_total_enrollment(
+      grade, direct, management, report_enrollment = report
+    )
     out$dise_total_enrollment <- preferred$dise_total_enrollment
     out$dise_total_enrollment_source <- preferred$dise_total_enrollment_source
     out$dise_direct_to_grade_enrollment_ratio <- ifelse(
