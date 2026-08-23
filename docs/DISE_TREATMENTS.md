@@ -109,8 +109,11 @@ The extended DISE output writes both `dise_lineage_bridge.csv` and `dise_distric
 The expensive alternative-distance and DISE IV diagnostics are projected onto
 minimal analysis panels before estimation and are executed as `{targets}`
 dynamic branches (alternative-distance specification by specification and DISE
-construct by construct). Unrelated columns added to the main district panel,
-including future HCES outcomes, therefore do not change the diagnostic-panel
-hash and do not invalidate these branches. The sequential diagnostic wrapper
+construct by construct). Alternative-distance diagnostics use two projections:
+a common-support-filtered first-stage view and a row-preserving augmentation
+view that retains the welfare outcome needed by weak-IV diagnostics. Unrelated
+columns added to the main district panel, including future HCES outcomes, are
+excluded from both projections, so downstream diagnostic hashes remain stable
+when those unrelated columns change. The sequential diagnostic wrapper
 functions remain available for tests and direct use; the targets graph schedules
 the same estimators at finer granularity.

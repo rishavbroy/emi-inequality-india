@@ -90,36 +90,75 @@ estimate_alternative_distance_spec <- function(data, specification, treatment) {
   list(summary = summary, coefficients = coefficients)
 }
 
-prepare_alternative_distance_panel <- function(
-  panel,
+alternative_distance_panel_columns <- function(
   treatment = "emi_exposure_all_children_0708",
   retain = character()
 ) {
-  x <- if (inherits(panel, "sf")) sf::st_drop_geometry(panel) else as.data.frame(panel, stringsAsFactors = FALSE)
   needed <- unique(c(
     treatment, "state_code_2001", "district_code_2001", "region",
     census_2001_diagnostic_controls(), alternative_distance_variables()
   ))
   retain <- setdiff(unique(plain_chr(retain)), needed)
-  required <- unique(c(needed, retain))
-  missing <- setdiff(required, names(x))
-  if (length(missing)) stop("Alternative-distance panel is missing columns: ", paste(missing, collapse = ", "), call. = FALSE)
-  numeric_vars <- setdiff(needed, c("state_code_2001", "district_code_2001", "region"))
+  list(needed = needed, retain = retain, required = unique(c(needed, retain)))
+}
+
+project_alternative_distance_panel <- function(
+  panel,
+  treatment = "emi_exposure_all_children_0708",
+  retain = character()
+) {
+  x <- if (inherits(panel, "sf")) sf::st_drop_geometry(panel) else as.data.frame(panel, stringsAsFactors = FALSE)
+  columns <- alternative_distance_panel_columns(treatment, retain)
+  missing <- setdiff(columns$required, names(x))
+  if (length(missing)) {
+    stop(
+      "Alternative-distance panel is missing columns: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  numeric_vars <- setdiff(
+    columns$needed,
+    c("state_code_2001", "district_code_2001", "region")
+  )
   for (variable in numeric_vars) x[[variable]] <- num(x[[variable]])
   x$state_code_2001 <- plain_chr(x$state_code_2001)
   x$district_code_2001 <- plain_chr(x$district_code_2001)
   if (!"district_panel_id" %in% names(x)) {
-    x$district_panel_id <- make_district_key(x$state_code_2001, x$district_code_2001, 2001L)
+    x$district_panel_id <- make_district_key(
+      x$state_code_2001, x$district_code_2001, 2001L
+    )
   }
   x$region <- as.character(x$region)
-  x <- x[unique(c(needed, retain, "district_panel_id"))]
-  keep <- stats::complete.cases(x[needed]) & nzchar(x$state_code_2001) &
-    nzchar(x$district_code_2001) & nzchar(x$region)
+  x <- x[unique(c(columns$required, "district_panel_id"))]
+  rownames(x) <- NULL
+  x
+}
+
+prepare_alternative_distance_panel <- function(
+  panel,
+  treatment = "emi_exposure_all_children_0708",
+  retain = character()
+) {
+  columns <- alternative_distance_panel_columns(treatment, retain)
+  x <- project_alternative_distance_panel(panel, treatment, retain)
+  keep <- stats::complete.cases(x[columns$needed]) &
+    nzchar(x$state_code_2001) &
+    nzchar(x$district_code_2001) &
+    nzchar(x$region)
   x <- x[keep, , drop = FALSE]
   rownames(x) <- NULL
-  if (!nrow(x)) stop("No complete common support is available for alternative-distance diagnostics.", call. = FALSE)
+  if (!nrow(x)) {
+    stop(
+      "No complete common support is available for alternative-distance diagnostics.",
+      call. = FALSE
+    )
+  }
   if (length(unique(x$region)) != length(panel_region_levels())) {
-    stop("Alternative-distance common support does not contain all six panel regions.", call. = FALSE)
+    stop(
+      "Alternative-distance common support does not contain all six panel regions.",
+      call. = FALSE
+    )
   }
   x
 }

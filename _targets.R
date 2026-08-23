@@ -853,6 +853,13 @@ extended_diagnostic_targets <- list(
     prepare_alternative_distance_panel(district_panel)
   ),
   tar_target(
+    alternative_distance_augmentation_panel,
+    project_alternative_distance_panel(
+      district_panel,
+      retain = "real_log_consumption_change"
+    )
+  ),
+  tar_target(
     alternative_distance_spec_registry,
     alternative_distance_registry(),
     iteration = "list"
@@ -886,7 +893,7 @@ extended_diagnostic_targets <- list(
     alternative_distance_first_stages,
     augment_alternative_distance_diagnostics(
       alternative_distance_first_stage_base,
-      alternative_distance_analysis_panel,
+      alternative_distance_augmentation_panel,
       census_2001_languages,
       glottolog = glottolog_5_3,
       glottolog_crosswalk = census_glottolog_crosswalk

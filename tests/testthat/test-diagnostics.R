@@ -859,6 +859,10 @@ test_that("alternative linguistic-distance first stages use fixed support and jo
     panel,
     retain = "real_log_consumption_change"
   )
+  augmentation_panel <- project_alternative_distance_panel(
+    panel,
+    retain = "real_log_consumption_change"
+  )
   registry <- alternative_distance_registry()
   branch_specification <- registry[
     registry$construction_id == "distance_shares_all" &
@@ -882,9 +886,13 @@ test_that("alternative linguistic-distance first stages use fixed support and jo
   )
 
   expect_false("future_hces_outcome" %in% names(projected))
+  expect_false("future_hces_outcome" %in% names(augmentation_panel))
   expect_true("real_log_consumption_change" %in% names(projected_with_outcome))
+  expect_true("real_log_consumption_change" %in% names(augmentation_panel))
   expect_equal(nrow(projected_with_outcome), nrow(projected))
+  expect_equal(nrow(augmentation_panel), nrow(panel))
   expect_true(is.na(projected_with_outcome$real_log_consumption_change[[1]]))
+  expect_true(is.na(augmentation_panel$real_log_consumption_change[[1]]))
   expect_equal(branched$summary, out$summary)
   expect_equal(branched$coefficients, out$coefficients)
   expect_equal(branched$coverage_sensitivity, out$coverage_sensitivity)
