@@ -253,6 +253,40 @@ test_that("DISE construct registry separates treatments from mechanism outcomes"
   expect_false(any(grepl("reported", registry$construct_id, fixed = TRUE)))
 })
 
+
+
+test_that("DISE IV diagnostic projection is insensitive to unrelated future outcomes", {
+  constructs <- dise_construct_registry()
+  validation <- dise_nss_validation_registry()
+  needed_numeric <- unique(c(
+    "real_log_consumption_change",
+    constructs$variable,
+    validation$dise_variable,
+    validation$nss_variable,
+    census_2001_diagnostic_controls(),
+    alternative_distance_variables()
+  ))
+  panel <- data.frame(
+    state_code_2001 = c("01", "02"),
+    district_code_2001 = c("001", "002"),
+    region = c("north", "south"),
+    stringsAsFactors = FALSE
+  )
+  for (variable in setdiff(
+    needed_numeric,
+    c("state_code_2001", "district_code_2001", "region")
+  )) {
+    panel[[variable]] <- c(1, 2)
+  }
+  panel$future_hces_outcome <- c(100, 200)
+
+  projected <- prepare_dise_iv_diagnostic_panel(panel, constructs)
+
+  expect_false("future_hces_outcome" %in% names(projected))
+  expect_true(all(constructs$variable %in% names(projected)))
+  expect_true("real_log_consumption_change" %in% names(projected))
+})
+
 test_that("DISE-NSS validation compares like-scaled enrolled measures and residualizes states", {
   panel <- data.frame(
     state_code_2001 = rep(c("01", "02"), each = 3),

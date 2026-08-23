@@ -106,6 +106,7 @@ prepare_alternative_distance_panel <- function(panel, treatment = "emi_exposure_
     x$district_panel_id <- make_district_key(x$state_code_2001, x$district_code_2001, 2001L)
   }
   x$region <- as.character(x$region)
+  x <- x[unique(c(needed, "district_panel_id"))]
   keep <- stats::complete.cases(x[needed]) & nzchar(x$state_code_2001) &
     nzchar(x$district_code_2001) & nzchar(x$region)
   x <- x[keep, , drop = FALSE]
@@ -117,26 +118,45 @@ prepare_alternative_distance_panel <- function(panel, treatment = "emi_exposure_
   x
 }
 
-diagnose_alternative_distance_first_stages <- function(
-  panel,
+diagnose_alternative_distance_specification <- function(
+  data,
+  specification,
   treatment = "emi_exposure_all_children_0708"
 ) {
-  data <- prepare_alternative_distance_panel(panel, treatment)
-  registry <- alternative_distance_registry(treatment = treatment)
-  estimated <- lapply(seq_len(nrow(registry)), function(i) {
-    estimate_alternative_distance_spec(data, registry[i, , drop = FALSE], treatment)
-  })
+  specification <- safe_df(specification)
+  if (nrow(specification) != 1L) {
+    stop("Alternative-distance branch requires exactly one specification.", call. = FALSE)
+  }
+  estimate <- estimate_alternative_distance_spec(data, specification, treatment)
+  list(
+    summary = estimate$summary,
+    coefficients = estimate$coefficients,
+    coverage_sensitivity = estimate_alternative_distance_by_coverage(
+      data, specification, treatment
+    )
+  )
+}
+
+assemble_alternative_distance_first_stages <- function(
+  data,
+  registry,
+  branches,
+  treatment = "emi_exposure_all_children_0708"
+) {
+  branches <- unname(branches)
   structure(
     list(
-      summary = safe_bind_rows(lapply(estimated, `[[`, "summary")),
-      coefficients = safe_bind_rows(lapply(estimated, `[[`, "coefficients")),
+      summary = safe_bind_rows(lapply(branches, `[[`, "summary")),
+      coefficients = safe_bind_rows(lapply(branches, `[[`, "coefficients")),
       registry = registry,
       common_support = data.frame(
         treatment = treatment, n = nrow(data),
         n_states = length(unique(data$state_code_2001)),
         n_regions = length(unique(data$region)), stringsAsFactors = FALSE
       ),
-      coverage_sensitivity = estimate_alternative_distance_by_coverage(data, registry, treatment),
+      coverage_sensitivity = safe_bind_rows(
+        lapply(branches, `[[`, "coverage_sensitivity")
+      ),
       distance4_languages = data.frame(status = character()),
       unmapped_languages = data.frame(status = character()),
       distance4_leave_one_out = data.frame(status = character()),
@@ -150,6 +170,20 @@ diagnose_alternative_distance_first_stages <- function(
     ),
     class = "emi_alternative_distance_first_stages"
   )
+}
+
+diagnose_alternative_distance_first_stages <- function(
+  panel,
+  treatment = "emi_exposure_all_children_0708"
+) {
+  data <- prepare_alternative_distance_panel(panel, treatment)
+  registry <- alternative_distance_registry(treatment = treatment)
+  branches <- lapply(seq_len(nrow(registry)), function(i) {
+    diagnose_alternative_distance_specification(
+      data, registry[i, , drop = FALSE], treatment
+    )
+  })
+  assemble_alternative_distance_first_stages(data, registry, branches, treatment)
 }
 
 save_alternative_distance_first_stages <- function(

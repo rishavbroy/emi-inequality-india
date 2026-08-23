@@ -165,6 +165,102 @@ diagnose_dise_archive <- function(district_year, treatments, publication_checks 
   )
 }
 
+prepare_dise_iv_diagnostic_panel <- function(
+  panel,
+  constructs = dise_construct_registry(),
+  outcome = "real_log_consumption_change"
+) {
+  x <- if (inherits(panel, "sf")) sf::st_drop_geometry(panel) else safe_df(panel)
+  validation <- dise_nss_validation_registry()
+  needed <- unique(c(
+    outcome,
+    constructs$variable,
+    validation$dise_variable,
+    validation$nss_variable,
+    "state_code_2001", "district_code_2001", "region",
+    census_2001_diagnostic_controls(),
+    alternative_distance_variables()
+  ))
+  missing <- setdiff(needed, names(x))
+  if (length(missing)) {
+    stop(
+      "DISE IV diagnostic panel is missing columns: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  if ("district_panel_id" %in% names(x)) needed <- c(needed, "district_panel_id")
+  out <- x[unique(needed)]
+  rownames(out) <- NULL
+  out
+}
+
+diagnose_dise_iv_construct <- function(
+  panel,
+  construct,
+  outcome = "real_log_consumption_change"
+) {
+  construct <- safe_df(construct)
+  if (nrow(construct) != 1L) {
+    stop("DISE diagnostic branch requires exactly one construct.", call. = FALSE)
+  }
+  variable <- construct$variable[[1]]
+  if (!variable %in% names(panel)) {
+    return(list(
+      first_stage = data.frame(), first_stage_coefficients = data.frame(),
+      weak_iv_outcomes = data.frame(), anderson_rubin_grid = data.frame(),
+      overidentification = data.frame(), monotonicity_summary = data.frame(),
+      monotonicity_bins = data.frame(), monotonicity_state_slopes = data.frame(),
+      balance = data.frame(), joint_balance = data.frame()
+    ))
+  }
+  fs <- estimate_dise_first_stage_suite(panel, construct)
+  out <- list(
+    first_stage = fs$summary,
+    first_stage_coefficients = fs$coefficients,
+    weak_iv_outcomes = data.frame(), anderson_rubin_grid = data.frame(),
+    overidentification = data.frame(), monotonicity_summary = data.frame(),
+    monotonicity_bins = data.frame(), monotonicity_state_slopes = data.frame(),
+    balance = data.frame(), joint_balance = data.frame()
+  )
+  if (!identical(construct$analysis_scope[[1]], "structural_iv")) return(out)
+  weak <- estimate_weak_iv_outcomes(panel, outcome = outcome, treatment = variable)
+  out$weak_iv_outcomes <- add_dise_construct_id(weak$summary, construct)
+  out$anderson_rubin_grid <- add_dise_construct_id(weak$ar_grid, construct)
+  out$overidentification <- add_dise_construct_id(weak$overidentification, construct)
+  mono <- run_iv_monotonicity_diagnostics(panel, specifications = weak$registry)
+  out$monotonicity_summary <- add_dise_construct_id(mono$summary, construct)
+  out$monotonicity_bins <- add_dise_construct_id(mono$bins, construct)
+  out$monotonicity_state_slopes <- add_dise_construct_id(mono$state_slopes, construct)
+  balance_panel <- panel[is.finite(num(panel[[variable]])), , drop = FALSE]
+  out$balance <- add_dise_construct_id(
+    run_iv_balance_diagnostics(balance_panel, specifications = weak$registry), construct
+  )
+  out$joint_balance <- add_dise_construct_id(
+    run_iv_joint_balance_diagnostics(balance_panel, specifications = weak$registry), construct
+  )
+  out
+}
+
+assemble_dise_iv_permutations <- function(constructs, nss_validation, branches) {
+  branches <- unname(branches)
+  collect <- function(name) safe_bind_rows(lapply(branches, `[[`, name))
+  list(
+    construct_registry = constructs,
+    nss_validation = nss_validation,
+    first_stage = collect("first_stage"),
+    first_stage_coefficients = collect("first_stage_coefficients"),
+    weak_iv_outcomes = collect("weak_iv_outcomes"),
+    anderson_rubin_grid = collect("anderson_rubin_grid"),
+    overidentification = collect("overidentification"),
+    monotonicity_summary = collect("monotonicity_summary"),
+    monotonicity_bins = collect("monotonicity_bins"),
+    monotonicity_state_slopes = collect("monotonicity_state_slopes"),
+    balance = collect("balance"),
+    joint_balance = collect("joint_balance")
+  )
+}
+
 estimate_dise_first_stage_suite <- function(panel, construct) {
   treatment <- construct$variable[[1]]
   data <- prepare_alternative_distance_panel(panel, treatment)
@@ -184,56 +280,16 @@ diagnose_dise_iv_permutations <- function(
   constructs = dise_construct_registry(),
   outcome = "real_log_consumption_change"
 ) {
-  first_stage <- list()
-  coefficients <- list()
-  weak_summary <- list()
-  ar_grid <- list()
-  overidentification <- list()
-  monotonicity_summary <- list()
-  monotonicity_bins <- list()
-  monotonicity_state <- list()
-  balance <- list()
-  joint_balance <- list()
-
-  for (i in seq_len(nrow(constructs))) {
-    construct <- constructs[i, , drop = FALSE]
-    variable <- construct$variable[[1]]
-    if (!variable %in% names(panel)) next
-    fs <- estimate_dise_first_stage_suite(panel, construct)
-    first_stage[[i]] <- fs$summary
-    coefficients[[i]] <- fs$coefficients
-
-    if (!identical(construct$analysis_scope[[1]], "structural_iv")) next
-    weak <- estimate_weak_iv_outcomes(panel, outcome = outcome, treatment = variable)
-    weak_summary[[i]] <- add_dise_construct_id(weak$summary, construct)
-    ar_grid[[i]] <- add_dise_construct_id(weak$ar_grid, construct)
-    overidentification[[i]] <- add_dise_construct_id(weak$overidentification, construct)
-    mono <- run_iv_monotonicity_diagnostics(panel, specifications = weak$registry)
-    monotonicity_summary[[i]] <- add_dise_construct_id(mono$summary, construct)
-    monotonicity_bins[[i]] <- add_dise_construct_id(mono$bins, construct)
-    monotonicity_state[[i]] <- add_dise_construct_id(mono$state_slopes, construct)
-    balance_panel <- panel[is.finite(num(panel[[variable]])), , drop = FALSE]
-    balance[[i]] <- add_dise_construct_id(
-      run_iv_balance_diagnostics(balance_panel, specifications = weak$registry), construct
+  data <- prepare_dise_iv_diagnostic_panel(panel, constructs, outcome)
+  branches <- lapply(seq_len(nrow(constructs)), function(i) {
+    diagnose_dise_iv_construct(
+      data, constructs[i, , drop = FALSE], outcome = outcome
     )
-    joint_balance[[i]] <- add_dise_construct_id(
-      run_iv_joint_balance_diagnostics(balance_panel, specifications = weak$registry), construct
-    )
-  }
-
-  list(
-    construct_registry = constructs,
-    nss_validation = diagnose_dise_nss_validation(panel),
-    first_stage = safe_bind_rows(first_stage),
-    first_stage_coefficients = safe_bind_rows(coefficients),
-    weak_iv_outcomes = safe_bind_rows(weak_summary),
-    anderson_rubin_grid = safe_bind_rows(ar_grid),
-    overidentification = safe_bind_rows(overidentification),
-    monotonicity_summary = safe_bind_rows(monotonicity_summary),
-    monotonicity_bins = safe_bind_rows(monotonicity_bins),
-    monotonicity_state_slopes = safe_bind_rows(monotonicity_state),
-    balance = safe_bind_rows(balance),
-    joint_balance = safe_bind_rows(joint_balance)
+  })
+  assemble_dise_iv_permutations(
+    constructs,
+    diagnose_dise_nss_validation(data),
+    branches
   )
 }
 

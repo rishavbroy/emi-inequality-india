@@ -800,9 +800,33 @@ extended_diagnostic_targets <- list(
       dise_baseline_district_year, dise_baseline_treatments, dise_publication_checks
     )
   ),
+  tar_target(dise_iv_construct_registry, dise_construct_registry(), iteration = "list"),
+  tar_target(
+    dise_iv_analysis_panel,
+    prepare_dise_iv_diagnostic_panel(
+      district_panel_with_dise,
+      dise_iv_construct_registry
+    )
+  ),
+  tar_target(
+    dise_iv_construct,
+    split(dise_iv_construct_registry, seq_len(nrow(dise_iv_construct_registry))),
+    iteration = "list"
+  ),
+  tar_target(
+    dise_iv_construct_diagnostic,
+    diagnose_dise_iv_construct(dise_iv_analysis_panel, dise_iv_construct),
+    pattern = map(dise_iv_construct),
+    iteration = "list"
+  ),
+  tar_target(dise_iv_nss_validation, diagnose_dise_nss_validation(dise_iv_analysis_panel)),
   tar_target(
     dise_iv_permutations,
-    diagnose_dise_iv_permutations(district_panel_with_dise)
+    assemble_dise_iv_permutations(
+      dise_iv_construct_registry,
+      dise_iv_nss_validation,
+      dise_iv_construct_diagnostic
+    )
   ),
   tar_target(
     diag_ext_dise,
@@ -825,10 +849,44 @@ extended_diagnostic_targets <- list(
   ),
 
   tar_target(
+    alternative_distance_analysis_panel,
+    prepare_alternative_distance_panel(district_panel)
+  ),
+  tar_target(
+    alternative_distance_spec_registry,
+    alternative_distance_registry(),
+    iteration = "list"
+  ),
+  tar_target(
+    alternative_distance_specification,
+    split(
+      alternative_distance_spec_registry,
+      seq_len(nrow(alternative_distance_spec_registry))
+    ),
+    iteration = "list"
+  ),
+  tar_target(
+    alternative_distance_spec_diagnostic,
+    diagnose_alternative_distance_specification(
+      alternative_distance_analysis_panel,
+      alternative_distance_specification
+    ),
+    pattern = map(alternative_distance_specification),
+    iteration = "list"
+  ),
+  tar_target(
+    alternative_distance_first_stage_base,
+    assemble_alternative_distance_first_stages(
+      alternative_distance_analysis_panel,
+      alternative_distance_spec_registry,
+      alternative_distance_spec_diagnostic
+    )
+  ),
+  tar_target(
     alternative_distance_first_stages,
     augment_alternative_distance_diagnostics(
-      diagnose_alternative_distance_first_stages(district_panel),
-      district_panel,
+      alternative_distance_first_stage_base,
+      alternative_distance_analysis_panel,
       census_2001_languages,
       glottolog = glottolog_5_3,
       glottolog_crosswalk = census_glottolog_crosswalk

@@ -103,3 +103,14 @@ The bridge treats an empty candidate source as an ordinary no-evidence condition
 When multiple DISE districts deterministically map to the same Census-2001 parent, the pipeline sums English enrollment and total enrollment first and recomputes EMI from those pooled counts. It never averages child-district percentages. The pooled 2005-06 to 2007-08 treatment is then constructed from the harmonized annual counts and still requires all three academic years.
 
 The extended DISE output writes both `dise_lineage_bridge.csv` and `dise_district_year_2001.csv` so the geographic recovery is reviewable independently of the regression results.
+
+### Diagnostic cache isolation
+
+The expensive alternative-distance and DISE IV diagnostics are projected onto
+minimal analysis panels before estimation and are executed as `{targets}`
+dynamic branches (alternative-distance specification by specification and DISE
+construct by construct). Unrelated columns added to the main district panel,
+including future HCES outcomes, therefore do not change the diagnostic-panel
+hash and do not invalidate these branches. The sequential diagnostic wrapper
+functions remain available for tests and direct use; the targets graph schedules
+the same estimators at finer granularity.

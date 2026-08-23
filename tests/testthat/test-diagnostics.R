@@ -851,7 +851,22 @@ test_that("alternative linguistic-distance first stages use fixed support and jo
   for (variable in census_2001_diagnostic_controls()) panel[[variable]] <- stats::rnorm(n)
 
   out <- diagnose_alternative_distance_first_stages(panel)
+  panel$future_hces_outcome <- seq_len(nrow(panel))
+  projected <- prepare_alternative_distance_panel(panel)
+  registry <- alternative_distance_registry()
+  branches <- lapply(seq_len(nrow(registry)), function(i) {
+    diagnose_alternative_distance_specification(
+      projected, registry[i, , drop = FALSE]
+    )
+  })
+  branched <- assemble_alternative_distance_first_stages(
+    projected, registry, branches
+  )
 
+  expect_false("future_hces_outcome" %in% names(projected))
+  expect_equal(branched$summary, out$summary)
+  expect_equal(branched$coefficients, out$coefficients)
+  expect_equal(branched$coverage_sensitivity, out$coverage_sensitivity)
   expect_s3_class(out, "emi_alternative_distance_first_stages")
   expect_equal(nrow(out$summary), nrow(alternative_distance_registry()))
   expect_true(all(out$summary$n == n))
