@@ -28,17 +28,21 @@ The canonical raw source directories are:
 - `data/raw/census_2001/religion/C01/`
 - `data/raw/census_2001/education/C08/`
 - `data/raw/census_2001/age/C14/`
+- `data/raw/census_2001/age/C13/` (planned elementary-age exposure)
+- `data/raw/census_2011/age/C13/` (planned elementary-age exposure)
 - `data/raw/census_2001/housing/H09/`
 - `data/raw/district_boundaries_2020/`
 - `data/raw/district_changes/`
 
-Census 2001 state/UT workbooks can be restored from the tracked acquisition manifest without redownloading files already present:
+Census 2001 and 2011 state/UT workbooks in the tracked acquisition manifests can be restored without redownloading nonempty files already present:
 
 ```bash
 make download-census-tables
 ```
 
-The downloader reads `data/metadata/census_2001_download_manifest.tsv`, checks each destination with a local file stat, and contacts Census of India only for missing or empty files. The acquisition manifest also inventories Census tables reserved for planned controls and diagnostics, so it is intentionally broader than the production `data/metadata/file_manifest.csv`.
+This runs `bash scripts/download_census_tables.sh`, which processes both `data/metadata/census_2001_download_manifest.tsv` and `data/metadata/census_2011_download_manifest.tsv` by default. The downloader creates missing destination directories, contacts Census of India only for missing or empty files, and writes through a temporary `.part` file before the final rename. A specific manifest can still be supplied explicitly as a script argument.
+
+The 2001 C-13 workbooks are stored under `data/raw/census_2001/age/C13/`; the 2011 C-13 workbooks are stored under `data/raw/census_2011/age/C13/`. These acquisition manifests are intentionally broader than the production `data/metadata/file_manifest.csv`: downloading a planned table does not make it a current build dependency.
 
 ## Optional district-lineage inputs
 

@@ -6,7 +6,7 @@ This directory contains tracked descriptions, manifests, checksums, crosswalks, 
 
 - `data_sources.csv`: project-wide source catalog, acquisition route, local path, role, and redistribution caveat.
 - `file_manifest.csv`: exact files required by the existing production pipeline. Missing required files must fail before a raw reader is called.
-- `census_2001_download_manifest.tsv`: official Census of India download URL and repository destination for each state/UT workbook in the project Census-2001 acquisition set. It is broader than `file_manifest.csv`; acquisition metadata does not make a table a production dependency.
+- `census_2001_download_manifest.tsv` and `census_2011_download_manifest.tsv`: official Census of India download URLs and repository destinations for the project Census acquisition sets. The 2001 manifest includes C-13 single-year-age workbooks under `data/raw/census_2001/age/C13/`; the 2011 manifest currently contains the corresponding C-13 state/UT workbooks under `data/raw/census_2011/age/C13/`. Acquisition metadata is broader than `file_manifest.csv`; a downloadable table is not a production dependency until a reader/target explicitly uses it.
 - `variable_dictionary.csv`: public processed-variable definitions.
 - `checksums.csv`: checksums for every tracked metadata CSV/TSV and processed CSV. Run `Rscript scripts/update_checksums.R` after intentionally changing any of those files; the test suite verifies both inventory completeness and current MD5 values.
 
