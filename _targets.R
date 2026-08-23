@@ -602,12 +602,26 @@ extended_diagnostic_targets <- list(
   tar_target(dise_report_language_enrollment, read_dise_report_language_enrollment(paths)),
   tar_target(raw_dise_baseline, read_dise_baseline_archive(paths, dise_archive_registry)),
   tar_target(
+    raw_dise_baseline_teachers,
+    read_dise_baseline_teacher_archive(paths, dise_archive_registry)
+  ),
+  tar_target(
     raw_dise_dynamic,
     read_dise_dynamic_archive(paths, dise_archive_registry, dise_report_language_enrollment)
   ),
   tar_target(
     dise_baseline_district_year,
-    attach_dise_medium_identities(raw_dise_baseline, dise_medium_slot_crosswalk)
+    {
+      baseline <- attach_dise_medium_identities(raw_dise_baseline, dise_medium_slot_crosswalk)
+      baseline <- merge(
+        baseline,
+        raw_dise_baseline_teachers,
+        by = c("academic_year", "district_code_dise"),
+        all.x = TRUE,
+        sort = FALSE
+      )
+      finalize_dise_school_quality_measures(baseline)
+    }
   ),
   tar_target(
     dise_all_district_year,

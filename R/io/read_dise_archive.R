@@ -349,16 +349,48 @@ read_dise_baseline_year <- function(paths, registry_row) {
   schools <- extract_dise_school_measures(
     read_dise_machine_sheet(workbook, registry_row$school_sheet[[1]])
   )
-  teachers <- extract_dise_teacher_measures(
-    read_dise_machine_sheet(workbook, registry_row$teacher_sheet[[1]])
-  )
   key <- c("state_code_dise", "district_code_dise")
   if (anyDuplicated(enrolment[key])) stop("DISE enrollment sheet contains duplicate district codes.", call. = FALSE)
   if (anyDuplicated(schools[key])) stop("DISE school sheet contains duplicate district codes.", call. = FALSE)
-  if (anyDuplicated(teachers$district_code_dise)) stop("DISE teacher sheet contains duplicate district codes.", call. = FALSE)
-  out <- merge(enrolment, schools, by = key, all.x = TRUE, sort = FALSE)
-  out <- merge(out, teachers, by = "district_code_dise", all.x = TRUE, sort = FALSE)
-  finalize_dise_school_quality_measures(out)
+  finalize_dise_school_quality_measures(
+    merge(enrolment, schools, by = key, all.x = TRUE, sort = FALSE)
+  )
+}
+
+read_dise_baseline_teacher_year <- function(paths, registry_row) {
+  year <- registry_row$academic_year[[1]]
+  sheet <- registry_row$teacher_sheet[[1]]
+  if (!is.character(sheet) || length(sheet) != 1L || is.na(sheet) || !nzchar(sheet)) {
+    stop("DISE baseline teacher sheet is not registered for ", year, ".", call. = FALSE)
+  }
+  tryCatch(
+    {
+      workbook <- materialize_dise_workbook(paths, registry_row)
+      out <- extract_dise_teacher_measures(read_dise_machine_sheet(workbook, sheet))
+      out$academic_year <- year
+      if (anyDuplicated(out[c("academic_year", "district_code_dise")])) {
+        stop("DISE teacher sheet contains duplicate district codes.", call. = FALSE)
+      }
+      out
+    },
+    error = function(e) {
+      stop(
+        "DISE baseline teacher year ", year, " [sheet=", sheet, "] failed: ",
+        conditionMessage(e),
+        call. = FALSE
+      )
+    }
+  )
+}
+
+read_dise_baseline_teacher_archive <- function(
+  paths = build_paths(),
+  registry = read_dise_archive_registry(paths)
+) {
+  rows <- registry[registry$analytic_role == "baseline_treatment", , drop = FALSE]
+  safe_bind_rows(lapply(seq_len(nrow(rows)), function(i) {
+    read_dise_baseline_teacher_year(paths, rows[i, , drop = FALSE])
+  }))
 }
 
 read_dise_baseline_archive <- function(paths = build_paths(), registry = read_dise_archive_registry(paths)) {

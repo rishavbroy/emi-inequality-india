@@ -595,6 +595,12 @@ test_that("Census-2001 DISE attachment is one-to-one and preserves panel order",
   expect_identical(out$dise_emi_enrollment_share_total_0708, c(20, 10))
 })
 
+test_that("DISE baseline treatment reader does not depend on Teacher sheets", {
+  body_text <- paste(deparse(body(read_dise_baseline_year)), collapse = "\n")
+  expect_false(grepl("teacher_sheet", body_text, fixed = TRUE))
+  expect_false(grepl("extract_dise_teacher_measures", body_text, fixed = TRUE))
+})
+
 test_that("DISE school-quality extraction preserves additive counts", {
   school <- data.frame(
     statecd = "01", distcd = "0101",
