@@ -843,7 +843,12 @@ test_that("DISE report-language maintainer parses both documented table orientat
 
   script <- file.path(root, "scripts", "build_dise_report_language_enrollment.py")
   expect_true(file.exists(script))
-  status <- system2(python, c(script, "--self-test"), stdout = TRUE, stderr = TRUE)
+  status <- system2(
+    python,
+    c(shQuote(script), "--self-test"),
+    stdout = TRUE,
+    stderr = TRUE
+  )
   status_code <- attr(status, "status")
   if (is.null(status_code)) status_code <- 0L
   expect_equal(status_code, 0L)
