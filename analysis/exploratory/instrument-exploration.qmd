@@ -134,13 +134,13 @@ analysis_table(
 
 ## DISE school-quality mechanisms
 
-These diagnostics preserve additive administrative counts through Census-2001 harmonization and construct ratios only afterward. The 2007-08 associations are contemporaneous diagnostics, not predetermined covariate-balance tests. Dynamic coefficients use the preferred scalar linguistic-distance measure and the same two fixed-effect structures as the EMI trajectory.
+These diagnostics preserve additive administrative counts through Census-2001 harmonization and construct ratios only afterward. The 2005-06 and 2006-07 associations are predetermined school-system diagnostics estimated with state fixed effects and state-clustered inference. Dynamic coefficients use the preferred scalar linguistic-distance measure and the same two fixed-effect structures as the EMI trajectory, with 2007-08 retained only as the event-study reference year. The joint summaries separate pre-reference and post-reference distance×year tests, because the full-period omnibus statistic alone cannot distinguish pre-existing gradient changes from later divergence.
 
 ```{r dise-school-quality-mechanisms}
 analysis_table(dise_school_quality_registry, "DISE school-quality mechanism registry")
 analysis_table(
   dise_school_quality_baseline,
-  "2007-08 school-quality associations with preferred linguistic distance",
+  "Predetermined 2005-06/2006-07 school-quality associations with preferred linguistic distance",
   max_rows = 10
 )
 analysis_table(

@@ -434,6 +434,18 @@ estimate_dise_dynamic_spec <- function(
     )
   }))
   joint <- clustered_joint_wald_test(fit, terms$term, cluster)
+  pre_terms <- terms$term[terms$academic_year < reference_year]
+  post_terms <- terms$term[terms$academic_year > reference_year]
+  pre_joint <- if (length(pre_terms)) {
+    clustered_joint_wald_test(fit, pre_terms, cluster)
+  } else {
+    c(statistic = NA_real_, p.value = NA_real_)
+  }
+  post_joint <- if (length(post_terms)) {
+    clustered_joint_wald_test(fit, post_terms, cluster)
+  } else {
+    c(statistic = NA_real_, p.value = NA_real_)
+  }
   summary <- data.frame(
     instrument = instrument,
     dynamic_fe = dynamic_fe,
@@ -443,6 +455,10 @@ estimate_dise_dynamic_spec <- function(
     n_years = length(unique(x$academic_year)),
     joint_distance_year_f = unname(joint[["statistic"]]),
     joint_distance_year_p = unname(joint[["p.value"]]),
+    pre_distance_year_f = unname(pre_joint[["statistic"]]),
+    pre_distance_year_p = unname(pre_joint[["p.value"]]),
+    post_distance_year_f = unname(post_joint[["statistic"]]),
+    post_distance_year_p = unname(post_joint[["p.value"]]),
     cluster_status = inf$status,
     outcome = outcome,
     stringsAsFactors = FALSE
@@ -483,7 +499,7 @@ estimate_dise_school_quality_baseline <- function(
     stats::reformulate(c(instrument, "factor(state_code_2001)"), response = outcome),
     data = x
   )
-  inf <- iv_clustered_inference(fit, x$target_unit_2001)
+  inf <- iv_clustered_inference(fit, x$state_code_2001)
   estimate <- unname(stats::coef(fit)[instrument])
   se <- if (!is.null(inf$vcov) && instrument %in% rownames(inf$vcov)) {
     sqrt(inf$vcov[instrument, instrument])
@@ -504,6 +520,7 @@ estimate_dise_school_quality_baseline <- function(
       NA_real_
     },
     n = stats::nobs(fit),
+    cluster_variable = "state_code_2001",
     cluster_status = inf$status,
     stringsAsFactors = FALSE
   )
@@ -512,12 +529,15 @@ estimate_dise_school_quality_baseline <- function(
 diagnose_dise_school_quality_mechanisms <- function(
   data,
   reference_year = "2007-08",
+  baseline_years = c("2005-06", "2006-07"),
   instrument = "ling_distance_nonzero_mean"
 ) {
   registry <- dise_school_quality_registry()
   fes <- dise_dynamic_fe_registry()
-  baseline <- safe_bind_rows(lapply(registry$outcome, function(outcome) {
-    estimate_dise_school_quality_baseline(data, outcome, instrument, reference_year)
+  baseline <- safe_bind_rows(lapply(baseline_years, function(academic_year) {
+    safe_bind_rows(lapply(registry$outcome, function(outcome) {
+      estimate_dise_school_quality_baseline(data, outcome, instrument, academic_year)
+    }))
   }))
   results <- list()
   k <- 1L

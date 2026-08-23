@@ -1049,6 +1049,10 @@ test_that("dynamic event study recovers changes relative to the reference-year g
   expect_true(all(is.finite(fit$coefficients$std.error)))
   expect_true(is.finite(fit$summary$joint_distance_year_f[[1]]))
   expect_true(is.finite(fit$summary$joint_distance_year_p[[1]]))
+  expect_true(is.finite(fit$summary$pre_distance_year_f[[1]]))
+  expect_true(is.finite(fit$summary$post_distance_year_f[[1]]))
+  expect_true(is.finite(fit$summary$pre_distance_year_p[[1]]))
+  expect_true(is.finite(fit$summary$post_distance_year_p[[1]]))
 
   state_year_fit <- estimate_dise_dynamic_spec(
     base, "ling_distance_nonzero_mean", "district_state_year", "2007-08"
@@ -1118,4 +1122,29 @@ test_that("pooled baseline age exposure sums person-year counts before forming t
     out$dise_emi_gross_enrollment_ratio_age_6_13_0508_pooled,
     100 * 280 / 700
   )
+})
+
+test_that("DISE school-quality baseline diagnostics use predetermined years and state clustering", {
+  set.seed(42)
+  states <- sprintf("%02d", 1:5)
+  districts <- paste0(
+    "pc2001__", rep(states, each = 8), "__", sprintf("%02d", rep(1:8, 5))
+  )
+  rows <- do.call(rbind, lapply(c("2005-06", "2006-07", "2007-08"), function(year) {
+    data.frame(
+      target_unit_2001 = districts,
+      state_code_2001 = rep(states, each = 8),
+      academic_year = year,
+      ling_distance_nonzero_mean = rep(seq(0.1, 0.8, length.out = 8), 5),
+      dise_pupils_per_teacher = stats::rnorm(40, 30, 2),
+      dise_single_teacher_school_share = stats::runif(40, 0, 20),
+      dise_girls_toilet_school_share = stats::runif(40, 20, 80),
+      stringsAsFactors = FALSE
+    )
+  }))
+  out <- diagnose_dise_school_quality_mechanisms(rows)
+
+  expect_setequal(unique(out$baseline_association$academic_year), c("2005-06", "2006-07"))
+  expect_false("2007-08" %in% out$baseline_association$academic_year)
+  expect_true(all(out$baseline_association$cluster_variable == "state_code_2001"))
 })
