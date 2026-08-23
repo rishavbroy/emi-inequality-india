@@ -596,10 +596,42 @@ extended_diagnostic_targets <- list(
     save_census_glottolog_match_candidates(census_glottolog_match_candidates),
     format = "file"
   ),
-  tar_target(dise_archive_registry, read_dise_archive_registry(paths)),
-  tar_target(dise_medium_slot_crosswalk, read_dise_medium_slot_crosswalk(paths)),
-  tar_target(dise_publication_checks, read_dise_publication_checks(paths)),
-  tar_target(dise_report_language_enrollment, read_dise_report_language_enrollment(paths)),
+  tar_target(
+    dise_archive_registry_file,
+    path_metadata(paths, "dise_archive_registry.csv"),
+    format = "file"
+  ),
+  tar_target(
+    dise_medium_slot_crosswalk_file,
+    path_metadata(paths, "dise_medium_slot_crosswalk.csv"),
+    format = "file"
+  ),
+  tar_target(
+    dise_publication_checks_file,
+    path_metadata(paths, "dise_publication_checks.csv"),
+    format = "file"
+  ),
+  tar_target(
+    dise_report_language_enrollment_file,
+    path_metadata(paths, "dise_report_language_enrollment.csv"),
+    format = "file"
+  ),
+  tar_target(
+    dise_archive_registry,
+    read_dise_archive_registry(paths, dise_archive_registry_file)
+  ),
+  tar_target(
+    dise_medium_slot_crosswalk,
+    read_dise_medium_slot_crosswalk(paths, dise_medium_slot_crosswalk_file)
+  ),
+  tar_target(
+    dise_publication_checks,
+    read_dise_publication_checks(paths, dise_publication_checks_file)
+  ),
+  tar_target(
+    dise_report_language_enrollment,
+    read_dise_report_language_enrollment(paths, dise_report_language_enrollment_file)
+  ),
   tar_target(raw_dise_baseline, read_dise_baseline_archive(paths, dise_archive_registry)),
   tar_target(
     raw_dise_baseline_teachers,

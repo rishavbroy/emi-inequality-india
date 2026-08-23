@@ -1,19 +1,25 @@
 # Archived DISE/UDISE district-report-card readers.
 
-read_dise_archive_registry <- function(paths = build_paths()) {
-  path <- path_metadata(paths, "dise_archive_registry.csv")
+read_dise_archive_registry <- function(
+  paths = build_paths(),
+  path = path_metadata(paths, "dise_archive_registry.csv")
+) {
   if (!file.exists(path)) stop("Missing DISE archive registry: ", path, call. = FALSE)
   utils::read.csv(path, stringsAsFactors = FALSE, na.strings = c("", "NA"))
 }
 
-read_dise_publication_checks <- function(paths = build_paths()) {
-  path <- path_metadata(paths, "dise_publication_checks.csv")
+read_dise_publication_checks <- function(
+  paths = build_paths(),
+  path = path_metadata(paths, "dise_publication_checks.csv")
+) {
   if (!file.exists(path)) stop("Missing DISE publication checks: ", path, call. = FALSE)
   utils::read.csv(path, stringsAsFactors = FALSE)
 }
 
-read_dise_medium_slot_crosswalk <- function(paths = build_paths()) {
-  path <- path_metadata(paths, "dise_medium_slot_crosswalk.csv")
+read_dise_medium_slot_crosswalk <- function(
+  paths = build_paths(),
+  path = path_metadata(paths, "dise_medium_slot_crosswalk.csv")
+) {
   if (!file.exists(path)) stop("Missing DISE medium-slot crosswalk: ", path, call. = FALSE)
   out <- utils::read.csv(path, stringsAsFactors = FALSE)
   key <- paste(out$academic_year, out$state_report, out$district_report, out$medium_slot, sep = "|")
@@ -404,8 +410,10 @@ read_dise_baseline_archive <- function(paths = build_paths(), registry = read_di
   }))
 }
 
-read_dise_report_language_enrollment <- function(paths = build_paths()) {
-  path <- path_metadata(paths, "dise_report_language_enrollment.csv")
+read_dise_report_language_enrollment <- function(
+  paths = build_paths(),
+  path = path_metadata(paths, "dise_report_language_enrollment.csv")
+) {
   if (!file.exists(path)) stop("Missing DISE report-language metadata: ", path, call. = FALSE)
   out <- utils::read.csv(path, stringsAsFactors = FALSE, na.strings = c("", "NA"))
   key <- paste(out$academic_year, canonicalize_state_name(out$state_report),

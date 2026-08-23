@@ -595,6 +595,24 @@ test_that("Census-2001 DISE attachment is one-to-one and preserves panel order",
   expect_identical(out$dise_emi_enrollment_share_total_0708, c(20, 10))
 })
 
+test_that("DISE metadata inputs are explicit file dependencies in the targets graph", {
+  targets_text <- paste(readLines("_targets.R", warn = FALSE), collapse = "\n")
+  metadata_targets <- c(
+    "dise_archive_registry_file",
+    "dise_medium_slot_crosswalk_file",
+    "dise_publication_checks_file",
+    "dise_report_language_enrollment_file"
+  )
+
+  for (target in metadata_targets) {
+    expect_match(targets_text, target, fixed = TRUE)
+  }
+  expect_gte(
+    lengths(regmatches(targets_text, gregexpr('format = "file"', targets_text, fixed = TRUE))),
+    4L
+  )
+})
+
 test_that("DISE baseline treatment reader does not depend on Teacher sheets", {
   body_text <- paste(deparse(body(read_dise_baseline_year)), collapse = "\n")
   expect_false(grepl("teacher_sheet", body_text, fixed = TRUE))

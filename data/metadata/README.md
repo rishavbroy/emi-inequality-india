@@ -65,3 +65,5 @@ See `docs/DISE_TREATMENTS.md` for construction and scope.
 - `dise_report_language_enrollment.csv` stores report-card-derived English/Hindi district enrollment for 2008-09 through 2014-15 with PDF/page provenance. It is a compact, tracked extraction from the archived DISE district report cards and is used only where the raw district workbook does not expose a stable language identity.
 
 `dise_archive_registry.csv` records the round-specific Teacher sheet for 2005-06 through 2013-14. The 2014-15 and 2015-16 summary sheets co-locate teacher and school-quality counts, so those rows intentionally leave `teacher_sheet` blank.
+
+DISE metadata files used by the `targets` pipeline are declared as explicit `format = "file"` dependencies before parsing. This ensures incremental builds invalidate cached parsed metadata when a registry, crosswalk, publication check, or report-language CSV changes.
