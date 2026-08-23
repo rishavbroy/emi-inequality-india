@@ -836,6 +836,28 @@ test_that("DISE machine-name normalization handles later workbook labels", {
   )
 })
 
+test_that("DISE report-language maintainer parses both documented table orientations", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
+  python <- Sys.which("python3")
+  skip_if(!nzchar(python), "python3 is required for the maintainer self-test")
+
+  script <- file.path(root, "scripts", "build_dise_report_language_enrollment.py")
+  expect_true(file.exists(script))
+  status <- system2(python, c(script, "--self-test"), stdout = TRUE, stderr = TRUE)
+  status_code <- attr(status, "status")
+  if (is.null(status_code)) status_code <- 0L
+  expect_equal(status_code, 0L)
+})
+
+test_that("DISE report-language maintainer stays outside the targets runtime graph", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
+  targets_text <- paste(
+    readLines(file.path(root, "_targets.R"), warn = FALSE),
+    collapse = "\n"
+  )
+  expect_false(grepl("build_dise_report_language_enrollment.py", targets_text, fixed = TRUE))
+})
+
 test_that("report-derived DISE language metadata is unique and spans dynamic report years", {
   root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
   path <- file.path(root, "data", "metadata", "dise_report_language_enrollment.csv")
