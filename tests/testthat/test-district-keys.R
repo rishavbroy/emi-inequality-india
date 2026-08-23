@@ -3,11 +3,19 @@ test_that("canonical names are stable", {
 })
 
 test_that("state canonicalization covers observed NSS spelling variants", {
-  raw <- c("Andhra Pardesh", "Gujrat", "Maharastra", "Andaman & Nicober", "Pondicheri", "Uttaranchal", "Orissa")
+  raw <- c(
+    "Andhra Pardesh", "Gujrat", "Maharastra", "Andaman & Nicober",
+    "Pondicheri", "Uttaranchal", "Orissa", "Chhatisgarh",
+    "Dadar & Nagar Haveli"
+  )
 
   expect_equal(
     canonicalize_state_name(raw),
-    c("andhra pradesh", "gujarat", "maharashtra", "andaman and nicobar islands", "puducherry", "uttarakhand", "odisha")
+    c(
+      "andhra pradesh", "gujarat", "maharashtra",
+      "andaman and nicobar islands", "puducherry", "uttarakhand",
+      "odisha", "chhattisgarh", "dadra and nagar haveli"
+    )
   )
 })
 
