@@ -1413,3 +1413,27 @@ test_that("Shastry adjudication sensitivities reuse the canonical IV registry ma
     logical(1)
   )))
 })
+
+test_that("clustered first-stage diagnostics reuse a cached covariance without changing inference", {
+  set.seed(42)
+  data <- data.frame(
+    y = rnorm(80),
+    z1 = rnorm(80),
+    z2 = rnorm(80),
+    cluster = rep(seq_len(20), each = 4)
+  )
+  fit <- stats::lm(y ~ z1 + z2, data = data)
+  cached <- iv_clustered_inference(fit, data$cluster)
+
+  direct_joint <- clustered_joint_wald_test(fit, c("z1", "z2"), data$cluster)
+  cached_joint <- clustered_joint_wald_test(
+    fit, c("z1", "z2"), data$cluster, inference = cached
+  )
+  direct_coef <- clustered_first_stage_inference(fit, "z1", data$cluster)
+  cached_coef <- clustered_first_stage_inference(
+    fit, "z1", data$cluster, inference = cached
+  )
+
+  expect_equal(cached_joint, direct_joint, tolerance = 1e-12)
+  expect_equal(cached_coef, direct_coef, tolerance = 1e-12)
+})

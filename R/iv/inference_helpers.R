@@ -29,28 +29,13 @@ wald_f_from_vcov <- function(fit, terms, vcov) {
   c(statistic = statistic, p.value = p_value, df = q)
 }
 
-clustered_joint_wald_test <- function(fit, terms, cluster) {
-  inference <- tryCatch(iv_clustered_inference(fit, cluster), error = function(e) NULL)
+clustered_joint_wald_test <- function(fit, terms, cluster, inference = NULL) {
+  if (is.null(inference)) {
+    inference <- tryCatch(iv_clustered_inference(fit, cluster), error = function(e) NULL)
+  }
   if (is.null(inference) || is.null(inference$vcov)) {
     return(c(statistic = NA_real_, p.value = NA_real_, df = length(terms)))
   }
-
-  if (requireNamespace("car", quietly = TRUE)) {
-    hypotheses <- paste0(terms, " = 0")
-    test <- tryCatch(
-      car::linearHypothesis(fit, hypotheses, vcov. = inference$vcov, test = "F"),
-      error = function(e) NULL
-    )
-    if (!is.null(test) && nrow(test) >= 2L && all(c("F", "Pr(>F)") %in% names(test))) {
-      result <- c(
-        statistic = suppressWarnings(as.numeric(test[["F"]][[2]])),
-        p.value = suppressWarnings(as.numeric(test[["Pr(>F)"]][[2]])),
-        df = length(terms)
-      )
-      if (all(is.finite(result[c("statistic", "p.value")]))) return(result)
-    }
-  }
-
   wald_f_from_vcov(fit, terms, inference$vcov)
 }
 

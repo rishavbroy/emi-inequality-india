@@ -75,8 +75,10 @@ residualize_first_stage_variable <- function(data, variable, controls = characte
   residualize_iv_variable(data, variable, controls, fixed_effect)
 }
 
-clustered_first_stage_inference <- function(fit, instrument, cluster) {
-  inference <- tryCatch(iv_clustered_inference(fit, cluster), error = function(e) NULL)
+clustered_first_stage_inference <- function(fit, instrument, cluster, inference = NULL) {
+  if (is.null(inference)) {
+    inference <- tryCatch(iv_clustered_inference(fit, cluster), error = function(e) NULL)
+  }
   if (is.null(inference) || is.null(inference$vcov)) {
     coefs <- summary(fit)$coefficients
     row <- match(instrument, rownames(coefs))

@@ -18,7 +18,9 @@ alternative_distance_variables <- function() {
   ))
 }
 
-partial_r_squared_instrument_set <- function(data, treatment, excluded, included, controls, fixed_effect) {
+partial_r_squared_instrument_set <- function(
+  data, treatment, excluded, included, controls, fixed_effect, full_fit = NULL
+) {
   nuisance <- unique(c(controls, included))
   restricted_rhs <- iv_nuisance_terms(nuisance, fixed_effect)
   restricted <- if (length(restricted_rhs)) {
@@ -26,13 +28,15 @@ partial_r_squared_instrument_set <- function(data, treatment, excluded, included
   } else {
     stats::lm(stats::reformulate(character(), response = treatment), data = data)
   }
-  full_rhs <- c(excluded, nuisance)
-  if (identical(fixed_effect, "region")) full_rhs <- c(full_rhs, "factor(region)")
-  if (identical(fixed_effect, "state")) full_rhs <- c(full_rhs, "factor(state_code_2001)")
-  full <- stats::lm(stats::reformulate(full_rhs, response = treatment), data = data)
+  if (is.null(full_fit)) {
+    full_rhs <- c(excluded, nuisance)
+    if (identical(fixed_effect, "region")) full_rhs <- c(full_rhs, "factor(region)")
+    if (identical(fixed_effect, "state")) full_rhs <- c(full_rhs, "factor(state_code_2001)")
+    full_fit <- stats::lm(stats::reformulate(full_rhs, response = treatment), data = data)
+  }
   denominator <- stats::deviance(restricted)
   if (!is.finite(denominator) || denominator <= 0) return(NA_real_)
-  max(0, (denominator - stats::deviance(full)) / denominator)
+  max(0, (denominator - stats::deviance(full_fit)) / denominator)
 }
 
 estimate_alternative_distance_spec <- function(data, specification, treatment) {
@@ -45,16 +49,19 @@ estimate_alternative_distance_spec <- function(data, specification, treatment) {
   if (identical(fixed_effect, "state")) rhs <- c(rhs, "factor(state_code_2001)")
   fit <- stats::lm(stats::reformulate(rhs, response = treatment), data = data)
   cluster <- iv_specification_cluster(data, specification)
-  joint <- clustered_joint_wald_test(fit, excluded, cluster)
+  cluster_inference <- tryCatch(iv_clustered_inference(fit, cluster), error = function(e) NULL)
+  joint <- clustered_joint_wald_test(fit, excluded, cluster, inference = cluster_inference)
   coefficients <- safe_bind_rows(lapply(excluded, function(term) {
-    inference <- clustered_first_stage_inference(fit, term, cluster)
+    term_inference <- clustered_first_stage_inference(
+      fit, term, cluster, inference = cluster_inference
+    )
     data.frame(
       specification_id = specification$specification_id,
       term = term,
       estimate = unname(stats::coef(fit)[term]),
-      std.error = unname(inference[["std.error"]]),
-      statistic = unname(inference[["statistic"]]),
-      p.value = unname(inference[["p.value"]]),
+      std.error = unname(term_inference[["std.error"]]),
+      statistic = unname(term_inference[["statistic"]]),
+      p.value = unname(term_inference[["p.value"]]),
       stringsAsFactors = FALSE
     )
   }))
@@ -72,7 +79,8 @@ estimate_alternative_distance_spec <- function(data, specification, treatment) {
     joint_excluded_f = unname(joint[["statistic"]]),
     joint_excluded_p = unname(joint[["p.value"]]),
     partial_r_squared = partial_r_squared_instrument_set(
-      data, treatment, excluded, included, controls, fixed_effect
+      data, treatment, excluded, included, controls, fixed_effect,
+      full_fit = fit
     ),
     n = stats::nobs(fit),
     n_states = length(unique(data$state_code_2001)),
@@ -500,9 +508,6 @@ augment_alternative_distance_diagnostics <- function(
 ) {
   if (!inherits(diagnostics, "emi_alternative_distance_first_stages")) stop("Expected alternative-distance diagnostics.", call. = FALSE)
   data <- prepare_alternative_distance_panel(panel, diagnostics$common_support$treatment[[1]])
-  diagnostics$coverage_sensitivity <- estimate_alternative_distance_by_coverage(
-    data, diagnostics$registry, diagnostics$common_support$treatment[[1]]
-  )
   diagnostics$distance4_languages <- distance_four_language_decomposition(
     census_2001_languages, panel, glottolog, glottolog_crosswalk
   )
