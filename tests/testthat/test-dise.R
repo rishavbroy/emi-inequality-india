@@ -237,9 +237,15 @@ test_that("DISE construct registry separates treatments from mechanism outcomes"
   registry <- dise_construct_registry()
   structural <- registry[registry$analysis_scope == "structural_iv", , drop = FALSE]
   relevance <- registry[registry$analysis_scope == "relevance_only", , drop = FALSE]
-  expect_equal(nrow(structural), 2L)
+  expect_equal(nrow(structural), 4L)
   expect_true(all(grepl("dise_emi_", structural$variable, fixed = TRUE)))
-  expect_setequal(structural$construct_id, c("emi_total_0708", "emi_total_0508_pooled"))
+  expect_setequal(
+    structural$construct_id,
+    c(
+      "emi_total_0708", "emi_total_0508_pooled",
+      "emi_age6_13_gross_0708", "emi_age6_13_gross_0508_pooled"
+    )
+  )
   expect_setequal(
     relevance$construct_id,
     c("hindi_share_0708", "english_hindi_share_0708", "private_enrollment_share_0708", "private_school_share_0708")
@@ -335,8 +341,17 @@ test_that("DISE diagnostic saver returns the repository-standard output manifest
 
   expect_s3_class(manifest, "data.frame")
   expect_setequal(names(manifest), c("path", "description"))
-  expect_equal(nrow(manifest), 27L)
+  expect_equal(nrow(manifest), 31L)
   expect_true(all(file.exists(manifest$path)))
+  expect_setequal(
+    basename(manifest$path)[grepl("age_6_13|elementary_age_exposure", basename(manifest$path))],
+    c(
+      "census_age_6_13_anchors_2001_2011.csv",
+      "census_age_6_13_population_by_academic_year.csv",
+      "dise_elementary_age_exposure_dynamic_summary.csv",
+      "dise_elementary_age_exposure_dynamic_event_study.csv"
+    )
+  )
   expect_setequal(
     basename(manifest$path)[grepl("dise_school_quality_", basename(manifest$path))],
     c(
@@ -1062,7 +1077,7 @@ test_that("DISE diagnostic saver includes longitudinal outputs", {
     archive, permutations, empty, empty,
     dynamic_panel = empty, dynamic_relevance = dynamic, dir = dir
   )
-  expect_equal(nrow(manifest), 27L)
+  expect_equal(nrow(manifest), 31L)
   expect_true(all(file.exists(manifest$path)))
   expect_setequal(
     basename(manifest$path)[grepl("dise_dynamic_", basename(manifest$path))],
@@ -1072,5 +1087,35 @@ test_that("DISE diagnostic saver includes longitudinal outputs", {
       "dise_dynamic_first_stage_summary.csv",
       "dise_dynamic_first_stage_event_study.csv"
     )
+  )
+})
+
+test_that("pooled baseline age exposure sums person-year counts before forming the ratio", {
+  x <- data.frame(
+    academic_year = c("2005-06", "2006-07", "2007-08"),
+    target_unit_2001 = "pc2001__09__01",
+    dise_source_district_count = 1L,
+    dise_english_enrollment = c(20, 80, 180),
+    dise_hindi_enrollment = c(80, 120, 120),
+    dise_total_enrollment = c(100, 200, 300),
+    dise_english_identity_resolved = TRUE,
+    dise_hindi_identity_resolved = TRUE,
+    dise_emi_enrollment_share_total = c(20, 40, 60),
+    dise_hindi_enrollment_share_total = c(80, 60, 40),
+    dise_english_share_english_hindi = c(20, 40, 60),
+    dise_private_enrollment_share = 10,
+    dise_private_school_share = 10,
+    census_age_6_13_population = c(100, 200, 400),
+    dise_emi_gross_enrollment_ratio_age_6_13 = c(20, 40, 45),
+    dise_elementary_gross_enrollment_ratio_age_6_13 = c(100, 100, 75),
+    stringsAsFactors = FALSE
+  )
+
+  out <- build_dise_baseline_treatments_2001(x)
+  expect_equal(out$dise_emi_gross_enrollment_ratio_age_6_13_0708, 45)
+  expect_equal(out$dise_age_6_13_baseline_years_observed, 3L)
+  expect_equal(
+    out$dise_emi_gross_enrollment_ratio_age_6_13_0508_pooled,
+    100 * 280 / 700
   )
 })

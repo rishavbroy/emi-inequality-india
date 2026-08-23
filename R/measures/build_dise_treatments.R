@@ -189,21 +189,26 @@ dise_construct_registry <- function() {
   data.frame(
     construct_id = c(
       "emi_total_0708", "emi_total_0508_pooled",
+      "emi_age6_13_gross_0708", "emi_age6_13_gross_0508_pooled",
       "hindi_share_0708", "english_hindi_share_0708",
       "private_enrollment_share_0708", "private_school_share_0708"
     ),
     variable = c(
       "dise_emi_enrollment_share_total_0708",
       "dise_emi_enrollment_share_total_0508_pooled",
+      "dise_emi_gross_enrollment_ratio_age_6_13_0708",
+      "dise_emi_gross_enrollment_ratio_age_6_13_0508_pooled",
       "dise_hindi_enrollment_share_total_0708",
       "dise_english_share_english_hindi_0708",
       "dise_private_enrollment_share_0708",
       "dise_private_school_share_0708"
     ),
-    analysis_scope = c(rep("structural_iv", 2), rep("relevance_only", 4)),
+    analysis_scope = c(rep("structural_iv", 4), rep("relevance_only", 4)),
     label = c(
       "DISE 2007-08 English-medium enrollment / total enrollment",
       "DISE pooled 2005-06 to 2007-08 English-medium enrollment / total enrollment",
+      "DISE 2007-08 English-medium gross enrollment ratio, ages 6-13 denominator",
+      "DISE pooled 2005-06 to 2007-08 English-medium gross enrollment ratio, ages 6-13 denominator",
       "DISE 2007-08 Hindi-medium enrollment / total enrollment",
       "DISE 2007-08 English share among English + Hindi enrollment",
       "DISE 2007-08 private enrollment share",

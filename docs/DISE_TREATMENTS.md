@@ -74,7 +74,19 @@ Mechanism diagnostics use the preferred scalar linguistic-distance measure. The 
 
 ## Deferred extensions
 
-A future HCES endpoint remains deferred to its separate feasibility/comparability phase. An all-school-age DISE EMI exposure is also deferred until a defensible age-specific Census denominator is added. Historical school-level medium availability and language-taught-as-subject measures require school-level DISE/UDISE data rather than these district report-card aggregates.
+A future HCES endpoint remains deferred to its separate feasibility/comparability phase. Historical school-level medium availability and language-taught-as-subject measures require school-level DISE/UDISE data rather than these district report-card aggregates.
+
+## Elementary-age administrative exposure
+
+Census C-13 single-year age returns provide the population denominator for a second administrative EMI treatment family. The pipeline sums completed ages 6 through 13, matching the eight cohorts covered by the statutory 6-14 elementary-age range, and uses total persons because the DISE numerator covers elementary schools regardless of rural/urban residence. The Census tables themselves are district-level single-year population counts for total, rural, and urban residence by sex.
+
+The resulting construct is deliberately named a **gross enrollment ratio**, not a share of children. DISE reports enrollment in grades I-VIII rather than enrollment conditional on the pupil being age 6-13, so over-age and under-age pupils can appear in the numerator. Values above 100 are therefore possible and are retained rather than clipped. A true net age-specific EMI enrollment share would require pupil-level age-by-medium administrative data that these district report cards do not provide.
+
+The 2001 C-13 denominator is already on the analytical Census-2001 geography. The 2011 denominator is harmonized backward only through the existing `district_transition_2001_2011` rows classified as `official_lgd_census_code_bridge` or `deterministic_containment` with complete population, area, and SHRID coverage. Multiple 2011 child districts wholly contained in one 2001 parent are summed before any ratio is formed. Non-nested or incompletely covered 2011 districts are not split using generic population shares because district-level C-13 does not reveal the age composition of the territorial fragments.
+
+For Census-2001 districts with both valid anchors, the annual ages-6-13 denominator follows constant compound growth between the two Censuses: the pipeline linearly interpolates log population from 2001 to 2011 and evaluates it at the midpoint of each academic year. Academic years after 2011 use the same district-specific 2001-2011 log growth rate as an explicit extrapolation. The output records whether each value is an interpolation or post-2011 extrapolation. Districts without a deterministic 2011 anchor remain missing rather than receiving a state-growth or fractional-boundary imputation.
+
+Two baseline treatment variants enter the same IV-permutation machinery as the existing DISE treatments: the 2007-08 English-medium gross enrollment ratio and a pooled 2005-06 to 2007-08 person-year ratio. The pooled measure sums English enrollment and projected ages-6-13 population over the three academic years before dividing. The longitudinal event-study suite also reruns the scalar linguistic-distance-by-year specifications using the annual gross English-medium enrollment ratio as the outcome.
 
 ## Census-2001 geographic harmonization
 

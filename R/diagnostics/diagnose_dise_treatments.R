@@ -250,6 +250,10 @@ save_dise_diagnostics <- function(
     registry = data.frame(), baseline_association = data.frame(),
     summary = data.frame(), coefficients = data.frame()
   ),
+  age_exposure = list(
+    anchors = data.frame(), population = data.frame(),
+    dynamic_relevance = list(summary = data.frame(), coefficients = data.frame())
+  ),
   dir = "outputs/diagnostics/extended/dise"
 ) {
   dir.create(dir, recursive = TRUE, showWarnings = FALSE)
@@ -303,6 +307,22 @@ save_dise_diagnostics <- function(
     school_quality_coefficients = write_diagnostic_csv(
       school_quality$coefficients,
       file.path(dir, "dise_school_quality_dynamic_event_study.csv")
+    ),
+    age_6_13_anchors = write_diagnostic_csv(
+      age_exposure$anchors,
+      file.path(dir, "census_age_6_13_anchors_2001_2011.csv")
+    ),
+    age_6_13_population = write_diagnostic_csv(
+      age_exposure$population,
+      file.path(dir, "census_age_6_13_population_by_academic_year.csv")
+    ),
+    age_exposure_dynamic_summary = write_diagnostic_csv(
+      age_exposure$dynamic_relevance$summary,
+      file.path(dir, "dise_elementary_age_exposure_dynamic_summary.csv")
+    ),
+    age_exposure_dynamic_coefficients = write_diagnostic_csv(
+      age_exposure$dynamic_relevance$coefficients,
+      file.path(dir, "dise_elementary_age_exposure_dynamic_event_study.csv")
     )
   )
   output_manifest(outputs)
@@ -517,7 +537,11 @@ diagnose_dise_school_quality_mechanisms <- function(
   )
 }
 
-diagnose_dise_dynamic_relevance <- function(data, reference_year = "2007-08") {
+diagnose_dise_dynamic_relevance <- function(
+  data,
+  reference_year = "2007-08",
+  outcome = "dise_emi_enrollment_share_total"
+) {
   instruments <- dise_dynamic_instrument_registry()
   fes <- dise_dynamic_fe_registry()
   results <- list()
@@ -528,7 +552,8 @@ diagnose_dise_dynamic_relevance <- function(data, reference_year = "2007-08") {
         data,
         instruments$excluded_instrument[[i]],
         fes$dynamic_fe[[j]],
-        reference_year
+        reference_year,
+        outcome = outcome
       )
       if (nrow(result$summary)) {
         result$summary$construction_id <- instruments$construction_id[[i]]

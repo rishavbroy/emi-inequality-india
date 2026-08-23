@@ -597,6 +597,34 @@ extended_diagnostic_targets <- list(
     format = "file"
   ),
   tar_target(
+    census_2001_c13_manifest_file,
+    path_metadata(paths, "census_2001_download_manifest.tsv"),
+    format = "file"
+  ),
+  tar_target(
+    census_2011_c13_manifest_file,
+    path_metadata(paths, "census_2011_download_manifest.tsv"),
+    format = "file"
+  ),
+  tar_target(
+    census_2001_c13_files,
+    census_c13_manifest_files(paths, 2001, census_2001_c13_manifest_file),
+    format = "file"
+  ),
+  tar_target(
+    census_2011_c13_files,
+    census_c13_manifest_files(paths, 2011, census_2011_c13_manifest_file),
+    format = "file"
+  ),
+  tar_target(
+    census_age_6_13_2001,
+    read_census_c13_age_6_13(census_2001_c13_files, 2001)
+  ),
+  tar_target(
+    census_age_6_13_2011,
+    read_census_c13_age_6_13(census_2011_c13_files, 2011)
+  ),
+  tar_target(
     dise_archive_registry_file,
     path_metadata(paths, "dise_archive_registry.csv"),
     format = "file"
@@ -669,8 +697,26 @@ extended_diagnostic_targets <- list(
     )
   ),
   tar_target(
+    census_age_6_13_anchors,
+    build_census_age_6_13_anchors(
+      census_age_6_13_2001,
+      census_age_6_13_2011,
+      district_lineage$district_transition_2001_2011
+    )
+  ),
+  tar_target(
+    census_age_6_13_population,
+    project_census_age_6_13_population(
+      census_age_6_13_anchors,
+      unique(dise_all_district_year$academic_year)
+    )
+  ),
+  tar_target(
     dise_baseline_district_year_2001,
-    harmonize_dise_counts_to_2001(dise_baseline_district_year, dise_lineage_bridge)
+    attach_dise_age_6_13_exposure(
+      harmonize_dise_counts_to_2001(dise_baseline_district_year, dise_lineage_bridge),
+      census_age_6_13_population
+    )
   ),
   tar_target(
     dise_baseline_treatments,
@@ -682,18 +728,28 @@ extended_diagnostic_targets <- list(
   ),
   tar_target(
     dise_dynamic_panel,
-    build_dise_longitudinal_panel(
-      dise_baseline_district_year,
-      raw_dise_dynamic,
-      district_lineage$nss_source_roster,
-      district_lineage$full_reviewed_source_crosswalk,
-      district_lineage$admin_units_2001,
-      district_panel
+    attach_dise_age_6_13_exposure(
+      build_dise_longitudinal_panel(
+        dise_baseline_district_year,
+        raw_dise_dynamic,
+        district_lineage$nss_source_roster,
+        district_lineage$full_reviewed_source_crosswalk,
+        district_lineage$admin_units_2001,
+        district_panel
+      ),
+      census_age_6_13_population
     )
   ),
   tar_target(
     dise_dynamic_relevance,
     diagnose_dise_dynamic_relevance(dise_dynamic_panel)
+  ),
+  tar_target(
+    dise_elementary_age_dynamic_relevance,
+    diagnose_dise_dynamic_relevance(
+      dise_dynamic_panel,
+      outcome = "dise_emi_gross_enrollment_ratio_age_6_13"
+    )
   ),
   tar_target(
     dise_school_quality_mechanisms,
@@ -720,7 +776,12 @@ extended_diagnostic_targets <- list(
       harmonized_district_year = dise_baseline_district_year_2001,
       dynamic_panel = dise_dynamic_panel,
       dynamic_relevance = dise_dynamic_relevance,
-      school_quality = dise_school_quality_mechanisms
+      school_quality = dise_school_quality_mechanisms,
+      age_exposure = list(
+        anchors = census_age_6_13_anchors,
+        population = census_age_6_13_population,
+        dynamic_relevance = dise_elementary_age_dynamic_relevance
+      )
     )
   ),
 

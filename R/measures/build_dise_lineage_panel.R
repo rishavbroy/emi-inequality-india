@@ -186,6 +186,8 @@ build_dise_baseline_treatments_2001 <- function(harmonized_district_year) {
     "target_unit_2001", "dise_source_district_count", "dise_emi_enrollment_share_total",
     "dise_hindi_enrollment_share_total", "dise_english_share_english_hindi",
     "dise_private_enrollment_share", "dise_private_school_share",
+    "dise_emi_gross_enrollment_ratio_age_6_13",
+    "dise_elementary_gross_enrollment_ratio_age_6_13",
     "dise_english_identity_resolved", "dise_hindi_identity_resolved"
   ), names(anchor))
   out <- anchor[keep]
@@ -196,6 +198,8 @@ build_dise_baseline_treatments_2001 <- function(harmonized_district_year) {
     dise_english_share_english_hindi = "dise_english_share_english_hindi_0708",
     dise_private_enrollment_share = "dise_private_enrollment_share_0708",
     dise_private_school_share = "dise_private_school_share_0708",
+    dise_emi_gross_enrollment_ratio_age_6_13 = "dise_emi_gross_enrollment_ratio_age_6_13_0708",
+    dise_elementary_gross_enrollment_ratio_age_6_13 = "dise_elementary_gross_enrollment_ratio_age_6_13_0708",
     dise_english_identity_resolved = "dise_english_identity_resolved_0708",
     dise_hindi_identity_resolved = "dise_hindi_identity_resolved_0708"
   )
@@ -226,6 +230,46 @@ build_dise_baseline_treatments_2001 <- function(harmonized_district_year) {
     counts[c("target_unit_2001", "dise_baseline_years_observed", "dise_emi_enrollment_share_total_0508_pooled")],
     by = "target_unit_2001", all.x = TRUE, sort = FALSE
   )
+
+  if ("census_age_6_13_population" %in% names(x)) {
+    age_pool <- x[
+      x$academic_year %in% c("2005-06", "2006-07", "2007-08") &
+        x$dise_english_identity_resolved %in% TRUE &
+        is.finite(num(x$dise_english_enrollment)) &
+        is.finite(num(x$census_age_6_13_population)) &
+        num(x$census_age_6_13_population) > 0,
+      , drop = FALSE
+    ]
+    if (nrow(age_pool)) {
+      age_counts <- aggregate(
+        age_pool[c("dise_english_enrollment", "census_age_6_13_population")],
+        list(target_unit_2001 = age_pool$target_unit_2001),
+        sum
+      )
+      age_years <- aggregate(
+        age_pool$academic_year,
+        list(target_unit_2001 = age_pool$target_unit_2001),
+        function(v) length(unique(v))
+      )
+      names(age_years)[[2]] <- "dise_age_6_13_baseline_years_observed"
+      age_counts <- merge(age_counts, age_years, by = "target_unit_2001", all.x = TRUE, sort = FALSE)
+      age_counts$dise_emi_gross_enrollment_ratio_age_6_13_0508_pooled <- ifelse(
+        age_counts$dise_age_6_13_baseline_years_observed == 3L &
+          is.finite(age_counts$census_age_6_13_population) &
+          age_counts$census_age_6_13_population > 0,
+        100 * age_counts$dise_english_enrollment / age_counts$census_age_6_13_population,
+        NA_real_
+      )
+      out <- merge(
+        out,
+        age_counts[c(
+          "target_unit_2001", "dise_age_6_13_baseline_years_observed",
+          "dise_emi_gross_enrollment_ratio_age_6_13_0508_pooled"
+        )],
+        by = "target_unit_2001", all.x = TRUE, sort = FALSE
+      )
+    }
+  }
   rownames(out) <- NULL
   out
 }
