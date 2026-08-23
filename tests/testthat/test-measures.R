@@ -1373,3 +1373,35 @@ test_that("lexically adjudicated Shastry rows require lexical provenance", {
   utils::write.csv(x, path, row.names = FALSE)
   expect_error(read_shastry_language_adjudications(path), "Lexically adjudicated")
 })
+
+test_that("Glottolog alias indexing resolves each source code consistently across aliases", {
+  languoids <- data.frame(
+    id = c("fami1234", "lang1234", "dial1234"),
+    parent_id = c("", "fami1234", "lang1234"),
+    level = c("family", "language", "dialect"),
+    bookkeeping = FALSE,
+    stringsAsFactors = FALSE
+  )
+  cldf <- list(
+    languages = data.frame(
+      ID = c("lang1234", "dial1234"),
+      Name = c("Language", "Dialect"),
+      Family_ID = c("fami1234", "fami1234"),
+      Countries = c("IN", "IN"),
+      ISO639P3code = c("lng", ""),
+      stringsAsFactors = FALSE
+    ),
+    names = data.frame(
+      Language_ID = c("dial1234", "dial1234"),
+      Name = c("Dialect alias A", "Dialect alias B"),
+      Provider = c("fixture", "fixture"),
+      stringsAsFactors = FALSE
+    )
+  )
+
+  out <- glottolog_alias_index(languoids, cldf)
+  dialect_aliases <- out[out$source_glottocode == "dial1234", , drop = FALSE]
+
+  expect_true(nrow(dialect_aliases) >= 2L)
+  expect_true(all(dialect_aliases$language_glottocode == "lang1234"))
+})

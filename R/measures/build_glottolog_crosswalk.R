@@ -50,12 +50,17 @@ glottolog_alias_index <- function(languoids, cldf) {
   out <- rbind(primary, aliases)
   out$normalized_name <- normalize_language_match_name(out$alias_name)
   out <- out[nzchar(out$normalized_name), , drop = FALSE]
-  out$language_glottocode <- vapply(
-    out$source_glottocode,
-    glottolog_language_node,
-    languoids = languoids,
-    FUN.VALUE = character(1)
+  source_codes <- unique(out$source_glottocode)
+  language_nodes <- stats::setNames(
+    vapply(
+      source_codes,
+      glottolog_language_node,
+      languoids = languoids,
+      FUN.VALUE = character(1)
+    ),
+    source_codes
   )
+  out$language_glottocode <- unname(language_nodes[out$source_glottocode])
   out <- out[!is.na(out$language_glottocode) & nzchar(out$language_glottocode), , drop = FALSE]
 
   language_rows <- cldf$languages[match(out$language_glottocode, cldf$languages$ID), , drop = FALSE]
