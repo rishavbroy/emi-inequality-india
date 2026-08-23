@@ -670,3 +670,100 @@ test_that("reviewed single-parent ancestry can enter the preferred panel", {
   expect_identical(out$target_unit_2001, "pc2001__20__16")
   expect_identical(out$mapping_class, "deterministic_2011_to_2001")
 })
+
+test_that("reviewed ancestry does not replace a valid LGD Census-code transition", {
+  admin_2001 <- data.frame(
+    unit_id = c("pc2001__35__01", "pc2001__35__02"),
+    stringsAsFactors = FALSE
+  )
+  lgd <- data.frame(
+    state_code_2011 = "35", district_code_2011 = "640",
+    state_code_2001 = "35", district_code_2001 = "01",
+    population_share_to_2001 = 1, area_share_to_2001 = 1, shrid_coverage = 1,
+    mapping_class = "official_lgd_census_code_bridge",
+    source_id = "lgd",
+    stringsAsFactors = FALSE
+  )
+  reviewed <- data.frame(
+    state_code_2011 = "35", district_code_2011 = "640",
+    state_code_2001 = "35", district_code_2001 = "02",
+    population_share_to_2001 = 1, area_share_to_2001 = 1, shrid_coverage = 1,
+    mapping_class = "reviewed_single_parent_ancestry",
+    source_id = "reviewed",
+    stringsAsFactors = FALSE
+  )
+
+  out <- combine_district_transitions_2001_2011(
+    data.frame(), lgd, reviewed, admin_2001 = admin_2001
+  )
+
+  expect_equal(nrow(out), 1L)
+  expect_identical(transition_target_unit_2001(out), "pc2001__35__01")
+  expect_identical(out$mapping_class, "official_lgd_census_code_bridge")
+})
+
+test_that("reviewed one-parent ancestry overrides phantom LGD Census-2001 targets", {
+  admin_2001 <- data.frame(
+    unit_id = c("pc2001__12__10", "pc2001__20__16"),
+    state_code = c("12", "20"), district_code = c("10", "16"),
+    stringsAsFactors = FALSE
+  )
+  admin_2011 <- data.frame(
+    unit_id = c("pc2011__12__258", "pc2011__20__367"),
+    state_code = c("12", "20"), district_code = c("258", "367"),
+    stringsAsFactors = FALSE
+  )
+  events <- data.frame(
+    from_unit = c("pc2001__12__10", "pc2001__20__16"),
+    to_unit = c("pc2011__12__258", "pc2011__20__367"),
+    source_id = c("lower_dibang_history", "simdega_history"),
+    status = "accepted",
+    stringsAsFactors = FALSE
+  )
+  reviewed <- build_reviewed_ancestry_transition_2001_2011(
+    events, admin_2001, admin_2011
+  )
+  lgd <- data.frame(
+    state_code_2011 = c("12", "20"),
+    district_code_2011 = c("258", "367"),
+    state_code_2001 = c("12", "20"),
+    district_code_2001 = c("15", "21"),
+    population_share_to_2001 = 1,
+    area_share_to_2001 = 1,
+    shrid_coverage = 1,
+    mapping_class = "official_lgd_census_code_bridge",
+    source_id = "lgd",
+    stringsAsFactors = FALSE
+  )
+
+  out <- combine_district_transitions_2001_2011(
+    data.frame(), lgd, reviewed, admin_2001 = admin_2001
+  )
+
+  expect_equal(nrow(out), 2L)
+  expect_setequal(
+    transition_target_unit_2001(out),
+    c("pc2001__12__10", "pc2001__20__16")
+  )
+  expect_true(all(out$mapping_class == "reviewed_single_parent_ancestry"))
+  expect_silent(validate_district_transition_targets(out, admin_2001))
+})
+
+test_that("district transition rejects targets absent from the Census-2001 registry", {
+  transition <- data.frame(
+    state_code_2011 = "12", district_code_2011 = "258",
+    state_code_2001 = "12", district_code_2001 = "15",
+    population_share_to_2001 = 1, area_share_to_2001 = 1, shrid_coverage = 1,
+    mapping_class = "official_lgd_census_code_bridge",
+    stringsAsFactors = FALSE
+  )
+  admin_2001 <- data.frame(
+    unit_id = "pc2001__12__10",
+    stringsAsFactors = FALSE
+  )
+
+  expect_error(
+    validate_district_transition_targets(transition, admin_2001),
+    "unknown Census-2001 target units"
+  )
+})

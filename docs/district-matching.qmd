@@ -33,7 +33,7 @@ initialize_public_qmd_helpers(knitr::knit_global())
 
 ### District Matching Method {#sec-distma}
 
-The analysis is harmonized to Census-2001 districts. District names alone are not treated as evidence of geographic continuity: exact names, aliases, and fuzzy string scores generate candidates, while accepted lineage decisions rely on registered administrative and geographic evidence. The evidence hierarchy prioritizes official Census or LGD identifiers and modification records, then official district histories or gazettes, India State Stories, SHRUG locality transitions, and documented secondary concordances.
+The analysis is harmonized to Census-2001 districts. District names alone are not treated as evidence of geographic continuity: exact names, aliases, and fuzzy string scores generate candidates, while accepted lineage decisions rely on registered administrative and geographic evidence. The evidence hierarchy prioritizes official Census identifiers and LGD identifiers or modification records that resolve to valid Census units, then official district histories or gazettes, India State Stories, SHRUG locality transitions, and documented secondary concordances.
 
 The production lineage records each NSS source identity, its accepted Census-2001 target or explicit exclusion, and any allocation weight. Additive quantities are summed across accepted source rows; means and shares are reconstructed from pooled numerators and denominators; district Gini coefficients are reconstructed from pooled household microdata rather than averaged. Accepted allocation weights must sum to one within source unit, and the final production panel must contain unique Census-2001 target districts.
 

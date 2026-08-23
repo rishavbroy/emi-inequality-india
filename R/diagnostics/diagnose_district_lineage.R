@@ -557,6 +557,13 @@ build_district_lineage <- function(
   admin_2011 <- if ("shrug_pc11_district_geometry" %in% names(raw_sources)) {
     build_admin_registry_2011(raw_sources$shrug_pc11_district_geometry)
   } else data.frame()
+  adjudicated_events <- read_admin_events(
+    raw_sources$lineage_events %||% data.frame()
+  )
+  adjudicated_weights <- read_adjudicated_allocation_weights(
+    raw_sources$lineage_allocation_weights %||% data.frame(),
+    admin_2001
+  )
   bridge <- if (!length(missing_core)) {
     build_shrug_district_bridge(
       raw_sources$shrug_pc01r, raw_sources$shrug_pc01u,
@@ -568,9 +575,14 @@ build_district_lineage <- function(
   transition_lgd <- build_lgd_district_transition_2001_2011(
     raw_sources$lgd_mod_districts_2001_2011 %||% data.frame()
   )
-  transition <- combine_district_transitions_2001_2011(
-    transition_shrug, transition_lgd
+  transition_reviewed <- build_reviewed_ancestry_transition_2001_2011(
+    adjudicated_events, admin_2001, admin_2011
   )
+  transition <- combine_district_transitions_2001_2011(
+    transition_shrug, transition_lgd, transition_reviewed,
+    admin_2001 = admin_2001
+  )
+  validate_district_transition_targets(transition, admin_2001)
   bridge_summary <- summarize_shrid_bridge(bridge)
   bridge_df <- safe_df(bridge)
   bridge_qa <- bridge_df[!(bridge_df$deterministic %in% TRUE), , drop = FALSE]
@@ -583,11 +595,6 @@ build_district_lineage <- function(
     raw_sources$lgd_districts %||% data.frame()
   )
   adjudications <- raw_sources$lineage_adjudications %||% data.frame()
-  adjudicated_events <- read_admin_events(raw_sources$lineage_events %||% data.frame())
-  adjudicated_weights <- read_adjudicated_allocation_weights(
-    raw_sources$lineage_allocation_weights %||% data.frame(),
-    admin_2001
-  )
   adjudicated_weight_validation <- validate_adjudicated_allocation_weights(adjudicated_weights)
   source_matches <- build_adjudicated_source_matches(adjudications, reference_units)
   candidates <- build_source_candidate_ledger(source_roster, reference_units, adjudications)

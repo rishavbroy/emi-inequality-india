@@ -235,19 +235,155 @@ build_lgd_district_transition_2001_2011 <- function(lgd_mod_districts) {
   out
 }
 
-#' Prefer official Census-code links over locality-derived transitions
-combine_district_transitions_2001_2011 <- function(shrug_transition, lgd_transition) {
+build_reviewed_ancestry_transition_2001_2011 <- function(
+  admin_events, admin_2001, admin_2011
+) {
+  events <- safe_df(admin_events)
+  if (!nrow(events)) return(data.frame())
+  required <- c("from_unit", "to_unit", "source_id", "status")
+  missing <- setdiff(required, names(events))
+  if (length(missing)) {
+    stop(
+      "Reviewed administrative events lack transition fields: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  events <- events[
+    events$status %in% "accepted" &
+      grepl("^pc2001__[0-9]{2}__[0-9]{2}$", events$from_unit) &
+      grepl("^pc2011__[0-9]{2}__[0-9]{3}$", events$to_unit),
+    required,
+    drop = FALSE
+  ]
+  if (!nrow(events)) return(data.frame())
+
+  child_counts <- table(events$to_unit)
+  ambiguous <- names(child_counts[child_counts > 1L])
+  events <- events[!events$to_unit %in% ambiguous, , drop = FALSE]
+  if (!nrow(events)) return(data.frame())
+
+  source_units <- unique(plain_chr(safe_df(admin_2011)$unit_id %||% character()))
+  target_units <- unique(plain_chr(safe_df(admin_2001)$unit_id %||% character()))
+  unknown_source <- !events$to_unit %in% source_units
+  unknown_target <- !events$from_unit %in% target_units
+  if (any(unknown_source)) {
+    stop(
+      "Reviewed ancestry events reference unknown Census-2011 districts: ",
+      paste(unique(events$to_unit[unknown_source]), collapse = ", "),
+      call. = FALSE
+    )
+  }
+  if (any(unknown_target)) {
+    stop(
+      "Reviewed ancestry events reference unknown Census-2001 districts: ",
+      paste(unique(events$from_unit[unknown_target]), collapse = ", "),
+      call. = FALSE
+    )
+  }
+
+  source_parts <- strsplit(events$to_unit, "__", fixed = TRUE)
+  target_parts <- strsplit(events$from_unit, "__", fixed = TRUE)
+  out <- data.frame(
+    state_code_2011 = vapply(source_parts, `[[`, character(1), 2L),
+    district_code_2011 = vapply(source_parts, `[[`, character(1), 3L),
+    state_code_2001 = vapply(target_parts, `[[`, character(1), 2L),
+    district_code_2001 = vapply(target_parts, `[[`, character(1), 3L),
+    population_share_to_2001 = 1,
+    area_share_to_2001 = 1,
+    shrid_coverage = 1,
+    mapping_class = "reviewed_single_parent_ancestry",
+    source_id = plain_chr(events$source_id),
+    stringsAsFactors = FALSE
+  )
+  key <- transition_source_key(out)
+  if (anyDuplicated(key)) {
+    stop("Reviewed ancestry transition must contain one target per 2011 district.", call. = FALSE)
+  }
+  out
+}
+
+transition_source_key <- function(x) {
+  paste(
+    pad_admin_code(x$state_code_2011, 2L),
+    pad_admin_code(x$district_code_2011, 3L),
+    sep = "__"
+  )
+}
+
+#' Combine district transitions by evidence priority
+#'
+#' Valid LGD Census-code links retain priority over locality-derived SHRUG
+#' containment. A reviewed one-parent ancestry edge replaces an LGD row only
+#' when the LGD target is absent from the authoritative Census-2001 registry;
+#' this repairs historical-code artifacts without changing valid production
+#' transitions. Invalid LGD targets without reviewed ancestry remain in the
+#' combined table so the final registry-validity gate fails loudly.
+combine_district_transitions_2001_2011 <- function(
+  shrug_transition, lgd_transition, reviewed_transition = data.frame(),
+  admin_2001 = data.frame()
+) {
   shrug <- safe_df(shrug_transition)
   lgd <- safe_df(lgd_transition)
-  if (!nrow(lgd)) return(shrug)
-  source_key <- function(x) paste(
-    pad_admin_code(x$state_code_2011, 2L),
-    pad_admin_code(x$district_code_2011, 3L), sep = "__"
+  reviewed <- safe_df(reviewed_transition)
+
+  reviewed_use <- reviewed[0, , drop = FALSE]
+  if (nrow(lgd) && nrow(reviewed) && nrow(safe_df(admin_2001))) {
+    valid_targets <- unique(plain_chr(safe_df(admin_2001)$unit_id %||% character()))
+    invalid_lgd <- !transition_target_unit_2001(lgd) %in% valid_targets
+    invalid_keys <- transition_source_key(lgd[invalid_lgd, , drop = FALSE])
+    reviewed_use <- reviewed[
+      transition_source_key(reviewed) %in% invalid_keys,
+      , drop = FALSE
+    ]
+    replacement_keys <- transition_source_key(reviewed_use)
+    if (length(replacement_keys)) {
+      lgd <- lgd[
+        !(invalid_lgd & transition_source_key(lgd) %in% replacement_keys),
+        , drop = FALSE
+      ]
+    }
+  }
+
+  preferred_keys <- unique(c(
+    if (nrow(reviewed_use)) transition_source_key(reviewed_use) else character(),
+    if (nrow(lgd)) transition_source_key(lgd) else character()
+  ))
+  if (nrow(shrug) && length(preferred_keys)) {
+    shrug <- shrug[!transition_source_key(shrug) %in% preferred_keys, , drop = FALSE]
+  }
+  safe_bind_rows(list(reviewed_use, lgd, shrug))
+}
+
+transition_target_unit_2001 <- function(transition) {
+  x <- safe_df(transition)
+  paste0(
+    "pc2001__",
+    pad_admin_code(x$state_code_2001, 2L), "__",
+    pad_admin_code(x$district_code_2001, 2L)
   )
-  if (!nrow(shrug)) return(lgd)
-  lgd_keys <- source_key(lgd)
-  shrug <- shrug[!source_key(shrug) %in% lgd_keys, , drop = FALSE]
-  safe_bind_rows(list(lgd, shrug))
+}
+
+validate_district_transition_targets <- function(transition, admin_2001) {
+  x <- safe_df(transition)
+  if (!nrow(x)) return(invisible(TRUE))
+  target <- transition_target_unit_2001(x)
+  valid <- unique(plain_chr(safe_df(admin_2001)$unit_id %||% character()))
+  unknown <- !target %in% valid
+  if (any(unknown)) {
+    source <- paste0(
+      "pc2011__",
+      pad_admin_code(x$state_code_2011[unknown], 2L), "__",
+      pad_admin_code(x$district_code_2011[unknown], 3L)
+    )
+    pairs <- paste(source, "->", target[unknown])
+    stop(
+      "District transition references unknown Census-2001 target units: ",
+      paste(unique(pairs), collapse = ", "),
+      call. = FALSE
+    )
+  }
+  invisible(TRUE)
 }
 
 #' Aggregate deterministic SHRID mappings to district transition weights

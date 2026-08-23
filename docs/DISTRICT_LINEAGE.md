@@ -18,7 +18,7 @@ The full reviewed panel is a sensitivity specification. Fractional allocations d
 
 Accepted lineage decisions should use the strongest available source in this order:
 
-1. official Census or LGD identifiers and modification records;
+1. official Census identifiers and LGD identifiers or modification records that resolve to valid Census units;
 2. official district histories, gazettes, or administrative atlases;
 3. India State Stories district-change records;
 4. SHRUG locality transitions and coverage;
@@ -32,6 +32,7 @@ The production lineage is ready only when all of the following hold:
 
 - every NSS source identity is accepted or explicitly excluded;
 - Census-2001 and Census-2011 unit identifiers are unique;
+- every target emitted by the 2011-to-2001 district transition exists in the authoritative Census-2001 district registry; reviewed one-parent ancestry supersedes an LGD historical code when the latter does not correspond to an actual Census-2001 district;
 - SHRUG transition weights are finite, nonnegative, and do not overallocate a source unit;
 - accepted allocation weights sum to one within source unit;
 - every accepted decision cites a registered source;
