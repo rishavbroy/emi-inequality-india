@@ -62,9 +62,17 @@ The event-study reference year is 2007-08. Two models are reported: district FE 
 
 Later-year language counts are also checked against the independently read elementary-enrollment denominator before EMI is constructed. The same validity contract is reapplied after child-district counts are summed to Census-2001 geography, so harmonization cannot reintroduce an impossible share. A language count below zero, above the district total, or paired with a missing/nonpositive denominator is retained for source QA but is not treated as a resolved treatment count; the resulting EMI share is `NA` rather than capped or winsorized.
 
+## School-quality mechanisms
+
+The district report-card workbooks support three stable, count-derived school-quality measures across 2005-06 through 2015-16: pupils per teacher, the share of schools that are single-teacher schools, and the share of schools reporting a girls' toilet. The reader carries teacher and school counts through the same deterministic Census-2001 lineage bridge as EMI and derives ratios only after child-district counts have been summed. District percentages are never averaged across lineage changes.
+
+Historical Teacher sheets contribute government-plus-private teacher counts; the 2014-15 and 2015-16 summary sheets expose explicit total-teacher fields. Single-teacher-school and girls'-toilet counts use the archived total fields (`tch1_school` / `gtoilet_sch` in the older schema and `stchtot` / `sgtoiltot` in 2014-15 and 2015-16). Facility shares become `NA`, rather than being capped, when a reported count exceeds total schools.
+
+Mechanism diagnostics use the preferred scalar linguistic-distance measure. The 2007-08 state-FE associations are labeled contemporaneous diagnostics rather than predetermined balance. Dynamic trajectories use the same district+year and district+state×year specifications, Census-2001 district clustering, and 2007-08 reference year as the EMI event study. Later-only amenities such as electricity and computers are excluded from the common mechanism registry because they do not have a comparable 2007-08 baseline. DISE/UDISE publications likewise report single-teacher-school and girls'-toilet availability as school-system indicators.
+
 ## Deferred extensions
 
-Teacher/school-quality mechanisms and a future HCES endpoint remain deferred. An all-school-age DISE EMI exposure is also deferred until a defensible age-specific Census denominator is added. Historical school-level medium availability and language-taught-as-subject measures require school-level DISE/UDISE data rather than these district report-card aggregates.
+A future HCES endpoint remains deferred to its separate feasibility/comparability phase. An all-school-age DISE EMI exposure is also deferred until a defensible age-specific Census denominator is added. Historical school-level medium availability and language-taught-as-subject measures require school-level DISE/UDISE data rather than these district report-card aggregates.
 
 ## Census-2001 geographic harmonization
 

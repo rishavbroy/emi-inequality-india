@@ -62,7 +62,7 @@ dise_machine_header_score <- function(values) {
   row <- repair_dise_machine_names(values)
   key_score <- sum(row %in% c("statecd", "statename", "distcd", "distname"))
   machine_score <- sum(grepl(
-    "^(enr_|sch[0-9]|m[1-5]$|enre[0-9]|c[0-9]+_[bg]$)",
+    "^(enr_|sch|tch|stch|gtoilet|sgtoil|m[1-5]$|enre[0-9]|c[0-9]+_[bg]$)",
     row
   ))
   key_score + machine_score
@@ -262,20 +262,81 @@ extract_dise_enrollment_measures <- function(data, academic_year) {
   out
 }
 
+dise_total_from_columns <- function(data, total_column, fallback_columns = character()) {
+  if (total_column %in% names(data)) return(num(data[[total_column]]))
+  row_sum_available(data, intersect(fallback_columns, names(data)))
+}
+
 extract_dise_school_measures <- function(data) {
   out <- data.frame(
-    state_code_dise = plain_chr(data$statecd),
+    state_code_dise = if ("statecd" %in% names(data)) plain_chr(data$statecd) else NA_character_,
     district_code_dise = plain_chr(data$distcd),
     stringsAsFactors = FALSE
   )
   out$dise_government_schools <- row_sum_available(data, dise_management_columns(data, "schgovt"))
   out$dise_private_schools <- row_sum_available(data, dise_management_columns(data, "schpvt"))
-  out$dise_total_schools <- out$dise_government_schools + out$dise_private_schools
+  out$dise_total_schools <- if ("schtot" %in% names(data)) {
+    num(data$schtot)
+  } else {
+    out$dise_government_schools + out$dise_private_schools
+  }
+  out$dise_single_teacher_schools <- dise_total_from_columns(
+    data, "stchtot", "tch1_school"
+  )
+  out$dise_girls_toilet_schools <- dise_total_from_columns(
+    data, "sgtoiltot", "gtoilet_sch"
+  )
   out$dise_private_school_share <- ifelse(
     is.finite(out$dise_total_schools) & out$dise_total_schools > 0,
     100 * out$dise_private_schools / out$dise_total_schools,
     NA_real_
   )
+  out
+}
+
+extract_dise_teacher_measures <- function(data) {
+  out <- data.frame(
+    district_code_dise = plain_chr(data$distcd),
+    stringsAsFactors = FALSE
+  )
+  out$dise_total_teachers <- if ("tchtot" %in% names(data)) {
+    num(data$tchtot)
+  } else {
+    row_sum_available(data, dise_management_columns(data, "tch_govt")) +
+      row_sum_available(data, dise_management_columns(data, "tch_pvt"))
+  }
+  out
+}
+
+finalize_dise_school_quality_measures <- function(data) {
+  out <- safe_df(data)
+  if ("dise_total_schools" %in% names(out)) {
+    total <- num(out$dise_total_schools)
+    valid_share <- function(count) {
+      count <- num(count)
+      ifelse(
+        is.finite(count) & is.finite(total) & total > 0 &
+          count >= 0 & count <= total,
+        100 * count / total,
+        NA_real_
+      )
+    }
+    if ("dise_single_teacher_schools" %in% names(out)) {
+      out$dise_single_teacher_school_share <- valid_share(out$dise_single_teacher_schools)
+    }
+    if ("dise_girls_toilet_schools" %in% names(out)) {
+      out$dise_girls_toilet_school_share <- valid_share(out$dise_girls_toilet_schools)
+    }
+  }
+  if (all(c("dise_total_enrollment", "dise_total_teachers") %in% names(out))) {
+    enrollment <- num(out$dise_total_enrollment)
+    teachers <- num(out$dise_total_teachers)
+    out$dise_pupils_per_teacher <- ifelse(
+      is.finite(enrollment) & enrollment >= 0 & is.finite(teachers) & teachers > 0,
+      enrollment / teachers,
+      NA_real_
+    )
+  }
   out
 }
 
@@ -288,10 +349,16 @@ read_dise_baseline_year <- function(paths, registry_row) {
   schools <- extract_dise_school_measures(
     read_dise_machine_sheet(workbook, registry_row$school_sheet[[1]])
   )
+  teachers <- extract_dise_teacher_measures(
+    read_dise_machine_sheet(workbook, registry_row$teacher_sheet[[1]])
+  )
   key <- c("state_code_dise", "district_code_dise")
   if (anyDuplicated(enrolment[key])) stop("DISE enrollment sheet contains duplicate district codes.", call. = FALSE)
   if (anyDuplicated(schools[key])) stop("DISE school sheet contains duplicate district codes.", call. = FALSE)
-  merge(enrolment, schools, by = key, all.x = TRUE, sort = FALSE)
+  if (anyDuplicated(teachers$district_code_dise)) stop("DISE teacher sheet contains duplicate district codes.", call. = FALSE)
+  out <- merge(enrolment, schools, by = key, all.x = TRUE, sort = FALSE)
+  out <- merge(out, teachers, by = "district_code_dise", all.x = TRUE, sort = FALSE)
+  finalize_dise_school_quality_measures(out)
 }
 
 read_dise_baseline_archive <- function(paths = build_paths(), registry = read_dise_archive_registry(paths)) {
@@ -468,23 +535,58 @@ extract_dise_2015_medium_counts <- function(data) {
 read_dise_dynamic_year <- function(paths, registry_row, report_languages) {
   workbook <- materialize_dise_workbook(paths, registry_row)
   year <- registry_row$academic_year[[1]]
-  if (identical(year, "2015-16")) {
-    base <- read_dise_machine_sheet(workbook, "2015-16_1")
-    medium <- read_dise_machine_sheet(workbook, "2015-16_2")
-    totals <- extract_dise_direct_total(base, year)
-    medium <- extract_dise_2015_medium_counts(medium)
-    out <- merge(totals, medium, by = "district_code_dise", all.x = TRUE, sort = FALSE)
-    out$dise_english_identity_resolved <- is.finite(out$dise_english_enrollment)
-    out$dise_hindi_identity_resolved <- is.finite(out$dise_hindi_enrollment)
-    return(finalize_dise_language_measure(out))
+
+  if (year %in% c("2014-15", "2015-16")) {
+    sheet <- if (identical(year, "2015-16")) "2015-16_1" else "2014-15_PY"
+    base <- read_dise_machine_sheet(workbook, sheet)
+    out <- merge(
+      extract_dise_direct_total(base, year),
+      extract_dise_school_measures(base),
+      by = "district_code_dise", all.x = TRUE, sort = FALSE
+    )
+    out <- merge(
+      out, extract_dise_teacher_measures(base),
+      by = "district_code_dise", all.x = TRUE, sort = FALSE
+    )
+    if (identical(year, "2015-16")) {
+      out <- merge(
+        out,
+        extract_dise_2015_medium_counts(read_dise_machine_sheet(workbook, "2015-16_2")),
+        by = "district_code_dise", all.x = TRUE, sort = FALSE
+      )
+      out$dise_english_identity_resolved <- is.finite(out$dise_english_enrollment)
+      out$dise_hindi_identity_resolved <- is.finite(out$dise_hindi_enrollment)
+      return(finalize_dise_school_quality_measures(finalize_dise_language_measure(out)))
+    }
+    out <- attach_dise_report_language_counts(
+      out,
+      report_languages[report_languages$academic_year == year, , drop = FALSE]
+    )
+    return(finalize_dise_school_quality_measures(out))
   }
-  sheet <- registry_row$enrollment_sheet[[1]]
-  if (identical(year, "2014-15")) sheet <- "2014-15_PY"
-  totals <- extract_dise_direct_total(read_dise_machine_sheet(workbook, sheet), year)
-  attach_dise_report_language_counts(
-    totals,
+
+  out <- merge(
+    extract_dise_direct_total(
+      read_dise_machine_sheet(workbook, registry_row$enrollment_sheet[[1]]),
+      year
+    ),
+    extract_dise_school_measures(
+      read_dise_machine_sheet(workbook, registry_row$school_sheet[[1]])
+    ),
+    by = "district_code_dise", all.x = TRUE, sort = FALSE
+  )
+  out <- merge(
+    out,
+    extract_dise_teacher_measures(
+      read_dise_machine_sheet(workbook, registry_row$teacher_sheet[[1]])
+    ),
+    by = "district_code_dise", all.x = TRUE, sort = FALSE
+  )
+  out <- attach_dise_report_language_counts(
+    out,
     report_languages[report_languages$academic_year == year, , drop = FALSE]
   )
+  finalize_dise_school_quality_measures(out)
 }
 
 read_dise_dynamic_archive <- function(

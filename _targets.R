@@ -650,6 +650,10 @@ extended_diagnostic_targets <- list(
     diagnose_dise_dynamic_relevance(dise_dynamic_panel)
   ),
   tar_target(
+    dise_school_quality_mechanisms,
+    diagnose_dise_school_quality_mechanisms(dise_dynamic_panel)
+  ),
+  tar_target(
     dise_archive_diagnostics,
     diagnose_dise_archive(
       dise_baseline_district_year, dise_baseline_treatments, dise_publication_checks
@@ -669,7 +673,8 @@ extended_diagnostic_targets <- list(
       lineage_bridge = dise_lineage_bridge,
       harmonized_district_year = dise_baseline_district_year_2001,
       dynamic_panel = dise_dynamic_panel,
-      dynamic_relevance = dise_dynamic_relevance
+      dynamic_relevance = dise_dynamic_relevance,
+      school_quality = dise_school_quality_mechanisms
     )
   ),
 

@@ -246,6 +246,10 @@ save_dise_diagnostics <- function(
   harmonized_district_year = data.frame(),
   dynamic_panel = data.frame(),
   dynamic_relevance = list(registry = data.frame(), summary = data.frame(), coefficients = data.frame()),
+  school_quality = list(
+    registry = data.frame(), baseline_association = data.frame(),
+    summary = data.frame(), coefficients = data.frame()
+  ),
   dir = "outputs/diagnostics/extended/dise"
 ) {
   dir.create(dir, recursive = TRUE, showWarnings = FALSE)
@@ -285,6 +289,20 @@ save_dise_diagnostics <- function(
     dynamic_coefficients = write_diagnostic_csv(
       dynamic_relevance$coefficients,
       file.path(dir, "dise_dynamic_first_stage_event_study.csv")
+    ),
+    school_quality_registry = write_diagnostic_csv(
+      school_quality$registry, file.path(dir, "dise_school_quality_registry.csv")
+    ),
+    school_quality_baseline = write_diagnostic_csv(
+      school_quality$baseline_association,
+      file.path(dir, "dise_school_quality_baseline_association.csv")
+    ),
+    school_quality_summary = write_diagnostic_csv(
+      school_quality$summary, file.path(dir, "dise_school_quality_dynamic_summary.csv")
+    ),
+    school_quality_coefficients = write_diagnostic_csv(
+      school_quality$coefficients,
+      file.path(dir, "dise_school_quality_dynamic_event_study.csv")
     )
   )
   output_manifest(outputs)
@@ -345,11 +363,12 @@ estimate_dise_dynamic_spec <- function(
   data,
   instrument,
   dynamic_fe,
-  reference_year = "2007-08"
+  reference_year = "2007-08",
+  outcome = "dise_emi_enrollment_share_total"
 ) {
   x <- safe_df(data)
   required <- c(
-    "dise_emi_enrollment_share_total", "target_unit_2001",
+    outcome, "target_unit_2001",
     "state_code_2001", "academic_year", instrument
   )
   x <- x[stats::complete.cases(x[required]), , drop = FALSE]
@@ -369,7 +388,7 @@ estimate_dise_dynamic_spec <- function(
     c("factor(target_unit_2001)", "factor(academic_year)")
   }
   fit <- stats::lm(
-    stats::reformulate(c(fixed, terms$term), response = "dise_emi_enrollment_share_total"),
+    stats::reformulate(c(fixed, terms$term), response = outcome),
     data = x
   )
   cluster <- x$target_unit_2001
@@ -390,6 +409,7 @@ estimate_dise_dynamic_spec <- function(
       std.error = se,
       statistic = statistic,
       p.value = if (is.finite(statistic)) 2 * stats::pnorm(abs(statistic), lower.tail = FALSE) else NA_real_,
+      outcome = outcome,
       stringsAsFactors = FALSE
     )
   }))
@@ -404,9 +424,97 @@ estimate_dise_dynamic_spec <- function(
     joint_distance_year_f = unname(joint[["statistic"]]),
     joint_distance_year_p = unname(joint[["p.value"]]),
     cluster_status = inf$status,
+    outcome = outcome,
     stringsAsFactors = FALSE
   )
   list(summary = summary, coefficients = coef_rows)
+}
+
+dise_school_quality_registry <- function() {
+  data.frame(
+    outcome = c(
+      "dise_pupils_per_teacher",
+      "dise_single_teacher_school_share",
+      "dise_girls_toilet_school_share"
+    ),
+    label = c(
+      "Pupils per teacher",
+      "Single-teacher schools (%)",
+      "Schools with girls' toilet (%)"
+    ),
+    direction = c("lower_is_better", "lower_is_better", "higher_is_better"),
+    stringsAsFactors = FALSE
+  )
+}
+
+estimate_dise_school_quality_baseline <- function(
+  data,
+  outcome,
+  instrument = "ling_distance_nonzero_mean",
+  academic_year = "2007-08"
+) {
+  x <- safe_df(data)
+  required <- c(outcome, instrument, "state_code_2001", "target_unit_2001", "academic_year")
+  x <- x[x$academic_year == academic_year & stats::complete.cases(x[required]), , drop = FALSE]
+  rownames(x) <- NULL
+  if (!nrow(x)) return(data.frame())
+
+  fit <- stats::lm(
+    stats::reformulate(c(instrument, "factor(state_code_2001)"), response = outcome),
+    data = x
+  )
+  inf <- iv_clustered_inference(fit, x$target_unit_2001)
+  estimate <- unname(stats::coef(fit)[instrument])
+  se <- if (!is.null(inf$vcov) && instrument %in% rownames(inf$vcov)) {
+    sqrt(inf$vcov[instrument, instrument])
+  } else {
+    NA_real_
+  }
+  statistic <- estimate / se
+  data.frame(
+    academic_year = academic_year,
+    outcome = outcome,
+    instrument = instrument,
+    estimate = estimate,
+    std.error = se,
+    statistic = statistic,
+    p.value = if (is.finite(statistic)) {
+      2 * stats::pnorm(abs(statistic), lower.tail = FALSE)
+    } else {
+      NA_real_
+    },
+    n = stats::nobs(fit),
+    cluster_status = inf$status,
+    stringsAsFactors = FALSE
+  )
+}
+
+diagnose_dise_school_quality_mechanisms <- function(
+  data,
+  reference_year = "2007-08",
+  instrument = "ling_distance_nonzero_mean"
+) {
+  registry <- dise_school_quality_registry()
+  fes <- dise_dynamic_fe_registry()
+  baseline <- safe_bind_rows(lapply(registry$outcome, function(outcome) {
+    estimate_dise_school_quality_baseline(data, outcome, instrument, reference_year)
+  }))
+  results <- list()
+  k <- 1L
+  for (outcome in registry$outcome) {
+    for (dynamic_fe in fes$dynamic_fe) {
+      results[[k]] <- estimate_dise_dynamic_spec(
+        data, instrument, dynamic_fe, reference_year, outcome = outcome
+      )
+      k <- k + 1L
+    }
+  }
+  list(
+    registry = registry,
+    baseline_association = baseline,
+    summary = safe_bind_rows(lapply(results, `[[`, "summary")),
+    coefficients = safe_bind_rows(lapply(results, `[[`, "coefficients"))
+  )
 }
 
 diagnose_dise_dynamic_relevance <- function(data, reference_year = "2007-08") {

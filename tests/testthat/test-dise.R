@@ -335,8 +335,17 @@ test_that("DISE diagnostic saver returns the repository-standard output manifest
 
   expect_s3_class(manifest, "data.frame")
   expect_setequal(names(manifest), c("path", "description"))
-  expect_equal(nrow(manifest), 23L)
+  expect_equal(nrow(manifest), 27L)
   expect_true(all(file.exists(manifest$path)))
+  expect_setequal(
+    basename(manifest$path)[grepl("dise_school_quality_", basename(manifest$path))],
+    c(
+      "dise_school_quality_registry.csv",
+      "dise_school_quality_baseline_association.csv",
+      "dise_school_quality_dynamic_summary.csv",
+      "dise_school_quality_dynamic_event_study.csv"
+    )
+  )
 })
 
 test_that("DISE lineage candidate constructors preserve empty schemas", {
@@ -584,6 +593,72 @@ test_that("Census-2001 DISE attachment is one-to-one and preserves panel order",
   out <- attach_dise_treatments_to_panel_2001(panel, treatments)
   expect_identical(out$y, c(2, 1))
   expect_identical(out$dise_emi_enrollment_share_total_0708, c(20, 10))
+})
+
+test_that("DISE school-quality extraction preserves additive counts", {
+  school <- data.frame(
+    statecd = "01", distcd = "0101",
+    schgovt1 = 8, schpvt1 = 2,
+    tch1_school = 2, gtoilet_sch = 7,
+    stringsAsFactors = FALSE
+  )
+  teacher <- data.frame(
+    distcd = "0101", tch_govt1 = 9, tch_pvt1 = 1,
+    stringsAsFactors = FALSE
+  )
+  quality <- finalize_dise_school_quality_measures(cbind(
+    data.frame(dise_total_enrollment = 200),
+    extract_dise_school_measures(school),
+    extract_dise_teacher_measures(teacher)["dise_total_teachers"]
+  ))
+
+  expect_equal(quality$dise_total_schools, 10)
+  expect_equal(quality$dise_total_teachers, 10)
+  expect_equal(quality$dise_pupils_per_teacher, 20)
+  expect_equal(quality$dise_single_teacher_school_share, 20)
+  expect_equal(quality$dise_girls_toilet_school_share, 70)
+})
+
+test_that("DISE school-quality ratios are recomputed after lineage aggregation", {
+  district_year <- data.frame(
+    academic_year = c("2007-08", "2007-08"),
+    state_name_dise = "State",
+    district_name_dise = c("Child A", "Child B"),
+    dise_total_enrollment = c(100, 300),
+    dise_total_teachers = c(10, 20),
+    dise_total_schools = c(10, 30),
+    dise_single_teacher_schools = c(2, 3),
+    dise_girls_toilet_schools = c(8, 18),
+    stringsAsFactors = FALSE
+  )
+  bridge <- data.frame(
+    state_key = "state",
+    district_key = c("child a", "child b"),
+    target_unit_2001 = "pc2001__01__01",
+    n_candidate_targets = 1L,
+    bridge_status = "deterministic_to_2001",
+    bridge_sources = "reviewed",
+    stringsAsFactors = FALSE
+  )
+
+  out <- harmonize_dise_counts_to_2001(district_year, bridge)
+
+  expect_equal(out$dise_pupils_per_teacher, 400 / 30)
+  expect_equal(out$dise_single_teacher_school_share, 12.5)
+  expect_equal(out$dise_girls_toilet_school_share, 65)
+})
+
+test_that("DISE school-quality registry is concise and stable", {
+  registry <- dise_school_quality_registry()
+  expect_identical(
+    registry$outcome,
+    c(
+      "dise_pupils_per_teacher",
+      "dise_single_teacher_school_share",
+      "dise_girls_toilet_school_share"
+    )
+  )
+  expect_false(anyDuplicated(registry$outcome))
 })
 
 test_that("DISE state aliases used by archived reports canonicalize to lineage states", {

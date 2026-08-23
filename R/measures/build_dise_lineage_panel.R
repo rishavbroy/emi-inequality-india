@@ -135,7 +135,8 @@ harmonize_dise_counts_to_2001 <- function(district_year, bridge) {
   count_columns <- intersect(c(
     "dise_english_enrollment", "dise_hindi_enrollment", "dise_total_enrollment",
     "dise_government_enrollment", "dise_private_enrollment",
-    "dise_government_schools", "dise_private_schools", "dise_total_schools"
+    "dise_government_schools", "dise_private_schools", "dise_total_schools",
+    "dise_total_teachers", "dise_single_teacher_schools", "dise_girls_toilet_schools"
   ), names(mapped))
   groups <- split(seq_len(nrow(mapped)), paste(mapped$academic_year, mapped$target_unit_2001, sep = "|"))
   out <- safe_bind_rows(lapply(groups, function(i) {
@@ -166,6 +167,7 @@ harmonize_dise_counts_to_2001 <- function(district_year, bridge) {
       100 * out$dise_private_schools / out$dise_total_schools, NA_real_
     )
   }
+  out <- finalize_dise_school_quality_measures(out)
   rownames(out) <- NULL
   out
 }
