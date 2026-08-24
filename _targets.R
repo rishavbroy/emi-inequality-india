@@ -73,6 +73,15 @@ core_pipeline_targets <- list(
     consumption_survey_spec(consumption_survey_registry, "nss_2017_18_education")
   ),
   tar_target(
+    hces_summary_items_file,
+    hces_summary_items_path(paths),
+    format = "file"
+  ),
+  tar_target(
+    hces_summary_items,
+    read_hces_summary_items_file(hces_summary_items_file)
+  ),
+  tar_target(
     consumption_archive_2004_05,
     {
       raw_data_preflight
@@ -105,6 +114,22 @@ core_pipeline_targets <- list(
     format = "file"
   ),
   tar_target(
+    consumption_archive_hces_2022_23,
+    {
+      raw_data_preflight
+      discover_consumption_csv_archive(paths, consumption_survey_spec(consumption_survey_registry, "hces_2022_23"))
+    },
+    format = "file"
+  ),
+  tar_target(
+    consumption_archive_hces_2023_24,
+    {
+      raw_data_preflight
+      discover_consumption_csv_archive(paths, consumption_survey_spec(consumption_survey_registry, "hces_2023_24"))
+    },
+    format = "file"
+  ),
+  tar_target(
     consumption_households_2004_05,
     read_registered_detailed_consumption(
       consumption_archive_2004_05, consumption_survey_spec(consumption_survey_registry, "nss_2004_05")
@@ -126,6 +151,22 @@ core_pipeline_targets <- list(
     consumption_households_2011_12_type2,
     read_registered_detailed_consumption(
       consumption_archive_2011_12_type2, consumption_survey_spec(consumption_survey_registry, "nss_2011_12_type2")
+    )
+  ),
+  tar_target(
+    consumption_households_hces_2022_23,
+    read_registered_hces_consumption(
+      consumption_archive_hces_2022_23,
+      consumption_survey_spec(consumption_survey_registry, "hces_2022_23"),
+      hces_summary_items
+    )
+  ),
+  tar_target(
+    consumption_households_hces_2023_24,
+    read_registered_hces_consumption(
+      consumption_archive_hces_2023_24,
+      consumption_survey_spec(consumption_survey_registry, "hces_2023_24"),
+      hces_summary_items
     )
   ),
   tar_target(
@@ -162,12 +203,26 @@ core_pipeline_targets <- list(
     )
   ),
   tar_target(
+    consumption_mpce_validation_hces_2022_23,
+    validate_consumption_mpce_reconstruction(
+      consumption_households_hces_2022_23, consumption_mpce_benchmarks, "hces_2022_23"
+    )
+  ),
+  tar_target(
+    consumption_mpce_validation_hces_2023_24,
+    validate_consumption_mpce_reconstruction(
+      consumption_households_hces_2023_24, consumption_mpce_benchmarks, "hces_2023_24"
+    )
+  ),
+  tar_target(
     consumption_mpce_validation,
     combine_consumption_mpce_validations(
       consumption_mpce_validation_2004_05,
       consumption_mpce_validation_2009_10_type1,
       consumption_mpce_validation_2009_10_type2,
-      consumption_mpce_validation_2011_12_type2
+      consumption_mpce_validation_2011_12_type2,
+      consumption_mpce_validation_hces_2022_23,
+      consumption_mpce_validation_hces_2023_24
     )
   ),
   tar_target(

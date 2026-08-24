@@ -65,3 +65,18 @@ test_that("MPCE benchmark metadata require unique survey-sector identities", {
   ), path)
   expect_error(read_consumption_mpce_benchmarks(path), "unique by survey_id and sector")
 })
+
+test_that("modern HCES official benchmark metadata cover both sectors in both rounds", {
+  benchmarks <- read_consumption_mpce_benchmarks(file.path(
+    Sys.getenv("EMI_PROJECT_ROOT", "."),
+    "data", "metadata", "consumption_mpce_benchmarks.csv"
+  ))
+  modern <- benchmarks[benchmarks$survey_id %in% c("hces_2022_23", "hces_2023_24"), , drop = FALSE]
+  expect_equal(nrow(modern), 4L)
+  expect_true(all(vapply(
+    split(modern$sector, modern$survey_id),
+    function(x) setequal(x, c("rural", "urban")),
+    logical(1)
+  )))
+  expect_true(all(modern$tolerance_abs_rupees == 1))
+})

@@ -13,14 +13,39 @@ The first migration step is deliberately behavior-preserving. Generic
 `build_survey_subround_deflators()` functions now own the quarterly survey-period
 logic. The historical `nss_*` functions are compatibility wrappers backed by the
 registry, so the current 2007-08 and 2017-18 public outputs remain unchanged while
-later phases add canonical Schedule 1.0 and three-visit HCES household readers. HCES
-three-visit price timing is declared in the registry but is intentionally not forced
-through the quarterly NSS sub-round implementation.
+later phases add canonical Schedule 1.0 and three-visit HCES household readers. The
+Schedule 1.0 readers and the nominal HCES three-visit reconstruction are now active.
+HCES three-visit price timing is declared in the registry but remains intentionally
+outside the quarterly NSS sub-round implementation until its panel-month price phase.
 
 The registry also records that the active 2007-08 outcome currently comes from the
 education survey's household consumption question, whereas the planned 2007-08
 Schedule 1.0 source is a distinct survey contract. This distinction must remain
 explicit during the welfare migration.
+
+### Modern HCES nominal-MPCE contract
+
+`R/io/read_hces_three_visit.R` owns the release-schema differences between HCES
+2022-23 and 2023-24. Production reconstruction reads only Level 14 (A1/B1/C1
+questionnaire summaries) and Level 15 (A2/B2/C2 household size and visit
+metadata). `data/metadata/hces_summary_items.csv` declares each summary item,
+its 7/30/365-day reference period, and whether it belongs in MPCE. Monthlyization
+uses `value * 30 / reference_days`; imputed house/garage rent (CSQ item 539) is
+explicitly excluded.
+
+For each complete household, questionnaire expenditure is converted to a
+per-person component with the household size observed in that questionnaire,
+then summed across FDQ, CSQ, and DGQ. This is algebraically the published
+three-questionnaire MPCE formula. The Level-15 single-shot "usual monthly
+consumption expenditure" cross-validation field is not read by the adapter.
+
+Questionnaire order rotates in 2023-24, so the survey multiplier is taken from
+the row with `VISIT == 3`, regardless of whether that visit canvassed F, C, or D.
+The released 2022-23 Level 15 omits visit order; that adapter therefore requires
+the F/C/D multiplier to be identical within household and fails otherwise.
+Both rounds must reproduce the official all-India rural/urban MPCE benchmarks
+within one rupee before their nominal household objects can feed later price,
+geography, or welfare targets.
 
 ## Main-paper specification after the revision gate
 

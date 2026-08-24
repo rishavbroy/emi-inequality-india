@@ -98,7 +98,7 @@ validate_consumption_mpce_reconstruction <- function(households, benchmarks, sur
         ", tolerance=", format(as.numeric(row[["tolerance_abs_rupees"]]), digits = 8)
       )
     })
-    stop("Historical consumption MPCE reconstruction failed official benchmark(s): ", paste(detail, collapse = "; "), call. = FALSE)
+    stop("Consumption MPCE reconstruction failed official benchmark(s): ", paste(detail, collapse = "; "), call. = FALSE)
   }
   expected
 }
