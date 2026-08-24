@@ -316,8 +316,13 @@ MPCE is estimated with the same NSS survey design and person weights after
 applying `log()` at the household MPCE level. The median uses
 `survey::svyquantile()` at probability 0.5 through the same district-domain
 design and retains its design-based standard error. The registry stores the
-quantile probability explicitly so future p10/p25 outcomes can use the same
-estimator without new branches. Level-valued outcomes retain
+quantile probability, interval method, and quantile rule explicitly so future
+p10/p25 outcomes can use the same estimator without new branches. Quantile
+uncertainty uses the bounded `beta` probability interval rather than `survey`'s
+default mean-scale Woodruff interval, which can yield `NaN` endpoints when a
+probability confidence interval leaves [0, 1]. The mathematical quantile rule
+(`qrule = "math"`) remains explicit as well. Warnings are not suppressed; a
+non-finite quantile SE remains `not_estimable`. Level-valued outcomes retain
 `cv = std_error / estimate`; log-mean rows set `cv` to missing because that ratio
 is not a consumption coefficient of variation. `relative_se` is retained
 generically for all outcomes.
