@@ -77,3 +77,49 @@ test_that("consumption lineage attachment never silently drops uncovered geograp
     "does not cover every source household geography"
   )
 })
+
+test_that("consumption lineage handles fully resolved rosters without zero-row assignment errors", {
+  households <- data.frame(
+    survey_id = "wave", household_id = "h1",
+    source_state_code = "01", source_district_code = "01",
+    state_std = "state", district_std = "old",
+    source_unit_kind = "district", source_lineage_eligible = TRUE,
+    survey_weight = 1, household_size = 1, stringsAsFactors = FALSE
+  )
+  reference <- build_consumption_lineage_reference(
+    data.frame(
+      unit_id = "pc2001__01__01", state_std = "state", district_std = "old",
+      stringsAsFactors = FALSE
+    ),
+    data.frame(
+      source_row_id = character(), wave = character(),
+      state_std = character(), district_std = character(),
+      stringsAsFactors = FALSE
+    ),
+    data.frame(
+      source_row_id = character(), target_unit_2001 = character(),
+      weight = numeric(), basis = character(), panel_variant = character(),
+      stringsAsFactors = FALSE
+    )
+  )
+
+  bridge <- build_consumption_lineage_bridge(households, reference)
+
+  expect_equal(nrow(bridge), 1L)
+  expect_equal(bridge$lineage_status, "resolved_exact_2001")
+  expect_equal(bridge$lineage_weight, 1)
+})
+
+test_that("consumption lineage review queue saver uses the pipeline API", {
+  path <- tempfile(fileext = ".csv")
+  queue <- data.frame(
+    survey_id = "wave", source_state_code = "01", source_district_code = "02",
+    state_std = "state", district_std = "unresolved", source_unit_kind = "district",
+    lineage_status = "unresolved_no_stable_lineage", stringsAsFactors = FALSE
+  )
+
+  out <- save_consumption_lineage_review_queue(queue, path)
+
+  expect_true(file.exists(path))
+  expect_identical(normalizePath(out), normalizePath(path))
+})
