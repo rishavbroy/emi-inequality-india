@@ -1,6 +1,6 @@
 test_that("sector MPCE reconstruction uses person rather than household weights", {
   households <- data.frame(
-    sector = c("1", "1", "2"),
+    sector = c("Rural", "rural", "Urban"),
     household_size = c(1, 9, 2),
     survey_weight = c(1, 1, 1),
     nominal_mpce = c(100, 200, 300),
@@ -10,6 +10,21 @@ test_that("sector MPCE reconstruction uses person rather than household weights"
   expect_equal(out$estimate_mpce[out$sector == "rural"], 190)
   expect_equal(out$estimate_mpce[out$sector == "urban"], 300)
   expect_equal(out$sample_households, c(2L, 1L))
+})
+
+
+test_that("MPCE reconstruction reports the invalid canonical field", {
+  households <- data.frame(
+    sector = c("Rural", "mystery"),
+    household_size = c(2, 2),
+    survey_weight = c(1, 1),
+    nominal_mpce = c(100, 100),
+    stringsAsFactors = FALSE
+  )
+  expect_error(
+    estimate_consumption_mpce_by_sector(households),
+    "invalid values: sector=1"
+  )
 })
 
 test_that("official MPCE reconstruction validation is blocking and returns diagnostics", {
