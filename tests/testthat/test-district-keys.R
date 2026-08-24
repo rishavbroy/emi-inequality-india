@@ -74,3 +74,8 @@ test_that("district source matcher keeps deterministic one-to-one matches", {
   expect_equal(out$.tracker_row, c(10L, 11L))
   expect_true(all(out$.source_match_distance == 0))
 })
+
+
+test_that("state canonicalization handles official NSS compact Tamil Nadu spelling", {
+  expect_equal(canonicalize_state_name("Tamilnadu"), "tamil nadu")
+})

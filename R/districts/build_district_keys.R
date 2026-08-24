@@ -23,6 +23,7 @@ canonicalize_state_name <- function(x) {
     "andhra pardesh" = "andhra pradesh",
     "gujrat" = "gujarat",
     "maharastra" = "maharashtra",
+    "tamilnadu" = "tamil nadu",
     "pondicheri" = "puducherry",
     "pondicherry" = "puducherry",
     "uttaranchal" = "uttarakhand",
