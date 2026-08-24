@@ -47,6 +47,57 @@ lineage_distribution_signature <- function(target, weight) {
   paste(paste(target[ord], sprintf("%.12f", weight[ord]), sep = "="), collapse = ";")
 }
 
+
+read_consumption_lineage_identity_aliases <- function(path) {
+  x <- utils::read.csv(path, stringsAsFactors = FALSE, check.names = FALSE)
+  required <- c("state_std", "source_district_std", "target_district_std", "basis")
+  missing <- setdiff(required, names(x))
+  if (length(missing)) {
+    stop("Consumption lineage identity aliases are missing columns: ", paste(missing, collapse = ", "), call. = FALSE)
+  }
+  x$state_std <- canonicalize_state_name(x$state_std)
+  x$source_district_std <- canonicalize_district_name(x$source_district_std)
+  x$target_district_std <- canonicalize_district_name(x$target_district_std)
+  x$basis <- trimws(plain_chr(x$basis))
+  key <- paste(x$state_std, x$source_district_std, sep = "\r")
+  if (anyDuplicated(key)) stop("Consumption lineage identity aliases must be unique by source identity.", call. = FALSE)
+  if (any(!nzchar(x$state_std) | !nzchar(x$source_district_std) | !nzchar(x$target_district_std) | !nzchar(x$basis))) {
+    stop("Consumption lineage identity aliases contain empty required values.", call. = FALSE)
+  }
+  x
+}
+
+consumption_identity_alias_lineage <- function(identity_aliases, exact_lineage) {
+  aliases <- safe_df(identity_aliases)
+  if (!nrow(aliases)) return(data.frame())
+  required <- c("state_std", "source_district_std", "target_district_std", "basis")
+  missing <- setdiff(required, names(aliases))
+  if (length(missing)) stop("Consumption identity aliases lack required fields: ", paste(missing, collapse = ", "), call. = FALSE)
+  exact <- safe_df(exact_lineage)
+  targets <- unique(data.frame(
+    state_std = exact$state_std,
+    target_district_std = exact$district_std,
+    target_unit_2001 = exact$target_unit_2001,
+    stringsAsFactors = FALSE
+  ))
+  out <- merge(aliases, targets, by = c("state_std", "target_district_std"), all.x = TRUE, sort = FALSE)
+  if (any(is.na(out$target_unit_2001) | !nzchar(out$target_unit_2001))) {
+    bad <- unique(paste(out$state_std[is.na(out$target_unit_2001) | !nzchar(out$target_unit_2001)], out$target_district_std[is.na(out$target_unit_2001) | !nzchar(out$target_unit_2001)], sep = "/"))
+    stop("Consumption lineage aliases reference unknown Census-2001 districts: ", paste(bad, collapse = ", "), call. = FALSE)
+  }
+  if (anyDuplicated(out[c("state_std", "source_district_std")])) {
+    stop("Consumption lineage aliases resolve ambiguously.", call. = FALSE)
+  }
+  data.frame(
+    state_std = out$state_std,
+    district_std = out$source_district_std,
+    target_unit_2001 = out$target_unit_2001,
+    lineage_weight = 1,
+    lineage_basis = paste0("reviewed_identity_alias:", out$basis),
+    stringsAsFactors = FALSE
+  )
+}
+
 reviewed_district_identity_lineage <- function(nss_source_roster, full_reviewed_source_crosswalk) {
   roster <- safe_df(nss_source_roster)
   crosswalk <- safe_df(full_reviewed_source_crosswalk)
@@ -148,9 +199,11 @@ exact_census_2001_identity_lineage <- function(admin_units_2001) {
 }
 
 build_consumption_lineage_reference <- function(
-    admin_units_2001, nss_source_roster, full_reviewed_source_crosswalk) {
+    admin_units_2001, nss_source_roster, full_reviewed_source_crosswalk, identity_aliases = NULL) {
+  exact <- exact_census_2001_identity_lineage(admin_units_2001)
   list(
-    exact = exact_census_2001_identity_lineage(admin_units_2001),
+    exact = exact,
+    aliases = consumption_identity_alias_lineage(identity_aliases, exact),
     reviewed = reviewed_district_identity_lineage(
       nss_source_roster, full_reviewed_source_crosswalk
     )
@@ -161,7 +214,7 @@ build_consumption_lineage_bridge <- function(households, lineage_reference) {
   source <- consumption_source_district_roster(households)
   if (!nrow(source)) return(empty_consumption_lineage_bridge())
   if (!is.list(lineage_reference) || is.null(lineage_reference$exact) ||
-      is.null(lineage_reference$reviewed)) {
+      is.null(lineage_reference$aliases) || is.null(lineage_reference$reviewed)) {
     stop("Consumption lineage reference is incomplete.", call. = FALSE)
   }
   exact <- safe_df(lineage_reference$exact)
@@ -183,6 +236,16 @@ build_consumption_lineage_bridge <- function(households, lineage_reference) {
     source$source_lineage_eligible %in% TRUE & !source$row_id %in% exact_ids,
     , drop = FALSE
   ]
+  alias_rows <- data.frame()
+  if (nrow(remaining) && nrow(lineage_reference$aliases)) {
+    alias_rows <- merge(
+      remaining, lineage_reference$aliases,
+      by = c("state_std", "district_std"), all = FALSE, sort = FALSE
+    )
+  }
+  alias_ids <- unique(alias_rows$row_id)
+  remaining <- remaining[!remaining$row_id %in% alias_ids, , drop = FALSE]
+
   reviewed_rows <- data.frame()
   if (nrow(remaining) && nrow(reviewed$mapping)) {
     reviewed_rows <- merge(
@@ -213,8 +276,9 @@ build_consumption_lineage_bridge <- function(households, lineage_reference) {
   noneligible$lineage_status <- rep("source_not_lineage_eligible", nrow(noneligible))
 
   if (nrow(exact_rows)) exact_rows$lineage_status <- "resolved_exact_2001"
+  if (nrow(alias_rows)) alias_rows$lineage_status <- "resolved_reviewed_identity_alias"
   if (nrow(reviewed_rows)) reviewed_rows$lineage_status <- "resolved_reviewed_consensus"
-  out <- safe_bind_rows(list(exact_rows, reviewed_rows, unresolved, noneligible))
+  out <- safe_bind_rows(list(exact_rows, alias_rows, reviewed_rows, unresolved, noneligible))
   wanted <- names(empty_consumption_lineage_bridge())
   for (nm in setdiff(wanted, names(out))) out[[nm]] <- rep(NA, nrow(out))
   out <- out[wanted]

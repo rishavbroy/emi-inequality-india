@@ -123,3 +123,51 @@ test_that("consumption lineage review queue saver uses the pipeline API", {
   expect_true(file.exists(path))
   expect_identical(normalizePath(out), normalizePath(path))
 })
+
+test_that("reviewed consumption identity aliases resolve only to known Census-2001 districts", {
+  admin <- data.frame(
+    unit_id = "pc2001__24__07", state_std = "gujarat", district_std = "ahmadabad",
+    stringsAsFactors = FALSE
+  )
+  exact <- exact_census_2001_identity_lineage(admin)
+  aliases <- data.frame(
+    state_std = "gujarat", source_district_std = "ahmedabad",
+    target_district_std = "ahmadabad", basis = "orthographic_variant",
+    stringsAsFactors = FALSE
+  )
+  out <- consumption_identity_alias_lineage(aliases, exact)
+  expect_equal(out$district_std, "ahmedabad")
+  expect_equal(out$target_unit_2001, "pc2001__24__07")
+  expect_equal(out$lineage_weight, 1)
+  expect_match(out$lineage_basis, "reviewed_identity_alias")
+
+  aliases$target_district_std <- "not a census district"
+  expect_error(consumption_identity_alias_lineage(aliases, exact), "unknown Census-2001")
+})
+
+test_that("identity aliases resolve before cross-wave lineage and never override exact identities", {
+  households <- data.frame(
+    survey_id = "nss_test", source_state_code = c("24", "24"),
+    source_district_code = c("07", "08"), state_std = "gujarat",
+    district_std = c("ahmedabad", "ahmadabad"), source_unit_kind = "district",
+    source_lineage_eligible = TRUE, stringsAsFactors = FALSE
+  )
+  admin <- data.frame(
+    unit_id = "pc2001__24__07", state_std = "gujarat", district_std = "ahmadabad",
+    stringsAsFactors = FALSE
+  )
+  aliases <- data.frame(
+    state_std = "gujarat", source_district_std = "ahmedabad",
+    target_district_std = "ahmadabad", basis = "orthographic_variant",
+    stringsAsFactors = FALSE
+  )
+  ref <- list(
+    exact = exact_census_2001_identity_lineage(admin),
+    aliases = consumption_identity_alias_lineage(aliases, exact_census_2001_identity_lineage(admin)),
+    reviewed = list(mapping = data.frame(), conflicts = data.frame())
+  )
+  out <- build_consumption_lineage_bridge(households, ref)
+  expect_equal(out$lineage_status[out$source_district_code == "07"], "resolved_reviewed_identity_alias")
+  expect_equal(out$lineage_status[out$source_district_code == "08"], "resolved_exact_2001")
+  expect_true(all(out$target_unit_2001 == "pc2001__24__07"))
+})
