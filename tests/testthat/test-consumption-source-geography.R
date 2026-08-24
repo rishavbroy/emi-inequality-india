@@ -41,3 +41,28 @@ test_that("modern HCES source geography reuses the canonical attachment contract
   expect_equal(out$source_district_name, c("Y.S.R. (Cuddapah)", "Hyderabad"))
   expect_equal(out$state_std, c("andhra pradesh", "telangana"))
 })
+
+test_that("modern HCES codebook preserves historical price geography after UT reorganization", {
+  path <- file.path(
+    Sys.getenv("EMI_PROJECT_ROOT", "."),
+    "data", "metadata", "hces_2022_24_district_codebook.csv"
+  )
+  codebook <- read_consumption_district_codebook_csv(path, "hces_2022_24")
+
+  modern <- data.frame(
+    state_code_source = c("25", "25", "25", "37", "37", "28"),
+    district_code_source = c("01", "02", "03", "01", "02", "10"),
+    stratum = "1",
+    stringsAsFactors = FALSE
+  )
+  out <- attach_consumption_source_district_identity(modern, codebook)
+
+  expect_equal(
+    out$price_state_code,
+    c("DADI", "DADI", "DNHA", "JNK", "JNK", "28")
+  )
+  expect_equal(
+    out$source_state_code,
+    c("25", "25", "25", "37", "37", "28")
+  )
+})

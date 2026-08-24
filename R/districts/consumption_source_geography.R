@@ -153,7 +153,7 @@ normalize_consumption_codebook <- function(
 read_consumption_district_codebook_csv <- function(path, source_id) {
   if (!file.exists(path)) stop("Consumption district codebook is missing: ", path, call. = FALSE)
   raw <- utils::read.csv(path, stringsAsFactors = FALSE, check.names = FALSE)
-  normalize_consumption_codebook(
+  out <- normalize_consumption_codebook(
     raw,
     "state_name_source",
     "state_code_source",
@@ -161,6 +161,25 @@ read_consumption_district_codebook_csv <- function(path, source_id) {
     "district_code_source",
     source_id
   )
+
+  optional <- intersect(c("nss_region", "price_state_code"), names(raw))
+  if (!length(optional)) return(out)
+
+  raw_state <- consumption_code_key(raw$state_code_source, 2L)
+  raw_district <- consumption_code_key(raw$district_code_source, 2L)
+  raw_key <- paste(raw_state, raw_district, sep = "__")
+  out_key <- paste(out$state_code_source, out$district_code_source, sep = "__")
+  pos <- match(out_key, raw_key)
+  if (anyNA(pos)) {
+    stop(source_id, " district codebook optional metadata could not be reattached.", call. = FALSE)
+  }
+
+  for (nm in optional) {
+    value <- trimws(plain_chr(raw[[nm]][pos]))
+    value[is.na(value)] <- ""
+    out[[nm]] <- value
+  }
+  out
 }
 
 read_consumption_district_codebook_excel <- function(path, source_id) {
@@ -356,6 +375,15 @@ attach_consumption_source_district_identity <- function(households, codebook) {
   out$source_unit_kind <- cb$source_unit_kind[pos]
   out$source_lineage_eligible <- cb$source_lineage_eligible[pos]
   out$source_geography_mapping_basis <- cb$mapping_basis[pos]
+  if ("price_state_code" %in% names(cb)) {
+    price_state <- trimws(plain_chr(cb$price_state_code[pos]))
+    price_state[is.na(price_state) | !nzchar(price_state)] <- out$source_state_code[
+      is.na(price_state) | !nzchar(price_state)
+    ]
+    out$price_state_code <- price_state
+  } else {
+    out$price_state_code <- out$source_state_code
+  }
   out
 }
 
