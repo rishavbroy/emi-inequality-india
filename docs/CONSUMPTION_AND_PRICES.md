@@ -336,3 +336,6 @@ and a 20% relative-SE ceiling for the primary level mean) are explicit QA and
 preferred-analysis rules rather than survey-theory cutoffs. They are stored in
 the registry so sensitivity analyses can vary them transparently without
 reconstructing district estimates.
+### Quantile inference and thin district domains
+
+Registered district quantiles keep a design-weighted point estimate for every resolved district. Quantile confidence intervals and standard errors are requested only when the district satisfies the registry's ex-ante sample-support thresholds (`min_households`, `min_fsu`, and `min_kish_effective_n`). This is an inference gate, not a data filter: thin districts remain in the public long-form welfare file with `status = "point_estimate_only"`, `uncertainty_requested = FALSE`, and their support diagnostics intact. Supported districts use the registry-declared `survey::svyquantile()` interval and quantile rule. The pipeline does not suppress non-lonely-PSU warnings from supported quantile inference; a warning there remains a strict-build failure. This prevents unstable Woodruff interval calculations in domains that are already declared too thin for preferred inference while preserving their descriptive weighted medians.

@@ -95,49 +95,64 @@ test_that("district means intentionally handle lonely-PSU survey warnings", {
   expect_equal(out$estimate, 150)
 })
 
-test_that("welfare registry dispatches means and quantiles without dropping thin cells", {
+test_that("welfare registry keeps thin quantile points but gates uncertainty on support", {
   registry <- data.frame(
     outcome_id = c("real_mean_mpce", "mean_log_real_mpce", "weighted_median_real_mpce"),
     estimand = c("survey_mean", "survey_mean", "survey_quantile"),
     transform = c("identity", "log", "identity"), quantile = c(NA, NA, 0.5),
     quantile_interval = c("", "", "xlogit"), quantile_rule = c("", "", "math"),
-    role = c("primary", "robustness", "robustness"), min_households = 10,
+    role = c("primary", "robustness", "robustness"), min_households = 4,
     min_fsu = 2, min_kish_effective_n = 1, max_relative_se = c(0.50, NA, 0.50),
     stringsAsFactors = FALSE
   )
   x <- data.frame(
-    survey_id = "wave", household_id = paste0("h", 1:8), source_state_code = "01",
-    sector = "Rural", subround = "1", fsu = as.character(1:8), stratum = "1",
-    sub_stratum = "1", household_size = 1, target_unit_2001 = "a",
+    survey_id = "wave", household_id = paste0("h", 1:10), source_state_code = "01",
+    sector = "Rural", subround = "1", fsu = as.character(1:10), stratum = "1",
+    sub_stratum = "1", household_size = 1,
+    target_unit_2001 = c(rep("a", 8), rep("b", 2)),
     lineage_status = "resolved_exact_2001", lineage_weight = 1,
     lineage_person_weight = 1,
-    real_mpce = c(100, 100, 150, 150, 200, 200, 250, 250), stringsAsFactors = FALSE
+    real_mpce = c(100, 100, 150, 150, 200, 200, 250, 250, 300, 500),
+    stringsAsFactors = FALSE
   )
-  out <- estimate_consumption_district_welfare(x, registry)
+  expect_warning(out <- estimate_consumption_district_welfare(x, registry), NA)
   expect_setequal(out$outcome_id, registry$outcome_id)
-  expect_equal(out$estimate[out$outcome_id == "real_mean_mpce"], 175, tolerance = 1e-8)
+
+  mean_a <- out[out$outcome_id == "real_mean_mpce" & out$district_2001 == "a", ]
+  log_a <- out[out$outcome_id == "mean_log_real_mpce" & out$district_2001 == "a", ]
+  median_a <- out[out$outcome_id == "weighted_median_real_mpce" & out$district_2001 == "a", ]
+  median_b <- out[out$outcome_id == "weighted_median_real_mpce" & out$district_2001 == "b", ]
+  expect_equal(mean_a$estimate, 175, tolerance = 1e-8)
   expect_equal(
-    out$estimate[out$outcome_id == "mean_log_real_mpce"],
+    log_a$estimate,
     mean(log(c(100, 100, 150, 150, 200, 200, 250, 250))),
     tolerance = 1e-8
   )
-  rows <- consumption_design_rows(x)
+
+  rows <- consumption_design_rows(x[x$target_unit_2001 == "a", , drop = FALSE])
   design <- consumption_survey_design_from_rows(rows)
   expect_warning(direct_median <- with_consumption_survey_adjustment(survey::svyquantile(
     ~real_mpce, design, quantiles = 0.5, ci = TRUE, interval.type = "xlogit",
     qrule = "math", na.rm = TRUE
   )), NA)
-  expect_equal(
-    out$estimate[out$outcome_id == "weighted_median_real_mpce"],
-    unname(stats::coef(direct_median))[[1L]],
-    tolerance = 1e-8
-  )
-  expect_true(all(!out$sample_support_ok))
-  expect_true(all(!out$preferred_eligible))
-  expect_true(all(out$status[out$outcome_id != "weighted_median_real_mpce"] == "estimated"))
-  expect_true(all(grepl("thin_household_sample", out$support_reason, fixed = TRUE)))
-  expect_true(is.na(out$cv[out$outcome_id == "mean_log_real_mpce"]))
+  expect_equal(median_a$estimate, unname(stats::coef(direct_median))[[1L]], tolerance = 1e-8)
+  expect_equal(median_a$std_error, unname(survey::SE(direct_median))[[1L]], tolerance = 1e-8)
+  expect_true(median_a$uncertainty_requested)
+  expect_true(median_a$sample_support_ok)
+  expect_equal(median_a$status, "estimated")
+
+  expect_true(is.finite(median_b$estimate))
+  expect_true(is.na(median_b$std_error))
+  expect_false(median_b$uncertainty_requested)
+  expect_false(median_b$sample_support_ok)
+  expect_false(median_b$preferred_eligible)
+  expect_equal(median_b$status, "point_estimate_only")
+  expect_equal(median_b$reason, "uncertainty_not_requested_thin_support")
+  expect_true(grepl("thin_household_sample", median_b$support_reason, fixed = TRUE))
+  expect_true(is.na(median_b$precision_ok))
+  expect_true(is.na(log_a$cv))
 })
+
 
 test_that("consumption welfare registry validates outcome contracts", {
   path <- tempfile(fileext = ".csv")
