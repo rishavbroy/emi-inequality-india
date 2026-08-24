@@ -276,10 +276,13 @@ Historical consumption source labels are never fuzzy-matched into Census-2001 di
 Historical district mean MPCE is now estimated from the lineaged household
 records with the project's existing `survey` dependency. The design uses the
 NSS first-stage unit as the PSU and nests it within state, sector, stratum and
-sub-stratum. Sub-round is retained as fieldwork timing metadata but is not
-promoted to a sampling stratum. This matches the NSS stratified multistage
-sample design: FSUs are selected within stratum/sub-stratum cells and
-households are the ultimate sampling units.
+sub-stratum. For Round 66, the official design has no urban sub-stratification,
+so the released blank urban `Sub_Stratum` values are represented internally as
+an explicit no-subdivision category; blank rural sub-strata remain invalid.
+Sub-round is retained as fieldwork timing metadata but is not promoted to a
+sampling stratum. This matches the NSS stratified multistage sample design:
+FSUs are selected within the applicable stratum/sub-stratum cells and households
+are the ultimate sampling units.
 
 Because household MPCE is a per-person welfare concept, the analysis weight for
 mean MPCE is the combined household multiplier multiplied by household size and
