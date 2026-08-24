@@ -325,7 +325,10 @@ from the survey registry: non-overlapping three-month sub-rounds for legacy NSS
 Schedule 1.0 and overlapping three-month panels for modern HCES. When source
 geography supplies an explicit historical `price_state_code`, that key is used
 instead of trying to infer a pre-reorganization price geography from the modern
-state code alone. Only then are
+state code alone. The shared household-price diagnostic uses the same contract
+and reports legacy `subround` and modern `panel` assignments in one long-format
+output, with the appropriate survey-weight field selected from each canonical
+household object. Only then are
 `real_mpce` and `real_household_consumption` constructed and their household-size
 identity checked.
 The production targets depend on the corresponding official MPCE reconstruction

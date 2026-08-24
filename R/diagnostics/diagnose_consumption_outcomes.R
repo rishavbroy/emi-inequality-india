@@ -155,44 +155,80 @@ compare_consumption_outcomes <- function(panel, cfg) {
   )
 }
 
-summarise_household_price_assignments <- function(households, wave) {
+consumption_price_diagnostic_contract <- function(households) {
   x <- safe_df(households)
+  period_candidates <- c(subround = ".price_subround", panel = ".price_panel")
+  present_periods <- period_candidates[period_candidates %in% names(x)]
+  if (length(present_periods) != 1L) {
+    stop(
+      "Household price diagnostics require exactly one registered price-period field.",
+      call. = FALSE
+    )
+  }
+
+  weight_candidates <- c("survey_weight_price", "survey_weight")
+  present_weights <- weight_candidates[weight_candidates %in% names(x)]
+  if (!length(present_weights)) {
+    stop("Household price diagnostics lack a survey-weight field.", call. = FALSE)
+  }
+
+  list(
+    period_type = names(present_periods)[[1L]],
+    period_col = unname(present_periods[[1L]]),
+    weight_col = present_weights[[1L]]
+  )
+}
+
+summarise_household_price_assignments <- function(households, round_id) {
+  x <- safe_df(households)
+  contract <- consumption_price_diagnostic_contract(x)
   required <- c(
-    ".price_state_code", ".price_sector", ".price_subround",
-    "survey_weight_price", "price_deflator", "state_rule",
+    ".price_state_code", ".price_sector", contract$period_col,
+    contract$weight_col, "price_deflator", "state_rule",
     "temporal_state_source"
   )
   missing <- setdiff(required, names(x))
   if (length(missing)) {
     stop("Household price diagnostics are missing columns: ", paste(missing, collapse = ", "), call. = FALSE)
   }
+
+  period <- x[[contract$period_col]]
+  weight <- num(x[[contract$weight_col]])
+  if (any(!is.finite(weight) | weight <= 0)) {
+    stop("Household price diagnostics require positive finite survey weights.", call. = FALSE)
+  }
+
   x$assignment_type <- ifelse(x$state_rule == "direct", "direct", "fallback_or_inheritance")
   group <- interaction(
-    x$.price_state_code, x$.price_sector, x$.price_subround,
+    x$.price_state_code, x$.price_sector, period,
     x$assignment_type, x$temporal_state_source,
     drop = TRUE, sep = "\r"
   )
-  total_weight <- sum(num(x$survey_weight_price), na.rm = TRUE)
+  total_weight <- sum(weight)
   out <- safe_bind_rows(lapply(split(seq_len(nrow(x)), group), function(i) {
-    w <- num(x$survey_weight_price[i])
+    w <- weight[i]
     d <- num(x$price_deflator[i])
     data.frame(
-      wave = as.integer(wave),
+      round_id = as.character(round_id),
       state_code = x$.price_state_code[i[[1]]],
       sector = x$.price_sector[i[[1]]],
-      subround = x$.price_subround[i[[1]]],
+      period_type = contract$period_type,
+      period_group = as.integer(period[i[[1]]]),
       assignment_type = x$assignment_type[i[[1]]],
       temporal_state_source = x$temporal_state_source[i[[1]]],
       households = length(i),
-      survey_weight = sum(w, na.rm = TRUE),
-      survey_weight_share_pct = 100 * sum(w, na.rm = TRUE) / total_weight,
+      survey_weight = sum(w),
+      survey_weight_share_pct = 100 * sum(w) / total_weight,
       deflator_min = min(d, na.rm = TRUE),
       deflator_median = stats::median(d, na.rm = TRUE),
       deflator_max = max(d, na.rm = TRUE),
       stringsAsFactors = FALSE
     )
   }))
-  out[order(out$wave, out$state_code, out$sector, out$subround, out$assignment_type), , drop = FALSE]
+  out[order(
+    out$round_id, out$state_code, out$sector,
+    out$period_type, out$period_group, out$assignment_type
+  ), , drop = FALSE]
 }
 
 compare_district_consumption_constructions <- function(panel) {
@@ -223,7 +259,11 @@ compare_district_consumption_constructions <- function(panel) {
   }))
 }
 
-save_consumption_price_diagnostics <- function(comparison, households_2007, households_2017, panel) {
+save_consumption_price_diagnostics <- function(comparison, price_households, panel) {
+  if (!is.list(price_households) || !length(price_households) ||
+      is.null(names(price_households)) || any(!nzchar(names(price_households)))) {
+    stop("Consumption price diagnostics require a named list of survey household objects.", call. = FALSE)
+  }
   dir <- "outputs/diagnostics/extended/consumption"
   unname(unlist(list(
     outcome_coefficients = write_diagnostic_csv(
@@ -239,10 +279,9 @@ save_consumption_price_diagnostics <- function(comparison, households_2007, hous
       file.path(dir, "outcome_fixed_sample_summary.csv")
     ),
     price_assignments = write_diagnostic_csv(
-      safe_bind_rows(list(
-        summarise_household_price_assignments(households_2007, 2007),
-        summarise_household_price_assignments(households_2017, 2017)
-      )),
+      safe_bind_rows(lapply(names(price_households), function(round_id) {
+        summarise_household_price_assignments(price_households[[round_id]], round_id)
+      })),
       file.path(dir, "household_price_assignments.csv")
     ),
     district_constructions = write_diagnostic_csv(

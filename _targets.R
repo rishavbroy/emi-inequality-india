@@ -1475,8 +1475,12 @@ extended_diagnostic_targets <- list(
     diag_ext_consumption_prices,
     save_consumption_price_diagnostics(
       consumption_outcome_comparison,
-      consumption_households_2007,
-      consumption_households_2017,
+      list(
+        nss_2007_08 = consumption_households_2007,
+        nss_2017_18 = consumption_households_2017,
+        hces_2022_23 = consumption_households_real_hces_2022_23,
+        hces_2023_24 = consumption_households_real_hces_2023_24
+      ),
       district_panel
     ),
     format = "file"

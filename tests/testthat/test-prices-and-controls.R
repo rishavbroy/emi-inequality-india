@@ -1003,9 +1003,48 @@ test_that("household price diagnostics report direct and fallback weighted share
     price_deflator = c(1, 2), state_rule = c("direct", "fallback"),
     temporal_state_source = c("A", "B")
   )
-  out <- summarise_household_price_assignments(households, 2007)
+  out <- summarise_household_price_assignments(households, "nss_2007_08")
   expect_equal(sum(out$survey_weight_share_pct), 100)
   expect_equal(out$survey_weight_share_pct[out$assignment_type == "fallback_or_inheritance"], 75)
+  expect_equal(unique(out$period_type), "subround")
+  expect_equal(unique(out$period_group), 1L)
+  expect_equal(unique(out$round_id), "nss_2007_08")
+})
+
+test_that("household price diagnostics use modern HCES panel timing and canonical weights", {
+  households <- data.frame(
+    .price_state_code = c("JNK", "JNK"),
+    .price_sector = c("rural", "rural"),
+    .price_panel = c(4L, 4L),
+    survey_weight = c(2, 6),
+    price_deflator = c(2, 2),
+    state_rule = c("direct", "direct"),
+    temporal_state_source = c("JNK", "JNK"),
+    stringsAsFactors = FALSE
+  )
+
+  out <- summarise_household_price_assignments(households, "hces_2023_24")
+  expect_equal(nrow(out), 1L)
+  expect_equal(out$period_type, "panel")
+  expect_equal(out$period_group, 4L)
+  expect_equal(out$survey_weight, 8)
+  expect_equal(out$survey_weight_share_pct, 100)
+  expect_equal(out$round_id, "hces_2023_24")
+})
+
+test_that("household price diagnostics reject ambiguous price-period contracts", {
+  households <- data.frame(
+    .price_state_code = "A", .price_sector = "rural",
+    .price_subround = 1L, .price_panel = 1L,
+    survey_weight = 1,
+    price_deflator = 1,
+    state_rule = "direct",
+    temporal_state_source = "A"
+  )
+  expect_error(
+    summarise_household_price_assignments(households, "bad_round"),
+    "exactly one registered price-period field"
+  )
 })
 
 test_that("Census source cleaners use standardized state-district keys", {
