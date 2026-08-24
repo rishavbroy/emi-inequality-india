@@ -154,20 +154,28 @@ core_pipeline_targets <- list(
     )
   ),
   tar_target(
-    consumption_households_hces_2022_23,
-    read_registered_hces_consumption(
+    consumption_hces_bundle_2022_23,
+    read_registered_hces_bundle(
       consumption_archive_hces_2022_23,
       consumption_survey_spec(consumption_survey_registry, "hces_2022_23"),
       hces_summary_items
     )
   ),
   tar_target(
-    consumption_households_hces_2023_24,
-    read_registered_hces_consumption(
+    consumption_hces_bundle_2023_24,
+    read_registered_hces_bundle(
       consumption_archive_hces_2023_24,
       consumption_survey_spec(consumption_survey_registry, "hces_2023_24"),
       hces_summary_items
     )
+  ),
+  tar_target(
+    consumption_households_hces_2022_23,
+    consumption_hces_bundle_2022_23$households
+  ),
+  tar_target(
+    consumption_households_hces_2023_24,
+    consumption_hces_bundle_2023_24$households
   ),
   tar_target(
     consumption_mpce_benchmarks_file,
@@ -232,37 +240,11 @@ core_pipeline_targets <- list(
   ),
   tar_target(
     hces_summary_coverage_2022_23,
-    summarize_hces_summary_coverage(
-      read_hces_release_level(
-        consumption_archive_hces_2022_23,
-        consumption_survey_spec(consumption_survey_registry, "hces_2022_23"),
-        14L
-      ),
-      read_hces_release_level(
-        consumption_archive_hces_2022_23,
-        consumption_survey_spec(consumption_survey_registry, "hces_2022_23"),
-        15L
-      ),
-      consumption_survey_spec(consumption_survey_registry, "hces_2022_23"),
-      hces_summary_items
-    )
+    consumption_hces_bundle_2022_23$summary_coverage
   ),
   tar_target(
     hces_summary_coverage_2023_24,
-    summarize_hces_summary_coverage(
-      read_hces_release_level(
-        consumption_archive_hces_2023_24,
-        consumption_survey_spec(consumption_survey_registry, "hces_2023_24"),
-        14L
-      ),
-      read_hces_release_level(
-        consumption_archive_hces_2023_24,
-        consumption_survey_spec(consumption_survey_registry, "hces_2023_24"),
-        15L
-      ),
-      consumption_survey_spec(consumption_survey_registry, "hces_2023_24"),
-      hces_summary_items
-    )
+    consumption_hces_bundle_2023_24$summary_coverage
   ),
   tar_target(
     hces_summary_coverage,

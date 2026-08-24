@@ -56,6 +56,17 @@ summary with no matching Level-15 visit remains an error. The production diagnos
 by round and questionnaire. This convention remains protected by the blocking
 official rural/urban MPCE benchmark test.
 
+The 2022-23 public release also contains a valid household with blank `Sample SU
+No.` and `Sample Sub-division No.` fields. Those two fields are therefore optional
+components of the canonical household key; FSU, second-stage stratum, and sample
+household number remain required. The full released Level-15 household roster is
+collision-free under that contract.
+
+Modern HCES Levels 14 and 15 are parsed once per round into a registered bundle.
+The canonical household reconstruction and sparse-summary QA are derived from the
+same in-memory levels, avoiding a second multi-hundred-megabyte read and preventing
+diagnostic parsing from drifting away from production parsing.
+
 ### Modern HCES source geography
 
 `data/metadata/hces_2022_24_district_codebook.csv` is a derived transcription of
