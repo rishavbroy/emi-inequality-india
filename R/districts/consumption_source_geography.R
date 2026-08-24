@@ -22,6 +22,70 @@ consumption_codebook_column <- function(data, candidates, context) {
   names(data)[hit]
 }
 
+complete_consumption_codebook_semantics <- function(codebook) {
+  cb <- safe_df(codebook)
+  defaults <- list(
+    source_unit_kind = "district",
+    source_lineage_eligible = TRUE,
+    expected_stratum = "",
+    mapping_basis = "official_round_codebook"
+  )
+  for (nm in names(defaults)) {
+    if (!nm %in% names(cb)) cb[[nm]] <- rep(defaults[[nm]], nrow(cb))
+  }
+  cb$source_unit_kind <- trimws(plain_chr(cb$source_unit_kind))
+  cb$source_lineage_eligible <- as.logical(cb$source_lineage_eligible)
+  cb$expected_stratum <- trimws(plain_chr(cb$expected_stratum))
+  cb$expected_stratum[is.na(cb$expected_stratum)] <- ""
+  cb$mapping_basis <- trimws(plain_chr(cb$mapping_basis))
+  if (any(!nzchar(cb$source_unit_kind)) || anyNA(cb$source_lineage_eligible)) {
+    stop("Consumption district codebook has invalid source-unit semantics.", call. = FALSE)
+  }
+  cb
+}
+
+read_consumption_source_geography_special_units <- function(path = NULL) {
+  if (is.null(path)) {
+    project_root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
+    path <- file.path(project_root, "data", "metadata", "consumption_source_geography_special_units.csv")
+  }
+  if (!file.exists(path)) stop("Consumption source-geography special-unit registry is missing: ", path, call. = FALSE)
+  x <- utils::read.csv(path, stringsAsFactors = FALSE, check.names = FALSE)
+  require_consumption_columns(
+    x,
+    c(
+      "source_id", "state_code_source", "district_code_source", "state_name_source",
+      "district_name_source", "source_unit_kind", "source_lineage_eligible",
+      "expected_stratum", "mapping_basis"
+    ),
+    "Consumption source-geography special-unit registry"
+  )
+  x$state_code_source <- consumption_code_key(x$state_code_source, 2L)
+  x$district_code_source <- consumption_code_key(x$district_code_source, 2L)
+  x$state_name_source <- trimws(plain_chr(x$state_name_source))
+  x$district_name_source <- trimws(plain_chr(x$district_name_source))
+  x$state_std <- canonicalize_state_name(x$state_name_source)
+  x$district_std <- canonicalize_district_name(x$district_name_source)
+  complete_consumption_codebook_semantics(x)
+}
+
+merge_consumption_codebook_special_units <- function(codebook, special_units, source_id) {
+  cb <- complete_consumption_codebook_semantics(codebook)
+  sp <- complete_consumption_codebook_semantics(safe_df(special_units))
+  sp <- sp[sp$source_id == source_id, , drop = FALSE]
+  if (!nrow(sp)) return(cb)
+  common <- union(names(cb), names(sp))
+  for (nm in setdiff(common, names(cb))) cb[[nm]] <- NA
+  for (nm in setdiff(common, names(sp))) sp[[nm]] <- NA
+  out <- rbind(cb[common], sp[common])
+  key <- paste(out$state_code_source, out$district_code_source, sep = "__")
+  if (anyDuplicated(key)) {
+    stop(source_id, " source geography contains duplicate state/district codes after special-unit merge.", call. = FALSE)
+  }
+  rownames(out) <- NULL
+  out
+}
+
 normalize_consumption_codebook <- function(
     data,
     state_name_col,
@@ -66,6 +130,10 @@ normalize_consumption_codebook <- function(
     district_code_source = district_code[keep],
     state_name_source = state_name_raw[keep],
     district_name_source = district_name[keep],
+    source_unit_kind = rep("district", sum(keep)),
+    source_lineage_eligible = rep(TRUE, sum(keep)),
+    expected_stratum = rep("", sum(keep)),
+    mapping_basis = rep("official_round_codebook", sum(keep)),
     stringsAsFactors = FALSE
   )
   out$state_std <- canonicalize_state_name(out$state_name_source)
@@ -198,13 +266,14 @@ consumption_household_district_code <- function(district, state_code) {
 
 attach_consumption_source_district_identity <- function(households, codebook) {
   hh <- safe_df(households)
-  cb <- safe_df(codebook)
+  cb <- complete_consumption_codebook_semantics(codebook)
   require_consumption_columns(hh, c("state_code_source", "district_code_source"), "Consumption households")
   require_consumption_columns(
     cb,
     c(
       "source_id", "state_code_source", "district_code_source", "state_name_source",
-      "district_name_source", "state_std", "district_std"
+      "district_name_source", "state_std", "district_std", "source_unit_kind",
+      "source_lineage_eligible", "expected_stratum", "mapping_basis"
     ),
     "Consumption district codebook"
   )
@@ -224,6 +293,25 @@ attach_consumption_source_district_identity <- function(households, codebook) {
     )
   }
 
+  expected_stratum <- cb$expected_stratum[pos]
+  special <- nzchar(expected_stratum)
+  if (any(special)) {
+    if (!"stratum" %in% names(hh)) {
+      stop("Consumption source geography special units require household stratum identifiers.", call. = FALSE)
+    }
+    observed_stratum <- trimws(plain_chr(hh$stratum))
+    mismatch <- special & observed_stratum != expected_stratum
+    mismatch[is.na(mismatch)] <- TRUE
+    if (any(mismatch)) {
+      bad <- unique(paste(hh$state_code_source[mismatch], hh$district_code_source[mismatch], observed_stratum[mismatch], sep = "/"))
+      stop(
+        "Consumption source geography special-unit stratum mismatch: ",
+        paste(utils::head(bad, 10L), collapse = ", "),
+        call. = FALSE
+      )
+    }
+  }
+
   out <- hh
   out$source_state_code <- cb$state_code_source[pos]
   out$source_district_code <- cb$district_code_source[pos]
@@ -231,6 +319,9 @@ attach_consumption_source_district_identity <- function(households, codebook) {
   out$source_district_name <- cb$district_name_source[pos]
   out$state_std <- cb$state_std[pos]
   out$district_std <- cb$district_std[pos]
+  out$source_unit_kind <- cb$source_unit_kind[pos]
+  out$source_lineage_eligible <- cb$source_lineage_eligible[pos]
+  out$source_geography_mapping_basis <- cb$mapping_basis[pos]
   out
 }
 

@@ -218,3 +218,52 @@ test_that("district-codebook anomaly review avoids short-state substring false p
   )
   expect_equal(nrow(consumption_codebook_name_anomalies(codebook)), 0L)
 })
+
+
+test_that("declared aggregate source units are preserved but excluded from district lineage", {
+  districts <- data.frame(
+    source_id = "nss_2004_05", state_code_source = "07", district_code_source = "01",
+    state_name_source = "Delhi", district_name_source = "North West",
+    state_std = "delhi", district_std = "north west", stringsAsFactors = FALSE
+  )
+  specials <- data.frame(
+    source_id = c("nss_2004_05", "nss_2004_05"),
+    state_code_source = c("07", "07"), district_code_source = c("98", "99"),
+    state_name_source = c("Delhi", "Delhi"),
+    district_name_source = c("Delhi all districts combined", "Delhi Municipal Corporation aggregate"),
+    source_unit_kind = c("aggregate", "aggregate"),
+    source_lineage_eligible = c(FALSE, FALSE), expected_stratum = c("99", "10"),
+    mapping_basis = c("official sampling frame", "official sampling frame"),
+    state_std = c("delhi", "delhi"),
+    district_std = c("delhi all districts combined", "delhi municipal corporation aggregate"),
+    stringsAsFactors = FALSE
+  )
+  codebook <- merge_consumption_codebook_special_units(districts, specials, "nss_2004_05")
+  households <- data.frame(
+    state_code_source = c("Delhi", "Delhi", "Delhi"),
+    district_code_source = c("01", "98", "99"),
+    stratum = c("99", "99", "10"), stringsAsFactors = FALSE
+  )
+  out <- attach_consumption_source_district_identity(households, codebook)
+  expect_equal(out$source_unit_kind, c("district", "aggregate", "aggregate"))
+  expect_equal(out$source_lineage_eligible, c(TRUE, FALSE, FALSE))
+  expect_equal(out$source_district_name[[1]], "North West")
+  expect_equal(out$source_district_name[[2]], "Delhi all districts combined")
+})
+
+test_that("aggregate source-unit mappings verify their documented stratum", {
+  special <- data.frame(
+    source_id = "nss_2004_05", state_code_source = "07", district_code_source = "98",
+    state_name_source = "Delhi", district_name_source = "Delhi all districts combined",
+    source_unit_kind = "aggregate", source_lineage_eligible = FALSE, expected_stratum = "99",
+    mapping_basis = "official sampling frame", state_std = "delhi",
+    district_std = "delhi all districts combined", stringsAsFactors = FALSE
+  )
+  households <- data.frame(
+    state_code_source = "Delhi", district_code_source = "98", stratum = "10", stringsAsFactors = FALSE
+  )
+  expect_error(
+    attach_consumption_source_district_identity(households, special),
+    "special-unit stratum mismatch"
+  )
+})
