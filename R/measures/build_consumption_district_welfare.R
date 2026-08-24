@@ -189,6 +189,18 @@ consumption_welfare_value <- function(real_mpce, transform) {
   stop("Unsupported consumption welfare transform: ", transform, call. = FALSE)
 }
 
+consumption_sample_support_ok <- function(support, rule) {
+  x <- safe_df(support)
+  required <- c("n_households", "n_fsu", "kish_effective_n")
+  missing <- setdiff(required, names(x))
+  if (length(missing)) {
+    stop("District support is missing columns: ", paste(missing, collapse = ", "), call. = FALSE)
+  }
+  x$n_households >= rule$min_households[[1L]] &
+    x$n_fsu >= rule$min_fsu[[1L]] &
+    x$kish_effective_n >= rule$min_kish_effective_n[[1L]]
+}
+
 consumption_support_reason <- function(out, rule, precision_ok) {
   reasons <- character(nrow(out))
   add_reason <- function(flag, label) {
@@ -219,25 +231,43 @@ consumption_finalize_district_estimate <- function(
     NA_real_
   )
   out$cv <- if (isTRUE(cv_applicable)) out$relative_se else NA_real_
-  valid <- is.finite(out$estimate) & is.finite(out$std_error) & out$std_error >= 0
-  out$status <- ifelse(valid, "estimated", "not_estimable")
-  out$reason <- ifelse(valid, NA_character_, "non_finite_design_estimate")
-  out$sample_support_ok <- out$n_households >= rule$min_households[[1L]] &
-    out$n_fsu >= rule$min_fsu[[1L]] &
-    out$kish_effective_n >= rule$min_kish_effective_n[[1L]]
+  if (!"uncertainty_requested" %in% names(out)) out$uncertainty_requested <- TRUE
+  out$uncertainty_requested <- as.logical(out$uncertainty_requested)
+  valid_point <- is.finite(out$estimate)
+  valid_se <- is.finite(out$std_error) & out$std_error >= 0
+  out$status <- ifelse(
+    !valid_point,
+    "not_estimable",
+    ifelse(!out$uncertainty_requested, "point_estimate_only", ifelse(valid_se, "estimated", "not_estimable"))
+  )
+  out$reason <- ifelse(
+    !valid_point,
+    "non_finite_point_estimate",
+    ifelse(
+      !out$uncertainty_requested,
+      "uncertainty_not_requested_thin_support",
+      ifelse(valid_se, NA_character_, "non_finite_design_uncertainty")
+    )
+  )
+  out$sample_support_ok <- consumption_sample_support_ok(out, rule)
   max_rse <- rule$max_relative_se[[1L]]
   out$precision_ok <- if (is.finite(max_rse)) {
-    valid & is.finite(out$relative_se) & out$relative_se <= max_rse
+    ifelse(
+      !out$uncertainty_requested,
+      NA,
+      valid_se & is.finite(out$relative_se) & out$relative_se <= max_rse
+    )
   } else {
     NA
   }
-  out$preferred_eligible <- valid & out$sample_support_ok &
-    if (is.finite(max_rse)) out$precision_ok else TRUE
+  inferentially_estimated <- valid_point & out$uncertainty_requested & valid_se
+  out$preferred_eligible <- inferentially_estimated & out$sample_support_ok &
+    if (is.finite(max_rse)) !is.na(out$precision_ok) & out$precision_ok else TRUE
   out$support_reason <- consumption_support_reason(out, rule, out$precision_ok)
   out <- out[c(
     "district_2001", "round_id", "outcome_id", "estimate", "std_error", "relative_se", "cv",
     "n_households", "n_fsu", "n_sample_person_equiv", "sum_person_weight", "kish_effective_n",
-    "status", "reason", "sample_support_ok", "precision_ok", "preferred_eligible", "support_reason"
+    "status", "reason", "uncertainty_requested", "sample_support_ok", "precision_ok", "preferred_eligible", "support_reason"
   )]
   out[order(out$district_2001), , drop = FALSE]
 }
@@ -262,6 +292,26 @@ consumption_svyby_estimates <- function(result, survey_id, outcome_id) {
   )
 }
 
+consumption_svyby_point_estimates <- function(result, survey_id, outcome_id) {
+  estimate <- num(stats::coef(result))
+  result_df <- as.data.frame(result, stringsAsFactors = FALSE)
+  if (!"target_unit_2001" %in% names(result_df)) {
+    stop("survey::svyby returned an unexpected district-group schema.", call. = FALSE)
+  }
+  if (length(estimate) != nrow(result_df)) {
+    stop("survey::svyby returned an unexpected coefficient shape.", call. = FALSE)
+  }
+  data.frame(
+    district_2001 = plain_chr(result_df$target_unit_2001),
+    round_id = survey_id,
+    outcome_id = outcome_id,
+    estimate = estimate,
+    std_error = NA_real_,
+    uncertainty_requested = FALSE,
+    stringsAsFactors = FALSE
+  )
+}
+
 estimate_consumption_district_svymean <- function(rows, design, support, rule) {
   x <- rows
   x$.welfare_value <- consumption_welfare_value(x$real_mpce, rule$transform[[1L]])
@@ -278,6 +328,7 @@ estimate_consumption_district_svymean <- function(rows, design, support, rule) {
   ))
   survey_id <- unique(plain_chr(x$survey_id))[[1L]]
   estimates <- consumption_svyby_estimates(result, survey_id, rule$outcome_id[[1L]])
+  estimates$uncertainty_requested <- TRUE
   consumption_finalize_district_estimate(
     estimates,
     support,
@@ -290,22 +341,56 @@ estimate_consumption_district_svyquantile <- function(rows, design, support, rul
   x <- rows
   x$.welfare_value <- consumption_welfare_value(x$real_mpce, rule$transform[[1L]])
   outcome_design <- update(design, .welfare_value = x$.welfare_value)
-  result <- with_consumption_survey_adjustment(survey::svyby(
+  survey_id <- unique(plain_chr(x$survey_id))[[1L]]
+  outcome_id <- rule$outcome_id[[1L]]
+
+  # Quantile point estimates remain available for every resolved district.
+  # Complex-survey quantile uncertainty is requested only for domains that
+  # satisfy the registry's ex-ante sample-support contract. This avoids asking
+  # Woodruff interval machinery to infer uncertainty from domains that the
+  # analysis already declares too thin for preferred inference.
+  point_result <- with_consumption_survey_adjustment(survey::svyby(
     ~.welfare_value,
     ~target_unit_2001,
     outcome_design,
     survey::svyquantile,
     quantiles = rule$quantile[[1L]],
-    ci = TRUE,
-    interval.type = rule$quantile_interval[[1L]],
+    ci = FALSE,
+    se = FALSE,
     qrule = rule$quantile_rule[[1L]],
     na.rm = TRUE,
-    vartype = "se",
+    keep.var = FALSE,
     keep.names = FALSE,
     drop.empty.groups = FALSE
   ))
-  survey_id <- unique(plain_chr(x$survey_id))[[1L]]
-  estimates <- consumption_svyby_estimates(result, survey_id, rule$outcome_id[[1L]])
+  estimates <- consumption_svyby_point_estimates(point_result, survey_id, outcome_id)
+
+  supported <- support$district_2001[consumption_sample_support_ok(support, rule)]
+  if (length(supported)) {
+    supported_design <- subset(outcome_design, target_unit_2001 %in% supported)
+    interval_result <- with_consumption_survey_adjustment(survey::svyby(
+      ~.welfare_value,
+      ~target_unit_2001,
+      supported_design,
+      survey::svyquantile,
+      quantiles = rule$quantile[[1L]],
+      ci = TRUE,
+      interval.type = rule$quantile_interval[[1L]],
+      qrule = rule$quantile_rule[[1L]],
+      na.rm = TRUE,
+      vartype = "se",
+      keep.names = FALSE,
+      drop.empty.groups = FALSE
+    ))
+    interval_estimates <- consumption_svyby_estimates(interval_result, survey_id, outcome_id)
+    if (!setequal(interval_estimates$district_2001, supported)) {
+      stop("Supported quantile domains did not return a complete uncertainty estimate set.", call. = FALSE)
+    }
+    match_i <- match(interval_estimates$district_2001, estimates$district_2001)
+    estimates$std_error[match_i] <- interval_estimates$std_error
+    estimates$uncertainty_requested[match_i] <- TRUE
+  }
+
   consumption_finalize_district_estimate(
     estimates,
     support,
@@ -313,6 +398,7 @@ estimate_consumption_district_svyquantile <- function(rows, design, support, rul
     cv_applicable = identical(rule$transform[[1L]], "identity")
   )
 }
+
 
 
 estimate_consumption_district_welfare <- function(lineaged_households, outcome_registry) {
