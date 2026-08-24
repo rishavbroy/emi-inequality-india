@@ -46,7 +46,7 @@ std <- function(df, year) {
 }
 
 safe_bind_rows <- function(xs) {
-  xs <- Filter(function(x) !is.null(x) && length(x) > 0L, xs)
+  xs <- Filter(Negate(is.null), xs)
   xs <- lapply(xs, safe_df)
   xs <- Filter(function(x) length(names(x)) > 0L, xs)
   if (!length(xs)) return(data.frame())
@@ -54,7 +54,7 @@ safe_bind_rows <- function(xs) {
   all_cols <- unique(unlist(lapply(xs, names), use.names = FALSE))
   xs <- lapply(xs, function(x) {
     missing <- setdiff(all_cols, names(x))
-    for (nm in missing) x[[nm]] <- NA
+    for (nm in missing) x[[nm]] <- rep(NA, nrow(x))
     x[all_cols]
   })
   out <- do.call(rbind, xs)

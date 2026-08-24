@@ -1,14 +1,23 @@
-test_that("safe_bind_rows unions columns and drops empty inputs", {
+test_that("safe_bind_rows unions columns and tolerates empty inputs", {
   out <- safe_bind_rows(list(
     data.frame(a = 1, b = "x"),
     NULL,
-    data.frame(b = "y", c = 2)
+    data.frame(b = "y", c = 2),
+    data.frame(a = integer(), d = logical())
   ))
 
-  expect_equal(names(out), c("a", "b", "c"))
+  expect_equal(names(out), c("a", "b", "c", "d"))
   expect_equal(nrow(out), 2L)
   expect_true(is.na(out$a[2]))
   expect_true(is.na(out$c[1]))
+  expect_true(all(is.na(out$d)))
+
+  empty <- safe_bind_rows(list(
+    data.frame(a = integer()),
+    data.frame(b = character())
+  ))
+  expect_equal(names(empty), c("a", "b"))
+  expect_equal(nrow(empty), 0L)
 })
 
 test_that("canon normalizes punctuation, case, and ampersands", {
