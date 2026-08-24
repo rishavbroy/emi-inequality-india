@@ -39,3 +39,15 @@ test_that("registry validation rejects ambiguous or malformed survey contracts",
   bad_dates$survey_end[[1]] <- as.Date("2000-12-31")
   expect_error(validate_consumption_survey_registry(bad_dates), "exactly 12 survey months")
 })
+
+
+test_that("registry defaults resolve from the project root rather than the working directory", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
+  expected <- read_consumption_survey_registry(build_paths(root))
+  old <- setwd(tempdir())
+  on.exit(setwd(old), add = TRUE)
+
+  actual <- read_consumption_survey_registry()
+  expect_equal(actual, expected)
+  expect_equal(nss_wave_months(2007), survey_period_months(consumption_survey_spec(expected, "nss_2007_08_education")))
+})

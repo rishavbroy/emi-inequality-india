@@ -1,6 +1,6 @@
 # Declarative metadata for household-consumption survey designs.
 
-consumption_survey_registry_path <- function(paths = build_paths()) {
+consumption_survey_registry_path <- function(paths = build_paths(Sys.getenv("EMI_PROJECT_ROOT", unset = "."))) {
   path_metadata(paths, "consumption_survey_registry.csv")
 }
 
@@ -10,7 +10,7 @@ read_consumption_survey_registry_file <- function(path) {
   validate_consumption_survey_registry(out)
 }
 
-read_consumption_survey_registry <- function(paths = build_paths()) {
+read_consumption_survey_registry <- function(paths = build_paths(Sys.getenv("EMI_PROJECT_ROOT", unset = "."))) {
   read_consumption_survey_registry_file(consumption_survey_registry_path(paths))
 }
 
