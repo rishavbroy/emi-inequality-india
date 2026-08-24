@@ -75,8 +75,8 @@ merge_consumption_codebook_special_units <- function(codebook, special_units, so
   sp <- sp[sp$source_id == source_id, , drop = FALSE]
   if (!nrow(sp)) return(cb)
   common <- union(names(cb), names(sp))
-  for (nm in setdiff(common, names(cb))) cb[[nm]] <- NA
-  for (nm in setdiff(common, names(sp))) sp[[nm]] <- NA
+  for (nm in setdiff(common, names(cb))) cb[[nm]] <- rep(NA, nrow(cb))
+  for (nm in setdiff(common, names(sp))) sp[[nm]] <- rep(NA, nrow(sp))
   out <- rbind(cb[common], sp[common])
   key <- paste(out$state_code_source, out$district_code_source, sep = "__")
   if (anyDuplicated(key)) {

@@ -216,7 +216,7 @@ build_consumption_lineage_bridge <- function(households, lineage_reference) {
   if (nrow(reviewed_rows)) reviewed_rows$lineage_status <- "resolved_reviewed_consensus"
   out <- safe_bind_rows(list(exact_rows, reviewed_rows, unresolved, noneligible))
   wanted <- names(empty_consumption_lineage_bridge())
-  for (nm in setdiff(wanted, names(out))) out[[nm]] <- NA
+  for (nm in setdiff(wanted, names(out))) out[[nm]] <- rep(NA, nrow(out))
   out <- out[wanted]
 
   resolved <- grepl("^resolved_", out$lineage_status)
