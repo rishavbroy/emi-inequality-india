@@ -654,9 +654,15 @@ test_that("bulk Glottolog language-node indexing preserves endpoint semantics", 
   expect_true(is.na(index[["family"]]))
   expect_true(is.na(index[["book"]]))
   expect_true(is.na(index[["book_child"]]))
+  expect_identical(names(index), languoids$id)
   expect_identical(
     unname(index),
-    vapply(languoids$id, glottolog_language_node, languoids = languoids, FUN.VALUE = character(1))
+    unname(vapply(
+      languoids$id,
+      glottolog_language_node,
+      languoids = languoids,
+      FUN.VALUE = character(1)
+    ))
   )
 })
 
