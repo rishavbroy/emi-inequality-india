@@ -251,3 +251,89 @@ save_consumption_price_diagnostics <- function(comparison, households_2007, hous
     )
   ), use.names = FALSE))
 }
+
+compare_modern_hces_welfare <- function(
+    welfare_2022_23, welfare_2023_24,
+    round_2022_23 = "hces_2022_23", round_2023_24 = "hces_2023_24") {
+  a <- safe_df(welfare_2022_23)
+  b <- safe_df(welfare_2023_24)
+  required <- c(
+    "district_2001", "round_id", "outcome_id", "estimate",
+    "preferred_eligible", "n_households", "n_fsu", "kish_effective_n"
+  )
+  missing_a <- setdiff(required, names(a))
+  missing_b <- setdiff(required, names(b))
+  if (length(missing_a) || length(missing_b)) {
+    stop("Modern HCES welfare consistency inputs lack canonical welfare fields.", call. = FALSE)
+  }
+  if (!all(unique(plain_chr(a$round_id)) == round_2022_23) ||
+      !all(unique(plain_chr(b$round_id)) == round_2023_24)) {
+    stop("Modern HCES welfare consistency received unexpected survey rounds.", call. = FALSE)
+  }
+
+  outcomes <- intersect(unique(plain_chr(a$outcome_id)), unique(plain_chr(b$outcome_id)))
+  if (!length(outcomes)) stop("Modern HCES welfare rounds have no common registered outcomes.", call. = FALSE)
+
+  safe_bind_rows(lapply(outcomes, function(outcome) {
+    x <- a[a$outcome_id == outcome, c(
+      "district_2001", "estimate", "preferred_eligible",
+      "n_households", "n_fsu", "kish_effective_n"
+    ), drop = FALSE]
+    y <- b[b$outcome_id == outcome, c(
+      "district_2001", "estimate", "preferred_eligible",
+      "n_households", "n_fsu", "kish_effective_n"
+    ), drop = FALSE]
+    names(x)[-1L] <- paste0(names(x)[-1L], "_2022_23")
+    names(y)[-1L] <- paste0(names(y)[-1L], "_2023_24")
+    joined <- merge(x, y, by = "district_2001", all = FALSE, sort = FALSE)
+
+    finite <- is.finite(joined$estimate_2022_23) & is.finite(joined$estimate_2023_24)
+    preferred <- finite &
+      joined$preferred_eligible_2022_23 %in% TRUE &
+      joined$preferred_eligible_2023_24 %in% TRUE
+    use <- if (sum(preferred) >= 3L) preferred else finite
+    status <- if (sum(use) >= 3L) {
+      if (sum(preferred) >= 3L) "estimated_preferred_common_support" else "estimated_all_common_support"
+    } else {
+      "insufficient_common_support"
+    }
+
+    pearson <- spearman <- median_abs_difference <- NA_real_
+    if (sum(use) >= 3L) {
+      pearson <- stats::cor(
+        joined$estimate_2022_23[use], joined$estimate_2023_24[use],
+        method = "pearson"
+      )
+      spearman <- stats::cor(
+        joined$estimate_2022_23[use], joined$estimate_2023_24[use],
+        method = "spearman"
+      )
+      median_abs_difference <- stats::median(
+        abs(joined$estimate_2023_24[use] - joined$estimate_2022_23[use])
+      )
+    }
+
+    data.frame(
+      outcome_id = outcome,
+      common_districts = sum(finite),
+      common_preferred_districts = sum(preferred),
+      comparison_districts = sum(use),
+      comparison_basis = if (sum(preferred) >= 3L) "preferred_common_support" else "all_finite_common_support",
+      pearson_correlation = pearson,
+      spearman_correlation = spearman,
+      median_absolute_difference = median_abs_difference,
+      median_households_2022_23 = if (sum(use)) stats::median(joined$n_households_2022_23[use]) else NA_real_,
+      median_households_2023_24 = if (sum(use)) stats::median(joined$n_households_2023_24[use]) else NA_real_,
+      median_kish_effective_n_2022_23 = if (sum(use)) stats::median(joined$kish_effective_n_2022_23[use]) else NA_real_,
+      median_kish_effective_n_2023_24 = if (sum(use)) stats::median(joined$kish_effective_n_2023_24[use]) else NA_real_,
+      status = status,
+      stringsAsFactors = FALSE
+    )
+  }))
+}
+
+save_modern_hces_welfare_consistency <- function(
+    comparison,
+    path = "outputs/diagnostics/extended/consumption/modern_hces_welfare_consistency.csv") {
+  write_diagnostic_csv(safe_df(comparison), path)
+}

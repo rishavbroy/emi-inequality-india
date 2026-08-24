@@ -221,3 +221,60 @@ test_that("consumption welfare registry validates outcome contracts", {
   write.csv(bad, path, row.names = FALSE, na = "")
   expect_error(read_consumption_welfare_outcomes(path), "unique outcome_id")
 })
+
+test_that("modern HCES welfare consistency uses preferred common support when available", {
+  make_round <- function(round_id, estimate, eligible) {
+    data.frame(
+      district_2001 = letters[1:4],
+      round_id = round_id,
+      outcome_id = "real_mean_mpce",
+      estimate = estimate,
+      std_error = 1,
+      relative_se = 0.01,
+      cv = 0.01,
+      n_households = c(100, 90, 80, 20),
+      n_fsu = c(10, 9, 8, 2),
+      n_sample_person_equiv = c(100, 90, 80, 20),
+      sum_person_weight = c(1000, 900, 800, 200),
+      kish_effective_n = c(80, 70, 60, 10),
+      status = "estimated",
+      reason = NA_character_,
+      uncertainty_requested = TRUE,
+      sample_support_ok = eligible,
+      precision_ok = eligible,
+      preferred_eligible = eligible,
+      support_reason = ifelse(eligible, "eligible", "thin"),
+      stringsAsFactors = FALSE
+    )
+  }
+
+  a <- make_round("hces_2022_23", c(100, 200, 300, 900), c(TRUE, TRUE, TRUE, FALSE))
+  b <- make_round("hces_2023_24", c(110, 210, 310, 100), c(TRUE, TRUE, TRUE, FALSE))
+  out <- compare_modern_hces_welfare(a, b)
+
+  expect_equal(out$common_districts, 4L)
+  expect_equal(out$common_preferred_districts, 3L)
+  expect_equal(out$comparison_districts, 3L)
+  expect_equal(out$comparison_basis, "preferred_common_support")
+  expect_equal(out$pearson_correlation, 1, tolerance = 1e-12)
+  expect_equal(out$spearman_correlation, 1, tolerance = 1e-12)
+  expect_equal(out$median_absolute_difference, 10)
+  expect_equal(out$status, "estimated_preferred_common_support")
+})
+
+test_that("modern HCES welfare consistency reports thin common support without failing", {
+  a <- data.frame(
+    district_2001 = c("a", "b"), round_id = "hces_2022_23",
+    outcome_id = "real_mean_mpce", estimate = c(100, 200),
+    preferred_eligible = FALSE, n_households = 20, n_fsu = 2,
+    kish_effective_n = 10, stringsAsFactors = FALSE
+  )
+  b <- a
+  b$round_id <- "hces_2023_24"
+
+  out <- compare_modern_hces_welfare(a, b)
+  expect_equal(out$comparison_districts, 2L)
+  expect_equal(out$status, "insufficient_common_support")
+  expect_true(is.na(out$pearson_correlation))
+  expect_true(is.na(out$spearman_correlation))
+})
