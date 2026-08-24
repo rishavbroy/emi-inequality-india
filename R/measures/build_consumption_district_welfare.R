@@ -344,28 +344,14 @@ estimate_consumption_district_svyquantile <- function(rows, design, support, rul
   survey_id <- unique(plain_chr(x$survey_id))[[1L]]
   outcome_id <- rule$outcome_id[[1L]]
 
-  # Quantile point estimates remain available for every resolved district.
-  # Complex-survey quantile uncertainty is requested only for domains that
-  # satisfy the registry's ex-ante sample-support contract. This avoids asking
-  # Woodruff interval machinery to infer uncertainty from domains that the
-  # analysis already declares too thin for preferred inference.
-  point_result <- with_consumption_survey_adjustment(survey::svyby(
-    ~.welfare_value,
-    ~target_unit_2001,
-    outcome_design,
-    survey::svyquantile,
-    quantiles = rule$quantile[[1L]],
-    ci = FALSE,
-    se = FALSE,
-    qrule = rule$quantile_rule[[1L]],
-    na.rm = TRUE,
-    keep.var = FALSE,
-    keep.names = FALSE,
-    drop.empty.groups = FALSE
-  ))
-  estimates <- consumption_svyby_point_estimates(point_result, survey_id, outcome_id)
+  # Partition domains before estimation so every district's quantile is
+  # computed exactly once. Supported domains request point + design uncertainty;
+  # thin domains request the descriptive point estimate only.
+  support_ok <- consumption_sample_support_ok(support, rule)
+  supported <- support$district_2001[support_ok]
+  thin <- support$district_2001[!support_ok]
+  pieces <- list()
 
-  supported <- support$district_2001[consumption_sample_support_ok(support, rule)]
   if (length(supported)) {
     supported_design <- subset(outcome_design, target_unit_2001 %in% supported)
     interval_result <- with_consumption_survey_adjustment(survey::svyby(
@@ -382,20 +368,44 @@ estimate_consumption_district_svyquantile <- function(rows, design, support, rul
       keep.names = FALSE,
       drop.empty.groups = FALSE
     ))
-    interval_estimates <- consumption_svyby_estimates(interval_result, survey_id, outcome_id)
-    if (!setequal(interval_estimates$district_2001, supported)) {
-      stop("Supported quantile domains did not return a complete uncertainty estimate set.", call. = FALSE)
-    }
-    match_i <- match(interval_estimates$district_2001, estimates$district_2001)
-    estimates$std_error[match_i] <- interval_estimates$std_error
-    estimates$uncertainty_requested[match_i] <- TRUE
+    supported_estimates <- consumption_svyby_estimates(interval_result, survey_id, outcome_id)
+    supported_estimates$uncertainty_requested <- TRUE
+    pieces[[length(pieces) + 1L]] <- supported_estimates
+  }
+
+  if (length(thin)) {
+    thin_design <- subset(outcome_design, target_unit_2001 %in% thin)
+    point_result <- with_consumption_survey_adjustment(survey::svyby(
+      ~.welfare_value,
+      ~target_unit_2001,
+      thin_design,
+      survey::svyquantile,
+      quantiles = rule$quantile[[1L]],
+      ci = FALSE,
+      se = FALSE,
+      qrule = rule$quantile_rule[[1L]],
+      na.rm = TRUE,
+      keep.var = FALSE,
+      keep.names = FALSE,
+      drop.empty.groups = FALSE
+    ))
+    pieces[[length(pieces) + 1L]] <- consumption_svyby_point_estimates(
+      point_result, survey_id, outcome_id
+    )
+  }
+
+  estimates <- safe_bind_rows(pieces)
+  expected <- sort(unique(plain_chr(support$district_2001)))
+  returned <- sort(unique(plain_chr(estimates$district_2001)))
+  if (!identical(returned, expected)) {
+    stop("Quantile estimation did not return exactly one estimate per district domain.", call. = FALSE)
   }
 
   consumption_finalize_district_estimate(
     estimates,
     support,
     rule,
-    cv_applicable = identical(rule$transform[[1L]], "identity")
+    cv_applicable = FALSE
   )
 }
 
