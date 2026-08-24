@@ -101,3 +101,102 @@ test_that("registered detailed-consumption reader discovers source members by co
   expect_equal(out$stratum, "1")
   expect_equal(out$sub_stratum, "01")
 })
+
+test_that("consumption source geography normalizes two- and four-digit district codes", {
+  codebook <- data.frame(
+    source_id = "round",
+    state_code_source = c("14", "14"),
+    district_code_source = c("06", "07"),
+    state_name_source = c("Manipur", "Manipur"),
+    district_name_source = c("Thoubal", "Bishnupur"),
+    state_std = c("manipur", "manipur"),
+    district_std = c("thoubal", "bishnupur"),
+    stringsAsFactors = FALSE
+  )
+  households <- data.frame(
+    state_code_source = c("14", "14"),
+    district_code_source = c("1406", "07"),
+    stringsAsFactors = FALSE
+  )
+  out <- attach_consumption_source_district_identity(households, codebook)
+  expect_equal(out$source_district_code, c("06", "07"))
+  expect_equal(out$source_district_name, c("Thoubal", "Bishnupur"))
+})
+
+test_that("consumption source geography resolves state-name households without guessing code order", {
+  codebook <- data.frame(
+    source_id = "round",
+    state_code_source = c("24", "24"), district_code_source = c("01", "02"),
+    state_name_source = c("Gujarat", "Gujarat"), district_name_source = c("Kachchh", "Banas Kantha"),
+    state_std = c("gujarat", "gujarat"), district_std = c("kachchh", "banas kantha"),
+    stringsAsFactors = FALSE
+  )
+  households <- data.frame(state_code_source = "Gujrat", district_code_source = "2", stringsAsFactors = FALSE)
+  out <- attach_consumption_source_district_identity(households, codebook)
+  expect_equal(out$source_state_code, "24")
+  expect_equal(out$source_district_code, "02")
+  expect_equal(out$district_std, "banas kantha")
+})
+
+test_that("consumption source geography fails unresolved survey codes", {
+  codebook <- data.frame(
+    source_id = "round", state_code_source = "14", district_code_source = "06",
+    state_name_source = "Manipur", district_name_source = "Thoubal",
+    state_std = "manipur", district_std = "thoubal", stringsAsFactors = FALSE
+  )
+  households <- data.frame(state_code_source = "14", district_code_source = "1499", stringsAsFactors = FALSE)
+  expect_error(attach_consumption_source_district_identity(households, codebook), "unresolved")
+})
+
+test_that("district-codebook normalization rejects duplicate code identities", {
+  raw <- data.frame(
+    state = c("Assam", ""), state_code = c("18", "18"),
+    district = c("One", "Two"), district_code = c("01", "01"), stringsAsFactors = FALSE
+  )
+  expect_error(
+    normalize_consumption_codebook(raw, "state", "state_code", "district", "district_code", "test"),
+    "duplicate state/district codes"
+  )
+})
+
+
+test_that("district-codebook anomaly review surfaces foreign-state text without rewriting it", {
+  codebook <- data.frame(
+    source_id = c("round", "round"),
+    state_code_source = c("18", "31"), district_code_source = c("12", "01"),
+    state_name_source = c("Assam", "Lakshadweep"),
+    district_name_source = c("Lakshadweephimpur", "Lakshadweep"),
+    state_std = c("assam", "lakshadweep"), district_std = c("lakshadweephimpur", "lakshadweep"),
+    stringsAsFactors = FALSE
+  )
+  anomalies <- consumption_codebook_name_anomalies(codebook)
+  expect_equal(anomalies$district_name_source, "Lakshadweephimpur")
+})
+
+
+test_that("NSS 68 district DDI parser reads labelled four-digit categories from an explicit XML file", {
+  ddi <- tempfile(fileext = ".xml")
+  writeLines(c(
+    "<codeBook><dataDscr>",
+    "<var ID='V1' name='District_Code'>",
+    "<catgry><catValu>1406</catValu><labl>Thoubal</labl></catgry>",
+    "<catgry><catValu>1407</catValu><labl>Bishnupur</labl></catgry>",
+    "</var></dataDscr></codeBook>"
+  ), ddi)
+  out <- read_consumption_district_codebook_ddi(ddi, "nss_2011_12")
+  expect_equal(out$state_code_source, c("14", "14"))
+  expect_equal(out$district_code_source, c("06", "07"))
+  expect_equal(out$district_name_source, c("Thoubal", "Bishnupur"))
+  expect_equal(out$state_std, c("manipur", "manipur"))
+})
+
+test_that("district-codebook anomaly review uses whole state names rather than substrings", {
+  codebook <- data.frame(
+    source_id = c("round", "round"),
+    state_code_source = c("18", "30"), district_code_source = c("03", "01"),
+    state_name_source = c("Assam", "Goa"), district_name_source = c("Goalpara", "North Goa"),
+    state_std = c("assam", "goa"), district_std = c("goalpara", "north goa"),
+    stringsAsFactors = FALSE
+  )
+  expect_equal(nrow(consumption_codebook_name_anomalies(codebook)), 0L)
+})
