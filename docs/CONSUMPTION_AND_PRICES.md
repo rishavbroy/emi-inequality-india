@@ -242,3 +242,27 @@ Months that cannot be completed from an official overlapping series remain
 fatal. This rule is designed for source-file gaps such as the incomplete RBI
 centre months in 2012; it does not replace weighted CPI-IW as the primary
 pre-2013 urban deflator.
+
+### Historical consumption lineage handoff
+
+Detailed historical consumption surveys now enter the existing lineage-v2
+system only after source district identity and real household consumption are
+established. Survey district numbers are retained as source identifiers but are
+not interpreted as Census codes.
+
+The consumption lineage bridge accepts an exact normalized state/district
+identity in the Census-2001 registry. For non-exact identities it may reuse the
+existing reviewed NSS lineage only when at least two reviewed NSS waves imply
+the same complete Census-2001 target-weight distribution for that state/district
+identity. Cross-wave disagreement remains unresolved rather than being selected
+by proximity or name similarity. Source units explicitly marked non-district
+(e.g. the reviewed NSS-61 Delhi aggregate units) remain in survey-level QA but
+are not lineage eligible.
+
+Population-allocation mappings duplicate a household across Census-2001 targets
+with `lineage_weight`; `lineage_survey_weight` and `lineage_person_weight` apply
+that allocation share so resolved household weight is conserved. Unresolved and
+conflicting source districts remain in the lineaged household object with an
+explicit `lineage_status` and no target weight. Coverage is written to
+`outputs/diagnostics/public/consumption_lineage_coverage.csv` before district
+welfare aggregation is introduced.

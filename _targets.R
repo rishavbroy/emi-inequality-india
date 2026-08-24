@@ -447,6 +447,90 @@ core_pipeline_targets <- list(
     )
   ),
   tar_target(
+    consumption_lineage_reference,
+    build_consumption_lineage_reference(
+      district_lineage$admin_units_2001,
+      district_lineage$nss_source_roster,
+      district_lineage$full_reviewed_source_crosswalk
+    )
+  ),
+  tar_target(
+    consumption_lineage_bridge_2004_05,
+    build_consumption_lineage_bridge(
+      consumption_households_real_2004_05, consumption_lineage_reference
+    )
+  ),
+  tar_target(
+    consumption_lineage_bridge_2009_10_type1,
+    build_consumption_lineage_bridge(
+      consumption_households_real_2009_10_type1, consumption_lineage_reference
+    )
+  ),
+  tar_target(
+    consumption_lineage_bridge_2009_10_type2,
+    build_consumption_lineage_bridge(
+      consumption_households_real_2009_10_type2, consumption_lineage_reference
+    )
+  ),
+  tar_target(
+    consumption_lineage_bridge_2011_12_type2,
+    build_consumption_lineage_bridge(
+      consumption_households_real_2011_12_type2, consumption_lineage_reference
+    )
+  ),
+  tar_target(
+    consumption_households_lineaged_2004_05,
+    attach_consumption_lineage(
+      consumption_households_real_2004_05, consumption_lineage_bridge_2004_05
+    )
+  ),
+  tar_target(
+    consumption_households_lineaged_2009_10_type1,
+    attach_consumption_lineage(
+      consumption_households_real_2009_10_type1, consumption_lineage_bridge_2009_10_type1
+    )
+  ),
+  tar_target(
+    consumption_households_lineaged_2009_10_type2,
+    attach_consumption_lineage(
+      consumption_households_real_2009_10_type2, consumption_lineage_bridge_2009_10_type2
+    )
+  ),
+  tar_target(
+    consumption_households_lineaged_2011_12_type2,
+    attach_consumption_lineage(
+      consumption_households_real_2011_12_type2, consumption_lineage_bridge_2011_12_type2
+    )
+  ),
+  tar_target(
+    consumption_lineage_coverage,
+    safe_bind_rows(list(
+      summarize_consumption_lineage_coverage(consumption_households_lineaged_2004_05),
+      summarize_consumption_lineage_coverage(consumption_households_lineaged_2009_10_type1),
+      summarize_consumption_lineage_coverage(consumption_households_lineaged_2009_10_type2),
+      summarize_consumption_lineage_coverage(consumption_households_lineaged_2011_12_type2)
+    ))
+  ),
+  tar_target(
+    consumption_lineage_coverage_file,
+    save_consumption_lineage_coverage(consumption_lineage_coverage),
+    format = "file"
+  ),
+  tar_target(
+    consumption_lineage_review_queue,
+    safe_bind_rows(list(
+      build_consumption_lineage_review_queue(consumption_lineage_bridge_2004_05),
+      build_consumption_lineage_review_queue(consumption_lineage_bridge_2009_10_type1),
+      build_consumption_lineage_review_queue(consumption_lineage_bridge_2009_10_type2),
+      build_consumption_lineage_review_queue(consumption_lineage_bridge_2011_12_type2)
+    ))
+  ),
+  tar_target(
+    consumption_lineage_review_queue_file,
+    save_consumption_lineage_review_queue(consumption_lineage_review_queue),
+    format = "file"
+  ),
+  tar_target(
     district_panel_conservative_provisional,
     build_lineage_district_panel(
       district_lineage$conservative_source_crosswalk,
