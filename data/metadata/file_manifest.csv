@@ -65,6 +65,8 @@ price_cpi_iw_centres,prices,true,data/raw/prices/cpi_iw_aisc_rn_26_7_2026.csv,,c
 price_cpi_ruc_2010,prices,true,data/raw/prices/cpi_ruc_st_rn_26_7_2026_2011-2014_base-2010.csv,,csv,utils::read.csv,price_sources,State rural and urban CPI base 2010
 price_cpi_ruc_2012,prices,true,data/raw/prices/cpi_ruc_st_rn_26_7_2026_2013-2025_base-2012.csv,,csv,utils::read.csv,price_sources,State rural and urban CPI base 2012
 price_tendulkar_2011_12,prices,false,data/raw/prices/poverty-lines/press-note-poverty-2011-12-23-08-16.pdf,,pdf,pdftools::pdf_text,price_sources,Tendulkar state-sector poverty lines
+price_cpi_iw_compendium_1982,prices,false,data/raw/prices/cpi-compendia/base-1982.pdf,39870075,pdf,reference,price_sources,Labour Bureau CPI-IW 1982-base compendium; source for 70-centre weights.
+price_cpi_iw_compendium_2001,prices,false,data/raw/prices/cpi-compendia/base-2001.pdf,31767592,pdf,reference,price_sources,Labour Bureau CPI-IW 2001-base compendium; source for 1982/2001 linking factors.
 census2001_c01,census_2001_controls,true,data/raw/census_2001/religion/C01,,directory,custom,raw_census_2001_controls,Census 2001 religion tables
 census2001_c08,census_2001_controls,true,data/raw/census_2001/education/C08,,directory,custom,raw_census_2001_controls,Census 2001 educational attainment tables
 census2001_c14,census_2001_controls,true,data/raw/census_2001/age/C14,,directory,custom,raw_census_2001_controls,Census 2001 age tables
@@ -82,4 +84,4 @@ nss6609cons_t2_csv_archive,nss_2009_10_consumption_type2,true,data/raw/hces/2009
 nss6811cons_t2_csv_archive,nss_2011_12_consumption_type2,true,data/raw/hces/2011-12/CSV_data_nss68_consumer_expenditure_type2.zip,145443065,zip,read_registered_detailed_consumption,consumption_households_2011_12_type2,NSS 68 Schedule 1.0 Type 2 distributed CSV archive; medium-run welfare.
 nss6811_district_ddi,nss_2011_12_consumption_type2,true,data/raw/hces/2011-12/DDI-IND-MOSPI-NSSO-68Rnd-Sch2.0-July2011-June2012.xml,3364186,xml,read_consumption_district_codebook_ddi,consumption_district_codebook_2011_12,Official NSS 68 DDI with labelled four-digit district-code categories.
 nss6104_district_codes,nss_2004_05_consumption,true,data/raw/hces/2004-05/District_code_list_nss61_round.xls,91136,xls,read_consumption_district_codebook_excel,consumption_district_codebook_2004_05,Official NSS 61 district-code list from MoSPI related materials.
-nss6609_district_codes,nss_2009_10_consumption_type2,true,"data/raw/hces/2009-10/District code_66.xls",67584,xls,read_consumption_district_codebook_excel,consumption_district_codebook_2009_10,Official NSS 66 district-code list; shared survey-frame geography for Type 1 and Type 2.
+nss6609_district_codes,nss_2009_10_consumption_type2,true,data/raw/hces/2009-10/District code_66.xls,67584,xls,read_consumption_district_codebook_excel,consumption_district_codebook_2009_10,Official NSS 66 district-code list; shared survey-frame geography for Type 1 and Type 2.
