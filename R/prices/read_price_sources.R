@@ -159,6 +159,7 @@ normalise_cpi_iw_centre <- function(x) {
     DMTINSUKIA = "DDTINSUKIA",
     MUNGERJAMALPUR = "MONGERJAMALPUR",
     MONGHYRJAMALPUR = "MONGERJAMALPUR",
+    MONGHYR = "MONGERJAMALPUR",
     BHILAI = "BHILLAI",
     VADODARA = "VADODRA",
     BANGALORE = "BENGALURU",
@@ -177,6 +178,7 @@ normalise_cpi_iw_centre <- function(x) {
     TIRUCHIRAPPALLI = "TIRUCHIRAPALLY",
     TRICHY = "TIRUCHIRAPALLY",
     TRICHIRAPALLY = "TIRUCHIRAPALLY",
+    TRIVANDRUM = "THIRUVANANTHAPURAM",
     WARANGAL = "WARRANGAL"
   )
   alias_i <- match(key, names(aliases))
@@ -315,17 +317,75 @@ validate_cpi_iw_weights <- function(weights, expected_total = 100, tolerance = 1
       call. = FALSE
     )
   }
-  if (abs(sum(weights$weight) - expected_total) > tolerance) {
-    stop("CPI-IW centre weights must sum to ", expected_total, ".", call. = FALSE)
+  if ("all_india_member" %in% names(weights)) {
+    member <- tolower(trimws(as.character(weights$all_india_member)))
+    valid_member <- member %in% c("true", "t", "1", "yes", "y", "false", "f", "0", "no", "n")
+    if (any(!valid_member | is.na(valid_member))) {
+      stop("CPI-IW all_india_member values must be logical.", call. = FALSE)
+    }
+    weights$all_india_member <- member %in% c("true", "t", "1", "yes", "y")
+  } else {
+    weights$all_india_member <- TRUE
+  }
+
+  if (!is.null(expected_total)) {
+    total <- sum(weights$weight[weights$all_india_member])
+    if (abs(total - expected_total) > tolerance) {
+      stop("CPI-IW All-India centre weights must sum to ", expected_total, " within tolerance.", call. = FALSE)
+    }
   }
   weights
 }
 
-read_cpi_iw_weights <- function(path) {
+read_cpi_iw_weights <- function(path, expected_total = 100, tolerance = 1e-8) {
   path <- resolve_price_path(path)
   if (!file.exists(path)) stop("CPI-IW weights file does not exist: ", path, call. = FALSE)
   weights <- utils::read.csv(path, stringsAsFactors = FALSE, check.names = FALSE)
-  validate_cpi_iw_weights(weights)
+  validate_cpi_iw_weights(weights, expected_total = expected_total, tolerance = tolerance)
+}
+
+cpi_iw_state_link_factors <- function(weights) {
+  weights <- safe_df(weights)
+  required <- c("state_code", "centre_key", "weight", "link_factor_2001")
+  missing <- setdiff(required, names(weights))
+  if (length(missing)) {
+    stop("CPI-IW linking metadata are missing columns: ", paste(missing, collapse = ", "), call. = FALSE)
+  }
+  link <- suppressWarnings(as.numeric(weights$link_factor_2001))
+  valid <- positive_finite(link)
+  states <- unique(as.character(weights$state_code))
+  out <- do.call(rbind, lapply(states, function(state) {
+    i <- as.character(weights$state_code) == state
+    linked <- i & valid
+    if (!any(linked)) {
+      stop("CPI-IW 1982-base state has no published 2001 linking factor: ", state, call. = FALSE)
+    }
+    data.frame(
+      state_code = state,
+      link_factor_2001 = stats::weighted.mean(link[linked], weights$weight[linked]),
+      link_weight_coverage = sum(weights$weight[linked]) / sum(weights$weight[i]),
+      link_centres = sum(linked),
+      total_centres = sum(i),
+      stringsAsFactors = FALSE
+    )
+  }))
+  rownames(out) <- NULL
+  if (any(!positive_finite(out$link_factor_2001))) stop("CPI-IW state linking produced an invalid factor.", call. = FALSE)
+  out[order(out$state_code), , drop = FALSE]
+}
+
+link_cpi_iw_state_series <- function(state_index, state_links) {
+  index <- safe_df(state_index)
+  links <- safe_df(state_links)
+  out <- merge(index, links, by = "state_code", all.x = TRUE, sort = FALSE)
+  if (any(!positive_finite(out$link_factor_2001))) {
+    bad <- unique(out$state_code[!positive_finite(out$link_factor_2001)])
+    stop("CPI-IW state series lacks a 1982-to-2001 linking factor: ", paste(bad, collapse = ", "), call. = FALSE)
+  }
+  out$index <- num(out$index) / num(out$link_factor_2001)
+  out$base_link_source <- "Labour Bureau 2001/1982 centre linking factors"
+  validate_price_index(out)
+  out[order(out$state_code, out$period), , drop = FALSE]
 }
 
 aggregate_cpi_iw_to_state <- function(centre_index, centre_weights) {
@@ -336,10 +396,11 @@ aggregate_cpi_iw_to_state <- function(centre_index, centre_weights) {
   missing <- c(setdiff(required_index, names(index)), setdiff(required_weights, names(weights)))
   if (length(missing)) stop("CPI-IW aggregation is missing columns: ", paste(unique(missing), collapse = ", "), call. = FALSE)
 
-  unmatched <- setdiff(unique(index$centre_key), weights$centre_key)
-  if (length(unmatched)) {
-    stop("CPI-IW observations have no official centre weight: ", paste(unmatched, collapse = ", "), call. = FALSE)
+  missing_weighted_centres <- setdiff(weights$centre_key, unique(index$centre_key))
+  if (length(missing_weighted_centres)) {
+    stop("CPI-IW official weighting centres are absent from the source series: ", paste(missing_weighted_centres, collapse = ", "), call. = FALSE)
   }
+  index <- index[index$centre_key %in% weights$centre_key, , drop = FALSE]
   joined <- merge(index, weights[c("centre_key", "state_code", "weight")], by = "centre_key", all.x = TRUE, sort = FALSE)
   expected <- stats::aggregate(centre_key ~ state_code, weights, length)
   names(expected)[2] <- "expected_centres"
@@ -404,19 +465,59 @@ cpi_iw_state_periods <- function(
   ))
 }
 
-read_price_sources <- function(paths, cpi_iw_weights_file = "data/metadata/cpi_iw_centres_2001.csv") {
+read_price_sources <- function(
+    paths,
+    cpi_iw_weights_1982_file = "data/metadata/cpi_iw_centres_1982.csv",
+    cpi_iw_weights_2001_file = "data/metadata/cpi_iw_centres_2001.csv",
+    cpi_iw_base_switch = as.Date("2006-01-01"),
+    cpi_iw_all_india_link_factor = 4.63) {
   paths <- validate_price_source_paths(paths)
-  weights <- read_cpi_iw_weights(cpi_iw_weights_file)
-  iw_centres <- read_cpi_iw_centres(paths$cpi_iw, base_year = 2001)
-  iw_state_input <- iw_centres[iw_centres$period %in% cpi_iw_state_periods(), , drop = FALSE]
+  cpi_iw_base_switch <- price_boundary(cpi_iw_base_switch)
+  periods <- cpi_iw_state_periods()
+
+  weights_1982 <- read_cpi_iw_weights(cpi_iw_weights_1982_file, tolerance = 0.02)
+  weights_2001 <- read_cpi_iw_weights(cpi_iw_weights_2001_file)
+  iw_1982 <- read_cpi_iw_centres(paths$cpi_iw, base_year = 1982)
+  iw_2001 <- read_cpi_iw_centres(paths$cpi_iw, base_year = 2001)
+  old_input <- iw_1982[iw_1982$period %in% periods & iw_1982$period < cpi_iw_base_switch, , drop = FALSE]
+  new_input <- iw_2001[iw_2001$period %in% periods & iw_2001$period >= cpi_iw_base_switch, , drop = FALSE]
+
+  old_states <- aggregate_cpi_iw_to_state(old_input, weights_1982)
+  old_states <- link_cpi_iw_state_series(old_states, cpi_iw_state_link_factors(weights_1982))
+  new_states <- aggregate_cpi_iw_to_state(new_input, weights_2001)
+  new_states$link_factor_2001 <- 1
+  new_states$link_weight_coverage <- 1
+  new_states$link_centres <- new_states$centre_count
+  new_states$total_centres <- new_states$centre_count
+  new_states$base_link_source <- "native 2001 base"
+  state_columns <- intersect(names(old_states), names(new_states))
+  iw_states <- rbind(old_states[state_columns], new_states[state_columns])
+  iw_states <- iw_states[order(iw_states$state_code, iw_states$period), , drop = FALSE]
+  validate_price_index(iw_states)
+
+  if (length(cpi_iw_all_india_link_factor) != 1L || !positive_finite(cpi_iw_all_india_link_factor)) {
+    stop("The CPI-IW All-India 1982-to-2001 linking factor must be one positive value.", call. = FALSE)
+  }
+  old_all_india <- read_cpi_iw_all_india(paths$cpi_iw, base_year = 1982)
+  old_all_india <- old_all_india[old_all_india$period %in% periods & old_all_india$period < cpi_iw_base_switch, , drop = FALSE]
+  old_all_india$index <- num(old_all_india$index) / cpi_iw_all_india_link_factor
+  new_all_india <- read_cpi_iw_all_india(paths$cpi_iw, base_year = 2001)
+  new_all_india <- new_all_india[new_all_india$period %in% periods & new_all_india$period >= cpi_iw_base_switch, , drop = FALSE]
+  iw_all_india <- rbind(old_all_india, new_all_india)
+  iw_all_india <- iw_all_india[order(iw_all_india$period), , drop = FALSE]
+  validate_price_index(iw_all_india)
+
   list(
     cpi_alrl = read_cpi_alrl_state(paths$cpi_alrl),
-    cpi_iw_centres = iw_centres,
-    cpi_iw_states = aggregate_cpi_iw_to_state(iw_state_input, weights),
-    cpi_iw_all_india = read_cpi_iw_all_india(paths$cpi_iw, base_year = 2001),
+    cpi_iw_centres_1982 = iw_1982,
+    cpi_iw_centres_2001 = iw_2001,
+    cpi_iw_states = iw_states,
+    cpi_iw_all_india = iw_all_india,
     cpi_ruc_2010 = read_cpi_ruc_state(paths$cpi_ruc_2010, expected_base = 2010),
     cpi_ruc_2012 = read_cpi_ruc_state(paths$cpi_ruc_2012, expected_base = 2012),
-    cpi_iw_weights = weights
+    cpi_iw_weights_1982 = weights_1982,
+    cpi_iw_weights_2001 = weights_2001,
+    cpi_iw_state_links_1982_2001 = cpi_iw_state_link_factors(weights_1982)
   )
 }
 

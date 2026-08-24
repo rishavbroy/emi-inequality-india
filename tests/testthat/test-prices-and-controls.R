@@ -220,15 +220,15 @@ test_that("CPI-IW reader collapses identical rows but rejects conflicting values
 test_that("CPI-IW aliases match the names used by the RBI extract", {
   source_names <- c(
     "ALWAYE_ERNAKULAM", "COONOR", "DM_TINSUKIA", "HALDI",
-    "MONGHYR_JAMALPUR", "OTHERS-GOA", "OTHERS_HIMACHAL_PRADESH",
+    "MONGHYR_JAMALPUR", "MONGHYR", "OTHERS-GOA", "OTHERS_HIMACHAL_PRADESH",
     "OTHERS-TRIPURA", "PONDICHERRY", "QUILLON", "SHOLAPUR",
-    "TEZPUR_RANGAPARA", "TRICHIRAPALLY"
+    "TEZPUR_RANGAPARA", "TRICHIRAPALLY", "TRIVANDRUM"
   )
   metadata_names <- c(
     "Ernakulam", "Coonoor", "D.D.Tinsukia", "Haldia",
-    "Monger-Jamalpur", "Goa", "Himachal Pradesh", "Tripura",
+    "Monger-Jamalpur", "Monger-Jamalpur", "Goa", "Himachal Pradesh", "Tripura",
     "Puducherry", "Quilon", "Solapur", "Rangapara-Tezpur",
-    "Tiruchirapally"
+    "Tiruchirapally", "Thiruvananthapuram"
   )
   expect_equal(normalise_cpi_iw_centre(source_names), normalise_cpi_iw_centre(metadata_names))
 })
@@ -278,6 +278,47 @@ test_that("CPI-IW aggregation rejects incomplete centre coverage", {
     state_code = "ANP", weight = c(25, 75)
   )
   expect_error(aggregate_cpi_iw_to_state(centre, weights), "incomplete centre coverage")
+})
+
+
+test_that("CPI-IW aggregation ignores source centres outside the official weighting system", {
+  centre <- data.frame(
+    centre_key = normalise_cpi_iw_centre(c("Guntur", "Vijaywada", "Kothagudem")),
+    period = as.Date("2005-01-01"),
+    index = c(100, 200, 999)
+  )
+  weights <- data.frame(
+    centre_key = normalise_cpi_iw_centre(c("Guntur", "Vijaywada")),
+    state_code = "ANP", weight = c(25, 75)
+  )
+  out <- aggregate_cpi_iw_to_state(centre, weights)
+  expect_equal(out$index, 175)
+  expect_equal(out$centre_count, 2L)
+})
+
+test_that("1982-base CPI-IW metadata reproduce the published weighted system and linking contract", {
+  weights <- read_cpi_iw_weights("data/metadata/cpi_iw_centres_1982.csv", tolerance = 0.02)
+  expect_equal(nrow(weights), 73L)
+  expect_equal(sum(weights$all_india_member), 70L)
+  expect_equal(sum(weights$weight[weights$all_india_member]), 100.01, tolerance = 1e-10)
+  links <- cpi_iw_state_link_factors(weights)
+  expect_true(all(positive_finite(links$link_factor_2001)))
+  expect_true(all(links$link_weight_coverage > 0 & links$link_weight_coverage <= 1))
+  expect_equal(links$link_factor_2001[links$state_code == "DEL"], 5.60)
+})
+
+test_that("1982-base CPI-IW state linking changes units but preserves observations", {
+  index <- data.frame(
+    state_code = "A", sector = "urban", period = as.Date("2005-01-01"),
+    index = 460, centre_count = 2L
+  )
+  links <- data.frame(
+    state_code = "A", link_factor_2001 = 4.6,
+    link_weight_coverage = 0.8, link_centres = 2L, total_centres = 3L
+  )
+  out <- link_cpi_iw_state_series(index, links)
+  expect_equal(out$index, 100)
+  expect_equal(out$link_weight_coverage, 0.8)
 })
 
 test_that("tracked CPI-IW weights reproduce the 78-centre system", {
