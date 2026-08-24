@@ -233,13 +233,20 @@ test_that("CPI-IW aliases match the names used by the RBI extract", {
   expect_equal(normalise_cpi_iw_centre(source_names), normalise_cpi_iw_centre(metadata_names))
 })
 
-test_that("CPI-IW state aggregation is limited to estimation and link windows", {
+test_that("CPI-IW state aggregation covers historical estimation and link windows", {
   periods <- cpi_iw_state_periods()
-  expect_equal(min(periods), as.Date("2007-07-01"))
+  expect_equal(min(periods), as.Date("2004-07-01"))
   expect_equal(max(periods), as.Date("2014-12-01"))
-  expect_true(all(seq(as.Date("2007-07-01"), as.Date("2008-06-01"), by = "month") %in% periods))
+  expect_true(all(seq(as.Date("2004-07-01"), as.Date("2012-12-01"), by = "month") %in% periods))
   expect_true(all(seq(as.Date("2013-01-01"), as.Date("2014-12-01"), by = "month") %in% periods))
-  expect_false(as.Date("2012-06-01") %in% periods)
+  expect_equal(length(periods), length(unique(periods)))
+})
+
+test_that("CPI-IW state aggregation windows must be ordered", {
+  expect_error(
+    cpi_iw_state_periods(as.Date("2010-01-01"), as.Date("2009-01-01")),
+    "must be ordered"
+  )
 })
 
 test_that("CPI-IW state indices use official centre weights", {
@@ -562,6 +569,35 @@ test_that("NSS sub-round deflators average exactly three monthly indices", {
   expect_equal(out$price_deflator, 2)
   expect_equal(out$period_start, as.Date("2007-07-01"))
   expect_equal(out$period_end, as.Date("2007-09-01"))
+})
+
+
+test_that("canonical detailed households are deflated before downstream aggregation", {
+  registry <- read_consumption_survey_registry()
+  spec <- consumption_survey_spec(registry, "nss_2004_05")
+  months <- seq(as.Date("2004-07-01"), as.Date("2004-09-01"), by = "month")
+  deflators <- data.frame(
+    state_code = rep("ANP", 3),
+    sector = rep("rural", 3),
+    period = months,
+    price_deflator = rep(2, 3),
+    spatial_price_relative = rep(1, 3),
+    price_source = rep("fixture", 3),
+    temporal_state_source = rep("ANP", 3),
+    state_rule = rep("direct", 3),
+    fallback_reason = rep(NA_character_, 3),
+    stringsAsFactors = FALSE
+  )
+  households <- data.frame(
+    source_state_code = "28", sector = "Rural", subround = "1",
+    nominal_mpce = 100, nominal_household_consumption = 400,
+    household_size = 4, survey_weight = 2,
+    source_lineage_eligible = TRUE, stringsAsFactors = FALSE
+  )
+  out <- deflate_detailed_consumption_households(households, deflators, spec)
+  expect_equal(out$real_mpce, 50)
+  expect_equal(out$real_household_consumption, 200)
+  expect_true(out$source_lineage_eligible)
 })
 
 test_that("NSS state resolution accepts names, survey codes, and price codes", {

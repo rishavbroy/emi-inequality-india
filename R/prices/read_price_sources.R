@@ -386,11 +386,22 @@ validate_price_source_paths <- function(paths) {
   lapply(out, as.character)
 }
 
-cpi_iw_state_periods <- function() {
-  c(
-    seq(as.Date("2007-07-01"), as.Date("2008-06-01"), by = "month"),
-    seq(as.Date("2013-01-01"), as.Date("2014-12-01"), by = "month")
-  )
+cpi_iw_state_periods <- function(
+    estimation_start = as.Date("2004-07-01"),
+    estimation_end = as.Date("2012-12-01"),
+    link_start = as.Date("2013-01-01"),
+    link_end = as.Date("2014-12-01")) {
+  estimation_start <- price_boundary(estimation_start)
+  estimation_end <- price_boundary(estimation_end)
+  link_start <- price_boundary(link_start)
+  link_end <- price_boundary(link_end)
+  if (estimation_end < estimation_start || link_end < link_start) {
+    stop("CPI-IW state aggregation windows must be ordered.", call. = FALSE)
+  }
+  unique(c(
+    seq(estimation_start, estimation_end, by = "month"),
+    seq(link_start, link_end, by = "month")
+  ))
 }
 
 read_price_sources <- function(paths, cpi_iw_weights_file = "data/metadata/cpi_iw_centres_2001.csv") {
