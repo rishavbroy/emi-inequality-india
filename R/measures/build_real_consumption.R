@@ -1,5 +1,42 @@
 # Household-level real-consumption construction shared by registered survey adapters.
 
+
+deflate_detailed_consumption_households <- function(households, deflators, specification) {
+  hh <- safe_df(households)
+  required <- c(
+    "source_state_code", "sector", "subround", "nominal_mpce",
+    "nominal_household_consumption", "household_size", "survey_weight"
+  )
+  missing <- setdiff(required, names(hh))
+  if (length(missing)) {
+    stop(
+      "Canonical detailed-consumption households are missing columns: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  if (!nrow(hh)) return(hh)
+
+  out <- attach_survey_subround_deflator(
+    hh, deflators, specification,
+    state_col = "source_state_code", sector_col = "sector", subround_col = "subround"
+  )
+  out$real_mpce <- num(out$nominal_mpce) / num(out$price_deflator)
+  out$real_household_consumption <-
+    num(out$nominal_household_consumption) / num(out$price_deflator)
+
+  valid <- positive_finite(out$real_mpce) & positive_finite(out$real_household_consumption)
+  if (!all(valid)) {
+    stop("Detailed-consumption deflation produced invalid real expenditure.", call. = FALSE)
+  }
+  implied_total <- out$real_mpce * num(out$household_size)
+  tolerance <- sqrt(.Machine$double.eps) * pmax(1, abs(out$real_household_consumption))
+  if (any(abs(implied_total - out$real_household_consumption) > tolerance)) {
+    stop("Detailed-consumption real MPCE and household totals are inconsistent.", call. = FALSE)
+  }
+  out
+}
+
 prepare_consumption_households <- function(
     df, wave, district_keys, value_candidates, size_candidates, weight_candidates,
     state_candidates, sector_candidates, subround_candidates, deflators = NULL,
