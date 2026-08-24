@@ -203,3 +203,23 @@ The NSS 61 workbook spells Tamil Nadu as `Tamilnadu`; this is handled in the sha
 Before historical detailed-consumption households are used for prices, lineage, or district welfare outcomes, the pipeline reconstructs all-India rural and urban person-weighted MPCE and compares it with official MoSPI benchmarks in `data/metadata/consumption_mpce_benchmarks.csv`. The estimator uses household survey weight times household size, so the estimand is average MPCE across persons rather than households. The target fails when an estimate lies outside its declared rupee tolerance and writes the passing comparison to `outputs/diagnostics/public/consumption_mpce_reconstruction.csv`.
 
 The benchmark definitions match each registered survey construct: MRP for NSS 61 (2004-05) and NSS 66 Type 1, and MMRP for NSS 66 Type 2 and NSS 68 Type 2. This gate intentionally uses all survey households, including source-frame aggregate units that are ineligible for district lineage, because the published national estimates use the full survey sample.
+
+
+## Historical detailed-consumption deflation
+
+The registered NSS 61, NSS 66 Type 1/Type 2, and NSS 68 Type 2 household
+records now use the same production state-sector monthly price chain as the
+legacy outcomes. The pre-2013 CPI-RL/CPI-IW portion is retained from July 2004
+through December 2012, so every quarterly sub-round in the 2004-05, 2009-10,
+and 2011-12 surveys is covered before the January 2013 CPI-R/U switch.
+
+`deflate_detailed_consumption_households()` operates only on the explicit
+canonical detailed-survey contract: authoritative source state, sector,
+sub-round, nominal MPCE, nominal household consumption, household size, and
+survey weight. It does not reuse the legacy column-name heuristic that guesses
+whether a source field is a household total. The function attaches the
+registered three-month sub-round deflator first, then constructs `real_mpce`
+and `real_household_consumption`; their household-size identity is checked.
+The production targets depend on the corresponding official MPCE reconstruction
+gate, so a survey cannot proceed to real welfare measures if its nominal
+reconstruction has not first matched the published benchmark.

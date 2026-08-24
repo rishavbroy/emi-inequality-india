@@ -249,6 +249,47 @@ core_pipeline_targets <- list(
     attach_consumption_source_district_identity(consumption_households_2011_12_type2, consumption_district_codebook_2011_12)
   ),
 
+  tar_target(
+    consumption_households_real_2004_05,
+    {
+      consumption_mpce_validation_2004_05
+      deflate_detailed_consumption_households(
+        consumption_households_named_2004_05, state_sector_price_deflators,
+        consumption_survey_spec(consumption_survey_registry, "nss_2004_05")
+      )
+    }
+  ),
+  tar_target(
+    consumption_households_real_2009_10_type1,
+    {
+      consumption_mpce_validation_2009_10_type1
+      deflate_detailed_consumption_households(
+        consumption_households_named_2009_10_type1, state_sector_price_deflators,
+        consumption_survey_spec(consumption_survey_registry, "nss_2009_10_type1")
+      )
+    }
+  ),
+  tar_target(
+    consumption_households_real_2009_10_type2,
+    {
+      consumption_mpce_validation_2009_10_type2
+      deflate_detailed_consumption_households(
+        consumption_households_named_2009_10_type2, state_sector_price_deflators,
+        consumption_survey_spec(consumption_survey_registry, "nss_2009_10_type2")
+      )
+    }
+  ),
+  tar_target(
+    consumption_households_real_2011_12_type2,
+    {
+      consumption_mpce_validation_2011_12_type2
+      deflate_detailed_consumption_households(
+        consumption_households_named_2011_12_type2, state_sector_price_deflators,
+        consumption_survey_spec(consumption_survey_registry, "nss_2011_12_type2")
+      )
+    }
+  ),
+
   tar_target(raw_nss_2007_education, { raw_data_preflight; read_nss_2007_education(paths) }),
   tar_target(raw_nss_2007_consumption, { raw_data_preflight; read_nss_2007_consumption(paths) }),
   tar_target(raw_nss_2017_education, { raw_data_preflight; read_nss_2017_education(paths) }),
@@ -269,8 +310,8 @@ core_pipeline_targets <- list(
     temporal_price_series,
     build_temporal_price_series(
       raw_price_sources,
-      pre_switch_start = as.Date("2007-07-01"),
-      pre_switch_end = as.Date("2008-06-01")
+      pre_switch_start = as.Date("2004-07-01"),
+      pre_switch_end = as.Date("2012-12-01")
     )
   ),
   tar_target(price_reference_index, build_ruc_reference_index(raw_price_sources)),
@@ -279,7 +320,7 @@ core_pipeline_targets <- list(
     build_state_sector_price_deflators(
       temporal_price_series,
       reference_index = price_reference_index,
-      start_period = as.Date("2007-07-01"),
+      start_period = as.Date("2004-07-01"),
       end_period = as.Date("2018-06-01")
     )
   ),
