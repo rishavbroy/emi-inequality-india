@@ -129,6 +129,53 @@ core_pipeline_targets <- list(
     )
   ),
   tar_target(
+    consumption_mpce_benchmarks_file,
+    path_project(paths, "data/metadata/consumption_mpce_benchmarks.csv"),
+    format = "file"
+  ),
+  tar_target(
+    consumption_mpce_benchmarks,
+    read_consumption_mpce_benchmarks(consumption_mpce_benchmarks_file)
+  ),
+  tar_target(
+    consumption_mpce_validation_2004_05,
+    validate_consumption_mpce_reconstruction(
+      consumption_households_2004_05, consumption_mpce_benchmarks, "nss_2004_05"
+    )
+  ),
+  tar_target(
+    consumption_mpce_validation_2009_10_type1,
+    validate_consumption_mpce_reconstruction(
+      consumption_households_2009_10_type1, consumption_mpce_benchmarks, "nss_2009_10_type1"
+    )
+  ),
+  tar_target(
+    consumption_mpce_validation_2009_10_type2,
+    validate_consumption_mpce_reconstruction(
+      consumption_households_2009_10_type2, consumption_mpce_benchmarks, "nss_2009_10_type2"
+    )
+  ),
+  tar_target(
+    consumption_mpce_validation_2011_12_type2,
+    validate_consumption_mpce_reconstruction(
+      consumption_households_2011_12_type2, consumption_mpce_benchmarks, "nss_2011_12_type2"
+    )
+  ),
+  tar_target(
+    consumption_mpce_validation,
+    combine_consumption_mpce_validations(
+      consumption_mpce_validation_2004_05,
+      consumption_mpce_validation_2009_10_type1,
+      consumption_mpce_validation_2009_10_type2,
+      consumption_mpce_validation_2011_12_type2
+    )
+  ),
+  tar_target(
+    consumption_mpce_validation_file,
+    save_consumption_mpce_validation(consumption_mpce_validation),
+    format = "file"
+  ),
+  tar_target(
     consumption_district_codebook_2004_05_file,
     {
       raw_data_preflight
