@@ -33,7 +33,7 @@ target_metadata_snapshot <- function(target_names = NULL) {
   if (!requireNamespace("targets", quietly = TRUE)) return(data.frame())
   if (is.null(target_names)) {
     return(targets::tar_meta(
-      fields = c("name", "time", "error", "warnings"),
+      fields = c("name", "seconds", "time", "error", "warnings"),
       targets_only = TRUE
     ))
   }
@@ -42,7 +42,7 @@ target_metadata_snapshot <- function(target_names = NULL) {
   rlang::inject(
     targets::tar_meta(
       names = !!selection,
-      fields = c("name", "time", "error", "warnings"),
+      fields = c("name", "seconds", "time", "error", "warnings"),
       targets_only = TRUE
     )
   )

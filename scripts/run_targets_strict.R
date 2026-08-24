@@ -29,11 +29,10 @@ tryCatch(
   }
 )
 
-meta <- tryCatch(
-  targets::tar_meta(fields = c("name", "error", "warnings")),
+meta_active <- tryCatch(
+  target_metadata_snapshot(active_target_names),
   error = function(e) data.frame()
 )
-meta_active <- select_target_metadata(meta, active_target_names)
 write_target_run_metadata(meta_active, "strict")
 
 errors <- target_metadata_issue_rows(meta_active, "error")
