@@ -1,0 +1,26 @@
+state_std,source_district_std,target_district_std,basis
+assam,lakshadweephimpur,lakhimpur,official_codebook_label_corruption
+assam,hailakshadweepandi,hailakandi,official_codebook_label_corruption
+bihar,champaran w,pashchim champaran,source_abbreviation
+bihar,champaran e,purba champaran,source_abbreviation
+dadra and nagar haveli,dadra and nagar havelira,dadra and nagar haveli,official_codebook_label_corruption
+dadra and nagar haveli,dadra and nagar havelira and nh,dadra and nagar haveli,official_codebook_label_corruption
+gujarat,ahmedabad,ahmadabad,orthographic_variant
+gujarat,bans kantha,banas kantha,orthographic_variant
+jharkhand,hazaribag,hazaribagh,orthographic_variant
+kerala,palakshadweepkad,palakkad,official_codebook_label_corruption
+lakshadweep,lakshadweepshadweep,lakshadweep,official_codebook_label_corruption
+madhya pradesh,w nimar,west nimar,source_abbreviation
+madhya pradesh,e nimar,east nimar,source_abbreviation
+maharashtra,mumbai suburban an,mumbai suburban,truncated_source_label
+manipur,senapati excluding 3 sub divisions,senapati excl 3 sub divisions,orthographic_variant
+mizoram,serchip,serchhip,orthographic_variant
+tamil nadu,tiruvanamalai,tiruvannamalai,orthographic_variant
+tamil nadu,toothukudi,thoothukkudi,orthographic_variant
+uttar pradesh,ambedkar nag,ambedkar nagar,source_abbreviation
+uttar pradesh,g buddha nagar,gautam buddha nagar,source_abbreviation
+uttar pradesh,j phule nagar,jyotiba phule nagar,source_abbreviation
+uttar pradesh,s kabir nagar,sant kabir nagar,source_abbreviation
+uttar pradesh,s r nagar bhadohi,sant ravidas nagar bhadohi,source_abbreviation
+uttar pradesh,s r nagar bhadoh,sant ravidas nagar bhadohi,source_abbreviation
+uttar pradesh,mahrajganj,maharajganj,orthographic_variant
