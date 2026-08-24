@@ -292,12 +292,12 @@ coverage/review diagnostics and are excluded only at the district-estimation
 boundary because they have no Census-2001 target.
 
 The public district-welfare diagnostic is long-form and reports the estimate,
-design-based standard error, coefficient of variation, raw household and FSU
-support, and Kish effective sample size. Thin districts remain in the output
-with their precision metadata rather than being removed by an arbitrary sample
-threshold. Distributional outcomes (quantiles, Gini, Atkinson and poverty) are
-separate later phases and should reuse this survey-design layer rather than
-introduce hand-written variance estimators.
+design-based standard error, coefficient of variation where meaningful, raw
+household and FSU support, and Kish effective sample size. Thin districts remain
+in the output with their precision metadata rather than being removed by an
+arbitrary sample threshold. Means and quantiles reuse this survey-design layer;
+Gini, Atkinson, poverty and lower-tail means remain later phases rather than
+introducing hand-written variance estimators.
 
 ### District welfare outcome registry and support flags
 
@@ -310,12 +310,17 @@ equivalent, represented person weight, and Kish effective sample size.
 `sample_support_ok`, `precision_ok`, and `preferred_eligible` are therefore
 review/specification flags, not upstream filters.
 
-The first two registered survey-mean outcomes are real mean MPCE (primary) and
-mean log real MPCE (robustness). The latter is estimated with the same NSS
-survey design and person weights after applying `log()` at the household MPCE
-level. The level-mean row retains `cv = std_error / estimate`; log-mean rows set
-`cv` to missing because that ratio is not a consumption coefficient of
-variation. `relative_se` is retained generically for all outcomes.
+The registry currently declares real mean MPCE (primary), mean log real MPCE
+(robustness), and the person-weighted median of real MPCE (robustness). Mean log
+MPCE is estimated with the same NSS survey design and person weights after
+applying `log()` at the household MPCE level. The median uses
+`survey::svyquantile()` at probability 0.5 through the same district-domain
+design and retains its design-based standard error. The registry stores the
+quantile probability explicitly so future p10/p25 outcomes can use the same
+estimator without new branches. Level-valued outcomes retain
+`cv = std_error / estimate`; log-mean rows set `cv` to missing because that ratio
+is not a consumption coefficient of variation. `relative_se` is retained
+generically for all outcomes.
 
 The initial support thresholds (50 households, 2 PSUs, Kish effective N 20,
 and a 20% relative-SE ceiling for the primary level mean) are explicit QA and
