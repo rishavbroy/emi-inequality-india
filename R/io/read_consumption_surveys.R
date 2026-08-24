@@ -32,7 +32,7 @@ validate_consumption_survey_registry <- function(registry) {
     "price_group_months", "district_identity_source", "mpce_contract", "legacy_wave",
     "household_adapter", "household_id_field", "mpce_field", "mpce_scale",
     "household_size_field", "weight_field", "state_field", "district_field",
-    "sector_field", "subround_field"
+    "sector_field", "subround_field", "fsu_field", "stratum_field", "sub_stratum_field"
   )
   missing <- setdiff(required, names(x))
   if (length(missing)) {
@@ -46,7 +46,8 @@ validate_consumption_survey_registry <- function(registry) {
   )
   adapter_fields <- c(
     "household_id_field", "mpce_field", "household_size_field", "weight_field",
-    "state_field", "district_field", "sector_field", "subround_field"
+    "state_field", "district_field", "sector_field", "subround_field",
+    "fsu_field", "stratum_field", "sub_stratum_field"
   )
   text_fields <- c(required_text, adapter_fields)
   for (field in text_fields) x[[field]] <- trimws(plain_chr(x[[field]]))
@@ -125,7 +126,10 @@ consumption_adapter_fields <- function(specification) {
     state = "state_field",
     district = "district_field",
     sector = "sector_field",
-    subround = "subround_field"
+    subround = "subround_field",
+    fsu = "fsu_field",
+    stratum = "stratum_field",
+    sub_stratum = "sub_stratum_field"
   )
   values <- stats::setNames(vapply(fields, function(field) {
     if (!field %in% names(spec)) return("")
@@ -169,7 +173,10 @@ canonicalize_detailed_consumption_households <- function(households, specificati
   hh <- safe_df(households)
   require_consumption_columns(
     hh,
-    unname(fields[c("household_id", "household_size", "weight", "state", "district", "sector", "subround")]),
+    unname(fields[c(
+      "household_id", "household_size", "weight", "state", "district", "sector",
+      "subround", "fsu", "stratum", "sub_stratum"
+    )]),
     paste0(spec$survey_id[[1]], " household data")
   )
 
@@ -225,6 +232,9 @@ canonicalize_detailed_consumption_households <- function(households, specificati
     district_code_source = plain_chr(hh[[fields[["district"]]]]),
     sector = plain_chr(hh[[fields[["sector"]]]]),
     subround = plain_chr(hh[[fields[["subround"]]]]),
+    fsu = plain_chr(hh[[fields[["fsu"]]]]),
+    stratum = plain_chr(hh[[fields[["stratum"]]]]),
+    sub_stratum = plain_chr(hh[[fields[["sub_stratum"]]]]),
     household_size = size,
     survey_weight = weight,
     nominal_mpce = mpce,
@@ -242,4 +252,91 @@ canonicalize_detailed_consumption_households <- function(households, specificati
   }
   rownames(out) <- NULL
   out
+}
+
+
+consumption_source_directory <- function(paths, specification) {
+  spec <- validate_direct_consumption_adapter(specification)
+  path_project(paths, spec$raw_path[[1]])
+}
+
+#' Locate the unique distributed CSV archive for a detailed consumption survey.
+discover_consumption_csv_archive <- function(paths, specification) {
+  directory <- consumption_source_directory(paths, specification)
+  if (!dir.exists(directory)) {
+    stop("Consumption survey raw directory is missing: ", directory, call. = FALSE)
+  }
+  archives <- list.files(directory, pattern = "\\.zip$", full.names = TRUE, recursive = FALSE)
+  if (length(archives) != 1L) {
+    stop(
+      "Expected exactly one CSV archive in ", directory, "; found ", length(archives), ".",
+      call. = FALSE
+    )
+  }
+  normalizePath(archives[[1]], mustWork = TRUE)
+}
+
+consumption_zip_csv_members <- function(archive) {
+  listing <- utils::unzip(archive, list = TRUE)$Name
+  listing[grepl("\\.csv$", listing, ignore.case = TRUE)]
+}
+
+read_consumption_zip_csv <- function(archive, member, n_max = Inf) {
+  need_pkg("readr", "consumption survey CSV archives")
+  con <- unz(archive, member, open = "rb")
+  on.exit(close(con), add = TRUE)
+  readr::read_csv(
+    con,
+    col_types = readr::cols(.default = readr::col_character()),
+    locale = readr::locale(encoding = "ISO-8859-1"),
+    n_max = n_max,
+    show_col_types = FALSE,
+    progress = FALSE,
+    name_repair = "minimal"
+  )
+}
+
+find_consumption_zip_member <- function(archive, required_columns, context) {
+  members <- consumption_zip_csv_members(archive)
+  if (!length(members)) stop("Consumption archive contains no CSV members: ", archive, call. = FALSE)
+  hits <- vapply(members, function(member) {
+    header <- names(read_consumption_zip_csv(archive, member, n_max = 0L))
+    all(required_columns %in% header)
+  }, logical(1))
+  matched <- members[hits]
+  if (length(matched) != 1L) {
+    stop(
+      context, " must resolve to exactly one CSV member; found ", length(matched), ".",
+      call. = FALSE
+    )
+  }
+  matched[[1]]
+}
+
+#' Read and canonicalize one registered legacy detailed-consumption archive.
+read_registered_detailed_consumption <- function(archive, specification) {
+  spec <- validate_direct_consumption_adapter(specification)
+  fields <- consumption_adapter_fields(spec)
+  household_fields <- unname(fields[c(
+    "household_id", "household_size", "weight", "state", "district", "sector",
+    "subround", "fsu", "stratum", "sub_stratum"
+  )])
+  if (identical(spec$household_adapter[[1]], "direct_mpce")) {
+    household_fields <- unique(c(household_fields, fields[["mpce"]]))
+  }
+  household_member <- find_consumption_zip_member(
+    archive, household_fields, paste0(spec$survey_id[[1]], " household source")
+  )
+  households <- read_consumption_zip_csv(archive, household_member)
+
+  mpce_data <- NULL
+  if (identical(spec$household_adapter[[1]], "split_household_mpce")) {
+    mpce_member <- find_consumption_zip_member(
+      archive,
+      c(fields[["household_id"]], fields[["mpce"]]),
+      paste0(spec$survey_id[[1]], " MPCE source")
+    )
+    mpce_data <- read_consumption_zip_csv(archive, mpce_member)
+  }
+  canonicalize_detailed_consumption_households(households, spec, mpce_data)
 }
