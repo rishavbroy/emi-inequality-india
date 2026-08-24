@@ -256,7 +256,8 @@ canonicalize_detailed_consumption_households <- function(households, specificati
 
 
 consumption_source_directory <- function(paths, specification) {
-  spec <- validate_direct_consumption_adapter(specification)
+  spec <- validate_consumption_survey_registry(specification)
+  if (nrow(spec) != 1L) stop("A single consumption survey specification is required.", call. = FALSE)
   path_project(paths, spec$raw_path[[1]])
 }
 
