@@ -171,3 +171,12 @@ for each specification and the estimated ANCOVA baseline coefficient.
 ## Public specification
 
 The public tables, figures, report values, and spatial diagnostics use the person-weighted real log consumption change model with the predetermined Census 2001 controls and state fixed effects. Nominal log change, ANCOVA, and legacy-control variants remain diagnostic comparisons. Because the conditional excluded-instrument first stage is extremely weak, the public interpretation is explicitly non-causal.
+
+
+## Canonical detailed-consumption household contract
+
+Registered detailed Schedule 1.0 surveys are normalized before price attachment or district aggregation. The canonical household table contains one row per household with survey/source geography, household size, survey weight, nominal MPCE, and nominal household consumption. `canonicalize_detailed_consumption_households()` is the only adapter boundary for direct household-MPCE files and split household/MPCE files.
+
+The survey registry declares the source fields and MPCE scale instead of embedding round-specific column choices in downstream estimators. This is already active for NSS 61 (2004-05), NSS 66 Type 1/Type 2 (2009-10), and NSS 68 Type 2 (2011-12). The NSS 68 public MPCE field is stored in hundredths of rupees, so its registry scale is `0.01`; NSS 61 and NSS 66 fields are already rupee values. NSS 66 Type 1 uses the published MRP MPCE for comparability with the modified-reference-period family.
+
+Modern HCES rows deliberately declare a separate `three_questionnaire` adapter and are rejected by the direct-MPCE normalizer. Their FDQ/CSQ/DGQ construction belongs in the HCES-specific adapter phase rather than being forced through the legacy Schedule 1.0 contract. Likewise, the legacy education-survey consumption questions remain separate contracts and are not silently promoted to detailed-consumption measures.
