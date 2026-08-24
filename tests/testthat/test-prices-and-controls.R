@@ -652,6 +652,85 @@ test_that("NSS sub-rounds map to consecutive survey-quarter price months", {
   )
 })
 
+test_that("HCES panels map to overlapping three-month survey windows", {
+  registry <- read_consumption_survey_registry(build_paths(Sys.getenv("EMI_PROJECT_ROOT", ".")))
+  spec22 <- consumption_survey_spec(registry, "hces_2022_23")
+  spec23 <- consumption_survey_spec(registry, "hces_2023_24")
+
+  expect_equal(
+    survey_panel_months(1, spec22),
+    as.Date(c("2022-08-01", "2022-09-01", "2022-10-01"))
+  )
+  expect_equal(
+    survey_panel_months(10, spec22),
+    as.Date(c("2023-05-01", "2023-06-01", "2023-07-01"))
+  )
+  expect_equal(
+    survey_panel_months(10, spec23),
+    as.Date(c("2024-05-01", "2024-06-01", "2024-07-01"))
+  )
+  expect_equal(normalise_survey_panel(c("1", "panel 10", "11"), spec22), c(1L, 10L, NA_integer_))
+})
+
+test_that("HCES panel deflators average exactly the panel's three monthly indices", {
+  registry <- read_consumption_survey_registry(build_paths(Sys.getenv("EMI_PROJECT_ROOT", ".")))
+  spec <- consumption_survey_spec(registry, "hces_2022_23")
+  months <- seq(as.Date("2022-08-01"), as.Date("2023-07-01"), by = "month")
+  d <- data.frame(
+    state_code = "BIH",
+    sector = "rural",
+    period = months,
+    price_deflator = seq_along(months),
+    spatial_price_relative = 1,
+    price_source = "cpi_rural_2012",
+    temporal_state_source = "BIH",
+    state_rule = "direct",
+    fallback_reason = NA_character_,
+    stringsAsFactors = FALSE
+  )
+
+  out <- build_survey_panel_deflators(d, spec)
+  expect_equal(out$panel, 1:10)
+  expect_equal(out$price_deflator, 2:11)
+  expect_equal(out$period_start[c(1, 10)], as.Date(c("2022-08-01", "2023-05-01")))
+  expect_equal(out$period_end[c(1, 10)], as.Date(c("2022-10-01", "2023-07-01")))
+})
+
+test_that("registered real-consumption deflation dispatches HCES to panel timing", {
+  registry <- read_consumption_survey_registry(build_paths(Sys.getenv("EMI_PROJECT_ROOT", ".")))
+  spec <- consumption_survey_spec(registry, "hces_2023_24")
+  months <- seq(as.Date("2023-08-01"), as.Date("2024-07-01"), by = "month")
+  deflators <- data.frame(
+    state_code = "BIH",
+    sector = "rural",
+    period = months,
+    price_deflator = rep(2, length(months)),
+    spatial_price_relative = 1,
+    price_source = "cpi_rural_2012",
+    temporal_state_source = "BIH",
+    state_rule = "direct",
+    fallback_reason = NA_character_,
+    stringsAsFactors = FALSE
+  )
+  households <- data.frame(
+    source_state_code = "10",
+    sector = "1",
+    subround = "4",
+    nominal_mpce = 100,
+    nominal_household_consumption = 400,
+    household_size = 4,
+    survey_weight = 2,
+    stringsAsFactors = FALSE
+  )
+
+  out <- deflate_detailed_consumption_households(households, deflators, spec)
+  expect_equal(out$.price_panel, 4L)
+  expect_equal(out$period_start, as.Date("2023-11-01"))
+  expect_equal(out$period_end, as.Date("2024-01-01"))
+  expect_equal(out$real_mpce, 50)
+  expect_equal(out$real_household_consumption, 200)
+})
+
 test_that("NSS sub-round deflators average exactly three monthly indices", {
   months <- seq(as.Date("2007-07-01"), as.Date("2007-09-01"), by = "month")
   d <- data.frame(

@@ -15,8 +15,8 @@ logic. The historical `nss_*` functions are compatibility wrappers backed by the
 registry, so the current 2007-08 and 2017-18 public outputs remain unchanged while
 later phases add canonical Schedule 1.0 and three-visit HCES household readers. The
 Schedule 1.0 readers and the nominal HCES three-visit reconstruction are now active.
-HCES three-visit price timing is declared in the registry but remains intentionally
-outside the quarterly NSS sub-round implementation until its panel-month price phase.
+Modern HCES real expenditure uses its registered overlapping three-month panel timing,
+not the non-overlapping quarterly NSS sub-round implementation.
 
 The registry also records that the active 2007-08 outcome currently comes from the
 education survey's household consumption question, whereas the planned 2007-08
@@ -46,6 +46,16 @@ the F/C/D multiplier to be identical within household and fails otherwise.
 Both rounds must reproduce the official all-India rural/urban MPCE benchmarks
 within one rupee before their nominal household objects can feed later price,
 geography, or welfare targets.
+
+For the primary real-MPCE construction, panel `r` is assigned the three consecutive
+survey months `r:(r+2)`: panel 1 covers the first through third survey months and
+panel 10 covers the tenth through twelfth. The state-sector CPI deflator is averaged
+over those three months and attached at the household level before any district
+aggregation. This deliberately uses the same panel-average timing rule in 2022-23
+and 2023-24. The public 2022-23 Level 15 release does not identify questionnaire
+visit order, while 2023-24 does; exact questionnaire-visit deflation for 2023-24 is
+therefore reserved as a later timing sensitivity rather than changing the primary
+cross-round estimand.
 
 ## Main-paper specification after the revision gate
 
@@ -240,11 +250,13 @@ and 2011-12 surveys is covered before the January 2013 CPI-R/U switch.
 
 `deflate_detailed_consumption_households()` operates only on the explicit
 canonical detailed-survey contract: authoritative source state, sector,
-sub-round, nominal MPCE, nominal household consumption, household size, and
-survey weight. It does not reuse the legacy column-name heuristic that guesses
-whether a source field is a household total. The function attaches the
-registered three-month sub-round deflator first, then constructs `real_mpce`
-and `real_household_consumption`; their household-size identity is checked.
+registered period group, nominal MPCE, nominal household consumption, household
+size, and survey weight. It does not reuse the legacy column-name heuristic that
+guesses whether a source field is a household total. Price attachment dispatches
+from the survey registry: non-overlapping three-month sub-rounds for legacy NSS
+Schedule 1.0 and overlapping three-month panels for modern HCES. Only then are
+`real_mpce` and `real_household_consumption` constructed and their household-size
+identity checked.
 The production targets depend on the corresponding official MPCE reconstruction
 gate, so a survey cannot proceed to real welfare measures if its nominal
 reconstruction has not first matched the published benchmark.

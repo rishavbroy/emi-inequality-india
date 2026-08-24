@@ -17,9 +17,9 @@ deflate_detailed_consumption_households <- function(households, deflators, speci
   }
   if (!nrow(hh)) return(hh)
 
-  out <- attach_survey_subround_deflator(
+  out <- attach_registered_consumption_deflator(
     hh, deflators, specification,
-    state_col = "source_state_code", sector_col = "sector", subround_col = "subround"
+    state_col = "source_state_code", sector_col = "sector", period_group_col = "subround"
   )
   out$real_mpce <- num(out$nominal_mpce) / num(out$price_deflator)
   out$real_household_consumption <-

@@ -344,6 +344,26 @@ core_pipeline_targets <- list(
       )
     }
   ),
+  tar_target(
+    consumption_households_real_hces_2022_23,
+    {
+      consumption_mpce_validation_hces_2022_23
+      deflate_detailed_consumption_households(
+        consumption_households_hces_2022_23, state_sector_price_deflators,
+        consumption_survey_spec(consumption_survey_registry, "hces_2022_23")
+      )
+    }
+  ),
+  tar_target(
+    consumption_households_real_hces_2023_24,
+    {
+      consumption_mpce_validation_hces_2023_24
+      deflate_detailed_consumption_households(
+        consumption_households_hces_2023_24, state_sector_price_deflators,
+        consumption_survey_spec(consumption_survey_registry, "hces_2023_24")
+      )
+    }
+  ),
 
   tar_target(raw_nss_2007_education, { raw_data_preflight; read_nss_2007_education(paths) }),
   tar_target(raw_nss_2007_consumption, { raw_data_preflight; read_nss_2007_consumption(paths) }),
