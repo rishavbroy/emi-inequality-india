@@ -270,3 +270,28 @@ welfare aggregation is introduced.
 ### Historical consumption lineage identity aliases
 
 Historical consumption source labels are never fuzzy-matched into Census-2001 districts. A small reviewed metadata registry, `data/metadata/consumption_lineage_identity_aliases.csv`, handles only deterministic orthographic, abbreviation, truncation, or documented source-label corruption cases whose target is a unique Census-2001 district within the same normalized state. The lineage bridge applies exact Census-2001 identity first, then these reviewed identity aliases, then stable reviewed cross-wave lineage. Administrative-change cases remain unresolved for explicit adjudication.
+
+### Historical district welfare survey design
+
+Historical district mean MPCE is now estimated from the lineaged household
+records with the project's existing `survey` dependency. The design uses the
+NSS first-stage unit as the PSU and nests it within state, sector, stratum and
+sub-stratum. Sub-round is retained as fieldwork timing metadata but is not
+promoted to a sampling stratum. This matches the NSS stratified multistage
+sample design: FSUs are selected within stratum/sub-stratum cells and
+households are the ultimate sampling units.
+
+Because household MPCE is a per-person welfare concept, the analysis weight for
+mean MPCE is the combined household multiplier multiplied by household size and
+by any reviewed lineage allocation weight. Unresolved source districts are not
+silently assigned or dropped upstream; they remain visible in the lineage
+coverage/review diagnostics and are excluded only at the district-estimation
+boundary because they have no Census-2001 target.
+
+The public district-welfare diagnostic is long-form and reports the estimate,
+design-based standard error, coefficient of variation, raw household and FSU
+support, and Kish effective sample size. Thin districts remain in the output
+with their precision metadata rather than being removed by an arbitrary sample
+threshold. Distributional outcomes (quantiles, Gini, Atkinson and poverty) are
+separate later phases and should reuse this survey-design layer rather than
+introduce hand-written variance estimators.

@@ -541,6 +541,36 @@ core_pipeline_targets <- list(
     format = "file"
   ),
   tar_target(
+    consumption_district_welfare_2004_05,
+    estimate_consumption_district_mean(consumption_households_lineaged_2004_05)
+  ),
+  tar_target(
+    consumption_district_welfare_2009_10_type1,
+    estimate_consumption_district_mean(consumption_households_lineaged_2009_10_type1)
+  ),
+  tar_target(
+    consumption_district_welfare_2009_10_type2,
+    estimate_consumption_district_mean(consumption_households_lineaged_2009_10_type2)
+  ),
+  tar_target(
+    consumption_district_welfare_2011_12_type2,
+    estimate_consumption_district_mean(consumption_households_lineaged_2011_12_type2)
+  ),
+  tar_target(
+    consumption_district_welfare,
+    safe_bind_rows(list(
+      consumption_district_welfare_2004_05,
+      consumption_district_welfare_2009_10_type1,
+      consumption_district_welfare_2009_10_type2,
+      consumption_district_welfare_2011_12_type2
+    ))
+  ),
+  tar_target(
+    consumption_district_welfare_file,
+    save_consumption_district_welfare(consumption_district_welfare),
+    format = "file"
+  ),
+  tar_target(
     district_panel_conservative_provisional,
     build_lineage_district_panel(
       district_lineage$conservative_source_crosswalk,
