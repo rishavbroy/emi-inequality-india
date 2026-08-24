@@ -104,13 +104,23 @@ read_consumption_district_codebook_ddi <- function(path, source_id) {
   need_pkg("XML", "consumption district-code DDI metadata")
   if (!file.exists(path)) stop("Consumption district DDI is missing: ", path, call. = FALSE)
   doc <- XML::xmlParse(path)
-  vars <- XML::getNodeSet(doc, ".//var[@name='District_Code']")
+  # DDI documents may declare a default namespace. Match by local element name so
+  # the same parser handles both the distributed metadata and small test fixtures.
+  vars <- XML::getNodeSet(
+    doc,
+    "//*[local-name()='var' and @name='District_Code']"
+  )
   if (length(vars) != 1L) {
     stop(source_id, " DDI must contain exactly one District_Code variable.", call. = FALSE)
   }
-  categories <- XML::getNodeSet(vars[[1]], "./catgry")
-  values <- vapply(categories, function(node) trimws(XML::xmlValue(XML::getNodeSet(node, "./catValu")[[1]])), character(1))
-  labels <- vapply(categories, function(node) trimws(XML::xmlValue(XML::getNodeSet(node, "./labl")[[1]])), character(1))
+  categories <- XML::getNodeSet(vars[[1]], "./*[local-name()='catgry']")
+  category_text <- function(node, child) {
+    hit <- XML::getNodeSet(node, paste0("./*[local-name()='", child, "']"))
+    if (length(hit) != 1L) return(NA_character_)
+    trimws(XML::xmlValue(hit[[1]]))
+  }
+  values <- vapply(categories, category_text, character(1), child = "catValu")
+  labels <- vapply(categories, category_text, character(1), child = "labl")
   valid <- grepl("^[0-9]{4}$", values) & nzchar(labels)
   if (!any(valid)) stop(source_id, " DDI contains no labelled four-digit district codes.", call. = FALSE)
 
@@ -216,8 +226,19 @@ consumption_codebook_name_anomalies <- function(codebook) {
     district_key <- canonicalize_district_name(cb$district_name_source[[i]])
     other <- state_names$state_std[state_names$state_std != cb$state_std[[i]]]
     padded_district <- paste0(" ", district_key, " ")
+    compact_district <- gsub(" ", "", district_key, fixed = TRUE)
     hit <- other[vapply(other, function(state) {
-      nzchar(state) && grepl(paste0(" ", state, " "), padded_district, fixed = TRUE)
+      if (!nzchar(state)) return(FALSE)
+      compact_state <- gsub(" ", "", state, fixed = TRUE)
+      # Long state names embedded inside a district label are suspicious even
+      # when a workbook corruption removes the separating whitespace (for
+      # example, "Lakshadweephimpur"). Short names need token boundaries so
+      # ordinary names such as "Goalpara" do not spuriously match "Goa".
+      if (nchar(compact_state) >= 5L) {
+        grepl(compact_state, compact_district, fixed = TRUE)
+      } else {
+        grepl(paste0(" ", state, " "), padded_district, fixed = TRUE)
+      }
     }, logical(1))]
     if (length(hit)) {
       flagged[[i]] <- TRUE

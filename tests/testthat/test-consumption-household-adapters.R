@@ -177,7 +177,7 @@ test_that("district-codebook anomaly review surfaces foreign-state text without 
 test_that("NSS 68 district DDI parser reads labelled four-digit categories from an explicit XML file", {
   ddi <- tempfile(fileext = ".xml")
   writeLines(c(
-    "<codeBook><dataDscr>",
+    "<codeBook xmlns='urn:ddi:test'><dataDscr>",
     "<var ID='V1' name='District_Code'>",
     "<catgry><catValu>1406</catValu><labl>Thoubal</labl></catgry>",
     "<catgry><catValu>1407</catValu><labl>Bishnupur</labl></catgry>",
@@ -190,7 +190,7 @@ test_that("NSS 68 district DDI parser reads labelled four-digit categories from 
   expect_equal(out$state_std, c("manipur", "manipur"))
 })
 
-test_that("district-codebook anomaly review uses whole state names rather than substrings", {
+test_that("district-codebook anomaly review avoids short-state substring false positives", {
   codebook <- data.frame(
     source_id = c("round", "round"),
     state_code_source = c("18", "30"), district_code_source = c("03", "01"),
