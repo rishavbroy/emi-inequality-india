@@ -104,32 +104,53 @@ read_consumption_district_codebook_ddi <- function(path, source_id) {
   need_pkg("XML", "consumption district-code DDI metadata")
   if (!file.exists(path)) stop("Consumption district DDI is missing: ", path, call. = FALSE)
   doc <- XML::xmlParse(path)
-  # DDI documents may declare a default namespace. Match by local element name so
-  # the same parser handles both the distributed metadata and small test fixtures.
+  # A DDI can repeat the same variable in several data-file descriptions. NSS 68
+  # does this for District_Code. Parse every definition, then require the repeated
+  # code -> label mappings to agree instead of assuming one global variable node.
   vars <- XML::getNodeSet(
     doc,
     "//*[local-name()='var' and @name='District_Code']"
   )
-  if (length(vars) != 1L) {
-    stop(source_id, " DDI must contain exactly one District_Code variable.", call. = FALSE)
+  if (!length(vars)) {
+    stop(source_id, " DDI must contain at least one District_Code variable.", call. = FALSE)
   }
-  categories <- XML::getNodeSet(vars[[1]], "./*[local-name()='catgry']")
   category_text <- function(node, child) {
     hit <- XML::getNodeSet(node, paste0("./*[local-name()='", child, "']"))
     if (length(hit) != 1L) return(NA_character_)
     trimws(XML::xmlValue(hit[[1]]))
   }
+  categories <- unlist(
+    lapply(vars, XML::getNodeSet, path = "./*[local-name()='catgry']"),
+    recursive = FALSE,
+    use.names = FALSE
+  )
   values <- vapply(categories, category_text, character(1), child = "catValu")
   labels <- vapply(categories, category_text, character(1), child = "labl")
-  valid <- grepl("^[0-9]{4}$", values) & nzchar(labels)
+  valid <- grepl("^[0-9]{4}$", values) & !is.na(labels) & nzchar(labels)
   if (!any(valid)) stop(source_id, " DDI contains no labelled four-digit district codes.", call. = FALSE)
 
-  state_code <- substr(values[valid], 1L, 2L)
-  district_code <- substr(values[valid], 3L, 4L)
+  pairs <- unique(data.frame(
+    district_full_code = values[valid],
+    district_name = labels[valid],
+    stringsAsFactors = FALSE
+  ))
+  conflicting <- duplicated(pairs$district_full_code) | duplicated(pairs$district_full_code, fromLast = TRUE)
+  if (any(conflicting)) {
+    bad <- unique(pairs$district_full_code[conflicting])
+    stop(
+      source_id,
+      " DDI contains conflicting labels for district codes: ",
+      paste(utils::head(bad, 10L), collapse = ", "),
+      call. = FALSE
+    )
+  }
+
+  state_code <- substr(pairs$district_full_code, 1L, 2L)
+  district_code <- substr(pairs$district_full_code, 3L, 4L)
   raw <- data.frame(
     state_name = census_2001_state_name(state_code),
     state_code = state_code,
-    district_name = labels[valid],
+    district_name = pairs$district_name,
     district_code = district_code,
     stringsAsFactors = FALSE
   )
