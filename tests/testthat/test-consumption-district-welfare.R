@@ -100,7 +100,7 @@ test_that("welfare registry dispatches means and quantiles without dropping thin
     outcome_id = c("real_mean_mpce", "mean_log_real_mpce", "weighted_median_real_mpce"),
     estimand = c("survey_mean", "survey_mean", "survey_quantile"),
     transform = c("identity", "log", "identity"), quantile = c(NA, NA, 0.5),
-    quantile_interval = c("", "", "beta"), quantile_rule = c("", "", "math"),
+    quantile_interval = c("", "", "xlogit"), quantile_rule = c("", "", "math"),
     role = c("primary", "robustness", "robustness"), min_households = 10,
     min_fsu = 2, min_kish_effective_n = 1, max_relative_se = c(0.50, NA, 0.50),
     stringsAsFactors = FALSE
@@ -123,10 +123,10 @@ test_that("welfare registry dispatches means and quantiles without dropping thin
   )
   rows <- consumption_design_rows(x)
   design <- consumption_survey_design_from_rows(rows)
-  direct_median <- with_consumption_survey_adjustment(survey::svyquantile(
-    ~real_mpce, design, quantiles = 0.5, ci = TRUE, interval.type = "beta",
+  expect_warning(direct_median <- with_consumption_survey_adjustment(survey::svyquantile(
+    ~real_mpce, design, quantiles = 0.5, ci = TRUE, interval.type = "xlogit",
     qrule = "math", na.rm = TRUE
-  ))
+  )), NA)
   expect_equal(
     out$estimate[out$outcome_id == "weighted_median_real_mpce"],
     unname(stats::coef(direct_median))[[1L]],
@@ -145,7 +145,7 @@ test_that("consumption welfare registry validates outcome contracts", {
     outcome_id = c("real_mean_mpce", "mean_log_real_mpce", "weighted_median_real_mpce"),
     estimand = c("survey_mean", "survey_mean", "survey_quantile"),
     transform = c("identity", "log", "identity"), quantile = c(NA, NA, 0.5),
-    quantile_interval = c("", "", "beta"), quantile_rule = c("", "", "math"),
+    quantile_interval = c("", "", "xlogit"), quantile_rule = c("", "", "math"),
     role = c("primary", "robustness", "robustness"),
     min_households = 50, min_fsu = 2, min_kish_effective_n = 20,
     max_relative_se = c(0.2, NA, 0.2), stringsAsFactors = FALSE
@@ -154,7 +154,7 @@ test_that("consumption welfare registry validates outcome contracts", {
   expect_equal(out$outcome_id, c("real_mean_mpce", "mean_log_real_mpce", "weighted_median_real_mpce"))
   expect_true(is.na(out$max_relative_se[[2L]]))
   expect_equal(out$quantile[[3L]], 0.5)
-  expect_equal(out$quantile_interval[[3L]], "beta")
+  expect_equal(out$quantile_interval[[3L]], "xlogit")
   expect_equal(out$quantile_rule[[3L]], "math")
 
   bad_quantile <- out

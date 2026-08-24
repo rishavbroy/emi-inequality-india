@@ -318,9 +318,13 @@ applying `log()` at the household MPCE level. The median uses
 design and retains its design-based standard error. The registry stores the
 quantile probability, interval method, and quantile rule explicitly so future
 p10/p25 outcomes can use the same estimator without new branches. Quantile
-uncertainty uses the bounded `beta` probability interval rather than `survey`'s
-default mean-scale Woodruff interval, which can yield `NaN` endpoints when a
-probability confidence interval leaves [0, 1]. The mathematical quantile rule
+uncertainty uses the logit-scale Woodruff interval (`interval.type = "xlogit"`)
+rather than `survey`'s default mean-scale interval. The previously tested beta
+interval is bounded in probability space but derives an effective sample size
+from the domain variance estimate; thin district domains can yield invalid beta
+shape parameters and `NaNs produced`. The xlogit method avoids that beta
+effective-sample-size calculation while remaining a standard `survey`
+probability-interval method. The mathematical quantile rule
 (`qrule = "math"`) remains explicit as well. Warnings are not suppressed; a
 non-finite quantile SE remains `not_estimable`. Level-valued outcomes retain
 `cv = std_error / estimate`; log-mean rows set `cv` to missing because that ratio
