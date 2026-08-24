@@ -136,8 +136,8 @@ consumption_district_support <- function(lineaged_households) {
 read_consumption_welfare_outcomes <- function(path) {
   x <- read.csv(path, stringsAsFactors = FALSE, check.names = FALSE)
   required <- c(
-    "outcome_id", "estimand", "transform", "quantile", "role", "min_households", "min_fsu",
-    "min_kish_effective_n", "max_relative_se"
+    "outcome_id", "estimand", "transform", "quantile", "quantile_interval", "quantile_rule",
+    "role", "min_households", "min_fsu", "min_kish_effective_n", "max_relative_se"
   )
   missing <- setdiff(required, names(x))
   if (length(missing)) {
@@ -156,6 +156,19 @@ read_consumption_welfare_outcomes <- function(path) {
   if (any(mean_row & is.finite(x$quantile)) ||
       any(quantile_row & (!is.finite(x$quantile) | x$quantile <= 0 | x$quantile >= 1))) {
     stop("Consumption welfare registry contains invalid quantile declarations.", call. = FALSE)
+  }
+  x$quantile_interval <- trimws(plain_chr(x$quantile_interval))
+  x$quantile_rule <- trimws(plain_chr(x$quantile_rule))
+  x$quantile_interval[is.na(x$quantile_interval)] <- ""
+  x$quantile_rule[is.na(x$quantile_rule)] <- ""
+  allowed_intervals <- c("mean", "beta", "xlogit", "asin", "score")
+  allowed_rules <- c("math", "school", "shahvaish", paste0("hf", 1:9))
+  invalid_quantile_method <- quantile_row & (
+    !x$quantile_interval %in% allowed_intervals | !x$quantile_rule %in% allowed_rules
+  )
+  stray_quantile_method <- mean_row & (nzchar(x$quantile_interval) | nzchar(x$quantile_rule))
+  if (any(invalid_quantile_method) || any(stray_quantile_method)) {
+    stop("Consumption welfare registry contains invalid quantile uncertainty declarations.", call. = FALSE)
   }
   for (nm in c("min_households", "min_fsu", "min_kish_effective_n", "max_relative_se")) {
     x[[nm]] <- suppressWarnings(as.numeric(x[[nm]]))
@@ -284,6 +297,8 @@ estimate_consumption_district_svyquantile <- function(rows, design, support, rul
     survey::svyquantile,
     quantiles = rule$quantile[[1L]],
     ci = TRUE,
+    interval.type = rule$quantile_interval[[1L]],
+    qrule = rule$quantile_rule[[1L]],
     na.rm = TRUE,
     vartype = "se",
     keep.names = FALSE,
@@ -323,7 +338,8 @@ estimate_consumption_district_welfare <- function(lineaged_households, outcome_r
 estimate_consumption_district_mean <- function(lineaged_households) {
   # Backward-compatible single-outcome wrapper used by focused tests and callers.
   registry <- data.frame(
-    outcome_id = "real_mean_mpce", estimand = "survey_mean", transform = "identity", quantile = NA_real_, role = "primary",
+    outcome_id = "real_mean_mpce", estimand = "survey_mean", transform = "identity", quantile = NA_real_,
+    quantile_interval = "", quantile_rule = "", role = "primary",
     min_households = 1, min_fsu = 1, min_kish_effective_n = .Machine$double.eps,
     max_relative_se = NA_real_, stringsAsFactors = FALSE
   )
