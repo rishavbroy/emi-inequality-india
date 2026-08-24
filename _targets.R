@@ -128,6 +128,62 @@ core_pipeline_targets <- list(
       consumption_archive_2011_12_type2, consumption_survey_spec(consumption_survey_registry, "nss_2011_12_type2")
     )
   ),
+  tar_target(
+    consumption_district_codebook_2004_05_file,
+    {
+      raw_data_preflight
+      path_project(paths, "data/raw/hces/2004-05/District_code_list_nss61_round.xls")
+    },
+    format = "file"
+  ),
+  tar_target(
+    consumption_district_codebook_2009_10_file,
+    {
+      raw_data_preflight
+      path_project(paths, "data/raw/hces/2009-10/District code_66.xls")
+    },
+    format = "file"
+  ),
+  tar_target(
+    consumption_district_codebook_2004_05,
+    read_consumption_district_codebook_excel(consumption_district_codebook_2004_05_file, "nss_2004_05")
+  ),
+  tar_target(
+    consumption_district_codebook_2009_10,
+    read_consumption_district_codebook_excel(consumption_district_codebook_2009_10_file, "nss_2009_10")
+  ),
+  tar_target(
+    consumption_district_codebook_2009_10_anomalies,
+    consumption_codebook_name_anomalies(consumption_district_codebook_2009_10)
+  ),
+  tar_target(
+    consumption_district_codebook_2011_12_file,
+    {
+      raw_data_preflight
+      path_project(paths, "data/raw/hces/2011-12/DDI-IND-MOSPI-NSSO-68Rnd-Sch2.0-July2011-June2012.xml")
+    },
+    format = "file"
+  ),
+  tar_target(
+    consumption_district_codebook_2011_12,
+    read_consumption_district_codebook_ddi(consumption_district_codebook_2011_12_file, "nss_2011_12")
+  ),
+  tar_target(
+    consumption_households_named_2004_05,
+    attach_consumption_source_district_identity(consumption_households_2004_05, consumption_district_codebook_2004_05)
+  ),
+  tar_target(
+    consumption_households_named_2009_10_type1,
+    attach_consumption_source_district_identity(consumption_households_2009_10_type1, consumption_district_codebook_2009_10)
+  ),
+  tar_target(
+    consumption_households_named_2009_10_type2,
+    attach_consumption_source_district_identity(consumption_households_2009_10_type2, consumption_district_codebook_2009_10)
+  ),
+  tar_target(
+    consumption_households_named_2011_12_type2,
+    attach_consumption_source_district_identity(consumption_households_2011_12_type2, consumption_district_codebook_2011_12)
+  ),
 
   tar_target(raw_nss_2007_education, { raw_data_preflight; read_nss_2007_education(paths) }),
   tar_target(raw_nss_2007_consumption, { raw_data_preflight; read_nss_2007_consumption(paths) }),
