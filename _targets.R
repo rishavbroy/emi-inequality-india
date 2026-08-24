@@ -145,8 +145,25 @@ core_pipeline_targets <- list(
     format = "file"
   ),
   tar_target(
-    consumption_district_codebook_2004_05,
+    consumption_source_geography_special_units_file,
+    path_project(paths, "data/metadata/consumption_source_geography_special_units.csv"),
+    format = "file"
+  ),
+  tar_target(
+    consumption_source_geography_special_units,
+    read_consumption_source_geography_special_units(consumption_source_geography_special_units_file)
+  ),
+  tar_target(
+    consumption_district_codebook_2004_05_base,
     read_consumption_district_codebook_excel(consumption_district_codebook_2004_05_file, "nss_2004_05")
+  ),
+  tar_target(
+    consumption_district_codebook_2004_05,
+    merge_consumption_codebook_special_units(
+      consumption_district_codebook_2004_05_base,
+      consumption_source_geography_special_units,
+      "nss_2004_05"
+    )
   ),
   tar_target(
     consumption_district_codebook_2009_10,

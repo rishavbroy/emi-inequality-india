@@ -184,3 +184,16 @@ Modern HCES rows deliberately declare a separate `three_questionnaire` adapter a
 ## Detailed-consumption source ingestion
 
 The historical detailed-consumption adapter now reads the distributed NSS CSV archives through one column-contract interface. It locates the unique household/MPCE members by the fields declared in `consumption_survey_registry.csv`, rather than by survey-specific filenames. The canonical output preserves FSU, stratum, and sub-stratum identifiers needed for later design-based district estimation. NSS 61 uses its MPCE-365/MRP field; NSS 66 Type 1 uses `MPCE_MRP`; NSS 66 Type 2 uses `MPCE`; and NSS 68 Type 2 applies the documented 0.01 scale to the distributed integer MPCE field. Modern HCES remains excluded from this adapter because its FDQ/CSQ/DGQ three-visit construction is methodologically distinct.
+
+## Source district identities for detailed NSS rounds
+
+Historical detailed-consumption households keep their released geography untouched until a round-specific official district dictionary is attached. NSS 61 uses `District_code_list_nss61_round.xls`; NSS 66 uses `District code_66.xls`; NSS 68 reads the labelled `District_Code` categories directly from the DDI XML embedded in the distributed Type-2 archive. The attachment layer accepts either two-digit within-state district codes or documented four-digit state+district codes, requires every observed household code to resolve exactly once, and preserves both the official source label and canonical matching keys. It does not infer district identity from numeric ordering.
+
+Official source labels are retained even when a codebook appears textually damaged. Such anomalies are review evidence, not an invitation to silently rewrite the source; later lineage matching may use independently documented administrative identities while keeping the raw label auditable.
+
+
+### Aggregate survey-frame geography is not a district
+
+Source-geography resolution distinguishes named districts from documented survey-frame aggregates. NSS 61 is the first active example: the released Delhi records contain ordinary district codes together with codes 98 and 99. The round's official estimation procedure identifies the corresponding strata as an all-district aggregate and a Delhi Municipal Corporation aggregate; the released microdata show those special codes only with strata 99 and 10, respectively. These rows are retained for state/national reconstruction and official-aggregate QA, but `source_lineage_eligible = FALSE` prevents them from being silently assigned to a Census-2001 district. Unknown codes still fail. The small tracked special-unit registry records these exceptional source identities and their mapping basis rather than embedding round-specific exceptions in R.
+
+The NSS 61 workbook spells Tamil Nadu as `Tamilnadu`; this is handled in the shared state-name canonicalization table, not in consumption-specific code. NSS 68 DDI parsing uses the document's declared XML namespace explicitly so default-namespace metadata do not generate XPath warnings.
