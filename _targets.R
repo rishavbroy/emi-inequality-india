@@ -72,6 +72,62 @@ core_pipeline_targets <- list(
     consumption_price_spec_2017_legacy,
     consumption_survey_spec(consumption_survey_registry, "nss_2017_18_education")
   ),
+  tar_target(
+    consumption_archive_2004_05,
+    {
+      raw_data_preflight
+      discover_consumption_csv_archive(paths, consumption_survey_spec(consumption_survey_registry, "nss_2004_05"))
+    },
+    format = "file"
+  ),
+  tar_target(
+    consumption_archive_2009_10_type1,
+    {
+      raw_data_preflight
+      discover_consumption_csv_archive(paths, consumption_survey_spec(consumption_survey_registry, "nss_2009_10_type1"))
+    },
+    format = "file"
+  ),
+  tar_target(
+    consumption_archive_2009_10_type2,
+    {
+      raw_data_preflight
+      discover_consumption_csv_archive(paths, consumption_survey_spec(consumption_survey_registry, "nss_2009_10_type2"))
+    },
+    format = "file"
+  ),
+  tar_target(
+    consumption_archive_2011_12_type2,
+    {
+      raw_data_preflight
+      discover_consumption_csv_archive(paths, consumption_survey_spec(consumption_survey_registry, "nss_2011_12_type2"))
+    },
+    format = "file"
+  ),
+  tar_target(
+    consumption_households_2004_05,
+    read_registered_detailed_consumption(
+      consumption_archive_2004_05, consumption_survey_spec(consumption_survey_registry, "nss_2004_05")
+    )
+  ),
+  tar_target(
+    consumption_households_2009_10_type1,
+    read_registered_detailed_consumption(
+      consumption_archive_2009_10_type1, consumption_survey_spec(consumption_survey_registry, "nss_2009_10_type1")
+    )
+  ),
+  tar_target(
+    consumption_households_2009_10_type2,
+    read_registered_detailed_consumption(
+      consumption_archive_2009_10_type2, consumption_survey_spec(consumption_survey_registry, "nss_2009_10_type2")
+    )
+  ),
+  tar_target(
+    consumption_households_2011_12_type2,
+    read_registered_detailed_consumption(
+      consumption_archive_2011_12_type2, consumption_survey_spec(consumption_survey_registry, "nss_2011_12_type2")
+    )
+  ),
 
   tar_target(raw_nss_2007_education, { raw_data_preflight; read_nss_2007_education(paths) }),
   tar_target(raw_nss_2007_consumption, { raw_data_preflight; read_nss_2007_consumption(paths) }),
