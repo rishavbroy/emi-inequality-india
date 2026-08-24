@@ -1,4 +1,4 @@
-outcome_id,estimand,transform,quantile,role,min_households,min_fsu,min_kish_effective_n,max_relative_se,notes
-real_mean_mpce,survey_mean,identity,,primary,50,2,20,0.20,Primary real consumption level; support and precision thresholds are diagnostic eligibility flags and never delete estimates.
-mean_log_real_mpce,survey_mean,log,,robustness,50,2,20,,Mean log real MPCE robustness outcome; sample-support thresholds apply but no relative-SE cutoff is imposed because relative SE of a log-level mean is not a consumption CV.
-weighted_median_real_mpce,survey_quantile,identity,0.5,robustness,50,2,20,0.20,Design-based person-weighted median real MPCE; survey quantile uncertainty is retained and support/precision flags never delete estimates.
+outcome_id,estimand,transform,quantile,quantile_interval,quantile_rule,role,min_households,min_fsu,min_kish_effective_n,max_relative_se,notes
+real_mean_mpce,survey_mean,identity,,,,primary,50,2,20,0.20,Primary real consumption level; support and precision thresholds are diagnostic eligibility flags and never delete estimates.
+mean_log_real_mpce,survey_mean,log,,,,robustness,50,2,20,,Mean log real MPCE robustness outcome; sample-support thresholds apply but no relative-SE cutoff is imposed because relative SE of a log-level mean is not a consumption CV.
+weighted_median_real_mpce,survey_quantile,identity,0.5,beta,math,robustness,50,2,20,0.20,Design-based person-weighted median real MPCE; survey quantile uncertainty is retained and support/precision flags never delete estimates.
