@@ -227,3 +227,18 @@ reconstruction has not first matched the published benchmark.
 ### CPI-IW base transition for the 2004-05 welfare baseline
 
 The urban pre-2013 temporal series respects the Labour Bureau CPI-IW base regimes. The 2001-base 78-centre series begins in January 2006, so 2004-05 is constructed from the predecessor 1982-base system rather than by back-casting the 2001 centre weights. `data/metadata/cpi_iw_centres_1982.csv` records the published 70-centre All-India weights, three additional one-centre state series needed for Goa, Himachal Pradesh, and Tripura, and the published 2001/1982 centre linking factors. State indices retain the 1982 weighting system and are converted to 2001-base units with the weighted mean of available published linking factors within each state; `link_weight_coverage` records the share of the old state weighting system represented by centres with a direct published link when a retired centre has no 2001 successor. The published All-India linking factor (4.63) is used for the explicit All-India fallback series. January 2006 onward uses the native 2001-base 78-centre system.
+
+### Historical CPI-IW source gaps
+
+The historical urban chain remains weighted state CPI-IW before 2013. The RBI
+centre extract is required to contain the complete official centre universe for
+a month; partial months are never renormalized over the centres that happen to
+be present. If a 2001-base CPI-IW month is incomplete and falls in the period
+covered by the official state CPI-Urban series (2010=100, released from January
+2011), the missing state-months are filled from CPI-Urban after a state-specific
+median overlap calibration to CPI-IW units. The output records
+`cpi_iw_completion = "scaled_cpi_u_2010_gap_fill"` for those observations.
+Months that cannot be completed from an official overlapping series remain
+fatal. This rule is designed for source-file gaps such as the incomplete RBI
+centre months in 2012; it does not replace weighted CPI-IW as the primary
+pre-2013 urban deflator.
