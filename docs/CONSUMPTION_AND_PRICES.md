@@ -223,3 +223,7 @@ and `real_household_consumption`; their household-size identity is checked.
 The production targets depend on the corresponding official MPCE reconstruction
 gate, so a survey cannot proceed to real welfare measures if its nominal
 reconstruction has not first matched the published benchmark.
+
+### CPI-IW base transition for the 2004-05 welfare baseline
+
+The urban pre-2013 temporal series respects the Labour Bureau CPI-IW base regimes. The 2001-base 78-centre series begins in January 2006, so 2004-05 is constructed from the predecessor 1982-base system rather than by back-casting the 2001 centre weights. `data/metadata/cpi_iw_centres_1982.csv` records the published 70-centre All-India weights, three additional one-centre state series needed for Goa, Himachal Pradesh, and Tripura, and the published 2001/1982 centre linking factors. State indices retain the 1982 weighting system and are converted to 2001-base units with the weighted mean of available published linking factors within each state; `link_weight_coverage` records the share of the old state weighting system represented by centres with a direct published link when a retired centre has no 2001 successor. The published All-India linking factor (4.63) is used for the explicit All-India fallback series. January 2006 onward uses the native 2001-base 78-centre system.
