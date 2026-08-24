@@ -298,3 +298,27 @@ with their precision metadata rather than being removed by an arbitrary sample
 threshold. Distributional outcomes (quantiles, Gini, Atkinson and poverty) are
 separate later phases and should reuse this survey-design layer rather than
 introduce hand-written variance estimators.
+
+### District welfare outcome registry and support flags
+
+Historical district welfare outcomes are declared in
+`data/metadata/consumption_welfare_outcomes.csv`. The registry separates the
+estimand from diagnostic support rules. Estimates are never dropped merely for
+failing a support rule: the output retains the estimate, design standard error,
+relative standard error, household and PSU counts, fractional sample-person
+equivalent, represented person weight, and Kish effective sample size.
+`sample_support_ok`, `precision_ok`, and `preferred_eligible` are therefore
+review/specification flags, not upstream filters.
+
+The first two registered survey-mean outcomes are real mean MPCE (primary) and
+mean log real MPCE (robustness). The latter is estimated with the same NSS
+survey design and person weights after applying `log()` at the household MPCE
+level. The level-mean row retains `cv = std_error / estimate`; log-mean rows set
+`cv` to missing because that ratio is not a consumption coefficient of
+variation. `relative_se` is retained generically for all outcomes.
+
+The initial support thresholds (50 households, 2 PSUs, Kish effective N 20,
+and a 20% relative-SE ceiling for the primary level mean) are explicit QA and
+preferred-analysis rules rather than survey-theory cutoffs. They are stored in
+the registry so sensitivity analyses can vary them transparently without
+reconstructing district estimates.

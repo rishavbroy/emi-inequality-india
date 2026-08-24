@@ -541,20 +541,37 @@ core_pipeline_targets <- list(
     format = "file"
   ),
   tar_target(
+    consumption_welfare_outcomes_file,
+    "data/metadata/consumption_welfare_outcomes.csv",
+    format = "file"
+  ),
+  tar_target(
+    consumption_welfare_outcomes,
+    read_consumption_welfare_outcomes(consumption_welfare_outcomes_file)
+  ),
+  tar_target(
     consumption_district_welfare_2004_05,
-    estimate_consumption_district_mean(consumption_households_lineaged_2004_05)
+    estimate_consumption_district_welfare(
+      consumption_households_lineaged_2004_05, consumption_welfare_outcomes
+    )
   ),
   tar_target(
     consumption_district_welfare_2009_10_type1,
-    estimate_consumption_district_mean(consumption_households_lineaged_2009_10_type1)
+    estimate_consumption_district_welfare(
+      consumption_households_lineaged_2009_10_type1, consumption_welfare_outcomes
+    )
   ),
   tar_target(
     consumption_district_welfare_2009_10_type2,
-    estimate_consumption_district_mean(consumption_households_lineaged_2009_10_type2)
+    estimate_consumption_district_welfare(
+      consumption_households_lineaged_2009_10_type2, consumption_welfare_outcomes
+    )
   ),
   tar_target(
     consumption_district_welfare_2011_12_type2,
-    estimate_consumption_district_mean(consumption_households_lineaged_2011_12_type2)
+    estimate_consumption_district_welfare(
+      consumption_households_lineaged_2011_12_type2, consumption_welfare_outcomes
+    )
   ),
   tar_target(
     consumption_district_welfare,
