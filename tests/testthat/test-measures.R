@@ -639,6 +639,27 @@ test_that("native English is explicit rather than unresolved distance mass", {
 })
 
 
+test_that("bulk Glottolog language-node indexing preserves endpoint semantics", {
+  languoids <- data.frame(
+    id = c("family", "language", "dialect", "book", "book_child"),
+    parent_id = c("", "family", "language", "", "book"),
+    level = c("family", "language", "dialect", "family", "language"),
+    bookkeeping = c(FALSE, FALSE, FALSE, TRUE, FALSE),
+    stringsAsFactors = FALSE
+  )
+
+  index <- glottolog_language_node_index(languoids)
+
+  expect_identical(unname(index[c("language", "dialect")]), c("language", "language"))
+  expect_true(is.na(index[["family"]]))
+  expect_true(is.na(index[["book"]]))
+  expect_true(is.na(index[["book_child"]]))
+  expect_identical(
+    unname(index),
+    vapply(languoids$id, glottolog_language_node, languoids = languoids, FUN.VALUE = character(1))
+  )
+})
+
 test_that("Census-Glottolog candidates are exact, leaf-aware, and review-only", {
   languoids <- data.frame(
     id = c("indo", "sino", "hindi", "bhili", "bilaspuri", "mising"),

@@ -61,6 +61,42 @@ glottolog_language_node <- function(glottocode, languoids) {
   path[[language[[1]]]]
 }
 
+#' Resolve many Glottolog endpoints with one genealogy index
+#'
+#' Bulk callers should use this helper instead of repeatedly rebuilding named
+#' parent vectors and subsetting the full languoid table for each Glottocode.
+#' The result preserves `glottolog_language_node()` semantics: descendants of
+#' bookkeeping branches and family-only endpoints resolve to `NA`.
+glottolog_language_node_index <- function(languoids) {
+  ids <- plain_chr(languoids$id)
+  parent_by_id <- stats::setNames(plain_chr(languoids$parent_id), ids)
+  level_by_id <- stats::setNames(plain_chr(languoids$level), ids)
+  bookkeeping <- if ("bookkeeping" %in% names(languoids)) {
+    stats::setNames(as.logical(languoids$bookkeeping), ids)
+  } else {
+    stats::setNames(rep(FALSE, length(ids)), ids)
+  }
+
+  resolve_one <- function(id) {
+    if (is.na(id) || !nzchar(id)) return(NA_character_)
+    node <- id
+    language <- NA_character_
+    seen <- character()
+    while (nzchar(node)) {
+      if (node %in% seen) {
+        stop("Glottolog genealogy contains a parent cycle at ", id, ".", call. = FALSE)
+      }
+      seen <- c(seen, node)
+      if (isTRUE(bookkeeping[[node]])) return(NA_character_)
+      if (is.na(language) && identical(level_by_id[[node]], "language")) language <- node
+      node <- parent_by_id[[node]] %||% ""
+    }
+    language
+  }
+
+  stats::setNames(vapply(ids, resolve_one, character(1)), ids)
+}
+
 glottolog_ancestor_path <- function(glottocode, languoids) {
   path <- glottolog_lineage(glottocode, languoids)
   if (!length(path)) return(character())
