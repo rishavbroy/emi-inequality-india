@@ -7,7 +7,7 @@ test_that("modern HCES official district codebook has unique complete geography"
 
   expect_equal(nrow(codebook), 695L)
   expect_equal(length(unique(codebook$state_code_source)), 36L)
-  expect_false(anyDuplicated(codebook[c("state_code_source", "district_code_source")]))
+  expect_equal(anyDuplicated(codebook[c("state_code_source", "district_code_source")]), 0L)
   expect_true(all(codebook$source_unit_kind == "district"))
   expect_true(all(codebook$source_lineage_eligible))
 
