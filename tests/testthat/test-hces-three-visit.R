@@ -174,3 +174,50 @@ test_that("HCES rejects Level 14 summaries without a matching Level 15 visit", {
     "summaries absent from Level 15"
   )
 })
+
+test_that("HCES household identity permits released optional sample-design blanks", {
+  identity <- hces_fixture_identity()
+  identity$sample_su <- ""
+  identity$sample_subdivision <- NA_character_
+
+  id <- hces_household_id(identity)
+  expect_length(id, 1L)
+  expect_true(nzchar(id))
+})
+
+test_that("HCES household identity still requires FSU, second-stage stratum, and household number", {
+  identity <- hces_fixture_identity()
+
+  missing_fsu <- identity
+  missing_fsu$fsu <- ""
+  expect_error(hces_household_id(missing_fsu), "incomplete household identity")
+
+  missing_sss <- identity
+  missing_sss$second_stage_stratum <- ""
+  expect_error(hces_household_id(missing_sss), "incomplete household identity")
+
+  missing_hh <- identity
+  missing_hh$sample_household <- ""
+  expect_error(hces_household_id(missing_hh), "incomplete household identity")
+})
+
+test_that("HCES bundle derives households and QA from the same release levels", {
+  registry <- read_consumption_survey_registry(build_paths(Sys.getenv("EMI_PROJECT_ROOT", ".")))
+  items <- read_hces_summary_items_file(
+    hces_summary_items_path(build_paths(Sys.getenv("EMI_PROJECT_ROOT", ".")))
+  )
+  spec <- consumption_survey_spec(registry, "hces_2023_24")
+  level14 <- hces_fixture_level14()
+  level15 <- hces_fixture_level15()
+
+  level14 <- level14[level14$questionnaire != "D", , drop = FALSE]
+  households <- canonicalize_hces_three_visit(level14, level15, spec, items)
+  coverage <- summarize_hces_summary_coverage(level14, level15, spec, items)
+
+  expect_equal(households$nominal_mpce, 275)
+  expect_equal(
+    coverage$n_summary_zero_filled[coverage$questionnaire == "D"],
+    1L
+  )
+  expect_equal(sum(coverage$n_households), 3L)
+})

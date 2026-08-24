@@ -169,6 +169,17 @@ hces_household_identity_fields <- function() {
   )
 }
 
+hces_optional_household_identity_fields <- function() {
+  # The 2022-23 public release contains a valid household whose Sample SU No.
+  # and Sample Sub-division No. are both blank. FSU + second-stage stratum +
+  # sample household number remain populated and uniquely identify it.
+  c("sample_su", "sample_subdivision")
+}
+
+hces_required_household_identity_fields <- function() {
+  setdiff(hces_household_identity_fields(), hces_optional_household_identity_fields())
+}
+
 hces_household_id <- function(data) {
   x <- safe_df(data)
   fields <- hces_household_identity_fields()
@@ -179,7 +190,7 @@ hces_household_id <- function(data) {
     value
   })
   names(parts) <- fields
-  required <- setdiff(fields, "sample_subdivision")
+  required <- hces_required_household_identity_fields()
   invalid <- Reduce(`|`, lapply(required, function(field) !nzchar(parts[[field]])))
   if (any(invalid)) {
     stop("HCES release rows contain incomplete household identity fields.", call. = FALSE)
@@ -427,9 +438,20 @@ canonicalize_hces_three_visit <- function(level14, level15, specification, summa
   out
 }
 
-read_registered_hces_consumption <- function(archive, specification, summary_items) {
+read_registered_hces_bundle <- function(archive, specification, summary_items) {
   spec <- validate_hces_three_visit_specification(specification)
   level14 <- read_hces_release_level(archive, spec, 14L)
   level15 <- read_hces_release_level(archive, spec, 15L)
-  canonicalize_hces_three_visit(level14, level15, spec, summary_items)
+  list(
+    households = canonicalize_hces_three_visit(level14, level15, spec, summary_items),
+    summary_coverage = summarize_hces_summary_coverage(
+      level14, level15, spec, summary_items
+    )
+  )
+}
+
+read_registered_hces_consumption <- function(archive, specification, summary_items) {
+  read_registered_hces_bundle(
+    archive, specification, summary_items
+  )$households
 }
