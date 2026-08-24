@@ -22,18 +22,28 @@ consumption_design_rows <- function(lineaged_households) {
   x$sector <- price_sector(x$sector)
   x$lineage_person_weight <- num(x$lineage_person_weight)
   x$real_mpce <- num(x$real_mpce)
+
+  # Round 66 has no urban sub-stratification. Preserve that design fact
+  # explicitly instead of treating the released blank Sub_Stratum field as
+  # missing data. Rural blanks remain invalid because rural strata are
+  # subdivided in the 66th-round design.
+  sub_stratum <- trimws(plain_chr(x$sub_stratum))
+  blank_sub_stratum <- is.na(sub_stratum) | !nzchar(sub_stratum)
+  invalid_sub_stratum <- blank_sub_stratum & x$sector != "urban"
+  sub_stratum[blank_sub_stratum & x$sector == "urban"] <- "__none__"
+  x$.design_sub_stratum <- sub_stratum
+
   valid <- !is.na(x$target_unit_2001) & nzchar(plain_chr(x$target_unit_2001)) &
     !is.na(x$fsu) & nzchar(plain_chr(x$fsu)) &
     !is.na(x$stratum) & nzchar(plain_chr(x$stratum)) &
-    !is.na(x$sub_stratum) & nzchar(plain_chr(x$sub_stratum)) &
-    !is.na(x$sector) & positive_finite(x$lineage_person_weight) &
-    positive_finite(x$real_mpce)
+    !invalid_sub_stratum & !is.na(x$sector) &
+    positive_finite(x$lineage_person_weight) & positive_finite(x$real_mpce)
   if (!all(valid)) {
     counts <- c(
       target_unit_2001 = sum(is.na(x$target_unit_2001) | !nzchar(plain_chr(x$target_unit_2001))),
       fsu = sum(is.na(x$fsu) | !nzchar(plain_chr(x$fsu))),
       stratum = sum(is.na(x$stratum) | !nzchar(plain_chr(x$stratum))),
-      sub_stratum = sum(is.na(x$sub_stratum) | !nzchar(plain_chr(x$sub_stratum))),
+      sub_stratum = sum(invalid_sub_stratum),
       sector = sum(is.na(x$sector)),
       lineage_person_weight = sum(!positive_finite(x$lineage_person_weight)),
       real_mpce = sum(!positive_finite(x$real_mpce))
@@ -50,7 +60,7 @@ consumption_design_rows <- function(lineaged_households) {
   # Build nested design identifiers rather than treating the raw numbers as
   # globally unique. Sub-round is a fieldwork period, not a sampling stratum.
   x$.design_stratum <- interaction(
-    x$source_state_code, x$sector, x$stratum, x$sub_stratum,
+    x$source_state_code, x$sector, x$stratum, x$.design_sub_stratum,
     drop = TRUE, lex.order = TRUE
   )
   x$.design_psu <- interaction(
@@ -60,14 +70,33 @@ consumption_design_rows <- function(lineaged_households) {
   x
 }
 
-build_consumption_survey_design <- function(lineaged_households) {
-  x <- consumption_design_rows(lineaged_households)
+consumption_survey_design_from_rows <- function(rows) {
   survey::svydesign(
     ids = ~.design_psu,
     strata = ~.design_stratum,
     weights = ~lineage_person_weight,
-    data = x,
+    data = safe_df(rows),
     nest = TRUE
+  )
+}
+
+build_consumption_survey_design <- function(lineaged_households) {
+  consumption_survey_design_from_rows(consumption_design_rows(lineaged_households))
+}
+
+with_consumption_survey_adjustment <- function(expr) {
+  old_options <- options(survey.lonely.psu = "adjust", survey.adjust.domain.lonely = TRUE)
+  on.exit(options(old_options), add = TRUE)
+  withCallingHandlers(
+    expr,
+    warning = function(w) {
+      # survey deliberately warns for domain-level lonely PSUs even when the
+      # requested adjustment is applied. Muffle only that handled condition so
+      # strict builds remain warning-clean; all other warnings still propagate.
+      if (grepl("has only one PSU at stage", conditionMessage(w), fixed = TRUE)) {
+        invokeRestart("muffleWarning")
+      }
+    }
   )
 }
 
@@ -80,8 +109,8 @@ kish_effective_n <- function(weight) {
   sum(w)^2 / denom
 }
 
-consumption_district_support <- function(lineaged_households) {
-  x <- consumption_design_rows(lineaged_households)
+consumption_district_support_from_rows <- function(x) {
+  x <- safe_df(x)
   groups <- split(seq_len(nrow(x)), x$target_unit_2001)
   safe_bind_rows(lapply(groups, function(i) {
     part <- x[i, , drop = FALSE]
@@ -95,15 +124,17 @@ consumption_district_support <- function(lineaged_households) {
   }))
 }
 
+consumption_district_support <- function(lineaged_households) {
+  consumption_district_support_from_rows(consumption_design_rows(lineaged_households))
+}
+
 estimate_consumption_district_mean <- function(lineaged_households) {
   x <- consumption_design_rows(lineaged_households)
   survey_id <- unique(plain_chr(x$survey_id))
   if (length(survey_id) != 1L) stop("District welfare estimation requires one survey at a time.", call. = FALSE)
 
-  design <- build_consumption_survey_design(x)
-  old_options <- options(survey.lonely.psu = "adjust", survey.adjust.domain.lonely = TRUE)
-  on.exit(options(old_options), add = TRUE)
-  estimates <- survey::svyby(
+  design <- consumption_survey_design_from_rows(x)
+  estimates <- with_consumption_survey_adjustment(survey::svyby(
     ~real_mpce,
     ~target_unit_2001,
     design,
@@ -112,13 +143,13 @@ estimate_consumption_district_mean <- function(lineaged_households) {
     vartype = "se",
     keep.names = FALSE,
     drop.empty.groups = FALSE
-  )
+  ))
   estimates <- as.data.frame(estimates, stringsAsFactors = FALSE)
   if (!all(c("target_unit_2001", "real_mpce", "se") %in% names(estimates))) {
     stop("survey::svyby returned an unexpected district-mean schema.", call. = FALSE)
   }
 
-  support <- consumption_district_support(x)
+  support <- consumption_district_support_from_rows(x)
   out <- merge(
     data.frame(
       district_2001 = plain_chr(estimates$target_unit_2001),
