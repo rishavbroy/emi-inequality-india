@@ -630,6 +630,18 @@ core_pipeline_targets <- list(
     )
   ),
   tar_target(
+    consumption_lineage_bridge_hces_2022_23,
+    build_consumption_lineage_bridge(
+      consumption_households_real_hces_2022_23, consumption_lineage_reference
+    )
+  ),
+  tar_target(
+    consumption_lineage_bridge_hces_2023_24,
+    build_consumption_lineage_bridge(
+      consumption_households_real_hces_2023_24, consumption_lineage_reference
+    )
+  ),
+  tar_target(
     consumption_households_lineaged_2004_05,
     attach_consumption_lineage(
       consumption_households_real_2004_05, consumption_lineage_bridge_2004_05
@@ -654,12 +666,26 @@ core_pipeline_targets <- list(
     )
   ),
   tar_target(
+    consumption_households_lineaged_hces_2022_23,
+    attach_consumption_lineage(
+      consumption_households_real_hces_2022_23, consumption_lineage_bridge_hces_2022_23
+    )
+  ),
+  tar_target(
+    consumption_households_lineaged_hces_2023_24,
+    attach_consumption_lineage(
+      consumption_households_real_hces_2023_24, consumption_lineage_bridge_hces_2023_24
+    )
+  ),
+  tar_target(
     consumption_lineage_coverage,
     safe_bind_rows(list(
       summarize_consumption_lineage_coverage(consumption_households_lineaged_2004_05),
       summarize_consumption_lineage_coverage(consumption_households_lineaged_2009_10_type1),
       summarize_consumption_lineage_coverage(consumption_households_lineaged_2009_10_type2),
-      summarize_consumption_lineage_coverage(consumption_households_lineaged_2011_12_type2)
+      summarize_consumption_lineage_coverage(consumption_households_lineaged_2011_12_type2),
+      summarize_consumption_lineage_coverage(consumption_households_lineaged_hces_2022_23),
+      summarize_consumption_lineage_coverage(consumption_households_lineaged_hces_2023_24)
     ))
   ),
   tar_target(
@@ -673,7 +699,9 @@ core_pipeline_targets <- list(
       build_consumption_lineage_review_queue(consumption_lineage_bridge_2004_05),
       build_consumption_lineage_review_queue(consumption_lineage_bridge_2009_10_type1),
       build_consumption_lineage_review_queue(consumption_lineage_bridge_2009_10_type2),
-      build_consumption_lineage_review_queue(consumption_lineage_bridge_2011_12_type2)
+      build_consumption_lineage_review_queue(consumption_lineage_bridge_2011_12_type2),
+      build_consumption_lineage_review_queue(consumption_lineage_bridge_hces_2022_23),
+      build_consumption_lineage_review_queue(consumption_lineage_bridge_hces_2023_24)
     ))
   ),
   tar_target(
@@ -715,17 +743,43 @@ core_pipeline_targets <- list(
     )
   ),
   tar_target(
+    consumption_district_welfare_hces_2022_23,
+    estimate_consumption_district_welfare(
+      consumption_households_lineaged_hces_2022_23, consumption_welfare_outcomes
+    )
+  ),
+  tar_target(
+    consumption_district_welfare_hces_2023_24,
+    estimate_consumption_district_welfare(
+      consumption_households_lineaged_hces_2023_24, consumption_welfare_outcomes
+    )
+  ),
+  tar_target(
     consumption_district_welfare,
     safe_bind_rows(list(
       consumption_district_welfare_2004_05,
       consumption_district_welfare_2009_10_type1,
       consumption_district_welfare_2009_10_type2,
-      consumption_district_welfare_2011_12_type2
+      consumption_district_welfare_2011_12_type2,
+      consumption_district_welfare_hces_2022_23,
+      consumption_district_welfare_hces_2023_24
     ))
   ),
   tar_target(
     consumption_district_welfare_file,
     save_consumption_district_welfare(consumption_district_welfare),
+    format = "file"
+  ),
+  tar_target(
+    modern_hces_welfare_consistency,
+    compare_modern_hces_welfare(
+      consumption_district_welfare_hces_2022_23,
+      consumption_district_welfare_hces_2023_24
+    )
+  ),
+  tar_target(
+    modern_hces_welfare_consistency_file,
+    save_modern_hces_welfare_consistency(modern_hces_welfare_consistency),
     format = "file"
   ),
   tar_target(

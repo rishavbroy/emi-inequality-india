@@ -68,10 +68,16 @@ continuity mapping, not an assertion that administrative geography was frozen.
 
 The existing `attach_consumption_source_district_identity()` contract resolves
 modern HCES codes to named source districts before real-consumption objects move
-to the lineage layer. Modern Census-2001 lineage is intentionally separate:
-post-2011 district creation and state/UT reorganization must be handled by the
-reviewed lineage machinery rather than by treating a matching modern name as a
-2001 identity.
+to the lineage layer. The modern rounds then reuse the existing conservative
+consumption-lineage reference: exact Census-2001 identities, reviewed identity
+aliases, and stable reviewed cross-wave lineage are accepted; unresolved or
+conflicting modern source districts remain explicit review-queue rows.
+
+The repository already contains accepted post-2011 administrative-event
+adjudications and 1951-2024 lineage sources. Those records are not duplicated in
+the HCES reader. Where they are not yet represented in the conservative
+consumption-lineage reference, the modern review queue identifies the remaining
+integration gap instead of replacing it with a name-only shortcut.
 
 For the primary real-MPCE construction, panel `r` is assigned the three consecutive
 survey months `r:(r+2)`: panel 1 covers the first through third survey months and
@@ -82,6 +88,23 @@ and 2023-24. The public 2022-23 Level 15 release does not identify questionnaire
 visit order, while 2023-24 does; exact questionnaire-visit deflation for 2023-24 is
 therefore reserved as a later timing sensitivity rather than changing the primary
 cross-round estimand.
+
+
+### Modern HCES district welfare and consistency
+
+After source geography, price assignment, and conservative lineage attachment,
+the 2022-23 and 2023-24 rounds use the same registered design-aware welfare
+estimator as historical NSS rounds. Only `resolved_*` lineage households enter
+district estimation. The public welfare output therefore contains the registered
+real mean MPCE, mean log real MPCE, and person-weighted median MPCE together with
+household, FSU, Kish-effective-N, support, precision, and eligibility diagnostics.
+
+`modern_hces_welfare_consistency.csv` compares the two modern endpoints by
+registered outcome on common Census-2001 districts. Preferred-eligible common
+districts are used when at least three exist; otherwise the diagnostic falls back
+to all finite common districts and reports that basis explicitly. This is a
+measurement-stability diagnostic, not a rule for selecting whichever endpoint
+produces a more favorable regression result.
 
 ## Main-paper specification after the revision gate
 
