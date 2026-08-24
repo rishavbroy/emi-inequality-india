@@ -32,14 +32,6 @@ read_consumption_mpce_benchmarks <- function(path) {
   out
 }
 
-consumption_sector_name <- function(x) {
-  value <- trimws(plain_chr(x))
-  out <- rep(NA_character_, length(value))
-  out[value %in% c("1", "rural")] <- "rural"
-  out[value %in% c("2", "urban")] <- "urban"
-  out
-}
-
 estimate_consumption_mpce_by_sector <- function(households) {
   x <- safe_df(households)
   required <- c("sector", "household_size", "survey_weight", "nominal_mpce")
@@ -48,13 +40,19 @@ estimate_consumption_mpce_by_sector <- function(households) {
     stop("Canonical consumption households are missing columns: ", paste(missing, collapse = ", "), call. = FALSE)
   }
 
-  sector <- consumption_sector_name(x$sector)
+  sector <- price_sector(x$sector)
   size <- num(x$household_size)
   weight <- num(x$survey_weight)
   mpce <- num(x$nominal_mpce)
-  valid <- !is.na(sector) & is.finite(size) & size > 0 & is.finite(weight) & weight > 0 & is.finite(mpce) & mpce > 0
-  if (!all(valid)) {
-    stop("Canonical consumption households contain invalid sector, size, weight, or MPCE values.", call. = FALSE)
+  invalid <- c(
+    sector = sum(is.na(sector)),
+    household_size = sum(!is.finite(size) | size <= 0),
+    survey_weight = sum(!is.finite(weight) | weight <= 0),
+    nominal_mpce = sum(!is.finite(mpce) | mpce <= 0)
+  )
+  if (any(invalid > 0L)) {
+    detail <- paste(paste0(names(invalid)[invalid > 0L], "=", invalid[invalid > 0L]), collapse = ", ")
+    stop("Canonical consumption households contain invalid values: ", detail, ".", call. = FALSE)
   }
 
   person_weight <- weight * size
