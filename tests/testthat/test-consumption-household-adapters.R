@@ -187,7 +187,10 @@ test_that("NSS 68 district DDI parser collapses repeated consistent District_Cod
     "<catgry><catValu>1407</catValu><labl>Bishnupur</labl></catgry>",
     "</var></dataDscr></codeBook>"
   ), ddi)
-  out <- read_consumption_district_codebook_ddi(ddi, "nss_2011_12")
+  expect_warning(
+    out <- read_consumption_district_codebook_ddi(ddi, "nss_2011_12"),
+    NA
+  )
   expect_equal(out$state_code_source, c("14", "14"))
   expect_equal(out$district_code_source, c("06", "07"))
   expect_equal(out$district_name_source, c("Thoubal", "Bishnupur"))

@@ -172,23 +172,44 @@ read_consumption_district_codebook_ddi <- function(path, source_id) {
   need_pkg("XML", "consumption district-code DDI metadata")
   if (!file.exists(path)) stop("Consumption district DDI is missing: ", path, call. = FALSE)
   doc <- XML::xmlParse(path)
+
+  # XPath requires an explicit prefix for elements in a default namespace. NSS 68
+  # declares the DDI namespace on the document root, while small test/adjudication
+  # files may be unnamespaced. Resolve that once and use the same query contract
+  # for every node so strict targets do not accumulate namespace warnings.
+  default_ns <- XML::getDefaultNamespace(doc, simplify = TRUE)
+  if (length(default_ns)) {
+    namespaces <- c(ddi = unname(default_ns[[1L]]))
+    tag <- function(name) paste0("ddi:", name)
+  } else {
+    namespaces <- character()
+    tag <- identity
+  }
+
   # A DDI can repeat the same variable in several data-file descriptions. NSS 68
   # does this for District_Code. Parse every definition, then require the repeated
   # code -> label mappings to agree instead of assuming one global variable node.
   vars <- XML::getNodeSet(
     doc,
-    "//*[local-name()='var' and @name='District_Code']"
+    paste0("//", tag("var"), "[@name='District_Code']"),
+    namespaces = namespaces
   )
   if (!length(vars)) {
     stop(source_id, " DDI must contain at least one District_Code variable.", call. = FALSE)
   }
   category_text <- function(node, child) {
-    hit <- XML::getNodeSet(node, paste0("./*[local-name()='", child, "']"))
+    hit <- XML::getNodeSet(
+      node,
+      paste0("./", tag(child)),
+      namespaces = namespaces
+    )
     if (length(hit) != 1L) return(NA_character_)
     trimws(XML::xmlValue(hit[[1]]))
   }
   categories <- unlist(
-    lapply(vars, XML::getNodeSet, path = "./*[local-name()='catgry']"),
+    lapply(vars, function(node) {
+      XML::getNodeSet(node, paste0("./", tag("catgry")), namespaces = namespaces)
+    }),
     recursive = FALSE,
     use.names = FALSE
   )
