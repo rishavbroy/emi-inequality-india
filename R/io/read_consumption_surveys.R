@@ -6,7 +6,17 @@ consumption_survey_registry_path <- function(paths = build_paths(Sys.getenv("EMI
 
 read_consumption_survey_registry_file <- function(path) {
   if (!file.exists(path)) stop("Consumption survey registry is missing: ", path, call. = FALSE)
-  out <- utils::read.csv(path, stringsAsFactors = FALSE, check.names = FALSE, na.strings = c("", "NA"))
+  field_counts <- utils::count.fields(path, sep = ",", quote = "\"")
+  if (!length(field_counts) || anyNA(field_counts) || any(field_counts != field_counts[[1]])) {
+    stop("Consumption survey registry must be a rectangular CSV.", call. = FALSE)
+  }
+  out <- utils::read.csv(
+    path,
+    stringsAsFactors = FALSE,
+    check.names = FALSE,
+    na.strings = c("", "NA"),
+    row.names = NULL
+  )
   validate_consumption_survey_registry(out)
 }
 

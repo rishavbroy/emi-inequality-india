@@ -51,3 +51,17 @@ test_that("registry defaults resolve from the project root rather than the worki
   expect_equal(actual, expected)
   expect_equal(nss_wave_months(2007), survey_period_months(consumption_survey_spec(expected, "nss_2007_08_education")))
 })
+
+test_that("registry reader rejects non-rectangular CSV input before column shifting", {
+  path <- tempfile(fileext = ".csv")
+  writeLines(c(
+    "survey_id,survey_family",
+    "one,family,unexpected"
+  ), path)
+  on.exit(unlink(path), add = TRUE)
+
+  expect_error(
+    read_consumption_survey_registry_file(path),
+    "rectangular CSV"
+  )
+})
