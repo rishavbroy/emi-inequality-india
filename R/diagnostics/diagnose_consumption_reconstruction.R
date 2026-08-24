@@ -118,3 +118,9 @@ save_consumption_mpce_validation <- function(validation, path = file.path("outpu
   utils::write.csv(out, path, row.names = FALSE, na = "")
   path
 }
+
+save_hces_summary_coverage <- function(
+    coverage,
+    path = "outputs/diagnostics/extended/consumption/hces_summary_coverage.csv") {
+  write_csv_output(coverage, path)
+}

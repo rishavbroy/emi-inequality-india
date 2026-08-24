@@ -320,25 +320,74 @@ validate_hces_visit_rows <- function(level15, specification) {
   list(rows = safe_df(dt), weights = safe_df(weight))
 }
 
+join_hces_questionnaire_expenditure <- function(level15_rows, components) {
+  need_pkg("data.table", "HCES three-visit reconstruction")
+  rows <- data.table::as.data.table(safe_df(level15_rows))
+  expense <- data.table::as.data.table(safe_df(components))
+  require_consumption_columns(
+    rows, c("household_id", "questionnaire"),
+    "HCES Level 15 questionnaire rows"
+  )
+  require_consumption_columns(
+    expense, c("household_id", "questionnaire", "monthly_expenditure"),
+    "HCES Level 14 questionnaire summaries"
+  )
+
+  row_key <- paste(rows$household_id, rows$questionnaire, sep = "\r")
+  expense_key <- paste(expense$household_id, expense$questionnaire, sep = "\r")
+  unexpected <- !expense_key %in% row_key
+  if (any(unexpected)) {
+    bad <- unique(expense_key[unexpected])
+    stop(
+      "HCES Level 14 contains questionnaire summaries absent from Level 15: ",
+      paste(utils::head(bad, 10L), collapse = ", "),
+      call. = FALSE
+    )
+  }
+
+  joined <- merge(
+    rows, expense,
+    by = c("household_id", "questionnaire"),
+    all.x = TRUE, all.y = FALSE, sort = FALSE
+  )
+  if (nrow(joined) != nrow(rows)) {
+    stop("HCES Level 14 questionnaire summaries are not unique within household.", call. = FALSE)
+  }
+  joined$summary_row_present <- !is.na(joined$monthly_expenditure)
+  joined$monthly_expenditure[!joined$summary_row_present] <- 0
+  safe_df(joined)
+}
+
+summarize_hces_summary_coverage <- function(level14, level15, specification, summary_items) {
+  spec <- validate_hces_three_visit_specification(specification)
+  components <- hces_monthly_questionnaire_expenditure(level14, summary_items)
+  visit <- validate_hces_visit_rows(level15, spec)
+  joined <- join_hces_questionnaire_expenditure(visit$rows, components)
+
+  groups <- split(seq_len(nrow(joined)), joined$questionnaire)
+  out <- safe_bind_rows(lapply(names(groups), function(questionnaire) {
+    i <- groups[[questionnaire]]
+    data.frame(
+      survey_id = spec$survey_id[[1L]],
+      questionnaire = questionnaire,
+      n_households = length(i),
+      n_summary_present = sum(joined$summary_row_present[i]),
+      n_summary_zero_filled = sum(!joined$summary_row_present[i]),
+      share_summary_zero_filled = mean(!joined$summary_row_present[i]),
+      stringsAsFactors = FALSE
+    )
+  }))
+  out[order(out$questionnaire), , drop = FALSE]
+}
+
 canonicalize_hces_three_visit <- function(level14, level15, specification, summary_items) {
   need_pkg("data.table", "HCES three-visit reconstruction")
   spec <- validate_hces_three_visit_specification(specification)
   components <- hces_monthly_questionnaire_expenditure(level14, summary_items)
   visit <- validate_hces_visit_rows(level15, spec)
-  rows <- data.table::as.data.table(visit$rows)
-  expense <- data.table::as.data.table(components)
-
-  joined <- merge(
-    rows, expense,
-    by = c("household_id", "questionnaire"),
-    all.x = TRUE, all.y = TRUE, sort = FALSE
+  joined <- data.table::as.data.table(
+    join_hces_questionnaire_expenditure(visit$rows, components)
   )
-  if (anyNA(joined$monthly_expenditure)) {
-    stop("HCES Level 14 and Level 15 do not have complete F/C/D household coverage.", call. = FALSE)
-  }
-  if (nrow(joined) != nrow(rows)) {
-    stop("HCES Level 14 contains questionnaire households absent from Level 15.", call. = FALSE)
-  }
   joined[, component_mpce := monthly_expenditure / household_size]
 
   totals <- joined[, list(nominal_mpce = sum(component_mpce)), by = household_id]

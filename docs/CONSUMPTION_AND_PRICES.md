@@ -47,6 +47,32 @@ Both rounds must reproduce the official all-India rural/urban MPCE benchmarks
 within one rupee before their nominal household objects can feed later price,
 geography, or welfare targets.
 
+The distributed Level 14 summary is sparse rather than a rectangular
+household-by-questionnaire table. A small number of F/C/D questionnaire pairs have
+a Level-15 visit but no Level-14 A1/B1/C1 row. At the Level-14/15 join boundary,
+those absent summaries are treated as zero questionnaire expenditure; a Level-14
+summary with no matching Level-15 visit remains an error. The production diagnostic
+`hces_summary_coverage.csv` reports the number and share of zero-filled summaries
+by round and questionnaire. This convention remains protected by the blocking
+official rural/urban MPCE benchmark test.
+
+### Modern HCES source geography
+
+`data/metadata/hces_2022_24_district_codebook.csv` is a derived transcription of
+Appendix I ("List of NSS Regions and their Composition") in the official HCES
+2022-23 Volume I, paired with the released HCES tabulation state-code workbook.
+It contains 695 unique state/district code pairs across 36 States/UTs. Every
+state/district code observed in the released 2022-23 and 2023-24 household files
+is covered by this codebook. The 2023-24 use is therefore an observed-code
+continuity mapping, not an assertion that administrative geography was frozen.
+
+The existing `attach_consumption_source_district_identity()` contract resolves
+modern HCES codes to named source districts before real-consumption objects move
+to the lineage layer. Modern Census-2001 lineage is intentionally separate:
+post-2011 district creation and state/UT reorganization must be handled by the
+reviewed lineage machinery rather than by treating a matching modern name as a
+2001 identity.
+
 For the primary real-MPCE construction, panel `r` is assigned the three consecutive
 survey months `r:(r+2)`: panel 1 covers the first through third survey months and
 panel 10 covers the tenth through twelfth. The state-sector CPI deflator is averaged

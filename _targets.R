@@ -231,6 +231,49 @@ core_pipeline_targets <- list(
     format = "file"
   ),
   tar_target(
+    hces_summary_coverage_2022_23,
+    summarize_hces_summary_coverage(
+      read_hces_release_level(
+        consumption_archive_hces_2022_23,
+        consumption_survey_spec(consumption_survey_registry, "hces_2022_23"),
+        14L
+      ),
+      read_hces_release_level(
+        consumption_archive_hces_2022_23,
+        consumption_survey_spec(consumption_survey_registry, "hces_2022_23"),
+        15L
+      ),
+      consumption_survey_spec(consumption_survey_registry, "hces_2022_23"),
+      hces_summary_items
+    )
+  ),
+  tar_target(
+    hces_summary_coverage_2023_24,
+    summarize_hces_summary_coverage(
+      read_hces_release_level(
+        consumption_archive_hces_2023_24,
+        consumption_survey_spec(consumption_survey_registry, "hces_2023_24"),
+        14L
+      ),
+      read_hces_release_level(
+        consumption_archive_hces_2023_24,
+        consumption_survey_spec(consumption_survey_registry, "hces_2023_24"),
+        15L
+      ),
+      consumption_survey_spec(consumption_survey_registry, "hces_2023_24"),
+      hces_summary_items
+    )
+  ),
+  tar_target(
+    hces_summary_coverage,
+    safe_bind_rows(list(hces_summary_coverage_2022_23, hces_summary_coverage_2023_24))
+  ),
+  tar_target(
+    hces_summary_coverage_file,
+    save_hces_summary_coverage(hces_summary_coverage),
+    format = "file"
+  ),
+  tar_target(
     consumption_district_codebook_2004_05_file,
     {
       raw_data_preflight
@@ -245,6 +288,17 @@ core_pipeline_targets <- list(
       path_project(paths, "data/raw/hces/2009-10/District code_66.xls")
     },
     format = "file"
+  ),
+  tar_target(
+    consumption_district_codebook_hces_file,
+    path_project(paths, "data/metadata/hces_2022_24_district_codebook.csv"),
+    format = "file"
+  ),
+  tar_target(
+    consumption_district_codebook_hces,
+    read_consumption_district_codebook_csv(
+      consumption_district_codebook_hces_file, "hces_2022_24"
+    )
   ),
   tar_target(
     consumption_source_geography_special_units_file,
@@ -303,6 +357,18 @@ core_pipeline_targets <- list(
     consumption_households_named_2011_12_type2,
     attach_consumption_source_district_identity(consumption_households_2011_12_type2, consumption_district_codebook_2011_12)
   ),
+  tar_target(
+    consumption_households_named_hces_2022_23,
+    attach_consumption_source_district_identity(
+      consumption_households_hces_2022_23, consumption_district_codebook_hces
+    )
+  ),
+  tar_target(
+    consumption_households_named_hces_2023_24,
+    attach_consumption_source_district_identity(
+      consumption_households_hces_2023_24, consumption_district_codebook_hces
+    )
+  ),
 
   tar_target(
     consumption_households_real_2004_05,
@@ -349,7 +415,7 @@ core_pipeline_targets <- list(
     {
       consumption_mpce_validation_hces_2022_23
       deflate_detailed_consumption_households(
-        consumption_households_hces_2022_23, state_sector_price_deflators,
+        consumption_households_named_hces_2022_23, state_sector_price_deflators,
         consumption_survey_spec(consumption_survey_registry, "hces_2022_23")
       )
     }
@@ -359,7 +425,7 @@ core_pipeline_targets <- list(
     {
       consumption_mpce_validation_hces_2023_24
       deflate_detailed_consumption_households(
-        consumption_households_hces_2023_24, state_sector_price_deflators,
+        consumption_households_named_hces_2023_24, state_sector_price_deflators,
         consumption_survey_spec(consumption_survey_registry, "hces_2023_24")
       )
     }

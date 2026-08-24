@@ -138,3 +138,39 @@ test_that("HCES reconstruction rejects missing questionnaire coverage and unregi
     "unregistered summary item"
   )
 })
+
+test_that("HCES sparse Level 14 summaries zero-fill only against existing visits", {
+  registry <- read_consumption_survey_registry(build_paths(Sys.getenv("EMI_PROJECT_ROOT", ".")))
+  items <- read_hces_summary_items_file(
+    hces_summary_items_path(build_paths(Sys.getenv("EMI_PROJECT_ROOT", ".")))
+  )
+  spec <- consumption_survey_spec(registry, "hces_2023_24")
+  level14 <- hces_fixture_level14()
+  level15 <- hces_fixture_level15()
+
+  level14 <- level14[level14$questionnaire != "D", , drop = FALSE]
+  out <- canonicalize_hces_three_visit(level14, level15, spec, items)
+
+  expect_equal(out$nominal_mpce, 275)
+  coverage <- summarize_hces_summary_coverage(level14, level15, spec, items)
+  expect_equal(coverage$n_summary_zero_filled[coverage$questionnaire == "D"], 1L)
+  expect_true(all(coverage$n_summary_zero_filled[coverage$questionnaire != "D"] == 0L))
+})
+
+test_that("HCES rejects Level 14 summaries without a matching Level 15 visit", {
+  registry <- read_consumption_survey_registry(build_paths(Sys.getenv("EMI_PROJECT_ROOT", ".")))
+  items <- read_hces_summary_items_file(
+    hces_summary_items_path(build_paths(Sys.getenv("EMI_PROJECT_ROOT", ".")))
+  )
+  spec <- consumption_survey_spec(registry, "hces_2023_24")
+  level14 <- hces_fixture_level14()
+  extra <- level14[level14$questionnaire == "D", , drop = FALSE]
+  extra$sample_household <- "02"
+  extra$household_id <- hces_household_id(extra)
+  level14 <- rbind(level14, extra)
+
+  expect_error(
+    canonicalize_hces_three_visit(level14, hces_fixture_level15(), spec, items),
+    "summaries absent from Level 15"
+  )
+})
