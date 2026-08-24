@@ -77,6 +77,14 @@ state/district code observed in the released 2022-23 and 2023-24 household files
 is covered by this codebook. The 2023-24 use is therefore an observed-code
 continuity mapping, not an assertion that administrative geography was frozen.
 
+The modern source-geography codebook also carries a `price_state_code` only where
+post-2001 administrative reorganization makes the HCES state code incompatible
+with the historical Tendulkar spatial-price geography. Diu and Daman retain the
+former Daman & Diu anchor (`DADI`), Dadra & Nagar Haveli retains `DNHA`, and Leh
+and Kargil retain the former Jammu & Kashmir anchor (`JNK`). Other districts
+default to their ordinary source-state code. This keeps district-dependent
+reorganization logic out of the generic price engine.
+
 The existing `attach_consumption_source_district_identity()` contract resolves
 modern HCES codes to named source districts before real-consumption objects move
 to the lineage layer. The modern rounds then reuse the existing conservative
@@ -314,7 +322,10 @@ registered period group, nominal MPCE, nominal household consumption, household
 size, and survey weight. It does not reuse the legacy column-name heuristic that
 guesses whether a source field is a household total. Price attachment dispatches
 from the survey registry: non-overlapping three-month sub-rounds for legacy NSS
-Schedule 1.0 and overlapping three-month panels for modern HCES. Only then are
+Schedule 1.0 and overlapping three-month panels for modern HCES. When source
+geography supplies an explicit historical `price_state_code`, that key is used
+instead of trying to infer a pre-reorganization price geography from the modern
+state code alone. Only then are
 `real_mpce` and `real_household_consumption` constructed and their household-size
 identity checked.
 The production targets depend on the corresponding official MPCE reconstruction

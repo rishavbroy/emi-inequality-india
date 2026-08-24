@@ -1143,3 +1143,71 @@ test_that("preferred public outcome is real log consumption growth", {
   figures <- make_figures(panel, character(), list(mode = "draft"))
   expect_identical(figures$map_consumption_growth$variable, "real_log_consumption_change")
 })
+
+test_that("real-consumption deflation prefers an explicit historical price-state key", {
+  registry <- read_consumption_survey_registry(build_paths(Sys.getenv("EMI_PROJECT_ROOT", ".")))
+  spec <- consumption_survey_spec(registry, "hces_2023_24")
+  months <- seq(as.Date("2023-08-01"), as.Date("2024-07-01"), by = "month")
+
+  deflators <- data.frame(
+    state_code = "JNK",
+    sector = "rural",
+    period = months,
+    price_deflator = rep(2, length(months)),
+    spatial_price_relative = 1,
+    price_source = "test",
+    temporal_state_source = "JNK",
+    state_rule = "direct",
+    fallback_reason = NA_character_,
+    stringsAsFactors = FALSE
+  )
+  households <- data.frame(
+    source_state_code = "37",
+    price_state_code = "JNK",
+    sector = "1",
+    subround = "1",
+    nominal_mpce = 100,
+    nominal_household_consumption = 400,
+    household_size = 4,
+    survey_weight = 1,
+    stringsAsFactors = FALSE
+  )
+
+  out <- deflate_detailed_consumption_households(households, deflators, spec)
+  expect_equal(out$.price_state_code, "JNK")
+  expect_equal(out$real_mpce, 50)
+  expect_equal(out$real_household_consumption, 200)
+})
+
+test_that("unresolved price-key errors identify the failing key and raw value", {
+  registry <- read_consumption_survey_registry(build_paths(Sys.getenv("EMI_PROJECT_ROOT", ".")))
+  spec <- consumption_survey_spec(registry, "hces_2023_24")
+  months <- seq(as.Date("2023-08-01"), as.Date("2024-07-01"), by = "month")
+  deflators <- data.frame(
+    state_code = "JNK",
+    sector = "rural",
+    period = months,
+    price_deflator = 1,
+    spatial_price_relative = 1,
+    price_source = "test",
+    temporal_state_source = "JNK",
+    state_rule = "direct",
+    fallback_reason = NA_character_,
+    stringsAsFactors = FALSE
+  )
+  households <- data.frame(
+    source_state_code = "37",
+    sector = "1",
+    subround = "1",
+    nominal_mpce = 100,
+    nominal_household_consumption = 400,
+    household_size = 4,
+    survey_weight = 1,
+    stringsAsFactors = FALSE
+  )
+
+  expect_error(
+    deflate_detailed_consumption_households(households, deflators, spec),
+    "state=1 \\[37\\]"
+  )
+})

@@ -195,15 +195,54 @@ resolve_nss_price_state <- function(x, poverty_lines = read_tendulkar_poverty_li
   out
 }
 
+stop_unresolved_consumption_price_keys <- function(
+    state_raw, state_key, sector_raw, sector_key, period_raw, period_key, period_name) {
+  bad_state <- is.na(state_key)
+  bad_sector <- is.na(sector_key)
+  bad_period <- is.na(period_key)
+  if (!any(bad_state | bad_sector | bad_period)) return(invisible(NULL))
+
+  summarize_bad <- function(raw, bad) {
+    value <- unique(trimws(plain_chr(raw[bad])))
+    value[is.na(value) | !nzchar(value)] <- "<blank>"
+    paste(utils::head(value, 8L), collapse = ", ")
+  }
+
+  detail <- character()
+  if (any(bad_state)) {
+    detail <- c(detail, paste0(
+      "state=", sum(bad_state), " [", summarize_bad(state_raw, bad_state), "]"
+    ))
+  }
+  if (any(bad_sector)) {
+    detail <- c(detail, paste0(
+      "sector=", sum(bad_sector), " [", summarize_bad(sector_raw, bad_sector), "]"
+    ))
+  }
+  if (any(bad_period)) {
+    detail <- c(detail, paste0(
+      period_name, "=", sum(bad_period), " [", summarize_bad(period_raw, bad_period), "]"
+    ))
+  }
+  stop(
+    "Survey households contain unresolved price keys: ",
+    paste(detail, collapse = "; "),
+    call. = FALSE
+  )
+}
+
 attach_survey_subround_deflator <- function(households, deflators, specification, state_col, sector_col, subround_col) {
   hh <- safe_df(households)
   hh$.price_row <- seq_len(nrow(hh))
   hh$.price_state_code <- resolve_nss_price_state(hh[[state_col]])
   hh$.price_sector <- price_sector(hh[[sector_col]])
   hh$.price_subround <- normalise_nss_subround(hh[[subround_col]])
-  if (anyNA(hh$.price_state_code) || anyNA(hh$.price_sector) || anyNA(hh$.price_subround)) {
-    stop("Survey households contain unresolved state, sector, or sub-round price keys.", call. = FALSE)
-  }
+  stop_unresolved_consumption_price_keys(
+    hh[[state_col]], hh$.price_state_code,
+    hh[[sector_col]], hh$.price_sector,
+    hh[[subround_col]], hh$.price_subround,
+    "subround"
+  )
 
   d <- build_survey_subround_deflators(deflators, specification)
   names(d)[names(d) == "state_code"] <- ".price_state_code"
@@ -223,9 +262,12 @@ attach_survey_panel_deflator <- function(households, deflators, specification, s
   hh$.price_state_code <- resolve_nss_price_state(hh[[state_col]])
   hh$.price_sector <- price_sector(hh[[sector_col]])
   hh$.price_panel <- normalise_survey_panel(hh[[panel_col]], specification)
-  if (anyNA(hh$.price_state_code) || anyNA(hh$.price_sector) || anyNA(hh$.price_panel)) {
-    stop("Survey households contain unresolved state, sector, or panel price keys.", call. = FALSE)
-  }
+  stop_unresolved_consumption_price_keys(
+    hh[[state_col]], hh$.price_state_code,
+    hh[[sector_col]], hh$.price_sector,
+    hh[[panel_col]], hh$.price_panel,
+    "panel"
+  )
 
   d <- build_survey_panel_deflators(deflators, specification)
   names(d)[names(d) == "state_code"] <- ".price_state_code"
