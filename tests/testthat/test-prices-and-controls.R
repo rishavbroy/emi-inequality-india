@@ -296,6 +296,56 @@ test_that("CPI-IW aggregation ignores source centres outside the official weight
   expect_equal(out$centre_count, 2L)
 })
 
+test_that("CPI-IW aggregation can drop globally incomplete source months without renormalizing weights", {
+  centre <- data.frame(
+    centre_key = normalise_cpi_iw_centre(c(
+      "Guntur", "Vijaywada",
+      "Guntur",
+      "Guntur", "Vijaywada"
+    )),
+    period = as.Date(c(
+      "2012-05-01", "2012-05-01",
+      "2012-06-01",
+      "2012-07-01", "2012-07-01"
+    )),
+    index = c(100, 200, 110, 120, 220)
+  )
+  weights <- data.frame(
+    centre_key = normalise_cpi_iw_centre(c("Guntur", "Vijaywada")),
+    state_code = "ANP", weight = c(25, 75)
+  )
+  out <- aggregate_cpi_iw_to_state(
+    centre, weights, incomplete_periods = "drop"
+  )
+  expect_equal(out$period, as.Date(c("2012-05-01", "2012-07-01")))
+  expect_false(as.Date("2012-06-01") %in% out$period)
+})
+
+test_that("official CPI-Urban fills only missing CPI-IW months after overlap calibration", {
+  iw <- data.frame(
+    state_code = "A", sector = "urban",
+    period = as.Date(c("2011-01-01", "2011-02-01", "2011-04-01", "2011-05-01")),
+    index = c(100, 110, 130, 140),
+    centre_count = 2L
+  )
+  donor <- data.frame(
+    state_code = "A", sector = "urban",
+    period = as.Date(c("2011-01-01", "2011-02-01", "2011-03-01", "2011-04-01", "2011-05-01")),
+    index = c(50, 55, 60, 65, 70)
+  )
+  out <- complete_cpi_iw_state_months(
+    iw, donor,
+    required_periods = as.Date(c(
+      "2011-01-01", "2011-02-01", "2011-03-01", "2011-04-01", "2011-05-01"
+    )),
+    minimum_overlap_months = 4L
+  )
+  march <- out[out$period == as.Date("2011-03-01"), ]
+  expect_equal(march$index, 120)
+  expect_equal(march$cpi_iw_completion, "scaled_cpi_u_2010_gap_fill")
+  expect_true(all(out$cpi_iw_completion[out$period != as.Date("2011-03-01")] == "direct_cpi_iw"))
+})
+
 test_that("1982-base CPI-IW metadata reproduce the published weighted system and linking contract", {
   weights <- read_cpi_iw_weights("data/metadata/cpi_iw_centres_1982.csv", tolerance = 0.02)
   expect_equal(nrow(weights), 73L)
@@ -319,6 +369,10 @@ test_that("1982-base CPI-IW state linking changes units but preserves observatio
   out <- link_cpi_iw_state_series(index, links)
   expect_equal(out$index, 100)
   expect_equal(out$link_weight_coverage, 0.8)
+  expect_error(
+    link_cpi_iw_state_series(index, rbind(links, links)),
+    "one row per state"
+  )
 })
 
 test_that("tracked CPI-IW weights reproduce the 78-centre system", {
