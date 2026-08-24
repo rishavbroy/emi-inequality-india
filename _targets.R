@@ -447,11 +447,21 @@ core_pipeline_targets <- list(
     )
   ),
   tar_target(
+    consumption_lineage_identity_aliases_file,
+    "data/metadata/consumption_lineage_identity_aliases.csv",
+    format = "file"
+  ),
+  tar_target(
+    consumption_lineage_identity_aliases,
+    read_consumption_lineage_identity_aliases(consumption_lineage_identity_aliases_file)
+  ),
+  tar_target(
     consumption_lineage_reference,
     build_consumption_lineage_reference(
       district_lineage$admin_units_2001,
       district_lineage$nss_source_roster,
-      district_lineage$full_reviewed_source_crosswalk
+      district_lineage$full_reviewed_source_crosswalk,
+      consumption_lineage_identity_aliases
     )
   ),
   tar_target(

@@ -266,3 +266,7 @@ conflicting source districts remain in the lineaged household object with an
 explicit `lineage_status` and no target weight. Coverage is written to
 `outputs/diagnostics/public/consumption_lineage_coverage.csv` before district
 welfare aggregation is introduced.
+
+### Historical consumption lineage identity aliases
+
+Historical consumption source labels are never fuzzy-matched into Census-2001 districts. A small reviewed metadata registry, `data/metadata/consumption_lineage_identity_aliases.csv`, handles only deterministic orthographic, abbreviation, truncation, or documented source-label corruption cases whose target is a unique Census-2001 district within the same normalized state. The lineage bridge applies exact Census-2001 identity first, then these reviewed identity aliases, then stable reviewed cross-wave lineage. Administrative-change cases remain unresolved for explicit adjudication.
