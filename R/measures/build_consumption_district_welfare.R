@@ -136,7 +136,7 @@ consumption_district_support <- function(lineaged_households) {
 read_consumption_welfare_outcomes <- function(path) {
   x <- read.csv(path, stringsAsFactors = FALSE, check.names = FALSE)
   required <- c(
-    "outcome_id", "estimand", "transform", "role", "min_households", "min_fsu",
+    "outcome_id", "estimand", "transform", "quantile", "role", "min_households", "min_fsu",
     "min_kish_effective_n", "max_relative_se"
   )
   missing <- setdiff(required, names(x))
@@ -146,8 +146,16 @@ read_consumption_welfare_outcomes <- function(path) {
   if (!nrow(x) || anyDuplicated(x$outcome_id)) {
     stop("Consumption welfare registry must contain unique outcome_id rows.", call. = FALSE)
   }
-  if (any(x$estimand != "survey_mean") || any(!x$transform %in% c("identity", "log"))) {
+  if (any(!x$estimand %in% c("survey_mean", "survey_quantile")) ||
+      any(!x$transform %in% c("identity", "log"))) {
     stop("Consumption welfare registry contains unsupported estimands or transforms.", call. = FALSE)
+  }
+  x$quantile <- suppressWarnings(as.numeric(x$quantile))
+  mean_row <- x$estimand == "survey_mean"
+  quantile_row <- x$estimand == "survey_quantile"
+  if (any(mean_row & is.finite(x$quantile)) ||
+      any(quantile_row & (!is.finite(x$quantile) | x$quantile <= 0 | x$quantile >= 1))) {
+    stop("Consumption welfare registry contains invalid quantile declarations.", call. = FALSE)
   }
   for (nm in c("min_households", "min_fsu", "min_kish_effective_n", "max_relative_se")) {
     x[[nm]] <- suppressWarnings(as.numeric(x[[nm]]))
@@ -183,41 +191,21 @@ consumption_support_reason <- function(out, rule, precision_ok) {
   reasons
 }
 
-estimate_consumption_district_svymean <- function(rows, design, support, rule) {
-  x <- rows
-  x$.welfare_value <- consumption_welfare_value(x$real_mpce, rule$transform[[1L]])
-  outcome_design <- update(design, .welfare_value = x$.welfare_value)
-  estimates <- with_consumption_survey_adjustment(survey::svyby(
-    ~.welfare_value,
-    ~target_unit_2001,
-    outcome_design,
-    survey::svymean,
-    na.rm = TRUE,
-    vartype = "se",
-    keep.names = FALSE,
-    drop.empty.groups = FALSE
-  ))
-  estimates <- as.data.frame(estimates, stringsAsFactors = FALSE)
-  if (!all(c("target_unit_2001", ".welfare_value", "se") %in% names(estimates))) {
-    stop("survey::svyby returned an unexpected district-mean schema.", call. = FALSE)
+consumption_finalize_district_estimate <- function(
+    estimates, support, rule, cv_applicable = FALSE) {
+  estimates <- safe_df(estimates)
+  required <- c("district_2001", "estimate", "std_error")
+  missing <- setdiff(required, names(estimates))
+  if (length(missing)) {
+    stop("District welfare estimates are missing columns: ", paste(missing, collapse = ", "), call. = FALSE)
   }
-
-  survey_id <- unique(plain_chr(x$survey_id))
-  out <- merge(
-    data.frame(
-      district_2001 = plain_chr(estimates$target_unit_2001),
-      round_id = survey_id[[1L]],
-      outcome_id = rule$outcome_id[[1L]],
-      estimate = num(estimates$.welfare_value),
-      std_error = num(estimates$se),
-      stringsAsFactors = FALSE
-    ),
-    support,
-    by = "district_2001", all.x = TRUE, sort = FALSE
+  out <- merge(estimates, support, by = "district_2001", all.x = TRUE, sort = FALSE)
+  out$relative_se <- ifelse(
+    is.finite(out$estimate) & out$estimate != 0,
+    out$std_error / abs(out$estimate),
+    NA_real_
   )
-  out$relative_se <- ifelse(is.finite(out$estimate) & out$estimate != 0,
-                            out$std_error / abs(out$estimate), NA_real_)
-  out$cv <- if (identical(rule$transform[[1L]], "identity")) out$relative_se else NA_real_
+  out$cv <- if (isTRUE(cv_applicable)) out$relative_se else NA_real_
   valid <- is.finite(out$estimate) & is.finite(out$std_error) & out$std_error >= 0
   out$status <- ifelse(valid, "estimated", "not_estimable")
   out$reason <- ifelse(valid, NA_character_, "non_finite_design_estimate")
@@ -225,7 +213,11 @@ estimate_consumption_district_svymean <- function(rows, design, support, rule) {
     out$n_fsu >= rule$min_fsu[[1L]] &
     out$kish_effective_n >= rule$min_kish_effective_n[[1L]]
   max_rse <- rule$max_relative_se[[1L]]
-  out$precision_ok <- if (is.finite(max_rse)) valid & is.finite(out$relative_se) & out$relative_se <= max_rse else NA
+  out$precision_ok <- if (is.finite(max_rse)) {
+    valid & is.finite(out$relative_se) & out$relative_se <= max_rse
+  } else {
+    NA
+  }
   out$preferred_eligible <- valid & out$sample_support_ok &
     if (is.finite(max_rse)) out$precision_ok else TRUE
   out$support_reason <- consumption_support_reason(out, rule, out$precision_ok)
@@ -237,6 +229,77 @@ estimate_consumption_district_svymean <- function(rows, design, support, rule) {
   out[order(out$district_2001), , drop = FALSE]
 }
 
+consumption_svyby_estimates <- function(result, survey_id, outcome_id) {
+  estimate <- num(stats::coef(result))
+  std_error <- num(survey::SE(result))
+  result_df <- as.data.frame(result, stringsAsFactors = FALSE)
+  if (!"target_unit_2001" %in% names(result_df)) {
+    stop("survey::svyby returned an unexpected district-group schema.", call. = FALSE)
+  }
+  if (length(estimate) != nrow(result_df) || length(std_error) != nrow(result_df)) {
+    stop("survey::svyby returned an unexpected coefficient/SE shape.", call. = FALSE)
+  }
+  data.frame(
+    district_2001 = plain_chr(result_df$target_unit_2001),
+    round_id = survey_id,
+    outcome_id = outcome_id,
+    estimate = estimate,
+    std_error = std_error,
+    stringsAsFactors = FALSE
+  )
+}
+
+estimate_consumption_district_svymean <- function(rows, design, support, rule) {
+  x <- rows
+  x$.welfare_value <- consumption_welfare_value(x$real_mpce, rule$transform[[1L]])
+  outcome_design <- update(design, .welfare_value = x$.welfare_value)
+  result <- with_consumption_survey_adjustment(survey::svyby(
+    ~.welfare_value,
+    ~target_unit_2001,
+    outcome_design,
+    survey::svymean,
+    na.rm = TRUE,
+    vartype = "se",
+    keep.names = FALSE,
+    drop.empty.groups = FALSE
+  ))
+  survey_id <- unique(plain_chr(x$survey_id))[[1L]]
+  estimates <- consumption_svyby_estimates(result, survey_id, rule$outcome_id[[1L]])
+  consumption_finalize_district_estimate(
+    estimates,
+    support,
+    rule,
+    cv_applicable = identical(rule$transform[[1L]], "identity")
+  )
+}
+
+estimate_consumption_district_svyquantile <- function(rows, design, support, rule) {
+  x <- rows
+  x$.welfare_value <- consumption_welfare_value(x$real_mpce, rule$transform[[1L]])
+  outcome_design <- update(design, .welfare_value = x$.welfare_value)
+  result <- with_consumption_survey_adjustment(survey::svyby(
+    ~.welfare_value,
+    ~target_unit_2001,
+    outcome_design,
+    survey::svyquantile,
+    quantiles = rule$quantile[[1L]],
+    ci = TRUE,
+    na.rm = TRUE,
+    vartype = "se",
+    keep.names = FALSE,
+    drop.empty.groups = FALSE
+  ))
+  survey_id <- unique(plain_chr(x$survey_id))[[1L]]
+  estimates <- consumption_svyby_estimates(result, survey_id, rule$outcome_id[[1L]])
+  consumption_finalize_district_estimate(
+    estimates,
+    support,
+    rule,
+    cv_applicable = identical(rule$transform[[1L]], "identity")
+  )
+}
+
+
 estimate_consumption_district_welfare <- function(lineaged_households, outcome_registry) {
   x <- consumption_design_rows(lineaged_households)
   survey_id <- unique(plain_chr(x$survey_id))
@@ -246,14 +309,21 @@ estimate_consumption_district_welfare <- function(lineaged_households, outcome_r
   design <- consumption_survey_design_from_rows(x)
   support <- consumption_district_support_from_rows(x)
   safe_bind_rows(lapply(seq_len(nrow(registry)), function(i) {
-    estimate_consumption_district_svymean(x, design, support, registry[i, , drop = FALSE])
+    rule <- registry[i, , drop = FALSE]
+    if (identical(rule$estimand[[1L]], "survey_mean")) {
+      return(estimate_consumption_district_svymean(x, design, support, rule))
+    }
+    if (identical(rule$estimand[[1L]], "survey_quantile")) {
+      return(estimate_consumption_district_svyquantile(x, design, support, rule))
+    }
+    stop("Unsupported registered consumption welfare estimand: ", rule$estimand[[1L]], call. = FALSE)
   }))
 }
 
 estimate_consumption_district_mean <- function(lineaged_households) {
   # Backward-compatible single-outcome wrapper used by focused tests and callers.
   registry <- data.frame(
-    outcome_id = "real_mean_mpce", estimand = "survey_mean", transform = "identity", role = "primary",
+    outcome_id = "real_mean_mpce", estimand = "survey_mean", transform = "identity", quantile = NA_real_, role = "primary",
     min_households = 1, min_fsu = 1, min_kish_effective_n = .Machine$double.eps,
     max_relative_se = NA_real_, stringsAsFactors = FALSE
   )

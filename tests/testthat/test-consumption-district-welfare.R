@@ -95,32 +95,44 @@ test_that("district means intentionally handle lonely-PSU survey warnings", {
   expect_equal(out$estimate, 150)
 })
 
-test_that("welfare registry drives multiple survey-mean outcomes without dropping thin cells", {
+test_that("welfare registry dispatches means and quantiles without dropping thin cells", {
   registry <- data.frame(
-    outcome_id = c("real_mean_mpce", "mean_log_real_mpce"),
-    estimand = "survey_mean", transform = c("identity", "log"),
-    role = c("primary", "robustness"), min_households = 3,
-    min_fsu = 2, min_kish_effective_n = 1, max_relative_se = c(0.50, NA),
+    outcome_id = c("real_mean_mpce", "mean_log_real_mpce", "weighted_median_real_mpce"),
+    estimand = c("survey_mean", "survey_mean", "survey_quantile"),
+    transform = c("identity", "log", "identity"), quantile = c(NA, NA, 0.5),
+    role = c("primary", "robustness", "robustness"), min_households = 10,
+    min_fsu = 2, min_kish_effective_n = 1, max_relative_se = c(0.50, NA, 0.50),
     stringsAsFactors = FALSE
   )
   x <- data.frame(
-    survey_id = "wave", household_id = c("h1", "h2"), source_state_code = "01",
-    sector = "Rural", subround = "1", fsu = c("1", "2"), stratum = "1",
+    survey_id = "wave", household_id = paste0("h", 1:8), source_state_code = "01",
+    sector = "Rural", subround = "1", fsu = as.character(1:8), stratum = "1",
     sub_stratum = "1", household_size = 1, target_unit_2001 = "a",
     lineage_status = "resolved_exact_2001", lineage_weight = 1,
-    lineage_person_weight = c(1, 3), real_mpce = c(100, 200), stringsAsFactors = FALSE
+    lineage_person_weight = 1,
+    real_mpce = c(100, 100, 150, 150, 200, 200, 250, 250), stringsAsFactors = FALSE
   )
   out <- estimate_consumption_district_welfare(x, registry)
   expect_setequal(out$outcome_id, registry$outcome_id)
   expect_equal(out$estimate[out$outcome_id == "real_mean_mpce"], 175, tolerance = 1e-8)
   expect_equal(
     out$estimate[out$outcome_id == "mean_log_real_mpce"],
-    (log(100) + 3 * log(200)) / 4,
+    mean(log(c(100, 100, 150, 150, 200, 200, 250, 250))),
+    tolerance = 1e-8
+  )
+  rows <- consumption_design_rows(x)
+  design <- consumption_survey_design_from_rows(rows)
+  direct_median <- with_consumption_survey_adjustment(survey::svyquantile(
+    ~real_mpce, design, quantiles = 0.5, ci = TRUE, na.rm = TRUE
+  ))
+  expect_equal(
+    out$estimate[out$outcome_id == "weighted_median_real_mpce"],
+    unname(stats::coef(direct_median))[[1L]],
     tolerance = 1e-8
   )
   expect_true(all(!out$sample_support_ok))
   expect_true(all(!out$preferred_eligible))
-  expect_true(all(out$status == "estimated"))
+  expect_true(all(out$status[out$outcome_id != "weighted_median_real_mpce"] == "estimated"))
   expect_true(all(grepl("thin_household_sample", out$support_reason, fixed = TRUE)))
   expect_true(is.na(out$cv[out$outcome_id == "mean_log_real_mpce"]))
 })
@@ -128,14 +140,22 @@ test_that("welfare registry drives multiple survey-mean outcomes without droppin
 test_that("consumption welfare registry validates outcome contracts", {
   path <- tempfile(fileext = ".csv")
   write.csv(data.frame(
-    outcome_id = c("real_mean_mpce", "mean_log_real_mpce"),
-    estimand = "survey_mean", transform = c("identity", "log"), role = c("primary", "robustness"),
+    outcome_id = c("real_mean_mpce", "mean_log_real_mpce", "weighted_median_real_mpce"),
+    estimand = c("survey_mean", "survey_mean", "survey_quantile"),
+    transform = c("identity", "log", "identity"), quantile = c(NA, NA, 0.5),
+    role = c("primary", "robustness", "robustness"),
     min_households = 50, min_fsu = 2, min_kish_effective_n = 20,
-    max_relative_se = c(0.2, NA), stringsAsFactors = FALSE
+    max_relative_se = c(0.2, NA, 0.2), stringsAsFactors = FALSE
   ), path, row.names = FALSE, na = "")
   out <- read_consumption_welfare_outcomes(path)
-  expect_equal(out$outcome_id, c("real_mean_mpce", "mean_log_real_mpce"))
+  expect_equal(out$outcome_id, c("real_mean_mpce", "mean_log_real_mpce", "weighted_median_real_mpce"))
   expect_true(is.na(out$max_relative_se[[2L]]))
+  expect_equal(out$quantile[[3L]], 0.5)
+
+  bad_quantile <- out
+  bad_quantile$quantile[[3L]] <- 1
+  write.csv(bad_quantile, path, row.names = FALSE, na = "")
+  expect_error(read_consumption_welfare_outcomes(path), "invalid quantile declarations")
 
   bad <- out
   bad$outcome_id[[2L]] <- bad$outcome_id[[1L]]
