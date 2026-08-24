@@ -150,6 +150,19 @@ normalize_consumption_codebook <- function(
   out
 }
 
+read_consumption_district_codebook_csv <- function(path, source_id) {
+  if (!file.exists(path)) stop("Consumption district codebook is missing: ", path, call. = FALSE)
+  raw <- utils::read.csv(path, stringsAsFactors = FALSE, check.names = FALSE)
+  normalize_consumption_codebook(
+    raw,
+    "state_name_source",
+    "state_code_source",
+    "district_name_source",
+    "district_code_source",
+    source_id
+  )
+}
+
 read_consumption_district_codebook_excel <- function(path, source_id) {
   need_pkg("readxl", "consumption district codebooks")
   if (!file.exists(path)) stop("Consumption district codebook is missing: ", path, call. = FALSE)
