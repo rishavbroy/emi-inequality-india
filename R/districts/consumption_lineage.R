@@ -197,9 +197,9 @@ build_consumption_lineage_bridge <- function(households, lineage_reference) {
   } else character()
   unresolved <- remaining[!remaining$row_id %in% reviewed_ids, , drop = FALSE]
   unresolved_key <- paste(unresolved$state_std, unresolved$district_std, sep = "\r")
-  unresolved$target_unit_2001 <- NA_character_
-  unresolved$lineage_weight <- NA_real_
-  unresolved$lineage_basis <- NA_character_
+  unresolved$target_unit_2001 <- rep(NA_character_, nrow(unresolved))
+  unresolved$lineage_weight <- rep(NA_real_, nrow(unresolved))
+  unresolved$lineage_basis <- rep(NA_character_, nrow(unresolved))
   unresolved$lineage_status <- ifelse(
     unresolved_key %in% conflict_key,
     "reviewed_lineage_conflict",
@@ -207,10 +207,10 @@ build_consumption_lineage_bridge <- function(households, lineage_reference) {
   )
 
   noneligible <- source[!(source$source_lineage_eligible %in% TRUE), , drop = FALSE]
-  noneligible$target_unit_2001 <- NA_character_
-  noneligible$lineage_weight <- NA_real_
-  noneligible$lineage_basis <- NA_character_
-  noneligible$lineage_status <- "source_not_lineage_eligible"
+  noneligible$target_unit_2001 <- rep(NA_character_, nrow(noneligible))
+  noneligible$lineage_weight <- rep(NA_real_, nrow(noneligible))
+  noneligible$lineage_basis <- rep(NA_character_, nrow(noneligible))
+  noneligible$lineage_status <- rep("source_not_lineage_eligible", nrow(noneligible))
 
   if (nrow(exact_rows)) exact_rows$lineage_status <- "resolved_exact_2001"
   if (nrow(reviewed_rows)) reviewed_rows$lineage_status <- "resolved_reviewed_consensus"
@@ -317,6 +317,6 @@ save_consumption_lineage_coverage <- function(coverage, path = "outputs/diagnost
   write_diagnostic_csv(safe_df(coverage), path)
 }
 
-save_build_consumption_lineage_review_queue <- function(queue, path = "outputs/diagnostics/extended/consumption/lineage_review_queue.csv") {
+save_consumption_lineage_review_queue <- function(queue, path = "outputs/diagnostics/extended/consumption/lineage_review_queue.csv") {
   write_diagnostic_csv(safe_df(queue), path)
 }
