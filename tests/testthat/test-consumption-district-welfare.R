@@ -140,6 +140,7 @@ test_that("welfare registry keeps thin quantile points but gates uncertainty on 
   expect_true(median_a$uncertainty_requested)
   expect_true(median_a$sample_support_ok)
   expect_equal(median_a$status, "estimated")
+  expect_true(is.na(median_a$cv))
 
   expect_true(is.finite(median_b$estimate))
   expect_true(is.na(median_b$std_error))
@@ -151,6 +152,39 @@ test_that("welfare registry keeps thin quantile points but gates uncertainty on 
   expect_true(grepl("thin_household_sample", median_b$support_reason, fixed = TRUE))
   expect_true(is.na(median_b$precision_ok))
   expect_true(is.na(log_a$cv))
+})
+
+
+test_that("quantile estimator handles all-supported and all-thin domain partitions", {
+  registry <- data.frame(
+    outcome_id = "weighted_median_real_mpce", estimand = "survey_quantile",
+    transform = "identity", quantile = 0.5, quantile_interval = "xlogit",
+    quantile_rule = "math", role = "robustness", min_households = 2,
+    min_fsu = 2, min_kish_effective_n = 1, max_relative_se = 0.5,
+    stringsAsFactors = FALSE
+  )
+  x <- data.frame(
+    survey_id = "wave", household_id = paste0("h", 1:8), source_state_code = "01",
+    sector = "Rural", subround = "1", fsu = as.character(1:8), stratum = "1",
+    sub_stratum = "1", household_size = 1,
+    target_unit_2001 = rep(c("a", "b"), each = 4),
+    lineage_status = "resolved_exact_2001", lineage_weight = 1,
+    lineage_person_weight = 1, real_mpce = seq(100, 800, by = 100),
+    stringsAsFactors = FALSE
+  )
+
+  supported <- estimate_consumption_district_welfare(x, registry)
+  expect_equal(nrow(supported), 2L)
+  expect_true(all(supported$uncertainty_requested))
+  expect_true(all(supported$status == "estimated"))
+
+  registry$min_households <- 10
+  expect_warning(thin <- estimate_consumption_district_welfare(x, registry), NA)
+  expect_equal(nrow(thin), 2L)
+  expect_true(all(is.finite(thin$estimate)))
+  expect_true(all(is.na(thin$std_error)))
+  expect_true(all(!thin$uncertainty_requested))
+  expect_true(all(thin$status == "point_estimate_only"))
 })
 
 
