@@ -132,7 +132,9 @@ price_link_factor <- function(old_index, new_index) {
   stats::median(new[keep] / old[keep], na.rm = TRUE)
 }
 
-apply_price_state_rules <- function(temporal_index, state_rules, start_period = NULL, end_period = NULL) {
+apply_price_state_rules <- function(
+    temporal_index, state_rules, start_period = NULL, end_period = NULL,
+    require_complete_grid = TRUE) {
   idx <- safe_df(temporal_index)
   rules <- safe_df(state_rules)
   validate_price_index(idx, keys = c("state_code", "sector", "period"))
@@ -263,13 +265,16 @@ apply_price_state_rules <- function(temporal_index, state_rules, start_period = 
   }
 
   unresolved <- !positive_finite(num(direct$index))
-  if (any(unresolved)) {
+  if (any(unresolved) && isTRUE(require_complete_grid)) {
     bad <- unique(direct[unresolved, c("state_code", "sector"), drop = FALSE])
     stop(
       "No direct or documented fallback temporal price series for: ",
       paste(paste(bad$state_code, bad$sector, sep = "/"), collapse = ", "),
       call. = FALSE
     )
+  }
+  if (any(unresolved)) {
+    direct <- direct[!unresolved, , drop = FALSE]
   }
 
   direct$.price_row <- NULL
@@ -348,7 +353,8 @@ build_state_sector_price_deflators <- function(
     reference_index = NULL,
     start_period = NULL,
     end_period = NULL,
-    reference_rupees = 816) {
+    reference_rupees = 816,
+    require_complete_grid = TRUE) {
   temporal_index <- if (inherits(temporal_series, "emi_temporal_price_series")) {
     temporal_series$index
   } else {
@@ -358,7 +364,8 @@ build_state_sector_price_deflators <- function(
     temporal_index,
     state_rules,
     start_period = start_period,
-    end_period = end_period
+    end_period = end_period,
+    require_complete_grid = require_complete_grid
   )
   spatial <- build_tendulkar_spatial_relatives(poverty_lines, reference_rupees)
   missing_spatial <- setdiff(

@@ -1288,3 +1288,102 @@ test_that("consumption price-window validation accepts complete monthly coverage
   out <- validate_consumption_price_window(d, window)
   expect_equal(out, d)
 })
+
+test_that("sparse price-state expansion keeps resolved cells without inventing missing history", {
+  months <- as.Date(c("2004-07-01", "2023-08-01"))
+  temporal <- rbind(
+    data.frame(
+      state_code = "OLD", sector = "rural", period = months[[1]],
+      index = 100, price_source = "old"
+    ),
+    data.frame(
+      state_code = "NEW", sector = "rural", period = months[[2]],
+      index = 200, price_source = "new"
+    )
+  )
+  rules <- data.frame(
+    target_state_code = character(),
+    source_state_code = character(),
+    sector = character(),
+    valid_from = as.Date(character()),
+    valid_to = as.Date(character()),
+    rule_type = character(),
+    reason = character(),
+    stringsAsFactors = FALSE
+  )
+
+  expect_error(
+    apply_price_state_rules(
+      temporal, rules,
+      start_period = months[[1]], end_period = months[[2]]
+    ),
+    "No direct or documented fallback"
+  )
+
+  out <- apply_price_state_rules(
+    temporal, rules,
+    start_period = months[[1]], end_period = months[[2]],
+    require_complete_grid = FALSE
+  )
+  expect_equal(nrow(out), 2L)
+  expect_equal(
+    paste(out$state_code, out$period),
+    c("NEW 2023-08-01", "OLD 2004-07-01")
+  )
+  expect_true(all(out$state_rule == "direct"))
+})
+
+test_that("sparse expansion still resolves documented fallback chains", {
+  months <- as.Date(c("2004-07-01", "2023-08-01"))
+  temporal <- rbind(
+    data.frame(
+      state_code = "ALL_INDIA", sector = "rural", period = months[[1]],
+      index = 100, price_source = "old"
+    ),
+    data.frame(
+      state_code = "DADI", sector = "rural", period = months[[2]],
+      index = 200, price_source = "new"
+    )
+  )
+  rules <- data.frame(
+    target_state_code = c("GOA", "DADI"),
+    source_state_code = c("ALL_INDIA", "GOA"),
+    sector = "rural",
+    valid_from = as.Date("1900-01-01"),
+    valid_to = as.Date(NA_character_),
+    rule_type = "fallback",
+    reason = c("Goa fallback", "Daman and Diu fallback"),
+    stringsAsFactors = FALSE
+  )
+
+  out <- apply_price_state_rules(
+    temporal, rules,
+    start_period = months[[1]], end_period = months[[2]],
+    require_complete_grid = FALSE
+  )
+  dadi_old <- out[
+    out$state_code == "DADI" & out$period == months[[1]],
+    , drop = FALSE
+  ]
+  expect_equal(nrow(dadi_old), 1L)
+  expect_equal(dadi_old$index, 100)
+  expect_equal(dadi_old$temporal_state_source, "ALL_INDIA")
+  expect_match(dadi_old$fallback_reason, "Daman and Diu fallback -> Goa fallback", fixed = TRUE)
+})
+
+test_that("production price-window validation accepts sparse state histories with complete calendar coverage", {
+  window <- data.frame(
+    start_period = as.Date("2023-08-01"),
+    end_period = as.Date("2023-10-01"),
+    stringsAsFactors = FALSE
+  )
+  d <- data.frame(
+    state_code = c("A", "A", "B"),
+    sector = c("rural", "rural", "urban"),
+    period = as.Date(c("2023-08-01", "2023-09-01", "2023-10-01")),
+    price_deflator = c(1, 1.1, 1.2),
+    stringsAsFactors = FALSE
+  )
+
+  expect_equal(validate_consumption_price_window(d, window), d)
+})
