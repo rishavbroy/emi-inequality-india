@@ -134,9 +134,16 @@ corresponding log difference as robustness outcomes.
 
 The bridge deliberately does not replace the headline IV models yet. It prepares
 a `consumption_iv_panel`, compiles the welfare rows into the existing canonical
-IV specification schema, and reports complete-case coverage. This keeps the
-outcome-measurement decision separate from the unresolved interpretation choice
-between reduced-form and weak-first-stage 2SLS evidence.
+IV specification schema, and reports complete-case coverage. Canonical IV
+specification list-columns are preserved through a dedicated row binder rather
+than the generic data-frame binder, which intentionally flattens list-columns.
+Coverage is computed from `iv_specification_variables()`, so fixed-effect terms
+such as `factor(state_code_2001)` are resolved to their underlying panel
+variables. Every registered welfare-IV row must be analysis-ready; missing
+columns or fewer than three complete cases fail the coverage target rather than
+silently surviving as a diagnostic status. This keeps the outcome-measurement
+decision separate from the unresolved interpretation choice between reduced-form
+and weak-first-stage 2SLS evidence.
 
 `consumption_welfare_changes.csv` is the district-level dynamic welfare object
 derived from the same comparison registry. It retains both round estimates,

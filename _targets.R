@@ -868,9 +868,11 @@ core_pipeline_targets <- list(
   ),
   tar_target(
     consumption_iv_outcome_coverage,
-    summarize_consumption_iv_outcome_coverage(
-      consumption_iv_panel,
-      consumption_iv_specifications
+    validate_consumption_iv_outcome_coverage(
+      summarize_consumption_iv_outcome_coverage(
+        consumption_iv_panel,
+        consumption_iv_specifications
+      )
     )
   ),
   tar_target(
