@@ -135,9 +135,10 @@ corresponding log difference as robustness outcomes.
 The bridge deliberately does not replace the headline IV models yet. It prepares
 a `consumption_iv_panel`, compiles the welfare rows into the existing canonical
 IV specification schema, and reports complete-case coverage. Canonical IV
-specification list-columns are preserved through a dedicated row binder rather
-than the generic data-frame binder, which intentionally flattens list-columns.
-Coverage is computed from `iv_specification_variables()`, so fixed-effect terms
+specification list-columns are preserved through a dedicated row binder and a
+canonical specification validator rather than raw-data normalization helpers
+such as `safe_df()`, which intentionally flatten list-columns for CSV-friendly
+data frames. Coverage is computed from `iv_specification_variables()`, so fixed-effect terms
 such as `factor(state_code_2001)` are resolved to their underlying panel
 variables. Every registered welfare-IV row must be analysis-ready; missing
 columns or fewer than three complete cases fail the coverage target rather than
