@@ -47,6 +47,10 @@ Both rounds must reproduce the official all-India rural/urban MPCE benchmarks
 within one rupee before their nominal household objects can feed later price,
 geography, or welfare targets.
 
+Reconstruction QA outputs use the shared diagnostic CSV writer used by the rest
+of the repository, so their target-level file behavior is exercised by the same
+output contract rather than by HCES-specific write helpers.
+
 The distributed Level 14 summary is sparse rather than a rectangular
 household-by-questionnaire table. A small number of F/C/D questionnaire pairs have
 a Level-15 visit but no Level-14 A1/B1/C1 row. At the Level-14/15 join boundary,
