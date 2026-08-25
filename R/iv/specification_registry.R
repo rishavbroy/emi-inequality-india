@@ -174,6 +174,43 @@ bind_iv_specification_rows <- function(rows) {
   out
 }
 
+as_iv_specifications <- function(specifications) {
+  x <- as.data.frame(specifications, stringsAsFactors = FALSE)
+  required <- c(
+    "specification_id", "outcome", "treatment", "fixed_effect",
+    "controls", "included_language_controls", "excluded_instruments", "cluster"
+  )
+  missing <- setdiff(required, names(x))
+  if (length(missing)) {
+    stop(
+      "IV specifications are missing canonical columns: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  list_columns <- c("controls", "included_language_controls", "excluded_instruments")
+  invalid <- list_columns[!vapply(x[list_columns], is.list, logical(1))]
+  if (length(invalid)) {
+    stop(
+      "IV specification list-column contract was lost for: ",
+      paste(invalid, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  if (nrow(x) && anyDuplicated(plain_chr(x$specification_id))) {
+    stop("IV specification_id values must be unique.", call. = FALSE)
+  }
+  x
+}
+
+as_single_iv_specification <- function(specification) {
+  x <- as_iv_specifications(specification)
+  if (nrow(x) != 1L) {
+    stop("A single canonical IV specification is required.", call. = FALSE)
+  }
+  x
+}
+
 iv_specification_row <- function(
   specification_id,
   adjustment_id,
@@ -368,6 +405,7 @@ iv_diagnostic_specification_registry <- function(
 }
 
 iv_specification_formula <- function(specification) {
+  specification <- as_single_iv_specification(specification)
   controls <- unlist(specification$controls[[1]], use.names = FALSE)
   included <- unlist(specification$included_language_controls[[1]], use.names = FALSE)
   excluded <- unlist(specification$excluded_instruments[[1]], use.names = FALSE)
@@ -382,6 +420,7 @@ iv_specification_formula <- function(specification) {
 }
 
 iv_first_stage_formula <- function(specification) {
+  specification <- as_single_iv_specification(specification)
   controls <- unlist(specification$controls[[1]], use.names = FALSE)
   included <- unlist(specification$included_language_controls[[1]], use.names = FALSE)
   excluded <- unlist(specification$excluded_instruments[[1]], use.names = FALSE)
@@ -392,6 +431,7 @@ iv_first_stage_formula <- function(specification) {
 }
 
 iv_specification_cluster_variable <- function(specification) {
+  specification <- as_single_iv_specification(specification)
   cluster <- plain_chr(specification$cluster[[1]] %||% "")
   cluster <- cluster[nzchar(cluster)]
   if (length(cluster) != 1L) {

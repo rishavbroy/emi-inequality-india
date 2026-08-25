@@ -267,7 +267,7 @@ compile_consumption_iv_specifications <- function(registry) {
 
 summarize_consumption_iv_outcome_coverage <- function(panel, specifications) {
   x <- if (inherits(panel, "sf")) sf::st_drop_geometry(panel) else safe_df(panel)
-  specs <- safe_df(specifications)
+  specs <- as_iv_specifications(specifications)
   safe_bind_rows(lapply(seq_len(nrow(specs)), function(i) {
     spec <- specs[i, , drop = FALSE]
     needed <- iv_specification_variables(spec, include_outcome = TRUE)

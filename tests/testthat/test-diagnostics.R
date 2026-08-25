@@ -1710,3 +1710,112 @@ test_that("consumption IV coverage validation blocks non-ready registered specif
     "broken=missing_columns\\[state_code_2001\\]"
   )
 })
+
+test_that("canonical IV specification coercion preserves list columns", {
+  row <- iv_specification_row(
+    specification_id = "one",
+    adjustment_id = "state_main",
+    adjustment = "State FE + main controls",
+    construction_id = "nonzero_mean",
+    construction = "Nonzero mean",
+    outcome = "y",
+    treatment = "d",
+    fixed_effect = "state",
+    controls = c("literacy_rate_2001", "custom_baseline"),
+    included_language_controls = "hindi_urdu_share",
+    excluded_instruments = "z",
+    mapping_coverage_variable = "coverage",
+    panel_variant = "primary",
+    sample_rule = "support",
+    cluster = "state_code_2001"
+  )
+  out <- as_iv_specifications(row)
+  expect_true(is.list(out$controls))
+  expect_true(is.list(out$included_language_controls))
+  expect_true(is.list(out$excluded_instruments))
+  expect_identical(
+    unlist(out$controls[[1]], use.names = FALSE),
+    unlist(row$controls[[1]], use.names = FALSE)
+  )
+})
+
+test_that("canonical IV specification coercion rejects flattened list columns", {
+  row <- iv_specification_row(
+    specification_id = "one",
+    adjustment_id = "state_main",
+    adjustment = "State FE + main controls",
+    construction_id = "nonzero_mean",
+    construction = "Nonzero mean",
+    outcome = "y",
+    treatment = "d",
+    fixed_effect = "state",
+    controls = "literacy_rate_2001",
+    included_language_controls = character(),
+    excluded_instruments = "z",
+    mapping_coverage_variable = "coverage",
+    panel_variant = "primary",
+    sample_rule = "support"
+  )
+  expect_error(
+    as_iv_specifications(safe_df(row)),
+    "list-column contract was lost"
+  )
+})
+
+test_that("IV variable extraction preserves formula and cluster contracts after binding", {
+  rows <- lapply(c("y1", "y2"), function(outcome) {
+    iv_specification_row(
+      specification_id = outcome,
+      adjustment_id = "state_main",
+      adjustment = "State FE + main controls",
+      construction_id = "nonzero_mean",
+      construction = "Nonzero mean",
+      outcome = outcome,
+      treatment = "d",
+      fixed_effect = "state",
+      controls = c("literacy_rate_2001", "custom_baseline"),
+      included_language_controls = character(),
+      excluded_instruments = "z",
+      mapping_coverage_variable = "coverage",
+      panel_variant = "primary",
+      sample_rule = "support",
+      cluster = "state_code_2001"
+    )
+  })
+  specs <- bind_iv_specification_rows(rows)
+  vars <- iv_specification_variables(specs[1, , drop = FALSE])
+  expect_true(all(c(
+    "y1", "d", "z", "literacy_rate_2001", "custom_baseline", "state_code_2001"
+  ) %in% vars))
+  expect_false(any(grepl("factor\\(", vars)))
+  expect_identical(
+    iv_specification_cluster_variable(specs[1, , drop = FALSE]),
+    "state_code_2001"
+  )
+})
+
+test_that("IV formula helpers reject multi-row specifications explicitly", {
+  row <- iv_specification_row(
+    specification_id = "one",
+    adjustment_id = "state_main",
+    adjustment = "State FE + main controls",
+    construction_id = "nonzero_mean",
+    construction = "Nonzero mean",
+    outcome = "y",
+    treatment = "d",
+    fixed_effect = "state",
+    controls = character(),
+    included_language_controls = character(),
+    excluded_instruments = "z",
+    mapping_coverage_variable = "coverage",
+    panel_variant = "primary",
+    sample_rule = "support"
+  )
+  row2 <- row
+  row2$specification_id <- "two"
+  specs <- bind_iv_specification_rows(list(row, row2))
+  expect_error(
+    iv_specification_variables(specs),
+    "single canonical IV specification"
+  )
+})
