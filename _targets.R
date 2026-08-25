@@ -757,15 +757,25 @@ core_pipeline_targets <- list(
     format = "file"
   ),
   tar_target(
-    modern_hces_welfare_consistency,
-    compare_modern_hces_welfare(
-      consumption_district_welfare_hces_2022_23,
-      consumption_district_welfare_hces_2023_24
+    consumption_welfare_comparisons_file,
+    "data/metadata/consumption_welfare_comparisons.csv",
+    format = "file"
+  ),
+  tar_target(
+    consumption_welfare_comparisons,
+    read_consumption_welfare_comparisons(consumption_welfare_comparisons_file)
+  ),
+  tar_target(
+    consumption_welfare_comparability,
+    compare_consumption_welfare(
+      consumption_district_welfare,
+      consumption_welfare_outcomes,
+      consumption_welfare_comparisons
     )
   ),
   tar_target(
-    modern_hces_welfare_consistency_file,
-    save_modern_hces_welfare_consistency(modern_hces_welfare_consistency),
+    consumption_welfare_comparability_file,
+    save_consumption_welfare_comparability(consumption_welfare_comparability),
     format = "file"
   ),
   tar_target(
