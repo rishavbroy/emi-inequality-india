@@ -43,15 +43,27 @@ estimate_first_stage <- function(iv_models, district_panel, cfg) {
       paste(iv_terms$instruments, collapse = " + ")
     ))
 
-    missing <- setdiff(all.vars(first_stage_formula), names(as.data.frame(district_panel)))
+    panel <- as.data.frame(district_panel)
+    missing <- setdiff(all.vars(first_stage_formula), names(panel))
     if (length(missing)) {
       return(first_stage_status_row(model_name, paste("Missing first-stage variables:", paste(missing, collapse = ", "))))
     }
 
-    fit <- tryCatch(stats::lm(first_stage_formula, data = district_panel), error = function(e) e)
+    fitted_rows <- iv_model_row_indices(model, panel)
+    if (!length(fitted_rows)) {
+      return(first_stage_status_row(
+        model_name,
+        "Could not align the first stage to the fitted IV estimation sample."
+      ))
+    }
+    analysis_data <- panel[fitted_rows, , drop = FALSE]
+    fit <- tryCatch(
+      stats::lm(first_stage_formula, data = analysis_data),
+      error = function(e) e
+    )
     if (inherits(fit, "error")) return(first_stage_status_row(model_name, conditionMessage(fit)))
 
-    vc <- first_stage_vcov(fit, district_panel)
+    vc <- first_stage_vcov(fit, analysis_data)
     coef_mat <- tryCatch({
       if (is.null(vc)) summary(fit)$coefficients else lmtest::coeftest(fit, vcov. = vc)
     }, error = function(e) NULL)

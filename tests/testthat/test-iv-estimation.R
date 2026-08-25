@@ -433,3 +433,43 @@ test_that("IV clustering prefers the canonical Census 2001 state code", {
 
   expect_identical(iv_cluster_column(data), "state_code_2001")
 })
+
+test_that("first-stage diagnostics use the fitted IV estimation sample", {
+  skip_if_not_installed("ivreg")
+  set.seed(501)
+  n <- 80
+  dat <- data.frame(
+    y = rnorm(n), x = rnorm(n), z = rnorm(n), w = rnorm(n),
+    state_code_2001 = rep(sprintf("%02d", 1:8), each = 10),
+    stringsAsFactors = FALSE
+  )
+  dat$x <- 0.8 * dat$z + 0.2 * dat$w + rnorm(n)
+  dat$y <- dat$x + dat$w + rnorm(n)
+  dat$y[c(2, 5, 19, 37, 58)] <- NA_real_
+  rownames(dat) <- paste0("district_", seq_len(n))
+
+  models <- estimate_2sls(dat, list(model = y ~ x + w | z + w), list())
+  first_stage <- estimate_first_stage(models, dat, list())
+
+  expect_equal(
+    unique(first_stage$nobs[first_stage$model == "model"]),
+    stats::nobs(models$model)
+  )
+})
+
+test_that("generic model-term inference reports clustered coefficient statistics", {
+  skip_if_not_installed("sandwich")
+  set.seed(502)
+  dat <- data.frame(
+    y = rnorm(60), z = rnorm(60),
+    cluster = rep(letters[1:6], each = 10),
+    stringsAsFactors = FALSE
+  )
+  dat$y <- 0.5 * dat$z + dat$y
+  fit <- stats::lm(y ~ z, data = dat)
+  inference <- iv_clustered_inference(fit, dat$cluster)
+  out <- model_term_inference(fit, "z", inference$vcov)
+
+  expect_true(all(is.finite(out)))
+  expect_equal(out[["estimate"]], stats::coef(fit)[["z"]])
+})

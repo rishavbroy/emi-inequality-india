@@ -49,3 +49,40 @@ residualize_iv_variable <- function(data, variable, controls = character(), fixe
   if (!length(rhs)) return(num(data[[variable]]) - mean(num(data[[variable]])))
   stats::residuals(stats::lm(stats::reformulate(rhs, response = variable), data = data))
 }
+
+model_term_inference <- function(fit, term, vcov = NULL) {
+  coefficients <- tryCatch(stats::coef(fit), error = function(e) NULL)
+  if (is.null(coefficients) || !term %in% names(coefficients) ||
+      !is.finite(coefficients[[term]])) {
+    return(c(
+      estimate = NA_real_, std.error = NA_real_,
+      statistic = NA_real_, p.value = NA_real_
+    ))
+  }
+
+  if (is.null(vcov)) {
+    vcov <- tryCatch(stats::vcov(fit), error = function(e) NULL)
+  }
+  se <- NA_real_
+  if (!is.null(vcov) && length(dim(vcov)) == 2L &&
+      term %in% rownames(vcov) && term %in% colnames(vcov) &&
+      is.finite(vcov[term, term]) && vcov[term, term] >= 0) {
+    se <- sqrt(vcov[term, term])
+  }
+
+  estimate <- unname(coefficients[[term]])
+  statistic <- if (is.finite(se) && se > 0) estimate / se else NA_real_
+  residual_df <- tryCatch(stats::df.residual(fit), error = function(e) NA_real_)
+  p_value <- if (is.finite(statistic) && is.finite(residual_df) && residual_df > 0) {
+    2 * stats::pt(abs(statistic), df = residual_df, lower.tail = FALSE)
+  } else if (is.finite(statistic)) {
+    2 * stats::pnorm(abs(statistic), lower.tail = FALSE)
+  } else {
+    NA_real_
+  }
+
+  c(
+    estimate = estimate, std.error = se,
+    statistic = statistic, p.value = p_value
+  )
+}

@@ -90,6 +90,7 @@ anderson_rubin_grid <- function(
 }
 
 estimate_anderson_rubin_spec <- function(data, specification, level = 0.95, points = 401L) {
+  specification <- as_single_iv_specification(specification)
   controls <- unlist(specification$controls[[1]], use.names = FALSE)
   included <- unlist(specification$included_language_controls[[1]], use.names = FALSE)
   excluded <- unlist(specification$excluded_instruments[[1]], use.names = FALSE)
