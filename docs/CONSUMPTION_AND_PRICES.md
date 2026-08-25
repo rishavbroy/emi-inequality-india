@@ -320,7 +320,14 @@ and 2011-12 surveys is covered before the January 2013 CPI-R/U switch.
 canonical detailed-survey contract: authoritative source state, sector,
 registered period group, nominal MPCE, nominal household consumption, household
 size, and survey weight. It does not reuse the legacy column-name heuristic that
-guesses whether a source field is a household total. Price attachment dispatches
+guesses whether a source field is a household total. The production price window is derived from the consumption-survey registry rather
+than hard-coded in `_targets.R`. Surveys whose household adapter is still
+`legacy_schedule_pending` do not expand the production window; every implemented
+survey does. With the current registry this yields July 2004 through July 2024.
+The assembled deflator table must cover every month in that window before any
+household-level price attachment is allowed to run.
+
+Price attachment dispatches
 from the survey registry: non-overlapping three-month sub-rounds for legacy NSS
 Schedule 1.0 and overlapping three-month panels for modern HCES. When source
 geography supplies an explicit historical `price_state_code`, that key is used

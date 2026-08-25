@@ -430,21 +430,24 @@ core_pipeline_targets <- list(
   tar_target(nss_2017_education, clean_nss_2017_education(raw_nss_2017_education)),
   tar_target(census_2001_languages, clean_census_2001_languages(raw_census_2001)),
   tar_target(
+    consumption_price_window,
+    registered_consumption_price_window(consumption_survey_registry)
+  ),
+  tar_target(
     temporal_price_series,
-    build_temporal_price_series(
-      raw_price_sources,
-      pre_switch_start = as.Date("2004-07-01"),
-      pre_switch_end = as.Date("2012-12-01")
-    )
+    build_temporal_price_series(raw_price_sources)
   ),
   tar_target(price_reference_index, build_ruc_reference_index(raw_price_sources)),
   tar_target(
     state_sector_price_deflators,
-    build_state_sector_price_deflators(
-      temporal_price_series,
-      reference_index = price_reference_index,
-      start_period = as.Date("2004-07-01"),
-      end_period = as.Date("2018-06-01")
+    validate_consumption_price_window(
+      build_state_sector_price_deflators(
+        temporal_price_series,
+        reference_index = price_reference_index,
+        start_period = consumption_price_window$start_period[[1L]],
+        end_period = consumption_price_window$end_period[[1L]]
+      ),
+      consumption_price_window
     )
   ),
 

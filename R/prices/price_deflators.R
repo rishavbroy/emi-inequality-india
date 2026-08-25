@@ -376,6 +376,39 @@ build_state_sector_price_deflators <- function(
   )
 }
 
+validate_consumption_price_window <- function(deflators, price_window) {
+  d <- safe_df(deflators)
+  w <- safe_df(price_window)
+  if (nrow(w) != 1L || !all(c("start_period", "end_period") %in% names(w))) {
+    stop("Consumption price window must contain one start_period/end_period row.", call. = FALSE)
+  }
+  required <- c("state_code", "sector", "period", "price_deflator")
+  missing <- setdiff(required, names(d))
+  if (length(missing)) {
+    stop("Consumption price deflators are missing columns: ", paste(missing, collapse = ", "), call. = FALSE)
+  }
+
+  start <- price_boundary(w$start_period[[1L]])
+  end <- price_boundary(w$end_period[[1L]])
+  if (end < start) stop("Consumption price window ends before it begins.", call. = FALSE)
+
+  periods <- sort(unique(price_month_start(d$period)))
+  required_periods <- seq(start, end, by = "month")
+  missing_periods <- setdiff(as.character(required_periods), as.character(periods))
+  if (length(missing_periods)) {
+    stop(
+      "Price deflator table does not cover registered consumption month(s): ",
+      paste(utils::head(missing_periods, 12L), collapse = ", "),
+      if (length(missing_periods) > 12L) " ..." else "",
+      call. = FALSE
+    )
+  }
+  if (any(!positive_finite(d$price_deflator))) {
+    stop("Consumption price deflator table contains invalid values.", call. = FALSE)
+  }
+  d
+}
+
 attach_household_deflator <- function(households, deflators, state_col, sector_col, period_col) {
   hh <- safe_df(households)
   d <- safe_df(deflators)

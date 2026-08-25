@@ -1250,3 +1250,41 @@ test_that("unresolved price-key errors identify the failing key and raw value", 
     "state=1 \\[37\\]"
   )
 })
+
+test_that("consumption price-window validation catches truncated production tables early", {
+  window <- data.frame(
+    start_period = as.Date("2023-08-01"),
+    end_period = as.Date("2023-10-01"),
+    stringsAsFactors = FALSE
+  )
+  d <- data.frame(
+    state_code = "JNK",
+    sector = "rural",
+    period = as.Date(c("2023-08-01", "2023-09-01")),
+    price_deflator = c(1, 1.1),
+    stringsAsFactors = FALSE
+  )
+
+  expect_error(
+    validate_consumption_price_window(d, window),
+    "2023-10-01"
+  )
+})
+
+test_that("consumption price-window validation accepts complete monthly coverage", {
+  window <- data.frame(
+    start_period = as.Date("2023-08-01"),
+    end_period = as.Date("2023-10-01"),
+    stringsAsFactors = FALSE
+  )
+  d <- data.frame(
+    state_code = "JNK",
+    sector = "rural",
+    period = seq(as.Date("2023-08-01"), as.Date("2023-10-01"), by = "month"),
+    price_deflator = c(1, 1.1, 1.2),
+    stringsAsFactors = FALSE
+  )
+
+  out <- validate_consumption_price_window(d, window)
+  expect_equal(out, d)
+})
