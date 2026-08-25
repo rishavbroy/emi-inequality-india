@@ -766,6 +766,19 @@ core_pipeline_targets <- list(
     read_consumption_welfare_comparisons(consumption_welfare_comparisons_file)
   ),
   tar_target(
+    consumption_welfare_changes,
+    build_consumption_welfare_changes(
+      consumption_district_welfare,
+      consumption_welfare_outcomes,
+      consumption_welfare_comparisons
+    )
+  ),
+  tar_target(
+    consumption_welfare_changes_file,
+    save_consumption_welfare_changes(consumption_welfare_changes),
+    format = "file"
+  ),
+  tar_target(
     consumption_welfare_comparability,
     compare_consumption_welfare(
       consumption_district_welfare,

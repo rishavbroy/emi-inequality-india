@@ -122,6 +122,13 @@ district estimation. The public welfare output therefore contains the registered
 real mean MPCE, mean log real MPCE, and person-weighted median MPCE together with
 household, FSU, Kish-effective-N, support, precision, and eligibility diagnostics.
 
+`consumption_welfare_changes.csv` is the district-level dynamic welfare object
+derived from the same comparison registry. It retains both round estimates,
+absolute changes, proportional changes for positive level-valued outcomes,
+common-support flags, preferred-eligibility flags, and survey-support diagnostics.
+This object is the intended handoff for later IV outcome integration; summary
+comparability statistics are derived from it rather than recomputing round joins.
+
 `consumption_welfare_comparability.csv` applies one registry-driven comparison
 contract across the planned survey-method checks: 2009 Type 1 versus Type 2,
 2009 Type 2 versus 2011 Type 2, 2011 Type 2 versus each modern HCES endpoint,
