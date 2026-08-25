@@ -222,6 +222,88 @@ test_that("consumption welfare registry validates outcome contracts", {
   expect_error(read_consumption_welfare_outcomes(path), "unique outcome_id")
 })
 
+test_that("district welfare changes preserve common-support and directional change semantics", {
+  make_round <- function(round_id, outcome_id, estimate, eligible) {
+    data.frame(
+      district_2001 = letters[1:3],
+      round_id = round_id,
+      outcome_id = outcome_id,
+      estimate = estimate,
+      preferred_eligible = eligible,
+      n_households = c(100, 90, 80),
+      n_fsu = c(10, 9, 8),
+      kish_effective_n = c(80, 70, 60),
+      stringsAsFactors = FALSE
+    )
+  }
+  welfare <- rbind(
+    make_round("left", "real_mean_mpce", c(100, 200, NA), c(TRUE, TRUE, TRUE)),
+    make_round("right", "real_mean_mpce", c(110, 180, 300), c(TRUE, FALSE, TRUE))
+  )
+  outcomes <- data.frame(
+    outcome_id = "real_mean_mpce", transform = "identity",
+    stringsAsFactors = FALSE
+  )
+  comparison <- data.frame(
+    comparison_id = "left_vs_right",
+    left_round = "left", right_round = "right",
+    comparison_family = "test", stringsAsFactors = FALSE
+  )
+
+  out <- consumption_welfare_pair_rows(welfare, outcomes, comparison)
+  a <- out[out$district_2001 == "a", , drop = FALSE]
+  b <- out[out$district_2001 == "b", , drop = FALSE]
+  c <- out[out$district_2001 == "c", , drop = FALSE]
+
+  expect_equal(a$absolute_change, 10)
+  expect_equal(a$proportional_change, 0.1, tolerance = 1e-12)
+  expect_true(a$finite_common)
+  expect_true(a$preferred_common)
+
+  expect_equal(b$absolute_change, -20)
+  expect_equal(b$proportional_change, -0.1, tolerance = 1e-12)
+  expect_true(b$finite_common)
+  expect_false(b$preferred_common)
+
+  expect_false(c$finite_common)
+  expect_false(c$preferred_common)
+  expect_true(is.na(c$proportional_change))
+})
+
+test_that("comparability summary is derived from the district welfare-change object", {
+  make <- function(round_id, estimate) {
+    data.frame(
+      district_2001 = letters[1:3],
+      round_id = round_id,
+      outcome_id = "real_mean_mpce",
+      estimate = estimate,
+      preferred_eligible = TRUE,
+      n_households = 100,
+      n_fsu = 10,
+      kish_effective_n = 80,
+      stringsAsFactors = FALSE
+    )
+  }
+  welfare <- rbind(make("left", c(100, 200, 300)), make("right", c(110, 220, 330)))
+  outcomes <- data.frame(
+    outcome_id = "real_mean_mpce", transform = "identity",
+    stringsAsFactors = FALSE
+  )
+  comparisons <- data.frame(
+    comparison_id = "left_vs_right",
+    left_round = "left", right_round = "right",
+    comparison_family = "test", stringsAsFactors = FALSE
+  )
+
+  changes <- build_consumption_welfare_changes(welfare, outcomes, comparisons)
+  summary_from_changes <- summarize_consumption_welfare_pair(changes)
+  summary_direct <- compare_consumption_welfare(
+    welfare, outcomes, comparisons
+  )
+
+  expect_equal(summary_direct, summary_from_changes, ignore_attr = TRUE)
+})
+
 test_that("welfare comparability uses preferred common support and directional level changes", {
   make_round <- function(round_id, outcome_id, estimate, eligible) {
     data.frame(

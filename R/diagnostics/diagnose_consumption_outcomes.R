@@ -314,7 +314,7 @@ read_consumption_welfare_comparisons <- function(path) {
   x
 }
 
-compare_consumption_welfare_pair <- function(
+consumption_welfare_pair_rows <- function(
     welfare, outcome_registry, comparison) {
   x <- safe_df(welfare)
   outcomes <- safe_df(outcome_registry)
@@ -375,89 +375,177 @@ compare_consumption_welfare_pair <- function(
     preferred <- finite &
       joined$preferred_eligible_left %in% TRUE &
       joined$preferred_eligible_right %in% TRUE
-    use_preferred <- sum(preferred) >= 3L
-    use <- if (use_preferred) preferred else finite
-
-    pearson <- spearman <- median_abs_difference <- median_prop_change <- NA_real_
-    if (sum(use) >= 3L) {
-      pearson <- stats::cor(
-        joined$estimate_left[use], joined$estimate_right[use],
-        method = "pearson"
-      )
-      spearman <- stats::cor(
-        joined$estimate_left[use], joined$estimate_right[use],
-        method = "spearman"
-      )
-      median_abs_difference <- stats::median(
-        abs(joined$estimate_right[use] - joined$estimate_left[use])
-      )
-
-      transform <- outcomes$transform[
-        match(outcome_id, plain_chr(outcomes$outcome_id))
-      ][[1L]]
-      positive_level <- identical(plain_chr(transform), "identity") &
-        all(joined$estimate_left[use] > 0)
-      if (positive_level) {
-        median_prop_change <- stats::median(
-          (joined$estimate_right[use] - joined$estimate_left[use]) /
-            joined$estimate_left[use]
-        )
-      }
-    }
+    transform <- plain_chr(outcomes$transform[
+      match(outcome_id, plain_chr(outcomes$outcome_id))
+    ][[1L]])
+    proportional <- rep(NA_real_, nrow(joined))
+    positive_level <- finite & identical(transform, "identity") &
+      joined$estimate_left > 0
+    proportional[positive_level] <- (
+      joined$estimate_right[positive_level] -
+        joined$estimate_left[positive_level]
+    ) / joined$estimate_left[positive_level]
 
     data.frame(
       comparison_id = plain_chr(cmp$comparison_id[[1L]]),
       comparison_family = plain_chr(cmp$comparison_family[[1L]]),
       left_round = left_id,
       right_round = right_id,
+      district_2001 = joined$district_2001,
       outcome_id = outcome_id,
-      common_districts = sum(finite),
-      common_preferred_districts = sum(preferred),
-      comparison_districts = sum(use),
-      comparison_basis = if (use_preferred) {
-        "preferred_common_support"
-      } else {
-        "all_finite_common_support"
-      },
-      pearson_correlation = pearson,
-      spearman_correlation = spearman,
-      median_absolute_difference = median_abs_difference,
-      median_proportional_change = median_prop_change,
-      median_households_left = if (sum(use)) {
-        stats::median(joined$n_households_left[use])
-      } else NA_real_,
-      median_households_right = if (sum(use)) {
-        stats::median(joined$n_households_right[use])
-      } else NA_real_,
-      median_kish_effective_n_left = if (sum(use)) {
-        stats::median(joined$kish_effective_n_left[use])
-      } else NA_real_,
-      median_kish_effective_n_right = if (sum(use)) {
-        stats::median(joined$kish_effective_n_right[use])
-      } else NA_real_,
-      status = if (sum(use) < 3L) {
-        "insufficient_common_support"
-      } else if (use_preferred) {
-        "estimated_preferred_common_support"
-      } else {
-        "estimated_all_common_support"
-      },
+      transform = transform,
+      estimate_left = joined$estimate_left,
+      estimate_right = joined$estimate_right,
+      absolute_change = joined$estimate_right - joined$estimate_left,
+      proportional_change = proportional,
+      finite_common = finite,
+      preferred_common = preferred,
+      preferred_eligible_left = joined$preferred_eligible_left,
+      preferred_eligible_right = joined$preferred_eligible_right,
+      n_households_left = joined$n_households_left,
+      n_households_right = joined$n_households_right,
+      n_fsu_left = joined$n_fsu_left,
+      n_fsu_right = joined$n_fsu_right,
+      kish_effective_n_left = joined$kish_effective_n_left,
+      kish_effective_n_right = joined$kish_effective_n_right,
       stringsAsFactors = FALSE
     )
   }))
 }
 
-compare_consumption_welfare <- function(
+build_consumption_welfare_changes <- function(
     welfare, outcome_registry, comparison_registry) {
   comparisons <- safe_df(comparison_registry)
   if (!nrow(comparisons)) {
     stop("Consumption welfare comparison registry is empty.", call. = FALSE)
   }
-  safe_bind_rows(lapply(seq_len(nrow(comparisons)), function(i) {
-    compare_consumption_welfare_pair(
+  out <- safe_bind_rows(lapply(seq_len(nrow(comparisons)), function(i) {
+    consumption_welfare_pair_rows(
       welfare, outcome_registry, comparisons[i, , drop = FALSE]
     )
   }))
+  out[order(
+    out$comparison_id, out$outcome_id, out$district_2001
+  ), , drop = FALSE]
+}
+
+summarize_consumption_welfare_pair <- function(changes) {
+  x <- safe_df(changes)
+  required <- c(
+    "comparison_id", "comparison_family", "left_round", "right_round",
+    "outcome_id", "estimate_left", "estimate_right", "absolute_change",
+    "proportional_change", "finite_common", "preferred_common",
+    "n_households_left", "n_households_right",
+    "kish_effective_n_left", "kish_effective_n_right"
+  )
+  missing <- setdiff(required, names(x))
+  if (length(missing)) {
+    stop(
+      "Consumption welfare changes lack comparison fields: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  if (!nrow(x) || length(unique(x$comparison_id)) != 1L ||
+      length(unique(x$outcome_id)) != 1L) {
+    stop(
+      "A single comparison/outcome welfare-change group is required.",
+      call. = FALSE
+    )
+  }
+
+  finite <- x$finite_common %in% TRUE
+  preferred <- x$preferred_common %in% TRUE
+  use_preferred <- sum(preferred) >= 3L
+  use <- if (use_preferred) preferred else finite
+
+  pearson <- spearman <- median_abs_difference <- median_prop_change <- NA_real_
+  if (sum(use) >= 3L) {
+    pearson <- stats::cor(
+      x$estimate_left[use], x$estimate_right[use], method = "pearson"
+    )
+    spearman <- stats::cor(
+      x$estimate_left[use], x$estimate_right[use], method = "spearman"
+    )
+    median_abs_difference <- stats::median(abs(x$absolute_change[use]))
+    prop <- x$proportional_change[use]
+    prop <- prop[is.finite(prop)]
+    if (length(prop)) median_prop_change <- stats::median(prop)
+  }
+
+  data.frame(
+    comparison_id = x$comparison_id[[1L]],
+    comparison_family = x$comparison_family[[1L]],
+    left_round = x$left_round[[1L]],
+    right_round = x$right_round[[1L]],
+    outcome_id = x$outcome_id[[1L]],
+    common_districts = sum(finite),
+    common_preferred_districts = sum(preferred),
+    comparison_districts = sum(use),
+    comparison_basis = if (use_preferred) {
+      "preferred_common_support"
+    } else {
+      "all_finite_common_support"
+    },
+    pearson_correlation = pearson,
+    spearman_correlation = spearman,
+    median_absolute_difference = median_abs_difference,
+    median_proportional_change = median_prop_change,
+    median_households_left = if (sum(use)) {
+      stats::median(x$n_households_left[use])
+    } else NA_real_,
+    median_households_right = if (sum(use)) {
+      stats::median(x$n_households_right[use])
+    } else NA_real_,
+    median_kish_effective_n_left = if (sum(use)) {
+      stats::median(x$kish_effective_n_left[use])
+    } else NA_real_,
+    median_kish_effective_n_right = if (sum(use)) {
+      stats::median(x$kish_effective_n_right[use])
+    } else NA_real_,
+    status = if (sum(use) < 3L) {
+      "insufficient_common_support"
+    } else if (use_preferred) {
+      "estimated_preferred_common_support"
+    } else {
+      "estimated_all_common_support"
+    },
+    stringsAsFactors = FALSE
+  )
+}
+
+compare_consumption_welfare_pair <- function(
+    welfare, outcome_registry, comparison) {
+  changes <- consumption_welfare_pair_rows(
+    welfare, outcome_registry, comparison
+  )
+  groups <- split(
+    seq_len(nrow(changes)),
+    interaction(changes$comparison_id, changes$outcome_id, drop = TRUE)
+  )
+  safe_bind_rows(lapply(groups, function(i) {
+    summarize_consumption_welfare_pair(changes[i, , drop = FALSE])
+  }))
+}
+
+compare_consumption_welfare <- function(
+    welfare, outcome_registry, comparison_registry) {
+  changes <- build_consumption_welfare_changes(
+    welfare, outcome_registry, comparison_registry
+  )
+  groups <- split(
+    seq_len(nrow(changes)),
+    interaction(changes$comparison_id, changes$outcome_id, drop = TRUE)
+  )
+  safe_bind_rows(lapply(groups, function(i) {
+    summarize_consumption_welfare_pair(changes[i, , drop = FALSE])
+  }))
+}
+
+save_consumption_welfare_changes <- function(
+    changes,
+    path = "outputs/diagnostics/extended/consumption/consumption_welfare_changes.csv") {
+  write_diagnostic_csv(safe_df(changes), path)
 }
 
 save_consumption_welfare_comparability <- function(
