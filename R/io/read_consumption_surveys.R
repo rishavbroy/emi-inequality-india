@@ -115,6 +115,22 @@ survey_period_months <- function(specification) {
   seq(spec$survey_start[[1]], spec$survey_end[[1]], by = "month")
 }
 
+registered_consumption_price_window <- function(registry) {
+  x <- validate_consumption_survey_registry(registry)
+  implemented <- x$household_adapter != "legacy_schedule_pending"
+  if (!any(implemented)) {
+    stop("Consumption survey registry has no implemented household adapters.", call. = FALSE)
+  }
+  x <- x[implemented, , drop = FALSE]
+  data.frame(
+    start_period = as.Date(format(min(x$survey_start), "%Y-%m-01")),
+    end_period = as.Date(format(max(x$survey_end), "%Y-%m-01")),
+    first_survey_id = x$survey_id[which.min(x$survey_start)],
+    last_survey_id = x$survey_id[which.max(x$survey_end)],
+    stringsAsFactors = FALSE
+  )
+}
+
 consumption_adapter_fields <- function(specification) {
   spec <- validate_consumption_survey_registry(specification)
   if (nrow(spec) != 1L) stop("A single consumption survey specification is required.", call. = FALSE)

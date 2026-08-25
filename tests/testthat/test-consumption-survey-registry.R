@@ -65,3 +65,33 @@ test_that("registry reader rejects non-rectangular CSV input before column shift
     "rectangular CSV"
   )
 })
+
+test_that("registered consumption price window follows implemented survey adapters", {
+  registry <- read_consumption_survey_registry(build_paths(Sys.getenv("EMI_PROJECT_ROOT", ".")))
+  window <- registered_consumption_price_window(registry)
+
+  expect_equal(window$start_period, as.Date("2004-07-01"))
+  expect_equal(window$end_period, as.Date("2024-07-01"))
+  expect_equal(window$first_survey_id, "nss_2004_05")
+  expect_equal(window$last_survey_id, "hces_2023_24")
+
+  implemented <- registry$household_adapter != "legacy_schedule_pending"
+  expect_equal(
+    window$start_period,
+    as.Date(format(min(registry$survey_start[implemented]), "%Y-%m-01"))
+  )
+  expect_equal(
+    window$end_period,
+    as.Date(format(max(registry$survey_end[implemented]), "%Y-%m-01"))
+  )
+})
+
+test_that("pending legacy survey adapters do not expand the production price window", {
+  registry <- read_consumption_survey_registry(build_paths(Sys.getenv("EMI_PROJECT_ROOT", ".")))
+  pending <- registry$survey_id == "nss_2000_01"
+  registry$survey_start[pending] <- as.Date("1998-07-01")
+  registry$survey_end[pending] <- as.Date("1999-06-30")
+
+  window <- registered_consumption_price_window(registry)
+  expect_equal(window$start_period, as.Date("2004-07-01"))
+})
