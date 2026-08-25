@@ -166,6 +166,14 @@ iv_adjustment_sets <- function() {
   )
 }
 
+bind_iv_specification_rows <- function(rows) {
+  rows <- Filter(Negate(is.null), rows)
+  if (!length(rows)) return(data.frame())
+  out <- do.call(rbind, rows)
+  rownames(out) <- NULL
+  out
+}
+
 iv_specification_row <- function(
   specification_id,
   adjustment_id,
@@ -244,9 +252,7 @@ iv_specification_registry <- function(
       )
     }
   }
-  out <- do.call(rbind, rows)
-  rownames(out) <- NULL
-  out
+  bind_iv_specification_rows(rows)
 }
 
 iv_absorption_adjustments <- function() {
@@ -323,9 +329,7 @@ iv_absorption_specification_registry <- function(
       sequence = i
     )
   })
-  out <- do.call(rbind, rows)
-  rownames(out) <- NULL
-  out
+  bind_iv_specification_rows(rows)
 }
 
 iv_specification_signature <- function(specification) {

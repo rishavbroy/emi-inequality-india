@@ -1621,3 +1621,92 @@ test_that("consumption IV panel augmentation preserves canonical panel rows", {
     log(c(100, 200))
   )
 })
+
+test_that("IV specification row binding preserves list-column contracts", {
+  row_a <- iv_specification_row(
+    specification_id = "a",
+    adjustment_id = "state_main",
+    adjustment = "State FE + main controls",
+    construction_id = "nonzero_mean",
+    construction = "Nonzero mean",
+    outcome = "y_a",
+    treatment = "d",
+    fixed_effect = "state",
+    controls = c("literacy_rate_2001", "custom_baseline"),
+    included_language_controls = character(),
+    excluded_instruments = "z",
+    mapping_coverage_variable = "coverage",
+    panel_variant = "primary",
+    sample_rule = "support"
+  )
+  row_b <- row_a
+  row_b$specification_id <- "b"
+  row_b$outcome <- "y_b"
+
+  out <- bind_iv_specification_rows(list(row_a, row_b))
+  expect_true(is.list(out$controls))
+  expect_true(is.list(out$excluded_instruments))
+  expect_true(is.list(out$included_language_controls))
+  expect_true("custom_baseline" %in% unlist(out$controls[[1]], use.names = FALSE))
+  expect_identical(unlist(out$excluded_instruments[[2]], use.names = FALSE), "z")
+})
+
+test_that("consumption IV coverage resolves fixed-effect formula terms to panel variables", {
+  registry <- data.frame(
+    welfare_specification_id = "long_2023__ancova",
+    outcome_id = "real_mean_mpce",
+    outcome_round = "hces_2023_24",
+    baseline_round = "nss_2004_05",
+    estimand = "ancova",
+    analysis_transform = "log",
+    treatment = preferred_iv_variables()$treatment,
+    instrument = preferred_iv_variables()$instrument,
+    adjustment_id = "state_main",
+    construction_id = "nonzero_mean",
+    panel_variant = "primary",
+    sample_rule = "preferred_welfare_support",
+    tier = "A",
+    stringsAsFactors = FALSE
+  )
+  spec <- compile_consumption_iv_specifications(registry)
+  required <- iv_specification_variables(spec, include_outcome = TRUE)
+  panel <- as.data.frame(
+    setNames(
+      replicate(length(required), rep(1, 5), simplify = FALSE),
+      required
+    ),
+    stringsAsFactors = FALSE
+  )
+  panel$state_code_2001 <- c("01", "01", "02", "02", "03")
+
+  out <- summarize_consumption_iv_outcome_coverage(panel, spec)
+  expect_equal(out$status, "ready")
+  expect_equal(out$n_analysis_complete, 5L)
+  expect_true(is.na(out$missing_columns))
+  expect_false(grepl("factor\\(", paste(required, collapse = ";")))
+})
+
+test_that("consumption IV coverage validation blocks non-ready registered specifications", {
+  good <- data.frame(
+    specification_id = "ready",
+    n_analysis_complete = 10L,
+    analysis_share = 0.5,
+    status = "ready",
+    missing_columns = NA_character_,
+    stringsAsFactors = FALSE
+  )
+  expect_equal(
+    validate_consumption_iv_outcome_coverage(good),
+    good,
+    ignore_attr = TRUE
+  )
+
+  bad <- good
+  bad$specification_id <- "broken"
+  bad$status <- "missing_columns"
+  bad$missing_columns <- "state_code_2001"
+  expect_error(
+    validate_consumption_iv_outcome_coverage(bad),
+    "broken=missing_columns\\[state_code_2001\\]"
+  )
+})

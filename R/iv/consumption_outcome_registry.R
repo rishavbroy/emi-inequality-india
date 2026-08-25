@@ -201,7 +201,7 @@ compile_consumption_iv_specifications <- function(registry) {
   adjustments <- iv_adjustment_sets()
   constructions <- iv_instrument_constructions()
 
-  out <- safe_bind_rows(lapply(seq_len(nrow(specs)), function(i) {
+  rows <- lapply(seq_len(nrow(specs)), function(i) {
     x <- specs[i, , drop = FALSE]
     adjustment_id <- x$adjustment_id[[1L]]
     construction_id <- x$construction_id[[1L]]
@@ -261,9 +261,8 @@ compile_consumption_iv_specifications <- function(registry) {
     row$estimand <- x$estimand[[1L]]
     row$analysis_transform <- x$analysis_transform[[1L]]
     row
-  }))
-  rownames(out) <- NULL
-  out
+  })
+  bind_iv_specification_rows(rows)
 }
 
 summarize_consumption_iv_outcome_coverage <- function(panel, specifications) {
@@ -271,15 +270,7 @@ summarize_consumption_iv_outcome_coverage <- function(panel, specifications) {
   specs <- safe_df(specifications)
   safe_bind_rows(lapply(seq_len(nrow(specs)), function(i) {
     spec <- specs[i, , drop = FALSE]
-    outcome <- spec$outcome[[1L]]
-    controls <- unlist(spec$controls[[1L]], use.names = FALSE)
-    needed <- unique(c(
-      outcome, spec$treatment[[1L]],
-      unlist(spec$excluded_instruments[[1L]], use.names = FALSE),
-      controls,
-      iv_fixed_effect_terms(spec$fixed_effect[[1L]]),
-      iv_specification_cluster_variable(spec)
-    ))
+    needed <- iv_specification_variables(spec, include_outcome = TRUE)
     missing <- setdiff(needed, names(x))
     complete <- if (length(missing)) {
       rep(FALSE, nrow(x))
@@ -304,6 +295,42 @@ summarize_consumption_iv_outcome_coverage <- function(panel, specifications) {
       stringsAsFactors = FALSE
     )
   }))
+}
+
+validate_consumption_iv_outcome_coverage <- function(coverage) {
+  x <- safe_df(coverage)
+  required <- c(
+    "specification_id", "n_analysis_complete", "analysis_share",
+    "status", "missing_columns"
+  )
+  missing <- setdiff(required, names(x))
+  if (length(missing)) {
+    stop(
+      "Consumption IV outcome coverage is missing columns: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  bad <- x$status != "ready"
+  if (any(bad)) {
+    detail <- paste(
+      paste0(
+        x$specification_id[bad], "=", x$status[bad],
+        ifelse(
+          is.na(x$missing_columns[bad]) | !nzchar(x$missing_columns[bad]),
+          "",
+          paste0("[", x$missing_columns[bad], "]")
+        )
+      ),
+      collapse = "; "
+    )
+    stop(
+      "Registered consumption IV outcome specifications are not analysis-ready: ",
+      detail,
+      call. = FALSE
+    )
+  }
+  x
 }
 
 save_consumption_iv_outcome_coverage <- function(
