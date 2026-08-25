@@ -122,12 +122,17 @@ district estimation. The public welfare output therefore contains the registered
 real mean MPCE, mean log real MPCE, and person-weighted median MPCE together with
 household, FSU, Kish-effective-N, support, precision, and eligibility diagnostics.
 
-`modern_hces_welfare_consistency.csv` compares the two modern endpoints by
-registered outcome on common Census-2001 districts. Preferred-eligible common
-districts are used when at least three exist; otherwise the diagnostic falls back
-to all finite common districts and reports that basis explicitly. This is a
-measurement-stability diagnostic, not a rule for selecting whichever endpoint
-produces a more favorable regression result.
+`consumption_welfare_comparability.csv` applies one registry-driven comparison
+contract across the planned survey-method checks: 2009 Type 1 versus Type 2,
+2009 Type 2 versus 2011 Type 2, 2011 Type 2 versus each modern HCES endpoint,
+and 2022-23 versus 2023-24. Each registered outcome is compared on common
+Census-2001 districts. Preferred-eligible common districts are used when at
+least three exist; otherwise the diagnostic falls back to all finite common
+districts and reports that basis explicitly. It reports level and rank
+correlations, median absolute differences, and directional median proportional
+changes for positive level-valued outcomes. This is a measurement-stability
+diagnostic, not a rule for selecting whichever round produces a more favorable
+regression result.
 
 For survey quantiles, the `{survey}` package can return `NaN` confidence limits
 when a probability-scale Woodruff interval cannot be inverted inside `[0, 1]`.
@@ -462,11 +467,15 @@ from the domain variance estimate; thin district domains can yield invalid beta
 shape parameters and `NaNs produced`. The xlogit method avoids that beta
 effective-sample-size calculation while remaining a standard `survey`
 probability-interval method. The mathematical quantile rule
-(`qrule = "math"`) remains explicit as well. Warnings are not suppressed; a
-non-finite quantile SE remains `not_estimable`. Level-valued outcomes retain
-`cv = std_error / estimate`; log-mean rows set `cv` to missing because that ratio
-is not a consumption coefficient of variation. `relative_se` is retained
-generically for all outcomes.
+(`qrule = "math"`) remains explicit as well. For supported domains, the
+documented `survey::svyquantile()` `NaNs produced` condition is handled only at
+the quantile-CI boundary: a finite point estimate is retained with
+`status = "point_estimate_only"`, `reason = "non_finite_design_uncertainty"`,
+and unavailable precision, so it cannot be preferred-eligible. Other warnings
+still propagate. Level-valued outcomes retain `cv = std_error / estimate`;
+log-mean rows set `cv` to missing because that ratio is not a consumption
+coefficient of variation. `relative_se` is retained generically for all
+outcomes.
 
 The initial support thresholds (50 households, 2 PSUs, Kish effective N 20,
 and a 20% relative-SE ceiling for the primary level mean) are explicit QA and
@@ -475,4 +484,4 @@ the registry so sensitivity analyses can vary them transparently without
 reconstructing district estimates.
 ### Quantile inference and thin district domains
 
-Registered district quantiles keep a design-weighted point estimate for every resolved district. Quantile confidence intervals and standard errors are requested only when the district satisfies the registry's ex-ante sample-support thresholds (`min_households`, `min_fsu`, and `min_kish_effective_n`). This is an inference gate, not a data filter: thin districts remain in the public long-form welfare file with `status = "point_estimate_only"`, `uncertainty_requested = FALSE`, and their support diagnostics intact. Supported districts use the registry-declared `survey::svyquantile()` interval and quantile rule. The pipeline does not suppress non-lonely-PSU warnings from supported quantile inference; a warning there remains a strict-build failure. This prevents unstable Woodruff interval calculations in domains that are already declared too thin for preferred inference while preserving their descriptive weighted medians.
+Registered district quantiles keep a design-weighted point estimate for every resolved district. Quantile confidence intervals and standard errors are requested only when the district satisfies the registry's ex-ante sample-support thresholds (`min_households`, `min_fsu`, and `min_kish_effective_n`). This is an inference gate, not a data filter: thin districts remain in the public long-form welfare file with `status = "point_estimate_only"`, `uncertainty_requested = FALSE`, and their support diagnostics intact. Supported districts use the registry-declared `survey::svyquantile()` interval and quantile rule. The only supported-domain warning handled locally is the documented non-finite Woodruff-interval condition described above; all other warnings remain strict-build failures. This preserves descriptive weighted medians while keeping unavailable design uncertainty explicit.
