@@ -80,3 +80,62 @@ test_that("modern HCES official benchmark metadata cover both sectors in both ro
   )))
   expect_true(all(modern$tolerance_abs_rupees == 1))
 })
+
+test_that("consumption reconstruction savers use the shared diagnostic CSV contract", {
+  validation <- data.frame(
+    survey_id = "round",
+    sector = "rural",
+    estimate_mpce = 100,
+    expected_mpce = 100,
+    passed = TRUE,
+    stringsAsFactors = FALSE
+  )
+  coverage <- data.frame(
+    survey_id = "hces_2023_24",
+    questionnaire = c("F", "C", "D"),
+    n_households = c(10L, 10L, 10L),
+    n_summary_present = c(10L, 10L, 9L),
+    n_summary_zero_filled = c(0L, 0L, 1L),
+    share_summary_zero_filled = c(0, 0, 0.1),
+    stringsAsFactors = FALSE
+  )
+
+  dir <- tempfile("consumption-reconstruction-output-")
+  mpce_path <- file.path(dir, "public", "mpce.csv")
+  coverage_path <- file.path(dir, "extended", "coverage.csv")
+
+  written_mpce <- save_consumption_mpce_validation(validation, mpce_path)
+  written_coverage <- save_hces_summary_coverage(coverage, coverage_path)
+
+  expect_true(file.exists(written_mpce))
+  expect_true(file.exists(written_coverage))
+  expect_equal(
+    utils::read.csv(written_mpce, stringsAsFactors = FALSE),
+    validation,
+    ignore_attr = TRUE
+  )
+  expect_equal(
+    utils::read.csv(written_coverage, stringsAsFactors = FALSE),
+    coverage,
+    ignore_attr = TRUE
+  )
+})
+
+test_that("HCES summary coverage saver returns the normalized output path", {
+  coverage <- data.frame(
+    survey_id = "hces_2022_23",
+    questionnaire = "F",
+    n_households = 1L,
+    n_summary_present = 1L,
+    n_summary_zero_filled = 0L,
+    share_summary_zero_filled = 0,
+    stringsAsFactors = FALSE
+  )
+  path <- tempfile(fileext = ".csv")
+  written <- save_hces_summary_coverage(coverage, path)
+
+  expect_identical(
+    written,
+    normalizePath(path, mustWork = FALSE)
+  )
+})

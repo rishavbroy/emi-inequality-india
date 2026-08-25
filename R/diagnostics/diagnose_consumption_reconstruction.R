@@ -112,15 +112,17 @@ combine_consumption_mpce_validations <- function(...) {
   out
 }
 
-save_consumption_mpce_validation <- function(validation, path = file.path("outputs", "diagnostics", "public", "consumption_mpce_reconstruction.csv")) {
-  out <- safe_df(validation)
-  dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
-  utils::write.csv(out, path, row.names = FALSE, na = "")
-  path
+save_consumption_mpce_validation <- function(
+    validation,
+    path = file.path(
+      "outputs", "diagnostics", "public",
+      "consumption_mpce_reconstruction.csv"
+    )) {
+  write_diagnostic_csv(safe_df(validation), path)
 }
 
 save_hces_summary_coverage <- function(
     coverage,
     path = "outputs/diagnostics/extended/consumption/hces_summary_coverage.csv") {
-  write_csv_output(coverage, path)
+  write_diagnostic_csv(safe_df(coverage), path)
 }
