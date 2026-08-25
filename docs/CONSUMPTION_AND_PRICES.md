@@ -129,6 +129,15 @@ to all finite common districts and reports that basis explicitly. This is a
 measurement-stability diagnostic, not a rule for selecting whichever endpoint
 produces a more favorable regression result.
 
+For survey quantiles, the `{survey}` package can return `NaN` confidence limits
+when a probability-scale Woodruff interval cannot be inverted inside `[0, 1]`.
+The HCES median path handles only that documented numerical condition at the
+quantile-CI boundary. Its finite median point estimate is retained, its design
+uncertainty remains non-finite, and the district is labeled
+`point_estimate_only` with reason `non_finite_design_uncertainty`; it therefore
+cannot be `preferred_eligible`. Other quantile warnings continue to propagate and
+remain fatal in final builds.
+
 ## Main-paper specification after the revision gate
 
 The preferred specification uses the person-weighted mean of real monthly
