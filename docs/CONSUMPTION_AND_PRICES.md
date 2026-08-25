@@ -325,7 +325,13 @@ than hard-coded in `_targets.R`. Surveys whose household adapter is still
 `legacy_schedule_pending` do not expand the production window; every implemented
 survey does. With the current registry this yields July 2004 through July 2024.
 The assembled deflator table must cover every month in that window before any
-household-level price attachment is allowed to run.
+household-level price attachment is allowed to run. It is intentionally sparse in
+state-sector history: a state-sector is not required to exist in months before that
+direct series or a documented donor chain exists. Production price construction
+therefore resolves all available direct/documented fallback cells and drops only
+structurally unavailable state-sector-month cells. Household attachment remains the
+strict requirement check for the state-sector-period keys actually used by each
+survey; undocumented fallback is never invented.
 
 Price attachment dispatches
 from the survey registry: non-overlapping three-month sub-rounds for legacy NSS

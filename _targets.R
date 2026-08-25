@@ -445,7 +445,8 @@ core_pipeline_targets <- list(
         temporal_price_series,
         reference_index = price_reference_index,
         start_period = consumption_price_window$start_period[[1L]],
-        end_period = consumption_price_window$end_period[[1L]]
+        end_period = consumption_price_window$end_period[[1L]],
+        require_complete_grid = FALSE
       ),
       consumption_price_window
     )
