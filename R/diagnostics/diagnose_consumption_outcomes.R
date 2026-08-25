@@ -291,88 +291,177 @@ save_consumption_price_diagnostics <- function(comparison, price_households, pan
   ), use.names = FALSE))
 }
 
-compare_modern_hces_welfare <- function(
-    welfare_2022_23, welfare_2023_24,
-    round_2022_23 = "hces_2022_23", round_2023_24 = "hces_2023_24") {
-  a <- safe_df(welfare_2022_23)
-  b <- safe_df(welfare_2023_24)
+read_consumption_welfare_comparisons <- function(path) {
+  x <- utils::read.csv(path, stringsAsFactors = FALSE, check.names = FALSE)
   required <- c(
+    "comparison_id", "left_round", "right_round", "comparison_family"
+  )
+  missing <- setdiff(required, names(x))
+  if (length(missing)) {
+    stop(
+      "Consumption welfare comparison registry is missing columns: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  if (!nrow(x) || anyDuplicated(x$comparison_id) ||
+      any(!nzchar(trimws(plain_chr(x$comparison_id)))) ||
+      any(!nzchar(trimws(plain_chr(x$left_round)))) ||
+      any(!nzchar(trimws(plain_chr(x$right_round)))) ||
+      any(x$left_round == x$right_round)) {
+    stop("Consumption welfare comparison registry contains invalid round pairs.", call. = FALSE)
+  }
+  x
+}
+
+compare_consumption_welfare_pair <- function(
+    welfare, outcome_registry, comparison) {
+  x <- safe_df(welfare)
+  outcomes <- safe_df(outcome_registry)
+  cmp <- safe_df(comparison)
+  if (nrow(cmp) != 1L) {
+    stop("A single welfare comparison specification is required.", call. = FALSE)
+  }
+
+  required_welfare <- c(
     "district_2001", "round_id", "outcome_id", "estimate",
     "preferred_eligible", "n_households", "n_fsu", "kish_effective_n"
   )
-  missing_a <- setdiff(required, names(a))
-  missing_b <- setdiff(required, names(b))
-  if (length(missing_a) || length(missing_b)) {
-    stop("Modern HCES welfare consistency inputs lack canonical welfare fields.", call. = FALSE)
+  missing_welfare <- setdiff(required_welfare, names(x))
+  if (length(missing_welfare)) {
+    stop(
+      "Consumption welfare comparison input lacks canonical fields: ",
+      paste(missing_welfare, collapse = ", "),
+      call. = FALSE
+    )
   }
-  if (!all(unique(plain_chr(a$round_id)) == round_2022_23) ||
-      !all(unique(plain_chr(b$round_id)) == round_2023_24)) {
-    stop("Modern HCES welfare consistency received unexpected survey rounds.", call. = FALSE)
+  if (!all(c("outcome_id", "transform") %in% names(outcomes))) {
+    stop("Consumption welfare outcome registry lacks comparison metadata.", call. = FALSE)
   }
 
-  outcomes <- intersect(unique(plain_chr(a$outcome_id)), unique(plain_chr(b$outcome_id)))
-  if (!length(outcomes)) stop("Modern HCES welfare rounds have no common registered outcomes.", call. = FALSE)
+  left_id <- plain_chr(cmp$left_round[[1L]])
+  right_id <- plain_chr(cmp$right_round[[1L]])
+  left <- x[x$round_id == left_id, , drop = FALSE]
+  right <- x[x$round_id == right_id, , drop = FALSE]
+  if (!nrow(left) || !nrow(right)) {
+    stop(
+      "Consumption welfare comparison references unavailable round(s): ",
+      left_id, " / ", right_id,
+      call. = FALSE
+    )
+  }
 
-  safe_bind_rows(lapply(outcomes, function(outcome) {
-    x <- a[a$outcome_id == outcome, c(
+  common_outcomes <- intersect(
+    unique(plain_chr(left$outcome_id)),
+    unique(plain_chr(right$outcome_id))
+  )
+  common_outcomes <- intersect(common_outcomes, plain_chr(outcomes$outcome_id))
+  if (!length(common_outcomes)) {
+    stop("Consumption welfare comparison has no common registered outcomes.", call. = FALSE)
+  }
+
+  safe_bind_rows(lapply(common_outcomes, function(outcome_id) {
+    keep <- c(
       "district_2001", "estimate", "preferred_eligible",
       "n_households", "n_fsu", "kish_effective_n"
-    ), drop = FALSE]
-    y <- b[b$outcome_id == outcome, c(
-      "district_2001", "estimate", "preferred_eligible",
-      "n_households", "n_fsu", "kish_effective_n"
-    ), drop = FALSE]
-    names(x)[-1L] <- paste0(names(x)[-1L], "_2022_23")
-    names(y)[-1L] <- paste0(names(y)[-1L], "_2023_24")
-    joined <- merge(x, y, by = "district_2001", all = FALSE, sort = FALSE)
+    )
+    a <- left[left$outcome_id == outcome_id, keep, drop = FALSE]
+    b <- right[right$outcome_id == outcome_id, keep, drop = FALSE]
+    names(a)[-1L] <- paste0(names(a)[-1L], "_left")
+    names(b)[-1L] <- paste0(names(b)[-1L], "_right")
+    joined <- merge(a, b, by = "district_2001", all = FALSE, sort = FALSE)
 
-    finite <- is.finite(joined$estimate_2022_23) & is.finite(joined$estimate_2023_24)
+    finite <- is.finite(joined$estimate_left) & is.finite(joined$estimate_right)
     preferred <- finite &
-      joined$preferred_eligible_2022_23 %in% TRUE &
-      joined$preferred_eligible_2023_24 %in% TRUE
-    use <- if (sum(preferred) >= 3L) preferred else finite
-    status <- if (sum(use) >= 3L) {
-      if (sum(preferred) >= 3L) "estimated_preferred_common_support" else "estimated_all_common_support"
-    } else {
-      "insufficient_common_support"
-    }
+      joined$preferred_eligible_left %in% TRUE &
+      joined$preferred_eligible_right %in% TRUE
+    use_preferred <- sum(preferred) >= 3L
+    use <- if (use_preferred) preferred else finite
 
-    pearson <- spearman <- median_abs_difference <- NA_real_
+    pearson <- spearman <- median_abs_difference <- median_prop_change <- NA_real_
     if (sum(use) >= 3L) {
       pearson <- stats::cor(
-        joined$estimate_2022_23[use], joined$estimate_2023_24[use],
+        joined$estimate_left[use], joined$estimate_right[use],
         method = "pearson"
       )
       spearman <- stats::cor(
-        joined$estimate_2022_23[use], joined$estimate_2023_24[use],
+        joined$estimate_left[use], joined$estimate_right[use],
         method = "spearman"
       )
       median_abs_difference <- stats::median(
-        abs(joined$estimate_2023_24[use] - joined$estimate_2022_23[use])
+        abs(joined$estimate_right[use] - joined$estimate_left[use])
       )
+
+      transform <- outcomes$transform[
+        match(outcome_id, plain_chr(outcomes$outcome_id))
+      ][[1L]]
+      positive_level <- identical(plain_chr(transform), "identity") &
+        all(joined$estimate_left[use] > 0)
+      if (positive_level) {
+        median_prop_change <- stats::median(
+          (joined$estimate_right[use] - joined$estimate_left[use]) /
+            joined$estimate_left[use]
+        )
+      }
     }
 
     data.frame(
-      outcome_id = outcome,
+      comparison_id = plain_chr(cmp$comparison_id[[1L]]),
+      comparison_family = plain_chr(cmp$comparison_family[[1L]]),
+      left_round = left_id,
+      right_round = right_id,
+      outcome_id = outcome_id,
       common_districts = sum(finite),
       common_preferred_districts = sum(preferred),
       comparison_districts = sum(use),
-      comparison_basis = if (sum(preferred) >= 3L) "preferred_common_support" else "all_finite_common_support",
+      comparison_basis = if (use_preferred) {
+        "preferred_common_support"
+      } else {
+        "all_finite_common_support"
+      },
       pearson_correlation = pearson,
       spearman_correlation = spearman,
       median_absolute_difference = median_abs_difference,
-      median_households_2022_23 = if (sum(use)) stats::median(joined$n_households_2022_23[use]) else NA_real_,
-      median_households_2023_24 = if (sum(use)) stats::median(joined$n_households_2023_24[use]) else NA_real_,
-      median_kish_effective_n_2022_23 = if (sum(use)) stats::median(joined$kish_effective_n_2022_23[use]) else NA_real_,
-      median_kish_effective_n_2023_24 = if (sum(use)) stats::median(joined$kish_effective_n_2023_24[use]) else NA_real_,
-      status = status,
+      median_proportional_change = median_prop_change,
+      median_households_left = if (sum(use)) {
+        stats::median(joined$n_households_left[use])
+      } else NA_real_,
+      median_households_right = if (sum(use)) {
+        stats::median(joined$n_households_right[use])
+      } else NA_real_,
+      median_kish_effective_n_left = if (sum(use)) {
+        stats::median(joined$kish_effective_n_left[use])
+      } else NA_real_,
+      median_kish_effective_n_right = if (sum(use)) {
+        stats::median(joined$kish_effective_n_right[use])
+      } else NA_real_,
+      status = if (sum(use) < 3L) {
+        "insufficient_common_support"
+      } else if (use_preferred) {
+        "estimated_preferred_common_support"
+      } else {
+        "estimated_all_common_support"
+      },
       stringsAsFactors = FALSE
     )
   }))
 }
 
-save_modern_hces_welfare_consistency <- function(
+compare_consumption_welfare <- function(
+    welfare, outcome_registry, comparison_registry) {
+  comparisons <- safe_df(comparison_registry)
+  if (!nrow(comparisons)) {
+    stop("Consumption welfare comparison registry is empty.", call. = FALSE)
+  }
+  safe_bind_rows(lapply(seq_len(nrow(comparisons)), function(i) {
+    compare_consumption_welfare_pair(
+      welfare, outcome_registry, comparisons[i, , drop = FALSE]
+    )
+  }))
+}
+
+save_consumption_welfare_comparability <- function(
     comparison,
-    path = "outputs/diagnostics/extended/consumption/modern_hces_welfare_consistency.csv") {
+    path = "outputs/diagnostics/extended/consumption/consumption_welfare_comparability.csv") {
   write_diagnostic_csv(safe_df(comparison), path)
 }

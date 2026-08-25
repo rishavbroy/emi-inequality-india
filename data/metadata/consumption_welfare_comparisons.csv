@@ -1,0 +1,6 @@
+comparison_id,left_round,right_round,comparison_family,notes
+nss_2009_type1_vs_type2,nss_2009_10_type1,nss_2009_10_type2,within_survey_design,Same field period; isolates Type 1 versus Type 2 questionnaire/recall design.
+nss_2009_type2_vs_2011_type2,nss_2009_10_type2,nss_2011_12_type2,nearby_historical_rounds,Nearby Type 2 rounds; checks short-horizon stability within the detailed NSS family.
+nss_2011_type2_vs_hces_2022,nss_2011_12_type2,hces_2022_23,methodology_break,Detailed NSS versus first modern three-visit HCES endpoint.
+nss_2011_type2_vs_hces_2023,nss_2011_12_type2,hces_2023_24,methodology_break,Detailed NSS versus second modern three-visit HCES endpoint.
+hces_2022_vs_2023,hces_2022_23,hces_2023_24,modern_replication,Near-identical modern HCES rounds used as independent consistency endpoints.
