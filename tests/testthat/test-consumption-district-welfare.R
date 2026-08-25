@@ -337,6 +337,7 @@ test_that("finite welfare points with failed design uncertainty remain explicit 
   expect_false(out$preferred_eligible)
   expect_true(is.na(out$std_error))
   expect_true(is.na(out$precision_ok))
+  expect_true(is.na(out$support_reason))
 })
 
 test_that("non-finite welfare points remain not estimable", {
@@ -373,4 +374,51 @@ test_that("non-finite welfare points remain not estimable", {
   expect_equal(out$status, "not_estimable")
   expect_equal(out$reason, "non_finite_point_estimate")
   expect_false(out$preferred_eligible)
+})
+
+test_that("finite high relative SE is distinguished from unavailable precision", {
+  estimates <- data.frame(
+    district_2001 = c("high_rse", "no_se"),
+    round_id = "hces_2023_24",
+    outcome_id = "real_mean_mpce",
+    estimate = c(100, 100),
+    std_error = c(30, NA_real_),
+    uncertainty_requested = TRUE,
+    stringsAsFactors = FALSE
+  )
+  support <- data.frame(
+    district_2001 = c("high_rse", "no_se"),
+    n_households = 100L,
+    n_fsu = 5L,
+    n_sample_person_equiv = 400,
+    sum_person_weight = 1000,
+    kish_effective_n = 60,
+    stringsAsFactors = FALSE
+  )
+  rule <- data.frame(
+    outcome_id = "real_mean_mpce",
+    min_households = 50,
+    min_fsu = 2,
+    min_kish_effective_n = 20,
+    max_relative_se = 0.20,
+    stringsAsFactors = FALSE
+  )
+
+  out <- consumption_finalize_district_estimate(
+    estimates, support, rule, cv_applicable = TRUE
+  )
+
+  high <- out[out$district_2001 == "high_rse", , drop = FALSE]
+  missing <- out[out$district_2001 == "no_se", , drop = FALSE]
+
+  expect_false(high$precision_ok)
+  expect_equal(high$status, "estimated")
+  expect_equal(high$support_reason, "high_relative_se")
+  expect_false(high$preferred_eligible)
+
+  expect_true(is.na(missing$precision_ok))
+  expect_equal(missing$status, "point_estimate_only")
+  expect_equal(missing$reason, "non_finite_design_uncertainty")
+  expect_true(is.na(missing$support_reason))
+  expect_false(missing$preferred_eligible)
 })

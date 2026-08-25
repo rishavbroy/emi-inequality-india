@@ -274,9 +274,9 @@ consumption_finalize_district_estimate <- function(
   max_rse <- rule$max_relative_se[[1L]]
   out$precision_ok <- if (is.finite(max_rse)) {
     ifelse(
-      !out$uncertainty_requested,
+      !out$uncertainty_requested | !valid_se | !is.finite(out$relative_se),
       NA,
-      valid_se & is.finite(out$relative_se) & out$relative_se <= max_rse
+      out$relative_se <= max_rse
     )
   } else {
     NA
