@@ -103,6 +103,23 @@ with_consumption_survey_adjustment <- function(expr) {
   )
 }
 
+with_consumption_quantile_adjustment <- function(expr) {
+  with_consumption_survey_adjustment(
+    withCallingHandlers(
+      expr,
+      warning = function(w) {
+        # survey::svyquantile documents NaN confidence limits when the
+        # probability-scale interval cannot be inverted inside [0, 1].
+        # The returned point estimate remains usable; downstream code converts
+        # the non-finite SE into an explicit point-estimate-only status.
+        if (identical(conditionMessage(w), "NaNs produced")) {
+          invokeRestart("muffleWarning")
+        }
+      }
+    )
+  )
+}
+
 kish_effective_n <- function(weight) {
   w <- num(weight)
   w <- w[positive_finite(w)]
@@ -238,7 +255,11 @@ consumption_finalize_district_estimate <- function(
   out$status <- ifelse(
     !valid_point,
     "not_estimable",
-    ifelse(!out$uncertainty_requested, "point_estimate_only", ifelse(valid_se, "estimated", "not_estimable"))
+    ifelse(
+      !out$uncertainty_requested | !valid_se,
+      "point_estimate_only",
+      "estimated"
+    )
   )
   out$reason <- ifelse(
     !valid_point,
@@ -354,7 +375,7 @@ estimate_consumption_district_svyquantile <- function(rows, design, support, rul
 
   if (length(supported)) {
     supported_design <- subset(outcome_design, target_unit_2001 %in% supported)
-    interval_result <- with_consumption_survey_adjustment(survey::svyby(
+    interval_result <- with_consumption_quantile_adjustment(survey::svyby(
       ~.welfare_value,
       ~target_unit_2001,
       supported_design,

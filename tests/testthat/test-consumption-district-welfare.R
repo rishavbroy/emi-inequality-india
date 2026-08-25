@@ -278,3 +278,99 @@ test_that("modern HCES welfare consistency reports thin common support without f
   expect_true(is.na(out$pearson_correlation))
   expect_true(is.na(out$spearman_correlation))
 })
+
+test_that("quantile adjustment muffles only documented non-finite interval warnings", {
+  expect_warning(
+    value <- with_consumption_quantile_adjustment({
+      warning("NaNs produced")
+      7
+    }),
+    NA
+  )
+  expect_equal(value, 7)
+
+  expect_warning(
+    with_consumption_quantile_adjustment({
+      warning("unexpected quantile warning")
+      7
+    }),
+    "unexpected quantile warning"
+  )
+})
+
+test_that("finite welfare points with failed design uncertainty remain explicit point estimates", {
+  estimates <- data.frame(
+    district_2001 = "a",
+    round_id = "hces_2023_24",
+    outcome_id = "weighted_median_real_mpce",
+    estimate = 2000,
+    std_error = NaN,
+    uncertainty_requested = TRUE,
+    stringsAsFactors = FALSE
+  )
+  support <- data.frame(
+    district_2001 = "a",
+    n_households = 100L,
+    n_fsu = 5L,
+    n_sample_person_equiv = 400,
+    sum_person_weight = 1000,
+    kish_effective_n = 60,
+    stringsAsFactors = FALSE
+  )
+  rule <- data.frame(
+    outcome_id = "weighted_median_real_mpce",
+    min_households = 50,
+    min_fsu = 2,
+    min_kish_effective_n = 20,
+    max_relative_se = 0.20,
+    stringsAsFactors = FALSE
+  )
+
+  out <- consumption_finalize_district_estimate(
+    estimates, support, rule, cv_applicable = FALSE
+  )
+
+  expect_equal(out$status, "point_estimate_only")
+  expect_equal(out$reason, "non_finite_design_uncertainty")
+  expect_true(out$uncertainty_requested)
+  expect_true(out$sample_support_ok)
+  expect_false(out$preferred_eligible)
+  expect_true(is.na(out$std_error))
+  expect_true(is.na(out$precision_ok))
+})
+
+test_that("non-finite welfare points remain not estimable", {
+  estimates <- data.frame(
+    district_2001 = "a",
+    round_id = "hces_2023_24",
+    outcome_id = "weighted_median_real_mpce",
+    estimate = NaN,
+    std_error = NaN,
+    uncertainty_requested = TRUE,
+    stringsAsFactors = FALSE
+  )
+  support <- data.frame(
+    district_2001 = "a",
+    n_households = 100L,
+    n_fsu = 5L,
+    n_sample_person_equiv = 400,
+    sum_person_weight = 1000,
+    kish_effective_n = 60,
+    stringsAsFactors = FALSE
+  )
+  rule <- data.frame(
+    outcome_id = "weighted_median_real_mpce",
+    min_households = 50,
+    min_fsu = 2,
+    min_kish_effective_n = 20,
+    max_relative_se = 0.20,
+    stringsAsFactors = FALSE
+  )
+
+  out <- consumption_finalize_district_estimate(
+    estimates, support, rule, cv_applicable = FALSE
+  )
+  expect_equal(out$status, "not_estimable")
+  expect_equal(out$reason, "non_finite_point_estimate")
+  expect_false(out$preferred_eligible)
+})
