@@ -122,6 +122,22 @@ district estimation. The public welfare output therefore contains the registered
 real mean MPCE, mean log real MPCE, and person-weighted median MPCE together with
 household, FSU, Kish-effective-N, support, precision, and eligibility diagnostics.
 
+`consumption_iv_outcomes.csv` is the analysis-specification handoff from the
+welfare subsystem to the canonical IV subsystem. It declares the welfare
+outcome, endpoint round, 2004-05 baseline, estimand (`ancova`, `change`, or
+`level`), analysis transform, treatment, instrument construction, adjustment
+set, panel, sample rule, and tier. The current dynamic mean-MPCE rows use the
+same preferred state-FE/main-Census-control/nonzero-distance design at 2009-10
+Type 2, 2011-12 Type 2, 2022-23, and 2023-24. ANCOVA rows add log real 2004-05
+mean MPCE as an explicitly declared pre-treatment control; change rows use the
+corresponding log difference as robustness outcomes.
+
+The bridge deliberately does not replace the headline IV models yet. It prepares
+a `consumption_iv_panel`, compiles the welfare rows into the existing canonical
+IV specification schema, and reports complete-case coverage. This keeps the
+outcome-measurement decision separate from the unresolved interpretation choice
+between reduced-form and weak-first-stage 2SLS evidence.
+
 `consumption_welfare_changes.csv` is the district-level dynamic welfare object
 derived from the same comparison registry. It retains both round estimates,
 absolute changes, proportional changes for positive level-valued outcomes,

@@ -792,6 +792,19 @@ core_pipeline_targets <- list(
     format = "file"
   ),
   tar_target(
+    consumption_iv_outcome_registry_file,
+    "data/metadata/consumption_iv_outcomes.csv",
+    format = "file"
+  ),
+  tar_target(
+    consumption_iv_outcome_registry,
+    read_consumption_iv_outcome_registry(consumption_iv_outcome_registry_file)
+  ),
+  tar_target(
+    consumption_iv_specifications,
+    compile_consumption_iv_specifications(consumption_iv_outcome_registry)
+  ),
+  tar_target(
     district_panel_conservative_provisional,
     build_lineage_district_panel(
       district_lineage$conservative_source_crosswalk,
@@ -845,6 +858,26 @@ core_pipeline_targets <- list(
   ),
   tar_target(district_panel, district_panel_primary),
   tar_target(processed_district_panel_file, save_processed_district_panel(district_panel), format = "file"),
+  tar_target(
+    consumption_iv_panel,
+    attach_consumption_iv_outcomes(
+      district_panel,
+      consumption_district_welfare,
+      consumption_iv_outcome_registry
+    )
+  ),
+  tar_target(
+    consumption_iv_outcome_coverage,
+    summarize_consumption_iv_outcome_coverage(
+      consumption_iv_panel,
+      consumption_iv_specifications
+    )
+  ),
+  tar_target(
+    consumption_iv_outcome_coverage_file,
+    save_consumption_iv_outcome_coverage(consumption_iv_outcome_coverage),
+    format = "file"
+  ),
 
   tar_target(revised_iv_formulas, build_revised_iv_formulas()),
   tar_target(revised_iv_models, estimate_2sls(district_panel, revised_iv_formulas, cfg)),
