@@ -880,6 +880,22 @@ core_pipeline_targets <- list(
     save_consumption_iv_outcome_coverage(consumption_iv_outcome_coverage),
     format = "file"
   ),
+  tar_target(
+    consumption_iv_dynamics,
+    {
+      consumption_iv_outcome_coverage
+      estimate_consumption_iv_dynamics(
+        consumption_iv_panel,
+        consumption_iv_specifications,
+        cfg
+      )
+    }
+  ),
+  tar_target(
+    consumption_iv_dynamics_files,
+    save_consumption_iv_dynamics(consumption_iv_dynamics),
+    format = "file"
+  ),
 
   tar_target(revised_iv_formulas, build_revised_iv_formulas()),
   tar_target(revised_iv_models, estimate_2sls(district_panel, revised_iv_formulas, cfg)),

@@ -132,7 +132,16 @@ Type 2, 2011-12 Type 2, 2022-23, and 2023-24. ANCOVA rows add log real 2004-05
 mean MPCE as an explicitly declared pre-treatment control; change rows use the
 corresponding log difference as robustness outcomes.
 
-The bridge deliberately does not replace the headline IV models yet. It prepares
+The bridge deliberately does not replace the headline IV models. After the
+coverage gate passes, `consumption_iv_dynamics.csv` evaluates every registered
+welfare horizon as diagnostics using one common specification sample for the
+first stage, clustered reduced form, conventional clustered 2SLS, and
+Anderson-Rubin inference. The corresponding AR grids are retained separately.
+This is intentionally an identification diagnostic rather than an automatic
+headline-model switch: weak first-stage evidence can therefore be read alongside
+the reduced form and identification-robust AR results.
+
+The bridge prepares
 a `consumption_iv_panel`, compiles the welfare rows into the existing canonical
 IV specification schema, and reports complete-case coverage. Canonical IV
 specification list-columns are preserved through a dedicated row binder and a

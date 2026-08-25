@@ -338,3 +338,240 @@ save_consumption_iv_outcome_coverage <- function(
     path = "outputs/diagnostics/extended/consumption/consumption_iv_outcome_coverage.csv") {
   write_diagnostic_csv(safe_df(coverage), path)
 }
+
+consumption_iv_formula_list <- function(specifications) {
+  specs <- as_iv_specifications(specifications)
+  formulas <- lapply(seq_len(nrow(specs)), function(i) {
+    iv_specification_formula(specs[i, , drop = FALSE])
+  })
+  stats::setNames(formulas, plain_chr(specs$specification_id))
+}
+
+estimate_iv_reduced_form_spec <- function(data, specification, cfg = list()) {
+  spec <- as_single_iv_specification(specification)
+  excluded <- unlist(spec$excluded_instruments[[1L]], use.names = FALSE)
+  included <- unlist(spec$included_language_controls[[1L]], use.names = FALSE)
+  controls <- unlist(spec$controls[[1L]], use.names = FALSE)
+  if (length(excluded) != 1L) {
+    stop(
+      "Dynamic consumption reduced forms currently require one excluded instrument.",
+      call. = FALSE
+    )
+  }
+
+  needed <- iv_specification_variables(spec)
+  missing <- setdiff(needed, names(data))
+  if (length(missing)) {
+    return(data.frame(
+      specification_id = spec$specification_id[[1L]],
+      term = excluded[[1L]],
+      estimate = NA_real_, std.error = NA_real_,
+      statistic = NA_real_, p.value = NA_real_, n = NA_integer_,
+      status = "not_estimated",
+      reason = paste0("Missing columns: ", paste(missing, collapse = ", ")),
+      stringsAsFactors = FALSE
+    ))
+  }
+
+  panel <- as.data.frame(data)
+  x <- panel[stats::complete.cases(panel[needed]), , drop = FALSE]
+  if (nrow(x) < 3L) {
+    return(data.frame(
+      specification_id = spec$specification_id[[1L]],
+      term = excluded[[1L]],
+      estimate = NA_real_, std.error = NA_real_,
+      statistic = NA_real_, p.value = NA_real_, n = nrow(x),
+      status = "not_estimated", reason = "Insufficient complete observations.",
+      stringsAsFactors = FALSE
+    ))
+  }
+
+  rhs <- unique(c(
+    excluded, included, controls,
+    iv_fixed_effect_terms(spec$fixed_effect[[1L]])
+  ))
+  fit <- stats::lm(
+    stats::reformulate(rhs, response = spec$outcome[[1L]]),
+    data = x
+  )
+  cluster <- iv_specification_cluster(x, spec)
+  inference <- iv_clustered_inference(fit, cluster)
+  if (identical(inference$status, "unavailable") && is_final_mode(cfg)) {
+    stop(
+      "Clustered reduced-form inference is unavailable for ",
+      spec$specification_id[[1L]], ": ", inference$reason,
+      call. = FALSE
+    )
+  }
+  term <- model_term_inference(fit, excluded[[1L]], inference$vcov)
+
+  data.frame(
+    specification_id = spec$specification_id[[1L]],
+    term = excluded[[1L]],
+    estimate = term[["estimate"]],
+    std.error = term[["std.error"]],
+    statistic = term[["statistic"]],
+    p.value = term[["p.value"]],
+    n = stats::nobs(fit),
+    status = if (all(is.finite(term[c("estimate", "std.error", "p.value")]))) {
+      "estimated"
+    } else {
+      "inference_unavailable"
+    },
+    reason = if (identical(inference$status, "unavailable")) {
+      inference$reason
+    } else {
+      NA_character_
+    },
+    stringsAsFactors = FALSE
+  )
+}
+
+consumption_iv_second_stage_rows <- function(models, specifications, data) {
+  specs <- as_iv_specifications(specifications)
+  safe_bind_rows(lapply(seq_len(nrow(specs)), function(i) {
+    spec <- specs[i, , drop = FALSE]
+    id <- spec$specification_id[[1L]]
+    model <- models[[id]]
+    if (!inherits(model, "ivreg")) {
+      return(data.frame(
+        specification_id = id,
+        estimate = NA_real_, std.error = NA_real_,
+        statistic = NA_real_, p.value = NA_real_, n = NA_integer_,
+        status = model$status %||% "not_estimated",
+        reason = model$reason %||% NA_character_,
+        stringsAsFactors = FALSE
+      ))
+    }
+
+    vc <- attr(model, "cluster_vcov")
+    if (is.null(vc)) {
+      cluster <- iv_model_cluster(model, data)
+      inference <- if (is.null(cluster)) NULL else iv_clustered_inference(model, cluster)
+      vc <- inference$vcov %||% NULL
+    }
+    term <- model_term_inference(model, spec$treatment[[1L]], vc)
+    data.frame(
+      specification_id = id,
+      estimate = term[["estimate"]],
+      std.error = term[["std.error"]],
+      statistic = term[["statistic"]],
+      p.value = term[["p.value"]],
+      n = stats::nobs(model),
+      status = if (all(is.finite(term[c("estimate", "std.error", "p.value")]))) {
+        "estimated"
+      } else {
+        "inference_unavailable"
+      },
+      reason = NA_character_,
+      stringsAsFactors = FALSE
+    )
+  }))
+}
+
+consumption_iv_first_stage_rows <- function(first_stage, specifications) {
+  fs <- safe_df(first_stage)
+  specs <- as_iv_specifications(specifications)
+  safe_bind_rows(lapply(seq_len(nrow(specs)), function(i) {
+    spec <- specs[i, , drop = FALSE]
+    id <- spec$specification_id[[1L]]
+    excluded <- unlist(spec$excluded_instruments[[1L]], use.names = FALSE)
+    rows <- fs[plain_chr(fs$model) == id, , drop = FALSE]
+    term_row <- rows[plain_chr(rows$term) == excluded[[1L]], , drop = FALSE]
+    row <- if (nrow(term_row)) term_row[1L, , drop = FALSE] else if (nrow(rows)) {
+      rows[1L, , drop = FALSE]
+    } else {
+      data.frame()
+    }
+    if (!nrow(row)) {
+      return(data.frame(
+        specification_id = id,
+        first_stage_estimate = NA_real_,
+        first_stage_std.error = NA_real_,
+        first_stage_p.value = NA_real_,
+        partial_f = NA_real_, partial_p = NA_real_,
+        first_stage_n = NA_integer_,
+        first_stage_status = "not_estimated",
+        first_stage_reason = "First-stage result is unavailable.",
+        stringsAsFactors = FALSE
+      ))
+    }
+    data.frame(
+      specification_id = id,
+      first_stage_estimate = num(row$estimate[[1L]]),
+      first_stage_std.error = num(row$std.error[[1L]]),
+      first_stage_p.value = num(row$p.value[[1L]]),
+      partial_f = num(row$partial_f[[1L]]),
+      partial_p = num(row$partial_p[[1L]]),
+      first_stage_n = as.integer(num(row$nobs[[1L]])),
+      first_stage_status = plain_chr(row$status[[1L]]),
+      first_stage_reason = plain_chr(row$reason[[1L]]),
+      stringsAsFactors = FALSE
+    )
+  }))
+}
+
+estimate_consumption_iv_dynamics <- function(
+    panel, specifications, cfg = list(), ar_level = 0.95, ar_points = 401L) {
+  specs <- as_iv_specifications(specifications)
+  formulas <- consumption_iv_formula_list(specs)
+  models <- estimate_2sls(panel, formulas, cfg)
+  first_stage <- estimate_first_stage(models, panel, cfg)
+
+  reduced_form <- safe_bind_rows(lapply(seq_len(nrow(specs)), function(i) {
+    estimate_iv_reduced_form_spec(panel, specs[i, , drop = FALSE], cfg)
+  }))
+  second_stage <- consumption_iv_second_stage_rows(models, specs, panel)
+  first_stage_rows <- consumption_iv_first_stage_rows(first_stage, specs)
+
+  ar <- lapply(seq_len(nrow(specs)), function(i) {
+    estimate_anderson_rubin_spec(
+      panel, specs[i, , drop = FALSE],
+      level = ar_level, points = ar_points
+    )
+  })
+  ar_summary <- safe_bind_rows(lapply(ar, `[[`, "summary"))
+  ar_grid <- safe_bind_rows(lapply(ar, `[[`, "grid"))
+
+  summary <- specs[c(
+    "specification_id", "welfare_specification_id",
+    "welfare_outcome_id", "outcome_round", "baseline_round",
+    "estimand", "analysis_transform", "tier"
+  )]
+  summary <- merge(summary, first_stage_rows, by = "specification_id", all.x = TRUE, sort = FALSE)
+
+  rf <- reduced_form
+  names(rf)[names(rf) != "specification_id"] <- paste0(
+    "reduced_form_", names(rf)[names(rf) != "specification_id"]
+  )
+  ss <- second_stage
+  names(ss)[names(ss) != "specification_id"] <- paste0(
+    "second_stage_", names(ss)[names(ss) != "specification_id"]
+  )
+
+  summary <- merge(summary, rf, by = "specification_id", all.x = TRUE, sort = FALSE)
+  summary <- merge(summary, ss, by = "specification_id", all.x = TRUE, sort = FALSE)
+  summary <- merge(summary, ar_summary, by = "specification_id", all.x = TRUE, sort = FALSE)
+
+  order_pos <- match(plain_chr(specs$specification_id), plain_chr(summary$specification_id))
+  summary <- summary[order_pos, , drop = FALSE]
+  rownames(summary) <- NULL
+
+  list(summary = summary, anderson_rubin_grid = ar_grid)
+}
+
+save_consumption_iv_dynamics <- function(
+    dynamics,
+    directory = "outputs/diagnostics/extended/consumption") {
+  dir.create(directory, recursive = TRUE, showWarnings = FALSE)
+  c(
+    write_diagnostic_csv(
+      safe_df(dynamics$summary),
+      file.path(directory, "consumption_iv_dynamics.csv")
+    ),
+    write_diagnostic_csv(
+      safe_df(dynamics$anderson_rubin_grid),
+      file.path(directory, "consumption_iv_dynamics_anderson_rubin_grid.csv")
+    )
+  )
+}

@@ -1819,3 +1819,90 @@ test_that("IV formula helpers reject multi-row specifications explicitly", {
     "single canonical IV specification"
   )
 })
+
+test_that("registered consumption IV dynamics share one specification sample across estimators", {
+  skip_if_not_installed("ivreg")
+  skip_if_not_installed("sandwich")
+  set.seed(503)
+  n <- 96
+  panel <- data.frame(
+    y = rnorm(n), d = rnorm(n), z = rnorm(n), control = rnorm(n),
+    state_code_2001 = rep(sprintf("%02d", 1:8), each = 12),
+    stringsAsFactors = FALSE
+  )
+  panel$d <- 0.7 * panel$z + 0.3 * panel$control + rnorm(n)
+  panel$y <- 0.8 * panel$d + 0.2 * panel$control + rnorm(n)
+  panel$y[c(4, 13, 51)] <- NA_real_
+  rownames(panel) <- paste0("d_", seq_len(n))
+
+  spec <- iv_specification_row(
+    specification_id = "consumption__toy",
+    adjustment_id = "state_main",
+    adjustment = "State FE",
+    construction_id = "nonzero_mean",
+    construction = "Toy",
+    outcome = "y",
+    treatment = "d",
+    fixed_effect = "state",
+    controls = "control",
+    included_language_controls = character(),
+    excluded_instruments = "z",
+    mapping_coverage_variable = NA_character_,
+    panel_variant = "primary",
+    sample_rule = "preferred_welfare_support",
+    cluster = "state_code_2001"
+  )
+  spec$welfare_specification_id <- "toy"
+  spec$welfare_outcome_id <- "real_mean_mpce"
+  spec$outcome_round <- "hces_2023_24"
+  spec$baseline_round <- "nss_2004_05"
+  spec$estimand <- "ancova"
+  spec$analysis_transform <- "log"
+
+  out <- estimate_consumption_iv_dynamics(panel, spec, list(), ar_points = 31L)
+  row <- out$summary
+
+  expect_equal(nrow(row), 1L)
+  expect_equal(row$first_stage_n, row$reduced_form_n)
+  expect_equal(row$first_stage_n, row$second_stage_n)
+  expect_equal(row$first_stage_n, row$n)
+  expect_true(is.finite(row$reduced_form_estimate))
+  expect_true(is.finite(row$second_stage_estimate))
+  expect_true(is.finite(row$partial_f))
+  expect_true(is.finite(row$anderson_rubin_p_beta0))
+  expect_true(nrow(out$anderson_rubin_grid) > 0L)
+})
+
+test_that("consumption reduced forms preserve canonical controls and fixed effects", {
+  skip_if_not_installed("sandwich")
+  set.seed(504)
+  n <- 72
+  panel <- data.frame(
+    y = rnorm(n), d = rnorm(n), z = rnorm(n), baseline = rnorm(n),
+    state_code_2001 = rep(sprintf("%02d", 1:6), each = 12),
+    stringsAsFactors = FALSE
+  )
+  spec <- iv_specification_row(
+    specification_id = "rf",
+    adjustment_id = "state_main",
+    adjustment = "State FE",
+    construction_id = "nonzero_mean",
+    construction = "Toy",
+    outcome = "y",
+    treatment = "d",
+    fixed_effect = "state",
+    controls = "baseline",
+    included_language_controls = character(),
+    excluded_instruments = "z",
+    mapping_coverage_variable = NA_character_,
+    panel_variant = "primary",
+    sample_rule = "support",
+    cluster = "state_code_2001"
+  )
+
+  out <- estimate_iv_reduced_form_spec(panel, spec, list())
+  expect_equal(out$status, "estimated")
+  expect_equal(out$n, n)
+  expect_identical(out$term, "z")
+  expect_true(all(is.finite(out[c("estimate", "std.error", "p.value")])))
+})
