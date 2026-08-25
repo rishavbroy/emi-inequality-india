@@ -1,7 +1,11 @@
 # Canonical IV specification metadata used by estimation and diagnostics.
 
 order_iv_controls <- function(controls, canonical = census_2001_diagnostic_controls()) {
-  canonical[canonical %in% unique(controls)]
+  controls <- unique(plain_chr(controls))
+  c(
+    canonical[canonical %in% controls],
+    controls[!controls %in% canonical]
+  )
 }
 
 iv_fixed_effect_terms <- function(fixed_effect = "none") {

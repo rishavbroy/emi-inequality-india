@@ -1481,3 +1481,143 @@ test_that("clustered first-stage diagnostics reuse a cached covariance without c
   expect_equal(cached_joint, direct_joint, tolerance = 1e-12)
   expect_equal(cached_coef, direct_coef, tolerance = 1e-12)
 })
+
+test_that("IV control ordering preserves explicitly declared noncanonical controls", {
+  canonical <- c("a", "b", "c")
+  expect_identical(
+    order_iv_controls(c("custom_baseline", "c", "a"), canonical),
+    c("a", "c", "custom_baseline")
+  )
+  expect_identical(
+    order_iv_controls(c("c", "a"), canonical),
+    c("a", "c")
+  )
+})
+
+test_that("consumption IV registry compiles ANCOVA into the canonical IV specification contract", {
+  registry <- data.frame(
+    welfare_specification_id = "long_2023__ancova",
+    outcome_id = "real_mean_mpce",
+    outcome_round = "hces_2023_24",
+    baseline_round = "nss_2004_05",
+    estimand = "ancova",
+    analysis_transform = "log",
+    treatment = preferred_iv_variables()$treatment,
+    instrument = preferred_iv_variables()$instrument,
+    adjustment_id = "state_main",
+    construction_id = "nonzero_mean",
+    panel_variant = "primary",
+    sample_rule = "preferred_welfare_support",
+    tier = "A",
+    stringsAsFactors = FALSE
+  )
+
+  out <- compile_consumption_iv_specifications(registry)
+  baseline <- consumption_iv_variable_name("long_2023__ancova", "baseline")
+  expect_equal(nrow(out), 1L)
+  expect_identical(out$fixed_effect[[1]], "state")
+  expect_identical(out$outcome_round[[1]], "hces_2023_24")
+  expect_identical(out$baseline_round[[1]], "nss_2004_05")
+  expect_identical(out$estimand[[1]], "ancova")
+  expect_true(baseline %in% unlist(out$controls[[1]], use.names = FALSE))
+  expect_true(all(census_2001_main_controls() %in% unlist(out$controls[[1]], use.names = FALSE)))
+  expect_identical(
+    unlist(out$excluded_instruments[[1]], use.names = FALSE),
+    preferred_iv_variables()$instrument
+  )
+})
+
+test_that("consumption IV outcome data require preferred baseline and endpoint support", {
+  welfare <- data.frame(
+    district_2001 = rep(c("pc2001__01__01", "pc2001__01__02", "pc2001__01__03"), 2),
+    round_id = rep(c("nss_2004_05", "hces_2023_24"), each = 3),
+    outcome_id = "real_mean_mpce",
+    estimate = c(100, 200, 300, 200, 400, 600),
+    preferred_eligible = c(TRUE, FALSE, TRUE, TRUE, TRUE, FALSE),
+    stringsAsFactors = FALSE
+  )
+  spec <- data.frame(
+    welfare_specification_id = "long_2023__ancova",
+    outcome_id = "real_mean_mpce",
+    outcome_round = "hces_2023_24",
+    baseline_round = "nss_2004_05",
+    estimand = "ancova",
+    analysis_transform = "log",
+    stringsAsFactors = FALSE
+  )
+
+  out <- build_consumption_iv_specification_data(welfare, spec)
+  expect_equal(out$outcome_value[[1]], log(200))
+  expect_equal(out$baseline_value[[1]], log(100))
+  expect_true(out$preferred_welfare_support[[1]])
+  expect_true(is.na(out$outcome_value[[2]]))
+  expect_true(is.na(out$baseline_value[[2]]))
+  expect_false(out$preferred_welfare_support[[2]])
+  expect_true(is.na(out$outcome_value[[3]]))
+  expect_false(out$preferred_welfare_support[[3]])
+})
+
+test_that("consumption IV change outcomes use the same transformed baseline and endpoint", {
+  welfare <- data.frame(
+    district_2001 = rep(c("pc2001__01__01", "pc2001__01__02"), 2),
+    round_id = rep(c("nss_2004_05", "nss_2011_12_type2"), each = 2),
+    outcome_id = "real_mean_mpce",
+    estimate = c(100, 200, 150, 100),
+    preferred_eligible = TRUE,
+    stringsAsFactors = FALSE
+  )
+  spec <- data.frame(
+    welfare_specification_id = "medium_2011__change",
+    outcome_id = "real_mean_mpce",
+    outcome_round = "nss_2011_12_type2",
+    baseline_round = "nss_2004_05",
+    estimand = "change",
+    analysis_transform = "log",
+    stringsAsFactors = FALSE
+  )
+
+  out <- build_consumption_iv_specification_data(welfare, spec)
+  expect_equal(
+    out$outcome_value,
+    c(log(150) - log(100), log(100) - log(200)),
+    tolerance = 1e-12
+  )
+  expect_equal(out$baseline_value, log(c(100, 200)), tolerance = 1e-12)
+})
+
+test_that("consumption IV panel augmentation preserves canonical panel rows", {
+  panel <- data.frame(
+    target_unit_2001 = c("pc2001__01__01", "pc2001__01__02"),
+    keep = c("a", "b"),
+    stringsAsFactors = FALSE
+  )
+  welfare <- data.frame(
+    district_2001 = rep(panel$target_unit_2001, 2),
+    round_id = rep(c("nss_2004_05", "hces_2023_24"), each = 2),
+    outcome_id = "real_mean_mpce",
+    estimate = c(100, 200, 150, 300),
+    preferred_eligible = TRUE,
+    stringsAsFactors = FALSE
+  )
+  registry <- data.frame(
+    welfare_specification_id = "long_2023__ancova",
+    outcome_id = "real_mean_mpce",
+    outcome_round = "hces_2023_24",
+    baseline_round = "nss_2004_05",
+    estimand = "ancova",
+    analysis_transform = "log",
+    stringsAsFactors = FALSE
+  )
+
+  out <- attach_consumption_iv_outcomes(panel, welfare, registry)
+  expect_identical(out$target_unit_2001, panel$target_unit_2001)
+  expect_identical(out$keep, panel$keep)
+  expect_equal(
+    out[[consumption_iv_variable_name("long_2023__ancova", "outcome")]],
+    log(c(150, 300))
+  )
+  expect_equal(
+    out[[consumption_iv_variable_name("long_2023__ancova", "baseline")]],
+    log(c(100, 200))
+  )
+})
