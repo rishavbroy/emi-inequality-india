@@ -362,12 +362,7 @@ estimate_consumption_district_svymean <- function(rows, design, support, rule) {
 }
 
 consumption_bottom_mean_stat <- function(design, alpha) {
-  if (!requireNamespace("convey", quietly = TRUE)) {
-    stop(
-      "Package 'convey' is required for design-based lower-tail welfare estimates.",
-      call. = FALSE
-    )
-  }
+  need_pkg("convey", "design-based lower-tail welfare estimates")
   if (!is.finite(alpha) || alpha <= 0 || alpha >= 1) {
     stop("Bottom-share mean alpha must lie strictly between zero and one.", call. = FALSE)
   }

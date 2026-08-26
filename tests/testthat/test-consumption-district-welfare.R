@@ -591,7 +591,6 @@ test_that("finite high relative SE is distinguished from unavailable precision",
 })
 
 test_that("bottom-share mean uses convey lower-tail linearization", {
-  skip_if_not_installed("convey")
   values <- 1:10
   design <- survey::svydesign(
     ids = ~1,
@@ -615,7 +614,6 @@ test_that("bottom-share mean uses convey lower-tail linearization", {
 })
 
 test_that("bottom-share welfare retains district support and precision contracts", {
-  skip_if_not_installed("convey")
   x <- data.frame(
     survey_id = "wave",
     household_id = paste0("h", 1:20),
@@ -666,7 +664,6 @@ test_that("bottom-share welfare retains district support and precision contracts
 })
 
 test_that("bottom-share welfare rejects transformed tail means", {
-  skip_if_not_installed("convey")
   x <- data.frame(
     survey_id = "wave", household_id = paste0("h", 1:4),
     source_state_code = "01", sector = "Rural", subround = "1",
