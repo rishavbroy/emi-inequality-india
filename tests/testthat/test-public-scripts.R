@@ -809,3 +809,46 @@ test_that("Census downloader processes both manifests and skips present files", 
   expect_identical(readLines(log_path), manifests[[2]]$url)
   expect_true(any(grepl("1 downloaded, 1 already present", output, fixed = TRUE)))
 })
+
+test_that("canonical public audit restores the locked R library before synchronization checks", {
+  audit <- repo_text("scripts", "run_public_build_audit.sh")
+  syntax <- repo_text("scripts", "check_source_syntax.sh")
+
+  restore_pos <- regexpr(
+    'current_stage="restore-project-library"',
+    audit,
+    fixed = TRUE
+  )[[1L]]
+  static_pos <- regexpr(
+    'current_stage="static-parse-checks"',
+    audit,
+    fixed = TRUE
+  )[[1L]]
+
+  expect_gt(restore_pos, 0L)
+  expect_gt(static_pos, restore_pos)
+  expect_match(audit, 'make restore', fixed = TRUE)
+  expect_match(
+    syntax,
+    'status <- renv::status(dev = TRUE)',
+    fixed = TRUE
+  )
+})
+
+test_that("lower-tail welfare runtime dependency is exercised rather than conditionally skipped", {
+  description <- repo_text("DESCRIPTION")
+  welfare <- repo_text("R", "measures", "build_consumption_district_welfare.R")
+  tests <- repo_text("tests", "testthat", "test-consumption-district-welfare.R")
+
+  expect_match(description, "    convey,", fixed = TRUE)
+  expect_match(
+    welfare,
+    'need_pkg("convey", "design-based lower-tail welfare estimates")',
+    fixed = TRUE
+  )
+  expect_false(grepl(
+    'skip_if_not_installed("convey")',
+    tests,
+    fixed = TRUE
+  ))
+})

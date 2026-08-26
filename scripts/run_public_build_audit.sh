@@ -25,8 +25,9 @@ application-samples/output from the review archive. Use --with-samples before a
 full submission/review bundle. This script is the canonical end-to-end audit for
 the active current pipeline.
 
-The audit checks source whitespace without editing source files. Every review
-archive contains outputs/diagnostics/build/audit_status.json. Failed runs can
+The audit restores the project R library from the tracked renv.lock before
+checking synchronization, then checks source whitespace without editing source
+files. Every review archive contains outputs/diagnostics/build/audit_status.json. Failed runs can
 still produce an explicitly failed/incomplete review archive with
 --archive-on-error (or its synonym --archive-always). Successful runs create the
 verified archive only after all warning, integrity, and manifest gates pass.
@@ -230,6 +231,11 @@ if [[ "$incremental" == "true" ]]; then
 else
   echo "=== PUBLIC BUILD AUDIT MODE: ${sample_mode} ==="
 fi
+
+current_stage="restore-project-library"
+echo "=== RESTORE PROJECT LIBRARY FROM RENV.LOCK ==="
+make restore
+checkpoint_archive "after-restore"
 
 current_stage="clean-generated-renders"
 if [[ "$skip_clean" == "true" ]]; then
