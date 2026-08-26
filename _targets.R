@@ -884,10 +884,13 @@ core_pipeline_targets <- list(
     consumption_iv_dynamics,
     {
       consumption_iv_outcome_coverage
-      estimate_consumption_iv_dynamics(
-        consumption_iv_panel,
-        consumption_iv_specifications,
-        cfg
+      validate_consumption_iv_dynamics(
+        estimate_consumption_iv_dynamics(
+          consumption_iv_panel,
+          consumption_iv_specifications,
+          cfg
+        ),
+        consumption_iv_specifications
       )
     }
   ),

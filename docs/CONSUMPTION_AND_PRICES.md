@@ -139,7 +139,12 @@ first stage, clustered reduced form, conventional clustered 2SLS, and
 Anderson-Rubin inference. The corresponding AR grids are retained separately.
 This is intentionally an identification diagnostic rather than an automatic
 headline-model switch: weak first-stage evidence can therefore be read alongside
-the reduced form and identification-robust AR results.
+the reduced form and identification-robust AR results. Before these files are
+persisted, a blocking validation requires one row and one AR grid per registered
+specification, finite inference outputs, and identical estimation-sample counts
+for the first stage, reduced form, 2SLS, and Anderson-Rubin test. This prevents
+schema merges or estimator-specific missingness from silently producing
+incomparable horizon diagnostics.
 
 The bridge prepares
 a `consumption_iv_panel`, compiles the welfare rows into the existing canonical

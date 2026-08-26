@@ -560,6 +560,97 @@ estimate_consumption_iv_dynamics <- function(
   list(summary = summary, anderson_rubin_grid = ar_grid)
 }
 
+validate_consumption_iv_dynamics <- function(dynamics, specifications) {
+  specs <- as_iv_specifications(specifications)
+  if (!is.list(dynamics) ||
+      !all(c("summary", "anderson_rubin_grid") %in% names(dynamics))) {
+    stop("Consumption IV dynamics must contain summary and Anderson-Rubin grid outputs.", call. = FALSE)
+  }
+
+  summary <- safe_df(dynamics$summary)
+  required <- c(
+    "specification_id",
+    "first_stage_n", "first_stage_status",
+    "reduced_form_n", "reduced_form_status",
+    "second_stage_n", "second_stage_status",
+    "n", "status",
+    "partial_f",
+    "reduced_form_estimate", "reduced_form_std.error", "reduced_form_p.value",
+    "second_stage_estimate", "second_stage_std.error", "second_stage_p.value",
+    "anderson_rubin_p_beta0"
+  )
+  missing <- setdiff(required, names(summary))
+  if (length(missing)) {
+    stop(
+      "Consumption IV dynamics summary is missing columns: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+
+  expected <- plain_chr(specs$specification_id)
+  observed <- plain_chr(summary$specification_id)
+  if (anyDuplicated(observed) || !setequal(expected, observed)) {
+    stop(
+      "Consumption IV dynamics summary does not contain exactly one row per registered specification.",
+      call. = FALSE
+    )
+  }
+  summary <- summary[match(expected, observed), , drop = FALSE]
+
+  sample_ok <- with(
+    summary,
+    is.finite(first_stage_n) &
+      first_stage_n == reduced_form_n &
+      first_stage_n == second_stage_n &
+      first_stage_n == n
+  )
+  status_ok <- summary$first_stage_status == "estimated" &
+    summary$reduced_form_status == "estimated" &
+    summary$second_stage_status == "estimated" &
+    summary$status == "estimated"
+  inference_ok <- is.finite(summary$partial_f) &
+    is.finite(summary$reduced_form_estimate) &
+    is.finite(summary$reduced_form_std.error) &
+    is.finite(summary$reduced_form_p.value) &
+    is.finite(summary$second_stage_estimate) &
+    is.finite(summary$second_stage_std.error) &
+    is.finite(summary$second_stage_p.value) &
+    is.finite(summary$anderson_rubin_p_beta0)
+
+  bad <- !(sample_ok & status_ok & inference_ok)
+  if (any(bad)) {
+    detail <- paste0(
+      summary$specification_id[bad],
+      "[fs=", summary$first_stage_status[bad],
+      ",rf=", summary$reduced_form_status[bad],
+      ",iv=", summary$second_stage_status[bad],
+      ",ar=", summary$status[bad],
+      ",n=", summary$first_stage_n[bad], "/",
+      summary$reduced_form_n[bad], "/",
+      summary$second_stage_n[bad], "/",
+      summary$n[bad], "]"
+    )
+    stop(
+      "Registered consumption IV dynamics are not analysis-ready: ",
+      paste(detail, collapse = "; "),
+      call. = FALSE
+    )
+  }
+
+  grid <- safe_df(dynamics$anderson_rubin_grid)
+  if (!nrow(grid) || !"specification_id" %in% names(grid) ||
+      !all(expected %in% plain_chr(grid$specification_id))) {
+    stop(
+      "Consumption IV dynamics lack Anderson-Rubin grids for registered specifications.",
+      call. = FALSE
+    )
+  }
+
+  dynamics$summary <- summary
+  dynamics
+}
+
 save_consumption_iv_dynamics <- function(
     dynamics,
     directory = "outputs/diagnostics/extended/consumption") {
