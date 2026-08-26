@@ -109,6 +109,13 @@ deterministic 2011-to-2001 transition resolves it. Multi-parent events and
 lineage evidence without duplicating post-2011 adjudications in HCES-specific
 metadata.
 
+Administrative ancestry is an optional enrichment of the generic consumption
+lineage constructor, not a new mandatory input for every caller. Legacy/unit
+callers that provide none of the LGD/2011-transition inputs retain the original
+exact/alias/reviewed-crosswave behavior. Production supplies the complete
+enrichment bundle. A partially supplied bundle is rejected explicitly so missing
+canonical lineage objects cannot silently disable administrative ancestry.
+
 For the primary real-MPCE construction, panel `r` is assigned the three consecutive
 survey months `r:(r+2)`: panel 1 covers the first through third survey months and
 panel 10 covers the tenth through twelfth. The state-sector CPI deflator is averaged
