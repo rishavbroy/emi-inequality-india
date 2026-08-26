@@ -225,9 +225,18 @@ the lower tail.
 
 All Gini and Atkinson rows remain robustness outcomes. They flow through the
 existing district-welfare change and cross-round comparability diagnostics but
-are not added to the registered causal-IV outcomes automatically. Poverty/FGT
-measures remain deferred until the analysis defines a defensible poverty-line
-convention rather than choosing a threshold because the software supports one.
+are not added to the registered causal-IV outcomes automatically.
+
+The poverty robustness rows use the same already-implemented 2011-12 Tendulkar
+price anchor rather than introduce another threshold convention. The spatial
+deflator is `PL_sr / 816`, so at the 2011-12 reference period every official
+state-sector Tendulkar line maps to real MPCE of Rs. 816; the temporal CPI
+component carries that same real threshold across survey dates. The registry
+therefore estimates FGT(0), FGT(1), and FGT(2) against
+`tendulkar_real_poverty_line()` using `convey::svyfgt()` with an absolute
+threshold. `fgt_order` is explicit registry metadata and is restricted to
+0, 1, or 2. Poverty outcomes use support gates but no relative-SE cutoff because
+relative SE is undefined for a valid zero poverty estimate.
 
 Lower-tail inference uses the standard `{convey}` implementation rather than a
 repository-specific variance formula. `convey::svyisq()` supplies the
@@ -543,9 +552,10 @@ The public district-welfare diagnostic is long-form and reports the estimate,
 design-based standard error, coefficient of variation where meaningful, raw
 household and FSU support, and Kish effective sample size. Thin districts remain
 in the output with their precision metadata rather than being removed by an
-arbitrary sample threshold. Means and quantiles reuse this survey-design layer;
-Gini, Atkinson, poverty and lower-tail means remain later phases rather than
-introducing hand-written variance estimators.
+arbitrary sample threshold. Means, quantiles, lower-tail means, Gini, Atkinson, and Tendulkar FGT poverty
+measures all reuse this survey-design layer. Distributional and poverty
+uncertainty is delegated to the standard `convey` estimators rather than
+introducing hand-written variance formulas.
 
 ### District welfare outcome registry and support flags
 
@@ -558,10 +568,10 @@ equivalent, represented person weight, and Kish effective sample size.
 `sample_support_ok`, `precision_ok`, and `preferred_eligible` are therefore
 review/specification flags, not upstream filters.
 
-The registry currently declares real mean MPCE (primary), mean log real MPCE
-(robustness), and the person-weighted median of real MPCE (robustness). Mean log
-MPCE is estimated with the same NSS survey design and person weights after
-applying `log()` at the household MPCE level. The median uses
+The registry declares real mean MPCE (primary) plus mean-log, median,
+bottom-tail, Gini, Atkinson, and Tendulkar FGT poverty robustness outcomes.
+Mean log MPCE is estimated with the same NSS survey design and person weights
+after applying `log()` at the household MPCE level. The median uses
 `survey::svyquantile()` at probability 0.5 through the same district-domain
 design and retains its design-based standard error. The registry stores the
 quantile probability, interval method, and quantile rule explicitly so future
