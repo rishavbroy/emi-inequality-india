@@ -2068,3 +2068,35 @@ test_that("Anderson-Rubin acceptance grid rejects malformed public inputs", {
     "invalid accepted flags"
   )
 })
+
+test_that("consumption distribution benchmark preserves serial/configured estimates", {
+  set.seed(702)
+  n <- 40
+  x <- data.frame(
+    survey_id = "wave", household_id = paste0("h", seq_len(n)),
+    source_state_code = "01", sector = "Rural", subround = "1",
+    fsu = as.character(seq_len(n)), stratum = "1", sub_stratum = "1",
+    household_size = 1, target_unit_2001 = rep(c("a", "b"), each = n / 2),
+    lineage_status = "resolved_exact_2001", lineage_weight = 1,
+    lineage_person_weight = 1, real_mpce = exp(rnorm(n, log(200), .3)),
+    stringsAsFactors = FALSE
+  )
+  registry <- data.frame(
+    outcome_id = "gini", estimand = "survey_gini", transform = "identity",
+    quantile = NA_real_, quantile_interval = "", quantile_rule = "",
+    epsilon = NA_real_, role = "robustness", min_households = 1,
+    min_fsu = 1, min_kish_effective_n = 1, max_relative_se = 10,
+    stringsAsFactors = FALSE
+  )
+  old <- Sys.getenv("EMI_CONSUMPTION_DOMAIN_CORES", unset = NA_character_)
+  Sys.setenv(EMI_CONSUMPTION_DOMAIN_CORES = "1")
+  on.exit({
+    if (is.na(old)) Sys.unsetenv("EMI_CONSUMPTION_DOMAIN_CORES") else
+      Sys.setenv(EMI_CONSUMPTION_DOMAIN_CORES = old)
+  }, add = TRUE)
+  out <- benchmark_consumption_distribution_domains(x, registry, max_districts = 2L)
+  expect_equal(out$mode, c("serial", "configured"))
+  expect_true(all(is.finite(out$elapsed_seconds)))
+  expect_lte(out$max_abs_estimate_diff[[2L]], 1e-10)
+  expect_lte(out$max_abs_se_diff[[2L]], 1e-10)
+})
