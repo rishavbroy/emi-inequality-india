@@ -588,7 +588,11 @@ core_pipeline_targets <- list(
       district_lineage$admin_units_2001,
       district_lineage$nss_source_roster,
       district_lineage$full_reviewed_source_crosswalk,
-      consumption_lineage_identity_aliases
+      consumption_lineage_identity_aliases,
+      district_lineage$reference_units,
+      district_lineage$adjudicated_admin_events,
+      district_lineage$admin_units_2011,
+      district_lineage$district_transition_2001_2011
     )
   ),
   tar_target(
