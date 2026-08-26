@@ -319,3 +319,104 @@ test_that("administrative lineage resolves before cross-wave consensus", {
   expect_equal(out$target_unit_2001, "pc2001__20__04")
   expect_equal(out$lineage_status, "resolved_reviewed_admin_ancestry")
 })
+
+test_that("administrative lineage enrichment is optional for legacy reference builders", {
+  admin <- data.frame(
+    unit_id = "pc2001__01__01",
+    state_std = "state",
+    district_std = "old",
+    stringsAsFactors = FALSE
+  )
+  roster <- data.frame(
+    source_row_id = character(), wave = character(),
+    state_std = character(), district_std = character(),
+    stringsAsFactors = FALSE
+  )
+  crosswalk <- data.frame(
+    source_row_id = character(), target_unit_2001 = character(),
+    weight = numeric(), basis = character(), panel_variant = character(),
+    stringsAsFactors = FALSE
+  )
+
+  out <- build_consumption_lineage_reference(admin, roster, crosswalk)
+
+  expect_true(is.list(out))
+  expect_equal(nrow(out$exact), 1L)
+  expect_equal(nrow(out$administrative), 0L)
+  expect_equal(out$exact$target_unit_2001, "pc2001__01__01")
+})
+
+test_that("administrative lineage enrichment rejects partial canonical inputs", {
+  admin_2001 <- data.frame(
+    unit_id = "pc2001__20__04",
+    state_std = "jharkhand",
+    district_std = "hazaribagh",
+    stringsAsFactors = FALSE
+  )
+  reference <- data.frame(
+    unit_id = "lgd_district__607",
+    level = "district",
+    state_code = "20",
+    district_code = "361",
+    state_std = "jharkhand",
+    district_std = "ramgarh",
+    reference_vintage = "current_lgd",
+    stringsAsFactors = FALSE
+  )
+
+  expect_error(
+    consumption_admin_transition_lineage(
+      reference_units = reference,
+      admin_events = data.frame(),
+      admin_units_2001 = admin_2001,
+      admin_units_2011 = data.frame(),
+      transition_2001_2011 = data.frame()
+    ),
+    "only partially configured"
+  )
+})
+
+test_that("administrative lineage enrichment permits an empty event graph", {
+  admin_2001 <- data.frame(
+    unit_id = "pc2001__20__04",
+    state_code = "20",
+    district_code = "04",
+    state_std = "jharkhand",
+    district_std = "hazaribagh",
+    stringsAsFactors = FALSE
+  )
+  admin_2011 <- data.frame(
+    unit_id = "pc2011__20__361",
+    state_code = "20",
+    district_code = "361",
+    district_std = "ramgarh",
+    stringsAsFactors = FALSE
+  )
+  reference <- data.frame(
+    unit_id = "lgd_district__607",
+    level = "district",
+    state_code = "20",
+    district_code = "361",
+    state_std = "jharkhand",
+    district_std = "ramgarh",
+    reference_vintage = "current_lgd",
+    stringsAsFactors = FALSE
+  )
+  transition <- data.frame(
+    state_code_2011 = "20",
+    district_code_2011 = "361",
+    state_code_2001 = "20",
+    district_code_2001 = "04",
+    population_share_to_2001 = 1,
+    shrid_coverage = 1,
+    mapping_class = "official_lgd_census_code_bridge",
+    stringsAsFactors = FALSE
+  )
+
+  out <- consumption_admin_transition_lineage(
+    reference, data.frame(), admin_2001, admin_2011, transition
+  )
+
+  expect_equal(nrow(out), 1L)
+  expect_equal(out$target_unit_2001, "pc2001__20__04")
+})

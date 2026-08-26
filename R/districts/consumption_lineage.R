@@ -1,6 +1,7 @@
 # Conservative handoff from named consumption source districts to Census-2001
 # lineage. Survey district codes remain source identifiers only; accepted
-# mappings come from exact Census-2001 identities or stable reviewed lineage.
+# mappings come from exact Census-2001 identities, reviewed deterministic
+# administrative ancestry, or stable reviewed lineage.
 
 empty_consumption_lineage_bridge <- function() {
   data.frame(
@@ -205,6 +206,25 @@ consumption_admin_transition_lineage <- function(
   events <- safe_df(admin_events)
   admin_2001 <- safe_df(admin_units_2001)
   admin_2011 <- safe_df(admin_units_2011)
+  transition <- safe_df(transition_2001_2011)
+
+  # Administrative ancestry is an optional enrichment of the original
+  # consumption-lineage contract. Legacy callers that provide none of the
+  # enrichment inputs retain exact/alias/reviewed-crosswave behavior.
+  enrichment_rows <- c(
+    reference_units = nrow(reference),
+    admin_units_2011 = nrow(admin_2011),
+    transition_2001_2011 = nrow(transition)
+  )
+  if (!any(enrichment_rows > 0L)) return(data.frame())
+  if (any(enrichment_rows == 0L)) {
+    missing <- names(enrichment_rows)[enrichment_rows == 0L]
+    stop(
+      "Consumption administrative lineage enrichment is only partially configured; missing: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
 
   required_reference <- c(
     "unit_id", "level", "state_code", "district_code",
@@ -288,9 +308,7 @@ consumption_admin_transition_lineage <- function(
   terminal[use_event] <- event_terminal[use_event]
   basis[use_event] <- "accepted_admin_event_parentage"
 
-  deterministic <- deterministic_transition_2011_to_2001(
-    transition_2001_2011
-  )
+  deterministic <- deterministic_transition_2011_to_2001(transition)
   admin01 <- normalize_admin_lookup(admin_2001)
   admin01$state_code <- pad_admin_code(admin01$state_code, 2L)
   admin01$district_code <- pad_admin_code(admin01$district_code, 2L)
