@@ -185,6 +185,24 @@ changes for positive level-valued outcomes. This is a measurement-stability
 diagnostic, not a rule for selecting whichever round produces a more favorable
 regression result.
 
+The registered distributional robustness outcomes now also include
+`bottom40_mean_real_mpce` and `bottom20_mean_real_mpce`. These are means among
+the bottom 40 and bottom 20 percent of represented persons within each
+Census-2001 district, not household-order statistics. They reuse the same
+person-weighted survey design and conservative lineage support as the mean and
+median outcomes.
+
+Lower-tail inference uses the standard `{convey}` implementation rather than a
+repository-specific variance formula. `convey::svyisq()` supplies the
+design-linearized total below the requested survey quantile; the welfare adapter
+uses `convey::contrastinf()` to divide that lower-tail total by the represented
+bottom-share population while retaining denominator uncertainty. The bottom-20
+registry row uses stricter total-domain household and Kish-effective-N thresholds
+than the bottom-40 row because only one fifth of represented persons contribute
+to the lower tail. Both remain robustness outcomes and flow automatically through
+the existing cross-round comparability diagnostics; they are not added to the
+preferred IV registry merely because they are newly available.
+
 For survey quantiles, the `{survey}` package can return `NaN` confidence limits
 when a probability-scale Woodruff interval cannot be inverted inside `[0, 1]`.
 The HCES median path handles only that documented numerical condition at the
