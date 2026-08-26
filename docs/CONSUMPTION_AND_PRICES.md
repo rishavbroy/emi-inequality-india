@@ -206,6 +206,28 @@ changes for positive level-valued outcomes. This is a measurement-stability
 diagnostic, not a rule for selecting whichever round produces a more favorable
 regression result.
 
+
+### Distributional-welfare runtime contract
+
+Distributional robustness is intentionally retained, but it must not dominate the
+replication runtime. District Gini, Atkinson, Tendulkar FGT poverty, and bottom-tail means use
+`survey::svyby()` as the standard domain-estimation interface over one
+`convey_prep()` design per survey. The `convey` estimators accept survey-domain
+calls through this interface; the repository does not maintain its own
+per-district survey loop. The public audit requests up to four forked domain
+workers through `EMI_CONSUMPTION_DOMAIN_CORES` (clamped to detected physical
+cores; Windows remains serial). Set the environment variable to `1` for a
+strictly serial reproduction or to a lower value on memory-constrained systems.
+
+Core welfare outcomes (mean/log mean and median) and expensive distributional
+robustness outcomes are separate `{targets}` nodes and are combined only after
+estimation. Thus editing or extending a distributional robustness row does not
+force the already-stable core welfare estimates to rerun on an incremental build.
+The opt-in benchmark writes
+`outputs/benchmarking/consumption_distribution_domains.csv`, recording serial and
+configured domain runtimes on a bounded district subset while requiring numerical
+equivalence.
+
 The registered distributional robustness outcomes now also include
 `bottom40_mean_real_mpce` and `bottom20_mean_real_mpce`. These are means among
 the bottom 40 and bottom 20 percent of represented persons within each

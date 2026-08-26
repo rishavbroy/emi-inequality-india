@@ -98,6 +98,8 @@ bash scripts/run_public_build_audit.sh --with-samples --incremental --archive-on
 
 `make test` should pass without local raw data. The full pipeline requires the local-only raw files listed in the manifest. [`bash scripts/run_public_build_audit.sh`](scripts/run_public_build_audit.sh) defaults to the faster no-samples mode and writes `review.zip` without [`application-samples/output/`](application-samples/output/); pass `--with-samples` before a full submission/review bundle so the application samples are rendered and required in the archive. Commit intentional regenerated outputs after a proof run; the audit does not require a clean working tree because public PDFs and sample PDFs are tracked deliverables that may be regenerated.
 
+The public target stages request up to four parallel consumption-domain workers for the expensive design-based distributional welfare statistics. Override this with `EMI_CONSUMPTION_DOMAIN_CORES=1` for serial execution or a smaller value on memory-constrained machines; the R helper clamps the request to detected physical cores and Windows remains serial. Core and distributional welfare targets are separately cached, so `--incremental` avoids recomputing core welfare when only a distributional robustness specification changes.
+
 Useful lower-level Makefile targets are:
 
 ```bash
