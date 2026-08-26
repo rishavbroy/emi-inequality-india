@@ -921,7 +921,8 @@ core_pipeline_targets <- list(
     make_figures(
       district_panel, raw_ilo_figures, cfg,
       iv_models = revised_iv_models,
-      map_geometry = lineage_geometry_2001
+      map_geometry = lineage_geometry_2001,
+      consumption_iv_dynamics = consumption_iv_dynamics
     )
   ),
   tar_target(figure_files, save_figures(figures, cfg), format = "file"),
