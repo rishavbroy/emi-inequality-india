@@ -163,15 +163,17 @@ read_consumption_welfare_outcomes <- function(path) {
   if (!nrow(x) || anyDuplicated(x$outcome_id)) {
     stop("Consumption welfare registry must contain unique outcome_id rows.", call. = FALSE)
   }
-  if (any(!x$estimand %in% c("survey_mean", "survey_quantile")) ||
+  if (any(!x$estimand %in% c("survey_mean", "survey_quantile", "survey_bottom_mean")) ||
       any(!x$transform %in% c("identity", "log"))) {
     stop("Consumption welfare registry contains unsupported estimands or transforms.", call. = FALSE)
   }
   x$quantile <- suppressWarnings(as.numeric(x$quantile))
   mean_row <- x$estimand == "survey_mean"
   quantile_row <- x$estimand == "survey_quantile"
+  bottom_mean_row <- x$estimand == "survey_bottom_mean"
+  quantile_declared <- quantile_row | bottom_mean_row
   if (any(mean_row & is.finite(x$quantile)) ||
-      any(quantile_row & (!is.finite(x$quantile) | x$quantile <= 0 | x$quantile >= 1))) {
+      any(quantile_declared & (!is.finite(x$quantile) | x$quantile <= 0 | x$quantile >= 1))) {
     stop("Consumption welfare registry contains invalid quantile declarations.", call. = FALSE)
   }
   x$quantile_interval <- trimws(plain_chr(x$quantile_interval))
@@ -183,7 +185,8 @@ read_consumption_welfare_outcomes <- function(path) {
   invalid_quantile_method <- quantile_row & (
     !x$quantile_interval %in% allowed_intervals | !x$quantile_rule %in% allowed_rules
   )
-  stray_quantile_method <- mean_row & (nzchar(x$quantile_interval) | nzchar(x$quantile_rule))
+  stray_quantile_method <- !quantile_row &
+    (nzchar(x$quantile_interval) | nzchar(x$quantile_rule))
   if (any(invalid_quantile_method) || any(stray_quantile_method)) {
     stop("Consumption welfare registry contains invalid quantile uncertainty declarations.", call. = FALSE)
   }
@@ -358,6 +361,108 @@ estimate_consumption_district_svymean <- function(rows, design, support, rule) {
   )
 }
 
+consumption_bottom_mean_stat <- function(design, alpha) {
+  if (!requireNamespace("convey", quietly = TRUE)) {
+    stop(
+      "Package 'convey' is required for design-based lower-tail welfare estimates.",
+      call. = FALSE
+    )
+  }
+  if (!is.finite(alpha) || alpha <= 0 || alpha >= 1) {
+    stop("Bottom-share mean alpha must lie strictly between zero and one.", call. = FALSE)
+  }
+
+  lower <- convey::svyisq(
+    ~.welfare_value,
+    design = design,
+    alpha = alpha,
+    na.rm = TRUE,
+    linearized = TRUE
+  )
+  lower_value <- num(stats::coef(lower))[[1L]]
+  lower_linearized <- as.numeric(attr(lower, "linearized"))
+  sampling_weight <- num(stats::weights(design, type = "sampling"))
+  population_value <- sum(sampling_weight)
+
+  if (!is.finite(lower_value) || !length(lower_linearized) ||
+      length(lower_linearized) != length(sampling_weight) ||
+      !is.finite(population_value) || population_value <= 0) {
+    stop("Lower-tail welfare linearization returned an invalid design object.", call. = FALSE)
+  }
+
+  # convey::svyisq() supplies the design-linearized total below q_alpha.
+  # Divide by alpha and then use convey::contrastinf() so uncertainty in the
+  # represented-person denominator is retained in the bottom-share mean.
+  contrast <- convey::contrastinf(
+    quote(LOWER / POPULATION),
+    list(
+      LOWER = list(
+        value = lower_value / alpha,
+        lin = lower_linearized / alpha
+      ),
+      POPULATION = list(
+        value = population_value,
+        lin = rep(1, length(sampling_weight))
+      )
+    )
+  )
+  variance_total <- survey::svytotal(contrast$lin, design)
+  standard_error <- num(survey::SE(variance_total))[[1L]]
+
+  c(
+    estimate = num(contrast$value)[[1L]],
+    std_error = standard_error
+  )
+}
+
+estimate_consumption_district_bottom_mean <- function(rows, design, support, rule) {
+  x <- rows
+  if (!identical(rule$transform[[1L]], "identity")) {
+    stop("Bottom-share welfare means currently require the identity MPCE transform.", call. = FALSE)
+  }
+
+  x$.welfare_value <- consumption_welfare_value(
+    x$real_mpce, rule$transform[[1L]]
+  )
+  # convey_prep() stores the full design before domain subsetting, as required
+  # by convey's linearized distributional estimators.
+  outcome_design <- convey::convey_prep(
+    update(design, .welfare_value = x$.welfare_value)
+  )
+  survey_id <- unique(plain_chr(x$survey_id))[[1L]]
+  outcome_id <- rule$outcome_id[[1L]]
+  alpha <- rule$quantile[[1L]]
+
+  estimates <- safe_bind_rows(lapply(
+    plain_chr(support$district_2001),
+    function(district_id) {
+      domain_design <- subset(
+        outcome_design,
+        target_unit_2001 == district_id
+      )
+      stat <- with_consumption_survey_adjustment(
+        consumption_bottom_mean_stat(domain_design, alpha)
+      )
+      data.frame(
+        district_2001 = district_id,
+        round_id = survey_id,
+        outcome_id = outcome_id,
+        estimate = stat[["estimate"]],
+        std_error = stat[["std_error"]],
+        uncertainty_requested = TRUE,
+        stringsAsFactors = FALSE
+      )
+    }
+  ))
+
+  consumption_finalize_district_estimate(
+    estimates,
+    support,
+    rule,
+    cv_applicable = TRUE
+  )
+}
+
 estimate_consumption_district_svyquantile <- function(rows, design, support, rule) {
   x <- rows
   x$.welfare_value <- consumption_welfare_value(x$real_mpce, rule$transform[[1L]])
@@ -447,6 +552,9 @@ estimate_consumption_district_welfare <- function(lineaged_households, outcome_r
     }
     if (identical(rule$estimand[[1L]], "survey_quantile")) {
       return(estimate_consumption_district_svyquantile(x, design, support, rule))
+    }
+    if (identical(rule$estimand[[1L]], "survey_bottom_mean")) {
+      return(estimate_consumption_district_bottom_mean(x, design, support, rule))
     }
     stop("Unsupported registered consumption welfare estimand: ", rule$estimand[[1L]], call. = FALSE)
   }))

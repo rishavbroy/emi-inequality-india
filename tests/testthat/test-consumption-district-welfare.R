@@ -191,20 +191,32 @@ test_that("quantile estimator handles all-supported and all-thin domain partitio
 test_that("consumption welfare registry validates outcome contracts", {
   path <- tempfile(fileext = ".csv")
   write.csv(data.frame(
-    outcome_id = c("real_mean_mpce", "mean_log_real_mpce", "weighted_median_real_mpce"),
-    estimand = c("survey_mean", "survey_mean", "survey_quantile"),
-    transform = c("identity", "log", "identity"), quantile = c(NA, NA, 0.5),
-    quantile_interval = c("", "", "xlogit"), quantile_rule = c("", "", "math"),
-    role = c("primary", "robustness", "robustness"),
-    min_households = 50, min_fsu = 2, min_kish_effective_n = 20,
-    max_relative_se = c(0.2, NA, 0.2), stringsAsFactors = FALSE
+    outcome_id = c(
+      "real_mean_mpce", "mean_log_real_mpce", "weighted_median_real_mpce",
+      "bottom20_mean_real_mpce"
+    ),
+    estimand = c("survey_mean", "survey_mean", "survey_quantile", "survey_bottom_mean"),
+    transform = c("identity", "log", "identity", "identity"),
+    quantile = c(NA, NA, 0.5, 0.2),
+    quantile_interval = c("", "", "xlogit", ""),
+    quantile_rule = c("", "", "math", ""),
+    role = c("primary", "robustness", "robustness", "robustness"),
+    min_households = c(50, 50, 50, 100),
+    min_fsu = 2,
+    min_kish_effective_n = c(20, 20, 20, 100),
+    max_relative_se = c(0.2, NA, 0.2, 0.25), stringsAsFactors = FALSE
   ), path, row.names = FALSE, na = "")
   out <- read_consumption_welfare_outcomes(path)
-  expect_equal(out$outcome_id, c("real_mean_mpce", "mean_log_real_mpce", "weighted_median_real_mpce"))
+  expect_equal(out$outcome_id, c(
+    "real_mean_mpce", "mean_log_real_mpce", "weighted_median_real_mpce",
+    "bottom20_mean_real_mpce"
+  ))
   expect_true(is.na(out$max_relative_se[[2L]]))
   expect_equal(out$quantile[[3L]], 0.5)
   expect_equal(out$quantile_interval[[3L]], "xlogit")
   expect_equal(out$quantile_rule[[3L]], "math")
+  expect_equal(out$estimand[[4L]], "survey_bottom_mean")
+  expect_equal(out$quantile[[4L]], 0.2)
 
   bad_quantile <- out
   bad_quantile$quantile[[3L]] <- 1
@@ -215,6 +227,14 @@ test_that("consumption welfare registry validates outcome contracts", {
   bad_interval$quantile_interval[[3L]] <- "unknown"
   write.csv(bad_interval, path, row.names = FALSE, na = "")
   expect_error(read_consumption_welfare_outcomes(path), "invalid quantile uncertainty declarations")
+
+  bad_bottom_method <- out
+  bad_bottom_method$quantile_rule[[4L]] <- "math"
+  write.csv(bad_bottom_method, path, row.names = FALSE, na = "")
+  expect_error(
+    read_consumption_welfare_outcomes(path),
+    "invalid quantile uncertainty declarations"
+  )
 
   bad <- out
   bad$outcome_id[[2L]] <- bad$outcome_id[[1L]]
@@ -568,4 +588,107 @@ test_that("finite high relative SE is distinguished from unavailable precision",
   expect_equal(missing$reason, "non_finite_design_uncertainty")
   expect_true(is.na(missing$support_reason))
   expect_false(missing$preferred_eligible)
+})
+
+test_that("bottom-share mean uses convey lower-tail linearization", {
+  skip_if_not_installed("convey")
+  values <- 1:10
+  design <- survey::svydesign(
+    ids = ~1,
+    weights = ~weight,
+    data = data.frame(
+      .welfare_value = values,
+      weight = 1
+    )
+  )
+  design <- convey::convey_prep(design)
+
+  bottom20 <- consumption_bottom_mean_stat(design, 0.2)
+  bottom40 <- consumption_bottom_mean_stat(design, 0.4)
+
+  expect_equal(bottom20[["estimate"]], mean(1:2), tolerance = 1e-10)
+  expect_equal(bottom40[["estimate"]], mean(1:4), tolerance = 1e-10)
+  expect_true(is.finite(bottom20[["std_error"]]))
+  expect_true(is.finite(bottom40[["std_error"]]))
+  expect_gt(bottom20[["std_error"]], 0)
+  expect_gt(bottom40[["std_error"]], 0)
+})
+
+test_that("bottom-share welfare retains district support and precision contracts", {
+  skip_if_not_installed("convey")
+  x <- data.frame(
+    survey_id = "wave",
+    household_id = paste0("h", 1:20),
+    source_state_code = "01",
+    sector = "Rural",
+    subround = "1",
+    fsu = as.character(1:20),
+    stratum = "1",
+    sub_stratum = "1",
+    household_size = 1,
+    target_unit_2001 = rep(c("a", "b"), each = 10),
+    lineage_status = "resolved_exact_2001",
+    lineage_weight = 1,
+    lineage_person_weight = 1,
+    real_mpce = c(1:10, 11:20) * 100,
+    stringsAsFactors = FALSE
+  )
+  registry <- data.frame(
+    outcome_id = c("bottom40_mean_real_mpce", "bottom20_mean_real_mpce"),
+    estimand = "survey_bottom_mean",
+    transform = "identity",
+    quantile = c(0.4, 0.2),
+    quantile_interval = "",
+    quantile_rule = "",
+    role = "robustness",
+    min_households = 5,
+    min_fsu = 2,
+    min_kish_effective_n = 5,
+    max_relative_se = 10,
+    stringsAsFactors = FALSE
+  )
+
+  out <- estimate_consumption_district_welfare(x, registry)
+
+  expect_equal(nrow(out), 4L)
+  expect_true(all(out$status == "estimated"))
+  expect_true(all(out$uncertainty_requested))
+  expect_true(all(out$sample_support_ok))
+  expect_true(all(out$preferred_eligible))
+  expect_true(all(is.finite(out$estimate)))
+  expect_true(all(is.finite(out$std_error)))
+  expect_true(all(is.finite(out$relative_se)))
+  expect_true(all(is.finite(out$cv)))
+  expect_true(all(
+    out$estimate[out$outcome_id == "bottom20_mean_real_mpce"] <=
+      out$estimate[out$outcome_id == "bottom40_mean_real_mpce"]
+  ))
+})
+
+test_that("bottom-share welfare rejects transformed tail means", {
+  skip_if_not_installed("convey")
+  x <- data.frame(
+    survey_id = "wave", household_id = paste0("h", 1:4),
+    source_state_code = "01", sector = "Rural", subround = "1",
+    fsu = as.character(1:4), stratum = "1", sub_stratum = "1",
+    household_size = 1, target_unit_2001 = "a",
+    lineage_status = "resolved_exact_2001", lineage_weight = 1,
+    lineage_person_weight = 1, real_mpce = 1:4 * 100,
+    stringsAsFactors = FALSE
+  )
+  rule <- data.frame(
+    outcome_id = "bad_tail", estimand = "survey_bottom_mean",
+    transform = "log", quantile = 0.2, quantile_interval = "",
+    quantile_rule = "", role = "robustness", min_households = 1,
+    min_fsu = 1, min_kish_effective_n = 1, max_relative_se = 1,
+    stringsAsFactors = FALSE
+  )
+  rows <- consumption_design_rows(x)
+  design <- consumption_survey_design_from_rows(rows)
+  support <- consumption_district_support_from_rows(rows)
+
+  expect_error(
+    estimate_consumption_district_bottom_mean(rows, design, support, rule),
+    "identity MPCE transform"
+  )
 })
