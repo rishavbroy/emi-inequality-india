@@ -580,6 +580,91 @@ summarize_consumption_lineage_coverage <- function(lineaged_households) {
 }
 
 
+summarize_consumption_lineage_status_coverage <- function(lineaged_households) {
+  x <- safe_df(lineaged_households)
+  required <- c(
+    "survey_id", "household_id", "source_state_code", "source_district_code",
+    "source_lineage_eligible", "lineage_status", "survey_weight", "household_size"
+  )
+  missing <- setdiff(required, names(x))
+  if (length(missing)) {
+    stop(
+      "Lineaged consumption households lack status-coverage fields: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+
+  x$person_weight <- num(x$survey_weight) * num(x$household_size)
+  source_key <- paste(
+    x$survey_id, x$source_state_code, x$source_district_code,
+    sep = "\\r"
+  )
+  household_source_key <- paste(x$household_id, source_key, sep = "\\r")
+  base <- x[!duplicated(household_source_key), , drop = FALSE]
+
+  source_status <- unique(data.frame(
+    source_key = source_key,
+    lineage_status = plain_chr(x$lineage_status),
+    stringsAsFactors = FALSE
+  ))
+  if (anyDuplicated(source_status$source_key)) {
+    counts <- tapply(
+      source_status$lineage_status,
+      source_status$source_key,
+      function(z) length(unique(z))
+    )
+    if (any(counts > 1L)) {
+      stop(
+        "A consumption source district has conflicting lineage statuses.",
+        call. = FALSE
+      )
+    }
+    source_status <- source_status[
+      !duplicated(source_status$source_key), , drop = FALSE
+    ]
+  }
+
+  total_person <- sum(base$person_weight, na.rm = TRUE)
+  eligible_person <- sum(
+    base$person_weight[base$source_lineage_eligible %in% TRUE],
+    na.rm = TRUE
+  )
+  statuses <- sort(unique(plain_chr(base$lineage_status)))
+
+  safe_bind_rows(lapply(statuses, function(status) {
+    rows <- plain_chr(base$lineage_status) == status
+    status_person <- sum(base$person_weight[rows], na.rm = TRUE)
+    eligible_status_person <- sum(
+      base$person_weight[rows & base$source_lineage_eligible %in% TRUE],
+      na.rm = TRUE
+    )
+    data.frame(
+      survey_id = unique(plain_chr(base$survey_id))[[1L]],
+      lineage_status = status,
+      source_districts = sum(source_status$lineage_status == status),
+      person_weight = status_person,
+      total_person_weight_share = if (total_person > 0) {
+        status_person / total_person
+      } else {
+        NA_real_
+      },
+      eligible_person_weight_share = if (eligible_person > 0) {
+        eligible_status_person / eligible_person
+      } else {
+        NA_real_
+      },
+      stringsAsFactors = FALSE
+    )
+  }))
+}
+
+save_consumption_lineage_status_coverage <- function(
+    coverage,
+    path = "outputs/diagnostics/extended/consumption/lineage_status_coverage.csv") {
+  write_diagnostic_csv(safe_df(coverage), path)
+}
+
 build_consumption_lineage_review_queue <- function(bridge) {
   x <- safe_df(bridge)
   required <- c(

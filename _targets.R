@@ -684,6 +684,22 @@ core_pipeline_targets <- list(
     format = "file"
   ),
   tar_target(
+    consumption_lineage_status_coverage,
+    safe_bind_rows(list(
+      summarize_consumption_lineage_status_coverage(consumption_households_lineaged_2004_05),
+      summarize_consumption_lineage_status_coverage(consumption_households_lineaged_2009_10_type1),
+      summarize_consumption_lineage_status_coverage(consumption_households_lineaged_2009_10_type2),
+      summarize_consumption_lineage_status_coverage(consumption_households_lineaged_2011_12_type2),
+      summarize_consumption_lineage_status_coverage(consumption_households_lineaged_hces_2022_23),
+      summarize_consumption_lineage_status_coverage(consumption_households_lineaged_hces_2023_24)
+    ))
+  ),
+  tar_target(
+    consumption_lineage_status_coverage_file,
+    save_consumption_lineage_status_coverage(consumption_lineage_status_coverage),
+    format = "file"
+  ),
+  tar_target(
     consumption_lineage_review_queue,
     safe_bind_rows(list(
       build_consumption_lineage_review_queue(consumption_lineage_bridge_2004_05),

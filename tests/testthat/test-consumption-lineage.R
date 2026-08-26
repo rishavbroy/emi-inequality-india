@@ -420,3 +420,56 @@ test_that("administrative lineage enrichment permits an empty event graph", {
   expect_equal(nrow(out), 1L)
   expect_equal(out$target_unit_2001, "pc2001__20__04")
 })
+
+test_that("lineage status coverage attributes source mass without allocation double counting", {
+  x <- data.frame(
+    survey_id = "wave",
+    household_id = c("h1", "h1", "h2", "h3"),
+    source_state_code = "01",
+    source_district_code = c("01", "01", "02", "03"),
+    source_lineage_eligible = TRUE,
+    lineage_status = c(
+      "resolved_reviewed_admin_ancestry",
+      "resolved_reviewed_admin_ancestry",
+      "resolved_exact_2001",
+      "unresolved_no_stable_lineage"
+    ),
+    survey_weight = c(10, 10, 20, 30),
+    household_size = c(2, 2, 1, 1),
+    lineage_person_weight = c(12, 8, 20, 0),
+    stringsAsFactors = FALSE
+  )
+
+  out <- summarize_consumption_lineage_status_coverage(x)
+
+  admin <- out[out$lineage_status == "resolved_reviewed_admin_ancestry", , drop = FALSE]
+  exact <- out[out$lineage_status == "resolved_exact_2001", , drop = FALSE]
+  unresolved <- out[out$lineage_status == "unresolved_no_stable_lineage", , drop = FALSE]
+
+  expect_equal(admin$source_districts, 1L)
+  expect_equal(admin$person_weight, 20)
+  expect_equal(exact$person_weight, 20)
+  expect_equal(unresolved$person_weight, 30)
+  expect_equal(sum(out$total_person_weight_share), 1, tolerance = 1e-12)
+  expect_equal(sum(out$eligible_person_weight_share), 1, tolerance = 1e-12)
+})
+
+test_that("lineage status coverage rejects conflicting status assignments", {
+  x <- data.frame(
+    survey_id = "wave",
+    household_id = c("h1", "h1"),
+    source_state_code = "01",
+    source_district_code = "01",
+    source_lineage_eligible = TRUE,
+    lineage_status = c("resolved_exact_2001", "resolved_reviewed_admin_ancestry"),
+    survey_weight = 1,
+    household_size = 1,
+    lineage_person_weight = c(0.5, 0.5),
+    stringsAsFactors = FALSE
+  )
+
+  expect_error(
+    summarize_consumption_lineage_status_coverage(x),
+    "conflicting lineage statuses"
+  )
+})
