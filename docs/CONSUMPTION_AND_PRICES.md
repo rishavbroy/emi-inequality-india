@@ -116,6 +116,13 @@ exact/alias/reviewed-crosswave behavior. Production supplies the complete
 enrichment bundle. A partially supplied bundle is rejected explicitly so missing
 canonical lineage objects cannot silently disable administrative ancestry.
 
+`lineage_status_coverage.csv` decomposes each survey's source-district count and
+person-weight mass by the final lineage status. It is derived from one
+household/source row before any lineage allocation expansion, so split allocation
+rows cannot double-count source mass. This makes the contribution of
+`resolved_reviewed_admin_ancestry` directly auditable without changing the
+public aggregate coverage definition or any welfare inclusion rule.
+
 For the primary real-MPCE construction, panel `r` is assigned the three consecutive
 survey months `r:(r+2)`: panel 1 covers the first through third survey months and
 panel 10 covers the tenth through twelfth. The state-sector CPI deflator is averaged
