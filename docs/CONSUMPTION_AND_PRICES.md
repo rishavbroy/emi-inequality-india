@@ -92,15 +92,22 @@ reorganization logic out of the generic price engine.
 The existing `attach_consumption_source_district_identity()` contract resolves
 modern HCES codes to named source districts before real-consumption objects move
 to the lineage layer. The modern rounds then reuse the existing conservative
-consumption-lineage reference: exact Census-2001 identities, reviewed identity
-aliases, and stable reviewed cross-wave lineage are accepted; unresolved or
-conflicting modern source districts remain explicit review-queue rows.
+consumption-lineage reference in evidence order: exact Census-2001 identities,
+reviewed identity aliases, deterministic administrative ancestry already present
+in the district-lineage subsystem, and stable reviewed cross-wave lineage.
+Unresolved or conflicting modern source districts remain explicit review-queue
+rows.
 
-The repository already contains accepted post-2011 administrative-event
-adjudications and 1951-2024 lineage sources. Those records are not duplicated in
-the HCES reader. Where they are not yet represented in the conservative
-consumption-lineage reference, the modern review queue identifies the remaining
-integration gap instead of replacing it with a name-only shortcut.
+Administrative ancestry is not inferred from name similarity. A current LGD
+district may enter the consumption reference only when its normalized
+state/district identity uniquely identifies an existing LGD reference unit and
+either (a) the LGD record carries a unique Census-2011 district code or (b) the
+accepted administrative-event graph supplies a single parent path. A
+Census-2011 terminal is then accepted only when the repository's existing
+deterministic 2011-to-2001 transition resolves it. Multi-parent events and
+`non_nested_or_incomplete` transitions remain unresolved. This reuses reviewed
+lineage evidence without duplicating post-2011 adjudications in HCES-specific
+metadata.
 
 For the primary real-MPCE construction, panel `r` is assigned the three consecutive
 survey months `r:(r+2)`: panel 1 covers the first through third survey months and
@@ -480,7 +487,7 @@ welfare aggregation is introduced.
 
 ### Historical consumption lineage identity aliases
 
-Historical consumption source labels are never fuzzy-matched into Census-2001 districts. A small reviewed metadata registry, `data/metadata/consumption_lineage_identity_aliases.csv`, handles only deterministic orthographic, abbreviation, truncation, or documented source-label corruption cases whose target is a unique Census-2001 district within the same normalized state. The lineage bridge applies exact Census-2001 identity first, then these reviewed identity aliases, then stable reviewed cross-wave lineage. Administrative-change cases remain unresolved for explicit adjudication.
+Historical consumption source labels are never fuzzy-matched into Census-2001 districts. A small reviewed metadata registry, `data/metadata/consumption_lineage_identity_aliases.csv`, handles only deterministic orthographic, abbreviation, truncation, or documented source-label corruption cases whose target is a unique Census-2001 district within the same normalized state. The lineage bridge applies exact Census-2001 identity first, then these reviewed identity aliases, then any deterministic administrative ancestry already accepted by the district-lineage subsystem, and finally stable reviewed cross-wave lineage. Administrative-change cases lacking a unique accepted ancestry path remain unresolved for explicit adjudication.
 
 ### Historical district welfare survey design
 
