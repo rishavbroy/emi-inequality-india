@@ -868,3 +868,33 @@ test_that("consumption welfare targets cache core and distributional work separa
   expect_false(grepl("lapply(\\n    plain_chr(support$district_2001)", welfare, fixed = TRUE))
   expect_match(audit, 'EMI_CONSUMPTION_DOMAIN_CORES="${EMI_CONSUMPTION_DOMAIN_CORES:-4}"', fixed = TRUE)
 })
+
+test_that("public audit checks the targets process before tests and pipeline execution", {
+  audit <- repo_text("scripts", "run_public_build_audit.sh")
+  checker <- repo_text("scripts", "check_targets_process.R")
+  expect_match(audit, 'current_stage="targets-process-preflight"', fixed = TRUE)
+  expect_match(audit, "Rscript scripts/check_targets_process.R", fixed = TRUE)
+  expect_lt(
+    regexpr("Rscript scripts/check_targets_process.R", audit, fixed = TRUE)[[1L]],
+    regexpr('current_stage="unit-tests"', audit, fixed = TRUE)[[1L]]
+  )
+  expect_lt(
+    regexpr("Rscript scripts/check_targets_process.R", audit, fixed = TRUE)[[1L]],
+    regexpr('current_stage="public-final-check"', audit, fixed = TRUE)[[1L]]
+  )
+  expect_match(checker, "targets::tar_pid()", fixed = TRUE)
+  expect_match(checker, "pid %in% ps::ps_pids()", fixed = TRUE)
+  expect_match(checker, "targets::tar_unblock_process()", fixed = TRUE)
+  expect_match(checker, "kill ", fixed = TRUE)
+  expect_false(grepl("ps::ps_kill", checker, fixed = TRUE))
+})
+
+test_that("targets process recovery never unblocks a live recorded process", {
+  checker <- repo_text("scripts", "check_targets_process.R")
+  live <- regexpr("if (pid %in% ps::ps_pids())", checker, fixed = TRUE)[[1L]]
+  fail <- regexpr("quit(status = 3L)", checker, fixed = TRUE)[[1L]]
+  unblock <- regexpr("targets::tar_unblock_process()", checker, fixed = TRUE)[[1L]]
+  expect_gt(live, 0L)
+  expect_gt(fail, live)
+  expect_gt(unblock, fail)
+})
