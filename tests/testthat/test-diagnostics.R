@@ -1904,5 +1904,137 @@ test_that("consumption reduced forms preserve canonical controls and fixed effec
   expect_equal(out$status, "estimated")
   expect_equal(out$n, n)
   expect_identical(out$term, "z")
-  expect_true(all(is.finite(out[c("estimate", "std.error", "p.value")])))
+  expect_true(all(is.finite(unlist(
+    out[c("estimate", "std.error", "p.value")],
+    use.names = FALSE
+  ))))
+})
+
+test_that("dynamic consumption IV validation enforces the common-sample inference contract", {
+  spec <- iv_specification_row(
+    specification_id = "consumption__toy",
+    adjustment_id = "state_main",
+    adjustment = "State FE",
+    construction_id = "nonzero_mean",
+    construction = "Toy",
+    outcome = "y",
+    treatment = "d",
+    fixed_effect = "state",
+    controls = "control",
+    included_language_controls = character(),
+    excluded_instruments = "z",
+    mapping_coverage_variable = NA_character_,
+    panel_variant = "primary",
+    sample_rule = "preferred_welfare_support",
+    cluster = "state_code_2001"
+  )
+  spec$welfare_specification_id <- "toy"
+  spec$welfare_outcome_id <- "real_mean_mpce"
+  spec$outcome_round <- "hces_2023_24"
+  spec$baseline_round <- "nss_2004_05"
+  spec$estimand <- "ancova"
+  spec$analysis_transform <- "log"
+
+  summary <- data.frame(
+    specification_id = "consumption__toy",
+    first_stage_n = 50L,
+    first_stage_status = "estimated",
+    reduced_form_n = 50L,
+    reduced_form_status = "estimated",
+    second_stage_n = 50L,
+    second_stage_status = "estimated",
+    n = 50L,
+    status = "estimated",
+    partial_f = 4,
+    reduced_form_estimate = 0.1,
+    reduced_form_std.error = 0.04,
+    reduced_form_p.value = 0.02,
+    second_stage_estimate = 0.2,
+    second_stage_std.error = 0.1,
+    second_stage_p.value = 0.05,
+    anderson_rubin_p_beta0 = 0.03,
+    stringsAsFactors = FALSE
+  )
+  dynamics <- list(
+    summary = summary,
+    anderson_rubin_grid = data.frame(
+      specification_id = "consumption__toy",
+      beta = c(-1, 0, 1),
+      accepted = c(TRUE, FALSE, TRUE),
+      stringsAsFactors = FALSE
+    )
+  )
+
+  out <- validate_consumption_iv_dynamics(dynamics, spec)
+  expect_equal(out$summary$specification_id, "consumption__toy")
+
+  dynamics$summary$reduced_form_n <- 49L
+  expect_error(
+    validate_consumption_iv_dynamics(dynamics, spec),
+    "not analysis-ready"
+  )
+})
+
+test_that("dynamic consumption IV validation rejects missing registered AR grids", {
+  specs <- bind_iv_specification_rows(lapply(c("one", "two"), function(id) {
+    row <- iv_specification_row(
+      specification_id = id,
+      adjustment_id = "state_main",
+      adjustment = "State FE",
+      construction_id = "nonzero_mean",
+      construction = "Toy",
+      outcome = "y",
+      treatment = "d",
+      fixed_effect = "state",
+      controls = "control",
+      included_language_controls = character(),
+      excluded_instruments = "z",
+      mapping_coverage_variable = NA_character_,
+      panel_variant = "primary",
+      sample_rule = "support",
+      cluster = "state_code_2001"
+    )
+    row$welfare_specification_id <- id
+    row$welfare_outcome_id <- "real_mean_mpce"
+    row$outcome_round <- "hces_2023_24"
+    row$baseline_round <- "nss_2004_05"
+    row$estimand <- "ancova"
+    row$analysis_transform <- "log"
+    row
+  }))
+
+  summary <- data.frame(
+    specification_id = c("one", "two"),
+    first_stage_n = 50L,
+    first_stage_status = "estimated",
+    reduced_form_n = 50L,
+    reduced_form_status = "estimated",
+    second_stage_n = 50L,
+    second_stage_status = "estimated",
+    n = 50L,
+    status = "estimated",
+    partial_f = 4,
+    reduced_form_estimate = 0.1,
+    reduced_form_std.error = 0.04,
+    reduced_form_p.value = 0.02,
+    second_stage_estimate = 0.2,
+    second_stage_std.error = 0.1,
+    second_stage_p.value = 0.05,
+    anderson_rubin_p_beta0 = 0.03,
+    stringsAsFactors = FALSE
+  )
+  dynamics <- list(
+    summary = summary,
+    anderson_rubin_grid = data.frame(
+      specification_id = "one",
+      beta = c(-1, 0, 1),
+      accepted = c(TRUE, FALSE, TRUE),
+      stringsAsFactors = FALSE
+    )
+  )
+
+  expect_error(
+    validate_consumption_iv_dynamics(dynamics, specs),
+    "lack Anderson-Rubin grids"
+  )
 })
