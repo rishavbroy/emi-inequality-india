@@ -144,6 +144,7 @@ test_that("targets graph separates public diagnostics, extended diagnostics, and
   expect_match(src, "save_spatial_autocorrelation_diagnostics(diag_public_spatial_autocorrelation), format = \"file\"", fixed = TRUE)
   expect_match(src, "diag_ext_missingness", fixed = TRUE)
   expect_match(src, "bench_ame_methods", fixed = TRUE)
+  expect_match(src, "bench_consumption_distribution_domains", fixed = TRUE)
   expect_match(src, "EMI_RUN_EXTENDED_DIAGNOSTICS", fixed = TRUE)
   expect_match(src, "EMI_RUN_BENCHMARKS", fixed = TRUE)
   public_spatial_line <- grep(
@@ -851,4 +852,19 @@ test_that("lower-tail welfare runtime dependency is exercised rather than condit
     tests,
     fixed = TRUE
   ))
+})
+
+test_that("consumption welfare targets cache core and distributional work separately", {
+  targets <- repo_text("_targets.R")
+  welfare <- repo_text("R", "measures", "build_consumption_district_welfare.R")
+  audit <- repo_text("scripts", "run_public_build_audit.sh")
+
+  expect_match(targets, "consumption_welfare_outcomes_core", fixed = TRUE)
+  expect_match(targets, "consumption_welfare_outcomes_distributional", fixed = TRUE)
+  expect_match(targets, "consumption_district_welfare_core_2011_12_type2", fixed = TRUE)
+  expect_match(targets, "consumption_district_welfare_distributional_2011_12_type2", fixed = TRUE)
+  expect_match(welfare, "survey::svyby", fixed = TRUE)
+  expect_match(welfare, "multicore = consumption_domain_multicore()", fixed = TRUE)
+  expect_false(grepl("lapply(\\n    plain_chr(support$district_2001)", welfare, fixed = TRUE))
+  expect_match(audit, 'EMI_CONSUMPTION_DOMAIN_CORES="${EMI_CONSUMPTION_DOMAIN_CORES:-4}"', fixed = TRUE)
 })

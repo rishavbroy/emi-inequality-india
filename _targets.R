@@ -725,40 +725,126 @@ core_pipeline_targets <- list(
     read_consumption_welfare_outcomes(consumption_welfare_outcomes_file)
   ),
   tar_target(
+    consumption_welfare_outcomes_core,
+    consumption_welfare_registry_partition(consumption_welfare_outcomes, "core")
+  ),
+  tar_target(
+    consumption_welfare_outcomes_distributional,
+    consumption_welfare_registry_partition(consumption_welfare_outcomes, "distributional")
+  ),
+  tar_target(
+    consumption_district_welfare_core_2004_05,
+    estimate_consumption_district_welfare_core(
+      consumption_households_lineaged_2004_05, consumption_welfare_outcomes_core
+    )
+  ),
+  tar_target(
+    consumption_district_welfare_distributional_2004_05,
+    estimate_consumption_district_welfare_distributional(
+      consumption_households_lineaged_2004_05, consumption_welfare_outcomes_distributional
+    )
+  ),
+  tar_target(
     consumption_district_welfare_2004_05,
-    estimate_consumption_district_welfare(
-      consumption_households_lineaged_2004_05, consumption_welfare_outcomes
+    safe_bind_rows(list(
+      consumption_district_welfare_core_2004_05,
+      consumption_district_welfare_distributional_2004_05
+    ))
+  ),
+  tar_target(
+    consumption_district_welfare_core_2009_10_type1,
+    estimate_consumption_district_welfare_core(
+      consumption_households_lineaged_2009_10_type1, consumption_welfare_outcomes_core
+    )
+  ),
+  tar_target(
+    consumption_district_welfare_distributional_2009_10_type1,
+    estimate_consumption_district_welfare_distributional(
+      consumption_households_lineaged_2009_10_type1, consumption_welfare_outcomes_distributional
     )
   ),
   tar_target(
     consumption_district_welfare_2009_10_type1,
-    estimate_consumption_district_welfare(
-      consumption_households_lineaged_2009_10_type1, consumption_welfare_outcomes
+    safe_bind_rows(list(
+      consumption_district_welfare_core_2009_10_type1,
+      consumption_district_welfare_distributional_2009_10_type1
+    ))
+  ),
+  tar_target(
+    consumption_district_welfare_core_2009_10_type2,
+    estimate_consumption_district_welfare_core(
+      consumption_households_lineaged_2009_10_type2, consumption_welfare_outcomes_core
+    )
+  ),
+  tar_target(
+    consumption_district_welfare_distributional_2009_10_type2,
+    estimate_consumption_district_welfare_distributional(
+      consumption_households_lineaged_2009_10_type2, consumption_welfare_outcomes_distributional
     )
   ),
   tar_target(
     consumption_district_welfare_2009_10_type2,
-    estimate_consumption_district_welfare(
-      consumption_households_lineaged_2009_10_type2, consumption_welfare_outcomes
+    safe_bind_rows(list(
+      consumption_district_welfare_core_2009_10_type2,
+      consumption_district_welfare_distributional_2009_10_type2
+    ))
+  ),
+  tar_target(
+    consumption_district_welfare_core_2011_12_type2,
+    estimate_consumption_district_welfare_core(
+      consumption_households_lineaged_2011_12_type2, consumption_welfare_outcomes_core
+    )
+  ),
+  tar_target(
+    consumption_district_welfare_distributional_2011_12_type2,
+    estimate_consumption_district_welfare_distributional(
+      consumption_households_lineaged_2011_12_type2, consumption_welfare_outcomes_distributional
     )
   ),
   tar_target(
     consumption_district_welfare_2011_12_type2,
-    estimate_consumption_district_welfare(
-      consumption_households_lineaged_2011_12_type2, consumption_welfare_outcomes
+    safe_bind_rows(list(
+      consumption_district_welfare_core_2011_12_type2,
+      consumption_district_welfare_distributional_2011_12_type2
+    ))
+  ),
+  tar_target(
+    consumption_district_welfare_core_hces_2022_23,
+    estimate_consumption_district_welfare_core(
+      consumption_households_lineaged_hces_2022_23, consumption_welfare_outcomes_core
+    )
+  ),
+  tar_target(
+    consumption_district_welfare_distributional_hces_2022_23,
+    estimate_consumption_district_welfare_distributional(
+      consumption_households_lineaged_hces_2022_23, consumption_welfare_outcomes_distributional
     )
   ),
   tar_target(
     consumption_district_welfare_hces_2022_23,
-    estimate_consumption_district_welfare(
-      consumption_households_lineaged_hces_2022_23, consumption_welfare_outcomes
+    safe_bind_rows(list(
+      consumption_district_welfare_core_hces_2022_23,
+      consumption_district_welfare_distributional_hces_2022_23
+    ))
+  ),
+  tar_target(
+    consumption_district_welfare_core_hces_2023_24,
+    estimate_consumption_district_welfare_core(
+      consumption_households_lineaged_hces_2023_24, consumption_welfare_outcomes_core
+    )
+  ),
+  tar_target(
+    consumption_district_welfare_distributional_hces_2023_24,
+    estimate_consumption_district_welfare_distributional(
+      consumption_households_lineaged_hces_2023_24, consumption_welfare_outcomes_distributional
     )
   ),
   tar_target(
     consumption_district_welfare_hces_2023_24,
-    estimate_consumption_district_welfare(
-      consumption_households_lineaged_hces_2023_24, consumption_welfare_outcomes
-    )
+    safe_bind_rows(list(
+      consumption_district_welfare_core_hces_2023_24,
+      consumption_district_welfare_distributional_hces_2023_24
+    ))
   ),
   tar_target(
     consumption_district_welfare,
@@ -1591,6 +1677,14 @@ extended_diagnostic_targets <- list(
 
 benchmark_targets <- list(
   tar_target(bench_ame_methods, run_ame_methods_benchmark(selection_model, selection_data, cfg)),
+  tar_target(
+    bench_consumption_distribution_domains,
+    run_consumption_distribution_benchmark(
+      consumption_households_lineaged_2011_12_type2,
+      consumption_welfare_outcomes_distributional
+    ),
+    format = "file"
+  ),
   tar_target(bench_fuzzy_matching, run_fuzzy_matching_benchmark(district_tracker, district_join_map, cfg)),
   tar_target(bench_spatial_weights, run_spatial_weights_benchmark(district_panel, cfg)),
   tar_target(bench_spatial_iv_experimental, run_spatial_iv_benchmark(district_panel, spatial_weights, with_diagnostic_enabled(cfg, "spatial_iv_experimental")))
