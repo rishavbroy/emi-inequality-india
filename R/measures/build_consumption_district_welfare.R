@@ -227,6 +227,39 @@ read_consumption_welfare_outcomes <- function(path) {
   x
 }
 
+consumption_distributional_estimands <- function() {
+  c("survey_bottom_mean", "survey_gini", "survey_atkinson", "survey_fgt")
+}
+
+consumption_welfare_registry_partition <- function(registry, part = c("all", "core", "distributional")) {
+  part <- match.arg(part)
+  x <- safe_df(registry)
+  if (!nrow(x)) return(x)
+  is_distributional <- plain_chr(x$estimand) %in% consumption_distributional_estimands()
+  if (identical(part, "core")) return(x[!is_distributional, , drop = FALSE])
+  if (identical(part, "distributional")) return(x[is_distributional, , drop = FALSE])
+  x
+}
+
+consumption_domain_cores <- function() {
+  requested <- suppressWarnings(as.integer(Sys.getenv("EMI_CONSUMPTION_DOMAIN_CORES", "1")))
+  if (!is.finite(requested) || requested < 1L) requested <- 1L
+  detected <- suppressWarnings(parallel::detectCores(logical = FALSE))
+  if (!is.finite(detected) || detected < 1L) detected <- 1L
+  as.integer(max(1L, min(requested, detected)))
+}
+
+consumption_domain_multicore <- function() {
+  .Platform$OS.type != "windows" && consumption_domain_cores() > 1L
+}
+
+with_consumption_domain_cores <- function(expr) {
+  old <- getOption("mc.cores")
+  options(mc.cores = consumption_domain_cores())
+  on.exit(options(mc.cores = old), add = TRUE)
+  force(expr)
+}
+
 consumption_welfare_value <- function(real_mpce, transform) {
   x <- num(real_mpce)
   if (identical(transform, "identity")) return(x)
@@ -386,17 +419,19 @@ estimate_consumption_district_svymean <- function(rows, design, support, rule) {
   )
 }
 
-consumption_bottom_mean_stat <- function(design, alpha) {
+consumption_bottom_mean_stat <- function(
+    formula, design, alpha, na.rm = TRUE, deff = FALSE,
+    linearized = FALSE, influence = FALSE, ...) {
   need_pkg("convey", "design-based lower-tail welfare estimates")
   if (!is.finite(alpha) || alpha <= 0 || alpha >= 1) {
     stop("Bottom-share mean alpha must lie strictly between zero and one.", call. = FALSE)
   }
 
   lower <- convey::svyisq(
-    ~.welfare_value,
+    formula,
     design = design,
     alpha = alpha,
-    na.rm = TRUE,
+    na.rm = na.rm,
     linearized = TRUE
   )
   lower_value <- num(stats::coef(lower))[[1L]]
@@ -410,73 +445,93 @@ consumption_bottom_mean_stat <- function(design, alpha) {
     stop("Lower-tail welfare linearization returned an invalid design object.", call. = FALSE)
   }
 
-  # convey::svyisq() supplies the design-linearized total below q_alpha.
-  # Divide by alpha and then use convey::contrastinf() so uncertainty in the
-  # represented-person denominator is retained in the bottom-share mean.
   contrast <- convey::contrastinf(
     quote(LOWER / POPULATION),
     list(
-      LOWER = list(
-        value = lower_value / alpha,
-        lin = lower_linearized / alpha
-      ),
-      POPULATION = list(
-        value = population_value,
-        lin = rep(1, length(sampling_weight))
-      )
+      LOWER = list(value = lower_value / alpha, lin = lower_linearized / alpha),
+      POPULATION = list(value = population_value, lin = rep(1, length(sampling_weight)))
     )
   )
-  variance_total <- survey::svytotal(contrast$lin, design)
-  standard_error <- num(survey::SE(variance_total))[[1L]]
+  total <- survey::svytotal(contrast$lin, design)
+  estimate <- num(contrast$value)[[1L]]
+  variance <- stats::vcov(total)
+  names(estimate) <- ".welfare_value"
+  rownames(variance) <- colnames(variance) <- ".welfare_value"
+  class(estimate) <- c("cvystat", "svystat")
+  attr(estimate, "var") <- variance
+  attr(estimate, "statistic") <- "bottom_mean"
 
-  c(
-    estimate = num(contrast$value)[[1L]],
-    std_error = standard_error
+  if (isTRUE(linearized)) {
+    attr(estimate, "linearized") <- matrix(
+      contrast$lin,
+      ncol = 1L,
+      dimnames = list(rownames(design$variables), ".welfare_value")
+    )
+  }
+  if (isTRUE(influence)) {
+    weighted_influence <- contrast$lin / design$prob
+    attr(estimate, "influence") <- matrix(
+      weighted_influence,
+      ncol = 1L,
+      dimnames = list(rownames(design$variables), ".welfare_value")
+    )
+  }
+  if (isTRUE(linearized) || isTRUE(influence)) {
+    attr(estimate, "index") <- seq_len(nrow(design$variables))
+  }
+  estimate
+}
+
+consumption_distribution_svyby <- function(design, rule) {
+  estimand <- plain_chr(rule$estimand[[1L]])
+  args <- list(
+    formula = ~.welfare_value,
+    by = ~target_unit_2001,
+    design = design,
+    na.rm = TRUE,
+    vartype = "se",
+    keep.names = FALSE,
+    drop.empty.groups = FALSE,
+    multicore = consumption_domain_multicore()
+  )
+  if (identical(estimand, "survey_bottom_mean")) {
+    args$FUN <- consumption_bottom_mean_stat
+    args$alpha <- rule$quantile[[1L]]
+  } else if (identical(estimand, "survey_gini")) {
+    args$FUN <- convey::svygini
+  } else if (identical(estimand, "survey_atkinson")) {
+    args$FUN <- convey::svyatk
+    args$epsilon <- rule$epsilon[[1L]]
+  } else if (identical(estimand, "survey_fgt")) {
+    args$FUN <- convey::svyfgt
+    args$g <- as.integer(rule$fgt_order[[1L]])
+    args$type_thresh <- "abs"
+    args$abs_thresh <- tendulkar_real_poverty_line()
+  } else {
+    stop("Unsupported convey distribution estimand: ", estimand, call. = FALSE)
+  }
+  with_consumption_domain_cores(
+    with_consumption_survey_adjustment(do.call(survey::svyby, args))
   )
 }
 
-estimate_consumption_district_convey_domains <- function(
-    rows, design, support, rule, statistic, cv_applicable = FALSE) {
+estimate_consumption_district_distribution <- function(
+    rows, convey_design, support, rule) {
   need_pkg("convey", "design-based consumption distribution estimates")
-  x <- rows
-  x$.welfare_value <- consumption_welfare_value(
-    x$real_mpce, rule$transform[[1L]]
+  if (!identical(rule$transform[[1L]], "identity")) {
+    stop("Consumption distribution outcomes require the identity MPCE transform.", call. = FALSE)
+  }
+  result <- consumption_distribution_svyby(convey_design, rule)
+  survey_id <- unique(plain_chr(rows$survey_id))[[1L]]
+  estimates <- consumption_svyby_estimates(
+    result, survey_id, rule$outcome_id[[1L]]
   )
-  # convey_prep() stores the full design before domain subsetting, as required
-  # by convey's linearized distributional estimators.
-  outcome_design <- convey::convey_prep(
-    update(design, .welfare_value = x$.welfare_value)
-  )
-  survey_id <- unique(plain_chr(x$survey_id))[[1L]]
-  outcome_id <- rule$outcome_id[[1L]]
-
-  estimates <- safe_bind_rows(lapply(
-    plain_chr(support$district_2001),
-    function(district_id) {
-      domain_design <- subset(
-        outcome_design,
-        target_unit_2001 == district_id
-      )
-      stat <- with_consumption_survey_adjustment(
-        statistic(domain_design, rule)
-      )
-      data.frame(
-        district_2001 = district_id,
-        round_id = survey_id,
-        outcome_id = outcome_id,
-        estimate = stat[["estimate"]],
-        std_error = stat[["std_error"]],
-        uncertainty_requested = TRUE,
-        stringsAsFactors = FALSE
-      )
-    }
-  ))
-
+  estimates$uncertainty_requested <- TRUE
   consumption_finalize_district_estimate(
     estimates,
     support,
     rule,
-    cv_applicable = cv_applicable
+    cv_applicable = identical(rule$estimand[[1L]], "survey_bottom_mean")
   )
 }
 
@@ -484,51 +539,10 @@ estimate_consumption_district_bottom_mean <- function(rows, design, support, rul
   if (!identical(rule$transform[[1L]], "identity")) {
     stop("Bottom-share welfare means currently require the identity MPCE transform.", call. = FALSE)
   }
-  estimate_consumption_district_convey_domains(
-    rows, design, support, rule,
-    statistic = function(domain_design, rule) {
-      consumption_bottom_mean_stat(domain_design, rule$quantile[[1L]])
-    },
-    cv_applicable = TRUE
+  outcome_design <- convey::convey_prep(
+    update(design, .welfare_value = num(rows$real_mpce))
   )
-}
-
-consumption_distribution_stat <- function(design, rule) {
-  estimand <- plain_chr(rule$estimand[[1L]])
-  result <- switch(
-    estimand,
-    survey_gini = convey::svygini(
-      ~.welfare_value, design = design, na.rm = TRUE
-    ),
-    survey_atkinson = convey::svyatk(
-      ~.welfare_value, design = design,
-      epsilon = rule$epsilon[[1L]], na.rm = TRUE
-    ),
-    survey_fgt = convey::svyfgt(
-      ~.welfare_value,
-      design = design,
-      g = as.integer(rule$fgt_order[[1L]]),
-      type_thresh = "abs",
-      abs_thresh = tendulkar_real_poverty_line(),
-      na.rm = TRUE
-    ),
-    stop("Unsupported convey distribution estimand: ", estimand, call. = FALSE)
-  )
-  c(
-    estimate = num(stats::coef(result))[[1L]],
-    std_error = num(survey::SE(result))[[1L]]
-  )
-}
-
-estimate_consumption_district_distribution <- function(rows, design, support, rule) {
-  if (!identical(rule$transform[[1L]], "identity")) {
-    stop("Consumption distribution outcomes require the identity MPCE transform.", call. = FALSE)
-  }
-  estimate_consumption_district_convey_domains(
-    rows, design, support, rule,
-    statistic = consumption_distribution_stat,
-    cv_applicable = FALSE
-  )
+  estimate_consumption_district_distribution(rows, outcome_design, support, rule)
 }
 
 estimate_consumption_district_svyquantile <- function(rows, design, support, rule) {
@@ -608,29 +622,54 @@ estimate_consumption_district_svyquantile <- function(rows, design, support, rul
 estimate_consumption_district_welfare <- function(lineaged_households, outcome_registry) {
   x <- consumption_design_rows(lineaged_households)
   survey_id <- unique(plain_chr(x$survey_id))
-  if (length(survey_id) != 1L) stop("District welfare estimation requires one survey at a time.", call. = FALSE)
+  if (length(survey_id) != 1L) {
+    stop("District welfare estimation requires one survey at a time.", call. = FALSE)
+  }
   registry <- safe_df(outcome_registry)
-  if (!nrow(registry)) stop("Consumption welfare outcome registry is empty.", call. = FALSE)
+  if (!nrow(registry)) return(data.frame())
+
   design <- consumption_survey_design_from_rows(x)
   support <- consumption_district_support_from_rows(x)
+  distributional <- plain_chr(registry$estimand) %in% consumption_distributional_estimands()
+  convey_design <- NULL
+  if (any(distributional)) {
+    need_pkg("convey", "design-based consumption distribution estimates")
+    convey_design <- convey::convey_prep(
+      update(design, .welfare_value = num(x$real_mpce))
+    )
+  }
+
   safe_bind_rows(lapply(seq_len(nrow(registry)), function(i) {
     rule <- registry[i, , drop = FALSE]
-    if (identical(rule$estimand[[1L]], "survey_mean")) {
+    estimand <- plain_chr(rule$estimand[[1L]])
+    if (identical(estimand, "survey_mean")) {
       return(estimate_consumption_district_svymean(x, design, support, rule))
     }
-    if (identical(rule$estimand[[1L]], "survey_quantile")) {
+    if (identical(estimand, "survey_quantile")) {
       return(estimate_consumption_district_svyquantile(x, design, support, rule))
     }
-    if (identical(rule$estimand[[1L]], "survey_bottom_mean")) {
-      return(estimate_consumption_district_bottom_mean(x, design, support, rule))
+    if (estimand %in% consumption_distributional_estimands()) {
+      return(estimate_consumption_district_distribution(
+        x, convey_design, support, rule
+      ))
     }
-    if (rule$estimand[[1L]] %in% c(
-        "survey_gini", "survey_atkinson", "survey_fgt"
-      )) {
-      return(estimate_consumption_district_distribution(x, design, support, rule))
-    }
-    stop("Unsupported registered consumption welfare estimand: ", rule$estimand[[1L]], call. = FALSE)
+    stop("Unsupported registered consumption welfare estimand: ", estimand, call. = FALSE)
   }))
+}
+
+estimate_consumption_district_welfare_core <- function(lineaged_households, outcome_registry) {
+  estimate_consumption_district_welfare(
+    lineaged_households,
+    consumption_welfare_registry_partition(outcome_registry, "core")
+  )
+}
+
+estimate_consumption_district_welfare_distributional <- function(
+    lineaged_households, outcome_registry) {
+  estimate_consumption_district_welfare(
+    lineaged_households,
+    consumption_welfare_registry_partition(outcome_registry, "distributional")
+  )
 }
 
 estimate_consumption_district_mean <- function(lineaged_households) {

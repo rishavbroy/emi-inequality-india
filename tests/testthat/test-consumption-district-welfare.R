@@ -650,15 +650,15 @@ test_that("bottom-share mean uses convey lower-tail linearization", {
   )
   design <- convey::convey_prep(design)
 
-  bottom20 <- consumption_bottom_mean_stat(design, 0.2)
-  bottom40 <- consumption_bottom_mean_stat(design, 0.4)
+  bottom20 <- consumption_bottom_mean_stat(~.welfare_value, design, 0.2)
+  bottom40 <- consumption_bottom_mean_stat(~.welfare_value, design, 0.4)
 
-  expect_equal(bottom20[["estimate"]], mean(1:2), tolerance = 1e-10)
-  expect_equal(bottom40[["estimate"]], mean(1:4), tolerance = 1e-10)
-  expect_true(is.finite(bottom20[["std_error"]]))
-  expect_true(is.finite(bottom40[["std_error"]]))
-  expect_gt(bottom20[["std_error"]], 0)
-  expect_gt(bottom40[["std_error"]], 0)
+  expect_equal(unname(stats::coef(bottom20))[[1L]], mean(1:2), tolerance = 1e-10)
+  expect_equal(unname(stats::coef(bottom40))[[1L]], mean(1:4), tolerance = 1e-10)
+  expect_true(is.finite(unname(survey::SE(bottom20))[[1L]]))
+  expect_true(is.finite(unname(survey::SE(bottom40))[[1L]]))
+  expect_gt(unname(survey::SE(bottom20))[[1L]], 0)
+  expect_gt(unname(survey::SE(bottom40))[[1L]], 0)
 })
 
 test_that("bottom-share welfare retains district support and precision contracts", {
@@ -1069,4 +1069,193 @@ test_that("Tendulkar poverty eligibility does not depend on relative SE near zer
   expect_true(is.na(out$precision_ok))
   expect_true(out$sample_support_ok)
   expect_true(out$preferred_eligible)
+})
+
+
+test_that("welfare registry partitions core and expensive distributional outcomes", {
+  registry <- data.frame(
+    outcome_id = c("mean", "median", "bottom40", "gini", "atk", "fgt"),
+    estimand = c(
+      "survey_mean", "survey_quantile", "survey_bottom_mean",
+      "survey_gini", "survey_atkinson", "survey_fgt"
+    ),
+    stringsAsFactors = FALSE
+  )
+  expect_equal(
+    consumption_welfare_registry_partition(registry, "core")$outcome_id,
+    c("mean", "median")
+  )
+  expect_equal(
+    consumption_welfare_registry_partition(registry, "distributional")$outcome_id,
+    c("bottom40", "gini", "atk", "fgt")
+  )
+})
+
+test_that("grouped convey domains reproduce direct district Gini and Atkinson inference", {
+  old <- Sys.getenv("EMI_CONSUMPTION_DOMAIN_CORES", unset = NA_character_)
+  Sys.setenv(EMI_CONSUMPTION_DOMAIN_CORES = "1")
+  on.exit({
+    if (is.na(old)) Sys.unsetenv("EMI_CONSUMPTION_DOMAIN_CORES") else
+      Sys.setenv(EMI_CONSUMPTION_DOMAIN_CORES = old)
+  }, add = TRUE)
+
+  set.seed(701)
+  n <- 72
+  x <- data.frame(
+    survey_id = "wave",
+    household_id = paste0("h", seq_len(n)),
+    source_state_code = "01",
+    sector = "Rural",
+    subround = "1",
+    fsu = as.character(seq_len(n)),
+    stratum = "1",
+    sub_stratum = "1",
+    household_size = 1,
+    target_unit_2001 = rep(c("a", "b", "c"), each = n / 3),
+    lineage_status = "resolved_exact_2001",
+    lineage_weight = 1,
+    lineage_person_weight = seq(1, 2, length.out = n),
+    real_mpce = exp(rnorm(n, log(250), 0.4)),
+    stringsAsFactors = FALSE
+  )
+  registry <- data.frame(
+    outcome_id = c("gini", "atk"),
+    estimand = c("survey_gini", "survey_atkinson"),
+    transform = "identity",
+    quantile = NA_real_, quantile_interval = "", quantile_rule = "",
+    epsilon = c(NA, 1), fgt_order = NA_real_, role = "robustness",
+    min_households = 1, min_fsu = 1, min_kish_effective_n = 1,
+    max_relative_se = 10, stringsAsFactors = FALSE
+  )
+
+  grouped <- estimate_consumption_district_welfare_distributional(x, registry)
+  rows <- consumption_design_rows(x)
+  design <- convey::convey_prep(
+    update(consumption_survey_design_from_rows(rows), .welfare_value = rows$real_mpce)
+  )
+  direct <- safe_bind_rows(lapply(c("a", "b", "c"), function(district) {
+    d <- subset(design, target_unit_2001 == district)
+    safe_bind_rows(list(
+      data.frame(
+        district_2001 = district, outcome_id = "gini",
+        estimate = unname(stats::coef(convey::svygini(~.welfare_value, d, na.rm = TRUE)))[[1L]],
+        std_error = unname(survey::SE(convey::svygini(~.welfare_value, d, na.rm = TRUE)))[[1L]]
+      ),
+      data.frame(
+        district_2001 = district, outcome_id = "atk",
+        estimate = unname(stats::coef(convey::svyatk(~.welfare_value, d, epsilon = 1, na.rm = TRUE)))[[1L]],
+        std_error = unname(survey::SE(convey::svyatk(~.welfare_value, d, epsilon = 1, na.rm = TRUE)))[[1L]]
+      )
+    ))
+  }))
+  key_grouped <- paste(grouped$district_2001, grouped$outcome_id)
+  key_direct <- paste(direct$district_2001, direct$outcome_id)
+  direct <- direct[match(key_grouped, key_direct), , drop = FALSE]
+
+  expect_equal(grouped$estimate, direct$estimate, tolerance = 1e-10)
+  expect_equal(grouped$std_error, direct$std_error, tolerance = 1e-10)
+})
+
+test_that("grouped bottom-tail means reproduce direct convey-domain estimates", {
+  old <- Sys.getenv("EMI_CONSUMPTION_DOMAIN_CORES", unset = NA_character_)
+  Sys.setenv(EMI_CONSUMPTION_DOMAIN_CORES = "1")
+  on.exit({
+    if (is.na(old)) Sys.unsetenv("EMI_CONSUMPTION_DOMAIN_CORES") else
+      Sys.setenv(EMI_CONSUMPTION_DOMAIN_CORES = old)
+  }, add = TRUE)
+
+  values <- c(1:12, 21:32) * 100
+  x <- data.frame(
+    survey_id = "wave", household_id = paste0("h", seq_along(values)),
+    source_state_code = "01", sector = "Rural", subround = "1",
+    fsu = as.character(seq_along(values)), stratum = "1", sub_stratum = "1",
+    household_size = 1, target_unit_2001 = rep(c("a", "b"), each = 12),
+    lineage_status = "resolved_exact_2001", lineage_weight = 1,
+    lineage_person_weight = 1, real_mpce = values, stringsAsFactors = FALSE
+  )
+  rule <- data.frame(
+    outcome_id = "bottom40", estimand = "survey_bottom_mean", transform = "identity",
+    quantile = 0.4, quantile_interval = "", quantile_rule = "", epsilon = NA_real_,
+    fgt_order = NA_real_, role = "robustness", min_households = 1, min_fsu = 1,
+    min_kish_effective_n = 1, max_relative_se = 10, stringsAsFactors = FALSE
+  )
+  grouped <- estimate_consumption_district_welfare_distributional(x, rule)
+  rows <- consumption_design_rows(x)
+  design <- convey::convey_prep(
+    update(consumption_survey_design_from_rows(rows), .welfare_value = rows$real_mpce)
+  )
+  direct <- safe_bind_rows(lapply(c("a", "b"), function(district) {
+    stat <- consumption_bottom_mean_stat(
+      ~.welfare_value, subset(design, target_unit_2001 == district), alpha = 0.4
+    )
+    data.frame(
+      district_2001 = district,
+      estimate = unname(stats::coef(stat))[[1L]],
+      std_error = unname(survey::SE(stat))[[1L]],
+      stringsAsFactors = FALSE
+    )
+  }))
+  direct <- direct[match(grouped$district_2001, direct$district_2001), , drop = FALSE]
+  expect_equal(grouped$estimate, direct$estimate, tolerance = 1e-10)
+  expect_equal(grouped$std_error, direct$std_error, tolerance = 1e-10)
+})
+
+test_that("consumption domain cores are explicit and clamped", {
+  old <- Sys.getenv("EMI_CONSUMPTION_DOMAIN_CORES", unset = NA_character_)
+  on.exit({
+    if (is.na(old)) Sys.unsetenv("EMI_CONSUMPTION_DOMAIN_CORES") else
+      Sys.setenv(EMI_CONSUMPTION_DOMAIN_CORES = old)
+  }, add = TRUE)
+  Sys.setenv(EMI_CONSUMPTION_DOMAIN_CORES = "1")
+  expect_equal(consumption_domain_cores(), 1L)
+  Sys.setenv(EMI_CONSUMPTION_DOMAIN_CORES = "9999")
+  expect_lte(consumption_domain_cores(), parallel::detectCores(logical = FALSE))
+})
+
+test_that("grouped convey domains reproduce direct district FGT inference", {
+  old <- Sys.getenv("EMI_CONSUMPTION_DOMAIN_CORES", unset = NA_character_)
+  Sys.setenv(EMI_CONSUMPTION_DOMAIN_CORES = "1")
+  on.exit({
+    if (is.na(old)) Sys.unsetenv("EMI_CONSUMPTION_DOMAIN_CORES") else
+      Sys.setenv(EMI_CONSUMPTION_DOMAIN_CORES = old)
+  }, add = TRUE)
+
+  values <- c(400, 600, 900, 1200, 500, 700, 1000, 1400)
+  x <- data.frame(
+    survey_id = "wave", household_id = paste0("h", seq_along(values)),
+    source_state_code = "01", sector = "Rural", subround = "1",
+    fsu = as.character(seq_along(values)), stratum = "1", sub_stratum = "1",
+    household_size = 1, target_unit_2001 = rep(c("a", "b"), each = 4),
+    lineage_status = "resolved_exact_2001", lineage_weight = 1,
+    lineage_person_weight = 1, real_mpce = values, stringsAsFactors = FALSE
+  )
+  rule <- data.frame(
+    outcome_id = "fgt1", estimand = "survey_fgt", transform = "identity",
+    quantile = NA_real_, quantile_interval = "", quantile_rule = "",
+    epsilon = NA_real_, fgt_order = 1, role = "robustness",
+    min_households = 1, min_fsu = 1, min_kish_effective_n = 1,
+    max_relative_se = NA_real_, stringsAsFactors = FALSE
+  )
+
+  grouped <- estimate_consumption_district_welfare_distributional(x, rule)
+  rows <- consumption_design_rows(x)
+  design <- convey::convey_prep(
+    update(consumption_survey_design_from_rows(rows), .welfare_value = rows$real_mpce)
+  )
+  direct <- safe_bind_rows(lapply(c("a", "b"), function(district) {
+    stat <- convey::svyfgt(
+      ~.welfare_value, subset(design, target_unit_2001 == district),
+      g = 1, type_thresh = "abs",
+      abs_thresh = tendulkar_real_poverty_line(), na.rm = TRUE
+    )
+    data.frame(
+      district_2001 = district,
+      estimate = unname(stats::coef(stat))[[1L]],
+      std_error = unname(survey::SE(stat))[[1L]],
+      stringsAsFactors = FALSE
+    )
+  }))
+  direct <- direct[match(grouped$district_2001, direct$district_2001), , drop = FALSE]
+  expect_equal(grouped$estimate, direct$estimate, tolerance = 1e-10)
+  expect_equal(grouped$std_error, direct$std_error, tolerance = 1e-10)
 })
