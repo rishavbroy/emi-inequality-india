@@ -100,7 +100,16 @@ read_tendulkar_poverty_lines <- function(path = "data/metadata/tendulkar_poverty
   poverty
 }
 
-build_tendulkar_spatial_relatives <- function(poverty_lines, reference_rupees = 816) {
+tendulkar_real_poverty_line <- function() {
+  # The common all-India rural 2011-12 Tendulkar line used to normalize the
+  # spatial price relatives. Because real MPCE divides nominal MPCE by those
+  # spatial relatives and the linked temporal CPI, this is also the common
+  # real-MPCE poverty threshold at every survey date.
+  816
+}
+
+build_tendulkar_spatial_relatives <- function(
+    poverty_lines, reference_rupees = tendulkar_real_poverty_line()) {
   df <- safe_df(poverty_lines)
   required <- c("state_code", "sector", "poverty_line_rupees")
   missing <- setdiff(required, names(df))

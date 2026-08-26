@@ -519,6 +519,14 @@ test_that("official price metadata covers every current state and sector", {
   telangana <- poverty[poverty$state_code == "TEL", ]
   expect_equal(telangana$poverty_line_rupees, c(860, 1009))
   expect_true(all(telangana$source_state_code == "ANP"))
+
+  spatial <- build_tendulkar_spatial_relatives(poverty)
+  expect_equal(tendulkar_real_poverty_line(), 816)
+  expect_equal(
+    spatial$poverty_line_rupees / spatial$spatial_price_relative,
+    rep(tendulkar_real_poverty_line(), nrow(spatial)),
+    tolerance = 1e-12
+  )
 })
 
 test_that("state rules prefer direct observations and use documented donors only when needed", {
