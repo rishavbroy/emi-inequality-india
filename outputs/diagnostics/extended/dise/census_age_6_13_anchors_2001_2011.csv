@@ -1,0 +1,594 @@
+"target_unit_2001","census_2001_district_name","census_age_6_13_population_2001","census_age_6_13_population_2011","census_2011_source_district_count","census_2011_source_districts","census_2011_parent_reconstruction_complete","census_age_6_13_anchor_status","census_age_6_13_annual_log_growth_2001_2011"
+"pc2001__01__01","Kupwara",155237,199377,1,"Kupwara",TRUE,"two_census_anchors",0.025024452343904
+"pc2001__01__06","Anantnag",270909,297462,2,"Anantnag;Kulgam",TRUE,"two_census_anchors",0.00935035146043832
+"pc2001__01__07","Leh (Ladakh)",19220,15062,1,"Leh(Ladakh)",TRUE,"two_census_anchors",-0.0243776387862986
+"pc2001__01__08","Kargil",25441,23345,1,"Kargil",TRUE,"two_census_anchors",-0.00859792174525755
+"pc2001__01__11","Punch",82793,95014,1,"Punch",TRUE,"two_census_anchors",0.0137680732409319
+"pc2001__02__01","Chamba",92413,87749,1,"Chamba",TRUE,"two_census_anchors",-0.00517871951224057
+"pc2001__02__02","Kangra",227168,207394,1,"Kangra",TRUE,"two_census_anchors",-0.00910694660846463
+"pc2001__02__04","Kullu",71502,64126,1,"Kullu",TRUE,"two_census_anchors",-0.0108875523425474
+"pc2001__02__06","Hamirpur",68676,62091,1,"Hamirpur",TRUE,"two_census_anchors",-0.0100798742314774
+"pc2001__02__09","Solan",82644,83137,1,"Solan",TRUE,"two_census_anchors",0.000594762310868009
+"pc2001__02__10","Sirmaur",88942,86045,1,"Sirmaur",TRUE,"two_census_anchors",-0.00331140566827805
+"pc2001__02__12","Kinnaur",12687,10541,1,"Kinnaur",TRUE,"two_census_anchors",-0.0185305431885409
+"pc2001__03__03","Kapurthala",136137,115088,1,"Kapurthala",TRUE,"two_census_anchors",-0.0167964678512737
+"pc2001__03__04","Jalandhar",331991,296379,1,"Jalandhar",TRUE,"two_census_anchors",-0.0113468819405805
+"pc2001__03__08","Fatehgarh Sahib *",94291,80251,1,"Fatehgarh Sahib",TRUE,"two_census_anchors",-0.0161226522008205
+"pc2001__03__10","Moga *",164394,142160,1,"Moga",TRUE,"two_census_anchors",-0.0145312801759311
+"pc2001__03__12","Muktsar *",144198,130134,1,"Muktsar",TRUE,"two_census_anchors",-0.0102622666320619
+"pc2001__03__13","Faridkot",102608,87490,1,"Faridkot",TRUE,"two_census_anchors",-0.0159391401288334
+"pc2001__03__14","Bathinda",214137,189370,1,"Bathinda",TRUE,"two_census_anchors",-0.0122913223830698
+"pc2001__03__15","Mansa *",132458,112139,1,"Mansa",TRUE,"two_census_anchors",-0.0166526440813945
+"pc2001__04__01","Chandigarh",145461,147111,1,"Chandigarh",TRUE,"two_census_anchors",0.0011279394428479
+"pc2001__05__08","Bageshwar",49554,44442,1,"Bageshwar",TRUE,"two_census_anchors",-0.0108878015797428
+"pc2001__05__09","Almora",128637,106408,1,"Almora",TRUE,"two_census_anchors",-0.0189713722212203
+"pc2001__05__13","Hardwar",314208,351766,1,"Hardwar",TRUE,"two_census_anchors",0.011291099482458
+"pc2001__06__01","Panchkula *",80726,83054,1,"Panchkula",TRUE,"two_census_anchors",0.00284302943524876
+"pc2001__06__02","Ambala",180794,155000,1,"Ambala",TRUE,"two_census_anchors",-0.0153933144647459
+"pc2001__06__03","Yamunanagar",195251,181466,1,"Yamunanagar",TRUE,"two_census_anchors",-0.00732176020124385
+"pc2001__06__04","Kurukshetra",155410,141828,1,"Kurukshetra",TRUE,"two_census_anchors",-0.00914517301094167
+"pc2001__06__05","Kaithal",191588,169516,1,"Kaithal",TRUE,"two_census_anchors",-0.0122399915449436
+"pc2001__06__06","Karnal",253530,235500,1,"Karnal",TRUE,"two_census_anchors",-0.00737712457680282
+"pc2001__06__07","Panipat",198157,203826,1,"Panipat",TRUE,"two_census_anchors",0.00282070429213323
+"pc2001__06__08","Sonipat",253650,230656,1,"Sonipat",TRUE,"two_census_anchors",-0.00950279409069357
+"pc2001__06__09","Jind",244427,217383,1,"Jind",TRUE,"two_census_anchors",-0.011725592106987
+"pc2001__06__10","Fatehabad *",167749,152866,1,"Fatehabad",TRUE,"two_census_anchors",-0.00929070939349722
+"pc2001__06__11","Sirsa",226548,202768,1,"Sirsa",TRUE,"two_census_anchors",-0.0110894374661198
+"pc2001__06__14","Rohtak",177387,162009,1,"Rohtak",TRUE,"two_census_anchors",-0.00906818972239956
+"pc2001__06__15","Jhajjar *",167434,145995,1,"Jhajjar",TRUE,"two_census_anchors",-0.0137016869217648
+"pc2001__06__16","Mahendragarh",165480,145701,1,"Mahendragarh",TRUE,"two_census_anchors",-0.0127293764997623
+"pc2001__06__17","Rewari",146291,138824,1,"Rewari",TRUE,"two_census_anchors",-0.00523908449156628
+"pc2001__08__02","Hanumangarh *",325807,308859,1,"Hanumangarh",TRUE,"two_census_anchors",-0.0053420319434371
+"pc2001__08__05","Jhunjhunun",426410,380566,1,"Jhunjhunun",TRUE,"two_census_anchors",-0.0113741706495269
+"pc2001__08__17","Barmer",437118,584341,1,"Barmer",TRUE,"two_census_anchors",0.0290281535002874
+"pc2001__08__18","Jalor",337846,394059,1,"Jalor",TRUE,"two_census_anchors",0.0153910473925665
+"pc2001__08__19","Sirohi",182988,206104,1,"Sirohi",TRUE,"two_census_anchors",0.0118960318841547
+"pc2001__08__20","Pali",402028,389560,1,"Pali",TRUE,"two_census_anchors",-0.00315038408417462
+"pc2001__08__23","Bundi",211172,202756,1,"Bundi",TRUE,"two_census_anchors",-0.00406696816329883
+"pc2001__08__27","Dungarpur",229534,282520,1,"Dungarpur",TRUE,"two_census_anchors",0.0207698177864827
+"pc2001__08__32","Jhalawar",246203,259487,1,"Jhalawar",TRUE,"two_census_anchors",0.00525502061205801
+"pc2001__09__01","Saharanpur",654601,669260,1,"Saharanpur",TRUE,"two_census_anchors",0.00221467346718079
+"pc2001__09__03","Bijnor",735755,741700,1,"Bijnor",TRUE,"two_census_anchors",0.000804766586540909
+"pc2001__09__05","Rampur",478715,512285,1,"Rampur",TRUE,"two_census_anchors",0.00677756800247857
+"pc2001__09__08","Baghpat *",255811,246097,1,"Baghpat",TRUE,"two_census_anchors",-0.00387131234096398
+"pc2001__09__10","Gautam Buddha Nagar *",260864,288514,1,"Gautam Buddha Nagar",TRUE,"two_census_anchors",0.0100744412913699
+"pc2001__09__11","Bulandshahr",659367,683889,1,"Bulandshahr",TRUE,"two_census_anchors",0.00365153398624505
+"pc2001__09__12","Aligarh",691270,737120,1,"Aligarh",TRUE,"two_census_anchors",0.0064220215677392
+"pc2001__09__14","Mathura",478980,505226,1,"Mathura",TRUE,"two_census_anchors",0.00533470110327371
+"pc2001__09__15","Agra",838745,883845,1,"Agra",TRUE,"two_census_anchors",0.00523749808811234
+"pc2001__09__16","Firozabad",477614,518746,1,"Firozabad",TRUE,"two_census_anchors",0.00826114857902071
+"pc2001__09__18","Mainpuri",368330,383749,1,"Mainpuri",TRUE,"two_census_anchors",0.00410094175657811
+"pc2001__09__20","Bareilly",855661,928830,1,"Bareilly",TRUE,"two_census_anchors",0.00820514599391129
+"pc2001__09__21","Pilibhit",391043,425810,1,"Pilibhit",TRUE,"two_census_anchors",0.00851757090247527
+"pc2001__09__22","Shahjahanpur",594329,651032,1,"Shahjahanpur",TRUE,"two_census_anchors",0.00911257580604186
+"pc2001__09__24","Sitapur",818867,960899,1,"Sitapur",TRUE,"two_census_anchors",0.0159947627088183
+"pc2001__09__25","Hardoi",773513,866078,1,"Hardoi",TRUE,"two_census_anchors",0.0113032497195927
+"pc2001__09__26","Unnao",609051,604537,1,"Unnao",TRUE,"two_census_anchors",-0.000743913225460902
+"pc2001__09__27","Lucknow",732877,764102,1,"Lucknow",TRUE,"two_census_anchors",0.00417234038495491
+"pc2001__09__28","Rae Bareli",645793,682416,1,"Rae Bareli",TRUE,"two_census_anchors",0.00551604235651459
+"pc2001__09__29","Farrukhabad",362220,385058,1,"Farrukhabad",TRUE,"two_census_anchors",0.00611422102555698
+"pc2001__09__30","Kannauj *",327379,340414,1,"Kannauj",TRUE,"two_census_anchors",0.0039044002780886
+"pc2001__09__31","Etawah",294373,298483,1,"Etawah",TRUE,"two_census_anchors",0.00138653090946765
+"pc2001__09__32","Auraiya *",260794,267357,1,"Auraiya",TRUE,"two_census_anchors",0.00248540203053935
+"pc2001__09__33","Kanpur Dehat",341218,334937,1,"Kanpur Dehat",TRUE,"two_census_anchors",-0.0018579114770313
+"pc2001__09__34","Kanpur Nagar",813164,722260,1,"Kanpur Nagar",TRUE,"two_census_anchors",-0.0118547626350063
+"pc2001__09__35","Jalaun",310182,300071,1,"Jalaun",TRUE,"two_census_anchors",-0.00331401086577687
+"pc2001__09__36","Jhansi",353599,337721,1,"Jhansi",TRUE,"two_census_anchors",-0.00459433918754672
+"pc2001__09__37","Lalitpur",215965,256789,1,"Lalitpur",TRUE,"two_census_anchors",0.0173138378489691
+"pc2001__09__38","Hamirpur",230109,211786,1,"Hamirpur",TRUE,"two_census_anchors",-0.0082976778817184
+"pc2001__09__39","Mahoba *",152408,175073,1,"Mahoba",TRUE,"two_census_anchors",0.0138641894487629
+"pc2001__09__40","Banda",342185,379591,1,"Banda",TRUE,"two_census_anchors",0.0103742830805003
+"pc2001__09__41","Chitrakoot *",178633,220180,1,"Chitrakoot",TRUE,"two_census_anchors",0.0209111971831083
+"pc2001__09__42","Fatehpur",522128,534395,1,"Fatehpur",TRUE,"two_census_anchors",0.00232224973398692
+"pc2001__09__43","Pratapgarh",639435,670315,1,"Pratapgarh",TRUE,"two_census_anchors",0.0047162777207943
+"pc2001__09__48","Ambedkar Nagar *",467358,490779,1,"Ambedkar Nagar",TRUE,"two_census_anchors",0.00488983653614012
+"pc2001__09__50","Bahraich",545807,778439,1,"Bahraich",TRUE,"two_census_anchors",0.035502519898892
+"pc2001__09__52","Balrampur *",393334,494099,1,"Balrampur",TRUE,"two_census_anchors",0.0228076778262432
+"pc2001__09__53","Gonda",640922,751240,1,"Gonda",TRUE,"two_census_anchors",0.0158817409963666
+"pc2001__09__55","Basti",477914,531878,1,"Basti",TRUE,"two_census_anchors",0.0106983339748181
+"pc2001__09__60","Deoria",630320,650276,1,"Deoria",TRUE,"two_census_anchors",0.00311692612132641
+"pc2001__09__61","Azamgarh",924468,990092,1,"Azamgarh",TRUE,"two_census_anchors",0.00685794311802693
+"pc2001__09__62","Mau",433941,475219,1,"Mau",TRUE,"two_census_anchors",0.00908671702554872
+"pc2001__09__63","Ballia",621101,660730,1,"Ballia",TRUE,"two_census_anchors",0.00618515747815139
+"pc2001__09__64","Jaunpur",907616,945450,1,"Jaunpur",TRUE,"two_census_anchors",0.00408396229655148
+"pc2001__09__65","Ghazipur",707781,749858,1,"Ghazipur",TRUE,"two_census_anchors",0.0057749131461311
+"pc2001__09__66","Chandauli *",364148,399790,1,"Chandauli",TRUE,"two_census_anchors",0.00933790308405948
+"pc2001__09__67","Varanasi",694613,696150,1,"Varanasi",TRUE,"two_census_anchors",0.000221029841280024
+"pc2001__09__69","Mirzapur",490774,514060,1,"Mirzapur",TRUE,"two_census_anchors",0.00463562534616623
+"pc2001__09__70","Sonbhadra",339868,402102,1,"Sonbhadra",TRUE,"two_census_anchors",0.0168148480844695
+"pc2001__10__01","Pashchim Champaran",693845,932309,1,"Pashchim Champaran",TRUE,"two_census_anchors",0.0295415712178474
+"pc2001__10__02","Purba Champaran",915458,1213139,1,"Purba Champaran",TRUE,"two_census_anchors",0.0281542007807732
+"pc2001__10__03","Sheohar *",117835,151406,1,"Sheohar",TRUE,"two_census_anchors",0.0250679629496928
+"pc2001__10__04","Sitamarhi",613790,792387,1,"Sitamarhi",TRUE,"two_census_anchors",0.0255397058733045
+"pc2001__10__05","Madhubani",818337,1025873,1,"Madhubani",TRUE,"two_census_anchors",0.0226025004190513
+"pc2001__10__06","Supaul *",409324,531749,1,"Supaul",TRUE,"two_census_anchors",0.0261664555019505
+"pc2001__10__08","Kishanganj",309024,402422,1,"Kishanganj",TRUE,"two_census_anchors",0.0264082345474755
+"pc2001__10__09","Purnia",613469,763721,1,"Purnia",TRUE,"two_census_anchors",0.0219072806097864
+"pc2001__10__11","Madhepura",360183,478582,1,"Madhepura",TRUE,"two_census_anchors",0.0284215329446199
+"pc2001__10__12","Saharsa",356255,448404,1,"Saharsa",TRUE,"two_census_anchors",0.0230047845192729
+"pc2001__10__14","Muzaffarpur",841049,1040691,1,"Muzaffarpur",TRUE,"two_census_anchors",0.021299027233392
+"pc2001__10__15","Gopalganj",524119,590930,1,"Gopalganj",TRUE,"two_census_anchors",0.0119978809300167
+"pc2001__10__16","Siwan",656027,746169,1,"Siwan",TRUE,"two_census_anchors",0.0128750169468372
+"pc2001__10__17","Saran",785213,888460,1,"Saran",TRUE,"two_census_anchors",0.0123534608328529
+"pc2001__10__19","Samastipur",787972,980542,1,"Samastipur",TRUE,"two_census_anchors",0.0218642923775471
+"pc2001__10__20","Begusarai",554779,690740,1,"Begusarai",TRUE,"two_census_anchors",0.0219193650434717
+"pc2001__10__21","Khagaria",303618,398821,1,"Khagaria",TRUE,"two_census_anchors",0.0272742362373694
+"pc2001__10__23","Banka *",370148,450574,1,"Banka",TRUE,"two_census_anchors",0.0196619399830469
+"pc2001__10__24","Munger",258123,286486,1,"Munger",TRUE,"two_census_anchors",0.0104253453840024
+"pc2001__10__25","Lakhisarai *",188605,228661,1,"Lakhisarai",TRUE,"two_census_anchors",0.0192585676426985
+"pc2001__10__26","Sheikhpura *",122834,147705,1,"Sheikhpura",TRUE,"two_census_anchors",0.0184383191012909
+"pc2001__10__27","Nalanda",539644,641970,1,"Nalanda",TRUE,"two_census_anchors",0.0173631910734048
+"pc2001__10__28","Patna",1024222,1185403,1,"Patna",TRUE,"two_census_anchors",0.0146149501164423
+"pc2001__10__30","Buxar *",323267,371062,1,"Buxar",TRUE,"two_census_anchors",0.0137890557405041
+"pc2001__10__31","Kaimur (Bhabua) *",290495,368184,1,"Kaimur (Bhabua)",TRUE,"two_census_anchors",0.0236996448770698
+"pc2001__10__32","Rohtas",555290,652339,1,"Rohtas",TRUE,"two_census_anchors",0.0161073865654094
+"pc2001__10__35","Gaya",816282,978672,1,"Gaya",TRUE,"two_census_anchors",0.0181436667145187
+"pc2001__10__36","Nawada",432844,516941,1,"Nawada",TRUE,"two_census_anchors",0.0177551362122793
+"pc2001__10__37","Jamui *",328649,390679,1,"Jamui",TRUE,"two_census_anchors",0.0172895938982088
+"pc2001__11__03","South",27937,25281,1,"South District",TRUE,"two_census_anchors",-0.00998988496635842
+"pc2001__11__04","East",46049,41876,1,"East District",TRUE,"two_census_anchors",-0.00949931764818204
+"pc2001__12__01","Tawang",7386,7873,1,"Tawang",TRUE,"two_census_anchors",0.00638528677719588
+"pc2001__12__09","Upper Siang *",6779,6861,1,"Upper Siang",TRUE,"two_census_anchors",0.00120236052599253
+"pc2001__12__10","Dibang Valley",12937,12226,2,"Dibang Valley;Lower Dibang Valley",TRUE,"two_census_anchors",-0.00565265913292312
+"pc2001__12__12","Changlang",27208,29947,1,"Changlang",TRUE,"two_census_anchors",0.00959181048946124
+"pc2001__12__13","Tirap",22494,24272,1,"Tirap",TRUE,"two_census_anchors",0.00760748156243464
+"pc2001__13__01","Mon",57863,53671,1,"Mon",TRUE,"two_census_anchors",-0.00752053290970154
+"pc2001__13__03","Mokokchung",43470,32563,1,"Mokokchung",TRUE,"two_census_anchors",-0.0288894370518631
+"pc2001__13__04","Zunheboto",35786,28889,1,"Zunheboto",TRUE,"two_census_anchors",-0.0214095855643912
+"pc2001__13__05","Wokha",36574,30381,1,"Wokha",TRUE,"two_census_anchors",-0.0185520192434184
+"pc2001__14__04","Bishnupur",37232,39688,1,"Bishnupur",TRUE,"two_census_anchors",0.00638802684388118
+"pc2001__14__05","Thoubal",69851,76236,1,"Thoubal",TRUE,"two_census_anchors",0.00874693900796351
+"pc2001__14__06","Imphal West",71497,75759,1,"Imphal West",TRUE,"two_census_anchors",0.00579017584353535
+"pc2001__14__08","Ukhrul",28356,33806,1,"Ukhrul",TRUE,"two_census_anchors",0.0175799653535215
+"pc2001__15__01","Mamit *",12998,16140,1,"Mamit",TRUE,"two_census_anchors",0.0216505163369646
+"pc2001__15__02","Kolasib *",12846,14712,1,"Kolasib",TRUE,"two_census_anchors",0.0135631008466419
+"pc2001__15__07","Lawngtlai",15849,23964,1,"Lawngtlai",TRUE,"two_census_anchors",0.041344629737139
+"pc2001__16__01","West Tripura",290818,237819,1,"West Tripura",TRUE,"two_census_anchors",-0.0201187761815805
+"pc2001__16__02","South Tripura",152643,139006,1,"South Tripura",TRUE,"two_census_anchors",-0.00935847639281719
+"pc2001__16__03","Dhalai  *",66090,66416,1,"Dhalai",TRUE,"two_census_anchors",0.00049205418283215
+"pc2001__16__04","North Tripura",119698,113482,1,"North Tripura",TRUE,"two_census_anchors",-0.00533276699502643
+"pc2001__17__03","South Garo Hills *",23030,29693,1,"South Garo Hills",TRUE,"two_census_anchors",0.0254113613961061
+"pc2001__17__05","Ri Bhoi  *",45322,57754,1,"Ribhoi",TRUE,"two_census_anchors",0.0242400045259789
+"pc2001__17__06","East Khasi Hills",136568,155222,1,"East Khasi Hills",TRUE,"two_census_anchors",0.0128033691202039
+"pc2001__18__03","Goalpara",186101,194704,1,"Goalpara",TRUE,"two_census_anchors",0.00451909195055445
+"pc2001__18__13","Dhemaji",130040,131067,1,"Dhemaji",TRUE,"two_census_anchors",0.000786654740095818
+"pc2001__18__14","Tinsukia",233578,230228,1,"Tinsukia",TRUE,"two_census_anchors",-0.00144459461835079
+"pc2001__18__15","Dibrugarh",230615,212383,1,"Dibrugarh",TRUE,"two_census_anchors",-0.0082358404921281
+"pc2001__19__07","Murshidabad",1324026,1296087,1,"Murshidabad",TRUE,"two_census_anchors",-0.00213273694776199
+"pc2001__19__08","Birbhum",615846,566329,1,"Birbhum",TRUE,"two_census_anchors",-0.00838217508635024
+"pc2001__19__13","Bankura",590540,537940,1,"Bankura",TRUE,"two_census_anchors",-0.00932903427683513
+"pc2001__19__14","Puruliya",502901,494975,1,"Puruliya",TRUE,"two_census_anchors",-0.00158860754000719
+"pc2001__19__16","Haora",741305,669251,1,"Haora",TRUE,"two_census_anchors",-0.010225296993824
+"pc2001__19__17","Kolkata",593260,494940,1,"Kolkata",TRUE,"two_census_anchors",-0.0181196208373154
+"pc2001__20__01","Garhwa *",254999,307671,1,"Garhwa",TRUE,"two_census_anchors",0.018777140666049
+"pc2001__20__02","Palamu",507015,601963,2,"Latehar;Palamu",TRUE,"two_census_anchors",0.0171655392673599
+"pc2001__20__03","Chatra *",196987,242787,1,"Chatra",TRUE,"two_census_anchors",0.0209046779029187
+"pc2001__20__04","Hazaribag",532934,543641,2,"Hazaribagh;Ramgarh",TRUE,"two_census_anchors",0.00198915134315536
+"pc2001__20__05","Kodarma *",116880,153746,1,"Kodarma",TRUE,"two_census_anchors",0.0274154122645592
+"pc2001__20__06","Giridih",455257,538296,1,"Giridih",TRUE,"two_census_anchors",0.0167546500082188
+"pc2001__20__07","Deoghar",266656,306237,1,"Deoghar",TRUE,"two_census_anchors",0.0138399873778565
+"pc2001__20__08","Godda",237821,277693,1,"Godda",TRUE,"two_census_anchors",0.0154997897075663
+"pc2001__20__09","Sahibganj",216392,251326,1,"Sahibganj",TRUE,"two_census_anchors",0.0149659323483074
+"pc2001__20__10","Pakaur *",163536,195842,1,"Pakur",TRUE,"two_census_anchors",0.0180275062103395
+"pc2001__20__11","Dumka",385350,407284,2,"Dumka;Jamtara",TRUE,"two_census_anchors",0.0055358718575042
+"pc2001__20__12","Dhanbad",520013,489993,1,"Dhanbad",TRUE,"two_census_anchors",-0.00594627059746334
+"pc2001__20__13","Bokaro *",378782,386010,1,"Bokaro",TRUE,"two_census_anchors",0.00189024341615326
+"pc2001__20__14","Ranchi",592368,632659,2,"Khunti;Ranchi",TRUE,"two_census_anchors",0.00658035090304349
+"pc2001__20__15","Lohardaga",89138,103921,1,"Lohardaga",TRUE,"two_census_anchors",0.0153445264452657
+"pc2001__20__16","Gumla",299589,336449,2,"Gumla;Simdega",TRUE,"two_census_anchors",0.011603504207187
+"pc2001__20__17","Pashchimi Singhbhum",452592,497422,2,"Pashchimi Singhbhum;Saraikela-Kharsawan",TRUE,"two_census_anchors",0.00944477029957348
+"pc2001__20__18","Purbi Singhbhum",362592,358591,1,"Purbi Singhbhum",TRUE,"two_census_anchors",-0.00110957719438583
+"pc2001__21__02","Jharsuguda  *",92730,82428,1,"Jharsuguda",TRUE,"two_census_anchors",-0.011776685979239
+"pc2001__21__03","Sambalpur",167263,150615,1,"Sambalpur",TRUE,"two_census_anchors",-0.0104840511940335
+"pc2001__21__07","Mayurbhanj",456054,459881,1,"Mayurbhanj",TRUE,"two_census_anchors",0.000835653680767627
+"pc2001__21__09","Bhadrak  *",262827,241616,1,"Bhadrak",TRUE,"two_census_anchors",-0.00841463320256853
+"pc2001__21__14","Dhenkanal",193032,176320,1,"Dhenkanal",TRUE,"two_census_anchors",-0.00905554523053279
+"pc2001__21__17","Khordha  *",312340,312326,1,"Khordha",TRUE,"two_census_anchors",-4.4823953928456e-06
+"pc2001__21__18","Puri",256556,239609,1,"Puri",TRUE,"two_census_anchors",-0.00683385362282649
+"pc2001__21__19","Ganjam",614829,585627,1,"Ganjam",TRUE,"two_census_anchors",-0.00486611122216968
+"pc2001__21__20","Gajapati  *",110574,113153,1,"Gajapati",TRUE,"two_census_anchors",0.00230559051277997
+"pc2001__21__22","Baudh  *",67375,78262,1,"Baudh",TRUE,"two_census_anchors",0.014978814306607
+"pc2001__21__24","Balangir",240570,256263,1,"Balangir",TRUE,"two_census_anchors",0.00631931533860785
+"pc2001__21__25","Nuapada  *",102662,107374,1,"Nuapada",TRUE,"two_census_anchors",0.00448760283792994
+"pc2001__21__26","Kalahandi",244983,276657,1,"Kalahandi",TRUE,"two_census_anchors",0.0121589651370907
+"pc2001__21__28","Nabarangapur  *",219593,244573,1,"Nabarangapur",TRUE,"two_census_anchors",0.010773799987049
+"pc2001__21__30","Malkangiri  *",110260,125896,1,"Malkangiri",TRUE,"two_census_anchors",0.0132614956137026
+"pc2001__22__03","Jashpur *",147086,145659,1,"Jashpur",TRUE,"two_census_anchors",-0.000974917626321655
+"pc2001__22__05","Korba *",209081,207246,1,"Korba",TRUE,"two_census_anchors",-0.000881524322425118
+"pc2001__22__10","Durg",548702,545284,1,"Durg",TRUE,"two_census_anchors",-0.000624872918258673
+"pc2001__22__11","Raipur",618379,708607,1,"Raipur",TRUE,"two_census_anchors",0.0136199532922745
+"pc2001__22__12","Mahasamund *",162681,169522,1,"Mahasamund",TRUE,"two_census_anchors",0.00411914838511216
+"pc2001__22__13","Dhamtari *",136991,129990,1,"Dhamtari",TRUE,"two_census_anchors",-0.00524577058196323
+"pc2001__23__01","Sheopur *",134879,143163,1,"Sheopur",TRUE,"two_census_anchors",0.00596057610240088
+"pc2001__23__02","Morena",365363,382873,1,"Morena",TRUE,"two_census_anchors",0.00468119615798228
+"pc2001__23__03","Bhind",311966,310865,1,"Bhind",TRUE,"two_census_anchors",-0.000353547317598307
+"pc2001__23__04","Gwalior",343111,345862,1,"Gwalior",TRUE,"two_census_anchors",0.000798584159349467
+"pc2001__23__07","Guna",376169,432330,2,"Ashoknagar;Guna",TRUE,"two_census_anchors",0.0139150675023902
+"pc2001__23__09","Chhatarpur",333096,363607,1,"Chhatarpur",TRUE,"two_census_anchors",0.0087642877321552
+"pc2001__23__10","Panna",185649,208633,1,"Panna",TRUE,"two_census_anchors",0.011671893343331
+"pc2001__23__11","Sagar",428010,444508,1,"Sagar",TRUE,"two_census_anchors",0.00378214927474502
+"pc2001__23__12","Damoh",228209,238720,1,"Damoh",TRUE,"two_census_anchors",0.00450294412766023
+"pc2001__23__15","Umaria *",107439,125889,1,"Umaria",TRUE,"two_census_anchors",0.015847732165274
+"pc2001__23__16","Shahdol",320175,325855,2,"Anuppur;Shahdol",TRUE,"two_census_anchors",0.00175847758321868
+"pc2001__23__18","Neemuch *",139442,139777,1,"Neemuch",TRUE,"two_census_anchors",0.000239955132523112
+"pc2001__23__19","Mandsaur",232122,235559,1,"Mandsaur",TRUE,"two_census_anchors",0.00146983173461675
+"pc2001__23__20","Ratlam",251126,270426,1,"Ratlam",TRUE,"two_census_anchors",0.00740436881846709
+"pc2001__23__21","Ujjain",338985,346497,1,"Ujjain",TRUE,"two_census_anchors",0.00219183019699417
+"pc2001__23__23","Dewas",281462,290313,1,"Dewas",TRUE,"two_census_anchors",0.00309622039400797
+"pc2001__23__24","Jhabua",340922,418261,2,"Alirajpur;Jhabua",TRUE,"two_census_anchors",0.0204451927465037
+"pc2001__23__25","Dhar",384213,438013,1,"Dhar",TRUE,"two_census_anchors",0.0131051503995809
+"pc2001__23__26","Indore",458521,511905,1,"Indore",TRUE,"two_census_anchors",0.0110132968774178
+"pc2001__23__28","Barwani *",254080,312076,1,"Barwani",TRUE,"two_census_anchors",0.0205597569831137
+"pc2001__23__30","Rajgarh",266145,300228,1,"Rajgarh",TRUE,"two_census_anchors",0.0120500912958791
+"pc2001__23__31","Vidisha",267893,300249,1,"Vidisha",TRUE,"two_census_anchors",0.0114024483340156
+"pc2001__23__32","Bhopal",359208,380499,1,"Bhopal",TRUE,"two_census_anchors",0.00575819412824377
+"pc2001__23__33","Sehore",238877,256127,1,"Sehore",TRUE,"two_census_anchors",0.00697246401105523
+"pc2001__23__34","Raisen",245121,261767,1,"Raisen",TRUE,"two_census_anchors",0.00657028289322401
+"pc2001__23__35","Betul",296187,271796,1,"Betul",TRUE,"two_census_anchors",-0.00859392267012325
+"pc2001__23__36","Harda *",101803,105573,1,"Harda",TRUE,"two_census_anchors",0.00363630835314732
+"pc2001__23__38","Katni *",212738,241695,1,"Katni",TRUE,"two_census_anchors",0.0127615239061254
+"pc2001__23__39","Jabalpur",401075,374869,1,"Jabalpur",TRUE,"two_census_anchors",-0.00675718106311648
+"pc2001__23__41","Dindori *",118394,123907,1,"Dindori",TRUE,"two_census_anchors",0.00455132387241586
+"pc2001__23__42","Mandla",181813,179687,1,"Mandla",TRUE,"two_census_anchors",-0.00117622379584766
+"pc2001__23__44","Seoni",241646,238050,1,"Seoni",TRUE,"two_census_anchors",-0.00149931096478502
+"pc2001__23__45","Balaghat",292985,277422,1,"Balaghat",TRUE,"two_census_anchors",-0.00545816005726159
+"pc2001__24__01","Kachchh",305260,358994,1,"Kachchh",TRUE,"two_census_anchors",0.0162141802769716
+"pc2001__24__03","Patan  *",220753,233269,1,"Patan",TRUE,"two_census_anchors",0.00551478646477084
+"pc2001__24__04","Mahesana",318295,310128,1,"Mahesana",TRUE,"two_census_anchors",-0.00259935102296021
+"pc2001__24__07","Ahmadabad",963870,1036771,1,"Ahmadabad",TRUE,"two_census_anchors",0.00729099237827722
+"pc2001__24__08","Surendranagar",285165,304049,1,"Surendranagar",TRUE,"two_census_anchors",0.00641209125162692
+"pc2001__24__09","Rajkot",539313,553072,1,"Rajkot",TRUE,"two_census_anchors",0.00251920845878347
+"pc2001__24__11","Porbandar  *",90302,91761,1,"Porbandar",TRUE,"two_census_anchors",0.00160277621845924
+"pc2001__24__13","Amreli",266962,236386,1,"Amreli",TRUE,"two_census_anchors",-0.0121640264054055
+"pc2001__24__14","Bhavnagar",494712,493446,1,"Bhavnagar",TRUE,"two_census_anchors",-0.000256234467093682
+"pc2001__24__15","Anand  *",315460,315834,1,"Anand",TRUE,"two_census_anchors",0.000118486804485786
+"pc2001__24__17","Panch Mahals",395409,428642,1,"Panch Mahals",TRUE,"two_census_anchors",0.00807013994678182
+"pc2001__24__18","Dohad  *",357667,449508,1,"Dohad",TRUE,"two_census_anchors",0.0228551265377533
+"pc2001__24__20","Narmada  *",97724,102597,1,"Narmada",TRUE,"two_census_anchors",0.00486615137125453
+"pc2001__24__21","Bharuch",238947,238773,1,"Bharuch",TRUE,"two_census_anchors",-7.28460218096339e-05
+"pc2001__24__23","The Dangs",41556,49131,1,"The Dangs",TRUE,"two_census_anchors",0.0167448284927555
+"pc2001__24__24","Navsari  *",197382,176334,1,"Navsari",TRUE,"two_census_anchors",-0.0112761013530025
+"pc2001__24__25","Valsad",244713,266149,1,"Valsad",TRUE,"two_census_anchors",0.00839702070174292
+"pc2001__25__01","Diu",8948,8950,1,"Diu",TRUE,"two_census_anchors",2.2348865888073e-05
+"pc2001__25__02","Daman",13636,19562,1,"Daman",TRUE,"two_census_anchors",0.0360875554592644
+"pc2001__26__01","Dadra & Nagar Haveli",38538,57635,1,"Dadra & Nagar Haveli",TRUE,"two_census_anchors",0.0402485254549265
+"pc2001__27__01","Nandurbar *",277513,318141,1,"Nandurbar",TRUE,"two_census_anchors",0.0136626901799476
+"pc2001__27__02","Dhule",329555,346760,1,"Dhule",TRUE,"two_census_anchors",0.00508896384122861
+"pc2001__27__04","Buldana",431644,404731,1,"Buldana",TRUE,"two_census_anchors",-0.00643785255355646
+"pc2001__27__05","Akola",297971,270653,1,"Akola",TRUE,"two_census_anchors",-0.00961586087257726
+"pc2001__27__06","Washim *",200029,195334,1,"Washim",TRUE,"two_census_anchors",-0.00237514421641907
+"pc2001__27__07","Amravati",460493,415874,1,"Amravati",TRUE,"two_census_anchors",-0.0101915324944137
+"pc2001__27__08","Wardha",197851,168907,1,"Wardha",TRUE,"two_census_anchors",-0.0158165954556003
+"pc2001__27__09","Nagpur",676850,617097,1,"Nagpur",TRUE,"two_census_anchors",-0.00924234587653027
+"pc2001__27__10","Bhandara",189805,168654,1,"Bhandara",TRUE,"two_census_anchors",-0.0118147950363268
+"pc2001__27__11","Gondiya *",210061,194354,1,"Gondiya",TRUE,"two_census_anchors",-0.0077716726216203
+"pc2001__27__12","Gadchiroli",184789,171228,1,"Gadchiroli",TRUE,"two_census_anchors",-0.00762186318900093
+"pc2001__27__13","Chandrapur",359573,299857,1,"Chandrapur",TRUE,"two_census_anchors",-0.018161152200467
+"pc2001__27__14","Yavatmal",461213,427143,1,"Yavatmal",TRUE,"two_census_anchors",-0.00767411235575057
+"pc2001__27__15","Nanded",629243,575765,1,"Nanded",TRUE,"two_census_anchors",-0.00888179182633561
+"pc2001__27__16","Hingoli *",210043,203378,1,"Hingoli",TRUE,"two_census_anchors",-0.0032245955155368
+"pc2001__27__17","Parbhani",331031,310477,1,"Parbhani",TRUE,"two_census_anchors",-0.00641022020249362
+"pc2001__27__20","Nashik",943081,988563,1,"Nashik",TRUE,"two_census_anchors",0.00471001984875417
+"pc2001__27__22","Mumbai (Suburban) *",1313130,1173203,1,"Mumbai Suburban",TRUE,"two_census_anchors",-0.0112675985093841
+"pc2001__27__23","Mumbai",438267,351157,1,"Mumbai",TRUE,"two_census_anchors",-0.022159489678635
+"pc2001__27__24","Raigarh",387311,373422,1,"Raigarh",TRUE,"two_census_anchors",-0.00365188404507589
+"pc2001__27__25","Pune",1190727,1237154,1,"Pune",TRUE,"two_census_anchors",0.00382495354520116
+"pc2001__27__27","Bid",455072,417813,1,"Bid",TRUE,"two_census_anchors",-0.00854216841856895
+"pc2001__27__31","Satara",478346,405966,1,"Satara",TRUE,"two_census_anchors",-0.0164064907758581
+"pc2001__27__32","Ratnagiri",282846,230851,1,"Ratnagiri",TRUE,"two_census_anchors",-0.0203130099157099
+"pc2001__27__33","Sindhudurg",129355,106538,1,"Sindhudurg",TRUE,"two_census_anchors",-0.019405883367693
+"pc2001__27__34","Kolhapur",573034,517274,1,"Kolhapur",TRUE,"two_census_anchors",-0.0102372337002193
+"pc2001__27__35","Sangli",444088,392268,1,"Sangli",TRUE,"two_census_anchors",-0.0124077461330147
+"pc2001__28__05","Hyderabad",694066,583905,1,"Hyderabad",TRUE,"two_census_anchors",-0.0172828758486607
+"pc2001__28__22","Anantapur",721635,596953,1,"Anantapur",TRUE,"two_census_anchors",-0.018968108757281
+"pc2001__29__02","Bagalkot *",332333,317644,1,"Bagalkot",TRUE,"two_census_anchors",-0.00452062194640437
+"pc2001__29__05","Bidar",333955,292787,1,"Bidar",TRUE,"two_census_anchors",-0.0131560871166412
+"pc2001__29__06","Raichur",382987,338179,1,"Raichur",TRUE,"two_census_anchors",-0.0124425704945072
+"pc2001__29__07","Koppal *",269526,241101,1,"Koppal",TRUE,"two_census_anchors",-0.0111448927814163
+"pc2001__29__08","Gadag *",181848,156358,1,"Gadag",TRUE,"two_census_anchors",-0.0151022923449373
+"pc2001__29__09","Dharwad",283014,264649,1,"Dharwad",TRUE,"two_census_anchors",-0.00670919466629229
+"pc2001__29__11","Haveri *",270333,237270,1,"Haveri",TRUE,"two_census_anchors",-0.0130455799201485
+"pc2001__29__13","Chitradurga",274898,232648,1,"Chitradurga",TRUE,"two_census_anchors",-0.0166873538122506
+"pc2001__29__16","Udupi *",167824,133513,1,"Udupi",TRUE,"two_census_anchors",-0.0228716959842747
+"pc2001__29__20","Bangalore",973433,1162759,1,"Bangalore",TRUE,"two_census_anchors",0.017772190973291
+"pc2001__29__22","Mandya",287003,226514,1,"Mandya",TRUE,"two_census_anchors",-0.0236685915499217
+"pc2001__29__23","Hassan",276422,223983,1,"Hassan",TRUE,"two_census_anchors",-0.0210358527398288
+"pc2001__29__24","Dakshina Kannada",292039,265474,1,"Dakshina Kannada",TRUE,"two_census_anchors",-0.00953704475437756
+"pc2001__29__25","Kodagu",84702,77385,1,"Kodagu",TRUE,"two_census_anchors",-0.00903462507653946
+"pc2001__30__01","North Goa",98406,93688,1,"North Goa",TRUE,"two_census_anchors",-0.00491316650691908
+"pc2001__31__01","Lakshadweep",11259,9151,1,"Lakshadweep",TRUE,"two_census_anchors",-0.0207304645887752
+"pc2001__32__01","Kasaragod",190479,185809,1,"Kasaragod",TRUE,"two_census_anchors",-0.00248226878813096
+"pc2001__32__02","Kannur",335373,317484,1,"Kannur",TRUE,"two_census_anchors",-0.00548159218921294
+"pc2001__32__03","Wayanad",112675,119132,1,"Wayanad",TRUE,"two_census_anchors",0.00557245534760738
+"pc2001__32__04","Kozhikode",403712,412057,1,"Kozhikode",TRUE,"two_census_anchors",0.00204599368342142
+"pc2001__32__05","Malappuram",659722,667224,1,"Malappuram",TRUE,"two_census_anchors",0.00113072874560943
+"pc2001__32__06","Palakkad",379532,370617,1,"Palakkad",TRUE,"two_census_anchors",-0.00237697303976301
+"pc2001__32__07","Thrissur",385818,379097,1,"Thrissur",TRUE,"two_census_anchors",-0.00175736466701734
+"pc2001__32__08","Ernakulam",370583,384141,1,"Ernakulam",TRUE,"two_census_anchors",0.00359322314514003
+"pc2001__32__09","Idukki",143458,139778,1,"Idukki",TRUE,"two_census_anchors",-0.00259868596848175
+"pc2001__32__10","Kottayam",235700,235302,1,"Kottayam",TRUE,"two_census_anchors",-0.000169001445738636
+"pc2001__32__11","Alappuzha",252473,250415,1,"Alappuzha",TRUE,"two_census_anchors",-0.000818477071973516
+"pc2001__32__12","Pathanamthitta",152683,132515,1,"Pathanamthitta",TRUE,"two_census_anchors",-0.0141668030056992
+"pc2001__32__13","Kollam",324965,325233,1,"Kollam",TRUE,"two_census_anchors",8.24364317260978e-05
+"pc2001__32__14","Thiruvananthapuram",420356,392812,1,"Thiruvananthapuram",TRUE,"two_census_anchors",-0.00677708453870329
+"pc2001__33__02","Chennai",574946,535866,1,"Chennai",TRUE,"two_census_anchors",-0.00703919935281735
+"pc2001__33__05","Dharmapuri",509572,497200,2,"Dharmapuri;Krishnagiri",TRUE,"two_census_anchors",-0.00245787980569177
+"pc2001__33__06","Tiruvannamalai",367590,333915,1,"Tiruvannamalai",TRUE,"two_census_anchors",-0.00960817170590628
+"pc2001__33__08","Salem",456847,466470,1,"Salem",TRUE,"two_census_anchors",0.00208451668215624
+"pc2001__33__09","Namakkal   *",197589,206872,1,"Namakkal",TRUE,"two_census_anchors",0.00459111287675539
+"pc2001__33__11","The Nilgiris",111086,96240,1,"The Nilgiris",TRUE,"two_census_anchors",-0.0143459604437646
+"pc2001__33__13","Dindigul",284326,281707,1,"Dindigul",TRUE,"two_census_anchors",-0.000925394346235846
+"pc2001__33__14","Karur  *",127998,133798,1,"Karur",TRUE,"two_census_anchors",0.00443165611017557
+"pc2001__33__15","Tiruchirappalli",354133,354672,1,"Tiruchirappalli",TRUE,"two_census_anchors",0.000152086992584494
+"pc2001__33__16","Perambalur  *",78421,80739,1,"Perambalur",TRUE,"two_census_anchors",0.00291299812814664
+"pc2001__33__17","Ariyalur  *",110382,108321,1,"Ariyalur",TRUE,"two_census_anchors",-0.00188480360448849
+"pc2001__33__18","Cuddalore",366756,362173,1,"Cuddalore",TRUE,"two_census_anchors",-0.0012574778587312
+"pc2001__33__20","Thiruvarur",178092,164316,1,"Thiruvarur",TRUE,"two_census_anchors",-0.00805088675635846
+"pc2001__33__21","Thanjavur",332337,320104,1,"Thanjavur",TRUE,"two_census_anchors",-0.00375035713394502
+"pc2001__33__22","Pudukkottai",228732,230310,1,"Pudukkottai",TRUE,"two_census_anchors",0.000687521497298077
+"pc2001__33__23","Sivaganga",175129,179799,1,"Sivaganga",TRUE,"two_census_anchors",0.00263167150624886
+"pc2001__33__24","Madurai",378384,402589,1,"Madurai",TRUE,"two_census_anchors",0.00620066374423938
+"pc2001__33__25","Theni  *",169673,165458,1,"Theni",TRUE,"two_census_anchors",-0.00251556691046559
+"pc2001__33__26","Virudhunagar",265774,263424,1,"Virudhunagar",TRUE,"two_census_anchors",-0.000888142225498466
+"pc2001__33__27","Ramanathapuram",196135,187492,1,"Ramanathapuram",TRUE,"two_census_anchors",-0.00450670198101837
+"pc2001__33__30","Kanniyakumari",228910,231116,1,"Kanniyakumari",TRUE,"two_census_anchors",0.00095908357776451
+"pc2001__34__01","Yanam",5771,8773,1,"Yanam",TRUE,"two_census_anchors",0.0418833447417417
+"pc2001__34__03","Mahe",5097,5390,1,"Mahe",TRUE,"two_census_anchors",0.00558932535630012
+"pc2001__34__04","Karaikal",25939,27259,1,"Karaikal",TRUE,"two_census_anchors",0.00496361141657017
+"pc2001__35__02","Nicobars",6673,4189,1,"Nicobars",TRUE,"two_census_anchors",-0.0465607491956572
+"pc2001__13__02","Tuensang",96387,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__01__02","Baramula",265916,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__01__03","Srinagar",236368,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__01__04","Badgam",150054,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__01__05","Pulwama",147850,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__13__07","Kohima",65935,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__13__08","Phek",34532,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__14__01","Senapati",31650,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__01__09","Doda",155669,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__01__10","Udhampur",152890,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__22__08","Kawardha *",129412,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__01__12","Rajauri",103559,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__01__13","Jammu",274361,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__01__14","Kathua",105720,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__09__19","Budaun",737332,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__14__09","Chandel",21856,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__02__03","Lahul & Spiti",4615,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__22__15","Bastar",275172,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__02__05","Mandi",157071,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__15__04","Champhai *",21787,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__02__07","Una",77514,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__02__08","Bilaspur",57857,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__28__17","Guntur",771900,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__15__08","Saiha *",13527,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__02__11","Shimla",120305,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__28__20","Cuddapah",479161,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__03__01","Gurdaspur",385572,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__03__02","Amritsar",584706,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__17__01","West Garo Hills",117347,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__17__02","East Garo Hills",59554,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__03__05","Hoshiarpur",256447,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__03__06","Nawanshahr *",102910,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__03__07","Rupnagar",196370,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__24__10","Jamnagar",335308,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__03__09","Ludhiana",517533,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__18__01","Kokrajhar",205054,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__03__11","Firozpur",347674,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__07__02","North   *",136796,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__18__04","Bongaigaon",195809,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__09__44","Kaushambi *",311000,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__09__45","Allahabad",1097976,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__03__16","Sangrur",369702,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__03__17","Patiala",333909,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__18__09","Marigaon",172833,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__05__01","Uttarkashi",61111,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__05__02","Chamoli",74050,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__05__03","Rudraprayag *",46128,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__05__04","Tehri Garhwal",125050,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__05__05","Dehradun",237879,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__05__06","Garhwal",132889,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__05__07","Pithoragarh",90861,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__09__56","Sant Kabir Nagar *",339878,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__09__57","Maharajganj",499354,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__05__10","Champawat",48016,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__05__11","Nainital",151127,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__05__12","Udham Singh Nagar *",275112,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__18__22","Karimganj",217708,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__18__23","Hailakandi",119446,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__19__01","Darjiling",298328,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__19__02","Jalpaiguri",695111,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__19__03","Koch Bihar",520317,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__19__04","Uttar Dinajpur",563568,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__19__05","Dakshin Dinajpur *",303524,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__09__68","Sant Ravidas Nagar *",325898,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__11__02","West",27208,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__24__02","Banas Kantha",539744,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__19__09","Barddhaman",1250950,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__19__10","Nadia",860455,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__06__12","Hisar",312780,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__06__13","Bhiwani",289335,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__08__26","Udaipur",544960,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__12__05","Lower Subansiri",23300,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__10__07","Araria",520615,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__08__29","Chittaurgarh",353368,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__06__18","Gurgaon",370766,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__06__19","Faridabad",466531,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__07__01","North West   *",533969,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__12__11","Lohit",31786,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__07__03","North East   *",367086,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__07__04","East   *",251160,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__07__05","New Delhi",29133,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__07__06","Central  *",106770,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__07__07","West   *",357737,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__07__08","South West   *",303575,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__07__09","South  *",400122,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__08__01","Ganganagar",371381,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__18__11","Sonitpur",349959,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__08__03","Bikaner",368742,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__08__04","Churu",442254,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__09__13","Hathras *",306910,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__08__06","Alwar",672559,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__08__07","Bharatpur",490185,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__08__08","Dhaulpur",238582,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__08__09","Karauli *",282739,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__08__10","Sawai Madhopur",250687,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__08__11","Dausa *",305525,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__08__12","Jaipur",1119631,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__08__13","Sikar",535272,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__08__14","Nagaur",631474,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__08__15","Jodhpur",639130,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__08__16","Jaisalmer",111657,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__21__08","Baleshwar",397541,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__15__06","Lunglei",25754,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__11__01","North",8276,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__23__05","Datia",132114,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__08__21","Ajmer",438521,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__08__22","Tonk",262902,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__35__01","Andamans",51600,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__08__24","Bhilwara",406713,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__08__25","Rajsamand *",203253,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__29__01","Belgaum",794244,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__12__04","Papum Pare *",27714,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__08__28","Banswara",328381,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__23__14","Rewa",437035,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__08__30","Kota",320491,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__08__31","Baran *",228204,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__21__23","Sonapur  *",100912,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__18__02","Dhubri",372277,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__09__02","Muzaffarnagar",803860,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__27__28","Latur",425255,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__09__04","Moradabad",919161,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__27__30","Solapur",727666,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__09__06","Jyotiba Phule Nagar *",358628,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__09__07","Meerut",661898,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__22__01","Koriya *",122948,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__09__09","Ghaziabad",721260,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__24__22","Surat",832904,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__22__04","Raigarh",231041,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__28__02","Nizamabad",459266,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__29__19","Kolar",460700,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__14__03","Churachandpur",44820,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__18__16","Sibsagar",198227,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__22__09","Rajnandgaon",249319,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__09__17","Etah",656563,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__14__07","Imphal East *",71890,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__28__09","Warangal",629157,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__28__10","Khammam",505131,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__22__14","Kanker *",127207,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__28__12","Vizianagaram",409881,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__09__23","Kheri",735422,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__28__14","East Godavari",892252,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__15__05","Serchhip *",10786,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__23__43","Chhindwara",390640,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__28__16","Krishna",732666,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__19__06","Maldah",749082,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__23__06","Shivpuri",328159,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__21__12","Cuttack",390500,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__23__08","Tikamgarh",262419,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__28__21","Kurnool",768786,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__28__23","Chittoor",647137,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__19__12","Hugli",849012,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__24__06","Gandhinagar",228610,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__17__04","West Khasi Hills",74227,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__19__15","Medinipur",1868692,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__33__01","Thiruvallur",417184,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__17__07","Jaintia Hills",73152,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__23__17","Sidhi",440065,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__33__04","Vellore",582786,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__27__26","Ahmadnagar",752121,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__29__10","Uttara Kannada",221244,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__18__05","Barpeta",362834,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__18__06","Kamrup",479315,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__09__46","Barabanki",595691,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__09__47","Faizabad",463846,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__29__15","Shimoga",268302,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__09__49","Sultanpur",727700,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__13__06","Dimapur *",65397,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__09__51","Shrawasti *",260862,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__23__29","East Nimar",366375,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__29__18","Tumkur",431856,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__09__54","Siddharthnagar",485319,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__22__07","Bilaspur",418007,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__18__17","Jorhat",185464,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__18__18","Golaghat",196342,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__09__58","Gorakhpur",861301,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__09__59","Kushinagar *",682635,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__18__21","Cachar",291117,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__23__37","Hoshangabad",221117,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__30__02","South Goa",82660,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__23__40","Narsimhapur",184998,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__10__34","Aurangabad",460814,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__33__28","Thoothukkudi",244305,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__33__29","Tirunelveli",417925,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__10__10","Katihar",578269,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__21__10","Kendrapara *",239882,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__21__11","Jagatsinghapur  *",178373,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__28__19","Nellore",457921,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__21__13","Jajapur  *",302353,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__21__27","Rayagada  *",168989,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__19__11","North Twenty Four Parganas",1530775,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__12__03","East Kameng",13345,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__21__16","Nayagarh  *",148292,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__27__19","Aurangabad",596656,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__12__06","Upper Subansiri",13058,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__12__07","West Siang",24716,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__12__08","East Siang",19258,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__28__15","West Godavari",676129,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__19__18","South  Twenty Four Parganas",1422613,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__24__12","Junagadh",440547,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__10__13","Darbhanga",772074,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__24__16","Kheda",346761,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__28__07","Mahbubnagar",766997,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__23__22","Shajapur",268270,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__24__19","Vadodara",610488,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__10__18","Vaishali",635166,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__33__12","Coimbatore",537248,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__18__10","Nagaon",498155,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__23__27","West Nimar",333694,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__10__22","Bhagalpur",566973,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__28__01","Adilabad",540690,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__14__02","Tamenglong",22144,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__29__21","Bangalore Rural",321052,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__33__19","Nagapattinam  *",234096,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__28__06","Rangareddi",681906,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__28__03","Karimnagar",640126,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__10__29","Bhojpur",514419,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__18__20","North Cachar Hills",38600,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__29__26","Mysore",440605,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__21__04","Debagarh  *",51998,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__10__33","Jehanabad",341729,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__15__03","Aizawl",57133,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__21__06","Kendujhar",309168,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__22__16","Dantewada*",158878,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__21__21","Kandhamal",139579,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__29__17","Chikmagalur",180045,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__28__18","Prakasam",563674,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__34__02","Pondicherry",106427,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__18__08","Darrang",312931,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__33__07","Viluppuram",511232,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__12__02","West Kameng",15165,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__24__05","Sabar Kantha",377622,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__27__21","Thane",1359616,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__27__18","Jalna",347133,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__23__13","Satna",400017,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__29__04","Gulbarga",718315,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__33__03","Kancheepuram",442762,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__28__13","Visakhapatnam",692685,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__29__14","Davanagere*",322972,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__22__06","Janjgir - Champa*",277203,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__21__29","Koraput",236538,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__27__03","Jalgaon",685696,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__18__12","Lakhimpur",189466,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__27__29","Osmanabad",292846,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__22__02","Surguja",407981,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__28__04","Medak",550230,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__21__15","Anugul  *",215055,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__29__27","Chamarajanagar*",157725,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__28__08","Nalgonda",652448,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__21__01","Bargarh  *",229518,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__18__19","Karbi Anglong",185980,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__28__11","Srikakulam",482230,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__33__10","Erode",323124,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__21__05","Sundargarh",347777,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__29__03","Bijapur",379445,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__29__12","Bellary",431811,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA
+"pc2001__18__07","Nalbari",231464,NA,NA,NA,NA,"missing_complete_2011_parent_reconstruction",NA

@@ -1,4 +1,4 @@
 "basis_a","variable_a","basis_b","variable_b","n","pearson_correlation","spearman_correlation","mean_a","mean_b"
 "shastry","ling_distance_nonzero_mean","glottolog","ling_distance_glottolog_nonhindi_mean",573,0.689604346307233,0.630606145227522,3.0452929017014,12.0153012242071
 "shastry","ling_distance_nonzero_mean","dyen","ling_distance_dyen_noncognate_pct",573,0.811211338408177,0.831060269063078,3.0452929017014,57.7092411200777
-"glottolog","ling_distance_glottolog_nonhindi_mean","dyen","ling_distance_dyen_noncognate_pct",573,0.738045720470019,0.623137939828018,12.0153012242071,57.7092411200777
+"glottolog","ling_distance_glottolog_nonhindi_mean","dyen","ling_distance_dyen_noncognate_pct",573,0.73804572047002,0.623137939828018,12.0153012242071,57.7092411200777

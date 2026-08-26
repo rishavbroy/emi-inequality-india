@@ -1,6 +1,8 @@
 "construct_id","variable","analysis_scope","label"
 "emi_total_0708","dise_emi_enrollment_share_total_0708","structural_iv","DISE 2007-08 English-medium enrollment / total enrollment"
 "emi_total_0508_pooled","dise_emi_enrollment_share_total_0508_pooled","structural_iv","DISE pooled 2005-06 to 2007-08 English-medium enrollment / total enrollment"
+"emi_age6_13_gross_0708","dise_emi_gross_enrollment_ratio_age_6_13_0708","structural_iv","DISE 2007-08 English-medium gross enrollment ratio, ages 6-13 denominator"
+"emi_age6_13_gross_0508_pooled","dise_emi_gross_enrollment_ratio_age_6_13_0508_pooled","structural_iv","DISE pooled 2005-06 to 2007-08 English-medium gross enrollment ratio, ages 6-13 denominator"
 "hindi_share_0708","dise_hindi_enrollment_share_total_0708","relevance_only","DISE 2007-08 Hindi-medium enrollment / total enrollment"
 "english_hindi_share_0708","dise_english_share_english_hindi_0708","relevance_only","DISE 2007-08 English share among English + Hindi enrollment"
 "private_enrollment_share_0708","dise_private_enrollment_share_0708","relevance_only","DISE 2007-08 private enrollment share"

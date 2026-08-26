@@ -1,0 +1,4 @@
+"outcome_id","common_districts","common_preferred_districts","comparison_districts","comparison_basis","pearson_correlation","spearman_correlation","median_absolute_difference","median_households_2022_23","median_households_2023_24","median_kish_effective_n_2022_23","median_kish_effective_n_2023_24","status"
+"real_mean_mpce",547,534,534,"preferred_common_support",0.858727829986853,0.84653416365907,190.05731603898,340,324,231.543948936492,234.373946814942,"estimated_preferred_common_support"
+"mean_log_real_mpce",547,540,540,"preferred_common_support",0.853511438992097,0.841733491693883,0.09868193415064,338.5,324,230.899229820657,232.806476367307,"estimated_preferred_common_support"
+"weighted_median_real_mpce",547,489,489,"preferred_common_support",0.85960666579918,0.829080862959687,181.73479767113,363,360,245.900532816257,247.374349456989,"estimated_preferred_common_support"

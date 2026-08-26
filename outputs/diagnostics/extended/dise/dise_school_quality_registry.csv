@@ -1,0 +1,4 @@
+"outcome","dynamic_outcome","label","direction","dynamic_start_year","dynamic_reference_year","dynamic_status","definition_note"
+"dise_pupils_per_teacher","dise_report_pupils_per_teacher","Pupils per teacher","lower_is_better","2011-12","2011-12","estimated_report_cards","Published all-school PTR."
+"dise_single_teacher_school_share","dise_report_single_teacher_school_share","Single-teacher schools (%)","lower_is_better","2011-12","2011-12","estimated_report_cards","Published all-school single-teacher-school percentage."
+"dise_girls_toilet_school_share","dise_report_girls_toilet_school_share","Schools with girls' toilet (%)","higher_is_better","2012-13","2012-13","estimated_report_cards","Published all-school eligible-school percentage; 2011-12 is excluded because the report-card denominator changes from all schools to girls'/coeducational schools in 2012-13."

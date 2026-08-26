@@ -1,0 +1,9 @@
+"specification_id","welfare_specification_id","outcome_round","baseline_round","estimand","n_panel","n_analysis_complete","analysis_share","status","missing_columns"
+"consumption__early_2009__ancova","early_2009__ancova","nss_2009_10_type2","nss_2004_05","ancova",573,499,0.870855148342059,"ready",NA
+"consumption__early_2009__change","early_2009__change","nss_2009_10_type2","nss_2004_05","change",573,499,0.870855148342059,"ready",NA
+"consumption__medium_2011__ancova","medium_2011__ancova","nss_2011_12_type2","nss_2004_05","ancova",573,501,0.87434554973822,"ready",NA
+"consumption__medium_2011__change","medium_2011__change","nss_2011_12_type2","nss_2004_05","change",573,501,0.87434554973822,"ready",NA
+"consumption__long_2022__ancova","long_2022__ancova","hces_2022_23","nss_2004_05","ancova",573,501,0.87434554973822,"ready",NA
+"consumption__long_2022__change","long_2022__change","hces_2022_23","nss_2004_05","change",573,501,0.87434554973822,"ready",NA
+"consumption__long_2023__ancova","long_2023__ancova","hces_2023_24","nss_2004_05","ancova",573,499,0.870855148342059,"ready",NA
+"consumption__long_2023__change","long_2023__change","hces_2023_24","nss_2004_05","change",573,499,0.870855148342059,"ready",NA

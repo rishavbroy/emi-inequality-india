@@ -73,6 +73,11 @@ dise_weak_iv <- analysis_target_csv("diag_ext_dise", "dise_weak_iv_outcomes.csv"
 dise_dynamic_panel <- analysis_target_csv("diag_ext_dise", "dise_dynamic_district_year_2001.csv")
 dise_dynamic_summary <- analysis_target_csv("diag_ext_dise", "dise_dynamic_first_stage_summary.csv")
 dise_dynamic_event <- analysis_target_csv("diag_ext_dise", "dise_dynamic_first_stage_event_study.csv")
+dise_school_quality_registry <- analysis_target_csv("diag_ext_dise", "dise_school_quality_registry.csv")
+dise_school_quality_baseline <- analysis_target_csv("diag_ext_dise", "dise_school_quality_baseline_association.csv")
+dise_school_quality_report <- analysis_target_csv("diag_ext_dise", "dise_school_quality_report_2001.csv")
+dise_school_quality_summary <- analysis_target_csv("diag_ext_dise", "dise_school_quality_dynamic_summary.csv")
+dise_school_quality_event <- analysis_target_csv("diag_ext_dise", "dise_school_quality_dynamic_event_study.csv")
 ```
 
 ## Administrative DISE treatment validation
@@ -106,6 +111,8 @@ analysis_table(dise_treatment_summary, "DISE baseline treatment coverage and sca
 |:---|---:|---:|---:|---:|---:|
 | dise_emi_enrollment_share_total_0708 | 538 | 12.688 | 23.801 | 0 | 100.000 |
 | dise_emi_enrollment_share_total_0508_pooled | 475 | 13.205 | 24.543 | 0 | 99.879 |
+| dise_emi_gross_enrollment_ratio_age_6_13_0708 | 319 | 10.565 | 22.870 | 0 | 198.399 |
+| dise_emi_gross_enrollment_ratio_age_6_13_0508_pooled | 278 | 10.502 | 22.895 | 0 | 172.514 |
 | dise_hindi_enrollment_share_total_0708 | 502 | 46.688 | 46.616 | 0 | 100.000 |
 | dise_english_share_english_hindi_0708 | 486 | 43.518 | 45.041 | 0 | 100.000 |
 | dise_private_enrollment_share_0708 | 552 | 27.405 | 18.617 | 0 | 95.114 |
@@ -151,6 +158,16 @@ analysis_table(
 | region_expanded\_\_nonzero_mean | 31 | region_expanded | Six-region FE + expanded controls | nonzero_mean | Mean distance among speakers above zero | region | ling_distance_nonzero_mean |  | 1 | 8.976 | 0.003 | 0.077 | 458 | 30 | 6 | emi_total_0508_pooled | dise_emi_enrollment_share_total_0508_pooled | structural_iv |
 | state_main\_\_nonzero_mean | 46 | state_main | State FE + main controls | nonzero_mean | Mean distance among speakers above zero | state | ling_distance_nonzero_mean |  | 1 | 1.724 | 0.190 | 0.025 | 458 | 30 | 6 | emi_total_0508_pooled | dise_emi_enrollment_share_total_0508_pooled | structural_iv |
 | state_expanded\_\_nonzero_mean | 61 | state_expanded | State FE + expanded controls | nonzero_mean | Mean distance among speakers above zero | state | ling_distance_nonzero_mean |  | 1 | 3.149 | 0.077 | 0.038 | 458 | 30 | 6 | emi_total_0508_pooled | dise_emi_enrollment_share_total_0508_pooled | structural_iv |
+| unadjusted\_\_nonzero_mean | 1 | unadjusted | Unadjusted | nonzero_mean | Mean distance among speakers above zero | none | ling_distance_nonzero_mean |  | 1 | 11.924 | 0.001 | 0.134 | 315 | 31 | 6 | emi_age6_13_gross_0708 | dise_emi_gross_enrollment_ratio_age_6_13_0708 | structural_iv |
+| region_main\_\_nonzero_mean | 16 | region_main | Six-region FE + main controls | nonzero_mean | Mean distance among speakers above zero | region | ling_distance_nonzero_mean |  | 1 | 0.000 | 0.994 | 0.000 | 315 | 31 | 6 | emi_age6_13_gross_0708 | dise_emi_gross_enrollment_ratio_age_6_13_0708 | structural_iv |
+| region_expanded\_\_nonzero_mean | 31 | region_expanded | Six-region FE + expanded controls | nonzero_mean | Mean distance among speakers above zero | region | ling_distance_nonzero_mean |  | 1 | 0.824 | 0.365 | 0.003 | 315 | 31 | 6 | emi_age6_13_gross_0708 | dise_emi_gross_enrollment_ratio_age_6_13_0708 | structural_iv |
+| state_main\_\_nonzero_mean | 46 | state_main | State FE + main controls | nonzero_mean | Mean distance among speakers above zero | state | ling_distance_nonzero_mean |  | 1 | 0.269 | 0.604 | 0.002 | 315 | 31 | 6 | emi_age6_13_gross_0708 | dise_emi_gross_enrollment_ratio_age_6_13_0708 | structural_iv |
+| state_expanded\_\_nonzero_mean | 61 | state_expanded | State FE + expanded controls | nonzero_mean | Mean distance among speakers above zero | state | ling_distance_nonzero_mean |  | 1 | 0.713 | 0.399 | 0.004 | 315 | 31 | 6 | emi_age6_13_gross_0708 | dise_emi_gross_enrollment_ratio_age_6_13_0708 | structural_iv |
+| unadjusted\_\_nonzero_mean | 1 | unadjusted | Unadjusted | nonzero_mean | Mean distance among speakers above zero | none | ling_distance_nonzero_mean |  | 1 | 10.860 | 0.001 | 0.126 | 274 | 29 | 6 | emi_age6_13_gross_0508_pooled | dise_emi_gross_enrollment_ratio_age_6_13_0508_pooled | structural_iv |
+| region_main\_\_nonzero_mean | 16 | region_main | Six-region FE + main controls | nonzero_mean | Mean distance among speakers above zero | region | ling_distance_nonzero_mean |  | 1 | 0.118 | 0.731 | 0.001 | 274 | 29 | 6 | emi_age6_13_gross_0508_pooled | dise_emi_gross_enrollment_ratio_age_6_13_0508_pooled | structural_iv |
+| region_expanded\_\_nonzero_mean | 31 | region_expanded | Six-region FE + expanded controls | nonzero_mean | Mean distance among speakers above zero | region | ling_distance_nonzero_mean |  | 1 | 2.055 | 0.153 | 0.012 | 274 | 29 | 6 | emi_age6_13_gross_0508_pooled | dise_emi_gross_enrollment_ratio_age_6_13_0508_pooled | structural_iv |
+| state_main\_\_nonzero_mean | 46 | state_main | State FE + main controls | nonzero_mean | Mean distance among speakers above zero | state | ling_distance_nonzero_mean |  | 1 | 0.358 | 0.550 | 0.003 | 274 | 29 | 6 | emi_age6_13_gross_0508_pooled | dise_emi_gross_enrollment_ratio_age_6_13_0508_pooled | structural_iv |
+| state_expanded\_\_nonzero_mean | 61 | state_expanded | State FE + expanded controls | nonzero_mean | Mean distance among speakers above zero | state | ling_distance_nonzero_mean |  | 1 | 0.924 | 0.337 | 0.006 | 274 | 29 | 6 | emi_age6_13_gross_0508_pooled | dise_emi_gross_enrollment_ratio_age_6_13_0508_pooled | structural_iv |
 | unadjusted\_\_nonzero_mean | 1 | unadjusted | Unadjusted | nonzero_mean | Mean distance among speakers above zero | none | ling_distance_nonzero_mean |  | 1 | 4.135 | 0.043 | 0.098 | 485 | 30 | 6 | hindi_share_0708 | dise_hindi_enrollment_share_total_0708 | relevance_only |
 | region_main\_\_nonzero_mean | 16 | region_main | Six-region FE + main controls | nonzero_mean | Mean distance among speakers above zero | region | ling_distance_nonzero_mean |  | 1 | 1.205 | 0.273 | 0.007 | 485 | 30 | 6 | hindi_share_0708 | dise_hindi_enrollment_share_total_0708 | relevance_only |
 | region_expanded\_\_nonzero_mean | 31 | region_expanded | Six-region FE + expanded controls | nonzero_mean | Mean distance among speakers above zero | region | ling_distance_nonzero_mean |  | 1 | 1.040 | 0.308 | 0.006 | 485 | 30 | 6 | hindi_share_0708 | dise_hindi_enrollment_share_total_0708 | relevance_only |
@@ -202,6 +219,16 @@ analysis_table(
 | region_expanded\_\_nonzero_mean | region_expanded | nonzero_mean | 0.000 | 0.003 | 0.991 | 0.000 | 0.991 | 0.000 | 0.991 | -0.006 | 0.013 | FALSE | 1 | FALSE | TRUE | -0.006 | 0.013 | FALSE | FALSE | \[-0.00560077, 0.0126017\] | 458 | estimated | NA | emi_total_0508_pooled | dise_emi_enrollment_share_total_0508_pooled | structural_iv |
 | state_main\_\_nonzero_mean | state_main | nonzero_mean | 0.015 | 0.014 | 0.286 | 4.397 | 0.037 | 4.397 | 0.037 | NA | NA | FALSE | 2 | TRUE | FALSE | -0.093 | 0.093 | TRUE | TRUE | \[grid\<= -0.0933462, -0.0280039\] U \[0.000933462, 0.0933462 \<=grid\] | 458 | estimated | NA | emi_total_0508_pooled | dise_emi_enrollment_share_total_0508_pooled | structural_iv |
 | state_expanded\_\_nonzero_mean | state_expanded | nonzero_mean | 0.011 | 0.009 | 0.224 | 3.459 | 0.064 | 3.459 | 0.064 | NA | NA | FALSE | 1 | FALSE | TRUE | 0.000 | 0.093 | FALSE | TRUE | \[-0.000466731, 0.0933462 \<=grid\] | 458 | estimated | NA | emi_total_0508_pooled | dise_emi_enrollment_share_total_0508_pooled | structural_iv |
+| unadjusted\_\_nonzero_mean | unadjusted | nonzero_mean | -0.003 | 0.002 | 0.176 | 1.883 | 0.171 | 1.883 | 0.171 | -0.009 | 0.001 | FALSE | 1 | FALSE | TRUE | -0.009 | 0.001 | FALSE | FALSE | \[-0.00929355, 0.0014674\] | 315 | estimated | NA | emi_age6_13_gross_0708 | dise_emi_gross_enrollment_ratio_age_6_13_0708 | structural_iv |
+| region_main\_\_nonzero_mean | region_main | nonzero_mean | -0.635 | 80.175 | 0.994 | 0.079 | 0.779 | 0.079 | 0.779 | NA | NA | FALSE | 1 | FALSE | TRUE | -0.098 | 0.098 | TRUE | TRUE | \[grid\<= -0.0978268, 0.0978268 \<=grid\] | 315 | estimated | NA | emi_age6_13_gross_0708 | dise_emi_gross_enrollment_ratio_age_6_13_0708 | structural_iv |
+| region_expanded\_\_nonzero_mean | region_expanded | nonzero_mean | 0.005 | 0.023 | 0.824 | 0.059 | 0.808 | 0.059 | 0.808 | NA | NA | FALSE | 1 | FALSE | TRUE | -0.098 | 0.098 | TRUE | TRUE | \[grid\<= -0.0978268, 0.0978268 \<=grid\] | 315 | estimated | NA | emi_age6_13_gross_0708 | dise_emi_gross_enrollment_ratio_age_6_13_0708 | structural_iv |
+| state_main\_\_nonzero_mean | state_main | nonzero_mean | 0.056 | 0.099 | 0.571 | 1.898 | 0.169 | 1.898 | 0.169 | NA | NA | FALSE | 1 | FALSE | TRUE | -0.098 | 0.098 | TRUE | TRUE | \[grid\<= -0.0978268, 0.0978268 \<=grid\] | 315 | estimated | NA | emi_age6_13_gross_0708 | dise_emi_gross_enrollment_ratio_age_6_13_0708 | structural_iv |
+| state_expanded\_\_nonzero_mean | state_expanded | nonzero_mean | 0.039 | 0.044 | 0.367 | 2.311 | 0.130 | 2.311 | 0.130 | NA | NA | FALSE | 1 | FALSE | TRUE | -0.098 | 0.098 | TRUE | TRUE | \[grid\<= -0.0978268, 0.0978268 \<=grid\] | 315 | estimated | NA | emi_age6_13_gross_0708 | dise_emi_gross_enrollment_ratio_age_6_13_0708 | structural_iv |
+| unadjusted\_\_nonzero_mean | unadjusted | nonzero_mean | -0.003 | 0.002 | 0.152 | 1.892 | 0.170 | 1.892 | 0.170 | -0.009 | 0.001 | FALSE | 1 | FALSE | TRUE | -0.009 | 0.001 | FALSE | FALSE | \[-0.00935215, 0.00147666\] | 274 | estimated | NA | emi_age6_13_gross_0508_pooled | dise_emi_gross_enrollment_ratio_age_6_13_0508_pooled | structural_iv |
+| region_main\_\_nonzero_mean | region_main | nonzero_mean | 0.011 | 0.062 | 0.862 | 0.066 | 0.798 | 0.066 | 0.798 | NA | NA | FALSE | 1 | FALSE | TRUE | -0.098 | 0.098 | TRUE | TRUE | \[grid\<= -0.0984437, 0.0984437 \<=grid\] | 274 | estimated | NA | emi_age6_13_gross_0508_pooled | dise_emi_gross_enrollment_ratio_age_6_13_0508_pooled | structural_iv |
+| region_expanded\_\_nonzero_mean | region_expanded | nonzero_mean | 0.003 | 0.013 | 0.800 | 0.074 | 0.785 | 0.074 | 0.785 | NA | NA | FALSE | 1 | FALSE | TRUE | -0.098 | 0.098 | TRUE | TRUE | \[grid\<= -0.0984437, 0.0984437 \<=grid\] | 274 | estimated | NA | emi_age6_13_gross_0508_pooled | dise_emi_gross_enrollment_ratio_age_6_13_0508_pooled | structural_iv |
+| state_main\_\_nonzero_mean | state_main | nonzero_mean | 0.052 | 0.080 | 0.520 | 1.438 | 0.232 | 1.438 | 0.232 | NA | NA | FALSE | 1 | FALSE | TRUE | -0.098 | 0.098 | TRUE | TRUE | \[grid\<= -0.0984437, 0.0984437 \<=grid\] | 274 | estimated | NA | emi_age6_13_gross_0508_pooled | dise_emi_gross_enrollment_ratio_age_6_13_0508_pooled | structural_iv |
+| state_expanded\_\_nonzero_mean | state_expanded | nonzero_mean | 0.038 | 0.039 | 0.333 | 1.538 | 0.216 | 1.538 | 0.216 | NA | NA | FALSE | 1 | FALSE | TRUE | -0.098 | 0.098 | TRUE | TRUE | \[grid\<= -0.0984437, 0.0984437 \<=grid\] | 274 | estimated | NA | emi_age6_13_gross_0508_pooled | dise_emi_gross_enrollment_ratio_age_6_13_0508_pooled | structural_iv |
 
 Administrative EMI treatments: weak-IV-aware outcome estimates
 
@@ -235,16 +262,16 @@ analysis_table(dise_dynamic_qa, "Longitudinal DISE EMI coverage and count-validi
 
 | academic_year | n_rows | n_emi | n_invalid_english_count |
 |:--------------|-------:|------:|------------------------:|
-| 2005-06       |    547 |   503 |                       0 |
-| 2006-07       |    550 |   528 |                       0 |
-| 2007-08       |    552 |   538 |                       0 |
-| 2008-09       |    539 |   460 |                       0 |
-| 2009-10       |    539 |   457 |                       0 |
-| 2010-11       |    532 |   448 |                       0 |
-| 2011-12       |    539 |   477 |                       0 |
-| 2012-13       |    553 |   486 |                       0 |
-| 2013-14       |    553 |   506 |                       0 |
-| 2014-15       |    543 |   530 |                       0 |
+| 2005-06       |    547 |   503 |                      44 |
+| 2006-07       |    550 |   528 |                      22 |
+| 2007-08       |    552 |   538 |                      14 |
+| 2008-09       |    552 |   471 |                      81 |
+| 2009-10       |    552 |   468 |                      84 |
+| 2010-11       |    532 |   461 |                      71 |
+| 2011-12       |    552 |   490 |                      62 |
+| 2012-13       |    553 |   486 |                      67 |
+| 2013-14       |    553 |   504 |                      49 |
+| 2014-15       |    543 |   530 |                      13 |
 | 2015-16       |    543 |   543 |                       0 |
 
 Longitudinal DISE EMI coverage and count-validity checks
@@ -257,10 +284,10 @@ analysis_table(
 )
 ```
 
-| instrument | dynamic_fe | reference_year | n | n_districts | n_years | joint_distance_year_f | joint_distance_year_p | cluster_status | construction_id | equivalent_construction_ids |
-|:---|:---|:---|---:|---:|---:|---:|---:|:---|:---|:---|
-| ling_distance_nonzero_mean | district_year | 2007-08 | 5294 | 553 | 11 | 2.357 | 0.009 | estimated | nonzero_mean | nonzero_mean;nonzero_mean_hindi_urdu;nonzero_mean_hindi_urdu_separate;nonzero_mean_shastry |
-| ling_distance_nonzero_mean | district_state_year | 2007-08 | 5294 | 553 | 11 | NA | NA | estimated | nonzero_mean | nonzero_mean;nonzero_mean_hindi_urdu;nonzero_mean_hindi_urdu_separate;nonzero_mean_shastry |
+| instrument | dynamic_fe | reference_year | n | n_districts | n_years | joint_distance_year_f | joint_distance_year_p | pre_distance_year_f | pre_distance_year_p | post_distance_year_f | post_distance_year_p | cluster_status | outcome | construction_id | equivalent_construction_ids |
+|:---|:---|:---|---:|---:|---:|---:|---:|---:|---:|---:|---:|:---|:---|:---|:---|
+| ling_distance_nonzero_mean | district_year | 2007-08 | 5341 | 554 | 11 | 2.432 | 0.007 | 2.296 | 0.101 | 1.911 | 0.054 | estimated | dise_emi_enrollment_share_total | nonzero_mean | nonzero_mean;nonzero_mean_hindi_urdu;nonzero_mean_hindi_urdu_separate;nonzero_mean_shastry |
+| ling_distance_nonzero_mean | district_state_year | 2007-08 | 5341 | 554 | 11 | 1.768 | 0.061 | 1.494 | 0.225 | 1.514 | 0.147 | estimated | dise_emi_enrollment_share_total | nonzero_mean | nonzero_mean;nonzero_mean_hindi_urdu;nonzero_mean_hindi_urdu_separate;nonzero_mean_shastry |
 
 Preferred linguistic-distance trajectory: joint clustered tests
 
@@ -272,31 +299,155 @@ analysis_table(
 )
 ```
 
-| academic_year | reference_year | estimate | std.error | statistic | p.value | construction_id | instrument | dynamic_fe |
-|:---|:---|---:|---:|---:|---:|:---|:---|:---|
-| 2005-06 | 2007-08 | -0.620 | 0.307 | -2.021 | 0.043 | nonzero_mean | ling_distance_nonzero_mean | district_year |
-| 2006-07 | 2007-08 | -0.643 | 0.339 | -1.897 | 0.058 | nonzero_mean | ling_distance_nonzero_mean | district_year |
-| 2008-09 | 2007-08 | 0.337 | 0.318 | 1.059 | 0.290 | nonzero_mean | ling_distance_nonzero_mean | district_year |
-| 2009-10 | 2007-08 | 0.055 | 0.465 | 0.118 | 0.906 | nonzero_mean | ling_distance_nonzero_mean | district_year |
-| 2010-11 | 2007-08 | 4.625 | 2.745 | 1.685 | 0.092 | nonzero_mean | ling_distance_nonzero_mean | district_year |
-| 2011-12 | 2007-08 | 0.444 | 0.475 | 0.935 | 0.350 | nonzero_mean | ling_distance_nonzero_mean | district_year |
-| 2012-13 | 2007-08 | 0.596 | 0.474 | 1.259 | 0.208 | nonzero_mean | ling_distance_nonzero_mean | district_year |
-| 2013-14 | 2007-08 | 0.423 | 0.537 | 0.787 | 0.431 | nonzero_mean | ling_distance_nonzero_mean | district_year |
-| 2014-15 | 2007-08 | 0.857 | 0.546 | 1.568 | 0.117 | nonzero_mean | ling_distance_nonzero_mean | district_year |
-| 2015-16 | 2007-08 | 0.992 | 0.572 | 1.734 | 0.083 | nonzero_mean | ling_distance_nonzero_mean | district_year |
-| 2005-06 | 2007-08 | 2.390 | 1.483 | 1.612 | 0.107 | nonzero_mean | ling_distance_nonzero_mean | district_state_year |
-| 2006-07 | 2007-08 | 2.049 | 1.164 | 1.760 | 0.078 | nonzero_mean | ling_distance_nonzero_mean | district_state_year |
-| 2008-09 | 2007-08 | 0.671 | 1.156 | 0.581 | 0.561 | nonzero_mean | ling_distance_nonzero_mean | district_state_year |
-| 2009-10 | 2007-08 | 0.288 | 1.031 | 0.280 | 0.780 | nonzero_mean | ling_distance_nonzero_mean | district_state_year |
-| 2010-11 | 2007-08 | -10.331 | 10.806 | -0.956 | 0.339 | nonzero_mean | ling_distance_nonzero_mean | district_state_year |
-| 2011-12 | 2007-08 | 0.297 | 1.119 | 0.266 | 0.791 | nonzero_mean | ling_distance_nonzero_mean | district_state_year |
-| 2012-13 | 2007-08 | -0.489 | 1.017 | -0.481 | 0.631 | nonzero_mean | ling_distance_nonzero_mean | district_state_year |
-| 2013-14 | 2007-08 | -0.382 | 1.054 | -0.363 | 0.717 | nonzero_mean | ling_distance_nonzero_mean | district_state_year |
-| 2014-15 | 2007-08 | -0.285 | 1.094 | -0.260 | 0.795 | nonzero_mean | ling_distance_nonzero_mean | district_state_year |
-| 2015-16 | 2007-08 | -0.580 | 1.096 | -0.529 | 0.596 | nonzero_mean | ling_distance_nonzero_mean | district_state_year |
+| academic_year | reference_year | estimate | std.error | statistic | p.value | outcome | construction_id | instrument | dynamic_fe |
+|:---|:---|---:|---:|---:|---:|:---|:---|:---|:---|
+| 2005-06 | 2007-08 | -0.606 | 0.306 | -1.979 | 0.048 | dise_emi_enrollment_share_total | nonzero_mean | ling_distance_nonzero_mean | district_year |
+| 2006-07 | 2007-08 | -0.426 | 0.228 | -1.869 | 0.062 | dise_emi_enrollment_share_total | nonzero_mean | ling_distance_nonzero_mean | district_year |
+| 2008-09 | 2007-08 | 0.568 | 0.215 | 2.637 | 0.008 | dise_emi_enrollment_share_total | nonzero_mean | ling_distance_nonzero_mean | district_year |
+| 2009-10 | 2007-08 | 0.206 | 0.374 | 0.551 | 0.581 | dise_emi_enrollment_share_total | nonzero_mean | ling_distance_nonzero_mean | district_year |
+| 2010-11 | 2007-08 | 0.524 | 0.409 | 1.282 | 0.200 | dise_emi_enrollment_share_total | nonzero_mean | ling_distance_nonzero_mean | district_year |
+| 2011-12 | 2007-08 | 0.650 | 0.410 | 1.587 | 0.112 | dise_emi_enrollment_share_total | nonzero_mean | ling_distance_nonzero_mean | district_year |
+| 2012-13 | 2007-08 | 0.814 | 0.421 | 1.932 | 0.053 | dise_emi_enrollment_share_total | nonzero_mean | ling_distance_nonzero_mean | district_year |
+| 2013-14 | 2007-08 | 0.632 | 0.491 | 1.288 | 0.198 | dise_emi_enrollment_share_total | nonzero_mean | ling_distance_nonzero_mean | district_year |
+| 2014-15 | 2007-08 | 1.101 | 0.498 | 2.209 | 0.027 | dise_emi_enrollment_share_total | nonzero_mean | ling_distance_nonzero_mean | district_year |
+| 2015-16 | 2007-08 | 1.237 | 0.527 | 2.346 | 0.019 | dise_emi_enrollment_share_total | nonzero_mean | ling_distance_nonzero_mean | district_year |
+| 2005-06 | 2007-08 | 2.287 | 1.483 | 1.542 | 0.123 | dise_emi_enrollment_share_total | nonzero_mean | ling_distance_nonzero_mean | district_state_year |
+| 2006-07 | 2007-08 | 2.011 | 1.164 | 1.727 | 0.084 | dise_emi_enrollment_share_total | nonzero_mean | ling_distance_nonzero_mean | district_state_year |
+| 2008-09 | 2007-08 | 0.610 | 1.120 | 0.545 | 0.586 | dise_emi_enrollment_share_total | nonzero_mean | ling_distance_nonzero_mean | district_state_year |
+| 2009-10 | 2007-08 | 0.427 | 1.025 | 0.417 | 0.677 | dise_emi_enrollment_share_total | nonzero_mean | ling_distance_nonzero_mean | district_state_year |
+| 2010-11 | 2007-08 | 0.476 | 1.116 | 0.427 | 0.670 | dise_emi_enrollment_share_total | nonzero_mean | ling_distance_nonzero_mean | district_state_year |
+| 2011-12 | 2007-08 | 0.279 | 1.109 | 0.252 | 0.801 | dise_emi_enrollment_share_total | nonzero_mean | ling_distance_nonzero_mean | district_state_year |
+| 2012-13 | 2007-08 | -0.517 | 1.016 | -0.509 | 0.611 | dise_emi_enrollment_share_total | nonzero_mean | ling_distance_nonzero_mean | district_state_year |
+| 2013-14 | 2007-08 | -0.409 | 1.054 | -0.388 | 0.698 | dise_emi_enrollment_share_total | nonzero_mean | ling_distance_nonzero_mean | district_state_year |
+| 2014-15 | 2007-08 | -0.290 | 1.093 | -0.266 | 0.791 | dise_emi_enrollment_share_total | nonzero_mean | ling_distance_nonzero_mean | district_state_year |
+| 2015-16 | 2007-08 | -0.582 | 1.095 | -0.531 | 0.595 | dise_emi_enrollment_share_total | nonzero_mean | ling_distance_nonzero_mean | district_state_year |
 
 Preferred linguistic-distance trajectory: year coefficients relative to
 2007-08
+
+## DISE school-quality mechanisms
+
+The 2005-06 and 2006-07 associations are predetermined school-system
+diagnostics estimated with state fixed effects and state-clustered
+inference after count-preserving Census-2001 harmonization. Later
+mechanism trajectories are reconstructed from the published district
+report cards rather than the corrupted raw School/Teacher sheets.
+Because the publication values are already ratios, only one-to-one
+deterministic later-district mappings are retained on Census-2001
+geography; split parents are not averaged. PTR and single-teacher
+trajectories begin in 2011-12, while the girls’-toilet trajectory begins
+in 2012-13 because the report-card denominator changes after 2011-12.
+
+``` r
+analysis_table(dise_school_quality_registry, "DISE school-quality mechanism registry")
+```
+
+| outcome | dynamic_outcome | label | direction | dynamic_start_year | dynamic_reference_year | dynamic_status | definition_note |
+|:---|:---|:---|:---|:---|:---|:---|:---|
+| dise_pupils_per_teacher | dise_report_pupils_per_teacher | Pupils per teacher | lower_is_better | 2011-12 | 2011-12 | estimated_report_cards | Published all-school PTR. |
+| dise_single_teacher_school_share | dise_report_single_teacher_school_share | Single-teacher schools (%) | lower_is_better | 2011-12 | 2011-12 | estimated_report_cards | Published all-school single-teacher-school percentage. |
+| dise_girls_toilet_school_share | dise_report_girls_toilet_school_share | Schools with girls’ toilet (%) | higher_is_better | 2012-13 | 2012-13 | estimated_report_cards | Published all-school eligible-school percentage; 2011-12 is excluded because the report-card denominator changes from all schools to girls’/coeducational schools in 2012-13. |
+
+DISE school-quality mechanism registry
+
+``` r
+analysis_table(
+  dise_school_quality_baseline,
+  "Predetermined 2005-06/2006-07 school-quality associations with preferred linguistic distance",
+  max_rows = 10
+)
+```
+
+| academic_year | outcome | instrument | estimate | std.error | statistic | p.value | n | cluster_variable | cluster_status |
+|:---|:---|:---|---:|---:|---:|---:|---:|:---|:---|
+| 2005-06 | dise_pupils_per_teacher | ling_distance_nonzero_mean | -0.721 | 0.838 | -0.860 | 0.390 | 530 | state_code_2001 | estimated |
+| 2005-06 | dise_single_teacher_school_share | ling_distance_nonzero_mean | 1.760 | 0.436 | 4.038 | 0.000 | 530 | state_code_2001 | estimated |
+| 2005-06 | dise_girls_toilet_school_share | ling_distance_nonzero_mean | -2.831 | 0.965 | -2.933 | 0.003 | 530 | state_code_2001 | estimated |
+| 2006-07 | dise_pupils_per_teacher | ling_distance_nonzero_mean | -1.418 | 0.803 | -1.766 | 0.077 | 533 | state_code_2001 | estimated |
+| 2006-07 | dise_single_teacher_school_share | ling_distance_nonzero_mean | 1.486 | 0.423 | 3.510 | 0.000 | 533 | state_code_2001 | estimated |
+| 2006-07 | dise_girls_toilet_school_share | ling_distance_nonzero_mean | -2.391 | 0.722 | -3.309 | 0.001 | 533 | state_code_2001 | estimated |
+
+Predetermined 2005-06/2006-07 school-quality associations with preferred
+linguistic distance
+
+``` r
+school_quality_coverage <- do.call(
+  rbind,
+  lapply(split(dise_school_quality_report, dise_school_quality_report$academic_year), function(x) {
+    data.frame(
+      academic_year = x$academic_year[[1]],
+      n_targets = nrow(x),
+      n_one_to_one = sum(x$dise_report_school_quality_status == "one_to_one_report_ratio"),
+      n_ptr = sum(is.finite(x$dise_report_pupils_per_teacher)),
+      n_single_teacher = sum(is.finite(x$dise_report_single_teacher_school_share)),
+      n_girls_toilet = sum(is.finite(x$dise_report_girls_toilet_school_share)),
+      stringsAsFactors = FALSE
+    )
+  })
+)
+analysis_table(
+  school_quality_coverage,
+  "Publication-derived school-quality coverage on Census-2001 geography",
+  max_rows = 10
+)
+```
+
+| academic_year | n_targets | n_one_to_one | n_ptr | n_single_teacher | n_girls_toilet |
+|:--------------|----------:|-------------:|------:|-----------------:|---------------:|
+| 2011-12       |       552 |          537 |   537 |              537 |            537 |
+| 2012-13       |       553 |          535 |   535 |              535 |            535 |
+| 2013-14       |       552 |          534 |   534 |              534 |            534 |
+| 2014-15       |       545 |          527 |   527 |              527 |            527 |
+
+Publication-derived school-quality coverage on Census-2001 geography
+
+``` r
+analysis_table(
+  dise_school_quality_summary,
+  "Publication-derived school-quality trajectories: joint clustered tests",
+  max_rows = 20
+)
+```
+
+| instrument | dynamic_fe | reference_year | n | n_districts | n_years | joint_distance_year_f | joint_distance_year_p | pre_distance_year_f | pre_distance_year_p | post_distance_year_f | post_distance_year_p | cluster_status | outcome | label | dynamic_status | definition_note |
+|:---|:---|:---|---:|---:|---:|---:|---:|:---|:---|---:|---:|:---|:---|:---|:---|:---|
+| ling_distance_nonzero_mean | district_year | 2011-12 | 2067 | 525 | 4 | 3.513 | 0.015 | NA | NA | 3.513 | 0.015 | estimated | dise_report_pupils_per_teacher | Pupils per teacher | estimated_report_cards | Published all-school PTR. |
+| ling_distance_nonzero_mean | district_state_year | 2011-12 | 2067 | 525 | 4 | 0.374 | 0.772 | NA | NA | 0.374 | 0.772 | estimated | dise_report_pupils_per_teacher | Pupils per teacher | estimated_report_cards | Published all-school PTR. |
+| ling_distance_nonzero_mean | district_year | 2011-12 | 2067 | 525 | 4 | 5.751 | 0.001 | NA | NA | 5.751 | 0.001 | estimated | dise_report_single_teacher_school_share | Single-teacher schools (%) | estimated_report_cards | Published all-school single-teacher-school percentage. |
+| ling_distance_nonzero_mean | district_state_year | 2011-12 | 2067 | 525 | 4 | 0.672 | 0.569 | NA | NA | 0.672 | 0.569 | estimated | dise_report_single_teacher_school_share | Single-teacher schools (%) | estimated_report_cards | Published all-school single-teacher-school percentage. |
+| ling_distance_nonzero_mean | district_year | 2012-13 | 1546 | 521 | 3 | 11.767 | 0.000 | NA | NA | 11.767 | 0.000 | estimated | dise_report_girls_toilet_school_share | Schools with girls’ toilet (%) | estimated_report_cards | Published all-school eligible-school percentage; 2011-12 is excluded because the report-card denominator changes from all schools to girls’/coeducational schools in 2012-13. |
+| ling_distance_nonzero_mean | district_state_year | 2012-13 | 1546 | 521 | 3 | 1.300 | 0.273 | NA | NA | 1.300 | 0.273 | estimated | dise_report_girls_toilet_school_share | Schools with girls’ toilet (%) | estimated_report_cards | Published all-school eligible-school percentage; 2011-12 is excluded because the report-card denominator changes from all schools to girls’/coeducational schools in 2012-13. |
+
+Publication-derived school-quality trajectories: joint clustered tests
+
+``` r
+analysis_table(
+  dise_school_quality_event,
+  "Publication-derived school-quality trajectories: year coefficients",
+  max_rows = 40
+)
+```
+
+| academic_year | reference_year | estimate | std.error | statistic | p.value | outcome | label | dynamic_status | definition_note | dynamic_fe | instrument |
+|:---|:---|---:|---:|---:|---:|:---|:---|:---|:---|:---|:---|
+| 2012-13 | 2011-12 | 0.253 | 0.150 | 1.681 | 0.093 | dise_report_pupils_per_teacher | Pupils per teacher | estimated_report_cards | Published all-school PTR. | district_year | ling_distance_nonzero_mean |
+| 2013-14 | 2011-12 | 0.342 | 0.168 | 2.040 | 0.041 | dise_report_pupils_per_teacher | Pupils per teacher | estimated_report_cards | Published all-school PTR. | district_year | ling_distance_nonzero_mean |
+| 2014-15 | 2011-12 | 0.542 | 0.198 | 2.744 | 0.006 | dise_report_pupils_per_teacher | Pupils per teacher | estimated_report_cards | Published all-school PTR. | district_year | ling_distance_nonzero_mean |
+| 2012-13 | 2011-12 | -0.461 | 0.800 | -0.577 | 0.564 | dise_report_pupils_per_teacher | Pupils per teacher | estimated_report_cards | Published all-school PTR. | district_state_year | ling_distance_nonzero_mean |
+| 2013-14 | 2011-12 | -0.391 | 0.805 | -0.486 | 0.627 | dise_report_pupils_per_teacher | Pupils per teacher | estimated_report_cards | Published all-school PTR. | district_state_year | ling_distance_nonzero_mean |
+| 2014-15 | 2011-12 | -0.233 | 0.855 | -0.273 | 0.785 | dise_report_pupils_per_teacher | Pupils per teacher | estimated_report_cards | Published all-school PTR. | district_state_year | ling_distance_nonzero_mean |
+| 2012-13 | 2011-12 | 0.406 | 0.126 | 3.227 | 0.001 | dise_report_single_teacher_school_share | Single-teacher schools (%) | estimated_report_cards | Published all-school single-teacher-school percentage. | district_year | ling_distance_nonzero_mean |
+| 2013-14 | 2011-12 | 0.244 | 0.165 | 1.480 | 0.139 | dise_report_single_teacher_school_share | Single-teacher schools (%) | estimated_report_cards | Published all-school single-teacher-school percentage. | district_year | ling_distance_nonzero_mean |
+| 2014-15 | 2011-12 | 0.053 | 0.174 | 0.306 | 0.759 | dise_report_single_teacher_school_share | Single-teacher schools (%) | estimated_report_cards | Published all-school single-teacher-school percentage. | district_year | ling_distance_nonzero_mean |
+| 2012-13 | 2011-12 | 0.433 | 0.328 | 1.319 | 0.187 | dise_report_single_teacher_school_share | Single-teacher schools (%) | estimated_report_cards | Published all-school single-teacher-school percentage. | district_state_year | ling_distance_nonzero_mean |
+| 2013-14 | 2011-12 | 0.241 | 0.369 | 0.652 | 0.514 | dise_report_single_teacher_school_share | Single-teacher schools (%) | estimated_report_cards | Published all-school single-teacher-school percentage. | district_state_year | ling_distance_nonzero_mean |
+| 2014-15 | 2011-12 | 0.087 | 0.426 | 0.204 | 0.838 | dise_report_single_teacher_school_share | Single-teacher schools (%) | estimated_report_cards | Published all-school single-teacher-school percentage. | district_state_year | ling_distance_nonzero_mean |
+| 2013-14 | 2012-13 | 0.866 | 0.182 | 4.760 | 0.000 | dise_report_girls_toilet_school_share | Schools with girls’ toilet (%) | estimated_report_cards | Published all-school eligible-school percentage; 2011-12 is excluded because the report-card denominator changes from all schools to girls’/coeducational schools in 2012-13. | district_year | ling_distance_nonzero_mean |
+| 2014-15 | 2012-13 | 0.659 | 0.440 | 1.499 | 0.134 | dise_report_girls_toilet_school_share | Schools with girls’ toilet (%) | estimated_report_cards | Published all-school eligible-school percentage; 2011-12 is excluded because the report-card denominator changes from all schools to girls’/coeducational schools in 2012-13. | district_year | ling_distance_nonzero_mean |
+| 2013-14 | 2012-13 | 0.888 | 0.648 | 1.372 | 0.170 | dise_report_girls_toilet_school_share | Schools with girls’ toilet (%) | estimated_report_cards | Published all-school eligible-school percentage; 2011-12 is excluded because the report-card denominator changes from all schools to girls’/coeducational schools in 2012-13. | district_state_year | ling_distance_nonzero_mean |
+| 2014-15 | 2012-13 | -0.092 | 1.545 | -0.060 | 0.952 | dise_report_girls_toilet_school_share | Schools with girls’ toilet (%) | estimated_report_cards | Published all-school eligible-school percentage; 2011-12 is excluded because the report-card denominator changes from all schools to girls’/coeducational schools in 2012-13. | district_state_year | ling_distance_nonzero_mean |
+
+Publication-derived school-quality trajectories: year coefficients
 
 ## District-level treatment and instrument check
 
@@ -671,8 +822,8 @@ analysis_table(weak_iv_outcomes, "Weak-IV-aware exploratory outcome estimates", 
 | unadjusted\_\_nonzero_mean_sensitivity_low | unadjusted | nonzero_mean_sensitivity_low | -0.00433625242534929 | 0.00264725791659205 | 0.101971064194068 | 2.37485334182605 | 0.123859099964951 | 2.37485334182605 | 0.12385909996495 | -0.0115750291127703 | 0.00110238372502575 | FALSE | 1 | FALSE | TRUE | -0.0115750291127703 | 0.00110238372502575 | FALSE | FALSE | \[-0.011575, 0.00110238\] | 573 | estimated | NA |
 | unadjusted\_\_nonzero_mean_sensitivity_high | unadjusted | nonzero_mean_sensitivity_high | -0.0037167968880124 | 0.00310408350849609 | 0.231653373418154 | 1.30529382013151 | 0.253729016834483 | 1.30529382013151 | 0.253729016834484 | -0.0121262209752832 | 0.00330715117507724 | FALSE | 1 | FALSE | TRUE | -0.0121262209752832 | 0.00330715117507724 | FALSE | FALSE | \[-0.0121262, 0.00330715\] | 573 | estimated | NA |
 | unadjusted\_\_nonzero_mean_hindi_urdu_separate | unadjusted | nonzero_mean_hindi_urdu_separate | -0.00455995546137914 | 0.00254078415357537 | 0.0732315291368704 | 2.73937569324302 | 0.0984544257181452 | 2.73937569324302 | 0.0984544257181453 | -0.0110238372502574 | 0.00110238372502575 | FALSE | 1 | FALSE | TRUE | -0.0110238372502574 | 0.00110238372502575 | FALSE | FALSE | \[-0.0110238, 0.00110238\] | 573 | estimated | NA |
-| unadjusted\_\_distance_shares_all | unadjusted | distance_shares_all | -0.00101785666306581 | 0.00131045142468129 | 0.437644343731445 | 16.3136517864742 | 4.72697094720407e-15 | 16.3136517864742 | 4.72697094720391e-15 | NA | NA | TRUE | 0 | FALSE | FALSE | NA | NA | FALSE | FALSE | NA | 573 | estimated | NA |
-| unadjusted\_\_distance_shares_all_unmapped | unadjusted | distance_shares_all_unmapped | -0.00154785452819314 | 0.00118985776899343 | 0.193828294423888 | 22.3705737936252 | 1.71239807208146e-20 | 22.3705737936253 | 1.71239807208106e-20 | NA | NA | TRUE | 0 | FALSE | FALSE | NA | NA | FALSE | FALSE | NA | 573 | estimated | NA |
+| unadjusted\_\_distance_shares_all | unadjusted | distance_shares_all | -0.00101785666306581 | 0.00131045142468129 | 0.437644343731445 | 16.3136517864742 | 4.72697094720407e-15 | 16.3136517864742 | 4.72697094720394e-15 | NA | NA | TRUE | 0 | FALSE | FALSE | NA | NA | FALSE | FALSE | NA | 573 | estimated | NA |
+| unadjusted\_\_distance_shares_all_unmapped | unadjusted | distance_shares_all_unmapped | -0.00154785452819314 | 0.00118985776899343 | 0.193828294423888 | 22.3705737936252 | 1.71239807208142e-20 | 22.3705737936253 | 1.71239807208108e-20 | NA | NA | TRUE | 0 | FALSE | FALSE | NA | NA | FALSE | FALSE | NA | 573 | estimated | NA |
 | Table truncated in rendered note; full CSV has 93 rows. |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 
 Weak-IV-aware exploratory outcome estimates
@@ -723,28 +874,28 @@ analysis_table(iv_joint_balance, "Joint holdout-covariate balance tests", max_ro
 
 | specification_id | adjustment_id | construction_id | fixed_effect | instrument | tested_covariates | n_tested_covariates | joint_f | joint_p | n | status | reason |
 |:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|
-| unadjusted\_\_nonzero_mean | unadjusted | nonzero_mean | none | ling_distance_nonzero_mean | log_population_2001;urban_share_2001;adult_secondary_plus_share_2001;sc_share_2001;st_share_2001;muslim_share_2001;dependency_ratio_2001;electricity_access_share_2001;log_population_density_2001;literacy_share_2001;worker_share_2001;cultivator_share_workers_2001;agricultural_labourer_share_workers_2001 | 13 | 7.99307457370494 | 8.90174408009716e-15 | 573 | estimated |  |
+| unadjusted\_\_nonzero_mean | unadjusted | nonzero_mean | none | ling_distance_nonzero_mean | log_population_2001;urban_share_2001;adult_secondary_plus_share_2001;sc_share_2001;st_share_2001;muslim_share_2001;dependency_ratio_2001;electricity_access_share_2001;log_population_density_2001;literacy_share_2001;worker_share_2001;cultivator_share_workers_2001;agricultural_labourer_share_workers_2001 | 13 | 7.99307457370493 | 8.90174408009734e-15 | 573 | estimated |  |
 | unadjusted\_\_distant_share | unadjusted | distant_share | none | ling_share_distance_ge3 | log_population_2001;urban_share_2001;adult_secondary_plus_share_2001;sc_share_2001;st_share_2001;muslim_share_2001;dependency_ratio_2001;electricity_access_share_2001;log_population_density_2001;literacy_share_2001;worker_share_2001;cultivator_share_workers_2001;agricultural_labourer_share_workers_2001 | 13 | 50.5411642024887 | 1.65742599834248e-85 | 573 | estimated |  |
 | unadjusted\_\_top3_legacy | unadjusted | top3_legacy | none | ling_distance_top3_legacy | log_population_2001;urban_share_2001;adult_secondary_plus_share_2001;sc_share_2001;st_share_2001;muslim_share_2001;dependency_ratio_2001;electricity_access_share_2001;log_population_density_2001;literacy_share_2001;worker_share_2001;cultivator_share_workers_2001;agricultural_labourer_share_workers_2001 | 13 | 16.1760554308659 | 1.54201329453102e-31 | 573 | estimated |  |
 | unadjusted\_\_nonzero_mean_hindi_urdu | unadjusted | nonzero_mean_hindi_urdu | none | ling_distance_nonzero_mean | log_population_2001;urban_share_2001;adult_secondary_plus_share_2001;sc_share_2001;st_share_2001;muslim_share_2001;dependency_ratio_2001;electricity_access_share_2001;log_population_density_2001;literacy_share_2001;worker_share_2001;cultivator_share_workers_2001;agricultural_labourer_share_workers_2001 | 13 | 5.79296094809036 | 4.56458363405227e-10 | 573 | estimated |  |
-| unadjusted\_\_nonzero_mean_shastry | unadjusted | nonzero_mean_shastry | none | ling_distance_nonzero_mean | log_population_2001;urban_share_2001;adult_secondary_plus_share_2001;sc_share_2001;st_share_2001;muslim_share_2001;dependency_ratio_2001;electricity_access_share_2001;log_population_density_2001;literacy_share_2001;worker_share_2001;cultivator_share_workers_2001;agricultural_labourer_share_workers_2001 | 13 | 6.48007529472653 | 1.5518690180035e-11 | 573 | estimated |  |
-| unadjusted\_\_nonzero_mean_sensitivity_low | unadjusted | nonzero_mean_sensitivity_low | none | ling_distance_nonzero_mean_sensitivity_low | log_population_2001;urban_share_2001;adult_secondary_plus_share_2001;sc_share_2001;st_share_2001;muslim_share_2001;dependency_ratio_2001;electricity_access_share_2001;log_population_density_2001;literacy_share_2001;worker_share_2001;cultivator_share_workers_2001;agricultural_labourer_share_workers_2001 | 13 | 6.36114512118508 | 2.78930955335088e-11 | 573 | estimated |  |
-| unadjusted\_\_nonzero_mean_sensitivity_high | unadjusted | nonzero_mean_sensitivity_high | none | ling_distance_nonzero_mean_sensitivity_high | log_population_2001;urban_share_2001;adult_secondary_plus_share_2001;sc_share_2001;st_share_2001;muslim_share_2001;dependency_ratio_2001;electricity_access_share_2001;log_population_density_2001;literacy_share_2001;worker_share_2001;cultivator_share_workers_2001;agricultural_labourer_share_workers_2001 | 13 | 7.13883140926004 | 6.02804613164417e-13 | 573 | estimated |  |
-| unadjusted\_\_nonzero_mean_hindi_urdu_separate | unadjusted | nonzero_mean_hindi_urdu_separate | none | ling_distance_nonzero_mean | log_population_2001;urban_share_2001;adult_secondary_plus_share_2001;sc_share_2001;st_share_2001;muslim_share_2001;dependency_ratio_2001;electricity_access_share_2001;log_population_density_2001;literacy_share_2001;worker_share_2001;cultivator_share_workers_2001;agricultural_labourer_share_workers_2001 | 13 | 5.79715437222931 | 4.4839106922886e-10 | 573 | estimated |  |
-| unadjusted\_\_glottolog_mean | unadjusted | glottolog_mean | none | ling_distance_glottolog_nonhindi_mean | log_population_2001;urban_share_2001;adult_secondary_plus_share_2001;sc_share_2001;st_share_2001;muslim_share_2001;dependency_ratio_2001;electricity_access_share_2001;log_population_density_2001;literacy_share_2001;worker_share_2001;cultivator_share_workers_2001;agricultural_labourer_share_workers_2001 | 13 | 6.9668761503136 | 1.39559463586044e-12 | 573 | estimated |  |
+| unadjusted\_\_nonzero_mean_shastry | unadjusted | nonzero_mean_shastry | none | ling_distance_nonzero_mean | log_population_2001;urban_share_2001;adult_secondary_plus_share_2001;sc_share_2001;st_share_2001;muslim_share_2001;dependency_ratio_2001;electricity_access_share_2001;log_population_density_2001;literacy_share_2001;worker_share_2001;cultivator_share_workers_2001;agricultural_labourer_share_workers_2001 | 13 | 6.48007529472653 | 1.55186901800352e-11 | 573 | estimated |  |
+| unadjusted\_\_nonzero_mean_sensitivity_low | unadjusted | nonzero_mean_sensitivity_low | none | ling_distance_nonzero_mean_sensitivity_low | log_population_2001;urban_share_2001;adult_secondary_plus_share_2001;sc_share_2001;st_share_2001;muslim_share_2001;dependency_ratio_2001;electricity_access_share_2001;log_population_density_2001;literacy_share_2001;worker_share_2001;cultivator_share_workers_2001;agricultural_labourer_share_workers_2001 | 13 | 6.36114512118508 | 2.7893095533509e-11 | 573 | estimated |  |
+| unadjusted\_\_nonzero_mean_sensitivity_high | unadjusted | nonzero_mean_sensitivity_high | none | ling_distance_nonzero_mean_sensitivity_high | log_population_2001;urban_share_2001;adult_secondary_plus_share_2001;sc_share_2001;st_share_2001;muslim_share_2001;dependency_ratio_2001;electricity_access_share_2001;log_population_density_2001;literacy_share_2001;worker_share_2001;cultivator_share_workers_2001;agricultural_labourer_share_workers_2001 | 13 | 7.13883140926004 | 6.0280461316441e-13 | 573 | estimated |  |
+| unadjusted\_\_nonzero_mean_hindi_urdu_separate | unadjusted | nonzero_mean_hindi_urdu_separate | none | ling_distance_nonzero_mean | log_population_2001;urban_share_2001;adult_secondary_plus_share_2001;sc_share_2001;st_share_2001;muslim_share_2001;dependency_ratio_2001;electricity_access_share_2001;log_population_density_2001;literacy_share_2001;worker_share_2001;cultivator_share_workers_2001;agricultural_labourer_share_workers_2001 | 13 | 5.79715437222932 | 4.48391069228847e-10 | 573 | estimated |  |
+| unadjusted\_\_glottolog_mean | unadjusted | glottolog_mean | none | ling_distance_glottolog_nonhindi_mean | log_population_2001;urban_share_2001;adult_secondary_plus_share_2001;sc_share_2001;st_share_2001;muslim_share_2001;dependency_ratio_2001;electricity_access_share_2001;log_population_density_2001;literacy_share_2001;worker_share_2001;cultivator_share_workers_2001;agricultural_labourer_share_workers_2001 | 13 | 6.9668761503136 | 1.39559463586046e-12 | 573 | estimated |  |
 | unadjusted\_\_glottolog_mean_shastry | unadjusted | glottolog_mean_shastry | none | ling_distance_glottolog_nonhindi_mean | log_population_2001;urban_share_2001;adult_secondary_plus_share_2001;sc_share_2001;st_share_2001;muslim_share_2001;dependency_ratio_2001;electricity_access_share_2001;log_population_density_2001;literacy_share_2001;worker_share_2001;cultivator_share_workers_2001;agricultural_labourer_share_workers_2001 | 13 | 6.08232630991346 | 1.10194324361083e-10 | 573 | estimated |  |
 | unadjusted\_\_dyen_noncognate | unadjusted | dyen_noncognate | none | ling_distance_dyen_noncognate_pct | log_population_2001;urban_share_2001;adult_secondary_plus_share_2001;sc_share_2001;st_share_2001;muslim_share_2001;dependency_ratio_2001;electricity_access_share_2001;log_population_density_2001;literacy_share_2001;worker_share_2001;cultivator_share_workers_2001;agricultural_labourer_share_workers_2001 | 13 | 17.3261028318373 | 9.29403984472188e-34 | 573 | estimated |  |
-| unadjusted\_\_dyen_noncognate_shastry | unadjusted | dyen_noncognate_shastry | none | ling_distance_dyen_noncognate_pct | log_population_2001;urban_share_2001;adult_secondary_plus_share_2001;sc_share_2001;st_share_2001;muslim_share_2001;dependency_ratio_2001;electricity_access_share_2001;log_population_density_2001;literacy_share_2001;worker_share_2001;cultivator_share_workers_2001;agricultural_labourer_share_workers_2001 | 13 | 11.5781986268508 | 2.62746348234377e-22 | 573 | estimated |  |
+| unadjusted\_\_dyen_noncognate_shastry | unadjusted | dyen_noncognate_shastry | none | ling_distance_dyen_noncognate_pct | log_population_2001;urban_share_2001;adult_secondary_plus_share_2001;sc_share_2001;st_share_2001;muslim_share_2001;dependency_ratio_2001;electricity_access_share_2001;log_population_density_2001;literacy_share_2001;worker_share_2001;cultivator_share_workers_2001;agricultural_labourer_share_workers_2001 | 13 | 11.5781986268508 | 2.62746348234374e-22 | 573 | estimated |  |
 | region_main\_\_nonzero_mean | region_main | nonzero_mean | region | ling_distance_nonzero_mean | literacy_share_2001;worker_share_2001;cultivator_share_workers_2001;agricultural_labourer_share_workers_2001 | 4 | 13.256332255539 | 2.54250295822459e-10 | 573 | estimated |  |
 | region_main\_\_distant_share | region_main | distant_share | region | ling_share_distance_ge3 | literacy_share_2001;worker_share_2001;cultivator_share_workers_2001;agricultural_labourer_share_workers_2001 | 4 | 2.41287262333319 | 0.0480174902151429 | 573 | estimated |  |
-| region_main\_\_top3_legacy | region_main | top3_legacy | region | ling_distance_top3_legacy | literacy_share_2001;worker_share_2001;cultivator_share_workers_2001;agricultural_labourer_share_workers_2001 | 4 | 0.643356743376577 | 0.631773913601768 | 573 | estimated |  |
-| region_main\_\_nonzero_mean_hindi_urdu | region_main | nonzero_mean_hindi_urdu | region | ling_distance_nonzero_mean | literacy_share_2001;worker_share_2001;cultivator_share_workers_2001;agricultural_labourer_share_workers_2001 | 4 | 12.2917567781619 | 1.39389900296398e-09 | 573 | estimated |  |
+| region_main\_\_top3_legacy | region_main | top3_legacy | region | ling_distance_top3_legacy | literacy_share_2001;worker_share_2001;cultivator_share_workers_2001;agricultural_labourer_share_workers_2001 | 4 | 0.643356743376577 | 0.631773913601769 | 573 | estimated |  |
+| region_main\_\_nonzero_mean_hindi_urdu | region_main | nonzero_mean_hindi_urdu | region | ling_distance_nonzero_mean | literacy_share_2001;worker_share_2001;cultivator_share_workers_2001;agricultural_labourer_share_workers_2001 | 4 | 12.2917567781619 | 1.39389900296397e-09 | 573 | estimated |  |
 | region_main\_\_nonzero_mean_shastry | region_main | nonzero_mean_shastry | region | ling_distance_nonzero_mean | literacy_share_2001;worker_share_2001;cultivator_share_workers_2001;agricultural_labourer_share_workers_2001 | 4 | 11.608678739785 | 4.66777041616539e-09 | 573 | estimated |  |
 | region_main\_\_nonzero_mean_sensitivity_low | region_main | nonzero_mean_sensitivity_low | region | ling_distance_nonzero_mean_sensitivity_low | literacy_share_2001;worker_share_2001;cultivator_share_workers_2001;agricultural_labourer_share_workers_2001 | 4 | 11.6965008297178 | 3.99624285168773e-09 | 573 | estimated |  |
 | region_main\_\_nonzero_mean_sensitivity_high | region_main | nonzero_mean_sensitivity_high | region | ling_distance_nonzero_mean_sensitivity_high | literacy_share_2001;worker_share_2001;cultivator_share_workers_2001;agricultural_labourer_share_workers_2001 | 4 | 5.32052853836261 | 0.000328479471183337 | 573 | estimated |  |
 | region_main\_\_nonzero_mean_hindi_urdu_separate | region_main | nonzero_mean_hindi_urdu_separate | region | ling_distance_nonzero_mean | literacy_share_2001;worker_share_2001;cultivator_share_workers_2001;agricultural_labourer_share_workers_2001 | 4 | 14.6490790761642 | 2.21897221832896e-11 | 573 | estimated |  |
 | region_main\_\_glottolog_mean | region_main | glottolog_mean | region | ling_distance_glottolog_nonhindi_mean | literacy_share_2001;worker_share_2001;cultivator_share_workers_2001;agricultural_labourer_share_workers_2001 | 4 | 2.26374093934227 | 0.0611510902689427 | 573 | estimated |  |
-| region_main\_\_glottolog_mean_shastry | region_main | glottolog_mean_shastry | region | ling_distance_glottolog_nonhindi_mean | literacy_share_2001;worker_share_2001;cultivator_share_workers_2001;agricultural_labourer_share_workers_2001 | 4 | 2.41873233711915 | 0.047565812153335 | 573 | estimated |  |
+| region_main\_\_glottolog_mean_shastry | region_main | glottolog_mean_shastry | region | ling_distance_glottolog_nonhindi_mean | literacy_share_2001;worker_share_2001;cultivator_share_workers_2001;agricultural_labourer_share_workers_2001 | 4 | 2.41873233711914 | 0.047565812153335 | 573 | estimated |  |
 | region_main\_\_dyen_noncognate | region_main | dyen_noncognate | region | ling_distance_dyen_noncognate_pct | literacy_share_2001;worker_share_2001;cultivator_share_workers_2001;agricultural_labourer_share_workers_2001 | 4 | 5.71031199888573 | 0.000165060699621946 | 573 | estimated |  |
 | region_main\_\_dyen_noncognate_shastry | region_main | dyen_noncognate_shastry | region | ling_distance_dyen_noncognate_pct | literacy_share_2001;worker_share_2001;cultivator_share_workers_2001;agricultural_labourer_share_workers_2001 | 4 | 6.09946491908444 | 8.29891959859627e-05 | 573 | estimated |  |
 | region_expanded\_\_nonzero_mean |  |  |  |  |  | 0 | NA | NA | NA | not_applicable | All diagnostic balance covariates are already included as nuisance controls. |
@@ -836,36 +987,36 @@ analysis_table(
 
 | specification_id | adjustment_id | construction_id | instrument | fixed_effect | linear_slope | spearman_rho | isotonic_r_squared | n_bins | share_nondecreasing_bin_steps | n_negative_bin_steps | n_state_slopes | share_negative_state_slopes | n | status | reason |
 |:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|
-| region_main\_\_nonzero_mean | region_main | nonzero_mean | ling_distance_nonzero_mean | region | 4.07038406394942 | 0.207409306311107 | 0.0626530414156398 | 10 | 0.777777777777778 | 2 | 26 | 0.269230769230769 | 573 | estimated | NA |
-| region_main\_\_distant_share | region_main | distant_share | ling_share_distance_ge3 | region | -0.0533459056841136 | -0.0634988176170656 | 0.0132199712468269 | 10 | 0.333333333333333 | 6 | 26 | 0.461538461538462 | 573 | estimated | NA |
+| region_main\_\_nonzero_mean | region_main | nonzero_mean | ling_distance_nonzero_mean | region | 4.07038406394939 | 0.207409306311107 | 0.0626530414156411 | 10 | 0.777777777777778 | 2 | 26 | 0.269230769230769 | 573 | estimated | NA |
+| region_main\_\_distant_share | region_main | distant_share | ling_share_distance_ge3 | region | -0.0533459056841132 | -0.0634988176170656 | 0.0132199712468263 | 10 | 0.333333333333333 | 6 | 26 | 0.461538461538462 | 573 | estimated | NA |
 | region_main\_\_top3_legacy | region_main | top3_legacy | ling_distance_top3_legacy | region | 3.87944999219917 | 0.284420980628362 | 0.101624018823417 | 10 | 0.666666666666667 | 3 | 26 | 0.346153846153846 | 573 | estimated | NA |
-| region_main\_\_nonzero_mean_hindi_urdu | region_main | nonzero_mean_hindi_urdu | ling_distance_nonzero_mean | region | 4.0785251040729 | 0.208390893999373 | 0.0623218066599762 | 10 | 0.777777777777778 | 2 | 26 | 0.269230769230769 | 573 | estimated | NA |
-| region_main\_\_nonzero_mean_shastry | region_main | nonzero_mean_shastry | ling_distance_nonzero_mean | region | 4.03728543511109 | 0.206282352559967 | 0.0624045981333906 | 10 | 0.777777777777778 | 2 | 26 | 0.230769230769231 | 573 | estimated | NA |
-| region_main\_\_nonzero_mean_sensitivity_low | region_main | nonzero_mean_sensitivity_low | ling_distance_nonzero_mean_sensitivity_low | region | 4.0825347316473 | 0.210066972996356 | 0.0624910885986472 | 10 | 0.777777777777778 | 2 | 26 | 0.230769230769231 | 573 | estimated | NA |
-| region_main\_\_nonzero_mean_sensitivity_high | region_main | nonzero_mean_sensitivity_high | ling_distance_nonzero_mean_sensitivity_high | region | 0.53959052973382 | 0.109225278616161 | 0.0135160680822839 | 10 | 0.555555555555556 | 4 | 26 | 0.269230769230769 | 573 | estimated | NA |
-| region_main\_\_nonzero_mean_hindi_urdu_separate | region_main | nonzero_mean_hindi_urdu_separate | ling_distance_nonzero_mean | region | 3.9799750643284 | 0.199300890655762 | 0.0686304066848693 | 10 | 0.777777777777778 | 2 | 26 | 0.230769230769231 | 573 | estimated | NA |
-| region_main\_\_glottolog_mean | region_main | glottolog_mean | ling_distance_glottolog_nonhindi_mean | region | -0.198636080357125 | 0.000426594220490275 | 0.00762977859041081 | 10 | 0.444444444444444 | 5 | 26 | 0.5 | 573 | estimated | NA |
-| region_main\_\_glottolog_mean_shastry | region_main | glottolog_mean_shastry | ling_distance_glottolog_nonhindi_mean | region | -0.181445387314719 | 0.00591778289390344 | 0.00789427597848769 | 10 | 0.444444444444444 | 5 | 26 | 0.461538461538462 | 573 | estimated | NA |
-| region_main\_\_dyen_noncognate | region_main | dyen_noncognate | ling_distance_dyen_noncognate_pct | region | -0.0234088208073109 | 0.0231140969871656 | 0.00924814986009304 | 10 | 0.555555555555556 | 4 | 26 | 0.384615384615385 | 573 | estimated | NA |
-| region_main\_\_dyen_noncognate_shastry | region_main | dyen_noncognate_shastry | ling_distance_dyen_noncognate_pct | region | -0.0287165494018947 | 0.0194951900353509 | 0.00747684100966128 | 10 | 0.444444444444444 | 5 | 26 | 0.384615384615385 | 573 | estimated | NA |
-| state_main\_\_nonzero_mean | state_main | nonzero_mean | ling_distance_nonzero_mean | state | 0.847230978551493 | 0.0671566334316941 | 0.0659370187603894 | 10 | 0.666666666666667 | 3 | 26 | 0.346153846153846 | 573 | estimated | NA |
-| state_main\_\_distant_share | state_main | distant_share | ling_share_distance_ge3 | state | 0.0278694360992876 | 0.0794288714733102 | 0.0236997221882597 | 10 | 0.555555555555556 | 4 | 26 | 0.384615384615385 | 573 | estimated | NA |
-| state_main\_\_top3_legacy | state_main | top3_legacy | ling_distance_top3_legacy | state | 1.24979225458437 | 0.100332052062355 | 0.0409155790691569 | 10 | 0.555555555555556 | 4 | 26 | 0.423076923076923 | 573 | estimated | NA |
-| state_main\_\_nonzero_mean_hindi_urdu | state_main | nonzero_mean_hindi_urdu | ling_distance_nonzero_mean | state | 0.872139712431346 | 0.0714700316922255 | 0.0679330184323957 | 10 | 0.777777777777778 | 2 | 26 | 0.384615384615385 | 573 | estimated | NA |
-| state_main\_\_nonzero_mean_shastry | state_main | nonzero_mean_shastry | ling_distance_nonzero_mean | state | 0.854221402674301 | 0.0710564496160205 | 0.0655383285705257 | 10 | 0.555555555555556 | 4 | 26 | 0.384615384615385 | 573 | estimated | NA |
-| state_main\_\_nonzero_mean_sensitivity_low | state_main | nonzero_mean_sensitivity_low | ling_distance_nonzero_mean_sensitivity_low | state | 0.804231223467154 | 0.0675818881667432 | 0.0660275798863265 | 10 | 0.555555555555556 | 4 | 26 | 0.423076923076923 | 573 | estimated | NA |
-| state_main\_\_nonzero_mean_sensitivity_high | state_main | nonzero_mean_sensitivity_high | ling_distance_nonzero_mean_sensitivity_high | state | 0.445275719612497 | 0.0525286232092515 | 0.0115899218725664 | 10 | 0.555555555555556 | 4 | 26 | 0.307692307692308 | 573 | estimated | NA |
-| state_main\_\_nonzero_mean_hindi_urdu_separate | state_main | nonzero_mean_hindi_urdu_separate | ling_distance_nonzero_mean | state | 0.869660296571507 | 0.07101014169077 | 0.06463079836133 | 10 | 0.555555555555556 | 4 | 26 | 0.269230769230769 | 573 | estimated | NA |
-| state_main\_\_glottolog_mean | state_main | glottolog_mean | ling_distance_glottolog_nonhindi_mean | state | -0.118360493494532 | -0.0259467259850353 | 0.0155832398904854 | 10 | 0.333333333333333 | 6 | 26 | 0.461538461538462 | 573 | estimated | NA |
-| state_main\_\_glottolog_mean_shastry | state_main | glottolog_mean_shastry | ling_distance_glottolog_nonhindi_mean | state | -0.0839373651539127 | -0.0088074357005528 | 0.0164578305572497 | 10 | 0.444444444444444 | 5 | 26 | 0.423076923076923 | 573 | estimated | NA |
-| state_main\_\_dyen_noncognate | state_main | dyen_noncognate | ling_distance_dyen_noncognate_pct | state | 0.0123273121018981 | 0.0452265777894689 | 0.0120467956686527 | 10 | 0.555555555555556 | 4 | 26 | 0.461538461538462 | 573 | estimated | NA |
-| state_main\_\_dyen_noncognate_shastry | state_main | dyen_noncognate_shastry | ling_distance_dyen_noncognate_pct | state | 0.0118283070992545 | 0.0419717557375583 | 0.0119849379709549 | 10 | 0.555555555555556 | 4 | 26 | 0.423076923076923 | 573 | estimated | NA |
-| state_expanded\_\_nonzero_mean | state_expanded | nonzero_mean | ling_distance_nonzero_mean | state | 0.927946666623571 | 0.0558810363433017 | 0.0613315740228744 | 10 | 0.555555555555556 | 4 | 26 | 0.346153846153846 | 573 | estimated | NA |
-| state_expanded\_\_distant_share | state_expanded | distant_share | ling_share_distance_ge3 | state | 0.0302570088453909 | 0.0741227231458364 | 0.024099475930109 | 10 | 0.555555555555556 | 4 | 26 | 0.384615384615385 | 573 | estimated | NA |
-| state_expanded\_\_top3_legacy | state_expanded | top3_legacy | ling_distance_top3_legacy | state | 1.24824639697791 | 0.0964339580735954 | 0.0446898863412952 | 10 | 0.666666666666667 | 3 | 26 | 0.384615384615385 | 573 | estimated | NA |
-| state_expanded\_\_nonzero_mean_hindi_urdu | state_expanded | nonzero_mean_hindi_urdu | ling_distance_nonzero_mean | state | 0.948160081321907 | 0.0597464724013058 | 0.0616048712342002 | 10 | 0.666666666666667 | 3 | 26 | 0.346153846153846 | 573 | estimated | NA |
-| state_expanded\_\_nonzero_mean_shastry | state_expanded | nonzero_mean_shastry | ling_distance_nonzero_mean | state | 0.932611572908321 | 0.0586270452826448 | 0.061968977711579 | 10 | 0.666666666666667 | 3 | 26 | 0.384615384615385 | 573 | estimated | NA |
-| state_expanded\_\_nonzero_mean_sensitivity_low | state_expanded | nonzero_mean_sensitivity_low | ling_distance_nonzero_mean_sensitivity_low | state | 0.899038830825229 | 0.0555277311119477 | 0.0624856751701968 | 10 | 0.555555555555556 | 4 | 26 | 0.423076923076923 | 573 | estimated | NA |
+| region_main\_\_nonzero_mean_hindi_urdu | region_main | nonzero_mean_hindi_urdu | ling_distance_nonzero_mean | region | 4.07852510407288 | 0.208390893999373 | 0.0623218066599766 | 10 | 0.777777777777778 | 2 | 26 | 0.269230769230769 | 573 | estimated | NA |
+| region_main\_\_nonzero_mean_shastry | region_main | nonzero_mean_shastry | ling_distance_nonzero_mean | region | 4.03728543511108 | 0.206282352559967 | 0.0624045981333906 | 10 | 0.777777777777778 | 2 | 26 | 0.230769230769231 | 573 | estimated | NA |
+| region_main\_\_nonzero_mean_sensitivity_low | region_main | nonzero_mean_sensitivity_low | ling_distance_nonzero_mean_sensitivity_low | region | 4.08253473164729 | 0.210066972996356 | 0.062491088598648 | 10 | 0.777777777777778 | 2 | 26 | 0.230769230769231 | 573 | estimated | NA |
+| region_main\_\_nonzero_mean_sensitivity_high | region_main | nonzero_mean_sensitivity_high | ling_distance_nonzero_mean_sensitivity_high | region | 0.539590529733824 | 0.109225278616161 | 0.0135160680822836 | 10 | 0.555555555555556 | 4 | 26 | 0.269230769230769 | 573 | estimated | NA |
+| region_main\_\_nonzero_mean_hindi_urdu_separate | region_main | nonzero_mean_hindi_urdu_separate | ling_distance_nonzero_mean | region | 3.97997506432838 | 0.199300890655762 | 0.0686304066848706 | 10 | 0.777777777777778 | 2 | 26 | 0.230769230769231 | 573 | estimated | NA |
+| region_main\_\_glottolog_mean | region_main | glottolog_mean | ling_distance_glottolog_nonhindi_mean | region | -0.198636080357126 | 0.000426594220490275 | 0.00762977859041147 | 10 | 0.444444444444444 | 5 | 26 | 0.5 | 573 | estimated | NA |
+| region_main\_\_glottolog_mean_shastry | region_main | glottolog_mean_shastry | ling_distance_glottolog_nonhindi_mean | region | -0.18144538731472 | 0.00591778289390344 | 0.00789427597848769 | 10 | 0.444444444444444 | 5 | 26 | 0.461538461538462 | 573 | estimated | NA |
+| region_main\_\_dyen_noncognate | region_main | dyen_noncognate | ling_distance_dyen_noncognate_pct | region | -0.0234088208073108 | 0.0231140969871656 | 0.00924814986009304 | 10 | 0.555555555555556 | 4 | 26 | 0.384615384615385 | 573 | estimated | NA |
+| region_main\_\_dyen_noncognate_shastry | region_main | dyen_noncognate_shastry | ling_distance_dyen_noncognate_pct | region | -0.0287165494018943 | 0.0194951900353509 | 0.0074768410096625 | 10 | 0.444444444444444 | 5 | 26 | 0.384615384615385 | 573 | estimated | NA |
+| state_main\_\_nonzero_mean | state_main | nonzero_mean | ling_distance_nonzero_mean | state | 0.847230978551485 | 0.0671564420766311 | 0.0659370187603883 | 10 | 0.666666666666667 | 3 | 26 | 0.346153846153846 | 573 | estimated | NA |
+| state_main\_\_distant_share | state_main | distant_share | ling_share_distance_ge3 | state | 0.0278694360992876 | 0.0794286801182472 | 0.0236997221882581 | 10 | 0.555555555555556 | 4 | 26 | 0.384615384615385 | 573 | estimated | NA |
+| state_main\_\_top3_legacy | state_main | top3_legacy | ling_distance_top3_legacy | state | 1.24979225458438 | 0.100331988277334 | 0.0409155790691564 | 10 | 0.555555555555556 | 4 | 26 | 0.423076923076923 | 573 | estimated | NA |
+| state_main\_\_nonzero_mean_hindi_urdu | state_main | nonzero_mean_hindi_urdu | ling_distance_nonzero_mean | state | 0.87213971243134 | 0.0714700954772465 | 0.0679330184323959 | 10 | 0.777777777777778 | 2 | 26 | 0.384615384615385 | 573 | estimated | NA |
+| state_main\_\_nonzero_mean_shastry | state_main | nonzero_mean_shastry | ling_distance_nonzero_mean | state | 0.854221402674295 | 0.0710564496160205 | 0.065538328570525 | 10 | 0.555555555555556 | 4 | 26 | 0.384615384615385 | 573 | estimated | NA |
+| state_main\_\_nonzero_mean_sensitivity_low | state_main | nonzero_mean_sensitivity_low | ling_distance_nonzero_mean_sensitivity_low | state | 0.804231223467146 | 0.0675820795218063 | 0.0660275798863265 | 10 | 0.555555555555556 | 4 | 26 | 0.423076923076923 | 573 | estimated | NA |
+| state_main\_\_nonzero_mean_sensitivity_high | state_main | nonzero_mean_sensitivity_high | ling_distance_nonzero_mean_sensitivity_high | state | 0.445275719612503 | 0.0525287507792935 | 0.0115899218725669 | 10 | 0.555555555555556 | 4 | 26 | 0.307692307692308 | 573 | estimated | NA |
+| state_main\_\_nonzero_mean_hindi_urdu_separate | state_main | nonzero_mean_hindi_urdu_separate | ling_distance_nonzero_mean | state | 0.869660296571493 | 0.071010333045833 | 0.0646307983613275 | 10 | 0.555555555555556 | 4 | 26 | 0.269230769230769 | 573 | estimated | NA |
+| state_main\_\_glottolog_mean | state_main | glottolog_mean | ling_distance_glottolog_nonhindi_mean | state | -0.118360493494526 | -0.0259467259850353 | 0.0155832398904854 | 10 | 0.333333333333333 | 6 | 26 | 0.461538461538462 | 573 | estimated | NA |
+| state_main\_\_glottolog_mean_shastry | state_main | glottolog_mean_shastry | ling_distance_glottolog_nonhindi_mean | state | -0.0839373651539049 | -0.00880762705561582 | 0.0164578305572503 | 10 | 0.444444444444444 | 5 | 26 | 0.423076923076923 | 573 | estimated | NA |
+| state_main\_\_dyen_noncognate | state_main | dyen_noncognate | ling_distance_dyen_noncognate_pct | state | 0.0123273121018976 | 0.0452264502194268 | 0.0120467956686526 | 10 | 0.555555555555556 | 4 | 26 | 0.461538461538462 | 573 | estimated | NA |
+| state_main\_\_dyen_noncognate_shastry | state_main | dyen_noncognate_shastry | ling_distance_dyen_noncognate_pct | state | 0.0118283070992546 | 0.0419717557375583 | 0.0119849379709562 | 10 | 0.555555555555556 | 4 | 26 | 0.423076923076923 | 573 | estimated | NA |
+| state_expanded\_\_nonzero_mean | state_expanded | nonzero_mean | ling_distance_nonzero_mean | state | 0.927946666623568 | 0.0558808449882387 | 0.0613315740228749 | 10 | 0.555555555555556 | 4 | 26 | 0.346153846153846 | 573 | estimated | NA |
+| state_expanded\_\_distant_share | state_expanded | distant_share | ling_share_distance_ge3 | state | 0.0302570088453909 | 0.0741225317907734 | 0.024099475930109 | 10 | 0.555555555555556 | 4 | 26 | 0.384615384615385 | 573 | estimated | NA |
+| state_expanded\_\_top3_legacy | state_expanded | top3_legacy | ling_distance_top3_legacy | state | 1.24824639697792 | 0.0964337667185324 | 0.0446898863412959 | 10 | 0.666666666666667 | 3 | 26 | 0.384615384615385 | 573 | estimated | NA |
+| state_expanded\_\_nonzero_mean_hindi_urdu | state_expanded | nonzero_mean_hindi_urdu | ling_distance_nonzero_mean | state | 0.94816008132189 | 0.0597463448312637 | 0.0616048712341991 | 10 | 0.666666666666667 | 3 | 26 | 0.346153846153846 | 573 | estimated | NA |
+| state_expanded\_\_nonzero_mean_shastry | state_expanded | nonzero_mean_shastry | ling_distance_nonzero_mean | state | 0.93261157290831 | 0.0586270452826448 | 0.0619689777115794 | 10 | 0.666666666666667 | 3 | 26 | 0.384615384615385 | 573 | estimated | NA |
+| state_expanded\_\_nonzero_mean_sensitivity_low | state_expanded | nonzero_mean_sensitivity_low | ling_distance_nonzero_mean_sensitivity_low | state | 0.899038830825221 | 0.0555276035419057 | 0.0624856751701979 | 10 | 0.555555555555556 | 4 | 26 | 0.423076923076923 | 573 | estimated | NA |
 | Table truncated in rendered note; full CSV has 36 rows. |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 
 Residualized scalar first-stage shape diagnostics

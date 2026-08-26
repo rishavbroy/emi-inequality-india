@@ -43,8 +43,8 @@ spatial_bench[spatial_bench$contiguity %in% c("rook", "queen"), c("contiguity", 
 ```
 
       contiguity   n mean_neighbors n_islands elapsed_seconds
-    1       rook 573       5.204188         3           1.264
-    2      queen 573       5.232112         3           1.131
+    1       rook 573       5.204188         3           1.101
+    2      queen 573       5.232112         3           1.121
 
 ``` r
 analysis_table(spatial_bench, "Current rook/queen benchmark")
@@ -52,14 +52,14 @@ analysis_table(spatial_bench, "Current rook/queen benchmark")
 
 | contiguity | n | mean_neighbors | n_islands | n_subgraphs | snap | panel_scope | elapsed_seconds | warnings |
 |:---|---:|---:|---:|---:|:---|:---|---:|:---|
-| rook | 573 | 5.204 | 3 | 4 | NA | current_final_matched_panel_non_empty_geometry | 1.264 | some observations have no neighbours; |
+| rook | 573 | 5.204 | 3 | 4 | NA | current_final_matched_panel_non_empty_geometry | 1.101 | some observations have no neighbours; |
 
 Current rook/queen benchmark
 
 if this seems unexpected, try increasing the snap argument.; neighbour
 object has 4 sub-graphs; if this sub-graph count seems unexpected, try
 increasing the snap argument. \| \|queen \| 573\| 5.232\| 3\| 4\|NA
-\|current_final_matched_panel_non_empty_geometry \| 1.131\|some
+\|current_final_matched_panel_non_empty_geometry \| 1.121\|some
 observations have no neighbours; if this seems unexpected, try
 increasing the snap argument.; neighbour object has 4 sub-graphs; if
 this sub-graph count seems unexpected, try increasing the snap argument.
@@ -71,7 +71,7 @@ analysis_table(spatial_diag, "Current-vs-legacy rook/queen comparison")
 
 | contiguity | n | mean_neighbors | n_islands | n_subgraphs | snap | panel_scope | elapsed_seconds | warnings | legacy_mean_neighbors | mean_neighbor_delta_from_legacy | pct_delta_from_legacy |
 |:---|---:|---:|---:|---:|:---|:---|---:|:---|---:|---:|---:|
-| rook | 573 | 5.204 | 3 | 4 | NA | current_final_matched_panel_non_empty_geometry | 1.398 | some observations have no neighbours; |  |  |  |
+| rook | 573 | 5.204 | 3 | 4 | NA | current_final_matched_panel_non_empty_geometry | 1.124 | some observations have no neighbours; |  |  |  |
 
 Current-vs-legacy rook/queen comparison
 
@@ -79,7 +79,7 @@ if this seems unexpected, try increasing the snap argument.; neighbour
 object has 4 sub-graphs; if this sub-graph count seems unexpected, try
 increasing the snap argument. \| 4.780\| 0.424\| 8.870\| \|queen \|
 573\| 5.232\| 3\| 4\|NA \|current_final_matched_panel_non_empty_geometry
-\| 1.154\|some observations have no neighbours; if this seems
+\| 1.084\|some observations have no neighbours; if this seems
 unexpected, try increasing the snap argument.; neighbour object has 4
 sub-graphs; if this sub-graph count seems unexpected, try increasing the
 snap argument. \| 4.783\| 0.449\| 9.379\|

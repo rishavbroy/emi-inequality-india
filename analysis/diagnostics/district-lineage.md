@@ -186,11 +186,11 @@ analysis_table(inventory, "Input inventory", max_rows = 60)
 | concordance_census_region | data/raw/concordance/census_region.csv | csv | published_concordance | FALSE | TRUE | TRUE | 21341 |
 | lineage_gold | data/metadata/district_match_gold.csv | csv | calibration | FALSE | TRUE | TRUE | 7217 |
 | lineage_adjudications | data/metadata/district_adjudications.csv | csv | adjudication | FALSE | TRUE | TRUE | 653364 |
-| lineage_events | data/metadata/district_admin_events.csv | csv | event_adjudication | FALSE | TRUE | TRUE | 14139 |
+| lineage_events | data/metadata/district_admin_events.csv | csv | event_adjudication | FALSE | TRUE | TRUE | 15254 |
 | lineage_allocation_weights | data/metadata/district_allocation_weights.csv | allocation_csv | allocation_adjudication | FALSE | TRUE | TRUE | 226672 |
 | lineage_geometry_carrybacks | data/metadata/district_geometry_carrybacks.csv | csv | geometry_adjudication | FALSE | TRUE | TRUE | 2983 |
 | lineage_primary_reviews | data/metadata/district_primary_reviews.csv | csv | primary_review | FALSE | TRUE | TRUE | 78552 |
-| lineage_sources | data/metadata/district_lineage_sources.csv | csv | source_registry | FALSE | TRUE | TRUE | 11737 |
+| lineage_sources | data/metadata/district_lineage_sources.csv | csv | source_registry | FALSE | TRUE | TRUE | 12407 |
 
 Input inventory
 
@@ -246,10 +246,12 @@ analysis_table(registry, "Evidence registry", max_rows = 60)
 | punjab_2011_parent_district_review | Government of Punjab district and municipal records documenting the 2011 creation of Pathankot from Gurdaspur and Fazilka from Firozpur | https://mcpathankot.punjab.gov.in/; https://pathankot.nic.in/history/; https://fazilka.nic.in/about-district/ | 2026-07-23 |
 | lineage_legacy_review | Archived reviewed comparison of the current conservative crosswalk with the inherited pre-lineage district panel | outputs/diagnostics/extended/district_lineage/legacy_crosswalk_comparison.csv; data/metadata/district_legacy_mapping_reviews.csv | 2026-07-23 |
 | census_registry_2001_2011_continuity | Office of the Registrar General & Census Commissioner, India, Census-2001 and Census-2011 district registries; reviewed canonical state/district continuity | data/raw/census_2001/languages/C16; data/raw/shrug/open-polygons/shrug-pc11dist-poly-gpkg/district.gpkg | 2026-07-24 |
-| official_single_parent_district_histories_2026 | Official Union, state, district, court, and audit histories documenting single-parent district creation or official renaming for Ganderbal, Kurung Kumey, Lower Dibang Valley, Dima Hasao, Tapi, Shopian, Ramgarh, Longleng, and Peren | https://ganderbal.nic.in/history/; https://ghcitanagar.gov.in/ghcita/Jmt10/WP%28C%29NO269%28AP%292009.pdf; https://dimahasao.assam.gov.in/about-district/district-glance; https://tapi.dcourts.gov.in/about-department/history/; https://shopian.dcourts.gov.in/about-department/history/; https://ramgarh.dcourts.gov.in/about-department/history/; https://tourism.nagaland.gov.in/districts/ | 2026-07-24 |
+| official_single_parent_district_histories_2026 | Official Union, state, district, court, and audit histories documenting single-parent district creation or official renaming for Ganderbal, Kurung Kumey, Lower Dibang Valley, Dima Hasao, Tapi, Shopian, Ramgarh, Longleng, and Peren | https://ganderbal.nic.in/history/; https://ghcitanagar.gov.in/ghcita/Jmt10/WP%28C%29NO269%28AP%292009.pdf; https://roing.nic.in/history/; https://dimahasao.assam.gov.in/about-district/district-glance; https://tapi.dcourts.gov.in/about-department/history/; https://shopian.dcourts.gov.in/about-department/history/; https://ramgarh.dcourts.gov.in/about-department/history/; https://tourism.nagaland.gov.in/districts/ | 2026-08-23 |
 | official_multi_parent_exclusion_2026 | Directorate of Census Operations Assam and Government of Jammu & Kashmir district histories identifying Baksa, Udalguri, and Samba as post-2001 reorganizations for which a defensible single-parent unit weight is unavailable | https://assam.census.gov.in/census_division.php; https://samba.gov.in/location/ | 2026-07-24 |
 | lgd_mod_districts_2001_2011 | Ministry of Panchayati Raj, Local Government Directory, All Districts of India modification report, 01 January 2001 through 01 January 2011 | data/raw/local_government_directory/modifications_01-01-2001_01-01-2011/districts.xls | 2026-07-24 |
 | official_simdega_gumla_history_2026 | District Administration Gumla, About District; Government of India MSME and Jharkhand Space Applications Centre district profiles documenting that Simdega was carved wholly from Gumla on 30 April 2001 | https://gumla.nic.in/about-district/; https://dcmsme.gov.in/dips/2016-17/Simdega.pdf; https://jsac.jharkhand.gov.in/district_profile/Simdega.pdf | 2026-07-24 |
+| official_jamtara_dumka_history_2026 | District Administration Jamtara, district profile and district-at-a-glance pages documenting creation of Jamtara by separation from Dumka on 26 April 2001 | https://jamtara.nic.in/about-district/; https://jamtara.nic.in/district-at-a-glance/ | 2026-08-23 |
+| official_ashoknagar_guna_history_2026 | District Administration Ashoknagar and District Administration Guna pages documenting that Ashoknagar remained part of Guna until its creation as a separate district on 15 August 2003 | https://ashoknagar.nic.in/en/profile/; https://guna.nic.in/%E0%A4%87%E0%A4%A4%E0%A4%BF%E0%A4%B9%E0%A4%BE%E0%A4%B8/ | 2026-08-23 |
 
 Evidence registry
 
@@ -275,11 +277,14 @@ analysis_table(transition, "Census 2011 to Census 2001 transitions", max_rows = 
 
 | state_code_2011 | district_code_2011 | state_code_2001 | district_code_2001 | population_share_to_2001 | area_share_to_2001 | shrid_coverage | mapping_class | source_id | n_shrid_mapped | population_2011_mapped | area_2011_mapped | n_shrid_total | population_2011_total | area_2011_total | n_target_2001_districts |
 |:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| 20 | 367 | 20 | 16 | 1 | 1 | 1 | reviewed_single_parent_ancestry | official_simdega_gumla_history_2026 | NA | NA | NA | NA | NA | NA | NA |
+| 12 | 258 | 12 | 10 | 1 | 1 | 1 | reviewed_single_parent_ancestry | official_single_parent_district_histories_2026 | NA | NA | NA | NA | NA | NA | NA |
+| 20 | 363 | 20 | 11 | 1 | 1 | 1 | reviewed_single_parent_ancestry | official_jamtara_dumka_history_2026 | NA | NA | NA | NA | NA | NA | NA |
+| 23 | 459 | 23 | 7 | 1 | 1 | 1 | reviewed_single_parent_ancestry | official_ashoknagar_guna_history_2026 | NA | NA | NA | NA | NA | NA | NA |
 | 35 | 638 | 35 | 2 | 1 | 1 | 1 | official_lgd_census_code_bridge | lgd_mod_districts_2001_2011 | NA | NA | NA | NA | NA | NA | NA |
 | 35 | 640 | 35 | 1 | 1 | 1 | 1 | official_lgd_census_code_bridge | lgd_mod_districts_2001_2011 | NA | NA | NA | NA | NA | NA | NA |
 | 12 | 253 | 12 | 12 | 1 | 1 | 1 | official_lgd_census_code_bridge | lgd_mod_districts_2001_2011 | NA | NA | NA | NA | NA | NA | NA |
 | 12 | 257 | 12 | 10 | 1 | 1 | 1 | official_lgd_census_code_bridge | lgd_mod_districts_2001_2011 | NA | NA | NA | NA | NA | NA | NA |
-| 12 | 258 | 12 | 15 | 1 | 1 | 1 | official_lgd_census_code_bridge | lgd_mod_districts_2001_2011 | NA | NA | NA | NA | NA | NA | NA |
 | 12 | 245 | 12 | 1 | 1 | 1 | 1 | official_lgd_census_code_bridge | lgd_mod_districts_2001_2011 | NA | NA | NA | NA | NA | NA | NA |
 | 12 | 252 | 12 | 9 | 1 | 1 | 1 | official_lgd_census_code_bridge | lgd_mod_districts_2001_2011 | NA | NA | NA | NA | NA | NA | NA |
 | 18 | 308 | 18 | 13 | 1 | 1 | 1 | official_lgd_census_code_bridge | lgd_mod_districts_2001_2011 | NA | NA | NA | NA | NA | NA | NA |
@@ -332,9 +337,6 @@ analysis_table(transition, "Census 2011 to Census 2001 transitions", max_rows = 
 | 24 | 473 | 24 | 6 | 1 | 1 | 1 | official_lgd_census_code_bridge | lgd_mod_districts_2001_2011 | NA | NA | NA | NA | NA | NA | NA |
 | 24 | 468 | 24 | 1 | 1 | 1 | 1 | official_lgd_census_code_bridge | lgd_mod_districts_2001_2011 | NA | NA | NA | NA | NA | NA | NA |
 | 24 | 471 | 24 | 4 | 1 | 1 | 1 | official_lgd_census_code_bridge | lgd_mod_districts_2001_2011 | NA | NA | NA | NA | NA | NA | NA |
-| 24 | 487 | 24 | 20 | 1 | 1 | 1 | official_lgd_census_code_bridge | lgd_mod_districts_2001_2011 | NA | NA | NA | NA | NA | NA | NA |
-| 24 | 490 | 24 | 24 | 1 | 1 | 1 | official_lgd_census_code_bridge | lgd_mod_districts_2001_2011 | NA | NA | NA | NA | NA | NA | NA |
-| 24 | 470 | 24 | 3 | 1 | 1 | 1 | official_lgd_census_code_bridge | lgd_mod_districts_2001_2011 | NA | NA | NA | NA | NA | NA | NA |
 | Table truncated in rendered note; full CSV has 668 rows. |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 
 Census 2011 to Census 2001 transitions
