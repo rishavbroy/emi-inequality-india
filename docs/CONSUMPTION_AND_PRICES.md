@@ -213,6 +213,22 @@ Census-2001 district, not household-order statistics. They reuse the same
 person-weighted survey design and conservative lineage support as the mean and
 median outcomes.
 
+The registry also includes the design-based `gini_real_mpce` and Atkinson
+indices at epsilon 0.5, 1, and 2. These reuse the same person-weighted district
+domains, sample-support rules, and precision flags. Their uncertainty comes
+directly from `convey::svygini()` and `convey::svyatk()`; no inequality
+linearization is implemented in this repository. `epsilon` is explicit registry
+metadata and is valid only for `survey_atkinson`, so the estimand cannot be
+changed by parsing an outcome name. Higher-epsilon Atkinson outcomes use more
+conservative support thresholds because they place progressively more weight on
+the lower tail.
+
+All Gini and Atkinson rows remain robustness outcomes. They flow through the
+existing district-welfare change and cross-round comparability diagnostics but
+are not added to the registered causal-IV outcomes automatically. Poverty/FGT
+measures remain deferred until the analysis defines a defensible poverty-line
+convention rather than choosing a threshold because the software supports one.
+
 Lower-tail inference uses the standard `{convey}` implementation rather than a
 repository-specific variance formula. `convey::svyisq()` supplies the
 design-linearized total below the requested survey quantile; the welfare adapter
