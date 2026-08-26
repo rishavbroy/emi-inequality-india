@@ -58,7 +58,7 @@ Rplots.pdf
 .texcache/
 
 # analysis notebooks (for now)
-analysis/
+/analysis/
 
 # temporary application sample assembly files
 application-samples/.work/
