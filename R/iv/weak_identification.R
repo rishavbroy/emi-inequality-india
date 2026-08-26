@@ -12,15 +12,50 @@ anderson_rubin_test <- function(
   c(statistic = test[["statistic"]], p.value = test[["p.value"]])
 }
 
-anderson_rubin_acceptance_components <- function(grid) {
-  if (!nrow(grid) || !all(c("beta", "accepted") %in% names(grid))) {
-    return(data.frame())
+normalize_anderson_rubin_acceptance_grid <- function(grid) {
+  x <- safe_df(grid)
+  required <- c("beta", "accepted")
+  missing <- setdiff(required, names(x))
+  if (length(missing)) {
+    stop(
+      "Anderson-Rubin acceptance grid is missing columns: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  if (!nrow(x)) {
+    return(data.frame(beta = numeric(), accepted = logical()))
   }
 
-  ord <- order(grid$beta)
-  beta <- grid$beta[ord]
-  accepted <- as.logical(grid$accepted[ord])
-  accepted[is.na(accepted)] <- FALSE
+  beta <- num(x$beta)
+  if (any(!is.finite(beta))) {
+    stop("Anderson-Rubin acceptance grid contains non-finite beta values.", call. = FALSE)
+  }
+
+  raw <- tolower(trimws(plain_chr(x$accepted)))
+  missing_flag <- is.na(raw) | !nzchar(raw) | raw == "na"
+  truthy <- raw %in% c("true", "t", "1")
+  falsy <- raw %in% c("false", "f", "0")
+  invalid <- !(missing_flag | truthy | falsy)
+  if (any(invalid)) {
+    stop(
+      "Anderson-Rubin acceptance grid contains invalid accepted flags.",
+      call. = FALSE
+    )
+  }
+
+  accepted <- truthy
+  accepted[missing_flag] <- FALSE
+  data.frame(beta = beta, accepted = accepted, stringsAsFactors = FALSE)
+}
+
+anderson_rubin_acceptance_components <- function(grid) {
+  x <- normalize_anderson_rubin_acceptance_grid(grid)
+  if (!nrow(x)) return(data.frame())
+
+  ord <- order(x$beta)
+  beta <- x$beta[ord]
+  accepted <- x$accepted[ord]
   if (!any(accepted)) return(data.frame())
 
   run_start <- accepted & c(TRUE, !accepted[-length(accepted)])
@@ -131,6 +166,18 @@ estimate_anderson_rubin_spec <- function(data, specification, level = 0.95, poin
   )
   components <- anderson_rubin_acceptance_components(grid)
   grid$specification_id <- specification$specification_id
+
+  if (nrow(components)) {
+    components$lower <- num(components$lower)
+    components$upper <- num(components$upper)
+    components$touches_left_grid_edge <- as.logical(
+      plain_chr(components$touches_left_grid_edge)
+    )
+    components$touches_right_grid_edge <- as.logical(
+      plain_chr(components$touches_right_grid_edge)
+    )
+    components$contains_zero <- as.logical(plain_chr(components$contains_zero))
+  }
 
   bounded_interval <- nrow(components) == 1L &&
     !components$touches_left_grid_edge[[1]] &&

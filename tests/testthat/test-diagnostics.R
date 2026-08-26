@@ -2038,3 +2038,33 @@ test_that("dynamic consumption IV validation rejects missing registered AR grids
     "lack Anderson-Rubin grids"
   )
 })
+
+test_that("Anderson-Rubin acceptance components normalize list-column-like inputs", {
+  grid <- data.frame(id = 1:7)
+  grid$beta <- I(as.list(-3:3))
+  grid$accepted <- I(as.list(c(TRUE, TRUE, FALSE, FALSE, FALSE, TRUE, TRUE)))
+
+  components <- anderson_rubin_acceptance_components(grid)
+
+  expect_equal(nrow(components), 2L)
+  expect_type(components$lower, "double")
+  expect_type(components$upper, "double")
+  expect_equal(components$lower, c(-3, 2))
+  expect_equal(components$upper, c(-2, 3))
+  expect_false(any(components$contains_zero))
+})
+
+test_that("Anderson-Rubin acceptance grid rejects malformed public inputs", {
+  expect_error(
+    anderson_rubin_acceptance_components(
+      data.frame(beta = c(-1, NA, 1), accepted = TRUE)
+    ),
+    "non-finite beta"
+  )
+  expect_error(
+    anderson_rubin_acceptance_components(
+      data.frame(beta = -1:1, accepted = c("TRUE", "maybe", "FALSE"))
+    ),
+    "invalid accepted flags"
+  )
+})
