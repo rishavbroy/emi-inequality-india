@@ -164,10 +164,158 @@ test_that("identity aliases resolve before cross-wave lineage and never override
   ref <- list(
     exact = exact_census_2001_identity_lineage(admin),
     aliases = consumption_identity_alias_lineage(aliases, exact_census_2001_identity_lineage(admin)),
+    administrative = data.frame(),
     reviewed = list(mapping = data.frame(), conflicts = data.frame())
   )
   out <- build_consumption_lineage_bridge(households, ref)
   expect_equal(out$lineage_status[out$source_district_code == "07"], "resolved_reviewed_identity_alias")
   expect_equal(out$lineage_status[out$source_district_code == "08"], "resolved_exact_2001")
   expect_true(all(out$target_unit_2001 == "pc2001__24__07"))
+})
+
+test_that("consumption lineage reuses deterministic current-LGD Census-code ancestry", {
+  admin_2001 <- data.frame(
+    unit_id = "pc2001__20__04", state_code = "20", district_code = "04",
+    state_std = "jharkhand", district_std = "hazaribagh",
+    stringsAsFactors = FALSE
+  )
+  admin_2011 <- data.frame(
+    unit_id = "pc2011__20__361", state_code = "20", district_code = "361",
+    district_std = "ramgarh", stringsAsFactors = FALSE
+  )
+  reference <- data.frame(
+    unit_id = "lgd_district__607", level = "district",
+    state_code = "20", district_code = "361",
+    state_std = "jharkhand", district_std = "ramgarh",
+    reference_vintage = "current_lgd", stringsAsFactors = FALSE
+  )
+  transition <- data.frame(
+    state_code_2011 = "20", district_code_2011 = "361",
+    state_code_2001 = "20", district_code_2001 = "04",
+    population_share_to_2001 = 1, shrid_coverage = 1,
+    mapping_class = "official_lgd_census_code_bridge",
+    stringsAsFactors = FALSE
+  )
+
+  out <- consumption_admin_transition_lineage(
+    reference, data.frame(), admin_2001, admin_2011, transition
+  )
+
+  expect_equal(out$district_std, "ramgarh")
+  expect_equal(out$target_unit_2001, "pc2001__20__04")
+  expect_equal(out$lineage_weight, 1)
+  expect_match(out$lineage_basis, "current_lgd_census2011_code")
+})
+
+test_that("consumption lineage reuses accepted single-parent administrative events", {
+  admin_2001 <- data.frame(
+    unit_id = "pc2001__22__11", state_code = "22", district_code = "11",
+    state_std = "chhattisgarh", district_std = "raipur",
+    stringsAsFactors = FALSE
+  )
+  admin_2011 <- data.frame(
+    unit_id = "pc2011__22__410", state_code = "22", district_code = "410",
+    district_std = "raipur", stringsAsFactors = FALSE
+  )
+  reference <- data.frame(
+    unit_id = "lgd_district__645", level = "district",
+    state_code = NA_character_, district_code = NA_character_,
+    state_std = "chhattisgarh", district_std = "gariyaband",
+    reference_vintage = "current_lgd", stringsAsFactors = FALSE
+  )
+  events <- data.frame(
+    from_unit = "pc2011__22__410", to_unit = "lgd_district__645",
+    status = "accepted", stringsAsFactors = FALSE
+  )
+  transition <- data.frame(
+    state_code_2011 = "22", district_code_2011 = "410",
+    state_code_2001 = "22", district_code_2001 = "11",
+    population_share_to_2001 = 1, shrid_coverage = 1,
+    mapping_class = "official_lgd_census_code_bridge",
+    stringsAsFactors = FALSE
+  )
+
+  out <- consumption_admin_transition_lineage(
+    reference, events, admin_2001, admin_2011, transition
+  )
+
+  expect_equal(out$target_unit_2001, "pc2001__22__11")
+  expect_match(out$lineage_basis, "accepted_admin_event_parentage")
+})
+
+test_that("consumption administrative lineage keeps ambiguous and non-deterministic ancestry unresolved", {
+  admin_2001 <- data.frame(
+    unit_id = c("pc2001__28__06", "pc2001__28__07"),
+    state_code = "28", district_code = c("06", "07"),
+    state_std = "andhra pradesh", district_std = c("parent a", "parent b"),
+    stringsAsFactors = FALSE
+  )
+  admin_2011 <- data.frame(
+    unit_id = c("pc2011__28__537", "pc2011__28__538"),
+    state_code = "28", district_code = c("537", "538"),
+    district_std = c("parent a", "parent b"), stringsAsFactors = FALSE
+  )
+  reference <- data.frame(
+    unit_id = "lgd_district__698", level = "district",
+    state_code = NA_character_, district_code = NA_character_,
+    state_std = "telangana", district_std = "vikarabad",
+    reference_vintage = "current_lgd", stringsAsFactors = FALSE
+  )
+  events <- data.frame(
+    from_unit = c("pc2011__28__537", "pc2011__28__538"),
+    to_unit = "lgd_district__698", status = "accepted",
+    stringsAsFactors = FALSE
+  )
+  transition <- data.frame(
+    state_code_2011 = c("28", "28"),
+    district_code_2011 = c("537", "538"),
+    state_code_2001 = c("28", "28"),
+    district_code_2001 = c("06", "07"),
+    population_share_to_2001 = c(.999, .999),
+    shrid_coverage = 1,
+    mapping_class = "non_nested_or_incomplete",
+    stringsAsFactors = FALSE
+  )
+
+  out <- consumption_admin_transition_lineage(
+    reference, events, admin_2001, admin_2011, transition
+  )
+
+  expect_equal(nrow(out), 0L)
+})
+
+test_that("administrative lineage resolves before cross-wave consensus", {
+  households <- data.frame(
+    survey_id = "hces_test", source_state_code = "20",
+    source_district_code = "01", state_std = "jharkhand",
+    district_std = "ramgarh", source_unit_kind = "district",
+    source_lineage_eligible = TRUE, stringsAsFactors = FALSE
+  )
+  ref <- list(
+    exact = data.frame(
+      state_std = "jharkhand", district_std = "hazaribagh",
+      target_unit_2001 = "pc2001__20__04", lineage_weight = 1,
+      lineage_basis = "exact_census_2001_identity", stringsAsFactors = FALSE
+    ),
+    aliases = data.frame(),
+    administrative = data.frame(
+      state_std = "jharkhand", district_std = "ramgarh",
+      target_unit_2001 = "pc2001__20__04", lineage_weight = 1,
+      lineage_basis = "reviewed_admin_ancestry:test", stringsAsFactors = FALSE
+    ),
+    reviewed = list(
+      mapping = data.frame(
+        state_std = "jharkhand", district_std = "ramgarh",
+        target_unit_2001 = "pc2001__20__99", lineage_weight = 1,
+        lineage_basis = "reviewed_crosswave_consensus:test",
+        stringsAsFactors = FALSE
+      ),
+      conflicts = data.frame()
+    )
+  )
+
+  out <- build_consumption_lineage_bridge(households, ref)
+
+  expect_equal(out$target_unit_2001, "pc2001__20__04")
+  expect_equal(out$lineage_status, "resolved_reviewed_admin_ancestry")
 })

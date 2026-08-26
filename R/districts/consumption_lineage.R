@@ -198,12 +198,190 @@ exact_census_2001_identity_lineage <- function(admin_units_2001) {
   out
 }
 
+consumption_admin_transition_lineage <- function(
+    reference_units, admin_events, admin_units_2001, admin_units_2011,
+    transition_2001_2011) {
+  reference <- safe_df(reference_units)
+  events <- safe_df(admin_events)
+  admin_2001 <- safe_df(admin_units_2001)
+  admin_2011 <- safe_df(admin_units_2011)
+
+  required_reference <- c(
+    "unit_id", "level", "state_code", "district_code",
+    "state_std", "district_std", "reference_vintage"
+  )
+  missing_reference <- setdiff(required_reference, names(reference))
+  if (length(missing_reference)) {
+    stop(
+      "Consumption administrative lineage reference lacks fields: ",
+      paste(missing_reference, collapse = ", "),
+      call. = FALSE
+    )
+  }
+
+  current <- reference[
+    reference$level == "district" &
+      reference$reference_vintage == "current_lgd",
+    required_reference,
+    drop = FALSE
+  ]
+  if (!nrow(current)) return(data.frame())
+
+  current$state_std <- canonicalize_state_name(current$state_std)
+  current$district_std <- canonicalize_district_name(current$district_std)
+  identity_key <- paste(current$state_std, current$district_std, sep = "\r")
+  if (anyDuplicated(identity_key)) {
+    stop(
+      "Current LGD district identities are not unique after normalization.",
+      call. = FALSE
+    )
+  }
+
+  admin11 <- normalize_admin_lookup(admin_2011)
+  admin11$state_code <- pad_admin_code(admin11$state_code, 2L)
+  admin11$district_code <- pad_admin_code(admin11$district_code, 3L)
+  admin11_key <- paste(admin11$state_code, admin11$district_code, sep = "\r")
+  if (anyDuplicated(admin11_key)) {
+    stop("Census-2011 district registry codes are not unique.", call. = FALSE)
+  }
+
+  direct_state <- pad_admin_code(current$state_code, 2L)
+  direct_district <- pad_admin_code(current$district_code, 3L)
+  direct_key <- paste(direct_state, direct_district, sep = "\r")
+  direct_pos <- match(direct_key, admin11_key)
+  direct_terminal <- admin11$unit_id[direct_pos]
+  direct_terminal[
+    is.na(direct_state) | !nzchar(direct_state) |
+      is.na(direct_district) | !nzchar(direct_district)
+  ] <- NA_character_
+
+  event_resolution <- resolve_lineage_terminals(
+    current$unit_id, events, admin_2001, admin_2011
+  )
+  event_terminal <- ifelse(
+    event_resolution$resolution_status == "resolved",
+    event_resolution$terminal_unit,
+    NA_character_
+  )
+
+  terminal <- direct_terminal
+  basis <- ifelse(
+    !is.na(direct_terminal) & nzchar(direct_terminal),
+    "current_lgd_census2011_code",
+    NA_character_
+  )
+  event_available <- !is.na(event_terminal) & nzchar(event_terminal)
+  both <- event_available & !is.na(direct_terminal) & nzchar(direct_terminal)
+  conflict <- both & event_terminal != direct_terminal
+  if (any(conflict)) {
+    bad <- paste(
+      current$state_std[conflict], current$district_std[conflict],
+      sep = "/"
+    )
+    stop(
+      "Current LGD Census-code and accepted-event lineage disagree for: ",
+      paste(bad, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  use_event <- event_available & !both
+  terminal[use_event] <- event_terminal[use_event]
+  basis[use_event] <- "accepted_admin_event_parentage"
+
+  deterministic <- deterministic_transition_2011_to_2001(
+    transition_2001_2011
+  )
+  admin01 <- normalize_admin_lookup(admin_2001)
+  admin01$state_code <- pad_admin_code(admin01$state_code, 2L)
+  admin01$district_code <- pad_admin_code(admin01$district_code, 2L)
+  target_key <- paste(admin01$state_code, admin01$district_code, sep = "\r")
+  if (anyDuplicated(target_key)) {
+    stop("Census-2001 district registry codes are not unique.", call. = FALSE)
+  }
+
+  target <- rep(NA_character_, nrow(current))
+  terminal_basis <- rep(NA_character_, nrow(current))
+  direct_2001 <- terminal %in% admin01$unit_id
+  target[direct_2001] <- terminal[direct_2001]
+  terminal_basis[direct_2001] <- "direct_2001_parent"
+
+  terminal_2011 <- terminal %in% admin11$unit_id
+  if (any(terminal_2011) && nrow(deterministic)) {
+    terminal_pos <- match(terminal[terminal_2011], admin11$unit_id)
+    source_state <- admin11$state_code[terminal_pos]
+    source_district <- admin11$district_code[terminal_pos]
+    deterministic$state_code_2011 <- pad_admin_code(
+      deterministic$state_code_2011, 2L
+    )
+    deterministic$district_code_2011 <- pad_admin_code(
+      deterministic$district_code_2011, 3L
+    )
+    transition_key <- paste(
+      deterministic$state_code_2011,
+      deterministic$district_code_2011,
+      sep = "\r"
+    )
+    source_key <- paste(source_state, source_district, sep = "\r")
+    transition_pos <- match(source_key, transition_key)
+    mapped <- !is.na(transition_pos)
+
+    target_state <- pad_admin_code(
+      deterministic$state_code_2001[transition_pos[mapped]], 2L
+    )
+    target_district <- pad_admin_code(
+      deterministic$district_code_2001[transition_pos[mapped]], 2L
+    )
+    mapped_target_pos <- match(
+      paste(target_state, target_district, sep = "\r"),
+      target_key
+    )
+    if (any(is.na(mapped_target_pos))) {
+      stop(
+        "Deterministic administrative lineage references unknown Census-2001 targets.",
+        call. = FALSE
+      )
+    }
+
+    current_pos <- which(terminal_2011)[mapped]
+    target[current_pos] <- admin01$unit_id[mapped_target_pos]
+    terminal_basis[current_pos] <- "deterministic_2011_to_2001"
+  }
+
+  keep <- !is.na(target) & nzchar(target) &
+    !is.na(basis) & nzchar(basis)
+  if (!any(keep)) return(data.frame())
+
+  out <- data.frame(
+    state_std = current$state_std[keep],
+    district_std = current$district_std[keep],
+    target_unit_2001 = target[keep],
+    lineage_weight = 1,
+    lineage_basis = paste0(
+      "reviewed_admin_ancestry:",
+      basis[keep], ":", terminal_basis[keep]
+    ),
+    stringsAsFactors = FALSE
+  )
+  if (anyDuplicated(out[c("state_std", "district_std")])) {
+    stop("Administrative consumption lineage resolves ambiguously.", call. = FALSE)
+  }
+  out
+}
+
+
 build_consumption_lineage_reference <- function(
-    admin_units_2001, nss_source_roster, full_reviewed_source_crosswalk, identity_aliases = NULL) {
+    admin_units_2001, nss_source_roster, full_reviewed_source_crosswalk,
+    identity_aliases = NULL, reference_units = data.frame(),
+    admin_events = data.frame(), admin_units_2011 = data.frame(),
+    transition_2001_2011 = data.frame()) {
   exact <- exact_census_2001_identity_lineage(admin_units_2001)
   list(
     exact = exact,
     aliases = consumption_identity_alias_lineage(identity_aliases, exact),
+    administrative = consumption_admin_transition_lineage(
+      reference_units, admin_events, admin_units_2001, admin_units_2011,
+      transition_2001_2011
+    ),
     reviewed = reviewed_district_identity_lineage(
       nss_source_roster, full_reviewed_source_crosswalk
     )
@@ -214,7 +392,9 @@ build_consumption_lineage_bridge <- function(households, lineage_reference) {
   source <- consumption_source_district_roster(households)
   if (!nrow(source)) return(empty_consumption_lineage_bridge())
   if (!is.list(lineage_reference) || is.null(lineage_reference$exact) ||
-      is.null(lineage_reference$aliases) || is.null(lineage_reference$reviewed)) {
+      is.null(lineage_reference$aliases) ||
+      is.null(lineage_reference$administrative) ||
+      is.null(lineage_reference$reviewed)) {
     stop("Consumption lineage reference is incomplete.", call. = FALSE)
   }
   exact <- safe_df(lineage_reference$exact)
@@ -245,6 +425,19 @@ build_consumption_lineage_bridge <- function(households, lineage_reference) {
   }
   alias_ids <- unique(alias_rows$row_id)
   remaining <- remaining[!remaining$row_id %in% alias_ids, , drop = FALSE]
+
+  administrative_rows <- data.frame()
+  if (nrow(remaining) && nrow(lineage_reference$administrative)) {
+    administrative_rows <- merge(
+      remaining, lineage_reference$administrative,
+      by = c("state_std", "district_std"), all = FALSE, sort = FALSE
+    )
+  }
+  administrative_ids <- unique(administrative_rows$row_id)
+  remaining <- remaining[
+    !remaining$row_id %in% administrative_ids,
+    , drop = FALSE
+  ]
 
   reviewed_rows <- data.frame()
   if (nrow(remaining) && nrow(reviewed$mapping)) {
@@ -277,8 +470,14 @@ build_consumption_lineage_bridge <- function(households, lineage_reference) {
 
   if (nrow(exact_rows)) exact_rows$lineage_status <- "resolved_exact_2001"
   if (nrow(alias_rows)) alias_rows$lineage_status <- "resolved_reviewed_identity_alias"
+  if (nrow(administrative_rows)) {
+    administrative_rows$lineage_status <- "resolved_reviewed_admin_ancestry"
+  }
   if (nrow(reviewed_rows)) reviewed_rows$lineage_status <- "resolved_reviewed_consensus"
-  out <- safe_bind_rows(list(exact_rows, alias_rows, reviewed_rows, unresolved, noneligible))
+  out <- safe_bind_rows(list(
+    exact_rows, alias_rows, administrative_rows,
+    reviewed_rows, unresolved, noneligible
+  ))
   wanted <- names(empty_consumption_lineage_bridge())
   for (nm in setdiff(wanted, names(out))) out[[nm]] <- rep(NA, nrow(out))
   out <- out[wanted]
