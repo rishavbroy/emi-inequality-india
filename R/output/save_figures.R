@@ -768,6 +768,138 @@ save_emie_expected_values <- function(spec, path_base, formats, district_panel, 
   save_plot_formats(p, path_base, formats, width = 7.4, height = 4.8, dpi = 300)
 }
 
+consumption_dynamic_round_label <- function(round_id) {
+  labels <- c(
+    nss_2009_10_type2 = "2009-10",
+    nss_2011_12_type2 = "2011-12",
+    hces_2022_23 = "2022-23",
+    hces_2023_24 = "2023-24"
+  )
+  out <- unname(labels[plain_chr(round_id)])
+  out[is.na(out)] <- plain_chr(round_id)[is.na(out)]
+  out
+}
+
+consumption_iv_dynamic_figure_data <- function(dynamics) {
+  if (is.null(dynamics) || !is.list(dynamics) || is.null(dynamics$summary)) {
+    return(data.frame())
+  }
+  x <- safe_df(dynamics$summary)
+  required <- c(
+    "outcome_round", "estimand", "partial_f",
+    "reduced_form_estimate", "reduced_form_std.error",
+    "second_stage_estimate", "second_stage_std.error"
+  )
+  missing <- setdiff(required, names(x))
+  if (length(missing)) {
+    stop(
+      "Dynamic consumption IV figure input is missing columns: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+
+  x <- x[plain_chr(x$estimand) == "ancova", , drop = FALSE]
+  if (!nrow(x)) {
+    stop("Dynamic consumption IV figure has no registered ANCOVA rows.", call. = FALSE)
+  }
+  round_order <- c(
+    "nss_2009_10_type2", "nss_2011_12_type2",
+    "hces_2022_23", "hces_2023_24"
+  )
+  pos <- match(round_order, plain_chr(x$outcome_round))
+  if (anyNA(pos)) {
+    stop(
+      "Dynamic consumption IV figure lacks one or more planned outcome horizons.",
+      call. = FALSE
+    )
+  }
+  x <- x[pos, , drop = FALSE]
+
+  label <- paste0(
+    consumption_dynamic_round_label(x$outcome_round),
+    "\nF=", formatC(num(x$partial_f), digits = 2L, format = "f")
+  )
+  build_rows <- function(kind, estimate, std_error) {
+    estimate <- num(estimate)
+    std_error <- num(std_error)
+    if (any(!is.finite(estimate)) || any(!is.finite(std_error))) {
+      stop(
+        "Dynamic consumption IV figure requires finite estimates and standard errors.",
+        call. = FALSE
+      )
+    }
+    data.frame(
+      outcome_round = plain_chr(x$outcome_round),
+      horizon = factor(label, levels = label),
+      estimator = kind,
+      estimate = estimate,
+      std.error = std_error,
+      conf.low = estimate - stats::qnorm(0.975) * std_error,
+      conf.high = estimate + stats::qnorm(0.975) * std_error,
+      partial_f = num(x$partial_f),
+      stringsAsFactors = FALSE
+    )
+  }
+
+  rbind(
+    build_rows(
+      "Reduced form",
+      x$reduced_form_estimate,
+      x$reduced_form_std.error
+    ),
+    build_rows(
+      "Conventional 2SLS",
+      x$second_stage_estimate,
+      x$second_stage_std.error
+    )
+  )
+}
+
+save_consumption_iv_dynamic_figure <- function(
+    spec, path_base, formats, dynamics) {
+  need_pkg("ggplot2", "dynamic consumption IV figure")
+  plot_data <- consumption_iv_dynamic_figure_data(dynamics)
+
+  p <- ggplot2::ggplot(
+    plot_data,
+    ggplot2::aes(x = horizon, y = estimate)
+  ) +
+    ggplot2::geom_hline(yintercept = 0, linewidth = 0.4, linetype = 2) +
+    ggplot2::geom_errorbar(
+      ggplot2::aes(ymin = conf.low, ymax = conf.high),
+      width = 0.12,
+      linewidth = 0.55
+    ) +
+    ggplot2::geom_point(size = 2.2) +
+    ggplot2::facet_wrap(~ estimator, scales = "free_y", ncol = 1) +
+    ggplot2::labs(
+      title = spec$title,
+      subtitle = spec$subtitle,
+      x = "Outcome horizon (state-FE first-stage F shown below)",
+      y = "Coefficient",
+      caption = paste(
+        "95% clustered Wald intervals.",
+        "Reduced form: linguistic-distance coefficient.",
+        "2SLS: EMI-exposure coefficient.",
+        "All panels use endpoint ANCOVA with log real 2004-05 mean MPCE",
+        "and the predetermined Census-2001 controls."
+      )
+    ) +
+    ggplot2::theme_minimal(base_size = 12) +
+    ggplot2::theme(
+      panel.grid.minor = ggplot2::element_blank(),
+      strip.text = ggplot2::element_text(face = "bold"),
+      axis.title = ggplot2::element_text(face = "bold"),
+      plot.caption = ggplot2::element_text(size = 9, hjust = 0)
+    )
+
+  save_plot_formats(
+    p, path_base, formats,
+    width = 7.2, height = 6.4, dpi = 300
+  )
+}
+
 #' save figures
 #'
 #' @return A character vector of generated figure and manifest paths.
@@ -796,6 +928,10 @@ save_figures <- function(figures, cfg) {
       emie_expected_values = save_emie_expected_values(spec, path_base, formats, attr(figures, "district_panel") %||% data.frame(), attr(figures, "iv_models")),
       poster_first_stage_specs = save_poster_first_stage_specs(spec, path_base, formats, attr(figures, "district_panel") %||% data.frame()),
       poster_second_stage_specs = save_poster_second_stage_specs(spec, path_base, formats, attr(figures, "district_panel") %||% data.frame()),
+      consumption_iv_dynamics = save_consumption_iv_dynamic_figure(
+        spec, path_base, formats,
+        attr(figures, "consumption_iv_dynamics")
+      ),
       status = save_status_figure(spec, format_path(path_base, "png")),
       save_distribution_figure(spec, format_path(path_base, "png"), attr(figures, "district_panel") %||% data.frame())
     )

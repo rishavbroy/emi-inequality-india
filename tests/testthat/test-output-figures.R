@@ -462,3 +462,100 @@ test_that("poster second-stage specifications use preferred variables and one sa
   expect_length(unique(out$n), 1L)
   expect_true(all(is.finite(out$estimate)))
 })
+
+test_that("dynamic welfare figure uses only the prespecified ANCOVA horizons", {
+  rounds <- c(
+    "nss_2009_10_type2", "nss_2011_12_type2",
+    "hces_2022_23", "hces_2023_24"
+  )
+  summary <- rbind(
+    data.frame(
+      outcome_round = rounds,
+      estimand = "ancova",
+      partial_f = c(1.7, 1.6, 1.4, 1.0),
+      reduced_form_estimate = c(-0.02, -0.01, 0.02, 0.01),
+      reduced_form_std.error = 0.02,
+      second_stage_estimate = c(-0.02, -0.01, 0.02, 0.01),
+      second_stage_std.error = 0.04,
+      stringsAsFactors = FALSE
+    ),
+    data.frame(
+      outcome_round = rounds,
+      estimand = "change",
+      partial_f = 9,
+      reduced_form_estimate = 9,
+      reduced_form_std.error = 1,
+      second_stage_estimate = 9,
+      second_stage_std.error = 1,
+      stringsAsFactors = FALSE
+    )
+  )
+
+  out <- consumption_iv_dynamic_figure_data(list(summary = summary))
+
+  expect_equal(nrow(out), 8L)
+  expect_setequal(unique(out$estimator), c("Reduced form", "Conventional 2SLS"))
+  expect_setequal(unique(out$outcome_round), rounds)
+  expect_false(any(out$estimate == 9))
+  expect_equal(
+    levels(out$horizon),
+    c("2009-10\nF=1.70", "2011-12\nF=1.60", "2022-23\nF=1.40", "2023-24\nF=1.00")
+  )
+})
+
+test_that("dynamic welfare figure exposes uncertainty and weak first-stage context", {
+  summary <- data.frame(
+    outcome_round = c(
+      "nss_2009_10_type2", "nss_2011_12_type2",
+      "hces_2022_23", "hces_2023_24"
+    ),
+    estimand = "ancova",
+    partial_f = c(1.7, 1.6, 1.4, 1.0),
+    reduced_form_estimate = c(-0.02, -0.01, 0.02, 0.01),
+    reduced_form_std.error = rep(0.02, 4),
+    second_stage_estimate = c(-0.03, -0.02, 0.02, 0.01),
+    second_stage_std.error = rep(0.04, 4),
+    stringsAsFactors = FALSE
+  )
+
+  out <- consumption_iv_dynamic_figure_data(list(summary = summary))
+  expect_true(all(out$conf.low < out$estimate))
+  expect_true(all(out$conf.high > out$estimate))
+  expect_equal(
+    out$conf.high - out$estimate,
+    stats::qnorm(0.975) * out$std.error,
+    tolerance = 1e-12
+  )
+})
+
+test_that("shared figure registry carries validated dynamic welfare diagnostics", {
+  cfg <- list(mode = "final", output_formats = list(figures = "png"))
+  panel <- poster_map_fixture(1L)
+  dynamics <- list(summary = data.frame(
+    outcome_round = c(
+      "nss_2009_10_type2", "nss_2011_12_type2",
+      "hces_2022_23", "hces_2023_24"
+    ),
+    estimand = "ancova",
+    partial_f = 1,
+    reduced_form_estimate = 0,
+    reduced_form_std.error = 1,
+    second_stage_estimate = 0,
+    second_stage_std.error = 1,
+    stringsAsFactors = FALSE
+  ))
+
+  figures <- make_figures(
+    panel, character(), cfg,
+    iv_models = list(),
+    consumption_iv_dynamics = dynamics
+  )
+  expect_identical(
+    figures$consumption_iv_dynamics$kind,
+    "consumption_iv_dynamics"
+  )
+  expect_identical(
+    attr(figures, "consumption_iv_dynamics"),
+    dynamics
+  )
+})

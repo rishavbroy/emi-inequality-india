@@ -92,7 +92,9 @@ add_poster_residual_variables <- function(district_panel) {
 #' make figures
 #'
 #' @return A named list of figure specifications consumed by save_figures().
-make_figures <- function(district_panel, raw_ilo_figures, cfg, iv_models = NULL, map_geometry = NULL) {
+make_figures <- function(
+    district_panel, raw_ilo_figures, cfg, iv_models = NULL,
+    map_geometry = NULL, consumption_iv_dynamics = NULL) {
   district_panel <- add_poster_residual_variables(district_panel)
 
   spec <- preferred_iv_variables()
@@ -142,6 +144,18 @@ make_figures <- function(district_panel, raw_ilo_figures, cfg, iv_models = NULL,
       "Consumption response across IV specifications",
       "Preferred EMI exposure instrumented with preferred linguistic distance.",
       kind = "poster_second_stage_specs"
+    ),
+    consumption_iv_dynamics = figure_spec(
+      "consumption_iv_dynamics",
+      "consumption_iv_dynamics.png",
+      "Dynamic welfare identification diagnostics",
+      "Preferred endpoint-ANCOVA specification at each post-treatment horizon.",
+      kind = if (!is.null(consumption_iv_dynamics) &&
+        nrow(safe_df(consumption_iv_dynamics$summary %||% data.frame()))) {
+        "consumption_iv_dynamics"
+      } else {
+        "status"
+      }
     )
   )
 
@@ -208,6 +222,7 @@ make_figures <- function(district_panel, raw_ilo_figures, cfg, iv_models = NULL,
   attr(out, "district_panel") <- district_panel
   attr(out, "map_geometry") <- map_geometry
   attr(out, "iv_models") <- iv_models
+  attr(out, "consumption_iv_dynamics") <- consumption_iv_dynamics
   out
 }
 
