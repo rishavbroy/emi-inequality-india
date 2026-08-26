@@ -1430,6 +1430,36 @@
       "Maintainer": "Achim Zeileis <Achim.Zeileis@R-project.org>",
       "Repository": "CRAN"
     },
+    "convey": {
+      "Package": "convey",
+      "Version": "1.0.1",
+      "Source": "Repository",
+      "Title": "Income Concentration Analysis with Complex Survey Samples",
+      "Date": "2024-10-16",
+      "Description": "Variance estimation on indicators of income concentration and poverty using complex sample survey designs. Wrapper around the 'survey' package.",
+      "License": "GPL-3",
+      "Depends": [
+        "R (>= 4.0.0)"
+      ],
+      "Imports": [
+        "survey (>= 4.2-1)",
+        "methods"
+      ],
+      "Suggests": [
+        "testthat",
+        "knitr",
+        "rmarkdown",
+        "vardpoor",
+        "laeken",
+        "DBI",
+        "RSQLite"
+      ],
+      "URL": "https://www.convey-r.org/",
+      "BugReports": "https://github.com/ajdamico/convey/issues",
+      "RoxygenNote": "7.3.2",
+      "NeedsCompilation": "no",
+      "Repository": "CRAN"
+    },
     "cowplot": {
       "Package": "cowplot",
       "Version": "1.2.0",
