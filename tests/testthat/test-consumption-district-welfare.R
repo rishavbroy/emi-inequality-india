@@ -193,23 +193,28 @@ test_that("consumption welfare registry validates outcome contracts", {
   write.csv(data.frame(
     outcome_id = c(
       "real_mean_mpce", "mean_log_real_mpce", "weighted_median_real_mpce",
-      "bottom20_mean_real_mpce"
+      "bottom20_mean_real_mpce", "gini_real_mpce", "atkinson_1_real_mpce"
     ),
-    estimand = c("survey_mean", "survey_mean", "survey_quantile", "survey_bottom_mean"),
-    transform = c("identity", "log", "identity", "identity"),
-    quantile = c(NA, NA, 0.5, 0.2),
-    quantile_interval = c("", "", "xlogit", ""),
-    quantile_rule = c("", "", "math", ""),
-    role = c("primary", "robustness", "robustness", "robustness"),
-    min_households = c(50, 50, 50, 100),
+    estimand = c(
+      "survey_mean", "survey_mean", "survey_quantile", "survey_bottom_mean",
+      "survey_gini", "survey_atkinson"
+    ),
+    transform = c("identity", "log", "identity", "identity", "identity", "identity"),
+    quantile = c(NA, NA, 0.5, 0.2, NA, NA),
+    quantile_interval = c("", "", "xlogit", "", "", ""),
+    quantile_rule = c("", "", "math", "", "", ""),
+    epsilon = c(NA, NA, NA, NA, NA, 1),
+    role = c("primary", rep("robustness", 5)),
+    min_households = c(50, 50, 50, 100, 100, 100),
     min_fsu = 2,
-    min_kish_effective_n = c(20, 20, 20, 100),
-    max_relative_se = c(0.2, NA, 0.2, 0.25), stringsAsFactors = FALSE
+    min_kish_effective_n = c(20, 20, 20, 100, 75, 75),
+    max_relative_se = c(0.2, NA, 0.2, 0.25, 0.30, 0.30),
+    stringsAsFactors = FALSE
   ), path, row.names = FALSE, na = "")
   out <- read_consumption_welfare_outcomes(path)
   expect_equal(out$outcome_id, c(
     "real_mean_mpce", "mean_log_real_mpce", "weighted_median_real_mpce",
-    "bottom20_mean_real_mpce"
+    "bottom20_mean_real_mpce", "gini_real_mpce", "atkinson_1_real_mpce"
   ))
   expect_true(is.na(out$max_relative_se[[2L]]))
   expect_equal(out$quantile[[3L]], 0.5)
@@ -217,6 +222,10 @@ test_that("consumption welfare registry validates outcome contracts", {
   expect_equal(out$quantile_rule[[3L]], "math")
   expect_equal(out$estimand[[4L]], "survey_bottom_mean")
   expect_equal(out$quantile[[4L]], 0.2)
+  expect_equal(out$estimand[[5L]], "survey_gini")
+  expect_true(is.na(out$epsilon[[5L]]))
+  expect_equal(out$estimand[[6L]], "survey_atkinson")
+  expect_equal(out$epsilon[[6L]], 1)
 
   bad_quantile <- out
   bad_quantile$quantile[[3L]] <- 1
@@ -234,6 +243,22 @@ test_that("consumption welfare registry validates outcome contracts", {
   expect_error(
     read_consumption_welfare_outcomes(path),
     "invalid quantile uncertainty declarations"
+  )
+
+  bad_epsilon <- out
+  bad_epsilon$epsilon[[6L]] <- NA_real_
+  write.csv(bad_epsilon, path, row.names = FALSE, na = "")
+  expect_error(
+    read_consumption_welfare_outcomes(path),
+    "invalid Atkinson epsilon declarations"
+  )
+
+  stray_epsilon <- out
+  stray_epsilon$epsilon[[5L]] <- 1
+  write.csv(stray_epsilon, path, row.names = FALSE, na = "")
+  expect_error(
+    read_consumption_welfare_outcomes(path),
+    "invalid Atkinson epsilon declarations"
   )
 
   bad <- out
@@ -688,4 +713,172 @@ test_that("bottom-share welfare rejects transformed tail means", {
     estimate_consumption_district_bottom_mean(rows, design, support, rule),
     "identity MPCE transform"
   )
+})
+
+test_that("registered inequality estimators match direct convey statistics", {
+  set.seed(601)
+  n <- 60
+  values <- exp(rnorm(n, log(200), 0.45))
+  x <- data.frame(
+    survey_id = "wave",
+    household_id = paste0("h", seq_len(n)),
+    source_state_code = "01",
+    sector = "Rural",
+    subround = "1",
+    fsu = as.character(seq_len(n)),
+    stratum = "1",
+    sub_stratum = "1",
+    household_size = 1,
+    target_unit_2001 = "a",
+    lineage_status = "resolved_exact_2001",
+    lineage_weight = 1,
+    lineage_person_weight = seq(1, 2, length.out = n),
+    real_mpce = values,
+    stringsAsFactors = FALSE
+  )
+  registry <- data.frame(
+    outcome_id = c(
+      "gini_real_mpce",
+      "atkinson_0_5_real_mpce",
+      "atkinson_1_real_mpce",
+      "atkinson_2_real_mpce"
+    ),
+    estimand = c("survey_gini", rep("survey_atkinson", 3)),
+    transform = "identity",
+    quantile = NA_real_,
+    quantile_interval = "",
+    quantile_rule = "",
+    epsilon = c(NA, 0.5, 1, 2),
+    role = "robustness",
+    min_households = 1,
+    min_fsu = 1,
+    min_kish_effective_n = 1,
+    max_relative_se = 10,
+    stringsAsFactors = FALSE
+  )
+
+  out <- estimate_consumption_district_welfare(x, registry)
+
+  rows <- consumption_design_rows(x)
+  design <- convey::convey_prep(
+    update(
+      consumption_survey_design_from_rows(rows),
+      .welfare_value = rows$real_mpce
+    )
+  )
+  direct <- c(
+    gini_real_mpce = unname(stats::coef(convey::svygini(
+      ~.welfare_value, design, na.rm = TRUE
+    )))[[1L]],
+    atkinson_0_5_real_mpce = unname(stats::coef(convey::svyatk(
+      ~.welfare_value, design, epsilon = 0.5, na.rm = TRUE
+    )))[[1L]],
+    atkinson_1_real_mpce = unname(stats::coef(convey::svyatk(
+      ~.welfare_value, design, epsilon = 1, na.rm = TRUE
+    )))[[1L]],
+    atkinson_2_real_mpce = unname(stats::coef(convey::svyatk(
+      ~.welfare_value, design, epsilon = 2, na.rm = TRUE
+    )))[[1L]]
+  )
+
+  expect_equal(
+    out$estimate[match(names(direct), out$outcome_id)],
+    unname(direct),
+    tolerance = 1e-10
+  )
+  expect_true(all(out$status == "estimated"))
+  expect_true(all(is.finite(out$std_error)))
+  expect_true(all(out$estimate >= 0))
+  expect_true(all(out$estimate < 1))
+})
+
+test_that("Atkinson sensitivity rises with epsilon on a nondegenerate distribution", {
+  values <- c(rep(100, 20), rep(200, 20), rep(500, 20))
+  x <- data.frame(
+    survey_id = "wave",
+    household_id = paste0("h", seq_along(values)),
+    source_state_code = "01",
+    sector = "Rural",
+    subround = "1",
+    fsu = as.character(seq_along(values)),
+    stratum = "1",
+    sub_stratum = "1",
+    household_size = 1,
+    target_unit_2001 = "a",
+    lineage_status = "resolved_exact_2001",
+    lineage_weight = 1,
+    lineage_person_weight = 1,
+    real_mpce = values,
+    stringsAsFactors = FALSE
+  )
+  registry <- data.frame(
+    outcome_id = c(
+      "atkinson_0_5_real_mpce",
+      "atkinson_1_real_mpce",
+      "atkinson_2_real_mpce"
+    ),
+    estimand = "survey_atkinson",
+    transform = "identity",
+    quantile = NA_real_,
+    quantile_interval = "",
+    quantile_rule = "",
+    epsilon = c(0.5, 1, 2),
+    role = "robustness",
+    min_households = 1,
+    min_fsu = 1,
+    min_kish_effective_n = 1,
+    max_relative_se = 10,
+    stringsAsFactors = FALSE
+  )
+
+  out <- estimate_consumption_district_welfare(x, registry)
+  estimate <- out$estimate[match(registry$outcome_id, out$outcome_id)]
+
+  expect_true(all(diff(estimate) > 0))
+})
+
+test_that("inequality outcomes reuse the common support and precision contract", {
+  values <- c(100, 120, 140, 160, 180, 200)
+  x <- data.frame(
+    survey_id = "wave",
+    household_id = paste0("h", seq_along(values)),
+    source_state_code = "01",
+    sector = "Rural",
+    subround = "1",
+    fsu = as.character(seq_along(values)),
+    stratum = "1",
+    sub_stratum = "1",
+    household_size = 1,
+    target_unit_2001 = "a",
+    lineage_status = "resolved_exact_2001",
+    lineage_weight = 1,
+    lineage_person_weight = 1,
+    real_mpce = values,
+    stringsAsFactors = FALSE
+  )
+  rule <- data.frame(
+    outcome_id = "gini_real_mpce",
+    estimand = "survey_gini",
+    transform = "identity",
+    quantile = NA_real_,
+    quantile_interval = "",
+    quantile_rule = "",
+    epsilon = NA_real_,
+    role = "robustness",
+    min_households = 10,
+    min_fsu = 2,
+    min_kish_effective_n = 10,
+    max_relative_se = 1,
+    stringsAsFactors = FALSE
+  )
+
+  out <- estimate_consumption_district_welfare(x, rule)
+
+  expect_true(is.finite(out$estimate))
+  expect_true(is.finite(out$std_error))
+  expect_equal(out$status, "estimated")
+  expect_false(out$sample_support_ok)
+  expect_false(out$preferred_eligible)
+  expect_match(out$support_reason, "thin_household_sample")
+  expect_true(is.na(out$cv))
 })

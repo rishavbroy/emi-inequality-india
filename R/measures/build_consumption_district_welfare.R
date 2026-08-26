@@ -153,8 +153,9 @@ consumption_district_support <- function(lineaged_households) {
 read_consumption_welfare_outcomes <- function(path) {
   x <- read.csv(path, stringsAsFactors = FALSE, check.names = FALSE)
   required <- c(
-    "outcome_id", "estimand", "transform", "quantile", "quantile_interval", "quantile_rule",
-    "role", "min_households", "min_fsu", "min_kish_effective_n", "max_relative_se"
+    "outcome_id", "estimand", "transform", "quantile", "quantile_interval",
+    "quantile_rule", "epsilon", "role", "min_households", "min_fsu",
+    "min_kish_effective_n", "max_relative_se"
   )
   missing <- setdiff(required, names(x))
   if (length(missing)) {
@@ -163,7 +164,10 @@ read_consumption_welfare_outcomes <- function(path) {
   if (!nrow(x) || anyDuplicated(x$outcome_id)) {
     stop("Consumption welfare registry must contain unique outcome_id rows.", call. = FALSE)
   }
-  if (any(!x$estimand %in% c("survey_mean", "survey_quantile", "survey_bottom_mean")) ||
+  if (any(!x$estimand %in% c(
+        "survey_mean", "survey_quantile", "survey_bottom_mean",
+        "survey_gini", "survey_atkinson"
+      )) ||
       any(!x$transform %in% c("identity", "log"))) {
     stop("Consumption welfare registry contains unsupported estimands or transforms.", call. = FALSE)
   }
@@ -171,8 +175,9 @@ read_consumption_welfare_outcomes <- function(path) {
   mean_row <- x$estimand == "survey_mean"
   quantile_row <- x$estimand == "survey_quantile"
   bottom_mean_row <- x$estimand == "survey_bottom_mean"
+  inequality_row <- x$estimand %in% c("survey_gini", "survey_atkinson")
   quantile_declared <- quantile_row | bottom_mean_row
-  if (any(mean_row & is.finite(x$quantile)) ||
+  if (any((mean_row | inequality_row) & is.finite(x$quantile)) ||
       any(quantile_declared & (!is.finite(x$quantile) | x$quantile <= 0 | x$quantile >= 1))) {
     stop("Consumption welfare registry contains invalid quantile declarations.", call. = FALSE)
   }
@@ -189,6 +194,15 @@ read_consumption_welfare_outcomes <- function(path) {
     (nzchar(x$quantile_interval) | nzchar(x$quantile_rule))
   if (any(invalid_quantile_method) || any(stray_quantile_method)) {
     stop("Consumption welfare registry contains invalid quantile uncertainty declarations.", call. = FALSE)
+  }
+  x$epsilon <- suppressWarnings(as.numeric(x$epsilon))
+  atkinson_row <- x$estimand == "survey_atkinson"
+  if (any(atkinson_row & (!is.finite(x$epsilon) | x$epsilon <= 0)) ||
+      any(!atkinson_row & is.finite(x$epsilon))) {
+    stop("Consumption welfare registry contains invalid Atkinson epsilon declarations.", call. = FALSE)
+  }
+  if (any(inequality_row & x$transform != "identity")) {
+    stop("Consumption inequality outcomes require the identity MPCE transform.", call. = FALSE)
   }
   for (nm in c("min_households", "min_fsu", "min_kish_effective_n", "max_relative_se")) {
     x[[nm]] <- suppressWarnings(as.numeric(x[[nm]]))
@@ -410,12 +424,10 @@ consumption_bottom_mean_stat <- function(design, alpha) {
   )
 }
 
-estimate_consumption_district_bottom_mean <- function(rows, design, support, rule) {
+estimate_consumption_district_convey_domains <- function(
+    rows, design, support, rule, statistic, cv_applicable = FALSE) {
+  need_pkg("convey", "design-based consumption distribution estimates")
   x <- rows
-  if (!identical(rule$transform[[1L]], "identity")) {
-    stop("Bottom-share welfare means currently require the identity MPCE transform.", call. = FALSE)
-  }
-
   x$.welfare_value <- consumption_welfare_value(
     x$real_mpce, rule$transform[[1L]]
   )
@@ -426,7 +438,6 @@ estimate_consumption_district_bottom_mean <- function(rows, design, support, rul
   )
   survey_id <- unique(plain_chr(x$survey_id))[[1L]]
   outcome_id <- rule$outcome_id[[1L]]
-  alpha <- rule$quantile[[1L]]
 
   estimates <- safe_bind_rows(lapply(
     plain_chr(support$district_2001),
@@ -436,7 +447,7 @@ estimate_consumption_district_bottom_mean <- function(rows, design, support, rul
         target_unit_2001 == district_id
       )
       stat <- with_consumption_survey_adjustment(
-        consumption_bottom_mean_stat(domain_design, alpha)
+        statistic(domain_design, rule)
       )
       data.frame(
         district_2001 = district_id,
@@ -454,7 +465,50 @@ estimate_consumption_district_bottom_mean <- function(rows, design, support, rul
     estimates,
     support,
     rule,
+    cv_applicable = cv_applicable
+  )
+}
+
+estimate_consumption_district_bottom_mean <- function(rows, design, support, rule) {
+  if (!identical(rule$transform[[1L]], "identity")) {
+    stop("Bottom-share welfare means currently require the identity MPCE transform.", call. = FALSE)
+  }
+  estimate_consumption_district_convey_domains(
+    rows, design, support, rule,
+    statistic = function(domain_design, rule) {
+      consumption_bottom_mean_stat(domain_design, rule$quantile[[1L]])
+    },
     cv_applicable = TRUE
+  )
+}
+
+consumption_inequality_stat <- function(design, rule) {
+  estimand <- plain_chr(rule$estimand[[1L]])
+  result <- switch(
+    estimand,
+    survey_gini = convey::svygini(
+      ~.welfare_value, design = design, na.rm = TRUE
+    ),
+    survey_atkinson = convey::svyatk(
+      ~.welfare_value, design = design,
+      epsilon = rule$epsilon[[1L]], na.rm = TRUE
+    ),
+    stop("Unsupported convey inequality estimand: ", estimand, call. = FALSE)
+  )
+  c(
+    estimate = num(stats::coef(result))[[1L]],
+    std_error = num(survey::SE(result))[[1L]]
+  )
+}
+
+estimate_consumption_district_inequality <- function(rows, design, support, rule) {
+  if (!identical(rule$transform[[1L]], "identity")) {
+    stop("Consumption inequality outcomes require the identity MPCE transform.", call. = FALSE)
+  }
+  estimate_consumption_district_convey_domains(
+    rows, design, support, rule,
+    statistic = consumption_inequality_stat,
+    cv_applicable = FALSE
   )
 }
 
@@ -551,6 +605,9 @@ estimate_consumption_district_welfare <- function(lineaged_households, outcome_r
     if (identical(rule$estimand[[1L]], "survey_bottom_mean")) {
       return(estimate_consumption_district_bottom_mean(x, design, support, rule))
     }
+    if (rule$estimand[[1L]] %in% c("survey_gini", "survey_atkinson")) {
+      return(estimate_consumption_district_inequality(x, design, support, rule))
+    }
     stop("Unsupported registered consumption welfare estimand: ", rule$estimand[[1L]], call. = FALSE)
   }))
 }
@@ -559,7 +616,7 @@ estimate_consumption_district_mean <- function(lineaged_households) {
   # Backward-compatible single-outcome wrapper used by focused tests and callers.
   registry <- data.frame(
     outcome_id = "real_mean_mpce", estimand = "survey_mean", transform = "identity", quantile = NA_real_,
-    quantile_interval = "", quantile_rule = "", role = "primary",
+    quantile_interval = "", quantile_rule = "", epsilon = NA_real_, role = "primary",
     min_households = 1, min_fsu = 1, min_kish_effective_n = .Machine$double.eps,
     max_relative_se = NA_real_, stringsAsFactors = FALSE
   )
