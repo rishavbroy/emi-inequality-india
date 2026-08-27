@@ -2082,11 +2082,11 @@ test_that("consumption distribution benchmark preserves serial/configured estima
     stringsAsFactors = FALSE
   )
   registry <- data.frame(
-    outcome_id = "gini", estimand = "survey_gini", transform = "identity",
-    quantile = NA_real_, quantile_interval = "", quantile_rule = "",
-    epsilon = NA_real_, role = "robustness", min_households = 1,
+    outcome_id = "bottom40", estimand = "survey_bottom_mean", transform = "identity",
+    quantile = 0.4, quantile_interval = "", quantile_rule = "",
+    role = "robustness", min_households = 1,
     min_fsu = 1, min_kish_effective_n = 1, max_relative_se = 10,
-    stringsAsFactors = FALSE
+    survey_ids = "*", stringsAsFactors = FALSE
   )
   old <- Sys.getenv("EMI_CONSUMPTION_DOMAIN_CORES", unset = NA_character_)
   Sys.setenv(EMI_CONSUMPTION_DOMAIN_CORES = "1")
@@ -2102,7 +2102,11 @@ test_that("consumption distribution benchmark preserves serial/configured estima
 })
 
 test_that("NSS-64 detailed consumption is gated by official reconstruction before welfare", {
-  targets_file <- paste(readLines(repo_file("_targets.R"), warn = FALSE), collapse = "\n")
+  root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
+  targets_file <- paste(
+    readLines(file.path(root, "_targets.R"), warn = FALSE),
+    collapse = "\n"
+  )
   expect_match(targets_file, "consumption_mpce_validation_2007_08", fixed = TRUE)
   expect_match(targets_file, "consumption_households_real_2007_08", fixed = TRUE)
   expect_match(targets_file, "consumption_households_lineaged_2007_08", fixed = TRUE)

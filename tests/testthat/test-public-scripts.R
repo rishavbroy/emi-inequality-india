@@ -921,14 +921,18 @@ test_that("consumption welfare targets cache core and distributional work separa
   welfare <- repo_text("R", "measures", "build_consumption_district_welfare.R")
   audit <- repo_text("scripts", "run_public_build_audit.sh")
 
-  expect_match(targets, "consumption_welfare_outcomes_core", fixed = TRUE)
-  expect_match(targets, "consumption_welfare_outcomes_distributional", fixed = TRUE)
+  expect_false(grepl("consumption_welfare_outcomes_core", targets, fixed = TRUE))
+  expect_false(grepl("consumption_welfare_outcomes_distributional", targets, fixed = TRUE))
+  expect_match(targets, "consumption_welfare_outcomes", fixed = TRUE)
   expect_match(targets, "consumption_district_welfare_core_2011_12_type2", fixed = TRUE)
   expect_match(targets, "consumption_district_welfare_distributional_2011_12_type2", fixed = TRUE)
+  expect_match(welfare, "consumption_welfare_registry_for_survey", fixed = TRUE)
   expect_match(welfare, "survey::svyby", fixed = TRUE)
   expect_match(welfare, "multicore = consumption_domain_multicore()", fixed = TRUE)
   expect_false(grepl("lapply(\\n    plain_chr(support$district_2001)", welfare, fixed = TRUE))
   expect_match(audit, 'EMI_CONSUMPTION_DOMAIN_CORES="${EMI_CONSUMPTION_DOMAIN_CORES:-4}"', fixed = TRUE)
+  expect_match(targets, "consumption_households_lineaged_2004_05", fixed = TRUE)
+  expect_false(grepl("survey_gini", repo_text("R", "benchmarking", "benchmarking_targets.R"), fixed = TRUE))
 })
 
 test_that("public audit checks the targets process before tests and pipeline execution", {

@@ -188,51 +188,43 @@ test_that("quantile estimator handles all-supported and all-thin domain partitio
 })
 
 
-test_that("consumption welfare registry validates outcome contracts", {
+test_that("consumption welfare registry validates the retained outcome contract", {
   path <- tempfile(fileext = ".csv")
   write.csv(data.frame(
     outcome_id = c(
-      "real_mean_mpce", "mean_log_real_mpce", "weighted_median_real_mpce",
-      "bottom20_mean_real_mpce", "gini_real_mpce", "atkinson_1_real_mpce",
-      "tendulkar_poverty_gap"
+      "real_mean_mpce", "mean_log_real_mpce",
+      "weighted_median_real_mpce", "bottom40_mean_real_mpce"
     ),
     estimand = c(
-      "survey_mean", "survey_mean", "survey_quantile", "survey_bottom_mean",
-      "survey_gini", "survey_atkinson", "survey_fgt"
+      "survey_mean", "survey_mean", "survey_quantile", "survey_bottom_mean"
     ),
-    transform = c(
-      "identity", "log", "identity", "identity", "identity", "identity", "identity"
-    ),
-    quantile = c(NA, NA, 0.5, 0.2, NA, NA, NA),
-    quantile_interval = c("", "", "xlogit", "", "", "", ""),
-    quantile_rule = c("", "", "math", "", "", "", ""),
-    epsilon = c(NA, NA, NA, NA, NA, 1, NA),
-    fgt_order = c(NA, NA, NA, NA, NA, NA, 1),
-    role = c("primary", rep("robustness", 6)),
-    min_households = c(50, 50, 50, 100, 100, 100, 100),
+    transform = c("identity", "log", "identity", "identity"),
+    quantile = c(NA, NA, 0.5, 0.4),
+    quantile_interval = c("", "", "xlogit", ""),
+    quantile_rule = c("", "", "math", ""),
+    role = c("primary", rep("robustness", 3)),
+    min_households = c(50, 50, 50, 50),
     min_fsu = 2,
-    min_kish_effective_n = c(20, 20, 20, 100, 75, 75, 75),
-    max_relative_se = c(0.2, NA, 0.2, 0.25, 0.30, 0.30, NA),
+    min_kish_effective_n = c(20, 20, 20, 50),
+    max_relative_se = c(0.2, NA, 0.2, 0.2),
+    survey_ids = c(
+      "*", "*", "*",
+      "nss_2004_05;nss_2007_08_consumption;hces_2022_23;hces_2023_24"
+    ),
     stringsAsFactors = FALSE
   ), path, row.names = FALSE, na = "")
+
   out <- read_consumption_welfare_outcomes(path)
   expect_equal(out$outcome_id, c(
-    "real_mean_mpce", "mean_log_real_mpce", "weighted_median_real_mpce",
-    "bottom20_mean_real_mpce", "gini_real_mpce", "atkinson_1_real_mpce",
-    "tendulkar_poverty_gap"
+    "real_mean_mpce", "mean_log_real_mpce",
+    "weighted_median_real_mpce", "bottom40_mean_real_mpce"
   ))
   expect_true(is.na(out$max_relative_se[[2L]]))
   expect_equal(out$quantile[[3L]], 0.5)
   expect_equal(out$quantile_interval[[3L]], "xlogit")
   expect_equal(out$quantile_rule[[3L]], "math")
   expect_equal(out$estimand[[4L]], "survey_bottom_mean")
-  expect_equal(out$quantile[[4L]], 0.2)
-  expect_equal(out$estimand[[5L]], "survey_gini")
-  expect_true(is.na(out$epsilon[[5L]]))
-  expect_equal(out$estimand[[6L]], "survey_atkinson")
-  expect_equal(out$epsilon[[6L]], 1)
-  expect_equal(out$estimand[[7L]], "survey_fgt")
-  expect_equal(out$fgt_order[[7L]], 1)
+  expect_equal(out$quantile[[4L]], 0.4)
 
   bad_quantile <- out
   bad_quantile$quantile[[3L]] <- 1
@@ -242,7 +234,10 @@ test_that("consumption welfare registry validates outcome contracts", {
   bad_interval <- out
   bad_interval$quantile_interval[[3L]] <- "unknown"
   write.csv(bad_interval, path, row.names = FALSE, na = "")
-  expect_error(read_consumption_welfare_outcomes(path), "invalid quantile uncertainty declarations")
+  expect_error(
+    read_consumption_welfare_outcomes(path),
+    "invalid quantile uncertainty declarations"
+  )
 
   bad_bottom_method <- out
   bad_bottom_method$quantile_rule[[4L]] <- "math"
@@ -252,36 +247,12 @@ test_that("consumption welfare registry validates outcome contracts", {
     "invalid quantile uncertainty declarations"
   )
 
-  bad_epsilon <- out
-  bad_epsilon$epsilon[[6L]] <- NA_real_
-  write.csv(bad_epsilon, path, row.names = FALSE, na = "")
+  unsupported <- out
+  unsupported$estimand[[4L]] <- "survey_gini"
+  write.csv(unsupported, path, row.names = FALSE, na = "")
   expect_error(
     read_consumption_welfare_outcomes(path),
-    "invalid Atkinson epsilon declarations"
-  )
-
-  stray_epsilon <- out
-  stray_epsilon$epsilon[[5L]] <- 1
-  write.csv(stray_epsilon, path, row.names = FALSE, na = "")
-  expect_error(
-    read_consumption_welfare_outcomes(path),
-    "invalid Atkinson epsilon declarations"
-  )
-
-  bad_fgt <- out
-  bad_fgt$fgt_order[[7L]] <- 3
-  write.csv(bad_fgt, path, row.names = FALSE, na = "")
-  expect_error(
-    read_consumption_welfare_outcomes(path),
-    "invalid FGT order declarations"
-  )
-
-  stray_fgt <- out
-  stray_fgt$fgt_order[[5L]] <- 0
-  write.csv(stray_fgt, path, row.names = FALSE, na = "")
-  expect_error(
-    read_consumption_welfare_outcomes(path),
-    "invalid FGT order declarations"
+    "unsupported estimands or transforms"
   )
 
   bad <- out
@@ -738,347 +709,10 @@ test_that("bottom-share welfare rejects transformed tail means", {
   )
 })
 
-test_that("registered inequality estimators match direct convey statistics", {
-  set.seed(601)
-  n <- 60
-  values <- exp(rnorm(n, log(200), 0.45))
-  x <- data.frame(
-    survey_id = "wave",
-    household_id = paste0("h", seq_len(n)),
-    source_state_code = "01",
-    sector = "Rural",
-    subround = "1",
-    fsu = as.character(seq_len(n)),
-    stratum = "1",
-    sub_stratum = "1",
-    household_size = 1,
-    target_unit_2001 = "a",
-    lineage_status = "resolved_exact_2001",
-    lineage_weight = 1,
-    lineage_person_weight = seq(1, 2, length.out = n),
-    real_mpce = values,
-    stringsAsFactors = FALSE
-  )
+test_that("welfare registry partitions core and retained lower-tail work", {
   registry <- data.frame(
-    outcome_id = c(
-      "gini_real_mpce",
-      "atkinson_0_5_real_mpce",
-      "atkinson_1_real_mpce",
-      "atkinson_2_real_mpce"
-    ),
-    estimand = c("survey_gini", rep("survey_atkinson", 3)),
-    transform = "identity",
-    quantile = NA_real_,
-    quantile_interval = "",
-    quantile_rule = "",
-    epsilon = c(NA, 0.5, 1, 2),
-    role = "robustness",
-    min_households = 1,
-    min_fsu = 1,
-    min_kish_effective_n = 1,
-    max_relative_se = 10,
-    stringsAsFactors = FALSE
-  )
-
-  out <- estimate_consumption_district_welfare(x, registry)
-
-  rows <- consumption_design_rows(x)
-  design <- convey::convey_prep(
-    update(
-      consumption_survey_design_from_rows(rows),
-      .welfare_value = rows$real_mpce
-    )
-  )
-  direct <- c(
-    gini_real_mpce = unname(stats::coef(convey::svygini(
-      ~.welfare_value, design, na.rm = TRUE
-    )))[[1L]],
-    atkinson_0_5_real_mpce = unname(stats::coef(convey::svyatk(
-      ~.welfare_value, design, epsilon = 0.5, na.rm = TRUE
-    )))[[1L]],
-    atkinson_1_real_mpce = unname(stats::coef(convey::svyatk(
-      ~.welfare_value, design, epsilon = 1, na.rm = TRUE
-    )))[[1L]],
-    atkinson_2_real_mpce = unname(stats::coef(convey::svyatk(
-      ~.welfare_value, design, epsilon = 2, na.rm = TRUE
-    )))[[1L]]
-  )
-
-  expect_equal(
-    out$estimate[match(names(direct), out$outcome_id)],
-    unname(direct),
-    tolerance = 1e-10
-  )
-  expect_true(all(out$status == "estimated"))
-  expect_true(all(is.finite(out$std_error)))
-  expect_true(all(out$estimate >= 0))
-  expect_true(all(out$estimate < 1))
-})
-
-test_that("Atkinson sensitivity rises with epsilon on a nondegenerate distribution", {
-  values <- c(rep(100, 20), rep(200, 20), rep(500, 20))
-  x <- data.frame(
-    survey_id = "wave",
-    household_id = paste0("h", seq_along(values)),
-    source_state_code = "01",
-    sector = "Rural",
-    subround = "1",
-    fsu = as.character(seq_along(values)),
-    stratum = "1",
-    sub_stratum = "1",
-    household_size = 1,
-    target_unit_2001 = "a",
-    lineage_status = "resolved_exact_2001",
-    lineage_weight = 1,
-    lineage_person_weight = 1,
-    real_mpce = values,
-    stringsAsFactors = FALSE
-  )
-  registry <- data.frame(
-    outcome_id = c(
-      "atkinson_0_5_real_mpce",
-      "atkinson_1_real_mpce",
-      "atkinson_2_real_mpce"
-    ),
-    estimand = "survey_atkinson",
-    transform = "identity",
-    quantile = NA_real_,
-    quantile_interval = "",
-    quantile_rule = "",
-    epsilon = c(0.5, 1, 2),
-    role = "robustness",
-    min_households = 1,
-    min_fsu = 1,
-    min_kish_effective_n = 1,
-    max_relative_se = 10,
-    stringsAsFactors = FALSE
-  )
-
-  out <- estimate_consumption_district_welfare(x, registry)
-  estimate <- out$estimate[match(registry$outcome_id, out$outcome_id)]
-
-  expect_true(all(diff(estimate) > 0))
-})
-
-test_that("inequality outcomes reuse the common support and precision contract", {
-  values <- c(100, 120, 140, 160, 180, 200)
-  x <- data.frame(
-    survey_id = "wave",
-    household_id = paste0("h", seq_along(values)),
-    source_state_code = "01",
-    sector = "Rural",
-    subround = "1",
-    fsu = as.character(seq_along(values)),
-    stratum = "1",
-    sub_stratum = "1",
-    household_size = 1,
-    target_unit_2001 = "a",
-    lineage_status = "resolved_exact_2001",
-    lineage_weight = 1,
-    lineage_person_weight = 1,
-    real_mpce = values,
-    stringsAsFactors = FALSE
-  )
-  rule <- data.frame(
-    outcome_id = "gini_real_mpce",
-    estimand = "survey_gini",
-    transform = "identity",
-    quantile = NA_real_,
-    quantile_interval = "",
-    quantile_rule = "",
-    epsilon = NA_real_,
-    role = "robustness",
-    min_households = 10,
-    min_fsu = 2,
-    min_kish_effective_n = 10,
-    max_relative_se = 1,
-    stringsAsFactors = FALSE
-  )
-
-  out <- estimate_consumption_district_welfare(x, rule)
-
-  expect_true(is.finite(out$estimate))
-  expect_true(is.finite(out$std_error))
-  expect_equal(out$status, "estimated")
-  expect_false(out$sample_support_ok)
-  expect_false(out$preferred_eligible)
-  expect_match(out$support_reason, "thin_household_sample")
-  expect_true(is.na(out$cv))
-})
-
-test_that("registered Tendulkar poverty outcomes match direct convey FGT estimates", {
-  set.seed(602)
-  n <- 80
-  values <- exp(rnorm(n, log(tendulkar_real_poverty_line()), 0.55))
-  x <- data.frame(
-    survey_id = "wave",
-    household_id = paste0("h", seq_len(n)),
-    source_state_code = "01",
-    sector = "Rural",
-    subround = "1",
-    fsu = as.character(seq_len(n)),
-    stratum = "1",
-    sub_stratum = "1",
-    household_size = 1,
-    target_unit_2001 = "a",
-    lineage_status = "resolved_exact_2001",
-    lineage_weight = 1,
-    lineage_person_weight = seq(1, 2, length.out = n),
-    real_mpce = values,
-    stringsAsFactors = FALSE
-  )
-  registry <- data.frame(
-    outcome_id = c(
-      "tendulkar_poverty_headcount",
-      "tendulkar_poverty_gap",
-      "tendulkar_poverty_severity"
-    ),
-    estimand = "survey_fgt",
-    transform = "identity",
-    quantile = NA_real_,
-    quantile_interval = "",
-    quantile_rule = "",
-    epsilon = NA_real_,
-    fgt_order = 0:2,
-    role = "robustness",
-    min_households = 1,
-    min_fsu = 1,
-    min_kish_effective_n = 1,
-    max_relative_se = NA_real_,
-    stringsAsFactors = FALSE
-  )
-
-  out <- estimate_consumption_district_welfare(x, registry)
-
-  rows <- consumption_design_rows(x)
-  design <- convey::convey_prep(
-    update(
-      consumption_survey_design_from_rows(rows),
-      .welfare_value = rows$real_mpce
-    )
-  )
-  direct <- vapply(0:2, function(g) {
-    unname(stats::coef(convey::svyfgt(
-      ~.welfare_value,
-      design,
-      g = g,
-      type_thresh = "abs",
-      abs_thresh = tendulkar_real_poverty_line(),
-      na.rm = TRUE
-    )))[[1L]]
-  }, numeric(1))
-
-  expect_equal(
-    out$estimate[match(registry$outcome_id, out$outcome_id)],
-    direct,
-    tolerance = 1e-10
-  )
-  expect_true(all(out$status == "estimated"))
-  expect_true(all(is.finite(out$std_error)))
-  expect_true(all(out$estimate >= 0))
-  expect_true(all(out$estimate <= 1))
-})
-
-test_that("FGT poverty measures are ordered by poverty-gap sensitivity", {
-  values <- c(
-    rep(300, 10), rep(500, 10), rep(700, 10),
-    rep(900, 10), rep(1200, 10)
-  )
-  x <- data.frame(
-    survey_id = "wave",
-    household_id = paste0("h", seq_along(values)),
-    source_state_code = "01",
-    sector = "Rural",
-    subround = "1",
-    fsu = as.character(seq_along(values)),
-    stratum = "1",
-    sub_stratum = "1",
-    household_size = 1,
-    target_unit_2001 = "a",
-    lineage_status = "resolved_exact_2001",
-    lineage_weight = 1,
-    lineage_person_weight = 1,
-    real_mpce = values,
-    stringsAsFactors = FALSE
-  )
-  registry <- data.frame(
-    outcome_id = c("fgt0", "fgt1", "fgt2"),
-    estimand = "survey_fgt",
-    transform = "identity",
-    quantile = NA_real_,
-    quantile_interval = "",
-    quantile_rule = "",
-    epsilon = NA_real_,
-    fgt_order = 0:2,
-    role = "robustness",
-    min_households = 1,
-    min_fsu = 1,
-    min_kish_effective_n = 1,
-    max_relative_se = NA_real_,
-    stringsAsFactors = FALSE
-  )
-
-  out <- estimate_consumption_district_welfare(x, registry)
-  estimate <- out$estimate[match(registry$outcome_id, out$outcome_id)]
-
-  expect_true(estimate[[1L]] > estimate[[2L]])
-  expect_true(estimate[[2L]] > estimate[[3L]])
-  expect_true(all(out$preferred_eligible))
-})
-
-test_that("Tendulkar poverty eligibility does not depend on relative SE near zero", {
-  values <- rep(2000, 20)
-  x <- data.frame(
-    survey_id = "wave",
-    household_id = paste0("h", seq_along(values)),
-    source_state_code = "01",
-    sector = "Rural",
-    subround = "1",
-    fsu = as.character(seq_along(values)),
-    stratum = "1",
-    sub_stratum = "1",
-    household_size = 1,
-    target_unit_2001 = "a",
-    lineage_status = "resolved_exact_2001",
-    lineage_weight = 1,
-    lineage_person_weight = 1,
-    real_mpce = values,
-    stringsAsFactors = FALSE
-  )
-  rule <- data.frame(
-    outcome_id = "tendulkar_poverty_headcount",
-    estimand = "survey_fgt",
-    transform = "identity",
-    quantile = NA_real_,
-    quantile_interval = "",
-    quantile_rule = "",
-    epsilon = NA_real_,
-    fgt_order = 0,
-    role = "robustness",
-    min_households = 1,
-    min_fsu = 1,
-    min_kish_effective_n = 1,
-    max_relative_se = NA_real_,
-    stringsAsFactors = FALSE
-  )
-
-  out <- estimate_consumption_district_welfare(x, rule)
-
-  expect_equal(out$estimate, 0)
-  expect_true(is.na(out$relative_se))
-  expect_true(is.na(out$precision_ok))
-  expect_true(out$sample_support_ok)
-  expect_true(out$preferred_eligible)
-})
-
-
-test_that("welfare registry partitions core and expensive distributional outcomes", {
-  registry <- data.frame(
-    outcome_id = c("mean", "median", "bottom40", "gini", "atk", "fgt"),
-    estimand = c(
-      "survey_mean", "survey_quantile", "survey_bottom_mean",
-      "survey_gini", "survey_atkinson", "survey_fgt"
-    ),
+    outcome_id = c("mean", "median", "bottom40"),
+    estimand = c("survey_mean", "survey_quantile", "survey_bottom_mean"),
     stringsAsFactors = FALSE
   )
   expect_equal(
@@ -1087,73 +721,8 @@ test_that("welfare registry partitions core and expensive distributional outcome
   )
   expect_equal(
     consumption_welfare_registry_partition(registry, "distributional")$outcome_id,
-    c("bottom40", "gini", "atk", "fgt")
+    "bottom40"
   )
-})
-
-test_that("grouped convey domains reproduce direct district Gini and Atkinson inference", {
-  old <- Sys.getenv("EMI_CONSUMPTION_DOMAIN_CORES", unset = NA_character_)
-  Sys.setenv(EMI_CONSUMPTION_DOMAIN_CORES = "1")
-  on.exit({
-    if (is.na(old)) Sys.unsetenv("EMI_CONSUMPTION_DOMAIN_CORES") else
-      Sys.setenv(EMI_CONSUMPTION_DOMAIN_CORES = old)
-  }, add = TRUE)
-
-  set.seed(701)
-  n <- 72
-  x <- data.frame(
-    survey_id = "wave",
-    household_id = paste0("h", seq_len(n)),
-    source_state_code = "01",
-    sector = "Rural",
-    subround = "1",
-    fsu = as.character(seq_len(n)),
-    stratum = "1",
-    sub_stratum = "1",
-    household_size = 1,
-    target_unit_2001 = rep(c("a", "b", "c"), each = n / 3),
-    lineage_status = "resolved_exact_2001",
-    lineage_weight = 1,
-    lineage_person_weight = seq(1, 2, length.out = n),
-    real_mpce = exp(rnorm(n, log(250), 0.4)),
-    stringsAsFactors = FALSE
-  )
-  registry <- data.frame(
-    outcome_id = c("gini", "atk"),
-    estimand = c("survey_gini", "survey_atkinson"),
-    transform = "identity",
-    quantile = NA_real_, quantile_interval = "", quantile_rule = "",
-    epsilon = c(NA, 1), fgt_order = NA_real_, role = "robustness",
-    min_households = 1, min_fsu = 1, min_kish_effective_n = 1,
-    max_relative_se = 10, stringsAsFactors = FALSE
-  )
-
-  grouped <- estimate_consumption_district_welfare_distributional(x, registry)
-  rows <- consumption_design_rows(x)
-  design <- convey::convey_prep(
-    update(consumption_survey_design_from_rows(rows), .welfare_value = rows$real_mpce)
-  )
-  direct <- safe_bind_rows(lapply(c("a", "b", "c"), function(district) {
-    d <- subset(design, target_unit_2001 == district)
-    safe_bind_rows(list(
-      data.frame(
-        district_2001 = district, outcome_id = "gini",
-        estimate = unname(stats::coef(convey::svygini(~.welfare_value, d, na.rm = TRUE)))[[1L]],
-        std_error = unname(survey::SE(convey::svygini(~.welfare_value, d, na.rm = TRUE)))[[1L]]
-      ),
-      data.frame(
-        district_2001 = district, outcome_id = "atk",
-        estimate = unname(stats::coef(convey::svyatk(~.welfare_value, d, epsilon = 1, na.rm = TRUE)))[[1L]],
-        std_error = unname(survey::SE(convey::svyatk(~.welfare_value, d, epsilon = 1, na.rm = TRUE)))[[1L]]
-      )
-    ))
-  }))
-  key_grouped <- paste(grouped$district_2001, grouped$outcome_id)
-  key_direct <- paste(direct$district_2001, direct$outcome_id)
-  direct <- direct[match(key_grouped, key_direct), , drop = FALSE]
-
-  expect_equal(grouped$estimate, direct$estimate, tolerance = 1e-10)
-  expect_equal(grouped$std_error, direct$std_error, tolerance = 1e-10)
 })
 
 test_that("grouped bottom-tail means reproduce direct convey-domain estimates", {
@@ -1175,8 +744,8 @@ test_that("grouped bottom-tail means reproduce direct convey-domain estimates", 
   )
   rule <- data.frame(
     outcome_id = "bottom40", estimand = "survey_bottom_mean", transform = "identity",
-    quantile = 0.4, quantile_interval = "", quantile_rule = "", epsilon = NA_real_,
-    fgt_order = NA_real_, role = "robustness", min_households = 1, min_fsu = 1,
+    quantile = 0.4, quantile_interval = "", quantile_rule = "",
+    role = "robustness", min_households = 1, min_fsu = 1,
     min_kish_effective_n = 1, max_relative_se = 10, stringsAsFactors = FALSE
   )
   grouped <- estimate_consumption_district_welfare_distributional(x, rule)
@@ -1212,57 +781,10 @@ test_that("consumption domain cores are explicit and clamped", {
   expect_lte(consumption_domain_cores(), parallel::detectCores(logical = FALSE))
 })
 
-test_that("grouped convey domains reproduce direct district FGT inference", {
-  old <- Sys.getenv("EMI_CONSUMPTION_DOMAIN_CORES", unset = NA_character_)
-  Sys.setenv(EMI_CONSUMPTION_DOMAIN_CORES = "1")
-  on.exit({
-    if (is.na(old)) Sys.unsetenv("EMI_CONSUMPTION_DOMAIN_CORES") else
-      Sys.setenv(EMI_CONSUMPTION_DOMAIN_CORES = old)
-  }, add = TRUE)
-
-  values <- c(400, 600, 900, 1200, 500, 700, 1000, 1400)
-  x <- data.frame(
-    survey_id = "wave", household_id = paste0("h", seq_along(values)),
-    source_state_code = "01", sector = "Rural", subround = "1",
-    fsu = as.character(seq_along(values)), stratum = "1", sub_stratum = "1",
-    household_size = 1, target_unit_2001 = rep(c("a", "b"), each = 4),
-    lineage_status = "resolved_exact_2001", lineage_weight = 1,
-    lineage_person_weight = 1, real_mpce = values, stringsAsFactors = FALSE
-  )
-  rule <- data.frame(
-    outcome_id = "fgt1", estimand = "survey_fgt", transform = "identity",
-    quantile = NA_real_, quantile_interval = "", quantile_rule = "",
-    epsilon = NA_real_, fgt_order = 1, role = "robustness",
-    min_households = 1, min_fsu = 1, min_kish_effective_n = 1,
-    max_relative_se = NA_real_, stringsAsFactors = FALSE
-  )
-
-  grouped <- estimate_consumption_district_welfare_distributional(x, rule)
-  rows <- consumption_design_rows(x)
-  design <- convey::convey_prep(
-    update(consumption_survey_design_from_rows(rows), .welfare_value = rows$real_mpce)
-  )
-  direct <- safe_bind_rows(lapply(c("a", "b"), function(district) {
-    stat <- convey::svyfgt(
-      ~.welfare_value, subset(design, target_unit_2001 == district),
-      g = 1, type_thresh = "abs",
-      abs_thresh = tendulkar_real_poverty_line(), na.rm = TRUE
-    )
-    data.frame(
-      district_2001 = district,
-      estimate = unname(stats::coef(stat))[[1L]],
-      std_error = unname(survey::SE(stat))[[1L]],
-      stringsAsFactors = FALSE
-    )
-  }))
-  direct <- direct[match(grouped$district_2001, direct$district_2001), , drop = FALSE]
-  expect_equal(grouped$estimate, direct$estimate, tolerance = 1e-10)
-  expect_equal(grouped$std_error, direct$std_error, tolerance = 1e-10)
-})
-
 test_that("production welfare registry selects outcomes by informative survey rounds", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
   registry <- read_consumption_welfare_outcomes(
-    repo_file("data", "metadata", "consumption_welfare_outcomes.csv")
+    file.path(root, "data", "metadata", "consumption_welfare_outcomes.csv")
   )
 
   nss64 <- consumption_welfare_registry_for_survey(
@@ -1287,4 +809,19 @@ test_that("production welfare registry selects outcomes by informative survey ro
     "bottom20|gini|atkinson|poverty",
     registry$outcome_id
   )))
+})
+
+test_that("survey-specific welfare selection rejects mixed-round inputs", {
+  registry <- data.frame(
+    outcome_id = "mean",
+    estimand = "survey_mean",
+    survey_ids = "*",
+    stringsAsFactors = FALSE
+  )
+  expect_error(
+    consumption_welfare_registry_for_survey(
+      registry, c("nss_2004_05", "nss_2007_08_consumption")
+    ),
+    "exactly one survey_id"
+  )
 })
