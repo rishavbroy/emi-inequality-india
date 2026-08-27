@@ -57,6 +57,7 @@ test_that("rendered and archived artifacts are treated as binary by Git", {
 test_that("current public build helper scripts parse", {
   expect_silent(parse(repo_file("_targets.R")))
   expect_silent(parse(repo_file("scripts", "check_required_outputs.R")))
+  expect_silent(parse(repo_file("scripts", "check_targets_process.R")))
   expect_silent(parse(repo_file("scripts", "run_targets_checked.R")))
   expect_silent(parse(repo_file("scripts", "run_targets_strict.R")))
   expect_silent(parse(repo_file("scripts", "target_metadata_helpers.R")))
@@ -316,6 +317,49 @@ test_that("review archives do not carry stale root-level diagnostic CSVs", {
   archive <- repo_text("scripts", "make_review_archive.sh")
 
   expect_match(archive, "find \"$tmpdir/outputs/diagnostics\" -maxdepth 1 -type f -name '*.csv' -delete", fixed = TRUE)
+})
+
+
+test_that("debug review archives include safe untracked source files but exclude raw data", {
+  skip_if(Sys.which("git") == "")
+  skip_if(Sys.which("zip") == "")
+  root <- tempfile("review-archive-untracked-")
+  dir.create(root, recursive = TRUE)
+  on.exit(unlink(root, recursive = TRUE, force = TRUE), add = TRUE)
+
+  dir.create(file.path(root, "scripts"), recursive = TRUE)
+  dir.create(file.path(root, "data", "raw"), recursive = TRUE)
+  file.copy(
+    repo_file("scripts", "make_review_archive.sh"),
+    file.path(root, "scripts", "make_review_archive.sh")
+  )
+  writeLines("tracked", file.path(root, "README.md"))
+  writeLines("helper <- function() TRUE", file.path(root, "scripts", "new_helper.R"))
+  writeLines("raw", file.path(root, "data", "raw", "private.csv"))
+
+  system2("git", c("-C", shQuote(root), "init", "-q"))
+  system2(
+    "git",
+    c("-C", shQuote(root), "add", "README.md", "scripts/make_review_archive.sh")
+  )
+
+  old_wd <- setwd(root)
+  on.exit(setwd(old_wd), add = TRUE)
+  output <- system2(
+    "bash",
+    c(
+      "scripts/make_review_archive.sh",
+      "--without-samples",
+      "--allow-incomplete",
+      "--output", "review.zip"
+    ),
+    stdout = TRUE,
+    stderr = TRUE
+  )
+  expect_null(attr(output, "status"))
+  listing <- utils::unzip("review.zip", list = TRUE)$Name
+  expect_true("scripts/new_helper.R" %in% listing)
+  expect_false("data/raw/private.csv" %in% listing)
 })
 
 test_that("targets sources only R scripts from source directories", {
@@ -872,6 +916,7 @@ test_that("consumption welfare targets cache core and distributional work separa
 test_that("public audit checks the targets process before tests and pipeline execution", {
   audit <- repo_text("scripts", "run_public_build_audit.sh")
   checker <- repo_text("scripts", "check_targets_process.R")
+  description <- repo_text("DESCRIPTION")
   expect_match(audit, 'current_stage="targets-process-preflight"', fixed = TRUE)
   expect_match(audit, "Rscript scripts/check_targets_process.R", fixed = TRUE)
   expect_lt(
@@ -882,6 +927,7 @@ test_that("public audit checks the targets process before tests and pipeline exe
     regexpr("Rscript scripts/check_targets_process.R", audit, fixed = TRUE)[[1L]],
     regexpr('current_stage="public-final-check"', audit, fixed = TRUE)[[1L]]
   )
+  expect_match(description, "    ps,", fixed = TRUE)
   expect_match(checker, "targets::tar_pid()", fixed = TRUE)
   expect_match(checker, "pid %in% ps::ps_pids()", fixed = TRUE)
   expect_match(checker, "targets::tar_unblock_process()", fixed = TRUE)
