@@ -511,54 +511,91 @@ consumption_iv_first_stage_rows <- function(first_stage, specifications) {
   }))
 }
 
+estimate_consumption_iv_dynamic_spec <- function(
+    panel, specification, cfg = list(), ar_level = 0.95, ar_points = 401L) {
+  spec <- as_single_iv_specification(specification)
+  id <- plain_chr(spec$specification_id[[1L]])
+
+  tryCatch({
+    formula <- iv_specification_formula(spec)
+    models <- estimate_2sls(
+      panel, stats::setNames(list(formula), id), cfg
+    )
+    first_stage <- estimate_first_stage(models, panel, cfg)
+    first_stage_row <- consumption_iv_first_stage_rows(first_stage, spec)
+    reduced_form <- estimate_iv_reduced_form_spec(panel, spec, cfg)
+    second_stage <- consumption_iv_second_stage_rows(models, spec, panel)
+    ar <- estimate_anderson_rubin_spec(
+      panel, spec, level = ar_level, points = ar_points
+    )
+
+    summary <- spec[c(
+      "specification_id", "welfare_specification_id",
+      "welfare_outcome_id", "outcome_round", "baseline_round",
+      "estimand", "analysis_transform", "tier"
+    )]
+    summary <- merge(
+      summary, first_stage_row,
+      by = "specification_id", all.x = TRUE, sort = FALSE
+    )
+
+    rf <- reduced_form
+    names(rf)[names(rf) != "specification_id"] <- paste0(
+      "reduced_form_", names(rf)[names(rf) != "specification_id"]
+    )
+    ss <- second_stage
+    names(ss)[names(ss) != "specification_id"] <- paste0(
+      "second_stage_", names(ss)[names(ss) != "specification_id"]
+    )
+
+    summary <- merge(
+      summary, rf, by = "specification_id", all.x = TRUE, sort = FALSE
+    )
+    summary <- merge(
+      summary, ss, by = "specification_id", all.x = TRUE, sort = FALSE
+    )
+    summary <- merge(
+      summary, ar$summary,
+      by = "specification_id", all.x = TRUE, sort = FALSE
+    )
+    rownames(summary) <- NULL
+
+    list(summary = summary, anderson_rubin_grid = ar$grid)
+  }, error = function(e) {
+    stop(
+      "Consumption IV dynamics failed for ", id, ": ",
+      conditionMessage(e),
+      call. = FALSE
+    )
+  })
+}
+
 estimate_consumption_iv_dynamics <- function(
     panel, specifications, cfg = list(), ar_level = 0.95, ar_points = 401L) {
   specs <- as_iv_specifications(specifications)
-  formulas <- consumption_iv_formula_list(specs)
-  models <- estimate_2sls(panel, formulas, cfg)
-  first_stage <- estimate_first_stage(models, panel, cfg)
-
-  reduced_form <- safe_bind_rows(lapply(seq_len(nrow(specs)), function(i) {
-    estimate_iv_reduced_form_spec(panel, specs[i, , drop = FALSE], cfg)
-  }))
-  second_stage <- consumption_iv_second_stage_rows(models, specs, panel)
-  first_stage_rows <- consumption_iv_first_stage_rows(first_stage, specs)
-
-  ar <- lapply(seq_len(nrow(specs)), function(i) {
-    estimate_anderson_rubin_spec(
-      panel, specs[i, , drop = FALSE],
-      level = ar_level, points = ar_points
+  estimated <- lapply(seq_len(nrow(specs)), function(i) {
+    estimate_consumption_iv_dynamic_spec(
+      panel,
+      specs[i, , drop = FALSE],
+      cfg = cfg,
+      ar_level = ar_level,
+      ar_points = ar_points
     )
   })
-  ar_summary <- safe_bind_rows(lapply(ar, `[[`, "summary"))
-  ar_grid <- safe_bind_rows(lapply(ar, `[[`, "grid"))
 
-  summary <- specs[c(
-    "specification_id", "welfare_specification_id",
-    "welfare_outcome_id", "outcome_round", "baseline_round",
-    "estimand", "analysis_transform", "tier"
-  )]
-  summary <- merge(summary, first_stage_rows, by = "specification_id", all.x = TRUE, sort = FALSE)
-
-  rf <- reduced_form
-  names(rf)[names(rf) != "specification_id"] <- paste0(
-    "reduced_form_", names(rf)[names(rf) != "specification_id"]
-  )
-  ss <- second_stage
-  names(ss)[names(ss) != "specification_id"] <- paste0(
-    "second_stage_", names(ss)[names(ss) != "specification_id"]
-  )
-
-  summary <- merge(summary, rf, by = "specification_id", all.x = TRUE, sort = FALSE)
-  summary <- merge(summary, ss, by = "specification_id", all.x = TRUE, sort = FALSE)
-  summary <- merge(summary, ar_summary, by = "specification_id", all.x = TRUE, sort = FALSE)
-
-  order_pos <- match(plain_chr(specs$specification_id), plain_chr(summary$specification_id))
-  summary <- summary[order_pos, , drop = FALSE]
+  summary <- safe_bind_rows(lapply(estimated, `[[`, "summary"))
+  grid <- safe_bind_rows(lapply(estimated, `[[`, "anderson_rubin_grid"))
+  expected <- plain_chr(specs$specification_id)
+  summary <- summary[
+    match(expected, plain_chr(summary$specification_id)),
+    ,
+    drop = FALSE
+  ]
   rownames(summary) <- NULL
 
-  list(summary = summary, anderson_rubin_grid = ar_grid)
+  list(summary = summary, anderson_rubin_grid = grid)
 }
+
 
 validate_consumption_iv_dynamics <- function(dynamics, specifications) {
   specs <- as_iv_specifications(specifications)

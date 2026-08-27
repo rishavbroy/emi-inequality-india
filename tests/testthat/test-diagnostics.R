@@ -2168,3 +2168,92 @@ test_that("production CPI-IW history follows the registered consumption window",
     fixed = TRUE
   )
 })
+
+test_that("dynamic consumption IV estimation is stable across multiple registered specifications", {
+  skip_if_not_installed("ivreg")
+  skip_if_not_installed("sandwich")
+  skip_if_not_installed("car")
+
+  set.seed(507)
+  n <- 96L
+  panel <- data.frame(
+    z = rnorm(n),
+    control = rnorm(n),
+    state_code_2001 = rep(sprintf("%02d", 1:8), each = 12),
+    stringsAsFactors = FALSE
+  )
+  panel$d <- 0.8 * panel$z + 0.2 * panel$control + rnorm(n)
+  panel$baseline_a <- rnorm(n)
+  panel$baseline_b <- rnorm(n)
+  panel$y_a <- 0.5 * panel$d + 0.3 * panel$baseline_a + rnorm(n)
+  panel$y_b <- 0.7 * panel$d + 0.3 * panel$baseline_b + rnorm(n)
+
+  make_spec <- function(id, outcome, baseline) {
+    spec <- iv_specification_row(
+      specification_id = id,
+      adjustment_id = "state_main",
+      adjustment = "State FE",
+      construction_id = "nonzero_mean",
+      construction = "Toy",
+      outcome = outcome,
+      treatment = "d",
+      fixed_effect = "state",
+      controls = c("control", baseline),
+      included_language_controls = character(),
+      excluded_instruments = "z",
+      mapping_coverage_variable = NA_character_,
+      panel_variant = "primary",
+      sample_rule = "preferred_welfare_support",
+      cluster = "state_code_2001"
+    )
+    spec$welfare_specification_id <- sub("^consumption__", "", id)
+    spec$welfare_outcome_id <- "real_mean_mpce"
+    spec$outcome_round <- "toy_endpoint"
+    spec$baseline_round <- "toy_baseline"
+    spec$estimand <- "ancova"
+    spec$analysis_transform <- "log"
+    spec
+  }
+
+  specs <- bind_iv_specification_rows(list(
+    make_spec("consumption__toy_a", "y_a", "baseline_a"),
+    make_spec("consumption__toy_b", "y_b", "baseline_b")
+  ))
+
+  out <- estimate_consumption_iv_dynamics(
+    panel, specs, list(), ar_points = 31L
+  )
+
+  expect_identical(
+    out$summary$specification_id,
+    c("consumption__toy_a", "consumption__toy_b")
+  )
+  expect_equal(nrow(out$summary), 2L)
+  expect_true(all(out$summary$first_stage_status == "estimated"))
+  expect_true(all(out$summary$reduced_form_status == "estimated"))
+  expect_true(all(out$summary$second_stage_status == "estimated"))
+  expect_true(all(out$summary$status == "estimated"))
+  expect_setequal(
+    unique(out$anderson_rubin_grid$specification_id),
+    out$summary$specification_id
+  )
+})
+
+test_that("optional pretrend welfare rounds remain outside the causal IV registry", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
+  survey_registry <- read_consumption_survey_registry(build_paths(root))
+  iv_registry <- read_consumption_iv_outcome_registry(
+    file.path(root, "data", "metadata", "consumption_iv_outcomes.csv")
+  )
+
+  pretrend <- survey_registry$survey_id[
+    survey_registry$analysis_role == "optional_pretrend"
+  ]
+  registered_rounds <- unique(c(
+    plain_chr(iv_registry$outcome_round),
+    plain_chr(iv_registry$baseline_round)
+  ))
+
+  expect_setequal(pretrend, c("nss_2000_01", "nss_2001_02"))
+  expect_length(intersect(pretrend, registered_rounds), 0L)
+})
