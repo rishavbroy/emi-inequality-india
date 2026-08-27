@@ -1708,9 +1708,11 @@ test_that("IV analysis frames drop sf geometry without flattening analysis colum
     state_code_2001 = c("01", "02"),
     stringsAsFactors = FALSE
   )
+  panel$x_coord <- c(0, 1)
+  panel$y_coord <- c(0, 1)
   panel <- sf::st_as_sf(
     panel,
-    coords = data.frame(x = c(0, 1), y = c(0, 1)),
+    coords = c("x_coord", "y_coord"),
     crs = 4326
   )
 
@@ -2302,12 +2304,11 @@ test_that("dynamic consumption IV estimation is stable across multiple registere
   ))
 
   if (requireNamespace("sf", quietly = TRUE)) {
+    panel$x_coord <- seq_len(nrow(panel))
+    panel$y_coord <- 0
     panel <- sf::st_as_sf(
       panel,
-      coords = data.frame(
-        x = seq_len(nrow(panel)),
-        y = rep(0, nrow(panel))
-      ),
+      coords = c("x_coord", "y_coord"),
       crs = 4326
     )
   }
