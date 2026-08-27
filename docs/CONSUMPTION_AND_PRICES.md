@@ -247,32 +247,30 @@ benchmarks (rural Rs. 772; urban Rs. 1,472). It is a treatment-period welfare
 observation, not automatically a new causal-IV endpoint.
 
 The production distributional robustness menu is intentionally narrow.
-`bottom40_mean_real_mpce` is retained because it can be estimated at the
-pre-treatment 2004-05 baseline, the NSS-64 treatment-period round, and both
-modern HCES replication rounds. Bottom-20, Gini, Atkinson, and district FGT
-poverty outcomes are no longer produced routinely: their incremental research
-value did not justify their nonlinear district-survey runtime or historical
-support limitations.
+`bottom40_mean_real_mpce` is retained only where the district survey support is
+strong enough to make the lower-tail statistic informative: the pre-treatment
+2004-05 baseline and the two modern HCES replication rounds. NSS-64 is retained
+for mean, mean-log, and median treatment-period welfare, but only 97 of 527
+NSS-64 district estimates pass the predeclared bottom-40 support gate (the
+dominant failure is Kish effective N below 50), so 2007-08 bottom-40 is not a
+registered production outcome. Bottom-20, Gini, Atkinson, and district FGT
+poverty outcomes are likewise not produced routinely because their incremental
+research value does not justify their historical support limitations and
+nonlinear district-survey runtime.
 
-The registered distributional robustness outcome is
-`bottom40_mean_real_mpce`. It is the mean among
-the bottom 40 and bottom 20 percent of represented persons within each
-Census-2001 district, not household-order statistics. They reuse the same
-person-weighted survey design and conservative lineage support as the mean and
-median outcomes.
-
-
+The registered distributional robustness outcome,
+`bottom40_mean_real_mpce`, is the mean real MPCE among the bottom 40 percent of
+represented persons within each Census-2001 district, not a household-order
+statistic. It reuses the same person-weighted survey design and conservative
+lineage support as the mean and median outcomes.
 
 Lower-tail inference uses the standard `{convey}` implementation rather than a
 repository-specific variance formula. `convey::svyisq()` supplies the
 design-linearized total below the requested survey quantile; the welfare adapter
 uses `convey::contrastinf()` to divide that lower-tail total by the represented
-bottom-share population while retaining denominator uncertainty. The bottom-20
-registry row uses stricter total-domain household and Kish-effective-N thresholds
-than the bottom-40 row because only one fifth of represented persons contribute
-to the lower tail. Both remain robustness outcomes and flow automatically through
-the existing cross-round comparability diagnostics; they are not added to the
-preferred IV registry merely because they are newly available.
+bottom-share population while retaining denominator uncertainty. Bottom-40
+remains a robustness outcome and is not added to the preferred IV registry
+merely because it is available.
 
 For survey quantiles, the `{survey}` package can return `NaN` confidence limits
 when a probability-scale Woodruff interval cannot be inverted inside `[0, 1]`.
