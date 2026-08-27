@@ -656,3 +656,15 @@ reconstructing district estimates.
 ### Quantile inference and thin district domains
 
 Registered district quantiles keep a design-weighted point estimate for every resolved district. Quantile confidence intervals and standard errors are requested only when the district satisfies the registry's ex-ante sample-support thresholds (`min_households`, `min_fsu`, and `min_kish_effective_n`). This is an inference gate, not a data filter: thin districts remain in the public long-form welfare file with `status = "point_estimate_only"`, `uncertainty_requested = FALSE`, and their support diagnostics intact. Supported districts use the registry-declared `survey::svyquantile()` interval and quantile rule. The only supported-domain warning handled locally is the documented non-finite Woodruff-interval condition described above; all other warnings remain strict-build failures. This preserves descriptive weighted medians while keeping unavailable design uncertainty explicit.
+
+
+### Pretrend analysis scope
+
+NSS 56 (2000-01) and NSS 57 (2001-02) remain optional descriptive pretrend
+rounds. Their core welfare estimates and comparability diagnostics are produced,
+but they are not causal-IV endpoints. The first production pass shows that
+2000-01 to 2001-02 common preferred district support is too thin for a credible
+district-level placebo trend; 2001-02 to 2004-05 is retained as descriptive
+context. Any future placebo registration therefore requires an explicit
+research-design change rather than occurring automatically when a round is
+available.
