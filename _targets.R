@@ -1752,8 +1752,8 @@ benchmark_targets <- list(
   tar_target(
     bench_consumption_distribution_domains,
     run_consumption_distribution_benchmark(
-      consumption_households_lineaged_2011_12_type2,
-      consumption_welfare_outcomes_distributional
+      consumption_households_lineaged_2004_05,
+      consumption_welfare_outcomes
     ),
     format = "file"
   ),

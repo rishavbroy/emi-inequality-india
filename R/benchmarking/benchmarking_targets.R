@@ -77,8 +77,12 @@ save_spatial_weights_benchmark <- function(x, dir = "outputs/benchmarking/spatia
 
 benchmark_consumption_distribution_domains <- function(
     lineaged_households, registry, max_districts = 8L) {
-  rules <- consumption_welfare_registry_partition(registry, "distributional")
-  rules <- rules[plain_chr(rules$estimand) == "survey_gini", , drop = FALSE]
+  survey_id <- unique(plain_chr(safe_df(lineaged_households)$survey_id))
+  rules <- consumption_welfare_registry_partition(
+    consumption_welfare_registry_for_survey(registry, survey_id),
+    "distributional"
+  )
+  rules <- rules[plain_chr(rules$estimand) == "survey_bottom_mean", , drop = FALSE]
   if (!nrow(rules)) {
     return(data.frame(
       mode = "unavailable", elapsed_seconds = NA_real_, n_districts = 0L,
