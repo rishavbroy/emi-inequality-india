@@ -13,6 +13,10 @@ test_that("consumption survey registry is self-describing and distinguishes lega
     consumption_survey_spec(registry, "nss_2007_08_consumption")$mpce_contract[[1]],
     "schedule_1_0_summary"
   )
+  nss64 <- consumption_survey_spec(registry, "nss_2007_08_consumption")
+  expect_identical(nss64$household_adapter[[1]], "direct_mpce")
+  expect_identical(nss64$mpce_field[[1]], "MPCE_Value")
+  expect_identical(nss64$weight_field[[1]], "Multiplier")
   expect_identical(
     consumption_survey_spec(registry, "nss_2017_18_education")$mpce_contract[[1]],
     "single_shot_umpce_classification"
@@ -75,6 +79,11 @@ test_that("registered consumption price window follows implemented survey adapte
   expect_equal(window$first_survey_id, "nss_2004_05")
   expect_equal(window$last_survey_id, "hces_2023_24")
 
+  expect_true(
+    consumption_survey_spec(registry, "nss_2007_08_consumption")$household_adapter[[1]] !=
+      "legacy_schedule_pending"
+  )
+
   implemented <- registry$household_adapter != "legacy_schedule_pending"
   expect_equal(
     window$start_period,
@@ -94,4 +103,37 @@ test_that("pending legacy survey adapters do not expand the production price win
 
   window <- registered_consumption_price_window(registry)
   expect_equal(window$start_period, as.Date("2004-07-01"))
+})
+
+test_that("registered detailed consumption frames reuse the declarative adapter", {
+  spec <- data.frame(
+    survey_id = "wave", survey_family = "nss", survey_label = "Wave",
+    survey_start = "2007-07-01", survey_end = "2008-06-30",
+    schedule_variant = "schedule_1_0", analysis_role = "test",
+    raw_path = "unused", price_timing = "quarterly_subround",
+    price_group_months = 3, district_identity_source = "labels",
+    mpce_contract = "schedule_1_0_summary", legacy_wave = NA,
+    household_adapter = "direct_mpce", household_id_field = "HH_ID",
+    mpce_field = "MPCE_Value", mpce_scale = 1,
+    household_size_field = "HH_Size", weight_field = "Multiplier",
+    state_field = "State", district_field = "District", sector_field = "Sector",
+    subround_field = "Sub_Round", fsu_field = "FSUno", stratum_field = "Stratum",
+    sub_stratum_field = "Sub_Stratum", stringsAsFactors = FALSE
+  )
+  raw <- list(
+    unrelated = data.frame(x = 1),
+    household = data.frame(
+      HH_ID = c("a", "b"), MPCE_Value = c(500, 1000), HH_Size = c(2, 4),
+      Multiplier = c(10, 20), State = c("01", "01"),
+      District = c("01113", "01114"), Sector = c("1", "2"),
+      Sub_Round = c("1", "4"), FSUno = c("001", "002"),
+      Stratum = c("01", "02"), Sub_Stratum = c("01", "01"),
+      stringsAsFactors = FALSE
+    )
+  )
+
+  out <- read_registered_detailed_consumption_frames(raw, spec)
+  expect_equal(out$nominal_mpce, c(500, 1000))
+  expect_equal(out$survey_weight, c(10, 20))
+  expect_equal(out$survey_id, rep("wave", 2))
 })

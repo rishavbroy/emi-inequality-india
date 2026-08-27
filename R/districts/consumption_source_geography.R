@@ -309,12 +309,88 @@ consumption_household_district_code <- function(district, state_code) {
       out[[i]] <- sprintf("%02d", numeric_value[[i]])
       next
     }
-    padded <- sprintf("%04d", numeric_value[[i]])
-    if (!is.na(state_code[[i]]) && substr(padded, 1L, 2L) == state_code[[i]]) {
-      out[[i]] <- substr(padded, 3L, 4L)
+
+    # Standard detailed NSS releases use either SSDD or the NSS-64 compact
+    # SSRDD code (state, NSS region, Census-2001 district). Preserve the
+    # district component and validate the state prefix instead of treating the
+    # extra region digit as part of district identity.
+    candidates <- c(
+      sprintf("%04d", numeric_value[[i]]),
+      sprintf("%05d", numeric_value[[i]])
+    )
+    for (padded in candidates) {
+      if (is.na(state_code[[i]]) || substr(padded, 1L, 2L) != state_code[[i]]) next
+      if (nchar(padded) == 4L) {
+        out[[i]] <- substr(padded, 3L, 4L)
+        break
+      }
+      if (nchar(padded) == 5L) {
+        out[[i]] <- substr(padded, 4L, 5L)
+        break
+      }
     }
   }
   out
+}
+
+consumption_labelled_names <- function(x, context) {
+  if (!inherits(x, c("haven_labelled", "haven_labelled_spss", "labelled"))) {
+    stop(context, " must retain distributed value labels.", call. = FALSE)
+  }
+  labels <- as.character(haven::as_factor(x, levels = "labels"))
+  if (any(is.na(labels) | !nzchar(trimws(labels)))) {
+    stop(context, " contains values without labels.", call. = FALSE)
+  }
+  trimws(labels)
+}
+
+build_consumption_district_codebook_from_labels <- function(
+    raw, specification) {
+  spec <- validate_direct_consumption_adapter(specification)
+  fields <- consumption_adapter_fields(spec)
+  households <- find_consumption_data_frame(
+    raw,
+    unname(fields[c("state", "district")]),
+    paste0(spec$survey_id[[1L]], " labelled geography source")
+  )
+
+  state_raw <- households[[fields[["state"]]]]
+  district_raw <- households[[fields[["district"]]]]
+  state_code <- consumption_code_key(state_raw, 2L)
+  district_code <- consumption_household_district_code(district_raw, state_code)
+  state_name <- consumption_labelled_names(
+    state_raw, paste0(spec$survey_id[[1L]], " state field")
+  )
+  district_name <- consumption_labelled_names(
+    district_raw, paste0(spec$survey_id[[1L]], " district field")
+  )
+
+  out <- unique(data.frame(
+    source_id = spec$survey_id[[1L]],
+    state_code_source = state_code,
+    district_code_source = district_code,
+    state_name_source = state_name,
+    district_name_source = district_name,
+    source_unit_kind = "district",
+    source_lineage_eligible = TRUE,
+    expected_stratum = "",
+    mapping_basis = "distributed_labelled_survey_codes",
+    stringsAsFactors = FALSE
+  ))
+  if (any(is.na(out$state_code_source) | is.na(out$district_code_source))) {
+    stop(spec$survey_id[[1L]], " contains invalid labelled geography codes.", call. = FALSE)
+  }
+  out$state_std <- canonicalize_state_name(out$state_name_source)
+  out$district_std <- canonicalize_district_name(out$district_name_source)
+  key <- paste(out$state_code_source, out$district_code_source, sep = "__")
+  if (anyDuplicated(key)) {
+    stop(
+      spec$survey_id[[1L]],
+      " labelled geography maps a state/district code to multiple names.",
+      call. = FALSE
+    )
+  }
+  complete_consumption_codebook_semantics(out)
 }
 
 attach_consumption_source_district_identity <- function(households, codebook) {

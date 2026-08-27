@@ -66,3 +66,35 @@ test_that("modern HCES codebook preserves historical price geography after UT re
     c("25", "25", "25", "37", "37", "28")
   )
 })
+
+test_that("NSS compact SSRDD district codes preserve the Census district component", {
+  expect_equal(
+    consumption_household_district_code(
+      c("01113", "28216", "13"),
+      c("01", "28", "28")
+    ),
+    c("13", "16", "13")
+  )
+})
+
+test_that("labelled NSS geography builds a unique state-district codebook", {
+  state <- haven::labelled(
+    c(1, 1, 28),
+    labels = c("Jammu & Kashmir" = 1, "Andhra Pradesh" = 28)
+  )
+  district <- haven::labelled(
+    c(1113, 1114, 28216),
+    labels = c("Jammu" = 1113, "Kathua" = 1114, "Krishna" = 28216)
+  )
+  raw <- list(household = data.frame(State = state, District = district))
+  spec <- consumption_survey_spec(
+    read_consumption_survey_registry(build_paths(Sys.getenv("EMI_PROJECT_ROOT", "."))),
+    "nss_2007_08_consumption"
+  )
+
+  out <- build_consumption_district_codebook_from_labels(raw, spec)
+  expect_equal(out$state_code_source, c("01", "01", "28"))
+  expect_equal(out$district_code_source, c("13", "14", "16"))
+  expect_equal(out$district_std, c("jammu", "kathua", "krishna"))
+  expect_equal(anyDuplicated(out[c("state_code_source", "district_code_source")]), 0L)
+})

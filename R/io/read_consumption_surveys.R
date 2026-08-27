@@ -330,6 +330,59 @@ find_consumption_zip_member <- function(archive, required_columns, context) {
   matched[[1]]
 }
 
+consumption_data_frames <- function(raw) {
+  frames <- as_input_list(raw)
+  frames <- frames[vapply(frames, inherits, logical(1), what = "data.frame")]
+  if (!length(frames)) {
+    stop("Registered consumption source contains no data frames.", call. = FALSE)
+  }
+  frames
+}
+
+find_consumption_data_frame <- function(raw, required_columns, context) {
+  frames <- consumption_data_frames(raw)
+  hits <- vapply(
+    frames,
+    function(frame) all(required_columns %in% names(frame)),
+    logical(1)
+  )
+  matched <- frames[hits]
+  if (length(matched) != 1L) {
+    stop(
+      context, " must resolve to exactly one data frame; found ",
+      length(matched), ".", call. = FALSE
+    )
+  }
+  matched[[1L]]
+}
+
+#' Canonicalize one registered detailed-consumption source already read through
+#' the raw-file manifest (e.g. an SPSS release read by haven).
+read_registered_detailed_consumption_frames <- function(raw, specification) {
+  spec <- validate_direct_consumption_adapter(specification)
+  fields <- consumption_adapter_fields(spec)
+  household_fields <- unname(fields[c(
+    "household_id", "household_size", "weight", "state", "district", "sector",
+    "subround", "fsu", "stratum", "sub_stratum"
+  )])
+  if (identical(spec$household_adapter[[1L]], "direct_mpce")) {
+    household_fields <- unique(c(household_fields, fields[["mpce"]]))
+  }
+  households <- find_consumption_data_frame(
+    raw, household_fields, paste0(spec$survey_id[[1L]], " household source")
+  )
+
+  mpce_data <- NULL
+  if (identical(spec$household_adapter[[1L]], "split_household_mpce")) {
+    mpce_data <- find_consumption_data_frame(
+      raw,
+      c(fields[["household_id"]], fields[["mpce"]]),
+      paste0(spec$survey_id[[1L]], " MPCE source")
+    )
+  }
+  canonicalize_detailed_consumption_households(households, spec, mpce_data)
+}
+
 #' Read and canonicalize one registered legacy detailed-consumption archive.
 read_registered_detailed_consumption <- function(archive, specification) {
   spec <- validate_direct_consumption_adapter(specification)
