@@ -103,19 +103,19 @@ reviewed_consumption_source_code_lineage <- function(
     nss_source_roster, full_reviewed_source_crosswalk) {
   roster <- safe_df(nss_source_roster)
   crosswalk <- safe_df(full_reviewed_source_crosswalk)
+
+  # Source-code reuse is an optional evidence layer. Legacy callers and tests
+  # may supply reviewed identity metadata without source codes; in that case
+  # there is simply no source-code evidence to add.
+  if (!nrow(roster) || !"source_code" %in% names(roster)) return(data.frame())
+
   required_roster <- c("source_row_id", "wave", "source_code")
-  required_crosswalk <- c(
-    "source_row_id", "target_unit_2001", "weight", "basis", "panel_variant"
-  )
-  if (!all(required_roster %in% names(roster)) ||
-      !all(required_crosswalk %in% names(crosswalk))) {
-    stop("Reviewed source-code lineage inputs lack required fields.", call. = FALSE)
+  if (!all(required_roster %in% names(roster))) {
+    stop("Reviewed source-code roster lacks required fields.", call. = FALSE)
   }
 
-  # NSS-64 Schedule 1.0 and Schedule 25.2 use the same round-level district
-  # identification system. Reuse only source identities that the canonical
-  # district-lineage system already reviewed as a deterministic, whole
-  # Census-2001 code identity. A parseable code by itself is never sufficient.
+  # Restrict before validating the crosswalk schema so unrelated waves do not
+  # acquire a dependency on NSS-64-only review metadata.
   roster <- roster[
     roster$wave == "nss_2007_08" &
       grepl("^[0-9]{5}$", plain_chr(roster$source_code)),
@@ -124,6 +124,17 @@ reviewed_consumption_source_code_lineage <- function(
   ]
   if (!nrow(roster)) return(data.frame())
 
+  required_crosswalk <- c(
+    "source_row_id", "target_unit_2001", "weight", "basis", "panel_variant"
+  )
+  if (!all(required_crosswalk %in% names(crosswalk))) {
+    stop("Reviewed source-code crosswalk lacks required fields.", call. = FALSE)
+  }
+
+  # NSS-64 Schedule 1.0 and Schedule 25.2 use the same round-level district
+  # identification system. Reuse only source identities that the canonical
+  # district-lineage system already reviewed as a deterministic, whole
+  # Census-2001 code identity. A parseable code by itself is never sufficient.
   joined <- merge(
     roster, crosswalk[required_crosswalk],
     by = "source_row_id", all = FALSE, sort = FALSE

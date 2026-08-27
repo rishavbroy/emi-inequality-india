@@ -89,6 +89,36 @@ test_that("consumption lineage reuses reviewed NSS-64 source-code identities onl
   expect_true(is.na(unreviewed$target_unit_2001))
 })
 
+test_that("consumption source-code reuse is optional but rejects partial source-code metadata", {
+  legacy_roster <- data.frame(
+    source_row_id = "r1",
+    wave = "nss_2007_08",
+    state_std = "state",
+    district_std = "district",
+    stringsAsFactors = FALSE
+  )
+  legacy_crosswalk <- data.frame(
+    source_row_id = "r1",
+    target_unit_2001 = "pc2001__01__01",
+    weight = 1,
+    basis = "reviewed",
+    panel_variant = "deterministic",
+    stringsAsFactors = FALSE
+  )
+
+  expect_equal(
+    nrow(reviewed_consumption_source_code_lineage(legacy_roster, legacy_crosswalk)),
+    0L
+  )
+
+  malformed_roster <- transform(legacy_roster, source_code = "01101")
+  malformed_roster$source_row_id <- NULL
+  expect_error(
+    reviewed_consumption_source_code_lineage(malformed_roster, legacy_crosswalk),
+    "roster lacks required fields"
+  )
+})
+
 test_that("consumption source-code reuse rejects reviewed mappings that are not code identities", {
   roster <- data.frame(
     source_row_id = c("r1", "r2"),
