@@ -281,12 +281,32 @@ test_that("Census download manifests are canonical acquisition metadata", {
     expect_true(all(startsWith(manifest$url, "https://censusindia.gov.in/")))
   }
 
+  expected_codes <- sprintf("%02d", 1:35)
+  expected_tables <- list(
+    `2001` = c("C13", "C16", "C17"),
+    `2011` = c(
+      "C13", "B01", "B04", "B06", "B25A", "B25B", "C16", "C17",
+      "D02", "D03", "D04", "D05", "D06", "D07",
+      "HL04", "HL06", "HL07", "HL08", "HL09", "HL10", "HL11", "HL12", "HL13",
+      "HH08", "HH10", "HH11"
+    )
+  )
+  for (i in seq_along(manifests)) {
+    manifest <- manifests[[i]]
+    year <- as.character(years[[i]])
+    for (table in expected_tables[[year]]) {
+      rows <- manifest[manifest$table == table, , drop = FALSE]
+      expect_equal(nrow(rows), 35L, info = paste(year, table))
+      expect_setequal(
+        sprintf("%02d", as.integer(rows$state_code)),
+        expected_codes,
+        info = paste(year, table)
+      )
+    }
+  }
+
   c13_2001 <- manifests[[1]][manifests[[1]]$table == "C13", ]
   c13_2011 <- manifests[[2]][manifests[[2]]$table == "C13", ]
-  expected_codes <- sprintf("%02d", 1:35)
-
-  expect_setequal(sprintf("%02d", as.integer(c13_2001$state_code)), expected_codes)
-  expect_setequal(sprintf("%02d", as.integer(c13_2011$state_code)), expected_codes)
   expect_setequal(
     basename(c13_2001$relative_path),
     sprintf("PC01_C13_%02d.xls", 1:35)
@@ -295,9 +315,28 @@ test_that("Census download manifests are canonical acquisition metadata", {
     basename(c13_2011$relative_path),
     sprintf("DDW-%02d00C-13.xls", 1:35)
   )
+
+  expected_2011_roots <- c(
+    B01 = "workers/B01", B04 = "workers/B04", B06 = "workers/B06",
+    B25A = "workers/B25A", B25B = "workers/B25B",
+    C16 = "languages/C16", C17 = "languages/C17",
+    D02 = "migration/D02", D03 = "migration/D03", D04 = "migration/D04",
+    D05 = "migration/D05", D06 = "migration/D06", D07 = "migration/D07",
+    HL04 = "housing/HL04", HL06 = "housing/HL06", HL07 = "housing/HL07",
+    HL08 = "housing/HL08", HL09 = "housing/HL09", HL10 = "housing/HL10",
+    HL11 = "housing/HL11", HL12 = "housing/HL12", HL13 = "housing/HL13",
+    HH08 = "households/HH08", HH10 = "households/HH10", HH11 = "households/HH11"
+  )
+  for (table in names(expected_2011_roots)) {
+    rows <- manifests[[2]][manifests[[2]]$table == table, , drop = FALSE]
+    expect_true(all(startsWith(
+      rows$relative_path,
+      file.path("data", "raw", "census_2011", expected_2011_roots[[table]])
+    )), info = table)
+  }
   expect_true(all(file.path(
-    "data", "raw", "census_2001", "languages", "C16",
-    sprintf("PC01_C16_%02d.xls", 1:35)
+    "data", "raw", "census_2001", "languages", "C17",
+    sprintf("PC01_C17_%02d.xls", 1:35)
   ) %in% manifests[[1]]$relative_path))
 })
 
