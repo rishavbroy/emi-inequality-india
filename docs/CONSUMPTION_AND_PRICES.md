@@ -153,9 +153,15 @@ Type 2, 2011-12 Type 2, 2022-23, and 2023-24. ANCOVA rows add log real 2004-05
 mean MPCE as an explicitly declared pre-treatment control; change rows use the
 corresponding log difference as robustness outcomes.
 
-The bridge deliberately does not replace the headline IV models. After the
-coverage gate passes, `consumption_iv_dynamics.csv` evaluates every registered
-welfare horizon as diagnostics using one common specification sample for the
+The bridge deliberately does not replace the headline IV models. Registered
+Tier-A welfare outcomes must use `analysis_welfare_support`, so headline
+regression inclusion depends on finite point estimates and ex-ante survey
+support rather than realized outcome RSE. The registry can still declare
+`preferred_welfare_support` for an explicitly labeled lower-tier precision
+sensitivity; that rule is not permitted for Tier-A specifications. After the
+coverage gate passes, `consumption_iv_dynamics.csv`
+evaluates every registered welfare horizon as diagnostics using one common
+specification sample for the
 first stage, clustered reduced form, conventional clustered 2SLS, and
 Anderson-Rubin inference. The corresponding AR grids are retained separately.
 This is intentionally an identification diagnostic rather than an automatic
@@ -606,11 +612,13 @@ boundary because they have no Census-2001 target.
 The public district-welfare diagnostic is long-form and reports the estimate,
 design-based standard error, coefficient of variation where meaningful, raw
 household and FSU support, and Kish effective sample size. Thin districts remain
-in the output with their precision metadata rather than being removed by an
-arbitrary sample threshold. Means, quantiles, lower-tail means, Gini, Atkinson, and Tendulkar FGT poverty
-measures all reuse this survey-design layer. Distributional and poverty
-uncertainty is delegated to the standard `convey` estimators rather than
-introducing hand-written variance formulas.
+in the output with their precision metadata rather than being removed upstream.
+The active outcome registry contains means, a person-weighted median, and the
+selected bottom-40 mean robustness outcome. The bottom-tail implementation uses
+`convey` linearization through the common survey-design layer; Gini, Atkinson,
+and FGT measures are intentionally not registered in the routine production
+pipeline because the current project does not need them to answer a distinct
+paper question.
 
 ### District welfare outcome registry and support flags
 
@@ -620,11 +628,16 @@ estimand from diagnostic support rules. Estimates are never dropped merely for
 failing a support rule: the output retains the estimate, design standard error,
 relative standard error, household and PSU counts, fractional sample-person
 equivalent, represented person weight, and Kish effective sample size.
-`sample_support_ok`, `precision_ok`, and `preferred_eligible` are therefore
-review/specification flags, not upstream filters.
+`sample_support_ok`, `analysis_eligible`, `precision_ok`, and
+`preferred_eligible` have distinct roles. `analysis_eligible` is the ex-ante
+causal-sample gate: it requires a finite point estimate and the registered
+household/PSU/Kish support thresholds. `precision_ok` is an outcome-RSE
+diagnostic and does not determine IV inclusion. `preferred_eligible` remains a
+stricter descriptive/high-confidence flag that also requires usable design
+uncertainty and, where registered, the RSE ceiling.
 
-The registry declares real mean MPCE (primary) plus mean-log, median,
-bottom-tail, Gini, Atkinson, and Tendulkar FGT poverty robustness outcomes.
+The active registry declares real mean MPCE (primary) plus mean-log, median, and
+the selected bottom-40 robustness outcome.
 Mean log MPCE is estimated with the same NSS survey design and person weights
 after applying `log()` at the household MPCE level. The median uses
 `survey::svyquantile()` at probability 0.5 through the same district-domain
@@ -648,11 +661,11 @@ log-mean rows set `cv` to missing because that ratio is not a consumption
 coefficient of variation. `relative_se` is retained generically for all
 outcomes.
 
-The initial support thresholds (50 households, 2 PSUs, Kish effective N 20,
-and a 20% relative-SE ceiling for the primary level mean) are explicit QA and
-preferred-analysis rules rather than survey-theory cutoffs. They are stored in
-the registry so sensitivity analyses can vary them transparently without
-reconstructing district estimates.
+The initial support thresholds (50 households, 2 PSUs, Kish effective N 20)
+are explicit ex-ante analysis-support rules rather than survey-theory cutoffs.
+The 20% relative-SE ceiling for the primary level mean is a descriptive
+precision flag only. These values remain registry metadata so sensitivity
+analyses can vary them transparently without reconstructing district estimates.
 ### Quantile inference and thin district domains
 
 Registered district quantiles keep a design-weighted point estimate for every resolved district. Quantile confidence intervals and standard errors are requested only when the district satisfies the registry's ex-ante sample-support thresholds (`min_households`, `min_fsu`, and `min_kish_effective_n`). This is an inference gate, not a data filter: thin districts remain in the public long-form welfare file with `status = "point_estimate_only"`, `uncertainty_requested = FALSE`, and their support diagnostics intact. Supported districts use the registry-declared `survey::svyquantile()` interval and quantile rule. The only supported-domain warning handled locally is the documented non-finite Woodruff-interval condition described above; all other warnings remain strict-build failures. This preserves descriptive weighted medians while keeping unavailable design uncertainty explicit.
