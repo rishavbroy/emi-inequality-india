@@ -23,6 +23,7 @@ The canonical raw source directories are:
 
 - `data/raw/nss_2007_education_64/`
 - `data/raw/nss_2007_consumption_64/`
+  - Detailed NSS-64 Schedule 1.0 Block-3 household consumption; the canonical welfare pipeline uses `Household Characteristics.sav` and validates its released MPCE against NSS Report 530 before deflation.
 - `data/raw/nss_2017_education_75/`
 - `data/raw/census_2001/languages/C16/`
 - `data/raw/census_2001/religion/C01/`

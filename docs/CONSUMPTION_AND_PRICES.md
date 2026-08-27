@@ -228,37 +228,36 @@ The opt-in benchmark writes
 configured domain runtimes on a bounded district subset while requiring numerical
 equivalence.
 
-The registered distributional robustness outcomes now also include
-`bottom40_mean_real_mpce` and `bottom20_mean_real_mpce`. These are means among
+NSS 64 (2007-08) Schedule 1.0 is a first-class detailed-consumption round.
+The pipeline reads the distributed Block-3 SPSS household file through the raw
+manifest and the same declarative direct-MPCE adapter used by later detailed NSS
+rounds. `MPCE_Value` is the released 30-day household MPCE; `Multiplier`,
+household size, sub-round, FSU, stratum, and sub-stratum remain explicit survey
+design fields. The distributed State and District value labels provide the
+source-geography dictionary. NSS-64's compact SSRDD district code is decoded as
+state + NSS region + Census-2001 district, while lineage itself continues to be
+resolved by the shared named-district lineage layer.
+
+NSS-64 is blocked before deflation on the official Report 530 all-India MRP
+benchmarks (rural Rs. 772; urban Rs. 1,472). It is a treatment-period welfare
+observation, not automatically a new causal-IV endpoint.
+
+The production distributional robustness menu is intentionally narrow.
+`bottom40_mean_real_mpce` is retained because it can be estimated at the
+pre-treatment 2004-05 baseline, the NSS-64 treatment-period round, and both
+modern HCES replication rounds. Bottom-20, Gini, Atkinson, and district FGT
+poverty outcomes are no longer produced routinely: their incremental research
+value did not justify their nonlinear district-survey runtime or historical
+support limitations.
+
+The registered distributional robustness outcome is
+`bottom40_mean_real_mpce`. It is the mean among
 the bottom 40 and bottom 20 percent of represented persons within each
 Census-2001 district, not household-order statistics. They reuse the same
 person-weighted survey design and conservative lineage support as the mean and
 median outcomes.
 
-The registry also includes the design-based `gini_real_mpce` and Atkinson
-indices at epsilon 0.5, 1, and 2. These reuse the same person-weighted district
-domains, sample-support rules, and precision flags. Their uncertainty comes
-directly from `convey::svygini()` and `convey::svyatk()`; no inequality
-linearization is implemented in this repository. `epsilon` is explicit registry
-metadata and is valid only for `survey_atkinson`, so the estimand cannot be
-changed by parsing an outcome name. Higher-epsilon Atkinson outcomes use more
-conservative support thresholds because they place progressively more weight on
-the lower tail.
 
-All Gini and Atkinson rows remain robustness outcomes. They flow through the
-existing district-welfare change and cross-round comparability diagnostics but
-are not added to the registered causal-IV outcomes automatically.
-
-The poverty robustness rows use the same already-implemented 2011-12 Tendulkar
-price anchor rather than introduce another threshold convention. The spatial
-deflator is `PL_sr / 816`, so at the 2011-12 reference period every official
-state-sector Tendulkar line maps to real MPCE of Rs. 816; the temporal CPI
-component carries that same real threshold across survey dates. The registry
-therefore estimates FGT(0), FGT(1), and FGT(2) against
-`tendulkar_real_poverty_line()` using `convey::svyfgt()` with an absolute
-threshold. `fgt_order` is explicit registry metadata and is restricted to
-0, 1, or 2. Poverty outcomes use support gates but no relative-SE cutoff because
-relative SE is undefined for a valid zero poverty estimate.
 
 Lower-tail inference uses the standard `{convey}` implementation rather than a
 repository-specific variance formula. `convey::svyisq()` supplies the
