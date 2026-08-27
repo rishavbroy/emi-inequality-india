@@ -270,3 +270,65 @@ test_that("aggregate source-unit mappings verify their documented stratum", {
     "special-unit stratum mismatch"
   )
 })
+
+test_that("NSS-64 household size uses distributed numeric value labels", {
+  registry <- read_consumption_survey_registry(
+    build_paths(Sys.getenv("EMI_PROJECT_ROOT", "."))
+  )
+  spec <- consumption_survey_spec(registry, "nss_2007_08_consumption")
+
+  # Mirrors the distributed Block-3 SPSS encoding: stored categorical codes
+  # differ from the numeric household sizes carried in their value labels.
+  size <- haven::labelled(
+    c(1, 2, 6, 7),
+    labels = c("04" = 1, "03" = 2, "2" = 6, "4" = 7)
+  )
+  households <- data.frame(
+    HH_ID = c("a", "b", "c", "d"),
+    MPCE_Value = c(500, 600, 700, 800),
+    HH_Size = size,
+    Multiplier = c(10, 10, 10, 10),
+    State = c("01", "01", "01", "01"),
+    District = c("01113", "01113", "01114", "01114"),
+    Sector = c("1", "1", "2", "2"),
+    Sub_Round = c("1", "2", "3", "4"),
+    FSUno = c("001", "002", "003", "004"),
+    Stratum = c("1", "1", "2", "2"),
+    Sub_Stratum = c("01", "01", "01", "01"),
+    stringsAsFactors = FALSE
+  )
+
+  out <- canonicalize_detailed_consumption_households(households, spec)
+
+  expect_equal(out$household_size, c(4, 3, 2, 4))
+  expect_equal(
+    out$nominal_household_consumption,
+    out$nominal_mpce * c(4, 3, 2, 4)
+  )
+})
+
+test_that("label-numeric household sizes require usable distributed labels", {
+  registry <- read_consumption_survey_registry(
+    build_paths(Sys.getenv("EMI_PROJECT_ROOT", "."))
+  )
+  spec <- consumption_survey_spec(registry, "nss_2007_08_consumption")
+
+  expect_error(
+    consumption_numeric_field(
+      c(1, 2),
+      spec$household_size_encoding[[1L]],
+      "nss_2007_08_consumption household size"
+    ),
+    "requires distributed numeric value labels"
+  )
+
+  bad <- haven::labelled(c(1, 2), labels = c("four" = 1, "3" = 2))
+  expect_error(
+    consumption_numeric_field(
+      bad,
+      spec$household_size_encoding[[1L]],
+      "nss_2007_08_consumption household size"
+    ),
+    "non-numeric or missing value labels"
+  )
+})

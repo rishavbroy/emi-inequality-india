@@ -231,10 +231,14 @@ equivalence.
 NSS 64 (2007-08) Schedule 1.0 is a first-class detailed-consumption round.
 The pipeline reads the distributed Block-3 SPSS household file through the raw
 manifest and the same declarative direct-MPCE adapter used by later detailed NSS
-rounds. `MPCE_Value` is the released 30-day household MPCE; `Multiplier`,
-household size, sub-round, FSU, stratum, and sub-stratum remain explicit survey
-design fields. The distributed State and District value labels provide the
-source-geography dictionary. NSS-64's compact SSRDD district code is decoded as
+rounds. `MPCE_Value` is the released 30-day household MPCE and `Multiplier`
+remains the released survey multiplier. NSS-64's `HH_Size` is unusual: its SPSS
+stored values are category codes while the distributed numeric value labels are
+the actual household sizes. The survey registry therefore declares
+`household_size_encoding=label_numeric`, and the generic adapter decodes those
+labels before constructing person weights. Sub-round, FSU, stratum, and
+sub-stratum remain explicit survey-design fields. The distributed State and
+District value labels provide the source-geography dictionary. NSS-64's compact SSRDD district code is decoded as
 state + NSS region + Census-2001 district, while lineage itself continues to be
 resolved by the shared named-district lineage layer.
 
