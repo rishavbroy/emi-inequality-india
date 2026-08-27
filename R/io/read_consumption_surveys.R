@@ -30,7 +30,7 @@ validate_consumption_survey_registry <- function(registry) {
     "survey_id", "survey_family", "survey_label", "survey_start", "survey_end",
     "schedule_variant", "analysis_role", "raw_path", "price_timing",
     "price_group_months", "district_identity_source", "mpce_contract", "legacy_wave",
-    "household_adapter", "household_id_field", "mpce_field", "mpce_scale",
+    "household_adapter", "household_id_field", "household_id_suffix_field", "mpce_field", "mpce_scale",
     "household_size_field", "household_size_encoding", "weight_field",
     "state_field", "district_field",
     "sector_field", "subround_field", "fsu_field", "stratum_field", "sub_stratum_field"
@@ -59,6 +59,9 @@ validate_consumption_survey_registry <- function(registry) {
   if (anyDuplicated(x$survey_id)) {
     stop("Consumption survey_id values must be non-empty and unique.", call. = FALSE)
   }
+
+  x$household_id_suffix_field <- trimws(plain_chr(x$household_id_suffix_field))
+  x$household_id_suffix_field[is.na(x$household_id_suffix_field)] <- ""
 
   x$household_size_encoding <- trimws(plain_chr(x$household_size_encoding))
   allowed_size_encoding <- c("value", "label_numeric")
@@ -165,6 +168,26 @@ consumption_adapter_fields <- function(specification) {
   values
 }
 
+
+consumption_household_id_fields <- function(specification) {
+  spec <- validate_consumption_survey_registry(specification)
+  if (nrow(spec) != 1L) stop("A single consumption survey specification is required.", call. = FALSE)
+  fields <- consumption_adapter_fields(spec)
+  suffix <- trimws(plain_chr(spec$household_id_suffix_field[[1L]] %||% ""))
+  unique(c(fields[["household_id"]], suffix[nzchar(suffix)]))
+}
+
+consumption_household_id <- function(data, specification) {
+  spec <- validate_consumption_survey_registry(specification)
+  fields <- consumption_household_id_fields(spec)
+  require_consumption_columns(data, fields, paste0(spec$survey_id[[1L]], " household identifier"))
+  values <- lapply(fields, function(field) canon(plain_chr(data[[field]])))
+  if (any(vapply(values, function(x) any(is.na(x) | !nzchar(x)), logical(1)))) {
+    stop(spec$survey_id[[1L]], " contains empty household identifier components.", call. = FALSE)
+  }
+  do.call(paste, c(values, sep = "__"))
+}
+
 validate_direct_consumption_adapter <- function(specification) {
   spec <- validate_consumption_survey_registry(specification)
   if (nrow(spec) != 1L) stop("A single consumption survey specification is required.", call. = FALSE)
@@ -225,11 +248,7 @@ canonicalize_detailed_consumption_households <- function(households, specificati
     paste0(spec$survey_id[[1]], " household data")
   )
 
-  raw_household_id <- plain_chr(hh[[fields[["household_id"]]]])
-  if (any(is.na(raw_household_id) | !nzchar(trimws(raw_household_id)))) {
-    stop(spec$survey_id[[1]], " contains empty household identifiers.", call. = FALSE)
-  }
-  hh$.canonical_household_id <- canon(raw_household_id)
+  hh$.canonical_household_id <- consumption_household_id(hh, spec)
   hh <- collapse_identical_key_rows(
     hh, ".canonical_household_id", context = paste(spec$survey_id[[1]], "household data")
   )
@@ -394,10 +413,13 @@ find_consumption_data_frame <- function(raw, required_columns, context) {
 read_registered_detailed_consumption_frames <- function(raw, specification) {
   spec <- validate_direct_consumption_adapter(specification)
   fields <- consumption_adapter_fields(spec)
-  household_fields <- unname(fields[c(
-    "household_id", "household_size", "weight", "state", "district", "sector",
-    "subround", "fsu", "stratum", "sub_stratum"
-  )])
+  household_fields <- unique(c(
+    consumption_household_id_fields(spec),
+    unname(fields[c(
+      "household_size", "weight", "state", "district", "sector",
+      "subround", "fsu", "stratum", "sub_stratum"
+    )])
+  ))
   if (identical(spec$household_adapter[[1L]], "direct_mpce")) {
     household_fields <- unique(c(household_fields, fields[["mpce"]]))
   }
@@ -420,10 +442,13 @@ read_registered_detailed_consumption_frames <- function(raw, specification) {
 read_registered_detailed_consumption <- function(archive, specification) {
   spec <- validate_direct_consumption_adapter(specification)
   fields <- consumption_adapter_fields(spec)
-  household_fields <- unname(fields[c(
-    "household_id", "household_size", "weight", "state", "district", "sector",
-    "subround", "fsu", "stratum", "sub_stratum"
-  )])
+  household_fields <- unique(c(
+    consumption_household_id_fields(spec),
+    unname(fields[c(
+      "household_size", "weight", "state", "district", "sector",
+      "subround", "fsu", "stratum", "sub_stratum"
+    )])
+  ))
   if (identical(spec$household_adapter[[1]], "direct_mpce")) {
     household_fields <- unique(c(household_fields, fields[["mpce"]]))
   }

@@ -13,6 +13,13 @@ test_that("consumption survey registry is self-describing and distinguishes lega
     consumption_survey_spec(registry, "nss_2007_08_consumption")$mpce_contract[[1]],
     "schedule_1_0_summary"
   )
+  nss56 <- consumption_survey_spec(registry, "nss_2000_01")
+  nss57 <- consumption_survey_spec(registry, "nss_2001_02")
+  expect_identical(nss56$household_adapter[[1]], "direct_mpce")
+  expect_identical(nss56$household_id_suffix_field[[1]], "SS_Revised")
+  expect_identical(nss57$household_adapter[[1]], "direct_mpce")
+  expect_identical(nss57$household_id_suffix_field[[1]], "SS_Posted")
+
   nss64 <- consumption_survey_spec(registry, "nss_2007_08_consumption")
   expect_identical(nss64$household_adapter[[1]], "direct_mpce")
   expect_identical(nss64$mpce_field[[1]], "MPCE_Value")
@@ -82,9 +89,9 @@ test_that("registered consumption price window follows implemented survey adapte
   registry <- read_consumption_survey_registry(build_paths(Sys.getenv("EMI_PROJECT_ROOT", ".")))
   window <- registered_consumption_price_window(registry)
 
-  expect_equal(window$start_period, as.Date("2004-07-01"))
+  expect_equal(window$start_period, as.Date("2000-07-01"))
   expect_equal(window$end_period, as.Date("2024-07-01"))
-  expect_equal(window$first_survey_id, "nss_2004_05")
+  expect_equal(window$first_survey_id, "nss_2000_01")
   expect_equal(window$last_survey_id, "hces_2023_24")
 
   expect_true(
@@ -103,14 +110,24 @@ test_that("registered consumption price window follows implemented survey adapte
   )
 })
 
-test_that("pending legacy survey adapters do not expand the production price window", {
+test_that("all detailed pretrend rounds expand the registered production price window", {
   registry <- read_consumption_survey_registry(build_paths(Sys.getenv("EMI_PROJECT_ROOT", ".")))
-  pending <- registry$survey_id == "nss_2000_01"
-  registry$survey_start[pending] <- as.Date("1998-07-01")
-  registry$survey_end[pending] <- as.Date("1999-06-30")
-
+  expect_true(all(
+    registry$household_adapter[registry$survey_id %in% c("nss_2000_01", "nss_2001_02")] ==
+      "direct_mpce"
+  ))
   window <- registered_consumption_price_window(registry)
-  expect_equal(window$start_period, as.Date("2004-07-01"))
+  expect_equal(window$start_period, as.Date("2000-07-01"))
+})
+
+test_that("composite household identifiers preserve posted sample records", {
+  registry <- read_consumption_survey_registry(build_paths(Sys.getenv("EMI_PROJECT_ROOT", ".")))
+  spec <- consumption_survey_spec(registry, "nss_2001_02")
+  x <- data.frame(HHID2 = c("100", "100"), SS_Posted = c("1", "2"))
+  expect_equal(
+    consumption_household_id(x, spec),
+    c("100__1", "100__2")
+  )
 })
 
 test_that("registered detailed consumption frames reuse the declarative adapter", {
