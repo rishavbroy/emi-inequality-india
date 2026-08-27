@@ -209,7 +209,7 @@ test_that("consumption welfare registry validates the retained outcome contract"
     max_relative_se = c(0.2, NA, 0.2, 0.2),
     survey_ids = c(
       "*", "*", "*",
-      "nss_2004_05;nss_2007_08_consumption;hces_2022_23;hces_2023_24"
+      "nss_2004_05;hces_2022_23;hces_2023_24"
     ),
     stringsAsFactors = FALSE
   ), path, row.names = FALSE, na = "")
@@ -796,10 +796,7 @@ test_that("production welfare registry selects outcomes by informative survey ro
 
   expect_setequal(
     nss64$outcome_id,
-    c(
-      "real_mean_mpce", "mean_log_real_mpce",
-      "weighted_median_real_mpce", "bottom40_mean_real_mpce"
-    )
+    c("real_mean_mpce", "mean_log_real_mpce", "weighted_median_real_mpce")
   )
   expect_setequal(
     nss66$outcome_id,

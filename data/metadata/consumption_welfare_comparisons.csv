@@ -1,5 +1,5 @@
 comparison_id,left_round,right_round,comparison_family,notes
-nss_2004_vs_2007,nss_2004_05,nss_2007_08_consumption,baseline_to_treatment_period,Pre-treatment detailed NSS baseline versus NSS-64 treatment-period consumer expenditure; provides the first post-baseline lower-tail comparison.
+nss_2004_vs_2007,nss_2004_05,nss_2007_08_consumption,baseline_to_treatment_period,Pre-treatment detailed NSS baseline versus NSS-64 treatment-period consumer expenditure; used for core mean/log/median welfare comparisons. NSS-64 lower-tail support is too thin for registered bottom-40 comparison.
 nss_2007_vs_2009_type2,nss_2007_08_consumption,nss_2009_10_type2,treatment_period_to_early_post,NSS-64 treatment-period round versus the early-post NSS-66 Type 2 round; core welfare outcomes only unless both rounds register a robustness outcome.
 nss_2009_type1_vs_type2,nss_2009_10_type1,nss_2009_10_type2,within_survey_design,Same field period; isolates Type 1 versus Type 2 questionnaire/recall design.
 nss_2009_type2_vs_2011_type2,nss_2009_10_type2,nss_2011_12_type2,nearby_historical_rounds,Nearby Type 2 rounds; checks short-horizon stability within the detailed NSS family.
