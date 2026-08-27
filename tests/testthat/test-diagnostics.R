@@ -1699,6 +1699,39 @@ test_that("IV specification row binding preserves list-column contracts", {
   expect_identical(unlist(out$excluded_instruments[[2]], use.names = FALSE), "z")
 })
 
+test_that("IV analysis frames drop sf geometry without flattening analysis columns", {
+  skip_if_not_installed("sf")
+  panel <- data.frame(
+    y = c(1, 2),
+    d = c(0.2, 0.4),
+    z = c(0.1, 0.3),
+    state_code_2001 = c("01", "02"),
+    stringsAsFactors = FALSE
+  )
+  panel <- sf::st_as_sf(
+    panel,
+    coords = data.frame(x = c(0, 1), y = c(0, 1)),
+    crs = 4326
+  )
+
+  out <- iv_analysis_frame(panel, c("y", "d", "z", "state_code_2001"))
+
+  expect_false(inherits(out, "sf"))
+  expect_false("geometry" %in% names(out))
+  expect_identical(out$y, c(1, 2))
+  expect_identical(out$state_code_2001, c("01", "02"))
+})
+
+test_that("IV analysis frames reject non-atomic registered variables", {
+  panel <- data.frame(y = 1:2)
+  panel$z <- I(list(1, 2))
+
+  expect_error(
+    iv_analysis_frame(panel, c("y", "z")),
+    "must be atomic"
+  )
+})
+
 test_that("consumption IV coverage resolves fixed-effect formula terms to panel variables", {
   registry <- data.frame(
     welfare_specification_id = "long_2023__ancova",
@@ -2267,6 +2300,17 @@ test_that("dynamic consumption IV estimation is stable across multiple registere
     make_spec("consumption__toy_a", "y_a", "baseline_a"),
     make_spec("consumption__toy_b", "y_b", "baseline_b")
   ))
+
+  if (requireNamespace("sf", quietly = TRUE)) {
+    panel <- sf::st_as_sf(
+      panel,
+      coords = data.frame(
+        x = seq_len(nrow(panel)),
+        y = rep(0, nrow(panel))
+      ),
+      crs = 4326
+    )
+  }
 
   out <- estimate_consumption_iv_dynamics(
     panel, specs, list(), ar_points = 31L

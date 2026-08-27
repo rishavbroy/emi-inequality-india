@@ -293,8 +293,11 @@ compile_consumption_iv_specifications <- function(registry) {
 }
 
 summarize_consumption_iv_outcome_coverage <- function(panel, specifications) {
-  x <- if (inherits(panel, "sf")) sf::st_drop_geometry(panel) else safe_df(panel)
   specs <- as_iv_specifications(specifications)
+  needed_all <- unique(unlist(lapply(seq_len(nrow(specs)), function(i) {
+    iv_specification_variables(specs[i, , drop = FALSE], include_outcome = TRUE)
+  }), use.names = FALSE))
+  x <- iv_analysis_frame(panel, needed_all)
   safe_bind_rows(lapply(seq_len(nrow(specs)), function(i) {
     spec <- specs[i, , drop = FALSE]
     needed <- iv_specification_variables(spec, include_outcome = TRUE)
@@ -542,18 +545,20 @@ estimate_consumption_iv_dynamic_spec <- function(
     panel, specification, cfg = list(), ar_level = 0.95, ar_points = 401L) {
   spec <- as_single_iv_specification(specification)
   id <- plain_chr(spec$specification_id[[1L]])
+  needed <- iv_specification_variables(spec, include_outcome = TRUE)
+  analysis_panel <- iv_analysis_frame(panel, needed)
 
   tryCatch({
     formula <- iv_specification_formula(spec)
     models <- estimate_2sls(
-      panel, stats::setNames(list(formula), id), cfg
+      analysis_panel, stats::setNames(list(formula), id), cfg
     )
-    first_stage <- estimate_first_stage(models, panel, cfg)
+    first_stage <- estimate_first_stage(models, analysis_panel, cfg)
     first_stage_row <- consumption_iv_first_stage_rows(first_stage, spec)
-    reduced_form <- estimate_iv_reduced_form_spec(panel, spec, cfg)
-    second_stage <- consumption_iv_second_stage_rows(models, spec, panel)
+    reduced_form <- estimate_iv_reduced_form_spec(analysis_panel, spec, cfg)
+    second_stage <- consumption_iv_second_stage_rows(models, spec, analysis_panel)
     ar <- estimate_anderson_rubin_spec(
-      panel, spec, level = ar_level, points = ar_points
+      analysis_panel, spec, level = ar_level, points = ar_points
     )
 
     summary <- spec[c(

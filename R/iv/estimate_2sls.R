@@ -1,6 +1,26 @@
 # This file is part of the EMI inequality research pipeline.
 # Functions are intentionally small enough to be tested and called by _targets.R.
 
+iv_analysis_frame <- function(data, variables = NULL) {
+  x <- if (inherits(data, "sf")) sf::st_drop_geometry(data) else as.data.frame(data)
+  x <- as.data.frame(x, stringsAsFactors = FALSE)
+
+  if (!is.null(variables)) {
+    variables <- unique(plain_chr(variables))
+    variables <- variables[nzchar(variables) & variables %in% names(x)]
+    non_atomic <- variables[vapply(x[variables], is.list, logical(1))]
+    if (length(non_atomic)) {
+      stop(
+        "IV analysis variables must be atomic after geometry removal: ",
+        paste(non_atomic, collapse = ", "),
+        call. = FALSE
+      )
+    }
+  }
+  x
+}
+
+
 iv_cluster_column <- function(data) {
   first_col(
     as.data.frame(data),
