@@ -16,6 +16,7 @@ test_that("consumption survey registry is self-describing and distinguishes lega
   nss64 <- consumption_survey_spec(registry, "nss_2007_08_consumption")
   expect_identical(nss64$household_adapter[[1]], "direct_mpce")
   expect_identical(nss64$mpce_field[[1]], "MPCE_Value")
+  expect_identical(nss64$household_size_encoding[[1]], "label_numeric")
   expect_identical(nss64$weight_field[[1]], "Multiplier")
   expect_identical(
     consumption_survey_spec(registry, "nss_2017_18_education")$mpce_contract[[1]],
@@ -38,6 +39,13 @@ test_that("registry validation rejects ambiguous or malformed survey contracts",
   bad_timing <- registry
   bad_timing$price_timing[[1]] <- "invented"
   expect_error(validate_consumption_survey_registry(bad_timing), "Unsupported consumption price_timing")
+
+  bad_size_encoding <- registry
+  bad_size_encoding$household_size_encoding[[1]] <- "guess_from_labels"
+  expect_error(
+    validate_consumption_survey_registry(bad_size_encoding),
+    "Unsupported consumption household_size_encoding"
+  )
 
   bad_dates <- registry
   bad_dates$survey_end[[1]] <- as.Date("2000-12-31")
@@ -115,7 +123,8 @@ test_that("registered detailed consumption frames reuse the declarative adapter"
     mpce_contract = "schedule_1_0_summary", legacy_wave = NA,
     household_adapter = "direct_mpce", household_id_field = "HH_ID",
     mpce_field = "MPCE_Value", mpce_scale = 1,
-    household_size_field = "HH_Size", weight_field = "Multiplier",
+    household_size_field = "HH_Size", household_size_encoding = "value",
+    weight_field = "Multiplier",
     state_field = "State", district_field = "District", sector_field = "Sector",
     subround_field = "Sub_Round", fsu_field = "FSUno", stratum_field = "Stratum",
     sub_stratum_field = "Sub_Stratum", stringsAsFactors = FALSE

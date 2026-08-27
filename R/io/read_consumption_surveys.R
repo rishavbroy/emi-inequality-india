@@ -31,7 +31,8 @@ validate_consumption_survey_registry <- function(registry) {
     "schedule_variant", "analysis_role", "raw_path", "price_timing",
     "price_group_months", "district_identity_source", "mpce_contract", "legacy_wave",
     "household_adapter", "household_id_field", "mpce_field", "mpce_scale",
-    "household_size_field", "weight_field", "state_field", "district_field",
+    "household_size_field", "household_size_encoding", "weight_field",
+    "state_field", "district_field",
     "sector_field", "subround_field", "fsu_field", "stratum_field", "sub_stratum_field"
   )
   missing <- setdiff(required, names(x))
@@ -57,6 +58,16 @@ validate_consumption_survey_registry <- function(registry) {
   }
   if (anyDuplicated(x$survey_id)) {
     stop("Consumption survey_id values must be non-empty and unique.", call. = FALSE)
+  }
+
+  x$household_size_encoding <- trimws(plain_chr(x$household_size_encoding))
+  allowed_size_encoding <- c("value", "label_numeric")
+  if (any(is.na(x$household_size_encoding) |
+          !x$household_size_encoding %in% allowed_size_encoding)) {
+    stop(
+      "Unsupported consumption household_size_encoding value.",
+      call. = FALSE
+    )
   }
 
   x$survey_start <- as.Date(x$survey_start)
@@ -182,6 +193,24 @@ require_consumption_columns <- function(data, columns, context) {
   invisible(TRUE)
 }
 
+consumption_numeric_field <- function(x, encoding = "value", context = "field") {
+  method <- trimws(plain_chr(encoding[[1L]] %||% "value"))
+  if (identical(method, "value")) return(num(x))
+  if (!identical(method, "label_numeric")) {
+    stop("Unsupported numeric field encoding for ", context, ": ", method, call. = FALSE)
+  }
+  if (!inherits(x, c("haven_labelled", "haven_labelled_spss", "labelled"))) {
+    stop(context, " requires distributed numeric value labels.", call. = FALSE)
+  }
+  need_pkg("haven", paste0(context, " numeric value labels"))
+  labels <- trimws(plain_chr(haven::as_factor(x, levels = "labels")))
+  values <- suppressWarnings(as.numeric(labels))
+  if (any(is.na(values) | !is.finite(values))) {
+    stop(context, " contains non-numeric or missing value labels.", call. = FALSE)
+  }
+  values
+}
+
 canonicalize_detailed_consumption_households <- function(households, specification, mpce_data = NULL) {
   spec <- validate_direct_consumption_adapter(specification)
   adapter <- spec$household_adapter[[1]]
@@ -234,7 +263,11 @@ canonicalize_detailed_consumption_households <- function(households, specificati
   }
 
   mpce <- mpce * as.numeric(spec$mpce_scale[[1]])
-  size <- num(hh[[fields[["household_size"]]]])
+  size <- consumption_numeric_field(
+    hh[[fields[["household_size"]]]],
+    spec$household_size_encoding[[1L]],
+    paste0(spec$survey_id[[1L]], " household size")
+  )
   weight <- num(hh[[fields[["weight"]]]])
   valid <- positive_finite(mpce) & positive_finite(size) & positive_finite(weight)
   if (!all(valid)) {
