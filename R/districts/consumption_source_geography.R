@@ -393,6 +393,130 @@ build_consumption_district_codebook_from_labels <- function(
   complete_consumption_codebook_semantics(out)
 }
 
+
+read_consumption_state_code_crosswalk <- function(path = NULL) {
+  if (is.null(path)) {
+    root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
+    path <- file.path(root, "data", "metadata", "consumption_state_code_crosswalk.csv")
+  }
+  if (!file.exists(path)) stop("Consumption state-code crosswalk is missing: ", path, call. = FALSE)
+  x <- utils::read.csv(path, stringsAsFactors = FALSE, check.names = FALSE)
+  require_consumption_columns(
+    x,
+    c("source_id", "source_state_code", "state_code_2001", "source_state_name", "mapping_basis"),
+    "Consumption state-code crosswalk"
+  )
+  x$source_id <- trimws(plain_chr(x$source_id))
+  x$source_state_code <- consumption_code_key(x$source_state_code, 2L)
+  x$state_code_2001 <- consumption_code_key(x$state_code_2001, 2L)
+  x$source_state_name <- trimws(plain_chr(x$source_state_name))
+  x$mapping_basis <- trimws(plain_chr(x$mapping_basis))
+  if (anyDuplicated(x[c("source_id", "source_state_code")]) ||
+      any(!nzchar(x$source_id)) || any(!nzchar(x$source_state_name)) ||
+      any(!nzchar(x$mapping_basis))) {
+    stop("Consumption state-code crosswalk contains invalid or duplicate rows.", call. = FALSE)
+  }
+  x
+}
+
+consumption_source_state_to_2001 <- function(state, source_id, admin_units_2001, state_crosswalk) {
+  admin <- safe_df(admin_units_2001)
+  state_lookup <- unique(admin[c("state_code", "state_std")])
+  source <- trimws(plain_chr(state))
+  numeric <- suppressWarnings(!is.na(as.integer(source)))
+  out <- rep(NA_character_, length(source))
+
+  rules <- safe_df(state_crosswalk)
+  rules <- rules[rules$source_id == source_id, , drop = FALSE]
+  if (any(numeric)) {
+    if (!nrow(rules)) {
+      stop(source_id, " uses numeric state codes but has no registered state-code crosswalk.", call. = FALSE)
+    }
+    key <- consumption_code_key(source[numeric], 2L)
+    out[numeric] <- rules$state_code_2001[match(key, rules$source_state_code)]
+  }
+  if (any(!numeric)) {
+    state_std <- canonicalize_state_name(source[!numeric])
+    out[!numeric] <- state_lookup$state_code[match(state_std, state_lookup$state_std)]
+  }
+  if (anyNA(out)) {
+    bad <- unique(source[is.na(out)])
+    stop(source_id, " contains unresolved source state codes/names: ",
+         paste(utils::head(bad, 10L), collapse = ", "), call. = FALSE)
+  }
+  out
+}
+
+build_consumption_census2001_codebook <- function(
+    households, admin_units_2001, specification, state_crosswalk = data.frame()) {
+  hh <- safe_df(households)
+  spec <- validate_direct_consumption_adapter(specification)
+  admin <- safe_df(admin_units_2001)
+  require_consumption_columns(
+    admin,
+    c("unit_id", "state_code", "district_code", "state_std", "district_std"),
+    "Census-2001 administrative units"
+  )
+  require_consumption_columns(
+    hh, c("state_code_source", "district_code_source"),
+    paste0(spec$survey_id[[1L]], " households")
+  )
+
+  source_state <- trimws(plain_chr(hh$state_code_source))
+  source_district <- consumption_code_key(hh$district_code_source, 2L)
+  state_2001 <- consumption_source_state_to_2001(
+    source_state, spec$survey_id[[1L]], admin, state_crosswalk
+  )
+  observed <- unique(data.frame(
+    state_code_source = ifelse(
+      suppressWarnings(!is.na(as.integer(source_state))),
+      consumption_code_key(source_state, 2L),
+      state_2001
+    ),
+    district_code_source = source_district,
+    state_code_2001 = state_2001,
+    stringsAsFactors = FALSE
+  ))
+  admin$state_code <- consumption_code_key(admin$state_code, 2L)
+  admin$district_code <- consumption_code_key(admin$district_code, 2L)
+  target_key <- paste(admin$state_code, admin$district_code, sep = "__")
+  pos <- match(
+    paste(observed$state_code_2001, observed$district_code_source, sep = "__"),
+    target_key
+  )
+  matched <- !is.na(pos)
+
+  state_names <- unique(admin[c("state_code", "state_std")])
+  state_pos <- match(observed$state_code_2001, state_names$state_code)
+  out <- data.frame(
+    source_id = spec$survey_id[[1L]],
+    state_code_source = observed$state_code_source,
+    district_code_source = observed$district_code_source,
+    state_name_source = state_names$state_std[state_pos],
+    district_name_source = ifelse(
+      matched,
+      admin$district_std[pos],
+      paste0("unresolved legacy district code ", observed$district_code_source)
+    ),
+    source_unit_kind = ifelse(matched, "district", "unresolved_legacy_district_code"),
+    source_lineage_eligible = matched,
+    expected_stratum = "",
+    mapping_basis = ifelse(
+      matched,
+      "registered_code_identity_to_census2001",
+      "unresolved_legacy_district_code"
+    ),
+    stringsAsFactors = FALSE
+  )
+  out$state_std <- canonicalize_state_name(out$state_name_source)
+  out$district_std <- canonicalize_district_name(out$district_name_source)
+  key <- paste(out$state_code_source, out$district_code_source, sep = "__")
+  if (anyDuplicated(key)) {
+    stop(spec$survey_id[[1L]], " Census-2001 source codebook contains duplicate source codes.", call. = FALSE)
+  }
+  complete_consumption_codebook_semantics(out)
+}
+
 attach_consumption_source_district_identity <- function(households, codebook) {
   hh <- safe_df(households)
   cb <- complete_consumption_codebook_semantics(codebook)
