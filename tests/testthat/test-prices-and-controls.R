@@ -242,6 +242,17 @@ test_that("CPI-IW state aggregation covers historical estimation and link window
   expect_equal(length(periods), length(unique(periods)))
 })
 
+
+test_that("CPI-IW state aggregation can extend to registered pretrend surveys", {
+  periods <- cpi_iw_state_periods(estimation_start = as.Date("2000-07-01"))
+
+  expect_equal(min(periods), as.Date("2000-07-01"))
+  expect_true(all(
+    seq(as.Date("2000-07-01"), as.Date("2012-12-01"), by = "month") %in% periods
+  ))
+  expect_equal(max(periods), as.Date("2014-12-01"))
+})
+
 test_that("CPI-IW state aggregation windows must be ordered", {
   expect_error(
     cpi_iw_state_periods(as.Date("2010-01-01"), as.Date("2009-01-01")),
@@ -1189,6 +1200,41 @@ test_that("preferred public outcome is real log consumption growth", {
   )
   figures <- make_figures(panel, character(), list(mode = "draft"))
   expect_identical(figures$map_consumption_growth$variable, "real_log_consumption_change")
+})
+
+test_that("missing survey deflator errors identify the uncovered price key", {
+  registry <- read_consumption_survey_registry(
+    build_paths(Sys.getenv("EMI_PROJECT_ROOT", "."))
+  )
+  spec <- consumption_survey_spec(registry, "nss_2000_01")
+  deflators <- data.frame(
+    state_code = "ANP",
+    sector = "rural",
+    period = seq(as.Date("2000-07-01"), as.Date("2000-09-01"), by = "month"),
+    price_deflator = 1,
+    spatial_price_relative = 1,
+    price_source = "test",
+    temporal_state_source = "ANP",
+    state_rule = "direct",
+    fallback_reason = NA_character_,
+    stringsAsFactors = FALSE
+  )
+  households <- data.frame(
+    source_state_code = "ANP",
+    sector = "urban",
+    subround = "1",
+    nominal_mpce = 100,
+    nominal_household_consumption = 400,
+    household_size = 4,
+    survey_weight = 1,
+    stringsAsFactors = FALSE
+  )
+
+  expect_error(
+    deflate_detailed_consumption_households(households, deflators, spec),
+    "state_code=ANP/.price_sector=urban/.price_subround=1",
+    fixed = TRUE
+  )
 })
 
 test_that("real-consumption deflation prefers an explicit historical price-state key", {

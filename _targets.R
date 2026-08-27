@@ -574,7 +574,16 @@ core_pipeline_targets <- list(
   tar_target(census_glottolog_crosswalk, read_census_language_glottolog_crosswalk()),
   tar_target(shastry_language_adjudications, read_shastry_language_adjudications()),
   tar_target(raw_ilo_figures, { raw_data_preflight; list_ilo_figure_paths(paths) }, format = "file"),
-  tar_target(raw_price_sources, { raw_data_preflight; read_price_sources(price_source_paths(paths)) }),
+  tar_target(
+    raw_price_sources,
+    {
+      raw_data_preflight
+      read_price_sources(
+        price_source_paths(paths),
+        cpi_iw_estimation_start = consumption_price_window$start_period[[1L]]
+      )
+    }
+  ),
   tar_target(raw_census_2001_controls, { raw_data_preflight; read_census_2001_control_sources(paths) }),
 
   tar_target(nss_2007_education, clean_nss_2007_education(raw_nss_2007_education)),

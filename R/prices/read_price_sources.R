@@ -585,10 +585,12 @@ read_price_sources <- function(
     cpi_iw_weights_1982_file = "data/metadata/cpi_iw_centres_1982.csv",
     cpi_iw_weights_2001_file = "data/metadata/cpi_iw_centres_2001.csv",
     cpi_iw_base_switch = as.Date("2006-01-01"),
-    cpi_iw_all_india_link_factor = 4.63) {
+    cpi_iw_all_india_link_factor = 4.63,
+    cpi_iw_estimation_start = as.Date("2004-07-01")) {
   paths <- validate_price_source_paths(paths)
   cpi_iw_base_switch <- price_boundary(cpi_iw_base_switch)
-  periods <- cpi_iw_state_periods()
+  cpi_iw_estimation_start <- price_boundary(cpi_iw_estimation_start)
+  periods <- cpi_iw_state_periods(estimation_start = cpi_iw_estimation_start)
 
   weights_1982 <- read_cpi_iw_weights(cpi_iw_weights_1982_file, tolerance = 0.02)
   weights_2001 <- read_cpi_iw_weights(cpi_iw_weights_2001_file)
