@@ -372,7 +372,13 @@ pre-2006 1982-base series, the corresponding historical centre weights and
 published linking factors are used; from January 2006 the native 2001-base
 system takes over. The state CPI-IW aggregation window begins at the earliest
 implemented consumption-survey month declared in the survey registry and also
-retains the 2013-14 overlap used to link CPI-IW to CPI-Urban. A required state-month
+retains the 2013-14 overlap used to link CPI-IW to CPI-Urban. State indices are
+weighted averages of the centre indices observed for that state-month, using the
+registered Labour Bureau centre weights. `centre_weight_coverage` records the
+share of each state's registered centre weight represented in the source month;
+a missing centre therefore does not discard otherwise observed states in the
+same month. Entirely missing required state-months remain absent and are caught
+by the existing completion/deflator gates. A required state-month
 is rejected when one of its expected centres is absent; the code does not
 silently reweight an incomplete set of centres. The full centre table remains
 available for source diagnostics.
