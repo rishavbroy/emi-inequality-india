@@ -228,6 +228,29 @@ The opt-in benchmark writes
 configured domain runtimes on a bounded district subset while requiring numerical
 equivalence.
 
+NSS 56 (2000-01) and NSS 57 (2001-02) Schedule 1.0 are registered as
+optional pre-treatment welfare rounds. Both use the released Block-3 monthly
+per-capita expenditure (`B3_q17`), household size (`B3_q1`), and combined
+sub-sample weight (`Wgt_Combined`). NSS 56 retains posted/revised sample
+records under the same published household key, so the canonical household
+identifier appends `SS_Revised`; NSS 57 appends `SS_Posted`. This preserves the
+released combined-estimate records instead of collapsing their weights.
+
+Both pre-treatment rounds are blocked on official all-India MPCE benchmarks
+before deflation: Rs. 495 rural / Rs. 914 urban for NSS 56 (Report 476) and
+Rs. 498 rural / Rs. 933 urban for NSS 57 (Report 481).
+
+For geography, NSS 57 state names and district serials are matched directly to
+the Census-2001 administrative frame. NSS 56 uses the official round-56
+state-code crosswalk and treats a state/district serial as an exact
+Census-2001 identity only when that pair exists in the authoritative
+Census-2001 units. Legacy district serials retained after the creation of
+Jharkhand, Chhattisgarh, and Uttaranchal are not guessed: unmatched codes are
+marked lineage-ineligible and flow to the review/coverage diagnostics. The
+pre-treatment rounds currently produce only the inexpensive core welfare
+outcomes (real mean, mean log, weighted median); lower-tail statistics are not
+registered for them.
+
 NSS 64 (2007-08) Schedule 1.0 is a first-class detailed-consumption round.
 The pipeline reads the distributed Block-3 SPSS household file through the raw
 manifest and the same declarative direct-MPCE adapter used by later detailed NSS
