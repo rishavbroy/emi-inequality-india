@@ -169,3 +169,32 @@ test_that("name-coded NSS-57 states map directly to Census-2001 state codes", {
   expect_true(all(out$source_lineage_eligible))
   expect_equal(out$district_std, c("jammu", "kathua"))
 })
+
+test_that("official NSS-57 abbreviated state labels resolve through Census-2001 geography", {
+  admin <- data.frame(
+    unit_id = c("pc2001__35__01", "pc2001__35__02"),
+    state_code = c("35", "35"),
+    district_code = c("01", "02"),
+    state_std = rep("andaman and nicobar islands", 2),
+    district_std = c("andamans", "nicobars"),
+    stringsAsFactors = FALSE
+  )
+  households <- data.frame(
+    state_code_source = c("Andaman & Nicobar Is.", "Andaman & Nicobar Is."),
+    district_code_source = c("01", "02"),
+    stringsAsFactors = FALSE
+  )
+  registry <- read_consumption_survey_registry(
+    build_paths(Sys.getenv("EMI_PROJECT_ROOT", "."))
+  )
+  spec <- consumption_survey_spec(registry, "nss_2001_02")
+
+  out <- build_consumption_census2001_codebook(
+    households, admin, spec, data.frame()
+  )
+
+  expect_true(all(out$source_lineage_eligible))
+  expect_equal(out$state_code_source, c("35", "35"))
+  expect_equal(out$state_std, rep("andaman and nicobar islands", 2))
+  expect_equal(out$district_std, c("andamans", "nicobars"))
+})

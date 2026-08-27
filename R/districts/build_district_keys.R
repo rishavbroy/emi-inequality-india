@@ -15,6 +15,7 @@ canonicalize_state_name <- function(x) {
   aliases <- c(
     "andaman and nicober" = "andaman and nicobar islands",
     "andaman and nicobar" = "andaman and nicobar islands",
+    "andaman and nicobar is" = "andaman and nicobar islands",
     "andaman nicobar islands" = "andaman and nicobar islands",
     "a and n islands" = "andaman and nicobar islands",
     "d and n haveli" = "dadra and nagar haveli",
