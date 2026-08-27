@@ -342,14 +342,19 @@ consumption_finalize_district_estimate <- function(
   } else {
     NA
   }
+  # Structural-regression eligibility uses predeclared survey-support rules, not
+  # an RSE computed from the realized outcome. Keep outcome precision as a
+  # separate diagnostic so it can be reported or varied in sensitivity analyses.
+  out$analysis_eligible <- valid_point & out$sample_support_ok
   inferentially_estimated <- valid_point & out$uncertainty_requested & valid_se
-  out$preferred_eligible <- inferentially_estimated & out$sample_support_ok &
+  out$preferred_eligible <- out$analysis_eligible & inferentially_estimated &
     if (is.finite(max_rse)) !is.na(out$precision_ok) & out$precision_ok else TRUE
   out$support_reason <- consumption_support_reason(out, rule, out$precision_ok)
   out <- out[c(
     "district_2001", "round_id", "outcome_id", "estimate", "std_error", "relative_se", "cv",
     "n_households", "n_fsu", "n_sample_person_equiv", "sum_person_weight", "kish_effective_n",
-    "status", "reason", "uncertainty_requested", "sample_support_ok", "precision_ok", "preferred_eligible", "support_reason"
+    "status", "reason", "uncertainty_requested", "sample_support_ok", "analysis_eligible",
+    "precision_ok", "preferred_eligible", "support_reason"
   )]
   out[order(out$district_2001), , drop = FALSE]
 }

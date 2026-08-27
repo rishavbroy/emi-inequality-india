@@ -146,6 +146,7 @@ test_that("welfare registry keeps thin quantile points but gates uncertainty on 
   expect_true(is.na(median_b$std_error))
   expect_false(median_b$uncertainty_requested)
   expect_false(median_b$sample_support_ok)
+  expect_false(median_b$analysis_eligible)
   expect_false(median_b$preferred_eligible)
   expect_equal(median_b$status, "point_estimate_only")
   expect_equal(median_b$reason, "uncertainty_not_requested_thin_support")
@@ -559,6 +560,7 @@ test_that("non-finite welfare points remain not estimable", {
   )
   expect_equal(out$status, "not_estimable")
   expect_equal(out$reason, "non_finite_point_estimate")
+  expect_false(out$analysis_eligible)
   expect_false(out$preferred_eligible)
 })
 
@@ -600,12 +602,14 @@ test_that("finite high relative SE is distinguished from unavailable precision",
   expect_false(high$precision_ok)
   expect_equal(high$status, "estimated")
   expect_equal(high$support_reason, "high_relative_se")
+  expect_true(high$analysis_eligible)
   expect_false(high$preferred_eligible)
 
   expect_true(is.na(missing$precision_ok))
   expect_equal(missing$status, "point_estimate_only")
   expect_equal(missing$reason, "non_finite_design_uncertainty")
   expect_true(is.na(missing$support_reason))
+  expect_true(missing$analysis_eligible)
   expect_false(missing$preferred_eligible)
 })
 

@@ -1507,7 +1507,7 @@ test_that("consumption IV registry compiles ANCOVA into the canonical IV specifi
     adjustment_id = "state_main",
     construction_id = "nonzero_mean",
     panel_variant = "primary",
-    sample_rule = "preferred_welfare_support",
+    sample_rule = "analysis_welfare_support",
     tier = "A",
     stringsAsFactors = FALSE
   )
@@ -1527,13 +1527,48 @@ test_that("consumption IV registry compiles ANCOVA into the canonical IV specifi
   )
 })
 
-test_that("consumption IV outcome data require preferred baseline and endpoint support", {
+test_that("Tier-A consumption IV specifications cannot select on outcome precision", {
+  path <- tempfile(fileext = ".csv")
+  on.exit(unlink(path), add = TRUE)
+  registry <- data.frame(
+    welfare_specification_id = "headline",
+    outcome_id = "real_mean_mpce",
+    outcome_round = "hces_2023_24",
+    baseline_round = "nss_2004_05",
+    estimand = "ancova",
+    analysis_transform = "log",
+    treatment = preferred_iv_variables()$treatment,
+    instrument = preferred_iv_variables()$instrument,
+    adjustment_id = "state_main",
+    construction_id = "nonzero_mean",
+    panel_variant = "primary",
+    sample_rule = "preferred_welfare_support",
+    tier = "A",
+    stringsAsFactors = FALSE
+  )
+  utils::write.csv(registry, path, row.names = FALSE)
+
+  expect_error(
+    read_consumption_iv_outcome_registry(path),
+    "Tier-A consumption IV specifications must use ex-ante"
+  )
+
+  registry$tier <- "B"
+  utils::write.csv(registry, path, row.names = FALSE)
+  expect_identical(
+    read_consumption_iv_outcome_registry(path)$sample_rule,
+    "preferred_welfare_support"
+  )
+})
+
+test_that("consumption IV outcome data separate analysis support from precision sensitivity", {
   welfare <- data.frame(
     district_2001 = rep(c("pc2001__01__01", "pc2001__01__02", "pc2001__01__03"), 2),
     round_id = rep(c("nss_2004_05", "hces_2023_24"), each = 3),
     outcome_id = "real_mean_mpce",
     estimate = c(100, 200, 300, 200, 400, 600),
-    preferred_eligible = c(TRUE, FALSE, TRUE, TRUE, TRUE, FALSE),
+    analysis_eligible = c(TRUE, TRUE, TRUE, TRUE, TRUE, FALSE),
+    preferred_eligible = c(TRUE, FALSE, TRUE, TRUE, FALSE, FALSE),
     stringsAsFactors = FALSE
   )
   spec <- data.frame(
@@ -1543,18 +1578,27 @@ test_that("consumption IV outcome data require preferred baseline and endpoint s
     baseline_round = "nss_2004_05",
     estimand = "ancova",
     analysis_transform = "log",
+    sample_rule = "analysis_welfare_support",
     stringsAsFactors = FALSE
   )
 
   out <- build_consumption_iv_specification_data(welfare, spec)
   expect_equal(out$outcome_value[[1]], log(200))
   expect_equal(out$baseline_value[[1]], log(100))
-  expect_true(out$preferred_welfare_support[[1]])
-  expect_true(is.na(out$outcome_value[[2]]))
-  expect_true(is.na(out$baseline_value[[2]]))
-  expect_false(out$preferred_welfare_support[[2]])
+  expect_true(out$welfare_support[[1]])
+  # District 2 fails the stricter RSE/reporting flag but remains in the primary
+  # causal sample because both rounds pass predeclared survey-support rules.
+  expect_equal(out$outcome_value[[2]], log(400))
+  expect_equal(out$baseline_value[[2]], log(200))
+  expect_true(out$welfare_support[[2]])
   expect_true(is.na(out$outcome_value[[3]]))
-  expect_false(out$preferred_welfare_support[[3]])
+  expect_false(out$welfare_support[[3]])
+
+  spec$sample_rule <- "preferred_welfare_support"
+  strict <- build_consumption_iv_specification_data(welfare, spec)
+  expect_true(is.na(strict$outcome_value[[2]]))
+  expect_true(is.na(strict$baseline_value[[2]]))
+  expect_false(strict$welfare_support[[2]])
 })
 
 test_that("consumption IV change outcomes use the same transformed baseline and endpoint", {
@@ -1563,6 +1607,7 @@ test_that("consumption IV change outcomes use the same transformed baseline and 
     round_id = rep(c("nss_2004_05", "nss_2011_12_type2"), each = 2),
     outcome_id = "real_mean_mpce",
     estimate = c(100, 200, 150, 100),
+    analysis_eligible = TRUE,
     preferred_eligible = TRUE,
     stringsAsFactors = FALSE
   )
@@ -1573,6 +1618,7 @@ test_that("consumption IV change outcomes use the same transformed baseline and 
     baseline_round = "nss_2004_05",
     estimand = "change",
     analysis_transform = "log",
+    sample_rule = "analysis_welfare_support",
     stringsAsFactors = FALSE
   )
 
@@ -1596,6 +1642,7 @@ test_that("consumption IV panel augmentation preserves canonical panel rows", {
     round_id = rep(c("nss_2004_05", "hces_2023_24"), each = 2),
     outcome_id = "real_mean_mpce",
     estimate = c(100, 200, 150, 300),
+    analysis_eligible = TRUE,
     preferred_eligible = TRUE,
     stringsAsFactors = FALSE
   )
@@ -1606,6 +1653,7 @@ test_that("consumption IV panel augmentation preserves canonical panel rows", {
     baseline_round = "nss_2004_05",
     estimand = "ancova",
     analysis_transform = "log",
+    sample_rule = "analysis_welfare_support",
     stringsAsFactors = FALSE
   )
 
@@ -1664,7 +1712,7 @@ test_that("consumption IV coverage resolves fixed-effect formula terms to panel 
     adjustment_id = "state_main",
     construction_id = "nonzero_mean",
     panel_variant = "primary",
-    sample_rule = "preferred_welfare_support",
+    sample_rule = "analysis_welfare_support",
     tier = "A",
     stringsAsFactors = FALSE
   )
@@ -1849,7 +1897,7 @@ test_that("registered consumption IV dynamics share one specification sample acr
     excluded_instruments = "z",
     mapping_coverage_variable = NA_character_,
     panel_variant = "primary",
-    sample_rule = "preferred_welfare_support",
+    sample_rule = "analysis_welfare_support",
     cluster = "state_code_2001"
   )
   spec$welfare_specification_id <- "toy"
@@ -1925,7 +1973,7 @@ test_that("dynamic consumption IV validation enforces the common-sample inferenc
     excluded_instruments = "z",
     mapping_coverage_variable = NA_character_,
     panel_variant = "primary",
-    sample_rule = "preferred_welfare_support",
+    sample_rule = "analysis_welfare_support",
     cluster = "state_code_2001"
   )
   spec$welfare_specification_id <- "toy"
@@ -2203,7 +2251,7 @@ test_that("dynamic consumption IV estimation is stable across multiple registere
       excluded_instruments = "z",
       mapping_coverage_variable = NA_character_,
       panel_variant = "primary",
-      sample_rule = "preferred_welfare_support",
+      sample_rule = "analysis_welfare_support",
       cluster = "state_code_2001"
     )
     spec$welfare_specification_id <- sub("^consumption__", "", id)

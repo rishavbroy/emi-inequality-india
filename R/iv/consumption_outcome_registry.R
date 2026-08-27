@@ -34,6 +34,18 @@ read_consumption_iv_outcome_registry <- function(path) {
   if (any(!x$analysis_transform %in% c("identity", "log"))) {
     stop("Consumption IV outcome registry contains an unknown analysis transform.", call. = FALSE)
   }
+  supported_sample_rules <- c(
+    "analysis_welfare_support", "preferred_welfare_support"
+  )
+  if (any(!x$sample_rule %in% supported_sample_rules)) {
+    stop("Consumption IV outcome registry contains an unknown sample rule.", call. = FALSE)
+  }
+  if (any(toupper(x$tier) == "A" & x$sample_rule != "analysis_welfare_support")) {
+    stop(
+      "Tier-A consumption IV specifications must use ex-ante analysis_welfare_support.",
+      call. = FALSE
+    )
+  }
   needs_baseline <- x$estimand %in% c("ancova", "change")
   if (any(needs_baseline & x$baseline_round == x$outcome_round)) {
     stop("Consumption IV outcome baseline and endpoint rounds must differ.", call. = FALSE)
@@ -64,11 +76,20 @@ transform_consumption_iv_value <- function(value, transform) {
   )
 }
 
-consumption_iv_round_rows <- function(welfare, outcome_id, round_id) {
+consumption_iv_support_column <- function(sample_rule) {
+  switch(
+    plain_chr(sample_rule),
+    analysis_welfare_support = "analysis_eligible",
+    preferred_welfare_support = "preferred_eligible",
+    stop("Unknown consumption IV welfare sample rule: ", sample_rule, call. = FALSE)
+  )
+}
+
+consumption_iv_round_rows <- function(welfare, outcome_id, round_id, sample_rule) {
   x <- safe_df(welfare)
+  support_column <- consumption_iv_support_column(sample_rule)
   required <- c(
-    "district_2001", "round_id", "outcome_id", "estimate",
-    "preferred_eligible"
+    "district_2001", "round_id", "outcome_id", "estimate", support_column
   )
   missing <- setdiff(required, names(x))
   if (length(missing)) {
@@ -97,6 +118,7 @@ consumption_iv_round_rows <- function(welfare, outcome_id, round_id) {
       call. = FALSE
     )
   }
+  out$iv_support <- out[[support_column]] %in% TRUE
   out
 }
 
@@ -111,25 +133,30 @@ build_consumption_iv_specification_data <- function(welfare, specification) {
   baseline_id <- spec$baseline_round[[1L]]
   estimand <- spec$estimand[[1L]]
   transform <- spec$analysis_transform[[1L]]
+  sample_rule <- spec$sample_rule[[1L]]
 
-  endpoint <- consumption_iv_round_rows(welfare, outcome_id, endpoint_id)
+  endpoint <- consumption_iv_round_rows(
+    welfare, outcome_id, endpoint_id, sample_rule
+  )
   endpoint_value <- transform_consumption_iv_value(endpoint$estimate, transform)
-  endpoint_ok <- endpoint$preferred_eligible %in% TRUE & is.finite(endpoint_value)
+  endpoint_ok <- endpoint$iv_support & is.finite(endpoint_value)
 
   if (estimand == "level") {
     return(data.frame(
       target_unit_2001 = plain_chr(endpoint$district_2001),
       outcome_value = ifelse(endpoint_ok, endpoint_value, NA_real_),
       baseline_value = NA_real_,
-      preferred_welfare_support = endpoint_ok,
+      welfare_support = endpoint_ok,
       stringsAsFactors = FALSE
     ))
   }
 
-  baseline <- consumption_iv_round_rows(welfare, outcome_id, baseline_id)
+  baseline <- consumption_iv_round_rows(
+    welfare, outcome_id, baseline_id, sample_rule
+  )
   joined <- merge(
-    endpoint[c("district_2001", "estimate", "preferred_eligible")],
-    baseline[c("district_2001", "estimate", "preferred_eligible")],
+    endpoint[c("district_2001", "estimate", "iv_support")],
+    baseline[c("district_2001", "estimate", "iv_support")],
     by = "district_2001", all = FALSE, sort = FALSE,
     suffixes = c("_endpoint", "_baseline")
   )
@@ -139,8 +166,8 @@ build_consumption_iv_specification_data <- function(welfare, specification) {
   baseline_value <- transform_consumption_iv_value(
     joined$estimate_baseline, transform
   )
-  common_ok <- joined$preferred_eligible_endpoint %in% TRUE &
-    joined$preferred_eligible_baseline %in% TRUE &
+  common_ok <- joined$iv_support_endpoint %in% TRUE &
+    joined$iv_support_baseline %in% TRUE &
     is.finite(endpoint_value) & is.finite(baseline_value)
 
   outcome_value <- if (estimand == "ancova") {
@@ -155,7 +182,7 @@ build_consumption_iv_specification_data <- function(welfare, specification) {
     target_unit_2001 = plain_chr(joined$district_2001),
     outcome_value = ifelse(common_ok, outcome_value, NA_real_),
     baseline_value = ifelse(common_ok, baseline_value, NA_real_),
-    preferred_welfare_support = common_ok,
+    welfare_support = common_ok,
     stringsAsFactors = FALSE
   )
 }
