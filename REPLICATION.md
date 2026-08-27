@@ -61,6 +61,8 @@ On a new machine, restore the project library from the tracked lockfile with `ma
 
 If an audit is interrupted manually while `{targets}` is running, its callr child can outlive the shell process. The next canonical audit checks the recorded `_targets` process immediately after restoring the project library. Dead/stale process metadata is cleared with `targets::tar_unblock_process()`. A genuinely live process is never terminated automatically: the audit stops early, prints the PID, and shows `kill <PID>` so the user can inspect and terminate only the process they intentionally abandoned.
 
+For an immediate debug snapshot after an interrupted run, `bash scripts/make_review_archive.sh --without-samples --allow-incomplete --output review.zip` copies current tracked files and safe non-ignored untracked source/config files, such as a newly added `scripts/*.R` helper. It deliberately does not sweep in `data/raw`, arbitrary outputs, caches, or other untracked content. This keeps review archives faithful to the current code even before a new helper has been committed.
+
 Project paths are relative to the repository root by default. Moving or renaming the project directory should therefore not require edits to tracked configuration or deletion of the `{targets}` store. Functions that are explicitly given another root still resolve paths under that root, which keeps temporary-directory tests and external callers predictable.
 
 ## Public processed outputs
