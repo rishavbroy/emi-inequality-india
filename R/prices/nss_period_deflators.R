@@ -231,6 +231,27 @@ stop_unresolved_consumption_price_keys <- function(
   )
 }
 
+stop_missing_survey_price_deflators <- function(
+    households, price_deflator, key_columns, context) {
+  bad <- !positive_finite(price_deflator)
+  if (!any(bad)) return(invisible(NULL))
+
+  keys <- unique(households[bad, key_columns, drop = FALSE])
+  format_key <- function(row) {
+    paste(paste(names(row), as.character(row), sep = "="), collapse = "/")
+  }
+  examples <- vapply(
+    seq_len(min(nrow(keys), 8L)),
+    function(i) format_key(keys[i, , drop = FALSE]),
+    character(1)
+  )
+  stop(
+    context, " Missing price keys: ", paste(examples, collapse = ", "),
+    if (nrow(keys) > length(examples)) " ..." else "",
+    call. = FALSE
+  )
+}
+
 attach_survey_subround_deflator <- function(households, deflators, specification, state_col, sector_col, subround_col) {
   hh <- safe_df(households)
   hh$.price_row <- seq_len(nrow(hh))
@@ -252,7 +273,11 @@ attach_survey_subround_deflator <- function(households, deflators, specification
   out <- out[order(out$.price_row), , drop = FALSE]
   out$.price_row <- NULL
   rownames(out) <- NULL
-  if (any(!positive_finite(out$price_deflator))) stop("At least one survey household lacks a valid sub-round price deflator.", call. = FALSE)
+  stop_missing_survey_price_deflators(
+    out, out$price_deflator,
+    c(".price_state_code", ".price_sector", ".price_subround"),
+    "At least one survey household lacks a valid sub-round price deflator."
+  )
   out
 }
 
@@ -282,9 +307,11 @@ attach_survey_panel_deflator <- function(households, deflators, specification, s
   out <- out[order(out$.price_row), , drop = FALSE]
   out$.price_row <- NULL
   rownames(out) <- NULL
-  if (any(!positive_finite(out$price_deflator))) {
-    stop("At least one survey household lacks a valid panel price deflator.", call. = FALSE)
-  }
+  stop_missing_survey_price_deflators(
+    out, out$price_deflator,
+    c(".price_state_code", ".price_sector", ".price_panel"),
+    "At least one survey household lacks a valid panel price deflator."
+  )
   out
 }
 
