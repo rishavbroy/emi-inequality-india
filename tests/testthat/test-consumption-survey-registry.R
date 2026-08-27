@@ -130,6 +130,20 @@ test_that("composite household identifiers preserve posted sample records", {
   )
 })
 
+
+test_that("household ID suffix metadata is optional for ordinary survey specifications", {
+  registry <- read_consumption_survey_registry(
+    build_paths(Sys.getenv("EMI_PROJECT_ROOT", "."))
+  )
+  ordinary <- consumption_survey_spec(registry, "nss_2009_10_type1")
+  ordinary$household_id_suffix_field <- NULL
+
+  validated <- validate_consumption_survey_registry(ordinary)
+
+  expect_true("household_id_suffix_field" %in% names(validated))
+  expect_identical(validated$household_id_suffix_field[[1L]], "")
+})
+
 test_that("registered detailed consumption frames reuse the declarative adapter", {
   spec <- data.frame(
     survey_id = "wave", survey_family = "nss", survey_label = "Wave",

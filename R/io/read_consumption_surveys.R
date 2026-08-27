@@ -30,7 +30,7 @@ validate_consumption_survey_registry <- function(registry) {
     "survey_id", "survey_family", "survey_label", "survey_start", "survey_end",
     "schedule_variant", "analysis_role", "raw_path", "price_timing",
     "price_group_months", "district_identity_source", "mpce_contract", "legacy_wave",
-    "household_adapter", "household_id_field", "household_id_suffix_field", "mpce_field", "mpce_scale",
+    "household_adapter", "household_id_field", "mpce_field", "mpce_scale",
     "household_size_field", "household_size_encoding", "weight_field",
     "state_field", "district_field",
     "sector_field", "subround_field", "fsu_field", "stratum_field", "sub_stratum_field"
@@ -40,6 +40,14 @@ validate_consumption_survey_registry <- function(registry) {
     stop("Consumption survey registry is missing columns: ", paste(missing, collapse = ", "), call. = FALSE)
   }
   if (!nrow(x)) stop("Consumption survey registry is empty.", call. = FALSE)
+
+  # Most detailed-consumption releases identify a household with one published
+  # ID. A few combined-estimate releases need a posted/revised sample suffix.
+  # Treat the suffix as optional metadata so generic specifications do not need
+  # to manufacture an empty column.
+  if (!"household_id_suffix_field" %in% names(x)) {
+    x$household_id_suffix_field <- ""
+  }
 
   required_text <- c(
     "survey_id", "survey_family", "survey_label", "schedule_variant", "analysis_role",
