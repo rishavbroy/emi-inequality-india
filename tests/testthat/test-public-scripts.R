@@ -320,21 +320,35 @@ test_that("review archives do not carry stale root-level diagnostic CSVs", {
 })
 
 
-test_that("debug review archives include safe untracked source files but exclude raw data", {
+test_that("debug review archives retain intermediate diagnostics but exclude raw data", {
   skip_if(Sys.which("git") == "")
   skip_if(Sys.which("zip") == "")
-  root <- tempfile("review-archive-untracked-")
+  root <- tempfile("review-archive-intermediates-")
   dir.create(root, recursive = TRUE)
   on.exit(unlink(root, recursive = TRUE, force = TRUE), add = TRUE)
 
   dir.create(file.path(root, "scripts"), recursive = TRUE)
+  dir.create(
+    file.path(root, "outputs", "diagnostics", "extended"),
+    recursive = TRUE
+  )
+  dir.create(file.path(root, "outputs", "benchmarking"), recursive = TRUE)
+  dir.create(file.path(root, "data", "processed"), recursive = TRUE)
   dir.create(file.path(root, "data", "raw"), recursive = TRUE)
   file.copy(
     repo_file("scripts", "make_review_archive.sh"),
     file.path(root, "scripts", "make_review_archive.sh")
   )
   writeLines("tracked", file.path(root, "README.md"))
-  writeLines("helper <- function() TRUE", file.path(root, "scripts", "new_helper.R"))
+  writeLines(
+    "diagnostic",
+    file.path(root, "outputs", "diagnostics", "extended", "intermediate.csv")
+  )
+  writeLines(
+    "benchmark",
+    file.path(root, "outputs", "benchmarking", "runtime.csv")
+  )
+  writeLines("processed", file.path(root, "data", "processed", "panel.csv"))
   writeLines("raw", file.path(root, "data", "raw", "private.csv"))
 
   system2("git", c("-C", shQuote(root), "init", "-q"))
@@ -358,7 +372,11 @@ test_that("debug review archives include safe untracked source files but exclude
   )
   expect_null(attr(output, "status"))
   listing <- utils::unzip("review.zip", list = TRUE)$Name
-  expect_true("scripts/new_helper.R" %in% listing)
+  expect_true(
+    "outputs/diagnostics/extended/intermediate.csv" %in% listing
+  )
+  expect_true("outputs/benchmarking/runtime.csv" %in% listing)
+  expect_true("data/processed/panel.csv" %in% listing)
   expect_false("data/raw/private.csv" %in% listing)
 })
 
@@ -929,7 +947,7 @@ test_that("public audit checks the targets process before tests and pipeline exe
   )
   expect_match(description, "    ps,", fixed = TRUE)
   expect_match(checker, "targets::tar_pid()", fixed = TRUE)
-  expect_match(checker, "pid %in% ps::ps_pids()", fixed = TRUE)
+  expect_match(checker, "ps::ps_is_running(ps::ps_handle(pid))", fixed = TRUE)
   expect_match(checker, "targets::tar_unblock_process()", fixed = TRUE)
   expect_match(checker, "kill ", fixed = TRUE)
   expect_false(grepl("ps::ps_kill", checker, fixed = TRUE))
@@ -937,7 +955,7 @@ test_that("public audit checks the targets process before tests and pipeline exe
 
 test_that("targets process recovery never unblocks a live recorded process", {
   checker <- repo_text("scripts", "check_targets_process.R")
-  live <- regexpr("if (pid %in% ps::ps_pids())", checker, fixed = TRUE)[[1L]]
+  live <- regexpr("if (isTRUE(process_is_running))", checker, fixed = TRUE)[[1L]]
   fail <- regexpr("quit(status = 3L)", checker, fixed = TRUE)[[1L]]
   unblock <- regexpr("targets::tar_unblock_process()", checker, fixed = TRUE)[[1L]]
   expect_gt(live, 0L)

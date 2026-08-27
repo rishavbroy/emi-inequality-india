@@ -21,7 +21,12 @@ if (!is.finite(pid) || pid <= 0L) {
   quit(status = 0L)
 }
 
-if (pid %in% ps::ps_pids()) {
+process_is_running <- tryCatch(
+  ps::ps_is_running(ps::ps_handle(pid)),
+  error = function(e) FALSE
+)
+
+if (isTRUE(process_is_running)) {
   message(
     "A live {targets} process is already recorded for this data store (PID ",
     pid,

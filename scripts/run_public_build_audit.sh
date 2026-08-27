@@ -237,6 +237,10 @@ echo "=== RESTORE PROJECT LIBRARY FROM RENV.LOCK ==="
 make restore
 checkpoint_archive "after-restore"
 
+current_stage="targets-process-preflight"
+echo "=== TARGETS PROCESS PREFLIGHT ==="
+Rscript scripts/check_targets_process.R
+
 current_stage="clean-generated-renders"
 if [[ "$skip_clean" == "true" ]]; then
   echo "=== CLEAN GENERATED RENDERS: skipped by --skip-clean ==="
