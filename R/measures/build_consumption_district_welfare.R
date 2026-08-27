@@ -154,8 +154,8 @@ read_consumption_welfare_outcomes <- function(path) {
   x <- read.csv(path, stringsAsFactors = FALSE, check.names = FALSE)
   required <- c(
     "outcome_id", "estimand", "transform", "quantile", "quantile_interval",
-    "quantile_rule", "epsilon", "fgt_order", "role", "min_households",
-    "min_fsu", "min_kish_effective_n", "max_relative_se"
+    "quantile_rule", "role", "min_households", "min_fsu",
+    "min_kish_effective_n", "max_relative_se", "survey_ids"
   )
   missing <- setdiff(required, names(x))
   if (length(missing)) {
@@ -165,8 +165,7 @@ read_consumption_welfare_outcomes <- function(path) {
     stop("Consumption welfare registry must contain unique outcome_id rows.", call. = FALSE)
   }
   if (any(!x$estimand %in% c(
-        "survey_mean", "survey_quantile", "survey_bottom_mean",
-        "survey_gini", "survey_atkinson", "survey_fgt"
+        "survey_mean", "survey_quantile", "survey_bottom_mean"
       )) ||
       any(!x$transform %in% c("identity", "log"))) {
     stop("Consumption welfare registry contains unsupported estimands or transforms.", call. = FALSE)
@@ -175,11 +174,8 @@ read_consumption_welfare_outcomes <- function(path) {
   mean_row <- x$estimand == "survey_mean"
   quantile_row <- x$estimand == "survey_quantile"
   bottom_mean_row <- x$estimand == "survey_bottom_mean"
-  distribution_row <- x$estimand %in% c(
-    "survey_gini", "survey_atkinson", "survey_fgt"
-  )
   quantile_declared <- quantile_row | bottom_mean_row
-  if (any((mean_row | distribution_row) & is.finite(x$quantile)) ||
+  if (any(mean_row & is.finite(x$quantile)) ||
       any(quantile_declared & (!is.finite(x$quantile) | x$quantile <= 0 | x$quantile >= 1))) {
     stop("Consumption welfare registry contains invalid quantile declarations.", call. = FALSE)
   }
@@ -197,23 +193,8 @@ read_consumption_welfare_outcomes <- function(path) {
   if (any(invalid_quantile_method) || any(stray_quantile_method)) {
     stop("Consumption welfare registry contains invalid quantile uncertainty declarations.", call. = FALSE)
   }
-  x$epsilon <- suppressWarnings(as.numeric(x$epsilon))
-  atkinson_row <- x$estimand == "survey_atkinson"
-  if (any(atkinson_row & (!is.finite(x$epsilon) | x$epsilon <= 0)) ||
-      any(!atkinson_row & is.finite(x$epsilon))) {
-    stop("Consumption welfare registry contains invalid Atkinson epsilon declarations.", call. = FALSE)
-  }
-  x$fgt_order <- suppressWarnings(as.numeric(x$fgt_order))
-  fgt_row <- x$estimand == "survey_fgt"
-  valid_fgt_order <- is.finite(x$fgt_order) &
-    x$fgt_order %in% c(0, 1, 2) &
-    x$fgt_order == floor(x$fgt_order)
-  if (any(fgt_row & !valid_fgt_order) ||
-      any(!fgt_row & is.finite(x$fgt_order))) {
-    stop("Consumption welfare registry contains invalid FGT order declarations.", call. = FALSE)
-  }
-  if (any(distribution_row & x$transform != "identity")) {
-    stop("Consumption distribution outcomes require the identity MPCE transform.", call. = FALSE)
+  if (any(bottom_mean_row & x$transform != "identity")) {
+    stop("Bottom-share welfare means require the identity MPCE transform.", call. = FALSE)
   }
   for (nm in c("min_households", "min_fsu", "min_kish_effective_n", "max_relative_se")) {
     x[[nm]] <- suppressWarnings(as.numeric(x[[nm]]))
@@ -228,13 +209,18 @@ read_consumption_welfare_outcomes <- function(path) {
 }
 
 consumption_distributional_estimands <- function() {
-  c("survey_bottom_mean", "survey_gini", "survey_atkinson", "survey_fgt")
+  "survey_bottom_mean"
 }
 
 consumption_welfare_registry_for_survey <- function(registry, survey_id) {
   x <- safe_df(registry)
-  if (!nrow(x) || !"survey_ids" %in% names(x)) return(x)
-  id <- trimws(plain_chr(survey_id[[1L]]))
+  if (!nrow(x)) return(x)
+  ids <- unique(trimws(plain_chr(survey_id)))
+  ids <- ids[!is.na(ids) & nzchar(ids)]
+  if (length(ids) != 1L) {
+    stop("Consumption welfare estimation requires exactly one survey_id.", call. = FALSE)
+  }
+  id <- ids[[1L]]
   declared <- trimws(plain_chr(x$survey_ids))
   keep <- vapply(declared, function(value) {
     if (is.na(value) || !nzchar(value) || identical(value, "*")) return(TRUE)
@@ -496,32 +482,21 @@ consumption_bottom_mean_stat <- function(
 
 consumption_distribution_svyby <- function(design, rule) {
   estimand <- plain_chr(rule$estimand[[1L]])
+  if (!identical(estimand, "survey_bottom_mean")) {
+    stop("Unsupported distributional welfare estimand: ", estimand, call. = FALSE)
+  }
   args <- list(
     formula = ~.welfare_value,
     by = ~target_unit_2001,
     design = design,
+    FUN = consumption_bottom_mean_stat,
+    alpha = rule$quantile[[1L]],
     na.rm = TRUE,
     vartype = "se",
     keep.names = FALSE,
     drop.empty.groups = FALSE,
     multicore = consumption_domain_multicore()
   )
-  if (identical(estimand, "survey_bottom_mean")) {
-    args$FUN <- consumption_bottom_mean_stat
-    args$alpha <- rule$quantile[[1L]]
-  } else if (identical(estimand, "survey_gini")) {
-    args$FUN <- convey::svygini
-  } else if (identical(estimand, "survey_atkinson")) {
-    args$FUN <- convey::svyatk
-    args$epsilon <- rule$epsilon[[1L]]
-  } else if (identical(estimand, "survey_fgt")) {
-    args$FUN <- convey::svyfgt
-    args$g <- as.integer(rule$fgt_order[[1L]])
-    args$type_thresh <- "abs"
-    args$abs_thresh <- tendulkar_real_poverty_line()
-  } else {
-    stop("Unsupported convey distribution estimand: ", estimand, call. = FALSE)
-  }
   with_consumption_domain_cores(
     with_consumption_survey_adjustment(do.call(survey::svyby, args))
   )
@@ -695,9 +670,9 @@ estimate_consumption_district_welfare_distributional <- function(
 estimate_consumption_district_mean <- function(lineaged_households) {
   # Backward-compatible single-outcome wrapper used by focused tests and callers.
   registry <- data.frame(
-    outcome_id = "real_mean_mpce", estimand = "survey_mean", transform = "identity", quantile = NA_real_,
-    quantile_interval = "", quantile_rule = "", epsilon = NA_real_,
-    fgt_order = NA_real_, role = "primary",
+    outcome_id = "real_mean_mpce", estimand = "survey_mean", transform = "identity",
+    quantile = NA_real_, quantile_interval = "", quantile_rule = "",
+    role = "primary",
     min_households = 1, min_fsu = 1, min_kish_effective_n = .Machine$double.eps,
     max_relative_se = NA_real_, stringsAsFactors = FALSE
   )
