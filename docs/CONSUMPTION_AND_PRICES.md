@@ -367,15 +367,17 @@ The appendix will report:
 `price_series_registry.csv`. It retains only the general rural and urban index
 from the two CPI-R/U files, distinguishes CPI-AL from CPI-RL, and selects the
 2001-base centre series from CPI-IW. The CPI-IW state series is a weighted mean
-of centre indices using the Labour Bureau's 78 centre weights. For the 2007-08
-series, Godavarikhani, Hyderabad, and Warangal are assigned to undivided Andhra
-Pradesh. State CPI-IW aggregation is limited to the 2007-08 estimation months
-and the 2013-14 overlap used to link CPI-IW to CPI-Urban. A required state-month
+of centre indices using the applicable Labour Bureau centre weights. For the
+pre-2006 1982-base series, the corresponding historical centre weights and
+published linking factors are used; from January 2006 the native 2001-base
+system takes over. The state CPI-IW aggregation window begins at the earliest
+implemented consumption-survey month declared in the survey registry and also
+retains the 2013-14 overlap used to link CPI-IW to CPI-Urban. A required state-month
 is rejected when one of its expected centres is absent; the code does not
 silently reweight an incomplete set of centres. The full centre table remains
 available for source diagnostics.
 
-These readers construct validated source tables only. `R/prices/build_temporal_price_series.R` rescales CPI-RL and state CPI-IW to the 2012-base CPI-R/U scale using the median state-sector ratio over common 2013-14 months. The production chain retains the older sources only for the July 2007-June 2008 survey period and uses state CPI-Rural or CPI-Urban from January 2013 onward. A state-sector chain is rejected when it has fewer than the required number of common months; no link is inferred from another state. The base-2010 CPI-R/U observations for July 2011-June 2012 are converted to the 2012-base scale with the observed 2013-14 overlap and supply the common reference index. This avoids deriving the spatial anchor from incomplete CPI-IW centre coverage in isolated 2012 months.
+These readers construct validated source tables only. `R/prices/build_temporal_price_series.R` rescales CPI-RL and state CPI-IW to the 2012-base CPI-R/U scale using the median state-sector ratio over common 2013-14 months. The production chain retains the older sources for every implemented pre-2013 consumption survey, including the 2000-01 and 2001-02 pretrend rounds, and uses state CPI-Rural or CPI-Urban from January 2013 onward. A state-sector chain is rejected when it has fewer than the required number of common months; no link is inferred from another state. The base-2010 CPI-R/U observations for July 2011-June 2012 are converted to the 2012-base scale with the observed 2013-14 overlap and supply the common reference index. This avoids deriving the spatial anchor from incomplete CPI-IW centre coverage in isolated 2012 months.
 
 The production target graph reads the four CPI files, constructs the monthly state-sector deflator, converts each NSS sub-round to its three survey months, and attaches the arithmetic mean of those monthly deflators to Block 3 household records before district aggregation. The resulting real-consumption measure is used by the active public model.
 
@@ -491,9 +493,10 @@ The benchmark definitions match each registered survey construct: MRP for NSS 61
 
 The registered NSS 61, NSS 66 Type 1/Type 2, and NSS 68 Type 2 household
 records now use the same production state-sector monthly price chain as the
-legacy outcomes. The pre-2013 CPI-RL/CPI-IW portion is retained from July 2004
-through December 2012, so every quarterly sub-round in the 2004-05, 2009-10,
-and 2011-12 surveys is covered before the January 2013 CPI-R/U switch.
+legacy outcomes. The pre-2013 CPI-RL/CPI-IW portion now begins at the earliest
+implemented survey in the registry. With the current survey set this is July
+2000, covering NSS 56, NSS 57, NSS 61, NSS 66, and NSS 68 before the January
+2013 CPI-R/U switch.
 
 `deflate_detailed_consumption_households()` operates only on the explicit
 canonical detailed-survey contract: authoritative source state, sector,
@@ -502,7 +505,7 @@ size, and survey weight. It does not reuse the legacy column-name heuristic that
 guesses whether a source field is a household total. The production price window is derived from the consumption-survey registry rather
 than hard-coded in `_targets.R`. Surveys whose household adapter is still
 `legacy_schedule_pending` do not expand the production window; every implemented
-survey does. With the current registry this yields July 2004 through July 2024.
+survey does. With the current registry this yields July 2000 through July 2024.
 The assembled deflator table must cover every month in that window before any
 household-level price attachment is allowed to run. It is intentionally sparse in
 state-sector history: a state-sector is not required to exist in months before that
