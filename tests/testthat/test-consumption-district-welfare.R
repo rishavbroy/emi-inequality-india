@@ -1259,3 +1259,32 @@ test_that("grouped convey domains reproduce direct district FGT inference", {
   expect_equal(grouped$estimate, direct$estimate, tolerance = 1e-10)
   expect_equal(grouped$std_error, direct$std_error, tolerance = 1e-10)
 })
+
+test_that("production welfare registry selects outcomes by informative survey rounds", {
+  registry <- read_consumption_welfare_outcomes(
+    repo_file("data", "metadata", "consumption_welfare_outcomes.csv")
+  )
+
+  nss64 <- consumption_welfare_registry_for_survey(
+    registry, "nss_2007_08_consumption"
+  )
+  nss66 <- consumption_welfare_registry_for_survey(
+    registry, "nss_2009_10_type2"
+  )
+
+  expect_setequal(
+    nss64$outcome_id,
+    c(
+      "real_mean_mpce", "mean_log_real_mpce",
+      "weighted_median_real_mpce", "bottom40_mean_real_mpce"
+    )
+  )
+  expect_setequal(
+    nss66$outcome_id,
+    c("real_mean_mpce", "mean_log_real_mpce", "weighted_median_real_mpce")
+  )
+  expect_false(any(grepl(
+    "bottom20|gini|atkinson|poverty",
+    registry$outcome_id
+  )))
+})

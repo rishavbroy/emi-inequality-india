@@ -231,6 +231,18 @@ consumption_distributional_estimands <- function() {
   c("survey_bottom_mean", "survey_gini", "survey_atkinson", "survey_fgt")
 }
 
+consumption_welfare_registry_for_survey <- function(registry, survey_id) {
+  x <- safe_df(registry)
+  if (!nrow(x) || !"survey_ids" %in% names(x)) return(x)
+  id <- trimws(plain_chr(survey_id[[1L]]))
+  declared <- trimws(plain_chr(x$survey_ids))
+  keep <- vapply(declared, function(value) {
+    if (is.na(value) || !nzchar(value) || identical(value, "*")) return(TRUE)
+    id %in% trimws(strsplit(value, ";", fixed = TRUE)[[1L]])
+  }, logical(1))
+  x[keep, , drop = FALSE]
+}
+
 consumption_welfare_registry_partition <- function(registry, part = c("all", "core", "distributional")) {
   part <- match.arg(part)
   x <- safe_df(registry)
@@ -658,17 +670,25 @@ estimate_consumption_district_welfare <- function(lineaged_households, outcome_r
 }
 
 estimate_consumption_district_welfare_core <- function(lineaged_households, outcome_registry) {
+  survey_id <- unique(plain_chr(safe_df(lineaged_households)$survey_id))
   estimate_consumption_district_welfare(
     lineaged_households,
-    consumption_welfare_registry_partition(outcome_registry, "core")
+    consumption_welfare_registry_partition(
+      consumption_welfare_registry_for_survey(outcome_registry, survey_id),
+      "core"
+    )
   )
 }
 
 estimate_consumption_district_welfare_distributional <- function(
     lineaged_households, outcome_registry) {
+  survey_id <- unique(plain_chr(safe_df(lineaged_households)$survey_id))
   estimate_consumption_district_welfare(
     lineaged_households,
-    consumption_welfare_registry_partition(outcome_registry, "distributional")
+    consumption_welfare_registry_partition(
+      consumption_welfare_registry_for_survey(outcome_registry, survey_id),
+      "distributional"
+    )
   )
 }
 
