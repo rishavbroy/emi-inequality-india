@@ -42,6 +42,76 @@ test_that("consumption lineage accepts exact identities and stable reviewed mapp
   expect_equal(aggregate$lineage_status, "source_not_lineage_eligible")
 })
 
+test_that("consumption lineage reuses reviewed NSS-64 source-code identities only", {
+  households <- data.frame(
+    survey_id = "nss_2007_08_consumption",
+    household_id = c("h1", "h2"),
+    source_state_code = "01",
+    source_district_code = c("01", "02"),
+    state_std = "state",
+    district_std = c("misspelled one", "misspelled two"),
+    source_unit_kind = "district",
+    source_lineage_eligible = TRUE,
+    stringsAsFactors = FALSE
+  )
+  admin <- data.frame(
+    unit_id = c("pc2001__01__01", "pc2001__01__02"),
+    state_std = "state",
+    district_std = c("official one", "official two"),
+    stringsAsFactors = FALSE
+  )
+  roster <- data.frame(
+    source_row_id = c("r1", "r2"),
+    wave = "nss_2007_08",
+    source_code = c("01101", "01102"),
+    state_std = "state",
+    district_std = c("misspelled one", "misspelled two"),
+    stringsAsFactors = FALSE
+  )
+  crosswalk <- data.frame(
+    source_row_id = "r1",
+    target_unit_2001 = "pc2001__01__01",
+    weight = 1,
+    basis = "identity_or_documented_rename_to_2001",
+    panel_variant = "deterministic",
+    stringsAsFactors = FALSE
+  )
+
+  reference <- build_consumption_lineage_reference(admin, roster, crosswalk)
+  bridge <- build_consumption_lineage_bridge(households, reference)
+
+  reviewed <- bridge[bridge$source_district_code == "01", , drop = FALSE]
+  unreviewed <- bridge[bridge$source_district_code == "02", , drop = FALSE]
+  expect_equal(reviewed$target_unit_2001, "pc2001__01__01")
+  expect_equal(reviewed$lineage_status, "resolved_reviewed_source_code")
+  expect_match(reviewed$lineage_basis, "reviewed_same_round_source_code")
+  expect_equal(unreviewed$lineage_status, "unresolved_no_stable_lineage")
+  expect_true(is.na(unreviewed$target_unit_2001))
+})
+
+test_that("consumption source-code reuse rejects reviewed mappings that are not code identities", {
+  roster <- data.frame(
+    source_row_id = c("r1", "r2"),
+    wave = "nss_2007_08",
+    source_code = c("01101", "01102"),
+    stringsAsFactors = FALSE
+  )
+  crosswalk <- data.frame(
+    source_row_id = c("r1", "r2"),
+    target_unit_2001 = c("pc2001__01__01", "pc2001__01__01"),
+    weight = 1,
+    basis = "reviewed",
+    panel_variant = "deterministic",
+    stringsAsFactors = FALSE
+  )
+
+  out <- reviewed_consumption_source_code_lineage(roster, crosswalk)
+
+  expect_equal(nrow(out), 1L)
+  expect_equal(out$source_district_code, "01")
+  expect_equal(out$target_unit_2001, "pc2001__01__01")
+})
+
 test_that("consumption lineage expansion conserves survey and person weight", {
   households <- data.frame(
     survey_id = "wave", household_id = "h1",

@@ -99,6 +99,77 @@ consumption_identity_alias_lineage <- function(identity_aliases, exact_lineage) 
   )
 }
 
+reviewed_consumption_source_code_lineage <- function(
+    nss_source_roster, full_reviewed_source_crosswalk) {
+  roster <- safe_df(nss_source_roster)
+  crosswalk <- safe_df(full_reviewed_source_crosswalk)
+  required_roster <- c("source_row_id", "wave", "source_code")
+  required_crosswalk <- c(
+    "source_row_id", "target_unit_2001", "weight", "basis", "panel_variant"
+  )
+  if (!all(required_roster %in% names(roster)) ||
+      !all(required_crosswalk %in% names(crosswalk))) {
+    stop("Reviewed source-code lineage inputs lack required fields.", call. = FALSE)
+  }
+
+  # NSS-64 Schedule 1.0 and Schedule 25.2 use the same round-level district
+  # identification system. Reuse only source identities that the canonical
+  # district-lineage system already reviewed as a deterministic, whole
+  # Census-2001 code identity. A parseable code by itself is never sufficient.
+  roster <- roster[
+    roster$wave == "nss_2007_08" &
+      grepl("^[0-9]{5}$", plain_chr(roster$source_code)),
+    required_roster,
+    drop = FALSE
+  ]
+  if (!nrow(roster)) return(data.frame())
+
+  joined <- merge(
+    roster, crosswalk[required_crosswalk],
+    by = "source_row_id", all = FALSE, sort = FALSE
+  )
+  if (!nrow(joined)) return(data.frame())
+
+  joined$weight <- num(joined$weight)
+  parsed_target <- nss64_census2001_unit_id(joined$source_code)
+  keep <- !is.na(parsed_target) &
+    joined$target_unit_2001 == parsed_target &
+    is.finite(joined$weight) &
+    abs(joined$weight - 1) < 1e-8 &
+    joined$panel_variant == "deterministic"
+  joined <- joined[keep, , drop = FALSE]
+  if (!nrow(joined)) return(data.frame())
+
+  source_code <- plain_chr(joined$source_code)
+  out <- unique(data.frame(
+    survey_id = "nss_2007_08_consumption",
+    source_state_code = substr(source_code, 1L, 2L),
+    source_district_code = substr(source_code, 4L, 5L),
+    target_unit_2001 = joined$target_unit_2001,
+    lineage_weight = 1,
+    lineage_basis = paste0("reviewed_same_round_source_code:", joined$basis),
+    stringsAsFactors = FALSE
+  ))
+
+  key <- paste(out$survey_id, out$source_state_code, out$source_district_code, sep = "\r")
+  if (anyDuplicated(key)) {
+    groups <- split(out$target_unit_2001, key)
+    conflicting <- names(groups)[vapply(
+      groups, function(x) length(unique(x)) > 1L, logical(1)
+    )]
+    if (length(conflicting)) {
+      stop(
+        "Reviewed consumption source codes resolve to conflicting Census-2001 targets.",
+        call. = FALSE
+      )
+    }
+    out <- out[!duplicated(key), , drop = FALSE]
+  }
+  rownames(out) <- NULL
+  out
+}
+
+
 reviewed_district_identity_lineage <- function(nss_source_roster, full_reviewed_source_crosswalk) {
   roster <- safe_df(nss_source_roster)
   crosswalk <- safe_df(full_reviewed_source_crosswalk)
@@ -395,6 +466,9 @@ build_consumption_lineage_reference <- function(
   exact <- exact_census_2001_identity_lineage(admin_units_2001)
   list(
     exact = exact,
+    source_codes = reviewed_consumption_source_code_lineage(
+      nss_source_roster, full_reviewed_source_crosswalk
+    ),
     aliases = consumption_identity_alias_lineage(identity_aliases, exact),
     administrative = consumption_admin_transition_lineage(
       reference_units, admin_events, admin_units_2001, admin_units_2011,
@@ -416,6 +490,7 @@ build_consumption_lineage_bridge <- function(households, lineage_reference) {
     stop("Consumption lineage reference is incomplete.", call. = FALSE)
   }
   exact <- safe_df(lineage_reference$exact)
+  source_codes <- safe_df(lineage_reference$source_codes)
   reviewed <- lineage_reference$reviewed
 
   source$row_id <- seq_len(nrow(source))
@@ -434,6 +509,18 @@ build_consumption_lineage_bridge <- function(households, lineage_reference) {
     source$source_lineage_eligible %in% TRUE & !source$row_id %in% exact_ids,
     , drop = FALSE
   ]
+
+  source_code_rows <- data.frame()
+  if (nrow(remaining) && nrow(source_codes)) {
+    source_code_rows <- merge(
+      remaining, source_codes,
+      by = c("survey_id", "source_state_code", "source_district_code"),
+      all = FALSE, sort = FALSE
+    )
+  }
+  source_code_ids <- unique(source_code_rows$row_id)
+  remaining <- remaining[!remaining$row_id %in% source_code_ids, , drop = FALSE]
+
   alias_rows <- data.frame()
   if (nrow(remaining) && nrow(lineage_reference$aliases)) {
     alias_rows <- merge(
@@ -487,13 +574,16 @@ build_consumption_lineage_bridge <- function(households, lineage_reference) {
   noneligible$lineage_status <- rep("source_not_lineage_eligible", nrow(noneligible))
 
   if (nrow(exact_rows)) exact_rows$lineage_status <- "resolved_exact_2001"
+  if (nrow(source_code_rows)) {
+    source_code_rows$lineage_status <- "resolved_reviewed_source_code"
+  }
   if (nrow(alias_rows)) alias_rows$lineage_status <- "resolved_reviewed_identity_alias"
   if (nrow(administrative_rows)) {
     administrative_rows$lineage_status <- "resolved_reviewed_admin_ancestry"
   }
   if (nrow(reviewed_rows)) reviewed_rows$lineage_status <- "resolved_reviewed_consensus"
   out <- safe_bind_rows(list(
-    exact_rows, alias_rows, administrative_rows,
+    exact_rows, source_code_rows, alias_rows, administrative_rows,
     reviewed_rows, unresolved, noneligible
   ))
   wanted <- names(empty_consumption_lineage_bridge())

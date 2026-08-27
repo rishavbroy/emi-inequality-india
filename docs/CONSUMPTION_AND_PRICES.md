@@ -93,10 +93,15 @@ The existing `attach_consumption_source_district_identity()` contract resolves
 modern HCES codes to named source districts before real-consumption objects move
 to the lineage layer. The modern rounds then reuse the existing conservative
 consumption-lineage reference in evidence order: exact Census-2001 identities,
-reviewed identity aliases, deterministic administrative ancestry already present
-in the district-lineage subsystem, and stable reviewed cross-wave lineage.
-Unresolved or conflicting modern source districts remain explicit review-queue
-rows.
+reviewed same-round source-code identities, reviewed identity aliases,
+deterministic administrative ancestry already present in the district-lineage
+subsystem, and stable reviewed cross-wave lineage. The source-code layer is
+currently limited to NSS-64 Schedule 1.0: it reuses only 2007-08 source codes
+whose canonical district-lineage row was already reviewed as a deterministic
+whole Census-2001 code identity. A parseable NSS code alone never creates an
+accepted mapping. This avoids duplicating the NSS-64 education adjudications in
+a consumption-specific alias ledger. Unresolved or conflicting modern source
+districts remain explicit review-queue rows.
 
 Administrative ancestry is not inferred from name similarity. A current LGD
 district may enter the consumption reference only when its normalized
