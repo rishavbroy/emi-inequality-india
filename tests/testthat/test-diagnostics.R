@@ -2100,3 +2100,21 @@ test_that("consumption distribution benchmark preserves serial/configured estima
   expect_lte(out$max_abs_estimate_diff[[2L]], 1e-10)
   expect_lte(out$max_abs_se_diff[[2L]], 1e-10)
 })
+
+test_that("NSS-64 detailed consumption is gated by official reconstruction before welfare", {
+  targets_file <- paste(readLines(repo_file("_targets.R"), warn = FALSE), collapse = "\n")
+  expect_match(targets_file, "consumption_mpce_validation_2007_08", fixed = TRUE)
+  expect_match(targets_file, "consumption_households_real_2007_08", fixed = TRUE)
+  expect_match(targets_file, "consumption_households_lineaged_2007_08", fixed = TRUE)
+  expect_match(targets_file, "consumption_district_welfare_2007_08", fixed = TRUE)
+
+  validation <- regexpr(
+    "consumption_mpce_validation_2007_08",
+    targets_file, fixed = TRUE
+  )[[1L]]
+  deflation <- regexpr(
+    "consumption_households_real_2007_08",
+    targets_file, fixed = TRUE
+  )[[1L]]
+  expect_gt(deflation, validation)
+})

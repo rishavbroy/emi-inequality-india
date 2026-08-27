@@ -65,6 +65,20 @@ core_pipeline_targets <- list(
     read_consumption_survey_registry_file(consumption_survey_registry_file)
   ),
   tar_target(
+    raw_nss_2007_consumption,
+    {
+      raw_data_preflight
+      read_nss_2007_consumption(paths)
+    }
+  ),
+  tar_target(
+    consumption_households_2007_08,
+    read_registered_detailed_consumption_frames(
+      raw_nss_2007_consumption,
+      consumption_survey_spec(consumption_survey_registry, "nss_2007_08_consumption")
+    )
+  ),
+  tar_target(
     consumption_price_spec_2007_legacy,
     consumption_survey_spec(consumption_survey_registry, "nss_2007_08_education")
   ),
@@ -193,6 +207,14 @@ core_pipeline_targets <- list(
     )
   ),
   tar_target(
+    consumption_mpce_validation_2007_08,
+    validate_consumption_mpce_reconstruction(
+      consumption_households_2007_08,
+      consumption_mpce_benchmarks,
+      "nss_2007_08_consumption"
+    )
+  ),
+  tar_target(
     consumption_mpce_validation_2009_10_type1,
     validate_consumption_mpce_reconstruction(
       consumption_households_2009_10_type1, consumption_mpce_benchmarks, "nss_2009_10_type1"
@@ -226,6 +248,7 @@ core_pipeline_targets <- list(
     consumption_mpce_validation,
     combine_consumption_mpce_validations(
       consumption_mpce_validation_2004_05,
+      consumption_mpce_validation_2007_08,
       consumption_mpce_validation_2009_10_type1,
       consumption_mpce_validation_2009_10_type2,
       consumption_mpce_validation_2011_12_type2,
@@ -324,8 +347,21 @@ core_pipeline_targets <- list(
     read_consumption_district_codebook_ddi(consumption_district_codebook_2011_12_file, "nss_2011_12")
   ),
   tar_target(
+    consumption_district_codebook_2007_08,
+    build_consumption_district_codebook_from_labels(
+      raw_nss_2007_consumption,
+      consumption_survey_spec(consumption_survey_registry, "nss_2007_08_consumption")
+    )
+  ),
+  tar_target(
     consumption_households_named_2004_05,
     attach_consumption_source_district_identity(consumption_households_2004_05, consumption_district_codebook_2004_05)
+  ),
+  tar_target(
+    consumption_households_named_2007_08,
+    attach_consumption_source_district_identity(
+      consumption_households_2007_08, consumption_district_codebook_2007_08
+    )
   ),
   tar_target(
     consumption_households_named_2009_10_type1,
@@ -359,6 +395,16 @@ core_pipeline_targets <- list(
       deflate_detailed_consumption_households(
         consumption_households_named_2004_05, state_sector_price_deflators,
         consumption_survey_spec(consumption_survey_registry, "nss_2004_05")
+      )
+    }
+  ),
+  tar_target(
+    consumption_households_real_2007_08,
+    {
+      consumption_mpce_validation_2007_08
+      deflate_detailed_consumption_households(
+        consumption_households_named_2007_08, state_sector_price_deflators,
+        consumption_survey_spec(consumption_survey_registry, "nss_2007_08_consumption")
       )
     }
   ),
@@ -414,7 +460,6 @@ core_pipeline_targets <- list(
   ),
 
   tar_target(raw_nss_2007_education, { raw_data_preflight; read_nss_2007_education(paths) }),
-  tar_target(raw_nss_2007_consumption, { raw_data_preflight; read_nss_2007_consumption(paths) }),
   tar_target(raw_nss_2017_education, { raw_data_preflight; read_nss_2017_education(paths) }),
   tar_target(raw_census_2001, { raw_data_preflight; read_census_2001_mother_tongue(paths) }),
   tar_target(glottolog_5_3, { raw_data_preflight; read_glottolog_5_3(paths) }),
@@ -602,6 +647,12 @@ core_pipeline_targets <- list(
     )
   ),
   tar_target(
+    consumption_lineage_bridge_2007_08,
+    build_consumption_lineage_bridge(
+      consumption_households_real_2007_08, consumption_lineage_reference
+    )
+  ),
+  tar_target(
     consumption_lineage_bridge_2009_10_type1,
     build_consumption_lineage_bridge(
       consumption_households_real_2009_10_type1, consumption_lineage_reference
@@ -638,6 +689,12 @@ core_pipeline_targets <- list(
     )
   ),
   tar_target(
+    consumption_households_lineaged_2007_08,
+    attach_consumption_lineage(
+      consumption_households_real_2007_08, consumption_lineage_bridge_2007_08
+    )
+  ),
+  tar_target(
     consumption_households_lineaged_2009_10_type1,
     attach_consumption_lineage(
       consumption_households_real_2009_10_type1, consumption_lineage_bridge_2009_10_type1
@@ -671,6 +728,7 @@ core_pipeline_targets <- list(
     consumption_lineage_coverage,
     safe_bind_rows(list(
       summarize_consumption_lineage_coverage(consumption_households_lineaged_2004_05),
+      summarize_consumption_lineage_coverage(consumption_households_lineaged_2007_08),
       summarize_consumption_lineage_coverage(consumption_households_lineaged_2009_10_type1),
       summarize_consumption_lineage_coverage(consumption_households_lineaged_2009_10_type2),
       summarize_consumption_lineage_coverage(consumption_households_lineaged_2011_12_type2),
@@ -687,6 +745,7 @@ core_pipeline_targets <- list(
     consumption_lineage_status_coverage,
     safe_bind_rows(list(
       summarize_consumption_lineage_status_coverage(consumption_households_lineaged_2004_05),
+      summarize_consumption_lineage_status_coverage(consumption_households_lineaged_2007_08),
       summarize_consumption_lineage_status_coverage(consumption_households_lineaged_2009_10_type1),
       summarize_consumption_lineage_status_coverage(consumption_households_lineaged_2009_10_type2),
       summarize_consumption_lineage_status_coverage(consumption_households_lineaged_2011_12_type2),
@@ -703,6 +762,7 @@ core_pipeline_targets <- list(
     consumption_lineage_review_queue,
     safe_bind_rows(list(
       build_consumption_lineage_review_queue(consumption_lineage_bridge_2004_05),
+      build_consumption_lineage_review_queue(consumption_lineage_bridge_2007_08),
       build_consumption_lineage_review_queue(consumption_lineage_bridge_2009_10_type1),
       build_consumption_lineage_review_queue(consumption_lineage_bridge_2009_10_type2),
       build_consumption_lineage_review_queue(consumption_lineage_bridge_2011_12_type2),
@@ -725,23 +785,15 @@ core_pipeline_targets <- list(
     read_consumption_welfare_outcomes(consumption_welfare_outcomes_file)
   ),
   tar_target(
-    consumption_welfare_outcomes_core,
-    consumption_welfare_registry_partition(consumption_welfare_outcomes, "core")
-  ),
-  tar_target(
-    consumption_welfare_outcomes_distributional,
-    consumption_welfare_registry_partition(consumption_welfare_outcomes, "distributional")
-  ),
-  tar_target(
     consumption_district_welfare_core_2004_05,
     estimate_consumption_district_welfare_core(
-      consumption_households_lineaged_2004_05, consumption_welfare_outcomes_core
+      consumption_households_lineaged_2004_05, consumption_welfare_outcomes
     )
   ),
   tar_target(
     consumption_district_welfare_distributional_2004_05,
     estimate_consumption_district_welfare_distributional(
-      consumption_households_lineaged_2004_05, consumption_welfare_outcomes_distributional
+      consumption_households_lineaged_2004_05, consumption_welfare_outcomes
     )
   ),
   tar_target(
@@ -752,15 +804,34 @@ core_pipeline_targets <- list(
     ))
   ),
   tar_target(
+    consumption_district_welfare_core_2007_08,
+    estimate_consumption_district_welfare_core(
+      consumption_households_lineaged_2007_08, consumption_welfare_outcomes
+    )
+  ),
+  tar_target(
+    consumption_district_welfare_distributional_2007_08,
+    estimate_consumption_district_welfare_distributional(
+      consumption_households_lineaged_2007_08, consumption_welfare_outcomes
+    )
+  ),
+  tar_target(
+    consumption_district_welfare_2007_08,
+    safe_bind_rows(list(
+      consumption_district_welfare_core_2007_08,
+      consumption_district_welfare_distributional_2007_08
+    ))
+  ),
+  tar_target(
     consumption_district_welfare_core_2009_10_type1,
     estimate_consumption_district_welfare_core(
-      consumption_households_lineaged_2009_10_type1, consumption_welfare_outcomes_core
+      consumption_households_lineaged_2009_10_type1, consumption_welfare_outcomes
     )
   ),
   tar_target(
     consumption_district_welfare_distributional_2009_10_type1,
     estimate_consumption_district_welfare_distributional(
-      consumption_households_lineaged_2009_10_type1, consumption_welfare_outcomes_distributional
+      consumption_households_lineaged_2009_10_type1, consumption_welfare_outcomes
     )
   ),
   tar_target(
@@ -773,13 +844,13 @@ core_pipeline_targets <- list(
   tar_target(
     consumption_district_welfare_core_2009_10_type2,
     estimate_consumption_district_welfare_core(
-      consumption_households_lineaged_2009_10_type2, consumption_welfare_outcomes_core
+      consumption_households_lineaged_2009_10_type2, consumption_welfare_outcomes
     )
   ),
   tar_target(
     consumption_district_welfare_distributional_2009_10_type2,
     estimate_consumption_district_welfare_distributional(
-      consumption_households_lineaged_2009_10_type2, consumption_welfare_outcomes_distributional
+      consumption_households_lineaged_2009_10_type2, consumption_welfare_outcomes
     )
   ),
   tar_target(
@@ -792,13 +863,13 @@ core_pipeline_targets <- list(
   tar_target(
     consumption_district_welfare_core_2011_12_type2,
     estimate_consumption_district_welfare_core(
-      consumption_households_lineaged_2011_12_type2, consumption_welfare_outcomes_core
+      consumption_households_lineaged_2011_12_type2, consumption_welfare_outcomes
     )
   ),
   tar_target(
     consumption_district_welfare_distributional_2011_12_type2,
     estimate_consumption_district_welfare_distributional(
-      consumption_households_lineaged_2011_12_type2, consumption_welfare_outcomes_distributional
+      consumption_households_lineaged_2011_12_type2, consumption_welfare_outcomes
     )
   ),
   tar_target(
@@ -811,13 +882,13 @@ core_pipeline_targets <- list(
   tar_target(
     consumption_district_welfare_core_hces_2022_23,
     estimate_consumption_district_welfare_core(
-      consumption_households_lineaged_hces_2022_23, consumption_welfare_outcomes_core
+      consumption_households_lineaged_hces_2022_23, consumption_welfare_outcomes
     )
   ),
   tar_target(
     consumption_district_welfare_distributional_hces_2022_23,
     estimate_consumption_district_welfare_distributional(
-      consumption_households_lineaged_hces_2022_23, consumption_welfare_outcomes_distributional
+      consumption_households_lineaged_hces_2022_23, consumption_welfare_outcomes
     )
   ),
   tar_target(
@@ -830,13 +901,13 @@ core_pipeline_targets <- list(
   tar_target(
     consumption_district_welfare_core_hces_2023_24,
     estimate_consumption_district_welfare_core(
-      consumption_households_lineaged_hces_2023_24, consumption_welfare_outcomes_core
+      consumption_households_lineaged_hces_2023_24, consumption_welfare_outcomes
     )
   ),
   tar_target(
     consumption_district_welfare_distributional_hces_2023_24,
     estimate_consumption_district_welfare_distributional(
-      consumption_households_lineaged_hces_2023_24, consumption_welfare_outcomes_distributional
+      consumption_households_lineaged_hces_2023_24, consumption_welfare_outcomes
     )
   ),
   tar_target(
@@ -850,6 +921,7 @@ core_pipeline_targets <- list(
     consumption_district_welfare,
     safe_bind_rows(list(
       consumption_district_welfare_2004_05,
+      consumption_district_welfare_2007_08,
       consumption_district_welfare_2009_10_type1,
       consumption_district_welfare_2009_10_type2,
       consumption_district_welfare_2011_12_type2,
