@@ -2122,3 +2122,37 @@ test_that("NSS-64 detailed consumption is gated by official reconstruction befor
   )[[1L]]
   expect_gt(deflation, validation)
 })
+
+test_that("pretrend consumption rounds are validation-gated core welfare inputs", {
+  targets_file <- paste(readLines(file.path(
+    Sys.getenv("EMI_PROJECT_ROOT", unset = "."), "_targets.R"
+  ), warn = FALSE), collapse = "\n")
+
+  for (id in c("2000_01", "2001_02")) {
+    expect_match(
+      targets_file,
+      paste0("consumption_mpce_validation_", id),
+      fixed = TRUE
+    )
+    expect_match(
+      targets_file,
+      paste0("consumption_households_real_", id),
+      fixed = TRUE
+    )
+    expect_match(
+      targets_file,
+      paste0("consumption_households_lineaged_", id),
+      fixed = TRUE
+    )
+    expect_match(
+      targets_file,
+      paste0("consumption_district_welfare_core_", id),
+      fixed = TRUE
+    )
+    expect_false(grepl(
+      paste0("consumption_district_welfare_distributional_", id),
+      targets_file,
+      fixed = TRUE
+    ))
+  }
+})
