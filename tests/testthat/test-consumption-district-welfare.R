@@ -825,3 +825,30 @@ test_that("survey-specific welfare selection rejects mixed-round inputs", {
     "exactly one survey_id"
   )
 })
+
+test_that("survey-specific welfare selection is optional for generic rule frames", {
+  registry <- data.frame(
+    outcome_id = c("mean", "bottom40"),
+    estimand = c("survey_mean", "survey_bottom_mean"),
+    stringsAsFactors = FALSE
+  )
+
+  selected <- consumption_welfare_registry_for_survey(registry, "wave")
+
+  expect_equal(selected, registry)
+})
+
+test_that("survey-specific welfare selection treats blank scope as unrestricted", {
+  registry <- data.frame(
+    outcome_id = c("mean", "bottom40"),
+    estimand = c("survey_mean", "survey_bottom_mean"),
+    survey_ids = c("", "nss_2004_05;nss_2007_08_consumption"),
+    stringsAsFactors = FALSE
+  )
+
+  selected <- consumption_welfare_registry_for_survey(
+    registry, "nss_2009_10_type2"
+  )
+
+  expect_equal(selected$outcome_id, "mean")
+})

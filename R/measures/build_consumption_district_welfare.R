@@ -220,6 +220,8 @@ consumption_welfare_registry_for_survey <- function(registry, survey_id) {
   if (length(ids) != 1L) {
     stop("Consumption welfare estimation requires exactly one survey_id.", call. = FALSE)
   }
+  if (!"survey_ids" %in% names(x)) return(x)
+
   id <- ids[[1L]]
   declared <- trimws(plain_chr(x$survey_ids))
   keep <- vapply(declared, function(value) {
