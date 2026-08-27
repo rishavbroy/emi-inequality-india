@@ -398,52 +398,76 @@ link_cpi_iw_state_series <- function(state_index, state_links) {
   out[order(out$state_code, out$period), , drop = FALSE]
 }
 
-aggregate_cpi_iw_to_state <- function(
-    centre_index, centre_weights, incomplete_periods = c("error", "drop")) {
-  incomplete_periods <- match.arg(incomplete_periods)
+aggregate_cpi_iw_to_state <- function(centre_index, centre_weights) {
   index <- safe_df(centre_index)
   weights <- safe_df(centre_weights)
   required_index <- c("centre_key", "period", "index")
   required_weights <- c("centre_key", "state_code", "weight")
-  missing <- c(setdiff(required_index, names(index)), setdiff(required_weights, names(weights)))
-  if (length(missing)) stop("CPI-IW aggregation is missing columns: ", paste(unique(missing), collapse = ", "), call. = FALSE)
+  missing <- c(
+    setdiff(required_index, names(index)),
+    setdiff(required_weights, names(weights))
+  )
+  if (length(missing)) {
+    stop(
+      "CPI-IW aggregation is missing columns: ",
+      paste(unique(missing), collapse = ", "),
+      call. = FALSE
+    )
+  }
 
   missing_weighted_centres <- setdiff(weights$centre_key, unique(index$centre_key))
   if (length(missing_weighted_centres)) {
-    stop("CPI-IW official weighting centres are absent from the source series: ", paste(missing_weighted_centres, collapse = ", "), call. = FALSE)
+    stop(
+      "CPI-IW official weighting centres are absent from the source series: ",
+      paste(missing_weighted_centres, collapse = ", "),
+      call. = FALSE
+    )
   }
-  index <- index[index$centre_key %in% weights$centre_key, , drop = FALSE]
 
-  required_centres <- unique(as.character(weights$centre_key))
-  period_rows <- split(seq_len(nrow(index)), index$period)
-  complete_period <- vapply(period_rows, function(i) {
-    length(unique(as.character(index$centre_key[i]))) == length(required_centres)
-  }, logical(1))
-  if (any(!complete_period)) {
-    bad_periods <- as.Date(names(complete_period)[!complete_period])
-    if (identical(incomplete_periods, "error")) {
-      first <- bad_periods[[1L]]
-      present <- length(unique(index$centre_key[index$period == first]))
-      stop(
-        "CPI-IW state aggregation has incomplete centre coverage; first incomplete month: ",
-        format(first, "%Y-%m"), " (", present, "/", length(required_centres), " centres).",
-        call. = FALSE
-      )
-    }
-    index <- index[index$period %in% as.Date(names(complete_period)[complete_period]), , drop = FALSE]
+  joined <- merge(
+    index[index$centre_key %in% weights$centre_key, , drop = FALSE],
+    weights[c("centre_key", "state_code", "weight")],
+    by = "centre_key", all.x = TRUE, sort = FALSE
+  )
+  if (!nrow(joined)) {
+    stop("CPI-IW aggregation has no weighted centre-month observations.", call. = FALSE)
   }
-  if (!nrow(index)) stop("CPI-IW aggregation has no complete centre-months.", call. = FALSE)
 
-  joined <- merge(index, weights[c("centre_key", "state_code", "weight")], by = "centre_key", all.x = TRUE, sort = FALSE)
-  split_rows <- split(seq_len(nrow(joined)), interaction(joined$state_code, joined$period, drop = TRUE))
+  state_weight_totals <- stats::aggregate(
+    weight ~ state_code, data = weights, FUN = sum
+  )
+  names(state_weight_totals)[names(state_weight_totals) == "weight"] <-
+    "state_weight_total"
+
+  split_rows <- split(
+    seq_len(nrow(joined)),
+    interaction(joined$state_code, joined$period, drop = TRUE)
+  )
   out <- do.call(rbind, lapply(split_rows, function(i) {
     data.frame(
-      state_code = joined$state_code[i[1]], sector = "urban", period = joined$period[i[1]],
-      index = stats::weighted.mean(num(joined$index[i]), num(joined$weight[i])),
-      centre_count = length(unique(joined$centre_key[i])), stringsAsFactors = FALSE
+      state_code = joined$state_code[i[[1L]]],
+      sector = "urban",
+      period = joined$period[i[[1L]]],
+      index = stats::weighted.mean(
+        num(joined$index[i]), num(joined$weight[i])
+      ),
+      centre_count = length(unique(joined$centre_key[i])),
+      centre_weight_observed = sum(num(joined$weight[i])),
+      stringsAsFactors = FALSE
     )
   }))
   rownames(out) <- NULL
+
+  out <- merge(out, state_weight_totals, by = "state_code", all.x = TRUE, sort = FALSE)
+  out$centre_weight_coverage <-
+    num(out$centre_weight_observed) / num(out$state_weight_total)
+  if (any(
+    !positive_finite(out$centre_weight_coverage) |
+      out$centre_weight_coverage > 1 + 1e-10
+  )) {
+    stop("CPI-IW state aggregation produced invalid centre-weight coverage.", call. = FALSE)
+  }
+
   out$year <- as.integer(format(out$period, "%Y"))
   out$month <- as.integer(format(out$period, "%m"))
   validate_price_index(out)
@@ -522,6 +546,9 @@ complete_cpi_iw_state_months <- function(
   fill$sector <- "urban"
   fill$index <- num(fill$index) * num(fill$cpi_u_to_iw_factor)
   fill$centre_count <- NA_integer_
+  fill$centre_weight_observed <- NA_real_
+  fill$state_weight_total <- NA_real_
+  fill$centre_weight_coverage <- NA_real_
   fill$link_factor_2001 <- 1
   fill$link_weight_coverage <- NA_real_
   fill$link_centres <- NA_integer_
@@ -603,9 +630,7 @@ read_price_sources <- function(
   old_states <- aggregate_cpi_iw_to_state(old_input, weights_1982)
   old_states <- link_cpi_iw_state_series(old_states, cpi_iw_state_link_factors(weights_1982))
   old_states$cpi_iw_completion <- "direct_cpi_iw_1982_linked"
-  new_states <- aggregate_cpi_iw_to_state(
-    new_input, weights_2001, incomplete_periods = "drop"
-  )
+  new_states <- aggregate_cpi_iw_to_state(new_input, weights_2001)
   new_states$link_factor_2001 <- 1
   new_states$link_weight_coverage <- 1
   new_states$link_centres <- new_states$centre_count

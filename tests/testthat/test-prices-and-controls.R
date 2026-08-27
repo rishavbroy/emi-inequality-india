@@ -276,19 +276,35 @@ test_that("CPI-IW state indices use official centre weights", {
   out <- aggregate_cpi_iw_to_state(centre, weights)
   expect_equal(out$index, c(175, 192.5))
   expect_equal(out$centre_count, c(2L, 2L))
+  expect_equal(out$centre_weight_coverage, c(1, 1))
 })
 
-test_that("CPI-IW aggregation rejects incomplete centre coverage", {
+test_that("CPI-IW aggregation preserves partial state-month coverage explicitly", {
   centre <- data.frame(
-    centre_key = normalise_cpi_iw_centre(c("Guntur", "Vijaywada", "Guntur")),
-    period = as.Date(c("2007-07-01", "2007-07-01", "2007-08-01")),
+    centre_key = normalise_cpi_iw_centre(c(
+      "Guntur", "Vijaywada",
+      "Guntur"
+    )),
+    period = as.Date(c(
+      "2007-07-01", "2007-07-01",
+      "2007-08-01"
+    )),
     index = c(100, 200, 110)
   )
   weights <- data.frame(
     centre_key = normalise_cpi_iw_centre(c("Guntur", "Vijaywada")),
     state_code = "ANP", weight = c(25, 75)
   )
-  expect_error(aggregate_cpi_iw_to_state(centre, weights), "incomplete centre coverage")
+
+  out <- aggregate_cpi_iw_to_state(centre, weights)
+  july <- out[out$period == as.Date("2007-07-01"), ]
+  august <- out[out$period == as.Date("2007-08-01"), ]
+
+  expect_equal(july$index, 175)
+  expect_equal(july$centre_weight_coverage, 1)
+  expect_equal(august$index, 110)
+  expect_equal(august$centre_weight_coverage, 0.25)
+  expect_equal(august$centre_count, 1L)
 })
 
 
@@ -307,29 +323,36 @@ test_that("CPI-IW aggregation ignores source centres outside the official weight
   expect_equal(out$centre_count, 2L)
 })
 
-test_that("CPI-IW aggregation can drop globally incomplete source months without renormalizing weights", {
+test_that("CPI-IW aggregation is local to each state rather than global month completeness", {
   centre <- data.frame(
     centre_key = normalise_cpi_iw_centre(c(
-      "Guntur", "Vijaywada",
-      "Guntur",
-      "Guntur", "Vijaywada"
+      "Guntur", "Vijaywada", "Delhi",
+      "Guntur", "Delhi"
     )),
     period = as.Date(c(
-      "2012-05-01", "2012-05-01",
-      "2012-06-01",
-      "2012-07-01", "2012-07-01"
+      "2001-01-01", "2001-01-01", "2001-01-01",
+      "2001-02-01", "2001-02-01"
     )),
-    index = c(100, 200, 110, 120, 220)
+    index = c(100, 200, 300, 110, 310)
   )
   weights <- data.frame(
-    centre_key = normalise_cpi_iw_centre(c("Guntur", "Vijaywada")),
-    state_code = "ANP", weight = c(25, 75)
+    centre_key = normalise_cpi_iw_centre(c("Guntur", "Vijaywada", "Delhi")),
+    state_code = c("ANP", "ANP", "DEL"),
+    weight = c(25, 75, 100)
   )
-  out <- aggregate_cpi_iw_to_state(
-    centre, weights, incomplete_periods = "drop"
+
+  out <- aggregate_cpi_iw_to_state(centre, weights)
+
+  expect_equal(
+    out$index[out$state_code == "DEL" & out$period == as.Date("2001-02-01")],
+    310
   )
-  expect_equal(out$period, as.Date(c("2012-05-01", "2012-07-01")))
-  expect_false(as.Date("2012-06-01") %in% out$period)
+  expect_equal(
+    out$centre_weight_coverage[
+      out$state_code == "ANP" & out$period == as.Date("2001-02-01")
+    ],
+    0.25
+  )
 })
 
 test_that("official CPI-Urban fills only missing CPI-IW months after overlap calibration", {
