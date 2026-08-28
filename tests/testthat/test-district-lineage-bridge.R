@@ -802,3 +802,70 @@ test_that("district transition rejects targets absent from the Census-2001 regis
     "unknown Census-2001 target units"
   )
 })
+
+test_that("SHRUG Census code widths include the published 1991 identifiers", {
+  pc91 <- data.frame(
+    shrid2 = "x", pc91_state_id = 2, pc91_district_id = 1,
+    pc91_subdistrict_id = 10, pc91_village_id = 335,
+    pc91_land_area = 0.53, pc91_pca_tot_p = 368
+  )
+
+  locality <- standardize_shrug_locality_key(pc91, 1991L, "rural")
+  district <- standardize_shrug_district_key(pc91, 1991L)
+
+  expect_equal(locality$district_code, "01")
+  expect_equal(locality$subdistrict_code, "0010")
+  expect_equal(district$district_code, "01")
+  expect_error(shrug_census_code_widths(1981L), "Unsupported SHRUG Population Census year")
+})
+
+test_that("historical SHRUG transition weights use source-year population", {
+  pc91 <- data.frame(
+    shrid2 = c("a", "b"), pc91_state_id = "02", pc91_district_id = "01",
+    pc91_subdistrict_id = "0010", pc91_village_id = c("1", "2"),
+    pc91_pca_tot_p = c(90, 10), pc91_land_area = c(9, 1),
+    stringsAsFactors = FALSE
+  )
+  pc01 <- data.frame(
+    shrid2 = c("a", "b"), pc01_state_id = "02", pc01_district_id = c("01", "02"),
+    pc01_subdistrict_id = "0001", pc01_village_id = c("1", "2"),
+    pc01_pca_tot_p = c(1, 999), pc01_land_area = c(1, 999),
+    stringsAsFactors = FALSE
+  )
+  d91 <- pc91[c("shrid2", "pc91_state_id", "pc91_district_id")]
+  d01 <- pc01[c("shrid2", "pc01_state_id", "pc01_district_id")]
+
+  bridge <- build_shrug_district_bridge_1991_2001(
+    pc91, pc91[0, ], pc01, pc01[0, ], d91, d01
+  )
+  transition <- build_district_transition_1991_2001(bridge)
+  transition <- transition[order(transition$district_code_2001), ]
+
+  expect_equal(transition$population_share_to_2001, c(0.9, 0.1))
+  expect_equal(unique(transition$population_1991_total), 100)
+  expect_equal(unique(transition$area_1991_total), 10)
+  expect_true(all(transition$mapping_class == "non_nested_or_incomplete"))
+  expect_equal(attr(bridge, "source_year"), 1991L)
+  expect_equal(attr(bridge, "target_year"), 2001L)
+})
+
+test_that("historical language geography separates one-to-one districts from splits", {
+  bridge <- data.frame(
+    shrid2 = c("a", "b", "c"),
+    state_code_1991 = "02", district_code_1991 = c("01", "01", "02"),
+    state_code_2001 = "02", district_code_2001 = c("01", "02", "03"),
+    deterministic = TRUE, population = c(90, 10, 50),
+    stringsAsFactors = FALSE
+  )
+
+  out <- historical_1991_district_geography_summary(bridge)
+  split <- out[out$district_code_1991 == "01", ]
+  stable <- out[out$district_code_1991 == "02", ]
+
+  expect_equal(split$mapping_class, "splits_across_2001_districts")
+  expect_false(split$preferred_language_persistence)
+  expect_equal(split$n_target_2001_districts, 2L)
+  expect_equal(stable$mapping_class, "deterministic_one_to_one")
+  expect_true(stable$preferred_language_persistence)
+  expect_equal(stable$population_coverage, 1)
+})

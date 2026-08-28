@@ -1,4 +1,4 @@
-# Census 2001/2011 registries and stable-locality transition matrices.
+# Census registries and stable-locality transition matrices.
 
 pad_admin_code <- function(x, width) {
   x <- trimws(plain_chr(x))
@@ -8,6 +8,21 @@ pad_admin_code <- function(x, width) {
   out <- ifelse(is.na(x), NA_character_, sprintf(paste0("%0", width, "d"), suppressWarnings(as.integer(x))))
   out[grepl("^0+$", out)] <- NA_character_
   out
+}
+
+shrug_census_code_widths <- function(year) {
+  year <- as.integer(year)
+  widths <- switch(
+    as.character(year),
+    `1991` = c(district = 2L, subdistrict = 4L),
+    `2001` = c(district = 2L, subdistrict = 4L),
+    `2011` = c(district = 3L, subdistrict = 5L),
+    NULL
+  )
+  if (is.null(widths)) {
+    stop("Unsupported SHRUG Population Census year: ", year, call. = FALSE)
+  }
+  widths
 }
 
 first_matching_column <- function(df, patterns, exclude = character()) {
@@ -33,8 +48,9 @@ standardize_shrug_locality_key <- function(x, year, sector) {
   area <- first_matching_column(x, c("land area", "area"))
   if (is.null(shrid)) stop("SHRUG locality key is missing shrid2.", call. = FALSE)
 
-  district_width <- if (as.integer(year) == 2001L) 2L else 3L
-  subdistrict_width <- if (as.integer(year) == 2001L) 4L else 5L
+  widths <- shrug_census_code_widths(year)
+  district_width <- widths[["district"]]
+  subdistrict_width <- widths[["subdistrict"]]
   n <- nrow(x)
   data.frame(
     shrid2 = plain_chr(x[[shrid]]),
@@ -59,7 +75,7 @@ standardize_shrug_district_key <- function(x, year) {
   if (is.null(shrid) || is.null(district)) {
     stop("SHRUG district key must contain shrid2 and a district identifier.", call. = FALSE)
   }
-  district_width <- if (as.integer(year) == 2001L) 2L else 3L
+  district_width <- shrug_census_code_widths(year)[["district"]]
   data.frame(
     shrid2 = plain_chr(x[[shrid]]),
     census_year = as.integer(year),
@@ -139,18 +155,23 @@ unique_shrid_district_membership <- function(key, suffix) {
   ))
 }
 
-shrid_bridge_status <- function(bridge) {
+shrid_bridge_status <- function(bridge, years = c(2001L, 2011L)) {
   bridge <- safe_df(bridge)
+  years <- as.integer(years)
+  if (length(years) != 2L || anyDuplicated(years)) {
+    stop("SHRUG bridge status requires exactly two distinct Census years.", call. = FALSE)
+  }
   n <- nrow(bridge)
   status <- rep("missing_census_membership", n)
-  crosses <-
-    (num(bridge$n_state_memberships_2001) > 1L) %in% TRUE |
-    (num(bridge$n_district_memberships_2001) > 1L) %in% TRUE |
-    (num(bridge$n_state_memberships_2011) > 1L) %in% TRUE |
-    (num(bridge$n_district_memberships_2011) > 1L) %in% TRUE
-  missing_locality <-
-    !(bridge$has_locality_key_2001 %in% TRUE) |
-    !(bridge$has_locality_key_2011 %in% TRUE)
+  crosses <- rep(FALSE, n)
+  missing_locality <- rep(FALSE, n)
+  for (year in years) {
+    crosses <- crosses |
+      (num(bridge[[paste0("n_state_memberships_", year)]]) > 1L) %in% TRUE |
+      (num(bridge[[paste0("n_district_memberships_", year)]]) > 1L) %in% TRUE
+    missing_locality <- missing_locality |
+      !(bridge[[paste0("has_locality_key_", year)]] %in% TRUE)
+  }
   deterministic <- bridge$deterministic %in% TRUE
 
   status[crosses] <- "crosses_district_boundary"
@@ -159,35 +180,68 @@ shrid_bridge_status <- function(bridge) {
   status
 }
 
-#' Build a deterministic SHRUG district bridge
-#'
-#' SHRID units that cross district boundaries in either Census year are retained
-#' in the QA table but excluded from deterministic transition weights. This
-#' avoids inventing fragment shares not supplied by the district keys.
-build_shrug_district_bridge <- function(pc01r, pc01u, pc11r, pc11u, pc01dist, pc11dist) {
-  loc01 <- safe_bind_rows(list(
-    standardize_shrug_locality_key(pc01r, 2001L, "rural"),
-    standardize_shrug_locality_key(pc01u, 2001L, "urban")
-  ))
-  loc11 <- safe_bind_rows(list(
-    standardize_shrug_locality_key(pc11r, 2011L, "rural"),
-    standardize_shrug_locality_key(pc11u, 2011L, "urban")
-  ))
-  d01 <- unique_shrid_district_membership(standardize_shrug_district_key(pc01dist, 2001L), "2001")
-  d11 <- unique_shrid_district_membership(standardize_shrug_district_key(pc11dist, 2011L), "2011")
-  weights <- aggregate_shrid_weights(loc11)
+build_shrug_district_bridge_between_years <- function(
+    source_r, source_u, target_r, target_u, source_dist, target_dist,
+    source_year, target_year) {
+  source_year <- as.integer(source_year)
+  target_year <- as.integer(target_year)
+  if (identical(source_year, target_year)) {
+    stop("SHRUG district bridge requires distinct source and target Census years.", call. = FALSE)
+  }
+  shrug_census_code_widths(source_year)
+  shrug_census_code_widths(target_year)
 
-  bridge <- merge(d01, d11, by = "shrid2", all = TRUE, sort = FALSE)
+  source_loc <- safe_bind_rows(list(
+    standardize_shrug_locality_key(source_r, source_year, "rural"),
+    standardize_shrug_locality_key(source_u, source_year, "urban")
+  ))
+  target_loc <- safe_bind_rows(list(
+    standardize_shrug_locality_key(target_r, target_year, "rural"),
+    standardize_shrug_locality_key(target_u, target_year, "urban")
+  ))
+  source_membership <- unique_shrid_district_membership(
+    standardize_shrug_district_key(source_dist, source_year), as.character(source_year)
+  )
+  target_membership <- unique_shrid_district_membership(
+    standardize_shrug_district_key(target_dist, target_year), as.character(target_year)
+  )
+  weights <- aggregate_shrid_weights(source_loc)
+
+  bridge <- merge(source_membership, target_membership, by = "shrid2", all = TRUE, sort = FALSE)
   bridge <- merge(bridge, weights, by = "shrid2", all.x = TRUE, sort = FALSE)
-  bridge$has_locality_key_2001 <- bridge$shrid2 %in% unique(loc01$shrid2)
-  bridge$has_locality_key_2011 <- bridge$shrid2 %in% unique(loc11$shrid2)
-  bridge$deterministic <- bridge$deterministic_2001 %in% TRUE &
-    bridge$deterministic_2011 %in% TRUE &
-    bridge$has_locality_key_2001 & bridge$has_locality_key_2011
-  bridge$bridge_status <- shrid_bridge_status(bridge)
-  attr(bridge, "locality_keys_2001") <- loc01
-  attr(bridge, "locality_keys_2011") <- loc11
+  bridge[[paste0("has_locality_key_", source_year)]] <- bridge$shrid2 %in% unique(source_loc$shrid2)
+  bridge[[paste0("has_locality_key_", target_year)]] <- bridge$shrid2 %in% unique(target_loc$shrid2)
+  bridge$deterministic <-
+    bridge[[paste0("deterministic_", source_year)]] %in% TRUE &
+    bridge[[paste0("deterministic_", target_year)]] %in% TRUE &
+    bridge[[paste0("has_locality_key_", source_year)]] &
+    bridge[[paste0("has_locality_key_", target_year)]]
+  bridge$bridge_status <- shrid_bridge_status(bridge, c(source_year, target_year))
+  attr(bridge, paste0("locality_keys_", source_year)) <- source_loc
+  attr(bridge, paste0("locality_keys_", target_year)) <- target_loc
+  attr(bridge, "source_year") <- source_year
+  attr(bridge, "target_year") <- target_year
   bridge
+}
+
+#' Build the production Census-2011 to Census-2001 SHRUG district bridge
+build_shrug_district_bridge <- function(pc01r, pc01u, pc11r, pc11u, pc01dist, pc11dist) {
+  build_shrug_district_bridge_between_years(
+    source_r = pc11r, source_u = pc11u,
+    target_r = pc01r, target_u = pc01u,
+    source_dist = pc11dist, target_dist = pc01dist,
+    source_year = 2011L, target_year = 2001L
+  )
+}
+
+#' Build the historical Census-1991 to Census-2001 SHRUG district bridge
+build_shrug_district_bridge_1991_2001 <- function(pc91r, pc91u, pc01r, pc01u, pc91dist, pc01dist) {
+  build_shrug_district_bridge_between_years(
+    source_r = pc91r, source_u = pc91u,
+    target_r = pc01r, target_u = pc01u,
+    source_dist = pc91dist, target_dist = pc01dist,
+    source_year = 1991L, target_year = 2001L
+  )
 }
 
 weighted_share <- function(x, group_total) {
@@ -404,70 +458,123 @@ validate_district_transition_targets <- function(transition, admin_2001) {
 
 #' Aggregate deterministic SHRID mappings to district transition weights
 #'
-#' Shares use the full 2011 source-district denominator. Consequently, excluded
+#' Shares use the full source-year district denominator. Consequently, excluded
 #' cross-boundary or missing-membership SHRID units make the weights sum to less
 #' than one instead of being silently renormalized away.
-build_district_transition_2001_2011 <- function(shrid_bridge) {
+build_district_transition_between_years <- function(shrid_bridge, source_year, target_year) {
   all_rows <- safe_df(shrid_bridge)
+  source_year <- as.integer(source_year)
+  target_year <- as.integer(target_year)
+  source_state <- paste0("state_code_", source_year)
+  source_district <- paste0("district_code_", source_year)
+  target_state <- paste0("state_code_", target_year)
+  target_district <- paste0("district_code_", target_year)
+  required <- c(
+    "shrid2", "deterministic", "population", "area",
+    source_state, source_district, target_state, target_district
+  )
+  missing <- setdiff(required, names(all_rows))
+  if (length(missing)) {
+    stop("SHRUG bridge lacks transition fields: ", paste(missing, collapse = ", "), call. = FALSE)
+  }
+
   source_rows <- all_rows[
-    !is.na(all_rows$state_code_2011) & !is.na(all_rows$district_code_2011),
+    !is.na(all_rows[[source_state]]) & !is.na(all_rows[[source_district]]),
     , drop = FALSE
   ]
   mapped <- source_rows[
     source_rows$deterministic %in% TRUE &
-      !is.na(source_rows$state_code_2001) & !is.na(source_rows$district_code_2001),
+      !is.na(source_rows[[target_state]]) & !is.na(source_rows[[target_district]]),
     , drop = FALSE
   ]
   if (!nrow(mapped)) return(data.frame())
 
-  source_key_all <- interaction(source_rows$state_code_2011, source_rows$district_code_2011, drop = TRUE)
+  source_key_all <- interaction(source_rows[[source_state]], source_rows[[source_district]], drop = TRUE)
   source_totals <- safe_bind_rows(lapply(split(seq_len(nrow(source_rows)), source_key_all), function(i) {
-    data.frame(
-      state_code_2011 = source_rows$state_code_2011[[i[[1]]]],
-      district_code_2011 = source_rows$district_code_2011[[i[[1]]]],
+    out <- data.frame(
       n_shrid_total = length(unique(source_rows$shrid2[i])),
-      population_2011_total = sum_finite_or_na(source_rows$population[i]),
-      area_2011_total = sum_finite_or_na(source_rows$area[i]),
+      population_total = sum_finite_or_na(source_rows$population[i]),
+      area_total = sum_finite_or_na(source_rows$area[i]),
       stringsAsFactors = FALSE
     )
+    out[[source_state]] <- source_rows[[source_state]][[i[[1]]]]
+    out[[source_district]] <- source_rows[[source_district]][[i[[1]]]]
+    out[c(source_state, source_district, "n_shrid_total", "population_total", "area_total")]
   }))
 
   transition_key <- interaction(
-    mapped$state_code_2011, mapped$district_code_2011,
-    mapped$state_code_2001, mapped$district_code_2001,
+    mapped[[source_state]], mapped[[source_district]],
+    mapped[[target_state]], mapped[[target_district]],
     drop = TRUE
   )
   rows <- safe_bind_rows(lapply(split(seq_len(nrow(mapped)), transition_key), function(i) {
-    data.frame(
-      state_code_2011 = mapped$state_code_2011[[i[[1]]]],
-      district_code_2011 = mapped$district_code_2011[[i[[1]]]],
-      state_code_2001 = mapped$state_code_2001[[i[[1]]]],
-      district_code_2001 = mapped$district_code_2001[[i[[1]]]],
+    out <- data.frame(
       n_shrid_mapped = length(unique(mapped$shrid2[i])),
-      population_2011_mapped = sum_finite_or_na(mapped$population[i]),
-      area_2011_mapped = sum_finite_or_na(mapped$area[i]),
+      population_mapped = sum_finite_or_na(mapped$population[i]),
+      area_mapped = sum_finite_or_na(mapped$area[i]),
       stringsAsFactors = FALSE
     )
+    out[[source_state]] <- mapped[[source_state]][[i[[1]]]]
+    out[[source_district]] <- mapped[[source_district]][[i[[1]]]]
+    out[[target_state]] <- mapped[[target_state]][[i[[1]]]]
+    out[[target_district]] <- mapped[[target_district]][[i[[1]]]]
+    out[c(
+      source_state, source_district, target_state, target_district,
+      "n_shrid_mapped", "population_mapped", "area_mapped"
+    )]
   }))
   rows <- merge(
     rows, source_totals,
-    by = c("state_code_2011", "district_code_2011"),
+    by = c(source_state, source_district),
     all.x = TRUE, sort = FALSE
   )
-  rows$population_share_to_2001 <- weighted_share(rows$population_2011_mapped, rows$population_2011_total)
-  rows$area_share_to_2001 <- weighted_share(rows$area_2011_mapped, rows$area_2011_total)
 
-  source_key <- interaction(rows$state_code_2011, rows$district_code_2011, drop = TRUE)
-  rows$n_target_2001_districts <- as.integer(ave(rep(1L, nrow(rows)), source_key, FUN = length))
+  population_share <- paste0("population_share_to_", target_year)
+  area_share <- paste0("area_share_to_", target_year)
+  n_targets <- paste0("n_target_", target_year, "_districts")
+  rows[[paste0("population_", source_year, "_mapped")]] <- rows$population_mapped
+  rows[[paste0("area_", source_year, "_mapped")]] <- rows$area_mapped
+  rows[[paste0("population_", source_year, "_total")]] <- rows$population_total
+  rows[[paste0("area_", source_year, "_total")]] <- rows$area_total
+  rows[[population_share]] <- weighted_share(rows$population_mapped, rows$population_total)
+  rows[[area_share]] <- weighted_share(rows$area_mapped, rows$area_total)
+
+  source_key <- interaction(rows[[source_state]], rows[[source_district]], drop = TRUE)
+  rows[[n_targets]] <- as.integer(ave(rep(1L, nrow(rows)), source_key, FUN = length))
   mapped_shrid <- ave(rows$n_shrid_mapped, source_key, FUN = sum)
   rows$shrid_coverage <- weighted_share(mapped_shrid, rows$n_shrid_total)
   complete <- is.finite(rows$shrid_coverage) & abs(rows$shrid_coverage - 1) <= 1e-12
   rows$mapping_class <- ifelse(
-    rows$n_target_2001_districts == 1L & complete,
+    rows[[n_targets]] == 1L & complete,
     "deterministic_containment",
     "non_nested_or_incomplete"
   )
-  rows[order(rows$state_code_2011, rows$district_code_2011, -rows$population_share_to_2001), , drop = FALSE]
+  rows$population_mapped <- NULL
+  rows$area_mapped <- NULL
+  rows$population_total <- NULL
+  rows$area_total <- NULL
+  ordered <- c(
+    source_state, source_district, target_state, target_district,
+    "n_shrid_mapped",
+    paste0("population_", source_year, "_mapped"),
+    paste0("area_", source_year, "_mapped"),
+    "n_shrid_total",
+    paste0("population_", source_year, "_total"),
+    paste0("area_", source_year, "_total"),
+    population_share, area_share, n_targets, "shrid_coverage", "mapping_class"
+  )
+  rows <- rows[ordered]
+  rows[order(rows[[source_state]], rows[[source_district]], -rows[[population_share]]), , drop = FALSE]
+}
+
+#' Aggregate deterministic SHRID mappings to 2011-to-2001 district weights
+build_district_transition_2001_2011 <- function(shrid_bridge) {
+  build_district_transition_between_years(shrid_bridge, 2011L, 2001L)
+}
+
+#' Aggregate deterministic SHRID mappings to 1991-to-2001 district weights
+build_district_transition_1991_2001 <- function(shrid_bridge) {
+  build_district_transition_between_years(shrid_bridge, 1991L, 2001L)
 }
 
 #' Canonical Census 2001 district registry
