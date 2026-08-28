@@ -736,6 +736,18 @@ core_pipeline_targets <- list(
     format = "file"
   ),
   tar_target(
+    historical_vanneman_source_qa,
+    {
+      raw_data_preflight
+      summarize_vanneman_historical_sources(paths)
+    }
+  ),
+  tar_target(
+    diag_ext_historical_vanneman_source_qa,
+    save_vanneman_historical_source_qa(historical_vanneman_source_qa),
+    format = "file"
+  ),
+  tar_target(
     district_lineage,
     build_district_lineage(
       district_lineage_sources,

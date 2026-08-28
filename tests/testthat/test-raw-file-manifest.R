@@ -434,3 +434,23 @@ test_that("DISE archive is optional but fully documented", {
   expect_match(source$license_or_terms_notes, "redistribution rights are not asserted", ignore.case = TRUE)
   expect_true(file.exists(file.path(root, "docs", "DISE_TREATMENTS.md")))
 })
+
+test_that("Vanneman historical source QA is manifest-backed but values remain provenance-gated", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
+  manifest <- read.csv(file.path(root, "data", "metadata", "file_manifest.csv"), stringsAsFactors = FALSE)
+  sources <- read.csv(file.path(root, "data", "metadata", "data_sources.csv"), stringsAsFactors = FALSE)
+
+  rows <- manifest[manifest$source_id == "vanneman_1961_91", , drop = FALSE]
+  expect_setequal(
+    rows$file_id,
+    c("vanneman_panel4", "vanneman_dist81", "vanneman_dist91", "vanneman_codebook")
+  )
+  expect_true(all(tolower(as.character(rows$required_for_current_pipeline)) == "true"))
+  expect_true(all(startsWith(rows$relative_path, "data/raw/census_1961-91/vanneman_1961-91/")))
+
+  source <- sources[sources$source_id == "vanneman_1961_91", , drop = FALSE]
+  expect_equal(nrow(source), 1L)
+  expect_true(as.logical(source$used_in_current_pipeline))
+  expect_match(source$notes, "source-contract QA only", fixed = TRUE)
+  expect_match(source$notes, "panel version 6", fixed = TRUE)
+})
