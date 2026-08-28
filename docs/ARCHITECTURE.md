@@ -29,9 +29,9 @@ Reusable logic belongs in `R/`; `_targets.R`, scripts, and Make targets should c
 
 ## District-panel roles
 
-- `district_panel_conservative`: 408 deterministic districts.
-- `district_panel_primary`: 573 reviewed districts and the public production specification.
-- `district_panel_full_reviewed`: 587-district fractional-allocation sensitivity specification.
+- `district_panel_conservative`: deterministic district specification.
+- `district_panel_primary`: reviewed public production specification.
+- `district_panel_full_reviewed`: fractional-allocation sensitivity specification.
 - `district_panel`: public alias to `district_panel_primary`.
 - `district_panel_legacy`: inherited harmonization panel used only in historical comparison diagnostics.
 
