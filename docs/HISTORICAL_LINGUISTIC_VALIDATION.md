@@ -90,7 +90,9 @@ python3 scripts/build_language_atlas_1991.py \
   --pca-zip data/raw/shrug/census_1991/shrug-pca91-csv.zip \
   --state-crosswalk data/metadata/language_atlas_1991_state_crosswalk.csv \
   --district-output /tmp/language_atlas_1991_district_population.csv \
-  --population-review-output /tmp/language_atlas_1991_population_review.csv
+  --population-review-output /tmp/language_atlas_1991_population_review.csv \
+  --page0-language-output /tmp/language_atlas_1991_page0_languages.csv \
+  --page0-language-review-output /tmp/language_atlas_1991_page0_language_review.csv
 ```
 
 The candidate output is deliberately keyed by Atlas page/block, detected row,
@@ -114,10 +116,15 @@ name similarity. The ORGI 1991 editing/coding manual defines state codes and
 within-state district serials; `language_atlas_1991_state_crosswalk.csv` records
 the reviewed OCR form of the 31 state/UT headings present in the Atlas scan
 (Jammu and Kashmir is absent because the 1991 Census was not conducted there).
-Within each reviewed state block, the extractor accepts only a source serial from
-the Atlas serial column or a leading serial printed with the district label. It
-does not infer a missing serial from the district name, row order, or nearest
-population.
+Within each reviewed state block, the extractor accepts a source serial from the
+Atlas serial column or a leading serial printed with the district label. Because
+Annexure IV repeats the same district rows across all eight language pages, a
+serial that is missing on the population page may also be recovered from an
+**exactly repeated raw district label** elsewhere in the same eight-page block
+when all non-missing serial evidence for that exact label agrees. This is source
+repetition, not name similarity: no fuzzy label match, row-order fill, or nearest-
+population match is used. Conflicting repeated serial evidence remains a review
+case.
 
 SHRUG's `pc91_pca_clean_pc91dist.csv` then provides an independent population
 check keyed by `pc91_state_id` and `pc91_district_id`. A 1% relative-population
@@ -128,16 +135,29 @@ line carries the district serial but whose second line carries the population
 are joined only under that structural condition.
 
 On the currently registered sources this produces 443 district-row candidates.
-Three wrapped labels are deterministically rejoined and 414 rows have a unique
-official-code candidate plus Atlas/PCA population agreement within 1%. The
+Three wrapped labels are deterministically rejoined. Cross-page exact-label
+serial recovery resolves Greater Bombay and West Tripura and identifies Dhubri
+as district 01 (its population remains outside the 1% QA tolerance), raising the
+population-validated set from 414 to **416** rows without fuzzy matching. The
 remaining queue includes OCR population failures, source-population differences,
-missing/garbled district serials, duplicate serial candidates, and PCA districts
-whose Atlas population row was not recovered. These are source-review statuses,
-not silently imputed observations.
+conflicting/garbled district serials, duplicate serial candidates, and PCA
+districts whose Atlas population row was not recovered. These are source-review
+statuses, not silently imputed observations.
 
-The next promotion step must resolve that district/PCA review queue and validate
-row alignment across the remaining seven language pages before a tracked
-district-language long table can enter targets.
+For those 416 population-validated rows, the extractor can now bind the first
+page of each eight-page block directly to Atlas language columns 4--14 because
+that page contains the independently validated district population row itself.
+This yields 4,576 district-language candidate cells: 3,785 are conservative
+integer/explicit-zero candidates and 791 remain blank or otherwise unparsed and
+therefore enter a dedicated review queue. These first 11 columns are an
+extraction-stage validation slice, not yet a production language table: language
+labels have not been promoted and columns 15--117 still require cross-page row
+alignment.
+
+The next promotion step must resolve the remaining district/PCA and first-page
+language-cell review queues, then validate row alignment across the remaining
+seven language pages before a tracked district-language long table can enter
+targets.
 
 ## Vanneman source provenance
 
@@ -158,8 +178,9 @@ sensitivity source rather than geography authority for the Census-2001 panel.
 
 ## Next phases
 
-1. Resolve the remaining Atlas district/PCA population review queue and bind the
-   validated district identities across all eight pages of each Atlas block.
+1. Resolve the remaining Atlas district/PCA and first-page language-cell review
+   queues, then bind validated district identities across pages 2--8 of each
+   Atlas block using explicit row-alignment diagnostics.
 2. Reuse the frozen Shastry/Glottolog language identity machinery rather than
    defining a separate 1991 distance scale.
 3. Construct 1991 district linguistic distance on native 1991 geography.

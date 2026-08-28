@@ -460,6 +460,16 @@ test_that("1991 Atlas state and PCA review inputs have explicit source contracts
   expect_false(as.logical(pca$required_for_current_pipeline))
   expect_identical(pca$relative_path, "data/raw/shrug/census_1991/shrug-pca91-csv.zip")
   expect_equal(pca$expected_size_bytes, 42996056)
+
+  sources <- readr::read_csv(
+    file.path(root, "data", "metadata", "data_sources.csv"),
+    show_col_types = FALSE
+  )
+  atlas <- sources[sources$source_id == "census_1991_language_atlas", , drop = FALSE]
+  expect_equal(nrow(atlas), 1L)
+  expect_false(as.logical(atlas$used_in_current_pipeline))
+  expect_match(atlas$notes, "columns 4-14", fixed = TRUE)
+  expect_match(atlas$notes, "no Atlas speaker count enters targets", fixed = TRUE)
 })
 
 test_that("DISE archive is optional but fully documented", {
