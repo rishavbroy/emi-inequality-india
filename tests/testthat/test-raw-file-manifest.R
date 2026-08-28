@@ -296,11 +296,12 @@ test_that("Census download manifests are canonical acquisition metadata", {
     year <- as.character(years[[i]])
     for (table in expected_tables[[year]]) {
       rows <- manifest[manifest$table == table, , drop = FALSE]
-      expect_equal(nrow(rows), 35L, info = paste(year, table))
-      expect_setequal(
-        sprintf("%02d", as.integer(rows$state_code)),
+      case_label <- paste(year, table)
+      expect_equal(nrow(rows), 35L, label = case_label)
+      expect_equal(
+        sort(sprintf("%02d", as.integer(rows$state_code))),
         expected_codes,
-        info = paste(year, table)
+        label = case_label
       )
     }
   }
