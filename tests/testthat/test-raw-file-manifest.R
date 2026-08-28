@@ -468,7 +468,7 @@ test_that("1991 Atlas state and PCA review inputs have explicit source contracts
   atlas <- sources[sources$source_id == "census_1991_language_atlas", , drop = FALSE]
   expect_equal(nrow(atlas), 1L)
   expect_false(as.logical(atlas$used_in_current_pipeline))
-  expect_match(atlas$notes, "columns 4-14", fixed = TRUE)
+  expect_match(atlas$notes, "all-page district-language candidates", fixed = TRUE)
   expect_match(atlas$notes, "no Atlas speaker count enters targets", fixed = TRUE)
 })
 

@@ -33,7 +33,7 @@ values should not be accepted without row-total/coverage validation against the
 
 SHRUG provides stable `shrid2` locality keys linking Population Census places
 across 1991, 2001, and 2011, plus district-membership keys for each Census year.
-The project now constructs the 1991-to-2001 bridge before ingesting Atlas counts.
+The project now constructs the 1991-to-2001 bridge before ingesting Atlas counts. `summarize_shrug_source_district_mapping()` in `R/districts/lineage_bridge.R` owns the source-district coverage classification, so historical persistence uses the same deterministic SHRID semantics as the production lineage system.
 Transition weights use **1991** locality population because the source quantity
 being carried forward is the 1991 population distribution.
 
@@ -92,7 +92,10 @@ python3 scripts/build_language_atlas_1991.py \
   --district-output /tmp/language_atlas_1991_district_population.csv \
   --population-review-output /tmp/language_atlas_1991_population_review.csv \
   --page0-language-output /tmp/language_atlas_1991_page0_languages.csv \
-  --page0-language-review-output /tmp/language_atlas_1991_page0_language_review.csv
+  --page0-language-review-output /tmp/language_atlas_1991_page0_language_review.csv \
+  --all-language-output /tmp/language_atlas_1991_all_languages.csv \
+  --all-language-review-output /tmp/language_atlas_1991_all_language_review.csv \
+  --alignment-review-output /tmp/language_atlas_1991_alignment_review.csv
 ```
 
 The candidate output is deliberately keyed by Atlas page/block, detected row,
@@ -144,20 +147,29 @@ conflicting/garbled district serials, duplicate serial candidates, and PCA
 districts whose Atlas population row was not recovered. These are source-review
 statuses, not silently imputed observations.
 
-For those 416 population-validated rows, the extractor can now bind the first
-page of each eight-page block directly to Atlas language columns 4--14 because
-that page contains the independently validated district population row itself.
-This yields 4,576 district-language candidate cells: 3,785 are conservative
-integer/explicit-zero candidates and 791 remain blank or otherwise unparsed and
-therefore enter a dedicated review queue. These first 11 columns are an
-extraction-stage validation slice, not yet a production language table: language
-labels have not been promoted and columns 15--117 still require cross-page row
-alignment.
+For those 416 population-validated rows, the extractor first binds the population
+page directly to Atlas language columns 4--14. It then aligns repeated district
+rows on pages 2--8 with the same conservative identity philosophy used by the
+district-lineage system. Exact raw district labels are alignment anchors. A
+mismatched run is positionally aligned only when it is bounded by exact anchors
+on both sides, has the same number of source and target rows, and all reference
+rows plus both anchors belong to one 1991 Census state. Python's standard-library
+`difflib.SequenceMatcher` is used only to locate exact matching blocks; no string
+similarity score or fuzzy-name threshold enters the rule.
 
-The next promotion step must resolve the remaining district/PCA and first-page
-language-cell review queues, then validate row alignment across the remaining
-seven language pages before a tracked district-language long table can enter
-targets.
+On the currently registered scan, this aligns 31,602 district-language cells
+across all 114 Atlas columns for the population-validated districts. Of those,
+29,524 are conservative integer/explicit-zero candidates and 2,078 remain blank
+or otherwise unparsed. A further 1,066 district-page combinations cannot be
+aligned by the exact/bounded rule and remain in a dedicated row-alignment review
+queue. These are extraction candidates, not a production language table:
+language labels have not yet been promoted, unresolved district/page alignments
+are not filled by sequence order, and no speaker count enters targets.
+
+The next promotion step must resolve the remaining district/PCA, cell, and
+district-page alignment review queues; add a reviewed 114-column language-label
+registry; and only then write a tracked district-language long table for normal
+R/targets ingestion.
 
 ## Vanneman source provenance
 
@@ -178,9 +190,8 @@ sensitivity source rather than geography authority for the Census-2001 panel.
 
 ## Next phases
 
-1. Resolve the remaining Atlas district/PCA and first-page language-cell review
-   queues, then bind validated district identities across pages 2--8 of each
-   Atlas block using explicit row-alignment diagnostics.
+1. Resolve the remaining Atlas district/PCA, cell, and cross-page alignment
+   review queues and promote the 114 Atlas language labels into a reviewed registry.
 2. Reuse the frozen Shastry/Glottolog language identity machinery rather than
    defining a separate 1991 distance scale.
 3. Construct 1991 district linguistic distance on native 1991 geography.
