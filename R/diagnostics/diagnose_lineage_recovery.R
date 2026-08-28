@@ -267,8 +267,31 @@ build_primary_source_crosswalk <- function(
     "source_row_id", "target_unit_2001"
   ), drop = FALSE]
 
+  # A later evidence upgrade can promote a formerly primary-only source into
+  # the conservative crosswalk. In that case the historical review is
+  # redundant, not invalid, but it must still agree with the stronger mapping.
+  promoted <- merge(
+    conservative[c("source_row_id", "target_unit_2001")],
+    accepted,
+    by = "source_row_id", all = FALSE, sort = FALSE,
+    suffixes = c("_conservative", "_reviewed")
+  )
+  conflicting_promotions <- promoted$source_row_id[
+    promoted$target_unit_2001_conservative != promoted$target_unit_2001_reviewed
+  ]
+  if (length(conflicting_promotions)) {
+    stop(
+      "Accepted primary-panel reviews conflict with stronger conservative mappings: ",
+      paste(conflicting_promotions, collapse = ", "), call. = FALSE
+    )
+  }
+
+  pending <- accepted[
+    !accepted$source_row_id %in% conservative$source_row_id,
+    , drop = FALSE
+  ]
   reviewed <- merge(
-    full_reviewed, accepted,
+    full_reviewed, pending,
     by = c("source_row_id", "target_unit_2001"),
     all = FALSE, sort = FALSE
   )
@@ -278,7 +301,7 @@ build_primary_source_crosswalk <- function(
       abs(suppressWarnings(as.numeric(reviewed$weight)) - 1) < 1e-8,
     , drop = FALSE
   ]
-  missing_reviews <- setdiff(accepted$source_row_id, reviewed$source_row_id)
+  missing_reviews <- setdiff(pending$source_row_id, reviewed$source_row_id)
   if (length(missing_reviews)) {
     stop(
       "Accepted primary-panel reviews do not match an eligible single-target allocation: ",

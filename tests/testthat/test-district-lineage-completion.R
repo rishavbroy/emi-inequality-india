@@ -1192,6 +1192,53 @@ test_that("primary reviews create a separate one-parent crosswalk", {
   expect_true(all(out$panel_variant == "primary"))
 })
 
+test_that("stronger conservative evidence supersedes a matching primary review", {
+  conservative <- data.frame(
+    source_row_id = "d17", wave = "nss_2017_18", source_code = "2",
+    target_unit_2001 = "pc2001__28__01", weight = 1,
+    basis = "deterministic_2011_to_2001", source_id = "census_atlas",
+    panel_variant = "conservative", stringsAsFactors = FALSE
+  )
+  reviews <- data.frame(
+    source_row_id = "d17", wave = "nss_2017_18", source_code = "2",
+    raw_state = "State", raw_district = "District",
+    terminal_unit = "pc2011__28__532", target_unit_2001 = "pc2001__28__01",
+    review_status = "accepted_primary", reviewed_panel = "primary",
+    evidence_basis = "older_review", evidence_source_ids = "shrug_pc_keys",
+    notes = "reviewed", stringsAsFactors = FALSE
+  )
+
+  out <- build_primary_source_crosswalk(conservative, conservative, reviews)
+
+  expect_equal(nrow(out), 1L)
+  expect_equal(out$source_row_id, "d17")
+  expect_equal(out$target_unit_2001, "pc2001__28__01")
+  expect_equal(out$basis, "deterministic_2011_to_2001")
+  expect_true(all(out$panel_variant == "primary"))
+})
+
+test_that("primary reviews fail when stronger conservative evidence disagrees", {
+  conservative <- data.frame(
+    source_row_id = "d17", wave = "nss_2017_18", source_code = "2",
+    target_unit_2001 = "pc2001__28__02", weight = 1,
+    basis = "deterministic_2011_to_2001", source_id = "census_atlas",
+    panel_variant = "conservative", stringsAsFactors = FALSE
+  )
+  reviews <- data.frame(
+    source_row_id = "d17", wave = "nss_2017_18", source_code = "2",
+    raw_state = "State", raw_district = "District",
+    terminal_unit = "pc2011__28__532", target_unit_2001 = "pc2001__28__01",
+    review_status = "accepted_primary", reviewed_panel = "primary",
+    evidence_basis = "older_review", evidence_source_ids = "shrug_pc_keys",
+    notes = "reviewed", stringsAsFactors = FALSE
+  )
+
+  expect_error(
+    build_primary_source_crosswalk(conservative, conservative, reviews),
+    "conflict with stronger conservative mappings"
+  )
+})
+
 test_that("primary reviews cannot admit multi-parent allocations", {
   conservative <- data.frame(
     source_row_id = character(), wave = character(), source_code = character(),
