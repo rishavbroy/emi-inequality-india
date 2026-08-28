@@ -111,9 +111,9 @@ test_that("report values expose MOP effective F from canonical first-stage diagn
   )
 
   expect_equal(values$effective_f, 0.81234)
-  expect_equal(values$effective_f_report, "0.81")
+  expect_equal(values$effective_f_report, 0.81)
   expect_equal(values$effective_f_critical_value, 10.5)
-  expect_equal(values$effective_f_critical_value_report, "10.5")
+  expect_equal(values$effective_f_critical_value_report, 10.5)
   expect_equal(values$effective_f_p_value, 0.42)
 })
 
@@ -872,7 +872,18 @@ test_that("alternative linguistic-distance first stages use fixed support and jo
   panel$future_hces_outcome <- seq_len(nrow(panel))
   panel$real_log_consumption_change <- stats::rnorm(nrow(panel))
   panel$real_log_consumption_change[[1]] <- NA_real_
-  weak_iv <- estimate_weak_iv_outcomes(panel)
+  weak_iv <- withCallingHandlers(
+    estimate_weak_iv_outcomes(panel),
+    warning = function(w) {
+      # This synthetic all-registry fixture intentionally creates rank-deficient
+      # instrument sets for some alternative specifications. Consume only the
+      # warning ivreg emits for that known fixture property; every other warning
+      # must still reach testthat and fail the audit.
+      if (identical(conditionMessage(w), "some instrumental variables are collinear")) {
+        invokeRestart("muffleWarning")
+      }
+    }
+  )
   expect_true("effective_f" %in% names(weak_iv$summary))
   expect_true(all(is.finite(weak_iv$summary$effective_f)))
   expect_true(all(weak_iv$summary$effective_f > 0))
