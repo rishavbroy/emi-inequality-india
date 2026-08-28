@@ -62,7 +62,13 @@ residualize_iv_variables <- function(data, variables, controls = character(), fi
     design <- stats::model.matrix(stats::reformulate(rhs), data = data)
     out <- stats::lm.fit(design, y)$residuals
   }
-  colnames(out) <- variables
+  # lm.fit() simplifies one-column matrix responses to a vector. Preserve the
+  # documented matrix contract so single- and multi-variable callers behave
+  # identically and the scalar wrapper remains a trivial column extraction.
+  out <- matrix(
+    out, nrow = nrow(data), ncol = length(variables),
+    dimnames = list(NULL, variables)
+  )
   out
 }
 

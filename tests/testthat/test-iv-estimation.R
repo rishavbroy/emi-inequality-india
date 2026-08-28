@@ -599,4 +599,12 @@ test_that("shared IV residualization reuses one nuisance projection without chan
     unname(expected_z),
     tolerance = 1e-12
   )
+  scalar_batch <- residualize_iv_variables(data, "z", controls = "x", fixed_effect = "state")
+  expect_identical(dim(scalar_batch), c(nrow(data), 1L))
+  expect_identical(colnames(scalar_batch), "z")
+  expect_equal(
+    residualize_iv_variable(data, "z"),
+    unname(data$z - mean(data$z)),
+    tolerance = 1e-12
+  )
 })
