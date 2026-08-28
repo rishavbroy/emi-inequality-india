@@ -656,7 +656,7 @@ test_that("poster citations resolve through the project bibliography", {
 })
 
 
-test_that("public audit prepares production geometry before public outputs", {
+test_that("public audit caches requested diagnostics before rendering public outputs", {
   audit <- readLines(
     repo_file("scripts", "run_public_build_audit.sh"),
     warn = FALSE
@@ -664,16 +664,16 @@ test_that("public audit prepares production geometry before public outputs", {
   geometry_line <- match(TRUE, grepl(
     "make lineage-geometry-build", audit, fixed = TRUE
   ))
-  public_line <- match(TRUE, grepl(
-    'make "$check_target"', audit, fixed = TRUE
-  ))
   diagnostics_line <- match(TRUE, grepl(
     "make extended-diagnostics", audit, fixed = TRUE
   ))
+  public_line <- match(TRUE, grepl(
+    'make "$check_target"', audit, fixed = TRUE
+  ))
 
-  expect_true(all(is.finite(c(geometry_line, public_line, diagnostics_line))))
-  expect_lt(geometry_line, public_line)
-  expect_lt(public_line, diagnostics_line)
+  expect_true(all(is.finite(c(geometry_line, diagnostics_line, public_line))))
+  expect_lt(geometry_line, diagnostics_line)
+  expect_lt(diagnostics_line, public_line)
 })
 
 test_that("reviewed primary lineage is public and alternatives remain diagnostic", {

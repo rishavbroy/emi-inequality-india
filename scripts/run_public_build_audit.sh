@@ -270,19 +270,19 @@ echo "=== LINEAGE GEOMETRY ==="
 make lineage-geometry-build
 checkpoint_archive "after-lineage-geometry"
 
-current_stage="public-final-check"
-export EMI_CONSUMPTION_DOMAIN_CORES="${EMI_CONSUMPTION_DOMAIN_CORES:-4}"
-echo "=== CONSUMPTION DOMAIN WORKERS: ${EMI_CONSUMPTION_DOMAIN_CORES} requested (clamped to physical cores in R) ==="
-echo "=== PUBLIC FINAL CHECK (${sample_mode}) ==="
-make "$check_target"
-checkpoint_archive "after-public-final-check"
-
 if [[ "$with_extended_diagnostics" == "true" ]]; then
   current_stage="extended-diagnostics"
   echo "=== EXTENDED DIAGNOSTICS ==="
   make extended-diagnostics
   checkpoint_archive "after-extended-diagnostics"
 fi
+
+current_stage="public-final-check"
+export EMI_CONSUMPTION_DOMAIN_CORES="${EMI_CONSUMPTION_DOMAIN_CORES:-4}"
+echo "=== CONSUMPTION DOMAIN WORKERS: ${EMI_CONSUMPTION_DOMAIN_CORES} requested (clamped to physical cores in R) ==="
+echo "=== PUBLIC FINAL CHECK (${sample_mode}) ==="
+make "$check_target"
+checkpoint_archive "after-public-final-check"
 
 if [[ "$with_benchmarks" == "true" ]]; then
   current_stage="benchmarks"
