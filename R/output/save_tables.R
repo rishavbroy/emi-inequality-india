@@ -32,10 +32,10 @@ nice_column_name <- function(x) {
   tools::toTitleCase(x)
 }
 
-public_modelsummary_notes <- function(name) {
+public_longtable_notes <- function(name) {
   note <- public_table_note(name)
-  if (is.null(note)) return(NULL)
-  as.list(note)
+  if (is.null(note)) return(regression_star_note())
+  c(regression_star_note(), note)
 }
 
 
@@ -249,10 +249,15 @@ apply_table_column_widths <- function(tex, widths) {
   tex
 }
 
-public_ame_table_notes <- function(name) {
-  note <- public_table_note(name)
-  if (is.null(note)) return(regression_star_note())
-  c(regression_star_note(), note)
+add_public_longtable_notes <- function(tex, name) {
+  kableExtra::footnote(
+    tex,
+    general = public_longtable_notes(name),
+    general_title = "",
+    threeparttable = TRUE,
+    footnote_as_chunk = TRUE,
+    escape = FALSE
+  )
 }
 
 single_space_longtable_tex <- function(tex) {
@@ -330,14 +335,7 @@ ame_modelsummary_table <- function(table, name) {
     full_width = FALSE
   )
   tex <- kableExtra::add_header_above(tex, c(" " = 1, "Enrolled (1 = yes)" = 1))
-  tex <- kableExtra::footnote(
-    tex,
-    general = public_ame_table_notes(name),
-    general_title = "",
-    threeparttable = TRUE,
-    footnote_as_chunk = TRUE,
-    escape = FALSE
-  )
+  tex <- add_public_longtable_notes(tex, name)
   single_space_longtable_tex(tex)
 }
 
@@ -414,10 +412,17 @@ public_modelsummary_table <- function(model, name, vcov_matrix = NULL, add_rows 
   need_pkg("modelsummary", "legacy regression table rendering")
   old_knit_to <- knitr::opts_knit$get("rmarkdown.pandoc.to")
   old_opt <- getOption("modelsummary_format_numeric_latex")
+  old_stars_note <- getOption("modelsummary_stars_note")
   on.exit(knitr::opts_knit$set(rmarkdown.pandoc.to = old_knit_to), add = TRUE)
-  on.exit(options(modelsummary_format_numeric_latex = old_opt), add = TRUE)
+  on.exit(options(
+    modelsummary_format_numeric_latex = old_opt,
+    modelsummary_stars_note = old_stars_note
+  ), add = TRUE)
   knitr::opts_knit$set(rmarkdown.pandoc.to = "latex")
-  options(modelsummary_format_numeric_latex = "plain")
+  options(
+    modelsummary_format_numeric_latex = "plain",
+    modelsummary_stars_note = FALSE
+  )
   args <- list(
     models = modelsummary_payload(model, vcov_matrix),
     coef_map = public_regression_coef_map(),
@@ -428,7 +433,7 @@ public_modelsummary_table <- function(model, name, vcov_matrix = NULL, add_rows 
     output = "kableExtra",
     longtable = TRUE,
     escape = FALSE,
-    notes = public_modelsummary_notes(name)
+    notes = NULL
   )
   if (!is.null(add_rows)) args$add_rows <- add_rows
   tex <- suppress_modelsummary_latex_preamble_warning(do.call(modelsummary::modelsummary, args))
@@ -442,7 +447,8 @@ public_modelsummary_table <- function(model, name, vcov_matrix = NULL, add_rows 
     fs_cons = c(" " = 1, "EMI Exposure" = 1),
     cons_iv = c(" " = 1, "Real Log Consumption Growth" = 1)
   )
-  kableExtra::add_header_above(tex, header)
+  tex <- kableExtra::add_header_above(tex, header)
+  add_public_longtable_notes(tex, name)
 }
 
 regression_standard_error_rows <- function(df) {

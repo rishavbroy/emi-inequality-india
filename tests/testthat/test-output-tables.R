@@ -525,6 +525,8 @@ test_that("public modelsummary writer renders ivreg through the custom payload",
   expect_match(tex, "\\begin{longtable}", fixed = TRUE)
   expect_false(grepl("\\begin{table}", tex, fixed = TRUE))
   expect_match(tex, "Consumption Growth", fixed = TRUE)
+  expect_match(tex, "Standard errors clustered by state in parentheses.", fixed = TRUE)
+  expect_false(grepl("\\\\*\n\\multicolumn", tex))
 })
 
 test_that("public modelsummary regression writer emits LaTeX rather than HTML", {
@@ -538,6 +540,9 @@ test_that("public modelsummary regression writer emits LaTeX rather than HTML", 
   expect_match(tex, "\\begin{longtable}", fixed = TRUE)
   expect_false(grepl("\\begin{table}", tex, fixed = TRUE))
   expect_match(tex, "\\label{tbl-fs-cons}", fixed = TRUE)
+  expect_match(tex, regression_star_note(), fixed = TRUE)
+  expect_match(tex, "Standard errors clustered by state in parentheses.", fixed = TRUE)
+  expect_false(grepl("\\\\*\n\\multicolumn", tex))
   expect_false(grepl("<table", tex, fixed = TRUE))
   expect_false(grepl("<caption>", tex, fixed = TRUE))
 })
@@ -708,7 +713,7 @@ test_that("probit AME modelsummary table uses same standard styling path as IV t
   expect_match(src, "public_longtable_latex_options", fixed = TRUE)
   expect_match(src, "Enrolled (1 = yes)", fixed = TRUE)
   expect_match(src, "modelsummary_stars_note", fixed = TRUE)
-  expect_match(src, "kableExtra::footnote", fixed = TRUE)
+  expect_match(src, "add_public_longtable_notes", fixed = TRUE)
   expect_match(src, "single_space_longtable_tex", fixed = TRUE)
   expect_false(grepl("p\\{[0-9.]+cm\\}", src))
   expect_false(grepl("add_rows =", src, fixed = TRUE))
@@ -768,9 +773,16 @@ test_that("AME modelsummary labels use colon separators", {
 })
 
 
-test_that("probit AME note is compact for longtable output", {
+test_that("public longtable notes combine significance and table-specific context", {
   expect_equal(public_table_note("probit_mfx"), "NSS 64th round; design-based SEs in parentheses.")
-  expect_equal(public_ame_table_notes("probit_mfx"), c(regression_star_note(), public_table_note("probit_mfx")))
+  expect_equal(
+    public_longtable_notes("probit_mfx"),
+    c(regression_star_note(), public_table_note("probit_mfx"))
+  )
+  expect_equal(
+    public_longtable_notes("fs_cons"),
+    c(regression_star_note(), public_table_note("fs_cons"))
+  )
   wrapped <- single_space_longtable_tex("BODY")
   expect_true(grepl("singlespacing", wrapped, fixed = TRUE))
   expect_true(grepl("BODY", wrapped, fixed = TRUE))
