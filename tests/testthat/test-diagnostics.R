@@ -989,47 +989,36 @@ test_that("alternative linguistic-distance first stages use fixed support and jo
   )
 })
 
-test_that("alternative linguistic-distance diagnostics save four explicit outputs", {
-  set.seed(23)
-  n <- 48
-  panel <- data.frame(
-    state_code_2001 = rep(sprintf("%02d", 1:12), each = 4),
-    district_code_2001 = sprintf("%03d", seq_len(n)),
-    region = rep(panel_region_levels(), each = 8),
-    emi_exposure_all_children_0708 = stats::rnorm(n),
-    ling_distance_nonzero_mean = stats::runif(n, 1, 5),
-    ling_share_distance_ge3 = stats::runif(n, 0, 100),
-    ling_distance_top3_legacy = stats::runif(n, 0, 5),
-    hindi_share = stats::runif(n, 0, 60),
-    urdu_share = stats::runif(n, 0, 20),
-    stringsAsFactors = FALSE
+test_that("alternative linguistic-distance diagnostics save explicit outputs without recomputation", {
+  registry <- alternative_distance_registry()[1, , drop = FALSE]
+  diagnostic_specifications <- iv_diagnostic_specification_registry()[1, , drop = FALSE]
+  diagnostics <- structure(
+    list(
+      summary = data.frame(status = "test"),
+      coefficients = data.frame(status = "test"),
+      registry = registry,
+      diagnostic_specifications = diagnostic_specifications,
+      common_support = data.frame(status = "test"),
+      coverage_sensitivity = data.frame(status = "test"),
+      distance4_languages = data.frame(status = "test"),
+      unmapped_languages = data.frame(status = "test"),
+      distance4_leave_one_out = data.frame(status = "test"),
+      weak_iv_outcomes = data.frame(status = "test"),
+      anderson_rubin_grid = data.frame(status = "test"),
+      diagnostic_applicability = data.frame(status = "test"),
+      diagnostic_registry = data.frame(status = "test"),
+      overidentification = data.frame(status = "test"),
+      monotonicity_summary = data.frame(status = "test"),
+      monotonicity_bins = data.frame(status = "test"),
+      monotonicity_state_slopes = data.frame(status = "test"),
+      basis_comparison = data.frame(status = "test")
+    ),
+    class = "emi_alternative_distance_first_stages"
   )
-  panel$hindi_urdu_share <- panel$hindi_share + panel$urdu_share
-  panel$native_english_share <- 0
-  distance_shares <- matrix(stats::runif(n * 6), ncol = 6)
-  distance_shares <- 100 * distance_shares / rowSums(distance_shares)
-  for (degree in 0:5) {
-    panel[[paste0("ling_share_distance_", degree)]] <- distance_shares[, degree + 1]
-    panel[[paste0("ling_mapped_share_distance_", degree)]] <- distance_shares[, degree + 1]
-  }
-  panel$ling_mapped_speaker_share <- 100
-  panel$ling_unmapped_speaker_share <- 0
-  panel$ling_distance_glottolog_nonhindi_mean <- panel$ling_distance_nonzero_mean + 1
-  panel$ling_glottolog_mapped_speaker_share <- 100
-  panel$ling_glottolog_unmapped_speaker_share <- 0
-  panel$ling_distance_dyen_noncognate_pct <- 100 - 10 * panel$ling_distance_nonzero_mean
-  panel$ling_dyen_mapped_speaker_share <- 100
-  panel$ling_distance_nonzero_mean_sensitivity_low <- panel$ling_distance_nonzero_mean
-  panel$ling_distance_nonzero_mean_sensitivity_high <- panel$ling_distance_nonzero_mean
-  panel$ling_sensitivity_mapped_speaker_share <- 100
-  panel$ling_dyen_unmapped_speaker_share <- 0
-  panel$native_english_share <- 0
-  for (variable in census_2001_diagnostic_controls()) panel[[variable]] <- stats::rnorm(n)
-  out <- diagnose_alternative_distance_first_stages(panel)
   dir <- tempfile("alternative-distance-")
   on.exit(unlink(dir, recursive = TRUE, force = TRUE), add = TRUE)
 
-  manifest <- save_alternative_distance_first_stages(out, dir)
+  manifest <- save_alternative_distance_first_stages(diagnostics, dir)
 
   expect_setequal(basename(manifest$path), c(
     "alternative_distance_first_stage_summary.csv",
