@@ -676,9 +676,12 @@ test_that("first-stage residual metrics reproduce nested-model partial R-squared
 
 test_that("first-stage absorption diagnostics use fixed support and report requested statistics", {
   set.seed(42)
-  states <- rep(sprintf("%02d", 1:12), each = 8)
-  regions <- rep(panel_region_levels(), each = 16)
-  z <- rep(seq(-1, 1, length.out = 8), 12) + rep(seq(-2, 2, length.out = 12), each = 8)
+  # Keep this fixture at the smallest scale that still exercises all six
+  # regions, state fixed effects, state deletion, and the full control registry.
+  # Production-sized resampling belongs in the target pipeline, not unit tests.
+  states <- rep(sprintf("%02d", 1:6), each = 6)
+  regions <- rep(panel_region_levels(), each = 6)
+  z <- rep(seq(-1, 1, length.out = 6), 6) + rep(seq(-2, 2, length.out = 6), each = 6)
   panel <- data.frame(
     state_code_2001 = states,
     district_code_2001 = sprintf("%02d", seq_along(states)),
@@ -749,22 +752,25 @@ test_that("first-stage absorption diagnostics fail rather than changing support 
   )
 })
 
-test_that("first-stage absorption diagnostics save a compact manifest", {
-  set.seed(1)
-  panel <- data.frame(
-    state_code_2001 = rep(sprintf("%02d", 1:6), each = 4),
-    region = rep(panel_region_levels(), each = 4),
-    ling_distance_nonzero_mean = stats::rnorm(24),
-    emi_exposure_all_children_0708 = stats::rnorm(24),
-    stringsAsFactors = FALSE
+test_that("first-stage absorption diagnostics save a compact manifest without recomputation", {
+  registry <- first_stage_absorption_registry()[1, , drop = FALSE]
+  diagnostics <- structure(
+    list(
+      summary = data.frame(specification_id = registry$specification_id, stringsAsFactors = FALSE),
+      registry = registry,
+      common_support = data.frame(n = 24L),
+      state_residual_ranges = data.frame(specification_id = registry$specification_id),
+      state_deletion = data.frame(specification_id = registry$specification_id),
+      district_influence = data.frame(district_code_2001 = "001"),
+      vif = data.frame(specification_id = registry$specification_id),
+      stringsAsFactors = FALSE
+    ),
+    class = "emi_first_stage_absorption"
   )
-  panel$district_code_2001 <- sprintf("%02d", seq_len(nrow(panel)))
-  for (variable in census_2001_diagnostic_controls()) panel[[variable]] <- stats::rnorm(24)
-  out <- diagnose_first_stage_absorption(panel)
   dir <- tempfile("first-stage-absorption-")
   on.exit(unlink(dir, recursive = TRUE, force = TRUE), add = TRUE)
 
-  manifest <- save_first_stage_absorption_diagnostics(out, dir)
+  manifest <- save_first_stage_absorption_diagnostics(diagnostics, dir)
 
   expect_setequal(basename(manifest$path), c(
     "first_stage_absorption_ladder.csv", "first_stage_absorption_registry.csv",
