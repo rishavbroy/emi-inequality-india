@@ -435,6 +435,33 @@ test_that("historical linguistic review sources are versioned with exact local c
   expect_match(sources$license_or_terms_notes[sources$source_id == "asjp_v21"], "CC BY 4.0", fixed = TRUE)
 })
 
+
+test_that("1991 Atlas state and PCA review inputs have explicit source contracts", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
+  crosswalk <- readr::read_csv(
+    file.path(root, "data", "metadata", "language_atlas_1991_state_crosswalk.csv"),
+    show_col_types = FALSE,
+    col_types = readr::cols(.default = readr::col_character())
+  )
+  manifest <- readr::read_csv(
+    file.path(root, "data", "metadata", "file_manifest.csv"),
+    show_col_types = FALSE
+  )
+
+  expected_codes <- sprintf("%02d", setdiff(2:33, 10))
+  expect_equal(nrow(crosswalk), 31L)
+  expect_setequal(crosswalk$state_code_1991, expected_codes)
+  expect_equal(anyDuplicated(crosswalk$atlas_label_raw), 0L)
+  expect_equal(anyDuplicated(crosswalk$state_code_1991), 0L)
+  expect_false("10" %in% crosswalk$state_code_1991)
+
+  pca <- manifest[manifest$file_id == "shrug_pca91_archive", , drop = FALSE]
+  expect_equal(nrow(pca), 1L)
+  expect_false(as.logical(pca$required_for_current_pipeline))
+  expect_identical(pca$relative_path, "data/raw/shrug/census_1991/shrug-pca91-csv.zip")
+  expect_equal(pca$expected_size_bytes, 42996056)
+})
+
 test_that("DISE archive is optional but fully documented", {
   root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
   manifest <- read.csv(file.path(root, "data", "metadata", "file_manifest.csv"), stringsAsFactors = FALSE)
