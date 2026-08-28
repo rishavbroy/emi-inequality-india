@@ -20,5 +20,6 @@ for (dir in source_dirs) {
 test_filter <- Sys.getenv("EMI_TEST_FILTER", unset = "")
 test_dir(
   "tests/testthat",
-  filter = if (nzchar(test_filter)) test_filter else NULL
+  filter = if (nzchar(test_filter)) test_filter else NULL,
+  stop_on_warning = TRUE
 )
