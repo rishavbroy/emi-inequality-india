@@ -208,6 +208,28 @@ revised_iv_summary_fixture <- function() {
   out
 }
 
+test_that("model-backed public regression tables are true longtables", {
+  skip_if_not_installed("modelsummary")
+  skip_if_not_installed("kableExtra")
+  skip_if_not_installed("knitr")
+
+  set.seed(712)
+  n <- 80
+  model <- stats::lm(
+    y ~ z + x,
+    data = data.frame(
+      y = stats::rnorm(n),
+      z = stats::rnorm(n),
+      x = stats::rnorm(n)
+    )
+  )
+
+  tex <- as.character(public_modelsummary_table(model, "fs_cons"))
+  expect_match(tex, "\\begin{longtable}", fixed = TRUE)
+  expect_false(grepl("\\begin{table}", tex, fixed = TRUE))
+  expect_match(tex, "Standard errors clustered by state in parentheses.", fixed = TRUE)
+})
+
 test_that("regression public tables place standard errors below estimates", {
   first_stage <- data.frame(
     model = rep("consumption", 3),

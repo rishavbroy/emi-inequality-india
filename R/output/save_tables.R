@@ -321,7 +321,7 @@ ame_modelsummary_table <- function(table, name) {
   tex <- suppress_modelsummary_latex_preamble_warning(do.call(modelsummary::modelsummary, args))
   tex <- kableExtra::kable_styling(
     tex,
-    latex_options = c("hold_position", "repeat_header", "striped", "longtable"),
+    latex_options = c("repeat_header", "striped", "longtable"),
     position = "center",
     full_width = FALSE
   )
@@ -422,6 +422,7 @@ public_modelsummary_table <- function(model, name, vcov_matrix = NULL, add_rows 
     fmt = 3,
     title = table_caption(name),
     output = "kableExtra",
+    longtable = TRUE,
     escape = FALSE,
     notes = public_modelsummary_notes(name)
   )
