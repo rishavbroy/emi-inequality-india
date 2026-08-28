@@ -522,7 +522,8 @@ test_that("public modelsummary writer renders ivreg through the custom payload",
 
   tex <- paste(as.character(public_modelsummary_table(model, "cons_iv")), collapse = "\n")
 
-  expect_match(tex, "\\begin{table}", fixed = TRUE)
+  expect_match(tex, "\\begin{longtable}", fixed = TRUE)
+  expect_false(grepl("\\begin{table}", tex, fixed = TRUE))
   expect_match(tex, "Consumption Growth", fixed = TRUE)
 })
 
@@ -534,7 +535,8 @@ test_that("public modelsummary regression writer emits LaTeX rather than HTML", 
   tex <- paste(as.character(public_modelsummary_table(model, "fs_cons")), collapse = "\n")
   tex <- paste(normalize_quarto_table_labels(tex, "fs_cons"), collapse = "\n")
 
-  expect_match(tex, "\\begin{table}", fixed = TRUE)
+  expect_match(tex, "\\begin{longtable}", fixed = TRUE)
+  expect_false(grepl("\\begin{table}", tex, fixed = TRUE))
   expect_match(tex, "\\label{tbl-fs-cons}", fixed = TRUE)
   expect_false(grepl("<table", tex, fixed = TRUE))
   expect_false(grepl("<caption>", tex, fixed = TRUE))
@@ -686,6 +688,13 @@ test_that("Table 2 categorical column widths are slightly narrowed", {
   expect_lt(numeric_widths[[2]], 6.6)
 })
 
+test_that("public regression longtables use one non-floating styling contract", {
+  opts <- public_longtable_latex_options()
+
+  expect_equal(opts, c("repeat_header", "striped", "longtable"))
+  expect_false("hold_position" %in% opts)
+})
+
 test_that("probit AME modelsummary table uses same standard styling path as IV tables", {
   src <- paste(deparse(ame_modelsummary_table), collapse = "\n")
 
@@ -696,10 +705,7 @@ test_that("probit AME modelsummary table uses same standard styling path as IV t
   expect_match(src, "gof_function = ame_gof_function", fixed = TRUE)
   expect_match(src, "longtable = TRUE", fixed = TRUE)
   expect_match(src, "kableExtra::kable_styling", fixed = TRUE)
-  expect_match(src, "hold_position", fixed = TRUE)
-  expect_match(src, "repeat_header", fixed = TRUE)
-  expect_match(src, "striped", fixed = TRUE)
-  expect_match(src, "longtable", fixed = TRUE)
+  expect_match(src, "public_longtable_latex_options", fixed = TRUE)
   expect_match(src, "Enrolled (1 = yes)", fixed = TRUE)
   expect_match(src, "modelsummary_stars_note", fixed = TRUE)
   expect_match(src, "kableExtra::footnote", fixed = TRUE)

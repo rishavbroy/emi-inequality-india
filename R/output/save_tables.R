@@ -259,6 +259,10 @@ single_space_longtable_tex <- function(tex) {
   paste(c("\\begingroup\\singlespacing", as.character(tex), "\\endgroup"), collapse = "\n")
 }
 
+public_longtable_latex_options <- function() {
+  c("repeat_header", "striped", "longtable")
+}
+
 
 ame_modelsummary_object <- function(table) {
   native <- attr(table, "marginaleffects_object", exact = TRUE)
@@ -321,7 +325,7 @@ ame_modelsummary_table <- function(table, name) {
   tex <- suppress_modelsummary_latex_preamble_warning(do.call(modelsummary::modelsummary, args))
   tex <- kableExtra::kable_styling(
     tex,
-    latex_options = c("repeat_header", "striped", "longtable"),
+    latex_options = public_longtable_latex_options(),
     position = "center",
     full_width = FALSE
   )
@@ -430,7 +434,7 @@ public_modelsummary_table <- function(model, name, vcov_matrix = NULL, add_rows 
   tex <- suppress_modelsummary_latex_preamble_warning(do.call(modelsummary::modelsummary, args))
   tex <- kableExtra::kable_styling(
     tex,
-    latex_options = c("hold_position", "repeat_header", "striped", "longtable"),
+    latex_options = public_longtable_latex_options(),
     position = "center",
     full_width = FALSE
   )
