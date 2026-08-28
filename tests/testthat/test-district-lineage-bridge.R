@@ -849,6 +849,36 @@ test_that("historical SHRUG transition weights use source-year population", {
   expect_equal(attr(bridge, "target_year"), 2001L)
 })
 
+test_that("source-district mapping summary centralizes coverage semantics", {
+  bridge <- data.frame(
+    shrid2 = c("a", "b", "c", "d"),
+    state_code_1991 = "02",
+    district_code_1991 = c("01", "01", "02", "02"),
+    state_code_2001 = "02",
+    district_code_2001 = c("01", "02", "03", NA),
+    deterministic = c(TRUE, TRUE, TRUE, FALSE),
+    population = c(90, 10, 99, 1),
+    stringsAsFactors = FALSE
+  )
+
+  out <- summarize_shrug_source_district_mapping(
+    bridge, 1991L, 2001L, min_population_coverage = 0.99
+  )
+  split <- out[out$district_code_1991 == "01", ]
+  high <- out[out$district_code_1991 == "02", ]
+
+  expect_equal(split$mapping_class, "splits_across_target_districts")
+  expect_false(split$preferred_single_target)
+  expect_equal(high$mapping_class, "high_population_coverage_single_target")
+  expect_true(high$preferred_single_target)
+  expect_false(high$exact_one_to_one)
+  expect_equal(high$population_coverage, 0.99)
+  expect_error(
+    summarize_shrug_source_district_mapping(bridge, 1991L, 2001L, 0),
+    "coverage must be in"
+  )
+})
+
 test_that("historical language geography separates exact, high-coverage, and split mappings", {
   bridge <- data.frame(
     shrid2 = c("a", "b", "c", "d", "e", "f"),

@@ -20,75 +20,21 @@ require_historical_linguistic_shrug_sources <- function(raw_sources) {
 }
 
 historical_1991_district_geography_summary <- function(bridge, min_population_coverage = 0.99) {
-  bridge <- safe_df(bridge)
-  if (!is.numeric(min_population_coverage) || length(min_population_coverage) != 1L ||
-      !is.finite(min_population_coverage) || min_population_coverage <= 0 || min_population_coverage > 1) {
-    stop("Historical linguistic geography population coverage must be in (0, 1].", call. = FALSE)
-  }
-  required <- c(
-    "shrid2", "state_code_1991", "district_code_1991",
-    "state_code_2001", "district_code_2001", "deterministic",
-    "population"
+  out <- summarize_shrug_source_district_mapping(
+    bridge,
+    source_year = 1991L,
+    target_year = 2001L,
+    min_population_coverage = min_population_coverage
   )
-  missing <- setdiff(required, names(bridge))
-  if (length(missing)) {
-    stop("1991 SHRUG bridge lacks geography-summary fields: ", paste(missing, collapse = ", "), call. = FALSE)
-  }
-  source <- bridge[
-    !is.na(bridge$state_code_1991) & !is.na(bridge$district_code_1991),
-    , drop = FALSE
-  ]
-  if (!nrow(source)) return(data.frame())
-
-  key <- interaction(source$state_code_1991, source$district_code_1991, drop = TRUE)
-  out <- safe_bind_rows(lapply(split(seq_len(nrow(source)), key), function(i) {
-    part <- source[i, , drop = FALSE]
-    deterministic <- part$deterministic %in% TRUE &
-      !is.na(part$state_code_2001) & !is.na(part$district_code_2001)
-    targets <- unique(paste(
-      part$state_code_2001[deterministic],
-      part$district_code_2001[deterministic],
-      sep = "__"
-    ))
-    n_total <- length(unique(part$shrid2))
-    n_mapped <- length(unique(part$shrid2[deterministic]))
-    pop_total <- sum_finite_or_na(part$population)
-    pop_mapped <- sum_finite_or_na(part$population[deterministic])
-    shrid_coverage <- if (n_total > 0L) n_mapped / n_total else NA_real_
-    population_coverage <- if (is.finite(pop_total) && pop_total > 0) pop_mapped / pop_total else NA_real_
-    complete <- is.finite(shrid_coverage) && abs(shrid_coverage - 1) <= 1e-12
-    one_target <- length(targets) == 1L
-    high_population_coverage <- is.finite(population_coverage) &&
-      population_coverage >= min_population_coverage
-    mapping_class <- if (!length(targets)) {
-      "no_deterministic_target"
-    } else if (length(targets) > 1L) {
-      "splits_across_2001_districts"
-    } else if (complete) {
-      "deterministic_one_to_one"
-    } else if (high_population_coverage) {
-      "high_population_coverage_single_target"
-    } else {
-      "incomplete_population_coverage_single_target"
-    }
-    data.frame(
-      state_code_1991 = part$state_code_1991[[1L]],
-      district_code_1991 = part$district_code_1991[[1L]],
-      n_shrid_total = n_total,
-      n_shrid_deterministic = n_mapped,
-      shrid_coverage = shrid_coverage,
-      population_1991_total = pop_total,
-      population_1991_deterministic = pop_mapped,
-      population_coverage = population_coverage,
-      n_target_2001_districts = length(targets),
-      mapping_class = mapping_class,
-      exact_language_persistence = identical(mapping_class, "deterministic_one_to_one"),
-      preferred_language_persistence = one_target && high_population_coverage,
-      preferred_population_coverage_threshold = min_population_coverage,
-      stringsAsFactors = FALSE
-    )
-  }))
-  out[order(out$state_code_1991, out$district_code_1991), , drop = FALSE]
+  if (!nrow(out)) return(out)
+  out$mapping_class[out$mapping_class == "splits_across_target_districts"] <-
+    "splits_across_2001_districts"
+  names(out)[names(out) == "population_total"] <- "population_1991_total"
+  names(out)[names(out) == "population_deterministic"] <- "population_1991_deterministic"
+  names(out)[names(out) == "n_target_districts"] <- "n_target_2001_districts"
+  names(out)[names(out) == "exact_one_to_one"] <- "exact_language_persistence"
+  names(out)[names(out) == "preferred_single_target"] <- "preferred_language_persistence"
+  out
 }
 
 historical_linguistic_geography_sensitivity <- function(

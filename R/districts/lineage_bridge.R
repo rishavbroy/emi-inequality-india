@@ -539,16 +539,25 @@ build_district_transition_between_years <- function(shrid_bridge, source_year, t
   rows[[population_share]] <- weighted_share(rows$population_mapped, rows$population_total)
   rows[[area_share]] <- weighted_share(rows$area_mapped, rows$area_total)
 
-  source_key <- interaction(rows[[source_state]], rows[[source_district]], drop = TRUE)
-  rows[[n_targets]] <- as.integer(ave(rep(1L, nrow(rows)), source_key, FUN = length))
-  mapped_shrid <- ave(rows$n_shrid_mapped, source_key, FUN = sum)
-  rows$shrid_coverage <- weighted_share(mapped_shrid, rows$n_shrid_total)
-  complete <- is.finite(rows$shrid_coverage) & abs(rows$shrid_coverage - 1) <= 1e-12
+  source_summary <- summarize_shrug_source_district_mapping(
+    all_rows, source_year, target_year, min_population_coverage = 1
+  )
+  source_summary <- source_summary[c(
+    source_state, source_district,
+    "n_target_districts", "shrid_coverage", "exact_one_to_one"
+  )]
+  names(source_summary)[names(source_summary) == "n_target_districts"] <- n_targets
+  rows <- merge(
+    rows, source_summary,
+    by = c(source_state, source_district),
+    all.x = TRUE, sort = FALSE
+  )
   rows$mapping_class <- ifelse(
-    rows[[n_targets]] == 1L & complete,
+    rows$exact_one_to_one %in% TRUE,
     "deterministic_containment",
     "non_nested_or_incomplete"
   )
+  rows$exact_one_to_one <- NULL
   rows$population_mapped <- NULL
   rows$area_mapped <- NULL
   rows$population_total <- NULL
@@ -565,6 +574,110 @@ build_district_transition_between_years <- function(shrid_bridge, source_year, t
   )
   rows <- rows[ordered]
   rows[order(rows[[source_state]], rows[[source_district]], -rows[[population_share]]), , drop = FALSE]
+}
+
+
+#' Summarize deterministic source-district coverage across Census years
+#'
+#' This is the district-level coverage contract shared by historical validation
+#' and production lineage diagnostics. Preferred single-target mappings may
+#' tolerate incomplete locality coverage only when the represented source-year
+#' population meets the caller's explicit threshold; exact one-to-one remains
+#' reserved for complete SHRID coverage.
+summarize_shrug_source_district_mapping <- function(
+    shrid_bridge, source_year, target_year, min_population_coverage = 1) {
+  bridge <- safe_df(shrid_bridge)
+  source_year <- as.integer(source_year)
+  target_year <- as.integer(target_year)
+  if (!is.numeric(min_population_coverage) || length(min_population_coverage) != 1L ||
+      !is.finite(min_population_coverage) || min_population_coverage <= 0 ||
+      min_population_coverage > 1) {
+    stop("District mapping population coverage must be in (0, 1].", call. = FALSE)
+  }
+  source_state <- paste0("state_code_", source_year)
+  source_district <- paste0("district_code_", source_year)
+  target_state <- paste0("state_code_", target_year)
+  target_district <- paste0("district_code_", target_year)
+  required <- c(
+    "shrid2", "deterministic", "population",
+    source_state, source_district, target_state, target_district
+  )
+  missing <- setdiff(required, names(bridge))
+  if (length(missing)) {
+    stop(
+      "SHRUG source-district mapping lacks fields: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+
+  source <- bridge[
+    !is.na(bridge[[source_state]]) & !is.na(bridge[[source_district]]),
+    , drop = FALSE
+  ]
+  if (!nrow(source)) return(data.frame())
+
+  key <- interaction(source[[source_state]], source[[source_district]], drop = TRUE)
+  out <- safe_bind_rows(lapply(split(seq_len(nrow(source)), key), function(i) {
+    part <- source[i, , drop = FALSE]
+    deterministic <- part$deterministic %in% TRUE &
+      !is.na(part[[target_state]]) & !is.na(part[[target_district]])
+    targets <- unique(paste(
+      part[[target_state]][deterministic],
+      part[[target_district]][deterministic],
+      sep = "__"
+    ))
+    n_total <- length(unique(part$shrid2))
+    n_mapped <- length(unique(part$shrid2[deterministic]))
+    population_total <- sum_finite_or_na(part$population)
+    population_mapped <- sum_finite_or_na(part$population[deterministic])
+    shrid_coverage <- if (n_total > 0L) n_mapped / n_total else NA_real_
+    population_coverage <- if (is.finite(population_total) && population_total > 0) {
+      population_mapped / population_total
+    } else {
+      NA_real_
+    }
+    complete <- is.finite(shrid_coverage) && abs(shrid_coverage - 1) <= 1e-12
+    one_target <- length(targets) == 1L
+    high_population_coverage <- is.finite(population_coverage) &&
+      population_coverage >= min_population_coverage
+    mapping_class <- if (!length(targets)) {
+      "no_deterministic_target"
+    } else if (length(targets) > 1L) {
+      "splits_across_target_districts"
+    } else if (complete) {
+      "deterministic_one_to_one"
+    } else if (high_population_coverage) {
+      "high_population_coverage_single_target"
+    } else {
+      "incomplete_population_coverage_single_target"
+    }
+
+    row <- data.frame(
+      n_shrid_total = n_total,
+      n_shrid_deterministic = n_mapped,
+      shrid_coverage = shrid_coverage,
+      population_total = population_total,
+      population_deterministic = population_mapped,
+      population_coverage = population_coverage,
+      n_target_districts = length(targets),
+      mapping_class = mapping_class,
+      exact_one_to_one = identical(mapping_class, "deterministic_one_to_one"),
+      preferred_single_target = one_target && high_population_coverage,
+      preferred_population_coverage_threshold = min_population_coverage,
+      stringsAsFactors = FALSE
+    )
+    row[[source_state]] <- part[[source_state]][[1L]]
+    row[[source_district]] <- part[[source_district]][[1L]]
+    row[c(
+      source_state, source_district,
+      "n_shrid_total", "n_shrid_deterministic", "shrid_coverage",
+      "population_total", "population_deterministic", "population_coverage",
+      "n_target_districts", "mapping_class", "exact_one_to_one",
+      "preferred_single_target", "preferred_population_coverage_threshold"
+    )]
+  }))
+  out[order(out[[source_state]], out[[source_district]]), , drop = FALSE]
 }
 
 #' Aggregate deterministic SHRID mappings to 2011-to-2001 district weights
