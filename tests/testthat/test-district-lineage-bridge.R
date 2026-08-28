@@ -849,23 +849,32 @@ test_that("historical SHRUG transition weights use source-year population", {
   expect_equal(attr(bridge, "target_year"), 2001L)
 })
 
-test_that("historical language geography separates one-to-one districts from splits", {
+test_that("historical language geography separates exact, high-coverage, and split mappings", {
   bridge <- data.frame(
-    shrid2 = c("a", "b", "c"),
-    state_code_1991 = "02", district_code_1991 = c("01", "01", "02"),
-    state_code_2001 = "02", district_code_2001 = c("01", "02", "03"),
-    deterministic = TRUE, population = c(90, 10, 50),
+    shrid2 = c("a", "b", "c", "d", "e", "f"),
+    state_code_1991 = "02", district_code_1991 = c("01", "01", "02", "03", "03", "03"),
+    state_code_2001 = "02", district_code_2001 = c("01", "02", "03", "04", "04", NA),
+    deterministic = c(TRUE, TRUE, TRUE, TRUE, TRUE, FALSE),
+    population = c(90, 10, 50, 495, 495, 10),
     stringsAsFactors = FALSE
   )
 
-  out <- historical_1991_district_geography_summary(bridge)
+  out <- historical_1991_district_geography_summary(bridge, min_population_coverage = 0.99)
   split <- out[out$district_code_1991 == "01", ]
-  stable <- out[out$district_code_1991 == "02", ]
+  exact <- out[out$district_code_1991 == "02", ]
+  high_coverage <- out[out$district_code_1991 == "03", ]
 
   expect_equal(split$mapping_class, "splits_across_2001_districts")
   expect_false(split$preferred_language_persistence)
   expect_equal(split$n_target_2001_districts, 2L)
-  expect_equal(stable$mapping_class, "deterministic_one_to_one")
-  expect_true(stable$preferred_language_persistence)
-  expect_equal(stable$population_coverage, 1)
+  expect_equal(exact$mapping_class, "deterministic_one_to_one")
+  expect_true(exact$exact_language_persistence)
+  expect_true(exact$preferred_language_persistence)
+  expect_equal(high_coverage$mapping_class, "high_population_coverage_single_target")
+  expect_false(high_coverage$exact_language_persistence)
+  expect_true(high_coverage$preferred_language_persistence)
+  expect_equal(high_coverage$population_coverage, 0.99)
+
+  sensitivity <- historical_linguistic_geography_sensitivity(out, thresholds = c(0.99, 1))
+  expect_equal(sensitivity$eligible_districts, c(2L, 1L))
 })

@@ -37,21 +37,61 @@ The project now constructs the 1991-to-2001 bridge before ingesting Atlas counts
 Transition weights use **1991** locality population because the source quantity
 being carried forward is the 1991 population distribution.
 
-For the preferred persistence sample, a 1991 district must have complete
-SHRID coverage and exactly one Census-2001 target district. If a 1991 district
-splits across multiple 2001 districts, district-level Atlas language shares do
-not reveal the within-parent location of each language. Those cases must not be
-fractionally disaggregated in the preferred exercise merely because SHRUG can
-allocate total population. They remain explicit sensitivity/exclusion cases.
+The first real bridge diagnostic showed that exact SHRID completeness is too
+strict for a speaker-weighted historical comparison: only 64 of 451 source
+districts are completely mapped even though median deterministic **population**
+coverage is about 99.96%. The preferred geography therefore requires exactly
+one observed deterministic Census-2001 target district and at least 99% deterministic 1991 population
+coverage. Exact one-to-one districts remain separately flagged, and threshold
+sensitivity is reported at 95%, 98%, 99%, 99.5%, 99.9%, and 100% coverage.
+
+This is a coverage criterion, not an exact reconstruction claim. If a 1991
+district splits across multiple 2001 districts, district-level Atlas language
+shares do not reveal the within-parent location of each language. Those cases
+must not be fractionally disaggregated in the preferred exercise merely because
+SHRUG can allocate total population. They remain explicit sensitivity/exclusion
+cases.
 
 The diagnostic outputs are:
 
 - `historical_linguistic_geography_1991_2001.csv`: one row per 1991 source
   district with SHRID/population coverage, number of 2001 targets, mapping class,
   and preferred-persistence eligibility;
+- `historical_linguistic_geography_coverage_sensitivity.csv`: preferred-sample
+  counts and represented 1991 population under alternative coverage cutoffs;
 - `historical_linguistic_transition_1991_2001.csv`: population/area transition
   weights for deterministic SHRID membership;
 - `historical_linguistic_shrid_bridge_1991_2001.csv`: bridge-status summary.
+
+
+## Atlas extraction contract
+
+Annexure IV occupies PDF pages 205--260. Direct inspection shows seven repeated
+eight-page district blocks. Across each block the language headers cover Atlas
+columns 4--117 exactly once, for 114 language columns in total. The PDF has a
+usable text layer, so OCR is not part of the planned production workflow.
+`scripts/inspect_language_atlas_1991.py` is a maintainer-side layout checker; its
+self-test runs in every source-syntax audit, while the raw PDF itself remains
+outside the normal targets dependency graph. The next extraction stage should
+write a tracked long-form source and validate district language totals against
+PCA91 before any linguistic-distance target consumes them.
+
+## Vanneman source provenance
+
+The downloaded Vanneman-Barnes snapshot is useful for later pre-treatment
+balance and pre-trend diagnostics, but it is not yet promoted to a production
+historical panel. The codebook documents identifier column 10 as version 2 for
+cross-sectional data and version 6 for the 1961--91 panel. Direct source QA finds
+`panel4.data.gz` entirely at version 5, while `dist81.data.gz` mixes versions 2
+and 3 (the non-contract records are education records 151--156 in the downloaded
+snapshot). `dist91.data.gz` matches the documented version-2 cross-section.
+
+`vanneman_historical_source_qa.csv` records these contracts explicitly. A file
+whose year/version identifiers disagree with the downloaded codebook is not
+eligible for baseline values until its vintage is resolved. This prevents the
+pipeline from silently interpreting an undocumented harmonized-panel revision.
+The Vanneman panel's own historical harmonization assumptions also remain a
+sensitivity source rather than geography authority for the Census-2001 panel.
 
 ## Next phases
 
@@ -60,9 +100,9 @@ The diagnostic outputs are:
 2. Reuse the frozen Shastry/Glottolog language identity machinery rather than
    defining a separate 1991 distance scale.
 3. Construct 1991 district linguistic distance on native 1991 geography.
-4. Compare 1991 and 2001 distance on the deterministic one-to-one sample;
-   report population-weighted Pearson/Spearman persistence and within-state
-   persistence.
+4. Compare 1991 and 2001 distance on the one-target, high-population-coverage
+   preferred sample; report the exact one-to-one result separately and show
+   population-weighted Pearson/Spearman and within-state persistence.
 5. Treat split/non-nested geography as sensitivity evidence, not as preferred
    exact reconstruction.
 6. Add 1961-1991 predetermined baseline/pre-trend diagnostics from Vanneman and

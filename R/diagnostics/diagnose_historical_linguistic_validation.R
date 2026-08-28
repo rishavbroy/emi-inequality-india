@@ -19,8 +19,12 @@ require_historical_linguistic_shrug_sources <- function(raw_sources) {
   invisible(TRUE)
 }
 
-historical_1991_district_geography_summary <- function(bridge) {
+historical_1991_district_geography_summary <- function(bridge, min_population_coverage = 0.99) {
   bridge <- safe_df(bridge)
+  if (!is.numeric(min_population_coverage) || length(min_population_coverage) != 1L ||
+      !is.finite(min_population_coverage) || min_population_coverage <= 0 || min_population_coverage > 1) {
+    stop("Historical linguistic geography population coverage must be in (0, 1].", call. = FALSE)
+  }
   required <- c(
     "shrid2", "state_code_1991", "district_code_1991",
     "state_code_2001", "district_code_2001", "deterministic",
@@ -53,14 +57,19 @@ historical_1991_district_geography_summary <- function(bridge) {
     shrid_coverage <- if (n_total > 0L) n_mapped / n_total else NA_real_
     population_coverage <- if (is.finite(pop_total) && pop_total > 0) pop_mapped / pop_total else NA_real_
     complete <- is.finite(shrid_coverage) && abs(shrid_coverage - 1) <= 1e-12
+    one_target <- length(targets) == 1L
+    high_population_coverage <- is.finite(population_coverage) &&
+      population_coverage >= min_population_coverage
     mapping_class <- if (!length(targets)) {
       "no_deterministic_target"
-    } else if (!complete) {
-      "incomplete_shrid_coverage"
-    } else if (length(targets) == 1L) {
-      "deterministic_one_to_one"
-    } else {
+    } else if (length(targets) > 1L) {
       "splits_across_2001_districts"
+    } else if (complete) {
+      "deterministic_one_to_one"
+    } else if (high_population_coverage) {
+      "high_population_coverage_single_target"
+    } else {
+      "incomplete_population_coverage_single_target"
     }
     data.frame(
       state_code_1991 = part$state_code_1991[[1L]],
@@ -73,11 +82,33 @@ historical_1991_district_geography_summary <- function(bridge) {
       population_coverage = population_coverage,
       n_target_2001_districts = length(targets),
       mapping_class = mapping_class,
-      preferred_language_persistence = identical(mapping_class, "deterministic_one_to_one"),
+      exact_language_persistence = identical(mapping_class, "deterministic_one_to_one"),
+      preferred_language_persistence = one_target && high_population_coverage,
+      preferred_population_coverage_threshold = min_population_coverage,
       stringsAsFactors = FALSE
     )
   }))
   out[order(out$state_code_1991, out$district_code_1991), , drop = FALSE]
+}
+
+historical_linguistic_geography_sensitivity <- function(
+    source_districts, thresholds = c(0.95, 0.98, 0.99, 0.995, 0.999, 1)) {
+  x <- safe_df(source_districts)
+  required <- c("population_coverage", "n_target_2001_districts")
+  missing <- setdiff(required, names(x))
+  if (length(missing)) {
+    stop("Historical linguistic geography sensitivity lacks fields: ", paste(missing, collapse = ", "), call. = FALSE)
+  }
+  safe_bind_rows(lapply(thresholds, function(threshold) {
+    eligible <- x$n_target_2001_districts == 1L &
+      is.finite(x$population_coverage) & x$population_coverage >= threshold
+    data.frame(
+      population_coverage_threshold = threshold,
+      eligible_districts = sum(eligible),
+      eligible_population_1991 = sum(num(x$population_1991_total[eligible]), na.rm = TRUE),
+      stringsAsFactors = FALSE
+    )
+  }))
 }
 
 build_historical_linguistic_geography_1991_2001 <- function(raw_sources) {
@@ -87,10 +118,12 @@ build_historical_linguistic_geography_1991_2001 <- function(raw_sources) {
     raw_sources$shrug_pc01r, raw_sources$shrug_pc01u,
     raw_sources$shrug_pc91dist, raw_sources$shrug_pc01dist
   )
+  source_districts <- historical_1991_district_geography_summary(bridge)
   list(
     bridge = bridge,
     transition = build_district_transition_1991_2001(bridge),
-    source_districts = historical_1991_district_geography_summary(bridge),
+    source_districts = source_districts,
+    coverage_sensitivity = historical_linguistic_geography_sensitivity(source_districts),
     bridge_summary = summarize_shrid_bridge(bridge)
   )
 }
@@ -100,10 +133,12 @@ save_historical_linguistic_geography_1991_2001 <- function(
   dir.create(directory, recursive = TRUE, showWarnings = FALSE)
   paths <- c(
     source_districts = file.path(directory, "historical_linguistic_geography_1991_2001.csv"),
+    coverage_sensitivity = file.path(directory, "historical_linguistic_geography_coverage_sensitivity.csv"),
     transition = file.path(directory, "historical_linguistic_transition_1991_2001.csv"),
     bridge_summary = file.path(directory, "historical_linguistic_shrid_bridge_1991_2001.csv")
   )
   write_diagnostic_csv(x$source_districts, paths[["source_districts"]])
+  write_diagnostic_csv(x$coverage_sensitivity, paths[["coverage_sensitivity"]])
   write_diagnostic_csv(x$transition, paths[["transition"]])
   write_diagnostic_csv(x$bridge_summary, paths[["bridge_summary"]])
   unname(paths)
