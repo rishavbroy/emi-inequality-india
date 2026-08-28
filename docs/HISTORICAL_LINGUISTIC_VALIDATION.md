@@ -79,14 +79,18 @@ standalone OCR glyphs `O` and `()` are retained as explicitly tagged zero
 normalizations. Other nonnumeric glyphs and cells with no positioned text are
 not guessed. They enter a review queue.
 
-A maintainer run writes three disposable review products, for example:
+A maintainer run writes the positioned-cell products plus a separate district/PCA validation layer:
 
 ```bash
 python3 scripts/build_language_atlas_1991.py \
   --pdf data/raw/census_1961-91/Language_Atlas_of_India_1991.pdf \
   --candidate-output /tmp/language_atlas_1991_candidate.csv \
   --review-output /tmp/language_atlas_1991_review.csv \
-  --layout-output /tmp/language_atlas_1991_layout.csv
+  --layout-output /tmp/language_atlas_1991_layout.csv \
+  --pca-zip data/raw/shrug/census_1991/shrug-pca91-csv.zip \
+  --state-crosswalk data/metadata/language_atlas_1991_state_crosswalk.csv \
+  --district-output /tmp/language_atlas_1991_district_population.csv \
+  --population-review-output /tmp/language_atlas_1991_population_review.csv
 ```
 
 The candidate output is deliberately keyed by Atlas page/block, detected row,
@@ -105,9 +109,35 @@ no positioned text at the candidate row/column intersection. Fifteen pages also
 require row-alignment review. These figures are extraction diagnostics, not
 data-quality claims and not production speaker counts.
 
-The next promotion step must resolve the review queue, assign reviewed Atlas
-rows to 1991 Census district identifiers, and validate district totals against
-SHRUG PCA91 before a tracked district-language long table can enter targets.
+District identity now uses the official 1991 Census coding structure rather than
+name similarity. The ORGI 1991 editing/coding manual defines state codes and
+within-state district serials; `language_atlas_1991_state_crosswalk.csv` records
+the reviewed OCR form of the 31 state/UT headings present in the Atlas scan
+(Jammu and Kashmir is absent because the 1991 Census was not conducted there).
+Within each reviewed state block, the extractor accepts only a source serial from
+the Atlas serial column or a leading serial printed with the district label. It
+does not infer a missing serial from the district name, row order, or nearest
+population.
+
+SHRUG's `pc91_pca_clean_pc91dist.csv` then provides an independent population
+check keyed by `pc91_state_id` and `pc91_district_id`. A 1% relative-population
+difference is used only as an **extraction QA tolerance**, not as a substantive
+sample-support rule. Rows outside that tolerance remain review items; population
+is never used to discover district identity. Obvious wrapped labels whose first
+line carries the district serial but whose second line carries the population
+are joined only under that structural condition.
+
+On the currently registered sources this produces 443 district-row candidates.
+Three wrapped labels are deterministically rejoined and 414 rows have a unique
+official-code candidate plus Atlas/PCA population agreement within 1%. The
+remaining queue includes OCR population failures, source-population differences,
+missing/garbled district serials, duplicate serial candidates, and PCA districts
+whose Atlas population row was not recovered. These are source-review statuses,
+not silently imputed observations.
+
+The next promotion step must resolve that district/PCA review queue and validate
+row alignment across the remaining seven language pages before a tracked
+district-language long table can enter targets.
 
 ## Vanneman source provenance
 
@@ -128,8 +158,8 @@ sensitivity source rather than geography authority for the Census-2001 panel.
 
 ## Next phases
 
-1. Resolve the Atlas positioned-cell review queue, bind reviewed rows to 1991
-   district identifiers, and validate district totals against SHRUG PCA91.
+1. Resolve the remaining Atlas district/PCA population review queue and bind the
+   validated district identities across all eight pages of each Atlas block.
 2. Reuse the frozen Shastry/Glottolog language identity machinery rather than
    defining a separate 1991 distance scale.
 3. Construct 1991 district linguistic distance on native 1991 geography.
