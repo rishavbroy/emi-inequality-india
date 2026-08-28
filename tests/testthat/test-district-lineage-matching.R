@@ -467,6 +467,29 @@ test_that("deterministic transitions require complete one-to-one coverage", {
   expect_identical(out$district_code_2001, "01")
 })
 
+test_that("deterministic transitions accept all reviewed whole-parent classes", {
+  transition <- data.frame(
+    state_code_2011 = rep("28", 4),
+    district_code_2011 = c("532", "533", "534", "535"),
+    state_code_2001 = rep("28", 4),
+    district_code_2001 = c("01", "02", "03", "04"),
+    population_share_to_2001 = c(1, 1, 1, 0.99),
+    shrid_coverage = c(1, 1, 1, 1),
+    mapping_class = c(
+      "deterministic_containment",
+      "official_lgd_census_code_bridge",
+      "reviewed_single_parent_ancestry",
+      "non_nested_or_incomplete"
+    ),
+    stringsAsFactors = FALSE
+  )
+
+  out <- deterministic_transition_2011_to_2001(transition)
+
+  expect_setequal(out$district_code_2011, c("532", "533", "534"))
+  expect_setequal(out$mapping_class, deterministic_transition_mapping_classes())
+})
+
 test_that("deterministic transitions reject duplicate source targets", {
   transition <- data.frame(
     state_code_2011 = c("01", "01"),

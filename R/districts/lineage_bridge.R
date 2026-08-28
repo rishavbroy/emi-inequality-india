@@ -311,6 +311,14 @@ transition_source_key <- function(x) {
   )
 }
 
+deterministic_transition_mapping_classes <- function() {
+  c(
+    "deterministic_containment",
+    "official_lgd_census_code_bridge",
+    "reviewed_single_parent_ancestry"
+  )
+}
+
 #' Combine district transitions by evidence priority
 #'
 #' Valid LGD Census-code links retain highest priority. Reviewed one-parent
