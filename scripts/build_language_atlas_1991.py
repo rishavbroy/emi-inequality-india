@@ -6,14 +6,16 @@ It uses Poppler's positioned text output to verify the fixed 56-page Annexure-IV
 layout and writes raw cell text, conservative integer parses, and an explicit
 review queue. Candidate values are not production-ready until district rows and
 all flagged cells have been reviewed and validated against Census/SHRUG totals.
-For population-validated districts the tool can also emit the first 11 language
-columns from each block's population page, preserving unresolved cells for review.
+For population-validated districts the tool can also align repeated district rows
+across all eight language pages using exact-label anchors and bounded equal-length
+gaps within one 1991 state. Unresolved alignments and cells remain review items.
 """
 
 from __future__ import annotations
 
 import argparse
 import csv
+import difflib
 import re
 import shutil
 import subprocess
@@ -642,6 +644,195 @@ def page0_language_review_rows(rows: list[dict[str, object]]) -> list[dict[str, 
     return [dict(row) for row in rows if row["language_cell_status"] == "review_required"]
 
 
+
+def _unique_page_rows(
+    cells: list[dict[str, object]],
+    block: int,
+    page: int,
+    state_crosswalk: dict[str, dict[str, str]],
+) -> list[dict[str, object]]:
+    """Return one row record per printed district row on a language page."""
+    rows: dict[int, dict[str, object]] = {}
+    for cell in cells:
+        if int(cell["block"]) != block or int(cell["page"]) != page:
+            continue
+        sequence = int(cell["row_sequence"])
+        rows.setdefault(sequence, {
+            "row_sequence": sequence,
+            "row_label_raw": str(cell["row_label_raw"]).strip(),
+        })
+    return [
+        row for _, row in sorted(rows.items())
+        if row["row_label_raw"] != "INDIA"
+        and row["row_label_raw"] not in state_crosswalk
+    ]
+
+
+def align_repeated_atlas_page(
+    reference_rows: list[dict[str, object]],
+    page_rows: list[dict[str, object]],
+) -> tuple[dict[int, tuple[int, str]], list[dict[str, object]]]:
+    """Align a repeated Atlas district page without fuzzy text matching.
+
+    Exact raw labels are anchors. A mismatched run is positionally aligned only
+    when it has equal source/target length, exact anchors on both sides, and the
+    entire reference run plus both anchors lies within one Census-1991 state.
+    This is table-structure evidence, not string similarity or code imputation.
+    """
+    ref_labels = [str(row["row_label_raw"]).strip() for row in reference_rows]
+    page_labels = [str(row["row_label_raw"]).strip() for row in page_rows]
+    matcher = difflib.SequenceMatcher(a=ref_labels, b=page_labels, autojunk=False)
+    opcodes = matcher.get_opcodes()
+    aligned: dict[int, tuple[int, str]] = {}
+
+    for tag, i1, i2, j1, j2 in opcodes:
+        if tag != "equal":
+            continue
+        for ref_index, page_index in zip(range(i1, i2), range(j1, j2)):
+            aligned[ref_index] = (page_index, "exact_label")
+
+    for tag, i1, i2, j1, j2 in opcodes:
+        if tag != "replace" or i2 - i1 != j2 - j1 or i1 == i2:
+            continue
+        if i1 == 0 or i2 >= len(reference_rows):
+            continue
+        if i1 - 1 not in aligned or i2 not in aligned:
+            continue
+        state_codes = {
+            str(reference_rows[index].get("state_code_1991", ""))
+            for index in range(i1 - 1, i2 + 1)
+        }
+        if len(state_codes) != 1 or "" in state_codes:
+            continue
+        for ref_index, page_index in zip(range(i1, i2), range(j1, j2)):
+            aligned[ref_index] = (page_index, "bounded_equal_gap")
+
+    review: list[dict[str, object]] = []
+    for ref_index, row in enumerate(reference_rows):
+        if row.get("promotion_status") != "population_validated_candidate":
+            continue
+        if ref_index not in aligned:
+            review.append({
+                "state_code_1991": row.get("state_code_1991", ""),
+                "district_code_1991": row.get("district_code_1991", ""),
+                "state_name_1991": row.get("state_name_1991", ""),
+                "row_label_raw": row.get("row_label_raw", ""),
+                "block": row.get("block", ""),
+                "page": "",
+                "page_offset": "",
+                "review_type": "unresolved_row_alignment",
+                "detail": "no exact-label or bounded equal-length within-state alignment",
+            })
+    return aligned, review
+
+
+def build_validated_all_page_language_cells(
+    cells: list[dict[str, object]],
+    district_validation: list[dict[str, object]],
+    state_crosswalk: dict[str, dict[str, str]],
+) -> tuple[list[dict[str, object]], list[dict[str, object]]]:
+    """Bind validated districts to all Atlas language pages where alignment is deterministic."""
+    page0 = build_validated_page0_language_cells(cells, district_validation)
+    for row in page0:
+        row["page_offset"] = 0
+        row["alignment_status"] = "population_validated_row"
+
+    cell_index: dict[tuple[int, int, int, int], dict[str, object]] = {}
+    for cell in cells:
+        if cell["cell_kind"] != "language_speakers":
+            continue
+        key = (
+            int(cell["block"]), int(cell["page"]),
+            int(cell["row_sequence"]), int(cell["atlas_column"]),
+        )
+        if key in cell_index:
+            raise ValueError(f"Duplicate Atlas language cell at {key}")
+        cell_index[key] = cell
+
+    out = list(page0)
+    alignment_review: list[dict[str, object]] = []
+    reference_by_block: dict[int, list[dict[str, object]]] = {}
+    for row in district_validation:
+        reference_by_block.setdefault(int(row["block"]), []).append(row)
+    for block in reference_by_block:
+        reference_by_block[block].sort(key=lambda row: int(row["row_sequence"]))
+
+    for block, reference_rows in sorted(reference_by_block.items()):
+        for offset in range(1, 8):
+            page = BLOCK_START_PAGES[block - 1] + offset
+            page_rows = _unique_page_rows(cells, block, page, state_crosswalk)
+            aligned, review = align_repeated_atlas_page(reference_rows, page_rows)
+            for row in review:
+                row["page"] = page
+                row["page_offset"] = offset
+            alignment_review.extend(review)
+
+            for ref_index, (page_index, alignment_status) in aligned.items():
+                district = reference_rows[ref_index]
+                if district["promotion_status"] != "population_validated_candidate":
+                    continue
+                page_row = page_rows[page_index]
+                row_sequence = int(page_row["row_sequence"])
+                for atlas_column in expected_columns(offset):
+                    key = (block, page, row_sequence, atlas_column)
+                    cell = cell_index.get(key)
+                    if cell is None:
+                        alignment_review.append({
+                            "state_code_1991": district["state_code_1991"],
+                            "district_code_1991": district["district_code_1991"],
+                            "state_name_1991": district["state_name_1991"],
+                            "row_label_raw": district["row_label_raw"],
+                            "block": block,
+                            "page": page,
+                            "page_offset": offset,
+                            "review_type": "missing_aligned_cell",
+                            "detail": f"aligned row lacks Atlas column {atlas_column}",
+                        })
+                        continue
+                    parse_status = str(cell["parse_status"])
+                    out.append({
+                        "state_code_1991": district["state_code_1991"],
+                        "district_code_1991": district["district_code_1991"],
+                        "state_name_1991": district["state_name_1991"],
+                        "row_label_raw": district["row_label_raw"],
+                        "atlas_population_candidate": district["atlas_population_candidate"],
+                        "pca91_population": district["pca91_population"],
+                        "population_relative_diff": district["population_relative_diff"],
+                        "block": block,
+                        "page": page,
+                        "row_sequence": row_sequence,
+                        "atlas_column": atlas_column,
+                        "raw_value": cell["raw_value"],
+                        "speaker_count_candidate": cell["speaker_count_candidate"],
+                        "parse_status": parse_status,
+                        "language_cell_status": (
+                            "candidate_value"
+                            if parse_status in {"parsed", "normalized_ocr_zero"}
+                            else "review_required"
+                        ),
+                        "page_offset": offset,
+                        "alignment_status": alignment_status,
+                    })
+
+    keys = [
+        (row["state_code_1991"], row["district_code_1991"], row["atlas_column"])
+        for row in out
+    ]
+    if len(keys) != len(set(keys)):
+        raise ValueError("Aligned Atlas language cells are not unique by district and column")
+    out.sort(key=lambda row: (
+        str(row["state_code_1991"]), str(row["district_code_1991"]), int(row["atlas_column"])
+    ))
+    alignment_review.sort(key=lambda row: (
+        str(row["state_code_1991"]), str(row["district_code_1991"]),
+        int(row["page"]) if str(row["page"]).strip() else 0
+    ))
+    return out, alignment_review
+
+
+def all_page_language_review_rows(rows: list[dict[str, object]]) -> list[dict[str, object]]:
+    return [dict(row) for row in rows if row["language_cell_status"] == "review_required"]
+
 def write_csv(path: Path, rows: list[dict[str, object]], fields: list[str] | None = None) -> None:
     if not rows and fields is None:
         raise ValueError("fields are required when writing an empty CSV")
@@ -712,6 +903,31 @@ def self_test() -> None:
     )
     assert conflicted == (None, "cross_page_conflict", "3;36")
 
+    reference = [
+        {"row_label_raw": "A", "state_code_1991": "02", "promotion_status": "population_validated_candidate"},
+        {"row_label_raw": "B", "state_code_1991": "02", "promotion_status": "population_validated_candidate"},
+        {"row_label_raw": "C", "state_code_1991": "02", "promotion_status": "population_validated_candidate"},
+        {"row_label_raw": "D", "state_code_1991": "02", "promotion_status": "population_validated_candidate"},
+    ]
+    repeated_page = [
+        {"row_sequence": 1, "row_label_raw": "A"},
+        {"row_sequence": 2, "row_label_raw": "B OCR"},
+        {"row_sequence": 3, "row_label_raw": "C OCR"},
+        {"row_sequence": 4, "row_label_raw": "D"},
+    ]
+    aligned, alignment_review = align_repeated_atlas_page(reference, repeated_page)
+    assert aligned[0][1] == "exact_label"
+    assert aligned[1][1] == "bounded_equal_gap"
+    assert aligned[2][1] == "bounded_equal_gap"
+    assert aligned[3][1] == "exact_label"
+    assert not alignment_review
+
+    crossing_state = [dict(row) for row in reference]
+    crossing_state[2]["state_code_1991"] = "03"
+    crossing, crossing_review = align_repeated_atlas_page(crossing_state, repeated_page)
+    assert 1 not in crossing and 2 not in crossing
+    assert len(crossing_review) == 2
+
     continued = merge_population_continuations(
         [
             {"cell_kind": "district_population", "page_offset": 0, "block": 1, "page": 205, "row_sequence": 1,
@@ -739,6 +955,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--population-review-output", type=Path)
     parser.add_argument("--page0-language-output", type=Path)
     parser.add_argument("--page0-language-review-output", type=Path)
+    parser.add_argument("--all-language-output", type=Path)
+    parser.add_argument("--all-language-review-output", type=Path)
+    parser.add_argument("--alignment-review-output", type=Path)
     parser.add_argument("--pdftotext", default="pdftotext")
     parser.add_argument("--self-test", action="store_true")
     args = parser.parse_args(argv)
@@ -767,9 +986,13 @@ def main(argv: list[str] | None = None) -> int:
         write_csv(args.layout_output, layout)
     district_validation = None
     language_cells = None
+    all_language_cells = None
+    alignment_review = None
     district_options = (
         args.pca_zip, args.state_crosswalk, args.district_output, args.population_review_output,
         args.page0_language_output, args.page0_language_review_output,
+        args.all_language_output, args.all_language_review_output,
+        args.alignment_review_output,
     )
     if any(value is not None for value in district_options):
         if args.pca_zip is None or args.state_crosswalk is None or args.district_output is None or args.population_review_output is None:
@@ -793,6 +1016,35 @@ def main(argv: list[str] | None = None) -> int:
                 page0_language_review_rows(language_cells),
                 fields=list(language_cells[0]),
             )
+        all_language_options = (
+            args.all_language_output,
+            args.all_language_review_output,
+            args.alignment_review_output,
+        )
+        if any(value is not None for value in all_language_options):
+            if not all(value is not None for value in all_language_options):
+                parser.error(
+                    "--all-language-output, --all-language-review-output, and "
+                    "--alignment-review-output must be supplied together"
+                )
+            all_language_cells, alignment_review = build_validated_all_page_language_cells(
+                cells, district_validation, state_crosswalk
+            )
+            write_csv(args.all_language_output, all_language_cells)
+            write_csv(
+                args.all_language_review_output,
+                all_page_language_review_rows(all_language_cells),
+                fields=list(all_language_cells[0]),
+            )
+            write_csv(
+                args.alignment_review_output,
+                alignment_review,
+                fields=[
+                    "state_code_1991", "district_code_1991", "state_name_1991",
+                    "row_label_raw", "block", "page", "page_offset",
+                    "review_type", "detail",
+                ],
+            )
     unparsed = sum(row["review_type"] == "unparsed_cell" for row in review)
     blank = sum(row["review_type"] == "blank_cell" for row in review)
     page_contracts = sum(row["review_type"] == "page_row_contract" for row in review)
@@ -807,6 +1059,13 @@ def main(argv: list[str] | None = None) -> int:
     if language_cells is not None:
         language_review = sum(row["language_cell_status"] == "review_required" for row in language_cells)
         message += f"; {len(language_cells) - language_review}/{len(language_cells)} page-0 language cells parsed"
+    if all_language_cells is not None:
+        all_review = sum(row["language_cell_status"] == "review_required" for row in all_language_cells)
+        message += (
+            f"; {len(all_language_cells)} all-page district-language cells aligned; "
+            f"{len(all_language_cells) - all_review} parsed; "
+            f"{len(alignment_review or [])} district-page alignment reviews"
+        )
     print(message)
     return 0
 
