@@ -44,10 +44,30 @@ iv_nuisance_terms <- function(controls = character(), fixed_effect = "none") {
   unique(c(controls, iv_fixed_effect_terms(fixed_effect)))
 }
 
-residualize_iv_variable <- function(data, variable, controls = character(), fixed_effect = "none") {
+residualize_iv_variables <- function(data, variables, controls = character(), fixed_effect = "none") {
+  variables <- unique(plain_chr(variables))
+  if (!length(variables) || anyNA(variables) || any(!nzchar(variables))) {
+    stop("IV residualization requires one or more variable names.", call. = FALSE)
+  }
+  missing <- setdiff(variables, names(data))
+  if (length(missing)) {
+    stop("IV residualization is missing variables: ", paste(missing, collapse = ", "), call. = FALSE)
+  }
+  y <- as.matrix(data[variables])
+  storage.mode(y) <- "double"
   rhs <- iv_nuisance_terms(controls, fixed_effect)
-  if (!length(rhs)) return(num(data[[variable]]) - mean(num(data[[variable]])))
-  stats::residuals(stats::lm(stats::reformulate(rhs, response = variable), data = data))
+  if (!length(rhs)) {
+    out <- sweep(y, 2L, colMeans(y), FUN = "-")
+  } else {
+    design <- stats::model.matrix(stats::reformulate(rhs), data = data)
+    out <- stats::lm.fit(design, y)$residuals
+  }
+  colnames(out) <- variables
+  out
+}
+
+residualize_iv_variable <- function(data, variable, controls = character(), fixed_effect = "none") {
+  unname(residualize_iv_variables(data, variable, controls, fixed_effect)[, 1L])
 }
 
 model_term_inference <- function(fit, term, vcov = NULL) {

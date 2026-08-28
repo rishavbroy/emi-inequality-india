@@ -577,3 +577,26 @@ test_that("generic model-term inference reports clustered coefficient statistics
   expect_true(all(is.finite(out)))
   expect_equal(out[["estimate"]], stats::coef(fit)[["z"]])
 })
+
+test_that("shared IV residualization reuses one nuisance projection without changing residuals", {
+  set.seed(601)
+  data <- data.frame(
+    y = stats::rnorm(48),
+    z = stats::rnorm(48),
+    x = stats::rnorm(48),
+    state_code_2001 = rep(sprintf("%02d", 1:6), each = 8),
+    stringsAsFactors = FALSE
+  )
+
+  batch <- residualize_iv_variables(data, c("y", "z"), controls = "x", fixed_effect = "state")
+  expected_y <- stats::residuals(stats::lm(y ~ x + factor(state_code_2001), data = data))
+  expected_z <- stats::residuals(stats::lm(z ~ x + factor(state_code_2001), data = data))
+
+  expect_equal(unname(batch[, "y"]), unname(expected_y), tolerance = 1e-12)
+  expect_equal(unname(batch[, "z"]), unname(expected_z), tolerance = 1e-12)
+  expect_equal(
+    residualize_iv_variable(data, "z", controls = "x", fixed_effect = "state"),
+    unname(expected_z),
+    tolerance = 1e-12
+  )
+})
