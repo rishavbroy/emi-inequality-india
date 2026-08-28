@@ -19,7 +19,7 @@ for path in paths:
     ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
 print(f"Parsed {len(paths)} active Python file(s).")
 PY
-python3 scripts/inspect_language_atlas_1991.py --self-test
+python3 scripts/build_language_atlas_1991.py --self-test
 
 echo "=== JSON AND LOCKFILE CONTRACT ==="
 python3 - <<'PY'
