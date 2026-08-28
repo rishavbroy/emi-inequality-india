@@ -84,6 +84,8 @@ test_that("first-stage table rejects numeric coefficient terms in final mode", {
     p.value = c(0.01, 0.02),
     partial_f = c(39.2, 39.2),
     partial_p = c(0.001, 0.001),
+    effective_f = c(38.5, 38.5),
+    effective_f_critical_value = c(10.23, 10.23),
     status = "estimated",
     stringsAsFactors = FALSE
   )
@@ -91,6 +93,50 @@ test_that("first-stage table rejects numeric coefficient terms in final mode", {
   expect_error(
     make_first_stage_table(malformed, list(mode = "final")),
     "numeric row positions",
+    fixed = TRUE
+  )
+})
+
+test_that("final first-stage table requires MOP effective F", {
+  fs <- data.frame(
+    model = "consumption",
+    term = c("ling_distance_nonzero_mean", "(Intercept)"),
+    estimate = c(1, 2),
+    std.error = c(0.2, 0.3),
+    p.value = c(0.02, 0.5),
+    partial_f = c(5, 5),
+    partial_p = c(0.02, 0.02),
+    effective_f = NA_real_,
+    effective_f_critical_value = 10,
+    status = "estimated",
+    stringsAsFactors = FALSE
+  )
+
+  expect_error(
+    make_first_stage_table(fs, list(mode = "final")),
+    "requires a finite Montiel Olea-Pflueger effective F",
+    fixed = TRUE
+  )
+})
+
+test_that("final first-stage table requires the MOP critical value", {
+  fs <- data.frame(
+    model = "consumption",
+    term = c("ling_distance_nonzero_mean", "(Intercept)"),
+    estimate = c(1, 2),
+    std.error = c(0.2, 0.3),
+    p.value = c(0.02, 0.5),
+    partial_f = c(5, 5),
+    partial_p = c(0.02, 0.02),
+    effective_f = c(4, 4),
+    effective_f_critical_value = NA_real_,
+    status = "estimated",
+    stringsAsFactors = FALSE
+  )
+
+  expect_error(
+    make_first_stage_table(fs, list(mode = "final")),
+    "requires a finite Montiel Olea-Pflueger critical value",
     fixed = TRUE
   )
 })
@@ -104,6 +150,8 @@ test_that("first-stage table reports full coefficients with standard errors bene
     p.value = c(0.004, 0.02, 0.1),
     partial_f = c(9.46, 9.46, 9.46),
     partial_p = c(0.0021, 0.0021, 0.0021),
+    effective_f = c(8.81, 8.81, 8.81),
+    effective_f_critical_value = c(10.23, 10.23, 10.23),
     model_f = c(39.20, 39.20, 39.20),
     model_p = c(0.0001, 0.0001, 0.0001),
     status = "estimated",
@@ -115,7 +163,9 @@ test_that("first-stage table reports full coefficients with standard errors bene
 
   expect_true(all(c(
     "Linguistic distance", "Log population", "Constant",
-    "Observations", "Instrument's F-Statistic"
+    "Observations", "Instrument's clustered Wald F",
+    "Montiel Olea-Pflueger effective F",
+    "MOP 5% critical value (10% relative bias)"
   ) %in% out$Term))
   expect_false("Model's F-Statistic" %in% out$Term)
 
@@ -123,8 +173,12 @@ test_that("first-stage table reports full coefficients with standard errors bene
   expect_equal(out[[value_col]][[ling_row]], "1.234**")
   expect_equal(out[[value_col]][[ling_row + 1L]], "(0.456)")
 
-  f_row <- out[out$Term == "Instrument's F-Statistic", , drop = FALSE]
+  f_row <- out[out$Term == "Instrument's clustered Wald F", , drop = FALSE]
   expect_equal(f_row[[value_col]][[1]], "9.46**")
+  mop_row <- out[out$Term == "Montiel Olea-Pflueger effective F", , drop = FALSE]
+  expect_equal(mop_row[[value_col]][[1]], "8.81")
+  critical_row <- out[out$Term == "MOP 5% critical value (10% relative bias)", , drop = FALSE]
+  expect_equal(critical_row[[value_col]][[1]], "10.23")
 })
 
 test_that("final district panel validation enforces structural IV-panel contract", {
@@ -188,6 +242,8 @@ test_that("final table generation records incomplete first-stage diagnostics wit
     p.value = NA_real_,
     partial_f = NA_real_,
     partial_p = NA_real_,
+    effective_f = NA_real_,
+    effective_f_critical_value = NA_real_,
     status = "out_of_active_pipeline",
     reason = "Missing first-stage variables: real_log_consumption_change, ling_distance_nonzero_mean",
     stringsAsFactors = FALSE

@@ -460,7 +460,12 @@ sanitize_table_for_kable <- function(df) {
 regression_summary_start <- function(df) {
   if (!"Term" %in% names(df)) return(NA_integer_)
   terms <- table_contract_column_strings(df$Term)
-  hit <- which(terms %in% c("Observations", "R-squared", "Adjusted R-squared", "Instrument's F-Statistic", "Model's F-Statistic", "F-Statistic"))
+  hit <- which(terms %in% c(
+    "Observations", "R-squared", "Adjusted R-squared",
+    "Instrument's clustered Wald F", "Montiel Olea-Pflueger effective F",
+    "MOP 5% critical value (10% relative bias)",
+    "Instrument's F-Statistic", "Model's F-Statistic", "F-Statistic"
+  ))
   if (length(hit)) hit[[1]] else NA_integer_
 }
 

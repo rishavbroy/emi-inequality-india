@@ -786,7 +786,7 @@ consumption_iv_dynamic_figure_data <- function(dynamics) {
   }
   x <- safe_df(dynamics$summary)
   required <- c(
-    "outcome_round", "estimand", "partial_f",
+    "outcome_round", "estimand", "partial_f", "effective_f",
     "reduced_form_estimate", "reduced_form_std.error",
     "second_stage_estimate", "second_stage_std.error"
   )
@@ -818,7 +818,7 @@ consumption_iv_dynamic_figure_data <- function(dynamics) {
 
   label <- paste0(
     consumption_dynamic_round_label(x$outcome_round),
-    "\nF=", formatC(num(x$partial_f), digits = 2L, format = "f")
+    "\nMOP F=", formatC(num(x$effective_f), digits = 2L, format = "f")
   )
   build_rows <- function(kind, estimate, std_error) {
     estimate <- num(estimate)
@@ -838,6 +838,7 @@ consumption_iv_dynamic_figure_data <- function(dynamics) {
       conf.low = estimate - stats::qnorm(0.975) * std_error,
       conf.high = estimate + stats::qnorm(0.975) * std_error,
       partial_f = num(x$partial_f),
+      effective_f = num(x$effective_f),
       stringsAsFactors = FALSE
     )
   }

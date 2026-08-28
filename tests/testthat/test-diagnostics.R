@@ -99,6 +99,24 @@ test_that("report values read Moran p-values from spatial autocorrelation diagno
   expect_equal(values[["moran_consumption_growth_p"]], signif(0.98765, 3))
 })
 
+test_that("report values expose MOP effective F from canonical first-stage diagnostics", {
+  first_stage <- data.frame(
+    effective_f = 0.81234,
+    effective_f_critical_value = 10.5,
+    effective_f_p_value = 0.42,
+    stringsAsFactors = FALSE
+  )
+  values <- build_report_values(
+    data.frame(), first_stage, list(), data.frame(), data.frame(), NULL, list()
+  )
+
+  expect_equal(values$effective_f, 0.81234)
+  expect_equal(values$effective_f_report, "0.81")
+  expect_equal(values$effective_f_critical_value, 10.5)
+  expect_equal(values$effective_f_critical_value_report, "10.5")
+  expect_equal(values$effective_f_p_value, 0.42)
+})
+
 test_that("missingness diagnostics preserve legacy diagnostic components", {
   df <- data.frame(
     enrolled = c("Yes", "No", "Yes", "Yes"),
@@ -854,6 +872,10 @@ test_that("alternative linguistic-distance first stages use fixed support and jo
   panel$future_hces_outcome <- seq_len(nrow(panel))
   panel$real_log_consumption_change <- stats::rnorm(nrow(panel))
   panel$real_log_consumption_change[[1]] <- NA_real_
+  weak_iv <- estimate_weak_iv_outcomes(panel)
+  expect_true("effective_f" %in% names(weak_iv$summary))
+  expect_true(all(is.finite(weak_iv$summary$effective_f)))
+  expect_true(all(weak_iv$summary$effective_f > 0))
   projected <- prepare_alternative_distance_panel(panel)
   projected_with_outcome <- prepare_alternative_distance_panel(
     panel,
@@ -998,6 +1020,17 @@ test_that("canonical IV registry drives alternative-distance specifications", {
   ) %in% names(registry)))
   expect_true(all(registry$n_endogenous == 1L))
   expect_true(all(registry$cluster == "state_code_2001"))
+})
+
+test_that("canonical IV diagnostic registry includes MOP effective F", {
+  registry <- iv_diagnostic_registry()
+  row <- registry[registry$diagnostic_id == "effective_f", , drop = FALSE]
+
+  expect_equal(nrow(row), 1L)
+  expect_equal(row$family, "relevance")
+  expect_true(row$implemented)
+  expect_true(row$requires_outcome)
+  expect_false(row$requires_overidentified)
 })
 
 test_that("canonical IV registries preserve vector-valued specification fields", {
@@ -2029,6 +2062,11 @@ test_that("dynamic consumption IV validation enforces the common-sample inferenc
     n = 50L,
     status = "estimated",
     partial_f = 4,
+    effective_f = 3.5,
+    effective_f_critical_value = 10,
+    effective_f_p_value = 0.2,
+    effective_f_df = 1,
+    effective_f_status = "estimated",
     reduced_form_estimate = 0.1,
     reduced_form_std.error = 0.04,
     reduced_form_p.value = 0.02,
@@ -2097,6 +2135,11 @@ test_that("dynamic consumption IV validation rejects missing registered AR grids
     n = 50L,
     status = "estimated",
     partial_f = 4,
+    effective_f = 3.5,
+    effective_f_critical_value = 10,
+    effective_f_p_value = 0.2,
+    effective_f_df = 1,
+    effective_f_status = "estimated",
     reduced_form_estimate = 0.1,
     reduced_form_std.error = 0.04,
     reduced_form_p.value = 0.02,

@@ -482,7 +482,11 @@ make_iv_summary_table <- function(district_panel) {
 
 make_first_stage_table <- function(first_stage_tests, cfg = list()) {
   fs <- as.data.frame(first_stage_tests, stringsAsFactors = FALSE)
-  required_cols <- c("model", "term", "estimate", "std.error", "p.value", "partial_f", "partial_p", "status")
+  required_cols <- c(
+    "model", "term", "estimate", "std.error", "p.value",
+    "partial_f", "partial_p", "effective_f",
+    "effective_f_critical_value", "status"
+  )
   missing_cols <- setdiff(required_cols, names(fs))
   if (length(missing_cols)) {
     msg <- paste("First-stage results are missing columns:", paste(missing_cols, collapse = ", "))
@@ -523,8 +527,32 @@ make_first_stage_table <- function(first_stage_tests, cfg = list()) {
   f_value <- if (nrow(stat)) first_finite_value(stat, c("partial_f", "model_f")) else NA_real_
   f_p <- if (nrow(stat)) first_finite_value(stat, c("partial_p", "model_p")) else NA_real_
   f_row <- data.frame(
-    Term = "Instrument's F-Statistic",
+    Term = "Instrument's clustered Wald F",
     value = paste0(sprintf("%.2f", f_value), significance_stars(f_p)),
+    stringsAsFactors = FALSE
+  )
+  effective_f <- first_finite_value(stat, "effective_f")
+  if (is_final_mode(cfg) && !is.finite(effective_f)) {
+    stop(
+      "Final first-stage table requires a finite Montiel Olea-Pflueger effective F.",
+      call. = FALSE
+    )
+  }
+  effective_f_row <- data.frame(
+    Term = "Montiel Olea-Pflueger effective F",
+    value = ifelse(is.finite(effective_f), sprintf("%.2f", effective_f), ""),
+    stringsAsFactors = FALSE
+  )
+  effective_f_critical <- first_finite_value(stat, "effective_f_critical_value")
+  if (is_final_mode(cfg) && !is.finite(effective_f_critical)) {
+    stop(
+      "Final first-stage table requires a finite Montiel Olea-Pflueger critical value.",
+      call. = FALSE
+    )
+  }
+  effective_f_critical_row <- data.frame(
+    Term = "MOP 5% critical value (10% relative bias)",
+    value = ifelse(is.finite(effective_f_critical), sprintf("%.2f", effective_f_critical), ""),
     stringsAsFactors = FALSE
   )
   nobs_value <- first_finite_value(stat, c("nobs", "n", "N"))
@@ -534,7 +562,9 @@ make_first_stage_table <- function(first_stage_tests, cfg = list()) {
     data.frame(Term = "Observations", value = ifelse(is.finite(nobs_value), sprintf("%.0f", nobs_value), ""), stringsAsFactors = FALSE),
     data.frame(Term = "R-squared", value = ifelse(is.finite(r2_value), sprintf("%.3f", r2_value), ""), stringsAsFactors = FALSE),
     data.frame(Term = "Adjusted R-squared", value = ifelse(is.finite(adj_r2_value), sprintf("%.3f", adj_r2_value), ""), stringsAsFactors = FALSE),
-    f_row
+    f_row,
+    effective_f_row,
+    effective_f_critical_row
   ))
 
   regression_display_table(
@@ -573,15 +603,38 @@ first_stage_table_model <- function(iv_models, district_panel) {
   if (length(setdiff(all.vars(formula), names(as.data.frame(data))))) {
     return(list(model = NULL, vcov = NULL, add_rows = NULL))
   }
-  fit <- tryCatch(stats::lm(formula, data = data), error = function(e) NULL)
+  fitted_rows <- iv_model_row_indices(model, data)
+  if (!length(fitted_rows)) return(list(model = NULL, vcov = NULL, add_rows = NULL))
+  analysis_data <- data[fitted_rows, , drop = FALSE]
+  fit <- tryCatch(stats::lm(formula, data = analysis_data), error = function(e) NULL)
   if (is.null(fit)) return(list(model = NULL, vcov = NULL, add_rows = NULL))
-  vc <- first_stage_vcov(fit, data)
+  vc <- first_stage_vcov(fit, analysis_data)
   excluded <- setdiff(terms$instruments, terms$regressors)
   excluded_term <- if (length(excluded)) excluded[[1]] else NA_character_
   wald <- first_stage_wald_test(fit, excluded_term, vc)
+  effective <- mop_effective_f(model, analysis_data)
   add_rows <- data.frame(
-    term = "Instrument's F-Statistic",
-    estimate = paste0(formatC(wald$partial_f, digits = 2, format = "f"), significance_stars(wald$partial_p)),
+    term = c(
+      "Instrument's clustered Wald F",
+      "Montiel Olea-Pflueger effective F",
+      "MOP 5% critical value (10% relative bias)"
+    ),
+    estimate = c(
+      paste0(
+        formatC(wald$partial_f, digits = 2, format = "f"),
+        significance_stars(wald$partial_p)
+      ),
+      if (is.finite(effective$statistic)) {
+        formatC(effective$statistic, digits = 2, format = "f")
+      } else {
+        ""
+      },
+      if (is.finite(effective$critical_value)) {
+        formatC(effective$critical_value, digits = 2, format = "f")
+      } else {
+        ""
+      }
+    ),
     stringsAsFactors = FALSE
   )
   list(model = fit, vcov = vc, add_rows = add_rows)

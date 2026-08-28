@@ -520,6 +520,12 @@ consumption_iv_first_stage_rows <- function(first_stage, specifications) {
         first_stage_std.error = NA_real_,
         first_stage_p.value = NA_real_,
         partial_f = NA_real_, partial_p = NA_real_,
+        effective_f = NA_real_,
+        effective_f_critical_value = NA_real_,
+        effective_f_p_value = NA_real_,
+        effective_f_df = NA_real_,
+        effective_f_status = "not_estimated",
+        effective_f_reason = "First-stage result is unavailable.",
         first_stage_n = NA_integer_,
         first_stage_status = "not_estimated",
         first_stage_reason = "First-stage result is unavailable.",
@@ -533,6 +539,12 @@ consumption_iv_first_stage_rows <- function(first_stage, specifications) {
       first_stage_p.value = num(row$p.value[[1L]]),
       partial_f = num(row$partial_f[[1L]]),
       partial_p = num(row$partial_p[[1L]]),
+      effective_f = num(row$effective_f[[1L]]),
+      effective_f_critical_value = num(row$effective_f_critical_value[[1L]]),
+      effective_f_p_value = num(row$effective_f_p_value[[1L]]),
+      effective_f_df = num(row$effective_f_df[[1L]]),
+      effective_f_status = plain_chr(row$effective_f_status[[1L]]),
+      effective_f_reason = plain_chr(row$effective_f_reason[[1L]]),
       first_stage_n = as.integer(num(row$nobs[[1L]])),
       first_stage_status = plain_chr(row$status[[1L]]),
       first_stage_reason = plain_chr(row$reason[[1L]]),
@@ -643,7 +655,8 @@ validate_consumption_iv_dynamics <- function(dynamics, specifications) {
     "reduced_form_n", "reduced_form_status",
     "second_stage_n", "second_stage_status",
     "n", "status",
-    "partial_f",
+    "partial_f", "effective_f", "effective_f_critical_value",
+    "effective_f_p_value", "effective_f_df", "effective_f_status",
     "reduced_form_estimate", "reduced_form_std.error", "reduced_form_p.value",
     "second_stage_estimate", "second_stage_std.error", "second_stage_p.value",
     "anderson_rubin_p_beta0"
@@ -675,10 +688,15 @@ validate_consumption_iv_dynamics <- function(dynamics, specifications) {
       first_stage_n == n
   )
   status_ok <- summary$first_stage_status == "estimated" &
+    summary$effective_f_status == "estimated" &
     summary$reduced_form_status == "estimated" &
     summary$second_stage_status == "estimated" &
     summary$status == "estimated"
   inference_ok <- is.finite(summary$partial_f) &
+    is.finite(summary$effective_f) &
+    is.finite(summary$effective_f_critical_value) &
+    is.finite(summary$effective_f_p_value) &
+    is.finite(summary$effective_f_df) &
     is.finite(summary$reduced_form_estimate) &
     is.finite(summary$reduced_form_std.error) &
     is.finite(summary$reduced_form_p.value) &
@@ -692,6 +710,7 @@ validate_consumption_iv_dynamics <- function(dynamics, specifications) {
     detail <- paste0(
       summary$specification_id[bad],
       "[fs=", summary$first_stage_status[bad],
+      ",mop=", summary$effective_f_status[bad],
       ",rf=", summary$reduced_form_status[bad],
       ",iv=", summary$second_stage_status[bad],
       ",ar=", summary$status[bad],

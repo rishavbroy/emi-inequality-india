@@ -3919,6 +3919,12 @@
       "Maintainer": "Vincent Arel-Bundock <vincent.arel-bundock@umontreal.ca>",
       "Repository": "CRAN"
     },
+    "momentfit": {
+      "Package": "momentfit",
+      "Version": "1.0",
+      "Source": "Repository",
+      "Repository": "CRAN"
+    },
     "nlme": {
       "Package": "nlme",
       "Version": "3.1-169",

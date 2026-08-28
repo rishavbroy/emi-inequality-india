@@ -51,6 +51,24 @@ build_report_values <- function(ame_results, first_stage_tests, iv_models, selec
   values$partial_p <- value_or_status(first_available_number(first_stage_tests, c("partial_p", "model_p", "p.value", "p_value", "p")), unavailable_first_stage)
   values$partial_f_report <- format_report_value(values$partial_f, function(x) round(x, 2))
   values$partial_p_report <- format_report_value(values$partial_p, function(x) signif(x, 2))
+  values$effective_f <- value_or_status(
+    first_available_number(first_stage_tests, "effective_f"),
+    unavailable_first_stage
+  )
+  values$effective_f_report <- format_report_value(
+    values$effective_f, function(x) round(x, 2)
+  )
+  values$effective_f_critical_value <- value_or_status(
+    first_available_number(first_stage_tests, "effective_f_critical_value"),
+    unavailable_first_stage
+  )
+  values$effective_f_critical_value_report <- format_report_value(
+    values$effective_f_critical_value, function(x) round(x, 2)
+  )
+  values$effective_f_p_value <- value_or_status(
+    first_available_number(first_stage_tests, "effective_f_p_value"),
+    unavailable_first_stage
+  )
 
   spec <- preferred_iv_variables()
   instrument_terms <- c(spec$instrument, "linguistic_distance", "ling_degrees")

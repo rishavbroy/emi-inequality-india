@@ -14,6 +14,12 @@ estimate_first_stage <- function(iv_models, district_panel, cfg) {
         p.value = NA_real_,
         partial_f = NA_real_,
         partial_p = NA_real_,
+        effective_f = NA_real_,
+        effective_f_critical_value = NA_real_,
+        effective_f_p_value = NA_real_,
+        effective_f_df = NA_real_,
+        effective_f_status = "not_estimated",
+        effective_f_reason = "IV model is unavailable.",
         model_f = NA_real_,
         model_p = NA_real_,
         nobs = NA_real_,
@@ -85,6 +91,16 @@ estimate_first_stage <- function(iv_models, district_panel, cfg) {
     excluded_term <- if (length(excluded)) excluded[[1]] else NA_character_
     excluded_row <- if (!is.na(excluded_term)) match(excluded_term, coefs$term) else NA_integer_
     wald <- first_stage_wald_test(fit, excluded_term, vc)
+    effective <- mop_effective_f(model, analysis_data)
+    if (is_final_mode(cfg) && !identical(effective$status, "estimated")) {
+      stop(
+        paste0(
+          "Montiel Olea-Pflueger effective F is unavailable for ",
+          model_name, ": ", effective$reason
+        ),
+        call. = FALSE
+      )
+    }
     model_f <- model_f_statistic(fit)
     sm <- tryCatch(summary(fit), error = function(e) NULL)
     nobs_value <- tryCatch(stats::nobs(fit), error = function(e) NA_real_)
@@ -106,6 +122,12 @@ estimate_first_stage <- function(iv_models, district_panel, cfg) {
       p.value = p_values,
       partial_f = partial_f,
       partial_p = partial_p,
+      effective_f = effective$statistic,
+      effective_f_critical_value = effective$critical_value,
+      effective_f_p_value = effective$p.value,
+      effective_f_df = effective$effective_df,
+      effective_f_status = effective$status,
+      effective_f_reason = effective$reason,
       model_f = model_f$statistic,
       model_p = model_f$p.value,
       nobs = nobs_value,
@@ -131,6 +153,12 @@ first_stage_status_row <- function(model_name, reason) {
     p.value = NA_real_,
     partial_f = NA_real_,
     partial_p = NA_real_,
+    effective_f = NA_real_,
+    effective_f_critical_value = NA_real_,
+    effective_f_p_value = NA_real_,
+    effective_f_df = NA_real_,
+    effective_f_status = "not_estimated",
+    effective_f_reason = reason,
     model_f = NA_real_,
     model_p = NA_real_,
     nobs = NA_real_,

@@ -92,7 +92,9 @@ consumption_outcome_first_stage_rows <- function(models, common_sample, cfg) {
       return(data.frame(
         model = model_name, instrument = instrument_name,
         estimate = NA_real_, std.error = NA_real_, partial_f = NA_real_,
-        partial_p = NA_real_, nobs = NA_real_, status = "unavailable",
+        partial_p = NA_real_, effective_f = NA_real_,
+        effective_f_critical_value = NA_real_, effective_f_p_value = NA_real_,
+        effective_f_status = "not_estimated", nobs = NA_real_, status = "unavailable",
         reason = "No first-stage result was returned.", stringsAsFactors = FALSE
       ))
     }
@@ -106,6 +108,10 @@ consumption_outcome_first_stage_rows <- function(models, common_sample, cfg) {
       std.error = instrument$std.error,
       partial_f = instrument$partial_f,
       partial_p = instrument$partial_p,
+      effective_f = instrument$effective_f,
+      effective_f_critical_value = instrument$effective_f_critical_value,
+      effective_f_p_value = instrument$effective_f_p_value,
+      effective_f_status = instrument$effective_f_status,
       nobs = instrument$nobs,
       status = instrument$status,
       reason = instrument$reason,

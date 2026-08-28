@@ -460,18 +460,19 @@ iv_specification_variables <- function(specification, include_outcome = TRUE) {
 iv_diagnostic_registry <- function() {
   data.frame(
     diagnostic_id = c(
-      "first_stage_joint_f", "partial_r_squared", "balance_covariates",
-      "balance_joint", "anderson_rubin", "monotonicity_shape", "overidentification"
+      "first_stage_joint_f", "effective_f", "partial_r_squared",
+      "balance_covariates", "balance_joint", "anderson_rubin",
+      "monotonicity_shape", "overidentification"
     ),
     family = c(
-      "relevance", "relevance", "independence", "independence",
+      "relevance", "relevance", "relevance", "independence", "independence",
       "weak_identification", "monotonicity", "overidentification"
     ),
-    requires_outcome = c(FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, TRUE),
-    requires_overidentified = c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE),
-    min_instruments = c(1L, 1L, 1L, 1L, 1L, 1L, 2L),
-    max_instruments = c(Inf, Inf, Inf, 1L, Inf, 1L, Inf),
-    implemented = rep(TRUE, 7L),
+    requires_outcome = c(FALSE, TRUE, FALSE, FALSE, FALSE, TRUE, FALSE, TRUE),
+    requires_overidentified = c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE),
+    min_instruments = c(1L, 1L, 1L, 1L, 1L, 1L, 1L, 2L),
+    max_instruments = c(Inf, Inf, Inf, Inf, 1L, Inf, 1L, Inf),
+    implemented = rep(TRUE, 8L),
     stringsAsFactors = FALSE
   )
 }

@@ -473,6 +473,7 @@ test_that("dynamic welfare figure uses only the prespecified ANCOVA horizons", {
       outcome_round = rounds,
       estimand = "ancova",
       partial_f = c(1.7, 1.6, 1.4, 1.0),
+      effective_f = c(1.5, 1.4, 1.2, 0.9),
       reduced_form_estimate = c(-0.02, -0.01, 0.02, 0.01),
       reduced_form_std.error = 0.02,
       second_stage_estimate = c(-0.02, -0.01, 0.02, 0.01),
@@ -483,6 +484,7 @@ test_that("dynamic welfare figure uses only the prespecified ANCOVA horizons", {
       outcome_round = rounds,
       estimand = "change",
       partial_f = 9,
+      effective_f = 8,
       reduced_form_estimate = 9,
       reduced_form_std.error = 1,
       second_stage_estimate = 9,
@@ -499,7 +501,10 @@ test_that("dynamic welfare figure uses only the prespecified ANCOVA horizons", {
   expect_false(any(out$estimate == 9))
   expect_equal(
     levels(out$horizon),
-    c("2009-10\nF=1.70", "2011-12\nF=1.60", "2022-23\nF=1.40", "2023-24\nF=1.00")
+    c(
+      "2009-10\nMOP F=1.50", "2011-12\nMOP F=1.40",
+      "2022-23\nMOP F=1.20", "2023-24\nMOP F=0.90"
+    )
   )
 })
 
@@ -511,6 +516,7 @@ test_that("dynamic welfare figure exposes uncertainty and weak first-stage conte
     ),
     estimand = "ancova",
     partial_f = c(1.7, 1.6, 1.4, 1.0),
+    effective_f = c(1.5, 1.4, 1.2, 0.9),
     reduced_form_estimate = c(-0.02, -0.01, 0.02, 0.01),
     reduced_form_std.error = rep(0.02, 4),
     second_stage_estimate = c(-0.03, -0.02, 0.02, 0.01),

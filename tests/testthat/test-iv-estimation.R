@@ -26,6 +26,110 @@ test_that("estimate_2sls fits a toy exactly identified IV model when possible", 
   expect_equal(attr(out$toy, "prediction_data"), panel[c("y", "x", "z")])
 })
 
+test_that("first-stage diagnostics report standard MOP effective F", {
+  skip_if_not_installed("ivreg")
+  skip_if_not_installed("momentfit")
+  set.seed(101)
+  n <- 120
+  panel <- data.frame(
+    state_code_2001 = rep(sprintf("%02d", 1:12), each = 10),
+    z = stats::rnorm(n),
+    w = stats::rnorm(n),
+    stringsAsFactors = FALSE
+  )
+  panel$x <- 0.7 * panel$z + 0.2 * panel$w + stats::rnorm(n)
+  panel$y <- 1 + 1.5 * panel$x + 0.4 * panel$w + stats::rnorm(n)
+
+  models <- estimate_2sls(
+    panel,
+    list(toy = y ~ x + w + factor(state_code_2001) | z + w + factor(state_code_2001)),
+    list(mode = "final")
+  )
+  out <- estimate_first_stage(models, panel, list(mode = "final"))
+
+  expect_true(all(out$effective_f_status == "estimated"))
+  expect_true(all(is.na(out$effective_f_reason)))
+  expect_true(all(is.finite(out$effective_f)))
+  expect_true(all(out$effective_f > 0))
+  expect_true(all(is.finite(out$effective_f_critical_value)))
+  expect_true(all(is.finite(out$effective_f_p_value)))
+  expect_true(all(is.finite(out$effective_f_df)))
+  expect_length(unique(out$effective_f), 1L)
+
+  standard_model <- momentfit::momentModel(
+    y ~ x + w + factor(state_code_2001),
+    ~ z + w + factor(state_code_2001),
+    data = panel,
+    vcov = "CL",
+    vcovOptions = list(
+      cluster = data.frame(cluster = panel$state_code_2001),
+      type = "HC0", cadjust = TRUE, multi0 = FALSE
+    )
+  )
+  direct <- momentfit::MOPtest(
+    standard_model,
+    tau = 0.10,
+    size = 0.05,
+    estMethod = "TSLS",
+    simplified = TRUE,
+    print = FALSE
+  )
+  expect_equal(unique(out$effective_f), unname(direct[["Feff"]]), tolerance = 1e-8)
+  expect_equal(
+    unique(out$effective_f_critical_value),
+    unname(direct[["critValue"]]),
+    tolerance = 1e-8
+  )
+})
+
+test_that("just-identified MOP effective F agrees with momentfit robust strength under matched HC0 covariance", {
+  skip_if_not_installed("ivreg")
+  skip_if_not_installed("momentfit")
+  set.seed(102)
+  n <- 160
+  data <- data.frame(
+    z = stats::rnorm(n),
+    w = stats::rnorm(n),
+    stringsAsFactors = FALSE
+  )
+  data$x <- 0.8 * data$z + 0.3 * data$w + stats::rnorm(n)
+  data$y <- 1 + 1.2 * data$x + 0.2 * data$w + stats::rnorm(n)
+  fit <- ivreg::ivreg(y ~ x + w | z + w, data = data, model = TRUE, x = TRUE, y = TRUE)
+
+  observed <- mop_effective_f(fit, data)
+  standard_model <- momentfit::momentModel(
+    y ~ x + w,
+    ~ z + w,
+    data = data,
+    vcov = "MDS",
+    vcovOptions = list(type = "HC0")
+  )
+  direct <- momentfit::MOPtest(
+    standard_model,
+    tau = 0.10,
+    size = 0.05,
+    estMethod = "TSLS",
+    simplified = TRUE,
+    print = FALSE
+  )
+  strength <- momentfit::momentStrength(standard_model)$strength
+  expected_f <- suppressWarnings(as.numeric(strength[1L, "Stats"]))
+
+  expect_equal(observed$status, "estimated")
+  expect_equal(observed$statistic, unname(direct[["Feff"]]), tolerance = 1e-8)
+  expect_equal(observed$critical_value, unname(direct[["critValue"]]), tolerance = 1e-8)
+  expect_equal(observed$p.value, unname(direct[["pvalue"]]), tolerance = 1e-8)
+  expect_equal(observed$statistic, expected_f, tolerance = 1e-8)
+})
+
+test_that("MOP effective F fails explicitly when the IV formula is unavailable", {
+  out <- mop_effective_f(list(), data.frame())
+
+  expect_true(is.na(out$statistic))
+  expect_equal(out$status, "not_estimated")
+  expect_match(out$reason, "ivreg model", fixed = TRUE)
+})
+
 test_that("serialized IV models retain inputs required by diagnostics and clustered inference", {
   skip_if_not_installed("ivreg")
   skip_if_not_installed("sandwich")

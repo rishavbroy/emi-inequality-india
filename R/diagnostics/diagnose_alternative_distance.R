@@ -454,6 +454,14 @@ estimate_weak_iv_outcomes <- function(
     if (!nrow(x)) return(NULL)
 
     fit <- ivreg::ivreg(iv_specification_formula(spec), data = x, model = TRUE, x = TRUE, y = TRUE)
+    effective <- mop_effective_f(fit, x)
+    if (!identical(effective$status, "estimated")) {
+      stop(
+        "Montiel Olea-Pflueger effective F is unavailable for ",
+        spec$specification_id, ": ", effective$reason,
+        call. = FALSE
+      )
+    }
     cluster <- iv_specification_cluster(x, spec)
     inference <- iv_clustered_inference(fit, cluster)
     ct <- lmtest::coeftest(fit, vcov. = inference$vcov)
@@ -497,6 +505,10 @@ estimate_weak_iv_outcomes <- function(
         estimate_2sls = unname(stats::coef(fit)[treatment]),
         std_error_clustered = ct[row, 2],
         p_value_clustered = ct[row, 4],
+        effective_f = effective$statistic,
+        effective_f_critical_value = effective$critical_value,
+        effective_f_p_value = effective$p.value,
+        effective_f_df = effective$effective_df,
         reduced_form_joint_f = reduced_test[["statistic"]],
         reduced_form_joint_p = reduced_test[["p.value"]],
         stringsAsFactors = FALSE

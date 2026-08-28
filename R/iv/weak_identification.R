@@ -1,5 +1,110 @@
 # Weak-identification-robust inference shared by IV specifications.
 
+mop_effective_f <- function(
+    model, analysis_data, tau = 0.10, size = 0.05) {
+  unavailable <- function(reason) {
+    list(
+      statistic = NA_real_, critical_value = NA_real_, p.value = NA_real_,
+      effective_df = NA_real_, tau = tau, size = size,
+      status = "not_estimated", reason = reason
+    )
+  }
+
+  if (!inherits(model, "ivreg")) {
+    return(unavailable("Montiel Olea-Pflueger effective F requires an ivreg model."))
+  }
+  if (!requireNamespace("momentfit", quietly = TRUE)) {
+    return(unavailable("Package 'momentfit' is not installed."))
+  }
+  if (!is.finite(tau) || tau <= 0 || !is.finite(size) || size <= 0 || size >= 1) {
+    return(unavailable("Montiel Olea-Pflueger tau and size must be valid probabilities."))
+  }
+
+  terms <- parse_iv_formula_terms(model)
+  if (is.null(terms)) {
+    return(unavailable("Could not parse IV formula for Montiel Olea-Pflueger effective F."))
+  }
+  endogenous <- setdiff(terms$regressors, terms$instruments)
+  if (length(endogenous) != 1L) {
+    return(unavailable("Montiel Olea-Pflueger effective F requires exactly one endogenous regressor."))
+  }
+
+  formula <- stats::formula(model)
+  regression_formula <- stats::as.formula(
+    call("~", formula[[2L]], formula[[3L]][[2L]]),
+    env = environment(formula)
+  )
+  instrument_formula <- stats::as.formula(
+    call("~", formula[[3L]][[3L]]),
+    env = environment(formula)
+  )
+  needed <- unique(c(all.vars(regression_formula), all.vars(instrument_formula)))
+  data <- iv_analysis_frame(analysis_data, needed)
+  missing <- setdiff(needed, names(data))
+  if (length(missing)) {
+    return(unavailable(paste(
+      "Missing variables for Montiel Olea-Pflueger effective F:",
+      paste(missing, collapse = ", ")
+    )))
+  }
+  moment_data <- data[needed]
+  if (any(!stats::complete.cases(moment_data))) {
+    return(unavailable("Montiel Olea-Pflueger analysis data contain incomplete model rows."))
+  }
+
+  stored_cluster <- attr(model, "cluster_state", exact = TRUE)
+  cluster <- if (
+    length(stored_cluster) == stats::nobs(model) &&
+      !anyNA(stored_cluster) && length(unique(stored_cluster)) >= 2L
+  ) {
+    as.vector(stored_cluster)
+  } else {
+    iv_model_cluster(model, data)
+  }
+  covariance <- if (is.null(cluster)) "MDS" else "CL"
+  covariance_options <- if (is.null(cluster)) {
+    list(type = "HC0")
+  } else {
+    # momentfit's clustered moment covariance is based on sandwich::meatCL()
+    # and supports HC0. Keep its package-native finite-cluster correction
+    # rather than altering the existing HC1 Wald-F diagnostic to force equality.
+    list(
+      cluster = data.frame(cluster = cluster),
+      type = "HC0", cadjust = TRUE, multi0 = FALSE
+    )
+  }
+
+  result <- tryCatch({
+    moment_model <- momentfit::momentModel(
+      regression_formula,
+      instrument_formula,
+      data = moment_data,
+      vcov = covariance,
+      vcovOptions = covariance_options
+    )
+    momentfit::MOPtest(
+      moment_model,
+      tau = tau,
+      size = size,
+      estMethod = "TSLS",
+      simplified = TRUE,
+      print = FALSE
+    )
+  }, error = function(e) e)
+  if (inherits(result, "error")) return(unavailable(conditionMessage(result)))
+
+  values <- suppressWarnings(as.numeric(result[c("Feff", "critValue", "pvalue", "Keff")]))
+  names(values) <- c("statistic", "critical_value", "p.value", "effective_df")
+  if (length(values) != 4L || any(!is.finite(values))) {
+    return(unavailable("momentfit::MOPtest() did not return finite effective-F diagnostics."))
+  }
+
+  c(
+    as.list(values),
+    list(tau = tau, size = size, status = "estimated", reason = NA_character_)
+  )
+}
+
 anderson_rubin_test <- function(
   data, outcome, treatment, excluded, included = character(),
   controls = character(), fixed_effect = "none", cluster, beta0 = 0

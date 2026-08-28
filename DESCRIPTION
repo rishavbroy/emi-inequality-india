@@ -27,6 +27,7 @@ Imports:
     ivreg,
     sandwich,
     lmtest,
+    momentfit,
     modelsummary,
     kableExtra,
     stringdist,

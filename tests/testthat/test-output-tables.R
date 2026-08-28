@@ -98,7 +98,7 @@ test_that("status-only public tables write stable csv and tex outputs", {
 })
 
 
-test_that("first-stage public table reports instrument partial F before model F", {
+test_that("first-stage public table reports clustered Wald and MOP strength diagnostics", {
   first_stage <- data.frame(
     model = rep("consumption", 2),
     term = c("ling_distance_nonzero_mean", "(Intercept)"),
@@ -108,6 +108,8 @@ test_that("first-stage public table reports instrument partial F before model F"
     p.value = c(0.0022, 0.4700),
     partial_f = c(9.4646, 9.4646),
     partial_p = c(0.0022, 0.0022),
+    effective_f = c(8.75, 8.75),
+    effective_f_critical_value = c(10.23, 10.23),
     model_f = c(68.2013, 68.2013),
     model_p = c(3.9e-114, 3.9e-114),
     status = rep("estimated", 2),
@@ -117,11 +119,54 @@ test_that("first-stage public table reports instrument partial F before model F"
 
   out <- make_first_stage_table(first_stage, list(final = TRUE))
 
-  f_row <- out[out$Term == "Instrument's F-Statistic", , drop = FALSE]
+  f_row <- out[out$Term == "Instrument's clustered Wald F", , drop = FALSE]
   value_col <- setdiff(names(out), "Term")[[1]]
   expect_equal(nrow(f_row), 1L)
   expect_match(f_row[[value_col]][[1]], "9.46", fixed = TRUE)
   expect_false(grepl("68.20", f_row[[value_col]][[1]], fixed = TRUE))
+  mop_row <- out[out$Term == "Montiel Olea-Pflueger effective F", , drop = FALSE]
+  expect_equal(nrow(mop_row), 1L)
+  expect_match(mop_row[[value_col]][[1]], "8.75", fixed = TRUE)
+  critical_row <- out[out$Term == "MOP 5% critical value (10% relative bias)", , drop = FALSE]
+  expect_equal(nrow(critical_row), 1L)
+})
+
+test_that("first-stage table model uses the fitted IV sample", {
+  skip_if_not_installed("ivreg")
+  skip_if_not_installed("momentfit")
+  set.seed(901)
+  n <- 60
+  panel <- data.frame(
+    state_code_2001 = rep(sprintf("%02d", 1:6), each = 10),
+    z = stats::rnorm(n),
+    w = stats::rnorm(n),
+    stringsAsFactors = FALSE
+  )
+  panel$x <- 0.8 * panel$z + 0.2 * panel$w + stats::rnorm(n)
+  panel$y <- 1 + panel$x + panel$w + stats::rnorm(n)
+  panel$y[c(2, 17, 41)] <- NA_real_
+
+  model <- ivreg::ivreg(y ~ x + w | z + w, data = panel, model = TRUE, x = TRUE, y = TRUE)
+  out <- first_stage_table_model(list(consumption = model), panel)
+
+  expect_s3_class(out$model, "lm")
+  expect_equal(stats::nobs(out$model), stats::nobs(model))
+  expect_equal(nrow(stats::model.frame(out$model)), stats::nobs(model))
+})
+
+test_that("regression styling recognizes the renamed strength diagnostics as GOF rows", {
+  table <- data.frame(
+    Term = c(
+      "Linguistic distance", "", "Observations",
+      "Instrument's clustered Wald F",
+      "Montiel Olea-Pflueger effective F",
+      "MOP 5% critical value (10% relative bias)"
+    ),
+    value = c("1.00", "(0.50)", "500", "4.00", "3.50", "10.23"),
+    stringsAsFactors = FALSE
+  )
+
+  expect_equal(regression_summary_start(table), 3L)
 })
 
 test_that("public summary tables use documented display names and grouping rows", {
@@ -173,6 +218,8 @@ test_that("regression public tables place standard errors below estimates", {
     p.value = c(0.002, 0.01, 0.45),
     partial_f = c(9.56, 9.56, 9.56),
     partial_p = c(0.002, 0.002, 0.002),
+    effective_f = c(8.9, 8.9, 8.9),
+    effective_f_critical_value = c(10.23, 10.23, 10.23),
     model_f = c(60, 60, 60),
     model_p = c(0, 0, 0),
     status = rep("estimated", 3),
@@ -187,7 +234,9 @@ test_that("regression public tables place standard errors below estimates", {
   expect_match(out$`EMI Exposure`[[1]], "3.825", fixed = TRUE)
   expect_equal(out$`EMI Exposure`[[2]], "(1.237)")
   expect_true("Urban population share" %in% out$Term)
-  expect_true("Instrument's F-Statistic" %in% out$Term)
+  expect_true("Instrument's clustered Wald F" %in% out$Term)
+  expect_true("Montiel Olea-Pflueger effective F" %in% out$Term)
+  expect_true("MOP 5% critical value (10% relative bias)" %in% out$Term)
   expect_false("Model's F-Statistic" %in% out$Term)
 })
 
