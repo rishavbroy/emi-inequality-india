@@ -725,6 +725,17 @@ core_pipeline_targets <- list(
     )
   ),
   tar_target(
+    historical_linguistic_geography_1991_2001,
+    build_historical_linguistic_geography_1991_2001(district_lineage_sources)
+  ),
+  tar_target(
+    diag_ext_historical_linguistic_geography_1991_2001,
+    save_historical_linguistic_geography_1991_2001(
+      historical_linguistic_geography_1991_2001
+    ),
+    format = "file"
+  ),
+  tar_target(
     district_lineage,
     build_district_lineage(
       district_lineage_sources,

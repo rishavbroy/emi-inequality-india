@@ -1388,3 +1388,17 @@ test_that("lineage readiness contains only current invariants", {
   expect_false(any(grepl("migration|production|legacy", readiness$gate)))
   expect_equal(nrow(build_lineage_blockers(readiness)), 0L)
 })
+
+test_that("1991 SHRUG geography and baseline archives are explicitly inventoried", {
+  specs <- district_lineage_input_specs(build_paths(Sys.getenv("EMI_PROJECT_ROOT", ".")))
+  historical_keys <- c("shrug_pc91r", "shrug_pc91u", "shrug_pc91dist")
+  baseline_archives <- c("shrug_pca91_zip", "shrug_td91_zip", "shrug_vd91_zip")
+
+  expect_true(all(historical_keys %in% specs$source_id))
+  expect_true(all(specs$load_for_diagnostic[match(historical_keys, specs$source_id)]))
+  expect_true(all(baseline_archives %in% specs$source_id))
+  expect_false(any(specs$load_for_diagnostic[match(baseline_archives, specs$source_id)]))
+  expect_true(all(grepl("census_1991|pc91", specs$relative_path[match(
+    c(historical_keys, baseline_archives), specs$source_id
+  )])))
+})
