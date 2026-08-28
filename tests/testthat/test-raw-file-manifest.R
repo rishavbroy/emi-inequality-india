@@ -1,3 +1,19 @@
+test_that("metadata CSV catalogs parse without field-loss warnings", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
+  catalogs <- c("file_manifest.csv", "data_sources.csv", "district_lineage_sources.csv")
+
+  for (catalog in catalogs) {
+    path <- file.path(root, "data", "metadata", catalog)
+    parsed <- suppressWarnings(readr::read_csv(path, show_col_types = FALSE))
+    issues <- readr::problems(parsed)
+    expect_equal(
+      nrow(issues),
+      0L,
+      info = if (nrow(issues)) paste(catalog, paste(utils::capture.output(print(issues)), collapse = "\n")) else catalog
+    )
+  }
+})
+
 test_that("file_manifest has required columns", {
   manifest <- readr::read_csv(file.path(Sys.getenv("EMI_PROJECT_ROOT", "."), "data", "metadata", "file_manifest.csv"), show_col_types = FALSE)
   expect_true(all(c("file_id", "source_id", "required_for_current_pipeline", "relative_path", "reader_function") %in% names(manifest)))
