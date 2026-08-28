@@ -652,6 +652,28 @@ test_that("first-stage absorption registry is ordered and exhausts main Census c
   )
 })
 
+test_that("first-stage residual metrics reproduce nested-model partial R-squared", {
+  set.seed(41)
+  n <- 120L
+  data <- data.frame(
+    y = stats::rnorm(n),
+    z = stats::rnorm(n),
+    x = stats::rnorm(n),
+    state_code_2001 = rep(sprintf("%02d", 1:12), each = 10),
+    stringsAsFactors = FALSE
+  )
+  data$y <- 0.8 * data$z + 0.5 * data$x + data$y
+  residual <- first_stage_residual_metrics(
+    data, treatment = "y", instrument = "z", controls = "x", fixed_effect = "none"
+  )
+  restricted <- stats::lm(y ~ x, data = data)
+  full <- stats::lm(y ~ z + x, data = data)
+  expected <- (stats::deviance(restricted) - stats::deviance(full)) / stats::deviance(restricted)
+
+  expect_equal(residual$partial_r_squared, expected, tolerance = 1e-12)
+  expect_equal(residual$partial_r_squared, residual$correlation^2, tolerance = 1e-12)
+})
+
 test_that("first-stage absorption diagnostics use fixed support and report requested statistics", {
   set.seed(42)
   states <- rep(sprintf("%02d", 1:12), each = 8)
@@ -695,6 +717,13 @@ test_that("first-stage absorption diagnostics use fixed support and report reque
   expect_length(intersect(no_hc, first_stage_control_blocks()$human_capital), 0L)
   expect_gt(out$summary$partial_r_squared[1], 0.9)
   expect_equal(nrow(out$state_deletion), length(unique(states)))
+  expect_setequal(
+    names(out$state_deletion),
+    c(
+      "specification_id", "specification", "treatment", "instrument", "omitted_state",
+      "estimate", "excluded_instrument_f", "estimate_change", "f_change"
+    )
+  )
   expect_equal(nrow(out$district_influence), nrow(panel))
   expect_true(all(c("instrument_range", "treatment_range") %in% names(out$state_residual_ranges)))
   expect_true(all(c("leverage", "cooks_distance", "instrument_dfbeta") %in% names(out$district_influence)))

@@ -98,28 +98,40 @@ clustered_first_stage_inference <- function(fit, instrument, cluster, inference 
   )
 }
 
-partial_r_squared_first_stage <- function(data, treatment, instrument, controls = character(), fixed_effect = "none") {
-  restricted_rhs <- first_stage_nuisance_terms(controls, fixed_effect)
-  restricted <- if (length(restricted_rhs)) {
-    stats::lm(stats::reformulate(restricted_rhs, response = treatment), data = data)
-  } else {
-    stats::lm(stats::as.formula(paste(treatment, "~ 1")), data = data)
-  }
-  full <- stats::lm(first_stage_absorption_formula(treatment, instrument, controls, fixed_effect), data = data)
-  sse_restricted <- stats::deviance(restricted)
-  if (!is.finite(sse_restricted) || sse_restricted <= 0) return(NA_real_)
-  max(0, (sse_restricted - stats::deviance(full)) / sse_restricted)
+first_stage_residual_metrics <- function(
+    data, treatment, instrument, controls = character(), fixed_effect = "none") {
+  residualized <- residualize_iv_variables(
+    data, c(instrument, treatment), controls, fixed_effect
+  )
+  z_resid <- residualized[, instrument]
+  d_resid <- residualized[, treatment]
+  residual_correlation <- stats::cor(z_resid, d_resid)
+  list(
+    instrument = z_resid,
+    treatment = d_resid,
+    correlation = residual_correlation,
+    partial_r_squared = if (is.finite(residual_correlation)) residual_correlation^2 else NA_real_
+  )
 }
 
-estimate_first_stage_absorption_spec <- function(data, specification, treatment, instrument) {
+estimate_first_stage_coefficient <- function(data, specification, treatment, instrument) {
   controls <- unlist(specification$controls[[1]], use.names = FALSE)
   fixed_effect <- specification$fixed_effect[[1]]
   fit <- stats::lm(first_stage_absorption_formula(treatment, instrument, controls, fixed_effect), data = data)
   inference <- clustered_first_stage_inference(fit, instrument, data$state_code_2001)
-  z_resid <- residualize_first_stage_variable(data, instrument, controls, fixed_effect)
-  d_resid <- residualize_first_stage_variable(data, treatment, controls, fixed_effect)
+  list(fit = fit, inference = inference)
+}
 
-  data.frame(
+
+estimate_first_stage_absorption_spec <- function(data, specification, treatment, instrument) {
+  controls <- unlist(specification$controls[[1]], use.names = FALSE)
+  fixed_effect <- specification$fixed_effect[[1]]
+  coefficient <- estimate_first_stage_coefficient(data, specification, treatment, instrument)
+  fit <- coefficient$fit
+  inference <- coefficient$inference
+  residuals <- first_stage_residual_metrics(data, treatment, instrument, controls, fixed_effect)
+
+  summary <- data.frame(
     specification_id = specification$specification_id,
     specification = specification$label,
     sequence = specification$sequence,
@@ -133,11 +145,11 @@ estimate_first_stage_absorption_spec <- function(data, specification, treatment,
     statistic = unname(inference[["statistic"]]),
     p.value = unname(inference[["p.value"]]),
     excluded_instrument_f = unname(inference[["partial_f"]]),
-    partial_r_squared = partial_r_squared_first_stage(data, treatment, instrument, controls, fixed_effect),
-    residual_instrument_sd = stats::sd(z_resid),
-    residual_treatment_sd = stats::sd(d_resid),
-    residual_correlation = stats::cor(z_resid, d_resid),
-    instrument_variance_remaining = stats::var(z_resid) / stats::var(num(data[[instrument]])),
+    partial_r_squared = residuals$partial_r_squared,
+    residual_instrument_sd = stats::sd(residuals$instrument),
+    residual_treatment_sd = stats::sd(residuals$treatment),
+    residual_correlation = residuals$correlation,
+    instrument_variance_remaining = stats::var(residuals$instrument) / stats::var(num(data[[instrument]])),
     n = stats::nobs(fit),
     n_states = length(unique(data$state_code_2001)),
     n_regions = length(unique(data$region)),
@@ -145,19 +157,24 @@ estimate_first_stage_absorption_spec <- function(data, specification, treatment,
     reason = NA_character_,
     stringsAsFactors = FALSE
   )
+  list(
+    summary = summary, fit = fit, inference = inference,
+    instrument_residual = residuals$instrument, treatment_residual = residuals$treatment
+  )
 }
 
-first_stage_state_residual_ranges <- function(data, registry, treatment, instrument) {
-  safe_bind_rows(lapply(seq_len(nrow(registry)), function(i) {
-    spec <- registry[i, , drop = FALSE]
-    controls <- unlist(spec$controls[[1]], use.names = FALSE)
-    fixed_effect <- spec$fixed_effect[[1]]
-    z <- residualize_first_stage_variable(data, instrument, controls, fixed_effect)
-    d <- residualize_first_stage_variable(data, treatment, controls, fixed_effect)
-    tmp <- data.frame(state_code_2001 = data$state_code_2001, z = z, d = d)
+first_stage_state_residual_ranges <- function(data, estimates) {
+  safe_bind_rows(lapply(estimates, function(estimate) {
+    spec_id <- estimate$summary$specification_id[[1L]]
+    tmp <- data.frame(
+      state_code_2001 = data$state_code_2001,
+      z = estimate$instrument_residual,
+      d = estimate$treatment_residual,
+      stringsAsFactors = FALSE
+    )
     safe_bind_rows(lapply(split(tmp, tmp$state_code_2001), function(x) {
       data.frame(
-        specification_id = spec$specification_id,
+        specification_id = spec_id,
         state_code_2001 = x$state_code_2001[[1]],
         n_districts = nrow(x),
         instrument_min = min(x$z), instrument_max = max(x$z),
@@ -174,22 +191,36 @@ first_stage_full_specification <- function(registry) {
   registry[registry$specification_id == "state_fe_expanded_controls", , drop = FALSE]
 }
 
-first_stage_state_deletion <- function(data, specification, treatment, instrument) {
-  full <- estimate_first_stage_absorption_spec(data, specification, treatment, instrument)
+first_stage_state_deletion <- function(
+    data, specification, treatment, instrument, full_estimate = NULL) {
+  if (is.null(full_estimate)) {
+    full_estimate <- estimate_first_stage_absorption_spec(
+      data, specification, treatment, instrument
+    )
+  }
+  full_coefficient <- unname(stats::coef(full_estimate$fit)[instrument])
+  full_f <- unname(full_estimate$inference[["partial_f"]])
   safe_bind_rows(lapply(sort(unique(data$state_code_2001)), function(state) {
     reduced <- data[data$state_code_2001 != state, , drop = FALSE]
-    row <- estimate_first_stage_absorption_spec(reduced, specification, treatment, instrument)
-    row$omitted_state <- state
-    row$estimate_change <- row$estimate - full$estimate
-    row$f_change <- row$excluded_instrument_f - full$excluded_instrument_f
-    row
+    coefficient <- estimate_first_stage_coefficient(reduced, specification, treatment, instrument)
+    estimate <- unname(stats::coef(coefficient$fit)[instrument])
+    partial_f <- unname(coefficient$inference[["partial_f"]])
+    data.frame(
+      specification_id = specification$specification_id,
+      specification = specification$label,
+      treatment = treatment,
+      instrument = instrument,
+      omitted_state = state,
+      estimate = estimate,
+      excluded_instrument_f = partial_f,
+      estimate_change = estimate - full_coefficient,
+      f_change = partial_f - full_f,
+      stringsAsFactors = FALSE
+    )
   }))
 }
 
-first_stage_district_influence <- function(data, specification, treatment, instrument) {
-  controls <- unlist(specification$controls[[1]], use.names = FALSE)
-  fixed_effect <- specification$fixed_effect[[1]]
-  fit <- stats::lm(first_stage_absorption_formula(treatment, instrument, controls, fixed_effect), data = data)
+first_stage_district_influence <- function(data, fit, instrument) {
   dfb <- stats::dfbeta(fit)
   instrument_dfbeta <- if (instrument %in% colnames(dfb)) dfb[, instrument] else rep(NA_real_, nrow(data))
   data.frame(
@@ -203,18 +234,16 @@ first_stage_district_influence <- function(data, specification, treatment, instr
   )
 }
 
-first_stage_vif_diagnostics <- function(data, registry, treatment, instrument) {
+first_stage_vif_diagnostics <- function(estimates) {
   ids <- c(
     "region_fe_census_controls", "region_fe_expanded_controls",
     "state_fe_census_controls", "state_fe_expanded_controls"
   )
   safe_bind_rows(lapply(ids, function(id) {
-    spec <- registry[registry$specification_id == id, , drop = FALSE]
-    controls <- unlist(spec$controls[[1]], use.names = FALSE)
-    fit <- stats::lm(first_stage_absorption_formula(
-      treatment, instrument, controls, spec$fixed_effect[[1]]
-    ), data = data)
-    out <- compute_vif_if_applicable(fit)
+    estimate <- estimates[[match(id, vapply(
+      estimates, function(x) x$summary$specification_id[[1L]], character(1)
+    ))]]
+    out <- compute_vif_if_applicable(estimate$fit)
     out$specification_id <- id
     out
   }))
@@ -231,10 +260,15 @@ diagnose_first_stage_absorption <- function(
 ) {
   data <- prepare_first_stage_absorption_panel(panel, treatment, instrument)
   registry <- first_stage_absorption_registry()
-  summary <- safe_bind_rows(lapply(seq_len(nrow(registry)), function(i) {
+  estimates <- lapply(seq_len(nrow(registry)), function(i) {
     estimate_first_stage_absorption_spec(data, registry[i, , drop = FALSE], treatment, instrument)
-  }))
+  })
+  summary <- safe_bind_rows(lapply(estimates, `[[`, "summary"))
   full_spec <- first_stage_full_specification(registry)
+  full_id <- full_spec$specification_id[[1L]]
+  full_estimate <- estimates[[match(full_id, vapply(
+    estimates, function(x) x$summary$specification_id[[1L]], character(1)
+  ))]]
   structure(
     list(
       summary = summary,
@@ -244,10 +278,12 @@ diagnose_first_stage_absorption <- function(
         n_states = length(unique(data$state_code_2001)),
         n_regions = length(unique(data$region)), stringsAsFactors = FALSE
       ),
-      state_residual_ranges = first_stage_state_residual_ranges(data, registry, treatment, instrument),
-      state_deletion = first_stage_state_deletion(data, full_spec, treatment, instrument),
-      district_influence = first_stage_district_influence(data, full_spec, treatment, instrument),
-      vif = first_stage_vif_diagnostics(data, registry, treatment, instrument)
+      state_residual_ranges = first_stage_state_residual_ranges(data, estimates),
+      state_deletion = first_stage_state_deletion(
+        data, full_spec, treatment, instrument, full_estimate = full_estimate
+      ),
+      district_influence = first_stage_district_influence(data, full_estimate$fit, instrument),
+      vif = first_stage_vif_diagnostics(estimates)
     ),
     class = "emi_first_stage_absorption"
   )
