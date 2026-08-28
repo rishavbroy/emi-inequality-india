@@ -16,11 +16,17 @@ The registry is intentionally not the Cartesian product of every imaginable proj
 
 The `cluster` field is part of that self-describing specification contract. Registry-driven relevance, balance, reduced-form, and Anderson-Rubin inference use the declared cluster variable directly rather than substituting a hard-coded state column. The current registry declares `state_code_2001` throughout, so this is a structural invariant rather than a change to the preferred inference.
 
+The effective-F statistic is computed with the standard `momentfit::MOPtest()` implementation of Montiel Olea and Pflueger (2013). The project uses the simplified TSLS test with the conventional 10% relative-bias tolerance (`tau = 0.10`) and 5% test size, and records the effective F, effective degrees of freedom, critical value, and p-value. The wrapper reconstructs the moment model from the already-fitted canonical `ivreg` formula and exact fitted sample; `ivreg` remains the source of record for 2SLS coefficients and conventional clustered inference.
+
+For the registered state-clustered specifications, `momentfit` uses clustered moment covariance (`vcov = "CL"`) with HC0 and its finite-cluster adjustment. The existing excluded-instrument Wald F deliberately remains the project's HC1 `sandwich::vcovCL()` statistic. The two relevance diagnostics are therefore reported side by side rather than forced to coincide. In a just-identified model the effective F equals the appropriately robust first-stage F when covariance conventions are matched; the test suite verifies that documented identity under unclustered HC0, but the project does not assert equality between its clustered HC0 MOP statistic and HC1 Wald F. Weak-identification-robust Anderson-Rubin inference remains the inferential safeguard when relevance is weak.
+
+MOP effective F is attached only to outcome-defined structural IV specifications because its standard definition uses the structural IV model. Outcome-free absorption ladders and alternative first-stage-only comparisons continue to report their clustered excluded-instrument F and partial R-squared without inventing an outcome solely to obtain an effective F.
+
 ## Diagnostic families
 
 The current registry distinguishes:
 
-- **relevance**: joint excluded-instrument tests, individual first-stage coefficients, and partial R-squared;
+- **relevance**: clustered excluded-instrument Wald tests, Montiel Olea–Pflueger effective F, individual first-stage coefficients, and partial R-squared;
 - **independence evidence**: specification-matched covariate balance plus an omnibus holdout-covariate balance test;
 - **weak-identification-robust inference**: Anderson-Rubin tests and inverted grids for structural IV specifications;
 - **monotonicity evidence**: residualized scalar first-stage shape, isotonic fit, binned means, and state-specific slopes;
