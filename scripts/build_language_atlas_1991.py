@@ -6,6 +6,8 @@ It uses Poppler's positioned text output to verify the fixed 56-page Annexure-IV
 layout and writes raw cell text, conservative integer parses, and an explicit
 review queue. Candidate values are not production-ready until district rows and
 all flagged cells have been reviewed and validated against Census/SHRUG totals.
+For population-validated districts the tool can also emit the first 11 language
+columns from each block's population page, preserving unresolved cells for review.
 """
 
 from __future__ import annotations
@@ -398,12 +400,63 @@ def merge_population_continuations(
     return out
 
 
+def cross_page_serial_evidence(cells: list[dict[str, object]]) -> dict[tuple[int, str], tuple[int, ...]]:
+    """Collect repeated printed district-serial evidence for exact Atlas row labels.
+
+    Annexure IV repeats the district rows on each of its eight language pages.
+    Exact label repetition can therefore recover a dropped serial without fuzzy
+    district matching. Conflicting repeated serials remain conflicts.
+    """
+    observed: dict[tuple[int, str], set[int]] = {}
+    unique_rows = {
+        (int(cell["block"]), int(cell["page"]), int(cell["row_sequence"]),
+         str(cell["row_label_raw"]).strip(), str(cell["serial_candidate"]).strip())
+        for cell in cells
+    }
+    for block, _page, _sequence, label, serial_raw in unique_rows:
+        if not label or label == "INDIA":
+            continue
+        serial = int(serial_raw) if serial_raw else parse_leading_serial(label)
+        if serial is not None:
+            observed.setdefault((block, label), set()).add(serial)
+    return {key: tuple(sorted(values)) for key, values in observed.items()}
+
+
+def reconcile_district_serial(
+    cell: dict[str, object],
+    evidence: dict[tuple[int, str], tuple[int, ...]],
+) -> tuple[int | None, str, str]:
+    """Resolve one Atlas district serial using direct and exact-label evidence."""
+    label = str(cell["row_label_raw"]).strip()
+    serial_column = int(cell["serial_candidate"]) if str(cell["serial_candidate"]).strip() else None
+    serial_label = parse_leading_serial(label)
+    repeated = evidence.get((int(cell["block"]), label), ())
+    repeated_text = ";".join(map(str, repeated))
+
+    if serial_column is not None and serial_label is not None and serial_column != serial_label:
+        return None, "direct_conflict", repeated_text
+    direct = serial_column if serial_column is not None else serial_label
+    direct_source = "serial_column" if serial_column is not None else "label_prefix"
+
+    if direct is not None:
+        # Direct page-1 serial evidence remains primary. Repeated pages are used
+        # to recover a missing serial, not to overturn a directly printed code
+        # because isolated OCR serial errors occur on continuation pages.
+        return direct, direct_source, repeated_text
+    if len(repeated) == 1:
+        return repeated[0], "cross_page_exact_label", repeated_text
+    if len(repeated) > 1:
+        return None, "cross_page_conflict", repeated_text
+    return None, "missing", repeated_text
+
+
 def build_district_population_validation(
     cells: list[dict[str, object]],
     state_crosswalk: dict[str, dict[str, str]],
     pca91: dict[tuple[str, str], int],
 ) -> list[dict[str, object]]:
     rows = merge_population_continuations(cells, state_crosswalk)
+    serial_evidence = cross_page_serial_evidence(cells)
     seen_state_codes: set[str] = set()
     current_state: dict[str, str] | None = None
     candidates: list[dict[str, object]] = []
@@ -417,20 +470,7 @@ def build_district_population_validation(
             seen_state_codes.add(mapped_state["state_code_1991"])
             continue
 
-        serial_column = int(cell["serial_candidate"]) if str(cell["serial_candidate"]).strip() else None
-        serial_label = parse_leading_serial(label)
-        if serial_column is not None and serial_label is not None and serial_column != serial_label:
-            serial = None
-            serial_source = "conflict"
-        elif serial_column is not None:
-            serial = serial_column
-            serial_source = "serial_column"
-        elif serial_label is not None:
-            serial = serial_label
-            serial_source = "label_prefix"
-        else:
-            serial = None
-            serial_source = "missing"
+        serial, serial_source, cross_page_serials = reconcile_district_serial(cell, serial_evidence)
 
         state_code = current_state["state_code_1991"] if current_state else ""
         state_name = current_state["state_name_1991"] if current_state else ""
@@ -458,6 +498,7 @@ def build_district_population_validation(
             "state_name_1991": state_name,
             "district_code_1991": district_code,
             "serial_source": serial_source,
+            "cross_page_serials": cross_page_serials,
             "atlas_population_raw": cell["raw_value"],
             "atlas_population_candidate": "" if atlas_population is None else atlas_population,
             "pca91_population": "" if pca_population is None else pca_population,
@@ -490,7 +531,7 @@ def build_district_population_validation(
         key = (str(row["state_code_1991"]), str(row["district_code_1991"]))
         if not row["state_code_1991"]:
             identity_status = "missing_state_context"
-        elif row["serial_source"] == "conflict":
+        elif row["serial_source"] in {"direct_conflict", "cross_page_conflict"}:
             identity_status = "serial_conflict"
         elif not row["district_code_1991"]:
             identity_status = "missing_district_serial"
@@ -540,6 +581,67 @@ def district_population_review_rows(
         review.append(row)
     return review
 
+def build_validated_page0_language_cells(
+    cells: list[dict[str, object]],
+    district_validation: list[dict[str, object]],
+) -> list[dict[str, object]]:
+    """Bind page-0 language cells to independently population-validated districts."""
+    page0 = {}
+    for cell in cells:
+        if cell["cell_kind"] != "language_speakers" or int(cell["page_offset"]) != 0:
+            continue
+        key = (int(cell["block"]), int(cell["page"]), int(cell["row_sequence"]), int(cell["atlas_column"]))
+        if key in page0:
+            raise ValueError(f"Duplicate Atlas page-0 language cell at {key}")
+        page0[key] = cell
+
+    out: list[dict[str, object]] = []
+    validated = [row for row in district_validation if row["promotion_status"] == "population_validated_candidate"]
+    for district in validated:
+        block = int(district["block"])
+        page = int(district["page"])
+        row_sequence = int(district["row_sequence_end"])
+        for atlas_column in expected_columns(0):
+            key = (block, page, row_sequence, atlas_column)
+            if key not in page0:
+                raise ValueError(f"Missing Atlas page-0 language cell at {key}")
+            cell = page0[key]
+            parse_status = str(cell["parse_status"])
+            out.append({
+                "state_code_1991": district["state_code_1991"],
+                "district_code_1991": district["district_code_1991"],
+                "state_name_1991": district["state_name_1991"],
+                "row_label_raw": district["row_label_raw"],
+                "atlas_population_candidate": district["atlas_population_candidate"],
+                "pca91_population": district["pca91_population"],
+                "population_relative_diff": district["population_relative_diff"],
+                "block": block,
+                "page": page,
+                "row_sequence": row_sequence,
+                "atlas_column": atlas_column,
+                "raw_value": cell["raw_value"],
+                "speaker_count_candidate": cell["speaker_count_candidate"],
+                "parse_status": parse_status,
+                "language_cell_status": (
+                    "candidate_value"
+                    if parse_status in {"parsed", "normalized_ocr_zero"}
+                    else "review_required"
+                ),
+            })
+
+    expected_n = len(validated) * len(expected_columns(0))
+    if len(out) != expected_n:
+        raise ValueError(f"Expected {expected_n} validated page-0 language cells, found {len(out)}")
+    keys = [(row["state_code_1991"], row["district_code_1991"], row["atlas_column"]) for row in out]
+    if len(keys) != len(set(keys)):
+        raise ValueError("Validated Atlas page-0 language cells are not unique by district and column")
+    return out
+
+
+def page0_language_review_rows(rows: list[dict[str, object]]) -> list[dict[str, object]]:
+    return [dict(row) for row in rows if row["language_cell_status"] == "review_required"]
+
+
 def write_csv(path: Path, rows: list[dict[str, object]], fields: list[str] | None = None) -> None:
     if not rows and fields is None:
         raise ValueError("fields are required when writing an empty CSV")
@@ -584,6 +686,32 @@ def self_test() -> None:
         {("02", "01"): 50},
     )
     assert validated[0]["promotion_status"] == "population_validated_candidate"
+    toy_language_cells = list(toy_cells) + [
+        {
+            "cell_kind": "language_speakers", "page_offset": 0, "block": 1, "page": 205,
+            "row_sequence": 2, "atlas_column": column, "raw_value": str(column),
+            "speaker_count_candidate": column, "parse_status": "parsed",
+        }
+        for column in expected_columns(0)
+    ]
+    promoted = build_validated_page0_language_cells(toy_language_cells, validated)
+    assert len(promoted) == 11
+    assert all(row["language_cell_status"] == "candidate_value" for row in promoted)
+    serial_cells = [
+        {"block": 1, "page": 205, "row_sequence": 2, "row_label_raw": "DHUBRI", "serial_candidate": ""},
+        {"block": 1, "page": 207, "row_sequence": 2, "row_label_raw": "DHUBRI", "serial_candidate": 1},
+        {"block": 2, "page": 213, "row_sequence": 4, "row_label_raw": "LOHARDAGA", "serial_candidate": 3},
+        {"block": 2, "page": 215, "row_sequence": 4, "row_label_raw": "LOHARDAGA", "serial_candidate": 36},
+    ]
+    serial_evidence = cross_page_serial_evidence(serial_cells)
+    recovered = reconcile_district_serial(serial_cells[0], serial_evidence)
+    assert recovered == (1, "cross_page_exact_label", "1")
+    conflicted = reconcile_district_serial(
+        {"block": 2, "row_label_raw": "LOHARDAGA", "serial_candidate": ""},
+        serial_evidence,
+    )
+    assert conflicted == (None, "cross_page_conflict", "3;36")
+
     continued = merge_population_continuations(
         [
             {"cell_kind": "district_population", "page_offset": 0, "block": 1, "page": 205, "row_sequence": 1,
@@ -609,6 +737,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--state-crosswalk", type=Path)
     parser.add_argument("--district-output", type=Path)
     parser.add_argument("--population-review-output", type=Path)
+    parser.add_argument("--page0-language-output", type=Path)
+    parser.add_argument("--page0-language-review-output", type=Path)
     parser.add_argument("--pdftotext", default="pdftotext")
     parser.add_argument("--self-test", action="store_true")
     args = parser.parse_args(argv)
@@ -636,7 +766,12 @@ def main(argv: list[str] | None = None) -> int:
     if args.layout_output is not None:
         write_csv(args.layout_output, layout)
     district_validation = None
-    if any(value is not None for value in (args.pca_zip, args.state_crosswalk, args.district_output, args.population_review_output)):
+    language_cells = None
+    district_options = (
+        args.pca_zip, args.state_crosswalk, args.district_output, args.population_review_output,
+        args.page0_language_output, args.page0_language_review_output,
+    )
+    if any(value is not None for value in district_options):
         if args.pca_zip is None or args.state_crosswalk is None or args.district_output is None or args.population_review_output is None:
             parser.error("--pca-zip, --state-crosswalk, --district-output, and --population-review-output must be supplied together")
         state_crosswalk = read_state_crosswalk(args.state_crosswalk)
@@ -648,6 +783,16 @@ def main(argv: list[str] | None = None) -> int:
             district_population_review_rows(district_validation, pca91),
             fields=list(district_validation[0]),
         )
+        if (args.page0_language_output is None) != (args.page0_language_review_output is None):
+            parser.error("--page0-language-output and --page0-language-review-output must be supplied together")
+        if args.page0_language_output is not None:
+            language_cells = build_validated_page0_language_cells(cells, district_validation)
+            write_csv(args.page0_language_output, language_cells)
+            write_csv(
+                args.page0_language_review_output,
+                page0_language_review_rows(language_cells),
+                fields=list(language_cells[0]),
+            )
     unparsed = sum(row["review_type"] == "unparsed_cell" for row in review)
     blank = sum(row["review_type"] == "blank_cell" for row in review)
     page_contracts = sum(row["review_type"] == "page_row_contract" for row in review)
@@ -659,6 +804,9 @@ def main(argv: list[str] | None = None) -> int:
     if district_validation is not None:
         validated = sum(row["promotion_status"] == "population_validated_candidate" for row in district_validation)
         message += f"; {validated}/{len(district_validation)} district rows population-validated"
+    if language_cells is not None:
+        language_review = sum(row["language_cell_status"] == "review_required" for row in language_cells)
+        message += f"; {len(language_cells) - language_review}/{len(language_cells)} page-0 language cells parsed"
     print(message)
     return 0
 
