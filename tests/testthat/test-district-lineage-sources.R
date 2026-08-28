@@ -1084,6 +1084,35 @@ test_that("reviewed NSS-75 aliases complete source identity without granting anc
   )
 })
 
+test_that("Andhra Pradesh Census concordance records all 23 district continuities", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
+  events <- read_admin_events(
+    read.csv(
+      file.path(root, "data", "metadata", "district_admin_events.csv"),
+      stringsAsFactors = FALSE
+    )
+  )
+  rows <- events[
+    events$source_id %in% "census2011_andhra_admin_atlas",
+    ,
+    drop = FALSE
+  ]
+
+  expect_equal(nrow(rows), 23L)
+  expect_true(all(rows$status == "accepted"))
+  expect_true(all(rows$event_type == "documented_continuity"))
+  expect_true(all(rows$effective_date == "2011-03-01"))
+  expect_true(all(is.na(rows$share)))
+  expect_setequal(
+    paste(rows$from_unit, rows$to_unit, sep = "->"),
+    paste(
+      sprintf("pc2001__28__%02d", 1:23),
+      sprintf("pc2011__28__%03d", 532:554),
+      sep = "->"
+    )
+  )
+})
+
 test_that("tracked Telangana parentage records only single-parent ancestry", {
   root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
   events <- read_admin_events(

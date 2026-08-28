@@ -1,6 +1,6 @@
 source_id,citation,path_or_url,accessed
 census2001_c16,Census of India 2001 C-16 mother-tongue tables,data/raw/census_2001/languages/C16,2026-07-22
-datameet_census_2001_districts,"DataMeet maps; Census of India Administrative Atlas",data/raw/datameet/Districts/Census_2001/2001_Dist.shp,2026-07-26
+datameet_census_2001_districts,DataMeet maps; Census of India Administrative Atlas,data/raw/datameet/Districts/Census_2001/2001_Dist.shp,2026-07-26
 shrug_pc_keys,Development Data Lab SHRUG Population Census location keys,data/raw/shrug/shrug-pc-keys-csv,2026-07-22
 shrug_pc11_district_geometry,Development Data Lab SHRUG PC11 district polygons,data/raw/shrug/open-polygons/shrug-pc11dist-poly-gpkg/district.gpkg,2026-07-22
 shrug_open_polygons,Development Data Lab SHRUG open polygons,data/raw/shrug/open-polygons,2026-07-22
@@ -50,4 +50,5 @@ official_multi_parent_exclusion_2026,"Directorate of Census Operations Assam and
 lgd_mod_districts_2001_2011,"Ministry of Panchayati Raj, Local Government Directory, All Districts of India modification report, 01 January 2001 through 01 January 2011",data/raw/local_government_directory/modifications_01-01-2001_01-01-2011/districts.xls,2026-07-24
 official_simdega_gumla_history_2026,"District Administration Gumla, About District; Government of India MSME and Jharkhand Space Applications Centre district profiles documenting that Simdega was carved wholly from Gumla on 30 April 2001",https://gumla.nic.in/about-district/; https://dcmsme.gov.in/dips/2016-17/Simdega.pdf; https://jsac.jharkhand.gov.in/district_profile/Simdega.pdf,2026-07-24
 official_jamtara_dumka_history_2026,"District Administration Jamtara, district profile and district-at-a-glance pages documenting creation of Jamtara by separation from Dumka on 26 April 2001",https://jamtara.nic.in/about-district/; https://jamtara.nic.in/district-at-a-glance/,2026-08-23
-official_ashoknagar_guna_history_2026,"District Administration Ashoknagar and District Administration Guna pages documenting that Ashoknagar remained part of Guna until its creation as a separate district on 15 August 2003",https://ashoknagar.nic.in/en/profile/; https://guna.nic.in/%E0%A4%87%E0%A4%A4%E0%A4%BF%E0%A4%B9%E0%A4%BE%E0%A4%B8/,2026-08-23
+official_ashoknagar_guna_history_2026,District Administration Ashoknagar and District Administration Guna pages documenting that Ashoknagar remained part of Guna until its creation as a separate district on 15 August 2003,https://ashoknagar.nic.in/en/profile/; https://guna.nic.in/%E0%A4%87%E0%A4%A4%E0%A4%BF%E0%A4%B9%E0%A4%BE%E0%A4%B8/,2026-08-23
+census2011_andhra_admin_atlas,"Directorate of Census Operations, Andhra Pradesh, Census of India 2011 Administrative Atlas: Andhra Pradesh, Volume I",https://censusindia.gov.in/nada/index.php/catalog/12,2026-08-27

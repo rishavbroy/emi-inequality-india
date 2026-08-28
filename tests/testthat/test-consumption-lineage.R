@@ -521,6 +521,52 @@ test_that("administrative lineage enrichment permits an empty event graph", {
   expect_equal(out$target_unit_2001, "pc2001__20__04")
 })
 
+test_that("reviewed Census continuity completes a single-parent modern descendant", {
+  admin_2001 <- data.frame(
+    unit_id = "pc2001__28__01",
+    state_code = "28", district_code = "01",
+    state_std = "andhra pradesh", district_std = "adilabad",
+    stringsAsFactors = FALSE
+  )
+  admin_2011 <- data.frame(
+    unit_id = "pc2011__28__532",
+    state_code = "28", district_code = "532",
+    district_std = "adilabad",
+    stringsAsFactors = FALSE
+  )
+  reference <- data.frame(
+    unit_id = "lgd_district__699",
+    level = "district",
+    state_code = "36", district_code = "699",
+    state_std = "telangana", district_std = "komaram bheem asifabad",
+    reference_vintage = "current_lgd",
+    stringsAsFactors = FALSE
+  )
+  events <- data.frame(
+    from_unit = "pc2011__28__532",
+    to_unit = "lgd_district__699",
+    status = "accepted",
+    stringsAsFactors = FALSE
+  )
+  transition <- data.frame(
+    state_code_2011 = "28", district_code_2011 = "532",
+    state_code_2001 = "28", district_code_2001 = "01",
+    population_share_to_2001 = 1,
+    shrid_coverage = 1,
+    mapping_class = "reviewed_single_parent_ancestry",
+    stringsAsFactors = FALSE
+  )
+
+  out <- consumption_admin_transition_lineage(
+    reference, events, admin_2001, admin_2011, transition
+  )
+
+  expect_equal(nrow(out), 1L)
+  expect_equal(out$target_unit_2001, "pc2001__28__01")
+  expect_match(out$lineage_basis, "accepted_admin_event_parentage")
+  expect_match(out$lineage_basis, "deterministic_2011_to_2001")
+})
+
 test_that("lineage status coverage attributes source mass without allocation double counting", {
   x <- data.frame(
     survey_id = "wave",
