@@ -313,12 +313,12 @@ transition_source_key <- function(x) {
 
 #' Combine district transitions by evidence priority
 #'
-#' Valid LGD Census-code links retain priority over locality-derived SHRUG
-#' containment. A reviewed one-parent ancestry edge replaces an LGD row only
-#' when the LGD target is absent from the authoritative Census-2001 registry;
-#' this repairs historical-code artifacts without changing valid production
-#' transitions. Invalid LGD targets without reviewed ancestry remain in the
-#' combined table so the final registry-validity gate fails loudly.
+#' Valid LGD Census-code links retain highest priority. Reviewed one-parent
+#' ancestry is next: it fills sources with no LGD code bridge and replaces an
+#' LGD row only when that row points outside the authoritative Census-2001
+#' registry. Locality-derived SHRUG containment is the fallback. Invalid LGD
+#' targets without reviewed ancestry remain in the combined table so the final
+#' registry-validity gate fails loudly.
 combine_district_transitions_2001_2011 <- function(
   shrug_transition, lgd_transition, reviewed_transition = data.frame(),
   admin_2001 = data.frame()
@@ -327,27 +327,35 @@ combine_district_transitions_2001_2011 <- function(
   lgd <- safe_df(lgd_transition)
   reviewed <- safe_df(reviewed_transition)
 
-  reviewed_use <- reviewed[0, , drop = FALSE]
+  lgd_keys <- if (nrow(lgd)) transition_source_key(lgd) else character()
+  reviewed_keys <- if (nrow(reviewed)) transition_source_key(reviewed) else character()
+
+  reviewed_use <- reviewed[
+    if (nrow(reviewed)) !reviewed_keys %in% lgd_keys else logical(),
+    , drop = FALSE
+  ]
+
   if (nrow(lgd) && nrow(reviewed) && nrow(safe_df(admin_2001))) {
     valid_targets <- unique(plain_chr(safe_df(admin_2001)$unit_id %||% character()))
     invalid_lgd <- !transition_target_unit_2001(lgd) %in% valid_targets
-    invalid_keys <- transition_source_key(lgd[invalid_lgd, , drop = FALSE])
-    reviewed_use <- reviewed[
-      transition_source_key(reviewed) %in% invalid_keys,
+    invalid_keys <- lgd_keys[invalid_lgd]
+    reviewed_replacements <- reviewed[
+      reviewed_keys %in% invalid_keys,
       , drop = FALSE
     ]
-    replacement_keys <- transition_source_key(reviewed_use)
+    replacement_keys <- transition_source_key(reviewed_replacements)
     if (length(replacement_keys)) {
       lgd <- lgd[
-        !(invalid_lgd & transition_source_key(lgd) %in% replacement_keys),
+        !(invalid_lgd & lgd_keys %in% replacement_keys),
         , drop = FALSE
       ]
+      reviewed_use <- safe_bind_rows(list(reviewed_use, reviewed_replacements))
     }
   }
 
   preferred_keys <- unique(c(
-    if (nrow(reviewed_use)) transition_source_key(reviewed_use) else character(),
-    if (nrow(lgd)) transition_source_key(lgd) else character()
+    if (nrow(lgd)) transition_source_key(lgd) else character(),
+    if (nrow(reviewed_use)) transition_source_key(reviewed_use) else character()
   ))
   if (nrow(shrug) && length(preferred_keys)) {
     shrug <- shrug[!transition_source_key(shrug) %in% preferred_keys, , drop = FALSE]

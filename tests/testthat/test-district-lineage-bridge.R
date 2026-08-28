@@ -671,6 +671,41 @@ test_that("reviewed single-parent ancestry can enter the preferred panel", {
   expect_identical(out$mapping_class, "deterministic_2011_to_2001")
 })
 
+test_that("reviewed ancestry fills sources without an LGD bridge before SHRUG", {
+  admin_2001 <- data.frame(
+    unit_id = "pc2001__28__01",
+    stringsAsFactors = FALSE
+  )
+  shrug <- data.frame(
+    state_code_2011 = "28", district_code_2011 = "532",
+    state_code_2001 = "28", district_code_2001 = "01",
+    population_share_to_2001 = 0.9967,
+    area_share_to_2001 = 0.9874,
+    shrid_coverage = 0.9863,
+    mapping_class = "non_nested_or_incomplete",
+    source_id = NA_character_,
+    stringsAsFactors = FALSE
+  )
+  reviewed <- data.frame(
+    state_code_2011 = "28", district_code_2011 = "532",
+    state_code_2001 = "28", district_code_2001 = "01",
+    population_share_to_2001 = 1,
+    area_share_to_2001 = 1,
+    shrid_coverage = 1,
+    mapping_class = "reviewed_single_parent_ancestry",
+    source_id = "census2011_andhra_admin_atlas",
+    stringsAsFactors = FALSE
+  )
+
+  out <- combine_district_transitions_2001_2011(
+    shrug, data.frame(), reviewed, admin_2001 = admin_2001
+  )
+
+  expect_equal(nrow(out), 1L)
+  expect_identical(out$mapping_class, "reviewed_single_parent_ancestry")
+  expect_identical(transition_target_unit_2001(out), "pc2001__28__01")
+})
+
 test_that("reviewed ancestry does not replace a valid LGD Census-code transition", {
   admin_2001 <- data.frame(
     unit_id = c("pc2001__35__01", "pc2001__35__02"),
