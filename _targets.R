@@ -782,6 +782,18 @@ core_pipeline_targets <- list(
     format = "file"
   ),
   tar_target(
+    historical_vanneman_liu_alias_review_candidates,
+    {
+      raw_data_preflight
+      vanneman_liu_alias_review_candidates(historical_vanneman_panel4_dist91_crosswalk, paths)
+    }
+  ),
+  tar_target(
+    diag_ext_historical_vanneman_liu_alias_review_candidates,
+    save_vanneman_liu_alias_review_candidates(historical_vanneman_liu_alias_review_candidates),
+    format = "file"
+  ),
+  tar_target(
     district_lineage,
     build_district_lineage(
       district_lineage_sources,

@@ -11,8 +11,84 @@ liu_vanneman_benchmark_paths <- function(paths = build_paths()) {
     vanneman_crosswalk = file.path(root, "Vanneman_district_crosswalk.dta"),
     panel4_copy = file.path(root, "panel4_lst.data"),
     pca1991_crosswalk = file.path(root, "PCA_census1991_dist_match.dta"),
-    pca2011_crosswalk = file.path(root, "PCA_census2011_dist_match.dta")
+    pca2011_crosswalk = file.path(root, "PCA_census2011_dist_match.dta"),
+    vanneman_dictionary = file.path(root, "dm-Stata/lst-dm-01a-Vanneman_dictionary.dct"),
+    clean_vanneman_do = file.path(root, "dm-Stata/lst-dm-01a-clean_Vanneman_data.do"),
+    pca_1961_1991_do = file.path(root, "dm-Stata/lst-dm-01b-make_pca_1961_1991.do"),
+    pca_1961_2011_do = file.path(root, "dm-Stata/lst-dm-01d-make_pca_1961_2011.do")
   )
+}
+
+
+liu_vanneman_construction_contract <- function(paths = build_paths()) {
+  files <- liu_vanneman_benchmark_paths(paths)
+  required <- c("vanneman_dictionary", "clean_vanneman_do", "pca_1961_1991_do", "pca_1961_2011_do")
+  missing <- files[required][!file.exists(files[required])]
+  if (length(missing)) {
+    stop("Liu et al. Vanneman construction contract is missing files: ", paste(missing, collapse = ", "), call. = FALSE)
+  }
+  clean <- paste(readLines(files[["clean_vanneman_do"]], warn = FALSE), collapse = "\n")
+  pca_early <- paste(readLines(files[["pca_1961_1991_do"]], warn = FALSE), collapse = "\n")
+  pca_all <- paste(readLines(files[["pca_1961_2011_do"]], warn = FALSE), collapse = "\n")
+  dictionary <- paste(readLines(files[["vanneman_dictionary"]], warn = FALSE), collapse = "\n")
+
+  checks <- c(
+    dictionary_targets_panel = grepl("panel4", dictionary, ignore.case = TRUE),
+    stable_id_merge = grepl("merge 1:1 state_id dist_id using Data/Source/PCA/Vanneman_district_crosswalk\\.dta", clean),
+    early_builder_keeps_vanneman_ids = grepl("rename state_id_[[:space:]]+st_code", pca_early) &&
+      grepl("rename dist_id_[[:space:]]+dist_code", pca_early),
+    six_census_appends_early_panel = grepl("append using Data/Derived/PCA/pca_1961_1991\\.dta", pca_all),
+    six_census_rebuilds_harmonized_ids = grepl("egen state_id = group\\(statename_temp\\)", pca_all) &&
+      grepl("egen district_id = group\\(state_id dtname_temp\\)", pca_all)
+  )
+  data.frame(
+    check = names(checks),
+    passed = unname(checks),
+    interpretation = c(
+      "Dictionary explicitly targets the bundled Vanneman panel source.",
+      "Published cleaning code merges the 339-row name crosswalk 1:1 on Vanneman stable state/district IDs.",
+      "The 1961-1991 builder carries Vanneman stable IDs forward as its state/district codes.",
+      "The six-census builder appends the already-cleaned 1961-1991 panel before later harmonization.",
+      "The six-census builder creates a separate harmonized geography from normalized state/district names."
+    ),
+    stringsAsFactors = FALSE
+  )
+}
+
+vanneman_liu_alias_review_candidates <- function(panel_dist91_crosswalk, paths = build_paths()) {
+  panel <- safe_df(panel_dist91_crosswalk)
+  required <- c("panel_unit_id", "mapping_class", "dist91_state_id", "district_label_1991")
+  missing <- setdiff(required, names(panel))
+  if (length(missing)) {
+    stop("Vanneman panel-to-dist91 crosswalk lacks fields for Liu alias review: ", paste(missing, collapse = ", "), call. = FALSE)
+  }
+  files <- liu_vanneman_benchmark_paths(paths)
+  external <- read_liu_vanneman_crosswalk(files[["vanneman_crosswalk"]])
+  vanneman_files <- vanneman_historical_paths(paths)
+  dist91 <- vanneman_dist91_geography_inventory(vanneman_files[["dist91"]])
+
+  review <- panel[panel$mapping_class == "label_review_required", , drop = FALSE]
+  if (!nrow(review)) return(review)
+  idx <- match(review$panel_unit_id, external$panel_unit_id)
+  if (anyNA(idx)) stop("Liu et al. crosswalk does not cover all Vanneman label-review IDs.", call. = FALSE)
+  review$liu_harmonized_name <- as.character(external$dist_name_david[idx])
+  review$liu_label_key <- canonicalize_district_name(review$liu_harmonized_name)
+
+  unique_match <- lapply(seq_len(nrow(review)), function(i) {
+    cand <- dist91[
+      dist91$dist91_state_id == review$dist91_state_id[[i]] &
+        dist91$dist91_label_key == review$liu_label_key[[i]],
+      , drop = FALSE
+    ]
+    if (nrow(cand) != 1L || identical(cand$dist91_district_id[[1L]], "00")) {
+      return(c(NA_character_, NA_character_, "manual_review"))
+    }
+    c(cand$dist91_district_id[[1L]], cand$dist91_district_label[[1L]], "external_unique_alias_candidate")
+  })
+  matched <- do.call(rbind, unique_match)
+  colnames(matched) <- c("liu_candidate_dist91_district_id", "liu_candidate_dist91_label", "liu_alias_review_status")
+  out <- cbind(review, as.data.frame(matched, stringsAsFactors = FALSE))
+  out[order(out$panel_unit_id), , drop = FALSE]
 }
 
 read_liu_vanneman_crosswalk <- function(path) {
@@ -139,6 +215,10 @@ build_vanneman_liu_geography_benchmark <- function(panel_geography, paths = buil
     )
   )
 
+  construction_contract <- liu_vanneman_construction_contract(paths)
+  if (any(!construction_contract$passed)) {
+    stop("Liu et al. Vanneman construction scripts do not satisfy the documented geography contract.", call. = FALSE)
+  }
   pca_summary <- summarize_liu_pca1991_crosswalk(files[["pca1991_crosswalk"]])
   summary <- rbind(
     data.frame(
@@ -164,7 +244,8 @@ build_vanneman_liu_geography_benchmark <- function(panel_geography, paths = buil
 
   list(
     panel_comparison = panel[order(panel$vanneman_state_id, panel$vanneman_district_id), , drop = FALSE],
-    source_summary = summary
+    source_summary = summary,
+    construction_contract = construction_contract
   )
 }
 
@@ -174,9 +255,18 @@ save_vanneman_liu_geography_benchmark <- function(
   dir.create(directory, recursive = TRUE, showWarnings = FALSE)
   paths <- c(
     panel_comparison = file.path(directory, "vanneman_liu_geography_benchmark.csv"),
-    source_summary = file.path(directory, "vanneman_liu_geography_benchmark_summary.csv")
+    source_summary = file.path(directory, "vanneman_liu_geography_benchmark_summary.csv"),
+    construction_contract = file.path(directory, "vanneman_liu_construction_contract.csv")
   )
   write_diagnostic_csv(x$panel_comparison, paths[["panel_comparison"]])
   write_diagnostic_csv(x$source_summary, paths[["source_summary"]])
+  write_diagnostic_csv(x$construction_contract, paths[["construction_contract"]])
   unname(paths)
+}
+
+
+save_vanneman_liu_alias_review_candidates <- function(
+    x,
+    path = "outputs/diagnostics/extended/instrument_relevance/vanneman_liu_alias_review_candidates.csv") {
+  write_diagnostic_csv(x, path)
 }

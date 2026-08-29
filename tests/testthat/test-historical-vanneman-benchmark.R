@@ -1,7 +1,30 @@
+liu_benchmark_write_construction_contract <- function(raw_root) {
+  dm <- file.path(raw_root, "dm-Stata")
+  dir.create(dm, recursive = TRUE, showWarnings = FALSE)
+  writeLines("dictionary using Data/Source/PCA/panel4.data {", file.path(dm, "lst-dm-01a-Vanneman_dictionary.dct"))
+  writeLines(
+    "merge 1:1 state_id dist_id using Data/Source/PCA/Vanneman_district_crosswalk.dta",
+    file.path(dm, "lst-dm-01a-clean_Vanneman_data.do")
+  )
+  writeLines(
+    c("rename state_id_ st_code", "rename dist_id_ dist_code"),
+    file.path(dm, "lst-dm-01b-make_pca_1961_1991.do")
+  )
+  writeLines(
+    c(
+      "append using Data/Derived/PCA/pca_1961_1991.dta",
+      "egen state_id = group(statename_temp)",
+      "egen district_id = group(state_id dtname_temp)"
+    ),
+    file.path(dm, "lst-dm-01d-make_pca_1961_2011.do")
+  )
+}
+
 test_that("Liu Vanneman benchmark preserves stable IDs without importing PCA geography IDs", {
   td <- tempfile(); dir.create(td)
   raw_root <- file.path(td, "data/raw/maggieliuDataCodeClimate2023")
   dir.create(raw_root, recursive = TRUE)
+  liu_benchmark_write_construction_contract(raw_root)
 
   haven::write_dta(
     data.frame(
@@ -67,6 +90,7 @@ test_that("Liu benchmark retains missing external panel copies as benchmark QA r
   td <- tempfile(); dir.create(td)
   raw_root <- file.path(td, "data/raw/maggieliuDataCodeClimate2023")
   dir.create(raw_root, recursive = TRUE)
+  liu_benchmark_write_construction_contract(raw_root)
 
   haven::write_dta(
     data.frame(
@@ -142,4 +166,67 @@ test_that("Liu benchmark requires exactly the canonical Vanneman stable-ID unive
     build_vanneman_liu_geography_benchmark(panel, paths),
     "does not cover exactly the current stable panel IDs"
   )
+})
+
+
+test_that("Liu construction scripts document stable Vanneman IDs before separate six-census harmonization", {
+  td <- tempfile(); dir.create(td)
+  raw_root <- file.path(td, "data/raw/maggieliuDataCodeClimate2023")
+  liu_benchmark_write_construction_contract(raw_root)
+  paths <- list(root = td); class(paths) <- "emi_paths"
+
+  contract <- liu_vanneman_construction_contract(paths)
+  expect_true(all(contract$passed))
+  expect_match(
+    contract$interpretation[contract$check == "stable_id_merge"],
+    "1:1"
+  )
+  expect_match(
+    contract$interpretation[contract$check == "six_census_rebuilds_harmonized_ids"],
+    "separate harmonized geography"
+  )
+})
+
+test_that("Liu alias review proposes only unique external-name matches and never promotes them", {
+  td <- tempfile(); dir.create(td)
+  raw_root <- file.path(td, "data/raw/maggieliuDataCodeClimate2023")
+  dir.create(raw_root, recursive = TRUE)
+  liu_benchmark_write_construction_contract(raw_root)
+  haven::write_dta(
+    data.frame(
+      state_id = c(2, 2), dist_id = c(3, 4),
+      dist_name_Vanneman = c("Visakhapatnam", "East Godavari"),
+      state_name_Vanneman = c("Andhra Pradesh", "Andhra Pradesh"),
+      state_name_david = c("Andhra Pradesh", "Andhra Pradesh"),
+      dist_name_david = c("Vishakhapatnam", "No Match"),
+      state_dist = c(203, 204),
+      stringsAsFactors = FALSE
+    ),
+    file.path(raw_root, "Vanneman_district_crosswalk.dta")
+  )
+
+  vanneman_root <- file.path(td, "data/raw/census_1961-91/vanneman_1961-91/data_archived")
+  dir.create(vanneman_root, recursive = TRUE)
+  con <- gzfile(file.path(vanneman_root, "dist91.data.gz"), "wt")
+  writeLines(c(
+    "0203000912Vishakhapatnam",
+    "0204000912East Godavari"
+  ), con)
+  close(con)
+
+  panel <- data.frame(
+    panel_unit_id = c("0203", "0204"),
+    mapping_class = c("label_review_required", "label_review_required"),
+    dist91_state_id = c("02", "02"),
+    district_label_1991 = c("Vishakhapatnam", "East Godavari"),
+    preferred_pretrend_eligible = c(FALSE, FALSE),
+    stringsAsFactors = FALSE
+  )
+  paths <- list(root = td); class(paths) <- "emi_paths"
+  out <- vanneman_liu_alias_review_candidates(panel, paths)
+
+  expect_equal(out$liu_alias_review_status, c("external_unique_alias_candidate", "manual_review"))
+  expect_equal(out$liu_candidate_dist91_district_id[[1]], "03")
+  expect_true(is.na(out$liu_candidate_dist91_district_id[[2]]))
+  expect_false(any(out$preferred_pretrend_eligible))
 })
