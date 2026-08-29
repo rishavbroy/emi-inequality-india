@@ -245,3 +245,25 @@ test_that("historical balance sampling fails clearly on noncanonical predictor c
     fixed = TRUE
   )
 })
+
+
+test_that("historical weighted inference helper preserves clustered standardized-effect contract", {
+  set.seed(591)
+  n <- 80L
+  x <- data.frame(
+    predictor = stats::rnorm(n),
+    outcome = stats::rnorm(n),
+    population = sample(100:1000, n, replace = TRUE),
+    state = rep(sprintf("%02d", 1:8), each = 10),
+    stringsAsFactors = FALSE
+  )
+  out <- historical_weighted_term_inference(
+    x, "predictor", "outcome", "population", "state", "state"
+  )
+  expect_true(all(is.finite(unlist(out[c(
+    "estimate", "std.error", "p.value", "standardized_effect"
+  )]))))
+  expect_equal(out$n, n)
+  expect_equal(out$n_states, 8L)
+  expect_equal(out$population_weight, sum(x$population))
+})

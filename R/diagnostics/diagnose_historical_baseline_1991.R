@@ -72,6 +72,80 @@ historical_weighted_sd <- function(x, weight) {
   sqrt(unname(stats::cov.wt(cbind(x[keep]), wt = weight[keep])$cov[1L, 1L]))
 }
 
+historical_weighted_term_inference <- function(
+    data, predictor, outcome, weight, state, fixed_effect = c("none", "state")) {
+  fixed_effect <- match.arg(fixed_effect)
+  x <- safe_df(data)
+  needed <- c(predictor, outcome, weight, state)
+  missing <- setdiff(needed, names(x))
+  if (length(missing)) {
+    stop("Historical weighted inference lacks columns: ", paste(missing, collapse = ", "), call. = FALSE)
+  }
+
+  rhs <- c(
+    predictor,
+    if (fixed_effect == "state") paste0("factor(", state, ")") else character()
+  )
+  fit <- stats::lm(
+    stats::reformulate(rhs, response = outcome),
+    data = x,
+    weights = num(x[[weight]])
+  )
+  inference <- clustered_lm_term_inference(fit, predictor, x[[state]])
+  estimate <- unname(stats::coef(fit)[[predictor]])
+  predictor_sd <- historical_weighted_sd(x[[predictor]], x[[weight]])
+  outcome_sd <- historical_weighted_sd(x[[outcome]], x[[weight]])
+  standardized <- if (
+      is.finite(estimate) && is.finite(predictor_sd) &&
+      is.finite(outcome_sd) && outcome_sd > 0) {
+    estimate * predictor_sd / outcome_sd
+  } else {
+    NA_real_
+  }
+
+  list(
+    estimate = estimate,
+    std.error = unname(inference[["std.error"]]),
+    p.value = unname(inference[["p.value"]]),
+    standardized_effect = standardized,
+    n = stats::nobs(fit),
+    n_states = length(unique(x[[state]])),
+    population_weight = sum(num(x[[weight]]))
+  )
+}
+
+historical_weighted_joint_inference <- function(
+    data, predictor, covariates, weight, state) {
+  x <- safe_df(data)
+  needed <- unique(c(predictor, covariates, weight, state))
+  missing <- setdiff(needed, names(x))
+  if (length(missing)) {
+    stop("Historical joint inference lacks columns: ", paste(missing, collapse = ", "), call. = FALSE)
+  }
+
+  fit <- stats::lm(
+    stats::reformulate(
+      c(covariates, paste0("factor(", state, ")")),
+      response = predictor
+    ),
+    data = x,
+    weights = num(x[[weight]])
+  )
+  joint <- clustered_joint_wald_test(fit, covariates, x[[state]])
+  estimability <- joint_wald_estimability(fit, covariates, joint)
+  estimated <- identical(unname(estimability[["status"]]), "estimated")
+
+  list(
+    joint_f = if (estimated) unname(joint[["statistic"]]) else NA_real_,
+    joint_p = if (estimated) unname(joint[["p.value"]]) else NA_real_,
+    n = stats::nobs(fit),
+    n_states = length(unique(x[[state]])),
+    population_weight = sum(num(x[[weight]])),
+    status = unname(estimability[["status"]]),
+    reason = unname(estimability[["reason"]])
+  )
+}
+
 historical_baseline_balance_sample <- function(panel, predictor, covariates, exact_only = FALSE) {
   x <- safe_df(panel)
   keep <- x$preferred_language_persistence %in% TRUE & num(x$n_transition_targets) == 1L
@@ -110,26 +184,16 @@ estimate_historical_baseline_balance <- function(
       stringsAsFactors = FALSE
     ))
   }
-  rhs <- c(predictor, if (fixed_effect == "state") "factor(state_code_1991)" else character())
-  fit <- stats::lm(
-    stats::reformulate(rhs, response = covariate), data = x, weights = num(x$population_1991)
+  inference <- historical_weighted_term_inference(
+    x, predictor, covariate, "population_1991", "state_code_1991", fixed_effect
   )
-  inference <- clustered_lm_term_inference(fit, predictor, x$state_code_1991)
-  estimate <- unname(stats::coef(fit)[[predictor]])
-  predictor_sd <- historical_weighted_sd(x[[predictor]], x$population_1991)
-  covariate_sd <- historical_weighted_sd(x[[covariate]], x$population_1991)
-  standardized <- if (is.finite(estimate) && is.finite(predictor_sd) && is.finite(covariate_sd) && covariate_sd > 0) {
-    estimate * predictor_sd / covariate_sd
-  } else {
-    NA_real_
-  }
   data.frame(
     sample = sample_name, predictor = predictor, fixed_effect = fixed_effect,
     variable = covariate, domain = row$domain, source = row$source, label = row$label,
-    estimate = estimate, std.error = unname(inference[["std.error"]]),
-    p.value = unname(inference[["p.value"]]), standardized_effect = standardized,
-    n = stats::nobs(fit), n_states = length(unique(x$state_code_1991)),
-    population_1991 = sum(num(x$population_1991)), status = "estimated",
+    estimate = inference$estimate, std.error = inference$std.error,
+    p.value = inference$p.value, standardized_effect = inference$standardized_effect,
+    n = inference$n, n_states = inference$n_states,
+    population_1991 = inference$population_weight, status = "estimated",
     stringsAsFactors = FALSE
   )
 }
@@ -149,21 +213,16 @@ estimate_historical_baseline_joint_balance <- function(
       stringsAsFactors = FALSE
     ))
   }
-  rhs <- c(variables, "factor(state_code_1991)")
-  fit <- stats::lm(
-    stats::reformulate(rhs, response = predictor), data = x, weights = num(x$population_1991)
+  inference <- historical_weighted_joint_inference(
+    x, predictor, variables, "population_1991", "state_code_1991"
   )
-  joint <- clustered_joint_wald_test(fit, variables, x$state_code_1991)
-  estimability <- joint_wald_estimability(fit, variables, joint)
-  estimated <- identical(unname(estimability[["status"]]), "estimated")
   data.frame(
     sample = sample_name, predictor = predictor, domain = domain,
     tested_covariates = paste(variables, collapse = ";"), n_tested_covariates = length(variables),
-    joint_f = if (estimated) unname(joint[["statistic"]]) else NA_real_,
-    joint_p = if (estimated) unname(joint[["p.value"]]) else NA_real_,
-    n = stats::nobs(fit), n_states = length(unique(x$state_code_1991)),
-    population_1991 = sum(num(x$population_1991)),
-    status = unname(estimability[["status"]]), reason = unname(estimability[["reason"]]),
+    joint_f = inference$joint_f, joint_p = inference$joint_p,
+    n = inference$n, n_states = inference$n_states,
+    population_1991 = inference$population_weight,
+    status = inference$status, reason = inference$reason,
     stringsAsFactors = FALSE
   )
 }

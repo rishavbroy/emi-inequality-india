@@ -19,6 +19,66 @@ test_that("Vanneman pretrend reader follows the archived fixed-width count contr
   expect_true(all(out$panel_unit_id == "0201"))
 })
 
+test_that("Vanneman pretrend reader ignores short label records before fixed-width validation", {
+  path <- tempfile(fileext = ".data.gz")
+  con <- gzfile(path, "wt")
+  records <- vanneman_pretrend_record_registry()$record_id
+  lines <- "0201000615Short label"
+  for (year in c(61, 71, 81, 91)) for (record in records) {
+    lines <- c(lines, sprintf(
+      "0201%s%02d5%9d%9d%9d%9d",
+      record, year, 1000, 800, 600, 480
+    ))
+  }
+  writeLines(lines, con); close(con)
+  on.exit(unlink(path), add = TRUE)
+
+  out <- read_vanneman_panel4_pretrend_counts(path)
+  expect_equal(nrow(out), 4L * nrow(vanneman_pretrend_record_registry()))
+})
+
+test_that("Vanneman pretrend reader requires version-5 stable-panel records", {
+  path <- tempfile(fileext = ".data.gz")
+  con <- gzfile(path, "wt")
+  records <- vanneman_pretrend_record_registry()$record_id
+  lines <- character()
+  for (year in c(61, 71, 81, 91)) for (record in records) {
+    version <- if (year == 81 && record == "140") 6 else 5
+    lines <- c(lines, sprintf(
+      "0201%s%02d%d%9d%9d%9d%9d",
+      record, year, version, 1000, 800, 600, 480
+    ))
+  }
+  writeLines(lines, con); close(con)
+  on.exit(unlink(path), add = TRUE)
+
+  expect_error(
+    read_vanneman_panel4_pretrend_counts(path),
+    "version-5 contract"
+  )
+})
+
+test_that("Vanneman pretrend semantic contract is tied to the archived SAS reader", {
+  path <- tempfile(fileext = ".sas")
+  writeLines(c(
+    "/* Record ID # 100 - Total population */",
+    "/* Record ID # 111 - Total main workers */",
+    "/ WORK6 11-19 WORKr6 20-28 /* estimated */",
+    "/* Record ID # 112 - Farm workers (main) */",
+    "/ FARM6 11-19 FARMr6 20-28 /* estimated */",
+    "/* Record ID # 140 - Literates (ages 5+) */",
+    "/* Record ID # 151 - Primary School or higher */",
+    "/* Record ID # 153 - Matriculates or higher */"
+  ), path)
+  expect_true(validate_vanneman_pretrend_sas_contract(path))
+
+  writeLines("/* Record ID # 100 - Total population */", path)
+  expect_error(
+    validate_vanneman_pretrend_sas_contract(path),
+    "semantic contract"
+  )
+})
+
 test_that("Vanneman pretrend reader treats negative count sentinels as unavailable", {
   path <- tempfile(fileext = ".data.gz")
   con <- gzfile(path, "wt")
@@ -62,6 +122,13 @@ test_that("Vanneman pretrend levels enforce accounting identities and reviewed g
   expect_equal(unique(out$primary_plus_share_population), .2)
   expect_equal(unique(out$matriculate_plus_share_population), .1)
 
+  missing_geo <- geography
+  missing_geo$panel_unit_id <- "9999"
+  expect_error(
+    build_vanneman_pretrend_levels(counts, missing_geo),
+    "stable-ID universes differ"
+  )
+
   bad <- counts
   bad$total[bad$record_id == "112" & bad$year == 1961L] <- 500
   expect_error(build_vanneman_pretrend_levels(bad, geography), "accounting identities")
@@ -86,6 +153,19 @@ test_that("Vanneman pretrend changes use stable units and predetermined 1961 wei
   row <- out[out$period_id == "1961_1981" & out$measure_id == "urban_share", , drop=FALSE]
   expect_equal(row$change, .20)
   expect_equal(row$population_1961, 1000)
+
+  labor <- out[
+    out$period_id == "1961_1981" &
+      out$measure_id == "main_worker_share",
+    , drop = FALSE
+  ]
+  later_labor <- out[
+    out$period_id == "1971_1981" &
+      out$measure_id == "main_worker_share",
+    , drop = FALSE
+  ]
+  expect_true(labor$contains_estimated_source)
+  expect_false(later_labor$contains_estimated_source)
 })
 
 test_that("Vanneman pretrend registries remain narrow and entirely pre-treatment", {

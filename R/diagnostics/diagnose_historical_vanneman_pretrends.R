@@ -30,6 +30,7 @@ vanneman_pretrend_measure_registry <- function() {
       "Primary-school-or-higher share of population",
       "Matriculate-or-higher share of population"
     ),
+    estimated_1961_source = c(FALSE, FALSE, TRUE, TRUE, FALSE, FALSE, FALSE),
     stringsAsFactors = FALSE
   )
 }
@@ -49,6 +50,31 @@ vanneman_count_value <- function(x) {
   out
 }
 
+validate_vanneman_pretrend_sas_contract <- function(path) {
+  if (!file.exists(path)) stop("Missing Vanneman panel4 SAS reader: ", path, call. = FALSE)
+  text <- paste(readLines(path, warn = FALSE, encoding = "UTF-8"), collapse = "\n")
+  squashed <- gsub("[[:space:]]+", " ", text)
+
+  checks <- c(
+    population = "Record ID # 100 - Total population",
+    main_workers = "Record ID # 111 - Total main workers",
+    farm_workers = "Record ID # 112 - Farm workers (main)",
+    literates = "Record ID # 140 - Literates (ages 5+)",
+    primary_plus = "Record ID # 151 - Primary School or higher",
+    matriculates = "Record ID # 153 - Matriculates or higher"
+  )
+  passed <- vapply(checks, function(pattern) {
+    grepl(pattern, squashed, fixed = TRUE)
+  }, logical(1))
+  labor_estimates <- grepl("WORK6 11-19.*estimated", squashed, ignore.case = TRUE, perl = TRUE) &&
+    grepl("FARM6 11-19.*estimated", squashed, ignore.case = TRUE, perl = TRUE)
+
+  if (!all(passed) || !labor_estimates) {
+    stop("Vanneman panel4 SAS reader does not satisfy the registered pretrend semantic contract.", call. = FALSE)
+  }
+  invisible(TRUE)
+}
+
 read_vanneman_panel4_pretrend_counts <- function(
     path, record_registry = vanneman_pretrend_record_registry()) {
   if (!file.exists(path)) stop("Missing Vanneman panel4 data: ", path, call. = FALSE)
@@ -60,27 +86,31 @@ read_vanneman_panel4_pretrend_counts <- function(
   con <- gzfile(path, open = "rt")
   on.exit(close(con), add = TRUE)
   lines <- readLines(con, warn = FALSE)
-  if (!length(lines) || any(nchar(lines) < 46L)) {
-    stop("Vanneman panel4 pretrend records are malformed.", call. = FALSE)
-  }
-  record_id <- substr(lines, 5L, 7L)
+  if (!length(lines)) stop("Vanneman panel4 pretrend source is empty.", call. = FALSE)
+
+  record_id <- ifelse(nchar(lines) >= 7L, substr(lines, 5L, 7L), "")
   keep <- record_id %in% records$record_id
+  selected <- lines[keep]
+  if (!length(selected) || any(nchar(selected) < 46L)) {
+    stop("Vanneman panel4 registered pretrend records are malformed.", call. = FALSE)
+  }
   out <- data.frame(
-    vanneman_state_id = substr(lines[keep], 1L, 2L),
-    vanneman_district_id = substr(lines[keep], 3L, 4L),
-    record_id = record_id[keep],
-    year = 1900L + suppressWarnings(as.integer(substr(lines[keep], 8L, 9L))),
-    version = suppressWarnings(as.integer(substr(lines[keep], 10L, 10L))),
-    total = vanneman_count_value(substr(lines[keep], 11L, 19L)),
-    rural = vanneman_count_value(substr(lines[keep], 20L, 28L)),
-    male = vanneman_count_value(substr(lines[keep], 29L, 37L)),
-    rural_male = vanneman_count_value(substr(lines[keep], 38L, 46L)),
+    vanneman_state_id = substr(selected, 1L, 2L),
+    vanneman_district_id = substr(selected, 3L, 4L),
+    record_id = substr(selected, 5L, 7L),
+    year = 1900L + suppressWarnings(as.integer(substr(selected, 8L, 9L))),
+    version = suppressWarnings(as.integer(substr(selected, 10L, 10L))),
+    total = vanneman_count_value(substr(selected, 11L, 19L)),
+    rural = vanneman_count_value(substr(selected, 20L, 28L)),
+    male = vanneman_count_value(substr(selected, 29L, 37L)),
+    rural_male = vanneman_count_value(substr(selected, 38L, 46L)),
     stringsAsFactors = FALSE
   )
   out$panel_unit_id <- paste0(out$vanneman_state_id, out$vanneman_district_id)
   expected_years <- c(1961L, 1971L, 1981L, 1991L)
-  if (any(!out$year %in% expected_years) || any(!is.finite(out$version))) {
-    stop("Vanneman pretrend records violate the stable-panel year/version contract.", call. = FALSE)
+  if (any(!out$year %in% expected_years) || any(!is.finite(out$version)) ||
+      any(out$version != 5L)) {
+    stop("Vanneman pretrend records violate the stable-panel year/version-5 contract.", call. = FALSE)
   }
   key <- paste(out$panel_unit_id, out$year, out$record_id, sep = "__")
   if (anyDuplicated(key)) stop("Vanneman panel4 has duplicate registered pretrend records.", call. = FALSE)
@@ -148,6 +178,9 @@ build_vanneman_pretrend_levels <- function(counts, geography) {
   if (anyDuplicated(geography$panel_unit_id)) {
     stop("Vanneman pretrend geography must contain unique stable panel IDs.", call. = FALSE)
   }
+  if (!setequal(unique(x$panel_unit_id), geography$panel_unit_id)) {
+    stop("Vanneman pretrend count and reviewed-geography stable-ID universes differ.", call. = FALSE)
+  }
   out <- merge(base, geography[required_geo], by = "panel_unit_id", all.x = TRUE, sort = FALSE)
   if (anyNA(out$pretrend_geography_status)) {
     stop("Vanneman pretrend levels contain stable IDs absent from reviewed geography.", call. = FALSE)
@@ -162,8 +195,10 @@ build_vanneman_pretrend_levels_from_sources <- function(
   if (nrow(panel) != 1L || !isTRUE(panel$eligible_for_baseline_values[[1L]])) {
     stop("Vanneman panel4 source contract must be verified before constructing pretrend levels.", call. = FALSE)
   }
+  files <- vanneman_historical_paths(paths)
+  validate_vanneman_pretrend_sas_contract(files[["panel4_sas"]])
   build_vanneman_pretrend_levels(
-    read_vanneman_panel4_pretrend_counts(vanneman_historical_paths(paths)[["panel4"]]),
+    read_vanneman_panel4_pretrend_counts(files[["panel4"]]),
     geography
   )
 }
@@ -196,6 +231,9 @@ build_vanneman_pretrend_changes <- function(levels) {
         measure_id = variable,
         domain = measures$domain[[j]],
         label = measures$label[[j]],
+        contains_estimated_source =
+          isTRUE(measures$estimated_1961_source[[j]]) &&
+          periods$start_year[[i]] == 1961L,
         start_value = num(start[[variable]]),
         end_value = num(end[[variable]][idx]),
         change = num(end[[variable]][idx]) - num(start[[variable]]),
@@ -286,28 +324,24 @@ estimate_vanneman_pretrend_association <- function(
       predictor = predictor, period_id = period_id, measure_id = measure_id,
       fixed_effect = fixed_effect, estimate = NA_real_, std.error = NA_real_,
       p.value = NA_real_, standardized_effect = NA_real_,
-      n = 0L, n_states = 0L, status = "not_estimated",
+      contains_estimated_source = NA, n = 0L, n_states = 0L,
+      population_1961 = 0, status = "not_estimated",
       stringsAsFactors = FALSE
     ))
   }
-  rhs <- c(predictor, if (fixed_effect == "state") "factor(state_code_2001)" else character())
-  fit <- stats::lm(stats::reformulate(rhs, response = "change"),
-                   data = x, weights = num(x$population_1961))
-  inference <- clustered_lm_term_inference(fit, predictor, x$state_code_2001)
-  estimate <- unname(stats::coef(fit)[[predictor]])
-  predictor_sd <- historical_weighted_sd(x[[predictor]], x$population_1961)
-  outcome_sd <- historical_weighted_sd(x$change, x$population_1961)
-  standardized <- if (is.finite(estimate) && is.finite(predictor_sd) &&
-                      is.finite(outcome_sd) && outcome_sd > 0) {
-    estimate * predictor_sd / outcome_sd
-  } else NA_real_
+  inference <- historical_weighted_term_inference(
+    x, predictor, "change", "population_1961", "state_code_2001", fixed_effect
+  )
+  quality <- unique(x$contains_estimated_source)
+  quality <- quality[!is.na(quality)]
   data.frame(
     predictor = predictor, period_id = period_id, measure_id = measure_id,
-    fixed_effect = fixed_effect, estimate = estimate,
-    std.error = unname(inference[["std.error"]]),
-    p.value = unname(inference[["p.value"]]),
-    standardized_effect = standardized,
-    n = stats::nobs(fit), n_states = length(unique(x$state_code_2001)),
+    fixed_effect = fixed_effect, estimate = inference$estimate,
+    std.error = inference$std.error, p.value = inference$p.value,
+    standardized_effect = inference$standardized_effect,
+    contains_estimated_source = length(quality) == 1L && isTRUE(quality[[1L]]),
+    n = inference$n, n_states = inference$n_states,
+    population_1961 = inference$population_weight,
     status = "estimated", stringsAsFactors = FALSE
   )
 }
@@ -321,7 +355,7 @@ estimate_vanneman_pretrend_joint_balance <- function(panel, predictor, period_id
       predictor = predictor, period_id = period_id, domain = domain,
       tested_measures = paste(measures, collapse = ";"),
       joint_f = NA_real_, joint_p = NA_real_, n = 0L, n_states = 0L,
-      status = "not_estimated", reason = "no_complete_cases",
+      population_1961 = 0, status = "not_estimated", reason = "no_complete_cases",
       stringsAsFactors = FALSE
     ))
   }
@@ -338,25 +372,20 @@ estimate_vanneman_pretrend_joint_balance <- function(panel, predictor, period_id
       predictor = predictor, period_id = period_id, domain = domain,
       tested_measures = paste(measures, collapse = ";"),
       joint_f = NA_real_, joint_p = NA_real_, n = 0L, n_states = 0L,
-      status = "not_estimated", reason = "no_complete_cases",
+      population_1961 = 0, status = "not_estimated", reason = "no_complete_cases",
       stringsAsFactors = FALSE
     ))
   }
-  fit <- stats::lm(
-    stats::reformulate(c(change_cols, "factor(state_code_2001)"), response = predictor),
-    data = wide, weights = num(wide$population_1961)
+  inference <- historical_weighted_joint_inference(
+    wide, predictor, change_cols, "population_1961", "state_code_2001"
   )
-  joint <- clustered_joint_wald_test(fit, change_cols, wide$state_code_2001)
-  estimability <- joint_wald_estimability(fit, change_cols, joint)
-  estimated <- identical(unname(estimability[["status"]]), "estimated")
   data.frame(
     predictor = predictor, period_id = period_id, domain = domain,
     tested_measures = paste(measures, collapse = ";"),
-    joint_f = if (estimated) unname(joint[["statistic"]]) else NA_real_,
-    joint_p = if (estimated) unname(joint[["p.value"]]) else NA_real_,
-    n = stats::nobs(fit), n_states = length(unique(wide$state_code_2001)),
-    status = unname(estimability[["status"]]),
-    reason = unname(estimability[["reason"]]),
+    joint_f = inference$joint_f, joint_p = inference$joint_p,
+    n = inference$n, n_states = inference$n_states,
+    population_1961 = inference$population_weight,
+    status = inference$status, reason = inference$reason,
     stringsAsFactors = FALSE
   )
 }
