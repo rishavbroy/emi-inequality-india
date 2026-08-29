@@ -49,6 +49,12 @@ ATLAS_LANGUAGE_FAMILY_COUNTS = {
 ATLAS_SHASTRY_FAMILY_CLASSES = {"indo_european", "non_indo_european", "special_english"}
 LANGUAGE_COVERAGE_THRESHOLDS = (0.95, 0.98, 0.99, 0.995, 0.999, 1.0)
 ATLAS_CELL_REVIEW_DECISIONS = {"accept_extracted", "replace_count", "leave_unresolved"}
+ATLAS_CELL_REVIEW_FIELDS = (
+    "state_code_1991", "district_code_1991", "atlas_column",
+    "review_decision", "reviewed_speaker_count", "expected_page",
+    "expected_raw_value", "expected_candidate_count", "expected_parse_status",
+    "expected_alignment_status", "review_basis",
+)
 
 
 @dataclass(frozen=True)
@@ -817,12 +823,7 @@ def read_language_atlas_cell_reviews(path: Path) -> list[dict[str, str]]:
     """Read reviewed Atlas cell decisions without mutating machine extraction."""
     with path.open(newline="", encoding="utf-8") as handle:
         rows = list(csv.DictReader(handle))
-    required = {
-        "state_code_1991", "district_code_1991", "atlas_column",
-        "review_decision", "reviewed_speaker_count", "expected_page",
-        "expected_raw_value", "expected_candidate_count", "expected_parse_status",
-        "expected_alignment_status", "review_basis",
-    }
+    required = set(ATLAS_CELL_REVIEW_FIELDS)
     if not rows:
         # Header-only ledgers are valid until the first source adjudication.
         with path.open(newline="", encoding="utf-8") as handle:
@@ -1234,6 +1235,89 @@ def build_validated_page0_language_cells(
     if len(keys) != len(set(keys)):
         raise ValueError("Validated Atlas page-0 language cells are not unique by district and column")
     return out
+
+
+def build_language_atlas_review_template(
+    rows: list[dict[str, object]],
+    excess_triage: list[dict[str, object]],
+    unresolved_triage: list[dict[str, object]],
+) -> list[dict[str, object]]:
+    """Prefill exact ledger fingerprints for the two priority review queues.
+
+    The template is not an adjudication. Decision/count/basis fields remain blank
+    until the PDF source is actually reviewed. Helper columns retain why and in
+    what order a cell entered review so maintainers do not need to copy keys or
+    extraction fingerprints by hand.
+    """
+    index = {
+        (str(row["state_code_1991"]), str(row["district_code_1991"]), int(row["atlas_column"])): row
+        for row in rows
+    }
+    if len(index) != len(rows):
+        raise ValueError("Atlas language cells are not unique before review-template construction")
+
+    priority: dict[tuple[str, str, int], dict[str, object]] = {}
+
+    def add_triage(source: str, triage_rows: list[dict[str, object]]) -> None:
+        for rank, triage in enumerate(triage_rows, start=1):
+            key = (
+                str(triage["state_code_1991"]),
+                str(triage["district_code_1991"]),
+                int(triage["atlas_column"]),
+            )
+            if key not in index:
+                raise ValueError(
+                    f"Atlas review triage references unknown cell: {key[0]}-{key[1]}-{key[2]}"
+                )
+            existing = priority.get(key)
+            if existing is None:
+                priority[key] = {
+                    "triage_source": source,
+                    "triage_rank": rank,
+                    "triage_sources": source,
+                }
+            else:
+                sources = existing["triage_sources"].split(";")
+                if source not in sources:
+                    existing["triage_sources"] = ";".join(sources + [source])
+                existing["triage_rank"] = min(int(existing["triage_rank"]), rank)
+
+    add_triage("impossible_sum", excess_triage)
+    add_triage("high_coverage_unresolved", unresolved_triage)
+
+    out: list[dict[str, object]] = []
+    source_order = {"impossible_sum": 0, "high_coverage_unresolved": 1}
+    for key, meta in priority.items():
+        row = index[key]
+        out.append({
+            "state_code_1991": key[0],
+            "district_code_1991": key[1],
+            "atlas_column": key[2],
+            "review_decision": "",
+            "reviewed_speaker_count": "",
+            "expected_page": row["page"],
+            "expected_raw_value": row["raw_value"],
+            "expected_candidate_count": row["speaker_count_candidate"],
+            "expected_parse_status": row["parse_status"],
+            "expected_alignment_status": row["alignment_status"],
+            "review_basis": "",
+            "triage_source": meta["triage_source"],
+            "triage_sources": meta["triage_sources"],
+            "triage_rank": meta["triage_rank"],
+            "language_1991": row.get("language_1991", ""),
+            "accepted_speaker_count": row.get("accepted_speaker_count", ""),
+            "accepted_count_basis": row.get("accepted_count_basis", ""),
+        })
+    return sorted(
+        out,
+        key=lambda row: (
+            source_order.get(str(row["triage_source"]), 99),
+            int(row["triage_rank"]),
+            str(row["state_code_1991"]),
+            str(row["district_code_1991"]),
+            int(row["atlas_column"]),
+        ),
+    )
 
 
 def page0_language_review_rows(rows: list[dict[str, object]]) -> list[dict[str, object]]:
@@ -1648,6 +1732,14 @@ def self_test() -> None:
     assert unresolved_triage[0]["highest_certified_threshold"] == 0.95
     assert unresolved_triage[0]["next_sensitivity_threshold"] == 0.99
     assert unresolved_triage[0]["speaker_deficit_to_next_threshold"] == 1
+    review_template = build_language_atlas_review_template(
+        impossible_rows, triage, unresolved_triage
+    )
+    assert review_template[0]["triage_source"] == "impossible_sum"
+    assert review_template[0]["review_decision"] == ""
+    assert review_template[0]["review_basis"] == ""
+    assert review_template[0]["expected_raw_value"] == impossible_rows[0]["raw_value"]
+    assert review_template[0]["expected_parse_status"] == impossible_rows[0]["parse_status"]
     assert unresolved_triage[0]["numeric_group_candidates"] == "2;40"
     assert unresolved_triage[0]["max_group_reaches_next_threshold"] is True
 
@@ -1688,6 +1780,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--unresolved-triage-output", type=Path)
     parser.add_argument("--language-registry", type=Path)
     parser.add_argument("--cell-review-registry", type=Path)
+    parser.add_argument("--cell-review-template-output", type=Path)
     parser.add_argument("--pdftotext", default="pdftotext")
     parser.add_argument("--self-test", action="store_true")
     args = parser.parse_args(argv)
@@ -1766,6 +1859,8 @@ def main(argv: list[str] | None = None) -> int:
         )
         if args.cell_review_registry is not None and not any(value is not None for value in all_language_options):
             parser.error("--cell-review-registry requires the all-language output bundle")
+        if args.cell_review_template_output is not None and not any(value is not None for value in all_language_options):
+            parser.error("--cell-review-template-output requires the all-language output bundle")
         if any(value is not None for value in all_language_options):
             if not all(value is not None for value in all_language_options):
                 parser.error(
@@ -1808,10 +1903,8 @@ def main(argv: list[str] | None = None) -> int:
                 args.coverage_sensitivity_output,
                 build_language_coverage_sensitivity(coverage),
             )
-            write_csv(
-                args.excess_triage_output,
-                build_language_excess_triage(all_language_cells, coverage),
-            )
+            excess_triage = build_language_excess_triage(all_language_cells, coverage)
+            write_csv(args.excess_triage_output, excess_triage)
             unresolved_triage = build_high_coverage_unresolved_triage(
                 all_language_cells, coverage
             )
@@ -1830,6 +1923,22 @@ def main(argv: list[str] | None = None) -> int:
                     "max_group_reaches_next_threshold",
                 ],
             )
+            if args.cell_review_template_output is not None:
+                review_template = build_language_atlas_review_template(
+                    all_language_cells, excess_triage, unresolved_triage
+                )
+                write_csv(
+                    args.cell_review_template_output,
+                    review_template,
+                    fields=(
+                        list(ATLAS_CELL_REVIEW_FIELDS)
+                        + [
+                            "triage_source", "triage_sources", "triage_rank",
+                            "language_1991", "accepted_speaker_count",
+                            "accepted_count_basis",
+                        ]
+                    ),
+                )
     unparsed = sum(row["review_type"] == "unparsed_cell" for row in review)
     ambiguous = sum(row["review_type"] == "ambiguous_numeric_groups" for row in review)
     blank = sum(row["review_type"] == "blank_cell" for row in review)

@@ -94,6 +94,7 @@ python3 scripts/build_language_atlas_1991.py \
   --state-crosswalk data/metadata/language_atlas_1991_state_crosswalk.csv \
   --language-registry data/metadata/language_atlas_1991_languages.csv \
   --cell-review-registry data/metadata/language_atlas_1991_cell_reviews.csv \
+  --cell-review-template-output /tmp/language_atlas_1991_cell_review_template.csv \
   --district-output /tmp/language_atlas_1991_district_population.csv \
   --population-review-output /tmp/language_atlas_1991_population_review.csv \
   --page0-language-output /tmp/language_atlas_1991_page0_languages.csv \
@@ -126,6 +127,16 @@ parseable numeric groups present in the raw PDF text. Numeric groups are exposed
 only as review candidates; the extractor never selects among them. On the current
 source pass this yields 161 unresolved cells across 30 districts: 69 blank cells,
 50 ambiguous multi-number cells, and 42 other unparsed cells.
+
+The optional cell-review-template output joins those two priority queues back to
+the canonical all-language cells and prefills the exact fingerprint columns
+required by `language_atlas_1991_cell_reviews.csv`: page, raw cell text, machine
+candidate, parse status, and alignment status. It also records which triage queue
+and rank produced the row. The actual `review_decision`, `reviewed_speaker_count`,
+and `review_basis` fields remain blank. The template is therefore a transcription
+safety aid, not an adjudication file; maintainers must inspect the PDF source and
+then copy only completed decisions into the tracked review ledger. The extractor
+continues to fail closed if a later parser run changes any fingerprinted field.
 
 The candidate output is deliberately keyed by Atlas page/block, detected row,
 and source column rather than pretending that OCR-distorted district labels are
@@ -236,9 +247,12 @@ The machine fields (`raw_value`, `speaker_count_candidate`, `parse_status`, and
 `accepted_speaker_count` and its provenance. Coverage, impossible-sum, and
 unresolved-cell diagnostics operate on this accepted-count layer. The review
 ledger may remain header-only until source decisions are actually completed; no
-empty ledger row is interpreted as acceptance. This mirrors the repository's
-reviewed Glottolog and district-lineage pattern: generated candidates remain
-non-authoritative until an explicit tracked decision is applied.
+empty ledger row is interpreted as acceptance. `--cell-review-template-output`
+can prefill the exact source fingerprints for the current impossible-sum and
+high-coverage-unresolved queues, but blank template rows are not valid ledger
+decisions. This mirrors the repository's reviewed Glottolog and district-lineage
+pattern: generated candidates remain non-authoritative until an explicit tracked
+decision is applied.
 
 The extractor also writes district-level lower-bound coverage diagnostics. It
 sums **only** accepted counts: machine candidates that passed numeric and
