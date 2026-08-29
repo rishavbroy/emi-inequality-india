@@ -102,27 +102,92 @@ clustered_first_stage_inference <- function(fit, instrument, cluster, inference 
   clustered_lm_term_inference(fit, instrument, cluster, inference)
 }
 
+first_stage_positive_variation <- function(x) {
+  sd_x <- stats::sd(num(x))
+  is.finite(sd_x) && sd_x > 0
+}
+
+first_stage_residual_metrics_from_vectors <- function(instrument, treatment) {
+  z_resid <- num(instrument)
+  d_resid <- num(treatment)
+  z_sd <- stats::sd(z_resid)
+  d_sd <- stats::sd(d_resid)
+  correlation <- if (
+    first_stage_positive_variation(z_resid) &&
+      first_stage_positive_variation(d_resid)
+  ) {
+    stats::cor(z_resid, d_resid)
+  } else {
+    NA_real_
+  }
+  list(
+    instrument = z_resid,
+    treatment = d_resid,
+    instrument_sd = z_sd,
+    treatment_sd = d_sd,
+    correlation = correlation,
+    partial_r_squared = if (is.finite(correlation)) correlation^2 else NA_real_
+  )
+}
+
 first_stage_residual_metrics <- function(
     data, treatment, instrument, controls = character(), fixed_effect = "none") {
   residualized <- residualize_iv_variables(
     data, c(instrument, treatment), controls, fixed_effect
   )
-  z_resid <- residualized[, instrument]
-  d_resid <- residualized[, treatment]
-  residual_correlation <- stats::cor(z_resid, d_resid)
-  list(
-    instrument = z_resid,
-    treatment = d_resid,
-    correlation = residual_correlation,
-    partial_r_squared = if (is.finite(residual_correlation)) residual_correlation^2 else NA_real_
+  first_stage_residual_metrics_from_vectors(
+    residualized[, instrument], residualized[, treatment]
   )
+}
+
+first_stage_variance_remaining <- function(residual, original) {
+  original <- num(original)
+  denominator <- stats::var(original)
+  if (!is.finite(denominator) || denominator <= .Machine$double.eps) return(NA_real_)
+  numerator <- stats::var(num(residual))
+  if (!is.finite(numerator)) return(NA_real_)
+  numerator / denominator
+}
+
+first_stage_estimability <- function(
+    fit, instrument, inference, residuals, original_instrument, original_treatment,
+    minimum_variance_share = sqrt(.Machine$double.eps)) {
+  estimate <- unname(stats::coef(fit)[[instrument]])
+  if (stats::df.residual(fit) <= 0L) {
+    return(c(status = "not_estimable", reason = "no_residual_degrees_of_freedom"))
+  }
+  instrument_variance <- first_stage_variance_remaining(
+    residuals$instrument, original_instrument
+  )
+  if (!is.finite(instrument_variance) || instrument_variance <= minimum_variance_share) {
+    return(c(status = "not_estimable", reason = "no_residual_instrument_variation"))
+  }
+  treatment_variance <- first_stage_variance_remaining(
+    residuals$treatment, original_treatment
+  )
+  if (!is.finite(treatment_variance) || treatment_variance <= minimum_variance_share) {
+    return(c(status = "not_estimable", reason = "no_residual_treatment_variation"))
+  }
+  if (!is.finite(estimate)) {
+    return(c(status = "not_estimable", reason = "non_finite_instrument_coefficient"))
+  }
+  inference_values <- num(inference[c("std.error", "statistic", "p.value", "partial_f")])
+  if (length(inference_values) != 4L || any(!is.finite(inference_values))) {
+    return(c(status = "not_estimable", reason = "non_finite_clustered_inference"))
+  }
+  c(status = "estimated", reason = NA_character_)
 }
 
 estimate_first_stage_coefficient <- function(data, specification, treatment, instrument) {
   controls <- unlist(specification$controls[[1]], use.names = FALSE)
   fixed_effect <- specification$fixed_effect[[1]]
   fit <- stats::lm(first_stage_absorption_formula(treatment, instrument, controls, fixed_effect), data = data)
-  inference <- clustered_first_stage_inference(fit, instrument, data$state_code_2001)
+  estimate <- unname(stats::coef(fit)[[instrument]])
+  inference <- if (stats::df.residual(fit) > 0L && is.finite(estimate)) {
+    clustered_first_stage_inference(fit, instrument, data$state_code_2001)
+  } else {
+    c(std.error = NA_real_, statistic = NA_real_, p.value = NA_real_, partial_f = NA_real_)
+  }
   list(fit = fit, inference = inference)
 }
 
@@ -135,6 +200,9 @@ estimate_first_stage_absorption_spec <- function(data, specification, treatment,
   inference <- coefficient$inference
   residuals <- first_stage_residual_metrics(data, treatment, instrument, controls, fixed_effect)
 
+  estimability <- first_stage_estimability(
+    fit, instrument, inference, residuals, data[[instrument]], data[[treatment]]
+  )
   summary <- data.frame(
     specification_id = specification$specification_id,
     specification = specification$label,
@@ -150,15 +218,17 @@ estimate_first_stage_absorption_spec <- function(data, specification, treatment,
     p.value = unname(inference[["p.value"]]),
     excluded_instrument_f = unname(inference[["partial_f"]]),
     partial_r_squared = residuals$partial_r_squared,
-    residual_instrument_sd = stats::sd(residuals$instrument),
-    residual_treatment_sd = stats::sd(residuals$treatment),
+    residual_instrument_sd = residuals$instrument_sd,
+    residual_treatment_sd = residuals$treatment_sd,
     residual_correlation = residuals$correlation,
-    instrument_variance_remaining = stats::var(residuals$instrument) / stats::var(num(data[[instrument]])),
+    instrument_variance_remaining = first_stage_variance_remaining(
+      residuals$instrument, data[[instrument]]
+    ),
     n = stats::nobs(fit),
     n_states = length(unique(data$state_code_2001)),
     n_regions = length(unique(data$region)),
-    status = "estimated",
-    reason = NA_character_,
+    status = estimability[["status"]],
+    reason = estimability[["reason"]],
     stringsAsFactors = FALSE
   )
   list(

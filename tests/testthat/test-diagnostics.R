@@ -652,6 +652,44 @@ test_that("first-stage absorption registry is ordered and exhausts main Census c
   )
 })
 
+test_that("first-stage residual metrics treat zero residual variation as not identified", {
+  expect_warning(
+    residual <- first_stage_residual_metrics_from_vectors(rep(0, 6), seq_len(6)),
+    NA
+  )
+  expect_true(is.na(residual$correlation))
+  expect_true(is.na(residual$partial_r_squared))
+  expect_equal(residual$instrument_sd, 0)
+
+  data <- data.frame(y = seq_len(6), z = 1, stringsAsFactors = FALSE)
+  specification <- data.frame(
+    specification_id = "instrument_only", label = "Instrument only",
+    fixed_effect = "none", sequence = 1L, stringsAsFactors = FALSE
+  )
+  specification$controls <- I(list(character()))
+  expect_warning(
+    estimate <- estimate_first_stage_absorption_spec(data, specification, "y", "z"),
+    NA
+  )
+  expect_identical(estimate$summary$status, "not_estimable")
+  expect_identical(estimate$summary$reason, "no_residual_instrument_variation")
+  expect_true(is.na(estimate$summary$partial_r_squared))
+})
+
+test_that("first-stage estimability rejects saturated fits", {
+  fit <- stats::lm(y ~ z + x, data = data.frame(
+    y = c(1, 2, 3), z = c(0, 1, 0), x = c(0, 0, 1)
+  ))
+  residuals <- first_stage_residual_metrics_from_vectors(c(1, -1, 0), c(1, 0, -1))
+  status <- first_stage_estimability(
+    fit, "z",
+    c(std.error = NA_real_, statistic = NA_real_, p.value = NA_real_, partial_f = NA_real_),
+    residuals, c(0, 1, 0), c(1, 2, 3)
+  )
+  expect_identical(status[["status"]], "not_estimable")
+  expect_identical(status[["reason"]], "no_residual_degrees_of_freedom")
+})
+
 test_that("first-stage residual metrics reproduce nested-model partial R-squared", {
   set.seed(41)
   n <- 120L
