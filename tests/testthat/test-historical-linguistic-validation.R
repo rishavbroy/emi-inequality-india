@@ -102,6 +102,24 @@ test_that("historical persistence fails closed on stale thresholds and bridge su
     ),
     "summary and transition disagree"
   )
+
+  bad_nesting <- fixture$geography
+  bad_nesting$source_districts$preferred_language_persistence[[1]] <- FALSE
+  expect_error(
+    build_historical_linguistic_persistence_validation(
+      fixture$historical, fixture$current, bad_nesting
+    ),
+    "subset of preferred geography"
+  )
+
+  bad_preferred <- fixture$geography
+  bad_preferred$source_districts$preferred_language_persistence[[8]] <- TRUE
+  expect_error(
+    build_historical_linguistic_persistence_validation(
+      fixture$historical, fixture$current, bad_preferred
+    ),
+    "map to exactly one Census-2001 district"
+  )
 })
 
 test_that("weighted historical correlations are defined from population weights", {

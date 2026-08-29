@@ -174,15 +174,7 @@ historical_linguistic_persistence_panel <- function(
   if (length(thresholds) != 1L) {
     stop("Historical persistence requires one explicit accepted-speaker coverage threshold.", call. = FALSE)
   }
-  if (any(geography$exact_language_persistence %in% TRUE &
-          !(geography$preferred_language_persistence %in% TRUE))) {
-    stop("Exact historical geography must be a subset of preferred geography.", call. = FALSE)
-  }
   geography_targets <- num(geography$n_target_2001_districts)
-  preferred_geography <- geography$preferred_language_persistence %in% TRUE
-  if (any(preferred_geography & (!is.finite(geography_targets) | geography_targets != 1L))) {
-    stop("Preferred historical geography must map to exactly one Census-2001 district.", call. = FALSE)
-  }
 
   transition_targets <- split(seq_len(nrow(bridge)), key_1991(bridge))
   target <- safe_bind_rows(lapply(transition_targets, function(i) {
@@ -214,6 +206,14 @@ historical_linguistic_persistence_panel <- function(
   geography_targets_n <- num(out$n_target_2001_districts)
   if (any(!is.finite(geography_targets_n)) || any(transition_targets_n != geography_targets_n)) {
     stop("Historical geography summary and transition disagree on target-district counts.", call. = FALSE)
+  }
+  if (any(out$exact_language_persistence %in% TRUE &
+          !(out$preferred_language_persistence %in% TRUE))) {
+    stop("Exact historical geography must be a subset of preferred geography.", call. = FALSE)
+  }
+  preferred_geography <- out$preferred_language_persistence %in% TRUE
+  if (any(preferred_geography & geography_targets_n != 1L)) {
+    stop("Preferred historical geography must map to exactly one Census-2001 district.", call. = FALSE)
   }
   current_keep <- current[current_required]
   names(current_keep)[names(current_keep) == "ling_distance_nonzero_mean"] <-
