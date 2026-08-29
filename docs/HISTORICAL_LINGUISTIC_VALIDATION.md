@@ -572,18 +572,36 @@ specification be estimable.
 
 The downloaded Vanneman-Barnes snapshot is useful for later pre-treatment
 balance and pre-trend diagnostics, but it is not yet promoted to a production
-historical panel. The codebook documents identifier column 10 as version 2 for
-cross-sectional data and version 6 for the 1961--91 panel. Direct source QA finds
-`panel4.data.gz` entirely at version 5, while `dist81.data.gz` mixes versions 2
-and 3 (the non-contract records are education records 151--156 in the downloaded
-snapshot). `dist91.data.gz` matches the documented version-2 cross-section.
+historical panel. It does contain substantive documentation: the archived
+variable index and topic pages define the record IDs and their substantive
+variables. In particular, the archived education page defines records 151--156
+as attainment counts. The unresolved issue is therefore **record-version
+provenance**, not absence of variable definitions.
 
-`vanneman_historical_source_qa.csv` records these contracts explicitly. A file
-whose year/version identifiers disagree with the downloaded codebook is not
-eligible for baseline values until its vintage is resolved. This prevents the
-pipeline from silently interpreting an undocumented harmonized-panel revision.
-The Vanneman panel's own historical harmonization assumptions also remain a
-sensitivity source rather than geography authority for the Census-2001 panel.
+The main codebook documents identifier column 10 as version 2 for cross-sectional
+data and version 6 for the 1961--91 panel. Direct source QA finds
+`panel4.data.gz` entirely at version 5. `dist81.data.gz` mixes versions 2 and 3;
+its version-3 records 151--156 are substantively defined by the archived
+education page, but the downloaded documentation does not establish that version
+3 follows the documented version-2 cross-sectional fixed-width/cleaning contract.
+`dist91.data.gz` matches the documented version-2 cross-section.
+
+`vanneman_historical_source_qa.csv` therefore reports record-definition coverage
+separately from version-contract coverage. A record can be substantively
+documented while its particular encoded vintage remains unresolved. Such rows
+remain ineligible for baseline/pre-trend values until the version contract is
+verified. This prevents the pipeline from silently interpreting an undocumented
+harmonized-panel revision while avoiding the misleading claim that the affected
+variables themselves lack documentation.
+
+The best provenance targets are archived copies of the original UMD distribution
+page (`vanneman.umd.edu/districts/files/index.html`, and its older
+`bsos.umd.edu/socy/vanneman/districts/` location), especially snapshots from the
+period when `panel4` or version-3 cross-sections were distributed; alternatively,
+an author/UMD archive containing the matching SAS input statements or release
+notes would resolve the contract. The Vanneman panel's own historical
+harmonization assumptions also remain a sensitivity source rather than geography
+authority for the Census-2001 panel.
 
 ## Next phases
 
