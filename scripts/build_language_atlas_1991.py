@@ -961,6 +961,13 @@ def build_language_extraction_coverage(rows: list[dict[str, object]]) -> list[di
         columns = {int(row["atlas_column"]) for row in district_rows}
         accepted_rows = accepted_language_rows(district_rows)
         speaker_sum = sum(int(row["accepted_speaker_count"]) for row in accepted_rows)
+        reviewed_accepted_rows = [
+            row for row in accepted_rows
+            if str(row.get("cell_review_decision", "")).strip()
+        ]
+        reviewed_speaker_sum = sum(
+            int(row["accepted_speaker_count"]) for row in reviewed_accepted_rows
+        )
         atlas_population = int(float(district_rows[0]["atlas_population_candidate"]))
         pca_population = int(float(district_rows[0]["pca91_population"]))
         if speaker_sum > atlas_population:
@@ -991,6 +998,8 @@ def build_language_extraction_coverage(rows: list[dict[str, object]]) -> list[di
             "n_accepted_values": len(accepted_rows),
             "n_review_required": len(district_rows) - len(accepted_rows),
             "accepted_speaker_lower_bound": speaker_sum,
+            "reviewed_accepted_speaker_sum": reviewed_speaker_sum,
+            "source_confirmed_population_bound_violation": reviewed_speaker_sum > atlas_population,
             "accepted_speaker_lower_bound_share_atlas": lower_bound_share if lower_bound_share is not None else "",
             "accepted_speaker_lower_bound_share_pca": speaker_sum / pca_population if pca_population > 0 else "",
             "coverage_status": status,
@@ -1060,22 +1069,28 @@ def build_language_excess_triage(
     rows: list[dict[str, object]],
     coverage_rows: list[dict[str, object]],
 ) -> list[dict[str, object]]:
-    """Prioritize accepted cells in districts whose speaker sum exceeds population.
+    """Prioritize unreviewed accepted cells in unresolved impossible districts.
 
-    This is a review aid only. It never drops or edits a count. A cell is marked
-    as individually sufficient when removing that one accepted count would restore
-    the district-level population bound.
+    This is a review aid only. Reviewed cells are not queued again. Districts
+    whose source-confirmed accepted counts already exceed population are also
+    removed from cell triage because no unreviewed correction can restore the
+    bound while preserving those reviewed decisions.
     """
     impossible = {
         (str(row["state_code_1991"]), str(row["district_code_1991"])): row
         for row in coverage_rows
         if row["coverage_status"] == "speaker_sum_exceeds_atlas_population"
+        and row.get("source_confirmed_population_bound_violation") is not True
     }
     out: list[dict[str, object]] = []
     for row in rows:
         key = (str(row["state_code_1991"]), str(row["district_code_1991"]))
         coverage = impossible.get(key)
-        if coverage is None or not str(row.get("accepted_speaker_count", "")).strip():
+        if (
+            coverage is None
+            or str(row.get("cell_review_decision", "")).strip()
+            or not str(row.get("accepted_speaker_count", "")).strip()
+        ):
             continue
         count = int(row["accepted_speaker_count"])
         population = int(float(coverage["atlas_population_candidate"]))
@@ -1131,7 +1146,8 @@ def build_high_coverage_unresolved_triage(
     """Prioritize unresolved cells in fully aligned, high-coverage districts.
 
     This is a review aid only. It never selects a numeric group, changes a count,
-    or defines the preferred historical coverage threshold. A district enters
+    or defines the preferred historical coverage threshold. Cells with an explicit
+    source-review decision are not queued again. A district enters
     only when all 114 language columns align, at least one cell remains unresolved,
     and its accepted speaker lower bound already certifies the lowest registered
     sensitivity threshold.
@@ -1160,7 +1176,11 @@ def build_high_coverage_unresolved_triage(
     for row in rows:
         key = (str(row["state_code_1991"]), str(row["district_code_1991"]))
         coverage = eligible.get(key)
-        if coverage is None or str(row.get("accepted_speaker_count", "")).strip():
+        if (
+            coverage is None
+            or str(row.get("cell_review_decision", "")).strip()
+            or str(row.get("accepted_speaker_count", "")).strip()
+        ):
             continue
         share = float(coverage["accepted_speaker_lower_bound_share_atlas"])
         certified = [threshold for threshold in thresholds if share >= threshold]
@@ -1824,6 +1844,20 @@ def self_test() -> None:
     assert tuple(accepted_source[0]) == ATLAS_ACCEPTED_SOURCE_FIELDS
     assert unresolved_triage[0]["numeric_group_candidates"] == "2;40"
     assert unresolved_triage[0]["max_group_reaches_next_threshold"] is True
+
+    reviewed_triage_rows = [dict(row) for row in impossible_rows]
+    reviewed_triage_rows[0]["cell_review_decision"] = "accept_extracted"
+    reviewed_impossible_coverage = build_language_extraction_coverage(reviewed_triage_rows)
+    assert reviewed_impossible_coverage[0]["reviewed_accepted_speaker_sum"] == 120
+    assert reviewed_impossible_coverage[0]["source_confirmed_population_bound_violation"] is True
+    assert not build_language_excess_triage(
+        reviewed_triage_rows, reviewed_impossible_coverage
+    )
+    reviewed_unresolved_rows = [dict(row) for row in unresolved_cells]
+    reviewed_unresolved_rows[0]["cell_review_decision"] = "leave_unresolved"
+    assert not build_high_coverage_unresolved_triage(
+        reviewed_unresolved_rows, unresolved_coverage
+    )
 
     continued = merge_population_continuations(
         [

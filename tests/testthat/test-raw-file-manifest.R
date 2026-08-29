@@ -506,6 +506,13 @@ test_that("1991 Atlas state and PCA review inputs have explicit source contracts
     anyDuplicated(paste(cell_reviews$state_code_1991, cell_reviews$district_code_1991, cell_reviews$atlas_column)),
     0L
   )
+  expect_true(all(grepl("^[0-9]+$", cell_reviews$expected_page)))
+  expect_true(all(nzchar(cell_reviews$review_basis)))
+  accept_extracted <- cell_reviews$review_decision == "accept_extracted"
+  expect_true(all(
+    is.na(cell_reviews$reviewed_speaker_count[accept_extracted]) |
+      !nzchar(cell_reviews$reviewed_speaker_count[accept_extracted])
+  ))
 
   expect_true(all(nzchar(languages$canonical_language)))
   expect_setequal(
