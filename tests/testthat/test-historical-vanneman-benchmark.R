@@ -199,7 +199,8 @@ test_that("Liu district aliases are parsed from published construction code", {
 
   out <- liu_direct_district_aliases(path)
   expect_true(any(out$source_key == "visakhapatanam" & out$target_key == "vishakhapatnam"))
-  expect_equal(sum(out$target_key == "amristar"), 2L)
+  expect_equal(sum(out$target_key == "amristar"), 1L)
+  expect_false(anyDuplicated(out[c("source_key", "target_key")]))
 })
 
 test_that("reviewed Vanneman aliases require stable IDs, raw Census codes, and a direct published rule", {
