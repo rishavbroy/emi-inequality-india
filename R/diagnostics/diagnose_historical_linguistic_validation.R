@@ -843,15 +843,27 @@ historical_linguistic_predetermined_first_stage_one <- function(
   controls <- unlist(specification$controls[[1L]], use.names = FALSE)
   rhs <- c(instrument, controls, "factor(state_code_1991)")
   fit <- stats::lm(stats::reformulate(rhs, response = treatment), data = data)
-  inference <- clustered_lm_term_inference(fit, instrument, data$state_code_1991)
   nuisance <- c(controls, "factor(state_code_1991)")
   design <- stats::model.matrix(stats::reformulate(nuisance), data = data)
   residuals <- stats::lm.fit(
     design, cbind(instrument = num(data[[instrument]]), treatment = num(data[[treatment]]))
   )$residuals
-  z_resid <- residuals[, "instrument"]
-  d_resid <- residuals[, "treatment"]
-  correlation <- stats::cor(z_resid, d_resid)
+  residual_metrics <- first_stage_residual_metrics_from_vectors(
+    residuals[, "instrument"], residuals[, "treatment"]
+  )
+  coefficient <- unname(stats::coef(fit)[[instrument]])
+  inference <- if (
+    stats::df.residual(fit) > 0L &&
+      first_stage_positive_variation(residual_metrics$instrument) &&
+      is.finite(coefficient)
+  ) {
+    clustered_lm_term_inference(fit, instrument, data$state_code_1991)
+  } else {
+    c(std.error = NA_real_, statistic = NA_real_, p.value = NA_real_, partial_f = NA_real_)
+  }
+  estimability <- first_stage_estimability(
+    fit, instrument, inference, residual_metrics, data[[instrument]], data[[treatment]]
+  )
   data.frame(
     specification_id = specification$specification_id,
     specification = specification$label,
@@ -861,21 +873,23 @@ historical_linguistic_predetermined_first_stage_one <- function(
     fixed_effect = specification$fixed_effect,
     control_blocks = if (specification$specification_id == "state_fe_1991_pca_controls") "predetermined_1991_pca" else "predetermined_1991_all",
     n_controls = length(controls),
-    estimate = unname(stats::coef(fit)[[instrument]]),
+    estimate = coefficient,
     std.error = unname(inference[["std.error"]]),
     statistic = unname(inference[["statistic"]]),
     p.value = unname(inference[["p.value"]]),
     excluded_instrument_f = unname(inference[["partial_f"]]),
-    partial_r_squared = if (is.finite(correlation)) correlation^2 else NA_real_,
-    residual_instrument_sd = stats::sd(z_resid),
-    residual_treatment_sd = stats::sd(d_resid),
-    residual_correlation = correlation,
-    instrument_variance_remaining = stats::var(z_resid) / stats::var(num(data[[instrument]])),
+    partial_r_squared = residual_metrics$partial_r_squared,
+    residual_instrument_sd = residual_metrics$instrument_sd,
+    residual_treatment_sd = residual_metrics$treatment_sd,
+    residual_correlation = residual_metrics$correlation,
+    instrument_variance_remaining = first_stage_variance_remaining(
+      residual_metrics$instrument, data[[instrument]]
+    ),
     n = stats::nobs(fit),
     n_states = length(unique(data$state_code_1991)),
     n_regions = length(unique(data$region)),
-    status = "estimated",
-    reason = NA_character_,
+    status = estimability[["status"]],
+    reason = estimability[["reason"]],
     stringsAsFactors = FALSE
   )
 }
@@ -916,17 +930,26 @@ historical_linguistic_first_stage_comparison <- function(estimates) {
     "max_distance_bound_width"
   )
   metrics <- c("estimate", "excluded_instrument_f", "partial_r_squared", "n", "n_states", "n_regions")
+  quality <- c("status", "reason")
   one <- function(vintage, suffix) {
-    out <- x[x$instrument_vintage == vintage, c(id, metrics), drop = FALSE]
-    names(out)[match(metrics, names(out))] <- paste0(metrics, suffix)
+    out <- x[x$instrument_vintage == vintage, c(id, metrics, quality), drop = FALSE]
+    renamed <- c(metrics, quality)
+    names(out)[match(renamed, names(out))] <- paste0(renamed, suffix)
     out
   }
   historical <- one("historical_1991", "_1991")
   current <- one("census_2001", "_2001")
   out <- merge(historical, current, by = id, all = TRUE, sort = FALSE)
-  out$estimate_change_1991_vs_2001 <- out$estimate_1991 - out$estimate_2001
-  out$f_change_1991_vs_2001 <- out$excluded_instrument_f_1991 - out$excluded_instrument_f_2001
-  out$partial_r_squared_change_1991_vs_2001 <- out$partial_r_squared_1991 - out$partial_r_squared_2001
+  comparable <- out$status_1991 == "estimated" & out$status_2001 == "estimated"
+  out$estimate_change_1991_vs_2001 <- ifelse(
+    comparable, out$estimate_1991 - out$estimate_2001, NA_real_
+  )
+  out$f_change_1991_vs_2001 <- ifelse(
+    comparable, out$excluded_instrument_f_1991 - out$excluded_instrument_f_2001, NA_real_
+  )
+  out$partial_r_squared_change_1991_vs_2001 <- ifelse(
+    comparable, out$partial_r_squared_1991 - out$partial_r_squared_2001, NA_real_
+  )
   out
 }
 

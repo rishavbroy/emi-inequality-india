@@ -478,6 +478,54 @@ test_that("historical predetermined controls use specification-specific common s
   expect_equal(length(unique(all_controls$n)), 1L)
 })
 
+test_that("historical predetermined first stage retains saturated specifications as not estimable", {
+  data <- data.frame(
+    y = seq_len(6), z = c(1, 2, 3, 4, 5, 6),
+    state_code_1991 = c("01", "01", "02", "02", "03", "03"),
+    region = rep("Northern", 6),
+    x1 = c(0, 1, 0, 0, 0, 0),
+    x2 = c(0, 0, 0, 1, 0, 0),
+    x3 = c(0, 0, 0, 0, 0, 1),
+    stringsAsFactors = FALSE
+  )
+  specification <- data.frame(
+    specification_id = "state_fe_1991_all_controls",
+    label = "Saturated historical specification", sequence = 1L,
+    fixed_effect = "state_1991", stringsAsFactors = FALSE
+  )
+  specification$controls <- I(list(c("x1", "x2", "x3")))
+
+  expect_warning(
+    out <- historical_linguistic_predetermined_first_stage_one(
+      data, specification, "y", "z"
+    ),
+    NA
+  )
+  expect_identical(out$status, "not_estimable")
+  expect_identical(out$reason, "no_residual_degrees_of_freedom")
+  expect_true(is.na(out$residual_correlation))
+})
+
+test_that("historical first-stage comparison does not compare non-estimable rows", {
+  estimates <- data.frame(
+    sample = rep("exact_one_to_one", 2), specification_id = rep("spec", 2),
+    specification = rep("Spec", 2), sequence = 1L, treatment = rep("y", 2),
+    fixed_effect = rep("state", 2), control_blocks = rep("all", 2), n_controls = 2L,
+    min_accepted_coverage = 0.99, max_distance_bound_width = 0.5,
+    estimate = c(2, 5), excluded_instrument_f = c(4, NA), partial_r_squared = c(0.2, NA),
+    n = 10L, n_states = 5L, n_regions = 4L,
+    instrument_vintage = c("historical_1991", "census_2001"),
+    status = c("estimated", "not_estimable"), reason = c(NA, "no_residual_degrees_of_freedom"),
+    stringsAsFactors = FALSE
+  )
+  out <- historical_linguistic_first_stage_comparison(estimates)
+  expect_identical(out$status_1991, "estimated")
+  expect_identical(out$status_2001, "not_estimable")
+  expect_true(is.na(out$estimate_change_1991_vs_2001))
+  expect_true(is.na(out$f_change_1991_vs_2001))
+  expect_true(is.na(out$partial_r_squared_change_1991_vs_2001))
+})
+
 test_that("historical source-quality grid keeps source and geography support distinct", {
   candidates <- data.frame(
     state_code_1991 = c("02", "02", "03"),
