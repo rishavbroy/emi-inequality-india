@@ -511,8 +511,10 @@ available source support.
 
 The current extended target executes this exercise for eventual EMI exposure.
 The same function accepts an adjudicated threshold-explicit `LD_1991` table and
-will add historical-instrument balance on exactly the same baseline variables
+will add historical-instrument balance on the same baseline-variable registry
 once the Atlas review and preferred accepted-speaker threshold are promoted.
-This keeps the two pre-treatment claims distinct: eventual treatment balance can
-be evaluated now, while historical-IV balance remains source-gated rather than
-substituting Census-2001 distance for the unfinished 1991 measure.
+The two predictors retain their own valid observation support: missing DISE
+treatment does not remove a district from `LD_1991` balance, and an ineligible
+historical-language observation does not remove it from eventual-EMI balance.
+This keeps the two pre-treatment claims distinct while sharing only the reviewed
+historical geography and each covariate's own source support.
