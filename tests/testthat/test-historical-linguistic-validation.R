@@ -11,8 +11,9 @@ historical_persistence_fixture <- function() {
     historical_language_status = "eligible",
     ling_distance_nonzero_mean_1991 = d91,
     ling_share_distance_ge3_1991 = 10 * d91,
+    ling_share_distance_ge3_upper_bound_1991 = 10 * d91 + 1,
     ling_distance_nonzero_bound_width_1991 = 0.1,
-    ling_share_distance_ge3_bound_width_1991 = 0.5,
+    ling_share_distance_ge3_bound_width_1991 = 1,
     stringsAsFactors = FALSE
   )
   geography <- data.frame(
@@ -122,14 +123,28 @@ test_that("historical persistence R-squared matches lm without summary-time warn
   expect_equal(value, 1, tolerance = 1e-12)
 })
 
-test_that("historical persistence measure registry reuses the two canonical constructions", {
+test_that("historical persistence registry separates canonical measures from source-endpoint sensitivity", {
   registry <- historical_linguistic_persistence_measure_registry()
-  expect_identical(registry$measure_id, c("nonzero_mean", "accepted_distant_share_ge3"))
+  expect_identical(
+    registry$measure_id,
+    c("nonzero_mean", "accepted_distant_share_ge3", "distant_share_ge3_upper_endpoint")
+  )
+  expect_identical(
+    registry$measure_role,
+    c("primary", "lower_bound", "upper_endpoint_sensitivity")
+  )
   expect_identical(
     registry$current_variable,
-    c("ling_distance_nonzero_mean_2001", "ling_share_distance_ge3_2001")
+    c(
+      "ling_distance_nonzero_mean_2001",
+      "ling_share_distance_ge3_2001",
+      "ling_share_distance_ge3_2001"
+    )
   )
-  expect_true(all(grepl("_1991$", registry$historical_variable)))
+  expect_identical(
+    registry$historical_variable[registry$measure_role == "upper_endpoint_sensitivity"],
+    "ling_share_distance_ge3_upper_bound_1991"
+  )
   expect_true(all(grepl("bound_width_1991$", registry$historical_bound_width_variable)))
 })
 
@@ -164,9 +179,17 @@ test_that("historical persistence keeps preferred and exact geography distinct",
       out$summary$measure_id == "accepted_distant_share_ge3",
     , drop = FALSE
   ]
+  distant_upper <- out$summary[
+    out$summary$sample == "preferred_geography" &
+      out$summary$measure_id == "distant_share_ge3_upper_endpoint",
+    , drop = FALSE
+  ]
   expect_equal(preferred$n_districts, 7L)
   expect_equal(exact$n_districts, 6L)
   expect_equal(distant$n_districts, 7L)
+  expect_equal(distant_upper$n_districts, 7L)
+  expect_identical(distant$measure_role, "lower_bound")
+  expect_identical(distant_upper$measure_role, "upper_endpoint_sensitivity")
   expect_equal(distant$state_fe_population_weighted_slope, 2, tolerance = 1e-10)
   expect_equal(distant$historical_bound_width_variable, "ling_share_distance_ge3_bound_width_1991")
   expect_equal(preferred$min_accepted_coverage, 0.99)

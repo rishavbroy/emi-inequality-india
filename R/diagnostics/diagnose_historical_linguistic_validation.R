@@ -595,7 +595,7 @@ historical_linguistic_lm_r_squared <- function(fit) {
 
 historical_linguistic_persistence_metrics <- function(
     panel, exact_only = FALSE,
-    measure_id = "nonzero_mean",
+    measure_id = "nonzero_mean", measure_role = "primary",
     historical_variable = "ling_distance_nonzero_mean_1991",
     current_variable = "ling_distance_nonzero_mean_2001",
     historical_bound_width_variable = "ling_distance_nonzero_bound_width_1991") {
@@ -619,6 +619,7 @@ historical_linguistic_persistence_metrics <- function(
   empty <- data.frame(
     sample = sample_name,
     measure_id = measure_id,
+    measure_role = measure_role,
     historical_variable = historical_variable,
     current_variable = current_variable,
     historical_bound_width_variable = historical_bound_width_variable %||% NA_character_,
@@ -734,17 +735,25 @@ historical_linguistic_quintile_transition <- function(panel, exact_only = FALSE)
 
 historical_linguistic_persistence_measure_registry <- function() {
   data.frame(
-    measure_id = c("nonzero_mean", "accepted_distant_share_ge3"),
+    measure_id = c(
+      "nonzero_mean",
+      "accepted_distant_share_ge3",
+      "distant_share_ge3_upper_endpoint"
+    ),
+    measure_role = c("primary", "lower_bound", "upper_endpoint_sensitivity"),
     historical_variable = c(
       "ling_distance_nonzero_mean_1991",
-      "ling_share_distance_ge3_1991"
+      "ling_share_distance_ge3_1991",
+      "ling_share_distance_ge3_upper_bound_1991"
     ),
     current_variable = c(
       "ling_distance_nonzero_mean_2001",
+      "ling_share_distance_ge3_2001",
       "ling_share_distance_ge3_2001"
     ),
     historical_bound_width_variable = c(
       "ling_distance_nonzero_bound_width_1991",
+      "ling_share_distance_ge3_bound_width_1991",
       "ling_share_distance_ge3_bound_width_1991"
     ),
     stringsAsFactors = FALSE
@@ -770,12 +779,14 @@ build_historical_linguistic_persistence_validation <- function(
         safe_bind_rows(list(
           historical_linguistic_persistence_metrics(
             panel, exact_only = FALSE, measure_id = measure$measure_id,
+            measure_role = measure$measure_role,
             historical_variable = measure$historical_variable,
             current_variable = measure$current_variable,
             historical_bound_width_variable = measure$historical_bound_width_variable
           ),
           historical_linguistic_persistence_metrics(
             panel, exact_only = TRUE, measure_id = measure$measure_id,
+            measure_role = measure$measure_role,
             historical_variable = measure$historical_variable,
             current_variable = measure$current_variable,
             historical_bound_width_variable = measure$historical_bound_width_variable
