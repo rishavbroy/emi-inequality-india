@@ -518,6 +518,17 @@ missing VD91/TD91 values therefore do not shrink the PCA91-only sensitivity,
 and missing Census-2001 controls do not shrink either predetermined-control
 sensitivity.
 
+Small exact-one-to-one samples can make state-FE/control specifications saturated
+or can absorb all residual instrument variation. Those rows are retained for
+auditability but are `status = "not_estimable"`; the diagnostic does not call a
+zero-variance correlation, fabricate a partial R-squared/F statistic, or compare
+that row across instrument vintages. This follows base R's linear-model contract:
+`lm` exposes model rank and residual degrees of freedom, and aliased/rank-deficient
+coefficients are not valid inferential estimates. Preferred-geography estimates
+remain the high-support historical robustness benchmark; the exact sample is a
+strict nested geography sensitivity, not a requirement that every rich nuisance
+specification be estimable.
+
 ## Vanneman source provenance
 
 The downloaded Vanneman-Barnes snapshot is useful for later pre-treatment
