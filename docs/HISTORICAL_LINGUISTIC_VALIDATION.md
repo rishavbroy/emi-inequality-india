@@ -601,11 +601,29 @@ The remaining substantive integration task is now the geography contract. Vannem
 own documentation says that the longitudinal database maintains comparable boundaries
 by aggregating simple district splits back to older units and, for territory transfers,
 estimating earlier values on recreated 1991 geography. `panel4` therefore has fewer
-stable units than the raw 1991 Census and its version-5 state/district IDs must not be
-silently interpreted as Census-1991 codes. `vanneman_panel4_geography_inventory()` now
-exposes those stable IDs, labels in all four census years, 1991 population, and explicit
-aggregate labels such as `Hyderabad+Rangareddi`. That inventory is the audit surface for
-the next reviewed Vanneman-v5 -> Census-1991 crosswalk. The Vanneman harmonization
+stable units than the raw 1991 Census and its panel state/district IDs must not be
+silently interpreted as Census-1991 codes.
+
+The archived `stateid.html` page closes the first part of this geography problem: it
+publishes panel (`P`), 1981, and 1991 state IDs side by side and explicitly notes that
+panel/1981 state IDs differ from the 1991 file. The tracked
+`vanneman_panel_state_crosswalk.csv` transcribes that table, including two cases that
+must not be forced into a one-to-one state map: Jammu & Kashmir has no 1991 Census and
+Goa, Daman & Diu splits across two 1991 state IDs. This same source documents the `-1`
+1991 missing-value sentinel for Jammu & Kashmir. Accordingly,
+`vanneman_panel4_geography_inventory()` preserves those nine panel units with
+`population_1991 = NA` and `population_1991_status = "no_1991_census"` rather than
+failing or imputing a population.
+
+`vanneman_panel4_dist91_crosswalk()` then uses the author's own 1991 cross-section as
+the immediate bridge target. It auto-accepts only a unique exact normalized 1991 label
+within the documented 1991 state map. Panel units listed in the author's
+`combining.html`, labels containing explicit `+` aggregates, small-state district-00
+units, state-split cases, Jammu & Kashmir, and spelling/name mismatches remain
+non-preferred review cases. No fuzzy match enters the preferred pretrend geography.
+This bridge is deliberately Vanneman-panel -> Vanneman-dist91 first; the next step is to
+validate the deterministic dist91 IDs against the existing Census-1991 geography and
+compose that with the already-reviewed 1991->2001 lineage. The Vanneman harmonization
 remains sensitivity evidence rather than authority for Census-2001 geography.
 
 ## Next phases
@@ -627,12 +645,15 @@ remains sensitivity evidence rather than authority for Census-2001 geography.
    construction as a new primary instrument based on favorable results.
 4. Treat split/non-nested geography as sensitivity evidence, not as preferred
    exact reconstruction.
-5. Complete the 1961--91 Vanneman pre-trend phase by constructing a reviewed
-   version-5 panel-ID crosswalk from the new Vanneman geography inventory into the
-   existing 1991/2001 historical geography. The 2013 archived data/reader pairing is
-   now checksum-verified, so geography—not byte provenance—is the remaining gate. Do
-   not let Vanneman's harmonized IDs silently replace the project's Census geography
-   contract.
+5. Complete the 1961--91 Vanneman pre-trend phase from the new conservative
+   panel4-to-dist91 bridge. First validate deterministic `dist91` IDs against the
+   project's Census-1991 geography and adjudicate only the remaining label/aggregate
+   cases that materially affect support. The 2013 archived data/reader pairing and
+   panel-to-1991 state-ID contract are now verified, so district geography—not byte
+   provenance—is the remaining gate. Do not let Vanneman's harmonized IDs silently
+   replace the project's Census geography contract. A published six-decade Census
+   replication package also contains `Vanneman_district_crosswalk.dta`; use it as an
+   external benchmark if acquired, not as an unchecked production authority.
 
 ## SHRUG Census-1991 predetermined baseline balance
 
