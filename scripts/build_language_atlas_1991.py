@@ -57,6 +57,18 @@ ATLAS_CELL_REVIEW_FIELDS = (
 )
 
 
+ATLAS_ACCEPTED_SOURCE_FIELDS = (
+    "state_code_1991", "district_code_1991", "state_name_1991",
+    "atlas_population_candidate", "pca91_population", "atlas_column",
+    "language_1991", "canonical_language", "accepted_speaker_count",
+    "accepted_count_basis", "cell_review_decision", "cell_review_basis",
+    "page", "raw_value", "speaker_count_candidate", "parse_status",
+    "alignment_status", "n_atlas_language_columns", "n_accepted_values",
+    "n_review_required", "accepted_speaker_lower_bound",
+    "accepted_speaker_lower_bound_share_atlas", "coverage_status",
+)
+
+
 @dataclass(frozen=True)
 class Word:
     text: str
@@ -1320,6 +1332,60 @@ def build_language_atlas_review_template(
     )
 
 
+def build_language_atlas_accepted_source(
+    rows: list[dict[str, object]],
+    coverage_rows: list[dict[str, object]],
+) -> list[dict[str, object]]:
+    """Build the canonical post-adjudication long-form Atlas source.
+
+    This is a lossless promotion boundary, not an analysis-sample selector.
+    Unresolved cells remain present with a blank accepted count, and district
+    coverage/status fields are repeated on each language row. No preferred
+    coverage threshold is applied here.
+    """
+    coverage = {
+        (str(row["state_code_1991"]), str(row["district_code_1991"])): row
+        for row in coverage_rows
+    }
+    if len(coverage) != len(coverage_rows):
+        raise ValueError("Atlas coverage rows are not unique before source promotion")
+    out: list[dict[str, object]] = []
+    for row in rows:
+        key = (str(row["state_code_1991"]), str(row["district_code_1991"]))
+        if key not in coverage:
+            raise ValueError(f"Atlas accepted source lacks coverage row for {key[0]}-{key[1]}")
+        district = coverage[key]
+        out.append({
+            "state_code_1991": key[0],
+            "district_code_1991": key[1],
+            "state_name_1991": row.get("state_name_1991", ""),
+            "atlas_population_candidate": row.get("atlas_population_candidate", ""),
+            "pca91_population": row.get("pca91_population", ""),
+            "atlas_column": row["atlas_column"],
+            "language_1991": row.get("language_1991", ""),
+            "canonical_language": row.get("canonical_language", ""),
+            "accepted_speaker_count": row.get("accepted_speaker_count", ""),
+            "accepted_count_basis": row.get("accepted_count_basis", ""),
+            "cell_review_decision": row.get("cell_review_decision", ""),
+            "cell_review_basis": row.get("cell_review_basis", ""),
+            "page": row.get("page", ""),
+            "raw_value": row.get("raw_value", ""),
+            "speaker_count_candidate": row.get("speaker_count_candidate", ""),
+            "parse_status": row.get("parse_status", ""),
+            "alignment_status": row.get("alignment_status", ""),
+            "n_atlas_language_columns": district["n_atlas_language_columns"],
+            "n_accepted_values": district["n_accepted_values"],
+            "n_review_required": district["n_review_required"],
+            "accepted_speaker_lower_bound": district["accepted_speaker_lower_bound"],
+            "accepted_speaker_lower_bound_share_atlas": district["accepted_speaker_lower_bound_share_atlas"],
+            "coverage_status": district["coverage_status"],
+        })
+    return sorted(
+        out,
+        key=lambda row: (str(row["state_code_1991"]), str(row["district_code_1991"]), int(row["atlas_column"])),
+    )
+
+
 def page0_language_review_rows(rows: list[dict[str, object]]) -> list[dict[str, object]]:
     return [dict(row) for row in rows if row["language_cell_status"] == "review_required"]
 
@@ -1740,6 +1806,19 @@ def self_test() -> None:
     assert review_template[0]["review_basis"] == ""
     assert review_template[0]["expected_raw_value"] == impossible_rows[0]["raw_value"]
     assert review_template[0]["expected_parse_status"] == impossible_rows[0]["parse_status"]
+    accepted_source = build_language_atlas_accepted_source(
+        impossible_rows,
+        [{
+            "state_code_1991": "02", "district_code_1991": "01",
+            "n_atlas_language_columns": 1, "n_accepted_values": 1,
+            "n_review_required": 0, "accepted_speaker_lower_bound": 120,
+            "accepted_speaker_lower_bound_share_atlas": 1.2,
+            "coverage_status": "speaker_sum_exceeds_atlas_population",
+        }],
+    )
+    assert accepted_source[0]["accepted_speaker_count"] == 120
+    assert accepted_source[0]["coverage_status"] == "speaker_sum_exceeds_atlas_population"
+    assert tuple(accepted_source[0]) == ATLAS_ACCEPTED_SOURCE_FIELDS
     assert unresolved_triage[0]["numeric_group_candidates"] == "2;40"
     assert unresolved_triage[0]["max_group_reaches_next_threshold"] is True
 
@@ -1781,6 +1860,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--language-registry", type=Path)
     parser.add_argument("--cell-review-registry", type=Path)
     parser.add_argument("--cell-review-template-output", type=Path)
+    parser.add_argument("--accepted-source-output", type=Path)
     parser.add_argument("--pdftotext", default="pdftotext")
     parser.add_argument("--self-test", action="store_true")
     args = parser.parse_args(argv)
@@ -1861,6 +1941,8 @@ def main(argv: list[str] | None = None) -> int:
             parser.error("--cell-review-registry requires the all-language output bundle")
         if args.cell_review_template_output is not None and not any(value is not None for value in all_language_options):
             parser.error("--cell-review-template-output requires the all-language output bundle")
+        if args.accepted_source_output is not None and not any(value is not None for value in all_language_options):
+            parser.error("--accepted-source-output requires the all-language output bundle")
         if any(value is not None for value in all_language_options):
             if not all(value is not None for value in all_language_options):
                 parser.error(
@@ -1903,6 +1985,12 @@ def main(argv: list[str] | None = None) -> int:
                 args.coverage_sensitivity_output,
                 build_language_coverage_sensitivity(coverage),
             )
+            if args.accepted_source_output is not None:
+                write_csv(
+                    args.accepted_source_output,
+                    build_language_atlas_accepted_source(all_language_cells, coverage),
+                    fields=list(ATLAS_ACCEPTED_SOURCE_FIELDS),
+                )
             excess_triage = build_language_excess_triage(all_language_cells, coverage)
             write_csv(args.excess_triage_output, excess_triage)
             unresolved_triage = build_high_coverage_unresolved_triage(
