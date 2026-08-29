@@ -338,16 +338,60 @@ and population-bound status and requires every repeated district summary field
 to agree. A stale or hand-edited summary therefore cannot turn an incomplete or
 impossible district into an eligible one.
 
-Eligible districts must have the full 114-column inventory, must not violate the
-district population bound, must meet the supplied accepted-speaker lower-bound
-threshold, and must contain positive speaker mass on at least one nonzero
-Shastry-mapped language. A district that passes source coverage but has no such
-mass is retained with `historical_language_status = "no_nonzero_mapped_speakers"`
-and an `NA` primary distance. The distance itself reuses the frozen
-Atlas-to-Shastry resolver and the same speaker-weighted **nonzero mapped-language
-mean** used by the 2001 primary IV. English remains a separately treated
-reference language exactly as in the 2001 construction. Ineligible districts
-stay in the output with explicit statuses rather than being silently dropped or
+The accepted-speaker threshold is necessary but not sufficient for instrument
+quality. The primary Shastry measure is a mean over **nonzero mapped-language
+speakers**, not over total district population. A small unresolved population
+share can therefore matter disproportionately in a Hindi-dominant district.
+`historical_linguistic_distance_1991_candidates()` now separates source
+construction from the analysis-quality gate and computes conservative
+partial-identification bounds before any preferred threshold is applied.
+
+For each district, accepted speakers with a known positive Shastry degree form
+the observed numerator and denominator. Accepted Hindi/zero-degree speakers and
+English are known not to enter that nonzero mean. Every other person in the
+Atlas population denominator--including unaligned cells, unresolved extracted
+cells, accepted languages whose frozen Shastry degree remains unresolved, and
+classified-language residual population--is treated as potentially unresolved
+for the distance. The lower and upper bounds allow that unresolved mass either
+to leave the accepted-speaker mean unchanged or to enter at the minimum/maximum
+positive degree supported by the frozen Shastry scale. This is deliberately
+worst-case and never assigns an unresolved speaker to a particular language.
+
+`build_historical_linguistic_distance_1991()` therefore requires **two explicit
+source-quality thresholds**: `min_accepted_coverage` and
+`max_distance_bound_width`. A district is eligible only if it does not violate
+the Atlas population bound, has positive accepted nonzero mapped-speaker mass,
+meets the population-coverage threshold, and has a worst-case distance interval
+no wider than the supplied bound threshold. Full 114-column alignment remains a
+reported QA field (`complete_atlas_alignment_1991`) but is no longer an automatic
+analysis exclusion when the unresolved speaker mass already yields sufficiently
+tight instrument bounds. This makes the accepted-speaker threshold operational
+rather than defeating it with a stricter all-columns rule.
+
+The promoted point value remains the observed accepted-speaker mean used by
+the existing 2001 analogue, while the accepted point, lower/upper bounds, bound
+width, resolved speaker mass, and unresolved-mass upper bound remain in the
+historical-distance output. A source-quality sensitivity helper reports district
+and represented-population counts over the registered coverage grid crossed with
+0.10, 0.25, 0.50, and 1.00 distance-width cutoffs.
+
+The preferred source-only rule is now frozen at **99% accepted speaker coverage
+and a maximum 0.50 Shastry-degree bound width**. `historical_linguistic_preferred_source_quality()`
+owns this decision. The 99% coverage requirement caps unaccepted/unresolved
+speaker mass at one percent of the Atlas district population; the 0.50 width
+requires that remaining uncertainty to leave the historical IV within half of
+one degree on Shastry's 0--5 scale. The two gates are deliberately distinct from
+the separate 1991-to-2001 geography-quality rule.
+This rule was selected before real persistence or historical first-stage results
+were available and must not be changed in response to those coefficients. The
+full source-quality grid remains a sensitivity diagnostic.
+`historical_linguistic_source_quality_geography_grid()` then joins those source
+rules to the already-reviewed preferred/exact geography flags and reports usable
+district counts, represented population, and preferred-state coverage for every
+threshold pair. This join is diagnostic only: geography never changes an Atlas
+count or a distance bound. A district that fails either source gate stays in the
+output with an explicit status (`below_coverage_threshold`,
+`distance_bound_too_wide`, etc.) rather than being silently dropped or
 renormalized into eligibility.
 
 The extractor also writes district-level lower-bound coverage diagnostics. It
@@ -375,8 +419,12 @@ These counts remain extraction diagnostics, not a chosen analysis sample.
 
 On the current source pass, 342 districts have incomplete alignment, 63 have all
 114 columns aligned but unresolved cells, and 10 still have accepted-cell sums
-above Atlas population. **No district yet has a complete 114-cell accepted
-inventory**, so 1991 linguistic distance remains blocked from production.
+above Atlas population. No district yet has a complete 114-cell accepted
+inventory. That fact remains important extraction QA, but it is no longer by
+itself a production blocker: the new distance-bound diagnostic asks whether the
+unresolved mass is small enough to leave the historical IV tightly bounded.
+Population-bound contradictions remain ineligible regardless of coverage or
+bound width.
 
 `language_atlas_1991_languages.csv` now freezes the reviewed Atlas column
 inventory for columns 4--117. It records the 18 Scheduled and 96 Non-Scheduled
@@ -401,10 +449,12 @@ remains special. No new degree is invented to make the historical table complete
 The Atlas reports 114 classified languages rather than every raw mother-tongue
 return, so eventual district language coverage must be measured against the Atlas/PCA
 population denominator rather than silently renormalizing the classified-language
-counts to 100 percent. The next promotion step must resolve or characterize the
-remaining district/PCA, cell, and district-page alignment review queues and then
-write a tracked reviewed district-language long table for normal R/targets
-ingestion.
+counts to 100 percent. The next promotion step must preserve the remaining
+population contradictions and unresolved/alignment cells in the tracked accepted
+source rather than pretending they are complete. The frozen coverage + bound rule
+then determines analytical eligibility from that reviewed long table; source
+review can continue later where it materially tightens bounds or resolves a
+population contradiction.
 
 The post-review persistence machinery is now implemented separately from source
 promotion. `build_historical_linguistic_persistence_validation()` requires a
@@ -422,8 +472,10 @@ stability. Population-weighted correlations use base R's `stats::cov.wt`; the
 weighted Spearman statistic applies the same estimator to ordinary ranks. Split
 or otherwise nonpreferred geography stays in the district panel with an
 explicit status and cannot enter either persistence summary. This diagnostic is
-not yet wired into targets because the reviewed Atlas source and preferred
-accepted-speaker threshold remain unresolved.
+not yet wired into targets because the accepted Atlas source has not yet been
+promoted. The preferred **coverage + distance-bound** source-quality rule is now
+frozen from source-only diagnostics and must not be revised after inspecting
+persistence or first-stage coefficients.
 
 The historical-IV relevance robustness is implemented at the same boundary.
 `build_historical_linguistic_first_stage_robustness()` maps only persistence-
@@ -436,7 +488,8 @@ instrument-only, region/state main-control, and region/state expanded-control
 specifications. Preferred-geography and exact-one-to-one samples are reported
 separately, and each specification uses the identical district observations for
 the two instrument vintages. This comparison remains diagnostic-only until the
-reviewed Atlas source and explicit accepted-speaker threshold are promoted.
+reviewed Atlas source and explicit coverage/bound source-quality rule are
+promoted.
 
 The 1991 baseline balance results also motivate a separate
 **predetermined-control sensitivity** for that historical first stage. Several
@@ -471,25 +524,32 @@ sensitivity source rather than geography authority for the Census-2001 panel.
 
 ## Next phases
 
-1. Review the impossible-sum and high-coverage unresolved triage queues first,
-   then characterize the remaining Atlas district/PCA and cross-page alignment
-   cases before promoting a tracked reviewed district-language table.
-2. Reuse the now-registered 114 Atlas labels and frozen Shastry/Glottolog identity
-   machinery; keep unresolved labels and speaker coverage explicit.
-3. Promote adjudicated cells through the accepted-source contract, choose the
-   preferred accepted-speaker coverage threshold from reviewed evidence, and
-   construct 1991 district linguistic distance on native 1991 geography.
-4. Run the implemented 1991--2001 persistence diagnostic once the reviewed
-   source/threshold are promoted; report preferred one-target and exact
-   one-to-one samples separately with weighted Pearson/Spearman, weighted
-   regression, state-FE persistence, and rank/quintile stability.
+1. After this source-quality contract passes the public audit, promote the
+   reviewed accepted-source artifact and publish the full coverage-by-bound-width
+   grid, including preferred/exact geography support. The preferred 99% / 0.50
+   rule is already frozen and must not be revised after viewing persistence or
+   first-stage outcomes.
+2. Continue source review only where it can materially tighten the bound or
+   resolve a population contradiction; do not spend effort completing tiny
+   language cells that cannot change preferred eligibility.
+3. Construct the real 1991 district value for the project's preferred nonzero
+   scalar and retain its point/lower/upper bounds. Separately add literal
+   Shastry-comparability diagnostics--the population-weighted all-native-language
+   degree mean and the share of speakers at least three degrees from Hindi--so
+   historical replication is not conflated with the project's nonzero scalar.
+4. Run the implemented 1991--2001 persistence diagnostic; report preferred
+   one-target and exact one-to-one samples separately with weighted
+   Pearson/Spearman, weighted regression, state-FE persistence, and rank/quintile
+   stability.
 5. Run the implemented 1991-vs-2001 first-stage robustness comparison on the
-   same preferred/exact geography samples and common district support.
-6. Treat split/non-nested geography as sensitivity evidence, not as preferred
-   exact reconstruction.
-7. Use the implemented SHRUG PCA91/VD91/TD91 baseline module for eventual-EMI
-   predetermined balance now, add `LD_1991` to the same diagnostic once the Atlas
-   threshold is promoted, and keep 1961--91 Vanneman pre-trends provenance-gated.
+   same preferred/exact geography samples and common district support, including
+   the separate 1991 predetermined-control ladder.
+6. Add `LD_1991` to the existing PCA91/VD91/TD91 historical balance diagnostics
+   on its own source-valid support; keep eventual-EMI and instrument balance as
+   distinct claims.
+7. Treat split/non-nested geography as sensitivity evidence, not as preferred
+   exact reconstruction, and keep 1961--91 Vanneman pre-trends provenance-gated
+   until the panel-version mismatch is resolved.
 
 ## SHRUG Census-1991 predetermined baseline balance
 
@@ -526,7 +586,7 @@ available source support.
 The current extended target executes this exercise for eventual EMI exposure.
 The same function accepts an adjudicated threshold-explicit `LD_1991` table and
 will add historical-instrument balance on the same baseline-variable registry
-once the Atlas review and preferred accepted-speaker threshold are promoted.
+once the Atlas accepted source and preferred coverage/bound rule are promoted.
 The two predictors retain their own valid observation support: missing DISE
 treatment does not remove a district from `LD_1991` balance, and an ineligible
 historical-language observation does not remove it from eventual-EMI balance.
