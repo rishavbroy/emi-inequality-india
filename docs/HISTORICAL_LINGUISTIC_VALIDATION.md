@@ -343,9 +343,11 @@ to agree. A stale or hand-edited summary therefore cannot turn an incomplete or
 impossible district into an eligible one.
 
 The accepted-speaker threshold is necessary but not sufficient for instrument
-quality. The primary Shastry measure is a mean over **nonzero mapped-language
-speakers**, not over total district population. A small unresolved population
-share can therefore matter disproportionately in a Hindi-dominant district.
+quality. Following Shastry's regression treatment of the non-monotonic response
+among zero-distance Hindi/Urdu speakers, the project's primary scalar is a mean
+over **positive-distance mapped-language speakers**, not over total district
+population. A small unresolved population share can therefore matter
+disproportionately in a Hindi-dominant district.
 `historical_linguistic_distance_1991_candidates()` now separates source
 construction from the analysis-quality gate and computes conservative
 partial-identification bounds before any preferred threshold is applied.
@@ -375,9 +377,22 @@ rather than defeating it with a stricter all-columns rule.
 The promoted point value remains the observed accepted-speaker mean used by
 the existing 2001 analogue, while the accepted point, lower/upper bounds, bound
 width, resolved speaker mass, and unresolved-mass upper bound remain in the
-historical-distance output. A source-quality sensitivity helper reports district
-and represented-population counts over the registered coverage grid crossed with
-0.10, 0.25, 0.50, and 1.00 distance-width cutoffs.
+historical-distance output. The same district calculation now also reproduces
+Shastry's second reduced-form measure: the percent of the district population
+speaking languages at least three degrees from Hindi. Its accepted count divided
+by Atlas population is a conservative lower bound; assigning every unresolved
+person to a degree-three-or-higher language gives the upper bound. The interval
+can exceed the raw unaccepted-speaker share because an accepted Atlas count may
+still lack a frozen Shastry degree; those speakers also remain unresolved for the
+threshold measure. The historical point measure is therefore labelled as the
+accepted distant-speaker share and reported together with its bound width rather
+than renormalizing classified-language counts. Persistence summaries expose the
+mean and maximum 1991 bound width on the analysis sample. No second language
+resolver or parser is introduced.
+
+A source-quality sensitivity helper reports district and represented-population
+counts over the registered coverage grid crossed with 0.10, 0.25, 0.50, and 1.00
+distance-width cutoffs for the primary scalar.
 
 The preferred source-only rule is now frozen at **99% accepted speaker coverage
 and a maximum 0.50 Shastry-degree bound width**. `historical_linguistic_preferred_source_quality()`
@@ -476,10 +491,14 @@ disagree on the number of target districts. The preferred comparison uses only
 one-target source districts passing the existing 99% 1991-population geography
 rule; exact one-to-one mappings are reported as a separate nested sample.
 
-For each sample the diagnostic reports ordinary and 1991-population-weighted
-Pearson/Spearman persistence, the population-weighted slope, the corresponding
-state-fixed-effect slope, mean absolute level/rank change, and quintile
-stability. Population-weighted correlations use base R's `stats::cov.wt`; the
+For each sample the diagnostic reports the same level/rank persistence metrics
+for two explicitly labelled measures: `nonzero_mean` (the project's primary
+Shastry-style weighted average) and `accepted_distant_share_ge3` (the accepted
+lower-bound analogue of Shastry's percent distant speakers). Ordinary and 1991-population-weighted Pearson/Spearman
+correlations, population-weighted slopes, and state-fixed-effect slopes are
+therefore computed by one shared metrics routine rather than parallel code.
+Quintile-transition output remains tied to the primary scalar.
+Population-weighted correlations use base R's `stats::cov.wt`; the
 weighted Spearman statistic applies the same estimator to ordinary ranks. Split
 or otherwise nonpreferred geography stays in the district panel with an
 explicit status and cannot enter either persistence summary. This diagnostic is
@@ -548,18 +567,23 @@ sensitivity source rather than geography authority for the Census-2001 panel.
 
 ## Next phases
 
-1. Run the promoted real historical-instrument chain end-to-end under the frozen
-   99% / 0.50 source rule. Inspect persistence, first-stage relevance, the 1991
-   predetermined-control ladder, and `LD_1991` baseline balance before changing
-   any source threshold or main-IV specification.
+1. Treat the now-green real historical chain as evidence, not as a specification
+   search. The preferred sample shows strong 1991--2001 persistence, broadly
+   reassuring `LD_1991` baseline balance, and weak relevance after rich
+   adjustment. Preserve the frozen 99% / 0.50 source rule and main-IV registry
+   rather than tuning either to improve the historical first stage.
 2. Continue Atlas source review only where it can materially tighten a district's
    distance bound or resolve a population contradiction; do not spend effort on
    tiny cells that cannot change preferred eligibility.
-3. Add literal Shastry-comparability diagnostics--the population-weighted
-   all-native-language degree mean and the share of speakers at least three
-   degrees from Hindi--as separate historical-replication measures. Shastry
-   defines both from 1991 district native-language composition; they should not
-   replace or be conflated with the project's preferred nonzero-distance scalar.
+3. Inspect both historical persistence measures now emitted by the shared
+   diagnostic. Shastry initially describes a population-weighted district
+   average, but in the regressions explicitly calculates that weighted average
+   among non-Hindi speakers to handle the zero-distance non-monotonicity; the
+   project's positive-distance mean is therefore the relevant comparability
+   analogue. The separately reported `accepted_distant_share_ge3` reconstructs her second
+   reduced-form measure without imposing linearity while retaining explicit
+   bounds for unresolved distance mass. Do not relabel either as a
+   new primary instrument based on favorable results.
 4. Treat split/non-nested geography as sensitivity evidence, not as preferred
    exact reconstruction.
 5. Keep 1961--91 Vanneman pre-trends provenance-gated until the downloaded panel
