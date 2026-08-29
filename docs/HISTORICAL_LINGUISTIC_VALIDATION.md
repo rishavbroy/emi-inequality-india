@@ -81,8 +81,16 @@ split destination labels (`Gautam Buddha/Nagar`, `Jyotiba Phule Na-/gar`).
 a nonblank source continuation with no population must follow a hyphen-terminated
 source label; rows carrying transfer percentages remain separate destination
 edges, while continuation-only rows extend the preceding source/destination
-label. A hyphen terminating a wrapped destination fragment is removed before the
-continuation is joined. Unexpected continuation shapes fail closed.
+label. The working paper distinguishes semantic hyphens from typographic word
+wraps in these cases: an uppercase continuation preserves the source hyphen
+(`Chengalpattu-MGR`), whereas a lowercase continuation removes the wrap hyphen
+(`Pasumpon M. Thevar`). Wrapped destination fragments use the same word-wrap
+rule. Unexpected continuation shapes fail closed. After repair, the reader also
+checks the table's substantive accounting identity from Kumar--Somanathan: the
+published child shares must partition each 1991 parent district to 100%, allowing
+0.05 percentage points for two-decimal rounding, and both published share columns
+must remain within 0--100. Dropped or duplicated extraction rows therefore fail at
+the source boundary rather than contaminating lineage diagnostics.
 
 Two additional diagnostic outputs record this comparison:
 
@@ -90,7 +98,18 @@ Two additional diagnostic outputs record this comparison:
   Kumar--Somanathan source-to-target edge with conservative match status and
   absolute transfer-share difference;
 - `historical_linguistic_geography_carveout_benchmark_summary.csv`: matched
-  source/edge counts and share-difference summaries.
+  source/edge counts, explicit source/edge benchmark-coverage shares, separate
+  counts for source populations that are absent versus non-unique in SHRUG, and
+  share-difference summaries. Agreement statistics therefore cannot be read
+  without the benchmark coverage reported beside them.
+
+This benchmark uses the first transfer margin reported by Kumar--Somanathan:
+the share of each 1991 parent district that went to each 2001 child. Their paper
+also reports the reverse margin (the share of each parent in a child district),
+but the SHRUG transition does not carry an independently complete 1991-population
+denominator on 2001 boundaries. The reverse margin is therefore not fabricated by
+renormalizing deterministic SHRUG mass; it remains source documentation rather
+than a benchmark statistic.
 
 
 ## Atlas extraction contract

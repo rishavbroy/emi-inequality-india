@@ -298,8 +298,50 @@ test_that("historical geography benchmark uses only uniquely population-identifi
   expect_identical(ambiguous$benchmark_status, "source_population_not_unique")
   expect_equal(sort(out$edges$share_abs_diff[out$edges$benchmark_status == "matched_edge"]), c(0.01, 0.01))
   expect_equal(out$summary$n_population_identified_source_districts, 1L)
+  expect_equal(out$summary$n_population_not_found_source_districts, 0L)
+  expect_equal(out$summary$n_population_ambiguous_source_districts, 1L)
+  expect_equal(out$summary$share_source_districts_population_identified, 0.5)
   expect_equal(out$summary$n_matched_edges, 2L)
+  expect_equal(out$summary$share_source_edges_matched, 2 / 3)
   expect_equal(out$summary$share_matched_edges_within_1pp, 1)
+})
+
+test_that("historical geography benchmark distinguishes absent from ambiguous populations", {
+  geography <- list(
+    source_districts = data.frame(
+      state_code_1991 = c("02", "03"),
+      district_code_1991 = c("01", "01"),
+      population_1991_total = c(200, 200),
+      stringsAsFactors = FALSE
+    ),
+    transition = data.frame(
+      state_code_1991 = character(), district_code_1991 = character(),
+      state_code_2001 = character(), district_code_2001 = character(),
+      population_share_to_2001 = numeric(), stringsAsFactors = FALSE
+    )
+  )
+  carveouts <- data.frame(
+    district_1991 = c("Missing", "Ambiguous"),
+    pop_1991 = c(100, 200),
+    district_2001 = c("Alpha", "Beta"),
+    pct_01in91 = c(100, 100),
+    stringsAsFactors = FALSE
+  )
+  admin <- data.frame(
+    state_code = character(), district_code = character(), district_std = character(),
+    stringsAsFactors = FALSE
+  )
+
+  out <- build_historical_linguistic_geography_external_benchmark(
+    geography, carveouts, admin
+  )
+
+  expect_identical(
+    out$edges$benchmark_status,
+    c("source_population_not_found", "source_population_not_unique")
+  )
+  expect_equal(out$summary$n_population_not_found_source_districts, 1L)
+  expect_equal(out$summary$n_population_ambiguous_source_districts, 1L)
 })
 
 test_that("historical geography benchmark does not fuzzy-match destination names", {

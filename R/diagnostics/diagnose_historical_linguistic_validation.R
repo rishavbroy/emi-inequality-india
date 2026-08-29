@@ -186,9 +186,13 @@ historical_linguistic_carveout_benchmark <- function(
   out$shrug_population_share_to_2001 <- bridge$population_share_to_2001[bridge_match]
   out$share_abs_diff <- abs(out$source_share_to_2001 - out$shrug_population_share_to_2001)
   out$benchmark_status <- ifelse(
-    out$n_geography_population_matches != 1L,
-    "source_population_not_unique",
-    ifelse(is.na(bridge_match), "target_name_not_in_shrug_transition", "matched_edge")
+    out$n_geography_population_matches == 0L,
+    "source_population_not_found",
+    ifelse(
+      out$n_geography_population_matches > 1L,
+      "source_population_not_unique",
+      ifelse(is.na(bridge_match), "target_name_not_in_shrug_transition", "matched_edge")
+    )
   )
   out <- out[c(
     "district_1991", "pop_1991", "district_2001",
@@ -208,13 +212,22 @@ historical_linguistic_carveout_benchmark_summary <- function(benchmark) {
   population_identified_key <- paste(
     population_identified$district_1991, population_identified$pop_1991, sep = "__"
   )
+  source_status <- unique(x[c("district_1991", "pop_1991", "n_geography_population_matches")])
   diff <- num(matched$share_abs_diff)
   diff <- diff[is.finite(diff)]
   data.frame(
     n_source_edges = nrow(x),
     n_source_districts = length(unique(source_key)),
     n_population_identified_source_districts = length(unique(population_identified_key)),
+    n_population_not_found_source_districts = sum(source_status$n_geography_population_matches == 0L),
+    n_population_ambiguous_source_districts = sum(source_status$n_geography_population_matches > 1L),
+    share_source_districts_population_identified = if (length(unique(source_key))) {
+      length(unique(population_identified_key)) / length(unique(source_key))
+    } else {
+      NA_real_
+    },
     n_matched_edges = nrow(matched),
+    share_source_edges_matched = if (nrow(x)) nrow(matched) / nrow(x) else NA_real_,
     median_absolute_share_difference = if (length(diff)) stats::median(diff, na.rm = TRUE) else NA_real_,
     p95_absolute_share_difference = if (length(diff)) unname(stats::quantile(diff, 0.95, na.rm = TRUE)) else NA_real_,
     max_absolute_share_difference = if (length(diff)) max(diff, na.rm = TRUE) else NA_real_,
