@@ -1,0 +1,418 @@
+# Pre-treatment baselines from the Vanneman-Barnes stable district panel.
+#
+# The archived panel4.sas is the parsing contract: columns 1-2 state ID,
+# 3-4 stable district ID, 5-7 record ID, 8-9 year, 10 version, and
+# total/rural/male/rural-male counts in columns 11-46. This module reads only
+# a narrow longitudinal family and then applies the already-reviewed geography.
+
+vanneman_pretrend_record_registry <- function() {
+  data.frame(
+    record_id = c("100", "111", "112", "140", "151", "153"),
+    record_name = c(
+      "total_population", "main_workers", "farm_workers_main", "literates",
+      "primary_school_or_higher", "matriculates_or_higher"
+    ),
+    stringsAsFactors = FALSE
+  )
+}
+
+vanneman_pretrend_measure_registry <- function() {
+  data.frame(
+    measure_id = c(
+      "log_population", "urban_share", "main_worker_share",
+      "nonfarm_worker_share_main_workers", "literate_share_population",
+      "primary_plus_share_population", "matriculate_plus_share_population"
+    ),
+    domain = c("demography", "demography", "labor", "labor", "education", "education", "education"),
+    label = c(
+      "Log population", "Urban share", "Main-worker share of population",
+      "Non-farm share of main workers", "Literate share of population",
+      "Primary-school-or-higher share of population",
+      "Matriculate-or-higher share of population"
+    ),
+    stringsAsFactors = FALSE
+  )
+}
+
+vanneman_pretrend_period_registry <- function() {
+  data.frame(
+    period_id = c("1961_1971", "1971_1981", "1981_1991", "1961_1981", "1961_1991"),
+    start_year = c(1961L, 1971L, 1981L, 1961L, 1961L),
+    end_year = c(1971L, 1981L, 1991L, 1981L, 1991L),
+    stringsAsFactors = FALSE
+  )
+}
+
+vanneman_count_value <- function(x) {
+  out <- suppressWarnings(as.numeric(trimws(x)))
+  out[is.finite(out) & out < 0] <- NA_real_
+  out
+}
+
+read_vanneman_panel4_pretrend_counts <- function(
+    path, record_registry = vanneman_pretrend_record_registry()) {
+  if (!file.exists(path)) stop("Missing Vanneman panel4 data: ", path, call. = FALSE)
+  records <- safe_df(record_registry)
+  if (anyDuplicated(records$record_id) || any(nchar(records$record_id) != 3L)) {
+    stop("Vanneman pretrend registry must contain unique three-digit record IDs.", call. = FALSE)
+  }
+
+  con <- gzfile(path, open = "rt")
+  on.exit(close(con), add = TRUE)
+  lines <- readLines(con, warn = FALSE)
+  if (!length(lines) || any(nchar(lines) < 46L)) {
+    stop("Vanneman panel4 pretrend records are malformed.", call. = FALSE)
+  }
+  record_id <- substr(lines, 5L, 7L)
+  keep <- record_id %in% records$record_id
+  out <- data.frame(
+    vanneman_state_id = substr(lines[keep], 1L, 2L),
+    vanneman_district_id = substr(lines[keep], 3L, 4L),
+    record_id = record_id[keep],
+    year = 1900L + suppressWarnings(as.integer(substr(lines[keep], 8L, 9L))),
+    version = suppressWarnings(as.integer(substr(lines[keep], 10L, 10L))),
+    total = vanneman_count_value(substr(lines[keep], 11L, 19L)),
+    rural = vanneman_count_value(substr(lines[keep], 20L, 28L)),
+    male = vanneman_count_value(substr(lines[keep], 29L, 37L)),
+    rural_male = vanneman_count_value(substr(lines[keep], 38L, 46L)),
+    stringsAsFactors = FALSE
+  )
+  out$panel_unit_id <- paste0(out$vanneman_state_id, out$vanneman_district_id)
+  expected_years <- c(1961L, 1971L, 1981L, 1991L)
+  if (any(!out$year %in% expected_years) || any(!is.finite(out$version))) {
+    stop("Vanneman pretrend records violate the stable-panel year/version contract.", call. = FALSE)
+  }
+  key <- paste(out$panel_unit_id, out$year, out$record_id, sep = "__")
+  if (anyDuplicated(key)) stop("Vanneman panel4 has duplicate registered pretrend records.", call. = FALSE)
+  expected_n <- length(unique(out$panel_unit_id)) * length(expected_years) * nrow(records)
+  if (nrow(out) != expected_n) {
+    stop("Vanneman panel4 does not contain the complete registered pretrend record grid.", call. = FALSE)
+  }
+  out[order(out$panel_unit_id, out$year, out$record_id), , drop = FALSE]
+}
+
+vanneman_pretrend_record_field <- function(counts, record_id, field, keys) {
+  x <- counts[counts$record_id == record_id, , drop = FALSE]
+  idx <- match(keys, paste(x$panel_unit_id, x$year, sep = "__"))
+  if (anyNA(idx)) stop("Vanneman pretrend record grid is incomplete for record ", record_id, ".", call. = FALSE)
+  x[[field]][idx]
+}
+
+build_vanneman_pretrend_levels <- function(counts, geography) {
+  x <- safe_df(counts)
+  geography <- safe_df(geography)
+  base <- x[x$record_id == "100",
+            c("panel_unit_id", "vanneman_state_id", "vanneman_district_id", "year", "version"),
+            drop = FALSE]
+  keys <- paste(base$panel_unit_id, base$year, sep = "__")
+  get_total <- function(id) vanneman_pretrend_record_field(x, id, "total", keys)
+  population <- get_total("100")
+  rural_population <- vanneman_pretrend_record_field(x, "100", "rural", keys)
+  main_workers <- get_total("111")
+  farm_workers <- get_total("112")
+  literates <- get_total("140")
+  primary_plus <- get_total("151")
+  matriculate_plus <- get_total("153")
+
+  invalid <- (is.finite(population) & population <= 0) |
+    (is.finite(rural_population) & is.finite(population) & rural_population > population) |
+    (is.finite(main_workers) & is.finite(population) & main_workers > population) |
+    (is.finite(farm_workers) & is.finite(main_workers) & farm_workers > main_workers) |
+    (is.finite(literates) & is.finite(population) & literates > population) |
+    (is.finite(primary_plus) & is.finite(population) & primary_plus > population) |
+    (is.finite(matriculate_plus) & is.finite(population) & matriculate_plus > population)
+  invalid[is.na(invalid)] <- FALSE
+  if (any(invalid)) stop("Vanneman pretrend counts violate basic population accounting identities.", call. = FALSE)
+
+  base$population <- population
+  base$log_population <- ifelse(population > 0, log(population), NA_real_)
+  base$urban_share <- ifelse(population > 0, 1 - rural_population / population, NA_real_)
+  base$main_worker_share <- ifelse(population > 0, main_workers / population, NA_real_)
+  base$nonfarm_worker_share_main_workers <- ifelse(main_workers > 0, 1 - farm_workers / main_workers, NA_real_)
+  base$literate_share_population <- ifelse(population > 0, literates / population, NA_real_)
+  base$primary_plus_share_population <- ifelse(population > 0, primary_plus / population, NA_real_)
+  base$matriculate_plus_share_population <- ifelse(population > 0, matriculate_plus / population, NA_real_)
+
+  for (variable in setdiff(vanneman_pretrend_measure_registry()$measure_id, "log_population")) {
+    bad <- is.finite(base[[variable]]) & (base[[variable]] < 0 | base[[variable]] > 1)
+    if (any(bad)) stop("Vanneman pretrend share falls outside [0, 1]: ", variable, call. = FALSE)
+  }
+
+  required_geo <- c(
+    "panel_unit_id", "dist91_state_id", "dist91_district_id",
+    "state_code_2001", "district_code_2001",
+    "pretrend_geography_status", "preferred_vanneman_pretrend_eligible"
+  )
+  missing <- setdiff(required_geo, names(geography))
+  if (length(missing)) stop("Vanneman pretrend geography lacks fields: ", paste(missing, collapse = ", "), call. = FALSE)
+  if (anyDuplicated(geography$panel_unit_id)) {
+    stop("Vanneman pretrend geography must contain unique stable panel IDs.", call. = FALSE)
+  }
+  out <- merge(base, geography[required_geo], by = "panel_unit_id", all.x = TRUE, sort = FALSE)
+  if (anyNA(out$pretrend_geography_status)) {
+    stop("Vanneman pretrend levels contain stable IDs absent from reviewed geography.", call. = FALSE)
+  }
+  out[order(out$panel_unit_id, out$year), , drop = FALSE]
+}
+
+build_vanneman_pretrend_levels_from_sources <- function(
+    source_qa, geography, paths = build_paths()) {
+  qa <- safe_df(source_qa)
+  panel <- qa[qa$source_id == "panel4", , drop = FALSE]
+  if (nrow(panel) != 1L || !isTRUE(panel$eligible_for_baseline_values[[1L]])) {
+    stop("Vanneman panel4 source contract must be verified before constructing pretrend levels.", call. = FALSE)
+  }
+  build_vanneman_pretrend_levels(
+    read_vanneman_panel4_pretrend_counts(vanneman_historical_paths(paths)[["panel4"]]),
+    geography
+  )
+}
+
+build_vanneman_pretrend_changes <- function(levels) {
+  x <- safe_df(levels)
+  measures <- vanneman_pretrend_measure_registry()
+  periods <- vanneman_pretrend_period_registry()
+  pop61 <- x[x$year == 1961L, c("panel_unit_id", "population"), drop = FALSE]
+  if (anyDuplicated(pop61$panel_unit_id)) stop("Vanneman 1961 population must be unique by stable panel ID.", call. = FALSE)
+
+  safe_bind_rows(lapply(seq_len(nrow(periods)), function(i) {
+    start <- x[x$year == periods$start_year[[i]], , drop = FALSE]
+    end <- x[x$year == periods$end_year[[i]], , drop = FALSE]
+    idx <- match(start$panel_unit_id, end$panel_unit_id)
+    if (anyNA(idx)) stop("Vanneman pretrend levels do not share one stable unit universe.", call. = FALSE)
+    safe_bind_rows(lapply(seq_len(nrow(measures)), function(j) {
+      variable <- measures$measure_id[[j]]
+      data.frame(
+        panel_unit_id = start$panel_unit_id,
+        dist91_state_id = start$dist91_state_id,
+        dist91_district_id = start$dist91_district_id,
+        state_code_2001 = start$state_code_2001,
+        district_code_2001 = start$district_code_2001,
+        preferred_vanneman_pretrend_eligible = start$preferred_vanneman_pretrend_eligible,
+        pretrend_geography_status = start$pretrend_geography_status,
+        period_id = periods$period_id[[i]],
+        start_year = periods$start_year[[i]],
+        end_year = periods$end_year[[i]],
+        measure_id = variable,
+        domain = measures$domain[[j]],
+        label = measures$label[[j]],
+        start_value = num(start[[variable]]),
+        end_value = num(end[[variable]][idx]),
+        change = num(end[[variable]][idx]) - num(start[[variable]]),
+        population_1961 = num(pop61$population[match(start$panel_unit_id, pop61$panel_unit_id)]),
+        stringsAsFactors = FALSE
+      )
+    }))
+  }))
+}
+
+build_vanneman_pretrend_predictor_panel <- function(
+    changes, district_panel, historical_distance = NULL,
+    treatment = preferred_iv_variables()$treatment) {
+  out <- safe_df(changes)
+  panel <- if (inherits(district_panel, "sf")) sf::st_drop_geometry(district_panel) else safe_df(district_panel)
+  required_panel <- c("state_code_2001", "district_code_2001", treatment)
+  missing <- setdiff(required_panel, names(panel))
+  if (length(missing)) stop("Vanneman pretrend treatment panel lacks: ", paste(missing, collapse = ", "), call. = FALSE)
+  panel$state_code_2001 <- pad_admin_code(panel$state_code_2001, 2L)
+  panel$district_code_2001 <- pad_admin_code(panel$district_code_2001, 2L)
+  if (anyDuplicated(panel[c("state_code_2001", "district_code_2001")])) {
+    stop("Vanneman pretrend treatment panel has duplicate Census-2001 district keys.", call. = FALSE)
+  }
+  treatment_data <- panel[required_panel]
+  names(treatment_data)[names(treatment_data) == treatment] <- "emie_exposure"
+  out <- merge(out, treatment_data,
+               by = c("state_code_2001", "district_code_2001"), all.x = TRUE, sort = FALSE)
+
+  if (!is.null(historical_distance)) {
+    distance <- safe_df(historical_distance)
+    required <- c(
+      "state_code_1991", "district_code_1991", "historical_language_status",
+      "ling_distance_nonzero_mean_1991"
+    )
+    missing <- setdiff(required, names(distance))
+    if (length(missing)) stop("Vanneman pretrend historical distance lacks: ", paste(missing, collapse = ", "), call. = FALSE)
+    distance$state_code_1991 <- pad_admin_code(distance$state_code_1991, 2L)
+    distance$district_code_1991 <- pad_admin_code(distance$district_code_1991, 2L)
+    if (anyDuplicated(distance[c("state_code_1991", "district_code_1991")])) {
+      stop("Vanneman pretrend historical distance has duplicate Census-1991 keys.", call. = FALSE)
+    }
+    names(distance)[names(distance) == "state_code_1991"] <- "dist91_state_id"
+    names(distance)[names(distance) == "district_code_1991"] <- "dist91_district_id"
+    out <- merge(
+      out,
+      distance[c(
+        "dist91_state_id", "dist91_district_id",
+        "historical_language_status", "ling_distance_nonzero_mean_1991"
+      )],
+      by = c("dist91_state_id", "dist91_district_id"), all.x = TRUE, sort = FALSE
+    )
+  }
+  out$historical_ld_eligible <- if ("historical_language_status" %in% names(out)) {
+    out$historical_language_status %in% "eligible" &
+      is.finite(num(out$ling_distance_nonzero_mean_1991))
+  } else FALSE
+  out
+}
+
+vanneman_pretrend_predictors <- function(panel) {
+  out <- c(eventual_emie = "emie_exposure")
+  if (all(c("historical_ld_eligible", "ling_distance_nonzero_mean_1991") %in% names(panel))) {
+    out <- c(out, historical_ld_1991 = "ling_distance_nonzero_mean_1991")
+  }
+  out
+}
+
+vanneman_pretrend_sample <- function(panel, predictor, period_id, measures) {
+  x <- safe_df(panel)
+  keep <- x$preferred_vanneman_pretrend_eligible %in% TRUE &
+    x$period_id == period_id & x$measure_id %in% measures &
+    is.finite(num(x$change)) & is.finite(num(x$population_1961)) &
+    num(x$population_1961) > 0 & nzchar(plain_chr(x$state_code_2001))
+  if (identical(predictor, "ling_distance_nonzero_mean_1991")) {
+    keep <- keep & x$historical_ld_eligible %in% TRUE
+  } else {
+    keep <- keep & is.finite(num(x[[predictor]]))
+  }
+  x[keep, , drop = FALSE]
+}
+
+estimate_vanneman_pretrend_association <- function(
+    panel, predictor, period_id, measure_id, fixed_effect = c("none", "state")) {
+  fixed_effect <- match.arg(fixed_effect)
+  x <- vanneman_pretrend_sample(panel, predictor, period_id, measure_id)
+  if (!nrow(x)) {
+    return(data.frame(
+      predictor = predictor, period_id = period_id, measure_id = measure_id,
+      fixed_effect = fixed_effect, estimate = NA_real_, std.error = NA_real_,
+      p.value = NA_real_, standardized_effect = NA_real_,
+      n = 0L, n_states = 0L, status = "not_estimated",
+      stringsAsFactors = FALSE
+    ))
+  }
+  rhs <- c(predictor, if (fixed_effect == "state") "factor(state_code_2001)" else character())
+  fit <- stats::lm(stats::reformulate(rhs, response = "change"),
+                   data = x, weights = num(x$population_1961))
+  inference <- clustered_lm_term_inference(fit, predictor, x$state_code_2001)
+  estimate <- unname(stats::coef(fit)[[predictor]])
+  predictor_sd <- historical_weighted_sd(x[[predictor]], x$population_1961)
+  outcome_sd <- historical_weighted_sd(x$change, x$population_1961)
+  standardized <- if (is.finite(estimate) && is.finite(predictor_sd) &&
+                      is.finite(outcome_sd) && outcome_sd > 0) {
+    estimate * predictor_sd / outcome_sd
+  } else NA_real_
+  data.frame(
+    predictor = predictor, period_id = period_id, measure_id = measure_id,
+    fixed_effect = fixed_effect, estimate = estimate,
+    std.error = unname(inference[["std.error"]]),
+    p.value = unname(inference[["p.value"]]),
+    standardized_effect = standardized,
+    n = stats::nobs(fit), n_states = length(unique(x$state_code_2001)),
+    status = "estimated", stringsAsFactors = FALSE
+  )
+}
+
+estimate_vanneman_pretrend_joint_balance <- function(panel, predictor, period_id, domain) {
+  metadata <- vanneman_pretrend_measure_registry()
+  measures <- metadata$measure_id[metadata$domain == domain]
+  x <- vanneman_pretrend_sample(panel, predictor, period_id, measures)
+  if (!nrow(x)) {
+    return(data.frame(
+      predictor = predictor, period_id = period_id, domain = domain,
+      tested_measures = paste(measures, collapse = ";"),
+      joint_f = NA_real_, joint_p = NA_real_, n = 0L, n_states = 0L,
+      status = "not_estimated", reason = "no_complete_cases",
+      stringsAsFactors = FALSE
+    ))
+  }
+  wide <- reshape(
+    x[c("panel_unit_id", "state_code_2001", "population_1961",
+        predictor, "measure_id", "change")],
+    idvar = c("panel_unit_id", "state_code_2001", "population_1961", predictor),
+    timevar = "measure_id", direction = "wide"
+  )
+  change_cols <- paste0("change.", measures)
+  wide <- wide[stats::complete.cases(wide[c(change_cols, predictor, "state_code_2001", "population_1961")]), , drop = FALSE]
+  if (!nrow(wide)) {
+    return(data.frame(
+      predictor = predictor, period_id = period_id, domain = domain,
+      tested_measures = paste(measures, collapse = ";"),
+      joint_f = NA_real_, joint_p = NA_real_, n = 0L, n_states = 0L,
+      status = "not_estimated", reason = "no_complete_cases",
+      stringsAsFactors = FALSE
+    ))
+  }
+  fit <- stats::lm(
+    stats::reformulate(c(change_cols, "factor(state_code_2001)"), response = predictor),
+    data = wide, weights = num(wide$population_1961)
+  )
+  joint <- clustered_joint_wald_test(fit, change_cols, wide$state_code_2001)
+  estimability <- joint_wald_estimability(fit, change_cols, joint)
+  estimated <- identical(unname(estimability[["status"]]), "estimated")
+  data.frame(
+    predictor = predictor, period_id = period_id, domain = domain,
+    tested_measures = paste(measures, collapse = ";"),
+    joint_f = if (estimated) unname(joint[["statistic"]]) else NA_real_,
+    joint_p = if (estimated) unname(joint[["p.value"]]) else NA_real_,
+    n = stats::nobs(fit), n_states = length(unique(wide$state_code_2001)),
+    status = unname(estimability[["status"]]),
+    reason = unname(estimability[["reason"]]),
+    stringsAsFactors = FALSE
+  )
+}
+
+build_vanneman_pretrend_validation <- function(
+    levels, district_panel, historical_distance = NULL,
+    treatment = preferred_iv_variables()$treatment) {
+  changes <- build_vanneman_pretrend_changes(levels)
+  panel <- build_vanneman_pretrend_predictor_panel(
+    changes, district_panel, historical_distance, treatment
+  )
+  predictors <- vanneman_pretrend_predictors(panel)
+  periods <- vanneman_pretrend_period_registry()$period_id
+  measures <- vanneman_pretrend_measure_registry()$measure_id
+  domains <- unique(vanneman_pretrend_measure_registry()$domain)
+
+  estimates <- safe_bind_rows(lapply(names(predictors), function(name) {
+    predictor <- predictors[[name]]
+    safe_bind_rows(lapply(periods, function(period_id) {
+      safe_bind_rows(lapply(measures, function(measure_id) {
+        safe_bind_rows(lapply(c("none", "state"), function(fixed_effect) {
+          out <- estimate_vanneman_pretrend_association(
+            panel, predictor, period_id, measure_id, fixed_effect
+          )
+          out$predictor_id <- name
+          out
+        }))
+      }))
+    }))
+  }))
+  joint <- safe_bind_rows(lapply(names(predictors), function(name) {
+    predictor <- predictors[[name]]
+    safe_bind_rows(lapply(periods, function(period_id) {
+      safe_bind_rows(lapply(domains, function(domain) {
+        out <- estimate_vanneman_pretrend_joint_balance(panel, predictor, period_id, domain)
+        out$predictor_id <- name
+        out
+      }))
+    }))
+  }))
+
+  list(levels = levels, changes = changes, panel = panel,
+       estimates = estimates, joint_balance = joint)
+}
+
+save_vanneman_pretrend_validation <- function(
+    x, directory = "outputs/diagnostics/extended/instrument_relevance") {
+  paths <- c(
+    levels = file.path(directory, "vanneman_pretrend_levels.csv"),
+    changes = file.path(directory, "vanneman_pretrend_changes.csv"),
+    estimates = file.path(directory, "vanneman_pretrend_balance.csv"),
+    joint_balance = file.path(directory, "vanneman_pretrend_balance_joint.csv")
+  )
+  write_diagnostic_csv(x$levels, paths[["levels"]])
+  write_diagnostic_csv(x$changes, paths[["changes"]])
+  write_diagnostic_csv(x$estimates, paths[["estimates"]])
+  write_diagnostic_csv(x$joint_balance, paths[["joint_balance"]])
+  unname(paths)
+}

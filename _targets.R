@@ -1518,6 +1518,27 @@ extended_diagnostic_targets <- list(
     format = "file"
   ),
   tar_target(
+    historical_vanneman_pretrend_levels,
+    build_vanneman_pretrend_levels_from_sources(
+      historical_vanneman_source_qa,
+      historical_vanneman_pretrend_geography,
+      paths
+    )
+  ),
+  tar_target(
+    historical_vanneman_pretrend_validation,
+    build_vanneman_pretrend_validation(
+      historical_vanneman_pretrend_levels,
+      district_panel,
+      historical_distance = historical_linguistic_distance_validation$preferred_distance
+    )
+  ),
+  tar_target(
+    diag_ext_historical_vanneman_pretrend_validation,
+    save_vanneman_pretrend_validation(historical_vanneman_pretrend_validation),
+    format = "file"
+  ),
+  tar_target(
     diag_ext_historical_linguistic_inference_validation,
     save_historical_linguistic_inference_validation(
       historical_linguistic_distance_validation,
