@@ -828,6 +828,60 @@ def build_language_coverage_sensitivity(
     return out
 
 
+
+def build_language_excess_triage(
+    rows: list[dict[str, object]],
+    coverage_rows: list[dict[str, object]],
+) -> list[dict[str, object]]:
+    """Prioritize accepted cells in districts whose speaker sum exceeds population.
+
+    This is a review aid only. It never drops or edits a count. A cell is marked
+    as individually sufficient when removing that one accepted count would restore
+    the district-level population bound.
+    """
+    impossible = {
+        (str(row["state_code_1991"]), str(row["district_code_1991"])): row
+        for row in coverage_rows
+        if row["coverage_status"] == "speaker_sum_exceeds_atlas_population"
+    }
+    out: list[dict[str, object]] = []
+    for row in rows:
+        key = (str(row["state_code_1991"]), str(row["district_code_1991"]))
+        coverage = impossible.get(key)
+        if coverage is None or row["language_cell_status"] != "candidate_value":
+            continue
+        count = int(row["speaker_count_candidate"])
+        population = int(float(coverage["atlas_population_candidate"]))
+        speaker_sum = int(float(coverage["parsed_speaker_lower_bound"]))
+        excess = speaker_sum - population
+        out.append({
+            "state_code_1991": key[0],
+            "district_code_1991": key[1],
+            "state_name_1991": row["state_name_1991"],
+            "atlas_population_candidate": population,
+            "parsed_speaker_lower_bound": speaker_sum,
+            "speaker_excess": excess,
+            "atlas_column": row["atlas_column"],
+            "language_1991": row["language_1991"],
+            "raw_value": row["raw_value"],
+            "speaker_count_candidate": count,
+            "alignment_status": row["alignment_status"],
+            "parse_status": row["parse_status"],
+            "removal_restores_population_bound": count >= excess,
+            "candidate_share_of_population": count / population if population > 0 else "",
+        })
+    return sorted(
+        out,
+        key=lambda row: (
+            not bool(row["removal_restores_population_bound"]),
+            str(row["alignment_status"]) == "exact_label",
+            -int(row["speaker_count_candidate"]),
+            str(row["state_code_1991"]),
+            str(row["district_code_1991"]),
+            int(row["atlas_column"]),
+        ),
+    )
+
 def build_validated_page0_language_cells(
     cells: list[dict[str, object]],
     district_validation: list[dict[str, object]],
@@ -1185,6 +1239,21 @@ def self_test() -> None:
     else:
         raise AssertionError("invalid language coverage threshold should fail")
 
+    impossible_rows = [dict(row) for row in coverage_rows]
+    for i, row in enumerate(impossible_rows):
+        row["speaker_count_candidate"] = 0
+        row["count_validation_status"] = "within_district_population"
+        row["language_cell_status"] = "candidate_value"
+        row["language_1991"] = f"LANGUAGE_{i + 1}"
+        row["parse_status"] = "parsed"
+    impossible_rows[0]["speaker_count_candidate"] = 120
+    impossible_coverage = build_language_extraction_coverage(impossible_rows)
+    assert impossible_coverage[0]["coverage_status"] == "speaker_sum_exceeds_atlas_population"
+    triage = build_language_excess_triage(impossible_rows, impossible_coverage)
+    assert triage[0]["removal_restores_population_bound"] is True
+    assert triage[0]["speaker_count_candidate"] == 120
+    assert all(row["speaker_excess"] > 0 for row in triage)
+
     continued = merge_population_continuations(
         [
             {"cell_kind": "district_population", "page_offset": 0, "block": 1, "page": 205, "row_sequence": 1,
@@ -1218,6 +1287,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--coverage-output", type=Path)
     parser.add_argument("--coverage-review-output", type=Path)
     parser.add_argument("--coverage-sensitivity-output", type=Path)
+    parser.add_argument("--excess-triage-output", type=Path)
     parser.add_argument("--language-registry", type=Path)
     parser.add_argument("--pdftotext", default="pdftotext")
     parser.add_argument("--self-test", action="store_true")
@@ -1292,14 +1362,15 @@ def main(argv: list[str] | None = None) -> int:
             args.coverage_output,
             args.coverage_review_output,
             args.coverage_sensitivity_output,
+            args.excess_triage_output,
         )
         if any(value is not None for value in all_language_options):
             if not all(value is not None for value in all_language_options):
                 parser.error(
                     "--all-language-output, --all-language-review-output, "
                     "--alignment-review-output, --coverage-output, "
-                    "--coverage-review-output, and --coverage-sensitivity-output "
-                    "must be supplied together"
+                    "--coverage-review-output, --coverage-sensitivity-output, and "
+                    "--excess-triage-output must be supplied together"
                 )
             all_language_cells, alignment_review = build_validated_all_page_language_cells(
                 cells, district_validation, state_crosswalk
@@ -1330,6 +1401,10 @@ def main(argv: list[str] | None = None) -> int:
             write_csv(
                 args.coverage_sensitivity_output,
                 build_language_coverage_sensitivity(coverage),
+            )
+            write_csv(
+                args.excess_triage_output,
+                build_language_excess_triage(all_language_cells, coverage),
             )
     unparsed = sum(row["review_type"] == "unparsed_cell" for row in review)
     ambiguous = sum(row["review_type"] == "ambiguous_numeric_groups" for row in review)

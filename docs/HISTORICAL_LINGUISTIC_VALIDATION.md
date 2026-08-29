@@ -102,8 +102,14 @@ python3 scripts/build_language_atlas_1991.py \
   --alignment-review-output /tmp/language_atlas_1991_alignment_review.csv \
   --coverage-output /tmp/language_atlas_1991_coverage.csv \
   --coverage-review-output /tmp/language_atlas_1991_coverage_review.csv \
-  --coverage-sensitivity-output /tmp/language_atlas_1991_coverage_sensitivity.csv
+  --coverage-sensitivity-output /tmp/language_atlas_1991_coverage_sensitivity.csv \
+  --excess-triage-output /tmp/language_atlas_1991_excess_triage.csv
 ```
+
+The excess-triage output is a review aid for districts whose accepted speaker
+sum exceeds Atlas population. It ranks already accepted cells and marks whether
+removing one cell would, by itself, restore the population bound. It never edits,
+drops, or substitutes a count; any correction still requires source review.
 
 The candidate output is deliberately keyed by Atlas page/block, detected row,
 and source column rather than pretending that OCR-distorted district labels are
