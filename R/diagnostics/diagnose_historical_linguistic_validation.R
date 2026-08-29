@@ -137,6 +137,7 @@ historical_linguistic_carveout_benchmark <- function(
   admin$district_code <- pad_admin_code(admin$district_code, 2L)
   admin$district_std <- canonicalize_district_name(admin$district_std)
 
+  carveouts$.source_row <- seq_len(nrow(carveouts))
   carveouts$district_1991 <- plain_chr(carveouts$district_1991)
   carveouts$district_2001 <- plain_chr(carveouts$district_2001)
   carveouts$pop_1991 <- num(carveouts$pop_1991)
@@ -194,6 +195,7 @@ historical_linguistic_carveout_benchmark <- function(
       ifelse(is.na(bridge_match), "target_name_not_in_shrug_transition", "matched_edge")
     )
   )
+  out <- out[order(out$.source_row), , drop = FALSE]
   out <- out[c(
     "district_1991", "pop_1991", "district_2001",
     "state_code_1991", "district_code_1991", "state_code_2001", "district_code_2001",
