@@ -1549,7 +1549,7 @@ test_that("historical Atlas distance uses the frozen resolver and explicit cover
 
   source <- historical_atlas_test_source(counts)
 
-  out <- build_historical_linguistic_distance_1991(source, min_accepted_coverage = 0.99)
+  out <- build_historical_linguistic_distance_1991(source, min_accepted_coverage = 0.99, max_distance_bound_width = 0.5)
   nonzero <- is.finite(mapping$shastry_degree) & mapping$shastry_degree > 0 &
     registry$language_1991 != "English"
   expected <- speaker_weighted_mean(counts, mapping$shastry_degree, nonzero)
@@ -1572,24 +1572,98 @@ test_that("historical Atlas distance uses the frozen resolver and explicit cover
   incomplete$coverage_status <- "unresolved_cells"
 
   combined <- rbind(source, incomplete)
-  gated <- build_historical_linguistic_distance_1991(combined, min_accepted_coverage = 0.95)
+  gated <- build_historical_linguistic_distance_1991(combined, min_accepted_coverage = 0.95, max_distance_bound_width = 0.5)
   expect_equal(
     gated$historical_language_status[gated$district_code_1991 == "02"],
     "below_coverage_threshold"
   )
   expect_true(is.na(gated$ling_distance_nonzero_mean_1991[gated$district_code_1991 == "02"]))
   expect_error(
-    build_historical_linguistic_distance_1991(source, min_accepted_coverage = 0),
+    build_historical_linguistic_distance_1991(source, min_accepted_coverage = 0, max_distance_bound_width = 0.5),
     "threshold must lie in"
+  )
+  expect_error(
+    build_historical_linguistic_distance_1991(source, min_accepted_coverage = 0.99, max_distance_bound_width = 0),
+    "distance-bound threshold must lie in"
   )
 
   hindi_only <- rep(0, nrow(registry))
   hindi_only[registry$language_1991 == "Hindi"] <- 100
   no_distance <- build_historical_linguistic_distance_1991(
-    historical_atlas_test_source(hindi_only), min_accepted_coverage = 0.99
+    historical_atlas_test_source(hindi_only), min_accepted_coverage = 0.99,
+    max_distance_bound_width = 0.5
   )
   expect_equal(no_distance$historical_language_status, "no_nonzero_mapped_speakers")
   expect_true(is.na(no_distance$ling_distance_nonzero_mean_1991))
+})
+
+
+test_that("historical Atlas eligibility uses bounded unresolved mass rather than 114-column completeness", {
+  registry <- read_language_atlas_1991_languages()
+  counts <- rep(0, nrow(registry))
+  counts[registry$language_1991 == "Tamil"] <- 95
+  source <- historical_atlas_test_source(counts, population = 100)
+
+  # Remove an otherwise zero language column and keep the repeated source
+  # metadata consistent with the resulting 113-column accepted source.
+  source <- source[source$language_1991 != "Assamese", , drop = FALSE]
+  source$n_atlas_language_columns <- 113L
+  source$n_accepted_values <- 113L
+  source$n_review_required <- 0L
+  source$accepted_speaker_lower_bound <- 95
+  source$accepted_speaker_lower_bound_share_atlas <- 0.95
+  source$coverage_status <- "incomplete_alignment"
+
+  out <- build_historical_linguistic_distance_1991(
+    source, min_accepted_coverage = 0.95, max_distance_bound_width = 0.25
+  )
+  expect_false(out$complete_atlas_alignment_1991)
+  expect_equal(out$historical_language_status, "eligible")
+  expect_equal(out$ling_distance_nonzero_mean_accepted_1991, 5)
+  expect_equal(out$ling_distance_nonzero_lower_bound_1991, 4.8, tolerance = 1e-10)
+  expect_equal(out$ling_distance_nonzero_upper_bound_1991, 5)
+  expect_equal(out$ling_distance_nonzero_bound_width_1991, 0.2, tolerance = 1e-10)
+})
+
+test_that("historical Atlas distance rejects source coverage with wide IV bounds", {
+  registry <- read_language_atlas_1991_languages()
+  counts <- rep(0, nrow(registry))
+  counts[registry$language_1991 == "Hindi"] <- 90
+  counts[registry$language_1991 == "Tamil"] <- 5
+  unresolved <- registry$language_1991 == "Assamese"
+  counts[unresolved] <- NA_real_
+  source <- historical_atlas_test_source(counts, population = 100)
+
+  out <- build_historical_linguistic_distance_1991(
+    source, min_accepted_coverage = 0.95, max_distance_bound_width = 0.5
+  )
+  expect_equal(out$accepted_speaker_coverage_1991, 0.95)
+  expect_equal(out$ling_distance_nonzero_mean_accepted_1991, 5)
+  expect_equal(out$ling_distance_nonzero_lower_bound_1991, 3)
+  expect_equal(out$ling_distance_nonzero_bound_width_1991, 2)
+  expect_equal(out$historical_language_status, "distance_bound_too_wide")
+  expect_true(is.na(out$ling_distance_nonzero_mean_1991))
+})
+
+test_that("historical language source-quality grid varies coverage and IV-bound thresholds", {
+  candidates <- data.frame(
+    atlas_population_1991 = c(100, 200, 300),
+    atlas_source_status = "candidate",
+    complete_atlas_alignment_1991 = c(TRUE, FALSE, FALSE),
+    accepted_speaker_coverage_1991 = c(0.99, 0.96, 0.995),
+    ling_distance_nonzero_bound_width_1991 = c(0.1, 0.2, 0.6),
+    stringsAsFactors = FALSE
+  )
+  out <- historical_linguistic_distance_quality_grid(
+    candidates, coverage_thresholds = c(0.95, 0.99),
+    bound_width_thresholds = c(0.25, 0.5)
+  )
+  strict <- out[out$min_accepted_coverage == 0.99 & out$max_distance_bound_width == 0.25, ]
+  loose <- out[out$min_accepted_coverage == 0.95 & out$max_distance_bound_width == 0.5, ]
+  expect_equal(strict$n_districts, 1L)
+  expect_equal(strict$n_complete_atlas_alignment, 1L)
+  expect_equal(loose$n_districts, 2L)
+  expect_equal(loose$atlas_population_1991, 300)
 })
 
 
@@ -1620,7 +1694,7 @@ test_that("historical Atlas distance rejects inconsistent accepted-count coverag
   source$accepted_speaker_lower_bound_share_atlas <- 0.01
 
   expect_error(
-    build_historical_linguistic_distance_1991(source, min_accepted_coverage = 0.95),
+    build_historical_linguistic_distance_1991(source, min_accepted_coverage = 0.95, max_distance_bound_width = 0.5),
     "coverage fields disagree"
   )
 })
@@ -1628,14 +1702,14 @@ test_that("historical Atlas distance rejects inconsistent accepted-count coverag
 test_that("historical Atlas source recomputes alignment and population-bound status from cells", {
   incomplete <- historical_atlas_test_source(rep(0, 114))[-1, , drop = FALSE]
   expect_error(
-    build_historical_linguistic_distance_1991(incomplete, min_accepted_coverage = 0.95),
+    build_historical_linguistic_distance_1991(incomplete, min_accepted_coverage = 0.95, max_distance_bound_width = 0.5),
     "coverage fields disagree"
   )
 
   impossible <- historical_atlas_test_source(rep(1, 114), population = 100)
   impossible$coverage_status <- "complete_accepted_inventory"
   expect_error(
-    build_historical_linguistic_distance_1991(impossible, min_accepted_coverage = 0.95),
+    build_historical_linguistic_distance_1991(impossible, min_accepted_coverage = 0.95, max_distance_bound_width = 0.5),
     "coverage status disagrees"
   )
 })
@@ -1654,5 +1728,22 @@ test_that("accepted Atlas provenance must agree with machine and reviewed count 
   expect_error(
     validate_language_atlas_1991_accepted_source(reviewed),
     "review decisions disagree"
+  )
+})
+
+test_that("preferred historical Atlas source quality is frozen before outcome diagnostics", {
+  rule <- historical_linguistic_preferred_source_quality()
+  expect_equal(language_atlas_1991_columns(), 4:117)
+  expect_equal(rule$min_accepted_coverage, 0.99)
+  expect_equal(rule$max_distance_bound_width, 0.5)
+  expect_match(rule$selection_basis, "Source-only rule")
+
+  registry <- read_language_atlas_1991_languages()
+  counts <- rep(0, nrow(registry))
+  counts[registry$language_1991 == "Tamil"] <- 100
+  source <- historical_atlas_test_source(counts)
+  expect_equal(
+    build_preferred_historical_linguistic_distance_1991(source)$historical_language_status,
+    "eligible"
   )
 })
