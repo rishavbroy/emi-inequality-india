@@ -570,38 +570,40 @@ specification be estimable.
 
 ## Vanneman source provenance
 
-The downloaded Vanneman-Barnes snapshot is useful for later pre-treatment
-balance and pre-trend diagnostics, but it is not yet promoted to a production
-historical panel. It does contain substantive documentation: the archived
-variable index and topic pages define the record IDs and their substantive
-variables. In particular, the archived education page defines records 151--156
-as attainment counts. The unresolved issue is therefore **record-version
-provenance**, not absence of variable definitions.
+The downloaded Vanneman-Barnes snapshot now has two complementary documentation
+layers. The archived HTML codebook defines substantive record meanings and a generic
+column-10 "version number" convention. The archived author-distributed SAS programs
+are file-specific readers for `panel4.data.gz`, `dist81.data.gz`, and `dist91.data.gz`.
+For parser/layout provenance, the file-specific readers are the stronger contract: they
+name the source file, declare the identifier positions, and declare the fixed-width
+fields for the records actually consumed.
 
-The main codebook documents identifier column 10 as version 2 for cross-sectional
-data and version 6 for the 1961--91 panel. Direct source QA finds
-`panel4.data.gz` entirely at version 5. `dist81.data.gz` mixes versions 2 and 3;
-its version-3 records 151--156 are substantively defined by the archived
-education page, but the downloaded documentation does not establish that version
-3 follows the documented version-2 cross-sectional fixed-width/cleaning contract.
-`dist91.data.gz` matches the documented version-2 cross-section.
+This changes how column 10 is interpreted in QA. The generic HTML codebook says
+version 2 denotes cross-sectional data and version 6 denotes the 1961--91 panel, while
+the observed `panel4.data.gz` carries 5 throughout. More decisively,
+`dist81.sas` itself labels the field "check always=2" but explicitly reads education
+records 151--156 even though those exact raw records carry 3. The digit therefore
+cannot be used as a stand-alone schema-validity gate. QA retains observed versus
+generic-codebook values, but parser eligibility now requires the corresponding
+file-specific SAS reader to target the source, declare the identifier layout, and cover
+all records whose column-10 value differs from the generic convention.
 
-`vanneman_historical_source_qa.csv` therefore reports record-definition coverage
-separately from version-contract coverage. A record can be substantively
-documented while its particular encoded vintage remains unresolved. Such rows
-remain ineligible for baseline/pre-trend values until the version contract is
-verified. This prevents the pipeline from silently interpreting an undocumented
-harmonized-panel revision while avoiding the misleading claim that the affected
-variables themselves lack documentation.
+The three SAS readers were recovered from the author's archived files distribution
+(`vanneman.umd.edu/districts/files/index.html`, Wayback snapshot dated 2013-07-22).
+A stronger provenance check is still desirable before promoting longitudinal values:
+download the compressed `panel4.data.gz`, `dist81.data.gz`, and `dist91.data.gz` from
+that same archived snapshot and compare their cryptographic hashes with the local raw
+files. A byte-for-byte match would establish that the archived readers and local data
+came from the same preserved distribution. A mismatch would identify which data
+vintage needs separate adjudication rather than reviving the generic column-10 gate.
 
-The best provenance targets are archived copies of the original UMD distribution
-page (`vanneman.umd.edu/districts/files/index.html`, and its older
-`bsos.umd.edu/socy/vanneman/districts/` location), especially snapshots from the
-period when `panel4` or version-3 cross-sections were distributed; alternatively,
-an author/UMD archive containing the matching SAS input statements or release
-notes would resolve the contract. The Vanneman panel's own historical
-harmonization assumptions also remain a sensitivity source rather than geography
-authority for the Census-2001 panel.
+Once byte provenance is checked, the remaining substantive integration task is the
+geography contract. `panel4` uses its own harmonized version-5 state/district IDs (the
+archived codebook's district-name appendix also refers to version-5 IDs). Those stable
+panel identifiers must be linked transparently to the project's reviewed 1991/2001
+historical geography before Vanneman trends are joined to EMI or linguistic-distance
+measures. The Vanneman harmonization remains sensitivity evidence rather than
+authority for Census-2001 geography.
 
 ## Next phases
 
@@ -622,9 +624,11 @@ authority for the Census-2001 panel.
    construction as a new primary instrument based on favorable results.
 4. Treat split/non-nested geography as sensitivity evidence, not as preferred
    exact reconstruction.
-5. Keep 1961--91 Vanneman pre-trends provenance-gated until the downloaded panel
-   vintage is reconciled with the available codebook; do not infer undocumented
-   panel semantics from the compressed data files.
+5. Complete the 1961--91 Vanneman pre-trend phase by first comparing local raw-file
+   hashes with the compressed files from the same archived distribution as the SAS
+   readers, then construct a reviewed version-5 panel-ID crosswalk into the existing
+   1991/2001 historical geography. Do not let Vanneman's harmonized IDs silently
+   replace the project's Census geography contract.
 
 ## SHRUG Census-1991 predetermined baseline balance
 
