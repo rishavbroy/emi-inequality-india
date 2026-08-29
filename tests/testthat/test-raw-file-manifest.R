@@ -477,12 +477,23 @@ test_that("1991 Atlas state and PCA review inputs have explicit source contracts
   )
   atlas <- sources[sources$source_id == "census_1991_language_atlas", , drop = FALSE]
   expect_equal(nrow(atlas), 1L)
-  expect_false(as.logical(atlas$used_in_current_pipeline))
-  expect_identical(atlas$current_or_future, "future")
+  expect_true(as.logical(atlas$used_in_current_pipeline))
+  expect_identical(atlas$current_or_future, "current")
   expect_identical(
     atlas$local_raw_path,
     "data/raw/census_1961-91/Language_Atlas_of_India_1991.pdf"
   )
+  checksums <- readr::read_csv(
+    file.path(root, "data", "metadata", "checksums.csv"),
+    show_col_types = FALSE,
+    col_types = readr::cols(.default = readr::col_character())
+  )
+  accepted <- checksums[
+    checksums$path == "data/metadata/language_atlas_1991_accepted_source.csv",
+    , drop = FALSE
+  ]
+  expect_equal(nrow(accepted), 1L)
+  expect_true(nzchar(accepted$md5[[1L]]))
 
   cell_reviews <- readr::read_csv(
     file.path(root, "data", "metadata", "language_atlas_1991_cell_reviews.csv"),

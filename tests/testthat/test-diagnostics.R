@@ -784,10 +784,21 @@ test_that("first-stage absorption diagnostics save a compact manifest without re
     stringsAsFactors = FALSE
   )
   expect_false(is.list(saved_registry$controls))
+  expected_controls <- unlist(registry$controls[[1L]], use.names = FALSE)
   expect_identical(
     saved_registry$controls,
-    paste(unlist(registry$controls[[1L]], use.names = FALSE), collapse = ";")
+    if (length(expected_controls)) paste(expected_controls, collapse = ";") else "none"
   )
+})
+
+test_that("diagnostic list-column serialization preserves empty and populated contracts", {
+  x <- data.frame(id = c("empty", "populated"), stringsAsFactors = FALSE)
+  x$controls <- I(list(character(), c("control_a", "control_b")))
+
+  out <- collapse_diagnostic_list_columns(x, "controls")
+
+  expect_false(is.list(out$controls))
+  expect_identical(out$controls, c("none", "control_a;control_b"))
 })
 
 
