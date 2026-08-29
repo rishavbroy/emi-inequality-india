@@ -1774,3 +1774,46 @@ test_that("preferred historical Atlas source quality is frozen before outcome di
     preferred
   )
 })
+
+test_that("historical Atlas population contradictions retain QA but no derived estimands", {
+  registry <- read_language_atlas_1991_languages()
+  counts <- rep(0, nrow(registry))
+  counts[registry$language_1991 == "Tamil"] <- 110
+  source <- historical_atlas_test_source(counts, population = 100)
+
+  direct_mean <- historical_linguistic_distance_bounds(
+    speakers = 110, degree = 5, language = "Tamil", population = 100
+  )
+  direct_share <- historical_linguistic_distant_share_bounds(
+    speakers = 110, degree = 5, language = "Tamil", population = 100
+  )
+  expect_false(direct_mean$population_coherent)
+  expect_false(direct_share$population_coherent)
+  expect_true(all(is.na(c(
+    direct_mean$point, direct_mean$lower, direct_mean$upper, direct_mean$width,
+    direct_share$point, direct_share$lower, direct_share$upper, direct_share$width
+  ))))
+
+  out <- build_historical_linguistic_distance_1991(
+    source, min_accepted_coverage = 0.99, max_distance_bound_width = 0.5
+  )
+  expect_equal(out$accepted_speaker_coverage_1991, 1.1)
+  expect_equal(out$distant_speakers_ge3_accepted_1991, 110)
+  expect_equal(out$atlas_source_status, "population_bound_violation")
+  expect_equal(out$historical_language_status, "population_bound_violation")
+  expect_true(all(is.na(c(
+    out$shastry_mapped_population_share_1991,
+    out$distance_resolved_speaker_share_1991,
+    out$distance_unresolved_mass_upper_bound_share_1991,
+    out$ling_distance_nonzero_mean_accepted_1991,
+    out$ling_distance_nonzero_lower_bound_1991,
+    out$ling_distance_nonzero_upper_bound_1991,
+    out$ling_distance_nonzero_mean_sensitivity_low_accepted_1991,
+    out$ling_distance_nonzero_mean_sensitivity_high_accepted_1991,
+    out$ling_share_distance_ge3_accepted_1991,
+    out$ling_share_distance_ge3_lower_bound_1991,
+    out$ling_share_distance_ge3_upper_bound_1991,
+    out$ling_distance_nonzero_mean_1991,
+    out$ling_share_distance_ge3_1991
+  ))))
+})

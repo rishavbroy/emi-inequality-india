@@ -221,15 +221,23 @@ speaker_weighted_mean <- function(speakers, values, index = rep(TRUE, length(spe
   sum(speakers[index] * values[index], na.rm = TRUE) / denominator
 }
 
+historical_linguistic_population_coherent <- function(speakers, population) {
+  speakers <- num(speakers)
+  if (!is.numeric(population) || length(population) != 1L ||
+      !is.finite(population) || population <= 0) {
+    stop("Historical linguistic bounds require a positive district population.", call. = FALSE)
+  }
+  accepted <- is.finite(speakers) & speakers >= 0
+  accepted_total <- sum(speakers[accepted], na.rm = TRUE)
+  isTRUE(accepted_total <= population)
+}
+
 historical_linguistic_distance_bounds <- function(
     speakers, degree, language, population, nonzero_degree_range = c(1, 5)) {
   speakers <- num(speakers)
   degree <- num(degree)
   language <- normalize_language_label(language)
-  if (!is.numeric(population) || length(population) != 1L ||
-      !is.finite(population) || population <= 0) {
-    stop("Historical linguistic-distance bounds require a positive district population.", call. = FALSE)
-  }
+  population_coherent <- historical_linguistic_population_coherent(speakers, population)
   accepted <- is.finite(speakers) & speakers >= 0
   english <- accepted & language == "English"
   known_nonzero <- accepted & is.finite(degree) & degree > 0 & !english
@@ -250,7 +258,9 @@ historical_linguistic_distance_bounds <- function(
   }
   degree_min <- min(nonzero_degree_range)
   degree_max <- max(nonzero_degree_range)
-  if (!is.finite(point) || !is.finite(degree_min) || !is.finite(degree_max)) {
+  if (!population_coherent) {
+    point <- lower <- upper <- width <- unresolved_mass <- NA_real_
+  } else if (!is.finite(point) || !is.finite(degree_min) || !is.finite(degree_max)) {
     lower <- upper <- width <- NA_real_
   } else if (unresolved_mass <= 0) {
     lower <- upper <- point
@@ -276,6 +286,7 @@ historical_linguistic_distance_bounds <- function(
     known_irrelevant_speakers = known_irrelevant_speakers,
     resolved_speakers = resolved_speakers,
     unresolved_mass_upper_bound = unresolved_mass,
+    population_coherent = population_coherent,
     degree_min = degree_min,
     degree_max = degree_max
   )
@@ -286,10 +297,7 @@ historical_linguistic_distant_share_bounds <- function(
   speakers <- num(speakers)
   degree <- num(degree)
   language <- normalize_language_label(language)
-  if (!is.numeric(population) || length(population) != 1L ||
-      !is.finite(population) || population <= 0) {
-    stop("Historical distant-speaker bounds require a positive district population.", call. = FALSE)
-  }
+  population_coherent <- historical_linguistic_population_coherent(speakers, population)
   if (!is.numeric(threshold) || length(threshold) != 1L ||
       !is.finite(threshold) || threshold <= 0 || threshold > 5) {
     stop("Historical distant-speaker threshold must lie in (0, 5].", call. = FALSE)
@@ -300,9 +308,13 @@ historical_linguistic_distant_share_bounds <- function(
   distant <- accepted & is.finite(degree) & degree >= threshold & !english
   resolved_speakers <- sum(speakers[resolved], na.rm = TRUE)
   distant_speakers <- sum(speakers[distant], na.rm = TRUE)
-  unresolved_mass <- max(0, population - resolved_speakers)
-  lower <- 100 * distant_speakers / population
-  upper <- 100 * min(population, distant_speakers + unresolved_mass) / population
+  if (population_coherent) {
+    unresolved_mass <- max(0, population - resolved_speakers)
+    lower <- 100 * distant_speakers / population
+    upper <- 100 * min(population, distant_speakers + unresolved_mass) / population
+  } else {
+    unresolved_mass <- lower <- upper <- NA_real_
+  }
   list(
     point = lower,
     lower = lower,
@@ -311,6 +323,7 @@ historical_linguistic_distant_share_bounds <- function(
     distant_speakers = distant_speakers,
     resolved_speakers = resolved_speakers,
     unresolved_mass_upper_bound = unresolved_mass,
+    population_coherent = population_coherent,
     threshold = threshold
   )
 }
@@ -398,12 +411,12 @@ historical_linguistic_distance_1991_candidates <- function(
       n_unresolved_languages = inventory_size - source$n_accepted,
       accepted_speaker_coverage_1991 = source$coverage,
       shastry_mapped_accepted_speaker_share_1991 = if (accepted_total > 0) mapped_total / accepted_total else NA_real_,
-      shastry_mapped_population_share_1991 = if (population > 0) mapped_total / population else NA_real_,
+      shastry_mapped_population_share_1991 = if (bounds$population_coherent) mapped_total / population else NA_real_,
       accepted_nonzero_mapped_speakers_1991 = bounds$nonzero_speakers,
       distance_resolved_speakers_1991 = bounds$resolved_speakers,
-      distance_resolved_speaker_share_1991 = bounds$resolved_speakers / population,
+      distance_resolved_speaker_share_1991 = if (bounds$population_coherent) bounds$resolved_speakers / population else NA_real_,
       distance_unresolved_mass_upper_bound_1991 = bounds$unresolved_mass_upper_bound,
-      distance_unresolved_mass_upper_bound_share_1991 = bounds$unresolved_mass_upper_bound / population,
+      distance_unresolved_mass_upper_bound_share_1991 = if (bounds$population_coherent) bounds$unresolved_mass_upper_bound / population else NA_real_,
       ling_distance_nonzero_mean_accepted_1991 = bounds$point,
       ling_distance_nonzero_lower_bound_1991 = bounds$lower,
       ling_distance_nonzero_upper_bound_1991 = bounds$upper,
@@ -413,7 +426,7 @@ historical_linguistic_distance_1991_candidates <- function(
       ling_share_distance_ge3_lower_bound_1991 = distant_bounds$lower,
       ling_share_distance_ge3_upper_bound_1991 = distant_bounds$upper,
       ling_share_distance_ge3_bound_width_1991 = distant_bounds$width,
-      atlas_source_status = if (source$coverage_status == "speaker_sum_exceeds_atlas_population") {
+      atlas_source_status = if (!bounds$population_coherent || !distant_bounds$population_coherent) {
         "population_bound_violation"
       } else if (!is.finite(bounds$point)) {
         "no_nonzero_mapped_speakers"
@@ -422,12 +435,16 @@ historical_linguistic_distance_1991_candidates <- function(
       },
       stringsAsFactors = FALSE
     )
-    result$ling_distance_nonzero_mean_sensitivity_low_accepted_1991 <- speaker_weighted_mean(
-      speakers, district$shastry_degree_sensitivity_low, nonzero_low
-    )
-    result$ling_distance_nonzero_mean_sensitivity_high_accepted_1991 <- speaker_weighted_mean(
-      speakers, district$shastry_degree_sensitivity_high, nonzero_high
-    )
+    result$ling_distance_nonzero_mean_sensitivity_low_accepted_1991 <- if (bounds$population_coherent) {
+      speaker_weighted_mean(speakers, district$shastry_degree_sensitivity_low, nonzero_low)
+    } else {
+      NA_real_
+    }
+    result$ling_distance_nonzero_mean_sensitivity_high_accepted_1991 <- if (bounds$population_coherent) {
+      speaker_weighted_mean(speakers, district$shastry_degree_sensitivity_high, nonzero_high)
+    } else {
+      NA_real_
+    }
     result
   }))
   validate_linguistic_distance_ranges(transform(
