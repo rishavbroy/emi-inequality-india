@@ -556,3 +556,39 @@ test_that("Vanneman historical source QA is manifest-backed but values remain pr
   expect_identical(source$current_or_future, "current")
   expect_true(all(rows$target_name == "historical_vanneman_source_qa"))
 })
+
+test_that("district carve-out reader repairs source-table wrapped labels structurally", {
+  path <- tempfile(fileext = ".csv")
+  writeLines(c(
+    'Chengalpattu-,"4,653,593",Kancheepuram,51.9,100',
+    'MGR,,Thiruvallur,48.1,100',
+    'Pasumpon M. The-,"1,078,190",Sivaganga,100,97.74',
+    'var,,,,',
+    'North 24 Para-,"7,281,881",North Twenty Four,100,100',
+    'ganas,,Parganas,,',
+    'Bulandshahr,200,Gautam Buddha,13.39,44.89',
+    ',,Nagar,,',
+    'Next,100,Next,100,100'
+  ), path)
+
+  out <- read_district_carveouts(path)
+
+  expect_equal(nrow(out), 6L)
+  expect_equal(out$district_1991[1:2], rep("Chengalpattu-MGR", 2))
+  expect_equal(out$pop_1991[1:2], rep(4653593, 2))
+  expect_equal(out$district_1991[[3]], "Pasumpon M. The-var")
+  expect_equal(out$district_1991[[4]], "North 24 Para-ganas")
+  expect_equal(out$district_2001[[4]], "North Twenty Four Parganas")
+  expect_equal(out$district_2001[[5]], "Gautam Buddha Nagar")
+  expect_false(any(out$district_1991 %in% c("MGR", "var", "ganas")))
+})
+
+test_that("unexpected carve-out continuation rows fail closed", {
+  path <- tempfile(fileext = ".csv")
+  writeLines(c(
+    'Ordinary,100,Ordinary,50,50',
+    'Unexpected,,Other,50,50'
+  ), path)
+
+  expect_error(read_district_carveouts(path), "Unexpected wrapped row")
+})

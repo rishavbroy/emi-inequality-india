@@ -54,6 +54,50 @@ list_ilo_figure_paths <- function(paths) {
 #'
 #' The source has five data columns and no header row. Reading it with the
 #' ordinary CSV default would consume the first Anantapur observation as names.
+repair_district_carveout_wrapped_rows <- function(x) {
+  out <- safe_df(x)
+  if (!nrow(out)) return(out)
+  blank <- function(value) is.na(value) || !nzchar(trimws(as.character(value)))
+  drop <- rep(FALSE, nrow(out))
+  for (i in seq_len(nrow(out))) {
+    if (i == 1L || !blank(out$pop_1991[[i]])) next
+    previous <- i - 1L
+    source_continuation <- !blank(out$district_1991[[i]])
+    target_continuation <- !blank(out$district_2001[[i]])
+    has_transfer <- !blank(out$pct_01in91[[i]]) || !blank(out$pct_91in01[[i]])
+
+    if (source_continuation) {
+      previous_name <- plain_chr(out$district_1991[[previous]])
+      if (!length(previous_name) || !grepl("-$", trimws(previous_name[[1L]]))) {
+        stop("Unexpected wrapped row in the district carve-out source.", call. = FALSE)
+      }
+      combined <- paste0(previous_name[[1L]], plain_chr(out$district_1991[[i]])[[1L]])
+      out$district_1991[[previous]] <- combined
+      if (has_transfer) {
+        out$district_1991[[i]] <- combined
+        out$pop_1991[[i]] <- out$pop_1991[[previous]]
+      }
+    }
+
+    if (!has_transfer && (source_continuation || target_continuation)) {
+      if (target_continuation) {
+        if (blank(out$district_2001[[previous]])) {
+          stop("Unexpected target-only continuation in the district carve-out source.", call. = FALSE)
+        }
+        previous_target <- trimws(as.character(out$district_2001[[previous]]))
+        continuation <- trimws(as.character(out$district_2001[[i]]))
+        out$district_2001[[previous]] <- if (grepl("-$", previous_target)) {
+          paste0(sub("-$", "", previous_target), continuation)
+        } else {
+          paste(previous_target, continuation)
+        }
+      }
+      drop[[i]] <- TRUE
+    }
+  }
+  out[!drop, , drop = FALSE]
+}
+
 read_district_carveouts <- function(path) {
   out <- utils::read.csv(
     path,
@@ -63,6 +107,7 @@ read_district_carveouts <- function(path) {
     na.strings = c("", "NA"),
     check.names = FALSE
   )
+  out <- repair_district_carveout_wrapped_rows(out)
   fill_down <- function(x) {
     if (!length(x)) return(x)
     for (i in seq_along(x)) {
