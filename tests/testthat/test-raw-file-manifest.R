@@ -560,12 +560,15 @@ test_that("Vanneman historical source QA is manifest-backed with file-specific r
       "vanneman_panel4", "vanneman_dist81", "vanneman_dist91",
       "vanneman_codebook", "vanneman_variables_codebook",
       "vanneman_education_codebook", "vanneman_panel4_sas",
-      "vanneman_dist81_sas", "vanneman_dist91_sas"
+      "vanneman_dist81_sas", "vanneman_dist91_sas",
+      "vanneman_state_ids_archived", "vanneman_combining_codebook"
     )
   )
   expect_true(all(tolower(as.character(rows$required_for_current_pipeline)) == "true"))
   expect_true(all(startsWith(rows$relative_path, "data/raw/census_1961-91/vanneman_1961-91/")))
-  expect_true(all(grepl("/(data_archived|sas_commands_archived|codebook)/", rows$relative_path)))
+  expect_true(all(grepl("/(data_archived|sas_commands_archived|codebook|codebook_archived)/", rows$relative_path)))
+  expect_true(any(grepl("codebook_archived/State IDs_", rows$relative_path, fixed = TRUE)))
+  expect_true(any(grepl("Combining divided district", rows$relative_path, fixed = TRUE)))
   checksum_registry <- file.path(root, "data", "metadata", "vanneman_archive_2013_checksums.csv")
   expect_true(file.exists(checksum_registry))
   archive_checksums <- read.csv(checksum_registry, stringsAsFactors = FALSE)
@@ -578,11 +581,34 @@ test_that("Vanneman historical source QA is manifest-backed with file-specific r
     )
   )
 
+  state_crosswalk <- read.csv(
+    file.path(root, "data", "metadata", "vanneman_panel_state_crosswalk.csv"),
+    stringsAsFactors = FALSE,
+    colClasses = "character"
+  )
+  expect_equal(nrow(state_crosswalk), 31L)
+  expect_false(anyDuplicated(state_crosswalk$panel_state_id))
+  expect_identical(
+    state_crosswalk$panel_to_1991_state_status[state_crosswalk$panel_state_id == "13"],
+    "no_1991_census"
+  )
+  expect_identical(
+    state_crosswalk$panel_to_1991_state_status[state_crosswalk$panel_state_id == "09"],
+    "split_across_1991_states"
+  )
+  expect_identical(
+    state_crosswalk$dist91_state_id[state_crosswalk$panel_state_id == "31"],
+    "17"
+  )
+
   source <- sources[sources$source_id == "vanneman_1961_91", , drop = FALSE]
   expect_equal(nrow(source), 1L)
   expect_true(as.logical(source$used_in_current_pipeline))
   expect_identical(source$current_or_future, "current")
-  expect_true(all(rows$target_name == "historical_vanneman_source_qa"))
+  expect_true(all(rows$target_name %in% c(
+    "historical_vanneman_source_qa",
+    "historical_vanneman_panel4_dist91_crosswalk"
+  )))
 })
 
 test_that("district carve-out wrapped-label joins distinguish word wraps from semantic hyphens", {
