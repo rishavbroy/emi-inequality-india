@@ -63,6 +63,35 @@ The diagnostic outputs are:
   weights for deterministic SHRID membership;
 - `historical_linguistic_shrid_bridge_1991_2001.csv`: bridge-status summary.
 
+The literature-derived Kumar--Somanathan 1991--2001 carve-out table is now used
+only as an **independent geography benchmark**, not as a mapping authority. Its
+published CSV lacks state codes, so the benchmark identifies a 1991 source
+district only when its reported 1991 population matches exactly one SHRUG source
+district nationwide. It then canonicalizes the reported 2001 destination name
+against the Census-2001 registry and compares the paper's source-population
+transfer share with the independently constructed SHRUG population share. No
+fuzzy 1991 name match, nearest-population match, or benchmark-based override is
+allowed. Ambiguous source populations and unmatched destination names remain
+explicitly unbenchmarked.
+
+The source CSV itself contains line-wrap artifacts from the table extraction,
+including split source labels (`Chengalpattu-/MGR`, `Pasumpon M. The-/var`) and
+split destination labels (`Gautam Buddha/Nagar`, `Jyotiba Phule Na-/gar`).
+`read_district_carveouts()` repairs only these structural continuation rows:
+a nonblank source continuation with no population must follow a hyphen-terminated
+source label; rows carrying transfer percentages remain separate destination
+edges, while continuation-only rows extend the preceding source/destination
+label. A hyphen terminating a wrapped destination fragment is removed before the
+continuation is joined. Unexpected continuation shapes fail closed.
+
+Two additional diagnostic outputs record this comparison:
+
+- `historical_linguistic_geography_carveout_benchmark.csv`: one row per
+  Kumar--Somanathan source-to-target edge with conservative match status and
+  absolute transfer-share difference;
+- `historical_linguistic_geography_carveout_benchmark_summary.csv`: matched
+  source/edge counts and share-difference summaries.
+
 
 ## Atlas extraction contract
 
