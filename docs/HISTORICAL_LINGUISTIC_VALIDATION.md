@@ -461,7 +461,14 @@ review can continue later where it materially tightens bounds or resolves a
 population contradiction.
 
 The post-review persistence machinery is now implemented separately from source
-promotion. `build_historical_linguistic_persistence_validation()` requires a
+promotion. `build_historical_linguistic_persistence_validation()` consumes the
+production Census-2001 linguistic-distance object at an explicit schema boundary:
+`state_code`,
+`district_code`, and `ling_distance_nonzero_mean` are normalized locally to the
+historical diagnostic's year-suffixed keys. The core Census-2001 IV object is
+not given duplicate `_2001` geography aliases solely for this diagnostic.
+
+`build_historical_linguistic_persistence_validation()` requires a
 threshold-explicit 1991 distance table, the existing 1991-to-2001 geography
 object, and a Census-2001 district table carrying the same primary
 `ling_distance_nonzero_mean`. It fails if the geography summary and transition
