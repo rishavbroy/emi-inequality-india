@@ -50,6 +50,20 @@ list_ilo_figure_paths <- function(paths) {
   stats::setNames(rows$absolute_path, rows$file_id)
 }
 
+#' Join one label split by table line wrapping
+join_district_carveout_wrapped_label <- function(previous, continuation) {
+  previous <- trimws(as.character(previous))
+  continuation <- trimws(as.character(continuation))
+  if (!nzchar(previous) || !nzchar(continuation)) {
+    stop("District carve-out wrapped labels must be nonblank.", call. = FALSE)
+  }
+  if (!grepl("-$", previous)) return(paste(previous, continuation))
+  if (grepl("^[[:lower:]]", continuation)) {
+    return(paste0(sub("-$", "", previous), continuation))
+  }
+  paste0(previous, continuation)
+}
+
 #' Read the headerless 1961-2001 district carve-out source
 #'
 #' The source has five data columns and no header row. Reading it with the
@@ -71,7 +85,8 @@ repair_district_carveout_wrapped_rows <- function(x) {
       if (!length(previous_name) || !grepl("-$", trimws(previous_name[[1L]]))) {
         stop("Unexpected wrapped row in the district carve-out source.", call. = FALSE)
       }
-      combined <- paste0(previous_name[[1L]], plain_chr(out$district_1991[[i]])[[1L]])
+      continuation <- plain_chr(out$district_1991[[i]])[[1L]]
+      combined <- join_district_carveout_wrapped_label(previous_name[[1L]], continuation)
       out$district_1991[[previous]] <- combined
       if (has_transfer) {
         out$district_1991[[i]] <- combined
@@ -86,16 +101,37 @@ repair_district_carveout_wrapped_rows <- function(x) {
         }
         previous_target <- trimws(as.character(out$district_2001[[previous]]))
         continuation <- trimws(as.character(out$district_2001[[i]]))
-        out$district_2001[[previous]] <- if (grepl("-$", previous_target)) {
-          paste0(sub("-$", "", previous_target), continuation)
-        } else {
-          paste(previous_target, continuation)
-        }
+        out$district_2001[[previous]] <- join_district_carveout_wrapped_label(
+          previous_target, continuation
+        )
       }
       drop[[i]] <- TRUE
     }
   }
   out[!drop, , drop = FALSE]
+}
+
+validate_district_carveout_shares <- function(x, rounding_tolerance_pp = 0.05) {
+  out <- safe_df(x)
+  if (!nrow(out)) return(invisible(TRUE))
+  share_cols <- c("pct_01in91", "pct_91in01")
+  for (field in share_cols) {
+    values <- num(out[[field]])
+    bad <- is.finite(values) & (values < 0 | values > 100)
+    if (any(bad)) {
+      stop("District carve-out transfer shares must lie in [0, 100].", call. = FALSE)
+    }
+  }
+  source_share <- num(out$pct_01in91)
+  if (any(!is.finite(source_share))) {
+    stop("District carve-out source shares must be complete.", call. = FALSE)
+  }
+  source_key <- paste(out$district_1991, out$pop_1991, sep = "__")
+  source_sum <- vapply(split(source_share, source_key), sum, numeric(1))
+  if (any(abs(source_sum - 100) > rounding_tolerance_pp)) {
+    stop("District carve-out source shares must sum to 100 within rounding tolerance.", call. = FALSE)
+  }
+  invisible(TRUE)
 }
 
 read_district_carveouts <- function(path) {
@@ -120,6 +156,7 @@ read_district_carveouts <- function(path) {
   out$pop_1991 <- num(gsub(",", "", fill_down(out$pop_1991), fixed = TRUE))
   out$pct_01in91 <- num(out$pct_01in91)
   out$pct_91in01 <- num(out$pct_91in01)
+  validate_district_carveout_shares(out)
   out
 }
 

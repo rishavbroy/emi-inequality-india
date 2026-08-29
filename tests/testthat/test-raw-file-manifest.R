@@ -557,6 +557,13 @@ test_that("Vanneman historical source QA is manifest-backed but values remain pr
   expect_true(all(rows$target_name == "historical_vanneman_source_qa"))
 })
 
+test_that("district carve-out wrapped-label joins distinguish word wraps from semantic hyphens", {
+  expect_identical(join_district_carveout_wrapped_label("Pasumpon M. The-", "var"), "Pasumpon M. Thevar")
+  expect_identical(join_district_carveout_wrapped_label("Chengalpattu-", "MGR"), "Chengalpattu-MGR")
+  expect_identical(join_district_carveout_wrapped_label("Gautam Buddha", "Nagar"), "Gautam Buddha Nagar")
+  expect_identical(join_district_carveout_wrapped_label("Jyotiba Phule Na-", "gar"), "Jyotiba Phule Nagar")
+})
+
 test_that("district carve-out reader repairs source-table wrapped labels structurally", {
   path <- tempfile(fileext = ".csv")
   writeLines(c(
@@ -576,11 +583,34 @@ test_that("district carve-out reader repairs source-table wrapped labels structu
   expect_equal(nrow(out), 6L)
   expect_equal(out$district_1991[1:2], rep("Chengalpattu-MGR", 2))
   expect_equal(out$pop_1991[1:2], rep(4653593, 2))
-  expect_equal(out$district_1991[[3]], "Pasumpon M. The-var")
-  expect_equal(out$district_1991[[4]], "North 24 Para-ganas")
+  expect_equal(out$district_1991[[3]], "Pasumpon M. Thevar")
+  expect_equal(out$district_1991[[4]], "North 24 Paraganas")
   expect_equal(out$district_2001[[4]], "North Twenty Four Parganas")
   expect_equal(out$district_2001[[5]], "Gautam Buddha Nagar")
   expect_false(any(out$district_1991 %in% c("MGR", "var", "ganas")))
+})
+
+test_that("district carve-out reader enforces parent-share partitions", {
+  valid <- tempfile(fileext = ".csv")
+  writeLines(c(
+    'Parent,100,Child A,60,100',
+    ',,Child B,40.01,100'
+  ), valid)
+  expect_silent(read_district_carveouts(valid))
+
+  incomplete <- tempfile(fileext = ".csv")
+  writeLines(c(
+    'Parent,100,Child A,60,100',
+    ',,Child B,30,100'
+  ), incomplete)
+  expect_error(
+    read_district_carveouts(incomplete),
+    "source shares must sum to 100"
+  )
+
+  out_of_range <- tempfile(fileext = ".csv")
+  writeLines('Parent,100,Child,100,100.01', out_of_range)
+  expect_error(read_district_carveouts(out_of_range), "must lie in \[0, 100\]")
 })
 
 test_that("unexpected carve-out continuation rows fail closed", {
