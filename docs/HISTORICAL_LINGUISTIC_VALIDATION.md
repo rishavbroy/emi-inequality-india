@@ -111,17 +111,34 @@ python3 scripts/build_language_atlas_1991.py \
 ```
 
 The excess-triage output is a review aid for districts whose accepted speaker
-sum exceeds Atlas population. It ranks already accepted cells and marks whether
-removing one cell would, by itself, restore the population bound. It never edits,
-drops, or substitutes a count; any correction still requires source review. On
-the current source pass it contains 837 accepted cells across the 10 impossible
-districts; 57 are individually large enough that correcting/removing that one
-cell could restore the population bound.
+sum exceeds Atlas population. It ranks **unreviewed** accepted cells and marks
+whether removing one cell would, by itself, restore the population bound. A cell
+with an explicit ledger decision is never queued again. If source-confirmed
+accepted counts alone already exceed Atlas population, the district is marked
+`source_confirmed_population_bound_violation` in the coverage diagnostics and is
+removed from cell triage: no correction to an unreviewed cell can restore the
+bound while preserving the reviewed evidence. The diagnostic never edits, drops,
+or substitutes a count.
+
+The first direct source-review pass inspected all 57 formerly individually
+sufficient cells against rendered Annexure-IV pages 205--226 and recorded
+`accept_extracted` where the printed district-language value matched the machine
+extraction. After applying those decisions, five districts are already decisive
+source-level population-bound contradictions: Barpeta (04-05), Gopalganj (05-11),
+Deoghar (05-31), Hazaribagh (05-34), and Palamu (05-35). Their reviewed accepted
+counts alone exceed the printed Atlas population, so they no longer generate
+cell-level excess triage. The remaining five impossible districts produce 333
+unreviewed accepted cells; none is individually sufficient to restore the bound.
+This narrows the next impossible-sum review from single-cell misreads to
+combinations, denominator/source-table consistency, or an explicit decision to
+exclude the contradictory source rows.
 
 The unresolved-triage output addresses the other high-value review queue without
-choosing a preferred coverage threshold. It contains only fully aligned districts
-whose accepted-speaker lower bound already certifies the lowest registered
-sensitivity threshold (95%) but which still have unresolved cells. For each cell
+choosing a preferred coverage threshold. It contains only **unreviewed** cells in
+fully aligned districts whose accepted-speaker lower bound already certifies the
+lowest registered sensitivity threshold (95%) but which still have unresolved
+cells. A `leave_unresolved` decision therefore documents a source-reviewed
+ambiguity without sending the same cell back to the priority template. For each cell
 it reports the district's current certified threshold, the next registered
 threshold, the additional speaker mass needed to reach it, and any independently
 parseable numeric groups present in the raw PDF text. Numeric groups are exposed
@@ -245,15 +262,16 @@ The allowed decisions are deliberately narrow:
 
 The machine fields (`raw_value`, `speaker_count_candidate`, `parse_status`, and
 `alignment_status`) are never overwritten. Reviewed decisions change only
-`accepted_speaker_count` and its provenance. Coverage, impossible-sum, and
-unresolved-cell diagnostics operate on this accepted-count layer. The review
-ledger may remain header-only until source decisions are actually completed; no
-empty ledger row is interpreted as acceptance. `--cell-review-template-output`
-can prefill the exact source fingerprints for the current impossible-sum and
-high-coverage-unresolved queues, but blank template rows are not valid ledger
-decisions. This mirrors the repository's reviewed Glottolog and district-lineage
-pattern: generated candidates remain non-authoritative until an explicit tracked
-decision is applied.
+`accepted_speaker_count` and its provenance. Coverage and population-bound
+diagnostics operate on this accepted-count layer, while the **review triage**
+operates only on cells without an existing ledger decision. The tracked ledger
+now contains the first completed direct-source reviews; no absent ledger row is
+interpreted as acceptance. `--cell-review-template-output` prefills the exact
+source fingerprints for the remaining impossible-sum and high-coverage-unresolved
+queues, but blank template rows are not valid ledger decisions. This mirrors the
+repository's reviewed Glottolog and district-lineage pattern: generated candidates
+remain non-authoritative until an explicit tracked decision is applied, and a
+completed review is not repeatedly re-queued.
 
 The optional `--accepted-source-output` is the canonical promotion boundary from
 maintainer extraction/adjudication to R. It contains one row per aligned
