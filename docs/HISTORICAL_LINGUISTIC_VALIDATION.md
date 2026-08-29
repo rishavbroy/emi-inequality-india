@@ -751,3 +751,23 @@ The written benchmark files are
 manual review of Vanneman label cases and to independently check the stable-ID
 universe. Promotion of any external alias into the preferred pretrend lineage
 requires an explicit reviewed rule in the project's own geography ledger.
+
+
+The replication package's construction scripts make the separation even more
+explicit. `lst-dm-01a-clean_Vanneman_data.do` merges
+`Vanneman_district_crosswalk.dta` 1:1 on Vanneman `state_id` / `dist_id`.
+`lst-dm-01b-make_pca_1961_1991.do` carries those stable identifiers into the
+1961--1991 builder. Only `lst-dm-01d-make_pca_1961_2011.do`, after appending
+later Census rounds, creates a new six-census geography from normalized
+state/district names. The diagnostic records these source-code invariants in
+`vanneman_liu_construction_contract.csv`; it does not infer that the later
+harmonized IDs are Vanneman IDs.
+
+For panel units that our author-source bridge still labels
+`label_review_required`, Liu et al.'s independently curated harmonized Vanneman
+name can provide review evidence. `vanneman_liu_alias_review_candidates.csv`
+therefore proposes a candidate only when that external name matches exactly one
+non-aggregate `dist91` district within the already documented Vanneman 1991
+state. Candidate status never changes `preferred_pretrend_eligible`; promotion
+still requires an explicit reviewed project rule. This turns the published
+replication package into a review aid rather than an automatic lineage authority.
