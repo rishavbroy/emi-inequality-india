@@ -610,7 +610,7 @@ test_that("district carve-out reader enforces parent-share partitions", {
 
   out_of_range <- tempfile(fileext = ".csv")
   writeLines('Parent,100,Child,100,100.01', out_of_range)
-  expect_error(read_district_carveouts(out_of_range), "must lie in \[0, 100\]")
+  expect_error(read_district_carveouts(out_of_range), "must lie in \\[0, 100\\]")
 })
 
 test_that("unexpected carve-out continuation rows fail closed", {
