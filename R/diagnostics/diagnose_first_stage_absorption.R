@@ -75,13 +75,13 @@ residualize_first_stage_variable <- function(data, variable, controls = characte
   residualize_iv_variable(data, variable, controls, fixed_effect)
 }
 
-clustered_first_stage_inference <- function(fit, instrument, cluster, inference = NULL) {
+clustered_lm_term_inference <- function(fit, term, cluster, inference = NULL) {
   if (is.null(inference)) {
     inference <- tryCatch(iv_clustered_inference(fit, cluster), error = function(e) NULL)
   }
   if (is.null(inference) || is.null(inference$vcov)) {
     coefs <- summary(fit)$coefficients
-    row <- match(instrument, rownames(coefs))
+    row <- match(term, rownames(coefs))
     if (is.na(row)) return(c(std.error = NA_real_, statistic = NA_real_, p.value = NA_real_, partial_f = NA_real_))
     return(c(
       std.error = coefs[row, "Std. Error"], statistic = coefs[row, "t value"],
@@ -89,13 +89,17 @@ clustered_first_stage_inference <- function(fit, instrument, cluster, inference 
     ))
   }
   table <- tryCatch(lmtest::coeftest(fit, vcov. = inference$vcov), error = function(e) NULL)
-  row <- if (!is.null(table)) match(instrument, rownames(table)) else NA_integer_
+  row <- if (!is.null(table)) match(term, rownames(table)) else NA_integer_
   if (is.na(row)) return(c(std.error = NA_real_, statistic = NA_real_, p.value = NA_real_, partial_f = NA_real_))
   statistic <- suppressWarnings(as.numeric(table[row, 3]))
   c(
     std.error = suppressWarnings(as.numeric(table[row, 2])), statistic = statistic,
     p.value = suppressWarnings(as.numeric(table[row, 4])), partial_f = statistic^2
   )
+}
+
+clustered_first_stage_inference <- function(fit, instrument, cluster, inference = NULL) {
+  clustered_lm_term_inference(fit, instrument, cluster, inference)
 }
 
 first_stage_residual_metrics <- function(

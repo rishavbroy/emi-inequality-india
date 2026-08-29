@@ -25,11 +25,9 @@ read_shrug_pca_2001_district <- function(paths) {
   csv_path <- file.path(root, "pc01_pca_clean_pc01dist.csv")
   zip_path <- file.path(root, "shrug-pca01-csv.zip")
   if (file.exists(csv_path)) return(utils::read.csv(csv_path, stringsAsFactors = FALSE, check.names = FALSE))
-  if (!file.exists(zip_path)) stop("Missing SHRUG Census 2001 PCA archive: ", zip_path, call. = FALSE)
-  listing <- utils::unzip(zip_path, list = TRUE)
-  hit <- listing$Name[basename(listing$Name) == "pc01_pca_clean_pc01dist.csv"]
-  if (!length(hit)) stop("SHRUG PCA archive lacks pc01_pca_clean_pc01dist.csv", call. = FALSE)
-  utils::read.csv(unz(zip_path, hit[[1]]), stringsAsFactors = FALSE, check.names = FALSE)
+  read_shrug_district_archive(
+    zip_path, "pc01_pca_clean_pc01dist.csv", "SHRUG Census-2001 PCA archive"
+  )
 }
 
 read_census_2001_control_sources <- function(paths) {
