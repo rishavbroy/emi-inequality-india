@@ -1498,6 +1498,46 @@ test_that("Atlas exact-label adjudication reuse does not broaden generic code-le
 })
 
 
+historical_atlas_test_source <- function(
+    counts = NULL, state_code = "02", district_code = "01", population = 100) {
+  registry <- read_language_atlas_1991_languages()
+  if (is.null(counts)) counts <- rep(0, nrow(registry))
+  accepted <- is.finite(counts)
+  accepted_total <- sum(counts[accepted], na.rm = TRUE)
+  data.frame(
+    state_code_1991 = state_code,
+    district_code_1991 = district_code,
+    state_name_1991 = "Andhra Pradesh",
+    atlas_population_candidate = population,
+    pca91_population = population,
+    atlas_column = registry$atlas_column,
+    language_1991 = registry$language_1991,
+    canonical_language = registry$canonical_language,
+    accepted_speaker_count = counts,
+    accepted_count_basis = ifelse(accepted, "machine_candidate", "unresolved"),
+    cell_review_decision = NA_character_,
+    cell_review_basis = NA_character_,
+    page = 205L,
+    raw_value = ifelse(accepted, as.character(counts), ""),
+    speaker_count_candidate = counts,
+    parse_status = ifelse(accepted, "parsed", "unparsed"),
+    alignment_status = "exact_label",
+    n_atlas_language_columns = 114L,
+    n_accepted_values = sum(accepted),
+    n_review_required = sum(!accepted),
+    accepted_speaker_lower_bound = accepted_total,
+    accepted_speaker_lower_bound_share_atlas = accepted_total / population,
+    coverage_status = if (accepted_total > population) {
+      "speaker_sum_exceeds_atlas_population"
+    } else if (sum(accepted) < 114L) {
+      "unresolved_cells"
+    } else {
+      "complete_accepted_inventory"
+    },
+    stringsAsFactors = FALSE
+  )
+}
+
 test_that("historical Atlas distance uses the frozen resolver and explicit coverage gate", {
   registry <- read_language_atlas_1991_languages()
   mapping <- resolve_language_atlas_1991_shastry_mapping(registry)
@@ -1507,32 +1547,7 @@ test_that("historical Atlas distance uses the frozen resolver and explicit cover
   counts[registry$language_1991 == "Assamese"] <- 10
   counts[registry$language_1991 == "English"] <- 10
 
-  source <- data.frame(
-    state_code_1991 = "02",
-    district_code_1991 = "01",
-    state_name_1991 = "Andhra Pradesh",
-    atlas_population_candidate = 100,
-    pca91_population = 100,
-    atlas_column = registry$atlas_column,
-    language_1991 = registry$language_1991,
-    canonical_language = registry$canonical_language,
-    accepted_speaker_count = counts,
-    accepted_count_basis = "machine_candidate",
-    cell_review_decision = NA_character_,
-    cell_review_basis = NA_character_,
-    page = 205L,
-    raw_value = as.character(counts),
-    speaker_count_candidate = counts,
-    parse_status = "parsed",
-    alignment_status = "exact_label",
-    n_atlas_language_columns = 114L,
-    n_accepted_values = 114L,
-    n_review_required = 0L,
-    accepted_speaker_lower_bound = 100,
-    accepted_speaker_lower_bound_share_atlas = 1,
-    coverage_status = "complete_accepted_inventory",
-    stringsAsFactors = FALSE
-  )
+  source <- historical_atlas_test_source(counts)
 
   out <- build_historical_linguistic_distance_1991(source, min_accepted_coverage = 0.99)
   nonzero <- is.finite(mapping$shastry_degree) & mapping$shastry_degree > 0 &
@@ -1545,7 +1560,11 @@ test_that("historical Atlas distance uses the frozen resolver and explicit cover
 
   incomplete <- source
   incomplete$district_code_1991 <- "02"
-  incomplete$accepted_speaker_count[registry$language_1991 == "Tamil"] <- NA_real_
+  tamil <- registry$language_1991 == "Tamil"
+  incomplete$accepted_speaker_count[tamil] <- NA_real_
+  incomplete$speaker_count_candidate[tamil] <- NA_real_
+  incomplete$accepted_count_basis[tamil] <- "unresolved"
+  incomplete$parse_status[tamil] <- "unparsed"
   incomplete$n_accepted_values <- 113L
   incomplete$n_review_required <- 1L
   incomplete$accepted_speaker_lower_bound <- 70
@@ -1563,23 +1582,26 @@ test_that("historical Atlas distance uses the frozen resolver and explicit cover
     build_historical_linguistic_distance_1991(source, min_accepted_coverage = 0),
     "threshold must lie in"
   )
+
+  hindi_only <- rep(0, nrow(registry))
+  hindi_only[registry$language_1991 == "Hindi"] <- 100
+  no_distance <- build_historical_linguistic_distance_1991(
+    historical_atlas_test_source(hindi_only), min_accepted_coverage = 0.99
+  )
+  expect_equal(no_distance$historical_language_status, "no_nonzero_mapped_speakers")
+  expect_true(is.na(no_distance$ling_distance_nonzero_mean_1991))
 })
 
 
 test_that("accepted Atlas source reader rejects drift from the reviewed language registry", {
   registry <- read_language_atlas_1991_languages()[1, , drop = FALSE]
-  row <- data.frame(
-    state_code_1991 = "02", district_code_1991 = "01", state_name_1991 = "Andhra Pradesh",
-    atlas_population_candidate = 100, pca91_population = 100,
-    atlas_column = registry$atlas_column, language_1991 = registry$language_1991,
-    canonical_language = registry$canonical_language, accepted_speaker_count = 100,
-    accepted_count_basis = "machine_candidate", cell_review_decision = NA_character_,
-    cell_review_basis = NA_character_, page = 205L, raw_value = "100",
-    speaker_count_candidate = 100, parse_status = "parsed", alignment_status = "exact_label",
-    n_atlas_language_columns = 1L, n_accepted_values = 1L, n_review_required = 0L,
-    accepted_speaker_lower_bound = 100, accepted_speaker_lower_bound_share_atlas = 1,
-    coverage_status = "incomplete_alignment", stringsAsFactors = FALSE
-  )
+  row <- historical_atlas_test_source(rep(0, 114))[1, , drop = FALSE]
+  row$n_atlas_language_columns <- 1L
+  row$n_accepted_values <- 1L
+  row$n_review_required <- 0L
+  row$accepted_speaker_lower_bound <- 0
+  row$accepted_speaker_lower_bound_share_atlas <- 0
+  row$coverage_status <- "incomplete_alignment"
   path <- tempfile(fileext = ".csv")
   on.exit(unlink(path), add = TRUE)
   utils::write.csv(row[language_atlas_1991_accepted_source_schema()], path, row.names = FALSE, na = "")
@@ -1593,21 +1615,44 @@ test_that("accepted Atlas source reader rejects drift from the reviewed language
 
 test_that("historical Atlas distance rejects inconsistent accepted-count coverage metadata", {
   registry <- read_language_atlas_1991_languages()
-  source <- data.frame(
-    state_code_1991 = "02", district_code_1991 = "01", state_name_1991 = "Andhra Pradesh",
-    atlas_population_candidate = 100, pca91_population = 100,
-    atlas_column = registry$atlas_column, language_1991 = registry$language_1991,
-    canonical_language = registry$canonical_language, accepted_speaker_count = 0,
-    accepted_count_basis = "machine_candidate", cell_review_decision = NA_character_,
-    cell_review_basis = NA_character_, page = 205L, raw_value = "0",
-    speaker_count_candidate = 0, parse_status = "parsed", alignment_status = "exact_label",
-    n_atlas_language_columns = 114L, n_accepted_values = 114L, n_review_required = 0L,
-    accepted_speaker_lower_bound = 1, accepted_speaker_lower_bound_share_atlas = 0.01,
-    coverage_status = "complete_accepted_inventory", stringsAsFactors = FALSE
-  )
+  source <- historical_atlas_test_source(rep(0, 114))
+  source$accepted_speaker_lower_bound <- 1
+  source$accepted_speaker_lower_bound_share_atlas <- 0.01
 
   expect_error(
     build_historical_linguistic_distance_1991(source, min_accepted_coverage = 0.95),
     "coverage fields disagree"
+  )
+})
+
+test_that("historical Atlas source recomputes alignment and population-bound status from cells", {
+  incomplete <- historical_atlas_test_source(rep(0, 114))[-1, , drop = FALSE]
+  expect_error(
+    build_historical_linguistic_distance_1991(incomplete, min_accepted_coverage = 0.95),
+    "coverage fields disagree"
+  )
+
+  impossible <- historical_atlas_test_source(rep(1, 114), population = 100)
+  impossible$coverage_status <- "complete_accepted_inventory"
+  expect_error(
+    build_historical_linguistic_distance_1991(impossible, min_accepted_coverage = 0.95),
+    "coverage status disagrees"
+  )
+})
+
+test_that("accepted Atlas provenance must agree with machine and reviewed count semantics", {
+  source <- historical_atlas_test_source(rep(0, 114))
+  source$accepted_speaker_count[[1L]] <- 1
+  expect_error(
+    validate_language_atlas_1991_accepted_source(source),
+    "machine counts disagree"
+  )
+
+  reviewed <- historical_atlas_test_source(rep(0, 114))
+  reviewed$accepted_count_basis[[1L]] <- "reviewed_replacement"
+  reviewed$cell_review_decision[[1L]] <- "accept_extracted"
+  expect_error(
+    validate_language_atlas_1991_accepted_source(reviewed),
+    "review decisions disagree"
   )
 })

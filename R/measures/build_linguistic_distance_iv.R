@@ -98,11 +98,101 @@ validate_language_atlas_1991_accepted_source <- function(
     stop("Accepted Language Atlas 1991 source disagrees with the frozen language registry.", call. = FALSE)
   }
   accepted <- num(out$accepted_speaker_count)
+  candidate <- num(out$speaker_count_candidate)
   noninteger <- is.finite(accepted) & abs(accepted - round(accepted)) > 1e-10
   if (any(is.finite(accepted) & accepted < 0) || any(noninteger)) {
     stop("Accepted Language Atlas 1991 speaker counts must be non-negative integers.", call. = FALSE)
   }
+  basis <- plain_chr(out$accepted_count_basis)
+  decision <- plain_chr(out$cell_review_decision)
+  unreviewed <- is.na(decision) | !nzchar(decision)
+  valid_basis <- c(
+    "machine_candidate", "unresolved",
+    "reviewed_machine_candidate", "reviewed_replacement", "reviewed_unresolved"
+  )
+  if (any(!basis %in% valid_basis)) {
+    stop("Accepted Language Atlas 1991 source has an invalid accepted-count basis.", call. = FALSE)
+  }
+  expected_review <- c(
+    reviewed_machine_candidate = "accept_extracted",
+    reviewed_replacement = "replace_count",
+    reviewed_unresolved = "leave_unresolved"
+  )
+  reviewed <- basis %in% names(expected_review)
+  if (any(reviewed & decision != unname(expected_review[basis]))) {
+    stop("Accepted Language Atlas 1991 review decisions disagree with accepted-count provenance.", call. = FALSE)
+  }
+  if (any(!reviewed & !unreviewed)) {
+    stop("Accepted Language Atlas 1991 unreviewed cells must not carry review decisions.", call. = FALSE)
+  }
+  unresolved <- basis %in% c("unresolved", "reviewed_unresolved")
+  if (any(unresolved & is.finite(accepted)) || any(!unresolved & !is.finite(accepted))) {
+    stop("Accepted Language Atlas 1991 count presence disagrees with accepted-count provenance.", call. = FALSE)
+  }
+  machine <- basis %in% c("machine_candidate", "reviewed_machine_candidate")
+  if (any(machine & (!is.finite(candidate) | abs(accepted - candidate) > 1e-10))) {
+    stop("Accepted Language Atlas 1991 machine counts disagree with their extraction candidates.", call. = FALSE)
+  }
   out
+}
+
+language_atlas_1991_district_summary <- function(district) {
+  population <- unique(num(district$atlas_population_candidate))
+  pca_population <- unique(num(district$pca91_population))
+  if (length(population) != 1L || !is.finite(population) || population <= 0 ||
+      length(pca_population) != 1L || !is.finite(pca_population) || pca_population <= 0) {
+    stop("Accepted Language Atlas 1991 district populations are internally inconsistent.", call. = FALSE)
+  }
+
+  speakers <- num(district$accepted_speaker_count)
+  accepted <- is.finite(speakers) & speakers >= 0
+  accepted_total <- sum(speakers[accepted], na.rm = TRUE)
+  columns <- sort(unique(as.integer(district$atlas_column)))
+  n_columns <- length(columns)
+  n_accepted <- sum(accepted)
+  n_review <- nrow(district) - n_accepted
+  coverage <- accepted_total / population
+  status <- if (accepted_total > population) {
+    "speaker_sum_exceeds_atlas_population"
+  } else if (n_columns < 114L) {
+    "incomplete_alignment"
+  } else if (n_accepted < 114L) {
+    "unresolved_cells"
+  } else {
+    "complete_accepted_inventory"
+  }
+
+  repeated <- list(
+    n_atlas_language_columns = n_columns,
+    n_accepted_values = n_accepted,
+    n_review_required = n_review,
+    accepted_speaker_lower_bound = accepted_total,
+    accepted_speaker_lower_bound_share_atlas = coverage,
+    coverage_status = status
+  )
+  for (field in names(repeated)) {
+    source <- unique(district[[field]])
+    if (length(source) != 1L) {
+      stop("Accepted Language Atlas 1991 district metadata are internally inconsistent.", call. = FALSE)
+    }
+    expected <- repeated[[field]]
+    if (is.numeric(expected)) {
+      if (!isTRUE(all.equal(num(source), expected, tolerance = 1e-10))) {
+        stop("Accepted Language Atlas 1991 district coverage fields disagree with cell-level counts.", call. = FALSE)
+      }
+    } else if (!identical(plain_chr(source), expected)) {
+      stop("Accepted Language Atlas 1991 coverage status disagrees with cell-level counts.", call. = FALSE)
+    }
+  }
+  if (n_columns == 114L && !identical(columns, 4:117)) {
+    stop("Accepted Language Atlas 1991 district does not contain the complete Atlas column inventory.", call. = FALSE)
+  }
+  list(
+    population = population, pca_population = pca_population,
+    speakers = speakers, accepted = accepted, accepted_total = accepted_total,
+    n_columns = n_columns, n_accepted = n_accepted, n_review = n_review,
+    coverage = coverage, coverage_status = status
+  )
 }
 
 read_language_atlas_1991_accepted_source <- function(path) {
@@ -166,28 +256,14 @@ build_historical_linguistic_distance_1991 <- function(
   )
   out <- safe_bind_rows(lapply(split_i, function(i) {
     district <- rows[i, , drop = FALSE]
-    population <- unique(num(district$atlas_population_candidate))
-    pca_population <- unique(num(district$pca91_population))
-    coverage <- unique(num(district$accepted_speaker_lower_bound_share_atlas))
-    n_columns <- unique(num(district$n_atlas_language_columns))
-    source_status <- unique(plain_chr(district$coverage_status))
-    if (length(population) != 1L || length(pca_population) != 1L || length(coverage) != 1L ||
-        length(n_columns) != 1L || length(source_status) != 1L) {
-      stop("Accepted Language Atlas 1991 district metadata are internally inconsistent.", call. = FALSE)
-    }
-    if (source_status == "speaker_sum_exceeds_atlas_population") {
-      status <- "population_bound_violation"
-    } else if (n_columns < 114) {
-      status <- "incomplete_alignment"
-    } else if (!is.finite(coverage) || coverage < min_accepted_coverage) {
-      status <- "below_coverage_threshold"
-    } else {
-      status <- "eligible"
-    }
-
-    speakers <- num(district$accepted_speaker_count)
+    source <- language_atlas_1991_district_summary(district)
+    population <- source$population
+    pca_population <- source$pca_population
+    coverage <- source$coverage
+    n_columns <- source$n_columns
+    speakers <- source$speakers
     language <- normalize_language_label(district$language_1991)
-    accepted <- is.finite(speakers) & speakers >= 0
+    accepted <- source$accepted
     english <- accepted & language == "English"
     mapped <- accepted & is.finite(district$shastry_degree) & !english
     mapped_low <- accepted & is.finite(district$shastry_degree_sensitivity_low) & !english
@@ -195,19 +271,19 @@ build_historical_linguistic_distance_1991 <- function(
     nonzero <- mapped & district$shastry_degree > 0
     nonzero_low <- mapped_low & district$shastry_degree_sensitivity_low > 0
     nonzero_high <- mapped_high & district$shastry_degree_sensitivity_high > 0
-    accepted_total <- sum(speakers[accepted], na.rm = TRUE)
+    accepted_total <- source$accepted_total
     mapped_total <- sum(speakers[mapped], na.rm = TRUE)
-    source_lower_bound <- unique(num(district$accepted_speaker_lower_bound))
-    source_n_accepted <- unique(num(district$n_accepted_values))
-    source_n_review <- unique(num(district$n_review_required))
-    if (length(source_lower_bound) != 1L || length(source_n_accepted) != 1L || length(source_n_review) != 1L ||
-        !isTRUE(all.equal(accepted_total, source_lower_bound, tolerance = 1e-10)) ||
-        as.integer(source_n_accepted) != sum(accepted) || as.integer(source_n_review) != nrow(district) - sum(accepted)) {
-      stop("Accepted Language Atlas 1991 district coverage fields disagree with cell-level counts.", call. = FALSE)
-    }
-    recomputed_coverage <- if (population > 0) accepted_total / population else NA_real_
-    if (!isTRUE(all.equal(coverage, recomputed_coverage, tolerance = 1e-10))) {
-      stop("Accepted Language Atlas 1991 coverage share disagrees with district population.", call. = FALSE)
+    nonzero_total <- sum(speakers[nonzero], na.rm = TRUE)
+    status <- if (source$coverage_status == "speaker_sum_exceeds_atlas_population") {
+      "population_bound_violation"
+    } else if (source$n_columns < 114L) {
+      "incomplete_alignment"
+    } else if (coverage < min_accepted_coverage) {
+      "below_coverage_threshold"
+    } else if (!is.finite(nonzero_total) || nonzero_total <= 0) {
+      "no_nonzero_mapped_speakers"
+    } else {
+      "eligible"
     }
 
     result <- data.frame(
@@ -217,8 +293,8 @@ build_historical_linguistic_distance_1991 <- function(
       atlas_population_1991 = population,
       pca91_population = pca_population,
       n_atlas_language_columns = as.integer(n_columns),
-      n_accepted_languages = sum(accepted),
-      n_unresolved_languages = nrow(district) - sum(accepted),
+      n_accepted_languages = source$n_accepted,
+      n_unresolved_languages = source$n_review,
       accepted_speaker_coverage_1991 = coverage,
       shastry_mapped_accepted_speaker_share_1991 = if (accepted_total > 0) mapped_total / accepted_total else NA_real_,
       shastry_mapped_population_share_1991 = if (population > 0) mapped_total / population else NA_real_,
