@@ -73,11 +73,14 @@ usable positioned text layer, so OCR is not part of the production plan.
 
 `scripts/build_language_atlas_1991.py` is the maintainer-side extractor. It uses
 Poppler's `pdftotext -bbox-layout`, preserves the raw positioned text for every
-candidate cell, and applies only conservative integer parsing: commas, periods,
-and whitespace are treated as thousands-separator/scanning artifacts, while the
-standalone OCR glyphs `O` and `()` are retained as explicitly tagged zero
+candidate cell, and applies only conservative single-integer parsing. Commas or
+periods may be thousands separators (including Indian grouping), but internal
+whitespace between digit groups is **not** collapsed: text such as
+`500 1,375,267` or `893 67` can contain values leaked from adjacent table cells
+and therefore enters review rather than becoming a fabricated concatenated
+count. The standalone OCR glyphs `O` and `()` remain explicitly tagged zero
 normalizations. Other nonnumeric glyphs and cells with no positioned text are
-not guessed. They enter a review queue.
+not guessed.
 
 A maintainer run writes the positioned-cell products plus a separate district/PCA validation layer:
 
@@ -96,7 +99,9 @@ python3 scripts/build_language_atlas_1991.py \
   --page0-language-review-output /tmp/language_atlas_1991_page0_language_review.csv \
   --all-language-output /tmp/language_atlas_1991_all_languages.csv \
   --all-language-review-output /tmp/language_atlas_1991_all_language_review.csv \
-  --alignment-review-output /tmp/language_atlas_1991_alignment_review.csv
+  --alignment-review-output /tmp/language_atlas_1991_alignment_review.csv \
+  --coverage-output /tmp/language_atlas_1991_coverage.csv \
+  --coverage-review-output /tmp/language_atlas_1991_coverage_review.csv
 ```
 
 The candidate output is deliberately keyed by Atlas page/block, detected row,
@@ -107,11 +112,11 @@ for its eight-page block. The layout self-test runs in every source-syntax
 audit; the raw PDF itself remains outside the normal targets dependency graph.
 
 On the currently registered Atlas scan, all 56 pages preserve the 114-column
-layout. The positioned-text candidate pass recovers 54,981 cells, including 478
-Atlas population-column cells used for later denominator checks. Of all candidate
-cells, 50,664 are plain conservative integer parses, 763 are explicit OCR-zero
-normalizations, 659 contain other nonnumeric text-layer artifacts, and 2,895 have
-no positioned text at the candidate row/column intersection. Fifteen pages also
+layout. The positioned-text candidate pass recovers 54,981 cells. Under the
+single-integer parser, 49,095 are ordinary parses, 763 are explicit OCR-zero
+normalizations, 1,572 contain multiple numeric groups and are now rejected as
+ambiguous, 656 contain other unparsed text-layer artifacts, and 2,895 have no
+positioned text at the candidate row/column intersection. Fifteen pages also
 require row-alignment review. These figures are extraction diagnostics, not
 data-quality claims and not production speaker counts.
 
@@ -141,14 +146,15 @@ are joined only under that structural condition.
 On the currently registered sources this produces 443 district-row candidates.
 Three wrapped labels are deterministically rejoined. Cross-page exact-label
 serial recovery resolves Greater Bombay and West Tripura and identifies Dhubri
-as district 01 (its population remains outside the 1% QA tolerance), raising the
-population-validated set from 414 to **416** rows without fuzzy matching. The
-remaining queue includes OCR population failures, source-population differences,
-conflicting/garbled district serials, duplicate serial candidates, and PCA
-districts whose Atlas population row was not recovered. These are source-review
-statuses, not silently imputed observations.
+as district 01 (its population remains outside the 1% QA tolerance). Tightening
+the numeric parser also reclassifies one formerly accepted population string,
+leaving **415** population-validated rows. The remaining queue includes OCR
+population failures, source-population differences, conflicting/garbled district
+serials, duplicate serial candidates, and PCA districts whose Atlas population
+row was not recovered. These are source-review statuses, not silently imputed
+observations.
 
-For those 416 population-validated rows, the extractor first binds the population
+For those 415 population-validated rows, the extractor first binds the population
 page directly to Atlas language columns 4--14. It then aligns repeated district
 rows on pages 2--8 with the same conservative identity philosophy used by the
 district-lineage system. Exact raw district labels are alignment anchors. A
@@ -158,14 +164,27 @@ rows plus both anchors belong to one 1991 Census state. Python's standard-librar
 `difflib.SequenceMatcher` is used only to locate exact matching blocks; no string
 similarity score or fuzzy-name threshold enters the rule.
 
-On the currently registered scan, this aligns 31,602 district-language cells
-across all 114 Atlas columns for the population-validated districts. Of those,
-29,524 are conservative integer/explicit-zero candidates and 2,078 remain blank
-or otherwise unparsed. A further 1,066 district-page combinations cannot be
-aligned by the exact/bounded rule and remain in a dedicated row-alignment review
-queue. These are extraction candidates, not a production language table:
-unresolved district/page alignments are not filled by sequence order, and no
-speaker count enters targets.
+On the currently registered scan, the stricter parser and population gate align
+31,488 district-language cells across all 114 Atlas columns for the 415
+population-validated districts. Of those, 28,310 pass both conservative numeric
+parsing and the per-language bound that a mother-tongue count cannot exceed its
+district population; 3,178 remain review-required. A further 1,066 district-page
+combinations cannot be aligned by the exact/bounded rule and remain in a
+dedicated row-alignment review queue. These are extraction candidates, not a
+production language table: unresolved district/page alignments are not filled by
+sequence order, and no speaker count enters targets.
+
+The extractor also writes district-level lower-bound coverage diagnostics. It
+sums **only** candidate cells that passed numeric and per-language population QA;
+unresolved cells are omitted without renormalization. The sum is therefore a
+parsed-speaker lower bound, not an estimate of classified-language coverage when
+columns remain unresolved. The district status distinguishes incomplete page
+alignment, unresolved cells, and the stronger impossibility check in which even
+the accepted-cell sum exceeds the Atlas district population. On the current
+source pass, 342 districts have incomplete alignment, 63 have all 114 columns
+aligned but unresolved cells, and 10 still have accepted-cell sums above Atlas
+population. **No district yet has a complete 114-cell candidate inventory**, so
+1991 linguistic distance remains blocked from production.
 
 `language_atlas_1991_languages.csv` now freezes the reviewed Atlas column
 inventory for columns 4--117. It records the 18 Scheduled and 96 Non-Scheduled
