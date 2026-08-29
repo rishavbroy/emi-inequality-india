@@ -298,8 +298,7 @@ save_first_stage_absorption_diagnostics <- function(
   dir = "outputs/diagnostics/extended/instrument_relevance"
 ) {
   if (!inherits(diagnostics, "emi_first_stage_absorption")) stop("Expected first-stage absorption diagnostics.", call. = FALSE)
-  registry <- diagnostics$registry
-  registry$controls <- vapply(registry$controls, paste, collapse = ";", FUN.VALUE = character(1))
+  registry <- collapse_diagnostic_list_columns(diagnostics$registry, "controls")
   output_manifest(c(
     specification_ladder = write_diagnostic_csv(diagnostics$summary, file.path(dir, "first_stage_absorption_ladder.csv")),
     specification_registry = write_diagnostic_csv(registry, file.path(dir, "first_stage_absorption_registry.csv")),

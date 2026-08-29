@@ -7,6 +7,16 @@ write_diagnostic_csv <- function(x, path, row.names = FALSE) {
   normalizePath(path, mustWork = FALSE)
 }
 
+collapse_diagnostic_list_columns <- function(x, columns, sep = ";") {
+  out <- as.data.frame(x, stringsAsFactors = FALSE)
+  for (column in intersect(columns, names(out))) {
+    if (is.list(out[[column]])) {
+      out[[column]] <- vapply(out[[column]], paste, collapse = sep, FUN.VALUE = character(1))
+    }
+  }
+  out
+}
+
 write_diagnostic_matrix <- function(x, path) {
   dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
   utils::write.csv(as.matrix(x), path, row.names = TRUE)

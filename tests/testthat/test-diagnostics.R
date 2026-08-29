@@ -779,6 +779,15 @@ test_that("first-stage absorption diagnostics save a compact manifest without re
     "first_stage_vif.csv"
   ))
   expect_true(all(file.exists(manifest$path)))
+  saved_registry <- utils::read.csv(
+    manifest$path[basename(manifest$path) == "first_stage_absorption_registry.csv"],
+    stringsAsFactors = FALSE
+  )
+  expect_false(is.list(saved_registry$controls))
+  expect_identical(
+    saved_registry$controls,
+    paste(unlist(registry$controls[[1L]], use.names = FALSE), collapse = ";")
+  )
 })
 
 
