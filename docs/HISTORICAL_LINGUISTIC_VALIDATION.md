@@ -720,3 +720,34 @@ transition, the standard and predetermined first-stage registries/estimates, and
 comparison tables under `outputs/diagnostics/extended/instrument_relevance/`.
 The existing historical baseline outputs now contain both eventual-EMI and
 `LD_1991` predictors whenever the historical instrument is eligible.
+
+## External Vanneman geography benchmark
+
+Liu, Shamdasani, and Taraz (2023) publish a six-decade Indian Census
+replication package with `Vanneman_district_crosswalk.dta`, `panel4_lst.data`,
+`PCA_census1991_dist_match.dta`, and a companion 2011 crosswalk. These files
+are useful independent evidence about historical district identities, but they
+are not promoted as this project's production lineage authority.
+
+The benchmark keeps the geography layers explicit. The published Vanneman
+crosswalk must cover exactly the stable IDs in the canonical author-distributed
+`panel4` inventory before any name comparison is reported. Its Vanneman name
+and independently curated harmonized name are then compared against the
+canonical panel's 1961 and 1991 labels. The bundled `panel4_lst.data` is treated
+only as a replication-package copy: missing IDs remain visible as benchmark QA
+and never remove a canonical Vanneman unit.
+
+The published `PCA_census1991_dist_match.dta` belongs to a different harmonized
+geography. Its Census-1991 rows are grouped into its own `state_id` / `district_id`
+units; those IDs must not be joined numerically to the Vanneman stable panel
+IDs. The diagnostic therefore inventories the number of PCA rows and harmonized
+groups but does not use those identifiers to promote a Vanneman-to-Census match.
+This prevents an externally useful benchmark from silently becoming a second,
+incompatible geography authority.
+
+The written benchmark files are
+`vanneman_liu_geography_benchmark.csv` and
+`vanneman_liu_geography_benchmark_summary.csv`. They are intended to prioritize
+manual review of Vanneman label cases and to independently check the stable-ID
+universe. Promotion of any external alias into the preferred pretrend lineage
+requires an explicit reviewed rule in the project's own geography ledger.
