@@ -89,6 +89,7 @@ python3 scripts/build_language_atlas_1991.py \
   --layout-output /tmp/language_atlas_1991_layout.csv \
   --pca-zip data/raw/shrug/census_1991/shrug-pca91-csv.zip \
   --state-crosswalk data/metadata/language_atlas_1991_state_crosswalk.csv \
+  --language-registry data/metadata/language_atlas_1991_languages.csv \
   --district-output /tmp/language_atlas_1991_district_population.csv \
   --population-review-output /tmp/language_atlas_1991_population_review.csv \
   --page0-language-output /tmp/language_atlas_1991_page0_languages.csv \
@@ -163,13 +164,36 @@ across all 114 Atlas columns for the population-validated districts. Of those,
 or otherwise unparsed. A further 1,066 district-page combinations cannot be
 aligned by the exact/bounded rule and remain in a dedicated row-alignment review
 queue. These are extraction candidates, not a production language table:
-language labels have not yet been promoted, unresolved district/page alignments
-are not filled by sequence order, and no speaker count enters targets.
+unresolved district/page alignments are not filled by sequence order, and no
+speaker count enters targets.
 
-The next promotion step must resolve the remaining district/PCA, cell, and
-district-page alignment review queues; add a reviewed 114-column language-label
-registry; and only then write a tracked district-language long table for normal
-R/targets ingestion.
+`language_atlas_1991_languages.csv` now freezes the reviewed Atlas column
+inventory for columns 4--117. It records the 18 Scheduled and 96 Non-Scheduled
+languages in Atlas order, their published 1991 family classification, and a
+coarse Shastry-resolution class. The family counts provide a source-structure
+check: 19 Indo-Aryan, 1 Germanic, 17 Dravidian, 14 Austro-Asiatic, 62
+Tibeto-Burmese, and 1 Semito-Hamitic language. The maintainer extractor requires
+this registry before writing district-language outputs and attaches the reviewed
+labels to every emitted candidate cell.
+
+The registry does **not** define a new historical distance scale.
+`resolve_language_atlas_1991_shastry_mapping()` passes the reviewed 1991 labels
+through the same frozen Shastry concordance/adjudication resolver used for
+Census 2001. Exact published concordance matches remain primary; already-reviewed
+code-less language adjudications may be reused by exact label; and the existing
+Shastry convention assigns degree 5 to reviewed non-Indo-European languages.
+English remains a special excluded mother tongue. Under the preferred frozen
+mapping, 108 of the 114 Atlas labels currently resolve, while Bishnupuriya,
+Halabi, Lahnda, Nepali, and Sanskrit remain explicitly unresolved and English
+remains special. No new degree is invented to make the historical table complete.
+
+The Atlas reports 114 classified languages rather than every raw mother-tongue
+return, so eventual district language coverage must be measured against the Atlas/PCA
+population denominator rather than silently renormalizing the classified-language
+counts to 100 percent. The next promotion step must resolve or characterize the
+remaining district/PCA, cell, and district-page alignment review queues and then
+write a tracked reviewed district-language long table for normal R/targets
+ingestion.
 
 ## Vanneman source provenance
 
@@ -190,10 +214,10 @@ sensitivity source rather than geography authority for the Census-2001 panel.
 
 ## Next phases
 
-1. Resolve the remaining Atlas district/PCA, cell, and cross-page alignment
-   review queues and promote the 114 Atlas language labels into a reviewed registry.
-2. Reuse the frozen Shastry/Glottolog language identity machinery rather than
-   defining a separate 1991 distance scale.
+1. Resolve or characterize the remaining Atlas district/PCA, cell, and cross-page
+   alignment review queues and promote a tracked reviewed district-language table.
+2. Reuse the now-registered 114 Atlas labels and frozen Shastry/Glottolog identity
+   machinery; keep unresolved labels and speaker coverage explicit.
 3. Construct 1991 district linguistic distance on native 1991 geography.
 4. Compare 1991 and 2001 distance on the one-target, high-population-coverage
    preferred sample; report the exact one-to-one result separately and show
