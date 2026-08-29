@@ -421,19 +421,45 @@ historical_preferred_geography_panel <- function(source_districts, transition) {
   out
 }
 
+historical_linguistic_distance_2001_panel <- function(distance_2001) {
+  current <- safe_df(distance_2001)
+  required <- c("state_code", "district_code", "ling_distance_nonzero_mean")
+  missing <- setdiff(required, names(current))
+  if (length(missing)) {
+    stop(
+      "Census-2001 linguistic distance lacks fields: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  out <- data.frame(
+    state_code_2001 = pad_admin_code(current$state_code, 2L),
+    district_code_2001 = pad_admin_code(current$district_code, 2L),
+    ling_distance_nonzero_mean_2001 = num(current$ling_distance_nonzero_mean),
+    stringsAsFactors = FALSE
+  )
+  key <- paste(out$state_code_2001, out$district_code_2001, sep = "__")
+  invalid_key <- is.na(out$state_code_2001) | !nzchar(out$state_code_2001) |
+    is.na(out$district_code_2001) | !nzchar(out$district_code_2001)
+  if (any(invalid_key)) {
+    stop("Census-2001 linguistic distance contains missing district codes.", call. = FALSE)
+  }
+  if (anyDuplicated(key)) {
+    stop("Census-2001 linguistic distance has duplicate district keys.", call. = FALSE)
+  }
+  out
+}
+
 historical_linguistic_persistence_panel <- function(
     historical_distance, distance_2001, source_districts, transition) {
   historical <- safe_df(historical_distance)
-  current <- safe_df(distance_2001)
+  current <- historical_linguistic_distance_2001_panel(distance_2001)
   geography <- historical_preferred_geography_panel(source_districts, transition)
 
   historical_required <- c(
     "state_code_1991", "district_code_1991", "atlas_population_1991",
     "min_accepted_coverage", "max_distance_bound_width", "historical_language_status",
     "ling_distance_nonzero_mean_1991"
-  )
-  current_required <- c(
-    "state_code_2001", "district_code_2001", "ling_distance_nonzero_mean"
   )
   missing_fields <- function(x, required, label) {
     missing <- setdiff(required, names(x))
@@ -442,15 +468,10 @@ historical_linguistic_persistence_panel <- function(
     }
   }
   missing_fields(historical, historical_required, "Historical linguistic distance")
-  missing_fields(current, current_required, "Census-2001 linguistic distance")
   historical$state_code_1991 <- pad_admin_code(historical$state_code_1991, 2L)
   historical$district_code_1991 <- pad_admin_code(historical$district_code_1991, 2L)
-  current$state_code_2001 <- pad_admin_code(current$state_code_2001, 2L)
-  current$district_code_2001 <- pad_admin_code(current$district_code_2001, 2L)
   key_1991 <- function(x) paste(x$state_code_1991, x$district_code_1991, sep = "__")
-  key_2001 <- function(x) paste(x$state_code_2001, x$district_code_2001, sep = "__")
   if (anyDuplicated(key_1991(historical))) stop("Historical linguistic distance has duplicate 1991 district keys.", call. = FALSE)
-  if (anyDuplicated(key_2001(current))) stop("Census-2001 linguistic distance has duplicate district keys.", call. = FALSE)
   thresholds <- unique(num(historical$min_accepted_coverage))
   thresholds <- thresholds[is.finite(thresholds)]
   if (length(thresholds) != 1L) {
@@ -466,11 +487,8 @@ historical_linguistic_persistence_panel <- function(
     historical, geography,
     by = c("state_code_1991", "district_code_1991"), all.x = TRUE, sort = FALSE
   )
-  current_keep <- current[current_required]
-  names(current_keep)[names(current_keep) == "ling_distance_nonzero_mean"] <-
-    "ling_distance_nonzero_mean_2001"
   out <- merge(
-    out, current_keep,
+    out, current,
     by = c("state_code_2001", "district_code_2001"), all.x = TRUE, sort = FALSE
   )
 

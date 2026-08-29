@@ -37,8 +37,8 @@ historical_persistence_fixture <- function() {
   )
   transition <- rbind(one_target, split_target)
   current <- data.frame(
-    state_code_2001 = c(state, "03"),
-    district_code_2001 = c(district, "05"),
+    state_code = c(state, "03"),
+    district_code = c(district, "05"),
     ling_distance_nonzero_mean = c(
       2 * d91[1:4],
       2 * d91[5:8] + 1,
@@ -52,6 +52,34 @@ historical_persistence_fixture <- function() {
     geography = list(source_districts = geography, transition = transition)
   )
 }
+
+test_that("historical persistence normalizes the production Census-2001 distance schema", {
+  current <- data.frame(
+    state_code = c(2, 2),
+    district_code = c(1, 2),
+    ling_distance_nonzero_mean = c(1.5, 2.5),
+    state_std = c("state", "state"),
+    district_std = c("one", "two"),
+    stringsAsFactors = FALSE
+  )
+  out <- historical_linguistic_distance_2001_panel(current)
+
+  expect_identical(
+    names(out),
+    c("state_code_2001", "district_code_2001", "ling_distance_nonzero_mean_2001")
+  )
+  expect_equal(out$state_code_2001, c("02", "02"))
+  expect_equal(out$district_code_2001, c("01", "02"))
+  expect_equal(out$ling_distance_nonzero_mean_2001, c(1.5, 2.5))
+  expect_error(
+    historical_linguistic_distance_2001_panel(transform(current, district_code = 1)),
+    "duplicate district keys"
+  )
+  expect_error(
+    historical_linguistic_distance_2001_panel(current[c("state_std", "district_std", "ling_distance_nonzero_mean")]),
+    "lacks fields: state_code, district_code"
+  )
+})
 
 test_that("historical persistence keeps preferred and exact geography distinct", {
   fixture <- historical_persistence_fixture()
@@ -169,8 +197,8 @@ historical_first_stage_fixture <- function() {
     stringsAsFactors = FALSE
   )
   current <- data.frame(
-    state_code_2001 = state,
-    district_code_2001 = district,
+    state_code = state,
+    district_code = district,
     ling_distance_nonzero_mean = z01,
     stringsAsFactors = FALSE
   )
