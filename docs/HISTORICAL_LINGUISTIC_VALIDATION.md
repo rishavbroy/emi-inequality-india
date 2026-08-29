@@ -499,9 +499,16 @@ one-target source districts passing the existing 99% 1991-population geography
 rule; exact one-to-one mappings are reported as a separate nested sample.
 
 For each sample the diagnostic reports the same level/rank persistence metrics
-for two explicitly labelled measures: `nonzero_mean` (the project's primary
-Shastry-style weighted average) and `accepted_distant_share_ge3` (the accepted
-lower-bound analogue of Shastry's percent distant speakers). Ordinary and 1991-population-weighted Pearson/Spearman
+for the project's primary `nonzero_mean` and for Shastry's percent-distant
+robustness measure. The latter is evaluated at both the accepted/lower endpoint
+(`accepted_distant_share_ge3`) and the district-specific feasible upper endpoint
+(`distant_share_ge3_upper_endpoint`). The upper-endpoint row is a source-uncertainty
+sensitivity, **not** a sharp bound on the correlation or regression coefficient:
+correlation extrema over interval-valued regressors need not occur when every
+district is placed at the same endpoint. It asks whether the persistence
+conclusion changes materially under a uniformly upper-endpoint reconstruction
+from the already-frozen source bounds, without introducing a new post-results
+quality threshold. Ordinary and 1991-population-weighted Pearson/Spearman
 correlations, population-weighted slopes, and state-fixed-effect slopes are
 therefore computed by one shared metrics routine rather than parallel code.
 Quintile-transition output remains tied to the primary scalar.
@@ -588,15 +595,13 @@ sensitivity source rather than geography authority for the Census-2001 panel.
 2. Continue Atlas source review only where it can materially tighten a district's
    distance bound or resolve a population contradiction; do not spend effort on
    tiny cells that cannot change preferred eligibility.
-3. Inspect both historical persistence measures now emitted by the shared
-   diagnostic. Shastry initially describes a population-weighted district
-   average, but in the regressions explicitly calculates that weighted average
-   among non-Hindi speakers to handle the zero-distance non-monotonicity; the
-   project's positive-distance mean is therefore the relevant comparability
-   analogue. The separately reported `accepted_distant_share_ge3` reconstructs her second
-   reduced-form measure without imposing linearity while retaining explicit
-   bounds for unresolved distance mass. Do not relabel either as a
-   new primary instrument based on favorable results.
+3. Treat both historical persistence constructions as completed diagnostics.
+   Shastry's regression weighted average is represented by the project's
+   positive-distance mean, while her nonlinear percent-distant measure is
+   reported at both the accepted/lower and feasible upper source endpoints.
+   Interpret the endpoint comparison as source-uncertainty sensitivity rather
+   than a formal bound on persistence, and do not relabel either robustness
+   construction as a new primary instrument based on favorable results.
 4. Treat split/non-nested geography as sensitivity evidence, not as preferred
    exact reconstruction.
 5. Keep 1961--91 Vanneman pre-trends provenance-gated until the downloaded panel
@@ -633,7 +638,12 @@ with state-clustered inference, for both the preferred geography and the nested
 exact-one-to-one sensitivity. Domain-level reverse regressions provide joint
 balance tests for demography, human capital, economic structure, rural
 development, and urban development. Each individual covariate retains its own
-available source support.
+available source support. A joint row is labelled `estimated` only when the
+state-FE model has residual degrees of freedom, all tested covariates are
+estimable, and the clustered Wald statistic and p-value are finite. Saturated,
+aliased, or covariance-singular small-sample rows remain in the diagnostic as
+`not_estimable` with an explicit reason rather than appearing as successful
+estimates with missing joint statistics.
 
 The current extended target executes this exercise for both eventual EMI exposure
 and the promoted threshold-explicit `LD_1991` table on the same baseline-variable
