@@ -33,8 +33,8 @@ historical_baseline_1991_panel <- function(
   if (!is.null(historical_distance)) {
     distance <- safe_df(historical_distance)
     required <- c(
-      census_1991_keys(), "min_accepted_coverage", "historical_language_status",
-      "ling_distance_nonzero_mean_1991"
+      census_1991_keys(), "min_accepted_coverage", "max_distance_bound_width",
+      "historical_language_status", "ling_distance_nonzero_mean_1991"
     )
     missing <- setdiff(required, names(distance))
     if (length(missing)) stop("Historical distance for baseline balance lacks: ", paste(missing, collapse = ", "), call. = FALSE)
@@ -44,6 +44,9 @@ historical_baseline_1991_panel <- function(
     threshold <- unique(num(distance$min_accepted_coverage))
     threshold <- threshold[is.finite(threshold)]
     if (length(threshold) != 1L) stop("Historical baseline balance requires one explicit historical-language coverage threshold.", call. = FALSE)
+    bound_width <- unique(num(distance$max_distance_bound_width))
+    bound_width <- bound_width[is.finite(bound_width)]
+    if (length(bound_width) != 1L) stop("Historical baseline balance requires one explicit historical-language distance-bound threshold.", call. = FALSE)
     distance <- distance[c(required)]
     out <- merge(out, distance, by = census_1991_keys(), all.x = TRUE, sort = FALSE)
     out$historical_ld_eligible <- out$historical_language_status %in% "eligible" &

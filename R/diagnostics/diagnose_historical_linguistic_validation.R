@@ -90,6 +90,66 @@ save_historical_linguistic_geography_1991_2001 <- function(
   unname(paths)
 }
 
+historical_linguistic_source_quality_geography_grid <- function(
+    candidates, source_districts,
+    coverage_thresholds = c(0.95, 0.98, 0.99, 0.995, 0.999),
+    bound_width_thresholds = c(0.10, 0.25, 0.50, 1.00)) {
+  source <- safe_df(candidates)
+  geography <- safe_df(source_districts)
+  source_required <- c(
+    "state_code_1991", "district_code_1991", "atlas_population_1991",
+    "atlas_source_status", "accepted_speaker_coverage_1991",
+    "ling_distance_nonzero_bound_width_1991"
+  )
+  geography_required <- c(
+    "state_code_1991", "district_code_1991",
+    "preferred_language_persistence", "exact_language_persistence"
+  )
+  missing <- setdiff(source_required, names(source))
+  if (length(missing)) {
+    stop("Historical source-quality grid lacks language fields: ", paste(missing, collapse = ", "), call. = FALSE)
+  }
+  missing <- setdiff(geography_required, names(geography))
+  if (length(missing)) {
+    stop("Historical source-quality grid lacks geography fields: ", paste(missing, collapse = ", "), call. = FALSE)
+  }
+  source$state_code_1991 <- pad_admin_code(source$state_code_1991, 2L)
+  source$district_code_1991 <- pad_admin_code(source$district_code_1991, 2L)
+  geography$state_code_1991 <- pad_admin_code(geography$state_code_1991, 2L)
+  geography$district_code_1991 <- pad_admin_code(geography$district_code_1991, 2L)
+  if (anyDuplicated(source[c("state_code_1991", "district_code_1991")])) {
+    stop("Historical source-quality candidates have duplicate district keys.", call. = FALSE)
+  }
+  if (anyDuplicated(geography[c("state_code_1991", "district_code_1991")])) {
+    stop("Historical source-quality geography has duplicate district keys.", call. = FALSE)
+  }
+  x <- merge(
+    source[source_required], geography[geography_required],
+    by = c("state_code_1991", "district_code_1991"), all.x = TRUE, sort = FALSE
+  )
+  base <- historical_linguistic_distance_quality_grid(
+    source, coverage_thresholds, bound_width_thresholds
+  )
+  safe_bind_rows(lapply(seq_len(nrow(base)), function(i) {
+    coverage_threshold <- base$min_accepted_coverage[[i]]
+    bound_width_threshold <- base$max_distance_bound_width[[i]]
+    source_ok <- x$atlas_source_status == "candidate" &
+      num(x$accepted_speaker_coverage_1991) >= coverage_threshold &
+      num(x$ling_distance_nonzero_bound_width_1991) <= bound_width_threshold
+    preferred <- source_ok & x$preferred_language_persistence %in% TRUE
+    exact <- source_ok & x$exact_language_persistence %in% TRUE
+    data.frame(
+      base[i, , drop = FALSE],
+      n_preferred_geography = sum(preferred, na.rm = TRUE),
+      preferred_geography_population_1991 = sum(num(x$atlas_population_1991[preferred]), na.rm = TRUE),
+      n_preferred_states_1991 = length(unique(x$state_code_1991[preferred])),
+      n_exact_geography = sum(exact, na.rm = TRUE),
+      exact_geography_population_1991 = sum(num(x$atlas_population_1991[exact]), na.rm = TRUE),
+      stringsAsFactors = FALSE
+    )
+  }))
+}
+
 historical_linguistic_carveout_benchmark <- function(
     geography, carveouts, admin_2001) {
   required <- c("source_districts", "transition")
@@ -350,7 +410,7 @@ historical_linguistic_persistence_panel <- function(
 
   historical_required <- c(
     "state_code_1991", "district_code_1991", "atlas_population_1991",
-    "min_accepted_coverage", "historical_language_status",
+    "min_accepted_coverage", "max_distance_bound_width", "historical_language_status",
     "ling_distance_nonzero_mean_1991"
   )
   current_required <- c(
@@ -376,6 +436,11 @@ historical_linguistic_persistence_panel <- function(
   thresholds <- thresholds[is.finite(thresholds)]
   if (length(thresholds) != 1L) {
     stop("Historical persistence requires one explicit accepted-speaker coverage threshold.", call. = FALSE)
+  }
+  bound_widths <- unique(num(historical$max_distance_bound_width))
+  bound_widths <- bound_widths[is.finite(bound_widths)]
+  if (length(bound_widths) != 1L) {
+    stop("Historical persistence requires one explicit distance-bound threshold.", call. = FALSE)
   }
 
   out <- merge(
@@ -460,9 +525,12 @@ historical_linguistic_persistence_metrics <- function(panel, exact_only = FALSE)
   sample_name <- if (exact_only) "exact_one_to_one" else "preferred_geography"
   threshold <- unique(num(panel$min_accepted_coverage))
   threshold <- threshold[is.finite(threshold)]
+  bound_width <- unique(num(panel$max_distance_bound_width))
+  bound_width <- bound_width[is.finite(bound_width)]
   empty <- data.frame(
     sample = sample_name,
     min_accepted_coverage = if (length(threshold) == 1L) threshold else NA_real_,
+    max_distance_bound_width = if (length(bound_width) == 1L) bound_width else NA_real_,
     n_districts = nrow(x), population_1991 = sum(num(x$atlas_population_1991), na.rm = TRUE),
     pearson = NA_real_, spearman = NA_real_,
     population_weighted_pearson = NA_real_, population_weighted_spearman = NA_real_,
@@ -655,7 +723,7 @@ historical_linguistic_first_stage_base_panel <- function(
 
   persistence_keep <- persistence[c(
     "state_code_1991", "district_code_1991", "state_code_2001", "district_code_2001",
-    "exact_language_persistence", "min_accepted_coverage",
+    "exact_language_persistence", "min_accepted_coverage", "max_distance_bound_width",
     "ling_distance_nonzero_mean_1991", "ling_distance_nonzero_mean_2001"
   )]
   panel_keep <- panel[required_panel]
@@ -701,6 +769,7 @@ historical_linguistic_first_stage_estimates <- function(
       estimate$sample <- sample_name
       estimate$instrument_vintage <- vintage
       estimate$min_accepted_coverage <- unique(num(sample$min_accepted_coverage))[[1L]]
+      estimate$max_distance_bound_width <- unique(num(sample$max_distance_bound_width))[[1L]]
       estimate
     }))
   }))
@@ -795,6 +864,7 @@ historical_linguistic_predetermined_first_stage_estimates <- function(
       estimate$sample <- sample_name
       estimate$instrument_vintage <- vintage
       estimate$min_accepted_coverage <- unique(num(sample$min_accepted_coverage))[[1L]]
+      estimate$max_distance_bound_width <- unique(num(sample$max_distance_bound_width))[[1L]]
       estimate
     }))
   }))
@@ -805,7 +875,8 @@ historical_linguistic_first_stage_comparison <- function(estimates) {
   if (!nrow(x)) return(data.frame())
   id <- c(
     "sample", "specification_id", "specification", "sequence", "treatment",
-    "fixed_effect", "control_blocks", "n_controls", "min_accepted_coverage"
+    "fixed_effect", "control_blocks", "n_controls", "min_accepted_coverage",
+    "max_distance_bound_width"
   )
   metrics <- c("estimate", "excluded_instrument_f", "partial_r_squared", "n", "n_states", "n_regions")
   one <- function(vintage, suffix) {

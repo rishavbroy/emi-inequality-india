@@ -7,6 +7,7 @@ historical_persistence_fixture <- function() {
     district_code_1991 = district,
     atlas_population_1991 = c(100, 120, 140, 160, 110, 130, 150, 170),
     min_accepted_coverage = 0.99,
+    max_distance_bound_width = 0.5,
     historical_language_status = "eligible",
     ling_distance_nonzero_mean_1991 = d91,
     stringsAsFactors = FALSE
@@ -75,6 +76,7 @@ test_that("historical persistence keeps preferred and exact geography distinct",
   expect_equal(preferred$n_districts, 7L)
   expect_equal(exact$n_districts, 6L)
   expect_equal(preferred$min_accepted_coverage, 0.99)
+  expect_equal(preferred$max_distance_bound_width, 0.5)
   expect_equal(preferred$state_fe_population_weighted_slope, 2, tolerance = 1e-10)
   expect_true(is.finite(preferred$population_weighted_pearson))
   expect_true(is.finite(preferred$population_weighted_spearman))
@@ -91,6 +93,15 @@ test_that("historical persistence fails closed on stale thresholds and bridge su
       mixed_threshold, fixture$current, fixture$geography
     ),
     "one explicit accepted-speaker coverage threshold"
+  )
+
+  mixed_bound <- fixture$historical
+  mixed_bound$max_distance_bound_width[[1]] <- 0.25
+  expect_error(
+    build_historical_linguistic_persistence_validation(
+      mixed_bound, fixture$current, fixture$geography
+    ),
+    "one explicit distance-bound threshold"
   )
 
   stale <- fixture$geography
@@ -152,6 +163,7 @@ historical_first_stage_fixture <- function() {
     district_code_1991 = district,
     atlas_population_1991 = 1000 + seq_len(n),
     min_accepted_coverage = 0.99,
+    max_distance_bound_width = 0.5,
     historical_language_status = "eligible",
     ling_distance_nonzero_mean_1991 = z91,
     stringsAsFactors = FALSE
@@ -207,6 +219,7 @@ test_that("historical first-stage robustness compares instrument vintages on com
   expect_setequal(out$estimates$instrument_vintage, c("historical_1991", "census_2001"))
   expect_setequal(out$estimates$sample, c("preferred_geography", "exact_one_to_one"))
   expect_equal(unique(out$panel$min_accepted_coverage), 0.99)
+  expect_equal(unique(out$panel$max_distance_bound_width), 0.5)
   expect_equal(nrow(out$panel), 60L)
 
   unadjusted <- out$estimates[
@@ -435,4 +448,33 @@ test_that("historical predetermined controls use specification-specific common s
   expect_equal(unique(all_controls$n), 59L)
   expect_equal(length(unique(pca$n)), 1L)
   expect_equal(length(unique(all_controls$n)), 1L)
+})
+
+test_that("historical source-quality grid keeps source and geography support distinct", {
+  candidates <- data.frame(
+    state_code_1991 = c("02", "02", "03"),
+    district_code_1991 = c("01", "02", "01"),
+    atlas_population_1991 = c(100, 200, 300),
+    atlas_source_status = "candidate",
+    complete_atlas_alignment_1991 = c(TRUE, FALSE, FALSE),
+    accepted_speaker_coverage_1991 = c(0.995, 0.995, 0.98),
+    ling_distance_nonzero_bound_width_1991 = c(0.1, 0.4, 0.1),
+    stringsAsFactors = FALSE
+  )
+  geography <- data.frame(
+    state_code_1991 = c("02", "02", "03"),
+    district_code_1991 = c("01", "02", "01"),
+    preferred_language_persistence = c(TRUE, FALSE, TRUE),
+    exact_language_persistence = c(TRUE, FALSE, FALSE),
+    stringsAsFactors = FALSE
+  )
+  out <- historical_linguistic_source_quality_geography_grid(
+    candidates, geography,
+    coverage_thresholds = c(0.99), bound_width_thresholds = c(0.5)
+  )
+  expect_equal(out$n_districts, 2L)
+  expect_equal(out$n_preferred_geography, 1L)
+  expect_equal(out$n_preferred_states_1991, 1L)
+  expect_equal(out$n_exact_geography, 1L)
+  expect_equal(out$preferred_geography_population_1991, 100)
 })

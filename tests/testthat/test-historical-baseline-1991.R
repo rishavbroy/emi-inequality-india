@@ -174,6 +174,7 @@ test_that("historical baseline balance keeps EMI and reviewed LD support separat
     state_code_1991 = fixture$baseline$state_code_1991,
     district_code_1991 = fixture$baseline$district_code_1991,
     min_accepted_coverage = 0.99,
+    max_distance_bound_width = 0.5,
     historical_language_status = "eligible",
     ling_distance_nonzero_mean_1991 = seq(0.5, 4, length.out = nrow(fixture$baseline)),
     stringsAsFactors = FALSE
