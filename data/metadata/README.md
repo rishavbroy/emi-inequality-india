@@ -30,6 +30,8 @@ The legacy harmonization crosswalk is retained only for historical comparison. C
 
 Ledgers may begin blank, but accepted rows must remain narrow, source-backed decisions. Generated candidates belong under `outputs/diagnostics/extended/district_lineage/`; they must not be copied into tracked adjudications without review.
 
+- `vanneman_panel4_dist91_adjudications.csv`: reviewed one-to-one promotions for historical Vanneman stable panel units whose 1991 labels are not exact matches. Each accepted row is machine-checked against the registered Liu-Shamdasani-Taraz stable-ID crosswalk, raw Census-1991 code/name row, and an explicit published district-name alias rule; aggregate/split cases are excluded.
+
 See [`docs/DISTRICT_LINEAGE.md`](../../docs/DISTRICT_LINEAGE.md) for authority rules, source caveats, schemas, invariants, and the implementation plan.
 
 ## Consumption prices and Census 2001 controls

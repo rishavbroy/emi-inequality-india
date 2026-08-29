@@ -645,15 +645,14 @@ remains sensitivity evidence rather than authority for Census-2001 geography.
    construction as a new primary instrument based on favorable results.
 4. Treat split/non-nested geography as sensitivity evidence, not as preferred
    exact reconstruction.
-5. Complete the 1961--91 Vanneman pre-trend phase from the new conservative
-   panel4-to-dist91 bridge. First validate deterministic `dist91` IDs against the
-   project's Census-1991 geography and adjudicate only the remaining label/aggregate
-   cases that materially affect support. The 2013 archived data/reader pairing and
-   panel-to-1991 state-ID contract are now verified, so district geography—not byte
-   provenance—is the remaining gate. Do not let Vanneman's harmonized IDs silently
-   replace the project's Census geography contract. A published six-decade Census
-   replication package also contains `Vanneman_district_crosswalk.dta`; use it as an
-   external benchmark if acquired, not as an unchecked production authority.
+5. Complete the 1961--91 Vanneman pre-trend value construction on the reviewed
+   `vanneman_pretrend_geography.csv` sample. The panel4-to-dist91 alias ledger and
+   direct Census-code composition now resolve the geography gate without importing
+   Liu et al.'s separate six-census harmonized IDs. Extract only source variables
+   whose archived parser contracts are verified, then test pre-existing literacy,
+   urbanization, and occupational trends against eventual EMI and `LD_1991`.
+   Aggregate/split geography remains sensitivity evidence rather than preferred
+   pretrend support.
 
 ## SHRUG Census-1991 predetermined baseline balance
 
@@ -763,11 +762,6 @@ state/district names. The diagnostic records these source-code invariants in
 `vanneman_liu_construction_contract.csv`; it does not infer that the later
 harmonized IDs are Vanneman IDs.
 
-For panel units that our author-source bridge still labels
-`label_review_required`, Liu et al.'s independently curated harmonized Vanneman
-name can provide review evidence. `vanneman_liu_alias_review_candidates.csv`
-therefore proposes a candidate only when that external name matches exactly one
-non-aggregate `dist91` district within the already documented Vanneman 1991
-state. Candidate status never changes `preferred_pretrend_eligible`; promotion
-still requires an explicit reviewed project rule. This turns the published
-replication package into a review aid rather than an automatic lineage authority.
+The initial exact-name alias-candidate layer was removed after real-data execution: it resolved none of the 50 `label_review_required` units because the author `dist91` labels themselves contain historical spellings and transcription variants. The project now keeps a narrow tracked `vanneman_panel4_dist91_adjudications.csv` ledger instead. Every accepted row must already be a label-review case, retain the author-documented 1991 state, point to a non-aggregate `dist91` code, agree with Liu et al.'s raw Census-1991 `st_code`/`dist_code` name, and be connected to Liu's stable Vanneman name by an explicit `replace dtname_temp=...` rule in the published construction code. No fuzzy threshold can promote a row.
+
+The first reviewed ledger contains 22 such one-to-one aliases and raises preferred panel4-to-1991 support from 245 to 267 of 339 stable Vanneman units. `vanneman_panel4_dist91_adjudication_evidence.csv` records the externally verified raw 1991 label, stable Vanneman label, and published source-code line used for each promotion. The next geography step is deliberately code-based rather than another name matcher: accepted `dist91` state/district codes are joined directly to the project's existing reviewed Census-1991 geography and 1991-to-2001 transition. Only one-target preferred transitions enter the Vanneman pretrend sample; split sources remain review/sensitivity cases. This produces `vanneman_pretrend_geography.csv` and preserves the project lineage as the production authority.
