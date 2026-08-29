@@ -588,22 +588,25 @@ generic-codebook values, but parser eligibility now requires the corresponding
 file-specific SAS reader to target the source, declare the identifier layout, and cover
 all records whose column-10 value differs from the generic convention.
 
-The three SAS readers were recovered from the author's archived files distribution
-(`vanneman.umd.edu/districts/files/index.html`, Wayback snapshot dated 2013-07-22).
-A stronger provenance check is still desirable before promoting longitudinal values:
-download the compressed `panel4.data.gz`, `dist81.data.gz`, and `dist91.data.gz` from
-that same archived snapshot and compare their cryptographic hashes with the local raw
-files. A byte-for-byte match would establish that the archived readers and local data
-came from the same preserved distribution. A mismatch would identify which data
-vintage needs separate adjudication rather than reviving the generic column-10 gate.
+The three SAS readers and the compressed `panel4.data.gz`, `dist81.data.gz`, and
+`dist91.data.gz` files have now been recovered from the **same** author files-page
+Wayback snapshot (`vanneman.umd.edu/districts/files/index.html`, 2013-07-22). The
+archived compressed files are byte-for-byte identical to the previously downloaded
+local copies. Production QA therefore treats `data_archived/` and
+`sas_commands_archived/` as the canonical provenance pair and verifies their recorded
+archive sizes and MD5 checksums before declaring the parser contract eligible. The
+duplicate top-level copies are not part of the production contract.
 
-Once byte provenance is checked, the remaining substantive integration task is the
-geography contract. `panel4` uses its own harmonized version-5 state/district IDs (the
-archived codebook's district-name appendix also refers to version-5 IDs). Those stable
-panel identifiers must be linked transparently to the project's reviewed 1991/2001
-historical geography before Vanneman trends are joined to EMI or linguistic-distance
-measures. The Vanneman harmonization remains sensitivity evidence rather than
-authority for Census-2001 geography.
+The remaining substantive integration task is now the geography contract. Vanneman's
+own documentation says that the longitudinal database maintains comparable boundaries
+by aggregating simple district splits back to older units and, for territory transfers,
+estimating earlier values on recreated 1991 geography. `panel4` therefore has fewer
+stable units than the raw 1991 Census and its version-5 state/district IDs must not be
+silently interpreted as Census-1991 codes. `vanneman_panel4_geography_inventory()` now
+exposes those stable IDs, labels in all four census years, 1991 population, and explicit
+aggregate labels such as `Hyderabad+Rangareddi`. That inventory is the audit surface for
+the next reviewed Vanneman-v5 -> Census-1991 crosswalk. The Vanneman harmonization
+remains sensitivity evidence rather than authority for Census-2001 geography.
 
 ## Next phases
 
@@ -624,11 +627,12 @@ authority for Census-2001 geography.
    construction as a new primary instrument based on favorable results.
 4. Treat split/non-nested geography as sensitivity evidence, not as preferred
    exact reconstruction.
-5. Complete the 1961--91 Vanneman pre-trend phase by first comparing local raw-file
-   hashes with the compressed files from the same archived distribution as the SAS
-   readers, then construct a reviewed version-5 panel-ID crosswalk into the existing
-   1991/2001 historical geography. Do not let Vanneman's harmonized IDs silently
-   replace the project's Census geography contract.
+5. Complete the 1961--91 Vanneman pre-trend phase by constructing a reviewed
+   version-5 panel-ID crosswalk from the new Vanneman geography inventory into the
+   existing 1991/2001 historical geography. The 2013 archived data/reader pairing is
+   now checksum-verified, so geography—not byte provenance—is the remaining gate. Do
+   not let Vanneman's harmonized IDs silently replace the project's Census geography
+   contract.
 
 ## SHRUG Census-1991 predetermined baseline balance
 

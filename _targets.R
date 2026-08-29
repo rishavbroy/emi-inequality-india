@@ -748,6 +748,15 @@ core_pipeline_targets <- list(
     format = "file"
   ),
   tar_target(
+    historical_vanneman_panel4_geography,
+    build_vanneman_panel4_geography_inventory(historical_vanneman_source_qa, paths)
+  ),
+  tar_target(
+    diag_ext_historical_vanneman_panel4_geography,
+    save_vanneman_panel4_geography_inventory(historical_vanneman_panel4_geography),
+    format = "file"
+  ),
+  tar_target(
     district_lineage,
     build_district_lineage(
       district_lineage_sources,
