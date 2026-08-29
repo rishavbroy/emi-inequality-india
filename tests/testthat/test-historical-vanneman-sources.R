@@ -5,6 +5,11 @@ test_that("Vanneman source QA reads documented fixed-width identifiers", {
     "Version number (2 = cross-sectional data; 6 = panel 1961-91 data)",
     codebook
   )
+  education <- file.path(td, "education.html")
+  writeLines(c(
+    '<div align="CENTER"> 151 </div>',
+    '<div align="CENTER"> 156 </div>'
+  ), education)
   write_gz <- function(path, lines) {
     con <- gzfile(path, open = "wt")
     on.exit(close(con), add = TRUE)
@@ -23,6 +28,7 @@ test_that("Vanneman source QA reads documented fixed-width identifiers", {
   write_gz(dist91, c("0201100912Srikakulam", "0201110912        1"))
 
   expect_equal(vanneman_documented_panel_version(codebook), 6L)
+  expect_equal(vanneman_documented_record_ids(education), c("151", "156"))
   ids <- vanneman_identifier_rows(panel)
   expect_equal(sort(unique(ids$year)), c(1961L, 1971L, 1981L, 1991L))
   expect_equal(unique(ids$version), 5L)
@@ -35,6 +41,14 @@ test_that("Vanneman source QA refuses to promote a panel vintage that disagrees 
   writeLines(
     "Version number (2 = cross-sectional data; 6 = panel 1961-91 data)",
     file.path(root, "codebook/Codebook_ Indian district database.html")
+  )
+  writeLines(
+    c('<div align="CENTER"> 100 </div>', '<div align="CENTER"> 151 </div>'),
+    file.path(root, "codebook/Variables_ Indian district codebook.html")
+  )
+  writeLines(
+    '<div align="CENTER"> 151 </div>',
+    file.path(root, "codebook/Education and literacy_ Indian district codebook.html")
   )
   write_gz <- function(name, lines) {
     con <- gzfile(file.path(root, name), open = "wt")
@@ -61,13 +75,23 @@ test_that("Vanneman source QA refuses to promote a panel vintage that disagrees 
   expect_equal(panel$observed_versions, "5")
   expect_equal(panel$documented_or_expected_version, 6L)
   expect_equal(panel$status, "version_mismatch")
+  expect_equal(panel$provenance_gap, "panel_version_provenance_missing")
+  expect_false(panel$version_provenance_resolved)
   expect_false(panel$eligible_for_baseline_values)
 
   expect_equal(dist81$observed_versions, "2;3")
   expect_equal(dist81$noncontract_record_ids, "151")
+  expect_true(dist81$noncontract_record_definitions_present)
+  expect_equal(
+    dist81$provenance_gap,
+    "record_definition_present_but_version_provenance_missing"
+  )
   expect_equal(dist81$status, "mixed_record_versions")
+  expect_false(dist81$version_provenance_resolved)
   expect_false(dist81$eligible_for_baseline_values)
 
   expect_equal(dist91$status, "source_contract_verified")
+  expect_true(dist91$version_provenance_resolved)
+  expect_identical(dist91$provenance_gap, "")
   expect_true(dist91$eligible_for_baseline_values)
 })

@@ -6,7 +6,9 @@ vanneman_historical_paths <- function(paths = build_paths()) {
     panel4 = file.path(root, "panel4.data.gz"),
     dist81 = file.path(root, "dist81.data.gz"),
     dist91 = file.path(root, "dist91.data.gz"),
-    codebook = file.path(root, "codebook/Codebook_ Indian district database.html")
+    codebook = file.path(root, "codebook/Codebook_ Indian district database.html"),
+    variables_codebook = file.path(root, "codebook/Variables_ Indian district codebook.html"),
+    education_codebook = file.path(root, "codebook/Education and literacy_ Indian district codebook.html")
   )
 }
 
@@ -26,6 +28,23 @@ vanneman_identifier_rows <- function(path) {
     version = suppressWarnings(as.integer(substr(lines, 10L, 10L))),
     stringsAsFactors = FALSE
   )
+}
+
+
+vanneman_documented_record_ids <- function(path) {
+  if (!file.exists(path)) stop("Missing Vanneman codebook page: ", path, call. = FALSE)
+  text <- paste(readLines(path, warn = FALSE, encoding = "UTF-8"), collapse = " ")
+  hits <- regmatches(
+    text,
+    gregexpr(
+      "<div[^>]*align=[\"']?center[\"']?[^>]*>[[:space:]]*[0-9]{3}[[:space:]]*</div>",
+      text,
+      ignore.case = TRUE,
+      perl = TRUE
+    )
+  )[[1L]]
+  if (!length(hits) || identical(hits, "-1")) return(character())
+  sort(unique(sub(".*?([0-9]{3}).*", "\\1", hits, perl = TRUE)))
 }
 
 vanneman_documented_panel_version <- function(path) {
@@ -48,6 +67,10 @@ summarize_vanneman_historical_sources <- function(paths = build_paths()) {
     stop("Historical Vanneman source QA is missing files: ", paste(missing, collapse = ", "), call. = FALSE)
   }
   documented_panel_version <- vanneman_documented_panel_version(files[["codebook"]])
+  documented_records <- unique(c(
+    vanneman_documented_record_ids(files[["variables_codebook"]]),
+    vanneman_documented_record_ids(files[["education_codebook"]])
+  ))
   specs <- data.frame(
     source_id = c("panel4", "dist81", "dist91"),
     expected_years = c("1961;1971;1981;1991", "1981", "1991"),
@@ -64,6 +87,11 @@ summarize_vanneman_historical_sources <- function(paths = build_paths()) {
     version_ok <- length(versions) == 1L && identical(versions, expected_version)
     years_ok <- identical(years, expected_years)
     noncontract_records <- sort(unique(x$record_id[is.finite(x$version) & x$version != expected_version]))
+    noncontract_definitions_present <- if (length(noncontract_records)) {
+      all(noncontract_records %in% documented_records)
+    } else {
+      NA
+    }
     status <- if (years_ok && version_ok) {
       "source_contract_verified"
     } else if (!years_ok) {
@@ -82,6 +110,17 @@ summarize_vanneman_historical_sources <- function(paths = build_paths()) {
       observed_versions = paste(versions, collapse = ";"),
       documented_or_expected_version = expected_version,
       noncontract_record_ids = paste(noncontract_records, collapse = ";"),
+      noncontract_record_definitions_present = noncontract_definitions_present,
+      version_provenance_resolved = version_ok,
+      provenance_gap = if (version_ok) {
+        ""
+      } else if (specs$source_id[[i]] == "panel4") {
+        "panel_version_provenance_missing"
+      } else if (length(noncontract_records) && isTRUE(noncontract_definitions_present)) {
+        "record_definition_present_but_version_provenance_missing"
+      } else {
+        "record_version_provenance_missing"
+      },
       years_match_contract = years_ok,
       version_matches_contract = version_ok,
       eligible_for_baseline_values = years_ok && version_ok,
