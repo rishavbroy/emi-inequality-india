@@ -1496,3 +1496,118 @@ test_that("Atlas exact-label adjudication reuse does not broaden generic code-le
     1
   )
 })
+
+
+test_that("historical Atlas distance uses the frozen resolver and explicit coverage gate", {
+  registry <- read_language_atlas_1991_languages()
+  mapping <- resolve_language_atlas_1991_shastry_mapping(registry)
+  counts <- rep(0, nrow(registry))
+  counts[registry$language_1991 == "Hindi"] <- 50
+  counts[registry$language_1991 == "Tamil"] <- 30
+  counts[registry$language_1991 == "Assamese"] <- 10
+  counts[registry$language_1991 == "English"] <- 10
+
+  source <- data.frame(
+    state_code_1991 = "02",
+    district_code_1991 = "01",
+    state_name_1991 = "Andhra Pradesh",
+    atlas_population_candidate = 100,
+    pca91_population = 100,
+    atlas_column = registry$atlas_column,
+    language_1991 = registry$language_1991,
+    canonical_language = registry$canonical_language,
+    accepted_speaker_count = counts,
+    accepted_count_basis = "machine_candidate",
+    cell_review_decision = NA_character_,
+    cell_review_basis = NA_character_,
+    page = 205L,
+    raw_value = as.character(counts),
+    speaker_count_candidate = counts,
+    parse_status = "parsed",
+    alignment_status = "exact_label",
+    n_atlas_language_columns = 114L,
+    n_accepted_values = 114L,
+    n_review_required = 0L,
+    accepted_speaker_lower_bound = 100,
+    accepted_speaker_lower_bound_share_atlas = 1,
+    coverage_status = "complete_accepted_inventory",
+    stringsAsFactors = FALSE
+  )
+
+  out <- build_historical_linguistic_distance_1991(source, min_accepted_coverage = 0.99)
+  nonzero <- is.finite(mapping$shastry_degree) & mapping$shastry_degree > 0 &
+    registry$language_1991 != "English"
+  expected <- speaker_weighted_mean(counts, mapping$shastry_degree, nonzero)
+
+  expect_equal(out$ling_distance_nonzero_mean_1991, expected)
+  expect_equal(out$accepted_speaker_coverage_1991, 1)
+  expect_equal(out$historical_language_status, "eligible")
+
+  incomplete <- source
+  incomplete$district_code_1991 <- "02"
+  incomplete$accepted_speaker_count[registry$language_1991 == "Tamil"] <- NA_real_
+  incomplete$n_accepted_values <- 113L
+  incomplete$n_review_required <- 1L
+  incomplete$accepted_speaker_lower_bound <- 70
+  incomplete$accepted_speaker_lower_bound_share_atlas <- 0.7
+  incomplete$coverage_status <- "unresolved_cells"
+
+  combined <- rbind(source, incomplete)
+  gated <- build_historical_linguistic_distance_1991(combined, min_accepted_coverage = 0.95)
+  expect_equal(
+    gated$historical_language_status[gated$district_code_1991 == "02"],
+    "below_coverage_threshold"
+  )
+  expect_true(is.na(gated$ling_distance_nonzero_mean_1991[gated$district_code_1991 == "02"]))
+  expect_error(
+    build_historical_linguistic_distance_1991(source, min_accepted_coverage = 0),
+    "threshold must lie in"
+  )
+})
+
+
+test_that("accepted Atlas source reader rejects drift from the reviewed language registry", {
+  registry <- read_language_atlas_1991_languages()[1, , drop = FALSE]
+  row <- data.frame(
+    state_code_1991 = "02", district_code_1991 = "01", state_name_1991 = "Andhra Pradesh",
+    atlas_population_candidate = 100, pca91_population = 100,
+    atlas_column = registry$atlas_column, language_1991 = registry$language_1991,
+    canonical_language = registry$canonical_language, accepted_speaker_count = 100,
+    accepted_count_basis = "machine_candidate", cell_review_decision = NA_character_,
+    cell_review_basis = NA_character_, page = 205L, raw_value = "100",
+    speaker_count_candidate = 100, parse_status = "parsed", alignment_status = "exact_label",
+    n_atlas_language_columns = 1L, n_accepted_values = 1L, n_review_required = 0L,
+    accepted_speaker_lower_bound = 100, accepted_speaker_lower_bound_share_atlas = 1,
+    coverage_status = "incomplete_alignment", stringsAsFactors = FALSE
+  )
+  path <- tempfile(fileext = ".csv")
+  on.exit(unlink(path), add = TRUE)
+  utils::write.csv(row[language_atlas_1991_accepted_source_schema()], path, row.names = FALSE, na = "")
+
+  expect_equal(nrow(read_language_atlas_1991_accepted_source(path)), 1L)
+  row$language_1991 <- "Not Assamese"
+  utils::write.csv(row[language_atlas_1991_accepted_source_schema()], path, row.names = FALSE, na = "")
+  expect_error(read_language_atlas_1991_accepted_source(path), "frozen language registry")
+})
+
+
+test_that("historical Atlas distance rejects inconsistent accepted-count coverage metadata", {
+  registry <- read_language_atlas_1991_languages()
+  source <- data.frame(
+    state_code_1991 = "02", district_code_1991 = "01", state_name_1991 = "Andhra Pradesh",
+    atlas_population_candidate = 100, pca91_population = 100,
+    atlas_column = registry$atlas_column, language_1991 = registry$language_1991,
+    canonical_language = registry$canonical_language, accepted_speaker_count = 0,
+    accepted_count_basis = "machine_candidate", cell_review_decision = NA_character_,
+    cell_review_basis = NA_character_, page = 205L, raw_value = "0",
+    speaker_count_candidate = 0, parse_status = "parsed", alignment_status = "exact_label",
+    n_atlas_language_columns = 114L, n_accepted_values = 114L, n_review_required = 0L,
+    accepted_speaker_lower_bound = 1, accepted_speaker_lower_bound_share_atlas = 0.01,
+    coverage_status = "complete_accepted_inventory", stringsAsFactors = FALSE
+  )
+
+  expect_error(
+    build_historical_linguistic_distance_1991(source, min_accepted_coverage = 0.95),
+    "coverage fields disagree"
+  )
+})

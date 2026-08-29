@@ -95,6 +95,7 @@ python3 scripts/build_language_atlas_1991.py \
   --language-registry data/metadata/language_atlas_1991_languages.csv \
   --cell-review-registry data/metadata/language_atlas_1991_cell_reviews.csv \
   --cell-review-template-output /tmp/language_atlas_1991_cell_review_template.csv \
+  --accepted-source-output /tmp/language_atlas_1991_accepted_source.csv \
   --district-output /tmp/language_atlas_1991_district_population.csv \
   --population-review-output /tmp/language_atlas_1991_population_review.csv \
   --page0-language-output /tmp/language_atlas_1991_page0_languages.csv \
@@ -254,6 +255,26 @@ decisions. This mirrors the repository's reviewed Glottolog and district-lineage
 pattern: generated candidates remain non-authoritative until an explicit tracked
 decision is applied.
 
+The optional `--accepted-source-output` is the canonical promotion boundary from
+maintainer extraction/adjudication to R. It contains one row per aligned
+1991 district-language cell, retains unresolved cells with a blank
+`accepted_speaker_count`, repeats the district coverage/status contract, and
+preserves both machine and reviewed provenance. It applies **no analysis
+threshold** and therefore is not itself the preferred historical-IV sample.
+
+R reads that contract with `read_language_atlas_1991_accepted_source()` and
+constructs the historical primary-distance analogue with
+`build_historical_linguistic_distance_1991()`. The latter requires an explicit
+`min_accepted_coverage` argument; there is deliberately no default. Eligible
+districts must have all 114 Atlas columns aligned, must not violate the district
+population bound, and must meet the supplied accepted-speaker lower-bound
+threshold. The distance itself reuses the frozen Atlas-to-Shastry resolver and
+the same speaker-weighted **nonzero mapped-language mean** used by the 2001
+primary IV. English remains a separately treated reference language exactly as
+in the 2001 construction. Districts below the requested coverage threshold stay
+in the output with an explicit status and `NA` historical distance rather than
+being silently dropped or renormalized into eligibility.
+
 The extractor also writes district-level lower-bound coverage diagnostics. It
 sums **only** accepted counts: machine candidates that passed numeric and
 per-language population QA, plus any source-reviewed replacements. Reviewed or
@@ -334,7 +355,9 @@ sensitivity source rather than geography authority for the Census-2001 panel.
    cases before promoting a tracked reviewed district-language table.
 2. Reuse the now-registered 114 Atlas labels and frozen Shastry/Glottolog identity
    machinery; keep unresolved labels and speaker coverage explicit.
-3. Construct 1991 district linguistic distance on native 1991 geography.
+3. Promote adjudicated cells through the accepted-source contract, choose the
+   preferred accepted-speaker coverage threshold from reviewed evidence, and
+   construct 1991 district linguistic distance on native 1991 geography.
 4. Compare 1991 and 2001 distance on the one-target, high-population-coverage
    preferred sample; report the exact one-to-one result separately and show
    population-weighted Pearson/Spearman and within-state persistence.

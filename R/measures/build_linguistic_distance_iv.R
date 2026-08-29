@@ -57,6 +57,201 @@ read_language_atlas_1991_languages <- function(path = NULL) {
   out
 }
 
+language_atlas_1991_accepted_source_schema <- function() {
+  c(
+    "state_code_1991", "district_code_1991", "state_name_1991",
+    "atlas_population_candidate", "pca91_population", "atlas_column",
+    "language_1991", "canonical_language", "accepted_speaker_count",
+    "accepted_count_basis", "cell_review_decision", "cell_review_basis",
+    "page", "raw_value", "speaker_count_candidate", "parse_status",
+    "alignment_status", "n_atlas_language_columns", "n_accepted_values",
+    "n_review_required", "accepted_speaker_lower_bound",
+    "accepted_speaker_lower_bound_share_atlas", "coverage_status"
+  )
+}
+
+validate_language_atlas_1991_accepted_source <- function(
+  rows,
+  registry = read_language_atlas_1991_languages()
+) {
+  out <- safe_df(rows)
+  if (!identical(names(out), language_atlas_1991_accepted_source_schema())) {
+    stop("Accepted Language Atlas 1991 source has an invalid schema.", call. = FALSE)
+  }
+  state <- suppressWarnings(as.integer(out$state_code_1991))
+  district <- suppressWarnings(as.integer(out$district_code_1991))
+  out$atlas_column <- suppressWarnings(as.integer(out$atlas_column))
+  if (anyNA(state) || anyNA(district) || any(state < 1L) || any(district < 1L) ||
+      anyNA(out$atlas_column) || any(!out$atlas_column %in% 4:117)) {
+    stop("Accepted Language Atlas 1991 source has invalid Census or Atlas codes.", call. = FALSE)
+  }
+  out$state_code_1991 <- sprintf("%02d", state)
+  out$district_code_1991 <- sprintf("%02d", district)
+  key <- paste(out$state_code_1991, out$district_code_1991, out$atlas_column, sep = "__")
+  if (anyDuplicated(key)) {
+    stop("Accepted Language Atlas 1991 source has duplicate district-language keys.", call. = FALSE)
+  }
+  registry_i <- match(out$atlas_column, registry$atlas_column)
+  if (anyNA(registry_i) ||
+      any(normalize_language_label(out$language_1991) != normalize_language_label(registry$language_1991[registry_i])) ||
+      any(normalize_language_label(out$canonical_language) != normalize_language_label(registry$canonical_language[registry_i]))) {
+    stop("Accepted Language Atlas 1991 source disagrees with the frozen language registry.", call. = FALSE)
+  }
+  accepted <- num(out$accepted_speaker_count)
+  noninteger <- is.finite(accepted) & abs(accepted - round(accepted)) > 1e-10
+  if (any(is.finite(accepted) & accepted < 0) || any(noninteger)) {
+    stop("Accepted Language Atlas 1991 speaker counts must be non-negative integers.", call. = FALSE)
+  }
+  out
+}
+
+read_language_atlas_1991_accepted_source <- function(path) {
+  if (!file.exists(path)) stop("Missing accepted Language Atlas 1991 source: ", path, call. = FALSE)
+  validate_language_atlas_1991_accepted_source(utils::read.csv(
+    path,
+    stringsAsFactors = FALSE,
+    check.names = FALSE,
+    na.strings = c("", "NA")
+  ))
+}
+
+
+speaker_weighted_mean <- function(speakers, values, index = rep(TRUE, length(speakers))) {
+  speakers <- num(speakers)
+  values <- num(values)
+  index <- as.logical(index) & is.finite(speakers) & speakers >= 0 & is.finite(values)
+  denominator <- sum(speakers[index], na.rm = TRUE)
+  if (!is.finite(denominator) || denominator <= 0) return(NA_real_)
+  sum(speakers[index] * values[index], na.rm = TRUE) / denominator
+}
+
+build_historical_linguistic_distance_1991 <- function(
+  atlas_source,
+  min_accepted_coverage,
+  registry = read_language_atlas_1991_languages(),
+  concordance = read_shastry_language_distance(),
+  adjudications = read_shastry_language_adjudications()
+) {
+  if (!is.numeric(min_accepted_coverage) || length(min_accepted_coverage) != 1L ||
+      !is.finite(min_accepted_coverage) || min_accepted_coverage <= 0 || min_accepted_coverage > 1) {
+    stop("Historical language coverage threshold must lie in (0, 1].", call. = FALSE)
+  }
+  rows <- if (is.character(atlas_source) && length(atlas_source) == 1L) {
+    read_language_atlas_1991_accepted_source(atlas_source)
+  } else {
+    safe_df(atlas_source)
+  }
+  rows <- validate_language_atlas_1991_accepted_source(rows, registry)
+
+  preferred <- resolve_language_atlas_1991_shastry_mapping(
+    registry, concordance, adjudications, scenario = "preferred"
+  )
+  sensitivity_low <- resolve_language_atlas_1991_shastry_mapping(
+    registry, concordance, adjudications, scenario = "sensitivity_low"
+  )
+  sensitivity_high <- resolve_language_atlas_1991_shastry_mapping(
+    registry, concordance, adjudications, scenario = "sensitivity_high"
+  )
+  registry_i <- match(rows$atlas_column, preferred$atlas_column)
+  rows$shastry_degree <- preferred$shastry_degree[registry_i]
+  rows$shastry_degree_sensitivity_low <- sensitivity_low$shastry_degree[registry_i]
+  rows$shastry_degree_sensitivity_high <- sensitivity_high$shastry_degree[registry_i]
+  if (!identical(is.finite(rows$shastry_degree_sensitivity_low), is.finite(rows$shastry_degree_sensitivity_high))) {
+    stop("Historical Shastry sensitivity mappings must have identical support.", call. = FALSE)
+  }
+
+  split_i <- split(
+    seq_len(nrow(rows)),
+    interaction(rows[c("state_code_1991", "district_code_1991")], drop = TRUE)
+  )
+  out <- safe_bind_rows(lapply(split_i, function(i) {
+    district <- rows[i, , drop = FALSE]
+    population <- unique(num(district$atlas_population_candidate))
+    pca_population <- unique(num(district$pca91_population))
+    coverage <- unique(num(district$accepted_speaker_lower_bound_share_atlas))
+    n_columns <- unique(num(district$n_atlas_language_columns))
+    source_status <- unique(plain_chr(district$coverage_status))
+    if (length(population) != 1L || length(pca_population) != 1L || length(coverage) != 1L ||
+        length(n_columns) != 1L || length(source_status) != 1L) {
+      stop("Accepted Language Atlas 1991 district metadata are internally inconsistent.", call. = FALSE)
+    }
+    if (source_status == "speaker_sum_exceeds_atlas_population") {
+      status <- "population_bound_violation"
+    } else if (n_columns < 114) {
+      status <- "incomplete_alignment"
+    } else if (!is.finite(coverage) || coverage < min_accepted_coverage) {
+      status <- "below_coverage_threshold"
+    } else {
+      status <- "eligible"
+    }
+
+    speakers <- num(district$accepted_speaker_count)
+    language <- normalize_language_label(district$language_1991)
+    accepted <- is.finite(speakers) & speakers >= 0
+    english <- accepted & language == "English"
+    mapped <- accepted & is.finite(district$shastry_degree) & !english
+    mapped_low <- accepted & is.finite(district$shastry_degree_sensitivity_low) & !english
+    mapped_high <- accepted & is.finite(district$shastry_degree_sensitivity_high) & !english
+    nonzero <- mapped & district$shastry_degree > 0
+    nonzero_low <- mapped_low & district$shastry_degree_sensitivity_low > 0
+    nonzero_high <- mapped_high & district$shastry_degree_sensitivity_high > 0
+    accepted_total <- sum(speakers[accepted], na.rm = TRUE)
+    mapped_total <- sum(speakers[mapped], na.rm = TRUE)
+    source_lower_bound <- unique(num(district$accepted_speaker_lower_bound))
+    source_n_accepted <- unique(num(district$n_accepted_values))
+    source_n_review <- unique(num(district$n_review_required))
+    if (length(source_lower_bound) != 1L || length(source_n_accepted) != 1L || length(source_n_review) != 1L ||
+        !isTRUE(all.equal(accepted_total, source_lower_bound, tolerance = 1e-10)) ||
+        as.integer(source_n_accepted) != sum(accepted) || as.integer(source_n_review) != nrow(district) - sum(accepted)) {
+      stop("Accepted Language Atlas 1991 district coverage fields disagree with cell-level counts.", call. = FALSE)
+    }
+    recomputed_coverage <- if (population > 0) accepted_total / population else NA_real_
+    if (!isTRUE(all.equal(coverage, recomputed_coverage, tolerance = 1e-10))) {
+      stop("Accepted Language Atlas 1991 coverage share disagrees with district population.", call. = FALSE)
+    }
+
+    result <- data.frame(
+      state_code_1991 = plain_chr(district$state_code_1991[[1L]]),
+      district_code_1991 = plain_chr(district$district_code_1991[[1L]]),
+      state_name_1991 = plain_chr(district$state_name_1991[[1L]]),
+      atlas_population_1991 = population,
+      pca91_population = pca_population,
+      n_atlas_language_columns = as.integer(n_columns),
+      n_accepted_languages = sum(accepted),
+      n_unresolved_languages = nrow(district) - sum(accepted),
+      accepted_speaker_coverage_1991 = coverage,
+      shastry_mapped_accepted_speaker_share_1991 = if (accepted_total > 0) mapped_total / accepted_total else NA_real_,
+      shastry_mapped_population_share_1991 = if (population > 0) mapped_total / population else NA_real_,
+      min_accepted_coverage = min_accepted_coverage,
+      historical_language_status = status,
+      stringsAsFactors = FALSE
+    )
+    result$ling_distance_nonzero_mean_1991 <- speaker_weighted_mean(
+      speakers, district$shastry_degree, nonzero
+    )
+    result$ling_distance_nonzero_mean_sensitivity_low_1991 <- speaker_weighted_mean(
+      speakers, district$shastry_degree_sensitivity_low, nonzero_low
+    )
+    result$ling_distance_nonzero_mean_sensitivity_high_1991 <- speaker_weighted_mean(
+      speakers, district$shastry_degree_sensitivity_high, nonzero_high
+    )
+    if (status != "eligible") {
+      result[c(
+        "ling_distance_nonzero_mean_1991",
+        "ling_distance_nonzero_mean_sensitivity_low_1991",
+        "ling_distance_nonzero_mean_sensitivity_high_1991"
+      )] <- NA_real_
+    }
+    result
+  }))
+  validate_linguistic_distance_ranges(transform(
+    out,
+    ling_distance_nonzero_mean = ling_distance_nonzero_mean_1991,
+    ling_distance_nonzero_mean_sensitivity_low = ling_distance_nonzero_mean_sensitivity_low_1991,
+    ling_distance_nonzero_mean_sensitivity_high = ling_distance_nonzero_mean_sensitivity_high_1991
+  ))[, names(out), drop = FALSE]
+}
+
 normalize_language_label <- function(x) {
   tools::toTitleCase(tolower(trimws(plain_chr(x))))
 }
@@ -191,27 +386,21 @@ build_district_language_constructions <- function(df) {
     if (!is.finite(denominator) || denominator <= 0) return(NA_real_)
     100 * sum(speakers[valid_speakers & condition], na.rm = TRUE) / denominator
   }
-  weighted_value <- function(index, value) {
-    denom <- sum(speakers[index], na.rm = TRUE)
-    if (!is.finite(denom) || denom <= 0) return(NA_real_)
-    sum(speakers[index] * value[index], na.rm = TRUE) / denom
-  }
-
   top3 <- select_top_mother_tongues(df[mapped, , drop = FALSE], 3L)
   top3_distance <- if (nrow(top3)) wmean(top3$ling_degrees, top3$spkr_tot) else NA_real_
   top3_coverage <- if (is.finite(total) && total > 0 && nrow(top3)) 100 * sum(num(top3$spkr_tot), na.rm = TRUE) / total else NA_real_
 
   out <- df[1, c("state_std", "district_std"), drop = FALSE]
-  out$ling_distance_nonzero_mean <- weighted_value(nonzero, distance)
+  out$ling_distance_nonzero_mean <- speaker_weighted_mean(speakers, distance, nonzero)
 
   sensitivity_mapped <- valid_speakers & is.finite(distance_low) & !english
   sensitivity_nonzero_low <- sensitivity_mapped & distance_low > 0
   sensitivity_nonzero_high <- sensitivity_mapped & distance_high > 0
-  out$ling_distance_nonzero_mean_sensitivity_low <- weighted_value(
-    sensitivity_nonzero_low, distance_low
+  out$ling_distance_nonzero_mean_sensitivity_low <- speaker_weighted_mean(
+    speakers, distance_low, sensitivity_nonzero_low
   )
-  out$ling_distance_nonzero_mean_sensitivity_high <- weighted_value(
-    sensitivity_nonzero_high, distance_high
+  out$ling_distance_nonzero_mean_sensitivity_high <- speaker_weighted_mean(
+    speakers, distance_high, sensitivity_nonzero_high
   )
   sensitivity_total <- sum(speakers[sensitivity_mapped], na.rm = TRUE)
   out$ling_sensitivity_mapped_speaker_share <- if (is.finite(total) && total > 0) {
@@ -237,7 +426,7 @@ build_district_language_constructions <- function(df) {
   glottolog_mapped <- glottolog_eligible & is.finite(glottolog_distance)
   glottolog_unmapped <- glottolog_eligible & !is.finite(glottolog_distance)
   glottolog_eligible_total <- sum(speakers[glottolog_eligible], na.rm = TRUE)
-  out$ling_distance_glottolog_nonhindi_mean <- weighted_value(glottolog_mapped, glottolog_distance)
+  out$ling_distance_glottolog_nonhindi_mean <- speaker_weighted_mean(speakers, glottolog_distance, glottolog_mapped)
   out$ling_glottolog_mapped_speaker_share <- if (is.finite(glottolog_eligible_total) && glottolog_eligible_total > 0) {
     100 * sum(speakers[glottolog_mapped], na.rm = TRUE) / glottolog_eligible_total
   } else {
@@ -254,7 +443,7 @@ build_district_language_constructions <- function(df) {
   dyen_mapped <- dyen_eligible & is.finite(dyen_distance)
   dyen_unmapped <- dyen_eligible & !is.finite(dyen_distance)
   dyen_eligible_total <- sum(speakers[dyen_eligible], na.rm = TRUE)
-  out$ling_distance_dyen_noncognate_pct <- weighted_value(dyen_mapped, dyen_distance)
+  out$ling_distance_dyen_noncognate_pct <- speaker_weighted_mean(speakers, dyen_distance, dyen_mapped)
   out$ling_dyen_mapped_speaker_share <- if (is.finite(dyen_eligible_total) && dyen_eligible_total > 0) {
     100 * sum(speakers[dyen_mapped], na.rm = TRUE) / dyen_eligible_total
   } else {
