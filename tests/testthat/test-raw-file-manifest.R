@@ -587,7 +587,7 @@ test_that("Vanneman historical source QA is manifest-backed with file-specific r
     colClasses = "character"
   )
   expect_equal(nrow(state_crosswalk), 31L)
-  expect_false(anyDuplicated(state_crosswalk$panel_state_id))
+  expect_identical(anyDuplicated(state_crosswalk$panel_state_id), 0L)
   expect_identical(
     state_crosswalk$panel_to_1991_state_status[state_crosswalk$panel_state_id == "13"],
     "no_1991_census"
@@ -686,4 +686,26 @@ test_that("SHRUG 1991 baseline archives are manifest-backed optional diagnostics
   expect_true(all(tolower(as.character(rows$required_for_current_pipeline)) == "false"))
   expect_true(all(startsWith(rows$relative_path, "data/raw/shrug/census_1991/")))
   expect_true(all(grepl("91-csv\\.zip$", rows$relative_path)))
+})
+
+test_that("Liu historical geography benchmark is manifest-backed without becoming the lineage authority", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
+  manifest <- read.csv(file.path(root, "data", "metadata", "file_manifest.csv"), stringsAsFactors = FALSE)
+  sources <- read.csv(file.path(root, "data", "metadata", "data_sources.csv"), stringsAsFactors = FALSE)
+
+  rows <- manifest[manifest$source_id == "maggieliuDataCodeClimate2023", , drop = FALSE]
+  expect_setequal(
+    rows$file_id,
+    c("liu_vanneman_crosswalk", "liu_panel4_copy", "liu_pca1991_crosswalk", "liu_pca2011_crosswalk")
+  )
+  expect_true(all(tolower(as.character(rows$required_for_current_pipeline)) == "true"))
+  expect_true(all(startsWith(rows$relative_path, "data/raw/maggieliuDataCodeClimate2023/")))
+  expect_true(all(rows$target_name == "historical_vanneman_liu_geography_benchmark"))
+
+  source <- sources[sources$source_id == "maggieliuDataCodeClimate2023", , drop = FALSE]
+  expect_equal(nrow(source), 1L)
+  expect_true(as.logical(source$used_in_current_pipeline))
+  expect_identical(source$current_or_future, "current")
+  expect_match(source$notes, "external geography benchmark", ignore.case = TRUE)
+  expect_match(source$notes, "must not be treated as Vanneman panel IDs", ignore.case = TRUE)
 })
