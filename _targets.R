@@ -770,6 +770,18 @@ core_pipeline_targets <- list(
     format = "file"
   ),
   tar_target(
+    historical_vanneman_liu_geography_benchmark,
+    {
+      raw_data_preflight
+      build_vanneman_liu_geography_benchmark(historical_vanneman_panel4_geography, paths)
+    }
+  ),
+  tar_target(
+    diag_ext_historical_vanneman_liu_geography_benchmark,
+    save_vanneman_liu_geography_benchmark(historical_vanneman_liu_geography_benchmark),
+    format = "file"
+  ),
+  tar_target(
     district_lineage,
     build_district_lineage(
       district_lineage_sources,
