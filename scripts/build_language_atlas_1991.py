@@ -944,7 +944,10 @@ def apply_language_atlas_cell_reviews(
 
 
 def accepted_language_rows(rows: list[dict[str, object]]) -> list[dict[str, object]]:
-    return [row for row in rows if str(row.get("accepted_speaker_count", "")).strip()]
+    return [
+        row for row in rows
+        if str(row.get("accepted_speaker_count", "")).strip() != ""
+    ]
 
 
 def build_language_extraction_coverage(rows: list[dict[str, object]]) -> list[dict[str, object]]:

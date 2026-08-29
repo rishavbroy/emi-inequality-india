@@ -340,6 +340,25 @@ remaining district/PCA, cell, and district-page alignment review queues and then
 write a tracked reviewed district-language long table for normal R/targets
 ingestion.
 
+The post-review persistence machinery is now implemented separately from source
+promotion. `build_historical_linguistic_persistence_validation()` requires a
+threshold-explicit 1991 distance table, the existing 1991-to-2001 geography
+object, and a Census-2001 district table carrying the same primary
+`ling_distance_nonzero_mean`. It fails if the geography summary and transition
+disagree on the number of target districts. The preferred comparison uses only
+one-target source districts passing the existing 99% 1991-population geography
+rule; exact one-to-one mappings are reported as a separate nested sample.
+
+For each sample the diagnostic reports ordinary and 1991-population-weighted
+Pearson/Spearman persistence, the population-weighted slope, the corresponding
+state-fixed-effect slope, mean absolute level/rank change, and quintile
+stability. Population-weighted correlations use base R's `stats::cov.wt`; the
+weighted Spearman statistic applies the same estimator to ordinary ranks. Split
+or otherwise nonpreferred geography stays in the district panel with an
+explicit status and cannot enter either persistence summary. This diagnostic is
+not yet wired into targets because the reviewed Atlas source and preferred
+accepted-speaker threshold remain unresolved.
+
 ## Vanneman source provenance
 
 The downloaded Vanneman-Barnes snapshot is useful for later pre-treatment
@@ -367,9 +386,10 @@ sensitivity source rather than geography authority for the Census-2001 panel.
 3. Promote adjudicated cells through the accepted-source contract, choose the
    preferred accepted-speaker coverage threshold from reviewed evidence, and
    construct 1991 district linguistic distance on native 1991 geography.
-4. Compare 1991 and 2001 distance on the one-target, high-population-coverage
-   preferred sample; report the exact one-to-one result separately and show
-   population-weighted Pearson/Spearman and within-state persistence.
+4. Run the implemented 1991--2001 persistence diagnostic once the reviewed
+   source/threshold are promoted; report preferred one-target and exact
+   one-to-one samples separately with weighted Pearson/Spearman, weighted
+   regression, state-FE persistence, and rank/quintile stability.
 5. Treat split/non-nested geography as sensitivity evidence, not as preferred
    exact reconstruction.
 6. Add 1961-1991 predetermined baseline/pre-trend diagnostics from Vanneman and
