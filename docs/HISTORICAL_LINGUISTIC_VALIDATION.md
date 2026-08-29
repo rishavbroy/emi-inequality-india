@@ -476,9 +476,9 @@ stability. Population-weighted correlations use base R's `stats::cov.wt`; the
 weighted Spearman statistic applies the same estimator to ordinary ranks. Split
 or otherwise nonpreferred geography stays in the district panel with an
 explicit status and cannot enter either persistence summary. This diagnostic is
-not yet wired into targets because the accepted Atlas source has not yet been
-promoted. The preferred **coverage + distance-bound** source-quality rule is now
-frozen from source-only diagnostics and must not be revised after inspecting
+wired into the extended target graph through the tracked accepted-source artifact.
+The preferred **coverage + distance-bound** source-quality rule is frozen from
+source-only diagnostics and must not be revised after inspecting
 persistence or first-stage coefficients.
 
 The historical-IV relevance robustness is implemented at the same boundary.
@@ -491,9 +491,11 @@ parallel historical regression stack. The compact robustness set is the
 instrument-only, region/state main-control, and region/state expanded-control
 specifications. Preferred-geography and exact-one-to-one samples are reported
 separately, and each specification uses the identical district observations for
-the two instrument vintages. This comparison remains diagnostic-only until the
-reviewed Atlas source and explicit coverage/bound source-quality rule are
-promoted.
+the two instrument vintages. This comparison is diagnostic-only with respect to
+the main IV specification: the reviewed Atlas source and explicit coverage/bound
+source-quality rule are now promoted, but historical first-stage results do not
+alter the main IV registry or
+paper tables automatically.
 
 The 1991 baseline balance results also motivate a separate
 **predetermined-control sensitivity** for that historical first stage. Several
@@ -528,32 +530,23 @@ sensitivity source rather than geography authority for the Census-2001 panel.
 
 ## Next phases
 
-1. After this source-quality contract passes the public audit, promote the
-   reviewed accepted-source artifact and publish the full coverage-by-bound-width
-   grid, including preferred/exact geography support. The preferred 99% / 0.50
-   rule is already frozen and must not be revised after viewing persistence or
-   first-stage outcomes.
-2. Continue source review only where it can materially tighten the bound or
-   resolve a population contradiction; do not spend effort completing tiny
-   language cells that cannot change preferred eligibility.
-3. Construct the real 1991 district value for the project's preferred nonzero
-   scalar and retain its point/lower/upper bounds. Separately add literal
-   Shastry-comparability diagnostics--the population-weighted all-native-language
-   degree mean and the share of speakers at least three degrees from Hindi--so
-   historical replication is not conflated with the project's nonzero scalar.
-4. Run the implemented 1991--2001 persistence diagnostic; report preferred
-   one-target and exact one-to-one samples separately with weighted
-   Pearson/Spearman, weighted regression, state-FE persistence, and rank/quintile
-   stability.
-5. Run the implemented 1991-vs-2001 first-stage robustness comparison on the
-   same preferred/exact geography samples and common district support, including
-   the separate 1991 predetermined-control ladder.
-6. Add `LD_1991` to the existing PCA91/VD91/TD91 historical balance diagnostics
-   on its own source-valid support; keep eventual-EMI and instrument balance as
-   distinct claims.
-7. Treat split/non-nested geography as sensitivity evidence, not as preferred
-   exact reconstruction, and keep 1961--91 Vanneman pre-trends provenance-gated
-   until the panel-version mismatch is resolved.
+1. Run the promoted real historical-instrument chain end-to-end under the frozen
+   99% / 0.50 source rule. Inspect persistence, first-stage relevance, the 1991
+   predetermined-control ladder, and `LD_1991` baseline balance before changing
+   any source threshold or main-IV specification.
+2. Continue Atlas source review only where it can materially tighten a district's
+   distance bound or resolve a population contradiction; do not spend effort on
+   tiny cells that cannot change preferred eligibility.
+3. Add literal Shastry-comparability diagnostics--the population-weighted
+   all-native-language degree mean and the share of speakers at least three
+   degrees from Hindi--as separate historical-replication measures. Shastry
+   defines both from 1991 district native-language composition; they should not
+   replace or be conflated with the project's preferred nonzero-distance scalar.
+4. Treat split/non-nested geography as sensitivity evidence, not as preferred
+   exact reconstruction.
+5. Keep 1961--91 Vanneman pre-trends provenance-gated until the downloaded panel
+   vintage is reconciled with the available codebook; do not infer undocumented
+   panel semantics from the compressed data files.
 
 ## SHRUG Census-1991 predetermined baseline balance
 
@@ -587,10 +580,9 @@ balance tests for demography, human capital, economic structure, rural
 development, and urban development. Each individual covariate retains its own
 available source support.
 
-The current extended target executes this exercise for eventual EMI exposure.
-The same function accepts an adjudicated threshold-explicit `LD_1991` table and
-will add historical-instrument balance on the same baseline-variable registry
-once the Atlas accepted source and preferred coverage/bound rule are promoted.
+The current extended target executes this exercise for both eventual EMI exposure
+and the promoted threshold-explicit `LD_1991` table on the same baseline-variable
+registry.
 The two predictors retain their own valid observation support: missing DISE
 treatment does not remove a district from `LD_1991` balance, and an ineligible
 historical-language observation does not remove it from eventual-EMI balance.
