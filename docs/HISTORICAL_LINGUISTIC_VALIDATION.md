@@ -799,3 +799,9 @@ and education.
 These diagnostics are evidence about pre-existing differential development, not
 proof of instrument exogeneity. Null pretrends are reassuring; non-null pretrends
 are substantive warnings.
+
+The author SAS reader labels the 1961 main-worker and farm-worker series as
+estimated. Accordingly, labor changes beginning in 1961 carry
+`contains_estimated_source = TRUE` in the diagnostic output. Later labor changes
+do not inherit that flag. This preserves the useful long-run comparison without
+presenting the reconstructed 1961 labor values as directly observed counts.
