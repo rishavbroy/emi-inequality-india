@@ -1587,7 +1587,7 @@ def write_csv(path: Path, rows: list[dict[str, object]], fields: list[str] | Non
     columns = fields or list(rows[0])
     temporary = path.with_suffix(path.suffix + ".tmp")
     with temporary.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=columns)
+        writer = csv.DictWriter(handle, fieldnames=columns, lineterminator="\n")
         writer.writeheader()
         writer.writerows(rows)
     temporary.replace(path)
