@@ -765,3 +765,37 @@ harmonized IDs are Vanneman IDs.
 The initial exact-name alias-candidate layer was removed after real-data execution: it resolved none of the 50 `label_review_required` units because the author `dist91` labels themselves contain historical spellings and transcription variants. The project now keeps a narrow tracked `vanneman_panel4_dist91_adjudications.csv` ledger instead. Every accepted row must already be a label-review case, retain the author-documented 1991 state, point to a non-aggregate `dist91` code, agree with Liu et al.'s raw Census-1991 `st_code`/`dist_code` name, and be connected to Liu's stable Vanneman name by an explicit `replace dtname_temp=...` rule in the published construction code. No fuzzy threshold can promote a row.
 
 The first reviewed ledger contains 22 such one-to-one aliases and raises preferred panel4-to-1991 support from 245 to 267 of 339 stable Vanneman units. `vanneman_panel4_dist91_adjudication_evidence.csv` records the externally verified raw 1991 label, stable Vanneman label, and published source-code line used for each promotion. The next geography step is deliberately code-based rather than another name matcher: accepted `dist91` state/district codes are joined directly to the project's existing reviewed Census-1991 geography and 1991-to-2001 transition. Only one-target preferred transitions enter the Vanneman pretrend sample; split sources remain review/sensitivity cases. This produces `vanneman_pretrend_geography.csv` and preserves the project lineage as the production authority.
+
+
+## Vanneman 1961–1991 pre-treatment trends
+
+The pretrend diagnostic reads a deliberately narrow family directly from the
+archived stable `panel4` file using the author-supplied `panel4.sas` fixed-width
+layout contract. It does not use `dist81`, does not import Liu et al.'s separate
+six-Census harmonized IDs, and does not introduce another district-name matcher.
+
+The registered records are total population (100), main workers (111), main farm
+workers (112), literates ages 5+ (140), primary-school-or-higher population (151),
+and matriculates-or-higher population (153). They produce log population, urban
+share, main-worker share, non-farm composition among main workers, the literate
+share of total population, and two educational-attainment shares. The literate
+share is deliberately not labelled a harmonized age-specific literacy rate. The
+author SAS reader marks the 1961 main-worker and farm-worker counts as estimated,
+so labor pretrends are supporting diagnostics rather than pristine Census-series
+outcomes. Negative archived values are treated as unavailable because counts
+cannot be negative: the codebook explicitly documents `-1` as missing, while the
+distributed panel also contains a few `-2` education values whose meaning is not
+documented in the attached source material.
+
+Changes are computed on stable panel units for 1961–71, 1971–81, 1981–91,
+1961–81, and 1961–91, then restricted through the conservative reviewed
+Vanneman→1991→2001 bridge. Regressions use 1961 population weights, so later
+population growth cannot determine observation weights. Future EMIE and reviewed
+1991 linguistic distance are evaluated as predictors of already-realized
+pre-treatment changes, with state-FE specifications aligned to the preferred
+modern design. Domain-level joint tests summarize demography, labor structure,
+and education.
+
+These diagnostics are evidence about pre-existing differential development, not
+proof of instrument exogeneity. Null pretrends are reassuring; non-null pretrends
+are substantive warnings.
