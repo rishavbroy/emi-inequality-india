@@ -696,11 +696,17 @@ test_that("Liu historical geography benchmark is manifest-backed without becomin
   rows <- manifest[manifest$source_id == "maggieliuDataCodeClimate2023", , drop = FALSE]
   expect_setequal(
     rows$file_id,
-    c("liu_vanneman_crosswalk", "liu_panel4_copy", "liu_pca1991_crosswalk", "liu_pca2011_crosswalk")
+    c(
+      "liu_vanneman_crosswalk", "liu_panel4_copy", "liu_pca1991_crosswalk", "liu_pca2011_crosswalk",
+      "liu_vanneman_dictionary", "liu_clean_vanneman_do", "liu_pca_1961_1991_do", "liu_pca_1961_2011_do"
+    )
   )
   expect_true(all(tolower(as.character(rows$required_for_current_pipeline)) == "true"))
   expect_true(all(startsWith(rows$relative_path, "data/raw/maggieliuDataCodeClimate2023/")))
   expect_true(all(rows$target_name == "historical_vanneman_liu_geography_benchmark"))
+  construction <- rows[grepl("dm-Stata", rows$relative_path, fixed = TRUE), , drop = FALSE]
+  expect_equal(nrow(construction), 4L)
+  expect_true(all(grepl("lst-dm-01", basename(construction$relative_path), fixed = TRUE)))
 
   source <- sources[sources$source_id == "maggieliuDataCodeClimate2023", , drop = FALSE]
   expect_equal(nrow(source), 1L)
