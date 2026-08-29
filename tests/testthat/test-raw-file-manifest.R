@@ -461,6 +461,16 @@ test_that("1991 Atlas state and PCA review inputs have explicit source contracts
   expect_identical(pca$relative_path, "data/raw/shrug/census_1991/shrug-pca91-csv.zip")
   expect_equal(pca$expected_size_bytes, 42996056)
 
+  languages <- readr::read_csv(
+    file.path(root, "data", "metadata", "language_atlas_1991_languages.csv"),
+    show_col_types = FALSE,
+    col_types = readr::cols(.default = readr::col_character())
+  )
+  expect_equal(nrow(languages), 114L)
+  expect_identical(as.integer(languages$atlas_column), 4:117)
+  expect_equal(anyDuplicated(tolower(languages$language_1991)), 0L)
+  expect_true(all(languages$review_status == "accepted"))
+
   sources <- readr::read_csv(
     file.path(root, "data", "metadata", "data_sources.csv"),
     show_col_types = FALSE
@@ -469,6 +479,8 @@ test_that("1991 Atlas state and PCA review inputs have explicit source contracts
   expect_equal(nrow(atlas), 1L)
   expect_false(as.logical(atlas$used_in_current_pipeline))
   expect_match(atlas$notes, "all-page district-language candidates", fixed = TRUE)
+  expect_match(atlas$notes, "reviewed 114-column language inventory", fixed = TRUE)
+  expect_match(atlas$notes, "existing frozen Shastry resolver", fixed = TRUE)
   expect_match(atlas$notes, "no Atlas speaker count enters targets", fixed = TRUE)
 })
 

@@ -37,6 +37,15 @@ LABEL_Y_CLUSTER = 4.5
 
 PCA91_DISTRICT_MEMBER = "pc91_pca_clean_pc91dist.csv"
 POPULATION_RELATIVE_TOLERANCE = 0.01
+ATLAS_LANGUAGE_FAMILY_COUNTS = {
+    "Indo-Aryan": 19,
+    "Germanic": 1,
+    "Dravidian": 17,
+    "Austro-Asiatic": 14,
+    "Tibeto-Burmese": 62,
+    "Semito-Hamitic": 1,
+}
+ATLAS_SHASTRY_FAMILY_CLASSES = {"indo_european", "non_indo_european", "special_english"}
 
 
 @dataclass(frozen=True)
@@ -559,6 +568,66 @@ def build_district_population_validation(
     return candidates
 
 
+def read_language_registry(path: Path) -> dict[int, dict[str, str]]:
+    rows: dict[int, dict[str, str]] = {}
+    with path.open(newline="", encoding="utf-8") as handle:
+        reader = csv.DictReader(handle)
+        required = [
+            "atlas_column", "language_1991", "canonical_language", "scheduled_1991",
+            "language_family_1991", "shastry_family_class", "source_basis", "review_status",
+        ]
+        if reader.fieldnames != required:
+            raise ValueError("Language Atlas 1991 language registry has an invalid schema")
+        for row in reader:
+            column = int(row["atlas_column"])
+            if column in rows:
+                raise ValueError(f"Duplicate Language Atlas registry column {column}")
+            if row["review_status"] != "accepted":
+                raise ValueError("Language Atlas language registry must contain accepted reviewed rows only")
+            rows[column] = row
+    if tuple(sorted(rows)) != tuple(range(4, 118)):
+        raise ValueError("Language Atlas language registry must cover columns 4 through 117 exactly once")
+    labels = [row["language_1991"].strip().casefold() for row in rows.values()]
+    if len(labels) != len(set(labels)):
+        raise ValueError("Language Atlas language registry has duplicate language labels")
+    scheduled = sum(row["scheduled_1991"].strip().lower() == "true" for row in rows.values())
+    if scheduled != 18:
+        raise ValueError("Language Atlas language registry must contain 18 scheduled languages")
+    family_counts = {family: 0 for family in ATLAS_LANGUAGE_FAMILY_COUNTS}
+    for row in rows.values():
+        family = row["language_family_1991"]
+        if family not in family_counts:
+            raise ValueError(f"Unexpected Language Atlas family: {family}")
+        family_counts[family] += 1
+        if row["shastry_family_class"] not in ATLAS_SHASTRY_FAMILY_CLASSES:
+            raise ValueError("Language Atlas registry has an invalid Shastry family class")
+    if family_counts != ATLAS_LANGUAGE_FAMILY_COUNTS:
+        raise ValueError("Language Atlas language registry does not match the reviewed family counts")
+    return rows
+
+
+def attach_language_registry(
+    rows: list[dict[str, object]],
+    registry: dict[int, dict[str, str]],
+) -> list[dict[str, object]]:
+    out: list[dict[str, object]] = []
+    for row in rows:
+        column = int(row["atlas_column"])
+        if column not in registry:
+            raise ValueError(f"Language Atlas registry lacks column {column}")
+        language = registry[column]
+        enriched = dict(row)
+        enriched.update({
+            "language_1991": language["language_1991"],
+            "canonical_language": language["canonical_language"],
+            "scheduled_1991": language["scheduled_1991"],
+            "language_family_1991": language["language_family_1991"],
+            "shastry_family_class": language["shastry_family_class"],
+        })
+        out.append(enriched)
+    return out
+
+
 def district_population_review_rows(
     rows: list[dict[str, object]],
     pca91: dict[tuple[str, str], int],
@@ -850,6 +919,18 @@ def self_test() -> None:
     assert BLOCK_START_PAGES == (205, 213, 221, 229, 237, 245, 253)
     assert tuple(v for i in range(8) for v in expected_columns(i)) == tuple(range(4, 118))
     assert sum(len(expected_columns(i)) for i in range(8)) == 114
+    toy_registry = {
+        column: {
+            "language_1991": f"Language {column}",
+            "canonical_language": f"Language {column}",
+            "scheduled_1991": "false",
+            "language_family_1991": "Test",
+            "shastry_family_class": "non_indo_european",
+        }
+        for column in range(4, 118)
+    }
+    enriched = attach_language_registry([{"atlas_column": 4, "raw_value": "1"}], toy_registry)
+    assert enriched[0]["language_1991"] == "Language 4"
     assert parse_count("2,134.680") == (2134680, "parsed")
     assert parse_count("40 ,67 3,814") == (40673814, "parsed")
     assert parse_count("( )") == (0, "normalized_ocr_zero")
@@ -958,6 +1039,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--all-language-output", type=Path)
     parser.add_argument("--all-language-review-output", type=Path)
     parser.add_argument("--alignment-review-output", type=Path)
+    parser.add_argument("--language-registry", type=Path)
     parser.add_argument("--pdftotext", default="pdftotext")
     parser.add_argument("--self-test", action="store_true")
     args = parser.parse_args(argv)
@@ -1008,8 +1090,16 @@ def main(argv: list[str] | None = None) -> int:
         )
         if (args.page0_language_output is None) != (args.page0_language_review_output is None):
             parser.error("--page0-language-output and --page0-language-review-output must be supplied together")
+        language_registry = None
+        if args.page0_language_output is not None or args.all_language_output is not None:
+            if args.language_registry is None:
+                parser.error("--language-registry is required when writing district-language outputs")
+            language_registry = read_language_registry(args.language_registry)
         if args.page0_language_output is not None:
-            language_cells = build_validated_page0_language_cells(cells, district_validation)
+            language_cells = attach_language_registry(
+                build_validated_page0_language_cells(cells, district_validation),
+                language_registry,
+            )
             write_csv(args.page0_language_output, language_cells)
             write_csv(
                 args.page0_language_review_output,
@@ -1030,6 +1120,7 @@ def main(argv: list[str] | None = None) -> int:
             all_language_cells, alignment_review = build_validated_all_page_language_cells(
                 cells, district_validation, state_crosswalk
             )
+            all_language_cells = attach_language_registry(all_language_cells, language_registry)
             write_csv(args.all_language_output, all_language_cells)
             write_csv(
                 args.all_language_review_output,
