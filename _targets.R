@@ -1393,16 +1393,60 @@ extended_diagnostic_targets <- list(
     build_shrug_1991_baseline_controls(raw_shrug_1991_baseline)
   ),
   tar_target(
-    historical_emie_balance_1991,
-    build_historical_baseline_balance_1991(
-      historical_baseline_1991,
-      historical_linguistic_geography_1991_2001,
-      district_panel
+    language_atlas_1991_accepted_source_file,
+    "data/metadata/language_atlas_1991_accepted_source.csv",
+    format = "file"
+  ),
+  tar_target(
+    language_atlas_1991_accepted_source,
+    read_language_atlas_1991_accepted_source(language_atlas_1991_accepted_source_file)
+  ),
+  tar_target(
+    historical_linguistic_distance_validation,
+    build_historical_linguistic_distance_validation(
+      language_atlas_1991_accepted_source,
+      historical_linguistic_geography_1991_2001
     )
   ),
   tar_target(
-    diag_ext_historical_emie_balance_1991,
-    save_historical_baseline_balance_1991(historical_emie_balance_1991),
+    historical_linguistic_persistence_validation,
+    build_historical_linguistic_persistence_validation(
+      historical_linguistic_distance_validation$preferred_distance,
+      linguistic_distance_iv,
+      historical_linguistic_geography_1991_2001
+    )
+  ),
+  tar_target(
+    historical_linguistic_first_stage_robustness,
+    build_historical_linguistic_first_stage_robustness(
+      historical_linguistic_distance_validation$preferred_distance,
+      linguistic_distance_iv,
+      historical_linguistic_geography_1991_2001,
+      district_panel,
+      baseline_1991 = historical_baseline_1991
+    )
+  ),
+  tar_target(
+    historical_baseline_balance_1991,
+    build_historical_baseline_balance_1991(
+      historical_baseline_1991,
+      historical_linguistic_geography_1991_2001,
+      district_panel,
+      historical_distance = historical_linguistic_distance_validation$preferred_distance
+    )
+  ),
+  tar_target(
+    diag_ext_historical_baseline_balance_1991,
+    save_historical_baseline_balance_1991(historical_baseline_balance_1991),
+    format = "file"
+  ),
+  tar_target(
+    diag_ext_historical_linguistic_inference_validation,
+    save_historical_linguistic_inference_validation(
+      historical_linguistic_distance_validation,
+      historical_linguistic_persistence_validation,
+      historical_linguistic_first_stage_robustness
+    ),
     format = "file"
   ),
   tar_target(

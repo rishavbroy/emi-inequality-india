@@ -327,6 +327,10 @@ maintainer extraction/adjudication to R. It contains one row per aligned
 `accepted_speaker_count`, repeats the district coverage/status contract, and
 preserves both machine and reviewed provenance. It applies **no analysis
 threshold** and therefore is not itself the preferred historical-IV sample.
+The reviewed source pass is now tracked as
+`data/metadata/language_atlas_1991_accepted_source.csv`; rerunning the documented
+maintainer command against the frozen language/state/cell-review registries
+reproduces that artifact byte-for-byte before it is promoted into targets.
 
 R reads that contract with `read_language_atlas_1991_accepted_source()` and
 constructs the historical primary-distance analogue with
@@ -592,3 +596,23 @@ treatment does not remove a district from `LD_1991` balance, and an ineligible
 historical-language observation does not remove it from eventual-EMI balance.
 This keeps the two pre-treatment claims distinct while sharing only the reviewed
 historical geography and each covariate's own source support.
+
+## Real historical-instrument execution
+
+The extended-diagnostic target graph now consumes the tracked accepted-source
+artifact rather than requiring a maintainer PDF extraction during ordinary
+builds. One `historical_linguistic_distance_validation` object owns the source
+candidates, the frozen preferred distance, the source-quality sensitivity grid,
+and the source-quality-by-geography grid. The preferred distance from that same
+object is then reused unchanged by persistence, the historical first-stage
+ladder, the 1991 predetermined-control first-stage sensitivities, and the 1991
+baseline-balance diagnostics. This prevents threshold drift or independent
+reconstruction across downstream analyses.
+
+The written diagnostics are deliberately long-form and diagnostic-only. They do
+not alter the main IV registry or paper tables automatically. The real run writes
+the historical distance/source-quality files, persistence panel/summary/quintile
+transition, the standard and predetermined first-stage registries/estimates, and
+comparison tables under `outputs/diagnostics/extended/instrument_relevance/`.
+The existing historical baseline outputs now contain both eventual-EMI and
+`LD_1991` predictors whenever the historical instrument is eligible.

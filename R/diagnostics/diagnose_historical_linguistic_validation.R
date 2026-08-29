@@ -150,6 +150,25 @@ historical_linguistic_source_quality_geography_grid <- function(
   }))
 }
 
+build_historical_linguistic_distance_validation <- function(atlas_source, geography) {
+  required <- c("source_districts", "transition")
+  missing <- setdiff(required, names(geography))
+  if (length(missing)) {
+    stop("Historical linguistic distance validation geography lacks: ", paste(missing, collapse = ", "), call. = FALSE)
+  }
+  candidates <- historical_linguistic_distance_1991_candidates(atlas_source)
+  preferred <- apply_preferred_historical_linguistic_distance_quality_gate(candidates)
+  list(
+    preferred_rule = historical_linguistic_preferred_source_quality(),
+    candidates = candidates,
+    preferred_distance = preferred,
+    source_quality_grid = historical_linguistic_distance_quality_grid(candidates),
+    source_geography_grid = historical_linguistic_source_quality_geography_grid(
+      candidates, geography$source_districts
+    )
+  )
+}
+
 historical_linguistic_carveout_benchmark <- function(
     geography, carveouts, admin_2001) {
   required <- c("source_districts", "transition")
@@ -937,4 +956,45 @@ build_historical_linguistic_first_stage_robustness <- function(
     ),
     class = "emi_historical_linguistic_first_stage"
   )
+}
+
+save_historical_linguistic_inference_validation <- function(
+    distance_validation, persistence, first_stage,
+    directory = "outputs/diagnostics/extended/instrument_relevance") {
+  dir.create(directory, recursive = TRUE, showWarnings = FALSE)
+  paths <- c(
+    distance = file.path(directory, "historical_linguistic_distance_1991.csv"),
+    source_candidates = file.path(directory, "historical_linguistic_source_quality_candidates.csv"),
+    source_quality_grid = file.path(directory, "historical_linguistic_source_quality_sensitivity.csv"),
+    source_geography_grid = file.path(directory, "historical_linguistic_source_geography_sensitivity.csv"),
+    persistence_panel = file.path(directory, "historical_linguistic_persistence_panel.csv"),
+    persistence_summary = file.path(directory, "historical_linguistic_persistence_summary.csv"),
+    quintile_transition = file.path(directory, "historical_linguistic_quintile_transition.csv"),
+    first_stage_registry = file.path(directory, "historical_linguistic_first_stage_registry.csv"),
+    first_stage_estimates = file.path(directory, "historical_linguistic_first_stage_estimates.csv"),
+    first_stage_comparison = file.path(directory, "historical_linguistic_first_stage_comparison.csv"),
+    predetermined_registry = file.path(directory, "historical_linguistic_predetermined_first_stage_registry.csv"),
+    predetermined_estimates = file.path(directory, "historical_linguistic_predetermined_first_stage_estimates.csv"),
+    predetermined_comparison = file.path(directory, "historical_linguistic_predetermined_first_stage_comparison.csv")
+  )
+  write_diagnostic_csv(distance_validation$preferred_distance, paths[["distance"]])
+  write_diagnostic_csv(distance_validation$candidates, paths[["source_candidates"]])
+  write_diagnostic_csv(distance_validation$source_quality_grid, paths[["source_quality_grid"]])
+  write_diagnostic_csv(distance_validation$source_geography_grid, paths[["source_geography_grid"]])
+  write_diagnostic_csv(persistence$panel, paths[["persistence_panel"]])
+  write_diagnostic_csv(persistence$summary, paths[["persistence_summary"]])
+  write_diagnostic_csv(persistence$quintile_transition, paths[["quintile_transition"]])
+  write_diagnostic_csv(
+    collapse_diagnostic_list_columns(first_stage$registry, "controls"),
+    paths[["first_stage_registry"]]
+  )
+  write_diagnostic_csv(first_stage$estimates, paths[["first_stage_estimates"]])
+  write_diagnostic_csv(first_stage$comparison, paths[["first_stage_comparison"]])
+  write_diagnostic_csv(
+    collapse_diagnostic_list_columns(first_stage$predetermined_registry, "controls"),
+    paths[["predetermined_registry"]]
+  )
+  write_diagnostic_csv(first_stage$predetermined_estimates, paths[["predetermined_estimates"]])
+  write_diagnostic_csv(first_stage$predetermined_comparison, paths[["predetermined_comparison"]])
+  unname(paths)
 }
