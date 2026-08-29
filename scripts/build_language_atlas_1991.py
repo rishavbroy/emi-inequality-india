@@ -46,6 +46,7 @@ ATLAS_LANGUAGE_FAMILY_COUNTS = {
     "Semito-Hamitic": 1,
 }
 ATLAS_SHASTRY_FAMILY_CLASSES = {"indo_european", "non_indo_european", "special_english"}
+LANGUAGE_COVERAGE_THRESHOLDS = (0.95, 0.98, 0.99, 0.995, 0.999, 1.0)
 
 
 @dataclass(frozen=True)
@@ -743,6 +744,16 @@ def build_language_extraction_coverage(rows: list[dict[str, object]]) -> list[di
             status = "unresolved_cells"
         else:
             status = "complete_candidate_inventory"
+        lower_bound_share = speaker_sum / atlas_population if atlas_population > 0 else None
+        if status == "speaker_sum_exceeds_atlas_population":
+            review_priority = 1
+            review_reason = "accepted-count sum exceeds Atlas district population"
+        elif status == "unresolved_cells":
+            review_priority = 2
+            review_reason = "all 114 columns align but one or more cells remain unresolved"
+        else:
+            review_priority = 3
+            review_reason = "one or more Atlas language columns remain unaligned"
         out.append({
             "state_code_1991": key[0],
             "district_code_1991": key[1],
@@ -753,15 +764,68 @@ def build_language_extraction_coverage(rows: list[dict[str, object]]) -> list[di
             "n_candidate_values": len(candidate_rows),
             "n_review_required": len(district_rows) - len(candidate_rows),
             "parsed_speaker_lower_bound": speaker_sum,
-            "parsed_speaker_lower_bound_share_atlas": speaker_sum / atlas_population if atlas_population > 0 else "",
+            "parsed_speaker_lower_bound_share_atlas": lower_bound_share if lower_bound_share is not None else "",
             "parsed_speaker_lower_bound_share_pca": speaker_sum / pca_population if pca_population > 0 else "",
             "coverage_status": status,
+            "review_priority": review_priority,
+            "review_reason": review_reason,
         })
     return out
 
 
 def language_extraction_coverage_review_rows(rows: list[dict[str, object]]) -> list[dict[str, object]]:
-    return [dict(row) for row in rows if row["coverage_status"] != "complete_candidate_inventory"]
+    review = [dict(row) for row in rows if row["coverage_status"] != "complete_candidate_inventory"]
+    return sorted(
+        review,
+        key=lambda row: (
+            int(row["review_priority"]),
+            -float(row["parsed_speaker_lower_bound_share_atlas"])
+            if str(row["parsed_speaker_lower_bound_share_atlas"]).strip()
+            else 0.0,
+            str(row["state_code_1991"]),
+            str(row["district_code_1991"]),
+        ),
+    )
+
+
+def build_language_coverage_sensitivity(
+    rows: list[dict[str, object]],
+    thresholds: tuple[float, ...] = LANGUAGE_COVERAGE_THRESHOLDS,
+) -> list[dict[str, object]]:
+    """Count districts whose accepted speaker mass certifies each coverage threshold.
+
+    The accepted speaker sum is a lower bound because unresolved cells are never
+    treated as zero. A district is therefore certified at threshold ``t`` only
+    when its lower-bound speaker share is at least ``t`` and the accepted-count
+    sum does not exceed the Atlas district population.
+    """
+    if any(not (0 < threshold <= 1) for threshold in thresholds):
+        raise ValueError("Language coverage thresholds must lie in (0, 1].")
+    out: list[dict[str, object]] = []
+    for threshold in thresholds:
+        certified = []
+        for row in rows:
+            if row["coverage_status"] == "speaker_sum_exceeds_atlas_population":
+                continue
+            share_raw = str(row["parsed_speaker_lower_bound_share_atlas"]).strip()
+            if not share_raw:
+                continue
+            if float(share_raw) >= threshold:
+                certified.append(row)
+        out.append({
+            "speaker_coverage_threshold": threshold,
+            "certified_districts": len(certified),
+            "certified_complete_alignment": sum(
+                int(row["n_atlas_language_columns"]) == 114 for row in certified
+            ),
+            "certified_incomplete_alignment": sum(
+                int(row["n_atlas_language_columns"]) < 114 for row in certified
+            ),
+            "certified_atlas_population": sum(
+                int(float(row["atlas_population_candidate"])) for row in certified
+            ),
+        })
+    return out
 
 
 def build_validated_page0_language_cells(
@@ -1088,7 +1152,7 @@ def self_test() -> None:
         validated_language_cell_row(
             {
                 "state_code_1991": "02", "district_code_1991": "01", "state_name_1991": "STATE",
-                "row_label_raw": "DISTRICT", "atlas_population_candidate": 200, "pca91_population": 200,
+                "row_label_raw": "DISTRICT", "atlas_population_candidate": 114, "pca91_population": 114,
                 "population_relative_diff": 0, "block": 1,
             },
             {
@@ -1106,6 +1170,20 @@ def self_test() -> None:
     assert coverage[0]["n_atlas_language_columns"] == 114
     assert coverage[0]["n_candidate_values"] == 113
     assert coverage[0]["coverage_status"] == "unresolved_cells"
+    assert coverage[0]["review_priority"] == 2
+    sensitivity = build_language_coverage_sensitivity(
+        coverage,
+        thresholds=(0.95, 0.99, 1.0),
+    )
+    assert [row["speaker_coverage_threshold"] for row in sensitivity] == [0.95, 0.99, 1.0]
+    assert sensitivity[0]["certified_districts"] == 1
+    assert sensitivity[-1]["certified_districts"] == 0
+    try:
+        build_language_coverage_sensitivity(coverage, thresholds=(0.0,))
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("invalid language coverage threshold should fail")
 
     continued = merge_population_continuations(
         [
@@ -1139,6 +1217,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--alignment-review-output", type=Path)
     parser.add_argument("--coverage-output", type=Path)
     parser.add_argument("--coverage-review-output", type=Path)
+    parser.add_argument("--coverage-sensitivity-output", type=Path)
     parser.add_argument("--language-registry", type=Path)
     parser.add_argument("--pdftotext", default="pdftotext")
     parser.add_argument("--self-test", action="store_true")
@@ -1212,13 +1291,15 @@ def main(argv: list[str] | None = None) -> int:
             args.alignment_review_output,
             args.coverage_output,
             args.coverage_review_output,
+            args.coverage_sensitivity_output,
         )
         if any(value is not None for value in all_language_options):
             if not all(value is not None for value in all_language_options):
                 parser.error(
                     "--all-language-output, --all-language-review-output, "
-                    "--alignment-review-output, --coverage-output, and "
-                    "--coverage-review-output must be supplied together"
+                    "--alignment-review-output, --coverage-output, "
+                    "--coverage-review-output, and --coverage-sensitivity-output "
+                    "must be supplied together"
                 )
             all_language_cells, alignment_review = build_validated_all_page_language_cells(
                 cells, district_validation, state_crosswalk
@@ -1245,6 +1326,10 @@ def main(argv: list[str] | None = None) -> int:
                 args.coverage_review_output,
                 language_extraction_coverage_review_rows(coverage),
                 fields=list(coverage[0]),
+            )
+            write_csv(
+                args.coverage_sensitivity_output,
+                build_language_coverage_sensitivity(coverage),
             )
     unparsed = sum(row["review_type"] == "unparsed_cell" for row in review)
     ambiguous = sum(row["review_type"] == "ambiguous_numeric_groups" for row in review)
