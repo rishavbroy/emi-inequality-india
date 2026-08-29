@@ -473,5 +473,46 @@ sensitivity source rather than geography authority for the Census-2001 panel.
    same preferred/exact geography samples and common district support.
 6. Treat split/non-nested geography as sensitivity evidence, not as preferred
    exact reconstruction.
-7. Add 1961-1991 predetermined baseline/pre-trend diagnostics from Vanneman and
-   SHRUG PCA/VD/TD in a separate historical-balance module.
+7. Use the implemented SHRUG PCA91/VD91/TD91 baseline module for eventual-EMI
+   predetermined balance now, add `LD_1991` to the same diagnostic once the Atlas
+   threshold is promoted, and keep 1961--91 Vanneman pre-trends provenance-gated.
+
+## SHRUG Census-1991 predetermined baseline balance
+
+The historical-balance branch now reads the district products distributed in the
+SHRUG Census-1991 PCA, Village Directory, and Town Directory archives directly;
+it does not reaggregate SHRID-level village/town files. PCA91 is the complete
+452-district demographic denominator. VD91 and TD91 retain their own source
+coverage, so individual balance regressions use covariate-specific support
+rather than forcing rural and urban directory variables onto a single complete
+case sample.
+
+The PCA block constructs only transparent count ratios: log population, female
+and age-0--6 shares, Scheduled Caste and Scheduled Tribe shares, literacy among
+the population age 7+, main- and marginal-worker shares, and cultivator and
+agricultural-labourer shares among main workers. The rural-directory block uses
+primary/high-school and hospital/primary-health-centre counts per 100,000 total
+district residents; the denominator is deliberately labelled as total district
+population because the district VD91 rural-population aggregate is incomplete in
+the distributed table. The town-directory block uses its internally documented
+age-7+ population denominator for urban literacy and primary-school, hospital,
+and bank rates. Ambiguous aggregated quantities such as district TD91 rail
+distance are not promoted merely because they are available.
+
+`build_historical_baseline_balance_1991()` maps native 1991 baseline districts
+through the already-reviewed preferred one-target 1991--2001 geography and joins
+the eventual DISE English-medium exposure from the Census-2001 target district.
+It reports population-weighted bivariate and 1991-state-FE balance regressions,
+with state-clustered inference, for both the preferred geography and the nested
+exact-one-to-one sensitivity. Domain-level reverse regressions provide joint
+balance tests for demography, human capital, economic structure, rural
+development, and urban development. Each individual covariate retains its own
+available source support.
+
+The current extended target executes this exercise for eventual EMI exposure.
+The same function accepts an adjudicated threshold-explicit `LD_1991` table and
+will add historical-instrument balance on exactly the same baseline variables
+once the Atlas review and preferred accepted-speaker threshold are promoted.
+This keeps the two pre-treatment claims distinct: eventual treatment balance can
+be evaluated now, while historical-IV balance remains source-gated rather than
+substituting Census-2001 distance for the unfinished 1991 measure.
