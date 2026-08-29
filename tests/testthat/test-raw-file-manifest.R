@@ -548,7 +548,7 @@ test_that("DISE archive is optional but fully documented", {
   expect_true(file.exists(file.path(root, "docs", "DISE_TREATMENTS.md")))
 })
 
-test_that("Vanneman historical source QA is manifest-backed but values remain provenance-gated", {
+test_that("Vanneman historical source QA is manifest-backed with file-specific readers", {
   root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
   manifest <- read.csv(file.path(root, "data", "metadata", "file_manifest.csv"), stringsAsFactors = FALSE)
   sources <- read.csv(file.path(root, "data", "metadata", "data_sources.csv"), stringsAsFactors = FALSE)
@@ -559,7 +559,8 @@ test_that("Vanneman historical source QA is manifest-backed but values remain pr
     c(
       "vanneman_panel4", "vanneman_dist81", "vanneman_dist91",
       "vanneman_codebook", "vanneman_variables_codebook",
-      "vanneman_education_codebook"
+      "vanneman_education_codebook", "vanneman_panel4_sas",
+      "vanneman_dist81_sas", "vanneman_dist91_sas"
     )
   )
   expect_true(all(tolower(as.character(rows$required_for_current_pipeline)) == "true"))
