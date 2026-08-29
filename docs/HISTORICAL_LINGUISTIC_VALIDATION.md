@@ -265,15 +265,24 @@ threshold** and therefore is not itself the preferred historical-IV sample.
 R reads that contract with `read_language_atlas_1991_accepted_source()` and
 constructs the historical primary-distance analogue with
 `build_historical_linguistic_distance_1991()`. The latter requires an explicit
-`min_accepted_coverage` argument; there is deliberately no default. Eligible
-districts must have all 114 Atlas columns aligned, must not violate the district
-population bound, and must meet the supplied accepted-speaker lower-bound
-threshold. The distance itself reuses the frozen Atlas-to-Shastry resolver and
-the same speaker-weighted **nonzero mapped-language mean** used by the 2001
-primary IV. English remains a separately treated reference language exactly as
-in the 2001 construction. Districts below the requested coverage threshold stay
-in the output with an explicit status and `NA` historical distance rather than
-being silently dropped or renormalized into eligibility.
+`min_accepted_coverage` argument; there is deliberately no default. The long-form
+cell rows are authoritative: R recomputes the number of aligned Atlas columns,
+accepted/unresolved cell counts, accepted-speaker lower bound, population share,
+and population-bound status and requires every repeated district summary field
+to agree. A stale or hand-edited summary therefore cannot turn an incomplete or
+impossible district into an eligible one.
+
+Eligible districts must have the full 114-column inventory, must not violate the
+district population bound, must meet the supplied accepted-speaker lower-bound
+threshold, and must contain positive speaker mass on at least one nonzero
+Shastry-mapped language. A district that passes source coverage but has no such
+mass is retained with `historical_language_status = "no_nonzero_mapped_speakers"`
+and an `NA` primary distance. The distance itself reuses the frozen
+Atlas-to-Shastry resolver and the same speaker-weighted **nonzero mapped-language
+mean** used by the 2001 primary IV. English remains a separately treated
+reference language exactly as in the 2001 construction. Ineligible districts
+stay in the output with explicit statuses rather than being silently dropped or
+renormalized into eligibility.
 
 The extractor also writes district-level lower-bound coverage diagnostics. It
 sums **only** accepted counts: machine candidates that passed numeric and
