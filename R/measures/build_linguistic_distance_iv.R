@@ -19,6 +19,44 @@ read_shastry_language_distance <- function(path = NULL) {
   out
 }
 
+
+#' Read the reviewed Census-1991 Language Atlas column registry
+read_language_atlas_1991_languages <- function(path = NULL) {
+  if (is.null(path)) {
+    root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
+    path <- file.path(root, "data", "metadata", "language_atlas_1991_languages.csv")
+  }
+  if (!file.exists(path)) stop("Missing Language Atlas 1991 language registry: ", path, call. = FALSE)
+  out <- utils::read.csv(path, stringsAsFactors = FALSE, check.names = FALSE)
+  required <- c(
+    "atlas_column", "language_1991", "canonical_language", "scheduled_1991",
+    "language_family_1991", "shastry_family_class", "source_basis", "review_status"
+  )
+  if (!identical(names(out), required)) stop("Language Atlas 1991 language registry has an invalid schema.", call. = FALSE)
+  out$atlas_column <- suppressWarnings(as.integer(out$atlas_column))
+  if (!identical(out$atlas_column, 4:117)) stop("Language Atlas 1991 registry must cover columns 4 through 117 exactly once.", call. = FALSE)
+  if (anyDuplicated(normalize_language_label(out$language_1991))) stop("Language Atlas 1991 registry has duplicate language labels.", call. = FALSE)
+  scheduled_text <- tolower(plain_chr(out$scheduled_1991))
+  if (any(!scheduled_text %in% c("true", "false")) || sum(scheduled_text == "true") != 18L) {
+    stop("Language Atlas 1991 registry must identify exactly 18 scheduled languages.", call. = FALSE)
+  }
+  expected_families <- c(
+    "Indo-Aryan" = 19L, "Germanic" = 1L, "Dravidian" = 17L,
+    "Austro-Asiatic" = 14L, "Tibeto-Burmese" = 62L, "Semito-Hamitic" = 1L
+  )
+  observed_families <- table(plain_chr(out$language_family_1991))
+  if (!identical(as.integer(observed_families[names(expected_families)]), unname(expected_families)) ||
+      any(!names(observed_families) %in% names(expected_families))) {
+    stop("Language Atlas 1991 registry does not match the reviewed language-family counts.", call. = FALSE)
+  }
+  family_class <- plain_chr(out$shastry_family_class)
+  if (any(!family_class %in% c("indo_european", "non_indo_european", "special_english"))) {
+    stop("Language Atlas 1991 registry has an invalid Shastry family class.", call. = FALSE)
+  }
+  if (!all(plain_chr(out$review_status) == "accepted")) stop("Language Atlas 1991 language registry must contain reviewed accepted rows only.", call. = FALSE)
+  out
+}
+
 normalize_language_label <- function(x) {
   tools::toTitleCase(tolower(trimws(plain_chr(x))))
 }

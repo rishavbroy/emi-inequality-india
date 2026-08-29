@@ -1432,3 +1432,67 @@ test_that("Glottolog alias indexing resolves each source code consistently acros
   expect_true(nrow(dialect_aliases) >= 2L)
   expect_true(all(dialect_aliases$language_glottocode == "lang1234"))
 })
+
+
+test_that("Language Atlas 1991 registry reproduces the reviewed 114-language inventory", {
+  x <- read_language_atlas_1991_languages()
+
+  expect_identical(x$atlas_column, 4:117)
+  expect_equal(nrow(x), 114L)
+  expect_equal(sum(tolower(x$scheduled_1991) == "true"), 18L)
+  family_counts <- table(x$language_family_1991)
+  expect_equal(unname(family_counts[["Indo-Aryan"]]), 19L)
+  expect_equal(unname(family_counts[["Germanic"]]), 1L)
+  expect_equal(unname(family_counts[["Dravidian"]]), 17L)
+  expect_equal(unname(family_counts[["Austro-Asiatic"]]), 14L)
+  expect_equal(unname(family_counts[["Tibeto-Burmese"]]), 62L)
+  expect_equal(unname(family_counts[["Semito-Hamitic"]]), 1L)
+  expect_identical(x$language_1991[1:3], c("Assamese", "Bengali", "Gujarati"))
+  expect_identical(tail(x$language_1991, 3), c("Zeliang", "Zemi", "Zou"))
+})
+
+
+test_that("Atlas language labels reuse the frozen Shastry resolver without new degrees", {
+  out <- resolve_language_atlas_1991_shastry_mapping()
+
+  expect_equal(sum(out$shastry_mapping_status == "mapped"), 108L)
+  expect_identical(
+    sort(out$language_1991[out$shastry_mapping_status == "frozen_unresolved"]),
+    sort(c("Bishnupuriya", "Halabi", "Lahnda", "Nepali", "Sanskrit"))
+  )
+  expect_identical(
+    out$language_1991[out$shastry_mapping_status == "special_english"],
+    "English"
+  )
+  expect_equal(out$shastry_degree[out$language_1991 == "Bhili/Bhilodi"], 1)
+  expect_equal(out$shastry_degree[out$language_1991 == "Dogri"], 1)
+  expect_equal(out$shastry_degree[out$language_1991 == "Khandeshi"], 2)
+  expect_equal(out$shastry_degree[out$language_1991 == "Khasi"], 5)
+})
+
+
+test_that("Atlas exact-label adjudication reuse does not broaden generic code-less resolution", {
+  concordance <- data.frame(
+    canonical_language = "Hindi",
+    distance_from_hindi = 0,
+    stringsAsFactors = FALSE
+  )
+  code_less <- data.frame(
+    mother_tongue = "Dogri",
+    canonical_language = "Dogri",
+    shastry_family_class = "indo_european",
+    stringsAsFactors = FALSE
+  )
+  atlas_row <- data.frame(
+    language_1991 = "Dogri",
+    canonical_language = "Dogri",
+    shastry_family_class = "indo_european",
+    stringsAsFactors = FALSE
+  )
+
+  expect_true(is.na(resolve_shastry_language_degrees(code_less, concordance)))
+  expect_equal(
+    resolve_language_atlas_1991_shastry_mapping(atlas_row, concordance)$shastry_degree,
+    1
+  )
+})

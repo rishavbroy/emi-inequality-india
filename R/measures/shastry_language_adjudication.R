@@ -129,17 +129,26 @@ resolve_shastry_language_degrees <- function(
     rows, degree, adjudications, scenario = scenario
   )
 
-  family <- if ("glottolog_family_id" %in% names(rows)) {
-    plain_chr(rows$glottolog_family_id)
-  } else if ("family_id" %in% names(rows)) {
-    plain_chr(rows$family_id)
+  family_class <- if ("shastry_family_class" %in% names(rows)) {
+    plain_chr(rows$shastry_family_class)
   } else {
-    rep(NA_character_, nrow(rows))
+    family <- if ("glottolog_family_id" %in% names(rows)) {
+      plain_chr(rows$glottolog_family_id)
+    } else if ("family_id" %in% names(rows)) {
+      plain_chr(rows$family_id)
+    } else {
+      rep(NA_character_, nrow(rows))
+    }
+    ifelse(
+      is.na(family) | !nzchar(family),
+      NA_character_,
+      ifelse(family == "indo1319", "indo_european", "non_indo_european")
+    )
   }
   non_ie <- !is.finite(degree) &
     language != "English" &
-    !is.na(family) & nzchar(family) &
-    family != "indo1319"
+    !is.na(family_class) &
+    family_class == "non_indo_european"
   degree[non_ie] <- 5
   degree
 }
@@ -165,4 +174,40 @@ prepare_shastry_language_rows <- function(
     out, concordance, adjudications, scenario = "sensitivity_high"
   )
   out
+}
+
+
+#' Resolve the reviewed Census-1991 Atlas language inventory on the frozen Shastry basis
+resolve_language_atlas_1991_shastry_mapping <- function(
+  registry = read_language_atlas_1991_languages(),
+  concordance = read_shastry_language_distance(),
+  adjudications = read_shastry_language_adjudications(),
+  scenario = c("preferred", "sensitivity_low", "sensitivity_high")
+) {
+  scenario <- match.arg(scenario)
+  rows <- safe_df(registry)
+  required <- c("language_1991", "canonical_language", "shastry_family_class")
+  if (!all(required %in% names(rows))) {
+    stop("Language Atlas 1991 registry lacks Shastry-resolution fields.", call. = FALSE)
+  }
+  rows$mother_tongue <- rows$language_1991
+  adjudication_label <- normalize_language_label(adjudications$mother_tongue)
+  if (anyDuplicated(adjudication_label)) {
+    stop("Shastry adjudication labels must be unique for Atlas exact-label reuse.", call. = FALSE)
+  }
+  adjudication_idx <- match(normalize_language_label(rows$mother_tongue), adjudication_label)
+  rows$mother_tongue_code <- ifelse(
+    is.na(adjudication_idx),
+    NA_character_,
+    plain_chr(adjudications$mother_tongue_code[adjudication_idx])
+  )
+  rows$shastry_degree <- resolve_shastry_language_degrees(
+    rows, concordance = concordance, adjudications = adjudications, scenario = scenario
+  )
+  rows$shastry_mapping_status <- ifelse(
+    normalize_language_label(rows$language_1991) == "English",
+    "special_english",
+    ifelse(is.finite(rows$shastry_degree), "mapped", "frozen_unresolved")
+  )
+  rows
 }
