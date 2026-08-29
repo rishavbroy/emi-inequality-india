@@ -59,7 +59,7 @@ test_that("final figures include public map collages when geometry is validated"
 test_that("district carve-out figure data uses pct_91in01 values", {
   path <- tempfile(fileext = ".csv")
   writeLines(c(
-    'Anantapur,"3,183,814",Anantapur,100,75.5',
+    'Anantapur,"3,183,814",Anantapur,74.5,75.5',
     ',,Sri Sathya Sai,25.5,24.5'
   ), path)
 

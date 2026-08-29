@@ -235,7 +235,7 @@ test_that("headerless district carve-out reader preserves the first observation"
 
 test_that("manifest dispatches district carve-out rows to the explicit headerless reader", {
   path <- tempfile(fileext = ".csv")
-  writeLines(c("Anantapur,100,Anantapur,75,80", "Kurnool,200,Kurnool,100,100"), path)
+  writeLines(c("Anantapur,100,Anantapur,100,80", "Kurnool,200,Kurnool,100,100"), path)
   row <- data.frame(
     absolute_path = path,
     file_type = "csv",
@@ -573,7 +573,7 @@ test_that("district carve-out reader repairs source-table wrapped labels structu
     'var,,,,',
     'North 24 Para-,"7,281,881",North Twenty Four,100,100',
     'ganas,,Parganas,,',
-    'Bulandshahr,200,Gautam Buddha,13.39,44.89',
+    'Bulandshahr,200,Gautam Buddha,100,44.89',
     ',,Nagar,,',
     'Next,100,Next,100,100'
   ), path)
