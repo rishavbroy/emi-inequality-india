@@ -48,6 +48,7 @@ ATLAS_LANGUAGE_FAMILY_COUNTS = {
 }
 ATLAS_SHASTRY_FAMILY_CLASSES = {"indo_european", "non_indo_european", "special_english"}
 LANGUAGE_COVERAGE_THRESHOLDS = (0.95, 0.98, 0.99, 0.995, 0.999, 1.0)
+ATLAS_CELL_REVIEW_DECISIONS = {"accept_extracted", "replace_count", "leave_unresolved"}
 
 
 @dataclass(frozen=True)
@@ -198,7 +199,7 @@ def table_row_value_bounds(
     Ordinary rows retain the established symmetric value window. At a
     state-heading → district-01 transition, the PDF text layer can place bold
     state totals closer to the district label than to the state heading. Rather
-    than choose an arbitrary label-gap fraction, identify the two dense numeric
+    than choose an arbitrary label-gap fraction, identify the two source numeric
     row baselines spanning the transition and split their vertical gap at its
     midpoint. If the source page does not expose two convincing baselines, leave
     the old extraction rule unchanged and let downstream QA surface the case.
@@ -793,9 +794,144 @@ def validated_language_cell_row(
             and count_validation_status == "within_district_population"
             else "review_required"
         ),
+        "accepted_speaker_count": (
+            count
+            if parse_status in {"parsed", "normalized_ocr_zero"}
+            and count_validation_status == "within_district_population"
+            else ""
+        ),
+        "accepted_count_basis": (
+            "machine_candidate"
+            if parse_status in {"parsed", "normalized_ocr_zero"}
+            and count_validation_status == "within_district_population"
+            else "unresolved"
+        ),
+        "cell_review_decision": "",
+        "cell_review_basis": "",
         "page_offset": page_offset,
         "alignment_status": alignment_status,
     }
+
+
+def read_language_atlas_cell_reviews(path: Path) -> list[dict[str, str]]:
+    """Read reviewed Atlas cell decisions without mutating machine extraction."""
+    with path.open(newline="", encoding="utf-8") as handle:
+        rows = list(csv.DictReader(handle))
+    required = {
+        "state_code_1991", "district_code_1991", "atlas_column",
+        "review_decision", "reviewed_speaker_count", "expected_page",
+        "expected_raw_value", "expected_candidate_count", "expected_parse_status",
+        "expected_alignment_status", "review_basis",
+    }
+    if not rows:
+        # Header-only ledgers are valid until the first source adjudication.
+        with path.open(newline="", encoding="utf-8") as handle:
+            header = next(csv.reader(handle), [])
+        if not required.issubset(header):
+            raise ValueError("Language Atlas cell review ledger is missing required columns")
+        return []
+    if not required.issubset(rows[0]):
+        raise ValueError("Language Atlas cell review ledger is missing required columns")
+
+    seen: set[tuple[str, str, int]] = set()
+    for row in rows:
+        row["state_code_1991"] = row["state_code_1991"].strip().zfill(2)
+        row["district_code_1991"] = row["district_code_1991"].strip().zfill(2)
+        try:
+            column = int(row["atlas_column"])
+        except ValueError as exc:
+            raise ValueError("Atlas cell review column must be an integer") from exc
+        if column not in range(4, 118):
+            raise ValueError(f"Atlas cell review column is outside 4--117: {column}")
+        row["atlas_column"] = str(column)
+        decision = row["review_decision"].strip()
+        if decision not in ATLAS_CELL_REVIEW_DECISIONS:
+            raise ValueError(f"Invalid Atlas cell review decision: {decision}")
+        if not row["expected_page"].strip().isdigit():
+            raise ValueError("Atlas cell review expected_page must be an integer")
+        reviewed = row["reviewed_speaker_count"].strip()
+        if decision == "replace_count":
+            if not reviewed.isdigit():
+                raise ValueError("replace_count requires a nonnegative reviewed_speaker_count")
+        elif reviewed:
+            raise ValueError(f"{decision} must not provide reviewed_speaker_count")
+        if not row["review_basis"].strip():
+            raise ValueError("Atlas cell reviews require nonblank review_basis")
+        key = (row["state_code_1991"], row["district_code_1991"], column)
+        if key in seen:
+            raise ValueError(f"Duplicate Atlas cell review key: {key[0]}-{key[1]}-{key[2]}")
+        seen.add(key)
+    return rows
+
+
+def apply_language_atlas_cell_reviews(
+    rows: list[dict[str, object]],
+    reviews: list[dict[str, str]],
+) -> list[dict[str, object]]:
+    """Apply source-reviewed decisions using exact extraction fingerprints.
+
+    The machine candidate fields are immutable. Reviews affect only the accepted
+    count used by coverage/triage diagnostics. A review becomes stale and fails
+    closed if page, raw text, or row-alignment evidence changes.
+    """
+    out = [dict(row) for row in rows]
+    index = {
+        (str(row["state_code_1991"]), str(row["district_code_1991"]), int(row["atlas_column"])): row
+        for row in out
+    }
+    if len(index) != len(out):
+        raise ValueError("Atlas language cells are not unique before review application")
+
+    for review in reviews:
+        key = (
+            review["state_code_1991"].zfill(2),
+            review["district_code_1991"].zfill(2),
+            int(review["atlas_column"]),
+        )
+        if key not in index:
+            raise ValueError(f"Atlas cell review references unknown cell: {key[0]}-{key[1]}-{key[2]}")
+        row = index[key]
+        fingerprint = {
+            "expected_page": str(row["page"]),
+            "expected_raw_value": str(row["raw_value"]),
+            "expected_candidate_count": str(row["speaker_count_candidate"]),
+            "expected_parse_status": str(row["parse_status"]),
+            "expected_alignment_status": str(row["alignment_status"]),
+        }
+        for field, actual in fingerprint.items():
+            if review[field] != actual:
+                raise ValueError(
+                    f"Stale Atlas cell review for {key[0]}-{key[1]}-{key[2]}: "
+                    f"{field} expected {review[field]!r}, current {actual!r}"
+                )
+
+        decision = review["review_decision"]
+        if decision == "accept_extracted":
+            if row["language_cell_status"] != "candidate_value":
+                raise ValueError(
+                    f"accept_extracted requires a machine candidate at {key[0]}-{key[1]}-{key[2]}"
+                )
+            row["accepted_speaker_count"] = int(row["speaker_count_candidate"])
+            row["accepted_count_basis"] = "reviewed_machine_candidate"
+        elif decision == "replace_count":
+            count = int(review["reviewed_speaker_count"])
+            population = int(float(row["atlas_population_candidate"]))
+            if count > population:
+                raise ValueError(
+                    f"Reviewed Atlas count exceeds district population at {key[0]}-{key[1]}-{key[2]}"
+                )
+            row["accepted_speaker_count"] = count
+            row["accepted_count_basis"] = "reviewed_replacement"
+        else:
+            row["accepted_speaker_count"] = ""
+            row["accepted_count_basis"] = "reviewed_unresolved"
+        row["cell_review_decision"] = decision
+        row["cell_review_basis"] = review["review_basis"]
+    return out
+
+
+def accepted_language_rows(rows: list[dict[str, object]]) -> list[dict[str, object]]:
+    return [row for row in rows if str(row.get("accepted_speaker_count", "")).strip()]
 
 
 def build_language_extraction_coverage(rows: list[dict[str, object]]) -> list[dict[str, object]]:
@@ -807,18 +943,18 @@ def build_language_extraction_coverage(rows: list[dict[str, object]]) -> list[di
     out: list[dict[str, object]] = []
     for key, district_rows in sorted(grouped.items()):
         columns = {int(row["atlas_column"]) for row in district_rows}
-        candidate_rows = [row for row in district_rows if row["language_cell_status"] == "candidate_value"]
-        speaker_sum = sum(int(row["speaker_count_candidate"]) for row in candidate_rows)
+        accepted_rows = accepted_language_rows(district_rows)
+        speaker_sum = sum(int(row["accepted_speaker_count"]) for row in accepted_rows)
         atlas_population = int(float(district_rows[0]["atlas_population_candidate"]))
         pca_population = int(float(district_rows[0]["pca91_population"]))
         if speaker_sum > atlas_population:
             status = "speaker_sum_exceeds_atlas_population"
         elif len(columns) < 114:
             status = "incomplete_alignment"
-        elif len(candidate_rows) < 114:
+        elif len(accepted_rows) < 114:
             status = "unresolved_cells"
         else:
-            status = "complete_candidate_inventory"
+            status = "complete_accepted_inventory"
         lower_bound_share = speaker_sum / atlas_population if atlas_population > 0 else None
         if status == "speaker_sum_exceeds_atlas_population":
             review_priority = 1
@@ -836,11 +972,11 @@ def build_language_extraction_coverage(rows: list[dict[str, object]]) -> list[di
             "atlas_population_candidate": atlas_population,
             "pca91_population": pca_population,
             "n_atlas_language_columns": len(columns),
-            "n_candidate_values": len(candidate_rows),
-            "n_review_required": len(district_rows) - len(candidate_rows),
-            "parsed_speaker_lower_bound": speaker_sum,
-            "parsed_speaker_lower_bound_share_atlas": lower_bound_share if lower_bound_share is not None else "",
-            "parsed_speaker_lower_bound_share_pca": speaker_sum / pca_population if pca_population > 0 else "",
+            "n_accepted_values": len(accepted_rows),
+            "n_review_required": len(district_rows) - len(accepted_rows),
+            "accepted_speaker_lower_bound": speaker_sum,
+            "accepted_speaker_lower_bound_share_atlas": lower_bound_share if lower_bound_share is not None else "",
+            "accepted_speaker_lower_bound_share_pca": speaker_sum / pca_population if pca_population > 0 else "",
             "coverage_status": status,
             "review_priority": review_priority,
             "review_reason": review_reason,
@@ -849,13 +985,13 @@ def build_language_extraction_coverage(rows: list[dict[str, object]]) -> list[di
 
 
 def language_extraction_coverage_review_rows(rows: list[dict[str, object]]) -> list[dict[str, object]]:
-    review = [dict(row) for row in rows if row["coverage_status"] != "complete_candidate_inventory"]
+    review = [dict(row) for row in rows if row["coverage_status"] != "complete_accepted_inventory"]
     return sorted(
         review,
         key=lambda row: (
             int(row["review_priority"]),
-            -float(row["parsed_speaker_lower_bound_share_atlas"])
-            if str(row["parsed_speaker_lower_bound_share_atlas"]).strip()
+            -float(row["accepted_speaker_lower_bound_share_atlas"])
+            if str(row["accepted_speaker_lower_bound_share_atlas"]).strip()
             else 0.0,
             str(row["state_code_1991"]),
             str(row["district_code_1991"]),
@@ -882,7 +1018,7 @@ def build_language_coverage_sensitivity(
         for row in rows:
             if row["coverage_status"] == "speaker_sum_exceeds_atlas_population":
                 continue
-            share_raw = str(row["parsed_speaker_lower_bound_share_atlas"]).strip()
+            share_raw = str(row["accepted_speaker_lower_bound_share_atlas"]).strip()
             if not share_raw:
                 continue
             if float(share_raw) >= threshold:
@@ -923,23 +1059,26 @@ def build_language_excess_triage(
     for row in rows:
         key = (str(row["state_code_1991"]), str(row["district_code_1991"]))
         coverage = impossible.get(key)
-        if coverage is None or row["language_cell_status"] != "candidate_value":
+        if coverage is None or not str(row.get("accepted_speaker_count", "")).strip():
             continue
-        count = int(row["speaker_count_candidate"])
+        count = int(row["accepted_speaker_count"])
         population = int(float(coverage["atlas_population_candidate"]))
-        speaker_sum = int(float(coverage["parsed_speaker_lower_bound"]))
+        speaker_sum = int(float(coverage["accepted_speaker_lower_bound"]))
         excess = speaker_sum - population
         out.append({
             "state_code_1991": key[0],
             "district_code_1991": key[1],
             "state_name_1991": row["state_name_1991"],
             "atlas_population_candidate": population,
-            "parsed_speaker_lower_bound": speaker_sum,
+            "accepted_speaker_lower_bound": speaker_sum,
             "speaker_excess": excess,
             "atlas_column": row["atlas_column"],
             "language_1991": row["language_1991"],
             "raw_value": row["raw_value"],
-            "speaker_count_candidate": count,
+            "speaker_count_candidate": row["speaker_count_candidate"],
+            "accepted_speaker_count": count,
+            "accepted_count_basis": row.get("accepted_count_basis", "machine_candidate"),
+            "cell_review_decision": row.get("cell_review_decision", ""),
             "alignment_status": row["alignment_status"],
             "parse_status": row["parse_status"],
             "removal_restores_population_bound": count >= excess,
@@ -991,7 +1130,7 @@ def build_high_coverage_unresolved_triage(
             continue
         if int(coverage["n_atlas_language_columns"]) != 114:
             continue
-        share_raw = str(coverage["parsed_speaker_lower_bound_share_atlas"]).strip()
+        share_raw = str(coverage["accepted_speaker_lower_bound_share_atlas"]).strip()
         if not share_raw or float(share_raw) < floor:
             continue
         eligible[(str(coverage["state_code_1991"]), str(coverage["district_code_1991"]))] = coverage
@@ -1005,15 +1144,15 @@ def build_high_coverage_unresolved_triage(
     for row in rows:
         key = (str(row["state_code_1991"]), str(row["district_code_1991"]))
         coverage = eligible.get(key)
-        if coverage is None or row["language_cell_status"] != "review_required":
+        if coverage is None or str(row.get("accepted_speaker_count", "")).strip():
             continue
-        share = float(coverage["parsed_speaker_lower_bound_share_atlas"])
+        share = float(coverage["accepted_speaker_lower_bound_share_atlas"])
         certified = [threshold for threshold in thresholds if share >= threshold]
         higher = [threshold for threshold in thresholds if share < threshold]
         highest_certified = max(certified) if certified else ""
         next_threshold = min(higher) if higher else ""
         population = int(float(coverage["atlas_population_candidate"]))
-        speaker_sum = int(float(coverage["parsed_speaker_lower_bound"]))
+        speaker_sum = int(float(coverage["accepted_speaker_lower_bound"]))
         deficit = (
             max(0, math.ceil(float(next_threshold) * population - speaker_sum))
             if next_threshold != ""
@@ -1026,8 +1165,8 @@ def build_high_coverage_unresolved_triage(
             "district_code_1991": key[1],
             "state_name_1991": row["state_name_1991"],
             "atlas_population_candidate": population,
-            "parsed_speaker_lower_bound": speaker_sum,
-            "parsed_speaker_lower_bound_share_atlas": share,
+            "accepted_speaker_lower_bound": speaker_sum,
+            "accepted_speaker_lower_bound_share_atlas": share,
             "n_review_required": int(coverage["n_review_required"]),
             "highest_certified_threshold": highest_certified,
             "next_sensitivity_threshold": next_threshold,
@@ -1037,6 +1176,8 @@ def build_high_coverage_unresolved_triage(
             "raw_value": row["raw_value"],
             "parse_status": row["parse_status"],
             "alignment_status": row["alignment_status"],
+            "cell_review_decision": row.get("cell_review_decision", ""),
+            "accepted_count_basis": row.get("accepted_count_basis", "unresolved"),
             "numeric_group_candidates": ";".join(map(str, groups)),
             "max_numeric_group_candidate": max_group,
             "max_group_reaches_next_threshold": (
@@ -1046,7 +1187,7 @@ def build_high_coverage_unresolved_triage(
     return sorted(
         out,
         key=lambda row: (
-            -float(row["parsed_speaker_lower_bound_share_atlas"]),
+            -float(row["accepted_speaker_lower_bound_share_atlas"]),
             int(row["n_review_required"]),
             parse_priority.get(str(row["parse_status"]), 3),
             str(row["alignment_status"]) != "exact_label",
@@ -1261,7 +1402,10 @@ def build_validated_all_page_language_cells(
 
 
 def all_page_language_review_rows(rows: list[dict[str, object]]) -> list[dict[str, object]]:
-    return [dict(row) for row in rows if row["language_cell_status"] == "review_required"]
+    return [
+        dict(row) for row in rows
+        if not str(row.get("accepted_speaker_count", "")).strip()
+    ]
 
 def write_csv(path: Path, rows: list[dict[str, object]], fields: list[str] | None = None) -> None:
     if not rows and fields is None:
@@ -1390,6 +1534,45 @@ def self_test() -> None:
     assert parse_count("893 67") == (None, "ambiguous_multiple_numeric_groups")
     assert parse_count("3 0") == (None, "ambiguous_multiple_numeric_groups")
 
+    review_rows = [validated_language_cell_row(
+        {
+            "state_code_1991": "02", "district_code_1991": "01", "state_name_1991": "STATE",
+            "row_label_raw": "DISTRICT", "atlas_population_candidate": 100,
+            "pca91_population": 100, "population_relative_diff": 0, "block": 1,
+        },
+        {
+            "page": 205, "row_sequence": 2, "atlas_column": 4, "raw_value": "2 40",
+            "speaker_count_candidate": "", "parse_status": "ambiguous_multiple_numeric_groups",
+        },
+        page_offset=0, alignment_status="population_validated_row",
+    )]
+    applied = apply_language_atlas_cell_reviews(review_rows, [{
+        "state_code_1991": "02", "district_code_1991": "01", "atlas_column": "4",
+        "review_decision": "replace_count", "reviewed_speaker_count": "40",
+        "expected_page": "205", "expected_raw_value": "2 40",
+        "expected_candidate_count": "",
+        "expected_parse_status": "ambiguous_multiple_numeric_groups",
+        "expected_alignment_status": "population_validated_row",
+        "review_basis": "source page reviewed",
+    }])
+    assert applied[0]["speaker_count_candidate"] == ""
+    assert applied[0]["accepted_speaker_count"] == 40
+    assert applied[0]["accepted_count_basis"] == "reviewed_replacement"
+    try:
+        apply_language_atlas_cell_reviews(review_rows, [{
+            "state_code_1991": "02", "district_code_1991": "01", "atlas_column": "4",
+            "review_decision": "replace_count", "reviewed_speaker_count": "40",
+            "expected_page": "205", "expected_raw_value": "stale text",
+            "expected_candidate_count": "",
+            "expected_parse_status": "ambiguous_multiple_numeric_groups",
+            "expected_alignment_status": "population_validated_row",
+            "review_basis": "source page reviewed",
+        }])
+    except ValueError as exc:
+        assert "Stale Atlas cell review" in str(exc)
+    else:
+        raise AssertionError("stale Atlas cell review should fail closed")
+
     coverage_rows = [
         validated_language_cell_row(
             {
@@ -1406,11 +1589,13 @@ def self_test() -> None:
         for column in range(4, 118)
     ]
     coverage_rows[0]["speaker_count_candidate"] = 201
+    coverage_rows[0]["accepted_speaker_count"] = ""
+    coverage_rows[0]["accepted_count_basis"] = "unresolved"
     coverage_rows[0]["count_validation_status"] = "exceeds_district_population"
     coverage_rows[0]["language_cell_status"] = "review_required"
     coverage = build_language_extraction_coverage(coverage_rows)
     assert coverage[0]["n_atlas_language_columns"] == 114
-    assert coverage[0]["n_candidate_values"] == 113
+    assert coverage[0]["n_accepted_values"] == 113
     assert coverage[0]["coverage_status"] == "unresolved_cells"
     assert coverage[0]["review_priority"] == 2
     sensitivity = build_language_coverage_sensitivity(
@@ -1430,11 +1615,14 @@ def self_test() -> None:
     impossible_rows = [dict(row) for row in coverage_rows]
     for i, row in enumerate(impossible_rows):
         row["speaker_count_candidate"] = 0
+        row["accepted_speaker_count"] = 0
+        row["accepted_count_basis"] = "machine_candidate"
         row["count_validation_status"] = "within_district_population"
         row["language_cell_status"] = "candidate_value"
         row["language_1991"] = f"LANGUAGE_{i + 1}"
         row["parse_status"] = "parsed"
     impossible_rows[0]["speaker_count_candidate"] = 120
+    impossible_rows[0]["accepted_speaker_count"] = 120
     impossible_coverage = build_language_extraction_coverage(impossible_rows)
     assert impossible_coverage[0]["coverage_status"] == "speaker_sum_exceeds_atlas_population"
     triage = build_language_excess_triage(impossible_rows, impossible_coverage)
@@ -1445,8 +1633,8 @@ def self_test() -> None:
     unresolved_coverage = [{
         "state_code_1991": "02", "district_code_1991": "01", "state_name_1991": "STATE",
         "atlas_population_candidate": 100, "n_atlas_language_columns": 114,
-        "n_review_required": 1, "parsed_speaker_lower_bound": 98,
-        "parsed_speaker_lower_bound_share_atlas": 0.98, "coverage_status": "unresolved_cells",
+        "n_review_required": 1, "accepted_speaker_lower_bound": 98,
+        "accepted_speaker_lower_bound_share_atlas": 0.98, "coverage_status": "unresolved_cells",
     }]
     unresolved_cells = [{
         "state_code_1991": "02", "district_code_1991": "01", "state_name_1991": "STATE",
@@ -1499,6 +1687,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--excess-triage-output", type=Path)
     parser.add_argument("--unresolved-triage-output", type=Path)
     parser.add_argument("--language-registry", type=Path)
+    parser.add_argument("--cell-review-registry", type=Path)
     parser.add_argument("--pdftotext", default="pdftotext")
     parser.add_argument("--self-test", action="store_true")
     args = parser.parse_args(argv)
@@ -1575,6 +1764,8 @@ def main(argv: list[str] | None = None) -> int:
             args.excess_triage_output,
             args.unresolved_triage_output,
         )
+        if args.cell_review_registry is not None and not any(value is not None for value in all_language_options):
+            parser.error("--cell-review-registry requires the all-language output bundle")
         if any(value is not None for value in all_language_options):
             if not all(value is not None for value in all_language_options):
                 parser.error(
@@ -1587,6 +1778,10 @@ def main(argv: list[str] | None = None) -> int:
                 cells, district_validation, state_crosswalk
             )
             all_language_cells = attach_language_registry(all_language_cells, language_registry)
+            if args.cell_review_registry is not None:
+                all_language_cells = apply_language_atlas_cell_reviews(
+                    all_language_cells, read_language_atlas_cell_reviews(args.cell_review_registry)
+                )
             write_csv(args.all_language_output, all_language_cells)
             write_csv(
                 args.all_language_review_output,
@@ -1625,11 +1820,12 @@ def main(argv: list[str] | None = None) -> int:
                 unresolved_triage,
                 fields=list(unresolved_triage[0]) if unresolved_triage else [
                     "state_code_1991", "district_code_1991", "state_name_1991",
-                    "atlas_population_candidate", "parsed_speaker_lower_bound",
-                    "parsed_speaker_lower_bound_share_atlas", "n_review_required",
+                    "atlas_population_candidate", "accepted_speaker_lower_bound",
+                    "accepted_speaker_lower_bound_share_atlas", "n_review_required",
                     "highest_certified_threshold", "next_sensitivity_threshold",
                     "speaker_deficit_to_next_threshold", "atlas_column", "language_1991",
                     "raw_value", "parse_status", "alignment_status",
+                    "cell_review_decision", "accepted_count_basis",
                     "numeric_group_candidates", "max_numeric_group_candidate",
                     "max_group_reaches_next_threshold",
                 ],

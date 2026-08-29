@@ -484,7 +484,29 @@ test_that("1991 Atlas state and PCA review inputs have explicit source contracts
     "data/raw/census_1961-91/Language_Atlas_of_India_1991.pdf"
   )
 
-  expect_identical(as.integer(languages$atlas_column), 4:117)
+  cell_reviews <- readr::read_csv(
+    file.path(root, "data", "metadata", "language_atlas_1991_cell_reviews.csv"),
+    show_col_types = FALSE,
+    col_types = readr::cols(.default = readr::col_character())
+  )
+  expect_setequal(
+    names(cell_reviews),
+    c(
+      "state_code_1991", "district_code_1991", "atlas_column",
+      "review_decision", "reviewed_speaker_count", "expected_page",
+      "expected_raw_value", "expected_candidate_count", "expected_parse_status",
+      "expected_alignment_status", "review_basis"
+    )
+  )
+  expect_true(all(
+    cell_reviews$review_decision %in%
+      c("accept_extracted", "replace_count", "leave_unresolved")
+  ))
+  expect_equal(
+    anyDuplicated(paste(cell_reviews$state_code_1991, cell_reviews$district_code_1991, cell_reviews$atlas_column)),
+    0L
+  )
+
   expect_true(all(nzchar(languages$canonical_language)))
   expect_setequal(
     languages$shastry_family_class,

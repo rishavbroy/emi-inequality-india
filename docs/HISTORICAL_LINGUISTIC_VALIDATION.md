@@ -93,6 +93,7 @@ python3 scripts/build_language_atlas_1991.py \
   --pca-zip data/raw/shrug/census_1991/shrug-pca91-csv.zip \
   --state-crosswalk data/metadata/language_atlas_1991_state_crosswalk.csv \
   --language-registry data/metadata/language_atlas_1991_languages.csv \
+  --cell-review-registry data/metadata/language_atlas_1991_cell_reviews.csv \
   --district-output /tmp/language_atlas_1991_district_population.csv \
   --population-review-output /tmp/language_atlas_1991_population_review.csv \
   --page0-language-output /tmp/language_atlas_1991_page0_languages.csv \
@@ -147,7 +148,7 @@ some state-heading → district-01 boundaries, bold state-total values sit lower
 in the PDF text layer than the heading itself, so a symmetric label-centered
 window can assign a state total to district 01. The extractor now changes row
 ownership only at that transition and only when the data columns expose two
-dense numeric baselines separated by approximately one printed row. The vertical
+source numeric baselines separated by approximately one printed row. The vertical
 boundary is the midpoint of those two numeric baselines; if the source page does
 not expose a convincing pair, the established extraction rule is left unchanged
 and downstream QA handles the case. Ordinary district-row extraction is
@@ -210,11 +211,41 @@ dedicated row-alignment review queue. These are extraction candidates, not a
 production language table: unresolved district/page alignments are not filled by
 sequence order, and no speaker count enters targets.
 
+
+### Reviewed cell adjudication ledger
+
+Machine extraction is now separated from source-reviewed acceptance.
+`data/metadata/language_atlas_1991_cell_reviews.csv` is the sole tracked ledger
+for cell-level source decisions. Its key is `(state_code_1991,
+district_code_1991, atlas_column)`, and every decision fingerprints the exact PDF
+page, raw extracted cell text, machine candidate, parse status, and alignment
+status that were reviewed. If any of those source-extraction fields changes
+later, application fails closed as a stale review rather than silently carrying
+the old decision forward.
+
+The allowed decisions are deliberately narrow:
+
+- `accept_extracted`: source review confirms an already valid machine candidate;
+- `replace_count`: source review supplies a nonnegative integer count that must
+  not exceed Atlas district population;
+- `leave_unresolved`: review has occurred but the cell is still not safely
+  quantifiable.
+
+The machine fields (`raw_value`, `speaker_count_candidate`, `parse_status`, and
+`alignment_status`) are never overwritten. Reviewed decisions change only
+`accepted_speaker_count` and its provenance. Coverage, impossible-sum, and
+unresolved-cell diagnostics operate on this accepted-count layer. The review
+ledger may remain header-only until source decisions are actually completed; no
+empty ledger row is interpreted as acceptance. This mirrors the repository's
+reviewed Glottolog and district-lineage pattern: generated candidates remain
+non-authoritative until an explicit tracked decision is applied.
+
 The extractor also writes district-level lower-bound coverage diagnostics. It
-sums **only** candidate cells that passed numeric and per-language population QA;
-unresolved cells are omitted without renormalization. The sum is therefore a
-parsed-speaker lower bound, not an estimate of classified-language coverage when
-columns remain unresolved. The district status distinguishes incomplete page
+sums **only** accepted counts: machine candidates that passed numeric and
+per-language population QA, plus any source-reviewed replacements. Reviewed or
+unreviewed unresolved cells are omitted without renormalization. The sum is
+therefore an accepted-speaker lower bound, not an estimate of classified-language
+coverage when columns remain unresolved. The district status distinguishes incomplete page
 alignment, unresolved cells, and the stronger impossibility check in which even
 the accepted-cell sum exceeds the Atlas district population. Review rows are
 ordered first by impossible accepted-count sums, then by fully aligned districts
@@ -234,7 +265,7 @@ These counts remain extraction diagnostics, not a chosen analysis sample.
 
 On the current source pass, 342 districts have incomplete alignment, 63 have all
 114 columns aligned but unresolved cells, and 10 still have accepted-cell sums
-above Atlas population. **No district yet has a complete 114-cell candidate
+above Atlas population. **No district yet has a complete 114-cell accepted
 inventory**, so 1991 linguistic distance remains blocked from production.
 
 `language_atlas_1991_languages.csv` now freezes the reviewed Atlas column
