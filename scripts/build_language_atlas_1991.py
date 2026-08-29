@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import math
 import difflib
 import re
 import shutil
@@ -186,6 +187,75 @@ def words_in_box(words: list[Word], y: float, x_lo: float, x_hi: float) -> str:
     return " ".join(text for _, text in hits).strip()
 
 
+def table_row_value_bounds(
+    rows: list[tuple[float, str]],
+    words: list[Word],
+    offset: int,
+    data_bounds: dict[int, tuple[float, float]],
+) -> list[tuple[float, float] | None]:
+    """Separate state totals from district 01 using the numeric row baselines.
+
+    Ordinary rows retain the established symmetric value window. At a
+    state-heading → district-01 transition, the PDF text layer can place bold
+    state totals closer to the district label than to the state heading. Rather
+    than choose an arbitrary label-gap fraction, identify the two dense numeric
+    row baselines spanning the transition and split their vertical gap at its
+    midpoint. If the source page does not expose two convincing baselines, leave
+    the old extraction rule unchanged and let downstream QA surface the case.
+    """
+    serial_lo, serial_hi = _serial_region(offset)
+    serials = [parse_serial(words_in_box(words, y, serial_lo, serial_hi)) for y, _ in rows]
+    bounds: list[tuple[float, float] | None] = [None] * len(rows)
+    for index in range(len(rows) - 1):
+        if serials[index] is not None or serials[index + 1] != 1:
+            continue
+        state_y = rows[index][0]
+        district_y = rows[index + 1][0]
+        gap = district_y - state_y
+        candidates = sorted(
+            word.y
+            for word in words
+            if state_y - ROW_Y_TOLERANCE <= word.y <= district_y + ROW_Y_TOLERANCE
+            and any(x_lo <= word.x < x_hi for x_lo, x_hi in data_bounds.values())
+        )
+        clusters: list[list[float]] = []
+        for value_y in candidates:
+            if not clusters or value_y - sum(clusters[-1]) / len(clusters[-1]) > LABEL_Y_CLUSTER:
+                clusters.append([value_y])
+            else:
+                clusters[-1].append(value_y)
+        centers = [(sum(cluster) / len(cluster), len(cluster)) for cluster in clusters]
+        plausible_pairs = [
+            (lower, upper)
+            for lower in centers
+            for upper in centers
+            if lower[0] < upper[0]
+            and 0.6 * gap <= upper[0] - lower[0] <= 1.4 * gap
+        ]
+        if not plausible_pairs:
+            continue
+        lower, upper = max(
+            plausible_pairs,
+            key=lambda pair: (
+                pair[0][1] + pair[1][1],
+                -abs((pair[1][0] - pair[0][0]) - gap),
+            ),
+        )
+        boundary = (lower[0] + upper[0]) / 2
+        bounds[index] = (max(ROW_Y_MIN, state_y - ROW_Y_TOLERANCE), boundary)
+        bounds[index + 1] = (boundary, min(ROW_Y_MAX, district_y + ROW_Y_TOLERANCE))
+    return bounds
+
+
+def words_in_row_bounds(words: list[Word], y_lo: float, y_hi: float, x_lo: float, x_hi: float) -> str:
+    hits = sorted(
+        (word.x, word.text)
+        for word in words
+        if x_lo <= word.x < x_hi and y_lo <= word.y < y_hi
+    )
+    return " ".join(text for _, text in hits).strip()
+
+
 def parse_serial(raw: str) -> int | None:
     match = re.search(r"(?<!\d)(\d{1,2})(?:[.:])?(?!\d)", raw.strip())
     return int(match.group(1)) if match else None
@@ -242,12 +312,17 @@ def extract_page_cells(page: int, block: int, offset: int, words: list[Word]) ->
     bounds = column_bounds(centers)
     serial_lo, serial_hi = _serial_region(offset)
     rows = group_label_rows(words, offset)
+    value_bounds = table_row_value_bounds(rows, words, offset, bounds)
     out: list[dict[str, object]] = []
-    for row_sequence, (y, label) in enumerate(rows, start=1):
+    for row_sequence, ((y, label), special_bounds) in enumerate(zip(rows, value_bounds), start=1):
         serial_raw = words_in_box(words, y, serial_lo, serial_hi)
         serial = parse_serial(serial_raw)
         for column in sorted(centers):
-            raw = words_in_box(words, y, *bounds[column])
+            raw = (
+                words_in_row_bounds(words, *special_bounds, *bounds[column])
+                if column != 3 and special_bounds is not None
+                else words_in_box(words, y, *bounds[column])
+            )
             parsed, parse_status = parse_count(raw)
             out.append({
                 "block": block,
@@ -882,6 +957,106 @@ def build_language_excess_triage(
         ),
     )
 
+def numeric_group_candidates(raw: str) -> tuple[int, ...]:
+    """Expose independently parseable numeric groups without choosing among them."""
+    groups = re.findall(r"\d[\d,.]*", str(raw))
+    parsed: list[int] = []
+    for group in groups:
+        digits = re.sub(r"\D", "", group)
+        if digits:
+            parsed.append(int(digits))
+    return tuple(parsed)
+
+
+def build_high_coverage_unresolved_triage(
+    rows: list[dict[str, object]],
+    coverage_rows: list[dict[str, object]],
+    thresholds: tuple[float, ...] = LANGUAGE_COVERAGE_THRESHOLDS,
+) -> list[dict[str, object]]:
+    """Prioritize unresolved cells in fully aligned, high-coverage districts.
+
+    This is a review aid only. It never selects a numeric group, changes a count,
+    or defines the preferred historical coverage threshold. A district enters
+    only when all 114 language columns align, at least one cell remains unresolved,
+    and its accepted speaker lower bound already certifies the lowest registered
+    sensitivity threshold.
+    """
+    thresholds = tuple(sorted(set(float(value) for value in thresholds)))
+    if not thresholds or any(not (0 < threshold <= 1) for threshold in thresholds):
+        raise ValueError("Language coverage thresholds must lie in (0, 1].")
+    floor = thresholds[0]
+    eligible: dict[tuple[str, str], dict[str, object]] = {}
+    for coverage in coverage_rows:
+        if coverage["coverage_status"] != "unresolved_cells":
+            continue
+        if int(coverage["n_atlas_language_columns"]) != 114:
+            continue
+        share_raw = str(coverage["parsed_speaker_lower_bound_share_atlas"]).strip()
+        if not share_raw or float(share_raw) < floor:
+            continue
+        eligible[(str(coverage["state_code_1991"]), str(coverage["district_code_1991"]))] = coverage
+
+    out: list[dict[str, object]] = []
+    parse_priority = {
+        "ambiguous_multiple_numeric_groups": 0,
+        "unparsed": 1,
+        "blank": 2,
+    }
+    for row in rows:
+        key = (str(row["state_code_1991"]), str(row["district_code_1991"]))
+        coverage = eligible.get(key)
+        if coverage is None or row["language_cell_status"] != "review_required":
+            continue
+        share = float(coverage["parsed_speaker_lower_bound_share_atlas"])
+        certified = [threshold for threshold in thresholds if share >= threshold]
+        higher = [threshold for threshold in thresholds if share < threshold]
+        highest_certified = max(certified) if certified else ""
+        next_threshold = min(higher) if higher else ""
+        population = int(float(coverage["atlas_population_candidate"]))
+        speaker_sum = int(float(coverage["parsed_speaker_lower_bound"]))
+        deficit = (
+            max(0, math.ceil(float(next_threshold) * population - speaker_sum))
+            if next_threshold != ""
+            else 0
+        )
+        groups = numeric_group_candidates(str(row["raw_value"]))
+        max_group = max(groups) if groups else ""
+        out.append({
+            "state_code_1991": key[0],
+            "district_code_1991": key[1],
+            "state_name_1991": row["state_name_1991"],
+            "atlas_population_candidate": population,
+            "parsed_speaker_lower_bound": speaker_sum,
+            "parsed_speaker_lower_bound_share_atlas": share,
+            "n_review_required": int(coverage["n_review_required"]),
+            "highest_certified_threshold": highest_certified,
+            "next_sensitivity_threshold": next_threshold,
+            "speaker_deficit_to_next_threshold": deficit,
+            "atlas_column": row["atlas_column"],
+            "language_1991": row["language_1991"],
+            "raw_value": row["raw_value"],
+            "parse_status": row["parse_status"],
+            "alignment_status": row["alignment_status"],
+            "numeric_group_candidates": ";".join(map(str, groups)),
+            "max_numeric_group_candidate": max_group,
+            "max_group_reaches_next_threshold": (
+                max_group != "" and next_threshold != "" and int(max_group) >= deficit
+            ),
+        })
+    return sorted(
+        out,
+        key=lambda row: (
+            -float(row["parsed_speaker_lower_bound_share_atlas"]),
+            int(row["n_review_required"]),
+            parse_priority.get(str(row["parse_status"]), 3),
+            str(row["alignment_status"]) != "exact_label",
+            str(row["state_code_1991"]),
+            str(row["district_code_1991"]),
+            int(row["atlas_column"]),
+        ),
+    )
+
+
 def build_validated_page0_language_cells(
     cells: list[dict[str, object]],
     district_validation: list[dict[str, object]],
@@ -1128,6 +1303,19 @@ def self_test() -> None:
     ]
     assert parse_serial(words_in_box(synthetic, 244, 735, 775)) == 1
     assert group_label_rows(synthetic, 1) == [(244.0, "DISTRICT")]
+    ownership_words = [
+        Word("STATE", 640, 700, 200, 208),
+        Word("1", 745, 750, 218, 226),
+        Word("DISTRICT", 640, 700, 218, 226),
+        Word("999", 120, 135, 211, 219),
+        Word("5", 120, 125, 222, 230),
+    ]
+    ownership_rows = [(204.0, "STATE"), (222.0, "DISTRICT")]
+    ownership = table_row_value_bounds(
+        ownership_rows, ownership_words, 1, {15: (100, 150)}
+    )
+    assert words_in_row_bounds(ownership_words, *ownership[0], 100, 150) == "999"
+    assert words_in_row_bounds(ownership_words, *ownership[1], 100, 150) == "5"
     assert parse_leading_serial("14. DISTRICT") == 14
     assert parse_leading_serial("DISTRICT") is None
     toy_cells = [
@@ -1254,6 +1442,27 @@ def self_test() -> None:
     assert triage[0]["speaker_count_candidate"] == 120
     assert all(row["speaker_excess"] > 0 for row in triage)
 
+    unresolved_coverage = [{
+        "state_code_1991": "02", "district_code_1991": "01", "state_name_1991": "STATE",
+        "atlas_population_candidate": 100, "n_atlas_language_columns": 114,
+        "n_review_required": 1, "parsed_speaker_lower_bound": 98,
+        "parsed_speaker_lower_bound_share_atlas": 0.98, "coverage_status": "unresolved_cells",
+    }]
+    unresolved_cells = [{
+        "state_code_1991": "02", "district_code_1991": "01", "state_name_1991": "STATE",
+        "language_cell_status": "review_required", "atlas_column": 4,
+        "language_1991": "LANGUAGE", "raw_value": "2 40",
+        "parse_status": "ambiguous_multiple_numeric_groups", "alignment_status": "exact_label",
+    }]
+    unresolved_triage = build_high_coverage_unresolved_triage(
+        unresolved_cells, unresolved_coverage, thresholds=(0.95, 0.99, 1.0)
+    )
+    assert unresolved_triage[0]["highest_certified_threshold"] == 0.95
+    assert unresolved_triage[0]["next_sensitivity_threshold"] == 0.99
+    assert unresolved_triage[0]["speaker_deficit_to_next_threshold"] == 1
+    assert unresolved_triage[0]["numeric_group_candidates"] == "2;40"
+    assert unresolved_triage[0]["max_group_reaches_next_threshold"] is True
+
     continued = merge_population_continuations(
         [
             {"cell_kind": "district_population", "page_offset": 0, "block": 1, "page": 205, "row_sequence": 1,
@@ -1288,6 +1497,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--coverage-review-output", type=Path)
     parser.add_argument("--coverage-sensitivity-output", type=Path)
     parser.add_argument("--excess-triage-output", type=Path)
+    parser.add_argument("--unresolved-triage-output", type=Path)
     parser.add_argument("--language-registry", type=Path)
     parser.add_argument("--pdftotext", default="pdftotext")
     parser.add_argument("--self-test", action="store_true")
@@ -1363,14 +1573,15 @@ def main(argv: list[str] | None = None) -> int:
             args.coverage_review_output,
             args.coverage_sensitivity_output,
             args.excess_triage_output,
+            args.unresolved_triage_output,
         )
         if any(value is not None for value in all_language_options):
             if not all(value is not None for value in all_language_options):
                 parser.error(
                     "--all-language-output, --all-language-review-output, "
                     "--alignment-review-output, --coverage-output, "
-                    "--coverage-review-output, --coverage-sensitivity-output, and "
-                    "--excess-triage-output must be supplied together"
+                    "--coverage-review-output, --coverage-sensitivity-output, "
+                    "--excess-triage-output, and --unresolved-triage-output must be supplied together"
                 )
             all_language_cells, alignment_review = build_validated_all_page_language_cells(
                 cells, district_validation, state_crosswalk
@@ -1405,6 +1616,23 @@ def main(argv: list[str] | None = None) -> int:
             write_csv(
                 args.excess_triage_output,
                 build_language_excess_triage(all_language_cells, coverage),
+            )
+            unresolved_triage = build_high_coverage_unresolved_triage(
+                all_language_cells, coverage
+            )
+            write_csv(
+                args.unresolved_triage_output,
+                unresolved_triage,
+                fields=list(unresolved_triage[0]) if unresolved_triage else [
+                    "state_code_1991", "district_code_1991", "state_name_1991",
+                    "atlas_population_candidate", "parsed_speaker_lower_bound",
+                    "parsed_speaker_lower_bound_share_atlas", "n_review_required",
+                    "highest_certified_threshold", "next_sensitivity_threshold",
+                    "speaker_deficit_to_next_threshold", "atlas_column", "language_1991",
+                    "raw_value", "parse_status", "alignment_status",
+                    "numeric_group_candidates", "max_numeric_group_candidate",
+                    "max_group_reaches_next_threshold",
+                ],
             )
     unparsed = sum(row["review_type"] == "unparsed_cell" for row in review)
     ambiguous = sum(row["review_type"] == "ambiguous_numeric_groups" for row in review)

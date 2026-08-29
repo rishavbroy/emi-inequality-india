@@ -103,13 +103,28 @@ python3 scripts/build_language_atlas_1991.py \
   --coverage-output /tmp/language_atlas_1991_coverage.csv \
   --coverage-review-output /tmp/language_atlas_1991_coverage_review.csv \
   --coverage-sensitivity-output /tmp/language_atlas_1991_coverage_sensitivity.csv \
-  --excess-triage-output /tmp/language_atlas_1991_excess_triage.csv
+  --excess-triage-output /tmp/language_atlas_1991_excess_triage.csv \
+  --unresolved-triage-output /tmp/language_atlas_1991_unresolved_triage.csv
 ```
 
 The excess-triage output is a review aid for districts whose accepted speaker
 sum exceeds Atlas population. It ranks already accepted cells and marks whether
 removing one cell would, by itself, restore the population bound. It never edits,
-drops, or substitutes a count; any correction still requires source review.
+drops, or substitutes a count; any correction still requires source review. On
+the current source pass it contains 837 accepted cells across the 10 impossible
+districts; 57 are individually large enough that correcting/removing that one
+cell could restore the population bound.
+
+The unresolved-triage output addresses the other high-value review queue without
+choosing a preferred coverage threshold. It contains only fully aligned districts
+whose accepted-speaker lower bound already certifies the lowest registered
+sensitivity threshold (95%) but which still have unresolved cells. For each cell
+it reports the district's current certified threshold, the next registered
+threshold, the additional speaker mass needed to reach it, and any independently
+parseable numeric groups present in the raw PDF text. Numeric groups are exposed
+only as review candidates; the extractor never selects among them. On the current
+source pass this yields 161 unresolved cells across 30 districts: 69 blank cells,
+50 ambiguous multi-number cells, and 42 other unparsed cells.
 
 The candidate output is deliberately keyed by Atlas page/block, detected row,
 and source column rather than pretending that OCR-distorted district labels are
@@ -120,12 +135,26 @@ audit; the raw PDF itself remains outside the normal targets dependency graph.
 
 On the currently registered Atlas scan, all 56 pages preserve the 114-column
 layout. The positioned-text candidate pass recovers 54,981 cells. Under the
-single-integer parser, 49,095 are ordinary parses, 763 are explicit OCR-zero
-normalizations, 1,572 contain multiple numeric groups and are now rejected as
-ambiguous, 656 contain other unparsed text-layer artifacts, and 2,895 have no
+single-integer parser, 49,098 are ordinary parses, 763 are explicit OCR-zero
+normalizations, 1,562 contain multiple numeric groups and are rejected as
+ambiguous, 656 contain other unparsed text-layer artifacts, and 2,902 have no
 positioned text at the candidate row/column intersection. Fifteen pages also
 require row-alignment review. These figures are extraction diagnostics, not
 data-quality claims and not production speaker counts.
+
+A source-level row-ownership defect was found during impossible-sum review. At
+some state-heading → district-01 boundaries, bold state-total values sit lower
+in the PDF text layer than the heading itself, so a symmetric label-centered
+window can assign a state total to district 01. The extractor now changes row
+ownership only at that transition and only when the data columns expose two
+dense numeric baselines separated by approximately one printed row. The vertical
+boundary is the midpoint of those two numeric baselines; if the source page does
+not expose a convincing pair, the established extraction rule is left unchanged
+and downstream QA handles the case. Ordinary district-row extraction is
+unchanged. This retains Srikakulam's printed Bengali and Hindi counts while
+removing, for example, a 393,825 Madhya Pradesh state-total Kurukh/Oraon value
+that had leaked into Morena; the Morena cell now remains unresolved rather than
+being accepted as a district count. No source-review override is used.
 
 District identity now uses the official 1991 Census coding structure rather than
 name similarity. The ORGI 1991 editing/coding manual defines state codes and
@@ -200,7 +229,7 @@ preferred analysis threshold. It mirrors the geographic-lineage sensitivity
 contract and lets a later phase choose a historical-language coverage rule from
 explicit evidence rather than parser convenience. On the current source pass,
 the accepted-speaker lower bound certifies 240 districts at 95%, 212 at 98%,
-201 at 99%, 175 at 99.5%, and 125 at 99.9%; none is certified at 100%.
+201 at 99%, 175 at 99.5%, and 124 at 99.9%; none is certified at 100%.
 These counts remain extraction diagnostics, not a chosen analysis sample.
 
 On the current source pass, 342 districts have incomplete alignment, 63 have all
@@ -255,8 +284,9 @@ sensitivity source rather than geography authority for the Census-2001 panel.
 
 ## Next phases
 
-1. Resolve or characterize the remaining Atlas district/PCA, cell, and cross-page
-   alignment review queues and promote a tracked reviewed district-language table.
+1. Review the impossible-sum and high-coverage unresolved triage queues first,
+   then characterize the remaining Atlas district/PCA and cross-page alignment
+   cases before promoting a tracked reviewed district-language table.
 2. Reuse the now-registered 114 Atlas labels and frozen Shastry/Glottolog identity
    machinery; keep unresolved labels and speaker coverage explicit.
 3. Construct 1991 district linguistic distance on native 1991 geography.
