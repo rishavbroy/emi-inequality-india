@@ -438,6 +438,20 @@ separately, and each specification uses the identical district observations for
 the two instrument vintages. This comparison remains diagnostic-only until the
 reviewed Atlas source and explicit accepted-speaker threshold are promoted.
 
+The 1991 baseline balance results also motivate a separate
+**predetermined-control sensitivity** for that historical first stage. Several
+eventual-EMI associations are visible in PCA91 and the rural/urban development
+blocks, so historical validation should not rely only on the Census-2001
+adjustment ladder. When a SHRUG 1991 baseline table is supplied,
+`build_historical_linguistic_first_stage_robustness()` additionally reports two
+state-1991-FE specifications: the complete-coverage PCA91 controls and the full
+selected PCA91+VD91+TD91 baseline set. These are robustness diagnostics, not
+changes to the primary IV specification. Each specification constructs common
+support for both the 1991 and 2001 linguistic-distance vintages independently;
+missing VD91/TD91 values therefore do not shrink the PCA91-only sensitivity,
+and missing Census-2001 controls do not shrink either predetermined-control
+sensitivity.
+
 ## Vanneman source provenance
 
 The downloaded Vanneman-Barnes snapshot is useful for later pre-treatment
