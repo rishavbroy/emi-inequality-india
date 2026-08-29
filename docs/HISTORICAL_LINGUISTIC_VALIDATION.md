@@ -499,7 +499,13 @@ correlations, population-weighted slopes, and state-fixed-effect slopes are
 therefore computed by one shared metrics routine rather than parallel code.
 Quintile-transition output remains tied to the primary scalar.
 Population-weighted correlations use base R's `stats::cov.wt`; the
-weighted Spearman statistic applies the same estimator to ordinary ranks. Split
+weighted Spearman statistic applies the same estimator to ordinary ranks.
+Weighted persistence slopes use `stats::lm`, while R-squared is recovered
+directly from the fitted values, residuals, and model weights using the same
+model/residual sum-of-squares definition as base R's `summary.lm`. The diagnostic
+does not call `summary.lm` merely to obtain R-squared: current R versions warn
+on essentially perfect fits because standard-error summaries become unreliable,
+whereas the descriptive fitted-value R-squared remains well-defined. Split
 or otherwise nonpreferred geography stays in the district panel with an
 explicit status and cannot enter either persistence summary. This diagnostic is
 wired into the extended target graph through the tracked accepted-source artifact.
