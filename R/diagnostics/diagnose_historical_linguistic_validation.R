@@ -90,6 +90,160 @@ save_historical_linguistic_geography_1991_2001 <- function(
   unname(paths)
 }
 
+historical_linguistic_carveout_benchmark <- function(
+    geography, carveouts, admin_2001) {
+  required <- c("source_districts", "transition")
+  missing <- setdiff(required, names(geography))
+  if (length(missing)) {
+    stop("Historical linguistic geography object lacks: ", paste(missing, collapse = ", "), call. = FALSE)
+  }
+  source <- safe_df(geography$source_districts)
+  transition <- safe_df(geography$transition)
+  carveouts <- safe_df(carveouts)
+  admin <- safe_df(admin_2001)
+  require_fields <- function(x, fields, label) {
+    missing <- setdiff(fields, names(x))
+    if (length(missing)) stop(label, " lacks fields: ", paste(missing, collapse = ", "), call. = FALSE)
+  }
+  require_fields(
+    source,
+    c("state_code_1991", "district_code_1991", "population_1991_total"),
+    "Historical linguistic geography"
+  )
+  require_fields(
+    transition,
+    c(
+      "state_code_1991", "district_code_1991", "state_code_2001", "district_code_2001",
+      "population_share_to_2001"
+    ),
+    "Historical linguistic transition"
+  )
+  require_fields(
+    carveouts,
+    c("district_1991", "pop_1991", "district_2001", "pct_01in91"),
+    "Kumar-Somanathan carve-out source"
+  )
+  require_fields(admin, c("state_code", "district_code", "district_std"), "Census-2001 district registry")
+
+  source$state_code_1991 <- pad_admin_code(source$state_code_1991, 2L)
+  source$district_code_1991 <- pad_admin_code(source$district_code_1991, 2L)
+  source$population_1991_total <- num(source$population_1991_total)
+  transition$state_code_1991 <- pad_admin_code(transition$state_code_1991, 2L)
+  transition$district_code_1991 <- pad_admin_code(transition$district_code_1991, 2L)
+  transition$state_code_2001 <- pad_admin_code(transition$state_code_2001, 2L)
+  transition$district_code_2001 <- pad_admin_code(transition$district_code_2001, 2L)
+  transition$population_share_to_2001 <- num(transition$population_share_to_2001)
+  admin$state_code <- pad_admin_code(admin$state_code, 2L)
+  admin$district_code <- pad_admin_code(admin$district_code, 2L)
+  admin$district_std <- canonicalize_district_name(admin$district_std)
+
+  carveouts$district_1991 <- plain_chr(carveouts$district_1991)
+  carveouts$district_2001 <- plain_chr(carveouts$district_2001)
+  carveouts$pop_1991 <- num(carveouts$pop_1991)
+  carveouts$source_share_to_2001 <- num(carveouts$pct_01in91) / 100
+  carveouts$target_district_std <- canonicalize_district_name(carveouts$district_2001)
+
+  population_groups <- split(seq_len(nrow(source)), as.character(source$population_1991_total))
+  population_match <- safe_bind_rows(lapply(population_groups, function(i) {
+    rows <- source[i, , drop = FALSE]
+    data.frame(
+      pop_1991 = rows$population_1991_total[[1L]],
+      n_geography_population_matches = nrow(rows),
+      state_code_1991 = if (nrow(rows) == 1L) rows$state_code_1991[[1L]] else NA_character_,
+      district_code_1991 = if (nrow(rows) == 1L) rows$district_code_1991[[1L]] else NA_character_,
+      stringsAsFactors = FALSE
+    )
+  }))
+  out <- merge(carveouts, population_match, by = "pop_1991", all.x = TRUE, sort = FALSE)
+  out$n_geography_population_matches <- num(out$n_geography_population_matches)
+  out$n_geography_population_matches[!is.finite(out$n_geography_population_matches)] <- 0L
+
+  target_registry <- unique(admin[c("state_code", "district_code", "district_std")])
+  names(target_registry) <- c("state_code_2001", "district_code_2001", "target_district_std")
+  bridge <- merge(
+    transition, target_registry,
+    by = c("state_code_2001", "district_code_2001"), all.x = TRUE, sort = FALSE
+  )
+  bridge <- bridge[c(
+    "state_code_1991", "district_code_1991", "state_code_2001", "district_code_2001",
+    "target_district_std", "population_share_to_2001"
+  )]
+  bridge$benchmark_key <- paste(
+    bridge$state_code_1991, bridge$district_code_1991, bridge$target_district_std,
+    sep = "__"
+  )
+  bridge_key_ok <- !is.na(bridge$target_district_std) & nzchar(bridge$target_district_std)
+  if (anyDuplicated(bridge$benchmark_key[bridge_key_ok])) {
+    stop("Historical SHRUG transition has duplicate source/target-name benchmark keys.", call. = FALSE)
+  }
+  out$benchmark_key <- paste(
+    out$state_code_1991, out$district_code_1991, out$target_district_std,
+    sep = "__"
+  )
+  bridge_match <- match(out$benchmark_key, bridge$benchmark_key)
+  out$state_code_2001 <- bridge$state_code_2001[bridge_match]
+  out$district_code_2001 <- bridge$district_code_2001[bridge_match]
+  out$shrug_population_share_to_2001 <- bridge$population_share_to_2001[bridge_match]
+  out$share_abs_diff <- abs(out$source_share_to_2001 - out$shrug_population_share_to_2001)
+  out$benchmark_status <- ifelse(
+    out$n_geography_population_matches != 1L,
+    "source_population_not_unique",
+    ifelse(is.na(bridge_match), "target_name_not_in_shrug_transition", "matched_edge")
+  )
+  out <- out[c(
+    "district_1991", "pop_1991", "district_2001",
+    "state_code_1991", "district_code_1991", "state_code_2001", "district_code_2001",
+    "source_share_to_2001", "shrug_population_share_to_2001", "share_abs_diff",
+    "n_geography_population_matches", "benchmark_status"
+  )]
+  rownames(out) <- NULL
+  out
+}
+
+historical_linguistic_carveout_benchmark_summary <- function(benchmark) {
+  x <- safe_df(benchmark)
+  matched <- x[x$benchmark_status == "matched_edge", , drop = FALSE]
+  source_key <- paste(x$district_1991, x$pop_1991, sep = "__")
+  population_identified <- x[x$n_geography_population_matches == 1L, , drop = FALSE]
+  population_identified_key <- paste(
+    population_identified$district_1991, population_identified$pop_1991, sep = "__"
+  )
+  diff <- num(matched$share_abs_diff)
+  diff <- diff[is.finite(diff)]
+  data.frame(
+    n_source_edges = nrow(x),
+    n_source_districts = length(unique(source_key)),
+    n_population_identified_source_districts = length(unique(population_identified_key)),
+    n_matched_edges = nrow(matched),
+    median_absolute_share_difference = if (length(diff)) stats::median(diff, na.rm = TRUE) else NA_real_,
+    p95_absolute_share_difference = if (length(diff)) unname(stats::quantile(diff, 0.95, na.rm = TRUE)) else NA_real_,
+    max_absolute_share_difference = if (length(diff)) max(diff, na.rm = TRUE) else NA_real_,
+    share_matched_edges_within_1pp = if (length(diff)) mean(diff <= 0.01, na.rm = TRUE) else NA_real_,
+    stringsAsFactors = FALSE
+  )
+}
+
+build_historical_linguistic_geography_external_benchmark <- function(
+    geography, carveouts, admin_2001) {
+  edges <- historical_linguistic_carveout_benchmark(geography, carveouts, admin_2001)
+  list(
+    edges = edges,
+    summary = historical_linguistic_carveout_benchmark_summary(edges)
+  )
+}
+
+save_historical_linguistic_geography_external_benchmark <- function(
+    x, directory = "outputs/diagnostics/extended/instrument_relevance") {
+  dir.create(directory, recursive = TRUE, showWarnings = FALSE)
+  paths <- c(
+    edges = file.path(directory, "historical_linguistic_geography_carveout_benchmark.csv"),
+    summary = file.path(directory, "historical_linguistic_geography_carveout_benchmark_summary.csv")
+  )
+  write_diagnostic_csv(x$edges, paths[["edges"]])
+  write_diagnostic_csv(x$summary, paths[["summary"]])
+  unname(paths)
+}
+
 historical_linguistic_rank_percentile <- function(x) {
   x <- num(x)
   out <- rep(NA_real_, length(x))
@@ -482,25 +636,11 @@ historical_linguistic_first_stage_panel <- function(
     by = c("state_code_2001", "district_code_2001"), all.x = TRUE, sort = FALSE
   )
 
-  numeric_variables <- unique(c(
-    treatment, "ling_distance_nonzero_mean_1991", "ling_distance_nonzero_mean_2001",
-    census_2001_diagnostic_controls()
-  ))
-  for (variable in numeric_variables) out[[variable]] <- num(out[[variable]])
-  out$region <- plain_chr(out$region)
-  needed <- unique(c(
-    treatment, "ling_distance_nonzero_mean_1991", "ling_distance_nonzero_mean_2001",
-    "state_code_2001", "district_code_2001", "region",
-    census_2001_diagnostic_controls()
-  ))
-  keep <- stats::complete.cases(out[needed]) &
-    nzchar(out$state_code_2001) & nzchar(out$district_code_2001) & nzchar(out$region)
-  out <- out[keep, , drop = FALSE]
-  rownames(out) <- NULL
-  if (!nrow(out)) {
-    stop("No common support is available for historical first-stage robustness.", call. = FALSE)
-  }
-  out
+  prepare_first_stage_absorption_panel(
+    out,
+    treatment = treatment,
+    instrument = c("ling_distance_nonzero_mean_1991", "ling_distance_nonzero_mean_2001")
+  )
 }
 
 historical_linguistic_first_stage_estimates <- function(

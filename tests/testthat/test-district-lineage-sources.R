@@ -1402,3 +1402,13 @@ test_that("1991 SHRUG geography and baseline archives are explicitly inventoried
     c(historical_keys, baseline_archives), specs$source_id
   )])))
 })
+
+test_that("Kumar-Somanathan carve-outs are loaded only as historical geography benchmark evidence", {
+  specs <- district_lineage_input_specs(build_paths(Sys.getenv("EMI_PROJECT_ROOT", ".")))
+  row <- specs[specs$source_id == "kumar_somanathan_1991_2001", , drop = FALSE]
+
+  expect_equal(nrow(row), 1L)
+  expect_identical(row$reader, "carveout_csv")
+  expect_true(row$load_for_diagnostic)
+  expect_identical(row$role, "historical_geography_benchmark")
+})

@@ -758,6 +758,21 @@ core_pipeline_targets <- list(
     )
   ),
   tar_target(
+    historical_linguistic_geography_external_benchmark,
+    build_historical_linguistic_geography_external_benchmark(
+      historical_linguistic_geography_1991_2001,
+      district_lineage_sources$kumar_somanathan_1991_2001,
+      district_lineage$admin_units_2001
+    )
+  ),
+  tar_target(
+    diag_ext_historical_linguistic_geography_external_benchmark,
+    save_historical_linguistic_geography_external_benchmark(
+      historical_linguistic_geography_external_benchmark
+    ),
+    format = "file"
+  ),
+  tar_target(
     consumption_lineage_identity_aliases_file,
     "data/metadata/consumption_lineage_identity_aliases.csv",
     format = "file"

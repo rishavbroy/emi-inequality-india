@@ -257,3 +257,74 @@ test_that("historical first-stage robustness fails on duplicate destination dist
     "duplicate Census-2001 district keys"
   )
 })
+
+test_that("historical geography benchmark uses only uniquely population-identified sources", {
+  geography <- list(
+    source_districts = data.frame(
+      state_code_1991 = c("02", "02", "03"),
+      district_code_1991 = c("01", "02", "01"),
+      population_1991_total = c(100, 200, 200),
+      stringsAsFactors = FALSE
+    ),
+    transition = data.frame(
+      state_code_1991 = c("02", "02", "02"),
+      district_code_1991 = c("01", "01", "02"),
+      state_code_2001 = c("28", "28", "28"),
+      district_code_2001 = c("01", "02", "03"),
+      population_share_to_2001 = c(0.59, 0.41, 1),
+      stringsAsFactors = FALSE
+    )
+  )
+  carveouts <- data.frame(
+    district_1991 = c("Old", "Old", "Ambiguous"),
+    pop_1991 = c(100, 100, 200),
+    district_2001 = c("Alpha", "Beta", "Gamma"),
+    pct_01in91 = c(60, 40, 100),
+    stringsAsFactors = FALSE
+  )
+  admin <- data.frame(
+    state_code = "28",
+    district_code = c("01", "02", "03"),
+    district_std = c("alpha", "beta", "gamma"),
+    stringsAsFactors = FALSE
+  )
+
+  out <- build_historical_linguistic_geography_external_benchmark(
+    geography, carveouts, admin
+  )
+
+  expect_equal(sum(out$edges$benchmark_status == "matched_edge"), 2L)
+  ambiguous <- out$edges[out$edges$district_1991 == "Ambiguous", , drop = FALSE]
+  expect_identical(ambiguous$benchmark_status, "source_population_not_unique")
+  expect_equal(sort(out$edges$share_abs_diff[out$edges$benchmark_status == "matched_edge"]), c(0.01, 0.01))
+  expect_equal(out$summary$n_population_identified_source_districts, 1L)
+  expect_equal(out$summary$n_matched_edges, 2L)
+  expect_equal(out$summary$share_matched_edges_within_1pp, 1)
+})
+
+test_that("historical geography benchmark does not fuzzy-match destination names", {
+  geography <- list(
+    source_districts = data.frame(
+      state_code_1991 = "02", district_code_1991 = "01",
+      population_1991_total = 100, stringsAsFactors = FALSE
+    ),
+    transition = data.frame(
+      state_code_1991 = "02", district_code_1991 = "01",
+      state_code_2001 = "28", district_code_2001 = "01",
+      population_share_to_2001 = 1, stringsAsFactors = FALSE
+    )
+  )
+  carveouts <- data.frame(
+    district_1991 = "Old", pop_1991 = 100,
+    district_2001 = "Alfa", pct_01in91 = 100,
+    stringsAsFactors = FALSE
+  )
+  admin <- data.frame(
+    state_code = "28", district_code = "01", district_std = "alpha",
+    stringsAsFactors = FALSE
+  )
+
+  out <- historical_linguistic_carveout_benchmark(geography, carveouts, admin)
+  expect_identical(out$benchmark_status, "target_name_not_in_shrug_transition")
+  expect_true(is.na(out$shrug_population_share_to_2001))
+})
