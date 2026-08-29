@@ -200,3 +200,30 @@ test_that("historical baseline balance keeps EMI and reviewed LD support separat
   expect_equal(select_n(missing_emie, "eventual_emie"), select_n(complete, "eventual_emie") - 1L)
   expect_equal(select_n(missing_emie, "historical_ld_1991"), select_n(complete, "historical_ld_1991"))
 })
+
+
+test_that("historical joint balance does not label unavailable Wald inference as estimated", {
+  fixture <- historical_baseline_balance_fixture()
+  panel <- historical_baseline_1991_panel(
+    fixture$baseline, fixture$geography, fixture$panel
+  )
+  rural <- historical_baseline_1991_metadata()
+  rural <- rural$variable[rural$domain == "rural_development"]
+  keep <- c(1:3, 7:9)
+  for (variable in rural) panel[[variable]][-keep] <- NA_real_
+
+  out <- expect_warning(
+    estimate_historical_baseline_joint_balance(
+      panel, "emi_exposure_all_children_0708", "rural_development", exact_only = FALSE
+    ),
+    NA
+  )
+  expect_identical(out$status, "not_estimable")
+  expect_true(is.na(out$joint_f))
+  expect_true(is.na(out$joint_p))
+  expect_true(out$reason %in% c(
+    "no_residual_degrees_of_freedom",
+    "tested_terms_aliased",
+    "clustered_joint_inference_unavailable"
+  ))
+})

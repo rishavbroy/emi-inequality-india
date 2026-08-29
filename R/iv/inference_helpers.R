@@ -39,6 +39,26 @@ clustered_joint_wald_test <- function(fit, terms, cluster, inference = NULL) {
   wald_f_from_vcov(fit, terms, inference$vcov)
 }
 
+joint_wald_estimability <- function(fit, terms, joint) {
+  residual_df <- tryCatch(stats::df.residual(fit), error = function(e) NA_real_)
+  if (!is.finite(residual_df) || residual_df <= 0) {
+    return(c(status = "not_estimable", reason = "no_residual_degrees_of_freedom"))
+  }
+
+  coefficients <- tryCatch(stats::coef(fit), error = function(e) NULL)
+  if (is.null(coefficients) || any(!terms %in% names(coefficients)) ||
+      any(!is.finite(coefficients[terms]))) {
+    return(c(status = "not_estimable", reason = "tested_terms_aliased"))
+  }
+
+  statistic <- if ("statistic" %in% names(joint)) as.numeric(joint[["statistic"]]) else NA_real_
+  p_value <- if ("p.value" %in% names(joint)) as.numeric(joint[["p.value"]]) else NA_real_
+  if (!is.finite(statistic) || !is.finite(p_value)) {
+    return(c(status = "not_estimable", reason = "clustered_joint_inference_unavailable"))
+  }
+  c(status = "estimated", reason = NA_character_)
+}
+
 
 iv_nuisance_terms <- function(controls = character(), fixed_effect = "none") {
   unique(c(controls, iv_fixed_effect_terms(fixed_effect)))

@@ -2486,3 +2486,31 @@ test_that("optional pretrend welfare rounds remain outside the causal IV registr
   expect_setequal(pretrend, c("nss_2000_01", "nss_2001_02"))
   expect_length(intersect(pretrend, registered_rounds), 0L)
 })
+
+
+test_that("joint Wald estimability distinguishes valid, saturated, and unavailable inference", {
+  x <- data.frame(
+    y = c(2, 3, 5, 8, 9, 12, 14, 17),
+    a = c(0, 1, 0, 1, 2, 2, 3, 4),
+    b = c(1, 0, 2, 1, 0, 3, 2, 4)
+  )
+  fit <- stats::lm(y ~ a + b, data = x)
+  valid <- c(statistic = 2, p.value = 0.1, df = 2)
+  expect_identical(
+    unname(joint_wald_estimability(fit, c("a", "b"), valid)[["status"]]),
+    "estimated"
+  )
+
+  saturated <- stats::lm(y ~ factor(seq_along(y)) - 1, data = x)
+  saturated_status <- joint_wald_estimability(
+    saturated, names(stats::coef(saturated))[1L], valid
+  )
+  expect_identical(unname(saturated_status[["status"]]), "not_estimable")
+  expect_identical(unname(saturated_status[["reason"]]), "no_residual_degrees_of_freedom")
+
+  unavailable <- joint_wald_estimability(
+    fit, c("a", "b"), c(statistic = NA_real_, p.value = NA_real_, df = 2)
+  )
+  expect_identical(unname(unavailable[["status"]]), "not_estimable")
+  expect_identical(unname(unavailable[["reason"]]), "clustered_joint_inference_unavailable")
+})

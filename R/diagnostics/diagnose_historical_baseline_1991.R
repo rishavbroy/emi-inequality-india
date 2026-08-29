@@ -137,7 +137,8 @@ estimate_historical_baseline_joint_balance <- function(
       sample = sample_name, predictor = predictor, domain = domain,
       tested_covariates = paste(variables, collapse = ";"), n_tested_covariates = length(variables),
       joint_f = NA_real_, joint_p = NA_real_, n = 0L, n_states = 0L,
-      population_1991 = 0, status = "not_estimated", stringsAsFactors = FALSE
+      population_1991 = 0, status = "not_estimated", reason = "no_complete_cases",
+      stringsAsFactors = FALSE
     ))
   }
   rhs <- c(variables, "factor(state_code_1991)")
@@ -145,12 +146,16 @@ estimate_historical_baseline_joint_balance <- function(
     stats::reformulate(rhs, response = predictor), data = x, weights = num(x$population_1991)
   )
   joint <- clustered_joint_wald_test(fit, variables, x$state_code_1991)
+  estimability <- joint_wald_estimability(fit, variables, joint)
+  estimated <- identical(unname(estimability[["status"]]), "estimated")
   data.frame(
     sample = sample_name, predictor = predictor, domain = domain,
     tested_covariates = paste(variables, collapse = ";"), n_tested_covariates = length(variables),
-    joint_f = unname(joint[["statistic"]]), joint_p = unname(joint[["p.value"]]),
+    joint_f = if (estimated) unname(joint[["statistic"]]) else NA_real_,
+    joint_p = if (estimated) unname(joint[["p.value"]]) else NA_real_,
     n = stats::nobs(fit), n_states = length(unique(x$state_code_1991)),
-    population_1991 = sum(num(x$population_1991)), status = "estimated",
+    population_1991 = sum(num(x$population_1991)),
+    status = unname(estimability[["status"]]), reason = unname(estimability[["reason"]]),
     stringsAsFactors = FALSE
   )
 }
