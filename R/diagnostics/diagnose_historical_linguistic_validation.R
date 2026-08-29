@@ -417,3 +417,160 @@ build_historical_linguistic_persistence_validation <- function(
     ))
   )
 }
+
+historical_linguistic_first_stage_registry <- function() {
+  keep <- c(
+    "instrument_only",
+    "region_fe_census_controls",
+    "state_fe_census_controls",
+    "region_fe_expanded_controls",
+    "state_fe_expanded_controls"
+  )
+  registry <- first_stage_absorption_registry()
+  index <- match(keep, registry$specification_id)
+  if (anyNA(index)) {
+    stop("Historical first-stage registry is missing canonical absorption specifications.", call. = FALSE)
+  }
+  registry[index, , drop = FALSE]
+}
+
+historical_linguistic_first_stage_panel <- function(
+    historical_distance, distance_2001, geography, district_panel,
+    treatment = preferred_iv_variables()$treatment) {
+  required <- c("source_districts", "transition")
+  missing <- setdiff(required, names(geography))
+  if (length(missing)) {
+    stop("Historical linguistic geography object lacks: ", paste(missing, collapse = ", "), call. = FALSE)
+  }
+  persistence <- historical_linguistic_persistence_panel(
+    historical_distance, distance_2001,
+    geography$source_districts, geography$transition
+  )
+  persistence <- persistence[persistence$persistence_status == "eligible", , drop = FALSE]
+  if (!nrow(persistence)) {
+    stop("No preferred historical districts are eligible for first-stage robustness.", call. = FALSE)
+  }
+
+  panel <- if (inherits(district_panel, "sf")) {
+    sf::st_drop_geometry(district_panel)
+  } else {
+    as.data.frame(district_panel, stringsAsFactors = FALSE)
+  }
+  required_panel <- unique(c(
+    "state_code_2001", "district_code_2001", "region", treatment,
+    census_2001_diagnostic_controls()
+  ))
+  missing <- setdiff(required_panel, names(panel))
+  if (length(missing)) {
+    stop("Historical first-stage panel is missing columns: ", paste(missing, collapse = ", "), call. = FALSE)
+  }
+  panel$state_code_2001 <- pad_admin_code(panel$state_code_2001, 2L)
+  panel$district_code_2001 <- pad_admin_code(panel$district_code_2001, 2L)
+  key <- paste(panel$state_code_2001, panel$district_code_2001, sep = "__")
+  if (anyDuplicated(key)) {
+    stop("Historical first-stage panel has duplicate Census-2001 district keys.", call. = FALSE)
+  }
+
+  persistence_keep <- persistence[c(
+    "state_code_1991", "district_code_1991", "state_code_2001", "district_code_2001",
+    "exact_language_persistence", "min_accepted_coverage",
+    "ling_distance_nonzero_mean_1991", "ling_distance_nonzero_mean_2001"
+  )]
+  panel_keep <- panel[required_panel]
+  out <- merge(
+    persistence_keep, panel_keep,
+    by = c("state_code_2001", "district_code_2001"), all.x = TRUE, sort = FALSE
+  )
+
+  numeric_variables <- unique(c(
+    treatment, "ling_distance_nonzero_mean_1991", "ling_distance_nonzero_mean_2001",
+    census_2001_diagnostic_controls()
+  ))
+  for (variable in numeric_variables) out[[variable]] <- num(out[[variable]])
+  out$region <- plain_chr(out$region)
+  needed <- unique(c(
+    treatment, "ling_distance_nonzero_mean_1991", "ling_distance_nonzero_mean_2001",
+    "state_code_2001", "district_code_2001", "region",
+    census_2001_diagnostic_controls()
+  ))
+  keep <- stats::complete.cases(out[needed]) &
+    nzchar(out$state_code_2001) & nzchar(out$district_code_2001) & nzchar(out$region)
+  out <- out[keep, , drop = FALSE]
+  rownames(out) <- NULL
+  if (!nrow(out)) {
+    stop("No common support is available for historical first-stage robustness.", call. = FALSE)
+  }
+  out
+}
+
+historical_linguistic_first_stage_estimates <- function(
+    data, registry, treatment, exact_only = FALSE) {
+  sample_name <- if (exact_only) "exact_one_to_one" else "preferred_geography"
+  sample <- if (exact_only) {
+    data[data$exact_language_persistence %in% TRUE, , drop = FALSE]
+  } else {
+    data
+  }
+  if (!nrow(sample)) return(data.frame())
+
+  instruments <- c(
+    historical_1991 = "ling_distance_nonzero_mean_1991",
+    census_2001 = "ling_distance_nonzero_mean_2001"
+  )
+  safe_bind_rows(lapply(names(instruments), function(vintage) {
+    instrument <- instruments[[vintage]]
+    safe_bind_rows(lapply(seq_len(nrow(registry)), function(i) {
+      estimate <- estimate_first_stage_absorption_spec(
+        sample, registry[i, , drop = FALSE], treatment, instrument
+      )$summary
+      estimate$sample <- sample_name
+      estimate$instrument_vintage <- vintage
+      estimate$min_accepted_coverage <- unique(num(sample$min_accepted_coverage))[[1L]]
+      estimate
+    }))
+  }))
+}
+
+historical_linguistic_first_stage_comparison <- function(estimates) {
+  x <- safe_df(estimates)
+  if (!nrow(x)) return(data.frame())
+  id <- c(
+    "sample", "specification_id", "specification", "sequence", "treatment",
+    "fixed_effect", "control_blocks", "n_controls", "min_accepted_coverage"
+  )
+  metrics <- c("estimate", "excluded_instrument_f", "partial_r_squared", "n", "n_states", "n_regions")
+  one <- function(vintage, suffix) {
+    out <- x[x$instrument_vintage == vintage, c(id, metrics), drop = FALSE]
+    names(out)[match(metrics, names(out))] <- paste0(metrics, suffix)
+    out
+  }
+  historical <- one("historical_1991", "_1991")
+  current <- one("census_2001", "_2001")
+  out <- merge(historical, current, by = id, all = TRUE, sort = FALSE)
+  out$estimate_change_1991_vs_2001 <- out$estimate_1991 - out$estimate_2001
+  out$f_change_1991_vs_2001 <- out$excluded_instrument_f_1991 - out$excluded_instrument_f_2001
+  out$partial_r_squared_change_1991_vs_2001 <- out$partial_r_squared_1991 - out$partial_r_squared_2001
+  out
+}
+
+build_historical_linguistic_first_stage_robustness <- function(
+    historical_distance, distance_2001, geography, district_panel,
+    treatment = preferred_iv_variables()$treatment) {
+  panel <- historical_linguistic_first_stage_panel(
+    historical_distance, distance_2001, geography, district_panel, treatment
+  )
+  registry <- historical_linguistic_first_stage_registry()
+  estimates <- safe_bind_rows(list(
+    historical_linguistic_first_stage_estimates(panel, registry, treatment, exact_only = FALSE),
+    historical_linguistic_first_stage_estimates(panel, registry, treatment, exact_only = TRUE)
+  ))
+  structure(
+    list(
+      panel = panel,
+      registry = registry,
+      estimates = estimates,
+      comparison = historical_linguistic_first_stage_comparison(estimates)
+    ),
+    class = "emi_historical_linguistic_first_stage"
+  )
+}

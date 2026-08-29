@@ -138,3 +138,122 @@ test_that("weighted historical correlations are defined from population weights"
   )
   expect_true(is.na(historical_linguistic_weighted_correlation(rep(1, 4), y, w)))
 })
+
+historical_first_stage_fixture <- function() {
+  n <- 60L
+  state <- sprintf("%02d", rep(2:11, each = 6))
+  district <- sprintf("%02d", seq_len(n))
+  region <- rep(panel_region_levels(), length.out = n)
+  z91 <- seq(0.4, 4.0, length.out = n) + rep(c(-0.05, 0.03, 0.01), length.out = n)
+  z01 <- z91 + 0.5
+  treatment <- 2 * z91 + 3 + 0.05 * sin(seq_len(n) / 3)
+  historical <- data.frame(
+    state_code_1991 = state,
+    district_code_1991 = district,
+    atlas_population_1991 = 1000 + seq_len(n),
+    min_accepted_coverage = 0.99,
+    historical_language_status = "eligible",
+    ling_distance_nonzero_mean_1991 = z91,
+    stringsAsFactors = FALSE
+  )
+  current <- data.frame(
+    state_code_2001 = state,
+    district_code_2001 = district,
+    ling_distance_nonzero_mean = z01,
+    stringsAsFactors = FALSE
+  )
+  source_districts <- data.frame(
+    state_code_1991 = state,
+    district_code_1991 = district,
+    exact_language_persistence = c(FALSE, rep(TRUE, n - 1L)),
+    preferred_language_persistence = TRUE,
+    population_coverage = c(0.995, rep(1, n - 1L)),
+    n_target_2001_districts = 1L,
+    stringsAsFactors = FALSE
+  )
+  transition <- data.frame(
+    state_code_1991 = state,
+    district_code_1991 = district,
+    state_code_2001 = state,
+    district_code_2001 = district,
+    stringsAsFactors = FALSE
+  )
+  controls <- census_2001_diagnostic_controls()
+  panel <- data.frame(
+    state_code_2001 = state,
+    district_code_2001 = district,
+    region = region,
+    emi_exposure_all_children_0708 = treatment,
+    stringsAsFactors = FALSE
+  )
+  for (i in seq_along(controls)) {
+    panel[[controls[[i]]]] <- sin(seq_len(n) * (i + 1) / 17) + cos(seq_len(n) / (i + 2))
+  }
+  list(
+    historical = historical,
+    current = current,
+    geography = list(source_districts = source_districts, transition = transition),
+    panel = panel
+  )
+}
+
+test_that("historical first-stage robustness compares instrument vintages on common support", {
+  fixture <- historical_first_stage_fixture()
+  out <- build_historical_linguistic_first_stage_robustness(
+    fixture$historical, fixture$current, fixture$geography, fixture$panel
+  )
+
+  expect_s3_class(out, "emi_historical_linguistic_first_stage")
+  expect_setequal(out$estimates$instrument_vintage, c("historical_1991", "census_2001"))
+  expect_setequal(out$estimates$sample, c("preferred_geography", "exact_one_to_one"))
+  expect_equal(unique(out$panel$min_accepted_coverage), 0.99)
+  expect_equal(nrow(out$panel), 60L)
+
+  unadjusted <- out$estimates[
+    out$estimates$sample == "preferred_geography" &
+      out$estimates$specification_id == "instrument_only",
+    , drop = FALSE
+  ]
+  expect_equal(unadjusted$n, c(60, 60))
+  expected <- unname(stats::coef(stats::lm(
+    emi_exposure_all_children_0708 ~ ling_distance_nonzero_mean_1991,
+    data = out$panel
+  ))[["ling_distance_nonzero_mean_1991"]])
+  expect_equal(unadjusted$estimate, rep(expected, 2), tolerance = 1e-10)
+
+  comparison <- out$comparison[
+    out$comparison$sample == "preferred_geography" &
+      out$comparison$specification_id == "instrument_only",
+    , drop = FALSE
+  ]
+  expect_equal(comparison$n_1991, comparison$n_2001)
+  expect_equal(comparison$estimate_change_1991_vs_2001, 0, tolerance = 1e-10)
+})
+
+test_that("historical first-stage robustness excludes nonpreferred geography and uses one common sample", {
+  fixture <- historical_first_stage_fixture()
+  fixture$geography$source_districts$preferred_language_persistence[[2L]] <- FALSE
+  fixture$geography$source_districts$exact_language_persistence[[2L]] <- FALSE
+  fixture$panel[[census_2001_diagnostic_controls()[[1L]]]][[3L]] <- NA_real_
+
+  out <- build_historical_linguistic_first_stage_robustness(
+    fixture$historical, fixture$current, fixture$geography, fixture$panel
+  )
+
+  expect_equal(nrow(out$panel), 58L)
+  expect_false(any(out$panel$district_code_2001 %in% c("02", "03")))
+  by_spec <- split(out$estimates$n, interaction(out$estimates$sample, out$estimates$specification_id, drop = TRUE))
+  expect_true(all(vapply(by_spec, function(n) length(unique(n)) == 1L, logical(1))))
+})
+
+test_that("historical first-stage robustness fails on duplicate destination districts", {
+  fixture <- historical_first_stage_fixture()
+  duplicate <- fixture$panel[1L, , drop = FALSE]
+  fixture$panel <- rbind(fixture$panel, duplicate)
+  expect_error(
+    build_historical_linguistic_first_stage_robustness(
+      fixture$historical, fixture$current, fixture$geography, fixture$panel
+    ),
+    "duplicate Census-2001 district keys"
+  )
+})
