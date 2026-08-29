@@ -556,7 +556,11 @@ test_that("Vanneman historical source QA is manifest-backed but values remain pr
   rows <- manifest[manifest$source_id == "vanneman_1961_91", , drop = FALSE]
   expect_setequal(
     rows$file_id,
-    c("vanneman_panel4", "vanneman_dist81", "vanneman_dist91", "vanneman_codebook")
+    c(
+      "vanneman_panel4", "vanneman_dist81", "vanneman_dist91",
+      "vanneman_codebook", "vanneman_variables_codebook",
+      "vanneman_education_codebook"
+    )
   )
   expect_true(all(tolower(as.character(rows$required_for_current_pipeline)) == "true"))
   expect_true(all(startsWith(rows$relative_path, "data/raw/census_1961-91/vanneman_1961-91/")))
