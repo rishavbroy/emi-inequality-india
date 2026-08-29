@@ -96,6 +96,32 @@ test_that("historical persistence normalizes the production Census-2001 distance
   )
 })
 
+test_that("historical persistence R-squared matches lm without summary-time warnings", {
+  data <- data.frame(
+    y = c(1, 3, 2, 6, 5),
+    x = c(0, 1, 2, 3, 4),
+    w = c(1, 2, 1, 3, 2)
+  )
+  weighted <- stats::lm(y ~ x, data = data, weights = w)
+  ordinary <- stats::lm(y ~ x, data = data)
+
+  expect_equal(
+    historical_linguistic_lm_r_squared(weighted),
+    summary(weighted)$r.squared,
+    tolerance = 1e-12
+  )
+  expect_equal(
+    historical_linguistic_lm_r_squared(ordinary),
+    summary(ordinary)$r.squared,
+    tolerance = 1e-12
+  )
+
+  perfect <- stats::lm(y ~ x, data = data.frame(y = 2 * (1:6), x = 1:6), weights = 1:6)
+  expect_warning(summary(perfect), "essentially perfect fit")
+  expect_warning(value <- historical_linguistic_lm_r_squared(perfect), NA)
+  expect_equal(value, 1, tolerance = 1e-12)
+})
+
 test_that("historical persistence measure registry reuses the two canonical constructions", {
   registry <- historical_linguistic_persistence_measure_registry()
   expect_identical(registry$measure_id, c("nonzero_mean", "accepted_distant_share_ge3"))

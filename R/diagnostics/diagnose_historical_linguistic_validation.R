@@ -566,6 +566,33 @@ historical_linguistic_weighted_correlation <- function(x, y, weight, rank_values
   unname(stats::cov.wt(cbind(x, y), wt = weight, cor = TRUE)$cor[1L, 2L])
 }
 
+historical_linguistic_lm_r_squared <- function(fit) {
+  if (!inherits(fit, "lm")) {
+    stop("Historical persistence R-squared requires an lm fit.", call. = FALSE)
+  }
+  residual <- num(stats::residuals(fit))
+  fitted <- num(stats::fitted(fit))
+  weight <- stats::weights(fit)
+  if (is.null(weight)) weight <- rep(1, length(residual))
+  weight <- num(weight)
+  ok <- is.finite(residual) & is.finite(fitted) & is.finite(weight) & weight >= 0
+  if (!any(ok) || sum(weight[ok]) <= 0) return(NA_real_)
+  residual <- residual[ok]
+  fitted <- fitted[ok]
+  weight <- weight[ok]
+  rss <- sum(weight * residual^2)
+  intercept <- attr(stats::terms(fit), "intercept") == 1L
+  mss <- if (intercept) {
+    fitted_mean <- sum(weight * fitted) / sum(weight)
+    sum(weight * (fitted - fitted_mean)^2)
+  } else {
+    sum(weight * fitted^2)
+  }
+  total <- mss + rss
+  if (!is.finite(total) || total <= 0) return(NA_real_)
+  mss / total
+}
+
 historical_linguistic_persistence_metrics <- function(
     panel, exact_only = FALSE,
     measure_id = "nonzero_mean",
@@ -666,10 +693,10 @@ historical_linguistic_persistence_metrics <- function(
     d91, d01, weight, rank_values = TRUE
   )
   empty$population_weighted_slope <- unname(stats::coef(weighted_fit)[["d91"]])
-  empty$population_weighted_r_squared <- summary(weighted_fit)$r.squared
+  empty$population_weighted_r_squared <- historical_linguistic_lm_r_squared(weighted_fit)
   if (!is.null(state_fit)) {
     empty$state_fe_population_weighted_slope <- unname(stats::coef(state_fit)[["d91"]])
-    empty$state_fe_population_weighted_r_squared <- summary(state_fit)$r.squared
+    empty$state_fe_population_weighted_r_squared <- historical_linguistic_lm_r_squared(state_fit)
   }
   empty$mean_absolute_change <- mean(abs(d01 - d91))
   empty$mean_absolute_rank_change <- mean(abs(rank01 - rank91))
