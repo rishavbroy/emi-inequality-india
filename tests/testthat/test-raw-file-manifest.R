@@ -565,6 +565,18 @@ test_that("Vanneman historical source QA is manifest-backed with file-specific r
   )
   expect_true(all(tolower(as.character(rows$required_for_current_pipeline)) == "true"))
   expect_true(all(startsWith(rows$relative_path, "data/raw/census_1961-91/vanneman_1961-91/")))
+  expect_true(all(grepl("/(data_archived|sas_commands_archived|codebook)/", rows$relative_path)))
+  checksum_registry <- file.path(root, "data", "metadata", "vanneman_archive_2013_checksums.csv")
+  expect_true(file.exists(checksum_registry))
+  archive_checksums <- read.csv(checksum_registry, stringsAsFactors = FALSE)
+  expect_setequal(
+    archive_checksums$relative_path,
+    c(
+      "data_archived/panel4.data.gz", "data_archived/dist81.data.gz", "data_archived/dist91.data.gz",
+      "sas_commands_archived/panel4.sas", "sas_commands_archived/dist81.sas",
+      "sas_commands_archived/dist91.sas"
+    )
+  )
 
   source <- sources[sources$source_id == "vanneman_1961_91", , drop = FALSE]
   expect_equal(nrow(source), 1L)
