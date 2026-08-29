@@ -212,9 +212,11 @@ test_that("historical joint balance does not label unavailable Wald inference as
   keep <- c(1:3, 7:9)
   for (variable in rural) panel[[variable]][-keep] <- NA_real_
 
+  predictor <- unname(historical_baseline_predictors(panel)[["eventual_emie"]])
+  expect_identical(predictor, "emie_exposure")
   out <- expect_warning(
     estimate_historical_baseline_joint_balance(
-      panel, "emi_exposure_all_children_0708", "rural_development", exact_only = FALSE
+      panel, predictor, "rural_development", exact_only = FALSE
     ),
     NA
   )
@@ -226,4 +228,20 @@ test_that("historical joint balance does not label unavailable Wald inference as
     "tested_terms_aliased",
     "clustered_joint_inference_unavailable"
   ))
+})
+
+
+test_that("historical balance sampling fails clearly on noncanonical predictor columns", {
+  fixture <- historical_baseline_balance_fixture()
+  panel <- historical_baseline_1991_panel(
+    fixture$baseline, fixture$geography, fixture$panel
+  )
+
+  expect_error(
+    historical_baseline_balance_sample(
+      panel, "emi_exposure_all_children_0708", "log_population_1991"
+    ),
+    "Historical baseline balance sample lacks columns: emi_exposure_all_children_0708",
+    fixed = TRUE
+  )
 })

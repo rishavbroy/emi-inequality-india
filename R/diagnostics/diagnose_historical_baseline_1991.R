@@ -82,6 +82,14 @@ historical_baseline_balance_sample <- function(panel, predictor, covariates, exa
   }
   if (exact_only) keep <- keep & x$exact_language_persistence %in% TRUE
   needed <- unique(c(predictor, covariates, "population_1991", "state_code_1991"))
+  missing <- setdiff(needed, names(x))
+  if (length(missing)) {
+    stop(
+      "Historical baseline balance sample lacks columns: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
   keep <- keep & stats::complete.cases(x[needed]) & num(x$population_1991) > 0 & nzchar(plain_chr(x$state_code_1991))
   x[keep, , drop = FALSE]
 }
