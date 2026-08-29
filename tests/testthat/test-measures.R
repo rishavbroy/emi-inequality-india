@@ -1555,6 +1555,10 @@ test_that("historical Atlas distance uses the frozen resolver and explicit cover
   expected <- speaker_weighted_mean(counts, mapping$shastry_degree, nonzero)
 
   expect_equal(out$ling_distance_nonzero_mean_1991, expected)
+  expect_equal(out$ling_share_distance_ge3_1991, 40)
+  expect_equal(out$ling_share_distance_ge3_lower_bound_1991, 40)
+  expect_equal(out$ling_share_distance_ge3_upper_bound_1991, 40)
+  expect_equal(out$ling_share_distance_ge3_bound_width_1991, 0)
   expect_equal(out$accepted_speaker_coverage_1991, 1)
   expect_equal(out$historical_language_status, "eligible")
 
@@ -1643,6 +1647,26 @@ test_that("historical Atlas distance rejects source coverage with wide IV bounds
   expect_equal(out$ling_distance_nonzero_bound_width_1991, 2)
   expect_equal(out$historical_language_status, "distance_bound_too_wide")
   expect_true(is.na(out$ling_distance_nonzero_mean_1991))
+})
+
+test_that("historical distant-speaker bounds treat unresolved mass as worst-case distant", {
+  bounds <- historical_linguistic_distant_share_bounds(
+    speakers = c(90, 5, NA),
+    degree = c(0, 5, NA),
+    language = c("Hindi", "Tamil", "Assamese"),
+    population = 100, threshold = 3
+  )
+
+  expect_equal(bounds$distant_speakers, 5)
+  expect_equal(bounds$point, 5)
+  expect_equal(bounds$lower, 5)
+  expect_equal(bounds$upper, 10)
+  expect_equal(bounds$width, 5)
+  expect_equal(bounds$unresolved_mass_upper_bound, 5)
+  expect_error(
+    historical_linguistic_distant_share_bounds(1, 3, "Tamil", 1, threshold = 0),
+    "threshold must lie in"
+  )
 })
 
 test_that("historical language source-quality grid varies coverage and IV-bound thresholds", {

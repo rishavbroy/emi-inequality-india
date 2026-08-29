@@ -281,6 +281,40 @@ historical_linguistic_distance_bounds <- function(
   )
 }
 
+historical_linguistic_distant_share_bounds <- function(
+    speakers, degree, language, population, threshold = 3) {
+  speakers <- num(speakers)
+  degree <- num(degree)
+  language <- normalize_language_label(language)
+  if (!is.numeric(population) || length(population) != 1L ||
+      !is.finite(population) || population <= 0) {
+    stop("Historical distant-speaker bounds require a positive district population.", call. = FALSE)
+  }
+  if (!is.numeric(threshold) || length(threshold) != 1L ||
+      !is.finite(threshold) || threshold <= 0 || threshold > 5) {
+    stop("Historical distant-speaker threshold must lie in (0, 5].", call. = FALSE)
+  }
+  accepted <- is.finite(speakers) & speakers >= 0
+  english <- accepted & language == "English"
+  resolved <- accepted & (is.finite(degree) | english)
+  distant <- accepted & is.finite(degree) & degree >= threshold & !english
+  resolved_speakers <- sum(speakers[resolved], na.rm = TRUE)
+  distant_speakers <- sum(speakers[distant], na.rm = TRUE)
+  unresolved_mass <- max(0, population - resolved_speakers)
+  lower <- 100 * distant_speakers / population
+  upper <- 100 * min(population, distant_speakers + unresolved_mass) / population
+  list(
+    point = lower,
+    lower = lower,
+    upper = upper,
+    width = upper - lower,
+    distant_speakers = distant_speakers,
+    resolved_speakers = resolved_speakers,
+    unresolved_mass_upper_bound = unresolved_mass,
+    threshold = threshold
+  )
+}
+
 historical_linguistic_distance_1991_candidates <- function(
   atlas_source,
   registry = read_language_atlas_1991_languages(),
@@ -346,6 +380,9 @@ historical_linguistic_distance_1991_candidates <- function(
       speakers, district$shastry_degree, language, population,
       nonzero_degree_range = nonzero_degree_range
     )
+    distant_bounds <- historical_linguistic_distant_share_bounds(
+      speakers, district$shastry_degree, language, population, threshold = 3
+    )
 
     result <- data.frame(
       state_code_1991 = plain_chr(district$state_code_1991[[1L]]),
@@ -371,6 +408,11 @@ historical_linguistic_distance_1991_candidates <- function(
       ling_distance_nonzero_lower_bound_1991 = bounds$lower,
       ling_distance_nonzero_upper_bound_1991 = bounds$upper,
       ling_distance_nonzero_bound_width_1991 = bounds$width,
+      distant_speakers_ge3_accepted_1991 = distant_bounds$distant_speakers,
+      ling_share_distance_ge3_accepted_1991 = distant_bounds$point,
+      ling_share_distance_ge3_lower_bound_1991 = distant_bounds$lower,
+      ling_share_distance_ge3_upper_bound_1991 = distant_bounds$upper,
+      ling_share_distance_ge3_bound_width_1991 = distant_bounds$width,
       atlas_source_status = if (source$coverage_status == "speaker_sum_exceeds_atlas_population") {
         "population_bound_violation"
       } else if (!is.finite(bounds$point)) {
@@ -423,6 +465,7 @@ apply_historical_linguistic_distance_quality_gate <- function(
   required <- c(
     "atlas_source_status", "accepted_speaker_coverage_1991",
     "ling_distance_nonzero_mean_accepted_1991", "ling_distance_nonzero_bound_width_1991",
+    "ling_share_distance_ge3_accepted_1991", "ling_share_distance_ge3_bound_width_1991",
     "ling_distance_nonzero_mean_sensitivity_low_accepted_1991",
     "ling_distance_nonzero_mean_sensitivity_high_accepted_1991"
   )
@@ -449,6 +492,9 @@ apply_historical_linguistic_distance_quality_gate <- function(
   )
   out$ling_distance_nonzero_mean_sensitivity_high_1991 <- ifelse(
     eligible, num(out$ling_distance_nonzero_mean_sensitivity_high_accepted_1991), NA_real_
+  )
+  out$ling_share_distance_ge3_1991 <- ifelse(
+    eligible, num(out$ling_share_distance_ge3_accepted_1991), NA_real_
   )
   validate_linguistic_distance_ranges(transform(
     out,
