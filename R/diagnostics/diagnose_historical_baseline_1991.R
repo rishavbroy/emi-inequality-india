@@ -30,12 +30,6 @@ historical_baseline_1991_panel <- function(
     out, treatment_data,
     by = c("state_code_2001", "district_code_2001"), all.x = TRUE, sort = FALSE
   )
-  out$historical_balance_status <- ifelse(
-    !(out$preferred_language_persistence %in% TRUE) | num(out$n_transition_targets) != 1L,
-    "geography_not_preferred",
-    ifelse(!is.finite(num(out$emie_exposure)), "missing_emie_exposure", "eligible")
-  )
-
   if (!is.null(historical_distance)) {
     distance <- safe_df(historical_distance)
     required <- c(
@@ -77,8 +71,10 @@ historical_weighted_sd <- function(x, weight) {
 
 historical_baseline_balance_sample <- function(panel, predictor, covariates, exact_only = FALSE) {
   x <- safe_df(panel)
-  keep <- x$historical_balance_status == "eligible"
-  if (identical(predictor, "ling_distance_nonzero_mean_1991")) {
+  keep <- x$preferred_language_persistence %in% TRUE & num(x$n_transition_targets) == 1L
+  if (identical(predictor, "emie_exposure")) {
+    keep <- keep & is.finite(num(x$emie_exposure))
+  } else if (identical(predictor, "ling_distance_nonzero_mean_1991")) {
     keep <- keep & x$historical_ld_eligible %in% TRUE
   }
   if (exact_only) keep <- keep & x$exact_language_persistence %in% TRUE

@@ -108,7 +108,7 @@ historical_baseline_balance_fixture <- function() {
 
   source_districts <- data.frame(
     state_code_1991 = state, district_code_1991 = district,
-    exact_language_persistence = c(FALSE, rep(TRUE, n - 1L)),
+    exact_language_persistence = c(FALSE, rep(TRUE, n - 2L), FALSE),
     preferred_language_persistence = c(rep(TRUE, n - 1L), FALSE),
     population_coverage = c(0.995, rep(1, n - 2L), 0.8),
     n_target_2001_districts = c(rep(1L, n - 1L), 2L),
@@ -168,7 +168,7 @@ test_that("historical baseline balance keeps preferred and exact samples distinc
   expect_true(is.finite(preferred$standardized_effect))
 })
 
-test_that("historical baseline balance can add reviewed LD without changing EMI support", {
+test_that("historical baseline balance keeps EMI and reviewed LD support separate", {
   fixture <- historical_baseline_balance_fixture()
   distance <- data.frame(
     state_code_1991 = fixture$baseline$state_code_1991,
@@ -179,18 +179,23 @@ test_that("historical baseline balance can add reviewed LD without changing EMI 
     stringsAsFactors = FALSE
   )
   distance$historical_language_status[[2]] <- "below_coverage_threshold"
-  out <- build_historical_baseline_balance_1991(
+
+  complete <- build_historical_baseline_balance_1991(
+    fixture$baseline, fixture$geography, fixture$panel, distance
+  )
+  fixture$panel$emi_exposure_all_children_0708[[3]] <- NA_real_
+  missing_emie <- build_historical_baseline_balance_1991(
     fixture$baseline, fixture$geography, fixture$panel, distance
   )
 
-  expect_setequal(out$estimates$predictor_id, c("eventual_emie", "historical_ld_1991"))
-  emi <- out$estimates[
-    out$estimates$predictor_id == "eventual_emie" & out$estimates$sample == "preferred_geography",
-    , drop = FALSE
-  ]
-  ld <- out$estimates[
-    out$estimates$predictor_id == "historical_ld_1991" & out$estimates$sample == "preferred_geography",
-    , drop = FALSE
-  ]
-  expect_true(all(emi$n >= ld$n))
+  expect_setequal(complete$estimates$predictor_id, c("eventual_emie", "historical_ld_1991"))
+  select_n <- function(x, predictor) {
+    unique(x$estimates$n[
+      x$estimates$predictor_id == predictor &
+        x$estimates$sample == "preferred_geography" &
+        x$estimates$fixed_effect == "none"
+    ])
+  }
+  expect_equal(select_n(missing_emie, "eventual_emie"), select_n(complete, "eventual_emie") - 1L)
+  expect_equal(select_n(missing_emie, "historical_ld_1991"), select_n(complete, "historical_ld_1991"))
 })
