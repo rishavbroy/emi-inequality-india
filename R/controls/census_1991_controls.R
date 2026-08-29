@@ -43,6 +43,14 @@ historical_baseline_1991_metadata <- function() {
 
 historical_baseline_1991_variables <- function() historical_baseline_1991_metadata()$variable
 
+historical_baseline_1991_control_sets <- function() {
+  metadata <- historical_baseline_1991_metadata()
+  list(
+    pca = metadata$variable[metadata$source == "PCA91"],
+    all = metadata$variable
+  )
+}
+
 validate_census_1991_district_keys <- function(x, source) {
   x <- safe_df(x)
   keys <- census_1991_keys()

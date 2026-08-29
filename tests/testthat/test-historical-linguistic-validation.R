@@ -370,3 +370,69 @@ test_that("historical geography benchmark does not fuzzy-match destination names
   expect_identical(out$benchmark_status, "target_name_not_in_shrug_transition")
   expect_true(is.na(out$shrug_population_share_to_2001))
 })
+
+historical_first_stage_baseline_fixture <- function(fixture) {
+  metadata <- historical_baseline_1991_metadata()
+  baseline <- data.frame(
+    state_code_1991 = fixture$historical$state_code_1991,
+    district_code_1991 = fixture$historical$district_code_1991,
+    stringsAsFactors = FALSE
+  )
+  n <- nrow(baseline)
+  for (i in seq_len(nrow(metadata))) {
+    baseline[[metadata$variable[[i]]]] <- sin(seq_len(n) * (i + 2) / 13) + i / 5
+  }
+  baseline
+}
+
+test_that("historical first-stage robustness adds predetermined 1991 control sensitivities", {
+  fixture <- historical_first_stage_fixture()
+  baseline <- historical_first_stage_baseline_fixture(fixture)
+
+  out <- build_historical_linguistic_first_stage_robustness(
+    fixture$historical, fixture$current, fixture$geography, fixture$panel,
+    baseline_1991 = baseline
+  )
+
+  expect_setequal(
+    out$predetermined_registry$specification_id,
+    c("state_fe_1991_pca_controls", "state_fe_1991_all_controls")
+  )
+  expect_setequal(out$predetermined_estimates$instrument_vintage, c("historical_1991", "census_2001"))
+  expect_setequal(out$predetermined_estimates$sample, c("preferred_geography", "exact_one_to_one"))
+  expect_true(all(out$predetermined_estimates$fixed_effect == "state_1991"))
+
+  by_spec <- split(
+    out$predetermined_estimates$n,
+    interaction(
+      out$predetermined_estimates$sample,
+      out$predetermined_estimates$specification_id,
+      drop = TRUE
+    )
+  )
+  expect_true(all(vapply(by_spec, function(n) length(unique(n)) == 1L, logical(1))))
+})
+
+test_that("historical predetermined controls use specification-specific common support", {
+  fixture <- historical_first_stage_fixture()
+  baseline <- historical_first_stage_baseline_fixture(fixture)
+  fixture$panel[[census_2001_diagnostic_controls()[[1L]]]][[3L]] <- NA_real_
+  baseline$rural_phc_per_100k_1991[[4L]] <- NA_real_
+
+  out <- build_historical_linguistic_first_stage_robustness(
+    fixture$historical, fixture$current, fixture$geography, fixture$panel,
+    baseline_1991 = baseline
+  )
+
+  expect_equal(nrow(out$panel), 59L)
+  preferred <- out$predetermined_estimates[
+    out$predetermined_estimates$sample == "preferred_geography",
+    , drop = FALSE
+  ]
+  pca <- preferred[preferred$specification_id == "state_fe_1991_pca_controls", , drop = FALSE]
+  all_controls <- preferred[preferred$specification_id == "state_fe_1991_all_controls", , drop = FALSE]
+  expect_equal(unique(pca$n), 60L)
+  expect_equal(unique(all_controls$n), 59L)
+  expect_equal(length(unique(pca$n)), 1L)
+  expect_equal(length(unique(all_controls$n)), 1L)
+})
