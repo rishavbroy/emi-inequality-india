@@ -191,14 +191,31 @@ def parse_serial(raw: str) -> int | None:
 
 
 def parse_count(raw: str) -> tuple[int | None, str]:
+    """Conservatively parse one printed integer count.
+
+    Positioned PDF text can leak adjacent table values into the same bounding
+    box (for example ``500 1,375,267``).  Removing every non-digit character
+    would silently turn such evidence into a huge but syntactically valid
+    count.  Accept only one integer token, optionally with conventional
+    Western or Indian thousands grouping.  Internal whitespace between digit
+    groups is therefore review evidence, not a thousands separator.
+    """
     value = raw.strip()
     if not value:
         return None, "blank"
     if re.fullmatch(r"(?:\(\s*\)|[Oo])", value):
         return 0, "normalized_ocr_zero"
-    if re.fullmatch(r"[\d\s,.]+", value):
-        digits = re.sub(r"\D", "", value)
-        return (int(digits), "parsed") if digits else (None, "unparsed")
+
+    value = re.sub(r"\s*([,.])\s*", r"\1", value)
+    if re.search(r"\d\s+\d", value):
+        return None, "ambiguous_multiple_numeric_groups"
+    if re.fullmatch(r"\d+", value):
+        return int(value), "parsed"
+
+    western = re.fullmatch(r"\d{1,3}(?:[,.]\d{3})+", value)
+    indian = re.fullmatch(r"\d{1,3}(?:[,.]\d{2})*[,.]\d{3}", value)
+    if western or indian:
+        return int(re.sub(r"[,.]", "", value)), "parsed"
     return None, "unparsed"
 
 
@@ -293,9 +310,13 @@ def review_rows(layout: list[dict[str, object]], cells: list[dict[str, object]])
                 ),
             })
     for cell in cells:
-        if cell["parse_status"] in {"blank", "unparsed"}:
+        if cell["parse_status"] not in {"parsed", "normalized_ocr_zero"}:
+            review_type = {
+                "blank": "blank_cell",
+                "ambiguous_multiple_numeric_groups": "ambiguous_numeric_groups",
+            }.get(str(cell["parse_status"]), "unparsed_cell")
             out.append({
-                "review_type": "blank_cell" if cell["parse_status"] == "blank" else "unparsed_cell",
+                "review_type": review_type,
                 "block": cell["block"],
                 "page": cell["page"],
                 "row_sequence": cell["row_sequence"],
@@ -306,7 +327,11 @@ def review_rows(layout: list[dict[str, object]], cells: list[dict[str, object]])
                 "detail": (
                     "no positioned text was recovered for this cell"
                     if cell["parse_status"] == "blank"
-                    else "positioned text is not a conservative integer parse"
+                    else (
+                        "multiple numeric groups occupy one positioned cell; adjacent values are not concatenated"
+                        if cell["parse_status"] == "ambiguous_multiple_numeric_groups"
+                        else "positioned text is not a conservative single-integer parse"
+                    )
                 ),
             })
     return out
@@ -652,6 +677,93 @@ def district_population_review_rows(
         review.append(row)
     return review
 
+def validated_language_cell_row(
+    district: dict[str, object],
+    cell: dict[str, object],
+    *,
+    page_offset: int,
+    alignment_status: str,
+) -> dict[str, object]:
+    """Attach district identity and population-bounded count QA to one cell."""
+    parse_status = str(cell["parse_status"])
+    count_raw = cell.get("speaker_count_candidate", "")
+    count = int(count_raw) if str(count_raw).strip() else None
+    atlas_population = int(float(district["atlas_population_candidate"]))
+    if count is None:
+        count_validation_status = "not_parsed"
+    elif count > atlas_population:
+        count_validation_status = "exceeds_district_population"
+    else:
+        count_validation_status = "within_district_population"
+    return {
+        "state_code_1991": district["state_code_1991"],
+        "district_code_1991": district["district_code_1991"],
+        "state_name_1991": district["state_name_1991"],
+        "row_label_raw": district["row_label_raw"],
+        "atlas_population_candidate": district["atlas_population_candidate"],
+        "pca91_population": district["pca91_population"],
+        "population_relative_diff": district["population_relative_diff"],
+        "block": district["block"],
+        "page": cell["page"],
+        "row_sequence": cell["row_sequence"],
+        "atlas_column": cell["atlas_column"],
+        "raw_value": cell["raw_value"],
+        "speaker_count_candidate": cell["speaker_count_candidate"],
+        "parse_status": parse_status,
+        "count_validation_status": count_validation_status,
+        "language_cell_status": (
+            "candidate_value"
+            if parse_status in {"parsed", "normalized_ocr_zero"}
+            and count_validation_status == "within_district_population"
+            else "review_required"
+        ),
+        "page_offset": page_offset,
+        "alignment_status": alignment_status,
+    }
+
+
+def build_language_extraction_coverage(rows: list[dict[str, object]]) -> list[dict[str, object]]:
+    """Summarize recovered speaker counts without renormalizing missing cells."""
+    grouped: dict[tuple[str, str], list[dict[str, object]]] = {}
+    for row in rows:
+        key = (str(row["state_code_1991"]), str(row["district_code_1991"]))
+        grouped.setdefault(key, []).append(row)
+    out: list[dict[str, object]] = []
+    for key, district_rows in sorted(grouped.items()):
+        columns = {int(row["atlas_column"]) for row in district_rows}
+        candidate_rows = [row for row in district_rows if row["language_cell_status"] == "candidate_value"]
+        speaker_sum = sum(int(row["speaker_count_candidate"]) for row in candidate_rows)
+        atlas_population = int(float(district_rows[0]["atlas_population_candidate"]))
+        pca_population = int(float(district_rows[0]["pca91_population"]))
+        if speaker_sum > atlas_population:
+            status = "speaker_sum_exceeds_atlas_population"
+        elif len(columns) < 114:
+            status = "incomplete_alignment"
+        elif len(candidate_rows) < 114:
+            status = "unresolved_cells"
+        else:
+            status = "complete_candidate_inventory"
+        out.append({
+            "state_code_1991": key[0],
+            "district_code_1991": key[1],
+            "state_name_1991": district_rows[0]["state_name_1991"],
+            "atlas_population_candidate": atlas_population,
+            "pca91_population": pca_population,
+            "n_atlas_language_columns": len(columns),
+            "n_candidate_values": len(candidate_rows),
+            "n_review_required": len(district_rows) - len(candidate_rows),
+            "parsed_speaker_lower_bound": speaker_sum,
+            "parsed_speaker_lower_bound_share_atlas": speaker_sum / atlas_population if atlas_population > 0 else "",
+            "parsed_speaker_lower_bound_share_pca": speaker_sum / pca_population if pca_population > 0 else "",
+            "coverage_status": status,
+        })
+    return out
+
+
+def language_extraction_coverage_review_rows(rows: list[dict[str, object]]) -> list[dict[str, object]]:
+    return [dict(row) for row in rows if row["coverage_status"] != "complete_candidate_inventory"]
+
+
 def build_validated_page0_language_cells(
     cells: list[dict[str, object]],
     district_validation: list[dict[str, object]],
@@ -677,28 +789,9 @@ def build_validated_page0_language_cells(
             if key not in page0:
                 raise ValueError(f"Missing Atlas page-0 language cell at {key}")
             cell = page0[key]
-            parse_status = str(cell["parse_status"])
-            out.append({
-                "state_code_1991": district["state_code_1991"],
-                "district_code_1991": district["district_code_1991"],
-                "state_name_1991": district["state_name_1991"],
-                "row_label_raw": district["row_label_raw"],
-                "atlas_population_candidate": district["atlas_population_candidate"],
-                "pca91_population": district["pca91_population"],
-                "population_relative_diff": district["population_relative_diff"],
-                "block": block,
-                "page": page,
-                "row_sequence": row_sequence,
-                "atlas_column": atlas_column,
-                "raw_value": cell["raw_value"],
-                "speaker_count_candidate": cell["speaker_count_candidate"],
-                "parse_status": parse_status,
-                "language_cell_status": (
-                    "candidate_value"
-                    if parse_status in {"parsed", "normalized_ocr_zero"}
-                    else "review_required"
-                ),
-            })
+            out.append(validated_language_cell_row(
+                district, cell, page_offset=0, alignment_status="population_validated_row"
+            ))
 
     expected_n = len(validated) * len(expected_columns(0))
     if len(out) != expected_n:
@@ -802,10 +895,6 @@ def build_validated_all_page_language_cells(
 ) -> tuple[list[dict[str, object]], list[dict[str, object]]]:
     """Bind validated districts to all Atlas language pages where alignment is deterministic."""
     page0 = build_validated_page0_language_cells(cells, district_validation)
-    for row in page0:
-        row["page_offset"] = 0
-        row["alignment_status"] = "population_validated_row"
-
     cell_index: dict[tuple[int, int, int, int], dict[str, object]] = {}
     for cell in cells:
         if cell["cell_kind"] != "language_speakers":
@@ -858,30 +947,9 @@ def build_validated_all_page_language_cells(
                             "detail": f"aligned row lacks Atlas column {atlas_column}",
                         })
                         continue
-                    parse_status = str(cell["parse_status"])
-                    out.append({
-                        "state_code_1991": district["state_code_1991"],
-                        "district_code_1991": district["district_code_1991"],
-                        "state_name_1991": district["state_name_1991"],
-                        "row_label_raw": district["row_label_raw"],
-                        "atlas_population_candidate": district["atlas_population_candidate"],
-                        "pca91_population": district["pca91_population"],
-                        "population_relative_diff": district["population_relative_diff"],
-                        "block": block,
-                        "page": page,
-                        "row_sequence": row_sequence,
-                        "atlas_column": atlas_column,
-                        "raw_value": cell["raw_value"],
-                        "speaker_count_candidate": cell["speaker_count_candidate"],
-                        "parse_status": parse_status,
-                        "language_cell_status": (
-                            "candidate_value"
-                            if parse_status in {"parsed", "normalized_ocr_zero"}
-                            else "review_required"
-                        ),
-                        "page_offset": offset,
-                        "alignment_status": alignment_status,
-                    })
+                    out.append(validated_language_cell_row(
+                        district, cell, page_offset=offset, alignment_status=alignment_status
+                    ))
 
     keys = [
         (row["state_code_1991"], row["district_code_1991"], row["atlas_column"])
@@ -932,7 +1000,7 @@ def self_test() -> None:
     enriched = attach_language_registry([{"atlas_column": 4, "raw_value": "1"}], toy_registry)
     assert enriched[0]["language_1991"] == "Language 4"
     assert parse_count("2,134.680") == (2134680, "parsed")
-    assert parse_count("40 ,67 3,814") == (40673814, "parsed")
+    assert parse_count("40 ,67 3,814") == (None, "ambiguous_multiple_numeric_groups")
     assert parse_count("( )") == (0, "normalized_ocr_zero")
     assert parse_count("O") == (0, "normalized_ocr_zero")
     assert parse_count("1'5") == (None, "unparsed")
@@ -1009,6 +1077,36 @@ def self_test() -> None:
     assert 1 not in crossing and 2 not in crossing
     assert len(crossing_review) == 2
 
+    assert parse_count("1,375,267") == (1375267, "parsed")
+    assert parse_count("13,75,267") == (1375267, "parsed")
+    assert parse_count("36.296") == (36296, "parsed")
+    assert parse_count("500 1,375,267") == (None, "ambiguous_multiple_numeric_groups")
+    assert parse_count("893 67") == (None, "ambiguous_multiple_numeric_groups")
+    assert parse_count("3 0") == (None, "ambiguous_multiple_numeric_groups")
+
+    coverage_rows = [
+        validated_language_cell_row(
+            {
+                "state_code_1991": "02", "district_code_1991": "01", "state_name_1991": "STATE",
+                "row_label_raw": "DISTRICT", "atlas_population_candidate": 200, "pca91_population": 200,
+                "population_relative_diff": 0, "block": 1,
+            },
+            {
+                "page": 205, "row_sequence": 2, "atlas_column": column, "raw_value": "1",
+                "speaker_count_candidate": 1, "parse_status": "parsed",
+            },
+            page_offset=0, alignment_status="population_validated_row",
+        )
+        for column in range(4, 118)
+    ]
+    coverage_rows[0]["speaker_count_candidate"] = 201
+    coverage_rows[0]["count_validation_status"] = "exceeds_district_population"
+    coverage_rows[0]["language_cell_status"] = "review_required"
+    coverage = build_language_extraction_coverage(coverage_rows)
+    assert coverage[0]["n_atlas_language_columns"] == 114
+    assert coverage[0]["n_candidate_values"] == 113
+    assert coverage[0]["coverage_status"] == "unresolved_cells"
+
     continued = merge_population_continuations(
         [
             {"cell_kind": "district_population", "page_offset": 0, "block": 1, "page": 205, "row_sequence": 1,
@@ -1039,6 +1137,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--all-language-output", type=Path)
     parser.add_argument("--all-language-review-output", type=Path)
     parser.add_argument("--alignment-review-output", type=Path)
+    parser.add_argument("--coverage-output", type=Path)
+    parser.add_argument("--coverage-review-output", type=Path)
     parser.add_argument("--language-registry", type=Path)
     parser.add_argument("--pdftotext", default="pdftotext")
     parser.add_argument("--self-test", action="store_true")
@@ -1110,12 +1210,15 @@ def main(argv: list[str] | None = None) -> int:
             args.all_language_output,
             args.all_language_review_output,
             args.alignment_review_output,
+            args.coverage_output,
+            args.coverage_review_output,
         )
         if any(value is not None for value in all_language_options):
             if not all(value is not None for value in all_language_options):
                 parser.error(
-                    "--all-language-output, --all-language-review-output, and "
-                    "--alignment-review-output must be supplied together"
+                    "--all-language-output, --all-language-review-output, "
+                    "--alignment-review-output, --coverage-output, and "
+                    "--coverage-review-output must be supplied together"
                 )
             all_language_cells, alignment_review = build_validated_all_page_language_cells(
                 cells, district_validation, state_crosswalk
@@ -1136,12 +1239,21 @@ def main(argv: list[str] | None = None) -> int:
                     "review_type", "detail",
                 ],
             )
+            coverage = build_language_extraction_coverage(all_language_cells)
+            write_csv(args.coverage_output, coverage)
+            write_csv(
+                args.coverage_review_output,
+                language_extraction_coverage_review_rows(coverage),
+                fields=list(coverage[0]),
+            )
     unparsed = sum(row["review_type"] == "unparsed_cell" for row in review)
+    ambiguous = sum(row["review_type"] == "ambiguous_numeric_groups" for row in review)
     blank = sum(row["review_type"] == "blank_cell" for row in review)
     page_contracts = sum(row["review_type"] == "page_row_contract" for row in review)
     message = (
         f"Language Atlas candidate extraction: {len(cells)} positioned cells; "
-        f"{unparsed} unparsed cells; {blank} blank cells; "
+        f"{unparsed} unparsed cells; {ambiguous} ambiguous multi-number cells; "
+        f"{blank} blank cells; "
         f"{page_contracts} page-row review flags"
     )
     if district_validation is not None:
