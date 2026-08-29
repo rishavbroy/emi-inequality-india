@@ -377,6 +377,19 @@ explicit status and cannot enter either persistence summary. This diagnostic is
 not yet wired into targets because the reviewed Atlas source and preferred
 accepted-speaker threshold remain unresolved.
 
+The historical-IV relevance robustness is implemented at the same boundary.
+`build_historical_linguistic_first_stage_robustness()` maps only persistence-
+eligible 1991 districts to their unique Census-2001 target, joins the existing
+DISE treatment and Census-2001 controls, and compares the 1991 and 2001 primary
+nonzero-distance instruments on one common support. It reuses the canonical
+first-stage absorption registry and clustered inference rather than defining a
+parallel historical regression stack. The compact robustness set is the
+instrument-only, region/state main-control, and region/state expanded-control
+specifications. Preferred-geography and exact-one-to-one samples are reported
+separately, and each specification uses the identical district observations for
+the two instrument vintages. This comparison remains diagnostic-only until the
+reviewed Atlas source and explicit accepted-speaker threshold are promoted.
+
 ## Vanneman source provenance
 
 The downloaded Vanneman-Barnes snapshot is useful for later pre-treatment
@@ -408,7 +421,9 @@ sensitivity source rather than geography authority for the Census-2001 panel.
    source/threshold are promoted; report preferred one-target and exact
    one-to-one samples separately with weighted Pearson/Spearman, weighted
    regression, state-FE persistence, and rank/quintile stability.
-5. Treat split/non-nested geography as sensitivity evidence, not as preferred
+5. Run the implemented 1991-vs-2001 first-stage robustness comparison on the
+   same preferred/exact geography samples and common district support.
+6. Treat split/non-nested geography as sensitivity evidence, not as preferred
    exact reconstruction.
-6. Add 1961-1991 predetermined baseline/pre-trend diagnostics from Vanneman and
+7. Add 1961-1991 predetermined baseline/pre-trend diagnostics from Vanneman and
    SHRUG PCA/VD/TD in a separate historical-balance module.
