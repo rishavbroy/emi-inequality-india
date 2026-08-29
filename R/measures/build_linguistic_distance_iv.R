@@ -20,6 +20,10 @@ read_shastry_language_distance <- function(path = NULL) {
 }
 
 
+language_atlas_1991_columns <- function() {
+  4:117
+}
+
 #' Read the reviewed Census-1991 Language Atlas column registry
 read_language_atlas_1991_languages <- function(path = NULL) {
   if (is.null(path)) {
@@ -470,20 +474,24 @@ build_historical_linguistic_distance_1991 <- function(
   )
 }
 
+apply_preferred_historical_linguistic_distance_quality_gate <- function(candidates) {
+  rule <- historical_linguistic_preferred_source_quality()
+  apply_historical_linguistic_distance_quality_gate(
+    candidates,
+    min_accepted_coverage = rule$min_accepted_coverage[[1L]],
+    max_distance_bound_width = rule$max_distance_bound_width[[1L]]
+  )
+}
+
 build_preferred_historical_linguistic_distance_1991 <- function(
     atlas_source,
     registry = read_language_atlas_1991_languages(),
     concordance = read_shastry_language_distance(),
     adjudications = read_shastry_language_adjudications()) {
-  rule <- historical_linguistic_preferred_source_quality()
-  build_historical_linguistic_distance_1991(
-    atlas_source,
-    min_accepted_coverage = rule$min_accepted_coverage[[1L]],
-    max_distance_bound_width = rule$max_distance_bound_width[[1L]],
-    registry = registry,
-    concordance = concordance,
-    adjudications = adjudications
+  candidates <- historical_linguistic_distance_1991_candidates(
+    atlas_source, registry, concordance, adjudications
   )
+  apply_preferred_historical_linguistic_distance_quality_gate(candidates)
 }
 
 historical_linguistic_distance_quality_grid <- function(

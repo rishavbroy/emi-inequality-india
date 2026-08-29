@@ -1742,8 +1742,11 @@ test_that("preferred historical Atlas source quality is frozen before outcome di
   counts <- rep(0, nrow(registry))
   counts[registry$language_1991 == "Tamil"] <- 100
   source <- historical_atlas_test_source(counts)
+  candidates <- historical_linguistic_distance_1991_candidates(source)
+  preferred <- apply_preferred_historical_linguistic_distance_quality_gate(candidates)
+  expect_equal(preferred$historical_language_status, "eligible")
   expect_equal(
-    build_preferred_historical_linguistic_distance_1991(source)$historical_language_status,
-    "eligible"
+    build_preferred_historical_linguistic_distance_1991(source),
+    preferred
   )
 })
