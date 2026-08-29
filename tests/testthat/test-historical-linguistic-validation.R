@@ -10,6 +10,9 @@ historical_persistence_fixture <- function() {
     max_distance_bound_width = 0.5,
     historical_language_status = "eligible",
     ling_distance_nonzero_mean_1991 = d91,
+    ling_share_distance_ge3_1991 = 10 * d91,
+    ling_distance_nonzero_bound_width_1991 = 0.1,
+    ling_share_distance_ge3_bound_width_1991 = 0.5,
     stringsAsFactors = FALSE
   )
   geography <- data.frame(
@@ -44,6 +47,11 @@ historical_persistence_fixture <- function() {
       2 * d91[5:8] + 1,
       10
     ),
+    ling_share_distance_ge3 = c(
+      20 * d91[1:4],
+      20 * d91[5:8] + 5,
+      100
+    ),
     stringsAsFactors = FALSE
   )
   list(
@@ -58,6 +66,7 @@ test_that("historical persistence normalizes the production Census-2001 distance
     state_code = c(2, 2),
     district_code = c(1, 2),
     ling_distance_nonzero_mean = c(1.5, 2.5),
+    ling_share_distance_ge3 = c(25, 50),
     state_std = c("state", "state"),
     district_std = c("one", "two"),
     stringsAsFactors = FALSE
@@ -66,19 +75,36 @@ test_that("historical persistence normalizes the production Census-2001 distance
 
   expect_identical(
     names(out),
-    c("state_code_2001", "district_code_2001", "ling_distance_nonzero_mean_2001")
+    c(
+      "state_code_2001", "district_code_2001",
+      "ling_distance_nonzero_mean_2001", "ling_share_distance_ge3_2001"
+    )
   )
   expect_equal(out$state_code_2001, c("02", "02"))
   expect_equal(out$district_code_2001, c("01", "02"))
   expect_equal(out$ling_distance_nonzero_mean_2001, c(1.5, 2.5))
+  expect_equal(out$ling_share_distance_ge3_2001, c(25, 50))
   expect_error(
     historical_linguistic_distance_2001_panel(transform(current, district_code = 1)),
     "duplicate district keys"
   )
   expect_error(
-    historical_linguistic_distance_2001_panel(current[c("state_std", "district_std", "ling_distance_nonzero_mean")]),
+    historical_linguistic_distance_2001_panel(current[c(
+      "state_std", "district_std", "ling_distance_nonzero_mean", "ling_share_distance_ge3"
+    )]),
     "lacks fields: state_code, district_code"
   )
+})
+
+test_that("historical persistence measure registry reuses the two canonical constructions", {
+  registry <- historical_linguistic_persistence_measure_registry()
+  expect_identical(registry$measure_id, c("nonzero_mean", "accepted_distant_share_ge3"))
+  expect_identical(
+    registry$current_variable,
+    c("ling_distance_nonzero_mean_2001", "ling_share_distance_ge3_2001")
+  )
+  expect_true(all(grepl("_1991$", registry$historical_variable)))
+  expect_true(all(grepl("bound_width_1991$", registry$historical_bound_width_variable)))
 })
 
 test_that("historical persistence keeps preferred and exact geography distinct", {
@@ -99,10 +125,24 @@ test_that("historical persistence keeps preferred and exact geography distinct",
   expect_true(high_coverage$persistence_status == "eligible")
   expect_false(high_coverage$exact_language_persistence)
 
-  preferred <- out$summary[out$summary$sample == "preferred_geography", , drop = FALSE]
-  exact <- out$summary[out$summary$sample == "exact_one_to_one", , drop = FALSE]
+  preferred <- out$summary[
+    out$summary$sample == "preferred_geography" & out$summary$measure_id == "nonzero_mean",
+    , drop = FALSE
+  ]
+  exact <- out$summary[
+    out$summary$sample == "exact_one_to_one" & out$summary$measure_id == "nonzero_mean",
+    , drop = FALSE
+  ]
+  distant <- out$summary[
+    out$summary$sample == "preferred_geography" &
+      out$summary$measure_id == "accepted_distant_share_ge3",
+    , drop = FALSE
+  ]
   expect_equal(preferred$n_districts, 7L)
   expect_equal(exact$n_districts, 6L)
+  expect_equal(distant$n_districts, 7L)
+  expect_equal(distant$state_fe_population_weighted_slope, 2, tolerance = 1e-10)
+  expect_equal(distant$historical_bound_width_variable, "ling_share_distance_ge3_bound_width_1991")
   expect_equal(preferred$min_accepted_coverage, 0.99)
   expect_equal(preferred$max_distance_bound_width, 0.5)
   expect_equal(preferred$state_fe_population_weighted_slope, 2, tolerance = 1e-10)
@@ -194,12 +234,16 @@ historical_first_stage_fixture <- function() {
     max_distance_bound_width = 0.5,
     historical_language_status = "eligible",
     ling_distance_nonzero_mean_1991 = z91,
+    ling_share_distance_ge3_1991 = 10 * z91,
+    ling_distance_nonzero_bound_width_1991 = 0.1,
+    ling_share_distance_ge3_bound_width_1991 = 0.5,
     stringsAsFactors = FALSE
   )
   current <- data.frame(
     state_code = state,
     district_code = district,
     ling_distance_nonzero_mean = z01,
+    ling_share_distance_ge3 = 10 * z01,
     stringsAsFactors = FALSE
   )
   source_districts <- data.frame(

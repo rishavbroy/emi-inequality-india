@@ -423,7 +423,10 @@ historical_preferred_geography_panel <- function(source_districts, transition) {
 
 historical_linguistic_distance_2001_panel <- function(distance_2001) {
   current <- safe_df(distance_2001)
-  required <- c("state_code", "district_code", "ling_distance_nonzero_mean")
+  required <- c(
+    "state_code", "district_code",
+    "ling_distance_nonzero_mean", "ling_share_distance_ge3"
+  )
   missing <- setdiff(required, names(current))
   if (length(missing)) {
     stop(
@@ -436,6 +439,7 @@ historical_linguistic_distance_2001_panel <- function(distance_2001) {
     state_code_2001 = pad_admin_code(current$state_code, 2L),
     district_code_2001 = pad_admin_code(current$district_code, 2L),
     ling_distance_nonzero_mean_2001 = num(current$ling_distance_nonzero_mean),
+    ling_share_distance_ge3_2001 = num(current$ling_share_distance_ge3),
     stringsAsFactors = FALSE
   )
   key <- paste(out$state_code_2001, out$district_code_2001, sep = "__")
@@ -459,7 +463,7 @@ historical_linguistic_persistence_panel <- function(
   historical_required <- c(
     "state_code_1991", "district_code_1991", "atlas_population_1991",
     "min_accepted_coverage", "max_distance_bound_width", "historical_language_status",
-    "ling_distance_nonzero_mean_1991"
+    "ling_distance_nonzero_mean_1991", "ling_share_distance_ge3_1991"
   )
   missing_fields <- function(x, required, label) {
     missing <- setdiff(required, names(x))
@@ -508,6 +512,14 @@ historical_linguistic_persistence_panel <- function(
     num(out$ling_distance_nonzero_mean_2001) - num(out$ling_distance_nonzero_mean_1991),
     NA_real_
   )
+  ge3_ok <- eligible &
+    is.finite(num(out$ling_share_distance_ge3_1991)) &
+    is.finite(num(out$ling_share_distance_ge3_2001))
+  out$ling_share_distance_ge3_change_1991_2001 <- ifelse(
+    ge3_ok,
+    num(out$ling_share_distance_ge3_2001) - num(out$ling_share_distance_ge3_1991),
+    NA_real_
+  )
   out$rank_percentile_1991 <- NA_real_
   out$rank_percentile_2001 <- NA_real_
   out$quintile_1991 <- NA_integer_
@@ -554,7 +566,12 @@ historical_linguistic_weighted_correlation <- function(x, y, weight, rank_values
   unname(stats::cov.wt(cbind(x, y), wt = weight, cor = TRUE)$cor[1L, 2L])
 }
 
-historical_linguistic_persistence_metrics <- function(panel, exact_only = FALSE) {
+historical_linguistic_persistence_metrics <- function(
+    panel, exact_only = FALSE,
+    measure_id = "nonzero_mean",
+    historical_variable = "ling_distance_nonzero_mean_1991",
+    current_variable = "ling_distance_nonzero_mean_2001",
+    historical_bound_width_variable = "ling_distance_nonzero_bound_width_1991") {
   x <- safe_df(panel)
   keep <- x$persistence_status == "eligible"
   if (exact_only) keep <- keep & x$exact_language_persistence %in% TRUE
@@ -564,8 +581,20 @@ historical_linguistic_persistence_metrics <- function(panel, exact_only = FALSE)
   threshold <- threshold[is.finite(threshold)]
   bound_width <- unique(num(panel$max_distance_bound_width))
   bound_width <- bound_width[is.finite(bound_width)]
+  required_measure_fields <- c(historical_variable, current_variable)
+  if (!is.null(historical_bound_width_variable)) {
+    required_measure_fields <- c(required_measure_fields, historical_bound_width_variable)
+  }
+  missing <- setdiff(required_measure_fields, names(x))
+  if (length(missing)) {
+    stop("Historical persistence metrics lack measure fields: ", paste(missing, collapse = ", "), call. = FALSE)
+  }
   empty <- data.frame(
     sample = sample_name,
+    measure_id = measure_id,
+    historical_variable = historical_variable,
+    current_variable = current_variable,
+    historical_bound_width_variable = historical_bound_width_variable %||% NA_character_,
     min_accepted_coverage = if (length(threshold) == 1L) threshold else NA_real_,
     max_distance_bound_width = if (length(bound_width) == 1L) bound_width else NA_real_,
     n_districts = nrow(x), population_1991 = sum(num(x$atlas_population_1991), na.rm = TRUE),
@@ -573,14 +602,15 @@ historical_linguistic_persistence_metrics <- function(panel, exact_only = FALSE)
     population_weighted_pearson = NA_real_, population_weighted_spearman = NA_real_,
     population_weighted_slope = NA_real_, population_weighted_r_squared = NA_real_,
     state_fe_population_weighted_slope = NA_real_, state_fe_population_weighted_r_squared = NA_real_,
+    historical_bound_width_mean = NA_real_, historical_bound_width_max = NA_real_,
     mean_absolute_change = NA_real_, mean_absolute_rank_change = NA_real_,
     same_quintile_share = NA_real_, mean_absolute_quintile_change = NA_real_,
     stringsAsFactors = FALSE
   )
   if (nrow(x) < 2L) return(empty)
 
-  d91 <- num(x$ling_distance_nonzero_mean_1991)
-  d01 <- num(x$ling_distance_nonzero_mean_2001)
+  d91 <- num(x[[historical_variable]])
+  d01 <- num(x[[current_variable]])
   weight <- num(x$atlas_population_1991)
   ok <- is.finite(d91) & is.finite(d01) & is.finite(weight) & weight > 0
   if (sum(ok) < 2L) return(empty)
@@ -620,6 +650,14 @@ historical_linguistic_persistence_metrics <- function(panel, exact_only = FALSE)
     stats::cor(d91, d01, method = "spearman")
   } else {
     NA_real_
+  }
+  if (!is.null(historical_bound_width_variable)) {
+    bound_width <- num(x[[historical_bound_width_variable]])
+    finite_width <- is.finite(bound_width)
+    if (any(finite_width)) {
+      empty$historical_bound_width_mean <- mean(bound_width[finite_width])
+      empty$historical_bound_width_max <- max(bound_width[finite_width])
+    }
   }
   empty$population_weighted_pearson <- historical_linguistic_weighted_correlation(
     d91, d01, weight, rank_values = FALSE
@@ -667,6 +705,25 @@ historical_linguistic_quintile_transition <- function(panel, exact_only = FALSE)
   }))
 }
 
+historical_linguistic_persistence_measure_registry <- function() {
+  data.frame(
+    measure_id = c("nonzero_mean", "accepted_distant_share_ge3"),
+    historical_variable = c(
+      "ling_distance_nonzero_mean_1991",
+      "ling_share_distance_ge3_1991"
+    ),
+    current_variable = c(
+      "ling_distance_nonzero_mean_2001",
+      "ling_share_distance_ge3_2001"
+    ),
+    historical_bound_width_variable = c(
+      "ling_distance_nonzero_bound_width_1991",
+      "ling_share_distance_ge3_bound_width_1991"
+    ),
+    stringsAsFactors = FALSE
+  )
+}
+
 build_historical_linguistic_persistence_validation <- function(
     historical_distance, distance_2001, geography) {
   required <- c("source_districts", "transition")
@@ -679,10 +736,26 @@ build_historical_linguistic_persistence_validation <- function(
   )
   list(
     panel = panel,
-    summary = safe_bind_rows(list(
-      historical_linguistic_persistence_metrics(panel, exact_only = FALSE),
-      historical_linguistic_persistence_metrics(panel, exact_only = TRUE)
-    )),
+    summary = {
+      measures <- historical_linguistic_persistence_measure_registry()
+      safe_bind_rows(lapply(seq_len(nrow(measures)), function(i) {
+        measure <- measures[i, , drop = FALSE]
+        safe_bind_rows(list(
+          historical_linguistic_persistence_metrics(
+            panel, exact_only = FALSE, measure_id = measure$measure_id,
+            historical_variable = measure$historical_variable,
+            current_variable = measure$current_variable,
+            historical_bound_width_variable = measure$historical_bound_width_variable
+          ),
+          historical_linguistic_persistence_metrics(
+            panel, exact_only = TRUE, measure_id = measure$measure_id,
+            historical_variable = measure$historical_variable,
+            current_variable = measure$current_variable,
+            historical_bound_width_variable = measure$historical_bound_width_variable
+          )
+        ))
+      }))
+    },
     quintile_transition = safe_bind_rows(list(
       historical_linguistic_quintile_transition(panel, exact_only = FALSE),
       historical_linguistic_quintile_transition(panel, exact_only = TRUE)
