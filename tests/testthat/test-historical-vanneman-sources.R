@@ -272,3 +272,63 @@ test_that("documented Vanneman combined units are parsed from the author codeboo
   writeLines(c("Andhra Pradesh: 0216 = Rangareddi + Hyderabad", "Bihar: 0501 = Patna + Nalanda"), path)
   expect_setequal(vanneman_documented_combined_panel_units(path), c("0216", "0501"))
 })
+
+
+test_that("reviewed Vanneman adjudications promote only tracked label cases", {
+  base <- data.frame(
+    vanneman_state_id = c("02", "02"), vanneman_district_id = c("03", "04"),
+    panel_unit_id = c("0203", "0204"), dist91_state_id = c("02", "02"),
+    dist91_district_id = c(NA, "04"), dist91_district_label = c(NA, "East Godavari"),
+    mapping_class = c("label_review_required", "deterministic_one_to_one"),
+    mapping_basis = c("no_unique_exact_normalized_label", "exact_normalized_label_within_state"),
+    preferred_pretrend_eligible = c(FALSE, TRUE), stringsAsFactors = FALSE
+  )
+  reviewed <- data.frame(
+    panel_unit_id = "0203", dist91_state_id = "02", dist91_district_id = "03",
+    dist91_district_label = "Visakhapatanam", decision = "accepted_one_to_one",
+    source_id = "maggieliuDataCodeClimate2023", evidence_status = "verified_direct_alias",
+    stringsAsFactors = FALSE
+  )
+
+  out <- apply_vanneman_panel4_dist91_adjudications(base, reviewed)
+  promoted <- out[out$panel_unit_id == "0203", , drop = FALSE]
+  untouched <- out[out$panel_unit_id == "0204", , drop = FALSE]
+  expect_true(promoted$preferred_pretrend_eligible)
+  expect_equal(promoted$mapping_class, "reviewed_one_to_one")
+  expect_equal(promoted$mapping_basis, "reviewed_liu_direct_alias")
+  expect_equal(promoted$dist91_district_id, "03")
+  expect_equal(untouched$mapping_class, "deterministic_one_to_one")
+})
+
+test_that("Vanneman pretrend geography composes reviewed Census codes and excludes split sources", {
+  panel <- data.frame(
+    panel_unit_id = c("a", "b", "c"),
+    dist91_state_id = c("02", "02", "02"),
+    dist91_district_id = c("01", "02", "03"),
+    dist91_district_label = c("A", "B", "C"),
+    preferred_pretrend_eligible = c(TRUE, TRUE, FALSE),
+    stringsAsFactors = FALSE
+  )
+  geography <- data.frame(
+    state_code_1991 = c("02", "02", "02"), district_code_1991 = c("01", "02", "03"),
+    mapping_class = c("high_population_coverage_single_target", "splits_across_2001_districts", "high_population_coverage_single_target"),
+    population_coverage = c(0.999, 1, 1), n_target_2001_districts = c(1L, 2L, 1L),
+    preferred_language_persistence = c(TRUE, FALSE, TRUE), stringsAsFactors = FALSE
+  )
+  transition <- data.frame(
+    state_code_1991 = c("02", "02", "02", "02"), district_code_1991 = c("01", "02", "02", "03"),
+    state_code_2001 = c("28", "28", "28", "28"), district_code_2001 = c("11", "12", "13", "14"),
+    stringsAsFactors = FALSE
+  )
+
+  out <- build_vanneman_pretrend_geography(panel, geography, transition)
+  preferred <- out[out$panel_unit_id == "a", , drop = FALSE]
+  split <- out[out$panel_unit_id == "b", , drop = FALSE]
+  blocked <- out[out$panel_unit_id == "c", , drop = FALSE]
+  expect_true(preferred$preferred_vanneman_pretrend_eligible)
+  expect_equal(preferred$district_code_2001, "11")
+  expect_equal(split$pretrend_geography_status, "splits_across_2001_districts")
+  expect_false(split$preferred_vanneman_pretrend_eligible)
+  expect_true(is.na(split$district_code_2001))
+  expect_equal(blocked$pretrend_geography_status, "panel_to_1991_not_preferred")
+})

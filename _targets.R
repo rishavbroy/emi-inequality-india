@@ -757,7 +757,7 @@ core_pipeline_targets <- list(
     format = "file"
   ),
   tar_target(
-    historical_vanneman_panel4_dist91_crosswalk,
+    historical_vanneman_panel4_dist91_crosswalk_seed,
     build_vanneman_panel4_dist91_crosswalk(
       historical_vanneman_source_qa,
       historical_vanneman_panel4_geography,
@@ -765,8 +765,51 @@ core_pipeline_targets <- list(
     )
   ),
   tar_target(
+    historical_vanneman_panel4_dist91_adjudications_file,
+    "data/metadata/vanneman_panel4_dist91_adjudications.csv",
+    format = "file"
+  ),
+  tar_target(
+    historical_vanneman_panel4_dist91_adjudications,
+    {
+      raw_data_preflight
+      validate_vanneman_panel4_dist91_adjudications(
+        read_vanneman_panel4_dist91_adjudications(historical_vanneman_panel4_dist91_adjudications_file),
+        historical_vanneman_panel4_dist91_crosswalk_seed,
+        paths
+      )
+    }
+  ),
+  tar_target(
+    diag_ext_historical_vanneman_panel4_dist91_adjudication_evidence,
+    save_vanneman_panel4_dist91_adjudication_evidence(
+      historical_vanneman_panel4_dist91_adjudications
+    ),
+    format = "file"
+  ),
+  tar_target(
+    historical_vanneman_panel4_dist91_crosswalk,
+    apply_vanneman_panel4_dist91_adjudications(
+      historical_vanneman_panel4_dist91_crosswalk_seed,
+      historical_vanneman_panel4_dist91_adjudications
+    )
+  ),
+  tar_target(
     diag_ext_historical_vanneman_panel4_dist91_crosswalk,
     save_vanneman_panel4_dist91_crosswalk(historical_vanneman_panel4_dist91_crosswalk),
+    format = "file"
+  ),
+  tar_target(
+    historical_vanneman_pretrend_geography,
+    build_vanneman_pretrend_geography(
+      historical_vanneman_panel4_dist91_crosswalk,
+      historical_linguistic_geography_1991_2001$source_districts,
+      historical_linguistic_geography_1991_2001$transition
+    )
+  ),
+  tar_target(
+    diag_ext_historical_vanneman_pretrend_geography,
+    save_vanneman_pretrend_geography(historical_vanneman_pretrend_geography),
     format = "file"
   ),
   tar_target(
@@ -779,18 +822,6 @@ core_pipeline_targets <- list(
   tar_target(
     diag_ext_historical_vanneman_liu_geography_benchmark,
     save_vanneman_liu_geography_benchmark(historical_vanneman_liu_geography_benchmark),
-    format = "file"
-  ),
-  tar_target(
-    historical_vanneman_liu_alias_review_candidates,
-    {
-      raw_data_preflight
-      vanneman_liu_alias_review_candidates(historical_vanneman_panel4_dist91_crosswalk, paths)
-    }
-  ),
-  tar_target(
-    diag_ext_historical_vanneman_liu_alias_review_candidates,
-    save_vanneman_liu_alias_review_candidates(historical_vanneman_liu_alias_review_candidates),
     format = "file"
   ),
   tar_target(

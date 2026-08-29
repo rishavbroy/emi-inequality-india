@@ -607,7 +607,7 @@ test_that("Vanneman historical source QA is manifest-backed with file-specific r
   expect_identical(source$current_or_future, "current")
   expect_true(all(rows$target_name %in% c(
     "historical_vanneman_source_qa",
-    "historical_vanneman_panel4_dist91_crosswalk"
+    "historical_vanneman_panel4_dist91_crosswalk_seed"
   )))
 })
 
@@ -713,5 +713,6 @@ test_that("Liu historical geography benchmark is manifest-backed without becomin
   expect_true(as.logical(source$used_in_current_pipeline))
   expect_identical(source$current_or_future, "current")
   expect_match(source$notes, "external geography benchmark", ignore.case = TRUE)
-  expect_match(source$notes, "must not be treated as Vanneman panel IDs", ignore.case = TRUE)
+  expect_match(source$notes, "reviewed-alias evidence", ignore.case = TRUE)
+  expect_match(source$notes, "six-census harmonized IDs remain benchmark-only", ignore.case = TRUE)
 })

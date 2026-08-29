@@ -411,6 +411,133 @@ vanneman_panel4_dist91_crosswalk <- function(
   out[order(out$vanneman_state_id, out$vanneman_district_id), , drop = FALSE]
 }
 
+read_vanneman_panel4_dist91_adjudications <- function(path) {
+  if (!file.exists(path)) stop("Missing Vanneman panel-to-dist91 adjudication ledger: ", path, call. = FALSE)
+  out <- utils::read.csv(path, stringsAsFactors = FALSE, colClasses = "character", check.names = FALSE)
+  required <- c(
+    "panel_unit_id", "dist91_state_id", "dist91_district_id",
+    "decision", "source_id", "evidence"
+  )
+  missing <- setdiff(required, names(out))
+  if (length(missing)) {
+    stop("Vanneman panel-to-dist91 adjudication ledger lacks fields: ", paste(missing, collapse = ", "), call. = FALSE)
+  }
+  if (anyDuplicated(out$panel_unit_id)) {
+    stop("Vanneman panel-to-dist91 adjudication ledger has duplicate panel IDs.", call. = FALSE)
+  }
+  if (any(out$decision != "accepted_one_to_one")) {
+    stop("Vanneman panel-to-dist91 adjudications currently support accepted_one_to_one decisions only.", call. = FALSE)
+  }
+  out
+}
+
+apply_vanneman_panel4_dist91_adjudications <- function(panel_crosswalk, adjudications) {
+  out <- safe_df(panel_crosswalk)
+  reviewed <- safe_df(adjudications)
+  if (!nrow(reviewed)) return(out)
+  required <- c(
+    "panel_unit_id", "dist91_state_id", "dist91_district_id", "dist91_district_label",
+    "decision", "source_id", "evidence_status"
+  )
+  missing <- setdiff(required, names(reviewed))
+  if (length(missing)) {
+    stop("Validated Vanneman adjudications lack fields: ", paste(missing, collapse = ", "), call. = FALSE)
+  }
+  if (any(reviewed$evidence_status != "verified_direct_alias")) {
+    stop("Only verified direct-alias adjudications may enter the preferred Vanneman geography.", call. = FALSE)
+  }
+  idx <- match(reviewed$panel_unit_id, out$panel_unit_id)
+  if (anyNA(idx)) stop("Validated Vanneman adjudication references an unknown stable panel ID.", call. = FALSE)
+  if (any(out$mapping_class[idx] != "label_review_required")) {
+    stop("Vanneman adjudications may promote only unresolved label-review cases.", call. = FALSE)
+  }
+
+  out$review_source_id <- NA_character_
+  out$review_evidence <- NA_character_
+  out$dist91_state_id[idx] <- reviewed$dist91_state_id
+  out$dist91_district_id[idx] <- reviewed$dist91_district_id
+  out$dist91_district_label[idx] <- reviewed$dist91_district_label
+  out$mapping_class[idx] <- "reviewed_one_to_one"
+  out$mapping_basis[idx] <- "reviewed_liu_direct_alias"
+  out$preferred_pretrend_eligible[idx] <- TRUE
+  out$review_source_id[idx] <- reviewed$source_id
+  out$review_evidence[idx] <- reviewed$evidence_status
+  out[order(out$vanneman_state_id, out$vanneman_district_id), , drop = FALSE]
+}
+
+build_vanneman_pretrend_geography <- function(panel_crosswalk, source_geography_1991, transition_1991_2001) {
+  panel <- safe_df(panel_crosswalk)
+  geography <- safe_df(source_geography_1991)
+  transition <- safe_df(transition_1991_2001)
+  required_panel <- c(
+    "panel_unit_id", "dist91_state_id", "dist91_district_id",
+    "dist91_district_label", "preferred_pretrend_eligible"
+  )
+  required_geography <- c(
+    "state_code_1991", "district_code_1991", "mapping_class",
+    "population_coverage", "n_target_2001_districts", "preferred_language_persistence"
+  )
+  required_transition <- c(
+    "state_code_1991", "district_code_1991", "state_code_2001", "district_code_2001"
+  )
+  missing_panel <- setdiff(required_panel, names(panel))
+  missing_geography <- setdiff(required_geography, names(geography))
+  missing_transition <- setdiff(required_transition, names(transition))
+  if (length(missing_panel)) stop("Vanneman pretrend panel geography lacks fields: ", paste(missing_panel, collapse = ", "), call. = FALSE)
+  if (length(missing_geography)) stop("Historical 1991 geography lacks fields: ", paste(missing_geography, collapse = ", "), call. = FALSE)
+  if (length(missing_transition)) stop("Historical 1991-2001 transition lacks fields: ", paste(missing_transition, collapse = ", "), call. = FALSE)
+  if (anyDuplicated(panel$panel_unit_id)) stop("Vanneman pretrend geography requires unique stable panel IDs.", call. = FALSE)
+  if (anyDuplicated(geography[c("state_code_1991", "district_code_1991")])) {
+    stop("Historical 1991 geography must contain unique source district codes.", call. = FALSE)
+  }
+
+  key <- paste(panel$dist91_state_id, panel$dist91_district_id, sep = "__")
+  geography_key <- paste(geography$state_code_1991, geography$district_code_1991, sep = "__")
+  gidx <- match(key, geography_key)
+  out <- panel
+  out$project_1991_mapping_class <- geography$mapping_class[gidx]
+  out$project_1991_population_coverage <- suppressWarnings(as.numeric(geography$population_coverage[gidx]))
+  out$project_1991_preferred_single_target <- geography$preferred_language_persistence[gidx]
+  out$project_1991_n_target_2001_districts <- suppressWarnings(as.integer(geography$n_target_2001_districts[gidx]))
+
+  transition_key <- paste(transition$state_code_1991, transition$district_code_1991, sep = "__")
+  target_count <- table(transition_key)
+  out$n_transition_targets <- as.integer(target_count[key])
+  out$n_transition_targets[is.na(out$n_transition_targets)] <- 0L
+  out$state_code_2001 <- NA_character_
+  out$district_code_2001 <- NA_character_
+
+  out$pretrend_geography_status <- "panel_to_1991_not_preferred"
+  panel_ok <- out$preferred_pretrend_eligible
+  missing_geo <- panel_ok & is.na(gidx)
+  out$pretrend_geography_status[missing_geo] <- "missing_project_1991_geography"
+  split <- panel_ok & !missing_geo & (
+    is.na(out$project_1991_n_target_2001_districts) |
+      out$project_1991_n_target_2001_districts != 1L |
+      out$n_transition_targets != 1L
+  )
+  out$pretrend_geography_status[split] <- "splits_across_2001_districts"
+  project_preferred <- as.logical(out$project_1991_preferred_single_target)
+  project_preferred[is.na(project_preferred)] <- FALSE
+  not_preferred <- panel_ok & !missing_geo & !split & !project_preferred
+  out$pretrend_geography_status[not_preferred] <- "project_1991_geography_not_preferred"
+  preferred <- panel_ok & !missing_geo & !split & project_preferred
+  out$pretrend_geography_status[preferred] <- "preferred_single_target"
+
+  if (any(preferred)) {
+    tidx <- match(key[preferred], transition_key)
+    out$state_code_2001[preferred] <- transition$state_code_2001[tidx]
+    out$district_code_2001[preferred] <- transition$district_code_2001[tidx]
+  }
+  out$preferred_vanneman_pretrend_eligible <- preferred
+  out[order(out$panel_unit_id), , drop = FALSE]
+}
+
+save_vanneman_pretrend_geography <- function(
+    x, path = "outputs/diagnostics/extended/instrument_relevance/vanneman_pretrend_geography.csv") {
+  write_diagnostic_csv(x, path)
+}
+
 build_vanneman_panel4_geography_inventory <- function(source_qa, paths = build_paths()) {
   qa <- safe_df(source_qa)
   panel <- qa[qa$source_id == "panel4", , drop = FALSE]
