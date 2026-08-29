@@ -101,7 +101,8 @@ python3 scripts/build_language_atlas_1991.py \
   --all-language-review-output /tmp/language_atlas_1991_all_language_review.csv \
   --alignment-review-output /tmp/language_atlas_1991_alignment_review.csv \
   --coverage-output /tmp/language_atlas_1991_coverage.csv \
-  --coverage-review-output /tmp/language_atlas_1991_coverage_review.csv
+  --coverage-review-output /tmp/language_atlas_1991_coverage_review.csv \
+  --coverage-sensitivity-output /tmp/language_atlas_1991_coverage_sensitivity.csv
 ```
 
 The candidate output is deliberately keyed by Atlas page/block, detected row,
@@ -180,11 +181,26 @@ unresolved cells are omitted without renormalization. The sum is therefore a
 parsed-speaker lower bound, not an estimate of classified-language coverage when
 columns remain unresolved. The district status distinguishes incomplete page
 alignment, unresolved cells, and the stronger impossibility check in which even
-the accepted-cell sum exceeds the Atlas district population. On the current
-source pass, 342 districts have incomplete alignment, 63 have all 114 columns
-aligned but unresolved cells, and 10 still have accepted-cell sums above Atlas
-population. **No district yet has a complete 114-cell candidate inventory**, so
-1991 linguistic distance remains blocked from production.
+the accepted-cell sum exceeds the Atlas district population. Review rows are
+ordered first by impossible accepted-count sums, then by fully aligned districts
+with unresolved cells, and finally by incomplete page alignment.
+
+Coverage-threshold sensitivity is reported separately at 95%, 98%, 99%, 99.5%,
+99.9%, and 100%. A district is *certified* at threshold `t` only when its
+accepted-speaker lower-bound share is at least `t` and its accepted-count sum
+does not exceed Atlas population. This is deliberately one-sided: unresolved
+cells are never set to zero, and the sensitivity table does not declare a
+preferred analysis threshold. It mirrors the geographic-lineage sensitivity
+contract and lets a later phase choose a historical-language coverage rule from
+explicit evidence rather than parser convenience. On the current source pass,
+the accepted-speaker lower bound certifies 240 districts at 95%, 212 at 98%,
+201 at 99%, 175 at 99.5%, and 125 at 99.9%; none is certified at 100%.
+These counts remain extraction diagnostics, not a chosen analysis sample.
+
+On the current source pass, 342 districts have incomplete alignment, 63 have all
+114 columns aligned but unresolved cells, and 10 still have accepted-cell sums
+above Atlas population. **No district yet has a complete 114-cell candidate
+inventory**, so 1991 linguistic distance remains blocked from production.
 
 `language_atlas_1991_languages.csv` now freezes the reviewed Atlas column
 inventory for columns 4--117. It records the 18 Scheduled and 96 Non-Scheduled
