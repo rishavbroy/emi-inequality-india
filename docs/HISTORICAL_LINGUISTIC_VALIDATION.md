@@ -783,9 +783,9 @@ share is deliberately not labelled a harmonized age-specific literacy rate. The
 author SAS reader marks the 1961 main-worker and farm-worker counts as estimated,
 so labor pretrends are supporting diagnostics rather than pristine Census-series
 outcomes. Negative archived values are treated as unavailable because counts
-cannot be negative: the codebook explicitly documents `-1` as missing, while the
-distributed panel also contains a few `-2` education values whose meaning is not
-documented in the attached source material.
+cannot be negative. The codebook explicitly documents `-1` as missing; the
+registered pretrend totals in the archived panel use that sentinel. Production
+code does not assign substantive meaning to any negative count value.
 
 Changes are computed on stable panel units for 1961–71, 1971–81, 1981–91,
 1961–81, and 1961–91, then restricted through the conservative reviewed
@@ -795,6 +795,16 @@ population growth cannot determine observation weights. Future EMIE and reviewed
 pre-treatment changes, with state-FE specifications aligned to the preferred
 modern design. Domain-level joint tests summarize demography, labor structure,
 and education.
+
+The two predictors do not have the same historical-source coverage. Therefore the
+diagnostic never treats their raw columns as directly comparable. It reports the
+eventual-EMIE pretrends on the full reviewed Vanneman sample and repeats them on
+the exact `historical_ld_support` sample used by the 1991 linguistic-distance
+diagnostic. `vanneman_pretrend_sample_coverage.csv` records the number of stable
+units, states, 1961 population, and fraction of the full sample retained. This
+common-support comparison separates predictor differences from changes in sample
+composition; it is a sensitivity diagnostic, not a reason to redefine the
+preferred historical geography after seeing results.
 
 These diagnostics are evidence about pre-existing differential development, not
 proof of instrument exogeneity. Null pretrends are reassuring; non-null pretrends
