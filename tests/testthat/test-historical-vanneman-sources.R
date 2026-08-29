@@ -13,6 +13,30 @@ vanneman_test_write_gz <- function(path, lines) {
   writeLines(lines, con)
 }
 
+
+vanneman_test_write_archive_checksums <- function(project_root, source_root) {
+  rel <- c(
+    "data_archived/panel4.data.gz",
+    "data_archived/dist81.data.gz",
+    "data_archived/dist91.data.gz",
+    "sas_commands_archived/panel4.sas",
+    "sas_commands_archived/dist81.sas",
+    "sas_commands_archived/dist91.sas"
+  )
+  paths <- file.path(source_root, rel)
+  registry <- data.frame(
+    relative_path = rel,
+    size_bytes = as.numeric(file.info(paths)$size),
+    md5 = unname(tools::md5sum(paths)),
+    sha256 = rep("fixture", length(rel)),
+    archive_snapshot = rep("fixture", length(rel)),
+    stringsAsFactors = FALSE
+  )
+  metadata_dir <- file.path(project_root, "data", "metadata")
+  dir.create(metadata_dir, recursive = TRUE, showWarnings = FALSE)
+  write.csv(registry, file.path(metadata_dir, "vanneman_archive_2013_checksums.csv"), row.names = FALSE)
+}
+
 test_that("Vanneman source QA reads documented fixed-width identifiers and SAS contracts", {
   td <- tempfile(); dir.create(td)
   codebook <- file.path(td, "codebook.html")
@@ -51,7 +75,8 @@ test_that("file-specific SAS readers supersede generic version labels for parser
   td <- tempfile(); dir.create(td)
   root <- file.path(td, "data/raw/census_1961-91/vanneman_1961-91")
   dir.create(file.path(root, "codebook"), recursive = TRUE)
-  dir.create(file.path(root, "sas_commands"), recursive = TRUE)
+  dir.create(file.path(root, "data_archived"), recursive = TRUE)
+  dir.create(file.path(root, "sas_commands_archived"), recursive = TRUE)
   writeLines(
     "Version number (2 = cross-sectional data; 6 = panel 1961-91 data)",
     file.path(root, "codebook/Codebook_ Indian district database.html")
@@ -64,18 +89,19 @@ test_that("file-specific SAS readers supersede generic version labels for parser
     '<div align="CENTER"> 151 </div>',
     file.path(root, "codebook/Education and literacy_ Indian district codebook.html")
   )
-  vanneman_test_write_gz(file.path(root, "panel4.data.gz"), c(
+  vanneman_test_write_gz(file.path(root, "data_archived/panel4.data.gz"), c(
     "0201100615Srikakulam", "0201100715Srikakulam",
     "0201100815Srikakulam", "0201100915Srikakulam"
   ))
-  vanneman_test_write_gz(file.path(root, "dist81.data.gz"), c(
+  vanneman_test_write_gz(file.path(root, "data_archived/dist81.data.gz"), c(
     "0201100812Srikakulam",
     "0201151813        1"
   ))
-  vanneman_test_write_gz(file.path(root, "dist91.data.gz"), "0201100912Srikakulam")
-  writeLines(vanneman_test_sas("panel4", "100"), file.path(root, "sas_commands/panel4.sas"))
-  writeLines(vanneman_test_sas("dist81", c("100", "151")), file.path(root, "sas_commands/dist81.sas"))
-  writeLines(vanneman_test_sas("dist91", "100"), file.path(root, "sas_commands/dist91.sas"))
+  vanneman_test_write_gz(file.path(root, "data_archived/dist91.data.gz"), "0201100912Srikakulam")
+  writeLines(vanneman_test_sas("panel4", "100"), file.path(root, "sas_commands_archived/panel4.sas"))
+  writeLines(vanneman_test_sas("dist81", c("100", "151")), file.path(root, "sas_commands_archived/dist81.sas"))
+  writeLines(vanneman_test_sas("dist91", "100"), file.path(root, "sas_commands_archived/dist91.sas"))
+  vanneman_test_write_archive_checksums(td, root)
 
   paths <- list(root = td)
   class(paths) <- "emi_paths"
@@ -88,6 +114,7 @@ test_that("file-specific SAS readers supersede generic version labels for parser
   expect_equal(panel$generic_codebook_version, 6L)
   expect_false(panel$generic_codebook_version_match)
   expect_true(panel$parser_contract_verified)
+  expect_true(panel$archive_distribution_pair_verified)
   expect_true(panel$eligible_for_baseline_values)
   expect_equal(panel$status, "source_reader_verified_generic_version_differs")
 
@@ -96,11 +123,13 @@ test_that("file-specific SAS readers supersede generic version labels for parser
   expect_true(dist81$version_exception_definitions_present)
   expect_true(dist81$source_specific_reader_covers_version_exceptions)
   expect_true(dist81$parser_contract_verified)
+  expect_true(dist81$archive_distribution_pair_verified)
   expect_true(dist81$eligible_for_baseline_values)
   expect_equal(dist81$status, "source_reader_verified_generic_version_differs")
 
   expect_true(dist91$generic_codebook_version_match)
   expect_true(dist91$parser_contract_verified)
+  expect_true(dist91$archive_distribution_pair_verified)
   expect_equal(dist91$status, "source_contract_verified")
   expect_true(dist91$eligible_for_baseline_values)
 })
@@ -115,4 +144,66 @@ test_that("Vanneman parser eligibility fails closed when SAS does not cover exce
   expect_true(contract$source_specific_identifier_layout_verified)
   expect_false(contract$source_specific_reader_covers_version_exceptions)
   expect_false(contract$parser_contract_verified)
+})
+
+
+test_that("Vanneman panel4 geography inventory exposes stable IDs without pretending they are Census IDs", {
+  td <- tempfile(); dir.create(td)
+  path <- file.path(td, "panel4.data.gz")
+  lines <- c(
+    "0201000615Hyderabad", "0201000715Hyderabad",
+    "0201000815Hyderabad+Rangareddi", "0201000915Hyderabad+Rangareddi",
+    "0201100615      100", "0201100715      120",
+    "0201100815      140", "0201100915      160",
+    "0202000615Srikakulam", "0202000715Srikakulam",
+    "0202000815Srikakulam", "0202000915Srikakulam",
+    "0202100615      200", "0202100715      220",
+    "0202100815      240", "0202100915      260"
+  )
+  vanneman_test_write_gz(path, lines)
+
+  out <- vanneman_panel4_geography_inventory(path)
+  expect_equal(nrow(out), 2L)
+  expect_identical(names(out)[1:2], c("vanneman_state_id", "vanneman_district_id"))
+  aggregate <- out[out$vanneman_district_id == "01", , drop = FALSE]
+  expect_identical(aggregate$district_label_1991, "Hyderabad+Rangareddi")
+  expect_true(aggregate$explicit_aggregate_label_1991)
+  expect_true(aggregate$label_changed_1981_1991 == FALSE)
+  expect_equal(aggregate$population_1991, 160)
+  expect_false(out$explicit_aggregate_label_1991[out$vanneman_district_id == "02"])
+  expect_true(all(out$n_distinct_labels >= 1L))
+})
+
+
+test_that("Vanneman source QA fails eligibility when archived data-reader pairing changes", {
+  td <- tempfile(); dir.create(td)
+  root <- file.path(td, "data/raw/census_1961-91/vanneman_1961-91")
+  dir.create(file.path(root, "codebook"), recursive = TRUE)
+  dir.create(file.path(root, "data_archived"), recursive = TRUE)
+  dir.create(file.path(root, "sas_commands_archived"), recursive = TRUE)
+  writeLines(
+    "Version number (2 = cross-sectional data; 6 = panel 1961-91 data)",
+    file.path(root, "codebook/Codebook_ Indian district database.html")
+  )
+  writeLines('<div align="CENTER"> 100 </div>', file.path(root, "codebook/Variables_ Indian district codebook.html"))
+  writeLines('<div align="CENTER"> 151 </div>', file.path(root, "codebook/Education and literacy_ Indian district codebook.html"))
+  vanneman_test_write_gz(file.path(root, "data_archived/panel4.data.gz"), c(
+    "0201100615Srikakulam", "0201100715Srikakulam",
+    "0201100815Srikakulam", "0201100915Srikakulam"
+  ))
+  vanneman_test_write_gz(file.path(root, "data_archived/dist81.data.gz"), "0201100812Srikakulam")
+  vanneman_test_write_gz(file.path(root, "data_archived/dist91.data.gz"), "0201100912Srikakulam")
+  writeLines(vanneman_test_sas("panel4", "100"), file.path(root, "sas_commands_archived/panel4.sas"))
+  writeLines(vanneman_test_sas("dist81", "100"), file.path(root, "sas_commands_archived/dist81.sas"))
+  writeLines(vanneman_test_sas("dist91", "100"), file.path(root, "sas_commands_archived/dist91.sas"))
+  vanneman_test_write_archive_checksums(td, root)
+  cat("\nchanged", file = file.path(root, "sas_commands_archived/panel4.sas"), append = TRUE)
+
+  paths <- list(root = td); class(paths) <- "emi_paths"
+  out <- summarize_vanneman_historical_sources(paths)
+  panel <- out[out$source_id == "panel4", , drop = FALSE]
+  expect_false(panel$archive_sas_checksum_verified)
+  expect_false(panel$archive_distribution_pair_verified)
+  expect_false(panel$eligible_for_baseline_values)
+  expect_equal(panel$status, "archive_distribution_checksum_mismatch")
 })
