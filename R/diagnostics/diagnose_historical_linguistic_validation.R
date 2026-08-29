@@ -89,3 +89,331 @@ save_historical_linguistic_geography_1991_2001 <- function(
   write_diagnostic_csv(x$bridge_summary, paths[["bridge_summary"]])
   unname(paths)
 }
+
+historical_linguistic_rank_percentile <- function(x) {
+  x <- num(x)
+  out <- rep(NA_real_, length(x))
+  ok <- is.finite(x)
+  n <- sum(ok)
+  if (!n) return(out)
+  if (n == 1L) {
+    out[ok] <- 0.5
+    return(out)
+  }
+  out[ok] <- (rank(x[ok], ties.method = "average") - 1) / (n - 1)
+  out
+}
+
+historical_linguistic_quintile <- function(x) {
+  x <- num(x)
+  out <- rep(NA_integer_, length(x))
+  ok <- is.finite(x)
+  n <- sum(ok)
+  if (!n) return(out)
+  out[ok] <- pmin(5L, pmax(1L, as.integer(ceiling(5 * rank(x[ok], ties.method = "average") / n))))
+  out
+}
+
+historical_linguistic_persistence_panel <- function(
+    historical_distance, distance_2001, source_districts, transition) {
+  historical <- safe_df(historical_distance)
+  current <- safe_df(distance_2001)
+  geography <- safe_df(source_districts)
+  bridge <- safe_df(transition)
+
+  historical_required <- c(
+    "state_code_1991", "district_code_1991", "atlas_population_1991",
+    "min_accepted_coverage", "historical_language_status",
+    "ling_distance_nonzero_mean_1991"
+  )
+  current_required <- c(
+    "state_code_2001", "district_code_2001", "ling_distance_nonzero_mean"
+  )
+  geography_required <- c(
+    "state_code_1991", "district_code_1991", "exact_language_persistence",
+    "preferred_language_persistence", "population_coverage", "n_target_2001_districts"
+  )
+  transition_required <- c(
+    "state_code_1991", "district_code_1991", "state_code_2001", "district_code_2001"
+  )
+  missing_fields <- function(x, required, label) {
+    missing <- setdiff(required, names(x))
+    if (length(missing)) {
+      stop(label, " lacks fields: ", paste(missing, collapse = ", "), call. = FALSE)
+    }
+  }
+  missing_fields(historical, historical_required, "Historical linguistic distance")
+  missing_fields(current, current_required, "Census-2001 linguistic distance")
+  missing_fields(geography, geography_required, "Historical linguistic geography")
+  missing_fields(bridge, transition_required, "Historical linguistic transition")
+
+  historical$state_code_1991 <- pad_admin_code(historical$state_code_1991, 2L)
+  historical$district_code_1991 <- pad_admin_code(historical$district_code_1991, 2L)
+  current$state_code_2001 <- pad_admin_code(current$state_code_2001, 2L)
+  current$district_code_2001 <- pad_admin_code(current$district_code_2001, 2L)
+  geography$state_code_1991 <- pad_admin_code(geography$state_code_1991, 2L)
+  geography$district_code_1991 <- pad_admin_code(geography$district_code_1991, 2L)
+  bridge$state_code_1991 <- pad_admin_code(bridge$state_code_1991, 2L)
+  bridge$district_code_1991 <- pad_admin_code(bridge$district_code_1991, 2L)
+  bridge$state_code_2001 <- pad_admin_code(bridge$state_code_2001, 2L)
+  bridge$district_code_2001 <- pad_admin_code(bridge$district_code_2001, 2L)
+
+  key_1991 <- function(x) paste(x$state_code_1991, x$district_code_1991, sep = "__")
+  key_2001 <- function(x) paste(x$state_code_2001, x$district_code_2001, sep = "__")
+  if (anyDuplicated(key_1991(historical))) {
+    stop("Historical linguistic distance has duplicate 1991 district keys.", call. = FALSE)
+  }
+  if (anyDuplicated(key_1991(geography))) {
+    stop("Historical linguistic geography has duplicate 1991 district keys.", call. = FALSE)
+  }
+  if (anyDuplicated(key_2001(current))) {
+    stop("Census-2001 linguistic distance has duplicate district keys.", call. = FALSE)
+  }
+  thresholds <- unique(num(historical$min_accepted_coverage))
+  thresholds <- thresholds[is.finite(thresholds)]
+  if (length(thresholds) != 1L) {
+    stop("Historical persistence requires one explicit accepted-speaker coverage threshold.", call. = FALSE)
+  }
+  if (any(geography$exact_language_persistence %in% TRUE &
+          !(geography$preferred_language_persistence %in% TRUE))) {
+    stop("Exact historical geography must be a subset of preferred geography.", call. = FALSE)
+  }
+  geography_targets <- num(geography$n_target_2001_districts)
+  preferred_geography <- geography$preferred_language_persistence %in% TRUE
+  if (any(preferred_geography & (!is.finite(geography_targets) | geography_targets != 1L))) {
+    stop("Preferred historical geography must map to exactly one Census-2001 district.", call. = FALSE)
+  }
+
+  transition_targets <- split(seq_len(nrow(bridge)), key_1991(bridge))
+  target <- safe_bind_rows(lapply(transition_targets, function(i) {
+    rows <- unique(bridge[i, transition_required, drop = FALSE])
+    targets <- unique(rows[c("state_code_2001", "district_code_2001")])
+    first <- rows[1L, c("state_code_1991", "district_code_1991"), drop = FALSE]
+    if (nrow(targets) == 1L) {
+      first$state_code_2001 <- targets$state_code_2001[[1L]]
+      first$district_code_2001 <- targets$district_code_2001[[1L]]
+    } else {
+      first$state_code_2001 <- NA_character_
+      first$district_code_2001 <- NA_character_
+    }
+    first$n_transition_targets <- nrow(targets)
+    first
+  }))
+
+  out <- merge(
+    historical, geography,
+    by = c("state_code_1991", "district_code_1991"), all.x = TRUE, sort = FALSE
+  )
+  out <- merge(
+    out, target,
+    by = c("state_code_1991", "district_code_1991"), all.x = TRUE, sort = FALSE
+  )
+  transition_targets_n <- num(out$n_transition_targets)
+  transition_targets_n[!is.finite(transition_targets_n)] <- 0L
+  out$n_transition_targets <- as.integer(transition_targets_n)
+  geography_targets_n <- num(out$n_target_2001_districts)
+  if (any(!is.finite(geography_targets_n)) || any(transition_targets_n != geography_targets_n)) {
+    stop("Historical geography summary and transition disagree on target-district counts.", call. = FALSE)
+  }
+  current_keep <- current[current_required]
+  names(current_keep)[names(current_keep) == "ling_distance_nonzero_mean"] <-
+    "ling_distance_nonzero_mean_2001"
+  out <- merge(
+    out, current_keep,
+    by = c("state_code_2001", "district_code_2001"), all.x = TRUE, sort = FALSE
+  )
+
+  historical_ok <- out$historical_language_status %in% "eligible" &
+    is.finite(num(out$ling_distance_nonzero_mean_1991))
+  current_ok <- is.finite(num(out$ling_distance_nonzero_mean_2001))
+  preferred_geo <- out$preferred_language_persistence %in% TRUE &
+    num(out$n_transition_targets) == 1L
+  out$persistence_status <- ifelse(
+    !preferred_geo, "geography_not_preferred",
+    ifelse(!historical_ok, "historical_language_ineligible",
+      ifelse(!current_ok, "missing_2001_distance", "eligible"))
+  )
+  eligible <- out$persistence_status == "eligible"
+  out$ling_distance_change_1991_2001 <- ifelse(
+    eligible,
+    num(out$ling_distance_nonzero_mean_2001) - num(out$ling_distance_nonzero_mean_1991),
+    NA_real_
+  )
+  out$rank_percentile_1991 <- NA_real_
+  out$rank_percentile_2001 <- NA_real_
+  out$quintile_1991 <- NA_integer_
+  out$quintile_2001 <- NA_integer_
+  out$rank_percentile_1991[eligible] <- historical_linguistic_rank_percentile(
+    out$ling_distance_nonzero_mean_1991[eligible]
+  )
+  out$rank_percentile_2001[eligible] <- historical_linguistic_rank_percentile(
+    out$ling_distance_nonzero_mean_2001[eligible]
+  )
+  out$quintile_1991[eligible] <- historical_linguistic_quintile(
+    out$ling_distance_nonzero_mean_1991[eligible]
+  )
+  out$quintile_2001[eligible] <- historical_linguistic_quintile(
+    out$ling_distance_nonzero_mean_2001[eligible]
+  )
+  out$same_quintile <- ifelse(
+    eligible,
+    out$quintile_1991 == out$quintile_2001,
+    NA
+  )
+  out$absolute_quintile_change <- ifelse(
+    eligible,
+    abs(out$quintile_2001 - out$quintile_1991),
+    NA_integer_
+  )
+  out
+}
+
+historical_linguistic_weighted_correlation <- function(x, y, weight, rank_values = FALSE) {
+  x <- num(x)
+  y <- num(y)
+  weight <- num(weight)
+  ok <- is.finite(x) & is.finite(y) & is.finite(weight) & weight > 0
+  if (sum(ok) < 2L) return(NA_real_)
+  x <- x[ok]
+  y <- y[ok]
+  weight <- weight[ok]
+  if (rank_values) {
+    x <- rank(x, ties.method = "average")
+    y <- rank(y, ties.method = "average")
+  }
+  if (length(unique(x)) < 2L || length(unique(y)) < 2L) return(NA_real_)
+  unname(stats::cov.wt(cbind(x, y), wt = weight, cor = TRUE)$cor[1L, 2L])
+}
+
+historical_linguistic_persistence_metrics <- function(panel, exact_only = FALSE) {
+  x <- safe_df(panel)
+  keep <- x$persistence_status == "eligible"
+  if (exact_only) keep <- keep & x$exact_language_persistence %in% TRUE
+  x <- x[keep, , drop = FALSE]
+  sample_name <- if (exact_only) "exact_one_to_one" else "preferred_geography"
+  threshold <- unique(num(panel$min_accepted_coverage))
+  threshold <- threshold[is.finite(threshold)]
+  empty <- data.frame(
+    sample = sample_name,
+    min_accepted_coverage = if (length(threshold) == 1L) threshold else NA_real_,
+    n_districts = nrow(x), population_1991 = sum(num(x$atlas_population_1991), na.rm = TRUE),
+    pearson = NA_real_, spearman = NA_real_,
+    population_weighted_pearson = NA_real_, population_weighted_spearman = NA_real_,
+    population_weighted_slope = NA_real_, population_weighted_r_squared = NA_real_,
+    state_fe_population_weighted_slope = NA_real_, state_fe_population_weighted_r_squared = NA_real_,
+    mean_absolute_change = NA_real_, mean_absolute_rank_change = NA_real_,
+    same_quintile_share = NA_real_, mean_absolute_quintile_change = NA_real_,
+    stringsAsFactors = FALSE
+  )
+  if (nrow(x) < 2L) return(empty)
+
+  d91 <- num(x$ling_distance_nonzero_mean_1991)
+  d01 <- num(x$ling_distance_nonzero_mean_2001)
+  weight <- num(x$atlas_population_1991)
+  ok <- is.finite(d91) & is.finite(d01) & is.finite(weight) & weight > 0
+  if (sum(ok) < 2L) return(empty)
+  x <- x[ok, , drop = FALSE]
+  d91 <- d91[ok]
+  d01 <- d01[ok]
+  weight <- weight[ok]
+
+  states <- plain_chr(x$state_code_2001)
+  fit_data <- data.frame(
+    d91 = d91, d01 = d01, state_code_2001 = states, weight = weight,
+    stringsAsFactors = FALSE
+  )
+  weighted_fit <- stats::lm(d01 ~ d91, data = fit_data, weights = weight)
+  state_fit <- if (length(unique(states)) >= 2L) {
+    stats::lm(
+      d01 ~ d91 + factor(state_code_2001),
+      data = fit_data,
+      weights = weight
+    )
+  } else {
+    NULL
+  }
+  rank91 <- historical_linguistic_rank_percentile(d91)
+  rank01 <- historical_linguistic_rank_percentile(d01)
+  q91 <- historical_linguistic_quintile(d91)
+  q01 <- historical_linguistic_quintile(d01)
+
+  empty$n_districts <- nrow(x)
+  empty$population_1991 <- sum(weight)
+  empty$pearson <- if (length(unique(d91)) >= 2L && length(unique(d01)) >= 2L) {
+    stats::cor(d91, d01, method = "pearson")
+  } else {
+    NA_real_
+  }
+  empty$spearman <- if (length(unique(d91)) >= 2L && length(unique(d01)) >= 2L) {
+    stats::cor(d91, d01, method = "spearman")
+  } else {
+    NA_real_
+  }
+  empty$population_weighted_pearson <- historical_linguistic_weighted_correlation(
+    d91, d01, weight, rank_values = FALSE
+  )
+  empty$population_weighted_spearman <- historical_linguistic_weighted_correlation(
+    d91, d01, weight, rank_values = TRUE
+  )
+  empty$population_weighted_slope <- unname(stats::coef(weighted_fit)[["d91"]])
+  empty$population_weighted_r_squared <- summary(weighted_fit)$r.squared
+  if (!is.null(state_fit)) {
+    empty$state_fe_population_weighted_slope <- unname(stats::coef(state_fit)[["d91"]])
+    empty$state_fe_population_weighted_r_squared <- summary(state_fit)$r.squared
+  }
+  empty$mean_absolute_change <- mean(abs(d01 - d91))
+  empty$mean_absolute_rank_change <- mean(abs(rank01 - rank91))
+  empty$same_quintile_share <- mean(q01 == q91)
+  empty$mean_absolute_quintile_change <- mean(abs(q01 - q91))
+  empty
+}
+
+historical_linguistic_quintile_transition <- function(panel, exact_only = FALSE) {
+  x <- safe_df(panel)
+  keep <- x$persistence_status == "eligible"
+  if (exact_only) keep <- keep & x$exact_language_persistence %in% TRUE
+  x <- x[keep, , drop = FALSE]
+  if (!nrow(x)) {
+    return(data.frame(
+      sample = character(), quintile_1991 = integer(), quintile_2001 = integer(),
+      n_districts = integer(), population_1991 = numeric(), stringsAsFactors = FALSE
+    ))
+  }
+  q91 <- historical_linguistic_quintile(x$ling_distance_nonzero_mean_1991)
+  q01 <- historical_linguistic_quintile(x$ling_distance_nonzero_mean_2001)
+  group <- interaction(q91, q01, drop = TRUE)
+  sample_name <- if (exact_only) "exact_one_to_one" else "preferred_geography"
+  safe_bind_rows(lapply(split(seq_len(nrow(x)), group), function(i) {
+    data.frame(
+      sample = sample_name,
+      quintile_1991 = q91[[i[[1L]]]],
+      quintile_2001 = q01[[i[[1L]]]],
+      n_districts = length(i),
+      population_1991 = sum(num(x$atlas_population_1991[i]), na.rm = TRUE),
+      stringsAsFactors = FALSE
+    )
+  }))
+}
+
+build_historical_linguistic_persistence_validation <- function(
+    historical_distance, distance_2001, geography) {
+  required <- c("source_districts", "transition")
+  missing <- setdiff(required, names(geography))
+  if (length(missing)) {
+    stop("Historical linguistic geography object lacks: ", paste(missing, collapse = ", "), call. = FALSE)
+  }
+  panel <- historical_linguistic_persistence_panel(
+    historical_distance, distance_2001, geography$source_districts, geography$transition
+  )
+  list(
+    panel = panel,
+    summary = safe_bind_rows(list(
+      historical_linguistic_persistence_metrics(panel, exact_only = FALSE),
+      historical_linguistic_persistence_metrics(panel, exact_only = TRUE)
+    )),
+    quintile_transition = safe_bind_rows(list(
+      historical_linguistic_quintile_transition(panel, exact_only = FALSE),
+      historical_linguistic_quintile_transition(panel, exact_only = TRUE)
+    ))
+  )
+}
