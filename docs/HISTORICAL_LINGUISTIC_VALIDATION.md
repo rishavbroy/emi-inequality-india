@@ -443,7 +443,14 @@ inventory. That fact remains important extraction QA, but it is no longer by
 itself a production blocker: the new distance-bound diagnostic asks whether the
 unresolved mass is small enough to leave the historical IV tightly bounded.
 Population-bound contradictions remain ineligible regardless of coverage or
-bound width.
+bound width. They also do not receive derived historical-language estimands in
+the candidate table. The raw accepted counts, printed Atlas population, coverage
+ratio, and review provenance remain visible for QA, but any population-normalized
+share or partial-identification bound is `NA`: once accepted speaker counts exceed
+the source population, neither capping a share at 100 percent nor continuing to
+compute distance bounds has a defensible interpretation. Both the primary
+positive-distance mean and the percent-distant robustness measure use this same
+source-coherence contract.
 
 `language_atlas_1991_languages.csv` now freezes the reviewed Atlas column
 inventory for columns 4--117. It records the 18 Scheduled and 96 Non-Scheduled
