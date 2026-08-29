@@ -478,13 +478,18 @@ test_that("1991 Atlas state and PCA review inputs have explicit source contracts
   atlas <- sources[sources$source_id == "census_1991_language_atlas", , drop = FALSE]
   expect_equal(nrow(atlas), 1L)
   expect_false(as.logical(atlas$used_in_current_pipeline))
-  expect_match(atlas$notes, "all-page district-language candidates", fixed = TRUE)
-  expect_match(atlas$notes, "reviewed 114-column language inventory", fixed = TRUE)
-  expect_match(atlas$notes, "single conservatively formatted integer", fixed = TRUE)
-  expect_match(atlas$notes, "never renormalize unresolved cells", fixed = TRUE)
-  expect_match(atlas$notes, "accepted-count sums that exceed district population", fixed = TRUE)
-  expect_match(atlas$notes, "existing frozen Shastry resolver", fixed = TRUE)
-  expect_match(atlas$notes, "no Atlas speaker count enters targets", fixed = TRUE)
+  expect_identical(atlas$current_or_future, "future")
+  expect_identical(
+    atlas$local_raw_path,
+    "data/raw/census_1961-91/Language_Atlas_of_India_1991.pdf"
+  )
+
+  expect_identical(as.integer(languages$atlas_column), 4:117)
+  expect_true(all(nzchar(languages$canonical_language)))
+  expect_setequal(
+    languages$shastry_family_class,
+    c("indo_european", "non_indo_european", "special_english")
+  )
 })
 
 test_that("DISE archive is optional but fully documented", {
