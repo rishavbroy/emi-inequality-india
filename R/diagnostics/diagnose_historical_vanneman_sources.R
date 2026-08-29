@@ -9,6 +9,8 @@ vanneman_historical_paths <- function(paths = build_paths()) {
     codebook = file.path(root, "codebook/Codebook_ Indian district database.html"),
     variables_codebook = file.path(root, "codebook/Variables_ Indian district codebook.html"),
     education_codebook = file.path(root, "codebook/Education and literacy_ Indian district codebook.html"),
+    combining_codebook = file.path(root, "codebook/Combining divided district to recreate 1961 district boundary.html"),
+    panel_state_crosswalk = path_project(paths, "data/metadata/vanneman_panel_state_crosswalk.csv"),
     panel4_sas = file.path(root, "sas_commands_archived/panel4.sas"),
     dist81_sas = file.path(root, "sas_commands_archived/dist81.sas"),
     dist91_sas = file.path(root, "sas_commands_archived/dist91.sas"),
@@ -132,7 +134,11 @@ vanneman_sas_reader_contract <- function(path, source_id, exception_record_ids =
 
 summarize_vanneman_historical_sources <- function(paths = build_paths()) {
   files <- vanneman_historical_paths(paths)
-  missing <- files[!file.exists(files)]
+  qa_file_ids <- c(
+    "panel4", "dist81", "dist91", "codebook", "variables_codebook", "education_codebook",
+    "panel4_sas", "dist81_sas", "dist91_sas", "archive_checksums"
+  )
+  missing <- files[qa_file_ids][!file.exists(files[qa_file_ids])]
   if (length(missing)) {
     stop("Historical Vanneman source QA is missing files: ", paste(missing, collapse = ", "), call. = FALSE)
   }
@@ -225,6 +231,44 @@ save_vanneman_historical_source_qa <- function(
 }
 
 
+read_vanneman_panel_state_crosswalk <- function(path) {
+  if (!file.exists(path)) stop("Missing Vanneman panel-state crosswalk: ", path, call. = FALSE)
+  x <- read.csv(path, stringsAsFactors = FALSE, colClasses = "character")
+  required <- c(
+    "panel_state_id", "dist81_state_id", "dist91_state_id", "state_name",
+    "panel_to_1991_state_status", "source_basis"
+  )
+  missing <- setdiff(required, names(x))
+  if (length(missing)) {
+    stop("Vanneman panel-state crosswalk lacks columns: ", paste(missing, collapse = ", "), call. = FALSE)
+  }
+  x$panel_state_id <- normalize_census_code(x$panel_state_id, 2L)
+  x$dist81_state_id <- ifelse(
+    nzchar(trimws(x$dist81_state_id)), normalize_census_code(x$dist81_state_id, 2L), NA_character_
+  )
+  x$dist91_state_id <- ifelse(
+    nzchar(trimws(x$dist91_state_id)), normalize_census_code(x$dist91_state_id, 2L), NA_character_
+  )
+  if (anyDuplicated(x$panel_state_id)) stop("Vanneman panel-state crosswalk has duplicate panel state IDs.", call. = FALSE)
+  allowed <- c("mapped_one_to_one", "split_across_1991_states", "no_1991_census")
+  if (any(!x$panel_to_1991_state_status %in% allowed)) {
+    stop("Vanneman panel-state crosswalk contains unsupported mapping statuses.", call. = FALSE)
+  }
+  mapped <- x$panel_to_1991_state_status == "mapped_one_to_one"
+  if (any(mapped & is.na(x$dist91_state_id))) {
+    stop("Mapped Vanneman panel states require a 1991 state ID.", call. = FALSE)
+  }
+  x
+}
+
+vanneman_documented_combined_panel_units <- function(path) {
+  if (!file.exists(path)) stop("Missing Vanneman combining-district documentation: ", path, call. = FALSE)
+  text <- paste(readLines(path, warn = FALSE, encoding = "UTF-8"), collapse = " ")
+  hits <- regmatches(text, gregexpr("[0-9]{4}[[:space:]]*=", text, perl = TRUE))[[1L]]
+  if (!length(hits) || identical(hits, "-1")) return(character())
+  sort(unique(sub("[[:space:]]*=.*$", "", hits)))
+}
+
 vanneman_panel4_geography_inventory <- function(path) {
   if (!file.exists(path)) stop("Missing Vanneman panel4 file: ", path, call. = FALSE)
   con <- gzfile(path, open = "rt")
@@ -269,7 +313,7 @@ vanneman_panel4_geography_inventory <- function(path) {
   populations <- data.frame(
     vanneman_state_id = state_id[pop_rows],
     vanneman_district_id = district_id[pop_rows],
-    population_1991 = suppressWarnings(as.numeric(trimws(substr(lines[pop_rows], 11L, 19L)))),
+    population_1991_raw = suppressWarnings(as.numeric(trimws(substr(lines[pop_rows], 11L, 19L)))),
     stringsAsFactors = FALSE
   )
   if (anyDuplicated(populations[c("vanneman_state_id", "vanneman_district_id")])) {
@@ -277,15 +321,93 @@ vanneman_panel4_geography_inventory <- function(path) {
   }
   pop_key <- paste(populations$vanneman_state_id, populations$vanneman_district_id, sep = "__")
   out_key <- paste(out$vanneman_state_id, out$vanneman_district_id, sep = "__")
-  out$population_1991 <- populations$population_1991[match(out_key, pop_key)]
-  if (any(!is.finite(out$population_1991) | out$population_1991 <= 0)) {
-    stop("Vanneman panel4 geography inventory lacks positive 1991 population.", call. = FALSE)
+  raw_population <- populations$population_1991_raw[match(out_key, pop_key)]
+  if (any(!is.finite(raw_population))) {
+    stop("Vanneman panel4 geography inventory contains malformed 1991 population values.", call. = FALSE)
   }
+  unsupported_nonpositive <- raw_population <= 0 & raw_population != -1
+  if (any(unsupported_nonpositive)) {
+    stop("Vanneman panel4 contains nonpositive 1991 population values other than the documented -1 missing sentinel.", call. = FALSE)
+  }
+  out$population_1991 <- ifelse(raw_population == -1, NA_real_, raw_population)
+  out$population_1991_available <- is.finite(out$population_1991) & out$population_1991 > 0
+  out$population_1991_status <- ifelse(out$population_1991_available, "observed", "documented_missing_sentinel")
 
   label_cols <- paste0("district_label_", expected_years)
   out$n_distinct_labels <- apply(out[label_cols], 1L, function(x) length(unique(x)))
   out$label_changed_1981_1991 <- out$district_label_1981 != out$district_label_1991
   out$explicit_aggregate_label_1991 <- grepl("+", out$district_label_1991, fixed = TRUE)
+  out[order(out$vanneman_state_id, out$vanneman_district_id), , drop = FALSE]
+}
+
+vanneman_dist91_geography_inventory <- function(path) {
+  if (!file.exists(path)) stop("Missing Vanneman dist91 file: ", path, call. = FALSE)
+  con <- gzfile(path, open = "rt")
+  on.exit(close(con), add = TRUE)
+  lines <- readLines(con, warn = FALSE)
+  if (!length(lines) || any(nchar(lines) < 10L)) {
+    stop("Vanneman dist91 contains malformed fixed-width records.", call. = FALSE)
+  }
+  keep <- substr(lines, 5L, 7L) == "000" & substr(lines, 8L, 9L) == "91"
+  out <- data.frame(
+    dist91_state_id = substr(lines[keep], 1L, 2L),
+    dist91_district_id = substr(lines[keep], 3L, 4L),
+    dist91_district_label = trimws(substr(lines[keep], 11L, nchar(lines[keep]))),
+    stringsAsFactors = FALSE
+  )
+  if (!nrow(out) || anyDuplicated(out[c("dist91_state_id", "dist91_district_id")])) {
+    stop("Vanneman dist91 label inventory must contain unique 1991 state-district IDs.", call. = FALSE)
+  }
+  out$dist91_label_key <- canonicalize_district_name(out$dist91_district_label)
+  out
+}
+
+vanneman_panel4_dist91_crosswalk <- function(
+    panel_geography, dist91_geography, state_crosswalk, documented_combined_units = character()) {
+  panel <- safe_df(panel_geography)
+  dist91 <- safe_df(dist91_geography)
+  states <- safe_df(state_crosswalk)
+  required_panel <- c("vanneman_state_id", "vanneman_district_id", "district_label_1991", "explicit_aggregate_label_1991")
+  missing <- setdiff(required_panel, names(panel))
+  if (length(missing)) stop("Vanneman panel geography lacks fields: ", paste(missing, collapse = ", "), call. = FALSE)
+
+  panel$panel_unit_id <- paste0(panel$vanneman_state_id, panel$vanneman_district_id)
+  panel$panel_label_key <- canonicalize_district_name(panel$district_label_1991)
+  state_idx <- match(panel$vanneman_state_id, states$panel_state_id)
+  if (anyNA(state_idx)) stop("Vanneman panel geography contains state IDs absent from the state crosswalk.", call. = FALSE)
+  panel$dist91_state_id <- states$dist91_state_id[state_idx]
+  panel$panel_to_1991_state_status <- states$panel_to_1991_state_status[state_idx]
+  panel$documented_combined_panel_unit <- panel$panel_unit_id %in% documented_combined_units
+
+  match_one <- function(i) {
+    if (panel$panel_to_1991_state_status[[i]] == "no_1991_census") {
+      return(c(NA_character_, NA_character_, "no_1991_census", "no_1991_census", "FALSE"))
+    }
+    if (panel$panel_to_1991_state_status[[i]] != "mapped_one_to_one") {
+      return(c(NA_character_, NA_character_, "state_mapping_requires_review", "state_mapping_requires_review", "FALSE"))
+    }
+    if (isTRUE(panel$explicit_aggregate_label_1991[[i]]) || isTRUE(panel$documented_combined_panel_unit[[i]])) {
+      return(c(NA_character_, NA_character_, "aggregate_requires_review", "documented_or_explicit_aggregate", "FALSE"))
+    }
+    cand <- dist91[
+      dist91$dist91_state_id == panel$dist91_state_id[[i]] &
+        dist91$dist91_label_key == panel$panel_label_key[[i]],
+      , drop = FALSE
+    ]
+    if (nrow(cand) != 1L) {
+      return(c(NA_character_, NA_character_, "label_review_required", "no_unique_exact_normalized_label", "FALSE"))
+    }
+    if (identical(cand$dist91_district_id[[1L]], "00")) {
+      return(c(cand$dist91_district_id[[1L]], cand$dist91_district_label[[1L]], "small_state_aggregate", "exact_label_but_aggregated_state", "FALSE"))
+    }
+    c(cand$dist91_district_id[[1L]], cand$dist91_district_label[[1L]], "deterministic_one_to_one", "exact_normalized_label_within_state", "TRUE")
+  }
+  matched <- t(vapply(seq_len(nrow(panel)), match_one, character(5)))
+  colnames(matched) <- c(
+    "dist91_district_id", "dist91_district_label", "mapping_class", "mapping_basis", "preferred_pretrend_eligible"
+  )
+  out <- cbind(panel, as.data.frame(matched, stringsAsFactors = FALSE))
+  out$preferred_pretrend_eligible <- out$preferred_pretrend_eligible == "TRUE"
   out[order(out$vanneman_state_id, out$vanneman_district_id), , drop = FALSE]
 }
 
@@ -295,10 +417,42 @@ build_vanneman_panel4_geography_inventory <- function(source_qa, paths = build_p
   if (nrow(panel) != 1L || !isTRUE(panel$eligible_for_baseline_values[[1L]])) {
     stop("Vanneman panel4 parser contract must be verified before building geography inventory.", call. = FALSE)
   }
-  vanneman_panel4_geography_inventory(vanneman_historical_paths(paths)[["panel4"]])
+  files <- vanneman_historical_paths(paths)
+  out <- vanneman_panel4_geography_inventory(files[["panel4"]])
+  states <- read_vanneman_panel_state_crosswalk(files[["panel_state_crosswalk"]])
+  state_idx <- match(out$vanneman_state_id, states$panel_state_id)
+  if (anyNA(state_idx)) stop("Vanneman panel4 geography contains states absent from the documented state crosswalk.", call. = FALSE)
+  out$panel_to_1991_state_status <- states$panel_to_1991_state_status[state_idx]
+  out$dist91_state_id <- states$dist91_state_id[state_idx]
+  missing_population <- !out$population_1991_available
+  if (any(missing_population & out$panel_to_1991_state_status != "no_1991_census")) {
+    stop("Vanneman panel4 has undocumented missing 1991 population outside a no-census state.", call. = FALSE)
+  }
+  out$population_1991_status[missing_population] <- "no_1991_census"
+  out
+}
+
+build_vanneman_panel4_dist91_crosswalk <- function(source_qa, panel_geography, paths = build_paths()) {
+  qa <- safe_df(source_qa)
+  dist91_qa <- qa[qa$source_id == "dist91", , drop = FALSE]
+  if (nrow(dist91_qa) != 1L || !isTRUE(dist91_qa$eligible_for_baseline_values[[1L]])) {
+    stop("Vanneman dist91 parser contract must be verified before building the panel geography crosswalk.", call. = FALSE)
+  }
+  files <- vanneman_historical_paths(paths)
+  vanneman_panel4_dist91_crosswalk(
+    panel_geography = panel_geography,
+    dist91_geography = vanneman_dist91_geography_inventory(files[["dist91"]]),
+    state_crosswalk = read_vanneman_panel_state_crosswalk(files[["panel_state_crosswalk"]]),
+    documented_combined_units = vanneman_documented_combined_panel_units(files[["combining_codebook"]])
+  )
 }
 
 save_vanneman_panel4_geography_inventory <- function(
     x, path = "outputs/diagnostics/extended/instrument_relevance/vanneman_panel4_geography_inventory.csv") {
+  write_diagnostic_csv(x, path)
+}
+
+save_vanneman_panel4_dist91_crosswalk <- function(
+    x, path = "outputs/diagnostics/extended/instrument_relevance/vanneman_panel4_dist91_crosswalk.csv") {
   write_diagnostic_csv(x, path)
 }

@@ -207,3 +207,68 @@ test_that("Vanneman source QA fails eligibility when archived data-reader pairin
   expect_false(panel$eligible_for_baseline_values)
   expect_equal(panel$status, "archive_distribution_checksum_mismatch")
 })
+
+test_that("Vanneman panel geography preserves documented 1991 missing-census sentinels", {
+  td <- tempfile(); dir.create(td)
+  path <- file.path(td, "panel4.data.gz")
+  lines <- c(
+    "1309000615Doda", "1309000715Doda", "1309000815Doda", "1309000915Doda",
+    "1309100615   262471", "1309100715   342220", "1309100815   425262", "1309100915       -1",
+    "0201000615Srikakulam", "0201000715Srikakulam", "0201000815Srikakulam", "0201000915Srikakulam",
+    "0201100615      100", "0201100715      120", "0201100815      140", "0201100915      160"
+  )
+  vanneman_test_write_gz(path, lines)
+
+  out <- vanneman_panel4_geography_inventory(path)
+  doda <- out[out$vanneman_state_id == "13", , drop = FALSE]
+  expect_false(doda$population_1991_available)
+  expect_true(is.na(doda$population_1991))
+  expect_equal(doda$population_1991_status, "documented_missing_sentinel")
+  expect_true(out$population_1991_available[out$vanneman_state_id == "02"])
+})
+
+test_that("Vanneman panel to 1991 crosswalk automates only deterministic exact labels", {
+  panel <- data.frame(
+    vanneman_state_id = c("02", "02", "13", "03"),
+    vanneman_district_id = c("01", "16", "09", "00"),
+    district_label_1991 = c("Srikakulam", "Hyderabad+Rangareddi", "Doda", "Arunachal Pradesh"),
+    explicit_aggregate_label_1991 = c(FALSE, TRUE, FALSE, FALSE),
+    stringsAsFactors = FALSE
+  )
+  dist91 <- data.frame(
+    dist91_state_id = c("02", "02", "02", "03"),
+    dist91_district_id = c("01", "15", "16", "00"),
+    dist91_district_label = c("Srikakulam", "Rangareddi", "Hyderabad", "Arunachal Pradesh"),
+    stringsAsFactors = FALSE
+  )
+  dist91$dist91_label_key <- canonicalize_district_name(dist91$dist91_district_label)
+  states <- data.frame(
+    panel_state_id = c("02", "13", "03"),
+    dist81_state_id = c("02", "13", "03"),
+    dist91_state_id = c("02", NA, "03"),
+    state_name = c("Andhra Pradesh", "Jammu & Kashmir", "Arunachal Pradesh"),
+    panel_to_1991_state_status = c("mapped_one_to_one", "no_1991_census", "mapped_one_to_one"),
+    source_basis = "fixture",
+    stringsAsFactors = FALSE
+  )
+
+  out <- vanneman_panel4_dist91_crosswalk(panel, dist91, states, documented_combined_units = "0216")
+  one <- out[out$panel_unit_id == "0201", , drop = FALSE]
+  combined <- out[out$panel_unit_id == "0216", , drop = FALSE]
+  jammu <- out[out$panel_unit_id == "1309", , drop = FALSE]
+  small <- out[out$panel_unit_id == "0300", , drop = FALSE]
+
+  expect_true(one$preferred_pretrend_eligible)
+  expect_equal(one$mapping_class, "deterministic_one_to_one")
+  expect_equal(one$dist91_district_id, "01")
+  expect_false(combined$preferred_pretrend_eligible)
+  expect_equal(combined$mapping_class, "aggregate_requires_review")
+  expect_equal(jammu$mapping_class, "no_1991_census")
+  expect_equal(small$mapping_class, "small_state_aggregate")
+})
+
+test_that("documented Vanneman combined units are parsed from the author codebook", {
+  path <- tempfile(fileext = ".html")
+  writeLines(c("Andhra Pradesh: 0216 = Rangareddi + Hyderabad", "Bihar: 0501 = Patna + Nalanda"), path)
+  expect_setequal(vanneman_documented_combined_panel_units(path), c("0216", "0501"))
+})
