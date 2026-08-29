@@ -524,6 +524,6 @@ test_that("Vanneman historical source QA is manifest-backed but values remain pr
   source <- sources[sources$source_id == "vanneman_1961_91", , drop = FALSE]
   expect_equal(nrow(source), 1L)
   expect_true(as.logical(source$used_in_current_pipeline))
-  expect_match(source$notes, "source-contract QA only", fixed = TRUE)
-  expect_match(source$notes, "panel version 6", fixed = TRUE)
+  expect_identical(source$current_or_future, "current")
+  expect_true(all(rows$target_name == "historical_vanneman_source_qa"))
 })
