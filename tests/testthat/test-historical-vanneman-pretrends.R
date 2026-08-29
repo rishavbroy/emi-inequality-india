@@ -231,3 +231,78 @@ test_that("Vanneman pretrend regressions honor reviewed geography and state-FE i
   expect_true(is.finite(emie$p.value))
   expect_true(is.finite(ld$p.value))
 })
+
+
+test_that("Vanneman pretrend specification registry makes common support explicit", {
+  panel <- data.frame(
+    historical_ld_eligible = c(TRUE, FALSE),
+    ling_distance_nonzero_mean_1991 = c(1, NA_real_),
+    stringsAsFactors = FALSE
+  )
+  registry <- vanneman_pretrend_specification_registry(panel)
+
+  expect_equal(nrow(registry), 3L)
+  expect_true(any(
+    registry$predictor_id == "eventual_emie" &
+      registry$sample_id == "full_pretrend"
+  ))
+  expect_true(any(
+    registry$predictor_id == "eventual_emie" &
+      registry$sample_id == "historical_ld_support"
+  ))
+  expect_true(any(
+    registry$predictor_id == "historical_ld_1991" &
+      registry$sample_id == "historical_ld_support"
+  ))
+  expect_false(any(
+    registry$predictor_id == "historical_ld_1991" &
+      registry$sample_id == "full_pretrend"
+  ))
+})
+
+test_that("Vanneman pretrend common support restricts EMIE and LD to identical units", {
+  panel <- data.frame(
+    panel_unit_id = rep(c("a", "b", "c"), each = 2),
+    preferred_vanneman_pretrend_eligible = TRUE,
+    period_id = "1961_1981",
+    measure_id = rep(c("log_population", "urban_share"), times = 3),
+    change = 1:6,
+    population_1961 = rep(c(100, 200, 300), each = 2),
+    state_code_2001 = rep(c("01", "01", "02"), each = 2),
+    emie_exposure = rep(c(1, 2, 3), each = 2),
+    historical_ld_eligible = rep(c(TRUE, FALSE, TRUE), each = 2),
+    ling_distance_nonzero_mean_1991 = rep(c(.2, NA, .8), each = 2),
+    stringsAsFactors = FALSE
+  )
+  emie <- vanneman_pretrend_sample(
+    panel, "emie_exposure", "1961_1981", "urban_share",
+    "historical_ld_support"
+  )
+  ld <- vanneman_pretrend_sample(
+    panel, "ling_distance_nonzero_mean_1991", "1961_1981", "urban_share",
+    "historical_ld_support"
+  )
+
+  expect_setequal(emie$panel_unit_id, c("a", "c"))
+  expect_setequal(ld$panel_unit_id, c("a", "c"))
+})
+
+test_that("Vanneman pretrend coverage reports the cost of historical-LD support", {
+  panel <- data.frame(
+    panel_unit_id = rep(c("a", "b", "c"), each = 2),
+    preferred_vanneman_pretrend_eligible = TRUE,
+    state_code_2001 = rep(c("01", "01", "02"), each = 2),
+    population_1961 = rep(c(100, 200, 300), each = 2),
+    emie_exposure = rep(c(1, 2, 3), each = 2),
+    historical_ld_eligible = rep(c(TRUE, FALSE, TRUE), each = 2),
+    stringsAsFactors = FALSE
+  )
+  out <- vanneman_pretrend_sample_coverage(panel)
+  full <- out[out$sample_id == "full_pretrend", , drop = FALSE]
+  common <- out[out$sample_id == "historical_ld_support", , drop = FALSE]
+
+  expect_equal(full$n_units, 3L)
+  expect_equal(common$n_units, 2L)
+  expect_equal(common$share_of_full_units, 2 / 3)
+  expect_equal(common$population_1961, 400)
+})

@@ -293,35 +293,97 @@ build_vanneman_pretrend_predictor_panel <- function(
   out
 }
 
-vanneman_pretrend_predictors <- function(panel) {
-  out <- c(eventual_emie = "emie_exposure")
-  if (all(c("historical_ld_eligible", "ling_distance_nonzero_mean_1991") %in% names(panel))) {
-    out <- c(out, historical_ld_1991 = "ling_distance_nonzero_mean_1991")
+vanneman_pretrend_specification_registry <- function(panel) {
+  x <- safe_df(panel)
+  rows <- list(data.frame(
+    predictor_id = "eventual_emie",
+    predictor = "emie_exposure",
+    sample_id = "full_pretrend",
+    stringsAsFactors = FALSE
+  ))
+  if (all(c(
+      "historical_ld_eligible",
+      "ling_distance_nonzero_mean_1991"
+    ) %in% names(x))) {
+    rows <- c(rows, list(
+      data.frame(
+        predictor_id = "eventual_emie",
+        predictor = "emie_exposure",
+        sample_id = "historical_ld_support",
+        stringsAsFactors = FALSE
+      ),
+      data.frame(
+        predictor_id = "historical_ld_1991",
+        predictor = "ling_distance_nonzero_mean_1991",
+        sample_id = "historical_ld_support",
+        stringsAsFactors = FALSE
+      )
+    ))
   }
-  out
+  safe_bind_rows(rows)
 }
 
-vanneman_pretrend_sample <- function(panel, predictor, period_id, measures) {
+vanneman_pretrend_sample <- function(
+    panel, predictor, period_id, measures,
+    sample_id = c("full_pretrend", "historical_ld_support")) {
+  sample_id <- match.arg(sample_id)
   x <- safe_df(panel)
   keep <- x$preferred_vanneman_pretrend_eligible %in% TRUE &
     x$period_id == period_id & x$measure_id %in% measures &
     is.finite(num(x$change)) & is.finite(num(x$population_1961)) &
-    num(x$population_1961) > 0 & nzchar(plain_chr(x$state_code_2001))
-  if (identical(predictor, "ling_distance_nonzero_mean_1991")) {
-    keep <- keep & x$historical_ld_eligible %in% TRUE
-  } else {
-    keep <- keep & is.finite(num(x[[predictor]]))
+    num(x$population_1961) > 0 & nzchar(plain_chr(x$state_code_2001)) &
+    is.finite(num(x[[predictor]]))
+
+  if (identical(sample_id, "historical_ld_support")) {
+    keep <- keep &
+      x$historical_ld_eligible %in% TRUE &
+      is.finite(num(x$emie_exposure))
   }
   x[keep, , drop = FALSE]
 }
 
+vanneman_pretrend_sample_coverage <- function(panel) {
+  x <- safe_df(panel)
+  keep <- x$preferred_vanneman_pretrend_eligible %in% TRUE &
+    is.finite(num(x$population_1961)) & num(x$population_1961) > 0 &
+    nzchar(plain_chr(x$state_code_2001))
+  units <- x[keep, c(
+    "panel_unit_id", "state_code_2001", "population_1961",
+    "emie_exposure", "historical_ld_eligible"
+  ), drop = FALSE]
+  units <- units[!duplicated(units$panel_unit_id), , drop = FALSE]
+
+  full <- is.finite(num(units$emie_exposure))
+  common <- full & units$historical_ld_eligible %in% TRUE
+  summarize <- function(sample_id, selected) {
+    data.frame(
+      sample_id = sample_id,
+      n_units = sum(selected),
+      n_states = length(unique(units$state_code_2001[selected])),
+      population_1961 = sum(num(units$population_1961[selected])),
+      share_of_full_units = if (sum(full) > 0) sum(selected) / sum(full) else NA_real_,
+      stringsAsFactors = FALSE
+    )
+  }
+  safe_bind_rows(list(
+    summarize("full_pretrend", full),
+    summarize("historical_ld_support", common)
+  ))
+}
+
 estimate_vanneman_pretrend_association <- function(
-    panel, predictor, period_id, measure_id, fixed_effect = c("none", "state")) {
+    panel, predictor, period_id, measure_id,
+    fixed_effect = c("none", "state"),
+    sample_id = c("full_pretrend", "historical_ld_support")) {
   fixed_effect <- match.arg(fixed_effect)
-  x <- vanneman_pretrend_sample(panel, predictor, period_id, measure_id)
+  sample_id <- match.arg(sample_id)
+  x <- vanneman_pretrend_sample(
+    panel, predictor, period_id, measure_id, sample_id
+  )
   if (!nrow(x)) {
     return(data.frame(
-      predictor = predictor, period_id = period_id, measure_id = measure_id,
+      predictor = predictor, sample_id = sample_id,
+      period_id = period_id, measure_id = measure_id,
       fixed_effect = fixed_effect, estimate = NA_real_, std.error = NA_real_,
       p.value = NA_real_, standardized_effect = NA_real_,
       contains_estimated_source = NA, n = 0L, n_states = 0L,
@@ -335,7 +397,8 @@ estimate_vanneman_pretrend_association <- function(
   quality <- unique(x$contains_estimated_source)
   quality <- quality[!is.na(quality)]
   data.frame(
-    predictor = predictor, period_id = period_id, measure_id = measure_id,
+    predictor = predictor, sample_id = sample_id,
+    period_id = period_id, measure_id = measure_id,
     fixed_effect = fixed_effect, estimate = inference$estimate,
     std.error = inference$std.error, p.value = inference$p.value,
     standardized_effect = inference$standardized_effect,
@@ -346,13 +409,17 @@ estimate_vanneman_pretrend_association <- function(
   )
 }
 
-estimate_vanneman_pretrend_joint_balance <- function(panel, predictor, period_id, domain) {
+estimate_vanneman_pretrend_joint_balance <- function(
+    panel, predictor, period_id, domain,
+    sample_id = c("full_pretrend", "historical_ld_support")) {
+  sample_id <- match.arg(sample_id)
   metadata <- vanneman_pretrend_measure_registry()
   measures <- metadata$measure_id[metadata$domain == domain]
-  x <- vanneman_pretrend_sample(panel, predictor, period_id, measures)
+  x <- vanneman_pretrend_sample(panel, predictor, period_id, measures, sample_id)
   if (!nrow(x)) {
     return(data.frame(
-      predictor = predictor, period_id = period_id, domain = domain,
+      predictor = predictor, sample_id = sample_id,
+      period_id = period_id, domain = domain,
       tested_measures = paste(measures, collapse = ";"),
       joint_f = NA_real_, joint_p = NA_real_, n = 0L, n_states = 0L,
       population_1961 = 0, status = "not_estimated", reason = "no_complete_cases",
@@ -369,7 +436,8 @@ estimate_vanneman_pretrend_joint_balance <- function(panel, predictor, period_id
   wide <- wide[stats::complete.cases(wide[c(change_cols, predictor, "state_code_2001", "population_1961")]), , drop = FALSE]
   if (!nrow(wide)) {
     return(data.frame(
-      predictor = predictor, period_id = period_id, domain = domain,
+      predictor = predictor, sample_id = sample_id,
+      period_id = period_id, domain = domain,
       tested_measures = paste(measures, collapse = ";"),
       joint_f = NA_real_, joint_p = NA_real_, n = 0L, n_states = 0L,
       population_1961 = 0, status = "not_estimated", reason = "no_complete_cases",
@@ -380,7 +448,8 @@ estimate_vanneman_pretrend_joint_balance <- function(panel, predictor, period_id
     wide, predictor, change_cols, "population_1961", "state_code_2001"
   )
   data.frame(
-    predictor = predictor, period_id = period_id, domain = domain,
+    predictor = predictor, sample_id = sample_id,
+    period_id = period_id, domain = domain,
     tested_measures = paste(measures, collapse = ";"),
     joint_f = inference$joint_f, joint_p = inference$joint_p,
     n = inference$n, n_states = inference$n_states,
@@ -397,38 +466,47 @@ build_vanneman_pretrend_validation <- function(
   panel <- build_vanneman_pretrend_predictor_panel(
     changes, district_panel, historical_distance, treatment
   )
-  predictors <- vanneman_pretrend_predictors(panel)
+  specifications <- vanneman_pretrend_specification_registry(panel)
   periods <- vanneman_pretrend_period_registry()$period_id
   measures <- vanneman_pretrend_measure_registry()$measure_id
   domains <- unique(vanneman_pretrend_measure_registry()$domain)
 
-  estimates <- safe_bind_rows(lapply(names(predictors), function(name) {
-    predictor <- predictors[[name]]
+  estimates <- safe_bind_rows(lapply(seq_len(nrow(specifications)), function(i) {
+    spec <- specifications[i, , drop = FALSE]
     safe_bind_rows(lapply(periods, function(period_id) {
       safe_bind_rows(lapply(measures, function(measure_id) {
         safe_bind_rows(lapply(c("none", "state"), function(fixed_effect) {
           out <- estimate_vanneman_pretrend_association(
-            panel, predictor, period_id, measure_id, fixed_effect
+            panel, spec$predictor[[1L]], period_id, measure_id,
+            fixed_effect, spec$sample_id[[1L]]
           )
-          out$predictor_id <- name
+          out$predictor_id <- spec$predictor_id[[1L]]
           out
         }))
       }))
     }))
   }))
-  joint <- safe_bind_rows(lapply(names(predictors), function(name) {
-    predictor <- predictors[[name]]
+  joint <- safe_bind_rows(lapply(seq_len(nrow(specifications)), function(i) {
+    spec <- specifications[i, , drop = FALSE]
     safe_bind_rows(lapply(periods, function(period_id) {
       safe_bind_rows(lapply(domains, function(domain) {
-        out <- estimate_vanneman_pretrend_joint_balance(panel, predictor, period_id, domain)
-        out$predictor_id <- name
+        out <- estimate_vanneman_pretrend_joint_balance(
+          panel, spec$predictor[[1L]], period_id, domain, spec$sample_id[[1L]]
+        )
+        out$predictor_id <- spec$predictor_id[[1L]]
         out
       }))
     }))
   }))
 
-  list(levels = levels, changes = changes, panel = panel,
-       estimates = estimates, joint_balance = joint)
+  list(
+    levels = levels,
+    changes = changes,
+    panel = panel,
+    sample_coverage = vanneman_pretrend_sample_coverage(panel),
+    estimates = estimates,
+    joint_balance = joint
+  )
 }
 
 save_vanneman_pretrend_validation <- function(
@@ -436,11 +514,13 @@ save_vanneman_pretrend_validation <- function(
   paths <- c(
     levels = file.path(directory, "vanneman_pretrend_levels.csv"),
     changes = file.path(directory, "vanneman_pretrend_changes.csv"),
+    sample_coverage = file.path(directory, "vanneman_pretrend_sample_coverage.csv"),
     estimates = file.path(directory, "vanneman_pretrend_balance.csv"),
     joint_balance = file.path(directory, "vanneman_pretrend_balance_joint.csv")
   )
   write_diagnostic_csv(x$levels, paths[["levels"]])
   write_diagnostic_csv(x$changes, paths[["changes"]])
+  write_diagnostic_csv(x$sample_coverage, paths[["sample_coverage"]])
   write_diagnostic_csv(x$estimates, paths[["estimates"]])
   write_diagnostic_csv(x$joint_balance, paths[["joint_balance"]])
   unname(paths)
