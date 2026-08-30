@@ -378,6 +378,7 @@ historical_linguistic_kumar_somanathan_transition <- function(
       call. = FALSE
     )
   }
+  validate_district_carveout_shares(carveouts)
 
   source_registry <- historical_linguistic_unique_name_registry(
     historical_name_registry,
@@ -424,13 +425,52 @@ historical_linguistic_kumar_somanathan_transition <- function(
   edges$target_name_exact_unique <- !is.na(target_idx)
   edges$source_share_to_2001 <- num(edges$pct_01in91) / 100
   edges$target_share_from_1991 <- num(edges$pct_91in01) / 100
+  edges$source_identity_key <- paste(
+    edges$source_name_key, num(edges$pop_1991), sep = "__"
+  )
+  edges$source_unit_id <- ifelse(
+    edges$source_name_exact_unique,
+    geography_transition_unit_id(
+      1991, edges$state_code_1991, edges$district_code_1991
+    ),
+    NA_character_
+  )
+  edges$target_unit_id <- ifelse(
+    edges$target_name_exact_unique,
+    geography_transition_unit_id(
+      2001, edges$state_code_2001, edges$district_code_2001
+    ),
+    NA_character_
+  )
+
+  exact_source_rows <- edges$source_name_exact_unique %in% TRUE
+  source_identity_counts <- vapply(
+    split(
+      edges$source_identity_key[exact_source_rows],
+      edges$source_unit_id[exact_source_rows]
+    ),
+    function(x) length(unique(x)),
+    integer(1)
+  )
+  edges$source_code_identity_count <- NA_integer_
+  edges$source_code_identity_count[exact_source_rows] <-
+    unname(source_identity_counts[
+      edges$source_unit_id[exact_source_rows]
+    ])
+  source_collision <- exact_source_rows &
+    edges$source_code_identity_count > 1L
+
   edges$transition_status <- ifelse(
     !edges$source_name_exact_unique,
     "source_name_not_unique_exact",
     ifelse(
-      !edges$target_name_exact_unique,
-      "target_name_not_unique_exact",
-      "matched_exact_names"
+      source_collision,
+      "source_code_identity_collision",
+      ifelse(
+        !edges$target_name_exact_unique,
+        "target_name_not_unique_exact",
+        "matched_exact_names"
+      )
     )
   )
 
@@ -447,18 +487,55 @@ historical_linguistic_kumar_somanathan_transition <- function(
       )
     ))
   }
-
-  matched$source_unit_id <- geography_transition_unit_id(
-    1991, matched$state_code_1991, matched$district_code_1991
-  )
-  matched$target_unit_id <- geography_transition_unit_id(
-    2001, matched$state_code_2001, matched$district_code_2001
-  )
   if (anyDuplicated(matched[c("source_unit_id", "target_unit_id")])) {
     stop(
       "Kumar-Somanathan exact-name transition contains duplicate code-resolved edges.",
       call. = FALSE
     )
+  }
+
+  tolerance <- district_carveout_rounding_tolerance_pp() / 100
+  source_raw <- tapply(
+    matched$source_share_to_2001,
+    matched$source_unit_id,
+    sum
+  )
+  target_raw <- tapply(
+    matched$target_share_from_1991,
+    matched$target_unit_id,
+    sum
+  )
+  bad_sources <- names(source_raw)[
+    is.finite(source_raw) & source_raw > 1 + tolerance
+  ]
+  bad_targets <- names(target_raw)[
+    is.finite(target_raw) & target_raw > 1 + tolerance
+  ]
+  if (length(bad_sources)) {
+    edges$transition_status[
+      edges$transition_status == "matched_exact_names" &
+        edges$source_unit_id %in% bad_sources
+    ] <- "source_share_overcoverage"
+  }
+  if (length(bad_targets)) {
+    edges$transition_status[
+      edges$transition_status == "matched_exact_names" &
+        edges$target_unit_id %in% bad_targets
+    ] <- "target_share_overcoverage"
+  }
+
+  matched <- edges[
+    edges$transition_status == "matched_exact_names",
+    ,
+    drop = FALSE
+  ]
+  if (!nrow(matched)) {
+    return(list(
+      edges = edges,
+      canonical_transition = empty_geography_transition(
+        annotated = TRUE
+      )
+    ))
   }
 
   source_coverage <- tapply(
@@ -470,6 +547,12 @@ historical_linguistic_kumar_somanathan_transition <- function(
     matched$target_share_from_1991,
     matched$target_unit_id,
     sum
+  )
+  source_coverage <- normalize_geography_coverage(
+    source_coverage, tolerance
+  )
+  target_coverage <- normalize_geography_coverage(
+    target_coverage, tolerance
   )
 
   transition <- data.frame(
@@ -517,24 +600,23 @@ build_historical_linguistic_kumar_somanathan_geography <- function(
       sep = "__"
     )
   )
-  exact_sources <- unique(
-    paste(
-      plain_chr(resolved$edges$district_1991[
-        resolved$edges$source_name_exact_unique %in% TRUE
-      ]),
-      num(resolved$edges$pop_1991[
-        resolved$edges$source_name_exact_unique %in% TRUE
-      ]),
-      sep = "__"
-    )
-  )
-  exact_sources <- exact_sources[!grepl("__NA$", exact_sources)]
   summary <- data.frame(
     n_source_edges = nrow(resolved$edges),
     n_source_districts = length(source_labels),
-    n_exact_unique_source_districts = length(exact_sources),
-    n_exact_name_edges = sum(
-      resolved$edges$transition_status == "matched_exact_names"
+    n_exact_unique_source_districts =
+      length(unique(transition$source_unit_id)),
+    n_exact_name_edges = nrow(transition),
+    n_source_code_identity_collision_edges = sum(
+      resolved$edges$transition_status ==
+        "source_code_identity_collision"
+    ),
+    n_source_share_overcoverage_edges = sum(
+      resolved$edges$transition_status ==
+        "source_share_overcoverage"
+    ),
+    n_target_share_overcoverage_edges = sum(
+      resolved$edges$transition_status ==
+        "target_share_overcoverage"
     ),
     n_components = nrow(component_summary),
     n_deterministic_components = sum(

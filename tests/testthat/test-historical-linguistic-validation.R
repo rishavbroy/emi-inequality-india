@@ -878,3 +878,133 @@ test_that("exact transition comparison keeps evidence sources separate", {
   )
   expect_equal(out$summary$n_exact_target_set_agreements, 1L)
 })
+
+
+test_that("Kumar-Somanathan coverage respects publication rounding tolerance", {
+  carveouts <- data.frame(
+    district_1991 = c("Old A", "Old A"),
+    pop_1991 = c(100, 100),
+    district_2001 = c("Alpha", "Beta"),
+    pct_01in91 = c(60.02, 40.01),
+    pct_91in01 = c(100, 100),
+    stringsAsFactors = FALSE
+  )
+  historical <- data.frame(
+    state_code_1991 = "01",
+    district_code_1991 = "01",
+    district_name_helms_lim = "Old A",
+    stringsAsFactors = FALSE
+  )
+  admin <- data.frame(
+    state_code = "01",
+    district_code = c("01", "02"),
+    district_std = c("Alpha", "Beta"),
+    stringsAsFactors = FALSE
+  )
+
+  out <- build_historical_linguistic_kumar_somanathan_geography(
+    carveouts, historical, admin
+  )
+
+  expect_true(all(out$canonical_transition$source_coverage == 1))
+  expect_true(all(out$canonical_transition$target_coverage == 1))
+  expect_true(
+    out$component_summary$deterministic_amalgamation_eligible
+  )
+})
+
+test_that("Kumar-Somanathan source identities cannot collapse onto one Census code", {
+  carveouts <- data.frame(
+    district_1991 = c("Old A", "Old A"),
+    pop_1991 = c(100, 200),
+    district_2001 = c("Alpha", "Beta"),
+    pct_01in91 = c(100, 100),
+    pct_91in01 = c(100, 100),
+    stringsAsFactors = FALSE
+  )
+  historical <- data.frame(
+    state_code_1991 = "01",
+    district_code_1991 = "01",
+    district_name_helms_lim = "Old A",
+    stringsAsFactors = FALSE
+  )
+  admin <- data.frame(
+    state_code = "01",
+    district_code = c("01", "02"),
+    district_std = c("Alpha", "Beta"),
+    stringsAsFactors = FALSE
+  )
+
+  out <- historical_linguistic_kumar_somanathan_transition(
+    carveouts, historical, admin
+  )
+
+  expect_true(all(
+    out$edges$transition_status == "source_code_identity_collision"
+  ))
+  expect_equal(nrow(out$canonical_transition), 0L)
+})
+
+test_that("Kumar-Somanathan reverse-margin overcoverage fails closed", {
+  carveouts <- data.frame(
+    district_1991 = c("Old A", "Old B"),
+    pop_1991 = c(100, 200),
+    district_2001 = c("Alpha", "Alpha"),
+    pct_01in91 = c(100, 100),
+    pct_91in01 = c(60, 50),
+    stringsAsFactors = FALSE
+  )
+  historical <- data.frame(
+    state_code_1991 = c("01", "01"),
+    district_code_1991 = c("01", "02"),
+    district_name_helms_lim = c("Old A", "Old B"),
+    stringsAsFactors = FALSE
+  )
+  admin <- data.frame(
+    state_code = "01",
+    district_code = "01",
+    district_std = "Alpha",
+    stringsAsFactors = FALSE
+  )
+
+  out <- historical_linguistic_kumar_somanathan_transition(
+    carveouts, historical, admin
+  )
+
+  expect_true(all(
+    out$edges$transition_status == "target_share_overcoverage"
+  ))
+  expect_equal(nrow(out$canonical_transition), 0L)
+})
+
+test_that("Kumar-Somanathan undercoverage remains diagnostic rather than renormalized", {
+  carveouts <- data.frame(
+    district_1991 = c("Old A", "Old B"),
+    pop_1991 = c(100, 200),
+    district_2001 = c("Alpha", "Alpha"),
+    pct_01in91 = c(100, 100),
+    pct_91in01 = c(60, 30),
+    stringsAsFactors = FALSE
+  )
+  historical <- data.frame(
+    state_code_1991 = c("01", "01"),
+    district_code_1991 = c("01", "02"),
+    district_name_helms_lim = c("Old A", "Old B"),
+    stringsAsFactors = FALSE
+  )
+  admin <- data.frame(
+    state_code = "01",
+    district_code = "01",
+    district_std = "Alpha",
+    stringsAsFactors = FALSE
+  )
+
+  out <- build_historical_linguistic_kumar_somanathan_geography(
+    carveouts, historical, admin
+  )
+
+  expect_equal(unique(out$canonical_transition$target_coverage), .9)
+  expect_false(
+    out$component_summary$deterministic_amalgamation_eligible
+  )
+})
