@@ -1296,3 +1296,19 @@ economic structure, while Census-2001 linguistic distance remains comparatively
 clean on literacy but shows persistent demography and economic-structure
 associations. The comparison is diagnostic evidence about historical balance;
 it does not establish the exclusion restriction.
+
+
+The aligned geography comparison now also reports target-support composition.
+`historical_baseline_1991_geography_target_support.csv` reduces each design to
+the Census-2001 targets it represents, aggregating multiple preferred 1991
+sources that point to the same target. The pairwise
+`historical_baseline_1991_geography_target_overlap.csv` reports shared and
+design-only targets, state overlap, target-set Jaccard similarity, and the
+1991 population represented on shared targets under each design's own weights.
+
+These are composition diagnostics, not a forced common-support regression.
+Preferred historical geography is estimated on 1991 districts whereas G2 is
+estimated on population-allocated Census-2001 targets. Restricting both to the
+same target names would therefore not make their observational units identical.
+The overlap table keeps that distinction explicit while showing how much of an
+apparent geography difference may coincide with changed support.

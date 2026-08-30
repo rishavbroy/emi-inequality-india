@@ -199,3 +199,11 @@ statistics, joint p-values, N, and represented population across the declared
 90/95/99 percent source-coverage rules. This treats the threshold as an explicit
 sensitivity dimension rather than selecting whichever cutoff yields a preferred
 result.
+
+
+The cross-geography historical comparison also reports pairwise Census-2001
+target overlap. This is deliberately separate from coefficient estimation:
+exact/preferred historical designs retain 1991 districts as observations,
+whereas G2 allocates sufficient statistics onto 2001 targets. A shared target
+universe is therefore useful for composition diagnostics but is not, by itself,
+a true common observational sample.
