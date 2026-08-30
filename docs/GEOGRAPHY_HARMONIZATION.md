@@ -83,3 +83,29 @@ Accordingly, exact constant-boundary aggregation remains preferable to
 fractional interpolation whenever a component closes. Population- and
 area-based interpolation are explicit later sensitivities, not hidden
 preprocessing defaults.
+
+
+## Exact three-vintage certification
+
+The production 2011↔2001 canonical transition now derives both source and target
+coverage from the underlying SHRUG stable-locality bridge after the
+evidence-priority transition has been selected. This separates two concepts:
+
+- `mapping_class` / `evidence_source` say why an edge is accepted;
+- `source_coverage` / `target_coverage` say whether stable-locality evidence
+  closes the participating district on each side.
+
+A raw `shrid_coverage = 1` placeholder on an official or reviewed edge is
+therefore not enough to certify canonical locality coverage. The canonical
+layer recomputes coverage from SHRUG in both directions.
+
+`extract_exact_geography_transition()` retains entire pairwise components only
+when every source and target unit closes. `build_exact_multivintage_geography()`
+then connects those already-certified pairwise components across vintages. A
+component enters `exact_multivintage_crosswalk.csv` only when it contains every
+required vintage.
+
+The crosswalk is labeled `G1_deterministic_amalgamation` and contains no
+fractional population or area allocation. Components that fail pairwise closure
+remain candidates for later G2/G3 sensitivities rather than being renormalized
+into G1.
