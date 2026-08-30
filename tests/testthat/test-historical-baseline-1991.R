@@ -913,8 +913,10 @@ test_that("historical baseline support variant labels preserve percentage magnit
     )
   )
   expect_identical(
-    historical_baseline_format_percent(c(.90, .955, NA)),
-    c("90", "95.5", NA_character_)
+    historical_baseline_format_percent(
+      c(.90, .955, .99, 0, 1, NA)
+    ),
+    c("90", "95.5", "99", "0", "100", NA_character_)
   )
 })
 

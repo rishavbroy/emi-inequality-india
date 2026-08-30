@@ -999,7 +999,8 @@ historical_baseline_format_percent <- function(x) {
     100 * x[finite],
     digits = 15,
     trim = TRUE,
-    scientific = FALSE
+    scientific = FALSE,
+    drop0trailing = TRUE
   )
   out
 }
