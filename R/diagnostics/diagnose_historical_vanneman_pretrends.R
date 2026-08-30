@@ -1213,16 +1213,32 @@ build_vanneman_pretrend_support_comparison <- function(validations) {
     }
   }
 
+  strict_population <- out$population_1961[
+    out$analysis_id == "strict_one_to_one" &
+      out$sample_id == "full_pretrend"
+  ]
+  if (length(strict_population) != 1L ||
+      !is.finite(strict_population) ||
+      strict_population <= 0) {
+    stop(
+      "Vanneman support comparison requires positive strict full-pretrend population.",
+      call. = FALSE
+    )
+  }
+
   out$gain_vs_strict_full_n <- out$n_units - strict_full
   out$gain_vs_strict_full_share <- if (strict_full > 0) {
     out$n_units / strict_full - 1
   } else {
     NA_real_
   }
+  out$population_share_vs_strict_full <-
+    out$population_1961 / strict_population
   out[c(
     "analysis_id", "sample_id", "n_units", "n_states",
     "population_1961", "share_of_full_units",
-    "gain_vs_strict_full_n", "gain_vs_strict_full_share"
+    "gain_vs_strict_full_n", "gain_vs_strict_full_share",
+    "population_share_vs_strict_full"
   )]
 }
 
@@ -1231,6 +1247,154 @@ save_vanneman_pretrend_support_comparison <- function(
     x,
     path = "outputs/diagnostics/extended/instrument_relevance/vanneman_pretrend_support_comparison.csv") {
   write_diagnostic_csv(x, path)
+}
+
+
+validate_vanneman_pretrend_comparison_inputs <- function(validations) {
+  if (!is.list(validations) || is.null(names(validations)) ||
+      any(!nzchar(names(validations)))) {
+    stop(
+      "Vanneman geography comparison requires a named list of validation objects.",
+      call. = FALSE
+    )
+  }
+  required <- c("sample_coverage", "estimates", "joint_balance")
+  for (analysis_id in names(validations)) {
+    validation <- validations[[analysis_id]]
+    if (!is.list(validation)) {
+      stop(
+        "Vanneman geography comparison input ", analysis_id,
+        " is not a validation object.",
+        call. = FALSE
+      )
+    }
+    missing <- setdiff(required, names(validation))
+    if (length(missing)) {
+      stop(
+        "Vanneman geography comparison input ", analysis_id,
+        " lacks: ", paste(missing, collapse = ", "),
+        call. = FALSE
+      )
+    }
+  }
+  invisible(TRUE)
+}
+
+build_vanneman_pretrend_geography_comparison <- function(validations) {
+  validate_vanneman_pretrend_comparison_inputs(validations)
+
+  append_analysis_id <- function(field) {
+    safe_bind_rows(lapply(names(validations), function(analysis_id) {
+      x <- safe_df(validations[[analysis_id]][[field]])
+      x$analysis_id <- analysis_id
+      x
+    }))
+  }
+
+  estimates <- append_analysis_id("estimates")
+  joint <- append_analysis_id("joint_balance")
+  support <- build_vanneman_pretrend_support_comparison(validations)
+
+  estimate_key <- c(
+    "analysis_id", "predictor_id", "sample_id",
+    "period_id", "measure_id", "fixed_effect"
+  )
+  joint_key <- c(
+    "analysis_id", "predictor_id", "sample_id",
+    "period_id", "domain"
+  )
+  missing_estimate_key <- setdiff(estimate_key, names(estimates))
+  if (length(missing_estimate_key)) {
+    stop(
+      "Vanneman geography estimate comparison lacks: ",
+      paste(missing_estimate_key, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  missing_joint_key <- setdiff(joint_key, names(joint))
+  if (length(missing_joint_key)) {
+    stop(
+      "Vanneman geography joint comparison lacks: ",
+      paste(missing_joint_key, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  if (anyDuplicated(estimates[estimate_key])) {
+    stop(
+      "Vanneman geography comparison has duplicate estimate specifications.",
+      call. = FALSE
+    )
+  }
+  if (anyDuplicated(joint[joint_key])) {
+    stop(
+      "Vanneman geography comparison has duplicate joint-balance specifications.",
+      call. = FALSE
+    )
+  }
+
+  estimate_columns <- c(
+    estimate_key,
+    "predictor", "estimate", "std.error", "p.value",
+    "standardized_effect", "contains_estimated_source",
+    "n", "n_states", "population_1961", "status"
+  )
+  joint_columns <- c(
+    joint_key,
+    "predictor", "tested_measures", "joint_f", "joint_p",
+    "n", "n_states", "population_1961", "status", "reason"
+  )
+  missing <- setdiff(estimate_columns, names(estimates))
+  if (length(missing)) {
+    stop(
+      "Vanneman geography estimate comparison lacks reporting fields: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  missing <- setdiff(joint_columns, names(joint))
+  if (length(missing)) {
+    stop(
+      "Vanneman geography joint comparison lacks reporting fields: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+
+  list(
+    support = support,
+    estimates = estimates[estimate_columns],
+    joint_balance = joint[joint_columns]
+  )
+}
+
+save_vanneman_pretrend_geography_comparison <- function(
+    x,
+    directory = "outputs/diagnostics/extended/instrument_relevance") {
+  required <- c("support", "estimates", "joint_balance")
+  missing <- setdiff(required, names(x))
+  if (length(missing)) {
+    stop(
+      "Vanneman geography comparison output lacks: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  dir.create(directory, recursive = TRUE, showWarnings = FALSE)
+  paths <- c(
+    support = file.path(
+      directory, "vanneman_pretrend_geography_support.csv"
+    ),
+    estimates = file.path(
+      directory, "vanneman_pretrend_geography_estimates.csv"
+    ),
+    joint_balance = file.path(
+      directory, "vanneman_pretrend_geography_joint_balance.csv"
+    )
+  )
+  write_diagnostic_csv(x$support, paths[["support"]])
+  write_diagnostic_csv(x$estimates, paths[["estimates"]])
+  write_diagnostic_csv(x$joint_balance, paths[["joint_balance"]])
+  unname(paths)
 }
 
 estimate_vanneman_pretrend_association <- function(

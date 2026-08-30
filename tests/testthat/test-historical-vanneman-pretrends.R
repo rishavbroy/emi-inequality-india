@@ -514,6 +514,7 @@ test_that("strict and historical-parent support comparison reports sample gain",
 
   expect_equal(parent_full$gain_vs_strict_full_n, 30L)
   expect_equal(parent_full$gain_vs_strict_full_share, 30 / 160)
+  expect_equal(parent_full$population_share_vs_strict_full, 1.2)
   expect_error(
     build_vanneman_pretrend_support_comparison(list(
       strict_one_to_one = parent,
@@ -1075,5 +1076,161 @@ test_that("Vanneman amalgamation saver records source-specific geography", {
   expect_true(
     "vanneman_kumar_somanathan_pretrend_source.csv" %in%
       basename(paths)
+  )
+})
+
+
+test_that("Vanneman geography comparison aligns coefficients and joint tests by design", {
+  make_validation <- function(analysis_shift = 0, n = 10L) {
+    list(
+      sample_coverage = data.frame(
+        sample_id = "full_pretrend",
+        n_units = n,
+        n_states = 5L,
+        population_1961 = n * 100,
+        share_of_full_units = 1,
+        stringsAsFactors = FALSE
+      ),
+      estimates = data.frame(
+        predictor_id = "census_2001_ld",
+        predictor = "ling_distance_nonzero_mean_2001",
+        sample_id = "full_pretrend",
+        period_id = "1961_1971",
+        measure_id = "urban_share",
+        fixed_effect = "state",
+        estimate = .1 + analysis_shift,
+        std.error = .02,
+        p.value = .1,
+        standardized_effect = .2,
+        contains_estimated_source = FALSE,
+        n = n,
+        n_states = 5L,
+        population_1961 = n * 100,
+        status = "estimated",
+        stringsAsFactors = FALSE
+      ),
+      joint_balance = data.frame(
+        predictor_id = "census_2001_ld",
+        predictor = "ling_distance_nonzero_mean_2001",
+        sample_id = "full_pretrend",
+        period_id = "1961_1971",
+        domain = "demography",
+        tested_measures = "log_population;urban_share",
+        joint_f = 1 + analysis_shift,
+        joint_p = .4,
+        n = n,
+        n_states = 5L,
+        population_1961 = n * 100,
+        status = "estimated",
+        reason = NA_character_,
+        stringsAsFactors = FALSE
+      )
+    )
+  }
+
+  out <- build_vanneman_pretrend_geography_comparison(list(
+    strict_one_to_one = make_validation(0, 10L),
+    historical_parent = make_validation(.01, 12L),
+    kumar_somanathan_exact_amalgamation = make_validation(.02, 8L)
+  ))
+
+  expect_setequal(
+    out$estimates$analysis_id,
+    c(
+      "strict_one_to_one",
+      "historical_parent",
+      "kumar_somanathan_exact_amalgamation"
+    )
+  )
+  expect_setequal(
+    out$joint_balance$analysis_id,
+    out$estimates$analysis_id
+  )
+  expect_equal(nrow(out$estimates), 3L)
+  expect_equal(nrow(out$joint_balance), 3L)
+
+  exact_support <- out$support[
+    out$support$analysis_id == "kumar_somanathan_exact_amalgamation",
+    ,
+    drop = FALSE
+  ]
+  expect_equal(exact_support$population_share_vs_strict_full, .8)
+})
+
+test_that("Vanneman geography comparison rejects duplicate specification rows", {
+  validation <- list(
+    sample_coverage = data.frame(
+      sample_id = "full_pretrend",
+      n_units = 10L,
+      n_states = 5L,
+      population_1961 = 1000,
+      share_of_full_units = 1,
+      stringsAsFactors = FALSE
+    ),
+    estimates = data.frame(
+      predictor_id = "eventual_emie",
+      predictor = "emie_exposure",
+      sample_id = "full_pretrend",
+      period_id = "1961_1971",
+      measure_id = "urban_share",
+      fixed_effect = "state",
+      estimate = .1,
+      std.error = .02,
+      p.value = .1,
+      standardized_effect = .2,
+      contains_estimated_source = FALSE,
+      n = 10L,
+      n_states = 5L,
+      population_1961 = 1000,
+      status = "estimated",
+      stringsAsFactors = FALSE
+    ),
+    joint_balance = data.frame(
+      predictor_id = "eventual_emie",
+      predictor = "emie_exposure",
+      sample_id = "full_pretrend",
+      period_id = "1961_1971",
+      domain = "demography",
+      tested_measures = "log_population;urban_share",
+      joint_f = 1,
+      joint_p = .4,
+      n = 10L,
+      n_states = 5L,
+      population_1961 = 1000,
+      status = "estimated",
+      reason = NA_character_,
+      stringsAsFactors = FALSE
+    )
+  )
+  validation$estimates <- rbind(
+    validation$estimates, validation$estimates
+  )
+
+  expect_error(
+    build_vanneman_pretrend_geography_comparison(list(
+      strict_one_to_one = validation
+    )),
+    "duplicate estimate specifications"
+  )
+})
+
+test_that("Vanneman geography comparison saver emits aligned robustness artifacts", {
+  x <- list(
+    support = data.frame(analysis_id = "strict_one_to_one"),
+    estimates = data.frame(analysis_id = "strict_one_to_one"),
+    joint_balance = data.frame(analysis_id = "strict_one_to_one")
+  )
+  dir <- tempfile()
+  paths <- save_vanneman_pretrend_geography_comparison(
+    x, directory = dir
+  )
+
+  expect_setequal(
+    basename(paths),
+    c(
+      "vanneman_pretrend_geography_support.csv",
+      "vanneman_pretrend_geography_estimates.csv",
+      "vanneman_pretrend_geography_joint_balance.csv"
+    )
   )
 })

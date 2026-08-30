@@ -1724,8 +1724,8 @@ extended_diagnostic_targets <- list(
     format = "file"
   ),
   tar_target(
-    historical_vanneman_pretrend_support_comparison,
-    build_vanneman_pretrend_support_comparison(list(
+    historical_vanneman_pretrend_geography_comparison,
+    build_vanneman_pretrend_geography_comparison(list(
       strict_one_to_one = historical_vanneman_pretrend_validation,
       historical_parent = historical_vanneman_parent_pretrend_validation,
       kumar_somanathan_exact_amalgamation =
@@ -1733,9 +1733,20 @@ extended_diagnostic_targets <- list(
     ))
   ),
   tar_target(
+    historical_vanneman_pretrend_support_comparison,
+    historical_vanneman_pretrend_geography_comparison$support
+  ),
+  tar_target(
     diag_ext_historical_vanneman_pretrend_support_comparison,
     save_vanneman_pretrend_support_comparison(
       historical_vanneman_pretrend_support_comparison
+    ),
+    format = "file"
+  ),
+  tar_target(
+    diag_ext_historical_vanneman_pretrend_geography_comparison,
+    save_vanneman_pretrend_geography_comparison(
+      historical_vanneman_pretrend_geography_comparison
     ),
     format = "file"
   ),
