@@ -40,79 +40,33 @@ Balance is evidence about the independence argument, not a separate IV identifyi
 
 The alternative linguistic-distance grid and the richer first-stage absorption ladder now obtain their specification metadata from the same IV registry layer. Historical output files are retained where useful for compatibility, but fixed effects, controls, instrument sets, and control-block definitions are no longer independently declared inside the two diagnostic modules.
 
-### Alternative-distance design-closure contract
+### Alternative-distance candidate-design comparison
 
 The Glottolog and Dyen constructions are robustness measurements of linguistic
-distance, not candidate instruments to promote merely because an unadjusted or
-region-FE first stage happens to be larger. Design closure is evaluated on the
-canonical tier-A `state_main` specification because that is the project's
-preferred within-state identification design.
+distance, not candidate instruments to promote merely because a particular
+fixed-effect specification produces a larger first stage. The diagnostic layer
+therefore compares both main-control designs registered by
+`iv_candidate_design_adjustments()`: six-region fixed effects and Census-2001
+state fixed effects.
 
-`alternative_distance_design_evidence.csv` extracts the existing Shastry
-nonzero-mean, Glottolog, and Dyen state-main rows and places their clustered
-first-stage strength, partial R-squared, Montiel Olea--Pflueger effective F and
-critical value, and Anderson--Rubin confidence-set diagnostics side by side.
-`alternative_distance_design_decision.csv` then applies only the already
-registered effective-F critical values: it records whether any construction
-passes that relevance screen and whether either robustness construction is
-stronger than the primary Shastry construction.
+`alternative_distance_design_evidence.csv` places the Shastry nonzero-mean,
+Glottolog, and Dyen constructions under both candidate adjustments side by
+side, with clustered first-stage strength, partial R-squared, Montiel
+Olea--Pflueger effective F and its critical value, and Anderson--Rubin
+confidence-set diagnostics. `alternative_distance_design_comparison.csv`
+summarizes relevance separately within each FE design.
 
-No new empirical threshold is introduced. In particular, a robustness
-construction is not promoted because its conventional first-stage F exceeds the
-primary construction if its effective F remains below its own weak-IV critical
-value. When no tested construction passes the effective-F screen, the recorded
-design implication is `weak_iv_robust_or_reduced_form`. This is a workflow gate,
-not an exclusion-validity claim: Anderson--Rubin inference and the historical,
-balance, monotonicity, migration, and other validity evidence remain separate.
+No diagnostic rule chooses between region and state fixed effects. State FE
+remove more state-level confounding but also absorb substantial linguistic
+variation; region FE preserve more cross-state variation but leave more
+state-level institutional and historical heterogeneity available to correlate
+with the instrument. Relative or absolute first-stage strength is evidence
+about relevance, not a sufficient criterion for choosing the identifying
+design.
 
-This closure rule follows the role of the effective F as the project's robust
-weak-identification screen and preserves Anderson--Rubin inference for weak
-instruments. It also prevents the alternative-distance branch from becoming an
-open-ended search for whichever linguistic basis produces the largest
-first-stage statistic.
-
-The de-duplicated `iv_specification_registry.csv` records the general diagnostic universe. `iv_diagnostic_registry.csv` records diagnostic capabilities, and `iv_diagnostic_applicability.csv` records which specification-diagnostic pairs run and why others do not.
-
-## Balance contract
-
-For each registered specification and predetermined Census variable, the covariate-level balance diagnostic uses the same fixed effects, language controls, and nuisance controls as the IV specification, except that the variable being tested is removed from its own nuisance-control set. Controls linked to the tested variable by an exact Census accounting identity are removed as well. For example, agricultural-worker share equals cultivator share plus agricultural-labourer share when all three use workers as the denominator, so the component shares are not conditioned on when agricultural-worker share is the balance outcome.
-
-The omnibus balance diagnostic asks whether predetermined covariates that are *not already conditioned on by the specification* jointly predict each excluded instrument, conditional on the specification's fixed effects, included language controls, and remaining nuisance controls. This avoids mechanically "testing" covariates that the specification has already partialled out. The test uses the same state-clustered Wald machinery as the other linear diagnostics.
-
-`instrument_balance.csv` contains the conditional specification-by-variable diagnostics and jointly tests all excluded instruments for each tested covariate. `instrument_balance_joint.csv` contains the complementary omnibus reverse-regression test for scalar instruments: the instrument is regressed on all predetermined holdout covariates and the holdout coefficients are tested jointly with state-clustered covariance. Multi-instrument specifications remain covered by the covariate-by-covariate joint-instrument tests; no scalar reverse-regression omnibus is reported for them.
-
-## Anderson-Rubin contract
-
-Anderson-Rubin inference is implemented once in `R/iv/weak_identification.R` and applied to the de-duplicated structural diagnostic registry. Historical alternative-distance filenames are retained for compatibility, but the implementation is not tied to a single linguistic-distance construction.
-
-The grid inversion is a numerical summary of the acceptance region over the recorded search range. Truncation flags identify cases where the accepted set reaches either edge of the grid; those should not be read as finite confidence-set endpoints.
-
-The preferred state-FE/main-control specification is also saved to `outputs/diagnostics/public/anderson_rubin_preferred.csv`, so weak-identification-robust inference for the headline design is part of the strict public build rather than only an extended diagnostic. The full specification grid remains extended-only.
-
-The AR confidence set is obtained by inverting the clustered AR test over the saved beta grid. Because weak-IV confidence sets can be disconnected or extend beyond the search grid, `ar_95_lower` and `ar_95_upper` are populated only when the accepted grid points form one bounded interior component. Otherwise those interval fields are `NA`, while `ar_95_n_components`, `ar_95_disconnected`, `ar_95_contains_zero`, the grid-edge truncation flags, and `ar_95_components` describe the observed acceptance set. A grid-edge flag means that the corresponding endpoint is unresolved by the finite search grid; it must not be read as a confidence bound.
-
-## Overidentifying-restrictions contract
-
-Overidentified specifications use the Sargan statistic provided by `summary.ivreg(..., diagnostics = TRUE)`. The statistic is reported as an **overidentifying-restrictions diagnostic**, not as proof that the instruments are exogenous.
-
-The Sargan statistic is the conventional homoskedastic diagnostic and is not state-cluster-robust or weak-identification-robust. That limitation is material in this project because several first stages are weak. Results therefore belong in the extended validity evidence alongside first-stage strength and Anderson-Rubin inference, not as a pass/fail validity gate. Exactly identified specifications are marked `not_applicable`.
-
-## Monotonicity / first-stage-shape contract
-
-Counterfactual monotonicity cannot be observed directly in this continuous district-level design. For scalar instruments the code therefore reports empirical implications of a monotone first stage rather than claiming to test the LATE assumption itself.
-
-For each applicable specification the diagnostic:
-
-1. residualizes the scalar excluded instrument and EMI exposure on the specification's included language controls, Census controls, and fixed effects;
-2. reports the residualized linear slope and Spearman rank correlation;
-3. fits base R's increasing isotonic regression and reports its fit relative to a constant;
-4. reports equal-count binned residualized first-stage means and the share of adjacent bin changes that are non-decreasing;
-5. reports state-specific residualized slopes where there is enough within-state variation.
-
-The multi-instrument distance-share constructions do not have a unique scalar ordering, so this shape diagnostic is marked inapplicable to them. Their individual and joint first-stage coefficients remain in the relevance outputs, and the language-decomposition/leave-one-language-out diagnostics continue to provide instrument-composition evidence.
-
-These shape summaries are diagnostics for plausibility. Negative local slopes or non-monotone bins can challenge a simple monotone-response story, but noisy signs do not identify latent "defiers."
-
-## Public multicollinearity contract
-
-Public multicollinearity diagnostics operate on the structural-regressor matrix. The condition number excludes the intercept and standardizes nonconstant regressors before calculation, so it is invariant to arbitrary regressor units. Term-level VIF/GVIF diagnostics use `car::vif()` on the fitted `ivreg` object after explicitly loading the `ivreg` namespace so its S3 covariance methods are registered even when a cached fitted model is read in a fresh targets process. The final-output audit requires finite, estimated GVIF diagnostics rather than silently accepting an unavailable diagnostic.
+A robustness construction is likewise not promoted because it has a larger
+conventional F statistic. Weak-identification screens and Anderson--Rubin
+inference remain conditional on the candidate design. Final methodology should
+integrate relevance with historical balance and pretrends, migration/sorting,
+spatial evidence, mechanism evidence, and the substantive interpretation of
+the remaining variation.

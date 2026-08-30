@@ -958,3 +958,28 @@ and LD_2001. The ordinary predictor-specific sample-coverage output then reports
 the resulting estimable N. This separation prevents ordinary source missingness
 from becoming a global geography failure and makes any remaining sample-size
 loss attributable to a specific predictor rather than to the lineage itself.
+
+
+## Canonical geography-transition contract
+
+Boundary-change evidence remains source-specific: SHRUG localities, LGD codes,
+reviewed administrative events, survey-lineage adjudications, and historical
+crosswalks retain their own acquisition and validation rules. Accepted district
+edges can now be normalized with `as_geography_transition()` into one
+change-of-support schema containing source/target vintages and unit IDs,
+population and area weights when available, coverage, mapping class, and
+evidence provenance.
+
+The canonical layer is descriptive at this stage. It classifies edge topology
+as one-to-one, split, merger, or many-to-many, but it does **not** yet allocate
+statistics across changed boundaries or declare an amalgamated analysis
+geography. This separation is intentional: deterministic constant-boundary
+amalgamation can be added on top of reviewed transitions without forcing
+population or area interpolation into the source-ingestion modules.
+
+This follows the constant-boundary principle used by Kumar and Somanathan for
+the 1961--2001 Indian district panel: where boundary changes can be resolved by
+combining districts into stable regions, aggregation is preferable to
+fractionally inventing historical district values. Population- and area-based
+interpolation remain later, explicitly labeled sensitivities for components
+that cannot be solved by deterministic amalgamation.
