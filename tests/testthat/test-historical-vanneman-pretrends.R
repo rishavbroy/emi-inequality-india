@@ -502,7 +502,10 @@ test_that("strict and historical-parent support comparison reports sample gain",
     stringsAsFactors = FALSE
   ))
 
-  out <- build_vanneman_pretrend_support_comparison(strict, parent)
+  out <- build_vanneman_pretrend_support_comparison(list(
+    strict_one_to_one = strict,
+    historical_parent = parent
+  ))
   parent_full <- out[
     out$analysis_id == "historical_parent" &
       out$sample_id == "full_pretrend",
@@ -512,7 +515,10 @@ test_that("strict and historical-parent support comparison reports sample gain",
   expect_equal(parent_full$gain_vs_strict_full_n, 30L)
   expect_equal(parent_full$gain_vs_strict_full_share, 30 / 160)
   expect_error(
-    build_vanneman_pretrend_support_comparison(parent, strict),
+    build_vanneman_pretrend_support_comparison(list(
+      strict_one_to_one = parent,
+      historical_parent = strict
+    )),
     "cannot be smaller"
   )
 })
@@ -663,4 +669,135 @@ test_that("historical-parent EMIE preserves the production percentage scale", {
   expect_equal(out$emie_exposure, safe_percent(140, 400))
   expect_equal(out$emie_exposure, 35)
   expect_true(out$emie_exposure > 1)
+})
+
+
+test_that("Vanneman sufficient statistics aggregate before shares", {
+  measures <- vanneman_pretrend_measures_from_counts(
+    population = 400,
+    rural_population = 320,
+    main_workers = 160,
+    farm_workers = 100,
+    literates = 180,
+    primary_plus = 80,
+    matriculate_plus = 40
+  )
+  expect_equal(measures$urban_share, .2)
+  expect_equal(measures$main_worker_share, .4)
+  expect_equal(measures$nonfarm_worker_share_main_workers, .375)
+  expect_equal(measures$literate_share_population, .45)
+})
+
+test_that("Vanneman harmonized membership requires complete preferred 1991 coverage", {
+  panel <- data.frame(
+    panel_unit_id = c("a", "b"),
+    dist91_state_id = c("01", "01"),
+    dist91_district_id = c("01", "02"),
+    preferred_pretrend_eligible = c(TRUE, TRUE),
+    stringsAsFactors = FALSE
+  )
+  crosswalk <- data.frame(
+    harmonized_region_id = "geo_component_0001",
+    component_class = "merger",
+    vintage = c(1991L, 1991L, 2001L),
+    state_code = c("01", "01", "01"),
+    district_code = c("01", "02", "01"),
+    deterministic_amalgamation_eligible = TRUE,
+    stringsAsFactors = FALSE
+  )
+
+  out <- build_vanneman_harmonized_membership(panel, crosswalk)
+  expect_true(all(out$vanneman_amalgamation_eligible))
+  expect_identical(
+    unique(out$vanneman_amalgamation_status),
+    "deterministic_amalgamation"
+  )
+  expect_equal(
+    unique(out$n_vanneman_panel_units),
+    2L
+  )
+
+  panel$preferred_pretrend_eligible[[2L]] <- FALSE
+  blocked <- build_vanneman_harmonized_membership(panel, crosswalk)
+  expect_false(any(blocked$vanneman_amalgamation_eligible))
+  expect_identical(
+    unique(blocked$vanneman_amalgamation_status),
+    "incomplete_vanneman_1991_membership"
+  )
+})
+
+test_that("Vanneman amalgamation sums counts rather than averaging district shares", {
+  years <- c(1961L, 1971L, 1981L, 1991L)
+  levels <- safe_bind_rows(lapply(years, function(year) {
+    safe_bind_rows(list(
+      data.frame(
+        panel_unit_id = "a", year = year, version = 5L,
+        population = 100, rural_population = 50,
+        main_workers = 40, farm_workers = 20,
+        literates = 40, primary_plus = 20, matriculate_plus = 10,
+        stringsAsFactors = FALSE
+      ),
+      data.frame(
+        panel_unit_id = "b", year = year, version = 5L,
+        population = 300, rural_population = 270,
+        main_workers = 120, farm_workers = 90,
+        literates = 120, primary_plus = 60, matriculate_plus = 30,
+        stringsAsFactors = FALSE
+      )
+    ))
+  }))
+  membership <- data.frame(
+    harmonized_region_id = "geo_component_0001",
+    vintage = c(1991L, 1991L, 2001L),
+    panel_unit_id = c("a", "b", NA),
+    state_code_2001 = "01",
+    vanneman_amalgamation_eligible = TRUE,
+    stringsAsFactors = FALSE
+  )
+
+  out <- build_vanneman_amalgamated_pretrend_levels(
+    levels, membership
+  )
+  expect_equal(unique(out$population), 400)
+  expect_equal(unique(out$urban_share), .2)
+  expect_equal(unique(out$main_worker_share), .4)
+  expect_equal(
+    unique(out$nonfarm_worker_share_main_workers),
+    1 - 110 / 160
+  )
+  expect_true(all(
+    out$pretrend_geography_status == "deterministic_amalgamation"
+  ))
+})
+
+test_that("Vanneman support comparison accepts non-monotone amalgamated region counts", {
+  make_validation <- function(n) {
+    list(sample_coverage = data.frame(
+      sample_id = "full_pretrend",
+      n_units = n,
+      n_states = 5L,
+      population_1961 = n * 100,
+      share_of_full_units = 1,
+      stringsAsFactors = FALSE
+    ))
+  }
+  out <- build_vanneman_pretrend_support_comparison(list(
+    strict_one_to_one = make_validation(10L),
+    historical_parent = make_validation(12L),
+    deterministic_amalgamation = make_validation(8L)
+  ))
+  expect_setequal(
+    out$analysis_id,
+    c(
+      "strict_one_to_one",
+      "historical_parent",
+      "deterministic_amalgamation"
+    )
+  )
+  amalgamated <- out[
+    out$analysis_id == "deterministic_amalgamation",
+    ,
+    drop = FALSE
+  ]
+  expect_equal(amalgamated$gain_vs_strict_full_n, -2L)
 })

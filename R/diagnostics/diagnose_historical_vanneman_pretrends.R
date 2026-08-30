@@ -128,6 +128,76 @@ vanneman_pretrend_record_field <- function(counts, record_id, field, keys) {
   x[[field]][idx]
 }
 
+vanneman_pretrend_measures_from_counts <- function(
+    population, rural_population, main_workers, farm_workers,
+    literates, primary_plus, matriculate_plus) {
+  invalid <- (is.finite(population) & population <= 0) |
+    (is.finite(rural_population) & is.finite(population) &
+       rural_population > population) |
+    (is.finite(main_workers) & is.finite(population) &
+       main_workers > population) |
+    (is.finite(farm_workers) & is.finite(main_workers) &
+       farm_workers > main_workers) |
+    (is.finite(literates) & is.finite(population) &
+       literates > population) |
+    (is.finite(primary_plus) & is.finite(population) &
+       primary_plus > population) |
+    (is.finite(matriculate_plus) & is.finite(population) &
+       matriculate_plus > population)
+  invalid[is.na(invalid)] <- FALSE
+  if (any(invalid)) {
+    stop(
+      "Vanneman pretrend counts violate basic population accounting identities.",
+      call. = FALSE
+    )
+  }
+
+  out <- data.frame(
+    population = population,
+    rural_population = rural_population,
+    main_workers = main_workers,
+    farm_workers = farm_workers,
+    literates = literates,
+    primary_plus = primary_plus,
+    matriculate_plus = matriculate_plus,
+    stringsAsFactors = FALSE
+  )
+  out$log_population <- ifelse(population > 0, log(population), NA_real_)
+  out$urban_share <- ifelse(
+    population > 0, 1 - rural_population / population, NA_real_
+  )
+  out$main_worker_share <- ifelse(
+    population > 0, main_workers / population, NA_real_
+  )
+  out$nonfarm_worker_share_main_workers <- ifelse(
+    main_workers > 0, 1 - farm_workers / main_workers, NA_real_
+  )
+  out$literate_share_population <- ifelse(
+    population > 0, literates / population, NA_real_
+  )
+  out$primary_plus_share_population <- ifelse(
+    population > 0, primary_plus / population, NA_real_
+  )
+  out$matriculate_plus_share_population <- ifelse(
+    population > 0, matriculate_plus / population, NA_real_
+  )
+
+  for (variable in setdiff(
+      vanneman_pretrend_measure_registry()$measure_id,
+      "log_population")) {
+    bad <- is.finite(out[[variable]]) &
+      (out[[variable]] < 0 | out[[variable]] > 1)
+    if (any(bad)) {
+      stop(
+        "Vanneman pretrend share falls outside [0, 1]: ",
+        variable,
+        call. = FALSE
+      )
+    }
+  }
+  out
+}
+
 build_vanneman_pretrend_levels <- function(counts, geography) {
   x <- safe_df(counts)
   geography <- safe_df(geography)
@@ -144,28 +214,12 @@ build_vanneman_pretrend_levels <- function(counts, geography) {
   primary_plus <- get_total("151")
   matriculate_plus <- get_total("153")
 
-  invalid <- (is.finite(population) & population <= 0) |
-    (is.finite(rural_population) & is.finite(population) & rural_population > population) |
-    (is.finite(main_workers) & is.finite(population) & main_workers > population) |
-    (is.finite(farm_workers) & is.finite(main_workers) & farm_workers > main_workers) |
-    (is.finite(literates) & is.finite(population) & literates > population) |
-    (is.finite(primary_plus) & is.finite(population) & primary_plus > population) |
-    (is.finite(matriculate_plus) & is.finite(population) & matriculate_plus > population)
-  invalid[is.na(invalid)] <- FALSE
-  if (any(invalid)) stop("Vanneman pretrend counts violate basic population accounting identities.", call. = FALSE)
-
-  base$population <- population
-  base$log_population <- ifelse(population > 0, log(population), NA_real_)
-  base$urban_share <- ifelse(population > 0, 1 - rural_population / population, NA_real_)
-  base$main_worker_share <- ifelse(population > 0, main_workers / population, NA_real_)
-  base$nonfarm_worker_share_main_workers <- ifelse(main_workers > 0, 1 - farm_workers / main_workers, NA_real_)
-  base$literate_share_population <- ifelse(population > 0, literates / population, NA_real_)
-  base$primary_plus_share_population <- ifelse(population > 0, primary_plus / population, NA_real_)
-  base$matriculate_plus_share_population <- ifelse(population > 0, matriculate_plus / population, NA_real_)
-
-  for (variable in setdiff(vanneman_pretrend_measure_registry()$measure_id, "log_population")) {
-    bad <- is.finite(base[[variable]]) & (base[[variable]] < 0 | base[[variable]] > 1)
-    if (any(bad)) stop("Vanneman pretrend share falls outside [0, 1]: ", variable, call. = FALSE)
+  measures <- vanneman_pretrend_measures_from_counts(
+    population, rural_population, main_workers, farm_workers,
+    literates, primary_plus, matriculate_plus
+  )
+  for (variable in names(measures)) {
+    base[[variable]] <- measures[[variable]]
   }
 
   required_geo <- c(
@@ -242,6 +296,282 @@ build_vanneman_pretrend_changes <- function(levels) {
       )
     }))
   }))
+}
+
+build_vanneman_harmonized_membership <- function(
+    panel_crosswalk, harmonized_crosswalk) {
+  panel <- safe_df(panel_crosswalk)
+  crosswalk <- safe_df(harmonized_crosswalk)
+  required_panel <- c(
+    "panel_unit_id", "dist91_state_id", "dist91_district_id",
+    "preferred_pretrend_eligible"
+  )
+  required_crosswalk <- c(
+    "harmonized_region_id", "component_class", "vintage",
+    "state_code", "district_code",
+    "deterministic_amalgamation_eligible"
+  )
+  missing <- setdiff(required_panel, names(panel))
+  if (length(missing)) {
+    stop(
+      "Vanneman harmonized membership panel lacks: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  missing <- setdiff(required_crosswalk, names(crosswalk))
+  if (length(missing)) {
+    stop(
+      "Vanneman harmonized geography lacks: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+
+  panel <- panel[panel$preferred_pretrend_eligible %in% TRUE, required_panel]
+  panel$dist91_state_id <- pad_admin_code(panel$dist91_state_id, 2L)
+  panel$dist91_district_id <- pad_admin_code(panel$dist91_district_id, 2L)
+  if (anyDuplicated(panel[c("dist91_state_id", "dist91_district_id")])) {
+    stop(
+      "Preferred Vanneman mappings must be unique by Census-1991 district.",
+      call. = FALSE
+    )
+  }
+
+  crosswalk <- crosswalk[
+    crosswalk$deterministic_amalgamation_eligible %in% TRUE,
+    ,
+    drop = FALSE
+  ]
+  crosswalk$state_code <- plain_chr(crosswalk$state_code)
+  crosswalk$district_code <- plain_chr(crosswalk$district_code)
+  source <- crosswalk[crosswalk$vintage == 1991L, , drop = FALSE]
+  target <- crosswalk[crosswalk$vintage == 2001L, , drop = FALSE]
+  source$state_code <- pad_admin_code(source$state_code, 2L)
+  source$district_code <- pad_admin_code(source$district_code, 2L)
+  target$state_code <- pad_admin_code(target$state_code, 2L)
+  target$district_code <- pad_admin_code(target$district_code, 2L)
+
+  source <- merge(
+    source,
+    panel,
+    by.x = c("state_code", "district_code"),
+    by.y = c("dist91_state_id", "dist91_district_id"),
+    all.x = TRUE, sort = FALSE
+  )
+
+  regions <- unique(c(
+    plain_chr(source$harmonized_region_id),
+    plain_chr(target$harmonized_region_id)
+  ))
+  summaries <- lapply(regions, function(region_id) {
+    s <- source[source$harmonized_region_id == region_id, , drop = FALSE]
+    t <- target[target$harmonized_region_id == region_id, , drop = FALSE]
+    states <- unique(plain_chr(t$state_code))
+    states <- states[!is.na(states) & nzchar(states)]
+    source_complete <- nrow(s) > 0L &&
+      all(!is.na(s$panel_unit_id) & nzchar(s$panel_unit_id))
+    same_state <- length(states) == 1L
+    status <- if (!source_complete) {
+      "incomplete_vanneman_1991_membership"
+    } else if (!same_state) {
+      "crosses_2001_state_boundary"
+    } else {
+      "deterministic_amalgamation"
+    }
+    data.frame(
+      harmonized_region_id = region_id,
+      n_source_1991_districts = nrow(s),
+      n_vanneman_panel_units = sum(
+        !is.na(s$panel_unit_id) & nzchar(s$panel_unit_id)
+      ),
+      n_target_2001_districts = nrow(t),
+      state_code_2001 = if (same_state) states[[1L]] else NA_character_,
+      vanneman_amalgamation_status = status,
+      vanneman_amalgamation_eligible =
+        identical(status, "deterministic_amalgamation"),
+      stringsAsFactors = FALSE
+    )
+  })
+  summary <- safe_bind_rows(summaries)
+  out <- merge(
+    crosswalk, summary,
+    by = "harmonized_region_id",
+    all.x = TRUE, sort = FALSE
+  )
+  source_panel <- source[c(
+    "harmonized_region_id", "state_code", "district_code", "panel_unit_id"
+  )]
+  out <- merge(
+    out, source_panel,
+    by = c("harmonized_region_id", "state_code", "district_code"),
+    all.x = TRUE, sort = FALSE
+  )
+  if (anyDuplicated(
+      out[
+        out$vintage == 1991L & !is.na(out$panel_unit_id),
+        c("vintage", "panel_unit_id")
+      ]
+    )) {
+    stop(
+      "A Vanneman stable unit cannot enter multiple harmonized regions.",
+      call. = FALSE
+    )
+  }
+  out[order(
+    out$harmonized_region_id, out$vintage,
+    out$state_code, out$district_code
+  ), , drop = FALSE]
+}
+
+sum_vanneman_component_if_complete <- function(x) {
+  value <- num(x)
+  if (!length(value) || any(!is.finite(value))) return(NA_real_)
+  sum(value)
+}
+
+build_vanneman_amalgamated_pretrend_levels <- function(
+    levels, membership) {
+  x <- safe_df(levels)
+  map <- safe_df(membership)
+  count_fields <- c(
+    "population", "rural_population", "main_workers", "farm_workers",
+    "literates", "primary_plus", "matriculate_plus"
+  )
+  required_levels <- c("panel_unit_id", "year", "version", count_fields)
+  required_map <- c(
+    "harmonized_region_id", "vintage", "panel_unit_id",
+    "state_code_2001", "vanneman_amalgamation_eligible"
+  )
+  missing <- setdiff(required_levels, names(x))
+  if (length(missing)) {
+    stop(
+      "Vanneman levels lack amalgamation sufficient statistics: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  missing <- setdiff(required_map, names(map))
+  if (length(missing)) {
+    stop(
+      "Vanneman harmonized membership lacks: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+
+  source <- unique(map[
+    map$vintage == 1991L &
+      map$vanneman_amalgamation_eligible %in% TRUE,
+    c("harmonized_region_id", "panel_unit_id", "state_code_2001")
+  ])
+  if (!nrow(source)) return(x[FALSE, , drop = FALSE])
+  if (anyNA(source$panel_unit_id) ||
+      anyDuplicated(source$panel_unit_id)) {
+    stop(
+      "Eligible Vanneman amalgamation membership must map stable units uniquely.",
+      call. = FALSE
+    )
+  }
+  joined <- merge(
+    source, x,
+    by = "panel_unit_id",
+    all.x = TRUE, sort = FALSE
+  )
+
+  rows <- lapply(
+    split(
+      seq_len(nrow(joined)),
+      paste(joined$harmonized_region_id, joined$year, sep = "__")
+    ),
+    function(i) {
+      part <- joined[i, , drop = FALSE]
+      region_id <- part$harmonized_region_id[[1L]]
+      year <- unique(part$year)
+      if (length(year) != 1L) {
+        stop("Vanneman amalgamation mixed historical years.", call. = FALSE)
+      }
+      states <- unique(plain_chr(part$state_code_2001))
+      if (length(states) != 1L) {
+        stop(
+          "Eligible Vanneman amalgamation spans multiple Census-2001 states.",
+          call. = FALSE
+        )
+      }
+      totals <- lapply(
+        count_fields,
+        function(variable) {
+          sum_vanneman_component_if_complete(part[[variable]])
+        }
+      )
+      names(totals) <- count_fields
+      measures <- do.call(
+        vanneman_pretrend_measures_from_counts,
+        totals
+      )
+      data.frame(
+        panel_unit_id = region_id,
+        vanneman_state_id = NA_character_,
+        vanneman_district_id = NA_character_,
+        year = year[[1L]],
+        version = unique(part$version)[[1L]],
+        measures,
+        dist91_state_id = NA_character_,
+        dist91_district_id = NA_character_,
+        state_code_2001 = states[[1L]],
+        district_code_2001 = NA_character_,
+        pretrend_geography_status = "deterministic_amalgamation",
+        preferred_vanneman_pretrend_eligible = TRUE,
+        stringsAsFactors = FALSE
+      )
+    }
+  )
+  out <- safe_bind_rows(rows)
+  out[order(out$panel_unit_id, out$year), , drop = FALSE]
+}
+
+build_vanneman_amalgamated_pretrend_validation <- function(
+    levels, membership, district_panel,
+    treatment = preferred_iv_variables()$treatment) {
+  amalgamated_levels <- build_vanneman_amalgamated_pretrend_levels(
+    levels, membership
+  )
+  changes <- build_vanneman_pretrend_changes(amalgamated_levels)
+  target <- unique(membership[
+    membership$vintage == 2001L &
+      membership$vanneman_amalgamation_eligible %in% TRUE,
+    c(
+      "harmonized_region_id", "state_code", "district_code",
+      "state_code_2001"
+    )
+  ])
+  predictor_bridge <- data.frame(
+    panel_unit_id = target$harmonized_region_id,
+    dist91_state_id = NA_character_,
+    dist91_district_id = NA_character_,
+    state_code_2001 = target$state_code,
+    district_code_2001 = target$district_code,
+    parent_bridge_status = "deterministic_amalgamation",
+    preferred_vanneman_parent_eligible = TRUE,
+    stringsAsFactors = FALSE
+  )
+  predictors <- aggregate_vanneman_parent_predictors(
+    predictor_bridge, district_panel, treatment
+  )
+  panel <- attach_vanneman_pretrend_predictors(
+    changes, predictors
+  )
+  out <- assemble_vanneman_pretrend_validation(
+    amalgamated_levels, changes, panel
+  )
+  out$amalgamation_membership <- unique(membership[c(
+    "harmonized_region_id", "component_class", "vintage",
+    "state_code", "district_code", "panel_unit_id",
+    "n_source_1991_districts", "n_vanneman_panel_units",
+    "n_target_2001_districts", "state_code_2001",
+    "vanneman_amalgamation_status", "vanneman_amalgamation_eligible"
+  )])
+  out
 }
 
 attach_vanneman_pretrend_predictors <- function(
@@ -705,12 +1035,21 @@ vanneman_pretrend_sample_coverage <- function(panel) {
   safe_bind_rows(rows)
 }
 
-build_vanneman_pretrend_support_comparison <- function(
-    strict_validation, parent_validation) {
-  inputs <- list(
-    strict_one_to_one = strict_validation,
-    historical_parent = parent_validation
-  )
+build_vanneman_pretrend_support_comparison <- function(validations) {
+  inputs <- validations
+  if (!is.list(inputs) || is.null(names(inputs)) ||
+      any(!nzchar(names(inputs)))) {
+    stop(
+      "Vanneman support comparison requires a named list of validation objects.",
+      call. = FALSE
+    )
+  }
+  if (!"strict_one_to_one" %in% names(inputs)) {
+    stop(
+      "Vanneman support comparison requires strict_one_to_one.",
+      call. = FALSE
+    )
+  }
   out <- safe_bind_rows(lapply(names(inputs), function(analysis_id) {
     validation <- inputs[[analysis_id]]
     if (!is.list(validation) ||
@@ -741,21 +1080,23 @@ build_vanneman_pretrend_support_comparison <- function(
     out$analysis_id == "strict_one_to_one" &
       out$sample_id == "full_pretrend"
   ]
-  parent_full <- out$n_units[
-    out$analysis_id == "historical_parent" &
-      out$sample_id == "full_pretrend"
-  ]
-  if (length(strict_full) != 1L || length(parent_full) != 1L) {
+  if (length(strict_full) != 1L) {
     stop(
-      "Vanneman support comparison requires one full-pretrend row per analysis.",
+      "Vanneman support comparison requires one strict full-pretrend row.",
       call. = FALSE
     )
   }
-  if (parent_full < strict_full) {
-    stop(
-      "Historical-parent support cannot be smaller than strict one-to-one support.",
-      call. = FALSE
-    )
+  if ("historical_parent" %in% names(inputs)) {
+    parent_full <- out$n_units[
+      out$analysis_id == "historical_parent" &
+        out$sample_id == "full_pretrend"
+    ]
+    if (length(parent_full) != 1L || parent_full < strict_full) {
+      stop(
+        "Historical-parent support cannot be smaller than strict one-to-one support.",
+        call. = FALSE
+      )
+    }
   }
 
   out$gain_vs_strict_full_n <- out$n_units - strict_full
@@ -770,6 +1111,7 @@ build_vanneman_pretrend_support_comparison <- function(
     "gain_vs_strict_full_n", "gain_vs_strict_full_share"
   )]
 }
+
 
 save_vanneman_pretrend_support_comparison <- function(
     x,
@@ -970,6 +1312,13 @@ save_vanneman_pretrend_validation <- function(
     )
     write_diagnostic_csv(x$descendant_completeness, completeness_path)
     paths <- c(paths, descendant_completeness = completeness_path)
+  }
+  if ("amalgamation_membership" %in% names(x)) {
+    membership_path <- file.path(
+      directory, paste0(prefix, "_membership.csv")
+    )
+    write_diagnostic_csv(x$amalgamation_membership, membership_path)
+    paths <- c(paths, amalgamation_membership = membership_path)
   }
   unname(paths)
 }
