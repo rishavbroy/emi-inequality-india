@@ -90,35 +90,63 @@ if (file.exists(multicollinearity_path)) {
   }
 }
 
-anderson_rubin_path <- "outputs/diagnostics/public/anderson_rubin_preferred.csv"
+anderson_rubin_path <- "outputs/diagnostics/public/anderson_rubin_candidate_designs.csv"
 if (file.exists(anderson_rubin_path)) {
   ar <- tryCatch(
     utils::read.csv(anderson_rubin_path, stringsAsFactors = FALSE, check.names = FALSE),
     error = function(e) data.frame()
   )
   required_ar <- c(
-    "status", "anderson_rubin_p_beta0", "ar_95_lower", "ar_95_upper",
-    "ar_95_n_components", "ar_95_disconnected", "ar_95_contains_zero",
+    "adjustment_id", "status", "anderson_rubin_p_beta0",
+    "ar_95_lower", "ar_95_upper", "ar_95_n_components",
+    "ar_95_disconnected", "ar_95_contains_zero",
     "ar_95_left_truncated", "ar_95_right_truncated", "ar_95_components"
   )
-  if (!nrow(ar) || !all(required_ar %in% names(ar))) {
-    add_failure("Preferred Anderson-Rubin diagnostic is malformed.")
-  } else if (!identical(ar$status[[1]], "estimated") || !is.finite(ar$anderson_rubin_p_beta0[[1]])) {
-    reason <- if ("reason" %in% names(ar) && !is.na(ar$reason[[1]])) paste0(" Reason: ", ar$reason[[1]]) else ""
-    add_failure("Preferred Anderson-Rubin diagnostic is unavailable in final mode.", reason)
+  expected_adjustments <- c("region_main", "state_main")
+  if (!nrow(ar) || !all(required_ar %in% names(ar)) ||
+      !setequal(ar$adjustment_id, expected_adjustments) ||
+      anyDuplicated(ar$adjustment_id)) {
+    add_failure("Candidate-design Anderson-Rubin diagnostic is malformed.")
   } else {
-    null_accepted <- ar$anderson_rubin_p_beta0[[1]] >= 0.05
-    if (!identical(as.logical(ar$ar_95_contains_zero[[1]]), null_accepted)) {
-      add_failure("Preferred Anderson-Rubin confidence-set inversion disagrees with the beta=0 test.")
-    }
-    noninterval <- isTRUE(ar$ar_95_disconnected[[1]]) ||
-      isTRUE(ar$ar_95_left_truncated[[1]]) ||
-      isTRUE(ar$ar_95_right_truncated[[1]])
-    if (noninterval && (is.finite(ar$ar_95_lower[[1]]) || is.finite(ar$ar_95_upper[[1]]))) {
-      add_failure("Preferred Anderson-Rubin output reports ordinary interval bounds for a disconnected or grid-truncated confidence set.")
+    for (i in seq_len(nrow(ar))) {
+      label <- ar$adjustment_id[[i]]
+      if (!identical(ar$status[[i]], "estimated") ||
+          !is.finite(ar$anderson_rubin_p_beta0[[i]])) {
+        reason <- if (
+            "reason" %in% names(ar) && !is.na(ar$reason[[i]])) {
+          paste0(" Reason: ", ar$reason[[i]])
+        } else {
+          ""
+        }
+        add_failure(
+          "Candidate-design Anderson-Rubin diagnostic is unavailable for ",
+          label, ".", reason
+        )
+        next
+      }
+      null_accepted <- ar$anderson_rubin_p_beta0[[i]] >= 0.05
+      if (!identical(
+          as.logical(ar$ar_95_contains_zero[[i]]), null_accepted)) {
+        add_failure(
+          "Candidate-design Anderson-Rubin confidence-set inversion disagrees with the beta=0 test for ",
+          label, "."
+        )
+      }
+      noninterval <- isTRUE(ar$ar_95_disconnected[[i]]) ||
+        isTRUE(ar$ar_95_left_truncated[[i]]) ||
+        isTRUE(ar$ar_95_right_truncated[[i]])
+      if (noninterval && (
+          is.finite(ar$ar_95_lower[[i]]) ||
+          is.finite(ar$ar_95_upper[[i]]))) {
+        add_failure(
+          "Candidate-design Anderson-Rubin output reports ordinary interval bounds for a disconnected or grid-truncated confidence set for ",
+          label, "."
+        )
+      }
     }
   }
 }
+
 
 
 if (length(failures)) {

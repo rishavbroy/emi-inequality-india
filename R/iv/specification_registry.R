@@ -142,6 +142,10 @@ iv_instrument_constructions <- function() {
     })
 }
 
+iv_candidate_design_adjustments <- function() {
+  c("region_main", "state_main")
+}
+
 iv_adjustment_sets <- function() {
   list(
     unadjusted = list(
@@ -149,7 +153,7 @@ iv_adjustment_sets <- function() {
     ),
     region_main = list(
       label = "Six-region FE + main controls", fixed_effect = "region",
-      controls = census_2001_main_controls(), tier = "B"
+      controls = census_2001_main_controls(), tier = "A"
     ),
     region_expanded = list(
       label = "Six-region FE + expanded controls", fixed_effect = "region",

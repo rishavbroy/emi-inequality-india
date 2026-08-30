@@ -524,14 +524,22 @@ test_that("Anderson-Rubin summaries do not collapse noninterval sets to min-max 
   expect_true("acceptance_component" %in% names(out$grid))
 })
 
-test_that("preferred public Anderson-Rubin diagnostic is registry-backed", {
-  spec <- preferred_iv_diagnostic_specification()
-  expect_equal(nrow(spec), 1L)
-  expect_identical(spec$adjustment_id[[1]], "state_main")
-  expect_identical(spec$construction_id[[1]], "nonzero_mean")
-  expect_identical(spec$outcome[[1]], "real_log_consumption_change")
-  expect_identical(spec$treatment[[1]], preferred_iv_variables()$treatment)
-  expect_identical(spec$excluded_instruments[[1]], preferred_iv_variables()$instrument)
+test_that("public Anderson-Rubin diagnostics cover both candidate main designs", {
+  specs <- candidate_iv_diagnostic_specifications()
+  expect_equal(nrow(specs), 2L)
+  expect_identical(
+    specs$adjustment_id,
+    iv_candidate_design_adjustments()
+  )
+  expect_true(all(specs$construction_id == "nonzero_mean"))
+  expect_true(all(specs$outcome == "real_log_consumption_change"))
+  expect_true(all(specs$treatment == preferred_iv_variables()$treatment))
+  expect_true(all(vapply(
+    specs$excluded_instruments,
+    identical,
+    logical(1),
+    preferred_iv_variables()$instrument
+  )))
 })
 
 test_that("condition number is invariant to regressor units and excludes the intercept", {
@@ -1071,7 +1079,7 @@ test_that("alternative linguistic-distance diagnostics save explicit outputs wit
       monotonicity_state_slopes = data.frame(status = "test"),
       basis_comparison = data.frame(status = "test"),
       design_evidence = data.frame(status = "test"),
-      design_decision = data.frame(status = "test")
+      design_comparison = data.frame(status = "test")
     ),
     class = "emi_alternative_distance_first_stages"
   )
@@ -1100,94 +1108,51 @@ test_that("alternative linguistic-distance diagnostics save explicit outputs wit
     "iv_monotonicity_state_slopes.csv",
     "linguistic_distance_basis_comparison.csv",
     "alternative_distance_design_evidence.csv",
-    "alternative_distance_design_decision.csv"
+    "alternative_distance_design_comparison.csv"
   ))
   expect_true(all(file.exists(manifest$path)))
 })
 
-test_that("alternative-distance design closure uses canonical weak-IV thresholds", {
+test_that("alternative-distance design comparison preserves both FE candidates", {
   constructions <- alternative_distance_design_constructions()
-  specification_ids <- paste("state_main", unname(constructions), sep = "__")
+  adjustments <- iv_candidate_design_adjustments()
+  target <- expand.grid(
+    adjustment_id = adjustments,
+    construction_id = unname(constructions),
+    stringsAsFactors = FALSE
+  )
+  ids <- paste(target$adjustment_id, target$construction_id, sep = "__")
+  fixed_effect <- ifelse(target$adjustment_id == "state_main", "state", "region")
+  primary <- target$construction_id == "nonzero_mean"
 
   diagnostics <- structure(
     list(
       summary = data.frame(
-        specification_id = specification_ids,
-        adjustment_id = "state_main",
-        construction_id = unname(constructions),
-        fixed_effect = "state",
-        joint_excluded_f = c(.75, .28, .15),
-        partial_r_squared = c(.0040, .0007, .0004),
+        specification_id = ids,
+        adjustment_id = target$adjustment_id,
+        construction_id = target$construction_id,
+        fixed_effect = fixed_effect,
+        joint_excluded_f = ifelse(primary, c(6, .75)[match(
+          target$adjustment_id,
+          c("region_main", "state_main")
+        )], .25),
+        partial_r_squared = ifelse(primary, .01, .001),
         n = 573L,
         stringsAsFactors = FALSE
       ),
       weak_iv_outcomes = data.frame(
-        specification_id = specification_ids,
-        effective_f = c(.82, .31, .16),
-        effective_f_critical_value = rep(23.1, 3),
-        anderson_rubin_p_beta0 = c(.05, .35, .25),
-        ar_95_contains_zero = c(TRUE, TRUE, TRUE),
-        ar_95_disconnected = c(TRUE, FALSE, TRUE),
-        ar_95_left_truncated = c(TRUE, FALSE, TRUE),
-        ar_95_right_truncated = c(TRUE, FALSE, TRUE),
-        n = 573L,
-        status = "estimated",
-        stringsAsFactors = FALSE
-      )
-    ),
-    class = "emi_alternative_distance_first_stages"
-  )
-
-  out <- summarize_alternative_distance_design_evidence(diagnostics)
-
-  expect_identical(
-    out$evidence$construction_id,
-    unname(constructions)
-  )
-  expect_true(all(out$evidence$effective_f_below_critical))
-  expect_false(any(out$evidence$meets_effective_f_critical_value))
-  expect_equal(
-    out$evidence$effective_f_relative_to_primary,
-    c(1, .31 / .82, .16 / .82)
-  )
-  expect_identical(
-    out$decision$conventional_2sls_relevance_screen,
-    "no_construction_passes"
-  )
-  expect_identical(
-    out$decision$design_implication,
-    "weak_iv_robust_or_reduced_form"
-  )
-  expect_false(
-    out$decision$any_robustness_construction_stronger_than_primary
-  )
-})
-
-test_that("alternative-distance design closure does not promote a stronger alternative by raw F alone", {
-  constructions <- alternative_distance_design_constructions()
-  ids <- paste("state_main", unname(constructions), sep = "__")
-  diagnostics <- structure(
-    list(
-      summary = data.frame(
         specification_id = ids,
-        adjustment_id = "state_main",
-        construction_id = unname(constructions),
-        fixed_effect = "state",
-        joint_excluded_f = c(1, 9, 8),
-        partial_r_squared = c(.01, .02, .02),
-        n = 100L,
-        stringsAsFactors = FALSE
-      ),
-      weak_iv_outcomes = data.frame(
-        specification_id = ids,
-        effective_f = c(1, 5, 4),
-        effective_f_critical_value = c(23, 23, 23),
-        anderson_rubin_p_beta0 = c(.8, .6, .7),
+        effective_f = ifelse(primary, c(7, .82)[match(
+          target$adjustment_id,
+          c("region_main", "state_main")
+        )], .3),
+        effective_f_critical_value = 23.1,
+        anderson_rubin_p_beta0 = .25,
         ar_95_contains_zero = TRUE,
         ar_95_disconnected = FALSE,
         ar_95_left_truncated = FALSE,
         ar_95_right_truncated = FALSE,
-        n = 100L,
+        n = 573L,
         status = "estimated",
         stringsAsFactors = FALSE
       )
@@ -1197,12 +1162,36 @@ test_that("alternative-distance design closure does not promote a stronger alter
 
   out <- summarize_alternative_distance_design_evidence(diagnostics)
 
-  expect_true(out$decision$any_robustness_construction_stronger_than_primary)
-  expect_false(out$decision$any_construction_meets_effective_f_critical_value)
+  expect_setequal(out$comparison$adjustment_id, adjustments)
+  expect_equal(nrow(out$evidence), length(adjustments) * length(constructions))
+  expect_false(any(out$evidence$meets_effective_f_critical_value))
+  expect_true(all(
+    out$evidence$effective_f_relative_to_primary[
+      out$evidence$construction_id == "nonzero_mean"
+    ] == 1
+  ))
+  expect_false(any(
+    out$comparison$any_construction_meets_effective_f_critical_value
+  ))
+})
+
+test_that("candidate IV adjustments do not encode an FE winner", {
+  adjustments <- iv_adjustment_sets()
+  candidates <- iv_candidate_design_adjustments()
+
+  expect_setequal(candidates, c("region_main", "state_main"))
+  expect_true(all(vapply(
+    adjustments[candidates],
+    `[[`,
+    character(1),
+    "tier"
+  ) == "A"))
   expect_identical(
-    out$decision$design_implication,
-    "weak_iv_robust_or_reduced_form"
+    adjustments$region_main$controls,
+    adjustments$state_main$controls
   )
+  expect_identical(adjustments$region_main$fixed_effect, "region")
+  expect_identical(adjustments$state_main$fixed_effect, "state")
 })
 
 test_that("canonical IV registry drives alternative-distance specifications", {

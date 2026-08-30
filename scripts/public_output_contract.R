@@ -79,7 +79,7 @@ required_final_artifacts <- function() {
     "outputs/diagnostics/public/spatial_moran_tests.csv",
     "outputs/diagnostics/public/spatial_moran_mc_reference.csv",
     "outputs/diagnostics/public/multicollinearity_diagnostics.csv",
-    "outputs/diagnostics/public/anderson_rubin_preferred.csv"
+    "outputs/diagnostics/public/anderson_rubin_candidate_designs.csv"
   )
 }
 

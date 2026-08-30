@@ -8,34 +8,52 @@ diagnose_weak_instruments <- function(iv_models, district_panel, cfg) {
   estimate_first_stage(iv_models, district_panel, cfg)
 }
 
-preferred_iv_diagnostic_specification <- function() {
+candidate_iv_diagnostic_specifications <- function() {
   registry <- iv_diagnostic_specification_registry()
-  preferred <- registry[
-    registry$adjustment_id == "state_main" &
+  candidates <- registry[
+    registry$adjustment_id %in% iv_candidate_design_adjustments() &
       registry$construction_id == "nonzero_mean",
-    , drop = FALSE
+    ,
+    drop = FALSE
   ]
-  if (nrow(preferred) != 1L) {
-    stop("Expected exactly one preferred state-main nonzero-mean IV specification.", call. = FALSE)
+  expected <- paste(
+    iv_candidate_design_adjustments(), "nonzero_mean", sep = "__"
+  )
+  if (!setequal(candidates$specification_id, expected) ||
+      anyDuplicated(candidates$adjustment_id)) {
+    stop(
+      "Expected one nonzero-mean IV specification for each candidate main design.",
+      call. = FALSE
+    )
   }
-  preferred
+  candidates[
+    match(iv_candidate_design_adjustments(), candidates$adjustment_id),
+    ,
+    drop = FALSE
+  ]
 }
 
-diagnose_preferred_anderson_rubin <- function(district_panel, level = 0.95, points = 401L) {
-  estimate_anderson_rubin_spec(
-    as.data.frame(district_panel),
-    preferred_iv_diagnostic_specification(),
-    level = level,
-    points = points
-  )$summary
+diagnose_candidate_anderson_rubin <- function(
+    district_panel, level = 0.95, points = 401L) {
+  panel <- as.data.frame(district_panel)
+  specifications <- candidate_iv_diagnostic_specifications()
+  safe_bind_rows(lapply(seq_len(nrow(specifications)), function(i) {
+    estimate_anderson_rubin_spec(
+      panel,
+      specifications[i, , drop = FALSE],
+      level = level,
+      points = points
+    )$summary
+  }))
 }
 
-save_preferred_anderson_rubin <- function(
-  diagnostic,
-  path = "outputs/diagnostics/public/anderson_rubin_preferred.csv"
+save_candidate_anderson_rubin <- function(
+    diagnostic,
+    path = "outputs/diagnostics/public/anderson_rubin_candidate_designs.csv"
 ) {
   write_diagnostic_csv(diagnostic, path)
 }
+
 
 #' diagnose instrument exploration
 #'

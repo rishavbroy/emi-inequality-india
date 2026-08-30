@@ -1382,7 +1382,9 @@ core_pipeline_targets <- list(
   tar_target(diag_public_weak_instruments, diagnose_weak_instruments(revised_iv_models, district_panel, cfg)),
   tar_target(
     diag_public_anderson_rubin,
-    save_preferred_anderson_rubin(diagnose_preferred_anderson_rubin(district_panel)),
+    save_candidate_anderson_rubin(
+      diagnose_candidate_anderson_rubin(district_panel)
+    ),
     format = "file"
   ),
   tar_target(diag_public_overidentification, diagnose_overidentification(revised_iv_models, revised_iv_formulas, cfg)),
