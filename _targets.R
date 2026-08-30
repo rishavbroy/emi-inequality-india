@@ -813,6 +813,21 @@ core_pipeline_targets <- list(
     format = "file"
   ),
   tar_target(
+    historical_vanneman_pretrend_parent_bridge,
+    build_vanneman_pretrend_parent_bridge(
+      historical_vanneman_panel4_dist91_crosswalk,
+      historical_linguistic_geography_1991_2001$source_districts,
+      historical_linguistic_geography_1991_2001$transition
+    )
+  ),
+  tar_target(
+    diag_ext_historical_vanneman_pretrend_parent_bridge,
+    save_vanneman_pretrend_parent_bridge(
+      historical_vanneman_pretrend_parent_bridge
+    ),
+    format = "file"
+  ),
+  tar_target(
     historical_vanneman_liu_geography_benchmark,
     {
       raw_data_preflight
@@ -1536,6 +1551,23 @@ extended_diagnostic_targets <- list(
   tar_target(
     diag_ext_historical_vanneman_pretrend_validation,
     save_vanneman_pretrend_validation(historical_vanneman_pretrend_validation),
+    format = "file"
+  ),
+  tar_target(
+    historical_vanneman_parent_pretrend_validation,
+    build_vanneman_parent_pretrend_validation(
+      historical_vanneman_pretrend_levels,
+      historical_vanneman_pretrend_parent_bridge,
+      district_panel,
+      historical_distance = historical_linguistic_distance_validation$preferred_distance
+    )
+  ),
+  tar_target(
+    diag_ext_historical_vanneman_parent_pretrend_validation,
+    save_vanneman_pretrend_validation(
+      historical_vanneman_parent_pretrend_validation,
+      prefix = "vanneman_parent_pretrend"
+    ),
     format = "file"
   ),
   tar_target(

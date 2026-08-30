@@ -538,6 +538,154 @@ save_vanneman_pretrend_geography <- function(
   write_diagnostic_csv(x, path)
 }
 
+build_vanneman_pretrend_parent_bridge <- function(
+    panel_crosswalk, source_geography_1991, transition_1991_2001,
+    min_population_coverage = 0.99) {
+  panel <- safe_df(panel_crosswalk)
+  geography <- safe_df(source_geography_1991)
+  transition <- safe_df(transition_1991_2001)
+
+  required_panel <- c(
+    "panel_unit_id", "dist91_state_id", "dist91_district_id",
+    "preferred_pretrend_eligible"
+  )
+  required_geography <- c(
+    "state_code_1991", "district_code_1991", "population_coverage",
+    "n_target_2001_districts"
+  )
+  required_transition <- c(
+    "state_code_1991", "district_code_1991",
+    "state_code_2001", "district_code_2001"
+  )
+  for (spec in list(
+      panel = c(required_panel, setdiff(required_panel, names(panel))),
+      geography = c(required_geography, setdiff(required_geography, names(geography))),
+      transition = c(required_transition, setdiff(required_transition, names(transition))))) {
+    invisible(spec)
+  }
+  missing <- setdiff(required_panel, names(panel))
+  if (length(missing)) stop("Vanneman parent bridge panel lacks: ", paste(missing, collapse = ", "), call. = FALSE)
+  missing <- setdiff(required_geography, names(geography))
+  if (length(missing)) stop("Vanneman parent bridge 1991 geography lacks: ", paste(missing, collapse = ", "), call. = FALSE)
+  missing <- setdiff(required_transition, names(transition))
+  if (length(missing)) stop("Vanneman parent bridge transition lacks: ", paste(missing, collapse = ", "), call. = FALSE)
+
+  code_cols <- c("state_code_1991", "district_code_1991")
+  for (nm in code_cols) {
+    geography[[nm]] <- pad_admin_code(geography[[nm]], 2L)
+    transition[[nm]] <- pad_admin_code(transition[[nm]], 2L)
+  }
+  transition$state_code_2001 <- pad_admin_code(transition$state_code_2001, 2L)
+  transition$district_code_2001 <- pad_admin_code(transition$district_code_2001, 2L)
+  panel$dist91_state_id <- pad_admin_code(panel$dist91_state_id, 2L)
+  panel$dist91_district_id <- pad_admin_code(panel$dist91_district_id, 2L)
+
+  if (anyDuplicated(panel$panel_unit_id)) {
+    stop("Vanneman parent bridge requires unique stable panel IDs.", call. = FALSE)
+  }
+  if (anyDuplicated(geography[code_cols])) {
+    stop("Vanneman parent bridge requires unique Census-1991 source districts.", call. = FALSE)
+  }
+  transition <- unique(transition[required_transition])
+  source_key <- paste(transition$state_code_1991, transition$district_code_1991, sep = "__")
+  target_key <- paste(transition$state_code_2001, transition$district_code_2001, sep = "__")
+  target_parent_n <- tapply(source_key, target_key, function(x) length(unique(x)))
+
+  panel_key <- paste(panel$dist91_state_id, panel$dist91_district_id, sep = "__")
+  geography_key <- paste(geography$state_code_1991, geography$district_code_1991, sep = "__")
+  gidx <- match(panel_key, geography_key)
+
+  rows <- lapply(seq_len(nrow(panel)), function(i) {
+    base <- panel[i, , drop = FALSE]
+    status <- "panel_to_1991_not_preferred"
+    descendants <- transition[FALSE, , drop = FALSE]
+    coverage <- NA_real_
+    expected_targets <- NA_integer_
+
+    if (isTRUE(base$preferred_pretrend_eligible[[1L]])) {
+      if (is.na(gidx[[i]])) {
+        status <- "missing_project_1991_geography"
+      } else {
+        coverage <- num(geography$population_coverage[gidx[[i]]])
+        expected_targets <- suppressWarnings(as.integer(
+          geography$n_target_2001_districts[gidx[[i]]]
+        ))
+        descendants <- transition[source_key == panel_key[[i]], , drop = FALSE]
+        if (!is.finite(coverage) || coverage < min_population_coverage) {
+          status <- "insufficient_1991_population_coverage"
+        } else if (!nrow(descendants)) {
+          status <- "missing_1991_2001_transition"
+        } else if (!is.finite(expected_targets) ||
+                   nrow(descendants) != expected_targets) {
+          status <- "incomplete_1991_2001_transition"
+        } else {
+          descendant_key <- paste(
+            descendants$state_code_2001,
+            descendants$district_code_2001,
+            sep = "__"
+          )
+          exclusive <- unname(target_parent_n[descendant_key]) == 1L
+          same_state <- length(unique(descendants$state_code_2001)) == 1L
+          if (!all(exclusive)) {
+            status <- "merger_requires_amalgamation"
+          } else if (!same_state) {
+            status <- "crosses_2001_state_boundary"
+          } else {
+            status <- if (nrow(descendants) == 1L) {
+              "preferred_single_target"
+            } else {
+              "preferred_historical_parent_split"
+            }
+          }
+        }
+      }
+    }
+
+    if (!nrow(descendants)) {
+      descendants <- data.frame(
+        state_code_1991 = base$dist91_state_id,
+        district_code_1991 = base$dist91_district_id,
+        state_code_2001 = NA_character_,
+        district_code_2001 = NA_character_,
+        stringsAsFactors = FALSE
+      )
+    }
+    descendants$panel_unit_id <- base$panel_unit_id
+    descendants$dist91_state_id <- base$dist91_state_id
+    descendants$dist91_district_id <- base$dist91_district_id
+    descendants$parent_population_coverage <- coverage
+    descendants$expected_target_2001_districts <- expected_targets
+    descendants$parent_bridge_status <- status
+    descendants$preferred_vanneman_parent_eligible <- status %in% c(
+      "preferred_single_target", "preferred_historical_parent_split"
+    )
+    descendants
+  })
+
+  out <- safe_bind_rows(rows)
+  preferred <- out$preferred_vanneman_parent_eligible %in% TRUE
+  if (any(preferred)) {
+    key <- paste(
+      out$state_code_2001[preferred],
+      out$district_code_2001[preferred],
+      sep = "__"
+    )
+    if (anyDuplicated(key)) {
+      stop(
+        "Preferred Vanneman historical-parent bridge assigns a Census-2001 district to multiple parents.",
+        call. = FALSE
+      )
+    }
+  }
+  out[order(out$panel_unit_id, out$state_code_2001, out$district_code_2001), , drop = FALSE]
+}
+
+save_vanneman_pretrend_parent_bridge <- function(
+    x,
+    path = "outputs/diagnostics/extended/instrument_relevance/vanneman_pretrend_parent_bridge.csv") {
+  write_diagnostic_csv(x, path)
+}
+
 build_vanneman_panel4_geography_inventory <- function(source_qa, paths = build_paths()) {
   qa <- safe_df(source_qa)
   panel <- qa[qa$source_id == "panel4", , drop = FALSE]

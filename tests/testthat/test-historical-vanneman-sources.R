@@ -332,3 +332,38 @@ test_that("Vanneman pretrend geography composes reviewed Census codes and exclud
   expect_true(is.na(split$district_code_2001))
   expect_equal(blocked$pretrend_geography_status, "panel_to_1991_not_preferred")
 })
+
+
+test_that("historical-parent bridge recovers clean splits but excludes mergers", {
+  panel <- data.frame(
+    panel_unit_id = c("a", "b", "c"),
+    dist91_state_id = "02",
+    dist91_district_id = c("01", "02", "03"),
+    preferred_pretrend_eligible = TRUE,
+    stringsAsFactors = FALSE
+  )
+  geography <- data.frame(
+    state_code_1991 = "02",
+    district_code_1991 = c("01", "02", "03"),
+    population_coverage = c(1, 1, 1),
+    n_target_2001_districts = c(2L, 1L, 1L),
+    stringsAsFactors = FALSE
+  )
+  transition <- data.frame(
+    state_code_1991 = c("02", "02", "02", "02"),
+    district_code_1991 = c("01", "01", "02", "03"),
+    state_code_2001 = c("28", "28", "28", "28"),
+    district_code_2001 = c("11", "12", "13", "13"),
+    stringsAsFactors = FALSE
+  )
+
+  out <- build_vanneman_pretrend_parent_bridge(panel, geography, transition)
+  split <- out[out$panel_unit_id == "a", , drop = FALSE]
+  merger <- out[out$panel_unit_id %in% c("b", "c"), , drop = FALSE]
+
+  expect_equal(nrow(split), 2L)
+  expect_true(all(split$preferred_vanneman_parent_eligible))
+  expect_true(all(split$parent_bridge_status == "preferred_historical_parent_split"))
+  expect_false(any(merger$preferred_vanneman_parent_eligible))
+  expect_true(all(merger$parent_bridge_status == "merger_requires_amalgamation"))
+})
