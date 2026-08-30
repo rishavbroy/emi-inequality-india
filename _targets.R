@@ -865,6 +865,21 @@ core_pipeline_targets <- list(
     format = "file"
   ),
   tar_target(
+    historical_linguistic_kumar_somanathan_geography,
+    build_historical_linguistic_kumar_somanathan_geography(
+      district_lineage_sources$kumar_somanathan_1991_2001,
+      helms_lim_linguistic_distance_1991,
+      district_lineage$admin_units_2001
+    )
+  ),
+  tar_target(
+    diag_ext_historical_linguistic_kumar_somanathan_geography,
+    save_historical_linguistic_kumar_somanathan_geography(
+      historical_linguistic_kumar_somanathan_geography
+    ),
+    format = "file"
+  ),
+  tar_target(
     consumption_lineage_identity_aliases_file,
     "data/metadata/consumption_lineage_identity_aliases.csv",
     format = "file"
@@ -1604,6 +1619,27 @@ extended_diagnostic_targets <- list(
     diag_ext_historical_vanneman_amalgamation_feasibility,
     save_vanneman_amalgamation_feasibility(
       historical_vanneman_amalgamation_feasibility
+    ),
+    format = "file"
+  ),
+  tar_target(
+    historical_vanneman_kumar_somanathan_membership,
+    build_vanneman_harmonized_membership(
+      historical_vanneman_panel4_dist91_crosswalk,
+      historical_linguistic_kumar_somanathan_geography$harmonized_crosswalk
+    )
+  ),
+  tar_target(
+    historical_vanneman_kumar_somanathan_amalgamation_feasibility,
+    build_vanneman_amalgamation_feasibility(
+      historical_vanneman_kumar_somanathan_membership
+    )
+  ),
+  tar_target(
+    diag_ext_historical_vanneman_kumar_somanathan_amalgamation_feasibility,
+    save_vanneman_amalgamation_feasibility(
+      historical_vanneman_kumar_somanathan_amalgamation_feasibility,
+      prefix = "vanneman_kumar_somanathan_amalgamation_feasibility"
     ),
     format = "file"
   ),

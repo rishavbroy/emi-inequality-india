@@ -332,6 +332,283 @@ historical_linguistic_carveout_benchmark <- function(
   out
 }
 
+historical_linguistic_unique_name_registry <- function(
+    x, name_field, state_field, district_field, vintage_label) {
+  data <- safe_df(x)
+  required <- c(name_field, state_field, district_field)
+  missing <- setdiff(required, names(data))
+  if (length(missing)) {
+    stop(
+      vintage_label, " district-name registry lacks: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  out <- data.frame(
+    district_name = plain_chr(data[[name_field]]),
+    state_code = pad_admin_code(data[[state_field]], 2L),
+    district_code = pad_admin_code(data[[district_field]], 2L),
+    stringsAsFactors = FALSE
+  )
+  out$name_key <- canonicalize_district_name(out$district_name)
+  out <- out[
+    !is.na(out$name_key) & nzchar(out$name_key) &
+      !is.na(out$state_code) & !is.na(out$district_code),
+    ,
+    drop = FALSE
+  ]
+  out <- unique(out)
+  counts <- table(out$name_key)
+  out$n_name_matches <- as.integer(counts[out$name_key])
+  out
+}
+
+historical_linguistic_kumar_somanathan_transition <- function(
+    carveouts, historical_name_registry, admin_2001) {
+  carveouts <- safe_df(carveouts)
+  required <- c(
+    "district_1991", "district_2001",
+    "pct_01in91", "pct_91in01"
+  )
+  missing <- setdiff(required, names(carveouts))
+  if (length(missing)) {
+    stop(
+      "Kumar-Somanathan transition source lacks: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+
+  source_registry <- historical_linguistic_unique_name_registry(
+    historical_name_registry,
+    "district_name_helms_lim",
+    "state_code_1991",
+    "district_code_1991",
+    "Census-1991"
+  )
+  target_registry <- historical_linguistic_unique_name_registry(
+    admin_2001,
+    "district_std",
+    "state_code",
+    "district_code",
+    "Census-2001"
+  )
+
+  edges <- carveouts
+  edges$.source_row <- seq_len(nrow(edges))
+  edges$source_name_key <- canonicalize_district_name(
+    plain_chr(edges$district_1991)
+  )
+  edges$target_name_key <- canonicalize_district_name(
+    plain_chr(edges$district_2001)
+  )
+
+  source_unique <- source_registry[
+    source_registry$n_name_matches == 1L,
+    ,
+    drop = FALSE
+  ]
+  target_unique <- target_registry[
+    target_registry$n_name_matches == 1L,
+    ,
+    drop = FALSE
+  ]
+  source_idx <- match(edges$source_name_key, source_unique$name_key)
+  target_idx <- match(edges$target_name_key, target_unique$name_key)
+
+  edges$state_code_1991 <- source_unique$state_code[source_idx]
+  edges$district_code_1991 <- source_unique$district_code[source_idx]
+  edges$state_code_2001 <- target_unique$state_code[target_idx]
+  edges$district_code_2001 <- target_unique$district_code[target_idx]
+  edges$source_name_exact_unique <- !is.na(source_idx)
+  edges$target_name_exact_unique <- !is.na(target_idx)
+  edges$source_share_to_2001 <- num(edges$pct_01in91) / 100
+  edges$target_share_from_1991 <- num(edges$pct_91in01) / 100
+  edges$transition_status <- ifelse(
+    !edges$source_name_exact_unique,
+    "source_name_not_unique_exact",
+    ifelse(
+      !edges$target_name_exact_unique,
+      "target_name_not_unique_exact",
+      "matched_exact_names"
+    )
+  )
+
+  matched <- edges[
+    edges$transition_status == "matched_exact_names",
+    ,
+    drop = FALSE
+  ]
+  if (!nrow(matched)) {
+    return(list(
+      edges = edges,
+      canonical_transition = data.frame(
+        source_vintage = integer(), target_vintage = integer(),
+        source_state_code = character(), source_district_code = character(),
+        source_unit_id = character(),
+        target_state_code = character(), target_district_code = character(),
+        target_unit_id = character(),
+        population_weight = numeric(), area_weight = numeric(),
+        source_coverage = numeric(), target_coverage = numeric(),
+        mapping_class = character(), evidence_source = character(),
+        source_degree = integer(), target_degree = integer(),
+        topology = character(),
+        stringsAsFactors = FALSE
+      )
+    ))
+  }
+
+  matched$source_unit_id <- geography_transition_unit_id(
+    1991, matched$state_code_1991, matched$district_code_1991
+  )
+  matched$target_unit_id <- geography_transition_unit_id(
+    2001, matched$state_code_2001, matched$district_code_2001
+  )
+  if (anyDuplicated(matched[c("source_unit_id", "target_unit_id")])) {
+    stop(
+      "Kumar-Somanathan exact-name transition contains duplicate code-resolved edges.",
+      call. = FALSE
+    )
+  }
+
+  source_coverage <- tapply(
+    matched$source_share_to_2001,
+    matched$source_unit_id,
+    sum
+  )
+  target_coverage <- tapply(
+    matched$target_share_from_1991,
+    matched$target_unit_id,
+    sum
+  )
+
+  transition <- data.frame(
+    source_vintage = 1991L,
+    target_vintage = 2001L,
+    source_state_code = pad_admin_code(matched$state_code_1991, 2L),
+    source_district_code = pad_admin_code(matched$district_code_1991, 2L),
+    source_unit_id = matched$source_unit_id,
+    target_state_code = pad_admin_code(matched$state_code_2001, 2L),
+    target_district_code = pad_admin_code(matched$district_code_2001, 2L),
+    target_unit_id = matched$target_unit_id,
+    population_weight = matched$source_share_to_2001,
+    area_weight = NA_real_,
+    source_coverage = unname(source_coverage[matched$source_unit_id]),
+    target_coverage = unname(target_coverage[matched$target_unit_id]),
+    mapping_class = "kumar_somanathan_exact_names",
+    evidence_source = "kumar_somanathan_2016",
+    stringsAsFactors = FALSE
+  )
+  transition <- transition[geography_transition_columns()]
+  validate_geography_transition(transition)
+  transition <- annotate_geography_transition_topology(transition)
+
+  list(edges = edges, canonical_transition = transition)
+}
+
+build_historical_linguistic_kumar_somanathan_geography <- function(
+    carveouts, historical_name_registry, admin_2001) {
+  resolved <- historical_linguistic_kumar_somanathan_transition(
+    carveouts, historical_name_registry, admin_2001
+  )
+  transition <- resolved$canonical_transition
+  components <- build_geography_components(transition)
+  component_summary <- summarize_geography_components(
+    transition, components
+  )
+  harmonized_crosswalk <- build_harmonized_region_crosswalk(
+    components, component_summary
+  )
+
+  source_labels <- unique(
+    paste(
+      plain_chr(resolved$edges$district_1991),
+      num(resolved$edges$pop_1991),
+      sep = "__"
+    )
+  )
+  exact_sources <- unique(
+    paste(
+      plain_chr(resolved$edges$district_1991[
+        resolved$edges$source_name_exact_unique %in% TRUE
+      ]),
+      num(resolved$edges$pop_1991[
+        resolved$edges$source_name_exact_unique %in% TRUE
+      ]),
+      sep = "__"
+    )
+  )
+  exact_sources <- exact_sources[!grepl("__NA$", exact_sources)]
+  summary <- data.frame(
+    n_source_edges = nrow(resolved$edges),
+    n_source_districts = length(source_labels),
+    n_exact_unique_source_districts = length(exact_sources),
+    n_exact_name_edges = sum(
+      resolved$edges$transition_status == "matched_exact_names"
+    ),
+    n_components = nrow(component_summary),
+    n_deterministic_components = sum(
+      component_summary$deterministic_amalgamation_eligible %in% TRUE
+    ),
+    n_nontrivial_deterministic_components = sum(
+      component_summary$deterministic_amalgamation_eligible %in% TRUE &
+        component_summary$component_class != "one_to_one"
+    ),
+    n_harmonized_regions =
+      length(unique(harmonized_crosswalk$harmonized_region_id)),
+    stringsAsFactors = FALSE
+  )
+
+  list(
+    edges = resolved$edges,
+    canonical_transition = transition,
+    components = components,
+    component_summary = component_summary,
+    harmonized_crosswalk = harmonized_crosswalk,
+    summary = summary
+  )
+}
+
+save_historical_linguistic_kumar_somanathan_geography <- function(
+    x, directory = "outputs/diagnostics/extended/instrument_relevance") {
+  dir.create(directory, recursive = TRUE, showWarnings = FALSE)
+  paths <- c(
+    edges = file.path(
+      directory, "historical_linguistic_kumar_somanathan_edges.csv"
+    ),
+    canonical_transition = file.path(
+      directory, "historical_linguistic_kumar_somanathan_transition.csv"
+    ),
+    components = file.path(
+      directory, "historical_linguistic_kumar_somanathan_components.csv"
+    ),
+    component_summary = file.path(
+      directory,
+      "historical_linguistic_kumar_somanathan_component_summary.csv"
+    ),
+    harmonized_crosswalk = file.path(
+      directory,
+      "historical_linguistic_kumar_somanathan_harmonized_crosswalk.csv"
+    ),
+    summary = file.path(
+      directory, "historical_linguistic_kumar_somanathan_summary.csv"
+    )
+  )
+  write_diagnostic_csv(x$edges, paths[["edges"]])
+  write_diagnostic_csv(
+    x$canonical_transition, paths[["canonical_transition"]]
+  )
+  write_diagnostic_csv(x$components, paths[["components"]])
+  write_diagnostic_csv(
+    x$component_summary, paths[["component_summary"]]
+  )
+  write_diagnostic_csv(
+    x$harmonized_crosswalk, paths[["harmonized_crosswalk"]]
+  )
+  write_diagnostic_csv(x$summary, paths[["summary"]])
+  unname(paths)
+}
+
 historical_linguistic_carveout_benchmark_summary <- function(benchmark) {
   x <- safe_df(benchmark)
   matched <- x[x$benchmark_status == "matched_edge", , drop = FALSE]

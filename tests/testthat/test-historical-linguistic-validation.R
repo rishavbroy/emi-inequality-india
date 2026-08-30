@@ -683,3 +683,137 @@ test_that("historical SHRUG geography saves deterministic harmonized-region arti
     fixed = TRUE
   )
 })
+
+
+test_that("Kumar-Somanathan transition uses only unique exact district names", {
+  carveouts <- data.frame(
+    district_1991 = c("Old A", "Old A", "Old B"),
+    pop_1991 = c(100, 100, 200),
+    district_2001 = c("Alpha", "Beta", "Gamma"),
+    pct_01in91 = c(60, 40, 100),
+    pct_91in01 = c(100, 100, 100),
+    stringsAsFactors = FALSE
+  )
+  historical <- data.frame(
+    state_code_1991 = c("01", "01"),
+    district_code_1991 = c("01", "02"),
+    district_name_helms_lim = c("Old A", "Old B"),
+    stringsAsFactors = FALSE
+  )
+  admin <- data.frame(
+    state_code = "01",
+    district_code = c("01", "02", "03"),
+    district_std = c("Alpha", "Beta", "Gamma"),
+    stringsAsFactors = FALSE
+  )
+
+  out <- build_historical_linguistic_kumar_somanathan_geography(
+    carveouts, historical, admin
+  )
+
+  expect_true(all(out$edges$transition_status == "matched_exact_names"))
+  expect_equal(nrow(out$canonical_transition), 3L)
+  expect_true(all(out$canonical_transition$source_coverage == 1))
+  expect_true(all(out$canonical_transition$target_coverage == 1))
+  expect_equal(out$summary$n_deterministic_components, 2L)
+  expect_equal(out$summary$n_nontrivial_deterministic_components, 1L)
+})
+
+test_that("Kumar-Somanathan transition fails closed on ambiguous names", {
+  carveouts <- data.frame(
+    district_1991 = "Old",
+    pop_1991 = 100,
+    district_2001 = "Alpha",
+    pct_01in91 = 100,
+    pct_91in01 = 100,
+    stringsAsFactors = FALSE
+  )
+  historical <- data.frame(
+    state_code_1991 = c("01", "02"),
+    district_code_1991 = c("01", "01"),
+    district_name_helms_lim = c("Old", "Old"),
+    stringsAsFactors = FALSE
+  )
+  admin <- data.frame(
+    state_code = "01",
+    district_code = "01",
+    district_std = "Alpha",
+    stringsAsFactors = FALSE
+  )
+
+  out <- historical_linguistic_kumar_somanathan_transition(
+    carveouts, historical, admin
+  )
+
+  expect_identical(
+    out$edges$transition_status,
+    "source_name_not_unique_exact"
+  )
+  expect_equal(nrow(out$canonical_transition), 0L)
+})
+
+test_that("Kumar-Somanathan reverse margin gates target completeness", {
+  carveouts <- data.frame(
+    district_1991 = c("Old A", "Old B"),
+    pop_1991 = c(100, 200),
+    district_2001 = c("Alpha", "Alpha"),
+    pct_01in91 = c(100, 100),
+    pct_91in01 = c(60, 30),
+    stringsAsFactors = FALSE
+  )
+  historical <- data.frame(
+    state_code_1991 = c("01", "01"),
+    district_code_1991 = c("01", "02"),
+    district_name_helms_lim = c("Old A", "Old B"),
+    stringsAsFactors = FALSE
+  )
+  admin <- data.frame(
+    state_code = "01",
+    district_code = "01",
+    district_std = "Alpha",
+    stringsAsFactors = FALSE
+  )
+
+  out <- build_historical_linguistic_kumar_somanathan_geography(
+    carveouts, historical, admin
+  )
+
+  expect_equal(nrow(out$component_summary), 1L)
+  expect_true(out$component_summary$source_coverage_complete)
+  expect_false(out$component_summary$target_coverage_complete)
+  expect_false(out$component_summary$deterministic_amalgamation_eligible)
+  expect_equal(nrow(out$harmonized_crosswalk), 0L)
+})
+
+test_that("Kumar-Somanathan transition never fuzzy-matches labels", {
+  carveouts <- data.frame(
+    district_1991 = "Old A",
+    pop_1991 = 100,
+    district_2001 = "Alfa",
+    pct_01in91 = 100,
+    pct_91in01 = 100,
+    stringsAsFactors = FALSE
+  )
+  historical <- data.frame(
+    state_code_1991 = "01",
+    district_code_1991 = "01",
+    district_name_helms_lim = "Old A",
+    stringsAsFactors = FALSE
+  )
+  admin <- data.frame(
+    state_code = "01",
+    district_code = "01",
+    district_std = "Alpha",
+    stringsAsFactors = FALSE
+  )
+
+  out <- historical_linguistic_kumar_somanathan_transition(
+    carveouts, historical, admin
+  )
+
+  expect_identical(
+    out$edges$transition_status,
+    "target_name_not_unique_exact"
+  )
+  expect_equal(nrow(out$canonical_transition), 0L)
+})
