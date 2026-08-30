@@ -1916,7 +1916,10 @@ test_that("population allocation operates on sufficient statistics, not final ra
     source_unit_id = c("s1", "s1"),
     target_state_code = c("01", "01"),
     target_district_code = c("01", "02"),
-    target_unit_id = c("t1", "t2"),
+    target_unit_id = c(
+      "census2001__01__01",
+      "census2001__01__02"
+    ),
     population_weight = c(.75, .25),
     area_weight = NA_real_,
     source_coverage = 1,
@@ -1967,7 +1970,10 @@ test_that("population allocation operates on sufficient statistics, not final ra
   )
   expect_setequal(out$target_state_code, "01")
   expect_setequal(out$target_district_code, c("01", "02"))
-  expect_setequal(out$target_unit_id, c("t1", "t2"))
+  expect_setequal(
+    out$target_unit_id,
+    c("census2001__01__01", "census2001__01__02")
+  )
 })
 
 test_that("generic population allocation fails closed for survey microdata", {
