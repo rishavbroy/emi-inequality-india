@@ -8,6 +8,8 @@ test_that("Census B04 industrial categories partition main workers exactly", {
   out <- validate_census_industry_partition(parse_census_b04_2011_sheet(raw), "main")
   expect_equal(out$main_workers_total, 110)
   expect_equal(out$main_manufacturing, 10)
+  expect_equal(out$main_accommodation_food, 7)
+  expect_equal(out$main_transport, 5)
   expect_equal(out$main_information_communication, 5)
 
   raw[1, 7] <- 109
@@ -28,6 +30,8 @@ test_that("Census B06 combines marginal-work durations before industry shares", 
   out <- validate_census_industry_partition(parse_census_b06_2011_sheet(raw), "marginal")
   expect_equal(out$marginal_workers_total, 100)
   expect_equal(out$marginal_manufacturing, 10)
+  expect_equal(out$marginal_accommodation_food, 7)
+  expect_equal(out$marginal_transport, 5)
   expect_equal(out$marginal_workers_3_6_months + out$marginal_workers_less_than_3_months, 100)
 })
 
@@ -156,4 +160,109 @@ test_that("Census occupation measures retain not-classified workers in the denom
   expect_equal(out$manager_professional_technical_share, 0.45)
   expect_equal(out$elementary_occupation_share, 0.4)
   expect_equal(out$occupation_not_classified_share, 0.15)
+})
+
+
+test_that("Census 2001 B04 industrial categories partition main workers exactly", {
+  raw <- data.frame(matrix("", nrow = 1, ncol = 49), stringsAsFactors = FALSE)
+  raw[1, 1:7] <- c("B0104", "09", "01", "0000", "District - Alpha 01", "Total", "Total")
+  raw[1, c(11, 14, 17, 20, 23, 26, 29, 32, 35, 38, 41, 44, 47)] <-
+    c(20, 10, 5, 5, 10, 5, 5, 10, 10, 5, 5, 5, 5)
+  raw[1, 8] <- sum(as.numeric(unlist(
+    raw[1, c(11, 14, 17, 20, 23, 26, 29, 32, 35, 38, 41, 44, 47)],
+    use.names = FALSE
+  )))
+
+  out <- parse_census_b04_2001_sheet(raw)
+  expect_equal(out$main_workers_total, 95)
+  expect_equal(out$main_agriculture, 35)
+  expect_equal(out$main_manufacturing, 15)
+
+  raw[1, 8] <- 94
+  expect_error(parse_census_b04_2001_sheet(raw), "do not sum exactly")
+})
+
+test_that("Census 2001 B25 and B26 retain and exhaust unclassified occupations", {
+  divisions <- c("0", as.character(1:9), "X")
+
+  raw25 <- data.frame(matrix("", nrow = length(divisions), ncol = 8), stringsAsFactors = FALSE)
+  raw25[, 1] <- "B0425"
+  raw25[, 2] <- "District - Alpha * 01"
+  raw25[, 3] <- divisions
+  raw25[, 4] <- ifelse(divisions == "X", "X9", "00")
+  raw25[, 5] <- "000"
+  raw25[, 6] <- "0000"
+  raw25[, 7] <- c("TOTAL", paste("Division", divisions[-1]))
+  raw25[, 8] <- c(100, 5, 10, 15, 10, 10, 5, 10, 10, 20, 5)
+
+  b25 <- summarise_census_b25_2001_district(
+    parse_census_b25_2001_sheet(raw25, "09")
+  )
+  expect_equal(b25$main_workers_excl_cultivators_aglab_total, 100)
+  expect_equal(b25$main_occupation_division_x, 5)
+
+  raw26 <- data.frame(matrix("", nrow = length(divisions), ncol = 10), stringsAsFactors = FALSE)
+  raw26[, 1] <- "B26"
+  raw26[, 2] <- "District - Alpha * 01"
+  raw26[, 3] <- divisions
+  raw26[, 4] <- ifelse(divisions == "X", "X9", "00")
+  raw26[, 5] <- "Total"
+  raw26[, 6] <- "Total"
+  raw26[, 7] <- raw25[, 8]
+  raw26[, 10] <- c(50, 2, 3, 5, 5, 5, 5, 5, 5, 10, 5)
+
+  b26 <- summarise_census_b26_2001_district(
+    parse_census_b26_2001_sheet(raw26, "09")
+  )
+  expect_equal(b26$main_workers_excl_cultivators_aglab_total, 100)
+  expect_equal(b26$marginal_workers_excl_cultivators_aglab_total, 50)
+  expect_equal(b26$marginal_occupation_division_x, 5)
+
+  validation <- validate_census_2001_b25_b26_main_occupation(b25, b26)
+  expect_true(all(validation$max_abs_difference == 0))
+})
+
+test_that("Census 2001 occupation shares use combined main and marginal counts", {
+  x <- data.frame(
+    state_code = "09", district_code = "01", district_name = "Alpha",
+    main_workers_excl_cultivators_aglab_total = 80,
+    marginal_workers_excl_cultivators_aglab_total = 20,
+    stringsAsFactors = FALSE
+  )
+  for (division in c(as.character(1:9), "x")) {
+    x[[paste0("main_occupation_division_", division)]] <- 0
+    x[[paste0("marginal_occupation_division_", division)]] <- 0
+  }
+  x$main_occupation_division_1 <- 20
+  x$main_occupation_division_2 <- 20
+  x$main_occupation_division_9 <- 30
+  x$main_occupation_division_x <- 10
+  x$marginal_occupation_division_2 <- 5
+  x$marginal_occupation_division_9 <- 10
+  x$marginal_occupation_division_x <- 5
+
+  out <- build_census_2001_occupation_measures(x)
+  expect_equal(out$workers_excl_cultivators_aglab_total, 100)
+  expect_equal(out$manager_professional_technical_share, 0.45)
+  expect_equal(out$elementary_occupation_share, 0.4)
+  expect_equal(out$occupation_not_classified_share, 0.15)
+})
+
+test_that("Census 2001 worker validity requires full district coverage", {
+  panel <- data.frame(
+    state_code_2001 = c("09", "09"),
+    district_code_2001 = c("01", "02"),
+    stringsAsFactors = FALSE
+  )
+  variables <- c("manufacturing_share_among_main_workers", "manager_professional_technical_share")
+  measures <- data.frame(
+    state_code = "09", district_code = "01",
+    manufacturing_share_among_main_workers = 0.2,
+    manager_professional_technical_share = 0.1,
+    stringsAsFactors = FALSE
+  )
+  expect_error(
+    prepare_census_2001_balance_panel(panel, measures, variables, "Worker"),
+    "do not cover the full IV panel"
+  )
 })
