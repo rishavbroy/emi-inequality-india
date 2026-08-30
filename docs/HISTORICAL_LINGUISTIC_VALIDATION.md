@@ -861,3 +861,33 @@ historical regions, but this implementation does not import their full 232-regio
 geography or replace the project's reviewed lineage. It composes only the
 already-reviewed project transition and therefore leaves source authority and
 lineage ownership unchanged.
+
+
+## Helms-Lim external 1991 linguistic-distance benchmark
+
+Helms and Lim's verified AJPS replication package provides a continuous
+population-weighted 1991 district linguistic-distance measure attributed to
+Shastry (2012). Their `public_goods_analysis_dataset.csv` uses `IPUM1993` as the
+1991 district identifier. In the attached replication archive, that identifier
+decomposes exactly as `state_code * 1000 + district_code`, so the project joins
+it to the reviewed Census-1991 geography by code rather than district name.
+
+This is a **Shastry-derived external replication source**, not an independent
+linguistic construction. It benchmarks the project's independently reconstructed
+Atlas LD_1991 and provides a broad-coverage historical-distance robustness
+predictor for Vanneman pretrends. It does not replace the Atlas source-quality
+gate, whose speaker counts, language mappings, unresolved mass, and uncertainty
+bounds remain auditable within this repository.
+
+The tracked extract contains 466 1991 district identifiers, 452 with a continuous
+distance. All 451 districts in the current reviewed SHRUG-1991 geography and all
+267 currently preferred Vanneman-to-1991 districts have nonmissing Helms-Lim
+distance. On the 148 districts where the Atlas reconstruction passes its
+preferred source-quality gate, the two measures correlate at approximately
+0.989. The benchmark writes discrepancies of at least one-quarter Shastry degree
+to a review table rather than treating high correlation as row-level proof.
+
+The Vanneman registry labels this robustness predictor `helms_lim_ld_1991`. It is
+estimated on broad historical support and again on the strict Atlas common-support
+sample. This separates source coverage from predictor behavior while preserving
+the Atlas reconstruction as the preferred historical source.
