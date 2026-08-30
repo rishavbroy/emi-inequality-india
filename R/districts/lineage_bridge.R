@@ -244,6 +244,107 @@ build_shrug_district_bridge_1991_2001 <- function(pc91r, pc91u, pc01r, pc01u, pc
   )
 }
 
+#' Build the complete deterministic Census-2011 to Census-2001 district bridge
+#'
+#' A Census-2001 parent is retained only when every Census-2011 district that
+#' contributes territory to it maps wholly and deterministically back to that
+#' same parent. This is the shared pooling contract for count-valued Census
+#' outcomes: partial-parent reconstructions are never treated as complete.
+build_complete_deterministic_transition_2011_to_2001 <- function(
+    district_transition_2001_2011) {
+  transition <- safe_df(district_transition_2001_2011)
+  required <- c(
+    "state_code_2011", "district_code_2011", "state_code_2001", "district_code_2001",
+    "population_share_to_2001", "area_share_to_2001", "shrid_coverage", "mapping_class"
+  )
+  missing <- setdiff(required, names(transition))
+  if (length(missing)) {
+    stop(
+      "District transition table lacks deterministic pooling fields: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  transition$source_unit_2011 <- paste0(
+    "pc2011__",
+    normalize_census_code(transition$state_code_2011, 2L), "__",
+    normalize_census_code(transition$district_code_2011, 3L)
+  )
+  transition$target_unit_2001 <- paste0(
+    "pc2001__",
+    normalize_census_code(transition$state_code_2001, 2L), "__",
+    normalize_census_code(transition$district_code_2001, 2L)
+  )
+
+  population_share <- num(transition$population_share_to_2001)
+  area_share <- num(transition$area_share_to_2001)
+  coverage <- num(transition$shrid_coverage)
+  deterministic <- transition[
+    !is.na(transition$mapping_class) &
+      transition$mapping_class %in% deterministic_transition_mapping_classes() &
+      is.finite(population_share) & abs(population_share - 1) < 1e-8 &
+      is.finite(area_share) & abs(area_share - 1) < 1e-8 &
+      is.finite(coverage) & abs(coverage - 1) < 1e-8,
+    , drop = FALSE
+  ]
+  if (!nrow(deterministic)) return(data.frame())
+
+  source_groups <- split(seq_len(nrow(deterministic)), deterministic$source_unit_2011)
+  source_bridge <- safe_bind_rows(lapply(source_groups, function(index) {
+    part <- deterministic[index, , drop = FALSE]
+    targets <- unique(part$target_unit_2001)
+    if (length(targets) != 1L) return(NULL)
+    data.frame(
+      source_unit_2011 = part$source_unit_2011[[1L]],
+      target_unit_2001 = targets[[1L]],
+      mapping_class = paste(sort(unique(part$mapping_class)), collapse = ";"),
+      stringsAsFactors = FALSE
+    )
+  }))
+  if (!nrow(source_bridge)) return(data.frame())
+  if (anyDuplicated(source_bridge$source_unit_2011)) {
+    stop("Complete deterministic Census-2011 bridge is not unique by source district.", call. = FALSE)
+  }
+
+  contributors <- unique(transition[c("source_unit_2011", "target_unit_2001")])
+  contributors <- contributors[
+    !is.na(contributors$source_unit_2011) & nzchar(contributors$source_unit_2011) &
+      !is.na(contributors$target_unit_2001) & nzchar(contributors$target_unit_2001),
+    , drop = FALSE
+  ]
+  names(source_bridge)[names(source_bridge) == "target_unit_2001"] <- "deterministic_target_2001"
+  contributors <- merge(
+    contributors,
+    source_bridge[c("source_unit_2011", "deterministic_target_2001")],
+    by = "source_unit_2011",
+    all.x = TRUE,
+    sort = FALSE
+  )
+  contributors$is_complete_source <- !is.na(contributors$deterministic_target_2001) &
+    contributors$deterministic_target_2001 == contributors$target_unit_2001
+  target_groups <- split(seq_len(nrow(contributors)), contributors$target_unit_2001)
+  target_status <- safe_bind_rows(lapply(target_groups, function(index) {
+    part <- contributors[index, , drop = FALSE]
+    data.frame(
+      target_unit_2001 = part$target_unit_2001[[1L]],
+      census_2011_contributing_source_count = length(unique(part$source_unit_2011)),
+      census_2011_deterministic_source_count = sum(part$is_complete_source),
+      census_2011_parent_reconstruction_complete = all(part$is_complete_source),
+      stringsAsFactors = FALSE
+    )
+  }))
+
+  names(source_bridge)[names(source_bridge) == "deterministic_target_2001"] <- "target_unit_2001"
+  out <- merge(source_bridge, target_status, by = "target_unit_2001", all.x = TRUE, sort = FALSE)
+  out <- out[out$census_2011_parent_reconstruction_complete %in% TRUE, , drop = FALSE]
+  if (nrow(out) && anyDuplicated(out$source_unit_2011)) {
+    stop("Complete Census-2011 bridge is not unique by source district.", call. = FALSE)
+  }
+  rownames(out) <- NULL
+  out
+}
+
+
 weighted_share <- function(x, group_total) {
   x <- num(x)
   group_total <- num(group_total)
