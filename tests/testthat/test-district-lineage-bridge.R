@@ -1955,6 +1955,19 @@ test_that("population allocation operates on sufficient statistics, not final ra
     out$enrolled_weight / out$eligible_weight,
     c(.4, .4)
   )
+  expect_setequal(
+    names(out)[names(out) %in% c(
+      "target_vintage", "target_state_code",
+      "target_district_code", "target_unit_id"
+    )],
+    c(
+      "target_vintage", "target_state_code",
+      "target_district_code", "target_unit_id"
+    )
+  )
+  expect_setequal(out$target_state_code, "01")
+  expect_setequal(out$target_district_code, c("01", "02"))
+  expect_setequal(out$target_unit_id, c("t1", "t2"))
 })
 
 test_that("generic population allocation fails closed for survey microdata", {
@@ -2014,5 +2027,44 @@ test_that("population interpolation saver exposes crosswalk and coverage diagnos
       "population_interpolation_source_coverage.csv",
       "population_interpolation_summary.csv"
     )
+  )
+})
+
+
+test_that("population allocation rejects inconsistent target identity metadata", {
+  transition <- data.frame(
+    source_vintage = 1991L,
+    target_vintage = 2001L,
+    source_state_code = "01",
+    source_district_code = "01",
+    source_unit_id = "s1",
+    target_state_code = "01",
+    target_district_code = "01",
+    target_unit_id = "census2001__01__01",
+    population_weight = 1,
+    area_weight = NA_real_,
+    source_coverage = 1,
+    target_coverage = 1,
+    mapping_class = "test",
+    evidence_source = "test",
+    stringsAsFactors = FALSE
+  )
+  map <- build_population_interpolation_crosswalk(
+    list(old = transition), 2001L
+  )$crosswalk
+  map$target_district_code[
+    map$transition_id != "target_identity"
+  ] <- "99"
+
+  expect_error(
+    allocate_population_sufficient_statistics(
+      data.frame(unit = "s1", count = 10),
+      map,
+      source_vintage = 1991L,
+      unit_field = "unit",
+      statistic_fields = "count",
+      measure_family = "census_extensive_counts"
+    ),
+    "disagree with target administrative codes"
   )
 })

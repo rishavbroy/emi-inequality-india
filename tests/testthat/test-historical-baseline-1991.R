@@ -406,6 +406,14 @@ test_that("G2 PCA baseline allocates counts before reconstructing shares", {
   )
 
   expect_equal(sort(out$controls$population_1991), c(250, 750))
+  expect_setequal(
+    out$controls$district_code_2001,
+    c("01", "02")
+  )
+  expect_setequal(
+    out$controls$target_unit_id,
+    c("census2001__02__01", "census2001__02__02")
+  )
   expect_equal(
     out$controls$female_share_1991[
       out$controls$district_code_2001 == "01"

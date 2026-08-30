@@ -792,7 +792,8 @@ allocate_population_sufficient_statistics <- function(
 
   required_map <- c(
     "geography_spec_id", "source_vintage", "source_unit_id",
-    "target_vintage", "target_unit_id", "allocation_weight",
+    "target_vintage", "target_state_code", "target_district_code",
+    "target_unit_id", "allocation_weight",
     "source_population_coverage", "unallocated_population_share",
     "allocation_status"
   )
@@ -810,6 +811,21 @@ allocate_population_sufficient_statistics <- function(
     required_map,
     drop = FALSE
   ]
+  if (nrow(map)) {
+    expected_target_id <- geography_transition_unit_id(
+      map$target_vintage,
+      map$target_state_code,
+      map$target_district_code
+    )
+    if (any(
+      plain_chr(map$target_unit_id) != plain_chr(expected_target_id)
+    )) {
+      stop(
+        "Population interpolation target unit IDs disagree with target administrative codes.",
+        call. = FALSE
+      )
+    }
+  }
   if (!nrow(map)) {
     stop(
       "Population interpolation has no rows for source vintage ",
