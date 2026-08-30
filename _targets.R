@@ -2243,6 +2243,47 @@ extended_diagnostic_targets <- list(
     format = "file"
   ),
   tar_target(
+    census_2001_b04_files,
+    census_worker_manifest_files(
+      paths, "B04", census_2001_download_manifest_file, census_year = 2001L
+    ),
+    format = "file"
+  ),
+  tar_target(
+    census_2001_b25_files,
+    census_worker_manifest_files(
+      paths, "B25", census_2001_download_manifest_file, census_year = 2001L
+    ),
+    format = "file"
+  ),
+  tar_target(
+    census_2001_b26_files,
+    census_worker_manifest_files(
+      paths, "B26", census_2001_download_manifest_file, census_year = 2001L
+    ),
+    format = "file"
+  ),
+  tar_target(
+    census_workers_b04_2001_source,
+    read_census_b04_2001_district(census_2001_b04_files)
+  ),
+  tar_target(
+    census_workers_b25_2001_source,
+    read_census_b25_2001_district(census_2001_b25_files)
+  ),
+  tar_target(
+    census_workers_b26_2001_source,
+    read_census_b26_2001_district(census_2001_b26_files)
+  ),
+  tar_target(
+    census_workers_industry_2001,
+    build_census_2001_industry_measures(census_workers_b04_2001_source)
+  ),
+  tar_target(
+    census_workers_occupation_2001,
+    build_census_2001_occupation_measures(census_workers_b26_2001_source)
+  ),
+  tar_target(
     census_2011_b04_files,
     census_worker_manifest_files(paths, "B04", census_2011_download_manifest_file),
     format = "file"
@@ -2297,12 +2338,18 @@ extended_diagnostic_targets <- list(
   tar_target(
     census_worker_diagnostics,
     build_census_worker_diagnostics(
+      census_workers_b04_2001_source,
+      census_workers_b25_2001_source,
+      census_workers_b26_2001_source,
+      census_workers_industry_2001,
+      census_workers_occupation_2001,
       census_workers_b04_2011_source,
       census_workers_b06_2011_source,
       census_workers_b25a_2011_source,
       census_workers_b25b_2011_source,
       census_workers_industry_2011,
-      census_workers_occupation_2011
+      census_workers_occupation_2011,
+      district_panel
     )
   ),
   tar_target(

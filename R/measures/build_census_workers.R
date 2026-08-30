@@ -89,7 +89,7 @@ validate_census_2011_b04_b25a_universe <- function(b04, b25a) {
   left <- safe_df(b04)
   left$expected_b25a_total <- num(left$main_workers_total) - num(left$main_cultivators) -
     num(left$main_agricultural_labourers)
-  validate_census_2011_matching_count(
+  validate_census_matching_count(
     left, b25a,
     "expected_b25a_total", "main_workers_excl_cultivators_aglab_total",
     "Census 2011 B04/B25A worker-universe"
@@ -100,7 +100,7 @@ validate_census_2011_b06_b25b_universe <- function(b06, b25b) {
   left <- safe_df(b06)
   left$expected_b25b_total <- num(left$marginal_workers_total) - num(left$marginal_cultivators) -
     num(left$marginal_agricultural_labourers)
-  validate_census_2011_matching_count(
+  validate_census_matching_count(
     left, b25b,
     "expected_b25b_total", "marginal_workers_excl_cultivators_aglab_total",
     "Census 2011 B06/B25B worker-universe"
@@ -153,4 +153,76 @@ build_census_2011_occupation_measures <- function(b25a, b25b, district_transitio
   )
   pooled$census_year <- rep.int(2011L, nrow(pooled))
   add_census_occupation_shares(pooled)
+}
+
+
+build_census_2001_industry_measures <- function(b04) {
+  x <- safe_df(b04)
+  required <- c(
+    "state_code", "district_code", "district_name",
+    census_2001_industry_count_columns()
+  )
+  missing <- setdiff(required, names(x))
+  if (length(missing)) {
+    stop("Census 2001 B04 measures are missing required columns.", call. = FALSE)
+  }
+  if (anyDuplicated(x[c("state_code", "district_code")])) {
+    stop("Census 2001 B04 measures are not unique by district.", call. = FALSE)
+  }
+  total <- num(x$main_workers_total)
+  for (group in unname(census_2001_industry_groups())) {
+    x[[paste0(group, "_share_among_main_workers")]] <- safe_count_share(
+      x[[paste0("main_", group)]], total
+    )
+  }
+  x$census_year <- rep.int(2001L, nrow(x))
+  x
+}
+
+build_census_2001_occupation_measures <- function(b26) {
+  x <- safe_df(b26)
+  required <- c(
+    "state_code", "district_code", "district_name",
+    "main_workers_excl_cultivators_aglab_total",
+    "marginal_workers_excl_cultivators_aglab_total",
+    paste0("main_occupation_division_", c(as.character(1:9), "x")),
+    paste0("marginal_occupation_division_", c(as.character(1:9), "x"))
+  )
+  missing <- setdiff(required, names(x))
+  if (length(missing)) {
+    stop("Census 2001 B26 measures are missing required columns.", call. = FALSE)
+  }
+  if (anyDuplicated(x[c("state_code", "district_code")])) {
+    stop("Census 2001 B26 measures are not unique by district.", call. = FALSE)
+  }
+  x$workers_excl_cultivators_aglab_total <-
+    num(x$main_workers_excl_cultivators_aglab_total) +
+    num(x$marginal_workers_excl_cultivators_aglab_total)
+  for (division in c(as.character(1:9), "x")) {
+    x[[paste0("occupation_division_", division)]] <-
+      num(x[[paste0("main_occupation_division_", division)]]) +
+      num(x[[paste0("marginal_occupation_division_", division)]])
+  }
+  parts <- paste0("occupation_division_", c(as.character(1:9), "x"))
+  if (any(rowSums(as.matrix(data.frame(lapply(x[parts], num), check.names = FALSE))) !=
+          x$workers_excl_cultivators_aglab_total)) {
+    stop("Census 2001 B26 combined occupation divisions do not sum exactly to workers.", call. = FALSE)
+  }
+  x$census_year <- rep.int(2001L, nrow(x))
+  add_census_occupation_shares(x)
+}
+
+validate_census_2001_b25_b26_main_occupation <- function(b25, b26) {
+  columns <- c(
+    "main_workers_excl_cultivators_aglab_total",
+    paste0("main_occupation_division_", c(as.character(1:9), "x"))
+  )
+  safe_bind_rows(lapply(columns, function(column) {
+    out <- validate_census_matching_count(
+      b25, b26, column, column,
+      paste0("Census 2001 B25/B26 ", column)
+    )
+    out$count_column <- column
+    out
+  }))
 }
