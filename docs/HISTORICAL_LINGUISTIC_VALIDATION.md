@@ -900,3 +900,29 @@ historical-parent coverage for the full sample and each distance-support layer.
 It is the decision gate for any further constant-boundary amalgamation: merger
 components should only be implemented if the realized support gain after
 historical-parent aggregation and broad Helms-Lim coverage remains material.
+
+
+### Broad-source 1991 baseline comparison
+
+The existing SHRUG PCA91/VD91/TD91 baseline engine now evaluates the same
+predetermined outcome families against four predictors when available:
+eventual EMIE, the actual Census-2001 linguistic-distance instrument, the broad
+Helms-Lim/Shastry-derived 1991 distance, and the project's strict Atlas-derived
+LD_1991.
+
+This is deliberately an extension of the existing balance engine rather than a
+new baseline module. Geography rules, population weights, state-clustered
+inference, individual standardized effects, and domain-level joint tests are
+shared across predictors. Each predictor retains its own source eligibility:
+Atlas LD uses the frozen Atlas source-quality gate; Helms-Lim uses only
+nonmissing exact-code coverage; LD_2001 uses the reviewed 1991-to-2001
+one-target geography; and eventual EMIE uses its observed treatment support.
+
+`historical_baseline_1991_predictor_coverage.csv` makes those sample-size
+differences explicit for both preferred and exact one-to-one geography. The
+broad sources are not forced onto the much smaller Atlas common sample merely
+to produce visually comparable columns. Common-support comparisons should be
+used as targeted sensitivities, while the broad-source regressions answer
+whether the main instrument and the published Shastry-derived 1991 measure
+predict predetermined 1991 district characteristics at the largest defensible
+support already available in the project.
