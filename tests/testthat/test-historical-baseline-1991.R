@@ -552,6 +552,15 @@ test_that("G2 historical baseline saver exposes coverage and inference", {
 
 test_that("historical baseline geography comparison aligns common human domains only", {
   baseline <- list(
+    panel = data.frame(
+      state_code_2001 = c("01", "01"),
+      district_code_2001 = c("01", "02"),
+      population_1991 = c(1000, 900),
+      preferred_language_persistence = TRUE,
+      exact_language_persistence = c(TRUE, FALSE),
+      n_transition_targets = 1L,
+      stringsAsFactors = FALSE
+    ),
     estimates = data.frame(
       sample = rep(c("preferred_geography", "exact_one_to_one"), each = 2),
       predictor_id = "eventual_emie",
@@ -598,6 +607,14 @@ test_that("historical baseline geography comparison aligns common human domains 
     )
   )
   g2 <- list(
+    controls = data.frame(
+      state_code_2001 = c("01", "01"),
+      district_code_2001 = c("01", "03"),
+      population_1991 = c(1200, 1100),
+      geography_spec_id = "G2_population_interpolated",
+      source_coverage_threshold = c(.90, .99),
+      stringsAsFactors = FALSE
+    ),
     estimates = data.frame(
       geography_spec_id = "G2_population_interpolated",
       source_coverage_threshold = c(.90, .99),
@@ -700,6 +717,15 @@ test_that("historical baseline geography support preserves sample ranges", {
 
 test_that("historical baseline geography comparison rejects duplicate specifications", {
   baseline <- list(
+    panel = data.frame(
+      state_code_2001 = "01",
+      district_code_2001 = "01",
+      population_1991 = 1000,
+      preferred_language_persistence = TRUE,
+      exact_language_persistence = TRUE,
+      n_transition_targets = 1L,
+      stringsAsFactors = FALSE
+    ),
     estimates = data.frame(
       sample = c("preferred_geography", "preferred_geography"),
       predictor_id = "eventual_emie",
@@ -737,6 +763,14 @@ test_that("historical baseline geography comparison rejects duplicate specificat
     )
   )
   g2 <- list(
+    controls = data.frame(
+      state_code_2001 = "01",
+      district_code_2001 = "01",
+      population_1991 = 1000,
+      geography_spec_id = "G2_population_interpolated",
+      source_coverage_threshold = .99,
+      stringsAsFactors = FALSE
+    ),
     estimates = data.frame(
       geography_spec_id = "G2_population_interpolated",
       source_coverage_threshold = .99,
@@ -789,6 +823,8 @@ test_that("historical baseline geography comparison saver emits aligned artifact
     estimates = data.frame(status = "test"),
     joint_balance = data.frame(status = "test"),
     support = data.frame(status = "test"),
+    target_support = data.frame(status = "test"),
+    target_overlap = data.frame(status = "test"),
     g2_threshold_stability = data.frame(status = "test")
   )
   dir <- tempfile()
@@ -801,7 +837,101 @@ test_that("historical baseline geography comparison saver emits aligned artifact
       "historical_baseline_1991_geography_estimates.csv",
       "historical_baseline_1991_geography_joint_balance.csv",
       "historical_baseline_1991_geography_support.csv",
+      "historical_baseline_1991_geography_target_support.csv",
+      "historical_baseline_1991_geography_target_overlap.csv",
       "historical_baseline_1991_g2_threshold_stability.csv"
     )
   )
+})
+
+
+test_that("historical baseline target support aggregates preferred sources by Census-2001 target", {
+  baseline <- list(
+    panel = data.frame(
+      state_code_2001 = c("01", "01", "01"),
+      district_code_2001 = c("01", "01", "02"),
+      population_1991 = c(100, 50, 80),
+      preferred_language_persistence = TRUE,
+      exact_language_persistence = c(TRUE, FALSE, TRUE),
+      n_transition_targets = 1L,
+      stringsAsFactors = FALSE
+    )
+  )
+  g2 <- list(
+    controls = data.frame(
+      state_code_2001 = c("01", "01"),
+      district_code_2001 = c("01", "03"),
+      population_1991 = c(140, 90),
+      geography_spec_id = "G2_population_interpolated",
+      source_coverage_threshold = .99,
+      stringsAsFactors = FALSE
+    )
+  )
+
+  out <- historical_baseline_target_support(baseline, g2)
+
+  preferred <- out[
+    out$geography_variant == "preferred_historical_geography",
+    ,
+    drop = FALSE
+  ]
+  expect_equal(nrow(preferred), 2L)
+  expect_equal(
+    preferred$population_1991[
+      preferred$target_unit_id == "census2001__01__01"
+    ],
+    150
+  )
+  expect_equal(
+    preferred$n_source_units[
+      preferred$target_unit_id == "census2001__01__01"
+    ],
+    2L
+  )
+
+  exact <- out[
+    out$geography_variant == "G0_exact_only",
+    ,
+    drop = FALSE
+  ]
+  expect_setequal(
+    exact$target_unit_id,
+    c("census2001__01__01", "census2001__01__02")
+  )
+})
+
+test_that("historical baseline target overlap reports composition without forcing common-unit regressions", {
+  support <- data.frame(
+    geography_variant = c(
+      "preferred_historical_geography",
+      "preferred_historical_geography",
+      "G2_population_interpolated",
+      "G2_population_interpolated"
+    ),
+    source_coverage_threshold = c(NA, NA, .99, .99),
+    target_unit_id = c("a", "b", "b", "c"),
+    state_code_2001 = c("01", "02", "02", "03"),
+    population_1991 = c(100, 200, 250, 150),
+    stringsAsFactors = FALSE
+  )
+
+  out <- summarize_historical_baseline_target_overlap(support)
+
+  expect_equal(nrow(out), 1L)
+  expect_equal(out$n_shared_targets, 1L)
+  expect_equal(out$n_only_a, 1L)
+  expect_equal(out$n_only_b, 1L)
+  expect_equal(out$target_jaccard, 1 / 3)
+  expect_equal(out$n_shared_states, 1L)
+  expect_equal(out$shared_target_population_1991_a, 200)
+  expect_equal(out$shared_target_population_1991_b, 250)
+  expect_equal(out$shared_population_share_a, 2 / 3)
+  expect_equal(out$shared_population_share_b, 250 / 400)
+})
+
+test_that("historical finite support ranges return NA for all-missing values", {
+  expect_true(is.na(historical_finite_min(c(NA, NaN, Inf))))
+  expect_true(is.na(historical_finite_max(c(NA, NaN, -Inf))))
+  expect_equal(historical_finite_min(c(NA, 2, 3)), 2)
+  expect_equal(historical_finite_max(c(NA, 2, 3)), 3)
 })

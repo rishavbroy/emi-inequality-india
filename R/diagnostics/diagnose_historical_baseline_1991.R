@@ -856,6 +856,228 @@ normalize_historical_baseline_geography_joint <- function(
   out
 }
 
+historical_finite_min <- function(x) {
+  x <- num(x)
+  x <- x[is.finite(x)]
+  if (length(x)) min(x) else NA_real_
+}
+
+historical_finite_max <- function(x) {
+  x <- num(x)
+  x <- x[is.finite(x)]
+  if (length(x)) max(x) else NA_real_
+}
+
+historical_baseline_target_support <- function(
+    baseline_balance, g2_sensitivity) {
+  panel <- safe_df(baseline_balance$panel)
+  g2 <- safe_df(g2_sensitivity$controls)
+  required_panel <- c(
+    "state_code_2001", "district_code_2001",
+    "population_1991", "preferred_language_persistence",
+    "exact_language_persistence", "n_transition_targets"
+  )
+  missing <- setdiff(required_panel, names(panel))
+  if (length(missing)) {
+    stop(
+      "Historical baseline target support lacks baseline panel fields: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  required_g2 <- c(
+    "state_code_2001", "district_code_2001",
+    "population_1991", "geography_spec_id",
+    "source_coverage_threshold"
+  )
+  missing <- setdiff(required_g2, names(g2))
+  if (length(missing)) {
+    stop(
+      "Historical baseline target support lacks G2 control fields: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+
+  panel$state_code_2001 <- pad_admin_code(panel$state_code_2001, 2L)
+  panel$district_code_2001 <- pad_admin_code(
+    panel$district_code_2001, 2L
+  )
+  preferred_keep <- panel$preferred_language_persistence %in% TRUE &
+    num(panel$n_transition_targets) == 1L &
+    !is.na(panel$state_code_2001) &
+    !is.na(panel$district_code_2001) &
+    is.finite(num(panel$population_1991)) &
+    num(panel$population_1991) > 0
+  exact_keep <- preferred_keep &
+    panel$exact_language_persistence %in% TRUE
+
+  aggregate_panel <- function(keep, geography_variant) {
+    x <- panel[keep, c(
+      "state_code_2001", "district_code_2001", "population_1991"
+    ), drop = FALSE]
+    if (!nrow(x)) return(data.frame())
+    x$target_unit_id <- geography_transition_unit_id(
+      2001L, x$state_code_2001, x$district_code_2001
+    )
+    rows <- lapply(split(x, x$target_unit_id), function(part) {
+      data.frame(
+        geography_variant = geography_variant,
+        source_coverage_threshold = NA_real_,
+        target_unit_id = part$target_unit_id[[1L]],
+        state_code_2001 = part$state_code_2001[[1L]],
+        district_code_2001 = part$district_code_2001[[1L]],
+        population_1991 = sum(num(part$population_1991)),
+        n_source_units = nrow(part),
+        stringsAsFactors = FALSE
+      )
+    })
+    safe_bind_rows(rows)
+  }
+
+  preferred <- aggregate_panel(
+    preferred_keep, "preferred_historical_geography"
+  )
+  exact <- aggregate_panel(exact_keep, "G0_exact_only")
+
+  g2$state_code_2001 <- pad_admin_code(g2$state_code_2001, 2L)
+  g2$district_code_2001 <- pad_admin_code(
+    g2$district_code_2001, 2L
+  )
+  g2 <- g2[
+    is.finite(num(g2$population_1991)) &
+      num(g2$population_1991) > 0 &
+      !is.na(g2$state_code_2001) &
+      !is.na(g2$district_code_2001),
+    ,
+    drop = FALSE
+  ]
+  if (nrow(g2)) {
+    g2$target_unit_id <- geography_transition_unit_id(
+      2001L, g2$state_code_2001, g2$district_code_2001
+    )
+    g2_support <- g2[c(
+      "geography_spec_id", "source_coverage_threshold",
+      "target_unit_id", "state_code_2001",
+      "district_code_2001", "population_1991"
+    )]
+    names(g2_support)[names(g2_support) == "geography_spec_id"] <-
+      "geography_variant"
+    g2_support$n_source_units <- NA_integer_
+  } else {
+    g2_support <- data.frame()
+  }
+
+  out <- safe_bind_rows(list(preferred, exact, g2_support))
+  key <- data.frame(
+    geography_variant = plain_chr(out$geography_variant),
+    threshold = ifelse(
+      is.na(out$source_coverage_threshold),
+      "NA",
+      format(
+        num(out$source_coverage_threshold),
+        digits = 15, trim = TRUE, scientific = FALSE
+      )
+    ),
+    target_unit_id = plain_chr(out$target_unit_id),
+    stringsAsFactors = FALSE
+  )
+  if (anyDuplicated(key)) {
+    stop(
+      "Historical baseline target support has duplicate target units within a geography variant.",
+      call. = FALSE
+    )
+  }
+  out
+}
+
+historical_baseline_support_variant_id <- function(
+    geography_variant, source_coverage_threshold) {
+  ifelse(
+    is.na(source_coverage_threshold),
+    plain_chr(geography_variant),
+    paste0(
+      plain_chr(geography_variant),
+      "_coverage_",
+      sub(
+        "\\.?0+$", "",
+        format(
+          100 * num(source_coverage_threshold),
+          digits = 15, trim = TRUE, scientific = FALSE
+        )
+      ),
+      "pct"
+    )
+  )
+}
+
+summarize_historical_baseline_target_overlap <- function(target_support) {
+  x <- safe_df(target_support)
+  required <- c(
+    "geography_variant", "source_coverage_threshold",
+    "target_unit_id", "state_code_2001", "population_1991"
+  )
+  missing <- setdiff(required, names(x))
+  if (length(missing)) {
+    stop(
+      "Historical baseline target-overlap support lacks: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  if (!nrow(x)) return(data.frame())
+
+  x$variant_id <- historical_baseline_support_variant_id(
+    x$geography_variant, x$source_coverage_threshold
+  )
+  variants <- sort(unique(plain_chr(x$variant_id)))
+  pairs <- utils::combn(variants, 2L, simplify = FALSE)
+
+  safe_bind_rows(lapply(pairs, function(pair) {
+    a <- x[x$variant_id == pair[[1L]], , drop = FALSE]
+    b <- x[x$variant_id == pair[[2L]], , drop = FALSE]
+    a_ids <- unique(plain_chr(a$target_unit_id))
+    b_ids <- unique(plain_chr(b$target_unit_id))
+    shared <- intersect(a_ids, b_ids)
+    union_ids <- union(a_ids, b_ids)
+    a_shared <- a[a$target_unit_id %in% shared, , drop = FALSE]
+    b_shared <- b[b$target_unit_id %in% shared, , drop = FALSE]
+    data.frame(
+      variant_a = pair[[1L]],
+      variant_b = pair[[2L]],
+      n_targets_a = length(a_ids),
+      n_targets_b = length(b_ids),
+      n_shared_targets = length(shared),
+      n_only_a = length(setdiff(a_ids, b_ids)),
+      n_only_b = length(setdiff(b_ids, a_ids)),
+      target_jaccard = if (length(union_ids)) {
+        length(shared) / length(union_ids)
+      } else {
+        NA_real_
+      },
+      n_states_a = length(unique(plain_chr(a$state_code_2001))),
+      n_states_b = length(unique(plain_chr(b$state_code_2001))),
+      n_shared_states = length(intersect(
+        unique(plain_chr(a$state_code_2001)),
+        unique(plain_chr(b$state_code_2001))
+      )),
+      population_1991_a = sum(num(a$population_1991)),
+      population_1991_b = sum(num(b$population_1991)),
+      shared_target_population_1991_a =
+        sum(num(a_shared$population_1991)),
+      shared_target_population_1991_b =
+        sum(num(b_shared$population_1991)),
+      shared_population_share_a =
+        sum(num(a_shared$population_1991)) /
+          sum(num(a$population_1991)),
+      shared_population_share_b =
+        sum(num(b_shared$population_1991)) /
+          sum(num(b$population_1991)),
+      stringsAsFactors = FALSE
+    )
+  }))
+}
+
 summarize_historical_baseline_geography_support <- function(estimates) {
   x <- safe_df(estimates)
   required <- c(
@@ -894,15 +1116,15 @@ summarize_historical_baseline_geography_support <- function(estimates) {
         part$source_coverage_threshold[[1L]],
       predictor_id = part$predictor_id[[1L]],
       fixed_effect = part$fixed_effect[[1L]],
-      n_min = min(num(part$n), na.rm = TRUE),
-      n_max = max(num(part$n), na.rm = TRUE),
-      n_states_min = min(num(part$n_states), na.rm = TRUE),
-      n_states_max = max(num(part$n_states), na.rm = TRUE),
-      population_1991_min = min(
-        num(part$population_1991), na.rm = TRUE
+      n_min = historical_finite_min(part$n),
+      n_max = historical_finite_max(part$n),
+      n_states_min = historical_finite_min(part$n_states),
+      n_states_max = historical_finite_max(part$n_states),
+      population_1991_min = historical_finite_min(
+        part$population_1991
       ),
-      population_1991_max = max(
-        num(part$population_1991), na.rm = TRUE
+      population_1991_max = historical_finite_max(
+        part$population_1991
       ),
       stringsAsFactors = FALSE
     )
@@ -956,10 +1178,10 @@ summarize_historical_baseline_g2_threshold_stability <- function(
       joint_p_max = if (length(p)) max(p) else NA_real_,
       joint_f_min = if (length(f)) min(f) else NA_real_,
       joint_f_max = if (length(f)) max(f) else NA_real_,
-      n_min = min(n, na.rm = TRUE),
-      n_max = max(n, na.rm = TRUE),
-      population_1991_min = min(pop, na.rm = TRUE),
-      population_1991_max = max(pop, na.rm = TRUE),
+      n_min = historical_finite_min(n),
+      n_max = historical_finite_max(n),
+      population_1991_min = historical_finite_min(pop),
+      population_1991_max = historical_finite_max(pop),
       all_status_estimated = all(part$status == "estimated"),
       stringsAsFactors = FALSE
     )
@@ -993,11 +1215,18 @@ build_historical_baseline_geography_comparison <- function(
   joint <- normalize_historical_baseline_geography_joint(
     baseline_balance, g2_sensitivity
   )
+  target_support <- historical_baseline_target_support(
+    baseline_balance, g2_sensitivity
+  )
   list(
     estimates = estimates,
     joint_balance = joint,
     support = summarize_historical_baseline_geography_support(
       estimates
+    ),
+    target_support = target_support,
+    target_overlap = summarize_historical_baseline_target_overlap(
+      target_support
     ),
     g2_threshold_stability =
       summarize_historical_baseline_g2_threshold_stability(joint)
@@ -1009,6 +1238,7 @@ save_historical_baseline_geography_comparison <- function(
     directory = "outputs/diagnostics/extended/instrument_relevance") {
   required <- c(
     "estimates", "joint_balance", "support",
+    "target_support", "target_overlap",
     "g2_threshold_stability"
   )
   missing <- setdiff(required, names(x))
@@ -1030,6 +1260,12 @@ save_historical_baseline_geography_comparison <- function(
     support = file.path(
       directory, "historical_baseline_1991_geography_support.csv"
     ),
+    target_support = file.path(
+      directory, "historical_baseline_1991_geography_target_support.csv"
+    ),
+    target_overlap = file.path(
+      directory, "historical_baseline_1991_geography_target_overlap.csv"
+    ),
     g2_threshold_stability = file.path(
       directory,
       "historical_baseline_1991_g2_threshold_stability.csv"
@@ -1040,6 +1276,12 @@ save_historical_baseline_geography_comparison <- function(
     x$joint_balance, paths[["joint_balance"]]
   )
   write_diagnostic_csv(x$support, paths[["support"]])
+  write_diagnostic_csv(
+    x$target_support, paths[["target_support"]]
+  )
+  write_diagnostic_csv(
+    x$target_overlap, paths[["target_overlap"]]
+  )
   write_diagnostic_csv(
     x$g2_threshold_stability,
     paths[["g2_threshold_stability"]]
