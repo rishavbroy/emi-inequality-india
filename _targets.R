@@ -880,6 +880,20 @@ core_pipeline_targets <- list(
     format = "file"
   ),
   tar_target(
+    historical_linguistic_exact_transition_comparison,
+    build_historical_linguistic_exact_transition_comparison(
+      historical_linguistic_geography_1991_2001,
+      historical_linguistic_kumar_somanathan_geography
+    )
+  ),
+  tar_target(
+    diag_ext_historical_linguistic_exact_transition_comparison,
+    save_historical_linguistic_exact_transition_comparison(
+      historical_linguistic_exact_transition_comparison
+    ),
+    format = "file"
+  ),
+  tar_target(
     consumption_lineage_identity_aliases_file,
     "data/metadata/consumption_lineage_identity_aliases.csv",
     format = "file"
