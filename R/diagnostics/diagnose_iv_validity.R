@@ -1,5 +1,67 @@
 # Specification-aware IV validity diagnostics.
 
+candidate_iv_balance_specifications <- function(
+    outcome = "real_log_consumption_change",
+    treatment = preferred_iv_variables()$treatment) {
+  registry <- iv_diagnostic_specification_registry(outcome = outcome, treatment = treatment)
+  construction_ids <- unname(alternative_distance_design_constructions())
+  keep <- registry$adjustment_id %in% iv_candidate_design_adjustments() &
+    registry$construction_id %in% construction_ids
+  out <- registry[keep, , drop = FALSE]
+  expected <- as.vector(outer(
+    iv_candidate_design_adjustments(), construction_ids, paste, sep = "__"
+  ))
+  if (!setequal(out$specification_id, expected) || anyDuplicated(out$specification_id)) {
+    stop("Could not recover the candidate IV design registry for balance diagnostics.", call. = FALSE)
+  }
+  out
+}
+
+add_iv_balance_holm <- function(balance) {
+  out <- safe_df(balance)
+  if (!nrow(out)) return(out)
+  out$p_holm_within_spec <- NA_real_
+  groups <- split(seq_len(nrow(out)), out$specification_id)
+  for (index in groups) {
+    estimated <- index[
+      out$status[index] == "estimated" & is.finite(num(out$p.value[index]))
+    ]
+    if (length(estimated)) {
+      out$p_holm_within_spec[estimated] <- stats::p.adjust(
+        num(out$p.value[estimated]), method = "holm"
+      )
+    }
+  }
+  out
+}
+
+prepare_census_2001_balance_panel <- function(panel, measures, variables, label) {
+  x <- if (inherits(panel, "sf")) sf::st_drop_geometry(panel) else safe_df(panel)
+  measures <- safe_df(measures)
+  panel_keys <- c("state_code_2001", "district_code_2001")
+  source_keys <- c("state_code", "district_code")
+  missing_panel <- setdiff(panel_keys, names(x))
+  missing_measures <- setdiff(c(source_keys, variables), names(measures))
+  if (length(missing_panel) || length(missing_measures)) {
+    stop(label, " balance panel is missing required district or measure columns.", call. = FALSE)
+  }
+  measures <- measures[c(source_keys, variables)]
+  names(measures)[1:2] <- panel_keys
+  measures$state_code_2001 <- normalize_census_code(measures$state_code_2001, 2L)
+  measures$district_code_2001 <- normalize_census_code(measures$district_code_2001, 2L)
+  if (anyDuplicated(measures[panel_keys])) {
+    stop(label, " balance inputs are not unique by Census-2001 district.", call. = FALSE)
+  }
+  x$state_code_2001 <- normalize_census_code(x$state_code_2001, 2L)
+  x$district_code_2001 <- normalize_census_code(x$district_code_2001, 2L)
+  out <- merge(x, measures, by = panel_keys, all.x = TRUE, sort = FALSE)
+  if (nrow(out) != nrow(x) || any(!stats::complete.cases(out[variables]))) {
+    stop(label, " measures do not cover the full IV panel.", call. = FALSE)
+  }
+  rownames(out) <- NULL
+  out
+}
+
 balance_nuisance_controls <- function(specification, tested_variable) {
   controls <- unlist(specification$controls[[1]], use.names = FALSE)
   exclusions <- c(

@@ -17,70 +17,13 @@ census_migration_first_stage_controls <- function() {
   )
 }
 
-census_migration_validity_specifications <- function(
-    outcome = "real_log_consumption_change",
-    treatment = preferred_iv_variables()$treatment) {
-  registry <- iv_diagnostic_specification_registry(outcome = outcome, treatment = treatment)
-  construction_ids <- unname(alternative_distance_design_constructions())
-  keep <- registry$adjustment_id %in% iv_candidate_design_adjustments() &
-    registry$construction_id %in% construction_ids
-  out <- registry[keep, , drop = FALSE]
-  expected <- as.vector(outer(
-    iv_candidate_design_adjustments(), construction_ids, paste, sep = "__"
-  ))
-  if (!setequal(out$specification_id, expected) || anyDuplicated(out$specification_id)) {
-    stop("Census migration validity diagnostics could not recover the candidate IV design registry.", call. = FALSE)
-  }
-  out
-}
-
 prepare_census_migration_validity_panel <- function(panel, d02_2001) {
-  x <- if (inherits(panel, "sf")) sf::st_drop_geometry(panel) else safe_df(panel)
-  migration <- safe_df(d02_2001)
-  required_panel <- c("state_code_2001", "district_code_2001")
-  required_migration <- c("state_code", "district_code", census_migration_balance_variables())
-  missing_panel <- setdiff(required_panel, names(x))
-  missing_migration <- setdiff(required_migration, names(migration))
-  if (length(missing_panel) || length(missing_migration)) {
-    stop(
-      "Census migration validity panel is missing required district or migration columns.",
-      call. = FALSE
-    )
-  }
-  migration <- migration[required_migration]
-  names(migration)[1:2] <- required_panel
-  migration$state_code_2001 <- normalize_census_code(migration$state_code_2001, 2L)
-  migration$district_code_2001 <- normalize_census_code(migration$district_code_2001, 2L)
-  if (anyDuplicated(migration[required_panel])) {
-    stop("Census-2001 migration validity inputs are not unique by district.", call. = FALSE)
-  }
-  x$state_code_2001 <- normalize_census_code(x$state_code_2001, 2L)
-  x$district_code_2001 <- normalize_census_code(x$district_code_2001, 2L)
-  out <- merge(x, migration, by = required_panel, all.x = TRUE, sort = FALSE)
-  variables <- census_migration_balance_variables()
-  if (nrow(out) != nrow(x) || any(!stats::complete.cases(out[variables]))) {
-    stop("Census-2001 migration measures do not cover the full IV panel.", call. = FALSE)
-  }
-  rownames(out) <- NULL
-  out
-}
-
-add_census_migration_balance_multiplicity <- function(balance) {
-  out <- safe_df(balance)
-  if (!nrow(out)) return(out)
-  out$p_holm_within_spec <- NA_real_
-  groups <- split(seq_len(nrow(out)), out$specification_id)
-  for (index in groups) {
-    estimated <- index[
-      out$status[index] == "estimated" & is.finite(num(out$p.value[index]))
-    ]
-    if (length(estimated)) {
-      out$p_holm_within_spec[estimated] <- stats::p.adjust(
-        num(out$p.value[estimated]), method = "holm"
-      )
-    }
-  }
-  out
+  prepare_census_2001_balance_panel(
+    panel,
+    d02_2001,
+    census_migration_balance_variables(),
+    "Census migration validity"
+  )
 }
 
 census_migration_first_stage_specifications <- function(
@@ -174,8 +117,8 @@ build_census_migration_diagnostics <- function(
     d07_2011,
     district_panel) {
   validity_panel <- prepare_census_migration_validity_panel(district_panel, d02_2001)
-  validity_specs <- census_migration_validity_specifications()
-  balance <- add_census_migration_balance_multiplicity(
+  validity_specs <- candidate_iv_balance_specifications()
+  balance <- add_iv_balance_holm(
     run_iv_balance_diagnostics(
       validity_panel,
       specifications = validity_specs,

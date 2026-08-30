@@ -391,7 +391,7 @@ test_that("migration balance diagnostics apply Holm correction within specificat
     status = c(rep("estimated", 4), "not_estimated", "estimated"),
     stringsAsFactors = FALSE
   )
-  out <- add_census_migration_balance_multiplicity(balance)
+  out <- add_iv_balance_holm(balance)
   expect_equal(out$p_holm_within_spec[1:3], stats::p.adjust(balance$p.value[1:3], "holm"))
   expect_true(is.na(out$p_holm_within_spec[[5L]]))
 })

@@ -1,4 +1,4 @@
-# Shared count-valued Census 2011 harmonization and accounting helpers.
+# Shared count-valued Census harmonization and accounting helpers.
 
 census_2011_harmonized_count_schema <- function(count_cols) {
   count_cols <- unique(plain_chr(count_cols))
@@ -84,7 +84,7 @@ safe_count_share <- function(numerator, denominator) {
   )
 }
 
-validate_census_2011_matching_count <- function(
+validate_census_matching_count <- function(
     left, right, left_column, right_column, label) {
   left <- safe_df(left)
   right <- safe_df(right)

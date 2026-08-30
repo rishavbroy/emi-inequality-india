@@ -113,7 +113,7 @@ add_census_d07_work_migrant_shares <- function(x) {
 }
 
 validate_census_2011_migration_totals <- function(d02_2011, d03_2011) {
-  out <- validate_census_2011_matching_count(
+  out <- validate_census_matching_count(
     d02_2011, d03_2011, "migrants_total", "migrants_total",
     "Census 2011 D02/D03 all-duration migrant"
   )
@@ -123,14 +123,14 @@ validate_census_2011_migration_totals <- function(d02_2011, d03_2011) {
 
 
 validate_census_2011_d02_d04_totals <- function(d02_2011, d04_2011) {
-  validate_census_2011_matching_count(
+  validate_census_matching_count(
     d02_2011, d04_2011, "migrants_total", "migrants_total",
     "Census 2011 D02/D04 all-migrant"
   )
 }
 
 validate_census_2011_d03_d07_recent_work <- function(d03_2011, d07_2011) {
-  validate_census_2011_matching_count(
+  validate_census_matching_count(
     d03_2011, d07_2011,
     "recent_0_9_work_employment_within_india_classified_origin",
     "recent_work_migrants_total",
