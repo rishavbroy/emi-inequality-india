@@ -49,6 +49,12 @@ The production lineage does not load `data/metadata/district_legacy_mapping_revi
 
 All public models, tables, maps, diagnostics, processed data, paper outputs, poster outputs, and application samples depend on the generic production targets rather than an implementation-specific comparison target.
 
+## Census mechanism diagnostics
+
+Census migration, worker, and housing/living-standard modules share the administrative-count harmonization layer in `R/measures/census_admin_counts.R`. Census-2011 counts are aggregated to Census-2001 parents only after the common complete deterministic transition rule has certified full parent reconstruction; all ratios are computed after count pooling.
+
+The housing module keeps source decoding in `R/io/read_census_housing.R`, measure construction in `R/measures/build_census_housing.R`, and output-only QA in `R/diagnostics/diagnose_census_housing.R`. It is an extended diagnostic dependency, not a preferred-model control dependency.
+
 ## Strict final mode
 
 `config/final.yml` enables strict district-panel and analysis-panel validation for production panels. Strict validation stops on error-severity panel issues, including duplicated production panel units, but retains warning-severity source-key reuse for documented split/merge allocations. Final builds also fail on incomplete analysis rows, placeholder model output, missing report values, unresolved cross-references, or missing required artifacts. The inherited legacy panel is exempt from production uniqueness gates only in its optional historical-comparison target because inherited duplicate split/merge rows are themselves an object of that review.
