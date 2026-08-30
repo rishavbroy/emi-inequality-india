@@ -306,3 +306,66 @@ test_that("Vanneman pretrend coverage reports the cost of historical-LD support"
   expect_equal(common$share_of_full_units, 2 / 3)
   expect_equal(common$population_1961, 400)
 })
+
+
+test_that("historical-parent predictors aggregate EMIE and LD2001 from components", {
+  bridge <- data.frame(
+    panel_unit_id = c("a", "a", "b"),
+    dist91_state_id = c("02", "02", "02"),
+    dist91_district_id = c("01", "01", "02"),
+    state_code_2001 = c("28", "28", NA),
+    district_code_2001 = c("11", "12", NA),
+    parent_bridge_status = c(
+      "preferred_historical_parent_split",
+      "preferred_historical_parent_split",
+      "merger_requires_amalgamation"
+    ),
+    preferred_vanneman_parent_eligible = c(TRUE, TRUE, FALSE),
+    stringsAsFactors = FALSE
+  )
+  panel <- data.frame(
+    state_code_2001 = c("28", "28"),
+    district_code_2001 = c("11", "12"),
+    eligible_child_weight_0708 = c(100, 300),
+    emi_enrolled_child_weight_0708 = c(20, 120),
+    emi_exposure_all_children_0708 = c(.2, .4),
+    ling_total_speakers = c(1000, 3000),
+    ling_distance_nonzero_mean = c(2, 4),
+    ling_share_distance_1 = c(0, 0),
+    ling_share_distance_2 = c(100, 0),
+    ling_share_distance_3 = c(0, 0),
+    ling_share_distance_4 = c(0, 100),
+    ling_share_distance_5 = c(0, 0),
+    stringsAsFactors = FALSE
+  )
+
+  out <- aggregate_vanneman_parent_predictors(bridge, panel)
+  a <- out[out$panel_unit_id == "a", , drop = FALSE]
+  b <- out[out$panel_unit_id == "b", , drop = FALSE]
+
+  expect_equal(a$emie_exposure, .35)
+  expect_equal(a$ling_distance_nonzero_mean_2001, 3.5)
+  expect_equal(a$n_descendant_2001_districts, 2L)
+  expect_true(a$pretrend_analysis_eligible)
+  expect_false(b$pretrend_analysis_eligible)
+})
+
+test_that("pretrend registry adds Census-2001 LD without changing historical common support", {
+  panel <- data.frame(
+    historical_ld_eligible = c(TRUE, FALSE),
+    ling_distance_nonzero_mean_1991 = c(1, NA_real_),
+    ling_distance_nonzero_mean_2001 = c(2, 3),
+    stringsAsFactors = FALSE
+  )
+  registry <- vanneman_pretrend_specification_registry(panel)
+
+  expect_equal(nrow(registry), 5L)
+  expect_true(any(
+    registry$predictor_id == "census_2001_ld" &
+      registry$sample_id == "full_pretrend"
+  ))
+  expect_true(any(
+    registry$predictor_id == "census_2001_ld" &
+      registry$sample_id == "historical_ld_support"
+  ))
+})
