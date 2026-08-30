@@ -137,6 +137,13 @@ must supply at least numerator and denominator sufficient statistics; the final
 rate is never interpolated directly. This preserves the existing EMIE
 enrolled/eligible and linguistic-distance speaker/component semantics.
 
+Allocated records retain the complete canonical target identity:
+`target_vintage`, `target_state_code`, `target_district_code`, and
+`target_unit_id`. The allocator validates that the unit ID agrees with the
+administrative codes before returning rows. This keeps change-of-support
+mathematics separate from downstream joins and prevents callers from
+reconstructing or guessing target geography metadata.
+
 Survey microdata are **not** eligible for generic population interpolation.
 Consumption and person-level survey records continue to require reviewed record
 allocation/lineage weights. Land quantities, point facilities, and spatial
