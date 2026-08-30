@@ -56,7 +56,7 @@ test_that("official MPCE reconstruction validation is blocking and returns diagn
   )
 })
 
-test_that("MPCE benchmark metadata require unique survey-sector identities", {
+test_that("MPCE benchmark duplicate identities fail before sector completeness", {
   path <- tempfile(fileext = ".csv")
   writeLines(c(
     "survey_id,sector,mpce_definition,expected_mpce,tolerance_abs_rupees,source_label,source_url",
@@ -196,5 +196,5 @@ test_that("NSS 61 MRP benchmark provenance points to the 2004-05 official report
     c(579, 1105)
   )
   expect_true(all(grepl("Report 508", nss61$source_label)))
-  expect_true(all(grepl("508_final\\\\.pdf$", nss61$source_url)))
+  expect_true(all(grepl("508_final\\.pdf$", nss61$source_url)))
 })

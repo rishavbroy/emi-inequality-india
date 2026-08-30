@@ -41,10 +41,17 @@ read_consumption_mpce_benchmarks <- function(path) {
       call. = FALSE
     )
   }
+  key <- paste(out$survey_id, out$sector, sep = "\r")
+  if (anyDuplicated(key)) {
+    stop(
+      "Consumption MPCE benchmarks must be unique by survey_id and sector.",
+      call. = FALSE
+    )
+  }
   sector_sets <- split(out$sector, out$survey_id)
   incomplete <- names(sector_sets)[!vapply(
     sector_sets,
-    function(x) setequal(unique(x), c("rural", "urban")),
+    function(x) setequal(x, c("rural", "urban")),
     logical(1)
   )]
   if (length(incomplete)) {
@@ -61,8 +68,6 @@ read_consumption_mpce_benchmarks <- function(path) {
   if (anyNA(out$tolerance_abs_rupees) || any(!is.finite(out$tolerance_abs_rupees)) || any(out$tolerance_abs_rupees < 0)) {
     stop("Consumption MPCE benchmarks require non-negative finite tolerances.", call. = FALSE)
   }
-  key <- paste(out$survey_id, out$sector, sep = "\r")
-  if (anyDuplicated(key)) stop("Consumption MPCE benchmarks must be unique by survey_id and sector.", call. = FALSE)
   out
 }
 
