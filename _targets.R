@@ -1544,7 +1544,8 @@ extended_diagnostic_targets <- list(
       historical_baseline_1991,
       historical_linguistic_geography_1991_2001,
       district_panel,
-      historical_distance = historical_linguistic_distance_validation$preferred_distance
+      historical_distance = historical_linguistic_distance_validation$preferred_distance,
+      external_historical_distance = helms_lim_linguistic_distance_1991
     )
   ),
   tar_target(

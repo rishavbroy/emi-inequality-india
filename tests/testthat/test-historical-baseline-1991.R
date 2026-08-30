@@ -267,3 +267,95 @@ test_that("historical weighted inference helper preserves clustered standardized
   expect_equal(out$n_states, 8L)
   expect_equal(out$population_weight, sum(x$population))
 })
+
+
+test_that("historical baseline reuses one balance engine for broad and strict distance sources", {
+  fixture <- historical_baseline_balance_fixture()
+  fixture$panel$ling_distance_nonzero_mean <- seq(
+    1, 4, length.out = nrow(fixture$panel)
+  )
+  atlas <- data.frame(
+    state_code_1991 = fixture$baseline$state_code_1991,
+    district_code_1991 = fixture$baseline$district_code_1991,
+    min_accepted_coverage = 0.99,
+    max_distance_bound_width = 0.5,
+    historical_language_status = "eligible",
+    ling_distance_nonzero_mean_1991 = seq(
+      .5, 4, length.out = nrow(fixture$baseline)
+    ),
+    stringsAsFactors = FALSE
+  )
+  atlas$historical_language_status[[2]] <- "below_coverage_threshold"
+  helms <- data.frame(
+    state_code_1991 = fixture$baseline$state_code_1991,
+    district_code_1991 = fixture$baseline$district_code_1991,
+    linguistic_distance_1991_helms_lim = seq(
+      .6, 4.1, length.out = nrow(fixture$baseline)
+    ),
+    stringsAsFactors = FALSE
+  )
+  helms$linguistic_distance_1991_helms_lim[[4]] <- NA_real_
+
+  out <- build_historical_baseline_balance_1991(
+    fixture$baseline, fixture$geography, fixture$panel,
+    historical_distance = atlas,
+    external_historical_distance = helms
+  )
+
+  expect_setequal(
+    out$estimates$predictor_id,
+    c(
+      "eventual_emie", "census_2001_ld",
+      "helms_lim_ld_1991", "historical_ld_1991"
+    )
+  )
+  preferred <- out$predictor_coverage[
+    out$predictor_coverage$sample == "preferred_geography",
+    , drop = FALSE
+  ]
+  n_by_id <- setNames(preferred$n, preferred$predictor_id)
+  expect_equal(n_by_id[["eventual_emie"]], 47L)
+  expect_equal(n_by_id[["census_2001_ld"]], 47L)
+  expect_equal(n_by_id[["helms_lim_ld_1991"]], 46L)
+  expect_equal(n_by_id[["historical_ld_1991"]], 46L)
+})
+
+test_that("historical baseline optional external source does not change Atlas eligibility", {
+  fixture <- historical_baseline_balance_fixture()
+  atlas <- data.frame(
+    state_code_1991 = fixture$baseline$state_code_1991,
+    district_code_1991 = fixture$baseline$district_code_1991,
+    min_accepted_coverage = 0.99,
+    max_distance_bound_width = 0.5,
+    historical_language_status = "eligible",
+    ling_distance_nonzero_mean_1991 = seq(
+      .5, 4, length.out = nrow(fixture$baseline)
+    ),
+    stringsAsFactors = FALSE
+  )
+  atlas$historical_language_status[[2]] <- "below_coverage_threshold"
+
+  without_external <- build_historical_baseline_balance_1991(
+    fixture$baseline, fixture$geography, fixture$panel,
+    historical_distance = atlas
+  )
+  helms <- data.frame(
+    state_code_1991 = fixture$baseline$state_code_1991,
+    district_code_1991 = fixture$baseline$district_code_1991,
+    linguistic_distance_1991_helms_lim = NA_real_,
+    stringsAsFactors = FALSE
+  )
+  with_external <- build_historical_baseline_balance_1991(
+    fixture$baseline, fixture$geography, fixture$panel,
+    historical_distance = atlas,
+    external_historical_distance = helms
+  )
+
+  atlas_n <- function(x) {
+    x$predictor_coverage$n[
+      x$predictor_coverage$predictor_id == "historical_ld_1991" &
+        x$predictor_coverage$sample == "preferred_geography"
+    ]
+  }
+  expect_equal(atlas_n(without_external), atlas_n(with_external))
+})

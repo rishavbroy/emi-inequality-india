@@ -2,6 +2,7 @@
 
 historical_baseline_1991_panel <- function(
     baseline, geography, district_panel, historical_distance = NULL,
+    external_historical_distance = NULL,
     treatment = preferred_iv_variables()$treatment) {
   baseline <- validate_census_1991_district_keys(baseline, "SHRUG 1991 baseline")
   required_variables <- c("population_1991", historical_baseline_1991_variables())
@@ -14,7 +15,12 @@ historical_baseline_1991_panel <- function(
 
   panel <- if (inherits(district_panel, "sf")) sf::st_drop_geometry(district_panel) else safe_df(district_panel)
   required_panel <- c("state_code_2001", "district_code_2001", treatment)
-  missing <- setdiff(required_panel, names(panel))
+  optional_panel <- intersect(
+    c("ling_distance_nonzero_mean"),
+    names(panel)
+  )
+  required_panel <- c(required_panel, optional_panel)
+  missing <- setdiff(c("state_code_2001", "district_code_2001", treatment), names(panel))
   if (length(missing)) stop("Historical baseline treatment panel lacks: ", paste(missing, collapse = ", "), call. = FALSE)
   panel$state_code_2001 <- pad_admin_code(panel$state_code_2001, 2L)
   panel$district_code_2001 <- pad_admin_code(panel$district_code_2001, 2L)
@@ -24,6 +30,12 @@ historical_baseline_1991_panel <- function(
   treatment_data <- panel[required_panel]
   names(treatment_data)[names(treatment_data) == treatment] <- "emie_exposure"
   treatment_data$emie_exposure <- num(treatment_data$emie_exposure)
+  if ("ling_distance_nonzero_mean" %in% names(treatment_data)) {
+    names(treatment_data)[names(treatment_data) == "ling_distance_nonzero_mean"] <-
+      "ling_distance_nonzero_mean_2001"
+    treatment_data$ling_distance_nonzero_mean_2001 <-
+      num(treatment_data$ling_distance_nonzero_mean_2001)
+  }
 
   out <- merge(baseline, mapping, by = census_1991_keys(), all.x = TRUE, sort = FALSE)
   out <- merge(
@@ -52,13 +64,59 @@ historical_baseline_1991_panel <- function(
     out$historical_ld_eligible <- out$historical_language_status %in% "eligible" &
       is.finite(num(out$ling_distance_nonzero_mean_1991))
   }
+
+  if (!is.null(external_historical_distance)) {
+    external <- safe_df(external_historical_distance)
+    required <- c(
+      census_1991_keys(),
+      "linguistic_distance_1991_helms_lim"
+    )
+    missing <- setdiff(required, names(external))
+    if (length(missing)) {
+      stop(
+        "External historical distance for baseline balance lacks: ",
+        paste(missing, collapse = ", "),
+        call. = FALSE
+      )
+    }
+    external$state_code_1991 <- pad_admin_code(external$state_code_1991, 2L)
+    external$district_code_1991 <- pad_admin_code(external$district_code_1991, 2L)
+    if (anyDuplicated(external[census_1991_keys()])) {
+      stop(
+        "External historical distance for baseline balance has duplicate district keys.",
+        call. = FALSE
+      )
+    }
+    external <- external[c(required)]
+    names(external)[names(external) == "linguistic_distance_1991_helms_lim"] <-
+      "ling_distance_helms_lim_1991"
+    out <- merge(
+      out, external,
+      by = census_1991_keys(), all.x = TRUE, sort = FALSE
+    )
+    out$helms_lim_ld_eligible <-
+      is.finite(num(out$ling_distance_helms_lim_1991))
+  } else {
+    out$helms_lim_ld_eligible <- rep(FALSE, nrow(out))
+  }
+
   rownames(out) <- NULL
   out
 }
 
 historical_baseline_predictors <- function(panel) {
+  x <- safe_df(panel)
   out <- c(eventual_emie = "emie_exposure")
-  if (all(c("historical_ld_eligible", "ling_distance_nonzero_mean_1991") %in% names(panel))) {
+  if ("ling_distance_nonzero_mean_2001" %in% names(x)) {
+    out <- c(out, census_2001_ld = "ling_distance_nonzero_mean_2001")
+  }
+  if ("ling_distance_helms_lim_1991" %in% names(x)) {
+    out <- c(out, helms_lim_ld_1991 = "ling_distance_helms_lim_1991")
+  }
+  if (all(c(
+      "historical_ld_eligible",
+      "ling_distance_nonzero_mean_1991"
+    ) %in% names(x))) {
     out <- c(out, historical_ld_1991 = "ling_distance_nonzero_mean_1991")
   }
   out
@@ -151,6 +209,10 @@ historical_baseline_balance_sample <- function(panel, predictor, covariates, exa
   keep <- x$preferred_language_persistence %in% TRUE & num(x$n_transition_targets) == 1L
   if (identical(predictor, "emie_exposure")) {
     keep <- keep & is.finite(num(x$emie_exposure))
+  } else if (identical(predictor, "ling_distance_nonzero_mean_2001")) {
+    keep <- keep & is.finite(num(x$ling_distance_nonzero_mean_2001))
+  } else if (identical(predictor, "ling_distance_helms_lim_1991")) {
+    keep <- keep & x$helms_lim_ld_eligible %in% TRUE
   } else if (identical(predictor, "ling_distance_nonzero_mean_1991")) {
     keep <- keep & x$historical_ld_eligible %in% TRUE
   }
@@ -227,11 +289,47 @@ estimate_historical_baseline_joint_balance <- function(
   )
 }
 
+historical_baseline_predictor_coverage <- function(panel) {
+  x <- safe_df(panel)
+  predictors <- historical_baseline_predictors(x)
+  safe_bind_rows(lapply(names(predictors), function(predictor_id) {
+    predictor <- unname(predictors[[predictor_id]])
+    preferred <- historical_baseline_balance_sample(
+      x, predictor, character(), exact_only = FALSE
+    )
+    exact <- historical_baseline_balance_sample(
+      x, predictor, character(), exact_only = TRUE
+    )
+    safe_bind_rows(list(
+      data.frame(
+        predictor_id = predictor_id,
+        predictor = predictor,
+        sample = "preferred_geography",
+        n = nrow(preferred),
+        n_states = length(unique(preferred$state_code_1991)),
+        population_1991 = sum(num(preferred$population_1991)),
+        stringsAsFactors = FALSE
+      ),
+      data.frame(
+        predictor_id = predictor_id,
+        predictor = predictor,
+        sample = "exact_one_to_one",
+        n = nrow(exact),
+        n_states = length(unique(exact$state_code_1991)),
+        population_1991 = sum(num(exact$population_1991)),
+        stringsAsFactors = FALSE
+      )
+    ))
+  }))
+}
+
 build_historical_baseline_balance_1991 <- function(
     baseline, geography, district_panel, historical_distance = NULL,
+    external_historical_distance = NULL,
     treatment = preferred_iv_variables()$treatment) {
   panel <- historical_baseline_1991_panel(
-    baseline, geography, district_panel, historical_distance, treatment
+    baseline, geography, district_panel, historical_distance,
+    external_historical_distance, treatment
   )
   predictors <- historical_baseline_predictors(panel)
   metadata <- historical_baseline_1991_metadata()
@@ -262,6 +360,7 @@ build_historical_baseline_balance_1991 <- function(
   list(
     panel = panel,
     coverage = summarize_historical_baseline_1991_coverage(baseline),
+    predictor_coverage = historical_baseline_predictor_coverage(panel),
     estimates = estimates,
     joint_balance = joint
   )
@@ -271,10 +370,16 @@ save_historical_baseline_balance_1991 <- function(
     x, directory = "outputs/diagnostics/extended/instrument_relevance") {
   paths <- c(
     coverage = file.path(directory, "historical_baseline_1991_coverage.csv"),
+    predictor_coverage = file.path(
+      directory, "historical_baseline_1991_predictor_coverage.csv"
+    ),
     estimates = file.path(directory, "historical_baseline_1991_balance.csv"),
     joint_balance = file.path(directory, "historical_baseline_1991_balance_joint.csv")
   )
   write_diagnostic_csv(x$coverage, paths[["coverage"]])
+  write_diagnostic_csv(
+    x$predictor_coverage, paths[["predictor_coverage"]]
+  )
   write_diagnostic_csv(x$estimates, paths[["estimates"]])
   write_diagnostic_csv(x$joint_balance, paths[["joint_balance"]])
   unname(paths)
