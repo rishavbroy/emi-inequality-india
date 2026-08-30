@@ -905,6 +905,54 @@ core_pipeline_targets <- list(
     format = "file"
   ),
   tar_target(
+    geography_allocation_semantics,
+    {
+      out <- geography_allocation_semantics_registry()
+      validate_geography_allocation_semantics(out)
+      out
+    }
+  ),
+  tar_target(
+    geography_measure_families,
+    {
+      out <- geography_measure_family_registry()
+      validate_geography_measure_families(
+        out, geography_allocation_semantics
+      )
+      out
+    }
+  ),
+  tar_target(
+    geography_specifications,
+    {
+      out <- geography_specification_registry()
+      validate_geography_specifications(out)
+      out
+    }
+  ),
+  tar_target(
+    multivintage_geography_1991_2001_2011,
+    build_multivintage_geography_inventory(
+      list(
+        shrug_1991_2001 =
+          historical_linguistic_geography_1991_2001$canonical_transition,
+        production_2011_2001 =
+          district_lineage$canonical_transition_2001_2011
+      ),
+      required_vintages = c(1991L, 2001L, 2011L)
+    )
+  ),
+  tar_target(
+    diag_ext_geography_harmonization_foundation,
+    save_geography_harmonization_foundation(
+      multivintage_geography_1991_2001_2011,
+      geography_allocation_semantics,
+      geography_measure_families,
+      geography_specifications
+    ),
+    format = "file"
+  ),
+  tar_target(
     historical_linguistic_consensus_geography,
     build_historical_linguistic_consensus_geography(
       historical_linguistic_geography_1991_2001,
