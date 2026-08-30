@@ -2358,6 +2358,88 @@ extended_diagnostic_targets <- list(
     format = "file"
   ),
   tar_target(
+    census_2001_h09_files,
+    census_housing_manifest_files(
+      paths, "H09", census_2001_download_manifest_file, census_year = 2001L
+    ),
+    format = "file"
+  ),
+  tar_target(
+    census_2001_h12_files,
+    census_housing_manifest_files(
+      paths, "H12", census_2001_download_manifest_file, census_year = 2001L
+    ),
+    format = "file"
+  ),
+  tar_target(
+    census_2001_h13_files,
+    census_housing_manifest_files(
+      paths, "H13", census_2001_download_manifest_file, census_year = 2001L
+    ),
+    format = "file"
+  ),
+  tar_target(census_housing_h09_2001_source, read_census_h09_2001_district(census_2001_h09_files)),
+  tar_target(census_housing_h12_2001_source, read_census_h12_2001_district(census_2001_h12_files)),
+  tar_target(census_housing_h13_2001_source, read_census_h13_2001_district(census_2001_h13_files)),
+  tar_target(
+    census_housing_2001,
+    build_census_2001_housing_measures(
+      census_housing_h09_2001_source,
+      census_housing_h12_2001_source,
+      census_housing_h13_2001_source
+    )
+  ),
+  tar_target(
+    census_2011_hl07_files,
+    census_housing_manifest_files(paths, "HL07", census_2011_download_manifest_file),
+    format = "file"
+  ),
+  tar_target(
+    census_2011_hl11_files,
+    census_housing_manifest_files(paths, "HL11", census_2011_download_manifest_file),
+    format = "file"
+  ),
+  tar_target(
+    census_2011_hl12_files,
+    census_housing_manifest_files(paths, "HL12", census_2011_download_manifest_file),
+    format = "file"
+  ),
+  tar_target(census_housing_hl07_2011_source, read_census_hl07_2011_district(census_2011_hl07_files)),
+  tar_target(census_housing_hl11_2011_source, read_census_hl11_2011_district(census_2011_hl11_files)),
+  tar_target(census_housing_hl12_2011_source, read_census_hl12_2011_district(census_2011_hl12_files)),
+  tar_target(
+    census_housing_2011,
+    build_census_2011_housing_measures(
+      census_housing_hl07_2011_source,
+      census_housing_hl11_2011_source,
+      census_housing_hl12_2011_source,
+      district_transition_2001_2011
+    )
+  ),
+  tar_target(
+    census_housing_change_2011_2001,
+    build_census_housing_change_measures(census_housing_2001, census_housing_2011)
+  ),
+  tar_target(
+    census_housing_diagnostics,
+    build_census_housing_diagnostics(
+      census_housing_h09_2001_source,
+      census_housing_h12_2001_source,
+      census_housing_h13_2001_source,
+      census_housing_2001,
+      census_housing_hl07_2011_source,
+      census_housing_hl11_2011_source,
+      census_housing_hl12_2011_source,
+      census_housing_2011,
+      census_housing_change_2011_2001
+    )
+  ),
+  tar_target(
+    diag_ext_census_housing,
+    save_census_housing_diagnostics(census_housing_diagnostics),
+    format = "file"
+  ),
+  tar_target(
     dise_archive_registry_file,
     path_metadata(paths, "dise_archive_registry.csv"),
     format = "file"
