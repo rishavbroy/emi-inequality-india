@@ -815,3 +815,49 @@ estimated. Accordingly, labor changes beginning in 1961 carry
 `contains_estimated_source = TRUE` in the diagnostic output. Later labor changes
 do not inherit that flag. This preserves the useful long-run comparison without
 presenting the reconstructed 1961 labor values as directly observed counts.
+
+
+## Historical-parent support expansion
+
+The strict Vanneman diagnostic keeps only historical districts that map to one
+Census-2001 district. That remains a useful sensitivity analysis, but it discards
+historical districts that merely split into several later districts.
+
+The expanded historical-parent diagnostic follows the constant-boundary logic of
+Kumar and Somanathan: later information is aggregated back to the historical
+district rather than copying one historical outcome into several descendants.
+The implementation is deliberately narrower than a generic boundary harmonizer.
+A Vanneman/1991 parent is eligible only when:
+
+1. the Vanneman-to-1991 identity is already preferred;
+2. the reviewed SHRUG 1991 geography has at least 99 percent population coverage;
+3. the recorded 1991-to-2001 descendant set is complete;
+4. every 2001 descendant has exactly one 1991 parent in the reviewed transition;
+5. every descendant remains in one Census-2001 state.
+
+Condition 4 means this phase recovers clean **splits**, but does not yet pretend
+that historical **mergers** can be resolved by allocating a later district back
+across several parents. Those cases are labeled `merger_requires_amalgamation`
+and remain outside the expanded sample. A future constant-boundary amalgamation
+may combine both historical and later units, but it should be a separate,
+explicit estimand rather than an implicit weighting rule.
+
+The later predictors are reconstructed from components. EMIE is the sum of
+English-medium enrolled-child survey weight divided by the sum of eligible-child
+weight across descendants. Census-2001 linguistic distance is reconstructed from
+the descendant speaker counts in distance bins 1--5. The code therefore never
+takes an unweighted average of district treatment or IV scalars.
+
+The strict outputs remain `vanneman_pretrend_*`. The expanded outputs use the
+`vanneman_parent_pretrend_*` prefix. Both now report three predictors when
+available: eventual EMIE, the actual Census-2001 linguistic-distance instrument,
+and the reviewed historical LD_1991 measure. LD_1991 remains the more historically
+predetermined source; LD_2001 has broader support and is the instrument actually
+used by the main specification. Their common-support rows are retained so source
+coverage is not confused with predictor behavior.
+
+Kumar and Somanathan's constant-boundary work motivates aggregation to common
+historical regions, but this implementation does not import their full 232-region
+geography or replace the project's reviewed lineage. It composes only the
+already-reviewed project transition and therefore leaves source authority and
+lineage ownership unchanged.
