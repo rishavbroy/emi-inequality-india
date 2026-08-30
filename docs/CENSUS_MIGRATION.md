@@ -119,7 +119,9 @@ A separate first-stage sensitivity compares the primary scalar linguistic-distan
 
 The first regression layer for post-treatment migration mechanisms is intentionally a reduced-form layer rather than a table of weak-IV 2SLS coefficients. `census_migration_mechanism_registry()` declares eight observed outcomes spanning geographic sorting, migration reasons, migrant skill composition, and recent work-migrant skill/origin composition. The registry labels core versus secondary outcomes and records whether the denominator is all migrants or recent work migrants.
 
-All four harmonized 2011 source tables must have the same Census-2001 parent support. The mechanism panel is then restricted once to a common complete sample containing every registered outcome, the treatment, all main Census controls, and the three live scalar linguistic-distance constructions (primary Shastry, Glottolog, and Dyen). Region-FE and state-FE specifications therefore compare mechanisms and instrument constructions on exactly the same districts.
+All four harmonized 2011 source tables must have the same Census-2001 parent support. That source-level equality remains a strict measurement invariant. The harmonized source universe need not, however, be identical to the canonical IV panel: valid reconstructed Census parents can lie outside the project's IV analysis panel. The mechanism branch therefore takes the explicit intersection with the IV panel, then applies the common complete-case rule only to variables declared by the six registered mechanism-IV designs and the eight registered outcomes: the treatment, main Census controls, and the primary Shastry, Glottolog, and Dyen scalar constructions. Unused exploratory linguistic-distance variables do not determine this sample. Region-FE and state-FE specifications therefore compare mechanisms and instrument constructions on exactly the same districts without treating ordinary analysis-sample attrition as a source-data error.
+
+`mechanism_sample_support.csv` records every harmonized parent and distinguishes `not_in_iv_panel`, `incomplete_iv_design_support`, `incomplete_mechanism_outcomes`, and `included`. `mechanism_sample_coverage.csv` separately reports the harmonized source count, IV-panel overlap, registered IV-design support, and final common-analysis count. This keeps geography reconstruction coverage distinct from the downstream econometric sample definition.
 
 For each of the six candidate scalar-IV designs, the diagnostics report the first stage on that common sample and the reduced form
 
@@ -133,7 +135,7 @@ The same common sample now also feeds the canonical single-specification IV esti
 
 Because several headline first stages are weak, conventional clustered 2SLS p-values are not treated as sufficient evidence. The weak-IV output therefore carries separate Holm adjustments for the conventional clustered 2SLS p-value and the Anderson-Rubin test of beta = 0 across the eight registered mechanism outcomes within each specification. Interpretation should prioritize the Anderson-Rubin result and the shape/boundedness of its confidence set whenever the effective-F evidence is weak.
 
-The files are `mechanism_registry.csv`, `mechanism_sample_coverage.csv`, `mechanism_first_stage.csv`, `mechanism_reduced_form.csv`, `mechanism_weak_iv.csv`, and `mechanism_anderson_rubin_grid.csv` under `outputs/diagnostics/extended/census_migration/`.
+The files are `mechanism_registry.csv`, `mechanism_sample_coverage.csv`, `mechanism_sample_support.csv`, `mechanism_first_stage.csv`, `mechanism_reduced_form.csv`, `mechanism_weak_iv.csv`, and `mechanism_anderson_rubin_grid.csv` under `outputs/diagnostics/extended/census_migration/`.
 
 ## Interpretation
 
