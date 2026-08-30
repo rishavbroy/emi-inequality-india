@@ -359,3 +359,184 @@ test_that("historical baseline optional external source does not change Atlas el
   }
   expect_equal(atlas_n(without_external), atlas_n(with_external))
 })
+
+
+test_that("PCA91 sufficient statistics reconstruct the existing PCA baseline", {
+  source <- historical_baseline_source_fixture()
+  counts <- build_shrug_1991_pca_sufficient_statistics(source$pca)
+  measures <- historical_baseline_1991_pca_measures_from_counts(counts)
+  existing <- clean_shrug_pca_1991_district(source$pca)
+
+  expect_equal(measures$population_1991, existing$population_1991)
+  for (variable in historical_baseline_1991_pca_variables()) {
+    expect_equal(measures[[variable]], existing[[variable]])
+  }
+})
+
+test_that("G2 PCA baseline allocates counts before reconstructing shares", {
+  source <- historical_baseline_source_fixture()
+  pca <- source$pca[1, , drop = FALSE]
+  transition <- data.frame(
+    source_vintage = 1991L,
+    target_vintage = 2001L,
+    source_state_code = c("02", "02"),
+    source_district_code = c("01", "01"),
+    source_unit_id = c(
+      "census1991__02__01", "census1991__02__01"
+    ),
+    target_state_code = c("02", "02"),
+    target_district_code = c("01", "02"),
+    target_unit_id = c(
+      "census2001__02__01", "census2001__02__02"
+    ),
+    population_weight = c(.75, .25),
+    area_weight = NA_real_,
+    source_coverage = 1,
+    target_coverage = 1,
+    mapping_class = "test",
+    evidence_source = "test",
+    stringsAsFactors = FALSE
+  )
+  crosswalk <- build_population_interpolation_crosswalk(
+    list(old = transition), 2001L
+  )$crosswalk
+
+  out <- build_population_interpolated_pca_baseline_1991(
+    pca, crosswalk, coverage_threshold = .99
+  )
+
+  expect_equal(sort(out$controls$population_1991), c(250, 750))
+  expect_equal(
+    out$controls$female_share_1991[
+      out$controls$district_code_2001 == "01"
+    ],
+    48
+  )
+  expect_equal(
+    out$controls$literacy_share_7plus_1991[
+      out$controls$district_code_2001 == "02"
+    ],
+    60
+  )
+  expect_equal(out$coverage$allocated_population_share, 1)
+})
+
+test_that("G2 PCA baseline excludes source districts below the declared threshold", {
+  source <- historical_baseline_source_fixture()
+  pca <- source$pca[1:2, , drop = FALSE]
+  transition <- data.frame(
+    source_vintage = 1991L,
+    target_vintage = 2001L,
+    source_state_code = c("02", "02"),
+    source_district_code = c("01", "02"),
+    source_unit_id = c(
+      "census1991__02__01", "census1991__02__02"
+    ),
+    target_state_code = c("02", "02"),
+    target_district_code = c("01", "02"),
+    target_unit_id = c(
+      "census2001__02__01", "census2001__02__02"
+    ),
+    population_weight = c(.995, .94),
+    area_weight = NA_real_,
+    source_coverage = c(.995, .94),
+    target_coverage = 1,
+    mapping_class = "test",
+    evidence_source = "test",
+    stringsAsFactors = FALSE
+  )
+  crosswalk <- build_population_interpolation_crosswalk(
+    list(old = transition), 2001L
+  )$crosswalk
+
+  out <- build_population_interpolated_pca_baseline_1991(
+    pca, crosswalk, coverage_threshold = .99
+  )
+
+  expect_equal(out$coverage$n_source_districts, 1L)
+  expect_equal(out$coverage$n_target_districts, 1L)
+  expect_equal(
+    out$coverage$allocated_population_share,
+    .995
+  )
+})
+
+test_that("G2 historical baseline sensitivity estimates PCA human domains only", {
+  source <- historical_baseline_source_fixture()
+  pca <- source$pca
+  transition <- data.frame(
+    source_vintage = 1991L,
+    target_vintage = 2001L,
+    source_state_code = pad_admin_code(pca$pc91_state_id, 2L),
+    source_district_code = pad_admin_code(pca$pc91_district_id, 2L),
+    source_unit_id = geography_transition_unit_id(
+      1991L, pca$pc91_state_id, pca$pc91_district_id
+    ),
+    target_state_code = pad_admin_code(pca$pc91_state_id, 2L),
+    target_district_code = pad_admin_code(pca$pc91_district_id, 2L),
+    target_unit_id = geography_transition_unit_id(
+      2001L, pca$pc91_state_id, pca$pc91_district_id
+    ),
+    population_weight = 1,
+    area_weight = NA_real_,
+    source_coverage = 1,
+    target_coverage = 1,
+    mapping_class = "test",
+    evidence_source = "test",
+    stringsAsFactors = FALSE
+  )
+  crosswalk <- build_population_interpolation_crosswalk(
+    list(old = transition), 2001L
+  )$crosswalk
+  panel <- data.frame(
+    state_code_2001 = pad_admin_code(pca$pc91_state_id, 2L),
+    district_code_2001 = pad_admin_code(pca$pc91_district_id, 2L),
+    emi_exposure_all_children_0708 = c(.1, .2, .3, .4),
+    ling_distance_nonzero_mean = c(1, 2, 3, 4),
+    stringsAsFactors = FALSE
+  )
+
+  out <- build_historical_baseline_g2_sensitivity(
+    pca, crosswalk, panel,
+    coverage_thresholds = c(.90, .99)
+  )
+
+  expect_setequal(
+    unique(out$estimates$source),
+    "PCA91"
+  )
+  expect_setequal(
+    unique(out$estimates$source_coverage_threshold),
+    c(.90, .99)
+  )
+  expect_false(any(
+    out$estimates$domain %in%
+      c("rural_development", "urban_development")
+  ))
+  expect_setequal(
+    out$estimates$predictor_id,
+    c("eventual_emie", "census_2001_ld")
+  )
+})
+
+test_that("G2 historical baseline saver exposes coverage and inference", {
+  x <- list(
+    controls = data.frame(status = "test"),
+    coverage = data.frame(status = "test"),
+    estimates = data.frame(status = "test"),
+    joint_balance = data.frame(status = "test")
+  )
+  dir <- tempfile()
+  paths <- save_historical_baseline_g2_sensitivity(
+    x, directory = dir
+  )
+  expect_setequal(
+    basename(paths),
+    c(
+      "historical_baseline_1991_g2_controls.csv",
+      "historical_baseline_1991_g2_coverage.csv",
+      "historical_baseline_1991_g2_balance.csv",
+      "historical_baseline_1991_g2_balance_joint.csv"
+    )
+  )
+})
