@@ -587,6 +587,12 @@ build_district_lineage <- function(
   bridge_df <- safe_df(bridge)
   bridge_qa <- bridge_df[!(bridge_df$deterministic %in% TRUE), , drop = FALSE]
   allocation_validation <- validate_allocation_weights(transition)
+  canonical_transition <- as_geography_transition(
+    transition,
+    source_year = 2011L,
+    target_year = 2001L,
+    evidence_source = "district_lineage_2001_2011"
+  )
 
   source_roster <- build_nss_district_roster(source_2007, source_2017)
   reference_units <- build_reference_units(
@@ -702,6 +708,7 @@ build_district_lineage <- function(
     shrid_bridge_summary = bridge_summary,
     shrid_bridge_qa = bridge_qa,
     district_transition_2001_2011 = transition,
+    canonical_transition_2001_2011 = canonical_transition,
     allocation_weight_validation = allocation_validation,
     nss_source_roster = source_roster,
     reference_units = reference_units,
@@ -748,7 +755,8 @@ save_district_lineage <- function(diagnostics, dir = "outputs/diagnostics/extend
     "adjudicated_geometry_carrybacks",
     "admin_units_2001", "admin_units_2011",
     "shrid_bridge_summary", "shrid_bridge_qa",
-    "district_transition_2001_2011", "allocation_weight_validation",
+    "district_transition_2001_2011", "canonical_transition_2001_2011",
+    "allocation_weight_validation",
     "nss_source_roster", "reference_units", "source_matches", "source_match_candidates",
     "source_adjudication_queue", "adjudication_draft",
     "conservative_mapping_eligibility", "conservative_source_crosswalk",

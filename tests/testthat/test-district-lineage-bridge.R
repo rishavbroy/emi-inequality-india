@@ -908,3 +908,84 @@ test_that("historical language geography separates exact, high-coverage, and spl
   sensitivity <- historical_linguistic_geography_sensitivity(out, thresholds = c(0.99, 1))
   expect_equal(sensitivity$eligible_districts, c(2L, 1L))
 })
+
+
+test_that("canonical geography transitions preserve weights and source provenance", {
+  transition <- data.frame(
+    state_code_2011 = c("01", "01"),
+    district_code_2011 = c("001", "001"),
+    state_code_2001 = c("01", "01"),
+    district_code_2001 = c("01", "02"),
+    population_share_to_2001 = c(.7, .3),
+    area_share_to_2001 = c(.6, .4),
+    shrid_coverage = c(1, 1),
+    mapping_class = "deterministic_containment",
+    source_id = "shrug",
+    stringsAsFactors = FALSE
+  )
+
+  out <- as_geography_transition(transition, 2011, 2001)
+
+  expect_identical(out$topology, c("split", "split"))
+  expect_equal(out$population_weight, c(.7, .3))
+  expect_equal(out$area_weight, c(.6, .4))
+  expect_identical(out$evidence_source, c("shrug", "shrug"))
+  expect_identical(out$source_unit_id, rep("census2011__01__001", 2))
+  expect_setequal(
+    out$target_unit_id,
+    c("census2001__01__01", "census2001__01__02")
+  )
+})
+
+test_that("canonical geography topology distinguishes mergers and many-to-many changes", {
+  merger <- data.frame(
+    source_vintage = 1991L,
+    target_vintage = 2001L,
+    source_state_code = c("01", "01"),
+    source_district_code = c("01", "02"),
+    source_unit_id = c("census1991__01__01", "census1991__01__02"),
+    target_state_code = c("01", "01"),
+    target_district_code = c("01", "01"),
+    target_unit_id = c("census2001__01__01", "census2001__01__01"),
+    population_weight = c(1, 1),
+    area_weight = c(1, 1),
+    coverage = c(1, 1),
+    mapping_class = "reviewed",
+    evidence_source = "test",
+    stringsAsFactors = FALSE
+  )
+  expect_identical(
+    annotate_geography_transition_topology(merger)$topology,
+    c("merger", "merger")
+  )
+
+  many <- rbind(
+    merger,
+    transform(
+      merger,
+      target_district_code = "02",
+      target_unit_id = "census2001__01__02"
+    )
+  )
+  expect_true(all(
+    annotate_geography_transition_topology(many)$topology ==
+      "many_to_many"
+  ))
+})
+
+test_that("canonical geography transitions reject invalid allocation weights", {
+  transition <- data.frame(
+    state_code_2011 = "01",
+    district_code_2011 = "001",
+    state_code_2001 = "01",
+    district_code_2001 = "01",
+    population_share_to_2001 = 1.2,
+    area_share_to_2001 = 1,
+    mapping_class = "test",
+    stringsAsFactors = FALSE
+  )
+  expect_error(
+    as_geography_transition(transition, 2011, 2001),
+    "population_weight"
+  )
+})
