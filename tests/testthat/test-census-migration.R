@@ -91,9 +91,10 @@ test_that("Census 2011 D03 reasons and recent-work validation rows preserve acco
     "do not sum exactly"
   )
 
-  incomplete <- parsed[
-    !(parsed$duration == census_recent_duration_labels()[[1L]] &
-      parsed$last_residence_type == "Rural"),
+  incomplete <- parse_census_d03_2011_sheet(raw)
+  incomplete <- incomplete[
+    !(incomplete$duration == census_recent_duration_labels()[[1L]] &
+      incomplete$last_residence_type == "Rural"),
     ,
     drop = FALSE
   ]
@@ -151,11 +152,11 @@ test_that("Census 2011 D02 and D03 agree on district migrant totals", {
   d03$migrants_total[[2L]] <- 199
   expect_error(
     validate_census_2011_migration_totals(d02, d03),
-    "totals disagree or district coverage differs"
+    "counts disagree or district coverage differs"
   )
   expect_error(
     validate_census_2011_migration_totals(d02, d03[-1L, , drop = FALSE]),
-    "totals disagree or district coverage differs"
+    "counts disagree or district coverage differs"
   )
 })
 
