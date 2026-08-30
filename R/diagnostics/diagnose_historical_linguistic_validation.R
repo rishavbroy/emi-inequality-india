@@ -74,12 +74,20 @@ build_historical_linguistic_geography_1991_2001 <- function(raw_sources) {
   component_summary <- summarize_geography_components(
     canonical_transition, components
   )
+  harmonized_crosswalk <- build_harmonized_region_crosswalk(
+    components, component_summary
+  )
+  harmonized_crosswalk_summary <- summarize_harmonized_region_crosswalk(
+    harmonized_crosswalk
+  )
   list(
     bridge = bridge,
     transition = transition,
     canonical_transition = canonical_transition,
     components = components,
     component_summary = component_summary,
+    harmonized_crosswalk = harmonized_crosswalk,
+    harmonized_crosswalk_summary = harmonized_crosswalk_summary,
     source_districts = source_districts,
     coverage_sensitivity = historical_linguistic_geography_sensitivity(source_districts),
     bridge_summary = summarize_shrid_bridge(bridge)
@@ -102,6 +110,12 @@ save_historical_linguistic_geography_1991_2001 <- function(
     component_summary = file.path(
       directory, "historical_linguistic_component_summary_1991_2001.csv"
     ),
+    harmonized_crosswalk = file.path(
+      directory, "historical_linguistic_harmonized_crosswalk_1991_2001.csv"
+    ),
+    harmonized_crosswalk_summary = file.path(
+      directory, "historical_linguistic_harmonized_crosswalk_summary_1991_2001.csv"
+    ),
     bridge_summary = file.path(directory, "historical_linguistic_shrid_bridge_1991_2001.csv")
   )
   write_diagnostic_csv(x$source_districts, paths[["source_districts"]])
@@ -112,6 +126,13 @@ save_historical_linguistic_geography_1991_2001 <- function(
   )
   write_diagnostic_csv(x$components, paths[["components"]])
   write_diagnostic_csv(x$component_summary, paths[["component_summary"]])
+  write_diagnostic_csv(
+    x$harmonized_crosswalk, paths[["harmonized_crosswalk"]]
+  )
+  write_diagnostic_csv(
+    x$harmonized_crosswalk_summary,
+    paths[["harmonized_crosswalk_summary"]]
+  )
   write_diagnostic_csv(x$bridge_summary, paths[["bridge_summary"]])
   unname(paths)
 }
