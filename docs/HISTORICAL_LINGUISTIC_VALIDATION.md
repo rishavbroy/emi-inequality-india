@@ -128,6 +128,14 @@ excluded from the canonical transition. Reverse-margin totals above 100 percent
 beyond publication rounding likewise receive `target_share_overcoverage`.
 These are source-adjudication failures, not weights to normalize away.
 
+Coverage totals are keyed by canonical source/target unit IDs throughout this
+adjudication step. The small `normalize_geography_coverage()` helper therefore
+preserves vector names while snapping publication-rounding deviations to zero
+or one. This is part of the canonical transition contract: downstream edge
+construction looks coverage up by unit ID, so dropping those names would turn
+valid closed components into missing coverage rather than merely changing
+display metadata.
+
 The resulting outputs are:
 
 - `historical_linguistic_kumar_somanathan_edges.csv`: every published edge with
