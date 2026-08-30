@@ -2115,23 +2115,23 @@ extended_diagnostic_targets <- list(
     format = "file"
   ),
   tar_target(
-    census_2001_c13_manifest_file,
+    census_2001_download_manifest_file,
     path_metadata(paths, "census_2001_download_manifest.tsv"),
     format = "file"
   ),
   tar_target(
-    census_2011_c13_manifest_file,
+    census_2011_download_manifest_file,
     path_metadata(paths, "census_2011_download_manifest.tsv"),
     format = "file"
   ),
   tar_target(
     census_2001_c13_files,
-    census_c13_manifest_files(paths, 2001, census_2001_c13_manifest_file),
+    census_c13_manifest_files(paths, 2001, census_2001_download_manifest_file),
     format = "file"
   ),
   tar_target(
     census_2011_c13_files,
-    census_c13_manifest_files(paths, 2011, census_2011_c13_manifest_file),
+    census_c13_manifest_files(paths, 2011, census_2011_download_manifest_file),
     format = "file"
   ),
   tar_target(
@@ -2141,6 +2141,69 @@ extended_diagnostic_targets <- list(
   tar_target(
     census_age_6_13_2011,
     read_census_c13_age_6_13(census_2011_c13_files, 2011)
+  ),
+  tar_target(
+    census_2001_d02_files,
+    census_migration_manifest_files(paths, 2001, "D02", census_2001_download_manifest_file),
+    format = "file"
+  ),
+  tar_target(
+    census_2011_d02_files,
+    census_migration_manifest_files(paths, 2011, "D02", census_2011_download_manifest_file),
+    format = "file"
+  ),
+  tar_target(
+    census_2011_d03_files,
+    census_migration_manifest_files(paths, 2011, "D03", census_2011_download_manifest_file),
+    format = "file"
+  ),
+  tar_target(
+    census_migration_d02_2001_source,
+    read_census_d02_district(census_2001_d02_files, 2001)
+  ),
+  tar_target(
+    census_migration_d02_2011_source,
+    read_census_d02_district(census_2011_d02_files, 2011)
+  ),
+  tar_target(
+    census_migration_d03_2011_source,
+    read_census_d03_2011_district(census_2011_d03_files)
+  ),
+  tar_target(
+    census_migration_d02_2001,
+    build_census_d02_2001_measures(
+      census_migration_d02_2001_source,
+      census_2001_district_totals
+    )
+  ),
+  tar_target(
+    census_migration_d02_2011,
+    build_census_d02_2011_measures(
+      census_migration_d02_2011_source,
+      district_lineage$district_transition_2001_2011
+    )
+  ),
+  tar_target(
+    census_migration_d03_2011,
+    build_census_d03_2011_measures(
+      census_migration_d03_2011_source,
+      district_lineage$district_transition_2001_2011
+    )
+  ),
+  tar_target(
+    census_migration_diagnostics,
+    build_census_migration_diagnostics(
+      census_migration_d02_2001,
+      census_migration_d02_2011_source,
+      census_migration_d03_2011_source,
+      census_migration_d02_2011,
+      census_migration_d03_2011
+    )
+  ),
+  tar_target(
+    diag_ext_census_migration,
+    save_census_migration_diagnostics(census_migration_diagnostics),
+    format = "file"
   ),
   tar_target(
     dise_archive_registry_file,

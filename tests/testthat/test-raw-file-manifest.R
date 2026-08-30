@@ -299,7 +299,7 @@ test_that("Census download manifests are canonical acquisition metadata", {
 
   expected_codes <- sprintf("%02d", 1:35)
   expected_tables <- list(
-    `2001` = c("C13", "C16", "C17"),
+    `2001` = c("C13", "C16", "C17", "D02"),
     `2011` = c(
       "C13", "B01", "B04", "B06", "B25A", "B25B", "C16", "C17",
       "D02", "D03", "D04", "D05", "D06", "D07",
