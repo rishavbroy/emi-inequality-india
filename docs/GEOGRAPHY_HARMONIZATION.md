@@ -109,3 +109,41 @@ The crosswalk is labeled `G1_deterministic_amalgamation` and contains no
 fractional population or area allocation. Components that fail pairwise closure
 remain candidates for later G2/G3 sensitivities rather than being renormalized
 into G1.
+
+
+## G2 population interpolation
+
+The exact three-vintage G1 crosswalk is intentionally conservative and therefore
+small. G2 provides the next assumption-explicit geography for **human
+quantities only** by expressing 1991 and 2011 source districts on Census-2001
+boundaries using SHRUG population shares.
+
+Before constructing G2, the production 2011↔2001 canonical transition replaces
+placeholder LGD/reviewed weights with population and area shares derived from
+the SHRUG stable-locality bridge for the same accepted source-target edge.
+Evidence provenance remains unchanged. This prevents an official ancestry edge
+with a placeholder weight of one from masquerading as a measured population
+allocation.
+
+`population_interpolation_crosswalk.csv` contains raw source-to-2001 population
+shares plus Census-2001 identity rows. Source shares are **not renormalized**.
+If observed deterministic population shares sum to 0.93, the crosswalk records
+0.93 coverage and 0.07 unallocated population rather than forcing the observed
+shares to sum to one. Material source partitions above one fail validation.
+
+The generic allocator is limited by the allocation-semantics registry.
+`extensive_human` and `ratio_human` families may use G2. Ratio-like quantities
+must supply at least numerator and denominator sufficient statistics; the final
+rate is never interpolated directly. This preserves the existing EMIE
+enrolled/eligible and linguistic-distance speaker/component semantics.
+
+Survey microdata are **not** eligible for generic population interpolation.
+Consumption and person-level survey records continue to require reviewed record
+allocation/lineage weights. Land quantities, point facilities, and spatial
+surfaces likewise remain outside G2.
+
+The G2 diagnostics report source population coverage without choosing an
+arbitrary analysis cutoff. Counts above 90, 95, and 99 percent are reported to
+show the sensitivity frontier. A later analysis may impose a documented
+coverage threshold, but the geography layer itself does not silently discard or
+renormalize partial source partitions.
