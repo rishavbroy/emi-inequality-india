@@ -1,5 +1,48 @@
 # This file is part of the EMI inequality research pipeline.
 
+
+read_helms_lim_linguistic_distance_1991 <- function(
+    path = "data/metadata/helms_lim_linguistic_distance_1991.csv") {
+  out <- readr::read_csv(
+    path, show_col_types = FALSE,
+    col_types = readr::cols(
+      state_code_1991 = readr::col_character(),
+      district_code_1991 = readr::col_character(),
+      ipum1993 = readr::col_integer(),
+      district_name_helms_lim = readr::col_character(),
+      linguistic_distance_1991_helms_lim = readr::col_double(),
+      source_row_count = readr::col_integer(),
+      source_years = readr::col_character()
+    )
+  )
+  required <- c(
+    "state_code_1991", "district_code_1991", "ipum1993",
+    "district_name_helms_lim", "linguistic_distance_1991_helms_lim",
+    "source_row_count", "source_years"
+  )
+  if (!identical(names(out), required)) {
+    stop("Helms-Lim historical linguistic-distance extract has unexpected schema.", call. = FALSE)
+  }
+  out$state_code_1991 <- pad_admin_code(out$state_code_1991, 2L)
+  out$district_code_1991 <- pad_admin_code(out$district_code_1991, 2L)
+  if (anyDuplicated(out$ipum1993) || anyDuplicated(out[c("state_code_1991", "district_code_1991")])) {
+    stop("Helms-Lim historical linguistic-distance extract has duplicate district identifiers.", call. = FALSE)
+  }
+  expected_ipum <- as.integer(out$state_code_1991) * 1000L + as.integer(out$district_code_1991)
+  if (any(out$ipum1993 != expected_ipum)) {
+    stop("Helms-Lim IPUM1993 identifiers must decompose exactly into 1991 state/district codes.", call. = FALSE)
+  }
+  distance <- num(out$linguistic_distance_1991_helms_lim)
+  if (any(is.finite(distance) & (distance < 0 | distance > 5))) {
+    stop("Helms-Lim linguistic distance falls outside the Shastry 0-5 range.", call. = FALSE)
+  }
+  if (any(out$source_row_count < 1L) || any(is.na(out$district_name_helms_lim) | !nzchar(trimws(out$district_name_helms_lim)))) {
+    stop("Helms-Lim extract has invalid source-row provenance.", call. = FALSE)
+  }
+  out
+}
+
+
 historical_linguistic_file <- function(rows, file_id) {
   hit <- rows$absolute_path[rows$file_id == file_id]
   if (length(hit) != 1L) {

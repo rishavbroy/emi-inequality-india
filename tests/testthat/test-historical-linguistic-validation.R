@@ -647,3 +647,20 @@ test_that("historical source-quality grid keeps source and geography support dis
   expect_equal(out$n_exact_geography, 1L)
   expect_equal(out$preferred_geography_population_1991, 100)
 })
+
+
+test_that("Helms-Lim historical-distance reader enforces the published IPUM district key", {
+  path <- tempfile(fileext=".csv")
+  x <- data.frame(state_code_1991=c("02","09"),district_code_1991=c("01","03"),ipum1993=c(2001L,9003L),district_name_helms_lim=c("Srikakulam","Hamirpur"),linguistic_distance_1991_helms_lim=c(4.8,3.8),source_row_count=c(3L,3L),source_years=c("1991;2001;2011","1991;2001;2011"),stringsAsFactors=FALSE)
+  write.csv(x,path,row.names=FALSE); out <- read_helms_lim_linguistic_distance_1991(path)
+  expect_identical(out$state_code_1991,c("02","09")); expect_identical(out$district_code_1991,c("01","03"))
+  x$ipum1993[[2L]] <- 9999L; write.csv(x,path,row.names=FALSE); expect_error(read_helms_lim_linguistic_distance_1991(path),"decompose exactly")
+})
+
+test_that("Helms-Lim benchmark uses exact Census-1991 keys and surfaces disagreements", {
+  helms <- data.frame(state_code_1991=c("02","02","03"),district_code_1991=c("01","02","01"),linguistic_distance_1991_helms_lim=c(1.1,3.6,5),stringsAsFactors=FALSE)
+  atlas <- data.frame(state_code_1991=c("02","02"),district_code_1991=c("01","02"),historical_language_status="eligible",ling_distance_nonzero_mean_1991=c(1,3),stringsAsFactors=FALSE)
+  geography <- data.frame(state_code_1991=c("02","02","03"),district_code_1991=c("01","02","01"),stringsAsFactors=FALSE)
+  out <- build_helms_lim_linguistic_distance_benchmark(helms,atlas,geography)
+  expect_equal(out$summary$n_atlas_preferred_overlap,2L); expect_equal(out$summary$n_project_1991_geography_with_helms_lim,3L); expect_equal(nrow(out$review),1L); expect_equal(out$review$district_code_1991,"02")
+})

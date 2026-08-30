@@ -557,12 +557,6 @@ build_vanneman_pretrend_parent_bridge <- function(
     "state_code_1991", "district_code_1991",
     "state_code_2001", "district_code_2001"
   )
-  for (spec in list(
-      panel = c(required_panel, setdiff(required_panel, names(panel))),
-      geography = c(required_geography, setdiff(required_geography, names(geography))),
-      transition = c(required_transition, setdiff(required_transition, names(transition))))) {
-    invisible(spec)
-  }
   missing <- setdiff(required_panel, names(panel))
   if (length(missing)) stop("Vanneman parent bridge panel lacks: ", paste(missing, collapse = ", "), call. = FALSE)
   missing <- setdiff(required_geography, names(geography))

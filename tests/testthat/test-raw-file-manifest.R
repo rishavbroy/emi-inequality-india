@@ -716,3 +716,13 @@ test_that("Liu historical geography benchmark is manifest-backed without becomin
   expect_match(source$notes, "reviewed-alias evidence", ignore.case = TRUE)
   expect_match(source$notes, "six-census harmonized IDs remain benchmark-only", ignore.case = TRUE)
 })
+
+
+test_that("Helms-Lim 1991 linguistic-distance benchmark has explicit tracked provenance", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
+  source <- read.csv(file.path(root,"data","metadata","data_sources.csv"),stringsAsFactors=FALSE)
+  row <- source[source$source_id=="helms_lim_2025",,drop=FALSE]
+  expect_equal(nrow(row),1L); expect_identical(row$source_type,"external_replication_benchmark"); expect_match(row$source_url,"10.7910/DVN/E0BJIZ",fixed=TRUE); expect_match(row$notes,"Shastry-derived",fixed=TRUE)
+  distance <- read_helms_lim_linguistic_distance_1991(file.path(root,"data","metadata","helms_lim_linguistic_distance_1991.csv"))
+  expect_equal(anyDuplicated(distance[c("state_code_1991","district_code_1991")]),0L); expect_true(sum(is.finite(distance$linguistic_distance_1991_helms_lim))>400L)
+})

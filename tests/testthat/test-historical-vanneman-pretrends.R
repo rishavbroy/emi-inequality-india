@@ -294,6 +294,7 @@ test_that("Vanneman pretrend coverage reports the cost of historical-LD support"
     state_code_2001 = rep(c("01", "01", "02"), each = 2),
     population_1961 = rep(c(100, 200, 300), each = 2),
     emie_exposure = rep(c(1, 2, 3), each = 2),
+    ling_distance_nonzero_mean_2001 = rep(c(.3, .5, .9), each = 2),
     historical_ld_eligible = rep(c(TRUE, FALSE, TRUE), each = 2),
     stringsAsFactors = FALSE
   )
@@ -368,4 +369,21 @@ test_that("pretrend registry adds Census-2001 LD without changing historical com
     registry$predictor_id == "census_2001_ld" &
       registry$sample_id == "historical_ld_support"
   ))
+})
+
+
+test_that("external historical LD attaches by exact Census-1991 code", {
+  changes <- data.frame(panel_unit_id="a",dist91_state_id="02",dist91_district_id="03",year=1961L,stringsAsFactors=FALSE)
+  predictors <- data.frame(panel_unit_id="a",state_code_2001="28",district_code_2001="11",pretrend_analysis_eligible=TRUE,pretrend_analysis_geography_status="preferred_single_target",emie_exposure=.25,stringsAsFactors=FALSE)
+  external <- data.frame(state_code_1991="02",district_code_1991="03",linguistic_distance_1991_helms_lim=4.75,stringsAsFactors=FALSE)
+  out <- attach_vanneman_pretrend_predictors(changes,predictors,external_historical_distance=external)
+  expect_equal(out$ling_distance_helms_lim_1991,4.75); expect_true(out$helms_lim_ld_eligible)
+})
+
+test_that("pretrend registry keeps Atlas primary while exposing Helms-Lim robustness", {
+  panel <- data.frame(historical_ld_eligible=c(TRUE,FALSE),ling_distance_nonzero_mean_1991=c(1,NA_real_),ling_distance_nonzero_mean_2001=c(2,3),ling_distance_helms_lim_1991=c(1.1,3.1),stringsAsFactors=FALSE)
+  registry <- vanneman_pretrend_specification_registry(panel)
+  expect_true(any(registry$predictor_id=="helms_lim_ld_1991" & registry$sample_id=="full_pretrend"))
+  expect_true(any(registry$predictor_id=="historical_ld_1991" & registry$sample_id=="historical_ld_support"))
+  expect_false(any(registry$predictor_id=="historical_ld_1991" & registry$sample_id=="full_pretrend"))
 })

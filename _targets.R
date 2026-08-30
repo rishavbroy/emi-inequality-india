@@ -1501,6 +1501,26 @@ extended_diagnostic_targets <- list(
     )
   ),
   tar_target(
+    helms_lim_linguistic_distance_file,
+    "data/metadata/helms_lim_linguistic_distance_1991.csv",
+    format = "file"
+  ),
+  tar_target(helms_lim_linguistic_distance_1991, read_helms_lim_linguistic_distance_1991(helms_lim_linguistic_distance_file)),
+  tar_target(
+    helms_lim_linguistic_distance_benchmark,
+    build_helms_lim_linguistic_distance_benchmark(
+      helms_lim_linguistic_distance_1991,
+      historical_linguistic_distance_validation$preferred_distance,
+      historical_linguistic_geography_1991_2001$source_districts,
+      historical_vanneman_panel4_dist91_crosswalk
+    )
+  ),
+  tar_target(
+    diag_ext_helms_lim_linguistic_distance_benchmark,
+    save_helms_lim_linguistic_distance_benchmark(helms_lim_linguistic_distance_benchmark),
+    format = "file"
+  ),
+  tar_target(
     historical_linguistic_persistence_validation,
     build_historical_linguistic_persistence_validation(
       historical_linguistic_distance_validation$preferred_distance,
@@ -1545,7 +1565,8 @@ extended_diagnostic_targets <- list(
     build_vanneman_pretrend_validation(
       historical_vanneman_pretrend_levels,
       district_panel,
-      historical_distance = historical_linguistic_distance_validation$preferred_distance
+      historical_distance = historical_linguistic_distance_validation$preferred_distance,
+      external_historical_distance = helms_lim_linguistic_distance_1991
     )
   ),
   tar_target(
@@ -1559,7 +1580,8 @@ extended_diagnostic_targets <- list(
       historical_vanneman_pretrend_levels,
       historical_vanneman_pretrend_parent_bridge,
       district_panel,
-      historical_distance = historical_linguistic_distance_validation$preferred_distance
+      historical_distance = historical_linguistic_distance_validation$preferred_distance,
+      external_historical_distance = helms_lim_linguistic_distance_1991
     )
   ),
   tar_target(

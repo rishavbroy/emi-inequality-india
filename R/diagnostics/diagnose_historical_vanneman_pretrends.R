@@ -245,7 +245,8 @@ build_vanneman_pretrend_changes <- function(levels) {
 }
 
 attach_vanneman_pretrend_predictors <- function(
-    changes, predictor_data, historical_distance = NULL) {
+    changes, predictor_data, historical_distance = NULL,
+    external_historical_distance = NULL) {
   out <- safe_df(changes)
   predictors <- safe_df(predictor_data)
   required <- c(
@@ -300,6 +301,19 @@ attach_vanneman_pretrend_predictors <- function(
     out$historical_language_status %in% "eligible" &
       is.finite(num(out$ling_distance_nonzero_mean_1991))
   } else FALSE
+
+  if (!is.null(external_historical_distance)) {
+    external <- safe_df(external_historical_distance)
+    required <- c("state_code_1991", "district_code_1991", "linguistic_distance_1991_helms_lim")
+    missing <- setdiff(required, names(external))
+    if (length(missing)) stop("External historical linguistic distance lacks: ", paste(missing, collapse = ", "), call. = FALSE)
+    external$state_code_1991 <- pad_admin_code(external$state_code_1991, 2L); external$district_code_1991 <- pad_admin_code(external$district_code_1991, 2L)
+    if (anyDuplicated(external[c("state_code_1991", "district_code_1991")])) stop("External historical linguistic distance has duplicate Census-1991 keys.", call. = FALSE)
+    names(external)[names(external)=="state_code_1991"] <- "dist91_state_id"; names(external)[names(external)=="district_code_1991"] <- "dist91_district_id"
+    out <- merge(out, external[c("dist91_state_id", "dist91_district_id", "linguistic_distance_1991_helms_lim")], by=c("dist91_state_id","dist91_district_id"), all.x=TRUE, sort=FALSE)
+    names(out)[names(out)=="linguistic_distance_1991_helms_lim"] <- "ling_distance_helms_lim_1991"
+  }
+  out$helms_lim_ld_eligible <- "ling_distance_helms_lim_1991" %in% names(out) & is.finite(num(out$ling_distance_helms_lim_1991))
   out
 }
 
@@ -476,23 +490,25 @@ aggregate_vanneman_parent_predictors <- function(
 
 build_vanneman_pretrend_predictor_panel <- function(
     changes, district_panel, historical_distance = NULL,
+    external_historical_distance = NULL,
     treatment = preferred_iv_variables()$treatment) {
   predictors <- build_vanneman_strict_pretrend_predictors(
     changes, district_panel, treatment
   )
   attach_vanneman_pretrend_predictors(
-    changes, predictors, historical_distance
+    changes, predictors, historical_distance, external_historical_distance
   )
 }
 
 build_vanneman_parent_pretrend_predictor_panel <- function(
     changes, parent_bridge, district_panel, historical_distance = NULL,
+    external_historical_distance = NULL,
     treatment = preferred_iv_variables()$treatment) {
   predictors <- aggregate_vanneman_parent_predictors(
     parent_bridge, district_panel, treatment
   )
   attach_vanneman_pretrend_predictors(
-    changes, predictors, historical_distance
+    changes, predictors, historical_distance, external_historical_distance
   )
 }
 
@@ -512,6 +528,14 @@ vanneman_pretrend_specification_registry <- function(panel) {
       stringsAsFactors = FALSE
     )))
   }
+  if ("ling_distance_helms_lim_1991" %in% names(x)) {
+    rows <- c(rows, list(data.frame(
+      predictor_id = "helms_lim_ld_1991",
+      predictor = "ling_distance_helms_lim_1991",
+      sample_id = "full_pretrend",
+      stringsAsFactors = FALSE
+    )))
+  }
   if (all(c(
       "historical_ld_eligible",
       "ling_distance_nonzero_mean_1991"
@@ -523,7 +547,13 @@ vanneman_pretrend_specification_registry <- function(panel) {
       stringsAsFactors = FALSE
     ))
     if ("ling_distance_nonzero_mean_2001" %in% names(x)) {
+      if ("ling_distance_helms_lim_1991" %in% names(x)) {
       common <- c(common, list(data.frame(
+        predictor_id = "helms_lim_ld_1991", predictor = "ling_distance_helms_lim_1991",
+        sample_id = "historical_ld_support", stringsAsFactors = FALSE
+      )))
+    }
+    common <- c(common, list(data.frame(
         predictor_id = "census_2001_ld",
         predictor = "ling_distance_nonzero_mean_2001",
         sample_id = "historical_ld_support",
@@ -559,6 +589,9 @@ vanneman_pretrend_sample <- function(
     if ("ling_distance_nonzero_mean_2001" %in% names(x)) {
       keep <- keep & is.finite(num(x$ling_distance_nonzero_mean_2001))
     }
+    if ("ling_distance_helms_lim_1991" %in% names(x)) {
+      keep <- keep & is.finite(num(x$ling_distance_helms_lim_1991))
+    }
   }
   x[keep, , drop = FALSE]
 }
@@ -575,6 +608,9 @@ vanneman_pretrend_sample_coverage <- function(panel) {
   if ("ling_distance_nonzero_mean_2001" %in% names(x)) {
     coverage_fields <- c(coverage_fields, "ling_distance_nonzero_mean_2001")
   }
+  if ("ling_distance_helms_lim_1991" %in% names(x)) {
+    coverage_fields <- c(coverage_fields, "ling_distance_helms_lim_1991")
+  }
   units <- x[keep, coverage_fields, drop = FALSE]
   units <- units[!duplicated(units$panel_unit_id), , drop = FALSE]
 
@@ -584,7 +620,9 @@ vanneman_pretrend_sample_coverage <- function(panel) {
   } else {
     rep(FALSE, nrow(units))
   }
+  external_ld <- if ("ling_distance_helms_lim_1991" %in% names(units)) is.finite(num(units$ling_distance_helms_lim_1991)) else rep(FALSE, nrow(units))
   common <- full & current_ld & units$historical_ld_eligible %in% TRUE
+  if (any(external_ld)) common <- common & external_ld
   summarize <- function(sample_id, selected) {
     data.frame(
       sample_id = sample_id,
@@ -598,6 +636,9 @@ vanneman_pretrend_sample_coverage <- function(panel) {
   rows <- list(summarize("full_pretrend", full))
   if (any(current_ld)) {
     rows <- c(rows, list(summarize("census_2001_ld_support", full & current_ld)))
+  }
+  if (any(external_ld)) {
+    rows <- c(rows, list(summarize("helms_lim_ld_support", full & external_ld)))
   }
   rows <- c(rows, list(summarize("historical_ld_support", common)))
   safe_bind_rows(rows)
@@ -738,20 +779,22 @@ assemble_vanneman_pretrend_validation <- function(levels, changes, panel) {
 
 build_vanneman_pretrend_validation <- function(
     levels, district_panel, historical_distance = NULL,
+    external_historical_distance = NULL,
     treatment = preferred_iv_variables()$treatment) {
   changes <- build_vanneman_pretrend_changes(levels)
   panel <- build_vanneman_pretrend_predictor_panel(
-    changes, district_panel, historical_distance, treatment
+    changes, district_panel, historical_distance, external_historical_distance, treatment
   )
   assemble_vanneman_pretrend_validation(levels, changes, panel)
 }
 
 build_vanneman_parent_pretrend_validation <- function(
     levels, parent_bridge, district_panel, historical_distance = NULL,
+    external_historical_distance = NULL,
     treatment = preferred_iv_variables()$treatment) {
   changes <- build_vanneman_pretrend_changes(levels)
   panel <- build_vanneman_parent_pretrend_predictor_panel(
-    changes, parent_bridge, district_panel, historical_distance, treatment
+    changes, parent_bridge, district_panel, historical_distance, external_historical_distance, treatment
   )
   assemble_vanneman_pretrend_validation(levels, changes, panel)
 }

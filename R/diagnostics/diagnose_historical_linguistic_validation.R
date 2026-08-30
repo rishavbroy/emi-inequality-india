@@ -1150,3 +1150,52 @@ save_historical_linguistic_inference_validation <- function(
   write_diagnostic_csv(first_stage$predetermined_comparison, paths[["predetermined_comparison"]])
   unname(paths)
 }
+
+
+build_helms_lim_linguistic_distance_benchmark <- function(
+    helms_lim, atlas_distance, source_geography, vanneman_crosswalk = NULL) {
+  helms <- safe_df(helms_lim); atlas <- safe_df(atlas_distance); geography <- safe_df(source_geography)
+  required_helms <- c("state_code_1991", "district_code_1991", "linguistic_distance_1991_helms_lim")
+  required_atlas <- c("state_code_1991", "district_code_1991", "historical_language_status", "ling_distance_nonzero_mean_1991")
+  required_geo <- c("state_code_1991", "district_code_1991")
+  missing <- setdiff(required_helms, names(helms)); if (length(missing)) stop("Helms-Lim benchmark lacks: ", paste(missing, collapse = ", "), call. = FALSE)
+  missing <- setdiff(required_atlas, names(atlas)); if (length(missing)) stop("Atlas benchmark lacks: ", paste(missing, collapse = ", "), call. = FALSE)
+  missing <- setdiff(required_geo, names(geography)); if (length(missing)) stop("Historical geography benchmark lacks: ", paste(missing, collapse = ", "), call. = FALSE)
+  normalize_codes <- function(x) { x$state_code_1991 <- pad_admin_code(x$state_code_1991, 2L); x$district_code_1991 <- pad_admin_code(x$district_code_1991, 2L); x }
+  helms <- normalize_codes(helms); atlas <- normalize_codes(atlas); geography <- normalize_codes(geography)
+  keys <- c("state_code_1991", "district_code_1991")
+  if (anyDuplicated(helms[keys]) || anyDuplicated(atlas[keys]) || anyDuplicated(geography[keys])) stop("Historical-distance benchmark inputs must have unique Census-1991 district keys.", call. = FALSE)
+  comparison <- merge(helms, atlas[required_atlas], by = keys, all.x = TRUE, sort = FALSE)
+  comparison$helms_lim_available <- is.finite(num(comparison$linguistic_distance_1991_helms_lim))
+  comparison$atlas_preferred_available <- comparison$historical_language_status %in% "eligible" & is.finite(num(comparison$ling_distance_nonzero_mean_1991))
+  comparison$difference_helms_lim_minus_atlas <- ifelse(comparison$helms_lim_available & comparison$atlas_preferred_available, num(comparison$linguistic_distance_1991_helms_lim)-num(comparison$ling_distance_nonzero_mean_1991), NA_real_)
+  comparison$absolute_difference <- abs(comparison$difference_helms_lim_minus_atlas)
+  comparison$agreement_status <- ifelse(!comparison$helms_lim_available, "helms_lim_missing", ifelse(!comparison$atlas_preferred_available, "atlas_not_preferred", ifelse(comparison$absolute_difference < .25, "close_within_quarter_degree", ifelse(comparison$absolute_difference < .50, "review_quarter_to_half_degree", "review_half_degree_or_more"))))
+  overlap <- comparison[comparison$helms_lim_available & comparison$atlas_preferred_available,,drop=FALSE]
+  correlation <- if (nrow(overlap)>=2L) stats::cor(num(overlap$linguistic_distance_1991_helms_lim),num(overlap$ling_distance_nonzero_mean_1991)) else NA_real_
+  abs_diff <- num(overlap$absolute_difference)
+  helms_key <- paste(helms$state_code_1991,helms$district_code_1991,sep="__")
+  geography_key <- paste(geography$state_code_1991,geography$district_code_1991,sep="__")
+  gidx <- match(geography_key,helms_key); geography_available <- !is.na(gidx) & is.finite(num(helms$linguistic_distance_1991_helms_lim[gidx]))
+  n_vanneman <- NA_integer_; n_vanneman_available <- NA_integer_
+  if (!is.null(vanneman_crosswalk)) {
+    vanneman <- safe_df(vanneman_crosswalk); required <- c("dist91_state_id","dist91_district_id","preferred_pretrend_eligible"); missing <- setdiff(required,names(vanneman)); if(length(missing)) stop("Vanneman Helms-Lim benchmark lacks: ",paste(missing,collapse=", "),call.=FALSE)
+    preferred <- vanneman[vanneman$preferred_pretrend_eligible %in% TRUE,,drop=FALSE]
+    vk <- paste(pad_admin_code(preferred$dist91_state_id,2L),pad_admin_code(preferred$dist91_district_id,2L),sep="__"); vidx <- match(vk,helms_key)
+    n_vanneman <- nrow(preferred); n_vanneman_available <- sum(!is.na(vidx)&is.finite(num(helms$linguistic_distance_1991_helms_lim[vidx])))
+  }
+  summary <- data.frame(
+    n_helms_lim_districts=nrow(helms), n_helms_lim_nonmissing=sum(comparison$helms_lim_available),
+    n_project_1991_geography=nrow(geography), n_project_1991_geography_with_helms_lim=sum(geography_available),
+    n_preferred_vanneman=n_vanneman, n_preferred_vanneman_with_helms_lim=n_vanneman_available,
+    n_atlas_preferred_overlap=nrow(overlap), pearson_correlation=correlation,
+    median_absolute_difference=if(length(abs_diff)) stats::median(abs_diff) else NA_real_,
+    p95_absolute_difference=if(length(abs_diff)) unname(stats::quantile(abs_diff,.95,names=FALSE,type=7)) else NA_real_,
+    n_absolute_difference_ge_0_25=sum(abs_diff>=.25,na.rm=TRUE), n_absolute_difference_ge_0_50=sum(abs_diff>=.50,na.rm=TRUE), stringsAsFactors=FALSE)
+  list(summary=summary,comparison=comparison,review=comparison[comparison$atlas_preferred_available & comparison$absolute_difference>=.25,,drop=FALSE])
+}
+
+save_helms_lim_linguistic_distance_benchmark <- function(x, directory = "outputs/diagnostics/extended/instrument_relevance") {
+  paths <- c(summary=file.path(directory,"helms_lim_linguistic_distance_benchmark_summary.csv"),comparison=file.path(directory,"helms_lim_linguistic_distance_benchmark.csv"),review=file.path(directory,"helms_lim_linguistic_distance_review.csv"))
+  write_diagnostic_csv(x$summary,paths[["summary"]]); write_diagnostic_csv(x$comparison,paths[["comparison"]]); write_diagnostic_csv(x$review,paths[["review"]]); unname(paths)
+}
