@@ -112,10 +112,21 @@ The exact-name transition uses both transfer margins reported in the
 Kumar--Somanathan table. `pct_01in91` supplies the share of each 1991 parent
 going to a 2001 child, while `pct_91in01` supplies the share of each 2001 child
 coming from that parent. After code resolution, these margins are summed by
-source and target unit respectively. A connected component is eligible for
-deterministic amalgamation only when **both** sides close to 100 percent. This
-means a missing or unresolved contributing parent blocks target completeness
-rather than being silently renormalized.
+source and target unit respectively. The source reader's published-share
+rounding tolerance (0.05 percentage point) is reused: totals within that
+tolerance of 100 percent are snapped to one, while larger overcoverage is
+treated as conflicting evidence rather than clipped. A connected component is
+eligible for deterministic amalgamation only when **both** sides close to 100
+percent. Missing or unresolved contributing parents therefore leave
+undercoverage visible rather than being silently renormalized.
+
+The literature table identifies a 1991 source by both district label and its
+reported 1991 population. Consequently, two distinct published source
+identities that happen to resolve to the same unique Census-1991 name/code are
+not combined. They receive `source_code_identity_collision` status and are
+excluded from the canonical transition. Reverse-margin totals above 100 percent
+beyond publication rounding likewise receive `target_share_overcoverage`.
+These are source-adjudication failures, not weights to normalize away.
 
 The resulting outputs are:
 
