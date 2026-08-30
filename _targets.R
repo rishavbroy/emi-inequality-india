@@ -2243,6 +2243,74 @@ extended_diagnostic_targets <- list(
     format = "file"
   ),
   tar_target(
+    census_2011_b04_files,
+    census_worker_manifest_files(paths, "B04", census_2011_download_manifest_file),
+    format = "file"
+  ),
+  tar_target(
+    census_2011_b06_files,
+    census_worker_manifest_files(paths, "B06", census_2011_download_manifest_file),
+    format = "file"
+  ),
+  tar_target(
+    census_2011_b25a_files,
+    census_worker_manifest_files(paths, "B25A", census_2011_download_manifest_file),
+    format = "file"
+  ),
+  tar_target(
+    census_2011_b25b_files,
+    census_worker_manifest_files(paths, "B25B", census_2011_download_manifest_file),
+    format = "file"
+  ),
+  tar_target(
+    census_workers_b04_2011_source,
+    read_census_b04_2011_district(census_2011_b04_files)
+  ),
+  tar_target(
+    census_workers_b06_2011_source,
+    read_census_b06_2011_district(census_2011_b06_files)
+  ),
+  tar_target(
+    census_workers_b25a_2011_source,
+    read_census_b25a_2011_district(census_2011_b25a_files)
+  ),
+  tar_target(
+    census_workers_b25b_2011_source,
+    read_census_b25b_2011_district(census_2011_b25b_files)
+  ),
+  tar_target(
+    census_workers_industry_2011,
+    build_census_2011_industry_measures(
+      census_workers_b04_2011_source,
+      census_workers_b06_2011_source,
+      district_lineage$district_transition_2001_2011
+    )
+  ),
+  tar_target(
+    census_workers_occupation_2011,
+    build_census_2011_occupation_measures(
+      census_workers_b25a_2011_source,
+      census_workers_b25b_2011_source,
+      district_lineage$district_transition_2001_2011
+    )
+  ),
+  tar_target(
+    census_worker_diagnostics,
+    build_census_worker_diagnostics(
+      census_workers_b04_2011_source,
+      census_workers_b06_2011_source,
+      census_workers_b25a_2011_source,
+      census_workers_b25b_2011_source,
+      census_workers_industry_2011,
+      census_workers_occupation_2011
+    )
+  ),
+  tar_target(
+    diag_ext_census_workers,
+    save_census_worker_diagnostics(census_worker_diagnostics),
+    format = "file"
+  ),
+  tar_target(
     dise_archive_registry_file,
     path_metadata(paths, "dise_archive_registry.csv"),
     format = "file"
