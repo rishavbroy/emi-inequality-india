@@ -251,23 +251,27 @@ prepare_census_migration_mechanism_panel <- function(
   out
 }
 
-add_census_migration_mechanism_holm <- function(results) {
+add_census_migration_holm <- function(results, p_column, output_column) {
   out <- safe_df(results)
-  out$p_holm_within_spec <- NA_real_
+  if (!all(c("specification_id", "status", p_column) %in% names(out))) {
+    stop("Migration Holm adjustment lacks required result columns.", call. = FALSE)
+  }
+  out[[output_column]] <- NA_real_
   groups <- split(seq_len(nrow(out)), out$specification_id)
   for (index in groups) {
-    usable <- index[out$status[index] == "estimated" & is.finite(num(out$p.value[index]))]
+    usable <- index[out$status[index] == "estimated" & is.finite(num(out[[p_column]][index]))]
     if (length(usable)) {
-      out$p_holm_within_spec[usable] <- stats::p.adjust(num(out$p.value[usable]), method = "holm")
+      out[[output_column]][usable] <- stats::p.adjust(num(out[[p_column]][usable]), method = "holm")
     }
   }
   out
 }
 
-estimate_census_migration_mechanism_reduced_forms <- function(
+estimate_census_migration_mechanism_models <- function(
     mechanism_panel,
     registry = census_migration_mechanism_registry(),
-    cfg = list()) {
+    cfg = list(),
+    ar_points = 401L) {
   panel <- safe_df(mechanism_panel)
   registry <- safe_df(registry)
   base_specs <- census_migration_mechanism_specifications()
@@ -305,13 +309,75 @@ estimate_census_migration_mechanism_reduced_forms <- function(
   if (any(num(reduced_form$n) != sample_n)) {
     stop("Census migration reduced forms did not use one common mechanism sample.", call. = FALSE)
   }
-  reduced_form <- add_census_migration_mechanism_holm(reduced_form)
+  reduced_form <- add_census_migration_holm(
+    reduced_form, "p.value", "p_holm_within_spec"
+  )
   reduced_form <- reduced_form[c(
     "outcome_id", "outcome_variable", "mechanism_family", "tier", "denominator",
     "specification_id", "adjustment_id", "construction_id", "fixed_effect",
     "term", "estimate", "std.error", "statistic", "p.value",
     "p_holm_within_spec", "n", "status", "reason"
   )]
+
+  weak_estimates <- list()
+  weak_grids <- list()
+  k <- 0L
+  for (j in seq_len(nrow(registry))) {
+    outcome <- registry[j, , drop = FALSE]
+    for (i in seq_len(nrow(base_specs))) {
+      spec <- base_specs[i, , drop = FALSE]
+      spec$outcome <- outcome$variable[[1L]]
+      result <- estimate_weak_iv_specification(
+        panel, spec, cfg = cfg, ar_points = ar_points
+      )
+      if (is.null(result)) next
+      k <- k + 1L
+      summary <- result$summary
+      summary$outcome_id <- outcome$outcome_id[[1L]]
+      summary$outcome_variable <- outcome$variable[[1L]]
+      summary$mechanism_family <- outcome$mechanism_family[[1L]]
+      summary$tier <- outcome$tier[[1L]]
+      summary$denominator <- outcome$denominator[[1L]]
+      summary$fixed_effect <- spec$fixed_effect[[1L]]
+      weak_estimates[[k]] <- summary
+
+      grid <- result$grid
+      if (nrow(grid)) {
+        grid$outcome_id <- outcome$outcome_id[[1L]]
+        grid$outcome_variable <- outcome$variable[[1L]]
+        grid$adjustment_id <- spec$adjustment_id[[1L]]
+        grid$construction_id <- spec$construction_id[[1L]]
+        grid$fixed_effect <- spec$fixed_effect[[1L]]
+        weak_grids[[k]] <- grid
+      }
+    }
+  }
+  weak_iv <- safe_bind_rows(weak_estimates)
+  if (nrow(weak_iv) != nrow(registry) * nrow(base_specs) ||
+      any(num(weak_iv$n) != sample_n)) {
+    stop("Census migration weak-IV models did not use one complete registered model grid.", call. = FALSE)
+  }
+  weak_iv <- add_census_migration_holm(
+    weak_iv, "p_value_clustered", "p_value_clustered_holm_within_spec"
+  )
+  weak_iv <- add_census_migration_holm(
+    weak_iv, "anderson_rubin_p_beta0", "anderson_rubin_p_beta0_holm_within_spec"
+  )
+  weak_iv <- weak_iv[c(
+    "outcome_id", "outcome_variable", "mechanism_family", "tier", "denominator",
+    "specification_id", "adjustment_id", "construction_id", "fixed_effect",
+    "estimate_2sls", "std_error_clustered", "p_value_clustered",
+    "p_value_clustered_holm_within_spec",
+    "effective_f", "effective_f_critical_value", "effective_f_p_value", "effective_f_df",
+    "reduced_form_joint_f", "reduced_form_joint_p",
+    "anderson_rubin_f_beta0", "anderson_rubin_p_beta0",
+    "anderson_rubin_p_beta0_holm_within_spec",
+    "ar_95_lower", "ar_95_upper", "ar_95_empty", "ar_95_n_components",
+    "ar_95_disconnected", "ar_95_contains_zero", "ar_95_grid_accepted_min",
+    "ar_95_grid_accepted_max", "ar_95_left_truncated", "ar_95_right_truncated",
+    "ar_95_components", "n", "status", "reason"
+  )]
+  ar_grid <- safe_bind_rows(weak_grids)
 
   list(
     registry = registry,
@@ -323,7 +389,9 @@ estimate_census_migration_mechanism_reduced_forms <- function(
       stringsAsFactors = FALSE
     ),
     first_stage = first_stage,
-    reduced_form = reduced_form
+    reduced_form = reduced_form,
+    weak_iv = weak_iv,
+    anderson_rubin_grid = ar_grid
   )
 }
 
@@ -359,7 +427,7 @@ build_census_migration_diagnostics <- function(
     district_panel, d02_2011, d03_2011, d04_2011, d07_2011,
     registry = mechanism_registry
   )
-  mechanism <- estimate_census_migration_mechanism_reduced_forms(
+  mechanism <- estimate_census_migration_mechanism_models(
     mechanism_panel, mechanism_registry, cfg = cfg
   )
   list(
@@ -391,7 +459,9 @@ build_census_migration_diagnostics <- function(
     mechanism_registry = mechanism$registry,
     mechanism_sample_coverage = mechanism$sample_coverage,
     mechanism_first_stage = mechanism$first_stage,
-    mechanism_reduced_form = mechanism$reduced_form
+    mechanism_reduced_form = mechanism$reduced_form,
+    mechanism_weak_iv = mechanism$weak_iv,
+    mechanism_anderson_rubin_grid = mechanism$anderson_rubin_grid
   )
 }
 
@@ -416,7 +486,9 @@ save_census_migration_diagnostics <- function(
     mechanism_registry = file.path(dir, "mechanism_registry.csv"),
     mechanism_sample_coverage = file.path(dir, "mechanism_sample_coverage.csv"),
     mechanism_first_stage = file.path(dir, "mechanism_first_stage.csv"),
-    mechanism_reduced_form = file.path(dir, "mechanism_reduced_form.csv")
+    mechanism_reduced_form = file.path(dir, "mechanism_reduced_form.csv"),
+    mechanism_weak_iv = file.path(dir, "mechanism_weak_iv.csv"),
+    mechanism_anderson_rubin_grid = file.path(dir, "mechanism_anderson_rubin_grid.csv")
   )
   for (name in names(files)) {
     utils::write.csv(diagnostics[[name]], files[[name]], row.names = FALSE, na = "")

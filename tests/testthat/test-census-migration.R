@@ -428,14 +428,18 @@ test_that("migration first-stage sensitivity uses one common sample for baseline
 test_that("migration mechanism registry covers distinct observed 2011 constructs", {
   registry <- census_migration_mechanism_registry()
   expect_equal(nrow(registry), 8L)
-  expect_false(anyDuplicated(registry$outcome_id))
-  expect_false(anyDuplicated(registry$variable))
+  expect_identical(anyDuplicated(registry$outcome_id), 0L)
+  expect_identical(anyDuplicated(registry$variable), 0L)
   expect_setequal(registry$source_id, c("d02", "d03", "d04", "d07"))
   expect_true(all(registry$tier %in% c("core", "secondary")))
   expect_true(all(registry$denominator %in% c("all_migrants", "recent_work_migrants")))
 })
 
 test_that("migration mechanism diagnostics use one common support sample", {
+  skip_if_not_installed("ivreg")
+  skip_if_not_installed("lmtest")
+  skip_if_not_installed("momentfit")
+  skip_if_not_installed("sandwich")
   set.seed(321)
   n <- 120L
   state <- sprintf("%02d", rep(1:12, each = 10))
@@ -474,8 +478,8 @@ test_that("migration mechanism diagnostics use one common support sample", {
   expect_equal(nrow(mechanism_panel), n - 1L)
   expect_equal(attr(mechanism_panel, "n_harmonized_mechanism_districts"), n)
 
-  diagnostics <- estimate_census_migration_mechanism_reduced_forms(
-    mechanism_panel, registry, cfg = list()
+  diagnostics <- estimate_census_migration_mechanism_models(
+    mechanism_panel, registry, cfg = list(), ar_points = 21L
   )
   expect_equal(nrow(diagnostics$first_stage), 6L)
   expect_equal(nrow(diagnostics$reduced_form), 6L * nrow(registry))
@@ -485,6 +489,18 @@ test_that("migration mechanism diagnostics use one common support sample", {
   expect_equal(diagnostics$sample_coverage$n_common_analysis_districts, n - 1L)
   expect_true(all(diagnostics$reduced_form$status == "estimated"))
   expect_true(all(is.finite(diagnostics$reduced_form$p_holm_within_spec)))
+  expect_equal(nrow(diagnostics$weak_iv), 6L * nrow(registry))
+  expect_true(all(diagnostics$weak_iv$n == nrow(mechanism_panel)))
+  expect_true(all(diagnostics$weak_iv$status == "estimated"))
+  expect_true(all(is.finite(diagnostics$weak_iv$anderson_rubin_p_beta0)))
+  expect_true(all(is.finite(
+    diagnostics$weak_iv$anderson_rubin_p_beta0_holm_within_spec
+  )))
+  expect_true(nrow(diagnostics$anderson_rubin_grid) > 0L)
+  expect_setequal(
+    unique(diagnostics$anderson_rubin_grid$outcome_id),
+    registry$outcome_id
+  )
 })
 
 test_that("migration mechanism preparation rejects source support drift", {
