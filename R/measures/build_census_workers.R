@@ -2,25 +2,6 @@
 
 census_worker_keys <- function() c("state_code", "district_code")
 
-merge_census_worker_sources <- function(left, right, left_label, right_label) {
-  left <- safe_df(left)
-  right <- safe_df(right)
-  keys <- census_worker_keys()
-  if (anyDuplicated(left[keys]) || anyDuplicated(right[keys])) {
-    stop("Census worker source merge requires unique district rows.", call. = FALSE)
-  }
-  left_key <- paste(left$state_code, left$district_code, sep = "/")
-  right_key <- paste(right$state_code, right$district_code, sep = "/")
-  if (!setequal(left_key, right_key)) {
-    stop(left_label, " and ", right_label, " district coverage differs.", call. = FALSE)
-  }
-  right_payload <- setdiff(names(right), c(keys, "district_name"))
-  out <- merge(left, right[c(keys, right_payload)], by = keys, all = FALSE, sort = FALSE)
-  out <- out[match(left_key, paste(out$state_code, out$district_code, sep = "/")), , drop = FALSE]
-  rownames(out) <- NULL
-  out
-}
-
 census_industry_combined_count_columns <- function() {
   c(
     "workers_total", "main_workers_total", "marginal_workers_total",
@@ -32,7 +13,7 @@ build_census_2011_industry_source <- function(b04, b06) {
   keys <- census_worker_keys()
   b04 <- safe_df(b04)[c(keys, "district_name", census_industry_count_columns("main"))]
   b06 <- safe_df(b06)[c(keys, "district_name", census_industry_count_columns("marginal"))]
-  x <- merge_census_worker_sources(b04, b06, "Census B04", "Census B06")
+  x <- merge_census_district_sources(b04, b06, "Census B04", "Census B06")
   x$workers_total <- num(x$main_workers_total) + num(x$marginal_workers_total)
   x$industry_agriculture <-
     num(x$main_cultivators) + num(x$main_agricultural_labourers) + num(x$main_agriculture_other) +
@@ -68,7 +49,7 @@ build_census_2011_occupation_source <- function(b25a, b25b) {
   )
   b25a <- safe_df(b25a)[c(keys, "district_name", main_columns)]
   b25b <- safe_df(b25b)[c(keys, "district_name", marginal_columns)]
-  x <- merge_census_worker_sources(b25a, b25b, "Census B25A", "Census B25B")
+  x <- merge_census_district_sources(b25a, b25b, "Census B25A", "Census B25B")
   x$workers_excl_cultivators_aglab_total <-
     num(x$main_workers_excl_cultivators_aglab_total) +
     num(x$marginal_workers_excl_cultivators_aglab_total)

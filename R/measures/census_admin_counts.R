@@ -73,6 +73,47 @@ harmonize_census_2011_counts_to_2001 <- function(
   out
 }
 
+
+merge_census_district_sources <- function(
+    left, right, left_label, right_label, right_exclude = "district_name") {
+  left <- safe_df(left)
+  right <- safe_df(right)
+  keys <- c("state_code", "district_code")
+  if (anyDuplicated(left[keys]) || anyDuplicated(right[keys])) {
+    stop("Census source merge requires unique district rows.", call. = FALSE)
+  }
+  left_key <- paste(left$state_code, left$district_code, sep = "/")
+  right_key <- paste(right$state_code, right$district_code, sep = "/")
+  if (!setequal(left_key, right_key)) {
+    stop(left_label, " and ", right_label, " district coverage differs.", call. = FALSE)
+  }
+  right_payload <- setdiff(names(right), c(keys, right_exclude))
+  out <- merge(left, right[c(keys, right_payload)], by = keys, all = FALSE, sort = FALSE)
+  out <- out[match(left_key, paste(out$state_code, out$district_code, sep = "/")), , drop = FALSE]
+  rownames(out) <- NULL
+  out
+}
+
+left_join_census_district_source <- function(
+    left, right, left_label, right_label, right_exclude = "district_name") {
+  left <- safe_df(left)
+  right <- safe_df(right)
+  keys <- c("state_code", "district_code")
+  if (anyDuplicated(left[keys]) || anyDuplicated(right[keys])) {
+    stop("Census source merge requires unique district rows.", call. = FALSE)
+  }
+  left_key <- paste(left$state_code, left$district_code, sep = "/")
+  right_key <- paste(right$state_code, right$district_code, sep = "/")
+  if (!all(right_key %in% left_key)) {
+    stop(right_label, " contains districts outside ", left_label, ".", call. = FALSE)
+  }
+  right_payload <- setdiff(names(right), c(keys, right_exclude))
+  out <- merge(left, right[c(keys, right_payload)], by = keys, all.x = TRUE, sort = FALSE)
+  out <- out[match(left_key, paste(out$state_code, out$district_code, sep = "/")), , drop = FALSE]
+  rownames(out) <- NULL
+  out
+}
+
 safe_count_share <- function(numerator, denominator) {
   numerator <- num(numerator)
   denominator <- num(denominator)
