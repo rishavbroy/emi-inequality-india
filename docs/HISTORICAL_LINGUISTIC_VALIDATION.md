@@ -1256,3 +1256,15 @@ systematically associated with those pretrends. This reinforces the existing
 distinction between historical selection into later EMI exposure and the
 separate plausibility diagnostics for linguistic distance; it does not prove
 the exclusion restriction.
+
+
+### Multi-vintage geography foundation
+
+The historical 1991↔2001 transition is now also connected to the production
+2011↔2001 lineage graph through the shared harmonization module. This produces a
+diagnostic 1991/2001/2011 component inventory without changing any historical
+regression sample. Allocation policy is documented separately in
+`docs/GEOGRAPHY_HARMONIZATION.md`; in particular, the new registry records the
+existing sufficient-statistic semantics for EMIE, linguistic distance, and
+survey welfare before any population- or area-interpolated sensitivity is
+implemented.
