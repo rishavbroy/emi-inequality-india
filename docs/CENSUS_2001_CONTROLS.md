@@ -32,6 +32,14 @@ aggregate and its components in the same regression. Hindu share, asset ownershi
 and primary-school supply remain reserved until their source-specific readers and
 denominator contracts are active.
 
+A separate worker-structure validity block now uses official Census B-04/B-25/B-26
+tables to test whether linguistic distance already predicted detailed industrial
+or occupational specialization in 2001. These variables are balance outcomes,
+not automatic additions to the preferred control vector. The 2001 publication
+categories are kept in their own denominator contract and are not silently
+treated as directly comparable to Census 2011 B-series categories; see
+`docs/CENSUS_WORKERS.md`.
+
 ## Active source pipeline
 
 The active reader now uses the district-level SHRUG Census 2001 PCA archive together with official Census C-01, C-08, C-14, and H-09 state workbooks. State and district codes are padded and joined jointly; district numbers are never treated as nationally unique. C-08 attainment categories are summed before division by the age-7-plus population, C-14 age bands are summed before constructing the dependency ratio, and H-09 household counts are used before constructing electricity access. District area is computed from the accepted Census-2001 geometry.
