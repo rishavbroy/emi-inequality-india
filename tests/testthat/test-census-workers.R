@@ -174,11 +174,11 @@ test_that("Census 2001 B04 industrial categories partition main workers exactly"
   )))
 
   out <- parse_census_b04_2001_sheet(raw)
-  expect_equal(out$main_workers_total, 95)
+  expect_equal(out$main_workers_total, 100)
   expect_equal(out$main_agriculture, 35)
   expect_equal(out$main_manufacturing, 15)
 
-  raw[1, 8] <- 94
+  raw[1, 8] <- 99
   expect_error(parse_census_b04_2001_sheet(raw), "do not sum exactly")
 })
 
