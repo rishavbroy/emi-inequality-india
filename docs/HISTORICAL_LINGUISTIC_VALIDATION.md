@@ -1182,3 +1182,40 @@ Vanneman feasibility is evaluated separately on this consensus crosswalk. As
 with the other exact geographies, the existence of a consensus crosswalk does
 not automatically activate another pretrend estimator; the number and topology
 of nontrivial analysis-ready regions remain the production gate.
+
+
+### Kumar--Somanathan exact Vanneman sensitivity
+
+The cleaned Kumar--Somanathan exact-name geography now has enough reviewed
+nontrivial Vanneman support to estimate a source-specific constant-boundary
+pretrend sensitivity. This analysis is deliberately distinct from the bilateral
+consensus geography.
+
+The production target uses
+`historical_vanneman_kumar_somanathan_membership` and the existing exact
+amalgamation machinery. Historical Vanneman counts are summed within each
+eligible constant-boundary region before rates are reconstructed. Later EMIE
+and Census-2001 linguistic distance are rebuilt from their existing
+numerator/denominator and speaker-distance sufficient statistics. No population
+or area interpolation weight is used.
+
+The geography label
+`kumar_somanathan_exact_amalgamation` is carried through the historical levels,
+predictor bridge, and saved source marker so this sensitivity cannot be
+confused with SHRUG-only exact components or bilateral consensus components.
+Outputs use the prefix `vanneman_kumar_somanathan_pretrend_*` and the general
+support comparison reports it alongside strict one-to-one and clean
+historical-parent geography.
+
+A lower number of harmonized regions than strict districts is not a failure:
+amalgamation intentionally combines districts to achieve constant boundaries.
+The sample comparison therefore continues to report represented 1961
+population and state coverage alongside region count.
+
+The bilateral SHRUG/Kumar--Somanathan consensus remains feasibility-only. In the
+current audited geography it retains very few nontrivial Vanneman-ready regions,
+so activating another estimator on that subset would add little information.
+The source-specific Kumar--Somanathan exact sensitivity is informative because
+its reviewed closed components contain materially broader nontrivial boundary
+coverage. Cross-source conflicts remain visible in the concordance outputs and
+are not used to overwrite either source-specific graph.
