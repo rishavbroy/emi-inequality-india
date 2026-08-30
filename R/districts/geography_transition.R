@@ -211,7 +211,7 @@ attach_shrug_transition_coverage <- function(
   source_year <- as.integer(source_year)
   target_year <- as.integer(target_year)
 
-  coverage_table <- function(year, other_year, side) {
+  coverage_table <- function(year, other_year) {
     summary <- summarize_shrug_source_district_mapping(
       shrid_bridge, year, other_year, min_population_coverage = 1
     )
@@ -232,8 +232,8 @@ attach_shrug_transition_coverage <- function(
     )
   }
 
-  source <- coverage_table(source_year, target_year, "source")
-  target <- coverage_table(target_year, source_year, "target")
+  source <- coverage_table(source_year, target_year)
+  target <- coverage_table(target_year, source_year)
   source_idx <- match(x$source_unit_id, source$unit_id)
   target_idx <- match(x$target_unit_id, target$unit_id)
   x$source_coverage <- source$coverage[source_idx]

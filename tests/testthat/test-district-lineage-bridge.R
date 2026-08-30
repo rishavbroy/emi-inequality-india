@@ -1592,3 +1592,183 @@ test_that("geography harmonization saver exposes policy and graph diagnostics", 
     )
   )
 })
+
+
+test_that("production canonical lineage coverage is derived bidirectionally from SHRUG", {
+  transition <- data.frame(
+    state_code_2011 = "01",
+    district_code_2011 = "001",
+    state_code_2001 = "01",
+    district_code_2001 = "01",
+    population_share_to_2001 = 1,
+    area_share_to_2001 = 1,
+    shrid_coverage = 1,
+    mapping_class = "official_lgd_census_code_bridge",
+    source_id = "official",
+    stringsAsFactors = FALSE
+  )
+  bridge <- data.frame(
+    shrid2 = c("a", "b"),
+    deterministic = TRUE,
+    population = c(60, 40),
+    area = c(6, 4),
+    state_code_2011 = "01",
+    district_code_2011 = "001",
+    state_code_2001 = "01",
+    district_code_2001 = "01",
+    stringsAsFactors = FALSE
+  )
+
+  out <- attach_shrug_transition_coverage(
+    as_geography_transition(transition, 2011L, 2001L),
+    bridge, 2011L, 2001L
+  )
+
+  expect_equal(out$source_coverage, 1)
+  expect_equal(out$target_coverage, 1)
+  expect_identical(out$evidence_source, "official")
+})
+
+test_that("SHRUG coverage overrides overloaded raw coverage flags in canonical geography", {
+  transition <- data.frame(
+    state_code_2011 = "01",
+    district_code_2011 = "001",
+    state_code_2001 = "01",
+    district_code_2001 = "01",
+    population_share_to_2001 = 1,
+    area_share_to_2001 = 1,
+    shrid_coverage = 1,
+    mapping_class = "official_lgd_census_code_bridge",
+    source_id = "official",
+    stringsAsFactors = FALSE
+  )
+  bridge <- data.frame(
+    shrid2 = c("a", "b"),
+    deterministic = c(TRUE, FALSE),
+    population = c(60, 40),
+    area = c(6, 4),
+    state_code_2011 = "01",
+    district_code_2011 = "001",
+    state_code_2001 = "01",
+    district_code_2001 = "01",
+    stringsAsFactors = FALSE
+  )
+
+  out <- attach_shrug_transition_coverage(
+    as_geography_transition(transition, 2011L, 2001L),
+    bridge, 2011L, 2001L
+  )
+
+  expect_equal(out$source_coverage, .5)
+  expect_equal(out$target_coverage, .5)
+  expect_false(
+    summarize_geography_components(out)$deterministic_amalgamation_eligible
+  )
+})
+
+test_that("exact transition extraction retains whole closed components only", {
+  transition <- data.frame(
+    source_vintage = 1991L,
+    target_vintage = 2001L,
+    source_state_code = c("01", "01", "01"),
+    source_district_code = c("01", "02", "03"),
+    source_unit_id = c("s1", "s2", "s3"),
+    target_state_code = c("01", "01", "01"),
+    target_district_code = c("01", "01", "02"),
+    target_unit_id = c("t1", "t1", "t2"),
+    population_weight = NA_real_,
+    area_weight = NA_real_,
+    source_coverage = c(1, 1, .9),
+    target_coverage = 1,
+    mapping_class = "test",
+    evidence_source = "test",
+    stringsAsFactors = FALSE
+  )
+
+  out <- extract_exact_geography_transition(transition)
+
+  expect_setequal(out$source_unit_id, c("s1", "s2"))
+  expect_setequal(out$target_unit_id, "t1")
+})
+
+test_that("exact multi-vintage geography requires pairwise closure and all vintages", {
+  transition <- function(
+      source_vintage, target_vintage,
+      source_unit, target_unit,
+      source_coverage = 1, target_coverage = 1) {
+    data.frame(
+      source_vintage = source_vintage,
+      target_vintage = target_vintage,
+      source_state_code = "01",
+      source_district_code = sub(".*__", "", source_unit),
+      source_unit_id = source_unit,
+      target_state_code = "01",
+      target_district_code = sub(".*__", "", target_unit),
+      target_unit_id = target_unit,
+      population_weight = NA_real_,
+      area_weight = NA_real_,
+      source_coverage = source_coverage,
+      target_coverage = target_coverage,
+      mapping_class = "test",
+      evidence_source = "test",
+      stringsAsFactors = FALSE
+    )
+  }
+
+  t91 <- transition(
+    1991L, 2001L,
+    "census1991__01__01",
+    "census2001__01__01"
+  )
+  t11 <- transition(
+    2011L, 2001L,
+    "census2011__01__001",
+    "census2001__01__01"
+  )
+
+  out <- build_exact_multivintage_geography(
+    list(old = t91, recent = t11),
+    required_vintages = c(1991L, 2001L, 2011L)
+  )
+
+  expect_equal(nrow(out$component_summary), 1L)
+  expect_true(out$component_summary$spans_all_required_vintages)
+  expect_equal(length(unique(out$crosswalk$harmonized_region_id)), 1L)
+  expect_setequal(out$crosswalk$vintage, c(1991L, 2001L, 2011L))
+  expect_true(all(
+    out$crosswalk$geography_spec_id ==
+      "G1_deterministic_amalgamation"
+  ))
+
+  t11$target_coverage <- .9
+  blocked <- build_exact_multivintage_geography(
+    list(old = t91, recent = t11),
+    required_vintages = c(1991L, 2001L, 2011L)
+  )
+  expect_equal(nrow(blocked$crosswalk), 0L)
+})
+
+test_that("exact multi-vintage saver exposes pairwise certification and crosswalk", {
+  x <- list(
+    transitions = data.frame(status = "test"),
+    components = data.frame(status = "test"),
+    component_summary = data.frame(status = "test"),
+    crosswalk = data.frame(status = "test"),
+    pairwise_summary = data.frame(status = "test")
+  )
+  dir <- tempfile()
+  paths <- save_exact_multivintage_geography(
+    x, directory = dir
+  )
+
+  expect_setequal(
+    basename(paths),
+    c(
+      "exact_multivintage_transitions.csv",
+      "exact_multivintage_components.csv",
+      "exact_multivintage_component_summary.csv",
+      "exact_multivintage_crosswalk.csv",
+      "exact_multivintage_pairwise_summary.csv"
+    )
+  )
+})
