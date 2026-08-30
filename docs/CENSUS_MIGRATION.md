@@ -99,7 +99,7 @@ Census 2001 D-02 rows already use the analytical Census-2001 district geography.
 
 A 2001 parent is usable only when **every** 2011 district contributing territory to it is wholly and deterministically assigned to that same parent. Partial-parent reconstructions and fractional territorial allocations are excluded. Counts are summed first and shares are recomputed afterward; district shares are never averaged.
 
-The same complete-parent bridge is now shared with the Census C-13 age-denominator module so administrative-count harmonization has one deterministic contract.
+The same complete-parent bridge and shared Census count-pooling helpers are used by the Census C-13 age-denominator and B-series worker-structure modules so administrative-count harmonization has one deterministic contract.
 
 
 ## Predetermined migration validity diagnostics
