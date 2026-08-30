@@ -865,6 +865,17 @@ core_pipeline_targets <- list(
     format = "file"
   ),
   tar_target(
+    helms_lim_linguistic_distance_file,
+    "data/metadata/helms_lim_linguistic_distance_1991.csv",
+    format = "file"
+  ),
+  tar_target(
+    helms_lim_linguistic_distance_1991,
+    read_helms_lim_linguistic_distance_1991(
+      helms_lim_linguistic_distance_file
+    )
+  ),
+  tar_target(
     historical_linguistic_kumar_somanathan_geography,
     build_historical_linguistic_kumar_somanathan_geography(
       district_lineage_sources$kumar_somanathan_1991_2001,
@@ -890,6 +901,21 @@ core_pipeline_targets <- list(
     diag_ext_historical_linguistic_exact_transition_comparison,
     save_historical_linguistic_exact_transition_comparison(
       historical_linguistic_exact_transition_comparison
+    ),
+    format = "file"
+  ),
+  tar_target(
+    historical_linguistic_consensus_geography,
+    build_historical_linguistic_consensus_geography(
+      historical_linguistic_geography_1991_2001,
+      historical_linguistic_kumar_somanathan_geography,
+      historical_linguistic_exact_transition_comparison
+    )
+  ),
+  tar_target(
+    diag_ext_historical_linguistic_consensus_geography,
+    save_historical_linguistic_consensus_geography(
+      historical_linguistic_consensus_geography
     ),
     format = "file"
   ),
@@ -1532,12 +1558,6 @@ extended_diagnostic_targets <- list(
     )
   ),
   tar_target(
-    helms_lim_linguistic_distance_file,
-    "data/metadata/helms_lim_linguistic_distance_1991.csv",
-    format = "file"
-  ),
-  tar_target(helms_lim_linguistic_distance_1991, read_helms_lim_linguistic_distance_1991(helms_lim_linguistic_distance_file)),
-  tar_target(
     helms_lim_linguistic_distance_benchmark,
     build_helms_lim_linguistic_distance_benchmark(
       helms_lim_linguistic_distance_1991,
@@ -1654,6 +1674,27 @@ extended_diagnostic_targets <- list(
     save_vanneman_amalgamation_feasibility(
       historical_vanneman_kumar_somanathan_amalgamation_feasibility,
       prefix = "vanneman_kumar_somanathan_amalgamation_feasibility"
+    ),
+    format = "file"
+  ),
+  tar_target(
+    historical_vanneman_consensus_membership,
+    build_vanneman_harmonized_membership(
+      historical_vanneman_panel4_dist91_crosswalk,
+      historical_linguistic_consensus_geography$harmonized_crosswalk
+    )
+  ),
+  tar_target(
+    historical_vanneman_consensus_amalgamation_feasibility,
+    build_vanneman_amalgamation_feasibility(
+      historical_vanneman_consensus_membership
+    )
+  ),
+  tar_target(
+    diag_ext_historical_vanneman_consensus_amalgamation_feasibility,
+    save_vanneman_amalgamation_feasibility(
+      historical_vanneman_consensus_amalgamation_feasibility,
+      prefix = "vanneman_consensus_amalgamation_feasibility"
     ),
     format = "file"
   ),
