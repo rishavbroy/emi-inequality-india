@@ -1249,10 +1249,10 @@ test_that("geography coverage normalization preserves keyed unit IDs", {
   )
 
   expect_identical(names(out), names(input))
-  expect_equal(out[1:2], c(1, 1))
-  expect_equal(out[3:4], c(1.01, .75))
+  expect_equal(unname(out[1:2]), c(1, 1))
+  expect_equal(unname(out[3:4]), c(1.01, .75))
   expect_equal(
-    out[c("census1991__01__01", "census1991__01__04")],
+    unname(out[c("census1991__01__01", "census1991__01__04")]),
     c(1, .75)
   )
   expect_error(
