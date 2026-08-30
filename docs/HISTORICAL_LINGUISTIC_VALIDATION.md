@@ -137,6 +137,24 @@ the other. Vanneman feasibility is therefore reported separately for strict
 SHRUG-exact regions and Kumar--Somanathan exact-name regions before any combined
 geography is considered.
 
+The separation is enforced by a concordance layer rather than a union.
+`historical_linguistic_exact_transition_edge_comparison.csv` reports exact
+source-target edge overlap and the absolute difference in source-population
+transfer shares where both sources identify the same edge.
+`historical_linguistic_exact_transition_source_comparison.csv` compares the
+**entire target set** of every 1991 source district observed by either graph.
+A source is labeled `exact_target_set_agreement` only when both graphs identify
+the same set of 2001 descendants; differing descendant sets are labeled
+`target_set_conflict`. The summary counts agreements and conflicts and reports
+shared-edge weight differences.
+
+This comparison is deliberately not an adjudication rule. A Kumar--Somanathan
+edge is not promoted because SHRUG is missing it, and a SHRUG edge is not
+discarded because the exact-name source cannot resolve a renamed district.
+Combining evidence into a single reviewed transition graph is a later step that
+must define how agreements, source-only edges, and genuine conflicts are
+handled explicitly.
+
 This benchmark uses the first transfer margin reported by Kumar--Somanathan:
 the share of each 1991 parent district that went to each 2001 child. Their paper
 also reports the reverse margin (the share of each parent in a child district),
