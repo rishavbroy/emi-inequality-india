@@ -1385,3 +1385,210 @@ test_that("consensus geography excludes unilateral source agreement", {
 
   expect_equal(nrow(consensus), 0L)
 })
+
+
+test_that("geography allocation semantics keep human and area weights distinct", {
+  semantics <- geography_allocation_semantics_registry()
+  expect_invisible(validate_geography_allocation_semantics(semantics))
+
+  human <- semantics[
+    semantics$semantic_id == "extensive_human",
+    ,
+    drop = FALSE
+  ]
+  land <- semantics[
+    semantics$semantic_id == "land_area",
+    ,
+    drop = FALSE
+  ]
+  survey <- semantics[
+    semantics$semantic_id == "survey_microdata",
+    ,
+    drop = FALSE
+  ]
+
+  expect_true(human$population_fractional_allowed)
+  expect_false(human$area_fractional_allowed)
+  expect_true(land$area_fractional_allowed)
+  expect_false(land$population_fractional_allowed)
+  expect_identical(
+    survey$aggregation_operation,
+    "reweight_records"
+  )
+
+  invalid <- semantics
+  invalid$area_fractional_allowed[
+    invalid$semantic_id == "extensive_human"
+  ] <- TRUE
+  expect_error(
+    validate_geography_allocation_semantics(invalid),
+    "interchangeable"
+  )
+})
+
+test_that("geography measure families require sufficient-statistic semantics", {
+  families <- geography_measure_family_registry()
+  semantics <- geography_allocation_semantics_registry()
+
+  expect_invisible(
+    validate_geography_measure_families(families, semantics)
+  )
+  expect_identical(
+    families$sufficient_statistics[
+      families$measure_family == "eventual_emie"
+    ],
+    "enrolled_weight+eligible_weight"
+  )
+  expect_identical(
+    families$sufficient_statistics[
+      families$measure_family == "linguistic_distance"
+    ],
+    "speaker_count+distance_components"
+  )
+  expect_identical(
+    families$semantic_id[
+      families$measure_family == "consumption_welfare"
+    ],
+    "survey_microdata"
+  )
+
+  invalid <- families
+  invalid$semantic_id[[1L]] <- "unknown"
+  expect_error(
+    validate_geography_measure_families(invalid, semantics),
+    "unknown semantics"
+  )
+})
+
+test_that("geography specifications expose assumptions instead of calendar rules", {
+  specs <- geography_specification_registry()
+  expect_invisible(validate_geography_specifications(specs))
+  expect_setequal(
+    specs$geography_spec_id,
+    c(
+      "G0_exact_only",
+      "G1_deterministic_amalgamation",
+      "G2_population_interpolated",
+      "G3_area_interpolated",
+      "G4_reviewed_fractional"
+    )
+  )
+  expect_false(
+    specs$allows_fractional_allocation[
+      specs$geography_spec_id == "G1_deterministic_amalgamation"
+    ]
+  )
+  expect_identical(
+    specs$fractional_basis[
+      specs$geography_spec_id == "G2_population_interpolated"
+    ],
+    "population"
+  )
+  expect_identical(
+    specs$fractional_basis[
+      specs$geography_spec_id == "G3_area_interpolated"
+    ],
+    "area"
+  )
+})
+
+test_that("multi-vintage geography connects adjacent transition graphs", {
+  transition <- function(
+      source_vintage, target_vintage,
+      source_unit, target_unit) {
+    data.frame(
+      source_vintage = source_vintage,
+      target_vintage = target_vintage,
+      source_state_code = "01",
+      source_district_code = sub(".*__", "", source_unit),
+      source_unit_id = source_unit,
+      target_state_code = "01",
+      target_district_code = sub(".*__", "", target_unit),
+      target_unit_id = target_unit,
+      population_weight = NA_real_,
+      area_weight = NA_real_,
+      source_coverage = 1,
+      target_coverage = 1,
+      mapping_class = "test",
+      evidence_source = "test",
+      stringsAsFactors = FALSE
+    )
+  }
+
+  t91 <- transition(
+    1991L, 2001L,
+    "census1991__01__01",
+    "census2001__01__01"
+  )
+  t11 <- transition(
+    2011L, 2001L,
+    "census2011__01__001",
+    "census2001__01__01"
+  )
+
+  out <- build_multivintage_geography_inventory(
+    list(old = t91, recent = t11),
+    required_vintages = c(1991L, 2001L, 2011L)
+  )
+
+  expect_equal(nrow(out$component_summary), 1L)
+  expect_true(out$component_summary$spans_all_required_vintages)
+  expect_equal(out$component_summary$n_units_1991, 1L)
+  expect_equal(out$component_summary$n_units_2001, 1L)
+  expect_equal(out$component_summary$n_units_2011, 1L)
+  expect_setequal(
+    out$transitions$transition_id,
+    c("old", "recent")
+  )
+})
+
+test_that("multi-vintage membership collapses bridge units without duplication", {
+  first <- data.frame(
+    harmonized_component_id = "c1",
+    vintage = 2001L,
+    state_code = "01",
+    district_code = "01",
+    unit_id = "census2001__01__01",
+    side = "target",
+    stringsAsFactors = FALSE
+  )
+  second <- first
+  second$side <- "source"
+
+  out <- collapse_multivintage_component_membership(
+    rbind(first, second)
+  )
+
+  expect_equal(nrow(out), 1L)
+  expect_identical(out$side, "bridge")
+})
+
+test_that("geography harmonization saver exposes policy and graph diagnostics", {
+  semantics <- geography_allocation_semantics_registry()
+  families <- geography_measure_family_registry()
+  specs <- geography_specification_registry()
+  empty <- list(
+    transitions = data.frame(status = "test"),
+    components = data.frame(status = "test"),
+    component_summary = data.frame(status = "test"),
+    transition_summary = data.frame(status = "test")
+  )
+  dir <- tempfile()
+
+  paths <- save_geography_harmonization_foundation(
+    empty, semantics, families, specs, directory = dir
+  )
+
+  expect_setequal(
+    basename(paths),
+    c(
+      "allocation_semantics.csv",
+      "measure_allocation_families.csv",
+      "geography_specifications.csv",
+      "multivintage_transitions.csv",
+      "multivintage_components.csv",
+      "multivintage_component_summary.csv",
+      "multivintage_transition_summary.csv"
+    )
+  )
+})
