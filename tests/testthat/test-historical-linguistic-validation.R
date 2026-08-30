@@ -817,3 +817,64 @@ test_that("Kumar-Somanathan transition never fuzzy-matches labels", {
   )
   expect_equal(nrow(out$canonical_transition), 0L)
 })
+
+
+test_that("Kumar-Somanathan exact transition declares population input contract", {
+  carveouts <- data.frame(
+    district_1991 = "Old A",
+    district_2001 = "Alpha",
+    pct_01in91 = 100,
+    pct_91in01 = 100,
+    stringsAsFactors = FALSE
+  )
+  historical <- data.frame(
+    state_code_1991 = "01",
+    district_code_1991 = "01",
+    district_name_helms_lim = "Old A",
+    stringsAsFactors = FALSE
+  )
+  admin <- data.frame(
+    state_code = "01",
+    district_code = "01",
+    district_std = "Alpha",
+    stringsAsFactors = FALSE
+  )
+  expect_error(
+    historical_linguistic_kumar_somanathan_transition(
+      carveouts, historical, admin
+    ),
+    "pop_1991"
+  )
+})
+
+test_that("exact transition comparison keeps evidence sources separate", {
+  transition <- data.frame(
+    source_vintage = 1991L,
+    target_vintage = 2001L,
+    source_state_code = "01",
+    source_district_code = "01",
+    source_unit_id = "s1",
+    target_state_code = "01",
+    target_district_code = "01",
+    target_unit_id = "t1",
+    population_weight = 1,
+    area_weight = NA_real_,
+    source_coverage = 1,
+    target_coverage = 1,
+    mapping_class = "test",
+    evidence_source = "shrug",
+    stringsAsFactors = FALSE
+  )
+  ks <- transition
+  ks$evidence_source <- "kumar"
+  out <- build_historical_linguistic_exact_transition_comparison(
+    list(canonical_transition = transition),
+    list(canonical_transition = ks)
+  )
+  expect_identical(out$summary$reference_label, "shrug_shrid")
+  expect_identical(
+    out$summary$candidate_label,
+    "kumar_somanathan_exact_names"
+  )
+  expect_equal(out$summary$n_exact_target_set_agreements, 1L)
+})

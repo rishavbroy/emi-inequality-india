@@ -367,7 +367,7 @@ historical_linguistic_kumar_somanathan_transition <- function(
     carveouts, historical_name_registry, admin_2001) {
   carveouts <- safe_df(carveouts)
   required <- c(
-    "district_1991", "district_2001",
+    "district_1991", "pop_1991", "district_2001",
     "pct_01in91", "pct_91in01"
   )
   missing <- setdiff(required, names(carveouts))
@@ -442,18 +442,8 @@ historical_linguistic_kumar_somanathan_transition <- function(
   if (!nrow(matched)) {
     return(list(
       edges = edges,
-      canonical_transition = data.frame(
-        source_vintage = integer(), target_vintage = integer(),
-        source_state_code = character(), source_district_code = character(),
-        source_unit_id = character(),
-        target_state_code = character(), target_district_code = character(),
-        target_unit_id = character(),
-        population_weight = numeric(), area_weight = numeric(),
-        source_coverage = numeric(), target_coverage = numeric(),
-        mapping_class = character(), evidence_source = character(),
-        source_degree = integer(), target_degree = integer(),
-        topology = character(),
-        stringsAsFactors = FALSE
+      canonical_transition = empty_geography_transition(
+        annotated = TRUE
       )
     ))
   }
@@ -605,6 +595,48 @@ save_historical_linguistic_kumar_somanathan_geography <- function(
   write_diagnostic_csv(
     x$harmonized_crosswalk, paths[["harmonized_crosswalk"]]
   )
+  write_diagnostic_csv(x$summary, paths[["summary"]])
+  unname(paths)
+}
+
+build_historical_linguistic_exact_transition_comparison <- function(
+    shrug_geography, kumar_somanathan_geography) {
+  if (!"canonical_transition" %in% names(shrug_geography)) {
+    stop(
+      "SHRUG historical geography lacks canonical_transition.",
+      call. = FALSE
+    )
+  }
+  if (!"canonical_transition" %in% names(kumar_somanathan_geography)) {
+    stop(
+      "Kumar-Somanathan geography lacks canonical_transition.",
+      call. = FALSE
+    )
+  }
+  compare_geography_transitions(
+    shrug_geography$canonical_transition,
+    kumar_somanathan_geography$canonical_transition,
+    reference_label = "shrug_shrid",
+    candidate_label = "kumar_somanathan_exact_names"
+  )
+}
+
+save_historical_linguistic_exact_transition_comparison <- function(
+    x, directory = "outputs/diagnostics/extended/instrument_relevance") {
+  dir.create(directory, recursive = TRUE, showWarnings = FALSE)
+  paths <- c(
+    edges = file.path(
+      directory, "historical_linguistic_exact_transition_edge_comparison.csv"
+    ),
+    sources = file.path(
+      directory, "historical_linguistic_exact_transition_source_comparison.csv"
+    ),
+    summary = file.path(
+      directory, "historical_linguistic_exact_transition_comparison_summary.csv"
+    )
+  )
+  write_diagnostic_csv(x$edges, paths[["edges"]])
+  write_diagnostic_csv(x$sources, paths[["sources"]])
   write_diagnostic_csv(x$summary, paths[["summary"]])
   unname(paths)
 }

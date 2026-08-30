@@ -15,6 +15,33 @@ geography_transition_columns <- function() {
   )
 }
 
+empty_geography_transition <- function(annotated = FALSE) {
+  out <- data.frame(
+    source_vintage = integer(),
+    target_vintage = integer(),
+    source_state_code = character(),
+    source_district_code = character(),
+    source_unit_id = character(),
+    target_state_code = character(),
+    target_district_code = character(),
+    target_unit_id = character(),
+    population_weight = numeric(),
+    area_weight = numeric(),
+    source_coverage = numeric(),
+    target_coverage = numeric(),
+    mapping_class = character(),
+    evidence_source = character(),
+    stringsAsFactors = FALSE
+  )
+  out <- out[geography_transition_columns()]
+  if (isTRUE(annotated)) {
+    out$source_degree <- integer()
+    out$target_degree <- integer()
+    out$topology <- character()
+  }
+  out
+}
+
 geography_transition_unit_id <- function(vintage, state_code, district_code) {
   paste(
     paste0("census", as.integer(vintage)),
@@ -483,4 +510,143 @@ summarize_harmonized_region_crosswalk <- function(crosswalk) {
       )
     }
   ))
+}
+
+
+compare_geography_transitions <- function(
+    reference, candidate,
+    reference_label = "reference",
+    candidate_label = "candidate") {
+  ref <- safe_df(reference)
+  cand <- safe_df(candidate)
+  validate_geography_transition(ref)
+  validate_geography_transition(cand)
+
+  edge_fields <- c(
+    "source_unit_id", "target_unit_id",
+    "population_weight", "mapping_class", "evidence_source"
+  )
+  ref_edge <- ref[edge_fields]
+  cand_edge <- cand[edge_fields]
+  names(ref_edge)[3:5] <- paste0(
+    c("population_weight", "mapping_class", "evidence_source"),
+    "_reference"
+  )
+  names(cand_edge)[3:5] <- paste0(
+    c("population_weight", "mapping_class", "evidence_source"),
+    "_candidate"
+  )
+  edges <- merge(
+    ref_edge, cand_edge,
+    by = c("source_unit_id", "target_unit_id"),
+    all = TRUE, sort = FALSE
+  )
+  ref_present <- !is.na(edges$evidence_source_reference)
+  cand_present <- !is.na(edges$evidence_source_candidate)
+  edges$edge_status <- ifelse(
+    ref_present & cand_present,
+    "both",
+    ifelse(ref_present, "reference_only", "candidate_only")
+  )
+  edges$population_weight_abs_diff <- ifelse(
+    ref_present & cand_present &
+      is.finite(num(edges$population_weight_reference)) &
+      is.finite(num(edges$population_weight_candidate)),
+    abs(
+      num(edges$population_weight_reference) -
+        num(edges$population_weight_candidate)
+    ),
+    NA_real_
+  )
+
+  # Avoid reconstructing source IDs from values inside split().
+  source_signature <- function(x) {
+    ids <- unique(plain_chr(x$source_unit_id))
+    safe_bind_rows(lapply(ids, function(source_id) {
+      targets <- sort(unique(
+        plain_chr(x$target_unit_id[x$source_unit_id == source_id])
+      ))
+      data.frame(
+        source_unit_id = source_id,
+        target_set = paste(targets, collapse = "|"),
+        n_targets = length(targets),
+        stringsAsFactors = FALSE
+      )
+    }))
+  }
+
+  ref_source <- source_signature(ref)
+  cand_source <- source_signature(cand)
+  names(ref_source)[2:3] <- c(
+    "target_set_reference", "n_targets_reference"
+  )
+  names(cand_source)[2:3] <- c(
+    "target_set_candidate", "n_targets_candidate"
+  )
+  sources <- merge(
+    ref_source, cand_source,
+    by = "source_unit_id",
+    all = TRUE, sort = FALSE
+  )
+  ref_source_present <- !is.na(sources$target_set_reference)
+  cand_source_present <- !is.na(sources$target_set_candidate)
+  sources$source_status <- ifelse(
+    ref_source_present & cand_source_present,
+    ifelse(
+      sources$target_set_reference == sources$target_set_candidate,
+      "exact_target_set_agreement",
+      "target_set_conflict"
+    ),
+    ifelse(
+      ref_source_present,
+      "reference_only",
+      "candidate_only"
+    )
+  )
+
+  shared_edges <- edges[edges$edge_status == "both", , drop = FALSE]
+  shared_sources <- sources[
+    ref_source_present & cand_source_present,
+    ,
+    drop = FALSE
+  ]
+  summary <- data.frame(
+    reference_label = reference_label,
+    candidate_label = candidate_label,
+    n_reference_edges = nrow(ref),
+    n_candidate_edges = nrow(cand),
+    n_shared_edges = nrow(shared_edges),
+    n_reference_sources = length(unique(ref$source_unit_id)),
+    n_candidate_sources = length(unique(cand$source_unit_id)),
+    n_shared_sources = nrow(shared_sources),
+    n_exact_target_set_agreements = sum(
+      shared_sources$source_status == "exact_target_set_agreement"
+    ),
+    n_target_set_conflicts = sum(
+      shared_sources$source_status == "target_set_conflict"
+    ),
+    mean_shared_edge_weight_abs_diff = if (
+        any(is.finite(shared_edges$population_weight_abs_diff))) {
+      mean(
+        shared_edges$population_weight_abs_diff[
+          is.finite(shared_edges$population_weight_abs_diff)
+        ]
+      )
+    } else {
+      NA_real_
+    },
+    max_shared_edge_weight_abs_diff = if (
+        any(is.finite(shared_edges$population_weight_abs_diff))) {
+      max(
+        shared_edges$population_weight_abs_diff[
+          is.finite(shared_edges$population_weight_abs_diff)
+        ]
+      )
+    } else {
+      NA_real_
+    },
+    stringsAsFactors = FALSE
+  )
+
+  list(edges = edges, sources = sources, summary = summary)
 }

@@ -1172,3 +1172,65 @@ test_that("harmonized crosswalk never duplicates a vintage geography unit", {
     "cannot belong to multiple"
   )
 })
+
+
+test_that("geography transition comparison separates agreement from conflict", {
+  base <- data.frame(
+    source_vintage = 1991L,
+    target_vintage = 2001L,
+    source_state_code = c("01", "01", "01"),
+    source_district_code = c("01", "01", "02"),
+    source_unit_id = c("s1", "s1", "s2"),
+    target_state_code = c("01", "01", "01"),
+    target_district_code = c("01", "02", "03"),
+    target_unit_id = c("t1", "t2", "t3"),
+    population_weight = c(.6, .4, 1),
+    area_weight = NA_real_,
+    source_coverage = 1,
+    target_coverage = 1,
+    mapping_class = "test",
+    evidence_source = "reference",
+    stringsAsFactors = FALSE
+  )
+  candidate <- base
+  candidate$evidence_source <- "candidate"
+  candidate$population_weight <- c(.61, .39, 1)
+  candidate <- candidate[c(1, 3), , drop = FALSE]
+  candidate <- rbind(
+    candidate,
+    transform(
+      candidate[1, , drop = FALSE],
+      source_district_code = "01",
+      source_unit_id = "s1",
+      target_district_code = "04",
+      target_unit_id = "t4",
+      population_weight = .39
+    )
+  )
+
+  out <- compare_geography_transitions(base, candidate)
+
+  s1 <- out$sources[out$sources$source_unit_id == "s1", , drop = FALSE]
+  s2 <- out$sources[out$sources$source_unit_id == "s2", , drop = FALSE]
+  expect_identical(s1$source_status, "target_set_conflict")
+  expect_identical(s2$source_status, "exact_target_set_agreement")
+  expect_equal(out$summary$n_shared_sources, 2L)
+  expect_equal(out$summary$n_exact_target_set_agreements, 1L)
+  expect_equal(out$summary$n_target_set_conflicts, 1L)
+  expect_true(any(
+    out$edges$edge_status == "both" &
+      is.finite(out$edges$population_weight_abs_diff)
+  ))
+})
+
+test_that("empty geography transition uses the canonical schema", {
+  out <- empty_geography_transition(annotated = TRUE)
+  expect_identical(
+    names(out)[seq_along(geography_transition_columns())],
+    geography_transition_columns()
+  )
+  expect_true(all(
+    c("source_degree", "target_degree", "topology") %in% names(out)
+  ))
+  expect_equal(nrow(out), 0L)
+})
