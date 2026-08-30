@@ -48,18 +48,29 @@ test_that("Census D02 rejects inconsistent within-state migration accounting", {
   )
 })
 
-test_that("Census 2011 D03 reasons form an exhaustive migrant partition", {
-  raw <- data.frame(matrix("", nrow = 1, ncol = 32), stringsAsFactors = FALSE)
+test_that("Census 2011 D03 reasons and recent-work validation rows preserve accounting", {
+  raw <- data.frame(matrix("", nrow = 7, ncol = 32), stringsAsFactors = FALSE)
   raw[, 1] <- "D0603"
   raw[, 2] <- "09"
   raw[, 3] <- "132"
   raw[, 4] <- "Alpha"
   raw[, 5] <- "Total"
-  raw[, 6] <- "All durations of residence"
-  raw[, 7] <- "Total"
-  raw[, 8] <- "Total"
-  raw[, 9] <- 100
-  raw[, c(12, 15, 18, 21, 24, 27, 30)] <- c(20, 5, 10, 30, 5, 20, 10)
+
+  raw[1, 6] <- "All durations of residence"
+  raw[1, 7] <- "Total"
+  raw[1, 8] <- "Total"
+  raw[1, 9] <- 100
+  raw[1, c(12, 15, 18, 21, 24, 27, 30)] <- c(20, 5, 10, 30, 5, 20, 10)
+
+  recent <- expand.grid(
+    duration = census_recent_duration_labels(),
+    type = c("Rural", "Urban"),
+    stringsAsFactors = FALSE
+  )
+  raw[2:7, 6] <- recent$duration
+  raw[2:7, 7] <- "Last residence within India"
+  raw[2:7, 8] <- recent$type
+  raw[2:7, 12] <- c(1, 2, 3, 4, 5, 6)
 
   parsed <- parse_census_d03_2011_sheet(raw)
   out <- summarise_census_d03_2011_district(parsed)
@@ -70,13 +81,25 @@ test_that("Census 2011 D03 reasons form an exhaustive migrant partition", {
     "work_employment", "business", "education", "marriage",
     "moved_after_birth", "moved_with_household", "other_reason"
   )], use.names = FALSE)), 100)
+  expect_equal(out$recent_0_9_work_employment_within_india_classified_origin, 21)
   expect_equal(measures$work_employment_share_among_migrants, 0.2)
   expect_equal(measures$education_share_among_migrants, 0.1)
 
-  parsed$other_reason <- parsed$other_reason - 1
+  parsed$other_reason[parsed$duration == "All durations of residence"] <- 9
   expect_error(
     summarise_census_d03_2011_district(parsed),
     "do not sum exactly"
+  )
+
+  incomplete <- parsed[
+    !(parsed$duration == census_recent_duration_labels()[[1L]] &
+      parsed$last_residence_type == "Rural"),
+    ,
+    drop = FALSE
+  ]
+  expect_error(
+    summarise_census_d03_2011_district(incomplete),
+    "recent-work validation rows are incomplete"
   )
 })
 
@@ -206,7 +229,9 @@ test_that("Census D03 harmonization preserves its empty output schema", {
     state_code = "01", district_code = "008", district_name = "Partial child",
     census_year = 2011L, migrants_total = 100, work_employment = 20,
     business = 5, education = 10, marriage = 30, moved_after_birth = 5,
-    moved_with_household = 20, other_reason = 10, stringsAsFactors = FALSE
+    moved_with_household = 20, other_reason = 10,
+    recent_0_9_work_employment_within_india_classified_origin = 12,
+    stringsAsFactors = FALSE
   )
   transition <- data.frame(
     state_code_2011 = "01", district_code_2011 = "008",
@@ -231,4 +256,170 @@ test_that("Census 2001 D03 is not exposed as a district migration source", {
     census_migration_manifest_files(build_paths(tempdir()), 2001, "D03"),
     "do not provide district rows"
   )
+})
+
+test_that("Census 2011 D04 retains a complete education partition and explicit residual", {
+  raw <- data.frame(matrix("", nrow = 1, ncol = 32), stringsAsFactors = FALSE)
+  raw[, 1] <- "D0904"
+  raw[, 2] <- "09"
+  raw[, 3] <- "132"
+  raw[, 4] <- "Alpha"
+  raw[, 5] <- "Total"
+  raw[, 6] <- "All durations of residence"
+  raw[, 7] <- "All ages"
+  raw[, 8] <- "Total"
+  raw[, c(9, 12, 15, 18, 21, 24, 27, 30)] <- c(100, 20, 80, 30, 20, 5, 15, 5)
+
+  out <- summarise_census_d04_2011_district(parse_census_d04_2011_sheet(raw))
+  measures <- add_census_d04_education_shares(out)
+
+  expect_equal(out$migrants_total, out$migrants_illiterate + out$migrants_literate)
+  expect_equal(out$migrants_literate_education_not_classified, 5)
+  expect_equal(measures$literate_share_among_migrants, 0.8)
+  expect_equal(measures$graduate_or_technical_degree_share_among_migrants, 0.2)
+  expect_equal(measures$technical_credential_share_among_migrants, 0.1)
+
+  raw[, 15] <- 79
+  expect_error(
+    summarise_census_d04_2011_district(parse_census_d04_2011_sheet(raw)),
+    "inconsistent migrant education counts"
+  )
+})
+
+test_that("Census 2011 D07 pools four origin cells before computing skill shares", {
+  raw <- data.frame(matrix("", nrow = 4, ncol = 31), stringsAsFactors = FALSE)
+  raw[, 1] <- "D1207"
+  raw[, 2] <- "09"
+  raw[, 3] <- "132"
+  raw[, 4] <- "Alpha"
+  raw[, 5] <- "Total"
+  raw[, 6] <- unname(census_d07_origin_labels())
+  raw[, 7] <- "All ages"
+  raw[, 8] <- c(10, 20, 30, 40)
+  raw[, 11] <- c(2, 4, 6, 8)
+  raw[, 14] <- c(8, 16, 24, 32)
+  raw[, 17] <- c(3, 6, 9, 12)
+  raw[, 20] <- c(2, 4, 6, 8)
+  raw[, 23] <- c(1, 2, 3, 4)
+  raw[, 26] <- c(1, 2, 3, 4)
+  raw[, 29] <- c(1, 1, 1, 1)
+
+  out <- summarise_census_d07_2011_district(parse_census_d07_2011_sheet(raw))
+  measures <- add_census_d07_work_migrant_shares(out)
+
+  expect_equal(out$recent_work_migrants_total, 100)
+  expect_equal(out$recent_work_migrants_within_state, 30)
+  expect_equal(out$recent_work_migrants_outside_state, 70)
+  expect_equal(out$recent_work_migrants_rural_origin, 40)
+  expect_equal(out$recent_work_migrants_urban_origin, 60)
+  expect_equal(measures$outside_state_share_among_recent_work_migrants, 0.7)
+  expect_equal(measures$rural_origin_share_among_recent_work_migrants, 0.4)
+  expect_equal(
+    measures$graduate_or_technical_degree_share_among_recent_work_migrants,
+    (10 + 4) / 100
+  )
+
+  incomplete <- raw[-1L, , drop = FALSE]
+  expect_error(
+    summarise_census_d07_2011_district(parse_census_d07_2011_sheet(incomplete)),
+    "missing one or more work-migrant origin rows"
+  )
+})
+
+test_that("Census migration cross-table validators compare observed source counts", {
+  d02 <- data.frame(
+    state_code = c("09", "09"), district_code = c("132", "133"),
+    migrants_total = c(100, 200), stringsAsFactors = FALSE
+  )
+  d04 <- d02
+  expect_equal(
+    validate_census_2011_d02_d04_totals(d02, d04)$max_abs_difference,
+    0
+  )
+
+  d03 <- data.frame(
+    state_code = c("09", "09"), district_code = c("132", "133"),
+    recent_0_9_work_employment_within_india_classified_origin = c(40, 80),
+    stringsAsFactors = FALSE
+  )
+  d07 <- data.frame(
+    state_code = c("09", "09"), district_code = c("132", "133"),
+    recent_work_migrants_total = c(40, 80), stringsAsFactors = FALSE
+  )
+  expect_equal(
+    validate_census_2011_d03_d07_recent_work(d03, d07)$max_abs_difference,
+    0
+  )
+
+  d07$recent_work_migrants_total[[2L]] <- 79
+  expect_error(
+    validate_census_2011_d03_d07_recent_work(d03, d07),
+    "counts disagree or district coverage differs"
+  )
+})
+
+test_that("Census 2001 migration validity inputs cover the IV panel exactly", {
+  panel <- data.frame(
+    state_code_2001 = c("09", "09"),
+    district_code_2001 = c("01", "02"),
+    outcome = c(1, 2),
+    stringsAsFactors = FALSE
+  )
+  d02 <- data.frame(
+    state_code = c("09", "09"), district_code = c("01", "02"),
+    migrant_stock_share_population = c(0.1, 0.2),
+    recent_0_9_migrant_share_population = c(0.03, 0.04),
+    interstate_migrant_share_population = c(0.01, 0.02),
+    other_district_same_state_share_among_migrants = c(0.2, 0.3),
+    stringsAsFactors = FALSE
+  )
+  out <- prepare_census_migration_validity_panel(panel, d02)
+  expect_equal(nrow(out), nrow(panel))
+  expect_equal(out$migrant_stock_share_population, c(0.1, 0.2))
+
+  expect_error(
+    prepare_census_migration_validity_panel(panel, d02[-1L, , drop = FALSE]),
+    "do not cover the full IV panel"
+  )
+})
+
+test_that("migration balance diagnostics apply Holm correction within specification", {
+  balance <- data.frame(
+    specification_id = rep(c("a", "b"), each = 3),
+    p.value = c(0.01, 0.03, 0.20, 0.01, NA, 0.5),
+    status = c(rep("estimated", 4), "not_estimated", "estimated"),
+    stringsAsFactors = FALSE
+  )
+  out <- add_census_migration_balance_multiplicity(balance)
+  expect_equal(out$p_holm_within_spec[1:3], stats::p.adjust(balance$p.value[1:3], "holm"))
+  expect_true(is.na(out$p_holm_within_spec[[5L]]))
+})
+
+test_that("migration first-stage sensitivity uses one common sample for baseline and augmented controls", {
+  set.seed(123)
+  n <- 120L
+  panel <- data.frame(
+    state_code_2001 = sprintf("%02d", rep(1:12, each = 10)),
+    district_code_2001 = rep(sprintf("%02d", 1:10), 12),
+    region = rep(panel_region_levels(), length.out = n),
+    ling_distance_nonzero_mean = stats::rnorm(n),
+    stringsAsFactors = FALSE
+  )
+  for (variable in census_2001_diagnostic_controls()) {
+    panel[[variable]] <- stats::rnorm(n)
+  }
+  for (variable in census_migration_balance_variables()) {
+    panel[[variable]] <- stats::runif(n, 0, 0.4)
+  }
+  treatment <- preferred_iv_variables()$treatment
+  panel[[treatment]] <- 0.4 * panel$ling_distance_nonzero_mean +
+    0.2 * panel$migrant_stock_share_population + stats::rnorm(n)
+
+  out <- estimate_census_migration_first_stage_sensitivity(panel)
+  expect_setequal(out$migration_adjustment, c("baseline", "plus_migration"))
+  expect_equal(nrow(out), 4L)
+  expect_equal(length(unique(out$n)), 1L)
+  expect_true(all(out$n_migration_controls[out$migration_adjustment == "plus_migration"] == 3L))
+  expect_true(all(is.finite(out$joint_excluded_f)))
+  expect_true(all(is.finite(out$partial_r_squared)))
 })
