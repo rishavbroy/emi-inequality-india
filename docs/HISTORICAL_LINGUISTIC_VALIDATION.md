@@ -926,3 +926,25 @@ used as targeted sensitivities, while the broad-source regressions answer
 whether the main instrument and the published Shastry-derived 1991 measure
 predict predetermined 1991 district characteristics at the largest defensible
 support already available in the project.
+
+
+### Historical-parent predictor completeness
+
+Historical-parent geography eligibility is separate from later-predictor
+availability. A reviewed 1991 parent with a complete, exclusive descendant
+partition remains a valid historical unit even if one Census-2001 descendant
+lacks the EMIE survey components or the linguistic-distance components.
+
+Parent predictors are therefore constructed only when **all descendants needed
+for that predictor are complete**. Missing one EMIE numerator/denominator makes
+parent EMIE unavailable but does not remove the parent from the LD_2001
+diagnostic; missing one descendant's linguistic speaker/share components makes
+parent LD_2001 unavailable but does not remove the parent from the EMIE
+diagnostic. Partial descendants are never silently summed with `na.rm = TRUE`.
+
+`vanneman_parent_pretrend_descendant_completeness.csv` records, for every
+historical parent, the number of descendants and the number complete for EMIE
+and LD_2001. The ordinary predictor-specific sample-coverage output then reports
+the resulting estimable N. This separation prevents ordinary source missingness
+from becoming a global geography failure and makes any remaining sample-size
+loss attributable to a specific predictor rather than to the lineage itself.
