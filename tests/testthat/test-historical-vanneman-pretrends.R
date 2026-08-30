@@ -750,7 +750,7 @@ test_that("Vanneman amalgamation sums counts rather than averaging district shar
     harmonized_region_id = "geo_component_0001",
     vintage = c(1991L, 1991L, 2001L),
     panel_unit_id = c("a", "b", NA),
-    state_code_2001 = "01",
+    harmonized_state_code_2001 = "01",
     vanneman_amalgamation_eligible = TRUE,
     stringsAsFactors = FALSE
   )
@@ -800,4 +800,107 @@ test_that("Vanneman support comparison accepts non-monotone amalgamated region c
     drop = FALSE
   ]
   expect_equal(amalgamated$gain_vs_strict_full_n, -2L)
+})
+
+
+test_that("Vanneman amalgamation keeps harmonized state distinct from level state", {
+  years <- c(1961L, 1971L, 1981L, 1991L)
+  levels <- safe_bind_rows(lapply(years, function(year) {
+    data.frame(
+      panel_unit_id = "a",
+      year = year,
+      version = 5L,
+      population = 100,
+      rural_population = 80,
+      main_workers = 40,
+      farm_workers = 20,
+      literates = 50,
+      primary_plus = 20,
+      matriculate_plus = 10,
+      state_code_2001 = "99",
+      stringsAsFactors = FALSE
+    )
+  }))
+  membership <- data.frame(
+    harmonized_region_id = "geo_component_0001",
+    vintage = 1991L,
+    panel_unit_id = "a",
+    harmonized_state_code_2001 = "01",
+    vanneman_amalgamation_eligible = TRUE,
+    stringsAsFactors = FALSE
+  )
+
+  out <- build_vanneman_amalgamated_pretrend_levels(levels, membership)
+
+  expect_identical(unique(out$state_code_2001), "01")
+})
+
+test_that("Vanneman amalgamation feasibility separates identities from boundary changes", {
+  membership <- safe_bind_rows(list(
+    data.frame(
+      harmonized_region_id = "identity",
+      component_class = "one_to_one",
+      n_source_1991_districts = 1L,
+      n_vanneman_panel_units = 1L,
+      n_target_2001_districts = 1L,
+      harmonized_state_code_2001 = "01",
+      vanneman_amalgamation_status = "deterministic_amalgamation",
+      vanneman_amalgamation_eligible = TRUE,
+      stringsAsFactors = FALSE
+    ),
+    data.frame(
+      harmonized_region_id = "merger",
+      component_class = "merger",
+      n_source_1991_districts = 2L,
+      n_vanneman_panel_units = 2L,
+      n_target_2001_districts = 1L,
+      harmonized_state_code_2001 = "01",
+      vanneman_amalgamation_status = "deterministic_amalgamation",
+      vanneman_amalgamation_eligible = TRUE,
+      stringsAsFactors = FALSE
+    ),
+    data.frame(
+      harmonized_region_id = "blocked",
+      component_class = "many_to_many",
+      n_source_1991_districts = 2L,
+      n_vanneman_panel_units = 1L,
+      n_target_2001_districts = 2L,
+      harmonized_state_code_2001 = "01",
+      vanneman_amalgamation_status =
+        "incomplete_vanneman_1991_membership",
+      vanneman_amalgamation_eligible = FALSE,
+      stringsAsFactors = FALSE
+    )
+  ))
+
+  out <- build_vanneman_amalgamation_feasibility(membership)
+
+  expect_equal(out$totals$n_regions, 3L)
+  expect_equal(out$totals$n_eligible_regions, 2L)
+  expect_equal(out$totals$n_nontrivial_regions, 2L)
+  expect_equal(out$totals$n_analysis_ready_regions, 1L)
+  expect_equal(out$totals$n_eligible_one_to_one_regions, 1L)
+  expect_identical(
+    out$regions$harmonized_region_id[out$regions$analysis_ready],
+    "merger"
+  )
+})
+
+test_that("Vanneman amalgamation feasibility is region-level, not membership-row-level", {
+  membership <- data.frame(
+    harmonized_region_id = rep("merger", 3),
+    component_class = "merger",
+    n_source_1991_districts = 2L,
+    n_vanneman_panel_units = 2L,
+    n_target_2001_districts = 1L,
+    harmonized_state_code_2001 = "01",
+    vanneman_amalgamation_status = "deterministic_amalgamation",
+    vanneman_amalgamation_eligible = TRUE,
+    stringsAsFactors = FALSE
+  )
+
+  out <- build_vanneman_amalgamation_feasibility(membership)
+
+  expect_equal(nrow(out$regions), 1L)
+  expect_equal(out$totals$n_analysis_ready_regions, 1L)
 })

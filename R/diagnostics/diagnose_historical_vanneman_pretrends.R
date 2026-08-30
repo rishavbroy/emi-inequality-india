@@ -386,7 +386,7 @@ build_vanneman_harmonized_membership <- function(
         !is.na(s$panel_unit_id) & nzchar(s$panel_unit_id)
       ),
       n_target_2001_districts = nrow(t),
-      state_code_2001 = if (same_state) states[[1L]] else NA_character_,
+      harmonized_state_code_2001 = if (same_state) states[[1L]] else NA_character_,
       vanneman_amalgamation_status = status,
       vanneman_amalgamation_eligible =
         identical(status, "deterministic_amalgamation"),
@@ -424,6 +424,107 @@ build_vanneman_harmonized_membership <- function(
   ), , drop = FALSE]
 }
 
+build_vanneman_amalgamation_feasibility <- function(membership) {
+  x <- safe_df(membership)
+  required <- c(
+    "harmonized_region_id", "component_class",
+    "n_source_1991_districts", "n_vanneman_panel_units",
+    "n_target_2001_districts", "harmonized_state_code_2001",
+    "vanneman_amalgamation_status", "vanneman_amalgamation_eligible"
+  )
+  missing <- setdiff(required, names(x))
+  if (length(missing)) {
+    stop(
+      "Vanneman amalgamation feasibility lacks: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+
+  regions <- unique(x[required])
+  if (anyDuplicated(regions$harmonized_region_id)) {
+    stop(
+      "Vanneman amalgamation feasibility must contain one row per harmonized region.",
+      call. = FALSE
+    )
+  }
+  regions$nontrivial_boundary_change <- regions$component_class != "one_to_one"
+  regions$analysis_ready <- regions$vanneman_amalgamation_eligible %in% TRUE &
+    regions$nontrivial_boundary_change
+  regions <- regions[order(
+    regions$vanneman_amalgamation_status,
+    regions$component_class,
+    regions$harmonized_region_id
+  ), , drop = FALSE]
+
+  summary <- safe_bind_rows(lapply(
+    split(
+      seq_len(nrow(regions)),
+      paste(
+        regions$vanneman_amalgamation_status,
+        regions$component_class,
+        sep = "__"
+      )
+    ),
+    function(i) {
+      part <- regions[i, , drop = FALSE]
+      data.frame(
+        vanneman_amalgamation_status =
+          part$vanneman_amalgamation_status[[1L]],
+        component_class = part$component_class[[1L]],
+        n_regions = nrow(part),
+        n_source_1991_districts =
+          sum(num(part$n_source_1991_districts)),
+        n_vanneman_panel_units =
+          sum(num(part$n_vanneman_panel_units)),
+        n_target_2001_districts =
+          sum(num(part$n_target_2001_districts)),
+        n_analysis_ready_regions =
+          sum(part$analysis_ready %in% TRUE),
+        stringsAsFactors = FALSE
+      )
+    }
+  ))
+
+  totals <- data.frame(
+    n_regions = nrow(regions),
+    n_eligible_regions =
+      sum(regions$vanneman_amalgamation_eligible %in% TRUE),
+    n_nontrivial_regions =
+      sum(regions$nontrivial_boundary_change %in% TRUE),
+    n_analysis_ready_regions =
+      sum(regions$analysis_ready %in% TRUE),
+    n_eligible_one_to_one_regions = sum(
+      regions$vanneman_amalgamation_eligible %in% TRUE &
+        !regions$nontrivial_boundary_change
+    ),
+    stringsAsFactors = FALSE
+  )
+
+  list(regions = regions, summary = summary, totals = totals)
+}
+
+save_vanneman_amalgamation_feasibility <- function(
+    x,
+    directory = "outputs/diagnostics/extended/instrument_relevance") {
+  dir.create(directory, recursive = TRUE, showWarnings = FALSE)
+  paths <- c(
+    regions = file.path(
+      directory, "vanneman_amalgamation_feasibility_regions.csv"
+    ),
+    summary = file.path(
+      directory, "vanneman_amalgamation_feasibility_summary.csv"
+    ),
+    totals = file.path(
+      directory, "vanneman_amalgamation_feasibility_totals.csv"
+    )
+  )
+  write_diagnostic_csv(x$regions, paths[["regions"]])
+  write_diagnostic_csv(x$summary, paths[["summary"]])
+  write_diagnostic_csv(x$totals, paths[["totals"]])
+  unname(paths)
+}
+
 sum_vanneman_component_if_complete <- function(x) {
   value <- num(x)
   if (!length(value) || any(!is.finite(value))) return(NA_real_)
@@ -441,7 +542,7 @@ build_vanneman_amalgamated_pretrend_levels <- function(
   required_levels <- c("panel_unit_id", "year", "version", count_fields)
   required_map <- c(
     "harmonized_region_id", "vintage", "panel_unit_id",
-    "state_code_2001", "vanneman_amalgamation_eligible"
+    "harmonized_state_code_2001", "vanneman_amalgamation_eligible"
   )
   missing <- setdiff(required_levels, names(x))
   if (length(missing)) {
@@ -463,7 +564,10 @@ build_vanneman_amalgamated_pretrend_levels <- function(
   source <- unique(map[
     map$vintage == 1991L &
       map$vanneman_amalgamation_eligible %in% TRUE,
-    c("harmonized_region_id", "panel_unit_id", "state_code_2001")
+    c(
+      "harmonized_region_id", "panel_unit_id",
+      "harmonized_state_code_2001"
+    )
   ])
   if (!nrow(source)) return(x[FALSE, , drop = FALSE])
   if (anyNA(source$panel_unit_id) ||
@@ -491,10 +595,11 @@ build_vanneman_amalgamated_pretrend_levels <- function(
       if (length(year) != 1L) {
         stop("Vanneman amalgamation mixed historical years.", call. = FALSE)
       }
-      states <- unique(plain_chr(part$state_code_2001))
+      states <- unique(plain_chr(part$harmonized_state_code_2001))
+      states <- states[!is.na(states) & nzchar(states)]
       if (length(states) != 1L) {
         stop(
-          "Eligible Vanneman amalgamation spans multiple Census-2001 states.",
+          "Eligible Vanneman amalgamation lacks one harmonized Census-2001 state.",
           call. = FALSE
         )
       }
@@ -568,7 +673,7 @@ build_vanneman_amalgamated_pretrend_validation <- function(
     "harmonized_region_id", "component_class", "vintage",
     "state_code", "district_code", "panel_unit_id",
     "n_source_1991_districts", "n_vanneman_panel_units",
-    "n_target_2001_districts", "state_code_2001",
+    "n_target_2001_districts", "harmonized_state_code_2001",
     "vanneman_amalgamation_status", "vanneman_amalgamation_eligible"
   )])
   out
