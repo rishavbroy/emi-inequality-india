@@ -125,9 +125,15 @@ For each of the six candidate scalar-IV designs, the diagnostics report the firs
 
 `mechanism_2011 ~ linguistic_distance + included_language_controls + baseline_controls + FE`.
 
-State-clustered inference uses the same canonical helper as the rest of the IV diagnostics. Holm-adjusted p-values are reported across the registered mechanism outcomes within each specification. These reduced forms are mechanism evidence about whether the instrument predicts post-treatment spatial/skill composition; they are not by themselves estimates of the causal effect of EMI. A later 2SLS mechanism layer should be added only together with the same weak-identification and Anderson-Rubin reporting used for welfare outcomes.
+State-clustered inference uses the same canonical helper as the rest of the IV diagnostics. Holm-adjusted p-values are reported across the registered mechanism outcomes within each specification. These reduced forms are mechanism evidence about whether the instrument predicts post-treatment spatial/skill composition; they are not by themselves estimates of the causal effect of EMI.
 
-The files are `mechanism_registry.csv`, `mechanism_sample_coverage.csv`, `mechanism_first_stage.csv`, and `mechanism_reduced_form.csv` under `outputs/diagnostics/extended/census_migration/`.
+## Weak-identification-robust mechanism IV
+
+The same common sample now also feeds the canonical single-specification IV estimator used by the broader weak-IV diagnostics. For each registered mechanism outcome and each of the six candidate scalar-IV designs, the module reports clustered 2SLS coefficients for scale, the Montiel Olea-Pflueger effective-F diagnostic, the reduced-form joint test, and Anderson-Rubin inference. Anderson-Rubin confidence sets are constructed with the same grid implementation used elsewhere in the project.
+
+Because several headline first stages are weak, conventional clustered 2SLS p-values are not treated as sufficient evidence. The weak-IV output therefore carries separate Holm adjustments for the conventional clustered 2SLS p-value and the Anderson-Rubin test of beta = 0 across the eight registered mechanism outcomes within each specification. Interpretation should prioritize the Anderson-Rubin result and the shape/boundedness of its confidence set whenever the effective-F evidence is weak.
+
+The files are `mechanism_registry.csv`, `mechanism_sample_coverage.csv`, `mechanism_first_stage.csv`, `mechanism_reduced_form.csv`, `mechanism_weak_iv.csv`, and `mechanism_anderson_rubin_grid.csv` under `outputs/diagnostics/extended/census_migration/`.
 
 ## Interpretation
 
@@ -137,4 +143,4 @@ These targets are extended diagnostics, not automatic controls or causal outcome
 - 2011 D-02, D-03, D-04, and D-07 measures are post-treatment migration mechanisms. They must not be added to the preferred outcome equation as controls.
 - D-03 does not recover migrant occupation or industry. The project will not synthesize missing 2011 D-08/D-09 cells by multiplying migration totals by destination-district B-series shares.
 
-Later phases can add D-05/D-06, a validated 2011 population denominator, and weak-identification-robust 2SLS mechanism estimates. The deterministic complete-parent bridge currently yields a substantially smaller 2011 mechanism sample than the 593-district 2001 baseline, so the reduced forms explicitly report common support and should not be generalized to excluded non-nested parents.
+Later phases can add D-05/D-06 and a validated 2011 population denominator. The deterministic complete-parent bridge currently yields a substantially smaller 2011 mechanism sample than the 593-district 2001 baseline, so reduced-form and weak-IV mechanism results explicitly report common support and should not be generalized to excluded non-nested parents.
