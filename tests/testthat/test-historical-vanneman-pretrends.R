@@ -387,3 +387,132 @@ test_that("pretrend registry keeps Atlas primary while exposing Helms-Lim robust
   expect_true(any(registry$predictor_id=="historical_ld_1991" & registry$sample_id=="historical_ld_support"))
   expect_false(any(registry$predictor_id=="historical_ld_1991" & registry$sample_id=="full_pretrend"))
 })
+
+
+test_that("optional Helms-Lim source is truly optional for predictor attachment", {
+  changes <- data.frame(
+    panel_unit_id = c("a", "b"),
+    dist91_state_id = c("02", "02"),
+    dist91_district_id = c("01", "02"),
+    stringsAsFactors = FALSE
+  )
+  predictors <- data.frame(
+    panel_unit_id = c("a", "b"),
+    state_code_2001 = c("28", "28"),
+    district_code_2001 = c("11", "12"),
+    pretrend_analysis_eligible = TRUE,
+    pretrend_analysis_geography_status = "preferred_single_target",
+    emie_exposure = c(.2, .4),
+    stringsAsFactors = FALSE
+  )
+
+  out <- attach_vanneman_pretrend_predictors(changes, predictors)
+
+  expect_identical(out$helms_lim_ld_eligible, c(FALSE, FALSE))
+  expect_false("ling_distance_helms_lim_1991" %in% names(out))
+})
+
+test_that("Atlas common support is not redefined by optional Helms-Lim coverage", {
+  panel <- data.frame(
+    panel_unit_id = rep(c("a", "b", "c"), each = 2),
+    preferred_vanneman_pretrend_eligible = TRUE,
+    period_id = "1961_1981",
+    measure_id = rep(c("log_population", "urban_share"), times = 3),
+    change = 1:6,
+    population_1961 = rep(c(100, 200, 300), each = 2),
+    state_code_2001 = rep(c("01", "01", "02"), each = 2),
+    emie_exposure = rep(c(1, 2, 3), each = 2),
+    ling_distance_nonzero_mean_2001 = rep(c(.3, .5, .9), each = 2),
+    historical_ld_eligible = rep(c(TRUE, TRUE, FALSE), each = 2),
+    ling_distance_nonzero_mean_1991 = rep(c(.2, .4, NA), each = 2),
+    ling_distance_helms_lim_1991 = rep(c(.25, NA, .8), each = 2),
+    stringsAsFactors = FALSE
+  )
+
+  emie_common <- vanneman_pretrend_sample(
+    panel, "emie_exposure", "1961_1981", "urban_share",
+    "historical_ld_support"
+  )
+  atlas_common <- vanneman_pretrend_sample(
+    panel, "ling_distance_nonzero_mean_1991",
+    "1961_1981", "urban_share", "historical_ld_support"
+  )
+  helms_common <- vanneman_pretrend_sample(
+    panel, "ling_distance_helms_lim_1991",
+    "1961_1981", "urban_share", "historical_ld_support"
+  )
+
+  expect_setequal(emie_common$panel_unit_id, c("a", "b"))
+  expect_setequal(atlas_common$panel_unit_id, c("a", "b"))
+  expect_identical(helms_common$panel_unit_id, "a")
+})
+
+test_that("pretrend specification registry is additive across optional sources", {
+  base <- data.frame(
+    historical_ld_eligible = c(TRUE, FALSE),
+    ling_distance_nonzero_mean_1991 = c(1, NA_real_),
+    stringsAsFactors = FALSE
+  )
+  base_registry <- vanneman_pretrend_specification_registry(base)
+  expect_setequal(
+    paste(base_registry$predictor_id, base_registry$sample_id, sep = "__"),
+    c(
+      "eventual_emie__full_pretrend",
+      "eventual_emie__historical_ld_support",
+      "historical_ld_1991__historical_ld_support"
+    )
+  )
+
+  expanded <- base
+  expanded$ling_distance_nonzero_mean_2001 <- c(2, 3)
+  expanded$ling_distance_helms_lim_1991 <- c(1.1, 3.1)
+  registry <- vanneman_pretrend_specification_registry(expanded)
+  expect_equal(nrow(registry), 7L)
+  expect_true(any(
+    registry$predictor_id == "helms_lim_ld_1991" &
+      registry$sample_id == "full_pretrend"
+  ))
+  expect_true(any(
+    registry$predictor_id == "census_2001_ld" &
+      registry$sample_id == "historical_ld_support"
+  ))
+})
+
+test_that("strict and historical-parent support comparison reports sample gain", {
+  strict <- list(sample_coverage = data.frame(
+    sample_id = c(
+      "full_pretrend", "census_2001_ld_support",
+      "helms_lim_ld_support", "historical_ld_support"
+    ),
+    n_units = c(160L, 158L, 159L, 60L),
+    n_states = c(17L, 17L, 17L, 12L),
+    population_1961 = c(1000, 990, 995, 400),
+    share_of_full_units = c(1, 158/160, 159/160, 60/160),
+    stringsAsFactors = FALSE
+  ))
+  parent <- list(sample_coverage = data.frame(
+    sample_id = c(
+      "full_pretrend", "census_2001_ld_support",
+      "helms_lim_ld_support", "historical_ld_support"
+    ),
+    n_units = c(190L, 188L, 189L, 70L),
+    n_states = c(18L, 18L, 18L, 13L),
+    population_1961 = c(1200, 1180, 1190, 500),
+    share_of_full_units = c(1, 188/190, 189/190, 70/190),
+    stringsAsFactors = FALSE
+  ))
+
+  out <- build_vanneman_pretrend_support_comparison(strict, parent)
+  parent_full <- out[
+    out$analysis_id == "historical_parent" &
+      out$sample_id == "full_pretrend",
+    , drop = FALSE
+  ]
+
+  expect_equal(parent_full$gain_vs_strict_full_n, 30L)
+  expect_equal(parent_full$gain_vs_strict_full_share, 30 / 160)
+  expect_error(
+    build_vanneman_pretrend_support_comparison(parent, strict),
+    "cannot be smaller"
+  )
+})

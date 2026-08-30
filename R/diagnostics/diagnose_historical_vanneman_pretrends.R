@@ -313,7 +313,12 @@ attach_vanneman_pretrend_predictors <- function(
     out <- merge(out, external[c("dist91_state_id", "dist91_district_id", "linguistic_distance_1991_helms_lim")], by=c("dist91_state_id","dist91_district_id"), all.x=TRUE, sort=FALSE)
     names(out)[names(out)=="linguistic_distance_1991_helms_lim"] <- "ling_distance_helms_lim_1991"
   }
-  out$helms_lim_ld_eligible <- "ling_distance_helms_lim_1991" %in% names(out) & is.finite(num(out$ling_distance_helms_lim_1991))
+  out$helms_lim_ld_eligible <- if (
+      "ling_distance_helms_lim_1991" %in% names(out)) {
+    is.finite(num(out$ling_distance_helms_lim_1991))
+  } else {
+    rep(FALSE, nrow(out))
+  }
   out
 }
 
@@ -514,60 +519,51 @@ build_vanneman_parent_pretrend_predictor_panel <- function(
 
 vanneman_pretrend_specification_registry <- function(panel) {
   x <- safe_df(panel)
-  rows <- list(data.frame(
-    predictor_id = "eventual_emie",
-    predictor = "emie_exposure",
-    sample_id = "full_pretrend",
-    stringsAsFactors = FALSE
-  ))
-  if ("ling_distance_nonzero_mean_2001" %in% names(x)) {
-    rows <- c(rows, list(data.frame(
-      predictor_id = "census_2001_ld",
-      predictor = "ling_distance_nonzero_mean_2001",
-      sample_id = "full_pretrend",
-      stringsAsFactors = FALSE
-    )))
-  }
-  if ("ling_distance_helms_lim_1991" %in% names(x)) {
-    rows <- c(rows, list(data.frame(
-      predictor_id = "helms_lim_ld_1991",
-      predictor = "ling_distance_helms_lim_1991",
-      sample_id = "full_pretrend",
-      stringsAsFactors = FALSE
-    )))
-  }
-  if (all(c(
-      "historical_ld_eligible",
-      "ling_distance_nonzero_mean_1991"
-    ) %in% names(x))) {
-    common <- list(data.frame(
-      predictor_id = "eventual_emie",
-      predictor = "emie_exposure",
-      sample_id = "historical_ld_support",
-      stringsAsFactors = FALSE
-    ))
-    if ("ling_distance_nonzero_mean_2001" %in% names(x)) {
-      if ("ling_distance_helms_lim_1991" %in% names(x)) {
-      common <- c(common, list(data.frame(
-        predictor_id = "helms_lim_ld_1991", predictor = "ling_distance_helms_lim_1991",
-        sample_id = "historical_ld_support", stringsAsFactors = FALSE
-      )))
+  available <- c(
+    eventual_emie = "emie_exposure",
+    census_2001_ld = "ling_distance_nonzero_mean_2001",
+    helms_lim_ld_1991 = "ling_distance_helms_lim_1991",
+    historical_ld_1991 = "ling_distance_nonzero_mean_1991"
+  )
+  available <- available[available %in% names(x)]
+
+  rows <- lapply(
+    intersect(
+      c("eventual_emie", "census_2001_ld", "helms_lim_ld_1991"),
+      names(available)
+    ),
+    function(predictor_id) {
+      data.frame(
+        predictor_id = predictor_id,
+        predictor = unname(available[[predictor_id]]),
+        sample_id = "full_pretrend",
+        stringsAsFactors = FALSE
+      )
     }
-    common <- c(common, list(data.frame(
-        predictor_id = "census_2001_ld",
-        predictor = "ling_distance_nonzero_mean_2001",
+  )
+
+  atlas_common_available <- all(c(
+    "historical_ld_eligible",
+    "ling_distance_nonzero_mean_1991"
+  ) %in% names(x))
+  if (atlas_common_available) {
+    common_ids <- intersect(
+      c(
+        "eventual_emie", "census_2001_ld",
+        "helms_lim_ld_1991", "historical_ld_1991"
+      ),
+      names(available)
+    )
+    rows <- c(rows, lapply(common_ids, function(predictor_id) {
+      data.frame(
+        predictor_id = predictor_id,
+        predictor = unname(available[[predictor_id]]),
         sample_id = "historical_ld_support",
         stringsAsFactors = FALSE
-      )))
-    }
-    common <- c(common, list(data.frame(
-      predictor_id = "historical_ld_1991",
-      predictor = "ling_distance_nonzero_mean_1991",
-      sample_id = "historical_ld_support",
-      stringsAsFactors = FALSE
-    )))
-    rows <- c(rows, common)
+      )
+    }))
   }
+
   safe_bind_rows(rows)
 }
 
@@ -588,9 +584,6 @@ vanneman_pretrend_sample <- function(
       is.finite(num(x$emie_exposure))
     if ("ling_distance_nonzero_mean_2001" %in% names(x)) {
       keep <- keep & is.finite(num(x$ling_distance_nonzero_mean_2001))
-    }
-    if ("ling_distance_helms_lim_1991" %in% names(x)) {
-      keep <- keep & is.finite(num(x$ling_distance_helms_lim_1991))
     }
   }
   x[keep, , drop = FALSE]
@@ -620,9 +613,12 @@ vanneman_pretrend_sample_coverage <- function(panel) {
   } else {
     rep(FALSE, nrow(units))
   }
-  external_ld <- if ("ling_distance_helms_lim_1991" %in% names(units)) is.finite(num(units$ling_distance_helms_lim_1991)) else rep(FALSE, nrow(units))
+  external_ld <- if ("ling_distance_helms_lim_1991" %in% names(units)) {
+    is.finite(num(units$ling_distance_helms_lim_1991))
+  } else {
+    rep(FALSE, nrow(units))
+  }
   common <- full & current_ld & units$historical_ld_eligible %in% TRUE
-  if (any(external_ld)) common <- common & external_ld
   summarize <- function(sample_id, selected) {
     data.frame(
       sample_id = sample_id,
@@ -642,6 +638,78 @@ vanneman_pretrend_sample_coverage <- function(panel) {
   }
   rows <- c(rows, list(summarize("historical_ld_support", common)))
   safe_bind_rows(rows)
+}
+
+build_vanneman_pretrend_support_comparison <- function(
+    strict_validation, parent_validation) {
+  inputs <- list(
+    strict_one_to_one = strict_validation,
+    historical_parent = parent_validation
+  )
+  out <- safe_bind_rows(lapply(names(inputs), function(analysis_id) {
+    validation <- inputs[[analysis_id]]
+    if (!is.list(validation) ||
+        !"sample_coverage" %in% names(validation)) {
+      stop(
+        "Vanneman support comparison requires validation objects with sample_coverage.",
+        call. = FALSE
+      )
+    }
+    x <- safe_df(validation$sample_coverage)
+    required <- c(
+      "sample_id", "n_units", "n_states",
+      "population_1961", "share_of_full_units"
+    )
+    missing <- setdiff(required, names(x))
+    if (length(missing)) {
+      stop(
+        "Vanneman sample coverage lacks: ",
+        paste(missing, collapse = ", "),
+        call. = FALSE
+      )
+    }
+    x$analysis_id <- analysis_id
+    x
+  }))
+
+  strict_full <- out$n_units[
+    out$analysis_id == "strict_one_to_one" &
+      out$sample_id == "full_pretrend"
+  ]
+  parent_full <- out$n_units[
+    out$analysis_id == "historical_parent" &
+      out$sample_id == "full_pretrend"
+  ]
+  if (length(strict_full) != 1L || length(parent_full) != 1L) {
+    stop(
+      "Vanneman support comparison requires one full-pretrend row per analysis.",
+      call. = FALSE
+    )
+  }
+  if (parent_full < strict_full) {
+    stop(
+      "Historical-parent support cannot be smaller than strict one-to-one support.",
+      call. = FALSE
+    )
+  }
+
+  out$gain_vs_strict_full_n <- out$n_units - strict_full
+  out$gain_vs_strict_full_share <- if (strict_full > 0) {
+    out$n_units / strict_full - 1
+  } else {
+    NA_real_
+  }
+  out[c(
+    "analysis_id", "sample_id", "n_units", "n_states",
+    "population_1961", "share_of_full_units",
+    "gain_vs_strict_full_n", "gain_vs_strict_full_share"
+  )]
+}
+
+save_vanneman_pretrend_support_comparison <- function(
+    x,
+    path = "outputs/diagnostics/extended/instrument_relevance/vanneman_pretrend_support_comparison.csv") {
+  write_diagnostic_csv(x, path)
 }
 
 estimate_vanneman_pretrend_association <- function(
