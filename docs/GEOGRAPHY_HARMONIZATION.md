@@ -50,7 +50,7 @@ Geographic assumptions are explicit analysis variants:
 - `G4_reviewed_fractional`: G1 plus externally reviewed source-specific
   fractional allocation.
 
-The registry defines policy only. This phase does **not** implement G2 or G3.
+The registry defines the admissible policy. G2 is now implemented for registered human quantities; G3 remains unimplemented.
 
 ## Multi-vintage graph
 
@@ -179,3 +179,23 @@ The G2 balance outputs therefore compare eventual EMI exposure and Census-2001
 linguistic distance against the human PCA domains only. This provides a
 population-interpolated geography robustness check without pretending that all
 1991 controls admit the same change-of-support operation.
+
+
+### Cross-geography G2 reporting
+
+The historical Census-1991 human-baseline diagnostics are now aligned across
+`preferred_historical_geography`, `G0_exact_only`, and
+`G2_population_interpolated`. The comparison is deliberately restricted to
+PCA91 human domains and predictors available in both the original and G2
+analyses.
+
+The aligned estimate and joint-balance files preserve each design's own N,
+state count, and represented 1991 population. They do not report a mechanical
+coefficient difference across designs because the observational support changes
+under exact filtering and population interpolation.
+
+A separate G2 threshold-stability table summarizes the range of joint F
+statistics, joint p-values, N, and represented population across the declared
+90/95/99 percent source-coverage rules. This treats the threshold as an explicit
+sensitivity dimension rather than selecting whichever cutoff yields a preferred
+result.

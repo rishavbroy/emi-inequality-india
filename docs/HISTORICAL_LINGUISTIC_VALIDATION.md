@@ -1279,3 +1279,20 @@ coverage thresholds. It is kept separate from the preferred/exact historical
 baseline diagnostics because G2 changes the support assumption rather than
 merely changing sample eligibility. Village/town facility controls are not
 population-interpolated.
+
+
+### Historical baseline geography comparison
+
+The preferred/exact historical baseline and the population-interpolated G2 PCA
+baseline are now exposed through one aligned robustness contract for their
+common human domains and common predictors. Outputs retain coefficient
+inference, joint tests, N, state coverage, and represented 1991 population for
+each geography variant. G2 also receives an explicit 90/95/99 percent
+threshold-stability summary.
+
+The realized G2 diagnostics are substantively stable across those coverage
+rules: eventual EMI remains strongly related to 1991 demography, literacy, and
+economic structure, while Census-2001 linguistic distance remains comparatively
+clean on literacy but shows persistent demography and economic-structure
+associations. The comparison is diagnostic evidence about historical balance;
+it does not establish the exclusion restriction.
