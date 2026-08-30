@@ -1008,3 +1008,26 @@ sample. The next stage may aggregate historical and later quantities upward
 within components marked `deterministic_amalgamation_eligible`; incomplete
 components remain excluded until an explicitly labeled interpolation or
 reviewed-allocation sensitivity is defined.
+
+
+### Deterministic harmonized-region crosswalk
+
+Connected components that have complete stable-locality coverage in both
+vintages now produce a reusable `harmonized_region_id` crosswalk. The crosswalk
+contains every participating district in each vintage and retains whether the
+component is one-to-one, a split, a merger, or many-to-many.
+
+The crosswalk is an **aggregation map**, not an interpolation map. Every
+district receives unit membership in exactly one constant-boundary component;
+population and area weights are deliberately absent from the harmonized-region
+assignment itself. Downstream measures must aggregate their own sufficient
+statistics upward to `harmonized_region_id` using their existing semantics
+(counts, numerator/denominator pairs, survey weights, speaker counts, and so
+on).
+
+Only components marked `deterministic_amalgamation_eligible` enter
+`historical_linguistic_harmonized_crosswalk_1991_2001.csv`. Components with
+incomplete locality coverage remain visible in the component diagnostics but
+are excluded from the exact crosswalk. This gives later Vanneman and Census
+analyses a common deterministic geography before any population- or area-based
+fractional sensitivity is introduced.
