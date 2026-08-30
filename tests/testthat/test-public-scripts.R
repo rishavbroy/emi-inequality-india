@@ -54,6 +54,36 @@ test_that("rendered and archived artifacts are treated as binary by Git", {
   )
 })
 
+test_that("shared Census transition is a first-class pipeline dependency", {
+  targets <- repo_text("_targets.R")
+  declaration <- paste0(
+    "tar_target(\n    district_transition_2001_2011,\n",
+    "    district_lineage$district_transition_2001_2011\n  )"
+  )
+  expect_match(targets, declaration, fixed = TRUE)
+
+  nested_access <- gregexpr(
+    "district_lineage$district_transition_2001_2011",
+    targets, fixed = TRUE
+  )[[1L]]
+  expect_equal(sum(nested_access > 0L), 1L)
+
+  for (consumer in c(
+    "build_consumption_lineage_reference",
+    "build_census_age_6_13_anchors",
+    "build_census_d02_2011_measures",
+    "build_census_d03_2011_measures",
+    "build_census_d04_2011_measures",
+    "build_census_d07_2011_measures",
+    "build_census_2011_industry_measures",
+    "build_census_2011_occupation_measures",
+    "build_census_2011_housing_measures"
+  )) {
+    pattern <- paste0(consumer, "(")
+    expect_match(targets, pattern, fixed = TRUE, info = consumer)
+  }
+})
+
 test_that("current public build helper scripts parse", {
   expect_silent(parse(repo_file("_targets.R")))
   expect_silent(parse(repo_file("scripts", "check_required_outputs.R")))
