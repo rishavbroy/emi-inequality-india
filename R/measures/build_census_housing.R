@@ -18,46 +18,10 @@ census_housing_common_share_columns <- function() {
   )
 }
 
-validate_census_housing_subset_count <- function(
-    left, right, left_column, right_column, label) {
-  left <- safe_df(left)
-  right <- safe_df(right)
-  keys <- c("state_code", "district_code")
-  needed_left <- c(keys, left_column)
-  needed_right <- c(keys, right_column)
-  if (length(setdiff(needed_left, names(left))) || length(setdiff(needed_right, names(right)))) {
-    stop(label, " validation is missing required source columns.", call. = FALSE)
-  }
-  if (anyDuplicated(left[keys]) || anyDuplicated(right[keys])) {
-    stop(label, " validation requires unique source districts.", call. = FALSE)
-  }
-  left_key <- paste(left$state_code, left$district_code, sep = "/")
-  right_key <- paste(right$state_code, right$district_code, sep = "/")
-  if (!all(right_key %in% left_key)) {
-    stop(label, " contains districts outside the reference table.", call. = FALSE)
-  }
-  joined <- merge(left[needed_left], right[needed_right], by = keys, all = FALSE, sort = TRUE)
-  left_value <- num(joined[[left_column]])
-  right_value <- num(joined[[right_column]])
-  same <- is.finite(left_value) & is.finite(right_value) & left_value == right_value
-  if (!nrow(joined) || any(!same)) {
-    bad <- joined[!same, , drop = FALSE]
-    detail <- if (nrow(bad)) paste0(bad$state_code[[1L]], "/", bad$district_code[[1L]]) else "no shared districts"
-    stop(label, " counts disagree on overlapping districts; first mismatch: ", detail, ".", call. = FALSE)
-  }
-  data.frame(
-    n_reference_districts = length(left_key),
-    n_source_districts = length(right_key),
-    n_overlap_districts = nrow(joined),
-    max_abs_difference = max(abs(left_value - right_value)),
-    stringsAsFactors = FALSE
-  )
-}
-
 census_housing_validation_row <- function(
     left, right, left_column, right_column, label, check, allow_right_subset = FALSE) {
   if (isTRUE(allow_right_subset)) {
-    out <- validate_census_housing_subset_count(left, right, left_column, right_column, label)
+    out <- validate_census_subset_count(left, right, left_column, right_column, label)
   } else {
     strict <- validate_census_matching_count(left, right, left_column, right_column, label)
     out <- data.frame(

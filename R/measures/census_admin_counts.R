@@ -125,6 +125,53 @@ safe_count_share <- function(numerator, denominator) {
   )
 }
 
+validate_census_subset_count <- function(
+    reference, subset, reference_column, subset_column, label) {
+  reference <- safe_df(reference)
+  subset <- safe_df(subset)
+  keys <- c("state_code", "district_code")
+  needed_reference <- c(keys, reference_column)
+  needed_subset <- c(keys, subset_column)
+  if (length(setdiff(needed_reference, names(reference))) ||
+      length(setdiff(needed_subset, names(subset)))) {
+    stop(label, " validation is missing required source columns.", call. = FALSE)
+  }
+  if (anyDuplicated(reference[keys]) || anyDuplicated(subset[keys])) {
+    stop(label, " validation requires unique source districts.", call. = FALSE)
+  }
+  reference_values <- reference[needed_reference]
+  subset_values <- subset[needed_subset]
+  names(reference_values)[[length(needed_reference)]] <- "reference_value"
+  names(subset_values)[[length(needed_subset)]] <- "subset_value"
+  reference_key <- paste(reference_values$state_code, reference_values$district_code, sep = "/")
+  subset_key <- paste(subset_values$state_code, subset_values$district_code, sep = "/")
+  if (!all(subset_key %in% reference_key)) {
+    stop(label, " contains districts outside the reference table.", call. = FALSE)
+  }
+  joined <- merge(reference_values, subset_values, by = keys, all = FALSE, sort = TRUE)
+  reference_value <- num(joined$reference_value)
+  subset_value <- num(joined$subset_value)
+  same <- is.finite(reference_value) & is.finite(subset_value) &
+    reference_value == subset_value
+  if (!nrow(joined) || any(!same)) {
+    bad <- joined[!same, , drop = FALSE]
+    detail <- if (nrow(bad)) {
+      paste0(bad$state_code[[1L]], "/", bad$district_code[[1L]])
+    } else {
+      "no shared districts"
+    }
+    stop(label, " counts disagree on overlapping districts; first mismatch: ", detail, ".", call. = FALSE)
+  }
+  data.frame(
+    n_reference_districts = length(reference_key),
+    n_source_districts = length(subset_key),
+    n_overlap_districts = nrow(joined),
+    max_abs_difference = max(abs(reference_value - subset_value)),
+    stringsAsFactors = FALSE
+  )
+}
+
+
 validate_census_matching_count <- function(
     left, right, left_column, right_column, label) {
   left <- safe_df(left)
