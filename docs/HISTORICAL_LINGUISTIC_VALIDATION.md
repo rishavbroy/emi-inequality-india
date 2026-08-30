@@ -1031,3 +1031,33 @@ incomplete locality coverage remain visible in the component diagnostics but
 are excluded from the exact crosswalk. This gives later Vanneman and Census
 analyses a common deterministic geography before any population- or area-based
 fractional sensitivity is introduced.
+
+
+### Vanneman constant-boundary amalgamation sensitivity
+
+The deterministic 1991--2001 harmonized-region crosswalk is now consumed by a
+third Vanneman pretrend geography. A harmonized region enters this sensitivity
+only when every Census-1991 member has a preferred reviewed Vanneman mapping and
+the component's Census-2001 members lie in one state. This is stricter than
+merely observing a connected boundary-change component.
+
+Historical outcomes are aggregated from their underlying Vanneman count
+sufficient statistics before any rate or share is reconstructed. Population,
+rural population, main workers, farm workers, literates, primary-plus counts,
+and matriculate-plus counts are summed only when every member is observed.
+Urban, worker, nonfarm, literacy, and education shares are then reconstructed
+from the aggregated counts. District-level rates are never averaged.
+
+Later EMIE and Census-2001 linguistic distance reuse the same component-based
+aggregation already used for clean historical-parent splits: EMIE is rebuilt
+from enrolled and eligible survey weights, and LD_2001 from speaker-distance
+components. No population or area interpolation weight enters the deterministic
+amalgamation analysis.
+
+The Vanneman diagnostics therefore report three distinct geography variants:
+strict one-to-one, historical-parent split aggregation, and deterministic
+constant-boundary amalgamation. Amalgamation can legitimately have fewer
+statistical observations than either district-based variant because several
+districts become one stable region; represented population and substantive
+results are therefore reported alongside N rather than treating a larger N as
+the objective.
