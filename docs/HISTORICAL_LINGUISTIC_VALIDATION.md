@@ -1219,3 +1219,40 @@ The source-specific Kumar--Somanathan exact sensitivity is informative because
 its reviewed closed components contain materially broader nontrivial boundary
 coverage. Cross-source conflicts remain visible in the concordance outputs and
 are not used to overwrite either source-specific graph.
+
+
+### Cross-geography Vanneman robustness
+
+The three implemented historical geography variants are now reported through a
+single aligned robustness object rather than requiring readers to compare
+source-specific CSVs manually:
+
+- `strict_one_to_one`;
+- `historical_parent`;
+- `kumar_somanathan_exact_amalgamation`.
+
+`vanneman_pretrend_geography_support.csv` reports region count, state count,
+1961 represented population, within-variant support, and represented population
+relative to the strict full-pretrend sample.
+`vanneman_pretrend_geography_estimates.csv` stacks every individual
+predictor-period-measure-FE coefficient with inference and effective sample
+information.
+`vanneman_pretrend_geography_joint_balance.csv` does the same for the
+domain-level joint tests.
+
+The tables deliberately do not compute a mechanical coefficient difference
+between geography variants. Exact amalgamation changes the observational unit,
+and the historical-parent design changes support, so such a difference would
+mix geography and composition effects. The aligned files instead expose the
+coefficient, uncertainty, N, states, and represented population for each design
+under the same specification identifiers.
+
+In the current audited outputs, the Kumar--Somanathan exact geography represents
+a materially smaller set of regions than the strict district geography while
+still covering a large historical population. Eventual EMIE continues to show
+strong associations with pre-treatment education trends on these exact
+constant-boundary regions, whereas Census-2001 linguistic distance is much less
+systematically associated with those pretrends. This reinforces the existing
+distinction between historical selection into later EMI exposure and the
+separate plausibility diagnostics for linguistic distance; it does not prove
+the exclusion restriction.
