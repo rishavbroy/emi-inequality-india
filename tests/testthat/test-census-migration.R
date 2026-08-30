@@ -424,3 +424,89 @@ test_that("migration first-stage sensitivity uses one common sample for baseline
   expect_true(all(is.finite(out$joint_excluded_f)))
   expect_true(all(is.finite(out$partial_r_squared)))
 })
+
+test_that("migration mechanism registry covers distinct observed 2011 constructs", {
+  registry <- census_migration_mechanism_registry()
+  expect_equal(nrow(registry), 8L)
+  expect_false(anyDuplicated(registry$outcome_id))
+  expect_false(anyDuplicated(registry$variable))
+  expect_setequal(registry$source_id, c("d02", "d03", "d04", "d07"))
+  expect_true(all(registry$tier %in% c("core", "secondary")))
+  expect_true(all(registry$denominator %in% c("all_migrants", "recent_work_migrants")))
+})
+
+test_that("migration mechanism diagnostics use one common support sample", {
+  set.seed(321)
+  n <- 120L
+  state <- sprintf("%02d", rep(1:12, each = 10))
+  district <- rep(sprintf("%02d", 1:10), 12)
+  target <- paste0("pc2001__", state, "__", district)
+  panel <- data.frame(
+    state_code_2001 = state,
+    district_code_2001 = district,
+    region = rep(panel_region_levels(), length.out = n),
+    stringsAsFactors = FALSE
+  )
+  for (variable in census_2001_diagnostic_controls()) panel[[variable]] <- stats::rnorm(n)
+  for (variable in alternative_distance_variables()) panel[[variable]] <- stats::rnorm(n)
+  panel$ling_mapped_speaker_share <- stats::runif(n, 0.8, 1)
+  panel$ling_glottolog_mapped_speaker_share <- stats::runif(n, 0.8, 1)
+  panel$ling_dyen_mapped_speaker_share <- stats::runif(n, 0.8, 1)
+  treatment <- preferred_iv_variables()$treatment
+  panel[[treatment]] <- 0.5 * panel$ling_distance_nonzero_mean + stats::rnorm(n)
+
+  registry <- census_migration_mechanism_registry()
+  source_rows <- function(source_id) {
+    variables <- registry$variable[registry$source_id == source_id]
+    out <- data.frame(target_unit_2001 = target, stringsAsFactors = FALSE)
+    for (variable in variables) out[[variable]] <- stats::plogis(stats::rnorm(n))
+    out
+  }
+  d02 <- source_rows("d02")
+  d03 <- source_rows("d03")
+  d04 <- source_rows("d04")
+  d07 <- source_rows("d07")
+  d07[[registry$variable[registry$source_id == "d07"][[1L]]]][[1L]] <- NA_real_
+
+  mechanism_panel <- prepare_census_migration_mechanism_panel(
+    panel, d02, d03, d04, d07, registry
+  )
+  expect_equal(nrow(mechanism_panel), n - 1L)
+  expect_equal(attr(mechanism_panel, "n_harmonized_mechanism_districts"), n)
+
+  diagnostics <- estimate_census_migration_mechanism_reduced_forms(
+    mechanism_panel, registry, cfg = list()
+  )
+  expect_equal(nrow(diagnostics$first_stage), 6L)
+  expect_equal(nrow(diagnostics$reduced_form), 6L * nrow(registry))
+  expect_true(all(diagnostics$first_stage$n == nrow(mechanism_panel)))
+  expect_true(all(diagnostics$reduced_form$n == nrow(mechanism_panel)))
+  expect_equal(diagnostics$sample_coverage$n_harmonized_mechanism_districts, n)
+  expect_equal(diagnostics$sample_coverage$n_common_analysis_districts, n - 1L)
+  expect_true(all(diagnostics$reduced_form$status == "estimated"))
+  expect_true(all(is.finite(diagnostics$reduced_form$p_holm_within_spec)))
+})
+
+test_that("migration mechanism preparation rejects source support drift", {
+  registry <- census_migration_mechanism_registry()
+  target <- c("pc2001__09__01", "pc2001__09__02")
+  source_rows <- function(source_id) {
+    variables <- registry$variable[registry$source_id == source_id]
+    out <- data.frame(target_unit_2001 = target, stringsAsFactors = FALSE)
+    for (variable in variables) out[[variable]] <- c(0.1, 0.2)
+    out
+  }
+  panel <- data.frame(
+    state_code_2001 = c("09", "09"), district_code_2001 = c("01", "02"),
+    stringsAsFactors = FALSE
+  )
+  d02 <- source_rows("d02")
+  d03 <- source_rows("d03")
+  d04 <- source_rows("d04")
+  d07 <- source_rows("d07")[-1L, , drop = FALSE]
+
+  expect_error(
+    prepare_census_migration_mechanism_panel(panel, d02, d03, d04, d07, registry),
+    "different district support"
+  )
+})

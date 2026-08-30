@@ -2234,7 +2234,8 @@ extended_diagnostic_targets <- list(
       census_migration_d03_2011,
       census_migration_d04_2011,
       census_migration_d07_2011,
-      district_panel
+      district_panel,
+      cfg
     )
   ),
   tar_target(

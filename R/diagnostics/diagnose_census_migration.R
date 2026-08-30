@@ -105,6 +105,229 @@ estimate_census_migration_first_stage_sensitivity <- function(panel) {
   out
 }
 
+census_migration_mechanism_registry <- function() {
+  data.frame(
+    outcome_id = c(
+      "interstate_migrant_composition",
+      "work_migration_reason",
+      "education_migration_reason",
+      "skilled_migrant_composition",
+      "technical_migrant_composition",
+      "outside_state_recent_work_migration",
+      "skilled_recent_work_migration",
+      "technical_recent_work_migration"
+    ),
+    source_id = c("d02", "d03", "d03", "d04", "d04", "d07", "d07", "d07"),
+    variable = c(
+      "interstate_share_among_migrants",
+      "work_employment_share_among_migrants",
+      "education_share_among_migrants",
+      "graduate_or_technical_degree_share_among_migrants",
+      "technical_credential_share_among_migrants",
+      "outside_state_share_among_recent_work_migrants",
+      "graduate_or_technical_degree_share_among_recent_work_migrants",
+      "technical_credential_share_among_recent_work_migrants"
+    ),
+    mechanism_family = c(
+      "geographic_sorting", "migration_reason", "migration_reason",
+      "migrant_skill", "migrant_skill", "work_migrant_sorting",
+      "work_migrant_skill", "work_migrant_skill"
+    ),
+    tier = c("core", "core", "core", "core", "secondary", "core", "core", "secondary"),
+    denominator = c(
+      "all_migrants", "all_migrants", "all_migrants", "all_migrants",
+      "all_migrants", "recent_work_migrants", "recent_work_migrants",
+      "recent_work_migrants"
+    ),
+    stringsAsFactors = FALSE
+  )
+}
+
+census_migration_mechanism_specifications <- function(
+    outcome = "interstate_share_among_migrants",
+    treatment = preferred_iv_variables()$treatment) {
+  registry <- iv_specification_registry(
+    outcome = outcome,
+    treatment = treatment,
+    panel_variant = "primary",
+    sample_rule = "migration_mechanism_common_support"
+  )
+  construction_ids <- unname(alternative_distance_design_constructions())
+  keep <- registry$adjustment_id %in% iv_candidate_design_adjustments() &
+    registry$construction_id %in% construction_ids
+  out <- registry[keep, , drop = FALSE]
+  expected <- as.vector(outer(
+    iv_candidate_design_adjustments(), construction_ids, paste, sep = "__"
+  ))
+  if (!setequal(out$specification_id, expected) || anyDuplicated(out$specification_id)) {
+    stop("Could not recover the candidate scalar-IV designs for Census migration mechanisms.", call. = FALSE)
+  }
+  out
+}
+
+census_migration_mechanism_sources <- function(d02_2011, d03_2011, d04_2011, d07_2011) {
+  list(
+    d02 = safe_df(d02_2011),
+    d03 = safe_df(d03_2011),
+    d04 = safe_df(d04_2011),
+    d07 = safe_df(d07_2011)
+  )
+}
+
+prepare_census_migration_mechanism_panel <- function(
+    district_panel, d02_2011, d03_2011, d04_2011, d07_2011,
+    registry = census_migration_mechanism_registry()) {
+  registry <- safe_df(registry)
+  required_registry <- c("outcome_id", "source_id", "variable")
+  if (length(setdiff(required_registry, names(registry))) ||
+      anyDuplicated(registry$outcome_id) || anyDuplicated(registry$variable)) {
+    stop("Census migration mechanism registry is malformed.", call. = FALSE)
+  }
+
+  sources <- census_migration_mechanism_sources(d02_2011, d03_2011, d04_2011, d07_2011)
+  if (!all(registry$source_id %in% names(sources))) {
+    stop("Census migration mechanism registry references an unknown source.", call. = FALSE)
+  }
+  target_sets <- lapply(sources, function(x) {
+    if (!"target_unit_2001" %in% names(x) || anyDuplicated(x$target_unit_2001)) {
+      stop("Harmonized Census migration mechanism sources must be unique by target_unit_2001.", call. = FALSE)
+    }
+    sort(unique(plain_chr(x$target_unit_2001)))
+  })
+  reference_targets <- target_sets[[1L]]
+  if (!all(vapply(target_sets, identical, logical(1), reference_targets))) {
+    stop("Harmonized Census migration mechanism sources have different district support.", call. = FALSE)
+  }
+
+  measures <- data.frame(target_unit_2001 = reference_targets, stringsAsFactors = FALSE)
+  for (source_id in unique(registry$source_id)) {
+    rows <- registry[registry$source_id == source_id, , drop = FALSE]
+    source <- sources[[source_id]]
+    missing <- setdiff(rows$variable, names(source))
+    if (length(missing)) {
+      stop(
+        "Census migration mechanism source `", source_id, "` is missing variables: ",
+        paste(missing, collapse = ", "), call. = FALSE
+      )
+    }
+    payload <- source[c("target_unit_2001", rows$variable)]
+    measures <- merge(measures, payload, by = "target_unit_2001", all = FALSE, sort = FALSE)
+  }
+  measures <- measures[match(reference_targets, measures$target_unit_2001), , drop = FALSE]
+  codes <- lineage_target_codes(measures$target_unit_2001)
+  measures$state_code_2001 <- normalize_census_code(codes$state_code_2001, 2L)
+  measures$district_code_2001 <- normalize_census_code(codes$district_code_2001, 2L)
+
+  panel <- if (inherits(district_panel, "sf")) sf::st_drop_geometry(district_panel) else safe_df(district_panel)
+  keys <- c("state_code_2001", "district_code_2001")
+  panel$state_code_2001 <- normalize_census_code(panel$state_code_2001, 2L)
+  panel$district_code_2001 <- normalize_census_code(panel$district_code_2001, 2L)
+  if (anyDuplicated(panel[keys])) {
+    stop("District panel is not unique by Census-2001 district for migration mechanisms.", call. = FALSE)
+  }
+  panel <- merge(
+    panel,
+    measures[c(keys, registry$variable)],
+    by = keys,
+    all = FALSE,
+    sort = FALSE
+  )
+  if (nrow(panel) != nrow(measures)) {
+    stop("Census migration mechanism districts are not all present in the IV panel.", call. = FALSE)
+  }
+
+  projected <- prepare_alternative_distance_panel(
+    panel,
+    treatment = preferred_iv_variables()$treatment,
+    retain = registry$variable
+  )
+  complete <- stats::complete.cases(projected[registry$variable])
+  out <- projected[complete, , drop = FALSE]
+  if (!nrow(out)) {
+    stop("Census migration mechanisms have no common complete outcome sample.", call. = FALSE)
+  }
+  attr(out, "n_harmonized_mechanism_districts") <- nrow(measures)
+  rownames(out) <- NULL
+  out
+}
+
+add_census_migration_mechanism_holm <- function(results) {
+  out <- safe_df(results)
+  out$p_holm_within_spec <- NA_real_
+  groups <- split(seq_len(nrow(out)), out$specification_id)
+  for (index in groups) {
+    usable <- index[out$status[index] == "estimated" & is.finite(num(out$p.value[index]))]
+    if (length(usable)) {
+      out$p_holm_within_spec[usable] <- stats::p.adjust(num(out$p.value[usable]), method = "holm")
+    }
+  }
+  out
+}
+
+estimate_census_migration_mechanism_reduced_forms <- function(
+    mechanism_panel,
+    registry = census_migration_mechanism_registry(),
+    cfg = list()) {
+  panel <- safe_df(mechanism_panel)
+  registry <- safe_df(registry)
+  base_specs <- census_migration_mechanism_specifications()
+  sample_n <- nrow(panel)
+  harmonized_n <- attr(mechanism_panel, "n_harmonized_mechanism_districts", exact = TRUE)
+  if (!is.finite(harmonized_n)) harmonized_n <- sample_n
+
+  first_stage <- safe_bind_rows(lapply(seq_len(nrow(base_specs)), function(i) {
+    spec <- base_specs[i, , drop = FALSE]
+    estimate_alternative_distance_spec(
+      panel, spec, treatment = spec$treatment[[1L]]
+    )$summary
+  }))
+  if (any(num(first_stage$n) != sample_n)) {
+    stop("Census migration mechanism first stages did not use the registered common sample.", call. = FALSE)
+  }
+
+  reduced_form <- safe_bind_rows(lapply(seq_len(nrow(registry)), function(j) {
+    outcome <- registry[j, , drop = FALSE]
+    safe_bind_rows(lapply(seq_len(nrow(base_specs)), function(i) {
+      spec <- base_specs[i, , drop = FALSE]
+      spec$outcome <- outcome$variable[[1L]]
+      estimate <- estimate_iv_reduced_form_spec(panel, spec, cfg)
+      estimate$outcome_id <- outcome$outcome_id[[1L]]
+      estimate$outcome_variable <- outcome$variable[[1L]]
+      estimate$mechanism_family <- outcome$mechanism_family[[1L]]
+      estimate$tier <- outcome$tier[[1L]]
+      estimate$denominator <- outcome$denominator[[1L]]
+      estimate$adjustment_id <- spec$adjustment_id[[1L]]
+      estimate$construction_id <- spec$construction_id[[1L]]
+      estimate$fixed_effect <- spec$fixed_effect[[1L]]
+      estimate
+    }))
+  }))
+  if (any(num(reduced_form$n) != sample_n)) {
+    stop("Census migration reduced forms did not use one common mechanism sample.", call. = FALSE)
+  }
+  reduced_form <- add_census_migration_mechanism_holm(reduced_form)
+  reduced_form <- reduced_form[c(
+    "outcome_id", "outcome_variable", "mechanism_family", "tier", "denominator",
+    "specification_id", "adjustment_id", "construction_id", "fixed_effect",
+    "term", "estimate", "std.error", "statistic", "p.value",
+    "p_holm_within_spec", "n", "status", "reason"
+  )]
+
+  list(
+    registry = registry,
+    sample_coverage = data.frame(
+      n_harmonized_mechanism_districts = as.integer(harmonized_n),
+      n_common_analysis_districts = sample_n,
+      n_states = length(unique(panel$state_code_2001)),
+      n_regions = length(unique(panel$region)),
+      stringsAsFactors = FALSE
+    ),
+    first_stage = first_stage,
+    reduced_form = reduced_form
+  )
+}
+
+
 build_census_migration_diagnostics <- function(
     d02_2001,
     d02_2011_source,
@@ -115,7 +338,8 @@ build_census_migration_diagnostics <- function(
     d03_2011,
     d04_2011,
     d07_2011,
-    district_panel) {
+    district_panel,
+    cfg = list()) {
   validity_panel <- prepare_census_migration_validity_panel(district_panel, d02_2001)
   validity_specs <- candidate_iv_balance_specifications()
   balance <- add_iv_balance_holm(
@@ -129,6 +353,14 @@ build_census_migration_diagnostics <- function(
     validity_panel,
     specifications = validity_specs,
     variables = census_migration_balance_variables()
+  )
+  mechanism_registry <- census_migration_mechanism_registry()
+  mechanism_panel <- prepare_census_migration_mechanism_panel(
+    district_panel, d02_2011, d03_2011, d04_2011, d07_2011,
+    registry = mechanism_registry
+  )
+  mechanism <- estimate_census_migration_mechanism_reduced_forms(
+    mechanism_panel, mechanism_registry, cfg = cfg
   )
   list(
     d02_2001 = safe_df(d02_2001),
@@ -155,7 +387,11 @@ build_census_migration_diagnostics <- function(
     d02_2001_balance = balance,
     d02_2001_joint_balance = joint_balance,
     d02_2001_first_stage_sensitivity =
-      estimate_census_migration_first_stage_sensitivity(validity_panel)
+      estimate_census_migration_first_stage_sensitivity(validity_panel),
+    mechanism_registry = mechanism$registry,
+    mechanism_sample_coverage = mechanism$sample_coverage,
+    mechanism_first_stage = mechanism$first_stage,
+    mechanism_reduced_form = mechanism$reduced_form
   )
 }
 
@@ -176,7 +412,11 @@ save_census_migration_diagnostics <- function(
     d02_2001_balance = file.path(dir, "d02_2001_instrument_balance.csv"),
     d02_2001_joint_balance = file.path(dir, "d02_2001_instrument_balance_joint.csv"),
     d02_2001_first_stage_sensitivity =
-      file.path(dir, "d02_2001_first_stage_sensitivity.csv")
+      file.path(dir, "d02_2001_first_stage_sensitivity.csv"),
+    mechanism_registry = file.path(dir, "mechanism_registry.csv"),
+    mechanism_sample_coverage = file.path(dir, "mechanism_sample_coverage.csv"),
+    mechanism_first_stage = file.path(dir, "mechanism_first_stage.csv"),
+    mechanism_reduced_form = file.path(dir, "mechanism_reduced_form.csv")
   )
   for (name in names(files)) {
     utils::write.csv(diagnostics[[name]], files[[name]], row.names = FALSE, na = "")
