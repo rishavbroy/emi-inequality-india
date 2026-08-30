@@ -1312,3 +1312,11 @@ estimated on population-allocated Census-2001 targets. Restricting both to the
 same target names would therefore not make their observational units identical.
 The overlap table keeps that distinction explicit while showing how much of an
 apparent geography difference may coincide with changed support.
+
+
+Pairwise target-overlap rows use a stable methodological ordering:
+`preferred_historical_geography`, then `G0_exact_only`, then G2 from lower to
+higher source-coverage thresholds. Threshold labels preserve their actual
+percentage magnitude (for example, `coverage_90pct`, not a lexically derived or
+zero-stripped abbreviation), so `variant_a` and `variant_b` remain interpretable
+across reruns and downstream joins.
