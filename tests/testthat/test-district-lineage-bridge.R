@@ -949,7 +949,8 @@ test_that("canonical geography topology distinguishes mergers and many-to-many c
     target_unit_id = c("census2001__01__01", "census2001__01__01"),
     population_weight = c(1, 1),
     area_weight = c(1, 1),
-    coverage = c(1, 1),
+    source_coverage = c(1, 1),
+    target_coverage = c(1, 1),
     mapping_class = "reviewed",
     evidence_source = "test",
     stringsAsFactors = FALSE
@@ -988,4 +989,70 @@ test_that("canonical geography transitions reject invalid allocation weights", {
     as_geography_transition(transition, 2011, 2001),
     "population_weight"
   )
+})
+
+
+test_that("geography components use standard undirected connected components", {
+  transition <- data.frame(
+    source_vintage = 1991L,
+    target_vintage = 2001L,
+    source_state_code = c("01", "01", "01", "01"),
+    source_district_code = c("01", "02", "03", "03"),
+    source_unit_id = c(
+      "census1991__01__01", "census1991__01__02",
+      "census1991__01__03", "census1991__01__03"
+    ),
+    target_state_code = c("01", "01", "01", "01"),
+    target_district_code = c("01", "01", "02", "03"),
+    target_unit_id = c(
+      "census2001__01__01", "census2001__01__01",
+      "census2001__01__02", "census2001__01__03"
+    ),
+    population_weight = c(1, 1, .6, .4),
+    area_weight = c(1, 1, .5, .5),
+    source_coverage = 1,
+    target_coverage = 1,
+    mapping_class = "deterministic_containment",
+    evidence_source = "test",
+    stringsAsFactors = FALSE
+  )
+
+  membership <- build_geography_components(transition)
+  summary <- summarize_geography_components(
+    transition, membership
+  )
+
+  expect_equal(nrow(summary), 2L)
+  expect_setequal(summary$component_class, c("merger", "split"))
+  expect_true(all(summary$deterministic_amalgamation_eligible))
+  expect_equal(
+    length(unique(membership$harmonized_component_id)),
+    2L
+  )
+})
+
+test_that("deterministic amalgamation requires complete coverage on both vintages", {
+  transition <- data.frame(
+    source_vintage = c(1991L, 1991L),
+    target_vintage = c(2001L, 2001L),
+    source_state_code = c("01", "01"),
+    source_district_code = c("01", "02"),
+    source_unit_id = c("census1991__01__01", "census1991__01__02"),
+    target_state_code = c("01", "01"),
+    target_district_code = c("01", "01"),
+    target_unit_id = c("census2001__01__01", "census2001__01__01"),
+    population_weight = c(1, 1),
+    area_weight = c(1, 1),
+    source_coverage = c(1, .98),
+    target_coverage = c(1, 1),
+    mapping_class = "deterministic_containment",
+    evidence_source = "test",
+    stringsAsFactors = FALSE
+  )
+  summary <- summarize_geography_components(transition)
+
+  expect_identical(summary$component_class, "merger")
+  expect_false(summary$source_coverage_complete)
+  expect_true(summary$target_coverage_complete)
+  expect_false(summary$deterministic_amalgamation_eligible)
 })
