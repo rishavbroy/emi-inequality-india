@@ -139,3 +139,62 @@ test_that("HCES summary coverage saver returns the normalized output path", {
     normalizePath(path, mustWork = FALSE)
   )
 })
+
+
+test_that("MPCE benchmark registry requires complete sector and provenance contracts", {
+  write_registry <- function(rows) {
+    path <- tempfile(fileext = ".csv")
+    writeLines(c(
+      "survey_id,sector,mpce_definition,expected_mpce,tolerance_abs_rupees,source_label,source_url",
+      rows
+    ), path)
+    path
+  }
+
+  missing_sector <- write_registry(
+    "round,rural,MRP,100,1,fixture,https://example.invalid"
+  )
+  expect_error(
+    read_consumption_mpce_benchmarks(missing_sector),
+    "rural and urban rows for every survey"
+  )
+
+  missing_source <- write_registry(c(
+    "round,rural,MRP,100,1,,https://example.invalid",
+    "round,urban,MRP,200,1,,https://example.invalid"
+  ))
+  expect_error(
+    read_consumption_mpce_benchmarks(missing_source),
+    "non-empty source_label"
+  )
+
+  malformed_url <- write_registry(c(
+    "round,rural,MRP,100,1,fixture,example.invalid",
+    "round,urban,MRP,200,1,fixture,example.invalid"
+  ))
+  expect_error(
+    read_consumption_mpce_benchmarks(malformed_url),
+    "HTTP"
+  )
+})
+
+test_that("NSS 61 MRP benchmark provenance points to the 2004-05 official report", {
+  benchmarks <- read_consumption_mpce_benchmarks(file.path(
+    Sys.getenv("EMI_PROJECT_ROOT", "."),
+    "data", "metadata", "consumption_mpce_benchmarks.csv"
+  ))
+  nss61 <- benchmarks[
+    benchmarks$survey_id == "nss_2004_05",
+    ,
+    drop = FALSE
+  ]
+
+  expect_setequal(nss61$sector, c("rural", "urban"))
+  expect_true(all(nss61$mpce_definition == "MRP"))
+  expect_equal(
+    nss61$expected_mpce[match(c("rural", "urban"), nss61$sector)],
+    c(579, 1105)
+  )
+  expect_true(all(grepl("Report 508", nss61$source_label)))
+  expect_true(all(grepl("508_final\\\\.pdf$", nss61$source_url)))
+})

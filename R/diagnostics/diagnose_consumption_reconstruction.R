@@ -21,6 +21,40 @@ read_consumption_mpce_benchmarks <- function(path) {
   if (!nrow(out) || any(!out$sector %in% c("rural", "urban"))) {
     stop("Consumption MPCE benchmarks must contain rural/urban rows.", call. = FALSE)
   }
+  text_fields <- c("survey_id", "mpce_definition", "source_label", "source_url")
+  empty_text <- vapply(
+    text_fields,
+    function(field) any(is.na(out[[field]]) | !nzchar(out[[field]])),
+    logical(1)
+  )
+  if (any(empty_text)) {
+    stop(
+      "Consumption MPCE benchmarks require non-empty ",
+      paste(text_fields[empty_text], collapse = ", "),
+      ".",
+      call. = FALSE
+    )
+  }
+  if (any(!grepl("^https?://", out$source_url, ignore.case = TRUE))) {
+    stop(
+      "Consumption MPCE benchmark source_url values must use HTTP(S).",
+      call. = FALSE
+    )
+  }
+  sector_sets <- split(out$sector, out$survey_id)
+  incomplete <- names(sector_sets)[!vapply(
+    sector_sets,
+    function(x) setequal(unique(x), c("rural", "urban")),
+    logical(1)
+  )]
+  if (length(incomplete)) {
+    stop(
+      "Consumption MPCE benchmarks require rural and urban rows for every survey: ",
+      paste(incomplete, collapse = ", "),
+      ".",
+      call. = FALSE
+    )
+  }
   if (anyNA(out$expected_mpce) || any(!is.finite(out$expected_mpce)) || any(out$expected_mpce <= 0)) {
     stop("Consumption MPCE benchmarks require positive finite expected_mpce values.", call. = FALSE)
   }
