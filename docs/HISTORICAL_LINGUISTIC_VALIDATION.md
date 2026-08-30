@@ -842,11 +842,15 @@ and remain outside the expanded sample. A future constant-boundary amalgamation
 may combine both historical and later units, but it should be a separate,
 explicit estimand rather than an implicit weighting rule.
 
-The later predictors are reconstructed from components. EMIE is the sum of
-English-medium enrolled-child survey weight divided by the sum of eligible-child
-weight across descendants. Census-2001 linguistic distance is reconstructed from
-the descendant speaker counts in distance bins 1--5. The code therefore never
-takes an unweighted average of district treatment or IV scalars.
+The later predictors are reconstructed from components. EMIE preserves the
+production percentage scale used by `emi_exposure_all_children_0708`:
+`100 * sum(English-medium enrolled-child survey weight) /
+sum(eligible-child survey weight)` across descendants. The implementation calls
+the same `safe_percent()` helper used by the 2007 education-exposure builder,
+rather than creating a second proportion-scale definition. Census-2001
+linguistic distance is reconstructed from descendant speaker counts in distance
+bins 1--5. The code therefore never takes an unweighted average of district
+treatment or IV scalars.
 
 The strict outputs remain `vanneman_pretrend_*`. The expanded outputs use the
 `vanneman_parent_pretrend_*` prefix. Both now report three predictors when
@@ -941,6 +945,12 @@ parent EMIE unavailable but does not remove the parent from the LD_2001
 diagnostic; missing one descendant's linguistic speaker/share components makes
 parent LD_2001 unavailable but does not remove the parent from the EMIE
 diagnostic. Partial descendants are never silently summed with `na.rm = TRUE`.
+
+The descendant identity check is on the same percentage scale: a district's
+stored `emi_exposure_all_children_0708` must equal
+`safe_percent(emi_enrolled_child_weight_0708,
+eligible_child_weight_0708)`. This catches both component drift and accidental
+0--1 versus 0--100 rescaling before parent aggregation.
 
 `vanneman_parent_pretrend_descendant_completeness.csv` records, for every
 historical parent, the number of descendants and the number complete for EMIE
