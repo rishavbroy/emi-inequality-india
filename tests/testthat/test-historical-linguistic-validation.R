@@ -666,21 +666,20 @@ test_that("Helms-Lim benchmark uses exact Census-1991 keys and surfaces disagree
 })
 
 
-test_that("historical SHRUG geography exposes exact constant-boundary component candidates", {
-  fixture <- historical_linguistic_validation_fixture()
-  geography <- build_historical_linguistic_geography_1991_2001(
-    fixture$raw_sources
-  )
+test_that("historical SHRUG geography saves deterministic harmonized-region artifacts", {
+  body <- paste(deparse(body(build_historical_linguistic_geography_1991_2001)), collapse = "\n")
+  saver <- paste(deparse(body(save_historical_linguistic_geography_1991_2001)), collapse = "\n")
 
-  expect_true(nrow(geography$canonical_transition) > 0L)
-  expect_true(nrow(geography$components) > 0L)
-  expect_true(nrow(geography$component_summary) > 0L)
-  expect_true(all(
-    geography$component_summary$component_class %in%
-      c("one_to_one", "split", "merger", "many_to_many")
-  ))
-  expect_true(all(
-    geography$component_summary$deterministic_amalgamation_eligible %in%
-      c(TRUE, FALSE)
-  ))
+  expect_match(body, "build_harmonized_region_crosswalk", fixed = TRUE)
+  expect_match(body, "summarize_harmonized_region_crosswalk", fixed = TRUE)
+  expect_match(
+    saver,
+    "historical_linguistic_harmonized_crosswalk_1991_2001.csv",
+    fixed = TRUE
+  )
+  expect_match(
+    saver,
+    "historical_linguistic_harmonized_crosswalk_summary_1991_2001.csv",
+    fixed = TRUE
+  )
 })

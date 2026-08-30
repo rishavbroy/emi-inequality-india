@@ -202,6 +202,8 @@ build_geography_components <- function(transition) {
     return(data.frame(
       harmonized_component_id = character(),
       vintage = integer(),
+      state_code = character(),
+      district_code = character(),
       unit_id = character(),
       side = character(),
       stringsAsFactors = FALSE
@@ -225,18 +227,22 @@ build_geography_components <- function(transition) {
   component_rank[component_order] <- seq_along(component_order)
   component_id <- sprintf(
     "geo_component_%04d",
-    component_rank[as.character(component_number)]
+    component_rank[component_number]
   )
 
   source_units <- unique(data.frame(
     unit_id = x$source_unit_id,
     vintage = as.integer(x$source_vintage),
+    state_code = x$source_state_code,
+    district_code = x$source_district_code,
     side = "source",
     stringsAsFactors = FALSE
   ))
   target_units <- unique(data.frame(
     unit_id = x$target_unit_id,
     vintage = as.integer(x$target_vintage),
+    state_code = x$target_state_code,
+    district_code = x$target_district_code,
     side = "target",
     stringsAsFactors = FALSE
   ))
@@ -244,7 +250,8 @@ build_geography_components <- function(transition) {
   idx <- match(out$unit_id, vertices)
   out$harmonized_component_id <- component_id[idx]
   out <- out[c(
-    "harmonized_component_id", "vintage", "unit_id", "side"
+    "harmonized_component_id", "vintage",
+    "state_code", "district_code", "unit_id", "side"
   )]
   out[order(
     out$harmonized_component_id, out$vintage, out$unit_id
@@ -258,7 +265,8 @@ summarize_geography_components <- function(
   membership <- safe_df(components)
   validate_geography_transition(x)
   required <- c(
-    "harmonized_component_id", "vintage", "unit_id", "side"
+    "harmonized_component_id", "vintage",
+    "state_code", "district_code", "unit_id", "side"
   )
   missing <- setdiff(required, names(membership))
   if (length(missing)) {
@@ -355,6 +363,122 @@ summarize_geography_components <- function(
         target_coverage_complete = target_complete,
         deterministic_amalgamation_eligible =
           source_complete && target_complete,
+        stringsAsFactors = FALSE
+      )
+    }
+  ))
+}
+
+
+build_harmonized_region_crosswalk <- function(
+    components, component_summary,
+    deterministic_only = TRUE) {
+  membership <- safe_df(components)
+  summary <- safe_df(component_summary)
+
+  required_membership <- c(
+    "harmonized_component_id", "vintage",
+    "state_code", "district_code", "unit_id", "side"
+  )
+  required_summary <- c(
+    "harmonized_component_id", "component_class",
+    "source_coverage_complete", "target_coverage_complete",
+    "deterministic_amalgamation_eligible"
+  )
+  missing <- setdiff(required_membership, names(membership))
+  if (length(missing)) {
+    stop(
+      "Harmonized-region membership lacks: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  missing <- setdiff(required_summary, names(summary))
+  if (length(missing)) {
+    stop(
+      "Harmonized-region component summary lacks: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  if (anyDuplicated(membership[c("vintage", "unit_id")])) {
+    stop(
+      "A geography unit cannot belong to multiple harmonized components.",
+      call. = FALSE
+    )
+  }
+  if (anyDuplicated(summary$harmonized_component_id)) {
+    stop(
+      "Harmonized-region component summary has duplicate component IDs.",
+      call. = FALSE
+    )
+  }
+
+  eligible <- if (isTRUE(deterministic_only)) {
+    summary$deterministic_amalgamation_eligible %in% TRUE
+  } else {
+    rep(TRUE, nrow(summary))
+  }
+  selected <- summary[eligible, required_summary, drop = FALSE]
+  out <- merge(
+    membership, selected,
+    by = "harmonized_component_id",
+    all = FALSE, sort = FALSE
+  )
+  if (!nrow(out)) {
+    out$harmonized_region_id <- character()
+    out$geography_variant <- character()
+    return(out)
+  }
+
+  out$harmonized_region_id <- out$harmonized_component_id
+  out$geography_variant <- if (isTRUE(deterministic_only)) {
+    "deterministic_amalgamation"
+  } else {
+    "all_components_diagnostic"
+  }
+  out <- out[c(
+    "harmonized_region_id", "geography_variant",
+    "harmonized_component_id", "component_class",
+    "vintage", "state_code", "district_code", "unit_id", "side",
+    "source_coverage_complete", "target_coverage_complete",
+    "deterministic_amalgamation_eligible"
+  )]
+  out[order(
+    out$harmonized_region_id, out$vintage,
+    out$state_code, out$district_code
+  ), , drop = FALSE]
+}
+
+summarize_harmonized_region_crosswalk <- function(crosswalk) {
+  x <- safe_df(crosswalk)
+  required <- c(
+    "harmonized_region_id", "component_class",
+    "vintage", "unit_id"
+  )
+  missing <- setdiff(required, names(x))
+  if (length(missing)) {
+    stop(
+      "Harmonized-region crosswalk lacks: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  if (!nrow(x)) {
+    return(data.frame(
+      component_class = character(),
+      n_regions = integer(),
+      n_units = integer(),
+      stringsAsFactors = FALSE
+    ))
+  }
+  safe_bind_rows(lapply(
+    split(x, x$component_class),
+    function(part) {
+      data.frame(
+        component_class = part$component_class[[1L]],
+        n_regions = length(unique(part$harmonized_region_id)),
+        n_units = nrow(part),
         stringsAsFactors = FALSE
       )
     }

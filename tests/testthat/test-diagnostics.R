@@ -1134,7 +1134,7 @@ test_that("alternative-distance design comparison preserves both FE candidates",
         fixed_effect = fixed_effect,
         joint_excluded_f = ifelse(
           primary,
-          unname(c(region_main = 6, state_main = .75)[target$adjustment_id]),
+          ifelse(target$adjustment_id == "region_main", 6, .75),
           .25
         ),
         partial_r_squared = ifelse(primary, .01, .001),
@@ -1145,7 +1145,7 @@ test_that("alternative-distance design comparison preserves both FE candidates",
         specification_id = ids,
         effective_f = ifelse(
           primary,
-          unname(c(region_main = 7, state_main = .82)[target$adjustment_id]),
+          ifelse(target$adjustment_id == "region_main", 7, .82),
           .3
         ),
         effective_f_critical_value = 23.1,

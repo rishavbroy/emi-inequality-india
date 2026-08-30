@@ -1056,3 +1056,119 @@ test_that("deterministic amalgamation requires complete coverage on both vintage
   expect_true(summary$target_coverage_complete)
   expect_false(summary$deterministic_amalgamation_eligible)
 })
+
+
+test_that("geography component IDs are stable across edge ordering", {
+  transition <- data.frame(
+    source_vintage = 1991L,
+    target_vintage = 2001L,
+    source_state_code = c("01", "01", "01"),
+    source_district_code = c("01", "02", "03"),
+    source_unit_id = c(
+      "census1991__01__01",
+      "census1991__01__02",
+      "census1991__01__03"
+    ),
+    target_state_code = c("01", "01", "01"),
+    target_district_code = c("01", "01", "02"),
+    target_unit_id = c(
+      "census2001__01__01",
+      "census2001__01__01",
+      "census2001__01__02"
+    ),
+    population_weight = 1,
+    area_weight = 1,
+    source_coverage = 1,
+    target_coverage = 1,
+    mapping_class = "deterministic_containment",
+    evidence_source = "test",
+    stringsAsFactors = FALSE
+  )
+
+  forward <- build_geography_components(transition)
+  reverse <- build_geography_components(
+    transition[rev(seq_len(nrow(transition))), , drop = FALSE]
+  )
+
+  forward <- forward[order(forward$unit_id), ]
+  reverse <- reverse[order(reverse$unit_id), ]
+  expect_identical(
+    forward$harmonized_component_id,
+    reverse$harmonized_component_id
+  )
+  expect_false(anyNA(forward$harmonized_component_id))
+})
+
+test_that("deterministic harmonized crosswalk includes complete components only", {
+  transition <- data.frame(
+    source_vintage = c(1991L, 1991L, 1991L),
+    target_vintage = c(2001L, 2001L, 2001L),
+    source_state_code = c("01", "01", "01"),
+    source_district_code = c("01", "02", "03"),
+    source_unit_id = c(
+      "census1991__01__01",
+      "census1991__01__02",
+      "census1991__01__03"
+    ),
+    target_state_code = c("01", "01", "01"),
+    target_district_code = c("01", "01", "02"),
+    target_unit_id = c(
+      "census2001__01__01",
+      "census2001__01__01",
+      "census2001__01__02"
+    ),
+    population_weight = 1,
+    area_weight = 1,
+    source_coverage = c(1, 1, .98),
+    target_coverage = 1,
+    mapping_class = "deterministic_containment",
+    evidence_source = "test",
+    stringsAsFactors = FALSE
+  )
+
+  components <- build_geography_components(transition)
+  summary <- summarize_geography_components(transition, components)
+  crosswalk <- build_harmonized_region_crosswalk(
+    components, summary
+  )
+
+  expect_equal(length(unique(crosswalk$harmonized_region_id)), 1L)
+  expect_identical(unique(crosswalk$component_class), "merger")
+  expect_true(all(crosswalk$deterministic_amalgamation_eligible))
+  expect_setequal(
+    crosswalk$vintage,
+    c(1991L, 2001L)
+  )
+  expect_setequal(
+    crosswalk$district_code[crosswalk$vintage == 1991L],
+    c("01", "02")
+  )
+  expect_identical(
+    crosswalk$district_code[crosswalk$vintage == 2001L],
+    "01"
+  )
+})
+
+test_that("harmonized crosswalk never duplicates a vintage geography unit", {
+  membership <- data.frame(
+    harmonized_component_id = c("a", "b"),
+    vintage = c(1991L, 1991L),
+    state_code = c("01", "01"),
+    district_code = c("01", "01"),
+    unit_id = c("same", "same"),
+    side = "source",
+    stringsAsFactors = FALSE
+  )
+  summary <- data.frame(
+    harmonized_component_id = c("a", "b"),
+    component_class = c("one_to_one", "one_to_one"),
+    source_coverage_complete = TRUE,
+    target_coverage_complete = TRUE,
+    deterministic_amalgamation_eligible = TRUE,
+    stringsAsFactors = FALSE
+  )
+  expect_error(
+    build_harmonized_region_crosswalk(membership, summary),
+    "cannot belong to multiple"
+  )
+})
