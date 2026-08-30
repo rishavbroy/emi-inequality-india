@@ -1588,6 +1588,29 @@ extended_diagnostic_targets <- list(
     )
   ),
   tar_target(
+    historical_vanneman_harmonized_membership,
+    build_vanneman_harmonized_membership(
+      historical_vanneman_panel4_dist91_crosswalk,
+      historical_linguistic_geography_1991_2001$harmonized_crosswalk
+    )
+  ),
+  tar_target(
+    historical_vanneman_amalgamated_pretrend_validation,
+    build_vanneman_amalgamated_pretrend_validation(
+      historical_vanneman_pretrend_levels,
+      historical_vanneman_harmonized_membership,
+      district_panel
+    )
+  ),
+  tar_target(
+    diag_ext_historical_vanneman_amalgamated_pretrend_validation,
+    save_vanneman_pretrend_validation(
+      historical_vanneman_amalgamated_pretrend_validation,
+      prefix = "vanneman_amalgamated_pretrend"
+    ),
+    format = "file"
+  ),
+  tar_target(
     diag_ext_historical_vanneman_parent_pretrend_validation,
     save_vanneman_pretrend_validation(
       historical_vanneman_parent_pretrend_validation,
@@ -1597,10 +1620,12 @@ extended_diagnostic_targets <- list(
   ),
   tar_target(
     historical_vanneman_pretrend_support_comparison,
-    build_vanneman_pretrend_support_comparison(
-      historical_vanneman_pretrend_validation,
-      historical_vanneman_parent_pretrend_validation
-    )
+    build_vanneman_pretrend_support_comparison(list(
+      strict_one_to_one = historical_vanneman_pretrend_validation,
+      historical_parent = historical_vanneman_parent_pretrend_validation,
+      deterministic_amalgamation =
+        historical_vanneman_amalgamated_pretrend_validation
+    ))
   ),
   tar_target(
     diag_ext_historical_vanneman_pretrend_support_comparison,
