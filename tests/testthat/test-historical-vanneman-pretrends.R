@@ -925,3 +925,26 @@ test_that("Vanneman feasibility saver supports parallel geography evidence", {
     )
   )
 })
+
+
+test_that("Vanneman feasibility supports consensus geography prefix", {
+  x <- list(
+    regions = data.frame(status = "test"),
+    summary = data.frame(status = "test"),
+    totals = data.frame(status = "test")
+  )
+  dir <- tempfile()
+  paths <- save_vanneman_amalgamation_feasibility(
+    x,
+    prefix = "vanneman_consensus_amalgamation_feasibility",
+    directory = dir
+  )
+  expect_setequal(
+    basename(paths),
+    c(
+      "vanneman_consensus_amalgamation_feasibility_regions.csv",
+      "vanneman_consensus_amalgamation_feasibility_summary.csv",
+      "vanneman_consensus_amalgamation_feasibility_totals.csv"
+    )
+  )
+})
