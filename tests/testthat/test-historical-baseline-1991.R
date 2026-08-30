@@ -900,6 +900,47 @@ test_that("historical baseline target support aggregates preferred sources by Ce
   )
 })
 
+test_that("historical baseline support variant labels preserve percentage magnitude", {
+  expect_identical(
+    historical_baseline_support_variant_id(
+      "G2_population_interpolated",
+      c(.90, .95, .99)
+    ),
+    c(
+      "G2_population_interpolated_coverage_90pct",
+      "G2_population_interpolated_coverage_95pct",
+      "G2_population_interpolated_coverage_99pct"
+    )
+  )
+  expect_identical(
+    historical_baseline_format_percent(c(.90, .955, NA)),
+    c("90", "95.5", NA_character_)
+  )
+})
+
+test_that("historical baseline support variants use methodological rather than lexical order", {
+  support <- data.frame(
+    geography_variant = c(
+      "G2_population_interpolated",
+      "preferred_historical_geography",
+      "G0_exact_only",
+      "G2_population_interpolated"
+    ),
+    source_coverage_threshold = c(.99, NA, NA, .90),
+    stringsAsFactors = FALSE
+  )
+
+  expect_identical(
+    historical_baseline_support_variant_levels(support),
+    c(
+      "preferred_historical_geography",
+      "G0_exact_only",
+      "G2_population_interpolated_coverage_90pct",
+      "G2_population_interpolated_coverage_99pct"
+    )
+  )
+})
+
 test_that("historical baseline target overlap reports composition without forcing common-unit regressions", {
   support <- data.frame(
     geography_variant = c(
@@ -918,6 +959,14 @@ test_that("historical baseline target overlap reports composition without forcin
   out <- summarize_historical_baseline_target_overlap(support)
 
   expect_equal(nrow(out), 1L)
+  expect_identical(
+    out$variant_a,
+    "preferred_historical_geography"
+  )
+  expect_identical(
+    out$variant_b,
+    "G2_population_interpolated_coverage_99pct"
+  )
   expect_equal(out$n_shared_targets, 1L)
   expect_equal(out$n_only_a, 1L)
   expect_equal(out$n_only_b, 1L)

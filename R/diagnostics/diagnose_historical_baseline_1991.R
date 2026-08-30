@@ -991,24 +991,72 @@ historical_baseline_target_support <- function(
   out
 }
 
+historical_baseline_format_percent <- function(x) {
+  x <- num(x)
+  out <- rep(NA_character_, length(x))
+  finite <- is.finite(x)
+  out[finite] <- format(
+    100 * x[finite],
+    digits = 15,
+    trim = TRUE,
+    scientific = FALSE
+  )
+  out
+}
+
 historical_baseline_support_variant_id <- function(
     geography_variant, source_coverage_threshold) {
+  threshold_label <- historical_baseline_format_percent(
+    source_coverage_threshold
+  )
   ifelse(
     is.na(source_coverage_threshold),
     plain_chr(geography_variant),
     paste0(
       plain_chr(geography_variant),
       "_coverage_",
-      sub(
-        "\\.?0+$", "",
-        format(
-          100 * num(source_coverage_threshold),
-          digits = 15, trim = TRUE, scientific = FALSE
-        )
-      ),
+      threshold_label,
       "pct"
     )
   )
+}
+
+historical_baseline_support_variant_levels <- function(target_support) {
+  x <- safe_df(target_support)
+  required <- c(
+    "geography_variant", "source_coverage_threshold"
+  )
+  missing <- setdiff(required, names(x))
+  if (length(missing)) {
+    stop(
+      "Historical baseline support ordering lacks: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  variants <- unique(x[required])
+  variants$variant_id <- historical_baseline_support_variant_id(
+    variants$geography_variant,
+    variants$source_coverage_threshold
+  )
+  preferred_order <- match(
+    plain_chr(variants$geography_variant),
+    c(
+      "preferred_historical_geography",
+      "G0_exact_only",
+      "G2_population_interpolated"
+    )
+  )
+  preferred_order[is.na(preferred_order)] <- 100L
+  threshold_order <- num(variants$source_coverage_threshold)
+  threshold_order[!is.finite(threshold_order)] <- -Inf
+
+  variants <- variants[order(
+    preferred_order,
+    threshold_order,
+    plain_chr(variants$variant_id)
+  ), , drop = FALSE]
+  plain_chr(variants$variant_id)
 }
 
 summarize_historical_baseline_target_overlap <- function(target_support) {
@@ -1030,7 +1078,7 @@ summarize_historical_baseline_target_overlap <- function(target_support) {
   x$variant_id <- historical_baseline_support_variant_id(
     x$geography_variant, x$source_coverage_threshold
   )
-  variants <- sort(unique(plain_chr(x$variant_id)))
+  variants <- historical_baseline_support_variant_levels(x)
   pairs <- utils::combn(variants, 2L, simplify = FALSE)
 
   safe_bind_rows(lapply(pairs, function(pair) {
