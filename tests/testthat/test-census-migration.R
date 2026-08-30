@@ -187,6 +187,43 @@ test_that("Census migration harmonization withholds partial 2001 parent reconstr
 
   out <- build_census_d02_2011_measures(d02, transition)
   expect_equal(nrow(out), 0L)
+  expect_identical(
+    names(out),
+    c(
+      "target_unit_2001", "census_2011_source_district_count",
+      "census_2011_source_districts", "census_2011_parent_reconstruction_complete",
+      census_d02_count_columns(), "census_year",
+      "recent_0_9_share_among_migrants", "within_district_share_among_migrants",
+      "other_district_same_state_share_among_migrants", "interstate_share_among_migrants",
+      "outside_india_share_among_migrants"
+    )
+  )
+  expect_identical(out$census_year, integer())
+})
+
+test_that("Census D03 harmonization preserves its empty output schema", {
+  d03 <- data.frame(
+    state_code = "01", district_code = "008", district_name = "Partial child",
+    census_year = 2011L, migrants_total = 100, work_employment = 20,
+    business = 5, education = 10, marriage = 30, moved_after_birth = 5,
+    moved_with_household = 20, other_reason = 10, stringsAsFactors = FALSE
+  )
+  transition <- data.frame(
+    state_code_2011 = "01", district_code_2011 = "008",
+    state_code_2001 = "01", district_code_2001 = "02",
+    population_share_to_2001 = 0.9995, area_share_to_2001 = 0.995,
+    shrid_coverage = 0.996, mapping_class = "non_nested_or_incomplete",
+    stringsAsFactors = FALSE
+  )
+
+  out <- build_census_d03_2011_measures(d03, transition)
+  expect_equal(nrow(out), 0L)
+  expect_identical(out$census_year, integer())
+  expect_true(all(census_d03_reason_count_columns() %in% names(out)))
+  expect_true(all(
+    paste0(setdiff(census_d03_reason_count_columns(), "migrants_total"), "_share_among_migrants") %in%
+      names(out)
+  ))
 })
 
 test_that("Census 2001 D03 is not exposed as a district migration source", {

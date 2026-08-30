@@ -15,6 +15,23 @@ census_d03_reason_count_columns <- function() {
   )
 }
 
+census_2011_harmonized_count_schema <- function(count_cols) {
+  count_cols <- unique(plain_chr(count_cols))
+  count_cols <- count_cols[!is.na(count_cols) & nzchar(count_cols)]
+  if (!length(count_cols)) {
+    stop("Harmonized Census-2011 counts require at least one count column.", call. = FALSE)
+  }
+  out <- data.frame(
+    target_unit_2001 = character(),
+    census_2011_source_district_count = integer(),
+    census_2011_source_districts = character(),
+    census_2011_parent_reconstruction_complete = logical(),
+    stringsAsFactors = FALSE
+  )
+  for (column in count_cols) out[[column]] <- numeric()
+  out
+}
+
 harmonize_census_2011_counts_to_2001 <- function(
     x, district_transition_2001_2011, count_cols) {
   x <- safe_df(x)
@@ -35,7 +52,7 @@ harmonize_census_2011_counts_to_2001 <- function(
   )
   x <- merge(x, bridge, by = "source_unit_2011", all.x = TRUE, sort = FALSE)
   mapped <- x[!is.na(x$target_unit_2001) & nzchar(x$target_unit_2001), , drop = FALSE]
-  if (!nrow(mapped)) return(data.frame())
+  if (!nrow(mapped)) return(census_2011_harmonized_count_schema(count_cols))
 
   groups <- split(seq_len(nrow(mapped)), mapped$target_unit_2001)
   out <- safe_bind_rows(lapply(groups, function(index) {
@@ -194,7 +211,7 @@ build_census_d02_2011_measures <- function(d02_2011, district_transition_2001_20
   pooled <- harmonize_census_2011_counts_to_2001(
     d02_2011, district_transition_2001_2011, census_d02_count_columns()
   )
-  pooled$census_year <- 2011L
+  pooled$census_year <- rep.int(2011L, nrow(pooled))
   add_census_d02_migration_shares(pooled)
 }
 
@@ -202,7 +219,7 @@ build_census_d03_2011_measures <- function(d03_2011, district_transition_2001_20
   pooled <- harmonize_census_2011_counts_to_2001(
     d03_2011, district_transition_2001_2011, census_d03_reason_count_columns()
   )
-  pooled$census_year <- 2011L
+  pooled$census_year <- rep.int(2011L, nrow(pooled))
   add_census_d03_reason_shares(pooled)
 }
 
