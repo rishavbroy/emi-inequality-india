@@ -2609,3 +2609,21 @@ test_that("joint Wald estimability distinguishes valid, saturated, and unavailab
   expect_identical(unname(unavailable[["status"]]), "not_estimable")
   expect_identical(unname(unavailable[["reason"]]), "clustered_joint_inference_unavailable")
 })
+
+
+test_that("candidate Anderson-Rubin output retains design metadata", {
+  specs <- candidate_iv_diagnostic_specifications()
+  expect_setequal(
+    specs$adjustment_id,
+    iv_candidate_design_adjustments()
+  )
+
+  # The public saver contract requires metadata to survive estimation.
+  body_text <- paste(
+    deparse(body(diagnose_candidate_anderson_rubin)),
+    collapse = "\n"
+  )
+  expect_match(body_text, "out$adjustment_id", fixed = TRUE)
+  expect_match(body_text, "out$construction_id", fixed = TRUE)
+  expect_match(body_text, "out$fixed_effect", fixed = TRUE)
+})

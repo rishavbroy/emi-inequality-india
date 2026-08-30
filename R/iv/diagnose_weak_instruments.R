@@ -38,12 +38,17 @@ diagnose_candidate_anderson_rubin <- function(
   panel <- as.data.frame(district_panel)
   specifications <- candidate_iv_diagnostic_specifications()
   safe_bind_rows(lapply(seq_len(nrow(specifications)), function(i) {
-    estimate_anderson_rubin_spec(
+    specification <- specifications[i, , drop = FALSE]
+    out <- estimate_anderson_rubin_spec(
       panel,
-      specifications[i, , drop = FALSE],
+      specification,
       level = level,
       points = points
     )$summary
+    out$adjustment_id <- specification$adjustment_id[[1L]]
+    out$construction_id <- specification$construction_id[[1L]]
+    out$fixed_effect <- specification$fixed_effect[[1L]]
+    out
   }))
 }
 
