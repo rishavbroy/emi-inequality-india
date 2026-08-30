@@ -115,6 +115,20 @@ Balance is reported for the live candidate IV designs (region and state fixed ef
 
 A separate first-stage sensitivity compares the primary scalar linguistic-distance first stage under region and state fixed effects with and without the three population-denominated migration controls. Baseline and migration-adjusted specifications are estimated on one common complete-case sample, so changes in the excluded-instrument F statistic or partial R-squared cannot be attributed to sample composition. The migration controls remain a registered sensitivity block; they are not added to the preferred specification automatically.
 
+## Registered 2011 mechanism reduced forms
+
+The first regression layer for post-treatment migration mechanisms is intentionally a reduced-form layer rather than a table of weak-IV 2SLS coefficients. `census_migration_mechanism_registry()` declares eight observed outcomes spanning geographic sorting, migration reasons, migrant skill composition, and recent work-migrant skill/origin composition. The registry labels core versus secondary outcomes and records whether the denominator is all migrants or recent work migrants.
+
+All four harmonized 2011 source tables must have the same Census-2001 parent support. The mechanism panel is then restricted once to a common complete sample containing every registered outcome, the treatment, all main Census controls, and the three live scalar linguistic-distance constructions (primary Shastry, Glottolog, and Dyen). Region-FE and state-FE specifications therefore compare mechanisms and instrument constructions on exactly the same districts.
+
+For each of the six candidate scalar-IV designs, the diagnostics report the first stage on that common sample and the reduced form
+
+`mechanism_2011 ~ linguistic_distance + included_language_controls + baseline_controls + FE`.
+
+State-clustered inference uses the same canonical helper as the rest of the IV diagnostics. Holm-adjusted p-values are reported across the registered mechanism outcomes within each specification. These reduced forms are mechanism evidence about whether the instrument predicts post-treatment spatial/skill composition; they are not by themselves estimates of the causal effect of EMI. A later 2SLS mechanism layer should be added only together with the same weak-identification and Anderson-Rubin reporting used for welfare outcomes.
+
+The files are `mechanism_registry.csv`, `mechanism_sample_coverage.csv`, `mechanism_first_stage.csv`, and `mechanism_reduced_form.csv` under `outputs/diagnostics/extended/census_migration/`.
+
 ## Interpretation
 
 These targets are extended diagnostics, not automatic controls or causal outcomes in the preferred models.
@@ -123,4 +137,4 @@ These targets are extended diagnostics, not automatic controls or causal outcome
 - 2011 D-02, D-03, D-04, and D-07 measures are post-treatment migration mechanisms. They must not be added to the preferred outcome equation as controls.
 - D-03 does not recover migrant occupation or industry. The project will not synthesize missing 2011 D-08/D-09 cells by multiplying migration totals by destination-district B-series shares.
 
-Later phases can add D-05/D-06, a validated 2011 population denominator, and registered mechanism regressions. The deterministic complete-parent bridge currently yields a substantially smaller 2011 mechanism sample than the 593-district 2001 baseline, so mechanism regressions should explicitly report that support and should not be generalized to excluded non-nested parents.
+Later phases can add D-05/D-06, a validated 2011 population denominator, and weak-identification-robust 2SLS mechanism estimates. The deterministic complete-parent bridge currently yields a substantially smaller 2011 mechanism sample than the 593-district 2001 baseline, so the reduced forms explicitly report common support and should not be generalized to excluded non-nested parents.
