@@ -223,7 +223,9 @@ assemble_alternative_distance_first_stages <- function(
       monotonicity_summary = data.frame(status = character()),
       monotonicity_bins = data.frame(status = character()),
       monotonicity_state_slopes = data.frame(status = character()),
-      basis_comparison = data.frame(status = character())
+      basis_comparison = data.frame(status = character()),
+      design_evidence = data.frame(status = character()),
+      design_decision = data.frame(status = character())
     ),
     class = "emi_alternative_distance_first_stages"
   )
@@ -320,6 +322,14 @@ save_alternative_distance_first_stages <- function(
     basis_comparison = write_diagnostic_csv(
       diagnostics$basis_comparison,
       file.path(dir, "linguistic_distance_basis_comparison.csv")
+    ),
+    design_evidence = write_diagnostic_csv(
+      diagnostics$design_evidence,
+      file.path(dir, "alternative_distance_design_evidence.csv")
+    ),
+    design_decision = write_diagnostic_csv(
+      diagnostics$design_decision,
+      file.path(dir, "alternative_distance_design_decision.csv")
     )
   ))
 }
@@ -604,6 +614,173 @@ compare_linguistic_distance_bases <- function(panel) {
   }))
 }
 
+alternative_distance_design_constructions <- function() {
+  c(
+    primary_shastry = "nonzero_mean",
+    robustness_glottolog = "glottolog_mean",
+    robustness_dyen = "dyen_noncognate"
+  )
+}
+
+summarize_alternative_distance_design_evidence <- function(
+    diagnostics,
+    adjustment_id = "state_main",
+    constructions = alternative_distance_design_constructions()) {
+  if (!inherits(diagnostics, "emi_alternative_distance_first_stages")) {
+    stop("Expected alternative-distance diagnostics.", call. = FALSE)
+  }
+  first_stage <- safe_df(diagnostics$summary)
+  weak_iv <- safe_df(diagnostics$weak_iv_outcomes)
+
+  required_first_stage <- c(
+    "specification_id", "adjustment_id", "construction_id",
+    "fixed_effect", "joint_excluded_f", "partial_r_squared", "n"
+  )
+  required_weak_iv <- c(
+    "specification_id", "effective_f", "effective_f_critical_value",
+    "anderson_rubin_p_beta0", "ar_95_contains_zero",
+    "ar_95_disconnected", "ar_95_left_truncated",
+    "ar_95_right_truncated", "n", "status"
+  )
+  missing <- setdiff(required_first_stage, names(first_stage))
+  if (length(missing)) {
+    stop(
+      "Alternative-distance first-stage evidence lacks: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  missing <- setdiff(required_weak_iv, names(weak_iv))
+  if (length(missing)) {
+    stop(
+      "Alternative-distance weak-IV evidence lacks: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+
+  target_ids <- paste(adjustment_id, unname(constructions), sep = "__")
+  fs <- first_stage[
+    first_stage$specification_id %in% target_ids,
+    required_first_stage,
+    drop = FALSE
+  ]
+  wi <- weak_iv[
+    weak_iv$specification_id %in% target_ids,
+    required_weak_iv,
+    drop = FALSE
+  ]
+  if (!setequal(fs$specification_id, target_ids) ||
+      !setequal(wi$specification_id, target_ids) ||
+      anyDuplicated(fs$specification_id) ||
+      anyDuplicated(wi$specification_id)) {
+    stop(
+      "Alternative-distance design closure requires one state-main row per registered construction.",
+      call. = FALSE
+    )
+  }
+
+  evidence <- merge(
+    fs, wi,
+    by = "specification_id",
+    suffixes = c("_first_stage", "_weak_iv"),
+    sort = FALSE
+  )
+  evidence <- evidence[
+    match(target_ids, evidence$specification_id),
+    ,
+    drop = FALSE
+  ]
+  role_by_construction <- setNames(names(constructions), unname(constructions))
+  evidence$design_role <- unname(
+    role_by_construction[evidence$construction_id]
+  )
+  evidence$effective_f_below_critical <- with(
+    evidence,
+    is.finite(effective_f) &
+      is.finite(effective_f_critical_value) &
+      effective_f < effective_f_critical_value
+  )
+  evidence$ar_95_bounded_single_interval <- with(
+    evidence,
+    status == "estimated" &
+      !(ar_95_disconnected %in% TRUE) &
+      !(ar_95_left_truncated %in% TRUE) &
+      !(ar_95_right_truncated %in% TRUE)
+  )
+
+  primary <- evidence[
+    evidence$construction_id == constructions[["primary_shastry"]],
+    ,
+    drop = FALSE
+  ]
+  if (nrow(primary) != 1L) {
+    stop("Alternative-distance design closure lacks the primary Shastry row.", call. = FALSE)
+  }
+  primary_effective_f <- primary$effective_f[[1L]]
+  primary_partial_r2 <- primary$partial_r_squared[[1L]]
+  evidence$effective_f_relative_to_primary <- if (
+      is.finite(primary_effective_f) && primary_effective_f > 0) {
+    evidence$effective_f / primary_effective_f
+  } else {
+    NA_real_
+  }
+  evidence$partial_r_squared_relative_to_primary <- if (
+      is.finite(primary_partial_r2) && primary_partial_r2 > 0) {
+    evidence$partial_r_squared / primary_partial_r2
+  } else {
+    NA_real_
+  }
+  evidence$meets_effective_f_critical_value <- with(
+    evidence,
+    is.finite(effective_f) &
+      is.finite(effective_f_critical_value) &
+      effective_f >= effective_f_critical_value
+  )
+
+  alternatives <- evidence[
+    evidence$design_role != "primary_shastry",
+    ,
+    drop = FALSE
+  ]
+  any_pass <- any(evidence$meets_effective_f_critical_value %in% TRUE)
+  any_alternative_stronger <- if (nrow(alternatives)) {
+    any(
+      is.finite(alternatives$effective_f) &
+        alternatives$effective_f > primary_effective_f
+    )
+  } else {
+    FALSE
+  }
+
+  decision <- data.frame(
+    preferred_adjustment_id = adjustment_id,
+    preferred_fixed_effect = unique(evidence$fixed_effect)[[1L]],
+    primary_construction_id = constructions[["primary_shastry"]],
+    n_design_constructions = nrow(evidence),
+    primary_effective_f = primary_effective_f,
+    primary_effective_f_critical_value =
+      primary$effective_f_critical_value[[1L]],
+    max_effective_f = max(evidence$effective_f, na.rm = TRUE),
+    any_construction_meets_effective_f_critical_value = any_pass,
+    any_robustness_construction_stronger_than_primary =
+      any_alternative_stronger,
+    conventional_2sls_relevance_screen = if (any_pass) {
+      "at_least_one_construction_passes"
+    } else {
+      "no_construction_passes"
+    },
+    design_implication = if (any_pass) {
+      "retain_weak_iv_checks"
+    } else {
+      "weak_iv_robust_or_reduced_form"
+    },
+    stringsAsFactors = FALSE
+  )
+
+  list(evidence = evidence, decision = decision)
+}
+
 augment_alternative_distance_diagnostics <- function(
   diagnostics,
   panel,
@@ -642,5 +819,8 @@ augment_alternative_distance_diagnostics <- function(
   diagnostics$monotonicity_bins <- monotonicity$bins
   diagnostics$monotonicity_state_slopes <- monotonicity$state_slopes
   diagnostics$basis_comparison <- compare_linguistic_distance_bases(panel)
+  design <- summarize_alternative_distance_design_evidence(diagnostics)
+  diagnostics$design_evidence <- design$evidence
+  diagnostics$design_decision <- design$decision
   diagnostics
 }
