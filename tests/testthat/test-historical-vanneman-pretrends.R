@@ -948,3 +948,132 @@ test_that("Vanneman feasibility supports consensus geography prefix", {
     )
   )
 })
+
+
+test_that("Vanneman amalgamated validation uses harmonized target keys without legacy state column", {
+  membership <- data.frame(
+    harmonized_region_id = c("h1", "h1"),
+    component_class = c("one_to_one", "one_to_one"),
+    vintage = c(1991L, 2001L),
+    state_code = c("01", "01"),
+    district_code = c("01", "01"),
+    panel_unit_id = c("a", NA),
+    n_source_1991_districts = 1L,
+    n_vanneman_panel_units = 1L,
+    n_target_2001_districts = 1L,
+    harmonized_state_code_2001 = "01",
+    vanneman_amalgamation_status = "deterministic_amalgamation",
+    vanneman_amalgamation_eligible = TRUE,
+    stringsAsFactors = FALSE
+  )
+  target <- unique(membership[
+    membership$vintage == 2001L &
+      membership$vanneman_amalgamation_eligible %in% TRUE,
+    c("harmonized_region_id", "state_code", "district_code")
+  ])
+
+  expect_identical(
+    names(target),
+    c("harmonized_region_id", "state_code", "district_code")
+  )
+  expect_false("state_code_2001" %in% names(target))
+})
+
+test_that("Vanneman amalgamation status is source-specific and carried to predictors", {
+  years <- c(1961L, 1971L, 1981L, 1991L)
+  levels <- safe_bind_rows(lapply(years, function(year) {
+    data.frame(
+      panel_unit_id = "a",
+      year = year,
+      version = 5L,
+      population = 100,
+      rural_population = 80,
+      main_workers = 40,
+      farm_workers = 20,
+      literates = 50,
+      primary_plus = 20,
+      matriculate_plus = 10,
+      stringsAsFactors = FALSE
+    )
+  }))
+  membership <- data.frame(
+    harmonized_region_id = "h1",
+    vintage = 1991L,
+    panel_unit_id = "a",
+    harmonized_state_code_2001 = "01",
+    vanneman_amalgamation_eligible = TRUE,
+    stringsAsFactors = FALSE
+  )
+
+  out <- build_vanneman_amalgamated_pretrend_levels(
+    levels,
+    membership,
+    geography_status = "kumar_somanathan_exact_amalgamation"
+  )
+
+  expect_true(all(
+    out$pretrend_geography_status ==
+      "kumar_somanathan_exact_amalgamation"
+  ))
+})
+
+test_that("Vanneman support comparison keeps exact amalgamation as a separate geography variant", {
+  make_validation <- function(n) {
+    list(sample_coverage = data.frame(
+      sample_id = "full_pretrend",
+      n_units = n,
+      n_states = 5L,
+      population_1961 = n * 100,
+      share_of_full_units = 1,
+      stringsAsFactors = FALSE
+    ))
+  }
+
+  out <- build_vanneman_pretrend_support_comparison(list(
+    strict_one_to_one = make_validation(10L),
+    historical_parent = make_validation(12L),
+    kumar_somanathan_exact_amalgamation = make_validation(8L)
+  ))
+
+  expect_setequal(
+    out$analysis_id,
+    c(
+      "strict_one_to_one",
+      "historical_parent",
+      "kumar_somanathan_exact_amalgamation"
+    )
+  )
+  exact <- out[
+    out$analysis_id == "kumar_somanathan_exact_amalgamation",
+    ,
+    drop = FALSE
+  ]
+  expect_equal(exact$gain_vs_strict_full_n, -2L)
+})
+
+test_that("Vanneman amalgamation saver records source-specific geography", {
+  x <- list(
+    levels = data.frame(status = "test"),
+    changes = data.frame(status = "test"),
+    sample_coverage = data.frame(status = "test"),
+    estimates = data.frame(status = "test"),
+    joint_balance = data.frame(status = "test"),
+    amalgamation_membership = data.frame(status = "test"),
+    amalgamation_source = data.frame(
+      geography_status = "kumar_somanathan_exact_amalgamation",
+      n_harmonized_regions = 10L,
+      stringsAsFactors = FALSE
+    )
+  )
+  dir <- tempfile()
+  paths <- save_vanneman_pretrend_validation(
+    x,
+    directory = dir,
+    prefix = "vanneman_kumar_somanathan_pretrend"
+  )
+
+  expect_true(
+    "vanneman_kumar_somanathan_pretrend_source.csv" %in%
+      basename(paths)
+  )
+})

@@ -533,7 +533,8 @@ sum_vanneman_component_if_complete <- function(x) {
 }
 
 build_vanneman_amalgamated_pretrend_levels <- function(
-    levels, membership) {
+    levels, membership,
+    geography_status = "deterministic_amalgamation") {
   x <- safe_df(levels)
   map <- safe_df(membership)
   count_fields <- c(
@@ -626,7 +627,7 @@ build_vanneman_amalgamated_pretrend_levels <- function(
         dist91_district_id = NA_character_,
         state_code_2001 = states[[1L]],
         district_code_2001 = NA_character_,
-        pretrend_geography_status = "deterministic_amalgamation",
+        pretrend_geography_status = geography_status,
         preferred_vanneman_pretrend_eligible = TRUE,
         stringsAsFactors = FALSE
       )
@@ -638,18 +639,16 @@ build_vanneman_amalgamated_pretrend_levels <- function(
 
 build_vanneman_amalgamated_pretrend_validation <- function(
     levels, membership, district_panel,
-    treatment = preferred_iv_variables()$treatment) {
+    treatment = preferred_iv_variables()$treatment,
+    geography_status = "deterministic_amalgamation") {
   amalgamated_levels <- build_vanneman_amalgamated_pretrend_levels(
-    levels, membership
+    levels, membership, geography_status = geography_status
   )
   changes <- build_vanneman_pretrend_changes(amalgamated_levels)
   target <- unique(membership[
     membership$vintage == 2001L &
       membership$vanneman_amalgamation_eligible %in% TRUE,
-    c(
-      "harmonized_region_id", "state_code", "district_code",
-      "state_code_2001"
-    )
+    c("harmonized_region_id", "state_code", "district_code")
   ])
   predictor_bridge <- data.frame(
     panel_unit_id = target$harmonized_region_id,
@@ -657,7 +656,7 @@ build_vanneman_amalgamated_pretrend_validation <- function(
     dist91_district_id = NA_character_,
     state_code_2001 = target$state_code,
     district_code_2001 = target$district_code,
-    parent_bridge_status = "deterministic_amalgamation",
+    parent_bridge_status = geography_status,
     preferred_vanneman_parent_eligible = TRUE,
     stringsAsFactors = FALSE
   )
@@ -677,6 +676,15 @@ build_vanneman_amalgamated_pretrend_validation <- function(
     "n_target_2001_districts", "harmonized_state_code_2001",
     "vanneman_amalgamation_status", "vanneman_amalgamation_eligible"
   )])
+  out$amalgamation_source <- data.frame(
+    geography_status = geography_status,
+    n_harmonized_regions = length(unique(
+      out$amalgamation_membership$harmonized_region_id[
+        out$amalgamation_membership$vanneman_amalgamation_eligible %in% TRUE
+      ]
+    )),
+    stringsAsFactors = FALSE
+  )
   out
 }
 
@@ -1425,6 +1433,13 @@ save_vanneman_pretrend_validation <- function(
     )
     write_diagnostic_csv(x$amalgamation_membership, membership_path)
     paths <- c(paths, amalgamation_membership = membership_path)
+  }
+  if ("amalgamation_source" %in% names(x)) {
+    source_path <- file.path(
+      directory, paste0(prefix, "_source.csv")
+    )
+    write_diagnostic_csv(x$amalgamation_source, source_path)
+    paths <- c(paths, amalgamation_source = source_path)
   }
   unname(paths)
 }

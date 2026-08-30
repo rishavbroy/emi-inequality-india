@@ -1678,6 +1678,23 @@ extended_diagnostic_targets <- list(
     format = "file"
   ),
   tar_target(
+    historical_vanneman_kumar_somanathan_pretrend_validation,
+    build_vanneman_amalgamated_pretrend_validation(
+      historical_vanneman_pretrend_levels,
+      historical_vanneman_kumar_somanathan_membership,
+      district_panel,
+      geography_status = "kumar_somanathan_exact_amalgamation"
+    )
+  ),
+  tar_target(
+    diag_ext_historical_vanneman_kumar_somanathan_pretrend_validation,
+    save_vanneman_pretrend_validation(
+      historical_vanneman_kumar_somanathan_pretrend_validation,
+      prefix = "vanneman_kumar_somanathan_pretrend"
+    ),
+    format = "file"
+  ),
+  tar_target(
     historical_vanneman_consensus_membership,
     build_vanneman_harmonized_membership(
       historical_vanneman_panel4_dist91_crosswalk,
@@ -1710,7 +1727,9 @@ extended_diagnostic_targets <- list(
     historical_vanneman_pretrend_support_comparison,
     build_vanneman_pretrend_support_comparison(list(
       strict_one_to_one = historical_vanneman_pretrend_validation,
-      historical_parent = historical_vanneman_parent_pretrend_validation
+      historical_parent = historical_vanneman_parent_pretrend_validation,
+      kumar_somanathan_exact_amalgamation =
+        historical_vanneman_kumar_somanathan_pretrend_validation
     ))
   ),
   tar_target(
