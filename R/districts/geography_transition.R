@@ -120,6 +120,24 @@ as_geography_transition <- function(
   annotate_geography_transition_topology(out)
 }
 
+normalize_geography_coverage <- function(
+    x, rounding_tolerance = 0) {
+  value <- num(x)
+  tolerance <- as.numeric(rounding_tolerance)
+  if (length(tolerance) != 1L || !is.finite(tolerance) ||
+      tolerance < 0) {
+    stop(
+      "Geography coverage rounding tolerance must be one nonnegative number.",
+      call. = FALSE
+    )
+  }
+  near_zero <- is.finite(value) & abs(value) <= tolerance
+  near_one <- is.finite(value) & abs(value - 1) <= tolerance
+  value[near_zero] <- 0
+  value[near_one] <- 1
+  value
+}
+
 validate_geography_transition <- function(transition) {
   x <- safe_df(transition)
   missing <- setdiff(geography_transition_columns(), names(x))

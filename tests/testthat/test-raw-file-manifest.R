@@ -726,3 +726,17 @@ test_that("Helms-Lim 1991 linguistic-distance benchmark has explicit tracked pro
   distance <- read_helms_lim_linguistic_distance_1991(file.path(root,"data","metadata","helms_lim_linguistic_distance_1991.csv"))
   expect_equal(anyDuplicated(distance[c("state_code_1991","district_code_1991")]),0L); expect_true(sum(is.finite(distance$linguistic_distance_1991_helms_lim))>400L)
 })
+
+
+test_that("district carve-out rounding tolerance is one shared source contract", {
+  expect_equal(district_carveout_rounding_tolerance_pp(), 0.05)
+  x <- data.frame(
+    district_1991 = c("A", "A"),
+    pop_1991 = c(100, 100),
+    district_2001 = c("B", "C"),
+    pct_01in91 = c(60.02, 40.01),
+    pct_91in01 = c(100, 100),
+    stringsAsFactors = FALSE
+  )
+  expect_invisible(validate_district_carveout_shares(x))
+})

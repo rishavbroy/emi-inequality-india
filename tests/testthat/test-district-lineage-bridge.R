@@ -1234,3 +1234,17 @@ test_that("empty geography transition uses the canonical schema", {
   ))
   expect_equal(nrow(out), 0L)
 })
+
+
+test_that("geography coverage normalization only snaps within tolerance", {
+  out <- normalize_geography_coverage(
+    c(1.0003, .9997, 1.01, .75),
+    rounding_tolerance = .0005
+  )
+  expect_equal(out[1:2], c(1, 1))
+  expect_equal(out[3:4], c(1.01, .75))
+  expect_error(
+    normalize_geography_coverage(1, rounding_tolerance = -1),
+    "nonnegative"
+  )
+})

@@ -111,7 +111,11 @@ repair_district_carveout_wrapped_rows <- function(x) {
   out[!drop, , drop = FALSE]
 }
 
-validate_district_carveout_shares <- function(x, rounding_tolerance_pp = 0.05) {
+district_carveout_rounding_tolerance_pp <- function() 0.05
+
+validate_district_carveout_shares <- function(
+    x,
+    rounding_tolerance_pp = district_carveout_rounding_tolerance_pp()) {
   out <- safe_df(x)
   if (!nrow(out)) return(invisible(TRUE))
   share_cols <- c("pct_01in91", "pct_91in01")
