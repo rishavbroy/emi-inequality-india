@@ -548,3 +548,260 @@ test_that("G2 historical baseline saver exposes coverage and inference", {
     )
   )
 })
+
+
+test_that("historical baseline geography comparison aligns common human domains only", {
+  baseline <- list(
+    estimates = data.frame(
+      sample = rep(c("preferred_geography", "exact_one_to_one"), each = 2),
+      predictor_id = "eventual_emie",
+      predictor = "emie_exposure",
+      fixed_effect = "state",
+      variable = rep(
+        c("log_population_1991", "rural_hospitals_per_100k_1991"),
+        2
+      ),
+      domain = rep(c("demography", "rural_development"), 2),
+      source = rep(c("PCA91", "VD91"), 2),
+      label = rep(c("Log population", "Rural hospitals"), 2),
+      estimate = c(.1, .2, .11, .21),
+      std.error = .01,
+      p.value = .1,
+      standardized_effect = .2,
+      n = c(100L, 90L, 40L, 35L),
+      n_states = c(10L, 9L, 8L, 7L),
+      population_1991 = c(1000, 900, 400, 350),
+      status = "estimated",
+      stringsAsFactors = FALSE
+    ),
+    joint_balance = data.frame(
+      sample = c(
+        "preferred_geography", "preferred_geography",
+        "exact_one_to_one", "exact_one_to_one"
+      ),
+      predictor_id = "eventual_emie",
+      predictor = "emie_exposure",
+      domain = rep(c("demography", "rural_development"), 2),
+      tested_covariates = rep(
+        c("log_population_1991", "rural_hospitals_per_100k_1991"),
+        2
+      ),
+      n_tested_covariates = 1L,
+      joint_f = c(2, 3, 2.1, 3.1),
+      joint_p = c(.2, .1, .19, .09),
+      n = c(100L, 90L, 40L, 35L),
+      n_states = c(10L, 9L, 8L, 7L),
+      population_1991 = c(1000, 900, 400, 350),
+      status = "estimated",
+      reason = NA_character_,
+      stringsAsFactors = FALSE
+    )
+  )
+  g2 <- list(
+    estimates = data.frame(
+      geography_spec_id = "G2_population_interpolated",
+      source_coverage_threshold = c(.90, .99),
+      predictor_id = "eventual_emie",
+      predictor = "emie_exposure",
+      fixed_effect = "state",
+      variable = "log_population_1991",
+      domain = "demography",
+      source = "PCA91",
+      label = "Log population",
+      estimate = c(.12, .13),
+      std.error = .01,
+      p.value = .1,
+      standardized_effect = .2,
+      n = c(120L, 110L),
+      n_states = 11L,
+      population_1991 = c(1200, 1100),
+      status = "estimated",
+      stringsAsFactors = FALSE
+    ),
+    joint_balance = data.frame(
+      geography_spec_id = "G2_population_interpolated",
+      source_coverage_threshold = c(.90, .99),
+      predictor_id = "eventual_emie",
+      predictor = "emie_exposure",
+      domain = "demography",
+      tested_covariates = "log_population_1991",
+      n_tested_covariates = 1L,
+      joint_f = c(2.2, 2.3),
+      joint_p = c(.18, .17),
+      n = c(120L, 110L),
+      n_states = 11L,
+      population_1991 = c(1200, 1100),
+      status = "estimated",
+      reason = NA_character_,
+      stringsAsFactors = FALSE
+    )
+  )
+
+  out <- build_historical_baseline_geography_comparison(
+    baseline, g2
+  )
+
+  expect_setequal(
+    out$estimates$geography_variant,
+    c(
+      "preferred_historical_geography",
+      "G0_exact_only",
+      "G2_population_interpolated"
+    )
+  )
+  expect_setequal(out$estimates$domain, "demography")
+  expect_false(any(
+    out$estimates$domain == "rural_development"
+  ))
+  expect_equal(nrow(out$g2_threshold_stability), 1L)
+  expect_equal(
+    out$g2_threshold_stability$n_thresholds,
+    2L
+  )
+  expect_equal(
+    out$g2_threshold_stability$joint_p_min,
+    .17
+  )
+  expect_equal(
+    out$g2_threshold_stability$joint_p_max,
+    .18
+  )
+})
+
+test_that("historical baseline geography support preserves sample ranges", {
+  estimates <- data.frame(
+    geography_variant = c(
+      "preferred_historical_geography",
+      "preferred_historical_geography",
+      "G2_population_interpolated",
+      "G2_population_interpolated"
+    ),
+    source_coverage_threshold = c(NA, NA, .99, .99),
+    predictor_id = "eventual_emie",
+    fixed_effect = "state",
+    n = c(100L, 95L, 120L, 118L),
+    n_states = c(10L, 9L, 12L, 12L),
+    population_1991 = c(1000, 950, 1200, 1180),
+    stringsAsFactors = FALSE
+  )
+
+  out <- summarize_historical_baseline_geography_support(estimates)
+
+  preferred <- out[
+    out$geography_variant == "preferred_historical_geography",
+    ,
+    drop = FALSE
+  ]
+  expect_equal(preferred$n_min, 95L)
+  expect_equal(preferred$n_max, 100L)
+  expect_equal(preferred$population_1991_min, 950)
+  expect_equal(preferred$population_1991_max, 1000)
+})
+
+test_that("historical baseline geography comparison rejects duplicate specifications", {
+  baseline <- list(
+    estimates = data.frame(
+      sample = c("preferred_geography", "preferred_geography"),
+      predictor_id = "eventual_emie",
+      predictor = "emie_exposure",
+      fixed_effect = "state",
+      variable = "log_population_1991",
+      domain = "demography",
+      source = "PCA91",
+      label = "Log population",
+      estimate = .1,
+      std.error = .01,
+      p.value = .1,
+      standardized_effect = .2,
+      n = 100L,
+      n_states = 10L,
+      population_1991 = 1000,
+      status = "estimated",
+      stringsAsFactors = FALSE
+    ),
+    joint_balance = data.frame(
+      sample = "preferred_geography",
+      predictor_id = "eventual_emie",
+      predictor = "emie_exposure",
+      domain = "demography",
+      tested_covariates = "log_population_1991",
+      n_tested_covariates = 1L,
+      joint_f = 2,
+      joint_p = .2,
+      n = 100L,
+      n_states = 10L,
+      population_1991 = 1000,
+      status = "estimated",
+      reason = NA_character_,
+      stringsAsFactors = FALSE
+    )
+  )
+  g2 <- list(
+    estimates = data.frame(
+      geography_spec_id = "G2_population_interpolated",
+      source_coverage_threshold = .99,
+      predictor_id = "eventual_emie",
+      predictor = "emie_exposure",
+      fixed_effect = "state",
+      variable = "log_population_1991",
+      domain = "demography",
+      source = "PCA91",
+      label = "Log population",
+      estimate = .1,
+      std.error = .01,
+      p.value = .1,
+      standardized_effect = .2,
+      n = 100L,
+      n_states = 10L,
+      population_1991 = 1000,
+      status = "estimated",
+      stringsAsFactors = FALSE
+    ),
+    joint_balance = data.frame(
+      geography_spec_id = "G2_population_interpolated",
+      source_coverage_threshold = .99,
+      predictor_id = "eventual_emie",
+      predictor = "emie_exposure",
+      domain = "demography",
+      tested_covariates = "log_population_1991",
+      n_tested_covariates = 1L,
+      joint_f = 2,
+      joint_p = .2,
+      n = 100L,
+      n_states = 10L,
+      population_1991 = 1000,
+      status = "estimated",
+      reason = NA_character_,
+      stringsAsFactors = FALSE
+    )
+  )
+
+  expect_error(
+    build_historical_baseline_geography_comparison(
+      baseline, g2
+    ),
+    "duplicate estimate specifications"
+  )
+})
+
+test_that("historical baseline geography comparison saver emits aligned artifacts", {
+  x <- list(
+    estimates = data.frame(status = "test"),
+    joint_balance = data.frame(status = "test"),
+    support = data.frame(status = "test"),
+    g2_threshold_stability = data.frame(status = "test")
+  )
+  dir <- tempfile()
+  paths <- save_historical_baseline_geography_comparison(
+    x, directory = dir
+  )
+  expect_setequal(
+    basename(paths),
+    c(
+      "historical_baseline_1991_geography_estimates.csv",
+      "historical_baseline_1991_geography_joint_balance.csv",
+      "historical_baseline_1991_geography_support.csv",
+      "historical_baseline_1991_g2_threshold_stability.csv"
+    )
+  )
+})

@@ -1707,6 +1707,20 @@ extended_diagnostic_targets <- list(
     format = "file"
   ),
   tar_target(
+    historical_baseline_geography_comparison,
+    build_historical_baseline_geography_comparison(
+      historical_baseline_balance_1991,
+      historical_baseline_g2_sensitivity
+    )
+  ),
+  tar_target(
+    diag_ext_historical_baseline_geography_comparison,
+    save_historical_baseline_geography_comparison(
+      historical_baseline_geography_comparison
+    ),
+    format = "file"
+  ),
+  tar_target(
     historical_vanneman_pretrend_levels,
     build_vanneman_pretrend_levels_from_sources(
       historical_vanneman_source_qa,

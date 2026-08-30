@@ -637,6 +637,416 @@ build_historical_baseline_g2_sensitivity <- function(
   )
 }
 
+historical_baseline_human_domains <- function() {
+  metadata <- historical_baseline_1991_metadata()
+  unique(metadata$domain[metadata$source == "PCA91"])
+}
+
+historical_baseline_common_predictors <- function(
+    baseline_balance, g2_sensitivity) {
+  baseline_ids <- unique(plain_chr(
+    safe_df(baseline_balance$estimates)$predictor_id
+  ))
+  g2_ids <- unique(plain_chr(
+    safe_df(g2_sensitivity$estimates)$predictor_id
+  ))
+  intersect(baseline_ids, g2_ids)
+}
+
+normalize_historical_baseline_geography_estimates <- function(
+    baseline_balance, g2_sensitivity) {
+  baseline <- safe_df(baseline_balance$estimates)
+  g2 <- safe_df(g2_sensitivity$estimates)
+  required_baseline <- c(
+    "sample", "predictor_id", "predictor", "fixed_effect",
+    "variable", "domain", "source", "label",
+    "estimate", "std.error", "p.value", "standardized_effect",
+    "n", "n_states", "population_1991", "status"
+  )
+  required_g2 <- c(
+    "geography_spec_id", "source_coverage_threshold",
+    "predictor_id", "predictor", "fixed_effect",
+    "variable", "domain", "source", "label",
+    "estimate", "std.error", "p.value", "standardized_effect",
+    "n", "n_states", "population_1991", "status"
+  )
+  missing <- setdiff(required_baseline, names(baseline))
+  if (length(missing)) {
+    stop(
+      "Historical baseline geography comparison lacks baseline estimate fields: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  missing <- setdiff(required_g2, names(g2))
+  if (length(missing)) {
+    stop(
+      "Historical baseline geography comparison lacks G2 estimate fields: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+
+  predictors <- historical_baseline_common_predictors(
+    baseline_balance, g2_sensitivity
+  )
+  domains <- historical_baseline_human_domains()
+  baseline <- baseline[
+    baseline$source == "PCA91" &
+      baseline$domain %in% domains &
+      baseline$predictor_id %in% predictors &
+      baseline$sample %in% c(
+        "preferred_geography", "exact_one_to_one"
+      ),
+    required_baseline,
+    drop = FALSE
+  ]
+  baseline$geography_variant <- ifelse(
+    baseline$sample == "exact_one_to_one",
+    "G0_exact_only",
+    "preferred_historical_geography"
+  )
+  baseline$source_coverage_threshold <- NA_real_
+  baseline$sample <- NULL
+
+  g2 <- g2[
+    g2$source == "PCA91" &
+      g2$domain %in% domains &
+      g2$predictor_id %in% predictors,
+    required_g2,
+    drop = FALSE
+  ]
+  g2$geography_variant <- plain_chr(g2$geography_spec_id)
+  g2$geography_spec_id <- NULL
+
+  columns <- c(
+    "geography_variant", "source_coverage_threshold",
+    "predictor_id", "predictor", "fixed_effect",
+    "variable", "domain", "source", "label",
+    "estimate", "std.error", "p.value", "standardized_effect",
+    "n", "n_states", "population_1991", "status"
+  )
+  out <- safe_bind_rows(list(
+    baseline[columns],
+    g2[columns]
+  ))
+  key <- c(
+    "geography_variant", "source_coverage_threshold",
+    "predictor_id", "fixed_effect", "variable"
+  )
+  duplicate_key <- data.frame(
+    geography_variant = plain_chr(out$geography_variant),
+    source_coverage_threshold = ifelse(
+      is.na(out$source_coverage_threshold),
+      "NA",
+      format(
+        num(out$source_coverage_threshold),
+        digits = 15, trim = TRUE, scientific = FALSE
+      )
+    ),
+    predictor_id = plain_chr(out$predictor_id),
+    fixed_effect = plain_chr(out$fixed_effect),
+    variable = plain_chr(out$variable),
+    stringsAsFactors = FALSE
+  )
+  if (anyDuplicated(duplicate_key[key])) {
+    stop(
+      "Historical baseline geography comparison has duplicate estimate specifications.",
+      call. = FALSE
+    )
+  }
+  out
+}
+
+normalize_historical_baseline_geography_joint <- function(
+    baseline_balance, g2_sensitivity) {
+  baseline <- safe_df(baseline_balance$joint_balance)
+  g2 <- safe_df(g2_sensitivity$joint_balance)
+  required_baseline <- c(
+    "sample", "predictor_id", "predictor", "domain",
+    "tested_covariates", "n_tested_covariates",
+    "joint_f", "joint_p", "n", "n_states",
+    "population_1991", "status", "reason"
+  )
+  required_g2 <- c(
+    "geography_spec_id", "source_coverage_threshold",
+    "predictor_id", "predictor", "domain",
+    "tested_covariates", "n_tested_covariates",
+    "joint_f", "joint_p", "n", "n_states",
+    "population_1991", "status", "reason"
+  )
+  missing <- setdiff(required_baseline, names(baseline))
+  if (length(missing)) {
+    stop(
+      "Historical baseline geography comparison lacks baseline joint fields: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  missing <- setdiff(required_g2, names(g2))
+  if (length(missing)) {
+    stop(
+      "Historical baseline geography comparison lacks G2 joint fields: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+
+  predictors <- historical_baseline_common_predictors(
+    baseline_balance, g2_sensitivity
+  )
+  domains <- historical_baseline_human_domains()
+  baseline <- baseline[
+    baseline$domain %in% domains &
+      baseline$predictor_id %in% predictors &
+      baseline$sample %in% c(
+        "preferred_geography", "exact_one_to_one"
+      ),
+    required_baseline,
+    drop = FALSE
+  ]
+  baseline$geography_variant <- ifelse(
+    baseline$sample == "exact_one_to_one",
+    "G0_exact_only",
+    "preferred_historical_geography"
+  )
+  baseline$source_coverage_threshold <- NA_real_
+  baseline$sample <- NULL
+
+  g2 <- g2[
+    g2$domain %in% domains &
+      g2$predictor_id %in% predictors,
+    required_g2,
+    drop = FALSE
+  ]
+  g2$geography_variant <- plain_chr(g2$geography_spec_id)
+  g2$geography_spec_id <- NULL
+
+  columns <- c(
+    "geography_variant", "source_coverage_threshold",
+    "predictor_id", "predictor", "domain",
+    "tested_covariates", "n_tested_covariates",
+    "joint_f", "joint_p", "n", "n_states",
+    "population_1991", "status", "reason"
+  )
+  out <- safe_bind_rows(list(
+    baseline[columns],
+    g2[columns]
+  ))
+  duplicate_key <- data.frame(
+    geography_variant = plain_chr(out$geography_variant),
+    source_coverage_threshold = ifelse(
+      is.na(out$source_coverage_threshold),
+      "NA",
+      format(
+        num(out$source_coverage_threshold),
+        digits = 15, trim = TRUE, scientific = FALSE
+      )
+    ),
+    predictor_id = plain_chr(out$predictor_id),
+    domain = plain_chr(out$domain),
+    stringsAsFactors = FALSE
+  )
+  if (anyDuplicated(duplicate_key)) {
+    stop(
+      "Historical baseline geography comparison has duplicate joint specifications.",
+      call. = FALSE
+    )
+  }
+  out
+}
+
+summarize_historical_baseline_geography_support <- function(estimates) {
+  x <- safe_df(estimates)
+  required <- c(
+    "geography_variant", "source_coverage_threshold",
+    "predictor_id", "fixed_effect", "n", "n_states",
+    "population_1991"
+  )
+  missing <- setdiff(required, names(x))
+  if (length(missing)) {
+    stop(
+      "Historical baseline geography support lacks: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+
+  group_key <- interaction(
+    plain_chr(x$geography_variant),
+    ifelse(
+      is.na(x$source_coverage_threshold),
+      "NA",
+      format(
+        num(x$source_coverage_threshold),
+        digits = 15, trim = TRUE, scientific = FALSE
+      )
+    ),
+    plain_chr(x$predictor_id),
+    plain_chr(x$fixed_effect),
+    drop = TRUE,
+    lex.order = TRUE
+  )
+  safe_bind_rows(lapply(split(x, group_key), function(part) {
+    data.frame(
+      geography_variant = part$geography_variant[[1L]],
+      source_coverage_threshold =
+        part$source_coverage_threshold[[1L]],
+      predictor_id = part$predictor_id[[1L]],
+      fixed_effect = part$fixed_effect[[1L]],
+      n_min = min(num(part$n), na.rm = TRUE),
+      n_max = max(num(part$n), na.rm = TRUE),
+      n_states_min = min(num(part$n_states), na.rm = TRUE),
+      n_states_max = max(num(part$n_states), na.rm = TRUE),
+      population_1991_min = min(
+        num(part$population_1991), na.rm = TRUE
+      ),
+      population_1991_max = max(
+        num(part$population_1991), na.rm = TRUE
+      ),
+      stringsAsFactors = FALSE
+    )
+  }))
+}
+
+summarize_historical_baseline_g2_threshold_stability <- function(
+    joint_balance) {
+  x <- safe_df(joint_balance)
+  x <- x[
+    x$geography_variant == "G2_population_interpolated",
+    ,
+    drop = FALSE
+  ]
+  if (!nrow(x)) return(data.frame())
+  required <- c(
+    "source_coverage_threshold", "predictor_id", "domain",
+    "joint_f", "joint_p", "n", "n_states", "population_1991",
+    "status"
+  )
+  missing <- setdiff(required, names(x))
+  if (length(missing)) {
+    stop(
+      "G2 historical baseline threshold stability lacks: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+
+  group_key <- interaction(
+    plain_chr(x$predictor_id),
+    plain_chr(x$domain),
+    drop = TRUE,
+    lex.order = TRUE
+  )
+  safe_bind_rows(lapply(split(x, group_key), function(part) {
+    thresholds <- sort(unique(num(part$source_coverage_threshold)))
+    estimated <- part$status == "estimated" &
+      is.finite(num(part$joint_p))
+    p <- num(part$joint_p[estimated])
+    f <- num(part$joint_f[estimated])
+    n <- num(part$n)
+    pop <- num(part$population_1991)
+    data.frame(
+      predictor_id = part$predictor_id[[1L]],
+      domain = part$domain[[1L]],
+      n_thresholds = length(thresholds),
+      min_threshold = min(thresholds),
+      max_threshold = max(thresholds),
+      joint_p_min = if (length(p)) min(p) else NA_real_,
+      joint_p_max = if (length(p)) max(p) else NA_real_,
+      joint_f_min = if (length(f)) min(f) else NA_real_,
+      joint_f_max = if (length(f)) max(f) else NA_real_,
+      n_min = min(n, na.rm = TRUE),
+      n_max = max(n, na.rm = TRUE),
+      population_1991_min = min(pop, na.rm = TRUE),
+      population_1991_max = max(pop, na.rm = TRUE),
+      all_status_estimated = all(part$status == "estimated"),
+      stringsAsFactors = FALSE
+    )
+  }))
+}
+
+build_historical_baseline_geography_comparison <- function(
+    baseline_balance, g2_sensitivity) {
+  required_baseline <- c("estimates", "joint_balance")
+  missing <- setdiff(required_baseline, names(baseline_balance))
+  if (length(missing)) {
+    stop(
+      "Historical baseline comparison input lacks: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  required_g2 <- c("estimates", "joint_balance")
+  missing <- setdiff(required_g2, names(g2_sensitivity))
+  if (length(missing)) {
+    stop(
+      "G2 historical baseline comparison input lacks: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+
+  estimates <- normalize_historical_baseline_geography_estimates(
+    baseline_balance, g2_sensitivity
+  )
+  joint <- normalize_historical_baseline_geography_joint(
+    baseline_balance, g2_sensitivity
+  )
+  list(
+    estimates = estimates,
+    joint_balance = joint,
+    support = summarize_historical_baseline_geography_support(
+      estimates
+    ),
+    g2_threshold_stability =
+      summarize_historical_baseline_g2_threshold_stability(joint)
+  )
+}
+
+save_historical_baseline_geography_comparison <- function(
+    x,
+    directory = "outputs/diagnostics/extended/instrument_relevance") {
+  required <- c(
+    "estimates", "joint_balance", "support",
+    "g2_threshold_stability"
+  )
+  missing <- setdiff(required, names(x))
+  if (length(missing)) {
+    stop(
+      "Historical baseline geography comparison output lacks: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  dir.create(directory, recursive = TRUE, showWarnings = FALSE)
+  paths <- c(
+    estimates = file.path(
+      directory, "historical_baseline_1991_geography_estimates.csv"
+    ),
+    joint_balance = file.path(
+      directory, "historical_baseline_1991_geography_joint_balance.csv"
+    ),
+    support = file.path(
+      directory, "historical_baseline_1991_geography_support.csv"
+    ),
+    g2_threshold_stability = file.path(
+      directory,
+      "historical_baseline_1991_g2_threshold_stability.csv"
+    )
+  )
+  write_diagnostic_csv(x$estimates, paths[["estimates"]])
+  write_diagnostic_csv(
+    x$joint_balance, paths[["joint_balance"]]
+  )
+  write_diagnostic_csv(x$support, paths[["support"]])
+  write_diagnostic_csv(
+    x$g2_threshold_stability,
+    paths[["g2_threshold_stability"]]
+  )
+  unname(paths)
+}
+
 save_historical_baseline_g2_sensitivity <- function(
     x,
     directory = "outputs/diagnostics/extended/instrument_relevance") {
