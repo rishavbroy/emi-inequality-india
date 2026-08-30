@@ -329,7 +329,7 @@ test_that("historical-parent predictors aggregate EMIE and LD2001 from component
     district_code_2001 = c("11", "12"),
     eligible_child_weight_0708 = c(100, 300),
     emi_enrolled_child_weight_0708 = c(20, 120),
-    emi_exposure_all_children_0708 = c(.2, .4),
+    emi_exposure_all_children_0708 = c(20, 40),
     ling_total_speakers = c(1000, 3000),
     ling_distance_nonzero_mean = c(2, 4),
     ling_share_distance_1 = c(0, 0),
@@ -344,7 +344,7 @@ test_that("historical-parent predictors aggregate EMIE and LD2001 from component
   a <- out[out$panel_unit_id == "a", , drop = FALSE]
   b <- out[out$panel_unit_id == "b", , drop = FALSE]
 
-  expect_equal(a$emie_exposure, .35)
+  expect_equal(a$emie_exposure, 35)
   expect_equal(a$ling_distance_nonzero_mean_2001, 3.5)
   expect_equal(a$n_descendant_2001_districts, 2L)
   expect_true(a$pretrend_analysis_eligible)
@@ -552,7 +552,7 @@ test_that("historical-parent predictor missingness is source-specific, not a geo
     district_code_2001 = c("11", "12", "13", "14"),
     eligible_child_weight_0708 = c(100, NA, 100, 100),
     emi_enrolled_child_weight_0708 = c(20, NA, 20, 30),
-    emi_exposure_all_children_0708 = c(.2, NA, .2, .3),
+    emi_exposure_all_children_0708 = c(20, NA, 20, 30),
     ling_total_speakers = c(1000, 1000, 1000, NA),
     ling_distance_nonzero_mean = c(2, 4, 2, NA),
     ling_share_distance_1 = c(0, 0, 0, NA),
@@ -575,7 +575,7 @@ test_that("historical-parent predictor missingness is source-specific, not a geo
   expect_equal(a$n_emie_complete_descendants, 1L)
   expect_equal(a$ling_distance_nonzero_mean_2001, 3)
 
-  expect_equal(b$emie_exposure, .25)
+  expect_equal(b$emie_exposure, 25)
   expect_true(b$emie_descendants_complete)
   expect_true(is.na(b$ling_distance_nonzero_mean_2001))
   expect_false(b$ld2001_descendants_complete)
@@ -614,7 +614,7 @@ test_that("historical-parent aggregation rejects invalid EMIE accounting", {
     district_code_2001 = "11",
     eligible_child_weight_0708 = 100,
     emi_enrolled_child_weight_0708 = 120,
-    emi_exposure_all_children_0708 = 1.2,
+    emi_exposure_all_children_0708 = 120,
     ling_total_speakers = 1000,
     ling_distance_nonzero_mean = 2,
     ling_share_distance_1 = 0,
@@ -628,4 +628,39 @@ test_that("historical-parent aggregation rejects invalid EMIE accounting", {
     aggregate_vanneman_parent_predictors(bridge, panel),
     "numerator/denominator accounting"
   )
+})
+
+
+test_that("historical-parent EMIE preserves the production percentage scale", {
+  bridge <- data.frame(
+    panel_unit_id = c("a", "a"),
+    dist91_state_id = c("02", "02"),
+    dist91_district_id = c("01", "01"),
+    state_code_2001 = c("28", "28"),
+    district_code_2001 = c("11", "12"),
+    parent_bridge_status = "preferred_historical_parent_split",
+    preferred_vanneman_parent_eligible = TRUE,
+    stringsAsFactors = FALSE
+  )
+  panel <- data.frame(
+    state_code_2001 = c("28", "28"),
+    district_code_2001 = c("11", "12"),
+    eligible_child_weight_0708 = c(100, 300),
+    emi_enrolled_child_weight_0708 = c(20, 120),
+    emi_exposure_all_children_0708 = c(20, 40),
+    ling_total_speakers = c(1000, 1000),
+    ling_distance_nonzero_mean = c(2, 2),
+    ling_share_distance_1 = c(0, 0),
+    ling_share_distance_2 = c(100, 100),
+    ling_share_distance_3 = c(0, 0),
+    ling_share_distance_4 = c(0, 0),
+    ling_share_distance_5 = c(0, 0),
+    stringsAsFactors = FALSE
+  )
+
+  out <- aggregate_vanneman_parent_predictors(bridge, panel)
+
+  expect_equal(out$emie_exposure, safe_percent(140, 400))
+  expect_equal(out$emie_exposure, 35)
+  expect_true(out$emie_exposure > 1)
 })

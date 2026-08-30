@@ -459,11 +459,10 @@ aggregate_vanneman_parent_predictors <- function(
     )
   }
 
-  district_emie <- ifelse(
-    joined$emie_descendant_complete & emie_denominator > 0,
-    emie_numerator / emie_denominator,
-    NA_real_
-  )
+  district_emie <- vapply(seq_len(nrow(joined)), function(i) {
+    if (!isTRUE(joined$emie_descendant_complete[[i]])) return(NA_real_)
+    safe_percent(emie_numerator[[i]], emie_denominator[[i]])
+  }, numeric(1))
   mismatch <- is.finite(district_emie) & is.finite(num(joined[[treatment]])) &
     abs(district_emie - num(joined[[treatment]])) > 1e-8
   if (any(mismatch)) {
@@ -509,9 +508,8 @@ aggregate_vanneman_parent_predictors <- function(
       district_code_2001 = NA_character_,
       pretrend_analysis_eligible = TRUE,
       pretrend_analysis_geography_status = x$parent_bridge_status[[1L]],
-      emie_exposure = if (
-          emie_complete && is.finite(denominator) && denominator > 0) {
-        numerator / denominator
+      emie_exposure = if (emie_complete) {
+        safe_percent(numerator, denominator)
       } else {
         NA_real_
       },
