@@ -250,6 +250,18 @@ build_shrug_district_bridge_1991_2001 <- function(pc91r, pc91u, pc01r, pc01u, pc
 #' contributes territory to it maps wholly and deterministically back to that
 #' same parent. This is the shared pooling contract for count-valued Census
 #' outcomes: partial-parent reconstructions are never treated as complete.
+complete_deterministic_transition_2011_to_2001_schema <- function() {
+  data.frame(
+    target_unit_2001 = character(),
+    source_unit_2011 = character(),
+    mapping_class = character(),
+    census_2011_contributing_source_count = integer(),
+    census_2011_deterministic_source_count = integer(),
+    census_2011_parent_reconstruction_complete = logical(),
+    stringsAsFactors = FALSE
+  )
+}
+
 build_complete_deterministic_transition_2011_to_2001 <- function(
     district_transition_2001_2011) {
   transition <- safe_df(district_transition_2001_2011)
@@ -287,7 +299,9 @@ build_complete_deterministic_transition_2011_to_2001 <- function(
       is.finite(coverage) & abs(coverage - 1) < 1e-8,
     , drop = FALSE
   ]
-  if (!nrow(deterministic)) return(data.frame())
+  if (!nrow(deterministic)) {
+    return(complete_deterministic_transition_2011_to_2001_schema())
+  }
 
   source_groups <- split(seq_len(nrow(deterministic)), deterministic$source_unit_2011)
   source_bridge <- safe_bind_rows(lapply(source_groups, function(index) {
@@ -301,7 +315,9 @@ build_complete_deterministic_transition_2011_to_2001 <- function(
       stringsAsFactors = FALSE
     )
   }))
-  if (!nrow(source_bridge)) return(data.frame())
+  if (!nrow(source_bridge)) {
+    return(complete_deterministic_transition_2011_to_2001_schema())
+  }
   if (anyDuplicated(source_bridge$source_unit_2011)) {
     stop("Complete deterministic Census-2011 bridge is not unique by source district.", call. = FALSE)
   }
@@ -340,6 +356,7 @@ build_complete_deterministic_transition_2011_to_2001 <- function(
   if (nrow(out) && anyDuplicated(out$source_unit_2011)) {
     stop("Complete Census-2011 bridge is not unique by source district.", call. = FALSE)
   }
+  out <- out[names(complete_deterministic_transition_2011_to_2001_schema())]
   rownames(out) <- NULL
   out
 }

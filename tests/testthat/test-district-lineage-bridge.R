@@ -35,6 +35,28 @@ test_that("SHRUG code widths follow their Census vintages", {
   expect_equal(district$district_code, "01")
 })
 
+
+test_that("complete Census transition keeps its schema when no source is deterministic", {
+  transition <- data.frame(
+    state_code_2011 = "01", district_code_2011 = "008",
+    state_code_2001 = "01", district_code_2001 = "02",
+    population_share_to_2001 = 0.9995, area_share_to_2001 = 0.995,
+    shrid_coverage = 0.996, mapping_class = "non_nested_or_incomplete",
+    stringsAsFactors = FALSE
+  )
+
+  out <- build_complete_deterministic_transition_2011_to_2001(transition)
+
+  expect_equal(nrow(out), 0L)
+  expect_identical(
+    names(out),
+    names(complete_deterministic_transition_2011_to_2001_schema())
+  )
+  expect_identical(out$source_unit_2011, character())
+  expect_identical(out$census_2011_contributing_source_count, integer())
+  expect_identical(out$census_2011_parent_reconstruction_complete, logical())
+})
+
 test_that("SHRUG bridge exposes incomplete coverage instead of renormalizing it", {
   locality <- function(shrid, district, population) {
     data.frame(
