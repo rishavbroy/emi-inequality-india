@@ -904,3 +904,24 @@ test_that("Vanneman amalgamation feasibility is region-level, not membership-row
   expect_equal(nrow(out$regions), 1L)
   expect_equal(out$totals$n_analysis_ready_regions, 1L)
 })
+
+
+test_that("Vanneman feasibility saver supports parallel geography evidence", {
+  x <- list(
+    regions = data.frame(status = "test"),
+    summary = data.frame(status = "test"),
+    totals = data.frame(status = "test")
+  )
+  dir <- tempfile()
+  paths <- save_vanneman_amalgamation_feasibility(
+    x, prefix = "external_exact", directory = dir
+  )
+  expect_setequal(
+    basename(paths),
+    c(
+      "external_exact_regions.csv",
+      "external_exact_summary.csv",
+      "external_exact_totals.csv"
+    )
+  )
+})

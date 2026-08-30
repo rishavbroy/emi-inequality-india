@@ -506,17 +506,18 @@ build_vanneman_amalgamation_feasibility <- function(membership) {
 
 save_vanneman_amalgamation_feasibility <- function(
     x,
+    prefix = "vanneman_amalgamation_feasibility",
     directory = "outputs/diagnostics/extended/instrument_relevance") {
   dir.create(directory, recursive = TRUE, showWarnings = FALSE)
   paths <- c(
     regions = file.path(
-      directory, "vanneman_amalgamation_feasibility_regions.csv"
+      directory, paste0(prefix, "_regions.csv")
     ),
     summary = file.path(
-      directory, "vanneman_amalgamation_feasibility_summary.csv"
+      directory, paste0(prefix, "_summary.csv")
     ),
     totals = file.path(
-      directory, "vanneman_amalgamation_feasibility_totals.csv"
+      directory, paste0(prefix, "_totals.csv")
     )
   )
   write_diagnostic_csv(x$regions, paths[["regions"]])
