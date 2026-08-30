@@ -32,7 +32,7 @@ geography_allocation_semantics_registry <- function() {
       "area"
     ),
     population_fractional_allowed = c(
-      TRUE, TRUE, TRUE, FALSE, FALSE, FALSE
+      TRUE, TRUE, FALSE, FALSE, FALSE, FALSE
     ),
     area_fractional_allowed = c(
       FALSE, FALSE, FALSE, TRUE, FALSE, TRUE
@@ -532,6 +532,350 @@ build_exact_multivintage_geography <- function(
     pairwise_summary = pairwise_summary,
     required_vintages = inventory$required_vintages
   )
+}
+
+population_interpolation_compatible_measure_families <- function(
+    measure_families = geography_measure_family_registry(),
+    semantics = geography_allocation_semantics_registry()) {
+  validate_geography_measure_families(measure_families, semantics)
+  allowed_semantics <- semantics$semantic_id[
+    semantics$population_fractional_allowed %in% TRUE
+  ]
+  measure_families[
+    measure_families$semantic_id %in% allowed_semantics,
+    ,
+    drop = FALSE
+  ]
+}
+
+build_population_interpolation_crosswalk <- function(
+    transitions, target_vintage = 2001L,
+    complete_tolerance = 1e-8) {
+  if (!is.list(transitions) || !length(transitions) ||
+      is.null(names(transitions)) || any(!nzchar(names(transitions)))) {
+    stop(
+      "Population interpolation requires a non-empty named transition list.",
+      call. = FALSE
+    )
+  }
+  target_vintage <- as.integer(target_vintage)
+  if (length(target_vintage) != 1L || is.na(target_vintage)) {
+    stop(
+      "Population interpolation requires one target vintage.",
+      call. = FALSE
+    )
+  }
+  tolerance <- as.numeric(complete_tolerance)
+  if (length(tolerance) != 1L || !is.finite(tolerance) ||
+      tolerance < 0) {
+    stop(
+      "Population interpolation tolerance must be one nonnegative number.",
+      call. = FALSE
+    )
+  }
+
+  rows <- safe_bind_rows(lapply(names(transitions), function(id) {
+    x <- safe_df(transitions[[id]])
+    validate_geography_transition(x)
+    if (!nrow(x)) return(data.frame())
+    vintages <- unique(as.integer(x$target_vintage))
+    if (length(vintages) != 1L || vintages[[1L]] != target_vintage) {
+      stop(
+        "Population interpolation transition ", id,
+        " must target Census-", target_vintage, ".",
+        call. = FALSE
+      )
+    }
+
+    keep <- is.finite(num(x$population_weight))
+    x <- x[keep, , drop = FALSE]
+    if (!nrow(x)) return(data.frame())
+    data.frame(
+      geography_spec_id = "G2_population_interpolated",
+      transition_id = id,
+      source_vintage = as.integer(x$source_vintage),
+      source_state_code = plain_chr(x$source_state_code),
+      source_district_code = plain_chr(x$source_district_code),
+      source_unit_id = plain_chr(x$source_unit_id),
+      target_vintage = as.integer(x$target_vintage),
+      target_state_code = plain_chr(x$target_state_code),
+      target_district_code = plain_chr(x$target_district_code),
+      target_unit_id = plain_chr(x$target_unit_id),
+      allocation_weight = num(x$population_weight),
+      mapping_class = plain_chr(x$mapping_class),
+      evidence_source = plain_chr(x$evidence_source),
+      stringsAsFactors = FALSE
+    )
+  }))
+
+  if (!nrow(rows)) {
+    return(list(
+      crosswalk = data.frame(),
+      source_coverage = data.frame(),
+      summary = data.frame()
+    ))
+  }
+  if (anyDuplicated(rows[c(
+    "source_vintage", "source_unit_id", "target_unit_id"
+  )])) {
+    stop(
+      "Population interpolation contains duplicate source-target allocations.",
+      call. = FALSE
+    )
+  }
+
+  source_key <- paste(
+    rows$source_vintage, rows$source_unit_id, sep = "__"
+  )
+  coverage <- tapply(rows$allocation_weight, source_key, sum)
+  bad <- is.finite(coverage) & coverage > 1 + tolerance
+  if (any(bad)) {
+    stop(
+      "Population interpolation source weights exceed one: ",
+      paste(names(coverage)[bad], collapse = ", "),
+      call. = FALSE
+    )
+  }
+  coverage <- normalize_geography_coverage(
+    coverage, rounding_tolerance = tolerance
+  )
+  rows$source_population_coverage <- unname(
+    coverage[source_key]
+  )
+  rows$unallocated_population_share <- pmax(
+    0, 1 - rows$source_population_coverage
+  )
+  rows$allocation_status <- ifelse(
+    is.finite(rows$source_population_coverage) &
+      rows$source_population_coverage >= 1 - tolerance,
+    "complete_population_partition",
+    "partial_population_partition"
+  )
+
+  target_units <- unique(rows[c(
+    "target_vintage", "target_state_code",
+    "target_district_code", "target_unit_id"
+  )])
+  identity <- data.frame(
+    geography_spec_id = "G2_population_interpolated",
+    transition_id = "target_identity",
+    source_vintage = target_units$target_vintage,
+    source_state_code = target_units$target_state_code,
+    source_district_code = target_units$target_district_code,
+    source_unit_id = target_units$target_unit_id,
+    target_vintage = target_units$target_vintage,
+    target_state_code = target_units$target_state_code,
+    target_district_code = target_units$target_district_code,
+    target_unit_id = target_units$target_unit_id,
+    allocation_weight = 1,
+    mapping_class = "target_identity",
+    evidence_source = "canonical_target_vintage",
+    source_population_coverage = 1,
+    unallocated_population_share = 0,
+    allocation_status = "complete_population_partition",
+    stringsAsFactors = FALSE
+  )
+  crosswalk <- safe_bind_rows(list(rows, identity))
+  crosswalk <- crosswalk[order(
+    crosswalk$source_vintage,
+    crosswalk$source_unit_id,
+    -crosswalk$allocation_weight,
+    crosswalk$target_unit_id
+  ), , drop = FALSE]
+
+  source_coverage <- unique(rows[c(
+    "transition_id", "source_vintage",
+    "source_state_code", "source_district_code", "source_unit_id",
+    "source_population_coverage", "unallocated_population_share",
+    "allocation_status"
+  )])
+  if (anyDuplicated(source_coverage[c(
+    "source_vintage", "source_unit_id"
+  )])) {
+    stop(
+      "Population interpolation source coverage is not unique by source unit.",
+      call. = FALSE
+    )
+  }
+
+  summary <- safe_bind_rows(lapply(
+    split(source_coverage, source_coverage$transition_id),
+    function(part) {
+      coverage_value <- num(part$source_population_coverage)
+      data.frame(
+        transition_id = part$transition_id[[1L]],
+        source_vintage = unique(part$source_vintage)[[1L]],
+        target_vintage = target_vintage,
+        n_source_units = nrow(part),
+        n_complete_population_partitions = sum(
+          part$allocation_status == "complete_population_partition"
+        ),
+        n_partial_population_partitions = sum(
+          part$allocation_status == "partial_population_partition"
+        ),
+        median_population_coverage = if (any(is.finite(coverage_value))) {
+          stats::median(coverage_value, na.rm = TRUE)
+        } else {
+          NA_real_
+        },
+        n_coverage_ge_90pct = sum(
+          is.finite(coverage_value) & coverage_value >= .90
+        ),
+        n_coverage_ge_95pct = sum(
+          is.finite(coverage_value) & coverage_value >= .95
+        ),
+        n_coverage_ge_99pct = sum(
+          is.finite(coverage_value) & coverage_value >= .99
+        ),
+        stringsAsFactors = FALSE
+      )
+    }
+  ))
+
+  list(
+    crosswalk = crosswalk,
+    source_coverage = source_coverage,
+    summary = summary
+  )
+}
+
+allocate_population_sufficient_statistics <- function(
+    data, crosswalk, source_vintage, unit_field,
+    statistic_fields, measure_family,
+    measure_families = geography_measure_family_registry(),
+    semantics = geography_allocation_semantics_registry()) {
+  x <- safe_df(data)
+  map <- safe_df(crosswalk)
+  source_vintage <- as.integer(source_vintage)
+  unit_field <- plain_chr(unit_field)
+  statistic_fields <- plain_chr(statistic_fields)
+  measure_family <- plain_chr(measure_family)
+
+  if (length(source_vintage) != 1L || is.na(source_vintage)) {
+    stop("Population allocation requires one source vintage.", call. = FALSE)
+  }
+  if (length(unit_field) != 1L || !unit_field %in% names(x)) {
+    stop(
+      "Population allocation unit field is missing from data.",
+      call. = FALSE
+    )
+  }
+  if (!length(statistic_fields) ||
+      length(setdiff(statistic_fields, names(x)))) {
+    stop(
+      "Population allocation sufficient-statistic fields are missing from data.",
+      call. = FALSE
+    )
+  }
+
+  compatible <- population_interpolation_compatible_measure_families(
+    measure_families, semantics
+  )
+  if (length(measure_family) != 1L ||
+      !measure_family %in% compatible$measure_family) {
+    stop(
+      "Measure family is not eligible for generic population interpolation: ",
+      measure_family,
+      call. = FALSE
+    )
+  }
+  semantic_id <- compatible$semantic_id[
+    compatible$measure_family == measure_family
+  ][[1L]]
+  if (identical(semantic_id, "ratio_human") &&
+      length(statistic_fields) < 2L) {
+    stop(
+      "Ratio-like population interpolation requires numerator and denominator sufficient statistics.",
+      call. = FALSE
+    )
+  }
+
+  required_map <- c(
+    "geography_spec_id", "source_vintage", "source_unit_id",
+    "target_vintage", "target_unit_id", "allocation_weight",
+    "source_population_coverage", "unallocated_population_share",
+    "allocation_status"
+  )
+  missing <- setdiff(required_map, names(map))
+  if (length(missing)) {
+    stop(
+      "Population interpolation crosswalk lacks: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  map <- map[
+    map$source_vintage == source_vintage &
+      map$transition_id != "target_identity",
+    required_map,
+    drop = FALSE
+  ]
+  if (!nrow(map)) {
+    stop(
+      "Population interpolation has no rows for source vintage ",
+      source_vintage, ".",
+      call. = FALSE
+    )
+  }
+
+  source_units <- plain_chr(x[[unit_field]])
+  missing_units <- setdiff(
+    unique(source_units[!is.na(source_units)]),
+    unique(plain_chr(map$source_unit_id))
+  )
+  if (length(missing_units)) {
+    stop(
+      "Population interpolation lacks source units: ",
+      paste(missing_units, collapse = ", "),
+      call. = FALSE
+    )
+  }
+
+  x$.allocation_row_id <- seq_len(nrow(x))
+  joined <- merge(
+    x, map,
+    by.x = unit_field, by.y = "source_unit_id",
+    all.x = FALSE, all.y = FALSE, sort = FALSE
+  )
+  joined <- joined[order(joined$.allocation_row_id), , drop = FALSE]
+  for (field in statistic_fields) {
+    joined[[field]] <- num(joined[[field]]) *
+      num(joined$allocation_weight)
+  }
+  joined$.allocation_row_id <- NULL
+  joined
+}
+
+save_population_interpolation_geography <- function(
+    x,
+    directory = "outputs/diagnostics/extended/geography") {
+  required <- c("crosswalk", "source_coverage", "summary")
+  missing <- setdiff(required, names(x))
+  if (length(missing)) {
+    stop(
+      "Population interpolation geography output lacks: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  dir.create(directory, recursive = TRUE, showWarnings = FALSE)
+  paths <- c(
+    crosswalk = file.path(
+      directory, "population_interpolation_crosswalk.csv"
+    ),
+    source_coverage = file.path(
+      directory, "population_interpolation_source_coverage.csv"
+    ),
+    summary = file.path(
+      directory, "population_interpolation_summary.csv"
+    )
+  )
+  write_diagnostic_csv(x$crosswalk, paths[["crosswalk"]])
+  write_diagnostic_csv(
+    x$source_coverage, paths[["source_coverage"]]
+  )
+  write_diagnostic_csv(x$summary, paths[["summary"]])
+  unname(paths)
 }
 
 save_exact_multivintage_geography <- function(

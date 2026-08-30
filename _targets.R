@@ -972,6 +972,25 @@ core_pipeline_targets <- list(
     format = "file"
   ),
   tar_target(
+    population_interpolation_geography_1991_2001_2011,
+    build_population_interpolation_crosswalk(
+      list(
+        shrug_1991_2001 =
+          historical_linguistic_geography_1991_2001$canonical_transition,
+        production_2011_2001 =
+          district_lineage$canonical_transition_2001_2011
+      ),
+      target_vintage = 2001L
+    )
+  ),
+  tar_target(
+    diag_ext_population_interpolation_geography,
+    save_population_interpolation_geography(
+      population_interpolation_geography_1991_2001_2011
+    ),
+    format = "file"
+  ),
+  tar_target(
     historical_linguistic_consensus_geography,
     build_historical_linguistic_consensus_geography(
       historical_linguistic_geography_1991_2001,
