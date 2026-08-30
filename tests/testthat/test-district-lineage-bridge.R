@@ -1260,3 +1260,128 @@ test_that("geography coverage normalization preserves keyed unit IDs", {
     "nonnegative"
   )
 })
+
+
+test_that("geography concordance compares both descendants and parents", {
+  make_transition <- function(edges) {
+    out <- data.frame(
+      source_vintage = 1991L,
+      target_vintage = 2001L,
+      source_state_code = "01",
+      source_district_code = sub("s", "", edges$source_unit_id),
+      source_unit_id = edges$source_unit_id,
+      target_state_code = "01",
+      target_district_code = sub("t", "", edges$target_unit_id),
+      target_unit_id = edges$target_unit_id,
+      population_weight = 1,
+      area_weight = NA_real_,
+      source_coverage = 1,
+      target_coverage = 1,
+      mapping_class = "test",
+      evidence_source = "test",
+      stringsAsFactors = FALSE
+    )
+    annotate_geography_transition_topology(out)
+  }
+  reference <- make_transition(data.frame(
+    source_unit_id = c("s1", "s2"),
+    target_unit_id = c("t1", "t1")
+  ))
+  candidate <- make_transition(data.frame(
+    source_unit_id = c("s1", "s2"),
+    target_unit_id = c("t1", "t2")
+  ))
+
+  out <- compare_geography_transitions(reference, candidate)
+
+  expect_identical(
+    out$sources$source_status[
+      out$sources$source_unit_id == "s1"
+    ],
+    "exact_target_set_agreement"
+  )
+  expect_identical(
+    out$targets$target_status[
+      out$targets$target_unit_id == "t1"
+    ],
+    "source_set_conflict"
+  )
+  expect_equal(out$summary$n_source_set_conflicts, 1L)
+})
+
+test_that("consensus geography requires bilateral set agreement and complete coverage", {
+  make_transition <- function(source, target, source_cov = 1, target_cov = 1) {
+    out <- data.frame(
+      source_vintage = 1991L,
+      target_vintage = 2001L,
+      source_state_code = "01",
+      source_district_code = sub("s", "", source),
+      source_unit_id = source,
+      target_state_code = "01",
+      target_district_code = sub("t", "", target),
+      target_unit_id = target,
+      population_weight = 1,
+      area_weight = NA_real_,
+      source_coverage = source_cov,
+      target_coverage = target_cov,
+      mapping_class = "test",
+      evidence_source = "test",
+      stringsAsFactors = FALSE
+    )
+    annotate_geography_transition_topology(out)
+  }
+  reference <- make_transition(c("s1", "s2"), c("t1", "t2"))
+  candidate <- make_transition(c("s1", "s2"), c("t1", "t2"))
+  comparison <- compare_geography_transitions(reference, candidate)
+
+  consensus <- build_consensus_geography_transition(
+    reference, candidate, comparison
+  )
+
+  expect_equal(nrow(consensus), 2L)
+  expect_true(all(consensus$source_coverage == 1))
+  expect_true(all(consensus$target_coverage == 1))
+  expect_true(all(is.na(consensus$population_weight)))
+  expect_true(all(
+    consensus$mapping_class == "bilateral_exact_consensus"
+  ))
+
+  candidate$target_coverage[candidate$target_unit_id == "t2"] <- .9
+  incomplete <- build_consensus_geography_transition(
+    reference,
+    candidate,
+    compare_geography_transitions(reference, candidate)
+  )
+  expect_setequal(incomplete$source_unit_id, "s1")
+})
+
+test_that("consensus geography excludes unilateral source agreement", {
+  reference <- data.frame(
+    source_vintage = 1991L,
+    target_vintage = 2001L,
+    source_state_code = "01",
+    source_district_code = c("01", "02"),
+    source_unit_id = c("s1", "s2"),
+    target_state_code = "01",
+    target_district_code = "01",
+    target_unit_id = "t1",
+    population_weight = 1,
+    area_weight = NA_real_,
+    source_coverage = 1,
+    target_coverage = 1,
+    mapping_class = "test",
+    evidence_source = "reference",
+    stringsAsFactors = FALSE
+  )
+  candidate <- reference[1, , drop = FALSE]
+  candidate$evidence_source <- "candidate"
+
+  reference <- annotate_geography_transition_topology(reference)
+  candidate <- annotate_geography_transition_topology(candidate)
+  comparison <- compare_geography_transitions(reference, candidate)
+  consensus <- build_consensus_geography_transition(
+    reference, candidate, comparison
+  )
+
+  expect_equal(nrow(consensus), 0L)
+})

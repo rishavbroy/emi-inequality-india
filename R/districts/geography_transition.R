@@ -579,24 +579,36 @@ compare_geography_transitions <- function(
     NA_real_
   )
 
-  # Avoid reconstructing source IDs from values inside split().
-  source_signature <- function(x) {
-    ids <- unique(plain_chr(x$source_unit_id))
-    safe_bind_rows(lapply(ids, function(source_id) {
-      targets <- sort(unique(
-        plain_chr(x$target_unit_id[x$source_unit_id == source_id])
+  geography_neighbor_signature <- function(
+      x, unit_field, neighbor_field,
+      unit_output, set_output, count_output) {
+    ids <- unique(plain_chr(x[[unit_field]]))
+    rows <- lapply(ids, function(unit_id) {
+      neighbors <- sort(unique(
+        plain_chr(x[[neighbor_field]][x[[unit_field]] == unit_id])
       ))
-      data.frame(
-        source_unit_id = source_id,
-        target_set = paste(targets, collapse = "|"),
-        n_targets = length(targets),
+      out <- data.frame(
+        unit_id = unit_id,
+        neighbor_set = paste(neighbors, collapse = "|"),
+        n_neighbors = length(neighbors),
         stringsAsFactors = FALSE
       )
-    }))
+      names(out) <- c(unit_output, set_output, count_output)
+      out
+    })
+    safe_bind_rows(rows)
   }
 
-  ref_source <- source_signature(ref)
-  cand_source <- source_signature(cand)
+  ref_source <- geography_neighbor_signature(
+    ref,
+    "source_unit_id", "target_unit_id",
+    "source_unit_id", "target_set", "n_targets"
+  )
+  cand_source <- geography_neighbor_signature(
+    cand,
+    "source_unit_id", "target_unit_id",
+    "source_unit_id", "target_set", "n_targets"
+  )
   names(ref_source)[2:3] <- c(
     "target_set_reference", "n_targets_reference"
   )
@@ -624,9 +636,51 @@ compare_geography_transitions <- function(
     )
   )
 
+  ref_target <- geography_neighbor_signature(
+    ref,
+    "target_unit_id", "source_unit_id",
+    "target_unit_id", "source_set", "n_sources"
+  )
+  cand_target <- geography_neighbor_signature(
+    cand,
+    "target_unit_id", "source_unit_id",
+    "target_unit_id", "source_set", "n_sources"
+  )
+  names(ref_target)[2:3] <- c(
+    "source_set_reference", "n_sources_reference"
+  )
+  names(cand_target)[2:3] <- c(
+    "source_set_candidate", "n_sources_candidate"
+  )
+  targets <- merge(
+    ref_target, cand_target,
+    by = "target_unit_id",
+    all = TRUE, sort = FALSE
+  )
+  ref_target_present <- !is.na(targets$source_set_reference)
+  cand_target_present <- !is.na(targets$source_set_candidate)
+  targets$target_status <- ifelse(
+    ref_target_present & cand_target_present,
+    ifelse(
+      targets$source_set_reference == targets$source_set_candidate,
+      "exact_source_set_agreement",
+      "source_set_conflict"
+    ),
+    ifelse(
+      ref_target_present,
+      "reference_only",
+      "candidate_only"
+    )
+  )
+
   shared_edges <- edges[edges$edge_status == "both", , drop = FALSE]
   shared_sources <- sources[
     ref_source_present & cand_source_present,
+    ,
+    drop = FALSE
+  ]
+  shared_targets <- targets[
+    ref_target_present & cand_target_present,
     ,
     drop = FALSE
   ]
@@ -644,6 +698,15 @@ compare_geography_transitions <- function(
     ),
     n_target_set_conflicts = sum(
       shared_sources$source_status == "target_set_conflict"
+    ),
+    n_reference_targets = length(unique(ref$target_unit_id)),
+    n_candidate_targets = length(unique(cand$target_unit_id)),
+    n_shared_targets = nrow(shared_targets),
+    n_exact_source_set_agreements = sum(
+      shared_targets$target_status == "exact_source_set_agreement"
+    ),
+    n_source_set_conflicts = sum(
+      shared_targets$target_status == "source_set_conflict"
     ),
     mean_shared_edge_weight_abs_diff = if (
         any(is.finite(shared_edges$population_weight_abs_diff))) {
@@ -668,5 +731,113 @@ compare_geography_transitions <- function(
     stringsAsFactors = FALSE
   )
 
-  list(edges = edges, sources = sources, summary = summary)
+  list(edges = edges, sources = sources, targets = targets, summary = summary)
+}
+
+
+build_consensus_geography_transition <- function(
+    reference, candidate, comparison,
+    evidence_source = "cross_source_consensus") {
+  ref <- safe_df(reference)
+  cand <- safe_df(candidate)
+  validate_geography_transition(ref)
+  validate_geography_transition(cand)
+  if (!is.list(comparison) ||
+      !all(c("sources", "targets") %in% names(comparison))) {
+    stop(
+      "Consensus geography requires source- and target-set comparison tables.",
+      call. = FALSE
+    )
+  }
+
+  source_agreement <- safe_df(comparison$sources)
+  target_agreement <- safe_df(comparison$targets)
+  required_source <- c("source_unit_id", "source_status")
+  required_target <- c("target_unit_id", "target_status")
+  missing <- setdiff(required_source, names(source_agreement))
+  if (length(missing)) {
+    stop(
+      "Consensus source comparison lacks: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  missing <- setdiff(required_target, names(target_agreement))
+  if (length(missing)) {
+    stop(
+      "Consensus target comparison lacks: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+
+  agreed_sources <- source_agreement$source_unit_id[
+    source_agreement$source_status == "exact_target_set_agreement"
+  ]
+  agreed_targets <- target_agreement$target_unit_id[
+    target_agreement$target_status == "exact_source_set_agreement"
+  ]
+
+  edge_keys <- c("source_unit_id", "target_unit_id")
+  shared <- merge(
+    ref,
+    cand,
+    by = edge_keys,
+    suffixes = c("_reference", "_candidate"),
+    all = FALSE, sort = FALSE
+  )
+  shared <- shared[
+    shared$source_unit_id %in% agreed_sources &
+      shared$target_unit_id %in% agreed_targets,
+    ,
+    drop = FALSE
+  ]
+  if (!nrow(shared)) return(empty_geography_transition(annotated = TRUE))
+
+  complete <- with(
+    shared,
+    source_coverage_reference == 1 &
+      target_coverage_reference == 1 &
+      source_coverage_candidate == 1 &
+      target_coverage_candidate == 1
+  )
+  complete[is.na(complete)] <- FALSE
+  shared <- shared[complete, , drop = FALSE]
+  if (!nrow(shared)) return(empty_geography_transition(annotated = TRUE))
+
+  same_code <- function(field) {
+    ref_field <- paste0(field, "_reference")
+    cand_field <- paste0(field, "_candidate")
+    identical_values <- plain_chr(shared[[ref_field]]) ==
+      plain_chr(shared[[cand_field]])
+    identical_values[is.na(identical_values)] <- FALSE
+    if (!all(identical_values)) {
+      stop(
+        "Consensus geography sources disagree on resolved ", field, ".",
+        call. = FALSE
+      )
+    }
+    plain_chr(shared[[ref_field]])
+  }
+
+  out <- data.frame(
+    source_vintage = as.integer(shared$source_vintage_reference),
+    target_vintage = as.integer(shared$target_vintage_reference),
+    source_state_code = same_code("source_state_code"),
+    source_district_code = same_code("source_district_code"),
+    source_unit_id = plain_chr(shared$source_unit_id),
+    target_state_code = same_code("target_state_code"),
+    target_district_code = same_code("target_district_code"),
+    target_unit_id = plain_chr(shared$target_unit_id),
+    population_weight = NA_real_,
+    area_weight = NA_real_,
+    source_coverage = 1,
+    target_coverage = 1,
+    mapping_class = "bilateral_exact_consensus",
+    evidence_source = evidence_source,
+    stringsAsFactors = FALSE
+  )
+  out <- unique(out[geography_transition_columns()])
+  validate_geography_transition(out)
+  annotate_geography_transition_topology(out)
 }

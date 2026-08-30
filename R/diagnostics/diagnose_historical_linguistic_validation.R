@@ -713,12 +713,88 @@ save_historical_linguistic_exact_transition_comparison <- function(
     sources = file.path(
       directory, "historical_linguistic_exact_transition_source_comparison.csv"
     ),
+    targets = file.path(
+      directory, "historical_linguistic_exact_transition_target_comparison.csv"
+    ),
     summary = file.path(
       directory, "historical_linguistic_exact_transition_comparison_summary.csv"
     )
   )
   write_diagnostic_csv(x$edges, paths[["edges"]])
   write_diagnostic_csv(x$sources, paths[["sources"]])
+  write_diagnostic_csv(x$targets, paths[["targets"]])
+  write_diagnostic_csv(x$summary, paths[["summary"]])
+  unname(paths)
+}
+
+build_historical_linguistic_consensus_geography <- function(
+    shrug_geography, kumar_somanathan_geography, comparison) {
+  transition <- build_consensus_geography_transition(
+    shrug_geography$canonical_transition,
+    kumar_somanathan_geography$canonical_transition,
+    comparison,
+    evidence_source = "shrug_shrid+kumar_somanathan_exact_names"
+  )
+  components <- build_geography_components(transition)
+  component_summary <- summarize_geography_components(
+    transition, components
+  )
+  harmonized_crosswalk <- build_harmonized_region_crosswalk(
+    components, component_summary
+  )
+  summary <- data.frame(
+    n_edges = nrow(transition),
+    n_source_districts = length(unique(transition$source_unit_id)),
+    n_target_districts = length(unique(transition$target_unit_id)),
+    n_components = nrow(component_summary),
+    n_deterministic_components = sum(
+      component_summary$deterministic_amalgamation_eligible %in% TRUE
+    ),
+    n_nontrivial_deterministic_components = sum(
+      component_summary$deterministic_amalgamation_eligible %in% TRUE &
+        component_summary$component_class != "one_to_one"
+    ),
+    n_harmonized_regions =
+      length(unique(harmonized_crosswalk$harmonized_region_id)),
+    stringsAsFactors = FALSE
+  )
+  list(
+    canonical_transition = transition,
+    components = components,
+    component_summary = component_summary,
+    harmonized_crosswalk = harmonized_crosswalk,
+    summary = summary
+  )
+}
+
+save_historical_linguistic_consensus_geography <- function(
+    x, directory = "outputs/diagnostics/extended/instrument_relevance") {
+  dir.create(directory, recursive = TRUE, showWarnings = FALSE)
+  paths <- c(
+    transition = file.path(
+      directory, "historical_linguistic_consensus_transition.csv"
+    ),
+    components = file.path(
+      directory, "historical_linguistic_consensus_components.csv"
+    ),
+    component_summary = file.path(
+      directory, "historical_linguistic_consensus_component_summary.csv"
+    ),
+    harmonized_crosswalk = file.path(
+      directory, "historical_linguistic_consensus_harmonized_crosswalk.csv"
+    ),
+    summary = file.path(
+      directory, "historical_linguistic_consensus_summary.csv"
+    )
+  )
+  write_diagnostic_csv(x$canonical_transition, paths[["transition"]])
+  write_diagnostic_csv(x$components, paths[["components"]])
+  write_diagnostic_csv(
+    x$component_summary, paths[["component_summary"]]
+  )
+  write_diagnostic_csv(
+    x$harmonized_crosswalk, paths[["harmonized_crosswalk"]]
+  )
   write_diagnostic_csv(x$summary, paths[["summary"]])
   unname(paths)
 }

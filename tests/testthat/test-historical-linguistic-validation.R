@@ -1011,3 +1011,63 @@ test_that("Kumar-Somanathan undercoverage remains diagnostic rather than renorma
     out$component_summary$deterministic_amalgamation_eligible
   )
 })
+
+
+test_that("historical exact transition comparison saves target-side concordance", {
+  x <- list(
+    edges = data.frame(status = "test"),
+    sources = data.frame(status = "test"),
+    targets = data.frame(status = "test"),
+    summary = data.frame(status = "test")
+  )
+  dir <- tempfile()
+  paths <- save_historical_linguistic_exact_transition_comparison(
+    x, directory = dir
+  )
+  expect_setequal(
+    basename(paths),
+    c(
+      "historical_linguistic_exact_transition_edge_comparison.csv",
+      "historical_linguistic_exact_transition_source_comparison.csv",
+      "historical_linguistic_exact_transition_target_comparison.csv",
+      "historical_linguistic_exact_transition_comparison_summary.csv"
+    )
+  )
+})
+
+test_that("historical consensus geography remains a separate exact tier", {
+  transition <- data.frame(
+    source_vintage = 1991L,
+    target_vintage = 2001L,
+    source_state_code = "01",
+    source_district_code = "01",
+    source_unit_id = "census1991__01__01",
+    target_state_code = "01",
+    target_district_code = "01",
+    target_unit_id = "census2001__01__01",
+    population_weight = 1,
+    area_weight = NA_real_,
+    source_coverage = 1,
+    target_coverage = 1,
+    mapping_class = "test",
+    evidence_source = "test",
+    stringsAsFactors = FALSE
+  )
+  transition <- annotate_geography_transition_topology(transition)
+  shrug <- list(canonical_transition = transition)
+  ks <- list(canonical_transition = transition)
+  comparison <- build_historical_linguistic_exact_transition_comparison(
+    shrug, ks
+  )
+
+  out <- build_historical_linguistic_consensus_geography(
+    shrug, ks, comparison
+  )
+
+  expect_equal(out$summary$n_harmonized_regions, 1L)
+  expect_true(all(
+    out$canonical_transition$evidence_source ==
+      "shrug_shrid+kumar_somanathan_exact_names"
+  ))
+  expect_true(all(is.na(out$canonical_transition$population_weight)))
+})
