@@ -456,6 +456,11 @@ test_that("migration mechanism diagnostics use one common support sample", {
   panel$ling_mapped_speaker_share <- stats::runif(n, 0.8, 1)
   panel$ling_glottolog_mapped_speaker_share <- stats::runif(n, 0.8, 1)
   panel$ling_dyen_mapped_speaker_share <- stats::runif(n, 0.8, 1)
+  design_variables <- census_migration_mechanism_design_variables()
+  unused_alternative <- setdiff(alternative_distance_variables(), design_variables)
+  expect_true(length(unused_alternative) > 0L)
+  panel[[unused_alternative[[1L]]]][[1L]] <- NA_real_
+  panel$ling_distance_glottolog_nonhindi_mean[[2L]] <- NA_real_
   treatment <- preferred_iv_variables()$treatment
   panel[[treatment]] <- 0.5 * panel$ling_distance_nonzero_mean + stats::rnorm(n)
 
@@ -472,11 +477,18 @@ test_that("migration mechanism diagnostics use one common support sample", {
   d07 <- source_rows("d07")
   d07[[registry$variable[registry$source_id == "d07"][[1L]]]][[1L]] <- NA_real_
 
+  panel <- panel[-n, , drop = FALSE]
   mechanism_panel <- prepare_census_migration_mechanism_panel(
     panel, d02, d03, d04, d07, registry
   )
-  expect_equal(nrow(mechanism_panel), n - 1L)
+  expect_equal(nrow(mechanism_panel), n - 3L)
   expect_equal(attr(mechanism_panel, "n_harmonized_mechanism_districts"), n)
+  expect_equal(attr(mechanism_panel, "n_iv_panel_overlap_districts"), n - 1L)
+  support <- attr(mechanism_panel, "mechanism_sample_support")
+  expect_equal(sum(support$exclusion_reason == "not_in_iv_panel"), 1L)
+  expect_equal(sum(support$exclusion_reason == "incomplete_iv_design_support"), 1L)
+  expect_equal(sum(support$exclusion_reason == "incomplete_mechanism_outcomes"), 1L)
+  expect_equal(sum(support$exclusion_reason == "included"), n - 3L)
 
   diagnostics <- estimate_census_migration_mechanism_models(
     mechanism_panel, registry, cfg = list(), ar_points = 21L
@@ -486,7 +498,11 @@ test_that("migration mechanism diagnostics use one common support sample", {
   expect_true(all(diagnostics$first_stage$n == nrow(mechanism_panel)))
   expect_true(all(diagnostics$reduced_form$n == nrow(mechanism_panel)))
   expect_equal(diagnostics$sample_coverage$n_harmonized_mechanism_districts, n)
-  expect_equal(diagnostics$sample_coverage$n_common_analysis_districts, n - 1L)
+  expect_equal(diagnostics$sample_coverage$n_iv_panel_overlap_districts, n - 1L)
+  expect_equal(diagnostics$sample_coverage$n_iv_design_support_districts, n - 2L)
+  expect_equal(diagnostics$sample_coverage$n_common_analysis_districts, n - 3L)
+  expect_equal(nrow(diagnostics$sample_support), n)
+  expect_equal(sum(diagnostics$sample_support$in_common_analysis), n - 3L)
   expect_true(all(diagnostics$reduced_form$status == "estimated"))
   expect_true(all(is.finite(diagnostics$reduced_form$p_holm_within_spec)))
   expect_equal(nrow(diagnostics$weak_iv), 6L * nrow(registry))

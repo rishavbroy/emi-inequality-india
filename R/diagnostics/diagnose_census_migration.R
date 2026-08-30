@@ -174,6 +174,17 @@ census_migration_mechanism_sources <- function(d02_2011, d03_2011, d04_2011, d07
   )
 }
 
+census_migration_mechanism_design_variables <- function(
+    specifications = census_migration_mechanism_specifications()) {
+  unique(c(
+    "state_code_2001", "district_code_2001", "region",
+    plain_chr(specifications$treatment),
+    unlist(specifications$controls, use.names = FALSE),
+    unlist(specifications$included_language_controls, use.names = FALSE),
+    unlist(specifications$excluded_instruments, use.names = FALSE)
+  ))
+}
+
 prepare_census_migration_mechanism_panel <- function(
     district_panel, d02_2011, d03_2011, d04_2011, d07_2011,
     registry = census_migration_mechanism_registry()) {
@@ -225,28 +236,72 @@ prepare_census_migration_mechanism_panel <- function(
   if (anyDuplicated(panel[keys])) {
     stop("District panel is not unique by Census-2001 district for migration mechanisms.", call. = FALSE)
   }
-  panel <- merge(
+
+  support <- measures[c("target_unit_2001", keys)]
+  panel_key <- paste(panel$state_code_2001, panel$district_code_2001, sep = "/")
+  support_key <- paste(support$state_code_2001, support$district_code_2001, sep = "/")
+  support$in_iv_panel <- support_key %in% panel_key
+
+  joined <- merge(
     panel,
     measures[c(keys, registry$variable)],
     by = keys,
     all = FALSE,
     sort = FALSE
   )
-  if (nrow(panel) != nrow(measures)) {
-    stop("Census migration mechanism districts are not all present in the IV panel.", call. = FALSE)
+  if (!nrow(joined)) {
+    stop("Census migration mechanisms have no overlap with the IV panel.", call. = FALSE)
   }
 
-  projected <- prepare_alternative_distance_panel(
-    panel,
-    treatment = preferred_iv_variables()$treatment,
-    retain = registry$variable
+  specifications <- census_migration_mechanism_specifications()
+  design_variables <- census_migration_mechanism_design_variables(specifications)
+  required <- unique(c(design_variables, registry$variable))
+  missing <- setdiff(required, names(joined))
+  if (length(missing)) {
+    stop(
+      "Census migration mechanism panel is missing registered model columns: ",
+      paste(missing, collapse = ", "), call. = FALSE
+    )
+  }
+  numeric_variables <- setdiff(
+    design_variables,
+    c("state_code_2001", "district_code_2001", "region")
   )
-  complete <- stats::complete.cases(projected[registry$variable])
-  out <- projected[complete, , drop = FALSE]
+  for (variable in numeric_variables) joined[[variable]] <- num(joined[[variable]])
+  joined$region <- as.character(joined$region)
+  design_complete <- stats::complete.cases(joined[design_variables]) &
+    nzchar(joined$state_code_2001) & nzchar(joined$district_code_2001) & nzchar(joined$region)
+  projected <- joined[design_complete, , drop = FALSE]
+  if (!nrow(projected)) {
+    stop("Census migration mechanisms have no complete registered IV-design support.", call. = FALSE)
+  }
+  if (length(unique(projected$region)) != length(panel_region_levels())) {
+    stop("Census migration IV-design support does not contain all six panel regions.", call. = FALSE)
+  }
+  projected_key <- paste(projected$state_code_2001, projected$district_code_2001, sep = "/")
+  support$in_iv_design_support <- support_key %in% projected_key
+
+  outcome_complete <- stats::complete.cases(projected[registry$variable])
+  out <- projected[outcome_complete, , drop = FALSE]
   if (!nrow(out)) {
     stop("Census migration mechanisms have no common complete outcome sample.", call. = FALSE)
   }
+  analysis_key <- paste(out$state_code_2001, out$district_code_2001, sep = "/")
+  support$all_mechanism_outcomes_complete <- support$in_iv_design_support & support_key %in% analysis_key
+  support$in_common_analysis <- support_key %in% analysis_key
+  support$exclusion_reason <- ifelse(
+    !support$in_iv_panel,
+    "not_in_iv_panel",
+    ifelse(
+      !support$in_iv_design_support,
+      "incomplete_iv_design_support",
+      ifelse(!support$all_mechanism_outcomes_complete, "incomplete_mechanism_outcomes", "included")
+    )
+  )
+
   attr(out, "n_harmonized_mechanism_districts") <- nrow(measures)
+  attr(out, "n_iv_panel_overlap_districts") <- sum(support$in_iv_panel)
+  attr(out, "mechanism_sample_support") <- support
   rownames(out) <- NULL
   out
 }
@@ -278,6 +333,10 @@ estimate_census_migration_mechanism_models <- function(
   sample_n <- nrow(panel)
   harmonized_n <- attr(mechanism_panel, "n_harmonized_mechanism_districts", exact = TRUE)
   if (!is.finite(harmonized_n)) harmonized_n <- sample_n
+  overlap_n <- attr(mechanism_panel, "n_iv_panel_overlap_districts", exact = TRUE)
+  if (!is.finite(overlap_n)) overlap_n <- sample_n
+  sample_support <- attr(mechanism_panel, "mechanism_sample_support", exact = TRUE)
+  if (is.null(sample_support)) sample_support <- data.frame()
 
   first_stage <- safe_bind_rows(lapply(seq_len(nrow(base_specs)), function(i) {
     spec <- base_specs[i, , drop = FALSE]
@@ -383,11 +442,18 @@ estimate_census_migration_mechanism_models <- function(
     registry = registry,
     sample_coverage = data.frame(
       n_harmonized_mechanism_districts = as.integer(harmonized_n),
+      n_iv_panel_overlap_districts = as.integer(overlap_n),
+      n_iv_design_support_districts = if (nrow(sample_support)) {
+        sum(sample_support$in_iv_design_support)
+      } else {
+        sample_n
+      },
       n_common_analysis_districts = sample_n,
       n_states = length(unique(panel$state_code_2001)),
       n_regions = length(unique(panel$region)),
       stringsAsFactors = FALSE
     ),
+    sample_support = safe_df(sample_support),
     first_stage = first_stage,
     reduced_form = reduced_form,
     weak_iv = weak_iv,
@@ -458,6 +524,7 @@ build_census_migration_diagnostics <- function(
       estimate_census_migration_first_stage_sensitivity(validity_panel),
     mechanism_registry = mechanism$registry,
     mechanism_sample_coverage = mechanism$sample_coverage,
+    mechanism_sample_support = mechanism$sample_support,
     mechanism_first_stage = mechanism$first_stage,
     mechanism_reduced_form = mechanism$reduced_form,
     mechanism_weak_iv = mechanism$weak_iv,
@@ -485,6 +552,7 @@ save_census_migration_diagnostics <- function(
       file.path(dir, "d02_2001_first_stage_sensitivity.csv"),
     mechanism_registry = file.path(dir, "mechanism_registry.csv"),
     mechanism_sample_coverage = file.path(dir, "mechanism_sample_coverage.csv"),
+    mechanism_sample_support = file.path(dir, "mechanism_sample_support.csv"),
     mechanism_first_stage = file.path(dir, "mechanism_first_stage.csv"),
     mechanism_reduced_form = file.path(dir, "mechanism_reduced_form.csv"),
     mechanism_weak_iv = file.path(dir, "mechanism_weak_iv.csv"),
