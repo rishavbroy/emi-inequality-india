@@ -519,13 +519,16 @@ build_vanneman_parent_pretrend_predictor_panel <- function(
 
 vanneman_pretrend_specification_registry <- function(panel) {
   x <- safe_df(panel)
-  available <- c(
-    eventual_emie = "emie_exposure",
+  available <- c(eventual_emie = "emie_exposure")
+  optional <- c(
     census_2001_ld = "ling_distance_nonzero_mean_2001",
     helms_lim_ld_1991 = "ling_distance_helms_lim_1991",
     historical_ld_1991 = "ling_distance_nonzero_mean_1991"
   )
-  available <- available[available %in% names(x)]
+  available <- c(
+    available,
+    optional[optional %in% names(x)]
+  )
 
   rows <- lapply(
     intersect(

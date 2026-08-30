@@ -516,3 +516,21 @@ test_that("strict and historical-parent support comparison reports sample gain",
     "cannot be smaller"
   )
 })
+
+
+test_that("eventual EMIE remains a core pretrend registry contract", {
+  panel <- data.frame(
+    historical_ld_eligible = TRUE,
+    ling_distance_nonzero_mean_1991 = 2,
+    stringsAsFactors = FALSE
+  )
+  registry <- vanneman_pretrend_specification_registry(panel)
+  expect_true(any(
+    registry$predictor_id == "eventual_emie" &
+      registry$sample_id == "full_pretrend"
+  ))
+  expect_true(any(
+    registry$predictor_id == "eventual_emie" &
+      registry$sample_id == "historical_ld_support"
+  ))
+})
