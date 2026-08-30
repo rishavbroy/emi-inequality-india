@@ -122,7 +122,9 @@ as_geography_transition <- function(
 
 normalize_geography_coverage <- function(
     x, rounding_tolerance = 0) {
+  input_names <- names(x)
   value <- num(x)
+  if (!is.null(input_names)) names(value) <- input_names
   tolerance <- as.numeric(rounding_tolerance)
   if (length(tolerance) != 1L || !is.finite(tolerance) ||
       tolerance < 0) {

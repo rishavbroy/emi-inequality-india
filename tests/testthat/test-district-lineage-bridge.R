@@ -1236,13 +1236,25 @@ test_that("empty geography transition uses the canonical schema", {
 })
 
 
-test_that("geography coverage normalization only snaps within tolerance", {
+test_that("geography coverage normalization preserves keyed unit IDs", {
+  input <- c(
+    census1991__01__01 = 1.0003,
+    census1991__01__02 = .9997,
+    census1991__01__03 = 1.01,
+    census1991__01__04 = .75
+  )
   out <- normalize_geography_coverage(
-    c(1.0003, .9997, 1.01, .75),
+    input,
     rounding_tolerance = .0005
   )
+
+  expect_identical(names(out), names(input))
   expect_equal(out[1:2], c(1, 1))
   expect_equal(out[3:4], c(1.01, .75))
+  expect_equal(
+    out[c("census1991__01__01", "census1991__01__04")],
+    c(1, .75)
+  )
   expect_error(
     normalize_geography_coverage(1, rounding_tolerance = -1),
     "nonnegative"

@@ -715,6 +715,8 @@ test_that("Kumar-Somanathan transition uses only unique exact district names", {
   expect_equal(nrow(out$canonical_transition), 3L)
   expect_true(all(out$canonical_transition$source_coverage == 1))
   expect_true(all(out$canonical_transition$target_coverage == 1))
+  expect_false(anyNA(out$canonical_transition$source_coverage))
+  expect_false(anyNA(out$canonical_transition$target_coverage))
   expect_equal(out$summary$n_deterministic_components, 2L)
   expect_equal(out$summary$n_nontrivial_deterministic_components, 1L)
 })
@@ -1004,6 +1006,7 @@ test_that("Kumar-Somanathan undercoverage remains diagnostic rather than renorma
   )
 
   expect_equal(unique(out$canonical_transition$target_coverage), .9)
+  expect_false(anyNA(out$canonical_transition$target_coverage))
   expect_false(
     out$component_summary$deterministic_amalgamation_eligible
   )
