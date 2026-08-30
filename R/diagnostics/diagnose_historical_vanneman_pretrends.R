@@ -374,12 +374,27 @@ vanneman_parent_linguistic_distance_2001 <- function(x) {
   shares <- lapply(1:5, function(degree) {
     num(x[[paste0("ling_share_distance_", degree)]])
   })
+  complete <- is.finite(total) & total >= 0
+  for (share in shares) {
+    complete <- complete & is.finite(share)
+  }
+  if (!all(complete)) return(NA_real_)
+
+  share_matrix <- do.call(cbind, shares)
+  if (any(share_matrix < 0 | share_matrix > 100) ||
+      any(rowSums(share_matrix) > 100 + 1e-8)) {
+    stop(
+      "Historical-parent linguistic-distance components violate share bounds.",
+      call. = FALSE
+    )
+  }
+
   count_by_degree <- lapply(shares, function(share) total * share / 100)
   denominator <- sum(vapply(
-    count_by_degree, function(v) sum(v, na.rm = TRUE), numeric(1)
+    count_by_degree, function(v) sum(v), numeric(1)
   ))
   numerator <- sum(vapply(seq_along(count_by_degree), function(i) {
-    i * sum(count_by_degree[[i]], na.rm = TRUE)
+    i * sum(count_by_degree[[i]])
   }, numeric(1)))
   if (!is.finite(denominator) || denominator <= 0) return(NA_real_)
   numerator / denominator
@@ -429,43 +444,88 @@ aggregate_vanneman_parent_predictors <- function(
     by = c("state_code_2001", "district_code_2001"),
     all.x = TRUE, sort = FALSE
   )
-  if (anyNA(joined[[treatment]]) ||
-      anyNA(joined$eligible_child_weight_0708) ||
-      anyNA(joined$emi_enrolled_child_weight_0708) ||
-      anyNA(joined$ling_total_speakers)) {
-    stop("Historical-parent predictor aggregation is missing required descendant data.", call. = FALSE)
+  emie_denominator <- num(joined$eligible_child_weight_0708)
+  emie_numerator <- num(joined$emi_enrolled_child_weight_0708)
+  joined$emie_descendant_complete <-
+    is.finite(emie_denominator) & is.finite(emie_numerator)
+  invalid_emie <- joined$emie_descendant_complete & (
+    emie_denominator < 0 | emie_numerator < 0 |
+      emie_numerator > emie_denominator + 1e-8
+  )
+  if (any(invalid_emie)) {
+    stop(
+      "Historical-parent EMIE components violate numerator/denominator accounting.",
+      call. = FALSE
+    )
   }
 
-  district_emie <- num(joined$emi_enrolled_child_weight_0708) /
-    num(joined$eligible_child_weight_0708)
+  district_emie <- ifelse(
+    joined$emie_descendant_complete & emie_denominator > 0,
+    emie_numerator / emie_denominator,
+    NA_real_
+  )
   mismatch <- is.finite(district_emie) & is.finite(num(joined[[treatment]])) &
     abs(district_emie - num(joined[[treatment]])) > 1e-8
   if (any(mismatch)) {
-    stop("Historical-parent EMIE components do not reproduce district treatment values.", call. = FALSE)
+    stop(
+      "Historical-parent EMIE components do not reproduce district treatment values.",
+      call. = FALSE
+    )
+  }
+
+  share_cols <- paste0("ling_share_distance_", 1:5)
+  joined$ld2001_descendant_complete <-
+    is.finite(num(joined$ling_total_speakers)) &
+    num(joined$ling_total_speakers) >= 0
+  for (variable in share_cols) {
+    joined$ld2001_descendant_complete <-
+      joined$ld2001_descendant_complete &
+      is.finite(num(joined[[variable]]))
   }
 
   rows <- lapply(split(seq_len(nrow(joined)), joined$panel_unit_id), function(i) {
     x <- joined[i, , drop = FALSE]
-    denominator <- sum(num(x$eligible_child_weight_0708))
-    numerator <- sum(num(x$emi_enrolled_child_weight_0708))
     states <- unique(plain_chr(x$state_code_2001))
     if (length(states) != 1L) {
       stop("Eligible historical parent spans multiple Census-2001 states.", call. = FALSE)
     }
+
+    emie_complete <- all(x$emie_descendant_complete %in% TRUE)
+    ld2001_complete <- all(x$ld2001_descendant_complete %in% TRUE)
+    denominator <- if (emie_complete) {
+      sum(num(x$eligible_child_weight_0708))
+    } else {
+      NA_real_
+    }
+    numerator <- if (emie_complete) {
+      sum(num(x$emi_enrolled_child_weight_0708))
+    } else {
+      NA_real_
+    }
+
     data.frame(
       panel_unit_id = x$panel_unit_id[[1L]],
       state_code_2001 = states[[1L]],
       district_code_2001 = NA_character_,
       pretrend_analysis_eligible = TRUE,
       pretrend_analysis_geography_status = x$parent_bridge_status[[1L]],
-      emie_exposure = if (is.finite(denominator) && denominator > 0) {
+      emie_exposure = if (
+          emie_complete && is.finite(denominator) && denominator > 0) {
         numerator / denominator
       } else {
         NA_real_
       },
-      ling_distance_nonzero_mean_2001 =
-        vanneman_parent_linguistic_distance_2001(x),
+      ling_distance_nonzero_mean_2001 = if (ld2001_complete) {
+        vanneman_parent_linguistic_distance_2001(x)
+      } else {
+        NA_real_
+      },
       n_descendant_2001_districts = nrow(x),
+      n_emie_complete_descendants = sum(x$emie_descendant_complete %in% TRUE),
+      n_ld2001_complete_descendants =
+        sum(x$ld2001_descendant_complete %in% TRUE),
+      emie_descendants_complete = emie_complete,
+      ld2001_descendants_complete = ld2001_complete,
       stringsAsFactors = FALSE
     )
   })
@@ -486,6 +546,10 @@ aggregate_vanneman_parent_predictors <- function(
       emie_exposure = NA_real_,
       ling_distance_nonzero_mean_2001 = NA_real_,
       n_descendant_2001_districts = NA_integer_,
+      n_emie_complete_descendants = NA_integer_,
+      n_ld2001_complete_descendants = NA_integer_,
+      emie_descendants_complete = FALSE,
+      ld2001_descendants_complete = FALSE,
       stringsAsFactors = FALSE
     )
     out <- safe_bind_rows(list(out, blocked_rows))
@@ -865,9 +929,26 @@ build_vanneman_parent_pretrend_validation <- function(
     treatment = preferred_iv_variables()$treatment) {
   changes <- build_vanneman_pretrend_changes(levels)
   panel <- build_vanneman_parent_pretrend_predictor_panel(
-    changes, parent_bridge, district_panel, historical_distance, external_historical_distance, treatment
+    changes, parent_bridge, district_panel, historical_distance,
+    external_historical_distance, treatment
   )
-  assemble_vanneman_pretrend_validation(levels, changes, panel)
+  out <- assemble_vanneman_pretrend_validation(levels, changes, panel)
+  completeness_fields <- c(
+    "panel_unit_id", "pretrend_analysis_geography_status",
+    "n_descendant_2001_districts",
+    "n_emie_complete_descendants", "emie_descendants_complete",
+    "n_ld2001_complete_descendants", "ld2001_descendants_complete"
+  )
+  missing <- setdiff(completeness_fields, names(panel))
+  if (length(missing)) {
+    stop(
+      "Historical-parent pretrend panel lacks completeness fields: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  out$descendant_completeness <- unique(panel[completeness_fields])
+  out
 }
 
 save_vanneman_pretrend_validation <- function(
@@ -885,5 +966,12 @@ save_vanneman_pretrend_validation <- function(
   write_diagnostic_csv(x$sample_coverage, paths[["sample_coverage"]])
   write_diagnostic_csv(x$estimates, paths[["estimates"]])
   write_diagnostic_csv(x$joint_balance, paths[["joint_balance"]])
+  if ("descendant_completeness" %in% names(x)) {
+    completeness_path <- file.path(
+      directory, paste0(prefix, "_descendant_completeness.csv")
+    )
+    write_diagnostic_csv(x$descendant_completeness, completeness_path)
+    paths <- c(paths, descendant_completeness = completeness_path)
+  }
   unname(paths)
 }

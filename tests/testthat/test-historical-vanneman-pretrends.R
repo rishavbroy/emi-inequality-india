@@ -534,3 +534,98 @@ test_that("eventual EMIE remains a core pretrend registry contract", {
       registry$sample_id == "historical_ld_support"
   ))
 })
+
+
+test_that("historical-parent predictor missingness is source-specific, not a geography failure", {
+  bridge <- data.frame(
+    panel_unit_id = c("a", "a", "b", "b"),
+    dist91_state_id = "02",
+    dist91_district_id = c("01", "01", "02", "02"),
+    state_code_2001 = "28",
+    district_code_2001 = c("11", "12", "13", "14"),
+    parent_bridge_status = "preferred_historical_parent_split",
+    preferred_vanneman_parent_eligible = TRUE,
+    stringsAsFactors = FALSE
+  )
+  panel <- data.frame(
+    state_code_2001 = "28",
+    district_code_2001 = c("11", "12", "13", "14"),
+    eligible_child_weight_0708 = c(100, NA, 100, 100),
+    emi_enrolled_child_weight_0708 = c(20, NA, 20, 30),
+    emi_exposure_all_children_0708 = c(.2, NA, .2, .3),
+    ling_total_speakers = c(1000, 1000, 1000, NA),
+    ling_distance_nonzero_mean = c(2, 4, 2, NA),
+    ling_share_distance_1 = c(0, 0, 0, NA),
+    ling_share_distance_2 = c(100, 0, 100, NA),
+    ling_share_distance_3 = c(0, 0, 0, NA),
+    ling_share_distance_4 = c(0, 100, 0, NA),
+    ling_share_distance_5 = c(0, 0, 0, NA),
+    stringsAsFactors = FALSE
+  )
+
+  out <- aggregate_vanneman_parent_predictors(bridge, panel)
+  a <- out[out$panel_unit_id == "a", , drop = FALSE]
+  b <- out[out$panel_unit_id == "b", , drop = FALSE]
+
+  expect_true(a$pretrend_analysis_eligible)
+  expect_true(b$pretrend_analysis_eligible)
+
+  expect_true(is.na(a$emie_exposure))
+  expect_false(a$emie_descendants_complete)
+  expect_equal(a$n_emie_complete_descendants, 1L)
+  expect_equal(a$ling_distance_nonzero_mean_2001, 3)
+
+  expect_equal(b$emie_exposure, .25)
+  expect_true(b$emie_descendants_complete)
+  expect_true(is.na(b$ling_distance_nonzero_mean_2001))
+  expect_false(b$ld2001_descendants_complete)
+  expect_equal(b$n_ld2001_complete_descendants, 1L)
+})
+
+test_that("historical-parent aggregation never uses partial LD components", {
+  x <- data.frame(
+    ling_total_speakers = c(1000, 1000),
+    ling_share_distance_1 = c(0, 0),
+    ling_share_distance_2 = c(100, NA),
+    ling_share_distance_3 = c(0, 0),
+    ling_share_distance_4 = c(0, 100),
+    ling_share_distance_5 = c(0, 0),
+    stringsAsFactors = FALSE
+  )
+  expect_true(is.na(vanneman_parent_linguistic_distance_2001(x)))
+
+  x$ling_share_distance_2[[2L]] <- 0
+  expect_equal(vanneman_parent_linguistic_distance_2001(x), 3)
+})
+
+test_that("historical-parent aggregation rejects invalid EMIE accounting", {
+  bridge <- data.frame(
+    panel_unit_id = "a",
+    dist91_state_id = "02",
+    dist91_district_id = "01",
+    state_code_2001 = "28",
+    district_code_2001 = "11",
+    parent_bridge_status = "preferred_single_target",
+    preferred_vanneman_parent_eligible = TRUE,
+    stringsAsFactors = FALSE
+  )
+  panel <- data.frame(
+    state_code_2001 = "28",
+    district_code_2001 = "11",
+    eligible_child_weight_0708 = 100,
+    emi_enrolled_child_weight_0708 = 120,
+    emi_exposure_all_children_0708 = 1.2,
+    ling_total_speakers = 1000,
+    ling_distance_nonzero_mean = 2,
+    ling_share_distance_1 = 0,
+    ling_share_distance_2 = 100,
+    ling_share_distance_3 = 0,
+    ling_share_distance_4 = 0,
+    ling_share_distance_5 = 0,
+    stringsAsFactors = FALSE
+  )
+  expect_error(
+    aggregate_vanneman_parent_predictors(bridge, panel),
+    "numerator/denominator accounting"
+  )
+})
