@@ -726,7 +726,9 @@ summarize_alternative_distance_design_evidence <- function(
 
   evidence$effective_f_relative_to_primary <- NA_real_
   evidence$partial_r_squared_relative_to_primary <- NA_real_
-  comparisons <- lapply(adjustment_ids, function(adjustment_id) {
+  comparisons <- vector("list", length(adjustment_ids))
+  for (j in seq_along(adjustment_ids)) {
+    adjustment_id <- adjustment_ids[[j]]
     rows <- which(evidence$adjustment_id == adjustment_id)
     x <- evidence[rows, , drop = FALSE]
     primary <- x[
@@ -754,7 +756,7 @@ summarize_alternative_distance_design_evidence <- function(
     }
 
     alternatives <- x[x$design_role != "primary_shastry", , drop = FALSE]
-    data.frame(
+    comparisons[[j]] <- data.frame(
       adjustment_id = adjustment_id,
       fixed_effect = primary$fixed_effect[[1L]],
       n_design_constructions = nrow(x),
@@ -778,7 +780,8 @@ summarize_alternative_distance_design_evidence <- function(
         ),
       stringsAsFactors = FALSE
     )
-  })
+  }
+
 
   list(
     evidence = evidence,

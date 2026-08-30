@@ -1167,11 +1167,11 @@ test_that("alternative-distance design comparison preserves both FE candidates",
   expect_setequal(out$comparison$adjustment_id, adjustments)
   expect_equal(nrow(out$evidence), length(adjustments) * length(constructions))
   expect_false(any(out$evidence$meets_effective_f_critical_value))
-  expect_true(all(
-    out$evidence$effective_f_relative_to_primary[
-      out$evidence$construction_id == "nonzero_mean"
-    ] == 1
-  ))
+  primary_relative <- out$evidence$effective_f_relative_to_primary[
+    out$evidence$construction_id == "nonzero_mean"
+  ]
+  expect_false(anyNA(primary_relative))
+  expect_true(all(primary_relative == 1))
   expect_false(any(
     out$comparison$any_construction_meets_effective_f_critical_value
   ))
