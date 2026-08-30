@@ -664,3 +664,23 @@ test_that("Helms-Lim benchmark uses exact Census-1991 keys and surfaces disagree
   out <- build_helms_lim_linguistic_distance_benchmark(helms,atlas,geography)
   expect_equal(out$summary$n_atlas_preferred_overlap,2L); expect_equal(out$summary$n_project_1991_geography_with_helms_lim,3L); expect_equal(nrow(out$review),1L); expect_equal(out$review$district_code_1991,"02")
 })
+
+
+test_that("historical SHRUG geography exposes exact constant-boundary component candidates", {
+  fixture <- historical_linguistic_validation_fixture()
+  geography <- build_historical_linguistic_geography_1991_2001(
+    fixture$raw_sources
+  )
+
+  expect_true(nrow(geography$canonical_transition) > 0L)
+  expect_true(nrow(geography$components) > 0L)
+  expect_true(nrow(geography$component_summary) > 0L)
+  expect_true(all(
+    geography$component_summary$component_class %in%
+      c("one_to_one", "split", "merger", "many_to_many")
+  ))
+  expect_true(all(
+    geography$component_summary$deterministic_amalgamation_eligible %in%
+      c(TRUE, FALSE)
+  ))
+})

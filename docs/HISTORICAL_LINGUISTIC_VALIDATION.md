@@ -983,3 +983,28 @@ combining districts into stable regions, aggregation is preferable to
 fractionally inventing historical district values. Population- and area-based
 interpolation remain later, explicitly labeled sensitivities for components
 that cannot be solved by deterministic amalgamation.
+
+
+### Constant-boundary component candidates
+
+The canonical 1991--2001 transition is now decomposed into undirected connected
+components with `igraph::components()`. Each component is the maximal set of
+1991 and 2001 districts linked by accepted transition edges. This is the
+standard graph operation needed for identities, splits, mergers, and
+many-to-many changes; no custom recursive district traversal is maintained.
+
+For SHRUG-derived historical transitions, deterministic amalgamation
+eligibility uses stable-locality coverage rather than interpolation weights.
+A component is eligible only when every participating district has complete
+deterministic SHRID membership coverage in both Census vintages. Population and
+area shares remain attached to the transition for later sensitivity analyses,
+but they do not make an incomplete territorial component exact.
+
+The new outputs
+`historical_linguistic_components_1991_2001.csv` and
+`historical_linguistic_component_summary_1991_2001.csv` therefore identify
+candidate constant-boundary regions without changing any current regression
+sample. The next stage may aggregate historical and later quantities upward
+within components marked `deterministic_amalgamation_eligible`; incomplete
+components remain excluded until an explicitly labeled interpolation or
+reviewed-allocation sensitivity is defined.

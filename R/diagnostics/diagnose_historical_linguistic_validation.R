@@ -65,9 +65,21 @@ build_historical_linguistic_geography_1991_2001 <- function(raw_sources) {
     raw_sources$shrug_pc91dist, raw_sources$shrug_pc01dist
   )
   source_districts <- historical_1991_district_geography_summary(bridge)
+  transition <- build_district_transition_1991_2001(bridge)
+  canonical_transition <- attach_shrug_transition_coverage(
+    as_geography_transition(transition, 1991L, 2001L),
+    bridge, 1991L, 2001L
+  )
+  components <- build_geography_components(canonical_transition)
+  component_summary <- summarize_geography_components(
+    canonical_transition, components
+  )
   list(
     bridge = bridge,
-    transition = build_district_transition_1991_2001(bridge),
+    transition = transition,
+    canonical_transition = canonical_transition,
+    components = components,
+    component_summary = component_summary,
     source_districts = source_districts,
     coverage_sensitivity = historical_linguistic_geography_sensitivity(source_districts),
     bridge_summary = summarize_shrid_bridge(bridge)
@@ -81,11 +93,25 @@ save_historical_linguistic_geography_1991_2001 <- function(
     source_districts = file.path(directory, "historical_linguistic_geography_1991_2001.csv"),
     coverage_sensitivity = file.path(directory, "historical_linguistic_geography_coverage_sensitivity.csv"),
     transition = file.path(directory, "historical_linguistic_transition_1991_2001.csv"),
+    canonical_transition = file.path(
+      directory, "historical_linguistic_canonical_transition_1991_2001.csv"
+    ),
+    components = file.path(
+      directory, "historical_linguistic_components_1991_2001.csv"
+    ),
+    component_summary = file.path(
+      directory, "historical_linguistic_component_summary_1991_2001.csv"
+    ),
     bridge_summary = file.path(directory, "historical_linguistic_shrid_bridge_1991_2001.csv")
   )
   write_diagnostic_csv(x$source_districts, paths[["source_districts"]])
   write_diagnostic_csv(x$coverage_sensitivity, paths[["coverage_sensitivity"]])
   write_diagnostic_csv(x$transition, paths[["transition"]])
+  write_diagnostic_csv(
+    x$canonical_transition, paths[["canonical_transition"]]
+  )
+  write_diagnostic_csv(x$components, paths[["components"]])
+  write_diagnostic_csv(x$component_summary, paths[["component_summary"]])
   write_diagnostic_csv(x$bridge_summary, paths[["bridge_summary"]])
   unname(paths)
 }
