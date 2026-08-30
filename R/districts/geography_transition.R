@@ -204,6 +204,58 @@ annotate_geography_transition_topology <- function(transition) {
 }
 
 
+attach_shrug_transition_weights <- function(
+    transition, shrid_bridge, source_year, target_year) {
+  x <- safe_df(transition)
+  validate_geography_transition(x)
+  source_year <- as.integer(source_year)
+  target_year <- as.integer(target_year)
+
+  shrug <- build_district_transition_between_years(
+    shrid_bridge, source_year, target_year
+  )
+  if (!nrow(shrug)) {
+    x$population_weight <- NA_real_
+    x$area_weight <- NA_real_
+    return(x)
+  }
+
+  source_state <- paste0("state_code_", source_year)
+  source_district <- paste0("district_code_", source_year)
+  target_state <- paste0("state_code_", target_year)
+  target_district <- paste0("district_code_", target_year)
+  population_share <- paste0("population_share_to_", target_year)
+  area_share <- paste0("area_share_to_", target_year)
+
+  support <- data.frame(
+    source_unit_id = geography_transition_unit_id(
+      source_year, shrug[[source_state]], shrug[[source_district]]
+    ),
+    target_unit_id = geography_transition_unit_id(
+      target_year, shrug[[target_state]], shrug[[target_district]]
+    ),
+    population_weight = num(shrug[[population_share]]),
+    area_weight = num(shrug[[area_share]]),
+    stringsAsFactors = FALSE
+  )
+  if (anyDuplicated(support[c("source_unit_id", "target_unit_id")])) {
+    stop(
+      "SHRUG transition support contains duplicate source-target edges.",
+      call. = FALSE
+    )
+  }
+
+  key <- paste(x$source_unit_id, x$target_unit_id, sep = "->")
+  support_key <- paste(
+    support$source_unit_id, support$target_unit_id, sep = "->"
+  )
+  idx <- match(key, support_key)
+  x$population_weight <- support$population_weight[idx]
+  x$area_weight <- support$area_weight[idx]
+  validate_geography_transition(x)
+  x
+}
+
 attach_shrug_transition_coverage <- function(
     transition, shrid_bridge, source_year, target_year) {
   x <- safe_df(transition)

@@ -1772,3 +1772,247 @@ test_that("exact multi-vintage saver exposes pairwise certification and crosswal
     )
   )
 })
+
+
+test_that("survey microdata cannot use generic population interpolation", {
+  semantics <- geography_allocation_semantics_registry()
+  survey <- semantics[
+    semantics$semantic_id == "survey_microdata",
+    ,
+    drop = FALSE
+  ]
+  expect_false(survey$population_fractional_allowed)
+  expect_identical(
+    survey$preferred_fractional_basis,
+    "reviewed_record_allocation"
+  )
+
+  compatible <- population_interpolation_compatible_measure_families()
+  expect_false(
+    "consumption_welfare" %in% compatible$measure_family
+  )
+  expect_false(
+    "survey_person_outcomes" %in% compatible$measure_family
+  )
+  expect_true(
+    "eventual_emie" %in% compatible$measure_family
+  )
+  expect_true(
+    "linguistic_distance" %in% compatible$measure_family
+  )
+})
+
+test_that("canonical SHRUG support replaces placeholder transition weights", {
+  transition <- data.frame(
+    state_code_2011 = "01",
+    district_code_2011 = "001",
+    state_code_2001 = c("01", "01"),
+    district_code_2001 = c("01", "02"),
+    population_share_to_2001 = c(1, 1),
+    area_share_to_2001 = c(1, 1),
+    shrid_coverage = 1,
+    mapping_class = "reviewed_single_parent_ancestry",
+    source_id = "reviewed",
+    stringsAsFactors = FALSE
+  )
+  canonical <- as_geography_transition(
+    transition, 2011L, 2001L
+  )
+  bridge <- data.frame(
+    shrid2 = c("a", "b"),
+    deterministic = TRUE,
+    population = c(70, 30),
+    area = c(8, 2),
+    state_code_2011 = "01",
+    district_code_2011 = "001",
+    state_code_2001 = "01",
+    district_code_2001 = c("01", "02"),
+    stringsAsFactors = FALSE
+  )
+
+  out <- attach_shrug_transition_weights(
+    canonical, bridge, 2011L, 2001L
+  )
+
+  expect_equal(out$population_weight, c(.7, .3))
+  expect_equal(out$area_weight, c(.8, .2))
+  expect_identical(out$evidence_source, c("reviewed", "reviewed"))
+})
+
+test_that("population interpolation preserves incomplete mass without renormalizing", {
+  transition <- data.frame(
+    source_vintage = 1991L,
+    target_vintage = 2001L,
+    source_state_code = c("01", "01"),
+    source_district_code = c("01", "01"),
+    source_unit_id = c("s1", "s1"),
+    target_state_code = c("01", "01"),
+    target_district_code = c("01", "02"),
+    target_unit_id = c("t1", "t2"),
+    population_weight = c(.6, .3),
+    area_weight = NA_real_,
+    source_coverage = .9,
+    target_coverage = 1,
+    mapping_class = "test",
+    evidence_source = "test",
+    stringsAsFactors = FALSE
+  )
+
+  out <- build_population_interpolation_crosswalk(
+    list(old = transition), target_vintage = 2001L
+  )
+
+  source <- out$source_coverage[
+    out$source_coverage$source_unit_id == "s1",
+    ,
+    drop = FALSE
+  ]
+  expect_equal(source$source_population_coverage, .9)
+  expect_equal(source$unallocated_population_share, .1)
+  expect_identical(
+    source$allocation_status,
+    "partial_population_partition"
+  )
+  allocated <- out$crosswalk[
+    out$crosswalk$source_unit_id == "s1",
+    ,
+    drop = FALSE
+  ]
+  expect_equal(sum(allocated$allocation_weight), .9)
+})
+
+test_that("population interpolation rejects materially overfull source partitions", {
+  transition <- data.frame(
+    source_vintage = 1991L,
+    target_vintage = 2001L,
+    source_state_code = c("01", "01"),
+    source_district_code = c("01", "01"),
+    source_unit_id = c("s1", "s1"),
+    target_state_code = c("01", "01"),
+    target_district_code = c("01", "02"),
+    target_unit_id = c("t1", "t2"),
+    population_weight = c(.6, .5),
+    area_weight = NA_real_,
+    source_coverage = 1,
+    target_coverage = 1,
+    mapping_class = "test",
+    evidence_source = "test",
+    stringsAsFactors = FALSE
+  )
+  expect_error(
+    build_population_interpolation_crosswalk(
+      list(old = transition), target_vintage = 2001L
+    ),
+    "exceed one"
+  )
+})
+
+test_that("population allocation operates on sufficient statistics, not final ratios", {
+  transition <- data.frame(
+    source_vintage = 1991L,
+    target_vintage = 2001L,
+    source_state_code = c("01", "01"),
+    source_district_code = c("01", "01"),
+    source_unit_id = c("s1", "s1"),
+    target_state_code = c("01", "01"),
+    target_district_code = c("01", "02"),
+    target_unit_id = c("t1", "t2"),
+    population_weight = c(.75, .25),
+    area_weight = NA_real_,
+    source_coverage = 1,
+    target_coverage = 1,
+    mapping_class = "test",
+    evidence_source = "test",
+    stringsAsFactors = FALSE
+  )
+  map <- build_population_interpolation_crosswalk(
+    list(old = transition), 2001L
+  )$crosswalk
+  data <- data.frame(
+    unit = "s1",
+    enrolled_weight = 40,
+    eligible_weight = 100,
+    stringsAsFactors = FALSE
+  )
+
+  out <- allocate_population_sufficient_statistics(
+    data, map,
+    source_vintage = 1991L,
+    unit_field = "unit",
+    statistic_fields = c("enrolled_weight", "eligible_weight"),
+    measure_family = "eventual_emie"
+  )
+
+  expect_equal(
+    sort(out$enrolled_weight),
+    c(10, 30)
+  )
+  expect_equal(
+    sort(out$eligible_weight),
+    c(25, 75)
+  )
+  expect_equal(
+    out$enrolled_weight / out$eligible_weight,
+    c(.4, .4)
+  )
+})
+
+test_that("generic population allocation fails closed for survey microdata", {
+  transition <- data.frame(
+    source_vintage = 2011L,
+    target_vintage = 2001L,
+    source_state_code = "01",
+    source_district_code = "001",
+    source_unit_id = "s1",
+    target_state_code = "01",
+    target_district_code = "01",
+    target_unit_id = "t1",
+    population_weight = 1,
+    area_weight = NA_real_,
+    source_coverage = 1,
+    target_coverage = 1,
+    mapping_class = "test",
+    evidence_source = "test",
+    stringsAsFactors = FALSE
+  )
+  map <- build_population_interpolation_crosswalk(
+    list(recent = transition), 2001L
+  )$crosswalk
+  data <- data.frame(
+    unit = "s1",
+    record_weight = 2,
+    stringsAsFactors = FALSE
+  )
+
+  expect_error(
+    allocate_population_sufficient_statistics(
+      data, map,
+      source_vintage = 2011L,
+      unit_field = "unit",
+      statistic_fields = "record_weight",
+      measure_family = "consumption_welfare"
+    ),
+    "not eligible"
+  )
+})
+
+test_that("population interpolation saver exposes crosswalk and coverage diagnostics", {
+  x <- list(
+    crosswalk = data.frame(status = "test"),
+    source_coverage = data.frame(status = "test"),
+    summary = data.frame(status = "test")
+  )
+  dir <- tempfile()
+  paths <- save_population_interpolation_geography(
+    x, directory = dir
+  )
+
+  expect_setequal(
+    basename(paths),
+    c(
+      "population_interpolation_crosswalk.csv",
+      "population_interpolation_source_coverage.csv",
+      "population_interpolation_summary.csv"
+    )
+  )
+})

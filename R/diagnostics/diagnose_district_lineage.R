@@ -588,11 +588,16 @@ build_district_lineage <- function(
   bridge_qa <- bridge_df[!(bridge_df$deterministic %in% TRUE), , drop = FALSE]
   allocation_validation <- validate_allocation_weights(transition)
   canonical_transition <- attach_shrug_transition_coverage(
-    as_geography_transition(
-      transition,
+    attach_shrug_transition_weights(
+      as_geography_transition(
+        transition,
+        source_year = 2011L,
+        target_year = 2001L,
+        evidence_source = "district_lineage_2001_2011"
+      ),
+      bridge,
       source_year = 2011L,
-      target_year = 2001L,
-      evidence_source = "district_lineage_2001_2011"
+      target_year = 2001L
     ),
     bridge,
     source_year = 2011L,
