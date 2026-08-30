@@ -87,3 +87,7 @@ Puducherry and Lakshadweep are Southern.
 ## DISE geographic harmonization
 
 Archived DISE district counts are harmonized to Census-2001 analysis units through a deterministic bridge derived from the reviewed district-lineage registry. Only exact Census-2001 identities and reviewed weight-one lineage mappings are eligible; fractional population allocations are excluded from administrative school counts. Count variables are aggregated before shares are recomputed.
+
+## Census administrative-count harmonization
+
+Census-2011 count-valued outcomes that are compared on Census-2001 analytical geography use `build_complete_deterministic_transition_2011_to_2001()`. A Census-2001 parent is retained only when every contributing 2011 district is wholly and deterministically assigned to that parent. The C-13 age-denominator and Census migration modules share this contract. Counts are pooled before any rates or composition shares are recomputed; partial parents and fractional territorial allocations are not silently treated as complete administrative totals.
