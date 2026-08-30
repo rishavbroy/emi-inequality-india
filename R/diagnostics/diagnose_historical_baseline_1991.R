@@ -366,6 +366,310 @@ build_historical_baseline_balance_1991 <- function(
   )
 }
 
+historical_baseline_g2_panel <- function(
+    controls, district_panel,
+    treatment = preferred_iv_variables()$treatment) {
+  x <- safe_df(controls)
+  required_controls <- c(
+    "state_code_2001", "district_code_2001",
+    "geography_spec_id", "source_coverage_threshold",
+    "population_1991", historical_baseline_1991_pca_variables()
+  )
+  missing <- setdiff(required_controls, names(x))
+  if (length(missing)) {
+    stop(
+      "G2 historical baseline controls lack: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  panel <- if (inherits(district_panel, "sf")) {
+    sf::st_drop_geometry(district_panel)
+  } else {
+    safe_df(district_panel)
+  }
+  required_panel <- c("state_code_2001", "district_code_2001", treatment)
+  if ("ling_distance_nonzero_mean" %in% names(panel)) {
+    required_panel <- c(required_panel, "ling_distance_nonzero_mean")
+  }
+  missing <- setdiff(
+    c("state_code_2001", "district_code_2001", treatment),
+    names(panel)
+  )
+  if (length(missing)) {
+    stop(
+      "G2 historical baseline treatment panel lacks: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  panel$state_code_2001 <- pad_admin_code(panel$state_code_2001, 2L)
+  panel$district_code_2001 <- pad_admin_code(
+    panel$district_code_2001, 2L
+  )
+  if (anyDuplicated(panel[c("state_code_2001", "district_code_2001")])) {
+    stop(
+      "G2 historical baseline treatment panel has duplicate Census-2001 keys.",
+      call. = FALSE
+    )
+  }
+  predictors <- panel[required_panel]
+  names(predictors)[names(predictors) == treatment] <- "emie_exposure"
+  if ("ling_distance_nonzero_mean" %in% names(predictors)) {
+    names(predictors)[
+      names(predictors) == "ling_distance_nonzero_mean"
+    ] <- "ling_distance_nonzero_mean_2001"
+  }
+  merge(
+    x, predictors,
+    by = c("state_code_2001", "district_code_2001"),
+    all.x = TRUE, sort = FALSE
+  )
+}
+
+historical_baseline_g2_sample <- function(panel, predictor, variables) {
+  x <- safe_df(panel)
+  needed <- unique(c(
+    predictor, variables, "population_1991", "state_code_2001"
+  ))
+  missing <- setdiff(needed, names(x))
+  if (length(missing)) {
+    stop(
+      "G2 historical baseline sample lacks: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  keep <- stats::complete.cases(x[needed]) &
+    num(x$population_1991) > 0 &
+    nzchar(plain_chr(x$state_code_2001))
+  x[keep, , drop = FALSE]
+}
+
+estimate_historical_baseline_g2_balance <- function(
+    panel, predictor, covariate,
+    fixed_effect = c("none", "state")) {
+  fixed_effect <- match.arg(fixed_effect)
+  x <- historical_baseline_g2_sample(
+    panel, predictor, covariate
+  )
+  metadata <- historical_baseline_1991_metadata()
+  row <- metadata[match(covariate, metadata$variable), , drop = FALSE]
+  threshold <- unique(num(panel$source_coverage_threshold))
+  if (length(threshold) != 1L) {
+    stop(
+      "G2 historical baseline estimate requires one coverage threshold.",
+      call. = FALSE
+    )
+  }
+  if (!nrow(x)) {
+    return(data.frame(
+      geography_spec_id = "G2_population_interpolated",
+      source_coverage_threshold = threshold,
+      predictor = predictor,
+      fixed_effect = fixed_effect,
+      variable = covariate,
+      domain = row$domain,
+      source = row$source,
+      label = row$label,
+      estimate = NA_real_,
+      std.error = NA_real_,
+      p.value = NA_real_,
+      standardized_effect = NA_real_,
+      n = 0L,
+      n_states = 0L,
+      population_1991 = 0,
+      status = "not_estimated",
+      stringsAsFactors = FALSE
+    ))
+  }
+  inference <- historical_weighted_term_inference(
+    x, predictor, covariate,
+    "population_1991", "state_code_2001", fixed_effect
+  )
+  data.frame(
+    geography_spec_id = "G2_population_interpolated",
+    source_coverage_threshold = threshold,
+    predictor = predictor,
+    fixed_effect = fixed_effect,
+    variable = covariate,
+    domain = row$domain,
+    source = row$source,
+    label = row$label,
+    estimate = inference$estimate,
+    std.error = inference$std.error,
+    p.value = inference$p.value,
+    standardized_effect = inference$standardized_effect,
+    n = inference$n,
+    n_states = inference$n_states,
+    population_1991 = inference$population_weight,
+    status = "estimated",
+    stringsAsFactors = FALSE
+  )
+}
+
+estimate_historical_baseline_g2_joint_balance <- function(
+    panel, predictor, domain) {
+  metadata <- historical_baseline_1991_metadata()
+  variables <- metadata$variable[
+    metadata$source == "PCA91" &
+      metadata$domain == domain
+  ]
+  threshold <- unique(num(panel$source_coverage_threshold))
+  if (length(threshold) != 1L) {
+    stop(
+      "G2 historical joint balance requires one coverage threshold.",
+      call. = FALSE
+    )
+  }
+  x <- historical_baseline_g2_sample(panel, predictor, variables)
+  if (!nrow(x)) {
+    return(data.frame(
+      geography_spec_id = "G2_population_interpolated",
+      source_coverage_threshold = threshold,
+      predictor = predictor,
+      domain = domain,
+      tested_covariates = paste(variables, collapse = ";"),
+      n_tested_covariates = length(variables),
+      joint_f = NA_real_,
+      joint_p = NA_real_,
+      n = 0L,
+      n_states = 0L,
+      population_1991 = 0,
+      status = "not_estimated",
+      reason = "no_complete_cases",
+      stringsAsFactors = FALSE
+    ))
+  }
+  inference <- historical_weighted_joint_inference(
+    x, predictor, variables,
+    "population_1991", "state_code_2001"
+  )
+  data.frame(
+    geography_spec_id = "G2_population_interpolated",
+    source_coverage_threshold = threshold,
+    predictor = predictor,
+    domain = domain,
+    tested_covariates = paste(variables, collapse = ";"),
+    n_tested_covariates = length(variables),
+    joint_f = inference$joint_f,
+    joint_p = inference$joint_p,
+    n = inference$n,
+    n_states = inference$n_states,
+    population_1991 = inference$population_weight,
+    status = inference$status,
+    reason = inference$reason,
+    stringsAsFactors = FALSE
+  )
+}
+
+build_historical_baseline_g2_sensitivity <- function(
+    pca, population_crosswalk, district_panel,
+    coverage_thresholds = c(.90, .95, .99),
+    treatment = preferred_iv_variables()$treatment) {
+  thresholds <- sort(unique(as.numeric(coverage_thresholds)))
+  if (!length(thresholds) || any(!is.finite(thresholds)) ||
+      any(thresholds < 0 | thresholds > 1)) {
+    stop(
+      "G2 historical baseline coverage thresholds must lie in [0, 1].",
+      call. = FALSE
+    )
+  }
+  metadata <- historical_baseline_1991_metadata()
+  pca_metadata <- metadata[metadata$source == "PCA91", , drop = FALSE]
+  domains <- unique(pca_metadata$domain)
+
+  builds <- lapply(thresholds, function(threshold) {
+    baseline <- build_population_interpolated_pca_baseline_1991(
+      pca, population_crosswalk,
+      coverage_threshold = threshold
+    )
+    panel <- historical_baseline_g2_panel(
+      baseline$controls, district_panel, treatment
+    )
+    predictors <- historical_baseline_predictors(panel)
+    estimates <- safe_bind_rows(lapply(names(predictors), function(id) {
+      predictor <- predictors[[id]]
+      rows <- safe_bind_rows(lapply(
+        c("none", "state"),
+        function(fixed_effect) {
+          safe_bind_rows(lapply(
+            pca_metadata$variable,
+            function(variable) {
+              estimate_historical_baseline_g2_balance(
+                panel, predictor, variable, fixed_effect
+              )
+            }
+          ))
+        }
+      ))
+      rows$predictor_id <- id
+      rows
+    }))
+    joint <- safe_bind_rows(lapply(names(predictors), function(id) {
+      predictor <- predictors[[id]]
+      rows <- safe_bind_rows(lapply(
+        domains,
+        function(domain) {
+          estimate_historical_baseline_g2_joint_balance(
+            panel, predictor, domain
+          )
+        }
+      ))
+      rows$predictor_id <- id
+      rows
+    }))
+    list(
+      controls = baseline$controls,
+      coverage = baseline$coverage,
+      estimates = estimates,
+      joint_balance = joint
+    )
+  })
+
+  list(
+    controls = safe_bind_rows(lapply(builds, `[[`, "controls")),
+    coverage = safe_bind_rows(lapply(builds, `[[`, "coverage")),
+    estimates = safe_bind_rows(lapply(builds, `[[`, "estimates")),
+    joint_balance = safe_bind_rows(
+      lapply(builds, `[[`, "joint_balance")
+    )
+  )
+}
+
+save_historical_baseline_g2_sensitivity <- function(
+    x,
+    directory = "outputs/diagnostics/extended/instrument_relevance") {
+  required <- c("controls", "coverage", "estimates", "joint_balance")
+  missing <- setdiff(required, names(x))
+  if (length(missing)) {
+    stop(
+      "G2 historical baseline output lacks: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  paths <- c(
+    controls = file.path(
+      directory, "historical_baseline_1991_g2_controls.csv"
+    ),
+    coverage = file.path(
+      directory, "historical_baseline_1991_g2_coverage.csv"
+    ),
+    estimates = file.path(
+      directory, "historical_baseline_1991_g2_balance.csv"
+    ),
+    joint_balance = file.path(
+      directory, "historical_baseline_1991_g2_balance_joint.csv"
+    )
+  )
+  write_diagnostic_csv(x$controls, paths[["controls"]])
+  write_diagnostic_csv(x$coverage, paths[["coverage"]])
+  write_diagnostic_csv(x$estimates, paths[["estimates"]])
+  write_diagnostic_csv(x$joint_balance, paths[["joint_balance"]])
+  unname(paths)
+}
+
 save_historical_baseline_balance_1991 <- function(
     x, directory = "outputs/diagnostics/extended/instrument_relevance") {
   paths <- c(

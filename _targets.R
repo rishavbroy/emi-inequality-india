@@ -1691,6 +1691,22 @@ extended_diagnostic_targets <- list(
     format = "file"
   ),
   tar_target(
+    historical_baseline_g2_sensitivity,
+    build_historical_baseline_g2_sensitivity(
+      raw_shrug_1991_baseline$pca,
+      population_interpolation_geography_1991_2001_2011$crosswalk,
+      district_panel,
+      coverage_thresholds = c(.90, .95, .99)
+    )
+  ),
+  tar_target(
+    diag_ext_historical_baseline_g2_sensitivity,
+    save_historical_baseline_g2_sensitivity(
+      historical_baseline_g2_sensitivity
+    ),
+    format = "file"
+  ),
+  tar_target(
     historical_vanneman_pretrend_levels,
     build_vanneman_pretrend_levels_from_sources(
       historical_vanneman_source_qa,
