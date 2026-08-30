@@ -40,6 +40,37 @@ Balance is evidence about the independence argument, not a separate IV identifyi
 
 The alternative linguistic-distance grid and the richer first-stage absorption ladder now obtain their specification metadata from the same IV registry layer. Historical output files are retained where useful for compatibility, but fixed effects, controls, instrument sets, and control-block definitions are no longer independently declared inside the two diagnostic modules.
 
+### Alternative-distance design-closure contract
+
+The Glottolog and Dyen constructions are robustness measurements of linguistic
+distance, not candidate instruments to promote merely because an unadjusted or
+region-FE first stage happens to be larger. Design closure is evaluated on the
+canonical tier-A `state_main` specification because that is the project's
+preferred within-state identification design.
+
+`alternative_distance_design_evidence.csv` extracts the existing Shastry
+nonzero-mean, Glottolog, and Dyen state-main rows and places their clustered
+first-stage strength, partial R-squared, Montiel Olea--Pflueger effective F and
+critical value, and Anderson--Rubin confidence-set diagnostics side by side.
+`alternative_distance_design_decision.csv` then applies only the already
+registered effective-F critical values: it records whether any construction
+passes that relevance screen and whether either robustness construction is
+stronger than the primary Shastry construction.
+
+No new empirical threshold is introduced. In particular, a robustness
+construction is not promoted because its conventional first-stage F exceeds the
+primary construction if its effective F remains below its own weak-IV critical
+value. When no tested construction passes the effective-F screen, the recorded
+design implication is `weak_iv_robust_or_reduced_form`. This is a workflow gate,
+not an exclusion-validity claim: Anderson--Rubin inference and the historical,
+balance, monotonicity, migration, and other validity evidence remain separate.
+
+This closure rule follows the role of the effective F as the project's robust
+weak-identification screen and preserves Anderson--Rubin inference for weak
+instruments. It also prevents the alternative-distance branch from becoming an
+open-ended search for whichever linguistic basis produces the largest
+first-stage statistic.
+
 The de-duplicated `iv_specification_registry.csv` records the general diagnostic universe. `iv_diagnostic_registry.csv` records diagnostic capabilities, and `iv_diagnostic_applicability.csv` records which specification-diagnostic pairs run and why others do not.
 
 ## Balance contract
