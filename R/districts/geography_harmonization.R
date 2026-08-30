@@ -415,6 +415,170 @@ build_multivintage_geography_inventory <- function(
   )
 }
 
+extract_exact_geography_transition <- function(transition) {
+  x <- safe_df(transition)
+  validate_geography_transition(x)
+  if (!nrow(x)) return(empty_geography_transition(annotated = TRUE))
+
+  membership <- build_geography_components(x)
+  summary <- summarize_geography_components(x, membership)
+  eligible <- summary$harmonized_component_id[
+    summary$deterministic_amalgamation_eligible %in% TRUE
+  ]
+  if (!length(eligible)) {
+    return(empty_geography_transition(annotated = TRUE))
+  }
+
+  unit_component <- setNames(
+    membership$harmonized_component_id,
+    membership$unit_id
+  )
+  component_id <- unname(unit_component[x$source_unit_id])
+  out <- x[component_id %in% eligible, , drop = FALSE]
+  if (!nrow(out)) return(empty_geography_transition(annotated = TRUE))
+  annotate_geography_transition_topology(
+    out[geography_transition_columns()]
+  )
+}
+
+build_exact_multivintage_geography <- function(
+    transitions, required_vintages = NULL) {
+  if (!is.list(transitions) || !length(transitions) ||
+      is.null(names(transitions)) || any(!nzchar(names(transitions)))) {
+    stop(
+      "Exact multi-vintage geography requires a non-empty named transition list.",
+      call. = FALSE
+    )
+  }
+
+  exact <- lapply(transitions, extract_exact_geography_transition)
+  names(exact) <- names(transitions)
+
+  pairwise_summary <- safe_bind_rows(lapply(names(transitions), function(id) {
+    all_transition <- safe_df(transitions[[id]])
+    validate_geography_transition(all_transition)
+    all_components <- summarize_geography_components(all_transition)
+    exact_transition <- exact[[id]]
+    data.frame(
+      transition_id = id,
+      source_vintage = if (nrow(all_transition)) {
+        unique(as.integer(all_transition$source_vintage))[[1L]]
+      } else {
+        NA_integer_
+      },
+      target_vintage = if (nrow(all_transition)) {
+        unique(as.integer(all_transition$target_vintage))[[1L]]
+      } else {
+        NA_integer_
+      },
+      n_components = nrow(all_components),
+      n_exact_components = sum(
+        all_components$deterministic_amalgamation_eligible %in% TRUE
+      ),
+      n_edges = nrow(all_transition),
+      n_exact_edges = nrow(exact_transition),
+      stringsAsFactors = FALSE
+    )
+  }))
+
+  nonempty <- exact[vapply(exact, nrow, integer(1)) > 0L]
+  if (!length(nonempty)) {
+    required <- sort(unique(as.integer(required_vintages)))
+    return(list(
+      transitions = data.frame(),
+      components = data.frame(),
+      component_summary = data.frame(),
+      crosswalk = data.frame(),
+      pairwise_summary = pairwise_summary,
+      required_vintages = data.frame(
+        vintage = required,
+        stringsAsFactors = FALSE
+      )
+    ))
+  }
+
+  inventory <- build_multivintage_geography_inventory(
+    nonempty,
+    required_vintages = required_vintages
+  )
+  eligible_components <- inventory$component_summary$harmonized_component_id[
+    inventory$component_summary$spans_all_required_vintages %in% TRUE
+  ]
+  crosswalk <- inventory$components[
+    inventory$components$harmonized_component_id %in%
+      eligible_components,
+    ,
+    drop = FALSE
+  ]
+  if (nrow(crosswalk)) {
+    crosswalk$harmonized_region_id <-
+      crosswalk$harmonized_component_id
+    crosswalk$geography_spec_id <- "G1_deterministic_amalgamation"
+    crosswalk <- crosswalk[c(
+      "harmonized_region_id", "geography_spec_id",
+      "harmonized_component_id", "vintage",
+      "state_code", "district_code", "unit_id", "side"
+    )]
+  } else {
+    crosswalk$harmonized_region_id <- character()
+    crosswalk$geography_spec_id <- character()
+  }
+
+  list(
+    transitions = inventory$transitions,
+    components = inventory$components,
+    component_summary = inventory$component_summary,
+    crosswalk = crosswalk,
+    pairwise_summary = pairwise_summary,
+    required_vintages = inventory$required_vintages
+  )
+}
+
+save_exact_multivintage_geography <- function(
+    x,
+    directory = "outputs/diagnostics/extended/geography") {
+  required <- c(
+    "transitions", "components", "component_summary",
+    "crosswalk", "pairwise_summary"
+  )
+  missing <- setdiff(required, names(x))
+  if (length(missing)) {
+    stop(
+      "Exact multi-vintage geography output lacks: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  dir.create(directory, recursive = TRUE, showWarnings = FALSE)
+  paths <- c(
+    transitions = file.path(
+      directory, "exact_multivintage_transitions.csv"
+    ),
+    components = file.path(
+      directory, "exact_multivintage_components.csv"
+    ),
+    component_summary = file.path(
+      directory, "exact_multivintage_component_summary.csv"
+    ),
+    crosswalk = file.path(
+      directory, "exact_multivintage_crosswalk.csv"
+    ),
+    pairwise_summary = file.path(
+      directory, "exact_multivintage_pairwise_summary.csv"
+    )
+  )
+  write_diagnostic_csv(x$transitions, paths[["transitions"]])
+  write_diagnostic_csv(x$components, paths[["components"]])
+  write_diagnostic_csv(
+    x$component_summary, paths[["component_summary"]]
+  )
+  write_diagnostic_csv(x$crosswalk, paths[["crosswalk"]])
+  write_diagnostic_csv(
+    x$pairwise_summary, paths[["pairwise_summary"]]
+  )
+  unname(paths)
+}
+
 save_geography_harmonization_foundation <- function(
     multivintage,
     semantics = geography_allocation_semantics_registry(),

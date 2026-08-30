@@ -953,6 +953,25 @@ core_pipeline_targets <- list(
     format = "file"
   ),
   tar_target(
+    exact_multivintage_geography_1991_2001_2011,
+    build_exact_multivintage_geography(
+      list(
+        shrug_1991_2001 =
+          historical_linguistic_geography_1991_2001$canonical_transition,
+        production_2011_2001 =
+          district_lineage$canonical_transition_2001_2011
+      ),
+      required_vintages = c(1991L, 2001L, 2011L)
+    )
+  ),
+  tar_target(
+    diag_ext_exact_multivintage_geography,
+    save_exact_multivintage_geography(
+      exact_multivintage_geography_1991_2001_2011
+    ),
+    format = "file"
+  ),
+  tar_target(
     historical_linguistic_consensus_geography,
     build_historical_linguistic_consensus_geography(
       historical_linguistic_geography_1991_2001,
