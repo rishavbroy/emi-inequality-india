@@ -63,16 +63,20 @@ The diagnostic outputs are:
   weights for deterministic SHRID membership;
 - `historical_linguistic_shrid_bridge_1991_2001.csv`: bridge-status summary.
 
-The literature-derived Kumar--Somanathan 1991--2001 carve-out table is now used
-only as an **independent geography benchmark**, not as a mapping authority. Its
-published CSV lacks state codes, so the benchmark identifies a 1991 source
-district only when its reported 1991 population matches exactly one SHRUG source
-district nationwide. It then canonicalizes the reported 2001 destination name
-against the Census-2001 registry and compares the paper's source-population
-transfer share with the independently constructed SHRUG population share. No
-fuzzy 1991 name match, nearest-population match, or benchmark-based override is
-allowed. Ambiguous source populations and unmatched destination names remain
-explicitly unbenchmarked.
+The literature-derived Kumar--Somanathan 1991--2001 carve-out table serves two
+separate roles. The original **independent geography benchmark** remains
+unchanged: it identifies a 1991 source only when the reported population matches
+exactly one SHRUG source district nationwide, then compares the published
+source-population transfer share with SHRUG.
+
+A second, explicitly labeled **exact-name transition sensitivity** broadens
+reviewed boundary-change evidence without fuzzy matching. The source table has
+no state codes, so a 1991 source name is assigned a Census code only when its
+canonical label is unique nationwide in the Helms-Lim Census-1991 code/name
+registry; a 2001 destination is assigned only when its canonical label is unique
+nationwide in the Census-2001 administrative registry. Helms-Lim supplies labels
+and codes here, not geographic shares or lineage authority. Ambiguous, renamed,
+or non-exact labels remain unresolved.
 
 The source CSV itself contains line-wrap artifacts from the table extraction,
 including split source labels (`Chengalpattu-/MGR`, `Pasumpon M. The-/var`) and
@@ -102,6 +106,36 @@ Two additional diagnostic outputs record this comparison:
   counts for source populations that are absent versus non-unique in SHRUG, and
   share-difference summaries. Agreement statistics therefore cannot be read
   without the benchmark coverage reported beside them.
+
+
+The exact-name transition uses both transfer margins reported in the
+Kumar--Somanathan table. `pct_01in91` supplies the share of each 1991 parent
+going to a 2001 child, while `pct_91in01` supplies the share of each 2001 child
+coming from that parent. After code resolution, these margins are summed by
+source and target unit respectively. A connected component is eligible for
+deterministic amalgamation only when **both** sides close to 100 percent. This
+means a missing or unresolved contributing parent blocks target completeness
+rather than being silently renormalized.
+
+The resulting outputs are:
+
+- `historical_linguistic_kumar_somanathan_edges.csv`: every published edge with
+  exact-name resolution status;
+- `historical_linguistic_kumar_somanathan_transition.csv`: only code-resolved
+  exact-name edges in the canonical transition schema;
+- `historical_linguistic_kumar_somanathan_components.csv` and
+  `historical_linguistic_kumar_somanathan_component_summary.csv`: connected
+  component topology and two-sided closure;
+- `historical_linguistic_kumar_somanathan_harmonized_crosswalk.csv`: only
+  deterministic closed regions;
+- `historical_linguistic_kumar_somanathan_summary.csv`: coverage and nontrivial
+  component counts.
+
+This external exact-name graph is kept separate from the SHRUG-SHRID graph.
+Agreement where they overlap is informative, but one source does not overwrite
+the other. Vanneman feasibility is therefore reported separately for strict
+SHRUG-exact regions and Kumar--Somanathan exact-name regions before any combined
+geography is considered.
 
 This benchmark uses the first transfer margin reported by Kumar--Somanathan:
 the share of each 1991 parent district that went to each 2001 child. Their paper
