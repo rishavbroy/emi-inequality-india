@@ -1593,6 +1593,20 @@ extended_diagnostic_targets <- list(
     format = "file"
   ),
   tar_target(
+    historical_vanneman_pretrend_support_comparison,
+    build_vanneman_pretrend_support_comparison(
+      historical_vanneman_pretrend_validation,
+      historical_vanneman_parent_pretrend_validation
+    )
+  ),
+  tar_target(
+    diag_ext_historical_vanneman_pretrend_support_comparison,
+    save_vanneman_pretrend_support_comparison(
+      historical_vanneman_pretrend_support_comparison
+    ),
+    format = "file"
+  ),
+  tar_target(
     diag_ext_historical_linguistic_inference_validation,
     save_historical_linguistic_inference_validation(
       historical_linguistic_distance_validation,
