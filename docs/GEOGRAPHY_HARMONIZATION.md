@@ -147,3 +147,28 @@ arbitrary analysis cutoff. Counts above 90, 95, and 99 percent are reported to
 show the sensitivity frontier. A later analysis may impose a documented
 coverage threshold, but the geography layer itself does not silently discard or
 renormalize partial source partitions.
+
+
+### First G2 analysis: Census-1991 PCA human baseline
+
+The first downstream G2 sensitivity is intentionally restricted to
+Census-1991 PCA human quantities. PCA population, sex, age, SC/ST, literacy,
+worker, cultivator, and agricultural-labourer counts are retained as sufficient
+statistics, population-allocated to Census-2001 districts, summed, and only
+then converted back to log population and shares.
+
+The analysis reports source-coverage thresholds of 90, 95, and 99 percent
+without renormalizing accepted source shares. A district with 99.5 percent
+observed population support contributes 99.5 percent of each count, and the
+coverage artifact records the resulting population shortfall.
+
+Village- and town-directory facility rates are deliberately excluded from this
+generic G2 sensitivity. Schools, hospitals, health centres, and banks are
+point-like facilities; splitting their district totals by population share
+would contradict the `point_location` semantic. Their later harmonization
+requires locality identifiers/coordinates or a reviewed source-specific rule.
+
+The G2 balance outputs therefore compare eventual EMI exposure and Census-2001
+linguistic distance against the human PCA domains only. This provides a
+population-interpolated geography robustness check without pretending that all
+1991 controls admit the same change-of-support operation.

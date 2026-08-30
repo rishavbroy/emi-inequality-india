@@ -1268,3 +1268,14 @@ regression sample. Allocation policy is documented separately in
 existing sufficient-statistic semantics for EMIE, linguistic distance, and
 survey welfare before any population- or area-interpolated sensitivity is
 implemented.
+
+
+### Population-interpolated 1991 PCA baseline
+
+A separate G2 sensitivity now expresses Census-1991 PCA human baseline counts on
+Census-2001 district boundaries using the population crosswalk. The analysis
+reconstructs shares from allocated counts and reports 90/95/99 percent source
+coverage thresholds. It is kept separate from the preferred/exact historical
+baseline diagnostics because G2 changes the support assumption rather than
+merely changing sample eligibility. Village/town facility controls are not
+population-interpolated.
