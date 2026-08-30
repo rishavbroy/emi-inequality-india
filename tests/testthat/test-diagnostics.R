@@ -1132,20 +1132,22 @@ test_that("alternative-distance design comparison preserves both FE candidates",
         adjustment_id = target$adjustment_id,
         construction_id = target$construction_id,
         fixed_effect = fixed_effect,
-        joint_excluded_f = ifelse(primary, c(6, .75)[match(
-          target$adjustment_id,
-          c("region_main", "state_main")
-        )], .25),
+        joint_excluded_f = ifelse(
+          primary,
+          unname(c(region_main = 6, state_main = .75)[target$adjustment_id]),
+          .25
+        ),
         partial_r_squared = ifelse(primary, .01, .001),
         n = 573L,
         stringsAsFactors = FALSE
       ),
       weak_iv_outcomes = data.frame(
         specification_id = ids,
-        effective_f = ifelse(primary, c(7, .82)[match(
-          target$adjustment_id,
-          c("region_main", "state_main")
-        )], .3),
+        effective_f = ifelse(
+          primary,
+          unname(c(region_main = 7, state_main = .82)[target$adjustment_id]),
+          .3
+        ),
         effective_f_critical_value = 23.1,
         anderson_rubin_p_beta0 = .25,
         ar_95_contains_zero = TRUE,
