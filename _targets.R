@@ -850,6 +850,10 @@ core_pipeline_targets <- list(
     )
   ),
   tar_target(
+    district_transition_2001_2011,
+    district_lineage$district_transition_2001_2011
+  ),
+  tar_target(
     historical_linguistic_geography_external_benchmark,
     build_historical_linguistic_geography_external_benchmark(
       historical_linguistic_geography_1991_2001,
@@ -1024,7 +1028,7 @@ core_pipeline_targets <- list(
       district_lineage$reference_units,
       district_lineage$adjudicated_admin_events,
       district_lineage$admin_units_2011,
-      district_lineage$district_transition_2001_2011
+      district_transition_2001_2011
     )
   ),
   tar_target(
@@ -2198,28 +2202,28 @@ extended_diagnostic_targets <- list(
     census_migration_d02_2011,
     build_census_d02_2011_measures(
       census_migration_d02_2011_source,
-      district_lineage$district_transition_2001_2011
+      district_transition_2001_2011
     )
   ),
   tar_target(
     census_migration_d03_2011,
     build_census_d03_2011_measures(
       census_migration_d03_2011_source,
-      district_lineage$district_transition_2001_2011
+      district_transition_2001_2011
     )
   ),
   tar_target(
     census_migration_d04_2011,
     build_census_d04_2011_measures(
       census_migration_d04_2011_source,
-      district_lineage$district_transition_2001_2011
+      district_transition_2001_2011
     )
   ),
   tar_target(
     census_migration_d07_2011,
     build_census_d07_2011_measures(
       census_migration_d07_2011_source,
-      district_lineage$district_transition_2001_2011
+      district_transition_2001_2011
     )
   ),
   tar_target(
@@ -2325,7 +2329,7 @@ extended_diagnostic_targets <- list(
     build_census_2011_industry_measures(
       census_workers_b04_2011_source,
       census_workers_b06_2011_source,
-      district_lineage$district_transition_2001_2011
+      district_transition_2001_2011
     )
   ),
   tar_target(
@@ -2333,7 +2337,7 @@ extended_diagnostic_targets <- list(
     build_census_2011_occupation_measures(
       census_workers_b25a_2011_source,
       census_workers_b25b_2011_source,
-      district_lineage$district_transition_2001_2011
+      district_transition_2001_2011
     )
   ),
   tar_target(
@@ -2553,7 +2557,7 @@ extended_diagnostic_targets <- list(
     build_census_age_6_13_anchors(
       census_age_6_13_2001,
       census_age_6_13_2011,
-      district_lineage$district_transition_2001_2011
+      district_transition_2001_2011
     )
   ),
   tar_target(
