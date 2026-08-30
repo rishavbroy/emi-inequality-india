@@ -1143,3 +1143,42 @@ registered Kumar--Somanathan and other externally validated district-history
 sources—while keeping exact amalgamation separate from later population- or
 area-weighted interpolation sensitivities.
 
+
+
+### Bilateral exact-transition consensus
+
+The SHRUG-SHRID and Kumar--Somanathan exact-name graphs remain separate source
+sensitivities. A third, more conservative consensus tier is now constructed only
+where the two sources agree **bilaterally** on boundary membership.
+
+Source-side agreement means the complete set of Census-2001 descendants is
+identical for a Census-1991 district in both graphs. Target-side agreement means
+the complete set of Census-1991 parents is identical for a Census-2001 district
+in both graphs. A consensus edge is retained only when both conditions hold and
+both source graphs independently report complete source and target coverage.
+
+This bilateral requirement matters for mergers. Agreement that a 1991 district
+maps to a particular 2001 district does not establish a constant-boundary
+component if the two sources disagree about the other historical parents of that
+2001 district. The consensus graph therefore checks both descendant and parent
+sets before constructing connected components.
+
+No fractional weight is synthesized across sources. Consensus edges have
+missing population and area weights and unit source/target coverage because
+their role is exact component membership, not interpolation. Source-specific
+transfer shares remain in their own diagnostic files. Conflicts, SHRUG-only
+sources, and Kumar--Somanathan-only sources are not promoted into the consensus
+graph.
+
+The consensus outputs are:
+
+- `historical_linguistic_consensus_transition.csv`;
+- `historical_linguistic_consensus_components.csv`;
+- `historical_linguistic_consensus_component_summary.csv`;
+- `historical_linguistic_consensus_harmonized_crosswalk.csv`;
+- `historical_linguistic_consensus_summary.csv`.
+
+Vanneman feasibility is evaluated separately on this consensus crosswalk. As
+with the other exact geographies, the existence of a consensus crosswalk does
+not automatically activate another pretrend estimator; the number and topology
+of nontrivial analysis-ready regions remain the production gate.
