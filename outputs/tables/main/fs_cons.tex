@@ -1,46 +1,59 @@
-\begin{table}[!h]
-\centering\centering
-\caption{\label{tbl-fs-cons}First-Stage Regression: EMI Exposure on Linguistic Distance}
-\centering
-\begin{tabular}[t]{lc}
+
+\begin{ThreePartTable}
+\begin{TableNotes}[para]
+\item * p < 0.05, ** p < 0.01, *** p < 0.001
+\item Standard errors clustered by state in parentheses.
+\end{TableNotes}
+\begin{longtable}[t]{lc}
+\caption{\label{tbl-fs-cons}First-Stage Regression: EMI Exposure on Linguistic Distance}\\
 \toprule
 \multicolumn{1}{c}{ } & \multicolumn{1}{c}{EMI Exposure} \\
 \cmidrule(l{3pt}r{3pt}){2-2}
   & (1)\\
 \midrule
-\cellcolor{gray!10}{Linguistic distance} & \cellcolor{gray!10}{0.847}\\
- & (0.962)\\
-\cellcolor{gray!10}{Log population} & \cellcolor{gray!10}{0.686}\\
- & (0.718)\\
-\cellcolor{gray!10}{Urban population share} & \cellcolor{gray!10}{0.117*}\\
- & (0.052)\\
-\cellcolor{gray!10}{Secondary-plus share, age 7+} & \cellcolor{gray!10}{0.563***}\\
- & (0.166)\\
-\cellcolor{gray!10}{Scheduled Caste share} & \cellcolor{gray!10}{0.038}\\
- & \vphantom{1} (0.067)\\
-\cellcolor{gray!10}{Scheduled Tribe share} & \cellcolor{gray!10}{0.044}\\
- & (0.031)\\
-\cellcolor{gray!10}{Muslim share} & \cellcolor{gray!10}{0.056}\\
+\endfirsthead
+\caption[]{First-Stage Regression: EMI Exposure on Linguistic Distance \textit{(continued)}}\\
+\toprule
+  & (1)\\
+\midrule
+\endhead
+
+\endfoot
+\bottomrule
+\insertTableNotes
+\endlastfoot
+\cellcolor{gray!10}{Linguistic distance} & \cellcolor{gray!10}{0.839}\\
+ & (0.966)\\
+\cellcolor{gray!10}{Log population} & \cellcolor{gray!10}{0.619}\\
+ & (0.704)\\
+\cellcolor{gray!10}{Urban population share} & \cellcolor{gray!10}{0.109*}\\
+ & \vphantom{1} (0.050)\\
+\cellcolor{gray!10}{Secondary-plus share, age 7+} & \cellcolor{gray!10}{0.554***}\\
+ & (0.165)\\
+\cellcolor{gray!10}{Scheduled Caste share} & \cellcolor{gray!10}{0.045}\\
+ & (0.065)\\
+\cellcolor{gray!10}{Scheduled Tribe share} & \cellcolor{gray!10}{0.049}\\
+ & (0.029)\\
+\cellcolor{gray!10}{Muslim share} & \cellcolor{gray!10}{0.057}\\
+ & \vphantom{1} (0.042)\\
+\cellcolor{gray!10}{Agricultural worker share} & \cellcolor{gray!10}{-0.056}\\
+ & (0.050)\\
+\cellcolor{gray!10}{Dependency ratio} & \cellcolor{gray!10}{-0.051}\\
+ & (0.066)\\
+\cellcolor{gray!10}{Electricity access share} & \cellcolor{gray!10}{-0.045}\\
  & (0.042)\\
-\cellcolor{gray!10}{Agricultural worker share} & \cellcolor{gray!10}{-0.047}\\
- & (0.054)\\
-\cellcolor{gray!10}{Dependency ratio} & \cellcolor{gray!10}{-0.049}\\
- & (0.067)\\
-\cellcolor{gray!10}{Electricity access share} & \cellcolor{gray!10}{-0.047}\\
- & (0.043)\\
-\cellcolor{gray!10}{Log population density} & \cellcolor{gray!10}{1.012}\\
- & (0.800)\\
-\cellcolor{gray!10}{Intercept} & \cellcolor{gray!10}{29.012**}\\
- & (9.330)\\
+\cellcolor{gray!10}{Log population density} & \cellcolor{gray!10}{1.074}\\
+ & (0.794)\\
+\cellcolor{gray!10}{Intercept} & \cellcolor{gray!10}{30.228***}\\
+ & (9.007)\\
 \midrule
 \cellcolor{gray!10}{Observations} & \cellcolor{gray!10}{573}\\
-$R^2$ & 0.894\\
-\cellcolor{gray!10}{Adjusted $R^2$} & \cellcolor{gray!10}{0.885}\\
-Residual Std. Error & 6.890\\
-\cellcolor{gray!10}{Model's F-Statistic} & \cellcolor{gray!10}{99.20}\\
-Instrument's F-Statistic & 0.78\\
-\bottomrule
-\multicolumn{2}{l}{\rule{0pt}{1em}* p $<$ 0.05, ** p $<$ 0.01, *** p $<$ 0.001}\\
-\multicolumn{2}{l}{\rule{0pt}{1em}Standard errors clustered by state in parentheses.}\\
-\end{tabular}
-\end{table}
+$R^2$ & 0.895\\
+\cellcolor{gray!10}{Adjusted $R^2$} & \cellcolor{gray!10}{0.886}\\
+Residual Std. Error & 6.853\\
+\cellcolor{gray!10}{Model's F-Statistic} & \cellcolor{gray!10}{100.17}\\
+Instrument's clustered Wald F & 0.75\\
+\cellcolor{gray!10}{Montiel Olea-Pflueger effective F} & \cellcolor{gray!10}{0.82}\\
+MOP 5% critical value (10% relative bias) & 23.11\\*
+\end{longtable}
+\end{ThreePartTable}
