@@ -48,7 +48,15 @@ For every completely reconstructed Census-2001 parent, the diagnostic reports 20
 \Delta s_d = s_{d,2011} - s_{d,2001}.
 \]
 
-The first phase reports changes for electricity, kerosene lighting, solar lighting, no lighting, latrine availability, banking, radio, television, telephone access, bicycle, motorcycle/scooter, and car/jeep/van. Changes are retained as missing when either year's underlying share is unavailable; `change_coverage.csv` reports this support outcome by variable. These are descriptive/mechanism-ready quantities; they are not automatically promoted to causal outcome regressions.
+The first phase reports changes for electricity, kerosene lighting, solar lighting, no lighting, latrine availability, banking, radio, television, telephone access, bicycle, motorcycle/scooter, and car/jeep/van. Changes are retained as missing when either year's underlying share is unavailable; `change_coverage.csv` reports this support outcome by variable.
+
+## Mechanism inference
+
+A deliberately smaller registry now carries the full-support longitudinal changes into extended mechanism diagnostics. The registered outcomes are electricity access, no-lighting, banking, television, telephone, bicycle, motorcycle/scooter, and car/jeep/van changes. Kerosene and solar lighting are omitted from the inferential registry because they are components of the same exhaustive lighting partition already represented by electricity/no-lighting and would mainly multiply correlated tests. Latrine change remains descriptive because the official 2001 H-12 source omits six districts; forcing that known source gap onto every other housing outcome would needlessly shrink their common sample.
+
+The registered housing outcomes use the same common-support scalar-IV engine as Census migration: six region/state-FE × Shastry/Glottolog/Dyen specifications, one fixed sample across the eight housing changes, state-clustered reduced forms, conventional 2SLS estimates for scale, effective-F diagnostics, and Anderson-Rubin tests/confidence sets with within-specification Holm adjustment. Because the migration-sample first stages are already weak, Anderson-Rubin inference remains the interpretation-first result rather than conventional 2SLS significance.
+
+These regressions use **changes**, not 2011 levels, so the estimand is local improvement in the measured housing/living-standard margin between 2001 and 2011. They remain extended mechanism diagnostics and are not controls in the preferred welfare equation or claims of identified mediation.
 
 ## Deferred tables
 

@@ -90,7 +90,9 @@ The diagnostic build fails if district coverage differs or either identity fails
 
 All 2011 counts use the same `build_complete_deterministic_transition_2011_to_2001()` contract as C-13 and Census migration. A Census-2001 parent is retained only when every contributing 2011 district is wholly and deterministically assigned to that parent. Counts are pooled first and shares are recomputed afterward.
 
-These variables are post-treatment local economic-structure mechanisms. They are not controls in the preferred welfare equation. They complement the D-series migration branch by separating two questions:
+These variables are post-treatment local economic-structure mechanisms. They are not controls in the preferred welfare equation. The current worker branch deliberately stops at measurement plus 2001 balance diagnostics rather than running the generic Census mechanism-IV grid. Two facts make that the more conservative contract: the 2001 B-04 baseline covers **main workers**, while the 2011 industry measure combines B-04 main and B-06 marginal workers, and the existing 2001 worker-structure joint-balance tests reject strongly for the scalar instruments. A later worker-outcome model should therefore resolve the longitudinal denominator/baseline-adjustment question instead of treating a 2011 composition level as a clean causal change outcome.
+
+They complement the D-series migration branch by separating two questions:
 
 1. did exposure change who moved and why; and
 2. did the economic structure of the district itself change?
