@@ -24,7 +24,7 @@ census_mechanism_specifications <- function(
 }
 
 census_mechanism_design_variables <- function(specifications) {
-  specifications <- safe_df(specifications)
+  specifications <- as_iv_specifications(specifications)
   unique(c(
     "state_code_2001", "district_code_2001", "region",
     plain_chr(specifications$treatment),
@@ -195,7 +195,7 @@ estimate_census_mechanism_models <- function(
     label = "Census") {
   panel <- safe_df(mechanism_panel)
   registry <- safe_df(registry)
-  base_specs <- safe_df(specifications)
+  base_specs <- as_iv_specifications(specifications)
   sample_n <- nrow(panel)
   harmonized_n <- attr(mechanism_panel, "n_harmonized_mechanism_districts", exact = TRUE)
   if (!is.finite(harmonized_n)) harmonized_n <- sample_n
