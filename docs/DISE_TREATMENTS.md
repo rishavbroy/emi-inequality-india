@@ -33,6 +33,8 @@ The first implementation deliberately limits treatment construction to 2005-06 t
 
 The two English-medium measures are genuine alternative treatment definitions and enter the full structural-IV diagnostic specification universe. Hindi, English-versus-Hindi, and private-sector shares are relevance/mechanism outcomes: they enter the same first-stage specification permutations but are not mislabeled as causal EMI treatments.
 
+`dise_construct_registry()` is also the semantic authority for paper-facing grouping. In addition to the estimand and analysis scope, every construct records its domain, margin, source side, and paper role. English/Hindi enrollment compositions are administrative equilibrium measurements rather than pure school supply; private-school share is a school-stock composition measure and is the only baseline registry row labeled administrative supply. The separate school-quality registry uses the same semantic fields for teacher resources, single-teacher-school prevalence, and girls' toilet availability. Diagnostic outputs carry these fields forward rather than rebuilding labels downstream.
+
 The extended diagnostic output also compares the 2007-08 administrative EMI share with the NSS district measures on the common 0-100 scale, reporting raw Pearson/Spearman agreement, mean difference, RMSE, and correlation after residualizing both measurements by 2001 state.
 
 The DISE diagnostic saver follows the repository-wide diagnostic-manifest convention: it returns a data-frame manifest of written outputs rather than pretending that manifest itself is a `targets` file target. The individual CSVs are still written explicitly and are discoverable by the analysis-note helpers.

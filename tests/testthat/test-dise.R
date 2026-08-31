@@ -187,9 +187,32 @@ test_that("DISE construct registry separates treatments from mechanism outcomes"
     c("hindi_share_0708", "english_hindi_share_0708", "private_enrollment_share_0708", "private_school_share_0708")
   )
   expect_false(any(grepl("reported", registry$construct_id, fixed = TRUE)))
+  semantic_fields <- c("domain", "margin", "source_side", "paper_role")
+  expect_true(all(semantic_fields %in% names(registry)))
+  expect_false(any(is.na(registry[semantic_fields]) | registry[semantic_fields] == ""))
+
+  private_school <- registry[registry$construct_id == "private_school_share_0708", , drop = FALSE]
+  expect_identical(private_school$domain[[1]], "management")
+  expect_identical(private_school$margin[[1]], "school_stock_composition")
+  expect_identical(private_school$source_side[[1]], "administrative_supply")
+  expect_identical(private_school$paper_role[[1]], "institutional_environment")
+
+  emi <- registry[registry$construct_id == "emi_total_0708", , drop = FALSE]
+  expect_identical(emi$source_side[[1]], "administrative_equilibrium")
+  expect_identical(emi$paper_role[[1]], "formal_english_exposure")
 })
 
-
+test_that("DISE school-quality registry carries reporting semantics without changing estimands", {
+  registry <- dise_school_quality_registry()
+  expect_true(all(c("domain", "margin", "source_side", "paper_role") %in% names(registry)))
+  expect_true(all(registry$domain == "quality"))
+  expect_true(all(registry$source_side == "administrative_supply"))
+  expect_true(all(registry$paper_role == "complementarity"))
+  expect_setequal(
+    registry$margin,
+    c("teacher_resources", "school_stock_quality", "school_amenity")
+  )
+})
 
 test_that("DISE diagnostic branches preserve construct registry rows", {
   construct <- dise_construct_registry()[1, , drop = FALSE]
@@ -208,6 +231,10 @@ test_that("DISE diagnostic branches preserve construct registry rows", {
     )
   )
   expect_identical(construct$construct_id[[1]], dise_construct_registry()$construct_id[[1]])
+
+  tagged <- add_dise_construct_id(data.frame(value = 1), construct)
+  expect_identical(tagged$domain[[1]], construct$domain[[1]])
+  expect_identical(tagged$paper_role[[1]], construct$paper_role[[1]])
 })
 
 test_that("DISE IV diagnostic projection is insensitive to unrelated future outcomes", {

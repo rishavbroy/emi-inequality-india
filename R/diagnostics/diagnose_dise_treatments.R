@@ -5,7 +5,12 @@ add_dise_construct_id <- function(data, construct) {
   if (!nrow(data)) return(data)
   data$construct_id <- construct$construct_id[[1]]
   data$treatment <- construct$variable[[1]]
-  data$analysis_scope <- construct$analysis_scope[[1]]
+  for (field in intersect(
+    c("analysis_scope", "domain", "margin", "source_side", "paper_role", "label"),
+    names(construct)
+  )) {
+    data[[field]] <- construct[[field]][[1]]
+  }
   data
 }
 
@@ -142,9 +147,12 @@ diagnose_dise_archive <- function(district_year, treatments, publication_checks 
       stringsAsFactors = FALSE
     )
   }))
-  treatment_summary <- safe_bind_rows(lapply(dise_construct_registry()$variable, function(variable) {
+  construct_registry <- dise_construct_registry()
+  treatment_summary <- safe_bind_rows(lapply(seq_len(nrow(construct_registry)), function(i) {
+    construct <- construct_registry[i, , drop = FALSE]
+    variable <- construct$variable[[1]]
     values <- num(treatments[[variable]])
-    data.frame(
+    summary <- data.frame(
       variable = variable,
       n_nonmissing = sum(is.finite(values)),
       mean = if (any(is.finite(values))) mean(values, na.rm = TRUE) else NA_real_,
@@ -153,6 +161,7 @@ diagnose_dise_archive <- function(district_year, treatments, publication_checks 
       max = if (any(is.finite(values))) max(values, na.rm = TRUE) else NA_real_,
       stringsAsFactors = FALSE
     )
+    add_dise_construct_id(summary, construct)
   }))
   list(
     year_summary = year_summary,
@@ -553,6 +562,10 @@ dise_school_quality_registry <- function() {
       "Schools with girls' toilet (%)"
     ),
     direction = c("lower_is_better", "lower_is_better", "higher_is_better"),
+    domain = "quality",
+    margin = c("teacher_resources", "school_stock_quality", "school_amenity"),
+    source_side = "administrative_supply",
+    paper_role = "complementarity",
     dynamic_start_year = c("2011-12", "2011-12", "2012-13"),
     dynamic_reference_year = c("2011-12", "2011-12", "2012-13"),
     dynamic_status = "estimated_report_cards",

@@ -109,6 +109,19 @@ dise_construct_registry <- function() {
       "dise_private_school_share_0708"
     ),
     analysis_scope = c(rep("structural_iv", 4), rep("relevance_only", 4)),
+    domain = c(rep("medium", 6), rep("management", 2)),
+    margin = c(
+      "enrollment_composition", "pooled_enrollment_composition",
+      "population_scaled_enrollment", "pooled_population_scaled_enrollment",
+      "enrollment_composition", "english_hindi_composition",
+      "enrollment_composition", "school_stock_composition"
+    ),
+    source_side = c(rep("administrative_equilibrium", 7), "administrative_supply"),
+    paper_role = c(
+      rep("formal_english_exposure", 4),
+      "language_substitution", "language_substitution",
+      "institution_choice_context", "institutional_environment"
+    ),
     label = c(
       "DISE 2007-08 English-medium enrollment / total enrollment",
       "DISE pooled 2005-06 to 2007-08 English-medium enrollment / total enrollment",
