@@ -43,9 +43,14 @@ See [`docs/DISTRICT_LINEAGE.md`](../../docs/DISTRICT_LINEAGE.md) for authority r
 ## Consumption prices and Census 2001 controls
 
 `price_series_registry.csv` records the role of each price source.
-`census_2001_control_registry.csv` records denominators and whether a variable is
-planned for the main paper or appendix. The construction rules are described in
-`docs/CONSUMPTION_AND_PRICES.md` and `docs/CENSUS_2001_CONTROLS.md`.
+`census_2001_control_registry.csv` is the semantic authority for Census-2001
+controls. It records labels/descriptions, theoretical control blocks, preferred
+versus alternative parameterizations, denominator/source provenance, and whether
+each variable belongs to the main, absorption, or appendix sets. Production
+targets track the file explicitly, and R control/specification helpers derive
+their vectors from it rather than maintaining parallel hard-coded lists. The
+construction rules are described in `docs/CONSUMPTION_AND_PRICES.md` and
+`docs/CENSUS_2001_CONTROLS.md`.
 
 - `cpi_iw_centres_2001.csv`: the 78 Labour Bureau CPI-IW centres and their
   All-India weights on the 2001=100 base. The three centres later assigned to

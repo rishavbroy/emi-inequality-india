@@ -2,7 +2,10 @@
 
 The revised main regression uses a compact set of variables measured before the
 2007-08 treatment measure. Ratios are calculated after lower-level counts have
-been summed to Census 2001 districts.
+been summed to Census 2001 districts. `data/metadata/census_2001_control_registry.csv`
+is the single semantic authority for control membership, labels, theoretical
+blocks, and alternative parameterizations; R helpers derive the main, absorption,
+and appendix vectors from that registry rather than restating them in code.
 
 ## Main paper
 
@@ -22,15 +25,23 @@ C-14, and H-09 tables. The main set is intentionally limited. Including every
 available Census variable would consume degrees of freedom and make the first
 stage harder to interpret.
 
-## Appendix and balance analysis
+## Alternative parameterizations and balance analysis
 
-The expanded first-stage diagnostics now add literacy and total worker shares and
-replace the aggregate agricultural-worker share with separate cultivator and
-agricultural-labourer shares among workers. This preserves the occupational
+The historical name `expanded` is retained in specification identifiers for
+backward-compatible output contracts, but it should not be read as a generic
+"more controls is better" hierarchy. The alternative absorption parameterization
+adds literacy alongside secondary attainment and replaces the compact aggregate
+agricultural-worker share with total-worker, cultivator, and agricultural-labourer
+shares. The registry records those relationships explicitly through
+`parameterization` and `alternative_to`. This preserves the occupational
 composition information available in the active PCA source without including the
-aggregate and its components in the same regression. Hindu share, asset ownership,
-and primary-school supply remain reserved until their source-specific readers and
-denominator contracts are active.
+aggregate and its components in the same regression.
+
+The theoretical blocks used by the absorption ladder—scale/geography, social
+composition, human capital, demography, economic structure, and basic
+development—are also derived from the registry. Hindu share, asset ownership, and
+primary-school supply remain appendix/context variables rather than automatic
+additions to the preferred control vector.
 
 A separate worker-structure validity block now uses official Census B-04/B-25/B-26
 tables to test whether linguistic distance already predicted detailed industrial

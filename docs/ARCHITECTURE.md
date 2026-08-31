@@ -4,11 +4,11 @@ This repository builds the EMI and inequality paper, diagnostics, application sa
 
 ## Project structure
 
-- `_targets.R` — thin orchestration and target-group selection.
+- `_targets.R` — composition root and target-group selection; target-family extraction is a planned cleanup because the file has outgrown the original thin-orchestration description.
 - `R/io/` — raw-data readers and path handling.
 - `R/districts/` — district identities, lineage, crosswalks, and panel construction contracts.
 - `R/measures/` — analysis measures and survey-weighted aggregation.
-- `R/iv/` and `R/selection/` — estimation logic; `R/iv/specification_registry.R` is the shared contract for extended IV specifications and diagnostic applicability.
+- `R/iv/` and `R/selection/` — estimation logic; `R/iv/specification_registry.R` remains the execution contract for IV specifications, while `R/iv/analysis_design_registry.R` projects specialized registries onto one cross-family design ontology without generating a Cartesian specification search.
 - `R/diagnostics/` — public and extended diagnostics.
 - `R/benchmarking/` — optional benchmarks.
 - `R/output/` — figures, tables, shared table contracts, report values, and render helpers.
@@ -26,6 +26,24 @@ This repository builds the EMI and inequality paper, diagnostics, application sa
 6. Output modules generate tables, figures, report values, and rendered documents.
 
 Reusable logic belongs in `R/`; `_targets.R`, scripts, and Make targets should coordinate rather than duplicate it. Public QMDs should contain prose and small rendering calls only.
+
+
+## Analysis-design ontology
+
+`R/iv/analysis_design_registry.R` is an inventory layer above the specialized
+execution registries. It normalizes currently implemented IV, consumption, DISE,
+Census mechanism, C-17, district mechanism, and historical first-stage designs
+onto explicit outcome, treatment, instrument, vintage, adjustment, estimand,
+estimator, inference, sample-rule, role, and admissibility fields. It does not
+replace source-specific registries and does not manufacture unestimated Cartesian
+products. New design families should first declare why a combination is
+scientifically admissible before adding another estimator branch. The compiled
+registry is a cached R target, not another persisted diagnostic CSV.
+
+The Census-2001 control registry is likewise metadata-first. Main, absorption,
+appendix, block-membership, labels, and alternative-measure relationships are
+derived from `data/metadata/census_2001_control_registry.csv`; production targets
+track that file explicitly.
 
 ## District-panel roles
 
