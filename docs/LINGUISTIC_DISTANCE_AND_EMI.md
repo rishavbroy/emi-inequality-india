@@ -198,3 +198,7 @@ one observation per state-language cell, so that serial-cluster dimension is abs
 The single-year C-17 diagnostic therefore reports HC1 heteroskedasticity-robust
 standard errors. This difference is explicit rather than imitating a cluster scheme
 whose repeated dimension is not present in the data.
+
+## Cross-source mechanism reporting contract
+
+`data/metadata/english_opportunity_measures.csv` is the reporting-only registry for the compact mechanism sequence. It gives each selected C-17, NSS-64, and DISE measure a source, observational unit, numerator, denominator, population, stage, source-side interpretation, and paper role. It contains no formulas or estimation settings. C-17 state-by-language behavior, NSS household-side realized enrollment, and DISE administrative conditions remain distinct empirical objects; their ordering in a figure is descriptive mechanism organization, not a sequential mediation model. DISE rows are checked against the existing DISE construct and school-quality registries so that paper labels cannot silently drift from the source-specific semantic authority.

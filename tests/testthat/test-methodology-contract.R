@@ -149,3 +149,57 @@ test_that("district source matching keeps deterministic one-to-one assignments",
   expect_equal(out$.tracker_row, 10L)
   expect_equal(out$.source_row, 1L)
 })
+
+test_that("cross-source English-opportunity registry is semantic rather than estimative", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
+  registry <- read_english_opportunity_measure_registry(
+    file.path(root, "data", "metadata", "english_opportunity_measures.csv")
+  )
+
+  expect_equal(anyDuplicated(registry$measure_id), 0L)
+  expect_equal(anyDuplicated(registry$variable), 0L)
+  expect_setequal(unique(registry$source), c("census_2001_c17", "nss_64_education", "dise"))
+  expect_true(all(registry$unit[registry$source == "census_2001_c17"] == "state_language"))
+  expect_true(all(registry$unit[registry$source != "census_2001_c17"] == "district"))
+  expect_false(any(c("formula", "controls", "fixed_effects", "estimator") %in% names(registry)))
+  expect_true(any(registry$preferred))
+  expect_true(any(!registry$preferred))
+})
+
+test_that("cross-source DISE semantics agree with the authoritative DISE registries", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
+  registry <- read_english_opportunity_measure_registry(
+    file.path(root, "data", "metadata", "english_opportunity_measures.csv")
+  )
+  dise <- registry[registry$source == "dise", , drop = FALSE]
+  constructs <- dise_construct_registry()
+  quality <- dise_school_quality_registry()
+
+  for (i in seq_len(nrow(dise))) {
+    row <- dise[i, , drop = FALSE]
+    if (row$variable %in% constructs$variable) {
+      authority <- constructs[constructs$variable == row$variable, , drop = FALSE]
+    } else {
+      authority <- quality[quality$outcome == row$variable, , drop = FALSE]
+    }
+    expect_equal(nrow(authority), 1L, info = row$measure_id)
+    expect_identical(row$source_side, authority$source_side[[1L]], info = row$measure_id)
+    expect_identical(row$paper_role, authority$paper_role[[1L]], info = row$measure_id)
+  }
+})
+
+test_that("cross-source NSS measures are defined in the public variable dictionary", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
+  registry <- read_english_opportunity_measure_registry(
+    file.path(root, "data", "metadata", "english_opportunity_measures.csv")
+  )
+  dictionary <- utils::read.csv(
+    file.path(root, "data", "metadata", "variable_dictionary.csv"),
+    stringsAsFactors = FALSE,
+    check.names = FALSE
+  )
+
+  expect_true(all(
+    registry$variable[registry$source == "nss_64_education"] %in% dictionary$variable
+  ))
+})
