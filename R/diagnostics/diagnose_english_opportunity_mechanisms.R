@@ -9,6 +9,8 @@
 # sample composition.
 
 district_mechanism_adjustment_registry <- function(control_registry = NULL) {
+  control_registry <- resolve_census_2001_control_registry(control_registry)
+  canonical <- census_2001_diagnostic_controls(control_registry)
   ids <- c("unadjusted", "region_main", "state_main")
   adjustments <- iv_adjustment_sets(control_registry)[ids]
   rows <- lapply(seq_along(adjustments), function(i) {
@@ -17,7 +19,7 @@ district_mechanism_adjustment_registry <- function(control_registry = NULL) {
       specification_id = ids[[i]],
       label = adjustment$label,
       fixed_effect = adjustment$fixed_effect,
-      controls = I(list(order_iv_controls(adjustment$controls))),
+      controls = I(list(order_iv_controls(adjustment$controls, canonical))),
       sequence = i,
       stringsAsFactors = FALSE
     )

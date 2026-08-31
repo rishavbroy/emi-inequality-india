@@ -2,7 +2,8 @@
 
 census_2001_keys <- function() c("state_code_2001", "district_code_2001")
 
-census_2001_control_registry_path <- function(paths = build_paths()) {
+census_2001_control_registry_path <- function(
+    paths = build_paths(Sys.getenv("EMI_PROJECT_ROOT", unset = "."))) {
   path_metadata(paths, "census_2001_control_registry.csv")
 }
 

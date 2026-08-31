@@ -1889,7 +1889,8 @@ extended_diagnostic_targets <- list(
     diag_ext_historical_vanneman_parent_pretrend_validation,
     save_vanneman_pretrend_validation(
       historical_vanneman_parent_pretrend_validation,
-      prefix = "vanneman_parent_pretrend"
+      prefix = "vanneman_parent_pretrend",
+      persist_inputs = FALSE
     ),
     format = "file"
   ),
@@ -2412,7 +2413,8 @@ extended_diagnostic_targets <- list(
       census_migration_d06_2011,
       census_migration_d07_2011,
       district_panel,
-      cfg
+      cfg,
+      control_registry = census_2001_control_registry
     )
   ),
   tar_target(
@@ -2527,7 +2529,8 @@ extended_diagnostic_targets <- list(
       census_workers_b25b_2011_source,
       census_workers_industry_2011,
       census_workers_occupation_2011,
-      district_panel
+      district_panel,
+      control_registry = census_2001_control_registry
     )
   ),
   tar_target(
@@ -2611,7 +2614,8 @@ extended_diagnostic_targets <- list(
       census_housing_2011,
       census_housing_change_2011_2001,
       district_panel,
-      cfg
+      cfg,
+      control_registry = census_2001_control_registry
     )
   ),
   tar_target(

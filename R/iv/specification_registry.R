@@ -331,8 +331,12 @@ iv_absorption_adjustments <- function(control_registry = NULL) {
     )
   )
   blocks <- iv_control_blocks(control_registry)
+  canonical <- census_2001_diagnostic_controls(control_registry)
   cumulative <- lapply(seq_along(blocks), function(i) {
-    order_iv_controls(unlist(blocks[seq_len(i)], use.names = FALSE))
+    order_iv_controls(
+      unlist(blocks[seq_len(i)], use.names = FALSE),
+      canonical
+    )
   })
   for (fixed_effect in c("region", "state")) {
     fixed_label <- if (identical(fixed_effect, "region")) "Six-region FE" else "State FE"

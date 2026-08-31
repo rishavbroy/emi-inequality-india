@@ -26,25 +26,29 @@ first_stage_absorption_registry <- function(control_registry = NULL) {
 
 first_stage_absorption_variables <- function(
   treatment = "emi_exposure_all_children_0708",
-  instrument = "ling_distance_nonzero_mean"
+  instrument = "ling_distance_nonzero_mean",
+  control_registry = NULL
 ) {
   unique(c(
     treatment, instrument, "state_code_2001", "district_code_2001", "region",
-    census_2001_diagnostic_controls()
+    census_2001_diagnostic_controls(control_registry)
   ))
 }
 
 prepare_first_stage_absorption_panel <- function(
   panel,
   treatment = "emi_exposure_all_children_0708",
-  instrument = "ling_distance_nonzero_mean"
+  instrument = "ling_distance_nonzero_mean",
+  control_registry = NULL
 ) {
   x <- if (inherits(panel, "sf")) sf::st_drop_geometry(panel) else as.data.frame(panel, stringsAsFactors = FALSE)
-  needed <- first_stage_absorption_variables(treatment, instrument)
+  needed <- first_stage_absorption_variables(treatment, instrument, control_registry)
   missing <- setdiff(needed, names(x))
   if (length(missing)) stop("First-stage absorption panel is missing columns: ", paste(missing, collapse = ", "), call. = FALSE)
 
-  numeric_vars <- unique(c(treatment, instrument, census_2001_diagnostic_controls()))
+  numeric_vars <- unique(c(
+    treatment, instrument, census_2001_diagnostic_controls(control_registry)
+  ))
   for (variable in numeric_vars) x[[variable]] <- num(x[[variable]])
   x$state_code_2001 <- plain_chr(x$state_code_2001)
   x$district_code_2001 <- plain_chr(x$district_code_2001)
@@ -192,7 +196,8 @@ estimate_first_stage_coefficient <- function(data, specification, treatment, ins
 }
 
 
-estimate_first_stage_absorption_spec <- function(data, specification, treatment, instrument) {
+estimate_first_stage_absorption_spec <- function(
+    data, specification, treatment, instrument, control_registry = NULL) {
   controls <- unlist(specification$controls[[1]], use.names = FALSE)
   fixed_effect <- specification$fixed_effect[[1]]
   coefficient <- estimate_first_stage_coefficient(data, specification, treatment, instrument)
@@ -210,7 +215,10 @@ estimate_first_stage_absorption_spec <- function(data, specification, treatment,
     treatment = treatment,
     instrument = instrument,
     fixed_effect = fixed_effect,
-    control_blocks = paste(first_stage_included_control_blocks(controls), collapse = ";"),
+    control_blocks = paste(
+      first_stage_included_control_blocks(controls, control_registry),
+      collapse = ";"
+    ),
     n_controls = length(controls),
     estimate = unname(stats::coef(fit)[instrument]),
     std.error = unname(inference[["std.error"]]),
@@ -266,10 +274,11 @@ first_stage_full_specification <- function(registry) {
 }
 
 first_stage_state_deletion <- function(
-    data, specification, treatment, instrument, full_estimate = NULL) {
+    data, specification, treatment, instrument, full_estimate = NULL,
+    control_registry = NULL) {
   if (is.null(full_estimate)) {
     full_estimate <- estimate_first_stage_absorption_spec(
-      data, specification, treatment, instrument
+      data, specification, treatment, instrument, control_registry
     )
   }
   full_coefficient <- unname(stats::coef(full_estimate$fit)[instrument])
@@ -333,10 +342,15 @@ diagnose_first_stage_absorption <- function(
   instrument = "ling_distance_nonzero_mean",
   control_registry = NULL
 ) {
-  data <- prepare_first_stage_absorption_panel(panel, treatment, instrument)
+  control_registry <- resolve_census_2001_control_registry(control_registry)
+  data <- prepare_first_stage_absorption_panel(
+    panel, treatment, instrument, control_registry
+  )
   registry <- first_stage_absorption_registry(control_registry)
   estimates <- lapply(seq_len(nrow(registry)), function(i) {
-    estimate_first_stage_absorption_spec(data, registry[i, , drop = FALSE], treatment, instrument)
+    estimate_first_stage_absorption_spec(
+      data, registry[i, , drop = FALSE], treatment, instrument, control_registry
+    )
   })
   summary <- safe_bind_rows(lapply(estimates, `[[`, "summary"))
   full_spec <- first_stage_full_specification(registry)
@@ -355,7 +369,8 @@ diagnose_first_stage_absorption <- function(
       ),
       state_residual_ranges = first_stage_state_residual_ranges(data, estimates),
       state_deletion = first_stage_state_deletion(
-        data, full_spec, treatment, instrument, full_estimate = full_estimate
+        data, full_spec, treatment, instrument, full_estimate = full_estimate,
+        control_registry = control_registry
       ),
       district_influence = first_stage_district_influence(data, full_estimate$fit, instrument),
       vif = first_stage_vif_diagnostics(estimates)

@@ -80,11 +80,13 @@ build_census_worker_diagnostics <- function(
     b04_2001_source, b25_2001_source, b26_2001_source,
     industry_2001, occupation_2001,
     b04_2011_source, b06_2011_source, b25a_2011_source, b25b_2011_source,
-    industry_2011, occupation_2011, district_panel) {
+    industry_2011, occupation_2011, district_panel, control_registry = NULL) {
   validity_panel <- prepare_census_worker_2001_validity_panel(
     district_panel, industry_2001, occupation_2001
   )
-  validity_specs <- candidate_iv_balance_specifications()
+  validity_specs <- candidate_iv_balance_specifications(
+    control_registry = control_registry
+  )
   balance <- add_iv_balance_holm(
     run_iv_balance_diagnostics(
       validity_panel,

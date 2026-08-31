@@ -50,23 +50,28 @@ census_housing_mechanism_specifications <- function(
 }
 
 prepare_census_housing_mechanism_panel <- function(
-    district_panel, housing_change, registry = census_housing_mechanism_registry()) {
+    district_panel, housing_change, registry = census_housing_mechanism_registry(),
+    control_registry = NULL) {
   prepare_census_mechanism_panel(
     district_panel = district_panel,
     sources = list(change = safe_df(housing_change)),
     registry = registry,
-    specifications = census_housing_mechanism_specifications(),
+    specifications = census_housing_mechanism_specifications(
+      control_registry = control_registry
+    ),
     label = "Census housing"
   )
 }
 
 estimate_census_housing_mechanism_models <- function(
     mechanism_panel, registry = census_housing_mechanism_registry(),
-    cfg = list(), ar_points = 401L) {
+    cfg = list(), ar_points = 401L, control_registry = NULL) {
   estimate_census_mechanism_models(
     mechanism_panel = mechanism_panel,
     registry = registry,
-    specifications = census_housing_mechanism_specifications(),
+    specifications = census_housing_mechanism_specifications(
+      control_registry = control_registry
+    ),
     cfg = cfg,
     ar_points = ar_points,
     label = "Census housing"
@@ -116,13 +121,15 @@ summarise_census_housing_change_coverage <- function(housing_change) {
 build_census_housing_diagnostics <- function(
     h09_2001, h12_2001, h13_2001, housing_2001,
     hl07_2011, hl11_2011, hl12_2011, housing_2011, housing_change,
-    district_panel, cfg = list()) {
+    district_panel, cfg = list(), control_registry = NULL) {
   mechanism_registry <- census_housing_mechanism_registry()
   mechanism_panel <- prepare_census_housing_mechanism_panel(
-    district_panel, housing_change, mechanism_registry
+    district_panel, housing_change, mechanism_registry,
+    control_registry = control_registry
   )
   mechanism <- estimate_census_housing_mechanism_models(
-    mechanism_panel, mechanism_registry, cfg = cfg
+    mechanism_panel, mechanism_registry, cfg = cfg,
+    control_registry = control_registry
   )
   list(
     housing_2001 = safe_df(housing_2001),

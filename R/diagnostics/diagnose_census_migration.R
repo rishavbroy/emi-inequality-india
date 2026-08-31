@@ -28,10 +28,14 @@ prepare_census_migration_validity_panel <- function(panel, d02_2001) {
 
 census_migration_first_stage_specifications <- function(
     outcome = "real_log_consumption_change",
-    treatment = preferred_iv_variables()$treatment) {
+    treatment = preferred_iv_variables()$treatment,
+    control_registry = NULL) {
+  control_registry <- resolve_census_2001_control_registry(control_registry)
+  canonical <- census_2001_diagnostic_controls(control_registry)
   registry <- iv_specification_registry(
     outcome = outcome, treatment = treatment,
-    panel_variant = "primary", sample_rule = "alternative_distance_common_support"
+    panel_variant = "primary", sample_rule = "alternative_distance_common_support",
+    control_registry = control_registry
   )
   keep <- registry$adjustment_id %in% iv_candidate_design_adjustments() &
     registry$construction_id == "nonzero_mean"
@@ -45,10 +49,13 @@ census_migration_first_stage_specifications <- function(
   augmented <- base
   augmented$specification_id <- paste0(augmented$specification_id, "__plus_migration")
   augmented$controls <- I(lapply(augmented$controls, function(controls) {
-    order_iv_controls(unique(c(
-      unlist(controls, use.names = FALSE),
-      census_migration_first_stage_controls()
-    )))
+    order_iv_controls(
+      unique(c(
+        unlist(controls, use.names = FALSE),
+        census_migration_first_stage_controls()
+      )),
+      canonical
+    )
   }))
   augmented$migration_adjustment <- "plus_migration"
   out <- bind_iv_specification_rows(list(base, augmented))
@@ -57,9 +64,12 @@ census_migration_first_stage_specifications <- function(
   out
 }
 
-estimate_census_migration_first_stage_sensitivity <- function(panel) {
+estimate_census_migration_first_stage_sensitivity <- function(
+    panel, control_registry = NULL) {
   x <- safe_df(panel)
-  specifications <- census_migration_first_stage_specifications()
+  specifications <- census_migration_first_stage_specifications(
+    control_registry = control_registry
+  )
   required <- unique(c(
     "state_code_2001", "region",
     census_migration_first_stage_controls(),
@@ -171,8 +181,11 @@ census_migration_mechanism_design_variables <- function(
 
 prepare_census_migration_mechanism_panel <- function(
     district_panel, d02_2011, d03_2011, d04_2011, d07_2011,
-    registry = census_migration_mechanism_registry()) {
-  specifications <- census_migration_mechanism_specifications()
+    registry = census_migration_mechanism_registry(),
+    control_registry = NULL) {
+  specifications <- census_migration_mechanism_specifications(
+    control_registry = control_registry
+  )
   prepare_census_mechanism_panel(
     district_panel = district_panel,
     sources = census_migration_mechanism_sources(
@@ -194,11 +207,14 @@ estimate_census_migration_mechanism_models <- function(
     mechanism_panel,
     registry = census_migration_mechanism_registry(),
     cfg = list(),
-    ar_points = 401L) {
+    ar_points = 401L,
+    control_registry = NULL) {
   estimate_census_mechanism_models(
     mechanism_panel = mechanism_panel,
     registry = registry,
-    specifications = census_migration_mechanism_specifications(),
+    specifications = census_migration_mechanism_specifications(
+      control_registry = control_registry
+    ),
     cfg = cfg,
     ar_points = ar_points,
     label = "Census migration"
@@ -223,9 +239,12 @@ build_census_migration_diagnostics <- function(
     d06_2011,
     d07_2011,
     district_panel,
-    cfg = list()) {
+    cfg = list(),
+    control_registry = NULL) {
   validity_panel <- prepare_census_migration_validity_panel(district_panel, d02_2001)
-  validity_specs <- candidate_iv_balance_specifications()
+  validity_specs <- candidate_iv_balance_specifications(
+    control_registry = control_registry
+  )
   balance <- add_iv_balance_holm(
     run_iv_balance_diagnostics(
       validity_panel,
@@ -241,10 +260,11 @@ build_census_migration_diagnostics <- function(
   mechanism_registry <- census_migration_mechanism_registry()
   mechanism_panel <- prepare_census_migration_mechanism_panel(
     district_panel, d02_2011, d03_2011, d04_2011, d07_2011,
-    registry = mechanism_registry
+    registry = mechanism_registry, control_registry = control_registry
   )
   mechanism <- estimate_census_migration_mechanism_models(
-    mechanism_panel, mechanism_registry, cfg = cfg
+    mechanism_panel, mechanism_registry, cfg = cfg,
+    control_registry = control_registry
   )
   list(
     d02_2001 = safe_df(d02_2001),
@@ -286,7 +306,9 @@ build_census_migration_diagnostics <- function(
     d02_2001_balance = balance,
     d02_2001_joint_balance = joint_balance,
     d02_2001_first_stage_sensitivity =
-      estimate_census_migration_first_stage_sensitivity(validity_panel),
+      estimate_census_migration_first_stage_sensitivity(
+        validity_panel, control_registry = control_registry
+      ),
     mechanism_registry = mechanism$registry,
     mechanism_sample_coverage = mechanism$sample_coverage,
     mechanism_sample_support = mechanism$sample_support,

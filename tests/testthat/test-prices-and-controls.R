@@ -1527,3 +1527,35 @@ test_that("control registry distinguishes preferred measures from alternative pa
   expect_identical(literacy$parameterization, "alternative_measure")
   expect_identical(literacy$alternative_to, "adult_secondary_plus_share_2001")
 })
+
+
+test_that("Census control defaults resolve from the project root outside the working directory", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
+  expected <- read_census_2001_control_registry(
+    file.path(root, "data", "metadata", "census_2001_control_registry.csv")
+  )
+  old_wd <- setwd(tempdir())
+  on.exit(setwd(old_wd), add = TRUE)
+
+  expect_identical(read_census_2001_control_registry(), expected)
+})
+
+test_that("explicit control registries do not fall back to hidden filesystem reads", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
+  registry <- read_census_2001_control_registry(
+    file.path(root, "data", "metadata", "census_2001_control_registry.csv")
+  )
+  old_root <- Sys.getenv("EMI_PROJECT_ROOT", unset = NA_character_)
+  Sys.setenv(EMI_PROJECT_ROOT = tempfile("missing-project-root-"))
+  on.exit({
+    if (is.na(old_root)) Sys.unsetenv("EMI_PROJECT_ROOT") else
+      Sys.setenv(EMI_PROJECT_ROOT = old_root)
+  }, add = TRUE)
+
+  expect_silent(iv_absorption_specification_registry(control_registry = registry))
+  expect_silent(district_mechanism_adjustment_registry(registry))
+  expect_silent(candidate_iv_balance_specifications(control_registry = registry))
+  expect_silent(census_migration_first_stage_specifications(control_registry = registry))
+  expect_silent(census_migration_mechanism_specifications(control_registry = registry))
+  expect_silent(census_housing_mechanism_specifications(control_registry = registry))
+})

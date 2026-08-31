@@ -2,8 +2,11 @@
 
 candidate_iv_balance_specifications <- function(
     outcome = "real_log_consumption_change",
-    treatment = preferred_iv_variables()$treatment) {
-  registry <- iv_diagnostic_specification_registry(outcome = outcome, treatment = treatment)
+    treatment = preferred_iv_variables()$treatment,
+    control_registry = NULL) {
+  registry <- iv_diagnostic_specification_registry(
+    outcome = outcome, treatment = treatment, control_registry = control_registry
+  )
   construction_ids <- unname(alternative_distance_design_constructions())
   keep <- registry$adjustment_id %in% iv_candidate_design_adjustments() &
     registry$construction_id %in% construction_ids
