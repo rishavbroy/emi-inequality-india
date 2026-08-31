@@ -19,7 +19,7 @@ test_that("district and fuzzy matching diagnostics return table counts", {
 })
 
 test_that("AME benchmark diagnostic is skipped unless enabled", {
-  out <- diagnose_ame_benchmark(list(), data.frame(x = 1), list(run_diagnostics = list(ame_benchmark = FALSE)))
+  out <- diagnose_ame_benchmark(list(), list(run_diagnostics = list(ame_benchmark = FALSE)))
 
   expect_equal(out$status, "skipped")
 })

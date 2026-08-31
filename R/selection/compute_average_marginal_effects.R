@@ -6,7 +6,7 @@
 
 #' compute average marginal effects
 #'
-compute_average_marginal_effects <- function(selection_model, selection_data, cfg = list()) {
+compute_average_marginal_effects <- function(selection_model, cfg = list()) {
   if (!inherits(selection_model, "glm")) {
     return(ame_out_of_pipeline(
       selection_model$status %||% "out_of_active_pipeline",
@@ -81,9 +81,9 @@ muffle_survey_lonely_psu_warnings <- function(expr) {
 
   out <- muffle_survey_lonely_psu_warnings(
     tryCatch(
-      compute_ames_autodiff(selection_model, selection_data),
+      compute_ames_autodiff(selection_model),
       error = function(e) {
-        fallback <- compute_ames_probit_analytic(selection_model, selection_data)
+        fallback <- compute_ames_probit_analytic(selection_model)
         fallback$method <- "delta_method_analytic_probit"
         fallback$reason <- NA_character_
         fallback
@@ -174,7 +174,7 @@ run_avg_slopes <- function(model, model_data, wts, numderiv = NULL) {
 
 #' compute ames autodiff
 #'
-compute_ames_autodiff <- function(model, newdata) {
+compute_ames_autodiff <- function(model) {
   # Use the exact estimation sample retained by glm/svyglm. Passing the full
   # pre-model selection_data can have extra rows omitted during model fitting,
   # which makes marginaleffects recycle weights/covariates silently.
@@ -186,7 +186,7 @@ compute_ames_autodiff <- function(model, newdata) {
 #' compute analytic probit AMEs
 #'
 #' @return Data frame of observed-data average marginal effects.
-compute_ames_probit_analytic <- function(model, newdata) {
+compute_ames_probit_analytic <- function(model) {
   coefs <- stats::coef(model)
   coef_table <- as.data.frame(summary(model)$coefficients)
   terms <- setdiff(names(coefs), "(Intercept)")

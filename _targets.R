@@ -618,8 +618,9 @@ core_pipeline_targets <- list(
   tar_target(district_keys_2017, build_district_keys_2017(nss_2017_education)),
 
   tar_target(selection_data, build_selection_data(nss_2007_education, district_keys_2007, cfg)),
-  tar_target(selection_model, estimate_selection_probit(selection_data, cfg)),
-  tar_target(ame_results, compute_average_marginal_effects(selection_model, selection_data, cfg)),
+  tar_target(selection_model_data, project_selection_model_data(selection_data)),
+  tar_target(selection_model, estimate_selection_probit(selection_model_data, cfg)),
+  tar_target(ame_results, compute_average_marginal_effects(selection_model, cfg)),
 
   tar_target(
     consumption_households_2007,
@@ -2144,6 +2145,15 @@ extended_diagnostic_targets <- list(
     )
   ),
   tar_target(
+    census_2001_c17_mechanism,
+    diagnose_census_c17_mechanism(census_2001_c17_state_languages)
+  ),
+  tar_target(
+    diag_ext_census_2001_c17_mechanism_files,
+    save_census_c17_mechanism_diagnostics(census_2001_c17_mechanism),
+    format = "file"
+  ),
+  tar_target(
     census_2011_pca_population_file,
     path_project(paths, "data", "raw", "shrug", "census_2011", "shrug-pca11-csv.zip"),
     format = "file"
@@ -2832,7 +2842,7 @@ extended_diagnostic_targets <- list(
 )
 
 benchmark_targets <- list(
-  tar_target(bench_ame_methods, run_ame_methods_benchmark(selection_model, selection_data, cfg)),
+  tar_target(bench_ame_methods, run_ame_methods_benchmark(selection_model, cfg)),
   tar_target(
     bench_consumption_distribution_domains,
     run_consumption_distribution_benchmark(

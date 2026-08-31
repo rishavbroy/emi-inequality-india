@@ -10,11 +10,11 @@
 #' comparisons, and failed future-based parallelization.  This function records
 #' those choices and, when packages/model support it, runs small reproducible
 #' timing checks behind the benchmark target.
-diagnose_ame_benchmark <- function(selection_model, selection_data, cfg) {
+diagnose_ame_benchmark <- function(selection_model, cfg) {
   if (!diagnostic_enabled(cfg, "ame_benchmark")) return(tibble::tibble(status = "skipped"))
   notes <- ame_benchmark_notes()
-  methods <- benchmark_ame_methods(selection_model, selection_data, cfg)
-  parallel <- benchmark_parallelization_options(selection_model, selection_data, cfg)
+  methods <- benchmark_ame_methods(selection_model, cfg)
+  parallel <- benchmark_parallelization_options(selection_model, cfg)
   out <- list(methods = methods, parallel = parallel, notes = notes)
   class(out) <- c("emi_ame_benchmark", class(out))
   out
@@ -56,7 +56,7 @@ ame_benchmark_sample_sizes <- function(n_observations, cfg = list()) {
   sort(unique(numeric_sizes[numeric_sizes <= n_observations]))
 }
 
-benchmark_ame_methods <- function(selection_model, selection_data, cfg, sample_sizes = NULL) {
+benchmark_ame_methods <- function(selection_model, cfg, sample_sizes = NULL) {
   if (!requireNamespace("marginaleffects", quietly = TRUE)) {
     return(data.frame(method = "avg_slopes", sample_size = NA_integer_, elapsed_seconds = NA_real_, status = "skipped", reason = "Package marginaleffects not installed.", stringsAsFactors = FALSE))
   }
@@ -120,7 +120,7 @@ benchmark_ame_methods <- function(selection_model, selection_data, cfg, sample_s
   }))
 }
 
-benchmark_parallelization_options <- function(selection_model, selection_data, cfg) {
+benchmark_parallelization_options <- function(selection_model, cfg) {
   data.frame(
     method = c("marginaleffects_parallel_false", "future_parallel_attempt"),
     status = c("legacy_final_choice", "documented_not_run_by_default"),

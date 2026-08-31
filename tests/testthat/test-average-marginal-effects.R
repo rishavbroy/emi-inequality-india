@@ -1,7 +1,6 @@
 test_that("AME fallback returns a typed out-of-pipeline row", {
   out <- compute_average_marginal_effects(
     list(status = "out_of_active_pipeline", reason = "No enrolled variable."),
-    data.frame(),
     list(run_full_ame = FALSE)
   )
 
@@ -18,7 +17,7 @@ test_that("draft AME path uses toy glm coefficient fallback", {
   )
   model <- stats::glm(enrolled ~ age, data = selection_data, family = stats::binomial(link = "probit"))
 
-  out <- compute_average_marginal_effects(model, selection_data, list(run_full_ame = FALSE))
+  out <- compute_average_marginal_effects(model, list(run_full_ame = FALSE))
 
   expect_equal(out$method, rep("coefficient_fallback", length(stats::coef(model))))
   expect_equal(out$status, rep("estimated", length(stats::coef(model))))
@@ -28,7 +27,6 @@ test_that("draft AME path uses toy glm coefficient fallback", {
 test_that("AME results keep the active pipeline schema stable", {
   out <- compute_average_marginal_effects(
     list(status = "out_of_active_pipeline", reason = "No probit covariates."),
-    data.frame(),
     list(run_full_ame = FALSE)
   )
 
@@ -75,7 +73,7 @@ test_that("full AME path uses marginaleffects uncertainty when available", {
   )
   model <- stats::glm(enrolled ~ age, data = selection_data, family = stats::binomial(link = "probit"))
 
-  out <- compute_average_marginal_effects(model, selection_data, list(run_full_ame = TRUE))
+  out <- compute_average_marginal_effects(model, list(run_full_ame = TRUE))
 
   expect_true(any(is.finite(out$std.error)))
   expect_equal(unique(out$status), "estimated")
@@ -126,7 +124,7 @@ test_that("AME benchmark exercises the production marginaleffects wrapper", {
   )
   model <- estimate_selection_probit(selection_data, list(mode = "draft"))
 
-  out <- benchmark_ame_methods(model, selection_data, list(), sample_sizes = 20L)
+  out <- benchmark_ame_methods(model, list(), sample_sizes = 20L)
 
   expect_setequal(out$method, c("avg_slopes_centered_default", "avg_slopes_fdforward"))
   expect_true(all(out$status == "estimated"))

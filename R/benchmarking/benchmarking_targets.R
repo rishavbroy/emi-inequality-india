@@ -10,11 +10,10 @@ with_diagnostic_enabled <- function(cfg, name) {
   cfg
 }
 
-run_ame_methods_benchmark <- function(selection_model, selection_data, cfg) {
+run_ame_methods_benchmark <- function(selection_model, cfg) {
   save_ame_benchmark(
     diagnose_ame_benchmark(
       selection_model,
-      selection_data,
       with_diagnostic_enabled(cfg, "ame_benchmark")
     )
   )

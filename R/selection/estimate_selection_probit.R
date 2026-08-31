@@ -15,6 +15,19 @@ selection_probit_variables <- function(selection_data) {
   intersect(c(controls, exclusion_all_kids, exclusion_district), names(selection_data))
 }
 
+#' project the selection sample to the model's actual dependency surface
+#'
+#' Keeping unrelated Block-5 schooling attributes in the fitted survey design makes
+#' the serialized model change whenever those attributes change, even though they
+#' are absent from the probit formula.  A narrow model frame lets {targets} skip the
+#' expensive AME branch when upstream changes do not affect estimation.
+project_selection_model_data <- function(selection_data) {
+  selection_data <- safe_df(selection_data)
+  design <- c("enrolled", "FSU_SL_NO", "weight", "STATE", "STRATUM", "SUB_STRATUM_NO")
+  keep <- unique(c(design, selection_probit_variables(selection_data)))
+  selection_data[intersect(keep, names(selection_data))]
+}
+
 #' estimate selection probit
 #'
 estimate_selection_probit <- function(selection_data, cfg) {

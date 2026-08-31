@@ -329,3 +329,28 @@ test_that("selection sample takes schooling attributes from Block 5", {
   expect_equal(out$NATURE_OF_INSTT, 2)
   expect_false(any(grepl("TYPE_OF_INSTT\\.", names(out))))
 })
+
+test_that("selection model input excludes unrelated schooling attributes", {
+  selection_data <- data.frame(
+    enrolled = factor(c(0, 1), levels = c(0, 1), labels = c("No", "Yes")),
+    AGE = c(8, 9),
+    weight = c(1, 2),
+    FSU_SL_NO = c("1", "2"),
+    STATE = c("09", "09"),
+    STRATUM = c("1", "1"),
+    SUB_STRATUM_NO = c("1", "1"),
+    TYPE_OF_INSTT = c(1, 4),
+    NATURE_OF_INSTT = c(1, 2),
+    MEDIUM_INSTRUCTION = c(1, 2),
+    stringsAsFactors = FALSE
+  )
+
+  out <- project_selection_model_data(selection_data)
+
+  expect_setequal(
+    names(out),
+    c("enrolled", "AGE", "weight", "FSU_SL_NO", "STATE", "STRATUM", "SUB_STRATUM_NO")
+  )
+  expect_false(any(c("TYPE_OF_INSTT", "NATURE_OF_INSTT", "MEDIUM_INSTRUCTION") %in% names(out)))
+  expect_identical(out$enrolled, selection_data$enrolled)
+})
