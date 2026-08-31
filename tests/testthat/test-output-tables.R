@@ -377,6 +377,10 @@ test_that("regression captions use plain public titles", {
   expect_equal(table_caption("fs_cons"), "First-Stage Regression: EMI Exposure on Linguistic Distance")
   expect_equal(table_caption("cons_iv"), "Second-Stage Regression: Real Log Consumption Growth on EMI Exposure (Fitted)")
   expect_equal(table_caption("probit_mfx"), "Average Marginal Effects and Counterfactual Comparisons for Enrollment Probit")
+  expect_equal(
+    table_caption("english_opportunity_mechanism"),
+    "Linguistic-Distance Association Across Mechanism Stages"
+  )
   expect_false(grepl("\\* p < 0.05", table_caption("fs_cons")))
   expect_false(grepl("\\n", table_caption("fs_cons"), fixed = TRUE))
   expect_false(grepl("parbox", table_caption("fs_cons"), fixed = TRUE))

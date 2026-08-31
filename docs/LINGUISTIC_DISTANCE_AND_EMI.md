@@ -248,3 +248,9 @@ controls (native-language state share, modal-language status, and the distance-z
 indicator), whereas district region/state columns use the predetermined Census-2001
 control set. The underlying numerical and specification CSVs remain the audit trail;
 the plot is a paper-organization diagnostic until the empirical pattern is reviewed.
+
+The cross-source mechanism figure and compact companion table use the same validated
+signed-partial-correlation data. The table contains only the predeclared unadjusted,
+region-plus-controls, and within-state columns. C-17 appears only in the within-state
+column because its state-by-language design has a different observational unit and
+nuisance-control set; neither output should be read as a sequential mediation model.

@@ -13,7 +13,8 @@ public_table_caption_text <- function(name) {
     fs_cons = "First-Stage Regression: EMI Exposure on Linguistic Distance",
     cons_iv = "Second-Stage Regression: Real Log Consumption Growth on EMI Exposure (Fitted)",
     ame_results = "Average Marginal Effects Results",
-    first_stage = "First-Stage Diagnostic Results"
+    first_stage = "First-Stage Diagnostic Results",
+    english_opportunity_mechanism = "Linguistic-Distance Association Across Mechanism Stages"
   )
   captions[[name]] %||% name
 }
@@ -30,6 +31,12 @@ public_table_note <- function(name) {
     probit_mfx = "NSS 64th round; design-based SEs in parentheses.",
     fs_cons = "Standard errors clustered by state in parentheses.",
     cons_iv = "Standard errors clustered by state in parentheses.",
+    english_opportunity_mechanism = paste(
+      "Entries are signed partial correlations with linguistic distance.",
+      "District rows use a fixed outcome-specific sample across columns; region and state specifications add predetermined Census-2001 controls.",
+      "The C-17 state-by-language row is reported only within state and uses its own language-prevalence and modal-language controls.",
+      "Rows are cross-source mechanism evidence, not a sequential mediation model."
+    ),
     NULL
   )
 }
