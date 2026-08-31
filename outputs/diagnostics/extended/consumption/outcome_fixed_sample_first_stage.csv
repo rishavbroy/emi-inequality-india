@@ -1,4 +1,4 @@
-"model","instrument","estimate","std.error","partial_f","partial_p","nobs","status","reason"
-"nominal_log_change","ling_distance_nonzero_mean",0.37449549182507,0.82199493428176,0.207565373761808,0.648871821201177,573,"estimated",NA
-"real_log_change_preferred","ling_distance_nonzero_mean",0.37449549182507,0.82199493428176,0.207565373761808,0.648871821201177,573,"estimated",NA
-"real_ancova","ling_distance_nonzero_mean",0.969582165902959,0.774341472190099,1.56784887118378,0.211081491467054,573,"estimated",NA
+"model","instrument","estimate","std.error","partial_f","partial_p","effective_f","effective_f_critical_value","effective_f_p_value","effective_f_status","nobs","status","reason"
+"nominal_log_change","ling_distance_nonzero_mean",0.375979797933481,0.825397903060358,0.2074924495858,0.64892935096761,0.227367205293269,23.1085112116065,0.996515152032417,"estimated",573,"estimated",NA
+"real_log_change_preferred","ling_distance_nonzero_mean",0.375979797933481,0.825397903060358,0.2074924495858,0.64892935096761,0.227367205293269,23.1085112116065,0.996515152032417,"estimated",573,"estimated",NA
+"real_ancova","ling_distance_nonzero_mean",0.981138398158016,0.77598485016668,1.59865246100009,0.206659611546577,1.7551424331901,23.1085112116065,0.966932585175115,"estimated",573,"estimated",NA
