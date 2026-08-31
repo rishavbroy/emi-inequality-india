@@ -23,6 +23,19 @@ test_that("C-17 parser preserves its hierarchical language counts", {
 })
 
 
+
+test_that("C-17 parser ignores empty workbook sheets but rejects malformed nonempty sheets", {
+  expect_equal(parse_census_c17_sheet(data.frame()), data.frame())
+  expect_equal(
+    parse_census_c17_sheet(data.frame(V1 = NA_character_)),
+    data.frame()
+  )
+  expect_error(
+    parse_census_c17_sheet(data.frame(V1 = "unexpected content")),
+    "fewer than 17 columns"
+  )
+})
+
 test_that("C-17 parser ignores the workbook column-number row before code normalization", {
   fixture <- make_census_c17_fixture()
   header <- as.data.frame(matrix(as.character(1:17), nrow = 1L), stringsAsFactors = FALSE)

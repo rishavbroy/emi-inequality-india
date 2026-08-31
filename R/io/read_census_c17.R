@@ -23,9 +23,20 @@ census_c17_validate_sex_triplet <- function(persons, males, females, label) {
 
 parse_census_c17_sheet <- function(raw) {
   raw <- safe_df(raw)
+  if (!nrow(raw) || !ncol(raw)) return(data.frame())
+  has_content <- vapply(raw, function(column) {
+    value <- trimws(plain_chr(column))
+    any(!is.na(value) & nzchar(value))
+  }, logical(1))
+  if (!any(has_content)) return(data.frame())
   if (ncol(raw) < 17L) stop("Census 2001 C-17 sheet has fewer than 17 columns.", call. = FALSE)
 
-  # The published workbooks contain a column-number header row whose first
+  # The official state workbooks carry two blank trailing worksheets in
+  # addition to the 17-column C-17 table. Empty sheets are ignored above, but
+  # any nonempty narrow sheet remains an error so workbook-format drift cannot
+  # silently pass through the parser.
+  #
+  # The published workbooks also contain a column-number header row whose first
   # cell is `1`. Gate on the raw four-character geography code before zero
   # padding; otherwise normalize_census_code("1", 4) becomes "0001" and a
   # harmless header is misclassified as a non-state geography.
