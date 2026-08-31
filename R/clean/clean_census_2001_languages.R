@@ -11,7 +11,7 @@ clean_census_2001_languages <- function(raw) {
   validate_census_2001_language_distribution(out)
 }
 
-clean_census_2001_language_file <- function(x) {
+parse_census_2001_language_file <- function(x) {
   x <- safe_df(x)
 
   table <- first_col(x, c("table", "TABLE", "C-16 POPULATION BY MOTHER TONGUE", "...1"))
@@ -24,33 +24,43 @@ clean_census_2001_language_file <- function(x) {
   speakers <- first_col(x, c("spkr_tot", "TOTAL", "population", "speakers", "...8"))
 
   required <- list(table, state, district, tehsil, area, mother_tongue_code, mother_tongue, speakers)
-  if (any(vapply(required, is.null, logical(1)))) return(clean_census_2001_language_fallback(x))
+  if (any(vapply(required, is.null, logical(1)))) return(data.frame())
 
   out <- data.frame(
     table = plain_chr(x[[table]]),
-    state_code = census_code(x[[state]], 2L),
-    district_code = census_code(x[[district]], 2L),
-    tehsil_code = census_code(x[[tehsil]], 4L),
+    state_code = normalize_census_code(x[[state]], 2L),
+    district_code = normalize_census_code(x[[district]], 2L),
+    tehsil_code = normalize_census_code(x[[tehsil]], 4L),
     area_name = plain_chr(x[[area]]),
-    mother_tongue_code = census_code(x[[mother_tongue_code]], 6L),
-    mother_tongue = plain_chr(x[[mother_tongue]]),
+    mother_tongue_code = normalize_census_code(x[[mother_tongue_code]], 6L),
+    mother_tongue = normalize_census_language_label(x[[mother_tongue]]),
     spkr_tot = num(x[[speakers]]),
     stringsAsFactors = FALSE
   )
-
   out <- out[
     out$table == "C0116" &
       !is.na(out$state_code) & !is.na(out$district_code) &
-      out$district_code != "00" & out$tehsil_code == "0000" &
-      grepl("^District - ", out$area_name %||% "") &
+      !is.na(out$tehsil_code) & !is.na(out$mother_tongue_code) &
       is.finite(out$spkr_tot),
     , drop = FALSE
   ]
   if (!nrow(out)) return(out)
-
   out$language_group_code <- substr(out$mother_tongue_code, 1L, 3L)
   out$is_language_group_total <- grepl("000$", out$mother_tongue_code)
-  out <- clean_mother_tongue_names(out)
+  rownames(out) <- NULL
+  out
+}
+
+clean_census_2001_language_file <- function(x) {
+  out <- parse_census_2001_language_file(x)
+  if (!nrow(out)) return(clean_census_2001_language_fallback(x))
+
+  out <- out[
+    out$district_code != "00" & out$tehsil_code == "0000" &
+      grepl("^District - ", out$area_name %||% ""),
+    , drop = FALSE
+  ]
+  if (!nrow(out)) return(out)
 
   group_rows <- out[out$is_language_group_total, c(
     "state_code", "district_code", "language_group_code", "mother_tongue"
@@ -70,6 +80,28 @@ clean_census_2001_language_file <- function(x) {
   leaves$district <- leaves$district_code
   leaves$district_name <- clean_census_area_name(leaves$area_name)
   std(leaves, 2001L)
+}
+
+census_2001_state_language_totals <- function(raw) {
+  out <- safe_bind_rows(lapply(raw, parse_census_2001_language_file))
+  out <- out[
+    out$district_code == "00" & out$tehsil_code == "0000" &
+      grepl("^State - ", out$area_name %||% "", ignore.case = TRUE) &
+      out$is_language_group_total,
+    , drop = FALSE
+  ]
+  if (!nrow(out)) stop("Census 2001 C-16 contains no state language-group totals.", call. = FALSE)
+  out <- data.frame(
+    state_code = out$state_code,
+    native_language_code = out$mother_tongue_code,
+    native_language = out$mother_tongue,
+    native_speakers = out$spkr_tot,
+    stringsAsFactors = FALSE
+  )
+  key <- paste(out$state_code, out$native_language_code, sep = "|")
+  if (anyDuplicated(key)) stop("Census 2001 C-16 state language totals are not unique.", call. = FALSE)
+  rownames(out) <- NULL
+  out
 }
 
 clean_census_2001_language_fallback <- function(x) {
@@ -99,12 +131,6 @@ validate_census_2001_language_distribution <- function(df) {
   df
 }
 
-census_code <- function(x, width) {
-  raw <- gsub("[^0-9]", "", plain_chr(x))
-  raw[!nzchar(raw)] <- NA_character_
-  ifelse(is.na(raw), NA_character_, sprintf(paste0("%0", width, "d"), as.integer(raw)))
-}
-
 clean_census_area_name <- function(x) {
   x <- gsub("^District -\\s*", "", plain_chr(x))
   x <- gsub("\\s*[0-9]{2}\\s*$", "", x)
@@ -127,7 +153,7 @@ select_top_mother_tongues <- function(df, n = 3L) {
 clean_mother_tongue_names <- function(df) {
   mother_tongue <- first_col(df, c("mother_tongue", "Mother Tongue", "Language", "...7", "...2"))
   if (!is.null(mother_tongue)) {
-    df$mother_tongue <- tools::toTitleCase(tolower(gsub("^\\s*\\d{1,3}\\s+", "", plain_chr(df[[mother_tongue]]))))
+    df$mother_tongue <- normalize_census_language_label(df[[mother_tongue]])
   }
   df
 }

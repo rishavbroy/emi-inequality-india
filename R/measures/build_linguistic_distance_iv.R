@@ -596,10 +596,6 @@ historical_linguistic_distance_quality_grid <- function(
 }
 
 
-normalize_language_label <- function(x) {
-  tools::toTitleCase(tolower(trimws(plain_chr(x))))
-}
-
 census_mother_tongue_identity <- function(df) {
   canonical <- normalize_language_label(df$canonical_language)
   if (!"mother_tongue" %in% names(df)) return(canonical)

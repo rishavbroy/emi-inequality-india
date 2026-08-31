@@ -299,3 +299,33 @@ test_that("survey selection estimation restores lonely-PSU option", {
   expect_silent(estimate_selection_probit(dat, list(mode = "final")))
   expect_identical(getOption("survey.lonely.psu"), "fail")
 })
+
+test_that("selection sample takes schooling attributes from Block 5", {
+  base <- data.frame(
+    PID = "p1", AGE = 10, district_code_0708 = "01001", weight = 2,
+    FSU_SL_NO = "100", HHID = "h1", STATE = "01", STRATUM = "01",
+    SUB_STRATUM_NO = "01", stringsAsFactors = FALSE
+  )
+  b4 <- transform(
+    base,
+    SEX = 1, HH_SIZE = 4, RELIGION = 1, SOCIAL_GROUP = 9, SECTOR = 1,
+    DIST_FROM_NEAREST_PRIMARY_CLASS = 1,
+    TYPE_OF_INSTT = 99
+  )
+  b5 <- transform(
+    base,
+    COURSE_NO = 1, IS_EDU_FREE = 1, TUTION_FEE_WAIVED = 3,
+    RECD_SCHOLARSHIP_STIPEND = 2, RECD_TXT_BOOKS = 3,
+    RECD_STATIONERY = 3, MID_DAY_MEAL_ETC_RECD = 2,
+    MEDIUM_INSTRUCTION = 2, TYPE_OF_INSTT = 4, NATURE_OF_INSTT = 2
+  )
+  b6 <- transform(base, TUTION_FEE = 0)
+
+  out <- construct_child_level_selection_sample(list(b4 = b4, b5 = b5, b6 = b6))
+
+  expect_equal(nrow(out), 1L)
+  expect_equal(out$MEDIUM_INSTRUCTION, 2)
+  expect_equal(out$TYPE_OF_INSTT, 4)
+  expect_equal(out$NATURE_OF_INSTT, 2)
+  expect_false(any(grepl("TYPE_OF_INSTT\\.", names(out))))
+})

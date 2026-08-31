@@ -72,6 +72,8 @@ construct_child_level_selection_sample <- function(blocks) {
     RECD_STATIONERY = nss_yes_no_indicator(selection_df$RECD_STATIONERY, yes = c(1, 2), no = c(3, 4, 5, 6)),
     MID_DAY_MEAL_ETC_RECD = nss_yes_no_indicator(selection_df$MID_DAY_MEAL_ETC_RECD, yes = 1, no = 2),
     MEDIUM_INSTRUCTION = selection_df$MEDIUM_INSTRUCTION %||% NA,
+    TYPE_OF_INSTT = selection_df$TYPE_OF_INSTT %||% NA,
+    NATURE_OF_INSTT = selection_df$NATURE_OF_INSTT %||% NA,
     stringsAsFactors = FALSE
   )
 
@@ -104,7 +106,6 @@ construct_child_level_selection_sample <- function(blocks) {
     DIST_FROM_UPPER_PRIMARY_CLASS = children$DIST_FROM_UPPER_PRIMARY_CLASS %||% NA,
     DIST_FROM_SEC_CLASS = children$DIST_FROM_SEC_CLASS %||% NA,
     RELATION_TO_HEAD = children$RELATION_TO_HEAD %||% NA,
-    TYPE_OF_INSTT = children$TYPE_OF_INSTT %||% NA,
     district_code_0708 = children$district_code_0708,
     PID = children$PID,
     weight = children$weight,
