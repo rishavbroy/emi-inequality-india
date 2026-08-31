@@ -2436,7 +2436,9 @@ extended_diagnostic_targets <- list(
       census_housing_hl11_2011_source,
       census_housing_hl12_2011_source,
       census_housing_2011,
-      census_housing_change_2011_2001
+      census_housing_change_2011_2001,
+      district_panel,
+      cfg
     )
   ),
   tar_target(

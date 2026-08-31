@@ -145,3 +145,71 @@ test_that("Census 2001 H12 may be a validated district subset without truncating
   expect_equal(out$latrine_share_households[out$district_code == "01"], 0.25)
   expect_true(is.na(out$latrine_share_households[out$district_code == "02"]))
 })
+
+test_that("Census housing mechanism registry uses full-support longitudinal changes", {
+  registry <- census_housing_mechanism_registry()
+  expect_equal(nrow(registry), 8L)
+  expect_identical(anyDuplicated(registry$outcome_id), 0L)
+  expect_identical(anyDuplicated(registry$variable), 0L)
+  expect_true(all(registry$source_id == "change"))
+  expect_true(all(registry$denominator == "households"))
+  expect_true(all(grepl("_change_2011_2001$", registry$variable)))
+  expect_false("latrine_share_households_change_2011_2001" %in% registry$variable)
+  expect_false("kerosene_lighting_share_households_change_2011_2001" %in% registry$variable)
+  expect_false("solar_lighting_share_households_change_2011_2001" %in% registry$variable)
+})
+
+test_that("Census housing change mechanisms reuse the common IV inference engine", {
+  skip_if_not_installed("ivreg")
+  skip_if_not_installed("lmtest")
+  skip_if_not_installed("momentfit")
+  skip_if_not_installed("sandwich")
+  set.seed(733)
+  n <- 120L
+  state <- sprintf("%02d", rep(1:12, each = 10))
+  district <- rep(sprintf("%02d", 1:10), 12)
+  target <- paste0("pc2001__", state, "__", district)
+  panel <- data.frame(
+    state_code_2001 = state,
+    district_code_2001 = district,
+    region = rep(panel_region_levels(), length.out = n),
+    stringsAsFactors = FALSE
+  )
+  for (variable in census_2001_diagnostic_controls()) panel[[variable]] <- stats::rnorm(n)
+  for (variable in alternative_distance_variables()) panel[[variable]] <- stats::rnorm(n)
+  panel$ling_mapped_speaker_share <- stats::runif(n, 0.8, 1)
+  panel$ling_glottolog_mapped_speaker_share <- stats::runif(n, 0.8, 1)
+  panel$ling_dyen_mapped_speaker_share <- stats::runif(n, 0.8, 1)
+  treatment <- preferred_iv_variables()$treatment
+  panel[[treatment]] <- 0.5 * panel$ling_distance_nonzero_mean + stats::rnorm(n)
+
+  registry <- census_housing_mechanism_registry()
+  housing_change <- data.frame(target_unit_2001 = target, stringsAsFactors = FALSE)
+  for (variable in registry$variable) {
+    housing_change[[variable]] <- stats::rnorm(n, sd = 0.08)
+  }
+
+  mechanism_panel <- prepare_census_housing_mechanism_panel(
+    panel, housing_change, registry
+  )
+  expect_equal(nrow(mechanism_panel), n)
+  expect_equal(attr(mechanism_panel, "n_harmonized_mechanism_districts"), n)
+
+  diagnostics <- estimate_census_housing_mechanism_models(
+    mechanism_panel, registry, cfg = list(), ar_points = 21L
+  )
+  expect_equal(nrow(diagnostics$first_stage), 6L)
+  expect_equal(nrow(diagnostics$reduced_form), 6L * nrow(registry))
+  expect_equal(nrow(diagnostics$weak_iv), 6L * nrow(registry))
+  expect_true(all(diagnostics$first_stage$n == n))
+  expect_true(all(diagnostics$reduced_form$n == n))
+  expect_true(all(diagnostics$weak_iv$n == n))
+  expect_true(all(diagnostics$reduced_form$status == "estimated"))
+  expect_true(all(diagnostics$weak_iv$status == "estimated"))
+  expect_true(all(is.finite(diagnostics$weak_iv$anderson_rubin_p_beta0)))
+  expect_true(all(is.finite(
+    diagnostics$weak_iv$anderson_rubin_p_beta0_holm_within_spec
+  )))
+  expect_true(nrow(diagnostics$anderson_rubin_grid) > 0L)
+  expect_setequal(unique(diagnostics$anderson_rubin_grid$outcome_id), registry$outcome_id)
+})
