@@ -109,3 +109,26 @@ test_that("C-17 mechanism registry stays deliberately small", {
     c("english_share_multilingual", "hindi_share_multilingual", "multilingual_share_native")
   )
 })
+
+test_that("C-17 diagnostic saver returns the files it writes", {
+  diagnostics <- diagnose_census_c17_mechanism(
+    make_census_c17_mechanism_fixture()
+  )
+  dir <- file.path(tempdir(), paste0("c17-diagnostics-", Sys.getpid()))
+  unlink(dir, recursive = TRUE)
+
+  paths <- save_census_c17_mechanism_diagnostics(diagnostics, dir = dir)
+
+  expect_type(paths, "character")
+  expect_length(paths, 4L)
+  expect_true(all(file.exists(paths)))
+  expect_setequal(
+    basename(paths),
+    c(
+      "c17_mechanism_registry.csv",
+      "c17_language_mapping_coverage.csv",
+      "c17_mechanism_coefficients.csv",
+      "c17_mechanism_model_summary.csv"
+    )
+  )
+})

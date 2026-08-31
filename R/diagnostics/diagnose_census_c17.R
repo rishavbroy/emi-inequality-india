@@ -247,7 +247,9 @@ save_census_c17_mechanism_diagnostics <- function(
     diagnostics,
     dir = "outputs/diagnostics/extended/census_c17") {
   dir.create(dir, recursive = TRUE, showWarnings = FALSE)
-  output_manifest(c(
+  # This saver backs a targets `format = "file"` target, so its return value
+  # is the character vector of files written rather than a tabular manifest.
+  unname(c(
     registry = write_diagnostic_csv(
       diagnostics$registry,
       file.path(dir, "c17_mechanism_registry.csv")
