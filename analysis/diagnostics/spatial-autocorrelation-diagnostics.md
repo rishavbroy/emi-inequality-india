@@ -53,9 +53,9 @@ moran <- analysis_target_csv("diag_public_spatial_autocorrelation_files", "spati
 moran_mc <- analysis_target_csv("diag_public_spatial_autocorrelation_files", "spatial_moran_mc_reference.csv")
 ```
 
-The current `m_cons_resid` p-value is 0.4272409, and the current
-`m_cons` p-value is 0. These are current active-pipeline results, not
-hard-coded legacy comments.
+The current `m_cons_resid` p-value is 0.434902, and the current `m_cons`
+p-value is 0. These are current active-pipeline results, not hard-coded
+legacy comments.
 
 ``` r
 if ("legacy_name" %in% names(moran)) {
@@ -68,10 +68,10 @@ if ("legacy_name" %in% names(moran)) {
 ```
 
               legacy_name  statistic    estimate       p.value
-    1        m_cons_resid  0.1834031 0.003159523  4.272409e-01
-    5              m_EMIE 24.6773846 0.659174283 9.354635e-135
+    1        m_cons_resid  0.1639075 0.002636599  4.349020e-01
+    5              m_EMIE 24.7290041 0.660538958 2.608096e-135
     6 m_wavg_ling_degrees 33.0299147 0.886371445 1.511252e-239
-    7              m_cons 11.5306860 0.307585881  4.620220e-31
+    7              m_cons 11.5120488 0.307088572  5.736008e-31
                                                                                                                        legacy_note
     1 Final-paper residual p-value: residuals(model_consumption_iv). Legacy comments reported a pre-control value of 2.779572e-23.
     5                                                                         Legacy comments reported p = 8.990354e-180 for EMIE.
@@ -84,7 +84,7 @@ analysis_table(moran, "Current Moran's I diagnostics")
 
 | legacy_name | estimand | variable | source | test | status | statistic | estimate | expected | variance | p.value | method | alternative | n | contiguity | weights_style | matrix_style | zero_policy | n_spatial_rows | n_islands | mean_neighbors | warnings | reason | legacy_note |
 |:---|:---|:---|:---|:---|:---|---:|---:|---:|---:|---:|:---|:---|---:|:---|:---|:---|:---|---:|---:|---:|:---|:---|:---|
-| m_cons_resid | consumption_iv_residual | resid_cons | second_stage_residual | moran | estimated | 0.183 | 0.003 | -0.002 | 0.001 | 0.427 | Moran I test under randomisation | greater | 573 | rook | W | B | TRUE | 573 | 3 | 5.204 | some observations have no neighbours; |  |  |
+| m_cons_resid | consumption_iv_residual | resid_cons | second_stage_residual | moran | estimated | 0.164 | 0.003 | -0.002 | 0.001 | 0.435 | Moran I test under randomisation | greater | 573 | rook | W | B | TRUE | 573 | 3 | 5.204 | some observations have no neighbours; |  |  |
 
 Current Moran’s I diagnostics
 
@@ -93,16 +93,16 @@ object has 4 sub-graphs; if this sub-graph count seems unexpected, try
 increasing the snap argument. \|NA \|Final-paper residual p-value:
 residuals(model_consumption_iv). Legacy comments reported a pre-control
 value of 2.779572e-23. \| \|m_gini_resid \|gini_iv_residual \|resid_gini
-\|second_stage_residual \|moran \|estimated \| 0.183\| 0.003\| -0.002\|
-0.001\| 0.427\|Moran I test under randomisation \|greater \| 573\|rook
+\|second_stage_residual \|moran \|estimated \| 0.164\| 0.003\| -0.002\|
+0.001\| 0.435\|Moran I test under randomisation \|greater \| 573\|rook
 \|W \|B \|TRUE \| 573\| 3\| 5.204\|some observations have no neighbours;
 if this seems unexpected, try increasing the snap argument.; neighbour
 object has 4 sub-graphs; if this sub-graph count seems unexpected, try
 increasing the snap argument. \|NA \|Legacy residual diagnostic:
 residuals(model_gini_iv). Legacy comments reported a pre-control value
 of 2.033012e-40. \| \|m_fscons_resid \|consumption_first_stage_residual
-\|resid_fscons \|first_stage_residual \|moran \|estimated \| -0.281\|
--0.009\| -0.002\| 0.001\| 0.611\|Moran I test under randomisation
+\|resid_fscons \|first_stage_residual \|moran \|estimated \| -0.320\|
+-0.010\| -0.002\| 0.001\| 0.625\|Moran I test under randomisation
 \|greater \| 573\|rook \|W \|B \|TRUE \| 573\| 3\| 5.204\|some
 observations have no neighbours; if this seems unexpected, try
 increasing the snap argument.; neighbour object has 4 sub-graphs; if
@@ -111,7 +111,7 @@ this sub-graph count seems unexpected, try increasing the snap argument.
 residuals(first_stage_consumption). Legacy comments reported a
 pre-control value of 1.189148e-105. \| \|m_fsgini_resid
 \|gini_first_stage_residual \|resid_fsgini \|first_stage_residual
-\|moran \|estimated \| -0.281\| -0.009\| -0.002\| 0.001\| 0.611\|Moran I
+\|moran \|estimated \| -0.320\| -0.010\| -0.002\| 0.001\| 0.625\|Moran I
 test under randomisation \|greater \| 573\|rook \|W \|B \|TRUE \| 573\|
 3\| 5.204\|some observations have no neighbours; if this seems
 unexpected, try increasing the snap argument.; neighbour object has 4
@@ -120,7 +120,7 @@ snap argument. \|NA \|Legacy first-stage residual diagnostic:
 residuals(first_stage_gini). Legacy comments noted the same pre-control
 value as first-stage consumption. \| \|m_EMIE \|emie
 \|emi_exposure_all_children_0708 \|treatment \|moran \|estimated \|
-24.677\| 0.659\| -0.002\| 0.001\| 0.000\|Moran I test under
+24.729\| 0.661\| -0.002\| 0.001\| 0.000\|Moran I test under
 randomisation \|greater \| 573\|rook \|W \|B \|TRUE \| 573\| 3\|
 5.204\|some observations have no neighbours; if this seems unexpected,
 try increasing the snap argument.; neighbour object has 4 sub-graphs; if
@@ -135,7 +135,7 @@ has 4 sub-graphs; if this sub-graph count seems unexpected, try
 increasing the snap argument. \|NA \|Legacy comments reported p =
 1.721903e-254 for weighted average linguistic distance. \| \|m_cons
 \|real_consumption_growth \|real_log_consumption_change \|outcome
-\|moran \|estimated \| 11.531\| 0.308\| -0.002\| 0.001\| 0.000\|Moran I
+\|moran \|estimated \| 11.512\| 0.307\| -0.002\| 0.001\| 0.000\|Moran I
 test under randomisation \|greater \| 573\|rook \|W \|B \|TRUE \| 573\|
 3\| 5.204\|some observations have no neighbours; if this seems
 unexpected, try increasing the snap argument.; neighbour object has 4

@@ -105,7 +105,7 @@ analysis_table(dm_summary, "District-matching diagnostic summary")
 
 | n_panel_rows | n_join_rows | n_unmatched_rows | n_source_key_inventory_rows | n_many_to_many_cases | n_panel_unmatched_by_key | n_join_unmatched_by_key |
 |---:|---:|---:|---:|---:|---:|---:|
-| 573 | 734 | 0 | 0 | 0 | 85 | 246 |
+| 573 | 734 | 0 | 0 | 0 | 86 | 247 |
 
 District-matching diagnostic summary
 
@@ -128,13 +128,13 @@ analysis_table(dm_tracker_panel, "Tracker/panel/intermediate row-count compariso
 
 | object                         | n_rows | n_complete_rows |
 |:-------------------------------|-------:|----------------:|
-| district_panel                 |    573 |             573 |
+| district_panel                 |    573 |             420 |
 | district_join_map              |    734 |             734 |
 | unmatched_rows                 |      0 |              NA |
 | source_key_inventory           |      0 |              NA |
 | many_to_many_cases             |      0 |              NA |
-| key_role:requires_review       |    331 |              NA |
-| key_role:shared_panel_join_key |    488 |              NA |
+| key_role:requires_review       |    333 |              NA |
+| key_role:shared_panel_join_key |    487 |              NA |
 
 Tracker/panel/intermediate row-count comparison
 
@@ -172,9 +172,9 @@ if (all(c("panel_key_status", "join_key_status") %in% names(dm_key_comparison)))
 
 | panel_key_status | join_key_status | Freq |
 |:-----------------|:----------------|-----:|
-| in_panel         | in_join_map     |  488 |
-| not_in_panel     | in_join_map     |  246 |
-| in_panel         | not_in_join_map |   85 |
+| in_panel         | in_join_map     |  487 |
+| not_in_panel     | in_join_map     |  247 |
+| in_panel         | not_in_join_map |   86 |
 | not_in_panel     | not_in_join_map |    0 |
 
 Panel-vs-join key-status summary
@@ -185,8 +185,8 @@ analysis_table(dm_key_roles, "Panel/join key roles and interpretation")
 
 | key_role              | n_keys | interpretation                             |
 |:----------------------|-------:|:-------------------------------------------|
-| requires_review       |    331 | Requires manual review.                    |
-| shared_panel_join_key |    488 | Shared by active final panel and join map. |
+| requires_review       |    333 | Requires manual review.                    |
+| shared_panel_join_key |    487 | Shared by active final panel and join map. |
 
 Panel/join key roles and interpretation
 

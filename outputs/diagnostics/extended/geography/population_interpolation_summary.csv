@@ -1,0 +1,3 @@
+"transition_id","source_vintage","target_vintage","n_source_units","n_complete_population_partitions","n_partial_population_partitions","median_population_coverage","n_coverage_ge_90pct","n_coverage_ge_95pct","n_coverage_ge_99pct"
+"production_2011_2001",2011,2001,629,92,537,0.999232623060299,615,601,542
+"shrug_1991_2001",1991,2001,449,76,373,0.999634718712171,440,438,422

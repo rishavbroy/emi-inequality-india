@@ -72,7 +72,7 @@ analysis_table(tracker_counts, "Tracker source row counts")
 | source_file_id                 | n_rows | n_columns |
 |:-------------------------------|-------:|----------:|
 | district_changes_alluvial      |    808 |        16 |
-| district_changes_carveouts     |    384 |         5 |
+| district_changes_carveouts     |    376 |         5 |
 | district_changes_tracker       |    735 |        60 |
 | district_changes_new_districts |    487 |         6 |
 | district_changes_name_changes  |    134 |         6 |

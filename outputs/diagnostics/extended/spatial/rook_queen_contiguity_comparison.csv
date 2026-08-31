@@ -1,7 +1,7 @@
 "contiguity","n","mean_neighbors","n_islands","n_subgraphs","snap","panel_scope","elapsed_seconds","warnings","legacy_mean_neighbors","mean_neighbor_delta_from_legacy","pct_delta_from_legacy"
-"rook",573,5.20418848167539,3,4,NA,"current_final_matched_panel_non_empty_geometry",1.124,"some observations have no neighbours;
+"rook",573,5.20418848167539,3,4,NA,"current_final_matched_panel_non_empty_geometry",1.19999999999999,"some observations have no neighbours;
 if this seems unexpected, try increasing the snap argument.; neighbour object has 4 sub-graphs;
 if this sub-graph count seems unexpected, try increasing the snap argument.",4.780165,0.424023481675392,8.87047793696226
-"queen",573,5.23211169284468,3,4,NA,"current_final_matched_panel_non_empty_geometry",1.084,"some observations have no neighbours;
+"queen",573,5.23211169284468,3,4,NA,"current_final_matched_panel_non_empty_geometry",1.09799999999998,"some observations have no neighbours;
 if this seems unexpected, try increasing the snap argument.; neighbour object has 4 sub-graphs;
 if this sub-graph count seems unexpected, try increasing the snap argument.",4.783471,0.448640692844678,9.37897800247305

@@ -1,0 +1,7 @@
+"semantic_id","aggregation_operation","preferred_fractional_basis","population_fractional_allowed","area_fractional_allowed","requires_sufficient_statistics","examples"
+"extensive_human","sum_sufficient_statistics","population",TRUE,FALSE,TRUE,"population;workers;literates;enrollment"
+"ratio_human","aggregate_numerator_denominator","population",TRUE,FALSE,TRUE,"shares;rates;EMIE;linguistic distance"
+"survey_microdata","reweight_records","reviewed_record_allocation",FALSE,FALSE,TRUE,"consumption;household or person surveys"
+"land_area","sum_or_area_allocate","area",FALSE,TRUE,TRUE,"land area;forest;cropland"
+"point_location","direct_location","direct_location",FALSE,FALSE,TRUE,"schools;hospitals;banks with coordinates"
+"spatial_surface","overlay_or_area_allocate","area",FALSE,TRUE,TRUE,"rainfall;gridded environmental surfaces"

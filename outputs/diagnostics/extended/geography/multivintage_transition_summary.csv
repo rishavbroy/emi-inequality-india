@@ -1,0 +1,3 @@
+"transition_id","source_vintage","target_vintage","n_edges","n_source_units","n_target_units","n_complete_source_edges","n_complete_target_edges"
+"production_2011_2001",2011,2001,668,631,584,95,89
+"shrug_1991_2001",1991,2001,657,449,567,96,35

@@ -59,7 +59,7 @@ analysis_table(summary, "District-lineage summary")
 
 | metric                           |  value |
 |:---------------------------------|-------:|
-| available_inputs                 |     52 |
+| available_inputs                 |     59 |
 | missing_inputs                   |      0 |
 | admin_units_2001                 |    593 |
 | admin_units_2011                 |    640 |
@@ -74,7 +74,7 @@ analysis_table(summary, "District-lineage summary")
 | single_vintage_exact_review_rows |      0 |
 | fuzzy_review_rows                |      0 |
 | no_candidate_rows                |      0 |
-| primary_eligible_source_rows     |   1024 |
+| primary_eligible_source_rows     |   1064 |
 | candidate_event_rows             |      0 |
 | current_component_rows           |  19278 |
 | urban_coverage_rows              |  34012 |
@@ -128,7 +128,7 @@ analysis_table(completion, "Six-step completion status")
 | 2 | Resolve open fuzzy identities and evidence requests | TRUE | 0 fuzzy identities and 0 evidence requests open | Use registered official evidence to close the remaining review queue. |
 | 3 | Validate reviewed allocation weights | TRUE | 0 unresolved source-unit allocations | Correct or explicitly reject any incomplete allocation. |
 | 4 | Construct and validate Census 2001 geometry | TRUE | 593/593 expected districts; 0 missing; 0 unexpected; 0 invalid | Inspect geometry_2001_unit_coverage.csv for missing, unexpected, or invalid units. |
-| 5 | Build the conservative, primary, and full reviewed crosswalks | TRUE | 1024 conservative; 1232 primary; 1279 full reviewed rows | Keep panel-role definitions monotone and evidence based. |
+| 5 | Build the conservative, primary, and full reviewed crosswalks | TRUE | 1064 conservative; 1233 primary; 1279 full reviewed rows | Keep panel-role definitions monotone and evidence based. |
 | 6 | Verify complete accepted-identity coverage | TRUE | 1254/1254 accepted identities mapped | Record an explicit exclusion for any accepted identity that cannot be mapped. |
 
 Six-step completion status
@@ -153,11 +153,15 @@ analysis_table(inventory, "Input inventory", max_rows = 60)
 | lgd_mod_villages | data/raw/local_government_directory/modifications_01-01-2011_30-06-2018/villages.xls | spreadsheetml | changed_unit_roster_2011_2018 | FALSE | TRUE | TRUE | 34056792 |
 | lgd_mod_urban_local_bodies | data/raw/local_government_directory/modifications_01-01-2011_30-06-2018/urbanLocalBody.xls | spreadsheetml | changed_unit_roster_2011_2018 | FALSE | TRUE | TRUE | 296172 |
 | lgd_changes_post_2018 | data/raw/local_government_directory/changes.csv | inventory_only | post_2018_validation | FALSE | FALSE | TRUE | 150427025 |
+| kumar_somanathan_1991_2001 | data/raw/district_changes/District Carve-Outs and Renamings 1961-2001.csv | carveout_csv | historical_geography_benchmark | FALSE | TRUE | TRUE | 12737 |
 | isded_1951_2024 | data/raw/district_changes/india_state_stories/isded/1951-2024/district_proliferation_1951_2024.xlsx | xlsx | candidate_lineage | FALSE | TRUE | TRUE | 152349 |
 | isded_admin_units_2025 | data/raw/district_changes/india_state_stories/isded/2025/admin_units_2025.xlsx | xlsx | published_current_component_registry | FALSE | TRUE | TRUE | 1432373 |
 | iss_census_series_1901_2011 | data/raw/district_changes/india_state_stories/census_data_collection/1901-2011/1901-2011-State Districts-Population Time Series.xlsx | inventory_only | historical_population_validation | FALSE | FALSE | TRUE | 1389673 |
 | iss_subdistricts_2026 | data/raw/district_changes/india_state_stories/census_data_collection/2026/2026_subdistricts_with_2011_census_pass2_loose.xlsx | inventory_only | published_current_component_registry | FALSE | FALSE | TRUE | 3309901 |
 | datameet_census_2001_districts | data/raw/datameet/Districts/Census_2001/2001_Dist.shp | inventory_only | production_census_2001_geometry | TRUE | FALSE | TRUE | 10088504 |
+| shrug_pc91r | data/raw/shrug/shrug-pc-keys-csv/pc91r_shrid_key.csv | shrug_locality_csv | historical_language_geography_weight | FALSE | TRUE | TRUE | 29890921 |
+| shrug_pc91u | data/raw/shrug/shrug-pc-keys-csv/pc91u_shrid_key.csv | shrug_locality_csv | historical_language_geography_weight | FALSE | TRUE | TRUE | 218331 |
+| shrug_pc91dist | data/raw/shrug/shrug-pc-keys-csv/shrid_pc91dist_key.csv | shrug_district_csv | historical_language_geography_membership | FALSE | TRUE | TRUE | 16595220 |
 | shrug_pc01r | data/raw/shrug/shrug-pc-keys-csv/pc01r_shrid_key.csv | shrug_locality_csv | stable_locality_weight | FALSE | TRUE | TRUE | 32554823 |
 | shrug_pc01u | data/raw/shrug/shrug-pc-keys-csv/pc01u_shrid_key.csv | shrug_locality_csv | stable_locality_weight | FALSE | TRUE | TRUE | 289671 |
 | shrug_pc11r | data/raw/shrug/shrug-pc-keys-csv/pc11r_shrid_key.csv | shrug_locality_csv | stable_locality_weight | FALSE | TRUE | TRUE | 33663741 |
@@ -172,6 +176,9 @@ analysis_table(inventory, "Input inventory", max_rows = 60)
 | shrug_pc11_state_geometry | data/raw/shrug/open-polygons/shrug-pc11state-poly-gpkg/state.gpkg | inventory_only | census_2011_geometry | FALSE | FALSE | TRUE | 8613888 |
 | shrug_pc11_village_geometry_zip | data/raw/shrug/open-polygons/shrug-pc11-village-poly-gpkg.zip | inventory_only | census_2011_geometry | FALSE | FALSE | TRUE | 399235423 |
 | shrug_shrid_geometry_zip | data/raw/shrug/open-polygons/shrug-shrid-poly-gpkg.zip | inventory_only | legacy_2001_geometry_reconstruction | FALSE | FALSE | TRUE | 379628892 |
+| shrug_pca91_zip | data/raw/shrug/census_1991/shrug-pca91-csv.zip | inventory_only | historical_baseline_attributes | FALSE | FALSE | TRUE | 42996056 |
+| shrug_td91_zip | data/raw/shrug/census_1991/shrug-td91-csv.zip | inventory_only | historical_baseline_attributes | FALSE | FALSE | TRUE | 1767370 |
+| shrug_vd91_zip | data/raw/shrug/census_1991/shrug-vd91-csv.zip | inventory_only | historical_baseline_attributes | FALSE | FALSE | TRUE | 25171502 |
 | shrug_pca01_zip | data/raw/shrug/census_2001/shrug-pca01-csv.zip | inventory_only | census_locality_attributes | FALSE | FALSE | TRUE | 50359039 |
 | shrug_pca11_zip | data/raw/shrug/census_2011/shrug-pca11-csv.zip | inventory_only | census_locality_attributes | FALSE | FALSE | TRUE | 66532473 |
 | shrug_td01_zip | data/raw/shrug/census_2001/shrug-td01-csv.zip | inventory_only | census_locality_attributes | FALSE | FALSE | TRUE | 2473771 |
@@ -186,11 +193,11 @@ analysis_table(inventory, "Input inventory", max_rows = 60)
 | concordance_census_region | data/raw/concordance/census_region.csv | csv | published_concordance | FALSE | TRUE | TRUE | 21341 |
 | lineage_gold | data/metadata/district_match_gold.csv | csv | calibration | FALSE | TRUE | TRUE | 7217 |
 | lineage_adjudications | data/metadata/district_adjudications.csv | csv | adjudication | FALSE | TRUE | TRUE | 653364 |
-| lineage_events | data/metadata/district_admin_events.csv | csv | event_adjudication | FALSE | TRUE | TRUE | 15254 |
+| lineage_events | data/metadata/district_admin_events.csv | csv | event_adjudication | FALSE | TRUE | TRUE | 24933 |
 | lineage_allocation_weights | data/metadata/district_allocation_weights.csv | allocation_csv | allocation_adjudication | FALSE | TRUE | TRUE | 226672 |
 | lineage_geometry_carrybacks | data/metadata/district_geometry_carrybacks.csv | csv | geometry_adjudication | FALSE | TRUE | TRUE | 2983 |
 | lineage_primary_reviews | data/metadata/district_primary_reviews.csv | csv | primary_review | FALSE | TRUE | TRUE | 78552 |
-| lineage_sources | data/metadata/district_lineage_sources.csv | csv | source_registry | FALSE | TRUE | TRUE | 12407 |
+| lineage_sources | data/metadata/district_lineage_sources.csv | csv | source_registry | FALSE | TRUE | TRUE | 12617 |
 
 Input inventory
 
@@ -252,6 +259,7 @@ analysis_table(registry, "Evidence registry", max_rows = 60)
 | official_simdega_gumla_history_2026 | District Administration Gumla, About District; Government of India MSME and Jharkhand Space Applications Centre district profiles documenting that Simdega was carved wholly from Gumla on 30 April 2001 | https://gumla.nic.in/about-district/; https://dcmsme.gov.in/dips/2016-17/Simdega.pdf; https://jsac.jharkhand.gov.in/district_profile/Simdega.pdf | 2026-07-24 |
 | official_jamtara_dumka_history_2026 | District Administration Jamtara, district profile and district-at-a-glance pages documenting creation of Jamtara by separation from Dumka on 26 April 2001 | https://jamtara.nic.in/about-district/; https://jamtara.nic.in/district-at-a-glance/ | 2026-08-23 |
 | official_ashoknagar_guna_history_2026 | District Administration Ashoknagar and District Administration Guna pages documenting that Ashoknagar remained part of Guna until its creation as a separate district on 15 August 2003 | https://ashoknagar.nic.in/en/profile/; https://guna.nic.in/%E0%A4%87%E0%A4%A4%E0%A4%BF%E0%A4%B9%E0%A4%BE%E0%A4%B8/ | 2026-08-23 |
+| census2011_andhra_admin_atlas | Directorate of Census Operations, Andhra Pradesh, Census of India 2011 Administrative Atlas: Andhra Pradesh, Volume I | https://censusindia.gov.in/nada/index.php/catalog/12 | 2026-08-27 |
 
 Evidence registry
 
@@ -277,6 +285,30 @@ analysis_table(transition, "Census 2011 to Census 2001 transitions", max_rows = 
 
 | state_code_2011 | district_code_2011 | state_code_2001 | district_code_2001 | population_share_to_2001 | area_share_to_2001 | shrid_coverage | mapping_class | source_id | n_shrid_mapped | population_2011_mapped | area_2011_mapped | n_shrid_total | population_2011_total | area_2011_total | n_target_2001_districts |
 |:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| 35 | 639 | 35 | 1 | 1 | 1 | 1 | reviewed_single_parent_ancestry | census2011_andaman_reorganization | NA | NA | NA | NA | NA | NA | NA |
+| 28 | 532 | 28 | 1 | 1 | 1 | 1 | reviewed_single_parent_ancestry | census2011_andhra_admin_atlas | NA | NA | NA | NA | NA | NA | NA |
+| 28 | 533 | 28 | 2 | 1 | 1 | 1 | reviewed_single_parent_ancestry | census2011_andhra_admin_atlas | NA | NA | NA | NA | NA | NA | NA |
+| 28 | 534 | 28 | 3 | 1 | 1 | 1 | reviewed_single_parent_ancestry | census2011_andhra_admin_atlas | NA | NA | NA | NA | NA | NA | NA |
+| 28 | 535 | 28 | 4 | 1 | 1 | 1 | reviewed_single_parent_ancestry | census2011_andhra_admin_atlas | NA | NA | NA | NA | NA | NA | NA |
+| 28 | 536 | 28 | 5 | 1 | 1 | 1 | reviewed_single_parent_ancestry | census2011_andhra_admin_atlas | NA | NA | NA | NA | NA | NA | NA |
+| 28 | 537 | 28 | 6 | 1 | 1 | 1 | reviewed_single_parent_ancestry | census2011_andhra_admin_atlas | NA | NA | NA | NA | NA | NA | NA |
+| 28 | 538 | 28 | 7 | 1 | 1 | 1 | reviewed_single_parent_ancestry | census2011_andhra_admin_atlas | NA | NA | NA | NA | NA | NA | NA |
+| 28 | 539 | 28 | 8 | 1 | 1 | 1 | reviewed_single_parent_ancestry | census2011_andhra_admin_atlas | NA | NA | NA | NA | NA | NA | NA |
+| 28 | 540 | 28 | 9 | 1 | 1 | 1 | reviewed_single_parent_ancestry | census2011_andhra_admin_atlas | NA | NA | NA | NA | NA | NA | NA |
+| 28 | 541 | 28 | 10 | 1 | 1 | 1 | reviewed_single_parent_ancestry | census2011_andhra_admin_atlas | NA | NA | NA | NA | NA | NA | NA |
+| 28 | 542 | 28 | 11 | 1 | 1 | 1 | reviewed_single_parent_ancestry | census2011_andhra_admin_atlas | NA | NA | NA | NA | NA | NA | NA |
+| 28 | 543 | 28 | 12 | 1 | 1 | 1 | reviewed_single_parent_ancestry | census2011_andhra_admin_atlas | NA | NA | NA | NA | NA | NA | NA |
+| 28 | 544 | 28 | 13 | 1 | 1 | 1 | reviewed_single_parent_ancestry | census2011_andhra_admin_atlas | NA | NA | NA | NA | NA | NA | NA |
+| 28 | 545 | 28 | 14 | 1 | 1 | 1 | reviewed_single_parent_ancestry | census2011_andhra_admin_atlas | NA | NA | NA | NA | NA | NA | NA |
+| 28 | 546 | 28 | 15 | 1 | 1 | 1 | reviewed_single_parent_ancestry | census2011_andhra_admin_atlas | NA | NA | NA | NA | NA | NA | NA |
+| 28 | 547 | 28 | 16 | 1 | 1 | 1 | reviewed_single_parent_ancestry | census2011_andhra_admin_atlas | NA | NA | NA | NA | NA | NA | NA |
+| 28 | 548 | 28 | 17 | 1 | 1 | 1 | reviewed_single_parent_ancestry | census2011_andhra_admin_atlas | NA | NA | NA | NA | NA | NA | NA |
+| 28 | 549 | 28 | 18 | 1 | 1 | 1 | reviewed_single_parent_ancestry | census2011_andhra_admin_atlas | NA | NA | NA | NA | NA | NA | NA |
+| 28 | 550 | 28 | 19 | 1 | 1 | 1 | reviewed_single_parent_ancestry | census2011_andhra_admin_atlas | NA | NA | NA | NA | NA | NA | NA |
+| 28 | 551 | 28 | 20 | 1 | 1 | 1 | reviewed_single_parent_ancestry | census2011_andhra_admin_atlas | NA | NA | NA | NA | NA | NA | NA |
+| 28 | 552 | 28 | 21 | 1 | 1 | 1 | reviewed_single_parent_ancestry | census2011_andhra_admin_atlas | NA | NA | NA | NA | NA | NA | NA |
+| 28 | 553 | 28 | 22 | 1 | 1 | 1 | reviewed_single_parent_ancestry | census2011_andhra_admin_atlas | NA | NA | NA | NA | NA | NA | NA |
+| 28 | 554 | 28 | 23 | 1 | 1 | 1 | reviewed_single_parent_ancestry | census2011_andhra_admin_atlas | NA | NA | NA | NA | NA | NA | NA |
 | 20 | 367 | 20 | 16 | 1 | 1 | 1 | reviewed_single_parent_ancestry | official_simdega_gumla_history_2026 | NA | NA | NA | NA | NA | NA | NA |
 | 12 | 258 | 12 | 10 | 1 | 1 | 1 | reviewed_single_parent_ancestry | official_single_parent_district_histories_2026 | NA | NA | NA | NA | NA | NA | NA |
 | 20 | 363 | 20 | 11 | 1 | 1 | 1 | reviewed_single_parent_ancestry | official_jamtara_dumka_history_2026 | NA | NA | NA | NA | NA | NA | NA |
@@ -313,30 +345,6 @@ analysis_table(transition, "Census 2011 to Census 2001 transitions", max_rows = 
 | 10 | 230 | 10 | 28 | 1 | 1 | 1 | official_lgd_census_code_bridge | lgd_mod_districts_2001_2011 | NA | NA | NA | NA | NA | NA | NA |
 | 10 | 204 | 10 | 2 | 1 | 1 | 1 | official_lgd_census_code_bridge | lgd_mod_districts_2001_2011 | NA | NA | NA | NA | NA | NA | NA |
 | 10 | 211 | 10 | 9 | 1 | 1 | 1 | official_lgd_census_code_bridge | lgd_mod_districts_2001_2011 | NA | NA | NA | NA | NA | NA | NA |
-| 10 | 234 | 10 | 32 | 1 | 1 | 1 | official_lgd_census_code_bridge | lgd_mod_districts_2001_2011 | NA | NA | NA | NA | NA | NA | NA |
-| 10 | 214 | 10 | 12 | 1 | 1 | 1 | official_lgd_census_code_bridge | lgd_mod_districts_2001_2011 | NA | NA | NA | NA | NA | NA | NA |
-| 10 | 221 | 10 | 19 | 1 | 1 | 1 | official_lgd_census_code_bridge | lgd_mod_districts_2001_2011 | NA | NA | NA | NA | NA | NA | NA |
-| 10 | 219 | 10 | 17 | 1 | 1 | 1 | official_lgd_census_code_bridge | lgd_mod_districts_2001_2011 | NA | NA | NA | NA | NA | NA | NA |
-| 10 | 228 | 10 | 26 | 1 | 1 | 1 | official_lgd_census_code_bridge | lgd_mod_districts_2001_2011 | NA | NA | NA | NA | NA | NA | NA |
-| 10 | 205 | 10 | 3 | 1 | 1 | 1 | official_lgd_census_code_bridge | lgd_mod_districts_2001_2011 | NA | NA | NA | NA | NA | NA | NA |
-| 10 | 206 | 10 | 4 | 1 | 1 | 1 | official_lgd_census_code_bridge | lgd_mod_districts_2001_2011 | NA | NA | NA | NA | NA | NA | NA |
-| 10 | 218 | 10 | 16 | 1 | 1 | 1 | official_lgd_census_code_bridge | lgd_mod_districts_2001_2011 | NA | NA | NA | NA | NA | NA | NA |
-| 10 | 208 | 10 | 6 | 1 | 1 | 1 | official_lgd_census_code_bridge | lgd_mod_districts_2001_2011 | NA | NA | NA | NA | NA | NA | NA |
-| 4 | 55 | 4 | 1 | 1 | 1 | 1 | official_lgd_census_code_bridge | lgd_mod_districts_2001_2011 | NA | NA | NA | NA | NA | NA | NA |
-| 22 | 414 | 22 | 15 | 1 | 1 | 1 | official_lgd_census_code_bridge | lgd_mod_districts_2001_2011 | NA | NA | NA | NA | NA | NA | NA |
-| 22 | 417 | 22 | 16 | 1 | 1 | 1 | official_lgd_census_code_bridge | lgd_mod_districts_2001_2011 | NA | NA | NA | NA | NA | NA | NA |
-| 22 | 412 | 22 | 13 | 1 | 1 | 1 | official_lgd_census_code_bridge | lgd_mod_districts_2001_2011 | NA | NA | NA | NA | NA | NA | NA |
-| 22 | 409 | 22 | 10 | 1 | 1 | 1 | official_lgd_census_code_bridge | lgd_mod_districts_2001_2011 | NA | NA | NA | NA | NA | NA | NA |
-| 22 | 402 | 22 | 3 | 1 | 1 | 1 | official_lgd_census_code_bridge | lgd_mod_districts_2001_2011 | NA | NA | NA | NA | NA | NA | NA |
-| 22 | 404 | 22 | 5 | 1 | 1 | 1 | official_lgd_census_code_bridge | lgd_mod_districts_2001_2011 | NA | NA | NA | NA | NA | NA | NA |
-| 22 | 411 | 22 | 12 | 1 | 1 | 1 | official_lgd_census_code_bridge | lgd_mod_districts_2001_2011 | NA | NA | NA | NA | NA | NA | NA |
-| 22 | 410 | 22 | 11 | 1 | 1 | 1 | official_lgd_census_code_bridge | lgd_mod_districts_2001_2011 | NA | NA | NA | NA | NA | NA | NA |
-| 30 | 585 | 30 | 1 | 1 | 1 | 1 | official_lgd_census_code_bridge | lgd_mod_districts_2001_2011 | NA | NA | NA | NA | NA | NA | NA |
-| 24 | 482 | 24 | 15 | 1 | 1 | 1 | official_lgd_census_code_bridge | lgd_mod_districts_2001_2011 | NA | NA | NA | NA | NA | NA | NA |
-| 24 | 488 | 24 | 21 | 1 | 1 | 1 | official_lgd_census_code_bridge | lgd_mod_districts_2001_2011 | NA | NA | NA | NA | NA | NA | NA |
-| 24 | 473 | 24 | 6 | 1 | 1 | 1 | official_lgd_census_code_bridge | lgd_mod_districts_2001_2011 | NA | NA | NA | NA | NA | NA | NA |
-| 24 | 468 | 24 | 1 | 1 | 1 | 1 | official_lgd_census_code_bridge | lgd_mod_districts_2001_2011 | NA | NA | NA | NA | NA | NA | NA |
-| 24 | 471 | 24 | 4 | 1 | 1 | 1 | official_lgd_census_code_bridge | lgd_mod_districts_2001_2011 | NA | NA | NA | NA | NA | NA | NA |
 | Table truncated in rendered note; full CSV has 668 rows. |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 
 Census 2011 to Census 2001 transitions
@@ -559,8 +567,8 @@ analysis_table(panel_variants, "Panel definitions", max_rows = 10)
 
 | panel_variant | source_rows_2007_08 | source_rows_2017_18 | target_districts_2007_08 | target_districts_2017_18 | two_wave_target_districts | accepted_primary_reviews | description |
 |:---|---:|---:|---:|---:|---:|---:|:---|
-| conservative | 587 | 437 | 587 | 413 | 408 | 0 | Deterministic official, registry, alias, and accepted single-parent mappings only. |
-| primary | 587 | 645 | 587 | 578 | 573 | 208 | Conservative mappings plus reviewed 2017-18 single-parent allocations with at least 99 percent SHRUG coverage and corroborating LGD or India State Stories evidence. |
+| conservative | 588 | 476 | 587 | 432 | 427 | 0 | Deterministic official, registry, alias, and accepted single-parent mappings only. |
+| primary | 588 | 645 | 587 | 578 | 573 | 208 | Conservative mappings plus reviewed 2017-18 single-parent allocations with at least 99 percent SHRUG coverage and corroborating LGD or India State Stories evidence. |
 | full_reviewed | 588 | 691 | 587 | 592 | 587 | 0 | Primary mappings plus reviewed multi-parent fractional allocations; robustness specification only. |
 
 Panel definitions
@@ -571,8 +579,8 @@ analysis_table(variant_models, "Analysis-sample comparison", max_rows = 10)
 
 | panel_variant | panel_rows | unique_districts | complete_iv_rows | multi_source_rows | coefficient_inference_available |
 |:---|---:|---:|---:|---:|:---|
-| conservative | 408 | 408 | 408 | 0 | TRUE |
-| primary | 573 | 573 | 573 | 0 | TRUE |
+| conservative | 427 | 427 | 427 | 1 | TRUE |
+| primary | 573 | 573 | 573 | 1 | TRUE |
 | full_reviewed | 587 | 587 | 587 | 1 | TRUE |
 
 Analysis-sample comparison
@@ -581,39 +589,39 @@ Analysis-sample comparison
 analysis_table(variant_first_stage, "First-stage comparison", max_rows = 30)
 ```
 
-| model | term | estimate | std.error | statistic | p.value | partial_f | partial_p | model_f | model_p | nobs | r.squared | adj.r.squared | sigma | status | reason | panel_variant |
-|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|
-| consumption | (Intercept) | 30.4907987439209 | 12.4916837906372 | 2.44088781424122 | 0.0151297970091406 | 0.227819945172438 | 0.633433076595918 | 69.8305454858381 | 1.82302531754277e-151 | 408 | 0.896700539523071 | 0.883859446369862 | 6.98079496129006 | estimated | NA | conservative |
-| consumption | ling_distance_nonzero_mean | 0.382419821293767 | 0.801206608369357 | 0.477304876543743 | 0.633433076595918 | 0.227819945172438 | 0.633433076595918 | 69.8305454858381 | 1.82302531754277e-151 | 408 | 0.896700539523071 | 0.883859446369862 | 6.98079496129006 | estimated | NA | conservative |
-| consumption | log_population_2001 | 1.02972744991382 | 0.892810837849464 | 1.15335455872618 | 0.249525834600311 | 0.227819945172438 | 0.633433076595918 | 69.8305454858381 | 1.82302531754277e-151 | 408 | 0.896700539523071 | 0.883859446369862 | 6.98079496129006 | estimated | NA | conservative |
-| consumption | urban_share_2001 | 0.0663980243750946 | 0.0505718583269332 | 1.31294412686695 | 0.190033463396062 | 0.227819945172438 | 0.633433076595918 | 69.8305454858381 | 1.82302531754277e-151 | 408 | 0.896700539523071 | 0.883859446369862 | 6.98079496129006 | estimated | NA | conservative |
-| consumption | adult_secondary_plus_share_2001 | 0.592768645520076 | 0.20684868822577 | 2.86571140771792 | 0.00440375665738253 | 0.227819945172438 | 0.633433076595918 | 69.8305454858381 | 1.82302531754277e-151 | 408 | 0.896700539523071 | 0.883859446369862 | 6.98079496129006 | estimated | NA | conservative |
-| consumption | sc_share_2001 | -0.0230065396061285 | 0.0921225496092303 | -0.249738415878834 | 0.802931302572025 | 0.227819945172438 | 0.633433076595918 | 69.8305454858381 | 1.82302531754277e-151 | 408 | 0.896700539523071 | 0.883859446369862 | 6.98079496129006 | estimated | NA | conservative |
-| consumption | st_share_2001 | 0.0457922489746239 | 0.0313024065187478 | 1.46289867353163 | 0.144362775202952 | 0.227819945172438 | 0.633433076595918 | 69.8305454858381 | 1.82302531754277e-151 | 408 | 0.896700539523071 | 0.883859446369862 | 6.98079496129006 | estimated | NA | conservative |
-| consumption | muslim_share_2001 | 0.0642770400224987 | 0.0708056118837597 | 0.907795841493766 | 0.364590013183957 | 0.227819945172438 | 0.633433076595918 | 69.8305454858381 | 1.82302531754277e-151 | 408 | 0.896700539523071 | 0.883859446369862 | 6.98079496129006 | estimated | NA | conservative |
-| consumption | agricultural_worker_share_2001 | -0.0607298701137523 | 0.070353128831303 | -0.863214914852958 | 0.388590855111113 | 0.227819945172438 | 0.633433076595918 | 69.8305454858381 | 1.82302531754277e-151 | 408 | 0.896700539523071 | 0.883859446369862 | 6.98079496129006 | estimated | NA | conservative |
-| consumption | dependency_ratio_2001 | -0.0707046170866688 | 0.0795891475576992 | -0.888370076277178 | 0.374931613961996 | 0.227819945172438 | 0.633433076595918 | 69.8305454858381 | 1.82302531754277e-151 | 408 | 0.896700539523071 | 0.883859446369862 | 6.98079496129006 | estimated | NA | conservative |
-| consumption | electricity_access_share_2001 | -0.0429979908965591 | 0.0399940599062751 | -1.07510942868325 | 0.283041782602796 | 0.227819945172438 | 0.633433076595918 | 69.8305454858381 | 1.82302531754277e-151 | 408 | 0.896700539523071 | 0.883859446369862 | 6.98079496129006 | estimated | NA | conservative |
-| consumption | log_population_density_2001 | 0.784084668306461 | 1.04519079359982 | 0.750183290082316 | 0.453631614321166 | 0.227819945172438 | 0.633433076595918 | 69.8305454858381 | 1.82302531754277e-151 | 408 | 0.896700539523071 | 0.883859446369862 | 6.98079496129006 | estimated | NA | conservative |
-| consumption | state_code_200102 | -39.169991260188 | 4.53559682417887 | -8.63612723498178 | 1.8819206273889e-16 | 0.227819945172438 | 0.633433076595918 | 69.8305454858381 | 1.82302531754277e-151 | 408 | 0.896700539523071 | 0.883859446369862 | 6.98079496129006 | estimated | NA | conservative |
-| consumption | state_code_200103 | -32.0856516846615 | 5.89986695336247 | -5.43836868497097 | 9.91404238574205e-08 | 0.227819945172438 | 0.633433076595918 | 69.8305454858381 | 1.82302531754277e-151 | 408 | 0.896700539523071 | 0.883859446369862 | 6.98079496129006 | estimated | NA | conservative |
-| consumption | state_code_200104 | -32.2419377570089 | 6.82231127274106 | -4.72595524713647 | 3.2841016131521e-06 | 0.227819945172438 | 0.633433076595918 | 69.8305454858381 | 1.82302531754277e-151 | 408 | 0.896700539523071 | 0.883859446369862 | 6.98079496129006 | estimated | NA | conservative |
-| consumption | state_code_200105 | -42.9579618802284 | 4.23643369508536 | -10.1401237389986 | 1.96393211806533e-21 | 0.227819945172438 | 0.633433076595918 | 69.8305454858381 | 1.82302531754277e-151 | 408 | 0.896700539523071 | 0.883859446369862 | 6.98079496129006 | estimated | NA | conservative |
-| consumption | state_code_200106 | -37.5133004889443 | 5.49709904449756 | -6.82419948872744 | 3.73350967233428e-11 | 0.227819945172438 | 0.633433076595918 | 69.8305454858381 | 1.82302531754277e-151 | 408 | 0.896700539523071 | 0.883859446369862 | 6.98079496129006 | estimated | NA | conservative |
-| consumption | state_code_200107 | -48.0762296576165 | 6.71677840495765 | -7.15763223960633 | 4.60001940115843e-12 | 0.227819945172438 | 0.633433076595918 | 69.8305454858381 | 1.82302531754277e-151 | 408 | 0.896700539523071 | 0.883859446369862 | 6.98079496129006 | estimated | NA | conservative |
-| consumption | state_code_200108 | -40.8449332250981 | 5.30213061205465 | -7.70349435229589 | 1.28215228242005e-13 | 0.227819945172438 | 0.633433076595918 | 69.8305454858381 | 1.82302531754277e-151 | 408 | 0.896700539523071 | 0.883859446369862 | 6.98079496129006 | estimated | NA | conservative |
-| consumption | state_code_200109 | -47.1277449594518 | 4.89271305206 | -9.63223153657242 | 1.06450533285146e-19 | 0.227819945172438 | 0.633433076595918 | 69.8305454858381 | 1.82302531754277e-151 | 408 | 0.896700539523071 | 0.883859446369862 | 6.98079496129006 | estimated | NA | conservative |
-| consumption | state_code_200110 | -47.6312484337771 | 4.98457815453467 | -9.55572306363479 | 1.9230687408278e-19 | 0.227819945172438 | 0.633433076595918 | 69.8305454858381 | 1.82302531754277e-151 | 408 | 0.896700539523071 | 0.883859446369862 | 6.98079496129006 | estimated | NA | conservative |
-| consumption | state_code_200111 | 32.8957721000397 | 4.6291710835769 | 7.10619061299019 | 6.38406399678203e-12 | 0.227819945172438 | 0.633433076595918 | 69.8305454858381 | 1.82302531754277e-151 | 408 | 0.896700539523071 | 0.883859446369862 | 6.98079496129006 | estimated | NA | conservative |
-| consumption | state_code_200112 | 20.2355428686157 | 4.46087730647173 | 4.53622493478098 | 7.80008281934357e-06 | 0.227819945172438 | 0.633433076595918 | 69.8305454858381 | 1.82302531754277e-151 | 408 | 0.896700539523071 | 0.883859446369862 | 6.98079496129006 | estimated | NA | conservative |
-| consumption | state_code_200113 | 26.4207604514554 | 4.93471597204044 | 5.35405899775237 | 1.53110077226205e-07 | 0.227819945172438 | 0.633433076595918 | 69.8305454858381 | 1.82302531754277e-151 | 408 | 0.896700539523071 | 0.883859446369862 | 6.98079496129006 | estimated | NA | conservative |
-| consumption | state_code_200114 | 0.0125294161450687 | 4.32370989139693 | 0.00289783923061049 | 0.997689458290232 | 0.227819945172438 | 0.633433076595918 | 69.8305454858381 | 1.82302531754277e-151 | 408 | 0.896700539523071 | 0.883859446369862 | 6.98079496129006 | estimated | NA | conservative |
-| consumption | state_code_200115 | -4.76572627420509 | 4.81805507859775 | -0.989139019056651 | 0.323255804586912 | 0.227819945172438 | 0.633433076595918 | 69.8305454858381 | 1.82302531754277e-151 | 408 | 0.896700539523071 | 0.883859446369862 | 6.98079496129006 | estimated | NA | conservative |
-| consumption | state_code_200116 | -46.821542582084 | 5.71844092263819 | -8.18781608755048 | 4.60508434920912e-15 | 0.227819945172438 | 0.633433076595918 | 69.8305454858381 | 1.82302531754277e-151 | 408 | 0.896700539523071 | 0.883859446369862 | 6.98079496129006 | estimated | NA | conservative |
-| consumption | state_code_200117 | -1.61907386446178 | 5.10725000564603 | -0.317014804967822 | 0.751415117407806 | 0.227819945172438 | 0.633433076595918 | 69.8305454858381 | 1.82302531754277e-151 | 408 | 0.896700539523071 | 0.883859446369862 | 6.98079496129006 | estimated | NA | conservative |
-| consumption | state_code_200118 | -50.8122842071973 | 4.38026588066793 | -11.6002739540206 | 1.14028937449719e-26 | 0.227819945172438 | 0.633433076595918 | 69.8305454858381 | 1.82302531754277e-151 | 408 | 0.896700539523071 | 0.883859446369862 | 6.98079496129006 | estimated | NA | conservative |
-| consumption | state_code_200119 | -53.1127524059743 | 5.67967545453984 | -9.35137101249695 | 9.20851564007608e-19 | 0.227819945172438 | 0.633433076595918 | 69.8305454858381 | 1.82302531754277e-151 | 408 | 0.896700539523071 | 0.883859446369862 | 6.98079496129006 | estimated | NA | conservative |
-| Table truncated in rendered note; full CSV has 573 rows. |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| model | term | estimate | std.error | statistic | p.value | partial_f | partial_p | effective_f | effective_f_critical_value | effective_f_p_value | effective_f_df | effective_f_status | effective_f_reason | model_f | model_p | nobs | r.squared | adj.r.squared | sigma | status | reason | panel_variant |
+|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| consumption | (Intercept) | 29.1135443787051 | 12.1422218126479 | 2.39771145906585 | 0.0169784181954553 | 0.22193022409798 | 0.637842720053828 | 0.248142455290654 | 23.1085112116065 | 0.996266615831656 | 1 | estimated | NA | 73.059442697815 | 6.03998814478412e-160 | 427 | 0.896147789552738 | 0.883881780444793 | 6.83362936287745 | estimated | NA | conservative |
+| consumption | ling_distance_nonzero_mean | 0.362076010329722 | 0.768584329274174 | 0.471094708204179 | 0.637842720053828 | 0.22193022409798 | 0.637842720053828 | 0.248142455290654 | 23.1085112116065 | 0.996266615831656 | 1 | estimated | NA | 73.059442697815 | 6.03998814478412e-160 | 427 | 0.896147789552738 | 0.883881780444793 | 6.83362936287745 | estimated | NA | conservative |
+| consumption | log_population_2001 | 0.912669709451914 | 0.855832806120807 | 1.06641122299194 | 0.286913077449348 | 0.22193022409798 | 0.637842720053828 | 0.248142455290654 | 23.1085112116065 | 0.996266615831656 | 1 | estimated | NA | 73.059442697815 | 6.03998814478412e-160 | 427 | 0.896147789552738 | 0.883881780444793 | 6.83362936287745 | estimated | NA | conservative |
+| consumption | urban_share_2001 | 0.0618732602092341 | 0.0469209490809123 | 1.31867026181711 | 0.188071462062763 | 0.22193022409798 | 0.637842720053828 | 0.248142455290654 | 23.1085112116065 | 0.996266615831656 | 1 | estimated | NA | 73.059442697815 | 6.03998814478412e-160 | 427 | 0.896147789552738 | 0.883881780444793 | 6.83362936287745 | estimated | NA | conservative |
+| consumption | adult_secondary_plus_share_2001 | 0.623617520268029 | 0.210309299831599 | 2.96523986703098 | 0.00321483513748479 | 0.22193022409798 | 0.637842720053828 | 0.248142455290654 | 23.1085112116065 | 0.996266615831656 | 1 | estimated | NA | 73.059442697815 | 6.03998814478412e-160 | 427 | 0.896147789552738 | 0.883881780444793 | 6.83362936287745 | estimated | NA | conservative |
+| consumption | sc_share_2001 | 0.00530406727021377 | 0.0868345412975932 | 0.0610824585580068 | 0.951325567519993 | 0.22193022409798 | 0.637842720053828 | 0.248142455290654 | 23.1085112116065 | 0.996266615831656 | 1 | estimated | NA | 73.059442697815 | 6.03998814478412e-160 | 427 | 0.896147789552738 | 0.883881780444793 | 6.83362936287745 | estimated | NA | conservative |
+| consumption | st_share_2001 | 0.0580963525304376 | 0.0291119078513304 | 1.99562161391572 | 0.0466866910778503 | 0.22193022409798 | 0.637842720053828 | 0.248142455290654 | 23.1085112116065 | 0.996266615831656 | 1 | estimated | NA | 73.059442697815 | 6.03998814478412e-160 | 427 | 0.896147789552738 | 0.883881780444793 | 6.83362936287745 | estimated | NA | conservative |
+| consumption | muslim_share_2001 | 0.0809842977467963 | 0.0716706706056205 | 1.1299503278325 | 0.259208012621369 | 0.22193022409798 | 0.637842720053828 | 0.248142455290654 | 23.1085112116065 | 0.996266615831656 | 1 | estimated | NA | 73.059442697815 | 6.03998814478412e-160 | 427 | 0.896147789552738 | 0.883881780444793 | 6.83362936287745 | estimated | NA | conservative |
+| consumption | agricultural_worker_share_2001 | -0.0660513691744471 | 0.0645318550095524 | -1.02354672997808 | 0.306698850737927 | 0.22193022409798 | 0.637842720053828 | 0.248142455290654 | 23.1085112116065 | 0.996266615831656 | 1 | estimated | NA | 73.059442697815 | 6.03998814478412e-160 | 427 | 0.896147789552738 | 0.883881780444793 | 6.83362936287745 | estimated | NA | conservative |
+| consumption | dependency_ratio_2001 | -0.0586733997695848 | 0.0785306933651693 | -0.747139713853695 | 0.455440061474466 | 0.22193022409798 | 0.637842720053828 | 0.248142455290654 | 23.1085112116065 | 0.996266615831656 | 1 | estimated | NA | 73.059442697815 | 6.03998814478412e-160 | 427 | 0.896147789552738 | 0.883881780444793 | 6.83362936287745 | estimated | NA | conservative |
+| consumption | electricity_access_share_2001 | -0.0317403197195621 | 0.0379643346351369 | -0.836056262400178 | 0.403647273445829 | 0.22193022409798 | 0.637842720053828 | 0.248142455290654 | 23.1085112116065 | 0.996266615831656 | 1 | estimated | NA | 73.059442697815 | 6.03998814478412e-160 | 427 | 0.896147789552738 | 0.883881780444793 | 6.83362936287745 | estimated | NA | conservative |
+| consumption | log_population_density_2001 | 0.72175456014711 | 0.950637643343743 | 0.759232043040536 | 0.448183226966155 | 0.22193022409798 | 0.637842720053828 | 0.248142455290654 | 23.1085112116065 | 0.996266615831656 | 1 | estimated | NA | 73.059442697815 | 6.03998814478412e-160 | 427 | 0.896147789552738 | 0.883881780444793 | 6.83362936287745 | estimated | NA | conservative |
+| consumption | state_code_200102 | -38.9387629813487 | 4.42186498042517 | -8.80595928499034 | 4.62020885396448e-17 | 0.22193022409798 | 0.637842720053828 | 0.248142455290654 | 23.1085112116065 | 0.996266615831656 | 1 | estimated | NA | 73.059442697815 | 6.03998814478412e-160 | 427 | 0.896147789552738 | 0.883881780444793 | 6.83362936287745 | estimated | NA | conservative |
+| consumption | state_code_200103 | -31.7137502472428 | 5.66224413192732 | -5.60091538060335 | 4.0900028785941e-08 | 0.22193022409798 | 0.637842720053828 | 0.248142455290654 | 23.1085112116065 | 0.996266615831656 | 1 | estimated | NA | 73.059442697815 | 6.03998814478412e-160 | 427 | 0.896147789552738 | 0.883881780444793 | 6.83362936287745 | estimated | NA | conservative |
+| consumption | state_code_200104 | -31.8380546630073 | 6.45973909879902 | -4.92869048982591 | 1.23732963327532e-06 | 0.22193022409798 | 0.637842720053828 | 0.248142455290654 | 23.1085112116065 | 0.996266615831656 | 1 | estimated | NA | 73.059442697815 | 6.03998814478412e-160 | 427 | 0.896147789552738 | 0.883881780444793 | 6.83362936287745 | estimated | NA | conservative |
+| consumption | state_code_200105 | -42.141166907219 | 4.16685644539671 | -10.1134194228779 | 1.86374251659295e-21 | 0.22193022409798 | 0.637842720053828 | 0.248142455290654 | 23.1085112116065 | 0.996266615831656 | 1 | estimated | NA | 73.059442697815 | 6.03998814478412e-160 | 427 | 0.896147789552738 | 0.883881780444793 | 6.83362936287745 | estimated | NA | conservative |
+| consumption | state_code_200106 | -36.8018712550995 | 5.34065332887149 | -6.8908931152953 | 2.30570361421391e-11 | 0.22193022409798 | 0.637842720053828 | 0.248142455290654 | 23.1085112116065 | 0.996266615831656 | 1 | estimated | NA | 73.059442697815 | 6.03998814478412e-160 | 427 | 0.896147789552738 | 0.883881780444793 | 6.83362936287745 | estimated | NA | conservative |
+| consumption | state_code_200107 | -47.524711854011 | 6.33937506727581 | -7.4967502868439 | 4.63110307287468e-13 | 0.22193022409798 | 0.637842720053828 | 0.248142455290654 | 23.1085112116065 | 0.996266615831656 | 1 | estimated | NA | 73.059442697815 | 6.03998814478412e-160 | 427 | 0.896147789552738 | 0.883881780444793 | 6.83362936287745 | estimated | NA | conservative |
+| consumption | state_code_200108 | -39.639506102258 | 5.29824809115055 | -7.48162513727251 | 5.12038124707989e-13 | 0.22193022409798 | 0.637842720053828 | 0.248142455290654 | 23.1085112116065 | 0.996266615831656 | 1 | estimated | NA | 73.059442697815 | 6.03998814478412e-160 | 427 | 0.896147789552738 | 0.883881780444793 | 6.83362936287745 | estimated | NA | conservative |
+| consumption | state_code_200109 | -45.8371921525671 | 4.78805009650286 | -9.57324823857756 | 1.34809848913762e-19 | 0.22193022409798 | 0.637842720053828 | 0.248142455290654 | 23.1085112116065 | 0.996266615831656 | 1 | estimated | NA | 73.059442697815 | 6.03998814478412e-160 | 427 | 0.896147789552738 | 0.883881780444793 | 6.83362936287745 | estimated | NA | conservative |
+| consumption | state_code_200110 | -45.8835326592827 | 4.90505916525275 | -9.35432807504542 | 7.34770156130689e-19 | 0.22193022409798 | 0.637842720053828 | 0.248142455290654 | 23.1085112116065 | 0.996266615831656 | 1 | estimated | NA | 73.059442697815 | 6.03998814478412e-160 | 427 | 0.896147789552738 | 0.883881780444793 | 6.83362936287745 | estimated | NA | conservative |
+| consumption | state_code_200111 | 33.787110133085 | 4.70261027246694 | 7.1847565874007 | 3.56939979738696e-12 | 0.22193022409798 | 0.637842720053828 | 0.248142455290654 | 23.1085112116065 | 0.996266615831656 | 1 | estimated | NA | 73.059442697815 | 6.03998814478412e-160 | 427 | 0.896147789552738 | 0.883881780444793 | 6.83362936287745 | estimated | NA | conservative |
+| consumption | state_code_200112 | 20.8802795737675 | 4.48274647433752 | 4.65792114126939 | 4.42015545172844e-06 | 0.22193022409798 | 0.637842720053828 | 0.248142455290654 | 23.1085112116065 | 0.996266615831656 | 1 | estimated | NA | 73.059442697815 | 6.03998814478412e-160 | 427 | 0.896147789552738 | 0.883881780444793 | 6.83362936287745 | estimated | NA | conservative |
+| consumption | state_code_200113 | 26.8432572378412 | 4.76866059218729 | 5.62909788166088 | 3.51850240928447e-08 | 0.22193022409798 | 0.637842720053828 | 0.248142455290654 | 23.1085112116065 | 0.996266615831656 | 1 | estimated | NA | 73.059442697815 | 6.03998814478412e-160 | 427 | 0.896147789552738 | 0.883881780444793 | 6.83362936287745 | estimated | NA | conservative |
+| consumption | state_code_200114 | 0.775460985518326 | 4.24388205508911 | 0.182724443198986 | 0.855111425101807 | 0.22193022409798 | 0.637842720053828 | 0.248142455290654 | 23.1085112116065 | 0.996266615831656 | 1 | estimated | NA | 73.059442697815 | 6.03998814478412e-160 | 427 | 0.896147789552738 | 0.883881780444793 | 6.83362936287745 | estimated | NA | conservative |
+| consumption | state_code_200115 | -4.2243122126648 | 4.74152962457226 | -0.890917604051853 | 0.373535628270465 | 0.22193022409798 | 0.637842720053828 | 0.248142455290654 | 23.1085112116065 | 0.996266615831656 | 1 | estimated | NA | 73.059442697815 | 6.03998814478412e-160 | 427 | 0.896147789552738 | 0.883881780444793 | 6.83362936287745 | estimated | NA | conservative |
+| consumption | state_code_200116 | -45.6612403524063 | 5.62460846049442 | -8.11811891851981 | 6.62124952111233e-15 | 0.22193022409798 | 0.637842720053828 | 0.248142455290654 | 23.1085112116065 | 0.996266615831656 | 1 | estimated | NA | 73.059442697815 | 6.03998814478412e-160 | 427 | 0.896147789552738 | 0.883881780444793 | 6.83362936287745 | estimated | NA | conservative |
+| consumption | state_code_200117 | -0.874674338858261 | 4.98112415634735 | -0.175597779016144 | 0.860703234374744 | 0.22193022409798 | 0.637842720053828 | 0.248142455290654 | 23.1085112116065 | 0.996266615831656 | 1 | estimated | NA | 73.059442697815 | 6.03998814478412e-160 | 427 | 0.896147789552738 | 0.883881780444793 | 6.83362936287745 | estimated | NA | conservative |
+| consumption | state_code_200118 | -49.3881438164164 | 4.39415513387959 | -11.2395084633281 | 1.65445648132673e-25 | 0.22193022409798 | 0.637842720053828 | 0.248142455290654 | 23.1085112116065 | 0.996266615831656 | 1 | estimated | NA | 73.059442697815 | 6.03998814478412e-160 | 427 | 0.896147789552738 | 0.883881780444793 | 6.83362936287745 | estimated | NA | conservative |
+| consumption | state_code_200119 | -51.7956859788009 | 5.52940542765676 | -9.36731564658495 | 6.64887334277246e-19 | 0.22193022409798 | 0.637842720053828 | 0.248142455290654 | 23.1085112116065 | 0.996266615831656 | 1 | estimated | NA | 73.059442697815 | 6.03998814478412e-160 | 427 | 0.896147789552738 | 0.883881780444793 | 6.83362936287745 | estimated | NA | conservative |
+| Table truncated in rendered note; full CSV has 573 rows. |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 
 First-stage comparison
 
@@ -623,66 +631,66 @@ analysis_table(variant_coefficients, "2SLS coefficient comparison", max_rows = 6
 
 | model | term | estimate | std.error | statistic | p.value | status | reason | panel_variant |
 |:---|:---|:---|:---|:---|:---|:---|:---|:---|
-| consumption | (Intercept) | -2.89653886858279 | 5.81606812459402 | -0.498023545552088 | 0.618769860191365 | estimated | NA | conservative |
-| consumption | emi_exposure_all_children_0708 | 0.0727563339996072 | 0.171600208747156 | 0.423987444600432 | 0.671826801385073 | estimated | NA | conservative |
-| consumption | log_population_2001 | -0.0435559266331799 | 0.171289354986109 | -0.254282740668339 | 0.799421510505145 | estimated | NA | conservative |
-| consumption | urban_share_2001 | 0.000763988423242638 | 0.0106670052498485 | 0.0716216412524491 | 0.942942569482279 | estimated | NA | conservative |
-| consumption | adult_secondary_plus_share_2001 | -0.0394464869520867 | 0.103866494029515 | -0.379780672493648 | 0.704330935492414 | estimated | NA | conservative |
-| consumption | sc_share_2001 | -0.0025482827264456 | 0.00908444014539454 | -0.280510706841685 | 0.779245951810267 | estimated | NA | conservative |
-| consumption | st_share_2001 | -0.00521321987635797 | 0.00851174510346966 | -0.612473683479184 | 0.540608939423826 | estimated | NA | conservative |
-| consumption | muslim_share_2001 | -0.00492440469263457 | 0.0110055984185666 | -0.447445427804002 | 0.65482110018577 | estimated | NA | conservative |
-| consumption | agricultural_worker_share_2001 | 0.00659057018198255 | 0.0122578262061258 | 0.537662230737858 | 0.591140624867893 | estimated | NA | conservative |
-| consumption | dependency_ratio_2001 | 0.0120890616850412 | 0.0132154737896729 | 0.914765666175972 | 0.360923572655546 | estimated | NA | conservative |
-| consumption | electricity_access_share_2001 | 0.00161330687181742 | 0.00789240316390871 | 0.204412627980655 | 0.83814593864755 | estimated | NA | conservative |
-| consumption | log_population_density_2001 | -0.116526162619184 | 0.168397103511875 | -0.691972487584783 | 0.48939819075034 | estimated | NA | conservative |
-| consumption | factor(state_code_2001)02 | 3.25819863947314 | 6.8840116212461 | 0.473299410102297 | 0.636284860681236 | estimated | NA | conservative |
-| consumption | factor(state_code_2001)03 | 2.71125118621086 | 5.76000754554047 | 0.470702714323695 | 0.638136537740094 | estimated | NA | conservative |
-| consumption | factor(state_code_2001)04 | 2.51609913102835 | 5.77737280560408 | 0.435509221178824 | 0.66345240418993 | estimated | NA | conservative |
-| consumption | factor(state_code_2001)05 | 3.47312714762984 | 7.5098518090479 | 0.462476122823808 | 0.64401777333946 | estimated | NA | conservative |
-| consumption | factor(state_code_2001)06 | 2.97820942788465 | 6.6793815973206 | 0.445881012260079 | 0.655949756963579 | estimated | NA | conservative |
-| consumption | factor(state_code_2001)07 | 3.72794503179262 | 8.40140582606197 | 0.44372871742824 | 0.657503832194123 | estimated | NA | conservative |
-| consumption | factor(state_code_2001)08 | 3.06044562271587 | 7.23558016423398 | 0.422971697258485 | 0.672567064004368 | estimated | NA | conservative |
-| consumption | factor(state_code_2001)09 | 3.44129020664322 | 8.19891436453296 | 0.419725106720181 | 0.67493526934544 | estimated | NA | conservative |
-| consumption | factor(state_code_2001)10 | 3.40209316954003 | 8.25009664211903 | 0.41237009905695 | 0.680312273807898 | estimated | NA | conservative |
-| consumption | factor(state_code_2001)11 | -2.17390854721993 | 5.59623292684331 | -0.38845926816098 | 0.697904549736053 | estimated | NA | conservative |
-| consumption | factor(state_code_2001)12 | -1.8328305771578 | 3.41380987101247 | -0.53688712799176 | 0.591675396898782 | estimated | NA | conservative |
-| consumption | factor(state_code_2001)13 | -2.1656755021207 | 4.4778347921571 | -0.483643457751918 | 0.628931345413523 | estimated | NA | conservative |
-| consumption | factor(state_code_2001)14 | -0.350218077864765 | 0.367660951175313 | -0.952557177326588 | 0.341450069111659 | estimated | NA | conservative |
-| consumption | factor(state_code_2001)15 | 0.372355480960188 | 0.937018885317365 | 0.397383112330839 | 0.691319171479896 | estimated | NA | conservative |
-| consumption | factor(state_code_2001)16 | 3.798673534048 | 8.11463923736362 | 0.46812599093218 | 0.639976216107999 | estimated | NA | conservative |
-| consumption | factor(state_code_2001)17 | 0.0392883027564792 | 0.524496021585836 | 0.074906769812456 | 0.940330266599583 | estimated | NA | conservative |
-| consumption | factor(state_code_2001)18 | 3.50527997357106 | 8.79450079993024 | 0.398576343707748 | 0.690440384075735 | estimated | NA | conservative |
-| consumption | factor(state_code_2001)19 | 4.11177740526014 | 9.1600317998221 | 0.448882437868829 | 0.653785058235439 | estimated | NA | conservative |
-| consumption | factor(state_code_2001)20 | 3.1099699088736 | 8.02118451034332 | 0.38771953255324 | 0.698451474823122 | estimated | NA | conservative |
-| consumption | factor(state_code_2001)21 | 3.45381507980656 | 7.92668161542507 | 0.435720172371443 | 0.663299466959675 | estimated | NA | conservative |
-| consumption | factor(state_code_2001)22 | 3.18893680140006 | 7.87964397534816 | 0.404705696269629 | 0.685932881250791 | estimated | NA | conservative |
-| consumption | factor(state_code_2001)23 | 3.19382674449332 | 7.44969252545259 | 0.428719270437177 | 0.668382532607895 | estimated | NA | conservative |
-| consumption | factor(state_code_2001)24 | 3.92095975424027 | 8.88490870232093 | 0.441305576186284 | 0.659255254033094 | estimated | NA | conservative |
-| consumption | factor(state_code_2001)25 | 2.87737871870686 | 6.73484595945427 | 0.427237495264111 | 0.669460358837737 | estimated | NA | conservative |
-| consumption | factor(state_code_2001)26 | 3.9033188502023 | 8.81975620534198 | 0.442565390621356 | 0.658344438068411 | estimated | NA | conservative |
-| consumption | factor(state_code_2001)27 | 3.35914517655026 | 8.11749732130365 | 0.413815372348135 | 0.679254382009817 | estimated | NA | conservative |
-| consumption | factor(state_code_2001)28 | 2.41607027910035 | 5.32096192477253 | 0.45406644761955 | 0.65005311664737 | estimated | NA | conservative |
-| consumption | factor(state_code_2001)29 | 2.95412968915719 | 6.88499124099599 | 0.429068038833096 | 0.668128942152963 | estimated | NA | conservative |
-| consumption | factor(state_code_2001)30 | 2.551422202777 | 5.85509833228864 | 0.43576077769811 | 0.663270030173516 | estimated | NA | conservative |
-| consumption | factor(state_code_2001)31 | 2.60841112433219 | 5.61757835557579 | 0.464330172047032 | 0.642690331020036 | estimated | NA | conservative |
-| consumption | factor(state_code_2001)32 | 2.15820618132485 | 4.5709716018089 | 0.472154799752151 | 0.637100790219247 | estimated | NA | conservative |
-| consumption | factor(state_code_2001)33 | 2.90146441371593 | 6.35085147801339 | 0.456862268588832 | 0.648044064698581 | estimated | NA | conservative |
-| consumption | factor(state_code_2001)34 | 1.39585328553269 | 3.20477071473558 | 0.435554805563634 | 0.663419354833235 | estimated | NA | conservative |
-| consumption | factor(state_code_2001)35 | 2.17007896328995 | 5.29511919991595 | 0.40982627233857 | 0.682175804354476 | estimated | NA | conservative |
-| consumption_ancova | (Intercept) | 3.5027605947378 | 1.16293386060272 | 3.01200327327506 | 0.00277824048514968 | estimated | NA | conservative |
-| consumption_ancova | emi_exposure_all_children_0708 | -0.0168615787396221 | 0.0256327441939258 | -0.657814029276576 | 0.511076870862456 | estimated | NA | conservative |
-| consumption_ancova | log_real_consumption_0708 | 0.508460286152201 | 0.250169053960242 | 2.03246675839054 | 0.0428379599500482 | estimated | NA | conservative |
-| consumption_ancova | log_population_2001 | 0.0375430576475441 | 0.0321925966510758 | 1.16620159766732 | 0.244302811319764 | estimated | NA | conservative |
-| consumption_ancova | urban_share_2001 | 0.00649909876549562 | 0.00243255446859678 | 2.67171767349762 | 0.00788832474482935 | estimated | NA | conservative |
-| consumption_ancova | adult_secondary_plus_share_2001 | 0.0178616601135744 | 0.0158394353021456 | 1.12767025925191 | 0.260208131996683 | estimated | NA | conservative |
-| consumption_ancova | sc_share_2001 | -0.00402824682808887 | 0.00249075792121182 | -1.61727753379141 | 0.106691810253879 | estimated | NA | conservative |
-| consumption_ancova | st_share_2001 | -0.00078819784456981 | 0.00191806180000012 | -0.410934540570987 | 0.681364353727166 | estimated | NA | conservative |
-| consumption_ancova | muslim_share_2001 | 0.000918417866513965 | 0.00256214949796275 | 0.358456002369975 | 0.720211614353701 | estimated | NA | conservative |
-| consumption_ancova | agricultural_worker_share_2001 | -0.000410443414090993 | 0.00144551980657611 | -0.283941743464019 | 0.776617808689357 | estimated | NA | conservative |
-| consumption_ancova | dependency_ratio_2001 | 0.00355164599951714 | 0.00228955779601804 | 1.55123666486782 | 0.121721183813549 | estimated | NA | conservative |
-| consumption_ancova | electricity_access_share_2001 | -0.000856601507554136 | 0.00153271962506583 | -0.558876844496165 | 0.57659228255384 | estimated | NA | conservative |
-| consumption_ancova | log_population_density_2001 | -0.0286741229672734 | 0.0305878194156416 | -0.937435996258377 | 0.349161059133659 | estimated | NA | conservative |
-| consumption_ancova | factor(state_code_2001)02 | -0.330927348945205 | 0.976025712770239 | -0.339055974259058 | 0.734764703564238 | estimated | NA | conservative |
+| consumption | (Intercept) | -2.88104295679186 | 5.90047260511596 | -0.488273253619358 | 0.625637194624227 | estimated | NA | conservative |
+| consumption | emi_exposure_all_children_0708 | 0.0762623143657719 | 0.182966370756378 | 0.416810554040645 | 0.677051714116524 | estimated | NA | conservative |
+| consumption | log_population_2001 | -0.0394970596647893 | 0.161907281373534 | -0.243948631153074 | 0.807401911182836 | estimated | NA | conservative |
+| consumption | urban_share_2001 | 0.000671201382575712 | 0.0105870703958972 | 0.063398216643182 | 0.949482654737772 | estimated | NA | conservative |
+| consumption | adult_secondary_plus_share_2001 | -0.0444213225711461 | 0.116654171346253 | -0.38079497765489 | 0.703567615654477 | estimated | NA | conservative |
+| consumption | sc_share_2001 | -0.00427980934352011 | 0.00754717791285982 | -0.567074129288465 | 0.57099775917845 | estimated | NA | conservative |
+| consumption | st_share_2001 | -0.00627640066070332 | 0.0111440502535205 | -0.563206421177126 | 0.573625620517183 | estimated | NA | conservative |
+| consumption | muslim_share_2001 | -0.00636373757918334 | 0.0146219545503351 | -0.43521798383907 | 0.66365064209145 | estimated | NA | conservative |
+| consumption | agricultural_worker_share_2001 | 0.00710397220398863 | 0.013707713359003 | 0.518246334595466 | 0.604587231333758 | estimated | NA | conservative |
+| consumption | dependency_ratio_2001 | 0.0112057628738145 | 0.0121197538095139 | 0.924586674773713 | 0.355766159884238 | estimated | NA | conservative |
+| consumption | electricity_access_share_2001 | 0.000938396444381623 | 0.00662305030570934 | 0.141686443718038 | 0.887402571093742 | estimated | NA | conservative |
+| consumption | log_population_density_2001 | -0.110204734732799 | 0.165274008559377 | -0.666800156258122 | 0.505303389710072 | estimated | NA | conservative |
+| consumption | factor(state_code_2001)02 | 3.38066749280983 | 7.27756266575828 | 0.46453292786007 | 0.642531312634029 | estimated | NA | conservative |
+| consumption | factor(state_code_2001)03 | 2.79238152698549 | 6.05238520136092 | 0.461368771828601 | 0.644797334280147 | estimated | NA | conservative |
+| consumption | factor(state_code_2001)04 | 2.60287354868943 | 6.07067312192835 | 0.428761934041117 | 0.668338796790664 | estimated | NA | conservative |
+| consumption | factor(state_code_2001)05 | 3.56556832079961 | 7.8456715556903 | 0.45446311325811 | 0.649754342110451 | estimated | NA | conservative |
+| consumption | factor(state_code_2001)06 | 3.05686728947944 | 6.97082217238177 | 0.438523206285577 | 0.661255598529105 | estimated | NA | conservative |
+| consumption | factor(state_code_2001)07 | 3.85778429766987 | 8.84757566419368 | 0.436027273921194 | 0.663063890828148 | estimated | NA | conservative |
+| consumption | factor(state_code_2001)08 | 3.11472695931669 | 7.4723019735538 | 0.416836333748345 | 0.67703287263142 | estimated | NA | conservative |
+| consumption | factor(state_code_2001)09 | 3.50917645622684 | 8.49913107704354 | 0.412886496797921 | 0.67992202990942 | estimated | NA | conservative |
+| consumption | factor(state_code_2001)10 | 3.43712560593395 | 8.47343073539824 | 0.405635652578733 | 0.685238023258765 | estimated | NA | conservative |
+| consumption | factor(state_code_2001)11 | -2.35387077750069 | 6.14791495675409 | -0.382873021838848 | 0.702027429134488 | estimated | NA | conservative |
+| consumption | factor(state_code_2001)12 | -1.93840463110441 | 3.77828561825566 | -0.513038141356641 | 0.608221975602949 | estimated | NA | conservative |
+| consumption | factor(state_code_2001)13 | -2.28220459955561 | 4.86741857533235 | -0.468873708770726 | 0.639428076457489 | estimated | NA | conservative |
+| consumption | factor(state_code_2001)14 | -0.399404581431247 | 0.395578013828071 | -1.00967335764227 | 0.313292594495537 | estimated | NA | conservative |
+| consumption | factor(state_code_2001)15 | 0.360743791320296 | 0.884057908146443 | 0.40805448149505 | 0.683462890658846 | estimated | NA | conservative |
+| consumption | factor(state_code_2001)16 | 3.86959467194925 | 8.42682431558082 | 0.459199637613727 | 0.646352685126429 | estimated | NA | conservative |
+| consumption | factor(state_code_2001)17 | -0.0020800822308307 | 0.463499539067391 | -0.00448777626622032 | 0.996421633433118 | estimated | NA | conservative |
+| consumption | factor(state_code_2001)18 | 3.58041370168208 | 9.10699286094577 | 0.393149940529354 | 0.694428631014692 | estimated | NA | conservative |
+| consumption | factor(state_code_2001)19 | 4.19083365575611 | 9.52266934506153 | 0.440090220913685 | 0.660121315534527 | estimated | NA | conservative |
+| consumption | factor(state_code_2001)20 | 3.17646734588192 | 8.29043841820176 | 0.383148295138161 | 0.701823496451659 | estimated | NA | conservative |
+| consumption | factor(state_code_2001)21 | 3.49552702141757 | 8.15400079125268 | 0.428688580109956 | 0.668392138945153 | estimated | NA | conservative |
+| consumption | factor(state_code_2001)22 | 3.25163952482371 | 8.13842395381507 | 0.399541673335834 | 0.689718001628528 | estimated | NA | conservative |
+| consumption | factor(state_code_2001)23 | 3.27163082892589 | 7.74079204408416 | 0.422648071449769 | 0.672790475888949 | estimated | NA | conservative |
+| consumption | factor(state_code_2001)24 | 4.02011107591533 | 9.25048065135318 | 0.43458402081272 | 0.664110422486679 | estimated | NA | conservative |
+| consumption | factor(state_code_2001)25 | 2.95679273855304 | 7.0405809530032 | 0.419964312361439 | 0.674748251661399 | estimated | NA | conservative |
+| consumption | factor(state_code_2001)26 | 4.04635607039885 | 9.2993431480441 | 0.435122782973107 | 0.663719678218692 | estimated | NA | conservative |
+| consumption | factor(state_code_2001)27 | 3.444985721559 | 8.43413359575772 | 0.408457570946208 | 0.683167241338524 | estimated | NA | conservative |
+| consumption | factor(state_code_2001)28 | 2.68128839202401 | 6.07490455913688 | 0.441371278498731 | 0.659194604511434 | estimated | NA | conservative |
+| consumption | factor(state_code_2001)29 | 3.02372318691018 | 7.15388139502919 | 0.422668900970483 | 0.67277528964249 | estimated | NA | conservative |
+| consumption | factor(state_code_2001)30 | 2.60954753674483 | 6.0641881574282 | 0.430321004065206 | 0.667205456568825 | estimated | NA | conservative |
+| consumption | factor(state_code_2001)31 | 2.85991075520928 | 6.31953565951463 | 0.452550774185984 | 0.651129822624965 | estimated | NA | conservative |
+| consumption | factor(state_code_2001)32 | 2.18263674346603 | 4.70613223472175 | 0.463785681023279 | 0.643066155978735 | estimated | NA | conservative |
+| consumption | factor(state_code_2001)33 | 2.93077612257673 | 6.52350629319798 | 0.449263937344958 | 0.653496718693101 | estimated | NA | conservative |
+| consumption | factor(state_code_2001)34 | 1.41225887649022 | 3.28623208413188 | 0.429750194245121 | 0.667620309075454 | estimated | NA | conservative |
+| consumption | factor(state_code_2001)35 | 2.74970489614579 | 6.64172301732207 | 0.414004752829103 | 0.679103586446312 | estimated | NA | conservative |
+| consumption_ancova | (Intercept) | 3.5435534725349 | 1.16619545860707 | 3.03855879936918 | 0.00254148099977624 | estimated | NA | conservative |
+| consumption_ancova | emi_exposure_all_children_0708 | -0.0172556054093973 | 0.0260705240198455 | -0.661881801695351 | 0.508448141788384 | estimated | NA | conservative |
+| consumption_ancova | log_real_consumption_0708 | 0.504366581667584 | 0.251255993488845 | 2.00738129532411 | 0.0454167043816847 | estimated | NA | conservative |
+| consumption_ancova | log_population_2001 | 0.0353413934738245 | 0.0297017221013045 | 1.18987691532783 | 0.234837645847784 | estimated | NA | conservative |
+| consumption_ancova | urban_share_2001 | 0.00625935312159159 | 0.00229851393199356 | 2.7232173947115 | 0.00676308431172877 | estimated | NA | conservative |
+| consumption_ancova | adult_secondary_plus_share_2001 | 0.0180679687551226 | 0.0166882612062958 | 1.0826753327846 | 0.279639080120457 | estimated | NA | conservative |
+| consumption_ancova | sc_share_2001 | -0.00309248681060939 | 0.00241662450429986 | -1.27967204052884 | 0.201441234839491 | estimated | NA | conservative |
+| consumption_ancova | st_share_2001 | -0.000475283797762718 | 0.00213811490642392 | -0.222291045413293 | 0.824206745047706 | estimated | NA | conservative |
+| consumption_ancova | muslim_share_2001 | 0.00124928653278197 | 0.0029751372103807 | 0.419908879638566 | 0.67478933528337 | estimated | NA | conservative |
+| consumption_ancova | agricultural_worker_share_2001 | -0.000613893329504781 | 0.0013595553616723 | -0.451539780439446 | 0.651858154383885 | estimated | NA | conservative |
+| consumption_ancova | dependency_ratio_2001 | 0.00327656131425719 | 0.00219037228832643 | 1.49589242510033 | 0.135511719358204 | estimated | NA | conservative |
+| consumption_ancova | electricity_access_share_2001 | -0.000675136435717075 | 0.00132831064054451 | -0.508266978453413 | 0.611561048156264 | estimated | NA | conservative |
+| consumption_ancova | log_population_density_2001 | -0.0245428421921847 | 0.0294323853643802 | -0.833872004879598 | 0.40487697118045 | estimated | NA | conservative |
+| consumption_ancova | factor(state_code_2001)02 | -0.345757847422941 | 0.984649583836011 | -0.351148117156495 | 0.725671834890971 | estimated | NA | conservative |
 | Table truncated in rendered note; full CSV has 573 rows. |  |  |  |  |  |  |  |  |
 
 2SLS coefficient comparison
@@ -693,6 +701,7 @@ analysis_table(variant_ginis, "Pooled-Gini reconstruction comparison", max_rows 
 
 | target_unit_2001 | wave | source_count | household_count | pooled_gini | status | panel_variant |
 |:---|:---|:---|:---|:---|:---|:---|
+| pc2001\_\_35\_\_01 | nss_2007_08 | 2 | 384 | 0.317772027089032 | reconstructed | conservative |
 | pc2001\_\_01\_\_03 | nss_2017_18 | 2 | 504 | 0.237026915221307 | reconstructed | conservative |
 | pc2001\_\_01\_\_05 | nss_2017_18 | 2 | 168 | 0.176028438954906 | reconstructed | conservative |
 | pc2001\_\_01\_\_06 | nss_2017_18 | 2 | 344 | 0.18198398694606 | reconstructed | conservative |
@@ -702,6 +711,7 @@ analysis_table(variant_ginis, "Pooled-Gini reconstruction comparison", max_rows 
 | pc2001\_\_13\_\_07 | nss_2017_18 | 2 | 272 | 0.223081724421003 | reconstructed | conservative |
 | pc2001\_\_20\_\_02 | nss_2017_18 | 2 | 248 | 0.19675114120572 | reconstructed | conservative |
 | pc2001\_\_20\_\_04 | nss_2017_18 | 2 | 256 | 0.278996132651325 | reconstructed | conservative |
+| pc2001\_\_20\_\_11 | nss_2017_18 | 2 | 224 | 0.274616923611997 | reconstructed | conservative |
 | pc2001\_\_20\_\_14 | nss_2017_18 | 2 | 312 | 0.310130004385182 | reconstructed | conservative |
 | pc2001\_\_20\_\_16 | nss_2017_18 | 2 | 157 | 0.165273450415545 | reconstructed | conservative |
 | pc2001\_\_20\_\_17 | nss_2017_18 | 2 | 224 | 0.295847765155981 | reconstructed | conservative |
@@ -709,21 +719,19 @@ analysis_table(variant_ginis, "Pooled-Gini reconstruction comparison", max_rows 
 | pc2001\_\_22\_\_10 | nss_2017_18 | 3 | 351 | 0.364902629109211 | reconstructed | conservative |
 | pc2001\_\_22\_\_11 | nss_2017_18 | 3 | 416 | 0.386967790805563 | reconstructed | conservative |
 | pc2001\_\_22\_\_15 | nss_2017_18 | 2 | 160 | 0.301929644793495 | reconstructed | conservative |
+| pc2001\_\_23\_\_07 | nss_2017_18 | 2 | 160 | 0.22425701006349 | reconstructed | conservative |
 | pc2001\_\_23\_\_16 | nss_2017_18 | 2 | 160 | 0.235098573324951 | reconstructed | conservative |
 | pc2001\_\_23\_\_24 | nss_2017_18 | 2 | 160 | 0.275611458106063 | reconstructed | conservative |
 | pc2001\_\_24\_\_22 | nss_2017_18 | 2 | 416 | 0.221109587553377 | reconstructed | conservative |
+| pc2001\_\_28\_\_01 | nss_2017_18 | 4 | 320 | 0.224234490293759 | reconstructed | conservative |
+| pc2001\_\_28\_\_02 | nss_2017_18 | 2 | 256 | 0.243329263944395 | reconstructed | conservative |
+| pc2001\_\_28\_\_03 | nss_2017_18 | 4 | 320 | 0.165024888762024 | reconstructed | conservative |
 | pc2001\_\_28\_\_04 | nss_2017_18 | 3 | 352 | 0.236526966527562 | reconstructed | conservative |
-| pc2001\_\_33\_\_05 | nss_2017_18 | 2 | 320 | 0.200926339062392 | reconstructed | conservative |
-| pc2001\_\_01\_\_02 | nss_2017_18 | 2 | 336 | 0.223770111043748 | reconstructed | primary |
-| pc2001\_\_01\_\_03 | nss_2017_18 | 2 | 504 | 0.237026915221307 | reconstructed | primary |
-| pc2001\_\_01\_\_05 | nss_2017_18 | 2 | 168 | 0.176028438954906 | reconstructed | primary |
-| pc2001\_\_01\_\_06 | nss_2017_18 | 2 | 344 | 0.18198398694606 | reconstructed | primary |
-| pc2001\_\_01\_\_09 | nss_2017_18 | 2 | 224 | 0.217823881485283 | reconstructed | primary |
-| pc2001\_\_03\_\_01 | nss_2017_18 | 2 | 288 | 0.267211918373247 | reconstructed | primary |
-| pc2001\_\_03\_\_02 | nss_2017_18 | 2 | 477 | 0.240260105744902 | reconstructed | primary |
-| pc2001\_\_03\_\_11 | nss_2017_18 | 2 | 224 | 0.208157246223697 | reconstructed | primary |
-| pc2001\_\_03\_\_16 | nss_2017_18 | 2 | 288 | 0.225166522732911 | reconstructed | primary |
-| Table truncated in rendered note; full CSV has 126 rows. |  |  |  |  |  |  |
+| pc2001\_\_28\_\_06 | nss_2017_18 | 2 | 448 | 0.269173483314496 | reconstructed | conservative |
+| pc2001\_\_28\_\_07 | nss_2017_18 | 4 | 384 | 0.215548685880166 | reconstructed | conservative |
+| pc2001\_\_28\_\_08 | nss_2017_18 | 3 | 384 | 0.178989532402066 | reconstructed | conservative |
+| pc2001\_\_28\_\_09 | nss_2017_18 | 4 | 351 | 0.201619299977395 | reconstructed | conservative |
+| Table truncated in rendered note; full CSV has 139 rows. |  |  |  |  |  |  |
 
 Pooled-Gini reconstruction comparison
 
@@ -735,6 +743,7 @@ analysis_table(conservative_crosswalk, "Conservative crosswalk", max_rows = 50)
 |:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|
 | nss_2007_08\_\_andaman and nicobar islands\_\_35101\_\_south andaman | nss_2007_08 | 35101 | Andaman & Nicober | South Andaman | andaman and nicobar islands | south andaman | pc2001\_\_35\_\_01 | 35 | 1 | identity_or_documented_rename_to_2001 |
 | nss_2007_08\_\_andaman and nicobar islands\_\_35102\_\_nicobars | nss_2007_08 | 35102 | Andaman & Nicober | Nicobars | andaman and nicobar islands | nicobars | pc2001\_\_35\_\_02 | 35 | 2 | identity_or_documented_rename_to_2001 |
+| nss_2007_08\_\_andaman and nicobar islands\_\_35103\_\_north and middle andaman | nss_2007_08 | 35103 | Andaman & Nicober | North and Middle Andaman | andaman and nicobar islands | north and middle andaman | pc2001\_\_35\_\_01 | 35 | 1 | deterministic_2011_to_2001 |
 | nss_2007_08\_\_andhra pradesh\_\_28111\_\_srikakulam | nss_2007_08 | 28111 | Andhra Pardesh | Srikakulam | andhra pradesh | srikakulam | pc2001\_\_28\_\_11 | 28 | 11 | identity_or_documented_rename_to_2001 |
 | nss_2007_08\_\_andhra pradesh\_\_28112\_\_vizianagaram | nss_2007_08 | 28112 | Andhra Pardesh | Vizianagaram | andhra pradesh | vizianagaram | pc2001\_\_28\_\_12 | 28 | 12 | identity_or_documented_rename_to_2001 |
 | nss_2007_08\_\_andhra pradesh\_\_28113\_\_visakhapatnam | nss_2007_08 | 28113 | Andhra Pardesh | Visakhapatnam | andhra pradesh | visakhapatnam | pc2001\_\_28\_\_13 | 28 | 13 | identity_or_documented_rename_to_2001 |
@@ -782,8 +791,7 @@ analysis_table(conservative_crosswalk, "Conservative crosswalk", max_rows = 50)
 | nss_2007_08\_\_assam\_\_18202\_\_dhubri | nss_2007_08 | 18202 | Assam | Dhubri | assam | dhubri | pc2001\_\_18\_\_02 | 18 | 2 | identity_or_documented_rename_to_2001 |
 | nss_2007_08\_\_assam\_\_18203\_\_goalpara | nss_2007_08 | 18203 | Assam | Goalpara | assam | goalpara | pc2001\_\_18\_\_03 | 18 | 3 | identity_or_documented_rename_to_2001 |
 | nss_2007_08\_\_assam\_\_18204\_\_bongaigaon | nss_2007_08 | 18204 | Assam | Bongaigaon | assam | bongaigaon | pc2001\_\_18\_\_04 | 18 | 4 | identity_or_documented_rename_to_2001 |
-| nss_2007_08\_\_assam\_\_18205\_\_barpeta | nss_2007_08 | 18205 | Assam | Barpeta | assam | barpeta | pc2001\_\_18\_\_05 | 18 | 5 | identity_or_documented_rename_to_2001 |
-| Table truncated in rendered note; full CSV has 1024 rows. |  |  |  |  |  |  |  |  |  |  |
+| Table truncated in rendered note; full CSV has 1064 rows. |  |  |  |  |  |  |  |  |  |  |
 
 Conservative crosswalk
 
@@ -795,6 +803,7 @@ analysis_table(primary_crosswalk, "Primary crosswalk", max_rows = 50)
 |:---|:---|:---|:---|:---|:---|:---|:---|
 | nss_2007_08\_\_andaman and nicobar islands\_\_35101\_\_south andaman | nss_2007_08 | 35101 | pc2001\_\_35\_\_01 | 1 | identity_or_documented_rename_to_2001 | NA | primary |
 | nss_2007_08\_\_andaman and nicobar islands\_\_35102\_\_nicobars | nss_2007_08 | 35102 | pc2001\_\_35\_\_02 | 1 | identity_or_documented_rename_to_2001 | NA | primary |
+| nss_2007_08\_\_andaman and nicobar islands\_\_35103\_\_north and middle andaman | nss_2007_08 | 35103 | pc2001\_\_35\_\_01 | 1 | deterministic_2011_to_2001 | NA | primary |
 | nss_2007_08\_\_andhra pradesh\_\_28111\_\_srikakulam | nss_2007_08 | 28111 | pc2001\_\_28\_\_11 | 1 | identity_or_documented_rename_to_2001 | NA | primary |
 | nss_2007_08\_\_andhra pradesh\_\_28112\_\_vizianagaram | nss_2007_08 | 28112 | pc2001\_\_28\_\_12 | 1 | identity_or_documented_rename_to_2001 | NA | primary |
 | nss_2007_08\_\_andhra pradesh\_\_28113\_\_visakhapatnam | nss_2007_08 | 28113 | pc2001\_\_28\_\_13 | 1 | identity_or_documented_rename_to_2001 | NA | primary |
@@ -842,8 +851,7 @@ analysis_table(primary_crosswalk, "Primary crosswalk", max_rows = 50)
 | nss_2007_08\_\_assam\_\_18202\_\_dhubri | nss_2007_08 | 18202 | pc2001\_\_18\_\_02 | 1 | identity_or_documented_rename_to_2001 | NA | primary |
 | nss_2007_08\_\_assam\_\_18203\_\_goalpara | nss_2007_08 | 18203 | pc2001\_\_18\_\_03 | 1 | identity_or_documented_rename_to_2001 | NA | primary |
 | nss_2007_08\_\_assam\_\_18204\_\_bongaigaon | nss_2007_08 | 18204 | pc2001\_\_18\_\_04 | 1 | identity_or_documented_rename_to_2001 | NA | primary |
-| nss_2007_08\_\_assam\_\_18205\_\_barpeta | nss_2007_08 | 18205 | pc2001\_\_18\_\_05 | 1 | identity_or_documented_rename_to_2001 | NA | primary |
-| Table truncated in rendered note; full CSV has 1232 rows. |  |  |  |  |  |  |  |
+| Table truncated in rendered note; full CSV has 1233 rows. |  |  |  |  |  |  |  |
 
 Primary crosswalk
 
@@ -855,6 +863,7 @@ analysis_table(full_reviewed_crosswalk, "Full reviewed crosswalk", max_rows = 50
 |:---|:---|:---|:---|:---|:---|:---|:---|
 | nss_2007_08\_\_andaman and nicobar islands\_\_35101\_\_south andaman | nss_2007_08 | 35101 | pc2001\_\_35\_\_01 | 1 | identity_or_documented_rename_to_2001 | NA | deterministic |
 | nss_2007_08\_\_andaman and nicobar islands\_\_35102\_\_nicobars | nss_2007_08 | 35102 | pc2001\_\_35\_\_02 | 1 | identity_or_documented_rename_to_2001 | NA | deterministic |
+| nss_2007_08\_\_andaman and nicobar islands\_\_35103\_\_north and middle andaman | nss_2007_08 | 35103 | pc2001\_\_35\_\_01 | 1 | deterministic_2011_to_2001 | NA | deterministic |
 | nss_2007_08\_\_andhra pradesh\_\_28111\_\_srikakulam | nss_2007_08 | 28111 | pc2001\_\_28\_\_11 | 1 | identity_or_documented_rename_to_2001 | NA | deterministic |
 | nss_2007_08\_\_andhra pradesh\_\_28112\_\_vizianagaram | nss_2007_08 | 28112 | pc2001\_\_28\_\_12 | 1 | identity_or_documented_rename_to_2001 | NA | deterministic |
 | nss_2007_08\_\_andhra pradesh\_\_28113\_\_visakhapatnam | nss_2007_08 | 28113 | pc2001\_\_28\_\_13 | 1 | identity_or_documented_rename_to_2001 | NA | deterministic |
@@ -902,7 +911,6 @@ analysis_table(full_reviewed_crosswalk, "Full reviewed crosswalk", max_rows = 50
 | nss_2007_08\_\_assam\_\_18202\_\_dhubri | nss_2007_08 | 18202 | pc2001\_\_18\_\_02 | 1 | identity_or_documented_rename_to_2001 | NA | deterministic |
 | nss_2007_08\_\_assam\_\_18203\_\_goalpara | nss_2007_08 | 18203 | pc2001\_\_18\_\_03 | 1 | identity_or_documented_rename_to_2001 | NA | deterministic |
 | nss_2007_08\_\_assam\_\_18204\_\_bongaigaon | nss_2007_08 | 18204 | pc2001\_\_18\_\_04 | 1 | identity_or_documented_rename_to_2001 | NA | deterministic |
-| nss_2007_08\_\_assam\_\_18205\_\_barpeta | nss_2007_08 | 18205 | pc2001\_\_18\_\_05 | 1 | identity_or_documented_rename_to_2001 | NA | deterministic |
 | Table truncated in rendered note; full CSV has 1279 rows. |  |  |  |  |  |  |  |
 
 Full reviewed crosswalk
@@ -1046,7 +1054,7 @@ analysis_table(reclassification, "NSS-75 identity classes", max_rows = 60)
 | source_row_id | wave | source_code | raw_state | raw_district | status | eligible_conservative | target_unit_2001 | exclusion_reason | recovery_class | recommended_panel | allocation_target_count | allocation_weight_sum | allocation_basis | allocation_source_id |
 |:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|
 | nss_2007_08\_\_andaman and nicobar islands\_\_35102\_\_nicobars | nss_2007_08 | 35102 | Andaman & Nicober | Nicobars | accepted | TRUE | pc2001\_\_35\_\_02 | NA | conservative_mapping | conservative | NA | NA | NA | NA |
-| nss_2007_08\_\_andaman and nicobar islands\_\_35103\_\_north and middle andaman | nss_2007_08 | 35103 | Andaman & Nicober | North and Middle Andaman | accepted | FALSE | NA | primary_near_complete_requires_review | primary_near_complete | primary | 1 | 1 | population_renormalized_min_99pct_mapped | shrug_pc_keys |
+| nss_2007_08\_\_andaman and nicobar islands\_\_35103\_\_north and middle andaman | nss_2007_08 | 35103 | Andaman & Nicober | North and Middle Andaman | accepted | TRUE | pc2001\_\_35\_\_01 | NA | conservative_mapping | conservative | 1 | 1 | population_renormalized_min_99pct_mapped | shrug_pc_keys |
 | nss_2007_08\_\_andaman and nicobar islands\_\_35101\_\_south andaman | nss_2007_08 | 35101 | Andaman & Nicober | South Andaman | accepted | TRUE | pc2001\_\_35\_\_01 | NA | conservative_mapping | conservative | NA | NA | NA | NA |
 | nss_2007_08\_\_andhra pradesh\_\_28301\_\_adilabad | nss_2007_08 | 28301 | Andhra Pardesh | Adilabad | accepted | TRUE | pc2001\_\_28\_\_01 | NA | conservative_mapping | conservative | NA | NA | NA | NA |
 | nss_2007_08\_\_andhra pradesh\_\_28522\_\_anantpur | nss_2007_08 | 28522 | Andhra Pardesh | Anantpur | accepted | TRUE | pc2001\_\_28\_\_22 | NA | conservative_mapping | conservative | NA | NA | NA | NA |
@@ -1321,7 +1329,7 @@ analysis_table(legacy_comparison, "Archived legacy crosswalk comparison", max_ro
 | nss_2007_08\_\_assam\_\_18410\_\_nagaon | nss_2007_08 | 18410 | pc2001\_\_18\_\_10 | pc2001\_\_18\_\_10 | same_target | NA | not_required |
 | nss_2007_08\_\_assam\_\_18411\_\_sonitpur | nss_2007_08 | 18411 | pc2001\_\_18\_\_11 | pc2001\_\_18\_\_11 | same_target | NA | not_required |
 | nss_2007_08\_\_bihar\_\_10103\_\_sheohar | nss_2007_08 | 10103 | pc2001\_\_10\_\_03 | pc2001\_\_10\_\_03 | same_target | NA | not_required |
-| Table truncated in rendered note; full CSV has 1024 rows. |  |  |  |  |  |  |  |
+| Table truncated in rendered note; full CSV has 1064 rows. |  |  |  |  |  |  |  |
 
 Archived legacy crosswalk comparison
 

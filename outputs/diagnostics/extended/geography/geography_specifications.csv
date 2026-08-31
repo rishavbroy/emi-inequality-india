@@ -1,0 +1,6 @@
+"geography_spec_id","allows_fractional_allocation","fractional_basis","description"
+"G0_exact_only",FALSE,NA,"Exact one-to-one or directly identified geography only."
+"G1_deterministic_amalgamation",FALSE,NA,"Exact closed constant-boundary components; no fractional allocation."
+"G2_population_interpolated",TRUE,"population","G1 plus population-weighted unresolved changes for compatible human quantities."
+"G3_area_interpolated",TRUE,"area","G1 plus area-weighted unresolved changes for area-compatible quantities."
+"G4_reviewed_fractional",TRUE,"reviewed","G1 plus externally reviewed source-specific fractional allocation."

@@ -48,7 +48,7 @@ analysis_table(fuzzy_summary, "Fuzzy matching diagnostic summary")
 
 | n_tracker_rows | n_join_rows | n_unmatched_rows | n_candidate_pairs | n_active_candidate_pairs |
 |---:|---:|---:|---:|---:|
-| 21534 | 734 | 0 | 487 | 478 |
+| 21526 | 734 | 0 | 487 | 478 |
 
 Fuzzy matching diagnostic summary
 
