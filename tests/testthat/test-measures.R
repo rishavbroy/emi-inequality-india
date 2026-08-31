@@ -810,6 +810,40 @@ test_that("reviewed Census-Glottolog crosswalk rejects unknown or bookkeeping en
   expect_error(validate_census_glottolog_crosswalk(crosswalk, g), "invalid genealogy")
 })
 
+test_that("exact-label Glottolog reuse requires reviewed unique identities", {
+  g <- data.frame(
+    id = c("indo1319", "hind1269", "gujarati"),
+    family_id = c("", "indo1319", "indo1319"),
+    parent_id = c("", "indo1319", "indo1319"),
+    name = c("Indo-European", "Hindi", "Gujarati"),
+    bookkeeping = FALSE,
+    level = c("family", "language", "language"),
+    iso639P3code = c("", "hin", "guj"),
+    stringsAsFactors = FALSE
+  )
+  crosswalk <- data.frame(
+    mother_tongue_code = c("006118", "005011", "999999"),
+    mother_tongue = c("Hindi", "Gujarati", "Unreviewed"),
+    canonical_language = c("Hindi", "Gujarati", "Unreviewed"),
+    language_glottocode = c("hind1269", "gujarati", ""),
+    family_id = c("indo1319", "indo1319", ""),
+    match_basis = c("manual", "manual", ""),
+    review_status = c("accepted_manual", "accepted_manual", "unresolved"),
+    stringsAsFactors = FALSE
+  )
+  rows <- data.frame(
+    mother_tongue = c("HINDI", "Gujarati", "Unreviewed"),
+    canonical_language = c("Hindi", "Gujarati", "Unreviewed"),
+    stringsAsFactors = FALSE
+  )
+
+  out <- attach_exact_label_glottolog_distance(rows, list(languoids = g), crosswalk)
+
+  expect_equal(out$glottolog_edge_distance[[1]], 0)
+  expect_true(is.finite(out$glottolog_edge_distance[[2]]))
+  expect_true(is.na(out$glottolog_edge_distance[[3]]))
+})
+
 test_that("Glottolog district mean excludes Hindi, Urdu, and English by construction", {
   # Production distance is anchored to Glottolog's persistent Hindi ID hind1269.
   g <- data.frame(

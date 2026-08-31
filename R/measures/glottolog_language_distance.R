@@ -170,6 +170,41 @@ glottolog_distance_from_hindi <- function(glottocode, languoids, hindi = "hind12
   )
 }
 
+attach_exact_label_glottolog_distance <- function(rows, glottolog, crosswalk) {
+  rows <- safe_df(rows)
+  required <- c("mother_tongue", "canonical_language")
+  if (!all(required %in% names(rows))) {
+    stop("Exact-label Glottolog attachment requires mother_tongue and canonical_language.", call. = FALSE)
+  }
+  validate_census_glottolog_crosswalk(crosswalk, glottolog$languoids)
+
+  accepted <- grepl("^accepted_", plain_chr(crosswalk$review_status))
+  accepted_labels <- normalize_language_label(crosswalk$mother_tongue[accepted])
+  if (anyDuplicated(accepted_labels)) {
+    stop("Accepted Census-Glottolog labels must be unique for exact-label reuse.", call. = FALSE)
+  }
+
+  index <- match(
+    normalize_language_label(rows$mother_tongue),
+    accepted_labels
+  )
+  accepted_rows <- which(accepted)
+  matched <- !is.na(index)
+  rows$glottolog_language_glottocode <- NA_character_
+  rows$glottolog_family_id <- NA_character_
+  rows$glottolog_language_glottocode[matched] <- plain_chr(
+    crosswalk$language_glottocode[accepted_rows[index[matched]]]
+  )
+  rows$glottolog_family_id[matched] <- plain_chr(
+    crosswalk$family_id[accepted_rows[index[matched]]]
+  )
+  rows$glottolog_edge_distance <- glottolog_distance_from_hindi(
+    rows$glottolog_language_glottocode,
+    glottolog$languoids
+  )
+  rows
+}
+
 attach_glottolog_language_distance <- function(census_2001_languages, glottolog, crosswalk) {
   rows <- safe_df(census_2001_languages)
   if (!"mother_tongue_code" %in% names(rows)) {
