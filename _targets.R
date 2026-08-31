@@ -2700,6 +2700,15 @@ extended_diagnostic_targets <- list(
     format = "file"
   ),
   tar_target(
+    diag_ext_english_opportunity_mechanism_figure_files,
+    save_english_opportunity_mechanism_figure(
+      census_2001_c17_mechanism,
+      english_opportunity_district_mechanisms,
+      english_opportunity_measure_registry
+    ),
+    format = "file"
+  ),
+  tar_target(
     dise_dynamic_panel,
     attach_dise_age_6_13_exposure(
       build_dise_longitudinal_panel(

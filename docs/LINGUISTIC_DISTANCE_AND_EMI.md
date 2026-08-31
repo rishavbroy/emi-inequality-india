@@ -228,3 +228,23 @@ quality measures (pupils per teacher, single-teacher-school share, and girls'-to
 share) alongside medium and management measures. This removes a parallel quality-
 data path for the compact district comparison while leaving later report-card
 dynamics in their existing quality diagnostic.
+
+## Mechanism-stage figure
+
+The extended mechanism figure combines the preferred C-17 language-acquisition
+model with the compact district grid using one common descriptive signal: the
+signed square root of the partial R-squared for linguistic distance. For the
+single linear C-17 distance term, partial R-squared is the proportional reduction
+in the native-speaker-weighted residual sum of squares when that term is added to
+the otherwise identical preferred model. For district outcomes, the existing
+standardized partial coefficient already has the same signed-square-root
+interpretation.
+
+The figure therefore compares strength and sign without placing percentage-point,
+enrollment-share, school-stock, and school-quality coefficients on a false common
+scale. It shows no causal arrows and no mediation estimate. The C-17 row appears
+only in the within-state column because its nuisance controls are language-cell
+controls (native-language state share, modal-language status, and the distance-zero
+indicator), whereas district region/state columns use the predetermined Census-2001
+control set. The underlying numerical and specification CSVs remain the audit trail;
+the plot is a paper-organization diagnostic until the empirical pattern is reviewed.

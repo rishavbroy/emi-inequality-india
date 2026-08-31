@@ -78,3 +78,75 @@ test_that("district mechanism reporting uses only preferred district measures", 
   expect_equal(nrow(out$estimates), 3L)
   expect_identical(unique(out$estimates$measure_id), "nss_enrollment")
 })
+
+test_that("mechanism figure combines C-17 and district evidence without mixing observational units", {
+  panel <- make_district_mechanism_fixture()
+  district_registry <- data.frame(
+    measure_id = "nss_enrollment",
+    variable = "enrollment_rate_0708",
+    source = "nss_64_education",
+    unit = "district",
+    stage = "schooling_access",
+    source_side = "household_realized",
+    paper_role = "schooling_access",
+    interpretation = "Realized enrollment",
+    preferred = TRUE,
+    stringsAsFactors = FALSE
+  )
+  district <- diagnose_english_opportunity_district_mechanisms(panel, district_registry)
+  c17 <- list(
+    registry = data.frame(
+      specification_id = "english_linear",
+      outcome = "english_share_multilingual",
+      preferred = TRUE,
+      stringsAsFactors = FALSE
+    ),
+    coefficients = data.frame(
+      specification_id = "english_linear",
+      term = "shastry_degree",
+      signed_partial_correlation = 0.4,
+      partial_r_squared = 0.16,
+      status = "estimated",
+      stringsAsFactors = FALSE
+    ),
+    model_summary = data.frame(
+      specification_id = "english_linear",
+      n = 120,
+      stringsAsFactors = FALSE
+    )
+  )
+  registry <- safe_bind_rows(list(
+    data.frame(
+      measure_id = "c17_english_multilingual",
+      variable = "english_share_multilingual",
+      source = "census_2001_c17",
+      unit = "state_language",
+      stage = "capability_acquisition",
+      source_side = "linguistic_behavior",
+      paper_role = "linguistic_behavioral_mechanism",
+      interpretation = "English acquisition among multilingual speakers",
+      preferred = TRUE,
+      stringsAsFactors = FALSE
+    ),
+    district_registry
+  ))
+
+  out <- english_opportunity_mechanism_figure_data(c17, district, registry)
+
+  expect_equal(nrow(out), 4L)
+  expect_equal(sum(out$measure_id == "c17_english_multilingual"), 1L)
+  expect_identical(
+    out$geography[out$measure_id == "c17_english_multilingual"],
+    "Within state"
+  )
+  expect_equal(
+    out$signal[out$measure_id == "c17_english_multilingual"],
+    0.4
+  )
+  district_rows <- out$measure_id == "nss_enrollment"
+  expect_setequal(
+    out$geography[district_rows],
+    unname(english_opportunity_mechanism_geography_labels())
+  )
+  expect_false(anyDuplicated(out[c("measure_id", "geography_id")]) > 0L)
+})
