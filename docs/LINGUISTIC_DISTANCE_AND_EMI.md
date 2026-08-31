@@ -186,11 +186,21 @@ trilingual speakers are counted once.
 The preferred C-17 specification follows Shastry's language-acquisition equation as
 closely as a single 2001 cross-section permits: state fixed effects, native-language
 share in the state, an indicator for the state's modal native language, native-speaker
-weights, a linear Shastry/Jasanoff distance term, and a separate distance-zero
-indicator for the Hindi/Urdu nonlinearity. Flexible distance bins, a distant-language
-indicator, Hindi acquisition, multilingualism, and male/female splits are retained as
-a deliberately small diagnostic registry. All distance assignments use
-`resolve_shastry_language_degrees()`; C-17 has no parallel language crosswalk.
+weights, a linear Shastry/Jasanoff distance term, and an explicit Hindi/Urdu reference
+indicator for the documented nonlinearity. Flexible Shastry distance bins, a
+distant-language indicator, Hindi acquisition, multilingualism, and male/female
+splits are retained as a deliberately small diagnostic registry.
+
+The registry also carries the two predeclared alternative distance bases rather than
+quietly treating the preferred coding as the only possible language-cost measure.
+Glottolog robustness reuses only accepted rows from the reviewed Census-Glottolog
+crosswalk whose leaf mother-tongue label exactly equals the published C-17 language
+label; it never creates a C-17-specific crosswalk or promotes an unresolved candidate.
+Dyen robustness then reuses the same lexical index and reviewed Glottolog family
+identity, including the documented 5-percent-Hindi-cognate convention for languages
+outside the Indo-European comparison universe. Coverage is reported separately for
+Shastry, Glottolog, and Dyen. The Shastry specification remains preferred; alternative
+bases are robustness checks and are not used to select a more favorable result.
 
 Shastry clusters by state-language in her pooled 1961/1991 language regressions to
 allow serial correlation within a local ethnic group. Census 2001 C-17 supplies only

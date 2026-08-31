@@ -34,7 +34,9 @@ test_that("C-17 mechanism data uses the shared Shastry language identity", {
   expect_equal(unique(out$shastry_degree[out$native_language == "Hindi"]), 0)
   expect_equal(unique(out$shastry_degree[out$native_language == "Gujarati"]), 1)
   expect_equal(unique(out$shastry_degree[out$native_language == "Bengali"]), 3)
-  expect_true(all(out$distance_mapping_status == "mapped"))
+  expect_true(all(is.finite(out$shastry_degree)))
+  expect_equal(unique(out$hindi_urdu_reference[out$native_language == "Hindi"]), 1L)
+  expect_equal(unique(out$hindi_urdu_reference[out$native_language == "Gujarati"]), 0L)
   expect_equal(sum(out$state_modal_language), 3L)
 
   state_share <- tapply(out$native_share_state, out$state_code, sum)
@@ -98,11 +100,81 @@ test_that("C-17 partial R-squared covers expanded distance-bin coefficients", {
   expect_true(all(out$coefficients$partial_r_squared[bin_rows] <= 1))
 })
 
+test_that("C-17 alternative bases reuse reviewed language identities", {
+  languoids <- data.frame(
+    id = c("indo1319", "dravidian", "hind1269", "gujarati", "kannada"),
+    family_id = c("", "", "indo1319", "indo1319", "dravidian"),
+    parent_id = c("", "", "indo1319", "indo1319", "dravidian"),
+    name = c("Indo-European", "Dravidian", "Hindi", "Gujarati", "Kannada"),
+    bookkeeping = FALSE,
+    level = c("family", "family", "language", "language", "language"),
+    iso639P3code = c("", "", "hin", "guj", "kan"),
+    stringsAsFactors = FALSE
+  )
+  crosswalk <- data.frame(
+    mother_tongue_code = c("006118", "005011", "007013"),
+    mother_tongue = c("Hindi", "Gujarati", "Kannada"),
+    canonical_language = c("Hindi", "Gujarati", "Kannada"),
+    language_glottocode = c("hind1269", "gujarati", "kannada"),
+    family_id = c("indo1319", "indo1319", "dravidian"),
+    match_basis = "manual",
+    review_status = "accepted_manual",
+    stringsAsFactors = FALSE
+  )
+  historical <- list(
+    dyen_hindi = data.frame(
+      list_name = c("Hindi", "Gujarati"),
+      percent_cognates_with_hindi = c(100, 64.5502645502645),
+      stringsAsFactors = FALSE
+    )
+  )
+  lexical <- data.frame(
+    language = c("Hindi", "Gujarati", "Kannada"),
+    dyen_list_name = c("Hindi", "Gujarati", NA_character_),
+    kogan_code = NA_character_,
+    match_basis = "test", source_note = "test",
+    stringsAsFactors = FALSE
+  )
+
+  out <- prepare_census_c17_mechanism_data(
+    make_census_c17_mechanism_fixture(),
+    glottolog = list(languoids = languoids),
+    glottolog_crosswalk = crosswalk,
+    historical_linguistics = historical,
+    lexical_index = lexical
+  )
+
+  expect_equal(unique(out$glottolog_edge_distance[out$native_language == "Hindi"]), 0)
+  expect_true(all(is.finite(out$glottolog_edge_distance[out$native_language == "Gujarati"])))
+  expect_equal(
+    unique(out$dyen_noncognate_pct[out$native_language == "Gujarati"]),
+    100 - 64.5502645502645
+  )
+  expect_equal(unique(out$dyen_noncognate_pct[out$native_language == "Kannada"]), 95)
+
+  coverage <- summarize_census_c17_mapping_coverage(out)
+  expect_setequal(unique(coverage$distance_basis), c("shastry", "glottolog", "dyen"))
+})
+
+test_that("C-17 alternative distance specifications remain separate robustness models", {
+  registry <- census_c17_mechanism_registry()
+  expect_identical(
+    registry$distance_variable[registry$specification_id == "english_glottolog"],
+    "glottolog_edge_distance"
+  )
+  expect_identical(
+    registry$distance_variable[registry$specification_id == "english_dyen"],
+    "dyen_noncognate_pct"
+  )
+  expect_false(any(registry$preferred[registry$distance_basis != "shastry"]))
+})
+
 test_that("C-17 mechanism registry stays deliberately small", {
   registry <- census_c17_mechanism_registry()
 
-  expect_equal(nrow(registry), 7L)
+  expect_equal(nrow(registry), 9L)
   expect_equal(sum(registry$preferred), 1L)
+  expect_setequal(unique(registry$distance_basis), c("shastry", "glottolog", "dyen"))
   expect_setequal(unique(registry$distance_form), c("linear", "bins", "distant"))
   expect_setequal(
     unique(registry$outcome),

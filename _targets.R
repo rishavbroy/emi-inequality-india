@@ -2146,7 +2146,12 @@ extended_diagnostic_targets <- list(
   ),
   tar_target(
     census_2001_c17_mechanism,
-    diagnose_census_c17_mechanism(census_2001_c17_state_languages)
+    diagnose_census_c17_mechanism(
+      census_2001_c17_state_languages,
+      glottolog_5_3,
+      census_glottolog_crosswalk,
+      historical_linguistic_sources
+    )
   ),
   tar_target(
     english_opportunity_measure_registry_file,
