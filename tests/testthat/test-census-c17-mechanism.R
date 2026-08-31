@@ -38,7 +38,7 @@ test_that("C-17 mechanism data uses the shared Shastry language identity", {
   expect_equal(sum(out$state_modal_language), 3L)
 
   state_share <- tapply(out$native_share_state, out$state_code, sum)
-  expect_equal(unname(state_share), rep(1, 3), tolerance = 1e-12)
+  expect_equal(as.numeric(state_share), rep(1, 3), tolerance = 1e-12)
 })
 
 test_that("C-17 preferred mechanism model identifies within-state language variation", {

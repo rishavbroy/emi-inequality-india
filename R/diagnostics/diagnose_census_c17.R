@@ -143,10 +143,18 @@ fit_census_c17_mechanism <- function(data, specification) {
     weights = native_speakers
   )
   vcov <- sandwich::vcovHC(model, type = "HC1")
-  test <- as.data.frame(lmtest::coeftest(model, vcov. = vcov), stringsAsFactors = FALSE)
-  test$term <- rownames(test)
-  rownames(test) <- NULL
-  names(test)[1:4] <- c("estimate", "std.error", "statistic", "p.value")
+  coeftest <- lmtest::coeftest(model, vcov. = vcov)
+  if (ncol(coeftest) != 4L) {
+    stop("Census C-17 coefficient table must contain estimate, SE, statistic, and p-value columns.", call. = FALSE)
+  }
+  test <- data.frame(
+    term = rownames(coeftest),
+    estimate = unname(coeftest[, 1L]),
+    std.error = unname(coeftest[, 2L]),
+    statistic = unname(coeftest[, 3L]),
+    p.value = unname(coeftest[, 4L]),
+    stringsAsFactors = FALSE
+  )
   test <- test[census_c17_distance_term(test$term), c(
     "term", "estimate", "std.error", "statistic", "p.value"
   ), drop = FALSE]
