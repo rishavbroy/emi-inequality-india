@@ -40,7 +40,17 @@ All district education-exposure margins are derived from the same weighted NSS c
 - `enrollment_rate_0708`: enrolled children divided by all age-eligible children;
 - `emi_share_enrolled_0708`: English-medium children divided by enrolled children with known medium;
 - `emi_exposure_all_children_0708`: English-medium enrolled children divided by all age-eligible children;
-- `unknown_medium_share_enrolled_0708`: enrolled children whose medium is unavailable.
+- `unknown_medium_share_enrolled_0708`: enrolled children whose medium is unavailable;
+- `private_share_enrolled_0708`: private aided or unaided enrollment among children with known institution management;
+- `emi_share_enrolled_public_0708` and `emi_share_enrolled_private_0708`: English-medium shares within public and private enrolled children whose medium is observed;
+- `emi_share_enrolled_private_aided_0708` and `emi_share_enrolled_private_unaided_0708`: finer private-sector sensitivity measures;
+- four all-child public/private × EMI/non-EMI exposure cells, plus `unknown_school_classification_share_all_children_0708`.
+
+NSS-64 Schedule 25.2 Block 5 codes institution type as government (1), local body (2), private aided (3), private unaided (4), and not known (5). The mechanism decomposition groups codes 1--2 as public and 3--4 as private. Code 5 and missing institution type remain unknown; they are never silently assigned to public schooling. Medium and management missingness are likewise retained as explicit classification mass. The four observed management × medium cells therefore satisfy the accounting identity
+
+`enrollment rate = public EMI + public non-EMI + private EMI + private non-EMI + unknown classification`,
+
+all expressed as shares of the same eligible-child population. These are realized household-side enrollment choices, not structural demand or school-supply measures.
 
 The public treatment is `emi_exposure_all_children_0708`, the survey-weighted share of children ages 5-19 who are both enrolled and observed in English-medium instruction. The historical field `EMIE` remains only for compatibility with legacy comparisons and measures EMI among enrolled children. The exact decomposition into enrollment and the intensive EMI margin is validated only when medium is fully observed; unknown medium is reported rather than classified as non-English.
 

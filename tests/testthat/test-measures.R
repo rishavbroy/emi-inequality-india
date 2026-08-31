@@ -513,6 +513,46 @@ test_that("unknown medium is reported rather than classified as non-EMI", {
 })
 
 
+test_that("NSS school management and medium cells preserve unknown classification", {
+  children <- data.frame(
+    district_code_0708 = rep("01001", 7),
+    AGE = rep(10, 7),
+    enrolled = factor(c("Yes", "Yes", "Yes", "Yes", "Yes", "Yes", "No"), levels = c("No", "Yes")),
+    MEDIUM_INSTRUCTION = c("02", "01", "02", "01", "02", NA, NA),
+    TYPE_OF_INSTT = c(1, 2, 3, 4, 5, 4, NA),
+    weight = c(1, 1, 2, 2, 1, 1, 2),
+    stringsAsFactors = FALSE
+  )
+
+  out <- build_education_exposure_2007(children)
+
+  # Known management excludes code 5; government and local body are public.
+  expect_equal(out$private_share_enrolled_0708, 100 * 5 / 7)
+  expect_equal(out$unknown_management_share_enrolled_0708, 100 / 8)
+  expect_equal(out$emi_share_enrolled_public_0708, 50)
+  expect_equal(out$emi_share_enrolled_private_0708, 50)
+  expect_equal(out$emi_share_enrolled_private_aided_0708, 100)
+  expect_equal(out$emi_share_enrolled_private_unaided_0708, 0)
+
+  four_cells <- unlist(out[c(
+    "public_emi_exposure_all_children_0708",
+    "public_nonemi_exposure_all_children_0708",
+    "private_emi_exposure_all_children_0708",
+    "private_nonemi_exposure_all_children_0708"
+  )], use.names = FALSE)
+  expect_equal(sum(four_cells) + out$unknown_school_classification_share_all_children_0708,
+               out$enrollment_rate_0708, tolerance = 1e-12)
+  expect_silent(validate_education_exposure_identity(out))
+})
+
+test_that("NSS management classifier never converts unknown institutions to public", {
+  out <- classify_nss_2007_school_management(c(1, 2, 3, 4, 5, NA))
+
+  expect_equal(out$public, c(TRUE, TRUE, FALSE, FALSE, FALSE, FALSE))
+  expect_equal(out$private, c(FALSE, FALSE, TRUE, TRUE, FALSE, FALSE))
+  expect_equal(out$management_known, c(TRUE, TRUE, TRUE, TRUE, FALSE, FALSE))
+})
+
 test_that("mapped linguistic-distance shares form a genuine composition", {
   census <- data.frame(
     state_std = "01", district_std = "001",
