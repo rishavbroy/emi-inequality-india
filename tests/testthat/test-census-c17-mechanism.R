@@ -51,7 +51,11 @@ test_that("C-17 preferred mechanism model identifies within-state language varia
   expect_equal(out$summary$n_states, 3L)
   expect_true("shastry_degree" %in% out$coefficients$term)
   expect_true(all(out$coefficients$status == "estimated"))
-  expect_match(deparse(census_c17_mechanism_formula(specification)), "factor\\(state_code\\)")
+  formula_terms <- attr(
+    stats::terms(census_c17_mechanism_formula(specification)),
+    "term.labels"
+  )
+  expect_true("factor(state_code)" %in% formula_terms)
 })
 
 test_that("C-17 mechanism registry stays deliberately small", {
