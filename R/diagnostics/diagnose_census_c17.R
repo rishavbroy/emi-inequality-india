@@ -52,7 +52,8 @@ prepare_census_c17_mechanism_data <- function(
   glottolog = NULL,
   glottolog_crosswalk = NULL,
   historical_linguistics = NULL,
-  lexical_index = read_lexical_language_index()
+  lexical_index = read_lexical_language_index(),
+  shastry_concordance = read_shastry_language_distance()
 ) {
   out <- safe_df(c17)
   required <- c(
@@ -71,7 +72,9 @@ prepare_census_c17_mechanism_data <- function(
   out$mother_tongue_code <- normalize_census_code(out$native_language_code, 6L)
   out$mother_tongue <- normalize_census_language_label(out$native_language)
   out$canonical_language <- out$mother_tongue
-  out$shastry_degree <- resolve_shastry_language_degrees(out)
+  out$shastry_degree <- resolve_shastry_language_degrees(
+    out, concordance = shastry_concordance
+  )
   out$hindi_urdu_reference <- as.integer(out$mother_tongue %in% c("Hindi", "Urdu"))
   out$distance_distant <- as.integer(is.finite(out$shastry_degree) & out$shastry_degree >= 3)
 
@@ -281,10 +284,13 @@ summarize_census_c17_mapping_coverage <- function(data) {
 }
 
 diagnose_census_c17_mechanism <- function(
-  c17, glottolog = NULL, glottolog_crosswalk = NULL, historical_linguistics = NULL
+  c17, glottolog = NULL, glottolog_crosswalk = NULL, historical_linguistics = NULL,
+  shastry_concordance = read_shastry_language_distance(),
+  lexical_index = read_lexical_language_index()
 ) {
   prepared <- prepare_census_c17_mechanism_data(
-    c17, glottolog, glottolog_crosswalk, historical_linguistics
+    c17, glottolog, glottolog_crosswalk, historical_linguistics,
+    lexical_index = lexical_index, shastry_concordance = shastry_concordance
   )
   registry <- census_c17_mechanism_registry()
   fits <- lapply(seq_len(nrow(registry)), function(i) {

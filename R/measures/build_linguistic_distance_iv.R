@@ -642,7 +642,9 @@ build_linguistic_distance_iv <- function(
   glottolog = NULL,
   glottolog_crosswalk = NULL,
   historical_linguistics = NULL,
-  shastry_adjudications = read_shastry_language_adjudications()
+  shastry_adjudications = read_shastry_language_adjudications(),
+  shastry_concordance = read_shastry_language_distance(),
+  lexical_index = read_lexical_language_index()
 ) {
   df <- std(safe_df(census_2001_languages), 2001L)
   if ("ling_degrees" %in% names(df)) validate_supplied_linguistic_distances(df$ling_degrees)
@@ -660,22 +662,25 @@ build_linguistic_distance_iv <- function(
   }
   if (!"ling_degrees" %in% names(df)) {
     df$ling_degrees <- resolve_shastry_language_degrees(
-      df, adjudications = shastry_adjudications, scenario = "preferred"
+      df, concordance = shastry_concordance, adjudications = shastry_adjudications,
+      scenario = "preferred"
     )
   }
   if (!"ling_degrees_sensitivity_low" %in% names(df)) {
     df$ling_degrees_sensitivity_low <- resolve_shastry_language_degrees(
-      df, adjudications = shastry_adjudications, scenario = "sensitivity_low"
+      df, concordance = shastry_concordance, adjudications = shastry_adjudications,
+      scenario = "sensitivity_low"
     )
   }
   if (!"ling_degrees_sensitivity_high" %in% names(df)) {
     df$ling_degrees_sensitivity_high <- resolve_shastry_language_degrees(
-      df, adjudications = shastry_adjudications, scenario = "sensitivity_high"
+      df, concordance = shastry_concordance, adjudications = shastry_adjudications,
+      scenario = "sensitivity_high"
     )
   }
 
   if (!is.null(historical_linguistics)) {
-    df <- attach_dyen_language_distance(df, historical_linguistics)
+    df <- attach_dyen_language_distance(df, historical_linguistics, lexical_index)
   } else if (!"dyen_noncognate_pct" %in% names(df)) {
     df$dyen_noncognate_pct <- NA_real_
   }

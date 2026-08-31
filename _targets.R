@@ -571,8 +571,39 @@ core_pipeline_targets <- list(
   tar_target(raw_census_2001, { raw_data_preflight; read_census_2001_mother_tongue(paths) }),
   tar_target(glottolog_5_3, { raw_data_preflight; read_glottolog_5_3(paths) }),
   tar_target(historical_linguistic_sources, { raw_data_preflight; read_historical_linguistic_sources(paths) }),
-  tar_target(census_glottolog_crosswalk, read_census_language_glottolog_crosswalk()),
-  tar_target(shastry_language_adjudications, read_shastry_language_adjudications()),
+  tar_target(
+    census_glottolog_crosswalk_file,
+    path_metadata(paths, "census_language_glottolog_crosswalk.csv"),
+    format = "file"
+  ),
+  tar_target(
+    census_glottolog_crosswalk,
+    read_census_language_glottolog_crosswalk(census_glottolog_crosswalk_file)
+  ),
+  tar_target(
+    shastry_language_distance_file,
+    path_metadata(paths, "shastry_language_distance.csv"),
+    format = "file"
+  ),
+  tar_target(
+    shastry_language_distance,
+    read_shastry_language_distance(shastry_language_distance_file)
+  ),
+  tar_target(
+    shastry_language_adjudications_file,
+    path_metadata(paths, "shastry_language_adjudications.csv"),
+    format = "file"
+  ),
+  tar_target(
+    shastry_language_adjudications,
+    read_shastry_language_adjudications(shastry_language_adjudications_file)
+  ),
+  tar_target(
+    lexical_language_index_file,
+    path_metadata(paths, "lexical_language_index.csv"),
+    format = "file"
+  ),
+  tar_target(lexical_language_index, read_lexical_language_index(lexical_language_index_file)),
   tar_target(raw_ilo_figures, { raw_data_preflight; list_ilo_figure_paths(paths) }, format = "file"),
   tar_target(
     raw_price_sources,
@@ -653,7 +684,9 @@ core_pipeline_targets <- list(
       glottolog_5_3,
       census_glottolog_crosswalk,
       historical_linguistic_sources,
-      shastry_language_adjudications
+      shastry_adjudications = shastry_language_adjudications,
+      shastry_concordance = shastry_language_distance,
+      lexical_index = lexical_language_index
     )
   ),
   tar_target(
@@ -2084,6 +2117,8 @@ extended_diagnostic_targets <- list(
       census_glottolog_crosswalk,
       glottolog_5_3,
       historical_linguistic_sources,
+      concordance = shastry_language_distance,
+      lexical_index = lexical_language_index,
       adjudications = shastry_language_adjudications
     )
   ),
@@ -2150,7 +2185,9 @@ extended_diagnostic_targets <- list(
       census_2001_c17_state_languages,
       glottolog_5_3,
       census_glottolog_crosswalk,
-      historical_linguistic_sources
+      historical_linguistic_sources,
+      shastry_concordance = shastry_language_distance,
+      lexical_index = lexical_language_index
     )
   ),
   tar_target(

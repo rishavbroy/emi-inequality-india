@@ -266,3 +266,8 @@ signed-partial-correlation data. The table contains only the predeclared unadjus
 region-plus-controls, and within-state columns. C-17 appears only in the within-state
 column because its state-by-language design has a different observational unit and
 nuisance-control set; neither output should be read as a sequential mediation model.
+
+
+### Pipeline dependency contract for reviewed language metadata
+
+The production target graph treats the reviewed Census–Glottolog crosswalk, Shastry distance concordance, Shastry adjudication ledger, and lexical-language index as explicit `format = "file"` inputs. Their parsed objects are injected into the district linguistic-distance builder, C-17 mechanism analysis, and extension diagnostics. This avoids hidden file reads inside target commands: editing a reviewed metadata source invalidates exactly the downstream targets that consume it, while unchanged metadata remains cacheable. Standalone function defaults remain available for interactive use.

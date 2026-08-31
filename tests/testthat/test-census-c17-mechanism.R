@@ -43,6 +43,18 @@ test_that("C-17 mechanism data uses the shared Shastry language identity", {
   expect_equal(as.numeric(state_share), rep(1, 3), tolerance = 1e-12)
 })
 
+test_that("C-17 mechanism honors an injected Shastry concordance", {
+  concordance <- read_shastry_language_distance()
+  concordance$distance_from_hindi[concordance$canonical_language == "Gujarati"] <- 5
+
+  out <- prepare_census_c17_mechanism_data(
+    make_census_c17_mechanism_fixture(),
+    shastry_concordance = concordance
+  )
+
+  expect_equal(unique(out$shastry_degree[out$native_language == "Gujarati"]), 5)
+})
+
 test_that("C-17 preferred mechanism model identifies within-state language variation", {
   data <- prepare_census_c17_mechanism_data(make_census_c17_mechanism_fixture())
   registry <- census_c17_mechanism_registry()
