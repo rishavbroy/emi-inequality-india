@@ -106,28 +106,19 @@ census_c17_distance_term <- function(term) {
     startsWith(term, "distance_distant")
 }
 
-census_c17_term_partial_r_squared <- function(model, term) {
-  term_labels <- attr(stats::terms(model), "term.labels")
-  if (!term %in% term_labels) return(NA_real_)
+census_c17_coefficient_partial_r_squared <- function(model, coefficient) {
+  # For a one-df coefficient in lm/WLS, partial R^2 is exactly
+  # t^2 / (t^2 + residual df), using the model-based t statistic. This is the
+  # standard partial-R^2 identity and avoids refitting the model. Robust HC1
+  # statistics remain the inferential quantities reported separately below.
+  coefficients <- stats::coef(summary(model))
+  row <- match(coefficient, rownames(coefficients))
+  residual_df <- stats::df.residual(model)
+  if (is.na(row) || !is.finite(residual_df) || residual_df <= 0L) return(NA_real_)
 
-  # stats::drop1.lm() evaluates a nested single-term deletion from the fitted
-  # design matrix, so it does not depend on the original data symbol remaining
-  # visible in the caller (unlike update(model, ...)). This is also the standard
-  # base-R implementation for single-term deletion in linear models.
-  deletion <- stats::drop1(
-    model,
-    scope = stats::reformulate(term),
-    test = "none"
-  )
-  row <- deletion[rownames(deletion) == term, , drop = FALSE]
-  if (nrow(row) != 1L || !"RSS" %in% names(row)) return(NA_real_)
-
-  full_rss <- stats::deviance(model)
-  restricted_rss <- num(row$RSS[[1L]])
-  if (!is.finite(full_rss) || !is.finite(restricted_rss) ||
-      restricted_rss <= 0) return(NA_real_)
-  value <- 1 - full_rss / restricted_rss
-  max(0, min(1, value))
+  statistic <- num(coefficients[row, "t value"])
+  if (!is.finite(statistic)) return(NA_real_)
+  statistic^2 / (statistic^2 + residual_df)
 }
 
 fit_census_c17_mechanism <- function(data, specification) {
@@ -184,7 +175,7 @@ fit_census_c17_mechanism <- function(data, specification) {
     "term", "estimate", "std.error", "statistic", "p.value"
   ), drop = FALSE]
   test$partial_r_squared <- vapply(
-    test$term, function(term) census_c17_term_partial_r_squared(model, term), numeric(1)
+    test$term, function(term) census_c17_coefficient_partial_r_squared(model, term), numeric(1)
   )
   test$signed_partial_correlation <- ifelse(
     is.finite(test$partial_r_squared),

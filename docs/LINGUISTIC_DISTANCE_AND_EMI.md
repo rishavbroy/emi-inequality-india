@@ -234,11 +234,13 @@ dynamics in their existing quality diagnostic.
 The extended mechanism figure combines the preferred C-17 language-acquisition
 model with the compact district grid using one common descriptive signal: the
 signed square root of the partial R-squared for linguistic distance. For the
-single linear C-17 distance term, partial R-squared is the proportional reduction
-in the native-speaker-weighted residual sum of squares when that term is added to
-the otherwise identical preferred model. For district outcomes, the existing
-standardized partial coefficient already has the same signed-square-root
-interpretation.
+single linear C-17 distance coefficient, partial R-squared is computed from the
+standard weighted-linear-model identity `t^2 / (t^2 + residual df)`, which is
+algebraically equal to the proportional reduction in native-speaker-weighted
+residual sum of squares from adding that one coefficient. The model-based statistic
+is used only for this descriptive effect-size identity; HC1 statistics remain the
+reported inferential quantities. For district outcomes, the existing standardized
+partial coefficient already has the same signed-square-root interpretation.
 
 The figure therefore compares strength and sign without placing percentage-point,
 enrollment-share, school-stock, and school-quality coefficients on a false common
