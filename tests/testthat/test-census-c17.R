@@ -24,8 +24,10 @@ test_that("C-17 parser preserves its hierarchical language counts", {
 
 
 test_that("C-17 parser ignores the workbook column-number row before code normalization", {
-  header <- as.data.frame(as.list(as.character(1:17)), stringsAsFactors = FALSE)
-  raw <- rbind(header, make_census_c17_fixture())
+  fixture <- make_census_c17_fixture()
+  header <- as.data.frame(matrix(as.character(1:17), nrow = 1L), stringsAsFactors = FALSE)
+  names(header) <- names(fixture)
+  raw <- rbind(header, fixture)
 
   rows <- parse_census_c17_sheet(raw)
 
