@@ -79,7 +79,7 @@ test_that("district mechanism reporting uses only preferred district measures", 
   expect_identical(unique(out$estimates$measure_id), "nss_enrollment")
 })
 
-test_that("mechanism figure combines C-17 and district evidence without mixing observational units", {
+make_english_opportunity_reporting_fixture <- function() {
   panel <- make_district_mechanism_fixture()
   district_registry <- data.frame(
     measure_id = "nss_enrollment",
@@ -130,8 +130,14 @@ test_that("mechanism figure combines C-17 and district evidence without mixing o
     ),
     district_registry
   ))
+  list(c17 = c17, district = district, registry = registry)
+}
 
-  out <- english_opportunity_mechanism_figure_data(c17, district, registry)
+test_that("mechanism figure combines C-17 and district evidence without mixing observational units", {
+  fixture <- make_english_opportunity_reporting_fixture()
+  out <- english_opportunity_mechanism_figure_data(
+    fixture$c17, fixture$district, fixture$registry
+  )
 
   expect_equal(nrow(out), 4L)
   expect_equal(sum(out$measure_id == "c17_english_multilingual"), 1L)
@@ -149,4 +155,26 @@ test_that("mechanism figure combines C-17 and district evidence without mixing o
     unname(english_opportunity_mechanism_geography_labels())
   )
   expect_false(anyDuplicated(out[c("measure_id", "geography_id")]) > 0L)
+})
+
+test_that("mechanism table is a compact wide view of the validated signal data", {
+  fixture <- make_english_opportunity_reporting_fixture()
+  out <- english_opportunity_mechanism_table(
+    fixture$c17, fixture$district, fixture$registry
+  )
+
+  expect_identical(
+    names(out),
+    c("measure_id", "source", "stage", "interpretation", "Unadjusted", "Region + controls", "Within state")
+  )
+  expect_equal(nrow(out), 2L)
+  c17_row <- out$measure_id == "c17_english_multilingual"
+  expect_true(is.na(out$Unadjusted[c17_row]))
+  expect_true(is.na(out[["Region + controls"]][c17_row]))
+  expect_equal(out[["Within state"]][c17_row], 0.4)
+  district_row <- out$measure_id == "nss_enrollment"
+  district_signals <- unlist(
+    out[district_row, c("Unadjusted", "Region + controls", "Within state")]
+  )
+  expect_true(all(is.finite(district_signals)))
 })

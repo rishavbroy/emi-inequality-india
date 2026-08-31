@@ -283,3 +283,63 @@ save_english_opportunity_mechanism_figure <- function(
     dpi = 300
   )
 }
+
+english_opportunity_mechanism_table <- function(
+    c17_diagnostics,
+    district_diagnostics,
+    registry) {
+  long <- english_opportunity_mechanism_figure_data(
+    c17_diagnostics, district_diagnostics, registry
+  )
+  keep <- c("measure_id", "source", "stage", "interpretation", "geography_id", "signal")
+  long <- long[, keep, drop = FALSE]
+
+  id_columns <- c("measure_id", "source", "stage", "interpretation")
+  wide <- stats::reshape(
+    long,
+    idvar = id_columns,
+    timevar = "geography_id",
+    direction = "wide"
+  )
+  desired <- names(english_opportunity_mechanism_geography_labels())
+  for (geography_id in desired) {
+    source_name <- paste0("signal.", geography_id)
+    if (!source_name %in% names(wide)) wide[[source_name]] <- NA_real_
+  }
+  names(wide)[match(paste0("signal.", desired), names(wide))] <- desired
+
+  registry_order <- preferred_district_mechanism_registry(registry)$measure_id
+  c17_order <- safe_df(registry)
+  c17_order <- c17_order[
+    c17_order$unit == "state_language" & c17_order$preferred %in% TRUE,
+    "measure_id", drop = TRUE
+  ]
+  measure_order <- c(c17_order, registry_order)
+  wide <- wide[order(match(wide$measure_id, measure_order)), , drop = FALSE]
+  wide <- wide[c(id_columns, desired)]
+  names(wide)[match(desired, names(wide))] <- unname(
+    english_opportunity_mechanism_geography_labels()[desired]
+  )
+  rownames(wide) <- NULL
+  wide
+}
+
+save_english_opportunity_mechanism_table <- function(
+    c17_diagnostics,
+    district_diagnostics,
+    registry,
+    dir = "outputs/diagnostics/extended/mechanisms") {
+  table <- english_opportunity_mechanism_table(
+    c17_diagnostics, district_diagnostics, registry
+  )
+  dir.create(dir, recursive = TRUE, showWarnings = FALSE)
+  name <- "english_opportunity_mechanism"
+  c(
+    csv = save_table_csv(
+      table, file.path(dir, paste0(name, ".csv")), public = TRUE
+    ),
+    tex = save_table_tex(
+      table, file.path(dir, paste0(name, ".tex")), name, public = TRUE
+    )
+  )
+}
