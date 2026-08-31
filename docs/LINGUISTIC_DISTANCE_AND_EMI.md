@@ -161,3 +161,30 @@ strength.
 An empty `shastry_extension_candidates.csv` now has a stable typed header rather
 than a one-column empty CSV. This is the expected release state: every accepted
 crosswalk identity is either assigned or explicitly frozen unresolved.
+
+## Census 2001 C-17 English-acquisition mechanism
+
+The extended diagnostics now use Census 2001 C-17 at the state × native-language
+level to test the behavioral mechanism that motivates linguistic distance. This is
+not a district IV and does not enter the production treatment or welfare model.
+For each state-language cell, the outcome is the share of multilingual native
+speakers who report English as either their first subsidiary language or, nested
+under a non-English first subsidiary language, their second subsidiary language.
+The multilingual denominator is the sum of first-subsidiary-language counts, so
+trilingual speakers are counted once.
+
+The preferred C-17 specification follows Shastry's language-acquisition equation as
+closely as a single 2001 cross-section permits: state fixed effects, native-language
+share in the state, an indicator for the state's modal native language, native-speaker
+weights, a linear Shastry/Jasanoff distance term, and a separate distance-zero
+indicator for the Hindi/Urdu nonlinearity. Flexible distance bins, a distant-language
+indicator, Hindi acquisition, multilingualism, and male/female splits are retained as
+a deliberately small diagnostic registry. All distance assignments use
+`resolve_shastry_language_degrees()`; C-17 has no parallel language crosswalk.
+
+Shastry clusters by state-language in her pooled 1961/1991 language regressions to
+allow serial correlation within a local ethnic group. Census 2001 C-17 supplies only
+one observation per state-language cell, so that serial-cluster dimension is absent.
+The single-year C-17 diagnostic therefore reports HC1 heteroskedasticity-robust
+standard errors. This difference is explicit rather than imitating a cluster scheme
+whose repeated dimension is not present in the data.
