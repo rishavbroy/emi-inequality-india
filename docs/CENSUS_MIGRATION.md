@@ -9,7 +9,9 @@ Extended diagnostics currently use:
 - Census 2001 **D-02**: migrants classified by place of last residence, sex, and duration of residence in the place of enumeration;
 - Census 2011 **D-02**: the corresponding origin/duration table;
 - Census 2011 **D-03**: migrants by place of last residence, duration of residence, and reason for migration;
-- Census 2011 **D-04**: migrant education by duration, age, and last-residence type; and
+- Census 2011 **D-04**: migrant education by duration, age, and last-residence type;
+- Census 2011 **D-05**: migration reasons by age;
+- Census 2011 **D-06**: migrant economic activity by age; and
 - Census 2011 **D-07**: education and origin of migrants resident for 0-9 years who report work/employment as their reason for migration.
 
 The source workbooks are restored from `data/metadata/census_2001_download_manifest.tsv` and `data/metadata/census_2011_download_manifest.tsv` with `make download-census-tables`. Readers live in `R/io/read_census_migration.R`; count pooling and shares live in `R/measures/build_census_migration.R`.
@@ -27,7 +29,10 @@ Official catalog references:
 - Census 2011 D-02: `https://censusindia.gov.in/nada/index.php/catalog/10743`
 - Census 2011 D-03: `https://censusindia.gov.in/nada/index.php/catalog/10840`
 - Census 2011 D-04: `https://censusindia.gov.in/nada/index.php/catalog/10994`
+- Census 2011 D-05: `https://censusindia.gov.in/nada/index.php/catalog/11030`
+- Census 2011 D-06: `https://censusindia.gov.in/nada/index.php/catalog/11066`
 - Census 2011 D-07: `https://censusindia.gov.in/nada/index.php/catalog/11102`
+- Census 2001 D-06 (state-level only): `https://censusindia.gov.in/nada/index.php/catalog/19659`
 
 ## D-02 district constructs
 
@@ -93,9 +98,19 @@ Those four cells must be present once per district. Counts are summed across the
 
 The four D-07 origin cells sum exactly to the D-03 0-9-year work/employment subtotal for rural/urban last residence within India. `d03_d07_2011_recent_work_validation.csv` records that source-level cross-table check. Because the D-07 universe excludes origins outside India and any unclassified origin, it is not compared with D-03's unrestricted recent-work total.
 
+## D-05 age selectivity and D-06 economic activity
+
+D-05 is read on district-total, all-duration, total-last-residence rows for every published age group. For each district, the seven migration reasons must partition total migrants within every age group, and the detailed age rows (including age not stated) must sum exactly to the published all-ages row for every reason. The descriptive measures retain the share of all migrants age 15-64, the share of work/employment migrants age 20-49, and the share of education migrants age 15-24. These age bands are predeclared summaries of working-age, prime-work-age, and education-age selectivity; they are not optimized against regression results.
+
+D-06 is treated as a 2011-only district source. Within every age group, main workers + marginal workers + non-workers must equal total migrants, while the seeking/available-for-work subsets cannot exceed their marginal-worker or non-worker parent categories. Detailed ages must again exhaust all ages. The harmonized measures summarize working-age (15-64) main-worker, marginal-worker, non-worker, and seeking/available-for-work shares.
+
+The attached 2001 D-06 state workbooks contain district code `00` only, consistent with the official catalog's state-level granularity, so they are **not** used to fabricate a district 2001 baseline. The 2011 D-05/D-06 measures therefore remain descriptive post-treatment mechanism measurements for now rather than longitudinal changes.
+
+D-03 and D-05 must agree exactly on all-age migrant totals and each of the seven reason counts. D-02 and D-06 must agree exactly on all-age migrant totals. These source-level checks are emitted before Census-2011 counts are pooled backward to Census-2001 parents.
+
 ## Geography contract
 
-Census 2001 D-02 rows already use the analytical Census-2001 district geography. Census 2011 D-02/D-03 counts are pooled backward only through `build_complete_deterministic_transition_2011_to_2001()`.
+Census 2001 D-02 rows already use the analytical Census-2001 district geography. Census 2011 D-02 through D-07 counts are pooled backward only through `build_complete_deterministic_transition_2011_to_2001()`.
 
 A 2001 parent is usable only when **every** 2011 district contributing territory to it is wholly and deterministically assigned to that same parent. Partial-parent reconstructions and fractional territorial allocations are excluded. Counts are summed first and shares are recomputed afterward; district shares are never averaged.
 
@@ -142,7 +157,7 @@ The files are `mechanism_registry.csv`, `mechanism_sample_coverage.csv`, `mechan
 These targets are extended diagnostics, not automatic controls or causal outcomes in the preferred models.
 
 - 2001 D-02 measures are predetermined sorting/balance variables. Their balance and first-stage sensitivity diagnostics are extended evidence; they do not automatically enter the preferred specification.
-- 2011 D-02, D-03, D-04, and D-07 measures are post-treatment migration mechanisms. They must not be added to the preferred outcome equation as controls.
+- 2011 D-02 through D-07 measures are post-treatment migration measurements. D-02/D-03/D-04/D-07 currently enter the registered common-sample inference family; D-05/D-06 remain descriptive until the existing weak-IV results justify expanding that family. None should be added to the preferred outcome equation as controls.
 - D-03 does not recover migrant occupation or industry. The project will not synthesize missing 2011 D-08/D-09 cells by multiplying migration totals by destination-district B-series shares.
 
-Later phases can add D-05/D-06 and a validated 2011 population denominator. The deterministic complete-parent bridge currently yields a substantially smaller 2011 mechanism sample than the 593-district 2001 baseline, so reduced-form and weak-IV mechanism results explicitly report common support and should not be generalized to excluded non-nested parents.
+A later phase can add a validated 2011 population denominator. D-05/D-06 are intentionally not added to the weak-IV outcome registry in this phase because the existing mechanism first stages are already weak; their first role is to audit age selectivity and labor-force attachment without multiplying inferential tests. The deterministic complete-parent bridge yields a substantially smaller 2011 mechanism sample than the 593-district 2001 baseline, so reduced-form and weak-IV mechanism results explicitly report common support and should not be generalized to excluded non-nested parents.
