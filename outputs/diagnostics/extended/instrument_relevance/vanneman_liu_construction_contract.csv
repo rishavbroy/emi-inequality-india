@@ -1,0 +1,6 @@
+"check","passed","interpretation"
+"dictionary_targets_panel",TRUE,"Dictionary explicitly targets the bundled Vanneman panel source."
+"stable_id_merge",TRUE,"Published cleaning code merges the 339-row name crosswalk 1:1 on Vanneman stable state/district IDs."
+"early_builder_keeps_vanneman_ids",TRUE,"The 1961-1991 builder carries Vanneman stable IDs forward as its state/district codes."
+"six_census_appends_early_panel",TRUE,"The six-census builder appends the already-cleaned 1961-1991 panel before later harmonization."
+"six_census_rebuilds_harmonized_ids",TRUE,"The six-census builder creates a separate harmonized geography from normalized state/district names."

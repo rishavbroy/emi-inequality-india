@@ -1,5 +1,6 @@
 "diagnostic_id","family","requires_outcome","requires_overidentified","min_instruments","max_instruments","implemented"
 "first_stage_joint_f","relevance",FALSE,FALSE,1,Inf,TRUE
+"effective_f","relevance",TRUE,FALSE,1,Inf,TRUE
 "partial_r_squared","relevance",FALSE,FALSE,1,Inf,TRUE
 "balance_covariates","independence",FALSE,FALSE,1,Inf,TRUE
 "balance_joint","independence",FALSE,FALSE,1,1,TRUE

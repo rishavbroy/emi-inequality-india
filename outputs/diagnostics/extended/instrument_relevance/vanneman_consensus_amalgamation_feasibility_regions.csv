@@ -1,0 +1,11 @@
+"harmonized_region_id","component_class","n_source_1991_districts","n_vanneman_panel_units","n_target_2001_districts","harmonized_state_code_2001","vanneman_amalgamation_status","vanneman_amalgamation_eligible","nontrivial_boundary_change","analysis_ready"
+"geo_component_0005","many_to_many",2,2,2,"32","deterministic_amalgamation",TRUE,TRUE,TRUE
+"geo_component_0003","one_to_one",1,1,1,"32","deterministic_amalgamation",TRUE,FALSE,FALSE
+"geo_component_0004","one_to_one",1,1,1,"32","deterministic_amalgamation",TRUE,FALSE,FALSE
+"geo_component_0006","one_to_one",1,1,1,"32","deterministic_amalgamation",TRUE,FALSE,FALSE
+"geo_component_0009","one_to_one",1,1,1,"19","deterministic_amalgamation",TRUE,FALSE,FALSE
+"geo_component_0001","one_to_one",1,0,1,"28","incomplete_vanneman_1991_membership",FALSE,FALSE,FALSE
+"geo_component_0002","one_to_one",1,0,1,"32","incomplete_vanneman_1991_membership",FALSE,FALSE,FALSE
+"geo_component_0007","one_to_one",1,0,1,"32","incomplete_vanneman_1991_membership",FALSE,FALSE,FALSE
+"geo_component_0008","one_to_one",1,0,1,"32","incomplete_vanneman_1991_membership",FALSE,FALSE,FALSE
+"geo_component_0010","one_to_one",1,0,1,"04","incomplete_vanneman_1991_membership",FALSE,FALSE,FALSE

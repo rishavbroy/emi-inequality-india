@@ -1,0 +1,2 @@
+"reference_label","candidate_label","n_reference_edges","n_candidate_edges","n_shared_edges","n_reference_sources","n_candidate_sources","n_shared_sources","n_exact_target_set_agreements","n_target_set_conflicts","n_reference_targets","n_candidate_targets","n_shared_targets","n_exact_source_set_agreements","n_source_set_conflicts","mean_shared_edge_weight_abs_diff","max_shared_edge_weight_abs_diff"
+"shrug_shrid","kumar_somanathan_exact_names",657,307,291,449,195,185,172,13,567,258,248,223,25,0.0123712791778102,0.999078813162175

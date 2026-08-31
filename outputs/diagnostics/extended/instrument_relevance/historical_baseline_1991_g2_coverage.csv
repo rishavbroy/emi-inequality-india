@@ -1,0 +1,4 @@
+"geography_spec_id","source_coverage_threshold","n_source_districts","n_target_districts","source_population_1991","allocated_population_1991","allocated_population_share"
+"G2_population_interpolated",0.9,440,551,805461967,804267363.056041,0.998516871071631
+"G2_population_interpolated",0.95,438,550,804157301,803058380.899597,0.998633451317253
+"G2_population_interpolated",0.99,422,533,784430514,783650615.254894,0.999005777145091

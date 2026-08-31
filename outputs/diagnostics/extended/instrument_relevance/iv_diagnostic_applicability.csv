@@ -1,5 +1,6 @@
 "specification_id","diagnostic_id","diagnostic_family","applicable","implemented","will_run","reason"
 "unadjusted__nonzero_mean","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"unadjusted__nonzero_mean","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "unadjusted__nonzero_mean","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "unadjusted__nonzero_mean","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "unadjusted__nonzero_mean","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -7,6 +8,7 @@
 "unadjusted__nonzero_mean","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "unadjusted__nonzero_mean","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "unadjusted__distant_share","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"unadjusted__distant_share","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "unadjusted__distant_share","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "unadjusted__distant_share","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "unadjusted__distant_share","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -14,6 +16,7 @@
 "unadjusted__distant_share","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "unadjusted__distant_share","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "unadjusted__top3_legacy","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"unadjusted__top3_legacy","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "unadjusted__top3_legacy","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "unadjusted__top3_legacy","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "unadjusted__top3_legacy","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -21,6 +24,7 @@
 "unadjusted__top3_legacy","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "unadjusted__top3_legacy","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "unadjusted__nonzero_mean_hindi_urdu","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"unadjusted__nonzero_mean_hindi_urdu","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "unadjusted__nonzero_mean_hindi_urdu","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "unadjusted__nonzero_mean_hindi_urdu","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "unadjusted__nonzero_mean_hindi_urdu","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -28,6 +32,7 @@
 "unadjusted__nonzero_mean_hindi_urdu","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "unadjusted__nonzero_mean_hindi_urdu","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "unadjusted__nonzero_mean_shastry","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"unadjusted__nonzero_mean_shastry","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "unadjusted__nonzero_mean_shastry","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "unadjusted__nonzero_mean_shastry","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "unadjusted__nonzero_mean_shastry","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -35,6 +40,7 @@
 "unadjusted__nonzero_mean_shastry","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "unadjusted__nonzero_mean_shastry","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "unadjusted__nonzero_mean_sensitivity_low","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"unadjusted__nonzero_mean_sensitivity_low","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "unadjusted__nonzero_mean_sensitivity_low","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "unadjusted__nonzero_mean_sensitivity_low","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "unadjusted__nonzero_mean_sensitivity_low","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -42,6 +48,7 @@
 "unadjusted__nonzero_mean_sensitivity_low","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "unadjusted__nonzero_mean_sensitivity_low","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "unadjusted__nonzero_mean_sensitivity_high","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"unadjusted__nonzero_mean_sensitivity_high","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "unadjusted__nonzero_mean_sensitivity_high","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "unadjusted__nonzero_mean_sensitivity_high","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "unadjusted__nonzero_mean_sensitivity_high","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -49,6 +56,7 @@
 "unadjusted__nonzero_mean_sensitivity_high","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "unadjusted__nonzero_mean_sensitivity_high","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "unadjusted__nonzero_mean_hindi_urdu_separate","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"unadjusted__nonzero_mean_hindi_urdu_separate","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "unadjusted__nonzero_mean_hindi_urdu_separate","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "unadjusted__nonzero_mean_hindi_urdu_separate","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "unadjusted__nonzero_mean_hindi_urdu_separate","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -56,6 +64,7 @@
 "unadjusted__nonzero_mean_hindi_urdu_separate","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "unadjusted__nonzero_mean_hindi_urdu_separate","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "unadjusted__distance_shares_all","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"unadjusted__distance_shares_all","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "unadjusted__distance_shares_all","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "unadjusted__distance_shares_all","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "unadjusted__distance_shares_all","balance_joint","independence",FALSE,TRUE,FALSE,"multi_instrument_balance_joint_not_defined"
@@ -63,6 +72,7 @@
 "unadjusted__distance_shares_all","monotonicity_shape","monotonicity",FALSE,TRUE,FALSE,"multi_instrument_monotonicity_shape_not_defined"
 "unadjusted__distance_shares_all","overidentification","overidentification",TRUE,TRUE,TRUE,NA
 "unadjusted__distance_shares_all_unmapped","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"unadjusted__distance_shares_all_unmapped","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "unadjusted__distance_shares_all_unmapped","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "unadjusted__distance_shares_all_unmapped","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "unadjusted__distance_shares_all_unmapped","balance_joint","independence",FALSE,TRUE,FALSE,"multi_instrument_balance_joint_not_defined"
@@ -70,6 +80,7 @@
 "unadjusted__distance_shares_all_unmapped","monotonicity_shape","monotonicity",FALSE,TRUE,FALSE,"multi_instrument_monotonicity_shape_not_defined"
 "unadjusted__distance_shares_all_unmapped","overidentification","overidentification",TRUE,TRUE,TRUE,NA
 "unadjusted__distance_shares_mapped","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"unadjusted__distance_shares_mapped","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "unadjusted__distance_shares_mapped","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "unadjusted__distance_shares_mapped","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "unadjusted__distance_shares_mapped","balance_joint","independence",FALSE,TRUE,FALSE,"multi_instrument_balance_joint_not_defined"
@@ -77,6 +88,7 @@
 "unadjusted__distance_shares_mapped","monotonicity_shape","monotonicity",FALSE,TRUE,FALSE,"multi_instrument_monotonicity_shape_not_defined"
 "unadjusted__distance_shares_mapped","overidentification","overidentification",TRUE,TRUE,TRUE,NA
 "unadjusted__glottolog_mean","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"unadjusted__glottolog_mean","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "unadjusted__glottolog_mean","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "unadjusted__glottolog_mean","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "unadjusted__glottolog_mean","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -84,6 +96,7 @@
 "unadjusted__glottolog_mean","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "unadjusted__glottolog_mean","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "unadjusted__glottolog_mean_shastry","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"unadjusted__glottolog_mean_shastry","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "unadjusted__glottolog_mean_shastry","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "unadjusted__glottolog_mean_shastry","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "unadjusted__glottolog_mean_shastry","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -91,6 +104,7 @@
 "unadjusted__glottolog_mean_shastry","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "unadjusted__glottolog_mean_shastry","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "unadjusted__dyen_noncognate","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"unadjusted__dyen_noncognate","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "unadjusted__dyen_noncognate","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "unadjusted__dyen_noncognate","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "unadjusted__dyen_noncognate","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -98,6 +112,7 @@
 "unadjusted__dyen_noncognate","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "unadjusted__dyen_noncognate","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "unadjusted__dyen_noncognate_shastry","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"unadjusted__dyen_noncognate_shastry","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "unadjusted__dyen_noncognate_shastry","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "unadjusted__dyen_noncognate_shastry","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "unadjusted__dyen_noncognate_shastry","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -105,6 +120,7 @@
 "unadjusted__dyen_noncognate_shastry","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "unadjusted__dyen_noncognate_shastry","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "region_main__nonzero_mean","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"region_main__nonzero_mean","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "region_main__nonzero_mean","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "region_main__nonzero_mean","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "region_main__nonzero_mean","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -112,6 +128,7 @@
 "region_main__nonzero_mean","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "region_main__nonzero_mean","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "region_main__distant_share","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"region_main__distant_share","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "region_main__distant_share","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "region_main__distant_share","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "region_main__distant_share","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -119,6 +136,7 @@
 "region_main__distant_share","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "region_main__distant_share","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "region_main__top3_legacy","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"region_main__top3_legacy","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "region_main__top3_legacy","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "region_main__top3_legacy","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "region_main__top3_legacy","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -126,6 +144,7 @@
 "region_main__top3_legacy","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "region_main__top3_legacy","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "region_main__nonzero_mean_hindi_urdu","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"region_main__nonzero_mean_hindi_urdu","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "region_main__nonzero_mean_hindi_urdu","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "region_main__nonzero_mean_hindi_urdu","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "region_main__nonzero_mean_hindi_urdu","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -133,6 +152,7 @@
 "region_main__nonzero_mean_hindi_urdu","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "region_main__nonzero_mean_hindi_urdu","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "region_main__nonzero_mean_shastry","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"region_main__nonzero_mean_shastry","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "region_main__nonzero_mean_shastry","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "region_main__nonzero_mean_shastry","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "region_main__nonzero_mean_shastry","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -140,6 +160,7 @@
 "region_main__nonzero_mean_shastry","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "region_main__nonzero_mean_shastry","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "region_main__nonzero_mean_sensitivity_low","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"region_main__nonzero_mean_sensitivity_low","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "region_main__nonzero_mean_sensitivity_low","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "region_main__nonzero_mean_sensitivity_low","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "region_main__nonzero_mean_sensitivity_low","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -147,6 +168,7 @@
 "region_main__nonzero_mean_sensitivity_low","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "region_main__nonzero_mean_sensitivity_low","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "region_main__nonzero_mean_sensitivity_high","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"region_main__nonzero_mean_sensitivity_high","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "region_main__nonzero_mean_sensitivity_high","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "region_main__nonzero_mean_sensitivity_high","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "region_main__nonzero_mean_sensitivity_high","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -154,6 +176,7 @@
 "region_main__nonzero_mean_sensitivity_high","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "region_main__nonzero_mean_sensitivity_high","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "region_main__nonzero_mean_hindi_urdu_separate","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"region_main__nonzero_mean_hindi_urdu_separate","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "region_main__nonzero_mean_hindi_urdu_separate","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "region_main__nonzero_mean_hindi_urdu_separate","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "region_main__nonzero_mean_hindi_urdu_separate","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -161,6 +184,7 @@
 "region_main__nonzero_mean_hindi_urdu_separate","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "region_main__nonzero_mean_hindi_urdu_separate","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "region_main__distance_shares_all","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"region_main__distance_shares_all","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "region_main__distance_shares_all","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "region_main__distance_shares_all","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "region_main__distance_shares_all","balance_joint","independence",FALSE,TRUE,FALSE,"multi_instrument_balance_joint_not_defined"
@@ -168,6 +192,7 @@
 "region_main__distance_shares_all","monotonicity_shape","monotonicity",FALSE,TRUE,FALSE,"multi_instrument_monotonicity_shape_not_defined"
 "region_main__distance_shares_all","overidentification","overidentification",TRUE,TRUE,TRUE,NA
 "region_main__distance_shares_all_unmapped","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"region_main__distance_shares_all_unmapped","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "region_main__distance_shares_all_unmapped","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "region_main__distance_shares_all_unmapped","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "region_main__distance_shares_all_unmapped","balance_joint","independence",FALSE,TRUE,FALSE,"multi_instrument_balance_joint_not_defined"
@@ -175,6 +200,7 @@
 "region_main__distance_shares_all_unmapped","monotonicity_shape","monotonicity",FALSE,TRUE,FALSE,"multi_instrument_monotonicity_shape_not_defined"
 "region_main__distance_shares_all_unmapped","overidentification","overidentification",TRUE,TRUE,TRUE,NA
 "region_main__distance_shares_mapped","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"region_main__distance_shares_mapped","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "region_main__distance_shares_mapped","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "region_main__distance_shares_mapped","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "region_main__distance_shares_mapped","balance_joint","independence",FALSE,TRUE,FALSE,"multi_instrument_balance_joint_not_defined"
@@ -182,6 +208,7 @@
 "region_main__distance_shares_mapped","monotonicity_shape","monotonicity",FALSE,TRUE,FALSE,"multi_instrument_monotonicity_shape_not_defined"
 "region_main__distance_shares_mapped","overidentification","overidentification",TRUE,TRUE,TRUE,NA
 "region_main__glottolog_mean","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"region_main__glottolog_mean","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "region_main__glottolog_mean","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "region_main__glottolog_mean","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "region_main__glottolog_mean","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -189,6 +216,7 @@
 "region_main__glottolog_mean","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "region_main__glottolog_mean","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "region_main__glottolog_mean_shastry","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"region_main__glottolog_mean_shastry","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "region_main__glottolog_mean_shastry","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "region_main__glottolog_mean_shastry","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "region_main__glottolog_mean_shastry","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -196,6 +224,7 @@
 "region_main__glottolog_mean_shastry","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "region_main__glottolog_mean_shastry","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "region_main__dyen_noncognate","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"region_main__dyen_noncognate","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "region_main__dyen_noncognate","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "region_main__dyen_noncognate","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "region_main__dyen_noncognate","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -203,6 +232,7 @@
 "region_main__dyen_noncognate","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "region_main__dyen_noncognate","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "region_main__dyen_noncognate_shastry","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"region_main__dyen_noncognate_shastry","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "region_main__dyen_noncognate_shastry","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "region_main__dyen_noncognate_shastry","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "region_main__dyen_noncognate_shastry","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -210,6 +240,7 @@
 "region_main__dyen_noncognate_shastry","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "region_main__dyen_noncognate_shastry","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "region_expanded__nonzero_mean","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"region_expanded__nonzero_mean","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "region_expanded__nonzero_mean","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "region_expanded__nonzero_mean","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "region_expanded__nonzero_mean","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -217,6 +248,7 @@
 "region_expanded__nonzero_mean","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "region_expanded__nonzero_mean","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "region_expanded__distant_share","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"region_expanded__distant_share","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "region_expanded__distant_share","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "region_expanded__distant_share","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "region_expanded__distant_share","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -224,6 +256,7 @@
 "region_expanded__distant_share","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "region_expanded__distant_share","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "region_expanded__top3_legacy","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"region_expanded__top3_legacy","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "region_expanded__top3_legacy","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "region_expanded__top3_legacy","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "region_expanded__top3_legacy","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -231,6 +264,7 @@
 "region_expanded__top3_legacy","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "region_expanded__top3_legacy","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "region_expanded__nonzero_mean_hindi_urdu","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"region_expanded__nonzero_mean_hindi_urdu","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "region_expanded__nonzero_mean_hindi_urdu","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "region_expanded__nonzero_mean_hindi_urdu","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "region_expanded__nonzero_mean_hindi_urdu","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -238,6 +272,7 @@
 "region_expanded__nonzero_mean_hindi_urdu","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "region_expanded__nonzero_mean_hindi_urdu","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "region_expanded__nonzero_mean_shastry","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"region_expanded__nonzero_mean_shastry","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "region_expanded__nonzero_mean_shastry","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "region_expanded__nonzero_mean_shastry","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "region_expanded__nonzero_mean_shastry","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -245,6 +280,7 @@
 "region_expanded__nonzero_mean_shastry","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "region_expanded__nonzero_mean_shastry","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "region_expanded__nonzero_mean_sensitivity_low","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"region_expanded__nonzero_mean_sensitivity_low","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "region_expanded__nonzero_mean_sensitivity_low","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "region_expanded__nonzero_mean_sensitivity_low","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "region_expanded__nonzero_mean_sensitivity_low","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -252,6 +288,7 @@
 "region_expanded__nonzero_mean_sensitivity_low","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "region_expanded__nonzero_mean_sensitivity_low","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "region_expanded__nonzero_mean_sensitivity_high","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"region_expanded__nonzero_mean_sensitivity_high","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "region_expanded__nonzero_mean_sensitivity_high","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "region_expanded__nonzero_mean_sensitivity_high","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "region_expanded__nonzero_mean_sensitivity_high","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -259,6 +296,7 @@
 "region_expanded__nonzero_mean_sensitivity_high","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "region_expanded__nonzero_mean_sensitivity_high","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "region_expanded__nonzero_mean_hindi_urdu_separate","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"region_expanded__nonzero_mean_hindi_urdu_separate","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "region_expanded__nonzero_mean_hindi_urdu_separate","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "region_expanded__nonzero_mean_hindi_urdu_separate","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "region_expanded__nonzero_mean_hindi_urdu_separate","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -266,6 +304,7 @@
 "region_expanded__nonzero_mean_hindi_urdu_separate","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "region_expanded__nonzero_mean_hindi_urdu_separate","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "region_expanded__distance_shares_all","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"region_expanded__distance_shares_all","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "region_expanded__distance_shares_all","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "region_expanded__distance_shares_all","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "region_expanded__distance_shares_all","balance_joint","independence",FALSE,TRUE,FALSE,"multi_instrument_balance_joint_not_defined"
@@ -273,6 +312,7 @@
 "region_expanded__distance_shares_all","monotonicity_shape","monotonicity",FALSE,TRUE,FALSE,"multi_instrument_monotonicity_shape_not_defined"
 "region_expanded__distance_shares_all","overidentification","overidentification",TRUE,TRUE,TRUE,NA
 "region_expanded__distance_shares_all_unmapped","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"region_expanded__distance_shares_all_unmapped","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "region_expanded__distance_shares_all_unmapped","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "region_expanded__distance_shares_all_unmapped","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "region_expanded__distance_shares_all_unmapped","balance_joint","independence",FALSE,TRUE,FALSE,"multi_instrument_balance_joint_not_defined"
@@ -280,6 +320,7 @@
 "region_expanded__distance_shares_all_unmapped","monotonicity_shape","monotonicity",FALSE,TRUE,FALSE,"multi_instrument_monotonicity_shape_not_defined"
 "region_expanded__distance_shares_all_unmapped","overidentification","overidentification",TRUE,TRUE,TRUE,NA
 "region_expanded__distance_shares_mapped","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"region_expanded__distance_shares_mapped","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "region_expanded__distance_shares_mapped","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "region_expanded__distance_shares_mapped","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "region_expanded__distance_shares_mapped","balance_joint","independence",FALSE,TRUE,FALSE,"multi_instrument_balance_joint_not_defined"
@@ -287,6 +328,7 @@
 "region_expanded__distance_shares_mapped","monotonicity_shape","monotonicity",FALSE,TRUE,FALSE,"multi_instrument_monotonicity_shape_not_defined"
 "region_expanded__distance_shares_mapped","overidentification","overidentification",TRUE,TRUE,TRUE,NA
 "region_expanded__glottolog_mean","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"region_expanded__glottolog_mean","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "region_expanded__glottolog_mean","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "region_expanded__glottolog_mean","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "region_expanded__glottolog_mean","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -294,6 +336,7 @@
 "region_expanded__glottolog_mean","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "region_expanded__glottolog_mean","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "region_expanded__glottolog_mean_shastry","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"region_expanded__glottolog_mean_shastry","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "region_expanded__glottolog_mean_shastry","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "region_expanded__glottolog_mean_shastry","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "region_expanded__glottolog_mean_shastry","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -301,6 +344,7 @@
 "region_expanded__glottolog_mean_shastry","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "region_expanded__glottolog_mean_shastry","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "region_expanded__dyen_noncognate","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"region_expanded__dyen_noncognate","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "region_expanded__dyen_noncognate","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "region_expanded__dyen_noncognate","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "region_expanded__dyen_noncognate","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -308,6 +352,7 @@
 "region_expanded__dyen_noncognate","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "region_expanded__dyen_noncognate","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "region_expanded__dyen_noncognate_shastry","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"region_expanded__dyen_noncognate_shastry","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "region_expanded__dyen_noncognate_shastry","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "region_expanded__dyen_noncognate_shastry","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "region_expanded__dyen_noncognate_shastry","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -315,6 +360,7 @@
 "region_expanded__dyen_noncognate_shastry","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "region_expanded__dyen_noncognate_shastry","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "state_main__nonzero_mean","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"state_main__nonzero_mean","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "state_main__nonzero_mean","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "state_main__nonzero_mean","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "state_main__nonzero_mean","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -322,6 +368,7 @@
 "state_main__nonzero_mean","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "state_main__nonzero_mean","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "state_main__distant_share","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"state_main__distant_share","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "state_main__distant_share","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "state_main__distant_share","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "state_main__distant_share","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -329,6 +376,7 @@
 "state_main__distant_share","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "state_main__distant_share","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "state_main__top3_legacy","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"state_main__top3_legacy","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "state_main__top3_legacy","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "state_main__top3_legacy","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "state_main__top3_legacy","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -336,6 +384,7 @@
 "state_main__top3_legacy","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "state_main__top3_legacy","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "state_main__nonzero_mean_hindi_urdu","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"state_main__nonzero_mean_hindi_urdu","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "state_main__nonzero_mean_hindi_urdu","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "state_main__nonzero_mean_hindi_urdu","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "state_main__nonzero_mean_hindi_urdu","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -343,6 +392,7 @@
 "state_main__nonzero_mean_hindi_urdu","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "state_main__nonzero_mean_hindi_urdu","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "state_main__nonzero_mean_shastry","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"state_main__nonzero_mean_shastry","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "state_main__nonzero_mean_shastry","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "state_main__nonzero_mean_shastry","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "state_main__nonzero_mean_shastry","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -350,6 +400,7 @@
 "state_main__nonzero_mean_shastry","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "state_main__nonzero_mean_shastry","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "state_main__nonzero_mean_sensitivity_low","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"state_main__nonzero_mean_sensitivity_low","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "state_main__nonzero_mean_sensitivity_low","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "state_main__nonzero_mean_sensitivity_low","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "state_main__nonzero_mean_sensitivity_low","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -357,6 +408,7 @@
 "state_main__nonzero_mean_sensitivity_low","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "state_main__nonzero_mean_sensitivity_low","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "state_main__nonzero_mean_sensitivity_high","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"state_main__nonzero_mean_sensitivity_high","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "state_main__nonzero_mean_sensitivity_high","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "state_main__nonzero_mean_sensitivity_high","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "state_main__nonzero_mean_sensitivity_high","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -364,6 +416,7 @@
 "state_main__nonzero_mean_sensitivity_high","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "state_main__nonzero_mean_sensitivity_high","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "state_main__nonzero_mean_hindi_urdu_separate","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"state_main__nonzero_mean_hindi_urdu_separate","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "state_main__nonzero_mean_hindi_urdu_separate","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "state_main__nonzero_mean_hindi_urdu_separate","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "state_main__nonzero_mean_hindi_urdu_separate","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -371,6 +424,7 @@
 "state_main__nonzero_mean_hindi_urdu_separate","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "state_main__nonzero_mean_hindi_urdu_separate","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "state_main__distance_shares_all","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"state_main__distance_shares_all","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "state_main__distance_shares_all","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "state_main__distance_shares_all","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "state_main__distance_shares_all","balance_joint","independence",FALSE,TRUE,FALSE,"multi_instrument_balance_joint_not_defined"
@@ -378,6 +432,7 @@
 "state_main__distance_shares_all","monotonicity_shape","monotonicity",FALSE,TRUE,FALSE,"multi_instrument_monotonicity_shape_not_defined"
 "state_main__distance_shares_all","overidentification","overidentification",TRUE,TRUE,TRUE,NA
 "state_main__distance_shares_all_unmapped","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"state_main__distance_shares_all_unmapped","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "state_main__distance_shares_all_unmapped","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "state_main__distance_shares_all_unmapped","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "state_main__distance_shares_all_unmapped","balance_joint","independence",FALSE,TRUE,FALSE,"multi_instrument_balance_joint_not_defined"
@@ -385,6 +440,7 @@
 "state_main__distance_shares_all_unmapped","monotonicity_shape","monotonicity",FALSE,TRUE,FALSE,"multi_instrument_monotonicity_shape_not_defined"
 "state_main__distance_shares_all_unmapped","overidentification","overidentification",TRUE,TRUE,TRUE,NA
 "state_main__distance_shares_mapped","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"state_main__distance_shares_mapped","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "state_main__distance_shares_mapped","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "state_main__distance_shares_mapped","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "state_main__distance_shares_mapped","balance_joint","independence",FALSE,TRUE,FALSE,"multi_instrument_balance_joint_not_defined"
@@ -392,6 +448,7 @@
 "state_main__distance_shares_mapped","monotonicity_shape","monotonicity",FALSE,TRUE,FALSE,"multi_instrument_monotonicity_shape_not_defined"
 "state_main__distance_shares_mapped","overidentification","overidentification",TRUE,TRUE,TRUE,NA
 "state_main__glottolog_mean","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"state_main__glottolog_mean","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "state_main__glottolog_mean","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "state_main__glottolog_mean","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "state_main__glottolog_mean","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -399,6 +456,7 @@
 "state_main__glottolog_mean","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "state_main__glottolog_mean","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "state_main__glottolog_mean_shastry","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"state_main__glottolog_mean_shastry","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "state_main__glottolog_mean_shastry","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "state_main__glottolog_mean_shastry","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "state_main__glottolog_mean_shastry","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -406,6 +464,7 @@
 "state_main__glottolog_mean_shastry","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "state_main__glottolog_mean_shastry","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "state_main__dyen_noncognate","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"state_main__dyen_noncognate","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "state_main__dyen_noncognate","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "state_main__dyen_noncognate","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "state_main__dyen_noncognate","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -413,6 +472,7 @@
 "state_main__dyen_noncognate","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "state_main__dyen_noncognate","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "state_main__dyen_noncognate_shastry","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"state_main__dyen_noncognate_shastry","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "state_main__dyen_noncognate_shastry","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "state_main__dyen_noncognate_shastry","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "state_main__dyen_noncognate_shastry","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -420,6 +480,7 @@
 "state_main__dyen_noncognate_shastry","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "state_main__dyen_noncognate_shastry","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "state_expanded__nonzero_mean","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"state_expanded__nonzero_mean","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "state_expanded__nonzero_mean","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "state_expanded__nonzero_mean","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "state_expanded__nonzero_mean","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -427,6 +488,7 @@
 "state_expanded__nonzero_mean","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "state_expanded__nonzero_mean","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "state_expanded__distant_share","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"state_expanded__distant_share","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "state_expanded__distant_share","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "state_expanded__distant_share","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "state_expanded__distant_share","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -434,6 +496,7 @@
 "state_expanded__distant_share","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "state_expanded__distant_share","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "state_expanded__top3_legacy","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"state_expanded__top3_legacy","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "state_expanded__top3_legacy","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "state_expanded__top3_legacy","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "state_expanded__top3_legacy","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -441,6 +504,7 @@
 "state_expanded__top3_legacy","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "state_expanded__top3_legacy","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "state_expanded__nonzero_mean_hindi_urdu","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"state_expanded__nonzero_mean_hindi_urdu","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "state_expanded__nonzero_mean_hindi_urdu","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "state_expanded__nonzero_mean_hindi_urdu","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "state_expanded__nonzero_mean_hindi_urdu","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -448,6 +512,7 @@
 "state_expanded__nonzero_mean_hindi_urdu","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "state_expanded__nonzero_mean_hindi_urdu","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "state_expanded__nonzero_mean_shastry","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"state_expanded__nonzero_mean_shastry","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "state_expanded__nonzero_mean_shastry","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "state_expanded__nonzero_mean_shastry","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "state_expanded__nonzero_mean_shastry","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -455,6 +520,7 @@
 "state_expanded__nonzero_mean_shastry","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "state_expanded__nonzero_mean_shastry","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "state_expanded__nonzero_mean_sensitivity_low","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"state_expanded__nonzero_mean_sensitivity_low","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "state_expanded__nonzero_mean_sensitivity_low","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "state_expanded__nonzero_mean_sensitivity_low","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "state_expanded__nonzero_mean_sensitivity_low","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -462,6 +528,7 @@
 "state_expanded__nonzero_mean_sensitivity_low","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "state_expanded__nonzero_mean_sensitivity_low","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "state_expanded__nonzero_mean_sensitivity_high","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"state_expanded__nonzero_mean_sensitivity_high","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "state_expanded__nonzero_mean_sensitivity_high","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "state_expanded__nonzero_mean_sensitivity_high","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "state_expanded__nonzero_mean_sensitivity_high","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -469,6 +536,7 @@
 "state_expanded__nonzero_mean_sensitivity_high","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "state_expanded__nonzero_mean_sensitivity_high","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "state_expanded__nonzero_mean_hindi_urdu_separate","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"state_expanded__nonzero_mean_hindi_urdu_separate","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "state_expanded__nonzero_mean_hindi_urdu_separate","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "state_expanded__nonzero_mean_hindi_urdu_separate","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "state_expanded__nonzero_mean_hindi_urdu_separate","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -476,6 +544,7 @@
 "state_expanded__nonzero_mean_hindi_urdu_separate","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "state_expanded__nonzero_mean_hindi_urdu_separate","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "state_expanded__distance_shares_all","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"state_expanded__distance_shares_all","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "state_expanded__distance_shares_all","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "state_expanded__distance_shares_all","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "state_expanded__distance_shares_all","balance_joint","independence",FALSE,TRUE,FALSE,"multi_instrument_balance_joint_not_defined"
@@ -483,6 +552,7 @@
 "state_expanded__distance_shares_all","monotonicity_shape","monotonicity",FALSE,TRUE,FALSE,"multi_instrument_monotonicity_shape_not_defined"
 "state_expanded__distance_shares_all","overidentification","overidentification",TRUE,TRUE,TRUE,NA
 "state_expanded__distance_shares_all_unmapped","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"state_expanded__distance_shares_all_unmapped","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "state_expanded__distance_shares_all_unmapped","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "state_expanded__distance_shares_all_unmapped","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "state_expanded__distance_shares_all_unmapped","balance_joint","independence",FALSE,TRUE,FALSE,"multi_instrument_balance_joint_not_defined"
@@ -490,6 +560,7 @@
 "state_expanded__distance_shares_all_unmapped","monotonicity_shape","monotonicity",FALSE,TRUE,FALSE,"multi_instrument_monotonicity_shape_not_defined"
 "state_expanded__distance_shares_all_unmapped","overidentification","overidentification",TRUE,TRUE,TRUE,NA
 "state_expanded__distance_shares_mapped","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"state_expanded__distance_shares_mapped","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "state_expanded__distance_shares_mapped","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "state_expanded__distance_shares_mapped","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "state_expanded__distance_shares_mapped","balance_joint","independence",FALSE,TRUE,FALSE,"multi_instrument_balance_joint_not_defined"
@@ -497,6 +568,7 @@
 "state_expanded__distance_shares_mapped","monotonicity_shape","monotonicity",FALSE,TRUE,FALSE,"multi_instrument_monotonicity_shape_not_defined"
 "state_expanded__distance_shares_mapped","overidentification","overidentification",TRUE,TRUE,TRUE,NA
 "state_expanded__glottolog_mean","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"state_expanded__glottolog_mean","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "state_expanded__glottolog_mean","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "state_expanded__glottolog_mean","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "state_expanded__glottolog_mean","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -504,6 +576,7 @@
 "state_expanded__glottolog_mean","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "state_expanded__glottolog_mean","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "state_expanded__glottolog_mean_shastry","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"state_expanded__glottolog_mean_shastry","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "state_expanded__glottolog_mean_shastry","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "state_expanded__glottolog_mean_shastry","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "state_expanded__glottolog_mean_shastry","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -511,6 +584,7 @@
 "state_expanded__glottolog_mean_shastry","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "state_expanded__glottolog_mean_shastry","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "state_expanded__dyen_noncognate","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"state_expanded__dyen_noncognate","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "state_expanded__dyen_noncognate","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "state_expanded__dyen_noncognate","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "state_expanded__dyen_noncognate","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -518,6 +592,7 @@
 "state_expanded__dyen_noncognate","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "state_expanded__dyen_noncognate","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "state_expanded__dyen_noncognate_shastry","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"state_expanded__dyen_noncognate_shastry","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "state_expanded__dyen_noncognate_shastry","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "state_expanded__dyen_noncognate_shastry","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "state_expanded__dyen_noncognate_shastry","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -525,6 +600,7 @@
 "state_expanded__dyen_noncognate_shastry","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "state_expanded__dyen_noncognate_shastry","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "absorption__region_fe","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"absorption__region_fe","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "absorption__region_fe","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "absorption__region_fe","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "absorption__region_fe","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -532,6 +608,7 @@
 "absorption__region_fe","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "absorption__region_fe","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "absorption__state_fe","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"absorption__state_fe","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "absorption__state_fe","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "absorption__state_fe","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "absorption__state_fe","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -539,6 +616,7 @@
 "absorption__state_fe","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "absorption__state_fe","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "absorption__census_controls","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"absorption__census_controls","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "absorption__census_controls","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "absorption__census_controls","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "absorption__census_controls","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -546,6 +624,7 @@
 "absorption__census_controls","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "absorption__census_controls","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "absorption__expanded_controls","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"absorption__expanded_controls","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "absorption__expanded_controls","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "absorption__expanded_controls","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "absorption__expanded_controls","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -553,6 +632,7 @@
 "absorption__expanded_controls","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "absorption__expanded_controls","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "absorption__region_fe_main_without_human_capital","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"absorption__region_fe_main_without_human_capital","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "absorption__region_fe_main_without_human_capital","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "absorption__region_fe_main_without_human_capital","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "absorption__region_fe_main_without_human_capital","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -560,6 +640,7 @@
 "absorption__region_fe_main_without_human_capital","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "absorption__region_fe_main_without_human_capital","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "absorption__state_fe_main_without_human_capital","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"absorption__state_fe_main_without_human_capital","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "absorption__state_fe_main_without_human_capital","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "absorption__state_fe_main_without_human_capital","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "absorption__state_fe_main_without_human_capital","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -567,6 +648,7 @@
 "absorption__state_fe_main_without_human_capital","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "absorption__state_fe_main_without_human_capital","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "absorption__region_fe_expanded_without_human_capital","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"absorption__region_fe_expanded_without_human_capital","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "absorption__region_fe_expanded_without_human_capital","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "absorption__region_fe_expanded_without_human_capital","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "absorption__region_fe_expanded_without_human_capital","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -574,6 +656,7 @@
 "absorption__region_fe_expanded_without_human_capital","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "absorption__region_fe_expanded_without_human_capital","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "absorption__state_fe_expanded_without_human_capital","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"absorption__state_fe_expanded_without_human_capital","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "absorption__state_fe_expanded_without_human_capital","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "absorption__state_fe_expanded_without_human_capital","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "absorption__state_fe_expanded_without_human_capital","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -581,6 +664,7 @@
 "absorption__state_fe_expanded_without_human_capital","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "absorption__state_fe_expanded_without_human_capital","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "absorption__region_fe_plus_basic_scale_geography","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"absorption__region_fe_plus_basic_scale_geography","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "absorption__region_fe_plus_basic_scale_geography","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "absorption__region_fe_plus_basic_scale_geography","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "absorption__region_fe_plus_basic_scale_geography","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -588,6 +672,7 @@
 "absorption__region_fe_plus_basic_scale_geography","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "absorption__region_fe_plus_basic_scale_geography","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "absorption__region_fe_plus_social_composition","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"absorption__region_fe_plus_social_composition","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "absorption__region_fe_plus_social_composition","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "absorption__region_fe_plus_social_composition","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "absorption__region_fe_plus_social_composition","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -595,6 +680,7 @@
 "absorption__region_fe_plus_social_composition","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "absorption__region_fe_plus_social_composition","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "absorption__region_fe_plus_human_capital","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"absorption__region_fe_plus_human_capital","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "absorption__region_fe_plus_human_capital","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "absorption__region_fe_plus_human_capital","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "absorption__region_fe_plus_human_capital","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -602,6 +688,7 @@
 "absorption__region_fe_plus_human_capital","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "absorption__region_fe_plus_human_capital","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "absorption__region_fe_plus_demography","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"absorption__region_fe_plus_demography","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "absorption__region_fe_plus_demography","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "absorption__region_fe_plus_demography","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "absorption__region_fe_plus_demography","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -609,6 +696,7 @@
 "absorption__region_fe_plus_demography","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "absorption__region_fe_plus_demography","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "absorption__region_fe_plus_economic_structure","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"absorption__region_fe_plus_economic_structure","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "absorption__region_fe_plus_economic_structure","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "absorption__region_fe_plus_economic_structure","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "absorption__region_fe_plus_economic_structure","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -616,6 +704,7 @@
 "absorption__region_fe_plus_economic_structure","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "absorption__region_fe_plus_economic_structure","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "absorption__state_fe_plus_basic_scale_geography","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"absorption__state_fe_plus_basic_scale_geography","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "absorption__state_fe_plus_basic_scale_geography","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "absorption__state_fe_plus_basic_scale_geography","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "absorption__state_fe_plus_basic_scale_geography","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -623,6 +712,7 @@
 "absorption__state_fe_plus_basic_scale_geography","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "absorption__state_fe_plus_basic_scale_geography","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "absorption__state_fe_plus_social_composition","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"absorption__state_fe_plus_social_composition","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "absorption__state_fe_plus_social_composition","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "absorption__state_fe_plus_social_composition","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "absorption__state_fe_plus_social_composition","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -630,6 +720,7 @@
 "absorption__state_fe_plus_social_composition","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "absorption__state_fe_plus_social_composition","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "absorption__state_fe_plus_human_capital","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"absorption__state_fe_plus_human_capital","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "absorption__state_fe_plus_human_capital","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "absorption__state_fe_plus_human_capital","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "absorption__state_fe_plus_human_capital","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -637,6 +728,7 @@
 "absorption__state_fe_plus_human_capital","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "absorption__state_fe_plus_human_capital","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "absorption__state_fe_plus_demography","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"absorption__state_fe_plus_demography","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "absorption__state_fe_plus_demography","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "absorption__state_fe_plus_demography","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "absorption__state_fe_plus_demography","balance_joint","independence",TRUE,TRUE,TRUE,NA
@@ -644,6 +736,7 @@
 "absorption__state_fe_plus_demography","monotonicity_shape","monotonicity",TRUE,TRUE,TRUE,NA
 "absorption__state_fe_plus_demography","overidentification","overidentification",FALSE,TRUE,FALSE,"exactly_identified"
 "absorption__state_fe_plus_economic_structure","first_stage_joint_f","relevance",TRUE,TRUE,TRUE,NA
+"absorption__state_fe_plus_economic_structure","effective_f","relevance",TRUE,TRUE,TRUE,NA
 "absorption__state_fe_plus_economic_structure","partial_r_squared","relevance",TRUE,TRUE,TRUE,NA
 "absorption__state_fe_plus_economic_structure","balance_covariates","independence",TRUE,TRUE,TRUE,NA
 "absorption__state_fe_plus_economic_structure","balance_joint","independence",TRUE,TRUE,TRUE,NA

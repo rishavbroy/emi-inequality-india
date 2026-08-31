@@ -1,0 +1,11 @@
+"harmonized_component_id","source_vintage","target_vintage","n_source_units","n_target_units","component_class","source_coverage_complete","target_coverage_complete","deterministic_amalgamation_eligible"
+"geo_component_0001",1991,2001,1,1,"one_to_one",TRUE,TRUE,TRUE
+"geo_component_0002",1991,2001,1,1,"one_to_one",TRUE,TRUE,TRUE
+"geo_component_0003",1991,2001,1,1,"one_to_one",TRUE,TRUE,TRUE
+"geo_component_0004",1991,2001,1,1,"one_to_one",TRUE,TRUE,TRUE
+"geo_component_0005",1991,2001,2,2,"many_to_many",TRUE,TRUE,TRUE
+"geo_component_0006",1991,2001,1,1,"one_to_one",TRUE,TRUE,TRUE
+"geo_component_0007",1991,2001,1,1,"one_to_one",TRUE,TRUE,TRUE
+"geo_component_0008",1991,2001,1,1,"one_to_one",TRUE,TRUE,TRUE
+"geo_component_0009",1991,2001,1,1,"one_to_one",TRUE,TRUE,TRUE
+"geo_component_0010",1991,2001,1,1,"one_to_one",TRUE,TRUE,TRUE

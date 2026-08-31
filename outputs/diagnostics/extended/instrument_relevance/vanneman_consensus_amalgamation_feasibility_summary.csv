@@ -1,0 +1,4 @@
+"vanneman_amalgamation_status","component_class","n_regions","n_source_1991_districts","n_vanneman_panel_units","n_target_2001_districts","n_analysis_ready_regions"
+"deterministic_amalgamation","many_to_many",1,2,2,2,1
+"deterministic_amalgamation","one_to_one",4,4,4,4,0
+"incomplete_vanneman_1991_membership","one_to_one",5,5,0,5,0

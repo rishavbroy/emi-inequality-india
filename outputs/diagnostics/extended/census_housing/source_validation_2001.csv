@@ -1,0 +1,4 @@
+"n_reference_districts","n_source_districts","n_overlap_districts","max_abs_difference","check"
+593,587,587,0,"household_total_lighting_vs_utility"
+593,587,587,0,"electricity_lighting_vs_utility"
+593,593,593,0,"household_total_lighting_vs_assets"

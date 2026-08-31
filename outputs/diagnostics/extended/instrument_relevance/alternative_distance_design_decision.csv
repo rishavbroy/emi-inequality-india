@@ -1,0 +1,2 @@
+"preferred_adjustment_id","preferred_fixed_effect","primary_construction_id","n_design_constructions","primary_effective_f","primary_effective_f_critical_value","max_effective_f","any_construction_meets_effective_f_critical_value","any_robustness_construction_stronger_than_primary","conventional_2sls_relevance_screen","design_implication"
+"state_main","state","nonzero_mean",3,0.819281090094508,23.1085112116065,0.819281090094508,FALSE,FALSE,"no_construction_passes","weak_iv_robust_or_reduced_form"

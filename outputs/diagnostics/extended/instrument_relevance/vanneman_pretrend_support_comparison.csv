@@ -1,0 +1,12 @@
+"analysis_id","sample_id","n_units","n_states","population_1961","share_of_full_units","gain_vs_strict_full_n","gain_vs_strict_full_share","population_share_vs_strict_full"
+"strict_one_to_one","full_pretrend",161,17,181849982,1,0,0,1
+"strict_one_to_one","census_2001_ld_support",161,17,181849982,1,0,0,1
+"strict_one_to_one","helms_lim_ld_support",161,17,181849982,1,0,0,1
+"strict_one_to_one","historical_ld_support",59,12,68802676,0.366459627329193,-102,-0.633540372670807,0.378348544461225
+"historical_parent","full_pretrend",187,19,213986430,1,26,0.161490683229814,1.17671955557301
+"historical_parent","census_2001_ld_support",187,19,213986430,1,26,0.161490683229814,1.17671955557301
+"historical_parent","helms_lim_ld_support",187,19,213986430,1,26,0.161490683229814,1.17671955557301
+"historical_parent","historical_ld_support",66,15,79903872,0.352941176470588,-95,-0.590062111801242,0.439394445472092
+"kumar_somanathan_exact_amalgamation","full_pretrend",70,16,110981379,1,-91,-0.565217391304348,0.61029084402109
+"kumar_somanathan_exact_amalgamation","census_2001_ld_support",70,16,110981379,1,-91,-0.565217391304348,0.61029084402109
+"kumar_somanathan_exact_amalgamation","historical_ld_support",0,0,0,0,-161,-1,0

@@ -1,0 +1,3 @@
+"adjustment_id","fixed_effect","n_design_constructions","primary_construction_id","primary_effective_f","primary_effective_f_critical_value","max_effective_f","any_construction_meets_effective_f_critical_value","any_robustness_construction_stronger_than_primary"
+"region_main","region",3,"nonzero_mean",3.33076514962072,23.1085112116065,3.33076514962072,FALSE,FALSE
+"state_main","state",3,"nonzero_mean",0.819281090094508,23.1085112116065,0.819281090094508,FALSE,FALSE

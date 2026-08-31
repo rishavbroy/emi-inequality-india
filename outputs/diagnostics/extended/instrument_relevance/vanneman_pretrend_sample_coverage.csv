@@ -1,3 +1,5 @@
 "sample_id","n_units","n_states","population_1961","share_of_full_units"
 "full_pretrend",161,17,181849982,1
+"census_2001_ld_support",161,17,181849982,1
+"helms_lim_ld_support",161,17,181849982,1
 "historical_ld_support",59,12,68802676,0.366459627329193

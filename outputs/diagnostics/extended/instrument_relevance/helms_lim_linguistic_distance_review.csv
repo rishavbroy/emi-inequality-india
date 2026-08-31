@@ -1,0 +1,3 @@
+"state_code_1991","district_code_1991","ipum1993","district_name_helms_lim","linguistic_distance_1991_helms_lim","source_row_count","source_years","historical_language_status","ling_distance_nonzero_mean_1991","helms_lim_available","atlas_preferred_available","difference_helms_lim_minus_atlas","absolute_difference","agreement_status"
+"09","03",9003,"Hamirpur",3.8221397,3,"1991;2001;2011","eligible",1.03471362664566,TRUE,TRUE,2.78742607335434,2.78742607335434,"review_half_degree_or_more"
+"21","27",21027,"Jhalawar",1.6790657,3,"1991;2001;2011","eligible",2.17151411462789,TRUE,TRUE,-0.49244841462789,0.49244841462789,"review_quarter_to_half_degree"

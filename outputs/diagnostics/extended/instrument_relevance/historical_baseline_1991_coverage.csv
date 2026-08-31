@@ -1,0 +1,19 @@
+"variable","domain","source","label","n_districts","n_nonmissing","missing_share"
+"log_population_1991","demography","PCA91","Log population",452,452,0
+"female_share_1991","demography","PCA91","Female population share",452,452,0
+"child_share_0_6_1991","demography","PCA91","Population age 0-6 share",452,452,0
+"sc_share_1991","demography","PCA91","Scheduled Caste share",452,452,0
+"st_share_1991","demography","PCA91","Scheduled Tribe share",452,452,0
+"literacy_share_7plus_1991","human_capital","PCA91","Literacy share, age 7+",452,452,0
+"main_worker_share_1991","economic_structure","PCA91","Main-worker share",452,452,0
+"marginal_worker_share_1991","economic_structure","PCA91","Marginal-worker share",452,452,0
+"cultivator_share_main_workers_1991","economic_structure","PCA91","Cultivator share of main workers",452,452,0
+"agricultural_labourer_share_main_workers_1991","economic_structure","PCA91","Agricultural-labourer share of main workers",452,452,0
+"rural_primary_schools_per_100k_1991","rural_development","VD91","Rural primary schools per 100,000 district residents",452,445,0.0154867256637168
+"rural_high_schools_per_100k_1991","rural_development","VD91","Rural high schools per 100,000 district residents",452,445,0.0154867256637168
+"rural_hospitals_per_100k_1991","rural_development","VD91","Rural hospitals per 100,000 district residents",452,443,0.0199115044247788
+"rural_phc_per_100k_1991","rural_development","VD91","Rural primary health centres per 100,000 district residents",452,427,0.0553097345132743
+"urban_literacy_share_7plus_1991","urban_development","TD91","Urban literacy share, age 7+",452,441,0.0243362831858407
+"urban_primary_schools_per_100k_7plus_1991","urban_development","TD91","Urban primary schools per 100,000 urban residents age 7+",452,441,0.0243362831858407
+"urban_hospitals_per_100k_7plus_1991","urban_development","TD91","Urban hospitals per 100,000 urban residents age 7+",452,441,0.0243362831858407
+"urban_banks_per_100k_7plus_1991","urban_development","TD91","Urban banks per 100,000 urban residents age 7+",452,441,0.0243362831858407

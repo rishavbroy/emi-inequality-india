@@ -7,9 +7,9 @@
 "unadjusted__nonzero_mean_sensitivity_low",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
 "unadjusted__nonzero_mean_sensitivity_high",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
 "unadjusted__nonzero_mean_hindi_urdu_separate",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
-"unadjusted__distance_shares_all",1,5,"sargan","estimated",15.4936758682898,4,0.00377956755987944,NA
-"unadjusted__distance_shares_all_unmapped",1,5,"sargan","estimated",19.3948065038018,4,0.000657278832697819,NA
-"unadjusted__distance_shares_mapped",1,5,"sargan","estimated",20.7184818406425,4,0.000360070997869301,NA
+"unadjusted__distance_shares_all",1,5,"sargan","estimated",15.3644899181024,4,0.00400198485180463,NA
+"unadjusted__distance_shares_all_unmapped",1,5,"sargan","estimated",19.25453968621,4,0.000700408712143579,NA
+"unadjusted__distance_shares_mapped",1,5,"sargan","estimated",20.5674612491993,4,0.000385731624327466,NA
 "unadjusted__glottolog_mean",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
 "unadjusted__glottolog_mean_shastry",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
 "unadjusted__dyen_noncognate",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
@@ -22,9 +22,9 @@
 "region_main__nonzero_mean_sensitivity_low",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
 "region_main__nonzero_mean_sensitivity_high",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
 "region_main__nonzero_mean_hindi_urdu_separate",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
-"region_main__distance_shares_all",1,5,"sargan","estimated",10.5946566779156,4,0.0315177982569597,NA
-"region_main__distance_shares_all_unmapped",1,5,"sargan","estimated",18.1596177577337,4,0.00114852751724326,NA
-"region_main__distance_shares_mapped",1,5,"sargan","estimated",10.0851085301388,4,0.0390181853327695,NA
+"region_main__distance_shares_all",1,5,"sargan","estimated",10.7308196907651,4,0.0297617512503793,NA
+"region_main__distance_shares_all_unmapped",1,5,"sargan","estimated",18.2503397522168,4,0.00110253248594318,NA
+"region_main__distance_shares_mapped",1,5,"sargan","estimated",10.1573222324841,4,0.0378593744649286,NA
 "region_main__glottolog_mean",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
 "region_main__glottolog_mean_shastry",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
 "region_main__dyen_noncognate",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
@@ -37,9 +37,9 @@
 "region_expanded__nonzero_mean_sensitivity_low",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
 "region_expanded__nonzero_mean_sensitivity_high",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
 "region_expanded__nonzero_mean_hindi_urdu_separate",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
-"region_expanded__distance_shares_all",1,5,"sargan","estimated",11.0170933164714,4,0.0263725792201232,NA
-"region_expanded__distance_shares_all_unmapped",1,5,"sargan","estimated",18.292766670953,4,0.00108165174234389,NA
-"region_expanded__distance_shares_mapped",1,5,"sargan","estimated",10.8817962050307,4,0.0279250787155732,NA
+"region_expanded__distance_shares_all",1,5,"sargan","estimated",11.1413303120306,4,0.025020742772326,NA
+"region_expanded__distance_shares_all_unmapped",1,5,"sargan","estimated",18.3547772413499,4,0.00105183379886026,NA
+"region_expanded__distance_shares_mapped",1,5,"sargan","estimated",10.9094304643067,4,0.0276009710285712,NA
 "region_expanded__glottolog_mean",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
 "region_expanded__glottolog_mean_shastry",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
 "region_expanded__dyen_noncognate",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
@@ -52,9 +52,9 @@
 "state_main__nonzero_mean_sensitivity_low",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
 "state_main__nonzero_mean_sensitivity_high",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
 "state_main__nonzero_mean_hindi_urdu_separate",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
-"state_main__distance_shares_all",1,5,"sargan","estimated",10.5886313730834,4,0.0315977699395087,NA
-"state_main__distance_shares_all_unmapped",1,5,"sargan","estimated",8.92112797116943,4,0.0631014262235029,NA
-"state_main__distance_shares_mapped",1,5,"sargan","estimated",8.41227342346409,4,0.0775914029166218,NA
+"state_main__distance_shares_all",1,5,"sargan","estimated",10.7411291735587,4,0.0296327091479661,NA
+"state_main__distance_shares_all_unmapped",1,5,"sargan","estimated",8.97908003064983,4,0.0616245130035987,NA
+"state_main__distance_shares_mapped",1,5,"sargan","estimated",8.50823363339224,4,0.0746380467432053,NA
 "state_main__glottolog_mean",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
 "state_main__glottolog_mean_shastry",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
 "state_main__dyen_noncognate",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
@@ -67,9 +67,9 @@
 "state_expanded__nonzero_mean_sensitivity_low",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
 "state_expanded__nonzero_mean_sensitivity_high",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
 "state_expanded__nonzero_mean_hindi_urdu_separate",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
-"state_expanded__distance_shares_all",1,5,"sargan","estimated",9.76401613011784,4,0.0445960560255905,NA
-"state_expanded__distance_shares_all_unmapped",1,5,"sargan","estimated",8.32173353759319,4,0.080478740310319,NA
-"state_expanded__distance_shares_mapped",1,5,"sargan","estimated",7.47519560590758,4,0.112808048745682,NA
+"state_expanded__distance_shares_all",1,5,"sargan","estimated",9.96764856981104,4,0.0409761778651961,NA
+"state_expanded__distance_shares_all_unmapped",1,5,"sargan","estimated",8.39918081800542,4,0.0780028001157419,NA
+"state_expanded__distance_shares_mapped",1,5,"sargan","estimated",7.60654173707633,4,0.107101986699963,NA
 "state_expanded__glottolog_mean",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
 "state_expanded__glottolog_mean_shastry",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."
 "state_expanded__dyen_noncognate",1,1,"sargan","not_applicable",NA,NA,NA,"Exactly identified."

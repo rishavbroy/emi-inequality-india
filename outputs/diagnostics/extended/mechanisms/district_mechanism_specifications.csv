@@ -1,0 +1,4 @@
+"specification_id","label","fixed_effect","controls","sequence"
+"unadjusted","Unadjusted","none","none",1
+"region_main","Six-region FE + main controls","region","log_population_2001;urban_share_2001;adult_secondary_plus_share_2001;sc_share_2001;st_share_2001;muslim_share_2001;agricultural_worker_share_2001;dependency_ratio_2001;electricity_access_share_2001;log_population_density_2001",2
+"state_main","State FE + main controls","state","log_population_2001;urban_share_2001;adult_secondary_plus_share_2001;sc_share_2001;st_share_2001;muslim_share_2001;agricultural_worker_share_2001;dependency_ratio_2001;electricity_access_share_2001;log_population_density_2001",3

@@ -1,0 +1,9 @@
+"predictor_id","predictor","sample","n","n_states","population_1991"
+"eventual_emie","emie_exposure","preferred_geography",283,28,478363810
+"eventual_emie","emie_exposure","exact_one_to_one",64,24,72333659
+"census_2001_ld","ling_distance_nonzero_mean_2001","preferred_geography",283,28,478363810
+"census_2001_ld","ling_distance_nonzero_mean_2001","exact_one_to_one",64,24,72333659
+"helms_lim_ld_1991","ling_distance_helms_lim_1991","preferred_geography",290,28,488763640
+"helms_lim_ld_1991","ling_distance_helms_lim_1991","exact_one_to_one",64,24,72333659
+"historical_ld_1991","ling_distance_nonzero_mean_1991","preferred_geography",91,17,187746748
+"historical_ld_1991","ling_distance_nonzero_mean_1991","exact_one_to_one",22,10,34941948

@@ -1,0 +1,2 @@
+"n_source_edges","n_source_districts","n_population_identified_source_districts","n_population_not_found_source_districts","n_population_ambiguous_source_districts","share_source_districts_population_identified","n_matched_edges","share_source_edges_matched","median_absolute_share_difference","p95_absolute_share_difference","max_absolute_share_difference","share_matched_edges_within_1pp"
+376,241,40,201,0,0.16597510373444,54,0.143617021276596,5.80235564929464e-05,0.00519037789643478,0.010959440164553,0.981481481481482
