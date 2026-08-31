@@ -1,13 +1,19 @@
 # Census migration tables used for baseline sorting checks and post-treatment mechanisms.
 
 census_migration_manifest_files <- function(paths, census_year, table, manifest_file = NULL) {
+  census_year <- as.integer(census_year)
   table <- toupper(trimws(plain_chr(table)))
-  if (length(table) != 1L || is.na(table) || !table %in% c("D02", "D03", "D04", "D07")) {
-    stop("Census migration reader currently supports D02, D03, D04, and D07.", call. = FALSE)
+  allowed <- if (identical(census_year, 2001L)) {
+    "D02"
+  } else if (identical(census_year, 2011L)) {
+    c("D02", "D03", "D04", "D05", "D06", "D07")
+  } else {
+    character()
   }
-  if (as.integer(census_year) == 2001L && identical(table, "D03")) {
+  if (length(table) != 1L || is.na(table) || !table %in% allowed) {
     stop(
-      "Census 2001 D03 state workbooks do not provide district rows; do not construct district reason measures from them.",
+      "Census migration district reader supports 2001 D02 and 2011 D02-D07. ",
+      "The attached 2001 D03/D06 state workbooks are not district-level sources.",
       call. = FALSE
     )
   }
@@ -165,6 +171,13 @@ census_recent_duration_labels <- function() {
     "Duration of residence less than 1 year",
     "Duration of residence 1-4 years",
     "Duration of residence 5-9 years"
+  )
+}
+
+census_migration_reason_columns <- function() {
+  c(
+    "migrants_total", "work_employment", "business", "education", "marriage",
+    "moved_after_birth", "moved_with_household", "other_reason"
   )
 }
 
@@ -388,6 +401,214 @@ read_census_d04_2011_district <- function(files) {
   out <- safe_bind_rows(lapply(files, read_census_d04_2011_file))
   if (anyDuplicated(out[c("state_code", "district_code")])) {
     stop("Census 2011 D04 files contain duplicate state-district summaries.", call. = FALSE)
+  }
+  out[order(out$state_code, out$district_code), , drop = FALSE]
+}
+
+census_2011_detailed_age_groups <- function() {
+  c(
+    "0-4", "5-9", "10-14", "15-19", "20-24", "25-29", "30-34",
+    "35-39", "40-44", "45-49", "50-54", "55-59", "60-64", "65-69",
+    "70-74", "75-79", "80+", "Age not stated"
+  )
+}
+
+census_working_age_groups <- function() {
+  c("15-19", "20-24", "25-29", "30-34", "35-39", "40-44", "45-49", "50-54", "55-59", "60-64")
+}
+
+parse_census_d05_2011_sheet <- function(raw) {
+  raw <- safe_df(raw)
+  if (ncol(raw) < 32L) stop("Census 2011 D05 sheet has fewer than 32 columns.", call. = FALSE)
+  out <- data.frame(
+    table = trimws(plain_chr(raw[[1L]])),
+    state_code = normalize_census_code(raw[[2L]], 2L),
+    district_code = normalize_census_code(raw[[3L]], 3L),
+    district_name = clean_census_district_label(raw[[4L]]),
+    enumeration_sector = trimws(plain_chr(raw[[5L]])),
+    duration = trimws(plain_chr(raw[[6L]])),
+    age_group = trimws(plain_chr(raw[[7L]])),
+    last_residence_type = trimws(plain_chr(raw[[8L]])),
+    migrants_total = num(raw[[9L]]),
+    work_employment = num(raw[[12L]]),
+    business = num(raw[[15L]]),
+    education = num(raw[[18L]]),
+    marriage = num(raw[[21L]]),
+    moved_after_birth = num(raw[[24L]]),
+    moved_with_household = num(raw[[27L]]),
+    other_reason = num(raw[[30L]]),
+    stringsAsFactors = FALSE
+  )
+  keep <- out$table == "D1005" & !is.na(out$state_code) &
+    !is.na(out$district_code) & out$district_code != "000" &
+    out$enumeration_sector == "Total" & out$duration == "All durations of residence" &
+    out$last_residence_type == "Total" &
+    out$age_group %in% c("All ages", census_2011_detailed_age_groups())
+  out <- out[keep %in% TRUE, , drop = FALSE]
+  rownames(out) <- NULL
+  out
+}
+
+summarise_census_d05_2011_district <- function(rows) {
+  x <- safe_df(rows)
+  expected_ages <- c("All ages", census_2011_detailed_age_groups())
+  count_cols <- census_migration_reason_columns()
+  groups <- split(seq_len(nrow(x)), paste(x$state_code, x$district_code, sep = "|"))
+  out <- safe_bind_rows(lapply(groups, function(index) {
+    part <- x[index, , drop = FALSE]
+    if (anyDuplicated(part$age_group) || !setequal(part$age_group, expected_ages)) {
+      stop(
+        "Census 2011 D05 district has incomplete age support: ",
+        part$state_code[[1L]], "/", part$district_code[[1L]], ".",
+        call. = FALSE
+      )
+    }
+    counts <- as.data.frame(lapply(part[count_cols], num), stringsAsFactors = FALSE)
+    reason_sum <- rowSums(counts[setdiff(count_cols, "migrants_total")], na.rm = FALSE)
+    if (any(!is.finite(as.matrix(counts))) || any(as.matrix(counts) < 0) ||
+        any(reason_sum != counts$migrants_total)) {
+      stop("Census 2011 D05 reason counts do not partition migrants by age.", call. = FALSE)
+    }
+    total_row <- part[part$age_group == "All ages", , drop = FALSE]
+    detail <- part[part$age_group != "All ages", , drop = FALSE]
+    detail_sum <- vapply(count_cols, function(column) sum(num(detail[[column]])), numeric(1))
+    total_values <- vapply(count_cols, function(column) num(total_row[[column]])[[1L]], numeric(1))
+    if (any(detail_sum != total_values)) {
+      stop("Census 2011 D05 detailed ages do not sum exactly to all ages.", call. = FALSE)
+    }
+    sum_age <- function(ages, column) sum(num(part[[column]][part$age_group %in% ages]))
+    row <- data.frame(
+      census_year = 2011L,
+      state_code = part$state_code[[1L]],
+      district_code = part$district_code[[1L]],
+      district_name = part$district_name[[1L]],
+      working_age_migrants_15_64 = sum_age(census_working_age_groups(), "migrants_total"),
+      work_migrants_age_20_49 = sum_age(c("20-24", "25-29", "30-34", "35-39", "40-44", "45-49"), "work_employment"),
+      education_migrants_age_15_24 = sum_age(c("15-19", "20-24"), "education"),
+      stringsAsFactors = FALSE
+    )
+    for (column in count_cols) row[[column]] <- total_values[[column]]
+    row
+  }))
+  if (!nrow(out) || anyDuplicated(out[c("state_code", "district_code")])) {
+    stop("Census 2011 D05 district summary is not unique by state-district.", call. = FALSE)
+  }
+  rownames(out) <- NULL
+  out
+}
+
+read_census_d05_2011_file <- function(path) {
+  summarise_census_d05_2011_district(
+    parse_census_d05_2011_sheet(read_census_migration_sheet(path, "D05"))
+  )
+}
+
+read_census_d05_2011_district <- function(files) {
+  out <- safe_bind_rows(lapply(files, read_census_d05_2011_file))
+  if (anyDuplicated(out[c("state_code", "district_code")])) {
+    stop("Census 2011 D05 files contain duplicate state-district summaries.", call. = FALSE)
+  }
+  out[order(out$state_code, out$district_code), , drop = FALSE]
+}
+
+parse_census_d06_2011_sheet <- function(raw) {
+  raw <- safe_df(raw)
+  if (ncol(raw) < 26L) stop("Census 2011 D06 sheet has fewer than 26 columns.", call. = FALSE)
+  out <- data.frame(
+    table = trimws(plain_chr(raw[[1L]])),
+    state_code = normalize_census_code(raw[[2L]], 2L),
+    district_code = normalize_census_code(raw[[3L]], 3L),
+    district_name = clean_census_district_label(raw[[4L]]),
+    enumeration_sector = trimws(plain_chr(raw[[5L]])),
+    duration = trimws(plain_chr(raw[[6L]])),
+    age_group = trimws(plain_chr(raw[[7L]])),
+    last_residence_type = trimws(plain_chr(raw[[8L]])),
+    migrants_total = num(raw[[9L]]),
+    main_workers = num(raw[[12L]]),
+    marginal_workers = num(raw[[15L]]),
+    marginal_workers_seeking_work = num(raw[[18L]]),
+    non_workers = num(raw[[21L]]),
+    non_workers_seeking_work = num(raw[[24L]]),
+    stringsAsFactors = FALSE
+  )
+  keep <- out$table == "D1106" & !is.na(out$state_code) &
+    !is.na(out$district_code) & out$district_code != "000" &
+    out$enumeration_sector == "Total" & out$duration == "All durations of residence" &
+    out$last_residence_type == "Total" &
+    out$age_group %in% c("All ages", census_2011_detailed_age_groups())
+  out <- out[keep %in% TRUE, , drop = FALSE]
+  rownames(out) <- NULL
+  out
+}
+
+summarise_census_d06_2011_district <- function(rows) {
+  x <- safe_df(rows)
+  expected_ages <- c("All ages", census_2011_detailed_age_groups())
+  count_cols <- c(
+    "migrants_total", "main_workers", "marginal_workers",
+    "marginal_workers_seeking_work", "non_workers", "non_workers_seeking_work"
+  )
+  groups <- split(seq_len(nrow(x)), paste(x$state_code, x$district_code, sep = "|"))
+  out <- safe_bind_rows(lapply(groups, function(index) {
+    part <- x[index, , drop = FALSE]
+    if (anyDuplicated(part$age_group) || !setequal(part$age_group, expected_ages)) {
+      stop(
+        "Census 2011 D06 district has incomplete age support: ",
+        part$state_code[[1L]], "/", part$district_code[[1L]], ".",
+        call. = FALSE
+      )
+    }
+    counts <- as.data.frame(lapply(part[count_cols], num), stringsAsFactors = FALSE)
+    valid <- apply(as.matrix(counts), 1L, function(value) {
+      all(is.finite(value)) && all(value >= 0) &&
+        value[[2L]] + value[[3L]] + value[[5L]] == value[[1L]] &&
+        value[[4L]] <= value[[3L]] && value[[6L]] <= value[[5L]]
+    })
+    if (any(!valid)) {
+      stop("Census 2011 D06 economic-activity counts do not partition migrants by age.", call. = FALSE)
+    }
+    total_row <- part[part$age_group == "All ages", , drop = FALSE]
+    detail <- part[part$age_group != "All ages", , drop = FALSE]
+    detail_sum <- vapply(count_cols, function(column) sum(num(detail[[column]])), numeric(1))
+    total_values <- vapply(count_cols, function(column) num(total_row[[column]])[[1L]], numeric(1))
+    if (any(detail_sum != total_values)) {
+      stop("Census 2011 D06 detailed ages do not sum exactly to all ages.", call. = FALSE)
+    }
+    working <- part[part$age_group %in% census_working_age_groups(), , drop = FALSE]
+    sum_working <- function(column) sum(num(working[[column]]))
+    row <- data.frame(
+      census_year = 2011L,
+      state_code = part$state_code[[1L]],
+      district_code = part$district_code[[1L]],
+      district_name = part$district_name[[1L]],
+      working_age_migrants_15_64 = sum_working("migrants_total"),
+      working_age_main_workers = sum_working("main_workers"),
+      working_age_marginal_workers = sum_working("marginal_workers"),
+      working_age_marginal_workers_seeking_work = sum_working("marginal_workers_seeking_work"),
+      working_age_non_workers = sum_working("non_workers"),
+      working_age_non_workers_seeking_work = sum_working("non_workers_seeking_work"),
+      stringsAsFactors = FALSE
+    )
+    for (column in count_cols) row[[column]] <- total_values[[column]]
+    row
+  }))
+  if (!nrow(out) || anyDuplicated(out[c("state_code", "district_code")])) {
+    stop("Census 2011 D06 district summary is not unique by state-district.", call. = FALSE)
+  }
+  rownames(out) <- NULL
+  out
+}
+
+read_census_d06_2011_file <- function(path) {
+  summarise_census_d06_2011_district(
+    parse_census_d06_2011_sheet(read_census_migration_sheet(path, "D06"))
+  )
+}
+
+read_census_d06_2011_district <- function(files) {
+  out <- safe_bind_rows(lapply(files, read_census_d06_2011_file))
+  if (anyDuplicated(out[c("state_code", "district_code")])) {
+    stop("Census 2011 D06 files contain duplicate state-district summaries.", call. = FALSE)
   }
   out[order(out$state_code, out$district_code), , drop = FALSE]
 }

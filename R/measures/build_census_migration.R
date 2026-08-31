@@ -9,10 +9,7 @@ census_d02_count_columns <- function() {
 }
 
 census_d03_reason_count_columns <- function() {
-  c(
-    "migrants_total", "work_employment", "business", "education", "marriage",
-    "moved_after_birth", "moved_with_household", "other_reason"
-  )
+  census_migration_reason_columns()
 }
 
 census_d03_count_columns <- function() {
@@ -28,6 +25,24 @@ census_d04_count_columns <- function() {
     "migrants_literate_below_matric", "migrants_matric_below_graduate",
     "migrants_technical_diploma_below_degree", "migrants_graduate_nontechnical",
     "migrants_technical_degree", "migrants_literate_education_not_classified"
+  )
+}
+
+census_d05_count_columns <- function() {
+  c(
+    census_d03_reason_count_columns(),
+    "working_age_migrants_15_64", "work_migrants_age_20_49",
+    "education_migrants_age_15_24"
+  )
+}
+
+census_d06_count_columns <- function() {
+  c(
+    "migrants_total", "main_workers", "marginal_workers",
+    "marginal_workers_seeking_work", "non_workers", "non_workers_seeking_work",
+    "working_age_migrants_15_64", "working_age_main_workers",
+    "working_age_marginal_workers", "working_age_marginal_workers_seeking_work",
+    "working_age_non_workers", "working_age_non_workers_seeking_work"
   )
 }
 
@@ -93,6 +108,43 @@ add_census_d04_education_shares <- function(x) {
   )
 }
 
+add_census_d05_age_reason_shares <- function(x) {
+  x <- safe_df(x)
+  x$working_age_15_64_share_among_migrants <- safe_count_share(
+    x$working_age_migrants_15_64, x$migrants_total
+  )
+  x$age_20_49_share_among_work_migrants <- safe_count_share(
+    x$work_migrants_age_20_49, x$work_employment
+  )
+  x$age_15_24_share_among_education_migrants <- safe_count_share(
+    x$education_migrants_age_15_24, x$education
+  )
+  x
+}
+
+add_census_d06_activity_shares <- function(x) {
+  x <- safe_df(x)
+  x$main_worker_share_among_working_age_migrants <- safe_count_share(
+    x$working_age_main_workers, x$working_age_migrants_15_64
+  )
+  x$marginal_worker_share_among_working_age_migrants <- safe_count_share(
+    x$working_age_marginal_workers, x$working_age_migrants_15_64
+  )
+  x$non_worker_share_among_working_age_migrants <- safe_count_share(
+    x$working_age_non_workers, x$working_age_migrants_15_64
+  )
+  seeking <- num(x$working_age_marginal_workers_seeking_work) +
+    num(x$working_age_non_workers_seeking_work)
+  non_main <- num(x$working_age_marginal_workers) + num(x$working_age_non_workers)
+  x$seeking_work_share_among_working_age_migrants <- safe_count_share(
+    seeking, x$working_age_migrants_15_64
+  )
+  x$seeking_work_share_among_working_age_non_main <- safe_count_share(
+    seeking, non_main
+  )
+  x
+}
+
 add_census_d07_work_migrant_shares <- function(x) {
   x <- safe_df(x)
   x$outside_state_share_among_recent_work_migrants <- safe_count_share(
@@ -126,6 +178,25 @@ validate_census_2011_d02_d04_totals <- function(d02_2011, d04_2011) {
   validate_census_matching_count(
     d02_2011, d04_2011, "migrants_total", "migrants_total",
     "Census 2011 D02/D04 all-migrant"
+  )
+}
+
+validate_census_2011_d03_d05_reasons <- function(d03_2011, d05_2011) {
+  columns <- census_d03_reason_count_columns()
+  safe_bind_rows(lapply(columns, function(column) {
+    out <- validate_census_matching_count(
+      d03_2011, d05_2011, column, column,
+      paste0("Census 2011 D03/D05 ", column)
+    )
+    out$measure <- column
+    out
+  }))
+}
+
+validate_census_2011_d02_d06_totals <- function(d02_2011, d06_2011) {
+  validate_census_matching_count(
+    d02_2011, d06_2011, "migrants_total", "migrants_total",
+    "Census 2011 D02/D06 all-migrant"
   )
 }
 
@@ -203,6 +274,22 @@ build_census_d04_2011_measures <- function(d04_2011, district_transition_2001_20
   )
   pooled$census_year <- rep.int(2011L, nrow(pooled))
   add_census_d04_education_shares(pooled)
+}
+
+build_census_d05_2011_measures <- function(d05_2011, district_transition_2001_2011) {
+  pooled <- harmonize_census_2011_counts_to_2001(
+    d05_2011, district_transition_2001_2011, census_d05_count_columns()
+  )
+  pooled$census_year <- rep.int(2011L, nrow(pooled))
+  add_census_d05_age_reason_shares(pooled)
+}
+
+build_census_d06_2011_measures <- function(d06_2011, district_transition_2001_2011) {
+  pooled <- harmonize_census_2011_counts_to_2001(
+    d06_2011, district_transition_2001_2011, census_d06_count_columns()
+  )
+  pooled$census_year <- rep.int(2011L, nrow(pooled))
+  add_census_d06_activity_shares(pooled)
 }
 
 build_census_d07_2011_measures <- function(d07_2011, district_transition_2001_2011) {

@@ -252,11 +252,13 @@ test_that("Census D03 harmonization preserves its empty output schema", {
   ))
 })
 
-test_that("Census 2001 D03 is not exposed as a district migration source", {
-  expect_error(
-    census_migration_manifest_files(build_paths(tempdir()), 2001, "D03"),
-    "do not provide district rows"
-  )
+test_that("Census 2001 state-only migration tables are not exposed as district sources", {
+  for (table in c("D03", "D06")) {
+    expect_error(
+      census_migration_manifest_files(build_paths(tempdir()), 2001, table),
+      "not district-level"
+    )
+  }
 })
 
 test_that("Census 2011 D04 retains a complete education partition and explicit residual", {
@@ -284,6 +286,76 @@ test_that("Census 2011 D04 retains a complete education partition and explicit r
   expect_error(
     summarise_census_d04_2011_district(parse_census_d04_2011_sheet(raw)),
     "inconsistent migrant education counts"
+  )
+})
+
+test_that("Census 2011 D05 age rows exhaust aggregate migration reasons", {
+  ages <- census_2011_detailed_age_groups()
+  raw <- data.frame(matrix("", nrow = length(ages) + 1L, ncol = 32), stringsAsFactors = FALSE)
+  raw[, 1] <- "D1005"
+  raw[, 2] <- "09"
+  raw[, 3] <- "132"
+  raw[, 4] <- "Alpha"
+  raw[, 5] <- "Total"
+  raw[, 6] <- "All durations of residence"
+  raw[, 7] <- c("All ages", ages)
+  raw[, 8] <- "Total"
+  detail <- c(10, 2, 1, 1, 2, 1, 2, 1)
+  raw[-1L, c(9, 12, 15, 18, 21, 24, 27, 30)] <- matrix(
+    rep(detail, length(ages)), nrow = length(ages), byrow = TRUE
+  )
+  raw[1L, c(9, 12, 15, 18, 21, 24, 27, 30)] <- detail * length(ages)
+
+  out <- summarise_census_d05_2011_district(parse_census_d05_2011_sheet(raw))
+  measures <- add_census_d05_age_reason_shares(out)
+
+  expect_equal(out$migrants_total, 10 * length(ages))
+  expect_equal(out$working_age_migrants_15_64, 100)
+  expect_equal(out$work_migrants_age_20_49, 12)
+  expect_equal(out$education_migrants_age_15_24, 2)
+  expect_equal(measures$age_20_49_share_among_work_migrants, 12 / (2 * length(ages)))
+  expect_equal(measures$age_15_24_share_among_education_migrants, 2 / length(ages))
+
+  raw[1L, 30] <- num(raw[1L, 30]) - 1
+  expect_error(
+    summarise_census_d05_2011_district(parse_census_d05_2011_sheet(raw)),
+    "do not partition migrants by age"
+  )
+})
+
+test_that("Census 2011 D06 economic activity partitions working-age migrants", {
+  ages <- census_2011_detailed_age_groups()
+  raw <- data.frame(matrix("", nrow = length(ages) + 1L, ncol = 26), stringsAsFactors = FALSE)
+  raw[, 1] <- "D1106"
+  raw[, 2] <- "09"
+  raw[, 3] <- "132"
+  raw[, 4] <- "Alpha"
+  raw[, 5] <- "Total"
+  raw[, 6] <- "All durations of residence"
+  raw[, 7] <- c("All ages", ages)
+  raw[, 8] <- "Total"
+  detail <- c(10, 4, 2, 1, 4, 1)
+  raw[-1L, c(9, 12, 15, 18, 21, 24)] <- matrix(
+    rep(detail, length(ages)), nrow = length(ages), byrow = TRUE
+  )
+  raw[1L, c(9, 12, 15, 18, 21, 24)] <- detail * length(ages)
+
+  out <- summarise_census_d06_2011_district(parse_census_d06_2011_sheet(raw))
+  measures <- add_census_d06_activity_shares(out)
+
+  expect_equal(out$working_age_migrants_15_64, 100)
+  expect_equal(out$working_age_main_workers, 40)
+  expect_equal(out$working_age_marginal_workers, 20)
+  expect_equal(out$working_age_non_workers, 40)
+  expect_equal(measures$main_worker_share_among_working_age_migrants, 0.4)
+  expect_equal(measures$marginal_worker_share_among_working_age_migrants, 0.2)
+  expect_equal(measures$seeking_work_share_among_working_age_migrants, 0.2)
+  expect_equal(measures$seeking_work_share_among_working_age_non_main, 1 / 3)
+
+  raw[2L, 18] <- 3
+  expect_error(
+    summarise_census_d06_2011_district(parse_census_d06_2011_sheet(raw)),
+    "do not partition migrants by age"
   )
 })
 
@@ -337,6 +409,23 @@ test_that("Census migration cross-table validators compare observed source count
     validate_census_2011_d02_d04_totals(d02, d04)$max_abs_difference,
     0
   )
+  d06 <- d02
+  expect_equal(
+    validate_census_2011_d02_d06_totals(d02, d06)$max_abs_difference,
+    0
+  )
+
+  d03_reasons <- data.frame(
+    state_code = c("09", "09"), district_code = c("132", "133"),
+    migrants_total = c(100, 200), work_employment = c(20, 40),
+    business = c(5, 10), education = c(10, 20), marriage = c(30, 60),
+    moved_after_birth = c(5, 10), moved_with_household = c(20, 40),
+    other_reason = c(10, 20), stringsAsFactors = FALSE
+  )
+  d05 <- d03_reasons
+  reason_validation <- validate_census_2011_d03_d05_reasons(d03_reasons, d05)
+  expect_equal(nrow(reason_validation), length(census_d03_reason_count_columns()))
+  expect_true(all(reason_validation$max_abs_difference == 0))
 
   d03 <- data.frame(
     state_code = c("09", "09"), district_code = c("132", "133"),
@@ -433,6 +522,14 @@ test_that("migration mechanism registry covers distinct observed 2011 constructs
   expect_setequal(registry$source_id, c("d02", "d03", "d04", "d07"))
   expect_true(all(registry$tier %in% c("core", "secondary")))
   expect_true(all(registry$denominator %in% c("all_migrants", "recent_work_migrants")))
+})
+
+test_that("Census mechanism design variables preserve IV registry list columns", {
+  specifications <- census_migration_mechanism_specifications()
+  variables <- census_migration_mechanism_design_variables(specifications)
+  expect_true(all(census_2001_main_controls() %in% variables))
+  expect_false(any(grepl(";", variables, fixed = TRUE)))
+  expect_true(preferred_iv_variables()$treatment %in% variables)
 })
 
 test_that("migration mechanism diagnostics use one common support sample", {

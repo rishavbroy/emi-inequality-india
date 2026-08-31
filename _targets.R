@@ -2167,6 +2167,16 @@ extended_diagnostic_targets <- list(
     format = "file"
   ),
   tar_target(
+    census_2011_d05_files,
+    census_migration_manifest_files(paths, 2011, "D05", census_2011_download_manifest_file),
+    format = "file"
+  ),
+  tar_target(
+    census_2011_d06_files,
+    census_migration_manifest_files(paths, 2011, "D06", census_2011_download_manifest_file),
+    format = "file"
+  ),
+  tar_target(
     census_2011_d07_files,
     census_migration_manifest_files(paths, 2011, "D07", census_2011_download_manifest_file),
     format = "file"
@@ -2186,6 +2196,14 @@ extended_diagnostic_targets <- list(
   tar_target(
     census_migration_d04_2011_source,
     read_census_d04_2011_district(census_2011_d04_files)
+  ),
+  tar_target(
+    census_migration_d05_2011_source,
+    read_census_d05_2011_district(census_2011_d05_files)
+  ),
+  tar_target(
+    census_migration_d06_2011_source,
+    read_census_d06_2011_district(census_2011_d06_files)
   ),
   tar_target(
     census_migration_d07_2011_source,
@@ -2220,6 +2238,20 @@ extended_diagnostic_targets <- list(
     )
   ),
   tar_target(
+    census_migration_d05_2011,
+    build_census_d05_2011_measures(
+      census_migration_d05_2011_source,
+      district_transition_2001_2011
+    )
+  ),
+  tar_target(
+    census_migration_d06_2011,
+    build_census_d06_2011_measures(
+      census_migration_d06_2011_source,
+      district_transition_2001_2011
+    )
+  ),
+  tar_target(
     census_migration_d07_2011,
     build_census_d07_2011_measures(
       census_migration_d07_2011_source,
@@ -2233,10 +2265,14 @@ extended_diagnostic_targets <- list(
       census_migration_d02_2011_source,
       census_migration_d03_2011_source,
       census_migration_d04_2011_source,
+      census_migration_d05_2011_source,
+      census_migration_d06_2011_source,
       census_migration_d07_2011_source,
       census_migration_d02_2011,
       census_migration_d03_2011,
       census_migration_d04_2011,
+      census_migration_d05_2011,
+      census_migration_d06_2011,
       census_migration_d07_2011,
       district_panel,
       cfg
