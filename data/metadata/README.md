@@ -5,7 +5,7 @@ This directory contains tracked descriptions, manifests, checksums, crosswalks, 
 ## General metadata
 
 - `data_sources.csv`: project-wide source catalog, acquisition route, local path, role, and redistribution caveat.
-- Census migration acquisition uses the year-specific download manifests; D-02 through D-07 district semantics, cross-table accounting checks, the 2001 D-03 granularity limitation, and the distinction between 2001 validity evidence and 2011 mechanisms are documented in `docs/CENSUS_MIGRATION.md`.
+- Census migration acquisition uses the year-specific download manifests; D-02 through D-07 district semantics, cross-table accounting checks, the 2001 D-03 granularity limitation, the SHRUG Census-2011 PCA population denominator, and the distinction between 2001 validity evidence and 2011 mechanisms are documented in `docs/CENSUS_MIGRATION.md`.
 - Census worker-structure acquisition uses both year manifests: 2001 B-04/B-25/B-26 feed predetermined balance diagnostics, while 2011 B-04/B-06/B-25A/B feed post-treatment mechanism diagnostics; B-04/B-06 industry accounting, B-25A/B occupational universes, and deterministic 2011-to-2001 count pooling are documented in `docs/CENSUS_WORKERS.md`.
 - Census housing/living-standard diagnostics use 2001 H-09/H-12/H-13 and 2011 HL-07/HL-11/HL-12. The module validates household/electricity universes across tables, pools 2011 counts only through complete deterministic parents, and computes common 2001–2011 household-share changes; see `docs/CENSUS_HOUSING.md`.
 - `file_manifest.csv`: exact files required by the existing production pipeline. Missing required files must fail before a raw reader is called.

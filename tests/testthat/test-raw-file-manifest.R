@@ -532,6 +532,31 @@ test_that("1991 Atlas state and PCA review inputs have explicit source contracts
   )
 })
 
+test_that("SHRUG Census-2011 PCA population denominator is manifest-backed", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
+  manifest <- read.csv(
+    file.path(root, "data", "metadata", "file_manifest.csv"),
+    stringsAsFactors = FALSE
+  )
+  sources <- read.csv(
+    file.path(root, "data", "metadata", "data_sources.csv"),
+    stringsAsFactors = FALSE
+  )
+
+  row <- manifest[manifest$file_id == "shrug_pca11_population", , drop = FALSE]
+  expect_equal(nrow(row), 1L)
+  expect_identical(tolower(as.character(row$required_for_current_pipeline)), "false")
+  expect_identical(row$relative_path, "data/raw/shrug/census_2011/shrug-pca11-csv.zip")
+  expect_equal(as.numeric(row$expected_size_bytes), 66532473)
+  expect_identical(row$reader_function, "read_census_2011_district_population")
+  expect_identical(row$target_name, "census_2011_population_source")
+
+  source <- sources[sources$source_id == "shrug_census_2011", , drop = FALSE]
+  expect_equal(nrow(source), 1L)
+  expect_true(as.logical(source$used_in_current_pipeline))
+  expect_identical(source$current_or_future, "current")
+})
+
 test_that("DISE archive is optional but fully documented", {
   root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
   manifest <- read.csv(file.path(root, "data", "metadata", "file_manifest.csv"), stringsAsFactors = FALSE)

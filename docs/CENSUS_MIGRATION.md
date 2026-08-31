@@ -51,7 +51,11 @@ The identity
 
 is required exactly. A workbook that violates it fails rather than silently producing shares.
 
-Composition shares are explicitly named `*_share_among_migrants`. For 2001, the module also joins the already validated `census_2001_district_totals$population_total` denominator and reports migrant stock, recent-migrant, and interstate-migrant shares of district population. Those population-denominated variables are the more direct predetermined sorting measures. No analogous 2011 population rate is created until a 2011 total-population denominator is separately integrated and validated.
+Composition shares are explicitly named `*_share_among_migrants`. For both Census years, D-02 also reports population-denominated migrant stock, recent-migrant, interdistrict-migrant, and interstate-migrant shares. The 2001 denominator is the already validated `census_2001_district_totals$population_total`. The 2011 denominator is `pc11_pca_tot_p` from SHRUG's district-level Census-2011 Primary Census Abstract (PCA), which SHRUG defines as total Census population and publishes for all 640 Census-2011 districts. The 2011 PCA population is pooled through the same complete deterministic 2011-to-2001 bridge before any migration rate is computed.
+
+The project deliberately does **not** use Census B-01 as this denominator. B-01's published universe is persons age 5 and above, whereas D-02 migrant totals include all ages; dividing the latter by B-01 population would mix universes. `d02_population_2011_validation.csv` instead verifies that D-02 and the all-age PCA have identical 640-district source support and that migrant counts never exceed district population.
+
+`d02_population_change_2011_2001.csv` reports 2001-to-2011 changes in the four population-denominated D-02 rates on the deterministically reconstructible follow-up support. The changes are descriptive post-treatment migration measurements for now; they are not added to the already weakly identified mechanism-IV family.
 
 ## D-03 2011 reason constructs
 
@@ -123,8 +127,8 @@ The 2001 D-02 measures now enter the same specification-aware IV validity engine
 
 - migrant stock as a share of district population;
 - 0-9-year migrants as a share of district population;
-- interstate migrants as a share of district population; and
-- other-district-within-state share among migrants.
+- interdistrict migrants as a share of district population; and
+- interstate migrants as a share of district population.
 
 Balance is reported for the live candidate IV designs (region and state fixed effects crossed with the primary Shastry, Glottolog, and Dyen constructions). Individual p-values receive a Holm family-wise adjustment within specification, while the existing reverse-regression joint-balance diagnostic provides the omnibus test. These are falsification/balance diagnostics, not selection rules for adding controls.
 
@@ -160,4 +164,4 @@ These targets are extended diagnostics, not automatic controls or causal outcome
 - 2011 D-02 through D-07 measures are post-treatment migration measurements. D-02/D-03/D-04/D-07 currently enter the registered common-sample inference family; D-05/D-06 remain descriptive until the existing weak-IV results justify expanding that family. None should be added to the preferred outcome equation as controls.
 - D-03 does not recover migrant occupation or industry. The project will not synthesize missing 2011 D-08/D-09 cells by multiplying migration totals by destination-district B-series shares.
 
-A later phase can add a validated 2011 population denominator. D-05/D-06 are intentionally not added to the weak-IV outcome registry in this phase because the existing mechanism first stages are already weak; their first role is to audit age selectivity and labor-force attachment without multiplying inferential tests. The deterministic complete-parent bridge yields a substantially smaller 2011 mechanism sample than the 593-district 2001 baseline, so reduced-form and weak-IV mechanism results explicitly report common support and should not be generalized to excluded non-nested parents.
+The validated 2011 all-age population denominator and longitudinal D-02 population-rate changes are now active descriptive diagnostics. D-05/D-06 and the new D-02 changes are intentionally not added to the weak-IV outcome registry because the existing mechanism first stages are already weak; their first role is to audit age selectivity, labor-force attachment, and migration-rate change without multiplying inferential tests. The deterministic complete-parent bridge yields a substantially smaller 2011 mechanism sample than the 593-district 2001 baseline, so reduced-form and weak-IV mechanism results explicitly report common support and should not be generalized to excluded non-nested parents.
