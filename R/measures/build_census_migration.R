@@ -209,6 +209,69 @@ validate_census_2011_d03_d07_recent_work <- function(d03_2011, d07_2011) {
   )
 }
 
+census_d02_population_rate_columns <- function() {
+  c(
+    "migrant_stock_share_population",
+    "recent_0_9_migrant_share_population",
+    "interdistrict_migrant_share_population",
+    "interstate_migrant_share_population"
+  )
+}
+
+add_census_d02_population_rates <- function(x, population_column) {
+  x <- safe_df(x)
+  if (!population_column %in% names(x)) {
+    stop("Census D02 population denominator column is missing: ", population_column, call. = FALSE)
+  }
+  population <- num(x[[population_column]])
+  interdistrict <- num(x$migrants_other_district_same_state) + num(x$migrants_interstate)
+  x$migrant_stock_share_population <- safe_count_share(x$migrants_total, population)
+  x$recent_0_9_migrant_share_population <- safe_count_share(x$migrants_recent_0_9, population)
+  x$interdistrict_migrant_share_population <- safe_count_share(interdistrict, population)
+  x$interstate_migrant_share_population <- safe_count_share(x$migrants_interstate, population)
+  rate_cols <- census_d02_population_rate_columns()
+  if (any(!is.finite(as.matrix(x[rate_cols])))) {
+    stop("Census D02 counts are incompatible with district population denominators.", call. = FALSE)
+  }
+  x
+}
+
+build_census_2011_population_measures <- function(
+    population_2011, district_transition_2001_2011) {
+  pooled <- harmonize_census_2011_counts_to_2001(
+    population_2011, district_transition_2001_2011, "population_total_2011"
+  )
+  if (nrow(pooled) && any(num(pooled$population_total_2011) <= 0)) {
+    stop("Harmonized Census-2011 population denominators must be positive.", call. = FALSE)
+  }
+  pooled$census_year <- rep.int(2011L, nrow(pooled))
+  pooled
+}
+
+validate_census_2011_migration_population <- function(d02_2011, population_2011) {
+  joined <- merge_census_district_sources(
+    d02_2011, population_2011,
+    "Census 2011 D02", "SHRUG Census-2011 PCA"
+  )
+  migrants <- num(joined$migrants_total)
+  population <- num(joined$population_total_2011)
+  valid <- is.finite(migrants) & migrants >= 0 & is.finite(population) & population > 0 &
+    migrants <= population
+  if (any(!valid)) {
+    bad <- joined[!valid, , drop = FALSE]
+    stop(
+      "Census 2011 D02 migrants exceed or lack district population; first mismatch: ",
+      bad$state_code[[1L]], "/", bad$district_code[[1L]], ".",
+      call. = FALSE
+    )
+  }
+  data.frame(
+    n_districts = nrow(joined),
+    max_migrant_stock_share_population = max(migrants / population),
+    stringsAsFactors = FALSE
+  )
+}
+
 build_census_d02_2001_measures <- function(d02_2001, census_2001_district_totals) {
   x <- safe_df(d02_2001)
   if (anyDuplicated(x[c("state_code", "district_code")])) {
@@ -239,25 +302,70 @@ build_census_d02_2001_measures <- function(d02_2001, census_2001_district_totals
     "pc2001__", normalize_census_code(x$state_code, 2L), "__",
     normalize_census_code(x$district_code, 2L)
   )
-  x$migrant_stock_share_population <- safe_count_share(x$migrants_total, x$population_total)
-  x$recent_0_9_migrant_share_population <- safe_count_share(x$migrants_recent_0_9, x$population_total)
-  x$interstate_migrant_share_population <- safe_count_share(x$migrants_interstate, x$population_total)
-  population_share_cols <- c(
-    "migrant_stock_share_population", "recent_0_9_migrant_share_population",
-    "interstate_migrant_share_population"
-  )
-  if (any(!is.finite(as.matrix(x[population_share_cols])))) {
-    stop("Census-2001 D02 counts are incompatible with district population denominators.", call. = FALSE)
-  }
+  x <- add_census_d02_population_rates(x, "population_total")
   add_census_d02_migration_shares(x)
 }
 
-build_census_d02_2011_measures <- function(d02_2011, district_transition_2001_2011) {
+build_census_d02_2011_measures <- function(
+    d02_2011, district_transition_2001_2011, population_2011) {
   pooled <- harmonize_census_2011_counts_to_2001(
     d02_2011, district_transition_2001_2011, census_d02_count_columns()
   )
+  population <- safe_df(population_2011)
+  needed_population <- c("target_unit_2001", "population_total_2011")
+  missing <- setdiff(needed_population, names(population))
+  if (length(missing)) {
+    stop(
+      "Harmonized Census-2011 population denominator lacks columns: ",
+      paste(missing, collapse = ", "), call. = FALSE
+    )
+  }
+  if (anyDuplicated(population$target_unit_2001) ||
+      !setequal(pooled$target_unit_2001, population$target_unit_2001)) {
+    stop("Census 2011 D02 and population denominator target coverage differ.", call. = FALSE)
+  }
+  pooled_order <- pooled$target_unit_2001
+  pooled <- merge(
+    pooled, population[needed_population],
+    by = "target_unit_2001", all.x = TRUE, sort = FALSE
+  )
+  pooled <- pooled[match(pooled_order, pooled$target_unit_2001), , drop = FALSE]
   pooled$census_year <- rep.int(2011L, nrow(pooled))
+  pooled <- add_census_d02_population_rates(pooled, "population_total_2011")
   add_census_d02_migration_shares(pooled)
+}
+
+build_census_d02_population_change_measures <- function(d02_2001, d02_2011) {
+  baseline <- safe_df(d02_2001)
+  followup <- safe_df(d02_2011)
+  rates <- census_d02_population_rate_columns()
+  required_baseline <- c("target_unit_2001", rates)
+  required_followup <- c("target_unit_2001", rates)
+  missing <- unique(c(
+    setdiff(required_baseline, names(baseline)),
+    setdiff(required_followup, names(followup))
+  ))
+  if (length(missing)) {
+    stop("Census D02 population-change measures lack columns: ", paste(missing, collapse = ", "), call. = FALSE)
+  }
+  if (anyDuplicated(baseline$target_unit_2001) || anyDuplicated(followup$target_unit_2001)) {
+    stop("Census D02 population-change measures require unique target districts.", call. = FALSE)
+  }
+  if (!all(followup$target_unit_2001 %in% baseline$target_unit_2001)) {
+    stop("Census 2011 D02 contains targets absent from the Census-2001 baseline.", call. = FALSE)
+  }
+  left <- baseline[c("target_unit_2001", rates)]
+  right <- followup[c("target_unit_2001", rates)]
+  names(left)[-1L] <- paste0(rates, "_2001")
+  names(right)[-1L] <- paste0(rates, "_2011")
+  out <- merge(right, left, by = "target_unit_2001", all.x = TRUE, sort = FALSE)
+  out <- out[match(followup$target_unit_2001, out$target_unit_2001), , drop = FALSE]
+  for (rate in rates) {
+    out[[paste0(rate, "_change_2011_2001")]] <-
+      num(out[[paste0(rate, "_2011")]]) - num(out[[paste0(rate, "_2001")]])
+  }
+  rownames(out) <- NULL
+  out
 }
 
 build_census_d03_2011_measures <- function(d03_2011, district_transition_2001_2011) {

@@ -2129,6 +2129,22 @@ extended_diagnostic_targets <- list(
     format = "file"
   ),
   tar_target(
+    census_2011_pca_population_file,
+    path_project(paths, "data", "raw", "shrug", "census_2011", "shrug-pca11-csv.zip"),
+    format = "file"
+  ),
+  tar_target(
+    census_2011_population_source,
+    read_census_2011_district_population(census_2011_pca_population_file)
+  ),
+  tar_target(
+    census_2011_population,
+    build_census_2011_population_measures(
+      census_2011_population_source,
+      district_transition_2001_2011
+    )
+  ),
+  tar_target(
     census_2001_c13_files,
     census_c13_manifest_files(paths, 2001, census_2001_download_manifest_file),
     format = "file"
@@ -2220,7 +2236,15 @@ extended_diagnostic_targets <- list(
     census_migration_d02_2011,
     build_census_d02_2011_measures(
       census_migration_d02_2011_source,
-      district_transition_2001_2011
+      district_transition_2001_2011,
+      census_2011_population
+    )
+  ),
+  tar_target(
+    census_migration_d02_population_change,
+    build_census_d02_population_change_measures(
+      census_migration_d02_2001,
+      census_migration_d02_2011
     )
   ),
   tar_target(
@@ -2268,7 +2292,10 @@ extended_diagnostic_targets <- list(
       census_migration_d05_2011_source,
       census_migration_d06_2011_source,
       census_migration_d07_2011_source,
+      census_2011_population_source,
+      census_2011_population,
       census_migration_d02_2011,
+      census_migration_d02_population_change,
       census_migration_d03_2011,
       census_migration_d04_2011,
       census_migration_d05_2011,

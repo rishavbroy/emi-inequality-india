@@ -4,8 +4,8 @@ census_migration_balance_variables <- function() {
   c(
     "migrant_stock_share_population",
     "recent_0_9_migrant_share_population",
-    "interstate_migrant_share_population",
-    "other_district_same_state_share_among_migrants"
+    "interdistrict_migrant_share_population",
+    "interstate_migrant_share_population"
   )
 }
 
@@ -211,7 +211,10 @@ build_census_migration_diagnostics <- function(
     d05_2011_source,
     d06_2011_source,
     d07_2011_source,
+    population_2011_source,
+    population_2011,
     d02_2011,
+    d02_population_change,
     d03_2011,
     d04_2011,
     d05_2011,
@@ -243,7 +246,9 @@ build_census_migration_diagnostics <- function(
   )
   list(
     d02_2001 = safe_df(d02_2001),
+    population_2011_harmonized = safe_df(population_2011),
     d02_2011_harmonized = safe_df(d02_2011),
+    d02_population_change = safe_df(d02_population_change),
     d03_2011_harmonized = safe_df(d03_2011),
     d04_2011_harmonized = safe_df(d04_2011),
     d05_2011_harmonized = safe_df(d05_2011),
@@ -258,6 +263,9 @@ build_census_migration_diagnostics <- function(
       d06_2011_harmonized = d06_2011,
       d07_2011_harmonized = d07_2011
     )),
+    d02_population_2011_validation = validate_census_2011_migration_population(
+      d02_2011_source, population_2011_source
+    ),
     d02_d03_2011_total_validation = validate_census_2011_migration_totals(
       d02_2011_source, d03_2011_source
     ),
@@ -292,13 +300,16 @@ save_census_migration_diagnostics <- function(
   dir.create(dir, recursive = TRUE, showWarnings = FALSE)
   files <- c(
     d02_2001 = file.path(dir, "d02_2001.csv"),
+    population_2011_harmonized = file.path(dir, "population_2011_harmonized_2001.csv"),
     d02_2011_harmonized = file.path(dir, "d02_2011_harmonized_2001.csv"),
+    d02_population_change = file.path(dir, "d02_population_change_2011_2001.csv"),
     d03_2011_harmonized = file.path(dir, "d03_2011_harmonized_2001.csv"),
     d04_2011_harmonized = file.path(dir, "d04_2011_harmonized_2001.csv"),
     d05_2011_harmonized = file.path(dir, "d05_2011_harmonized_2001.csv"),
     d06_2011_harmonized = file.path(dir, "d06_2011_harmonized_2001.csv"),
     d07_2011_harmonized = file.path(dir, "d07_2011_harmonized_2001.csv"),
     coverage = file.path(dir, "coverage.csv"),
+    d02_population_2011_validation = file.path(dir, "d02_population_2011_validation.csv"),
     d02_d03_2011_total_validation = file.path(dir, "d02_d03_2011_total_validation.csv"),
     d02_d04_2011_total_validation = file.path(dir, "d02_d04_2011_total_validation.csv"),
     d03_d05_2011_reason_validation = file.path(dir, "d03_d05_2011_reason_validation.csv"),

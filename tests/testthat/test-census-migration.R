@@ -120,6 +120,7 @@ test_that("Census 2001 D02 uses the validated Census population denominator", {
   out <- build_census_d02_2001_measures(d02, population)
   expect_equal(out$migrant_stock_share_population, 0.1)
   expect_equal(out$recent_0_9_migrant_share_population, 0.04)
+  expect_equal(out$interdistrict_migrant_share_population, 0.05)
   expect_equal(out$interstate_migrant_share_population, 0.02)
   expect_equal(out$interstate_share_among_migrants, 0.2)
 
@@ -133,6 +134,99 @@ test_that("Census 2001 D02 uses the validated Census population denominator", {
     build_census_d02_2001_measures(d02, bad_population),
     "incompatible with district population denominators"
   )
+})
+
+test_that("SHRUG Census-2011 PCA supplies complete district population denominators", {
+  raw <- data.frame(
+    pc11_state_id = rep(1, 640),
+    pc11_district_id = seq_len(640),
+    pc11_pca_tot_p = seq_len(640) + 1000,
+    stringsAsFactors = FALSE
+  )
+
+  out <- clean_shrug_pca_2011_population(raw)
+
+  expect_equal(nrow(out), 640L)
+  expect_identical(names(out), c(
+    "state_code", "district_code", "district_name", "population_total_2011"
+  ))
+  expect_true(all(out$population_total_2011 > 0))
+  expect_identical(anyDuplicated(out[c("state_code", "district_code")]), 0L)
+
+  raw$pc11_pca_tot_p[[1L]] <- NA_real_
+  expect_error(
+    clean_shrug_pca_2011_population(raw),
+    "finite and positive"
+  )
+})
+
+test_that("Census 2011 population counts pool through complete deterministic parents", {
+  population <- data.frame(
+    state_code = c("09", "09"), district_code = c("132", "133"),
+    district_name = c("Child A", "Child B"),
+    population_total_2011 = c(400, 600), stringsAsFactors = FALSE
+  )
+  transition <- data.frame(
+    state_code_2011 = c("09", "09"), district_code_2011 = c("132", "133"),
+    state_code_2001 = c("09", "09"), district_code_2001 = c("01", "01"),
+    population_share_to_2001 = 1, area_share_to_2001 = 1, shrid_coverage = 1,
+    mapping_class = c("official_lgd_census_code_bridge", "deterministic_containment"),
+    stringsAsFactors = FALSE
+  )
+
+  out <- build_census_2011_population_measures(population, transition)
+
+  expect_equal(nrow(out), 1L)
+  expect_equal(out$population_total_2011, 1000)
+  expect_equal(out$census_2011_source_district_count, 2L)
+  expect_true(out$census_2011_parent_reconstruction_complete)
+})
+
+test_that("Census 2011 migration population validation requires a shared district universe", {
+  d02 <- data.frame(
+    state_code = c("09", "09"), district_code = c("132", "133"),
+    district_name = c("A", "B"), migrants_total = c(40, 100),
+    stringsAsFactors = FALSE
+  )
+  population <- data.frame(
+    state_code = c("09", "09"), district_code = c("132", "133"),
+    district_name = c("A", "B"), population_total_2011 = c(100, 500),
+    stringsAsFactors = FALSE
+  )
+
+  out <- validate_census_2011_migration_population(d02, population)
+  expect_equal(out$n_districts, 2L)
+  expect_equal(out$max_migrant_stock_share_population, 0.4)
+
+  population$population_total_2011[[1L]] <- 39
+  expect_error(
+    validate_census_2011_migration_population(d02, population),
+    "migrants exceed or lack district population"
+  )
+})
+
+test_that("Census D02 population changes compare harmonized rates on follow-up support", {
+  baseline <- data.frame(
+    target_unit_2001 = c("pc2001__09__01", "pc2001__09__02"),
+    migrant_stock_share_population = c(0.10, 0.20),
+    recent_0_9_migrant_share_population = c(0.04, 0.08),
+    interdistrict_migrant_share_population = c(0.05, 0.10),
+    interstate_migrant_share_population = c(0.02, 0.03),
+    stringsAsFactors = FALSE
+  )
+  followup <- baseline[1L, , drop = FALSE]
+  followup$migrant_stock_share_population <- 0.16
+  followup$recent_0_9_migrant_share_population <- 0.06
+  followup$interdistrict_migrant_share_population <- 0.08
+  followup$interstate_migrant_share_population <- 0.05
+
+  out <- build_census_d02_population_change_measures(baseline, followup)
+
+  expect_equal(nrow(out), 1L)
+  expect_equal(out$migrant_stock_share_population_change_2011_2001, 0.06)
+  expect_equal(out$recent_0_9_migrant_share_population_change_2011_2001, 0.02)
+  expect_equal(out$interdistrict_migrant_share_population_change_2011_2001, 0.03)
+  expect_equal(out$interstate_migrant_share_population_change_2011_2001, 0.03)
 })
 
 test_that("Census 2011 D02 and D03 agree on district migrant totals", {
@@ -179,12 +273,19 @@ test_that("Census 2011 counts are pooled before migration shares are recomputed"
     stringsAsFactors = FALSE
   )
 
-  out <- build_census_d02_2011_measures(d02, transition)
+  population <- data.frame(
+    target_unit_2001 = "pc2001__09__01",
+    population_total_2011 = 1000,
+    stringsAsFactors = FALSE
+  )
+  out <- build_census_d02_2011_measures(d02, transition, population)
 
   expect_equal(nrow(out), 1L)
   expect_equal(out$migrants_total, 400)
   expect_equal(out$migrants_interstate, 100)
   expect_equal(out$interstate_share_among_migrants, 0.25)
+  expect_equal(out$migrant_stock_share_population, 0.4)
+  expect_equal(out$interdistrict_migrant_share_population, 0.3)
   expect_false(isTRUE(all.equal(out$interstate_share_among_migrants, mean(c(0.1, 0.3)))))
   expect_equal(out$census_2011_source_district_count, 2L)
 })
@@ -209,14 +310,19 @@ test_that("Census migration harmonization withholds partial 2001 parent reconstr
     stringsAsFactors = FALSE
   )
 
-  out <- build_census_d02_2011_measures(d02, transition)
+  population <- data.frame(
+    target_unit_2001 = character(), population_total_2011 = numeric(),
+    stringsAsFactors = FALSE
+  )
+  out <- build_census_d02_2011_measures(d02, transition, population)
   expect_equal(nrow(out), 0L)
   expect_identical(
     names(out),
     c(
       "target_unit_2001", "census_2011_source_district_count",
       "census_2011_source_districts", "census_2011_parent_reconstruction_complete",
-      census_d02_count_columns(), "census_year",
+      census_d02_count_columns(), "population_total_2011", "census_year",
+      census_d02_population_rate_columns(),
       "recent_0_9_share_among_migrants", "within_district_share_among_migrants",
       "other_district_same_state_share_among_migrants", "interstate_share_among_migrants",
       "outside_india_share_among_migrants"
@@ -459,8 +565,8 @@ test_that("Census 2001 migration validity inputs cover the IV panel exactly", {
     state_code = c("09", "09"), district_code = c("01", "02"),
     migrant_stock_share_population = c(0.1, 0.2),
     recent_0_9_migrant_share_population = c(0.03, 0.04),
+    interdistrict_migrant_share_population = c(0.04, 0.05),
     interstate_migrant_share_population = c(0.01, 0.02),
-    other_district_same_state_share_among_migrants = c(0.2, 0.3),
     stringsAsFactors = FALSE
   )
   out <- prepare_census_migration_validity_panel(panel, d02)
