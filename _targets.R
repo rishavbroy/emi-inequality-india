@@ -2129,6 +2129,21 @@ extended_diagnostic_targets <- list(
     format = "file"
   ),
   tar_target(
+    census_2001_c17_files,
+    census_c17_manifest_files(paths, census_2001_download_manifest_file),
+    format = "file"
+  ),
+  tar_target(
+    census_2001_c16_state_language_totals,
+    census_2001_state_language_totals(raw_census_2001)
+  ),
+  tar_target(
+    census_2001_c17_state_languages,
+    read_census_c17_state_languages(
+      census_2001_c17_files, census_2001_c16_state_language_totals
+    )
+  ),
+  tar_target(
     census_2011_pca_population_file,
     path_project(paths, "data", "raw", "shrug", "census_2011", "shrug-pca11-csv.zip"),
     format = "file"
