@@ -1,19 +1,19 @@
 # Diagnose where the preferred linguistic-distance first stage loses relevance.
 
-first_stage_control_blocks <- function() iv_control_blocks()
+first_stage_control_blocks <- function(control_registry = NULL) iv_control_blocks(control_registry)
 
-first_stage_control_block_membership <- function() iv_control_block_membership()
+first_stage_control_block_membership <- function(control_registry = NULL) iv_control_block_membership(control_registry)
 
-first_stage_included_control_blocks <- function(controls) iv_included_control_blocks(controls)
+first_stage_included_control_blocks <- function(controls, control_registry = NULL) iv_included_control_blocks(controls, control_registry)
 
 order_first_stage_controls <- function(controls, canonical = census_2001_diagnostic_controls()) {
   order_iv_controls(controls, canonical)
 }
 
-first_stage_without_human_capital <- function(controls) iv_without_human_capital(controls)
+first_stage_without_human_capital <- function(controls, control_registry = NULL) iv_without_human_capital(controls, control_registry)
 
-first_stage_absorption_registry <- function() {
-  registry <- iv_absorption_specification_registry()
+first_stage_absorption_registry <- function(control_registry = NULL) {
+  registry <- iv_absorption_specification_registry(control_registry = control_registry)
   data.frame(
     specification_id = sub("^absorption__", "", registry$specification_id),
     label = registry$adjustment,
@@ -330,10 +330,11 @@ first_stage_vif_diagnostics <- function(estimates) {
 diagnose_first_stage_absorption <- function(
   panel,
   treatment = "emi_exposure_all_children_0708",
-  instrument = "ling_distance_nonzero_mean"
+  instrument = "ling_distance_nonzero_mean",
+  control_registry = NULL
 ) {
   data <- prepare_first_stage_absorption_panel(panel, treatment, instrument)
-  registry <- first_stage_absorption_registry()
+  registry <- first_stage_absorption_registry(control_registry)
   estimates <- lapply(seq_len(nrow(registry)), function(i) {
     estimate_first_stage_absorption_spec(data, registry[i, , drop = FALSE], treatment, instrument)
   })

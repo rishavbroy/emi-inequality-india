@@ -53,6 +53,15 @@ core_pipeline_targets <- list(
   tar_target(config_path, Sys.getenv("EMI_CONFIG", "config/draft.yml"), cue = tar_cue(mode = "always")),
   tar_target(cfg, read_config(config_path)),
   tar_target(paths, build_paths()),
+  tar_target(
+    census_2001_control_registry_file,
+    census_2001_control_registry_path(paths),
+    format = "file"
+  ),
+  tar_target(
+    census_2001_control_registry,
+    read_census_2001_control_registry(census_2001_control_registry_file)
+  ),
   tar_target(raw_manifest, validate_raw_files(paths)),
   tar_target(raw_data_preflight, stop_if_required_files_missing(raw_manifest)),
   tar_target(
@@ -1457,7 +1466,9 @@ core_pipeline_targets <- list(
   ),
   tar_target(
     consumption_iv_specifications,
-    compile_consumption_iv_specifications(consumption_iv_outcome_registry)
+    compile_consumption_iv_specifications(
+      consumption_iv_outcome_registry, census_2001_control_registry
+    )
   ),
   tar_target(
     district_panel_conservative_provisional,
@@ -1502,13 +1513,15 @@ core_pipeline_targets <- list(
   tar_target(
     district_panel_primary,
     finalize_analysis_panel(
-      primary_gini_reconstruction$panel, census_2001_controls, cfg
+      primary_gini_reconstruction$panel, census_2001_controls, cfg,
+      control_registry = census_2001_control_registry
     )
   ),
   tar_target(
     district_panel_conservative,
     finalize_analysis_panel(
-      conservative_gini_reconstruction$panel, census_2001_controls, cfg
+      conservative_gini_reconstruction$panel, census_2001_controls, cfg,
+      control_registry = census_2001_control_registry
     )
   ),
   tar_target(district_panel, district_panel_primary),
@@ -1555,7 +1568,10 @@ core_pipeline_targets <- list(
     format = "file"
   ),
 
-  tar_target(revised_iv_formulas, build_revised_iv_formulas()),
+  tar_target(
+    revised_iv_formulas,
+    build_revised_iv_formulas(census_2001_control_registry)
+  ),
   tar_target(revised_iv_models, estimate_2sls(district_panel, revised_iv_formulas, cfg)),
   tar_target(revised_first_stage_tests, estimate_first_stage(revised_iv_models, district_panel, cfg)),
   tar_target(diag_public_weak_instruments, diagnose_weak_instruments(revised_iv_models, district_panel, cfg)),
@@ -2094,7 +2110,12 @@ extended_diagnostic_targets <- list(
   tar_target(diag_ext_fuzzy_matching, save_fuzzy_matching_diagnostics(diagnose_fuzzy_matching(district_tracker, district_join_map, cfg))),
   tar_target(diag_ext_spatial_weights, save_spatial_weight_diagnostics(diagnose_spatial_weights(district_panel, spatial_weights, cfg))),
   tar_target(diag_ext_instrument_exploration, save_instrument_exploration_diagnostics(diagnose_instrument_exploration(district_panel, cfg))),
-  tar_target(first_stage_absorption_diagnostics, diagnose_first_stage_absorption(district_panel)),
+  tar_target(
+    first_stage_absorption_diagnostics,
+    diagnose_first_stage_absorption(
+      district_panel, control_registry = census_2001_control_registry
+    )
+  ),
   tar_target(diag_ext_first_stage_absorption, save_first_stage_absorption_diagnostics(first_stage_absorption_diagnostics)),
   tar_target(
     glottolog_cldf_5_3,
@@ -2198,6 +2219,14 @@ extended_diagnostic_targets <- list(
   tar_target(
     english_opportunity_measure_registry,
     read_english_opportunity_measure_registry(english_opportunity_measure_registry_file)
+  ),
+  tar_target(
+    analysis_design_registry,
+    compile_analysis_design_registry(
+      consumption_iv_specifications,
+      english_opportunity_measure_registry,
+      census_2001_control_registry
+    )
   ),
   tar_target(
     diag_ext_english_opportunity_measure_registry,
@@ -2731,7 +2760,8 @@ extended_diagnostic_targets <- list(
   tar_target(
     english_opportunity_district_mechanisms,
     diagnose_english_opportunity_district_mechanisms(
-      district_panel_with_dise, english_opportunity_measure_registry
+      district_panel_with_dise, english_opportunity_measure_registry,
+      control_registry = census_2001_control_registry
     )
   ),
   tar_target(
@@ -2847,18 +2877,23 @@ extended_diagnostic_targets <- list(
 
   tar_target(
     alternative_distance_analysis_panel,
-    prepare_alternative_distance_panel(district_panel)
+    prepare_alternative_distance_panel(
+      district_panel, control_registry = census_2001_control_registry
+    )
   ),
   tar_target(
     alternative_distance_augmentation_panel,
     project_alternative_distance_panel(
       district_panel,
-      retain = "real_log_consumption_change"
+      retain = "real_log_consumption_change",
+      control_registry = census_2001_control_registry
     )
   ),
   tar_target(
     alternative_distance_spec_registry,
-    alternative_distance_registry(),
+    alternative_distance_registry(
+      control_registry = census_2001_control_registry
+    ),
     iteration = "list"
   ),
   tar_target(

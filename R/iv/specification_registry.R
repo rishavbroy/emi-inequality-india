@@ -18,37 +18,37 @@ iv_fixed_effect_terms <- function(fixed_effect = "none") {
   )
 }
 
-iv_control_blocks <- function() {
-  list(
-    basic_scale_geography = c(
-      "log_population_2001", "urban_share_2001", "log_population_density_2001"
-    ),
-    social_composition = c("sc_share_2001", "st_share_2001", "muslim_share_2001"),
-    human_capital = c("adult_secondary_plus_share_2001", "literacy_share_2001"),
-    demography = "dependency_ratio_2001",
-    economic_structure = c(
-      "worker_share_2001", "cultivator_share_workers_2001",
-      "agricultural_labourer_share_workers_2001"
-    ),
-    basic_development = "electricity_access_share_2001"
-  )
+iv_control_blocks <- function(control_registry = NULL) {
+  registry <- resolve_census_2001_control_registry(control_registry)
+  registry <- registry[registry$absorption_control %in% TRUE, , drop = FALSE]
+  block_ids <- unique(registry$control_block[order(registry$block_sequence, registry$sequence)])
+  stats::setNames(lapply(block_ids, function(block) {
+    rows <- registry[registry$control_block == block, , drop = FALSE]
+    rows$variable[order(rows$sequence)]
+  }), block_ids)
 }
 
-iv_control_block_membership <- function() {
-  blocks <- iv_control_blocks()
-  blocks$economic_structure <- unique(c(
-    "agricultural_worker_share_2001", blocks$economic_structure
-  ))
-  blocks
+iv_control_block_membership <- function(control_registry = NULL) {
+  registry <- resolve_census_2001_control_registry(control_registry)
+  active_blocks <- names(iv_control_blocks(registry))
+  registry <- registry[
+    registry$control_block %in% active_blocks &
+      (registry$main_paper %in% TRUE | registry$absorption_control %in% TRUE),
+    , drop = FALSE
+  ]
+  stats::setNames(lapply(active_blocks, function(block) {
+    rows <- registry[registry$control_block == block, , drop = FALSE]
+    rows$variable[order(rows$sequence)]
+  }), active_blocks)
 }
 
-iv_included_control_blocks <- function(controls) {
-  blocks <- iv_control_block_membership()
+iv_included_control_blocks <- function(controls, control_registry = NULL) {
+  blocks <- iv_control_block_membership(control_registry)
   names(blocks)[vapply(blocks, function(block) any(block %in% controls), logical(1))]
 }
 
-iv_without_human_capital <- function(controls) {
-  setdiff(controls, iv_control_blocks()$human_capital)
+iv_without_human_capital <- function(controls, control_registry = NULL) {
+  setdiff(controls, iv_control_block_membership(control_registry)$human_capital)
 }
 
 iv_instrument_constructions <- function() {
@@ -146,26 +146,27 @@ iv_candidate_design_adjustments <- function() {
   c("region_main", "state_main")
 }
 
-iv_adjustment_sets <- function() {
+iv_adjustment_sets <- function(control_registry = NULL) {
+  control_registry <- resolve_census_2001_control_registry(control_registry)
   list(
     unadjusted = list(
       label = "Unadjusted", fixed_effect = "none", controls = character(), tier = "B"
     ),
     region_main = list(
       label = "Six-region FE + main controls", fixed_effect = "region",
-      controls = census_2001_main_controls(), tier = "A"
+      controls = census_2001_main_controls(control_registry), tier = "A"
     ),
     region_expanded = list(
       label = "Six-region FE + expanded controls", fixed_effect = "region",
-      controls = census_2001_absorption_controls(), tier = "B"
+      controls = census_2001_absorption_controls(control_registry), tier = "B"
     ),
     state_main = list(
       label = "State FE + main controls", fixed_effect = "state",
-      controls = census_2001_main_controls(), tier = "A"
+      controls = census_2001_main_controls(control_registry), tier = "A"
     ),
     state_expanded = list(
       label = "State FE + expanded controls", fixed_effect = "state",
-      controls = census_2001_absorption_controls(), tier = "B"
+      controls = census_2001_absorption_controls(control_registry), tier = "B"
     )
   )
 }
@@ -232,7 +233,8 @@ iv_specification_row <- function(
   sample_rule,
   cluster = "state_code_2001",
   tier = "B",
-  sequence = NA_integer_
+  sequence = NA_integer_,
+  control_registry = NULL
 ) {
   data.frame(
     specification_id = specification_id,
@@ -243,7 +245,9 @@ iv_specification_row <- function(
     outcome = outcome,
     treatment = treatment,
     fixed_effect = fixed_effect,
-    controls = I(list(order_iv_controls(controls))),
+    controls = I(list(order_iv_controls(
+      controls, census_2001_diagnostic_controls(control_registry)
+    ))),
     included_language_controls = I(list(included_language_controls)),
     excluded_instruments = I(list(excluded_instruments)),
     mapping_coverage_variable = mapping_coverage_variable,
@@ -262,9 +266,11 @@ iv_specification_registry <- function(
   outcome = "real_log_consumption_change",
   treatment = preferred_iv_variables()$treatment,
   panel_variant = "primary",
-  sample_rule = "alternative_distance_common_support"
+  sample_rule = "alternative_distance_common_support",
+  control_registry = NULL
 ) {
-  adjustments <- iv_adjustment_sets()
+  control_registry <- resolve_census_2001_control_registry(control_registry)
+  adjustments <- iv_adjustment_sets(control_registry)
   constructions <- iv_instrument_constructions()
   rows <- list()
   sequence <- 0L
@@ -289,16 +295,18 @@ iv_specification_registry <- function(
         panel_variant = panel_variant,
         sample_rule = sample_rule,
         tier = adjustment$tier,
-        sequence = sequence
+        sequence = sequence,
+        control_registry = control_registry
       )
     }
   }
   bind_iv_specification_rows(rows)
 }
 
-iv_absorption_adjustments <- function() {
-  main <- census_2001_main_controls()
-  expanded <- census_2001_absorption_controls()
+iv_absorption_adjustments <- function(control_registry = NULL) {
+  control_registry <- resolve_census_2001_control_registry(control_registry)
+  main <- census_2001_main_controls(control_registry)
+  expanded <- census_2001_absorption_controls(control_registry)
   base <- list(
     instrument_only = list("Instrument only", "none", character()),
     region_fe = list("Six-region fixed effects", "region", character()),
@@ -310,19 +318,19 @@ iv_absorption_adjustments <- function() {
     region_fe_expanded_controls = list("Six-region fixed effects + expanded Census controls", "region", expanded),
     state_fe_expanded_controls = list("State fixed effects + expanded Census controls", "state", expanded),
     region_fe_main_without_human_capital = list(
-      "Six-region FE + main controls without human capital", "region", iv_without_human_capital(main)
+      "Six-region FE + main controls without human capital", "region", iv_without_human_capital(main, control_registry)
     ),
     state_fe_main_without_human_capital = list(
-      "State FE + main controls without human capital", "state", iv_without_human_capital(main)
+      "State FE + main controls without human capital", "state", iv_without_human_capital(main, control_registry)
     ),
     region_fe_expanded_without_human_capital = list(
-      "Six-region FE + expanded controls without human capital", "region", iv_without_human_capital(expanded)
+      "Six-region FE + expanded controls without human capital", "region", iv_without_human_capital(expanded, control_registry)
     ),
     state_fe_expanded_without_human_capital = list(
-      "State FE + expanded controls without human capital", "state", iv_without_human_capital(expanded)
+      "State FE + expanded controls without human capital", "state", iv_without_human_capital(expanded, control_registry)
     )
   )
-  blocks <- iv_control_blocks()
+  blocks <- iv_control_blocks(control_registry)
   cumulative <- lapply(seq_along(blocks), function(i) {
     order_iv_controls(unlist(blocks[seq_len(i)], use.names = FALSE))
   })
@@ -344,10 +352,12 @@ iv_absorption_specification_registry <- function(
   outcome = "real_log_consumption_change",
   treatment = preferred_iv_variables()$treatment,
   panel_variant = "primary",
-  sample_rule = "alternative_distance_common_support"
+  sample_rule = "alternative_distance_common_support",
+  control_registry = NULL
 ) {
+  control_registry <- resolve_census_2001_control_registry(control_registry)
   construction <- iv_instrument_constructions()$nonzero_mean
-  adjustments <- iv_absorption_adjustments()
+  adjustments <- iv_absorption_adjustments(control_registry)
   rows <- lapply(seq_along(adjustments), function(i) {
     id <- names(adjustments)[[i]]
     adjustment <- adjustments[[i]]
@@ -367,7 +377,8 @@ iv_absorption_specification_registry <- function(
       panel_variant = panel_variant,
       sample_rule = sample_rule,
       tier = "B",
-      sequence = i
+      sequence = i,
+      control_registry = control_registry
     )
   })
   bind_iv_specification_rows(rows)
@@ -391,10 +402,16 @@ iv_diagnostic_specification_registry <- function(
   outcome = "real_log_consumption_change",
   treatment = preferred_iv_variables()$treatment,
   panel_variant = "primary",
-  sample_rule = "alternative_distance_common_support"
+  sample_rule = "alternative_distance_common_support",
+  control_registry = NULL
 ) {
-  base <- iv_specification_registry(outcome, treatment, panel_variant, sample_rule)
-  absorption <- iv_absorption_specification_registry(outcome, treatment, panel_variant, sample_rule)
+  control_registry <- resolve_census_2001_control_registry(control_registry)
+  base <- iv_specification_registry(
+    outcome, treatment, panel_variant, sample_rule, control_registry
+  )
+  absorption <- iv_absorption_specification_registry(
+    outcome, treatment, panel_variant, sample_rule, control_registry
+  )
   base_signatures <- vapply(seq_len(nrow(base)), function(i) {
     iv_specification_signature(base[i, , drop = FALSE])
   }, character(1))

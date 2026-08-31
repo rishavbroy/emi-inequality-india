@@ -41,9 +41,9 @@ build_legacy_iv_formulas <- function() {
 
 # Preferred public formulas: all-child EMI exposure, the full-distribution
 # nonzero linguistic-distance scalar, predetermined Census controls, and state FE.
-build_revised_iv_formulas <- function() {
+build_revised_iv_formulas <- function(control_registry = NULL) {
   spec <- preferred_iv_variables()
-  controls <- census_2001_main_controls()
+  controls <- census_2001_main_controls(control_registry)
   state_fe <- 'factor(state_code_2001)'
   list(
     consumption = make_iv_formula(

@@ -199,7 +199,7 @@ compute_gini_change <- function(panel) {
   panel
 }
 
-analysis_panel_validation_failures <- function(out) {
+analysis_panel_validation_failures <- function(out, control_registry = NULL) {
   df <- as.data.frame(out)
   failures <- character()
   add <- function(...) failures <<- c(failures, paste0(...))
@@ -209,7 +209,7 @@ analysis_panel_validation_failures <- function(out) {
     spec$treatment, spec$instrument,
     "npeople_0708", "consumption_0708", "consumption_1718",
     "real_log_consumption_change",
-    census_2001_main_controls()
+    census_2001_main_controls(control_registry)
   ))
   missing <- setdiff(required, names(df))
   if (length(missing)) add("district_panel is missing required analysis columns: ", paste(missing, collapse = ", "))
@@ -257,10 +257,13 @@ isTRUEish <- function(x) {
   tolower(as.character(x)) %in% c("true", "1")
 }
 
-validate_analysis_district_panel <- function(out, cfg = list(), join_map = NULL, strict = isTRUE(cfg$strict_analysis_panel_validation)) {
+validate_analysis_district_panel <- function(
+    out, cfg = list(), join_map = NULL,
+    strict = isTRUE(cfg$strict_analysis_panel_validation),
+    control_registry = NULL) {
   out <- validate_district_panel(out, join_map = join_map, strict = isTRUE(cfg$strict_district_panel_validation))
   if (!identical(cfg$mode, "final")) return(out)
-  failures <- analysis_panel_validation_failures(out)
+  failures <- analysis_panel_validation_failures(out, control_registry)
   attr(out, "analysis_panel_validation_failures") <- failures
   if (length(failures) && isTRUE(strict)) {
     stop(paste(failures, collapse = "\n"), call. = FALSE)
@@ -268,9 +271,11 @@ validate_analysis_district_panel <- function(out, cfg = list(), join_map = NULL,
   out
 }
 
-finalize_analysis_panel <- function(panel, census_controls, cfg = list()) {
+finalize_analysis_panel <- function(
+    panel, census_controls, cfg = list(), control_registry = NULL) {
   validate_analysis_district_panel(
     attach_census_2001_controls(panel, census_controls),
-    cfg
+    cfg,
+    control_registry = control_registry
   )
 }

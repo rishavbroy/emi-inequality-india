@@ -145,11 +145,13 @@ census_migration_mechanism_registry <- function() {
 
 census_migration_mechanism_specifications <- function(
     outcome = "interstate_share_among_migrants",
-    treatment = preferred_iv_variables()$treatment) {
+    treatment = preferred_iv_variables()$treatment,
+    control_registry = NULL) {
   census_mechanism_specifications(
     outcome = outcome,
     treatment = treatment,
-    sample_rule = "migration_mechanism_common_support"
+    sample_rule = "migration_mechanism_common_support",
+    control_registry = control_registry
   )
 }
 

@@ -39,11 +39,13 @@ census_housing_mechanism_registry <- function() {
 
 census_housing_mechanism_specifications <- function(
     outcome = "electricity_share_households_change_2011_2001",
-    treatment = preferred_iv_variables()$treatment) {
+    treatment = preferred_iv_variables()$treatment,
+    control_registry = NULL) {
   census_mechanism_specifications(
     outcome = outcome,
     treatment = treatment,
-    sample_rule = "housing_change_mechanism_common_support"
+    sample_rule = "housing_change_mechanism_common_support",
+    control_registry = control_registry
   )
 }
 

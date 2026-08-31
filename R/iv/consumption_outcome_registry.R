@@ -223,9 +223,10 @@ attach_consumption_iv_outcomes <- function(panel, welfare, registry) {
   out
 }
 
-compile_consumption_iv_specifications <- function(registry) {
+compile_consumption_iv_specifications <- function(registry, control_registry = NULL) {
   specs <- safe_df(registry)
-  adjustments <- iv_adjustment_sets()
+  control_registry <- resolve_census_2001_control_registry(control_registry)
+  adjustments <- iv_adjustment_sets(control_registry)
   constructions <- iv_instrument_constructions()
 
   rows <- lapply(seq_len(nrow(specs)), function(i) {
@@ -279,7 +280,8 @@ compile_consumption_iv_specifications <- function(registry) {
       panel_variant = x$panel_variant[[1L]],
       sample_rule = x$sample_rule[[1L]],
       tier = x$tier[[1L]],
-      sequence = i
+      sequence = i,
+      control_registry = control_registry
     )
     row$welfare_specification_id <- x$welfare_specification_id[[1L]]
     row$welfare_outcome_id <- x$outcome_id[[1L]]

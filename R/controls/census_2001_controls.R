@@ -2,58 +2,115 @@
 
 census_2001_keys <- function() c("state_code_2001", "district_code_2001")
 
-census_2001_main_controls <- function() {
-  c(
-    "log_population_2001", "urban_share_2001",
-    "adult_secondary_plus_share_2001", "sc_share_2001", "st_share_2001",
-    "muslim_share_2001", "agricultural_worker_share_2001",
-    "dependency_ratio_2001", "electricity_access_share_2001",
-    "log_population_density_2001"
-  )
+census_2001_control_registry_path <- function(paths = build_paths()) {
+  path_metadata(paths, "census_2001_control_registry.csv")
 }
 
-
-census_2001_control_metadata <- function() {
-  data.frame(
-    variable = census_2001_main_controls(),
-    label = c(
-      "Log population",
-      "Urban population share",
-      "Secondary-plus share, age 7+",
-      "Scheduled Caste share",
-      "Scheduled Tribe share",
-      "Muslim share",
-      "Agricultural worker share",
-      "Dependency ratio",
-      "Electricity access share",
-      "Log population density"
-    ),
-    description = c(
-      "Natural log of Census 2001 district population",
-      "Urban population as a percentage of total population",
-      "Population age 7 and above with matric or higher attainment",
-      "Scheduled Caste population as a percentage of total population",
-      "Scheduled Tribe population as a percentage of total population",
-      "Muslim population as a percentage of total population",
-      "Cultivators and agricultural labourers as a percentage of workers",
-      "Population age 0-14 and 65+ as a percentage of population age 15-64",
-      "Households using electricity for lighting as a percentage of households",
-      "Natural log of persons per square kilometre"
-    ),
-    stringsAsFactors = FALSE
-  )
+parse_registry_flag <- function(x, field, label) {
+  value <- tolower(trimws(plain_chr(x)))
+  if (any(!value %in% c("true", "false"))) {
+    stop(label, " `", field, "` values must be TRUE or FALSE.", call. = FALSE)
+  }
+  value == "true"
 }
 
-census_2001_absorption_controls <- function() {
-  c(
-    setdiff(census_2001_main_controls(), "agricultural_worker_share_2001"),
-    "literacy_share_2001", "worker_share_2001",
-    "cultivator_share_workers_2001", "agricultural_labourer_share_workers_2001"
+read_census_2001_control_registry <- function(path = census_2001_control_registry_path()) {
+  if (!file.exists(path)) {
+    stop("Census 2001 control registry is missing: ", path, call. = FALSE)
+  }
+  out <- utils::read.csv(path, stringsAsFactors = FALSE, check.names = FALSE)
+  required <- c(
+    "variable", "label", "description", "control_block", "block_sequence",
+    "parameterization", "alternative_to", "source", "denominator",
+    "main_paper", "absorption_control", "appendix_control", "sequence"
   )
+  if (!identical(names(out), required)) {
+    stop("Census 2001 control registry has an invalid schema.", call. = FALSE)
+  }
+
+  text_fields <- c(
+    "variable", "label", "description", "control_block", "parameterization",
+    "alternative_to", "source", "denominator"
+  )
+  for (field in text_fields) out[[field]] <- trimws(plain_chr(out[[field]]))
+  required_text <- setdiff(text_fields, "alternative_to")
+  if (!nrow(out) || anyDuplicated(out$variable) ||
+      any(vapply(out[required_text], function(x) any(is.na(x) | !nzchar(x)), logical(1)))) {
+    stop("Census 2001 control registry contains empty or duplicate identifiers.", call. = FALSE)
+  }
+
+  out$block_sequence <- suppressWarnings(as.integer(out$block_sequence))
+  out$sequence <- suppressWarnings(as.integer(out$sequence))
+  if (any(!is.finite(out$block_sequence)) || any(!is.finite(out$sequence)) ||
+      anyDuplicated(out$sequence)) {
+    stop("Census 2001 control registry has invalid ordering metadata.", call. = FALSE)
+  }
+  for (field in c("main_paper", "absorption_control", "appendix_control")) {
+    out[[field]] <- parse_registry_flag(out[[field]], field, "Census 2001 control registry")
+  }
+
+  allowed_parameterizations <- c(
+    "preferred", "preferred_compact", "alternative_measure",
+    "alternative_parameterization", "appendix_context"
+  )
+  invalid <- setdiff(unique(out$parameterization), allowed_parameterizations)
+  if (length(invalid)) {
+    stop(
+      "Census 2001 control registry contains unknown parameterization values: ",
+      paste(invalid, collapse = ", "), call. = FALSE
+    )
+  }
+  referenced <- out$alternative_to[nzchar(out$alternative_to)]
+  missing_reference <- setdiff(referenced, out$variable)
+  if (length(missing_reference)) {
+    stop(
+      "Census 2001 control registry alternative_to references are unknown: ",
+      paste(missing_reference, collapse = ", "), call. = FALSE
+    )
+  }
+  out <- out[order(out$sequence), , drop = FALSE]
+  rownames(out) <- NULL
+  out
 }
 
-census_2001_diagnostic_controls <- function() {
-  unique(c(census_2001_main_controls(), census_2001_absorption_controls()))
+resolve_census_2001_control_registry <- function(registry = NULL) {
+  if (is.null(registry)) read_census_2001_control_registry() else safe_df(registry)
+}
+
+census_2001_control_set <- function(field, registry = NULL) {
+  registry <- resolve_census_2001_control_registry(registry)
+  if (!field %in% names(registry) || !is.logical(registry[[field]])) {
+    stop("Unknown Census 2001 control-set field: ", field, call. = FALSE)
+  }
+  registry$variable[registry[[field]] %in% TRUE]
+}
+
+census_2001_main_controls <- function(registry = NULL) {
+  census_2001_control_set("main_paper", registry)
+}
+
+census_2001_absorption_controls <- function(registry = NULL) {
+  census_2001_control_set("absorption_control", registry)
+}
+
+census_2001_diagnostic_controls <- function(registry = NULL) {
+  unique(c(
+    census_2001_main_controls(registry),
+    census_2001_absorption_controls(registry)
+  ))
+}
+
+census_2001_appendix_controls <- function(registry = NULL) {
+  census_2001_control_set("appendix_control", registry)
+}
+
+census_2001_control_metadata <- function(registry = NULL) {
+  registry <- resolve_census_2001_control_registry(registry)
+  registry[
+    registry$main_paper %in% TRUE,
+    c("variable", "label", "description"),
+    drop = FALSE
+  ]
 }
 
 census_2001_control_identity_groups <- function() {
@@ -83,16 +140,6 @@ census_2001_joint_balance_controls <- function(
     if (all(group %in% out)) out <- setdiff(out, group[[1]])
   }
   out
-}
-
-census_2001_appendix_controls <- function() {
-  c(
-    "literacy_share_2001", "worker_share_2001",
-    "cultivator_share_workers_2001", "agricultural_labourer_share_workers_2001",
-    "hindu_share_2001", "banking_access_share_2001",
-    "television_ownership_share_2001", "telephone_ownership_share_2001",
-    "primary_schools_per_1000_children_2001"
-  )
 }
 
 safe_share <- function(numerator, denominator, scale = 100) {

@@ -1315,7 +1315,7 @@ build_historical_linguistic_persistence_validation <- function(
   )
 }
 
-historical_linguistic_first_stage_registry <- function() {
+historical_linguistic_first_stage_registry <- function(control_registry = NULL) {
   keep <- c(
     "instrument_only",
     "region_fe_census_controls",
@@ -1323,7 +1323,7 @@ historical_linguistic_first_stage_registry <- function() {
     "region_fe_expanded_controls",
     "state_fe_expanded_controls"
   )
-  registry <- first_stage_absorption_registry()
+  registry <- first_stage_absorption_registry(control_registry)
   index <- match(keep, registry$specification_id)
   if (anyNA(index)) {
     stop("Historical first-stage registry is missing canonical absorption specifications.", call. = FALSE)

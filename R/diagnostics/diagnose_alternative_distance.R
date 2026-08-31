@@ -1,13 +1,16 @@
 # Alternative linguistic-distance first stages and coverage diagnostics.
 
-alternative_distance_adjustments <- function() iv_adjustment_sets()
+alternative_distance_adjustments <- function(control_registry = NULL) iv_adjustment_sets(control_registry)
 
 alternative_distance_constructions <- function() iv_instrument_constructions()
 
 alternative_distance_registry <- function(
   outcome = "real_log_consumption_change",
-  treatment = preferred_iv_variables()$treatment
-) iv_specification_registry(outcome = outcome, treatment = treatment)
+  treatment = preferred_iv_variables()$treatment,
+  control_registry = NULL
+) iv_specification_registry(
+  outcome = outcome, treatment = treatment, control_registry = control_registry
+)
 
 alternative_distance_variables <- function() {
   constructions <- alternative_distance_constructions()
@@ -92,11 +95,12 @@ estimate_alternative_distance_spec <- function(data, specification, treatment) {
 
 alternative_distance_panel_columns <- function(
   treatment = "emi_exposure_all_children_0708",
-  retain = character()
+  retain = character(),
+  control_registry = NULL
 ) {
   needed <- unique(c(
     treatment, "state_code_2001", "district_code_2001", "region",
-    census_2001_diagnostic_controls(), alternative_distance_variables()
+    census_2001_diagnostic_controls(control_registry), alternative_distance_variables()
   ))
   retain <- setdiff(unique(plain_chr(retain)), needed)
   list(needed = needed, retain = retain, required = unique(c(needed, retain)))
@@ -105,10 +109,11 @@ alternative_distance_panel_columns <- function(
 project_alternative_distance_panel <- function(
   panel,
   treatment = "emi_exposure_all_children_0708",
-  retain = character()
+  retain = character(),
+  control_registry = NULL
 ) {
   x <- if (inherits(panel, "sf")) sf::st_drop_geometry(panel) else as.data.frame(panel, stringsAsFactors = FALSE)
-  columns <- alternative_distance_panel_columns(treatment, retain)
+  columns <- alternative_distance_panel_columns(treatment, retain, control_registry)
   missing <- setdiff(columns$required, names(x))
   if (length(missing)) {
     stop(
@@ -138,10 +143,13 @@ project_alternative_distance_panel <- function(
 prepare_alternative_distance_panel <- function(
   panel,
   treatment = "emi_exposure_all_children_0708",
-  retain = character()
+  retain = character(),
+  control_registry = NULL
 ) {
-  columns <- alternative_distance_panel_columns(treatment, retain)
-  x <- project_alternative_distance_panel(panel, treatment, retain)
+  columns <- alternative_distance_panel_columns(treatment, retain, control_registry)
+  x <- project_alternative_distance_panel(
+    panel, treatment, retain, control_registry
+  )
   keep <- stats::complete.cases(x[columns$needed]) &
     nzchar(x$state_code_2001) &
     nzchar(x$district_code_2001) &

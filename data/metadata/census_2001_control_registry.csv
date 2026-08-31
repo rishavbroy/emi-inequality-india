@@ -1,20 +1,20 @@
-variable,role,source,denominator,main_paper
-log_population_2001,scale,SHRUG Census 2001 PCA,none,true
-urban_share_2001,urbanization,SHRUG Census 2001 PCA,total population,true
-adult_secondary_plus_share_2001,human capital,Census 2001 C-08,population age 7 plus,true
-sc_share_2001,social composition,SHRUG Census 2001 PCA,total population,true
-st_share_2001,social composition,SHRUG Census 2001 PCA,total population,true
-muslim_share_2001,religion,Census 2001 C-01,total population,true
-agricultural_worker_share_2001,economic structure,SHRUG Census 2001 PCA,total workers,true
-dependency_ratio_2001,demography,Census 2001 C-14,population age 15-64,true
-electricity_access_share_2001,infrastructure,Census 2001 H-09,total households,true
-log_population_density_2001,density,SHRUG PCA and Census 2001 geometry,none,true
-literacy_share_2001,human capital,SHRUG Census 2001 PCA,population age 7 plus,false
-worker_share_2001,economic structure,SHRUG Census 2001 PCA,total population,false
-cultivator_share_workers_2001,economic structure,SHRUG Census 2001 PCA,total workers,false
-agricultural_labourer_share_workers_2001,economic structure,SHRUG Census 2001 PCA,total workers,false
-hindu_share_2001,religion,Census 2001 C-01,total population,false
-banking_access_share_2001,assets,Census 2001 H-13,total households,false
-television_ownership_share_2001,assets,Census 2001 H-13,total households,false
-telephone_ownership_share_2001,assets,Census 2001 H-13,total households,false
-primary_schools_per_1000_children_2001,school supply,SHRUG Village and Town Directories,population age 5-14,false
+variable,label,description,control_block,block_sequence,parameterization,alternative_to,source,denominator,main_paper,absorption_control,appendix_control,sequence
+log_population_2001,Log population,Natural log of Census 2001 district population,basic_scale_geography,1,preferred,,SHRUG Census 2001 PCA,none,True,True,False,1
+urban_share_2001,Urban population share,Urban population as a percentage of total population,basic_scale_geography,1,preferred,,SHRUG Census 2001 PCA,total population,True,True,False,2
+adult_secondary_plus_share_2001,"Secondary-plus share, age 7+",Population age 7 and above with matric or higher attainment,human_capital,3,preferred,,Census 2001 C-08,population age 7 plus,True,True,False,3
+sc_share_2001,Scheduled Caste share,Scheduled Caste population as a percentage of total population,social_composition,2,preferred,,SHRUG Census 2001 PCA,total population,True,True,False,4
+st_share_2001,Scheduled Tribe share,Scheduled Tribe population as a percentage of total population,social_composition,2,preferred,,SHRUG Census 2001 PCA,total population,True,True,False,5
+muslim_share_2001,Muslim share,Muslim population as a percentage of total population,social_composition,2,preferred,,Census 2001 C-01,total population,True,True,False,6
+agricultural_worker_share_2001,Agricultural worker share,Cultivators and agricultural labourers as a percentage of workers,economic_structure,5,preferred_compact,,SHRUG Census 2001 PCA,total workers,True,False,False,7
+dependency_ratio_2001,Dependency ratio,Population age 0-14 and 65+ as a percentage of population age 15-64,demography,4,preferred,,Census 2001 C-14,population age 15-64,True,True,False,8
+electricity_access_share_2001,Electricity access share,Households using electricity for lighting as a percentage of households,basic_development,6,preferred,,Census 2001 H-09,total households,True,True,False,9
+log_population_density_2001,Log population density,Natural log of persons per square kilometre,basic_scale_geography,1,preferred,,SHRUG PCA and Census 2001 geometry,none,True,True,False,10
+literacy_share_2001,"Literacy share, age 7+",Literate population age 7 and above as a percentage of population age 7 and above,human_capital,3,alternative_measure,adult_secondary_plus_share_2001,SHRUG Census 2001 PCA,population age 7 plus,False,True,True,11
+worker_share_2001,Worker share,Workers as a percentage of total population,economic_structure,5,alternative_parameterization,agricultural_worker_share_2001,SHRUG Census 2001 PCA,total population,False,True,True,12
+cultivator_share_workers_2001,Cultivator share among workers,Cultivators as a percentage of workers,economic_structure,5,alternative_parameterization,agricultural_worker_share_2001,SHRUG Census 2001 PCA,total workers,False,True,True,13
+agricultural_labourer_share_workers_2001,Agricultural labourer share among workers,Agricultural labourers as a percentage of workers,economic_structure,5,alternative_parameterization,agricultural_worker_share_2001,SHRUG Census 2001 PCA,total workers,False,True,True,14
+hindu_share_2001,Hindu share,Hindu population as a percentage of total population,social_composition,2,appendix_context,muslim_share_2001,Census 2001 C-01,total population,False,False,True,15
+banking_access_share_2001,Banking access share,Households reporting banking access as a percentage of households,household_assets,7,appendix_context,,Census 2001 H-13,total households,False,False,True,16
+television_ownership_share_2001,Television ownership share,Households owning a television as a percentage of households,household_assets,7,appendix_context,,Census 2001 H-13,total households,False,False,True,17
+telephone_ownership_share_2001,Telephone ownership share,Households owning a telephone as a percentage of households,household_assets,7,appendix_context,,Census 2001 H-13,total households,False,False,True,18
+primary_schools_per_1000_children_2001,"Primary schools per 1,000 children","Primary schools per 1,000 children age 5-14",historical_school_supply,8,appendix_context,,SHRUG Village and Town Directories,population age 5-14,False,False,True,19

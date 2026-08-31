@@ -8,9 +8,9 @@
 # three specifications so changes across columns reflect adjustment rather than
 # sample composition.
 
-district_mechanism_adjustment_registry <- function() {
+district_mechanism_adjustment_registry <- function(control_registry = NULL) {
   ids <- c("unadjusted", "region_main", "state_main")
-  adjustments <- iv_adjustment_sets()[ids]
+  adjustments <- iv_adjustment_sets(control_registry)[ids]
   rows <- lapply(seq_along(adjustments), function(i) {
     adjustment <- adjustments[[i]]
     data.frame(
@@ -111,10 +111,11 @@ estimate_district_mechanism_grid <- function(
 diagnose_english_opportunity_district_mechanisms <- function(
     panel,
     registry,
-    instrument = "ling_distance_nonzero_mean") {
+    instrument = "ling_distance_nonzero_mean",
+    control_registry = NULL) {
   measures <- preferred_district_mechanism_registry(registry)
   if (!nrow(measures)) stop("No preferred district mechanism measures are registered.", call. = FALSE)
-  adjustments <- district_mechanism_adjustment_registry()
+  adjustments <- district_mechanism_adjustment_registry(control_registry)
   estimates <- safe_bind_rows(lapply(seq_len(nrow(measures)), function(i) {
     estimate_district_mechanism_grid(
       panel, measures[i, , drop = FALSE], adjustments, instrument

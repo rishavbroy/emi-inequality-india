@@ -3,12 +3,14 @@
 census_mechanism_specifications <- function(
     outcome,
     treatment = preferred_iv_variables()$treatment,
-    sample_rule = "census_mechanism_common_support") {
+    sample_rule = "census_mechanism_common_support",
+    control_registry = NULL) {
   registry <- iv_specification_registry(
     outcome = outcome,
     treatment = treatment,
     panel_variant = "primary",
-    sample_rule = sample_rule
+    sample_rule = sample_rule,
+    control_registry = control_registry
   )
   construction_ids <- unname(alternative_distance_design_constructions())
   keep <- registry$adjustment_id %in% iv_candidate_design_adjustments() &
