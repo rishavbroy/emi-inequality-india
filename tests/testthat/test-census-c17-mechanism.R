@@ -66,6 +66,25 @@ test_that("C-17 preferred mechanism model identifies within-state language varia
   expect_true("factor(state_code)" %in% formula_terms)
 })
 
+test_that("C-17 partial R-squared uses fitted-model term deletion", {
+  data <- data.frame(
+    y = c(1, 2, 4, 5, 7, 8),
+    x = c(0, 1, 1, 2, 2, 3),
+    z = c(1, 0, 1, 0, 1, 0),
+    w = c(1, 2, 1, 2, 1, 2)
+  )
+  full <- stats::lm(y ~ x + z, data = data, weights = w)
+  restricted <- stats::lm(y ~ z, data = data, weights = w)
+  expected <- 1 - stats::deviance(full) / stats::deviance(restricted)
+
+  expect_equal(
+    census_c17_term_partial_r_squared(full, "x"),
+    expected,
+    tolerance = 1e-12
+  )
+  expect_true(is.na(census_c17_term_partial_r_squared(full, "not_a_term")))
+})
+
 test_that("C-17 mechanism registry stays deliberately small", {
   registry <- census_c17_mechanism_registry()
 
