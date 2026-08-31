@@ -28,7 +28,7 @@
 "andhra pradesh","visakhapatnam","pc2001__28__13",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
 "andhra pradesh","vizianagaram","pc2001__28__12",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
 "andhra pradesh","warangal","pc2001__28__09",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
-"andhra pradesh","west godavari","pc2001__28__15",1,"deterministic_to_2001","exact_census_2001_identity"
+"andhra pradesh","west godavari","pc2001__28__15",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
 "arunachal pradesh","anjaw",NA,0,"unresolved_no_deterministic_lineage",NA
 "arunachal pradesh","changlang","pc2001__12__12",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
 "arunachal pradesh","dibang valley","pc2001__12__10",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
@@ -278,7 +278,7 @@
 "jharkhand","godda","pc2001__20__08",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
 "jharkhand","gumla","pc2001__20__16",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
 "jharkhand","hazaribag",NA,0,"unresolved_no_deterministic_lineage",NA
-"jharkhand","jamtara",NA,0,"unresolved_no_deterministic_lineage",NA
+"jharkhand","jamtara","pc2001__20__11",1,"deterministic_to_2001","reviewed_deterministic_nss_lineage"
 "jharkhand","khunti","pc2001__20__14",1,"deterministic_to_2001","reviewed_deterministic_nss_lineage"
 "jharkhand","kodarma","pc2001__20__05",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
 "jharkhand","latehar","pc2001__20__02",1,"deterministic_to_2001","reviewed_deterministic_nss_lineage"
@@ -363,7 +363,7 @@
 "madhya pradesh","anup pur",NA,0,"unresolved_no_deterministic_lineage",NA
 "madhya pradesh","anuppur","pc2001__23__16",1,"deterministic_to_2001","reviewed_deterministic_nss_lineage"
 "madhya pradesh","ashok nagar",NA,0,"unresolved_no_deterministic_lineage",NA
-"madhya pradesh","ashoknagar",NA,0,"unresolved_no_deterministic_lineage",NA
+"madhya pradesh","ashoknagar","pc2001__23__07",1,"deterministic_to_2001","reviewed_deterministic_nss_lineage"
 "madhya pradesh","balaghat","pc2001__23__45",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
 "madhya pradesh","barwani","pc2001__23__28",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
 "madhya pradesh","betul","pc2001__23__35",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
@@ -645,14 +645,14 @@
 "tamil nadu","viluppuram","pc2001__33__07",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
 "tamil nadu","virudhunagar","pc2001__33__26",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
 "tamil nadu","yanam",NA,0,"unresolved_no_deterministic_lineage",NA
-"telangana","adilabad",NA,0,"unresolved_no_deterministic_lineage",NA
+"telangana","adilabad","pc2001__28__01",1,"deterministic_to_2001","reviewed_deterministic_nss_lineage"
 "telangana","hyderabad","pc2001__28__05",1,"deterministic_to_2001","reviewed_deterministic_nss_lineage"
-"telangana","karimnagar",NA,0,"unresolved_no_deterministic_lineage",NA
-"telangana","khammam",NA,0,"unresolved_no_deterministic_lineage",NA
-"telangana","mahbubnagar",NA,0,"unresolved_no_deterministic_lineage",NA
+"telangana","karimnagar","pc2001__28__03",1,"deterministic_to_2001","reviewed_deterministic_nss_lineage"
+"telangana","khammam","pc2001__28__10",1,"deterministic_to_2001","reviewed_deterministic_nss_lineage"
+"telangana","mahbubnagar","pc2001__28__07",1,"deterministic_to_2001","reviewed_deterministic_nss_lineage"
 "telangana","medak","pc2001__28__04",1,"deterministic_to_2001","reviewed_deterministic_nss_lineage"
-"telangana","nalgonda",NA,0,"unresolved_no_deterministic_lineage",NA
-"telangana","nizamabad",NA,0,"unresolved_no_deterministic_lineage",NA
+"telangana","nalgonda","pc2001__28__08",1,"deterministic_to_2001","reviewed_deterministic_nss_lineage"
+"telangana","nizamabad","pc2001__28__02",1,"deterministic_to_2001","reviewed_deterministic_nss_lineage"
 "telangana","ranga reddy",NA,0,"unresolved_no_deterministic_lineage",NA
 "telangana","warangal",NA,0,"unresolved_no_deterministic_lineage",NA
 "tripura","dhalai","pc2001__16__03",1,"deterministic_to_2001","exact_census_2001_identity;reviewed_deterministic_nss_lineage"
