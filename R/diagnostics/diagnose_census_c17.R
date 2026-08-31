@@ -106,6 +106,20 @@ census_c17_distance_term <- function(term) {
     startsWith(term, "distance_distant")
 }
 
+census_c17_term_partial_r_squared <- function(model, term) {
+  term_labels <- attr(stats::terms(model), "term.labels")
+  if (!term %in% term_labels) return(NA_real_)
+  restricted <- stats::update(
+    model, stats::as.formula(paste(". ~ . -", term))
+  )
+  full_deviance <- stats::deviance(model)
+  restricted_deviance <- stats::deviance(restricted)
+  if (!is.finite(full_deviance) || !is.finite(restricted_deviance) ||
+      restricted_deviance <= 0) return(NA_real_)
+  value <- 1 - full_deviance / restricted_deviance
+  max(0, min(1, value))
+}
+
 fit_census_c17_mechanism <- function(data, specification) {
   data <- safe_df(data)
   sex <- as.character(specification$sex[[1L]])
@@ -125,6 +139,7 @@ fit_census_c17_mechanism <- function(data, specification) {
       coefficients = data.frame(
         specification_id = specification$specification_id[[1L]], term = NA_character_,
         estimate = NA_real_, std.error = NA_real_, statistic = NA_real_, p.value = NA_real_,
+        partial_r_squared = NA_real_, signed_partial_correlation = NA_real_,
         status = "not_estimable", reason = "Insufficient state-language support.",
         stringsAsFactors = FALSE
       ),
@@ -158,12 +173,21 @@ fit_census_c17_mechanism <- function(data, specification) {
   test <- test[census_c17_distance_term(test$term), c(
     "term", "estimate", "std.error", "statistic", "p.value"
   ), drop = FALSE]
+  test$partial_r_squared <- vapply(
+    test$term, function(term) census_c17_term_partial_r_squared(model, term), numeric(1)
+  )
+  test$signed_partial_correlation <- ifelse(
+    is.finite(test$partial_r_squared),
+    sign(test$estimate) * sqrt(test$partial_r_squared),
+    NA_real_
+  )
   test$specification_id <- specification$specification_id[[1L]]
   test$status <- "estimated"
   test$reason <- NA_character_
   test <- test[c(
     "specification_id", "term", "estimate", "std.error", "statistic",
-    "p.value", "status", "reason"
+    "p.value", "partial_r_squared", "signed_partial_correlation",
+    "status", "reason"
   )]
 
   summary <- summary(model)

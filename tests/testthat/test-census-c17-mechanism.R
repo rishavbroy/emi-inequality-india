@@ -51,6 +51,14 @@ test_that("C-17 preferred mechanism model identifies within-state language varia
   expect_equal(out$summary$n_states, 3L)
   expect_true("shastry_degree" %in% out$coefficients$term)
   expect_true(all(out$coefficients$status == "estimated"))
+  preferred <- out$coefficients[out$coefficients$term == "shastry_degree", , drop = FALSE]
+  expect_true(is.finite(preferred$partial_r_squared))
+  expect_true(preferred$partial_r_squared >= 0 && preferred$partial_r_squared <= 1)
+  expect_equal(
+    preferred$signed_partial_correlation^2,
+    preferred$partial_r_squared,
+    tolerance = 1e-12
+  )
   formula_terms <- attr(
     stats::terms(census_c17_mechanism_formula(specification)),
     "term.labels"
