@@ -1464,3 +1464,66 @@ test_that("production price-window validation accepts sparse state histories wit
 
   expect_equal(validate_consumption_price_window(d, window), d)
 })
+
+test_that("Census 2001 control registry is the authority for sets, labels, and blocks", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
+  registry <- read_census_2001_control_registry(
+    file.path(root, "data", "metadata", "census_2001_control_registry.csv")
+  )
+
+  expect_identical(
+    census_2001_main_controls(registry),
+    registry$variable[registry$main_paper]
+  )
+  expect_identical(
+    census_2001_absorption_controls(registry),
+    registry$variable[registry$absorption_control]
+  )
+  expect_identical(
+    census_2001_appendix_controls(registry),
+    registry$variable[registry$appendix_control]
+  )
+  expect_identical(
+    census_2001_control_metadata(registry),
+    registry[registry$main_paper, c("variable", "label", "description"), drop = FALSE]
+  )
+
+  blocks <- iv_control_blocks(registry)
+  expect_identical(
+    names(blocks),
+    c(
+      "basic_scale_geography", "social_composition", "human_capital",
+      "demography", "economic_structure", "basic_development"
+    )
+  )
+  expect_identical(
+    blocks$human_capital,
+    c("adult_secondary_plus_share_2001", "literacy_share_2001")
+  )
+  expect_false("agricultural_worker_share_2001" %in% blocks$economic_structure)
+  expect_true(
+    "agricultural_worker_share_2001" %in%
+      iv_control_block_membership(registry)$economic_structure
+  )
+})
+
+test_that("control registry distinguishes preferred measures from alternative parameterizations", {
+  registry <- read_census_2001_control_registry()
+
+  compact <- registry[registry$variable == "agricultural_worker_share_2001", , drop = FALSE]
+  detailed <- registry[
+    registry$variable %in% c(
+      "worker_share_2001", "cultivator_share_workers_2001",
+      "agricultural_labourer_share_workers_2001"
+    ),
+    , drop = FALSE
+  ]
+  literacy <- registry[registry$variable == "literacy_share_2001", , drop = FALSE]
+
+  expect_true(compact$main_paper)
+  expect_false(compact$absorption_control)
+  expect_true(all(detailed$parameterization == "alternative_parameterization"))
+  expect_true(all(detailed$alternative_to == "agricultural_worker_share_2001"))
+  expect_identical(literacy$parameterization, "alternative_measure")
+  expect_identical(literacy$alternative_to, "adult_secondary_plus_share_2001")
+})
