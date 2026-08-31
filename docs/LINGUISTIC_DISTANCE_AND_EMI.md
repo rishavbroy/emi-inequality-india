@@ -202,3 +202,29 @@ whose repeated dimension is not present in the data.
 ## Cross-source mechanism reporting contract
 
 `data/metadata/english_opportunity_measures.csv` is the reporting-only registry for the compact mechanism sequence. It gives each selected C-17, NSS-64, and DISE measure a source, observational unit, numerator, denominator, population, stage, source-side interpretation, and paper role. It contains no formulas or estimation settings. C-17 state-by-language behavior, NSS household-side realized enrollment, and DISE administrative conditions remain distinct empirical objects; their ordering in a figure is descriptive mechanism organization, not a sequential mediation model. DISE rows are checked against the existing DISE construct and school-quality registries so that paper labels cannot silently drift from the source-specific semantic authority.
+
+## Compact district mechanism grid
+
+The paper-facing district mechanism diagnostic uses the reporting registry only
+to select preferred district measures and attach labels. Estimation continues to
+use the canonical IV adjustment definitions and the shared first-stage residual
+and clustered-inference helpers. Exactly three specifications are reported:
+unadjusted, six-region fixed effects plus the predetermined main Census controls,
+and state fixed effects plus the same controls. No expanded-control or instrument-
+construction permutation enters this compact grid.
+
+For each mechanism outcome, the complete-case sample is fixed across those three
+columns before estimation. The diagnostic reports the raw linguistic-distance
+coefficient, state-clustered standard error, excluded-instrument Wald statistic,
+partial R-squared, and the signed standardized partial association. The latter is
+computed by scaling the coefficient with the residual standard deviations of the
+instrument and outcome after the specification's nuisance terms; its square equals
+the reported partial R-squared. This supports cross-row visualization without
+pretending that C-17 state-language outcomes and district NSS/DISE outcomes share
+a common unit or form a sequential mediation panel.
+
+The 2007-08 DISE baseline attachment now carries the already-constructed school-
+quality measures (pupils per teacher, single-teacher-school share, and girls'-toilet
+share) alongside medium and management measures. This removes a parallel quality-
+data path for the compact district comparison while leaving later report-card
+dynamics in their existing quality diagnostic.

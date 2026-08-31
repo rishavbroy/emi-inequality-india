@@ -2687,6 +2687,19 @@ extended_diagnostic_targets <- list(
     attach_dise_treatments_to_panel_2001(district_panel, dise_baseline_treatments)
   ),
   tar_target(
+    english_opportunity_district_mechanisms,
+    diagnose_english_opportunity_district_mechanisms(
+      district_panel_with_dise, english_opportunity_measure_registry
+    )
+  ),
+  tar_target(
+    diag_ext_english_opportunity_district_mechanism_files,
+    save_english_opportunity_district_mechanisms(
+      english_opportunity_district_mechanisms
+    ),
+    format = "file"
+  ),
+  tar_target(
     dise_dynamic_panel,
     attach_dise_age_6_13_exposure(
       build_dise_longitudinal_panel(
