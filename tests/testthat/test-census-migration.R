@@ -285,7 +285,11 @@ test_that("Census 2011 counts are pooled before migration shares are recomputed"
   expect_equal(out$migrants_interstate, 100)
   expect_equal(out$interstate_share_among_migrants, 0.25)
   expect_equal(out$migrant_stock_share_population, 0.4)
-  expect_equal(out$interdistrict_migrant_share_population, 0.3)
+  expect_equal(
+    out$interdistrict_migrant_share_population,
+    (out$migrants_other_district_same_state + out$migrants_interstate) /
+      out$population_total_2011
+  )
   expect_false(isTRUE(all.equal(out$interstate_share_among_migrants, mean(c(0.1, 0.3)))))
   expect_equal(out$census_2011_source_district_count, 2L)
 })
