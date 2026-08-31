@@ -551,6 +551,11 @@ dise_school_quality_registry <- function() {
       "dise_single_teacher_school_share",
       "dise_girls_toilet_school_share"
     ),
+    baseline_outcome = c(
+      "dise_pupils_per_teacher_0708",
+      "dise_single_teacher_school_share_0708",
+      "dise_girls_toilet_school_share_0708"
+    ),
     dynamic_outcome = c(
       "dise_report_pupils_per_teacher",
       "dise_report_single_teacher_school_share",

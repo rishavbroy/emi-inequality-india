@@ -600,6 +600,9 @@ test_that("Census-2001 DISE baseline pooling preserves annual count aggregation"
     dise_english_share_english_hindi = c(20, 40, 60),
     dise_private_enrollment_share = 10,
     dise_private_school_share = 10,
+    dise_pupils_per_teacher = c(10, 15, 20),
+    dise_single_teacher_school_share = c(5, 7, 10),
+    dise_girls_toilet_school_share = c(50, 60, 80),
     stringsAsFactors = FALSE
   )
 
@@ -607,6 +610,9 @@ test_that("Census-2001 DISE baseline pooling preserves annual count aggregation"
   expect_identical(out$target_unit_2001[[1]], "pc2001__01__01")
   expect_equal(out$dise_source_district_count_0708, 2L)
   expect_equal(out$dise_emi_enrollment_share_total_0708, 60)
+  expect_equal(out$dise_pupils_per_teacher_0708, 20)
+  expect_equal(out$dise_single_teacher_school_share_0708, 10)
+  expect_equal(out$dise_girls_toilet_school_share_0708, 80)
   expect_equal(out$dise_baseline_years_observed, 3L)
   expect_equal(out$dise_emi_enrollment_share_total_0508_pooled, 100 * 280 / 600)
 })

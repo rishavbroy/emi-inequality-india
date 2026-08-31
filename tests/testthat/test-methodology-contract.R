@@ -180,7 +180,7 @@ test_that("cross-source DISE semantics agree with the authoritative DISE registr
     if (row$variable %in% constructs$variable) {
       authority <- constructs[constructs$variable == row$variable, , drop = FALSE]
     } else {
-      authority <- quality[quality$outcome == row$variable, , drop = FALSE]
+      authority <- quality[quality$baseline_outcome == row$variable, , drop = FALSE]
     }
     expect_equal(nrow(authority), 1L, info = row$measure_id)
     expect_identical(row$source_side, authority$source_side[[1L]], info = row$measure_id)

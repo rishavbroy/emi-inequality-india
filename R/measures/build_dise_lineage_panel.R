@@ -300,6 +300,8 @@ build_dise_baseline_treatments_2001 <- function(harmonized_district_year) {
     "target_unit_2001", "dise_source_district_count", "dise_emi_enrollment_share_total",
     "dise_hindi_enrollment_share_total", "dise_english_share_english_hindi",
     "dise_private_enrollment_share", "dise_private_school_share",
+    "dise_pupils_per_teacher", "dise_single_teacher_school_share",
+    "dise_girls_toilet_school_share",
     "dise_emi_gross_enrollment_ratio_age_6_13",
     "dise_elementary_gross_enrollment_ratio_age_6_13",
     "dise_english_identity_resolved", "dise_hindi_identity_resolved"
@@ -312,6 +314,9 @@ build_dise_baseline_treatments_2001 <- function(harmonized_district_year) {
     dise_english_share_english_hindi = "dise_english_share_english_hindi_0708",
     dise_private_enrollment_share = "dise_private_enrollment_share_0708",
     dise_private_school_share = "dise_private_school_share_0708",
+    dise_pupils_per_teacher = "dise_pupils_per_teacher_0708",
+    dise_single_teacher_school_share = "dise_single_teacher_school_share_0708",
+    dise_girls_toilet_school_share = "dise_girls_toilet_school_share_0708",
     dise_emi_gross_enrollment_ratio_age_6_13 = "dise_emi_gross_enrollment_ratio_age_6_13_0708",
     dise_elementary_gross_enrollment_ratio_age_6_13 = "dise_elementary_gross_enrollment_ratio_age_6_13_0708",
     dise_english_identity_resolved = "dise_english_identity_resolved_0708",
