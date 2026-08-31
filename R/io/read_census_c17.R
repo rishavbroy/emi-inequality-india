@@ -25,8 +25,13 @@ parse_census_c17_sheet <- function(raw) {
   raw <- safe_df(raw)
   if (ncol(raw) < 17L) stop("Census 2001 C-17 sheet has fewer than 17 columns.", call. = FALSE)
 
-  state_code_raw <- normalize_census_code(raw[[1]], 4L)
-  data_rows <- !is.na(state_code_raw) & grepl("^[0-9]{4}$", state_code_raw)
+  # The published workbooks contain a column-number header row whose first
+  # cell is `1`. Gate on the raw four-character geography code before zero
+  # padding; otherwise normalize_census_code("1", 4) becomes "0001" and a
+  # harmless header is misclassified as a non-state geography.
+  state_code_text <- trimws(plain_chr(raw[[1]]))
+  data_rows <- !is.na(state_code_text) & grepl("^[0-9]{4}$", state_code_text)
+  state_code_raw <- normalize_census_code(state_code_text, 4L)
   invalid_state_rows <- data_rows & substr(state_code_raw, 3L, 4L) != "00"
   if (any(invalid_state_rows)) {
     stop("Census 2001 C-17 contains a non-state geographic code.", call. = FALSE)

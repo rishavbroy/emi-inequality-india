@@ -22,6 +22,25 @@ test_that("C-17 parser preserves its hierarchical language counts", {
   expect_silent(validate_census_c17_hierarchy(rows))
 })
 
+
+test_that("C-17 parser ignores the workbook column-number row before code normalization", {
+  header <- as.data.frame(as.list(as.character(1:17)), stringsAsFactors = FALSE)
+  raw <- rbind(header, make_census_c17_fixture())
+
+  rows <- parse_census_c17_sheet(raw)
+
+  expect_equal(nrow(rows), 21L)
+  expect_identical(unique(rows$state_code), "09")
+
+  nonstate <- make_census_c17_fixture()
+  nonstate[[1]][[1L]] <- "0901"
+  expect_error(
+    parse_census_c17_sheet(nonstate),
+    "non-state geographic code",
+    fixed = TRUE
+  )
+})
+
 test_that("C-17 collapse counts each multilingual speaker once", {
   rows <- parse_census_c17_sheet(make_census_c17_fixture())
   out <- collapse_census_c17_state_languages(rows)
