@@ -5,7 +5,7 @@ This repository builds the EMI and inequality paper, diagnostics, application sa
 ## Project structure
 
 - `_targets.R` — composition root and target-group selection.
-- `R/pipeline/` — target-family factories used by the composition root; these files declare target objects only and contain no statistical or data-construction logic. `core_consumption_targets.R` owns registered consumption ingestion, reconstruction validation, district identity attachment, and household deflation targets; extended factories own optional diagnostic families.
+- `R/pipeline/` — target-family factories used by the composition root; these files declare target objects only and contain no statistical or data-construction logic. `core_consumption_targets.R` owns registered consumption ingestion, reconstruction validation, source-district identity attachment, and household deflation; `core_consumption_outcome_targets.R` owns lineage harmonization, welfare aggregation, and outcome/specification registries; `core_consumption_iv_targets.R` owns the production consumption-IV panel, coverage gate, and dynamic estimates. Extended factories own optional diagnostic families.
 - `R/io/` — raw-data readers and path handling.
 - `R/districts/` — district identities, lineage, crosswalks, and panel construction contracts.
 - `R/measures/` — analysis measures and survey-weighted aggregation.
@@ -27,6 +27,7 @@ This repository builds the EMI and inequality paper, diagnostics, application sa
 6. Output modules generate tables, figures, report values, and rendered documents.
 
 Reusable logic belongs in `R/`; `_targets.R`, scripts, and Make targets should coordinate rather than duplicate it. Public QMDs should contain prose and small rendering calls only.
+Source directories are loaded with `{targets}`' native `tar_source()` directory support, which recursively sources only `.R`/`.r` scripts; the composition root should not maintain a parallel file-discovery wrapper.
 
 
 ## Analysis-design ontology
@@ -58,7 +59,7 @@ The lineage object uses matching names: `conservative_source_crosswalk`, `primar
 
 ## Production and legacy separation
 
-`core_pipeline_targets` contains only production dependencies and composes production target families rather than requiring every declaration to live inline. Registered consumption source/reconstruction targets are supplied by `core_consumption_target_definitions()`. Legacy boundaries, the inherited harmonization crosswalk, and district tracker inputs live in `legacy_geography_targets`; the inherited legacy panel and archived review ledger live in `legacy_comparison_targets`. The geography group is available to extended diagnostics and benchmarks, while the legacy panel is constructed only for extended historical comparisons. Extended diagnostics are grouped into historical, lineage/general-diagnostic, Census, DISE/mechanism, and IV/control target factories under `R/pipeline/`; `extended_diagnostic_target_definitions()` composes those families, while `_targets.R` remains responsible for deciding whether the combined family enters the selected graph.
+`core_pipeline_targets` contains only production dependencies and composes production target families rather than requiring every declaration to live inline. Consumption orchestration is split at real dependency boundaries: `core_consumption_target_definitions()` handles source reconstruction and deflation, `core_consumption_outcome_target_definitions()` handles lineage and welfare outcomes before panel construction, and `core_consumption_iv_target_definitions()` attaches those outcomes to the finalized district panel and estimates the registered dynamic IV specifications. Legacy boundaries, the inherited harmonization crosswalk, and district tracker inputs live in `legacy_geography_targets`; the inherited legacy panel and archived review ledger live in `legacy_comparison_targets`. The geography group is available to extended diagnostics and benchmarks, while the legacy panel is constructed only for extended historical comparisons. Extended diagnostics are grouped into historical, lineage/general-diagnostic, Census, DISE/mechanism, and IV/control target factories under `R/pipeline/`; `extended_diagnostic_target_definitions()` composes those families, while `_targets.R` remains responsible for deciding whether the combined family enters the selected graph.
 
 The production lineage does not load `data/metadata/district_legacy_mapping_reviews.csv`, does not evaluate migration gates, and does not depend on the inherited panel.
 
@@ -82,7 +83,7 @@ The housing module keeps source decoding in `R/io/read_census_housing.R`, measur
 
 ## Target groups
 
-- `core_pipeline_targets` — production data, models, outputs, and documents, including the `core_consumption_target_definitions()` production family.
+- `core_pipeline_targets` — production data, models, outputs, and documents, composing the three consumption production factories at their dependency boundaries rather than hiding cross-domain dependencies inside a monolithic factory.
 - `legacy_geography_targets` — inherited geometry and harmonization inputs shared by optional diagnostics and benchmarks.
 - `legacy_comparison_targets` — the inherited legacy panel, archived historical reviews, and crosswalk comparisons used only by extended diagnostics.
 - `extended_diagnostic_targets` — extended diagnostic target objects composed from the five domain-oriented factories under `R/pipeline/`; target names and dependency commands remain unchanged when orchestration is moved out of `_targets.R`.
