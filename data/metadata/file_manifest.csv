@@ -1,13 +1,13 @@
 file_id,source_id,required_for_current_pipeline,relative_path,expected_size_bytes,file_type,reader_function,target_name,notes
-nss0708edu_block3,nss_2007_education,true,data/raw/nss_2007_education_64/Block-3  Household  characteristics.sav,28283894,sav,haven::read_sav,raw_nss_2007_education,Block 3 household characteristics
-nss0708edu_block4,nss_2007_education,true,data/raw/nss_2007_education_64/Block-4  Demographic and other particulars of household members.sav,145117864,sav,read_sav_short,raw_nss_2007_education,Block 4 demographic/person records
-nss0708edu_block5,nss_2007_education,true,data/raw/nss_2007_education_64/Block-5  Education particulars of those aged 5-29 years who are currently attending primary level and above.sav,38109654,sav,read_sav_short,raw_nss_2007_education,Block 5 schooling details
-nss0708edu_block6,nss_2007_education,true,data/raw/nss_2007_education_64/Block-6  Particulars of private expend.sav,34841313,sav,haven::read_sav,raw_nss_2007_education,Block 6 private expenditure
-nss0708edu_metadata,nss_2007_education,true,data/raw/nss_2007_education_64/DDI Metadata from Nesstar XML.xlsx,,xlsx,readxl::read_xlsx,district_keys_2007,District/region/state code labels
-nss0708cons_hhchar,nss_2007_consumption,true,data/raw/nss_2007_consumption_64/Household Characteristics.sav,18094126,sav,haven::read_sav,raw_nss_2007_consumption,Baseline consumption household characteristics
-nss1718edu_block3,nss_2017_education,true,data/raw/nss_2017_education_75/Block 3 - Household characteristics.sav,42411683,sav,read_sav_short,raw_nss_2017_education,2017-18 household characteristics
-nss1718_districts,nss_2017_education,true,data/raw/nss_2017_education_75/List of Districts NSS 2017-18.csv,20472,csv,read_csv_short,district_keys_2017,District labels
-nss1718_state_codes,nss_2017_education,true,data/raw/nss_2017_education_75/State Codes.csv,549,csv,read_csv_short,district_keys_2017,State code labels
+nss0708edu_block3,nss_2007_education,true,data/raw/nss/nss_2007_education_64/Block-3  Household  characteristics.sav,28283894,sav,haven::read_sav,raw_nss_2007_education,Block 3 household characteristics
+nss0708edu_block4,nss_2007_education,true,data/raw/nss/nss_2007_education_64/Block-4  Demographic and other particulars of household members.sav,145117864,sav,read_sav_short,raw_nss_2007_education,Block 4 demographic/person records
+nss0708edu_block5,nss_2007_education,true,data/raw/nss/nss_2007_education_64/Block-5  Education particulars of those aged 5-29 years who are currently attending primary level and above.sav,38109654,sav,read_sav_short,raw_nss_2007_education,Block 5 schooling details
+nss0708edu_block6,nss_2007_education,true,data/raw/nss/nss_2007_education_64/Block-6  Particulars of private expend.sav,34841313,sav,haven::read_sav,raw_nss_2007_education,Block 6 private expenditure
+nss0708edu_metadata,nss_2007_education,true,data/raw/nss/nss_2007_education_64/DDI Metadata from Nesstar XML.xlsx,,xlsx,readxl::read_xlsx,district_keys_2007,District/region/state code labels
+nss0708cons_hhchar,nss_2007_consumption,true,data/raw/nss/nss_2007_consumption_64/Household Characteristics.sav,18094126,sav,haven::read_sav,raw_nss_2007_consumption,Baseline consumption household characteristics
+nss1718edu_block3,nss_2017_education,true,data/raw/nss/nss_2017_education_75/Block 3 - Household characteristics.sav,42411683,sav,read_sav_short,raw_nss_2017_education,2017-18 household characteristics
+nss1718_districts,nss_2017_education,true,data/raw/nss/nss_2017_education_75/List of Districts NSS 2017-18.csv,20472,csv,read_csv_short,district_keys_2017,District labels
+nss1718_state_codes,nss_2017_education,true,data/raw/nss/nss_2017_education_75/State Codes.csv,549,csv,read_csv_short,district_keys_2017,State code labels
 census2001_c16_01,census_2001_mother_tongue,true,data/raw/census_2001/languages/C16/PC01_C16_01.xls,,xls,readxl::read_excel,raw_census_2001,Census C-16 mother tongue file
 census2001_c16_02,census_2001_mother_tongue,true,data/raw/census_2001/languages/C16/PC01_C16_02.xls,,xls,readxl::read_excel,raw_census_2001,Census C-16 mother tongue file
 census2001_c16_03,census_2001_mother_tongue,true,data/raw/census_2001/languages/C16/PC01_C16_03.xls,,xls,readxl::read_excel,raw_census_2001,Census C-16 mother tongue file

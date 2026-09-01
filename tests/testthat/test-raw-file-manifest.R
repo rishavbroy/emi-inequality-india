@@ -26,31 +26,28 @@ test_that("manifest and data_sources use canonical raw-data directories", {
   sources <- readr::read_csv(file.path(root, "data", "metadata", "data_sources.csv"), show_col_types = FALSE)
 
   canonical_dirs <- c(
-    "data/raw/nss_2007_education_64",
-    "data/raw/nss_2007_consumption_64",
-    "data/raw/nss_2017_education_75",
-    "data/raw/census_2001/languages/C16",
-    "data/raw/district_boundaries_2020",
-    "data/raw/district_changes"
+    nss_2007_education = "data/raw/nss/nss_2007_education_64",
+    nss_2007_consumption = "data/raw/nss/nss_2007_consumption_64",
+    nss_2017_education = "data/raw/nss/nss_2017_education_75",
+    census_2001_mother_tongue = "data/raw/census_2001/languages/C16",
+    district_boundaries_2020 = "data/raw/district_boundaries_2020",
+    district_changes = "data/raw/district_changes"
   )
-  raw_source_ids <- c(
-    "nss_2007_education",
-    "nss_2007_consumption",
-    "nss_2017_education",
-    "census_2001_mother_tongue",
-    "district_boundaries_2020",
-    "district_changes"
-  )
-  manifest <- manifest[manifest$source_id %in% raw_source_ids, , drop = FALSE]
-  sources <- sources[sources$source_id %in% raw_source_ids, , drop = FALSE]
 
-  manifest_roots <- vapply(
-    manifest$relative_path,
-    function(path) any(startsWith(path, paste0(canonical_dirs, "/")) | path %in% canonical_dirs),
-    logical(1)
-  )
-  expect_true(all(manifest_roots))
-  expect_true(all(canonical_dirs %in% sources$local_raw_path))
+  for (source_id in names(canonical_dirs)) {
+    source_dir <- canonical_dirs[[source_id]]
+    source_manifest <- manifest[manifest$source_id == source_id, , drop = FALSE]
+    source_catalog <- sources[sources$source_id == source_id, , drop = FALSE]
+
+    expect_gt(nrow(source_manifest), 0L, info = source_id)
+    expect_equal(nrow(source_catalog), 1L, info = source_id)
+    expect_true(
+      all(startsWith(source_manifest$relative_path, paste0(source_dir, "/")) |
+            source_manifest$relative_path == source_dir),
+      info = source_id
+    )
+    expect_identical(source_catalog$local_raw_path[[1L]], source_dir, info = source_id)
+  }
 })
 
 test_that("optional manifest rows can be requested without entering the public preflight", {
