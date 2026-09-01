@@ -21,3 +21,11 @@ Block 4 exposes age, sex, education, usual principal activity status, NIC-2004, 
 NSS 64 uses two-digit state and district source codes. The source reader preserves those codes and the full survey design, but this patch does not assume that every survey district is a one-to-one Census-2001 district. District outcomes will only be activated after the source districts are passed through the existing reviewed lineage machinery and after effective sample/support diagnostics are defined.
 
 The next labor patch should predeclare a small person-level outcome family and its support rules before running district regressions. Candidate concepts are labor-force participation, employment/unemployment, regular salaried work, self/casual employment composition, occupation/industry structure, and migration. Wage outcomes require the weekly-status/earnings block rather than Block 4 and are intentionally deferred until that source contract is inspected.
+
+## Reviewed NSS64 district lineage
+
+NSS64 labor geography now reuses the project's existing reviewed `nss_2007_08` district lineage instead of creating a labor-specific concordance. The survey publishes a three-digit `State_Region` code and a two-digit district code; production reconstructs the same five-digit `SSRDD` source identity used by the reviewed NSS64 education lineage as `paste0(State_Region, District)`. The first two digits of `State_Region` must agree with the published state code.
+
+Only reviewed deterministic mappings with unit weight are accepted for person-level labor data. Survey districts without such a mapping remain `unresolved_source_district`; population-allocation or fractional lineage variants are not applied to people. `nss64_lineage_support.csv` reports source-district sample counts, weighted person mass, reviewed Census-2001 target, and resolution status before any district outcome is estimated.
+
+Block 4 and Block 6 must also agree person-by-person on the common survey geography and design fields. Matching person keys alone is insufficient because a cross-block geography/design disagreement would invalidate later labor/migration joins.

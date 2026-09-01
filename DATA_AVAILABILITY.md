@@ -64,4 +64,4 @@ Historical NIEPA/NUEPA DISE raw workbooks and report-card PDFs are local researc
 
 ### NSS 64 employment/migration source contract
 
-The extended labor branch now registers the official NSS 64 Schedule 10.2 DDI plus Block 4 usual-activity and Block 6 migration `.sav` files under `data/raw/nss/`. The branch validates their documented common 572,254-person universe and published design/weight fields but does not yet publish district labor outcomes; geography and minimum-support rules remain a separate predeclared step.
+The extended labor branch registers the official NSS 64 Schedule 10.2 DDI plus Block 4 usual-activity and Block 6 migration `.sav` files under `data/raw/nss/`. It validates their documented common 572,254-person universe, matching cross-block design/geography fields, and published combined weights. Source districts then reuse the reviewed `nss_2007_08` `SSRDD` lineage with deterministic mappings only; unresolved districts remain explicit. District labor outcomes are still inactive pending a predeclared outcome/support registry.

@@ -55,9 +55,9 @@ Priority candidate measures are non-farm employment, establishment density, hire
 
 ### 2. Labor-market outcomes
 
-The NSS 2007-08 source-contract phase is now active. The official Schedule 10.2 DDI, Block 4 usual-activity records, and Block 6 migration records are registered under `data/raw/nss/`, validated on one common person universe, and normalized with the published NSS survey-design fields and combined multiplier. No district labor outcome is yet registered; see `docs/LABOR_MARKET.md`.
+The NSS 2007-08 source and geography-contract phases are now active. The official Schedule 10.2 DDI, Block 4 usual-activity records, and Block 6 migration records are registered under `data/raw/nss/`, validated on one common person universe and matching cross-block design fields, and normalized with the published NSS survey-design fields and combined multiplier. Labor geography reuses the reviewed `nss_2007_08` lineage through the published `SSRDD` identity and accepts only deterministic reviewed mappings; unresolved source districts remain explicit. No district labor outcome is yet registered; see `docs/LABOR_MARKET.md`.
 
-Next, define the reviewed district-lineage/support contract and predeclare a small near-treatment outcome family before estimating district results. Then add NSS 2009-10 through the same interface, followed by later PLFS waves so near-treatment structure remains separate from long-run labor outcomes. Wage outcomes should wait for the weekly-status/earnings source rather than being inferred from the usual-activity block.
+Next, predeclare a small near-treatment outcome family and its survey-support rules before estimating district results. Then add NSS 2009-10 through the same interface, followed by later PLFS waves so near-treatment structure remains separate from long-run labor outcomes. Wage outcomes should wait for the weekly-status/earnings source rather than being inferred from the usual-activity block.
 
 Use the same discipline as consumption:
 
