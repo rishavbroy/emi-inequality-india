@@ -4,7 +4,8 @@ This repository builds the EMI and inequality paper, diagnostics, application sa
 
 ## Project structure
 
-- `_targets.R` — composition root and target-group selection; target-family extraction is a planned cleanup because the file has outgrown the original thin-orchestration description.
+- `_targets.R` — composition root and target-group selection.
+- `R/pipeline/` — target-family factories used by the composition root; these files declare target objects only and contain no statistical or data-construction logic.
 - `R/io/` — raw-data readers and path handling.
 - `R/districts/` — district identities, lineage, crosswalks, and panel construction contracts.
 - `R/measures/` — analysis measures and survey-weighted aggregation.
@@ -57,7 +58,7 @@ The lineage object uses matching names: `conservative_source_crosswalk`, `primar
 
 ## Production and legacy separation
 
-`core_pipeline_targets` contains only production dependencies. Legacy boundaries, the inherited harmonization crosswalk, and district tracker inputs live in `legacy_geography_targets`; the inherited legacy panel and archived review ledger live in `legacy_comparison_targets`. The geography group is available to extended diagnostics and benchmarks, while the legacy panel is constructed only for extended historical comparisons.
+`core_pipeline_targets` contains only production dependencies. Legacy boundaries, the inherited harmonization crosswalk, and district tracker inputs live in `legacy_geography_targets`; the inherited legacy panel and archived review ledger live in `legacy_comparison_targets`. The geography group is available to extended diagnostics and benchmarks, while the legacy panel is constructed only for extended historical comparisons. Extended diagnostics are grouped into historical, lineage/general-diagnostic, Census, DISE/mechanism, and IV/control target factories under `R/pipeline/`; `extended_diagnostic_target_definitions()` composes those families, while `_targets.R` remains responsible for deciding whether the combined family enters the selected graph.
 
 The production lineage does not load `data/metadata/district_legacy_mapping_reviews.csv`, does not evaluate migration gates, and does not depend on the inherited panel.
 
@@ -84,7 +85,7 @@ The housing module keeps source decoding in `R/io/read_census_housing.R`, measur
 - `core_pipeline_targets` — production data, models, outputs, and documents.
 - `legacy_geography_targets` — inherited geometry and harmonization inputs shared by optional diagnostics and benchmarks.
 - `legacy_comparison_targets` — the inherited legacy panel, archived historical reviews, and crosswalk comparisons used only by extended diagnostics.
-- `extended_diagnostic_targets` — three-panel, lineage, missingness, spatial, and matching diagnostics.
+- `extended_diagnostic_targets` — extended diagnostic target objects composed from the five domain-oriented factories under `R/pipeline/`; target names and dependency commands remain unchanged when orchestration is moved out of `_targets.R`.
 - `benchmark_targets` — optional benchmarks.
 - `analysis_note_targets` and `application_sample_targets` — optional rendered derivatives.
 
@@ -92,7 +93,7 @@ Legacy geography is appended once when either extended diagnostics or benchmarks
 
 ## Build philosophy
 
-`{targets}` is the build source of truth. Durable computation should be represented by functions and explicit targets. Avoid untracked side effects, compatibility aliases, source-text tests, and parallel implementations of the same contract. Tests should protect behavioral and methodological invariants.
+`{targets}` is the build source of truth. Durable computation should be represented by functions and explicit targets. Target-family factories may reorganize declarations, but they must preserve target names and commands so caches, debugging metadata, `tar_traceback()`, and existing diagnostic entry points remain useful. Avoid untracked side effects, compatibility aliases, source-text tests, and parallel implementations of the same contract. Tests should protect behavioral and methodological invariants.
 
 Update this document when target groups, panel roles, public-output contracts, directory ownership, or strict validation rules change.
 

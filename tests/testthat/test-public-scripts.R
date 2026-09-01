@@ -15,6 +15,19 @@ repo_text <- function(...) {
   paste(readLines(repo_file(...), warn = FALSE), collapse = "\n")
 }
 
+repo_extended_target_text <- function() {
+  pipeline_dir <- repo_file("R", "pipeline")
+  files <- sort(list.files(
+    pipeline_dir,
+    pattern = "^extended_.*_targets\\.R$",
+    full.names = TRUE
+  ))
+  paste(
+    unlist(lapply(files, readLines, warn = FALSE), use.names = FALSE),
+    collapse = "\n"
+  )
+}
+
 git_attribute <- function(path, attribute) {
   root <- dirname(repo_file(".gitattributes"))
   output <- suppressWarnings(system2(
@@ -86,6 +99,13 @@ test_that("shared Census transition is a first-class pipeline dependency", {
 
 test_that("current public build helper scripts parse", {
   expect_silent(parse(repo_file("_targets.R")))
+  for (file in list.files(
+    repo_file("R", "pipeline"),
+    pattern = "^extended_.*_targets\\.R$",
+    full.names = TRUE
+  )) {
+    expect_silent(parse(file))
+  }
   expect_silent(parse(repo_file("scripts", "check_required_outputs.R")))
   expect_silent(parse(repo_file("scripts", "check_targets_process.R")))
   expect_silent(parse(repo_file("scripts", "run_targets_checked.R")))
@@ -165,15 +185,22 @@ test_that("audit workspace cleanup removes transient state and preserves optiona
 
 test_that("targets graph separates public diagnostics, extended diagnostics, and benchmarks", {
   src <- repo_text("_targets.R")
+  extended <- repo_extended_target_text()
 
   expect_match(src, "core_pipeline_targets <- list", fixed = TRUE)
-  expect_match(src, "extended_diagnostic_targets <- list", fixed = TRUE)
+  expect_match(src, 'source("R/pipeline/extended_diagnostic_targets.R")', fixed = TRUE)
+  expect_match(
+    src,
+    "extended_diagnostic_targets <- extended_diagnostic_target_definitions()",
+    fixed = TRUE
+  )
   expect_match(src, "benchmark_targets <- list", fixed = TRUE)
   expect_match(src, "diag_public_iv_panel", fixed = TRUE)
   expect_match(src, "diag_public_spatial_autocorrelation", fixed = TRUE)
   expect_match(src, "diag_public_spatial_autocorrelation_files", fixed = TRUE)
   expect_match(src, "save_spatial_autocorrelation_diagnostics(diag_public_spatial_autocorrelation), format = \"file\"", fixed = TRUE)
-  expect_match(src, "diag_ext_missingness", fixed = TRUE)
+  expect_match(extended, "extended_diagnostic_target_definitions <- function()", fixed = TRUE)
+  expect_match(extended, "diag_ext_missingness", fixed = TRUE)
   expect_match(src, "bench_ame_methods", fixed = TRUE)
   expect_match(src, "bench_consumption_distribution_domains", fixed = TRUE)
   expect_match(src, "EMI_RUN_EXTENDED_DIAGNOSTICS", fixed = TRUE)
@@ -519,7 +546,7 @@ test_that("legacy tracker and panel remain optional comparison inputs", {
   root <- dirname(repo_file("README.md"))
   geography_start <- match(TRUE, grepl("legacy_geography_targets <- list(", target_lines, fixed = TRUE))
   comparison_start <- match(TRUE, grepl("legacy_comparison_targets <- list(", target_lines, fixed = TRUE))
-  extended_start <- match(TRUE, grepl("extended_diagnostic_targets <- list(", target_lines, fixed = TRUE))
+  extended_start <- match(TRUE, grepl("extended_diagnostic_targets <- extended_diagnostic_target_definitions()", target_lines, fixed = TRUE))
   geography <- paste(target_lines[geography_start:(comparison_start - 1L)], collapse = "\n")
   comparison <- paste(target_lines[comparison_start:(extended_start - 1L)], collapse = "\n")
 
@@ -711,10 +738,14 @@ test_that("reviewed primary lineage is public and alternatives remain diagnostic
   core_start <- match(TRUE, grepl("core_pipeline_targets <- list(", target_file, fixed = TRUE))
   extended_start <- match(
     TRUE,
-    grepl("extended_diagnostic_targets <- list(", target_file, fixed = TRUE)
+    grepl(
+      "extended_diagnostic_targets <- extended_diagnostic_target_definitions()",
+      target_file,
+      fixed = TRUE
+    )
   )
   core <- paste(target_file[core_start:(extended_start - 1L)], collapse = "\n")
-  extended <- paste(target_file[extended_start:length(target_file)], collapse = "\n")
+  extended <- repo_extended_target_text()
 
   expect_match(
     core,

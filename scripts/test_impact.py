@@ -97,8 +97,46 @@ def path_tests(path):
         tests.update(test.name for test in TEST_DIR.glob("test-*.R"))
     if path.startswith("tests/testthat/test-") and path.endswith(".R"):
         tests.add(Path(path).name)
-    if re.search(r"^(scripts/|_targets\.R$|Makefile$|DESCRIPTION$|renv\.lock$|\.gitignore$)", path):
+    if re.search(
+        r"^(scripts/|R/pipeline/|_targets\.R$|Makefile$|DESCRIPTION$|renv\.lock$|\.gitignore$)",
+        path,
+    ):
         tests.add("test-public-scripts.R")
+    pipeline_test_map = {
+        "R/pipeline/extended_historical_targets.R": {
+            "test-historical-baseline-1991.R",
+            "test-historical-linguistic-validation.R",
+            "test-historical-vanneman-benchmark.R",
+            "test-historical-vanneman-pretrends.R",
+            "test-historical-vanneman-sources.R",
+        },
+        "R/pipeline/extended_lineage_targets.R": {
+            "test-diagnostics.R",
+            "test-district-lineage-bridge.R",
+            "test-district-lineage-completion.R",
+            "test-district-lineage-matching.R",
+            "test-district-lineage-sources.R",
+        },
+        "R/pipeline/extended_census_targets.R": {
+            "test-census-c13.R",
+            "test-census-c17.R",
+            "test-census-c17-mechanism.R",
+            "test-census-housing.R",
+            "test-census-migration.R",
+            "test-census-workers.R",
+        },
+        "R/pipeline/extended_dise_targets.R": {
+            "test-dise.R",
+            "test-english-opportunity-mechanisms.R",
+        },
+        "R/pipeline/extended_iv_targets.R": {
+            "test-diagnostics.R",
+            "test-iv-estimation.R",
+            "test-overidentification.R",
+            "test-prices-and-controls.R",
+        },
+    }
+    tests.update(pipeline_test_map.get(path, set()))
     if path.startswith("config/"):
         tests.update({"test-config.R", "test-current-output-contract.R"})
     if re.search(r"^data/metadata/(file_manifest|data_sources|checksums)\.csv$", path):

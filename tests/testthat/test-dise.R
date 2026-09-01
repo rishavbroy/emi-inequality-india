@@ -637,7 +637,7 @@ test_that("Census-2001 DISE attachment is one-to-one and preserves panel order",
 test_that("DISE metadata inputs are explicit file dependencies in the targets graph", {
   root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
   targets_text <- paste(
-    readLines(file.path(root, "_targets.R"), warn = FALSE),
+    readLines(file.path(root, "R", "pipeline", "extended_dise_targets.R"), warn = FALSE),
     collapse = "\n"
   )
   metadata_targets <- c(
@@ -895,8 +895,16 @@ test_that("DISE report-language maintainer parses both documented table orientat
 
 test_that("DISE report-language maintainer stays outside the targets runtime graph", {
   root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
+  target_files <- c(
+    file.path(root, "_targets.R"),
+    list.files(
+      file.path(root, "R", "pipeline"),
+      pattern = "^extended_.*_targets\\.R$",
+      full.names = TRUE
+    )
+  )
   targets_text <- paste(
-    readLines(file.path(root, "_targets.R"), warn = FALSE),
+    unlist(lapply(target_files, readLines, warn = FALSE), use.names = FALSE),
     collapse = "\n"
   )
   expect_false(grepl("build_dise_report_language_enrollment.py", targets_text, fixed = TRUE))
