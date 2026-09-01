@@ -194,6 +194,30 @@ and output paths are frozen in
 Nesstar sources should be added there only when their `.Nesstar` binary is the
 chosen production source and the required companion metadata is available.
 
+### PLFS 2017-18 source gate
+
+The local PLFS 2017-18 package is intentionally **not** materialized yet. It
+contains `DDI-IND-CSO-PLFS-2017-18.Nesstar` and `Data_LayoutPLFS (1).xlsx`, but
+it does not contain the companion DDI XML required by `nesstar-converter` and
+it does not contain an open first-visit person table. The extended audit records
+this expected state in
+`outputs/diagnostics/extended/labor/plfs_2017_18_source_package.csv` as
+`blocked_missing_ddi`.
+
+Obtain the official metadata from the MoSPI PLFS 2017-18 catalog (reference
+`DDI-IND-CSO-PLFS-2017-18`) using the catalog's **Metadata → DDI/XML** export and
+save it beside the `.Nesstar` binary as:
+
+```text
+data/raw/plfs/PLFS 2017-18 Periodic Labour Force Survey July 2017 - June 2018/DDI-IND-CSO-PLFS-2017-18.xml
+```
+
+Do not create or hand-edit substitute XML from the layout workbook. On the next
+audit, the source-package diagnostic will change to `ddi_present_unregistered`.
+At that point record the downloaded XML's exact byte size and provenance in
+tracked metadata and add PLFS to the existing generic Nesstar conversion
+contract before materializing the first-visit person table.
+
 The full audit discovers this gitignored materialization on every run. With no
 interim files it records a non-error `not_materialized` diagnostic. A partial
 block set or missing/mismatched conversion manifest is a hard error. With a

@@ -103,4 +103,4 @@ NSS66 employment/unemployment registers both the official DDI and canonical `sur
   paths used by `scripts/materialize_nesstar.py nss66_eus`. The converted CSVs are
   reproducible local intermediates, not tracked raw data.
 
-`plfs_labor_contracts.csv` freezes official PLFS wave structure before ingestion: catalog reference/case counts, first-visit versus revisit roles, annual usual-status source choice, design/geography fields, multiplier field, and principal/subsidiary status fields. It intentionally contains source contracts rather than analytical estimates.
+`plfs_labor_contracts.csv` freezes official PLFS wave structure before ingestion: catalog reference/case counts, first-visit versus revisit roles, annual usual-status source choice, design/geography fields, multiplier field, and principal/subsidiary status fields. It intentionally contains source contracts rather than analytical estimates. The raw 2017-18 Nesstar binary and layout are separately registered in `file_manifest.csv`; the companion catalog DDI/XML is deliberately not fabricated or inferred from the layout and must be acquired before PLFS can enter `nesstar_conversion_contracts.csv`.

@@ -77,3 +77,12 @@ gitignored `data/interim/nss66_eus/` with `nesstar-converter==1.0.4`. The R
 canonical adapter and shared labor estimator are implemented; production NSS66
 district targets should be activated only after the converted tables have been
 materialized and their real-data diagnostics reviewed.
+
+### PLFS 2017-18 long-run labor source
+
+The local PLFS 2017-18 package under `data/raw/plfs/` contains the official
+`.Nesstar` binary and data-layout workbook, which are registered for source
+validation. It does not include the catalog DDI/XML or an open first-visit
+person table. Because the standard Nesstar converter requires companion DDI
+metadata, production ingestion remains fail-closed until that official XML is
+acquired and registered; see `REPLICATION.md` and `docs/LABOR_MARKET.md`.
