@@ -166,6 +166,13 @@ test_that("HL13 structure categories exhaust households and temporary structure"
 })
 
 
+test_that("ordinary Census 2001 H04 remains acquisition-only", {
+  expect_error(
+    census_housing_manifest_files(character(), "H04", census_year = 2001L),
+    "Census 2001 housing reader supports"
+  )
+})
+
 test_that("HL13 shares a strict household universe with the active 2011 housing sources", {
   hl07 <- data.frame(
     state_code = "09", district_code = "132", district_name = "Alpha",
@@ -196,7 +203,7 @@ test_that("HL13 shares a strict household universe with the active 2011 housing 
   bad$households_total <- 99
   expect_error(
     validate_census_housing_sources(hl07, hl11, hl12, 2011L, hl13 = bad),
-    "do not agree"
+    "household-universe counts disagree"
   )
 })
 
@@ -525,7 +532,7 @@ test_that("dedicated sanitation tables replace incomplete utility latrine counts
   bad_h10$latrine_available[[1L]] <- 26
   expect_error(
     validate_census_housing_sources(h09, h12, h13, 2001L, h10_or_hl08 = bad_h10),
-    "does not match"
+    "latrine counts disagree"
   )
   out <- build_census_2001_housing_measures(h09, h12, h13, h10 = h10)
   expect_equal(out$latrine_share_households[out$district_code == "02"], 0.4)
