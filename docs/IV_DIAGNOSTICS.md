@@ -40,6 +40,10 @@ Balance is evidence about the independence argument, not a separate IV identifyi
 
 The alternative linguistic-distance grid and the richer first-stage absorption ladder now obtain their specification metadata from the same IV registry layer. Historical output files are retained where useful for compatibility, but fixed effects, controls, instrument sets, and control-block definitions are no longer independently declared inside the two diagnostic modules.
 
+### Anderson--Rubin artifact retention
+
+Anderson--Rubin grids are computational inputs to confidence-set inversion, not automatically reportable artifacts. The diagnostic objects retain the pointwise grids so validation and downstream inference can inspect them. The broad alternative-distance permutation universe no longer writes its full grid to disk; its persisted weak-IV summary already records the beta-zero test and the inverted confidence-set components for every registered design. Raw grids remain persisted only for compact, predeclared candidate/preferred analyses where the pointwise acceptance path is itself a useful review artifact.
+
 ### Alternative-distance candidate-design comparison
 
 The Glottolog and Dyen constructions are robustness measurements of linguistic

@@ -357,8 +357,9 @@ test_that("DISE diagnostic saver returns the repository-standard output manifest
 
   expect_s3_class(manifest, "data.frame")
   expect_setequal(names(manifest), c("path", "description"))
-  expect_equal(nrow(manifest), 32L)
+  expect_equal(nrow(manifest), 31L)
   expect_true(all(file.exists(manifest$path)))
+  expect_false(file.exists(file.path(dir, "dise_anderson_rubin_grid.csv")))
   expect_setequal(
     basename(manifest$path)[grepl("age_6_13|elementary_age_exposure", basename(manifest$path))],
     c(
@@ -1210,6 +1211,34 @@ test_that("dynamic event study recovers changes relative to the reference-year g
   expect_true(is.finite(state_year_fit$summary$joint_distance_year_p[[1]]))
 })
 
+
+test_that("DISE Anderson-Rubin grids remain cached objects but are not persisted artifacts", {
+  constructs <- data.frame(construct_id = "emi", stringsAsFactors = FALSE)
+  nss <- data.frame(status = "ok", stringsAsFactors = FALSE)
+  branch <- list(
+    first_stage = data.frame(), first_stage_coefficients = data.frame(),
+    weak_iv_outcomes = data.frame(),
+    anderson_rubin_grid = data.frame(
+      construct_id = "emi", specification_id = "state_main", beta = c(-1, 0, 1),
+      p.value = c(0.2, 0.8, 0.2), stringsAsFactors = FALSE
+    ),
+    overidentification = data.frame(), monotonicity_summary = data.frame(),
+    monotonicity_bins = data.frame(), monotonicity_state_slopes = data.frame(),
+    balance = data.frame(), joint_balance = data.frame()
+  )
+  permutations <- assemble_dise_iv_permutations(constructs, nss, list(branch))
+  expect_equal(nrow(permutations$anderson_rubin_grid), 3L)
+
+  empty <- data.frame()
+  archive <- list(year_summary = empty, treatment_summary = empty, publication_checks = empty)
+  dir <- tempfile("dise-ar-retention-")
+  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  manifest <- save_dise_diagnostics(archive, permutations, empty, empty, dir = dir)
+
+  expect_false("dise_anderson_rubin_grid.csv" %in% basename(manifest$path))
+  expect_false(file.exists(file.path(dir, "dise_anderson_rubin_grid.csv")))
+})
+
 test_that("DISE diagnostic saver includes longitudinal outputs", {
   empty <- data.frame()
   archive <- list(year_summary = empty, treatment_summary = empty, publication_checks = empty)
@@ -1228,8 +1257,9 @@ test_that("DISE diagnostic saver includes longitudinal outputs", {
     archive, permutations, empty, empty,
     dynamic_panel = empty, dynamic_relevance = dynamic, dir = dir
   )
-  expect_equal(nrow(manifest), 32L)
+  expect_equal(nrow(manifest), 31L)
   expect_true(all(file.exists(manifest$path)))
+  expect_false(file.exists(file.path(dir, "dise_anderson_rubin_grid.csv")))
   expect_setequal(
     basename(manifest$path)[grepl("dise_dynamic_", basename(manifest$path))],
     c(

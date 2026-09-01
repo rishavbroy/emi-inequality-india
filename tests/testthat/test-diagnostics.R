@@ -1130,7 +1130,6 @@ test_that("alternative linguistic-distance diagnostics save explicit outputs wit
     "unmapped_language_decomposition.csv",
     "distance4_leave_one_language_out.csv",
     "alternative_distance_weak_iv_outcomes.csv",
-    "alternative_distance_anderson_rubin_grid.csv",
     "iv_diagnostic_applicability.csv",
     "iv_diagnostic_registry.csv",
     "iv_specification_registry.csv",
@@ -1143,6 +1142,8 @@ test_that("alternative linguistic-distance diagnostics save explicit outputs wit
     "alternative_distance_design_comparison.csv"
   ))
   expect_true(all(file.exists(manifest$path)))
+  expect_false(file.exists(file.path(dir, "alternative_distance_anderson_rubin_grid.csv")))
+  expect_true(nrow(diagnostics$anderson_rubin_grid) > 0L)
 })
 
 test_that("alternative-distance design comparison preserves both FE candidates", {

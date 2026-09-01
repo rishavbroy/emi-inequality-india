@@ -119,3 +119,7 @@ excluded from both projections, so downstream diagnostic hashes remain stable
 when those unrelated columns change. The sequential diagnostic wrapper
 functions remain available for tests and direct use; the targets graph schedules
 the same estimators at finer granularity.
+
+### Weak-IV diagnostic artifact retention
+
+The DISE structural-IV diagnostics still compute Anderson--Rubin grids in memory for each registered construct/specification and retain those grids in the cached diagnostic object. The exhaustive construct-by-specification grid is not serialized as `dise_anderson_rubin_grid.csv`: `dise_weak_iv_outcomes.csv` already persists the beta-zero test, confidence-set bounds/components, and weak-identification status needed for scientific review. This follows the project-wide objects-first/artifacts-last rule and avoids materializing a tens-of-megabytes intermediate table whose rows are only the pointwise inversion path.
