@@ -203,28 +203,45 @@ read_nss66_eus_ddi_contract <- function(path) {
   out
 }
 
-read_nss66_conversion_contract <- function(
-    path = "data/metadata/nss66_conversion_contract.csv") {
+read_nesstar_conversion_contract <- function(
+    source_id = NULL,
+    path = "data/metadata/nesstar_conversion_contracts.csv") {
+  project_root <- Sys.getenv("EMI_PROJECT_ROOT", unset = "")
+  if (nzchar(project_root) && !grepl("^(/|[A-Za-z]:[/\\\\])", path)) {
+    path <- file.path(project_root, path)
+  }
   x <- utils::read.csv(path, stringsAsFactors = FALSE, check.names = FALSE)
   required <- c(
-    "file_id", "expected_rows", "signature_column", "relative_path",
-    "converter_package", "converter_version"
+    "source_id", "block_id", "expected_rows", "signature_column", "relative_path",
+    "converter_package", "converter_executable", "converter_version", "nesstar_file_id", "ddi_file_id"
   )
   missing <- setdiff(required, names(x))
   if (length(missing)) {
-    stop("NSS66 conversion contract is missing columns: ", paste(missing, collapse = ", "), call. = FALSE)
+    stop("Nesstar conversion contract is missing columns: ", paste(missing, collapse = ", "), call. = FALSE)
   }
-  if (!identical(sort(plain_chr(x$file_id)), c("F4", "F5", "F6")) || anyDuplicated(x$file_id)) {
-    stop("NSS66 conversion contract must contain exactly one F4, F5, and F6 row.", call. = FALSE)
+  if (!is.null(source_id)) x <- x[plain_chr(x$source_id) == source_id, , drop = FALSE]
+  if (!nrow(x)) stop("No Nesstar conversion contract found for source: ", source_id, call. = FALSE)
+  if (anyDuplicated(paste(x$source_id, x$block_id, sep = "__"))) {
+    stop("Nesstar conversion contract contains duplicate source/block rows.", call. = FALSE)
   }
   x$expected_rows <- num(x$expected_rows)
   if (any(!is.finite(x$expected_rows) | x$expected_rows <= 0)) {
-    stop("NSS66 conversion contract contains invalid expected row counts.", call. = FALSE)
+    stop("Nesstar conversion contract contains invalid expected row counts.", call. = FALSE)
   }
-  if (length(unique(x$converter_package)) != 1L || length(unique(x$converter_version)) != 1L) {
-    stop("NSS66 conversion contract must pin one converter package and version.", call. = FALSE)
+  x
+}
+
+read_nss66_conversion_contract <- function(
+    path = "data/metadata/nesstar_conversion_contracts.csv") {
+  x <- read_nesstar_conversion_contract("nss66_eus", path)
+  if (!identical(sort(plain_chr(x$block_id)), c("F4", "F5", "F6"))) {
+    stop("NSS66 conversion contract must contain exactly one F4, F5, and F6 row.", call. = FALSE)
   }
-  x[match(c("F4", "F5", "F6"), x$file_id), , drop = FALSE]
+  singleton <- c("converter_package", "converter_executable", "converter_version", "nesstar_file_id", "ddi_file_id")
+  if (any(vapply(singleton, function(nm) length(unique(x[[nm]])) != 1L, logical(1)))) {
+    stop("NSS66 conversion contract must pin one converter and one source pair.", call. = FALSE)
+  }
+  x[match(c("F4", "F5", "F6"), x$block_id), , drop = FALSE]
 }
 
 read_nss66_converted_block <- function(path, file_id, ddi_contract = NULL) {
