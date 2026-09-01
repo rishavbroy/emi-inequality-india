@@ -6,7 +6,6 @@ from __future__ import annotations
 import argparse
 import csv
 import hashlib
-import importlib.metadata
 from pathlib import Path
 import shutil
 import subprocess
@@ -70,12 +69,7 @@ def csv_shape(path: Path) -> tuple[list[str], int]:
 
 
 def executable_package_version(executable: Path, package: str) -> str:
-    """Read package metadata from the console script's own Python environment."""
-    try:
-        return importlib.metadata.version(package)
-    except importlib.metadata.PackageNotFoundError:
-        pass
-
+    """Read package metadata only from the console script's Python environment."""
     candidates: list[Path] = []
     if sys.platform == "win32":
         candidates.extend([executable.parent / "python.exe", executable.parent / "python3.exe"])
