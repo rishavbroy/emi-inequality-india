@@ -4,7 +4,7 @@
 
 The 2005 production source is Development Data Lab SHRUG v2.1's published district product `ec05_pc01dist.csv`, distributed inside `data/raw/shrug/shrug-ec05-csv.zip`. It is already aggregated on the project's analytical geography: `pc01_state_id` and `pc01_district_id` are Census-2001 district identifiers. Reaggregating the raw Fifth Economic Census is therefore unnecessary for the current estimand.
 
-The standardized 2013 SHRUG district product is the intended production source for the follow-up wave. Development Data Lab documents `ec13_pc11dist.dta` as a complete 640-district Census-2011 product keyed by `pc11_state_id` and `pc11_district_id`. It should be pooled through the project's existing complete-child Census-2011-to-2001 geography before any 2013 shares or 2005-2013 changes are computed.
+The 2013 production source is now the local SHRUG `ec13_pc11dist.csv` product in `data/raw/shrug/shrug-ec13-csv.zip`. It contains the documented complete 640-district Census-2011 universe keyed by `pc11_state_id` and `pc11_district_id`. Production pools its **counts** through the existing complete-child Census-2011-to-2001 geography before computing any 2013 shares or 2005-2013 changes. Under the currently reviewed transition, 372 Census-2011 districts reconstruct 359 complete Census-2001 parents; the remaining parents stay unavailable rather than receiving fractional firm counts.
 
 The raw Fifth/Sixth Economic Census archives under `data/raw/ec/` are validation and reconstruction resources, not a parallel production aggregation path when a documented SHRUG district product represents the required estimand.
 
@@ -39,11 +39,13 @@ The raw state coding also demonstrates why a bespoke raw aggregation should not 
 
 ## Current inferential role
 
-Economic Census inference remains deliberately inactive. EC05 is currently source-validated and measurement-ready; EC13 raw metadata are validated, but the standardized `ec13_pc11dist` data file is not yet local in the tracked source inventory. Before any EC05 balance model or EC05-EC13 change model is activated:
+Economic Census inference remains deliberately inactive in this phase. EC05 and EC13 are now both source-validated and measurement-ready, and a longitudinal 2005-2013 diagnostic is constructed on Census-2001 geography. The current complete-parent bridge yields 359 EC13 parents, of which 357 also have observed EC05 data because Mumbai and Nicobars are EC05 source gaps. The common longitudinal family is intentionally limited to variables published comparably in both waves: log non-farm employment, log establishment count, mean employment per firm, and female/hired/private/manufacturing/services employment shares. EC05 informal employment remains descriptive because the EC13 district product does not publish a comparable field.
 
-1. acquire and inspect the standardized EC13 Census-2011 district product;
-2. harmonize its counts to complete Census-2001 parents before computing shares or changes;
-3. predeclare a small common EC05/EC13 outcome family;
-4. reuse the shared mechanism specification/inference layer rather than create an Economic-Census-specific estimator.
+Before IV mechanism models are activated, register the small causal mechanism family explicitly and reuse the shared Census mechanism specification/inference layer rather than create an Economic-Census-specific estimator.
 
 Economic Census employment is interpreted as employment located at establishments in the district, not resident-worker employment. NSS/PLFS labor outcomes therefore remain a separate mechanism family.
+
+
+## Historical EC90/EC98 sources
+
+The local source inventory now also contains SHRUG EC90 and EC98 archives. EC90 has a published Census-1991 district product, while EC98 is supplied at SHRID level rather than as a Census-2001 district file. Neither is activated in this phase: moving 1991 district counts forward to 2001 would require allocation across later splits, and EC98 requires the documented EC-to-SHRID/key linkage with explicit coverage accounting. These sources are valuable for a later firm-pretrend exercise, but they must not be forced onto Census-2001 geography by ad-hoc proportional allocation.

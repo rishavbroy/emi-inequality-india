@@ -41,14 +41,15 @@ The required source families are now local under `data/raw/ec/` and `data/raw/sh
 
 The EC05 source/measurement phase is now active: the documented SHRUG `ec05_pc01dist` product is read directly, validated against the canonical Census-2001 district registry, and reduced to a small core of firm/nonfarm counts and shares. Source gaps are retained explicitly rather than imputed, and no EC outcome has yet been added to the IV mechanism registry. See `docs/ECONOMIC_CENSUS.md`.
 
+The EC13 source/measurement phase is now active: the local SHRUG `ec13_pc11dist` product is validated on all 640 Census-2011 districts, its counts are pooled through the existing complete-parent Census-2011-to-2001 bridge, and common 2005-2013 log/count-composition changes are generated only after pooling. EC05 informal employment is excluded from the longitudinal family because EC13 does not publish a comparable district field.
+
 Next implementation order:
 
-1. acquire and inspect the documented SHRUG `ec13_pc11dist` district product. The official Sixth-EC DDI is already validated as an extended raw-source contract, including the establishment schema and post-bifurcation Andhra Pradesh/Telangana state coding; do not write a bespoke Nesstar aggregation unless the standardized product proves unsuitable;
-2. harmonize EC13 counts to complete Census-2001 parents before constructing changes or shares;
-3. predeclare the small EC05/EC13 outcome family before running IV results;
-4. distinguish near-treatment 2005 structure/balance uses from later firm-growth mechanisms;
-5. reuse the shared mechanism specification/inference layer rather than create an Economic-Census-specific estimator;
-6. persist registered model outputs without table-by-table artifact proliferation.
+1. predeclare the small EC05/EC13 causal mechanism family before running IV results;
+2. distinguish near-treatment 2005 structure/balance uses from later firm-growth mechanisms;
+3. reuse the shared mechanism specification/inference layer rather than create an Economic-Census-specific estimator;
+4. inspect EC90/EC98 only for a separately predeclared historical firm-pretrend exercise; do not allocate 1991 district totals across later splits or infer EC98 district totals without the documented key bridge and coverage accounting;
+5. persist registered model outputs without table-by-table artifact proliferation.
 
 Priority candidate measures are non-farm employment, establishment density, hired-employment share, private/informal employment, manufacturing employment, services employment, and a narrowly justified English-intensive services measure if the published industry mapping supports it.
 

@@ -58,3 +58,5 @@ Large locality attributes and village/SHRID polygon archives are not ordinary pu
 ## DISE/UDISE district report-card archive
 
 Historical NIEPA/NUEPA DISE raw workbooks and report-card PDFs are local research inputs under `data/raw/dise_internet_archive/`. Redistribution rights are not asserted, so the raw archive is excluded from repository/Zenodo deposits. The repository tracks only provenance/decoding metadata and derived diagnostic outputs.
+
+- Economic Census: SHRUG EC05 and EC13 district archives are active extended measurement sources under `data/raw/shrug/`; EC13 counts are harmonized from the complete Census-2011 district universe to Census-2001 parents before longitudinal shares/changes. EC90/EC98 are local but remain inactive historical-pretrend sources pending a defensible geography/key contract.

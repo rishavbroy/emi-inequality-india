@@ -91,3 +91,5 @@ HH-08, HH-10, and HH-11 are active extended-diagnostic sources under `data/raw/c
 Census housing diagnostics activate Census-2001 H-04 Appendix (`PC01_H04a`, manifest table `H04A`) and Census 2011 HL-13 as a longitudinal structural-durability pair. All 35 H04A workbooks pass structural accounting and their 593 district household totals match H-09 exactly. Durability changes are retained descriptively and do not expand the fixed housing weak-IV registry.
 
 - Economic Census source/measurement semantics are documented in `docs/ECONOMIC_CENSUS.md`; the active EC05 archive and Sixth-EC DDI validation are optional for the public core and required only when extended diagnostics run the EC branch. Raw EC13 Nesstar data are not a production aggregation path while the documented SHRUG Census-2011 district product remains the preferred follow-up source.
+
+- `shrug_ec05_csv_archive` and `shrug_ec13_csv_archive` are extended Economic Census district sources; EC13 is pooled from Census-2011 counts to complete Census-2001 parents before derived measures.
