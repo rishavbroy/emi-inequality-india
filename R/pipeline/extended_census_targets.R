@@ -449,6 +449,47 @@ extended_census_target_definitions <- function() {
       diag_ext_census_housing,
       save_census_housing_diagnostics(census_housing_diagnostics),
       format = "file"
+    ),
+    tar_target(
+      census_2011_hh08_files,
+      census_household_manifest_files(paths, "HH08", census_2011_download_manifest_file),
+      format = "file"
+    ),
+    tar_target(
+      census_2011_hh10_files,
+      census_household_manifest_files(paths, "HH10", census_2011_download_manifest_file),
+      format = "file"
+    ),
+    tar_target(
+      census_2011_hh11_files,
+      census_household_manifest_files(paths, "HH11", census_2011_download_manifest_file),
+      format = "file"
+    ),
+    tar_target(census_household_hh08_2011_source, read_census_hh08_2011_district(census_2011_hh08_files)),
+    tar_target(census_household_hh10_2011_source, read_census_hh10_2011_district(census_2011_hh10_files)),
+    tar_target(census_household_hh11_2011_source, read_census_hh11_2011_district(census_2011_hh11_files)),
+    tar_target(
+      census_household_2011,
+      build_census_2011_household_measures(
+        census_household_hh08_2011_source,
+        census_household_hh10_2011_source,
+        census_household_hh11_2011_source,
+        district_transition_2001_2011
+      )
+    ),
+    tar_target(
+      census_household_diagnostics,
+      build_census_household_diagnostics(
+        census_household_hh08_2011_source,
+        census_household_hh10_2011_source,
+        census_household_hh11_2011_source,
+        census_household_2011
+      )
+    ),
+    tar_target(
+      diag_ext_census_households,
+      save_census_household_diagnostics(census_household_diagnostics),
+      format = "file"
     )
   )
 }
