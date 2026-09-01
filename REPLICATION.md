@@ -148,21 +148,40 @@ NSS64 labor diagnostics now include a predeclared design-based district outcome 
 
 The NSS66 employment/unemployment source is distributed as a `.Nesstar` container with companion DDI XML. Extended diagnostics validate the DDI directly. Before activating NSS66 person-level estimation, convert the container with the maintained `nesstar-converter` package rather than adding a repository-specific binary parser, then inspect the generated F4/F5/F6 tables against the DDI case counts and schema.
 
-### Materialize NSS66 employment/unemployment blocks
+### Materialize Nesstar sources (NSS66 first)
 
-NSS66 Schedule 10 is distributed as a proprietary `.Nesstar` binary plus DDI.
-The repository does not parse that binary itself. Install the pinned standard
-converter in your local Python environment and materialize the three required
-blocks once:
+NSS66 Schedule 10 is the first active analytical source for which the
+proprietary `.Nesstar` container is unavoidable. Earlier NSS64 consumption,
+education, and labor sources also ship `.Nesstar` files, but production reads
+their companion `.sav`/open tables instead. The repository therefore keeps one
+generic Nesstar materialization boundary rather than a source-specific binary
+parser or a growing family of `convert_<survey>.py` scripts.
+
+`nesstar-converter` requires Python 3.10+ and exposes a standard console CLI.
+On Homebrew-managed macOS, the base Python may be marked externally managed
+under PEP 668; do not use `--break-system-packages`. The reproducible default is
+a project-local virtual environment:
 
 ```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
 python -m pip install 'nesstar-converter==1.0.4'
-python scripts/convert_nss66_eus.py
+python scripts/materialize_nesstar.py nss66_eus
 ```
+
+`.venv/` is gitignored. A `pipx` or `uv tool` installation is also valid: the
+materializer locates the `nesstar-converter` console script on `PATH` and reads
+package metadata from the Python environment that owns that executable, rather
+than requiring the converter package to be installed into the Python interpreter
+running the wrapper.
 
 The command writes `data/interim/nss66_eus/F4.csv`, `F5.csv`, `F6.csv`, and a
 local conversion manifest with SHA-256 hashes. `data/interim/` is gitignored;
 these are reproducible local intermediates, not tracked source data. Use
-`--force` only when intentionally replacing a prior conversion. The converter
-version, expected block sizes, and output paths are frozen in
-`data/metadata/nss66_conversion_contract.csv`.
+`--force` only when intentionally replacing a prior conversion. Source IDs,
+converter versions, raw manifest IDs, block signatures, expected row counts,
+and output paths are frozen in
+`data/metadata/nesstar_conversion_contracts.csv`. Future PLFS or Economic Census
+Nesstar sources should be added there only when their `.Nesstar` binary is the
+chosen production source and the required companion metadata is available.

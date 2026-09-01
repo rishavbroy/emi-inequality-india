@@ -98,7 +98,7 @@ Census housing diagnostics activate Census-2001 H-04 Appendix (`PC01_H04a`, mani
 
 NSS66 employment/unemployment registers both the official DDI and canonical `survey0/data` `.Nesstar` container. The DDI is an active extended validation source; the proprietary container is intentionally marked for standard external conversion rather than direct repository parsing.
 
-- `nss66_conversion_contract.csv` pins the reviewed `nesstar-converter` release,
+- `nesstar_conversion_contracts.csv` pins the reviewed `nesstar-converter` release,
   exact F4/F5/F6 case counts, signature columns, and gitignored interim output
-  paths used by `scripts/convert_nss66_eus.py`. The converted CSVs are
+  paths used by `scripts/materialize_nesstar.py nss66_eus`. The converted CSVs are
   reproducible local intermediates, not tracked raw data.

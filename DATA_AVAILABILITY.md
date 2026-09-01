@@ -72,7 +72,7 @@ The extended labor branch registers the official NSS 64 Schedule 10.2 DDI plus B
 
 NSS66 employment/unemployment conversion is reproducible but local-only: the
 official `.Nesstar` binary and DDI remain raw inputs under `data/raw/nss/`, while
-`scripts/convert_nss66_eus.py` materializes the required F4/F5/F6 tables under
+`scripts/materialize_nesstar.py nss66_eus` materializes the required F4/F5/F6 tables under
 gitignored `data/interim/nss66_eus/` with `nesstar-converter==1.0.4`. The R
 canonical adapter and shared labor estimator are implemented; production NSS66
 district targets should be activated only after the converted tables have been

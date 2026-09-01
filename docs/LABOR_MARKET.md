@@ -62,16 +62,20 @@ Production does not implement a repository-specific `.Nesstar` parser. Conversio
 
 ### NSS66 conversion and canonical person adapter
 
-NSS66 now has a reproducible conversion boundary rather than an implied manual
-step. `scripts/convert_nss66_eus.py` requires the reviewed
-`nesstar-converter==1.0.4` release, reads the canonical DDI and `.Nesstar` paths
+NSS66 now uses the repository's generic metadata-driven Nesstar materialization
+boundary rather than a survey-specific converter script. `scripts/materialize_nesstar.py
+nss66_eus` requires the reviewed `nesstar-converter==1.0.4` release and reads the
+canonical DDI and `.Nesstar` paths
 from `data/metadata/file_manifest.csv`, converts to CSV, identifies F4/F5/F6 by
 their DDI-validated signature columns and exact case counts, and writes only the
 three required tables to the gitignored `data/interim/nss66_eus/` directory.
 The script does not install packages or mutate the R environment.
 
-`data/metadata/nss66_conversion_contract.csv` pins the converter version, exact
-block row counts, signature columns, and deterministic interim filenames. The R
+`data/metadata/nesstar_conversion_contracts.csv` is keyed by `source_id` and pins
+the converter version, raw manifest IDs, exact block row counts, signature
+columns, and deterministic interim filenames. This boundary is reusable for
+later `.Nesstar` sources only when conversion is actually necessary; existing
+open companion files remain preferred when available. The R
 adapter then validates the converted blocks again. F4 and F5 must have the same
 complete PID universe; F6 must equal exactly the subset of F5 persons coded
 `Whether_in_Subsidiary_Activity == 1`. Shared survey-design and geography fields
