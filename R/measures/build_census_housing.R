@@ -2,7 +2,10 @@
 
 census_housing_common_count_columns <- function() {
   c(
-    "households_total", "lighting_electricity", "lighting_kerosene", "lighting_solar",
+    "households_total", "rooms_no_exclusive", "rooms_one", "rooms_two",
+    "overcrowding_gt2_ppr_lower_bound", "water_tap", "water_well",
+    "water_handpump_tubewell", "water_surface", "water_within_premises", "water_away",
+    "lighting_electricity", "lighting_kerosene", "lighting_solar",
     "lighting_other_oil", "lighting_other", "lighting_none", "latrine_available",
     "banking", "radio", "television", "telephone", "bicycle", "motorcycle", "car"
   )
@@ -10,6 +13,11 @@ census_housing_common_count_columns <- function() {
 
 census_housing_common_share_columns <- function() {
   c(
+    "no_exclusive_room_share_households", "one_room_share_households",
+    "overcrowding_gt2_ppr_lower_bound_share_households",
+    "tap_water_share_households", "well_water_share_households",
+    "handpump_tubewell_water_share_households", "surface_water_share_households",
+    "water_within_premises_share_households", "water_away_share_households",
     "electricity_share_households", "kerosene_lighting_share_households",
     "solar_lighting_share_households", "no_lighting_share_households",
     "latrine_share_households", "banking_share_households", "radio_share_households",
@@ -36,13 +44,17 @@ census_housing_validation_row <- function(
   out
 }
 
-validate_census_housing_sources <- function(h09_or_hl07, h12_or_hl11, h13_or_hl12, year) {
+validate_census_housing_sources <- function(
+    h09_or_hl07, h12_or_hl11, h13_or_hl12, year,
+    h05_or_hl04 = NULL, h08_or_hl06 = NULL) {
   year <- as.integer(year)
   light_label <- if (year == 2001L) "H09" else "HL07"
   utility_label <- if (year == 2001L) "H12" else "HL11"
   asset_label <- if (year == 2001L) "H13" else "HL12"
+  room_label <- if (year == 2001L) "H05" else "HL04"
+  water_label <- if (year == 2001L) "H08" else "HL06"
   utility_is_subset <- year == 2001L
-  safe_bind_rows(list(
+  checks <- list(
     census_housing_validation_row(
       h09_or_hl07, h12_or_hl11, "households_total", "households_total",
       paste0("Census ", year, " ", light_label, "/", utility_label, " household-universe"),
@@ -58,12 +70,44 @@ validate_census_housing_sources <- function(h09_or_hl07, h12_or_hl11, h13_or_hl1
       paste0("Census ", year, " ", light_label, "/", asset_label, " household-universe"),
       "household_total_lighting_vs_assets", FALSE
     )
-  ))
+  )
+  if (!is.null(h05_or_hl04)) {
+    checks[[length(checks) + 1L]] <- census_housing_validation_row(
+      h09_or_hl07, h05_or_hl04, "households_total", "households_total",
+      paste0("Census ", year, " ", light_label, "/", room_label, " household-universe"),
+      "household_total_lighting_vs_rooms", year == 2001L
+    )
+  }
+  if (!is.null(h08_or_hl06)) {
+    checks[[length(checks) + 1L]] <- census_housing_validation_row(
+      h09_or_hl07, h08_or_hl06, "households_total", "households_total",
+      paste0("Census ", year, " ", light_label, "/", water_label, " household-universe"),
+      "household_total_lighting_vs_water", FALSE
+    )
+  }
+  safe_bind_rows(checks)
 }
 
 add_census_housing_shares <- function(x) {
   x <- safe_df(x)
+  optional_counts <- c(
+    "rooms_no_exclusive", "rooms_one", "rooms_two", "overcrowding_gt2_ppr_lower_bound",
+    "water_tap", "water_well", "water_handpump_tubewell", "water_surface",
+    "water_within_premises", "water_away"
+  )
+  for (column in setdiff(optional_counts, names(x))) x[[column]] <- NA_real_
   total <- x$households_total
+  x$no_exclusive_room_share_households <- safe_count_share(x$rooms_no_exclusive, total)
+  x$one_room_share_households <- safe_count_share(x$rooms_one, total)
+  x$overcrowding_gt2_ppr_lower_bound_share_households <- safe_count_share(
+    x$overcrowding_gt2_ppr_lower_bound, total
+  )
+  x$tap_water_share_households <- safe_count_share(x$water_tap, total)
+  x$well_water_share_households <- safe_count_share(x$water_well, total)
+  x$handpump_tubewell_water_share_households <- safe_count_share(x$water_handpump_tubewell, total)
+  x$surface_water_share_households <- safe_count_share(x$water_surface, total)
+  x$water_within_premises_share_households <- safe_count_share(x$water_within_premises, total)
+  x$water_away_share_households <- safe_count_share(x$water_away, total)
   x$electricity_share_households <- safe_count_share(x$lighting_electricity, total)
   x$kerosene_lighting_share_households <- safe_count_share(x$lighting_kerosene, total)
   x$solar_lighting_share_households <- safe_count_share(x$lighting_solar, total)
@@ -79,8 +123,8 @@ add_census_housing_shares <- function(x) {
   x
 }
 
-build_census_2001_housing_measures <- function(h09, h12, h13) {
-  validate_census_housing_sources(h09, h12, h13, 2001L)
+build_census_2001_housing_measures <- function(h09, h12, h13, h05 = NULL, h08 = NULL) {
+  validate_census_housing_sources(h09, h12, h13, 2001L, h05, h08)
   x <- safe_df(h09)[c(
     "state_code", "district_code", "district_name", "households_total",
     "lighting_electricity", "lighting_kerosene", "lighting_solar", "lighting_other_oil",
@@ -91,15 +135,29 @@ build_census_2001_housing_measures <- function(h09, h12, h13) {
     "state_code", "district_code", "banking", "radio", "television", "telephone",
     "bicycle", "motorcycle", "car"
   )]
-  x <- left_join_census_district_source(x, utility, "Census H09", "Census H12", c("district_name", "households_total"))
-  x <- merge_census_district_sources(x, assets, "Census H09/H12", "Census H13", c("district_name", "households_total"))
+  if (!is.null(h05)) {
+    rooms <- safe_df(h05)[c(
+      "state_code", "district_code", "rooms_no_exclusive", "rooms_one", "rooms_two",
+      "overcrowding_gt2_ppr_lower_bound"
+    )]
+    x <- left_join_census_district_source(x, rooms, "Census H09", "Census H05", c("district_name", "households_total"))
+  }
+  if (!is.null(h08)) {
+    water <- safe_df(h08)[c(
+      "state_code", "district_code", "water_tap", "water_well", "water_handpump_tubewell",
+      "water_surface", "water_within_premises", "water_away"
+    )]
+    x <- merge_census_district_sources(x, water, "Census H09/H05", "Census H08", c("district_name", "households_total"))
+  }
+  x <- left_join_census_district_source(x, utility, "Census housing baseline", "Census H12", c("district_name", "households_total"))
+  x <- merge_census_district_sources(x, assets, "Census housing baseline", "Census H13", c("district_name", "households_total"))
   x$target_unit_2001 <- paste0("pc2001__", x$state_code, "__", x$district_code)
   x$census_year <- rep.int(2001L, nrow(x))
   add_census_housing_shares(x)
 }
 
-build_census_2011_housing_source <- function(hl07, hl11, hl12) {
-  validate_census_housing_sources(hl07, hl11, hl12, 2011L)
+build_census_2011_housing_source <- function(hl07, hl11, hl12, hl04 = NULL, hl06 = NULL) {
+  validate_census_housing_sources(hl07, hl11, hl12, 2011L, hl04, hl06)
   x <- safe_df(hl07)[c(
     "state_code", "district_code", "district_name", "households_total",
     "lighting_electricity", "lighting_kerosene", "lighting_solar", "lighting_other_oil",
@@ -110,16 +168,40 @@ build_census_2011_housing_source <- function(hl07, hl11, hl12) {
     "state_code", "district_code", "banking", "radio", "television", "telephone",
     "bicycle", "motorcycle", "car", "computer", "computer_internet"
   )]
-  x <- merge_census_district_sources(x, utility, "Census HL07", "Census HL11", c("district_name", "households_total"))
-  merge_census_district_sources(x, assets, "Census HL07/HL11", "Census HL12", c("district_name", "households_total"))
+  if (!is.null(hl04)) {
+    rooms <- safe_df(hl04)[c(
+      "state_code", "district_code", "rooms_no_exclusive", "rooms_one", "rooms_two",
+      "overcrowding_gt2_ppr_lower_bound", "households_owned", "households_rented"
+    )]
+    x <- merge_census_district_sources(x, rooms, "Census HL07", "Census HL04", c("district_name", "households_total"))
+  }
+  if (!is.null(hl06)) {
+    water <- safe_df(hl06)[c(
+      "state_code", "district_code", "water_tap", "water_well", "water_handpump_tubewell",
+      "water_surface", "water_within_premises", "water_away"
+    )]
+    x <- merge_census_district_sources(x, water, "Census housing follow-up", "Census HL06", c("district_name", "households_total"))
+  }
+  x <- merge_census_district_sources(x, utility, "Census housing follow-up", "Census HL11", c("district_name", "households_total"))
+  merge_census_district_sources(x, assets, "Census housing follow-up", "Census HL12", c("district_name", "households_total"))
 }
 
-build_census_2011_housing_measures <- function(hl07, hl11, hl12, district_transition_2001_2011) {
-  source <- build_census_2011_housing_source(hl07, hl11, hl12)
-  count_cols <- c(census_housing_common_count_columns(), "computer", "computer_internet")
+build_census_2011_housing_measures <- function(hl07, hl11, hl12, district_transition_2001_2011, hl04 = NULL, hl06 = NULL) {
+  source <- build_census_2011_housing_source(hl07, hl11, hl12, hl04, hl06)
+  count_cols <- c(
+    intersect(census_housing_common_count_columns(), names(source)),
+    "computer", "computer_internet"
+  )
+  if (!is.null(hl04)) count_cols <- c(count_cols, "households_owned", "households_rented")
   pooled <- harmonize_census_2011_counts_to_2001(source, district_transition_2001_2011, count_cols)
   pooled$census_year <- rep.int(2011L, nrow(pooled))
   pooled <- add_census_housing_shares(pooled)
+  pooled$owned_share_households <- if ("households_owned" %in% names(pooled)) {
+    safe_count_share(pooled$households_owned, pooled$households_total)
+  } else NA_real_
+  pooled$rented_share_households <- if ("households_rented" %in% names(pooled)) {
+    safe_count_share(pooled$households_rented, pooled$households_total)
+  } else NA_real_
   pooled$computer_share_households <- safe_count_share(pooled$computer, pooled$households_total)
   pooled$internet_computer_share_households <- safe_count_share(
     pooled$computer_internet, pooled$households_total

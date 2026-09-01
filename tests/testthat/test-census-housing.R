@@ -213,3 +213,113 @@ test_that("Census housing change mechanisms reuse the common IV inference engine
   expect_true(nrow(diagnostics$anderson_rubin_grid) > 0L)
   expect_setequal(unique(diagnostics$anderson_rubin_grid$outcome_id), registry$outcome_id)
 })
+
+
+test_that("H05 room-size accounting yields a conservative greater-than-two-person crowding lower bound", {
+  sizes <- c("All Households", "1", "2", "3", "4", "5", "6-8", "9+")
+  rows <- data.frame(
+    state_code = "09", district_code = "01", district_name = "Alpha",
+    household_size = sizes,
+    households_total = c(70, rep(10, 7)),
+    rooms_none = 0,
+    rooms_one = c(25, 0, 0, 5, 5, 5, 5, 5),
+    rooms_two = c(20, 10, 0, 0, 0, 5, 5, 0),
+    rooms_three = c(10, 0, 10, 0, 0, 0, 0, 0),
+    rooms_four = c(5, 0, 0, 5, 0, 0, 0, 0),
+    rooms_five = c(5, 0, 0, 0, 5, 0, 0, 0),
+    rooms_six_plus = c(5, 0, 0, 0, 0, 0, 0, 5),
+    stringsAsFactors = FALSE
+  )
+  out <- summarise_census_room_rows(rows, "toy H05")
+  expect_equal(out$households_total, 70)
+  expect_equal(out$rooms_one, 25)
+  expect_equal(out$overcrowding_gt2_ppr_lower_bound, 30)
+})
+
+test_that("HL04 ownership is follow-up-only and must exhaust the all-household room distribution", {
+  sizes <- c("All Households", "1", "2", "3", "4", "5", "6-8", "9+")
+  total_rows <- data.frame(
+    state_code = "09", district_code = "132", district_name = "Alpha",
+    ownership = "Total", household_size = sizes,
+    households_total = c(70, rep(10, 7)),
+    rooms_none = 0, rooms_one = c(70, rep(10, 7)), rooms_two = 0, rooms_three = 0,
+    rooms_four = 0, rooms_five = 0, rooms_six_plus = 0, stringsAsFactors = FALSE
+  )
+  owner_rows <- data.frame(
+    state_code = "09", district_code = "132", district_name = "Alpha",
+    ownership = c("Owned", "Rented", "Any Other"), household_size = "All Households",
+    households_total = c(50, 15, 5), rooms_none = 0, rooms_one = c(50, 15, 5),
+    rooms_two = 0, rooms_three = 0, rooms_four = 0, rooms_five = 0, rooms_six_plus = 0,
+    stringsAsFactors = FALSE
+  )
+  out <- summarise_census_room_rows(rbind(total_rows, owner_rows), "toy HL04", "ownership")
+  expect_equal(out$households_owned, 50)
+  expect_equal(out$households_rented, 15)
+
+  bad <- rbind(total_rows, owner_rows)
+  bad$households_total[bad$ownership == "Rented"] <- 14
+  expect_error(summarise_census_room_rows(bad, "toy HL04", "ownership"), "ownership categories")
+})
+
+test_that("H08 and HL06 water contracts preserve only genuinely comparable broad source groups", {
+  rows <- data.frame(
+    state_code = "09", district_code = "01", district_name = "Alpha",
+    water_location_group = c("Total", "Within", "Near", "Away"),
+    households_total = c(100, 40, 35, 25),
+    water_tap = c(40, 20, 15, 5),
+    water_well = c(10, 5, 3, 2),
+    water_handpump = c(20, 5, 10, 5),
+    water_tubewell = c(10, 4, 3, 3),
+    water_spring = c(5, 2, 2, 1),
+    water_surface = c(10, 3, 1, 6),
+    water_other = c(5, 1, 1, 3),
+    stringsAsFactors = FALSE
+  )
+  out <- summarise_census_water_rows(rows, "toy water")
+  expect_equal(out$water_handpump_tubewell, 30)
+  expect_equal(out$water_within_premises, 40)
+  expect_equal(out$water_away, 25)
+
+  bad <- rows
+  bad$water_tap[bad$water_location_group == "Away"] <- 4
+  expect_error(summarise_census_water_rows(bad, "toy water"), "do not exhaust")
+})
+
+test_that("H05 may be a validated 2001 subset without truncating water or existing housing support", {
+  reference <- data.frame(
+    state_code = c("04", "09"), district_code = c("01", "01"),
+    households_total = c(20, 100), stringsAsFactors = FALSE
+  )
+  rooms <- data.frame(
+    state_code = "09", district_code = "01", households_total = 100,
+    stringsAsFactors = FALSE
+  )
+  validation <- census_housing_validation_row(
+    reference, rooms, "households_total", "households_total",
+    "toy H05 subset", "household_total_lighting_vs_rooms", TRUE
+  )
+  expect_equal(validation$n_reference_districts, 2L)
+  expect_equal(validation$n_source_districts, 1L)
+  expect_equal(validation$n_overlap_districts, 1L)
+})
+
+test_that("new housing space and water shares are ratios of pooled counts", {
+  x <- data.frame(
+    households_total = 400,
+    rooms_no_exclusive = 20, rooms_one = 160, rooms_two = 100,
+    overcrowding_gt2_ppr_lower_bound = 80,
+    water_tap = 200, water_well = 40, water_handpump_tubewell = 80,
+    water_surface = 40, water_within_premises = 240, water_away = 60,
+    lighting_electricity = 200, lighting_kerosene = 100, lighting_solar = 0,
+    lighting_other_oil = 0, lighting_other = 0, lighting_none = 100,
+    latrine_available = 120, banking = 200, radio = 80, television = 120,
+    telephone = 160, bicycle = 140, motorcycle = 100, car = 40,
+    stringsAsFactors = FALSE
+  )
+  out <- add_census_housing_shares(x)
+  expect_equal(out$one_room_share_households, 0.4)
+  expect_equal(out$overcrowding_gt2_ppr_lower_bound_share_households, 0.2)
+  expect_equal(out$tap_water_share_households, 0.5)
+  expect_equal(out$water_within_premises_share_households, 0.6)
+  expect_equal(out$water_away_share_households, 0.15)
+})
