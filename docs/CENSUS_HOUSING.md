@@ -2,7 +2,7 @@
 
 ## Scope
 
-The housing diagnostic now builds longitudinal district measures from seven direct conceptual pairs:
+The housing diagnostic now builds longitudinal district measures from eight direct conceptual pairs:
 
 - Census 2001 H-05 and Census 2011 HL-04: household size and number of dwelling rooms;
 - Census 2001 H-08 and Census 2011 HL-06: main drinking-water source and source location;
@@ -11,29 +11,23 @@ The housing diagnostic now builds longitudinal district measures from seven dire
 - Census 2001 H-11 and Census 2011 HL-10: separate kitchen and cooking fuel;
 - Census 2001 H-12 and Census 2011 HL-11: independent electricity/latrine cross-checks within the drinking-water table;
 - Census 2001 H-13 and Census 2011 HL-12: banking services and specified household assets;
-- Census 2011 HL-13: follow-up-only structural durability (permanent, semi-permanent, temporary, and non-serviceable temporary structures).
+- Census 2001 H-04 Appendix and Census 2011 HL-13: structural durability (permanent, semi-permanent, temporary, and non-serviceable temporary structures).
 
 The module is an extended diagnostic. It does not add post-treatment housing variables to the preferred IV control set.
 
 ## Structural durability
 
-Census 2011 HL-13 classifies households by the structural type of the census house
-they occupy: permanent, semi-permanent, temporary (serviceable/non-serviceable), or
-unclassifiable. The reader enforces both published accounting identities before any
-geographic pooling:
+Census 2001 H-04 Appendix (`PC01_H04a`) and Census 2011 HL-13 are a validated household-level longitudinal pair. The attached 35 H-04 Appendix workbooks recover all 593 Census-2001 districts; every district satisfies
 
-- total households = permanent + semi-permanent + temporary + unclassifiable;
-- temporary = serviceable temporary + non-serviceable temporary.
+`households = permanent + semi-permanent + temporary + unclassifiable`
 
-HL-13 is retained as a follow-up-only descriptive mechanism in the current pipeline.
-The Census-2001 H-04 Appendix (`PC01_H04a`), titled *Distribution of households by
-type of census houses occupied*, is registered for acquisition as `H04A`. Its raw
-workbooks have not yet been inspected, and the Census catalog metadata are internally
-inconsistent about the statistical unit despite the household title/series. The source
-therefore remains outside the active reader until the raw structural counts and
-household denominator are validated directly. Longitudinal structural-durability
-changes remain deferred, and H-03 roof/wall/floor materials are not substituted for
-the missing validated household baseline.
+and
+
+`temporary = serviceable + non-serviceable`.
+
+The H-04 Appendix workbook header explicitly labels column 2 as the total number of households. Its district household totals match the active H-09 household universe exactly in all 593 districts. The official ORGI catalog title and series also identify H-04 Appendix as a household table, although some catalog metadata fields incorrectly retain the ordinary H-04 census-house universe. Raw workbook accounting and cross-table reconciliation therefore determine the production contract.
+
+HL-13 uses the same household structural categories in 2011. Its counts continue to flow through the complete deterministic 2011-to-2001 parent reconstruction before shares are computed. The longitudinal diagnostic now reports permanent, semi-permanent, temporary, and non-serviceable-temporary household-share changes. These durability changes remain descriptive and do not expand the pre-existing eight-outcome housing weak-IV registry.
 
 ## Geographic contract
 
@@ -105,7 +99,7 @@ For every completely reconstructed Census-2001 parent, the diagnostic reports 20
 \Delta s_d = s_{d,2011} - s_{d,2001}.
 \]
 
-The longitudinal table now also reports bathroom, flush/water-closet latrine, pit latrine, closed/no drainage, separate-kitchen, solid-fuel, and clean-cooking-fuel changes in addition to room/crowding, drinking-water, lighting/electricity, latrine availability, banking, and asset changes. Changes are retained as missing when either year's underlying share is unavailable; `change_coverage.csv` reports this support outcome by variable.
+The longitudinal table now also reports bathroom, flush/water-closet latrine, pit latrine, closed/no drainage, separate-kitchen, solid-fuel, clean-cooking-fuel, and structural-durability changes in addition to room/crowding, drinking-water, lighting/electricity, latrine availability, banking, and asset changes. Changes are retained as missing when either year's underlying share is unavailable; `change_coverage.csv` reports this support outcome by variable.
 
 ## Mechanism inference
 
@@ -114,7 +108,3 @@ A deliberately smaller registry carries eight pre-existing longitudinal changes 
 The registered housing outcomes use the same common-support scalar-IV engine as Census migration: six region/state-FE × Shastry/Glottolog/Dyen specifications, one fixed sample across the eight housing changes, state-clustered reduced forms, conventional 2SLS estimates for scale, effective-F diagnostics, and Anderson-Rubin tests/confidence sets with within-specification Holm adjustment. Because the migration-sample first stages are already weak, Anderson-Rubin inference remains the interpretation-first result rather than conventional 2SLS significance.
 
 These regressions use **changes**, not 2011 levels, so the estimand is local improvement in the measured housing/living-standard margin between 2001 and 2011. They remain extended mechanism diagnostics and are not controls in the preferred welfare equation or claims of identified mediation.
-
-## Deferred longitudinal durability
-
-HL-13 is active as a follow-up-only structural-durability source. H-04 Appendix (`PC01_H04a`) is registered for acquisition as `H04A` and must be downloaded, inspected, and reconciled to an established Census-2001 household universe before any 2001--2011 durability change is activated.

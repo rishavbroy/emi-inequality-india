@@ -58,4 +58,4 @@ Large locality attributes and village/SHRID polygon archives are not ordinary pu
 Historical NIEPA/NUEPA DISE raw workbooks and report-card PDFs are local research inputs under `data/raw/dise_internet_archive/`. Redistribution rights are not asserted, so the raw archive is excluded from repository/Zenodo deposits. The repository tracks only provenance/decoding metadata and derived diagnostic outputs.
 
 
-- Census 2011 HL-13 is active as a follow-up-only structural-durability diagnostic. Census-2001 H-04 Appendix (`PC01_H04a`) is registered in the 2001 acquisition manifest under `H04A` but remains acquisition-only until the raw workbooks are inspected and their household denominator is reconciled to an established 2001 housing source. No longitudinal durability change is constructed before that validation.
+- Census 2001 H-04 Appendix (`PC01_H04a`) and Census 2011 HL-13 are active as a longitudinal structural-durability pair. All 35 H04A workbooks pass structural accounting and their 593 district household totals match H-09 exactly; durability changes are descriptive and remain outside the fixed housing weak-IV registry.
