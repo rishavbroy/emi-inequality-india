@@ -296,9 +296,6 @@ save_alternative_distance_first_stages <- function(
     weak_iv_outcomes = write_diagnostic_csv(
       diagnostics$weak_iv_outcomes, file.path(dir, "alternative_distance_weak_iv_outcomes.csv")
     ),
-    anderson_rubin_grid = write_diagnostic_csv(
-      diagnostics$anderson_rubin_grid, file.path(dir, "alternative_distance_anderson_rubin_grid.csv")
-    ),
     diagnostic_applicability = write_diagnostic_csv(
       diagnostics$diagnostic_applicability %||% iv_diagnostic_applicability(diagnostics$registry),
       file.path(dir, "iv_diagnostic_applicability.csv")

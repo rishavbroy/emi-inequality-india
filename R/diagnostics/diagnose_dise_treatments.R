@@ -342,7 +342,6 @@ save_dise_diagnostics <- function(
     first_stage = write_diagnostic_csv(permutations$first_stage, file.path(dir, "dise_first_stage_permutations.csv")),
     first_stage_coefficients = write_diagnostic_csv(permutations$first_stage_coefficients, file.path(dir, "dise_first_stage_coefficients.csv")),
     weak_iv_outcomes = write_diagnostic_csv(permutations$weak_iv_outcomes, file.path(dir, "dise_weak_iv_outcomes.csv")),
-    ar_grid = write_diagnostic_csv(permutations$anderson_rubin_grid, file.path(dir, "dise_anderson_rubin_grid.csv")),
     overidentification = write_diagnostic_csv(permutations$overidentification, file.path(dir, "dise_overidentification.csv")),
     monotonicity_summary = write_diagnostic_csv(permutations$monotonicity_summary, file.path(dir, "dise_monotonicity_summary.csv")),
     monotonicity_bins = write_diagnostic_csv(permutations$monotonicity_bins, file.path(dir, "dise_monotonicity_bins.csv")),
