@@ -264,6 +264,23 @@ test_that("data source catalogs are documented and uniquely identified", {
   expect_true(file.exists(file.path(root, "docs", "DISTRICT_LINEAGE.md")))
 })
 
+
+
+test_that("required manifest sources are marked current in the source catalog", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
+  manifest <- read.csv(file.path(root, "data", "metadata", "file_manifest.csv"), stringsAsFactors = FALSE)
+  sources <- read.csv(file.path(root, "data", "metadata", "data_sources.csv"), stringsAsFactors = FALSE)
+
+  required_ids <- unique(plain_chr(manifest$source_id[
+    tolower(plain_chr(manifest$required_for_current_pipeline)) == "true"
+  ]))
+  source_rows <- sources[match(required_ids, sources$source_id), , drop = FALSE]
+
+  expect_false(anyNA(source_rows$source_id))
+  expect_true(all(as.logical(source_rows$used_in_current_pipeline)))
+  expect_true(all(source_rows$current_or_future %in% c("current", "both")))
+})
+
 test_that("post-period LGD history is inventory-only lineage evidence", {
   specs <- district_lineage_input_specs(build_paths(Sys.getenv("EMI_PROJECT_ROOT", ".")))
   row <- specs[specs$source_id == "lgd_changes_post_2018", , drop = FALSE]
