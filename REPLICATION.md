@@ -148,6 +148,8 @@ NSS64 labor diagnostics now include a predeclared design-based district outcome 
 
 The NSS66 employment/unemployment source is distributed as a `.Nesstar` container with companion DDI XML. Extended diagnostics validate the DDI directly. Before activating NSS66 person-level estimation, convert the container with the maintained `nesstar-converter` package rather than adding a repository-specific binary parser, then inspect the generated F4/F5/F6 tables against the DDI case counts and schema.
 
+The canonical adapter uses the original schedule geography fields (`State_Region` and `District`) rather than catalog-generated `STATE`/`DISTRICT_CODE` helper columns. `State_Region` encodes the two-digit state followed by the one-digit NSS region; the adapter derives state from that field and keeps `District` as the survey district code. This avoids treating redundant catalog foreign-key fields as an undocumented equality constraint.
+
 ### Materialize Nesstar sources (NSS66 first)
 
 NSS66 Schedule 10 is the first active analytical source for which the
