@@ -39,7 +39,7 @@ test_that("manifest and data_sources use canonical raw-data directories", {
     source_manifest <- manifest[manifest$source_id == source_id, , drop = FALSE]
     source_catalog <- sources[sources$source_id == source_id, , drop = FALSE]
 
-    expect_gt(nrow(source_manifest), 0L, info = source_id)
+    expect_true(nrow(source_manifest) > 0L, info = source_id)
     expect_equal(nrow(source_catalog), 1L, info = source_id)
     expect_true(
       all(startsWith(source_manifest$relative_path, paste0(source_dir, "/")) |
@@ -790,4 +790,20 @@ test_that("district carve-out rounding tolerance is one shared source contract",
     stringsAsFactors = FALSE
   )
   expect_invisible(validate_district_carveout_shares(x))
+})
+
+test_that("SHRUG EC05 is registered as an extended-only source on the organized raw path", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
+  manifest <- readr::read_csv(
+    file.path(root, "data", "metadata", "file_manifest.csv"),
+    show_col_types = FALSE
+  )
+  row <- manifest[manifest$file_id == "shrug_ec05_csv_archive", , drop = FALSE]
+
+  expect_equal(nrow(row), 1L)
+  expect_identical(row$source_id[[1L]], "shrug_economic_census")
+  expect_false(as.logical(row$required_for_current_pipeline[[1L]]))
+  expect_identical(row$relative_path[[1L]], "data/raw/shrug/shrug-ec05-csv.zip")
+  expect_identical(as.numeric(row$expected_size_bytes[[1L]]), 35220358)
+  expect_identical(row$reader_function[[1L]], "read_shrug_ec05_district")
 })

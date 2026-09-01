@@ -89,3 +89,5 @@ HH-08, HH-10, and HH-11 are active extended-diagnostic sources under `data/raw/c
 
 
 Census housing diagnostics activate Census-2001 H-04 Appendix (`PC01_H04a`, manifest table `H04A`) and Census 2011 HL-13 as a longitudinal structural-durability pair. All 35 H04A workbooks pass structural accounting and their 593 district household totals match H-09 exactly. Durability changes are retained descriptively and do not expand the fixed housing weak-IV registry.
+
+- Economic Census source/measurement semantics are documented in `docs/ECONOMIC_CENSUS.md`; the active EC05 archive is optional for the public core and required only when extended diagnostics run the EC branch.
