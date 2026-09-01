@@ -6,7 +6,7 @@ census_housing_manifest_files <- function(paths, table, manifest_file = NULL, ce
   supported <- switch(
     as.character(census_year),
     `2001` = c("H05", "H08", "H09", "H10", "H11", "H12", "H13"),
-    `2011` = c("HL04", "HL06", "HL07", "HL08", "HL09", "HL10", "HL11", "HL12"),
+    `2011` = c("HL04", "HL06", "HL07", "HL08", "HL09", "HL10", "HL11", "HL12", "HL13"),
     character()
   )
   if (length(table) != 1L || is.na(table) || !table %in% supported) {
@@ -818,6 +818,45 @@ parse_census_hl12_2011_sheet <- function(raw) {
   out
 }
 
+
+parse_census_hl13_2011_sheet <- function(raw) {
+  raw <- safe_df(raw)
+  if (ncol(raw) < 14L) stop("Census 2011 HL13 sheet has fewer than 14 columns.", call. = FALSE)
+  out <- data.frame(
+    table = trimws(plain_chr(raw[[1L]])),
+    state_code = normalize_census_code(raw[[2L]], 2L),
+    district_code = normalize_census_code(raw[[3L]], 3L),
+    subdistrict_code = trimws(plain_chr(raw[[4L]])),
+    town_code = trimws(plain_chr(raw[[5L]])),
+    district_name = clean_census_district_label(raw[[6L]]),
+    residence = trimws(plain_chr(raw[[7L]])),
+    households_total = num(raw[[8L]]),
+    structure_permanent = num(raw[[9L]]),
+    structure_semi_permanent = num(raw[[10L]]),
+    structure_temporary = num(raw[[11L]]),
+    structure_temporary_serviceable = num(raw[[12L]]),
+    structure_temporary_nonserviceable = num(raw[[13L]]),
+    structure_unclassifiable = num(raw[[14L]]),
+    stringsAsFactors = FALSE
+  )
+  keep <- out$table == "HH4313" & !is.na(out$state_code) & !is.na(out$district_code) &
+    out$district_code != "000" & out$subdistrict_code == "00000" & out$town_code == "000000" &
+    out$residence == "Total"
+  out <- out[keep %in% TRUE, , drop = FALSE]
+  validate_household_partition(
+    out$households_total,
+    out[c("structure_permanent", "structure_semi_permanent", "structure_temporary", "structure_unclassifiable")],
+    "Census 2011 HL13 structure"
+  )
+  validate_household_partition(
+    out$structure_temporary,
+    out[c("structure_temporary_serviceable", "structure_temporary_nonserviceable")],
+    "Census 2011 HL13 temporary structure"
+  )
+  rownames(out) <- NULL
+  out
+}
+
 read_census_housing_district_files <- function(files, reader, label) {
   out <- safe_bind_rows(lapply(files, reader))
   if (!nrow(out) || anyDuplicated(out[c("state_code", "district_code")])) {
@@ -841,6 +880,7 @@ read_census_hl09_2011_file <- function(path) parse_census_hl09_2011_sheet(read_c
 read_census_hl10_2011_file <- function(path) parse_census_hl10_2011_sheet(read_census_housing_sheet(path, 5L))
 read_census_hl11_2011_file <- function(path) parse_census_hl11_2011_sheet(read_census_housing_sheet(path, 6L))
 read_census_hl12_2011_file <- function(path) parse_census_hl12_2011_sheet(read_census_housing_sheet(path, 6L))
+read_census_hl13_2011_file <- function(path) parse_census_hl13_2011_sheet(read_census_housing_sheet(path, 7L))
 
 read_census_h05_2001_district <- function(files) read_census_housing_district_files(files, read_census_h05_2001_file, "Census H05")
 read_census_h08_2001_district <- function(files) read_census_housing_district_files(files, read_census_h08_2001_file, "Census H08")
@@ -857,3 +897,4 @@ read_census_hl09_2011_district <- function(files) read_census_housing_district_f
 read_census_hl10_2011_district <- function(files) read_census_housing_district_files(files, read_census_hl10_2011_file, "Census HL10")
 read_census_hl11_2011_district <- function(files) read_census_housing_district_files(files, read_census_hl11_2011_file, "Census HL11")
 read_census_hl12_2011_district <- function(files) read_census_housing_district_files(files, read_census_hl12_2011_file, "Census HL12")
+read_census_hl13_2011_district <- function(files) read_census_housing_district_files(files, read_census_hl13_2011_file, "Census HL13")

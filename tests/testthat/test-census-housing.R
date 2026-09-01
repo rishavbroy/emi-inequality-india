@@ -146,6 +146,81 @@ test_that("Census 2001 H12 may be a validated district subset without truncating
   expect_true(is.na(out$latrine_share_households[out$district_code == "02"]))
 })
 
+
+test_that("HL13 structure categories exhaust households and temporary structure", {
+  raw <- data.frame(matrix("", nrow = 1, ncol = 14), stringsAsFactors = FALSE)
+  raw[1, 1:7] <- c("HH4313", "09", "132", "00000", "000000", "District - Alpha", "Total")
+  raw[1, 8:14] <- c(100, 60, 20, 15, 10, 5, 5)
+  out <- parse_census_hl13_2011_sheet(raw)
+  expect_equal(out$structure_permanent, 60)
+  expect_equal(out$structure_temporary, 15)
+  expect_equal(out$structure_temporary_nonserviceable, 5)
+
+  bad_total <- raw
+  bad_total[1, 14] <- 4
+  expect_error(parse_census_hl13_2011_sheet(bad_total), "structure")
+
+  bad_temporary <- raw
+  bad_temporary[1, 13] <- 4
+  expect_error(parse_census_hl13_2011_sheet(bad_temporary), "temporary structure")
+})
+
+
+test_that("HL13 shares a strict household universe with the active 2011 housing sources", {
+  hl07 <- data.frame(
+    state_code = "09", district_code = "132", district_name = "Alpha",
+    households_total = 100, lighting_electricity = 70,
+    stringsAsFactors = FALSE
+  )
+  hl11 <- data.frame(
+    state_code = "09", district_code = "132", households_total = 100,
+    electricity_available = 70, latrine_available = 60,
+    stringsAsFactors = FALSE
+  )
+  hl12 <- data.frame(
+    state_code = "09", district_code = "132", households_total = 100,
+    stringsAsFactors = FALSE
+  )
+  hl13 <- data.frame(
+    state_code = "09", district_code = "132", households_total = 100,
+    stringsAsFactors = FALSE
+  )
+  validation <- validate_census_housing_sources(
+    hl07, hl11, hl12, 2011L, hl13 = hl13
+  )
+  structural <- validation[validation$check == "household_total_lighting_vs_structure", , drop = FALSE]
+  expect_equal(structural$n_overlap_districts, 1L)
+  expect_equal(structural$max_abs_difference, 0)
+
+  bad <- hl13
+  bad$households_total <- 99
+  expect_error(
+    validate_census_housing_sources(hl07, hl11, hl12, 2011L, hl13 = bad),
+    "do not agree"
+  )
+})
+
+test_that("follow-up housing shares use the common household denominator", {
+  x <- data.frame(
+    households_total = 200,
+    households_owned = 120,
+    households_rented = 60,
+    computer = 40,
+    computer_internet = 10,
+    structure_permanent = 130,
+    structure_semi_permanent = 40,
+    structure_temporary = 20,
+    structure_temporary_nonserviceable = 8,
+    stringsAsFactors = FALSE
+  )
+  out <- add_census_housing_followup_shares(x)
+  expect_equal(out$permanent_structure_share_households, 130 / 200)
+  expect_equal(out$semi_permanent_structure_share_households, 40 / 200)
+  expect_equal(out$temporary_structure_share_households, 20 / 200)
+  expect_equal(out$nonserviceable_temporary_structure_share_households, 8 / 200)
+  expect_equal(out$owned_share_households, 120 / 200)
+})
+
 test_that("Census housing mechanism registry remains a fixed predeclared longitudinal family", {
   registry <- census_housing_mechanism_registry()
   expect_equal(nrow(registry), 8L)
@@ -159,6 +234,8 @@ test_that("Census housing mechanism registry remains a fixed predeclared longitu
   expect_false("latrine_share_households_change_2011_2001" %in% registry$variable)
   expect_false("bathroom_share_households_change_2011_2001" %in% registry$variable)
   expect_false("clean_cooking_fuel_share_households_change_2011_2001" %in% registry$variable)
+  expect_false("permanent_structure_share_households" %in% registry$variable)
+  expect_false("temporary_structure_share_households" %in% registry$variable)
 })
 
 test_that("Census housing change mechanisms reuse the common IV inference engine", {
