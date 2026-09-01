@@ -168,8 +168,7 @@ nss66_common_person_columns <- function() {
   c(
     "FSU_Serial_No", "Sector", "State_Region", "District", "Stratum",
     "Sub_Stratum_No", "Sub_Round", "Sub_Sample", "Second_Stage_Stratum_No",
-    "Sample_Hhld_No", "Person_Serial_No", "STATE", "DISTRICT_CODE", "HHID",
-    "PID", "WEIGHT"
+    "Sample_Hhld_No", "Person_Serial_No", "PID", "WEIGHT"
   )
 }
 
@@ -411,10 +410,9 @@ normalize_nss66_design <- function(raw, label) {
   missing <- setdiff(required, names(raw))
   if (length(missing)) stop(label, " is missing required columns: ", paste(missing, collapse = ", "), call. = FALSE)
 
-  state_code <- normalize_census_code(num(raw$STATE), 2L)
-  district_code <- normalize_census_code(num(raw$DISTRICT_CODE), 2L)
-  district_raw <- normalize_census_code(num(raw$District), 2L)
   nss_region <- normalize_census_code(num(raw$State_Region), 3L)
+  state_code <- substr(nss_region, 1L, 2L)
+  district_code <- normalize_census_code(num(raw$District), 2L)
   sector <- num(raw$Sector)
   sub_stratum <- trimws(plain_chr(raw$Sub_Stratum_No))
   blank_sub_stratum <- is.na(sub_stratum) | !nzchar(sub_stratum)
@@ -443,10 +441,8 @@ normalize_nss66_design <- function(raw, label) {
   if (any(!nzchar(out$person_key)) || anyDuplicated(out$person_key)) {
     stop(label, " person keys must be complete and unique.", call. = FALSE)
   }
-  if (anyNA(out$state_code) || anyNA(out$district_code) || anyNA(out$nss_region) ||
-      any(out$district_code != district_raw, na.rm = TRUE) ||
-      any(substr(out$nss_region, 1L, 2L) != out$state_code, na.rm = TRUE)) {
-    stop(label, " has internally inconsistent state, region, or district codes.", call. = FALSE)
+  if (anyNA(out$state_code) || anyNA(out$district_code) || anyNA(out$nss_region)) {
+    stop(label, " has incomplete state-region or district codes.", call. = FALSE)
   }
   required_design <- c(
     "sector", "sub_round", "sub_sample", "stratum", "sub_stratum", "fsu",
