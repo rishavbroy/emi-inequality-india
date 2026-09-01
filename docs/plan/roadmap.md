@@ -37,7 +37,7 @@ This file records the active research plan. Historical brainstorming and refacto
 
 ### 1. Firm dynamics / Economic Census
 
-This is the next preferred mechanism phase once the raw source is available in the review environment. Start from the existing `shrug_economic_census` source registration and inspect the raw 2005 Economic Census before writing production code. Development Data Lab publishes a Census-2001-district aggregation with total non-farm employment, firms, hired employment, public/private/informal employment, manufacturing, services, and detailed industry groups.
+The required source families are now local under `data/raw/ec/` and `data/raw/shrug/`. Start from the existing `shrug_economic_census` registration and the documented SHRUG `ec05_pc01dist` district product; use the raw Fifth/Sixth Economic Census archives for source validation rather than duplicating a standard district aggregation without a methodological reason. Development Data Lab publishes the 2005 product directly on Census-2001 district identifiers with total non-farm employment, firms, hired employment, public/private/informal employment, manufacturing, services, and detailed industry groups.
 
 Source-first implementation order:
 
@@ -52,7 +52,7 @@ Priority candidate measures are non-farm employment, establishment density, hire
 
 ### 2. Labor-market outcomes
 
-After firm dynamics, inspect the available NSS employment/unemployment and PLFS microdata. The scientific targets are labor-force participation, employment/unemployment, regular salaried work, casual/self-employment composition, real wages, occupational skill, services employment, female labor-force participation, and migration where sample support permits.
+After firm dynamics, build the labor-market module from the now-local `data/raw/nss/` and `data/raw/plfs/` sources. Prioritize NSS 2007-08 employment/unemployment/migration and NSS 2009-10 employment/unemployment before the later PLFS waves so near-treatment structure is separated from long-run labor outcomes. The scientific targets are labor-force participation, employment/unemployment, regular salaried work, casual/self-employment composition, real wages, occupational skill, services employment, female labor-force participation, and migration where sample support permits.
 
 Use the same discipline as consumption:
 
