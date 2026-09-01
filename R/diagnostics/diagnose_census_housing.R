@@ -104,7 +104,7 @@ summarise_census_housing_coverage <- function(housing_2001, housing_2011, housin
 
 summarise_census_housing_change_coverage <- function(housing_change) {
   x <- safe_df(housing_change)
-  variables <- census_housing_common_share_columns()
+  variables <- census_housing_longitudinal_share_columns()
   safe_bind_rows(lapply(variables, function(variable) {
     change <- paste0(variable, "_change_2011_2001")
     data.frame(
@@ -119,7 +119,7 @@ summarise_census_housing_change_coverage <- function(housing_change) {
 }
 
 build_census_housing_diagnostics <- function(
-    h05_2001, h08_2001, h09_2001, h10_2001, h11_2001, h12_2001, h13_2001, housing_2001,
+    h04a_2001, h05_2001, h08_2001, h09_2001, h10_2001, h11_2001, h12_2001, h13_2001, housing_2001,
     hl04_2011, hl06_2011, hl07_2011, hl08_2011, hl09_2011, hl10_2011,
     hl11_2011, hl12_2011, hl13_2011, housing_2011, housing_change,
     district_panel, cfg = list(), control_registry = NULL) {
@@ -140,7 +140,7 @@ build_census_housing_diagnostics <- function(
     change_coverage = summarise_census_housing_change_coverage(housing_change),
     source_validation_2001 = validate_census_housing_sources(
       h09_2001, h12_2001, h13_2001, 2001L, h05_2001, h08_2001,
-      h10_2001, NULL, h11_2001
+      h10_2001, NULL, h11_2001, h04a_2001
     ),
     source_validation_2011 = validate_census_housing_sources(
       hl07_2011, hl11_2011, hl12_2011, 2011L, hl04_2011, hl06_2011,
