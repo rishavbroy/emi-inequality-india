@@ -1,0 +1,45 @@
+core_consumption_iv_target_definitions <- function() {
+  list(
+    tar_target(
+      consumption_iv_panel,
+      attach_consumption_iv_outcomes(
+        district_panel,
+        consumption_district_welfare,
+        consumption_iv_outcome_registry
+      )
+    ),
+    tar_target(
+      consumption_iv_outcome_coverage,
+      validate_consumption_iv_outcome_coverage(
+        summarize_consumption_iv_outcome_coverage(
+          consumption_iv_panel,
+          consumption_iv_specifications
+        )
+      )
+    ),
+    tar_target(
+      consumption_iv_outcome_coverage_file,
+      save_consumption_iv_outcome_coverage(consumption_iv_outcome_coverage),
+      format = "file"
+    ),
+    tar_target(
+      consumption_iv_dynamics,
+      {
+        consumption_iv_outcome_coverage
+        validate_consumption_iv_dynamics(
+          estimate_consumption_iv_dynamics(
+            consumption_iv_panel,
+            consumption_iv_specifications,
+            cfg
+          ),
+          consumption_iv_specifications
+        )
+      }
+    ),
+    tar_target(
+      consumption_iv_dynamics_files,
+      save_consumption_iv_dynamics(consumption_iv_dynamics),
+      format = "file"
+    )
+  )
+}

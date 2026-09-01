@@ -155,8 +155,25 @@ test_that("targets graph separates public diagnostics, extended diagnostics, and
   extended <- repo_extended_target_text()
 
   expect_match(src, "core_pipeline_targets <- c", fixed = TRUE)
-  expect_match(src, 'source("R/pipeline/core_consumption_targets.R")', fixed = TRUE)
-  expect_match(src, "core_consumption_target_definitions()", fixed = TRUE)
+  for (factory in c(
+    "core_consumption_targets.R",
+    "core_consumption_outcome_targets.R",
+    "core_consumption_iv_targets.R"
+  )) {
+    expect_match(
+      src,
+      paste0('source("R/pipeline/', factory, '")'),
+      fixed = TRUE,
+      info = factory
+    )
+  }
+  for (factory in c(
+    "core_consumption_target_definitions()",
+    "core_consumption_outcome_target_definitions()",
+    "core_consumption_iv_target_definitions()"
+  )) {
+    expect_match(src, factory, fixed = TRUE, info = factory)
+  }
   expect_match(src, 'source("R/pipeline/extended_diagnostic_targets.R")', fixed = TRUE)
   expect_match(
     src,
@@ -409,9 +426,14 @@ test_that("debug review archives retain intermediate diagnostics but exclude raw
 test_that("targets sources only R scripts from source directories", {
   targets <- repo_text("_targets.R")
 
-  expect_match(targets, "tar_source_r <- function", fixed = TRUE)
-  expect_match(targets, "list.files(path, pattern = \"\\\\.[Rr]$\", recursive = TRUE, full.names = TRUE)", fixed = TRUE)
-  expect_false(grepl('tar_source\\("R/', targets))
+  expect_false(grepl("tar_source_r", targets, fixed = TRUE))
+  for (path in c(
+    "R/io", "R/clean", "R/districts", "R/measures", "R/prices",
+    "R/controls", "R/selection", "R/iv", "R/diagnostics",
+    "R/benchmarking", "R/output", "R/application_samples"
+  )) {
+    expect_match(targets, paste0('tar_source("', path, '")'), fixed = TRUE)
+  }
   root <- dirname(repo_file("README.md"))
   expect_false(file.exists(file.path(root, "R", "districts", "join_district_panel.R")))
   expect_false(grepl("join_district_panel", targets, fixed = TRUE))

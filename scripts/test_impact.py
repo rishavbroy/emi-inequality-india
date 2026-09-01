@@ -112,6 +112,17 @@ def path_tests(path):
             "test-diagnostics.R",
             "test-prices-and-controls.R",
         },
+        "R/pipeline/core_consumption_outcome_targets.R": {
+            "test-analysis-design-registry.R",
+            "test-consumption-district-welfare.R",
+            "test-consumption-lineage.R",
+            "test-diagnostics.R",
+        },
+        "R/pipeline/core_consumption_iv_targets.R": {
+            "test-analysis-design-registry.R",
+            "test-diagnostics.R",
+            "test-output-figures.R",
+        },
         "R/pipeline/extended_historical_targets.R": {
             "test-historical-baseline-1991.R",
             "test-historical-linguistic-validation.R",
