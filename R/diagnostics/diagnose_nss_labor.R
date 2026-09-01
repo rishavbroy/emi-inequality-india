@@ -327,3 +327,11 @@ save_nss66_materialization_diagnostics <- function(
   utils::write.csv(x, path, row.names = FALSE, na = "")
   path
 }
+
+save_plfs_source_package_diagnostics <- function(
+    x, root = "outputs/diagnostics/extended/labor") {
+  dir.create(root, recursive = TRUE, showWarnings = FALSE)
+  path <- file.path(root, "plfs_2017_18_source_package.csv")
+  utils::write.csv(safe_df(x), path, row.names = FALSE, na = "")
+  path
+}

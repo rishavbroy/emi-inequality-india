@@ -504,3 +504,48 @@ test_that("PLFS long-run registry reuses the shared usual-status estimands", {
   expect_identical(unique(plfs$temporal_role), "long_run_post")
   expect_false("migrant_from_last_upr_share_age15plus" %in% plfs$outcome_id)
 })
+
+test_that("PLFS source package fails closed before standard Nesstar conversion", {
+  root <- tempfile("plfs1718-package-")
+  dir.create(root)
+  nesstar <- file.path(root, "DDI-IND-CSO-PLFS-2017-18.Nesstar")
+  layout <- file.path(root, "Data_LayoutPLFS (1).xlsx")
+  writeBin(charToRaw("nesstar"), nesstar)
+  writeBin(charToRaw("layout"), layout)
+  source_rows <- data.frame(
+    file_id = c("plfs1718_nesstar", "plfs1718_layout"),
+    expected_size_bytes = c(file.info(nesstar)$size, file.info(layout)$size),
+    absolute_path = c(nesstar, layout),
+    stringsAsFactors = FALSE
+  )
+
+  blocked <- inspect_plfs_2017_18_source_package(
+    source_rows = source_rows, layout_validator = function(path) invisible(TRUE)
+  )
+  expect_identical(blocked$status[[1L]], "blocked_missing_ddi")
+  expect_false(blocked$ddi_exists[[1L]])
+  expect_identical(blocked$annual_usual_status_rows[[1L]], 433339L)
+
+  writeLines("<codeBook/>", plfs_2017_18_ddi_path(nesstar))
+  present <- inspect_plfs_2017_18_source_package(
+    source_rows = source_rows, layout_validator = function(path) invisible(TRUE)
+  )
+  expect_identical(present$status[[1L]], "ddi_present_unregistered")
+  expect_true(present$ddi_exists[[1L]])
+})
+
+test_that("PLFS is not registered for Nesstar conversion without official DDI XML", {
+  contracts <- utils::read.csv(
+    file.path(Sys.getenv("EMI_PROJECT_ROOT", unset = "."), "data/metadata/nesstar_conversion_contracts.csv"),
+    stringsAsFactors = FALSE
+  )
+  expect_false("plfs_2017_18" %in% contracts$source_id)
+})
+
+test_that("PLFS layout contract anchors usual-status and design fields", {
+  x <- plfs_2017_18_layout_expectations()
+  expect_true(any(x$block == "5.1" & x$full_name == "Status Code" & x$start == 61L & x$end == 62L))
+  expect_true(any(x$block == "5.2" & x$full_name == "Status Code" & x$start == 80L & x$end == 81L))
+  expect_true(any(x$block == "Generated" & x$full_name == "Sub-sample wise Multiplier" & x$start == 309L & x$end == 318L))
+  expect_true(any(x$full_name == "Person Serial No." & x$start == 38L & x$end == 39L))
+})
