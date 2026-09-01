@@ -39,14 +39,16 @@ This file records the active research plan. Historical brainstorming and refacto
 
 The required source families are now local under `data/raw/ec/` and `data/raw/shrug/`. Start from the existing `shrug_economic_census` registration and the documented SHRUG `ec05_pc01dist` district product; use the raw Fifth/Sixth Economic Census archives for source validation rather than duplicating a standard district aggregation without a methodological reason. Development Data Lab publishes the 2005 product directly on Census-2001 district identifiers with total non-farm employment, firms, hired employment, public/private/informal employment, manufacturing, services, and detailed industry groups.
 
-Source-first implementation order:
+The EC05 source/measurement phase is now active: the documented SHRUG `ec05_pc01dist` product is read directly, validated against the canonical Census-2001 district registry, and reduced to a small core of firm/nonfarm counts and shares. Source gaps are retained explicitly rather than imputed, and no EC outcome has yet been added to the IV mechanism registry. See `docs/ECONOMIC_CENSUS.md`.
 
-1. inspect raw/archive schema, identifiers, missingness, and accounting identities;
-2. validate direct Census-2001 district keys against the project registry;
-3. define a small predeclared set of economically interpretable measures before IV results are seen;
-4. distinguish predetermined 2005 structure/balance uses from later firm-growth mechanisms;
+Next implementation order:
+
+1. inspect and validate the 2013-14 source and its Census-2011 identifiers;
+2. harmonize EC13 counts to complete Census-2001 parents before constructing changes or shares;
+3. predeclare the small EC05/EC13 outcome family before running IV results;
+4. distinguish near-treatment 2005 structure/balance uses from later firm-growth mechanisms;
 5. reuse the shared mechanism specification/inference layer rather than create an Economic-Census-specific estimator;
-6. persist one compact source/coverage diagnostic plus registered model outputs, not redundant table-specific artifacts.
+6. persist registered model outputs without table-by-table artifact proliferation.
 
 Priority candidate measures are non-farm employment, establishment density, hired-employment share, private/informal employment, manufacturing employment, services employment, and a narrowly justified English-intensive services measure if the published industry mapping supports it.
 
