@@ -48,4 +48,14 @@ Block 4 and Block 6 must also agree person-by-person on the common survey geogra
 
 ## Diagnostic outputs
 
-The extended labor branch writes `nss64_source_validation.csv`, `nss64_lineage_support.csv`, `nss64_target_support.csv`, `nss64_outcome_registry.csv`, and `nss64_district_outcomes.csv`. The district-outcome table keeps point estimates, design standard errors, denominator-specific sample/PSU/Kish support, and the preferred-analysis eligibility flag in one long table. No labor outcome is yet routed into the causal IV mechanism family; the next phase should inspect these design-based district estimates first, then decide whether the near-treatment exercise is best treated as balance/validity evidence or as a separately registered mechanism family.
+The extended labor branch writes `nss64_source_validation.csv`, `nss64_lineage_support.csv`, `nss64_target_support.csv`, `nss64_outcome_registry.csv`, and `nss64_district_outcomes.csv`. The district-outcome table keeps point estimates, design standard errors, denominator-specific sample/PSU/Kish support, and the preferred-analysis eligibility flag in one long table.
+
+NSS64 is frozen as a **near-treatment reference** rather than a predetermined balance test or a post-treatment causal mechanism family. Its July 2007-June 2008 field period overlaps the project's 2007-08 EMI measurement window, so contemporaneous labor differences cannot establish pre-treatment balance and should not be interpreted as long-run responses. The machine-readable outcome registry records this temporal role.
+
+## NSS 66 source contract
+
+The next wave is NSS 66 Schedule 10 (July 2009-June 2010). The official source is locally available as a DDI plus a proprietary `.Nesstar` container. The DDI reports 459,784 demographic records (F4), 459,784 usual-principal-activity records (F5), and 34,689 usual-subsidiary-activity records (F6). Unlike NSS64, subsidiary activity is a conditional separate block rather than one field on every principal-status person, so future production ingestion must left-join F6 onto the complete F4/F5 person universe rather than require equal F5/F6 row counts.
+
+The DDI contract requires the common person/design fields and the all-subround combined `WEIGHT` variable, plus age/demographics, principal activity status/NIC/NCO and subsidiary activity status/NIC/NCO. The official catalog defines `WEIGHT` as the weight for all-subround combined estimation; `WEIGHT_SR` is reserved for subround-specific estimates.
+
+Production does not implement a repository-specific `.Nesstar` parser. Conversion should use the maintained `nesstar-converter` package (pinned to a reviewed release when the converted files are materialized), which reads `.Nesstar` with companion DDI metadata and exports open tabular formats. The DDI validation target is active now; district estimation remains blocked until converted F4/F5/F6 tables have been materialized and inspected.
