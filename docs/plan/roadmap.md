@@ -43,13 +43,13 @@ The EC05 source/measurement phase is now active: the documented SHRUG `ec05_pc01
 
 The EC13 source/measurement phase is now active: the local SHRUG `ec13_pc11dist` product is validated on all 640 Census-2011 districts, its counts are pooled through the existing complete-parent Census-2011-to-2001 bridge, and common 2005-2013 log/count-composition changes are generated only after pooling. EC05 informal employment is excluded from the longitudinal family because EC13 does not publish a comparable district field.
 
-Next implementation order:
+The EC05/EC13 causal mechanism family is now predeclared and routed through the shared district-mechanism inference layer. The registered outcomes are log non-farm employment growth, log establishment growth, hired/private employment-share changes, services-share change, and a secondary manufacturing-share change. Female employment, mean firm size, and EC05-only informal employment remain descriptive rather than enlarging the inferential family. One Economic Census diagnostic object now owns both measurement and model outputs, avoiding parallel writer targets.
 
-1. predeclare the small EC05/EC13 causal mechanism family before running IV results;
-2. distinguish near-treatment 2005 structure/balance uses from later firm-growth mechanisms;
-3. reuse the shared mechanism specification/inference layer rather than create an Economic-Census-specific estimator;
-4. inspect EC90/EC98 only for a separately predeclared historical firm-pretrend exercise; do not allocate 1991 district totals across later splits or infer EC98 district totals without the documented key bridge and coverage accounting;
-5. persist registered model outputs without table-by-table artifact proliferation.
+Remaining implementation order:
+
+1. use the 2005 level only for a separately justified near-treatment structure/balance exercise; do not condition post-treatment firm mechanisms on 2013 structure;
+2. inspect EC90/EC98 only for a separately predeclared historical firm-pretrend exercise; do not allocate 1991 district totals across later splits or infer EC98 district totals without the documented key bridge and coverage accounting;
+3. after the EC model outputs have passed the full audit, move to NSS 2007-08 labor/migration rather than expanding the firm outcome family.
 
 Priority candidate measures are non-farm employment, establishment density, hired-employment share, private/informal employment, manufacturing employment, services employment, and a narrowly justified English-intensive services measure if the published industry mapping supports it.
 

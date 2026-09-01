@@ -49,3 +49,7 @@ Economic Census employment is interpreted as employment located at establishment
 ## Historical EC90/EC98 sources
 
 The local source inventory now also contains SHRUG EC90 and EC98 archives. EC90 has a published Census-1991 district product, while EC98 is supplied at SHRID level rather than as a Census-2001 district file. Neither is activated in this phase: moving 1991 district counts forward to 2001 would require allocation across later splits, and EC98 requires the documented EC-to-SHRID/key linkage with explicit coverage accounting. These sources are valuable for a later firm-pretrend exercise, but they must not be forced onto Census-2001 geography by ad-hoc proportional allocation.
+
+## Inference boundary
+
+The longitudinal firm-mechanism family is predeclared at six outcomes: log non-farm employment growth, log establishment growth, hired- and private-employment share changes, services-employment share change, and manufacturing-employment share change (secondary). Female employment share, mean employment per firm, and EC05-only informal employment remain descriptive. Models reuse the shared Census mechanism inference layer, including common-sample enforcement, the registered IV design grid, state-clustered inference, Holm correction, effective-F diagnostics, and Anderson-Rubin confidence sets.
