@@ -90,8 +90,13 @@ and remains green. If any contracted block or sidecar exists without the complet
 set, the audit fails rather than silently using a partial conversion. Once all
 three blocks and the conversion manifest are present, the audit automatically
 runs the real F4/F5/F6 canonical join and same-round lineage validation and writes
-`nss66_source_validation.csv`. District outcomes remain deliberately inactive
-until those reviewer-visible diagnostics have been inspected.
+`nss66_source_validation.csv`. The inspector also recognizes the narrowly defined
+legacy sidecar written by the original NSS66-only materializer (`file_id`, path,
+row/byte/hash, converter version), derives only its missing source/package fields
+from the pinned current contract, and labels it `legacy_v1` in diagnostics. Unknown
+or partial manifest schemas remain fatal. Newly materialized sidecars carry an
+explicit schema version. District outcomes remain deliberately inactive until
+those reviewer-visible diagnostics have been inspected.
 
 The district estimator is now wave-invariant. NSS64 keeps its five registered
 outcomes, including migration, and its `near_treatment_reference` role. NSS66

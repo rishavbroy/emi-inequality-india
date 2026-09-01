@@ -168,6 +168,12 @@ source .venv/bin/activate
 python -m pip install --upgrade pip
 python -m pip install 'nesstar-converter==1.0.4'
 python scripts/materialize_nesstar.py nss66_eus
+
+If NSS66 was already converted with the earlier source-specific script, do not
+reconvert solely to update `conversion_manifest.csv`: the audit accepts that
+exact legacy sidecar shape, validates its paths/rows/bytes/version against the
+current source-keyed contract, and records `manifest_schema = legacy_v1`. Future
+materializations write the current versioned sidecar automatically.
 ```
 
 `.venv/` is gitignored. A `pipx` or `uv tool` installation is also valid: the
