@@ -299,7 +299,7 @@ test_that("Census download manifests are canonical acquisition metadata", {
 
   expected_codes <- sprintf("%02d", 1:35)
   expected_tables <- list(
-    `2001` = c("C13", "C16", "C17", "D02", "H04"),
+    `2001` = c("C13", "C16", "C17", "D02", "H04A"),
     `2011` = c(
       "C13", "B01", "B04", "B06", "B25A", "B25B", "C16", "C17",
       "D02", "D03", "D04", "D05", "D06", "D07",
@@ -355,13 +355,17 @@ test_that("Census download manifests are canonical acquisition metadata", {
     "data", "raw", "census_2001", "languages", "C17",
     sprintf("PC01_C17_%02d.xls", 1:35)
   ) %in% manifests[[1]]$relative_path))
-  h04_2001 <- manifests[[1]][manifests[[1]]$table == "H04", , drop = FALSE]
+  h04a_2001 <- manifests[[1]][manifests[[1]]$table == "H04A", , drop = FALSE]
   expect_setequal(
-    h04_2001$relative_path,
+    h04a_2001$relative_path,
     file.path(
-      "data", "raw", "census_2001", "housing", "H04",
-      sprintf("PC01_H04_%02d.xls", 1:35)
+      "data", "raw", "census_2001", "housing", "H04A",
+      sprintf("PC01_H04_APP_%02d.xls", 1:35)
     )
+  )
+  expect_setequal(
+    basename(h04a_2001$url),
+    sprintf("PC01_H04_APP_%02d.xls", 1:35)
   )
 })
 
