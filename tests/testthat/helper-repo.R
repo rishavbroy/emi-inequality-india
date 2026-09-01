@@ -16,6 +16,34 @@ repo_text <- function(...) {
   paste(readLines(repo_file(...), warn = FALSE), collapse = "\n")
 }
 
+# Cache the canonical {targets} manifest so architecture tests assert pipeline
+# semantics rather than the physical placement/formatting of target declarations.
+.repo_target_manifest_cache <- new.env(parent = emptyenv())
+
+repo_target_manifest <- function() {
+  if (!exists("manifest", envir = .repo_target_manifest_cache, inherits = FALSE)) {
+    manifest <- targets::tar_manifest(
+      fields = tidyselect::any_of(c("name", "command")),
+      script = repo_file("_targets.R")
+    )
+    assign("manifest", manifest, envir = .repo_target_manifest_cache)
+  }
+  get("manifest", envir = .repo_target_manifest_cache, inherits = FALSE)
+}
+
+repo_target_command <- function(name) {
+  manifest <- repo_target_manifest()
+  rows <- manifest$name == name
+  if (sum(rows) != 1L) {
+    stop("Expected exactly one target named ", name, call. = FALSE)
+  }
+  command <- manifest$command[[which(rows)]]
+  if (is.character(command)) {
+    return(paste(command, collapse = "\n"))
+  }
+  paste(deparse(command, width.cutoff = 500L), collapse = "\n")
+}
+
 repo_pipeline_target_files <- function(pattern = ".*_targets\\.R$") {
   pipeline_dir <- repo_file("R", "pipeline")
   sort(list.files(pipeline_dir, pattern = pattern, full.names = TRUE))
