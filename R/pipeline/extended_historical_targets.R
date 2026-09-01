@@ -4,6 +4,277 @@
 extended_historical_target_definitions <- function() {
   list(
     tar_target(
+      historical_linguistic_geography_1991_2001,
+      build_historical_linguistic_geography_1991_2001(district_lineage_sources)
+    ),
+    tar_target(
+      diag_ext_historical_linguistic_geography_1991_2001,
+      save_historical_linguistic_geography_1991_2001(
+        historical_linguistic_geography_1991_2001
+      ),
+      format = "file"
+    ),
+    tar_target(
+      historical_vanneman_source_qa,
+      {
+        raw_data_preflight
+        summarize_vanneman_historical_sources(paths)
+      }
+    ),
+    tar_target(
+      diag_ext_historical_vanneman_source_qa,
+      save_vanneman_historical_source_qa(historical_vanneman_source_qa),
+      format = "file"
+    ),
+    tar_target(
+      historical_vanneman_panel4_geography,
+      build_vanneman_panel4_geography_inventory(historical_vanneman_source_qa, paths)
+    ),
+    tar_target(
+      diag_ext_historical_vanneman_panel4_geography,
+      save_vanneman_panel4_geography_inventory(historical_vanneman_panel4_geography),
+      format = "file"
+    ),
+    tar_target(
+      historical_vanneman_panel4_dist91_crosswalk_seed,
+      build_vanneman_panel4_dist91_crosswalk(
+        historical_vanneman_source_qa,
+        historical_vanneman_panel4_geography,
+        paths
+      )
+    ),
+    tar_target(
+      historical_vanneman_panel4_dist91_adjudications_file,
+      "data/metadata/vanneman_panel4_dist91_adjudications.csv",
+      format = "file"
+    ),
+    tar_target(
+      historical_vanneman_panel4_dist91_adjudications,
+      {
+        raw_data_preflight
+        validate_vanneman_panel4_dist91_adjudications(
+          read_vanneman_panel4_dist91_adjudications(historical_vanneman_panel4_dist91_adjudications_file),
+          historical_vanneman_panel4_dist91_crosswalk_seed,
+          paths
+        )
+      }
+    ),
+    tar_target(
+      diag_ext_historical_vanneman_panel4_dist91_adjudication_evidence,
+      save_vanneman_panel4_dist91_adjudication_evidence(
+        historical_vanneman_panel4_dist91_adjudications
+      ),
+      format = "file"
+    ),
+    tar_target(
+      historical_vanneman_panel4_dist91_crosswalk,
+      apply_vanneman_panel4_dist91_adjudications(
+        historical_vanneman_panel4_dist91_crosswalk_seed,
+        historical_vanneman_panel4_dist91_adjudications
+      )
+    ),
+    tar_target(
+      diag_ext_historical_vanneman_panel4_dist91_crosswalk,
+      save_vanneman_panel4_dist91_crosswalk(historical_vanneman_panel4_dist91_crosswalk),
+      format = "file"
+    ),
+    tar_target(
+      historical_vanneman_pretrend_geography,
+      build_vanneman_pretrend_geography(
+        historical_vanneman_panel4_dist91_crosswalk,
+        historical_linguistic_geography_1991_2001$source_districts,
+        historical_linguistic_geography_1991_2001$transition
+      )
+    ),
+    tar_target(
+      diag_ext_historical_vanneman_pretrend_geography,
+      save_vanneman_pretrend_geography(historical_vanneman_pretrend_geography),
+      format = "file"
+    ),
+    tar_target(
+      historical_vanneman_pretrend_parent_bridge,
+      build_vanneman_pretrend_parent_bridge(
+        historical_vanneman_panel4_dist91_crosswalk,
+        historical_linguistic_geography_1991_2001$source_districts,
+        historical_linguistic_geography_1991_2001$transition
+      )
+    ),
+    tar_target(
+      diag_ext_historical_vanneman_pretrend_parent_bridge,
+      save_vanneman_pretrend_parent_bridge(
+        historical_vanneman_pretrend_parent_bridge
+      ),
+      format = "file"
+    ),
+    tar_target(
+      historical_vanneman_liu_geography_benchmark,
+      {
+        raw_data_preflight
+        build_vanneman_liu_geography_benchmark(historical_vanneman_panel4_geography, paths)
+      }
+    ),
+    tar_target(
+      diag_ext_historical_vanneman_liu_geography_benchmark,
+      save_vanneman_liu_geography_benchmark(historical_vanneman_liu_geography_benchmark),
+      format = "file"
+    ),
+    tar_target(
+      historical_linguistic_geography_external_benchmark,
+      build_historical_linguistic_geography_external_benchmark(
+        historical_linguistic_geography_1991_2001,
+        district_lineage_sources$kumar_somanathan_1991_2001,
+        district_lineage$admin_units_2001
+      )
+    ),
+    tar_target(
+      diag_ext_historical_linguistic_geography_external_benchmark,
+      save_historical_linguistic_geography_external_benchmark(
+        historical_linguistic_geography_external_benchmark
+      ),
+      format = "file"
+    ),
+    tar_target(
+      helms_lim_linguistic_distance_file,
+      "data/metadata/helms_lim_linguistic_distance_1991.csv",
+      format = "file"
+    ),
+    tar_target(
+      helms_lim_linguistic_distance_1991,
+      read_helms_lim_linguistic_distance_1991(
+        helms_lim_linguistic_distance_file
+      )
+    ),
+    tar_target(
+      historical_linguistic_kumar_somanathan_geography,
+      build_historical_linguistic_kumar_somanathan_geography(
+        district_lineage_sources$kumar_somanathan_1991_2001,
+        helms_lim_linguistic_distance_1991,
+        district_lineage$admin_units_2001
+      )
+    ),
+    tar_target(
+      diag_ext_historical_linguistic_kumar_somanathan_geography,
+      save_historical_linguistic_kumar_somanathan_geography(
+        historical_linguistic_kumar_somanathan_geography
+      ),
+      format = "file"
+    ),
+    tar_target(
+      historical_linguistic_exact_transition_comparison,
+      build_historical_linguistic_exact_transition_comparison(
+        historical_linguistic_geography_1991_2001,
+        historical_linguistic_kumar_somanathan_geography
+      )
+    ),
+    tar_target(
+      diag_ext_historical_linguistic_exact_transition_comparison,
+      save_historical_linguistic_exact_transition_comparison(
+        historical_linguistic_exact_transition_comparison
+      ),
+      format = "file"
+    ),
+    tar_target(
+      geography_allocation_semantics,
+      {
+        out <- geography_allocation_semantics_registry()
+        validate_geography_allocation_semantics(out)
+        out
+      }
+    ),
+    tar_target(
+      geography_measure_families,
+      {
+        out <- geography_measure_family_registry()
+        validate_geography_measure_families(
+          out, geography_allocation_semantics
+        )
+        out
+      }
+    ),
+    tar_target(
+      geography_specifications,
+      {
+        out <- geography_specification_registry()
+        validate_geography_specifications(out)
+        out
+      }
+    ),
+    tar_target(
+      multivintage_geography_1991_2001_2011,
+      build_multivintage_geography_inventory(
+        list(
+          shrug_1991_2001 =
+            historical_linguistic_geography_1991_2001$canonical_transition,
+          production_2011_2001 =
+            district_lineage$canonical_transition_2001_2011
+        ),
+        required_vintages = c(1991L, 2001L, 2011L)
+      )
+    ),
+    tar_target(
+      diag_ext_geography_harmonization_foundation,
+      save_geography_harmonization_foundation(
+        multivintage_geography_1991_2001_2011,
+        geography_allocation_semantics,
+        geography_measure_families,
+        geography_specifications
+      ),
+      format = "file"
+    ),
+    tar_target(
+      exact_multivintage_geography_1991_2001_2011,
+      build_exact_multivintage_geography(
+        list(
+          shrug_1991_2001 =
+            historical_linguistic_geography_1991_2001$canonical_transition,
+          production_2011_2001 =
+            district_lineage$canonical_transition_2001_2011
+        ),
+        required_vintages = c(1991L, 2001L, 2011L)
+      )
+    ),
+    tar_target(
+      diag_ext_exact_multivintage_geography,
+      save_exact_multivintage_geography(
+        exact_multivintage_geography_1991_2001_2011
+      ),
+      format = "file"
+    ),
+    tar_target(
+      population_interpolation_geography_1991_2001_2011,
+      build_population_interpolation_crosswalk(
+        list(
+          shrug_1991_2001 =
+            historical_linguistic_geography_1991_2001$canonical_transition,
+          production_2011_2001 =
+            district_lineage$canonical_transition_2001_2011
+        ),
+        target_vintage = 2001L
+      )
+    ),
+    tar_target(
+      diag_ext_population_interpolation_geography,
+      save_population_interpolation_geography(
+        population_interpolation_geography_1991_2001_2011
+      ),
+      format = "file"
+    ),
+    tar_target(
+      historical_linguistic_consensus_geography,
+      build_historical_linguistic_consensus_geography(
+        historical_linguistic_geography_1991_2001,
+        historical_linguistic_kumar_somanathan_geography,
+        historical_linguistic_exact_transition_comparison
+      )
+    ),
+    tar_target(
+      diag_ext_historical_linguistic_consensus_geography,
+      save_historical_linguistic_consensus_geography(
+        historical_linguistic_consensus_geography
+      ),
+      format = "file"
+    ),
+    tar_target(
       shrug_1991_baseline_files,
       shrug_1991_baseline_source_paths(paths),
       format = "file"
