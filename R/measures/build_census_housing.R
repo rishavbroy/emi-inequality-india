@@ -54,7 +54,7 @@ census_housing_validation_row <- function(
 validate_census_housing_sources <- function(
     h09_or_hl07, h12_or_hl11, h13_or_hl12, year,
     h05_or_hl04 = NULL, h08_or_hl06 = NULL,
-    h10_or_hl08 = NULL, hl09 = NULL, h11_or_hl10 = NULL) {
+    h10_or_hl08 = NULL, hl09 = NULL, h11_or_hl10 = NULL, hl13 = NULL) {
   year <- as.integer(year)
   light_label <- if (year == 2001L) "H09" else "HL07"
   utility_label <- if (year == 2001L) "H12" else "HL11"
@@ -64,6 +64,7 @@ validate_census_housing_sources <- function(
   sanitation_label <- if (year == 2001L) "H10" else "HL08"
   bathing_label <- if (year == 2001L) "H10" else "HL09"
   kitchen_label <- if (year == 2001L) "H11" else "HL10"
+  structure_label <- if (year == 2001L) NA_character_ else "HL13"
   utility_is_subset <- year == 2001L
   checks <- list(
     census_housing_validation_row(
@@ -122,6 +123,14 @@ validate_census_housing_sources <- function(
       "household_total_lighting_vs_kitchen_fuel", FALSE
     )
   }
+  if (!is.null(hl13)) {
+    if (year != 2011L) stop("HL13 validation is only defined for Census 2011.", call. = FALSE)
+    checks[[length(checks) + 1L]] <- census_housing_validation_row(
+      h09_or_hl07, hl13, "households_total", "households_total",
+      paste0("Census ", year, " ", light_label, "/", structure_label, " household-universe"),
+      "household_total_lighting_vs_structure", FALSE
+    )
+  }
   safe_bind_rows(checks)
 }
 
@@ -171,6 +180,30 @@ add_census_housing_shares <- function(x) {
   x$bicycle_share_households <- safe_count_share(x$bicycle, total)
   x$motorcycle_share_households <- safe_count_share(x$motorcycle, total)
   x$car_share_households <- safe_count_share(x$car, total)
+  x
+}
+
+
+add_census_housing_followup_shares <- function(x) {
+  x <- safe_df(x)
+  share_specs <- list(
+    owned_share_households = "households_owned",
+    rented_share_households = "households_rented",
+    computer_share_households = "computer",
+    internet_computer_share_households = "computer_internet",
+    permanent_structure_share_households = "structure_permanent",
+    semi_permanent_structure_share_households = "structure_semi_permanent",
+    temporary_structure_share_households = "structure_temporary",
+    nonserviceable_temporary_structure_share_households = "structure_temporary_nonserviceable"
+  )
+  for (share in names(share_specs)) {
+    count <- share_specs[[share]]
+    x[[share]] <- if (count %in% names(x)) {
+      safe_count_share(x[[count]], x$households_total)
+    } else {
+      rep.int(NA_real_, nrow(x))
+    }
+  }
   x
 }
 
@@ -230,8 +263,11 @@ build_census_2001_housing_measures <- function(
 }
 
 build_census_2011_housing_source <- function(
-    hl07, hl11, hl12, hl04 = NULL, hl06 = NULL, hl08 = NULL, hl09 = NULL, hl10 = NULL) {
-  validate_census_housing_sources(hl07, hl11, hl12, 2011L, hl04, hl06, hl08, hl09, hl10)
+    hl07, hl11, hl12, hl04 = NULL, hl06 = NULL, hl08 = NULL, hl09 = NULL, hl10 = NULL,
+    hl13 = NULL) {
+  validate_census_housing_sources(
+    hl07, hl11, hl12, 2011L, hl04, hl06, hl08, hl09, hl10, hl13
+  )
   x <- safe_df(hl07)[c(
     "state_code", "district_code", "district_name", "households_total",
     "lighting_electricity", "lighting_kerosene", "lighting_solar", "lighting_other_oil",
@@ -286,34 +322,41 @@ build_census_2011_housing_source <- function(
       x, kitchen, "Census housing follow-up", "Census HL10", c("district_name", "households_total")
     )
   }
+  if (!is.null(hl13)) {
+    structure <- safe_df(hl13)[c(
+      "state_code", "district_code", "structure_permanent", "structure_semi_permanent",
+      "structure_temporary", "structure_temporary_serviceable",
+      "structure_temporary_nonserviceable", "structure_unclassifiable"
+    )]
+    x <- merge_census_district_sources(
+      x, structure, "Census housing follow-up", "Census HL13", c("district_name", "households_total")
+    )
+  }
   merge_census_district_sources(x, assets, "Census housing follow-up", "Census HL12", c("district_name", "households_total"))
 }
 
 build_census_2011_housing_measures <- function(
     hl07, hl11, hl12, district_transition_2001_2011,
-    hl04 = NULL, hl06 = NULL, hl08 = NULL, hl09 = NULL, hl10 = NULL) {
+    hl04 = NULL, hl06 = NULL, hl08 = NULL, hl09 = NULL, hl10 = NULL, hl13 = NULL) {
   source <- build_census_2011_housing_source(
-    hl07, hl11, hl12, hl04, hl06, hl08, hl09, hl10
+    hl07, hl11, hl12, hl04, hl06, hl08, hl09, hl10, hl13
   )
   count_cols <- c(
     intersect(census_housing_common_count_columns(), names(source)),
     "computer", "computer_internet"
   )
   if (!is.null(hl04)) count_cols <- c(count_cols, "households_owned", "households_rented")
+  if (!is.null(hl13)) {
+    count_cols <- c(
+      count_cols, "structure_permanent", "structure_semi_permanent", "structure_temporary",
+      "structure_temporary_serviceable", "structure_temporary_nonserviceable",
+      "structure_unclassifiable"
+    )
+  }
   pooled <- harmonize_census_2011_counts_to_2001(source, district_transition_2001_2011, count_cols)
   pooled$census_year <- rep.int(2011L, nrow(pooled))
   pooled <- add_census_housing_shares(pooled)
-  pooled$owned_share_households <- if ("households_owned" %in% names(pooled)) {
-    safe_count_share(pooled$households_owned, pooled$households_total)
-  } else NA_real_
-  pooled$rented_share_households <- if ("households_rented" %in% names(pooled)) {
-    safe_count_share(pooled$households_rented, pooled$households_total)
-  } else NA_real_
-  pooled$computer_share_households <- safe_count_share(pooled$computer, pooled$households_total)
-  pooled$internet_computer_share_households <- safe_count_share(
-    pooled$computer_internet, pooled$households_total
-  )
-  pooled
+  add_census_housing_followup_shares(pooled)
 }
 
 build_census_housing_change_measures <- function(housing_2001, housing_2011) {

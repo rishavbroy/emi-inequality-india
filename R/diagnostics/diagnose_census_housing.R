@@ -121,7 +121,7 @@ summarise_census_housing_change_coverage <- function(housing_change) {
 build_census_housing_diagnostics <- function(
     h05_2001, h08_2001, h09_2001, h10_2001, h11_2001, h12_2001, h13_2001, housing_2001,
     hl04_2011, hl06_2011, hl07_2011, hl08_2011, hl09_2011, hl10_2011,
-    hl11_2011, hl12_2011, housing_2011, housing_change,
+    hl11_2011, hl12_2011, hl13_2011, housing_2011, housing_change,
     district_panel, cfg = list(), control_registry = NULL) {
   mechanism_registry <- census_housing_mechanism_registry()
   mechanism_panel <- prepare_census_housing_mechanism_panel(
@@ -144,7 +144,7 @@ build_census_housing_diagnostics <- function(
     ),
     source_validation_2011 = validate_census_housing_sources(
       hl07_2011, hl11_2011, hl12_2011, 2011L, hl04_2011, hl06_2011,
-      hl08_2011, hl09_2011, hl10_2011
+      hl08_2011, hl09_2011, hl10_2011, hl13_2011
     ),
     mechanism_registry = mechanism$registry,
     mechanism_sample_coverage = mechanism$sample_coverage,
