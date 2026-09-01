@@ -86,3 +86,12 @@ required_final_artifacts <- function() {
 missing_or_empty_files <- function(paths) {
   paths[!file.exists(paths) | file.info(paths)$size <= 0]
 }
+
+
+add_failure <- function(...) {
+  failures <<- c(failures, paste0(...))
+}
+
+is_false_env <- function(name, default = "true") {
+  tolower(trimws(Sys.getenv(name, default))) %in% c("0", "false", "no", "off")
+}

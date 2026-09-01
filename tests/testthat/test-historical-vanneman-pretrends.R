@@ -1080,6 +1080,35 @@ test_that("Vanneman amalgamation saver records source-specific geography", {
 })
 
 
+test_that("parent pretrend saver reuses canonical levels and changes instead of duplicating them", {
+  x <- list(
+    levels = data.frame(status = "shared"),
+    changes = data.frame(status = "shared"),
+    sample_coverage = data.frame(status = "parent"),
+    estimates = data.frame(status = "parent"),
+    joint_balance = data.frame(status = "parent"),
+    descendant_completeness = data.frame(status = "parent")
+  )
+  dir <- tempfile()
+  paths <- save_vanneman_pretrend_validation(
+    x, directory = dir, prefix = "vanneman_parent_pretrend",
+    persist_inputs = FALSE
+  )
+
+  expect_false(any(grepl("_(levels|changes)\\.csv$", basename(paths))))
+  expect_true(all(file.exists(paths)))
+  expect_setequal(
+    basename(paths),
+    c(
+      "vanneman_parent_pretrend_sample_coverage.csv",
+      "vanneman_parent_pretrend_balance.csv",
+      "vanneman_parent_pretrend_balance_joint.csv",
+      "vanneman_parent_pretrend_descendant_completeness.csv"
+    )
+  )
+})
+
+
 test_that("Vanneman geography comparison aligns coefficients and joint tests by design", {
   make_validation <- function(analysis_shift = 0, n = 10L) {
     list(

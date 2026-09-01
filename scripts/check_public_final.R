@@ -2,9 +2,6 @@
 
 source("scripts/public_output_contract.R", local = TRUE)
 
-is_false_env <- function(name, default = "true") {
-  tolower(trimws(Sys.getenv(name, default))) %in% c("0", "false", "no", "off")
-}
 require_application_samples <- !is_false_env("EMI_REQUIRE_APPLICATION_SAMPLES", Sys.getenv("EMI_RENDER_APPLICATION_SAMPLES", "true"))
 
 required_files <- required_final_documents(require_application_samples)

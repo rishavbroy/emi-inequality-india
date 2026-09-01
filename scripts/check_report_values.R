@@ -1,14 +1,12 @@
 # Check that current public documents use named report values backed by the targets graph.
 
 source("scripts/public_output_contract.R", local = TRUE)
+source("R/output/report_value_core.R", local = TRUE)
 
 args <- commandArgs(trailingOnly = TRUE)
 strict <- "--strict" %in% args
 allow_status_placeholders <- "--allow-status-placeholders" %in% args
 
-is_report_value_status <- function(value) {
-  is.list(value) && !is.null(value$status) && !is.null(value$reason)
-}
 
 extract_report_value_keys <- function(paths) {
   keys <- character()

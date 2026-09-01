@@ -26,9 +26,9 @@ analysis_deviation_note("The legacy hand-counts are preserved as prose/reference
 ```
 
 ```{r fuzzy-targets}
-fuzzy_cov <- analysis_target_csv("bench_fuzzy_matching", "fuzzy_matching_candidate_pair_coverage.csv")
+fuzzy_cov <- analysis_target_csv("diag_ext_fuzzy_matching", "fuzzy_matching_candidate_pair_coverage.csv")
 fuzzy_threshold <- analysis_target_csv("bench_fuzzy_matching", "fuzzy_matching_threshold_sensitivity.csv")
-fuzzy_reference <- analysis_target_csv("bench_fuzzy_matching", "fuzzy_matching_legacy_tuning_reference.csv")
+fuzzy_reference <- analysis_target_csv("diag_ext_fuzzy_matching", "fuzzy_matching_legacy_tuning_reference.csv")
 ```
 
 The current benchmark evaluates `r analysis_format_number(sum(fuzzy_cov$n_pairs, na.rm = TRUE), 0)` candidate pairs across `r analysis_format_number(nrow(fuzzy_cov), 0)` pair-source groups.

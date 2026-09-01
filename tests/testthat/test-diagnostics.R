@@ -269,6 +269,38 @@ test_that("fuzzy benchmarking uses active tracker candidate pairs beyond toy exa
 
 
 
+test_that("fuzzy benchmark persists only benchmark-specific artifacts", {
+  td_diag <- tempfile("fuzzy-diagnostics-")
+  td_bench <- tempfile("fuzzy-benchmark-")
+  tracker <- data.frame(
+    district_01 = "Old Name",
+    district_07 = "New Name",
+    district_17 = "New Name",
+    district_20 = "Newest Name"
+  )
+  diagnostics <- diagnose_fuzzy_matching(tracker, data.frame(), list())
+  diagnostic_manifest <- save_fuzzy_matching_diagnostics(diagnostics, td_diag)
+  benchmark_manifest <- save_fuzzy_matching_benchmark(
+    data.frame(method = "jw", threshold = 0.15), td_bench
+  )
+
+  expect_setequal(
+    basename(diagnostic_manifest$path),
+    c(
+      "fuzzy_matching_summary.csv", "fuzzy_matching_legacy_methods.csv",
+      "fuzzy_matching_troublesome_pairs.csv", "fuzzy_matching_candidate_pairs.csv",
+      "fuzzy_matching_join_status_counts.csv",
+      "fuzzy_matching_candidate_pair_coverage.csv",
+      "fuzzy_matching_legacy_tuning_reference.csv"
+    )
+  )
+  expect_identical(
+    basename(benchmark_manifest$path),
+    "fuzzy_matching_threshold_sensitivity.csv"
+  )
+})
+
+
 test_that("fuzzy benchmarking expands fallback source-key inventory into active candidates", {
   tracker <- data.frame(
     state_07 = c("A", "A", "B"),

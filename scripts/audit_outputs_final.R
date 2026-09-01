@@ -7,7 +7,6 @@ if (!file.exists(".pipeline-final-ok")) {
 }
 
 failures <- character()
-add_failure <- function(...) failures <<- c(failures, paste0(...))
 
 required_files <- required_final_artifacts()
 missing_required <- missing_or_empty_files(required_files)

@@ -3,15 +3,13 @@
 # still run when the system extractor is absent.
 
 source("R/diagnostics/rendered_text_checks.R")
+source("scripts/public_output_contract.R", local = TRUE)
 
 args <- commandArgs(trailingOnly = TRUE)
 is_final_check <- "--final" %in% args ||
   identical(normalizePath(Sys.getenv("EMI_CONFIG"), mustWork = FALSE), normalizePath("config/final.yml", mustWork = FALSE)) ||
   identical(basename(Sys.getenv("EMI_CONFIG")), "final.yml")
 
-is_false_env <- function(name, default = "true") {
-  tolower(trimws(Sys.getenv(name, default))) %in% c("0", "false", "no", "off")
-}
 check_application_samples <- !is_false_env("EMI_REQUIRE_APPLICATION_SAMPLES", Sys.getenv("EMI_RENDER_APPLICATION_SAMPLES", "true"))
 
 text_paths <- c(

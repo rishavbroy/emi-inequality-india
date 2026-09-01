@@ -1571,16 +1571,21 @@ build_vanneman_parent_pretrend_validation <- function(
 
 save_vanneman_pretrend_validation <- function(
     x, directory = "outputs/diagnostics/extended/instrument_relevance",
-    prefix = "vanneman_pretrend") {
+    prefix = "vanneman_pretrend", persist_inputs = TRUE) {
   paths <- c(
-    levels = file.path(directory, paste0(prefix, "_levels.csv")),
-    changes = file.path(directory, paste0(prefix, "_changes.csv")),
     sample_coverage = file.path(directory, paste0(prefix, "_sample_coverage.csv")),
     estimates = file.path(directory, paste0(prefix, "_balance.csv")),
     joint_balance = file.path(directory, paste0(prefix, "_balance_joint.csv"))
   )
-  write_diagnostic_csv(x$levels, paths[["levels"]])
-  write_diagnostic_csv(x$changes, paths[["changes"]])
+  if (isTRUE(persist_inputs)) {
+    input_paths <- c(
+      levels = file.path(directory, paste0(prefix, "_levels.csv")),
+      changes = file.path(directory, paste0(prefix, "_changes.csv"))
+    )
+    write_diagnostic_csv(x$levels, input_paths[["levels"]])
+    write_diagnostic_csv(x$changes, input_paths[["changes"]])
+    paths <- c(input_paths, paths)
+  }
   write_diagnostic_csv(x$sample_coverage, paths[["sample_coverage"]])
   write_diagnostic_csv(x$estimates, paths[["estimates"]])
   write_diagnostic_csv(x$joint_balance, paths[["joint_balance"]])

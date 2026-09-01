@@ -924,9 +924,12 @@ bins 1--5. The code therefore never takes an unweighted average of district
 treatment or IV scalars.
 
 The strict outputs remain `vanneman_pretrend_*`. The expanded outputs use the
-`vanneman_parent_pretrend_*` prefix. Both now report three predictors when
-available: eventual EMIE, the actual Census-2001 linguistic-distance instrument,
-and the reviewed historical LD_1991 measure. LD_1991 remains the more historically
+`vanneman_parent_pretrend_*` prefix. The parent comparison reuses the strict
+validation's canonical source `levels` and `changes` objects, so it persists only
+its comparison-specific coverage, estimates, joint tests, and descendant
+completeness instead of writing byte-identical prefixed copies. Both report three
+predictors when available: eventual EMIE, the actual Census-2001
+linguistic-distance instrument, and the reviewed historical LD_1991 measure. LD_1991 remains the more historically
 predetermined source; LD_2001 has broader support and is the instrument actually
 used by the main specification. Their common-support rows are retained so source
 coverage is not confused with predictor behavior.

@@ -7,7 +7,6 @@ args <- commandArgs(trailingOnly = TRUE)
 require_stamp <- "--require-final-stamp" %in% args
 
 failures <- character()
-add_failure <- function(...) failures <<- c(failures, paste0(...))
 
 if (require_stamp && !file.exists(".pipeline-final-ok")) {
   add_failure("Missing .pipeline-final-ok; run `make pipeline-final` successfully before rendering public outputs.")

@@ -37,9 +37,9 @@ target-generated candidate pairs from the active tracker and join-map
 objects.
 
 ``` r
-fuzzy_cov <- analysis_target_csv("bench_fuzzy_matching", "fuzzy_matching_candidate_pair_coverage.csv")
+fuzzy_cov <- analysis_target_csv("diag_ext_fuzzy_matching", "fuzzy_matching_candidate_pair_coverage.csv")
 fuzzy_threshold <- analysis_target_csv("bench_fuzzy_matching", "fuzzy_matching_threshold_sensitivity.csv")
-fuzzy_reference <- analysis_target_csv("bench_fuzzy_matching", "fuzzy_matching_legacy_tuning_reference.csv")
+fuzzy_reference <- analysis_target_csv("diag_ext_fuzzy_matching", "fuzzy_matching_legacy_tuning_reference.csv")
 ```
 
 The current benchmark evaluates 487 candidate pairs across 20
