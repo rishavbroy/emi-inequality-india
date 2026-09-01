@@ -233,6 +233,31 @@ analysis_design_census_mechanisms <- function(control_registry = NULL) {
   }))
 }
 
+
+analysis_design_economic_census_mechanisms <- function(control_registry = NULL) {
+  registry <- economic_census_mechanism_registry()
+  safe_bind_rows(lapply(seq_len(nrow(registry)), function(i) {
+    specs <- economic_census_mechanism_specifications(
+      outcome = registry$variable[[i]],
+      control_registry = control_registry
+    )
+    rows <- analysis_design_from_iv(
+      specs,
+      family = paste0("economic_census__", registry$outcome_id[[i]]),
+      estimator = "reduced_form+2sls+anderson_rubin",
+      estimand = "post_treatment_firm_mechanism",
+      inference = "state_clustered+anderson_rubin",
+      analysis_role = plain_chr(registry$mechanism_family[[i]])
+    )
+    rows$family <- "economic_census_mechanism"
+    rows$analysis_id <- paste(
+      "economic_census", registry$outcome_id[[i]], rows$specification_id,
+      sep = "__"
+    )
+    rows
+  }))
+}
+
 analysis_design_historical_first_stages <- function(control_registry = NULL) {
   registry <- historical_linguistic_first_stage_registry(control_registry)
   instruments <- c(
@@ -317,6 +342,7 @@ compile_analysis_design_registry <- function(
     analysis_design_c17(),
     analysis_design_dise(control_registry = control_registry),
     analysis_design_census_mechanisms(control_registry),
+    analysis_design_economic_census_mechanisms(control_registry),
     analysis_design_historical_first_stages(control_registry)
   ))
   out <- out[analysis_design_columns()]

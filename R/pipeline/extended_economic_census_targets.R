@@ -60,18 +60,19 @@ extended_economic_census_target_definitions <- function() {
       )
     ),
     tar_target(
-      diag_ext_economic_census_2005_files,
-      save_economic_census_2005_diagnostics(economic_census_2005_district_measures),
-      format = "file"
+      economic_census_diagnostics,
+      build_economic_census_diagnostics(
+        economic_census_2005_district_measures,
+        economic_census_2013_district_measures,
+        economic_census_2005_2013_changes,
+        district_panel,
+        cfg,
+        control_registry = census_2001_control_registry
+      )
     ),
     tar_target(
-      diag_ext_economic_census_2013_files,
-      save_economic_census_2013_diagnostics(economic_census_2013_district_measures),
-      format = "file"
-    ),
-    tar_target(
-      diag_ext_economic_census_change_files,
-      save_economic_census_change_diagnostics(economic_census_2005_2013_changes),
+      diag_ext_economic_census_files,
+      save_economic_census_diagnostics(economic_census_diagnostics),
       format = "file"
     )
   )

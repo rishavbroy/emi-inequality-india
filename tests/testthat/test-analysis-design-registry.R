@@ -26,6 +26,7 @@ test_that("analysis-design ontology inventories registered families without Cart
       "district_iv_diagnostic", "consumption_iv", "district_mechanism",
       "c17_mechanism", "dise_first_stage", "dise_weak_iv",
       "census_migration_mechanism", "census_housing_mechanism",
+      "economic_census_mechanism",
       "historical_first_stage", "historical_predetermined_first_stage"
     )
   )
@@ -40,6 +41,11 @@ test_that("analysis-design ontology inventories registered families without Cart
     nrow(preferred_district_mechanism_registry(mechanism_measures)) * 3L
   )
   expect_equal(sum(registry$family == "c17_mechanism"), nrow(census_c17_mechanism_registry()))
+  expect_equal(
+    sum(registry$family == "economic_census_mechanism"),
+    nrow(economic_census_mechanism_registry()) *
+      nrow(economic_census_mechanism_specifications(control_registry = controls))
+  )
 
   constructs <- dise_construct_registry()
   n_iv_designs <- nrow(iv_diagnostic_specification_registry(control_registry = controls))
