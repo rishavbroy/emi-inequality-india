@@ -14,6 +14,8 @@ The active extended source contract uses three official files under `data/raw/ns
 
 The DDI reports 572,254 cases in both Block 4 and Block 6. Production ingestion therefore requires a complete one-to-one person-key universe across those two blocks. It also requires the common NSS design fields (sector, sub-round, sub-sample, NSS region, stratum, sub-stratum, FSU, second-stage stratum) and the combined multiplier `wgt_combined` to be present, with positive finite weights.
 
+The official SPSS files store many discrete NSS codes as character-formatted variables. Production therefore normalizes published codes through the shared character-safe `num()` helper rather than applying `as.numeric()` directly to `haven_labelled` vectors. This preserves the underlying posted code values while avoiding accidental interpretation of value labels.
+
 Block 4 exposes age, sex, education, usual principal activity status, NIC-2004, NCO-2004, and subsidiary-activity fields. Block 6 exposes temporary absence, migration-status/history fields, last usual place of residence, reason for leaving, and usual principal activity fields. These are source variables only at this stage; no district labor outcome is registered yet.
 
 ## Geography and inference boundary
