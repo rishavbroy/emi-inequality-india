@@ -131,3 +131,115 @@ test_that("NSS64 lineage fails closed on inconsistent or non-deterministic geogr
   )
   expect_error(nss64_reviewed_lineage_map(crosswalk), "no deterministic reviewed")
 })
+
+test_that("NSS64 design identifiers remain nested within source districts", {
+  rows <- data.frame(
+    source_district_code = c("01101", "01102"),
+    state_code = "01", sector = 1, stratum = 1, sub_stratum = 1, fsu = 1001,
+    stringsAsFactors = FALSE
+  )
+  expect_equal(length(unique(nss64_design_psu_key(rows))), 2L)
+  expect_equal(length(unique(nss64_design_stratum_key(rows))), 2L)
+})
+
+test_that("NSS64 support rule excludes only genuinely thin target designs", {
+  support <- data.frame(
+    target_unit_2001 = c("a", "b", "c"),
+    n_fsu = c(4, 5, 8),
+    kish_effective_n = c(150, 99, 100),
+    stringsAsFactors = FALSE
+  )
+  out <- nss64_target_support_classification(support)
+  expect_equal(out$preferred_eligible, c(FALSE, FALSE, TRUE))
+  expect_equal(out$support_reason[[1L]], "too_few_psus")
+  expect_equal(out$support_reason[[2L]], "low_kish_effective_n")
+  expect_true(is.na(out$support_reason[[3L]]))
+})
+
+test_that("NSS64 employment follows usual principal-plus-subsidiary status", {
+  flags <- nss64_labor_status_flags(
+    c(91, 81, 31, 51),
+    c(31, NA, 51, NA)
+  )
+  expect_equal(flags$employed, c(TRUE, FALSE, TRUE, TRUE))
+  expect_equal(flags$unemployed, c(FALSE, TRUE, FALSE, FALSE))
+  expect_equal(flags$regular_salaried, c(TRUE, FALSE, TRUE, FALSE))
+})
+
+test_that("NSS64 labor registry is compact and source-defined", {
+  registry <- nss64_outcome_registry()
+  expect_equal(nrow(registry), 5L)
+  expect_false(anyDuplicated(registry$outcome_id))
+  expect_setequal(
+    registry$outcome_id,
+    c(
+      "labor_force_participation_age15plus",
+      "employment_rate_age15plus",
+      "unemployment_rate_age15plus",
+      "regular_salaried_share_employed_age15plus",
+      "migrant_from_last_upr_share_age15plus"
+    )
+  )
+})
+
+test_that("NSS64 usual-status outcomes use documented denominator populations", {
+  rows <- data.frame(
+    age15plus = rep(TRUE, 5),
+    employed = c(TRUE, TRUE, FALSE, FALSE, FALSE),
+    unemployed = c(FALSE, FALSE, TRUE, FALSE, FALSE),
+    labor_force = c(TRUE, TRUE, TRUE, FALSE, FALSE),
+    regular_salaried = c(FALSE, TRUE, FALSE, FALSE, FALSE),
+    migrant_from_last_upr = c(FALSE, TRUE, FALSE, TRUE, FALSE)
+  )
+  expect_equal(nss64_outcome_domain(rows, "labor_force_participation_age15plus")$value, rows$labor_force)
+  expect_equal(
+    nss64_outcome_domain(rows, "unemployment_rate_age15plus")$rows,
+    c(TRUE, TRUE, TRUE, FALSE, FALSE)
+  )
+  expect_equal(
+    nss64_outcome_domain(rows, "regular_salaried_share_employed_age15plus")$rows,
+    c(TRUE, TRUE, FALSE, FALSE, FALSE)
+  )
+})
+
+test_that("NSS64 design-based district estimates preserve thin districts but flag support", {
+  people <- data.frame(
+    person_key = paste0("p", 1:12),
+    source_district_code = rep(c("01101", "01102"), each = 6),
+    state_code = "01", district_code = rep(c("01", "02"), each = 6),
+    sector = 1, sub_round = 1, sub_sample = 1, nss_region = "011",
+    stratum = rep(c(1, 2), each = 6), sub_stratum = 1,
+    fsu = c(1:6, 7, 7, 8, 8, 9, 10), second_stage_stratum = 1, household_no = 1:12,
+    person_no = 1, survey_weight = 1,
+    age = 20,
+    usual_principal_status = c(31, 31, 81, 91, 91, 91, 11, 31, 51, 81, 91, 91),
+    usual_subsidiary_status = c(NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA),
+    target_unit_2001 = rep(c("pc2001__01__01", "pc2001__01__02"), each = 6),
+    lineage_status = "resolved_reviewed_deterministic",
+    stringsAsFactors = FALSE
+  )
+  migration <- people[c(
+    "person_key", "state_code", "district_code", "sector", "sub_round", "sub_sample",
+    "nss_region", "stratum", "sub_stratum", "fsu", "second_stage_stratum",
+    "household_no", "person_no", "survey_weight"
+  )]
+  migration$enumeration_differs_last_upr <- c(1, 2, 2, 2, 2, 2, 1, 1, 2, 2, 2, 2)
+  support <- data.frame(
+    target_unit_2001 = c("pc2001__01__01", "pc2001__01__02"),
+    n_source_districts = 1, n_sample_people = 6, n_fsu = c(6, 4),
+    sum_person_weight = 6, kish_effective_n = c(6, 6),
+    n_rural_people = 6, n_urban_people = 0,
+    stringsAsFactors = FALSE
+  )
+  registry <- nss64_outcome_registry()[1:2, , drop = FALSE]
+  out <- estimate_nss64_district_outcomes(
+    people, migration, support, registry,
+    rule = data.frame(min_fsu = 5L, min_kish_effective_n = 1)
+  )
+  expect_equal(nrow(out$estimates), 4L)
+  lf <- out$estimates[out$estimates$outcome_id == "labor_force_participation_age15plus", ]
+  expect_equal(lf$estimate[lf$target_unit_2001 == "pc2001__01__01"], 0.5, tolerance = 1e-8)
+  expect_true(lf$analysis_eligible[lf$target_unit_2001 == "pc2001__01__01"])
+  expect_false(lf$analysis_eligible[lf$target_unit_2001 == "pc2001__01__02"])
+  expect_true(is.finite(lf$estimate[lf$target_unit_2001 == "pc2001__01__02"]))
+})

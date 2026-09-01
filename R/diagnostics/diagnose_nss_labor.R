@@ -125,19 +125,6 @@ attach_nss64_reviewed_lineage <- function(persons, full_reviewed_crosswalk) {
   x
 }
 
-nss64_design_psu_key <- function(x) {
-  x <- safe_df(x)
-  required <- c("state_code", "sector", "fsu")
-  missing <- setdiff(required, names(x))
-  if (length(missing)) {
-    stop("NSS64 rows lack PSU fields: ", paste(missing, collapse = ", "), call. = FALSE)
-  }
-  interaction(
-    plain_chr(x$state_code), num(x$sector), num(x$fsu),
-    drop = TRUE, lex.order = TRUE
-  )
-}
-
 summarize_nss64_lineage_support <- function(lineaged_persons) {
   x <- safe_df(lineaged_persons)
   required <- c(
@@ -211,15 +198,31 @@ build_nss64_source_diagnostics <- function(
   )
 }
 
-save_nss64_diagnostics <- function(x, root = "outputs/diagnostics/extended/labor") {
+save_nss64_diagnostics <- function(
+    x, district_outcomes = NULL, root = "outputs/diagnostics/extended/labor") {
   dir.create(root, recursive = TRUE, showWarnings = FALSE)
   paths <- c(
     source_validation = file.path(root, "nss64_source_validation.csv"),
     lineage_support = file.path(root, "nss64_lineage_support.csv"),
     target_support = file.path(root, "nss64_target_support.csv")
   )
+  target_support <- x$target_support
+  if (!is.null(district_outcomes)) {
+    target_support <- district_outcomes$target_support
+    paths <- c(
+      paths,
+      outcome_registry = file.path(root, "nss64_outcome_registry.csv"),
+      district_outcomes = file.path(root, "nss64_district_outcomes.csv")
+    )
+    utils::write.csv(
+      district_outcomes$registry, paths[["outcome_registry"]], row.names = FALSE, na = ""
+    )
+    utils::write.csv(
+      district_outcomes$estimates, paths[["district_outcomes"]], row.names = FALSE, na = ""
+    )
+  }
   utils::write.csv(x$source_validation, paths[["source_validation"]], row.names = FALSE, na = "")
   utils::write.csv(x$lineage_support, paths[["lineage_support"]], row.names = FALSE, na = "")
-  utils::write.csv(x$target_support, paths[["target_support"]], row.names = FALSE, na = "")
+  utils::write.csv(target_support, paths[["target_support"]], row.names = FALSE, na = "")
   unname(paths)
 }

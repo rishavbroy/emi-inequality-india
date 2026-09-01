@@ -37,8 +37,16 @@ extended_labor_target_definitions <- function() {
       )
     ),
     tar_target(
+      nss64_district_outcomes,
+      estimate_nss64_district_outcomes(
+        nss64_lineaged_usual_activity,
+        nss64_migration_source,
+        nss64_diagnostics$target_support
+      )
+    ),
+    tar_target(
       diag_ext_nss64_files,
-      save_nss64_diagnostics(nss64_diagnostics),
+      save_nss64_diagnostics(nss64_diagnostics, nss64_district_outcomes),
       format = "file"
     )
   )
