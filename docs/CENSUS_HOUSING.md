@@ -2,8 +2,10 @@
 
 ## Scope
 
-The first housing phase builds a longitudinal district diagnostic from three direct conceptual pairs:
+The housing diagnostic now builds longitudinal district measures from five direct conceptual pairs:
 
+- Census 2001 H-05 and Census 2011 HL-04: household size and number of dwelling rooms;
+- Census 2001 H-08 and Census 2011 HL-06: main drinking-water source and source location;
 - Census 2001 H-09 and Census 2011 HL-07: main source of lighting;
 - Census 2001 H-12 and Census 2011 HL-11: household electricity and latrine availability within the drinking-water table;
 - Census 2001 H-13 and Census 2011 HL-12: banking services and specified household assets.
@@ -15,6 +17,22 @@ The module is an extended diagnostic. It does not add post-treatment housing var
 Census 2001 measures are read directly on the 593-district Census-2001 geography. Census 2011 district counts are mapped backward only through `build_complete_deterministic_transition_2011_to_2001()`. A 2001 parent is retained only when every contributing 2011 district is wholly and deterministically assigned to that parent. Counts are summed before any share is computed.
 
 This is the same administrative-count rule used by the migration and worker modules. Fractional or incomplete 2011 reconstructions are withheld rather than interpreted as complete household totals.
+
+## Dwelling rooms and conservative overcrowding
+
+H-05 and HL-04 publish household size crossed with number of dwelling rooms. Every retained row must partition its household total exactly across no exclusive room, one, two, three, four, five, and six-or-more rooms, and the detailed household-size rows must reproduce the all-households room distribution. HL-04 additionally partitions the all-household room distribution by ownership status; owned, rented, and other tenure must reproduce the total exactly.
+
+The directly comparable longitudinal margins are no-exclusive-room and one-room household shares. The module also reports a deliberately conservative lower bound for the standard greater-than-two-persons-per-room overcrowding concept. Because household size is grouped at `6-8` and `9+`, ambiguous cells are not classified as overcrowded. Only cells that necessarily exceed two persons per room for every household represented in that published cell enter the numerator. `No exclusive room` is reported separately rather than assigned an artificial persons-per-room value.
+
+The attached 2001 H-05 files contain 590 district rows. Chandigarh (`04/01`), Daman (`26/01`), and Lakshadweep (`31/01`) are absent, while the other active 2001 housing sources contain 593 districts. H-05 is therefore treated as a validated subset: missing baseline room/crowding values remain missing without truncating the rest of the housing panel. HL-04 contains all 640 Census-2011 districts. Ownership shares are retained as 2011-only descriptors because H-05 does not provide the same ownership dimension.
+
+## Drinking-water source and location
+
+H-08 and HL-06 have directly comparable location rows: total, within premises, near premises, and away. Those location rows must reproduce the total household count and each source count exactly before any harmonization.
+
+For longitudinal source comparisons the richer 2011 categories are collapsed only where the 2001 table has an exact broader counterpart: treated plus untreated tap water becomes `tap`; covered plus uncovered wells becomes `well`; handpump plus tubewell/borehole is retained as a combined groundwater-access category; river/canal plus tank/pond/lake becomes `surface water`. Spring and residual other-source counts remain source-accounting components but are not separately promoted into the compact longitudinal outcome set.
+
+The module deliberately does **not** label the resulting 2001/2011 source measure as `improved drinking water`. H-08 does not distinguish covered from uncovered wells, so applying a modern improved/unimproved classification would create false longitudinal comparability. The retained longitudinal margins are tap, well, handpump/tubewell, surface-water, within-premises, and away-source household shares. Both H-08 and HL-06 have complete native district coverage (593 and 640 districts respectively).
 
 ## Source accounting
 
@@ -28,7 +46,7 @@ Within each census year, the module additionally checks:
 2. the lighting-table electricity count against the utility-table electricity count district by district;
 3. H-09/HL-07 household totals against H-13/HL-12 totals district by district.
 
-The attached official 2001 files reveal a source-coverage exception: H-09 and H-13 contain all 593 Census-2001 districts, while H-12 has 587 district rows and omits Andhra Pradesh district codes 18-23 (Prakasam, Nellore, Cuddapah, Kurnool, Anantapur, and Chittoor). H-12 is therefore validated as a subset of H-09 on its 587 observed districts; it is not used to truncate the otherwise complete 2001 housing panel. Baseline latrine values, and consequently latrine changes, remain missing where H-12 is absent.
+The attached official 2001 files reveal two source-coverage exceptions. H-09, H-08, and H-13 contain all 593 Census-2001 districts. H-12 has 587 district rows and omits Andhra Pradesh district codes 18-23 (Prakasam, Nellore, Cuddapah, Kurnool, Anantapur, and Chittoor). H-05 has 590 district rows and omits Chandigarh (`04/01`), Daman (`26/01`), and Lakshadweep (`31/01`). H-12 and H-05 are therefore validated as subsets of the full household universe; neither is used to truncate otherwise-supported outcomes. Baseline latrine and room/crowding values, and their corresponding changes, remain missing where their source tables are absent.
 
 These cross-table identities are source-level parser checks, not model assumptions.
 
@@ -60,4 +78,4 @@ These regressions use **changes**, not 2011 levels, so the estimand is local imp
 
 ## Deferred tables
 
-H-05/HL-04, H-08/HL-06, H-10/HL-08+HL-09, H-11/HL-10, and HL-13 remain acquisition-only in this phase. Their concepts are useful, but each requires its own denominator/category harmonization. Keeping them out of the first patch prevents same-number or superficially similar table labels from being mistaken for an already-validated longitudinal estimand.
+H-10/HL-08+HL-09, H-11/HL-10, and HL-13 remain acquisition-only in this phase. Their concepts are useful, but each requires its own denominator/category harmonization. Keeping them out of the first patch prevents same-number or superficially similar table labels from being mistaken for an already-validated longitudinal estimand.
