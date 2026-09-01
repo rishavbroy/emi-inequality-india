@@ -183,6 +183,7 @@ def main() -> None:
             shutil.copyfile(source, destination)
             records.append(
                 {
+                    "schema_version": 2,
                     "source_id": args.source_id,
                     "block_id": block_id,
                     "relative_path": str(destination.relative_to(ROOT)),
