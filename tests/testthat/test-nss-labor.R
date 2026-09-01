@@ -483,3 +483,24 @@ test_that("shared NSS labor registry separates near-treatment and early-post wav
     setdiff(nss64$outcome_id, "migrant_from_last_upr_share_age15plus")
   )
 })
+
+test_that("PLFS 2017-18 freezes the official annual usual-status source contract", {
+  x <- plfs_2017_18_contract()
+  expect_identical(x$reference_id[[1L]], "DDI-IND-CSO-PLFS-2017-18")
+  expect_equal(x$first_visit_person_rows[[1L]], 433339L)
+  expect_equal(x$first_visit_household_rows[[1L]], 102113L)
+  expect_equal(x$revisit_person_rows[[1L]], 272560L)
+  expect_equal(x$revisit_household_rows[[1L]], 66745L)
+  expect_identical(x$annual_usual_status_source[[1L]], "first_visit_person")
+  expect_identical(x$multiplier_field[[1L]], "MULT_per_fv")
+  expect_identical(x$principal_status_field[[1L]], "b5pt1q3_per_fv")
+  expect_identical(x$subsidiary_status_field[[1L]], "b5pt2q3_per_fv")
+})
+
+test_that("PLFS long-run registry reuses the shared usual-status estimands", {
+  plfs <- plfs_2017_18_outcome_registry()
+  nss66 <- nss66_outcome_registry()
+  expect_setequal(plfs$outcome_id, nss66$outcome_id)
+  expect_identical(unique(plfs$temporal_role), "long_run_post")
+  expect_false("migrant_from_last_upr_share_age15plus" %in% plfs$outcome_id)
+})

@@ -62,6 +62,10 @@ nss66_outcome_registry <- function() {
   nss_labor_outcome_registry("early_post", include_migration = FALSE)
 }
 
+plfs_2017_18_outcome_registry <- function() {
+  nss_labor_outcome_registry("long_run_post", include_migration = FALSE)
+}
+
 nss_labor_employed_status_codes <- function() c(11, 12, 21, 31, 41, 51)
 nss_labor_unemployed_status_codes <- function() 81
 
