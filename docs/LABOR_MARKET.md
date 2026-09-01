@@ -58,7 +58,7 @@ The next wave is NSS 66 Schedule 10 (July 2009-June 2010). The official source i
 
 The DDI contract requires the schedule's common person/design fields and the all-subround combined `WEIGHT` variable, plus age/demographics, principal activity status/NIC/NCO and subsidiary activity status/NIC/NCO. Geography is taken from the schedule fields themselves: `State_Region` is the three-digit state+NSS-region code (two-digit state followed by one region digit), and `District` is the two-digit survey district code. The catalog-added `STATE`, `DISTRICT_CODE`, and `HHID` foreign-key helper fields are deliberately not part of the analytical contract because they are redundant with the schedule geography/person keys and their numeric equality is not documented as a source invariant. The official catalog defines `WEIGHT` as the weight for all-subround combined estimation; `WEIGHT_SR` is reserved for subround-specific estimates.
 
-Production does not implement a repository-specific `.Nesstar` parser. Conversion should use the maintained `nesstar-converter` package (pinned to a reviewed release when the converted files are materialized), which reads `.Nesstar` with companion DDI metadata and exports open tabular formats. The DDI validation target is active now; district estimation remains blocked until converted F4/F5/F6 tables have been materialized and inspected.
+Production does not implement a repository-specific `.Nesstar` parser. Conversion uses the maintained `nesstar-converter` package pinned in the source contract, which reads `.Nesstar` with companion DDI metadata and exports open tabular formats. The materialized F4/F5/F6 source has now passed the real canonical-person and reviewed-lineage gate, so the four predeclared NSS66 usual-activity district outcomes run through the same survey-design/support estimator as NSS64 whenever the local materialization is present.
 
 ### NSS66 conversion and canonical person adapter
 
@@ -84,19 +84,28 @@ Urban blank `Sub_Stratum_No` values are represented internally as `__none__`,
 consistent with the Round-66 design's lack of urban sub-stratification; rural
 blank sub-strata remain invalid.
 
-The extended audit now treats materialization as an explicit optional state. Before
+The extended audit treats materialization as an explicit optional state. Before
 conversion it writes `nss66_materialization.csv` with `not_materialized` status
 and remains green. If any contracted block or sidecar exists without the complete
 set, the audit fails rather than silently using a partial conversion. Once all
 three blocks and the conversion manifest are present, the audit automatically
-runs the real F4/F5/F6 canonical join and same-round lineage validation and writes
-`nss66_source_validation.csv`. The inspector also recognizes the narrowly defined
-legacy sidecar written by the original NSS66-only materializer (`file_id`, path,
-row/byte/hash, converter version), derives only its missing source/package fields
-from the pinned current contract, and labels it `legacy_v1` in diagnostics. Unknown
-or partial manifest schemas remain fatal. Newly materialized sidecars carry an
-explicit schema version. District outcomes remain deliberately inactive until
-those reviewer-visible diagnostics have been inspected.
+runs the real F4/F5/F6 canonical join, same-round lineage validation, and the four
+predeclared early-post district outcomes. The inspector also recognizes the
+narrowly defined legacy sidecar written by the original NSS66-only materializer
+(`file_id`, path, row/byte/hash, converter version), derives only its missing
+source/package fields from the pinned current contract, and labels it `legacy_v1`
+in diagnostics. Unknown or partial manifest schemas remain fatal. Newly
+materialized sidecars carry an explicit schema version.
+
+The realized source gate now passes on 459,784 unique persons with positive
+weights throughout; about 97.9 percent of persons resolve through the deterministic
+same-round district lineage. NSS66 therefore uses the unchanged predeclared
+5-FSU/Kish-100 preferred-support rule and recomputes support separately on each
+registered denominator, exactly as NSS64 does. The audit writes
+`nss66_source_validation.csv`, `nss66_lineage_support.csv`,
+`nss66_target_support.csv`, `nss66_outcome_registry.csv`, and
+`nss66_district_outcomes.csv`. Thin but estimable districts remain visible and
+are flagged rather than deleted.
 
 The district estimator is now wave-invariant. NSS64 keeps its five registered
 outcomes, including migration, and its `near_treatment_reference` role. NSS66
