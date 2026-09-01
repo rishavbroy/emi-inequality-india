@@ -87,24 +87,8 @@ build_consumption_survey_design <- function(lineaged_households) {
   consumption_survey_design_from_rows(consumption_design_rows(lineaged_households))
 }
 
-with_consumption_survey_adjustment <- function(expr) {
-  old_options <- options(survey.lonely.psu = "adjust", survey.adjust.domain.lonely = TRUE)
-  on.exit(options(old_options), add = TRUE)
-  withCallingHandlers(
-    expr,
-    warning = function(w) {
-      # survey deliberately warns for domain-level lonely PSUs even when the
-      # requested adjustment is applied. Muffle only that handled condition so
-      # strict builds remain warning-clean; all other warnings still propagate.
-      if (grepl("has only one PSU at stage", conditionMessage(w), fixed = TRUE)) {
-        invokeRestart("muffleWarning")
-      }
-    }
-  )
-}
-
 with_consumption_quantile_adjustment <- function(expr) {
-  with_consumption_survey_adjustment(
+  with_survey_lonely_psu_adjustment(
     withCallingHandlers(
       expr,
       warning = function(w) {
@@ -394,7 +378,7 @@ estimate_consumption_district_svymean <- function(rows, design, support, rule) {
   x <- rows
   x$.welfare_value <- consumption_welfare_value(x$real_mpce, rule$transform[[1L]])
   outcome_design <- update(design, .welfare_value = x$.welfare_value)
-  result <- with_consumption_survey_adjustment(survey::svyby(
+  result <- with_survey_lonely_psu_adjustment(survey::svyby(
     ~.welfare_value,
     ~target_unit_2001,
     outcome_design,
@@ -496,7 +480,7 @@ consumption_distribution_svyby <- function(design, rule) {
     multicore = consumption_domain_multicore()
   )
   with_consumption_domain_cores(
-    with_consumption_survey_adjustment(do.call(survey::svyby, args))
+    with_survey_lonely_psu_adjustment(do.call(survey::svyby, args))
   )
 }
 
@@ -568,7 +552,7 @@ estimate_consumption_district_svyquantile <- function(rows, design, support, rul
 
   if (length(thin)) {
     thin_design <- subset(outcome_design, target_unit_2001 %in% thin)
-    point_result <- with_consumption_survey_adjustment(survey::svyby(
+    point_result <- with_survey_lonely_psu_adjustment(survey::svyby(
       ~.welfare_value,
       ~target_unit_2001,
       thin_design,

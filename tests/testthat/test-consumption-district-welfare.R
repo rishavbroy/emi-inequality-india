@@ -131,7 +131,7 @@ test_that("welfare registry keeps thin quantile points but gates uncertainty on 
 
   rows <- consumption_design_rows(x[x$target_unit_2001 == "a", , drop = FALSE])
   design <- consumption_survey_design_from_rows(rows)
-  expect_warning(direct_median <- with_consumption_survey_adjustment(survey::svyquantile(
+  expect_warning(direct_median <- with_survey_lonely_psu_adjustment(survey::svyquantile(
     ~real_mpce, design, quantiles = 0.5, ci = TRUE, interval.type = "xlogit",
     qrule = "math", na.rm = TRUE
   )), NA)
