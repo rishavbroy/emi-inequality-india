@@ -114,3 +114,11 @@ registers the same four usual-status labor outcomes without migration and with
 reviewed 2009-10 Type-2 consumption bridge on the same state/district survey
 frame, accepting only resolved one-to-one mappings. This avoids maintaining a
 second 2009-10 geography adjudication system for labor data.
+
+### Realized NSS66 support and PLFS long-run handoff
+
+The activated NSS66 wave produces finite district estimates and design standard errors for all four registered outcomes in 584 Census-2001 targets. Under the support rule frozen before outcome inspection (at least 5 FSUs and Kish effective N at least 100 on the estimand-specific denominator), preferred coverage is 471 targets for labor-force participation and employment, 244 for unemployment, and 235 for regular-salaried share. The thinner unemployment and employment-composition coverage is retained as a support diagnostic rather than used to retune the rule after seeing results. NSS66 is therefore closed as the registered `early_post` labor wave.
+
+The next long-run wave is PLFS 2017-18. The official PLFS catalog identifies four files: 433,339 first-visit persons (`hh_per_fv_2017-18`), 102,113 first-visit households (`hhfv_2017-18`), 272,560 revisit persons (`hh_per_rv_2017-18`), and 66,745 revisit households (`hh_rv_2017-18`). The first-visit person file contains Block 5 usual principal and subsidiary status (`b5pt1q3_per_fv`, `b5pt2q3_per_fv`) and the published sub-sample multiplier `MULT_per_fv`. The revisit person file is organized around Block 6 current-weekly-status/activity fields. Accordingly, the annual usual-status long-run outcomes are predeclared to use the first-visit person universe only; revisit records are not pooled into that universe. This preserves the same principal-plus-subsidiary estimands used for NSS64/NSS66 while keeping PLFS current-weekly-status and wage analyses as separate future outcome families.
+
+`data/metadata/plfs_labor_contracts.csv` freezes this source choice, official case counts, field names, and `long_run_post` temporal role before local PLFS ingestion is activated. The next implementation gate is source inspection of the local 2017-18 files and multiplier/design semantics, followed by a thin PLFS canonical adapter into the existing shared NSS-labor estimation interface.
