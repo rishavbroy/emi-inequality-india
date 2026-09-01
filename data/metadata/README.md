@@ -82,3 +82,7 @@ See `docs/DISE_TREATMENTS.md` for construction and scope.
 `dise_archive_registry.csv` records the round-specific Teacher sheet for 2005-06 through 2013-14. The 2014-15 and 2015-16 summary sheets co-locate teacher and school-quality counts, so those rows intentionally leave `teacher_sheet` blank.
 
 DISE metadata files used by the `targets` pipeline are declared as explicit `format = "file"` dependencies before parsing. This ensures incremental builds invalidate cached parsed metadata when a registry, crosswalk, publication check, or report-language CSV changes.
+
+### Census 2011 household mechanisms
+
+HH-08, HH-10, and HH-11 are active extended-diagnostic sources under `data/raw/census_2011/households/`. `R/io/read_census_households.R` validates each table's published accounting and `R/measures/build_census_households.R` reconciles their household universes before using the shared complete deterministic 2011-to-2001 count bridge. The branch is descriptive in this phase; it does not add post-treatment HH variables to preferred controls or automatically create another weak-IV outcome family.

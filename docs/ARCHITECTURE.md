@@ -75,9 +75,11 @@ All public models, tables, maps, diagnostics, processed data, paper outputs, pos
 
 ## Census mechanism diagnostics
 
-Census migration, worker, and housing/living-standard modules share the administrative-count harmonization layer in `R/measures/census_admin_counts.R`. Census-2011 counts are aggregated to Census-2001 parents only after the common complete deterministic transition rule has certified full parent reconstruction; all ratios are computed after count pooling.
+Census migration, worker, housing/living-standard, and household-mechanism modules share the administrative-count harmonization layer in `R/measures/census_admin_counts.R`. Census-2011 counts are aggregated to Census-2001 parents only after the common complete deterministic transition rule has certified full parent reconstruction; all ratios are computed after count pooling.
 
 The housing module keeps source decoding in `R/io/read_census_housing.R`, measure construction in `R/measures/build_census_housing.R`, and output-only QA in `R/diagnostics/diagnose_census_housing.R`. It is an extended diagnostic dependency, not a preferred-model control dependency.
+
+The 2011 HH-08/HH-10/HH-11 branch follows the same boundary: `R/io/read_census_households.R` decodes and validates table-specific accounting, `R/measures/build_census_households.R` reconciles the independent household universes and pools counts through the shared deterministic transition, and `R/diagnostics/diagnose_census_households.R` persists only the harmonized measure table plus source reconciliation. HH variables are post-treatment descriptors and do not enter preferred controls or a new estimator by default.
 
 ## Strict final mode
 
