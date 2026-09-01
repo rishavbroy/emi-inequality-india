@@ -38,19 +38,15 @@ test_that("rendered and archived artifacts are treated as binary by Git", {
 })
 
 test_that("shared Census transition is a first-class pipeline dependency", {
-  target_graph <- repo_target_definition_text()
-  declaration <- paste0(
-    "tar_target(\n    district_transition_2001_2011,\n",
-    "    district_lineage$district_transition_2001_2011\n  )"
-  )
-  expect_match(target_graph, declaration, fixed = TRUE)
-
-  nested_access <- gregexpr(
+  manifest <- repo_target_manifest()
+  expect_equal(sum(manifest$name == "district_transition_2001_2011"), 1L)
+  expect_match(
+    repo_target_command("district_transition_2001_2011"),
     "district_lineage$district_transition_2001_2011",
-    target_graph, fixed = TRUE
-  )[[1L]]
-  expect_equal(sum(nested_access > 0L), 1L)
+    fixed = TRUE
+  )
 
+  target_graph <- repo_target_definition_text()
   for (consumer in c(
     "build_consumption_lineage_reference",
     "build_census_age_6_13_anchors",

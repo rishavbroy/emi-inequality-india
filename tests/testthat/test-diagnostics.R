@@ -2501,12 +2501,10 @@ test_that("pretrend consumption rounds are validation-gated core welfare inputs"
 })
 
 test_that("production CPI-IW history follows the registered consumption window", {
-  targets_file <- paste(readLines(file.path(
-    Sys.getenv("EMI_PROJECT_ROOT", unset = "."), "_targets.R"
-  ), warn = FALSE), collapse = "\n")
+  command <- repo_target_command("raw_price_sources")
 
   expect_match(
-    targets_file,
+    command,
     "cpi_iw_estimation_start = consumption_price_window$start_period[[1L]]",
     fixed = TRUE
   )
