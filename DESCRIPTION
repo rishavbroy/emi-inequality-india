@@ -9,6 +9,8 @@ Encoding: UTF-8
 Imports:
     targets,
     ps,
+    grid,
+    parallel,
     yaml,
     dplyr,
     ggplot2,
@@ -31,11 +33,13 @@ Imports:
     modelsummary,
     kableExtra,
     stringdist,
+    igraph,
     magick,
     broom,
     readODS,
     jsonlite,
     XML,
+    xml2,
     data.table,
     car,
     knitr

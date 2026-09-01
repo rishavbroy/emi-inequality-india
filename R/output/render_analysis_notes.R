@@ -35,6 +35,24 @@ list_analysis_runtime_input_files <- function(root = ".") {
   normalizePath(sort(unique(files)), mustWork = TRUE)
 }
 
+
+#' run Quarto for one analysis note
+#'
+#' Quarto is a Deno launcher and can occasionally terminate with SIGSEGV
+#' (shell status 139) before document execution begins. Retry that process-level
+#' crash once, but never retry ordinary render/knitr/pandoc failures.
+#'
+#' @return Integer process status.
+run_analysis_quarto_render <- function(qmd_basename, runner = system2) {
+  args <- c("render", qmd_basename, "--to", "gfm")
+  status <- runner("quarto", args)
+  if (identical(as.integer(status), 139L)) {
+    message("Quarto exited with status 139; retrying analysis render once: ", qmd_basename)
+    status <- runner("quarto", args)
+  }
+  as.integer(status)
+}
+
 #' render one analysis notebook to GitHub-flavored Markdown
 #'
 #' @return Path to the rendered Markdown file.
@@ -50,7 +68,7 @@ render_analysis_markdown_file <- function(qmd, runtime_inputs = character()) {
   old_wd <- getwd()
   on.exit(setwd(old_wd), add = TRUE)
   setwd(dirname(qmd))
-  status <- system2("quarto", c("render", basename(qmd), "--to", "gfm"))
+  status <- run_analysis_quarto_render(basename(qmd))
   if (!identical(status, 0L)) stop("quarto render failed for ", qmd, " with status ", status, call. = FALSE)
 
   out <- sub("[.]qmd$", ".md", qmd)
