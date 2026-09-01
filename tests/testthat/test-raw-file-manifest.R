@@ -861,5 +861,5 @@ test_that("NSS64 employment and migration source files use the organized NSS nam
     setNames(rows$expected_size_bytes, rows$file_id)[c("nss64_eum_ddi", "nss64_eum_block4", "nss64_eum_block6")],
     c(nss64_eum_ddi = 879929, nss64_eum_block4 = 178944715, nss64_eum_block6 = 160789355)
   )
-  expect_false(any(rows$required_for_current_pipeline))
+  expect_false(any(as.logical(rows$required_for_current_pipeline)))
 })
