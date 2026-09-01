@@ -102,3 +102,5 @@ NSS66 employment/unemployment registers both the official DDI and canonical `sur
   exact F4/F5/F6 case counts, signature columns, and gitignored interim output
   paths used by `scripts/materialize_nesstar.py nss66_eus`. The converted CSVs are
   reproducible local intermediates, not tracked raw data.
+
+`plfs_labor_contracts.csv` freezes official PLFS wave structure before ingestion: catalog reference/case counts, first-visit versus revisit roles, annual usual-status source choice, design/geography fields, multiplier field, and principal/subsidiary status fields. It intentionally contains source contracts rather than analytical estimates.

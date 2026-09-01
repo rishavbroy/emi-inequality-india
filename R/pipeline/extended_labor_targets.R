@@ -3,6 +3,12 @@
 extended_labor_target_definitions <- function() {
   list(
     tar_target(
+      plfs_labor_contract_file,
+      path_project(paths, "data/metadata/plfs_labor_contracts.csv"),
+      format = "file"
+    ),
+    tar_target(plfs_labor_contracts, read_plfs_labor_contracts(plfs_labor_contract_file)),
+    tar_target(
       nss66_eus_ddi_file,
       manifest_file_by_id(paths, "nss_2009_10_employment", "nss66_eus_ddi", "NSS66 EUS DDI"),
       format = "file"
