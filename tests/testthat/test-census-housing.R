@@ -146,7 +146,7 @@ test_that("Census 2001 H12 may be a validated district subset without truncating
   expect_true(is.na(out$latrine_share_households[out$district_code == "02"]))
 })
 
-test_that("Census housing mechanism registry uses full-support longitudinal changes", {
+test_that("Census housing mechanism registry remains a fixed predeclared longitudinal family", {
   registry <- census_housing_mechanism_registry()
   expect_equal(nrow(registry), 8L)
   expect_identical(anyDuplicated(registry$outcome_id), 0L)
@@ -154,9 +154,11 @@ test_that("Census housing mechanism registry uses full-support longitudinal chan
   expect_true(all(registry$source_id == "change"))
   expect_true(all(registry$denominator == "households"))
   expect_true(all(grepl("_change_2011_2001$", registry$variable)))
-  expect_false("latrine_share_households_change_2011_2001" %in% registry$variable)
   expect_false("kerosene_lighting_share_households_change_2011_2001" %in% registry$variable)
   expect_false("solar_lighting_share_households_change_2011_2001" %in% registry$variable)
+  expect_false("latrine_share_households_change_2011_2001" %in% registry$variable)
+  expect_false("bathroom_share_households_change_2011_2001" %in% registry$variable)
+  expect_false("clean_cooking_fuel_share_households_change_2011_2001" %in% registry$variable)
 })
 
 test_that("Census housing change mechanisms reuse the common IV inference engine", {
@@ -231,9 +233,13 @@ test_that("H05 room-size accounting yields a conservative greater-than-two-perso
     stringsAsFactors = FALSE
   )
   out <- summarise_census_room_rows(rows, "toy H05")
+  expected <- sum(rows$rooms_one[rows$household_size %in% c("3", "4", "5", "6-8", "9+")]) +
+    sum(rows$rooms_two[rows$household_size %in% c("5", "6-8", "9+")]) +
+    sum(rows$rooms_three[rows$household_size == "9+"]) +
+    sum(rows$rooms_four[rows$household_size == "9+"])
   expect_equal(out$households_total, 70)
   expect_equal(out$rooms_one, 25)
-  expect_equal(out$overcrowding_gt2_ppr_lower_bound, 30)
+  expect_equal(out$overcrowding_gt2_ppr_lower_bound, expected)
 })
 
 test_that("HL04 ownership is follow-up-only and must exhaust the all-household room distribution", {
@@ -322,4 +328,148 @@ test_that("new housing space and water shares are ratios of pooled counts", {
   expect_equal(out$tap_water_share_households, 0.5)
   expect_equal(out$water_within_premises_share_households, 0.6)
   expect_equal(out$water_away_share_households, 0.15)
+})
+
+test_that("H10 and HL08 enforce exhaustive latrine accounting", {
+  h10 <- data.frame(matrix("", nrow = 1, ncol = 15), stringsAsFactors = FALSE)
+  h10[1, 1:6] <- c("H4310", "09", "01", "0000", "District - Alpha 01", "Total")
+  h10[1, 7:15] <- c(100, 40, 20, 30, 10, 40, 25, 35, 40)
+  out01 <- parse_census_h10_2001_sheet(h10)
+  expect_equal(out01$latrine_available, 60)
+  expect_equal(out01$latrine_flush_or_water_closet, 30)
+  expect_equal(out01$drainage_none, 40)
+
+  hl08 <- data.frame(matrix("", nrow = 1, ncol = 20), stringsAsFactors = FALSE)
+  hl08[1, 1:7] <- c("HH2808", "09", "132", "00000", "000000", "District - Alpha", "Total")
+  hl08[1, 8:20] <- c(100, 60, 10, 20, 5, 10, 5, 4, 3, 3, 40, 8, 32)
+  out11 <- parse_census_hl08_2011_sheet(hl08)
+  expect_equal(out11$latrine_available, 60)
+  expect_equal(out11$latrine_flush_or_water_closet, 35)
+  expect_equal(out11$latrine_pit, 15)
+
+  bad <- hl08
+  bad[1, 20] <- 31
+  expect_error(parse_census_hl08_2011_sheet(bad), "no-latrine alternatives")
+})
+
+test_that("H10 and HL09 drainage partitions are independently exhaustive", {
+  hl09 <- data.frame(matrix("", nrow = 1, ncol = 14), stringsAsFactors = FALSE)
+  hl09[1, 1:7] <- c("HH3109", "09", "132", "00000", "000000", "District - Alpha", "Total")
+  hl09[1, 8:14] <- c(100, 50, 20, 30, 25, 35, 40)
+  out <- parse_census_hl09_2011_sheet(hl09)
+  expect_equal(out$bathroom_available, 50)
+  expect_equal(out$drainage_closed, 25)
+  expect_equal(out$drainage_none, 40)
+
+  bad <- hl09
+  bad[1, 14] <- 39
+  expect_error(parse_census_hl09_2011_sheet(bad), "drainage categories")
+})
+
+test_that("H11 and HL10 kitchen hierarchies exhaust household and fuel totals", {
+  fuels <- census_cooking_fuel_columns()
+  mk <- function(status, households, firewood, kerosene, lpg, no_cooking) {
+    out <- data.frame(
+      row_order = seq_along(status),
+      state_code = "09", district_code = "01", district_name = "Alpha",
+      kitchen_status = status, households_total = households,
+      stringsAsFactors = FALSE
+    )
+    for (fuel in fuels) out[[fuel]] <- 0
+    out$fuel_firewood <- firewood
+    out$fuel_kerosene <- kerosene
+    out$fuel_lpg_png <- lpg
+    out$fuel_no_cooking <- no_cooking
+    out
+  }
+
+  rows01 <- mk(
+    c("Total", "Available", "Not available", "Cooking in Open", "No Cooking"),
+    c(100, 68, 20, 10, 2),
+    c(75, 50, 15, 10, 0),
+    c(5, 0, 5, 0, 0),
+    c(18, 18, 0, 0, 0),
+    c(2, 0, 0, 0, 2)
+  )
+  out01 <- summarise_census_kitchen_fuel_rows(rows01, "toy H11", 2001L)
+  expect_equal(out01$separate_kitchen_within_house, 68)
+  expect_equal(out01$cooking_solid_fuel, 75)
+  expect_equal(out01$cooking_clean_fuel, 18)
+
+  rows11 <- mk(
+    c(
+      "Total", "Cooking inside house:", "Has Kitchen", "Does not have kitchen",
+      "Cooking outside house:", "Has Kitchen", "Does not have kitchen", "No Cooking"
+    ),
+    c(100, 70, 45, 25, 28, 18, 10, 2),
+    c(70, 47, 27, 20, 23, 15, 8, 0),
+    c(5, 5, 3, 2, 0, 0, 0, 0),
+    c(23, 18, 15, 3, 5, 3, 2, 0),
+    c(2, 0, 0, 0, 0, 0, 0, 2)
+  )
+  out11 <- summarise_census_kitchen_fuel_rows(rows11, "toy HL10", 2011L)
+  expect_equal(out11$separate_kitchen_within_house, 45)
+  expect_equal(out11$cooking_outside_house, 28)
+
+  bad <- rows11
+  bad$fuel_firewood[which(bad$kitchen_status == "Does not have kitchen")[[1L]]] <- 19
+  expect_error(summarise_census_kitchen_fuel_rows(bad, "toy HL10", 2011L))
+})
+
+test_that("dedicated sanitation tables replace incomplete utility latrine counts without weakening validation", {
+  h09 <- data.frame(
+    state_code = c("09", "09"), district_code = c("01", "02"), district_name = c("A", "B"),
+    households_total = c(100, 200), lighting_electricity = c(60, 100),
+    lighting_kerosene = c(30, 80), lighting_solar = c(2, 4), lighting_other_oil = c(1, 2),
+    lighting_other = c(3, 6), lighting_none = c(4, 8), stringsAsFactors = FALSE
+  )
+  h12 <- data.frame(
+    state_code = "09", district_code = "01", households_total = 100,
+    electricity_available = 60, latrine_available = 25, stringsAsFactors = FALSE
+  )
+  h13 <- data.frame(
+    state_code = c("09", "09"), district_code = c("01", "02"), households_total = c(100, 200),
+    banking = c(40, 80), radio = c(20, 40), television = c(50, 100), telephone = c(10, 20),
+    bicycle = c(60, 120), motorcycle = c(15, 30), car = c(5, 10), stringsAsFactors = FALSE
+  )
+  h10 <- data.frame(
+    state_code = c("09", "09"), district_code = c("01", "02"), households_total = c(100, 200),
+    bathroom_available = c(40, 80), latrine_available = c(25, 80),
+    latrine_flush_or_water_closet = c(15, 40), latrine_pit = c(5, 20),
+    drainage_closed = c(20, 40), drainage_none = c(50, 100), stringsAsFactors = FALSE
+  )
+  validation <- validate_census_housing_sources(
+    h09, h12, h13, 2001L, h10_or_hl08 = h10
+  )
+  expect_equal(
+    validation$n_source_districts[validation$check == "latrine_dedicated_vs_utility"], 1L
+  )
+  bad_h10 <- h10
+  bad_h10$latrine_available[[1L]] <- 26
+  expect_error(
+    validate_census_housing_sources(h09, h12, h13, 2001L, h10_or_hl08 = bad_h10),
+    "does not match"
+  )
+  out <- build_census_2001_housing_measures(h09, h12, h13, h10 = h10)
+  expect_equal(out$latrine_share_households[out$district_code == "02"], 0.4)
+})
+
+test_that("sanitation drainage and cooking shares use the common household denominator", {
+  x <- data.frame(
+    households_total = 400,
+    bathroom_available = 240, latrine_flush_or_water_closet = 160, latrine_pit = 80,
+    drainage_closed = 120, drainage_none = 200, separate_kitchen_within_house = 280,
+    cooking_solid_fuel = 240, cooking_clean_fuel = 120,
+    lighting_electricity = 200, lighting_kerosene = 100, lighting_solar = 0,
+    lighting_other_oil = 0, lighting_other = 0, lighting_none = 100,
+    latrine_available = 280, banking = 200, radio = 80, television = 120,
+    telephone = 160, bicycle = 140, motorcycle = 100, car = 40,
+    stringsAsFactors = FALSE
+  )
+  out <- add_census_housing_shares(x)
+  expect_equal(out$bathroom_share_households, 0.6)
+  expect_equal(out$flush_or_water_closet_latrine_share_households, 0.4)
+  expect_equal(out$closed_drainage_share_households, 0.3)
+  expect_equal(out$separate_kitchen_within_house_share_households, 0.7)
+  expect_equal(out$clean_cooking_fuel_share_households, 0.3)
 })

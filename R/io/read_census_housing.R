@@ -5,8 +5,8 @@ census_housing_manifest_files <- function(paths, table, manifest_file = NULL, ce
   table <- toupper(trimws(plain_chr(table)))
   supported <- switch(
     as.character(census_year),
-    `2001` = c("H05", "H08", "H09", "H12", "H13"),
-    `2011` = c("HL04", "HL06", "HL07", "HL11", "HL12"),
+    `2001` = c("H05", "H08", "H09", "H10", "H11", "H12", "H13"),
+    `2011` = c("HL04", "HL06", "HL07", "HL08", "HL09", "HL10", "HL11", "HL12"),
     character()
   )
   if (length(table) != 1L || is.na(table) || !table %in% supported) {
@@ -322,6 +322,291 @@ parse_census_hl06_2011_sheet <- function(raw) {
   summarise_census_water_rows(out, "Census 2011 HL06")
 }
 
+
+census_cooking_fuel_columns <- function() {
+  c(
+    "fuel_firewood", "fuel_crop_residue", "fuel_cowdung", "fuel_coal",
+    "fuel_kerosene", "fuel_lpg_png", "fuel_electricity", "fuel_biogas",
+    "fuel_other", "fuel_no_cooking"
+  )
+}
+
+validate_census_kitchen_fuel_row <- function(rows, label) {
+  fuels <- census_cooking_fuel_columns()
+  validate_household_partition(rows$households_total, rows[fuels], paste0(label, " fuel"))
+}
+
+summarise_census_kitchen_fuel_rows <- function(rows, label, year) {
+  rows <- safe_df(rows)
+  year <- as.integer(year)
+  keys <- unique(rows[c("state_code", "district_code")])
+  fuels <- census_cooking_fuel_columns()
+  safe_bind_rows(lapply(seq_len(nrow(keys)), function(i) {
+    part <- rows[
+      rows$state_code == keys$state_code[[i]] & rows$district_code == keys$district_code[[i]],
+      , drop = FALSE
+    ]
+    part <- part[order(num(part$row_order)), , drop = FALSE]
+    validate_census_kitchen_fuel_row(part, label)
+
+    if (year == 2001L) {
+      expected <- c("Total", "Available", "Not available", "Cooking in Open", "No Cooking")
+      if (!identical(plain_chr(part$kitchen_status), expected)) {
+        stop(label, " kitchen rows do not match the published 2001 partition.", call. = FALSE)
+      }
+      total <- part[1L, , drop = FALSE]
+      detail <- part[2:5, , drop = FALSE]
+      if (sum(num(detail$households_total)) != num(total$households_total) ||
+          any(vapply(fuels, function(column) {
+            sum(num(detail[[column]])) != num(total[[column]])
+          }, logical(1)))) {
+        stop(label, " kitchen categories do not exhaust the total fuel distribution.", call. = FALSE)
+      }
+      separate_kitchen <- num(part$households_total[[2L]])
+      cooking_outside <- NA_real_
+    } else if (year == 2011L) {
+      expected <- c(
+        "Total", "Cooking inside house:", "Has Kitchen", "Does not have kitchen",
+        "Cooking outside house:", "Has Kitchen", "Does not have kitchen", "No Cooking"
+      )
+      if (!identical(plain_chr(part$kitchen_status), expected)) {
+        stop(label, " kitchen rows do not match the published 2011 hierarchy.", call. = FALSE)
+      }
+      total <- part[1L, , drop = FALSE]
+      inside <- part[2L, , drop = FALSE]
+      inside_detail <- part[3:4, , drop = FALSE]
+      outside <- part[5L, , drop = FALSE]
+      outside_detail <- part[6:7, , drop = FALSE]
+      no_cooking <- part[8L, , drop = FALSE]
+      for (column in c("households_total", fuels)) {
+        if (sum(num(inside_detail[[column]])) != num(inside[[column]]) ||
+            sum(num(outside_detail[[column]])) != num(outside[[column]]) ||
+            num(inside[[column]]) + num(outside[[column]]) + num(no_cooking[[column]]) !=
+              num(total[[column]])) {
+          stop(label, " kitchen hierarchy does not exhaust the total fuel distribution.", call. = FALSE)
+        }
+      }
+      separate_kitchen <- num(part$households_total[[3L]])
+      cooking_outside <- num(outside$households_total)
+    } else {
+      stop("Kitchen/fuel summariser supports Census 2001 and 2011 only.", call. = FALSE)
+    }
+
+    data.frame(
+      state_code = part$state_code[[1L]],
+      district_code = part$district_code[[1L]],
+      district_name = part$district_name[[1L]],
+      households_total = num(total$households_total),
+      separate_kitchen_within_house = separate_kitchen,
+      cooking_solid_fuel = num(total$fuel_firewood) + num(total$fuel_crop_residue) +
+        num(total$fuel_cowdung) + num(total$fuel_coal),
+      cooking_clean_fuel = num(total$fuel_lpg_png) + num(total$fuel_electricity) +
+        num(total$fuel_biogas),
+      cooking_outside_house = cooking_outside,
+      stringsAsFactors = FALSE
+    )
+  }))
+}
+
+parse_census_h10_2001_sheet <- function(raw) {
+  raw <- safe_df(raw)
+  if (ncol(raw) < 15L) stop("Census 2001 H10 sheet has fewer than 15 columns.", call. = FALSE)
+  out <- data.frame(
+    table = trimws(plain_chr(raw[[1L]])),
+    state_code = normalize_census_code(raw[[2L]], 2L),
+    district_code = normalize_census_code(raw[[3L]], 2L),
+    local_code = trimws(plain_chr(raw[[4L]])),
+    district_name = clean_census_district_label(raw[[5L]]),
+    residence = trimws(plain_chr(raw[[6L]])),
+    households_total = num(raw[[7L]]),
+    bathroom_available = num(raw[[8L]]),
+    latrine_pit = num(raw[[9L]]),
+    latrine_flush_or_water_closet = num(raw[[10L]]),
+    latrine_other = num(raw[[11L]]),
+    latrine_none = num(raw[[12L]]),
+    drainage_closed = num(raw[[13L]]),
+    drainage_open = num(raw[[14L]]),
+    drainage_none = num(raw[[15L]]),
+    stringsAsFactors = FALSE
+  )
+  keep <- out$table == "H4310" & !is.na(out$state_code) & !is.na(out$district_code) &
+    out$district_code != "00" & out$local_code == "0000" & out$residence == "Total"
+  out <- out[keep %in% TRUE, , drop = FALSE]
+  validate_household_partition(
+    out$households_total,
+    out[c("latrine_pit", "latrine_flush_or_water_closet", "latrine_other", "latrine_none")],
+    "Census 2001 H10 latrine"
+  )
+  validate_household_partition(
+    out$households_total, out[c("drainage_closed", "drainage_open", "drainage_none")],
+    "Census 2001 H10 drainage"
+  )
+  validate_household_subcounts(
+    out$households_total, out["bathroom_available"], "Census 2001 H10 bathroom"
+  )
+  out$latrine_available <- out$households_total - out$latrine_none
+  rownames(out) <- NULL
+  out
+}
+
+parse_census_hl08_2011_sheet <- function(raw) {
+  raw <- safe_df(raw)
+  if (ncol(raw) < 20L) stop("Census 2011 HL08 sheet has fewer than 20 columns.", call. = FALSE)
+  out <- data.frame(
+    table = trimws(plain_chr(raw[[1L]])),
+    state_code = normalize_census_code(raw[[2L]], 2L),
+    district_code = normalize_census_code(raw[[3L]], 3L),
+    subdistrict_code = trimws(plain_chr(raw[[4L]])),
+    town_code = trimws(plain_chr(raw[[5L]])),
+    district_name = clean_census_district_label(raw[[6L]]),
+    residence = trimws(plain_chr(raw[[7L]])),
+    households_total = num(raw[[8L]]),
+    latrine_available = num(raw[[9L]]),
+    latrine_flush_sewer = num(raw[[10L]]),
+    latrine_flush_septic = num(raw[[11L]]),
+    latrine_flush_other = num(raw[[12L]]),
+    latrine_pit_slab = num(raw[[13L]]),
+    latrine_pit_open = num(raw[[14L]]),
+    latrine_open_drain = num(raw[[15L]]),
+    latrine_service_human = num(raw[[16L]]),
+    latrine_service_animal = num(raw[[17L]]),
+    latrine_none = num(raw[[18L]]),
+    latrine_public_alternative = num(raw[[19L]]),
+    latrine_open_alternative = num(raw[[20L]]),
+    stringsAsFactors = FALSE
+  )
+  keep <- out$table == "HH2808" & !is.na(out$state_code) & !is.na(out$district_code) &
+    out$district_code != "000" & out$subdistrict_code == "00000" & out$town_code == "000000" &
+    out$residence == "Total"
+  out <- out[keep %in% TRUE, , drop = FALSE]
+  validate_household_partition(
+    out$latrine_available,
+    out[c(
+      "latrine_flush_sewer", "latrine_flush_septic", "latrine_flush_other",
+      "latrine_pit_slab", "latrine_pit_open", "latrine_open_drain",
+      "latrine_service_human", "latrine_service_animal"
+    )],
+    "Census 2011 HL08 latrine types"
+  )
+  validate_household_partition(
+    out$latrine_none, out[c("latrine_public_alternative", "latrine_open_alternative")],
+    "Census 2011 HL08 no-latrine alternatives"
+  )
+  validate_household_partition(
+    out$households_total, out[c("latrine_available", "latrine_none")],
+    "Census 2011 HL08 latrine availability"
+  )
+  out$latrine_flush_or_water_closet <-
+    out$latrine_flush_sewer + out$latrine_flush_septic + out$latrine_flush_other
+  out$latrine_pit <- out$latrine_pit_slab + out$latrine_pit_open
+  out$latrine_other <- out$latrine_open_drain + out$latrine_service_human +
+    out$latrine_service_animal
+  rownames(out) <- NULL
+  out
+}
+
+parse_census_hl09_2011_sheet <- function(raw) {
+  raw <- safe_df(raw)
+  if (ncol(raw) < 14L) stop("Census 2011 HL09 sheet has fewer than 14 columns.", call. = FALSE)
+  out <- data.frame(
+    table = trimws(plain_chr(raw[[1L]])),
+    state_code = normalize_census_code(raw[[2L]], 2L),
+    district_code = normalize_census_code(raw[[3L]], 3L),
+    subdistrict_code = trimws(plain_chr(raw[[4L]])),
+    town_code = trimws(plain_chr(raw[[5L]])),
+    district_name = clean_census_district_label(raw[[6L]]),
+    residence = trimws(plain_chr(raw[[7L]])),
+    households_total = num(raw[[8L]]),
+    bathroom_available = num(raw[[9L]]),
+    bathing_enclosure_without_roof = num(raw[[10L]]),
+    bathing_none = num(raw[[11L]]),
+    drainage_closed = num(raw[[12L]]),
+    drainage_open = num(raw[[13L]]),
+    drainage_none = num(raw[[14L]]),
+    stringsAsFactors = FALSE
+  )
+  keep <- out$table == "HH3109" & !is.na(out$state_code) & !is.na(out$district_code) &
+    out$district_code != "000" & out$subdistrict_code == "00000" & out$town_code == "000000" &
+    out$residence == "Total"
+  out <- out[keep %in% TRUE, , drop = FALSE]
+  validate_household_partition(
+    out$households_total,
+    out[c("bathroom_available", "bathing_enclosure_without_roof", "bathing_none")],
+    "Census 2011 HL09 bathing"
+  )
+  validate_household_partition(
+    out$households_total, out[c("drainage_closed", "drainage_open", "drainage_none")],
+    "Census 2011 HL09 drainage"
+  )
+  rownames(out) <- NULL
+  out
+}
+
+parse_census_h11_2001_sheet <- function(raw) {
+  raw <- safe_df(raw)
+  if (ncol(raw) < 18L) stop("Census 2001 H11 sheet has fewer than 18 columns.", call. = FALSE)
+  out <- data.frame(
+    row_order = seq_len(nrow(raw)),
+    table = trimws(plain_chr(raw[[1L]])),
+    state_code = normalize_census_code(raw[[2L]], 2L),
+    district_code = normalize_census_code(raw[[3L]], 2L),
+    local_code = trimws(plain_chr(raw[[4L]])),
+    district_name = clean_census_district_label(raw[[5L]]),
+    residence = trimws(plain_chr(raw[[6L]])),
+    kitchen_status = trimws(plain_chr(raw[[7L]])),
+    households_total = num(raw[[8L]]),
+    fuel_firewood = num(raw[[9L]]),
+    fuel_crop_residue = num(raw[[10L]]),
+    fuel_cowdung = num(raw[[11L]]),
+    fuel_coal = num(raw[[12L]]),
+    fuel_kerosene = num(raw[[13L]]),
+    fuel_lpg_png = num(raw[[14L]]),
+    fuel_electricity = num(raw[[15L]]),
+    fuel_biogas = num(raw[[16L]]),
+    fuel_other = num(raw[[17L]]),
+    fuel_no_cooking = num(raw[[18L]]),
+    stringsAsFactors = FALSE
+  )
+  keep <- out$table == "H4611" & !is.na(out$state_code) & !is.na(out$district_code) &
+    out$district_code != "00" & out$local_code == "0000" & out$residence == "Total" &
+    out$kitchen_status %in% c("Total", "Available", "Not available", "Cooking in Open", "No Cooking")
+  out <- out[keep %in% TRUE, , drop = FALSE]
+  summarise_census_kitchen_fuel_rows(out, "Census 2001 H11", 2001L)
+}
+
+parse_census_hl10_2011_sheet <- function(raw) {
+  raw <- safe_df(raw)
+  if (ncol(raw) < 19L) stop("Census 2011 HL10 sheet has fewer than 19 columns.", call. = FALSE)
+  out <- data.frame(
+    row_order = seq_len(nrow(raw)),
+    table = trimws(plain_chr(raw[[1L]])),
+    state_code = normalize_census_code(raw[[2L]], 2L),
+    district_code = normalize_census_code(raw[[3L]], 3L),
+    subdistrict_code = trimws(plain_chr(raw[[4L]])),
+    town_code = trimws(plain_chr(raw[[5L]])),
+    district_name = clean_census_district_label(raw[[6L]]),
+    residence = trimws(plain_chr(raw[[7L]])),
+    kitchen_status = trimws(plain_chr(raw[[8L]])),
+    households_total = num(raw[[9L]]),
+    fuel_firewood = num(raw[[10L]]),
+    fuel_crop_residue = num(raw[[11L]]),
+    fuel_cowdung = num(raw[[12L]]),
+    fuel_coal = num(raw[[13L]]),
+    fuel_kerosene = num(raw[[14L]]),
+    fuel_lpg_png = num(raw[[15L]]),
+    fuel_electricity = num(raw[[16L]]),
+    fuel_biogas = num(raw[[17L]]),
+    fuel_other = num(raw[[18L]]),
+    fuel_no_cooking = num(raw[[19L]]),
+    stringsAsFactors = FALSE
+  )
+  keep <- out$table == "HH3410" & !is.na(out$state_code) & !is.na(out$district_code) &
+    out$district_code != "000" & out$subdistrict_code == "00000" & out$town_code == "000000" &
+    out$residence == "Total"
+  out <- out[keep %in% TRUE, , drop = FALSE]
+  summarise_census_kitchen_fuel_rows(out, "Census 2011 HL10", 2011L)
+}
+
 parse_census_h09_2001_sheet <- function(raw) {
   raw <- safe_df(raw)
   if (ncol(raw) < 13L) stop("Census 2001 H09 sheet has fewer than 13 columns.", call. = FALSE)
@@ -544,21 +829,31 @@ read_census_housing_district_files <- function(files, reader, label) {
 read_census_h05_2001_file <- function(path) parse_census_h05_2001_sheet(read_census_housing_sheet(path, 5L))
 read_census_h08_2001_file <- function(path) parse_census_h08_2001_sheet(read_census_housing_sheet(path, 5L))
 read_census_h09_2001_file <- function(path) parse_census_h09_2001_sheet(read_census_housing_sheet(path, 5L))
+read_census_h10_2001_file <- function(path) parse_census_h10_2001_sheet(read_census_housing_sheet(path, 7L))
+read_census_h11_2001_file <- function(path) parse_census_h11_2001_sheet(read_census_housing_sheet(path, 5L))
 read_census_h12_2001_file <- function(path) parse_census_h12_2001_sheet(read_census_housing_sheet(path, 6L))
 read_census_h13_2001_file <- function(path) parse_census_h13_2001_sheet(read_census_housing_sheet(path, 6L))
 read_census_hl04_2011_file <- function(path) parse_census_hl04_2011_sheet(read_census_housing_sheet(path, 7L))
 read_census_hl06_2011_file <- function(path) parse_census_hl06_2011_sheet(read_census_housing_sheet(path, 7L))
 read_census_hl07_2011_file <- function(path) parse_census_hl07_2011_sheet(read_census_housing_sheet(path, 6L))
+read_census_hl08_2011_file <- function(path) parse_census_hl08_2011_sheet(read_census_housing_sheet(path, 8L))
+read_census_hl09_2011_file <- function(path) parse_census_hl09_2011_sheet(read_census_housing_sheet(path, 6L))
+read_census_hl10_2011_file <- function(path) parse_census_hl10_2011_sheet(read_census_housing_sheet(path, 5L))
 read_census_hl11_2011_file <- function(path) parse_census_hl11_2011_sheet(read_census_housing_sheet(path, 6L))
 read_census_hl12_2011_file <- function(path) parse_census_hl12_2011_sheet(read_census_housing_sheet(path, 6L))
 
 read_census_h05_2001_district <- function(files) read_census_housing_district_files(files, read_census_h05_2001_file, "Census H05")
 read_census_h08_2001_district <- function(files) read_census_housing_district_files(files, read_census_h08_2001_file, "Census H08")
 read_census_h09_2001_district <- function(files) read_census_housing_district_files(files, read_census_h09_2001_file, "Census H09")
+read_census_h10_2001_district <- function(files) read_census_housing_district_files(files, read_census_h10_2001_file, "Census H10")
+read_census_h11_2001_district <- function(files) read_census_housing_district_files(files, read_census_h11_2001_file, "Census H11")
 read_census_h12_2001_district <- function(files) read_census_housing_district_files(files, read_census_h12_2001_file, "Census H12")
 read_census_h13_2001_district <- function(files) read_census_housing_district_files(files, read_census_h13_2001_file, "Census H13")
 read_census_hl04_2011_district <- function(files) read_census_housing_district_files(files, read_census_hl04_2011_file, "Census HL04")
 read_census_hl06_2011_district <- function(files) read_census_housing_district_files(files, read_census_hl06_2011_file, "Census HL06")
 read_census_hl07_2011_district <- function(files) read_census_housing_district_files(files, read_census_hl07_2011_file, "Census HL07")
+read_census_hl08_2011_district <- function(files) read_census_housing_district_files(files, read_census_hl08_2011_file, "Census HL08")
+read_census_hl09_2011_district <- function(files) read_census_housing_district_files(files, read_census_hl09_2011_file, "Census HL09")
+read_census_hl10_2011_district <- function(files) read_census_housing_district_files(files, read_census_hl10_2011_file, "Census HL10")
 read_census_hl11_2011_district <- function(files) read_census_housing_district_files(files, read_census_hl11_2011_file, "Census HL11")
 read_census_hl12_2011_district <- function(files) read_census_housing_district_files(files, read_census_hl12_2011_file, "Census HL12")
