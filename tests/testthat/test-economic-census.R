@@ -49,7 +49,7 @@ test_that("SHRUG EC05 reader rejects malformed core counts and duplicate distric
   expect_error(read_shrug_ec05_district(make_zip(negative)), "negative core counts")
 
   duplicate <- rbind(base, base)
-  expect_error(read_shrug_ec05_district(make_zip(duplicate)), "unique by complete Census-2001 keys")
+  expect_error(read_shrug_ec05_district(make_zip(duplicate)), "unique by complete district keys")
 })
 
 test_that("EC05 measures retain documented source gaps rather than imputing them", {
@@ -160,4 +160,82 @@ test_that("shared Economic Census count validation rejects malformed canonical s
     validate_economic_census_source_counts(duplicate, "test source"),
     "unique by complete district keys"
   )
+})
+
+
+test_that("SHRUG EC13 reader uses the complete Census-2011 district product", {
+  td <- tempfile("ec13-")
+  dir.create(td)
+  csv <- file.path(td, "ec13_pc11dist.csv")
+  utils::write.csv(
+    data.frame(
+      pc11_state_id = c(9, 9), pc11_district_id = c(1, 2),
+      ec13_emp_all = c(120, 240), ec13_emp_f = c(30, 72),
+      ec13_emp_hired = c(72, 144), ec13_emp_priv = c(90, 180),
+      ec13_emp_manuf = c(24, 60), ec13_emp_services = c(84, 144),
+      ec13_count_all = c(24, 30)
+    ),
+    csv,
+    row.names = FALSE
+  )
+  old <- setwd(td)
+  on.exit(setwd(old), add = TRUE)
+  zip <- tempfile(fileext = ".zip")
+  utils::zip(zipfile = zip, files = basename(csv), flags = "-q")
+
+  out <- read_shrug_ec13_district(zip)
+
+  expect_identical(out$state_code, c("09", "09"))
+  expect_identical(out$district_code, c("001", "002"))
+  expect_equal(out$nonfarm_employment, c(120, 240))
+  expect_false("informal_employment" %in% names(out))
+})
+
+test_that("EC13 counts are pooled before shares and changes are constructed", {
+  source <- data.frame(
+    state_code = c("09", "09"), district_code = c("001", "002"),
+    nonfarm_employment = c(100, 300), female_employment = c(10, 90),
+    hired_employment = c(40, 180), private_employment = c(80, 240),
+    manufacturing_employment = c(20, 60), services_employment = c(70, 210),
+    firms_total = c(20, 30), stringsAsFactors = FALSE
+  )
+  admin11 <- data.frame(
+    level = "district", state_code = c("09", "09"), district_code = c("001", "002"),
+    district_std = c("child a", "child b"), stringsAsFactors = FALSE
+  )
+  admin01 <- data.frame(
+    level = "district", state_code = "09", district_code = "01",
+    state_std = "state", district_std = "parent", stringsAsFactors = FALSE
+  )
+  transition <- data.frame(
+    state_code_2011 = c("09", "09"), district_code_2011 = c("001", "002"),
+    state_code_2001 = c("09", "09"), district_code_2001 = c("01", "01"),
+    population_share_to_2001 = 1, area_share_to_2001 = 1, shrid_coverage = 1,
+    mapping_class = "deterministic_containment", stringsAsFactors = FALSE
+  )
+
+  followup <- build_economic_census_2013_measures(source, admin11, admin01, transition, expected_source_districts = 2L)
+  expect_equal(nrow(followup), 1L)
+  expect_true(followup$harmonized_available)
+  expect_equal(followup$nonfarm_employment, 400)
+  expect_equal(followup$female_employment_share, 0.25)
+  expect_equal(followup$mean_employment_per_firm, 8)
+
+  baseline <- data.frame(
+    target_unit_2001 = "pc2001__09__01",
+    log_nonfarm_employment = log(200), log_firms_total = log(25),
+    mean_employment_per_firm = 8,
+    female_employment_share = .20, hired_employment_share = .50,
+    private_employment_share = .70, manufacturing_employment_share = .25,
+    services_employment_share = .60,
+    stringsAsFactors = FALSE
+  )
+  changes <- build_economic_census_change_measures(baseline, followup)
+  expect_equal(changes$log_nonfarm_employment_change_2013_2005, log(2))
+  expect_equal(changes$female_employment_share_change_2013_2005, .05)
+})
+
+test_that("Economic Census longitudinal family excludes EC05-only informal employment", {
+  expect_false("informal_employment_share" %in% economic_census_longitudinal_measure_columns())
+  expect_true("informal_employment_share" %in% names(economic_census_share_specs(TRUE)))
 })

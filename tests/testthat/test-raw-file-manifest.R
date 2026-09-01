@@ -809,8 +809,9 @@ test_that("SHRUG EC05 is registered as an extended-only source on the organized 
 })
 
 test_that("Sixth Economic Census DDI is registered as extended source validation", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
   manifest <- read.csv(
-    "data/metadata/file_manifest.csv",
+    file.path(root, "data", "metadata", "file_manifest.csv"),
     stringsAsFactors = FALSE,
     check.names = FALSE
   )
@@ -824,4 +825,21 @@ test_that("Sixth Economic Census DDI is registered as extended source validation
   )
   expect_identical(row$reader_function[[1L]], "read_economic_census_ddi_contract")
   expect_equal(row$expected_size_bytes[[1L]], 6289329)
+})
+
+
+test_that("SHRUG EC13 is registered as an extended-only Census-2011 district source", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
+  manifest <- read.csv(
+    file.path(root, "data", "metadata", "file_manifest.csv"),
+    stringsAsFactors = FALSE,
+    check.names = FALSE
+  )
+  row <- manifest[manifest$file_id == "shrug_ec13_csv_archive", , drop = FALSE]
+  expect_equal(nrow(row), 1L)
+  expect_identical(row$source_id[[1L]], "shrug_economic_census")
+  expect_false(as.logical(row$required_for_current_pipeline[[1L]]))
+  expect_identical(row$relative_path[[1L]], "data/raw/shrug/shrug-ec13-csv.zip")
+  expect_identical(row$reader_function[[1L]], "read_shrug_ec13_district")
+  expect_equal(row$expected_size_bytes[[1L]], 43127568)
 })
