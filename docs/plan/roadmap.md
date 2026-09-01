@@ -43,7 +43,7 @@ The EC05 source/measurement phase is now active: the documented SHRUG `ec05_pc01
 
 Next implementation order:
 
-1. inspect and validate the 2013-14 source and its Census-2011 identifiers;
+1. acquire and inspect the documented SHRUG `ec13_pc11dist` district product. The official Sixth-EC DDI is already validated as an extended raw-source contract, including the establishment schema and post-bifurcation Andhra Pradesh/Telangana state coding; do not write a bespoke Nesstar aggregation unless the standardized product proves unsuitable;
 2. harmonize EC13 counts to complete Census-2001 parents before constructing changes or shares;
 3. predeclare the small EC05/EC13 outcome family before running IV results;
 4. distinguish near-treatment 2005 structure/balance uses from later firm-growth mechanisms;
