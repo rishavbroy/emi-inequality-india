@@ -105,7 +105,7 @@ test_that("Census housing counts are pooled before living-standard shares", {
 })
 
 test_that("Census housing changes compare harmonized 2011 shares with the matching 2001 parent", {
-  common <- census_housing_common_share_columns()
+  common <- census_housing_longitudinal_share_columns()
   h01 <- data.frame(target_unit_2001 = "pc2001__09__01", stringsAsFactors = FALSE)
   h11 <- data.frame(
     target_unit_2001 = "pc2001__09__01", census_2011_source_district_count = 2L,
@@ -120,6 +120,10 @@ test_that("Census housing changes compare harmonized 2011 shares with the matchi
   out <- build_census_housing_change_measures(h01, h11)
   expect_equal(out$electricity_share_households_change_2011_2001, 0.15)
   expect_equal(out$banking_share_households_change_2011_2001, 0.15)
+  expect_equal(out$permanent_structure_share_households_change_2011_2001, 0.15)
+  expect_equal(out$temporary_structure_share_households_change_2011_2001, 0.15)
+  registry <- census_housing_mechanism_registry()
+  expect_false(any(grepl("structure", registry$variable, fixed = TRUE)))
 })
 
 test_that("Census 2001 H12 may be a validated district subset without truncating housing measures", {
@@ -166,10 +170,50 @@ test_that("HL13 structure categories exhaust households and temporary structure"
 })
 
 
-test_that("Census 2001 H04 Appendix remains acquisition-only until source inspection", {
+test_that("H04A structure categories exhaust households and temporary structure", {
+  raw <- data.frame(matrix("", nrow = 1, ncol = 13), stringsAsFactors = FALSE)
+  raw[1, 1:7] <- c("H1904A", "09", "01", "0000", "District - Alpha", "Total", 100)
+  raw[1, 8:13] <- c(60, 20, 15, 10, 5, 5)
+  out <- parse_census_h04a_2001_sheet(raw)
+  expect_equal(out$structure_permanent, 60)
+  expect_equal(out$structure_temporary_nonserviceable, 5)
+
+  bad_total <- raw
+  bad_total[1, 13] <- 4
+  expect_error(parse_census_h04a_2001_sheet(bad_total), "structure")
+
+  bad_temporary <- raw
+  bad_temporary[1, 12] <- 4
+  expect_error(parse_census_h04a_2001_sheet(bad_temporary), "temporary structure")
+})
+
+test_that("H04A shares the full Census 2001 household universe", {
+  h09 <- data.frame(
+    state_code = "09", district_code = "01", district_name = "Alpha",
+    households_total = 100, lighting_electricity = 70, stringsAsFactors = FALSE
+  )
+  h12 <- data.frame(
+    state_code = "09", district_code = "01", households_total = 100,
+    electricity_available = 70, latrine_available = 60, stringsAsFactors = FALSE
+  )
+  h13 <- data.frame(
+    state_code = "09", district_code = "01", households_total = 100, stringsAsFactors = FALSE
+  )
+  h04a <- data.frame(
+    state_code = "09", district_code = "01", households_total = 100, stringsAsFactors = FALSE
+  )
+  validation <- validate_census_housing_sources(
+    h09, h12, h13, 2001L, structure = h04a
+  )
+  structural <- validation[validation$check == "household_total_lighting_vs_structure", , drop = FALSE]
+  expect_equal(structural$n_overlap_districts, 1L)
+  expect_equal(structural$max_abs_difference, 0)
+
+  bad <- h04a
+  bad$households_total <- 99
   expect_error(
-    census_housing_manifest_files(character(), "H04A", census_year = 2001L),
-    "Census 2001 housing reader supports"
+    validate_census_housing_sources(h09, h12, h13, 2001L, structure = bad),
+    "household-universe counts disagree"
   )
 })
 
@@ -193,7 +237,7 @@ test_that("HL13 shares a strict household universe with the active 2011 housing 
     stringsAsFactors = FALSE
   )
   validation <- validate_census_housing_sources(
-    hl07, hl11, hl12, 2011L, hl13 = hl13
+    hl07, hl11, hl12, 2011L, structure = hl13
   )
   structural <- validation[validation$check == "household_total_lighting_vs_structure", , drop = FALSE]
   expect_equal(structural$n_overlap_districts, 1L)
@@ -202,12 +246,12 @@ test_that("HL13 shares a strict household universe with the active 2011 housing 
   bad <- hl13
   bad$households_total <- 99
   expect_error(
-    validate_census_housing_sources(hl07, hl11, hl12, 2011L, hl13 = bad),
+    validate_census_housing_sources(hl07, hl11, hl12, 2011L, structure = bad),
     "household-universe counts disagree"
   )
 })
 
-test_that("follow-up housing shares use the common household denominator", {
+test_that("housing structural shares use the common household denominator", {
   x <- data.frame(
     households_total = 200,
     households_owned = 120,
@@ -220,12 +264,13 @@ test_that("follow-up housing shares use the common household denominator", {
     structure_temporary_nonserviceable = 8,
     stringsAsFactors = FALSE
   )
-  out <- add_census_housing_followup_shares(x)
+  out <- add_census_housing_structure_shares(x)
   expect_equal(out$permanent_structure_share_households, 130 / 200)
   expect_equal(out$semi_permanent_structure_share_households, 40 / 200)
   expect_equal(out$temporary_structure_share_households, 20 / 200)
   expect_equal(out$nonserviceable_temporary_structure_share_households, 8 / 200)
-  expect_equal(out$owned_share_households, 120 / 200)
+  followup <- add_census_housing_followup_shares(x)
+  expect_equal(followup$owned_share_households, 120 / 200)
 })
 
 test_that("Census housing mechanism registry remains a fixed predeclared longitudinal family", {
