@@ -29,6 +29,14 @@ repo_target_definition_text <- function() {
   )
 }
 
+repo_core_target_text <- function() {
+  files <- repo_pipeline_target_files("^core_.*_targets\\.R$")
+  paste(
+    unlist(lapply(files, readLines, warn = FALSE), use.names = FALSE),
+    collapse = "\n"
+  )
+}
+
 repo_extended_target_text <- function() {
   files <- repo_pipeline_target_files("^extended_.*_targets\\.R$")
   paste(

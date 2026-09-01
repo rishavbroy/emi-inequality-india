@@ -38,17 +38,16 @@ test_that("rendered and archived artifacts are treated as binary by Git", {
 })
 
 test_that("shared Census transition is a first-class pipeline dependency", {
-  composition_root <- repo_text("_targets.R")
   target_graph <- repo_target_definition_text()
   declaration <- paste0(
     "tar_target(\n    district_transition_2001_2011,\n",
     "    district_lineage$district_transition_2001_2011\n  )"
   )
-  expect_match(composition_root, declaration, fixed = TRUE)
+  expect_match(target_graph, declaration, fixed = TRUE)
 
   nested_access <- gregexpr(
     "district_lineage$district_transition_2001_2011",
-    composition_root, fixed = TRUE
+    target_graph, fixed = TRUE
   )[[1L]]
   expect_equal(sum(nested_access > 0L), 1L)
 
@@ -92,7 +91,7 @@ test_that("current public build helper scripts parse", {
 })
 
 test_that("public render targets own final report, notes, and sample rendering", {
-  targets <- repo_text("_targets.R")
+  targets <- paste(repo_core_target_text(), repo_text("_targets.R"), sep = "\n")
   renderer <- repo_text("R", "output", "render_public_artifacts.R")
   samples <- repo_text("R", "application_samples", "render_writing_sample.R")
 
@@ -152,13 +151,18 @@ test_that("audit workspace cleanup removes transient state and preserves optiona
 
 test_that("targets graph separates public diagnostics, extended diagnostics, and benchmarks", {
   src <- repo_text("_targets.R")
+  core <- repo_core_target_text()
   extended <- repo_extended_target_text()
 
   expect_match(src, "core_pipeline_targets <- c", fixed = TRUE)
   for (factory in c(
     "core_consumption_targets.R",
     "core_consumption_outcome_targets.R",
-    "core_consumption_iv_targets.R"
+    "core_consumption_iv_targets.R",
+    "core_measurement_targets.R",
+    "core_lineage_targets.R",
+    "core_panel_targets.R",
+    "core_public_targets.R"
   )) {
     expect_match(
       src,
@@ -170,7 +174,11 @@ test_that("targets graph separates public diagnostics, extended diagnostics, and
   for (factory in c(
     "core_consumption_target_definitions()",
     "core_consumption_outcome_target_definitions()",
-    "core_consumption_iv_target_definitions()"
+    "core_consumption_iv_target_definitions()",
+    "core_measurement_target_definitions()",
+    "core_lineage_target_definitions()",
+    "core_panel_target_definitions()",
+    "core_public_target_definitions()"
   )) {
     expect_match(src, factory, fixed = TRUE, info = factory)
   }
@@ -181,10 +189,10 @@ test_that("targets graph separates public diagnostics, extended diagnostics, and
     fixed = TRUE
   )
   expect_match(src, "benchmark_targets <- list", fixed = TRUE)
-  expect_match(src, "diag_public_iv_panel", fixed = TRUE)
-  expect_match(src, "diag_public_spatial_autocorrelation", fixed = TRUE)
-  expect_match(src, "diag_public_spatial_autocorrelation_files", fixed = TRUE)
-  expect_match(src, "save_spatial_autocorrelation_diagnostics(diag_public_spatial_autocorrelation), format = \"file\"", fixed = TRUE)
+  expect_match(core, "diag_public_iv_panel", fixed = TRUE)
+  expect_match(core, "diag_public_spatial_autocorrelation", fixed = TRUE)
+  expect_match(core, "diag_public_spatial_autocorrelation_files", fixed = TRUE)
+  expect_match(core, "save_spatial_autocorrelation_diagnostics(diag_public_spatial_autocorrelation), format = \"file\"", fixed = TRUE)
   expect_match(extended, "extended_diagnostic_target_definitions <- function()", fixed = TRUE)
   expect_match(extended, "diag_ext_missingness", fixed = TRUE)
   expect_match(src, "bench_ame_methods", fixed = TRUE)
@@ -193,11 +201,31 @@ test_that("targets graph separates public diagnostics, extended diagnostics, and
   expect_match(src, "EMI_RUN_BENCHMARKS", fixed = TRUE)
   public_spatial_line <- grep(
     "tar_target\\(diag_public_spatial_autocorrelation,",
-    strsplit(src, "\n", fixed = TRUE)[[1]],
+    strsplit(core, "\n", fixed = TRUE)[[1]],
     value = TRUE
   )
   expect_length(public_spatial_line, 1L)
   expect_false(grepl('tar_cue(mode = "always")', public_spatial_line, fixed = TRUE))
+})
+
+test_that("historical geography validation stays out of the public core graph", {
+  core <- repo_core_target_text()
+  extended <- repo_extended_target_text()
+  historical_targets <- c(
+    "historical_linguistic_geography_1991_2001",
+    "historical_vanneman_source_qa",
+    "historical_vanneman_panel4_geography",
+    "historical_linguistic_geography_external_benchmark",
+    "multivintage_geography_1991_2001_2011",
+    "historical_linguistic_consensus_geography"
+  )
+
+  for (target in historical_targets) {
+    expect_false(grepl(target, core, fixed = TRUE), info = target)
+    expect_match(extended, target, fixed = TRUE, info = target)
+  }
+  expect_match(core, "district_lineage_sources", fixed = TRUE)
+  expect_match(core, "district_transition_2001_2011", fixed = TRUE)
 })
 
 test_that("target warning metadata is written to build diagnostics", {
@@ -619,7 +647,7 @@ test_that("target issue printer selects columns without data-frame drop warnings
 })
 
 test_that("conference poster is a first-class final output", {
-  targets <- repo_text("_targets.R")
+  targets <- repo_core_target_text()
   renderer <- repo_text("R", "output", "render_public_artifacts.R")
   contract <- repo_text("scripts", "public_output_contract.R")
   poster <- repo_text("posters", "2026_predoc_conference", "poster.qmd")
@@ -725,17 +753,7 @@ test_that("public audit caches requested diagnostics before rendering public out
 })
 
 test_that("reviewed primary lineage is public and alternatives remain diagnostic", {
-  target_file <- readLines(repo_file("_targets.R"), warn = FALSE)
-  core_start <- match(TRUE, grepl("core_pipeline_targets <- c(", target_file, fixed = TRUE))
-  extended_start <- match(
-    TRUE,
-    grepl(
-      "extended_diagnostic_targets <- extended_diagnostic_target_definitions()",
-      target_file,
-      fixed = TRUE
-    )
-  )
-  core <- paste(target_file[core_start:(extended_start - 1L)], collapse = "\n")
+  core <- repo_core_target_text()
   extended <- repo_extended_target_text()
 
   expect_match(
@@ -794,7 +812,7 @@ test_that("poster Typst assets resolve from the repository root", {
   )
   renderer_text <- repo_text("R", "output", "render_public_artifacts.R")
   renderer <- poster_renderer_test_env()
-  targets <- repo_text("_targets.R")
+  targets <- repo_core_target_text()
   source <- paste(poster, template)
   root_relative_assets <- paste0("/", renderer$poster_required_assets())
 
