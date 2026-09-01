@@ -103,6 +103,15 @@ def path_tests(path):
     ):
         tests.add("test-public-scripts.R")
     pipeline_test_map = {
+        "R/pipeline/core_consumption_targets.R": {
+            "test-consumption-district-welfare.R",
+            "test-consumption-household-adapters.R",
+            "test-consumption-reconstruction.R",
+            "test-consumption-source-geography.R",
+            "test-consumption-survey-registry.R",
+            "test-diagnostics.R",
+            "test-prices-and-controls.R",
+        },
         "R/pipeline/extended_historical_targets.R": {
             "test-historical-baseline-1991.R",
             "test-historical-linguistic-validation.R",
