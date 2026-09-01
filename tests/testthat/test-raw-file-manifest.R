@@ -863,3 +863,18 @@ test_that("NSS64 employment and migration source files use the organized NSS nam
   )
   expect_false(any(as.logical(rows$required_for_current_pipeline)))
 })
+
+
+test_that("NSS66 proprietary source contract is registered without activating an ad-hoc parser", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
+  manifest <- utils::read.csv(file.path(root, "data", "metadata", "file_manifest.csv"), stringsAsFactors = FALSE)
+  rows <- manifest[manifest$file_id %in% c("nss66_eus_ddi", "nss66_eus_nesstar"), , drop = FALSE]
+  expect_equal(nrow(rows), 2L)
+  expect_setequal(rows$file_id, c("nss66_eus_ddi", "nss66_eus_nesstar"))
+  expected_sizes <- c(nss66_eus_ddi = 3750760, nss66_eus_nesstar = 533824972)
+  expect_equal(stats::setNames(rows$expected_size_bytes, rows$file_id)[names(expected_sizes)], expected_sizes)
+  expect_true(all(grepl("^data/raw/nss/NSS 2009-10 Employment and Unemployment 66th Round", rows$relative_path)))
+  expect_false(any(as.logical(rows$required_for_current_pipeline)))
+  expect_identical(rows$reader_function[rows$file_id == "nss66_eus_ddi"], "read_nss66_eus_ddi_contract")
+  expect_identical(rows$reader_function[rows$file_id == "nss66_eus_nesstar"], "nesstar-converter")
+})

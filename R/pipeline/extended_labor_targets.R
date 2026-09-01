@@ -3,6 +3,15 @@
 extended_labor_target_definitions <- function() {
   list(
     tar_target(
+      nss66_eus_ddi_file,
+      manifest_file_by_id(paths, "nss_2009_10_employment", "nss66_eus_ddi", "NSS66 EUS DDI"),
+      format = "file"
+    ),
+    tar_target(
+      nss66_eus_ddi_contract,
+      read_nss66_eus_ddi_contract(nss66_eus_ddi_file)
+    ),
+    tar_target(
       nss64_eum_ddi_file,
       manifest_file_by_id(paths, "nss_2007_08_employment_migration", "nss64_eum_ddi", "NSS64 EUM DDI"),
       format = "file"
