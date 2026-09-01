@@ -249,6 +249,37 @@ resolve_nesstar_contract_path <- function(path, root = Sys.getenv("EMI_PROJECT_R
   file.path(root, path)
 }
 
+normalize_nesstar_conversion_manifest <- function(manifest, contract) {
+  manifest <- safe_df(manifest)
+  contract <- safe_df(contract)
+  current_required <- c(
+    "source_id", "block_id", "relative_path", "rows", "bytes", "sha256",
+    "converter_package", "converter_version"
+  )
+  if (all(current_required %in% names(manifest))) return(manifest)
+
+  legacy_required <- c(
+    "file_id", "relative_path", "rows", "bytes", "sha256", "converter_version"
+  )
+  if (!all(legacy_required %in% names(manifest))) {
+    missing <- setdiff(current_required, names(manifest))
+    stop("Nesstar conversion manifest is missing columns: ", paste(missing, collapse = ", "), call. = FALSE)
+  }
+  if (nrow(manifest) != nrow(contract) || anyDuplicated(plain_chr(manifest$file_id))) {
+    stop("Legacy Nesstar conversion manifest does not match the contracted block set.", call. = FALSE)
+  }
+  if (length(unique(plain_chr(contract$source_id))) != 1L ||
+      length(unique(plain_chr(contract$converter_package))) != 1L) {
+    stop("Cannot normalize a legacy Nesstar manifest from an ambiguous conversion contract.", call. = FALSE)
+  }
+
+  manifest$source_id <- plain_chr(contract$source_id[[1L]])
+  manifest$block_id <- plain_chr(manifest$file_id)
+  manifest$converter_package <- plain_chr(contract$converter_package[[1L]])
+  attr(manifest, "manifest_schema") <- "legacy_v1"
+  manifest
+}
+
 inspect_nesstar_materialization <- function(contract, root = Sys.getenv("EMI_PROJECT_ROOT", unset = ".")) {
   contract <- safe_df(contract)
   required <- c(
@@ -278,6 +309,7 @@ inspect_nesstar_materialization <- function(contract, root = Sys.getenv("EMI_PRO
       status = "not_materialized",
       ready = FALSE,
       manifest_path = manifest_path,
+      manifest_schema = NA_character_,
       blocks = data.frame(
         block_id = plain_chr(contract$block_id),
         relative_path = plain_chr(contract$relative_path),
@@ -295,15 +327,10 @@ inspect_nesstar_materialization <- function(contract, root = Sys.getenv("EMI_PRO
     )
   }
 
-  manifest <- utils::read.csv(manifest_path, stringsAsFactors = FALSE, check.names = FALSE)
-  manifest_required <- c(
-    "source_id", "block_id", "relative_path", "rows", "bytes", "sha256",
-    "converter_package", "converter_version"
+  manifest <- normalize_nesstar_conversion_manifest(
+    utils::read.csv(manifest_path, stringsAsFactors = FALSE, check.names = FALSE),
+    contract
   )
-  missing_manifest <- setdiff(manifest_required, names(manifest))
-  if (length(missing_manifest)) {
-    stop("Nesstar conversion manifest is missing columns: ", paste(missing_manifest, collapse = ", "), call. = FALSE)
-  }
   manifest <- manifest[plain_chr(manifest$source_id) == plain_chr(contract$source_id[[1L]]), , drop = FALSE]
   idx <- match(plain_chr(contract$block_id), plain_chr(manifest$block_id))
   if (nrow(manifest) != nrow(contract) || anyNA(idx) || anyDuplicated(manifest$block_id)) {
@@ -333,6 +360,13 @@ inspect_nesstar_materialization <- function(contract, root = Sys.getenv("EMI_PRO
     status = "ready",
     ready = TRUE,
     manifest_path = manifest_path,
+    manifest_schema = if (!is.null(attr(manifest, "manifest_schema"))) {
+      attr(manifest, "manifest_schema")
+    } else if ("schema_version" %in% names(manifest)) {
+      paste0("v", plain_chr(manifest$schema_version[[1L]]))
+    } else {
+      "unversioned_current"
+    },
     blocks = data.frame(
       block_id = plain_chr(contract$block_id),
       relative_path = plain_chr(contract$relative_path),

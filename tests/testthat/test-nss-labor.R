@@ -315,8 +315,32 @@ test_that("Nesstar materialization is optional when absent and strict when prese
   ready <- inspect_nesstar_materialization(contract, root)
   expect_true(ready$ready)
   expect_identical(ready$status, "ready")
+  expect_identical(ready$manifest_schema, "unversioned_current")
   expect_true(all(ready$blocks$exists))
   expect_equal(ready$blocks$rows, c(2, 3))
+
+  legacy <- manifest[c("block_id", "relative_path", "rows", "bytes", "sha256", "converter_version")]
+  names(legacy)[names(legacy) == "block_id"] <- "file_id"
+  write.csv(legacy, file.path(output, "conversion_manifest.csv"), row.names = FALSE)
+  legacy_ready <- inspect_nesstar_materialization(contract, root)
+  expect_true(legacy_ready$ready)
+  expect_identical(legacy_ready$manifest_schema, "legacy_v1")
+  expect_equal(legacy_ready$blocks$rows, c(2, 3))
+})
+
+
+test_that("Nesstar materialization rejects unknown manifest schemas", {
+  contract <- data.frame(
+    source_id = "fixture", block_id = "F1", expected_rows = 1,
+    relative_path = "data/interim/fixture/F1.csv",
+    converter_package = "converter", converter_version = "1.2.3",
+    stringsAsFactors = FALSE
+  )
+  malformed <- data.frame(relative_path = contract$relative_path, rows = 1)
+  expect_error(
+    normalize_nesstar_conversion_manifest(malformed, contract),
+    "conversion manifest is missing columns"
+  )
 })
 
 test_that("NSS66 canonical adapter joins F4/F5 one-to-one and F6 conditionally", {

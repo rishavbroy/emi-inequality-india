@@ -287,8 +287,9 @@ build_nss66_materialization_diagnostics <- function(materialization, canonical_p
   blocks <- safe_df(materialization$blocks)
   blocks$source_id <- materialization$source_id
   blocks$materialization_status <- materialization$status
+  blocks$manifest_schema <- if (is.null(materialization$manifest_schema)) NA_character_ else materialization$manifest_schema
   blocks <- blocks[c(
-    "source_id", "materialization_status", "block_id", "relative_path",
+    "source_id", "materialization_status", "manifest_schema", "block_id", "relative_path",
     "exists", "rows", "bytes", "modified_at", "sha256"
   )]
   source <- NULL
