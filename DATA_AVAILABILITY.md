@@ -69,3 +69,11 @@ The extended labor branch registers the official NSS 64 Schedule 10.2 DDI plus B
 - NSS 64 Schedule 10.2 labor/migration now produces design-based Census-2001 district estimates after reviewed deterministic lineage. The registered age-15+ family is UPSS labor-force participation, employment, unemployment, regular-salaried share among employed, and migration from the last usual place of residence. Preferred support is predeclared as at least 5 FSUs and Kish effective N at least 100 on each outcome denominator; thin districts remain diagnostic rather than being deleted.
 
 - **NSS 66 employment/unemployment (2009-10):** official DDI and `.Nesstar` container are registered under `data/raw/nss/`; DDI schema validation is active, while person-level estimation awaits standard conversion of the proprietary container to open tabular files.
+
+NSS66 employment/unemployment conversion is reproducible but local-only: the
+official `.Nesstar` binary and DDI remain raw inputs under `data/raw/nss/`, while
+`scripts/convert_nss66_eus.py` materializes the required F4/F5/F6 tables under
+gitignored `data/interim/nss66_eus/` with `nesstar-converter==1.0.4`. The R
+canonical adapter and shared labor estimator are implemented; production NSS66
+district targets should be activated only after the converted tables have been
+materialized and their real-data diagnostics reviewed.

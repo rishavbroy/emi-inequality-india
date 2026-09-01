@@ -59,3 +59,31 @@ The next wave is NSS 66 Schedule 10 (July 2009-June 2010). The official source i
 The DDI contract requires the common person/design fields and the all-subround combined `WEIGHT` variable, plus age/demographics, principal activity status/NIC/NCO and subsidiary activity status/NIC/NCO. The official catalog defines `WEIGHT` as the weight for all-subround combined estimation; `WEIGHT_SR` is reserved for subround-specific estimates.
 
 Production does not implement a repository-specific `.Nesstar` parser. Conversion should use the maintained `nesstar-converter` package (pinned to a reviewed release when the converted files are materialized), which reads `.Nesstar` with companion DDI metadata and exports open tabular formats. The DDI validation target is active now; district estimation remains blocked until converted F4/F5/F6 tables have been materialized and inspected.
+
+### NSS66 conversion and canonical person adapter
+
+NSS66 now has a reproducible conversion boundary rather than an implied manual
+step. `scripts/convert_nss66_eus.py` requires the reviewed
+`nesstar-converter==1.0.4` release, reads the canonical DDI and `.Nesstar` paths
+from `data/metadata/file_manifest.csv`, converts to CSV, identifies F4/F5/F6 by
+their DDI-validated signature columns and exact case counts, and writes only the
+three required tables to the gitignored `data/interim/nss66_eus/` directory.
+The script does not install packages or mutate the R environment.
+
+`data/metadata/nss66_conversion_contract.csv` pins the converter version, exact
+block row counts, signature columns, and deterministic interim filenames. The R
+adapter then validates the converted blocks again. F4 and F5 must have the same
+complete PID universe; F6 must equal exactly the subset of F5 persons coded
+`Whether_in_Subsidiary_Activity == 1`. Shared survey-design and geography fields
+must agree by PID. Annual pooled estimation uses `WEIGHT`, not `WEIGHT_SR`.
+Urban blank `Sub_Stratum_No` values are represented internally as `__none__`,
+consistent with the Round-66 design's lack of urban sub-stratification; rural
+blank sub-strata remain invalid.
+
+The district estimator is now wave-invariant. NSS64 keeps its five registered
+outcomes, including migration, and its `near_treatment_reference` role. NSS66
+registers the same four usual-status labor outcomes without migration and with
+`temporal_role = "early_post"`. NSS66 district lineage reuses the already
+reviewed 2009-10 Type-2 consumption bridge on the same state/district survey
+frame, accepting only resolved one-to-one mappings. This avoids maintaining a
+second 2009-10 geography adjudication system for labor data.

@@ -97,3 +97,8 @@ Census housing diagnostics activate Census-2001 H-04 Appendix (`PC01_H04a`, mani
 - NSS 64 Schedule 10.2 labor/migration source semantics are documented in `docs/LABOR_MARKET.md`. Extended diagnostics register the official DDI plus Block 4 usual-activity and Block 6 migration `.sav` files under the organized `data/raw/nss/` namespace; district labor outcomes remain inactive until lineage and support rules are predeclared.
 
 NSS66 employment/unemployment registers both the official DDI and canonical `survey0/data` `.Nesstar` container. The DDI is an active extended validation source; the proprietary container is intentionally marked for standard external conversion rather than direct repository parsing.
+
+- `nss66_conversion_contract.csv` pins the reviewed `nesstar-converter` release,
+  exact F4/F5/F6 case counts, signature columns, and gitignored interim output
+  paths used by `scripts/convert_nss66_eus.py`. The converted CSVs are
+  reproducible local intermediates, not tracked raw data.

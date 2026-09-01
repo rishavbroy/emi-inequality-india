@@ -147,3 +147,22 @@ NSS64 labor diagnostics now include a predeclared design-based district outcome 
 ### NSS66 proprietary microdata
 
 The NSS66 employment/unemployment source is distributed as a `.Nesstar` container with companion DDI XML. Extended diagnostics validate the DDI directly. Before activating NSS66 person-level estimation, convert the container with the maintained `nesstar-converter` package rather than adding a repository-specific binary parser, then inspect the generated F4/F5/F6 tables against the DDI case counts and schema.
+
+### Materialize NSS66 employment/unemployment blocks
+
+NSS66 Schedule 10 is distributed as a proprietary `.Nesstar` binary plus DDI.
+The repository does not parse that binary itself. Install the pinned standard
+converter in your local Python environment and materialize the three required
+blocks once:
+
+```bash
+python -m pip install 'nesstar-converter==1.0.4'
+python scripts/convert_nss66_eus.py
+```
+
+The command writes `data/interim/nss66_eus/F4.csv`, `F5.csv`, `F6.csv`, and a
+local conversion manifest with SHA-256 hashes. `data/interim/` is gitignored;
+these are reproducible local intermediates, not tracked source data. Use
+`--force` only when intentionally replacing a prior conversion. The converter
+version, expected block sizes, and output paths are frozen in
+`data/metadata/nss66_conversion_contract.csv`.
