@@ -22,9 +22,21 @@ repo_text <- function(...) {
 
 repo_target_manifest <- function() {
   if (!exists("manifest", envir = .repo_target_manifest_cache, inherits = FALSE)) {
+    script <- repo_file("_targets.R")
+    root <- dirname(script)
+    old_wd <- setwd(root)
+    on.exit(setwd(old_wd), add = TRUE)
+
+    # tar_manifest() normally evaluates the target script in a clean callr
+    # process. For tests, its documented callr_function = NULL mode lets us
+    # control the working directory explicitly while keeping evaluation in an
+    # isolated environment. This matters because the target script deliberately
+    # uses project-relative source paths.
     manifest <- targets::tar_manifest(
       fields = tidyselect::any_of(c("name", "command")),
-      script = repo_file("_targets.R")
+      callr_function = NULL,
+      envir = new.env(parent = globalenv()),
+      script = "_targets.R"
     )
     assign("manifest", manifest, envir = .repo_target_manifest_cache)
   }
