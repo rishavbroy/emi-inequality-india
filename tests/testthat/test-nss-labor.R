@@ -408,6 +408,68 @@ test_that("NSS66 lineage reuses the reviewed same-round consumption bridge", {
   expect_equal(out$lineage_status[[3L]], "unresolved_source_district")
 })
 
+
+test_that("NSS66 uses the shared estimator without a migration-only branch", {
+  people <- data.frame(
+    person_key = paste0("p", 1:12),
+    source_district_code = rep(c("0101", "0102"), each = 6),
+    state_code = "01", district_code = rep(c("01", "02"), each = 6),
+    sector = 1, sub_round = 1, sub_sample = 1, nss_region = "011",
+    stratum = rep(c(1, 2), each = 6), sub_stratum = "1",
+    fsu = 1:12, second_stage_stratum = 1, household_no = 1:12,
+    person_no = 1, survey_weight = 1, age = 20,
+    usual_principal_status = c(31, 31, 81, 91, 91, 91, 11, 31, 51, 81, 91, 91),
+    usual_subsidiary_status = NA_real_,
+    target_unit_2001 = rep(c("pc2001__01__01", "pc2001__01__02"), each = 6),
+    lineage_status = "resolved_reviewed_deterministic",
+    stringsAsFactors = FALSE
+  )
+  support <- summarize_nss_labor_target_support(people)
+  out <- estimate_nss_labor_district_outcomes(
+    people, support, nss66_outcome_registry(),
+    rule = data.frame(min_fsu = 1L, min_kish_effective_n = 1),
+    label = "NSS66 labor"
+  )
+  expect_setequal(out$registry$outcome_id, nss66_outcome_registry()$outcome_id)
+  expect_equal(nrow(out$estimates), 8L)
+  expect_false(any(out$estimates$outcome_id == "migrant_from_last_upr_share_age15plus"))
+  expect_true(all(out$estimates$status == "estimated"))
+})
+
+test_that("NSS66 diagnostics share the common labor output contract", {
+  people <- data.frame(
+    person_key = c("p1", "p2"), source_district_code = c("0101", "0101"),
+    state_code = "01", district_code = "01", sector = 1, fsu = c(1, 2),
+    survey_weight = 1, target_unit_2001 = "pc2001__01__01",
+    lineage_status = "resolved_reviewed_deterministic", stringsAsFactors = FALSE
+  )
+  validation <- data.frame(
+    source = "usual_activity_f4_f5_f6", rows = 2, unique_people = 2,
+    positive_weight_share = 1, resolved_person_share = 1, stringsAsFactors = FALSE
+  )
+  out <- build_nss_labor_diagnostics(validation, people)
+  expect_named(out, c("source_validation", "lineage_support", "target_support"))
+  expect_equal(nrow(out$lineage_support), 1L)
+  expect_equal(nrow(out$target_support), 1L)
+})
+
+test_that("NSS66 diagnostic writer removes stale estimates when materialization is absent", {
+  root <- tempfile("nss66-diagnostics-")
+  dir.create(root, recursive = TRUE)
+  stale <- file.path(root, c(
+    "nss66_source_validation.csv", "nss66_lineage_support.csv",
+    "nss66_target_support.csv", "nss66_outcome_registry.csv",
+    "nss66_district_outcomes.csv"
+  ))
+  file.create(stale)
+  fallback <- file.path(root, "nss66_materialization.csv")
+  writeLines("status", fallback)
+  out <- save_nss66_diagnostics(NULL, fallback_path = fallback, root = root)
+  expect_identical(out, fallback)
+  expect_false(any(file.exists(stale)))
+  expect_true(file.exists(fallback))
+})
+
 test_that("shared NSS labor registry separates near-treatment and early-post waves", {
   nss64 <- nss64_outcome_registry()
   nss66 <- nss66_outcome_registry()

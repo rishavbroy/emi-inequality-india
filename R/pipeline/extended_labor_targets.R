@@ -42,13 +42,40 @@ extended_labor_target_definitions <- function() {
     ),
     tar_target(
       nss66_materialization_diagnostics,
-      build_nss66_materialization_diagnostics(
-        nss66_materialization, nss66_usual_activity_source, nss66_lineaged_usual_activity
-      )
+      build_nss66_materialization_diagnostics(nss66_materialization)
     ),
     tar_target(
       diag_ext_nss66_materialization_files,
       save_nss66_materialization_diagnostics(nss66_materialization_diagnostics),
+      format = "file"
+    ),
+    tar_target(
+      nss66_diagnostics,
+      if (is.null(nss66_usual_activity_source)) {
+        NULL
+      } else {
+        build_nss66_diagnostics(nss66_usual_activity_source, nss66_lineaged_usual_activity)
+      }
+    ),
+    tar_target(
+      nss66_district_outcomes,
+      if (is.null(nss66_diagnostics)) {
+        NULL
+      } else {
+        estimate_nss_labor_district_outcomes(
+          nss66_lineaged_usual_activity,
+          nss66_diagnostics$target_support,
+          nss66_outcome_registry(),
+          label = "NSS66 labor"
+        )
+      }
+    ),
+    tar_target(
+      diag_ext_nss66_files,
+      save_nss66_diagnostics(
+        nss66_diagnostics, nss66_district_outcomes,
+        fallback_path = diag_ext_nss66_materialization_files
+      ),
       format = "file"
     ),
     tar_target(
