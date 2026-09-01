@@ -12,6 +12,46 @@ extended_labor_target_definitions <- function() {
       read_nss66_eus_ddi_contract(nss66_eus_ddi_file)
     ),
     tar_target(
+      nss66_conversion_contract,
+      read_nss66_conversion_contract()
+    ),
+    tar_target(
+      nss66_materialization,
+      inspect_nesstar_materialization(nss66_conversion_contract),
+      cue = tar_cue(mode = "always")
+    ),
+    tar_target(
+      nss66_usual_activity_source,
+      if (isTRUE(nss66_materialization$ready)) {
+        read_nss66_materialized_usual_activity(
+          nss66_materialization, nss66_eus_ddi_contract, nss66_conversion_contract
+        )
+      } else {
+        NULL
+      }
+    ),
+    tar_target(
+      nss66_lineaged_usual_activity,
+      if (is.null(nss66_usual_activity_source)) {
+        NULL
+      } else {
+        attach_nss66_reviewed_lineage(
+          nss66_usual_activity_source, consumption_lineage_bridge_2009_10_type2
+        )
+      }
+    ),
+    tar_target(
+      nss66_materialization_diagnostics,
+      build_nss66_materialization_diagnostics(
+        nss66_materialization, nss66_usual_activity_source, nss66_lineaged_usual_activity
+      )
+    ),
+    tar_target(
+      diag_ext_nss66_materialization_files,
+      save_nss66_materialization_diagnostics(nss66_materialization_diagnostics),
+      format = "file"
+    ),
+    tar_target(
       nss64_eum_ddi_file,
       manifest_file_by_id(paths, "nss_2007_08_employment_migration", "nss64_eum_ddi", "NSS64 EUM DDI"),
       format = "file"

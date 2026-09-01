@@ -202,7 +202,8 @@ nss66_reviewed_lineage_map <- function(consumption_bridge) {
     !is.na(map$target_unit_2001) & nzchar(plain_chr(map$target_unit_2001))
   map <- unique(map[resolved, c("source_state_code", "source_district_code", "target_unit_2001", "lineage_status"), drop = FALSE])
   if (!nrow(map)) stop("NSS66 same-round lineage bridge has no resolved one-to-one districts.", call. = FALSE)
-  key <- paste(map$source_state_code, map$source_district_code, sep = "")
+  key <- paste(map$source_state_code, map$source_district_code, sep = "
+")
   if (anyDuplicated(key)) {
     stop("Each resolved NSS66 source district must map to one Census-2001 target.", call. = FALSE)
   }
@@ -215,8 +216,10 @@ attach_nss66_reviewed_lineage <- function(persons, consumption_bridge) {
   missing <- setdiff(required, names(x))
   if (length(missing)) stop("NSS66 person rows lack lineage fields: ", paste(missing, collapse = ", "), call. = FALSE)
   map <- nss66_reviewed_lineage_map(consumption_bridge)
-  source_key <- paste(plain_chr(x$state_code), plain_chr(x$district_code), sep = "")
-  map_key <- paste(plain_chr(map$source_state_code), plain_chr(map$source_district_code), sep = "")
+  source_key <- paste(plain_chr(x$state_code), plain_chr(x$district_code), sep = "
+")
+  map_key <- paste(plain_chr(map$source_state_code), plain_chr(map$source_district_code), sep = "
+")
   idx <- match(source_key, map_key)
   x$source_district_code <- paste0(plain_chr(x$state_code), plain_chr(x$district_code))
   x$target_unit_2001 <- plain_chr(map$target_unit_2001[idx])
@@ -277,5 +280,36 @@ save_nss64_diagnostics <- function(
   utils::write.csv(x$source_validation, paths[["source_validation"]], row.names = FALSE, na = "")
   utils::write.csv(x$lineage_support, paths[["lineage_support"]], row.names = FALSE, na = "")
   utils::write.csv(target_support, paths[["target_support"]], row.names = FALSE, na = "")
+  unname(paths)
+}
+
+build_nss66_materialization_diagnostics <- function(materialization, canonical_persons = NULL, lineaged_persons = NULL) {
+  blocks <- safe_df(materialization$blocks)
+  blocks$source_id <- materialization$source_id
+  blocks$materialization_status <- materialization$status
+  blocks <- blocks[c(
+    "source_id", "materialization_status", "block_id", "relative_path",
+    "exists", "rows", "bytes", "modified_at", "sha256"
+  )]
+  source <- NULL
+  if (!is.null(canonical_persons)) {
+    if (is.null(lineaged_persons)) stop("NSS66 source diagnostics require lineaged persons.", call. = FALSE)
+    source <- build_nss66_source_diagnostics(canonical_persons, lineaged_persons)
+  }
+  list(materialization = blocks, source_validation = source)
+}
+
+save_nss66_materialization_diagnostics <- function(
+    x, root = "outputs/diagnostics/extended/labor") {
+  dir.create(root, recursive = TRUE, showWarnings = FALSE)
+  source_path <- file.path(root, "nss66_source_validation.csv")
+  paths <- c(materialization = file.path(root, "nss66_materialization.csv"))
+  utils::write.csv(x$materialization, paths[["materialization"]], row.names = FALSE, na = "")
+  if (!is.null(x$source_validation)) {
+    paths <- c(paths, source_validation = source_path)
+    utils::write.csv(x$source_validation, source_path, row.names = FALSE, na = "")
+  } else if (file.exists(source_path)) {
+    unlink(source_path)
+  }
   unname(paths)
 }

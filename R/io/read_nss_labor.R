@@ -244,6 +244,108 @@ read_nss66_conversion_contract <- function(
   x[match(c("F4", "F5", "F6"), x$block_id), , drop = FALSE]
 }
 
+resolve_nesstar_contract_path <- function(path, root = Sys.getenv("EMI_PROJECT_ROOT", unset = ".")) {
+  if (grepl("^(/|[A-Za-z]:[/\\\\])", path)) return(path)
+  file.path(root, path)
+}
+
+inspect_nesstar_materialization <- function(contract, root = Sys.getenv("EMI_PROJECT_ROOT", unset = ".")) {
+  contract <- safe_df(contract)
+  required <- c(
+    "source_id", "block_id", "expected_rows", "relative_path",
+    "converter_package", "converter_version"
+  )
+  missing <- setdiff(required, names(contract))
+  if (length(missing)) {
+    stop("Nesstar materialization contract is missing columns: ", paste(missing, collapse = ", "), call. = FALSE)
+  }
+  if (!nrow(contract) || length(unique(contract$source_id)) != 1L) {
+    stop("Nesstar materialization inspection requires exactly one source_id.", call. = FALSE)
+  }
+
+  paths <- vapply(plain_chr(contract$relative_path), resolve_nesstar_contract_path, character(1), root = root)
+  exists <- file.exists(paths)
+  parents <- unique(dirname(paths))
+  if (length(parents) != 1L) {
+    stop("Nesstar materialization contract must use one output directory.", call. = FALSE)
+  }
+  manifest_path <- file.path(parents[[1L]], "conversion_manifest.csv")
+  manifest_exists <- file.exists(manifest_path)
+
+  if (!any(exists) && !manifest_exists) {
+    return(list(
+      source_id = plain_chr(contract$source_id[[1L]]),
+      status = "not_materialized",
+      ready = FALSE,
+      manifest_path = manifest_path,
+      blocks = data.frame(
+        block_id = plain_chr(contract$block_id),
+        relative_path = plain_chr(contract$relative_path),
+        exists = FALSE, bytes = NA_real_, modified_at = NA_real_, rows = NA_real_, sha256 = NA_character_,
+        stringsAsFactors = FALSE
+      )
+    ))
+  }
+
+  if (!all(exists) || !manifest_exists) {
+    stop(
+      "Nesstar materialization is partial for ", plain_chr(contract$source_id[[1L]]),
+      "; rerun materialization with --force after removing incomplete interim files.",
+      call. = FALSE
+    )
+  }
+
+  manifest <- utils::read.csv(manifest_path, stringsAsFactors = FALSE, check.names = FALSE)
+  manifest_required <- c(
+    "source_id", "block_id", "relative_path", "rows", "bytes", "sha256",
+    "converter_package", "converter_version"
+  )
+  missing_manifest <- setdiff(manifest_required, names(manifest))
+  if (length(missing_manifest)) {
+    stop("Nesstar conversion manifest is missing columns: ", paste(missing_manifest, collapse = ", "), call. = FALSE)
+  }
+  manifest <- manifest[plain_chr(manifest$source_id) == plain_chr(contract$source_id[[1L]]), , drop = FALSE]
+  idx <- match(plain_chr(contract$block_id), plain_chr(manifest$block_id))
+  if (nrow(manifest) != nrow(contract) || anyNA(idx) || anyDuplicated(manifest$block_id)) {
+    stop("Nesstar conversion manifest does not match the contracted block set.", call. = FALSE)
+  }
+  manifest <- manifest[idx, , drop = FALSE]
+
+  file_meta <- file.info(paths)
+  actual_bytes <- as.numeric(file_meta$size)
+  modified_at <- as.numeric(file_meta$mtime)
+  expected_rows <- num(contract$expected_rows)
+  manifest_rows <- num(manifest$rows)
+  manifest_bytes <- num(manifest$bytes)
+  same_contract <-
+    plain_chr(manifest$relative_path) == plain_chr(contract$relative_path) &
+    manifest_rows == expected_rows &
+    manifest_bytes == actual_bytes &
+    plain_chr(manifest$converter_package) == plain_chr(contract$converter_package) &
+    plain_chr(manifest$converter_version) == plain_chr(contract$converter_version) &
+    nzchar(plain_chr(manifest$sha256))
+  if (any(!same_contract | is.na(same_contract))) {
+    stop("Nesstar conversion manifest disagrees with the materialization contract or local files.", call. = FALSE)
+  }
+
+  list(
+    source_id = plain_chr(contract$source_id[[1L]]),
+    status = "ready",
+    ready = TRUE,
+    manifest_path = manifest_path,
+    blocks = data.frame(
+      block_id = plain_chr(contract$block_id),
+      relative_path = plain_chr(contract$relative_path),
+      exists = TRUE,
+      bytes = actual_bytes,
+      modified_at = modified_at,
+      rows = manifest_rows,
+      sha256 = plain_chr(manifest$sha256),
+      stringsAsFactors = FALSE
+    )
+  )
+}
+
 read_nss66_converted_block <- function(path, file_id, ddi_contract = NULL) {
   requirements <- nss66_eus_ddi_requirements()
   if (!file_id %in% names(requirements)) stop("Unsupported NSS66 block: ", file_id, call. = FALSE)
@@ -397,4 +499,20 @@ build_nss66_usual_activity <- function(f4_raw, f5_raw, f6_raw, ddi_contract = NU
     stop("NSS66 canonical persons contain invalid age or principal-status values.", call. = FALSE)
   }
   out
+}
+
+read_nss66_materialized_usual_activity <- function(
+    materialization, ddi_contract, contract = read_nss66_conversion_contract(),
+    root = Sys.getenv("EMI_PROJECT_ROOT", unset = ".")) {
+  if (!is.list(materialization) || !isTRUE(materialization$ready)) {
+    stop("NSS66 materialized persons require a ready conversion status.", call. = FALSE)
+  }
+  contract <- safe_df(contract)
+  contract <- contract[match(c("F4", "F5", "F6"), plain_chr(contract$block_id)), , drop = FALSE]
+  paths <- vapply(plain_chr(contract$relative_path), resolve_nesstar_contract_path, character(1), root = root)
+  blocks <- lapply(seq_len(nrow(contract)), function(i) {
+    read_nss66_converted_block(paths[[i]], plain_chr(contract$block_id[[i]]), ddi_contract)
+  })
+  names(blocks) <- plain_chr(contract$block_id)
+  build_nss66_usual_activity(blocks$F4, blocks$F5, blocks$F6, ddi_contract)
 }

@@ -278,6 +278,47 @@ test_that("NSS66 conversion contract pins one standard converter and three block
   expect_true(all(grepl("^data/interim/nss66_eus/F[456]\\.csv$", contract$relative_path)))
 })
 
+test_that("Nesstar materialization is optional when absent and strict when present", {
+  root <- tempfile("nesstar-materialization-")
+  dir.create(root, recursive = TRUE)
+  contract <- data.frame(
+    source_id = rep("fixture", 2), block_id = c("F1", "F2"),
+    expected_rows = c(2, 3), relative_path = c("data/interim/fixture/F1.csv", "data/interim/fixture/F2.csv"),
+    converter_package = "converter", converter_version = "1.2.3",
+    stringsAsFactors = FALSE
+  )
+
+  pending <- inspect_nesstar_materialization(contract, root)
+  expect_false(pending$ready)
+  expect_identical(pending$status, "not_materialized")
+  expect_false(any(pending$blocks$exists))
+
+  output <- file.path(root, "data/interim/fixture")
+  dir.create(output, recursive = TRUE)
+  writeLines(c("x", "1", "2"), file.path(output, "F1.csv"))
+  expect_error(
+    inspect_nesstar_materialization(contract, root),
+    "materialization is partial"
+  )
+
+  writeLines(c("x", "1", "2", "3"), file.path(output, "F2.csv"))
+  files <- file.path(output, c("F1.csv", "F2.csv"))
+  manifest <- data.frame(
+    source_id = rep("fixture", 2), block_id = c("F1", "F2"),
+    relative_path = contract$relative_path, rows = contract$expected_rows,
+    bytes = as.numeric(file.info(files)$size), sha256 = c("abc", "def"),
+    converter_package = "converter", converter_version = "1.2.3",
+    stringsAsFactors = FALSE
+  )
+  write.csv(manifest, file.path(output, "conversion_manifest.csv"), row.names = FALSE)
+
+  ready <- inspect_nesstar_materialization(contract, root)
+  expect_true(ready$ready)
+  expect_identical(ready$status, "ready")
+  expect_true(all(ready$blocks$exists))
+  expect_equal(ready$blocks$rows, c(2, 3))
+})
+
 test_that("NSS66 canonical adapter joins F4/F5 one-to-one and F6 conditionally", {
   common <- data.frame(
     FSU_Serial_No = c("1001", "1002", "1003"), Sector = c("1", "2", "2"),
