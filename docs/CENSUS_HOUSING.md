@@ -10,9 +10,29 @@ The housing diagnostic now builds longitudinal district measures from seven dire
 - Census 2001 H-10 and Census 2011 HL-08/HL-09: bathroom, latrine type, and drainage;
 - Census 2001 H-11 and Census 2011 HL-10: separate kitchen and cooking fuel;
 - Census 2001 H-12 and Census 2011 HL-11: independent electricity/latrine cross-checks within the drinking-water table;
-- Census 2001 H-13 and Census 2011 HL-12: banking services and specified household assets.
+- Census 2001 H-13 and Census 2011 HL-12: banking services and specified household assets;
+- Census 2011 HL-13: follow-up-only structural durability (permanent, semi-permanent, temporary, and non-serviceable temporary structures).
 
 The module is an extended diagnostic. It does not add post-treatment housing variables to the preferred IV control set.
+
+## Structural durability
+
+Census 2011 HL-13 classifies occupied census houses as permanent, semi-permanent,
+temporary (serviceable/non-serviceable), or unclassifiable. The reader enforces both
+published accounting identities before any geographic pooling:
+
+- total households = permanent + semi-permanent + temporary + unclassifiable;
+- temporary = serviceable temporary + non-serviceable temporary.
+
+HL-13 is retained as a follow-up-only descriptive mechanism in the current pipeline.
+The exact Census-2001 conceptual counterpart is H-04, *Distribution of census houses
+used as residence and residence-cum-other use by their type of structure*. H-04 uses
+the same permanent/semi-permanent/temporary/serviceability classification. It is not
+present in the current 2001 acquisition bundle, so no 2001 durability baseline or
+2001--2011 durability change is fabricated from H-03 roof/wall/floor materials.
+
+When H-04 is acquired and its raw state/UT workbooks are inspected, it can enter the
+existing housing count/geography machinery without a new estimator or output family.
 
 ## Geographic contract
 
@@ -94,6 +114,6 @@ The registered housing outcomes use the same common-support scalar-IV engine as 
 
 These regressions use **changes**, not 2011 levels, so the estimand is local improvement in the measured housing/living-standard margin between 2001 and 2011. They remain extended mechanism diagnostics and are not controls in the preferred welfare equation or claims of identified mediation.
 
-## Deferred table
+## Deferred longitudinal durability
 
-HL-13 remains acquisition-only. Structural-durability measures should not be activated until the correct 2001 conceptual counterpart and denominator contract are established explicitly rather than inferred from table numbering.
+HL-13 is active as a follow-up-only structural-durability source; H-04 is the missing exact 2001 baseline counterpart. Longitudinal structural-durability changes should not be activated until the H-04 raw workbooks are acquired and their household/count contract is validated explicitly.
