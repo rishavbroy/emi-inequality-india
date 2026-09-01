@@ -250,6 +250,7 @@ test_that("NSS labor DDI validation is reusable across survey waves", {
   req <- nss66_eus_ddi_requirements()
   expect_setequal(names(req), c("F4", "F5", "F6"))
   expect_true(all(c("WEIGHT", "PID", "District", "State_Region") %in% req$F5))
+  expect_false(any(c("STATE", "DISTRICT_CODE", "HHID") %in% req$F5))
   expect_true("Usual_Principal_Activity_Status" %in% req$F5)
   expect_true("Usual_Subsidiary_Activity_Status" %in% req$F6)
 })
@@ -349,8 +350,9 @@ test_that("NSS66 canonical adapter joins F4/F5 one-to-one and F6 conditionally",
     State_Region = "011", District = c("01", "01", "02"), Stratum = "1",
     Sub_Stratum_No = c("1", "", ""), Sub_Round = "1", Sub_Sample = "1",
     Second_Stage_Stratum_No = "1", Sample_Hhld_No = c("1", "2", "3"),
-    Person_Serial_No = "1", STATE = "01", DISTRICT_CODE = c("01", "01", "02"),
-    HHID = c("h1", "h2", "h3"), PID = c("p1", "p2", "p3"), WEIGHT = c("10", "20", "30"),
+    Person_Serial_No = "1", STATE = "99", DISTRICT_CODE = "99",
+    HHID = c("legacy-h1", "legacy-h2", "legacy-h3"),
+    PID = c("p1", "p2", "p3"), WEIGHT = c("10", "20", "30"),
     stringsAsFactors = FALSE
   )
   f4 <- cbind(common, Sex = c("1", "2", "1"), Age = c("20", "30", "40"),
@@ -371,6 +373,8 @@ test_that("NSS66 canonical adapter joins F4/F5 one-to-one and F6 conditionally",
   expect_identical(out$person_key, c("p1", "p2", "p3"))
   expect_equal(out$usual_subsidiary_status, c(31, NA, NA))
   expect_equal(out$sub_stratum, c("1", "__none__", "__none__"))
+  expect_equal(out$state_code, c("01", "01", "01"))
+  expect_equal(out$district_code, c("01", "01", "02"))
   expect_equal(out$survey_weight, c(10, 20, 30))
 
   bad_f6 <- cbind(
