@@ -33,7 +33,6 @@ read_nss_sav_columns <- function(path, columns, label) {
   as.data.frame(out, stringsAsFactors = FALSE)
 }
 
-nss_code_numeric <- function(x) suppressWarnings(as.numeric(x))
 
 normalize_nss64_design <- function(raw, person_column, label) {
   required <- unique(c(nss64_design_columns(), person_column))
@@ -42,19 +41,19 @@ normalize_nss64_design <- function(raw, person_column, label) {
 
   out <- data.frame(
     person_key = as.character(raw$key_memb),
-    state_code = normalize_census_code(nss_code_numeric(raw$state), 2L),
-    district_code = normalize_census_code(nss_code_numeric(raw$District), 2L),
-    sector = nss_code_numeric(raw$Sector),
-    sub_round = nss_code_numeric(raw$Sub_Round),
-    sub_sample = nss_code_numeric(raw$Sub_sample),
-    nss_region = normalize_census_code(nss_code_numeric(raw$State_Region), 3L),
-    stratum = nss_code_numeric(raw$Stratum),
-    sub_stratum = nss_code_numeric(raw$Sub_Stratum),
-    fsu = nss_code_numeric(raw$FSU),
-    second_stage_stratum = nss_code_numeric(raw$Ss_stratum),
-    household_no = nss_code_numeric(raw$Sample_hhold_No),
-    person_no = nss_code_numeric(raw[[person_column]]),
-    survey_weight = nss_code_numeric(raw$wgt_combined),
+    state_code = normalize_census_code(num(raw$state), 2L),
+    district_code = normalize_census_code(num(raw$District), 2L),
+    sector = num(raw$Sector),
+    sub_round = num(raw$Sub_Round),
+    sub_sample = num(raw$Sub_sample),
+    nss_region = normalize_census_code(num(raw$State_Region), 3L),
+    stratum = num(raw$Stratum),
+    sub_stratum = num(raw$Sub_Stratum),
+    fsu = num(raw$FSU),
+    second_stage_stratum = num(raw$Ss_stratum),
+    household_no = num(raw$Sample_hhold_No),
+    person_no = num(raw[[person_column]]),
+    survey_weight = num(raw$wgt_combined),
     stringsAsFactors = FALSE
   )
 
@@ -78,37 +77,37 @@ normalize_nss64_design <- function(raw, person_column, label) {
 read_nss64_usual_activity <- function(path) {
   raw <- read_nss_sav_columns(path, nss64_usual_activity_columns(), "NSS64 Block 4")
   out <- normalize_nss64_design(raw, "B4_c1", "NSS64 Block 4")
-  out$sex <- nss_code_numeric(raw$B4_c4)
-  out$age <- nss_code_numeric(raw$B4_c5)
-  out$general_education <- nss_code_numeric(raw$B4_c7)
-  out$technical_education <- nss_code_numeric(raw$B4_c8)
-  out$usual_principal_status <- nss_code_numeric(raw$B4_c9)
-  out$usual_principal_nic2004 <- nss_code_numeric(raw$B4_c11)
-  out$usual_principal_nco2004 <- nss_code_numeric(raw$B4_c12)
-  out$has_subsidiary_activity <- nss_code_numeric(raw$B4_c13)
-  out$usual_subsidiary_status <- nss_code_numeric(raw$B4_c14)
-  out$usual_subsidiary_nic2004 <- nss_code_numeric(raw$B4_c16)
-  out$usual_subsidiary_nco2004 <- nss_code_numeric(raw$B4_c17)
+  out$sex <- num(raw$B4_c4)
+  out$age <- num(raw$B4_c5)
+  out$general_education <- num(raw$B4_c7)
+  out$technical_education <- num(raw$B4_c8)
+  out$usual_principal_status <- num(raw$B4_c9)
+  out$usual_principal_nic2004 <- num(raw$B4_c11)
+  out$usual_principal_nco2004 <- num(raw$B4_c12)
+  out$has_subsidiary_activity <- num(raw$B4_c13)
+  out$usual_subsidiary_status <- num(raw$B4_c14)
+  out$usual_subsidiary_nic2004 <- num(raw$B4_c16)
+  out$usual_subsidiary_nco2004 <- num(raw$B4_c17)
   out
 }
 
 read_nss64_migration <- function(path) {
   raw <- read_nss_sav_columns(path, nss64_migration_columns(), "NSS64 Block 6")
   out <- normalize_nss64_design(raw, "B6_c1", "NSS64 Block 6")
-  out$age <- nss_code_numeric(raw$B6_c2)
-  out$stayed_away <- nss_code_numeric(raw$B6_c3)
-  out$away_spells <- nss_code_numeric(raw$B6_c4)
-  out$longest_spell_destination <- nss_code_numeric(raw$B6_c5)
-  out$longest_spell_nic2004 <- nss_code_numeric(raw$B6_c6)
-  out$enumeration_differs_last_upr <- nss_code_numeric(raw$B6_c7)
-  out$enumeration_was_upr_before <- nss_code_numeric(raw$B6_c8)
-  out$movement_nature <- nss_code_numeric(raw$B6_c9)
-  out$years_since_last_upr <- nss_code_numeric(raw$B6_c10)
-  out$last_upr_location <- nss_code_numeric(raw$B6_c11)
-  out$last_upr_state_country <- nss_code_numeric(raw$B6_c13)
-  out$usual_principal_status <- nss_code_numeric(raw$B6_c14)
-  out$usual_principal_nic2004 <- nss_code_numeric(raw$B6_c15)
-  out$reason_left_last_upr <- nss_code_numeric(raw$B6_c16)
+  out$age <- num(raw$B6_c2)
+  out$stayed_away <- num(raw$B6_c3)
+  out$away_spells <- num(raw$B6_c4)
+  out$longest_spell_destination <- num(raw$B6_c5)
+  out$longest_spell_nic2004 <- num(raw$B6_c6)
+  out$enumeration_differs_last_upr <- num(raw$B6_c7)
+  out$enumeration_was_upr_before <- num(raw$B6_c8)
+  out$movement_nature <- num(raw$B6_c9)
+  out$years_since_last_upr <- num(raw$B6_c10)
+  out$last_upr_location <- num(raw$B6_c11)
+  out$last_upr_state_country <- num(raw$B6_c13)
+  out$usual_principal_status <- num(raw$B6_c14)
+  out$usual_principal_nic2004 <- num(raw$B6_c15)
+  out$reason_left_last_upr <- num(raw$B6_c16)
   out
 }
 

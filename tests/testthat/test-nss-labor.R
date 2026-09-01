@@ -1,10 +1,13 @@
 test_that("NSS64 source normalizer preserves survey design and person keys", {
   raw <- data.frame(
-    key_memb = c("a", "b"), Sector = c(1, 2), Sub_Round = c(1, 2),
-    Sub_sample = c(1, 2), State_Region = c(101, 102), state = c(1, 1),
-    District = c(2, 3), Stratum = c(11, 12), Sub_Stratum = c(1, 1),
-    FSU = c(10001, 10002), Ss_stratum = c(1, 2), Sample_hhold_No = c(1, 1),
-    wgt_combined = c(100.5, 200.5), B4_c1 = c(1, 2)
+    key_memb = c("a", "b"),
+    Sector = haven::labelled(c("1", "2"), c(rural = "1", urban = "2")),
+    Sub_Round = c("1", "2"), Sub_sample = c("1", "2"),
+    State_Region = c("101", "102"), state = c("01", "01"),
+    District = c("02", "03"), Stratum = c("11", "12"),
+    Sub_Stratum = c("1", "1"), FSU = c("10001", "10002"),
+    Ss_stratum = c("1", "2"), Sample_hhold_No = c("1", "1"),
+    wgt_combined = c("100.5", "200.5"), B4_c1 = c("1", "2")
   )
   out <- normalize_nss64_design(raw, "B4_c1", "test")
   expect_equal(out$state_code, c("01", "01"))
