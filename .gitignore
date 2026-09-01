@@ -5,6 +5,9 @@
 .Rproj.user/
 *.Rproj
 
+# Python virtual environments
+.venv/
+
 # VS Code files
 .vscode/
 
@@ -57,8 +60,9 @@ Rplots.pdf
 *.tex
 .texcache/
 
-# analysis notebooks (for now)
-/analysis/
+# in-progress folders
+analysis/
+application-samples/
 
 # temporary application sample assembly files
 application-samples/.work/
