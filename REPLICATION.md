@@ -43,6 +43,8 @@ make download-census-tables
 
 This runs `bash scripts/download_census_tables.sh`, which processes both `data/metadata/census_2001_download_manifest.tsv` and `data/metadata/census_2011_download_manifest.tsv` by default. The downloader creates missing destination directories, contacts Census of India only for missing or empty files, and writes through a temporary `.part` file before the final rename. A specific manifest can still be supplied explicitly as a script argument.
 
+The 2001 acquisition manifest also registers ordinary H-04 structural-type workbooks under `data/raw/census_2001/housing/H04/`. They are acquisition-only: H-04 counts census houses, whereas 2011 HL-13 counts households by the type of census house occupied. Longitudinal structural durability remains deferred pending acquisition and inspection of the household-denominator H-04 Appendix (`PC01_H04a`).
+
 The 2001 C-13 workbooks are stored under `data/raw/census_2001/age/C13/`; the 2011 C-13 workbooks are stored under `data/raw/census_2011/age/C13/`. They are required by the extended DISE diagnostics that construct the ages-6-13 administrative exposure denominator. The acquisition manifests remain separate from the production `data/metadata/file_manifest.csv` because the public core pipeline does not require these workbooks unless extended diagnostics are enabled.
 
 ## Optional district-lineage inputs

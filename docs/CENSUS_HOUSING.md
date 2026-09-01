@@ -17,22 +17,27 @@ The module is an extended diagnostic. It does not add post-treatment housing var
 
 ## Structural durability
 
-Census 2011 HL-13 classifies occupied census houses as permanent, semi-permanent,
-temporary (serviceable/non-serviceable), or unclassifiable. The reader enforces both
-published accounting identities before any geographic pooling:
+Census 2011 HL-13 classifies households by the structural type of the census house
+they occupy: permanent, semi-permanent, temporary (serviceable/non-serviceable), or
+unclassifiable. The reader enforces both published accounting identities before any
+geographic pooling:
 
 - total households = permanent + semi-permanent + temporary + unclassifiable;
 - temporary = serviceable temporary + non-serviceable temporary.
 
 HL-13 is retained as a follow-up-only descriptive mechanism in the current pipeline.
-The exact Census-2001 conceptual counterpart is H-04, *Distribution of census houses
-used as residence and residence-cum-other use by their type of structure*. H-04 uses
-the same permanent/semi-permanent/temporary/serviceability classification. It is not
-present in the current 2001 acquisition bundle, so no 2001 durability baseline or
-2001--2011 durability change is fabricated from H-03 roof/wall/floor materials.
+Ordinary Census-2001 H-04 uses the same structural categories, but its published
+statistical unit is the **census house** used as residence or residence-cum-other use,
+not the household. Its 35 state/UT workbooks are therefore registered for acquisition
+and source inspection only; H-04 must not be treated as the denominator-compatible
+2001 baseline for HL-13.
 
-When H-04 is acquired and its raw state/UT workbooks are inspected, it can enter the
-existing housing count/geography machinery without a new estimator or output family.
+The Census-2001 H-04 Appendix (`PC01_H04a`), titled *Distribution of households by
+type of census houses occupied*, is the candidate denominator-compatible counterpart.
+Its raw workbooks are not in the attached acquisition bundle and the catalog metadata
+are not sufficiently reliable to activate it without source inspection. Longitudinal
+structural-durability changes therefore remain deferred. H-03 roof/wall/floor
+materials are also not substituted for the missing household baseline.
 
 ## Geographic contract
 
@@ -116,4 +121,4 @@ These regressions use **changes**, not 2011 levels, so the estimand is local imp
 
 ## Deferred longitudinal durability
 
-HL-13 is active as a follow-up-only structural-durability source; H-04 is the missing exact 2001 baseline counterpart. Longitudinal structural-durability changes should not be activated until the H-04 raw workbooks are acquired and their household/count contract is validated explicitly.
+HL-13 is active as a follow-up-only structural-durability source. Ordinary H-04 is acquisition-only because it counts census houses rather than households. The H-04 Appendix (`PC01_H04a`) is the candidate household-denominator baseline and must be acquired and inspected before any 2001--2011 durability change is activated.
