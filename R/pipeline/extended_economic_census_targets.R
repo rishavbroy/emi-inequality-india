@@ -3,6 +3,26 @@
 extended_economic_census_target_definitions <- function() {
   list(
     tar_target(
+      economic_census_ec13_ddi_file,
+      {
+        rows <- require_manifest_files(
+          paths,
+          source_id = "economic_census_raw",
+          required_only = FALSE
+        )
+        row <- rows[rows$file_id == "ec13_ddi_xml", , drop = FALSE]
+        if (nrow(row) != 1L) {
+          stop("Expected one Sixth Economic Census DDI manifest row.", call. = FALSE)
+        }
+        row$absolute_path[[1L]]
+      },
+      format = "file"
+    ),
+    tar_target(
+      economic_census_ec13_raw_contract,
+      read_economic_census_ddi_contract(economic_census_ec13_ddi_file)
+    ),
+    tar_target(
       shrug_ec05_archive,
       {
         rows <- require_manifest_files(

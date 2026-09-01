@@ -807,3 +807,21 @@ test_that("SHRUG EC05 is registered as an extended-only source on the organized 
   expect_identical(as.numeric(row$expected_size_bytes[[1L]]), 35220358)
   expect_identical(row$reader_function[[1L]], "read_shrug_ec05_district")
 })
+
+test_that("Sixth Economic Census DDI is registered as extended source validation", {
+  manifest <- read.csv(
+    "data/metadata/file_manifest.csv",
+    stringsAsFactors = FALSE,
+    check.names = FALSE
+  )
+  row <- manifest[manifest$file_id == "ec13_ddi_xml", , drop = FALSE]
+  expect_equal(nrow(row), 1L)
+  expect_identical(row$source_id[[1L]], "economic_census_raw")
+  expect_false(as.logical(row$required_for_current_pipeline[[1L]]))
+  expect_identical(
+    row$relative_path[[1L]],
+    "data/raw/ec/EC 2013-2014 Sixth Economic Census/survey0/data/ddi.xml"
+  )
+  expect_identical(row$reader_function[[1L]], "read_economic_census_ddi_contract")
+  expect_equal(row$expected_size_bytes[[1L]], 6289329)
+})
