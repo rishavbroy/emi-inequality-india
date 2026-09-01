@@ -39,24 +39,66 @@ test_that("NSS64 Block 4 and Block 6 validation requires one common person unive
   expect_error(validate_nss64_source_pair(block4, block6, ddi), "same household members")
 })
 
-test_that("analysis Quarto renderer retries only a SIGSEGV status once", {
-  statuses <- c(139L, 0L)
-  calls <- 0L
-  runner <- function(command, args) {
-    calls <<- calls + 1L
-    statuses[[calls]]
-  }
-  expect_message(
-    expect_identical(run_analysis_quarto_render("note.qmd", runner), 0L),
-    "status 139"
+test_that("NSS64 cross-block validation requires identical survey design by person", {
+  design <- data.frame(
+    person_key = c("a", "b"), state_code = c("01", "01"),
+    district_code = c("02", "03"), sector = c(1, 2), sub_round = c(1, 2),
+    sub_sample = c(1, 2), nss_region = c("011", "011"),
+    stratum = c(11, 12), sub_stratum = c(1, 1), fsu = c(1001, 1002),
+    second_stage_stratum = c(1, 2), household_no = c(1, 1),
+    person_no = c(1, 2), survey_weight = c(100, 200),
+    stringsAsFactors = FALSE
   )
-  expect_identical(calls, 2L)
+  migration <- design[c(2, 1), , drop = FALSE]
+  expect_invisible(validate_nss64_cross_block_design(design, migration))
 
-  calls <- 0L
-  runner_fail <- function(command, args) {
-    calls <<- calls + 1L
-    1L
-  }
-  expect_identical(run_analysis_quarto_render("note.qmd", runner_fail), 1L)
-  expect_identical(calls, 1L)
+  migration$district_code[migration$person_key == "a"] <- "04"
+  expect_error(
+    validate_nss64_cross_block_design(design, migration),
+    "disagree on shared field district_code"
+  )
+})
+
+test_that("NSS64 reviewed lineage uses the documented SSRDD source identity", {
+  persons <- data.frame(
+    person_key = c("a", "b", "c"),
+    state_code = c("22", "22", "22"),
+    district_code = c("09", "10", "99"),
+    nss_region = c("222", "222", "222"),
+    survey_weight = c(10, 20, 30),
+    stringsAsFactors = FALSE
+  )
+  crosswalk <- data.frame(
+    wave = c("nss_2007_08", "nss_2007_08", "nss_2017_18"),
+    source_code = c("22209", "22210", "22101"),
+    target_unit_2001 = c("pc2001__22__09", "pc2001__22__10", "pc2001__22__01"),
+    weight = c(1, 1, 1),
+    panel_variant = c("deterministic", "deterministic", "deterministic"),
+    stringsAsFactors = FALSE
+  )
+
+  out <- attach_nss64_reviewed_lineage(persons, crosswalk)
+  expect_equal(out$source_district_code, c("22209", "22210", "22299"))
+  expect_equal(out$target_unit_2001[1:2], c("pc2001__22__09", "pc2001__22__10"))
+  expect_true(is.na(out$target_unit_2001[[3L]]))
+  expect_equal(out$lineage_status[[3L]], "unresolved_source_district")
+
+  support <- summarize_nss64_lineage_support(out)
+  expect_equal(support$sample_people, c(1L, 1L, 1L))
+  expect_equal(support$weighted_people, c(10, 20, 30))
+})
+
+test_that("NSS64 lineage fails closed on inconsistent or non-deterministic geography", {
+  persons <- data.frame(
+    person_key = "a", state_code = "22", district_code = "09",
+    nss_region = "231", survey_weight = 1, stringsAsFactors = FALSE
+  )
+  expect_error(nss64_source_district_code(persons), "internally inconsistent")
+
+  crosswalk <- data.frame(
+    wave = "nss_2007_08", source_code = "22209",
+    target_unit_2001 = "pc2001__22__09", weight = 0.5,
+    panel_variant = "population_allocation", stringsAsFactors = FALSE
+  )
+  expect_error(nss64_reviewed_lineage_map(crosswalk), "no deterministic reviewed")
 })

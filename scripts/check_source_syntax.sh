@@ -43,12 +43,20 @@ for raw in Path("DESCRIPTION").read_text(encoding="utf-8").splitlines():
     current, value = raw.split(":", 1)
     fields[current] = value.strip()
 
+# Packages shipped with R are valid DESCRIPTION dependencies but are not
+# recorded as separately managed packages in renv.lock.  Keep the lockfile
+# contract focused on external runtime dependencies.
+base_packages = {
+    "base", "compiler", "datasets", "graphics", "grDevices", "grid",
+    "methods", "parallel", "splines", "stats", "stats4", "tcltk",
+    "tools", "utils",
+}
 required = set()
 for field in ("Depends", "Imports", "LinkingTo"):
     value = fields.get(field, "")
     for item in value.split(","):
         package = item.strip().split()[0] if item.strip() else ""
-        if package and package != "R":
+        if package and package != "R" and package not in base_packages:
             required.add(package)
 
 recorded = set(lock.get("Packages", {}))
