@@ -243,74 +243,87 @@ build_nss66_source_diagnostics <- function(canonical_persons, lineaged_persons) 
   )
 }
 
-build_nss64_source_diagnostics <- function(
-    usual_activity, migration, ddi_contract, lineaged_usual_activity) {
-  validation <- validate_nss64_source_pair(usual_activity, migration, ddi_contract)
-  validate_nss64_cross_block_design(usual_activity, migration)
+build_nss_labor_diagnostics <- function(source_validation, lineaged_usual_activity) {
   list(
-    source_validation = validation,
+    source_validation = safe_df(source_validation),
     lineage_support = summarize_nss_labor_lineage_support(lineaged_usual_activity),
     target_support = summarize_nss_labor_target_support(lineaged_usual_activity)
   )
 }
 
-save_nss64_diagnostics <- function(
-    x, district_outcomes = NULL, root = "outputs/diagnostics/extended/labor") {
-  dir.create(root, recursive = TRUE, showWarnings = FALSE)
-  paths <- c(
-    source_validation = file.path(root, "nss64_source_validation.csv"),
-    lineage_support = file.path(root, "nss64_lineage_support.csv"),
-    target_support = file.path(root, "nss64_target_support.csv")
+build_nss64_source_diagnostics <- function(
+    usual_activity, migration, ddi_contract, lineaged_usual_activity) {
+  validation <- validate_nss64_source_pair(usual_activity, migration, ddi_contract)
+  validate_nss64_cross_block_design(usual_activity, migration)
+  build_nss_labor_diagnostics(validation, lineaged_usual_activity)
+}
+
+build_nss66_diagnostics <- function(canonical_persons, lineaged_persons) {
+  build_nss_labor_diagnostics(
+    build_nss66_source_diagnostics(canonical_persons, lineaged_persons),
+    lineaged_persons
   )
-  target_support <- x$target_support
-  if (!is.null(district_outcomes)) {
-    target_support <- district_outcomes$target_support
-    paths <- c(
-      paths,
-      outcome_registry = file.path(root, "nss64_outcome_registry.csv"),
-      district_outcomes = file.path(root, "nss64_district_outcomes.csv")
-    )
-    utils::write.csv(
-      district_outcomes$registry, paths[["outcome_registry"]], row.names = FALSE, na = ""
-    )
-    utils::write.csv(
-      district_outcomes$estimates, paths[["district_outcomes"]], row.names = FALSE, na = ""
-    )
+}
+
+save_nss_labor_diagnostics <- function(
+    x, prefix, district_outcomes = NULL, root = "outputs/diagnostics/extended/labor") {
+  if (!nzchar(prefix) || !grepl("^[a-z0-9_]+$", prefix)) {
+    stop("NSS labor diagnostic prefix must be a non-empty file-safe identifier.", call. = FALSE)
   }
-  utils::write.csv(x$source_validation, paths[["source_validation"]], row.names = FALSE, na = "")
-  utils::write.csv(x$lineage_support, paths[["lineage_support"]], row.names = FALSE, na = "")
-  utils::write.csv(target_support, paths[["target_support"]], row.names = FALSE, na = "")
+  dir.create(root, recursive = TRUE, showWarnings = FALSE)
+  names_and_objects <- list(
+    source_validation = x$source_validation,
+    lineage_support = x$lineage_support,
+    target_support = if (is.null(district_outcomes)) x$target_support else district_outcomes$target_support
+  )
+  if (!is.null(district_outcomes)) {
+    names_and_objects$outcome_registry <- district_outcomes$registry
+    names_and_objects$district_outcomes <- district_outcomes$estimates
+  }
+  paths <- vapply(names(names_and_objects), function(suffix) {
+    file.path(root, paste0(prefix, "_", suffix, ".csv"))
+  }, character(1))
+  for (nm in names(names_and_objects)) {
+    utils::write.csv(names_and_objects[[nm]], paths[[nm]], row.names = FALSE, na = "")
+  }
   unname(paths)
 }
 
-build_nss66_materialization_diagnostics <- function(materialization, canonical_persons = NULL, lineaged_persons = NULL) {
+save_nss64_diagnostics <- function(
+    x, district_outcomes = NULL, root = "outputs/diagnostics/extended/labor") {
+  save_nss_labor_diagnostics(x, "nss64", district_outcomes, root)
+}
+
+save_nss66_diagnostics <- function(
+    x, district_outcomes = NULL, root = "outputs/diagnostics/extended/labor",
+    fallback_path = NULL) {
+  suffixes <- c(
+    "source_validation", "lineage_support", "target_support",
+    "outcome_registry", "district_outcomes"
+  )
+  stale <- file.path(root, paste0("nss66_", suffixes, ".csv"))
+  if (is.null(x)) {
+    unlink(stale[file.exists(stale)])
+    return(if (is.null(fallback_path)) character() else fallback_path)
+  }
+  save_nss_labor_diagnostics(x, "nss66", district_outcomes, root)
+}
+
+build_nss66_materialization_diagnostics <- function(materialization) {
   blocks <- safe_df(materialization$blocks)
   blocks$source_id <- materialization$source_id
   blocks$materialization_status <- materialization$status
   blocks$manifest_schema <- if (is.null(materialization$manifest_schema)) NA_character_ else materialization$manifest_schema
-  blocks <- blocks[c(
+  blocks[c(
     "source_id", "materialization_status", "manifest_schema", "block_id", "relative_path",
     "exists", "rows", "bytes", "modified_at", "sha256"
   )]
-  source <- NULL
-  if (!is.null(canonical_persons)) {
-    if (is.null(lineaged_persons)) stop("NSS66 source diagnostics require lineaged persons.", call. = FALSE)
-    source <- build_nss66_source_diagnostics(canonical_persons, lineaged_persons)
-  }
-  list(materialization = blocks, source_validation = source)
 }
 
 save_nss66_materialization_diagnostics <- function(
     x, root = "outputs/diagnostics/extended/labor") {
   dir.create(root, recursive = TRUE, showWarnings = FALSE)
-  source_path <- file.path(root, "nss66_source_validation.csv")
-  paths <- c(materialization = file.path(root, "nss66_materialization.csv"))
-  utils::write.csv(x$materialization, paths[["materialization"]], row.names = FALSE, na = "")
-  if (!is.null(x$source_validation)) {
-    paths <- c(paths, source_validation = source_path)
-    utils::write.csv(x$source_validation, source_path, row.names = FALSE, na = "")
-  } else if (file.exists(source_path)) {
-    unlink(source_path)
-  }
-  unname(paths)
+  path <- file.path(root, "nss66_materialization.csv")
+  utils::write.csv(x, path, row.names = FALSE, na = "")
+  path
 }
