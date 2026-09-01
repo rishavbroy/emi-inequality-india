@@ -169,7 +169,7 @@ test_that("NSS64 employment follows usual principal-plus-subsidiary status", {
 test_that("NSS64 labor registry is compact and source-defined", {
   registry <- nss64_outcome_registry()
   expect_equal(nrow(registry), 5L)
-  expect_false(anyDuplicated(registry$outcome_id))
+  expect_identical(anyDuplicated(registry$outcome_id), 0L)
   expect_setequal(
     registry$outcome_id,
     c(
