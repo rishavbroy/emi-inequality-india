@@ -84,6 +84,15 @@ Urban blank `Sub_Stratum_No` values are represented internally as `__none__`,
 consistent with the Round-66 design's lack of urban sub-stratification; rural
 blank sub-strata remain invalid.
 
+The extended audit now treats materialization as an explicit optional state. Before
+conversion it writes `nss66_materialization.csv` with `not_materialized` status
+and remains green. If any contracted block or sidecar exists without the complete
+set, the audit fails rather than silently using a partial conversion. Once all
+three blocks and the conversion manifest are present, the audit automatically
+runs the real F4/F5/F6 canonical join and same-round lineage validation and writes
+`nss66_source_validation.csv`. District outcomes remain deliberately inactive
+until those reviewer-visible diagnostics have been inspected.
+
 The district estimator is now wave-invariant. NSS64 keeps its five registered
 outcomes, including migration, and its `near_treatment_reference` role. NSS66
 registers the same four usual-status labor outcomes without migration and with

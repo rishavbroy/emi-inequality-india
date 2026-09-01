@@ -185,3 +185,12 @@ and output paths are frozen in
 `data/metadata/nesstar_conversion_contracts.csv`. Future PLFS or Economic Census
 Nesstar sources should be added there only when their `.Nesstar` binary is the
 chosen production source and the required companion metadata is available.
+
+The full audit discovers this gitignored materialization on every run. With no
+interim files it records a non-error `not_materialized` diagnostic. A partial
+block set or missing/mismatched conversion manifest is a hard error. With a
+complete materialization, the audit re-reads F4/F5/F6, verifies the official DDI
+row counts and cross-block person/design invariants, applies the reviewed
+2009-10 district lineage, and writes reviewer-visible diagnostics under
+`outputs/diagnostics/extended/labor/`. This lets `review.zip` carry the validation
+result without packaging the large local interim CSVs themselves.
