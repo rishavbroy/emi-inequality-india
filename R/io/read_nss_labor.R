@@ -111,28 +111,35 @@ read_nss64_migration <- function(path) {
   out
 }
 
-read_nss64_eum_ddi_contract <- function(path) {
+read_nss_labor_ddi_contract <- function(path, required_by_file, label) {
+  if (!file.exists(path)) stop("Missing ", label, " DDI: ", path, call. = FALSE)
+  if (!length(required_by_file) || is.null(names(required_by_file)) || any(!nzchar(names(required_by_file)))) {
+    stop(label, " DDI contract requires named file-variable specifications.", call. = FALSE)
+  }
   doc <- xml2::read_xml(path)
   ns <- c(ddi = "http://www.icpsr.umich.edu/DDI")
   variables <- xml2::xml_find_all(doc, ".//ddi:dataDscr/ddi:var", ns)
   files <- xml2::xml_find_all(doc, ".//ddi:fileDscr", ns)
-  if (!length(files) || !length(variables)) stop("NSS64 DDI is missing file or variable descriptions.", call. = FALSE)
+  if (!length(files) || !length(variables)) stop(label, " DDI is missing file or variable descriptions.", call. = FALSE)
 
-  wanted <- list(F4 = nss64_usual_activity_columns(), F6 = nss64_migration_columns())
-  rows <- lapply(names(wanted), function(file_id) {
+  rows <- lapply(names(required_by_file), function(file_id) {
     file_node <- files[xml2::xml_attr(files, "ID") == file_id]
-    if (length(file_node) != 1L) stop("NSS64 DDI must contain exactly one ", file_id, " file description.", call. = FALSE)
+    if (length(file_node) != 1L) stop(label, " DDI must contain exactly one ", file_id, " file description.", call. = FALSE)
     case_count <- suppressWarnings(as.numeric(trimws(xml2::xml_text(xml2::xml_find_first(
       file_node, "./ddi:fileTxt/ddi:dimensns/ddi:caseQnty", ns
     )))))
+    file_name <- trimws(xml2::xml_text(xml2::xml_find_first(
+      file_node, "./ddi:fileTxt/ddi:fileName", ns
+    )))
     file_vars <- xml2::xml_attr(variables, "name")[vapply(
       strsplit(trimws(xml2::xml_attr(variables, "files")), "[[:space:]]+"),
       function(ids) file_id %in% ids,
       logical(1)
     )]
-    missing <- setdiff(wanted[[file_id]], file_vars)
+    missing <- setdiff(required_by_file[[file_id]], file_vars)
     data.frame(
       file_id = file_id,
+      file_name = file_name,
       case_count = case_count,
       required_variables_complete = !length(missing),
       missing_required_variables = paste(missing, collapse = ";"),
@@ -141,10 +148,57 @@ read_nss64_eum_ddi_contract <- function(path) {
   })
   out <- do.call(rbind, rows)
   rownames(out) <- NULL
-  if (any(!is.finite(out$case_count) | out$case_count <= 0)) stop("NSS64 DDI must report positive case counts.", call. = FALSE)
+  if (any(!is.finite(out$case_count) | out$case_count <= 0)) stop(label, " DDI must report positive case counts.", call. = FALSE)
   if (any(!out$required_variables_complete)) {
     bad <- out[!out$required_variables_complete, , drop = FALSE]
-    stop("NSS64 DDI source schema mismatch for ", bad$file_id[[1L]], ": ", bad$missing_required_variables[[1L]], call. = FALSE)
+    stop(label, " DDI source schema mismatch for ", bad$file_id[[1L]], ": ", bad$missing_required_variables[[1L]], call. = FALSE)
+  }
+  out
+}
+
+read_nss64_eum_ddi_contract <- function(path) {
+  read_nss_labor_ddi_contract(
+    path,
+    list(F4 = nss64_usual_activity_columns(), F6 = nss64_migration_columns()),
+    "NSS64"
+  )
+}
+
+nss66_common_person_columns <- function() {
+  c(
+    "FSU_Serial_No", "Sector", "State_Region", "District", "Stratum",
+    "Sub_Stratum_No", "Sub_Round", "Sub_Sample", "Second_Stage_Stratum_No",
+    "Sample_Hhld_No", "Person_Serial_No", "STATE", "DISTRICT_CODE", "HHID",
+    "PID", "WEIGHT"
+  )
+}
+
+nss66_eus_ddi_requirements <- function() {
+  common <- nss66_common_person_columns()
+  list(
+    F4 = unique(c(common, "Sex", "Age", "General_Education", "Technical_Education")),
+    F5 = unique(c(
+      common, "Age", "Usual_Principal_Activity_Status",
+      "Usual_Principal_Activity_NIC2004", "Usual_Principal_Activity_NCO2004",
+      "Whether_in_Subsidiary_Activity"
+    )),
+    F6 = unique(c(
+      common, "Age", "Usual_Subsidiary_Activity_Status",
+      "Usual_SubsidiaryActivity_NIC2004", "Usual_SubsidiaryActivity_NCO2004"
+    ))
+  )
+}
+
+read_nss66_eus_ddi_contract <- function(path) {
+  out <- read_nss_labor_ddi_contract(path, nss66_eus_ddi_requirements(), "NSS66")
+  expected <- c(F4 = 459784, F5 = 459784, F6 = 34689)
+  observed <- stats::setNames(out$case_count, out$file_id)
+  if (!identical(as.numeric(observed[names(expected)]), as.numeric(expected))) {
+    stop(
+      "NSS66 DDI case counts differ from the inspected official source contract: ",
+      paste(names(expected), observed[names(expected)], sep = "=", collapse = ", "),
+      call. = FALSE
+    )
   }
   out
 }

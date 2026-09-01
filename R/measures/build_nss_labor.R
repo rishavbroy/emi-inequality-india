@@ -51,6 +51,7 @@ nss64_outcome_registry <- function() {
     source = c("usual_activity", "usual_activity", "usual_activity", "usual_activity", "migration"),
     denominator = c("age15plus", "age15plus", "labor_force_age15plus", "employed_age15plus", "age15plus"),
     role = c("core", "core", "core", "core", "core"),
+    temporal_role = rep("near_treatment_reference", 5L),
     stringsAsFactors = FALSE
   )
 }

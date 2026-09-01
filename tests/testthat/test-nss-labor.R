@@ -243,3 +243,19 @@ test_that("NSS64 design-based district estimates preserve thin districts but fla
   expect_false(lf$analysis_eligible[lf$target_unit_2001 == "pc2001__01__02"])
   expect_true(is.finite(lf$estimate[lf$target_unit_2001 == "pc2001__01__02"]))
 })
+
+
+test_that("NSS labor DDI validation is reusable across survey waves", {
+  expect_true(is.function(read_nss_labor_ddi_contract))
+  req <- nss66_eus_ddi_requirements()
+  expect_setequal(names(req), c("F4", "F5", "F6"))
+  expect_true(all(c("WEIGHT", "PID", "District", "State_Region") %in% req$F5))
+  expect_true("Usual_Principal_Activity_Status" %in% req$F5)
+  expect_true("Usual_Subsidiary_Activity_Status" %in% req$F6)
+})
+
+test_that("NSS64 outcomes are frozen as near-treatment reference measures", {
+  registry <- nss64_outcome_registry()
+  expect_true("temporal_role" %in% names(registry))
+  expect_identical(unique(registry$temporal_role), "near_treatment_reference")
+})
