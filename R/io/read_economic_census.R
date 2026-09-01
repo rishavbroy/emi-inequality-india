@@ -1,17 +1,25 @@
 # Source adapters and validation contracts for Economic Census inputs.
 
-economic_census_core_count_columns <- function() {
+economic_census_common_count_columns <- function() {
   c(
     "nonfarm_employment", "female_employment", "hired_employment",
-    "private_employment", "informal_employment", "manufacturing_employment",
-    "services_employment", "firms_total"
+    "private_employment", "manufacturing_employment", "services_employment",
+    "firms_total"
   )
 }
 
-validate_economic_census_source_counts <- function(source, source_label) {
+economic_census_2005_count_columns <- function() {
+  c(economic_census_common_count_columns(), "informal_employment")
+}
+
+validate_economic_census_source_counts <- function(
+    source,
+    source_label,
+    count_columns = economic_census_common_count_columns()) {
   source <- safe_df(source)
   keys <- c("state_code", "district_code")
-  required <- c(keys, economic_census_core_count_columns())
+  count_columns <- unique(plain_chr(count_columns))
+  required <- c(keys, count_columns)
   missing <- setdiff(required, names(source))
   if (length(missing)) {
     stop(
@@ -23,14 +31,14 @@ validate_economic_census_source_counts <- function(source, source_label) {
   if (any(!stats::complete.cases(source[keys])) || anyDuplicated(source[keys])) {
     stop(source_label, " must be unique by complete district keys.", call. = FALSE)
   }
-  invalid <- vapply(economic_census_core_count_columns(), function(column) {
+  invalid <- vapply(count_columns, function(column) {
     value <- num(source[[column]])
     any(!is.finite(value) | value < 0)
   }, logical(1))
   if (any(invalid)) {
     stop(
       source_label, " has missing, non-finite, or negative core counts: ",
-      paste(economic_census_core_count_columns()[invalid], collapse = ", "),
+      paste(count_columns[invalid], collapse = ", "),
       call. = FALSE
     )
   }
@@ -40,41 +48,75 @@ validate_economic_census_source_counts <- function(source, source_label) {
   source
 }
 
-read_shrug_ec05_district <- function(path) {
-  raw <- read_shrug_district_archive(
+read_shrug_economic_census_district <- function(
     path,
-    "ec05_pc01dist.csv",
-    source = "SHRUG 2005 Economic Census district archive"
+    member,
+    source_label,
+    state_column,
+    district_column,
+    prefix,
+    district_width,
+    include_informal = FALSE) {
+  raw <- read_shrug_district_archive(path, member, source = source_label)
+  fields <- c(
+    nonfarm_employment = "emp_all",
+    female_employment = "emp_f",
+    hired_employment = "emp_hired",
+    private_employment = "emp_priv",
+    manufacturing_employment = "emp_manuf",
+    services_employment = "emp_services",
+    firms_total = "count_all"
   )
-  required <- c(
-    "pc01_state_id", "pc01_district_id",
-    "ec05_emp_all", "ec05_emp_f", "ec05_emp_hired", "ec05_emp_priv",
-    "ec05_emp_inf", "ec05_emp_manuf", "ec05_emp_services", "ec05_count_all"
-  )
+  if (include_informal) fields <- c(fields, informal_employment = "emp_inf")
+  source_columns <- paste0(prefix, "_", unname(fields))
+  required <- c(state_column, district_column, source_columns)
   missing <- setdiff(required, names(raw))
   if (length(missing)) {
     stop(
-      "SHRUG EC05 district source is missing required columns: ",
+      source_label, " is missing required columns: ",
       paste(missing, collapse = ", "),
       call. = FALSE
     )
   }
 
+  out <- data.frame(
+    state_code = normalize_census_code(raw[[state_column]], 2L),
+    district_code = normalize_census_code(raw[[district_column]], district_width),
+    stringsAsFactors = FALSE
+  )
+  for (field in names(fields)) {
+    out[[field]] <- num(raw[[paste0(prefix, "_", fields[[field]])]])
+  }
   validate_economic_census_source_counts(
-    data.frame(
-      state_code = normalize_census_code(raw$pc01_state_id, 2L),
-      district_code = normalize_census_code(raw$pc01_district_id, 2L),
-      nonfarm_employment = num(raw$ec05_emp_all),
-      female_employment = num(raw$ec05_emp_f),
-      hired_employment = num(raw$ec05_emp_hired),
-      private_employment = num(raw$ec05_emp_priv),
-      informal_employment = num(raw$ec05_emp_inf),
-      manufacturing_employment = num(raw$ec05_emp_manuf),
-      services_employment = num(raw$ec05_emp_services),
-      firms_total = num(raw$ec05_count_all),
-      stringsAsFactors = FALSE
-    ),
-    "SHRUG EC05 district source"
+    out,
+    source_label,
+    if (include_informal) economic_census_2005_count_columns() else economic_census_common_count_columns()
+  )
+}
+
+read_shrug_ec05_district <- function(path) {
+  read_shrug_economic_census_district(
+    path = path,
+    member = "ec05_pc01dist.csv",
+    source_label = "SHRUG EC05 district source",
+    state_column = "pc01_state_id",
+    district_column = "pc01_district_id",
+    prefix = "ec05",
+    district_width = 2L,
+    include_informal = TRUE
+  )
+}
+
+read_shrug_ec13_district <- function(path) {
+  read_shrug_economic_census_district(
+    path = path,
+    member = "ec13_pc11dist.csv",
+    source_label = "SHRUG EC13 district source",
+    state_column = "pc11_state_id",
+    district_column = "pc11_district_id",
+    prefix = "ec13",
+    district_width = 3L,
+    include_informal = FALSE
   )
 }
 
