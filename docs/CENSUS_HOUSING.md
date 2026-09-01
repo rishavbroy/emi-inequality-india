@@ -26,18 +26,14 @@ geographic pooling:
 - temporary = serviceable temporary + non-serviceable temporary.
 
 HL-13 is retained as a follow-up-only descriptive mechanism in the current pipeline.
-Ordinary Census-2001 H-04 uses the same structural categories, but its published
-statistical unit is the **census house** used as residence or residence-cum-other use,
-not the household. Its 35 state/UT workbooks are therefore registered for acquisition
-and source inspection only; H-04 must not be treated as the denominator-compatible
-2001 baseline for HL-13.
-
 The Census-2001 H-04 Appendix (`PC01_H04a`), titled *Distribution of households by
-type of census houses occupied*, is the candidate denominator-compatible counterpart.
-Its raw workbooks are not in the attached acquisition bundle and the catalog metadata
-are not sufficiently reliable to activate it without source inspection. Longitudinal
-structural-durability changes therefore remain deferred. H-03 roof/wall/floor
-materials are also not substituted for the missing household baseline.
+type of census houses occupied*, is registered for acquisition as `H04A`. Its raw
+workbooks have not yet been inspected, and the Census catalog metadata are internally
+inconsistent about the statistical unit despite the household title/series. The source
+therefore remains outside the active reader until the raw structural counts and
+household denominator are validated directly. Longitudinal structural-durability
+changes remain deferred, and H-03 roof/wall/floor materials are not substituted for
+the missing validated household baseline.
 
 ## Geographic contract
 
@@ -121,4 +117,4 @@ These regressions use **changes**, not 2011 levels, so the estimand is local imp
 
 ## Deferred longitudinal durability
 
-HL-13 is active as a follow-up-only structural-durability source. Ordinary H-04 is acquisition-only because it counts census houses rather than households. The H-04 Appendix (`PC01_H04a`) is the candidate household-denominator baseline and must be acquired and inspected before any 2001--2011 durability change is activated.
+HL-13 is active as a follow-up-only structural-durability source. H-04 Appendix (`PC01_H04a`) is registered for acquisition as `H04A` and must be downloaded, inspected, and reconciled to an established Census-2001 household universe before any 2001--2011 durability change is activated.
