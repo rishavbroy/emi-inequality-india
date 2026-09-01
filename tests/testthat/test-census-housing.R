@@ -166,9 +166,9 @@ test_that("HL13 structure categories exhaust households and temporary structure"
 })
 
 
-test_that("ordinary Census 2001 H04 remains acquisition-only", {
+test_that("Census 2001 H04 Appendix remains acquisition-only until source inspection", {
   expect_error(
-    census_housing_manifest_files(character(), "H04", census_year = 2001L),
+    census_housing_manifest_files(character(), "H04A", census_year = 2001L),
     "Census 2001 housing reader supports"
   )
 })
