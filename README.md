@@ -20,17 +20,19 @@ Finally, go to ["Commands for running and auditing"](#commands-for-running-and-a
 - [`REPLICATION.md`](REPLICATION.md): Replication guide.
 - [`DATA_AVAILABILITY.md`](DATA_AVAILABILITY.md): Source-by-source data availability and redistribution notes.
 
-- [`docs/plan/roadmap.md`](docs/plan/roadmap.md): My plan going forward, after this refactoring is done.
+- [`docs/plan/roadmap.md`](docs/plan/roadmap.md): Current empirical roadmap and source-first priorities.
 - [`application-samples/output/RishavRoy_WritingSample.pdf`](application-samples/output/RishavRoy_WritingSample.pdf): Reviewer-facing writing sample generated from [marked excerpts](application-samples/specs/writing-10pg.yml) in the [paper](paper/report.qmd). Cover note updates are still pending.
 - [`application-samples/output/RishavRoy_CodingSample.pdf`](application-samples/output/RishavRoy_CodingSample.pdf):  Reviewer-facing coding sample generated from [marked excerpts](application-samples/specs/coding-full.yml) in the [code](R). Cover note updates are still pending.
 
 ## Research question
 
-Does increasing baseline district-level exposure to English-medium instruction (EMI) in 2007-08 affect local consumption growth over the next decade?
+Does baseline district-level exposure to English-medium instruction (EMI) in 2007-08 affect later local educational and economic outcomes, and through which channels?
 
 ## Empirical design and current status
 
-This project combines 2007-08 and 2017-18 National Sample Survey microdata, 2001 Census mother tongue data, 2020 district boundary data, and district change trackers to construct a district pseudo-panel. The current 2SLS design instruments district-level EMI exposure with a population-weighted measure of linguistic distance from Hindi. Pending the changes I discuss in [`docs/plan/roadmap.md`](docs/plan/roadmap.md), all current estimates should be treated as **provisional**.
+The analytical geography is Census-2001 districts. The pipeline combines NSS education surveys, historical NSS consumer-expenditure rounds, modern HCES 2022-23/2023-24, Census language and socioeconomic tables, reviewed district lineage, and price indices. District-level EMI exposure is instrumented with population-weighted linguistic distance from Hindi, with alternative constructions, historical balance checks, weak-IV-robust inference, monotonicity diagnostics, and extensive source-specific mechanism diagnostics. Consumption outcomes are price-adjusted and estimated under their survey designs before harmonization to the analytical geography.
+
+The paper text can lag the active pipeline, so empirical claims should be checked against generated tables/diagnostics and the current roadmap rather than older prose. [`docs/plan/roadmap.md`](docs/plan/roadmap.md) records the remaining source-first work.
 
 Current build status:
 
