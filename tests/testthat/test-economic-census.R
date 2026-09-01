@@ -106,3 +106,58 @@ test_that("EC05 measures fail on noncanonical districts or implausibly low cover
     "bounded subsets"
   )
 })
+
+test_that("Economic Census DDI validates the shared Sixth-EC establishment schema", {
+  required <- c(
+    "ST", "DT", "BACT", "NIC3", "OWN_SHIP_C",
+    "M_H", "F_H", "M_NH", "F_NH", "TOTAL_WORKER", "SECTOR"
+  )
+  make_ddi <- function(drop = character()) {
+    vars <- setdiff(required, drop)
+    var_xml <- paste0(
+      '<var files="F1 F2" name="', vars, '"><labl>', vars, '</labl></var>',
+      collapse = ""
+    )
+    xml <- paste0(
+      '<?xml version="1.0"?><codeBook xmlns="http://www.icpsr.umich.edu/DDI">',
+      '<fileDscr ID="F1"><fileTxt><fileName>EC6A_ST01_ALPHA.NSDstat</fileName>',
+      '<dimensns><caseQnty>10</caseQnty></dimensns></fileTxt></fileDscr>',
+      '<fileDscr ID="F2"><fileTxt><fileName>EC6A_ST37_BETA.NSDstat</fileName>',
+      '<dimensns><caseQnty>20</caseQnty></dimensns></fileTxt></fileDscr>',
+      '<dataDscr>', var_xml, '</dataDscr></codeBook>'
+    )
+    path <- tempfile(fileext = ".xml")
+    writeLines(xml, path)
+    path
+  }
+
+  out <- read_economic_census_ddi_contract(make_ddi())
+  expect_identical(out$state_code, c("01", "37"))
+  expect_equal(out$case_count, c(10, 20))
+  expect_true(all(out$required_variables_complete))
+
+  expect_error(
+    read_economic_census_ddi_contract(make_ddi("NIC3")),
+    "required establishment schema"
+  )
+})
+
+test_that("shared Economic Census count validation rejects malformed canonical sources", {
+  source <- data.frame(
+    state_code = "09", district_code = "01",
+    nonfarm_employment = 100, female_employment = 20,
+    hired_employment = 60, private_employment = 80,
+    informal_employment = 30, manufacturing_employment = 25,
+    services_employment = 65, firms_total = 20
+  )
+  expect_equal(
+    validate_economic_census_source_counts(source, "test source"),
+    source
+  )
+
+  duplicate <- rbind(source, source)
+  expect_error(
+    validate_economic_census_source_counts(duplicate, "test source"),
+    "unique by complete district keys"
+  )
+})
