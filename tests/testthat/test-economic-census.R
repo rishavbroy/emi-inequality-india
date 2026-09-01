@@ -239,3 +239,33 @@ test_that("Economic Census longitudinal family excludes EC05-only informal emplo
   expect_false("informal_employment_share" %in% economic_census_longitudinal_measure_columns())
   expect_true("informal_employment_share" %in% names(economic_census_share_specs(TRUE)))
 })
+
+test_that("Economic Census mechanism registry is compact and predeclared", {
+  registry <- economic_census_mechanism_registry()
+
+  expect_equal(nrow(registry), 6L)
+  expect_equal(anyDuplicated(registry$outcome_id), 0L)
+  expect_equal(anyDuplicated(registry$variable), 0L)
+  expect_setequal(
+    registry$variable,
+    c(
+      "log_nonfarm_employment_change_2013_2005",
+      "log_firms_total_change_2013_2005",
+      "hired_employment_share_change_2013_2005",
+      "private_employment_share_change_2013_2005",
+      "services_employment_share_change_2013_2005",
+      "manufacturing_employment_share_change_2013_2005"
+    )
+  )
+  expect_false(any(grepl("informal|female|mean_employment", registry$variable)))
+  expect_equal(sum(registry$tier == "core"), 5L)
+  expect_equal(sum(registry$tier == "secondary"), 1L)
+})
+
+test_that("Economic Census mechanism registry is supported by longitudinal measures", {
+  registry <- economic_census_mechanism_registry()
+  expected <- paste0(economic_census_longitudinal_measure_columns(), "_change_2013_2005")
+
+  expect_true(all(registry$variable %in% expected))
+  expect_false("informal_employment_share_change_2013_2005" %in% expected)
+})
