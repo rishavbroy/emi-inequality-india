@@ -55,7 +55,9 @@ Priority candidate measures are non-farm employment, establishment density, hire
 
 ### 2. Labor-market outcomes
 
-After firm dynamics, build the labor-market module from the now-local `data/raw/nss/` and `data/raw/plfs/` sources. Prioritize NSS 2007-08 employment/unemployment/migration and NSS 2009-10 employment/unemployment before the later PLFS waves so near-treatment structure is separated from long-run labor outcomes. The scientific targets are labor-force participation, employment/unemployment, regular salaried work, casual/self-employment composition, real wages, occupational skill, services employment, female labor-force participation, and migration where sample support permits.
+The NSS 2007-08 source-contract phase is now active. The official Schedule 10.2 DDI, Block 4 usual-activity records, and Block 6 migration records are registered under `data/raw/nss/`, validated on one common person universe, and normalized with the published NSS survey-design fields and combined multiplier. No district labor outcome is yet registered; see `docs/LABOR_MARKET.md`.
+
+Next, define the reviewed district-lineage/support contract and predeclare a small near-treatment outcome family before estimating district results. Then add NSS 2009-10 through the same interface, followed by later PLFS waves so near-treatment structure remains separate from long-run labor outcomes. Wage outcomes should wait for the weekly-status/earnings source rather than being inferred from the usual-activity block.
 
 Use the same discipline as consumption:
 

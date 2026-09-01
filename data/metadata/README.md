@@ -93,3 +93,5 @@ Census housing diagnostics activate Census-2001 H-04 Appendix (`PC01_H04a`, mani
 - Economic Census source/measurement semantics are documented in `docs/ECONOMIC_CENSUS.md`; the active EC05 archive and Sixth-EC DDI validation are optional for the public core and required only when extended diagnostics run the EC branch. Raw EC13 Nesstar data are not a production aggregation path while the documented SHRUG Census-2011 district product remains the preferred follow-up source.
 
 - `shrug_ec05_csv_archive` and `shrug_ec13_csv_archive` are extended Economic Census district sources; EC13 is pooled from Census-2011 counts to complete Census-2001 parents before derived measures.
+
+- NSS 64 Schedule 10.2 labor/migration source semantics are documented in `docs/LABOR_MARKET.md`. Extended diagnostics register the official DDI plus Block 4 usual-activity and Block 6 migration `.sav` files under the organized `data/raw/nss/` namespace; district labor outcomes remain inactive until lineage and support rules are predeclared.
