@@ -25,9 +25,150 @@ validate_nss64_source_pair <- function(usual_activity, migration, ddi_contract =
   )
 }
 
-save_nss64_source_validation <- function(x, root = "outputs/diagnostics/extended/labor") {
+
+nss64_shared_design_columns <- function() {
+  c(
+    "state_code", "district_code", "sector", "sub_round", "sub_sample",
+    "nss_region", "stratum", "sub_stratum", "fsu", "second_stage_stratum",
+    "household_no", "person_no", "survey_weight"
+  )
+}
+
+validate_nss64_cross_block_design <- function(usual_activity, migration) {
+  common <- nss64_shared_design_columns()
+  missing <- union(
+    setdiff(c("person_key", common), names(usual_activity)),
+    setdiff(c("person_key", common), names(migration))
+  )
+  if (length(missing)) {
+    stop(
+      "NSS64 person sources lack shared design fields: ",
+      paste(sort(unique(missing)), collapse = ", "),
+      call. = FALSE
+    )
+  }
+  lhs <- usual_activity[match(migration$person_key, usual_activity$person_key), c("person_key", common), drop = FALSE]
+  rhs <- migration[c("person_key", common)]
+  for (nm in common) {
+    x <- lhs[[nm]]
+    y <- rhs[[nm]]
+    equal <- if (is.numeric(x) || is.numeric(y)) {
+      x <- as.numeric(x)
+      y <- as.numeric(y)
+      (is.na(x) & is.na(y)) | (!is.na(x) & !is.na(y) & x == y)
+    } else {
+      x <- plain_chr(x)
+      y <- plain_chr(y)
+      (is.na(x) & is.na(y)) | (!is.na(x) & !is.na(y) & x == y)
+    }
+    bad <- which(!equal)
+    if (length(bad)) {
+      stop(
+        "NSS64 Block 4 and Block 6 disagree on shared field ", nm,
+        "; first mismatched person: ", lhs$person_key[[bad[[1L]]]], ".",
+        call. = FALSE
+      )
+    }
+  }
+  invisible(TRUE)
+}
+
+nss64_source_district_code <- function(x) {
+  x <- safe_df(x)
+  required <- c("state_code", "district_code", "nss_region")
+  missing <- setdiff(required, names(x))
+  if (length(missing)) {
+    stop("NSS64 source rows lack geography fields: ", paste(missing, collapse = ", "), call. = FALSE)
+  }
+  state <- plain_chr(x$state_code)
+  district <- plain_chr(x$district_code)
+  region <- plain_chr(x$nss_region)
+  valid <- grepl("^[0-9]{2}$", state) & grepl("^[0-9]{2}$", district) &
+    grepl("^[0-9]{3}$", region) & substr(region, 1L, 2L) == state
+  if (!all(valid)) {
+    stop("NSS64 state, NSS-region, and district codes are internally inconsistent.", call. = FALSE)
+  }
+  paste0(region, district)
+}
+
+nss64_reviewed_lineage_map <- function(full_reviewed_crosswalk) {
+  crosswalk <- safe_df(full_reviewed_crosswalk)
+  required <- c("wave", "source_code", "target_unit_2001", "weight", "panel_variant")
+  missing <- setdiff(required, names(crosswalk))
+  if (length(missing)) {
+    stop("Reviewed district lineage crosswalk lacks fields: ", paste(missing, collapse = ", "), call. = FALSE)
+  }
+  map <- crosswalk[crosswalk$wave %in% "nss_2007_08", required, drop = FALSE]
+  if (!nrow(map)) stop("Reviewed district lineage has no NSS 2007-08 mappings.", call. = FALSE)
+  map$source_code <- gsub("[^0-9]", "", plain_chr(map$source_code))
+  map$target_unit_2001 <- plain_chr(map$target_unit_2001)
+  map$weight <- num(map$weight)
+  deterministic <- map$panel_variant %in% "deterministic" &
+    is.finite(map$weight) & abs(map$weight - 1) <= 1e-8 &
+    !is.na(map$target_unit_2001) & nzchar(map$target_unit_2001)
+  map <- map[deterministic, c("source_code", "target_unit_2001"), drop = FALSE]
+  if (!nrow(map)) stop("NSS 2007-08 has no deterministic reviewed district mappings.", call. = FALSE)
+  if (anyDuplicated(map$source_code)) {
+    stop("Each deterministic NSS64 source district must map to one Census-2001 target.", call. = FALSE)
+  }
+  map[order(map$source_code), , drop = FALSE]
+}
+
+attach_nss64_reviewed_lineage <- function(persons, full_reviewed_crosswalk) {
+  x <- safe_df(persons)
+  if (!"person_key" %in% names(x)) stop("NSS64 person rows lack person_key.", call. = FALSE)
+  x$source_district_code <- nss64_source_district_code(x)
+  map <- nss64_reviewed_lineage_map(full_reviewed_crosswalk)
+  idx <- match(x$source_district_code, map$source_code)
+  x$target_unit_2001 <- map$target_unit_2001[idx]
+  x$lineage_status <- ifelse(is.na(x$target_unit_2001), "unresolved_source_district", "resolved_reviewed_deterministic")
+  x
+}
+
+summarize_nss64_lineage_support <- function(lineaged_persons) {
+  x <- safe_df(lineaged_persons)
+  required <- c(
+    "source_district_code", "target_unit_2001", "lineage_status",
+    "person_key", "survey_weight"
+  )
+  missing <- setdiff(required, names(x))
+  if (length(missing)) {
+    stop("Lineaged NSS64 rows lack fields: ", paste(missing, collapse = ", "), call. = FALSE)
+  }
+  groups <- split(seq_len(nrow(x)), x$source_district_code)
+  out <- safe_bind_rows(lapply(groups, function(i) {
+    rows <- x[i, , drop = FALSE]
+    targets <- unique(stats::na.omit(plain_chr(rows$target_unit_2001)))
+    status <- unique(plain_chr(rows$lineage_status))
+    data.frame(
+      source_district_code = rows$source_district_code[[1L]],
+      target_unit_2001 = if (length(targets) == 1L) targets[[1L]] else NA_character_,
+      lineage_status = if (length(status) == 1L) status[[1L]] else "mixed",
+      sample_people = nrow(rows),
+      weighted_people = sum(num(rows$survey_weight)),
+      stringsAsFactors = FALSE
+    )
+  }))
+  out[order(out$source_district_code), , drop = FALSE]
+}
+
+build_nss64_source_diagnostics <- function(
+    usual_activity, migration, ddi_contract, lineaged_usual_activity) {
+  validation <- validate_nss64_source_pair(usual_activity, migration, ddi_contract)
+  validate_nss64_cross_block_design(usual_activity, migration)
+  list(
+    source_validation = validation,
+    lineage_support = summarize_nss64_lineage_support(lineaged_usual_activity)
+  )
+}
+
+save_nss64_diagnostics <- function(x, root = "outputs/diagnostics/extended/labor") {
   dir.create(root, recursive = TRUE, showWarnings = FALSE)
-  path <- file.path(root, "nss64_source_validation.csv")
-  utils::write.csv(x, path, row.names = FALSE, na = "")
-  path
+  paths <- c(
+    source_validation = file.path(root, "nss64_source_validation.csv"),
+    lineage_support = file.path(root, "nss64_lineage_support.csv")
+  )
+  utils::write.csv(x$source_validation, paths[["source_validation"]], row.names = FALSE, na = "")
+  utils::write.csv(x$lineage_support, paths[["lineage_support"]], row.names = FALSE, na = "")
+  unname(paths)
 }

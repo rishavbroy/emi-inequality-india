@@ -1,4 +1,4 @@
-# Extended labor-market source targets.
+# Extended labor-market source and reviewed-lineage targets.
 
 extended_labor_target_definitions <- function() {
   list(
@@ -21,12 +21,24 @@ extended_labor_target_definitions <- function() {
     tar_target(nss64_usual_activity_source, read_nss64_usual_activity(nss64_eum_block4_file)),
     tar_target(nss64_migration_source, read_nss64_migration(nss64_eum_block6_file)),
     tar_target(
-      nss64_source_validation,
-      validate_nss64_source_pair(nss64_usual_activity_source, nss64_migration_source, nss64_eum_ddi_contract)
+      nss64_lineaged_usual_activity,
+      attach_nss64_reviewed_lineage(
+        nss64_usual_activity_source,
+        district_lineage$full_reviewed_source_crosswalk
+      )
     ),
     tar_target(
-      diag_ext_nss64_source_validation_file,
-      save_nss64_source_validation(nss64_source_validation),
+      nss64_diagnostics,
+      build_nss64_source_diagnostics(
+        nss64_usual_activity_source,
+        nss64_migration_source,
+        nss64_eum_ddi_contract,
+        nss64_lineaged_usual_activity
+      )
+    ),
+    tar_target(
+      diag_ext_nss64_files,
+      save_nss64_diagnostics(nss64_diagnostics),
       format = "file"
     )
   )
