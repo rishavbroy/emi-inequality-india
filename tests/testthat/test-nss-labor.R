@@ -260,11 +260,20 @@ test_that("NSS64 outcomes are frozen as near-treatment reference measures", {
   expect_identical(unique(registry$temporal_role), "near_treatment_reference")
 })
 
+test_that("Nesstar conversion contracts are source keyed and project-root stable", {
+  contract <- read_nesstar_conversion_contract("nss66_eus")
+  expect_true(all(contract$source_id == "nss66_eus"))
+  expect_setequal(contract$block_id, c("F4", "F5", "F6"))
+  expect_identical(unique(contract$nesstar_file_id), "nss66_eus_nesstar")
+  expect_identical(unique(contract$ddi_file_id), "nss66_eus_ddi")
+})
+
 test_that("NSS66 conversion contract pins one standard converter and three blocks", {
-  contract <- read_nss66_conversion_contract("data/metadata/nss66_conversion_contract.csv")
-  expect_identical(contract$file_id, c("F4", "F5", "F6"))
+  contract <- read_nss66_conversion_contract()
+  expect_identical(contract$block_id, c("F4", "F5", "F6"))
   expect_equal(contract$expected_rows, c(459784, 459784, 34689))
   expect_identical(unique(contract$converter_package), "nesstar-converter")
+  expect_identical(unique(contract$converter_executable), "nesstar-converter")
   expect_identical(unique(contract$converter_version), "1.0.4")
   expect_true(all(grepl("^data/interim/nss66_eus/F[456]\\.csv$", contract$relative_path)))
 })
@@ -299,8 +308,12 @@ test_that("NSS66 canonical adapter joins F4/F5 one-to-one and F6 conditionally",
   expect_equal(out$sub_stratum, c("1", "__none__", "__none__"))
   expect_equal(out$survey_weight, c(10, 20, 30))
 
-  bad_f6 <- f6
-  bad_f6$PID <- "p2"
+  bad_f6 <- cbind(
+    common[2, , drop = FALSE], Age = "30",
+    Usual_Subsidiary_Activity_Status = "31",
+    Usual_SubsidiaryActivity_NIC2004 = "100",
+    Usual_SubsidiaryActivity_NCO2004 = "200"
+  )
   expect_error(
     build_nss66_usual_activity(f4, f5, bad_f6),
     "F6 must equal the F5 persons coded as having subsidiary activity"
