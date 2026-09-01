@@ -2449,56 +2449,52 @@ test_that("consumption distribution benchmark preserves serial/configured estima
 })
 
 test_that("NSS-64 detailed consumption is gated by official reconstruction before welfare", {
-  root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
-  targets_file <- paste(
-    readLines(file.path(root, "_targets.R"), warn = FALSE),
-    collapse = "\n"
-  )
-  expect_match(targets_file, "consumption_mpce_validation_2007_08", fixed = TRUE)
-  expect_match(targets_file, "consumption_households_real_2007_08", fixed = TRUE)
-  expect_match(targets_file, "consumption_households_lineaged_2007_08", fixed = TRUE)
-  expect_match(targets_file, "consumption_district_welfare_2007_08", fixed = TRUE)
+  source_targets <- repo_text("R", "pipeline", "core_consumption_targets.R")
+  target_graph <- repo_target_definition_text()
+  expect_match(source_targets, "consumption_mpce_validation_2007_08", fixed = TRUE)
+  expect_match(source_targets, "consumption_households_real_2007_08", fixed = TRUE)
+  expect_match(target_graph, "consumption_households_lineaged_2007_08", fixed = TRUE)
+  expect_match(target_graph, "consumption_district_welfare_2007_08", fixed = TRUE)
 
   validation <- regexpr(
     "consumption_mpce_validation_2007_08",
-    targets_file, fixed = TRUE
+    source_targets, fixed = TRUE
   )[[1L]]
   deflation <- regexpr(
     "consumption_households_real_2007_08",
-    targets_file, fixed = TRUE
+    source_targets, fixed = TRUE
   )[[1L]]
   expect_gt(deflation, validation)
 })
 
 test_that("pretrend consumption rounds are validation-gated core welfare inputs", {
-  targets_file <- paste(readLines(file.path(
-    Sys.getenv("EMI_PROJECT_ROOT", unset = "."), "_targets.R"
-  ), warn = FALSE), collapse = "\n")
+  source_targets <- repo_text("R", "pipeline", "core_consumption_targets.R")
+  target_graph <- repo_target_definition_text()
 
   for (id in c("2000_01", "2001_02")) {
     expect_match(
-      targets_file,
+      source_targets,
       paste0("consumption_mpce_validation_", id),
       fixed = TRUE
     )
     expect_match(
-      targets_file,
+      source_targets,
       paste0("consumption_households_real_", id),
       fixed = TRUE
     )
     expect_match(
-      targets_file,
+      target_graph,
       paste0("consumption_households_lineaged_", id),
       fixed = TRUE
     )
     expect_match(
-      targets_file,
+      target_graph,
       paste0("consumption_district_welfare_core_", id),
       fixed = TRUE
     )
     expect_false(grepl(
       paste0("consumption_district_welfare_distributional_", id),
-      targets_file,
+      target_graph,
       fixed = TRUE
     ))
   }

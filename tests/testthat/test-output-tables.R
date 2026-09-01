@@ -1,7 +1,3 @@
-repo_file <- function(...) {
-  normalizePath(file.path(Sys.getenv("EMI_PROJECT_ROOT", getwd()), ...), mustWork = TRUE)
-}
-
 test_that("save_tables honors requested csv and tex formats", {
   skip_if_not_installed("kableExtra")
   old <- setwd(tempdir())
