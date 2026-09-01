@@ -26,13 +26,8 @@ validate_nss64_source_pair <- function(usual_activity, migration, ddi_contract =
 }
 
 
-nss64_shared_design_columns <- function() {
-  c(
-    "state_code", "district_code", "sector", "sub_round", "sub_sample",
-    "nss_region", "stratum", "sub_stratum", "fsu", "second_stage_stratum",
-    "household_no", "person_no", "survey_weight"
-  )
-}
+nss64_shared_design_columns <- nss_labor_shared_design_columns
+
 
 validate_nss64_cross_block_design <- function(usual_activity, migration) {
   common <- nss64_shared_design_columns()
@@ -125,7 +120,7 @@ attach_nss64_reviewed_lineage <- function(persons, full_reviewed_crosswalk) {
   x
 }
 
-summarize_nss64_lineage_support <- function(lineaged_persons) {
+summarize_nss_labor_lineage_support <- function(lineaged_persons) {
   x <- safe_df(lineaged_persons)
   required <- c(
     "source_district_code", "target_unit_2001", "lineage_status",
@@ -133,9 +128,9 @@ summarize_nss64_lineage_support <- function(lineaged_persons) {
   )
   missing <- setdiff(required, names(x))
   if (length(missing)) {
-    stop("Lineaged NSS64 rows lack fields: ", paste(missing, collapse = ", "), call. = FALSE)
+    stop("Lineaged NSS labor rows lack fields: ", paste(missing, collapse = ", "), call. = FALSE)
   }
-  x$.design_psu <- nss64_design_psu_key(x)
+  x$.design_psu <- nss_labor_design_psu_key(x)
   groups <- split(seq_len(nrow(x)), x$source_district_code)
   out <- safe_bind_rows(lapply(groups, function(i) {
     rows <- x[i, , drop = FALSE]
@@ -155,7 +150,7 @@ summarize_nss64_lineage_support <- function(lineaged_persons) {
   out[order(out$source_district_code), , drop = FALSE]
 }
 
-summarize_nss64_target_support <- function(lineaged_persons) {
+summarize_nss_labor_target_support <- function(lineaged_persons) {
   x <- safe_df(lineaged_persons)
   required <- c(
     "source_district_code", "target_unit_2001", "lineage_status",
@@ -163,12 +158,12 @@ summarize_nss64_target_support <- function(lineaged_persons) {
   )
   missing <- setdiff(required, names(x))
   if (length(missing)) {
-    stop("Lineaged NSS64 rows lack target-support fields: ", paste(missing, collapse = ", "), call. = FALSE)
+    stop("Lineaged NSS labor rows lack target-support fields: ", paste(missing, collapse = ", "), call. = FALSE)
   }
   resolved <- x[x$lineage_status %in% "resolved_reviewed_deterministic" &
                   !is.na(x$target_unit_2001) & nzchar(plain_chr(x$target_unit_2001)), , drop = FALSE]
   if (!nrow(resolved)) return(data.frame())
-  resolved$.design_psu <- nss64_design_psu_key(resolved)
+  resolved$.design_psu <- nss_labor_design_psu_key(resolved)
   groups <- split(seq_len(nrow(resolved)), resolved$target_unit_2001)
   out <- safe_bind_rows(lapply(groups, function(i) {
     rows <- resolved[i, , drop = FALSE]
@@ -187,14 +182,72 @@ summarize_nss64_target_support <- function(lineaged_persons) {
   out[order(out$target_unit_2001), , drop = FALSE]
 }
 
+summarize_nss64_lineage_support <- summarize_nss_labor_lineage_support
+summarize_nss64_target_support <- summarize_nss_labor_target_support
+
+nss66_reviewed_lineage_map <- function(consumption_bridge) {
+  bridge <- safe_df(consumption_bridge)
+  required <- c(
+    "survey_id", "source_state_code", "source_district_code", "target_unit_2001",
+    "lineage_weight", "lineage_status"
+  )
+  missing <- setdiff(required, names(bridge))
+  if (length(missing)) {
+    stop("NSS66 same-round consumption lineage bridge lacks fields: ", paste(missing, collapse = ", "), call. = FALSE)
+  }
+  map <- bridge[bridge$survey_id == "nss_2009_10_type2", required, drop = FALSE]
+  map$lineage_weight <- num(map$lineage_weight)
+  resolved <- grepl("^resolved_", plain_chr(map$lineage_status)) &
+    is.finite(map$lineage_weight) & abs(map$lineage_weight - 1) <= 1e-8 &
+    !is.na(map$target_unit_2001) & nzchar(plain_chr(map$target_unit_2001))
+  map <- unique(map[resolved, c("source_state_code", "source_district_code", "target_unit_2001", "lineage_status"), drop = FALSE])
+  if (!nrow(map)) stop("NSS66 same-round lineage bridge has no resolved one-to-one districts.", call. = FALSE)
+  key <- paste(map$source_state_code, map$source_district_code, sep = "")
+  if (anyDuplicated(key)) {
+    stop("Each resolved NSS66 source district must map to one Census-2001 target.", call. = FALSE)
+  }
+  map
+}
+
+attach_nss66_reviewed_lineage <- function(persons, consumption_bridge) {
+  x <- safe_df(persons)
+  required <- c("person_key", "state_code", "district_code")
+  missing <- setdiff(required, names(x))
+  if (length(missing)) stop("NSS66 person rows lack lineage fields: ", paste(missing, collapse = ", "), call. = FALSE)
+  map <- nss66_reviewed_lineage_map(consumption_bridge)
+  source_key <- paste(plain_chr(x$state_code), plain_chr(x$district_code), sep = "")
+  map_key <- paste(plain_chr(map$source_state_code), plain_chr(map$source_district_code), sep = "")
+  idx <- match(source_key, map_key)
+  x$source_district_code <- paste0(plain_chr(x$state_code), plain_chr(x$district_code))
+  x$target_unit_2001 <- plain_chr(map$target_unit_2001[idx])
+  x$lineage_status <- ifelse(
+    is.na(x$target_unit_2001), "unresolved_source_district", "resolved_reviewed_deterministic"
+  )
+  x$lineage_basis <- ifelse(
+    is.na(idx), NA_character_, paste0("same_round_consumption_bridge:", plain_chr(map$lineage_status[idx]))
+  )
+  x
+}
+
+build_nss66_source_diagnostics <- function(canonical_persons, lineaged_persons) {
+  data.frame(
+    source = "usual_activity_f4_f5_f6",
+    rows = nrow(canonical_persons),
+    unique_people = length(unique(canonical_persons$person_key)),
+    positive_weight_share = mean(num(canonical_persons$survey_weight) > 0),
+    resolved_person_share = mean(lineaged_persons$lineage_status == "resolved_reviewed_deterministic"),
+    stringsAsFactors = FALSE
+  )
+}
+
 build_nss64_source_diagnostics <- function(
     usual_activity, migration, ddi_contract, lineaged_usual_activity) {
   validation <- validate_nss64_source_pair(usual_activity, migration, ddi_contract)
   validate_nss64_cross_block_design(usual_activity, migration)
   list(
     source_validation = validation,
-    lineage_support = summarize_nss64_lineage_support(lineaged_usual_activity),
-    target_support = summarize_nss64_target_support(lineaged_usual_activity)
+    lineage_support = summarize_nss_labor_lineage_support(lineaged_usual_activity),
+    target_support = summarize_nss_labor_target_support(lineaged_usual_activity)
   )
 }
 

@@ -202,3 +202,182 @@ read_nss66_eus_ddi_contract <- function(path) {
   }
   out
 }
+
+read_nss66_conversion_contract <- function(
+    path = "data/metadata/nss66_conversion_contract.csv") {
+  x <- utils::read.csv(path, stringsAsFactors = FALSE, check.names = FALSE)
+  required <- c(
+    "file_id", "expected_rows", "signature_column", "relative_path",
+    "converter_package", "converter_version"
+  )
+  missing <- setdiff(required, names(x))
+  if (length(missing)) {
+    stop("NSS66 conversion contract is missing columns: ", paste(missing, collapse = ", "), call. = FALSE)
+  }
+  if (!identical(sort(plain_chr(x$file_id)), c("F4", "F5", "F6")) || anyDuplicated(x$file_id)) {
+    stop("NSS66 conversion contract must contain exactly one F4, F5, and F6 row.", call. = FALSE)
+  }
+  x$expected_rows <- num(x$expected_rows)
+  if (any(!is.finite(x$expected_rows) | x$expected_rows <= 0)) {
+    stop("NSS66 conversion contract contains invalid expected row counts.", call. = FALSE)
+  }
+  if (length(unique(x$converter_package)) != 1L || length(unique(x$converter_version)) != 1L) {
+    stop("NSS66 conversion contract must pin one converter package and version.", call. = FALSE)
+  }
+  x[match(c("F4", "F5", "F6"), x$file_id), , drop = FALSE]
+}
+
+read_nss66_converted_block <- function(path, file_id, ddi_contract = NULL) {
+  requirements <- nss66_eus_ddi_requirements()
+  if (!file_id %in% names(requirements)) stop("Unsupported NSS66 block: ", file_id, call. = FALSE)
+  if (!file.exists(path)) stop("Missing converted NSS66 ", file_id, " file: ", path, call. = FALSE)
+  columns <- requirements[[file_id]]
+  out <- safe_df(data.table::fread(
+    path,
+    select = columns,
+    colClasses = "character",
+    na.strings = c("", "NA"),
+    showProgress = FALSE
+  ))
+  missing <- setdiff(columns, names(out))
+  if (length(missing)) {
+    stop("Converted NSS66 ", file_id, " is missing columns: ", paste(missing, collapse = ", "), call. = FALSE)
+  }
+  if (!is.null(ddi_contract)) {
+    row <- safe_df(ddi_contract)
+    row <- row[row$file_id == file_id, , drop = FALSE]
+    if (nrow(row) != 1L || nrow(out) != num(row$case_count[[1L]])) {
+      stop("Converted NSS66 ", file_id, " row count does not match the DDI contract.", call. = FALSE)
+    }
+  }
+  out
+}
+
+normalize_nss66_design <- function(raw, label) {
+  required <- nss66_common_person_columns()
+  missing <- setdiff(required, names(raw))
+  if (length(missing)) stop(label, " is missing required columns: ", paste(missing, collapse = ", "), call. = FALSE)
+
+  state_code <- normalize_census_code(num(raw$STATE), 2L)
+  district_code <- normalize_census_code(num(raw$DISTRICT_CODE), 2L)
+  district_raw <- normalize_census_code(num(raw$District), 2L)
+  nss_region <- normalize_census_code(num(raw$State_Region), 3L)
+  sector <- num(raw$Sector)
+  sub_stratum <- trimws(plain_chr(raw$Sub_Stratum_No))
+  blank_sub_stratum <- is.na(sub_stratum) | !nzchar(sub_stratum)
+  if (any(blank_sub_stratum & sector != 2, na.rm = TRUE)) {
+    stop(label, " has blank rural sub-stratum values.", call. = FALSE)
+  }
+  sub_stratum[blank_sub_stratum & sector == 2] <- "__none__"
+
+  out <- data.frame(
+    person_key = plain_chr(raw$PID),
+    state_code = state_code,
+    district_code = district_code,
+    sector = sector,
+    sub_round = num(raw$Sub_Round),
+    sub_sample = num(raw$Sub_Sample),
+    nss_region = nss_region,
+    stratum = num(raw$Stratum),
+    sub_stratum = sub_stratum,
+    fsu = num(raw$FSU_Serial_No),
+    second_stage_stratum = num(raw$Second_Stage_Stratum_No),
+    household_no = num(raw$Sample_Hhld_No),
+    person_no = num(raw$Person_Serial_No),
+    survey_weight = num(raw$WEIGHT),
+    stringsAsFactors = FALSE
+  )
+  if (any(!nzchar(out$person_key)) || anyDuplicated(out$person_key)) {
+    stop(label, " person keys must be complete and unique.", call. = FALSE)
+  }
+  if (anyNA(out$state_code) || anyNA(out$district_code) || anyNA(out$nss_region) ||
+      any(out$district_code != district_raw, na.rm = TRUE) ||
+      any(substr(out$nss_region, 1L, 2L) != out$state_code, na.rm = TRUE)) {
+    stop(label, " has internally inconsistent state, region, or district codes.", call. = FALSE)
+  }
+  required_design <- c(
+    "sector", "sub_round", "sub_sample", "stratum", "sub_stratum", "fsu",
+    "second_stage_stratum", "household_no", "person_no", "survey_weight"
+  )
+  if (any(!stats::complete.cases(out[required_design]))) {
+    stop(label, " has incomplete survey-design fields.", call. = FALSE)
+  }
+  if (any(!is.finite(out$survey_weight) | out$survey_weight <= 0)) {
+    stop(label, " WEIGHT values must be finite and positive.", call. = FALSE)
+  }
+  out
+}
+
+nss_labor_shared_design_columns <- function() {
+  c(
+    "state_code", "district_code", "sector", "sub_round", "sub_sample",
+    "nss_region", "stratum", "sub_stratum", "fsu", "second_stage_stratum",
+    "household_no", "person_no", "survey_weight"
+  )
+}
+
+validate_nss_labor_shared_design <- function(lhs, rhs, label) {
+  common <- nss_labor_shared_design_columns()
+  missing <- union(
+    setdiff(c("person_key", common), names(lhs)),
+    setdiff(c("person_key", common), names(rhs))
+  )
+  if (length(missing)) stop(label, " lacks shared design fields: ", paste(sort(unique(missing)), collapse = ", "), call. = FALSE)
+  idx <- match(rhs$person_key, lhs$person_key)
+  if (anyNA(idx)) stop(label, " contains person keys outside the complete person universe.", call. = FALSE)
+  left <- lhs[idx, c("person_key", common), drop = FALSE]
+  right <- rhs[c("person_key", common)]
+  for (nm in common) {
+    x <- plain_chr(left[[nm]])
+    y <- plain_chr(right[[nm]])
+    equal <- (is.na(x) & is.na(y)) | (!is.na(x) & !is.na(y) & x == y)
+    bad <- which(!equal)
+    if (length(bad)) {
+      stop(label, " disagrees on shared field ", nm, "; first mismatched person: ", left$person_key[[bad[[1L]]]], ".", call. = FALSE)
+    }
+  }
+  invisible(TRUE)
+}
+
+build_nss66_usual_activity <- function(f4_raw, f5_raw, f6_raw, ddi_contract = NULL) {
+  f4 <- normalize_nss66_design(f4_raw, "NSS66 F4")
+  f5 <- normalize_nss66_design(f5_raw, "NSS66 F5")
+  f6 <- normalize_nss66_design(f6_raw, "NSS66 F6")
+  if (!setequal(f4$person_key, f5$person_key)) {
+    stop("NSS66 F4 and F5 must cover the same complete person universe.", call. = FALSE)
+  }
+  validate_nss_labor_shared_design(f4, f5, "NSS66 F4/F5")
+  validate_nss_labor_shared_design(f5, f6, "NSS66 F5/F6")
+
+  yes_subsidiary <- plain_chr(f5_raw$PID)[num(f5_raw$Whether_in_Subsidiary_Activity) == 1]
+  if (!setequal(plain_chr(f6_raw$PID), yes_subsidiary)) {
+    stop("NSS66 F6 must equal the F5 persons coded as having subsidiary activity.", call. = FALSE)
+  }
+  if (!is.null(ddi_contract)) {
+    expected <- stats::setNames(num(ddi_contract$case_count), plain_chr(ddi_contract$file_id))
+    observed <- c(F4 = nrow(f4), F5 = nrow(f5), F6 = nrow(f6))
+    if (!identical(as.numeric(observed[names(expected)]), as.numeric(expected[names(observed)]))) {
+      stop("NSS66 converted block counts do not match the DDI contract.", call. = FALSE)
+    }
+  }
+
+  i5 <- match(f4$person_key, f5$person_key)
+  i6 <- match(f4$person_key, f6$person_key)
+  out <- f4
+  out$sex <- num(f4_raw$Sex)
+  out$age <- num(f4_raw$Age)
+  out$general_education <- num(f4_raw$General_Education)
+  out$technical_education <- num(f4_raw$Technical_Education)
+  out$usual_principal_status <- num(f5_raw$Usual_Principal_Activity_Status[i5])
+  out$usual_principal_nic2004 <- num(f5_raw$Usual_Principal_Activity_NIC2004[i5])
+  out$usual_principal_nco2004 <- num(f5_raw$Usual_Principal_Activity_NCO2004[i5])
+  out$has_subsidiary_activity <- num(f5_raw$Whether_in_Subsidiary_Activity[i5])
+  out$usual_subsidiary_status <- ifelse(is.na(i6), NA_real_, num(f6_raw$Usual_Subsidiary_Activity_Status[i6]))
+  out$usual_subsidiary_nic2004 <- ifelse(is.na(i6), NA_real_, num(f6_raw$Usual_SubsidiaryActivity_NIC2004[i6]))
+  out$usual_subsidiary_nco2004 <- ifelse(is.na(i6), NA_real_, num(f6_raw$Usual_SubsidiaryActivity_NCO2004[i6]))
+
+  if (any(!is.finite(out$age) | out$age < 0) || any(!is.finite(out$usual_principal_status))) {
+    stop("NSS66 canonical persons contain invalid age or principal-status values.", call. = FALSE)
+  }
+  out
+}

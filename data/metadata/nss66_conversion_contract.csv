@@ -1,0 +1,4 @@
+file_id,expected_rows,signature_column,relative_path,converter_package,converter_version
+F4,459784,Sex,data/interim/nss66_eus/F4.csv,nesstar-converter,1.0.4
+F5,459784,Usual_Principal_Activity_Status,data/interim/nss66_eus/F5.csv,nesstar-converter,1.0.4
+F6,34689,Usual_Subsidiary_Activity_Status,data/interim/nss66_eus/F6.csv,nesstar-converter,1.0.4

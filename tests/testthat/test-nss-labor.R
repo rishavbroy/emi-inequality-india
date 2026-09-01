@@ -259,3 +259,83 @@ test_that("NSS64 outcomes are frozen as near-treatment reference measures", {
   expect_true("temporal_role" %in% names(registry))
   expect_identical(unique(registry$temporal_role), "near_treatment_reference")
 })
+
+test_that("NSS66 conversion contract pins one standard converter and three blocks", {
+  contract <- read_nss66_conversion_contract("data/metadata/nss66_conversion_contract.csv")
+  expect_identical(contract$file_id, c("F4", "F5", "F6"))
+  expect_equal(contract$expected_rows, c(459784, 459784, 34689))
+  expect_identical(unique(contract$converter_package), "nesstar-converter")
+  expect_identical(unique(contract$converter_version), "1.0.4")
+  expect_true(all(grepl("^data/interim/nss66_eus/F[456]\\.csv$", contract$relative_path)))
+})
+
+test_that("NSS66 canonical adapter joins F4/F5 one-to-one and F6 conditionally", {
+  common <- data.frame(
+    FSU_Serial_No = c("1001", "1002", "1003"), Sector = c("1", "2", "2"),
+    State_Region = "011", District = c("01", "01", "02"), Stratum = "1",
+    Sub_Stratum_No = c("1", "", ""), Sub_Round = "1", Sub_Sample = "1",
+    Second_Stage_Stratum_No = "1", Sample_Hhld_No = c("1", "2", "3"),
+    Person_Serial_No = "1", STATE = "01", DISTRICT_CODE = c("01", "01", "02"),
+    HHID = c("h1", "h2", "h3"), PID = c("p1", "p2", "p3"), WEIGHT = c("10", "20", "30"),
+    stringsAsFactors = FALSE
+  )
+  f4 <- cbind(common, Sex = c("1", "2", "1"), Age = c("20", "30", "40"),
+              General_Education = "5", Technical_Education = "1")
+  f5 <- cbind(common, Age = c("20", "30", "40"),
+              Usual_Principal_Activity_Status = c("81", "31", "91"),
+              Usual_Principal_Activity_NIC2004 = c("0", "100", "0"),
+              Usual_Principal_Activity_NCO2004 = c("0", "200", "0"),
+              Whether_in_Subsidiary_Activity = c("1", "2", "2"))
+  f6 <- cbind(common[1, , drop = FALSE], Age = "20",
+              Usual_Subsidiary_Activity_Status = "31",
+              Usual_SubsidiaryActivity_NIC2004 = "100",
+              Usual_SubsidiaryActivity_NCO2004 = "200")
+  ddi <- data.frame(file_id = c("F4", "F5", "F6"), case_count = c(3, 3, 1))
+
+  out <- build_nss66_usual_activity(f4, f5, f6, ddi)
+  expect_equal(nrow(out), 3L)
+  expect_identical(out$person_key, c("p1", "p2", "p3"))
+  expect_equal(out$usual_subsidiary_status, c(31, NA, NA))
+  expect_equal(out$sub_stratum, c("1", "__none__", "__none__"))
+  expect_equal(out$survey_weight, c(10, 20, 30))
+
+  bad_f6 <- f6
+  bad_f6$PID <- "p2"
+  expect_error(
+    build_nss66_usual_activity(f4, f5, bad_f6),
+    "F6 must equal the F5 persons coded as having subsidiary activity"
+  )
+})
+
+test_that("NSS66 lineage reuses the reviewed same-round consumption bridge", {
+  persons <- data.frame(
+    person_key = c("p1", "p2", "p3"), state_code = c("01", "01", "02"),
+    district_code = c("01", "02", "01"), stringsAsFactors = FALSE
+  )
+  bridge <- data.frame(
+    survey_id = rep("nss_2009_10_type2", 2),
+    source_state_code = c("01", "01"), source_district_code = c("01", "02"),
+    target_unit_2001 = c("pc2001__01__01", "pc2001__01__02"),
+    lineage_weight = 1, lineage_status = c("resolved_exact_2001", "resolved_reviewed_identity_alias"),
+    stringsAsFactors = FALSE
+  )
+  out <- attach_nss66_reviewed_lineage(persons, bridge)
+  expect_equal(out$source_district_code, c("0101", "0102", "0201"))
+  expect_equal(out$target_unit_2001[1:2], c("pc2001__01__01", "pc2001__01__02"))
+  expect_equal(out$lineage_status[1:2], rep("resolved_reviewed_deterministic", 2))
+  expect_equal(out$lineage_status[[3L]], "unresolved_source_district")
+})
+
+test_that("shared NSS labor registry separates near-treatment and early-post waves", {
+  nss64 <- nss64_outcome_registry()
+  nss66 <- nss66_outcome_registry()
+  expect_equal(nrow(nss64), 5L)
+  expect_equal(nrow(nss66), 4L)
+  expect_identical(unique(nss64$temporal_role), "near_treatment_reference")
+  expect_identical(unique(nss66$temporal_role), "early_post")
+  expect_false("migrant_from_last_upr_share_age15plus" %in% nss66$outcome_id)
+  expect_setequal(
+    nss66$outcome_id,
+    setdiff(nss64$outcome_id, "migrant_from_last_upr_share_age15plus")
+  )
+})
