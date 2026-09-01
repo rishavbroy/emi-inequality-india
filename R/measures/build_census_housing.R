@@ -5,6 +5,9 @@ census_housing_common_count_columns <- function() {
     "households_total", "rooms_no_exclusive", "rooms_one", "rooms_two",
     "overcrowding_gt2_ppr_lower_bound", "water_tap", "water_well",
     "water_handpump_tubewell", "water_surface", "water_within_premises", "water_away",
+    "bathroom_available", "latrine_flush_or_water_closet", "latrine_pit",
+    "drainage_closed", "drainage_none", "separate_kitchen_within_house",
+    "cooking_solid_fuel", "cooking_clean_fuel",
     "lighting_electricity", "lighting_kerosene", "lighting_solar",
     "lighting_other_oil", "lighting_other", "lighting_none", "latrine_available",
     "banking", "radio", "television", "telephone", "bicycle", "motorcycle", "car"
@@ -18,6 +21,10 @@ census_housing_common_share_columns <- function() {
     "tap_water_share_households", "well_water_share_households",
     "handpump_tubewell_water_share_households", "surface_water_share_households",
     "water_within_premises_share_households", "water_away_share_households",
+    "bathroom_share_households", "flush_or_water_closet_latrine_share_households",
+    "pit_latrine_share_households", "closed_drainage_share_households",
+    "no_drainage_share_households", "separate_kitchen_within_house_share_households",
+    "solid_cooking_fuel_share_households", "clean_cooking_fuel_share_households",
     "electricity_share_households", "kerosene_lighting_share_households",
     "solar_lighting_share_households", "no_lighting_share_households",
     "latrine_share_households", "banking_share_households", "radio_share_households",
@@ -46,13 +53,17 @@ census_housing_validation_row <- function(
 
 validate_census_housing_sources <- function(
     h09_or_hl07, h12_or_hl11, h13_or_hl12, year,
-    h05_or_hl04 = NULL, h08_or_hl06 = NULL) {
+    h05_or_hl04 = NULL, h08_or_hl06 = NULL,
+    h10_or_hl08 = NULL, hl09 = NULL, h11_or_hl10 = NULL) {
   year <- as.integer(year)
   light_label <- if (year == 2001L) "H09" else "HL07"
   utility_label <- if (year == 2001L) "H12" else "HL11"
   asset_label <- if (year == 2001L) "H13" else "HL12"
   room_label <- if (year == 2001L) "H05" else "HL04"
   water_label <- if (year == 2001L) "H08" else "HL06"
+  sanitation_label <- if (year == 2001L) "H10" else "HL08"
+  bathing_label <- if (year == 2001L) "H10" else "HL09"
+  kitchen_label <- if (year == 2001L) "H11" else "HL10"
   utility_is_subset <- year == 2001L
   checks <- list(
     census_housing_validation_row(
@@ -85,6 +96,32 @@ validate_census_housing_sources <- function(
       "household_total_lighting_vs_water", FALSE
     )
   }
+  if (!is.null(h10_or_hl08)) {
+    checks[[length(checks) + 1L]] <- census_housing_validation_row(
+      h09_or_hl07, h10_or_hl08, "households_total", "households_total",
+      paste0("Census ", year, " ", light_label, "/", sanitation_label, " household-universe"),
+      "household_total_lighting_vs_sanitation", FALSE
+    )
+    checks[[length(checks) + 1L]] <- census_housing_validation_row(
+      h10_or_hl08, h12_or_hl11, "latrine_available", "latrine_available",
+      paste0("Census ", year, " ", sanitation_label, "/", utility_label, " latrine"),
+      "latrine_dedicated_vs_utility", utility_is_subset
+    )
+  }
+  if (!is.null(hl09)) {
+    checks[[length(checks) + 1L]] <- census_housing_validation_row(
+      h09_or_hl07, hl09, "households_total", "households_total",
+      paste0("Census ", year, " ", light_label, "/", bathing_label, " household-universe"),
+      "household_total_lighting_vs_bathing_drainage", FALSE
+    )
+  }
+  if (!is.null(h11_or_hl10)) {
+    checks[[length(checks) + 1L]] <- census_housing_validation_row(
+      h09_or_hl07, h11_or_hl10, "households_total", "households_total",
+      paste0("Census ", year, " ", light_label, "/", kitchen_label, " household-universe"),
+      "household_total_lighting_vs_kitchen_fuel", FALSE
+    )
+  }
   safe_bind_rows(checks)
 }
 
@@ -93,7 +130,9 @@ add_census_housing_shares <- function(x) {
   optional_counts <- c(
     "rooms_no_exclusive", "rooms_one", "rooms_two", "overcrowding_gt2_ppr_lower_bound",
     "water_tap", "water_well", "water_handpump_tubewell", "water_surface",
-    "water_within_premises", "water_away"
+    "water_within_premises", "water_away", "bathroom_available",
+    "latrine_flush_or_water_closet", "latrine_pit", "drainage_closed", "drainage_none",
+    "separate_kitchen_within_house", "cooking_solid_fuel", "cooking_clean_fuel"
   )
   for (column in setdiff(optional_counts, names(x))) x[[column]] <- NA_real_
   total <- x$households_total
@@ -108,6 +147,18 @@ add_census_housing_shares <- function(x) {
   x$surface_water_share_households <- safe_count_share(x$water_surface, total)
   x$water_within_premises_share_households <- safe_count_share(x$water_within_premises, total)
   x$water_away_share_households <- safe_count_share(x$water_away, total)
+  x$bathroom_share_households <- safe_count_share(x$bathroom_available, total)
+  x$flush_or_water_closet_latrine_share_households <- safe_count_share(
+    x$latrine_flush_or_water_closet, total
+  )
+  x$pit_latrine_share_households <- safe_count_share(x$latrine_pit, total)
+  x$closed_drainage_share_households <- safe_count_share(x$drainage_closed, total)
+  x$no_drainage_share_households <- safe_count_share(x$drainage_none, total)
+  x$separate_kitchen_within_house_share_households <- safe_count_share(
+    x$separate_kitchen_within_house, total
+  )
+  x$solid_cooking_fuel_share_households <- safe_count_share(x$cooking_solid_fuel, total)
+  x$clean_cooking_fuel_share_households <- safe_count_share(x$cooking_clean_fuel, total)
   x$electricity_share_households <- safe_count_share(x$lighting_electricity, total)
   x$kerosene_lighting_share_households <- safe_count_share(x$lighting_kerosene, total)
   x$solar_lighting_share_households <- safe_count_share(x$lighting_solar, total)
@@ -123,8 +174,9 @@ add_census_housing_shares <- function(x) {
   x
 }
 
-build_census_2001_housing_measures <- function(h09, h12, h13, h05 = NULL, h08 = NULL) {
-  validate_census_housing_sources(h09, h12, h13, 2001L, h05, h08)
+build_census_2001_housing_measures <- function(
+    h09, h12, h13, h05 = NULL, h08 = NULL, h10 = NULL, h11 = NULL) {
+  validate_census_housing_sources(h09, h12, h13, 2001L, h05, h08, h10, NULL, h11)
   x <- safe_df(h09)[c(
     "state_code", "district_code", "district_name", "households_total",
     "lighting_electricity", "lighting_kerosene", "lighting_solar", "lighting_other_oil",
@@ -149,15 +201,37 @@ build_census_2001_housing_measures <- function(h09, h12, h13, h05 = NULL, h08 = 
     )]
     x <- merge_census_district_sources(x, water, "Census H09/H05", "Census H08", c("district_name", "households_total"))
   }
-  x <- left_join_census_district_source(x, utility, "Census housing baseline", "Census H12", c("district_name", "households_total"))
+  if (!is.null(h10)) {
+    sanitation <- safe_df(h10)[c(
+      "state_code", "district_code", "bathroom_available", "latrine_available",
+      "latrine_flush_or_water_closet", "latrine_pit", "drainage_closed", "drainage_none"
+    )]
+    x <- merge_census_district_sources(
+      x, sanitation, "Census housing baseline", "Census H10", c("district_name", "households_total")
+    )
+  } else {
+    x <- left_join_census_district_source(
+      x, utility, "Census housing baseline", "Census H12", c("district_name", "households_total")
+    )
+  }
+  if (!is.null(h11)) {
+    kitchen <- safe_df(h11)[c(
+      "state_code", "district_code", "separate_kitchen_within_house",
+      "cooking_solid_fuel", "cooking_clean_fuel"
+    )]
+    x <- merge_census_district_sources(
+      x, kitchen, "Census housing baseline", "Census H11", c("district_name", "households_total")
+    )
+  }
   x <- merge_census_district_sources(x, assets, "Census housing baseline", "Census H13", c("district_name", "households_total"))
   x$target_unit_2001 <- paste0("pc2001__", x$state_code, "__", x$district_code)
   x$census_year <- rep.int(2001L, nrow(x))
   add_census_housing_shares(x)
 }
 
-build_census_2011_housing_source <- function(hl07, hl11, hl12, hl04 = NULL, hl06 = NULL) {
-  validate_census_housing_sources(hl07, hl11, hl12, 2011L, hl04, hl06)
+build_census_2011_housing_source <- function(
+    hl07, hl11, hl12, hl04 = NULL, hl06 = NULL, hl08 = NULL, hl09 = NULL, hl10 = NULL) {
+  validate_census_housing_sources(hl07, hl11, hl12, 2011L, hl04, hl06, hl08, hl09, hl10)
   x <- safe_df(hl07)[c(
     "state_code", "district_code", "district_name", "households_total",
     "lighting_electricity", "lighting_kerosene", "lighting_solar", "lighting_other_oil",
@@ -182,12 +256,45 @@ build_census_2011_housing_source <- function(hl07, hl11, hl12, hl04 = NULL, hl06
     )]
     x <- merge_census_district_sources(x, water, "Census housing follow-up", "Census HL06", c("district_name", "households_total"))
   }
-  x <- merge_census_district_sources(x, utility, "Census housing follow-up", "Census HL11", c("district_name", "households_total"))
+  if (!is.null(hl08)) {
+    sanitation <- safe_df(hl08)[c(
+      "state_code", "district_code", "latrine_available",
+      "latrine_flush_or_water_closet", "latrine_pit"
+    )]
+    x <- merge_census_district_sources(
+      x, sanitation, "Census housing follow-up", "Census HL08", c("district_name", "households_total")
+    )
+  } else {
+    x <- merge_census_district_sources(
+      x, utility, "Census housing follow-up", "Census HL11", c("district_name", "households_total")
+    )
+  }
+  if (!is.null(hl09)) {
+    bathing <- safe_df(hl09)[c(
+      "state_code", "district_code", "bathroom_available", "drainage_closed", "drainage_none"
+    )]
+    x <- merge_census_district_sources(
+      x, bathing, "Census housing follow-up", "Census HL09", c("district_name", "households_total")
+    )
+  }
+  if (!is.null(hl10)) {
+    kitchen <- safe_df(hl10)[c(
+      "state_code", "district_code", "separate_kitchen_within_house",
+      "cooking_solid_fuel", "cooking_clean_fuel"
+    )]
+    x <- merge_census_district_sources(
+      x, kitchen, "Census housing follow-up", "Census HL10", c("district_name", "households_total")
+    )
+  }
   merge_census_district_sources(x, assets, "Census housing follow-up", "Census HL12", c("district_name", "households_total"))
 }
 
-build_census_2011_housing_measures <- function(hl07, hl11, hl12, district_transition_2001_2011, hl04 = NULL, hl06 = NULL) {
-  source <- build_census_2011_housing_source(hl07, hl11, hl12, hl04, hl06)
+build_census_2011_housing_measures <- function(
+    hl07, hl11, hl12, district_transition_2001_2011,
+    hl04 = NULL, hl06 = NULL, hl08 = NULL, hl09 = NULL, hl10 = NULL) {
+  source <- build_census_2011_housing_source(
+    hl07, hl11, hl12, hl04, hl06, hl08, hl09, hl10
+  )
   count_cols <- c(
     intersect(census_housing_common_count_columns(), names(source)),
     "computer", "computer_internet"
