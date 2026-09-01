@@ -843,3 +843,23 @@ test_that("SHRUG EC13 is registered as an extended-only Census-2011 district sou
   expect_identical(row$reader_function[[1L]], "read_shrug_ec13_district")
   expect_equal(row$expected_size_bytes[[1L]], 43127568)
 })
+
+test_that("NSS64 employment and migration source files use the organized NSS namespace", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
+  manifest <- utils::read.csv(
+    file.path(root, "data", "metadata", "file_manifest.csv"),
+    stringsAsFactors = FALSE,
+    check.names = FALSE
+  )
+  rows <- manifest[manifest$source_id == "nss_2007_08_employment_migration", , drop = FALSE]
+  expect_setequal(rows$file_id, c("nss64_eum_ddi", "nss64_eum_block4", "nss64_eum_block6"))
+  expect_true(all(startsWith(
+    rows$relative_path,
+    "data/raw/nss/NSS 2007-08 Employment, Unemployment and Migration Survey 64th Round/"
+  )))
+  expect_equal(
+    setNames(rows$expected_size_bytes, rows$file_id)[c("nss64_eum_ddi", "nss64_eum_block4", "nss64_eum_block6")],
+    c(nss64_eum_ddi = 879929, nss64_eum_block4 = 178944715, nss64_eum_block6 = 160789355)
+  )
+  expect_false(any(rows$required_for_current_pipeline))
+})
