@@ -125,16 +125,30 @@ attach_nss64_reviewed_lineage <- function(persons, full_reviewed_crosswalk) {
   x
 }
 
+nss64_design_psu_key <- function(x) {
+  x <- safe_df(x)
+  required <- c("state_code", "sector", "fsu")
+  missing <- setdiff(required, names(x))
+  if (length(missing)) {
+    stop("NSS64 rows lack PSU fields: ", paste(missing, collapse = ", "), call. = FALSE)
+  }
+  interaction(
+    plain_chr(x$state_code), num(x$sector), num(x$fsu),
+    drop = TRUE, lex.order = TRUE
+  )
+}
+
 summarize_nss64_lineage_support <- function(lineaged_persons) {
   x <- safe_df(lineaged_persons)
   required <- c(
     "source_district_code", "target_unit_2001", "lineage_status",
-    "person_key", "survey_weight"
+    "person_key", "state_code", "sector", "fsu", "survey_weight"
   )
   missing <- setdiff(required, names(x))
   if (length(missing)) {
     stop("Lineaged NSS64 rows lack fields: ", paste(missing, collapse = ", "), call. = FALSE)
   }
+  x$.design_psu <- nss64_design_psu_key(x)
   groups <- split(seq_len(nrow(x)), x$source_district_code)
   out <- safe_bind_rows(lapply(groups, function(i) {
     rows <- x[i, , drop = FALSE]
@@ -144,12 +158,46 @@ summarize_nss64_lineage_support <- function(lineaged_persons) {
       source_district_code = rows$source_district_code[[1L]],
       target_unit_2001 = if (length(targets) == 1L) targets[[1L]] else NA_character_,
       lineage_status = if (length(status) == 1L) status[[1L]] else "mixed",
-      sample_people = nrow(rows),
-      weighted_people = sum(num(rows$survey_weight)),
+      n_sample_people = nrow(rows),
+      n_fsu = length(unique(rows$.design_psu)),
+      sum_person_weight = sum(num(rows$survey_weight)),
+      kish_effective_n = kish_effective_n(rows$survey_weight),
       stringsAsFactors = FALSE
     )
   }))
   out[order(out$source_district_code), , drop = FALSE]
+}
+
+summarize_nss64_target_support <- function(lineaged_persons) {
+  x <- safe_df(lineaged_persons)
+  required <- c(
+    "source_district_code", "target_unit_2001", "lineage_status",
+    "state_code", "sector", "fsu", "survey_weight"
+  )
+  missing <- setdiff(required, names(x))
+  if (length(missing)) {
+    stop("Lineaged NSS64 rows lack target-support fields: ", paste(missing, collapse = ", "), call. = FALSE)
+  }
+  resolved <- x[x$lineage_status %in% "resolved_reviewed_deterministic" &
+                  !is.na(x$target_unit_2001) & nzchar(plain_chr(x$target_unit_2001)), , drop = FALSE]
+  if (!nrow(resolved)) return(data.frame())
+  resolved$.design_psu <- nss64_design_psu_key(resolved)
+  groups <- split(seq_len(nrow(resolved)), resolved$target_unit_2001)
+  out <- safe_bind_rows(lapply(groups, function(i) {
+    rows <- resolved[i, , drop = FALSE]
+    data.frame(
+      target_unit_2001 = plain_chr(rows$target_unit_2001[[1L]]),
+      n_source_districts = length(unique(rows$source_district_code)),
+      n_sample_people = nrow(rows),
+      n_fsu = length(unique(rows$.design_psu)),
+      sum_person_weight = sum(num(rows$survey_weight)),
+      kish_effective_n = kish_effective_n(rows$survey_weight),
+      n_rural_people = sum(num(rows$sector) == 1, na.rm = TRUE),
+      n_urban_people = sum(num(rows$sector) == 2, na.rm = TRUE),
+      stringsAsFactors = FALSE
+    )
+  }))
+  out[order(out$target_unit_2001), , drop = FALSE]
 }
 
 build_nss64_source_diagnostics <- function(
@@ -158,7 +206,8 @@ build_nss64_source_diagnostics <- function(
   validate_nss64_cross_block_design(usual_activity, migration)
   list(
     source_validation = validation,
-    lineage_support = summarize_nss64_lineage_support(lineaged_usual_activity)
+    lineage_support = summarize_nss64_lineage_support(lineaged_usual_activity),
+    target_support = summarize_nss64_target_support(lineaged_usual_activity)
   )
 }
 
@@ -166,9 +215,11 @@ save_nss64_diagnostics <- function(x, root = "outputs/diagnostics/extended/labor
   dir.create(root, recursive = TRUE, showWarnings = FALSE)
   paths <- c(
     source_validation = file.path(root, "nss64_source_validation.csv"),
-    lineage_support = file.path(root, "nss64_lineage_support.csv")
+    lineage_support = file.path(root, "nss64_lineage_support.csv"),
+    target_support = file.path(root, "nss64_target_support.csv")
   )
   utils::write.csv(x$source_validation, paths[["source_validation"]], row.names = FALSE, na = "")
   utils::write.csv(x$lineage_support, paths[["lineage_support"]], row.names = FALSE, na = "")
+  utils::write.csv(x$target_support, paths[["target_support"]], row.names = FALSE, na = "")
   unname(paths)
 }

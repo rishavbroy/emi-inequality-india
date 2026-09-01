@@ -65,6 +65,7 @@ test_that("NSS64 reviewed lineage uses the documented SSRDD source identity", {
     state_code = c("22", "22", "22"),
     district_code = c("09", "10", "99"),
     nss_region = c("222", "222", "222"),
+    sector = c(1, 2, 1), fsu = c(1001, 1002, 1003),
     survey_weight = c(10, 20, 30),
     stringsAsFactors = FALSE
   )
@@ -84,8 +85,33 @@ test_that("NSS64 reviewed lineage uses the documented SSRDD source identity", {
   expect_equal(out$lineage_status[[3L]], "unresolved_source_district")
 
   support <- summarize_nss64_lineage_support(out)
-  expect_equal(support$sample_people, c(1L, 1L, 1L))
-  expect_equal(support$weighted_people, c(10, 20, 30))
+  expect_equal(support$n_sample_people, c(1L, 1L, 1L))
+  expect_equal(support$n_fsu, c(1L, 1L, 1L))
+  expect_equal(support$sum_person_weight, c(10, 20, 30))
+  expect_equal(support$kish_effective_n, c(1, 1, 1))
+})
+
+test_that("NSS64 target support pools reviewed source districts before support diagnostics", {
+  persons <- data.frame(
+    source_district_code = c("22209", "22209", "22210", "22299"),
+    target_unit_2001 = c("pc2001__22__09", "pc2001__22__09", "pc2001__22__09", NA),
+    lineage_status = c(
+      "resolved_reviewed_deterministic", "resolved_reviewed_deterministic",
+      "resolved_reviewed_deterministic", "unresolved_source_district"
+    ),
+    state_code = "22", sector = c(1, 1, 2, 1), fsu = c(1001, 1001, 1002, 1003),
+    survey_weight = c(1, 2, 3, 100), stringsAsFactors = FALSE
+  )
+
+  out <- summarize_nss64_target_support(persons)
+  expect_equal(nrow(out), 1L)
+  expect_equal(out$n_source_districts, 2L)
+  expect_equal(out$n_sample_people, 3L)
+  expect_equal(out$n_fsu, 2L)
+  expect_equal(out$sum_person_weight, 6)
+  expect_equal(out$kish_effective_n, 36 / 14, tolerance = 1e-8)
+  expect_equal(out$n_rural_people, 2L)
+  expect_equal(out$n_urban_people, 1L)
 })
 
 test_that("NSS64 lineage fails closed on inconsistent or non-deterministic geography", {

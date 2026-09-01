@@ -97,6 +97,15 @@ wmean <- function(x, w = NULL) {
   stats::weighted.mean(x[ok], w[ok])
 }
 
+kish_effective_n <- function(weight) {
+  w <- num(weight)
+  w <- w[is.finite(w) & w > 0]
+  if (!length(w)) return(NA_real_)
+  denom <- sum(w^2)
+  if (!is.finite(denom) || denom <= 0) return(NA_real_)
+  sum(w)^2 / denom
+}
+
 bydist <- function(df, value, weight = NULL, name = "value", fun = wmean) {
   g <- intersect(c("state_std", "district_std"), names(df))
   if (length(g) < 2 || is.null(value) || !nrow(df)) {

@@ -120,15 +120,6 @@ with_consumption_quantile_adjustment <- function(expr) {
   )
 }
 
-kish_effective_n <- function(weight) {
-  w <- num(weight)
-  w <- w[positive_finite(w)]
-  if (!length(w)) return(NA_real_)
-  denom <- sum(w^2)
-  if (!is.finite(denom) || denom <= 0) return(NA_real_)
-  sum(w)^2 / denom
-}
-
 consumption_district_support_from_rows <- function(x) {
   x <- safe_df(x)
   groups <- split(seq_len(nrow(x)), x$target_unit_2001)
