@@ -362,6 +362,77 @@ vanneman_dist91_geography_inventory <- function(path) {
   out
 }
 
+
+
+vanneman_dist91_control_record_ids <- function() {
+  c(
+    population = "100", main_workers = "111", farm_workers = "112",
+    matriculate_plus = "153",
+    age_0_4 = "160", age_5_9 = "161", age_10_14 = "162",
+    age_15_19 = "163", age_20_24 = "164", age_25_29 = "165",
+    age_30_34 = "166", age_35_39 = "167", age_40_44 = "168",
+    age_45_49 = "169", age_50_54 = "170", age_55_59 = "171",
+    age_60_64 = "172", age_65_69 = "173", age_70_74 = "174",
+    age_75_79 = "175", age_80_84 = "176", age_85_89 = "177",
+    age_90_94 = "178", age_95_plus = "179",
+    scheduled_caste = "200", scheduled_tribe = "250", muslim = "332",
+    households_h4 = "670", households_electricity = "671"
+  )
+}
+
+vanneman_fixed_width_number <- function(x) {
+  value <- suppressWarnings(as.numeric(trimws(x)))
+  value[value == -1] <- NA_real_
+  value
+}
+
+read_vanneman_dist91_control_counts <- function(
+    path, record_ids = vanneman_dist91_control_record_ids()) {
+  if (!file.exists(path)) stop("Missing Vanneman dist91 file: ", path, call. = FALSE)
+  if (anyDuplicated(unname(record_ids)) || any(nchar(unname(record_ids)) != 3L)) {
+    stop("Vanneman dist91 control registry must contain unique three-digit record IDs.", call. = FALSE)
+  }
+  con <- gzfile(path, open = "rt")
+  on.exit(close(con), add = TRUE)
+  lines <- readLines(con, warn = FALSE)
+  if (!length(lines)) stop("Vanneman dist91 control source is empty.", call. = FALSE)
+  record_id <- ifelse(nchar(lines) >= 7L, substr(lines, 5L, 7L), "")
+  keep <- record_id %in% unname(record_ids) & substr(lines, 8L, 9L) == "91"
+  selected <- lines[keep]
+  if (!length(selected) || any(nchar(selected) < 28L)) {
+    stop("Vanneman dist91 registered control records are malformed.", call. = FALSE)
+  }
+  long <- data.frame(
+    state_code_1991 = pad_admin_code(substr(selected, 1L, 2L), 2L),
+    district_code_1991 = pad_admin_code(substr(selected, 3L, 4L), 2L),
+    record_id = substr(selected, 5L, 7L),
+    version = suppressWarnings(as.integer(substr(selected, 10L, 10L))),
+    total = vanneman_fixed_width_number(substr(selected, 11L, 19L)),
+    rural = vanneman_fixed_width_number(substr(selected, 20L, 28L)),
+    stringsAsFactors = FALSE
+  )
+  if (any(!is.finite(long$version)) || any(long$version != 2L)) {
+    stop("Vanneman dist91 registered control records violate the version-2 contract.", call. = FALSE)
+  }
+  key <- paste(long$state_code_1991, long$district_code_1991, long$record_id, sep = "__")
+  if (anyDuplicated(key)) stop("Vanneman dist91 has duplicate registered control records.", call. = FALSE)
+
+  districts <- unique(long[c("state_code_1991", "district_code_1991")])
+  out <- districts
+  lookup <- setNames(names(record_ids), unname(record_ids))
+  for (rid in names(lookup)) {
+    rows <- long[long$record_id == rid, , drop = FALSE]
+    rid_key <- paste(rows$state_code_1991, rows$district_code_1991, sep = "__")
+    idx <- match(paste(out$state_code_1991, out$district_code_1991, sep = "__"), rid_key)
+    if (anyNA(idx)) stop("Vanneman dist91 control record grid is incomplete for record ", rid, ".", call. = FALSE)
+    out[[lookup[[rid]]]] <- rows$total[idx]
+    if (rid == record_ids[["population"]]) out$rural_population <- rows$rural[idx]
+  }
+  out <- out[out$district_code_1991 != "00", , drop = FALSE]
+  rownames(out) <- NULL
+  out
+}
+
 vanneman_panel4_dist91_crosswalk <- function(
     panel_geography, dist91_geography, state_crosswalk, documented_combined_units = character()) {
   panel <- safe_df(panel_geography)

@@ -533,3 +533,151 @@ summarize_historical_baseline_1991_coverage <- function(baseline) {
     )
   }))
 }
+
+vanneman_historical_baseline_1991_variables <- function() {
+  c(
+    "vanneman_log_population_1991",
+    "vanneman_urban_share_1991",
+    "vanneman_sc_share_1991",
+    "vanneman_st_share_1991",
+    "vanneman_muslim_share_1991",
+    "vanneman_matriculate_plus_share_10plus_1991",
+    "vanneman_agricultural_worker_share_main_1991",
+    "vanneman_dependency_ratio_1991",
+    "vanneman_electricity_access_share_1991"
+  )
+}
+
+vanneman_historical_baseline_1991_count_fields <- function() {
+  c(
+    "population_1991_count", "rural_population_1991_count",
+    "sc_population_1991_count", "st_population_1991_count",
+    "muslim_population_1991_count", "matriculate_plus_1991_count",
+    "population_10plus_1991_count", "main_workers_1991_count",
+    "farm_workers_1991_count", "dependent_population_1991_count",
+    "working_age_population_1991_count", "households_h4_1991_count",
+    "households_electricity_1991_count"
+  )
+}
+
+build_vanneman_1991_control_sufficient_statistics <- function(path) {
+  x <- read_vanneman_dist91_control_counts(path)
+  age_10plus <- paste0("age_", c(
+    "10_14", "15_19", "20_24", "25_29", "30_34", "35_39", "40_44",
+    "45_49", "50_54", "55_59", "60_64", "65_69", "70_74", "75_79",
+    "80_84", "85_89", "90_94", "95_plus"
+  ))
+  working_age <- paste0("age_", c(
+    "15_19", "20_24", "25_29", "30_34", "35_39", "40_44", "45_49",
+    "50_54", "55_59", "60_64"
+  ))
+  dependent <- c("age_0_4", "age_5_9", "age_10_14", paste0("age_", c(
+    "65_69", "70_74", "75_79", "80_84", "85_89", "90_94", "95_plus"
+  )))
+  row_sum_complete <- function(fields) {
+    values <- as.data.frame(lapply(x[fields], num), stringsAsFactors = FALSE)
+    out <- rowSums(values)
+    out[!stats::complete.cases(values)] <- NA_real_
+    out
+  }
+  out <- data.frame(
+    state_code_1991 = x$state_code_1991,
+    district_code_1991 = x$district_code_1991,
+    population_1991_count = num(x$population),
+    rural_population_1991_count = num(x$rural_population),
+    sc_population_1991_count = num(x$scheduled_caste),
+    st_population_1991_count = num(x$scheduled_tribe),
+    muslim_population_1991_count = num(x$muslim),
+    matriculate_plus_1991_count = num(x$matriculate_plus),
+    population_10plus_1991_count = row_sum_complete(age_10plus),
+    main_workers_1991_count = num(x$main_workers),
+    farm_workers_1991_count = num(x$farm_workers),
+    dependent_population_1991_count = row_sum_complete(dependent),
+    working_age_population_1991_count = row_sum_complete(working_age),
+    households_h4_1991_count = num(x$households_h4),
+    households_electricity_1991_count = num(x$households_electricity),
+    stringsAsFactors = FALSE
+  )
+  out$source_unit_id <- geography_transition_unit_id(
+    1991L, out$state_code_1991, out$district_code_1991
+  )
+  out <- validate_census_1991_district_keys(out, "Vanneman dist91 control statistics")
+  if (any(vapply(out[vanneman_historical_baseline_1991_count_fields()], function(z) {
+    any(is.finite(num(z)) & num(z) < 0)
+  }, logical(1)))) {
+    stop("Vanneman dist91 control statistics contain negative counts.", call. = FALSE)
+  }
+  out
+}
+
+vanneman_historical_baseline_1991_measures_from_counts <- function(x) {
+  out <- safe_df(x)
+  pop <- num(out$population_1991_count)
+  main <- num(out$main_workers_1991_count)
+  work_age <- num(out$working_age_population_1991_count)
+  hh <- num(out$households_h4_1991_count)
+  data.frame(
+    vanneman_log_population_1991 = ifelse(positive_finite(pop), log(pop), NA_real_),
+    vanneman_urban_share_1991 = safe_share(pop - num(out$rural_population_1991_count), pop),
+    vanneman_sc_share_1991 = safe_share(out$sc_population_1991_count, pop),
+    vanneman_st_share_1991 = safe_share(out$st_population_1991_count, pop),
+    vanneman_muslim_share_1991 = safe_share(out$muslim_population_1991_count, pop),
+    vanneman_matriculate_plus_share_10plus_1991 = safe_share(
+      out$matriculate_plus_1991_count, out$population_10plus_1991_count
+    ),
+    vanneman_agricultural_worker_share_main_1991 = safe_share(
+      out$farm_workers_1991_count, main
+    ),
+    vanneman_dependency_ratio_1991 = safe_share(
+      out$dependent_population_1991_count, work_age
+    ),
+    vanneman_electricity_access_share_1991 = safe_share(
+      out$households_electricity_1991_count, hh
+    ),
+    stringsAsFactors = FALSE
+  )
+}
+
+build_population_interpolated_vanneman_baseline_1991 <- function(
+    path, population_crosswalk, coverage_threshold = .99) {
+  threshold <- as.numeric(coverage_threshold)
+  if (length(threshold) != 1L || !is.finite(threshold) || threshold < 0 || threshold > 1) {
+    stop("Vanneman population-interpolation coverage threshold must lie in [0, 1].", call. = FALSE)
+  }
+  sufficient <- build_vanneman_1991_control_sufficient_statistics(path)
+  map <- safe_df(population_crosswalk)
+  coverage <- unique(map[
+    map$source_vintage == 1991L & map$transition_id != "target_identity",
+    c("source_unit_id", "source_population_coverage")
+  ])
+  eligible <- coverage$source_unit_id[
+    is.finite(num(coverage$source_population_coverage)) &
+      num(coverage$source_population_coverage) >= threshold
+  ]
+  input <- sufficient[sufficient$source_unit_id %in% eligible, , drop = FALSE]
+  if (!nrow(input)) stop("Vanneman baseline has no source districts at the requested coverage threshold.", call. = FALSE)
+  allocated <- allocate_population_sufficient_statistics(
+    input, map, source_vintage = 1991L, unit_field = "source_unit_id",
+    statistic_fields = vanneman_historical_baseline_1991_count_fields(),
+    measure_family = "census_extensive_counts"
+  )
+  groups <- split(seq_len(nrow(allocated)), allocated$target_unit_id)
+  counts <- vanneman_historical_baseline_1991_count_fields()
+  aggregated <- safe_bind_rows(lapply(groups, function(i) {
+    part <- allocated[i, , drop = FALSE]
+    totals <- vapply(counts, function(field) {
+      value <- num(part[[field]])
+      if (any(!is.finite(value))) NA_real_ else sum(value)
+    }, numeric(1))
+    data.frame(
+      state_code_2001 = unique(part$target_state_code),
+      district_code_2001 = unique(part$target_district_code),
+      as.list(totals), stringsAsFactors = FALSE, check.names = FALSE
+    )
+  }))
+  measures <- vanneman_historical_baseline_1991_measures_from_counts(aggregated)
+  out <- cbind(aggregated[census_2001_keys()], measures)
+  out$source_coverage_threshold <- threshold
+  if (anyDuplicated(out[census_2001_keys()])) stop("Interpolated Vanneman controls duplicate Census-2001 targets.", call. = FALSE)
+  out
+}

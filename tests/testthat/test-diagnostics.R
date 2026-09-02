@@ -3139,3 +3139,55 @@ test_that("historical adjustment robustness re-estimates 1991 and 2001 benchmark
   expect_identical(adjustments$state_predetermined_1991$adjustment_vintage, "1991")
   expect_true(nzchar(adjustments$state_predetermined_1991$caution))
 })
+
+test_that("Vanneman concept-matched historical adjustments preserve benchmark and source roles", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
+  controls <- read_census_2001_control_registry(
+    file.path(root, "data", "metadata", "census_2001_control_registry.csv")
+  )
+  registry <- read_consumption_iv_outcome_registry(
+    file.path(root, "data", "metadata", "consumption_iv_outcomes.csv")
+  )
+  adjustments <- iv_historical_concept_matched_adjustments(controls)
+  specs <- compile_consumption_historical_concept_matched_specifications(registry, controls)
+
+  expect_equal(length(adjustments), 6L)
+  expect_setequal(
+    names(adjustments),
+    c(
+      "region_compact_2001", "region_pca_1991", "region_vanneman_1991",
+      "state_compact_2001", "state_pca_1991", "state_vanneman_1991"
+    )
+  )
+  expect_equal(nrow(specs), nrow(registry) * 6L)
+  expect_true(all(specs$construction_id == "nonzero_mean"))
+  expect_true(all(specs$sample_rule == "consumption_historical_concept_matched_common_support"))
+  expect_setequal(adjustments$state_compact_2001$controls, census_2001_main_controls(controls))
+  expect_setequal(adjustments$state_pca_1991$controls, historical_baseline_1991_pca_variables())
+  expect_setequal(adjustments$state_vanneman_1991$controls, vanneman_historical_baseline_1991_variables())
+})
+
+test_that("Vanneman 1991 control measures preserve ratio accounting", {
+  counts <- data.frame(
+    population_1991_count = 100,
+    rural_population_1991_count = 60,
+    sc_population_1991_count = 10,
+    st_population_1991_count = 5,
+    muslim_population_1991_count = 20,
+    matriculate_plus_1991_count = 18,
+    population_10plus_1991_count = 80,
+    main_workers_1991_count = 40,
+    farm_workers_1991_count = 24,
+    dependent_population_1991_count = 45,
+    working_age_population_1991_count = 55,
+    households_h4_1991_count = 20,
+    households_electricity_1991_count = 12
+  )
+  out <- vanneman_historical_baseline_1991_measures_from_counts(counts)
+  expect_equal(out$vanneman_urban_share_1991, .4)
+  expect_equal(out$vanneman_muslim_share_1991, .2)
+  expect_equal(out$vanneman_matriculate_plus_share_10plus_1991, 18 / 80)
+  expect_equal(out$vanneman_agricultural_worker_share_main_1991, .6)
+  expect_equal(out$vanneman_dependency_ratio_1991, 45 / 55)
+  expect_equal(out$vanneman_electricity_access_share_1991, .6)
+})
