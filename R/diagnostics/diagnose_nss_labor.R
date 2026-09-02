@@ -243,6 +243,83 @@ build_nss66_source_diagnostics <- function(canonical_persons, lineaged_persons) 
   )
 }
 
+
+plfs_2017_18_reviewed_lineage_map <- function(full_reviewed_crosswalk) {
+  crosswalk <- safe_df(full_reviewed_crosswalk)
+  required <- c("wave", "source_code", "target_unit_2001", "weight", "panel_variant")
+  missing <- setdiff(required, names(crosswalk))
+  if (length(missing)) {
+    stop("Reviewed district lineage crosswalk lacks PLFS reuse fields: ", paste(missing, collapse = ", "), call. = FALSE)
+  }
+  map <- crosswalk[
+    crosswalk$wave == "nss_2017_18" & crosswalk$panel_variant == "deterministic",
+    required, drop = FALSE
+  ]
+  map$source_code <- gsub("[^0-9]", "", plain_chr(map$source_code))
+  map$target_unit_2001 <- plain_chr(map$target_unit_2001)
+  map$weight <- num(map$weight)
+  keep <- is.finite(map$weight) & abs(map$weight - 1) <= 1e-8 &
+    grepl("^[0-9]{5}$", map$source_code) &
+    !is.na(map$target_unit_2001) & nzchar(map$target_unit_2001)
+  map <- unique(map[keep, c("source_code", "target_unit_2001"), drop = FALSE])
+  if (!nrow(map) || anyDuplicated(map$source_code)) {
+    stop("PLFS reuse requires unique deterministic NSS 2017-18 district mappings.", call. = FALSE)
+  }
+  map[order(map$source_code), , drop = FALSE]
+}
+
+plfs_2017_18_source_district_code <- function(x) {
+  x <- safe_df(x)
+  required <- c("state_code", "district_code", "nss_region")
+  missing <- setdiff(required, names(x))
+  if (length(missing)) stop("PLFS person rows lack geography fields: ", paste(missing, collapse = ", "), call. = FALSE)
+  state <- plain_chr(x$state_code)
+  district <- plain_chr(x$district_code)
+  region <- plain_chr(x$nss_region)
+  valid <- grepl("^[0-9]{2}$", state) & grepl("^[0-9]{2}$", district) &
+    grepl("^[0-9]{3}$", region) & substr(region, 1L, 2L) == state
+  if (!all(valid)) stop("PLFS state, NSS-region, and district codes are internally inconsistent.", call. = FALSE)
+  paste0(region, district)
+}
+
+attach_plfs_2017_18_reviewed_lineage <- function(persons, full_reviewed_crosswalk) {
+  x <- safe_df(persons)
+  if (!"person_key" %in% names(x)) stop("PLFS person rows lack person_key.", call. = FALSE)
+  x$source_district_code <- plfs_2017_18_source_district_code(x)
+  map <- plfs_2017_18_reviewed_lineage_map(full_reviewed_crosswalk)
+  idx <- match(x$source_district_code, map$source_code)
+  x$target_unit_2001 <- map$target_unit_2001[idx]
+  x$lineage_status <- ifelse(
+    is.na(x$target_unit_2001), "unresolved_source_district", "resolved_reviewed_deterministic"
+  )
+  x
+}
+
+build_plfs_2017_18_source_diagnostics <- function(canonical_persons, lineaged_persons) {
+  x <- safe_df(canonical_persons)
+  lineaged <- safe_df(lineaged_persons)
+  if (nrow(x) != nrow(lineaged)) stop("PLFS canonical and lineaged person universes differ.", call. = FALSE)
+  data.frame(
+    source = "first_visit_usual_status_f1",
+    rows = nrow(x),
+    unique_people = length(unique(x$person_key)),
+    positive_weight_share = mean(num(x$survey_weight) > 0),
+    source_districts = length(unique(plfs_2017_18_source_district_code(x))),
+    resolved_source_districts = length(unique(lineaged$source_district_code[
+      lineaged$lineage_status == "resolved_reviewed_deterministic"
+    ])),
+    resolved_person_share = mean(lineaged$lineage_status == "resolved_reviewed_deterministic"),
+    stringsAsFactors = FALSE
+  )
+}
+
+build_plfs_2017_18_diagnostics <- function(canonical_persons, lineaged_persons) {
+  build_nss_labor_diagnostics(
+    build_plfs_2017_18_source_diagnostics(canonical_persons, lineaged_persons),
+    lineaged_persons
+  )
+}
+
 build_nss_labor_diagnostics <- function(source_validation, lineaged_usual_activity) {
   list(
     source_validation = safe_df(source_validation),
@@ -307,6 +384,11 @@ save_nss66_diagnostics <- function(
     return(if (is.null(fallback_path)) character() else fallback_path)
   }
   save_nss_labor_diagnostics(x, "nss66", district_outcomes, root)
+}
+
+save_plfs_2017_18_diagnostics <- function(
+    x, district_outcomes = NULL, root = "outputs/diagnostics/extended/labor") {
+  save_nss_labor_diagnostics(x, "plfs_2017_18", district_outcomes, root)
 }
 
 build_nesstar_materialization_diagnostics <- function(materialization) {

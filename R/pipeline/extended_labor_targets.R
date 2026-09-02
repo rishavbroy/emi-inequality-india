@@ -27,6 +27,46 @@ extended_labor_target_definitions <- function() {
       build_nesstar_materialization_diagnostics(plfs_2017_18_materialization)
     ),
     tar_target(
+      plfs_2017_18_usual_activity_source,
+      if (isTRUE(plfs_2017_18_materialization$ready)) {
+        read_plfs_2017_18_materialized_persons(
+          plfs_2017_18_materialization,
+          plfs_labor_contracts[plfs_labor_contracts$wave_id == "plfs_2017_18", , drop = FALSE]
+        )
+      } else {
+        NULL
+      }
+    ),
+    tar_target(
+      plfs_2017_18_lineaged_usual_activity,
+      if (is.null(plfs_2017_18_usual_activity_source)) {
+        NULL
+      } else {
+        attach_plfs_2017_18_reviewed_lineage(
+          plfs_2017_18_usual_activity_source, district_lineage$full_reviewed_source_crosswalk
+        )
+      }
+    ),
+    tar_target(
+      plfs_2017_18_diagnostics,
+      if (is.null(plfs_2017_18_usual_activity_source)) {
+        NULL
+      } else {
+        build_plfs_2017_18_diagnostics(
+          plfs_2017_18_usual_activity_source, plfs_2017_18_lineaged_usual_activity
+        )
+      }
+    ),
+    tar_target(
+      diag_ext_plfs_2017_18_source_validation_files,
+      if (is.null(plfs_2017_18_diagnostics)) {
+        diag_ext_plfs_2017_18_materialization_file
+      } else {
+        save_plfs_2017_18_diagnostics(plfs_2017_18_diagnostics)
+      },
+      format = "file"
+    ),
+    tar_target(
       diag_ext_plfs_2017_18_source_package_file,
       save_plfs_source_package_diagnostics(plfs_2017_18_source_package),
       format = "file"
