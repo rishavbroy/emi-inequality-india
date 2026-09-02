@@ -4,13 +4,60 @@
 extended_iv_target_definitions <- function() {
   list(
     tar_target(
+      consumption_scalar_iv_robustness_specifications,
+      compile_consumption_scalar_iv_robustness_specifications(
+        consumption_iv_outcome_registry, census_2001_control_registry
+      )
+    ),
+    tar_target(
+      consumption_scalar_iv_robustness_support,
+      consumption_iv_common_sample_support(
+        consumption_iv_panel,
+        consumption_scalar_iv_robustness_specifications,
+        "welfare_specification_id"
+      )
+    ),
+    tar_target(
+      consumption_scalar_iv_robustness_panel,
+      restrict_consumption_iv_to_common_samples(
+        consumption_iv_panel,
+        consumption_scalar_iv_robustness_specifications,
+        "welfare_specification_id"
+      )
+    ),
+    tar_target(
+      consumption_scalar_iv_robustness,
+      add_consumption_scalar_iv_multiplicity(
+        validate_consumption_scalar_iv_robustness(
+          validate_consumption_iv_dynamics(
+            estimate_consumption_iv_dynamics(
+              consumption_scalar_iv_robustness_panel,
+              consumption_scalar_iv_robustness_specifications,
+              cfg
+            ),
+            consumption_scalar_iv_robustness_specifications
+          ),
+          consumption_scalar_iv_robustness_support
+        )
+      )
+    ),
+    tar_target(
+      consumption_scalar_iv_robustness_files,
+      save_consumption_scalar_iv_robustness(
+        consumption_scalar_iv_robustness,
+        consumption_scalar_iv_robustness_support
+      ),
+      format = "file"
+    ),
+    tar_target(
       iv_candidate_design_ledger,
       build_iv_candidate_design_ledger(
         public_iv_specifications,
         consumption_iv_specifications,
         census_2001_control_registry,
         consumption_welfare_outcomes,
-        english_opportunity_measure_registry
+        english_opportunity_measure_registry,
+        consumption_scalar_iv_robustness_specifications
       )
     ),
     tar_target(

@@ -371,7 +371,8 @@ compile_analysis_design_registry <- function(
     consumption_iv_specifications,
     english_opportunity_measure_registry,
     control_registry = NULL,
-    public_iv_specifications = public_iv_specification_registry(control_registry)) {
+    public_iv_specifications = public_iv_specification_registry(control_registry),
+    consumption_scalar_iv_robustness_specifications = NULL) {
   core_iv <- analysis_design_from_iv(
     iv_diagnostic_specification_registry(control_registry = control_registry),
     family = "district_iv_diagnostic",
@@ -390,10 +391,22 @@ compile_analysis_design_registry <- function(
       "preferred_outcome", "robustness"
     )
   )
+  consumption_scalar <- if (is.null(consumption_scalar_iv_robustness_specifications)) {
+    data.frame()
+  } else {
+    analysis_design_from_iv(
+      consumption_scalar_iv_robustness_specifications,
+      family = "consumption_iv",
+      estimator = "first_stage+reduced_form+2sls+anderson_rubin",
+      inference = "state_clustered+anderson_rubin+holm",
+      analysis_role = "scalar_iv_robustness"
+    )
+  }
   out <- safe_bind_rows(list(
     analysis_design_public_iv(public_iv_specifications),
     core_iv,
     consumption,
+    consumption_scalar,
     analysis_design_district_mechanisms(
       english_opportunity_measure_registry, control_registry
     ),
@@ -540,7 +553,8 @@ build_iv_candidate_design_ledger <- function(
     consumption_specifications,
     control_registry = NULL,
     welfare_registry = NULL,
-    english_opportunity_registry = NULL) {
+    english_opportunity_registry = NULL,
+    consumption_scalar_iv_robustness_specifications = NULL) {
   public_specs <- as_iv_specifications(public_specifications)
   consumption_specs <- as_iv_specifications(consumption_specifications)
   control_registry <- resolve_census_2001_control_registry(control_registry)
@@ -552,6 +566,11 @@ build_iv_candidate_design_ledger <- function(
   n_candidate_iv <- length(iv_candidate_design_adjustments()) *
     length(iv_candidate_design_constructions())
   n_consumption <- nrow(consumption_specs)
+  n_consumption_scalar <- if (is.null(consumption_scalar_iv_robustness_specifications)) {
+    0L
+  } else {
+    nrow(as_iv_specifications(consumption_scalar_iv_robustness_specifications))
+  }
   n_diagnostic_iv <- nrow(diagnostic_specs)
   n_scalar <- sum(canonical_specs$n_excluded_instruments == 1L)
   n_multishare <- sum(canonical_specs$n_excluded_instruments > 1L)
@@ -790,12 +809,13 @@ build_iv_candidate_design_ledger <- function(
       "Shastry/Glottolog/Dyen scalar candidates",
       "region_main/state_main",
       "first_stage+reduced_form+2sls+anderson_rubin",
-      "estimate_if_registered",
+      "estimate",
       multiplicity_family = "consumption_scalar_iv_robustness",
-      implementation_status = "partial",
+      implementation_status = if (n_consumption_scalar == n_consumption * n_candidate_iv) "implemented" else "partial",
       candidate_cells = n_consumption * n_candidate_iv,
-      implemented_cells = n_consumption,
-      rationale = "This six-design family is theoretically bounded by instrument basis and honest geographic adjustment, not by an arbitrary preference for a small number of regressions."
+      implemented_cells = n_consumption_scalar,
+      execution_cells = n_consumption_scalar,
+      rationale = "This six-design family is theoretically bounded by instrument basis and honest geographic adjustment. It is estimated on one common district sample across the six designs within each endpoint/estimand, with Holm correction both within endpoint and across the full registered family."
     ),
     candidate_design_row(
       "consumption_alternative_welfare_outcomes",

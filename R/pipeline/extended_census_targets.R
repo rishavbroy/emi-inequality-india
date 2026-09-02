@@ -54,7 +54,8 @@ extended_census_target_definitions <- function() {
         consumption_iv_specifications,
         english_opportunity_measure_registry,
         census_2001_control_registry,
-        public_iv_specifications
+        public_iv_specifications,
+        consumption_scalar_iv_robustness_specifications
       )
     ),
     tar_target(
