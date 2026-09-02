@@ -729,3 +729,9 @@ The historical-control robustness program has two layers.  The first compares co
 ### Treatment-definition robustness
 
 The causal robustness sequence now includes a separately registered intensive-margin EMI family using `emi_share_enrolled_0708`. The preferred treatment remains `emi_exposure_all_children_0708`; the intensive measure conditions on enrollment and known medium and is therefore interpreted as medium choice among enrolled children rather than population-level exposure. The family reuses the existing six scalar-IV region/state × distance-construction grid and common-support/weak-IV/Anderson--Rubin/Holm machinery, rather than introducing a treatment-specific estimator.
+
+The realized intensive-margin family does not repair relevance: none of its 48 cells reaches the registered effective-F threshold (maximum about 5.26). One 2022-23 change/state-FE/preferred-distance cell survives family-wide Holm-adjusted reduced-form and Anderson--Rubin beta-zero inference, but its AR confidence set is disconnected and grid-truncated. The treatment-definition axis therefore reinforces the same weak-identification caution as the preferred all-child exposure family rather than identifying a stronger treatment definition.
+
+### Cross-family robustness evidence
+
+The extended audit now normalizes the seven realized consumption-IV robustness families into `consumption_robustness_evidence_grid.csv` and `consumption_robustness_family_summary.csv`. This is a reviewer-facing synthesis layer only: it does not re-estimate models, change common-support rules, or recompute multiplicity. The family summary records model counts, maximum effective F, family-wide reduced-form and Anderson--Rubin signals, bounded/disconnected/grid-truncated AR sets, and realized sample-size ranges so evidence can be compared without treating every family CSV as an independent headline result.
