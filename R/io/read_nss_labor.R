@@ -111,25 +111,24 @@ read_nss64_migration <- function(path) {
   out
 }
 
-read_nss_labor_ddi_contract <- function(path, required_by_file, label) {
+read_labor_ddi_contract <- function(path, required_by_file, label) {
   if (!file.exists(path)) stop("Missing ", label, " DDI: ", path, call. = FALSE)
   if (!length(required_by_file) || is.null(names(required_by_file)) || any(!nzchar(names(required_by_file)))) {
     stop(label, " DDI contract requires named file-variable specifications.", call. = FALSE)
   }
   doc <- xml2::read_xml(path)
-  ns <- c(ddi = "http://www.icpsr.umich.edu/DDI")
-  variables <- xml2::xml_find_all(doc, ".//ddi:dataDscr/ddi:var", ns)
-  files <- xml2::xml_find_all(doc, ".//ddi:fileDscr", ns)
+  variables <- xml2::xml_find_all(doc, ".//*[local-name()='dataDscr']/*[local-name()='var']")
+  files <- xml2::xml_find_all(doc, ".//*[local-name()='fileDscr']")
   if (!length(files) || !length(variables)) stop(label, " DDI is missing file or variable descriptions.", call. = FALSE)
 
   rows <- lapply(names(required_by_file), function(file_id) {
     file_node <- files[xml2::xml_attr(files, "ID") == file_id]
     if (length(file_node) != 1L) stop(label, " DDI must contain exactly one ", file_id, " file description.", call. = FALSE)
     case_count <- suppressWarnings(as.numeric(trimws(xml2::xml_text(xml2::xml_find_first(
-      file_node, "./ddi:fileTxt/ddi:dimensns/ddi:caseQnty", ns
+      file_node, ".//*[local-name()='caseQnty']"
     )))))
     file_name <- trimws(xml2::xml_text(xml2::xml_find_first(
-      file_node, "./ddi:fileTxt/ddi:fileName", ns
+      file_node, ".//*[local-name()='fileName']"
     )))
     file_vars <- xml2::xml_attr(variables, "name")[vapply(
       strsplit(trimws(xml2::xml_attr(variables, "files")), "[[:space:]]+"),
@@ -157,7 +156,7 @@ read_nss_labor_ddi_contract <- function(path, required_by_file, label) {
 }
 
 read_nss64_eum_ddi_contract <- function(path) {
-  read_nss_labor_ddi_contract(
+  read_labor_ddi_contract(
     path,
     list(F4 = nss64_usual_activity_columns(), F6 = nss64_migration_columns()),
     "NSS64"
@@ -189,7 +188,7 @@ nss66_eus_ddi_requirements <- function() {
 }
 
 read_nss66_eus_ddi_contract <- function(path) {
-  out <- read_nss_labor_ddi_contract(path, nss66_eus_ddi_requirements(), "NSS66")
+  out <- read_labor_ddi_contract(path, nss66_eus_ddi_requirements(), "NSS66")
   expected <- c(F4 = 459784, F5 = 459784, F6 = 34689)
   observed <- stats::setNames(out$case_count, out$file_id)
   if (!identical(as.numeric(observed[names(expected)]), as.numeric(expected))) {

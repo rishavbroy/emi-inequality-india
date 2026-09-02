@@ -246,13 +246,28 @@ test_that("NSS64 design-based district estimates preserve thin districts but fla
 
 
 test_that("NSS labor DDI validation is reusable across survey waves", {
-  expect_true(is.function(read_nss_labor_ddi_contract))
+  expect_true(is.function(read_labor_ddi_contract))
   req <- nss66_eus_ddi_requirements()
   expect_setequal(names(req), c("F4", "F5", "F6"))
   expect_true(all(c("WEIGHT", "PID", "District", "State_Region") %in% req$F5))
   expect_false(any(c("STATE", "DISTRICT_CODE", "HHID") %in% req$F5))
   expect_true("Usual_Principal_Activity_Status" %in% req$F5)
   expect_true("Usual_Subsidiary_Activity_Status" %in% req$F6)
+})
+
+test_that("shared labor DDI validation accepts DDI Codebook 2.5 namespaces", {
+  path <- tempfile(fileext = ".xml")
+  writeLines(c(
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<codeBook xmlns="ddi:codebook:2_5">',
+    '  <fileDscr ID="F1"><fileTxt><fileName>people</fileName><dimensns><caseQnty>2</caseQnty></dimensns></fileTxt></fileDscr>',
+    '  <dataDscr><var ID="V1" name="status" files="F1"/></dataDscr>',
+    '</codeBook>'
+  ), path)
+  out <- read_labor_ddi_contract(path, list(F1 = "status"), "test")
+  expect_identical(out$file_name[[1L]], "people")
+  expect_equal(out$case_count[[1L]], 2)
+  expect_true(out$required_variables_complete[[1L]])
 })
 
 test_that("NSS64 outcomes are frozen as near-treatment reference measures", {
@@ -505,47 +520,62 @@ test_that("PLFS long-run registry reuses the shared usual-status estimands", {
   expect_false("migrant_from_last_upr_share_age15plus" %in% plfs$outcome_id)
 })
 
-test_that("PLFS source package fails closed before standard Nesstar conversion", {
+test_that("PLFS source package validates the official DDI before materialization", {
   root <- tempfile("plfs1718-package-")
   dir.create(root)
-  nesstar <- file.path(root, "DDI-IND-CSO-PLFS-2017-18.Nesstar")
-  layout <- file.path(root, "Data_LayoutPLFS (1).xlsx")
-  writeBin(charToRaw("nesstar"), nesstar)
-  writeBin(charToRaw("layout"), layout)
+  files <- file.path(root, c(
+    "DDI-IND-CSO-PLFS-2017-18.Nesstar",
+    "Data_LayoutPLFS (1).xlsx",
+    "DDI-IND-CSO-PLFS-2017-18.xml"
+  ))
+  lapply(files, function(path) writeBin(charToRaw(basename(path)), path))
   source_rows <- data.frame(
-    file_id = c("plfs1718_nesstar", "plfs1718_layout"),
-    expected_size_bytes = c(file.info(nesstar)$size, file.info(layout)$size),
-    absolute_path = c(nesstar, layout),
+    file_id = c("plfs1718_nesstar", "plfs1718_layout", "plfs1718_ddi"),
+    expected_size_bytes = file.info(files)$size,
+    absolute_path = files,
     stringsAsFactors = FALSE
   )
-
-  blocked <- inspect_plfs_2017_18_source_package(
-    source_rows = source_rows, layout_validator = function(path) invisible(TRUE)
-  )
-  expect_identical(blocked$status[[1L]], "blocked_missing_ddi")
-  expect_false(blocked$ddi_exists[[1L]])
-  expect_identical(blocked$annual_usual_status_rows[[1L]], 433339L)
-
-  writeLines("<codeBook/>", plfs_2017_18_ddi_path(nesstar))
-  present <- inspect_plfs_2017_18_source_package(
-    source_rows = source_rows, layout_validator = function(path) invisible(TRUE)
-  )
-  expect_identical(present$status[[1L]], "ddi_present_unregistered")
-  expect_true(present$ddi_exists[[1L]])
-})
-
-test_that("PLFS is not registered for Nesstar conversion without official DDI XML", {
-  contracts <- utils::read.csv(
-    file.path(Sys.getenv("EMI_PROJECT_ROOT", unset = "."), "data/metadata/nesstar_conversion_contracts.csv"),
+  fake_ddi <- function(path) data.frame(
+    file_id = "F1", file_name = "hh_per_fv_2017-18", case_count = 433339,
+    required_variables_complete = TRUE, missing_required_variables = "",
     stringsAsFactors = FALSE
   )
-  expect_false("plfs_2017_18" %in% contracts$source_id)
+  ready <- inspect_plfs_2017_18_source_package(
+    source_rows = source_rows,
+    layout_validator = function(path) invisible(TRUE),
+    ddi_validator = fake_ddi
+  )
+  expect_identical(ready$status[[1L]], "ready_for_materialization")
+  expect_identical(ready$ddi_file_id[[1L]], "plfs1718_ddi")
+  expect_identical(ready$annual_usual_status_rows[[1L]], 433339)
 })
 
-test_that("PLFS layout contract anchors usual-status and design fields", {
+test_that("PLFS DDI requirements come from the registered analytical fields", {
+  required <- plfs_2017_18_ddi_requirements()$F1
+  contract <- plfs_2017_18_contract()
+  declared <- unname(unlist(contract[c(
+    "multiplier_field", "state_field", "district_field", "nss_region_field",
+    "stratum_field", "sub_stratum_field", "sub_sample_field", "fsu_field",
+    "second_stage_stratum_field", "household_field", "person_field", "age_field",
+    "principal_status_field", "subsidiary_status_field"
+  )], use.names = FALSE))
+  expect_setequal(required, declared)
+})
+
+test_that("PLFS is registered in the generic Nesstar conversion contract", {
+  contracts <- read_nesstar_conversion_contract("plfs_2017_18")
+  expect_equal(nrow(contracts), 1L)
+  expect_identical(contracts$block_id[[1L]], "F1")
+  expect_equal(contracts$expected_rows[[1L]], 433339)
+  expect_identical(contracts$signature_column[[1L]], "b5pt1q3_per_fv")
+  expect_identical(contracts$nesstar_file_id[[1L]], "plfs1718_nesstar")
+  expect_identical(contracts$ddi_file_id[[1L]], "plfs1718_ddi")
+})
+
+test_that("PLFS layout contract anchors usual-status and design byte positions", {
   x <- plfs_2017_18_layout_expectations()
-  expect_true(any(x$block == "5.1" & x$full_name == "Status Code" & x$start == 61L & x$end == 62L))
-  expect_true(any(x$block == "5.2" & x$full_name == "Status Code" & x$start == 80L & x$end == 81L))
-  expect_true(any(x$block == "Generated" & x$full_name == "Sub-sample wise Multiplier" & x$start == 309L & x$end == 318L))
+  expect_true(any(x$full_name == "Status Code" & x$start == 61L & x$end == 62L))
+  expect_true(any(x$full_name == "Status Code" & x$start == 80L & x$end == 81L))
+  expect_true(any(x$full_name == "Sub-sample wise Multiplier" & x$start == 309L & x$end == 318L))
   expect_true(any(x$full_name == "Person Serial No." & x$start == 38L & x$end == 39L))
 })
