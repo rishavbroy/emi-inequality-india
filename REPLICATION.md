@@ -255,3 +255,10 @@ After the symmetric first-stage control audit is available, the extended IV grap
 
 
 Extended diagnostics are selected by the `diag_ext_` target prefix. Registered robustness computations can use ordinary internal target names, but every durable extended artifact must terminate in a `diag_ext_` file target so `scripts/run_targets_checked.R --starts-with diag_ext_` actually traverses the computation. The scalar-consumption robustness files and the persisted cross-family `analysis_design_registry.csv` follow this contract.
+
+
+### Alternative welfare robustness
+
+Extended IV diagnostics derive the alternative-welfare registry from the eight registered consumption endpoint/estimand templates and the survey-aware welfare metadata. The welfare metadata distinguish the survey estimator `transform` from `iv_analysis_transform`: mean-log MPCE enters the IV layer on its existing log scale, while positive monetary median and bottom-40 means are logged for IV analysis. Unsupported survey pairs are never generated. The resulting 20 response templates are each crossed with the six registered scalar IV/geography designs and estimated on template-specific common support.
+
+The audit writes `consumption_alternative_welfare_robustness.csv` and `consumption_alternative_welfare_robustness_common_support.csv`. Holm-adjusted reduced-form and Anderson-Rubin beta-zero p-values are reported both within each six-design response template and across the full 120-cell `consumption_welfare_robustness` family. Pointwise AR inversion grids are not persisted.

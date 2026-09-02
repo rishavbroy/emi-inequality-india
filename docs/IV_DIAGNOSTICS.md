@@ -112,3 +112,6 @@ The full 119-design diagnostic IV universe remains a relevance/validity diagnost
 ### Extended-target reachability
 
 The extended audit invokes targets by the `diag_ext_` prefix. Durable extended-IV artifacts therefore terminate in `diag_ext_` file targets; their upstream specification and estimation objects remain ordinary internal targets. The compiled cross-family design ontology is persisted as `outputs/diagnostics/extended/iv/analysis_design_registry.csv`, while the scalar-consumption robustness bundle is reached through `diag_ext_consumption_scalar_iv_robustness_files`. This naming rule is part of the pipeline contract, not a cosmetic convention.
+
+
+The realized 48-cell scalar-consumption family confirms pervasive weak identification: no effective-F value approaches the registered critical value. One 2022-23 change/state-FE/preferred-distance Anderson-Rubin beta-zero test survives Holm correction across the 48-cell family, while most specifications do not and many AR sets are disconnected or grid-truncated. This pattern motivates the next predeclared robustness axis—response definition—without changing the preferred instrument or control specification. The 120-cell alternative-welfare family therefore reuses the same six scalar designs and weak-IV-robust inference, with its own separately frozen Holm family.
