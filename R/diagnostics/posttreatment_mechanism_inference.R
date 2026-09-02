@@ -12,7 +12,7 @@ posttreatment_mechanism_specifications <- function(
     sample_rule = sample_rule,
     control_registry = control_registry
   )
-  construction_ids <- unname(alternative_distance_design_constructions())
+  construction_ids <- unname(iv_candidate_design_constructions())
   keep <- registry$adjustment_id %in% iv_candidate_design_adjustments() &
     registry$construction_id %in% construction_ids
   out <- registry[keep, , drop = FALSE]

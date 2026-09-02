@@ -540,18 +540,10 @@ compare_linguistic_distance_bases <- function(panel) {
   }))
 }
 
-alternative_distance_design_constructions <- function() {
-  c(
-    primary_shastry = "nonzero_mean",
-    robustness_glottolog = "glottolog_mean",
-    robustness_dyen = "dyen_noncognate"
-  )
-}
-
 summarize_alternative_distance_design_evidence <- function(
     diagnostics,
     adjustment_ids = iv_candidate_design_adjustments(),
-    constructions = alternative_distance_design_constructions()) {
+    constructions = iv_candidate_design_constructions()) {
   if (!inherits(diagnostics, "emi_alternative_distance_first_stages")) {
     stop("Expected alternative-distance diagnostics.", call. = FALSE)
   }

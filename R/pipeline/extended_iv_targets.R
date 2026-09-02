@@ -4,6 +4,22 @@
 extended_iv_target_definitions <- function() {
   list(
     tar_target(
+      iv_candidate_design_ledger,
+      build_iv_candidate_design_ledger(
+        public_iv_specifications,
+        consumption_iv_specifications,
+        census_2001_control_registry
+      )
+    ),
+    tar_target(
+      diag_ext_iv_candidate_design_ledger,
+      write_diagnostic_csv(
+        iv_candidate_design_ledger,
+        "outputs/diagnostics/extended/iv/candidate_design_ledger.csv"
+      ),
+      format = "file"
+    ),
+    tar_target(
       alternative_distance_analysis_panel,
       prepare_alternative_distance_panel(
         district_panel, control_registry = census_2001_control_registry

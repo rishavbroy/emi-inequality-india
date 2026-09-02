@@ -85,6 +85,24 @@ analysis_design_from_iv <- function(
   )
 }
 
+analysis_design_public_iv <- function(specifications) {
+  specs <- as_iv_specifications(specifications)
+  roles <- if ("analysis_role" %in% names(specs)) {
+    plain_chr(specs$analysis_role)
+  } else {
+    rep("public_registered", nrow(specs))
+  }
+  analysis_design_from_iv(
+    specs,
+    family = "public_iv",
+    estimator = "2sls",
+    estimand = "public_consumption_model",
+    inference = "state_clustered",
+    analysis_role = roles,
+    reason = "registered_public_iv_design"
+  )
+}
+
 analysis_design_district_mechanisms <- function(
     measure_registry,
     control_registry = NULL,
@@ -352,7 +370,8 @@ analysis_design_historical_first_stages <- function(control_registry = NULL) {
 compile_analysis_design_registry <- function(
     consumption_iv_specifications,
     english_opportunity_measure_registry,
-    control_registry = NULL) {
+    control_registry = NULL,
+    public_iv_specifications = public_iv_specification_registry(control_registry)) {
   core_iv <- analysis_design_from_iv(
     iv_diagnostic_specification_registry(control_registry = control_registry),
     family = "district_iv_diagnostic",
@@ -372,6 +391,7 @@ compile_analysis_design_registry <- function(
     )
   )
   out <- safe_bind_rows(list(
+    analysis_design_public_iv(public_iv_specifications),
     core_iv,
     consumption,
     analysis_design_district_mechanisms(
@@ -390,4 +410,138 @@ compile_analysis_design_registry <- function(
   }
   rownames(out) <- NULL
   out
+}
+
+candidate_design_columns <- function() {
+  c(
+    "candidate_id", "analysis_family", "design_role", "outcome_scope",
+    "treatment_scope", "instrument_scope", "adjustment_scope",
+    "estimator_scope", "admissible", "implementation_status",
+    "candidate_cells", "implemented_cells", "rationale"
+  )
+}
+
+candidate_design_frame <- function(...) {
+  out <- data.frame(..., stringsAsFactors = FALSE, check.names = FALSE)
+  missing <- setdiff(candidate_design_columns(), names(out))
+  if (length(missing)) {
+    stop(
+      "Candidate-design rows are missing columns: ",
+      paste(missing, collapse = ", "), call. = FALSE
+    )
+  }
+  out <- out[candidate_design_columns()]
+  allowed <- c("implemented", "partial", "unimplemented", "not_applicable")
+  if (!nrow(out) || anyDuplicated(out$candidate_id) || any(!nzchar(out$candidate_id)) ||
+      any(!out$implementation_status %in% allowed) || any(!nzchar(out$rationale))) {
+    stop("Candidate-design ledger is malformed.", call. = FALSE)
+  }
+  impossible <- out$implemented_cells > out$candidate_cells &
+    is.finite(out$implemented_cells) & is.finite(out$candidate_cells)
+  if (any(impossible)) {
+    stop("Candidate-design implemented cells cannot exceed candidate cells.", call. = FALSE)
+  }
+  out
+}
+
+build_iv_candidate_design_ledger <- function(
+    public_specifications,
+    consumption_specifications,
+    control_registry = NULL) {
+  public_specs <- as_iv_specifications(public_specifications)
+  consumption_specs <- as_iv_specifications(consumption_specifications)
+  n_candidate_iv <- length(iv_candidate_design_adjustments()) *
+    length(iv_candidate_design_constructions())
+  diagnostic_specs <- iv_diagnostic_specification_registry(
+    control_registry = control_registry
+  )
+  n_consumption <- nrow(consumption_specs)
+  n_diagnostic_iv <- nrow(diagnostic_specs)
+
+  candidate_design_frame(
+    candidate_id = c(
+      "public_headline_registered",
+      "consumption_registered_dynamics",
+      "consumption_candidate_scalar_iv_grid",
+      "consumption_full_diagnostic_cartesian",
+      "consumption_alternative_welfare_outcomes",
+      "emi_intensive_margin_robustness",
+      "historical_1991_adjustment_robustness",
+      "posttreatment_mechanisms_as_controls"
+    ),
+    analysis_family = c(
+      "public_iv", "consumption_iv", "consumption_iv", "consumption_iv",
+      "consumption_iv", "consumption_iv", "public_iv", "public_iv"
+    ),
+    design_role = c(
+      "primary_and_registered_robustness", "registered_dynamic_family",
+      "candidate_robustness", "non_goal", "candidate_robustness",
+      "candidate_robustness", "candidate_robustness", "non_goal"
+    ),
+    outcome_scope = c(
+      "public consumption change/ANCOVA plus inherited nominal robustness",
+      "registered real-mean-MPCE endpoint ANCOVA/change designs",
+      "registered consumption endpoint designs",
+      "registered consumption endpoint designs",
+      "registered mean-log/median/bottom-40 welfare outcomes",
+      "preferred real-consumption outcome family",
+      "preferred public real-consumption outcome",
+      "post-treatment Census/firm/migration/labor measures"
+    ),
+    treatment_scope = c(
+      rep(preferred_iv_variables()$treatment, 5L),
+      "emi_share_enrolled_0708",
+      preferred_iv_variables()$treatment,
+      preferred_iv_variables()$treatment
+    ),
+    instrument_scope = c(
+      "nonzero_mean", "nonzero_mean",
+      "Shastry/Glottolog/Dyen scalar candidates",
+      "all diagnostic constructions",
+      "Shastry/Glottolog/Dyen scalar candidates",
+      "Shastry/Glottolog/Dyen scalar candidates",
+      "nonzero_mean", "not_applicable"
+    ),
+    adjustment_scope = c(
+      "registered public model-specific adjustments",
+      "state_main",
+      "region_main/state_main",
+      "all diagnostic adjustments",
+      "region_main/state_main",
+      "region_main/state_main",
+      "region/state with a separately registered 1991 predetermined set",
+      "not_applicable"
+    ),
+    estimator_scope = c(
+      "2sls", "first_stage+reduced_form+2sls+anderson_rubin",
+      rep("first_stage+reduced_form+2sls+anderson_rubin", 4L),
+      "2sls_with_weak_iv_diagnostics", "not_applicable"
+    ),
+    admissible = c(TRUE, TRUE, TRUE, FALSE, TRUE, TRUE, TRUE, FALSE),
+    implementation_status = c(
+      "implemented", "implemented", "partial", "not_applicable",
+      "unimplemented", "unimplemented", "unimplemented", "not_applicable"
+    ),
+    candidate_cells = c(
+      nrow(public_specs), n_consumption,
+      n_consumption * n_candidate_iv,
+      n_consumption * n_diagnostic_iv,
+      NA_integer_, n_candidate_iv, 2L, NA_integer_
+    ),
+    implemented_cells = c(
+      nrow(public_specs), n_consumption,
+      n_consumption, n_consumption,
+      0L, 0L, 0L, 0L
+    ),
+    rationale = c(
+      "Public output contract; all rows are now canonical IV specifications.",
+      "Registered before estimation and tied to explicit endpoint/estimand metadata.",
+      "The same six scalar-IV designs already used for post-treatment mechanisms provide a bounded robustness family without opening the full diagnostic search space.",
+      "A mechanical endpoint-by-93-design Cartesian product is specification search rather than a theory-motivated robustness family.",
+      "Distributional/functional-form outcomes are already measured, but any causal expansion should be separately registered with endpoint comparability and multiplicity rules before estimation.",
+      "The enrolled-child EMI share is a substantively distinct intensive-margin treatment and may be a predeclared robustness family; it is not a replacement for all-child EMI exposure.",
+      "A 1991 predetermined adjustment comparison is temporally distinct from adding more 2001 covariates and should be registered as a dedicated robustness family before use.",
+      "Post-treatment Census, firm, migration, housing, and labor measures are outcomes/mechanisms rather than preferred controls."
+    )
+  )
 }

@@ -193,6 +193,7 @@ def path_tests(path):
             "test-english-opportunity-mechanisms.R",
         },
         "R/pipeline/extended_iv_targets.R": {
+            "test-analysis-design-registry.R",
             "test-diagnostics.R",
             "test-iv-estimation.R",
             "test-overidentification.R",
