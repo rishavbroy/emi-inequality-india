@@ -41,6 +41,43 @@ test_that("Census manifest helper requires explicit 1991 file scope", {
   )
 })
 
+test_that("grouped Census 1991 readers tolerate aggregate-only workbooks without inventing districts", {
+  c02 <- as.data.frame(matrix("0", nrow = 2, ncol = 29), stringsAsFactors = FALSE)
+  c02[, 1:6] <- rbind(
+    c("C02T", "30", "00", "State-Daman And Diu", "Total", "All ages"),
+    c("C02T", "30", "00", "State-Daman And Diu", "Total", "0-6")
+  )
+  c02[, 7] <- c("100", "20")
+  c02_out <- parse_census_1991_c02t_sheet(c02)
+  expect_equal(nrow(c02_out), 0L)
+  expect_setequal(
+    names(c02_out),
+    c(
+      census_1991_keys(), "district_name", "population_c02t_1991_count",
+      "population_0_6_c02t_1991_count", "population_7plus_c02t_1991_count",
+      "secondary_plus_c02t_1991_count"
+    )
+  )
+
+  ages <- c("All ages", census_1991_c06_age_groups())
+  c06 <- as.data.frame(matrix("0", nrow = length(ages), ncol = 12), stringsAsFactors = FALSE)
+  c06[, 1] <- "C06T"
+  c06[, 2] <- "30"
+  c06[, 3] <- "00"
+  c06[, 4] <- "State-Daman And Diu"
+  c06[, 5] <- "Total"
+  c06[, 6] <- ages
+  c06[, 7:8] <- "5"
+  c06_out <- parse_census_1991_c06t_sheet(c06)
+  expect_equal(nrow(c06_out), 0L)
+  expect_setequal(
+    names(c06_out),
+    c(
+      census_1991_keys(), "district_name", "population_c06t_1991_count",
+      "dependent_population_c06t_1991_count", "working_age_population_c06t_1991_count"
+    )
+  )
+})
 
 test_that("Census 1991 B-01(S) parser enforces the worker-status partition", {
   raw <- as.data.frame(matrix(NA_character_, nrow = 2, ncol = 21), stringsAsFactors = FALSE)

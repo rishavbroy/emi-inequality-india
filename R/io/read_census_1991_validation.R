@@ -68,6 +68,17 @@ validate_census_1991_nonnegative_counts <- function(x, fields, label) {
   invisible(TRUE)
 }
 
+empty_census_1991_district_counts <- function(count_fields) {
+  out <- data.frame(
+    state_code_1991 = character(),
+    district_code_1991 = character(),
+    district_name = character(),
+    stringsAsFactors = FALSE
+  )
+  for (field in count_fields) out[[field]] <- numeric()
+  out
+}
+
 parse_census_1991_b01s_sheet <- function(raw) {
   raw <- safe_df(raw)
   if (ncol(raw) < 21L) stop("Census 1991 B-01(S) sheet has fewer than 21 columns.", call. = FALSE)
@@ -125,6 +136,11 @@ parse_census_1991_c02t_sheet <- function(raw) {
       rows$residence == "Total" & rows$age_group %in% c("All ages", "0-6"),
     , drop = FALSE
   ]
+  count_fields <- c(
+    "population_c02t_1991_count", "population_0_6_c02t_1991_count",
+    "population_7plus_c02t_1991_count", "secondary_plus_c02t_1991_count"
+  )
+  if (!nrow(rows)) return(empty_census_1991_district_counts(count_fields))
   groups <- split(seq_len(nrow(rows)), paste(rows$state_code_1991, rows$district_code_1991, sep = "|"))
   out <- safe_bind_rows(lapply(groups, function(index) {
     part <- rows[index, , drop = FALSE]
@@ -146,10 +162,7 @@ parse_census_1991_c02t_sheet <- function(raw) {
   }))
   validate_census_1991_nonnegative_counts(
     out,
-    c(
-      "population_c02t_1991_count", "population_0_6_c02t_1991_count",
-      "population_7plus_c02t_1991_count", "secondary_plus_c02t_1991_count"
-    ),
+    count_fields,
     "Census 1991 C-02 total"
   )
   if (any(out$secondary_plus_c02t_1991_count > out$population_7plus_c02t_1991_count)) {
@@ -218,6 +231,11 @@ parse_census_1991_c06t_sheet <- function(raw) {
       rows$residence == "Total" & rows$age_group %in% required_ages,
     , drop = FALSE
   ]
+  count_fields <- c(
+    "population_c06t_1991_count", "dependent_population_c06t_1991_count",
+    "working_age_population_c06t_1991_count"
+  )
+  if (!nrow(rows)) return(empty_census_1991_district_counts(count_fields))
   groups <- split(seq_len(nrow(rows)), paste(rows$state_code_1991, rows$district_code_1991, sep = "|"))
   dependent <- c("0-4", "5-9", "10-14", "65-69", "70-74", "75-79", "80-84", "85-89", "90-94", "95-99", "100+")
   working <- c("15-19", "20-24", "25-29", "30-34", "35-39", "40-44", "45-49", "50-54", "55-59", "60-64")
@@ -239,10 +257,7 @@ parse_census_1991_c06t_sheet <- function(raw) {
   }))
   validate_census_1991_nonnegative_counts(
     out,
-    c(
-      "population_c06t_1991_count", "dependent_population_c06t_1991_count",
-      "working_age_population_c06t_1991_count"
-    ),
+    count_fields,
     "Census 1991 C-06"
   )
   if (any(out$dependent_population_c06t_1991_count + out$working_age_population_c06t_1991_count >
