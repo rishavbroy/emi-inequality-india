@@ -23,13 +23,24 @@ test_that("analysis-design ontology inventories registered families without Cart
   expect_setequal(
     unique(registry$family),
     c(
-      "district_iv_diagnostic", "consumption_iv", "district_mechanism",
+      "public_iv", "district_iv_diagnostic", "consumption_iv", "district_mechanism",
       "c17_mechanism", "dise_first_stage", "dise_weak_iv",
       "census_migration_mechanism", "census_housing_mechanism",
       "economic_census_mechanism", "labor_mechanism",
       "historical_first_stage", "historical_predetermined_first_stage"
     )
   )
+
+  expect_equal(
+    sum(registry$family == "public_iv"),
+    nrow(public_iv_specification_registry(controls))
+  )
+  public_rows <- registry[registry$family == "public_iv", , drop = FALSE]
+  expect_setequal(
+    public_rows$specification_id,
+    c("consumption", "consumption_ancova", "consumption_nominal", "consumption_legacy_controls")
+  )
+  expect_setequal(unique(public_rows$estimand), c("change", "ancova", "nominal_change"))
 
   expect_equal(
     sum(registry$family == "district_iv_diagnostic"),
@@ -126,4 +137,42 @@ test_that("canonical IV rows do not duplicate scalar metadata columns", {
 
   expect_equal(sum(names(row) == "adjustment"), 1L)
   expect_equal(anyDuplicated(names(row)), 0L)
+})
+
+
+test_that("candidate-design ledger records bounded robustness choices without Cartesian search", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
+  controls <- read_census_2001_control_registry(
+    file.path(root, "data", "metadata", "census_2001_control_registry.csv")
+  )
+  consumption <- compile_consumption_iv_specifications(
+    read_consumption_iv_outcome_registry(
+      file.path(root, "data", "metadata", "consumption_iv_outcomes.csv")
+    ),
+    controls
+  )
+  public <- public_iv_specification_registry(controls)
+  ledger <- build_iv_candidate_design_ledger(public, consumption, controls)
+
+  expect_identical(names(ledger), candidate_design_columns())
+  expect_equal(anyDuplicated(ledger$candidate_id), 0L)
+  expect_true(all(nzchar(ledger$rationale)))
+
+  bounded <- ledger[ledger$candidate_id == "consumption_candidate_scalar_iv_grid", , drop = FALSE]
+  expect_true(bounded$admissible)
+  expect_equal(bounded$implementation_status, "partial")
+  expect_equal(bounded$candidate_cells, nrow(consumption) * 6L)
+  expect_equal(bounded$implemented_cells, nrow(consumption))
+
+  cartesian <- ledger[ledger$candidate_id == "consumption_full_diagnostic_cartesian", , drop = FALSE]
+  expect_false(cartesian$admissible)
+  expect_equal(cartesian$implementation_status, "not_applicable")
+  expect_equal(
+    cartesian$candidate_cells,
+    nrow(consumption) * nrow(iv_diagnostic_specification_registry(control_registry = controls))
+  )
+
+  post <- ledger[ledger$candidate_id == "posttreatment_mechanisms_as_controls", , drop = FALSE]
+  expect_false(post$admissible)
+  expect_equal(post$implementation_status, "not_applicable")
 })

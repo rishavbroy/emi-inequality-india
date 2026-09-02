@@ -763,6 +763,8 @@ test_that("reviewed primary lineage is public and alternatives remain diagnostic
   expect_false(grepl("tar_target(iv_formulas", core, fixed = TRUE))
   expect_false(grepl("tar_target(iv_models", core, fixed = TRUE))
   expect_false(grepl("tar_target(first_stage_tests", core, fixed = TRUE))
+  expect_match(core, "public_iv_specification_registry(census_2001_control_registry)", fixed = TRUE)
+  expect_match(core, "iv_specification_formulas(public_iv_specifications)", fixed = TRUE)
   expect_match(core, "estimate_2sls(district_panel, revised_iv_formulas, cfg)", fixed = TRUE)
   expect_match(extended, "estimate_2sls(district_panel_conservative, revised_iv_formulas, cfg)", fixed = TRUE)
   expect_match(extended, "estimate_2sls(district_panel_legacy, legacy_iv_formulas, cfg)", fixed = TRUE)

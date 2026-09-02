@@ -1147,7 +1147,7 @@ test_that("alternative linguistic-distance diagnostics save explicit outputs wit
 })
 
 test_that("alternative-distance design comparison preserves both FE candidates", {
-  constructions <- alternative_distance_design_constructions()
+  constructions <- iv_candidate_design_constructions()
   adjustments <- iv_candidate_design_adjustments()
   target <- expand.grid(
     adjustment_id = adjustments,

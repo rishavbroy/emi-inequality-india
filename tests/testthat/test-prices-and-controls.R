@@ -97,9 +97,23 @@ test_that("bounded Census shares cannot exceed their universes", {
   )
 })
 
-test_that("revised formulas use state fixed effects and predetermined controls", {
-  f <- build_revised_iv_formulas()
-  text <- paste(deparse(f$consumption), collapse = " ")
+test_that("public IV registry preserves the headline specification contract", {
+  specs <- public_iv_specification_registry()
+  expect_identical(
+    plain_chr(specs$specification_id),
+    c("consumption", "consumption_ancova", "consumption_nominal", "consumption_legacy_controls")
+  )
+  expect_true(all(specs$treatment == "emi_exposure_all_children_0708"))
+  expect_true(all(specs$fixed_effect == "state"))
+  expect_true(all(vapply(
+    specs$excluded_instruments,
+    function(x) identical(plain_chr(x), "ling_distance_nonzero_mean"),
+    logical(1)
+  )))
+
+  formulas <- iv_specification_formulas(specs)
+  expect_identical(names(formulas), plain_chr(specs$specification_id))
+  text <- paste(deparse(formulas$consumption), collapse = " ")
   expect_match(text, "real_log_consumption_change")
   expect_match(text, "state_code_2001")
   expect_match(text, "urban_share_2001")
@@ -108,6 +122,11 @@ test_that("revised formulas use state fixed effects and predetermined controls",
   expect_false(grepl("EMIE", text, fixed = TRUE))
   expect_false(grepl("wavg_ling_degrees", text, fixed = TRUE))
   expect_false(grepl("gini_cons_0708", text, fixed = TRUE))
+
+  ancova_terms <- all.vars(formulas$consumption_ancova)
+  expect_true("log_real_consumption_0708" %in% ancova_terms)
+  legacy_terms <- all.vars(formulas$consumption_legacy_controls)
+  expect_true(all(legacy_2007_iv_controls() %in% legacy_terms))
 })
 
 test_that("RBI state rural and urban CPI extracts use the general index only", {

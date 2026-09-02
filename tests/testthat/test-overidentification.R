@@ -3,10 +3,11 @@ test_that("baseline exactly identified model is not overidentified", {
   expect_false(is_overidentified(spec))
 })
 
-test_that("overidentification diagnostics infer exact identification from active formulas", {
-  formulas <- build_revised_iv_formulas()
-  out <- diagnose_overidentification(list(), formulas, list())
+test_that("overidentification diagnostics consume canonical public specifications", {
+  specifications <- public_iv_specification_registry()
+  out <- diagnose_overidentification(list(), specifications, list())
 
+  expect_identical(plain_chr(out$model), plain_chr(specifications$specification_id))
   expect_true(all(out$status == "not_applicable"))
   expect_true(all(out$n_endogenous == 1L))
   expect_true(all(out$n_excluded_instruments == 1L))
