@@ -43,7 +43,7 @@ The EC05 source/measurement phase is now active: the documented SHRUG `ec05_pc01
 
 The EC13 source/measurement phase is now active: the local SHRUG `ec13_pc11dist` product is validated on all 640 Census-2011 districts, its counts are pooled through the existing complete-parent Census-2011-to-2001 bridge, and common 2005-2013 log/count-composition changes are generated only after pooling. EC05 informal employment is excluded from the longitudinal family because EC13 does not publish a comparable district field.
 
-The EC05/EC13 causal mechanism family is now predeclared and routed through the shared district-mechanism inference layer. The registered outcomes are log non-farm employment growth, log establishment growth, hired/private employment-share changes, services-share change, and a secondary manufacturing-share change. Female employment, mean firm size, and EC05-only informal employment remain descriptive rather than enlarging the inferential family. One Economic Census diagnostic object now owns both measurement and model outputs, avoiding parallel writer targets.
+The EC05/EC13 causal mechanism family is now predeclared and routed through the shared post-treatment mechanism inference layer. The registered outcomes are log non-farm employment growth, log establishment growth, hired/private employment-share changes, services-share change, and a secondary manufacturing-share change. Female employment, mean firm size, and EC05-only informal employment remain descriptive rather than enlarging the inferential family. One Economic Census diagnostic object now owns both measurement and model outputs, avoiding parallel writer targets.
 
 Remaining implementation order:
 
@@ -106,10 +106,12 @@ Once the firm/labor phases and final outcome registry are fixed:
 - Do not reconstruct unpublished migrant-by-industry/occupation cells by multiplying migration totals by destination worker shares.
 - Do not add post-treatment variables to the preferred control set merely because they are available.
 - Do not expand a registered hypothesis family after inspecting results without labeling the expansion exploratory.
-- Do not add parallel estimators when the shared Census mechanism or survey-design layers already represent the estimand.
+- Do not add parallel estimators when the shared post-treatment mechanism or survey-design layers already represent the estimand.
 - Do not add raw-source adapters before the underlying files have been inspected.
 
 
 PLFS 2017-18 now has a real materialized F1 and canonical annual-weight/person adapter. The realized geography review shows that the existing reviewed `primary_source_crosswalk` is the correct production bridge: it resolves 614 of 655 PLFS source districts and about 94.85% of sampled persons, while the stricter deterministic `conservative_source_crosswalk` resolves 446 districts and about 68.17%. The primary bridge consists of deterministic mappings plus already-adjudicated accepted single-target upgrades; unrestricted population-allocation rows remain excluded.
 
 The shared four-outcome long-run labor estimator is active for both the preferred primary bridge and the conservative deterministic sensitivity under the unchanged denominator-specific support rule. The realized comparison closes the 2017-18 geography gate: primary produces 565 estimable targets versus 420 conservative; preferred coverage is 469 versus 341 for LFPR/employment, 257 versus 183 for unemployment, and 239 versus 171 for regular-salaried share. Across the 420 overlapping targets, only 15 cells per outcome change and correlations are about 0.987-0.997. The production bridge therefore gains substantial reviewed coverage without broadly shifting overlapping estimates. PLFS 2017-18 is frozen as the principal `long_run_post` usual-status wave. Add later PLFS waves only for a predeclared dynamics/robustness extension.
+
+The causal labor mechanism family is now frozen before IV-coefficient inspection to LFPR and employment only. Both share the age-15+ denominator and retain substantially deeper preferred support than unemployment or regular-salaried composition, which remain secondary district outcomes. NSS66 enters as the `early_post` wave, PLFS 2017-18 as `long_run_post`, and the PLFS conservative bridge as a geography robustness sample. All are routed through the shared post-treatment mechanism reduced-form/weak-IV/Anderson-Rubin layer rather than a labor-specific IV estimator; NSS64 remains excluded from causal mechanism inference because it overlaps treatment measurement.
