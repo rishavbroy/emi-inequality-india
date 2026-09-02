@@ -50,6 +50,56 @@ extended_iv_target_definitions <- function() {
       format = "file"
     ),
     tar_target(
+      consumption_treatment_robustness_specifications,
+      compile_consumption_treatment_robustness_specifications(
+        consumption_iv_outcome_registry, census_2001_control_registry
+      )
+    ),
+    tar_target(
+      consumption_treatment_robustness_support,
+      consumption_iv_common_sample_support(
+        consumption_iv_panel,
+        consumption_treatment_robustness_specifications,
+        "welfare_specification_id"
+      )
+    ),
+    tar_target(
+      consumption_treatment_robustness_panel,
+      restrict_consumption_iv_to_common_samples(
+        consumption_iv_panel,
+        consumption_treatment_robustness_specifications,
+        "welfare_specification_id"
+      )
+    ),
+    tar_target(
+      consumption_treatment_robustness,
+      add_consumption_iv_family_multiplicity(
+        validate_consumption_iv_robustness_family(
+          validate_consumption_iv_dynamics(
+            estimate_consumption_iv_dynamics(
+              consumption_treatment_robustness_panel,
+              consumption_treatment_robustness_specifications,
+              cfg
+            ),
+            consumption_treatment_robustness_specifications
+          ),
+          consumption_treatment_robustness_support,
+          group_size = 6L,
+          family_label = "Consumption intensive-margin EMI robustness"
+        ),
+        "consumption_treatment_robustness"
+      )
+    ),
+    tar_target(
+      diag_ext_consumption_treatment_robustness_files,
+      save_consumption_iv_robustness_family(
+        consumption_treatment_robustness,
+        consumption_treatment_robustness_support,
+        "consumption_treatment_robustness"
+      ),
+      format = "file"
+    ),
+    tar_target(
       consumption_alternative_welfare_registry,
       build_consumption_alternative_welfare_registry(
         consumption_iv_outcome_registry,
@@ -351,6 +401,7 @@ extended_iv_target_definitions <- function() {
         census_2001_control_registry,
         public_iv_specifications,
         consumption_scalar_iv_robustness_specifications,
+        consumption_treatment_robustness_specifications,
         consumption_alternative_welfare_specifications,
         consumption_control_strategy_specifications,
         consumption_control_parameterization_specifications,
@@ -375,6 +426,7 @@ extended_iv_target_definitions <- function() {
         consumption_welfare_outcomes,
         english_opportunity_measure_registry,
         consumption_scalar_iv_robustness_specifications,
+        consumption_treatment_robustness_specifications,
         consumption_alternative_welfare_specifications,
         consumption_control_strategy_specifications,
         consumption_control_parameterization_specifications,

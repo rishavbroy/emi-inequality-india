@@ -1072,6 +1072,11 @@ test_that("extended IV artifacts are reachable from the diag_ext audit selector"
   )
   expect_match(
     iv_targets,
+    "tar_target(\n      diag_ext_consumption_treatment_robustness_files,",
+    fixed = TRUE
+  )
+  expect_match(
+    iv_targets,
     "tar_target(\n      diag_ext_consumption_alternative_welfare_files,",
     fixed = TRUE
   )
