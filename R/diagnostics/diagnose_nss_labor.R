@@ -254,12 +254,17 @@ plfs_2017_18_reviewed_lineage_map <- function(crosswalk, variant = c("primary", 
   }
   x <- x[x$wave == "nss_2017_18", , drop = FALSE]
   if (variant == "primary") {
-    if (!all(c("weight", "panel_variant") %in% names(x))) {
-      stop("PLFS primary reuse requires weight and panel_variant fields.", call. = FALSE)
+    if (!all(c("weight", "panel_variant", "basis") %in% names(x))) {
+      stop("PLFS primary reuse requires weight, panel_variant, and basis fields.", call. = FALSE)
     }
     x$weight <- num(x$weight)
     x <- x[x$panel_variant == "primary" & is.finite(x$weight) & abs(x$weight - 1) <= 1e-8, , drop = FALSE]
-    status <- "resolved_reviewed_primary"
+    x$lineage_status <- ifelse(
+      x$basis == "population_renormalized_min_99pct_mapped",
+      "resolved_reviewed_primary",
+      "resolved_reviewed_deterministic"
+    )
+    x$lineage_basis <- plain_chr(x$basis)
   } else {
     if ("panel_variant" %in% names(x)) {
       x <- x[x$panel_variant == "deterministic", , drop = FALSE]
@@ -268,17 +273,25 @@ plfs_2017_18_reviewed_lineage_map <- function(crosswalk, variant = c("primary", 
       weight <- num(x$weight)
       x <- x[is.finite(weight) & abs(weight - 1) <= 1e-8, , drop = FALSE]
     }
-    status <- "resolved_reviewed_deterministic"
+    x$lineage_status <- "resolved_reviewed_deterministic"
+    x$lineage_basis <- if ("mapping_class" %in% names(x)) {
+      plain_chr(x$mapping_class)
+    } else if ("basis" %in% names(x)) {
+      plain_chr(x$basis)
+    } else {
+      NA_character_
+    }
   }
   x$source_code <- gsub("[^0-9]", "", plain_chr(x$source_code))
   x$target_unit_2001 <- plain_chr(x$target_unit_2001)
   keep <- grepl("^[0-9]{5}$", x$source_code) &
     !is.na(x$target_unit_2001) & nzchar(x$target_unit_2001)
-  map <- unique(x[keep, c("source_code", "target_unit_2001"), drop = FALSE])
+  map <- unique(x[keep, c(
+    "source_code", "target_unit_2001", "lineage_status", "lineage_basis"
+  ), drop = FALSE])
   if (!nrow(map) || anyDuplicated(map$source_code)) {
     stop("PLFS reuse requires unique reviewed NSS 2017-18 district mappings for variant ", variant, ".", call. = FALSE)
   }
-  map$lineage_status <- status
   map[order(map$source_code), , drop = FALSE]
 }
 
@@ -307,6 +320,9 @@ attach_plfs_2017_18_reviewed_lineage <- function(persons, crosswalk, variant = c
   x$lineage_status <- ifelse(
     is.na(x$target_unit_2001), "unresolved_source_district", map$lineage_status[idx]
   )
+  x$lineage_basis <- ifelse(
+    is.na(x$target_unit_2001), NA_character_, map$lineage_basis[idx]
+  )
   x
 }
 
@@ -324,8 +340,64 @@ build_plfs_2017_18_source_diagnostics <- function(canonical_persons, lineaged_pe
     source_districts = length(unique(plfs_2017_18_source_district_code(x))),
     resolved_source_districts = length(unique(lineaged$source_district_code[resolved])),
     resolved_person_share = mean(resolved),
+    deterministic_person_share = mean(lineaged$lineage_status == "resolved_reviewed_deterministic"),
+    accepted_primary_person_share = mean(lineaged$lineage_status == "resolved_reviewed_primary"),
     stringsAsFactors = FALSE
   )
+}
+
+build_labor_variant_comparison <- function(preferred_estimates, sensitivity_estimates) {
+  preferred <- safe_df(preferred_estimates)
+  sensitivity <- safe_df(sensitivity_estimates)
+  required <- c("target_unit_2001", "outcome_id", "estimate", "std_error", "preferred_eligible")
+  for (x in list(preferred, sensitivity)) {
+    missing <- setdiff(required, names(x))
+    if (length(missing)) {
+      stop("Labor variant comparison lacks fields: ", paste(missing, collapse = ", "), call. = FALSE)
+    }
+  }
+  p <- preferred[required]
+  c <- sensitivity[required]
+  names(p)[3:5] <- paste0(names(p)[3:5], "_preferred")
+  names(c)[3:5] <- paste0(names(c)[3:5], "_sensitivity")
+  joined <- merge(p, c, by = c("target_unit_2001", "outcome_id"), all = TRUE, sort = FALSE)
+  outcomes <- sort(unique(joined$outcome_id))
+  rows <- lapply(outcomes, function(outcome) {
+    x <- joined[joined$outcome_id == outcome, , drop = FALSE]
+    common <- is.finite(x$estimate_preferred) & is.finite(x$estimate_sensitivity)
+    delta <- abs(x$estimate_preferred[common] - x$estimate_sensitivity[common])
+    changed <- delta > 1e-12
+    correlation <- if (sum(common) >= 2L) {
+      stats::cor(x$estimate_preferred[common], x$estimate_sensitivity[common])
+    } else {
+      NA_real_
+    }
+    data.frame(
+      outcome_id = outcome,
+      preferred_cells = sum(is.finite(x$estimate_preferred)),
+      sensitivity_cells = sum(is.finite(x$estimate_sensitivity)),
+      common_cells = sum(common),
+      preferred_only_cells = sum(is.finite(x$estimate_preferred) & !is.finite(x$estimate_sensitivity)),
+      preferred_eligible_cells = sum(x$preferred_eligible_preferred %in% TRUE, na.rm = TRUE),
+      sensitivity_eligible_cells = sum(x$preferred_eligible_sensitivity %in% TRUE, na.rm = TRUE),
+      changed_common_cells = sum(changed),
+      changed_common_share = if (length(delta)) mean(changed) else NA_real_,
+      estimate_correlation = correlation,
+      median_abs_difference = if (length(delta)) stats::median(delta) else NA_real_,
+      p90_abs_difference = if (length(delta)) as.numeric(stats::quantile(delta, .9, names = FALSE)) else NA_real_,
+      max_abs_difference = if (length(delta)) max(delta) else NA_real_,
+      stringsAsFactors = FALSE
+    )
+  })
+  do.call(rbind, rows)
+}
+
+save_labor_variant_comparison <- function(
+    x, filename, root = "outputs/diagnostics/extended/labor") {
+  dir.create(root, recursive = TRUE, showWarnings = FALSE)
+  path <- file.path(root, filename)
+  utils::write.csv(safe_df(x), path, row.names = FALSE, na = "")
+  path
 }
 
 build_plfs_2017_18_diagnostics <- function(canonical_persons, lineaged_persons, lineage_variant) {

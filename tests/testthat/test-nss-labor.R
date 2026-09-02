@@ -654,11 +654,21 @@ test_that("PLFS preferred lineage reuses the reviewed primary 2017-18 bridge", {
   primary <- data.frame(
     wave = "nss_2017_18", source_code = c("22209", "22210", "22211"),
     target_unit_2001 = c("a01", "a02", "a03"), weight = 1,
+    basis = c(
+      "deterministic_2011_to_2001",
+      "population_renormalized_min_99pct_mapped",
+      "identity_or_documented_rename_to_2001"
+    ),
     panel_variant = "primary", stringsAsFactors = FALSE
   )
   out <- attach_plfs_2017_18_reviewed_lineage(persons, primary, "primary")
   expect_equal(out$target_unit_2001, c("a01", "a02", "a03"))
-  expect_true(all(out$lineage_status == "resolved_reviewed_primary"))
+  expect_equal(out$lineage_status, c(
+    "resolved_reviewed_deterministic",
+    "resolved_reviewed_primary",
+    "resolved_reviewed_deterministic"
+  ))
+  expect_equal(out$lineage_basis, primary$basis)
 
   unrestricted <- primary
   unrestricted$panel_variant <- "population_allocation"
@@ -673,4 +683,28 @@ test_that("shared labor estimator admits reviewed primary but not allocation-onl
     "resolved_reviewed_deterministic", "resolved_reviewed_primary"
   )) |> all())
   expect_false(nss_labor_lineage_is_resolved("resolved_reviewed_population_allocation"))
+})
+
+test_that("labor variant comparison summarizes coverage and overlapping estimate sensitivity", {
+  preferred <- data.frame(
+    target_unit_2001 = c("a", "b", "c", "a", "b", "c"),
+    outcome_id = rep(c("lfpr", "employment"), each = 3),
+    estimate = c(.4, .5, .6, .3, .4, .5),
+    std_error = .01,
+    preferred_eligible = c(TRUE, TRUE, FALSE, TRUE, TRUE, FALSE),
+    stringsAsFactors = FALSE
+  )
+  sensitivity <- preferred[preferred$target_unit_2001 != "c", ]
+  sensitivity$estimate[sensitivity$target_unit_2001 == "b"] <-
+    sensitivity$estimate[sensitivity$target_unit_2001 == "b"] + .02
+
+  out <- build_labor_variant_comparison(preferred, sensitivity)
+
+  expect_equal(out$preferred_cells, c(3, 3))
+  expect_equal(out$sensitivity_cells, c(2, 2))
+  expect_equal(out$preferred_only_cells, c(1, 1))
+  expect_equal(out$changed_common_cells, c(1, 1))
+  expect_equal(out$changed_common_share, c(.5, .5))
+  expect_true(all(out$estimate_correlation > .99))
+  expect_equal(out$max_abs_difference, c(.02, .02), tolerance = 1e-12)
 })
