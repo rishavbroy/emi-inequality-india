@@ -42,10 +42,28 @@ extended_iv_target_definitions <- function() {
       )
     ),
     tar_target(
-      consumption_scalar_iv_robustness_files,
+      diag_ext_consumption_scalar_iv_robustness_files,
       save_consumption_scalar_iv_robustness(
         consumption_scalar_iv_robustness,
         consumption_scalar_iv_robustness_support
+      ),
+      format = "file"
+    ),
+    tar_target(
+      analysis_design_registry,
+      compile_analysis_design_registry(
+        consumption_iv_specifications,
+        english_opportunity_measure_registry,
+        census_2001_control_registry,
+        public_iv_specifications,
+        consumption_scalar_iv_robustness_specifications
+      )
+    ),
+    tar_target(
+      diag_ext_analysis_design_registry,
+      write_diagnostic_csv(
+        analysis_design_registry,
+        "outputs/diagnostics/extended/iv/analysis_design_registry.csv"
       ),
       format = "file"
     ),

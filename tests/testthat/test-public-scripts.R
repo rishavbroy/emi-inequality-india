@@ -1036,3 +1036,21 @@ test_that("targets process recovery never unblocks a live recorded process", {
   expect_gt(fail, live)
   expect_gt(unblock, fail)
 })
+
+test_that("extended IV artifacts are reachable from the diag_ext audit selector", {
+  iv_targets <- paste(readLines(repo_file("R", "pipeline", "extended_iv_targets.R"), warn = FALSE), collapse = "\n")
+  census_targets <- paste(readLines(repo_file("R", "pipeline", "extended_census_targets.R"), warn = FALSE), collapse = "\n")
+
+  expect_match(
+    iv_targets,
+    "tar_target(\n      diag_ext_consumption_scalar_iv_robustness_files,",
+    fixed = TRUE
+  )
+  expect_match(
+    iv_targets,
+    '"outputs/diagnostics/extended/iv/analysis_design_registry.csv"',
+    fixed = TRUE
+  )
+  expect_match(iv_targets, "tar_target(\n      analysis_design_registry,", fixed = TRUE)
+  expect_false(grepl("tar_target(\n      analysis_design_registry,", census_targets, fixed = TRUE))
+})
