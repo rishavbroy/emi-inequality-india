@@ -435,6 +435,22 @@ compile_consumption_scalar_iv_family_specifications <- function(
   out
 }
 
+compile_consumption_treatment_robustness_specifications <- function(
+    registry, control_registry = NULL) {
+  specs <- safe_df(registry)
+  if (!"treatment" %in% names(specs)) {
+    stop("Consumption treatment robustness requires a treatment field.", call. = FALSE)
+  }
+  specs$treatment <- intensive_margin_emi_treatment()
+  compile_consumption_scalar_iv_family_specifications(
+    specs,
+    family_prefix = "consumption_treatment",
+    sample_rule = "consumption_treatment_iv_common_support",
+    tier = "C",
+    control_registry = control_registry
+  )
+}
+
 compile_consumption_scalar_iv_robustness_specifications <- function(
     registry, control_registry = NULL) {
   compile_consumption_scalar_iv_family_specifications(

@@ -19,6 +19,8 @@ legacy_2007_iv_controls <- function() {
 }
 
 
+intensive_margin_emi_treatment <- function() "emi_share_enrolled_0708"
+
 preferred_iv_variables <- function() {
   list(
     treatment = "emi_exposure_all_children_0708",

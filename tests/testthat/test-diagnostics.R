@@ -3217,3 +3217,21 @@ test_that("Vanneman 1991 control measures preserve ratio accounting", {
   expect_equal(out$vanneman_dependency_ratio_1991, 100 * 45 / 55)
   expect_equal(out$vanneman_electricity_access_share_1991, 60)
 })
+
+
+test_that("intensive-margin consumption robustness uses the frozen six-design scalar grid", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
+  registry <- read_consumption_iv_outcome_registry(
+    file.path(root, "data", "metadata", "consumption_iv_outcomes.csv")
+  )
+  specs <- compile_consumption_treatment_robustness_specifications(registry)
+
+  expect_equal(nrow(specs), nrow(registry) * 6L)
+  expect_equal(anyDuplicated(specs$specification_id), 0L)
+  expect_true(all(specs$treatment == intensive_margin_emi_treatment()))
+  expect_true(all(specs$sample_rule == "consumption_treatment_iv_common_support"))
+  expect_true(all(specs$tier == "C"))
+  expect_setequal(unique(specs$adjustment_id), iv_candidate_design_adjustments())
+  expect_setequal(unique(specs$construction_id), unname(iv_candidate_design_constructions()))
+  expect_true(all(vapply(specs$excluded_instruments, function(x) length(x) == 1L, logical(1))))
+})

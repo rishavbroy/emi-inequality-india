@@ -373,6 +373,7 @@ compile_analysis_design_registry <- function(
     control_registry = NULL,
     public_iv_specifications = public_iv_specification_registry(control_registry),
     consumption_scalar_iv_robustness_specifications = NULL,
+    consumption_treatment_robustness_specifications = NULL,
     consumption_alternative_welfare_specifications = NULL,
     consumption_control_strategy_specifications = NULL,
     consumption_control_parameterization_specifications = NULL,
@@ -405,6 +406,17 @@ compile_analysis_design_registry <- function(
       estimator = "first_stage+reduced_form+2sls+anderson_rubin",
       inference = "state_clustered+anderson_rubin+holm",
       analysis_role = "scalar_iv_robustness"
+    )
+  }
+  consumption_treatment <- if (is.null(consumption_treatment_robustness_specifications)) {
+    data.frame()
+  } else {
+    analysis_design_from_iv(
+      consumption_treatment_robustness_specifications,
+      family = "consumption_iv",
+      estimator = "first_stage+reduced_form+2sls+anderson_rubin",
+      inference = "state_clustered+anderson_rubin+holm",
+      analysis_role = "treatment_definition_robustness"
     )
   }
   consumption_welfare <- if (is.null(consumption_alternative_welfare_specifications)) {
@@ -467,6 +479,7 @@ compile_analysis_design_registry <- function(
     core_iv,
     consumption,
     consumption_scalar,
+    consumption_treatment,
     consumption_welfare,
     consumption_control_strategy,
     consumption_control_parameterization,
@@ -603,6 +616,7 @@ build_iv_candidate_design_ledger <- function(
     welfare_registry = NULL,
     english_opportunity_registry = NULL,
     consumption_scalar_iv_robustness_specifications = NULL,
+    consumption_treatment_robustness_specifications = NULL,
     consumption_alternative_welfare_specifications = NULL,
     consumption_control_strategy_specifications = NULL,
     consumption_control_parameterization_specifications = NULL,
@@ -623,6 +637,11 @@ build_iv_candidate_design_ledger <- function(
     0L
   } else {
     nrow(as_iv_specifications(consumption_scalar_iv_robustness_specifications))
+  }
+  n_consumption_treatment <- if (is.null(consumption_treatment_robustness_specifications)) {
+    0L
+  } else {
+    nrow(as_iv_specifications(consumption_treatment_robustness_specifications))
   }
   n_consumption_welfare <- if (is.null(consumption_alternative_welfare_specifications)) {
     0L
@@ -928,16 +947,18 @@ build_iv_candidate_design_ledger <- function(
       "Does the welfare relationship differ when treatment is English-medium choice conditional on enrollment rather than all-child exposure?",
       "treatment_definition",
       "registered consumption endpoint designs",
-      "emi_share_enrolled_0708",
+      intensive_margin_emi_treatment(),
       "Shastry/Glottolog/Dyen scalar candidates",
       "region_main/state_main",
       "first_stage+reduced_form+2sls+anderson_rubin",
-      "estimate_if_registered",
+      "estimate",
       multiplicity_family = "consumption_treatment_robustness",
-      implementation_status = "unimplemented",
+      prerequisite = "registered enrolled-child EMI share and endpoint-specific common support",
+      implementation_status = if (n_consumption_treatment == n_consumption * n_candidate_iv) "implemented" else if (n_consumption_treatment > 0L) "partial" else "unimplemented",
       candidate_cells = n_consumption * n_candidate_iv,
-      implemented_cells = 0L,
-      rationale = "The intensive medium margin is substantively distinct and was the original treatment concept; it should be visible as a predeclared robustness family rather than silently substituted for all-child exposure."
+      implemented_cells = n_consumption_treatment,
+      execution_cells = n_consumption_treatment,
+      rationale = "The intensive medium margin is substantively distinct and was the original treatment concept; it is estimated as its own frozen 48-cell robustness family rather than silently substituted for all-child exposure or merged retrospectively with the already-observed preferred-treatment family."
     ),
     candidate_design_row(
       "consumption_control_strategy_robustness",

@@ -10,6 +10,9 @@ test_that("analysis-design ontology inventories registered families without Cart
   consumption_scalar_specs <- compile_consumption_scalar_iv_robustness_specifications(
     consumption, controls
   )
+  consumption_treatment_specs <- compile_consumption_treatment_robustness_specifications(
+    consumption, controls
+  )
   welfare <- read_consumption_welfare_outcomes(
     file.path(root, "data", "metadata", "consumption_welfare_outcomes.csv")
   )
@@ -35,6 +38,7 @@ test_that("analysis-design ontology inventories registered families without Cart
   registry <- compile_analysis_design_registry(
     consumption_specs, mechanism_measures, controls,
     consumption_scalar_iv_robustness_specifications = consumption_scalar_specs,
+    consumption_treatment_robustness_specifications = consumption_treatment_specs,
     consumption_alternative_welfare_specifications = consumption_welfare_specs,
     consumption_control_strategy_specifications = consumption_control_specs,
     consumption_control_parameterization_specifications = consumption_parameterization_specs,
@@ -74,7 +78,8 @@ test_that("analysis-design ontology inventories registered families without Cart
   )
   expect_equal(
     sum(registry$family == "consumption_iv"),
-    nrow(consumption_specs) + nrow(consumption_scalar_specs) + nrow(consumption_welfare_specs) +
+    nrow(consumption_specs) + nrow(consumption_scalar_specs) + nrow(consumption_treatment_specs) +
+      nrow(consumption_welfare_specs) +
       nrow(consumption_control_specs) + nrow(consumption_parameterization_specs) +
       nrow(consumption_historical_specs)
   )
@@ -118,6 +123,9 @@ test_that("analysis-design ontology preserves estimator and sample distinctions"
   consumption_scalar <- compile_consumption_scalar_iv_robustness_specifications(
     consumption_registry, controls
   )
+  consumption_treatment <- compile_consumption_treatment_robustness_specifications(
+    consumption_registry, controls
+  )
   welfare <- read_consumption_welfare_outcomes(
     file.path(root, "data", "metadata", "consumption_welfare_outcomes.csv")
   )
@@ -143,6 +151,7 @@ test_that("analysis-design ontology preserves estimator and sample distinctions"
   registry <- compile_analysis_design_registry(
     consumption, mechanisms, controls,
     consumption_scalar_iv_robustness_specifications = consumption_scalar,
+    consumption_treatment_robustness_specifications = consumption_treatment,
     consumption_alternative_welfare_specifications = consumption_welfare,
     consumption_control_strategy_specifications = consumption_control,
     consumption_control_parameterization_specifications = consumption_parameterization,
@@ -155,7 +164,8 @@ test_that("analysis-design ontology preserves estimator and sample distinctions"
   expect_true(all(consumption_rows$estimator == "first_stage+reduced_form+2sls+anderson_rubin"))
   preferred_consumption <- consumption_rows[
     !consumption_rows$analysis_role %in% c(
-      "scalar_iv_robustness", "welfare_definition_robustness", "control_strategy_robustness",
+      "scalar_iv_robustness", "treatment_definition_robustness", "welfare_definition_robustness",
+      "control_strategy_robustness",
       "control_parameterization_robustness", "historical_adjustment_robustness",
       "historical_concept_matched_robustness"
     ),
@@ -168,6 +178,12 @@ test_that("analysis-design ontology preserves estimator and sample distinctions"
   expect_equal(nrow(scalar_consumption), nrow(consumption_scalar))
   expect_true(all(scalar_consumption$inference == "state_clustered+anderson_rubin+holm"))
   expect_true(all(scalar_consumption$sample_rule == "consumption_scalar_iv_common_support"))
+  treatment_consumption <- consumption_rows[
+    consumption_rows$analysis_role == "treatment_definition_robustness", , drop = FALSE
+  ]
+  expect_equal(nrow(treatment_consumption), nrow(consumption_treatment))
+  expect_true(all(treatment_consumption$treatment == intensive_margin_emi_treatment()))
+  expect_true(all(treatment_consumption$sample_rule == "consumption_treatment_iv_common_support"))
   welfare_consumption <- consumption_rows[
     consumption_rows$analysis_role == "welfare_definition_robustness", , drop = FALSE
   ]
@@ -260,6 +276,9 @@ test_that("candidate-design ledger records bounded robustness choices without Ca
   consumption_scalar <- compile_consumption_scalar_iv_robustness_specifications(
     consumption_registry, controls
   )
+  consumption_treatment <- compile_consumption_treatment_robustness_specifications(
+    consumption_registry, controls
+  )
   public <- public_iv_specification_registry(controls)
   welfare <- read_consumption_welfare_outcomes(
     file.path(root, "data", "metadata", "consumption_welfare_outcomes.csv")
@@ -285,7 +304,7 @@ test_that("candidate-design ledger records bounded robustness choices without Ca
   )
   ledger <- build_iv_candidate_design_ledger(
     public, consumption, controls, welfare, opportunity, consumption_scalar,
-    consumption_welfare, consumption_control, consumption_parameterization,
+    consumption_treatment, consumption_welfare, consumption_control, consumption_parameterization,
     consumption_historical, consumption_historical_matched
   )
 
@@ -333,6 +352,11 @@ test_that("candidate-design ledger records bounded robustness choices without Ca
 
   treatment <- ledger[ledger$candidate_id == "emi_intensive_margin_robustness", , drop = FALSE]
   expect_equal(treatment$candidate_cells, nrow(consumption) * 6L)
+  expect_equal(treatment$implemented_cells, nrow(consumption_treatment))
+  expect_equal(treatment$execution_cells, nrow(consumption_treatment))
+  expect_equal(treatment$implementation_status, "implemented")
+  expect_equal(treatment$execution_policy, "estimate")
+  expect_equal(treatment$multiplicity_family, "consumption_treatment_robustness")
 
   blocks <- ledger[ledger$candidate_id == "relevance_control_block_interventions", , drop = FALSE]
   expect_equal(blocks$implementation_status, "implemented")
