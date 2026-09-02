@@ -419,7 +419,7 @@ candidate_design_columns <- function() {
     "instrument_scope", "adjustment_scope", "estimator_scope",
     "execution_policy", "multiplicity_family", "prerequisite",
     "admissible", "implementation_status", "candidate_cells",
-    "implemented_cells", "rationale"
+    "implemented_cells", "execution_cells", "rationale"
   )
 }
 
@@ -442,6 +442,7 @@ candidate_design_row <- function(
     implementation_status = "unimplemented",
     candidate_cells = NA_integer_,
     implemented_cells = 0L,
+    execution_cells = implemented_cells,
     rationale) {
   data.frame(
     candidate_id = candidate_id,
@@ -462,6 +463,7 @@ candidate_design_row <- function(
     implementation_status = implementation_status,
     candidate_cells = as.integer(candidate_cells),
     implemented_cells = as.integer(implemented_cells),
+    execution_cells = as.integer(execution_cells),
     rationale = rationale,
     stringsAsFactors = FALSE,
     check.names = FALSE
@@ -496,8 +498,13 @@ candidate_design_frame <- function(rows) {
   }
   impossible <- out$implemented_cells > out$candidate_cells &
     is.finite(out$implemented_cells) & is.finite(out$candidate_cells)
-  if (any(impossible)) {
-    stop("Candidate-design implemented cells cannot exceed candidate cells.", call. = FALSE)
+  invalid_execution <- out$execution_cells > out$implemented_cells &
+    is.finite(out$execution_cells) & is.finite(out$implemented_cells)
+  if (any(impossible) || any(invalid_execution)) {
+    stop(
+      "Candidate-design cell counts must satisfy execution <= implemented <= candidate.",
+      call. = FALSE
+    )
   }
   out
 }
@@ -548,7 +555,10 @@ build_iv_candidate_design_ledger <- function(
   n_diagnostic_iv <- nrow(diagnostic_specs)
   n_scalar <- sum(canonical_specs$n_excluded_instruments == 1L)
   n_multishare <- sum(canonical_specs$n_excluded_instruments > 1L)
-  n_absorption <- nrow(iv_absorption_specification_registry(control_registry = control_registry))
+  n_absorption_candidates <- length(iv_absorption_adjustments(control_registry))
+  n_absorption_executions <- nrow(
+    iv_absorption_specification_registry(control_registry = control_registry)
+  )
   n_block_interventions <- length(iv_block_intervention_adjustments(control_registry))
   n_parameterizations <- length(iv_main_parameterization_adjustments(control_registry))
   n_dise_relevance <- nrow(dise_construct_registry()) * n_diagnostic_iv
@@ -579,8 +589,9 @@ build_iv_candidate_design_ledger <- function(
       "first_stage",
       "diagnostic_only",
       implementation_status = "implemented",
-      candidate_cells = n_absorption,
-      implemented_cells = n_absorption,
+      candidate_cells = n_absorption_candidates,
+      implemented_cells = n_absorption_candidates,
+      execution_cells = n_absorption_executions,
       rationale = "The reference treats attenuation across geography and controls as a scientific result. The registry therefore keeps the historical cumulative ladder but adds symmetric block-only, leave-one-block-out, and declared alternative-parameterization designs."
     ),
     candidate_design_row(

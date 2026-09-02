@@ -167,6 +167,22 @@ test_that("candidate-design ledger records bounded robustness choices without Ca
   expect_true(all(nzchar(ledger$rationale)))
   expect_true(all(nzchar(ledger$reference_section)))
   expect_true(all(nzchar(ledger$scientific_question)))
+  finite_counts <- is.finite(ledger$candidate_cells) & is.finite(ledger$implemented_cells) &
+    is.finite(ledger$execution_cells)
+  expect_true(all(ledger$execution_cells[finite_counts] <= ledger$implemented_cells[finite_counts]))
+  expect_true(all(ledger$implemented_cells[finite_counts] <= ledger$candidate_cells[finite_counts]))
+
+  absorption <- ledger[
+    ledger$candidate_id == "relevance_geography_control_absorption",
+    , drop = FALSE
+  ]
+  expect_equal(absorption$candidate_cells, length(iv_absorption_adjustments(controls)))
+  expect_equal(absorption$implemented_cells, absorption$candidate_cells)
+  expect_equal(
+    absorption$execution_cells,
+    nrow(iv_absorption_specification_registry(control_registry = controls))
+  )
+  expect_lt(absorption$execution_cells, absorption$candidate_cells)
 
   bounded <- ledger[ledger$candidate_id == "consumption_candidate_scalar_iv_grid", , drop = FALSE]
   expect_true(bounded$admissible)
