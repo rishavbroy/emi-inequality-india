@@ -116,6 +116,57 @@ extended_iv_target_definitions <- function() {
       format = "file"
     ),
     tar_target(
+      consumption_control_strategy_specifications,
+      compile_consumption_control_strategy_specifications(
+        consumption_iv_outcome_registry,
+        census_2001_control_registry
+      )
+    ),
+    tar_target(
+      consumption_control_strategy_support,
+      consumption_iv_common_sample_support(
+        consumption_iv_panel,
+        consumption_control_strategy_specifications,
+        "welfare_specification_id"
+      )
+    ),
+    tar_target(
+      consumption_control_strategy_panel,
+      restrict_consumption_iv_to_common_samples(
+        consumption_iv_panel,
+        consumption_control_strategy_specifications,
+        "welfare_specification_id"
+      )
+    ),
+    tar_target(
+      consumption_control_strategy_robustness,
+      add_consumption_iv_family_multiplicity(
+        validate_consumption_iv_robustness_family(
+          validate_consumption_iv_dynamics(
+            estimate_consumption_iv_dynamics(
+              consumption_control_strategy_panel,
+              consumption_control_strategy_specifications,
+              cfg
+            ),
+            consumption_control_strategy_specifications
+          ),
+          consumption_control_strategy_support,
+          group_size = 6L,
+          family_label = "Consumption causal-control strategy robustness"
+        ),
+        "consumption_control_strategy"
+      )
+    ),
+    tar_target(
+      diag_ext_consumption_control_strategy_files,
+      save_consumption_iv_robustness_family(
+        consumption_control_strategy_robustness,
+        consumption_control_strategy_support,
+        "consumption_control_strategy_robustness"
+      ),
+      format = "file"
+    ),
+    tar_target(
       analysis_design_registry,
       compile_analysis_design_registry(
         consumption_iv_specifications,
@@ -123,7 +174,8 @@ extended_iv_target_definitions <- function() {
         census_2001_control_registry,
         public_iv_specifications,
         consumption_scalar_iv_robustness_specifications,
-        consumption_alternative_welfare_specifications
+        consumption_alternative_welfare_specifications,
+        consumption_control_strategy_specifications
       )
     ),
     tar_target(
@@ -143,7 +195,8 @@ extended_iv_target_definitions <- function() {
         consumption_welfare_outcomes,
         english_opportunity_measure_registry,
         consumption_scalar_iv_robustness_specifications,
-        consumption_alternative_welfare_specifications
+        consumption_alternative_welfare_specifications,
+        consumption_control_strategy_specifications
       )
     ),
     tar_target(

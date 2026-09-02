@@ -373,7 +373,8 @@ compile_analysis_design_registry <- function(
     control_registry = NULL,
     public_iv_specifications = public_iv_specification_registry(control_registry),
     consumption_scalar_iv_robustness_specifications = NULL,
-    consumption_alternative_welfare_specifications = NULL) {
+    consumption_alternative_welfare_specifications = NULL,
+    consumption_control_strategy_specifications = NULL) {
   core_iv <- analysis_design_from_iv(
     iv_diagnostic_specification_registry(control_registry = control_registry),
     family = "district_iv_diagnostic",
@@ -414,12 +415,24 @@ compile_analysis_design_registry <- function(
       analysis_role = "welfare_definition_robustness"
     )
   }
+  consumption_control_strategy <- if (is.null(consumption_control_strategy_specifications)) {
+    data.frame()
+  } else {
+    analysis_design_from_iv(
+      consumption_control_strategy_specifications,
+      family = "consumption_iv",
+      estimator = "first_stage+reduced_form+2sls+anderson_rubin",
+      inference = "state_clustered+anderson_rubin+holm",
+      analysis_role = "control_strategy_robustness"
+    )
+  }
   out <- safe_bind_rows(list(
     analysis_design_public_iv(public_iv_specifications),
     core_iv,
     consumption,
     consumption_scalar,
     consumption_welfare,
+    consumption_control_strategy,
     analysis_design_district_mechanisms(
       english_opportunity_measure_registry, control_registry
     ),
@@ -551,7 +564,8 @@ build_iv_candidate_design_ledger <- function(
     welfare_registry = NULL,
     english_opportunity_registry = NULL,
     consumption_scalar_iv_robustness_specifications = NULL,
-    consumption_alternative_welfare_specifications = NULL) {
+    consumption_alternative_welfare_specifications = NULL,
+    consumption_control_strategy_specifications = NULL) {
   public_specs <- as_iv_specifications(public_specifications)
   consumption_specs <- as_iv_specifications(consumption_specifications)
   control_registry <- resolve_census_2001_control_registry(control_registry)
@@ -572,6 +586,11 @@ build_iv_candidate_design_ledger <- function(
     0L
   } else {
     nrow(as_iv_specifications(consumption_alternative_welfare_specifications))
+  }
+  n_consumption_control_strategy <- if (is.null(consumption_control_strategy_specifications)) {
+    0L
+  } else {
+    nrow(as_iv_specifications(consumption_control_strategy_specifications))
   }
   n_diagnostic_iv <- nrow(diagnostic_specs)
   n_scalar <- sum(canonical_specs$n_excluded_instruments == 1L)
@@ -872,11 +891,12 @@ build_iv_candidate_design_ledger <- function(
       "preferred Shastry nonzero-mean distance",
       "region/state FE crossed with geography-only, compact-2001, and compact-2001-without-human-capital strategies",
       "first_stage+reduced_form+2sls+anderson_rubin",
-      "estimate_if_registered",
+      "estimate",
       multiplicity_family = "consumption_control_strategy",
-      implementation_status = "unimplemented",
+      implementation_status = "implemented",
       candidate_cells = n_consumption * n_control_strategies,
-      implemented_cells = 0L,
+      implemented_cells = n_consumption_control_strategy,
+      execution_cells = n_consumption_control_strategy,
       rationale = paste(
         "No single 2001 control vector is uniquely justified by IV theory. Geography-only designs avoid conditioning",
         "on possible descendants of historical linguistic structure; compact 2001 adjustment addresses observed",
