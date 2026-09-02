@@ -69,6 +69,14 @@ plfs_2017_18_outcome_registry <- function() {
 nss_labor_employed_status_codes <- function() c(11, 12, 21, 31, 41, 51)
 nss_labor_unemployed_status_codes <- function() 81
 
+nss_labor_resolved_lineage_statuses <- function() {
+  c("resolved_reviewed_deterministic", "resolved_reviewed_primary")
+}
+
+nss_labor_lineage_is_resolved <- function(status) {
+  plain_chr(status) %in% nss_labor_resolved_lineage_statuses()
+}
+
 nss_labor_status_flags <- function(principal_status, subsidiary_status) {
   principal <- num(principal_status)
   subsidiary <- num(subsidiary_status)
@@ -95,7 +103,7 @@ nss_labor_design_rows <- function(lineaged_usual_activity, migration = NULL, lab
   )
   missing <- setdiff(required, names(x))
   if (length(missing)) stop(label, " usual-activity rows lack estimation fields: ", paste(missing, collapse = ", "), call. = FALSE)
-  resolved <- x$lineage_status %in% "resolved_reviewed_deterministic" &
+  resolved <- nss_labor_lineage_is_resolved(x$lineage_status) &
     !is.na(x$target_unit_2001) & nzchar(plain_chr(x$target_unit_2001))
   x <- x[resolved, , drop = FALSE]
   if (!nrow(x)) stop("No reviewed ", label, " persons are available for district estimation.", call. = FALSE)

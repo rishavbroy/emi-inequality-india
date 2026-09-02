@@ -645,19 +645,32 @@ test_that("PLFS canonical F1 adapter preserves person/design fields and annual w
   expect_identical(anyDuplicated(out$person_key), 0L)
 })
 
-test_that("PLFS preferred lineage reuses only deterministic 2017-18 district mappings", {
+test_that("PLFS preferred lineage reuses the reviewed primary 2017-18 bridge", {
   persons <- data.frame(
     person_key = c("a", "b", "c"), state_code = "22", district_code = c("09", "10", "11"),
     nss_region = "222", sector = 1, fsu = 1:3, survey_weight = 1,
     stringsAsFactors = FALSE
   )
-  crosswalk <- data.frame(
+  primary <- data.frame(
     wave = "nss_2017_18", source_code = c("22209", "22210", "22211"),
     target_unit_2001 = c("a01", "a02", "a03"), weight = 1,
-    panel_variant = c("deterministic", "population_allocation", "deterministic"),
-    stringsAsFactors = FALSE
+    panel_variant = "primary", stringsAsFactors = FALSE
   )
-  out <- attach_plfs_2017_18_reviewed_lineage(persons, crosswalk)
-  expect_equal(out$target_unit_2001, c("a01", NA, "a03"))
-  expect_equal(out$lineage_status[[2L]], "unresolved_source_district")
+  out <- attach_plfs_2017_18_reviewed_lineage(persons, primary, "primary")
+  expect_equal(out$target_unit_2001, c("a01", "a02", "a03"))
+  expect_true(all(out$lineage_status == "resolved_reviewed_primary"))
+
+  unrestricted <- primary
+  unrestricted$panel_variant <- "population_allocation"
+  expect_error(
+    attach_plfs_2017_18_reviewed_lineage(persons, unrestricted, "primary"),
+    "unique reviewed"
+  )
+})
+
+test_that("shared labor estimator admits reviewed primary but not allocation-only statuses", {
+  expect_true(nss_labor_lineage_is_resolved(c(
+    "resolved_reviewed_deterministic", "resolved_reviewed_primary"
+  )) |> all())
+  expect_false(nss_labor_lineage_is_resolved("resolved_reviewed_population_allocation"))
 })

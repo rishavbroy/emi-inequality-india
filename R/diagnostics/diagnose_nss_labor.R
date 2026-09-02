@@ -160,7 +160,7 @@ summarize_nss_labor_target_support <- function(lineaged_persons) {
   if (length(missing)) {
     stop("Lineaged NSS labor rows lack target-support fields: ", paste(missing, collapse = ", "), call. = FALSE)
   }
-  resolved <- x[x$lineage_status %in% "resolved_reviewed_deterministic" &
+  resolved <- x[nss_labor_lineage_is_resolved(x$lineage_status) &
                   !is.na(x$target_unit_2001) & nzchar(plain_chr(x$target_unit_2001)), , drop = FALSE]
   if (!nrow(resolved)) return(data.frame())
   resolved$.design_psu <- nss_labor_design_psu_key(resolved)
@@ -244,27 +244,41 @@ build_nss66_source_diagnostics <- function(canonical_persons, lineaged_persons) 
 }
 
 
-plfs_2017_18_reviewed_lineage_map <- function(full_reviewed_crosswalk) {
-  crosswalk <- safe_df(full_reviewed_crosswalk)
-  required <- c("wave", "source_code", "target_unit_2001", "weight", "panel_variant")
-  missing <- setdiff(required, names(crosswalk))
+plfs_2017_18_reviewed_lineage_map <- function(crosswalk, variant = c("primary", "deterministic")) {
+  variant <- match.arg(variant)
+  x <- safe_df(crosswalk)
+  required <- c("wave", "source_code", "target_unit_2001")
+  missing <- setdiff(required, names(x))
   if (length(missing)) {
     stop("Reviewed district lineage crosswalk lacks PLFS reuse fields: ", paste(missing, collapse = ", "), call. = FALSE)
   }
-  map <- crosswalk[
-    crosswalk$wave == "nss_2017_18" & crosswalk$panel_variant == "deterministic",
-    required, drop = FALSE
-  ]
-  map$source_code <- gsub("[^0-9]", "", plain_chr(map$source_code))
-  map$target_unit_2001 <- plain_chr(map$target_unit_2001)
-  map$weight <- num(map$weight)
-  keep <- is.finite(map$weight) & abs(map$weight - 1) <= 1e-8 &
-    grepl("^[0-9]{5}$", map$source_code) &
-    !is.na(map$target_unit_2001) & nzchar(map$target_unit_2001)
-  map <- unique(map[keep, c("source_code", "target_unit_2001"), drop = FALSE])
-  if (!nrow(map) || anyDuplicated(map$source_code)) {
-    stop("PLFS reuse requires unique deterministic NSS 2017-18 district mappings.", call. = FALSE)
+  x <- x[x$wave == "nss_2017_18", , drop = FALSE]
+  if (variant == "primary") {
+    if (!all(c("weight", "panel_variant") %in% names(x))) {
+      stop("PLFS primary reuse requires weight and panel_variant fields.", call. = FALSE)
+    }
+    x$weight <- num(x$weight)
+    x <- x[x$panel_variant == "primary" & is.finite(x$weight) & abs(x$weight - 1) <= 1e-8, , drop = FALSE]
+    status <- "resolved_reviewed_primary"
+  } else {
+    if ("panel_variant" %in% names(x)) {
+      x <- x[x$panel_variant == "deterministic", , drop = FALSE]
+    }
+    if ("weight" %in% names(x)) {
+      weight <- num(x$weight)
+      x <- x[is.finite(weight) & abs(weight - 1) <= 1e-8, , drop = FALSE]
+    }
+    status <- "resolved_reviewed_deterministic"
   }
+  x$source_code <- gsub("[^0-9]", "", plain_chr(x$source_code))
+  x$target_unit_2001 <- plain_chr(x$target_unit_2001)
+  keep <- grepl("^[0-9]{5}$", x$source_code) &
+    !is.na(x$target_unit_2001) & nzchar(x$target_unit_2001)
+  map <- unique(x[keep, c("source_code", "target_unit_2001"), drop = FALSE])
+  if (!nrow(map) || anyDuplicated(map$source_code)) {
+    stop("PLFS reuse requires unique reviewed NSS 2017-18 district mappings for variant ", variant, ".", call. = FALSE)
+  }
+  map$lineage_status <- status
   map[order(map$source_code), , drop = FALSE]
 }
 
@@ -282,40 +296,41 @@ plfs_2017_18_source_district_code <- function(x) {
   paste0(region, district)
 }
 
-attach_plfs_2017_18_reviewed_lineage <- function(persons, full_reviewed_crosswalk) {
+attach_plfs_2017_18_reviewed_lineage <- function(persons, crosswalk, variant = c("primary", "deterministic")) {
+  variant <- match.arg(variant)
   x <- safe_df(persons)
   if (!"person_key" %in% names(x)) stop("PLFS person rows lack person_key.", call. = FALSE)
   x$source_district_code <- plfs_2017_18_source_district_code(x)
-  map <- plfs_2017_18_reviewed_lineage_map(full_reviewed_crosswalk)
+  map <- plfs_2017_18_reviewed_lineage_map(crosswalk, variant)
   idx <- match(x$source_district_code, map$source_code)
   x$target_unit_2001 <- map$target_unit_2001[idx]
   x$lineage_status <- ifelse(
-    is.na(x$target_unit_2001), "unresolved_source_district", "resolved_reviewed_deterministic"
+    is.na(x$target_unit_2001), "unresolved_source_district", map$lineage_status[idx]
   )
   x
 }
 
-build_plfs_2017_18_source_diagnostics <- function(canonical_persons, lineaged_persons) {
+build_plfs_2017_18_source_diagnostics <- function(canonical_persons, lineaged_persons, lineage_variant) {
   x <- safe_df(canonical_persons)
   lineaged <- safe_df(lineaged_persons)
   if (nrow(x) != nrow(lineaged)) stop("PLFS canonical and lineaged person universes differ.", call. = FALSE)
+  resolved <- nss_labor_lineage_is_resolved(lineaged$lineage_status)
   data.frame(
     source = "first_visit_usual_status_f1",
+    lineage_variant = lineage_variant,
     rows = nrow(x),
     unique_people = length(unique(x$person_key)),
     positive_weight_share = mean(num(x$survey_weight) > 0),
     source_districts = length(unique(plfs_2017_18_source_district_code(x))),
-    resolved_source_districts = length(unique(lineaged$source_district_code[
-      lineaged$lineage_status == "resolved_reviewed_deterministic"
-    ])),
-    resolved_person_share = mean(lineaged$lineage_status == "resolved_reviewed_deterministic"),
+    resolved_source_districts = length(unique(lineaged$source_district_code[resolved])),
+    resolved_person_share = mean(resolved),
     stringsAsFactors = FALSE
   )
 }
 
-build_plfs_2017_18_diagnostics <- function(canonical_persons, lineaged_persons) {
+build_plfs_2017_18_diagnostics <- function(canonical_persons, lineaged_persons, lineage_variant) {
   build_nss_labor_diagnostics(
-    build_plfs_2017_18_source_diagnostics(canonical_persons, lineaged_persons),
+    build_plfs_2017_18_source_diagnostics(canonical_persons, lineaged_persons, lineage_variant),
     lineaged_persons
   )
 }
