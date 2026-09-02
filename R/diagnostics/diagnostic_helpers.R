@@ -77,6 +77,14 @@ numeric_like <- function(x) {
   suppressWarnings(as.numeric(as.character(x)))
 }
 
+holm_adjust_finite <- function(p) {
+  x <- num(p)
+  out <- rep(NA_real_, length(x))
+  keep <- is.finite(x)
+  if (any(keep)) out[keep] <- stats::p.adjust(x[keep], method = "holm")
+  out
+}
+
 safe_pairwise_cor <- function(df) {
   df <- as.data.frame(df, stringsAsFactors = FALSE)
   if (!nrow(df) || ncol(df) < 2L) return(matrix(numeric(), nrow = 0L, ncol = 0L))

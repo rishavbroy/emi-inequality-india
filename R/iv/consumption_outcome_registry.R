@@ -223,75 +223,194 @@ attach_consumption_iv_outcomes <- function(panel, welfare, registry) {
   out
 }
 
-compile_consumption_iv_specifications <- function(registry, control_registry = NULL) {
-  specs <- safe_df(registry)
+compile_consumption_iv_design_row <- function(
+    specification,
+    adjustment_id,
+    construction_id,
+    specification_id,
+    control_registry = NULL,
+    tier = NULL,
+    sample_rule = NULL,
+    require_registered_instrument = FALSE,
+    sequence = 1L) {
+  x <- safe_df(specification)
+  if (nrow(x) != 1L) stop("A single consumption IV outcome specification is required.", call. = FALSE)
   control_registry <- resolve_census_2001_control_registry(control_registry)
   adjustments <- iv_adjustment_sets(control_registry)
   constructions <- iv_instrument_constructions()
+  if (!adjustment_id %in% names(adjustments)) {
+    stop("Unknown consumption IV adjustment_id: ", adjustment_id, call. = FALSE)
+  }
+  if (!construction_id %in% names(constructions)) {
+    stop("Unknown consumption IV construction_id: ", construction_id, call. = FALSE)
+  }
+  adjustment <- adjustments[[adjustment_id]]
+  construction <- constructions[[construction_id]]
+  excluded <- plain_chr(construction$excluded)
+  if (length(excluded) != 1L) {
+    stop("Consumption IV outcome designs require one excluded scalar instrument.", call. = FALSE)
+  }
+  if (isTRUE(require_registered_instrument) && !identical(excluded[[1L]], x$instrument[[1L]])) {
+    stop("Consumption IV registry instrument does not match its construction.", call. = FALSE)
+  }
 
+  outcome_name <- consumption_iv_variable_name(
+    x$welfare_specification_id[[1L]], "outcome"
+  )
+  controls <- adjustment$controls
+  if (identical(x$estimand[[1L]], "ancova")) {
+    controls <- c(
+      controls,
+      consumption_iv_variable_name(
+        x$welfare_specification_id[[1L]], "baseline"
+      )
+    )
+  }
+
+  row <- iv_specification_row(
+    specification_id = specification_id,
+    adjustment_id = adjustment_id,
+    adjustment = adjustment$label,
+    construction_id = construction_id,
+    construction = construction$label,
+    outcome = outcome_name,
+    treatment = x$treatment[[1L]],
+    fixed_effect = adjustment$fixed_effect,
+    controls = controls,
+    included_language_controls = construction$included,
+    excluded_instruments = construction$excluded,
+    mapping_coverage_variable = construction$coverage,
+    panel_variant = x$panel_variant[[1L]],
+    sample_rule = sample_rule %||% x$sample_rule[[1L]],
+    tier = tier %||% x$tier[[1L]],
+    sequence = sequence,
+    control_registry = control_registry
+  )
+  row$welfare_specification_id <- x$welfare_specification_id[[1L]]
+  row$welfare_outcome_id <- x$outcome_id[[1L]]
+  row$outcome_round <- x$outcome_round[[1L]]
+  row$baseline_round <- x$baseline_round[[1L]]
+  row$estimand <- x$estimand[[1L]]
+  row$analysis_transform <- x$analysis_transform[[1L]]
+  row
+}
+
+compile_consumption_iv_specifications <- function(registry, control_registry = NULL) {
+  specs <- safe_df(registry)
   rows <- lapply(seq_len(nrow(specs)), function(i) {
     x <- specs[i, , drop = FALSE]
-    adjustment_id <- x$adjustment_id[[1L]]
-    construction_id <- x$construction_id[[1L]]
-    if (!adjustment_id %in% names(adjustments)) {
-      stop("Unknown consumption IV adjustment_id: ", adjustment_id, call. = FALSE)
-    }
-    if (!construction_id %in% names(constructions)) {
-      stop("Unknown consumption IV construction_id: ", construction_id, call. = FALSE)
-    }
-    adjustment <- adjustments[[adjustment_id]]
-    construction <- constructions[[construction_id]]
-    excluded <- plain_chr(construction$excluded)
-    if (length(excluded) != 1L || !identical(excluded[[1L]], x$instrument[[1L]])) {
-      stop(
-        "Consumption IV registry instrument does not match its construction.",
-        call. = FALSE
-      )
-    }
-
-    outcome_name <- consumption_iv_variable_name(
-      x$welfare_specification_id[[1L]], "outcome"
+    compile_consumption_iv_design_row(
+      x,
+      adjustment_id = x$adjustment_id[[1L]],
+      construction_id = x$construction_id[[1L]],
+      specification_id = paste0("consumption__", x$welfare_specification_id[[1L]]),
+      control_registry = control_registry,
+      require_registered_instrument = TRUE,
+      sequence = i
     )
-    controls <- adjustment$controls
-    if (identical(x$estimand[[1L]], "ancova")) {
-      controls <- c(
-        controls,
-        consumption_iv_variable_name(
-          x$welfare_specification_id[[1L]], "baseline"
-        )
-      )
-    }
-
-    row <- iv_specification_row(
-      specification_id = paste0(
-        "consumption__", x$welfare_specification_id[[1L]]
-      ),
-      adjustment_id = adjustment_id,
-      adjustment = adjustment$label,
-      construction_id = construction_id,
-      construction = construction$label,
-      outcome = outcome_name,
-      treatment = x$treatment[[1L]],
-      fixed_effect = adjustment$fixed_effect,
-      controls = controls,
-      included_language_controls = construction$included,
-      excluded_instruments = construction$excluded,
-      mapping_coverage_variable = construction$coverage,
-      panel_variant = x$panel_variant[[1L]],
-      sample_rule = x$sample_rule[[1L]],
-      tier = x$tier[[1L]],
-      sequence = i,
-      control_registry = control_registry
-    )
-    row$welfare_specification_id <- x$welfare_specification_id[[1L]]
-    row$welfare_outcome_id <- x$outcome_id[[1L]]
-    row$outcome_round <- x$outcome_round[[1L]]
-    row$baseline_round <- x$baseline_round[[1L]]
-    row$estimand <- x$estimand[[1L]]
-    row$analysis_transform <- x$analysis_transform[[1L]]
-    row
   })
   bind_iv_specification_rows(rows)
+}
+
+compile_consumption_scalar_iv_robustness_specifications <- function(
+    registry, control_registry = NULL) {
+  specs <- safe_df(registry)
+  adjustments <- iv_candidate_design_adjustments()
+  constructions <- unname(iv_candidate_design_constructions())
+  rows <- list()
+  k <- 0L
+  for (i in seq_len(nrow(specs))) {
+    x <- specs[i, , drop = FALSE]
+    for (adjustment_id in adjustments) {
+      for (construction_id in constructions) {
+        k <- k + 1L
+        rows[[k]] <- compile_consumption_iv_design_row(
+          x,
+          adjustment_id = adjustment_id,
+          construction_id = construction_id,
+          specification_id = paste(
+            "consumption_scalar",
+            x$welfare_specification_id[[1L]],
+            adjustment_id,
+            construction_id,
+            sep = "__"
+          ),
+          control_registry = control_registry,
+          tier = "B",
+          sample_rule = "consumption_scalar_iv_common_support",
+          require_registered_instrument = FALSE,
+          sequence = k
+        )
+      }
+    }
+  }
+  out <- bind_iv_specification_rows(rows)
+  expected <- nrow(specs) * length(adjustments) * length(constructions)
+  if (nrow(out) != expected || anyDuplicated(out$specification_id)) {
+    stop("Consumption scalar-IV robustness registry is incomplete or duplicated.", call. = FALSE)
+  }
+  out
+}
+
+consumption_iv_common_sample_support <- function(panel, specifications, group_column) {
+  specs <- as_iv_specifications(specifications)
+  if (!group_column %in% names(specs)) {
+    stop("Consumption IV common-sample grouping column is missing: ", group_column, call. = FALSE)
+  }
+  x <- if (inherits(panel, "sf")) sf::st_drop_geometry(panel) else safe_df(panel)
+  groups <- split(seq_len(nrow(specs)), plain_chr(specs[[group_column]]))
+  safe_bind_rows(lapply(names(groups), function(group_id) {
+    group_specs <- specs[groups[[group_id]], , drop = FALSE]
+    needed <- unique(unlist(lapply(seq_len(nrow(group_specs)), function(i) {
+      iv_specification_variables(group_specs[i, , drop = FALSE], include_outcome = TRUE)
+    }), use.names = FALSE))
+    missing <- setdiff(needed, names(x))
+    complete <- if (length(missing)) rep(FALSE, nrow(x)) else stats::complete.cases(x[needed])
+    data.frame(
+      group_id = group_id,
+      group_column = group_column,
+      n_panel = nrow(x),
+      n_common = sum(complete),
+      common_share = if (nrow(x)) mean(complete) else NA_real_,
+      status = if (length(missing)) "missing_columns" else if (sum(complete) < 3L) {
+        "insufficient_common_cases"
+      } else {
+        "ready"
+      },
+      missing_columns = if (length(missing)) paste(missing, collapse = ";") else NA_character_,
+      stringsAsFactors = FALSE
+    )
+  }))
+}
+
+restrict_consumption_iv_to_common_samples <- function(panel, specifications, group_column) {
+  specs <- as_iv_specifications(specifications)
+  support <- consumption_iv_common_sample_support(panel, specs, group_column)
+  bad <- support$status != "ready"
+  if (any(bad)) {
+    stop(
+      "Consumption IV robustness common samples are not analysis-ready: ",
+      paste(paste0(support$group_id[bad], "=", support$status[bad]), collapse = "; "),
+      call. = FALSE
+    )
+  }
+  out <- panel
+  base <- if (inherits(panel, "sf")) sf::st_drop_geometry(panel) else safe_df(panel)
+  groups <- split(seq_len(nrow(specs)), plain_chr(specs[[group_column]]))
+  for (group_id in names(groups)) {
+    group_specs <- specs[groups[[group_id]], , drop = FALSE]
+    outcomes <- unique(plain_chr(group_specs$outcome))
+    if (length(outcomes) != 1L) {
+      stop("Consumption IV common-sample groups must share one outcome column.", call. = FALSE)
+    }
+    needed <- unique(unlist(lapply(seq_len(nrow(group_specs)), function(i) {
+      iv_specification_variables(group_specs[i, , drop = FALSE], include_outcome = TRUE)
+    }), use.names = FALSE))
+    complete <- stats::complete.cases(base[needed])
+    out[[outcomes[[1L]]]][!complete] <- NA_real_
+  }
+  attr(out, "consumption_iv_common_sample_support") <- support
+  out
 }
 
 summarize_consumption_iv_outcome_coverage <- function(panel, specifications) {
@@ -660,6 +779,80 @@ validate_consumption_iv_dynamics <- function(dynamics, specifications) {
 
   dynamics$summary <- summary
   dynamics
+}
+
+validate_consumption_scalar_iv_robustness <- function(dynamics, support) {
+  if (!is.list(dynamics) || !"summary" %in% names(dynamics)) {
+    stop("Consumption scalar-IV robustness dynamics lack a summary.", call. = FALSE)
+  }
+  summary <- safe_df(dynamics$summary)
+  support <- safe_df(support)
+  required_summary <- c("welfare_specification_id", "n", "first_stage_n", "reduced_form_n", "second_stage_n")
+  missing <- setdiff(required_summary, names(summary))
+  if (length(missing) || !all(c("group_id", "n_common", "status") %in% names(support))) {
+    stop("Consumption scalar-IV robustness common-sample validation lacks required fields.", call. = FALSE)
+  }
+  groups <- split(seq_len(nrow(summary)), plain_chr(summary$welfare_specification_id))
+  if (!setequal(names(groups), plain_chr(support$group_id))) {
+    stop("Consumption scalar-IV robustness summary and support groups differ.", call. = FALSE)
+  }
+  for (group_id in names(groups)) {
+    index <- groups[[group_id]]
+    expected_n <- num(support$n_common[match(group_id, plain_chr(support$group_id))])
+    realized <- unique(num(summary$n[index]))
+    stage_n <- unique(c(
+      num(summary$first_stage_n[index]),
+      num(summary$reduced_form_n[index]),
+      num(summary$second_stage_n[index])
+    ))
+    if (length(index) != 6L || length(realized) != 1L || length(stage_n) != 1L ||
+        !is.finite(expected_n) || realized[[1L]] != expected_n || stage_n[[1L]] != expected_n) {
+      stop("Consumption scalar-IV robustness did not preserve six-design common support for ", group_id, ".", call. = FALSE)
+    }
+  }
+  dynamics
+}
+
+add_consumption_scalar_iv_multiplicity <- function(dynamics) {
+  if (!is.list(dynamics) || !"summary" %in% names(dynamics)) {
+    stop("Consumption scalar-IV robustness dynamics lack a summary.", call. = FALSE)
+  }
+  out <- dynamics
+  summary <- safe_df(out$summary)
+  required <- c(
+    "welfare_specification_id", "reduced_form_p.value", "anderson_rubin_p_beta0"
+  )
+  missing <- setdiff(required, names(summary))
+  if (length(missing)) {
+    stop("Consumption scalar-IV multiplicity lacks fields: ", paste(missing, collapse = ", "), call. = FALSE)
+  }
+  summary$reduced_form_p_holm_within_welfare <- NA_real_
+  summary$anderson_rubin_p_beta0_holm_within_welfare <- NA_real_
+  groups <- split(seq_len(nrow(summary)), plain_chr(summary$welfare_specification_id))
+  for (index in groups) {
+    summary$reduced_form_p_holm_within_welfare[index] <-
+      holm_adjust_finite(summary$reduced_form_p.value[index])
+    summary$anderson_rubin_p_beta0_holm_within_welfare[index] <-
+      holm_adjust_finite(summary$anderson_rubin_p_beta0[index])
+  }
+  summary$reduced_form_p_holm_family <- holm_adjust_finite(summary$reduced_form_p.value)
+  summary$anderson_rubin_p_beta0_holm_family <- holm_adjust_finite(summary$anderson_rubin_p_beta0)
+  summary$multiplicity_family <- "consumption_scalar_iv_robustness"
+  out$summary <- summary
+  out
+}
+
+save_consumption_scalar_iv_robustness <- function(
+    dynamics,
+    support,
+    directory = "outputs/diagnostics/extended/consumption") {
+  write_diagnostic_bundle(
+    list(
+      consumption_scalar_iv_robustness = safe_df(dynamics$summary),
+      consumption_scalar_iv_robustness_common_support = safe_df(support)
+    ),
+    directory = directory
+  )
 }
 
 save_consumption_iv_dynamics <- function(

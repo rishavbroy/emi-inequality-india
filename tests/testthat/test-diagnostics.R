@@ -2748,3 +2748,117 @@ test_that("candidate Anderson-Rubin output retains design metadata", {
   expect_match(body_text, "out$construction_id", fixed = TRUE)
   expect_match(body_text, "out$fixed_effect", fixed = TRUE)
 })
+
+test_that("consumption scalar-IV robustness compiles exactly the registered six-design family", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
+  registry <- read_consumption_iv_outcome_registry(
+    file.path(root, "data/metadata/consumption_iv_outcomes.csv")
+  )
+  specs <- compile_consumption_scalar_iv_robustness_specifications(registry)
+
+  expect_equal(nrow(specs), nrow(registry) * 6L)
+  expect_equal(anyDuplicated(specs$specification_id), 0L)
+  expect_setequal(unique(specs$adjustment_id), c("region_main", "state_main"))
+  expect_setequal(
+    unique(specs$construction_id),
+    c("nonzero_mean", "glottolog_mean", "dyen_noncognate")
+  )
+  expect_true(all(specs$sample_rule == "consumption_scalar_iv_common_support"))
+  expect_true(all(specs$tier == "B"))
+  expect_true(all(specs$n_excluded_instruments == 1L))
+})
+
+test_that("consumption scalar-IV robustness uses one common sample within each welfare design", {
+  specs <- bind_iv_specification_rows(lapply(c("z1", "z2"), function(z) {
+    row <- iv_specification_row(
+      specification_id = paste0("s_", z), adjustment_id = "state_main",
+      adjustment = "State", construction_id = z, construction = z,
+      outcome = "y", treatment = "d", fixed_effect = "state",
+      controls = "x", included_language_controls = character(),
+      excluded_instruments = z, mapping_coverage_variable = NA_character_,
+      panel_variant = "primary", sample_rule = "consumption_scalar_iv_common_support",
+      cluster = "state_code_2001"
+    )
+    row$welfare_specification_id <- "welfare_a"
+    row
+  }))
+  panel <- data.frame(
+    y = 1:6, d = 2:7, x = 3:8,
+    z1 = c(1, 2, NA, 4, 5, 6), z2 = c(1, NA, 3, 4, 5, 6),
+    state_code_2001 = c("01", "01", "02", "02", "03", "03"),
+    stringsAsFactors = FALSE
+  )
+
+  support <- consumption_iv_common_sample_support(panel, specs, "welfare_specification_id")
+  restricted <- restrict_consumption_iv_to_common_samples(
+    panel, specs, "welfare_specification_id"
+  )
+
+  expect_equal(support$n_common, 4L)
+  expect_equal(sum(is.finite(restricted$y)), 4L)
+  expect_true(all(is.na(restricted$y[c(2, 3)])))
+})
+
+test_that("consumption scalar-IV multiplicity is frozen within welfare design and full family", {
+  dynamics <- list(summary = data.frame(
+    welfare_specification_id = rep(c("a", "b"), each = 3),
+    reduced_form_p.value = c(.01, .02, .9, .03, .04, .8),
+    anderson_rubin_p_beta0 = c(.02, .03, .8, .01, .05, .7),
+    stringsAsFactors = FALSE
+  ))
+  out <- add_consumption_scalar_iv_multiplicity(dynamics)$summary
+
+  expect_equal(
+    out$reduced_form_p_holm_within_welfare[1:3],
+    stats::p.adjust(c(.01, .02, .9), method = "holm")
+  )
+  expect_equal(
+    out$anderson_rubin_p_beta0_holm_family,
+    stats::p.adjust(dynamics$summary$anderson_rubin_p_beta0, method = "holm")
+  )
+  expect_true(all(out$multiplicity_family == "consumption_scalar_iv_robustness"))
+})
+
+test_that("consumption scalar-IV saver persists summaries but not pointwise AR grids", {
+  root <- tempfile("consumption-scalar-iv-")
+  dynamics <- list(
+    summary = data.frame(specification_id = "s", estimate = 1),
+    anderson_rubin_grid = data.frame(specification_id = "s", beta = 0, p.value = .5)
+  )
+  support <- data.frame(group_id = "w", n_common = 10, status = "ready")
+
+  paths <- save_consumption_scalar_iv_robustness(dynamics, support, root)
+
+  expect_setequal(
+    basename(paths),
+    c(
+      "consumption_scalar_iv_robustness.csv",
+      "consumption_scalar_iv_robustness_common_support.csv"
+    )
+  )
+  expect_false(file.exists(file.path(root, "consumption_scalar_iv_robustness_anderson_rubin_grid.csv")))
+})
+
+test_that("consumption scalar-IV validation enforces six-design realized common samples", {
+  summary <- data.frame(
+    welfare_specification_id = rep(c("a", "b"), each = 6),
+    n = rep(c(40, 35), each = 6),
+    first_stage_n = rep(c(40, 35), each = 6),
+    reduced_form_n = rep(c(40, 35), each = 6),
+    second_stage_n = rep(c(40, 35), each = 6),
+    stringsAsFactors = FALSE
+  )
+  support <- data.frame(
+    group_id = c("a", "b"), n_common = c(40, 35), status = "ready",
+    stringsAsFactors = FALSE
+  )
+  dynamics <- list(summary = summary)
+
+  expect_identical(validate_consumption_scalar_iv_robustness(dynamics, support), dynamics)
+  bad <- dynamics
+  bad$summary$n[[3L]] <- 39
+  expect_error(
+    validate_consumption_scalar_iv_robustness(bad, support),
+    "six-design common support"
+  )
+})

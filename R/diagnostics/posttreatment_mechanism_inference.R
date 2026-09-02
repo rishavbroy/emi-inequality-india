@@ -182,7 +182,7 @@ add_posttreatment_mechanism_holm <- function(results, p_column, output_column, l
   for (index in groups) {
     usable <- index[out$status[index] == "estimated" & is.finite(num(out[[p_column]][index]))]
     if (length(usable)) {
-      out[[output_column]][usable] <- stats::p.adjust(num(out[[p_column]][usable]), method = "holm")
+      out[[output_column]][usable] <- holm_adjust_finite(out[[p_column]][usable])
     }
   }
   out
