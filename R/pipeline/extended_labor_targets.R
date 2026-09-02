@@ -18,8 +18,24 @@ extended_labor_target_definitions <- function() {
       read_nesstar_conversion_contract("plfs_2017_18")
     ),
     tar_target(
+      plfs_2017_18_materialization,
+      inspect_nesstar_materialization(plfs_2017_18_conversion_contract),
+      cue = tar_cue(mode = "always")
+    ),
+    tar_target(
+      plfs_2017_18_materialization_diagnostics,
+      build_nesstar_materialization_diagnostics(plfs_2017_18_materialization)
+    ),
+    tar_target(
       diag_ext_plfs_2017_18_source_package_file,
       save_plfs_source_package_diagnostics(plfs_2017_18_source_package),
+      format = "file"
+    ),
+    tar_target(
+      diag_ext_plfs_2017_18_materialization_file,
+      save_nesstar_materialization_diagnostics(
+        plfs_2017_18_materialization_diagnostics, "plfs_2017_18_materialization.csv"
+      ),
       format = "file"
     ),
     tar_target(
@@ -62,11 +78,13 @@ extended_labor_target_definitions <- function() {
     ),
     tar_target(
       nss66_materialization_diagnostics,
-      build_nss66_materialization_diagnostics(nss66_materialization)
+      build_nesstar_materialization_diagnostics(nss66_materialization)
     ),
     tar_target(
       diag_ext_nss66_materialization_files,
-      save_nss66_materialization_diagnostics(nss66_materialization_diagnostics),
+      save_nesstar_materialization_diagnostics(
+        nss66_materialization_diagnostics, "nss66_materialization.csv"
+      ),
       format = "file"
     ),
     tar_target(

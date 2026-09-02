@@ -309,7 +309,7 @@ save_nss66_diagnostics <- function(
   save_nss_labor_diagnostics(x, "nss66", district_outcomes, root)
 }
 
-build_nss66_materialization_diagnostics <- function(materialization) {
+build_nesstar_materialization_diagnostics <- function(materialization) {
   blocks <- safe_df(materialization$blocks)
   blocks$source_id <- materialization$source_id
   blocks$materialization_status <- materialization$status
@@ -320,11 +320,14 @@ build_nss66_materialization_diagnostics <- function(materialization) {
   )]
 }
 
-save_nss66_materialization_diagnostics <- function(
-    x, root = "outputs/diagnostics/extended/labor") {
+save_nesstar_materialization_diagnostics <- function(
+    x, filename, root = "outputs/diagnostics/extended/labor") {
+  if (length(filename) != 1L || is.na(filename) || !nzchar(filename)) {
+    stop("Nesstar materialization diagnostic filename must be one non-empty string.", call. = FALSE)
+  }
   dir.create(root, recursive = TRUE, showWarnings = FALSE)
-  path <- file.path(root, "nss66_materialization.csv")
-  utils::write.csv(x, path, row.names = FALSE, na = "")
+  path <- file.path(root, filename)
+  utils::write.csv(safe_df(x), path, row.names = FALSE, na = "")
   path
 }
 

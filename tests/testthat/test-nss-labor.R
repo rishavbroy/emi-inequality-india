@@ -344,6 +344,25 @@ test_that("Nesstar materialization is optional when absent and strict when prese
   expect_equal(legacy_ready$blocks$rows, c(2, 3))
 })
 
+test_that("Nesstar materialization diagnostics are source-agnostic", {
+  materialization <- list(
+    source_id = "fixture", status = "ready", manifest_schema = "v2",
+    blocks = data.frame(
+      block_id = "F1", relative_path = "data/interim/fixture/F1.csv",
+      exists = TRUE, rows = 2, bytes = 12, modified_at = 1, sha256 = "abc",
+      stringsAsFactors = FALSE
+    )
+  )
+  out <- build_nesstar_materialization_diagnostics(materialization)
+  expect_identical(out$source_id[[1L]], "fixture")
+  expect_identical(out$materialization_status[[1L]], "ready")
+  expect_identical(out$manifest_schema[[1L]], "v2")
+
+  root <- tempfile("nesstar-diagnostics-")
+  path <- save_nesstar_materialization_diagnostics(out, "fixture_materialization.csv", root)
+  expect_true(file.exists(path))
+  expect_identical(basename(path), "fixture_materialization.csv")
+})
 
 test_that("Nesstar materialization rejects unknown manifest schemas", {
   contract <- data.frame(
