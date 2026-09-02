@@ -325,6 +325,8 @@ consumption between 2007-08 and 2017-18.
 
 The revision gate has passed: the public model now uses this real-consumption outcome together with the predetermined Census 2001 controls, state fixed effects, all-child EMI exposure, and the preferred scalar linguistic-distance instrument. `public_iv_specification_registry()` now declares the public headline and registered legacy-robustness models through the same canonical IV row contract used by newer diagnostic and outcome families; `iv_specification_formulas()` is only the final adapter required by the longstanding public model/table interface. `build_legacy_iv_formulas()` remains confined to the optional inherited-geography comparison.
 
+The governance layer distinguishes visibility from execution. The registered eight mean-MPCE horizon/estimand designs form the current executed dynamic family. A six-design scalar-IV robustness family (region/state × Shastry/Glottolog/Dyen) is a separately registered candidate family. Alternative mean-log, median, and bottom-40 welfare outcomes enter only at survey-compatible endpoint pairs; the current metadata imply 20 such outcome/endpoint/estimand designs before instrument/FE robustness is crossed. The enrolled-child EMI share is a separate treatment-margin robustness family. These axes are not automatically multiplied together: an interaction among robustness axes requires its own substantive rationale and multiplicity registration.
+
 ## Consumption estimands
 
 The preferred district mean is

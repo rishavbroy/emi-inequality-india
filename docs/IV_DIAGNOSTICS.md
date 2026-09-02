@@ -5,14 +5,16 @@ The extended IV diagnostics use one canonical specification layer rather than re
 `R/iv/specification_registry.R` defines:
 
 - admissible fixed-effect terms;
-- Census-2001 control blocks and the first-stage absorption ladder;
+- Census-2001 control blocks, the historical absorption ladder, symmetric block interventions, and finite alternative-control parameterizations;
 - the main and expanded adjustment sets;
 - alternative linguistic-distance constructions;
 - structural specification metadata with treatment, outcome, excluded instruments, included language controls, clustering variable, sample rule, panel variant, and diagnostic tier;
 - a de-duplicated diagnostic specification registry combining the alternative-instrument grid with the additional absorption/control-block specifications;
 - a diagnostic registry and saved applicability relation.
 
-The registry is intentionally not the Cartesian product of every imaginable project option. It contains theoretically motivated designs already used by the project. Specifications that are algebraically identical are de-duplicated before the general diagnostic suite runs.
+The registry is intentionally not the Cartesian product of every imaginable project option. Comprehensiveness is defined by scientific rationale, not by a target number of specifications: theoretically distinct relevance questions are made visible even when that enlarges the diagnostic universe, while mechanically crossable dimensions are excluded unless the interaction itself has a substantive interpretation. Specifications that are algebraically identical are de-duplicated before the general diagnostic suite runs.
+
+The absorption diagnostics therefore retain the historical cumulative ladder **and** add two symmetric families. `iv_block_intervention_adjustments()` estimates every main theoretical control block on its own and omits every block from the main set under both region and state fixed effects. `iv_main_parameterization_adjustments()` exhausts the finite substitutions already declared by the control metadata: secondary-plus versus literacy and compact versus decomposed economic structure. These families answer interpretable questions about attenuation and measurement without enumerating arbitrary individual-covariate subsets.
 
 The `cluster` field is part of that self-describing specification contract. Registry-driven relevance, balance, reduced-form, and Anderson-Rubin inference use the declared cluster variable directly rather than substituting a hard-coded state column. The current registry declares `state_code_2001` throughout, so this is a structural invariant rather than a change to the preferred inference.
 
@@ -43,6 +45,18 @@ The alternative linguistic-distance grid and the richer first-stage absorption l
 ### Anderson--Rubin artifact retention
 
 Anderson--Rubin grids are computational inputs to confidence-set inversion, not automatically reportable artifacts. The diagnostic objects retain the pointwise grids so validation and downstream inference can inspect them. The broad alternative-distance permutation universe no longer writes its full grid to disk; its persisted weak-IV summary already records the beta-zero test and the inverted confidence-set components for every registered design. Raw grids remain persisted only for compact, predeclared candidate/preferred analyses where the pointwise acceptance path is itself a useful review artifact.
+
+### Candidate-design governance
+
+`candidate_design_ledger.csv` is an explicit map from the project's methodological reference plan to the executable design space. Each row records the motivating reference section, scientific question, design axis, execution policy, multiplicity family, prerequisites, admissibility, and implementation status. It separates:
+
+- **relevance diagnostics**, where broad variation across geography, control blocks, treatment definitions, linguistic-distance bases, and historical vintages is itself scientifically informative;
+- **causal robustness families**, where response definitions, treatment margins, instrument bases, control parameterizations, and horizons are admitted only when the estimand remains interpretable;
+- **mechanism/falsification designs**, including the distinct C-17 state-by-language registry and the predeclared three-geography district-schooling grid;
+- **data-dependent candidates**, such as Shastry-style major-city/coast controls, which remain visible without fabricating inputs;
+- **non-goals**, including post-treatment mechanisms as baseline controls and mechanical Cartesian products of individually defensible robustness axes.
+
+This ledger is deliberately broader than the paper-facing model family. Visibility is not execution: `diagnostic_only`, `estimate_if_registered`, `requires_data`, and `do_not_estimate` are distinct policies. A design may therefore be scientifically justified and visible without being automatically dispatched.
 
 ### Alternative-distance candidate-design comparison
 
