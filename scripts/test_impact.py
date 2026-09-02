@@ -173,6 +173,21 @@ def path_tests(path):
             "test-census-migration.R",
             "test-census-workers.R",
         },
+        "R/pipeline/extended_economic_census_targets.R": {
+            "test-economic-census.R",
+            "test-posttreatment-mechanism-evidence.R",
+        },
+        "R/pipeline/extended_labor_targets.R": {
+            "test-nss-labor.R",
+            "test-posttreatment-mechanism-evidence.R",
+        },
+        "R/pipeline/extended_mechanism_targets.R": {
+            "test-census-housing.R",
+            "test-census-migration.R",
+            "test-economic-census.R",
+            "test-nss-labor.R",
+            "test-posttreatment-mechanism-evidence.R",
+        },
         "R/pipeline/extended_dise_targets.R": {
             "test-dise.R",
             "test-english-opportunity-mechanisms.R",

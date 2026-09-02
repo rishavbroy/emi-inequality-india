@@ -178,6 +178,7 @@ test_that("targets graph separates public diagnostics, extended diagnostics, and
   )) {
     expect_match(src, factory, fixed = TRUE, info = factory)
   }
+  expect_match(src, 'source("R/pipeline/extended_mechanism_targets.R")', fixed = TRUE)
   expect_match(src, 'source("R/pipeline/extended_diagnostic_targets.R")', fixed = TRUE)
   expect_match(
     src,
@@ -190,6 +191,7 @@ test_that("targets graph separates public diagnostics, extended diagnostics, and
   expect_match(core, "diag_public_spatial_autocorrelation_files", fixed = TRUE)
   expect_match(core, "save_spatial_autocorrelation_diagnostics(diag_public_spatial_autocorrelation), format = \"file\"", fixed = TRUE)
   expect_match(extended, "extended_diagnostic_target_definitions <- function()", fixed = TRUE)
+  expect_match(extended, "extended_mechanism_target_definitions()", fixed = TRUE)
   expect_match(extended, "diag_ext_missingness", fixed = TRUE)
   expect_match(src, "bench_ame_methods", fixed = TRUE)
   expect_match(src, "bench_consumption_distribution_domains", fixed = TRUE)
