@@ -143,15 +143,6 @@ census_2001_joint_balance_controls <- function(
   out
 }
 
-safe_share <- function(numerator, denominator, scale = 100) {
-  nume <- num(numerator)
-  deno <- num(denominator)
-  out <- rep(NA_real_, length(nume))
-  keep <- is.finite(nume) & is.finite(deno) & deno > 0
-  out[keep] <- scale * nume[keep] / deno[keep]
-  out
-}
-
 build_census_2001_controls <- function(district_totals) {
   x <- safe_df(district_totals)
   required <- c(

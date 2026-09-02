@@ -89,6 +89,18 @@ num <- function(x) {
   suppressWarnings(as.numeric(plain_chr(x)))
 }
 
+# Percentage-point share helper used by district control builders.
+# Keep this distinct from safe_count_share(), whose 0--1 scale is part of
+# count-accounting validation rather than model-variable construction.
+safe_share <- function(numerator, denominator, scale = 100) {
+  nume <- num(numerator)
+  deno <- num(denominator)
+  out <- rep(NA_real_, length(nume))
+  keep <- is.finite(nume) & is.finite(deno) & deno > 0
+  out[keep] <- scale * nume[keep] / deno[keep]
+  out
+}
+
 wmean <- function(x, w = NULL) {
   x <- num(x)
   if (is.null(w)) w <- rep(1, length(x)) else w <- num(w)

@@ -52,3 +52,9 @@ test_that("duplicate-key collapsing permits exact repeats and rejects conflicts"
     "fixture has duplicate keys with non-identical rows"
   )
 })
+
+test_that("safe_share uses the district-control percentage-point contract", {
+  expect_equal(safe_share(c(2, 1), c(5, 4)), c(40, 25))
+  expect_equal(safe_share(2, 5, scale = 1e5), 40000)
+  expect_true(is.na(safe_share(1, 0)))
+})
