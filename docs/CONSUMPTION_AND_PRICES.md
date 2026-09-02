@@ -688,3 +688,9 @@ district-level placebo trend; 2001-02 to 2004-05 is retained as descriptive
 context. Any future placebo registration therefore requires an explicit
 research-design change rather than occurring automatically when a round is
 available.
+
+## Registered scalar-IV consumption robustness
+
+The eight registered real-mean-MPCE ANCOVA/change endpoint designs are additionally evaluated under a bounded scalar-IV robustness family. The family crosses two defensible geographic adjustments (six-region FE + main controls; state FE + main controls) with the three serious scalar linguistic-distance bases already used by the shared IV diagnostics (preferred Shastry nonzero mean, Glottolog mean, and Dyen noncognate distance), yielding 48 predeclared cells. This is not the endpoint-by-full-diagnostic Cartesian product.
+
+Within each welfare endpoint/estimand, all six models use the same complete-case district sample across the outcome, treatment, controls, fixed-effect identifiers, and all three instrument bases. The persisted robustness artifact contains the model summaries and multiplicity-adjusted reduced-form/Anderson--Rubin evidence; the pointwise Anderson--Rubin grids remain computational target objects rather than another durable CSV. Holm adjustment is frozen at two levels: within each six-design welfare family and across all 48 registered cells.
