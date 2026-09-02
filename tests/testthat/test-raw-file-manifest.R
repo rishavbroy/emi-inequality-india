@@ -31,7 +31,8 @@ test_that("manifest and data_sources use canonical raw-data directories", {
     nss_2017_education = "data/raw/nss/nss_2017_education_75",
     census_2001_mother_tongue = "data/raw/census_2001/languages/C16",
     district_boundaries_2020 = "data/raw/district_boundaries_2020",
-    district_changes = "data/raw/district_changes"
+    district_changes = "data/raw/district_changes",
+    plfs_labor_market = "data/raw/plfs"
   )
 
   for (source_id in names(canonical_dirs)) {
