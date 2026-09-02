@@ -41,7 +41,7 @@ census_housing_mechanism_specifications <- function(
     outcome = "electricity_share_households_change_2011_2001",
     treatment = preferred_iv_variables()$treatment,
     control_registry = NULL) {
-  census_mechanism_specifications(
+  posttreatment_mechanism_specifications(
     outcome = outcome,
     treatment = treatment,
     sample_rule = "housing_change_mechanism_common_support",
@@ -52,7 +52,7 @@ census_housing_mechanism_specifications <- function(
 prepare_census_housing_mechanism_panel <- function(
     district_panel, housing_change, registry = census_housing_mechanism_registry(),
     control_registry = NULL) {
-  prepare_census_mechanism_panel(
+  prepare_posttreatment_mechanism_panel(
     district_panel = district_panel,
     sources = list(change = safe_df(housing_change)),
     registry = registry,
@@ -66,7 +66,7 @@ prepare_census_housing_mechanism_panel <- function(
 estimate_census_housing_mechanism_models <- function(
     mechanism_panel, registry = census_housing_mechanism_registry(),
     cfg = list(), ar_points = 401L, control_registry = NULL) {
-  estimate_census_mechanism_models(
+  estimate_posttreatment_mechanism_models(
     mechanism_panel = mechanism_panel,
     registry = registry,
     specifications = census_housing_mechanism_specifications(

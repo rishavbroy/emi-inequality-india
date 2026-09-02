@@ -157,7 +157,7 @@ census_migration_mechanism_specifications <- function(
     outcome = "interstate_share_among_migrants",
     treatment = preferred_iv_variables()$treatment,
     control_registry = NULL) {
-  census_mechanism_specifications(
+  posttreatment_mechanism_specifications(
     outcome = outcome,
     treatment = treatment,
     sample_rule = "migration_mechanism_common_support",
@@ -176,7 +176,7 @@ census_migration_mechanism_sources <- function(d02_2011, d03_2011, d04_2011, d07
 
 census_migration_mechanism_design_variables <- function(
     specifications = census_migration_mechanism_specifications()) {
-  census_mechanism_design_variables(specifications)
+  posttreatment_mechanism_design_variables(specifications)
 }
 
 prepare_census_migration_mechanism_panel <- function(
@@ -186,7 +186,7 @@ prepare_census_migration_mechanism_panel <- function(
   specifications <- census_migration_mechanism_specifications(
     control_registry = control_registry
   )
-  prepare_census_mechanism_panel(
+  prepare_posttreatment_mechanism_panel(
     district_panel = district_panel,
     sources = census_migration_mechanism_sources(
       d02_2011, d03_2011, d04_2011, d07_2011
@@ -198,7 +198,7 @@ prepare_census_migration_mechanism_panel <- function(
 }
 
 add_census_migration_holm <- function(results, p_column, output_column) {
-  add_census_mechanism_holm(
+  add_posttreatment_mechanism_holm(
     results, p_column, output_column, label = "Census migration"
   )
 }
@@ -209,7 +209,7 @@ estimate_census_migration_mechanism_models <- function(
     cfg = list(),
     ar_points = 401L,
     control_registry = NULL) {
-  estimate_census_mechanism_models(
+  estimate_posttreatment_mechanism_models(
     mechanism_panel = mechanism_panel,
     registry = registry,
     specifications = census_migration_mechanism_specifications(

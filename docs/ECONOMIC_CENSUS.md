@@ -41,7 +41,7 @@ The raw state coding also demonstrates why a bespoke raw aggregation should not 
 
 Economic Census inference remains deliberately inactive in this phase. EC05 and EC13 are now both source-validated and measurement-ready, and a longitudinal 2005-2013 diagnostic is constructed on Census-2001 geography. The current complete-parent bridge yields 359 EC13 parents, of which 357 also have observed EC05 data because Mumbai and Nicobars are EC05 source gaps. The common longitudinal family is intentionally limited to variables published comparably in both waves: log non-farm employment, log establishment count, mean employment per firm, and female/hired/private/manufacturing/services employment shares. EC05 informal employment remains descriptive because the EC13 district product does not publish a comparable field.
 
-Before IV mechanism models are activated, register the small causal mechanism family explicitly and reuse the shared Census mechanism specification/inference layer rather than create an Economic-Census-specific estimator.
+Before IV mechanism models are activated, register the small causal mechanism family explicitly and reuse the shared post-treatment mechanism specification/inference layer rather than create an Economic-Census-specific estimator.
 
 Economic Census employment is interpreted as employment located at establishments in the district, not resident-worker employment. NSS/PLFS labor outcomes therefore remain a separate mechanism family.
 
@@ -52,4 +52,4 @@ The local source inventory now also contains SHRUG EC90 and EC98 archives. EC90 
 
 ## Inference boundary
 
-The longitudinal firm-mechanism family is predeclared at six outcomes: log non-farm employment growth, log establishment growth, hired- and private-employment share changes, services-employment share change, and manufacturing-employment share change (secondary). Female employment share, mean employment per firm, and EC05-only informal employment remain descriptive. Models reuse the shared Census mechanism inference layer, including common-sample enforcement, the registered IV design grid, state-clustered inference, Holm correction, effective-F diagnostics, and Anderson-Rubin confidence sets.
+The longitudinal firm-mechanism family is predeclared at six outcomes: log non-farm employment growth, log establishment growth, hired- and private-employment share changes, services-employment share change, and manufacturing-employment share change (secondary). Female employment share, mean employment per firm, and EC05-only informal employment remain descriptive. Models reuse the shared post-treatment mechanism inference layer, including common-sample enforcement, the registered IV design grid, state-clustered inference, Holm correction, effective-F diagnostics, and Anderson-Rubin confidence sets.

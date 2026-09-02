@@ -35,7 +35,7 @@ economic_census_mechanism_specifications <- function(
     outcome = "log_nonfarm_employment_change_2013_2005",
     treatment = preferred_iv_variables()$treatment,
     control_registry = NULL) {
-  census_mechanism_specifications(
+  posttreatment_mechanism_specifications(
     outcome = outcome,
     treatment = treatment,
     sample_rule = "economic_census_change_mechanism_common_support",
@@ -48,7 +48,7 @@ prepare_economic_census_mechanism_panel <- function(
     changes,
     registry = economic_census_mechanism_registry(),
     control_registry = NULL) {
-  prepare_census_mechanism_panel(
+  prepare_posttreatment_mechanism_panel(
     district_panel = district_panel,
     sources = list(change = safe_df(changes)),
     registry = registry,
@@ -65,7 +65,7 @@ estimate_economic_census_mechanism_models <- function(
     cfg = list(),
     ar_points = 401L,
     control_registry = NULL) {
-  estimate_census_mechanism_models(
+  estimate_posttreatment_mechanism_models(
     mechanism_panel = mechanism_panel,
     registry = registry,
     specifications = economic_census_mechanism_specifications(

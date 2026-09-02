@@ -1,9 +1,9 @@
-# Shared post-treatment Census mechanism inference on Census-2001 geography.
+# Shared post-treatment mechanism inference on Census-2001 geography.
 
-census_mechanism_specifications <- function(
+posttreatment_mechanism_specifications <- function(
     outcome,
     treatment = preferred_iv_variables()$treatment,
-    sample_rule = "census_mechanism_common_support",
+    sample_rule = "posttreatment_mechanism_common_support",
     control_registry = NULL) {
   registry <- iv_specification_registry(
     outcome = outcome,
@@ -20,12 +20,12 @@ census_mechanism_specifications <- function(
     iv_candidate_design_adjustments(), construction_ids, paste, sep = "__"
   ))
   if (!setequal(out$specification_id, expected) || anyDuplicated(out$specification_id)) {
-    stop("Could not recover the candidate scalar-IV Census mechanism designs.", call. = FALSE)
+    stop("Could not recover the candidate scalar-IV post-treatment mechanism designs.", call. = FALSE)
   }
   out
 }
 
-census_mechanism_design_variables <- function(specifications) {
+posttreatment_mechanism_design_variables <- function(specifications) {
   specifications <- as_iv_specifications(specifications)
   unique(c(
     "state_code_2001", "district_code_2001", "region",
@@ -36,7 +36,7 @@ census_mechanism_design_variables <- function(specifications) {
   ))
 }
 
-validate_census_mechanism_registry <- function(registry, sources, label) {
+validate_posttreatment_mechanism_registry <- function(registry, sources, label) {
   registry <- safe_df(registry)
   required <- c(
     "outcome_id", "source_id", "variable", "mechanism_family", "tier", "denominator"
@@ -52,14 +52,14 @@ validate_census_mechanism_registry <- function(registry, sources, label) {
   registry
 }
 
-prepare_census_mechanism_panel <- function(
+prepare_posttreatment_mechanism_panel <- function(
     district_panel,
     sources,
     registry,
     specifications,
-    label = "Census") {
+    label = "District") {
   sources <- lapply(sources, safe_df)
-  registry <- validate_census_mechanism_registry(registry, sources, label)
+  registry <- validate_posttreatment_mechanism_registry(registry, sources, label)
 
   target_sets <- lapply(sources, function(x) {
     if (!"target_unit_2001" %in% names(x) || anyDuplicated(x$target_unit_2001)) {
@@ -120,7 +120,7 @@ prepare_census_mechanism_panel <- function(
     stop(label, " mechanisms have no overlap with the IV panel.", call. = FALSE)
   }
 
-  design_variables <- census_mechanism_design_variables(specifications)
+  design_variables <- posttreatment_mechanism_design_variables(specifications)
   required <- unique(c(design_variables, registry$variable))
   missing <- setdiff(required, names(joined))
   if (length(missing)) {
@@ -172,7 +172,7 @@ prepare_census_mechanism_panel <- function(
   out
 }
 
-add_census_mechanism_holm <- function(results, p_column, output_column, label = "Census") {
+add_posttreatment_mechanism_holm <- function(results, p_column, output_column, label = "District") {
   out <- safe_df(results)
   if (!all(c("specification_id", "status", p_column) %in% names(out))) {
     stop(label, " Holm adjustment lacks required result columns.", call. = FALSE)
@@ -188,13 +188,13 @@ add_census_mechanism_holm <- function(results, p_column, output_column, label = 
   out
 }
 
-estimate_census_mechanism_models <- function(
+estimate_posttreatment_mechanism_models <- function(
     mechanism_panel,
     registry,
     specifications,
     cfg = list(),
     ar_points = 401L,
-    label = "Census") {
+    label = "District") {
   panel <- safe_df(mechanism_panel)
   registry <- safe_df(registry)
   base_specs <- as_iv_specifications(specifications)
@@ -236,7 +236,7 @@ estimate_census_mechanism_models <- function(
   if (any(num(reduced_form$n) != sample_n)) {
     stop(label, " reduced forms did not use one common mechanism sample.", call. = FALSE)
   }
-  reduced_form <- add_census_mechanism_holm(
+  reduced_form <- add_posttreatment_mechanism_holm(
     reduced_form, "p.value", "p_holm_within_spec", label
   )
   reduced_form <- reduced_form[c(
@@ -284,10 +284,10 @@ estimate_census_mechanism_models <- function(
       any(num(weak_iv$n) != sample_n)) {
     stop(label, " weak-IV models did not use one complete registered model grid.", call. = FALSE)
   }
-  weak_iv <- add_census_mechanism_holm(
+  weak_iv <- add_posttreatment_mechanism_holm(
     weak_iv, "p_value_clustered", "p_value_clustered_holm_within_spec", label
   )
-  weak_iv <- add_census_mechanism_holm(
+  weak_iv <- add_posttreatment_mechanism_holm(
     weak_iv, "anderson_rubin_p_beta0", "anderson_rubin_p_beta0_holm_within_spec", label
   )
   weak_iv <- weak_iv[c(
