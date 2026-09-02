@@ -91,6 +91,53 @@ iv_block_intervention_adjustments <- function(control_registry = NULL) {
   rows
 }
 
+iv_causal_control_strategy_adjustments <- function(control_registry = NULL) {
+  registry <- resolve_census_2001_control_registry(control_registry)
+  main <- census_2001_main_controls(registry)
+  no_human_capital <- iv_without_human_capital(main, registry)
+  rows <- list()
+  for (fixed_effect in c("region", "state")) {
+    fe_label <- if (fixed_effect == "region") "Six-region FE" else "State FE"
+    rows[[paste(fixed_effect, "fe_only", sep = "_")]] <- list(
+      label = fe_label,
+      fixed_effect = fixed_effect,
+      controls = character(),
+      strategy = "geography_only",
+      theoretical_role = paste(
+        "Avoid conditioning on measured socioeconomic variables that may themselves",
+        "lie on long-run pathways from linguistic structure."
+      ),
+      caution = "Places the exclusion burden on geographic fixed effects and the instrument design."
+    )
+    rows[[paste(fixed_effect, "compact_2001", sep = "_")]] <- list(
+      label = paste0(fe_label, " + compact 2001 adjustment"),
+      fixed_effect = fixed_effect,
+      controls = main,
+      strategy = "observed_exclusion_threat_adjustment",
+      theoretical_role = paste(
+        "Condition on a compact set of observed 2001 scale, composition, human-capital,",
+        "economic-structure, demographic, and development differences."
+      ),
+      caution = paste(
+        "These controls predate 2007-08 EMI but do not predate the historically determined",
+        "linguistic instrument, so they are not automatically causally innocuous."
+      )
+    )
+    rows[[paste(fixed_effect, "compact_2001_no_human_capital", sep = "_")]] <- list(
+      label = paste0(fe_label, " + compact 2001 adjustment without human capital"),
+      fixed_effect = fixed_effect,
+      controls = no_human_capital,
+      strategy = "potential_pathway_robustness",
+      theoretical_role = paste(
+        "Retain observed baseline adjustment while avoiding direct conditioning on",
+        "pre-treatment education, a particularly plausible long-run language pathway."
+      ),
+      caution = "This is a pathway sensitivity, not a claim that other 2001 controls are necessarily exogenous."
+    )
+  }
+  rows
+}
+
 iv_main_parameterization_adjustments <- function(control_registry = NULL) {
   registry <- resolve_census_2001_control_registry(control_registry)
   secondary <- "adult_secondary_plus_share_2001"

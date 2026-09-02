@@ -262,6 +262,18 @@ test_that("candidate-design ledger records bounded robustness choices without Ca
   expect_equal(blocks$implementation_status, "implemented")
   expect_equal(blocks$candidate_cells, length(iv_block_intervention_adjustments(controls)))
 
+  control_strategy <- ledger[
+    ledger$candidate_id == "consumption_control_strategy_robustness",
+    ,
+    drop = FALSE
+  ]
+  expect_equal(
+    control_strategy$candidate_cells,
+    nrow(consumption) * length(iv_causal_control_strategy_adjustments(controls))
+  )
+  expect_equal(control_strategy$implementation_status, "unimplemented")
+  expect_equal(control_strategy$execution_policy, "estimate_if_registered")
+
   parameterizations <- ledger[
     ledger$candidate_id == "relevance_control_parameterizations",
     ,

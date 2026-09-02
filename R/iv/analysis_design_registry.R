@@ -581,6 +581,7 @@ build_iv_candidate_design_ledger <- function(
     iv_absorption_specification_registry(control_registry = control_registry)
   )
   n_block_interventions <- length(iv_block_intervention_adjustments(control_registry))
+  n_control_strategies <- length(iv_causal_control_strategy_adjustments(control_registry))
   n_parameterizations <- length(iv_main_parameterization_adjustments(control_registry))
   n_dise_relevance <- nrow(dise_construct_registry()) * n_diagnostic_iv
   n_historical_vintage <- nrow(historical_linguistic_predetermined_first_stage_registry()) * 4L
@@ -860,6 +861,30 @@ build_iv_candidate_design_ledger <- function(
       rationale = "The intensive medium margin is substantively distinct and was the original treatment concept; it should be visible as a predeclared robustness family rather than silently substituted for all-child exposure."
     ),
     candidate_design_row(
+      "consumption_control_strategy_robustness",
+      "Prompt 1 §3; control-set critique; Shastry identification discussion",
+      "consumption_iv",
+      "candidate_robustness",
+      "Do consumption conclusions depend on the causal role assigned to baseline controls, rather than on a single historically named main set?",
+      "control_strategy",
+      "registered consumption endpoint designs",
+      preferred_iv_variables()$treatment,
+      "preferred Shastry nonzero-mean distance",
+      "region/state FE crossed with geography-only, compact-2001, and compact-2001-without-human-capital strategies",
+      "first_stage+reduced_form+2sls+anderson_rubin",
+      "estimate_if_registered",
+      multiplicity_family = "consumption_control_strategy",
+      implementation_status = "unimplemented",
+      candidate_cells = n_consumption * n_control_strategies,
+      implemented_cells = 0L,
+      rationale = paste(
+        "No single 2001 control vector is uniquely justified by IV theory. Geography-only designs avoid conditioning",
+        "on possible descendants of historical linguistic structure; compact 2001 adjustment addresses observed",
+        "exclusion threats; and omitting human capital probes a particularly plausible language/education pathway.",
+        "This finite strategy family is more interpretable than arbitrary covariate subsets."
+      )
+    ),
+    candidate_design_row(
       "consumption_control_parameterization_robustness",
       "Prompt 1 §3; Response 2 controls",
       "consumption_iv",
@@ -869,14 +894,14 @@ build_iv_candidate_design_ledger <- function(
       "registered consumption endpoint designs",
       preferred_iv_variables()$treatment,
       "preferred Shastry nonzero-mean distance",
-      "region/state FE crossed with registered literacy/secondary-plus and compact/decomposed economic-structure parameterizations",
+      "within compact 2001 adjustment, region/state FE crossed with registered literacy/secondary-plus and compact/decomposed economic-structure parameterizations",
       "first_stage+reduced_form+2sls+anderson_rubin",
       "estimate_if_registered",
       multiplicity_family = "consumption_control_parameterization",
       implementation_status = "unimplemented",
       candidate_cells = n_consumption * n_parameterizations,
       implemented_cells = 0L,
-      rationale = "The control registry already declares these variables as alternative measures/parameterizations, so their finite substitution grid is more defensible than arbitrary main-versus-expanded accumulation."
+      rationale = "This family asks a measurement question conditional on the compact-2001 strategy. The registry already declares human-capital and economic-structure variables as substitutes, so their finite substitution grid is more defensible than arbitrary main-versus-expanded accumulation and is distinct from the causal control-strategy family."
     ),
     candidate_design_row(
       "historical_1991_adjustment_robustness",
