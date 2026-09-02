@@ -95,3 +95,7 @@ inference remain conditional on the candidate design. Final methodology should
 integrate relevance with historical balance and pretrends, migration/sorting,
 spatial evidence, mechanism evidence, and the substantive interpretation of
 the remaining variation.
+
+### Scientific questions versus fitted first-stage models
+
+The expanded control-intervention family distinguishes **semantic specifications** from **execution specifications**. Fifty-five named absorption questions are retained for scientific governance, but exact formula/sample aliases are fitted only once through the canonical IV-signature de-duplicator. The current registry therefore maps 55 scientific questions to 49 unique executions. `first_stage_absorption_aliases.csv` records the mapping, while `first_stage_absorption_semantic_summary.csv` joins every named question back to the corresponding fitted estimate, partial R-squared, excluded-instrument F statistic, and other execution diagnostics. This keeps the specification audit comprehensive without duplicating regressions or forcing reviewers to join artifacts manually.

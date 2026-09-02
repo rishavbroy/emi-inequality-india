@@ -246,3 +246,5 @@ The full extended audit writes `outputs/diagnostics/extended/iv/candidate_design
 ### Specification execution aliases
 
 The first-stage governance layer distinguishes scientific specification labels from unique model executions. Symmetric block interventions can duplicate older cumulative or leave-one-block-out formulas. The build therefore retains all named candidate questions, executes each formula/sample signature once, and writes `outputs/diagnostics/extended/instrument_relevance/first_stage_absorption_aliases.csv` so semantic aliases remain auditable. The candidate-design ledger records scientific candidate/implemented cells separately from unique execution cells.
+
+The expanded first-stage control audit writes both execution-level and scientific-question-level artifacts. `first_stage_absorption_ladder.csv` contains the 49 unique fitted specifications; `first_stage_absorption_aliases.csv` maps all 55 named questions to those executions; and `first_stage_absorption_semantic_summary.csv` carries the execution results back onto every scientific question. Exact aliases are therefore visible but never refit.
