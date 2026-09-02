@@ -216,16 +216,11 @@ usual-status outcomes use the first-visit person universe, while PLFS revisit
 records belong to a separate current-weekly-status/panel analysis. Do not pool
 revisits into the annual usual-status sample.
 
-The full audit discovers this gitignored materialization on every run. With no
-interim files it records a non-error `not_materialized` diagnostic. A partial
-block set or missing/mismatched conversion manifest is a hard error. With a
-complete materialization, the audit re-reads F4/F5/F6, verifies the official DDI
-row counts and cross-block person/design invariants, applies the reviewed
-2009-10 district lineage, and runs the four registered NSS66 usual-activity
-district outcomes through the same denominator-specific survey estimator used
-for NSS64. It writes source, lineage, target-support, outcome-registry, and
-district-outcome diagnostics under `outputs/diagnostics/extended/labor/`. This
-lets `review.zip` carry the validation and estimation results without packaging
-the large local interim CSVs themselves. If materialization is later removed,
-the audit removes stale NSS66 estimation diagnostics and falls back to the
-`not_materialized` state rather than leaving contradictory reviewer artifacts.
+The full audit discovers this gitignored PLFS materialization on every run and
+writes `outputs/diagnostics/extended/labor/plfs_2017_18_materialization.csv`.
+Before conversion it records the expected non-error `not_materialized` state. A
+partial F1 materialization or a missing/mismatched conversion manifest is a hard
+error. Once F1 and its sidecar validate, inspect the realized table's multiplier,
+geography, design, person-identity, and status distributions before adding the
+canonical PLFS adapter. The audit records provenance without packaging the large
+local interim CSV in `review.zip`.
