@@ -51,6 +51,82 @@ iv_without_human_capital <- function(controls, control_registry = NULL) {
   setdiff(controls, iv_control_block_membership(control_registry)$human_capital)
 }
 
+iv_main_control_blocks <- function(control_registry = NULL) {
+  registry <- resolve_census_2001_control_registry(control_registry)
+  main <- census_2001_main_controls(registry)
+  blocks <- iv_control_block_membership(registry)
+  blocks <- lapply(blocks, intersect, y = main)
+  blocks[vapply(blocks, length, integer(1)) > 0L]
+}
+
+iv_replace_main_controls <- function(
+    remove = character(), add = character(), control_registry = NULL) {
+  order_iv_controls(
+    c(setdiff(census_2001_main_controls(control_registry), remove), add),
+    census_2001_diagnostic_controls(control_registry)
+  )
+}
+
+iv_block_intervention_adjustments <- function(control_registry = NULL) {
+  blocks <- iv_main_control_blocks(control_registry)
+  main <- census_2001_main_controls(control_registry)
+  rows <- list()
+  for (fixed_effect in c("region", "state")) {
+    fixed_label <- if (identical(fixed_effect, "region")) "Six-region FE" else "State FE"
+    for (block_id in names(blocks)) {
+      block <- blocks[[block_id]]
+      label <- gsub("_", " ", block_id)
+      rows[[paste(fixed_effect, "block_only", block_id, sep = "_")]] <- list(
+        paste0(fixed_label, " + ", label, " block only"),
+        fixed_effect,
+        block
+      )
+      rows[[paste(fixed_effect, "main_without", block_id, sep = "_")]] <- list(
+        paste0(fixed_label, " + main controls without ", label),
+        fixed_effect,
+        setdiff(main, block)
+      )
+    }
+  }
+  rows
+}
+
+iv_main_parameterization_adjustments <- function(control_registry = NULL) {
+  registry <- resolve_census_2001_control_registry(control_registry)
+  secondary <- "adult_secondary_plus_share_2001"
+  literacy <- "literacy_share_2001"
+  compact_economic <- "agricultural_worker_share_2001"
+  decomposed_economic <- c(
+    "worker_share_2001", "cultivator_share_workers_2001",
+    "agricultural_labourer_share_workers_2001"
+  )
+  variants <- list(
+    literacy = iv_replace_main_controls(
+      remove = secondary, add = literacy, control_registry = registry
+    ),
+    decomposed_economic = iv_replace_main_controls(
+      remove = compact_economic, add = decomposed_economic, control_registry = registry
+    ),
+    literacy_decomposed_economic = iv_replace_main_controls(
+      remove = c(secondary, compact_economic),
+      add = c(literacy, decomposed_economic),
+      control_registry = registry
+    )
+  )
+  rows <- list()
+  for (fixed_effect in c("region", "state")) {
+    fixed_label <- if (identical(fixed_effect, "region")) "Six-region FE" else "State FE"
+    for (variant_id in names(variants)) {
+      rows[[paste(fixed_effect, "main", variant_id, sep = "_")]] <- list(
+        paste0(fixed_label, " + main-control ", gsub("_", " ", variant_id), " parameterization"),
+        fixed_effect,
+        variants[[variant_id]]
+      )
+    }
+  }
+  rows
+}
+
 iv_instrument_constructions <- function() {
   list(
     nonzero_mean = list(
@@ -440,6 +516,17 @@ iv_absorption_adjustments <- function(control_registry = NULL) {
       )
     }
   }
+
+  # The cumulative ladder is retained because it documents the historical
+  # attenuation pattern, but it is order-dependent. Symmetric block-only and
+  # leave-one-block-out interventions make each substantive control family
+  # interpretable on its own. Alternative parameterizations are crossed only
+  # where the control registry explicitly declares them as substitutes.
+  base <- c(
+    base,
+    iv_block_intervention_adjustments(control_registry),
+    iv_main_parameterization_adjustments(control_registry)
+  )
   base
 }
 

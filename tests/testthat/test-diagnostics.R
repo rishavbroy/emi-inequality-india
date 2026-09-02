@@ -796,6 +796,34 @@ test_that("first-stage absorption diagnostics use fixed support and report reque
   ) %in% out$summary$specification_id))
   no_hc <- out$registry$controls[out$registry$specification_id == "region_fe_expanded_without_human_capital"][[1]]
   expect_length(intersect(no_hc, first_stage_control_blocks()$human_capital), 0L)
+
+  main_blocks <- iv_main_control_blocks()
+  expect_true(length(main_blocks) > 1L)
+  for (block_id in names(main_blocks)) {
+    block_only <- paste("region", "block_only", block_id, sep = "_")
+    leave_out <- paste("state", "main_without", block_id, sep = "_")
+    expect_true(block_only %in% out$registry$specification_id)
+    expect_true(leave_out %in% out$registry$specification_id)
+    expect_setequal(
+      out$registry$controls[out$registry$specification_id == block_only][[1]],
+      main_blocks[[block_id]]
+    )
+    expect_length(
+      intersect(
+        out$registry$controls[out$registry$specification_id == leave_out][[1]],
+        main_blocks[[block_id]]
+      ),
+      0L
+    )
+  }
+  expect_true(all(c(
+    "region_main_literacy",
+    "state_main_literacy",
+    "region_main_decomposed_economic",
+    "state_main_decomposed_economic",
+    "region_main_literacy_decomposed_economic",
+    "state_main_literacy_decomposed_economic"
+  ) %in% out$registry$specification_id))
   expect_gt(out$summary$partial_r_squared[1], 0.9)
   expect_equal(nrow(out$state_deletion), length(unique(states)))
   expect_setequal(
