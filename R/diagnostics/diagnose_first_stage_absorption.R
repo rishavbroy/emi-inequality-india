@@ -24,6 +24,17 @@ first_stage_absorption_registry <- function(control_registry = NULL) {
   )
 }
 
+
+first_stage_absorption_aliases <- function(control_registry = NULL) {
+  aliases <- iv_absorption_specification_aliases(control_registry = control_registry)
+  data.frame(
+    semantic_specification_id = sub("^absorption__", "", aliases$semantic_specification_id),
+    execution_specification_id = sub("^absorption__", "", aliases$execution_specification_id),
+    is_execution_alias = aliases$is_execution_alias,
+    stringsAsFactors = FALSE
+  )
+}
+
 first_stage_absorption_variables <- function(
   treatment = "emi_exposure_all_children_0708",
   instrument = "ling_distance_nonzero_mean",
@@ -362,6 +373,7 @@ diagnose_first_stage_absorption <- function(
     list(
       summary = summary,
       registry = registry,
+      aliases = first_stage_absorption_aliases(control_registry),
       common_support = data.frame(
         treatment = treatment, instrument = instrument, n = nrow(data),
         n_states = length(unique(data$state_code_2001)),
@@ -388,6 +400,7 @@ save_first_stage_absorption_diagnostics <- function(
   output_manifest(c(
     specification_ladder = write_diagnostic_csv(diagnostics$summary, file.path(dir, "first_stage_absorption_ladder.csv")),
     specification_registry = write_diagnostic_csv(registry, file.path(dir, "first_stage_absorption_registry.csv")),
+    specification_aliases = write_diagnostic_csv(diagnostics$aliases, file.path(dir, "first_stage_absorption_aliases.csv")),
     common_support = write_diagnostic_csv(diagnostics$common_support, file.path(dir, "first_stage_absorption_common_support.csv")),
     state_residual_ranges = write_diagnostic_csv(diagnostics$state_residual_ranges, file.path(dir, "first_stage_state_residual_ranges.csv")),
     state_deletion = write_diagnostic_csv(diagnostics$state_deletion, file.path(dir, "first_stage_state_deletion.csv")),

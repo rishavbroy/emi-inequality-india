@@ -530,7 +530,7 @@ iv_absorption_adjustments <- function(control_registry = NULL) {
   base
 }
 
-iv_absorption_specification_registry <- function(
+iv_absorption_specification_candidates <- function(
   outcome = "real_log_consumption_change",
   treatment = preferred_iv_variables()$treatment,
   panel_variant = "primary",
@@ -580,6 +580,55 @@ iv_specification_signature <- function(specification) {
   )
 }
 
+
+iv_specification_alias_map <- function(specifications) {
+  if (!is.data.frame(specifications) || !nrow(specifications)) {
+    stop("IV alias mapping requires a non-empty specification data frame.", call. = FALSE)
+  }
+  signatures <- vapply(seq_len(nrow(specifications)), function(i) {
+    iv_specification_signature(specifications[i, , drop = FALSE])
+  }, character(1))
+  canonical_index <- match(signatures, signatures)
+  data.frame(
+    semantic_specification_id = plain_chr(specifications$specification_id),
+    execution_specification_id = plain_chr(specifications$specification_id[canonical_index]),
+    semantic_adjustment_id = plain_chr(specifications$adjustment_id),
+    execution_adjustment_id = plain_chr(specifications$adjustment_id[canonical_index]),
+    is_execution_alias = seq_len(nrow(specifications)) != canonical_index,
+    stringsAsFactors = FALSE
+  )
+}
+
+deduplicate_iv_specifications <- function(specifications) {
+  aliases <- iv_specification_alias_map(specifications)
+  out <- specifications[!aliases$is_execution_alias, , drop = FALSE]
+  out$sequence <- seq_len(nrow(out))
+  rownames(out) <- NULL
+  out
+}
+
+iv_absorption_specification_aliases <- function(
+    outcome = "real_log_consumption_change",
+    treatment = preferred_iv_variables()$treatment,
+    panel_variant = "primary",
+    sample_rule = "alternative_distance_common_support",
+    control_registry = NULL) {
+  iv_specification_alias_map(iv_absorption_specification_candidates(
+    outcome, treatment, panel_variant, sample_rule, control_registry
+  ))
+}
+
+iv_absorption_specification_registry <- function(
+    outcome = "real_log_consumption_change",
+    treatment = preferred_iv_variables()$treatment,
+    panel_variant = "primary",
+    sample_rule = "alternative_distance_common_support",
+    control_registry = NULL) {
+  deduplicate_iv_specifications(iv_absorption_specification_candidates(
+    outcome, treatment, panel_variant, sample_rule, control_registry
+  ))
+}
+
 iv_diagnostic_specification_registry <- function(
   outcome = "real_log_consumption_change",
   treatment = preferred_iv_variables()$treatment,
@@ -594,17 +643,7 @@ iv_diagnostic_specification_registry <- function(
   absorption <- iv_absorption_specification_registry(
     outcome, treatment, panel_variant, sample_rule, control_registry
   )
-  base_signatures <- vapply(seq_len(nrow(base)), function(i) {
-    iv_specification_signature(base[i, , drop = FALSE])
-  }, character(1))
-  absorption_signatures <- vapply(seq_len(nrow(absorption)), function(i) {
-    iv_specification_signature(absorption[i, , drop = FALSE])
-  }, character(1))
-  absorption <- absorption[!absorption_signatures %in% base_signatures, , drop = FALSE]
-  out <- rbind(base, absorption)
-  out$sequence <- seq_len(nrow(out))
-  rownames(out) <- NULL
-  out
+  deduplicate_iv_specifications(rbind(base, absorption))
 }
 
 iv_specification_formula <- function(specification) {

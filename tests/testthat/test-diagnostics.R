@@ -798,23 +798,24 @@ test_that("first-stage absorption diagnostics use fixed support and report reque
   expect_length(intersect(no_hc, first_stage_control_blocks()$human_capital), 0L)
 
   main_blocks <- iv_main_control_blocks()
+  aliases <- out$aliases
+  raw_adjustments <- iv_absorption_adjustments()
   expect_true(length(main_blocks) > 1L)
   for (block_id in names(main_blocks)) {
     block_only <- paste("region", "block_only", block_id, sep = "_")
     leave_out <- paste("state", "main_without", block_id, sep = "_")
-    expect_true(block_only %in% out$registry$specification_id)
-    expect_true(leave_out %in% out$registry$specification_id)
-    expect_setequal(
-      out$registry$controls[out$registry$specification_id == block_only][[1]],
-      main_blocks[[block_id]]
-    )
-    expect_length(
-      intersect(
-        out$registry$controls[out$registry$specification_id == leave_out][[1]],
-        main_blocks[[block_id]]
-      ),
-      0L
-    )
+    for (semantic_id in c(block_only, leave_out)) {
+      expect_true(semantic_id %in% aliases$semantic_specification_id)
+      execution_id <- aliases$execution_specification_id[
+        match(semantic_id, aliases$semantic_specification_id)
+      ]
+      expect_true(execution_id %in% out$registry$specification_id)
+      expect_setequal(
+        out$registry$controls[out$registry$specification_id == execution_id][[1]],
+        raw_adjustments[[semantic_id]][[3L]]
+      )
+    }
+    expect_length(intersect(raw_adjustments[[leave_out]][[3L]], main_blocks[[block_id]]), 0L)
   }
   expect_true(all(c(
     "region_main_literacy",
@@ -864,6 +865,12 @@ test_that("first-stage absorption diagnostics save a compact manifest without re
     list(
       summary = data.frame(specification_id = registry$specification_id, stringsAsFactors = FALSE),
       registry = registry,
+      aliases = data.frame(
+        semantic_specification_id = registry$specification_id,
+        execution_specification_id = registry$specification_id,
+        is_execution_alias = FALSE,
+        stringsAsFactors = FALSE
+      ),
       common_support = data.frame(n = 24L),
       state_residual_ranges = data.frame(specification_id = registry$specification_id),
       state_deletion = data.frame(specification_id = registry$specification_id),
@@ -880,7 +887,8 @@ test_that("first-stage absorption diagnostics save a compact manifest without re
 
   expect_setequal(basename(manifest$path), c(
     "first_stage_absorption_ladder.csv", "first_stage_absorption_registry.csv",
-    "first_stage_absorption_common_support.csv", "first_stage_state_residual_ranges.csv",
+    "first_stage_absorption_aliases.csv", "first_stage_absorption_common_support.csv",
+    "first_stage_state_residual_ranges.csv",
     "first_stage_state_deletion.csv", "first_stage_district_influence.csv",
     "first_stage_vif.csv"
   ))
@@ -1498,6 +1506,34 @@ test_that("conditional balance uses specification fixed effects and clustered jo
   expect_equal(out$n_excluded_instruments, 1L)
   expect_true(is.finite(out$joint_f))
   expect_true(is.finite(out$standardized_effect))
+})
+
+test_that("absorption registry separates scientific aliases from unique execution cells", {
+  candidates <- iv_absorption_specification_candidates()
+  registry <- iv_absorption_specification_registry()
+  aliases <- iv_absorption_specification_aliases()
+
+  expect_equal(nrow(candidates), length(iv_absorption_adjustments()))
+  expect_equal(nrow(registry), sum(!aliases$is_execution_alias))
+  expect_lt(nrow(registry), nrow(candidates))
+  expect_equal(anyDuplicated(vapply(seq_len(nrow(registry)), function(i) {
+    iv_specification_signature(registry[i, , drop = FALSE])
+  }, character(1))), 0L)
+
+  expected_aliases <- c(
+    region_fe_plus_basic_development = "region_fe_expanded_controls",
+    state_fe_plus_basic_development = "state_fe_expanded_controls",
+    region_block_only_basic_scale_geography = "region_fe_plus_basic_scale_geography",
+    state_block_only_basic_scale_geography = "state_fe_plus_basic_scale_geography",
+    region_main_without_human_capital = "region_fe_main_without_human_capital",
+    state_main_without_human_capital = "state_fe_main_without_human_capital"
+  )
+  observed <- stats::setNames(
+    aliases$execution_adjustment_id[aliases$is_execution_alias],
+    aliases$semantic_adjustment_id[aliases$is_execution_alias]
+  )
+  expect_equal(unname(observed[names(expected_aliases)]), unname(expected_aliases))
+  expect_equal(sum(aliases$is_execution_alias), length(expected_aliases))
 })
 
 test_that("diagnostic specification registry absorbs the control-block ladder without duplicates", {
