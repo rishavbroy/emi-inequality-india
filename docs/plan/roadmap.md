@@ -108,3 +108,8 @@ Once the firm/labor phases and final outcome registry are fixed:
 - Do not expand a registered hypothesis family after inspecting results without labeling the expansion exploratory.
 - Do not add parallel estimators when the shared Census mechanism or survey-design layers already represent the estimand.
 - Do not add raw-source adapters before the underlying files have been inspected.
+
+
+PLFS 2017-18 now has a real materialized F1, canonical annual-weight/person adapter, and deterministic reuse of the reviewed 2017-18 district lineage. The next labor gate is realized lineage/support review; do not activate long-run district outcomes until that diagnostic is inspected, and keep population-allocation geography as a separately labeled sensitivity.
+
+Current realized F1 inspection finds 655 source district identities; 446 are present in the strictly deterministic reviewed 2017-18 bridge, covering about 68.17% of sampled persons. This is a diagnostic gate, not a reason to promote population-allocation geography into the preferred specification.

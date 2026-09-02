@@ -124,3 +124,12 @@ The next long-run wave is PLFS 2017-18. The official PLFS catalog identifies fou
 `data/metadata/plfs_labor_contracts.csv` freezes this source choice, official case counts, field names, and `long_run_post` temporal role before analytical ingestion. The actual local 2017-18 package now contains the reviewed 156,891,958-byte `.Nesstar` binary, 56,959-byte layout workbook, and 218,040-byte official MoSPI DDI/XML. The DDI independently identifies `F1 = hh_per_fv_2017-18`, 433,339 persons, and all registered design/geography/status/multiplier fields. PLFS is therefore registered in the same generic `nesstar_conversion_contracts.csv` boundary used by NSS66, with only F1 selected for annual usual-status materialization. Revisit records remain reserved for a separate current-weekly-status/panel family.
 
 PLFS 2017-18 uses the same audited Nesstar materialization lifecycle as NSS66. The extended audit records `plfs_2017_18_materialization.csv`; absence is an expected pre-conversion state, while partial or sidecar-inconsistent materialization fails closed. Canonical PLFS ingestion remains downstream of inspection of the realized F1 table.
+
+
+### PLFS 2017-18 canonical first-visit adapter
+
+The materialized first-visit person file is normalized only after its generic Nesstar sidecar passes the audit. Annual person weights follow the official unit-level README: combine the two subsamples with `MULT/100` when `NSS == NSC` and `MULT/200` otherwise, then divide by `No_qtr_per_fv` for the annual estimate. The person key follows the documented quarter/visit/FSU/segment/second-stage-stratum/household identity, extended by person serial number.
+
+PLFS district identity uses the same `state + NSS-region digit + district` code convention as the reviewed NSS 2017-18 source roster. Preferred PLFS lineage reuses **only** rows already classified `panel_variant = deterministic`; population-allocation rows are not relabeled deterministic and remain a separate sensitivity. Realized F1 diagnostics should therefore be inspected before long-run district outcomes are activated.
+
+Current realized F1 inspection finds 655 source district identities; 446 are present in the strictly deterministic reviewed 2017-18 bridge, covering about 68.17% of sampled persons. This is a diagnostic gate, not a reason to promote population-allocation geography into the preferred specification.

@@ -104,3 +104,6 @@ NSS66 employment/unemployment registers both the official DDI and canonical `sur
   reproducible local intermediates, not tracked raw data.
 
 `plfs_labor_contracts.csv` freezes official PLFS wave structure before ingestion: catalog reference/case counts, first-visit versus revisit roles, annual usual-status source choice, design/geography fields, multiplier field, and principal/subsidiary status fields. The raw 2017-18 Nesstar binary, layout workbook, and official MoSPI DDI/XML are registered in `file_manifest.csv`. `nesstar_conversion_contracts.csv` selects only F1 (`hh_per_fv_2017-18`, 433,339 persons) for annual usual-status materialization; revisit PLFS records are intentionally excluded from that source family.
+
+
+`plfs_labor_contracts.csv` also declares the quarter/visit/segment and `NSS`/`NSC`/annual-quarter fields needed to reconstruct the official PLFS annual person weight. The PLFS 2017-18 unit-level README is registered in `file_manifest.csv` as the authority for that formula and the primary-key definition.

@@ -224,3 +224,6 @@ error. Once F1 and its sidecar validate, inspect the realized table's multiplier
 geography, design, person-identity, and status distributions before adding the
 canonical PLFS adapter. The audit records provenance without packaging the large
 local interim CSV in `review.zip`.
+
+
+After `plfs_2017_18` materialization is `ready`, the extended labor audit reads only the contracted F1 columns, applies the official annual multiplier rule from the bundled PLFS 2017-18 README, constructs the documented first-visit person identity, and reuses the deterministic reviewed NSS 2017-18 district bridge. Review `plfs_2017_18_source_validation.csv`, `plfs_2017_18_lineage_support.csv`, and `plfs_2017_18_target_support.csv` before activating long-run district outcomes. Population-allocation geography is intentionally excluded from this preferred bridge.
