@@ -158,25 +158,21 @@ build_census_housing_diagnostics <- function(
 
 save_census_housing_diagnostics <- function(
     diagnostics, dir = "outputs/diagnostics/extended/census_housing") {
-  dir.create(dir, recursive = TRUE, showWarnings = FALSE)
-  files <- c(
-    housing_2001 = file.path(dir, "housing_2001.csv"),
-    housing_2011_harmonized = file.path(dir, "housing_2011_harmonized_2001.csv"),
-    housing_change_2011_2001 = file.path(dir, "housing_change_2011_2001.csv"),
-    coverage = file.path(dir, "coverage.csv"),
-    change_coverage = file.path(dir, "change_coverage.csv"),
-    source_validation_2001 = file.path(dir, "source_validation_2001.csv"),
-    source_validation_2011 = file.path(dir, "source_validation_2011.csv"),
-    mechanism_registry = file.path(dir, "mechanism_registry.csv"),
-    mechanism_sample_coverage = file.path(dir, "mechanism_sample_coverage.csv"),
-    mechanism_sample_support = file.path(dir, "mechanism_sample_support.csv"),
-    mechanism_first_stage = file.path(dir, "mechanism_first_stage.csv"),
-    mechanism_reduced_form = file.path(dir, "mechanism_reduced_form.csv"),
-    mechanism_weak_iv = file.path(dir, "mechanism_weak_iv.csv"),
-    mechanism_anderson_rubin_grid = file.path(dir, "mechanism_anderson_rubin_grid.csv")
+  measurement <- diagnostics[c(
+    "housing_2001", "housing_2011_harmonized", "housing_change_2011_2001",
+    "coverage", "change_coverage", "source_validation_2001", "source_validation_2011"
+  )]
+  measurement_files <- c(
+    housing_2001 = "housing_2001.csv",
+    housing_2011_harmonized = "housing_2011_harmonized_2001.csv",
+    housing_change_2011_2001 = "housing_change_2011_2001.csv",
+    coverage = "coverage.csv",
+    change_coverage = "change_coverage.csv",
+    source_validation_2001 = "source_validation_2001.csv",
+    source_validation_2011 = "source_validation_2011.csv"
   )
-  for (name in names(files)) {
-    utils::write.csv(diagnostics[[name]], files[[name]], row.names = FALSE, na = "")
-  }
-  unname(files)
+  c(
+    write_diagnostic_bundle(measurement, dir, measurement_files),
+    save_posttreatment_mechanism_outputs(diagnostics, dir)
+  )
 }

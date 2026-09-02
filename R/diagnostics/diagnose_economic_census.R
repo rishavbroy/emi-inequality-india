@@ -112,23 +112,12 @@ build_economic_census_diagnostics <- function(
 }
 
 save_economic_census_diagnostics <- function(
-    diagnostics,
-    dir = "outputs/diagnostics/extended/economic_census") {
-  dir.create(dir, recursive = TRUE, showWarnings = FALSE)
-  files <- c(
-    ec05_district_measures = file.path(dir, "ec05_district_measures.csv"),
-    ec13_district_measures = file.path(dir, "ec13_district_measures.csv"),
-    ec05_ec13_changes = file.path(dir, "ec05_ec13_changes.csv"),
-    mechanism_registry = file.path(dir, "mechanism_registry.csv"),
-    mechanism_sample_coverage = file.path(dir, "mechanism_sample_coverage.csv"),
-    mechanism_sample_support = file.path(dir, "mechanism_sample_support.csv"),
-    mechanism_first_stage = file.path(dir, "mechanism_first_stage.csv"),
-    mechanism_reduced_form = file.path(dir, "mechanism_reduced_form.csv"),
-    mechanism_weak_iv = file.path(dir, "mechanism_weak_iv.csv"),
-    mechanism_anderson_rubin_grid = file.path(dir, "mechanism_anderson_rubin_grid.csv")
+    diagnostics, dir = "outputs/diagnostics/extended/economic_census") {
+  measurement <- diagnostics[c(
+    "ec05_district_measures", "ec13_district_measures", "ec05_ec13_changes"
+  )]
+  c(
+    write_diagnostic_bundle(measurement, dir),
+    save_posttreatment_mechanism_outputs(diagnostics, dir)
   )
-  for (name in names(files)) {
-    utils::write.csv(diagnostics[[name]], files[[name]], row.names = FALSE, na = "")
-  }
-  unname(files)
 }

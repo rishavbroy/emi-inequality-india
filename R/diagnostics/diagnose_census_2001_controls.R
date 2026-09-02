@@ -24,21 +24,16 @@ diagnose_census_2001_controls <- function(panel, revised_models, revised_first_s
   )
 }
 
-save_census_2001_control_diagnostics <- function(x, dir = "outputs/diagnostics/extended/census_2001_controls") {
-  dir.create(dir, recursive = TRUE, showWarnings = FALSE)
-  files <- c(
-    source_coverage = file.path(dir, "source_coverage.csv"),
-    coverage = file.path(dir, "control_coverage.csv"),
-    balance = file.path(dir, "instrument_balance.csv"),
-    joint_balance = file.path(dir, "instrument_balance_joint.csv"),
-    models = file.path(dir, "revised_model_status.csv"),
-    first_stage = file.path(dir, "revised_first_stage.csv")
+save_census_2001_control_diagnostics <- function(
+    x, dir = "outputs/diagnostics/extended/census_2001_controls") {
+  objects <- x[c("source_coverage", "coverage", "balance", "joint_balance", "models", "first_stage")]
+  filenames <- c(
+    source_coverage = "source_coverage.csv",
+    coverage = "control_coverage.csv",
+    balance = "instrument_balance.csv",
+    joint_balance = "instrument_balance_joint.csv",
+    models = "revised_model_status.csv",
+    first_stage = "revised_first_stage.csv"
   )
-  utils::write.csv(x$source_coverage, files[["source_coverage"]], row.names = FALSE, na = "")
-  utils::write.csv(x$coverage, files[["coverage"]], row.names = FALSE, na = "")
-  utils::write.csv(x$balance, files[["balance"]], row.names = FALSE, na = "")
-  utils::write.csv(x$joint_balance, files[["joint_balance"]], row.names = FALSE, na = "")
-  utils::write.csv(x$models, files[["models"]], row.names = FALSE, na = "")
-  utils::write.csv(x$first_stage, files[["first_stage"]], row.names = FALSE, na = "")
-  unname(files)
+  write_diagnostic_bundle(objects, dir, filenames)
 }

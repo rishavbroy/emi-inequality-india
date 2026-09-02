@@ -327,3 +327,177 @@ estimate_posttreatment_mechanism_models <- function(
     anderson_rubin_grid = safe_bind_rows(weak_grids)
   )
 }
+
+posttreatment_mechanism_persisted_components <- function() {
+  c(
+    "registry", "sample_coverage", "sample_support", "first_stage",
+    "reduced_form", "weak_iv"
+  )
+}
+
+extract_posttreatment_mechanism_result <- function(x) {
+  components <- posttreatment_mechanism_persisted_components()
+  direct <- all(components %in% names(x))
+  prefixed <- all(paste0("mechanism_", components) %in% names(x))
+  if (!direct && !prefixed) {
+    stop("Post-treatment mechanism object is missing the shared inference contract.", call. = FALSE)
+  }
+  if (direct) {
+    out <- x[components]
+    out$anderson_rubin_grid <- safe_df(x$anderson_rubin_grid %||% data.frame())
+  } else {
+    out <- stats::setNames(x[paste0("mechanism_", components)], components)
+    out$anderson_rubin_grid <- safe_df(x$mechanism_anderson_rubin_grid %||% data.frame())
+  }
+  out
+}
+
+save_posttreatment_mechanism_outputs <- function(
+    x, directory, prefix = "mechanism_") {
+  result <- extract_posttreatment_mechanism_result(x)
+  components <- posttreatment_mechanism_persisted_components()
+  objects <- result[components]
+  filenames <- stats::setNames(
+    paste0(prefix, components, ".csv"),
+    components
+  )
+  stale_grid <- file.path(directory, paste0(prefix, "anderson_rubin_grid.csv"))
+  write_diagnostic_bundle(objects, directory, filenames, stale = stale_grid)
+}
+
+summarize_posttreatment_mechanism_result <- function(
+    x, family, temporal_role, analysis_role = "causal_mechanism") {
+  result <- extract_posttreatment_mechanism_result(x)
+  weak <- safe_df(result$weak_iv)
+  reduced <- safe_df(result$reduced_form)
+  keys <- c("outcome_id", "specification_id")
+  if (!nrow(weak) || anyDuplicated(weak[keys])) {
+    stop(family, " weak-IV mechanism rows must be unique by outcome and specification.", call. = FALSE)
+  }
+  if (!nrow(reduced) || anyDuplicated(reduced[keys])) {
+    stop(family, " reduced-form mechanism rows must be unique by outcome and specification.", call. = FALSE)
+  }
+  rf <- reduced[c(keys, "p.value", "p_holm_within_spec")]
+  names(rf)[names(rf) == "p.value"] <- "reduced_form_p_value"
+  names(rf)[names(rf) == "p_holm_within_spec"] <- "reduced_form_p_holm"
+  out <- merge(weak, rf, by = keys, all.x = TRUE, sort = FALSE)
+  out <- out[match(
+    paste(weak$outcome_id, weak$specification_id),
+    paste(out$outcome_id, out$specification_id)
+  ), , drop = FALSE]
+
+  estimated <- plain_chr(out$status) == "estimated"
+  out$first_stage_strong <- estimated &
+    is.finite(num(out$effective_f)) &
+    is.finite(num(out$effective_f_critical_value)) &
+    num(out$effective_f) >= num(out$effective_f_critical_value)
+  out$reduced_form_holm_signal <- estimated &
+    is.finite(num(out$reduced_form_p_holm)) & num(out$reduced_form_p_holm) < 0.05
+  out$ar_holm_rejects_zero <- estimated &
+    is.finite(num(out$anderson_rubin_p_beta0_holm_within_spec)) &
+    num(out$anderson_rubin_p_beta0_holm_within_spec) < 0.05
+  out$ar_95_bounded <- estimated &
+    !(out$ar_95_empty %in% TRUE) &
+    !(out$ar_95_left_truncated %in% TRUE) &
+    !(out$ar_95_right_truncated %in% TRUE)
+  out$evidence_status <- ifelse(
+    !estimated,
+    "inference_unavailable",
+    ifelse(
+      out$ar_holm_rejects_zero,
+      "weak_iv_robust_signal",
+      ifelse(
+        !out$first_stage_strong,
+        "weak_iv_underidentified",
+        "identified_no_weak_iv_robust_signal"
+      )
+    )
+  )
+  out$family <- family
+  out$temporal_role <- temporal_role
+  out$analysis_role <- analysis_role
+  keep <- c(
+    "family", "temporal_role", "analysis_role", "outcome_id", "outcome_variable",
+    "mechanism_family", "tier", "denominator", "specification_id", "adjustment_id",
+    "construction_id", "fixed_effect", "n", "effective_f", "effective_f_critical_value",
+    "first_stage_strong", "reduced_form_p_value", "reduced_form_p_holm",
+    "reduced_form_holm_signal", "anderson_rubin_p_beta0",
+    "anderson_rubin_p_beta0_holm_within_spec", "ar_holm_rejects_zero",
+    "ar_95_contains_zero", "ar_95_bounded", "ar_95_n_components",
+    "ar_95_disconnected", "evidence_status"
+  )
+  out[keep]
+}
+
+build_posttreatment_mechanism_evidence <- function(families) {
+  if (!is.list(families) || is.null(names(families)) || any(!nzchar(names(families)))) {
+    stop("Mechanism evidence families must be a named list.", call. = FALSE)
+  }
+  grids <- lapply(names(families), function(family) {
+    entry <- families[[family]]
+    required <- c("result", "temporal_role")
+    if (!is.list(entry) || !all(required %in% names(entry))) {
+      stop("Mechanism evidence family `", family, "` is missing result or temporal_role.", call. = FALSE)
+    }
+    if (is.null(entry$result)) return(data.frame())
+    summarize_posttreatment_mechanism_result(
+      entry$result,
+      family = family,
+      temporal_role = entry$temporal_role,
+      analysis_role = entry$analysis_role %||% "causal_mechanism"
+    )
+  })
+  grid <- safe_bind_rows(grids)
+
+  summary <- safe_bind_rows(lapply(names(families), function(family) {
+    entry <- families[[family]]
+    temporal_role <- entry$temporal_role
+    analysis_role <- entry$analysis_role %||% "causal_mechanism"
+    x <- if (nrow(grid)) {
+      grid[
+        grid$family == family & grid$temporal_role == temporal_role &
+          grid$analysis_role == analysis_role,
+        , drop = FALSE
+      ]
+    } else {
+      data.frame()
+    }
+    if (!nrow(x)) {
+      return(data.frame(
+        family = family, temporal_role = temporal_role, analysis_role = analysis_role,
+        availability_status = "not_available", n_outcomes = 0L, n_models = 0L,
+        n_strong_first_stage = 0L, n_reduced_form_holm_signals = 0L,
+        n_ar_holm_signals = 0L, n_bounded_ar_sets = 0L, n_underidentified = 0L,
+        min_n = NA_real_, max_n = NA_real_, stringsAsFactors = FALSE
+      ))
+    }
+    data.frame(
+      family = family,
+      temporal_role = temporal_role,
+      analysis_role = analysis_role,
+      availability_status = "available",
+      n_outcomes = length(unique(x$outcome_id)),
+      n_models = nrow(x),
+      n_strong_first_stage = sum(x$first_stage_strong %in% TRUE),
+      n_reduced_form_holm_signals = sum(x$reduced_form_holm_signal %in% TRUE),
+      n_ar_holm_signals = sum(x$ar_holm_rejects_zero %in% TRUE),
+      n_bounded_ar_sets = sum(x$ar_95_bounded %in% TRUE),
+      n_underidentified = sum(x$evidence_status == "weak_iv_underidentified"),
+      min_n = min(num(x$n), na.rm = TRUE),
+      max_n = max(num(x$n), na.rm = TRUE),
+      stringsAsFactors = FALSE
+    )
+  }))
+  list(grid = grid, family_summary = summary)
+}
+
+save_posttreatment_mechanism_evidence <- function(
+    x, directory = "outputs/diagnostics/extended/mechanisms") {
+  write_diagnostic_bundle(
+    list(
+      evidence_grid = safe_df(x$grid),
+      family_summary = safe_df(x$family_summary)
+    ),
+    directory
+  )
+}

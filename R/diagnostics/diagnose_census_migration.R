@@ -321,39 +321,38 @@ build_census_migration_diagnostics <- function(
 
 save_census_migration_diagnostics <- function(
     diagnostics, dir = "outputs/diagnostics/extended/census_migration") {
-  dir.create(dir, recursive = TRUE, showWarnings = FALSE)
-  files <- c(
-    d02_2001 = file.path(dir, "d02_2001.csv"),
-    population_2011_harmonized = file.path(dir, "population_2011_harmonized_2001.csv"),
-    d02_2011_harmonized = file.path(dir, "d02_2011_harmonized_2001.csv"),
-    d02_population_change = file.path(dir, "d02_population_change_2011_2001.csv"),
-    d03_2011_harmonized = file.path(dir, "d03_2011_harmonized_2001.csv"),
-    d04_2011_harmonized = file.path(dir, "d04_2011_harmonized_2001.csv"),
-    d05_2011_harmonized = file.path(dir, "d05_2011_harmonized_2001.csv"),
-    d06_2011_harmonized = file.path(dir, "d06_2011_harmonized_2001.csv"),
-    d07_2011_harmonized = file.path(dir, "d07_2011_harmonized_2001.csv"),
-    coverage = file.path(dir, "coverage.csv"),
-    d02_population_2011_validation = file.path(dir, "d02_population_2011_validation.csv"),
-    d02_d03_2011_total_validation = file.path(dir, "d02_d03_2011_total_validation.csv"),
-    d02_d04_2011_total_validation = file.path(dir, "d02_d04_2011_total_validation.csv"),
-    d03_d05_2011_reason_validation = file.path(dir, "d03_d05_2011_reason_validation.csv"),
-    d02_d06_2011_total_validation = file.path(dir, "d02_d06_2011_total_validation.csv"),
-    d03_d07_2011_recent_work_validation =
-      file.path(dir, "d03_d07_2011_recent_work_validation.csv"),
-    d02_2001_balance = file.path(dir, "d02_2001_instrument_balance.csv"),
-    d02_2001_joint_balance = file.path(dir, "d02_2001_instrument_balance_joint.csv"),
-    d02_2001_first_stage_sensitivity =
-      file.path(dir, "d02_2001_first_stage_sensitivity.csv"),
-    mechanism_registry = file.path(dir, "mechanism_registry.csv"),
-    mechanism_sample_coverage = file.path(dir, "mechanism_sample_coverage.csv"),
-    mechanism_sample_support = file.path(dir, "mechanism_sample_support.csv"),
-    mechanism_first_stage = file.path(dir, "mechanism_first_stage.csv"),
-    mechanism_reduced_form = file.path(dir, "mechanism_reduced_form.csv"),
-    mechanism_weak_iv = file.path(dir, "mechanism_weak_iv.csv"),
-    mechanism_anderson_rubin_grid = file.path(dir, "mechanism_anderson_rubin_grid.csv")
+  measurement_names <- c(
+    "d02_2001", "population_2011_harmonized", "d02_2011_harmonized",
+    "d02_population_change", "d03_2011_harmonized", "d04_2011_harmonized",
+    "d05_2011_harmonized", "d06_2011_harmonized", "d07_2011_harmonized",
+    "coverage", "d02_population_2011_validation", "d02_d03_2011_total_validation",
+    "d02_d04_2011_total_validation", "d03_d05_2011_reason_validation",
+    "d02_d06_2011_total_validation", "d03_d07_2011_recent_work_validation",
+    "d02_2001_balance", "d02_2001_joint_balance", "d02_2001_first_stage_sensitivity"
   )
-  for (name in names(files)) {
-    utils::write.csv(diagnostics[[name]], files[[name]], row.names = FALSE, na = "")
-  }
-  unname(files)
+  filenames <- c(
+    d02_2001 = "d02_2001.csv",
+    population_2011_harmonized = "population_2011_harmonized_2001.csv",
+    d02_2011_harmonized = "d02_2011_harmonized_2001.csv",
+    d02_population_change = "d02_population_change_2011_2001.csv",
+    d03_2011_harmonized = "d03_2011_harmonized_2001.csv",
+    d04_2011_harmonized = "d04_2011_harmonized_2001.csv",
+    d05_2011_harmonized = "d05_2011_harmonized_2001.csv",
+    d06_2011_harmonized = "d06_2011_harmonized_2001.csv",
+    d07_2011_harmonized = "d07_2011_harmonized_2001.csv",
+    coverage = "coverage.csv",
+    d02_population_2011_validation = "d02_population_2011_validation.csv",
+    d02_d03_2011_total_validation = "d02_d03_2011_total_validation.csv",
+    d02_d04_2011_total_validation = "d02_d04_2011_total_validation.csv",
+    d03_d05_2011_reason_validation = "d03_d05_2011_reason_validation.csv",
+    d02_d06_2011_total_validation = "d02_d06_2011_total_validation.csv",
+    d03_d07_2011_recent_work_validation = "d03_d07_2011_recent_work_validation.csv",
+    d02_2001_balance = "d02_2001_instrument_balance.csv",
+    d02_2001_joint_balance = "d02_2001_instrument_balance_joint.csv",
+    d02_2001_first_stage_sensitivity = "d02_2001_first_stage_sensitivity.csv"
+  )
+  c(
+    write_diagnostic_bundle(diagnostics[measurement_names], dir, filenames),
+    save_posttreatment_mechanism_outputs(diagnostics, dir)
+  )
 }

@@ -120,22 +120,17 @@ build_census_worker_diagnostics <- function(
 
 save_census_worker_diagnostics <- function(
     diagnostics, dir = "outputs/diagnostics/extended/census_workers") {
-  dir.create(dir, recursive = TRUE, showWarnings = FALSE)
-  files <- c(
-    industry_2001 = file.path(dir, "industry_2001.csv"),
-    occupation_2001 = file.path(dir, "occupation_2001.csv"),
-    industry_2011_harmonized = file.path(dir, "industry_2011_harmonized_2001.csv"),
-    occupation_2011_harmonized = file.path(dir, "occupation_2011_harmonized_2001.csv"),
-    coverage = file.path(dir, "coverage.csv"),
-    b25_b26_2001_main_occupation_validation =
-      file.path(dir, "b25_b26_2001_main_occupation_validation.csv"),
-    b04_b25a_universe_validation = file.path(dir, "b04_b25a_universe_validation.csv"),
-    b06_b25b_universe_validation = file.path(dir, "b06_b25b_universe_validation.csv"),
-    worker_2001_balance = file.path(dir, "worker_2001_instrument_balance.csv"),
-    worker_2001_joint_balance = file.path(dir, "worker_2001_instrument_balance_joint.csv")
+  filenames <- c(
+    industry_2001 = "industry_2001.csv",
+    occupation_2001 = "occupation_2001.csv",
+    industry_2011_harmonized = "industry_2011_harmonized_2001.csv",
+    occupation_2011_harmonized = "occupation_2011_harmonized_2001.csv",
+    coverage = "coverage.csv",
+    b25_b26_2001_main_occupation_validation = "b25_b26_2001_main_occupation_validation.csv",
+    b04_b25a_universe_validation = "b04_b25a_universe_validation.csv",
+    b06_b25b_universe_validation = "b06_b25b_universe_validation.csv",
+    worker_2001_balance = "worker_2001_instrument_balance.csv",
+    worker_2001_joint_balance = "worker_2001_instrument_balance_joint.csv"
   )
-  for (name in names(files)) {
-    utils::write.csv(diagnostics[[name]], files[[name]], row.names = FALSE, na = "")
-  }
-  unname(files)
+  write_diagnostic_bundle(diagnostics[names(filenames)], dir, filenames)
 }

@@ -394,10 +394,10 @@ build_labor_variant_comparison <- function(preferred_estimates, sensitivity_esti
 
 save_labor_variant_comparison <- function(
     x, filename, root = "outputs/diagnostics/extended/labor") {
-  dir.create(root, recursive = TRUE, showWarnings = FALSE)
-  path <- file.path(root, filename)
-  utils::write.csv(safe_df(x), path, row.names = FALSE, na = "")
-  path
+  write_diagnostic_bundle(
+    list(variant_comparison = safe_df(x)), root,
+    c(variant_comparison = filename)
+  )
 }
 
 build_plfs_2017_18_diagnostics <- function(canonical_persons, lineaged_persons, lineage_variant) {
@@ -434,7 +434,6 @@ save_nss_labor_diagnostics <- function(
   if (!nzchar(prefix) || !grepl("^[a-z0-9_]+$", prefix)) {
     stop("NSS labor diagnostic prefix must be a non-empty file-safe identifier.", call. = FALSE)
   }
-  dir.create(root, recursive = TRUE, showWarnings = FALSE)
   names_and_objects <- list(
     source_validation = x$source_validation,
     lineage_support = x$lineage_support,
@@ -444,13 +443,11 @@ save_nss_labor_diagnostics <- function(
     names_and_objects$outcome_registry <- district_outcomes$registry
     names_and_objects$district_outcomes <- district_outcomes$estimates
   }
-  paths <- vapply(names(names_and_objects), function(suffix) {
-    file.path(root, paste0(prefix, "_", suffix, ".csv"))
-  }, character(1))
-  for (nm in names(names_and_objects)) {
-    utils::write.csv(names_and_objects[[nm]], paths[[nm]], row.names = FALSE, na = "")
-  }
-  unname(paths)
+  filenames <- stats::setNames(
+    paste0(prefix, "_", names(names_and_objects), ".csv"),
+    names(names_and_objects)
+  )
+  write_diagnostic_bundle(names_and_objects, root, filenames)
 }
 
 save_nss64_diagnostics <- function(
@@ -494,18 +491,17 @@ save_nesstar_materialization_diagnostics <- function(
   if (length(filename) != 1L || is.na(filename) || !nzchar(filename)) {
     stop("Nesstar materialization diagnostic filename must be one non-empty string.", call. = FALSE)
   }
-  dir.create(root, recursive = TRUE, showWarnings = FALSE)
-  path <- file.path(root, filename)
-  utils::write.csv(safe_df(x), path, row.names = FALSE, na = "")
-  path
+  write_diagnostic_bundle(
+    list(materialization = safe_df(x)), root, c(materialization = filename)
+  )
 }
 
 save_plfs_source_package_diagnostics <- function(
     x, root = "outputs/diagnostics/extended/labor") {
-  dir.create(root, recursive = TRUE, showWarnings = FALSE)
-  path <- file.path(root, "plfs_2017_18_source_package.csv")
-  utils::write.csv(safe_df(x), path, row.names = FALSE, na = "")
-  path
+  write_diagnostic_bundle(
+    list(source_package = safe_df(x)), root,
+    c(source_package = "plfs_2017_18_source_package.csv")
+  )
 }
 
 labor_mechanism_registry <- function(wave_id = c("nss66", "plfs_2017_18")) {
@@ -609,21 +605,7 @@ save_labor_mechanism_inference <- function(
   if (!nzchar(prefix) || !grepl("^[a-z0-9_]+$", prefix)) {
     stop("Labor mechanism diagnostic prefix must be a file-safe identifier.", call. = FALSE)
   }
-  dir.create(root, recursive = TRUE, showWarnings = FALSE)
-  objects <- list(
-    mechanism_registry = x$registry,
-    mechanism_sample_coverage = x$sample_coverage,
-    mechanism_sample_support = x$sample_support,
-    mechanism_first_stage = x$first_stage,
-    mechanism_reduced_form = x$reduced_form,
-    mechanism_weak_iv = x$weak_iv,
-    mechanism_anderson_rubin_grid = x$anderson_rubin_grid
+  save_posttreatment_mechanism_outputs(
+    x, root, prefix = paste0(prefix, "_mechanism_")
   )
-  paths <- vapply(names(objects), function(name) {
-    file.path(root, paste0(prefix, "_", name, ".csv"))
-  }, character(1))
-  for (name in names(objects)) {
-    utils::write.csv(objects[[name]], paths[[name]], row.names = FALSE, na = "")
-  }
-  unname(paths)
 }

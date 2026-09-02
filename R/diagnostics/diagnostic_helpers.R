@@ -1,10 +1,39 @@
 # Shared helpers for optional diagnostics and benchmarking outputs.
 
-write_diagnostic_csv <- function(x, path, row.names = FALSE) {
+write_diagnostic_csv <- function(x, path, row.names = FALSE, na = "NA") {
   dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
   x <- as.data.frame(x, stringsAsFactors = FALSE)
-  utils::write.csv(x, path, row.names = row.names)
+  utils::write.csv(x, path, row.names = row.names, na = na)
   normalizePath(path, mustWork = FALSE)
+}
+
+write_diagnostic_bundle <- function(objects, directory, filenames = NULL, stale = character()) {
+  if (!is.list(objects) || is.null(names(objects)) || any(!nzchar(names(objects)))) {
+    stop("Diagnostic bundles must be named lists.", call. = FALSE)
+  }
+  if (anyDuplicated(names(objects))) {
+    stop("Diagnostic bundle object names must be unique.", call. = FALSE)
+  }
+  if (is.null(filenames)) filenames <- paste0(names(objects), ".csv")
+  if (is.null(names(filenames))) names(filenames) <- names(objects)
+  missing <- setdiff(names(objects), names(filenames))
+  if (length(missing)) {
+    stop(
+      "Diagnostic bundle filenames are missing objects: ",
+      paste(missing, collapse = ", "), call. = FALSE
+    )
+  }
+  filenames <- filenames[names(objects)]
+  if (any(is.na(filenames)) || any(!nzchar(filenames)) || anyDuplicated(filenames)) {
+    stop("Diagnostic bundle filenames must be nonempty and unique.", call. = FALSE)
+  }
+  if (length(stale)) unlink(stale[file.exists(stale)])
+  paths <- file.path(directory, unname(filenames))
+  names(paths) <- names(objects)
+  for (name in names(objects)) {
+    write_diagnostic_csv(objects[[name]], paths[[name]], na = "")
+  }
+  unname(paths)
 }
 
 collapse_diagnostic_list_columns <- function(x, columns, sep = ";", empty = "none") {
