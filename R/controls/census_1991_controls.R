@@ -1,7 +1,5 @@
 # Predetermined Census-1991 district attributes from SHRUG district products.
 
-census_1991_keys <- function() c("state_code_1991", "district_code_1991")
-
 historical_baseline_1991_metadata <- function() {
   data.frame(
     variable = c(
@@ -49,22 +47,6 @@ historical_baseline_1991_control_sets <- function() {
     pca = metadata$variable[metadata$source == "PCA91"],
     all = metadata$variable
   )
-}
-
-validate_census_1991_district_keys <- function(x, source) {
-  x <- safe_df(x)
-  keys <- census_1991_keys()
-  missing <- setdiff(keys, names(x))
-  if (length(missing)) stop(source, " lacks standardized 1991 district keys.", call. = FALSE)
-  if (any(!stats::complete.cases(x[keys]))) stop(source, " contains missing 1991 district keys.", call. = FALSE)
-  if (anyDuplicated(x[keys])) stop(source, " contains duplicate 1991 district keys.", call. = FALSE)
-  x
-}
-
-
-census_1991_district_key <- function(x) {
-  x <- validate_census_1991_district_keys(x, "Census-1991 district source")
-  paste(x$state_code_1991, x$district_code_1991, sep = "__")
 }
 
 require_census_1991_subset <- function(source, reference, label) {
@@ -638,13 +620,28 @@ vanneman_historical_baseline_1991_measures_from_counts <- function(x) {
   )
 }
 
-build_population_interpolated_vanneman_baseline_1991 <- function(
-    path, population_crosswalk, coverage_threshold = .99) {
+build_population_interpolated_vanneman_baseline_1991_from_counts <- function(
+    sufficient, population_crosswalk, coverage_threshold = .99) {
   threshold <- as.numeric(coverage_threshold)
   if (length(threshold) != 1L || !is.finite(threshold) || threshold < 0 || threshold > 1) {
     stop("Vanneman population-interpolation coverage threshold must lie in [0, 1].", call. = FALSE)
   }
-  sufficient <- build_vanneman_1991_control_sufficient_statistics(path)
+  sufficient <- validate_census_1991_district_keys(
+    safe_df(sufficient), "Vanneman dist91 control statistics"
+  )
+  missing_counts <- setdiff(vanneman_historical_baseline_1991_count_fields(), names(sufficient))
+  if (length(missing_counts)) {
+    stop(
+      "Vanneman population interpolation lacks sufficient statistics: ",
+      paste(missing_counts, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  if (!"source_unit_id" %in% names(sufficient)) {
+    sufficient$source_unit_id <- geography_transition_unit_id(
+      1991L, sufficient$state_code_1991, sufficient$district_code_1991
+    )
+  }
   map <- safe_df(population_crosswalk)
   coverage <- unique(map[
     map$source_vintage == 1991L & map$transition_id != "target_identity",
@@ -680,4 +677,13 @@ build_population_interpolated_vanneman_baseline_1991 <- function(
   out$source_coverage_threshold <- threshold
   if (anyDuplicated(out[census_2001_keys()])) stop("Interpolated Vanneman controls duplicate Census-2001 targets.", call. = FALSE)
   out
+}
+
+build_population_interpolated_vanneman_baseline_1991 <- function(
+    path, population_crosswalk, coverage_threshold = .99) {
+  build_population_interpolated_vanneman_baseline_1991_from_counts(
+    build_vanneman_1991_control_sufficient_statistics(path),
+    population_crosswalk,
+    coverage_threshold = coverage_threshold
+  )
 }

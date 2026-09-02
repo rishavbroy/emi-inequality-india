@@ -277,8 +277,8 @@ extended_iv_target_definitions <- function() {
       consumption_vanneman_historical_controls,
       {
         raw_data_preflight
-        build_population_interpolated_vanneman_baseline_1991(
-          vanneman_historical_paths(paths)[["dist91"]],
+        build_population_interpolated_vanneman_baseline_1991_from_counts(
+          historical_vanneman_1991_control_statistics,
           population_interpolation_geography_1991_2001_2011$crosswalk,
           .99
         )
