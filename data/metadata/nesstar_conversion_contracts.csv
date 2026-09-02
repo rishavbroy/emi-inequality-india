@@ -2,3 +2,4 @@ source_id,block_id,expected_rows,signature_column,relative_path,converter_packag
 nss66_eus,F4,459784,Sex,data/interim/nss66_eus/F4.csv,nesstar-converter,nesstar-converter,1.0.4,nss66_eus_nesstar,nss66_eus_ddi
 nss66_eus,F5,459784,Usual_Principal_Activity_Status,data/interim/nss66_eus/F5.csv,nesstar-converter,nesstar-converter,1.0.4,nss66_eus_nesstar,nss66_eus_ddi
 nss66_eus,F6,34689,Usual_Subsidiary_Activity_Status,data/interim/nss66_eus/F6.csv,nesstar-converter,nesstar-converter,1.0.4,nss66_eus_nesstar,nss66_eus_ddi
+plfs_2017_18,F1,433339,b5pt1q3_per_fv,data/interim/plfs_2017_18/F1.csv,nesstar-converter,nesstar-converter,1.0.4,plfs1718_nesstar,plfs1718_ddi

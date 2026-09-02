@@ -879,19 +879,23 @@ test_that("NSS66 proprietary source contract is registered without activating an
   expect_identical(rows$reader_function[rows$file_id == "nss66_eus_nesstar"], "nesstar-converter")
 })
 
-test_that("PLFS 2017-18 registers only the locally available source package", {
+test_that("PLFS 2017-18 registers the reviewed binary, layout, and official DDI", {
   root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
   manifest <- utils::read.csv(
     file.path(root, "data", "metadata", "file_manifest.csv"),
     stringsAsFactors = FALSE
   )
   rows <- manifest[manifest$source_id == "plfs_labor_market", , drop = FALSE]
-  expect_setequal(rows$file_id, c("plfs1718_nesstar", "plfs1718_layout"))
-  expected_sizes <- c(plfs1718_nesstar = 156891958, plfs1718_layout = 56959)
+  expect_setequal(rows$file_id, c("plfs1718_nesstar", "plfs1718_layout", "plfs1718_ddi"))
+  expected_sizes <- c(
+    plfs1718_nesstar = 156891958,
+    plfs1718_layout = 56959,
+    plfs1718_ddi = 218040
+  )
   expect_equal(
     stats::setNames(rows$expected_size_bytes, rows$file_id)[names(expected_sizes)],
     expected_sizes
   )
   expect_false(any(as.logical(rows$required_for_current_pipeline)))
-  expect_false(any(grepl("\\.xml$", rows$relative_path, ignore.case = TRUE)))
+  expect_identical(rows$reader_function[rows$file_id == "plfs1718_ddi"], "read_plfs_2017_18_ddi_contract")
 })

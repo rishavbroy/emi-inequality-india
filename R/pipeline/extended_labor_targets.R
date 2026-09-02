@@ -14,6 +14,10 @@ extended_labor_target_definitions <- function() {
       cue = tar_cue(mode = "always")
     ),
     tar_target(
+      plfs_2017_18_conversion_contract,
+      read_nesstar_conversion_contract("plfs_2017_18")
+    ),
+    tar_target(
       diag_ext_plfs_2017_18_source_package_file,
       save_plfs_source_package_diagnostics(plfs_2017_18_source_package),
       format = "file"
