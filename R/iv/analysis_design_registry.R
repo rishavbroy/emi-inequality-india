@@ -376,7 +376,8 @@ compile_analysis_design_registry <- function(
     consumption_alternative_welfare_specifications = NULL,
     consumption_control_strategy_specifications = NULL,
     consumption_control_parameterization_specifications = NULL,
-    consumption_historical_adjustment_specifications = NULL) {
+    consumption_historical_adjustment_specifications = NULL,
+    consumption_historical_concept_matched_specifications = NULL) {
   core_iv <- analysis_design_from_iv(
     iv_diagnostic_specification_registry(control_registry = control_registry),
     family = "district_iv_diagnostic",
@@ -450,6 +451,17 @@ compile_analysis_design_registry <- function(
       analysis_role = "historical_adjustment_robustness"
     )
   }
+  consumption_historical_concept_matched <- if (is.null(consumption_historical_concept_matched_specifications)) {
+    data.frame()
+  } else {
+    analysis_design_from_iv(
+      consumption_historical_concept_matched_specifications,
+      family = "consumption_iv",
+      estimator = "first_stage+reduced_form+2sls+anderson_rubin",
+      inference = "state_clustered+anderson_rubin+holm",
+      analysis_role = "historical_concept_matched_robustness"
+    )
+  }
   out <- safe_bind_rows(list(
     analysis_design_public_iv(public_iv_specifications),
     core_iv,
@@ -459,6 +471,7 @@ compile_analysis_design_registry <- function(
     consumption_control_strategy,
     consumption_control_parameterization,
     consumption_historical_adjustment,
+    consumption_historical_concept_matched,
     analysis_design_district_mechanisms(
       english_opportunity_measure_registry, control_registry
     ),
@@ -593,7 +606,8 @@ build_iv_candidate_design_ledger <- function(
     consumption_alternative_welfare_specifications = NULL,
     consumption_control_strategy_specifications = NULL,
     consumption_control_parameterization_specifications = NULL,
-    consumption_historical_adjustment_specifications = NULL) {
+    consumption_historical_adjustment_specifications = NULL,
+    consumption_historical_concept_matched_specifications = NULL) {
   public_specs <- as_iv_specifications(public_specifications)
   consumption_specs <- as_iv_specifications(consumption_specifications)
   control_registry <- resolve_census_2001_control_registry(control_registry)
@@ -629,6 +643,11 @@ build_iv_candidate_design_ledger <- function(
     0L
   } else {
     nrow(as_iv_specifications(consumption_historical_adjustment_specifications))
+  }
+  n_consumption_historical_concept_matched <- if (is.null(consumption_historical_concept_matched_specifications)) {
+    0L
+  } else {
+    nrow(as_iv_specifications(consumption_historical_concept_matched_specifications))
   }
   n_diagnostic_iv <- nrow(diagnostic_specs)
   n_scalar <- sum(canonical_specs$n_excluded_instruments == 1L)
@@ -994,6 +1013,32 @@ build_iv_candidate_design_ledger <- function(
         "so the comparison is not driven by support changes. PCA91 is more remote from 2007-08 EMI and",
         "uses Census population, composition, literacy, and worker structure, but it is not a pure",
         "same-variable vintage substitution because the available 1991 and compact-2001 concept sets differ."
+      )
+    ),
+    candidate_design_row(
+      "historical_1991_concept_matched_robustness",
+      "Historical controls follow-up; Vanneman 1961-91 archive",
+      "consumption_iv",
+      "candidate_robustness",
+      "Does the remote-baseline result survive a 1991 control vector that more closely matches the compact-2001 concepts?",
+      "historical_control_source",
+      "registered consumption endpoint designs",
+      preferred_iv_variables()$treatment,
+      "preferred Shastry nonzero-mean distance",
+      "region/state crossed with compact-2001, PCA91, and Vanneman concept-matched 1991 controls on common support",
+      "first_stage+reduced_form+2sls+anderson_rubin",
+      "estimate",
+      multiplicity_family = "consumption_historical_concept_matched",
+      prerequisite = "verified Vanneman dist91 archive plus frozen G2 1991-to-2001 population interpolation",
+      implementation_status = "implemented",
+      candidate_cells = n_consumption * length(iv_historical_concept_matched_adjustments(control_registry)),
+      implemented_cells = n_consumption_historical_concept_matched,
+      execution_cells = n_consumption_historical_concept_matched,
+      rationale = paste(
+        "Vanneman dist91 supplies 1991 analogues for urbanization, SC/ST and Muslim composition,",
+        "matriculation, agricultural employment, age dependency, and household electricity that are",
+        "missing from the thinner PCA91 causal vector. Keeping PCA91 and compact-2001 benchmarks in",
+        "the same six-design common-support family separates source/concept sensitivity from sample drift."
       )
     ),
     candidate_design_row(

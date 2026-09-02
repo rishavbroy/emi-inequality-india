@@ -1068,6 +1068,11 @@ test_that("extended IV artifacts are reachable from the diag_ext audit selector"
   )
   expect_match(
     iv_targets,
+    "tar_target(\n      diag_ext_consumption_historical_concept_matched_files,",
+    fixed = TRUE
+  )
+  expect_match(
+    iv_targets,
     '"outputs/diagnostics/extended/iv/analysis_design_registry.csv"',
     fixed = TRUE
   )

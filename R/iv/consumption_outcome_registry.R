@@ -571,6 +571,41 @@ compile_consumption_historical_adjustment_specifications <- function(
   )
 }
 
+
+
+attach_consumption_historical_concept_matched_controls <- function(
+    panel, g2_sensitivity, vanneman_controls, coverage_threshold = .99) {
+  out <- attach_consumption_historical_adjustment_controls(
+    panel, g2_sensitivity, coverage_threshold
+  )
+  controls <- safe_df(vanneman_controls)
+  required <- c(census_2001_keys(), vanneman_historical_baseline_1991_variables())
+  missing <- setdiff(required, names(controls))
+  if (length(missing)) {
+    stop("Vanneman historical controls are missing columns: ", paste(missing, collapse = ", "), call. = FALSE)
+  }
+  x <- if (inherits(out, "sf")) sf::st_drop_geometry(out) else safe_df(out)
+  key <- paste(pad_admin_code(x$state_code_2001, 2L), pad_admin_code(x$district_code_2001, 2L), sep = "__")
+  control_key <- paste(pad_admin_code(controls$state_code_2001, 2L), pad_admin_code(controls$district_code_2001, 2L), sep = "__")
+  if (anyDuplicated(control_key)) stop("Vanneman historical controls duplicate Census-2001 district keys.", call. = FALSE)
+  index <- match(key, control_key)
+  collisions <- intersect(vanneman_historical_baseline_1991_variables(), names(out))
+  if (length(collisions)) stop("Consumption panel already contains Vanneman historical controls.", call. = FALSE)
+  for (variable in vanneman_historical_baseline_1991_variables()) out[[variable]] <- controls[[variable]][index]
+  out
+}
+
+compile_consumption_historical_concept_matched_specifications <- function(
+    registry, control_registry = NULL) {
+  compile_consumption_adjustment_family_specifications(
+    registry,
+    iv_historical_concept_matched_adjustments(control_registry),
+    family_prefix = "consumption_historical_concept_matched",
+    sample_rule = "consumption_historical_concept_matched_common_support",
+    control_registry = control_registry
+  )
+}
+
 consumption_iv_common_sample_support <- function(panel, specifications, group_column) {
   specs <- as_iv_specifications(specifications)
   if (!group_column %in% names(specs)) {

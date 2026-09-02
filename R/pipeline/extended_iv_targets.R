@@ -274,6 +274,76 @@ extended_iv_target_definitions <- function() {
       format = "file"
     ),
     tar_target(
+      consumption_vanneman_historical_controls,
+      {
+        raw_data_preflight
+        build_population_interpolated_vanneman_baseline_1991(
+          vanneman_historical_paths(paths)[["dist91"]],
+          population_interpolation_geography_1991_2001_2011$crosswalk,
+          .99
+        )
+      }
+    ),
+    tar_target(
+      consumption_historical_concept_matched_panel,
+      attach_consumption_historical_concept_matched_controls(
+        consumption_iv_panel,
+        historical_baseline_g2_sensitivity,
+        consumption_vanneman_historical_controls,
+        .99
+      )
+    ),
+    tar_target(
+      consumption_historical_concept_matched_specifications,
+      compile_consumption_historical_concept_matched_specifications(
+        consumption_iv_outcome_registry, census_2001_control_registry
+      )
+    ),
+    tar_target(
+      consumption_historical_concept_matched_support,
+      consumption_iv_common_sample_support(
+        consumption_historical_concept_matched_panel,
+        consumption_historical_concept_matched_specifications,
+        "welfare_specification_id"
+      )
+    ),
+    tar_target(
+      consumption_historical_concept_matched_common_panel,
+      restrict_consumption_iv_to_common_samples(
+        consumption_historical_concept_matched_panel,
+        consumption_historical_concept_matched_specifications,
+        "welfare_specification_id"
+      )
+    ),
+    tar_target(
+      consumption_historical_concept_matched_robustness,
+      add_consumption_iv_family_multiplicity(
+        validate_consumption_iv_robustness_family(
+          validate_consumption_iv_dynamics(
+            estimate_consumption_iv_dynamics(
+              consumption_historical_concept_matched_common_panel,
+              consumption_historical_concept_matched_specifications,
+              cfg
+            ),
+            consumption_historical_concept_matched_specifications
+          ),
+          consumption_historical_concept_matched_support,
+          group_size = 6L,
+          family_label = "Consumption concept-matched historical-adjustment robustness"
+        ),
+        "consumption_historical_concept_matched"
+      )
+    ),
+    tar_target(
+      diag_ext_consumption_historical_concept_matched_files,
+      save_consumption_iv_robustness_family(
+        consumption_historical_concept_matched_robustness,
+        consumption_historical_concept_matched_support,
+        "consumption_historical_concept_matched_robustness"
+      ),
+      format = "file"
+    ),
+    tar_target(
       analysis_design_registry,
       compile_analysis_design_registry(
         consumption_iv_specifications,
@@ -284,7 +354,8 @@ extended_iv_target_definitions <- function() {
         consumption_alternative_welfare_specifications,
         consumption_control_strategy_specifications,
         consumption_control_parameterization_specifications,
-        consumption_historical_adjustment_specifications
+        consumption_historical_adjustment_specifications,
+        consumption_historical_concept_matched_specifications
       )
     ),
     tar_target(
@@ -307,7 +378,8 @@ extended_iv_target_definitions <- function() {
         consumption_alternative_welfare_specifications,
         consumption_control_strategy_specifications,
         consumption_control_parameterization_specifications,
-        consumption_historical_adjustment_specifications
+        consumption_historical_adjustment_specifications,
+        consumption_historical_concept_matched_specifications
       )
     ),
     tar_target(

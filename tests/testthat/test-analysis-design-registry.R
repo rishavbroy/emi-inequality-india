@@ -134,6 +134,9 @@ test_that("analysis-design ontology preserves estimator and sample distinctions"
   consumption_historical <- compile_consumption_historical_adjustment_specifications(
     consumption_registry, controls
   )
+  consumption_historical_matched <- compile_consumption_historical_concept_matched_specifications(
+    consumption_registry, controls
+  )
   mechanisms <- read_english_opportunity_measure_registry(
     file.path(root, "data", "metadata", "english_opportunity_measures.csv")
   )
@@ -143,7 +146,8 @@ test_that("analysis-design ontology preserves estimator and sample distinctions"
     consumption_alternative_welfare_specifications = consumption_welfare,
     consumption_control_strategy_specifications = consumption_control,
     consumption_control_parameterization_specifications = consumption_parameterization,
-    consumption_historical_adjustment_specifications = consumption_historical
+    consumption_historical_adjustment_specifications = consumption_historical,
+    consumption_historical_concept_matched_specifications = consumption_historical_matched
   )
 
   consumption_rows <- registry[registry$family == "consumption_iv", , drop = FALSE]
@@ -152,7 +156,8 @@ test_that("analysis-design ontology preserves estimator and sample distinctions"
   preferred_consumption <- consumption_rows[
     !consumption_rows$analysis_role %in% c(
       "scalar_iv_robustness", "welfare_definition_robustness", "control_strategy_robustness",
-      "control_parameterization_robustness", "historical_adjustment_robustness"
+      "control_parameterization_robustness", "historical_adjustment_robustness",
+      "historical_concept_matched_robustness"
     ),
     , drop = FALSE
   ]
@@ -188,6 +193,13 @@ test_that("analysis-design ontology preserves estimator and sample distinctions"
   expect_true(all(historical_consumption$inference == "state_clustered+anderson_rubin+holm"))
   expect_true(all(
     historical_consumption$sample_rule == "consumption_historical_adjustment_common_support"
+  ))
+  matched_historical_consumption <- consumption_rows[
+    consumption_rows$analysis_role == "historical_concept_matched_robustness", , drop = FALSE
+  ]
+  expect_equal(nrow(matched_historical_consumption), nrow(consumption_historical_matched))
+  expect_true(all(
+    matched_historical_consumption$sample_rule == "consumption_historical_concept_matched_common_support"
   ))
   expect_true(all(welfare_consumption$inference == "state_clustered+anderson_rubin+holm"))
   expect_true(all(welfare_consumption$sample_rule == "consumption_welfare_iv_common_support"))
@@ -268,10 +280,13 @@ test_that("candidate-design ledger records bounded robustness choices without Ca
   consumption_historical <- compile_consumption_historical_adjustment_specifications(
     consumption_registry, controls
   )
+  consumption_historical_matched <- compile_consumption_historical_concept_matched_specifications(
+    consumption_registry, controls
+  )
   ledger <- build_iv_candidate_design_ledger(
     public, consumption, controls, welfare, opportunity, consumption_scalar,
     consumption_welfare, consumption_control, consumption_parameterization,
-    consumption_historical
+    consumption_historical, consumption_historical_matched
   )
 
   expect_identical(names(ledger), candidate_design_columns())
@@ -371,6 +386,21 @@ test_that("candidate-design ledger records bounded robustness choices without Ca
   expect_equal(
     historical_adjustment$multiplicity_family,
     "consumption_historical_adjustment"
+  )
+  historical_matched <- ledger[
+    ledger$candidate_id == "historical_1991_concept_matched_robustness",
+    , drop = FALSE
+  ]
+  expect_equal(
+    historical_matched$candidate_cells,
+    nrow(consumption) * length(iv_historical_concept_matched_adjustments(controls))
+  )
+  expect_equal(historical_matched$implementation_status, "implemented")
+  expect_equal(historical_matched$implemented_cells, nrow(consumption_historical_matched))
+  expect_equal(historical_matched$execution_cells, nrow(consumption_historical_matched))
+  expect_equal(
+    historical_matched$multiplicity_family,
+    "consumption_historical_concept_matched"
   )
 
   parameterizations <- ledger[

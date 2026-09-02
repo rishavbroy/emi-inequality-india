@@ -570,6 +570,42 @@ iv_historical_adjustment_comparison_adjustments <- function(control_registry = N
   )
 }
 
+
+
+iv_historical_concept_matched_adjustments <- function(control_registry = NULL) {
+  registry <- resolve_census_2001_control_registry(control_registry)
+  compact_2001 <- census_2001_main_controls(registry)
+  pca_1991 <- historical_baseline_1991_pca_variables()
+  vanneman_1991 <- vanneman_historical_baseline_1991_variables()
+  make <- function(fe, prefix) {
+    list(
+      compact_2001 = iv_adjustment(
+        paste0(prefix, " + compact 2001 adjustment"), fe, compact_2001,
+        adjustment_vintage = "2001", adjustment_role = "benchmark_compact_2001"
+      ),
+      pca_1991 = iv_adjustment(
+        paste0(prefix, " + population-interpolated PCA91 adjustment"), fe, pca_1991,
+        adjustment_vintage = "1991", adjustment_role = "remote_pca91_baseline"
+      ),
+      vanneman_1991 = iv_adjustment(
+        paste0(prefix, " + Vanneman concept-matched 1991 adjustment"), fe, vanneman_1991,
+        adjustment_vintage = "1991", adjustment_role = "concept_matched_vanneman_baseline",
+        caution = paste(
+          "Vanneman dist91 supplies closer analogues for urbanization, religion, educational attainment,",
+          "agricultural employment, dependency, and electricity, but split 1991 districts are allocated",
+          "to Census-2001 targets using the same frozen population-interpolation weights as PCA91."
+        )
+      )
+    )
+  }
+  region <- make("region", "Six-region FE")
+  state <- make("state", "State FE")
+  c(
+    setNames(region, paste0("region_", names(region))),
+    setNames(state, paste0("state_", names(state)))
+  )
+}
+
 iv_absorption_adjustments <- function(control_registry = NULL) {
   control_registry <- resolve_census_2001_control_registry(control_registry)
   main <- census_2001_main_controls(control_registry)
