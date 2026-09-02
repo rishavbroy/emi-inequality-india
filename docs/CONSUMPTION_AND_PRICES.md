@@ -323,7 +323,7 @@ expenditure is adjusted before district aggregation using a state, rural/urban,
 and survey-period price index. The outcome is the difference in log real
 consumption between 2007-08 and 2017-18.
 
-The revision gate has passed: the public model now uses this real-consumption outcome together with the predetermined Census 2001 controls, state fixed effects, all-child EMI exposure, and the preferred scalar linguistic-distance instrument. `build_revised_iv_formulas()` defines the public specification used by the production and conservative/primary/full-reviewed lineage-sensitivity models. `build_legacy_iv_formulas()` is confined to the optional inherited-geography comparison.
+The revision gate has passed: the public model now uses this real-consumption outcome together with the predetermined Census 2001 controls, state fixed effects, all-child EMI exposure, and the preferred scalar linguistic-distance instrument. `public_iv_specification_registry()` now declares the public headline and registered legacy-robustness models through the same canonical IV row contract used by newer diagnostic and outcome families; `iv_specification_formulas()` is only the final adapter required by the longstanding public model/table interface. `build_legacy_iv_formulas()` remains confined to the optional inherited-geography comparison.
 
 ## Consumption estimands
 

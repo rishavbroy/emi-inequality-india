@@ -236,3 +236,8 @@ The extended audit routes those registered outcomes through the shared post-trea
 ### Cross-family post-treatment mechanism evidence
 
 Extended diagnostics write compact cross-family mechanism summaries to `outputs/diagnostics/extended/mechanisms/evidence_grid.csv` and `family_summary.csv`. These combine only families already routed through the shared post-treatment mechanism engine; they do not reinterpret descriptive household/worker outputs as causal mediation. Pointwise Anderson--Rubin inversion grids remain cached in the corresponding target objects and are not serialized, because the persisted weak-IV tables already contain the beta-zero test, confidence-set bounds/components, grid truncation, disconnection, and zero-containment fields needed for review.
+
+
+### Specification-governance ledger
+
+The full extended audit writes `outputs/diagnostics/extended/iv/candidate_design_ledger.csv`. This is governance metadata, not a batch-estimation request: it records the bounded robustness families that are implemented, partially implemented, planned, or explicitly inadmissible. In particular, the full endpoint-by-diagnostic Cartesian IV grid is recorded as a non-goal rather than silently estimated. Public headline IV models are generated from `public_iv_specification_registry()` and retain their historical model names so public tables and report values are unchanged.

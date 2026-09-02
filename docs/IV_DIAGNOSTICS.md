@@ -49,9 +49,11 @@ Anderson--Rubin grids are computational inputs to confidence-set inversion, not 
 The Glottolog and Dyen constructions are robustness measurements of linguistic
 distance, not candidate instruments to promote merely because a particular
 fixed-effect specification produces a larger first stage. The diagnostic layer
-therefore compares both main-control designs registered by
+therefore compares the shared candidate construction set registered by
+`iv_candidate_design_constructions()` under both main-control designs from
 `iv_candidate_design_adjustments()`: six-region fixed effects and Census-2001
-state fixed effects.
+state fixed effects. The same two-by-three contract is reused by post-treatment
+mechanisms and the candidate-design governance ledger.
 
 `alternative_distance_design_evidence.csv` places the Shastry nonzero-mean,
 Glottolog, and Dyen constructions under both candidate adjustments side by

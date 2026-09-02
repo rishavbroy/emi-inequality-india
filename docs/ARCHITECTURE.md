@@ -33,14 +33,20 @@ Source directories are loaded with `{targets}`' native `tar_source()` directory 
 ## Analysis-design ontology
 
 `R/iv/analysis_design_registry.R` is an inventory layer above the specialized
-execution registries. It normalizes currently implemented IV, consumption, DISE,
-Census mechanism, C-17, district mechanism, and historical first-stage designs
-onto explicit outcome, treatment, instrument, vintage, adjustment, estimand,
-estimator, inference, sample-rule, role, and admissibility fields. It does not
-replace source-specific registries and does not manufacture unestimated Cartesian
-products. New design families should first declare why a combination is
-scientifically admissible before adding another estimator branch. The compiled
-registry is a cached R target, not another persisted diagnostic CSV.
+execution registries. It normalizes currently implemented public headline IV,
+consumption, DISE, Census mechanism, C-17, district mechanism, labor, firm, and
+historical first-stage designs onto explicit outcome, treatment, instrument,
+vintage, adjustment, estimand, estimator, inference, sample-rule, role, and
+admissibility fields. Public headline models are themselves declared by
+`public_iv_specification_registry()` and converted to formulas only at the final
+legacy model-interface boundary, so there is no second headline formula authority.
+The separate candidate-design ledger records bounded robustness families,
+unimplemented but theoretically admissible extensions, and explicit non-goals
+without manufacturing or estimating an indiscriminate Cartesian product. New
+design families should first declare why a combination is scientifically
+admissible before adding another estimator branch. The implemented analysis-design
+registry remains a cached R target; the compact candidate ledger is persisted as
+reviewer-facing extended diagnostic metadata.
 
 The Census-2001 control registry is likewise metadata-first. Main, absorption,
 appendix, block-membership, labels, and alternative-measure relationships are
