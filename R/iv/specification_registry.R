@@ -67,6 +67,15 @@ iv_replace_main_controls <- function(
   )
 }
 
+iv_adjustment <- function(label, fixed_effect, controls, ...) {
+  list(
+    label = label,
+    fixed_effect = fixed_effect,
+    controls = plain_chr(controls),
+    ...
+  )
+}
+
 iv_block_intervention_adjustments <- function(control_registry = NULL) {
   blocks <- iv_main_control_blocks(control_registry)
   main <- census_2001_main_controls(control_registry)
@@ -76,12 +85,12 @@ iv_block_intervention_adjustments <- function(control_registry = NULL) {
     for (block_id in names(blocks)) {
       block <- blocks[[block_id]]
       label <- gsub("_", " ", block_id)
-      rows[[paste(fixed_effect, "block_only", block_id, sep = "_")]] <- list(
+      rows[[paste(fixed_effect, "block_only", block_id, sep = "_")]] <- iv_adjustment(
         paste0(fixed_label, " + ", label, " block only"),
         fixed_effect,
         block
       )
-      rows[[paste(fixed_effect, "main_without", block_id, sep = "_")]] <- list(
+      rows[[paste(fixed_effect, "main_without", block_id, sep = "_")]] <- iv_adjustment(
         paste0(fixed_label, " + main controls without ", label),
         fixed_effect,
         setdiff(main, block)
@@ -98,7 +107,7 @@ iv_causal_control_strategy_adjustments <- function(control_registry = NULL) {
   rows <- list()
   for (fixed_effect in c("region", "state")) {
     fe_label <- if (fixed_effect == "region") "Six-region FE" else "State FE"
-    rows[[paste(fixed_effect, "fe_only", sep = "_")]] <- list(
+    rows[[paste(fixed_effect, "fe_only", sep = "_")]] <- iv_adjustment(
       label = fe_label,
       fixed_effect = fixed_effect,
       controls = character(),
@@ -109,7 +118,7 @@ iv_causal_control_strategy_adjustments <- function(control_registry = NULL) {
       ),
       caution = "Places the exclusion burden on geographic fixed effects and the instrument design."
     )
-    rows[[paste(fixed_effect, "compact_2001", sep = "_")]] <- list(
+    rows[[paste(fixed_effect, "compact_2001", sep = "_")]] <- iv_adjustment(
       label = paste0(fe_label, " + compact 2001 adjustment"),
       fixed_effect = fixed_effect,
       controls = main,
@@ -123,7 +132,7 @@ iv_causal_control_strategy_adjustments <- function(control_registry = NULL) {
         "linguistic instrument, so they are not automatically causally innocuous."
       )
     )
-    rows[[paste(fixed_effect, "compact_2001_no_human_capital", sep = "_")]] <- list(
+    rows[[paste(fixed_effect, "compact_2001_no_human_capital", sep = "_")]] <- iv_adjustment(
       label = paste0(fe_label, " + compact 2001 adjustment without human capital"),
       fixed_effect = fixed_effect,
       controls = no_human_capital,
@@ -164,7 +173,7 @@ iv_main_parameterization_adjustments <- function(control_registry = NULL) {
   for (fixed_effect in c("region", "state")) {
     fixed_label <- if (identical(fixed_effect, "region")) "Six-region FE" else "State FE"
     for (variant_id in names(variants)) {
-      rows[[paste(fixed_effect, "main", variant_id, sep = "_")]] <- list(
+      rows[[paste(fixed_effect, "main", variant_id, sep = "_")]] <- iv_adjustment(
         paste0(fixed_label, " + main-control ", gsub("_", " ", variant_id), " parameterization"),
         fixed_effect,
         variants[[variant_id]]
@@ -292,24 +301,24 @@ iv_candidate_design_constructions <- function() {
 iv_adjustment_sets <- function(control_registry = NULL) {
   control_registry <- resolve_census_2001_control_registry(control_registry)
   list(
-    unadjusted = list(
-      label = "Unadjusted", fixed_effect = "none", controls = character(), tier = "B"
+    unadjusted = iv_adjustment(
+      "Unadjusted", "none", character(), tier = "B"
     ),
-    region_main = list(
-      label = "Six-region FE + main controls", fixed_effect = "region",
-      controls = census_2001_main_controls(control_registry), tier = "A"
+    region_main = iv_adjustment(
+      "Six-region FE + main controls", "region",
+      census_2001_main_controls(control_registry), tier = "A"
     ),
-    region_expanded = list(
-      label = "Six-region FE + expanded controls", fixed_effect = "region",
-      controls = census_2001_absorption_controls(control_registry), tier = "B"
+    region_expanded = iv_adjustment(
+      "Six-region FE + expanded controls", "region",
+      census_2001_absorption_controls(control_registry), tier = "B"
     ),
-    state_main = list(
-      label = "State FE + main controls", fixed_effect = "state",
-      controls = census_2001_main_controls(control_registry), tier = "A"
+    state_main = iv_adjustment(
+      "State FE + main controls", "state",
+      census_2001_main_controls(control_registry), tier = "A"
     ),
-    state_expanded = list(
-      label = "State FE + expanded controls", fixed_effect = "state",
-      controls = census_2001_absorption_controls(control_registry), tier = "B"
+    state_expanded = iv_adjustment(
+      "State FE + expanded controls", "state",
+      census_2001_absorption_controls(control_registry), tier = "B"
     )
   )
 }
@@ -534,26 +543,34 @@ iv_absorption_adjustments <- function(control_registry = NULL) {
   main <- census_2001_main_controls(control_registry)
   expanded <- census_2001_absorption_controls(control_registry)
   base <- list(
-    instrument_only = list("Instrument only", "none", character()),
-    region_fe = list("Six-region fixed effects", "region", character()),
-    state_fe = list("State fixed effects", "state", character()),
-    census_controls = list("Main Census controls", "none", main),
-    region_fe_census_controls = list("Six-region fixed effects + main Census controls", "region", main),
-    state_fe_census_controls = list("State fixed effects + main Census controls", "state", main),
-    expanded_controls = list("Expanded Census controls", "none", expanded),
-    region_fe_expanded_controls = list("Six-region fixed effects + expanded Census controls", "region", expanded),
-    state_fe_expanded_controls = list("State fixed effects + expanded Census controls", "state", expanded),
-    region_fe_main_without_human_capital = list(
-      "Six-region FE + main controls without human capital", "region", iv_without_human_capital(main, control_registry)
+    instrument_only = iv_adjustment("Instrument only", "none", character()),
+    region_fe = iv_adjustment("Six-region fixed effects", "region", character()),
+    state_fe = iv_adjustment("State fixed effects", "state", character()),
+    census_controls = iv_adjustment("Main Census controls", "none", main),
+    region_fe_census_controls = iv_adjustment("Six-region fixed effects + main Census controls", "region", main),
+    state_fe_census_controls = iv_adjustment("State fixed effects + main Census controls", "state", main),
+    expanded_controls = iv_adjustment("Expanded Census controls", "none", expanded),
+    region_fe_expanded_controls = iv_adjustment(
+      "Six-region fixed effects + expanded Census controls", "region", expanded
     ),
-    state_fe_main_without_human_capital = list(
-      "State FE + main controls without human capital", "state", iv_without_human_capital(main, control_registry)
+    state_fe_expanded_controls = iv_adjustment(
+      "State fixed effects + expanded Census controls", "state", expanded
     ),
-    region_fe_expanded_without_human_capital = list(
-      "Six-region FE + expanded controls without human capital", "region", iv_without_human_capital(expanded, control_registry)
+    region_fe_main_without_human_capital = iv_adjustment(
+      "Six-region FE + main controls without human capital", "region",
+      iv_without_human_capital(main, control_registry)
     ),
-    state_fe_expanded_without_human_capital = list(
-      "State FE + expanded controls without human capital", "state", iv_without_human_capital(expanded, control_registry)
+    state_fe_main_without_human_capital = iv_adjustment(
+      "State FE + main controls without human capital", "state",
+      iv_without_human_capital(main, control_registry)
+    ),
+    region_fe_expanded_without_human_capital = iv_adjustment(
+      "Six-region FE + expanded controls without human capital", "region",
+      iv_without_human_capital(expanded, control_registry)
+    ),
+    state_fe_expanded_without_human_capital = iv_adjustment(
+      "State FE + expanded controls without human capital", "state",
+      iv_without_human_capital(expanded, control_registry)
     )
   )
   blocks <- iv_control_blocks(control_registry)
@@ -568,7 +585,7 @@ iv_absorption_adjustments <- function(control_registry = NULL) {
     fixed_label <- if (identical(fixed_effect, "region")) "Six-region FE" else "State FE"
     for (i in seq_along(blocks)) {
       id <- paste0(fixed_effect, "_fe_plus_", names(blocks)[[i]])
-      base[[id]] <- list(
+      base[[id]] <- iv_adjustment(
         paste0(fixed_label, " + through ", gsub("_", " ", names(blocks)[[i]])),
         fixed_effect,
         cumulative[[i]]
@@ -605,13 +622,13 @@ iv_absorption_specification_candidates <- function(
     iv_specification_row(
       specification_id = paste0("absorption__", id),
       adjustment_id = id,
-      adjustment = adjustment[[1]],
+      adjustment = adjustment$label,
       construction_id = "nonzero_mean",
       construction = construction$label,
       outcome = outcome,
       treatment = treatment,
-      fixed_effect = adjustment[[2]],
-      controls = adjustment[[3]],
+      fixed_effect = adjustment$fixed_effect,
+      controls = adjustment$controls,
       included_language_controls = construction$included,
       excluded_instruments = construction$excluded,
       mapping_coverage_variable = construction$coverage,

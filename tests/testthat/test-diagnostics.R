@@ -835,10 +835,10 @@ test_that("first-stage absorption diagnostics use fixed support and report reque
       expect_true(execution_id %in% out$registry$specification_id)
       expect_setequal(
         out$registry$controls[out$registry$specification_id == execution_id][[1]],
-        raw_adjustments[[semantic_id]][[3L]]
+        raw_adjustments[[semantic_id]]$controls
       )
     }
-    expect_length(intersect(raw_adjustments[[leave_out]][[3L]], main_blocks[[block_id]]), 0L)
+    expect_length(intersect(raw_adjustments[[leave_out]]$controls, main_blocks[[block_id]]), 0L)
   }
   expect_true(all(c(
     "region_main_literacy",
@@ -3023,6 +3023,26 @@ test_that("consumption control-strategy robustness isolates six theory-based adj
   }, logical(1))))
 })
 
+
+test_that("IV adjustment registries share one named execution contract", {
+  registries <- list(
+    canonical = iv_adjustment_sets(),
+    absorption = iv_absorption_adjustments(),
+    blocks = iv_block_intervention_adjustments(),
+    strategies = iv_causal_control_strategy_adjustments(),
+    relevance_parameterizations = iv_main_parameterization_adjustments(),
+    causal_parameterizations = iv_causal_control_parameterization_adjustments()
+  )
+  for (registry in registries) {
+    expect_true(length(registry) > 0L)
+    expect_true(all(vapply(registry, function(adjustment) {
+      all(c("label", "fixed_effect", "controls") %in% names(adjustment))
+    }, logical(1))))
+    expect_true(all(vapply(registry, function(adjustment) {
+      adjustment$fixed_effect %in% c("none", "region", "state") && is.character(adjustment$controls)
+    }, logical(1))))
+  }
+})
 
 test_that("consumption control parameterization family includes common-sample benchmark and substitutions", {
   root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
