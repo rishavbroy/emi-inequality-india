@@ -53,6 +53,8 @@ appendix, block-membership, labels, and alternative-measure relationships are
 derived from `data/metadata/census_2001_control_registry.csv`; production targets
 track that file explicitly.
 
+The extended IV pipeline owns and persists the compiled cross-family ontology at `outputs/diagnostics/extended/iv/analysis_design_registry.csv`; Census-specific pipeline modules no longer own this cross-family object. Extended diagnostic artifacts must be reachable from a `diag_ext_` target because the public audit intentionally selects that prefix.
+
 ## District-panel roles
 
 - `district_panel_conservative`: deterministic district specification.

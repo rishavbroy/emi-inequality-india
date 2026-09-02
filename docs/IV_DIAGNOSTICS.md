@@ -107,3 +107,8 @@ The expanded first-stage control audit is diagnostic rather than a model-selecti
 The predeclared consumption robustness family therefore keeps exactly the six serious scalar-IV/geography designs for each of the eight registered endpoint/estimand specifications: region and state main controls crossed with Shastry, Glottolog, and Dyen distance. Each endpoint/estimand is estimated on one common district sample across its six designs so instrument comparisons do not silently change support. Reduced-form and Anderson--Rubin beta-zero p-values receive Holm correction both within each six-design endpoint/estimand family and across the full 48-cell family. Conventional 2SLS estimates remain reported, but weak-IV-robust Anderson--Rubin inference governs causal interpretation.
 
 The full 119-design diagnostic IV universe remains a relevance/validity diagnostic and is not crossed with consumption outcomes. The 48-cell family is the registered causal robustness boundary for the instrument-definition/geography axis.
+
+
+### Extended-target reachability
+
+The extended audit invokes targets by the `diag_ext_` prefix. Durable extended-IV artifacts therefore terminate in `diag_ext_` file targets; their upstream specification and estimation objects remain ordinary internal targets. The compiled cross-family design ontology is persisted as `outputs/diagnostics/extended/iv/analysis_design_registry.csv`, while the scalar-consumption robustness bundle is reached through `diag_ext_consumption_scalar_iv_robustness_files`. This naming rule is part of the pipeline contract, not a cosmetic convention.

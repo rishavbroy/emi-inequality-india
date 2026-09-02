@@ -252,3 +252,6 @@ The expanded first-stage control audit writes both execution-level and scientifi
 ### Scalar-IV consumption robustness
 
 After the symmetric first-stage control audit is available, the extended IV graph estimates the registered 48-cell scalar robustness family: eight endpoint/estimand designs crossed with region/state main controls and Shastry/Glottolog/Dyen scalar distance measures. The six designs within each endpoint/estimand share one complete-case district sample. Extended diagnostics write `consumption_scalar_iv_robustness.csv` and `consumption_scalar_iv_robustness_common_support.csv`. The summary includes Holm-adjusted reduced-form and Anderson--Rubin beta-zero p-values both within each six-design welfare family and across the full 48-cell family. Pointwise AR grids are not serialized for this robustness family because the summary already retains the weak-IV confidence-set diagnostics needed for review.
+
+
+Extended diagnostics are selected by the `diag_ext_` target prefix. Registered robustness computations can use ordinary internal target names, but every durable extended artifact must terminate in a `diag_ext_` file target so `scripts/run_targets_checked.R --starts-with diag_ext_` actually traverses the computation. The scalar-consumption robustness files and the persisted cross-family `analysis_design_registry.csv` follow this contract.
