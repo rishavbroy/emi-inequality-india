@@ -50,13 +50,80 @@ extended_iv_target_definitions <- function() {
       format = "file"
     ),
     tar_target(
+      consumption_alternative_welfare_registry,
+      build_consumption_alternative_welfare_registry(
+        consumption_iv_outcome_registry,
+        consumption_welfare_outcomes
+      )
+    ),
+    tar_target(
+      consumption_alternative_welfare_panel,
+      attach_consumption_iv_outcomes(
+        consumption_iv_panel,
+        consumption_district_welfare,
+        consumption_alternative_welfare_registry
+      )
+    ),
+    tar_target(
+      consumption_alternative_welfare_specifications,
+      compile_consumption_alternative_welfare_specifications(
+        consumption_alternative_welfare_registry,
+        census_2001_control_registry
+      )
+    ),
+    tar_target(
+      consumption_alternative_welfare_support,
+      consumption_iv_common_sample_support(
+        consumption_alternative_welfare_panel,
+        consumption_alternative_welfare_specifications,
+        "welfare_specification_id"
+      )
+    ),
+    tar_target(
+      consumption_alternative_welfare_common_panel,
+      restrict_consumption_iv_to_common_samples(
+        consumption_alternative_welfare_panel,
+        consumption_alternative_welfare_specifications,
+        "welfare_specification_id"
+      )
+    ),
+    tar_target(
+      consumption_alternative_welfare_robustness,
+      add_consumption_iv_family_multiplicity(
+        validate_consumption_iv_robustness_family(
+          validate_consumption_iv_dynamics(
+            estimate_consumption_iv_dynamics(
+              consumption_alternative_welfare_common_panel,
+              consumption_alternative_welfare_specifications,
+              cfg
+            ),
+            consumption_alternative_welfare_specifications
+          ),
+          consumption_alternative_welfare_support,
+          group_size = 6L,
+          family_label = "Consumption alternative-welfare robustness"
+        ),
+        "consumption_welfare_robustness"
+      )
+    ),
+    tar_target(
+      diag_ext_consumption_alternative_welfare_files,
+      save_consumption_iv_robustness_family(
+        consumption_alternative_welfare_robustness,
+        consumption_alternative_welfare_support,
+        "consumption_alternative_welfare_robustness"
+      ),
+      format = "file"
+    ),
+    tar_target(
       analysis_design_registry,
       compile_analysis_design_registry(
         consumption_iv_specifications,
         english_opportunity_measure_registry,
         census_2001_control_registry,
         public_iv_specifications,
-        consumption_scalar_iv_robustness_specifications
+        consumption_scalar_iv_robustness_specifications,
+        consumption_alternative_welfare_specifications
       )
     ),
     tar_target(
@@ -75,7 +142,8 @@ extended_iv_target_definitions <- function() {
         census_2001_control_registry,
         consumption_welfare_outcomes,
         english_opportunity_measure_registry,
-        consumption_scalar_iv_robustness_specifications
+        consumption_scalar_iv_robustness_specifications,
+        consumption_alternative_welfare_specifications
       )
     ),
     tar_target(

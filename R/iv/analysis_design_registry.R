@@ -372,7 +372,8 @@ compile_analysis_design_registry <- function(
     english_opportunity_measure_registry,
     control_registry = NULL,
     public_iv_specifications = public_iv_specification_registry(control_registry),
-    consumption_scalar_iv_robustness_specifications = NULL) {
+    consumption_scalar_iv_robustness_specifications = NULL,
+    consumption_alternative_welfare_specifications = NULL) {
   core_iv <- analysis_design_from_iv(
     iv_diagnostic_specification_registry(control_registry = control_registry),
     family = "district_iv_diagnostic",
@@ -402,11 +403,23 @@ compile_analysis_design_registry <- function(
       analysis_role = "scalar_iv_robustness"
     )
   }
+  consumption_welfare <- if (is.null(consumption_alternative_welfare_specifications)) {
+    data.frame()
+  } else {
+    analysis_design_from_iv(
+      consumption_alternative_welfare_specifications,
+      family = "consumption_iv",
+      estimator = "first_stage+reduced_form+2sls+anderson_rubin",
+      inference = "state_clustered+anderson_rubin+holm",
+      analysis_role = "welfare_definition_robustness"
+    )
+  }
   out <- safe_bind_rows(list(
     analysis_design_public_iv(public_iv_specifications),
     core_iv,
     consumption,
     consumption_scalar,
+    consumption_welfare,
     analysis_design_district_mechanisms(
       english_opportunity_measure_registry, control_registry
     ),
@@ -522,30 +535,13 @@ candidate_design_frame <- function(rows) {
   out
 }
 
-candidate_welfare_round_is_supported <- function(outcome_row, survey_id) {
-  surveys <- trimws(plain_chr(outcome_row$survey_ids[[1L]] %||% "*"))
-  identical(surveys, "*") || survey_id %in% strsplit(surveys, ";", fixed = TRUE)[[1L]]
-}
-
 count_alternative_consumption_welfare_designs <- function(
     consumption_specifications,
     welfare_registry) {
-  consumption <- safe_df(consumption_specifications)
-  welfare <- safe_df(welfare_registry)
-  required_consumption <- c("outcome_round", "baseline_round")
-  required_welfare <- c("outcome_id", "role", "survey_ids")
-  if (length(setdiff(required_consumption, names(consumption))) ||
-      length(setdiff(required_welfare, names(welfare)))) {
-    stop("Alternative-welfare design count lacks registry metadata.", call. = FALSE)
-  }
-  welfare <- welfare[welfare$role == "robustness", , drop = FALSE]
-  sum(vapply(seq_len(nrow(welfare)), function(i) {
-    row <- welfare[i, , drop = FALSE]
-    sum(vapply(seq_len(nrow(consumption)), function(j) {
-      candidate_welfare_round_is_supported(row, consumption$outcome_round[[j]]) &&
-        candidate_welfare_round_is_supported(row, consumption$baseline_round[[j]])
-    }, logical(1)))
-  }, integer(1)))
+  nrow(build_consumption_alternative_welfare_registry(
+    consumption_specifications,
+    welfare_registry
+  ))
 }
 
 build_iv_candidate_design_ledger <- function(
@@ -554,7 +550,8 @@ build_iv_candidate_design_ledger <- function(
     control_registry = NULL,
     welfare_registry = NULL,
     english_opportunity_registry = NULL,
-    consumption_scalar_iv_robustness_specifications = NULL) {
+    consumption_scalar_iv_robustness_specifications = NULL,
+    consumption_alternative_welfare_specifications = NULL) {
   public_specs <- as_iv_specifications(public_specifications)
   consumption_specs <- as_iv_specifications(consumption_specifications)
   control_registry <- resolve_census_2001_control_registry(control_registry)
@@ -570,6 +567,11 @@ build_iv_candidate_design_ledger <- function(
     0L
   } else {
     nrow(as_iv_specifications(consumption_scalar_iv_robustness_specifications))
+  }
+  n_consumption_welfare <- if (is.null(consumption_alternative_welfare_specifications)) {
+    0L
+  } else {
+    nrow(as_iv_specifications(consumption_alternative_welfare_specifications))
   }
   n_diagnostic_iv <- nrow(diagnostic_specs)
   n_scalar <- sum(canonical_specs$n_excluded_instruments == 1L)
@@ -829,13 +831,14 @@ build_iv_candidate_design_ledger <- function(
       "Shastry/Glottolog/Dyen scalar candidates",
       "region_main/state_main",
       "first_stage+reduced_form+2sls+anderson_rubin",
-      "estimate_if_registered",
+      "estimate",
       multiplicity_family = "consumption_welfare_robustness",
       prerequisite = "endpoint-specific support/comparability registry",
-      implementation_status = "unimplemented",
+      implementation_status = if (is.finite(n_alt_welfare) && n_consumption_welfare == n_alt_welfare * n_candidate_iv) "implemented" else "partial",
       candidate_cells = if (is.finite(n_alt_welfare)) n_alt_welfare * n_candidate_iv else NA_integer_,
-      implemented_cells = 0L,
-      rationale = "These outcomes are already measured and theoretically interpretable, but only survey-compatible endpoint pairs belong in the causal robustness family."
+      implemented_cells = n_consumption_welfare,
+      execution_cells = n_consumption_welfare,
+      rationale = "These outcomes are already measured and theoretically interpretable. Only survey-compatible endpoint pairs enter, all six scalar designs share common support within each welfare definition, and Holm adjustment is frozen within definition and across the full secondary family."
     ),
     candidate_design_row(
       "emi_intensive_margin_robustness",
