@@ -53,7 +53,8 @@ extended_census_target_definitions <- function() {
       compile_analysis_design_registry(
         consumption_iv_specifications,
         english_opportunity_measure_registry,
-        census_2001_control_registry
+        census_2001_control_registry,
+        public_iv_specifications
       )
     ),
     tar_target(

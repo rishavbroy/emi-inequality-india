@@ -146,6 +146,14 @@ iv_candidate_design_adjustments <- function() {
   c("region_main", "state_main")
 }
 
+iv_candidate_design_constructions <- function() {
+  c(
+    primary_shastry = "nonzero_mean",
+    robustness_glottolog = "glottolog_mean",
+    robustness_dyen = "dyen_noncognate"
+  )
+}
+
 iv_adjustment_sets <- function(control_registry = NULL) {
   control_registry <- resolve_census_2001_control_registry(control_registry)
   list(
@@ -259,6 +267,89 @@ iv_specification_row <- function(
     tier = tier,
     sequence = sequence,
     stringsAsFactors = FALSE
+  )
+}
+
+
+# Public headline specifications use the same canonical row contract as extended
+# IV diagnostics. Model IDs are retained because tables, figures, and report
+# values use these names as their public-output contract.
+public_iv_specification_registry <- function(control_registry = NULL) {
+  control_registry <- resolve_census_2001_control_registry(control_registry)
+  variables <- preferred_iv_variables()
+  construction <- iv_instrument_constructions()$nonzero_mean
+  main_controls <- census_2001_main_controls(control_registry)
+  rows <- list(
+    consumption = list(
+      outcome = "real_log_consumption_change",
+      controls = main_controls,
+      adjustment_id = "state_main",
+      adjustment = "State FE + main Census-2001 controls",
+      estimand = "change",
+      role = "primary"
+    ),
+    consumption_ancova = list(
+      outcome = "log_real_consumption_1718",
+      controls = c(main_controls, "log_real_consumption_0708"),
+      adjustment_id = "state_main_ancova",
+      adjustment = "State FE + baseline real consumption + main Census-2001 controls",
+      estimand = "ancova",
+      role = "robustness"
+    ),
+    consumption_nominal = list(
+      outcome = "log_consumption_difference",
+      controls = main_controls,
+      adjustment_id = "state_main_nominal",
+      adjustment = "State FE + main Census-2001 controls; nominal outcome",
+      estimand = "nominal_change",
+      role = "legacy_outcome_robustness"
+    ),
+    consumption_legacy_controls = list(
+      outcome = "log_consumption_difference",
+      controls = legacy_2007_iv_controls(),
+      adjustment_id = "state_legacy_2007_controls",
+      adjustment = "State FE + inherited 2007 household controls; nominal outcome",
+      estimand = "nominal_change",
+      role = "legacy_control_robustness"
+    )
+  )
+
+  out <- bind_iv_specification_rows(lapply(seq_along(rows), function(i) {
+    id <- names(rows)[[i]]
+    x <- rows[[i]]
+    row <- iv_specification_row(
+      specification_id = id,
+      adjustment_id = x$adjustment_id,
+      adjustment = x$adjustment,
+      construction_id = "nonzero_mean",
+      construction = construction$label,
+      outcome = x$outcome,
+      treatment = variables$treatment,
+      fixed_effect = "state",
+      controls = x$controls,
+      included_language_controls = construction$included,
+      excluded_instruments = construction$excluded,
+      mapping_coverage_variable = construction$coverage,
+      panel_variant = "primary",
+      sample_rule = "public_model_specific_complete_case",
+      tier = if (identical(x$role, "primary")) "A" else "B",
+      sequence = i,
+      control_registry = control_registry
+    )
+    row$estimand <- x$estimand
+    row$analysis_role <- x$role
+    row
+  }))
+  out
+}
+
+iv_specification_formulas <- function(specifications) {
+  specs <- as_iv_specifications(specifications)
+  stats::setNames(
+    lapply(seq_len(nrow(specs)), function(i) {
+      iv_specification_formula(specs[i, , drop = FALSE])
+    }),
+    plain_chr(specs$specification_id)
   )
 }
 

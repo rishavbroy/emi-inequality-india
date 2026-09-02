@@ -171,7 +171,21 @@ diagnose_overidentification <- function(iv_models, model_specs, cfg = list()) {
 }
 
 normalize_overidentification_specs <- function(model_specs) {
-  if (is.null(model_specs) || inherits(model_specs, "data.frame")) return(list())
+  if (is.null(model_specs)) return(list())
+  if (inherits(model_specs, "data.frame")) {
+    specs <- tryCatch(as_iv_specifications(model_specs), error = function(e) NULL)
+    if (is.null(specs)) return(list())
+    out <- lapply(seq_len(nrow(specs)), function(i) {
+      list(
+        endogenous_vars = plain_chr(specs$treatment[[i]]),
+        excluded_instruments = plain_chr(unlist(
+          specs$excluded_instruments[[i]], use.names = FALSE
+        ))
+      )
+    })
+    names(out) <- plain_chr(specs$specification_id)
+    return(out)
+  }
   if (inherits(model_specs, "formula")) return(list(model = iv_formula_spec(model_specs)))
   if (is.list(model_specs) && !is.null(model_specs$endogenous_vars)) return(list(model = model_specs))
   if (!is.list(model_specs)) return(list())

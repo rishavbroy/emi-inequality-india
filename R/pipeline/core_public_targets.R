@@ -3,8 +3,12 @@
 core_public_target_definitions <- function() {
   list(
     tar_target(
+      public_iv_specifications,
+      public_iv_specification_registry(census_2001_control_registry)
+    ),
+    tar_target(
       revised_iv_formulas,
-      build_revised_iv_formulas(census_2001_control_registry)
+      iv_specification_formulas(public_iv_specifications)
     ),
     tar_target(revised_iv_models, estimate_2sls(district_panel, revised_iv_formulas, cfg)),
     tar_target(revised_first_stage_tests, estimate_first_stage(revised_iv_models, district_panel, cfg)),
@@ -16,7 +20,7 @@ core_public_target_definitions <- function() {
       ),
       format = "file"
     ),
-    tar_target(diag_public_overidentification, diagnose_overidentification(revised_iv_models, revised_iv_formulas, cfg)),
+    tar_target(diag_public_overidentification, diagnose_overidentification(revised_iv_models, public_iv_specifications, cfg)),
 
     tar_target(spatial_weights, build_spatial_weights(district_panel, cfg)),
     tar_target(diag_public_spatial_autocorrelation, diagnose_spatial_autocorrelation(district_panel, revised_iv_models, spatial_weights, cfg)),
