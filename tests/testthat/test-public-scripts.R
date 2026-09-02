@@ -1100,6 +1100,11 @@ test_that("extended IV artifacts are reachable from the diag_ext audit selector"
     "tar_target(\n      diag_ext_consumption_historical_concept_matched_files,",
     fixed = TRUE
   )
+  expect_match(
+    iv_targets,
+    "tar_target(\n      diag_ext_consumption_robustness_evidence_files,",
+    fixed = TRUE
+  )
   historical_targets <- paste(
     readLines(repo_file("R", "pipeline", "extended_historical_targets.R"), warn = FALSE),
     collapse = "\n"

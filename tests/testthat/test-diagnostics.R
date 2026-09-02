@@ -3235,3 +3235,44 @@ test_that("intensive-margin consumption robustness uses the frozen six-design sc
   expect_setequal(unique(specs$construction_id), unname(iv_candidate_design_constructions()))
   expect_true(all(vapply(specs$excluded_instruments, function(x) length(x) == 1L, logical(1))))
 })
+
+test_that("consumption robustness evidence summarizes realized families without changing inference", {
+  specs <- iv_specification_registry(outcome = "y", treatment = "t")[1:2, , drop = FALSE]
+  specs$specification_id <- c("a", "b")
+  dynamics <- list(summary = data.frame(
+    specification_id = c("a", "b"),
+    welfare_specification_id = c("w1", "w1"),
+    welfare_outcome_id = "real_mean_mpce",
+    outcome_round = "hces_2022_23",
+    estimand = "change",
+    effective_f = c(30, 2),
+    effective_f_critical_value = c(23, 23),
+    reduced_form_p_holm_family = c(.01, .6),
+    anderson_rubin_p_beta0_holm_family = c(.02, .7),
+    ar_95_empty = FALSE,
+    ar_95_disconnected = c(FALSE, TRUE),
+    ar_95_left_truncated = c(FALSE, TRUE),
+    ar_95_right_truncated = FALSE,
+    n = c(500, 500),
+    multiplicity_family = "fixture_family",
+    stringsAsFactors = FALSE
+  ))
+
+  out <- build_consumption_robustness_evidence(list(
+    fixture = list(
+      dynamics = dynamics,
+      specifications = specs,
+      analysis_role = "fixture_robustness"
+    )
+  ))
+
+  expect_equal(nrow(out$grid), 2L)
+  expect_identical(out$grid$first_stage_strong, c(TRUE, FALSE))
+  expect_identical(out$grid$reduced_form_family_signal, c(TRUE, FALSE))
+  expect_identical(out$grid$ar_family_signal, c(TRUE, FALSE))
+  expect_identical(out$grid$ar_95_bounded, c(TRUE, FALSE))
+  expect_identical(out$family_summary$n_models, 2L)
+  expect_identical(out$family_summary$n_strong_first_stage, 1L)
+  expect_identical(out$family_summary$n_ar_family_signals, 1L)
+  expect_identical(out$family_summary$n_grid_truncated_ar_sets, 1L)
+})

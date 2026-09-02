@@ -394,6 +394,51 @@ extended_iv_target_definitions <- function() {
       format = "file"
     ),
     tar_target(
+      consumption_robustness_evidence,
+      build_consumption_robustness_evidence(list(
+        scalar_iv = list(
+          dynamics = consumption_scalar_iv_robustness,
+          specifications = consumption_scalar_iv_robustness_specifications,
+          analysis_role = "scalar_iv_robustness"
+        ),
+        intensive_margin = list(
+          dynamics = consumption_treatment_robustness,
+          specifications = consumption_treatment_robustness_specifications,
+          analysis_role = "treatment_definition_robustness"
+        ),
+        welfare_definition = list(
+          dynamics = consumption_alternative_welfare_robustness,
+          specifications = consumption_alternative_welfare_specifications,
+          analysis_role = "welfare_definition_robustness"
+        ),
+        control_strategy = list(
+          dynamics = consumption_control_strategy_robustness,
+          specifications = consumption_control_strategy_specifications,
+          analysis_role = "control_strategy_robustness"
+        ),
+        control_parameterization = list(
+          dynamics = consumption_control_parameterization_robustness,
+          specifications = consumption_control_parameterization_specifications,
+          analysis_role = "control_parameterization_robustness"
+        ),
+        historical_adjustment = list(
+          dynamics = consumption_historical_adjustment_robustness,
+          specifications = consumption_historical_adjustment_specifications,
+          analysis_role = "historical_adjustment_robustness"
+        ),
+        historical_concept_matched = list(
+          dynamics = consumption_historical_concept_matched_robustness,
+          specifications = consumption_historical_concept_matched_specifications,
+          analysis_role = "historical_concept_matched_robustness"
+        )
+      ))
+    ),
+    tar_target(
+      diag_ext_consumption_robustness_evidence_files,
+      save_consumption_robustness_evidence(consumption_robustness_evidence),
+      format = "file"
+    ),
+    tar_target(
       analysis_design_registry,
       compile_analysis_design_registry(
         consumption_iv_specifications,
