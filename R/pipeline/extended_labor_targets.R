@@ -112,6 +112,18 @@ extended_labor_target_definitions <- function() {
       }
     ),
     tar_target(
+      plfs_2017_18_variant_comparison,
+      if (is.null(plfs_2017_18_district_outcomes) ||
+          is.null(plfs_2017_18_conservative_district_outcomes)) {
+        NULL
+      } else {
+        build_labor_variant_comparison(
+          plfs_2017_18_district_outcomes$estimates,
+          plfs_2017_18_conservative_district_outcomes$estimates
+        )
+      }
+    ),
+    tar_target(
       diag_ext_plfs_2017_18_source_validation_files,
       if (is.null(plfs_2017_18_diagnostics)) {
         diag_ext_plfs_2017_18_materialization_file
@@ -128,6 +140,17 @@ extended_labor_target_definitions <- function() {
         )
       },
       format = "file"
+    ),
+    tar_target(
+      diag_ext_plfs_2017_18_variant_comparison_file,
+      if (is.null(plfs_2017_18_variant_comparison)) {
+        character()
+      } else {
+        save_labor_variant_comparison(
+          plfs_2017_18_variant_comparison,
+          "plfs_2017_18_variant_comparison.csv"
+        )
+      }
     ),
     tar_target(
       diag_ext_plfs_2017_18_source_package_file,
