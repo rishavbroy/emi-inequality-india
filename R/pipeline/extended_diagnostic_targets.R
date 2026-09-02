@@ -6,6 +6,7 @@ extended_diagnostic_target_definitions <- function() {
     extended_census_target_definitions(),
     extended_economic_census_target_definitions(),
     extended_labor_target_definitions(),
+    extended_mechanism_target_definitions(),
     extended_dise_target_definitions(),
     extended_iv_target_definitions()
   )
