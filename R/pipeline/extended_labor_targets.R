@@ -38,12 +38,26 @@ extended_labor_target_definitions <- function() {
       }
     ),
     tar_target(
-      plfs_2017_18_lineaged_usual_activity,
+      plfs_2017_18_lineaged_primary,
       if (is.null(plfs_2017_18_usual_activity_source)) {
         NULL
       } else {
         attach_plfs_2017_18_reviewed_lineage(
-          plfs_2017_18_usual_activity_source, district_lineage$full_reviewed_source_crosswalk
+          plfs_2017_18_usual_activity_source,
+          district_lineage$primary_source_crosswalk,
+          variant = "primary"
+        )
+      }
+    ),
+    tar_target(
+      plfs_2017_18_lineaged_conservative,
+      if (is.null(plfs_2017_18_usual_activity_source)) {
+        NULL
+      } else {
+        attach_plfs_2017_18_reviewed_lineage(
+          plfs_2017_18_usual_activity_source,
+          district_lineage$conservative_source_crosswalk,
+          variant = "deterministic"
         )
       }
     ),
@@ -53,7 +67,47 @@ extended_labor_target_definitions <- function() {
         NULL
       } else {
         build_plfs_2017_18_diagnostics(
-          plfs_2017_18_usual_activity_source, plfs_2017_18_lineaged_usual_activity
+          plfs_2017_18_usual_activity_source,
+          plfs_2017_18_lineaged_primary,
+          "primary"
+        )
+      }
+    ),
+    tar_target(
+      plfs_2017_18_conservative_diagnostics,
+      if (is.null(plfs_2017_18_usual_activity_source)) {
+        NULL
+      } else {
+        build_plfs_2017_18_diagnostics(
+          plfs_2017_18_usual_activity_source,
+          plfs_2017_18_lineaged_conservative,
+          "conservative"
+        )
+      }
+    ),
+    tar_target(
+      plfs_2017_18_district_outcomes,
+      if (is.null(plfs_2017_18_diagnostics)) {
+        NULL
+      } else {
+        estimate_nss_labor_district_outcomes(
+          plfs_2017_18_lineaged_primary,
+          plfs_2017_18_diagnostics$target_support,
+          plfs_2017_18_outcome_registry(),
+          label = "PLFS 2017-18 labor"
+        )
+      }
+    ),
+    tar_target(
+      plfs_2017_18_conservative_district_outcomes,
+      if (is.null(plfs_2017_18_conservative_diagnostics)) {
+        NULL
+      } else {
+        estimate_nss_labor_district_outcomes(
+          plfs_2017_18_lineaged_conservative,
+          plfs_2017_18_conservative_diagnostics$target_support,
+          plfs_2017_18_outcome_registry(),
+          label = "PLFS 2017-18 conservative labor"
         )
       }
     ),
@@ -62,7 +116,16 @@ extended_labor_target_definitions <- function() {
       if (is.null(plfs_2017_18_diagnostics)) {
         diag_ext_plfs_2017_18_materialization_file
       } else {
-        save_plfs_2017_18_diagnostics(plfs_2017_18_diagnostics)
+        c(
+          save_plfs_2017_18_diagnostics(
+            plfs_2017_18_diagnostics, plfs_2017_18_district_outcomes
+          ),
+          save_nss_labor_diagnostics(
+            plfs_2017_18_conservative_diagnostics,
+            "plfs_2017_18_conservative",
+            plfs_2017_18_conservative_district_outcomes
+          )
+        )
       },
       format = "file"
     ),
