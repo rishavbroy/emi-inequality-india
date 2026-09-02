@@ -27,6 +27,76 @@ extended_historical_target_definitions <- function() {
       format = "file"
     ),
     tar_target(
+      historical_vanneman_1991_control_statistics,
+      {
+        raw_data_preflight
+        build_vanneman_1991_control_sufficient_statistics(
+          vanneman_historical_paths(paths)[["dist91"]]
+        )
+      }
+    ),
+    tar_target(
+      census_1991_download_manifest_file,
+      path_metadata(paths, "census_1991_download_manifest.tsv"),
+      format = "file"
+    ),
+    tar_target(
+      census_1991_b01s_files,
+      census_1991_validation_manifest_files(
+        paths, "B01S", census_1991_download_manifest_file
+      ),
+      format = "file"
+    ),
+    tar_target(
+      census_1991_c02t_files,
+      census_1991_validation_manifest_files(
+        paths, "C02T", census_1991_download_manifest_file
+      ),
+      format = "file"
+    ),
+    tar_target(
+      census_1991_c02u_files,
+      census_1991_validation_manifest_files(
+        paths, "C02U", census_1991_download_manifest_file
+      ),
+      format = "file"
+    ),
+    tar_target(
+      census_1991_c06t_files,
+      census_1991_validation_manifest_files(
+        paths, "C06T", census_1991_download_manifest_file
+      ),
+      format = "file"
+    ),
+    tar_target(
+      census_1991_c09t_files,
+      census_1991_validation_manifest_files(
+        paths, "C09T", census_1991_download_manifest_file
+      ),
+      format = "file"
+    ),
+    tar_target(census_1991_b01s, read_census_1991_b01s(census_1991_b01s_files)),
+    tar_target(census_1991_c02t, read_census_1991_c02t(census_1991_c02t_files)),
+    tar_target(census_1991_c02u, read_census_1991_c02u(census_1991_c02u_files)),
+    tar_target(census_1991_c06t, read_census_1991_c06t(census_1991_c06t_files)),
+    tar_target(census_1991_c09t, read_census_1991_c09t(census_1991_c09t_files)),
+    tar_target(
+      census_1991_primary_validation,
+      build_census_1991_primary_validation(
+        census_1991_b01s,
+        census_1991_c02t,
+        census_1991_c02u,
+        census_1991_c06t,
+        census_1991_c09t,
+        historical_vanneman_1991_control_statistics
+      )
+    ),
+    tar_target(
+      diag_ext_census_1991_primary_validation,
+      save_census_1991_primary_validation(census_1991_primary_validation),
+      format = "file"
+    ),
+    tar_target(
       historical_vanneman_panel4_geography,
       build_vanneman_panel4_geography_inventory(historical_vanneman_source_qa, paths)
     ),

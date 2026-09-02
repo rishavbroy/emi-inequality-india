@@ -952,8 +952,10 @@ test_that("Census 1991 acquisition manifest freezes reviewed official table fami
 
   expect_identical(names(manifest), c("table", "state_code", "relative_path", "url"))
   expect_equal(nrow(manifest), 125L)
-  expect_equal(table(manifest$table)[c("B01S", "C02T", "C02U", "C06T", "C09T")],
-               c(B01S = 31L, C02T = 31L, C02U = 31L, C06T = 31L, C09T = 1L))
+  expect_identical(
+    as.integer(table(manifest$table)[c("B01S", "C02T", "C02U", "C06T", "C09T")]),
+    c(31L, 31L, 31L, 31L, 1L)
+  )
   for (table_id in c("B01S", "C02T", "C02U", "C06T")) {
     expect_setequal(manifest$state_code[manifest$table == table_id], state_codes)
   }
@@ -961,8 +963,8 @@ test_that("Census 1991 acquisition manifest freezes reviewed official table fami
   expect_identical(religion$state_code, "01")
   expect_match(religion$relative_path, "^data/raw/census_1991/religion/C09T/")
   expect_true(all(grepl("^https://censusindia\\.gov\\.in/", manifest$url)))
-  expect_false(anyDuplicated(manifest$relative_path))
-  expect_false(anyDuplicated(manifest$url))
+  expect_identical(anyDuplicated(manifest$relative_path), 0L)
+  expect_identical(anyDuplicated(manifest$url), 0L)
 })
 
 test_that("canonical public audit restores the locked R library before synchronization checks", {
@@ -1091,6 +1093,15 @@ test_that("extended IV artifacts are reachable from the diag_ext audit selector"
   expect_match(
     iv_targets,
     "tar_target(\n      diag_ext_consumption_historical_concept_matched_files,",
+    fixed = TRUE
+  )
+  historical_targets <- paste(
+    readLines(repo_file("R", "pipeline", "extended_historical_targets.R"), warn = FALSE),
+    collapse = "\n"
+  )
+  expect_match(
+    historical_targets,
+    "tar_target(\n      diag_ext_census_1991_primary_validation,",
     fixed = TRUE
   )
   expect_match(

@@ -901,3 +901,18 @@ test_that("PLFS 2017-18 registers the reviewed binary, layout, DDI, and weightin
   expect_false(any(as.logical(rows$required_for_current_pipeline)))
   expect_identical(rows$reader_function[rows$file_id == "plfs1718_ddi"], "read_plfs_2017_18_ddi_contract")
 })
+
+test_that("official Census 1991 validation source is active in extended diagnostics", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
+  sources <- read.csv(
+    file.path(root, "data", "metadata", "data_sources.csv"),
+    stringsAsFactors = FALSE
+  )
+  source <- sources[sources$source_id == "census_1991_validation_tables", , drop = FALSE]
+
+  expect_equal(nrow(source), 1L)
+  expect_true(as.logical(source$used_in_current_pipeline))
+  expect_identical(source$current_or_future, "current")
+  expect_identical(source$local_raw_path, "data/raw/census_1991")
+  expect_match(source$notes, "before any G2 allocation", fixed = TRUE)
+})
