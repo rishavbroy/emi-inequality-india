@@ -507,3 +507,123 @@ save_plfs_source_package_diagnostics <- function(
   utils::write.csv(safe_df(x), path, row.names = FALSE, na = "")
   path
 }
+
+labor_mechanism_registry <- function(wave_id = c("nss66", "plfs_2017_18")) {
+  wave_id <- match.arg(wave_id)
+  temporal_role <- c(nss66 = "early_post", plfs_2017_18 = "long_run_post")[[wave_id]]
+  data.frame(
+    outcome_id = c("labor_force_participation_age15plus", "employment_rate_age15plus"),
+    source_id = rep("district_outcomes", 2L),
+    variable = c("labor_force_participation_age15plus", "employment_rate_age15plus"),
+    mechanism_family = c("labor_supply", "employment"),
+    tier = rep("core", 2L),
+    denominator = rep("age15plus", 2L),
+    wave_id = rep(wave_id, 2L),
+    temporal_role = rep(temporal_role, 2L),
+    stringsAsFactors = FALSE
+  )
+}
+
+labor_mechanism_source <- function(district_outcomes, registry) {
+  x <- safe_df(district_outcomes)
+  registry <- safe_df(registry)
+  required <- c("target_unit_2001", "outcome_id", "estimate", "analysis_eligible")
+  missing <- setdiff(required, names(x))
+  if (length(missing)) {
+    stop("Labor mechanism district outcomes lack fields: ", paste(missing, collapse = ", "), call. = FALSE)
+  }
+  if (!nrow(registry) || anyDuplicated(registry$outcome_id) ||
+      !all(registry$outcome_id %in% x$outcome_id)) {
+    stop("Labor mechanism registry does not match the district outcome family.", call. = FALSE)
+  }
+  x <- x[x$outcome_id %in% registry$outcome_id & x$analysis_eligible %in% TRUE, required, drop = FALSE]
+  if (!nrow(x)) stop("Labor mechanism family has no preferred-support district outcomes.", call. = FALSE)
+  if (anyDuplicated(x[c("target_unit_2001", "outcome_id")])) {
+    stop("Labor mechanism district outcomes are not unique by target and outcome.", call. = FALSE)
+  }
+
+  targets <- sort(unique(plain_chr(x$target_unit_2001)))
+  out <- data.frame(target_unit_2001 = targets, stringsAsFactors = FALSE)
+  for (i in seq_len(nrow(registry))) {
+    outcome_id <- registry$outcome_id[[i]]
+    variable <- registry$variable[[i]]
+    part <- x[x$outcome_id == outcome_id, c("target_unit_2001", "estimate"), drop = FALSE]
+    names(part)[[2L]] <- variable
+    out <- merge(out, part, by = "target_unit_2001", all.x = TRUE, sort = FALSE)
+  }
+  out <- out[match(targets, out$target_unit_2001), , drop = FALSE]
+  rownames(out) <- NULL
+  out
+}
+
+labor_mechanism_specifications <- function(
+    wave_id = c("nss66", "plfs_2017_18"),
+    outcome = "labor_force_participation_age15plus",
+    treatment = preferred_iv_variables()$treatment,
+    control_registry = NULL,
+    sample_suffix = "primary") {
+  wave_id <- match.arg(wave_id)
+  posttreatment_mechanism_specifications(
+    outcome = outcome,
+    treatment = treatment,
+    sample_rule = paste(wave_id, sample_suffix, "core_labor_common_support", sep = "_"),
+    control_registry = control_registry
+  )
+}
+
+build_labor_mechanism_inference <- function(
+    district_panel,
+    district_outcomes,
+    wave_id = c("nss66", "plfs_2017_18"),
+    cfg = list(),
+    control_registry = NULL,
+    sample_suffix = "primary") {
+  wave_id <- match.arg(wave_id)
+  registry <- labor_mechanism_registry(wave_id)
+  source <- labor_mechanism_source(district_outcomes, registry)
+  specifications <- labor_mechanism_specifications(
+    wave_id = wave_id,
+    outcome = registry$variable[[1L]],
+    control_registry = control_registry,
+    sample_suffix = sample_suffix
+  )
+  label <- paste(toupper(wave_id), sample_suffix, "labor")
+  panel <- prepare_posttreatment_mechanism_panel(
+    district_panel = district_panel,
+    sources = list(district_outcomes = source),
+    registry = registry,
+    specifications = specifications,
+    label = label
+  )
+  estimate_posttreatment_mechanism_models(
+    mechanism_panel = panel,
+    registry = registry,
+    specifications = specifications,
+    cfg = cfg,
+    label = label
+  )
+}
+
+save_labor_mechanism_inference <- function(
+    x, prefix, root = "outputs/diagnostics/extended/labor") {
+  if (!nzchar(prefix) || !grepl("^[a-z0-9_]+$", prefix)) {
+    stop("Labor mechanism diagnostic prefix must be a file-safe identifier.", call. = FALSE)
+  }
+  dir.create(root, recursive = TRUE, showWarnings = FALSE)
+  objects <- list(
+    mechanism_registry = x$registry,
+    mechanism_sample_coverage = x$sample_coverage,
+    mechanism_sample_support = x$sample_support,
+    mechanism_first_stage = x$first_stage,
+    mechanism_reduced_form = x$reduced_form,
+    mechanism_weak_iv = x$weak_iv,
+    mechanism_anderson_rubin_grid = x$anderson_rubin_grid
+  )
+  paths <- vapply(names(objects), function(name) {
+    file.path(root, paste0(prefix, "_", name, ".csv"))
+  }, character(1))
+  for (name in names(objects)) {
+    utils::write.csv(objects[[name]], paths[[name]], row.names = FALSE, na = "")
+  }
+  unname(paths)
+}

@@ -708,3 +708,48 @@ test_that("labor variant comparison summarizes coverage and overlapping estimate
   expect_true(all(out$estimate_correlation > .99))
   expect_equal(out$max_abs_difference, c(.02, .02), tolerance = 1e-12)
 })
+
+test_that("labor causal mechanism registry is compact and support-aligned", {
+  nss66 <- labor_mechanism_registry("nss66")
+  plfs <- labor_mechanism_registry("plfs_2017_18")
+  expected <- c("labor_force_participation_age15plus", "employment_rate_age15plus")
+
+  expect_setequal(nss66$outcome_id, expected)
+  expect_setequal(plfs$outcome_id, expected)
+  expect_identical(unique(nss66$temporal_role), "early_post")
+  expect_identical(unique(plfs$temporal_role), "long_run_post")
+  expect_true(all(nss66$denominator == "age15plus"))
+  expect_true(all(plfs$denominator == "age15plus"))
+  expect_false(any(grepl("unemployment|regular_salaried|migration", nss66$outcome_id)))
+})
+
+test_that("labor mechanism source uses only preferred-support registered cells", {
+  estimates <- data.frame(
+    target_unit_2001 = rep(c("a", "b", "c"), 4),
+    outcome_id = rep(c(
+      "labor_force_participation_age15plus", "employment_rate_age15plus",
+      "unemployment_rate_age15plus", "regular_salaried_share_employed_age15plus"
+    ), each = 3),
+    estimate = seq_len(12) / 20,
+    analysis_eligible = c(TRUE, TRUE, FALSE, TRUE, TRUE, FALSE, rep(TRUE, 6)),
+    stringsAsFactors = FALSE
+  )
+  source <- labor_mechanism_source(estimates, labor_mechanism_registry("nss66"))
+
+  expect_setequal(
+    names(source),
+    c("target_unit_2001", "labor_force_participation_age15plus", "employment_rate_age15plus")
+  )
+  expect_equal(source$target_unit_2001, c("a", "b"))
+  expect_false(any(grepl("unemployment|regular_salaried", names(source))))
+})
+
+test_that("labor mechanism specifications freeze wave and geography sample roles", {
+  early <- labor_mechanism_specifications("nss66")
+  long <- labor_mechanism_specifications("plfs_2017_18")
+  conservative <- labor_mechanism_specifications("plfs_2017_18", sample_suffix = "conservative")
+
+  expect_true(all(early$sample_rule == "nss66_primary_core_labor_common_support"))
+  expect_true(all(long$sample_rule == "plfs_2017_18_primary_core_labor_common_support"))
+  expect_true(all(conservative$sample_rule == "plfs_2017_18_conservative_core_labor_common_support"))
+})

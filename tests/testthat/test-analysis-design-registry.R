@@ -26,7 +26,7 @@ test_that("analysis-design ontology inventories registered families without Cart
       "district_iv_diagnostic", "consumption_iv", "district_mechanism",
       "c17_mechanism", "dise_first_stage", "dise_weak_iv",
       "census_migration_mechanism", "census_housing_mechanism",
-      "economic_census_mechanism",
+      "economic_census_mechanism", "labor_mechanism",
       "historical_first_stage", "historical_predetermined_first_stage"
     )
   )
@@ -45,6 +45,11 @@ test_that("analysis-design ontology inventories registered families without Cart
     sum(registry$family == "economic_census_mechanism"),
     nrow(economic_census_mechanism_registry()) *
       nrow(economic_census_mechanism_specifications(control_registry = controls))
+  )
+  expect_equal(
+    sum(registry$family == "labor_mechanism"),
+    3L * nrow(labor_mechanism_registry("nss66")) *
+      nrow(labor_mechanism_specifications("nss66", control_registry = controls))
   )
 
   constructs <- dise_construct_registry()
@@ -90,6 +95,15 @@ test_that("analysis-design ontology preserves estimator and sample distinctions"
   expect_setequal(unique(district$adjustment_set), c("unadjusted", "region_main", "state_main"))
   expect_true(all(district$estimand == "reduced_form_association"))
   expect_false(any(grepl("2sls", district$estimator, fixed = TRUE)))
+
+  labor <- registry[registry$family == "labor_mechanism", , drop = FALSE]
+  expect_setequal(
+    unique(labor$analysis_role),
+    c("early_post_mechanism", "long_run_mechanism", "geography_robustness")
+  )
+  expect_true(all(labor$estimand == "post_treatment_labor_mechanism"))
+  expect_true(all(labor$estimator == "reduced_form+2sls+anderson_rubin"))
+  expect_true(all(labor$inference == "state_clustered+anderson_rubin"))
 })
 
 test_that("canonical IV rows do not duplicate scalar metadata columns", {

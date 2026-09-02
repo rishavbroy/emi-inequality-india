@@ -112,6 +112,49 @@ extended_labor_target_definitions <- function() {
       }
     ),
     tar_target(
+      plfs_2017_18_labor_mechanism,
+      if (is.null(plfs_2017_18_district_outcomes)) {
+        NULL
+      } else {
+        build_labor_mechanism_inference(
+          district_panel,
+          plfs_2017_18_district_outcomes$estimates,
+          wave_id = "plfs_2017_18",
+          cfg = cfg,
+          control_registry = census_2001_control_registry
+        )
+      }
+    ),
+    tar_target(
+      plfs_2017_18_conservative_labor_mechanism,
+      if (is.null(plfs_2017_18_conservative_district_outcomes)) {
+        NULL
+      } else {
+        build_labor_mechanism_inference(
+          district_panel,
+          plfs_2017_18_conservative_district_outcomes$estimates,
+          wave_id = "plfs_2017_18",
+          cfg = cfg,
+          control_registry = census_2001_control_registry,
+          sample_suffix = "conservative"
+        )
+      }
+    ),
+    tar_target(
+      diag_ext_plfs_2017_18_labor_mechanism_files,
+      if (is.null(plfs_2017_18_labor_mechanism)) character() else
+        save_labor_mechanism_inference(plfs_2017_18_labor_mechanism, "plfs_2017_18"),
+      format = "file"
+    ),
+    tar_target(
+      diag_ext_plfs_2017_18_conservative_labor_mechanism_files,
+      if (is.null(plfs_2017_18_conservative_labor_mechanism)) character() else
+        save_labor_mechanism_inference(
+          plfs_2017_18_conservative_labor_mechanism, "plfs_2017_18_conservative"
+        ),
+      format = "file"
+    ),
+    tar_target(
       plfs_2017_18_variant_comparison,
       if (is.null(plfs_2017_18_district_outcomes) ||
           is.null(plfs_2017_18_conservative_district_outcomes)) {
@@ -233,6 +276,26 @@ extended_labor_target_definitions <- function() {
           label = "NSS66 labor"
         )
       }
+    ),
+    tar_target(
+      nss66_labor_mechanism,
+      if (is.null(nss66_district_outcomes)) {
+        NULL
+      } else {
+        build_labor_mechanism_inference(
+          district_panel,
+          nss66_district_outcomes$estimates,
+          wave_id = "nss66",
+          cfg = cfg,
+          control_registry = census_2001_control_registry
+        )
+      }
+    ),
+    tar_target(
+      diag_ext_nss66_labor_mechanism_files,
+      if (is.null(nss66_labor_mechanism)) character() else
+        save_labor_mechanism_inference(nss66_labor_mechanism, "nss66"),
+      format = "file"
     ),
     tar_target(
       diag_ext_nss66_files,

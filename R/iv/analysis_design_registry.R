@@ -210,7 +210,7 @@ analysis_design_census_mechanisms <- function(control_registry = NULL) {
     registry <- families[[source]]$registry
     safe_bind_rows(lapply(seq_len(nrow(registry)), function(i) {
       outcome <- registry$variable[[i]]
-      specs <- census_mechanism_specifications(
+      specs <- posttreatment_mechanism_specifications(
         outcome = outcome,
         sample_rule = families[[source]]$sample_rule,
         control_registry = control_registry
@@ -255,6 +255,44 @@ analysis_design_economic_census_mechanisms <- function(control_registry = NULL) 
       sep = "__"
     )
     rows
+  }))
+}
+
+analysis_design_labor_mechanisms <- function(control_registry = NULL) {
+  designs <- data.frame(
+    wave_id = c("nss66", "plfs_2017_18", "plfs_2017_18"),
+    sample_suffix = c("primary", "primary", "conservative"),
+    analysis_role = c("early_post_mechanism", "long_run_mechanism", "geography_robustness"),
+    stringsAsFactors = FALSE
+  )
+  safe_bind_rows(lapply(seq_len(nrow(designs)), function(j) {
+    design <- designs[j, , drop = FALSE]
+    registry <- labor_mechanism_registry(design$wave_id[[1L]])
+    safe_bind_rows(lapply(seq_len(nrow(registry)), function(i) {
+      specs <- labor_mechanism_specifications(
+        wave_id = design$wave_id[[1L]],
+        outcome = registry$variable[[i]],
+        control_registry = control_registry,
+        sample_suffix = design$sample_suffix[[1L]]
+      )
+      rows <- analysis_design_from_iv(
+        specs,
+        family = paste0(
+          "labor__", design$wave_id[[1L]], "__", design$sample_suffix[[1L]],
+          "__", registry$outcome_id[[i]]
+        ),
+        estimator = "reduced_form+2sls+anderson_rubin",
+        estimand = "post_treatment_labor_mechanism",
+        inference = "state_clustered+anderson_rubin",
+        analysis_role = design$analysis_role[[1L]]
+      )
+      rows$family <- "labor_mechanism"
+      rows$analysis_id <- paste(
+        "labor", design$wave_id[[1L]], design$sample_suffix[[1L]],
+        registry$outcome_id[[i]], rows$specification_id, sep = "__"
+      )
+      rows
+    }))
   }))
 }
 
@@ -343,6 +381,7 @@ compile_analysis_design_registry <- function(
     analysis_design_dise(control_registry = control_registry),
     analysis_design_census_mechanisms(control_registry),
     analysis_design_economic_census_mechanisms(control_registry),
+    analysis_design_labor_mechanisms(control_registry),
     analysis_design_historical_first_stages(control_registry)
   ))
   out <- out[analysis_design_columns()]
