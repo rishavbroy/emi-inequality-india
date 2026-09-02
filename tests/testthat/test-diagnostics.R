@@ -2859,7 +2859,7 @@ test_that("consumption scalar-IV validation enforces six-design realized common 
   bad$summary$n[[3L]] <- 39
   expect_error(
     validate_consumption_scalar_iv_robustness(bad, support),
-    "six-design common support"
+    "registered common support"
   )
 })
 
@@ -2954,5 +2954,38 @@ test_that("alternative welfare saver persists only compact family artifacts", {
   )
   expect_false(file.exists(file.path(
     root, "consumption_alternative_welfare_robustness_anderson_rubin_grid.csv"
+  )))
+})
+
+test_that("causal control strategies distinguish adjustment philosophies", {
+  strategies <- iv_causal_control_strategy_adjustments()
+  expect_equal(length(strategies), 6L)
+  expect_setequal(
+    names(strategies),
+    c(
+      "region_fe_only", "region_compact_2001",
+      "region_compact_2001_no_human_capital",
+      "state_fe_only", "state_compact_2001",
+      "state_compact_2001_no_human_capital"
+    )
+  )
+  expect_length(strategies$region_fe_only$controls, 0L)
+  expect_length(strategies$state_fe_only$controls, 0L)
+  expect_identical(
+    strategies$state_compact_2001$controls,
+    census_2001_main_controls()
+  )
+  expect_length(
+    intersect(
+      strategies$state_compact_2001_no_human_capital$controls,
+      iv_control_block_membership()$human_capital
+    ),
+    0L
+  )
+  expect_true(all(vapply(
+    strategies, function(x) nzchar(x$theoretical_role), logical(1)
+  )))
+  expect_true(all(vapply(
+    strategies, function(x) nzchar(x$caution), logical(1)
   )))
 })

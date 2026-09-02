@@ -324,8 +324,7 @@ build_consumption_alternative_welfare_registry <- function(
   welfare <- safe_df(welfare_registry)
   required_consumption <- c(
     "welfare_specification_id", "outcome_round", "baseline_round", "estimand",
-    "treatment", "instrument", "adjustment_id", "construction_id",
-    "panel_variant", "sample_rule"
+    "treatment", "panel_variant", "sample_rule"
   )
   required_welfare <- c(
     "outcome_id", "role", "survey_ids", "iv_analysis_transform"
@@ -362,9 +361,6 @@ build_consumption_alternative_welfare_registry <- function(
         estimand = base$estimand[[1L]],
         analysis_transform = outcome$iv_analysis_transform[[1L]],
         treatment = base$treatment[[1L]],
-        instrument = base$instrument[[1L]],
-        adjustment_id = base$adjustment_id[[1L]],
-        construction_id = base$construction_id[[1L]],
         panel_variant = base$panel_variant[[1L]],
         sample_rule = base$sample_rule[[1L]],
         tier = "C",
