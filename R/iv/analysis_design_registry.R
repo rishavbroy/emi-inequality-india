@@ -374,7 +374,8 @@ compile_analysis_design_registry <- function(
     public_iv_specifications = public_iv_specification_registry(control_registry),
     consumption_scalar_iv_robustness_specifications = NULL,
     consumption_alternative_welfare_specifications = NULL,
-    consumption_control_strategy_specifications = NULL) {
+    consumption_control_strategy_specifications = NULL,
+    consumption_control_parameterization_specifications = NULL) {
   core_iv <- analysis_design_from_iv(
     iv_diagnostic_specification_registry(control_registry = control_registry),
     family = "district_iv_diagnostic",
@@ -426,6 +427,17 @@ compile_analysis_design_registry <- function(
       analysis_role = "control_strategy_robustness"
     )
   }
+  consumption_control_parameterization <- if (is.null(consumption_control_parameterization_specifications)) {
+    data.frame()
+  } else {
+    analysis_design_from_iv(
+      consumption_control_parameterization_specifications,
+      family = "consumption_iv",
+      estimator = "first_stage+reduced_form+2sls+anderson_rubin",
+      inference = "state_clustered+anderson_rubin+holm",
+      analysis_role = "control_parameterization_robustness"
+    )
+  }
   out <- safe_bind_rows(list(
     analysis_design_public_iv(public_iv_specifications),
     core_iv,
@@ -433,6 +445,7 @@ compile_analysis_design_registry <- function(
     consumption_scalar,
     consumption_welfare,
     consumption_control_strategy,
+    consumption_control_parameterization,
     analysis_design_district_mechanisms(
       english_opportunity_measure_registry, control_registry
     ),
@@ -565,7 +578,8 @@ build_iv_candidate_design_ledger <- function(
     english_opportunity_registry = NULL,
     consumption_scalar_iv_robustness_specifications = NULL,
     consumption_alternative_welfare_specifications = NULL,
-    consumption_control_strategy_specifications = NULL) {
+    consumption_control_strategy_specifications = NULL,
+    consumption_control_parameterization_specifications = NULL) {
   public_specs <- as_iv_specifications(public_specifications)
   consumption_specs <- as_iv_specifications(consumption_specifications)
   control_registry <- resolve_census_2001_control_registry(control_registry)
@@ -592,6 +606,11 @@ build_iv_candidate_design_ledger <- function(
   } else {
     nrow(as_iv_specifications(consumption_control_strategy_specifications))
   }
+  n_consumption_control_parameterization <- if (is.null(consumption_control_parameterization_specifications)) {
+    0L
+  } else {
+    nrow(as_iv_specifications(consumption_control_parameterization_specifications))
+  }
   n_diagnostic_iv <- nrow(diagnostic_specs)
   n_scalar <- sum(canonical_specs$n_excluded_instruments == 1L)
   n_multishare <- sum(canonical_specs$n_excluded_instruments > 1L)
@@ -601,7 +620,10 @@ build_iv_candidate_design_ledger <- function(
   )
   n_block_interventions <- length(iv_block_intervention_adjustments(control_registry))
   n_control_strategies <- length(iv_causal_control_strategy_adjustments(control_registry))
-  n_parameterizations <- length(iv_main_parameterization_adjustments(control_registry))
+  n_relevance_parameterizations <- length(iv_main_parameterization_adjustments(control_registry))
+  n_control_parameterizations <- length(
+    iv_causal_control_parameterization_adjustments(control_registry)
+  )
   n_dise_relevance <- nrow(dise_construct_registry()) * n_diagnostic_iv
   n_historical_vintage <- nrow(historical_linguistic_predetermined_first_stage_registry()) * 4L
   n_c17 <- nrow(census_c17_mechanism_registry())
@@ -667,8 +689,8 @@ build_iv_candidate_design_ledger <- function(
       "first_stage",
       "diagnostic_only",
       implementation_status = "implemented",
-      candidate_cells = n_parameterizations,
-      implemented_cells = n_parameterizations,
+      candidate_cells = n_relevance_parameterizations,
+      implemented_cells = n_relevance_parameterizations,
       rationale = "These are finite substitutions already declared by the control registry, not arbitrary covariate subsets."
     ),
     candidate_design_row(
@@ -916,12 +938,18 @@ build_iv_candidate_design_ledger <- function(
       "preferred Shastry nonzero-mean distance",
       "within compact 2001 adjustment, region/state FE crossed with registered literacy/secondary-plus and compact/decomposed economic-structure parameterizations",
       "first_stage+reduced_form+2sls+anderson_rubin",
-      "estimate_if_registered",
+      "estimate",
       multiplicity_family = "consumption_control_parameterization",
-      implementation_status = "unimplemented",
-      candidate_cells = n_consumption * n_parameterizations,
-      implemented_cells = 0L,
-      rationale = "This family asks a measurement question conditional on the compact-2001 strategy. The registry already declares human-capital and economic-structure variables as substitutes, so their finite substitution grid is more defensible than arbitrary main-versus-expanded accumulation and is distinct from the causal control-strategy family."
+      implementation_status = "implemented",
+      candidate_cells = n_consumption * n_control_parameterizations,
+      implemented_cells = n_consumption_control_parameterization,
+      execution_cells = n_consumption_control_parameterization,
+      rationale = paste(
+        "This family asks a measurement question conditional on the compact-2001 strategy. The benchmark",
+        "secondary-plus/compact-economic specification is re-estimated on the same common sample as the",
+        "three registered substitutions under each FE, so sensitivity is not confounded by sample drift.",
+        "The finite 2 FE x 4 parameterization grid is distinct from causal control-strategy robustness."
+      )
     ),
     candidate_design_row(
       "historical_1991_adjustment_robustness",

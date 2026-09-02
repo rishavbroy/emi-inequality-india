@@ -22,6 +22,9 @@ test_that("analysis-design ontology inventories registered families without Cart
   consumption_control_specs <- compile_consumption_control_strategy_specifications(
     consumption, controls
   )
+  consumption_parameterization_specs <- compile_consumption_control_parameterization_specifications(
+    consumption, controls
+  )
   mechanism_measures <- read_english_opportunity_measure_registry(
     file.path(root, "data", "metadata", "english_opportunity_measures.csv")
   )
@@ -30,7 +33,8 @@ test_that("analysis-design ontology inventories registered families without Cart
     consumption_specs, mechanism_measures, controls,
     consumption_scalar_iv_robustness_specifications = consumption_scalar_specs,
     consumption_alternative_welfare_specifications = consumption_welfare_specs,
-    consumption_control_strategy_specifications = consumption_control_specs
+    consumption_control_strategy_specifications = consumption_control_specs,
+    consumption_control_parameterization_specifications = consumption_parameterization_specs
   )
 
   expect_identical(names(registry), analysis_design_columns())
@@ -67,7 +71,7 @@ test_that("analysis-design ontology inventories registered families without Cart
   expect_equal(
     sum(registry$family == "consumption_iv"),
     nrow(consumption_specs) + nrow(consumption_scalar_specs) + nrow(consumption_welfare_specs) +
-      nrow(consumption_control_specs)
+      nrow(consumption_control_specs) + nrow(consumption_parameterization_specs)
   )
   expect_equal(
     sum(registry$family == "district_mechanism"),
@@ -119,6 +123,9 @@ test_that("analysis-design ontology preserves estimator and sample distinctions"
   consumption_control <- compile_consumption_control_strategy_specifications(
     consumption_registry, controls
   )
+  consumption_parameterization <- compile_consumption_control_parameterization_specifications(
+    consumption_registry, controls
+  )
   mechanisms <- read_english_opportunity_measure_registry(
     file.path(root, "data", "metadata", "english_opportunity_measures.csv")
   )
@@ -126,7 +133,8 @@ test_that("analysis-design ontology preserves estimator and sample distinctions"
     consumption, mechanisms, controls,
     consumption_scalar_iv_robustness_specifications = consumption_scalar,
     consumption_alternative_welfare_specifications = consumption_welfare,
-    consumption_control_strategy_specifications = consumption_control
+    consumption_control_strategy_specifications = consumption_control,
+    consumption_control_parameterization_specifications = consumption_parameterization
   )
 
   consumption_rows <- registry[registry$family == "consumption_iv", , drop = FALSE]
@@ -134,7 +142,8 @@ test_that("analysis-design ontology preserves estimator and sample distinctions"
   expect_true(all(consumption_rows$estimator == "first_stage+reduced_form+2sls+anderson_rubin"))
   preferred_consumption <- consumption_rows[
     !consumption_rows$analysis_role %in% c(
-      "scalar_iv_robustness", "welfare_definition_robustness", "control_strategy_robustness"
+      "scalar_iv_robustness", "welfare_definition_robustness", "control_strategy_robustness",
+      "control_parameterization_robustness"
     ),
     , drop = FALSE
   ]
@@ -155,6 +164,14 @@ test_that("analysis-design ontology preserves estimator and sample distinctions"
   expect_equal(nrow(control_consumption), nrow(consumption_control))
   expect_true(all(control_consumption$inference == "state_clustered+anderson_rubin+holm"))
   expect_true(all(control_consumption$sample_rule == "consumption_control_strategy_common_support"))
+  parameterization_consumption <- consumption_rows[
+    consumption_rows$analysis_role == "control_parameterization_robustness", , drop = FALSE
+  ]
+  expect_equal(nrow(parameterization_consumption), nrow(consumption_parameterization))
+  expect_true(all(parameterization_consumption$inference == "state_clustered+anderson_rubin+holm"))
+  expect_true(all(
+    parameterization_consumption$sample_rule == "consumption_control_parameterization_common_support"
+  ))
   expect_true(all(welfare_consumption$inference == "state_clustered+anderson_rubin+holm"))
   expect_true(all(welfare_consumption$sample_rule == "consumption_welfare_iv_common_support"))
 
@@ -228,9 +245,12 @@ test_that("candidate-design ledger records bounded robustness choices without Ca
   consumption_control <- compile_consumption_control_strategy_specifications(
     consumption_registry, controls
   )
+  consumption_parameterization <- compile_consumption_control_parameterization_specifications(
+    consumption_registry, controls
+  )
   ledger <- build_iv_candidate_design_ledger(
     public, consumption, controls, welfare, opportunity, consumption_scalar,
-    consumption_welfare, consumption_control
+    consumption_welfare, consumption_control, consumption_parameterization
   )
 
   expect_identical(names(ledger), candidate_design_columns())
@@ -296,6 +316,24 @@ test_that("candidate-design ledger records bounded robustness choices without Ca
   expect_equal(control_strategy$implemented_cells, nrow(consumption_control))
   expect_equal(control_strategy$execution_cells, nrow(consumption_control))
   expect_equal(control_strategy$multiplicity_family, "consumption_control_strategy")
+
+  control_parameterization <- ledger[
+    ledger$candidate_id == "consumption_control_parameterization_robustness",
+    ,
+    drop = FALSE
+  ]
+  expect_equal(
+    control_parameterization$candidate_cells,
+    nrow(consumption) * length(iv_causal_control_parameterization_adjustments(controls))
+  )
+  expect_equal(control_parameterization$implementation_status, "implemented")
+  expect_equal(control_parameterization$execution_policy, "estimate")
+  expect_equal(control_parameterization$implemented_cells, nrow(consumption_parameterization))
+  expect_equal(control_parameterization$execution_cells, nrow(consumption_parameterization))
+  expect_equal(
+    control_parameterization$multiplicity_family,
+    "consumption_control_parameterization"
+  )
 
   parameterizations <- ledger[
     ledger$candidate_id == "relevance_control_parameterizations",
