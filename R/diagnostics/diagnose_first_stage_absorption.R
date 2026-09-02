@@ -30,9 +30,68 @@ first_stage_absorption_aliases <- function(control_registry = NULL) {
   data.frame(
     semantic_specification_id = sub("^absorption__", "", aliases$semantic_specification_id),
     execution_specification_id = sub("^absorption__", "", aliases$execution_specification_id),
+    semantic_adjustment_id = plain_chr(aliases$semantic_adjustment_id),
+    execution_adjustment_id = plain_chr(aliases$execution_adjustment_id),
     is_execution_alias = aliases$is_execution_alias,
     stringsAsFactors = FALSE
   )
+}
+
+first_stage_absorption_semantic_summary <- function(
+    execution_summary, aliases, control_registry = NULL) {
+  execution <- safe_df(execution_summary)
+  alias_map <- safe_df(aliases)
+  required_execution <- c("specification_id", "estimate", "partial_r_squared", "excluded_instrument_f")
+  required_alias <- c(
+    "semantic_specification_id", "execution_specification_id",
+    "semantic_adjustment_id", "is_execution_alias"
+  )
+  missing_execution <- setdiff(required_execution, names(execution))
+  missing_alias <- setdiff(required_alias, names(alias_map))
+  if (length(missing_execution) || length(missing_alias)) {
+    stop(
+      "First-stage semantic summary lacks execution or alias fields: ",
+      paste(c(missing_execution, missing_alias), collapse = ", "),
+      call. = FALSE
+    )
+  }
+
+  candidates <- iv_absorption_specification_candidates(control_registry = control_registry)
+  candidate <- data.frame(
+    semantic_specification_id = sub("^absorption__", "", plain_chr(candidates$specification_id)),
+    semantic_label = plain_chr(candidates$adjustment),
+    semantic_fixed_effect = plain_chr(candidates$fixed_effect),
+    semantic_control_blocks = vapply(
+      candidates$controls,
+      function(x) paste(first_stage_included_control_blocks(x, control_registry), collapse = ";"),
+      character(1)
+    ),
+    stringsAsFactors = FALSE
+  )
+  if (anyDuplicated(candidate$semantic_specification_id)) {
+    stop("First-stage semantic candidate identifiers must be unique.", call. = FALSE)
+  }
+
+  out <- merge(
+    alias_map, candidate,
+    by = "semantic_specification_id", all.x = TRUE, sort = FALSE
+  )
+  if (!all(alias_map$execution_specification_id %in% execution$specification_id)) {
+    stop("First-stage aliases reference missing execution specifications.", call. = FALSE)
+  }
+  execution_copy <- execution
+  names(execution_copy)[names(execution_copy) == "specification_id"] <-
+    "execution_specification_id"
+  out <- merge(
+    out, execution_copy,
+    by = "execution_specification_id", all.x = TRUE, sort = FALSE
+  )
+  out <- out[match(alias_map$semantic_specification_id, out$semantic_specification_id), , drop = FALSE]
+  rownames(out) <- NULL
+  if (nrow(out) != nrow(alias_map) || anyNA(out$semantic_label)) {
+    stop("First-stage semantic summary did not resolve every scientific question to an execution result.", call. = FALSE)
+  }
+  out
 }
 
 first_stage_absorption_variables <- function(
@@ -364,6 +423,10 @@ diagnose_first_stage_absorption <- function(
     )
   })
   summary <- safe_bind_rows(lapply(estimates, `[[`, "summary"))
+  aliases <- first_stage_absorption_aliases(control_registry)
+  semantic_summary <- first_stage_absorption_semantic_summary(
+    summary, aliases, control_registry
+  )
   full_spec <- first_stage_full_specification(registry)
   full_id <- full_spec$specification_id[[1L]]
   full_estimate <- estimates[[match(full_id, vapply(
@@ -372,8 +435,9 @@ diagnose_first_stage_absorption <- function(
   structure(
     list(
       summary = summary,
+      semantic_summary = semantic_summary,
       registry = registry,
-      aliases = first_stage_absorption_aliases(control_registry),
+      aliases = aliases,
       common_support = data.frame(
         treatment = treatment, instrument = instrument, n = nrow(data),
         n_states = length(unique(data$state_code_2001)),
@@ -399,6 +463,9 @@ save_first_stage_absorption_diagnostics <- function(
   registry <- collapse_diagnostic_list_columns(diagnostics$registry, "controls")
   output_manifest(c(
     specification_ladder = write_diagnostic_csv(diagnostics$summary, file.path(dir, "first_stage_absorption_ladder.csv")),
+    semantic_specification_summary = write_diagnostic_csv(
+      diagnostics$semantic_summary, file.path(dir, "first_stage_absorption_semantic_summary.csv")
+    ),
     specification_registry = write_diagnostic_csv(registry, file.path(dir, "first_stage_absorption_registry.csv")),
     specification_aliases = write_diagnostic_csv(diagnostics$aliases, file.path(dir, "first_stage_absorption_aliases.csv")),
     common_support = write_diagnostic_csv(diagnostics$common_support, file.path(dir, "first_stage_absorption_common_support.csv")),

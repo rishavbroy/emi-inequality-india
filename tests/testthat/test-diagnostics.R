@@ -786,20 +786,43 @@ test_that("first-stage absorption diagnostics use fixed support and report reque
     out$summary$control_blocks[out$summary$specification_id == "state_fe_census_controls"],
     paste(names(first_stage_control_blocks()), collapse = ";")
   )
-  expect_true(all(c(
+  named_absorption_questions <- c(
     "region_fe_census_controls", "region_fe_expanded_controls",
-    paste0("region_fe_plus_", names(first_stage_control_blocks()))
-  ) %in% out$summary$specification_id))
-  expect_true(all(c(
+    paste0("region_fe_plus_", names(first_stage_control_blocks())),
     "region_fe_main_without_human_capital", "state_fe_main_without_human_capital",
     "region_fe_expanded_without_human_capital", "state_fe_expanded_without_human_capital"
-  ) %in% out$summary$specification_id))
+  )
+  expect_true(all(named_absorption_questions %in% out$aliases$semantic_specification_id))
+  execution_ids <- out$aliases$execution_specification_id[
+    match(named_absorption_questions, out$aliases$semantic_specification_id)
+  ]
+  expect_true(all(execution_ids %in% out$summary$specification_id))
   no_hc <- out$registry$controls[out$registry$specification_id == "region_fe_expanded_without_human_capital"][[1]]
   expect_length(intersect(no_hc, first_stage_control_blocks()$human_capital), 0L)
 
   main_blocks <- iv_main_control_blocks()
   aliases <- out$aliases
   raw_adjustments <- iv_absorption_adjustments()
+  expect_equal(
+    nrow(out$semantic_summary),
+    length(iv_absorption_adjustments())
+  )
+  expect_equal(
+    out$semantic_summary$semantic_specification_id,
+    out$aliases$semantic_specification_id
+  )
+  expect_true(all(out$semantic_summary$execution_specification_id %in% out$summary$specification_id))
+  alias_rows <- out$semantic_summary[out$semantic_summary$is_execution_alias, , drop = FALSE]
+  expect_true(nrow(alias_rows) > 0L)
+  for (i in seq_len(nrow(alias_rows))) {
+    execution <- out$summary[
+      out$summary$specification_id == alias_rows$execution_specification_id[[i]],
+      , drop = FALSE
+    ]
+    expect_equal(alias_rows$estimate[[i]], execution$estimate[[1L]])
+    expect_equal(alias_rows$partial_r_squared[[i]], execution$partial_r_squared[[1L]])
+  }
+
   expect_true(length(main_blocks) > 1L)
   for (block_id in names(main_blocks)) {
     block_only <- paste("region", "block_only", block_id, sep = "_")
@@ -864,6 +887,11 @@ test_that("first-stage absorption diagnostics save a compact manifest without re
   diagnostics <- structure(
     list(
       summary = data.frame(specification_id = registry$specification_id, stringsAsFactors = FALSE),
+      semantic_summary = data.frame(
+        semantic_specification_id = registry$specification_id,
+        execution_specification_id = registry$specification_id,
+        stringsAsFactors = FALSE
+      ),
       registry = registry,
       aliases = data.frame(
         semantic_specification_id = registry$specification_id,
@@ -886,7 +914,9 @@ test_that("first-stage absorption diagnostics save a compact manifest without re
   manifest <- save_first_stage_absorption_diagnostics(diagnostics, dir)
 
   expect_setequal(basename(manifest$path), c(
-    "first_stage_absorption_ladder.csv", "first_stage_absorption_registry.csv",
+    "first_stage_absorption_ladder.csv",
+    "first_stage_absorption_semantic_summary.csv",
+    "first_stage_absorption_registry.csv",
     "first_stage_absorption_aliases.csv", "first_stage_absorption_common_support.csv",
     "first_stage_state_residual_ranges.csv",
     "first_stage_state_deletion.csv", "first_stage_district_influence.csv",
