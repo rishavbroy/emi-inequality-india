@@ -107,3 +107,6 @@ NSS66 employment/unemployment registers both the official DDI and canonical `sur
 
 
 `plfs_labor_contracts.csv` also declares the quarter/visit/segment and `NSS`/`NSC`/annual-quarter fields needed to reconstruct the official PLFS annual person weight. The PLFS 2017-18 unit-level README is registered in `file_manifest.csv` as the authority for that formula and the primary-key definition.
+
+
+`consumption_welfare_outcomes.csv` separates `transform`, which defines the survey-design welfare estimand, from `iv_analysis_transform`, which defines the downstream causal-analysis scale. This prevents already-log outcomes such as mean log MPCE from being transformed twice and allows response-definition robustness families to be compiled from metadata.

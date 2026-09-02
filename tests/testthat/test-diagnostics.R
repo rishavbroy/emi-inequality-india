@@ -2862,3 +2862,97 @@ test_that("consumption scalar-IV validation enforces six-design realized common 
     "six-design common support"
   )
 })
+
+test_that("alternative welfare registry is survey-compatible and scale-explicit", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
+  consumption <- read_consumption_iv_outcome_registry(
+    file.path(root, "data/metadata/consumption_iv_outcomes.csv")
+  )
+  welfare <- read_consumption_welfare_outcomes(
+    file.path(root, "data/metadata/consumption_welfare_outcomes.csv")
+  )
+  registry <- build_consumption_alternative_welfare_registry(consumption, welfare)
+
+  expect_equal(nrow(registry), 20L)
+  expect_equal(anyDuplicated(registry$welfare_specification_id), 0L)
+  expect_setequal(
+    unique(registry$outcome_id),
+    c("mean_log_real_mpce", "weighted_median_real_mpce", "bottom40_mean_real_mpce")
+  )
+  expect_equal(sum(registry$outcome_id == "mean_log_real_mpce"), 8L)
+  expect_equal(sum(registry$outcome_id == "weighted_median_real_mpce"), 8L)
+  expect_equal(sum(registry$outcome_id == "bottom40_mean_real_mpce"), 4L)
+  expect_true(all(registry$analysis_transform[registry$outcome_id == "mean_log_real_mpce"] == "identity"))
+  expect_true(all(registry$analysis_transform[registry$outcome_id != "mean_log_real_mpce"] == "log"))
+  expect_true(all(registry$tier == "C"))
+  expect_false(any(registry$outcome_round == "nss_2009_10_type2" & registry$outcome_id == "bottom40_mean_real_mpce"))
+  expect_false(any(registry$outcome_round == "nss_2011_12_type2" & registry$outcome_id == "bottom40_mean_real_mpce"))
+})
+
+test_that("alternative welfare robustness compiles the predeclared 120-cell family", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
+  consumption <- read_consumption_iv_outcome_registry(
+    file.path(root, "data/metadata/consumption_iv_outcomes.csv")
+  )
+  welfare <- read_consumption_welfare_outcomes(
+    file.path(root, "data/metadata/consumption_welfare_outcomes.csv")
+  )
+  registry <- build_consumption_alternative_welfare_registry(consumption, welfare)
+  specs <- compile_consumption_alternative_welfare_specifications(registry)
+
+  expect_equal(nrow(specs), 120L)
+  expect_equal(anyDuplicated(specs$specification_id), 0L)
+  expect_setequal(unique(specs$adjustment_id), c("region_main", "state_main"))
+  expect_setequal(
+    unique(specs$construction_id),
+    c("nonzero_mean", "glottolog_mean", "dyen_noncognate")
+  )
+  expect_true(all(specs$sample_rule == "consumption_welfare_iv_common_support"))
+  expect_true(all(specs$tier == "C"))
+})
+
+test_that("consumption robustness family helpers are reusable across multiplicity families", {
+  dynamics <- list(summary = data.frame(
+    welfare_specification_id = rep(c("a", "b"), each = 2),
+    reduced_form_p.value = c(.01, .2, .03, .8),
+    anderson_rubin_p_beta0 = c(.02, .3, .04, .9),
+    stringsAsFactors = FALSE
+  ))
+  out <- add_consumption_iv_family_multiplicity(
+    dynamics, "consumption_welfare_robustness"
+  )$summary
+
+  expect_equal(
+    out$reduced_form_p_holm_within_welfare[1:2],
+    stats::p.adjust(c(.01, .2), method = "holm")
+  )
+  expect_equal(
+    out$anderson_rubin_p_beta0_holm_family,
+    stats::p.adjust(dynamics$summary$anderson_rubin_p_beta0, method = "holm")
+  )
+  expect_true(all(out$multiplicity_family == "consumption_welfare_robustness"))
+})
+
+test_that("alternative welfare saver persists only compact family artifacts", {
+  root <- tempfile("consumption-welfare-iv-")
+  dynamics <- list(
+    summary = data.frame(specification_id = "s", estimate = 1),
+    anderson_rubin_grid = data.frame(specification_id = "s", beta = 0, p.value = .5)
+  )
+  support <- data.frame(group_id = "w", n_common = 10, status = "ready")
+
+  paths <- save_consumption_iv_robustness_family(
+    dynamics, support, "consumption_alternative_welfare_robustness", root
+  )
+
+  expect_setequal(
+    basename(paths),
+    c(
+      "consumption_alternative_welfare_robustness.csv",
+      "consumption_alternative_welfare_robustness_common_support.csv"
+    )
+  )
+  expect_false(file.exists(file.path(
+    root, "consumption_alternative_welfare_robustness_anderson_rubin_grid.csv"
+  )))
+})

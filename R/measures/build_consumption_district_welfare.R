@@ -128,7 +128,7 @@ consumption_district_support <- function(lineaged_households) {
 read_consumption_welfare_outcomes <- function(path) {
   x <- read.csv(path, stringsAsFactors = FALSE, check.names = FALSE)
   required <- c(
-    "outcome_id", "estimand", "transform", "quantile", "quantile_interval",
+    "outcome_id", "estimand", "transform", "iv_analysis_transform", "quantile", "quantile_interval",
     "quantile_rule", "role", "min_households", "min_fsu",
     "min_kish_effective_n", "max_relative_se", "survey_ids"
   )
@@ -142,7 +142,8 @@ read_consumption_welfare_outcomes <- function(path) {
   if (any(!x$estimand %in% c(
         "survey_mean", "survey_quantile", "survey_bottom_mean"
       )) ||
-      any(!x$transform %in% c("identity", "log"))) {
+      any(!x$transform %in% c("identity", "log")) ||
+      any(!x$iv_analysis_transform %in% c("identity", "log"))) {
     stop("Consumption welfare registry contains unsupported estimands or transforms.", call. = FALSE)
   }
   x$quantile <- suppressWarnings(as.numeric(x$quantile))

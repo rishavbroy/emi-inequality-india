@@ -200,6 +200,7 @@ test_that("consumption welfare registry validates the retained outcome contract"
       "survey_mean", "survey_mean", "survey_quantile", "survey_bottom_mean"
     ),
     transform = c("identity", "log", "identity", "identity"),
+    iv_analysis_transform = c("log", "identity", "log", "log"),
     quantile = c(NA, NA, 0.5, 0.4),
     quantile_interval = c("", "", "xlogit", ""),
     quantile_rule = c("", "", "math", ""),
@@ -226,6 +227,7 @@ test_that("consumption welfare registry validates the retained outcome contract"
   expect_equal(out$quantile_rule[[3L]], "math")
   expect_equal(out$estimand[[4L]], "survey_bottom_mean")
   expect_equal(out$quantile[[4L]], 0.4)
+  expect_equal(out$iv_analysis_transform, c("log", "identity", "log", "log"))
 
   bad_quantile <- out
   bad_quantile$quantile[[3L]] <- 1

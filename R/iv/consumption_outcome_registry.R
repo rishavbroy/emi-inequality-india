@@ -312,8 +312,79 @@ compile_consumption_iv_specifications <- function(registry, control_registry = N
   bind_iv_specification_rows(rows)
 }
 
-compile_consumption_scalar_iv_robustness_specifications <- function(
-    registry, control_registry = NULL) {
+consumption_welfare_round_is_supported <- function(outcome_row, survey_id) {
+  surveys <- trimws(plain_chr(outcome_row$survey_ids[[1L]] %||% "*"))
+  identical(surveys, "*") || survey_id %in% strsplit(surveys, ";", fixed = TRUE)[[1L]]
+}
+
+build_consumption_alternative_welfare_registry <- function(
+    consumption_registry,
+    welfare_registry) {
+  consumption <- safe_df(consumption_registry)
+  welfare <- safe_df(welfare_registry)
+  required_consumption <- c(
+    "welfare_specification_id", "outcome_round", "baseline_round", "estimand",
+    "treatment", "instrument", "adjustment_id", "construction_id",
+    "panel_variant", "sample_rule"
+  )
+  required_welfare <- c(
+    "outcome_id", "role", "survey_ids", "iv_analysis_transform"
+  )
+  missing <- c(
+    setdiff(required_consumption, names(consumption)),
+    setdiff(required_welfare, names(welfare))
+  )
+  if (length(missing)) {
+    stop(
+      "Alternative consumption-welfare registry lacks fields: ",
+      paste(unique(missing), collapse = ", "),
+      call. = FALSE
+    )
+  }
+  welfare <- welfare[welfare$role == "robustness", , drop = FALSE]
+  rows <- list()
+  k <- 0L
+  for (i in seq_len(nrow(welfare))) {
+    outcome <- welfare[i, , drop = FALSE]
+    for (j in seq_len(nrow(consumption))) {
+      base <- consumption[j, , drop = FALSE]
+      supported <- consumption_welfare_round_is_supported(outcome, base$outcome_round[[1L]]) &&
+        consumption_welfare_round_is_supported(outcome, base$baseline_round[[1L]])
+      if (!supported) next
+      k <- k + 1L
+      rows[[k]] <- data.frame(
+        welfare_specification_id = paste(
+          "alt_welfare", outcome$outcome_id[[1L]], base$welfare_specification_id[[1L]], sep = "__"
+        ),
+        outcome_id = outcome$outcome_id[[1L]],
+        outcome_round = base$outcome_round[[1L]],
+        baseline_round = base$baseline_round[[1L]],
+        estimand = base$estimand[[1L]],
+        analysis_transform = outcome$iv_analysis_transform[[1L]],
+        treatment = base$treatment[[1L]],
+        instrument = base$instrument[[1L]],
+        adjustment_id = base$adjustment_id[[1L]],
+        construction_id = base$construction_id[[1L]],
+        panel_variant = base$panel_variant[[1L]],
+        sample_rule = base$sample_rule[[1L]],
+        tier = "C",
+        stringsAsFactors = FALSE
+      )
+    }
+  }
+  out <- safe_bind_rows(rows)
+  if (!nrow(out) || anyDuplicated(out$welfare_specification_id)) {
+    stop("Alternative consumption-welfare registry is empty or duplicated.", call. = FALSE)
+  }
+  out
+}
+
+compile_consumption_scalar_iv_family_specifications <- function(
+    registry,
+    family_prefix,
+    sample_rule,
+    tier,
+    control_registry = NULL) {
   specs <- safe_df(registry)
   adjustments <- iv_candidate_design_adjustments()
   constructions <- unname(iv_candidate_design_constructions())
@@ -329,15 +400,15 @@ compile_consumption_scalar_iv_robustness_specifications <- function(
           adjustment_id = adjustment_id,
           construction_id = construction_id,
           specification_id = paste(
-            "consumption_scalar",
+            family_prefix,
             x$welfare_specification_id[[1L]],
             adjustment_id,
             construction_id,
             sep = "__"
           ),
           control_registry = control_registry,
-          tier = "B",
-          sample_rule = "consumption_scalar_iv_common_support",
+          tier = tier,
+          sample_rule = sample_rule,
           require_registered_instrument = FALSE,
           sequence = k
         )
@@ -347,9 +418,31 @@ compile_consumption_scalar_iv_robustness_specifications <- function(
   out <- bind_iv_specification_rows(rows)
   expected <- nrow(specs) * length(adjustments) * length(constructions)
   if (nrow(out) != expected || anyDuplicated(out$specification_id)) {
-    stop("Consumption scalar-IV robustness registry is incomplete or duplicated.", call. = FALSE)
+    stop("Consumption scalar-IV family registry is incomplete or duplicated.", call. = FALSE)
   }
   out
+}
+
+compile_consumption_scalar_iv_robustness_specifications <- function(
+    registry, control_registry = NULL) {
+  compile_consumption_scalar_iv_family_specifications(
+    registry,
+    family_prefix = "consumption_scalar",
+    sample_rule = "consumption_scalar_iv_common_support",
+    tier = "B",
+    control_registry = control_registry
+  )
+}
+
+compile_consumption_alternative_welfare_specifications <- function(
+    registry, control_registry = NULL) {
+  compile_consumption_scalar_iv_family_specifications(
+    registry,
+    family_prefix = "consumption_welfare",
+    sample_rule = "consumption_welfare_iv_common_support",
+    tier = "C",
+    control_registry = control_registry
+  )
 }
 
 consumption_iv_common_sample_support <- function(panel, specifications, group_column) {
@@ -781,20 +874,24 @@ validate_consumption_iv_dynamics <- function(dynamics, specifications) {
   dynamics
 }
 
-validate_consumption_scalar_iv_robustness <- function(dynamics, support) {
+validate_consumption_iv_robustness_family <- function(
+    dynamics,
+    support,
+    group_size = 6L,
+    family_label = "Consumption IV robustness") {
   if (!is.list(dynamics) || !"summary" %in% names(dynamics)) {
-    stop("Consumption scalar-IV robustness dynamics lack a summary.", call. = FALSE)
+    stop(family_label, " dynamics lack a summary.", call. = FALSE)
   }
   summary <- safe_df(dynamics$summary)
   support <- safe_df(support)
   required_summary <- c("welfare_specification_id", "n", "first_stage_n", "reduced_form_n", "second_stage_n")
   missing <- setdiff(required_summary, names(summary))
   if (length(missing) || !all(c("group_id", "n_common", "status") %in% names(support))) {
-    stop("Consumption scalar-IV robustness common-sample validation lacks required fields.", call. = FALSE)
+    stop(family_label, " common-sample validation lacks required fields.", call. = FALSE)
   }
   groups <- split(seq_len(nrow(summary)), plain_chr(summary$welfare_specification_id))
   if (!setequal(names(groups), plain_chr(support$group_id))) {
-    stop("Consumption scalar-IV robustness summary and support groups differ.", call. = FALSE)
+    stop(family_label, " summary and support groups differ.", call. = FALSE)
   }
   for (group_id in names(groups)) {
     index <- groups[[group_id]]
@@ -805,17 +902,17 @@ validate_consumption_scalar_iv_robustness <- function(dynamics, support) {
       num(summary$reduced_form_n[index]),
       num(summary$second_stage_n[index])
     ))
-    if (length(index) != 6L || length(realized) != 1L || length(stage_n) != 1L ||
+    if (length(index) != group_size || length(realized) != 1L || length(stage_n) != 1L ||
         !is.finite(expected_n) || realized[[1L]] != expected_n || stage_n[[1L]] != expected_n) {
-      stop("Consumption scalar-IV robustness did not preserve six-design common support for ", group_id, ".", call. = FALSE)
+      stop(family_label, " did not preserve registered common support for ", group_id, ".", call. = FALSE)
     }
   }
   dynamics
 }
 
-add_consumption_scalar_iv_multiplicity <- function(dynamics) {
+add_consumption_iv_family_multiplicity <- function(dynamics, multiplicity_family) {
   if (!is.list(dynamics) || !"summary" %in% names(dynamics)) {
-    stop("Consumption scalar-IV robustness dynamics lack a summary.", call. = FALSE)
+    stop("Consumption IV robustness dynamics lack a summary.", call. = FALSE)
   }
   out <- dynamics
   summary <- safe_df(out$summary)
@@ -824,7 +921,7 @@ add_consumption_scalar_iv_multiplicity <- function(dynamics) {
   )
   missing <- setdiff(required, names(summary))
   if (length(missing)) {
-    stop("Consumption scalar-IV multiplicity lacks fields: ", paste(missing, collapse = ", "), call. = FALSE)
+    stop("Consumption IV multiplicity lacks fields: ", paste(missing, collapse = ", "), call. = FALSE)
   }
   summary$reduced_form_p_holm_within_welfare <- NA_real_
   summary$anderson_rubin_p_beta0_holm_within_welfare <- NA_real_
@@ -837,21 +934,37 @@ add_consumption_scalar_iv_multiplicity <- function(dynamics) {
   }
   summary$reduced_form_p_holm_family <- holm_adjust_finite(summary$reduced_form_p.value)
   summary$anderson_rubin_p_beta0_holm_family <- holm_adjust_finite(summary$anderson_rubin_p_beta0)
-  summary$multiplicity_family <- "consumption_scalar_iv_robustness"
+  summary$multiplicity_family <- multiplicity_family
   out$summary <- summary
   out
+}
+
+save_consumption_iv_robustness_family <- function(
+    dynamics,
+    support,
+    artifact_prefix,
+    directory = "outputs/diagnostics/extended/consumption") {
+  objects <- list(safe_df(dynamics$summary), safe_df(support))
+  names(objects) <- c(artifact_prefix, paste0(artifact_prefix, "_common_support"))
+  write_diagnostic_bundle(objects, directory = directory)
+}
+
+validate_consumption_scalar_iv_robustness <- function(dynamics, support) {
+  validate_consumption_iv_robustness_family(
+    dynamics, support, 6L, "Consumption scalar-IV robustness"
+  )
+}
+
+add_consumption_scalar_iv_multiplicity <- function(dynamics) {
+  add_consumption_iv_family_multiplicity(dynamics, "consumption_scalar_iv_robustness")
 }
 
 save_consumption_scalar_iv_robustness <- function(
     dynamics,
     support,
     directory = "outputs/diagnostics/extended/consumption") {
-  write_diagnostic_bundle(
-    list(
-      consumption_scalar_iv_robustness = safe_df(dynamics$summary),
-      consumption_scalar_iv_robustness_common_support = safe_df(support)
-    ),
-    directory = directory
+  save_consumption_iv_robustness_family(
+    dynamics, support, "consumption_scalar_iv_robustness", directory
   )
 }
 
