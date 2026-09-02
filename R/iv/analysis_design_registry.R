@@ -414,15 +414,62 @@ compile_analysis_design_registry <- function(
 
 candidate_design_columns <- function() {
   c(
-    "candidate_id", "analysis_family", "design_role", "outcome_scope",
-    "treatment_scope", "instrument_scope", "adjustment_scope",
-    "estimator_scope", "admissible", "implementation_status",
-    "candidate_cells", "implemented_cells", "rationale"
+    "candidate_id", "reference_section", "analysis_family", "design_role",
+    "scientific_question", "design_axis", "outcome_scope", "treatment_scope",
+    "instrument_scope", "adjustment_scope", "estimator_scope",
+    "execution_policy", "multiplicity_family", "prerequisite",
+    "admissible", "implementation_status", "candidate_cells",
+    "implemented_cells", "rationale"
   )
 }
 
-candidate_design_frame <- function(...) {
-  out <- data.frame(..., stringsAsFactors = FALSE, check.names = FALSE)
+candidate_design_row <- function(
+    candidate_id,
+    reference_section,
+    analysis_family,
+    design_role,
+    scientific_question,
+    design_axis,
+    outcome_scope,
+    treatment_scope,
+    instrument_scope,
+    adjustment_scope,
+    estimator_scope,
+    execution_policy,
+    multiplicity_family = "not_applicable",
+    prerequisite = "none",
+    admissible = TRUE,
+    implementation_status = "unimplemented",
+    candidate_cells = NA_integer_,
+    implemented_cells = 0L,
+    rationale) {
+  data.frame(
+    candidate_id = candidate_id,
+    reference_section = reference_section,
+    analysis_family = analysis_family,
+    design_role = design_role,
+    scientific_question = scientific_question,
+    design_axis = design_axis,
+    outcome_scope = outcome_scope,
+    treatment_scope = treatment_scope,
+    instrument_scope = instrument_scope,
+    adjustment_scope = adjustment_scope,
+    estimator_scope = estimator_scope,
+    execution_policy = execution_policy,
+    multiplicity_family = multiplicity_family,
+    prerequisite = prerequisite,
+    admissible = admissible,
+    implementation_status = implementation_status,
+    candidate_cells = as.integer(candidate_cells),
+    implemented_cells = as.integer(implemented_cells),
+    rationale = rationale,
+    stringsAsFactors = FALSE,
+    check.names = FALSE
+  )
+}
+
+candidate_design_frame <- function(rows) {
+  out <- safe_bind_rows(rows)
   missing <- setdiff(candidate_design_columns(), names(out))
   if (length(missing)) {
     stop(
@@ -431,9 +478,20 @@ candidate_design_frame <- function(...) {
     )
   }
   out <- out[candidate_design_columns()]
-  allowed <- c("implemented", "partial", "unimplemented", "not_applicable")
+  allowed_status <- c(
+    "implemented", "partial", "unimplemented", "data_unavailable",
+    "deferred", "not_applicable"
+  )
+  allowed_policy <- c(
+    "estimate", "estimate_if_registered", "diagnostic_only", "report_only",
+    "requires_data", "do_not_estimate"
+  )
   if (!nrow(out) || anyDuplicated(out$candidate_id) || any(!nzchar(out$candidate_id)) ||
-      any(!out$implementation_status %in% allowed) || any(!nzchar(out$rationale))) {
+      any(!out$implementation_status %in% allowed_status) ||
+      any(!out$execution_policy %in% allowed_policy) ||
+      any(!nzchar(out$reference_section)) ||
+      any(!nzchar(out$scientific_question)) ||
+      any(!nzchar(out$rationale))) {
     stop("Candidate-design ledger is malformed.", call. = FALSE)
   }
   impossible <- out$implemented_cells > out$candidate_cells &
@@ -444,104 +502,483 @@ candidate_design_frame <- function(...) {
   out
 }
 
+candidate_welfare_round_is_supported <- function(outcome_row, survey_id) {
+  surveys <- trimws(plain_chr(outcome_row$survey_ids[[1L]] %||% "*"))
+  identical(surveys, "*") || survey_id %in% strsplit(surveys, ";", fixed = TRUE)[[1L]]
+}
+
+count_alternative_consumption_welfare_designs <- function(
+    consumption_specifications,
+    welfare_registry) {
+  consumption <- safe_df(consumption_specifications)
+  welfare <- safe_df(welfare_registry)
+  required_consumption <- c("outcome_round", "baseline_round")
+  required_welfare <- c("outcome_id", "role", "survey_ids")
+  if (length(setdiff(required_consumption, names(consumption))) ||
+      length(setdiff(required_welfare, names(welfare)))) {
+    stop("Alternative-welfare design count lacks registry metadata.", call. = FALSE)
+  }
+  welfare <- welfare[welfare$role == "robustness", , drop = FALSE]
+  sum(vapply(seq_len(nrow(welfare)), function(i) {
+    row <- welfare[i, , drop = FALSE]
+    sum(vapply(seq_len(nrow(consumption)), function(j) {
+      candidate_welfare_round_is_supported(row, consumption$outcome_round[[j]]) &&
+        candidate_welfare_round_is_supported(row, consumption$baseline_round[[j]])
+    }, logical(1)))
+  }, integer(1)))
+}
+
 build_iv_candidate_design_ledger <- function(
     public_specifications,
     consumption_specifications,
-    control_registry = NULL) {
+    control_registry = NULL,
+    welfare_registry = NULL,
+    english_opportunity_registry = NULL) {
   public_specs <- as_iv_specifications(public_specifications)
   consumption_specs <- as_iv_specifications(consumption_specifications)
-  n_candidate_iv <- length(iv_candidate_design_adjustments()) *
-    length(iv_candidate_design_constructions())
+  control_registry <- resolve_census_2001_control_registry(control_registry)
   diagnostic_specs <- iv_diagnostic_specification_registry(
     control_registry = control_registry
   )
+  canonical_specs <- iv_specification_registry(control_registry = control_registry)
+  constructions <- iv_instrument_constructions()
+  n_candidate_iv <- length(iv_candidate_design_adjustments()) *
+    length(iv_candidate_design_constructions())
   n_consumption <- nrow(consumption_specs)
   n_diagnostic_iv <- nrow(diagnostic_specs)
+  n_scalar <- sum(canonical_specs$n_excluded_instruments == 1L)
+  n_multishare <- sum(canonical_specs$n_excluded_instruments > 1L)
+  n_absorption <- nrow(iv_absorption_specification_registry(control_registry = control_registry))
+  n_block_interventions <- length(iv_block_intervention_adjustments(control_registry))
+  n_parameterizations <- length(iv_main_parameterization_adjustments(control_registry))
+  n_dise_relevance <- nrow(dise_construct_registry()) * n_diagnostic_iv
+  n_historical_vintage <- nrow(historical_linguistic_predetermined_first_stage_registry()) * 4L
+  n_c17 <- nrow(census_c17_mechanism_registry())
+  n_district_mechanism <- NA_integer_
+  if (!is.null(english_opportunity_registry)) {
+    n_district_mechanism <- nrow(
+      preferred_district_mechanism_registry(english_opportunity_registry)
+    ) * nrow(district_mechanism_adjustment_registry(control_registry))
+  }
+  n_alt_welfare <- if (is.null(welfare_registry)) NA_integer_ else {
+    count_alternative_consumption_welfare_designs(consumption_specs, welfare_registry)
+  }
 
-  candidate_design_frame(
-    candidate_id = c(
-      "public_headline_registered",
-      "consumption_registered_dynamics",
-      "consumption_candidate_scalar_iv_grid",
-      "consumption_full_diagnostic_cartesian",
-      "consumption_alternative_welfare_outcomes",
-      "emi_intensive_margin_robustness",
-      "historical_1991_adjustment_robustness",
-      "posttreatment_mechanisms_as_controls"
-    ),
-    analysis_family = c(
-      "public_iv", "consumption_iv", "consumption_iv", "consumption_iv",
-      "consumption_iv", "consumption_iv", "public_iv", "public_iv"
-    ),
-    design_role = c(
-      "primary_and_registered_robustness", "registered_dynamic_family",
-      "candidate_robustness", "non_goal", "candidate_robustness",
-      "candidate_robustness", "candidate_robustness", "non_goal"
-    ),
-    outcome_scope = c(
-      "public consumption change/ANCOVA plus inherited nominal robustness",
-      "registered real-mean-MPCE endpoint ANCOVA/change designs",
-      "registered consumption endpoint designs",
-      "registered consumption endpoint designs",
-      "registered mean-log/median/bottom-40 welfare outcomes",
-      "preferred real-consumption outcome family",
-      "preferred public real-consumption outcome",
-      "post-treatment Census/firm/migration/labor measures"
-    ),
-    treatment_scope = c(
-      rep(preferred_iv_variables()$treatment, 5L),
-      "emi_share_enrolled_0708",
+  rows <- list(
+    candidate_design_row(
+      "relevance_geography_control_absorption",
+      "Prompt 1 §§1-3",
+      "first_stage_relevance",
+      "diagnostic_relevance",
+      "Where does the linguistic-distance/EMI relationship disappear as geography and predetermined controls are absorbed?",
+      "geography_and_control_absorption",
+      "EMI/EMIE treatment relevance",
       preferred_iv_variables()$treatment,
-      preferred_iv_variables()$treatment
+      "preferred Shastry nonzero-mean distance",
+      "unadjusted, region/state FE, main/expanded, sequential, block interventions, and registered parameterizations",
+      "first_stage",
+      "diagnostic_only",
+      implementation_status = "implemented",
+      candidate_cells = n_absorption,
+      implemented_cells = n_absorption,
+      rationale = "The reference treats attenuation across geography and controls as a scientific result. The registry therefore keeps the historical cumulative ladder but adds symmetric block-only, leave-one-block-out, and declared alternative-parameterization designs."
     ),
-    instrument_scope = c(
-      "nonzero_mean", "nonzero_mean",
-      "Shastry/Glottolog/Dyen scalar candidates",
-      "all diagnostic constructions",
-      "Shastry/Glottolog/Dyen scalar candidates",
-      "Shastry/Glottolog/Dyen scalar candidates",
-      "nonzero_mean", "not_applicable"
+    candidate_design_row(
+      "relevance_control_block_interventions",
+      "Prompt 1 §3; control critique",
+      "first_stage_relevance",
+      "diagnostic_relevance",
+      "Which theoretically named predetermined control family accounts for first-stage attenuation, rather than which arbitrary cumulative ordering happens to enter first?",
+      "control_block",
+      "EMI/EMIE treatment relevance",
+      preferred_iv_variables()$treatment,
+      "preferred Shastry nonzero-mean distance",
+      "each main control block alone and each block omitted from the main set, under region/state FE",
+      "first_stage",
+      "diagnostic_only",
+      implementation_status = "implemented",
+      candidate_cells = n_block_interventions,
+      implemented_cells = n_block_interventions,
+      rationale = "Symmetric block interventions answer the theory question directly and avoid privileging human capital or an arbitrary cumulative block order."
     ),
-    adjustment_scope = c(
+    candidate_design_row(
+      "relevance_control_parameterizations",
+      "Prompt 1 §3; Response 2 controls",
+      "first_stage_relevance",
+      "diagnostic_relevance",
+      "Does relevance depend on how human capital and economic structure are parameterized?",
+      "control_parameterization",
+      "EMI/EMIE treatment relevance",
+      preferred_iv_variables()$treatment,
+      "preferred Shastry nonzero-mean distance",
+      "secondary-plus versus literacy crossed with compact versus decomposed economic structure, under region/state FE",
+      "first_stage",
+      "diagnostic_only",
+      implementation_status = "implemented",
+      candidate_cells = n_parameterizations,
+      implemented_cells = n_parameterizations,
+      rationale = "These are finite substitutions already declared by the control registry, not arbitrary covariate subsets."
+    ),
+    candidate_design_row(
+      "relevance_scalar_linguistic_constructions",
+      "Prompt 1 §4",
+      "first_stage_relevance",
+      "diagnostic_relevance",
+      "Is weak conditional relevance specific to one linguistic-distance construction?",
+      "instrument_definition",
+      "EMI/EMIE treatment relevance",
+      preferred_iv_variables()$treatment,
+      "all registered scalar Shastry/legacy/Glottolog/Dyen/sensitivity constructions",
+      "unadjusted plus region/state main/expanded designs",
+      "first_stage",
+      "diagnostic_only",
+      implementation_status = "implemented",
+      candidate_cells = n_scalar,
+      implemented_cells = n_scalar,
+      rationale = "Alternative scalar bases probe measurement robustness while preserving a one-instrument exclusion story."
+    ),
+    candidate_design_row(
+      "relevance_multishare_instruments",
+      "Prompt 1 §5",
+      "first_stage_relevance",
+      "diagnostic_only_overidentified",
+      "Does retaining the full linguistic-distance distribution increase prediction, and what exclusion cost accompanies it?",
+      "instrument_dimensionality",
+      "EMI/EMIE treatment relevance",
+      preferred_iv_variables()$treatment,
+      "registered five-share instrument systems",
+      "unadjusted plus region/state main/expanded designs",
+      "first_stage+overidentification",
+      "diagnostic_only",
+      implementation_status = "implemented",
+      candidate_cells = n_multishare,
+      implemented_cells = n_multishare,
+      rationale = "The reference explicitly treats strong five-share first stages as diagnostic rather than a preferred rescue because richer language-composition variation weakens the exclusion argument."
+    ),
+    candidate_design_row(
+      "relevance_dise_treatment_definitions",
+      "Prompt 1 §§6-8",
+      "dise_relevance",
+      "diagnostic_relevance",
+      "Does the geographic attenuation survive alternative administrative definitions of EMI and nearby language/schooling constructs?",
+      "treatment_definition",
+      "all registered DISE structural-IV and relevance-only constructs",
+      "DISE EMI, language-composition, and management constructs",
+      "full registered diagnostic IV universe",
+      "all registered diagnostic adjustments",
+      "first_stage",
+      "diagnostic_only",
+      implementation_status = "implemented",
+      candidate_cells = n_dise_relevance,
+      implemented_cells = n_dise_relevance,
+      rationale = "The reference uses DISE primarily to distinguish measurement failure from geographic attenuation; relevance-only constructs remain diagnostics rather than alternate causal treatments."
+    ),
+    candidate_design_row(
+      "relevance_historical_distance_vintage",
+      "Prompt 1 §§9,24",
+      "historical_first_stage",
+      "diagnostic_relevance",
+      "Does the first-stage pattern survive a pre-treatment 1991 linguistic-distance vintage and predetermined 1991 adjustment sets?",
+      "instrument_vintage",
+      "EMI/EMIE treatment relevance",
+      preferred_iv_variables()$treatment,
+      "1991 versus Census-2001 linguistic distance",
+      "1991 predetermined PCA/all controls; preferred/exact geography",
+      "first_stage",
+      "diagnostic_only",
+      implementation_status = "implemented",
+      candidate_cells = n_historical_vintage,
+      implemented_cells = n_historical_vintage,
+      rationale = "Historical vintage comparisons are an identification diagnostic; exact-match historical geography is not allowed to redefine the production instrument."
+    ),
+    candidate_design_row(
+      "c17_behavioral_mechanism",
+      "Response 2 C-17; Response 3 Phase 3",
+      "c17_mechanism",
+      "mechanism_and_falsification",
+      "Within a state, do speakers of languages farther from Hindi acquire English more often conditional on multilingualism?",
+      "language_group_mechanism",
+      "English acquisition, Hindi substitution, multilingualism, sex heterogeneity",
+      "language-group linguistic distance",
+      "Shastry/Glottolog/Dyen and registered nonlinear forms",
+      "state FE + native-language share + modal-language indicator",
+      "weighted_ols_hc1",
+      "estimate",
+      multiplicity_family = "c17_registered_mechanisms",
+      implementation_status = "implemented",
+      candidate_cells = n_c17,
+      implemented_cells = n_c17,
+      rationale = "C-17 is a distinct state-by-language estimand and should not be forced into the district IV grid."
+    ),
+    candidate_design_row(
+      "district_schooling_three_geography_grid",
+      "Response 3 Phase 12",
+      "district_schooling_mechanism",
+      "paper_facing_relevance",
+      "Where does the linguistic-distance signal attenuate across schooling-access, medium-choice, institution, and school-quality stages?",
+      "mechanism_stage_by_geography",
+      "preferred registered NSS and DISE district mechanism measures",
+      "district schooling/mechanism outcomes",
+      "preferred Shastry nonzero-mean distance",
+      "unadjusted; region FE + main controls; state FE + main controls",
+      "standardized_reduced_form",
+      "estimate",
+      multiplicity_family = "district_schooling_mechanisms",
+      implementation_status = if (is.finite(n_district_mechanism)) "implemented" else "unimplemented",
+      candidate_cells = n_district_mechanism,
+      implemented_cells = if (is.finite(n_district_mechanism)) n_district_mechanism else 0L,
+      rationale = "This is the explicitly predeclared paper-facing three-geography grid from the mechanism rescue plan; the larger IV permutation registry remains diagnostic."
+    ),
+    candidate_design_row(
+      "public_headline_registered",
+      "Prompt 1 §35; specification-governance consolidation",
+      "public_iv",
+      "primary_and_registered_robustness",
+      "What are the registered headline consumption estimands under the preferred honest state-FE benchmark?",
+      "headline_estimand",
+      "public consumption change/ANCOVA plus inherited nominal robustness",
+      preferred_iv_variables()$treatment,
+      "preferred Shastry nonzero-mean distance",
       "registered public model-specific adjustments",
+      "2sls",
+      "estimate",
+      multiplicity_family = "public_headline",
+      implementation_status = "implemented",
+      candidate_cells = nrow(public_specs),
+      implemented_cells = nrow(public_specs),
+      rationale = "Public output contract; all rows are canonical IV specifications and the state-FE benchmark is retained even when relevance is weak."
+    ),
+    candidate_design_row(
+      "consumption_registered_dynamics",
+      "Prompt 1 §§11-12,35",
+      "consumption_iv",
+      "registered_dynamic_family",
+      "How do real-consumption effects vary by post-treatment horizon and ANCOVA versus change estimand?",
+      "outcome_year_and_estimand",
+      "registered real-mean-MPCE endpoint ANCOVA/change designs",
+      preferred_iv_variables()$treatment,
+      "preferred Shastry nonzero-mean distance",
       "state_main",
+      "first_stage+reduced_form+2sls+anderson_rubin",
+      "estimate",
+      multiplicity_family = "consumption_registered_dynamics",
+      implementation_status = "implemented",
+      candidate_cells = n_consumption,
+      implemented_cells = n_consumption,
+      rationale = "Endpoint and estimand variation are substantively meaningful and were registered before estimation."
+    ),
+    candidate_design_row(
+      "consumption_candidate_scalar_iv_grid",
+      "Prompt 1 §§4,26-29,35",
+      "consumption_iv",
+      "candidate_robustness",
+      "Do conclusions survive the serious scalar linguistic-distance bases and both defensible geographic adjustment levels?",
+      "instrument_definition_by_geography",
+      "registered consumption endpoint designs",
+      preferred_iv_variables()$treatment,
+      "Shastry/Glottolog/Dyen scalar candidates",
       "region_main/state_main",
+      "first_stage+reduced_form+2sls+anderson_rubin",
+      "estimate_if_registered",
+      multiplicity_family = "consumption_scalar_iv_robustness",
+      implementation_status = "partial",
+      candidate_cells = n_consumption * n_candidate_iv,
+      implemented_cells = n_consumption,
+      rationale = "This six-design family is theoretically bounded by instrument basis and honest geographic adjustment, not by an arbitrary preference for a small number of regressions."
+    ),
+    candidate_design_row(
+      "consumption_alternative_welfare_outcomes",
+      "Prompt 1 §11",
+      "consumption_iv",
+      "candidate_robustness",
+      "Are welfare conclusions robust to functional-form and distributional response definitions already measured by the survey-design welfare layer?",
+      "response_definition",
+      "mean-log, median, and bottom-40 welfare outcomes at supported endpoints",
+      preferred_iv_variables()$treatment,
+      "Shastry/Glottolog/Dyen scalar candidates",
+      "region_main/state_main",
+      "first_stage+reduced_form+2sls+anderson_rubin",
+      "estimate_if_registered",
+      multiplicity_family = "consumption_welfare_robustness",
+      prerequisite = "endpoint-specific support/comparability registry",
+      implementation_status = "unimplemented",
+      candidate_cells = if (is.finite(n_alt_welfare)) n_alt_welfare * n_candidate_iv else NA_integer_,
+      implemented_cells = 0L,
+      rationale = "These outcomes are already measured and theoretically interpretable, but only survey-compatible endpoint pairs belong in the causal robustness family."
+    ),
+    candidate_design_row(
+      "emi_intensive_margin_robustness",
+      "Prompt 1 §18; Response 2 EMI decomposition",
+      "consumption_iv",
+      "candidate_robustness",
+      "Does the welfare relationship differ when treatment is English-medium choice conditional on enrollment rather than all-child exposure?",
+      "treatment_definition",
+      "registered consumption endpoint designs",
+      "emi_share_enrolled_0708",
+      "Shastry/Glottolog/Dyen scalar candidates",
+      "region_main/state_main",
+      "first_stage+reduced_form+2sls+anderson_rubin",
+      "estimate_if_registered",
+      multiplicity_family = "consumption_treatment_robustness",
+      implementation_status = "unimplemented",
+      candidate_cells = n_consumption * n_candidate_iv,
+      implemented_cells = 0L,
+      rationale = "The intensive medium margin is substantively distinct and was the original treatment concept; it should be visible as a predeclared robustness family rather than silently substituted for all-child exposure."
+    ),
+    candidate_design_row(
+      "consumption_control_parameterization_robustness",
+      "Prompt 1 §3; Response 2 controls",
+      "consumption_iv",
+      "candidate_robustness",
+      "Do causal conclusions depend on theoretically substitutable measures of baseline human capital or economic structure?",
+      "control_parameterization",
+      "registered consumption endpoint designs",
+      preferred_iv_variables()$treatment,
+      "preferred Shastry nonzero-mean distance",
+      "region/state FE crossed with registered literacy/secondary-plus and compact/decomposed economic-structure parameterizations",
+      "first_stage+reduced_form+2sls+anderson_rubin",
+      "estimate_if_registered",
+      multiplicity_family = "consumption_control_parameterization",
+      implementation_status = "unimplemented",
+      candidate_cells = n_consumption * n_parameterizations,
+      implemented_cells = 0L,
+      rationale = "The control registry already declares these variables as alternative measures/parameterizations, so their finite substitution grid is more defensible than arbitrary main-versus-expanded accumulation."
+    ),
+    candidate_design_row(
+      "historical_1991_adjustment_robustness",
+      "Prompt 1 §35; historical controls discussion",
+      "public_iv",
+      "candidate_robustness",
+      "Does the preferred outcome design survive adjustment with more remote predetermined 1991 socioeconomic structure?",
+      "control_vintage",
+      "preferred real-consumption outcome",
+      preferred_iv_variables()$treatment,
+      "preferred Shastry nonzero-mean distance",
+      "region/state with separately registered 1991 predetermined sets",
+      "2sls_with_weak_iv_diagnostics",
+      "estimate_if_registered",
+      multiplicity_family = "historical_adjustment_robustness",
+      prerequisite = "harmonized 1991 controls on production analysis geography",
+      implementation_status = "unimplemented",
+      candidate_cells = 2L,
+      implemented_cells = 0L,
+      rationale = "A 1991 comparison is a temporally distinct exclusion/confounding robustness exercise, not merely another larger 2001 control vector."
+    ),
+    candidate_design_row(
+      "shastry_geographic_access_controls",
+      "Response 2 Shastry controls",
+      "public_iv",
+      "candidate_robustness",
+      "Could market access/geography confound linguistic distance with gains from post-liberalization economic change?",
+      "predetermined_geographic_access",
+      "registered consumption endpoint designs",
+      preferred_iv_variables()$treatment,
+      "preferred Shastry nonzero-mean distance",
+      "region/state + distance to 1991 major city + coast",
+      "first_stage+reduced_form+2sls+anderson_rubin",
+      "requires_data",
+      multiplicity_family = "shastry_geographic_access",
+      prerequisite = "frozen 1991 city list and reviewed coastline geometry",
+      implementation_status = "data_unavailable",
+      candidate_cells = n_consumption * 2L,
+      implemented_cells = 0L,
+      rationale = "The reference identifies major-city distance and coast as theoretically motivated predetermined access controls, but they should not be fabricated from current population or substituted with unrelated rail-distance measures."
+    ),
+    candidate_design_row(
+      "shastry_hindi_belt_region_comparison",
+      "Response 2 Shastry controls",
+      "first_stage_relevance",
+      "candidate_robustness",
+      "Does the broad-region relevance pattern reflect the distinctive Hindi-belt political/institutional environment?",
+      "regional_institutional_control",
+      "EMI/EMIE treatment relevance",
+      preferred_iv_variables()$treatment,
+      "preferred Shastry nonzero-mean distance",
+      "region/no-state designs + Hindi-belt indicator",
+      "first_stage",
+      "estimate_if_registered",
+      prerequisite = "frozen Hindi-belt state definition",
+      implementation_status = "unimplemented",
+      candidate_cells = 2L,
+      implemented_cells = 0L,
+      rationale = "The indicator is potentially informative only without state FE, where it is not absorbed; Hindi/Urdu speaker shares remain the more granular language-composition controls."
+    ),
+    candidate_design_row(
+      "shastry_1987_wage_controls",
+      "Response 2 Shastry controls",
+      "replication_robustness",
+      "deferred_replication",
+      "Would closer replication of Shastry's pre-period wage and educated-wage controls materially change the historical comparison?",
+      "historical_labor_market_controls",
+      "Shastry-comparison designs",
+      preferred_iv_variables()$treatment,
+      "preferred Shastry nonzero-mean distance",
+      "historical wage/educated-wage controls",
+      "first_stage+outcome_robustness",
+      "requires_data",
+      prerequisite = "NSS 43rd-round geography and weighting subsystem",
+      implementation_status = "deferred",
+      candidate_cells = NA_integer_,
+      implemented_cells = 0L,
+      rationale = "The reference regards these controls as reconstructible but low priority because Census-2001 controls already cover much of the substantive dimension; no proxy should be invented."
+    ),
+    candidate_design_row(
+      "consumption_full_diagnostic_cartesian",
+      "Specification-governance critique",
+      "consumption_iv",
+      "non_goal",
+      "Should every endpoint be crossed mechanically with every diagnostic IV specification?",
+      "mechanical_cartesian",
+      "registered consumption endpoint designs",
+      preferred_iv_variables()$treatment,
+      "all diagnostic constructions",
       "all diagnostic adjustments",
-      "region_main/state_main",
-      "region_main/state_main",
-      "region/state with a separately registered 1991 predetermined set",
-      "not_applicable"
+      "first_stage+reduced_form+2sls+anderson_rubin",
+      "do_not_estimate",
+      admissible = FALSE,
+      implementation_status = "not_applicable",
+      candidate_cells = n_consumption * n_diagnostic_iv,
+      implemented_cells = n_consumption,
+      rationale = "Representability is not justification. The diagnostic universe exists to understand identification, not to create an outcome-model specification search."
     ),
-    estimator_scope = c(
-      "2sls", "first_stage+reduced_form+2sls+anderson_rubin",
-      rep("first_stage+reduced_form+2sls+anderson_rubin", 4L),
-      "2sls_with_weak_iv_diagnostics", "not_applicable"
+    candidate_design_row(
+      "cross_robustness_axes_without_interaction_rationale",
+      "Specification-governance critique",
+      "consumption_iv",
+      "non_goal",
+      "Should alternative outcome, treatment, instrument, and control robustness axes be fully crossed merely because each axis is individually defensible?",
+      "mechanical_cross_axis_interactions",
+      "all robustness outcomes",
+      "all robustness treatments",
+      "all robustness instruments",
+      "all robustness controls",
+      "all estimators",
+      "do_not_estimate",
+      admissible = FALSE,
+      implementation_status = "not_applicable",
+      candidate_cells = NA_integer_,
+      implemented_cells = 0L,
+      rationale = "Each robustness axis can be scientifically justified without implying that every interaction among robustness axes is itself a scientific estimand; cross-axis interactions require their own theory and preregistration."
     ),
-    admissible = c(TRUE, TRUE, TRUE, FALSE, TRUE, TRUE, TRUE, FALSE),
-    implementation_status = c(
-      "implemented", "implemented", "partial", "not_applicable",
-      "unimplemented", "unimplemented", "unimplemented", "not_applicable"
-    ),
-    candidate_cells = c(
-      nrow(public_specs), n_consumption,
-      n_consumption * n_candidate_iv,
-      n_consumption * n_diagnostic_iv,
-      NA_integer_, n_candidate_iv, 2L, NA_integer_
-    ),
-    implemented_cells = c(
-      nrow(public_specs), n_consumption,
-      n_consumption, n_consumption,
-      0L, 0L, 0L, 0L
-    ),
-    rationale = c(
-      "Public output contract; all rows are now canonical IV specifications.",
-      "Registered before estimation and tied to explicit endpoint/estimand metadata.",
-      "The same six scalar-IV designs already used for post-treatment mechanisms provide a bounded robustness family without opening the full diagnostic search space.",
-      "A mechanical endpoint-by-93-design Cartesian product is specification search rather than a theory-motivated robustness family.",
-      "Distributional/functional-form outcomes are already measured, but any causal expansion should be separately registered with endpoint comparability and multiplicity rules before estimation.",
-      "The enrolled-child EMI share is a substantively distinct intensive-margin treatment and may be a predeclared robustness family; it is not a replacement for all-child EMI exposure.",
-      "A 1991 predetermined adjustment comparison is temporally distinct from adding more 2001 covariates and should be registered as a dedicated robustness family before use.",
-      "Post-treatment Census, firm, migration, housing, and labor measures are outcomes/mechanisms rather than preferred controls."
+    candidate_design_row(
+      "posttreatment_mechanisms_as_controls",
+      "Response 3 methodological guardrail",
+      "public_iv",
+      "non_goal",
+      "Should post-treatment mechanisms be conditioned on in the preferred outcome equation?",
+      "bad_control",
+      "post-treatment Census/firm/migration/labor measures",
+      preferred_iv_variables()$treatment,
+      "not_applicable",
+      "not_applicable",
+      "not_applicable",
+      "do_not_estimate",
+      admissible = FALSE,
+      implementation_status = "not_applicable",
+      candidate_cells = NA_integer_,
+      implemented_cells = 0L,
+      rationale = "Post-treatment mechanisms are outcomes/evidence layers, not preferred baseline controls; conditioning on them would change the estimand and can induce bad-control bias."
     )
   )
+  candidate_design_frame(rows)
 }

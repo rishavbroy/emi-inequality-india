@@ -8,7 +8,9 @@ extended_iv_target_definitions <- function() {
       build_iv_candidate_design_ledger(
         public_iv_specifications,
         consumption_iv_specifications,
-        census_2001_control_registry
+        census_2001_control_registry,
+        consumption_welfare_outcomes,
+        english_opportunity_measure_registry
       )
     ),
     tar_target(

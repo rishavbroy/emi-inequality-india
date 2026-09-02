@@ -152,11 +152,21 @@ test_that("candidate-design ledger records bounded robustness choices without Ca
     controls
   )
   public <- public_iv_specification_registry(controls)
-  ledger <- build_iv_candidate_design_ledger(public, consumption, controls)
+  welfare <- read_consumption_welfare_outcomes(
+    file.path(root, "data", "metadata", "consumption_welfare_outcomes.csv")
+  )
+  opportunity <- read_english_opportunity_measure_registry(
+    file.path(root, "data", "metadata", "english_opportunity_measures.csv")
+  )
+  ledger <- build_iv_candidate_design_ledger(
+    public, consumption, controls, welfare, opportunity
+  )
 
   expect_identical(names(ledger), candidate_design_columns())
   expect_equal(anyDuplicated(ledger$candidate_id), 0L)
   expect_true(all(nzchar(ledger$rationale)))
+  expect_true(all(nzchar(ledger$reference_section)))
+  expect_true(all(nzchar(ledger$scientific_question)))
 
   bounded <- ledger[ledger$candidate_id == "consumption_candidate_scalar_iv_grid", , drop = FALSE]
   expect_true(bounded$admissible)
@@ -164,13 +174,55 @@ test_that("candidate-design ledger records bounded robustness choices without Ca
   expect_equal(bounded$candidate_cells, nrow(consumption) * 6L)
   expect_equal(bounded$implemented_cells, nrow(consumption))
 
+  welfare_row <- ledger[
+    ledger$candidate_id == "consumption_alternative_welfare_outcomes",
+    ,
+    drop = FALSE
+  ]
+  expect_equal(welfare_row$candidate_cells, 20L * 6L)
+  expect_equal(welfare_row$multiplicity_family, "consumption_welfare_robustness")
+
+  treatment <- ledger[ledger$candidate_id == "emi_intensive_margin_robustness", , drop = FALSE]
+  expect_equal(treatment$candidate_cells, nrow(consumption) * 6L)
+
+  blocks <- ledger[ledger$candidate_id == "relevance_control_block_interventions", , drop = FALSE]
+  expect_equal(blocks$implementation_status, "implemented")
+  expect_equal(blocks$candidate_cells, length(iv_block_intervention_adjustments(controls)))
+
+  parameterizations <- ledger[
+    ledger$candidate_id == "relevance_control_parameterizations",
+    ,
+    drop = FALSE
+  ]
+  expect_equal(
+    parameterizations$candidate_cells,
+    length(iv_main_parameterization_adjustments(controls))
+  )
+
+  schooling <- ledger[
+    ledger$candidate_id == "district_schooling_three_geography_grid",
+    ,
+    drop = FALSE
+  ]
+  expect_equal(
+    schooling$candidate_cells,
+    nrow(preferred_district_mechanism_registry(opportunity)) * 3L
+  )
+
   cartesian <- ledger[ledger$candidate_id == "consumption_full_diagnostic_cartesian", , drop = FALSE]
   expect_false(cartesian$admissible)
-  expect_equal(cartesian$implementation_status, "not_applicable")
+  expect_equal(cartesian$execution_policy, "do_not_estimate")
   expect_equal(
     cartesian$candidate_cells,
     nrow(consumption) * nrow(iv_diagnostic_specification_registry(control_registry = controls))
   )
+
+  cross_axes <- ledger[
+    ledger$candidate_id == "cross_robustness_axes_without_interaction_rationale",
+    ,
+    drop = FALSE
+  ]
+  expect_false(cross_axes$admissible)
 
   post <- ledger[ledger$candidate_id == "posttreatment_mechanisms_as_controls", , drop = FALSE]
   expect_false(post$admissible)
