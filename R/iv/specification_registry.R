@@ -174,6 +174,18 @@ iv_main_parameterization_adjustments <- function(control_registry = NULL) {
   rows
 }
 
+iv_causal_control_parameterization_adjustments <- function(control_registry = NULL) {
+  registry <- resolve_census_2001_control_registry(control_registry)
+  canonical <- iv_adjustment_sets(registry)
+  alternatives <- iv_main_parameterization_adjustments(registry)
+  c(
+    list(region_main = canonical$region_main),
+    alternatives[grepl("^region_", names(alternatives))],
+    list(state_main = canonical$state_main),
+    alternatives[grepl("^state_", names(alternatives))]
+  )
+}
+
 iv_instrument_constructions <- function() {
   list(
     nonzero_mean = list(

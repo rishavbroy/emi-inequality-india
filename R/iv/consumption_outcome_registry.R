@@ -457,42 +457,70 @@ compile_consumption_alternative_welfare_specifications <- function(
   )
 }
 
-compile_consumption_control_strategy_specifications <- function(
-    registry, control_registry = NULL) {
+compile_consumption_adjustment_family_specifications <- function(
+    registry,
+    adjustments,
+    family_prefix,
+    sample_rule,
+    tier = "C",
+    control_registry = NULL) {
   specs <- safe_df(registry)
   control_registry <- resolve_census_2001_control_registry(control_registry)
-  strategies <- iv_causal_control_strategy_adjustments(control_registry)
+  if (!length(adjustments) || is.null(names(adjustments)) || any(!nzchar(names(adjustments)))) {
+    stop("Consumption adjustment-family registry requires named adjustments.", call. = FALSE)
+  }
   construction <- iv_instrument_constructions()[["nonzero_mean"]]
   rows <- list()
   k <- 0L
   for (i in seq_len(nrow(specs))) {
     x <- specs[i, , drop = FALSE]
-    for (strategy_id in names(strategies)) {
+    for (adjustment_id in names(adjustments)) {
       k <- k + 1L
-      strategy <- strategies[[strategy_id]]
       rows[[k]] <- compile_consumption_iv_design_row(
         x,
-        adjustment_id = strategy_id,
+        adjustment_id = adjustment_id,
         construction_id = "nonzero_mean",
         specification_id = paste(
-          "consumption_control", x$welfare_specification_id[[1L]], strategy_id, sep = "__"
+          family_prefix, x$welfare_specification_id[[1L]], adjustment_id, sep = "__"
         ),
         control_registry = control_registry,
-        tier = "C",
-        sample_rule = "consumption_control_strategy_common_support",
+        tier = tier,
+        sample_rule = sample_rule,
         require_registered_instrument = FALSE,
-        adjustment = strategy,
+        adjustment = adjustments[[adjustment_id]],
         construction = construction,
         sequence = k
       )
     }
   }
   out <- bind_iv_specification_rows(rows)
-  expected <- nrow(specs) * length(strategies)
+  expected <- nrow(specs) * length(adjustments)
   if (nrow(out) != expected || anyDuplicated(out$specification_id)) {
-    stop("Consumption control-strategy registry is incomplete or duplicated.", call. = FALSE)
+    stop("Consumption adjustment-family registry is incomplete or duplicated.", call. = FALSE)
   }
   out
+}
+
+compile_consumption_control_strategy_specifications <- function(
+    registry, control_registry = NULL) {
+  compile_consumption_adjustment_family_specifications(
+    registry,
+    iv_causal_control_strategy_adjustments(control_registry),
+    family_prefix = "consumption_control",
+    sample_rule = "consumption_control_strategy_common_support",
+    control_registry = control_registry
+  )
+}
+
+compile_consumption_control_parameterization_specifications <- function(
+    registry, control_registry = NULL) {
+  compile_consumption_adjustment_family_specifications(
+    registry,
+    iv_causal_control_parameterization_adjustments(control_registry),
+    family_prefix = "consumption_parameterization",
+    sample_rule = "consumption_control_parameterization_common_support",
+    control_registry = control_registry
+  )
 }
 
 consumption_iv_common_sample_support <- function(panel, specifications, group_column) {

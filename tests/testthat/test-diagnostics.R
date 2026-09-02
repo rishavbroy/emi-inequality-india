@@ -3022,3 +3022,43 @@ test_that("consumption control-strategy robustness isolates six theory-based adj
     !any(iv_control_block_membership()$human_capital %in% plain_chr(x))
   }, logical(1))))
 })
+
+
+test_that("consumption control parameterization family includes common-sample benchmark and substitutions", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
+  controls <- read_census_2001_control_registry(
+    file.path(root, "data", "metadata", "census_2001_control_registry.csv")
+  )
+  registry <- read_consumption_iv_outcome_registry(
+    file.path(root, "data", "metadata", "consumption_iv_outcomes.csv")
+  )
+  adjustments <- iv_causal_control_parameterization_adjustments(controls)
+  specs <- compile_consumption_control_parameterization_specifications(registry, controls)
+
+  expect_equal(length(adjustments), 8L)
+  expect_setequal(
+    names(adjustments),
+    c(
+      "region_main", "region_main_literacy", "region_main_decomposed_economic",
+      "region_main_literacy_decomposed_economic",
+      "state_main", "state_main_literacy", "state_main_decomposed_economic",
+      "state_main_literacy_decomposed_economic"
+    )
+  )
+  expect_equal(nrow(specs), nrow(registry) * 8L)
+  expect_equal(anyDuplicated(specs$specification_id), 0L)
+  expect_true(all(specs$construction_id == "nonzero_mean"))
+  expect_true(all(specs$sample_rule == "consumption_control_parameterization_common_support"))
+  expect_true(all(specs$tier == "C"))
+
+  benchmark <- census_2001_main_controls(controls)
+  expect_setequal(adjustments$region_main$controls, benchmark)
+  expect_setequal(adjustments$state_main$controls, benchmark)
+  expect_true("literacy_share_2001" %in% adjustments$region_main_literacy$controls)
+  expect_false("adult_secondary_plus_share_2001" %in% adjustments$region_main_literacy$controls)
+  expect_true(all(c(
+    "worker_share_2001", "cultivator_share_workers_2001",
+    "agricultural_labourer_share_workers_2001"
+  ) %in% adjustments$state_main_decomposed_economic$controls))
+  expect_false("agricultural_worker_share_2001" %in% adjustments$state_main_decomposed_economic$controls)
+})
