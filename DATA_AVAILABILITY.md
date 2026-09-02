@@ -80,9 +80,9 @@ materialized and their real-data diagnostics reviewed.
 
 ### PLFS 2017-18 long-run labor source
 
-The local PLFS 2017-18 package under `data/raw/plfs/` contains the official
-`.Nesstar` binary and data-layout workbook, which are registered for source
-validation. It does not include the catalog DDI/XML or an open first-visit
-person table. Because the standard Nesstar converter requires companion DDI
-metadata, production ingestion remains fail-closed until that official XML is
-acquired and registered; see `REPLICATION.md` and `docs/LABOR_MARKET.md`.
+The local PLFS 2017-18 package under `data/raw/plfs/` now contains the official
+`.Nesstar` binary, data-layout workbook, and MoSPI catalog DDI/XML. All three are
+registered for source validation. The DDI identifies the 433,339-person first-visit
+file and the predeclared usual-status/design fields, so that F1 is now eligible for
+generic local materialization through `scripts/materialize_nesstar.py`; no
+PLFS-specific binary parser is used.

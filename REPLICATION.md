@@ -194,29 +194,27 @@ and output paths are frozen in
 Nesstar sources should be added there only when their `.Nesstar` binary is the
 chosen production source and the required companion metadata is available.
 
-### PLFS 2017-18 source gate
+### PLFS 2017-18 materialization
 
-The local PLFS 2017-18 package is intentionally **not** materialized yet. It
-contains `DDI-IND-CSO-PLFS-2017-18.Nesstar` and `Data_LayoutPLFS (1).xlsx`, but
-it does not contain the companion DDI XML required by `nesstar-converter` and
-it does not contain an open first-visit person table. The extended audit records
-this expected state in
-`outputs/diagnostics/extended/labor/plfs_2017_18_source_package.csv` as
-`blocked_missing_ddi`.
+The registered PLFS 2017-18 source package now contains the official MoSPI
+`.Nesstar` binary, fixed-width layout workbook, and catalog DDI/XML. The extended
+audit validates all three byte contracts, checks the reviewed layout byte
+positions, and validates the DDI first-visit person file (`F1`,
+`hh_per_fv_2017-18`, 433,339 cases) against the analytical field registry.
 
-Obtain the official metadata from the MoSPI PLFS 2017-18 catalog (reference
-`DDI-IND-CSO-PLFS-2017-18`) using the catalog's **Metadata → DDI/XML** export and
-save it beside the `.Nesstar` binary as:
+Materialize only the annual first-visit person file through the same generic
+converter used for NSS66:
 
-```text
-data/raw/plfs/PLFS 2017-18 Periodic Labour Force Survey July 2017 - June 2018/DDI-IND-CSO-PLFS-2017-18.xml
+```bash
+source .venv/bin/activate
+python scripts/materialize_nesstar.py plfs_2017_18
 ```
 
-Do not create or hand-edit substitute XML from the layout workbook. On the next
-audit, the source-package diagnostic will change to `ddi_present_unregistered`.
-At that point record the downloaded XML's exact byte size and provenance in
-tracked metadata and add PLFS to the existing generic Nesstar conversion
-contract before materializing the first-visit person table.
+This writes `data/interim/plfs_2017_18/F1.csv` plus a versioned local conversion
+manifest. The conversion contract deliberately selects only `F1`: annual
+usual-status outcomes use the first-visit person universe, while PLFS revisit
+records belong to a separate current-weekly-status/panel analysis. Do not pool
+revisits into the annual usual-status sample.
 
 The full audit discovers this gitignored materialization on every run. With no
 interim files it records a non-error `not_materialized` diagnostic. A partial
