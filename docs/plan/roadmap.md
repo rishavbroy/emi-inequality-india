@@ -104,3 +104,7 @@ With the firm and labor source/mechanism phases now fixed, once the final causal
 ### Control-strategy governance
 
 The historical `main` Census-2001 vector is retained as a compact benchmark, not as a uniquely theory-preferred causal adjustment set. The finite control-strategy and proxy-parameterization families are now complete. The next isolated axis is the remote 1991 baseline comparison: compact-2001 benchmark versus population-interpolated PCA91 controls under region/state FE, using common support and the preferred Shastry instrument. Do not automatically cross this family with alternative response, treatment, or instrument definitions.
+
+### Historical-control source/concept validation
+
+The realized 32-cell PCA91 family leaves a nontrivial long-run signal: the 2022-23 state-FE change design rejects beta zero after family-wide Holm adjustment under both compact-2001 and PCA91 adjustment, and the 2023-24 state-FE change survives under PCA91.  Before opening the EMI-treatment-definition axis, use the independently archived Vanneman 1991 district data to make the historical adjustment more conceptually comparable to the compact-2001 vector.  Run the 48-cell concept-matched family (8 endpoint/estimand designs x region/state x compact-2001/PCA91/Vanneman) on common support.  Do not merge its multiplicity family retrospectively with the already-observed 32-cell PCA91 exercise.
