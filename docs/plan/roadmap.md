@@ -44,7 +44,7 @@ This file records the active research plan. Historical brainstorming and refacto
 
 ### 1. Identification consolidation
 
-Do not try to repair a weak within-state first stage by adding many correlated controls. The immediate next empirical gate is to inspect the expanded, de-duplicated control-intervention first stages (block-only, leave-one-block-out, and declared parameterization substitutions) as relevance evidence; do not promote a control design because it raises F. Scientific aliases are retained separately from execution cells: 55 named absorption questions map to 49 unique first-stage models, and `first_stage_absorption_semantic_summary.csv` projects the fitted diagnostics back onto every named question for direct review. The broader diagnostic universe contains 119 unique IV designs. Only after that diagnostic family is reviewed should the registered scalar-IV consumption robustness family be activated with its multiplicity rule frozen in advance.
+Do not try to repair a weak within-state first stage by adding many correlated controls. The expanded, de-duplicated control-intervention first stages (block-only, leave-one-block-out, and declared parameterization substitutions) are now relevance evidence, not a model-selection device; no control design should be promoted because it raises F. Scientific aliases are retained separately from execution cells: 55 named absorption questions map to 49 unique first-stage models, and `first_stage_absorption_semantic_summary.csv` projects the fitted diagnostics back onto every named question for direct review. The broader diagnostic universe contains 119 unique IV designs. That review has already closed the gate for the registered scalar-IV consumption family; the remaining control question is now governed separately as causal strategy, proxy parameterization, and historical-vintage robustness.
 
 The cross-family post-treatment mechanism evidence ledger now synthesizes the registered Census migration/housing, Economic Census, NSS66, and PLFS weak-IV results into a common model-level grid plus family summary. It records first-stage strength, multiplicity-adjusted reduced-form and Anderson--Rubin signals, confidence-set boundedness, temporal role, and whether the run is a causal mechanism or geography robustness analysis. The final identification section should use that generated ledger to synthesize the evidence already generated:
 
@@ -92,3 +92,8 @@ With the firm and labor source/mechanism phases now fixed, once the final causal
 - Do not expand a registered hypothesis family after inspecting results without labeling the expansion exploratory.
 - Do not add parallel estimators when the shared post-treatment mechanism or survey-design layers already represent the estimand.
 - Do not add raw-source adapters before the underlying files have been inspected.
+
+
+### Control-strategy governance
+
+The historical `main` Census-2001 vector is retained as a compact benchmark, not as a uniquely theory-preferred causal adjustment set. Consumption robustness should keep axes separate: first response-definition robustness under a fixed benchmark; then a finite control-strategy family comparing geography-only, compact-2001, and compact-2001-without-human-capital specifications under region/state FE; separately, a finite proxy-parameterization family and the already registered 1991-vintage robustness. Do not automatically cross these with every response, treatment, and instrument definition.

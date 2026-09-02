@@ -21,9 +21,25 @@ and appendix vectors from that registry rather than restating them in code.
 - state fixed effects.
 
 These variables come from SHRUG's Census 2001 PCA and the official C-01, C-08,
-C-14, and H-09 tables. The main set is intentionally limited. Including every
-available Census variable would consume degrees of freedom and make the first
-stage harder to interpret.
+C-14, and H-09 tables. The historical identifier `main` now means **compact 2001
+adjustment**, not a claim that this is the uniquely correct causal conditioning
+set. Including every available Census variable would consume degrees of freedom
+and make the first stage harder to interpret, but a compact vector is not
+automatically innocuous either: linguistic structure predates 2001, so some
+2001 socioeconomic characteristics may themselves lie on long-run pathways from
+language to later English-medium exposure or welfare.
+
+For causal robustness, the design registry therefore distinguishes three finite
+adjustment philosophies under both region and state fixed effects: (i) geography
+fixed effects only, which avoid conditioning on measured socioeconomic descendants
+but place more burden on the exclusion restriction; (ii) the compact 2001 vector,
+which adjusts for observed scale, composition, human capital, economic structure,
+demography, and development; and (iii) the compact vector without human capital,
+which specifically avoids conditioning on a plausible language/education pathway.
+These are registered as a separate control-strategy robustness axis. Alternative
+literacy/secondary-plus and compact/decomposed economic-structure choices remain a
+second, measurement-parameterization axis rather than being conflated with the
+causal role of controls.
 
 ## Alternative parameterizations and balance analysis
 
