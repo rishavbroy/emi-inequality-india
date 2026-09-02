@@ -3167,6 +3167,32 @@ test_that("Vanneman concept-matched historical adjustments preserve benchmark an
   expect_setequal(adjustments$state_vanneman_1991$controls, vanneman_historical_baseline_1991_variables())
 })
 
+test_that("Vanneman dist91 control reader excludes aggregate administrative rows before key normalization", {
+  record_ids <- c(population = "100", muslim = "332")
+  line <- function(state, district, record, total, rural = total) {
+    sprintf("%s%s%s91%d%9d%9d", state, district, record, 2L, total, rural)
+  }
+  path <- tempfile(fileext = ".data.gz")
+  con <- gzfile(path, open = "wt")
+  writeLines(c(
+    line("01", "00", "100", 1000, 700),
+    line("01", "00", "332", 200, 150),
+    line("01", "01", "100", 100, 60),
+    line("01", "01", "332", 20, 12)
+  ), con)
+  close(con)
+
+  out <- read_vanneman_dist91_control_counts(path, record_ids)
+
+  expect_equal(nrow(out), 1L)
+  expect_identical(out$state_code_1991, "01")
+  expect_identical(out$district_code_1991, "01")
+  expect_equal(out$population, 100)
+  expect_equal(out$rural_population, 60)
+  expect_equal(out$muslim, 20)
+  expect_false(anyNA(out[c("state_code_1991", "district_code_1991")]))
+})
+
 test_that("Vanneman 1991 control measures preserve ratio accounting", {
   counts <- data.frame(
     population_1991_count = 100,

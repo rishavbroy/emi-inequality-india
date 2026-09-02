@@ -396,8 +396,13 @@ read_vanneman_dist91_control_counts <- function(
   on.exit(close(con), add = TRUE)
   lines <- readLines(con, warn = FALSE)
   if (!length(lines)) stop("Vanneman dist91 control source is empty.", call. = FALSE)
+  state_id <- ifelse(nchar(lines) >= 2L, substr(lines, 1L, 2L), "")
+  district_id <- ifelse(nchar(lines) >= 4L, substr(lines, 3L, 4L), "")
   record_id <- ifelse(nchar(lines) >= 7L, substr(lines, 5L, 7L), "")
-  keep <- record_id %in% unname(record_ids) & substr(lines, 8L, 9L) == "91"
+  district_row <- grepl("^[0-9]{2}$", state_id) & state_id != "00" &
+    grepl("^[0-9]{2}$", district_id) & district_id != "00"
+  keep <- district_row & record_id %in% unname(record_ids) &
+    substr(lines, 8L, 9L) == "91"
   selected <- lines[keep]
   if (!length(selected) || any(nchar(selected) < 28L)) {
     stop("Vanneman dist91 registered control records are malformed.", call. = FALSE)
@@ -428,7 +433,6 @@ read_vanneman_dist91_control_counts <- function(
     out[[lookup[[rid]]]] <- rows$total[idx]
     if (rid == record_ids[["population"]]) out$rural_population <- rows$rural[idx]
   }
-  out <- out[out$district_code_1991 != "00", , drop = FALSE]
   rownames(out) <- NULL
   out
 }
