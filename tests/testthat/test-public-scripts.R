@@ -862,37 +862,32 @@ test_that("poster delivery and typography contracts remain stable during draftin
   expect_match(template, "v(1pt)", fixed = TRUE)
 })
 
-test_that("Census downloader processes both manifests and skips present files", {
+test_that("Census downloader discovers year manifests and skips present files", {
   root <- tempfile("census-download-")
   on.exit(unlink(root, recursive = TRUE, force = TRUE), add = TRUE)
   dir.create(file.path(root, "data", "metadata"), recursive = TRUE)
 
-  manifests <- list(
+  years <- c(1991, 2001, 2011)
+  manifests <- lapply(years, function(year) {
     data.frame(
       table = "C13", state_code = "01",
-      relative_path = "data/raw/census_2001/age/C13/PC01_C13_01.xls",
-      url = "https://censusindia.gov.in/one.xls",
-      stringsAsFactors = FALSE
-    ),
-    data.frame(
-      table = "C13", state_code = "01",
-      relative_path = "data/raw/census_2011/age/C13/DDW-0100C-13.xls",
-      url = "https://censusindia.gov.in/two.xls",
+      relative_path = sprintf("data/raw/census_%d/age/C13/table.xls", year),
+      url = sprintf("https://censusindia.gov.in/%d.xls", year),
       stringsAsFactors = FALSE
     )
-  )
+  })
   for (i in seq_along(manifests)) {
     write.table(
       manifests[[i]],
       file.path(
         root, "data", "metadata",
-        sprintf("census_%d_download_manifest.tsv", c(2001, 2011)[[i]])
+        sprintf("census_%d_download_manifest.tsv", years[[i]])
       ),
       sep = "\t", quote = FALSE, row.names = FALSE
     )
   }
 
-  present <- file.path(root, manifests[[1]]$relative_path)
+  present <- file.path(root, manifests[[2]]$relative_path)
   dir.create(dirname(present), recursive = TRUE)
   writeLines("existing", present)
 
@@ -937,10 +932,37 @@ test_that("Census downloader processes both manifests and skips present files", 
 
   expect_null(attr(output, "status"))
   expect_identical(readLines(present), "existing")
-  downloaded <- file.path(root, manifests[[2]]$relative_path)
-  expect_identical(readLines(downloaded), "downloaded")
-  expect_identical(readLines(log_path), manifests[[2]]$url)
-  expect_true(any(grepl("1 downloaded, 1 already present", output, fixed = TRUE)))
+  downloaded <- vapply(manifests[c(1, 3)], function(x) {
+    file.path(root, x$relative_path)
+  }, character(1))
+  expect_true(all(file.exists(downloaded)))
+  expect_true(all(vapply(downloaded, function(path) {
+    identical(readLines(path), "downloaded")
+  }, logical(1))))
+  expect_setequal(readLines(log_path), vapply(manifests[c(1, 3)], `[[`, character(1), "url"))
+  expect_true(any(grepl("2 downloaded, 1 already present", output, fixed = TRUE)))
+})
+
+test_that("Census 1991 acquisition manifest freezes reviewed official table families", {
+  manifest <- utils::read.delim(
+    repo_file("data", "metadata", "census_1991_download_manifest.tsv"),
+    stringsAsFactors = FALSE, check.names = FALSE, colClasses = "character"
+  )
+  state_codes <- sprintf("%02d", c(2:9, 11:33))
+
+  expect_identical(names(manifest), c("table", "state_code", "relative_path", "url"))
+  expect_equal(nrow(manifest), 125L)
+  expect_equal(table(manifest$table)[c("B01S", "C02T", "C02U", "C06T", "C09T")],
+               c(B01S = 31L, C02T = 31L, C02U = 31L, C06T = 31L, C09T = 1L))
+  for (table_id in c("B01S", "C02T", "C02U", "C06T")) {
+    expect_setequal(manifest$state_code[manifest$table == table_id], state_codes)
+  }
+  religion <- manifest[manifest$table == "C09T", , drop = FALSE]
+  expect_identical(religion$state_code, "01")
+  expect_match(religion$relative_path, "^data/raw/census_1991/religion/C09T/")
+  expect_true(all(grepl("^https://censusindia\\.gov\\.in/", manifest$url)))
+  expect_false(anyDuplicated(manifest$relative_path))
+  expect_false(anyDuplicated(manifest$url))
 })
 
 test_that("canonical public audit restores the locked R library before synchronization checks", {

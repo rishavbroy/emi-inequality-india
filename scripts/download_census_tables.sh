@@ -13,10 +13,13 @@ fi
 if [[ $# -gt 0 ]]; then
   manifests=("$@")
 else
-  manifests=(
-    data/metadata/census_2001_download_manifest.tsv
-    data/metadata/census_2011_download_manifest.tsv
-  )
+  shopt -s nullglob
+  manifests=(data/metadata/census_*_download_manifest.tsv)
+  shopt -u nullglob
+  if [[ ${#manifests[@]} -eq 0 ]]; then
+    printf 'No Census download manifests found under data/metadata.\n' >&2
+    exit 1
+  fi
 fi
 
 downloaded=0
@@ -27,6 +30,13 @@ for manifest in "${manifests[@]}"; do
     printf 'Manifest not found: %s\n' "$manifest" >&2
     exit 1
   fi
+
+  manifest_name="$(basename "$manifest")"
+  if [[ ! "$manifest_name" =~ ^census_([0-9]{4})_download_manifest\.tsv$ ]]; then
+    printf 'Unexpected Census manifest name: %s\n' "$manifest" >&2
+    exit 1
+  fi
+  census_year="${BASH_REMATCH[1]}"
 
   normalized_manifest="$(mktemp)"
   tr -d '\r' < "$manifest" > "$normalized_manifest"
@@ -40,15 +50,15 @@ for manifest in "${manifests[@]}"; do
     exit 1
   fi
 
-  awk -F '\t' '
+  awk -F '\t' -v census_year="$census_year" '
     NR == 1 { next }
     NF != 4 || $1 == "" || $2 == "" || $3 == "" || $4 == "" {
       printf "Malformed manifest row %d\n", NR > "/dev/stderr"
       bad = 1
       next
     }
-    $3 !~ /^data\/raw\/census_(2001|2011)\// || $3 ~ /(^|\/)\.\.($|\/)/ {
-      printf "Unsafe Census destination on row %d: %s\n", NR, $3 > "/dev/stderr"
+    $3 !~ ("^data/raw/census_" census_year "/") || $3 ~ /(^|\/)\.\.($|\/)/ {
+      printf "Unsafe Census destination on row %d for census %s: %s\n", NR, census_year, $3 > "/dev/stderr"
       bad = 1
     }
     $4 !~ /^https:\/\/censusindia\.gov\.in\// {
