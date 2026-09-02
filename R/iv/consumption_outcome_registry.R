@@ -232,20 +232,36 @@ compile_consumption_iv_design_row <- function(
     tier = NULL,
     sample_rule = NULL,
     require_registered_instrument = FALSE,
+    adjustment = NULL,
+    construction = NULL,
     sequence = 1L) {
   x <- safe_df(specification)
   if (nrow(x) != 1L) stop("A single consumption IV outcome specification is required.", call. = FALSE)
   control_registry <- resolve_census_2001_control_registry(control_registry)
-  adjustments <- iv_adjustment_sets(control_registry)
-  constructions <- iv_instrument_constructions()
-  if (!adjustment_id %in% names(adjustments)) {
-    stop("Unknown consumption IV adjustment_id: ", adjustment_id, call. = FALSE)
+  if (is.null(adjustment)) {
+    adjustments <- iv_adjustment_sets(control_registry)
+    if (!adjustment_id %in% names(adjustments)) {
+      stop("Unknown consumption IV adjustment_id: ", adjustment_id, call. = FALSE)
+    }
+    adjustment <- adjustments[[adjustment_id]]
   }
-  if (!construction_id %in% names(constructions)) {
-    stop("Unknown consumption IV construction_id: ", construction_id, call. = FALSE)
+  if (is.null(construction)) {
+    constructions <- iv_instrument_constructions()
+    if (!construction_id %in% names(constructions)) {
+      stop("Unknown consumption IV construction_id: ", construction_id, call. = FALSE)
+    }
+    construction <- constructions[[construction_id]]
   }
-  adjustment <- adjustments[[adjustment_id]]
-  construction <- constructions[[construction_id]]
+  required_adjustment <- c("label", "fixed_effect", "controls")
+  missing_adjustment <- setdiff(required_adjustment, names(adjustment))
+  if (length(missing_adjustment)) {
+    stop("Consumption IV adjustment lacks fields: ", paste(missing_adjustment, collapse = ", "), call. = FALSE)
+  }
+  required_construction <- c("label", "excluded", "included", "coverage")
+  missing_construction <- setdiff(required_construction, names(construction))
+  if (length(missing_construction)) {
+    stop("Consumption IV construction lacks fields: ", paste(missing_construction, collapse = ", "), call. = FALSE)
+  }
   excluded <- plain_chr(construction$excluded)
   if (length(excluded) != 1L) {
     stop("Consumption IV outcome designs require one excluded scalar instrument.", call. = FALSE)
@@ -439,6 +455,44 @@ compile_consumption_alternative_welfare_specifications <- function(
     tier = "C",
     control_registry = control_registry
   )
+}
+
+compile_consumption_control_strategy_specifications <- function(
+    registry, control_registry = NULL) {
+  specs <- safe_df(registry)
+  control_registry <- resolve_census_2001_control_registry(control_registry)
+  strategies <- iv_causal_control_strategy_adjustments(control_registry)
+  construction <- iv_instrument_constructions()[["nonzero_mean"]]
+  rows <- list()
+  k <- 0L
+  for (i in seq_len(nrow(specs))) {
+    x <- specs[i, , drop = FALSE]
+    for (strategy_id in names(strategies)) {
+      k <- k + 1L
+      strategy <- strategies[[strategy_id]]
+      rows[[k]] <- compile_consumption_iv_design_row(
+        x,
+        adjustment_id = strategy_id,
+        construction_id = "nonzero_mean",
+        specification_id = paste(
+          "consumption_control", x$welfare_specification_id[[1L]], strategy_id, sep = "__"
+        ),
+        control_registry = control_registry,
+        tier = "C",
+        sample_rule = "consumption_control_strategy_common_support",
+        require_registered_instrument = FALSE,
+        adjustment = strategy,
+        construction = construction,
+        sequence = k
+      )
+    }
+  }
+  out <- bind_iv_specification_rows(rows)
+  expected <- nrow(specs) * length(strategies)
+  if (nrow(out) != expected || anyDuplicated(out$specification_id)) {
+    stop("Consumption control-strategy registry is incomplete or duplicated.", call. = FALSE)
+  }
+  out
 }
 
 consumption_iv_common_sample_support <- function(panel, specifications, group_column) {

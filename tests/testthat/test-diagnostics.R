@@ -2989,3 +2989,36 @@ test_that("causal control strategies distinguish adjustment philosophies", {
     strategies, function(x) nzchar(x$caution), logical(1)
   )))
 })
+
+test_that("consumption control-strategy robustness isolates six theory-based adjustments", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", unset = ".")
+  consumption <- read_consumption_iv_outcome_registry(
+    file.path(root, "data/metadata/consumption_iv_outcomes.csv")
+  )
+  specs <- compile_consumption_control_strategy_specifications(consumption)
+
+  expect_equal(nrow(specs), 48L)
+  expect_equal(anyDuplicated(specs$specification_id), 0L)
+  expect_setequal(
+    unique(specs$adjustment_id),
+    names(iv_causal_control_strategy_adjustments())
+  )
+  expect_true(all(specs$construction_id == "nonzero_mean"))
+  expect_true(all(specs$sample_rule == "consumption_control_strategy_common_support"))
+  expect_true(all(specs$tier == "C"))
+  expect_true(all(vapply(specs$excluded_instruments, function(x) {
+    identical(plain_chr(x), preferred_iv_variables()$instrument)
+  }, logical(1))))
+
+  strategies <- iv_causal_control_strategy_adjustments()
+  fe_only <- specs[specs$adjustment_id == "state_fe_only", , drop = FALSE]
+  compact <- specs[specs$adjustment_id == "state_compact_2001", , drop = FALSE]
+  no_hc <- specs[specs$adjustment_id == "state_compact_2001_no_human_capital", , drop = FALSE]
+  expect_true(all(vapply(fe_only$controls, length, integer(1)) %in% c(0L, 1L)))
+  expect_true(all(vapply(compact$controls, function(x) {
+    all(strategies$state_compact_2001$controls %in% plain_chr(x))
+  }, logical(1))))
+  expect_true(all(vapply(no_hc$controls, function(x) {
+    !any(iv_control_block_membership()$human_capital %in% plain_chr(x))
+  }, logical(1))))
+})
