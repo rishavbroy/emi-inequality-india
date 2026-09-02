@@ -72,7 +72,7 @@ Use the same discipline as consumption:
 
 ### 3. Identification consolidation
 
-Do not try to repair a weak within-state first stage by adding many correlated controls. The final identification section should synthesize the evidence already generated:
+Do not try to repair a weak within-state first stage by adding many correlated controls. The cross-family post-treatment mechanism evidence ledger now synthesizes the registered Census migration/housing, Economic Census, NSS66, and PLFS weak-IV results into a common model-level grid plus family summary. It records first-stage strength, multiplicity-adjusted reduced-form and Anderson--Rubin signals, confidence-set boundedness, temporal role, and whether the run is a causal mechanism or geography robustness analysis. The final identification section should use that generated ledger to synthesize the evidence already generated:
 
 - relevance under the predeclared instrument constructions;
 - region versus state fixed-effects sensitivity;
@@ -88,6 +88,8 @@ Any new control must have a clear exclusion-threat rationale and predetermined t
 ### 4. Outcome-specification consolidation
 
 Before final paper claims, choose a small registered causal outcome family. Historical and modern consumption rounds now make it possible to compare baseline-adjusted levels, changes, and dynamic specifications without selecting a specification after seeing significance. Use the comparability diagnostics to define which HCES/NSS contrasts are substantive versus survey-redesign sensitivity.
+
+Specification governance is not yet fully consolidated. `analysis_design_registry` inventories implemented designs, while the public headline models still originate in the older `build_revised_iv_formulas()` path. Before expanding the consumption robustness family, migrate those headline specifications onto the canonical IV-specification representation and add an explicit candidate-design ledger that records theoretically admissible but unimplemented/redundant/data-unavailable designs. Do not estimate a mechanical Cartesian product merely to populate that ledger.
 
 ### 5. Paper and reviewer-facing outputs
 

@@ -154,7 +154,7 @@ The same common sample now also feeds the canonical single-specification IV esti
 
 Because several headline first stages are weak, conventional clustered 2SLS p-values are not treated as sufficient evidence. The weak-IV output therefore carries separate Holm adjustments for the conventional clustered 2SLS p-value and the Anderson-Rubin test of beta = 0 across the eight registered mechanism outcomes within each specification. Interpretation should prioritize the Anderson-Rubin result and the shape/boundedness of its confidence set whenever the effective-F evidence is weak.
 
-The files are `mechanism_registry.csv`, `mechanism_sample_coverage.csv`, `mechanism_sample_support.csv`, `mechanism_first_stage.csv`, `mechanism_reduced_form.csv`, `mechanism_weak_iv.csv`, and `mechanism_anderson_rubin_grid.csv` under `outputs/diagnostics/extended/census_migration/`.
+The persisted inference files are `mechanism_registry.csv`, `mechanism_sample_coverage.csv`, `mechanism_sample_support.csv`, `mechanism_first_stage.csv`, `mechanism_reduced_form.csv`, and `mechanism_weak_iv.csv` under `outputs/diagnostics/extended/census_migration/`. The pointwise Anderson--Rubin inversion grid remains in the cached diagnostic object; the compact weak-IV table already records the beta-zero test, confidence-set components/bounds, truncation, disconnection, and zero containment.
 
 ## Interpretation
 
