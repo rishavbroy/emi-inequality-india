@@ -49,16 +49,6 @@ extended_census_target_definitions <- function() {
       read_english_opportunity_measure_registry(english_opportunity_measure_registry_file)
     ),
     tar_target(
-      analysis_design_registry,
-      compile_analysis_design_registry(
-        consumption_iv_specifications,
-        english_opportunity_measure_registry,
-        census_2001_control_registry,
-        public_iv_specifications,
-        consumption_scalar_iv_robustness_specifications
-      )
-    ),
-    tar_target(
       diag_ext_english_opportunity_measure_registry,
       save_english_opportunity_measure_registry(english_opportunity_measure_registry),
       format = "file"
