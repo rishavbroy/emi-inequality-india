@@ -538,6 +538,38 @@ iv_specification_registry <- function(
   bind_iv_specification_rows(rows)
 }
 
+iv_historical_adjustment_comparison_adjustments <- function(control_registry = NULL) {
+  registry <- resolve_census_2001_control_registry(control_registry)
+  compact_2001 <- census_2001_main_controls(registry)
+  remote_1991 <- historical_baseline_1991_pca_variables()
+  list(
+    region_compact_2001 = iv_adjustment(
+      "Six-region FE + compact 2001 adjustment", "region", compact_2001,
+      adjustment_vintage = "2001", adjustment_role = "benchmark_compact_2001"
+    ),
+    region_predetermined_1991 = iv_adjustment(
+      "Six-region FE + population-interpolated PCA91 adjustment", "region", remote_1991,
+      adjustment_vintage = "1991", adjustment_role = "remote_predetermined_baseline",
+      caution = paste(
+        "PCA91 covers a different but overlapping socioeconomic concept set from the compact 2001 controls;",
+        "the comparison is a remote-baseline robustness exercise, not a pure same-variable vintage substitution."
+      )
+    ),
+    state_compact_2001 = iv_adjustment(
+      "State FE + compact 2001 adjustment", "state", compact_2001,
+      adjustment_vintage = "2001", adjustment_role = "benchmark_compact_2001"
+    ),
+    state_predetermined_1991 = iv_adjustment(
+      "State FE + population-interpolated PCA91 adjustment", "state", remote_1991,
+      adjustment_vintage = "1991", adjustment_role = "remote_predetermined_baseline",
+      caution = paste(
+        "PCA91 covers a different but overlapping socioeconomic concept set from the compact 2001 controls;",
+        "the comparison is a remote-baseline robustness exercise, not a pure same-variable vintage substitution."
+      )
+    )
+  )
+}
+
 iv_absorption_adjustments <- function(control_registry = NULL) {
   control_registry <- resolve_census_2001_control_registry(control_registry)
   main <- census_2001_main_controls(control_registry)

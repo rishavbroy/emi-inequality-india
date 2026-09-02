@@ -94,6 +94,44 @@ historical_baseline_1991_pca_variables <- function() {
   metadata$variable[metadata$source == "PCA91"]
 }
 
+production_historical_baseline_1991_controls <- function(
+    g2_sensitivity, coverage_threshold = .99) {
+  controls <- safe_df(g2_sensitivity$controls)
+  required <- c(
+    census_2001_keys(), "geography_spec_id", "source_coverage_threshold",
+    historical_baseline_1991_pca_variables()
+  )
+  missing <- setdiff(required, names(controls))
+  if (length(missing)) {
+    stop(
+      "Production 1991 baseline controls are missing columns: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  threshold <- as.numeric(coverage_threshold)
+  if (length(threshold) != 1L || !is.finite(threshold) || threshold < 0 || threshold > 1) {
+    stop("Production 1991 baseline coverage threshold must lie in [0, 1].", call. = FALSE)
+  }
+  keep <- controls$geography_spec_id == "G2_population_interpolated" &
+    abs(num(controls$source_coverage_threshold) - threshold) < 1e-12
+  out <- controls[keep, c(census_2001_keys(), historical_baseline_1991_pca_variables()), drop = FALSE]
+  if (!nrow(out)) {
+    stop(
+      "Production 1991 baseline controls have no G2 population-interpolated rows at coverage threshold ",
+      threshold, ".",
+      call. = FALSE
+    )
+  }
+  out$state_code_2001 <- pad_admin_code(out$state_code_2001, 2L)
+  out$district_code_2001 <- pad_admin_code(out$district_code_2001, 2L)
+  if (anyDuplicated(out[census_2001_keys()])) {
+    stop("Production 1991 baseline controls contain duplicate Census-2001 district keys.", call. = FALSE)
+  }
+  rownames(out) <- NULL
+  out
+}
+
 build_shrug_1991_pca_sufficient_statistics <- function(x) {
   x <- safe_df(x)
   required <- c(

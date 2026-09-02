@@ -3031,7 +3031,8 @@ test_that("IV adjustment registries share one named execution contract", {
     blocks = iv_block_intervention_adjustments(),
     strategies = iv_causal_control_strategy_adjustments(),
     relevance_parameterizations = iv_main_parameterization_adjustments(),
-    causal_parameterizations = iv_causal_control_parameterization_adjustments()
+    causal_parameterizations = iv_causal_control_parameterization_adjustments(),
+    historical_adjustments = iv_historical_adjustment_comparison_adjustments()
   )
   for (registry in registries) {
     expect_true(length(registry) > 0L)
@@ -3081,4 +3082,60 @@ test_that("consumption control parameterization family includes common-sample be
     "agricultural_labourer_share_workers_2001"
   ) %in% adjustments$state_main_decomposed_economic$controls))
   expect_false("agricultural_worker_share_2001" %in% adjustments$state_main_decomposed_economic$controls)
+})
+
+
+test_that("production 1991 controls select the frozen population-interpolation threshold", {
+  variables <- historical_baseline_1991_pca_variables()
+  make_rows <- function(threshold, district) {
+    out <- data.frame(
+      state_code_2001 = "01",
+      district_code_2001 = district,
+      geography_spec_id = "G2_population_interpolated",
+      source_coverage_threshold = threshold,
+      stringsAsFactors = FALSE
+    )
+    for (i in seq_along(variables)) out[[variables[[i]]]] <- i + threshold
+    out
+  }
+  g2 <- list(controls = rbind(make_rows(.95, "01"), make_rows(.99, "02")))
+  out <- production_historical_baseline_1991_controls(g2, .99)
+  expect_equal(nrow(out), 1L)
+  expect_identical(out$district_code_2001, "02")
+  expect_identical(names(out), c(census_2001_keys(), variables))
+})
+
+test_that("historical adjustment robustness re-estimates 1991 and 2001 benchmarks on common-support designs", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
+  controls <- read_census_2001_control_registry(
+    file.path(root, "data", "metadata", "census_2001_control_registry.csv")
+  )
+  registry <- read_consumption_iv_outcome_registry(
+    file.path(root, "data", "metadata", "consumption_iv_outcomes.csv")
+  )
+  adjustments <- iv_historical_adjustment_comparison_adjustments(controls)
+  specs <- compile_consumption_historical_adjustment_specifications(registry, controls)
+
+  expect_equal(length(adjustments), 4L)
+  expect_setequal(
+    names(adjustments),
+    c(
+      "region_compact_2001", "region_predetermined_1991",
+      "state_compact_2001", "state_predetermined_1991"
+    )
+  )
+  expect_equal(nrow(specs), nrow(registry) * 4L)
+  expect_equal(anyDuplicated(specs$specification_id), 0L)
+  expect_true(all(specs$construction_id == "nonzero_mean"))
+  expect_true(all(specs$sample_rule == "consumption_historical_adjustment_common_support"))
+  expect_setequal(
+    adjustments$state_compact_2001$controls,
+    census_2001_main_controls(controls)
+  )
+  expect_setequal(
+    adjustments$state_predetermined_1991$controls,
+    historical_baseline_1991_pca_variables()
+  )
+  expect_identical(adjustments$state_predetermined_1991$adjustment_vintage, "1991")
+  expect_true(nzchar(adjustments$state_predetermined_1991$caution))
 })

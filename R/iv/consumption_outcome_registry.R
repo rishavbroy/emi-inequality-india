@@ -523,6 +523,54 @@ compile_consumption_control_parameterization_specifications <- function(
   )
 }
 
+attach_consumption_historical_adjustment_controls <- function(
+    panel, g2_sensitivity, coverage_threshold = .99) {
+  controls <- production_historical_baseline_1991_controls(
+    g2_sensitivity, coverage_threshold
+  )
+  x <- if (inherits(panel, "sf")) sf::st_drop_geometry(panel) else safe_df(panel)
+  required <- census_2001_keys()
+  missing <- setdiff(required, names(x))
+  if (length(missing)) {
+    stop(
+      "Consumption historical-adjustment panel lacks district keys: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  panel_key <- paste(
+    pad_admin_code(x$state_code_2001, 2L),
+    pad_admin_code(x$district_code_2001, 2L),
+    sep = "__"
+  )
+  control_key <- paste(controls$state_code_2001, controls$district_code_2001, sep = "__")
+  index <- match(panel_key, control_key)
+  out <- panel
+  variables <- historical_baseline_1991_pca_variables()
+  collisions <- intersect(variables, names(out))
+  if (length(collisions)) {
+    stop(
+      "Consumption historical-adjustment panel already contains 1991 control columns: ",
+      paste(collisions, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  for (variable in variables) out[[variable]] <- controls[[variable]][index]
+  attr(out, "historical_baseline_1991_coverage_threshold") <- as.numeric(coverage_threshold)
+  out
+}
+
+compile_consumption_historical_adjustment_specifications <- function(
+    registry, control_registry = NULL) {
+  compile_consumption_adjustment_family_specifications(
+    registry,
+    iv_historical_adjustment_comparison_adjustments(control_registry),
+    family_prefix = "consumption_historical_adjustment",
+    sample_rule = "consumption_historical_adjustment_common_support",
+    control_registry = control_registry
+  )
+}
+
 consumption_iv_common_sample_support <- function(panel, specifications, group_column) {
   specs <- as_iv_specifications(specifications)
   if (!group_column %in% names(specs)) {
