@@ -375,7 +375,8 @@ compile_analysis_design_registry <- function(
     consumption_scalar_iv_robustness_specifications = NULL,
     consumption_alternative_welfare_specifications = NULL,
     consumption_control_strategy_specifications = NULL,
-    consumption_control_parameterization_specifications = NULL) {
+    consumption_control_parameterization_specifications = NULL,
+    consumption_historical_adjustment_specifications = NULL) {
   core_iv <- analysis_design_from_iv(
     iv_diagnostic_specification_registry(control_registry = control_registry),
     family = "district_iv_diagnostic",
@@ -438,6 +439,17 @@ compile_analysis_design_registry <- function(
       analysis_role = "control_parameterization_robustness"
     )
   }
+  consumption_historical_adjustment <- if (is.null(consumption_historical_adjustment_specifications)) {
+    data.frame()
+  } else {
+    analysis_design_from_iv(
+      consumption_historical_adjustment_specifications,
+      family = "consumption_iv",
+      estimator = "first_stage+reduced_form+2sls+anderson_rubin",
+      inference = "state_clustered+anderson_rubin+holm",
+      analysis_role = "historical_adjustment_robustness"
+    )
+  }
   out <- safe_bind_rows(list(
     analysis_design_public_iv(public_iv_specifications),
     core_iv,
@@ -446,6 +458,7 @@ compile_analysis_design_registry <- function(
     consumption_welfare,
     consumption_control_strategy,
     consumption_control_parameterization,
+    consumption_historical_adjustment,
     analysis_design_district_mechanisms(
       english_opportunity_measure_registry, control_registry
     ),
@@ -579,7 +592,8 @@ build_iv_candidate_design_ledger <- function(
     consumption_scalar_iv_robustness_specifications = NULL,
     consumption_alternative_welfare_specifications = NULL,
     consumption_control_strategy_specifications = NULL,
-    consumption_control_parameterization_specifications = NULL) {
+    consumption_control_parameterization_specifications = NULL,
+    consumption_historical_adjustment_specifications = NULL) {
   public_specs <- as_iv_specifications(public_specifications)
   consumption_specs <- as_iv_specifications(consumption_specifications)
   control_registry <- resolve_census_2001_control_registry(control_registry)
@@ -610,6 +624,11 @@ build_iv_candidate_design_ledger <- function(
     0L
   } else {
     nrow(as_iv_specifications(consumption_control_parameterization_specifications))
+  }
+  n_consumption_historical_adjustment <- if (is.null(consumption_historical_adjustment_specifications)) {
+    0L
+  } else {
+    nrow(as_iv_specifications(consumption_historical_adjustment_specifications))
   }
   n_diagnostic_iv <- nrow(diagnostic_specs)
   n_scalar <- sum(canonical_specs$n_excluded_instruments == 1L)
@@ -954,22 +973,28 @@ build_iv_candidate_design_ledger <- function(
     candidate_design_row(
       "historical_1991_adjustment_robustness",
       "Prompt 1 §35; historical controls discussion",
-      "public_iv",
+      "consumption_iv",
       "candidate_robustness",
-      "Does the preferred outcome design survive adjustment with more remote predetermined 1991 socioeconomic structure?",
+      "Do consumption conclusions survive replacing compact 2001 adjustment with a more remote predetermined 1991 PCA baseline on the same production geography and sample?",
       "control_vintage",
-      "preferred real-consumption outcome",
+      "registered consumption endpoint designs",
       preferred_iv_variables()$treatment,
       "preferred Shastry nonzero-mean distance",
-      "region/state with separately registered 1991 predetermined sets",
-      "2sls_with_weak_iv_diagnostics",
-      "estimate_if_registered",
-      multiplicity_family = "historical_adjustment_robustness",
-      prerequisite = "harmonized 1991 controls on production analysis geography",
-      implementation_status = "unimplemented",
-      candidate_cells = 2L,
-      implemented_cells = 0L,
-      rationale = "A 1991 comparison is a temporally distinct exclusion/confounding robustness exercise, not merely another larger 2001 control vector."
+      "region/state crossed with compact-2001 benchmark and population-interpolated PCA91 controls at the frozen 99% source-coverage threshold",
+      "first_stage+reduced_form+2sls+anderson_rubin",
+      "estimate",
+      multiplicity_family = "consumption_historical_adjustment",
+      prerequisite = "G2 population-interpolated PCA91 controls on Census-2001 production geography",
+      implementation_status = "implemented",
+      candidate_cells = n_consumption * length(iv_historical_adjustment_comparison_adjustments(control_registry)),
+      implemented_cells = n_consumption_historical_adjustment,
+      execution_cells = n_consumption_historical_adjustment,
+      rationale = paste(
+        "The benchmark is re-estimated on the same four-design common sample as the 1991 adjustment,",
+        "so the comparison is not driven by support changes. PCA91 is more remote from 2007-08 EMI and",
+        "uses Census population, composition, literacy, and worker structure, but it is not a pure",
+        "same-variable vintage substitution because the available 1991 and compact-2001 concept sets differ."
+      )
     ),
     candidate_design_row(
       "shastry_geographic_access_controls",

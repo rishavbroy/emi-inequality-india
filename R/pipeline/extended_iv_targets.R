@@ -218,6 +218,62 @@ extended_iv_target_definitions <- function() {
       format = "file"
     ),
     tar_target(
+      consumption_historical_adjustment_panel,
+      attach_consumption_historical_adjustment_controls(
+        consumption_iv_panel, historical_baseline_g2_sensitivity, .99
+      )
+    ),
+    tar_target(
+      consumption_historical_adjustment_specifications,
+      compile_consumption_historical_adjustment_specifications(
+        consumption_iv_outcome_registry, census_2001_control_registry
+      )
+    ),
+    tar_target(
+      consumption_historical_adjustment_support,
+      consumption_iv_common_sample_support(
+        consumption_historical_adjustment_panel,
+        consumption_historical_adjustment_specifications,
+        "welfare_specification_id"
+      )
+    ),
+    tar_target(
+      consumption_historical_adjustment_common_panel,
+      restrict_consumption_iv_to_common_samples(
+        consumption_historical_adjustment_panel,
+        consumption_historical_adjustment_specifications,
+        "welfare_specification_id"
+      )
+    ),
+    tar_target(
+      consumption_historical_adjustment_robustness,
+      add_consumption_iv_family_multiplicity(
+        validate_consumption_iv_robustness_family(
+          validate_consumption_iv_dynamics(
+            estimate_consumption_iv_dynamics(
+              consumption_historical_adjustment_common_panel,
+              consumption_historical_adjustment_specifications,
+              cfg
+            ),
+            consumption_historical_adjustment_specifications
+          ),
+          consumption_historical_adjustment_support,
+          group_size = 4L,
+          family_label = "Consumption historical-adjustment robustness"
+        ),
+        "consumption_historical_adjustment"
+      )
+    ),
+    tar_target(
+      diag_ext_consumption_historical_adjustment_files,
+      save_consumption_iv_robustness_family(
+        consumption_historical_adjustment_robustness,
+        consumption_historical_adjustment_support,
+        "consumption_historical_adjustment_robustness"
+      ),
+      format = "file"
+    ),
+    tar_target(
       analysis_design_registry,
       compile_analysis_design_registry(
         consumption_iv_specifications,
@@ -227,7 +283,8 @@ extended_iv_target_definitions <- function() {
         consumption_scalar_iv_robustness_specifications,
         consumption_alternative_welfare_specifications,
         consumption_control_strategy_specifications,
-        consumption_control_parameterization_specifications
+        consumption_control_parameterization_specifications,
+        consumption_historical_adjustment_specifications
       )
     ),
     tar_target(
@@ -249,7 +306,8 @@ extended_iv_target_definitions <- function() {
         consumption_scalar_iv_robustness_specifications,
         consumption_alternative_welfare_specifications,
         consumption_control_strategy_specifications,
-        consumption_control_parameterization_specifications
+        consumption_control_parameterization_specifications,
+        consumption_historical_adjustment_specifications
       )
     ),
     tar_target(

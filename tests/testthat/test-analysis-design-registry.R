@@ -25,6 +25,9 @@ test_that("analysis-design ontology inventories registered families without Cart
   consumption_parameterization_specs <- compile_consumption_control_parameterization_specifications(
     consumption, controls
   )
+  consumption_historical_specs <- compile_consumption_historical_adjustment_specifications(
+    consumption, controls
+  )
   mechanism_measures <- read_english_opportunity_measure_registry(
     file.path(root, "data", "metadata", "english_opportunity_measures.csv")
   )
@@ -34,7 +37,8 @@ test_that("analysis-design ontology inventories registered families without Cart
     consumption_scalar_iv_robustness_specifications = consumption_scalar_specs,
     consumption_alternative_welfare_specifications = consumption_welfare_specs,
     consumption_control_strategy_specifications = consumption_control_specs,
-    consumption_control_parameterization_specifications = consumption_parameterization_specs
+    consumption_control_parameterization_specifications = consumption_parameterization_specs,
+    consumption_historical_adjustment_specifications = consumption_historical_specs
   )
 
   expect_identical(names(registry), analysis_design_columns())
@@ -71,7 +75,8 @@ test_that("analysis-design ontology inventories registered families without Cart
   expect_equal(
     sum(registry$family == "consumption_iv"),
     nrow(consumption_specs) + nrow(consumption_scalar_specs) + nrow(consumption_welfare_specs) +
-      nrow(consumption_control_specs) + nrow(consumption_parameterization_specs)
+      nrow(consumption_control_specs) + nrow(consumption_parameterization_specs) +
+      nrow(consumption_historical_specs)
   )
   expect_equal(
     sum(registry$family == "district_mechanism"),
@@ -126,6 +131,9 @@ test_that("analysis-design ontology preserves estimator and sample distinctions"
   consumption_parameterization <- compile_consumption_control_parameterization_specifications(
     consumption_registry, controls
   )
+  consumption_historical <- compile_consumption_historical_adjustment_specifications(
+    consumption_registry, controls
+  )
   mechanisms <- read_english_opportunity_measure_registry(
     file.path(root, "data", "metadata", "english_opportunity_measures.csv")
   )
@@ -134,7 +142,8 @@ test_that("analysis-design ontology preserves estimator and sample distinctions"
     consumption_scalar_iv_robustness_specifications = consumption_scalar,
     consumption_alternative_welfare_specifications = consumption_welfare,
     consumption_control_strategy_specifications = consumption_control,
-    consumption_control_parameterization_specifications = consumption_parameterization
+    consumption_control_parameterization_specifications = consumption_parameterization,
+    consumption_historical_adjustment_specifications = consumption_historical
   )
 
   consumption_rows <- registry[registry$family == "consumption_iv", , drop = FALSE]
@@ -143,7 +152,7 @@ test_that("analysis-design ontology preserves estimator and sample distinctions"
   preferred_consumption <- consumption_rows[
     !consumption_rows$analysis_role %in% c(
       "scalar_iv_robustness", "welfare_definition_robustness", "control_strategy_robustness",
-      "control_parameterization_robustness"
+      "control_parameterization_robustness", "historical_adjustment_robustness"
     ),
     , drop = FALSE
   ]
@@ -171,6 +180,14 @@ test_that("analysis-design ontology preserves estimator and sample distinctions"
   expect_true(all(parameterization_consumption$inference == "state_clustered+anderson_rubin+holm"))
   expect_true(all(
     parameterization_consumption$sample_rule == "consumption_control_parameterization_common_support"
+  ))
+  historical_consumption <- consumption_rows[
+    consumption_rows$analysis_role == "historical_adjustment_robustness", , drop = FALSE
+  ]
+  expect_equal(nrow(historical_consumption), nrow(consumption_historical))
+  expect_true(all(historical_consumption$inference == "state_clustered+anderson_rubin+holm"))
+  expect_true(all(
+    historical_consumption$sample_rule == "consumption_historical_adjustment_common_support"
   ))
   expect_true(all(welfare_consumption$inference == "state_clustered+anderson_rubin+holm"))
   expect_true(all(welfare_consumption$sample_rule == "consumption_welfare_iv_common_support"))
@@ -248,9 +265,13 @@ test_that("candidate-design ledger records bounded robustness choices without Ca
   consumption_parameterization <- compile_consumption_control_parameterization_specifications(
     consumption_registry, controls
   )
+  consumption_historical <- compile_consumption_historical_adjustment_specifications(
+    consumption_registry, controls
+  )
   ledger <- build_iv_candidate_design_ledger(
     public, consumption, controls, welfare, opportunity, consumption_scalar,
-    consumption_welfare, consumption_control, consumption_parameterization
+    consumption_welfare, consumption_control, consumption_parameterization,
+    consumption_historical
   )
 
   expect_identical(names(ledger), candidate_design_columns())
@@ -333,6 +354,23 @@ test_that("candidate-design ledger records bounded robustness choices without Ca
   expect_equal(
     control_parameterization$multiplicity_family,
     "consumption_control_parameterization"
+  )
+
+  historical_adjustment <- ledger[
+    ledger$candidate_id == "historical_1991_adjustment_robustness",
+    , drop = FALSE
+  ]
+  expect_equal(
+    historical_adjustment$candidate_cells,
+    nrow(consumption) * length(iv_historical_adjustment_comparison_adjustments(controls))
+  )
+  expect_equal(historical_adjustment$implementation_status, "implemented")
+  expect_equal(historical_adjustment$execution_policy, "estimate")
+  expect_equal(historical_adjustment$implemented_cells, nrow(consumption_historical))
+  expect_equal(historical_adjustment$execution_cells, nrow(consumption_historical))
+  expect_equal(
+    historical_adjustment$multiplicity_family,
+    "consumption_historical_adjustment"
   )
 
   parameterizations <- ledger[
