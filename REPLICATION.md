@@ -241,3 +241,8 @@ Extended diagnostics write compact cross-family mechanism summaries to `outputs/
 ### Specification-governance ledger
 
 The full extended audit writes `outputs/diagnostics/extended/iv/candidate_design_ledger.csv`. This is governance metadata, not a batch-estimation request. It follows the methodological reference plan in order and records, for each family, the scientific question, design axis, execution policy, multiplicity family, prerequisites, admissibility, and implementation status. The ledger is intentionally comprehensive-by-theory: broad first-stage relevance families are visible because attenuation across geography, controls, treatment definitions, distance bases, and vintages is itself evidence; causal robustness families are visible only where the estimand remains interpretable. Mechanically crossable but unjustified interactions remain explicit non-goals. Public headline IV models are generated from `public_iv_specification_registry()` and retain their historical model names so public tables and report values are unchanged.
+
+
+### Specification execution aliases
+
+The first-stage governance layer distinguishes scientific specification labels from unique model executions. Symmetric block interventions can duplicate older cumulative or leave-one-block-out formulas. The build therefore retains all named candidate questions, executes each formula/sample signature once, and writes `outputs/diagnostics/extended/instrument_relevance/first_stage_absorption_aliases.csv` so semantic aliases remain auditable. The candidate-design ledger records scientific candidate/implemented cells separately from unique execution cells.

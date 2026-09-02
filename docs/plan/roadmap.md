@@ -33,46 +33,20 @@ This file records the active research plan. Historical brainstorming and refacto
 - 2011 migration D02-D07, worker B-series, HH08/HH10/HH11, and housing/living-standard tables are harmonized through the shared Census count/geography architecture.
 - Housing includes the validated H04A-HL13 structural-durability pair. Durability changes remain descriptive and do not expand the frozen housing weak-IV outcome family.
 
+### Firm and labor mechanisms
+
+- Economic Census 2005/2013 firm dynamics are harmonized to Census-2001 geography and routed through the shared post-treatment mechanism inference layer. The causal family is frozen; EC05-only and thin descriptive measures do not expand it.
+- NSS64 labor/migration is frozen as a near-treatment reference. NSS66 is the completed `early_post` labor wave; PLFS 2017-18 is the completed `long_run_post` usual-status wave.
+- NSS66 and PLFS use canonical person ingestion, official survey design, denominator-specific support rules, reviewed lineage, a shared district estimator, and the common weak-IV/Anderson--Rubin mechanism layer. PLFS primary versus conservative geography is an explicit robustness comparison rather than a competing outcome family.
+- Detailed source, weighting, lineage, support, and outcome decisions live in `docs/ECONOMIC_CENSUS.md` and `docs/LABOR_MARKET.md`; this roadmap does not duplicate their completed implementation history.
+
 ## Remaining high-value work
 
-### 1. Firm dynamics / Economic Census
+### 1. Identification consolidation
 
-The required source families are now local under `data/raw/ec/` and `data/raw/shrug/`. Start from the existing `shrug_economic_census` registration and the documented SHRUG `ec05_pc01dist` district product; use the raw Fifth/Sixth Economic Census archives for source validation rather than duplicating a standard district aggregation without a methodological reason. Development Data Lab publishes the 2005 product directly on Census-2001 district identifiers with total non-farm employment, firms, hired employment, public/private/informal employment, manufacturing, services, and detailed industry groups.
+Do not try to repair a weak within-state first stage by adding many correlated controls. The immediate next empirical gate is to inspect the expanded, de-duplicated control-intervention first stages (block-only, leave-one-block-out, and declared parameterization substitutions) as relevance evidence; do not promote a control design because it raises F. Scientific aliases are retained separately from execution cells, so the 55 named absorption questions run through 49 unique first-stage models and the broader diagnostic universe contains 119 unique IV designs. Only after that diagnostic family is reviewed should the registered scalar-IV consumption robustness family be activated with its multiplicity rule frozen in advance.
 
-The EC05 source/measurement phase is now active: the documented SHRUG `ec05_pc01dist` product is read directly, validated against the canonical Census-2001 district registry, and reduced to a small core of firm/nonfarm counts and shares. Source gaps are retained explicitly rather than imputed, and no EC outcome has yet been added to the IV mechanism registry. See `docs/ECONOMIC_CENSUS.md`.
-
-The EC13 source/measurement phase is now active: the local SHRUG `ec13_pc11dist` product is validated on all 640 Census-2011 districts, its counts are pooled through the existing complete-parent Census-2011-to-2001 bridge, and common 2005-2013 log/count-composition changes are generated only after pooling. EC05 informal employment is excluded from the longitudinal family because EC13 does not publish a comparable district field.
-
-The EC05/EC13 causal mechanism family is now predeclared and routed through the shared post-treatment mechanism inference layer. The registered outcomes are log non-farm employment growth, log establishment growth, hired/private employment-share changes, services-share change, and a secondary manufacturing-share change. Female employment, mean firm size, and EC05-only informal employment remain descriptive rather than enlarging the inferential family. One Economic Census diagnostic object now owns both measurement and model outputs, avoiding parallel writer targets.
-
-Remaining implementation order:
-
-1. use the 2005 level only for a separately justified near-treatment structure/balance exercise; do not condition post-treatment firm mechanisms on 2013 structure;
-2. inspect EC90/EC98 only for a separately predeclared historical firm-pretrend exercise; do not allocate 1991 district totals across later splits or infer EC98 district totals without the documented key bridge and coverage accounting;
-3. after the EC model outputs have passed the full audit, move to NSS 2007-08 labor/migration rather than expanding the firm outcome family.
-
-Priority candidate measures are non-farm employment, establishment density, hired-employment share, private/informal employment, manufacturing employment, services employment, and a narrowly justified English-intensive services measure if the published industry mapping supports it.
-
-### 2. Labor-market outcomes
-
-The NSS 2007-08 source, geography, support, and first district-estimation phases are now active. The official Schedule 10.2 DDI, Block 4 usual-activity records, and Block 6 migration records are registered under `data/raw/nss/`, validated on one common person universe and matching cross-block design fields, and normalized with the published NSS survey-design fields and combined multiplier. Labor geography reuses the reviewed `nss_2007_08` lineage through the published `SSRDD` identity and accepts only deterministic reviewed mappings.
-
-The realized 587-target support distribution is now used to freeze, before outcome inspection, a preferred rule of at least 5 FSUs and Kish effective N at least 100. District estimation uses the standard NSS usual-status principal-plus-subsidiary concept and a five-outcome age-15+ registry covering labor-force participation, employment, unemployment, regular-salaried work, and migration from the last usual place of residence. Support is recomputed on each outcome denominator, while thin but estimable districts remain in diagnostics and are flagged rather than deleted. See `docs/LABOR_MARKET.md`.
-
-The realized NSS64 estimates are now treated as a registered near-treatment reference, not as predetermined balance evidence or a long-run causal mechanism: the survey field period overlaps the 2007-08 EMI measurement window. NSS66 is the early post-treatment labor wave. Its DDI and proprietary `.Nesstar` container are registered and validated; the generic metadata-driven standard-conversion boundary, F4/F5/F6 canonical adapter, same-round reviewed-lineage bridge, and shared NSS labor estimator are implemented. The materialized 459,784-person source passed the real canonical/source/lineage gate, with all posted weights positive and about 97.9 percent of persons resolving through the deterministic same-round lineage. All 584 district cells are estimable with finite SEs for each of the four usual-status outcomes. Under the unchanged predeclared 5-FSU/Kish-100 denominator-specific support rule, preferred coverage is 471 districts for LFPR/employment, 244 for unemployment, and 235 for regular-salaried share; the thinner denominators are retained rather than used to retune thresholds. NSS66 is therefore closed as the `early_post` wave. PLFS 2017-18 is the `long_run_post` source. Its official catalog contract is frozen in `data/metadata/plfs_labor_contracts.csv`: annual usual-status outcomes use the 433,339-person first-visit file containing Block 5 principal/subsidiary status and do not pool the 272,560-person revisit file, whose labor content is organized around current-weekly-status Block 6. The official DDI/XML and generic Nesstar materialization now feed a canonical first-visit adapter using the round-specific annual multiplier rule. Geography reuses the existing reviewed 2017-18 lineage architecture: the production `primary_source_crosswalk` resolves 614 of 655 observed PLFS source districts (about 94.85% of sampled persons), while the stricter deterministic conservative bridge resolves 446 (about 68.17%). The four shared long-run labor outcomes are activated under both variants with unchanged denominator-specific support rules; unrestricted population allocations remain excluded. Wage outcomes remain a separate weekly-status/earnings family.
-
-Use the same discipline as consumption:
-
-- canonical household/person ingestion;
-- official survey-design identifiers and weights;
-- explicit source geography;
-- support diagnostics before district inference;
-- no forced district estimate when public geography or effective sample size is inadequate;
-- common outcome registry and shared estimator where possible.
-
-### 3. Identification consolidation
-
-Do not try to repair a weak within-state first stage by adding many correlated controls. The cross-family post-treatment mechanism evidence ledger now synthesizes the registered Census migration/housing, Economic Census, NSS66, and PLFS weak-IV results into a common model-level grid plus family summary. It records first-stage strength, multiplicity-adjusted reduced-form and Anderson--Rubin signals, confidence-set boundedness, temporal role, and whether the run is a causal mechanism or geography robustness analysis. The final identification section should use that generated ledger to synthesize the evidence already generated:
+The cross-family post-treatment mechanism evidence ledger now synthesizes the registered Census migration/housing, Economic Census, NSS66, and PLFS weak-IV results into a common model-level grid plus family summary. It records first-stage strength, multiplicity-adjusted reduced-form and Anderson--Rubin signals, confidence-set boundedness, temporal role, and whether the run is a causal mechanism or geography robustness analysis. The final identification section should use that generated ledger to synthesize the evidence already generated:
 
 - relevance under the predeclared instrument constructions;
 - region versus state fixed-effects sensitivity;
@@ -85,7 +59,7 @@ Do not try to repair a weak within-state first stage by adding many correlated c
 
 Any new control must have a clear exclusion-threat rationale and predetermined timing. Post-treatment Census, firm, migration, or labor-market variables are mechanisms/outcomes, not preferred controls.
 
-### 4. Outcome-specification consolidation
+### 2. Outcome-specification consolidation
 
 Before final paper claims, choose a small registered causal outcome family. Historical and modern consumption rounds now make it possible to compare baseline-adjusted levels, changes, and dynamic specifications without selecting a specification after seeing significance. Use the comparability diagnostics to define which HCES/NSS contrasts are substantive versus survey-redesign sensitivity.
 
@@ -95,9 +69,9 @@ The candidate-design ledger is now organized around the methodological reference
 
 Comprehensiveness still does **not** imply universality. The ledger rejects the endpoint-by-full-diagnostic Cartesian product and the automatic crossing of every individually defensible robustness axis because representability is not a scientific rationale for an interaction. Post-treatment mechanisms remain inadmissible baseline controls. Expand an executable family only after its estimand, sample rule, and multiplicity family are registered—never because a coefficient in an adjacent design is attractive.
 
-### 5. Paper and reviewer-facing outputs
+### 3. Paper and reviewer-facing outputs
 
-Once the firm/labor phases and final outcome registry are fixed:
+With the firm and labor source/mechanism phases now fixed, once the final causal outcome/robustness registry is frozen:
 
 - rewrite the introduction around the outcomes the data can actually identify;
 - report first-stage and weak-IV limitations prominently;
@@ -114,10 +88,3 @@ Once the firm/labor phases and final outcome registry are fixed:
 - Do not expand a registered hypothesis family after inspecting results without labeling the expansion exploratory.
 - Do not add parallel estimators when the shared post-treatment mechanism or survey-design layers already represent the estimand.
 - Do not add raw-source adapters before the underlying files have been inspected.
-
-
-PLFS 2017-18 now has a real materialized F1 and canonical annual-weight/person adapter. The realized geography review shows that the existing reviewed `primary_source_crosswalk` is the correct production bridge: it resolves 614 of 655 PLFS source districts and about 94.85% of sampled persons, while the stricter deterministic `conservative_source_crosswalk` resolves 446 districts and about 68.17%. The primary bridge consists of deterministic mappings plus already-adjudicated accepted single-target upgrades; unrestricted population-allocation rows remain excluded.
-
-The shared four-outcome long-run labor estimator is active for both the preferred primary bridge and the conservative deterministic sensitivity under the unchanged denominator-specific support rule. The realized comparison closes the 2017-18 geography gate: primary produces 565 estimable targets versus 420 conservative; preferred coverage is 469 versus 341 for LFPR/employment, 257 versus 183 for unemployment, and 239 versus 171 for regular-salaried share. Across the 420 overlapping targets, only 15 cells per outcome change and correlations are about 0.987-0.997. The production bridge therefore gains substantial reviewed coverage without broadly shifting overlapping estimates. PLFS 2017-18 is frozen as the principal `long_run_post` usual-status wave. Add later PLFS waves only for a predeclared dynamics/robustness extension.
-
-The causal labor mechanism family is now frozen before IV-coefficient inspection to LFPR and employment only. Both share the age-15+ denominator and retain substantially deeper preferred support than unemployment or regular-salaried composition, which remain secondary district outcomes. NSS66 enters as the `early_post` wave, PLFS 2017-18 as `long_run_post`, and the PLFS conservative bridge as a geography robustness sample. All are routed through the shared post-treatment mechanism reduced-form/weak-IV/Anderson-Rubin layer rather than a labor-specific IV estimator; NSS64 remains excluded from causal mechanism inference because it overlaps treatment measurement.
