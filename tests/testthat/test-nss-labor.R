@@ -539,17 +539,18 @@ test_that("PLFS long-run registry reuses the shared usual-status estimands", {
   expect_false("migrant_from_last_upr_share_age15plus" %in% plfs$outcome_id)
 })
 
-test_that("PLFS source package validates the official DDI before materialization", {
+test_that("PLFS source package validates DDI and weighting documentation before materialization", {
   root <- tempfile("plfs1718-package-")
   dir.create(root)
   files <- file.path(root, c(
     "DDI-IND-CSO-PLFS-2017-18.Nesstar",
     "Data_LayoutPLFS (1).xlsx",
-    "DDI-IND-CSO-PLFS-2017-18.xml"
+    "DDI-IND-CSO-PLFS-2017-18.xml",
+    "README.doc"
   ))
   lapply(files, function(path) writeBin(charToRaw(basename(path)), path))
   source_rows <- data.frame(
-    file_id = c("plfs1718_nesstar", "plfs1718_layout", "plfs1718_ddi"),
+    file_id = c("plfs1718_nesstar", "plfs1718_layout", "plfs1718_ddi", "plfs1718_readme"),
     expected_size_bytes = file.info(files)$size,
     absolute_path = files,
     stringsAsFactors = FALSE
@@ -566,6 +567,7 @@ test_that("PLFS source package validates the official DDI before materialization
   )
   expect_identical(ready$status[[1L]], "ready_for_materialization")
   expect_identical(ready$ddi_file_id[[1L]], "plfs1718_ddi")
+  expect_identical(ready$readme_file_id[[1L]], "plfs1718_readme")
   expect_identical(ready$annual_usual_status_rows[[1L]], 433339)
 })
 
@@ -573,8 +575,10 @@ test_that("PLFS DDI requirements come from the registered analytical fields", {
   required <- plfs_2017_18_ddi_requirements()$F1
   contract <- plfs_2017_18_contract()
   declared <- unname(unlist(contract[c(
-    "multiplier_field", "state_field", "district_field", "nss_region_field",
-    "stratum_field", "sub_stratum_field", "sub_sample_field", "fsu_field",
+    "multiplier_field", "quarter_field", "visit_field", "sector_field",
+    "segment_field", "nss_count_field", "nsc_count_field", "annual_quarters_field",
+    "state_field", "district_field", "nss_region_field", "stratum_field",
+    "sub_stratum_field", "sub_sample_field", "fsu_field",
     "second_stage_stratum_field", "household_field", "person_field", "age_field",
     "principal_status_field", "subsidiary_status_field"
   )], use.names = FALSE))
@@ -597,4 +601,63 @@ test_that("PLFS layout contract anchors usual-status and design byte positions",
   expect_true(any(x$full_name == "Status Code" & x$start == 80L & x$end == 81L))
   expect_true(any(x$full_name == "Sub-sample wise Multiplier" & x$start == 309L & x$end == 318L))
   expect_true(any(x$full_name == "Person Serial No." & x$start == 38L & x$end == 39L))
+})
+
+
+test_that("PLFS annual weights follow the official combined-subsample and annual rule", {
+  out <- plfs_2017_18_annual_weight(
+    multiplier = c(40000, 40000, 30000),
+    nss = c(2, 2, 1), nsc = c(2, 4, 2), n_quarters = c(4, 4, 3)
+  )
+  expect_equal(out, c(100, 50, 50))
+  expect_error(plfs_2017_18_annual_weight(1, 1, 2, 0), "finite and positive")
+})
+
+test_that("PLFS canonical F1 adapter preserves person/design fields and annual weights", {
+  root <- tempfile("plfs-f1-")
+  dir.create(file.path(root, "data/interim/plfs_2017_18"), recursive = TRUE)
+  contract <- plfs_2017_18_contract()
+  contract$first_visit_person_rows <- 2L
+  raw <- data.frame(
+    MULT_per_fv = c("40000", "30000"), quarter_per_fv = c("Q1", "Q4"),
+    visit_per_fv = "V1", b1q3_per_fv = c("1", "2"), b1q13_per_fv = c("1", "2"),
+    NSS_per_fv = c("2", "1"), NSC_per_fv = c("4", "2"), No_qtr_per_fv = c("4", "3"),
+    state_per_fv = c("22", "22"), b1q4_per_fv = c("09", "10"),
+    nss_region_per_fv = c("222", "222"), b1q5_per_fv = c("01", "02"),
+    b1q6_per_fv = c("01", "02"), b1q11_per_fv = c("1", "2"),
+    fsu_per_fv = c("10001", "10002"), b1q14_per_fv = c("1", "2"),
+    b1q15_per_fv = c("01", "02"), b4q1_per_fv = c("01", "02"),
+    b4q6_per_fv = c("30", "40"), b5pt1q3_per_fv = c("81", "31"),
+    b5pt2q3_per_fv = c(NA, "11"), stringsAsFactors = FALSE
+  )
+  path <- file.path(root, "data/interim/plfs_2017_18/F1.csv")
+  utils::write.csv(raw, path, row.names = FALSE, na = "")
+  materialization <- list(
+    source_id = "plfs_2017_18", ready = TRUE,
+    blocks = data.frame(block_id = "F1", relative_path = "data/interim/plfs_2017_18/F1.csv")
+  )
+  out <- read_plfs_2017_18_materialized_persons(materialization, contract, root)
+  expect_equal(out$survey_weight, c(50, 50))
+  expect_equal(out$sub_round, c(1L, 4L))
+  expect_equal(out$state_code, c("22", "22"))
+  expect_equal(out$district_code, c("09", "10"))
+  expect_equal(out$usual_subsidiary_status, c(NA, 11))
+  expect_identical(anyDuplicated(out$person_key), 0L)
+})
+
+test_that("PLFS preferred lineage reuses only deterministic 2017-18 district mappings", {
+  persons <- data.frame(
+    person_key = c("a", "b", "c"), state_code = "22", district_code = c("09", "10", "11"),
+    nss_region = "222", sector = 1, fsu = 1:3, survey_weight = 1,
+    stringsAsFactors = FALSE
+  )
+  crosswalk <- data.frame(
+    wave = "nss_2017_18", source_code = c("22209", "22210", "22211"),
+    target_unit_2001 = c("a01", "a02", "a03"), weight = 1,
+    panel_variant = c("deterministic", "population_allocation", "deterministic"),
+    stringsAsFactors = FALSE
+  )
+  out <- attach_plfs_2017_18_reviewed_lineage(persons, crosswalk)
+  expect_equal(out$target_unit_2001, c("a01", NA, "a03"))
+  expect_equal(out$lineage_status[[2L]], "unresolved_source_district")
 })

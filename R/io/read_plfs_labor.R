@@ -11,8 +11,10 @@ read_plfs_labor_contracts <- function(path = "data/metadata/plfs_labor_contracts
     "first_visit_household_file", "first_visit_household_rows",
     "revisit_person_file", "revisit_person_rows",
     "revisit_household_file", "revisit_household_rows",
-    "annual_usual_status_source", "multiplier_field", "state_field",
-    "district_field", "nss_region_field", "stratum_field", "sub_stratum_field",
+    "annual_usual_status_source", "multiplier_field", "quarter_field", "visit_field",
+    "sector_field", "segment_field", "nss_count_field", "nsc_count_field",
+    "annual_quarters_field", "state_field", "district_field", "nss_region_field",
+    "stratum_field", "sub_stratum_field",
     "sub_sample_field", "fsu_field", "second_stage_stratum_field",
     "household_field", "person_field", "age_field", "principal_status_field",
     "subsidiary_status_field"
@@ -52,8 +54,10 @@ plfs_2017_18_contract <- function(path = "data/metadata/plfs_labor_contracts.csv
 
 plfs_2017_18_ddi_requirements <- function(contract = plfs_2017_18_contract()) {
   fields <- c(
-    "multiplier_field", "state_field", "district_field", "nss_region_field",
-    "stratum_field", "sub_stratum_field", "sub_sample_field", "fsu_field",
+    "multiplier_field", "quarter_field", "visit_field", "sector_field",
+    "segment_field", "nss_count_field", "nsc_count_field", "annual_quarters_field",
+    "state_field", "district_field", "nss_region_field", "stratum_field",
+    "sub_stratum_field", "sub_sample_field", "fsu_field",
     "second_stage_stratum_field", "household_field", "person_field", "age_field",
     "principal_status_field", "subsidiary_status_field"
   )
@@ -132,10 +136,10 @@ inspect_plfs_2017_18_source_package <- function(
   if (!all(required %in% names(rows))) {
     stop("PLFS 2017-18 source manifest lacks file, size, or path fields.", call. = FALSE)
   }
-  ids <- c("plfs1718_nesstar", "plfs1718_layout", "plfs1718_ddi")
+  ids <- c("plfs1718_nesstar", "plfs1718_layout", "plfs1718_ddi", "plfs1718_readme")
   rows <- rows[rows$file_id %in% ids, , drop = FALSE]
   if (!setequal(rows$file_id, ids) || nrow(rows) != length(ids)) {
-    stop("PLFS 2017-18 source manifest must declare one Nesstar, layout, and DDI file.", call. = FALSE)
+    stop("PLFS 2017-18 source manifest must declare one Nesstar, layout, DDI, and README file.", call. = FALSE)
   }
   rows$expected_size_bytes <- num(rows$expected_size_bytes)
   rows$size_bytes <- as.numeric(file.info(rows$absolute_path)$size)
@@ -156,8 +160,122 @@ inspect_plfs_2017_18_source_package <- function(
     layout_bytes = rows$size_bytes[rows$file_id == "plfs1718_layout"],
     ddi_file_id = "plfs1718_ddi",
     ddi_bytes = rows$size_bytes[rows$file_id == "plfs1718_ddi"],
+    readme_file_id = "plfs1718_readme",
+    readme_bytes = rows$size_bytes[rows$file_id == "plfs1718_readme"],
     ddi_file_name = ddi$file_name[[1L]],
     annual_usual_status_rows = ddi$case_count[[1L]],
     stringsAsFactors = FALSE
   )
+}
+
+
+plfs_2017_18_materialized_columns <- function(contract = plfs_2017_18_contract()) {
+  fields <- c(
+    "multiplier_field", "quarter_field", "visit_field", "sector_field",
+    "segment_field", "nss_count_field", "nsc_count_field", "annual_quarters_field",
+    "state_field", "district_field", "nss_region_field", "stratum_field",
+    "sub_stratum_field", "sub_sample_field", "fsu_field",
+    "second_stage_stratum_field", "household_field", "person_field", "age_field",
+    "principal_status_field", "subsidiary_status_field"
+  )
+  unique(unname(unlist(contract[fields], use.names = FALSE)))
+}
+
+plfs_2017_18_annual_weight <- function(multiplier, nss, nsc, n_quarters) {
+  multiplier <- num(multiplier)
+  nss <- num(nss)
+  nsc <- num(nsc)
+  n_quarters <- num(n_quarters)
+  valid <- is.finite(multiplier) & multiplier > 0 &
+    is.finite(nss) & nss > 0 & is.finite(nsc) & nsc > 0 &
+    is.finite(n_quarters) & n_quarters > 0
+  if (!all(valid)) stop("PLFS annual-weight inputs must be finite and positive.", call. = FALSE)
+  combined_divisor <- ifelse(nss == nsc, 100, 200)
+  multiplier / combined_divisor / n_quarters
+}
+
+read_plfs_2017_18_materialized_persons <- function(
+    materialization, contract = plfs_2017_18_contract(),
+    root = Sys.getenv("EMI_PROJECT_ROOT", unset = ".")) {
+  if (!isTRUE(materialization$ready) || !identical(materialization$source_id, "plfs_2017_18")) {
+    stop("PLFS 2017-18 F1 must be fully materialized before canonical ingestion.", call. = FALSE)
+  }
+  blocks <- safe_df(materialization$blocks)
+  row <- blocks[blocks$block_id == "F1", , drop = FALSE]
+  if (nrow(row) != 1L) stop("PLFS 2017-18 materialization must contain exactly one F1 block.", call. = FALSE)
+  path <- file.path(root, plain_chr(row$relative_path[[1L]]))
+  columns <- plfs_2017_18_materialized_columns(contract)
+  raw <- safe_df(data.table::fread(
+    path, select = columns, colClasses = "character",
+    na.strings = c("", "NA"), showProgress = FALSE
+  ))
+  missing <- setdiff(columns, names(raw))
+  if (length(missing)) stop("Materialized PLFS F1 is missing columns: ", paste(missing, collapse = ", "), call. = FALSE)
+  if (nrow(raw) != contract$first_visit_person_rows[[1L]]) {
+    stop("Materialized PLFS F1 row count differs from the registered source contract.", call. = FALSE)
+  }
+
+  value <- function(field) raw[[plain_chr(contract[[field]][[1L]])]]
+  quarter <- plain_chr(value("quarter_field"))
+  visit <- plain_chr(value("visit_field"))
+  state <- normalize_census_code(num(value("state_field")), 2L)
+  district <- normalize_census_code(num(value("district_field")), 2L)
+  region <- normalize_census_code(num(value("nss_region_field")), 3L)
+  if (!all(quarter %in% paste0("Q", 1:4)) || !all(visit %in% "V1")) {
+    stop("PLFS annual usual-status F1 must contain first visits from quarters Q1-Q4 only.", call. = FALSE)
+  }
+  if (anyNA(state) || anyNA(district) || anyNA(region) || any(substr(region, 1L, 2L) != state)) {
+    stop("PLFS F1 has internally inconsistent state, NSS-region, or district geography.", call. = FALSE)
+  }
+
+  segment <- num(value("segment_field"))
+  second_stage <- num(value("second_stage_stratum_field"))
+  household <- num(value("household_field"))
+  person <- num(value("person_field"))
+  fsu <- num(value("fsu_field"))
+  person_key <- paste(
+    quarter, visit, state, num(value("sector_field")), fsu, segment,
+    second_stage, household, person, sep = "__"
+  )
+  survey_weight <- plfs_2017_18_annual_weight(
+    value("multiplier_field"), value("nss_count_field"), value("nsc_count_field"),
+    value("annual_quarters_field")
+  )
+  out <- data.frame(
+    person_key = person_key,
+    state_code = state,
+    district_code = district,
+    sector = num(value("sector_field")),
+    sub_round = match(quarter, paste0("Q", 1:4)),
+    sub_sample = num(value("sub_sample_field")),
+    nss_region = region,
+    stratum = num(value("stratum_field")),
+    sub_stratum = normalize_census_code(num(value("sub_stratum_field")), 2L),
+    fsu = fsu,
+    second_stage_stratum = second_stage,
+    household_no = household,
+    person_no = person,
+    survey_weight = survey_weight,
+    age = num(value("age_field")),
+    usual_principal_status = num(value("principal_status_field")),
+    usual_subsidiary_status = num(value("subsidiary_status_field")),
+    stringsAsFactors = FALSE
+  )
+  design <- c(
+    "person_key", "state_code", "district_code", "sector", "sub_round", "sub_sample",
+    "nss_region", "stratum", "sub_stratum", "fsu", "second_stage_stratum",
+    "household_no", "person_no", "survey_weight", "age", "usual_principal_status"
+  )
+  if (any(!stats::complete.cases(out[design])) || anyDuplicated(out$person_key)) {
+    stop("PLFS F1 canonical person/design fields must be complete and unique.", call. = FALSE)
+  }
+  if (any(!is.finite(out$survey_weight) | out$survey_weight <= 0)) {
+    stop("PLFS annual survey weights must be finite and positive.", call. = FALSE)
+  }
+  employed <- nss_labor_employed_status_codes()
+  subsidiary <- out$usual_subsidiary_status
+  if (any(!is.na(subsidiary) & !(subsidiary %in% employed))) {
+    stop("PLFS F1 contains an unexpected non-employment subsidiary status code.", call. = FALSE)
+  }
+  out
 }
