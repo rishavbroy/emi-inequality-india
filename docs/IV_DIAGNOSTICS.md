@@ -156,7 +156,9 @@ Only two new cells are admissible: main Census-2001 controls plus the Hindi-belt
 
 ### Shastry child-population comparison
 
-The Shastry-comparison relevance diagnostics also register `log_child_population_5_19_2001`. It is constructed directly from Census-2001 C-14 as the log of the sum of the district populations in the 5-9, 10-14, and 15-19 five-year age bands. It is an appendix comparison control, not part of the preferred compact-2001 vector or the general absorption search. Two paired first stages add it to the main controls under no geographic FE and six-region FE on common support.
+The Shastry-comparison relevance diagnostics also register `log_child_population_5_19_2001`. It is constructed directly from Census-2001 C-14 as the log of the sum of the district populations in the 5-9, 10-14, and 15-19 five-year age bands. The attached official C-14 workbooks expose those exact district age bands, so no interpolation or proxy age window is used. It is an appendix comparison control, not part of the preferred compact-2001 vector or the general absorption search. Two paired first stages add it to the main controls under no geographic FE and six-region FE on common support.
+
+The realized 573-district comparison is essentially null as an explanation for first-stage attenuation. With no geographic FE, the excluded-instrument F changes from about 14.29 to 13.61; with six-region FE it changes from about 3.238 to 3.227. The child-population control therefore does not explain the weak conditional relevance and is not promoted into the preferred control vector. The Hindi-belt and child-population checks now share the generic `diagnose_shastry_control_first_stage.R` module rather than source-specific estimation code.
 
 ### Genuine EMI school supply
 
