@@ -69,7 +69,7 @@ treated as directly comparable to Census 2011 B-series categories; see
 
 ## Active source pipeline
 
-The active reader now uses the district-level SHRUG Census 2001 PCA archive together with official Census C-01, C-08, C-14, and H-09 state workbooks. State and district codes are padded and joined jointly; district numbers are never treated as nationally unique. C-08 attainment categories are summed before division by the age-7-plus population, C-14 age bands are summed before constructing the dependency ratio, and H-09 household counts are used before constructing electricity access. District area is computed from the accepted Census-2001 geometry.
+The active reader now uses the district-level SHRUG Census 2001 PCA archive together with official Census C-01, C-08, C-14, and H-09 state workbooks. State and district codes are padded and joined jointly; district numbers are never treated as nationally unique. C-08 attainment categories are summed before division by the age-7-plus population. C-14 must contain complete district coverage for every five-year band used by the registered 0-14, 5-19, 15-64, and 65-plus aggregates; the age-5-19 Shastry comparison is the exact sum of 5-9, 10-14, and 15-19. H-09 household counts are used before constructing electricity access. District area is computed from the accepted Census-2001 geometry.
 
 The public revised model remains unchanged while expanded controls are evaluated in
 extended diagnostics. The absorption ladder, VIF/GVIF results, state residual

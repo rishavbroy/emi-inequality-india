@@ -117,6 +117,31 @@ clean_census_c08_district <- function(x) {
   validate_census_district_rows(out, "Census C-08")
 }
 
+census_c14_age_groups <- function() {
+  list(
+    population_age_0_14 = c("0 4", "5 9", "10 14"),
+    population_age_5_19 = c("5 9", "10 14", "15 19"),
+    population_age_15_64 = c("15 19", "20 24", "25 29", "30 34", "35 39", "40 44", "45 49", "50 54", "55 59", "60 64"),
+    population_age_65_plus = c("65 69", "70 74", "75 79", "80")
+  )
+}
+
+validate_census_c14_age_coverage <- function(x, age, required_age_groups) {
+  keys <- census_2001_keys()
+  reference <- sort(do.call(paste, c(unique(x[keys]), sep = "__")))
+  for (age_group in required_age_groups) {
+    rows <- x[age == age_group, keys, drop = FALSE]
+    if (anyDuplicated(rows)) {
+      stop("Census C-14 contains duplicate district rows for age group `", age_group, "`.", call. = FALSE)
+    }
+    observed <- sort(do.call(paste, c(rows, sep = "__")))
+    if (!identical(observed, reference)) {
+      stop("Census C-14 lacks complete district coverage for age group `", age_group, "`.", call. = FALSE)
+    }
+  }
+  invisible(TRUE)
+}
+
 clean_census_c14_district <- function(x) {
   x <- validate_census_source_shape(x, 13L, "Census C-14")
   district <- pad_census_code(x[[3]], 2L) != "00" & pad_census_code(x[[4]], 8L) == "00000000"
@@ -127,12 +152,8 @@ clean_census_c14_district <- function(x) {
   x$district_code_2001 <- keys$district_code_2001
   x$.population <- num(x[[7]])
   x$.urban_population <- num(x[[13]])
-  groups <- list(
-    population_age_0_14 = c("0 4", "5 9", "10 14"),
-    population_age_5_19 = c("5 9", "10 14", "15 19"),
-    population_age_15_64 = c("15 19", "20 24", "25 29", "30 34", "35 39", "40 44", "45 49", "50 54", "55 59", "60 64"),
-    population_age_65_plus = c("65 69", "70 74", "75 79", "80")
-  )
+  groups <- census_c14_age_groups()
+  validate_census_c14_age_coverage(x, age, unique(c(unlist(groups, use.names = FALSE), "all ages")))
   pieces <- lapply(names(groups), function(nm) {
     z <- x[age %in% groups[[nm]], c("state_code_2001", "district_code_2001", ".population"), drop = FALSE]
     z <- aggregate_census_2001_counts(z, ".population", keys = c("state_code_2001", "district_code_2001"))

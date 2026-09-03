@@ -1585,18 +1585,48 @@ test_that("explicit control registries do not fall back to hidden filesystem rea
 
 
 test_that("Census C-14 constructs the Shastry age-5-19 population from exact five-year bands", {
-  rows <- data.frame(matrix(NA_character_, nrow = 5, ncol = 13), stringsAsFactors = FALSE)
+  age_groups <- c(
+    "All ages", "0-4", "5-9", "10-14", "15-19", "20-24", "25-29",
+    "30-34", "35-39", "40-44", "45-49", "50-54", "55-59", "60-64",
+    "65-69", "70-74", "75-79", "80+"
+  )
+  population <- c(1000, 90, 100, 120, 130, rep(40, 9), 30, 20, 10, 5)
+  rows <- data.frame(matrix(NA_character_, nrow = length(age_groups), ncol = 13), stringsAsFactors = FALSE)
   rows[[2]] <- "01"
   rows[[3]] <- "01"
   rows[[4]] <- "00000000"
-  rows[[6]] <- c("5-9", "10-14", "15-19", "0-4", "All ages")
-  rows[[7]] <- c("100", "120", "130", "90", "1000")
-  rows[[13]] <- c("40", "50", "60", "30", "400")
+  rows[[6]] <- age_groups
+  rows[[7]] <- as.character(population)
+  rows[[13]] <- as.character(round(population * 0.4))
+
   out <- clean_census_c14_district(rows)
+
   expect_equal(out$population_age_5_19, 350)
 })
 
+test_that("Census C-14 fails clearly when a required age band is absent", {
+  age_groups <- c(
+    "All ages", "0-4", "5-9", "10-14", "15-19", "20-24", "25-29",
+    "30-34", "35-39", "40-44", "45-49", "50-54", "55-59", "60-64",
+    "65-69", "70-74", "75-79"
+  )
+  rows <- data.frame(matrix(NA_character_, nrow = length(age_groups), ncol = 13), stringsAsFactors = FALSE)
+  rows[[2]] <- "01"
+  rows[[3]] <- "01"
+  rows[[4]] <- "00000000"
+  rows[[6]] <- age_groups
+  rows[[7]] <- "10"
+  rows[[13]] <- "4"
+
+  expect_error(
+    clean_census_c14_district(rows),
+    "lacks complete district coverage for age group `80`",
+    fixed = TRUE
+  )
+})
+
 test_that("child population 5-19 is an appendix Shastry comparison control", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
   registry <- read_census_2001_control_registry(
     file.path(root, "data", "metadata", "census_2001_control_registry.csv")
   )
