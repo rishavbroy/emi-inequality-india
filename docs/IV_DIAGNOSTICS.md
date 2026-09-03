@@ -152,3 +152,12 @@ The intensive-margin family uses exactly the same six scalar IV designs as the f
 The last predeclared executable relevance diagnostic adds Shastry's state-level `Hindi Belt` control to the preferred nonzero-mean linguistic-distance first stage. The definition is frozen to the states named by Shastry (2012): Bihar, Uttar Pradesh/Uttaranchal, Madhya Pradesh/Chhattisgarh, Haryana, Punjab, Rajasthan, Himachal Pradesh, Jharkhand, Chandigarh, and Delhi. The implementation stores that definition on Census-2001 state codes, so later state renamings cannot change the historical specification.
 
 Only two new cells are admissible: main Census-2001 controls plus the Hindi-belt indicator with (i) no geographic fixed effects and (ii) six-region fixed effects. They are estimated on one common support and reported against otherwise identical baselines without the indicator. State fixed effects are deliberately not estimated because any state-level Hindi-belt indicator is exactly absorbed by state FE. The diagnostic is a relevance/omitted-institutional-environment check, not a new preferred first stage and not a multiplicity family for causal outcome selection. District Hindi/Urdu composition remains conceptually distinct from the independently defined state-level Hindi-belt indicator.
+
+
+### Shastry child-population comparison
+
+The Shastry-comparison relevance diagnostics also register `log_child_population_5_19_2001`. It is constructed directly from Census-2001 C-14 as the log of the sum of the district populations in the 5-9, 10-14, and 15-19 five-year age bands. It is an appendix comparison control, not part of the preferred compact-2001 vector or the general absorption search. Two paired first stages add it to the main controls under no geographic FE and six-region FE on common support.
+
+### Genuine EMI school supply
+
+The archived DISE district-report-card files do **not** identify the number of schools offering English-medium instruction. Their medium block reports enrollment by medium, and the DISE documentation warns that medium enrollment is incomplete and applies only to schools that reported the item. Consequently `dise_emi_enrollment_share` remains an administrative-equilibrium measure rather than a school-supply measure. A genuine school-supply share is retained in the candidate ledger as data-dependent future work and must not be approximated by enrollment shares.

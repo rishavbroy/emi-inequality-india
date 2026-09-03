@@ -13,6 +13,12 @@ test_that("DISE metadata registries are unique and baseline reports decode order
   key <- with(crosswalk, paste(academic_year, state_report, district_report, medium_slot, sep = "|"))
   expect_equal(anyDuplicated(key), 0L)
 
+  baseline_0708 <- registry[registry$academic_year == "2007-08", , drop = FALSE]
+  expect_identical(
+    baseline_0708$known_issue,
+    "medium_enrollment_is_child_count_not_school_supply_and_underreported"
+  )
+
   kupwara <- crosswalk[
     crosswalk$academic_year == "2005-06" &
       grepl("KUPWARA", crosswalk$district_report, fixed = TRUE),
