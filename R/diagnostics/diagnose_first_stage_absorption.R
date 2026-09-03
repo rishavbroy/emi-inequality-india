@@ -278,9 +278,14 @@ estimate_first_stage_absorption_spec <- function(
   estimability <- first_stage_estimability(
     fit, instrument, inference, residuals, data[[instrument]], data[[treatment]]
   )
+  specification_label <- if ("label" %in% names(specification)) {
+    plain_chr(specification$label)
+  } else {
+    plain_chr(specification$adjustment)
+  }
   summary <- data.frame(
     specification_id = specification$specification_id,
-    specification = specification$label,
+    specification = specification_label,
     sequence = specification$sequence,
     treatment = treatment,
     instrument = instrument,

@@ -3276,3 +3276,67 @@ test_that("consumption robustness evidence summarizes realized families without 
   expect_identical(out$family_summary$n_ar_family_signals, 1L)
   expect_identical(out$family_summary$n_grid_truncated_ar_sets, 1L)
 })
+
+test_that("Shastry Hindi-belt definition is frozen on Census-2001 state codes", {
+  definition <- shastry_hindi_belt_state_definition()
+  expect_identical(
+    definition$state_code_2001,
+    c("02", "03", "04", "05", "06", "07", "08", "09", "10", "20", "22", "23")
+  )
+  expect_setequal(
+    definition$state_name_2001,
+    c(
+      "Himachal Pradesh", "Punjab", "Chandigarh", "Uttaranchal", "Haryana",
+      "Delhi", "Rajasthan", "Uttar Pradesh", "Bihar", "Jharkhand",
+      "Chhattisgarh", "Madhya Pradesh"
+    )
+  )
+})
+
+test_that("Hindi-belt first-stage registry is exactly the two non-state designs", {
+  specs <- iv_hindi_belt_first_stage_specifications()
+  expect_equal(nrow(specs), 2L)
+  expect_equal(anyDuplicated(specs$specification_id), 0L)
+  expect_identical(plain_chr(specs$fixed_effect), c("none", "region"))
+  expect_true(all(specs$treatment == preferred_iv_variables()$treatment))
+  expect_true(all(vapply(
+    specs$excluded_instruments,
+    function(x) identical(unname(unlist(x, use.names = FALSE)), "ling_distance_nonzero_mean"),
+    logical(1)
+  )))
+  expect_true(all(vapply(
+    specs$controls,
+    function(x) shastry_hindi_belt_variable() %in% unlist(x, use.names = FALSE),
+    logical(1)
+  )))
+  expect_false(any(specs$fixed_effect == "state"))
+  expect_true(all(specs$sample_rule == "hindi_belt_first_stage_common_support"))
+})
+
+test_that("Hindi-belt first-stage comparison changes only the registered state-level control", {
+  set.seed(903)
+  state_region <- data.frame(
+    state_code_2001 = c("01", "02", "18", "23", "19", "24", "28"),
+    region = c("Northern", "Northern", "North Eastern", "Central", "Eastern", "Western", "Southern"),
+    stringsAsFactors = FALSE
+  )
+  panel <- state_region[rep(seq_len(nrow(state_region)), each = 8L), , drop = FALSE]
+  panel$district_code_2001 <- sprintf("%03d", seq_len(nrow(panel)))
+  panel$region <- factor(panel$region, levels = panel_region_levels())
+  panel$ling_distance_nonzero_mean <- stats::rnorm(nrow(panel))
+  belt <- as.integer(panel$state_code_2001 %in% shastry_hindi_belt_state_codes())
+  panel$emi_exposure_all_children_0708 <-
+    10 + 2 * panel$ling_distance_nonzero_mean + 3 * belt + stats::rnorm(nrow(panel), sd = 0.5)
+  for (variable in census_2001_main_controls()) panel[[variable]] <- stats::rnorm(nrow(panel))
+
+  out <- diagnose_hindi_belt_first_stage(panel)
+
+  expect_s3_class(out, "emi_hindi_belt_first_stage")
+  expect_equal(nrow(out$summary), 2L)
+  expect_identical(out$summary$fixed_effect, c("none", "region"))
+  expect_true(all(out$summary$n == nrow(panel)))
+  expect_true(all(out$summary$status == "estimated"))
+  expect_true(all(is.finite(out$summary$estimate_change)))
+  expect_identical(out$common_support$n_hindi_belt, 16L)
+  expect_identical(out$common_support$n_non_hindi_belt, nrow(panel) - 16L)
+})
