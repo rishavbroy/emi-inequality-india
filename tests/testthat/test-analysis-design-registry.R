@@ -53,7 +53,7 @@ test_that("analysis-design ontology inventories registered families without Cart
   expect_setequal(
     unique(registry$family),
     c(
-      "public_iv", "district_iv_diagnostic", "consumption_iv", "district_mechanism",
+      "public_iv", "district_iv_diagnostic", "hindi_belt_first_stage", "consumption_iv", "district_mechanism",
       "c17_mechanism", "dise_first_stage", "dise_weak_iv",
       "census_migration_mechanism", "census_housing_mechanism",
       "economic_census_mechanism", "labor_mechanism",
@@ -76,6 +76,14 @@ test_that("analysis-design ontology inventories registered families without Cart
     sum(registry$family == "district_iv_diagnostic"),
     nrow(iv_diagnostic_specification_registry(control_registry = controls))
   )
+  expect_equal(
+    sum(registry$family == "hindi_belt_first_stage"),
+    nrow(iv_hindi_belt_first_stage_specifications(control_registry = controls))
+  )
+  hindi <- registry[registry$family == "hindi_belt_first_stage", , drop = FALSE]
+  expect_identical(hindi$fixed_effect, c("none", "region"))
+  expect_true(all(hindi$analysis_role == "regional_institutional_robustness"))
+  expect_false(any(hindi$fixed_effect == "state"))
   expect_equal(
     sum(registry$family == "consumption_iv"),
     nrow(consumption_specs) + nrow(consumption_scalar_specs) + nrow(consumption_treatment_specs) +
@@ -349,6 +357,15 @@ test_that("candidate-design ledger records bounded robustness choices without Ca
   expect_equal(welfare_row$implementation_status, "implemented")
   expect_equal(welfare_row$execution_policy, "estimate")
   expect_equal(welfare_row$multiplicity_family, "consumption_welfare_robustness")
+
+  hindi_belt <- ledger[
+    ledger$candidate_id == "shastry_hindi_belt_region_comparison", , drop = FALSE
+  ]
+  expect_equal(hindi_belt$candidate_cells, 2L)
+  expect_equal(hindi_belt$implemented_cells, 2L)
+  expect_equal(hindi_belt$execution_cells, 2L)
+  expect_equal(hindi_belt$implementation_status, "implemented")
+  expect_equal(hindi_belt$execution_policy, "estimate")
 
   treatment <- ledger[ledger$candidate_id == "emi_intensive_margin_robustness", , drop = FALSE]
   expect_equal(treatment$candidate_cells, nrow(consumption) * 6L)

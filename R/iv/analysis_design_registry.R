@@ -213,6 +213,18 @@ analysis_design_dise <- function(
   safe_bind_rows(list(first_stage, weak_iv))
 }
 
+analysis_design_hindi_belt_first_stage <- function(control_registry = NULL) {
+  analysis_design_from_iv(
+    iv_hindi_belt_first_stage_specifications(control_registry = control_registry),
+    family = "hindi_belt_first_stage",
+    estimator = "first_stage_comparison",
+    estimand = "first_stage_relevance",
+    inference = "state_clustered",
+    analysis_role = "regional_institutional_robustness",
+    reason = "registered_shastry_hindi_belt_comparison"
+  )
+}
+
 analysis_design_census_mechanisms <- function(control_registry = NULL) {
   families <- list(
     migration = list(
@@ -477,6 +489,7 @@ compile_analysis_design_registry <- function(
   out <- safe_bind_rows(list(
     analysis_design_public_iv(public_iv_specifications),
     core_iv,
+    analysis_design_hindi_belt_first_stage(control_registry),
     consumption,
     consumption_scalar,
     consumption_treatment,
@@ -674,6 +687,9 @@ build_iv_candidate_design_ledger <- function(
   n_absorption_candidates <- length(iv_absorption_adjustments(control_registry))
   n_absorption_executions <- nrow(
     iv_absorption_specification_registry(control_registry = control_registry)
+  )
+  n_hindi_belt <- nrow(
+    iv_hindi_belt_first_stage_specifications(control_registry = control_registry)
   )
   n_block_interventions <- length(iv_block_intervention_adjustments(control_registry))
   n_control_strategies <- length(iv_causal_control_strategy_adjustments(control_registry))
@@ -1094,12 +1110,17 @@ build_iv_candidate_design_ledger <- function(
       "preferred Shastry nonzero-mean distance",
       "region/no-state designs + Hindi-belt indicator",
       "first_stage",
-      "estimate_if_registered",
-      prerequisite = "frozen Hindi-belt state definition",
-      implementation_status = "unimplemented",
+      "estimate",
+      prerequisite = "Shastry's published Hindi-belt state definition frozen on Census-2001 state codes",
+      implementation_status = if (n_hindi_belt == 2L) "implemented" else "partial",
       candidate_cells = 2L,
-      implemented_cells = 0L,
-      rationale = "The indicator is potentially informative only without state FE, where it is not absorbed; Hindi/Urdu speaker shares remain the more granular language-composition controls."
+      implemented_cells = n_hindi_belt,
+      execution_cells = n_hindi_belt,
+      rationale = paste(
+        "Shastry defines this institutional control independently of district Hindi-speaker share.",
+        "The diagnostic adds that state-level indicator to the main-control first stage with no FE and",
+        "six-region FE on one common support; state FE are excluded because they absorb the indicator."
+      )
     ),
     candidate_design_row(
       "shastry_1987_wage_controls",

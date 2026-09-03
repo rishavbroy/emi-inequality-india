@@ -298,6 +298,61 @@ iv_candidate_design_constructions <- function() {
   )
 }
 
+# Shastry (2012, p. 299 in the published article; p. 17 in the
+# circulated NBER draft) defines the Hindi belt for this robustness control as
+# Bihar, Uttar Pradesh/Uttaranchal, Madhya Pradesh/Chhattisgarh, Haryana,
+# Punjab, Rajasthan, Himachal Pradesh, Jharkhand, Chandigarh, and Delhi.
+# Freeze the definition on Census-2001 state codes so later renamings do not
+# change the historical specification.
+shastry_hindi_belt_state_codes <- function() {
+  c("02", "03", "04", "05", "06", "07", "08", "09", "10", "20", "22", "23")
+}
+
+shastry_hindi_belt_variable <- function() "shastry_hindi_belt"
+
+iv_hindi_belt_first_stage_specifications <- function(
+    treatment = preferred_iv_variables()$treatment,
+    control_registry = NULL) {
+  control_registry <- resolve_census_2001_control_registry(control_registry)
+  construction <- iv_instrument_constructions()$nonzero_mean
+  main <- census_2001_main_controls(control_registry)
+  belt <- shastry_hindi_belt_variable()
+  adjustments <- list(
+    main_hindi_belt = iv_adjustment(
+      "Main Census controls + Shastry Hindi-belt indicator",
+      "none", c(main, belt)
+    ),
+    region_main_hindi_belt = iv_adjustment(
+      "Six-region FE + main Census controls + Shastry Hindi-belt indicator",
+      "region", c(main, belt)
+    )
+  )
+  rows <- lapply(seq_along(adjustments), function(i) {
+    id <- names(adjustments)[[i]]
+    adjustment <- adjustments[[i]]
+    iv_specification_row(
+      specification_id = paste0("hindi_belt__", id),
+      adjustment_id = id,
+      adjustment = adjustment$label,
+      construction_id = "nonzero_mean",
+      construction = construction$label,
+      outcome = treatment,
+      treatment = treatment,
+      fixed_effect = adjustment$fixed_effect,
+      controls = adjustment$controls,
+      included_language_controls = construction$included,
+      excluded_instruments = construction$excluded,
+      mapping_coverage_variable = construction$coverage,
+      panel_variant = "primary",
+      sample_rule = "hindi_belt_first_stage_common_support",
+      tier = "B",
+      sequence = i,
+      control_registry = control_registry
+    )
+  })
+  bind_iv_specification_rows(rows)
+}
+
 iv_adjustment_sets <- function(control_registry = NULL) {
   control_registry <- resolve_census_2001_control_registry(control_registry)
   list(
