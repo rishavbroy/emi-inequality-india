@@ -149,8 +149,8 @@ build_census_2001_controls <- function(district_totals) {
     census_2001_keys(), "population_total", "population_urban",
     "population_age_7_plus", "adult_secondary_plus", "literate_population", "sc_population",
     "st_population", "religion_population_total", "muslim_population", "workers_total", "cultivators",
-    "agricultural_labourers", "population_age_0_14", "population_age_15_64",
-    "population_age_65_plus", "households_total", "households_electricity",
+    "agricultural_labourers", "population_age_0_14", "population_age_5_19",
+    "population_age_15_64", "population_age_65_plus", "households_total", "households_electricity",
     "area_sq_km"
   )
   missing <- setdiff(required, names(x))
@@ -163,6 +163,10 @@ build_census_2001_controls <- function(district_totals) {
     stringsAsFactors = FALSE
   )
   out$log_population_2001 <- log(num(x$population_total))
+  child_population <- num(x$population_age_5_19)
+  out$log_child_population_5_19_2001 <- ifelse(
+    positive_finite(child_population), log(child_population), NA_real_
+  )
   out$urban_share_2001 <- safe_share(x$population_urban, x$population_total)
   out$adult_secondary_plus_share_2001 <- safe_share(x$adult_secondary_plus, x$population_age_7_plus)
   out$sc_share_2001 <- safe_share(x$sc_population, x$population_total)

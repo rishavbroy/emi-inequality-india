@@ -40,6 +40,7 @@ test_that("Census control ratios are built from totals", {
     cultivators = 100,
     agricultural_labourers = 100,
     population_age_0_14 = 300,
+    population_age_5_19 = 350,
     population_age_15_64 = 600,
     population_age_65_plus = 100,
     households_total = 200,
@@ -47,6 +48,7 @@ test_that("Census control ratios are built from totals", {
     area_sq_km = 10
   )
   out <- build_census_2001_controls(x)
+  expect_equal(out$log_child_population_5_19_2001, log(350))
   expect_equal(out$urban_share_2001, 20)
   expect_equal(out$adult_secondary_plus_share_2001, 20)
   expect_equal(out$muslim_share_2001, 15)
@@ -69,7 +71,7 @@ test_that("religion shares use the matching C-01 universe", {
     sc_population = 50, st_population = 20,
     religion_population_total = 1000, muslim_population = 990,
     workers_total = 400, cultivators = 100, agricultural_labourers = 100,
-    population_age_0_14 = 300, population_age_15_64 = 600,
+    population_age_0_14 = 300, population_age_5_19 = 350, population_age_15_64 = 600,
     population_age_65_plus = 100, households_total = 200,
     households_electricity = 120, area_sq_km = 10
   )
@@ -86,7 +88,7 @@ test_that("bounded Census shares cannot exceed their universes", {
     sc_population = 50, st_population = 20,
     religion_population_total = 900, muslim_population = 950,
     workers_total = 400, cultivators = 100, agricultural_labourers = 100,
-    population_age_0_14 = 300, population_age_15_64 = 600,
+    population_age_0_14 = 300, population_age_5_19 = 350, population_age_15_64 = 600,
     population_age_65_plus = 100, households_total = 200,
     households_electricity = 120, area_sq_km = 10
   )
@@ -1132,7 +1134,8 @@ test_that("Census controls attach without changing panel rows", {
     sc_population = c(5, 10), st_population = c(2, 4),
     religion_population_total = c(100, 200), muslim_population = c(8, 20),
     workers_total = c(40, 80), cultivators = c(10, 20), agricultural_labourers = c(5, 10),
-    population_age_0_14 = c(30, 60), population_age_15_64 = c(60, 120),
+    population_age_0_14 = c(30, 60), population_age_5_19 = c(35, 70),
+    population_age_15_64 = c(60, 120),
     population_age_65_plus = c(10, 20), households_total = c(20, 40),
     households_electricity = c(15, 30), area_sq_km = c(10, 20)
   )
@@ -1156,7 +1159,8 @@ test_that("Census controls preserve sf geometry and CRS", {
     sc_population = c(5, 10), st_population = c(2, 4),
     religion_population_total = c(100, 200), muslim_population = c(8, 20),
     workers_total = c(40, 80), cultivators = c(10, 20), agricultural_labourers = c(5, 10),
-    population_age_0_14 = c(30, 60), population_age_15_64 = c(60, 120),
+    population_age_0_14 = c(30, 60), population_age_5_19 = c(35, 70),
+    population_age_15_64 = c(60, 120),
     population_age_65_plus = c(10, 20), households_total = c(20, 40),
     households_electricity = c(15, 30), area_sq_km = c(10, 20)
   )
@@ -1577,4 +1581,29 @@ test_that("explicit control registries do not fall back to hidden filesystem rea
   expect_silent(census_migration_first_stage_specifications(control_registry = registry))
   expect_silent(census_migration_mechanism_specifications(control_registry = registry))
   expect_silent(census_housing_mechanism_specifications(control_registry = registry))
+})
+
+
+test_that("Census C-14 constructs the Shastry age-5-19 population from exact five-year bands", {
+  rows <- data.frame(matrix(NA_character_, nrow = 5, ncol = 13), stringsAsFactors = FALSE)
+  rows[[2]] <- "01"
+  rows[[3]] <- "01"
+  rows[[4]] <- "00000000"
+  rows[[6]] <- c("5-9", "10-14", "15-19", "0-4", "All ages")
+  rows[[7]] <- c("100", "120", "130", "90", "1000")
+  rows[[13]] <- c("40", "50", "60", "30", "400")
+  out <- clean_census_c14_district(rows)
+  expect_equal(out$population_age_5_19, 350)
+})
+
+test_that("child population 5-19 is an appendix Shastry comparison control", {
+  registry <- read_census_2001_control_registry(
+    file.path(root, "data", "metadata", "census_2001_control_registry.csv")
+  )
+  row <- registry[registry$variable == "log_child_population_5_19_2001", , drop = FALSE]
+  expect_equal(nrow(row), 1L)
+  expect_false(row$main_paper)
+  expect_false(row$absorption_control)
+  expect_true(row$appendix_control)
+  expect_identical(row$source, "Census 2001 C-14")
 })

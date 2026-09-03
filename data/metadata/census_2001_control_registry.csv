@@ -18,3 +18,4 @@ banking_access_share_2001,Banking access share,Households reporting banking acce
 television_ownership_share_2001,Television ownership share,Households owning a television as a percentage of households,household_assets,7,appendix_context,,Census 2001 H-13,total households,False,False,True,17
 telephone_ownership_share_2001,Telephone ownership share,Households owning a telephone as a percentage of households,household_assets,7,appendix_context,,Census 2001 H-13,total households,False,False,True,18
 primary_schools_per_1000_children_2001,"Primary schools per 1,000 children","Primary schools per 1,000 children age 5-14",historical_school_supply,8,appendix_context,,SHRUG Village and Town Directories,population age 5-14,False,False,True,19
+log_child_population_5_19_2001,"Log child population, age 5-19","Natural log of Census 2001 district population age 5-19",basic_scale_geography,1,appendix_context,log_population_2001,Census 2001 C-14,none,False,False,True,20

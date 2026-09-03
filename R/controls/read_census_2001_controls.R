@@ -129,6 +129,7 @@ clean_census_c14_district <- function(x) {
   x$.urban_population <- num(x[[13]])
   groups <- list(
     population_age_0_14 = c("0 4", "5 9", "10 14"),
+    population_age_5_19 = c("5 9", "10 14", "15 19"),
     population_age_15_64 = c("15 19", "20 24", "25 29", "30 34", "35 39", "40 44", "45 49", "50 54", "55 59", "60 64"),
     population_age_65_plus = c("65 69", "70 74", "75 79", "80")
   )
