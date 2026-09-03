@@ -53,7 +53,8 @@ test_that("analysis-design ontology inventories registered families without Cart
   expect_setequal(
     unique(registry$family),
     c(
-      "public_iv", "district_iv_diagnostic", "hindi_belt_first_stage", "consumption_iv", "district_mechanism",
+      "public_iv", "district_iv_diagnostic", "hindi_belt_first_stage", "child_population_first_stage",
+      "consumption_iv", "district_mechanism",
       "c17_mechanism", "dise_first_stage", "dise_weak_iv",
       "census_migration_mechanism", "census_housing_mechanism",
       "economic_census_mechanism", "labor_mechanism",

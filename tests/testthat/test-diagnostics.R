@@ -3343,6 +3343,7 @@ test_that("Hindi-belt first-stage comparison changes only the registered state-l
 
 
 test_that("Shastry child-population diagnostic registers two paired comparison cells", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
   controls <- read_census_2001_control_registry(
     file.path(root, "data", "metadata", "census_2001_control_registry.csv")
   )
