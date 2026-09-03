@@ -1114,6 +1114,11 @@ test_that("extended IV artifacts are reachable from the diag_ext audit selector"
     "tar_target(\n      diag_ext_hindi_belt_first_stage,",
     fixed = TRUE
   )
+  expect_match(
+    lineage_targets,
+    "tar_target(\n      diag_ext_child_population_first_stage,",
+    fixed = TRUE
+  )
   historical_targets <- paste(
     readLines(repo_file("R", "pipeline", "extended_historical_targets.R"), warn = FALSE),
     collapse = "\n"

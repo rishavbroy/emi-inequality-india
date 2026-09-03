@@ -3340,3 +3340,17 @@ test_that("Hindi-belt first-stage comparison changes only the registered state-l
   expect_identical(out$common_support$n_hindi_belt, 16L)
   expect_identical(out$common_support$n_non_hindi_belt, nrow(panel) - 16L)
 })
+
+
+test_that("Shastry child-population diagnostic registers two paired comparison cells", {
+  controls <- read_census_2001_control_registry(
+    file.path(root, "data", "metadata", "census_2001_control_registry.csv")
+  )
+  specs <- iv_child_population_first_stage_specifications(control_registry = controls)
+  expect_equal(nrow(specs), 2L)
+  expect_setequal(specs$fixed_effect, c("none", "region"))
+  expect_true(all(vapply(
+    specs$controls, function(x) shastry_child_population_variable() %in% x, logical(1)
+  )))
+  expect_true(all(specs$sample_rule == "child_population_first_stage_common_support"))
+})

@@ -309,30 +309,34 @@ shastry_hindi_belt_state_codes <- function() {
 }
 
 shastry_hindi_belt_variable <- function() "shastry_hindi_belt"
+shastry_child_population_variable <- function() "log_child_population_5_19_2001"
 
-iv_hindi_belt_first_stage_specifications <- function(
+iv_shastry_added_control_first_stage_specifications <- function(
+    added_control,
+    added_control_label,
+    specification_prefix,
+    sample_rule,
     treatment = preferred_iv_variables()$treatment,
     control_registry = NULL) {
   control_registry <- resolve_census_2001_control_registry(control_registry)
   construction <- iv_instrument_constructions()$nonzero_mean
   main <- census_2001_main_controls(control_registry)
-  belt <- shastry_hindi_belt_variable()
   adjustments <- list(
-    main_hindi_belt = iv_adjustment(
-      "Main Census controls + Shastry Hindi-belt indicator",
-      "none", c(main, belt)
+    main = iv_adjustment(
+      paste0("Main Census controls + ", added_control_label),
+      "none", c(main, added_control)
     ),
-    region_main_hindi_belt = iv_adjustment(
-      "Six-region FE + main Census controls + Shastry Hindi-belt indicator",
-      "region", c(main, belt)
+    region_main = iv_adjustment(
+      paste0("Six-region FE + main Census controls + ", added_control_label),
+      "region", c(main, added_control)
     )
   )
   rows <- lapply(seq_along(adjustments), function(i) {
     id <- names(adjustments)[[i]]
     adjustment <- adjustments[[i]]
     iv_specification_row(
-      specification_id = paste0("hindi_belt__", id),
-      adjustment_id = id,
+      specification_id = paste0(specification_prefix, "__", id),
+      adjustment_id = paste0(specification_prefix, "__", id),
       adjustment = adjustment$label,
       construction_id = "nonzero_mean",
       construction = construction$label,
@@ -344,13 +348,39 @@ iv_hindi_belt_first_stage_specifications <- function(
       excluded_instruments = construction$excluded,
       mapping_coverage_variable = construction$coverage,
       panel_variant = "primary",
-      sample_rule = "hindi_belt_first_stage_common_support",
+      sample_rule = sample_rule,
       tier = "B",
       sequence = i,
       control_registry = control_registry
     )
   })
   bind_iv_specification_rows(rows)
+}
+
+iv_hindi_belt_first_stage_specifications <- function(
+    treatment = preferred_iv_variables()$treatment,
+    control_registry = NULL) {
+  iv_shastry_added_control_first_stage_specifications(
+    added_control = shastry_hindi_belt_variable(),
+    added_control_label = "Shastry Hindi-belt indicator",
+    specification_prefix = "hindi_belt",
+    sample_rule = "hindi_belt_first_stage_common_support",
+    treatment = treatment,
+    control_registry = control_registry
+  )
+}
+
+iv_child_population_first_stage_specifications <- function(
+    treatment = preferred_iv_variables()$treatment,
+    control_registry = NULL) {
+  iv_shastry_added_control_first_stage_specifications(
+    added_control = shastry_child_population_variable(),
+    added_control_label = "log population age 5-19",
+    specification_prefix = "child_population",
+    sample_rule = "child_population_first_stage_common_support",
+    treatment = treatment,
+    control_registry = control_registry
+  )
 }
 
 iv_adjustment_sets <- function(control_registry = NULL) {

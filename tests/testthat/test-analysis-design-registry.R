@@ -367,6 +367,32 @@ test_that("candidate-design ledger records bounded robustness choices without Ca
   expect_equal(hindi_belt$implementation_status, "implemented")
   expect_equal(hindi_belt$execution_policy, "estimate")
 
+  child_population <- ledger[
+    ledger$candidate_id == "shastry_child_population_5_19_comparison", , drop = FALSE
+  ]
+  expect_equal(child_population$candidate_cells, 2L)
+  expect_equal(child_population$implemented_cells, 2L)
+  expect_equal(child_population$execution_cells, 2L)
+  expect_equal(child_population$implementation_status, "implemented")
+  expect_equal(child_population$execution_policy, "estimate")
+
+  future_goals <- ledger[ledger$candidate_id %in% c(
+    "ihds_emi_capability_mobility_followup",
+    "low_cost_private_school_followup",
+    "mother_tongue_vs_emi_learning_followup"
+  ), , drop = FALSE]
+  expect_equal(nrow(future_goals), 3L)
+  expect_true(all(future_goals$design_role == "future_goal"))
+  expect_true(all(future_goals$implementation_status == "deferred"))
+  expect_true(all(future_goals$execution_policy == "requires_data"))
+  expect_true(all(future_goals$implemented_cells == 0L))
+
+  emi_supply <- ledger[ledger$candidate_id == "genuine_emi_school_supply", , drop = FALSE]
+  expect_equal(nrow(emi_supply), 1L)
+  expect_equal(emi_supply$design_role, "future_goal")
+  expect_equal(emi_supply$implementation_status, "data_unavailable")
+  expect_equal(emi_supply$execution_policy, "requires_data")
+
   treatment <- ledger[ledger$candidate_id == "emi_intensive_margin_robustness", , drop = FALSE]
   expect_equal(treatment$candidate_cells, nrow(consumption) * 6L)
   expect_equal(treatment$implemented_cells, nrow(consumption_treatment))

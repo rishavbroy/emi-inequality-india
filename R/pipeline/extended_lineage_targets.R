@@ -202,6 +202,16 @@ extended_lineage_target_definitions <- function() {
       save_hindi_belt_first_stage_diagnostics(hindi_belt_first_stage_diagnostics)
     ),
     tar_target(
+      child_population_first_stage_diagnostics,
+      diagnose_child_population_first_stage(
+        district_panel, control_registry = census_2001_control_registry
+      )
+    ),
+    tar_target(
+      diag_ext_child_population_first_stage,
+      save_child_population_first_stage_diagnostics(child_population_first_stage_diagnostics)
+    ),
+    tar_target(
       glottolog_cldf_5_3,
       read_glottolog_cldf_5_3(glottolog_5_3$cldf_zip)
     ),

@@ -225,6 +225,18 @@ analysis_design_hindi_belt_first_stage <- function(control_registry = NULL) {
   )
 }
 
+analysis_design_child_population_first_stage <- function(control_registry = NULL) {
+  analysis_design_from_iv(
+    iv_child_population_first_stage_specifications(control_registry = control_registry),
+    family = "child_population_first_stage",
+    estimator = "first_stage_comparison",
+    estimand = "first_stage_relevance",
+    inference = "state_clustered",
+    analysis_role = "shastry_demographic_robustness",
+    reason = "registered_shastry_child_population_comparison"
+  )
+}
+
 analysis_design_census_mechanisms <- function(control_registry = NULL) {
   families <- list(
     migration = list(
@@ -490,6 +502,7 @@ compile_analysis_design_registry <- function(
     analysis_design_public_iv(public_iv_specifications),
     core_iv,
     analysis_design_hindi_belt_first_stage(control_registry),
+    analysis_design_child_population_first_stage(control_registry),
     consumption,
     consumption_scalar,
     consumption_treatment,
@@ -690,6 +703,9 @@ build_iv_candidate_design_ledger <- function(
   )
   n_hindi_belt <- nrow(
     iv_hindi_belt_first_stage_specifications(control_registry = control_registry)
+  )
+  n_child_population <- nrow(
+    iv_child_population_first_stage_specifications(control_registry = control_registry)
   )
   n_block_interventions <- length(iv_block_intervention_adjustments(control_registry))
   n_control_strategies <- length(iv_causal_control_strategy_adjustments(control_registry))
@@ -1121,6 +1137,102 @@ build_iv_candidate_design_ledger <- function(
         "The diagnostic adds that state-level indicator to the main-control first stage with no FE and",
         "six-region FE on one common support; state FE are excluded because they absorb the indicator."
       )
+    ),
+    candidate_design_row(
+      "shastry_child_population_5_19_comparison",
+      "Response 2 Shastry controls",
+      "first_stage_relevance",
+      "candidate_robustness",
+      "Does Shastry's age-eligible child-population scale control materially change the broad first-stage relationship?",
+      "predetermined_demographic_control",
+      "EMI/EMIE treatment relevance",
+      preferred_iv_variables()$treatment,
+      "preferred Shastry nonzero-mean distance",
+      "main Census controls + log Census-2001 population age 5-19, with no FE or six-region FE",
+      "first_stage",
+      "estimate",
+      prerequisite = "Census 2001 C-14 five-year age bands",
+      implementation_status = if (n_child_population == 2L) "implemented" else "partial",
+      candidate_cells = 2L,
+      implemented_cells = n_child_population,
+      execution_cells = n_child_population,
+      rationale = "Response 2 recommends Shastry's child-population control only as a comparison specification. C-14 directly supplies district counts for ages 5-9, 10-14, and 15-19, so no new source or age interpolation is needed."
+    ),
+    candidate_design_row(
+      "genuine_emi_school_supply",
+      "Response 2 genuine EMI supply",
+      "district_schooling_mechanism",
+      "future_goal",
+      "Does the local stock of schools offering English-medium instruction predict realized EMI exposure separately from enrollment demand?",
+      "school_level_emi_supply",
+      "district share of schools offering EMI",
+      "not_applicable",
+      "not_applicable",
+      "school-level medium-of-instruction census or complete DISE school microdata",
+      "descriptive+mechanism",
+      "requires_data",
+      prerequisite = "school-level medium-of-instruction records with complete school denominators",
+      implementation_status = "data_unavailable",
+      candidate_cells = NA_integer_,
+      implemented_cells = 0L,
+      rationale = "The archived DISE district-report-card files report children by medium, not the number of schools offering each medium, and explicitly warn that medium enrollment applies only to reporting schools. Re-labeling enrollment shares as school supply would violate the measurement contract."
+    ),
+    candidate_design_row(
+      "ihds_emi_capability_mobility_followup",
+      "Response 2 IHDS extension",
+      "future_microdata",
+      "future_goal",
+      "Can individual school medium be linked longitudinally to English capability, migration, and early labor-market outcomes?",
+      "individual_longitudinal_linkage",
+      "English proficiency, migration, employment, occupation, wages",
+      "individual EMI exposure",
+      "not_applicable",
+      "IHDS-I/II individual and household covariates",
+      "longitudinal_microdata",
+      "requires_data",
+      prerequisite = "reviewed IHDS-I to IHDS-II linkage and feasibility sample",
+      implementation_status = "deferred",
+      candidate_cells = NA_integer_,
+      implemented_cells = 0L,
+      rationale = "This is a separately scoped follow-on paper, not a missing district-IV cell. The first task is a linkage/feasibility study, as specified in Response 2."
+    ),
+    candidate_design_row(
+      "low_cost_private_school_followup",
+      "Response 2 low-cost private schools",
+      "future_schooling_project",
+      "future_goal",
+      "How did affordable private schooling evolve across the RTE period, and how does affordability interact with EMI and school quality?",
+      "school_sector_affordability",
+      "private-school participation, fees, quality, EMI",
+      "not_applicable",
+      "not_applicable",
+      "NSS64/NSS71 expenditure or school-fee microdata",
+      "descriptive+longitudinal",
+      "requires_data",
+      prerequisite = "predeclared affordability definition; private unaided must not be equated with low-cost",
+      implementation_status = "deferred",
+      candidate_cells = NA_integer_,
+      implemented_cells = 0L,
+      rationale = "Response 2 explicitly treats this as a separate paper-scale project. Fee/cost information is required before any school can be called low-cost."
+    ),
+    candidate_design_row(
+      "mother_tongue_vs_emi_learning_followup",
+      "Response 2 mother-tongue instruction",
+      "future_learning_project",
+      "future_goal",
+      "How do mother-tongue instruction and English-medium instruction differ in comprehension and learning outcomes?",
+      "instruction_language_learning",
+      "learning and comprehension outcomes",
+      "mother-tongue instruction versus EMI",
+      "not_applicable",
+      "individual/school learning covariates",
+      "learning_outcome_models",
+      "requires_data",
+      prerequisite = "data observing instructional language and comparable learning outcomes",
+      implementation_status = "deferred",
+      candidate_cells = NA_integer_,
+      implemented_cells = 0L,
+      rationale = "Current NSS/DISE medium fields do not observe classroom language fidelity or comparable learning outcomes. The distinction remains scientifically important but belongs to a future data-supported project."
     ),
     candidate_design_row(
       "shastry_1987_wage_controls",
