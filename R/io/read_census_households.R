@@ -310,12 +310,10 @@ summarise_census_hh13_2001_district <- function(rows) {
       row <- part[by_label[[labels[[id]]]], , drop = FALSE]
       sum(num(row[c("age15_1", "age15_2", "age15_3_6", "age15_7_10", "age15_11_plus")]))
     }
-    none15 <- function(id) num(part$age15_none[by_label[[labels[[id]]]]])[[1L]]
     no_mat_age15 <- age15_count("no_matriculate"); mat <- age15_count("matriculate")
     female_mat <- age15_count("female_matriculate"); grad <- age15_count("graduate"); female_grad <- age15_count("female_graduate")
-    if (female_mat > mat || grad > mat || female_grad > grad || female_grad > female_mat ||
-        any(vapply(c("matriculate", "female_matriculate", "graduate", "female_graduate"), none15, numeric(1)) != 0)) {
-      stop("Census 2001 HH13 education subset counts violate their published nesting.", call. = FALSE)
+    if (female_mat > mat || grad > mat || female_grad > grad || female_grad > female_mat) {
+      stop("Census 2001 HH13 age-15+ education subset counts violate their published nesting.", call. = FALSE)
     }
     data.frame(
       state_code = part$state_code[[1L]], district_code = part$district_code[[1L]], district_name = part$district_name[[1L]],

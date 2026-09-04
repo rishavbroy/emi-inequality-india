@@ -171,15 +171,20 @@ test_that("2001 household parsers preserve exact published accounting", {
     "Households with at least one female  matriculate and above", "Households with at least one  graduate and above",
     "Households with at least one female graduate and above"
   )
-  values <- c(60, 40, 25, 15, 8)
+  values <- c(60, 42, 26, 16, 9)
+  age15_values <- c(58, 40, 25, 15, 8)
+  none_values <- c(2, 2, 1, 1, 1)
   for (i in seq_along(categories)) {
     hh13[i, 1:8] <- c("HH13", "01", "01", "0000", "District - Alpha (01)", "TOTAL", categories[[i]], values[[i]])
-    hh13[i, 9:14] <- c(values[[i]], 0, 0, 0, 0, 0)
+    hh13[i, 9:14] <- c(age15_values[[i]], 0, 0, 0, 0, none_values[[i]])
   }
   hh13[1, 9:14] <- c(5, 5, 35, 10, 3, 2)
   parsed_hh13 <- parse_census_hh13_2001_sheet(hh13)
+  summary_hh13 <- summarise_census_hh13_2001_district(parsed_hh13)
   expect_equal(nrow(parsed_hh13), 5L)
-  expect_equal(summarise_census_hh13_2001_district(parsed_hh13)$households_age15_plus, 98)
+  expect_equal(summary_hh13$households_age15_plus, 98)
+  expect_equal(summary_hh13$households_with_matriculate, 40)
+  expect_true(any(parsed_hh13$age15_none > 0))
 
   # Some published workbooks omit the redundant row total while retaining all
   # six age-15+ buckets. The buckets remain the authoritative denominator.
