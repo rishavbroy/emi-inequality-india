@@ -195,7 +195,8 @@ parse_census_1991_st17_sheet <- function(raw, state_code_1991, district_code_199
 
     ignored_third <- c("Total Trilinguals", "Not Speaking A", "Third Language", "Total", "Males", "Females")
     third_language <- normalize_language_label(third_col)
-    if (!is.na(current_second) && nzchar(third_col) && !third_language %in% ignored_third) {
+    is_third_header <- tolower(third_language) %in% tolower(ignored_third)
+    if (!is.na(current_second) && nzchar(third_col) && !is_third_header) {
       value <- census_1991_st_language_count(raw[[8L]][[i]])
       if (!is.finite(value) || value < 0) {
         stop("Census 1991 ST-17 contains an invalid third-language count.", call. = FALSE)
