@@ -203,24 +203,118 @@ validate_economic_census_2005_it_baseline <- function(source) {
   source
 }
 
-build_economic_census_2005_it_baseline <- function(source, admin_units_2001) {
+economic_census_2005_name_aliases <- function(x) {
+  key <- canonicalize_district_name(x)
+  aliases <- c(
+    "baska" = "baksa",
+    "kamrup metro" = "kamrup metropolitan",
+    "seraikela kharswan" = "saraikela kharsawan",
+    "ashok nagar" = "ashoknagar",
+    "burhanpor" = "burhanpur",
+    "arval" = "arwal"
+  )
+  hit <- match(key, names(aliases), nomatch = 0L)
+  key[hit > 0L] <- unname(aliases[hit[hit > 0L]])
+  key
+}
+
+build_economic_census_2005_it_baseline <- function(
+    source, admin_units_2001, admin_units_2011, district_transition_2001_2011) {
   source <- validate_economic_census_2005_it_baseline(source)
-  admin <- canonical_economic_census_2001_districts(admin_units_2001)
+  if (!"district_name" %in% names(source)) {
+    stop("EC05 IT geography harmonization requires official district names.", call. = FALSE)
+  }
+  admin01 <- canonical_economic_census_2001_districts(admin_units_2001)
+  admin11 <- safe_df(admin_units_2011)
+  admin11 <- admin11[admin11$level == "district", c("state_code", "district_code", "district_std"), drop = FALSE]
+  admin11$state_code <- normalize_census_code(admin11$state_code, 2L)
+  admin11$district_code <- normalize_census_code(admin11$district_code, 3L)
+  admin11$name_key <- canonicalize_district_name(admin11$district_std)
+  if (anyDuplicated(admin11[c("state_code", "name_key")])) {
+    stop("Census-2011 district names must be unique within state for EC05 harmonization.", call. = FALSE)
+  }
+
   source$state_code <- normalize_census_code(source$state_code, 2L)
   source$district_code <- normalize_census_code(source$district_code, 2L)
-  source_key <- paste(source$state_code, source$district_code, sep = "/")
-  admin_key <- paste(admin$state_code, admin$district_code, sep = "/")
-  if (!setequal(source_key, admin_key)) {
-    missing <- setdiff(admin_key, source_key)
-    extra <- setdiff(source_key, admin_key)
-    stop(
-      "Official EC05 IT baseline must match the complete Census-2001 district registry; missing=",
-      length(missing), ", extra=", length(extra), ".",
-      call. = FALSE
+  source$name_key <- economic_census_2005_name_aliases(source$district_name)
+  admin01$name_key <- canonicalize_district_name(admin01$district_std)
+  source$key <- paste(source$state_code, source$district_code, sep = "/")
+  admin01$key <- paste(admin01$state_code, admin01$district_code, sep = "/")
+
+  # Preserve same-code identities unless the official EC05 name resolves to a
+  # different Census-2001 district in the same state. That catches genuine merged
+  # or recoded units (Mumbai) without treating harmless spelling drift as lineage.
+  direct_idx <- match(source$key, admin01$key)
+  name_idx <- match(
+    paste(source$state_code, source$name_key, sep = "__"),
+    paste(admin01$state_code, admin01$name_key, sep = "__")
+  )
+  conflict <- !is.na(direct_idx) & !is.na(name_idx) & direct_idx != name_idx
+  direct_ok <- !is.na(direct_idx) & !conflict
+  mapped <- source[direct_ok, , drop = FALSE]
+  mapped$target_unit_2001 <- admin01$target_unit_2001[direct_idx[direct_ok]]
+
+  unavailable <- character()
+  if (any(conflict)) {
+    unavailable <- c(
+      unavailable,
+      admin01$target_unit_2001[direct_idx[conflict]],
+      admin01$target_unit_2001[name_idx[conflict]]
     )
   }
-  out <- merge(admin, source, by = c("state_code", "district_code"), all.x = TRUE, sort = FALSE)
-  out <- out[match(admin_key, paste(out$state_code, out$district_code, sep = "/")), , drop = FALSE]
+
+  extra <- source[is.na(direct_idx), , drop = FALSE]
+  if (nrow(extra)) {
+    idx11 <- match(
+      paste(extra$state_code, extra$name_key, sep = "__"),
+      paste(admin11$state_code, admin11$name_key, sep = "__")
+    )
+    if (any(is.na(idx11))) {
+      stop("EC05 post-2001 districts could not be matched to the Census-2011 registry.", call. = FALSE)
+    }
+    extra$source_unit_2011 <- paste0(
+      "pc2011__", extra$state_code, "__", admin11$district_code[idx11]
+    )
+    bridge <- build_complete_deterministic_transition_2011_to_2001(district_transition_2001_2011)
+    exact_idx <- match(extra$source_unit_2011, bridge$source_unit_2011)
+    if (any(!is.na(exact_idx))) {
+      exact <- extra[!is.na(exact_idx), , drop = FALSE]
+      exact$target_unit_2001 <- bridge$target_unit_2001[exact_idx[!is.na(exact_idx)]]
+      mapped <- safe_bind_rows(list(mapped, exact))
+    }
+    unresolved <- extra$source_unit_2011[is.na(exact_idx)]
+    if (length(unresolved)) {
+      transition <- safe_df(district_transition_2001_2011)
+      transition$source_unit_2011 <- paste0(
+        "pc2011__", normalize_census_code(transition$state_code_2011, 2L), "__",
+        normalize_census_code(transition$district_code_2011, 3L)
+      )
+      hit <- transition$source_unit_2011 %in% unresolved
+      unavailable <- c(
+        unavailable,
+        paste0(
+          "pc2001__", normalize_census_code(transition$state_code_2001[hit], 2L), "__",
+          normalize_census_code(transition$district_code_2001[hit], 2L)
+        )
+      )
+    }
+  }
+
+  unavailable <- unique(unavailable[!is.na(unavailable) & nzchar(unavailable)])
+  mapped <- mapped[!mapped$target_unit_2001 %in% unavailable, , drop = FALSE]
+  counts <- c("nonfarm_firms_raw", "nonfarm_employment_raw", "it_firms", "it_employment")
+  groups <- split(seq_len(nrow(mapped)), mapped$target_unit_2001)
+  pooled <- safe_bind_rows(lapply(groups, function(i) {
+    row <- data.frame(target_unit_2001 = mapped$target_unit_2001[[i[[1L]]]], stringsAsFactors = FALSE)
+    for (column in counts) row[[column]] <- sum(num(mapped[[column]][i]))
+    row$ec05_source_district_count <- length(i)
+    row
+  }))
+
+  out <- merge(admin01, pooled, by = "target_unit_2001", all.x = TRUE, sort = FALSE)
+  out <- out[match(admin01$target_unit_2001, out$target_unit_2001), , drop = FALSE]
+  out$source_available <- !out$target_unit_2001 %in% unavailable & stats::complete.cases(out[counts])
+  for (column in counts) out[[column]][!out$source_available] <- NA_real_
   out$it_firm_share_nonfarm <- safe_count_share(out$it_firms, out$nonfarm_firms_raw)
   out$it_employment_share_nonfarm <- safe_count_share(out$it_employment, out$nonfarm_employment_raw)
   rownames(out) <- NULL

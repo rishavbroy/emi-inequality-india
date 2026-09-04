@@ -15,7 +15,9 @@ extended_economic_census_target_definitions <- function() {
       economic_census_2005_it_baseline,
       build_economic_census_2005_it_baseline(
         economic_census_2005_it_source,
-        district_lineage$admin_units_2001
+        district_lineage$admin_units_2001,
+        district_lineage$admin_units_2011,
+        district_transition_2001_2011
       )
     ),
     tar_target(

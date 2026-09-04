@@ -307,24 +307,69 @@ test_that("EC05 IT baseline uses major nonfarm NIC-2004 Division 72 establishmen
   expect_false(any(out$nonfarm_employment_raw == 80))
 })
 
-test_that("EC05 IT baseline requires exact Census-2001 district support and bounded shares", {
+test_that("EC05 IT baseline pools only deterministic post-2001 splits", {
   source <- data.frame(
-    state_code = c("09", "09"), district_code = c("01", "02"),
-    nonfarm_firms_raw = c(20, 10), nonfarm_employment_raw = c(100, 50),
-    it_firms = c(2, 1), it_employment = c(15, 5), stringsAsFactors = FALSE
+    state_code = rep("09", 4L), district_code = c("01", "02", "03", "04"),
+    district_name = c("parent a", "parent b", "child a", "child b"),
+    nonfarm_firms_raw = c(8, 4, 2, 1), nonfarm_employment_raw = c(80, 40, 20, 10),
+    it_firms = c(1, 1, 1, 0), it_employment = c(8, 4, 2, 0), stringsAsFactors = FALSE
   )
-  admin <- data.frame(
+  admin01 <- data.frame(
     level = "district", state_code = c("09", "09"), district_code = c("01", "02"),
-    state_std = "state", district_std = c("a", "b"), stringsAsFactors = FALSE
+    state_std = "state", district_std = c("parent a", "parent b"), stringsAsFactors = FALSE
   )
-  out <- build_economic_census_2005_it_baseline(source, admin)
-  expect_equal(out$it_firm_share_nonfarm, c(.10, .10))
-  expect_equal(out$it_employment_share_nonfarm, c(.15, .10))
+  admin11 <- data.frame(
+    level = "district", state_code = c("09", "09"), district_code = c("101", "102"),
+    district_std = c("child a", "child b"), stringsAsFactors = FALSE
+  )
+  transition <- data.frame(
+    state_code_2011 = c("09", "09"), district_code_2011 = c("101", "102"),
+    state_code_2001 = c("09", "09"), district_code_2001 = c("01", "02"),
+    population_share_to_2001 = c(1, .5), area_share_to_2001 = c(1, .5), shrid_coverage = 1,
+    mapping_class = c("reviewed_single_parent_ancestry", "non_nested_or_incomplete"),
+    stringsAsFactors = FALSE
+  )
 
-  expect_error(build_economic_census_2005_it_baseline(source[1, ], admin), "complete Census-2001 district registry")
+  out <- build_economic_census_2005_it_baseline(source, admin01, admin11, transition)
+  expect_true(out$source_available[out$district_code == "01"])
+  expect_equal(out$nonfarm_employment_raw[out$district_code == "01"], 100)
+  expect_equal(out$it_employment_share_nonfarm[out$district_code == "01"], .10)
+  expect_false(out$source_available[out$district_code == "02"])
+  expect_true(is.na(out$it_employment[out$district_code == "02"]))
+
   bad <- source
-  bad$it_firms[[1L]] <- 21
-  expect_error(build_economic_census_2005_it_baseline(bad, admin), "subset accounting")
+  bad$it_firms[[1L]] <- 9
+  expect_error(
+    build_economic_census_2005_it_baseline(bad, admin01, admin11, transition),
+    "subset accounting"
+  )
+})
+
+test_that("EC05 IT baseline does not fabricate a split for merged district codes", {
+  source <- data.frame(
+    state_code = "27", district_code = "22", district_name = "Mumbai",
+    nonfarm_firms_raw = 10, nonfarm_employment_raw = 100,
+    it_firms = 2, it_employment = 20, stringsAsFactors = FALSE
+  )
+  admin01 <- data.frame(
+    level = "district", state_code = c("27", "27"), district_code = c("22", "23"),
+    state_std = "maharashtra", district_std = c("mumbai suburban", "mumbai"), stringsAsFactors = FALSE
+  )
+  admin11 <- data.frame(
+    level = "district", state_code = "27", district_code = "519", district_std = "mumbai",
+    stringsAsFactors = FALSE
+  )
+  transition <- data.frame(
+    state_code_2011 = "27", district_code_2011 = "519",
+    state_code_2001 = "27", district_code_2001 = "23",
+    population_share_to_2001 = 1, area_share_to_2001 = 1, shrid_coverage = 1,
+    mapping_class = "official_lgd_census_code_bridge", stringsAsFactors = FALSE
+  )
+
+  out <- build_economic_census_2005_it_baseline(source, admin01, admin11, transition)
+  expect_equal(nrow(out), 2L)
+  expect_false(any(out$source_available))
+  expect_true(all(is.na(out$it_firm_share_nonfarm)))
 })
 
 test_that("EC05 IT opportunity baseline stays outside the weak-IV outcome registry", {
