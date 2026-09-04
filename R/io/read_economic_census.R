@@ -185,10 +185,10 @@ read_economic_census_ddi_contract <- function(path) {
 
 economic_census_2005_it_fwf_positions <- function() {
   readr::fwf_positions(
-    start = c(1L, 3L, 4L, 6L, 32L, 33L, 37L, 56L),
-    end = c(2L, 3L, 5L, 7L, 32L, 36L, 37L, 60L),
+    start = c(1L, 4L, 6L, 32L, 33L, 37L, 56L),
+    end = c(2L, 5L, 7L, 32L, 36L, 37L, 60L),
     col_names = c(
-      "schedule", "sector", "state_code", "district_code",
+      "schedule", "state_code", "district_code",
       "activity", "nic_2004", "agri_class", "workers"
     )
   )
@@ -208,7 +208,7 @@ economic_census_2005_raw_members <- function(path) {
 
 summarise_economic_census_2005_it_rows <- function(raw, source_label = "Fifth Economic Census 2005") {
   raw <- safe_df(raw)
-  required <- c("schedule", "sector", "state_code", "district_code", "activity", "nic_2004", "agri_class", "workers")
+  required <- c("schedule", "state_code", "district_code", "activity", "nic_2004", "agri_class", "workers")
   missing <- setdiff(required, names(raw))
   if (length(missing)) {
     stop(source_label, " is missing fixed-width fields: ", paste(missing, collapse = ", "), call. = FALSE)
@@ -220,9 +220,13 @@ summarise_economic_census_2005_it_rows <- function(raw, source_label = "Fifth Ec
   raw$agri_class <- trimws(plain_chr(raw$agri_class))
   raw$nic_2004 <- trimws(plain_chr(raw$nic_2004))
   raw$schedule <- trimws(plain_chr(raw$schedule))
-  raw$sector <- trimws(plain_chr(raw$sector))
 
-  valid_structure <- raw$schedule %in% c("53", "54") & raw$sector %in% c("1", "2") &
+  # Schedule already defines the rural/urban form (53/54). The published EC05
+  # archive contains a single otherwise valid schedule-54 record with a noncanonical
+  # sector byte, and sector is not used by this estimand. Do not duplicate that
+  # redundant field in the parsing contract; retain strict validation for every field
+  # that identifies geography or enters the IT baseline.
+  valid_structure <- raw$schedule %in% c("53", "54") &
     !is.na(raw$state_code) & !is.na(raw$district_code) & raw$district_code != "00" &
     is.finite(raw$workers) & raw$workers >= 0
   if (any(!valid_structure)) {

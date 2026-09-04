@@ -272,7 +272,7 @@ test_that("Economic Census mechanism registry is supported by longitudinal measu
 
 economic_census_2005_test_raw <- function() {
   data.frame(
-    schedule = rep("53", 5L), sector = rep("1", 5L),
+    schedule = rep("53", 5L),
     state_code = rep("09", 5L), district_code = c("01", "01", "01", "01", "02"),
     activity = c("1", "1", "2", "1", "1"),
     nic_2004 = c("7210", "5211", "7220", "7210", "7290"),
@@ -280,6 +280,19 @@ economic_census_2005_test_raw <- function() {
     stringsAsFactors = FALSE
   )
 }
+
+test_that("EC05 IT parser does not depend on the redundant rural/urban sector byte", {
+  positions <- economic_census_2005_it_fwf_positions()
+  expect_false("sector" %in% positions$col_names)
+
+  raw <- economic_census_2005_test_raw()
+  expect_silent(summarise_economic_census_2005_it_rows(raw))
+  raw$schedule[[1L]] <- "99"
+  expect_error(
+    summarise_economic_census_2005_it_rows(raw),
+    "malformed schedule/geography/worker fields"
+  )
+})
 
 test_that("EC05 IT baseline uses major nonfarm NIC-2004 Division 72 establishments", {
   out <- summarise_economic_census_2005_it_rows(economic_census_2005_test_raw())
