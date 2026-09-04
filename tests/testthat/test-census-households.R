@@ -197,7 +197,7 @@ test_that("2001 household parsers preserve exact published accounting", {
   hh13_shifted[, 10:14] <- canonical
   parsed_shifted <- parse_census_hh13_2001_sheet(hh13_shifted)
   expect_equal(parsed_shifted$households, shifted_totals)
-  expect_equal(parsed_shifted$age15_none, 0)
+  expect_true(all(parsed_shifted$age15_none == 0))
   expect_equal(
     summarise_census_hh13_2001_district(parsed_shifted)$households_age15_plus,
     summarise_census_hh13_2001_district(parsed_hh13)$households_age15_plus
