@@ -33,6 +33,19 @@ census_1991_district_key <- function(x) {
   paste(x$state_code_1991, x$district_code_1991, sep = "__")
 }
 
+
+read_census_download_manifest <- function(manifest_file) {
+  manifest <- utils::read.delim(
+    manifest_file, sep = "\t", stringsAsFactors = FALSE,
+    check.names = FALSE, colClasses = "character"
+  )
+  required <- c("table", "state_code", "relative_path", "url")
+  if (!identical(names(manifest), required)) {
+    stop("Unexpected Census download-manifest schema: ", manifest_file, call. = FALSE)
+  }
+  manifest
+}
+
 census_manifest_files <- function(
     paths, census_year, table, manifest_file = NULL, expected_states = NULL) {
   census_year <- as.integer(census_year)
@@ -46,17 +59,7 @@ census_manifest_files <- function(
   manifest_file <- manifest_file %||% path_metadata(
     paths, sprintf("census_%d_download_manifest.tsv", census_year)
   )
-  manifest <- utils::read.delim(
-    manifest_file,
-    sep = "\t",
-    stringsAsFactors = FALSE,
-    check.names = FALSE,
-    colClasses = "character"
-  )
-  required <- c("table", "state_code", "relative_path", "url")
-  if (!identical(names(manifest), required)) {
-    stop("Unexpected Census download-manifest schema: ", manifest_file, call. = FALSE)
-  }
+  manifest <- read_census_download_manifest(manifest_file)
   rows <- manifest[toupper(manifest$table) == table, , drop = FALSE]
   rows$state_code <- normalize_census_code(rows$state_code, 2L)
   if (is.null(expected_states)) {
