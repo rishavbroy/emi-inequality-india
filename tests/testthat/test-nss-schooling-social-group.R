@@ -38,13 +38,21 @@ test_that("NSS schooling access gaps are within-district contrasts against Other
   margins$district_code_2001 <- rep(c("01", "02"), each = 2)
   margins$ling_distance_nonzero_mean <- rep(c(1, 2), each = 2)
   margins$hindi_belt_2001 <- TRUE
+  margins$baseline_control <- rep(c(0.2, 0.4), each = 2)
 
-  gaps <- build_nss64_schooling_social_group_gaps(margins)
+  gaps <- build_nss64_schooling_social_group_gaps(
+    margins, covariates = "baseline_control"
+  )
   enrollment <- gaps[
     gaps$social_group == "Scheduled Tribe" & gaps$outcome == "enrollment_rate_0708",
     , drop = FALSE
   ]
   expect_equal(enrollment$gap_percentage_points, c(-10, 5))
+  expect_equal(enrollment$baseline_control, c(0.2, 0.4))
+  expect_error(
+    build_nss64_schooling_social_group_gaps(margins, covariates = "missing_control"),
+    "covariates are missing"
+  )
 
   summary <- nss64_schooling_social_group_access_summary(gaps)
   row <- summary[

@@ -73,9 +73,16 @@ prepare_nss64_schooling_social_group_panel <- function(
   out
 }
 
-build_nss64_schooling_social_group_gaps <- function(panel) {
+build_nss64_schooling_social_group_gaps <- function(panel, covariates = character()) {
   x <- safe_df(panel)
   registry <- nss64_schooling_social_group_margin_registry()
+  missing_covariates <- setdiff(covariates, names(x))
+  if (length(missing_covariates)) {
+    stop(
+      "NSS-64 schooling-gap covariates are missing from the prepared panel: ",
+      paste(missing_covariates, collapse = ", "), call. = FALSE
+    )
+  }
   reference <- x[x$social_group == "Other", , drop = FALSE]
   if (anyDuplicated(reference$district_code_0708)) {
     stop("NSS-64 reference social group must be unique by district.", call. = FALSE)
@@ -88,22 +95,26 @@ build_nss64_schooling_social_group_gaps <- function(panel) {
   safe_bind_rows(lapply(groups, function(group) {
     group_rows <- x[x$social_group == group, , drop = FALSE]
     ref_i <- match(group_rows$district_code_0708, reference$district_code_0708)
+    metadata <- data.frame(
+      district_code_0708 = group_rows$district_code_0708,
+      state_code_2001 = plain_chr(group_rows$state_code_2001),
+      district_code_2001 = plain_chr(group_rows$district_code_2001),
+      social_group = group,
+      reference_group = "Other",
+      ling_distance_nonzero_mean = num(group_rows$ling_distance_nonzero_mean),
+      hindi_belt_2001 = group_rows$hindi_belt_2001 %in% TRUE,
+      stringsAsFactors = FALSE
+    )
+    for (column in covariates) metadata[[column]] <- group_rows[[column]]
+
     safe_bind_rows(lapply(seq_len(nrow(registry)), function(j) {
       outcome <- registry$outcome[[j]]
-      data.frame(
-        district_code_0708 = group_rows$district_code_0708,
-        state_code_2001 = plain_chr(group_rows$state_code_2001),
-        district_code_2001 = plain_chr(group_rows$district_code_2001),
-        social_group = group,
-        reference_group = "Other",
-        outcome = outcome,
-        group_value = num(group_rows[[outcome]]),
-        reference_value = num(reference[[outcome]][ref_i]),
-        gap_percentage_points = num(group_rows[[outcome]]) - num(reference[[outcome]][ref_i]),
-        ling_distance_nonzero_mean = num(group_rows$ling_distance_nonzero_mean),
-        hindi_belt_2001 = group_rows$hindi_belt_2001 %in% TRUE,
-        stringsAsFactors = FALSE
-      )
+      out <- metadata
+      out$outcome <- outcome
+      out$group_value <- num(group_rows[[outcome]])
+      out$reference_value <- num(reference[[outcome]][ref_i])
+      out$gap_percentage_points <- out$group_value - out$reference_value
+      out
     }))
   }))
 }
@@ -179,10 +190,10 @@ build_nss64_schooling_social_group_diagnostic <- function(
   panel <- prepare_nss64_schooling_social_group_panel(
     margins, district_panel, control_registry = control_registry
   )
-  gaps <- build_nss64_schooling_social_group_gaps(panel)
+  controls <- census_2001_main_controls(control_registry)
+  gaps <- build_nss64_schooling_social_group_gaps(panel, covariates = controls)
   registry <- nss64_schooling_social_group_margin_registry()
   model_outcomes <- registry$outcome[registry$model_distance_heterogeneity]
-  controls <- census_2001_main_controls(control_registry)
   estimates <- safe_bind_rows(lapply(nss64_schooling_disadvantaged_groups(), function(group) {
     safe_bind_rows(lapply(model_outcomes, function(outcome) {
       safe_bind_rows(list(
