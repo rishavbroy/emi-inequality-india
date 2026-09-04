@@ -30,7 +30,7 @@ This file records the active research plan. Historical brainstorming and refacto
 ### Census mechanisms
 
 - Census-2001 HH-09/HH-13/HH-15(/Appendix) have now been structurally inspected and activated for exact 2001-to-2011 household-capacity changes. The longitudinal set is intentionally limited to matched literacy-depth, matriculate/graduate-access, and worker-count household shares; HH-15 top coding and the absence of a 2001 marginal-worker decomposition rule out exact workers-per-household or marginal-worker changes.
-- Census-1991 ST-16/ST-17 state workbooks and 2011 ST-15/ST-16 state/UT workbooks are also registered as acquisition-only language-mechanism sources. The supplied table inventory establishes that 1991 ST-17 state workbooks lack district observations, so the acquisition manifest now separates state validation files from the required district workbooks.
+- Census-1991 ST-16/ST-17 is now activated as a bounded pre-treatment language-mechanism diagnostic. District ST-17 workbooks provide Scheduled Tribe mother-tongue bilingual/trilingual counts; ST-16 district rows are an independent denominator gate. The preferred sample requires exact ST-16 reconciliation and a frozen historical Shastry mapping, preserves 1991 state geography, and reports all-state and Hindi-belt state-FE/state-clustered relationships for English versus Hindi acquisition. The 2011 ST-15/ST-16 sources remain acquisition-only follow-up material.
 
 - 2001 controls, migration, worker structure, household mechanisms, and C-17 diagnostics are implemented in dedicated modules.
 - 2011 migration D02-D07, worker B-series, HH08/HH10/HH11, and housing/living-standard tables are harmonized through the shared Census count/geography architecture.
