@@ -190,20 +190,17 @@ test_that("2001 household parsers preserve exact published accounting", {
   # positive age-15+ buckets in columns 10--14, and omits the `None` bucket.
   # Detect that layout from the accounting identity, not from geography.
   hh13_shifted <- hh13
-  canonical <- hh13_shifted[, 8:14, drop = FALSE]
+  canonical <- hh13_shifted[, 9:13, drop = FALSE]
+  shifted_totals <- rowSums(data.frame(lapply(canonical, num), check.names = FALSE))
   hh13_shifted[, 8] <- ""
-  hh13_shifted[, 9] <- canonical[[1L]]
-  hh13_shifted[, 10] <- canonical[[2L]]
-  hh13_shifted[, 11] <- canonical[[3L]]
-  hh13_shifted[, 12] <- canonical[[4L]]
-  hh13_shifted[, 13] <- canonical[[5L]]
-  hh13_shifted[, 14] <- canonical[[6L]]
+  hh13_shifted[, 9] <- shifted_totals
+  hh13_shifted[, 10:14] <- canonical
   parsed_shifted <- parse_census_hh13_2001_sheet(hh13_shifted)
-  expect_equal(parsed_shifted$households, parsed_hh13$households)
+  expect_equal(parsed_shifted$households, shifted_totals)
   expect_equal(parsed_shifted$age15_none, 0)
   expect_equal(
     summarise_census_hh13_2001_district(parsed_shifted)$households_age15_plus,
-    summarise_census_hh13_2001_district(parsed_hh13)$households_age15_plus - sum(parsed_hh13$age15_none[c(1, 2)])
+    summarise_census_hh13_2001_district(parsed_hh13)$households_age15_plus
   )
 
   malformed_shift <- hh13_shifted
