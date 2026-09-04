@@ -314,7 +314,10 @@ test_that("Census download manifests are canonical acquisition metadata", {
 
   expected_codes <- sprintf("%02d", 1:35)
   expected_tables <- list(
-    `2001` = c("C13", "C16", "C17", "D02", "H04A"),
+    `2001` = c(
+      "C13", "C16", "C17", "D02", "H04A",
+      "HH09", "HH13", "HH15", "HH15A"
+    ),
     `2011` = c(
       "C13", "B01", "B04", "B06", "B25A", "B25B", "C16", "C17",
       "D02", "D03", "D04", "D05", "D06", "D07",
@@ -348,6 +351,18 @@ test_that("Census download manifests are canonical acquisition metadata", {
     sprintf("DDW-%02d00C-13.xls", 1:35)
   )
 
+  expected_2001_household_roots <- c(
+    HH09 = "households/HH09", HH13 = "households/HH13",
+    HH15 = "households/HH15", HH15A = "households/HH15A"
+  )
+  for (table in names(expected_2001_household_roots)) {
+    rows <- manifests[[1]][manifests[[1]]$table == table, , drop = FALSE]
+    expect_true(all(startsWith(
+      rows$relative_path,
+      file.path("data", "raw", "census_2001", expected_2001_household_roots[[table]])
+    )), info = table)
+  }
+
   expected_2011_roots <- c(
     B01 = "workers/B01", B04 = "workers/B04", B06 = "workers/B06",
     B25A = "workers/B25A", B25B = "workers/B25B",
@@ -366,6 +381,17 @@ test_that("Census download manifests are canonical acquisition metadata", {
       file.path("data", "raw", "census_2011", expected_2011_roots[[table]])
     )), info = table)
   }
+  expected_st_2011 <- sprintf("%02d", c(1, 2, 5, 8:33, 35))
+  for (table in c("ST15", "ST16")) {
+    rows <- manifests[[2]][manifests[[2]]$table == table, , drop = FALSE]
+    expect_equal(nrow(rows), length(expected_st_2011), info = table)
+    expect_setequal(sprintf("%02d", as.integer(rows$state_code)), expected_st_2011, info = table)
+    expect_true(all(startsWith(
+      rows$relative_path,
+      file.path("data", "raw", "census_2011", "scheduled_tribes", table)
+    )), info = table)
+  }
+
   expect_true(all(file.path(
     "data", "raw", "census_2001", "languages", "C17",
     sprintf("PC01_C17_%02d.xls", 1:35)

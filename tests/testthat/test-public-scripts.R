@@ -943,22 +943,48 @@ test_that("Census downloader discovers year manifests and skips present files", 
   expect_true(any(grepl("2 downloaded, 1 already present", output, fixed = TRUE)))
 })
 
-test_that("Census 1991 acquisition manifest freezes reviewed official table families", {
+test_that("Census 1991 acquisition manifest preserves source-specific published scope", {
   manifest <- utils::read.delim(
     repo_file("data", "metadata", "census_1991_download_manifest.tsv"),
     stringsAsFactors = FALSE, check.names = FALSE, colClasses = "character"
   )
-  state_codes <- sprintf("%02d", c(2:9, 11:33))
+  validation_states <- sprintf("%02d", c(2:9, 11:33))
 
   expect_identical(names(manifest), c("table", "state_code", "relative_path", "url"))
-  expect_equal(nrow(manifest), 125L)
   expect_identical(
     as.integer(table(manifest$table)[c("B01S", "C02T", "C02U", "C06T", "C09T")]),
     c(31L, 31L, 31L, 31L, 1L)
   )
   for (table_id in c("B01S", "C02T", "C02U", "C06T")) {
-    expect_setequal(manifest$state_code[manifest$table == table_id], state_codes)
+    expect_setequal(manifest$state_code[manifest$table == table_id], validation_states)
   }
+
+  st16_states <- sprintf("%02d", c(2:4, 6:7, 9, 11:19, 21:27, 29:30, 32))
+  st16 <- manifest[manifest$table == "ST16T", , drop = FALSE]
+  expect_setequal(st16$state_code, st16_states)
+  expect_true(all(startsWith(
+    st16$relative_path,
+    file.path("data", "raw", "census_1991", "scheduled_tribes", "ST16T")
+  )))
+
+  st17_state_codes <- sprintf("%02d", c(2:7, 9, 11:19, 21:23, 25:27, 29:30, 32))
+  st17_state <- manifest[manifest$table == "ST17T_STATE", , drop = FALSE]
+  st17_district <- manifest[manifest$table == "ST17T_DISTRICT", , drop = FALSE]
+  expect_equal(nrow(st17_state), 25L)
+  expect_equal(nrow(st17_district), 416L)
+  expect_setequal(st17_state$state_code, st17_state_codes)
+  expect_setequal(unique(st17_district$state_code), st17_state_codes)
+  expect_true(all(grepl("00\\.xlsx$", st17_state$relative_path)))
+  expect_false(any(grepl("00\\.xlsx$", st17_district$relative_path)))
+  expect_true(all(startsWith(
+    st17_state$relative_path,
+    file.path("data", "raw", "census_1991", "scheduled_tribes", "ST17T", "state")
+  )))
+  expect_true(all(startsWith(
+    st17_district$relative_path,
+    file.path("data", "raw", "census_1991", "scheduled_tribes", "ST17T", "district")
+  )))
+
   religion <- manifest[manifest$table == "C09T", , drop = FALSE]
   expect_identical(religion$state_code, "01")
   expect_match(religion$relative_path, "^data/raw/census_1991/religion/C09T/")
