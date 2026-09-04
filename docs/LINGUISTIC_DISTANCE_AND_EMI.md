@@ -271,3 +271,39 @@ nuisance-control set; neither output should be read as a sequential mediation mo
 ### Pipeline dependency contract for reviewed language metadata
 
 The production target graph treats the reviewed Census–Glottolog crosswalk, Shastry distance concordance, Shastry adjudication ledger, and lexical-language index as explicit `format = "file"` inputs. Their parsed objects are injected into the district linguistic-distance builder, C-17 mechanism analysis, and extension diagnostics. This avoids hidden file reads inside target commands: editing a reviewed metadata source invalidates exactly the downstream targets that consume it, while unchanged metadata remains cacheable. Standalone function defaults remain available for interactive use.
+
+## NSS-64 schooling access by social group
+
+The extended schooling-access diagnostic reuses the canonical NSS-64 Schedule
+25.2 child sample rather than building a second education ingestion path. This
+is possible because the official survey records social group with the child and
+records institution type and medium of instruction for currently attending
+children. The four analysis groups are Scheduled Tribe, Scheduled Caste, Other
+Backward Class, and Other, matching the survey coding already used by the
+selection model.
+
+For each group, the pipeline reruns the same age-5--19 district schooling-margin
+builder used for the aggregate 2007 treatment. Thus enrollment, English medium
+conditional on observed medium, private enrollment conditional on observed
+management, public/private English-medium margins, and the four management by
+medium exposure cells inherit exactly the same survey weights and unknown-cell
+accounting. The diagnostic does not reinterpret unknown medium or institution
+type as non-English or public schooling.
+
+Access inequality is reported as a within-district percentage-point gap between
+each ST/SC/OBC margin and the corresponding `Other` margin. Geographic
+heterogeneity is deliberately narrower: only enrollment, EMI among enrolled,
+private enrollment, EMI among public-school children, and EMI among
+private-school children enter the distance regressions. Each group gap is
+regressed on the preferred historical linguistic-distance measure, the compact
+predetermined Census-2001 control vector, and state fixed effects, with
+state-clustered inference. The same five outcomes are rerun within the frozen
+Shastry Hindi-belt state definition. Holm adjustment is applied across this
+predeclared descriptive heterogeneity family.
+
+These are descriptive access/mechanism diagnostics, not additional endogenous
+schooling treatments and not members of the registered consumption-IV outcome
+families. The within-district group-gap construction is intended to answer
+whether children living in the same district occupy different schooling
+sectors/media, while the distance coefficient asks whether those local access
+gaps systematically vary with linguistic geography.
