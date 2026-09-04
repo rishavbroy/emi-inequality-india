@@ -123,3 +123,5 @@ The final current-data Shastry comparison controls are now implemented and revie
 - **Implemented:** Census-2001 C-14 population age 5-19 enters a two-cell Shastry first-stage comparison as `log_child_population_5_19_2001`.
 - **Data unavailable:** a genuine district share of schools offering EMI requires school-level medium-of-instruction records with a defensible school denominator; district report-card enrollment-by-medium data are not a substitute.
 - **Future goals, not current-plan omissions:** IHDS longitudinal EMI-to-capability/mobility, the low-cost-private-school/RTE project, and mother-tongue-versus-EMI learning are explicitly deferred in the candidate ledger until their required microdata/measurement contracts are opened.
+
+- The official EC05 establishment archive is now activated for a predeclared 2005 NIC-2004 Division-72 computer/IT opportunity baseline (firms, workers, and raw-nonfarm shares). It remains descriptive; EC13 NIC granularity must be validated before any IT-growth measure is admitted.

@@ -53,3 +53,9 @@ The local source inventory now also contains SHRUG EC90 and EC98 archives. EC90 
 ## Inference boundary
 
 The longitudinal firm-mechanism family is predeclared at six outcomes: log non-farm employment growth, log establishment growth, hired- and private-employment share changes, services-employment share change, and manufacturing-employment share change (secondary). Female employment share, mean employment per firm, and EC05-only informal employment remain descriptive. Models reuse the shared post-treatment mechanism inference layer, including common-sample enforcement, the registered IV design grid, state-clustered inference, Holm correction, effective-F diagnostics, and Anderson-Rubin confidence sets.
+
+## Fifth-EC computer/IT opportunity baseline
+
+The official Fifth Economic Census establishment archive is also read directly for a bounded baseline opportunity measure. The fixed-width contract follows the official 2005 record layout: state/district geography, major-versus-subsidiary activity, NIC-2004 major activity, agricultural/non-agricultural classification, and total workers. The baseline retains **major-activity non-agricultural establishments only** and defines computer/IT activity as NIC-2004 **Division 72 (Computer and related activities)**. It reports IT establishments, IT workers, and their shares of the internally consistent raw nonfarm establishment/employment universe.
+
+This is deliberately a **2005 baseline descriptor**, not a new IV outcome. Subsidiary-activity records are excluded to avoid double-counting an establishment, and the code does not infer IT growth from the broad SHRUG services category. A 2005--2013 IT-growth measure will be considered only if the Sixth Economic Census raw schema exposes NIC detail that can be mapped transparently to the same substantive computer/IT concept.
