@@ -280,10 +280,18 @@ economic_census_2005_directory <- function(path) {
   lines <- readLines(con, warn = FALSE)
   keep <- grepl("^[0-9]{4}", lines)
   lines <- lines[keep]
+  if (any(nchar(lines) < 35L)) {
+    stop("Fifth Economic Census district directory contains malformed fixed-width rows.", call. = FALSE)
+  }
   out <- data.frame(
     state_code = substr(lines, 1L, 2L),
     district_code = substr(lines, 3L, 4L),
-    district_name = trimws(sub("[[:space:]]+[0-9]{2}[[:space:]]*$", "", substr(lines, 5L, nchar(lines)))),
+    # Directory.txt is fixed width: columns 5--34 are the state/UT name and
+    # the district-name field begins at column 35. Keep the terminal repeated
+    # two-digit district code out of the name used for geography matching.
+    district_name = trimws(sub(
+      "[[:space:]]+[0-9]{2}[[:space:]]*$", "", substr(lines, 35L, nchar(lines))
+    )),
     stringsAsFactors = FALSE
   )
   if (anyDuplicated(out[c("state_code", "district_code")])) {

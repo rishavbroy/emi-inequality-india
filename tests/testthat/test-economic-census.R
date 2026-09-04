@@ -307,6 +307,30 @@ test_that("EC05 IT baseline uses major nonfarm NIC-2004 Division 72 establishmen
   expect_false(any(out$nonfarm_employment_raw == 80))
 })
 
+test_that("official EC05 directory separates fixed-width state and district names", {
+  td <- tempfile("ec05-directory-")
+  dir.create(td)
+  directory <- file.path(td, "Directory.txt")
+  writeLines(
+    c(
+      sprintf("%02d%02d%-30s%s %02d", 10, 38, "BIHAR", "Arval *", 38),
+      sprintf("%02d%02d%-30s%s %02d", 23, 46, "MADHYA PRADESH", "Ashok Nagar", 46)
+    ),
+    directory
+  )
+  old <- setwd(td)
+  on.exit(setwd(old), add = TRUE)
+  zip <- tempfile(fileext = ".zip")
+  utils::zip(zipfile = zip, files = basename(directory), flags = "-q")
+
+  out <- economic_census_2005_directory(zip)
+
+  expect_identical(out$state_code, c("10", "23"))
+  expect_identical(out$district_code, c("38", "46"))
+  expect_identical(out$district_name, c("Arval *", "Ashok Nagar"))
+  expect_false(any(grepl("BIHAR|MADHYA PRADESH", out$district_name)))
+})
+
 test_that("EC05 IT baseline pools only deterministic post-2001 splits", {
   source <- data.frame(
     state_code = rep("09", 4L), district_code = c("01", "02", "03", "04"),
