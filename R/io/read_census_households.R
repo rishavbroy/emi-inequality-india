@@ -286,10 +286,30 @@ parse_census_hh13_2001_sheet <- function(raw) {
   keep <- out$table == "HH13" & !is.na(out$state_code) & !is.na(out$district_code) &
     out$district_code != "00" & toupper(out$residence) == "TOTAL" & out$category %in% labels
   out <- out[keep %in% TRUE, , drop = FALSE]
-  sizes <- as.matrix(data.frame(lapply(out[c("age15_1", "age15_2", "age15_3_6", "age15_7_10", "age15_11_plus", "age15_none")], num), check.names = FALSE))
-  known_total <- is.finite(out$households)
-  if (any(known_total & out$households < 0) || any(!is.finite(sizes)) || any(sizes < 0) ||
-      any(known_total & rowSums(sizes) != out$households)) {
+  numeric_cols <- c("age15_1", "age15_2", "age15_3_6", "age15_7_10", "age15_11_plus", "age15_none")
+  sizes <- as.matrix(data.frame(lapply(out[numeric_cols], num), check.names = FALSE))
+
+  # The Odisha workbook is structurally shifted: column 8 is blank, column 9
+  # contains the row total, columns 10--14 contain the five positive age-15+
+  # buckets, and the `None` bucket is omitted. Detect that layout by its own
+  # accounting identity rather than by state name, then canonicalize it before
+  # applying the common validation below.
+  shifted <- !is.finite(out$households) & apply(is.finite(sizes), 1L, all) &
+    sizes[, 1L] == rowSums(sizes[, -1L, drop = FALSE])
+  if (any(shifted)) {
+    out$households[shifted] <- sizes[shifted, 1L]
+    out$age15_1[shifted] <- sizes[shifted, 2L]
+    out$age15_2[shifted] <- sizes[shifted, 3L]
+    out$age15_3_6[shifted] <- sizes[shifted, 4L]
+    out$age15_7_10[shifted] <- sizes[shifted, 5L]
+    out$age15_11_plus[shifted] <- sizes[shifted, 6L]
+    out$age15_none[shifted] <- 0
+    sizes <- as.matrix(data.frame(lapply(out[numeric_cols], num), check.names = FALSE))
+  }
+
+  if (any(!is.finite(out$households)) || any(out$households < 0) ||
+      any(!is.finite(sizes)) || any(sizes < 0) ||
+      any(rowSums(sizes) != out$households)) {
     stop("Census 2001 HH13 age-15+ household cells must be nonnegative and exhaust each published row total.", call. = FALSE)
   }
   out

@@ -186,16 +186,29 @@ test_that("2001 household parsers preserve exact published accounting", {
   expect_equal(summary_hh13$households_with_matriculate, 40)
   expect_true(any(parsed_hh13$age15_none > 0))
 
-  # Some published workbooks omit the redundant row total while retaining all
-  # six age-15+ buckets. The buckets remain the authoritative denominator.
-  hh13_without_totals <- hh13
-  hh13_without_totals[, 8] <- ""
-  parsed_without_totals <- parse_census_hh13_2001_sheet(hh13_without_totals)
-  expect_true(all(is.na(parsed_without_totals$households)))
+  # One published layout shifts the row total into column 9, stores the five
+  # positive age-15+ buckets in columns 10--14, and omits the `None` bucket.
+  # Detect that layout from the accounting identity, not from geography.
+  hh13_shifted <- hh13
+  canonical <- hh13_shifted[, 8:14, drop = FALSE]
+  hh13_shifted[, 8] <- ""
+  hh13_shifted[, 9] <- canonical[[1L]]
+  hh13_shifted[, 10] <- canonical[[2L]]
+  hh13_shifted[, 11] <- canonical[[3L]]
+  hh13_shifted[, 12] <- canonical[[4L]]
+  hh13_shifted[, 13] <- canonical[[5L]]
+  hh13_shifted[, 14] <- canonical[[6L]]
+  parsed_shifted <- parse_census_hh13_2001_sheet(hh13_shifted)
+  expect_equal(parsed_shifted$households, parsed_hh13$households)
+  expect_equal(parsed_shifted$age15_none, 0)
   expect_equal(
-    summarise_census_hh13_2001_district(parsed_without_totals)$households_age15_plus,
-    summarise_census_hh13_2001_district(parsed_hh13)$households_age15_plus
+    summarise_census_hh13_2001_district(parsed_shifted)$households_age15_plus,
+    summarise_census_hh13_2001_district(parsed_hh13)$households_age15_plus - sum(parsed_hh13$age15_none[c(1, 2)])
   )
+
+  malformed_shift <- hh13_shifted
+  malformed_shift[1, 14] <- as.numeric(malformed_shift[1, 14]) + 1
+  expect_error(parse_census_hh13_2001_sheet(malformed_shift), "exhaust each published row total")
 
   hh15 <- data.frame(matrix("", nrow = 6, ncol = 13), stringsAsFactors = FALSE)
   for (i in seq_along(labels)) {
