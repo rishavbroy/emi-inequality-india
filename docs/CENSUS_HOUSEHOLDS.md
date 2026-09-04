@@ -2,7 +2,9 @@
 
 This extended Census-2011 module activates HH-08, HH-10, and HH-11 as district-level post-treatment household mechanisms. It decodes published counts on the native 640-district Census-2011 geography, validates their independent household universes, pools counts only through the common complete deterministic 2011-to-2001 transition, and constructs a compact set of household-level human-capital and labor-intensity measures afterward.
 
-These are 2011-only mechanism descriptors. They are **not** preferred controls, 2001-to-2011 changes, or identified mediation effects. Given the weak scalar-IV first stages already documented for the Census mechanism sample, the module does not automatically add a new IV outcome family.
+The tracked Census-2001 acquisition manifest now also includes HH-09, HH-13, HH-15, and HH-15 Appendix, the predeclared candidate baselines for literacy depth, matriculate/graduate access, and worker intensity. These files are **acquisition-ready, not analysis-active**: no 2001-to-2011 change is constructed until actual workbooks confirm the row/category layout and an exact numerator/denominator mapping to the 2011 measures. In particular, HH-15's top-coded worker cells must not be used to fabricate exact marginal-worker counts.
+
+Until that validation is complete, the active HH-08/HH-10/HH-11 objects remain 2011-only mechanism descriptors. They are **not** preferred controls, 2001-to-2011 changes, or identified mediation effects. Given the weak scalar-IV first stages already documented for the Census mechanism sample, the module does not automatically add a new IV outcome family.
 
 ## HH-08: literacy depth
 

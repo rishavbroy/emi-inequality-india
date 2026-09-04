@@ -1323,3 +1323,9 @@ higher source-coverage thresholds. Threshold labels preserve their actual
 percentage magnitude (for example, `coverage_90pct`, not a lexically derived or
 zero-stripped abbreviation), so `variant_a` and `variant_b` remain interpretable
 across reruns and downstream joins.
+
+## Scheduled Tribe language acquisition sources
+
+The Census acquisition layer now tracks the official 1991 ST-16 mother-tongue and ST-17 bilingualism/trilingualism state workbooks as a **future pre-treatment mechanism diagnostic**, plus the corresponding 2011 ST-15/ST-16 state/UT tables as lower-priority validation/follow-up sources. These files do not enter any current regression, instrument construction, or control vector.
+
+For 1991 ST-17, the acquisition manifest explicitly separates state aggregates from district files. The supplied Census table inventory notes that the state-level ST-17 workbooks do not contain district observations, so the district files are required for the intended district-level mechanism test; state workbooks are retained only for aggregate validation. Historical state identities must remain on their 1991 geography until the existing lineage machinery performs any later harmonization.

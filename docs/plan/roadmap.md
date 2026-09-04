@@ -29,6 +29,9 @@ This file records the active research plan. Historical brainstorming and refacto
 
 ### Census mechanisms
 
+- The next bounded source-extension phase is now acquisition-ready: Census-2001 HH-09/HH-13/HH-15(/Appendix) are registered as candidate concept-matched baselines for the active 2011 household-capacity measures. They must remain outside the targets graph until workbook inspection proves the exact row/category and denominator contracts; HH-15 top-coded cells cannot justify exact marginal-worker-count reconstruction.
+- Census-1991 ST-16/ST-17 state workbooks and 2011 ST-15/ST-16 state/UT workbooks are also registered as acquisition-only language-mechanism sources. The supplied table inventory establishes that 1991 ST-17 state workbooks lack district observations, so the acquisition manifest now separates state validation files from the required district workbooks.
+
 - 2001 controls, migration, worker structure, household mechanisms, and C-17 diagnostics are implemented in dedicated modules.
 - 2011 migration D02-D07, worker B-series, HH08/HH10/HH11, and housing/living-standard tables are harmonized through the shared Census count/geography architecture.
 - Housing includes the validated H04A-HL13 structural-durability pair. Durability changes remain descriptive and do not expand the frozen housing weak-IV outcome family.

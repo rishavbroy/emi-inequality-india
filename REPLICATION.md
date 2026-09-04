@@ -35,13 +35,13 @@ The canonical raw source directories are:
 - `data/raw/district_boundaries_2020/`
 - `data/raw/district_changes/`
 
-Census 2001 and 2011 state/UT workbooks in the tracked acquisition manifests can be restored without redownloading nonempty files already present:
+Census 1991, 2001, and 2011 workbooks in the tracked acquisition manifests can be restored without redownloading nonempty files already present:
 
 ```bash
 make download-census-tables
 ```
 
-This runs `bash scripts/download_census_tables.sh`, which discovers and processes every `data/metadata/census_*_download_manifest.tsv` by default (currently 1991, 2001, and 2011). The downloader creates missing destination directories, contacts Census of India only for missing or empty files, and writes through a temporary `.part` file before the final rename. A specific manifest can still be supplied explicitly as a script argument.
+This runs `bash scripts/download_census_tables.sh`, which discovers and processes every `data/metadata/census_*_download_manifest.tsv` by default (1991, 2001, and 2011). The downloader creates missing destination directories, contacts Census of India only for missing or empty files, and writes through a temporary `.part` file before the final rename. Acquisition manifests may include source families with narrower published state coverage, such as Scheduled Tribe language tables; readers must declare that scope explicitly rather than assuming 35 files. A specific manifest can still be supplied explicitly as a script argument.
 
 The 2001 acquisition manifest stores H-04 Appendix (`PC01_H04a`) under `data/raw/census_2001/housing/H04A/`. All 35 workbooks have been inspected: the permanent/semi-permanent/temporary/unclassifiable partition and temporary serviceability subpartition close exactly, and all 593 district household totals match Census 2001 H-09. H04A and Census 2011 HL-13 therefore form the active structural-durability longitudinal pair; durability changes remain descriptive rather than expanding the fixed housing weak-IV registry.
 
