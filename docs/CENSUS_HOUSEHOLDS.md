@@ -1,10 +1,10 @@
 # Census household human-capital and worker-intensity diagnostics
 
-This extended Census-2011 module activates HH-08, HH-10, and HH-11 as district-level post-treatment household mechanisms. It decodes published counts on the native 640-district Census-2011 geography, validates their independent household universes, pools counts only through the common complete deterministic 2011-to-2001 transition, and constructs a compact set of household-level human-capital and labor-intensity measures afterward.
+This extended module constructs concept-matched Census-2001 to Census-2011 household-capacity changes from HH-09/HH-13/HH-15 and HH-08/HH-10/HH-11. Table-specific readers validate the native published accounting before any geography operation. Census-2011 counts are then pooled only through the common complete deterministic 2011-to-2001 transition; Census-2001 rows already live on the target geography. Shares are constructed only after the relevant counts have been validated and, for 2011, pooled.
 
-The tracked Census-2001 acquisition manifest now also includes HH-09, HH-13, HH-15, and HH-15 Appendix, the predeclared candidate baselines for literacy depth, matriculate/graduate access, and worker intensity. These files are **acquisition-ready, not analysis-active**: no 2001-to-2011 change is constructed until actual workbooks confirm the row/category layout and an exact numerator/denominator mapping to the 2011 measures. In particular, HH-15's top-coded worker cells must not be used to fabricate exact marginal-worker counts.
+The raw 2001 workbooks confirm exact matches for literacy-count categories, matriculate/graduate household access, and household worker-count categories across all 593 Census-2001 districts. HH-15 Appendix independently reproduces the HH-15 worker-count partition and is used as a source-integrity check. The published Odisha HH-13 workbook contains a blank spacer before its numeric block; the reader detects that row-wise layout shift from the data rather than hard-coding a state-specific correction. The longitudinal registry deliberately excludes `workers_per_household`, marginal-worker shares, and short-marginal shares: 2001 HH-15 top-codes worker counts at `4+` and does not publish the 2011 HH-11 marginal-worker decomposition, so those changes cannot be recovered exactly.
 
-Until that validation is complete, the active HH-08/HH-10/HH-11 objects remain 2011-only mechanism descriptors. They are **not** preferred controls, 2001-to-2011 changes, or identified mediation effects. Given the weak scalar-IV first stages already documented for the Census mechanism sample, the module does not automatically add a new IV outcome family.
+These household-capacity changes remain descriptive post-treatment evidence. They are **not** preferred controls or identified mediation effects, and the module does not automatically create another weak-IV outcome family.
 
 ## HH-08: literacy depth
 
@@ -54,9 +54,12 @@ All three attached table families contain all 640 Census-2011 districts. After s
 
 ## Persisted diagnostics
 
-The branch deliberately persists only two forensic artifacts under `outputs/diagnostics/extended/census_households/`:
+The branch persists a compact measurement bundle under `outputs/diagnostics/extended/census_households/`:
 
-- `household_2011_harmonized_2001.csv`: the harmonized count and measure table;
-- `source_validation_2011.csv`: exact cross-table source reconciliations.
+- `household_2001.csv`: validated 2001 baseline counts and shares;
+- `household_2011_harmonized_2001.csv`: harmonized 2011 counts and shares;
+- `household_change_2011_2001.csv`: exact common-concept share changes;
+- `change_coverage.csv`: finite baseline/follow-up/change coverage by concept;
+- `source_validation_2001.csv` and `source_validation_2011.csv`: exact within-vintage source reconciliations.
 
-No separate coverage file or household-specific estimator output is written because reconstruction provenance already travels with the harmonized rows and no new inferential family is introduced in this phase.
+No household-specific estimator output is written in this phase. The purpose is measurement and narrative validation, not another weak-IV search grid.
