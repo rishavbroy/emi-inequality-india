@@ -1,14 +1,15 @@
-# Update checksums for tracked metadata and processed data files.
+# Update checksums for tracked metadata files.
 
-paths <- c(
-  list.files("data/metadata", pattern = "\\.(csv|tsv)$", full.names = TRUE),
-  list.files("data/processed", pattern = "\\.csv$", full.names = TRUE)
+paths <- list.files(
+  "data/metadata",
+  pattern = "\\.(csv|tsv)$",
+  full.names = TRUE
 )
 
 paths <- sort(unique(paths[file.exists(paths)]))
 paths <- setdiff(paths, "data/metadata/checksums.csv")
 if (!length(paths)) {
-  stop("No metadata or processed CSV files found for checksums.", call. = FALSE)
+  stop("No metadata CSV/TSV files found for checksums.", call. = FALSE)
 }
 
 checksums <- tools::md5sum(paths)

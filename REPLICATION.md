@@ -75,7 +75,7 @@ The only public district data products intended to be tracked at this stage are:
 - [`data/metadata/district_harmonization_crosswalk.csv`](data/metadata/district_harmonization_crosswalk.csv), the single tracked district harmonization authority
 - [`data/processed/district_panel_emi_consumption_2001_2007_2017_2020.csv`](data/processed/district_panel_emi_consumption_2001_2007_2017_2020.csv)
 
-Checksums for tracked metadata and processed CSV files are recorded in [`data/metadata/checksums.csv`](data/metadata/checksums.csv). Refresh them with:
+Checksums for tracked metadata CSV/TSV files are recorded in [`data/metadata/checksums.csv`](data/metadata/checksums.csv). Generated processed outputs are validated by the pipeline and output-contract tests rather than pinned to a pre-build checksum. Refresh them with:
 
 ```bash
 Rscript scripts/update_checksums.R
