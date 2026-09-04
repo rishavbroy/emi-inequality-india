@@ -41,6 +41,30 @@ extended_historical_target_definitions <- function() {
       format = "file"
     ),
     tar_target(
+      census_1991_st16_source_files,
+      census_1991_st16_files(paths, census_1991_download_manifest_file),
+      format = "file"
+    ),
+    tar_target(
+      census_1991_st17_district_source_files,
+      census_1991_st17_district_files(paths, census_1991_download_manifest_file),
+      format = "file"
+    ),
+    tar_target(census_1991_st16, read_census_1991_st16(census_1991_st16_source_files)),
+    tar_target(
+      census_1991_st17_districts,
+      read_census_1991_st17_districts(census_1991_st17_district_source_files)
+    ),
+    tar_target(
+      census_1991_st_language_diagnostic,
+      build_census_1991_st_language_diagnostic(census_1991_st17_districts, census_1991_st16)
+    ),
+    tar_target(
+      diag_ext_census_1991_st_language,
+      save_census_1991_st_language_diagnostic(census_1991_st_language_diagnostic),
+      format = "file"
+    ),
+    tar_target(
       census_1991_b01s_files,
       census_1991_validation_manifest_files(
         paths, "B01S", census_1991_download_manifest_file
