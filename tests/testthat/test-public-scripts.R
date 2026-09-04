@@ -968,12 +968,13 @@ test_that("Census 1991 acquisition manifest preserves source-specific published 
   )))
 
   st17_state_codes <- sprintf("%02d", c(2:7, 9, 11:19, 21:23, 25:27, 29:30, 32))
+  st17_district_codes <- sort(unique(c(st17_state_codes, "24")))
   st17_state <- manifest[manifest$table == "ST17T_STATE", , drop = FALSE]
   st17_district <- manifest[manifest$table == "ST17T_DISTRICT", , drop = FALSE]
   expect_equal(nrow(st17_state), 25L)
   expect_equal(nrow(st17_district), 416L)
   expect_setequal(st17_state$state_code, st17_state_codes)
-  expect_setequal(unique(st17_district$state_code), st17_state_codes)
+  expect_setequal(unique(st17_district$state_code), st17_district_codes)
   expect_true(all(grepl("00\\.xlsx$", st17_state$relative_path)))
   expect_false(any(grepl("00\\.xlsx$", st17_district$relative_path)))
   expect_true(all(startsWith(

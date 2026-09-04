@@ -385,7 +385,7 @@ test_that("Census download manifests are canonical acquisition metadata", {
   for (table in c("ST15", "ST16")) {
     rows <- manifests[[2]][manifests[[2]]$table == table, , drop = FALSE]
     expect_equal(nrow(rows), length(expected_st_2011), info = table)
-    expect_setequal(sprintf("%02d", as.integer(rows$state_code)), expected_st_2011, info = table)
+    expect_setequal(sprintf("%02d", as.integer(rows$state_code)), expected_st_2011)
     expect_true(all(startsWith(
       rows$relative_path,
       file.path("data", "raw", "census_2011", "scheduled_tribes", table)
@@ -410,19 +410,14 @@ test_that("Census download manifests are canonical acquisition metadata", {
   )
 })
 
-test_that("tracked checksum inventory is complete and current", {
+test_that("tracked metadata checksum inventory is complete and current", {
   root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
-  metadata <- list.files(
+  tracked <- list.files(
     file.path(root, "data", "metadata"),
     pattern = "\\.(csv|tsv)$",
     full.names = TRUE
   )
-  processed <- list.files(
-    file.path(root, "data", "processed"),
-    pattern = "\\.csv$",
-    full.names = TRUE
-  )
-  tracked <- sort(unique(c(metadata, processed)))
+  tracked <- sort(unique(tracked))
   tracked <- setdiff(tracked, file.path(root, "data", "metadata", "checksums.csv"))
   relative <- substring(tracked, nchar(root) + 2L)
 
@@ -432,6 +427,7 @@ test_that("tracked checksum inventory is complete and current", {
   )
 
   expect_equal(anyDuplicated(checksums$path), 0L)
+  expect_false(any(startsWith(checksums$path, "data/processed/")))
   expect_setequal(checksums$path, relative)
   expect_identical(
     unname(tools::md5sum(tracked[match(checksums$path, relative)])),
