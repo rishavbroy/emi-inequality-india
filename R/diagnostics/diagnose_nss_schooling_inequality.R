@@ -81,7 +81,11 @@ build_nss64_schooling_social_group_gaps <- function(panel) {
     stop("NSS-64 reference social group must be unique by district.", call. = FALSE)
   }
 
-  safe_bind_rows(lapply(nss64_schooling_disadvantaged_groups(), function(group) {
+  groups <- intersect(
+    nss64_schooling_disadvantaged_groups(),
+    unique(plain_chr(x$social_group))
+  )
+  safe_bind_rows(lapply(groups, function(group) {
     group_rows <- x[x$social_group == group, , drop = FALSE]
     ref_i <- match(group_rows$district_code_0708, reference$district_code_0708)
     safe_bind_rows(lapply(seq_len(nrow(registry)), function(j) {
