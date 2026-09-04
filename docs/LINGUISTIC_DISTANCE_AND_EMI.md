@@ -297,9 +297,12 @@ private enrollment, EMI among public-school children, and EMI among
 private-school children enter the distance regressions. Each group gap is
 regressed on the preferred historical linguistic-distance measure, the compact
 predetermined Census-2001 control vector, and state fixed effects, with
-state-clustered inference. The same five outcomes are rerun within the frozen
-Shastry Hindi-belt state definition. Holm adjustment is applied across this
-predeclared descriptive heterogeneity family.
+state-clustered inference. Gap construction carries only that explicitly
+requested predetermined control vector forward from the prepared district
+panel; it does not copy unrelated panel columns or reconstruct controls after
+the within-district contrast. The same five outcomes are rerun within the
+frozen Shastry Hindi-belt state definition. Holm adjustment is applied across
+this predeclared descriptive heterogeneity family.
 
 These are descriptive access/mechanism diagnostics, not additional endogenous
 schooling treatments and not members of the registered consumption-IV outcome
