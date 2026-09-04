@@ -71,7 +71,7 @@ test_that("distance heterogeneity estimates how within-district group gaps vary 
   gaps$group_value <- 50
   gaps$reference_value <- 50
   state_effect <- c("09" = 1, "13" = -2, "21" = 3)
-  orthogonal_noise <- rep(c(1, -2, 1), times = 3)
+  orthogonal_noise <- rep(c(1, -2, 1), each = 3)
   gaps$gap_percentage_points <-
     1.5 * gaps$ling_distance_nonzero_mean +
     unname(state_effect[gaps$state_code_2001]) + orthogonal_noise
