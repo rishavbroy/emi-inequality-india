@@ -53,15 +53,21 @@ read_census_1991_st_language_sheet <- function(path) {
   )
 }
 
+census_1991_st_language_text <- function(x) {
+  out <- trimws(plain_chr(x))
+  out[is.na(out)] <- ""
+  out
+}
+
 census_1991_st_language_count <- function(x) {
-  raw <- trimws(plain_chr(x))
+  raw <- census_1991_st_language_text(x)
   out <- num(gsub(",", "", raw, fixed = TRUE))
   out[tolower(raw) == "nil"] <- 0
   out
 }
 
 census_1991_st17_language_label <- function(x) {
-  label <- trimws(plain_chr(x))
+  label <- census_1991_st_language_text(x)
   label <- sub("^[0-9]+\\.\\s*", "", label)
   normalize_language_label(label)
 }
@@ -124,9 +130,9 @@ parse_census_1991_st17_sheet <- function(raw, state_code_1991, district_code_199
   }
 
   for (i in seq_len(nrow(raw))) {
-    first <- trimws(plain_chr(raw[[1L]][[i]]))
-    second_col <- trimws(plain_chr(raw[[2L]][[i]]))
-    third_col <- trimws(plain_chr(raw[[6L]][[i]]))
+    first <- census_1991_st_language_text(raw[[1L]][[i]])
+    second_col <- census_1991_st_language_text(raw[[2L]][[i]])
+    third_col <- census_1991_st_language_text(raw[[6L]][[i]])
 
     if (!in_all_st) {
       if (identical(first, "All Scheduled Tribes")) in_all_st <- TRUE
