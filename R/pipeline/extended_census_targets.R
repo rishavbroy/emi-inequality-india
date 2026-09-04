@@ -541,6 +541,39 @@ extended_census_target_definitions <- function() {
       format = "file"
     ),
     tar_target(
+      census_2001_hh09_files,
+      census_household_manifest_files(paths, "HH09", census_2001_download_manifest_file, census_year = 2001L),
+      format = "file"
+    ),
+    tar_target(
+      census_2001_hh13_files,
+      census_household_manifest_files(paths, "HH13", census_2001_download_manifest_file, census_year = 2001L),
+      format = "file"
+    ),
+    tar_target(
+      census_2001_hh15_files,
+      census_household_manifest_files(paths, "HH15", census_2001_download_manifest_file, census_year = 2001L),
+      format = "file"
+    ),
+    tar_target(
+      census_2001_hh15a_files,
+      census_household_manifest_files(paths, "HH15A", census_2001_download_manifest_file, census_year = 2001L),
+      format = "file"
+    ),
+    tar_target(census_household_hh09_2001_source, read_census_hh09_2001_district(census_2001_hh09_files)),
+    tar_target(census_household_hh13_2001_source, read_census_hh13_2001_district(census_2001_hh13_files)),
+    tar_target(census_household_hh15_2001_source, read_census_hh15_2001_district(census_2001_hh15_files)),
+    tar_target(census_household_hh15a_2001_source, read_census_hh15a_2001_district(census_2001_hh15a_files)),
+    tar_target(
+      census_household_2001,
+      build_census_2001_household_measures(
+        census_household_hh09_2001_source,
+        census_household_hh13_2001_source,
+        census_household_hh15_2001_source,
+        census_household_hh15a_2001_source
+      )
+    ),
+    tar_target(
       census_2011_hh08_files,
       census_household_manifest_files(paths, "HH08", census_2011_download_manifest_file),
       format = "file"
@@ -568,12 +601,22 @@ extended_census_target_definitions <- function() {
       )
     ),
     tar_target(
+      census_household_change_2011_2001,
+      build_census_household_change_measures(census_household_2001, census_household_2011)
+    ),
+    tar_target(
       census_household_diagnostics,
       build_census_household_diagnostics(
+        census_household_hh09_2001_source,
+        census_household_hh13_2001_source,
+        census_household_hh15_2001_source,
+        census_household_hh15a_2001_source,
+        census_household_2001,
         census_household_hh08_2011_source,
         census_household_hh10_2011_source,
         census_household_hh11_2011_source,
-        census_household_2011
+        census_household_2011,
+        census_household_change_2011_2001
       )
     ),
     tar_target(

@@ -152,10 +152,139 @@ test_that("household measures pool counts before constructing shares and intensi
   expect_equal(out$marginal_worker_share_workers, (40 + 30) / (190 + 120))
 })
 
-test_that("household diagnostics persist only measures and source validation", {
-  diagnostics <- build_census_household_diagnostics(
-    toy_hh08(), toy_hh10(), toy_hh11(),
-    data.frame(target_unit_2001 = "pc2001__01__01", households_total = 100)
+
+test_that("2001 household parsers preserve exact published accounting", {
+  hh09 <- data.frame(matrix("", nrow = 6, ncol = 14), stringsAsFactors = FALSE)
+  labels <- c("Total", "None", "1", "2", "3", "4+")
+  totals <- c(100, 10, 20, 25, 20, 25)
+  for (i in seq_along(labels)) {
+    hh09[i, 1:8] <- c("HH09", "01", "01", "0000", "District - Alpha (01)", "TOTAL", labels[[i]], totals[[i]])
+    hh09[i, 9:14] <- c(totals[[i]], 0, 0, 0, 0, 0)
+  }
+  expect_equal(nrow(parse_census_hh09_2001_sheet(hh09)), 6L)
+  hh09[1, 9] <- 99
+  expect_error(parse_census_hh09_2001_sheet(hh09), "exhaust each row total")
+
+  hh13 <- data.frame(matrix("", nrow = 5, ncol = 14), stringsAsFactors = FALSE)
+  categories <- c(
+    "Households with No matriculate and above", "Households with at least one  matriculate and above",
+    "Households with at least one female  matriculate and above", "Households with at least one  graduate and above",
+    "Households with at least one female graduate and above"
   )
-  expect_setequal(names(diagnostics), c("household_2011_harmonized_2001", "source_validation_2011"))
+  values <- c(60, 40, 25, 15, 8)
+  for (i in seq_along(categories)) {
+    hh13[i, 1:8] <- c("HH13", "01", "01", "0000", "District - Alpha (01)", "TOTAL", categories[[i]], values[[i]])
+    hh13[i, 9:14] <- c(values[[i]], 0, 0, 0, 0, 0)
+  }
+  hh13[1, 9:14] <- c(5, 5, 35, 10, 3, 2)
+  expect_equal(nrow(parse_census_hh13_2001_sheet(hh13)), 5L)
+  shifted <- cbind(hh13[, 1:7, drop = FALSE], "", hh13[, 8:14, drop = FALSE])
+  expect_equal(
+    parse_census_hh13_2001_sheet(shifted)[c("households", "age15_none")],
+    parse_census_hh13_2001_sheet(hh13)[c("households", "age15_none")]
+  )
+
+  hh15 <- data.frame(matrix("", nrow = 6, ncol = 13), stringsAsFactors = FALSE)
+  for (i in seq_along(labels)) {
+    hh15[i, 1:8] <- c("HH15", "01", "01", "0000", "District - Alpha (01)", "TOTAL", labels[[i]], totals[[i]])
+    hh15[i, 9:13] <- c(totals[[i]], 0, 0, 0, 0)
+  }
+  expect_equal(nrow(parse_census_hh15_2001_sheet(hh15)), 6L)
+})
+
+toy_hh09_2001 <- function() {
+  data.frame(
+    state_code = "01", district_code = "01", district_name = "Alpha",
+    households_total = 100, households_no_literate = 10, households_1_literate = 20,
+    households_2_literates = 25, households_3_literates = 20, households_4_plus_literates = 25,
+    households_with_literate_member = 90, stringsAsFactors = FALSE
+  )
+}
+
+toy_hh13_2001 <- function() {
+  data.frame(
+    state_code = "01", district_code = "01", district_name = "Alpha",
+    households_no_matriculate = 60, households_age15_plus = 98,
+    households_with_matriculate = 40, households_with_female_matriculate = 25,
+    households_with_graduate = 15, households_with_female_graduate = 8,
+    households_without_age15_plus = 2, stringsAsFactors = FALSE
+  )
+}
+
+toy_hh15_2001 <- function() {
+  data.frame(
+    state_code = "01", district_code = "01", district_name = "Alpha",
+    households_total = 100, households_no_workers = 10, households_1_worker = 30,
+    households_2_workers = 35, households_3_workers = 15, households_4_plus_workers = 10,
+    stringsAsFactors = FALSE
+  )
+}
+
+test_that("2001 HH15 Appendix validates worker categories without inventing worker totals", {
+  validation <- validate_census_2001_household_sources(
+    toy_hh09_2001(), toy_hh13_2001(), toy_hh15_2001(), toy_hh15_2001()
+  )
+  expect_true(all(validation$max_abs_difference == 0))
+
+  bad <- toy_hh15_2001()
+  bad$households_4_plus_workers <- 9
+  expect_error(
+    validate_census_2001_household_sources(toy_hh09_2001(), toy_hh13_2001(), toy_hh15_2001(), bad),
+    "counts disagree"
+  )
+})
+
+test_that("longitudinal household changes include only exact common concepts", {
+  baseline <- build_census_2001_household_measures(
+    toy_hh09_2001(), toy_hh13_2001(), toy_hh15_2001(), toy_hh15_2001()
+  )
+  followup <- data.frame(
+    target_unit_2001 = "pc2001__01__01",
+    census_2011_source_district_count = 1L,
+    census_2011_parent_reconstruction_complete = TRUE,
+    households_total = 120,
+    no_literate_share_households = .05,
+    two_plus_literate_share_households = .80,
+    four_plus_literate_share_households = .40,
+    matriculate_access_share_households_age15_plus = .50,
+    female_matriculate_access_share_households_age15_plus = .30,
+    graduate_access_share_households_age15_plus = .20,
+    female_graduate_access_share_households_age15_plus = .10,
+    workerless_share_households = .08,
+    two_plus_worker_share_households = .70,
+    four_plus_worker_share_households = .15,
+    workers_per_household = 2.5,
+    marginal_worker_share_workers = .2,
+    stringsAsFactors = FALSE
+  )
+  out <- build_census_household_change_measures(baseline, followup)
+  expect_equal(out$no_literate_share_households_change_2011_2001, .05 - .10)
+  expect_equal(out$workerless_share_households_change_2011_2001, .08 - .10)
+  expect_false(any(c(
+    "workers_per_household_change_2011_2001",
+    "marginal_worker_share_workers_change_2011_2001"
+  ) %in% names(out)))
+  expect_setequal(
+    sub("_change_2011_2001$", "", grep("_change_2011_2001$", names(out), value = TRUE)),
+    census_household_longitudinal_share_columns()
+  )
+})
+
+test_that("household diagnostics retain both vintages, exact changes, and source validation", {
+  baseline <- build_census_2001_household_measures(
+    toy_hh09_2001(), toy_hh13_2001(), toy_hh15_2001(), toy_hh15_2001()
+  )
+  followup <- baseline[c("target_unit_2001", census_household_longitudinal_share_columns())]
+  followup$census_2011_source_district_count <- 1L
+  followup$census_2011_parent_reconstruction_complete <- TRUE
+  followup$households_total <- 100
+  change <- build_census_household_change_measures(baseline, followup)
+  diagnostics <- build_census_household_diagnostics(
+    toy_hh09_2001(), toy_hh13_2001(), toy_hh15_2001(), toy_hh15_2001(), baseline,
+    toy_hh08(), toy_hh10(), toy_hh11(), followup, change
+  )
+  expect_setequal(names(diagnostics), c(
+    "household_2001", "household_2011_harmonized_2001", "household_change_2011_2001",
+    "change_coverage", "source_validation_2001", "source_validation_2011"
+  ))
 })

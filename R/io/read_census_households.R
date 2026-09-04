@@ -1,12 +1,24 @@
 # Census 2011 household human-capital and worker-intensity tables.
 
-census_household_manifest_files <- function(paths, table, manifest_file = NULL) {
+census_household_manifest_files <- function(paths, table, manifest_file = NULL, census_year = 2011L) {
+  census_year <- as.integer(census_year)
   table <- toupper(trimws(plain_chr(table)))
-  supported <- c("HH08", "HH10", "HH11")
-  if (length(table) != 1L || is.na(table) || !table %in% supported) {
-    stop("Census 2011 household reader supports: HH08, HH10, HH11.", call. = FALSE)
+  supported <- list(
+    `2001` = c("HH09", "HH13", "HH15", "HH15A"),
+    `2011` = c("HH08", "HH10", "HH11")
+  )
+  valid <- supported[[as.character(census_year)]]
+  if (is.null(valid) || length(table) != 1L || is.na(table) || !table %in% valid) {
+    stop(
+      "Census household reader supports 2001 HH09/HH13/HH15/HH15A and 2011 HH08/HH10/HH11.",
+      call. = FALSE
+    )
   }
-  census_manifest_files(paths, 2011L, table, manifest_file)
+  census_manifest_files(paths, census_year, table, manifest_file)
+}
+
+normalize_census_household_category <- function(x) {
+  gsub("[[:space:]]+", " ", trimws(plain_chr(x)))
 }
 
 read_census_household_sheet <- function(path) {
@@ -19,6 +31,8 @@ read_census_household_sheet <- function(path) {
 
 summarise_census_household_rows <- function(rows, labels, label) {
   x <- safe_df(rows)
+  x$category <- normalize_census_household_category(x$category)
+  labels <- normalize_census_household_category(labels)
   key <- paste(x$state_code, x$district_code, x$category, sep = "|")
   if (anyDuplicated(key)) stop(label, " contains duplicate district-category rows.", call. = FALSE)
   groups <- split(seq_len(nrow(x)), paste(x$state_code, x$district_code, sep = "|"))
@@ -43,7 +57,7 @@ parse_census_hh08_2011_sheet <- function(raw) {
     district_code = normalize_census_code(raw[[3L]], 3L),
     district_name = clean_census_district_label(raw[[4L]]),
     residence = trimws(plain_chr(raw[[5L]])),
-    category = trimws(plain_chr(raw[[6L]])),
+    category = normalize_census_household_category(raw[[6L]]),
     households = num(raw[[7L]]),
     size_lt3 = num(raw[[8L]]), size_3 = num(raw[[9L]]), size_4 = num(raw[[10L]]),
     size_5 = num(raw[[11L]]), size_6 = num(raw[[12L]]), size_7_plus = num(raw[[13L]]),
@@ -88,15 +102,15 @@ parse_census_hh10_2011_sheet <- function(raw) {
   out <- data.frame(
     table = trimws(plain_chr(raw[[1L]])), state_code = normalize_census_code(raw[[2L]], 2L),
     district_code = normalize_census_code(raw[[3L]], 3L), district_name = clean_census_district_label(raw[[4L]]),
-    residence = trimws(plain_chr(raw[[5L]])), category = trimws(plain_chr(raw[[6L]])),
+    residence = trimws(plain_chr(raw[[5L]])), category = normalize_census_household_category(raw[[6L]]),
     households = num(raw[[7L]]), households_age15_plus = num(raw[[8L]]),
     size_1 = num(raw[[9L]]), size_2 = num(raw[[10L]]), size_3_6 = num(raw[[11L]]),
     size_7_10 = num(raw[[12L]]), size_11_plus = num(raw[[13L]]), stringsAsFactors = FALSE
   )
   labels <- c(
     "Households with atleast one member literate", "Households with No matriculate and above",
-    "Households with at least one  matriculate and above", "Households with at least one male  matriculate and above",
-    "Households with at least one female  matriculate and above", "Households with at least one  graduate and above",
+    "Households with at least one matriculate and above", "Households with at least one male matriculate and above",
+    "Households with at least one female matriculate and above", "Households with at least one graduate and above",
     "Households with at least one male graduate and above", "Households with at least one female graduate and above"
   )
   keep <- out$table == "HH10" & !is.na(out$state_code) & !is.na(out$district_code) &
@@ -116,10 +130,10 @@ summarise_census_hh10_2011_district <- function(rows) {
   labels <- c(
     literate = "Households with atleast one member literate",
     no_matriculate = "Households with No matriculate and above",
-    matriculate = "Households with at least one  matriculate and above",
-    male_matriculate = "Households with at least one male  matriculate and above",
-    female_matriculate = "Households with at least one female  matriculate and above",
-    graduate = "Households with at least one  graduate and above",
+    matriculate = "Households with at least one matriculate and above",
+    male_matriculate = "Households with at least one male matriculate and above",
+    female_matriculate = "Households with at least one female matriculate and above",
+    graduate = "Households with at least one graduate and above",
     male_graduate = "Households with at least one male graduate and above",
     female_graduate = "Households with at least one female graduate and above"
   )
@@ -155,7 +169,7 @@ parse_census_hh11_2011_sheet <- function(raw) {
   out <- data.frame(
     table = trimws(plain_chr(raw[[1L]])), state_code = normalize_census_code(raw[[2L]], 2L),
     district_code = normalize_census_code(raw[[3L]], 3L), district_name = clean_census_district_label(raw[[4L]]),
-    residence = trimws(plain_chr(raw[[5L]])), category = trimws(plain_chr(raw[[6L]])),
+    residence = trimws(plain_chr(raw[[5L]])), category = normalize_census_household_category(raw[[6L]]),
     households = num(raw[[7L]]), workers_total = num(raw[[8L]]), main_workers = num(raw[[9L]]),
     marginal_workers_3_6_months = num(raw[[10L]]), marginal_workers_lt3_months = num(raw[[11L]]),
     size_1 = num(raw[[12L]]), size_2 = num(raw[[13L]]), size_3_6 = num(raw[[14L]]),
@@ -207,3 +221,159 @@ read_census_household_district_files <- function(files, parser, summariser, labe
 read_census_hh08_2011_district <- function(files) read_census_household_district_files(files, parse_census_hh08_2011_sheet, summarise_census_hh08_2011_district, "Census HH08")
 read_census_hh10_2011_district <- function(files) read_census_household_district_files(files, parse_census_hh10_2011_sheet, summarise_census_hh10_2011_district, "Census HH10")
 read_census_hh11_2011_district <- function(files) read_census_household_district_files(files, parse_census_hh11_2011_sheet, summarise_census_hh11_2011_district, "Census HH11")
+
+
+parse_census_hh09_2001_sheet <- function(raw) {
+  raw <- safe_df(raw)
+  if (ncol(raw) < 14L) stop("Census 2001 HH09 sheet has fewer than 14 columns.", call. = FALSE)
+  out <- data.frame(
+    table = trimws(plain_chr(raw[[1L]])), state_code = normalize_census_code(raw[[2L]], 2L),
+    district_code = normalize_census_code(raw[[3L]], 2L), district_name = clean_census_district_label(raw[[5L]]),
+    residence = trimws(plain_chr(raw[[6L]])), category = normalize_census_household_category(raw[[7L]]),
+    households = num(raw[[8L]]), size_lt3 = num(raw[[9L]]), size_3 = num(raw[[10L]]),
+    size_4 = num(raw[[11L]]), size_5 = num(raw[[12L]]), size_6 = num(raw[[13L]]),
+    size_7_plus = num(raw[[14L]]), stringsAsFactors = FALSE
+  )
+  keep <- out$table == "HH09" & !is.na(out$state_code) & !is.na(out$district_code) &
+    out$district_code != "00" & toupper(out$residence) == "TOTAL" &
+    out$category %in% c("Total", "None", "1", "2", "3", "4+")
+  out <- out[keep %in% TRUE, , drop = FALSE]
+  sizes <- as.matrix(data.frame(lapply(out[c("size_lt3", "size_3", "size_4", "size_5", "size_6", "size_7_plus")], num), check.names = FALSE))
+  if (any(!is.finite(out$households)) || any(out$households < 0) || any(!is.finite(sizes)) ||
+      any(sizes < 0) || any(rowSums(sizes) != out$households)) {
+    stop("Census 2001 HH09 household-size cells must exhaust each row total.", call. = FALSE)
+  }
+  out
+}
+
+summarise_census_hh09_2001_district <- function(rows) {
+  rows <- safe_df(rows)
+  labels <- c("Total", "None", "1", "2", "3", "4+")
+  groups <- summarise_census_household_rows(rows, labels, "Census 2001 HH09")
+  out <- safe_bind_rows(lapply(groups, function(part) {
+    values <- setNames(num(part$households), part$category)
+    if (values[["Total"]] != sum(values[c("None", "1", "2", "3", "4+")])) {
+      stop("Census 2001 HH09 literacy-count categories do not exhaust total households.", call. = FALSE)
+    }
+    data.frame(
+      state_code = part$state_code[[1L]], district_code = part$district_code[[1L]],
+      district_name = part$district_name[[1L]], households_total = values[["Total"]],
+      households_no_literate = values[["None"]], households_1_literate = values[["1"]],
+      households_2_literates = values[["2"]], households_3_literates = values[["3"]],
+      households_4_plus_literates = values[["4+"]],
+      households_with_literate_member = values[["Total"]] - values[["None"]], stringsAsFactors = FALSE
+    )
+  }))
+  out
+}
+
+parse_census_hh13_2001_sheet <- function(raw) {
+  raw <- safe_df(raw)
+  if (ncol(raw) < 14L) stop("Census 2001 HH13 sheet has fewer than 14 columns.", call. = FALSE)
+  # Odisha's published workbook has one blank spacer before the numeric block.
+  # Select the block row-wise instead of hard-coding a state exception.
+  shifted <- ncol(raw) >= 15L & !is.finite(num(raw[[8L]])) & is.finite(num(raw[[9L]]))
+  pick <- function(regular, shifted_col) {
+    out <- num(raw[[regular]])
+    if (any(shifted %in% TRUE)) out[shifted %in% TRUE] <- num(raw[[shifted_col]])[shifted %in% TRUE]
+    out
+  }
+  out <- data.frame(
+    table = trimws(plain_chr(raw[[1L]])), state_code = normalize_census_code(raw[[2L]], 2L),
+    district_code = normalize_census_code(raw[[3L]], 2L), district_name = clean_census_district_label(raw[[5L]]),
+    residence = trimws(plain_chr(raw[[6L]])), category = normalize_census_household_category(raw[[7L]]),
+    households = pick(8L, 9L), age15_1 = pick(9L, 10L), age15_2 = pick(10L, 11L),
+    age15_3_6 = pick(11L, 12L), age15_7_10 = pick(12L, 13L), age15_11_plus = pick(13L, 14L),
+    age15_none = pick(14L, 15L), stringsAsFactors = FALSE
+  )
+  labels <- c(
+    "Households with No matriculate and above", "Households with at least one matriculate and above",
+    "Households with at least one female matriculate and above", "Households with at least one graduate and above",
+    "Households with at least one female graduate and above"
+  )
+  keep <- out$table == "HH13" & !is.na(out$state_code) & !is.na(out$district_code) &
+    out$district_code != "00" & toupper(out$residence) == "TOTAL" & out$category %in% labels
+  out <- out[keep %in% TRUE, , drop = FALSE]
+  sizes <- as.matrix(data.frame(lapply(out[c("age15_1", "age15_2", "age15_3_6", "age15_7_10", "age15_11_plus", "age15_none")], num), check.names = FALSE))
+  if (any(!is.finite(out$households)) || any(out$households < 0) || any(!is.finite(sizes)) ||
+      any(sizes < 0) || any(rowSums(sizes) != out$households)) {
+    stop("Census 2001 HH13 age-15+ household cells must exhaust each row total.", call. = FALSE)
+  }
+  out
+}
+
+summarise_census_hh13_2001_district <- function(rows) {
+  labels <- c(
+    no_matriculate = "Households with No matriculate and above",
+    matriculate = "Households with at least one matriculate and above",
+    female_matriculate = "Households with at least one female matriculate and above",
+    graduate = "Households with at least one graduate and above",
+    female_graduate = "Households with at least one female graduate and above"
+  )
+  groups <- summarise_census_household_rows(rows, unname(labels), "Census 2001 HH13")
+  safe_bind_rows(lapply(groups, function(part) {
+    by_label <- setNames(seq_len(nrow(part)), part$category)
+    value <- function(id) num(part$households[by_label[[labels[[id]]]]])[[1L]]
+    none15 <- function(id) num(part$age15_none[by_label[[labels[[id]]]]])[[1L]]
+    no_mat <- value("no_matriculate"); mat <- value("matriculate")
+    female_mat <- value("female_matriculate"); grad <- value("graduate"); female_grad <- value("female_graduate")
+    if (female_mat > mat || grad > mat || female_grad > grad || female_grad > female_mat ||
+        any(vapply(c("matriculate", "female_matriculate", "graduate", "female_graduate"), none15, numeric(1)) != 0)) {
+      stop("Census 2001 HH13 education subset counts violate their published nesting.", call. = FALSE)
+    }
+    data.frame(
+      state_code = part$state_code[[1L]], district_code = part$district_code[[1L]], district_name = part$district_name[[1L]],
+      households_no_matriculate = no_mat, households_age15_plus = no_mat - none15("no_matriculate") + mat,
+      households_with_matriculate = mat, households_with_female_matriculate = female_mat,
+      households_with_graduate = grad, households_with_female_graduate = female_grad,
+      households_without_age15_plus = none15("no_matriculate"), stringsAsFactors = FALSE
+    )
+  }))
+}
+
+parse_census_hh15_2001_sheet <- function(raw, table = "HH15") {
+  raw <- safe_df(raw)
+  if (ncol(raw) < 13L) stop("Census 2001 HH15 sheet has fewer than 13 columns.", call. = FALSE)
+  out <- data.frame(
+    table = trimws(plain_chr(raw[[1L]])), state_code = normalize_census_code(raw[[2L]], 2L),
+    district_code = normalize_census_code(raw[[3L]], 2L), district_name = clean_census_district_label(raw[[5L]]),
+    residence = trimws(plain_chr(raw[[6L]])), category = normalize_census_household_category(raw[[7L]]),
+    households = num(raw[[8L]]), aux_1 = num(raw[[9L]]), aux_2 = num(raw[[10L]]),
+    aux_3 = num(raw[[11L]]), aux_4 = num(raw[[12L]]), aux_5 = num(raw[[13L]]), stringsAsFactors = FALSE
+  )
+  keep <- out$table == table & !is.na(out$state_code) & !is.na(out$district_code) & out$district_code != "00" &
+    toupper(out$residence) == "TOTAL" & out$category %in% c("Total", "None", "1", "2", "3", "4+")
+  out <- out[keep %in% TRUE, , drop = FALSE]
+  aux <- as.matrix(data.frame(lapply(out[c("aux_1", "aux_2", "aux_3", "aux_4", "aux_5")], num), check.names = FALSE))
+  if (any(!is.finite(out$households)) || any(out$households < 0) || any(!is.finite(aux)) ||
+      any(aux < 0) || any(rowSums(aux) != out$households)) {
+    stop("Census 2001 HH15 auxiliary cells must exhaust each row total.", call. = FALSE)
+  }
+  out
+}
+
+summarise_census_hh15_2001_district <- function(rows, label = "Census 2001 HH15") {
+  groups <- summarise_census_household_rows(rows, c("Total", "None", "1", "2", "3", "4+"), label)
+  safe_bind_rows(lapply(groups, function(part) {
+    values <- setNames(num(part$households), part$category)
+    if (values[["Total"]] != sum(values[c("None", "1", "2", "3", "4+")])) {
+      stop(label, " worker-count categories do not exhaust total households.", call. = FALSE)
+    }
+    data.frame(
+      state_code = part$state_code[[1L]], district_code = part$district_code[[1L]], district_name = part$district_name[[1L]],
+      households_total = values[["Total"]], households_no_workers = values[["None"]],
+      households_1_worker = values[["1"]], households_2_workers = values[["2"]],
+      households_3_workers = values[["3"]], households_4_plus_workers = values[["4+"]], stringsAsFactors = FALSE
+    )
+  }))
+}
+
+read_census_hh09_2001_district <- function(files) read_census_household_district_files(files, parse_census_hh09_2001_sheet, summarise_census_hh09_2001_district, "Census 2001 HH09")
+read_census_hh13_2001_district <- function(files) read_census_household_district_files(files, parse_census_hh13_2001_sheet, summarise_census_hh13_2001_district, "Census 2001 HH13")
+read_census_hh15_2001_district <- function(files) read_census_household_district_files(files, parse_census_hh15_2001_sheet, summarise_census_hh15_2001_district, "Census 2001 HH15")
+read_census_hh15a_2001_district <- function(files) read_census_household_district_files(
+  files,
+  function(raw) parse_census_hh15_2001_sheet(raw, "HH15A"),
+  function(rows) summarise_census_hh15_2001_district(rows, "Census 2001 HH15 Appendix"),
+  "Census 2001 HH15 Appendix"
+)
