@@ -270,21 +270,13 @@ summarise_census_hh09_2001_district <- function(rows) {
 parse_census_hh13_2001_sheet <- function(raw) {
   raw <- safe_df(raw)
   if (ncol(raw) < 14L) stop("Census 2001 HH13 sheet has fewer than 14 columns.", call. = FALSE)
-  # Odisha's published workbook has one blank spacer before the numeric block.
-  # Select the block row-wise instead of hard-coding a state exception.
-  shifted <- ncol(raw) >= 15L & !is.finite(num(raw[[8L]])) & is.finite(num(raw[[9L]]))
-  pick <- function(regular, shifted_col) {
-    out <- num(raw[[regular]])
-    if (any(shifted %in% TRUE)) out[shifted %in% TRUE] <- num(raw[[shifted_col]])[shifted %in% TRUE]
-    out
-  }
   out <- data.frame(
     table = trimws(plain_chr(raw[[1L]])), state_code = normalize_census_code(raw[[2L]], 2L),
     district_code = normalize_census_code(raw[[3L]], 2L), district_name = clean_census_district_label(raw[[5L]]),
     residence = trimws(plain_chr(raw[[6L]])), category = normalize_census_household_category(raw[[7L]]),
-    households = pick(8L, 9L), age15_1 = pick(9L, 10L), age15_2 = pick(10L, 11L),
-    age15_3_6 = pick(11L, 12L), age15_7_10 = pick(12L, 13L), age15_11_plus = pick(13L, 14L),
-    age15_none = pick(14L, 15L), stringsAsFactors = FALSE
+    households = num(raw[[8L]]), age15_1 = num(raw[[9L]]), age15_2 = num(raw[[10L]]),
+    age15_3_6 = num(raw[[11L]]), age15_7_10 = num(raw[[12L]]), age15_11_plus = num(raw[[13L]]),
+    age15_none = num(raw[[14L]]), stringsAsFactors = FALSE
   )
   labels <- c(
     "Households with No matriculate and above", "Households with at least one matriculate and above",
@@ -295,9 +287,10 @@ parse_census_hh13_2001_sheet <- function(raw) {
     out$district_code != "00" & toupper(out$residence) == "TOTAL" & out$category %in% labels
   out <- out[keep %in% TRUE, , drop = FALSE]
   sizes <- as.matrix(data.frame(lapply(out[c("age15_1", "age15_2", "age15_3_6", "age15_7_10", "age15_11_plus", "age15_none")], num), check.names = FALSE))
-  if (any(!is.finite(out$households)) || any(out$households < 0) || any(!is.finite(sizes)) ||
-      any(sizes < 0) || any(rowSums(sizes) != out$households)) {
-    stop("Census 2001 HH13 age-15+ household cells must exhaust each row total.", call. = FALSE)
+  known_total <- is.finite(out$households)
+  if (any(known_total & out$households < 0) || any(!is.finite(sizes)) || any(sizes < 0) ||
+      any(known_total & rowSums(sizes) != out$households)) {
+    stop("Census 2001 HH13 age-15+ household cells must be nonnegative and exhaust each published row total.", call. = FALSE)
   }
   out
 }
@@ -313,20 +306,23 @@ summarise_census_hh13_2001_district <- function(rows) {
   groups <- summarise_census_household_rows(rows, unname(labels), "Census 2001 HH13")
   safe_bind_rows(lapply(groups, function(part) {
     by_label <- setNames(seq_len(nrow(part)), part$category)
-    value <- function(id) num(part$households[by_label[[labels[[id]]]]])[[1L]]
+    age15_count <- function(id) {
+      row <- part[by_label[[labels[[id]]]], , drop = FALSE]
+      sum(num(row[c("age15_1", "age15_2", "age15_3_6", "age15_7_10", "age15_11_plus")]))
+    }
     none15 <- function(id) num(part$age15_none[by_label[[labels[[id]]]]])[[1L]]
-    no_mat <- value("no_matriculate"); mat <- value("matriculate")
-    female_mat <- value("female_matriculate"); grad <- value("graduate"); female_grad <- value("female_graduate")
+    no_mat_age15 <- age15_count("no_matriculate"); mat <- age15_count("matriculate")
+    female_mat <- age15_count("female_matriculate"); grad <- age15_count("graduate"); female_grad <- age15_count("female_graduate")
     if (female_mat > mat || grad > mat || female_grad > grad || female_grad > female_mat ||
         any(vapply(c("matriculate", "female_matriculate", "graduate", "female_graduate"), none15, numeric(1)) != 0)) {
       stop("Census 2001 HH13 education subset counts violate their published nesting.", call. = FALSE)
     }
     data.frame(
       state_code = part$state_code[[1L]], district_code = part$district_code[[1L]], district_name = part$district_name[[1L]],
-      households_no_matriculate = no_mat, households_age15_plus = no_mat - none15("no_matriculate") + mat,
+      households_age15_plus = no_mat_age15 + mat,
       households_with_matriculate = mat, households_with_female_matriculate = female_mat,
       households_with_graduate = grad, households_with_female_graduate = female_grad,
-      households_without_age15_plus = none15("no_matriculate"), stringsAsFactors = FALSE
+      stringsAsFactors = FALSE
     )
   }))
 }

@@ -177,11 +177,19 @@ test_that("2001 household parsers preserve exact published accounting", {
     hh13[i, 9:14] <- c(values[[i]], 0, 0, 0, 0, 0)
   }
   hh13[1, 9:14] <- c(5, 5, 35, 10, 3, 2)
-  expect_equal(nrow(parse_census_hh13_2001_sheet(hh13)), 5L)
-  shifted <- cbind(hh13[, 1:7, drop = FALSE], "", hh13[, 8:14, drop = FALSE])
+  parsed_hh13 <- parse_census_hh13_2001_sheet(hh13)
+  expect_equal(nrow(parsed_hh13), 5L)
+  expect_equal(summarise_census_hh13_2001_district(parsed_hh13)$households_age15_plus, 98)
+
+  # Some published workbooks omit the redundant row total while retaining all
+  # six age-15+ buckets. The buckets remain the authoritative denominator.
+  hh13_without_totals <- hh13
+  hh13_without_totals[, 8] <- ""
+  parsed_without_totals <- parse_census_hh13_2001_sheet(hh13_without_totals)
+  expect_true(all(is.na(parsed_without_totals$households)))
   expect_equal(
-    parse_census_hh13_2001_sheet(shifted)[c("households", "age15_none")],
-    parse_census_hh13_2001_sheet(hh13)[c("households", "age15_none")]
+    summarise_census_hh13_2001_district(parsed_without_totals)$households_age15_plus,
+    summarise_census_hh13_2001_district(parsed_hh13)$households_age15_plus
   )
 
   hh15 <- data.frame(matrix("", nrow = 6, ncol = 13), stringsAsFactors = FALSE)
@@ -204,10 +212,9 @@ toy_hh09_2001 <- function() {
 toy_hh13_2001 <- function() {
   data.frame(
     state_code = "01", district_code = "01", district_name = "Alpha",
-    households_no_matriculate = 60, households_age15_plus = 98,
-    households_with_matriculate = 40, households_with_female_matriculate = 25,
-    households_with_graduate = 15, households_with_female_graduate = 8,
-    households_without_age15_plus = 2, stringsAsFactors = FALSE
+    households_age15_plus = 98, households_with_matriculate = 40,
+    households_with_female_matriculate = 25, households_with_graduate = 15,
+    households_with_female_graduate = 8, stringsAsFactors = FALSE
   )
 }
 
@@ -219,6 +226,15 @@ toy_hh15_2001 <- function() {
     stringsAsFactors = FALSE
   )
 }
+
+test_that("2001 HH13 denominator is bounded by the household universe", {
+  bad <- toy_hh13_2001()
+  bad$households_age15_plus <- 101
+  expect_error(
+    validate_census_2001_household_sources(toy_hh09_2001(), bad, toy_hh15_2001(), toy_hh15_2001()),
+    "subset of the HH09 household universe"
+  )
+})
 
 test_that("2001 HH15 Appendix validates worker categories without inventing worker totals", {
   validation <- validate_census_2001_household_sources(

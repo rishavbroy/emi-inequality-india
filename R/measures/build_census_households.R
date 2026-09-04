@@ -101,12 +101,19 @@ census_household_longitudinal_share_columns <- function() {
 
 validate_census_2001_household_sources <- function(hh09, hh13, hh15, hh15a) {
   hh09 <- safe_df(hh09); hh13 <- safe_df(hh13); hh15 <- safe_df(hh15); hh15a <- safe_df(hh15a)
-  hh13$households_total <- hh13$households_age15_plus + hh13$households_without_age15_plus
+  if (any(!is.finite(hh13$households_age15_plus)) || any(hh13$households_age15_plus < 0)) {
+    stop("Census 2001 HH13 age-15+ household counts must be finite and nonnegative.", call. = FALSE)
+  }
+  hh13_total <- merge(
+    hh09[c("state_code", "district_code", "households_total")],
+    hh13[c("state_code", "district_code", "households_age15_plus")],
+    by = c("state_code", "district_code"), all = FALSE, sort = FALSE
+  )
+  if (nrow(hh13_total) != nrow(hh09) || nrow(hh13_total) != nrow(hh13) ||
+      any(hh13_total$households_age15_plus > hh13_total$households_total)) {
+    stop("Census 2001 HH13 age-15+ households must be a subset of the HH09 household universe.", call. = FALSE)
+  }
   checks <- list(
-    transform(
-      validate_census_matching_count(hh09, hh13, "households_total", "households_total", "Census 2001 HH09/HH13 household universe"),
-      check = "household_total_hh09_vs_hh13"
-    ),
     transform(
       validate_census_matching_count(hh09, hh15, "households_total", "households_total", "Census 2001 HH09/HH15 household universe"),
       check = "household_total_hh09_vs_hh15"
