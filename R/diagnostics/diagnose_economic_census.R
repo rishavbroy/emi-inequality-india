@@ -79,6 +79,7 @@ estimate_economic_census_mechanism_models <- function(
 
 build_economic_census_diagnostics <- function(
     ec05,
+    ec05_it_baseline,
     ec13,
     changes,
     district_panel,
@@ -99,6 +100,7 @@ build_economic_census_diagnostics <- function(
   )
   list(
     ec05_district_measures = safe_df(ec05),
+    ec05_it_baseline = safe_df(ec05_it_baseline),
     ec13_district_measures = safe_df(ec13),
     ec05_ec13_changes = safe_df(changes),
     mechanism_registry = mechanism$registry,
@@ -114,7 +116,7 @@ build_economic_census_diagnostics <- function(
 save_economic_census_diagnostics <- function(
     diagnostics, dir = "outputs/diagnostics/extended/economic_census") {
   measurement <- diagnostics[c(
-    "ec05_district_measures", "ec13_district_measures", "ec05_ec13_changes"
+    "ec05_district_measures", "ec05_it_baseline", "ec13_district_measures", "ec05_ec13_changes"
   )]
   c(
     write_diagnostic_bundle(measurement, dir),

@@ -182,3 +182,98 @@ read_economic_census_ddi_contract <- function(path) {
   }
   out
 }
+
+economic_census_2005_it_fwf_positions <- function() {
+  readr::fwf_positions(
+    start = c(1L, 3L, 4L, 6L, 32L, 33L, 37L, 56L),
+    end = c(2L, 3L, 5L, 7L, 32L, 36L, 37L, 60L),
+    col_names = c(
+      "schedule", "sector", "state_code", "district_code",
+      "activity", "nic_2004", "agri_class", "workers"
+    )
+  )
+}
+
+economic_census_2005_raw_members <- function(path) {
+  members <- utils::unzip(path, list = TRUE)$Name
+  keep <- grepl("(^|/)ec05st[0-9]{2}\\.txt$", members, ignore.case = TRUE)
+  members <- members[keep]
+  state_code <- sub("^.*ec05st([0-9]{2})\\.txt$", "\\1", tolower(members))
+  if (length(members) != 35L || anyDuplicated(state_code) ||
+      !setequal(state_code, sprintf("%02d", 1:35))) {
+    stop("Fifth Economic Census archive must contain one EC05 ASCII file for each state/UT code 01-35.", call. = FALSE)
+  }
+  data.frame(state_code = state_code, member = members, stringsAsFactors = FALSE)
+}
+
+summarise_economic_census_2005_it_rows <- function(raw, source_label = "Fifth Economic Census 2005") {
+  raw <- safe_df(raw)
+  required <- c("schedule", "sector", "state_code", "district_code", "activity", "nic_2004", "agri_class", "workers")
+  missing <- setdiff(required, names(raw))
+  if (length(missing)) {
+    stop(source_label, " is missing fixed-width fields: ", paste(missing, collapse = ", "), call. = FALSE)
+  }
+  raw$state_code <- normalize_census_code(raw$state_code, 2L)
+  raw$district_code <- normalize_census_code(raw$district_code, 2L)
+  raw$workers <- num(raw$workers)
+  raw$activity <- trimws(plain_chr(raw$activity))
+  raw$agri_class <- trimws(plain_chr(raw$agri_class))
+  raw$nic_2004 <- trimws(plain_chr(raw$nic_2004))
+  raw$schedule <- trimws(plain_chr(raw$schedule))
+  raw$sector <- trimws(plain_chr(raw$sector))
+
+  valid_structure <- raw$schedule %in% c("53", "54") & raw$sector %in% c("1", "2") &
+    !is.na(raw$state_code) & !is.na(raw$district_code) & raw$district_code != "00" &
+    is.finite(raw$workers) & raw$workers >= 0
+  if (any(!valid_structure)) {
+    stop(source_label, " contains malformed schedule/geography/worker fields.", call. = FALSE)
+  }
+
+  # Count establishments on their major activity only. Subsidiary-activity records are
+  # excluded so one establishment cannot contribute twice to the opportunity baseline.
+  raw <- raw[raw$activity == "1" & raw$agri_class == "2", , drop = FALSE]
+  if (!nrow(raw)) stop(source_label, " contains no major-activity non-agricultural establishments.", call. = FALSE)
+  raw$is_it <- substr(raw$nic_2004, 1L, 2L) == "72"
+  key <- paste(raw$state_code, raw$district_code, sep = "/")
+  groups <- split(seq_len(nrow(raw)), key)
+  out <- safe_bind_rows(lapply(groups, function(index) {
+    part <- raw[index, , drop = FALSE]
+    data.frame(
+      state_code = part$state_code[[1L]],
+      district_code = part$district_code[[1L]],
+      nonfarm_firms_raw = nrow(part),
+      nonfarm_employment_raw = sum(part$workers),
+      it_firms = sum(part$is_it),
+      it_employment = sum(part$workers[part$is_it]),
+      stringsAsFactors = FALSE
+    )
+  }))
+  rownames(out) <- NULL
+  out
+}
+
+read_economic_census_2005_it_member <- function(path, member) {
+  need_pkg("readr", "Fifth Economic Census fixed-width microdata")
+  con <- unz(path, member, open = "rb")
+  on.exit(close(con), add = TRUE)
+  raw <- readr::read_fwf(
+    con,
+    col_positions = economic_census_2005_it_fwf_positions(),
+    col_types = readr::cols(.default = readr::col_character()),
+    progress = FALSE,
+    name_repair = "minimal"
+  )
+  raw$workers <- num(raw$workers)
+  summarise_economic_census_2005_it_rows(raw, paste0("Fifth Economic Census member ", member))
+}
+
+read_economic_census_2005_it_baseline <- function(path) {
+  members <- economic_census_2005_raw_members(path)
+  out <- safe_bind_rows(lapply(members$member, function(member) {
+    read_economic_census_2005_it_member(path, member)
+  }))
+  if (anyDuplicated(out[c("state_code", "district_code")])) {
+    stop("Fifth Economic Census IT baseline must be unique by district.", call. = FALSE)
+  }
+  out
+}

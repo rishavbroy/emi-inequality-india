@@ -3,6 +3,22 @@
 extended_economic_census_target_definitions <- function() {
   list(
     tar_target(
+      economic_census_ec05_raw_archive,
+      manifest_file_by_id(paths, "economic_census_raw", "ec05_raw_archive", "Fifth Economic Census raw archive"),
+      format = "file"
+    ),
+    tar_target(
+      economic_census_2005_it_source,
+      read_economic_census_2005_it_baseline(economic_census_ec05_raw_archive)
+    ),
+    tar_target(
+      economic_census_2005_it_baseline,
+      build_economic_census_2005_it_baseline(
+        economic_census_2005_it_source,
+        district_lineage$admin_units_2001
+      )
+    ),
+    tar_target(
       economic_census_ec13_ddi_file,
       manifest_file_by_id(paths, "economic_census_raw", "ec13_ddi_xml", "Sixth Economic Census DDI"),
       format = "file"
@@ -56,6 +72,7 @@ extended_economic_census_target_definitions <- function() {
       economic_census_diagnostics,
       build_economic_census_diagnostics(
         economic_census_2005_district_measures,
+        economic_census_2005_it_baseline,
         economic_census_2013_district_measures,
         economic_census_2005_2013_changes,
         district_panel,

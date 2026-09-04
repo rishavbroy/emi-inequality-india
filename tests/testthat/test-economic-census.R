@@ -269,3 +269,51 @@ test_that("Economic Census mechanism registry is supported by longitudinal measu
   expect_true(all(registry$variable %in% expected))
   expect_false("informal_employment_share_change_2013_2005" %in% expected)
 })
+
+economic_census_2005_test_raw <- function() {
+  data.frame(
+    schedule = rep("53", 5L), sector = rep("1", 5L),
+    state_code = rep("09", 5L), district_code = c("01", "01", "01", "01", "02"),
+    activity = c("1", "1", "2", "1", "1"),
+    nic_2004 = c("7210", "5211", "7220", "7210", "7290"),
+    agri_class = c("2", "2", "2", "1", "2"), workers = c(10, 20, 50, 30, 5),
+    stringsAsFactors = FALSE
+  )
+}
+
+test_that("EC05 IT baseline uses major nonfarm NIC-2004 Division 72 establishments", {
+  out <- summarise_economic_census_2005_it_rows(economic_census_2005_test_raw())
+  expect_equal(nrow(out), 2L)
+  one <- out[out$district_code == "01", , drop = FALSE]
+  expect_equal(one$nonfarm_firms_raw, 2)
+  expect_equal(one$nonfarm_employment_raw, 30)
+  expect_equal(one$it_firms, 1)
+  expect_equal(one$it_employment, 10)
+
+  # Subsidiary activity and agricultural rows never enter either numerator or denominator.
+  expect_false(any(out$nonfarm_employment_raw == 80))
+})
+
+test_that("EC05 IT baseline requires exact Census-2001 district support and bounded shares", {
+  source <- data.frame(
+    state_code = c("09", "09"), district_code = c("01", "02"),
+    nonfarm_firms_raw = c(20, 10), nonfarm_employment_raw = c(100, 50),
+    it_firms = c(2, 1), it_employment = c(15, 5), stringsAsFactors = FALSE
+  )
+  admin <- data.frame(
+    level = "district", state_code = c("09", "09"), district_code = c("01", "02"),
+    state_std = "state", district_std = c("a", "b"), stringsAsFactors = FALSE
+  )
+  out <- build_economic_census_2005_it_baseline(source, admin)
+  expect_equal(out$it_firm_share_nonfarm, c(.10, .10))
+  expect_equal(out$it_employment_share_nonfarm, c(.15, .10))
+
+  expect_error(build_economic_census_2005_it_baseline(source[1, ], admin), "complete Census-2001 district registry")
+  bad <- source
+  bad$it_firms[[1L]] <- 21
+  expect_error(build_economic_census_2005_it_baseline(bad, admin), "subset accounting")
+})
+
+test_that("EC05 IT opportunity baseline stays outside the weak-IV outcome registry", {
+  expect_false(any(grepl("it_|computer", economic_census_mechanism_registry()$variable)))
+})

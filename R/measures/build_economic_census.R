@@ -178,3 +178,51 @@ build_economic_census_change_measures <- function(ec05, ec13) {
   rownames(out) <- NULL
   out
 }
+
+validate_economic_census_2005_it_baseline <- function(source) {
+  source <- safe_df(source)
+  required <- c(
+    "state_code", "district_code", "nonfarm_firms_raw", "nonfarm_employment_raw",
+    "it_firms", "it_employment"
+  )
+  missing <- setdiff(required, names(source))
+  if (length(missing)) stop("EC05 IT baseline is missing columns: ", paste(missing, collapse = ", "), call. = FALSE)
+  if (any(!stats::complete.cases(source[c("state_code", "district_code")])) ||
+      anyDuplicated(source[c("state_code", "district_code")])) {
+    stop("EC05 IT baseline requires unique complete district keys.", call. = FALSE)
+  }
+  for (column in required[-c(1L, 2L)]) {
+    value <- num(source[[column]])
+    if (any(!is.finite(value) | value < 0)) stop("EC05 IT baseline counts must be finite and nonnegative.", call. = FALSE)
+  }
+  if (any(source$nonfarm_firms_raw <= 0) || any(source$nonfarm_employment_raw <= 0) ||
+      any(source$it_firms > source$nonfarm_firms_raw) ||
+      any(source$it_employment > source$nonfarm_employment_raw)) {
+    stop("EC05 IT baseline violates establishment/employment subset accounting.", call. = FALSE)
+  }
+  source
+}
+
+build_economic_census_2005_it_baseline <- function(source, admin_units_2001) {
+  source <- validate_economic_census_2005_it_baseline(source)
+  admin <- canonical_economic_census_2001_districts(admin_units_2001)
+  source$state_code <- normalize_census_code(source$state_code, 2L)
+  source$district_code <- normalize_census_code(source$district_code, 2L)
+  source_key <- paste(source$state_code, source$district_code, sep = "/")
+  admin_key <- paste(admin$state_code, admin$district_code, sep = "/")
+  if (!setequal(source_key, admin_key)) {
+    missing <- setdiff(admin_key, source_key)
+    extra <- setdiff(source_key, admin_key)
+    stop(
+      "Official EC05 IT baseline must match the complete Census-2001 district registry; missing=",
+      length(missing), ", extra=", length(extra), ".",
+      call. = FALSE
+    )
+  }
+  out <- merge(admin, source, by = c("state_code", "district_code"), all.x = TRUE, sort = FALSE)
+  out <- out[match(admin_key, paste(out$state_code, out$district_code, sep = "/")), , drop = FALSE]
+  out$it_firm_share_nonfarm <- safe_count_share(out$it_firms, out$nonfarm_firms_raw)
+  out$it_employment_share_nonfarm <- safe_count_share(out$it_employment, out$nonfarm_employment_raw)
+  rownames(out) <- NULL
+  out
+}
