@@ -303,13 +303,18 @@ build_economic_census_2005_it_baseline <- function(
   unavailable <- unique(unavailable[!is.na(unavailable) & nzchar(unavailable)])
   mapped <- mapped[!mapped$target_unit_2001 %in% unavailable, , drop = FALSE]
   counts <- c("nonfarm_firms_raw", "nonfarm_employment_raw", "it_firms", "it_employment")
-  groups <- split(seq_len(nrow(mapped)), mapped$target_unit_2001)
-  pooled <- safe_bind_rows(lapply(groups, function(i) {
-    row <- data.frame(target_unit_2001 = mapped$target_unit_2001[[i[[1L]]]], stringsAsFactors = FALSE)
-    for (column in counts) row[[column]] <- sum(num(mapped[[column]][i]))
-    row$ec05_source_district_count <- length(i)
-    row
-  }))
+  if (nrow(mapped)) {
+    for (column in counts) mapped[[column]] <- num(mapped[[column]])
+    mapped$ec05_source_district_count <- 1L
+    pooled <- stats::aggregate(
+      mapped[c(counts, "ec05_source_district_count")],
+      by = list(target_unit_2001 = mapped$target_unit_2001),
+      FUN = sum
+    )
+  } else {
+    pooled <- mapped[FALSE, c("target_unit_2001", counts), drop = FALSE]
+    pooled$ec05_source_district_count <- integer()
+  }
 
   out <- merge(admin01, pooled, by = "target_unit_2001", all.x = TRUE, sort = FALSE)
   out <- out[match(admin01$target_unit_2001, out$target_unit_2001), , drop = FALSE]
