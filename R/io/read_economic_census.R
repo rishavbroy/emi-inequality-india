@@ -271,6 +271,27 @@ read_economic_census_2005_it_member <- function(path, member) {
   summarise_economic_census_2005_it_rows(raw, paste0("Fifth Economic Census member ", member))
 }
 
+economic_census_2005_directory <- function(path) {
+  members <- utils::unzip(path, list = TRUE)$Name
+  member <- members[grepl("(^|/)Directory\\.txt$", members, ignore.case = TRUE)]
+  if (length(member) != 1L) stop("Fifth Economic Census archive must contain one Directory.txt.", call. = FALSE)
+  con <- unz(path, member[[1L]], open = "r")
+  on.exit(close(con), add = TRUE)
+  lines <- readLines(con, warn = FALSE)
+  keep <- grepl("^[0-9]{4}", lines)
+  lines <- lines[keep]
+  out <- data.frame(
+    state_code = substr(lines, 1L, 2L),
+    district_code = substr(lines, 3L, 4L),
+    district_name = trimws(sub("[[:space:]]+[0-9]{2}[[:space:]]*$", "", substr(lines, 5L, nchar(lines)))),
+    stringsAsFactors = FALSE
+  )
+  if (anyDuplicated(out[c("state_code", "district_code")])) {
+    stop("Fifth Economic Census district directory must be unique by district code.", call. = FALSE)
+  }
+  out
+}
+
 read_economic_census_2005_it_baseline <- function(path) {
   members <- economic_census_2005_raw_members(path)
   out <- safe_bind_rows(lapply(members$member, function(member) {
@@ -278,6 +299,11 @@ read_economic_census_2005_it_baseline <- function(path) {
   }))
   if (anyDuplicated(out[c("state_code", "district_code")])) {
     stop("Fifth Economic Census IT baseline must be unique by district.", call. = FALSE)
+  }
+  directory <- economic_census_2005_directory(path)
+  out <- merge(out, directory, by = c("state_code", "district_code"), all.x = TRUE, sort = FALSE)
+  if (any(!nzchar(trimws(out$district_name))) || any(is.na(out$district_name))) {
+    stop("Fifth Economic Census IT baseline has district codes missing from Directory.txt.", call. = FALSE)
   }
   out
 }
