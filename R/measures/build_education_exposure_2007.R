@@ -171,3 +171,31 @@ merge_education_exposure_2007 <- function(x, y) {
   if (!length(keys)) stop("Education-exposure age specifications lack common district keys.", call. = FALSE)
   merge(x, y, by = keys, all = TRUE, sort = FALSE)
 }
+
+#' Stable NSS-64 social-group labels used by the schooling-access diagnostic
+nss_2007_schooling_social_groups <- function() {
+  c("Scheduled Tribe", "Scheduled Caste", "Other Backward Class", "Other")
+}
+
+#' Reuse the canonical schooling-margin builder within each NSS social group
+#'
+#' Social group is observed on the same child record as enrollment and, after
+#' the Block-4/Block-5 child join, school medium/management. Splitting the child
+#' universe before calling `build_education_exposure_2007()` guarantees that
+#' group-specific margins retain exactly the same age windows, unknown-category
+#' handling, weights, and denominator contracts as the aggregate treatment.
+build_education_exposure_2007_by_social_group <- function(selection_data) {
+  df <- safe_df(selection_data)
+  if (!nrow(df) || !"SOCIAL_GROUP" %in% names(df)) return(data.frame())
+
+  group <- plain_chr(df$SOCIAL_GROUP)
+  levels <- nss_2007_schooling_social_groups()
+  safe_bind_rows(lapply(levels, function(label) {
+    keep <- !is.na(group) & group == label
+    if (!any(keep)) return(data.frame())
+    out <- build_education_exposure_2007(df[keep, , drop = FALSE])
+    if (!nrow(out)) return(data.frame())
+    out$social_group <- label
+    out
+  }))
+}

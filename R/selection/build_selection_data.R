@@ -96,7 +96,11 @@ construct_child_level_selection_sample <- function(blocks) {
     SEX = factor(num(children$SEX), levels = c(1, 2), labels = c("Male", "Female")),
     HH_SIZE = num(children$HH_SIZE),
     RELIGION = factor(num(children$RELIGION), levels = 1:8, labels = c("Hindu", "Muslim", "Christian", "Sikh", "Jain", "Buddhist", "Zoroastrian", "Other")),
-    SOCIAL_GROUP = factor(num(children$SOCIAL_GROUP), levels = c(1, 2, 3, 9), labels = c("Scheduled Tribe", "Scheduled Caste", "Other Backward Class", "Other")),
+    SOCIAL_GROUP = factor(
+      num(children$SOCIAL_GROUP),
+      levels = c(1, 2, 3, 9),
+      labels = nss_2007_schooling_social_groups()
+    ),
     SECTOR = factor(num(children$SECTOR), levels = c(1, 2), labels = c("Rural", "Urban")),
     DIST_FROM_NEAREST_PRIMARY_CLASS = factor(
       num(children$DIST_FROM_NEAREST_PRIMARY_CLASS),
