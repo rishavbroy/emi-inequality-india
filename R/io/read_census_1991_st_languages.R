@@ -72,6 +72,14 @@ census_1991_st17_language_label <- function(x) {
   normalize_language_label(label)
 }
 
+census_1991_st17_is_third_layout_label <- function(x) {
+  label <- normalize_language_label(census_1991_st_language_text(x))
+  grepl(
+    "^(Total( Trilinguals)?|Not Speaking\\b.*|Third Language|Males?|Females?)$",
+    label, ignore.case = TRUE
+  )
+}
+
 empty_census_1991_st17_rows <- function() {
   data.frame(
     state_code_1991 = character(), district_code_1991 = character(),
@@ -193,13 +201,22 @@ parse_census_1991_st17_sheet <- function(raw, state_code_1991, district_code_199
       current$second[current_second] <- if (!length(prior) || is.na(prior)) value else max(prior, value)
     }
 
-    ignored_third <- c("Total Trilinguals", "Not Speaking A", "Third Language", "Total", "Males", "Females")
     third_language <- normalize_language_label(third_col)
-    is_third_header <- tolower(third_language) %in% tolower(ignored_third)
+    is_third_header <- census_1991_st17_is_third_layout_label(third_col)
     if (!is.na(current_second) && nzchar(third_col) && !is_third_header) {
       value <- census_1991_st_language_count(raw[[8L]][[i]])
       if (!is.finite(value) || value < 0) {
-        stop("Census 1991 ST-17 contains an invalid third-language count.", call. = FALSE)
+        stop(
+          sprintf(
+            paste0(
+              "Census 1991 ST-17 contains an invalid third-language count ",
+              "at state %s district %s row %d: %s = %s."
+            ),
+            state_code_1991, district_code_1991, i, third_language,
+            census_1991_st_language_text(raw[[8L]][[i]])
+          ),
+          call. = FALSE
+        )
       }
       key <- paste(current_second, third_language, sep = "\r")
       prior <- current$third[key]
