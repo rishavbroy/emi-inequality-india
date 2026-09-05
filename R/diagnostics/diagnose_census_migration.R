@@ -138,6 +138,27 @@ census_migration_mechanism_registry <- function() {
       "graduate_or_technical_degree_share_among_recent_work_migrants",
       "technical_credential_share_among_recent_work_migrants"
     ),
+    construct_id = c(
+      "interstate_share_among_migrants",
+      "work_employment_share_among_migrants",
+      "education_share_among_migrants",
+      "graduate_or_technical_degree_share_among_migrants",
+      "technical_credential_share_among_migrants",
+      "outside_state_share_among_recent_work_migrants",
+      "graduate_or_technical_degree_share_among_recent_work_migrants",
+      "technical_credential_share_among_recent_work_migrants"
+    ),
+    label = c(
+      "Interstate share among migrants",
+      "Work/employment share among migrants",
+      "Education share among migrants",
+      "Graduate or technical-degree share among migrants",
+      "Technical-credential share among migrants",
+      "Outside-state share among recent work migrants",
+      "Graduate or technical-degree share among recent work migrants",
+      "Technical-credential share among recent work migrants"
+    ),
+    unit = rep("share", 8L),
     mechanism_family = c(
       "geographic_sorting", "migration_reason", "migration_reason",
       "migrant_skill", "migrant_skill", "work_migrant_sorting",

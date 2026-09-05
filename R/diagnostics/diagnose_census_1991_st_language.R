@@ -1,12 +1,32 @@
 # Descriptive pre-treatment ST language-acquisition diagnostic.
 
-census_1991_st_language_outcomes <- function() {
-  c(
-    "english_acquisition_share",
-    "hindi_acquisition_share",
-    "english_minus_hindi_acquisition_share",
-    "bilingual_share"
+census_1991_st_language_outcome_registry <- function() {
+  data.frame(
+    construct_id = paste0(
+      "census_1991_st__",
+      c(
+        "english_acquisition_share", "hindi_acquisition_share",
+        "english_minus_hindi_acquisition_share", "bilingual_share"
+      )
+    ),
+    variable = c(
+      "english_acquisition_share", "hindi_acquisition_share",
+      "english_minus_hindi_acquisition_share", "bilingual_share"
+    ),
+    label = c(
+      "English acquisition among Scheduled-Tribe mother-tongue speakers",
+      "Hindi acquisition among Scheduled-Tribe mother-tongue speakers",
+      "English-minus-Hindi acquisition share among Scheduled-Tribe mother-tongue speakers",
+      "Bilingual share among Scheduled-Tribe mother-tongue speakers"
+    ),
+    denominator = rep("scheduled_tribe_mother_tongue_speakers", 4L),
+    unit = rep("share", 4L),
+    stringsAsFactors = FALSE
   )
+}
+
+census_1991_st_language_outcomes <- function() {
+  census_1991_st_language_outcome_registry()$variable
 }
 
 census_1991_st_language_specifications <- function() {

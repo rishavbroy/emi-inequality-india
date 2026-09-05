@@ -19,6 +19,23 @@ economic_census_mechanism_registry <- function() {
       "services_employment_share_change_2013_2005",
       "manufacturing_employment_share_change_2013_2005"
     ),
+    construct_id = c(
+      "log_nonfarm_employment_change_2013_2005",
+      "log_firms_total_change_2013_2005",
+      "hired_employment_share_change_2013_2005",
+      "private_employment_share_change_2013_2005",
+      "services_employment_share_change_2013_2005",
+      "manufacturing_employment_share_change_2013_2005"
+    ),
+    label = c(
+      "Log change in nonfarm employment",
+      "Log change in establishments",
+      "Change in hired-worker employment share",
+      "Change in private-sector employment share",
+      "Change in services employment share",
+      "Change in manufacturing employment share"
+    ),
+    unit = c("log_change", "log_change", rep("share_change", 4L)),
     mechanism_family = c(
       "local_labor_demand", "establishment_growth", "employment_formality",
       "ownership_structure", "sectoral_shift", "sectoral_shift"

@@ -23,6 +23,27 @@ census_housing_mechanism_registry <- function() {
       "motorcycle_share_households_change_2011_2001",
       "car_share_households_change_2011_2001"
     ),
+    construct_id = c(
+      "electricity_share_households_change_2011_2001",
+      "no_lighting_share_households_change_2011_2001",
+      "banking_share_households_change_2011_2001",
+      "television_share_households_change_2011_2001",
+      "telephone_share_households_change_2011_2001",
+      "bicycle_share_households_change_2011_2001",
+      "motorcycle_share_households_change_2011_2001",
+      "car_share_households_change_2011_2001"
+    ),
+    label = c(
+      "Change in household electricity access",
+      "Change in households without lighting",
+      "Change in household banking access",
+      "Change in household television ownership",
+      "Change in household telephone access",
+      "Change in household bicycle ownership",
+      "Change in household motorcycle ownership",
+      "Change in household car ownership"
+    ),
+    unit = rep("share_change", 8L),
     mechanism_family = c(
       "basic_services", "basic_services", "financial_access",
       "communications_assets", "communications_assets",
