@@ -243,6 +243,33 @@ test_that("DISE diagnostic branches preserve construct registry rows", {
   expect_identical(tagged$paper_role[[1]], construct$paper_role[[1]])
 })
 
+test_that("DISE analysis identity is attached at the construct/specification boundary", {
+  construct <- dise_construct_registry()[1, , drop = FALSE]
+  rows <- data.frame(
+    specification_id = c("region_main__nonzero_mean", "state_main__nonzero_mean"),
+    estimate = c(1, 2),
+    stringsAsFactors = FALSE
+  )
+
+  first_stage <- add_dise_construct_id(rows, construct, "dise_first_stage")
+  weak_iv <- add_dise_construct_id(rows, construct, "dise_weak_iv")
+
+  expect_identical(
+    first_stage$analysis_id,
+    dise_analysis_id("dise_first_stage", construct$construct_id[[1]], rows$specification_id)
+  )
+  expect_identical(
+    weak_iv$analysis_id,
+    dise_analysis_id("dise_weak_iv", construct$construct_id[[1]], rows$specification_id)
+  )
+  expect_error(
+    add_dise_construct_id(data.frame(value = 1), construct, "dise_first_stage"),
+    "must carry specification_id",
+    fixed = TRUE
+  )
+})
+
+
 test_that("DISE IV diagnostic projection is insensitive to unrelated future outcomes", {
   constructs <- dise_construct_registry()
   validation <- dise_nss_validation_registry()

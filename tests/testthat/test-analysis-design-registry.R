@@ -175,6 +175,32 @@ test_that("analysis-design ontology inventories registered families without Cart
 })
 
 
+test_that("DISE registry IDs use the shared canonical key builder", {
+  registry <- analysis_design_dise()
+  first_stage <- registry[registry$family == "dise_first_stage", , drop = FALSE]
+  weak_iv <- registry[registry$family == "dise_weak_iv", , drop = FALSE]
+  constructs <- dise_construct_registry()
+  treatment_to_construct <- stats::setNames(constructs$construct_id, constructs$variable)
+
+  expect_identical(
+    first_stage$analysis_id,
+    dise_analysis_id(
+      "dise_first_stage",
+      unname(treatment_to_construct[first_stage$treatment]),
+      first_stage$specification_id
+    )
+  )
+  expect_identical(
+    weak_iv$analysis_id,
+    dise_analysis_id(
+      "dise_weak_iv",
+      unname(treatment_to_construct[weak_iv$treatment]),
+      weak_iv$specification_id
+    )
+  )
+})
+
+
 test_that("analysis-design ontology exposes linguistic measurement and adjustment as separate axes", {
   root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
   controls <- read_census_2001_control_registry(
