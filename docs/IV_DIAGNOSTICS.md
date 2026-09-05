@@ -185,7 +185,7 @@ The archived DISE district-report-card files do **not** identify the number of s
 
 ### Normalized inference metadata
 
-`analysis_design_registry.csv` preserves the legacy `inference` labels used by
+`analysis_design_registry.csv` preserves executable outcome/treatment/instrument strings for existing estimators while linking them, when applicable, to the canonical construct registry through stable construct-ID columns. This follows ordinary relational-registry practice: scientific identity is keyed separately from a storage name that may be generated, repeated across vintages, or contain a multi-instrument expression. The same file preserves the legacy `inference` labels used by
 existing outputs, but also separates their methodological components. State
 clustering is recorded in `covariance_id`; Anderson--Rubin or the broader weak-IV
 diagnostic suite is recorded in `weak_id_inference_id`; Holm adjustment is
