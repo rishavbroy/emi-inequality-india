@@ -1225,6 +1225,22 @@ test_that("targets process recovery never unblocks a live recorded process", {
   expect_gt(unblock, fail)
 })
 
+test_that("multi-file diagnostic writers are tracked as file targets", {
+  iv_targets <- repo_text("R", "pipeline", "extended_iv_targets.R")
+  dise_targets <- repo_text("R", "pipeline", "extended_dise_targets.R")
+
+  expect_match(
+    iv_targets,
+    "save_alternative_distance_first_stages(alternative_distance_first_stages)$path,\n      format = \"file\"",
+    fixed = TRUE
+  )
+  expect_match(
+    dise_targets,
+    ")$path,\n      format = \"file\"",
+    fixed = TRUE
+  )
+})
+
 test_that("extended IV artifacts are reachable from the diag_ext audit selector", {
   iv_targets <- paste(readLines(repo_file("R", "pipeline", "extended_iv_targets.R"), warn = FALSE), collapse = "\n")
   census_targets <- paste(readLines(repo_file("R", "pipeline", "extended_census_targets.R"), warn = FALSE), collapse = "\n")

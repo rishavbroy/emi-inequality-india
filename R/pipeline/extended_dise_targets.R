@@ -270,7 +270,8 @@ extended_dise_target_definitions <- function() {
           population = census_age_6_13_population,
           dynamic_relevance = dise_elementary_age_dynamic_relevance
         )
-      )
+      )$path,
+      format = "file"
     )
   )
 }

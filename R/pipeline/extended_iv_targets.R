@@ -607,7 +607,11 @@ extended_iv_target_definitions <- function() {
         glottolog_crosswalk = census_glottolog_crosswalk
       )
     ),
-    tar_target(diag_ext_alternative_distance_first_stages, save_alternative_distance_first_stages(alternative_distance_first_stages)),
+    tar_target(
+      diag_ext_alternative_distance_first_stages,
+      save_alternative_distance_first_stages(alternative_distance_first_stages)$path,
+      format = "file"
+    ),
     tar_target(
       census_2001_control_diagnostics,
       diagnose_census_2001_controls(
