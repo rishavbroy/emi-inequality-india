@@ -882,10 +882,9 @@ test_that("analysis-design ontology links scientific constructs by stable IDs", 
   )
 })
 test_that("post-treatment mechanism registry IDs use the shared canonical key builder", {
-  registry <- compile_analysis_design_registry()
-
+  census <- analysis_design_census_mechanisms()
   migration_registry <- census_migration_mechanism_registry()
-  migration <- registry[registry$family == "census_migration_mechanism", , drop = FALSE]
+  migration <- census[census$family == "census_migration_mechanism", , drop = FALSE]
   migration_outcome_id <- unname(stats::setNames(
     migration_registry$outcome_id, migration_registry$variable
   )[migration$outcome])
@@ -897,7 +896,7 @@ test_that("post-treatment mechanism registry IDs use the shared canonical key bu
   )
 
   economic_registry <- economic_census_mechanism_registry()
-  economic <- registry[registry$family == "economic_census_mechanism", , drop = FALSE]
+  economic <- analysis_design_economic_census_mechanisms()
   economic_outcome_id <- unname(stats::setNames(
     economic_registry$outcome_id, economic_registry$variable
   )[economic$outcome])
