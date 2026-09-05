@@ -144,12 +144,12 @@ If you want help changing the code but do not want to spend hundreds of dollars 
 1. `review.zip`
 2. the corresponding log file, usually `full_output.txt` or `full_output_with_diagnostics_benchmarks.txt`
 
-`--archive-on-error` is important: successful runs create a final `review.zip`, while failed runs create an incomplete debug archive that still contains the source tree, generated diagnostics, target metadata, and enough context for an LLM to propose a patch. The no-samples/incremental variants are cheaper for iteration; the full `--with-samples` run is the better reviewer-facing proof build.
+`--archive-on-error` is important: successful runs atomically replace the final `review.zip`, while failed runs preserve the last verified `review.zip` and write the incomplete diagnostic bundle to `review.failed.zip`. That failed-run archive still contains the source tree, generated diagnostics, target metadata, and enough context for an LLM to propose a patch. The no-samples/incremental variants are cheaper for iteration; the full `--with-samples` run is the better reviewer-facing proof build.
 
 
 ### Review archive contract
 
-Build `review.zip` through [`scripts/run_public_build_audit.sh`](scripts/run_public_build_audit.sh) or after a final public check succeeds. The packaging script stages the current working tree, omits raw data and local caches, and normally refuses to run without the `.public-final-ok` stamp produced by a final public check. When called by the audit script with `--archive-on-error`, it can create an `--allow-incomplete` debug archive after a failed run; that archive is for diagnosis, not for reviewer submission.
+Build `review.zip` through [`scripts/run_public_build_audit.sh`](scripts/run_public_build_audit.sh) or after a final public check succeeds. The packaging script stages the current working tree, omits raw data and local caches, and normally refuses to run without the `.public-final-ok` stamp produced by a final public check. When called by the audit script with `--archive-on-error`, it creates an `--allow-incomplete` `review.failed.zip` after a failed run without replacing the last verified `review.zip`; the failed archive is for diagnosis, not for reviewer submission.
 
 For fast iteration, run `bash scripts/run_public_build_audit.sh --without-samples --archive-on-error`. This mode omits [`application-samples/output/`](application-samples/output/) from `review.zip`, so it cannot accidentally package stale sample PDFs. Before a full submission or application bundle, run `bash scripts/run_public_build_audit.sh --with-samples --archive-on-error`; that mode renders application samples and requires them in `review.zip`. Because public PDFs and sample PDFs are tracked deliverables, commit intentional regenerated outputs before treating the run as a final proof.
 

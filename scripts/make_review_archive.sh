@@ -72,7 +72,10 @@ else
 fi
 
 tmpdir="$(mktemp -d)"
-trap 'rm -rf "$tmpdir"' EXIT
+out_dir="$(dirname "$out_path")"
+archive_tmpdir="$(mktemp -d "${out_dir}/.review-archive.XXXXXX")"
+tmp_archive="${archive_tmpdir}/review.zip"
+trap 'rm -rf "$tmpdir" "$archive_tmpdir"' EXIT
 
 # Copy the current working-tree versions of tracked files. This intentionally
 # avoids git archive HEAD because public QMDs/outputs may have just been
@@ -187,18 +190,22 @@ if [[ "$include_samples" != "true" && -d "$tmpdir/application-samples/output" ]]
   exit 1
 fi
 
-rm -f "$out_path"
-(cd "$tmpdir" && zip -r "$out_path" . >/dev/null)
+(cd "$tmpdir" && zip -r "$tmp_archive" . >/dev/null)
 
-if unzip -l "$out_path" | grep -E '(^|/)(_targets|renv/library|application-samples/\.work|scripts/__pycache__|\.quarto-home|\.texcache|__MACOSX|\.DS_Store)(/|$)' >/dev/null; then
+if unzip -l "$tmp_archive" | grep -E '(^|/)(_targets|renv/library|application-samples/\.work|scripts/__pycache__|\.quarto-home|\.texcache|__MACOSX|\.DS_Store)(/|$)' >/dev/null; then
   echo "Review archive contains local-only cache artifacts." >&2
   exit 1
 fi
 
-if [[ "$include_samples" != "true" ]] && unzip -l "$out_path" | grep -E '(^|/)application-samples/output/' >/dev/null; then
+if [[ "$include_samples" != "true" ]] && unzip -l "$tmp_archive" | grep -E '(^|/)application-samples/output/' >/dev/null; then
   echo "Fast review archive contains application-samples/output despite --without-samples." >&2
   exit 1
 fi
+
+# Keep the previous archive intact until the replacement has been fully built and
+# validated. tmp_archive lives beside out_path, so this move is a same-filesystem
+# rename on normal local filesystems.
+mv -f -- "$tmp_archive" "$out_path"
 
 echo "Wrote $out_path"
 if [[ "$allow_incomplete" == "true" ]]; then

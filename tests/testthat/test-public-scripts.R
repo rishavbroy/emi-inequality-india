@@ -396,6 +396,16 @@ test_that("review archives do not carry stale root-level diagnostic CSVs", {
 })
 
 
+test_that("review archive packaging replaces the destination only after validation", {
+  archive <- repo_text("scripts", "make_review_archive.sh")
+
+  expect_match(archive, 'archive_tmpdir="$(mktemp -d', fixed = TRUE)
+  expect_match(archive, 'unzip -l "$tmp_archive"', fixed = TRUE)
+  expect_match(archive, 'mv -f -- "$tmp_archive" "$out_path"', fixed = TRUE)
+  expect_false(grepl('rm -f "$out_path"', archive, fixed = TRUE))
+})
+
+
 test_that("debug review archives retain intermediate diagnostics but exclude raw data", {
   skip_if(Sys.which("git") == "")
   skip_if(Sys.which("zip") == "")
@@ -621,7 +631,7 @@ run_audit_script_fixture <- function(fixture) {
   )
 }
 
-test_that("public audit replaces stale archives and records manifest failures", {
+test_that("public audit preserves the last verified archive across failures", {
   skip_if(Sys.which("bash") == "")
   skip_if(Sys.which("git") == "")
   skip_if(Sys.which("python3") == "")
@@ -640,7 +650,8 @@ test_that("public audit replaces stale archives and records manifest failures", 
   on.exit(unlink(failed$root, recursive = TRUE, force = TRUE), add = TRUE)
   output <- suppressWarnings(run_audit_script_fixture(failed))
   expect_identical(attr(output, "status"), 7L)
-  expect_identical(readChar(file.path(failed$root, "review.zip"), 10L), "incomplete")
+  expect_identical(readChar(file.path(failed$root, "review.zip"), 5L), "stale")
+  expect_identical(readChar(file.path(failed$root, "review.failed.zip"), 10L), "incomplete")
   status <- jsonlite::read_json(file.path(failed$root, "outputs", "diagnostics", "build", "audit_status.json"))
   expect_identical(status$status, "failed")
   expect_identical(status$stage, "output-manifest")

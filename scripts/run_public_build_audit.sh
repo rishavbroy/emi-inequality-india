@@ -28,9 +28,10 @@ the active current pipeline.
 The audit restores the project R library from the tracked renv.lock before
 checking synchronization, then checks source whitespace without editing source
 files. Every review archive contains outputs/diagnostics/build/audit_status.json. Failed runs can
-still produce an explicitly failed/incomplete review archive with
---archive-on-error (or its synonym --archive-always). Successful runs create the
-verified archive only after all warning, integrity, and manifest gates pass.
+still produce an explicitly failed/incomplete `*.failed.zip` archive with
+--archive-on-error (or its synonym --archive-always), while preserving the last
+verified archive. Successful runs replace the verified archive only after all
+warning, integrity, and manifest gates pass.
 
 Use --incremental to preserve generated renders and the {targets} store while
 debugging; use a non-incremental run for the final reviewer-facing proof build.
@@ -144,12 +145,22 @@ path.write_text(json.dumps(status, indent=2, sort_keys=True) + "\n", encoding="u
 PY
 }
 
+debug_archive_out() {
+  if [[ "$archive_out" == *.zip ]]; then
+    printf '%s.failed.zip\n' "${archive_out%.zip}"
+  else
+    printf '%s.failed.zip\n' "$archive_out"
+  fi
+}
+
 make_debug_archive() {
   local label="$1"
+  local debug_out
   if [[ "$archive_on_error" != "true" && "$archive_each_step" != "true" ]]; then return 0; fi
-  echo "=== DEBUG REVIEW ARCHIVE (${label}) ==="
-  bash scripts/make_review_archive.sh "$archive_sample_flag" --allow-incomplete --output "$archive_out" || \
-    echo "Could not create debug review archive ${archive_out}" >&2
+  debug_out="$(debug_archive_out)"
+  echo "=== DEBUG REVIEW ARCHIVE (${label}): ${debug_out} ==="
+  bash scripts/make_review_archive.sh "$archive_sample_flag" --allow-incomplete --output "$debug_out" || \
+    echo "Could not create debug review archive ${debug_out}" >&2
 }
 
 checkpoint_archive() {
@@ -218,9 +229,8 @@ trap 'audit_exit_code=$?; dump_diagnostics "$audit_exit_code"' EXIT
 current_stage="initialize-diagnostics"
 echo "=== START: git state ==="
 git status --short
-# The requested archive belongs to this audit run. Remove any prior file now so
-# an early failure cannot leave a stale review.zip that looks current.
-rm -f -- "$archive_out"
+# Preserve the last verified archive until this run has successfully built and
+# validated its replacement. Failed runs write a separate *.failed.zip archive.
 bash scripts/clean_audit_workspace.sh
 write_audit_status "running" "$current_stage" 0 "pending"
 
@@ -329,4 +339,5 @@ current_stage="review-archive"
 write_audit_status "passed" "complete" 0 "verified"
 echo "=== VERIFIED REVIEW ARCHIVE ==="
 bash scripts/make_review_archive.sh "$archive_sample_flag" --output "$archive_out"
+rm -f -- "$(debug_archive_out)"
 audit_completed="true"
