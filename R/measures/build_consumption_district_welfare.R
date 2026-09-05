@@ -128,7 +128,7 @@ consumption_district_support <- function(lineaged_households) {
 read_consumption_welfare_outcomes <- function(path) {
   x <- read.csv(path, stringsAsFactors = FALSE, check.names = FALSE)
   required <- c(
-    "outcome_id", "estimand", "transform", "iv_analysis_transform", "quantile", "quantile_interval",
+    "outcome_id", "label", "unit", "estimand", "transform", "iv_analysis_transform", "quantile", "quantile_interval",
     "quantile_rule", "role", "min_households", "min_fsu",
     "min_kish_effective_n", "max_relative_se", "survey_ids"
   )
@@ -138,6 +138,9 @@ read_consumption_welfare_outcomes <- function(path) {
   }
   if (!nrow(x) || anyDuplicated(x$outcome_id)) {
     stop("Consumption welfare registry must contain unique outcome_id rows.", call. = FALSE)
+  }
+  if (any(!nzchar(trimws(plain_chr(x$label)))) || any(!nzchar(trimws(plain_chr(x$unit))))) {
+    stop("Consumption welfare registry requires nonempty labels and units.", call. = FALSE)
   }
   if (any(!x$estimand %in% c(
         "survey_mean", "survey_quantile", "survey_bottom_mean"

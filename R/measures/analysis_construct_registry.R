@@ -164,6 +164,67 @@ analysis_constructs_from_dise <- function(
 }
 
 
+
+analysis_constructs_from_consumption_welfare <- function(
+    iv_registry, welfare_registry, survey_registry, existing_construct_ids = character()) {
+  iv <- safe_df(iv_registry)
+  welfare <- safe_df(welfare_registry)
+  surveys <- validate_consumption_survey_registry(safe_df(survey_registry))
+  required_iv <- c("outcome_id", "outcome_round", "baseline_round")
+  required_welfare <- c("outcome_id", "label", "unit", "role", "survey_ids")
+  missing <- c(setdiff(required_iv, names(iv)), setdiff(required_welfare, names(welfare)))
+  if (length(missing)) {
+    stop(
+      "Consumption construct projection lacks fields: ",
+      paste(unique(missing), collapse = ", "), call. = FALSE
+    )
+  }
+
+  rounds <- unique(c(plain_chr(iv$outcome_round), plain_chr(iv$baseline_round)))
+  rounds <- rounds[nzchar(rounds)]
+  rows <- list()
+  k <- 0L
+  for (survey_id in rounds) {
+    survey <- consumption_survey_spec(surveys, survey_id)
+    available <- consumption_welfare_registry_for_survey(welfare, survey_id)
+    for (i in seq_len(nrow(available))) {
+      outcome <- available[i, , drop = FALSE]
+      construct_id <- paste("consumption", survey_id, outcome$outcome_id[[1L]], sep = "__")
+      if (construct_id %in% plain_chr(existing_construct_ids)) next
+      start_year <- format(survey$survey_start[[1L]], "%Y")
+      end_year <- format(survey$survey_end[[1L]], "%y")
+      survey_role <- plain_chr(survey$analysis_role[[1L]])
+      stage <- if (survey_role == "core_baseline") {
+        "pre_treatment_context"
+      } else if (grepl("^long_post", survey_role)) {
+        "long_run_welfare"
+      } else {
+        "post_treatment_intermediate"
+      }
+      k <- k + 1L
+      rows[[k]] <- analysis_construct_frame(
+        construct_id = construct_id,
+        variable = plain_chr(outcome$outcome_id[[1L]]),
+        label = paste(plain_chr(outcome$label[[1L]]), "—", plain_chr(survey$survey_label[[1L]])),
+        domain = "welfare", source = plain_chr(survey$survey_label[[1L]]),
+        vintage = paste0(start_year, "-", end_year), unit = plain_chr(outcome$unit[[1L]]),
+        level = "district", denominator = "survey-weighted persons",
+        universe = paste(plain_chr(survey$survey_label[[1L]]), "validated district welfare support"),
+        stage = stage, role = "outcome", preferred = outcome$role[[1L]] == "primary",
+        causal_status = if (stage == "pre_treatment_context") {
+          "predetermined_welfare_baseline"
+        } else {
+          "post_treatment_outcome"
+        },
+        comparable_to = "", alternative_to = "",
+        authority = "consumption_welfare_outcomes+consumption_survey_registry"
+      )
+    }
+  }
+  if (!length(rows)) return(empty_analysis_construct_registry())
+  safe_bind_rows(rows)
+}
+
 analysis_constructs_from_mechanism_registry <- function(
     registry, domain, source, vintage, universe, authority,
     stage = "post_treatment_intermediate", role = "outcome",
@@ -239,6 +300,9 @@ analysis_constructs_from_nss64_social_group_gaps <- function(
 compile_analysis_construct_registry <- function(
     variable_registry = read_analysis_construct_registry(),
     english_opportunity_registry = NULL,
+    consumption_iv_registry = NULL,
+    consumption_welfare_registry = NULL,
+    consumption_survey_registry = NULL,
     dise_registry = dise_construct_registry(),
     migration_registry = census_migration_mechanism_registry(),
     housing_registry = census_housing_mechanism_registry(),
@@ -261,6 +325,20 @@ compile_analysis_construct_registry <- function(
     rows[[length(rows) + 1L]] <- opportunity
     existing_variables <- union(existing_variables, opportunity$variable)
     existing_ids <- union(existing_ids, opportunity$construct_id)
+  }
+
+  if (!is.null(consumption_iv_registry)) {
+    if (is.null(consumption_welfare_registry) || is.null(consumption_survey_registry)) {
+      stop(
+        "Consumption construct projection requires welfare and survey registries.",
+        call. = FALSE
+      )
+    }
+    consumption <- analysis_constructs_from_consumption_welfare(
+      consumption_iv_registry, consumption_welfare_registry, consumption_survey_registry, existing_ids
+    )
+    rows[[length(rows) + 1L]] <- consumption
+    existing_ids <- union(existing_ids, consumption$construct_id)
   }
 
   dise <- analysis_constructs_from_dise(dise_registry, existing_variables)
