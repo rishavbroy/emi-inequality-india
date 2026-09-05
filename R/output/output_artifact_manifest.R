@@ -23,10 +23,10 @@ output_artifact_scope <- function(path) {
     "^analysis/" = "analysis_note",
     "^application-samples/output/" = "application_sample"
   )
-  vapply(as.character(path), function(x) {
+  unname(vapply(as.character(path), function(x) {
     hit <- which(vapply(names(rules), grepl, logical(1), x = x))
     if (length(hit)) unname(rules[[hit[[1L]]]]) else "other"
-  }, character(1))
+  }, character(1)))
 }
 
 relative_output_path <- function(path, root) {
