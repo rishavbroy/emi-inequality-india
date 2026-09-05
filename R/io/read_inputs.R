@@ -148,16 +148,8 @@ read_district_carveouts <- function(path) {
     check.names = FALSE
   )
   out <- repair_district_carveout_wrapped_rows(out)
-  fill_down <- function(x) {
-    if (!length(x)) return(x)
-    for (i in seq_along(x)) {
-      missing <- is.na(x[[i]]) || (is.character(x) && !nzchar(trimws(x[[i]])))
-      if (missing && i > 1L) x[[i]] <- x[[i - 1L]]
-    }
-    x
-  }
-  out$district_1991 <- fill_down(out$district_1991)
-  out$pop_1991 <- num(gsub(",", "", fill_down(out$pop_1991), fixed = TRUE))
+  out$district_1991 <- fill_down_missing(out$district_1991)
+  out$pop_1991 <- num(gsub(",", "", fill_down_missing(out$pop_1991), fixed = TRUE))
   out$pct_01in91 <- num(out$pct_01in91)
   out$pct_91in01 <- num(out$pct_91in01)
   validate_district_carveout_shares(out)

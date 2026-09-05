@@ -58,3 +58,11 @@ test_that("safe_share uses the district-control percentage-point contract", {
   expect_equal(safe_share(2, 5, scale = 1e5), 40000)
   expect_true(is.na(safe_share(1, 0)))
 })
+
+test_that("fill_down_missing carries only prior observed values", {
+  expect_identical(
+    fill_down_missing(c(NA_character_, " A ", "", NA_character_, "B", "")),
+    c(NA_character_, " A ", " A ", " A ", "B", "B")
+  )
+  expect_equal(fill_down_missing(c(NA_real_, 2, NA_real_, 4)), c(NA, 2, 2, 4))
+})

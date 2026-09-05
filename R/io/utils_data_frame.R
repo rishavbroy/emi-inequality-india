@@ -69,6 +69,16 @@ plain_chr <- function(x) {
   )
 }
 
+fill_down_missing <- function(x) {
+  if (!length(x)) return(x)
+  present <- !is.na(x)
+  if (is.character(x)) present <- present & nzchar(trimws(x))
+  source <- cummax(ifelse(present, seq_along(x), 0L))
+  fill <- !present & source > 0L
+  if (any(fill)) x[fill] <- x[source[fill]]
+  x
+}
+
 canon <- function(x) {
   trimws(gsub("\\s+", " ", gsub("[^a-z0-9]+", " ", tolower(gsub("&", " and ", plain_chr(x))))))
 }

@@ -102,14 +102,14 @@ parse_2017_district_lookup <- function(inputs) {
     drop = FALSE
   ]
   names(lookup) <- c("region_code_1718", "district_1718", "district_only_code_1718", "state_1718_raw")
-  lookup$region_code_1718 <- zoo_fill_down(as.character(lookup$region_code_1718))
+  lookup$region_code_1718 <- fill_down_missing(as.character(lookup$region_code_1718))
   lookup$district_only_code_1718 <- gsub("[()]", "", as.character(lookup$district_only_code_1718))
   lookup$district_code_1718 <- paste0(gsub("[^0-9]", "", lookup$region_code_1718), gsub("[^0-9]", "", lookup$district_only_code_1718))
   lookup$state_code_1718 <- substr(lookup$district_code_1718, 1, 2)
 
   states <- parse_2017_state_lookup(inputs)
   if (nrow(states)) lookup <- merge(lookup, states, by = "state_code_1718", all.x = TRUE, sort = FALSE)
-  if (!"state_1718" %in% names(lookup)) lookup$state_1718 <- zoo_fill_down(as.character(lookup$state_1718_raw))
+  if (!"state_1718" %in% names(lookup)) lookup$state_1718 <- fill_down_missing(as.character(lookup$state_1718_raw))
   lookup$state_17 <- lookup$state_1718
   lookup$district_17 <- lookup$district_1718
   lookup$state_18 <- lookup$state_1718
@@ -135,13 +135,4 @@ normalize_2017_state_name <- function(x) {
   out <- as.character(x)
   out[canon(out) == canon("A & N Islands")] <- "Andaman & Nicobar Islands"
   out
-}
-
-
-zoo_fill_down <- function(x) {
-  last <- NA_character_
-  for (i in seq_along(x)) {
-    if (is.na(x[[i]]) || !nzchar(x[[i]])) x[[i]] <- last else last <- x[[i]]
-  }
-  x
 }
