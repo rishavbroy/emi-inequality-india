@@ -179,6 +179,23 @@ test_that("mechanism table is a compact wide view of the validated signal data",
   expect_true(all(is.finite(district_signals)))
 })
 
+test_that("district mechanism sample only requires region for region-adjusted designs", {
+  panel <- make_district_mechanism_fixture()
+  panel$region <- NULL
+
+  expect_error(
+    prepare_district_mechanism_sample(
+      panel, "enrollment_rate_0708", controls = character()
+    ),
+    "region"
+  )
+  state_only <- prepare_district_mechanism_sample(
+    panel, "enrollment_rate_0708", controls = character(), require_region = FALSE
+  )
+  expect_false("region" %in% names(state_only))
+  expect_equal(nrow(state_only), nrow(panel))
+})
+
 test_that("ST-concentration heterogeneity family stays small and predetermined", {
   registry <- english_opportunity_st_heterogeneity_registry()
   expect_identical(

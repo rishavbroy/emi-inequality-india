@@ -38,11 +38,12 @@ prepare_district_mechanism_sample <- function(
     panel,
     outcome,
     instrument = "ling_distance_nonzero_mean",
-    controls = census_2001_main_controls()) {
+    controls = census_2001_main_controls(),
+    require_region = TRUE) {
   x <- if (inherits(panel, "sf")) sf::st_drop_geometry(panel) else safe_df(panel)
-  needed <- unique(c(
-    outcome, instrument, "target_unit_2001", "state_code_2001", "region", controls
-  ))
+  geography <- c("target_unit_2001", "state_code_2001")
+  if (isTRUE(require_region)) geography <- c(geography, "region")
+  needed <- unique(c(outcome, instrument, geography, controls))
   missing <- setdiff(needed, names(x))
   if (length(missing)) {
     stop(
@@ -54,9 +55,12 @@ prepare_district_mechanism_sample <- function(
   for (variable in numeric_vars) x[[variable]] <- num(x[[variable]])
   x$target_unit_2001 <- plain_chr(x$target_unit_2001)
   x$state_code_2001 <- plain_chr(x$state_code_2001)
-  x$region <- plain_chr(x$region)
   keep <- stats::complete.cases(x[needed]) &
-    nzchar(x$target_unit_2001) & nzchar(x$state_code_2001) & nzchar(x$region)
+    nzchar(x$target_unit_2001) & nzchar(x$state_code_2001)
+  if (isTRUE(require_region)) {
+    x$region <- plain_chr(x$region)
+    keep <- keep & nzchar(x$region)
+  }
   x <- x[keep, needed, drop = FALSE]
   rownames(x) <- NULL
   if (!nrow(x)) {
@@ -205,7 +209,8 @@ prepare_english_opportunity_st_heterogeneity_sample <- function(
     controls = english_opportunity_st_heterogeneity_controls(),
     instrument = preferred_iv_variables()$instrument) {
   x <- prepare_district_mechanism_sample(
-    panel, outcome, instrument, unique(c(controls, "st_share_2001"))
+    panel, outcome, instrument, unique(c(controls, "st_share_2001")),
+    require_region = FALSE
   )
   x$hindi_belt_2001 <- x$state_code_2001 %in% shastry_hindi_belt_state_codes()
   x$st_share_10pp <- num(x$st_share_2001) / 10
