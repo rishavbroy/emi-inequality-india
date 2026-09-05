@@ -62,7 +62,20 @@ build_output_artifact_manifest <- function(target_meta, design_registry, roots, 
   }))
   if (is.null(target_paths)) target_paths <- data.frame(target_name = character(), path = character())
   target_paths <- target_paths[target_paths$path %in% paths, , drop = FALSE]
-  if (anyDuplicated(target_paths$path)) stop("Multiple file targets claim one output path.", call. = FALSE)
+  target_paths <- unique(target_paths[c("target_name", "path")])
+  owner_count <- table(target_paths$path)
+  collisions <- names(owner_count)[owner_count > 1L]
+  if (length(collisions)) {
+    details <- vapply(collisions, function(path) {
+      owners <- sort(unique(target_paths$target_name[target_paths$path == path]))
+      paste0(path, " <- ", paste(owners, collapse = ";"))
+    }, character(1))
+    stop(
+      "Multiple file targets claim one output path: ",
+      paste(details, collapse = " | "),
+      call. = FALSE
+    )
+  }
 
   idx <- match(paths, target_paths$path)
   target_name <- ifelse(is.na(idx), "", target_paths$target_name[idx])
