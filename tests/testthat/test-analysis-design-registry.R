@@ -201,6 +201,22 @@ test_that("DISE registry IDs use the shared canonical key builder", {
 })
 
 
+test_that("district IV ontology reuses canonical diagnostic specification IDs", {
+  controls <- census_2001_control_registry()
+  specs <- iv_diagnostic_specification_registry(control_registry = controls)
+  rows <- analysis_design_from_iv(
+    specs,
+    family = "district_iv_diagnostic",
+    estimator = "iv_diagnostic_suite"
+  )
+
+  expect_identical(rows$analysis_id, specs$analysis_id)
+  expect_identical(
+    rows$analysis_id,
+    iv_analysis_id("district_iv_diagnostic", rows$specification_id)
+  )
+})
+
 test_that("analysis-design ontology exposes linguistic measurement and adjustment as separate axes", {
   root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
   controls <- read_census_2001_control_registry(

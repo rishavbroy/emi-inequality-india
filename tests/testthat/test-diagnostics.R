@@ -1094,6 +1094,9 @@ test_that("alternative linguistic-distance first stages use fixed support and jo
   expect_true("effective_f" %in% names(weak_iv$summary))
   expect_true(all(is.finite(weak_iv$summary$effective_f)))
   expect_true(all(weak_iv$summary$effective_f > 0))
+  expect_setequal(unique(weak_iv$summary$analysis_id), weak_iv$registry$analysis_id)
+  expect_true(all(weak_iv$ar_grid$analysis_id %in% weak_iv$registry$analysis_id))
+  expect_true(all(weak_iv$overidentification$analysis_id %in% weak_iv$registry$analysis_id))
   projected <- prepare_alternative_distance_panel(panel)
   projected_with_outcome <- prepare_alternative_distance_panel(
     panel,
@@ -1135,6 +1138,8 @@ test_that("alternative linguistic-distance first stages use fixed support and jo
   expect_true(is.na(augmentation_panel$real_log_consumption_change[[1]]))
   expect_equal(branched$summary, out$summary)
   expect_equal(branched$coefficients, out$coefficients)
+  expect_setequal(unique(out$summary$analysis_id), out$registry$analysis_id)
+  expect_true(all(out$coefficients$analysis_id %in% out$registry$analysis_id))
   expect_equal(branched$coverage_sensitivity, out$coverage_sensitivity)
   expect_s3_class(out, "emi_alternative_distance_first_stages")
   expect_equal(nrow(out$summary), nrow(alternative_distance_registry()))
@@ -1613,6 +1618,29 @@ test_that("absorption registry separates scientific aliases from unique executio
   )
   expect_equal(unname(observed[names(expected_aliases)]), unname(expected_aliases))
   expect_equal(sum(aliases$is_execution_alias), length(expected_aliases))
+})
+
+test_that("IV diagnostic specifications own canonical analysis IDs", {
+  specs <- iv_diagnostic_specification_registry()
+  expect_identical(
+    specs$analysis_id,
+    iv_analysis_id("district_iv_diagnostic", specs$specification_id)
+  )
+
+  result <- data.frame(
+    specification_id = specs$specification_id[1:2],
+    estimate = c(1, 2),
+    stringsAsFactors = FALSE
+  )
+  linked <- attach_iv_analysis_id(result, specs)
+  expect_identical(linked$analysis_id, specs$analysis_id[1:2])
+  expect_error(
+    attach_iv_analysis_id(
+      data.frame(specification_id = "not_registered"), specs
+    ),
+    "outside the supplied registry",
+    fixed = TRUE
+  )
 })
 
 test_that("diagnostic specification registry absorbs the control-block ladder without duplicates", {
