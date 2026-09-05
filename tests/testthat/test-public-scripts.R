@@ -298,6 +298,11 @@ test_that("public-output checks share one file contract", {
   audit <- repo_text("scripts", "audit_outputs_final.R")
 
   expect_match(contract, "required_public_render_inputs", fixed = TRUE)
+  expect_match(contract, "required_extended_diagnostic_outputs", fixed = TRUE)
+  expect_match(contract, "schooling_consumption_bridge_estimates.csv", fixed = TRUE)
+  expect_match(contract, "census_1991_st_language_estimates.csv", fixed = TRUE)
+  expect_match(contract, "nss64_social_group_distance_heterogeneity.csv", fixed = TRUE)
+  expect_match(contract, "st_concentration_heterogeneity_estimates.csv", fixed = TRUE)
   expect_match(contract, "required_final_documents", fixed = TRUE)
   expect_match(contract, "required_final_artifacts", fixed = TRUE)
   expect_match(contract, "spatial_moran_tests.csv", fixed = TRUE)
@@ -305,6 +310,8 @@ test_that("public-output checks share one file contract", {
   expect_match(contract, "multicollinearity_diagnostics.csv", fixed = TRUE)
   expect_match(contract, "anderson_rubin_candidate_designs.csv", fixed = TRUE)
   expect_match(required, "required_public_render_inputs()", fixed = TRUE)
+  expect_match(required, "required_extended_diagnostic_outputs()", fixed = TRUE)
+  expect_match(required, "--extended-diagnostics-only", fixed = TRUE)
   expect_match(final, "required_final_documents(require_application_samples)", fixed = TRUE)
   expect_match(audit, "required_final_artifacts()", fixed = TRUE)
   expect_match(audit, "Public VIF/GVIF diagnostics are unavailable", fixed = TRUE)
@@ -623,6 +630,10 @@ test_that("public build audit owns mandatory syntax and full-test gates", {
   expect_lt(test_line, pipeline_line)
   expect_true(any(grepl('trap dump_diagnostics EXIT', audit, fixed = TRUE)))
   expect_true(any(grepl('make_debug_archive "error-${current_stage}"', audit, fixed = TRUE)))
+  expect_true(any(grepl(
+    "Rscript scripts/check_required_outputs.R --extended-diagnostics-only",
+    audit, fixed = TRUE
+  )))
 })
 
 test_that("target issue printer selects columns without data-frame drop warnings", {

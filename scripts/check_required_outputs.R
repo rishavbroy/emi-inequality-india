@@ -5,15 +5,23 @@ source("scripts/public_output_contract.R", local = TRUE)
 
 args <- commandArgs(trailingOnly = TRUE)
 require_stamp <- "--require-final-stamp" %in% args
+extended_only <- "--extended-diagnostics-only" %in% args
 
 failures <- character()
 
-if (require_stamp && !file.exists(".pipeline-final-ok")) {
-  add_failure("Missing .pipeline-final-ok; run `make pipeline-final` successfully before rendering public outputs.")
-}
+if (extended_only) {
+  missing <- missing_or_empty_files(required_extended_diagnostic_outputs())
+  if (length(missing)) {
+    add_failure("Missing required extended diagnostic file(s): ", paste(missing, collapse = ", "))
+  }
+} else {
+  if (require_stamp && !file.exists(".pipeline-final-ok")) {
+    add_failure("Missing .pipeline-final-ok; run `make pipeline-final` successfully before rendering public outputs.")
+  }
 
-missing <- missing_or_empty_files(required_public_render_inputs())
-if (length(missing)) add_failure("Missing required public file(s): ", paste(missing, collapse = ", "))
+  missing <- missing_or_empty_files(required_public_render_inputs())
+  if (length(missing)) add_failure("Missing required public file(s): ", paste(missing, collapse = ", "))
+}
 
 check_bibliography_paths <- function(path) {
   if (!file.exists(path)) return()
@@ -28,16 +36,18 @@ check_bibliography_paths <- function(path) {
   }
 }
 
-for (qmd in public_qmd_sources()) check_bibliography_paths(qmd)
+if (!extended_only) {
+  for (qmd in public_qmd_sources()) check_bibliography_paths(qmd)
+}
 
-if (file.exists("paper/report.qmd")) {
+if (!extended_only && file.exists("paper/report.qmd")) {
   report <- paste(readLines("paper/report.qmd", warn = FALSE), collapse = "\n")
   if (grepl("render_public_table\\(", report) && !grepl("source_public_qmd_helpers", report, fixed = TRUE)) {
     add_failure("paper/report.qmd calls render_public_table() but does not source public QMD helpers.")
   }
 }
 
-if (!file.exists("R/output/public_qmd_helpers.R")) {
+if (!extended_only && !file.exists("R/output/public_qmd_helpers.R")) {
   add_failure("Missing shared public QMD helper file: R/output/public_qmd_helpers.R")
 }
 
@@ -46,4 +56,8 @@ if (length(failures)) {
   stop("Required public render dependencies are missing.", call. = FALSE)
 }
 
-message("Required public render dependencies exist.")
+if (extended_only) {
+  message("Required extended diagnostic outputs exist.")
+} else {
+  message("Required public render dependencies exist.")
+}

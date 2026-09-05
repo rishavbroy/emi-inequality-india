@@ -60,6 +60,21 @@ required_final_documents <- function(require_application_samples = TRUE) {
   files
 }
 
+required_extended_diagnostic_outputs <- function() {
+  c(
+    "outputs/diagnostics/extended/instrument_relevance/census_1991_st_language_coverage.csv",
+    "outputs/diagnostics/extended/instrument_relevance/census_1991_st_language_estimates.csv",
+    "outputs/diagnostics/extended/schooling_access/nss64_social_group_access_summary.csv",
+    "outputs/diagnostics/extended/schooling_access/nss64_social_group_distance_heterogeneity.csv",
+    "outputs/diagnostics/extended/mechanisms/st_concentration_heterogeneity_registry.csv",
+    "outputs/diagnostics/extended/mechanisms/st_concentration_heterogeneity_estimates.csv",
+    "outputs/diagnostics/extended/consumption/schooling_consumption_bridge_specifications.csv",
+    "outputs/diagnostics/extended/consumption/schooling_consumption_bridge_estimates.csv",
+    "outputs/diagnostics/extended/mechanisms/evidence_grid.csv",
+    "outputs/diagnostics/extended/mechanisms/family_summary.csv"
+  )
+}
+
 required_final_artifacts <- function() {
   c(
     "paper/references.bib",

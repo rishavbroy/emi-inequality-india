@@ -274,6 +274,7 @@ if [[ "$with_extended_diagnostics" == "true" ]]; then
   current_stage="extended-diagnostics"
   echo "=== EXTENDED DIAGNOSTICS ==="
   make extended-diagnostics
+  Rscript scripts/check_required_outputs.R --extended-diagnostics-only
   checkpoint_archive "after-extended-diagnostics"
 fi
 
