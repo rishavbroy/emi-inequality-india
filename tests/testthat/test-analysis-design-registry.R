@@ -178,6 +178,43 @@ test_that("analysis-design ontology exposes linguistic measurement and adjustmen
 })
 
 
+test_that("analysis-design ontology separates conditioning philosophy from control parameterization", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
+  controls <- read_census_2001_control_registry(
+    file.path(root, "data", "metadata", "census_2001_control_registry.csv")
+  )
+  opportunity <- read_english_opportunity_measure_registry(
+    file.path(root, "data", "metadata", "english_opportunity_measures.csv")
+  )
+  consumption_registry <- read_consumption_iv_outcome_registry(
+    file.path(root, "data", "metadata", "consumption_iv_outcomes.csv")
+  )
+  consumption <- compile_consumption_iv_specifications(consumption_registry, controls)
+  registry <- compile_analysis_design_registry(consumption, opportunity, controls)
+
+  diagnostic <- registry[
+    registry$family == "district_iv_diagnostic" &
+      registry$specification_id %in% c("state_main__nonzero_mean", "state_expanded__nonzero_mean"),
+    ,
+    drop = FALSE
+  ]
+  expect_equal(nrow(diagnostic), 2L)
+
+  main <- diagnostic[diagnostic$adjustment_set == "state_main", , drop = FALSE]
+  expanded <- diagnostic[diagnostic$adjustment_set == "state_expanded", , drop = FALSE]
+  expect_identical(main$control_strategy_id, "observed_exclusion_threat_adjustment")
+  expect_identical(main$control_parameterization_id, "secondary_compact_economic")
+  expect_identical(expanded$control_strategy_id, "expanded_absorption_diagnostic")
+  expect_identical(expanded$control_parameterization_id, "expanded_registry")
+
+  consumption_rows <- registry[registry$family == "consumption_iv", , drop = FALSE]
+  expect_setequal(
+    unique(consumption_rows$functional_form_id),
+    unique(consumption$estimand)
+  )
+})
+
+
 test_that("analysis-design ontology preserves estimator and sample distinctions", {
   root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
   controls <- read_census_2001_control_registry(
@@ -332,6 +369,47 @@ test_that("canonical IV rows do not duplicate scalar metadata columns", {
 })
 
 
+test_that("candidate-design admissibility and execution policy fail closed on contradictions", {
+  make <- function(
+      execution_policy = "diagnostic_only",
+      admissible = TRUE,
+      admissibility_reason = NULL) {
+    candidate_design_row(
+      candidate_id = "toy",
+      reference_section = "test",
+      analysis_family = "test",
+      design_role = "diagnostic",
+      scientific_question = "test question",
+      design_axis = "test_axis",
+      outcome_scope = "y",
+      treatment_scope = "d",
+      instrument_scope = "z",
+      adjustment_scope = "none",
+      estimator_scope = "ols",
+      execution_policy = execution_policy,
+      admissible = admissible,
+      admissibility_reason = admissibility_reason,
+      rationale = "test rationale"
+    )
+  }
+
+  expect_error(
+    candidate_design_frame(list(make(
+      admissible = FALSE,
+      admissibility_reason = "not_scientifically_admissible"
+    ))),
+    "admissibility must agree"
+  )
+  expect_error(
+    candidate_design_frame(list(make(
+      execution_policy = "do_not_estimate",
+      admissible = TRUE
+    ))),
+    "admissibility must agree"
+  )
+})
+
+
 test_that("candidate-design ledger records bounded robustness choices without Cartesian search", {
   root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
   controls <- read_census_2001_control_registry(
@@ -381,6 +459,9 @@ test_that("candidate-design ledger records bounded robustness choices without Ca
   expect_true(all(nzchar(ledger$rationale)))
   expect_true(all(nzchar(ledger$reference_section)))
   expect_true(all(nzchar(ledger$scientific_question)))
+  expect_true(all(nzchar(ledger$admissibility_reason)))
+  expect_true(all(ledger$execution_policy[!ledger$admissible] == "do_not_estimate"))
+  expect_false(any(ledger$execution_policy[ledger$admissible] == "do_not_estimate"))
   finite_counts <- is.finite(ledger$candidate_cells) & is.finite(ledger$implemented_cells) &
     is.finite(ledger$execution_cells)
   expect_true(all(ledger$execution_cells[finite_counts] <= ledger$implemented_cells[finite_counts]))
@@ -397,6 +478,16 @@ test_that("candidate-design ledger records bounded robustness choices without Ca
     nrow(iv_absorption_specification_registry(control_registry = controls))
   )
   expect_lt(absorption$execution_cells, absorption$candidate_cells)
+
+  rejected <- ledger[!ledger$admissible, , drop = FALSE]
+  expect_setequal(
+    rejected$admissibility_reason,
+    c(
+      "mechanical_cartesian_without_scientific_estimand",
+      "cross_axis_interaction_lacks_independent_theory",
+      "post_treatment_bad_control_changes_estimand"
+    )
+  )
 
   bounded <- ledger[ledger$candidate_id == "consumption_candidate_scalar_iv_grid", , drop = FALSE]
   expect_true(bounded$admissible)

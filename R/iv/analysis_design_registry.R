@@ -9,7 +9,8 @@ analysis_design_columns <- function() {
   c(
     "analysis_id", "family", "specification_id", "outcome", "treatment",
     "instrument", "instrument_vintage", "distance_measure_id",
-    "language_adjustment_id", "adjustment_set", "fixed_effect",
+    "language_adjustment_id", "adjustment_set", "control_strategy_id",
+    "control_parameterization_id", "fixed_effect", "functional_form_id",
     "estimand", "estimator", "inference", "sample_rule", "analysis_role",
     "admissible", "reason", "implemented"
   )
@@ -17,7 +18,10 @@ analysis_design_columns <- function() {
 
 analysis_design_frame <- function(...) {
   out <- data.frame(..., stringsAsFactors = FALSE, check.names = FALSE)
-  for (nm in c("distance_measure_id", "language_adjustment_id")) {
+  for (nm in c(
+      "distance_measure_id", "language_adjustment_id",
+      "control_strategy_id", "control_parameterization_id", "functional_form_id"
+  )) {
     if (!nm %in% names(out)) out[[nm]] <- rep("", nrow(out))
   }
   missing <- setdiff(analysis_design_columns(), names(out))
@@ -52,7 +56,9 @@ analysis_design_from_iv <- function(
     analysis_id = character(), family = character(), specification_id = character(),
     outcome = character(), treatment = character(), instrument = character(),
     instrument_vintage = character(), adjustment_set = character(),
-    fixed_effect = character(), estimand = character(), estimator = character(),
+    control_strategy_id = character(), control_parameterization_id = character(),
+    fixed_effect = character(), functional_form_id = character(),
+    estimand = character(), estimator = character(),
     inference = character(), sample_rule = character(), analysis_role = character(),
     admissible = logical(), reason = character(), implemented = logical()
   ))
@@ -73,6 +79,21 @@ analysis_design_from_iv <- function(
   } else {
     rep("", nrow(specs))
   }
+  control_strategy_value <- if ("control_strategy_id" %in% names(specs)) {
+    plain_chr(specs$control_strategy_id)
+  } else {
+    rep("", nrow(specs))
+  }
+  control_parameterization_value <- if ("control_parameterization_id" %in% names(specs)) {
+    plain_chr(specs$control_parameterization_id)
+  } else {
+    rep("", nrow(specs))
+  }
+  functional_form_value <- if ("estimand" %in% names(specs)) {
+    plain_chr(specs$estimand)
+  } else {
+    rep("linear", nrow(specs))
+  }
 
   analysis_design_frame(
     analysis_id = paste(family, plain_chr(specs$specification_id), sep = "__"),
@@ -89,7 +110,10 @@ analysis_design_from_iv <- function(
     distance_measure_id = distance_measure_value,
     language_adjustment_id = language_adjustment_value,
     adjustment_set = plain_chr(specs$adjustment_id),
+    control_strategy_id = control_strategy_value,
+    control_parameterization_id = control_parameterization_value,
     fixed_effect = plain_chr(specs$fixed_effect),
+    functional_form_id = functional_form_value,
     estimand = estimand_value,
     estimator = rep(estimator, nrow(specs)),
     inference = rep(inference, nrow(specs)),
@@ -165,6 +189,7 @@ analysis_design_c17 <- function(registry = census_c17_mechanism_registry()) {
     instrument_vintage = rep("time_invariant_language_basis", nrow(x)),
     adjustment_set = rep("state_language_controls", nrow(x)),
     fixed_effect = rep("state", nrow(x)),
+    functional_form_id = paste0("distance_", plain_chr(x$distance_form)),
     estimand = rep("language_behavior_association", nrow(x)),
     estimator = rep("native_speaker_weighted_ols", nrow(x)),
     inference = rep("HC1", nrow(x)),
@@ -664,7 +689,7 @@ candidate_design_columns <- function() {
     "scientific_question", "design_axis", "outcome_scope", "treatment_scope",
     "instrument_scope", "adjustment_scope", "estimator_scope",
     "execution_policy", "multiplicity_family", "prerequisite",
-    "admissible", "implementation_status", "candidate_cells",
+    "admissible", "admissibility_reason", "implementation_status", "candidate_cells",
     "implemented_cells", "execution_cells", "rationale"
   )
 }
@@ -685,11 +710,19 @@ candidate_design_row <- function(
     multiplicity_family = "not_applicable",
     prerequisite = "none",
     admissible = TRUE,
+    admissibility_reason = NULL,
     implementation_status = "unimplemented",
     candidate_cells = NA_integer_,
     implemented_cells = 0L,
     execution_cells = implemented_cells,
     rationale) {
+  if (is.null(admissibility_reason)) {
+    admissibility_reason <- if (isTRUE(admissible)) {
+      paste0("admissible_", design_role)
+    } else {
+      ""
+    }
+  }
   data.frame(
     candidate_id = candidate_id,
     reference_section = reference_section,
@@ -706,6 +739,7 @@ candidate_design_row <- function(
     multiplicity_family = multiplicity_family,
     prerequisite = prerequisite,
     admissible = admissible,
+    admissibility_reason = admissibility_reason,
     implementation_status = implementation_status,
     candidate_cells = as.integer(candidate_cells),
     implemented_cells = as.integer(implemented_cells),
@@ -739,8 +773,17 @@ candidate_design_frame <- function(rows) {
       any(!out$execution_policy %in% allowed_policy) ||
       any(!nzchar(out$reference_section)) ||
       any(!nzchar(out$scientific_question)) ||
+      any(!nzchar(out$admissibility_reason)) ||
       any(!nzchar(out$rationale))) {
     stop("Candidate-design ledger is malformed.", call. = FALSE)
+  }
+  policy_conflict <- (!out$admissible & out$execution_policy != "do_not_estimate") |
+    (out$admissible & out$execution_policy == "do_not_estimate")
+  if (any(policy_conflict)) {
+    stop(
+      "Candidate-design admissibility must agree with execution_policy.",
+      call. = FALSE
+    )
   }
   impossible <- out$implemented_cells > out$candidate_cells &
     is.finite(out$implemented_cells) & is.finite(out$candidate_cells)
@@ -1396,6 +1439,7 @@ build_iv_candidate_design_ledger <- function(
       "first_stage+reduced_form+2sls+anderson_rubin",
       "do_not_estimate",
       admissible = FALSE,
+      admissibility_reason = "mechanical_cartesian_without_scientific_estimand",
       implementation_status = "not_applicable",
       candidate_cells = n_consumption * n_diagnostic_iv,
       implemented_cells = n_consumption,
@@ -1415,6 +1459,7 @@ build_iv_candidate_design_ledger <- function(
       "all estimators",
       "do_not_estimate",
       admissible = FALSE,
+      admissibility_reason = "cross_axis_interaction_lacks_independent_theory",
       implementation_status = "not_applicable",
       candidate_cells = NA_integer_,
       implemented_cells = 0L,
@@ -1434,6 +1479,7 @@ build_iv_candidate_design_ledger <- function(
       "not_applicable",
       "do_not_estimate",
       admissible = FALSE,
+      admissibility_reason = "post_treatment_bad_control_changes_estimand",
       implementation_status = "not_applicable",
       candidate_cells = NA_integer_,
       implemented_cells = 0L,
