@@ -379,8 +379,6 @@ iv_shastry_added_control_first_stage_specifications <- function(
       adjustment = adjustment$label,
       construction_id = "nonzero_mean",
       construction = construction$label,
-      distance_measure_id = construction$distance_measure_id,
-      language_adjustment_id = construction$language_adjustment_id,
       outcome = treatment,
       treatment = treatment,
       fixed_effect = adjustment$fixed_effect,
@@ -494,14 +492,54 @@ as_single_iv_specification <- function(specification) {
   x
 }
 
+iv_specification_axes <- function(
+  construction_id,
+  distance_measure_id = NULL,
+  language_adjustment_id = NULL
+) {
+  registry <- iv_instrument_construction_registry()
+  idx <- match(construction_id, registry$construction_id)
+
+  registered_distance <- if (is.na(idx)) {
+    NA_character_
+  } else {
+    registry$distance_measure_id[[idx]]
+  }
+  registered_adjustment <- if (is.na(idx)) {
+    NA_character_
+  } else {
+    registry$language_adjustment_id[[idx]]
+  }
+
+  resolve_axis <- function(value, registered, axis) {
+    if (is.null(value) || !length(value)) return(registered)
+    value <- plain_chr(value)[[1L]]
+    if (!is.na(registered) && !is.na(value) && !identical(value, registered)) {
+      stop(
+        "IV construction '", construction_id, "' declares ", axis,
+        "='", registered, "', not '", value, "'.",
+        call. = FALSE
+      )
+    }
+    value
+  }
+
+  list(
+    distance_measure_id = resolve_axis(
+      distance_measure_id, registered_distance, "distance_measure_id"
+    ),
+    language_adjustment_id = resolve_axis(
+      language_adjustment_id, registered_adjustment, "language_adjustment_id"
+    )
+  )
+}
+
 iv_specification_row <- function(
   specification_id,
   adjustment_id,
   adjustment,
   construction_id,
   construction,
-  distance_measure_id,
-  language_adjustment_id,
   outcome,
   treatment,
   fixed_effect,
@@ -511,19 +549,27 @@ iv_specification_row <- function(
   mapping_coverage_variable,
   panel_variant,
   sample_rule,
+  distance_measure_id = NULL,
+  language_adjustment_id = NULL,
   cluster = "state_code_2001",
   tier = "B",
   sequence = NA_integer_,
   control_registry = NULL
 ) {
+  axes <- iv_specification_axes(
+    construction_id = construction_id,
+    distance_measure_id = distance_measure_id,
+    language_adjustment_id = language_adjustment_id
+  )
+
   data.frame(
     specification_id = specification_id,
     adjustment_id = adjustment_id,
     adjustment = adjustment,
     construction_id = construction_id,
     construction = construction,
-    distance_measure_id = distance_measure_id,
-    language_adjustment_id = language_adjustment_id,
+    distance_measure_id = axes$distance_measure_id,
+    language_adjustment_id = axes$language_adjustment_id,
     outcome = outcome,
     treatment = treatment,
     fixed_effect = fixed_effect,
@@ -597,8 +643,6 @@ public_iv_specification_registry <- function(control_registry = NULL) {
       adjustment = x$adjustment,
       construction_id = "nonzero_mean",
       construction = construction$label,
-      distance_measure_id = construction$distance_measure_id,
-      language_adjustment_id = construction$language_adjustment_id,
       outcome = x$outcome,
       treatment = variables$treatment,
       fixed_effect = "state",
@@ -652,8 +696,6 @@ iv_specification_registry <- function(
         adjustment = adjustment$label,
         construction_id = construction_id,
         construction = construction$label,
-        distance_measure_id = construction$distance_measure_id,
-        language_adjustment_id = construction$language_adjustment_id,
         outcome = outcome,
         treatment = treatment,
         fixed_effect = adjustment$fixed_effect,
@@ -827,8 +869,6 @@ iv_absorption_specification_candidates <- function(
       adjustment = adjustment$label,
       construction_id = "nonzero_mean",
       construction = construction$label,
-      distance_measure_id = construction$distance_measure_id,
-      language_adjustment_id = construction$language_adjustment_id,
       outcome = outcome,
       treatment = treatment,
       fixed_effect = adjustment$fixed_effect,
