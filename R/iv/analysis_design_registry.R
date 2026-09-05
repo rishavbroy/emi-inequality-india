@@ -7,8 +7,9 @@
 
 analysis_design_columns <- function() {
   c(
-    "analysis_id", "family", "specification_id", "outcome", "treatment",
-    "instrument", "instrument_vintage", "distance_measure_id",
+    "analysis_id", "family", "specification_id", "outcome", "outcome_construct_id",
+    "baseline_construct_id", "treatment", "treatment_construct_id",
+    "instrument", "instrument_construct_ids", "instrument_vintage", "distance_measure_id",
     "language_adjustment_id", "adjustment_set", "control_strategy_id",
     "control_parameterization_id", "fixed_effect", "functional_form_id",
     "estimand", "estimator", "estimation_scope_id", "inference",
@@ -95,6 +96,8 @@ analysis_support_policy <- function(sample_rule) {
 analysis_design_frame <- function(...) {
   out <- data.frame(..., stringsAsFactors = FALSE, check.names = FALSE)
   for (nm in c(
+      "outcome_construct_id", "baseline_construct_id",
+      "treatment_construct_id", "instrument_construct_ids",
       "distance_measure_id", "language_adjustment_id",
       "control_strategy_id", "control_parameterization_id", "functional_form_id"
   )) {
@@ -156,6 +159,62 @@ analysis_design_frame <- function(...) {
   out
 }
 
+
+analysis_design_resolve_construct_ids <- function(values, registry, explicit_ids = NULL) {
+  x <- analysis_construct_frame(safe_df(registry))
+  values <- plain_chr(values)
+  explicit <- if (is.null(explicit_ids)) rep("", length(values)) else plain_chr(explicit_ids)
+  if (length(explicit) != length(values)) {
+    stop("Explicit construct references must align with analysis-design rows.", call. = FALSE)
+  }
+
+  resolve_value <- function(value, declared) {
+    tokens <- trimws(strsplit(value, ";", fixed = TRUE)[[1L]])
+    tokens <- tokens[nzchar(tokens)]
+    if (nzchar(declared)) {
+      ids <- trimws(strsplit(declared, ";", fixed = TRUE)[[1L]])
+      if (any(!nzchar(ids)) || any(!ids %in% x$construct_id)) {
+        stop("Invalid explicit construct reference: ", declared, call. = FALSE)
+      }
+      return(paste(ids, collapse = ";"))
+    }
+    if (!length(tokens)) return("")
+    ids <- vapply(tokens, function(token) {
+      hits <- which(x$variable == token)
+      if (!length(hits)) return("")
+      if (length(hits) > 1L) {
+        stop(
+          "Analysis design contains an ambiguous construct variable: ", token,
+          ". Supply an explicit construct_id reference.", call. = FALSE
+        )
+      }
+      x$construct_id[[hits]]
+    }, character(1))
+    if (any(!nzchar(ids))) return("")
+    paste(ids, collapse = ";")
+  }
+
+  vapply(seq_along(values), function(i) resolve_value(values[[i]], explicit[[i]]), character(1))
+}
+
+link_analysis_design_constructs <- function(designs, construct_registry) {
+  out <- analysis_design_frame(safe_df(designs))
+  if (!nrow(out)) return(out)
+  out$outcome_construct_id <- analysis_design_resolve_construct_ids(
+    out$outcome, construct_registry, out$outcome_construct_id
+  )
+  out$baseline_construct_id <- analysis_design_resolve_construct_ids(
+    rep("", nrow(out)), construct_registry, out$baseline_construct_id
+  )
+  out$treatment_construct_id <- analysis_design_resolve_construct_ids(
+    out$treatment, construct_registry, out$treatment_construct_id
+  )
+  out$instrument_construct_ids <- analysis_design_resolve_construct_ids(
+    out$instrument, construct_registry, out$instrument_construct_ids
+  )
+  out
+}
+
 analysis_design_from_iv <- function(
     specifications,
     family,
@@ -209,12 +268,24 @@ analysis_design_from_iv <- function(
   } else {
     rep("linear", nrow(specs))
   }
+  outcome_construct_value <- if (all(c("welfare_outcome_id", "outcome_round") %in% names(specs))) {
+    paste("consumption", plain_chr(specs$outcome_round), plain_chr(specs$welfare_outcome_id), sep = "__")
+  } else {
+    rep("", nrow(specs))
+  }
+  baseline_construct_value <- if (all(c("welfare_outcome_id", "baseline_round") %in% names(specs))) {
+    paste("consumption", plain_chr(specs$baseline_round), plain_chr(specs$welfare_outcome_id), sep = "__")
+  } else {
+    rep("", nrow(specs))
+  }
 
   analysis_design_frame(
     analysis_id = paste(family, plain_chr(specs$specification_id), sep = "__"),
     family = rep(family, nrow(specs)),
     specification_id = plain_chr(specs$specification_id),
     outcome = plain_chr(specs$outcome),
+    outcome_construct_id = outcome_construct_value,
+    baseline_construct_id = baseline_construct_value,
     treatment = plain_chr(specs$treatment),
     instrument = vapply(
       specs$excluded_instruments,
@@ -485,6 +556,7 @@ analysis_design_labor_mechanisms <- function(control_registry = NULL) {
         analysis_role = design$analysis_role[[1L]]
       )
       rows$family <- "labor_mechanism"
+      rows$outcome_construct_id <- registry$construct_id[[i]]
       rows$analysis_id <- paste(
         "labor", design$wave_id[[1L]], design$sample_suffix[[1L]],
         registry$outcome_id[[i]], rows$specification_id, sep = "__"
@@ -690,7 +762,8 @@ compile_analysis_design_registry <- function(
     consumption_historical_concept_matched_specifications = NULL,
     consumption_exclusion_sensitivity_specifications = NULL,
     falsification_adaptive_specifications = NULL,
-    consumption_registry = NULL) {
+    consumption_registry = NULL,
+    construct_registry = NULL) {
   core_iv <- analysis_design_from_iv(
     iv_diagnostic_specification_registry(control_registry = control_registry),
     family = "district_iv_diagnostic",
@@ -831,6 +904,9 @@ compile_analysis_design_registry <- function(
     analysis_design_census_1991_st_language()
   ))
   out <- out[analysis_design_columns()]
+  if (!is.null(construct_registry)) {
+    out <- link_analysis_design_constructs(out, construct_registry)
+  }
   if (anyDuplicated(out$analysis_id)) {
     stop("Compiled analysis-design registry contains duplicate analysis_id values.", call. = FALSE)
   }

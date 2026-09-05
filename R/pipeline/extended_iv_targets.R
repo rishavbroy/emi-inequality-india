@@ -474,7 +474,10 @@ extended_iv_target_definitions <- function() {
     tar_target(
       analysis_construct_registry,
       compile_analysis_construct_registry(
-        english_opportunity_registry = english_opportunity_measure_registry
+        english_opportunity_registry = english_opportunity_measure_registry,
+        consumption_iv_registry = consumption_iv_outcome_registry,
+        consumption_welfare_registry = consumption_welfare_outcomes,
+        consumption_survey_registry = consumption_survey_registry
       )
     ),
     tar_target(
@@ -509,7 +512,8 @@ extended_iv_target_definitions <- function() {
         consumption_historical_concept_matched_specifications,
         consumption_exclusion_sensitivity_specs,
         iv_falsification_adaptive_specs,
-        consumption_registry = consumption_iv_outcome_registry
+        consumption_registry = consumption_iv_outcome_registry,
+        construct_registry = analysis_construct_registry
       )
     ),
     tar_target(
