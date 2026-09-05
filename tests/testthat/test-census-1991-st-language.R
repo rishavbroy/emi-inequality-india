@@ -117,6 +117,71 @@ test_that("ST language panel admits only exact ST16 validation with frozen dista
   expect_equal(panel$shastry_distance_1991, c(5, 0, 3))
 })
 
+test_that("ST16 parser carries hierarchical workbook keys without carrying measures", {
+  raw <- as.data.frame(matrix(NA_character_, nrow = 5, ncol = 12), stringsAsFactors = FALSE)
+  raw[1, c(1, 3, 4, 5, 6, 7, 10)] <- c(
+    "13", "01", "DISTRICT A", "All Scheduled Tribes", "GONDI", "80", "20"
+  )
+  raw[2, c(6, 7, 10)] <- c("HINDI", "10", "5")
+  raw[3, c(3, 4, 5, 6, 7, 10)] <- c(
+    "02", "DISTRICT B", "All Scheduled Tribes", "GONDI", "40", "10"
+  )
+  raw[4, c(5, 6, 7, 10)] <- c("Gond", "GONDI", "30", "5")
+
+  parsed <- parse_census_1991_st16_sheet(raw)
+
+  expect_equal(nrow(parsed), 3L)
+  expect_identical(parsed$state_code_1991, c("13", "13", "13"))
+  expect_identical(parsed$district_code_1991, c("01", "01", "02"))
+  expect_identical(parsed$mother_tongue, c("Gondi", "Hindi", "Gondi"))
+  expect_equal(parsed$mother_tongue_speakers_st16, c(100, 15, 50))
+})
+
+test_that("ST17 parser ignores the generic printed mother-tongue total row", {
+  raw <- as.data.frame(matrix(NA_character_, nrow = 24, ncol = 10), stringsAsFactors = FALSE)
+  raw[8, 1] <- "TEST DISTRICT"
+  raw[9, 1] <- "All Scheduled Tribes"
+  raw[10, 1] <- "Rural"
+  raw[12, 2] <- "Total No. of  speakers"; raw[12, 6] <- "999"
+  raw[13, 2] <- "Total No. of GONDI speakers"; raw[13, 6] <- "100"
+  raw[14, 2] <- "Monolinguals"; raw[14, 6] <- "70"
+  raw[15, 2] <- "Bilinguals (including trilinguals)"; raw[15, 6] <- "30"
+  raw[17, 1] <- "1. ENGLISH"; raw[17, 2] <- "10"
+  raw[20, 1] <- "Gond"
+
+  parsed <- parse_census_1991_st17_sheet(raw, "13", "01")
+
+  expect_equal(nrow(parsed), 1L)
+  expect_identical(parsed$mother_tongue, "Gondi")
+  expect_equal(parsed$mother_tongue_speakers, 100)
+})
+
+test_that("ST language coverage fails closed when preferred validation disappears", {
+  coverage <- data.frame(
+    n_st17_districts = 2L,
+    n_exact_st16_districts = 0L,
+    n_st16_mismatch_districts = 0L,
+    n_st16_unavailable_districts = 2L,
+    n_mapped_language_cells = 4L,
+    n_unresolved_language_cells = 1L,
+    n_preferred_language_cells = 0L
+  )
+  expect_error(
+    validate_census_1991_st_language_coverage(coverage),
+    "no exact ST-16 validated districts"
+  )
+
+  coverage$n_exact_st16_districts <- 1L
+  coverage$n_st16_unavailable_districts <- 1L
+  expect_error(
+    validate_census_1991_st_language_coverage(coverage),
+    "no preferred mapped language cells"
+  )
+
+  coverage$n_preferred_language_cells <- 3L
+  expect_silent(validate_census_1991_st_language_coverage(coverage))
+})
+
 test_that("historical Hindi-belt definition preserves 1991 state geography", {
   expect_setequal(
     census_1991_st_hindi_belt_state_codes(),

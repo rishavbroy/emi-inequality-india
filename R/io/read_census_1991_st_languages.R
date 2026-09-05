@@ -72,6 +72,17 @@ census_1991_st17_language_label <- function(x) {
   normalize_language_label(label)
 }
 
+census_1991_st17_mother_tongue_total <- function(x) {
+  text <- census_1991_st_language_text(x)
+  match <- regexec(
+    "^Total No\\. of\\s+(\\S(?:.*?\\S)?)\\s+speakers\\s*$",
+    text, ignore.case = TRUE, perl = TRUE
+  )
+  parts <- regmatches(text, match)[[1L]]
+  if (length(parts) != 2L) return(NA_character_)
+  normalize_language_label(parts[[2L]])
+}
+
 census_1991_st17_is_third_layout_label <- function(x) {
   label <- normalize_language_label(census_1991_st_language_text(x))
   grepl(
@@ -158,12 +169,11 @@ parse_census_1991_st17_sheet <- function(raw, state_code_1991, district_code_199
       break
     }
 
-    tongue <- sub("^.*Total No\\. of\\s+(.*?)\\s*speakers.*$", "\\1", second_col, ignore.case = TRUE)
-    is_tongue_total <- grepl("Total No\\. of\\s+.+?\\s*speakers", second_col, ignore.case = TRUE)
-    if (is_tongue_total) {
+    tongue <- census_1991_st17_mother_tongue_total(second_col)
+    if (!is.na(tongue)) {
       finalize()
       current <- list(
-        mother_tongue = normalize_language_label(tongue),
+        mother_tongue = tongue,
         mother_tongue_speakers = census_1991_st_language_count(raw[[6L]][[i]]),
         monolingual_speakers = NA_real_,
         bilingual_speakers = NA_real_,
@@ -291,6 +301,14 @@ read_census_1991_st17_districts <- function(files) {
 parse_census_1991_st16_sheet <- function(raw) {
   raw <- safe_df(raw)
   if (ncol(raw) < 12L) stop("Census 1991 ST-16 sheet has fewer than twelve columns.", call. = FALSE)
+
+  # ORGI's workbook is hierarchical: state, district, and tribe labels are
+  # printed once for the mother-tongue rows beneath them. Carry only those
+  # grouping dimensions downward; mother tongue and counts remain row-level.
+  for (column in c(1L, 3L, 4L, 5L)) {
+    raw[[column]] <- fill_down_missing(census_1991_st_language_text(raw[[column]]))
+  }
+
   out <- data.frame(
     state_code_1991 = normalize_census_code(raw[[1L]], 2L),
     district_code_1991 = normalize_census_code(raw[[3L]], 2L),
@@ -315,6 +333,9 @@ read_census_1991_st16 <- function(files) {
   out <- safe_bind_rows(lapply(files, function(path) {
     parse_census_1991_st16_sheet(read_census_1991_st_language_sheet(path))
   }))
+  if (!nrow(out)) {
+    stop("Census 1991 ST-16 parser produced no district mother-tongue rows.", call. = FALSE)
+  }
   keys <- c("state_code_1991", "district_code_1991", "mother_tongue")
   if (anyDuplicated(out[keys])) stop("Census 1991 ST-16 has duplicate district mother-tongue rows.", call. = FALSE)
   out

@@ -9,6 +9,37 @@ census_1991_st_language_outcomes <- function() {
   )
 }
 
+validate_census_1991_st_language_coverage <- function(coverage) {
+  x <- safe_df(coverage)
+  required <- c(
+    "n_st17_districts", "n_exact_st16_districts",
+    "n_st16_mismatch_districts", "n_st16_unavailable_districts",
+    "n_mapped_language_cells", "n_unresolved_language_cells",
+    "n_preferred_language_cells"
+  )
+  missing <- setdiff(required, names(x))
+  if (nrow(x) != 1L || length(missing)) {
+    stop("Census 1991 ST language coverage has an invalid schema.", call. = FALSE)
+  }
+  counts <- vapply(x[required], function(value) as.integer(value[[1L]]), integer(1))
+  if (anyNA(counts) || any(counts < 0L)) {
+    stop("Census 1991 ST language coverage contains invalid counts.", call. = FALSE)
+  }
+  classified <- counts[["n_exact_st16_districts"]] +
+    counts[["n_st16_mismatch_districts"]] +
+    counts[["n_st16_unavailable_districts"]]
+  if (classified != counts[["n_st17_districts"]]) {
+    stop("Census 1991 ST language district validation does not exhaust ST-17 coverage.", call. = FALSE)
+  }
+  if (counts[["n_exact_st16_districts"]] == 0L) {
+    stop("Census 1991 ST language diagnostic has no exact ST-16 validated districts.", call. = FALSE)
+  }
+  if (counts[["n_preferred_language_cells"]] == 0L) {
+    stop("Census 1991 ST language diagnostic has no preferred mapped language cells.", call. = FALSE)
+  }
+  invisible(x)
+}
+
 census_1991_st_language_fit <- function(panel, outcome, sample_id, hindi_belt_only = FALSE) {
   x <- safe_df(panel)
   keep <- x$preferred_st_language_sample %in% TRUE
@@ -72,6 +103,7 @@ build_census_1991_st_language_diagnostic <- function(st17, st16) {
     n_preferred_language_cells = sum(panel$preferred_st_language_sample),
     stringsAsFactors = FALSE
   )
+  validate_census_1991_st_language_coverage(coverage)
   structure(
     list(panel = panel, validation = validation, coverage = coverage, estimates = estimates),
     class = "emi_census_1991_st_language"
