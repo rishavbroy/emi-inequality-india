@@ -1094,9 +1094,13 @@ test_that("alternative linguistic-distance first stages use fixed support and jo
   expect_true("effective_f" %in% names(weak_iv$summary))
   expect_true(all(is.finite(weak_iv$summary$effective_f)))
   expect_true(all(weak_iv$summary$effective_f > 0))
-  expect_setequal(unique(weak_iv$summary$analysis_id), weak_iv$registry$analysis_id)
-  expect_true(all(weak_iv$ar_grid$analysis_id %in% weak_iv$registry$analysis_id))
-  expect_true(all(weak_iv$overidentification$analysis_id %in% weak_iv$registry$analysis_id))
+  expected_analysis_ids <- iv_analysis_id(
+    "district_iv_diagnostic",
+    weak_iv$registry$specification_id
+  )
+  expect_setequal(unique(weak_iv$summary$analysis_id), expected_analysis_ids)
+  expect_true(all(weak_iv$ar_grid$analysis_id %in% expected_analysis_ids))
+  expect_true(all(weak_iv$overidentification$analysis_id %in% expected_analysis_ids))
   projected <- prepare_alternative_distance_panel(panel)
   projected_with_outcome <- prepare_alternative_distance_panel(
     panel,
