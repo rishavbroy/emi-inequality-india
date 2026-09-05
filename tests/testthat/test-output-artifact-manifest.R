@@ -70,6 +70,34 @@ test_that("output artifact manifest rejects multiple file targets claiming one p
   )
 })
 
+test_that("output artifact manifest ignores duplicate source targets outside catalog roots", {
+  root <- tempfile("output-manifest-source-duplicates-")
+  dir.create(file.path(root, "outputs"), recursive = TRUE)
+  dir.create(file.path(root, "data", "raw"), recursive = TRUE)
+
+  artifact <- file.path(root, "outputs", "x.csv")
+  source <- file.path(root, "data", "raw", "shared.csv")
+  utils::write.csv(data.frame(x = 1), artifact, row.names = FALSE)
+  utils::write.csv(data.frame(x = 1), source, row.names = FALSE)
+
+  meta <- data.frame(
+    name = c("artifact", "source_a", "source_b"),
+    format = rep("file", 3L),
+    stringsAsFactors = FALSE
+  )
+  meta$path <- I(list(artifact, source, source))
+
+  out <- build_output_artifact_manifest(
+    target_meta = meta,
+    design_registry = data.frame(analysis_id = character(), family = character()),
+    roots = "outputs",
+    root = root
+  )
+
+  expect_identical(out$path, "outputs/x.csv")
+  expect_identical(out$target_name, "artifact")
+})
+
 test_that("output artifact manifest scopes are semantic rather than filename-specific", {
   paths <- c(
     "outputs/diagnostics/build/a.csv",
