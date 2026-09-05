@@ -8,6 +8,7 @@ test_that("FAS components match the corresponding just-identified IV regressions
     z2 = stats::rnorm(n),
     z3 = stats::rnorm(n),
     w = stats::rnorm(n),
+    region = rep(panel_region_levels(), each = 60L),
     state_code_2001 = rep(seq_len(18L), each = 20L)
   )
   data$x <- 0.8 * data$z1 + 0.5 * data$z2 - 0.4 * data$z3 + 0.3 * data$w + stats::rnorm(n)
@@ -15,14 +16,18 @@ test_that("FAS components match the corresponding just-identified IV regressions
   spec <- iv_specification_row(
     specification_id = "toy_fas", adjustment_id = "toy", adjustment = "Toy",
     construction_id = "toy", construction = "Toy instruments",
-    outcome = "y", treatment = "x", fixed_effect = "none", controls = "w",
+    outcome = "y", treatment = "x", fixed_effect = "region", controls = "w",
     included_language_controls = character(), excluded_instruments = c("z1", "z2", "z3"),
     mapping_coverage_variable = "", panel_variant = "primary",
     sample_rule = "toy", cluster = "state_code_2001"
   )
 
   component <- estimate_iv_fas_component(data, spec, "z1")
-  direct <- ivreg::ivreg(y ~ x + w + z2 + z3 | z1 + w + z2 + z3, data = data)
+  direct <- ivreg::ivreg(
+    y ~ x + w + z2 + z3 + factor(region) |
+      z1 + w + z2 + z3 + factor(region),
+    data = data
+  )
 
   expect_equal(component$status, "estimated")
   expect_equal(component$estimate, unname(stats::coef(direct)["x"]), tolerance = 1e-10)
