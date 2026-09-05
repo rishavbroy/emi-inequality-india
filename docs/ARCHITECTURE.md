@@ -34,10 +34,13 @@ Source directories are loaded with `{targets}`' native `tar_source()` directory 
 
 `R/iv/analysis_design_registry.R` is an inventory layer above the specialized
 execution registries. It normalizes currently implemented public headline IV,
-consumption, DISE, Census mechanism, C-17, district mechanism, labor, firm, and
-historical first-stage designs onto explicit outcome, treatment, instrument,
-vintage, adjustment, estimand, estimator, inference, sample-rule, role, and
-admissibility fields. Public headline models are themselves declared by
+consumption, DISE, Census mechanism, C-17, district mechanism, labor, firm,
+historical first-stage, schooling-to-welfare, social-group schooling, ST-concentration,
+and 1991 ST-language designs onto explicit outcome, treatment, instrument, vintage,
+adjustment, estimand, estimator, inference, sample-rule, role, and admissibility
+fields. Family-specific diagnostics must expose one canonical specification grid and
+use that same grid for estimation; the cross-family ontology projects those rows
+rather than reconstructing neighboring specifications independently. Public headline models are themselves declared by
 `public_iv_specification_registry()` and converted to formulas only at the final
 legacy model-interface boundary, so there is no second headline formula authority.
 The separate candidate-design ledger records bounded robustness families,
@@ -53,7 +56,7 @@ appendix, block-membership, labels, and alternative-measure relationships are
 derived from `data/metadata/census_2001_control_registry.csv`; production targets
 track that file explicitly.
 
-The extended IV pipeline owns and persists the compiled cross-family ontology at `outputs/diagnostics/extended/iv/analysis_design_registry.csv`; Census-specific pipeline modules no longer own this cross-family object. Extended diagnostic artifacts must be reachable from a `diag_ext_` target because the public audit intentionally selects that prefix.
+The extended IV pipeline owns and persists the compiled cross-family ontology at `outputs/diagnostics/extended/iv/analysis_design_registry.csv`; Census-specific pipeline modules no longer own this cross-family object. Family specification grids remain cached objects unless they are independently useful scientific artifacts: the durable cross-family registry is the preferred specification inventory, avoiding one CSV per family merely for bookkeeping. Extended diagnostic artifacts must be reachable from a `diag_ext_` target because the public audit intentionally selects that prefix.
 
 ## District-panel roles
 
