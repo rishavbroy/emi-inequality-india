@@ -8,26 +8,28 @@
 # complete-case sample across all three columns so attenuation is not a sample
 # composition artifact.
 
-schooling_consumption_bridge_treatment_registry <- function() {
+schooling_consumption_bridge_treatment_registry <- function(
+    construct_registry = read_analysis_construct_registry()) {
+  treatment_id <- c(
+    "enrollment", "emi_among_enrolled", "emi_all_children",
+    "public_emi_all_children", "private_emi_all_children"
+  )
+  variables <- c(
+    "enrollment_rate_0708",
+    "emi_share_enrolled_0708",
+    "emi_exposure_all_children_0708",
+    "public_emi_exposure_all_children_0708",
+    "private_emi_exposure_all_children_0708"
+  )
+  constructs <- analysis_construct_rows(construct_registry, variables)
+  if (any(!constructs$stage %in% c("schooling_access", "schooling_treatment", "institutional_bundle")) ||
+      any(!constructs$role %in% c("endogenous_treatment", "descriptive_treatment"))) {
+    stop("Schooling-consumption treatments violate the canonical construct-role contract.", call. = FALSE)
+  }
   data.frame(
-    treatment_id = c(
-      "enrollment", "emi_among_enrolled", "emi_all_children",
-      "public_emi_all_children", "private_emi_all_children"
-    ),
-    treatment = c(
-      "enrollment_rate_0708",
-      "emi_share_enrolled_0708",
-      "emi_exposure_all_children_0708",
-      "public_emi_exposure_all_children_0708",
-      "private_emi_exposure_all_children_0708"
-    ),
-    label = c(
-      "Enrollment",
-      "English medium among enrolled children",
-      "English-medium exposure among all children",
-      "Public English-medium exposure among all children",
-      "Private English-medium exposure among all children"
-    ),
+    treatment_id = treatment_id,
+    treatment = constructs$variable,
+    label = constructs$label,
     stringsAsFactors = FALSE
   )
 }

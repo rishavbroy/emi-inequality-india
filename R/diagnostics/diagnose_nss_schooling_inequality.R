@@ -1,29 +1,25 @@
 # NSS-64 social-group schooling-access diagnostics.
 
-nss64_schooling_social_group_margin_registry <- function() {
+nss64_schooling_social_group_margin_registry <- function(
+    construct_registry = read_analysis_construct_registry()) {
+  outcomes <- c(
+    "enrollment_rate_0708",
+    "emi_share_enrolled_0708",
+    "private_share_enrolled_0708",
+    "emi_share_enrolled_public_0708",
+    "emi_share_enrolled_private_0708",
+    "public_emi_exposure_all_children_0708",
+    "public_nonemi_exposure_all_children_0708",
+    "private_emi_exposure_all_children_0708",
+    "private_nonemi_exposure_all_children_0708"
+  )
+  constructs <- analysis_construct_rows(construct_registry, outcomes)
+  if (any(constructs$domain != "education")) {
+    stop("NSS schooling inequality margins must be canonical education constructs.", call. = FALSE)
+  }
   data.frame(
-    outcome = c(
-      "enrollment_rate_0708",
-      "emi_share_enrolled_0708",
-      "private_share_enrolled_0708",
-      "emi_share_enrolled_public_0708",
-      "emi_share_enrolled_private_0708",
-      "public_emi_exposure_all_children_0708",
-      "public_nonemi_exposure_all_children_0708",
-      "private_emi_exposure_all_children_0708",
-      "private_nonemi_exposure_all_children_0708"
-    ),
-    label = c(
-      "Enrollment",
-      "English medium among enrolled children with known medium",
-      "Private school among enrolled children with known management",
-      "English medium among public-school children with known medium",
-      "English medium among private-school children with known medium",
-      "Public English-medium exposure among all age-eligible children",
-      "Public non-English-medium exposure among all age-eligible children",
-      "Private English-medium exposure among all age-eligible children",
-      "Private non-English-medium exposure among all age-eligible children"
-    ),
+    outcome = constructs$variable,
+    label = constructs$label,
     model_distance_heterogeneity = c(rep(TRUE, 5L), rep(FALSE, 4L)),
     stringsAsFactors = FALSE
   )

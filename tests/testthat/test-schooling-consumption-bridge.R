@@ -155,3 +155,12 @@ test_that("schooling-consumption specification family stays bounded at 60 cells"
     c("unadjusted", "region_main", "state_main")
   )
 })
+
+test_that("schooling-consumption treatments derive shared semantics from canonical constructs", {
+  constructs <- read_analysis_construct_registry()
+  treatments <- schooling_consumption_bridge_treatment_registry(constructs)
+  canonical <- analysis_construct_rows(constructs, treatments$treatment)
+
+  expect_identical(treatments$label, canonical$label)
+  expect_true(all(canonical$role %in% c("endogenous_treatment", "descriptive_treatment")))
+})

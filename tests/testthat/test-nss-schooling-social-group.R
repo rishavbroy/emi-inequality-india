@@ -102,3 +102,12 @@ test_that("NSS-64 social-group model grid is canonical and complete", {
   expect_setequal(specs$sample, c("all_states", "hindi_belt"))
   expect_true(all(specs$hindi_belt_only == (specs$sample == "hindi_belt")))
 })
+
+test_that("NSS schooling inequality margins derive labels from canonical constructs", {
+  constructs <- read_analysis_construct_registry()
+  margins <- nss64_schooling_social_group_margin_registry(constructs)
+  canonical <- analysis_construct_rows(constructs, margins$outcome)
+
+  expect_identical(margins$label, canonical$label)
+  expect_true(all(canonical$domain == "education"))
+})
