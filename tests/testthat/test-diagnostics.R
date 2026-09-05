@@ -1750,6 +1750,101 @@ test_that("Anderson-Rubin inference accepts scalar and multi-instrument registry
 })
 
 
+test_that("bounded exclusion AR nests exact exclusion and expands monotonically", {
+  skip_if_not_installed("sandwich")
+  set.seed(905)
+  n <- 120L
+  panel <- data.frame(
+    state_code_2001 = rep(sprintf("%02d", 1:12), each = 10),
+    z = stats::rnorm(n),
+    control = stats::rnorm(n),
+    stringsAsFactors = FALSE
+  )
+  panel$d <- 0.08 * panel$z + 0.3 * panel$control + stats::rnorm(n)
+  panel$y <- 0.25 * panel$d + 0.04 * panel$z + 0.2 * panel$control + stats::rnorm(n)
+
+  spec <- iv_specification_row(
+    specification_id = "bounded_exclusion_toy",
+    adjustment_id = "toy", adjustment = "Toy",
+    construction_id = "toy", construction = "Toy",
+    outcome = "y", treatment = "d", fixed_effect = "none",
+    controls = "control", included_language_controls = character(),
+    excluded_instruments = "z", mapping_coverage_variable = NA_character_,
+    panel_variant = "primary", sample_rule = "public_model_specific_complete_case",
+    cluster = "state_code_2001"
+  )
+
+  profile <- estimate_bounded_exclusion_ar_profile_spec(panel, spec, points = 21L)
+  exact <- bounded_exclusion_ar_grid(profile, 0, 0)
+  ordinary <- estimate_anderson_rubin_spec(panel, spec, points = 21L)$grid
+  wider <- bounded_exclusion_ar_grid(profile, -0.1, 0.1)
+
+  expect_equal(exact$beta, ordinary$beta)
+  expect_equal(exact$statistic, ordinary$statistic, tolerance = 1e-8)
+  expect_equal(exact$p.value, ordinary$p.value, tolerance = 1e-8)
+  expect_true(all(!exact$accepted | wider$accepted))
+  expect_true(all(wider$statistic <= exact$statistic + 1e-12, na.rm = TRUE))
+})
+
+test_that("headline consumption exclusion sensitivity is bounded and transparent", {
+  skip_if_not_installed("sandwich")
+  set.seed(906)
+  root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
+  registry <- read_consumption_iv_outcome_registry(
+    file.path(root, "data", "metadata", "consumption_iv_outcomes.csv")
+  )
+  controls <- read_census_2001_control_registry(
+    file.path(root, "data", "metadata", "census_2001_control_registry.csv")
+  )
+  all_specs <- compile_consumption_iv_specifications(registry, controls)
+  specs <- consumption_exclusion_sensitivity_specifications(all_specs)
+
+  needed <- unique(unlist(lapply(seq_len(nrow(specs)), function(i) {
+    iv_specification_variables(specs[i, , drop = FALSE])
+  })))
+  n <- 120L
+  panel <- as.data.frame(
+    setNames(replicate(length(needed), stats::rnorm(n), simplify = FALSE), needed),
+    stringsAsFactors = FALSE
+  )
+  panel$state_code_2001 <- rep(sprintf("%02d", 1:12), each = 10)
+  z <- preferred_iv_variables()$instrument
+  d <- preferred_iv_variables()$treatment
+  panel[[d]] <- 0.08 * panel[[z]] + stats::rnorm(n)
+  for (outcome in unique(plain_chr(specs$outcome))) {
+    panel[[outcome]] <- 0.05 * panel[[z]] + 0.2 * panel[[d]] + stats::rnorm(n)
+  }
+
+  reduced <- safe_bind_rows(lapply(seq_len(nrow(specs)), function(i) {
+    estimate_iv_reduced_form_spec(panel, specs[i, , drop = FALSE])
+  }))
+  dynamics <- list(summary = data.frame(
+    specification_id = reduced$specification_id,
+    reduced_form_estimate = reduced$estimate,
+    stringsAsFactors = FALSE
+  ))
+  out <- validate_consumption_exclusion_sensitivity(
+    estimate_consumption_exclusion_sensitivity(
+      panel, specs, dynamics, points = 21L
+    ),
+    specs
+  )
+
+  expect_equal(nrow(out$summary), 4L * 7L)
+  expect_setequal(
+    unique(out$summary$welfare_specification_id),
+    c("long_2022__ancova", "long_2022__change", "long_2023__ancova", "long_2023__change")
+  )
+  expect_true(all(out$summary$calibration_role[out$summary$calibration_id != "exact_exclusion"] ==
+    "observed_reduced_form_scale_fragility"))
+  full_same_sign <- out$summary$calibration_id == "same_sign_rf_100"
+  expect_true(all(out$summary$exclusion_ar_95_contains_zero[full_same_sign]))
+  expect_true(all(
+    out$summary$minimum_gamma_share_of_reduced_form_for_zero_95 >= 0 &
+      out$summary$minimum_gamma_share_of_reduced_form_for_zero_95 <= 1
+  ))
+})
+
 test_that("linguistic basis comparison remains pairwise under partial lexical coverage", {
   panel <- data.frame(
     ling_distance_nonzero_mean = c(1, 2, 3, 4),
