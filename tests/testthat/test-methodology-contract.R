@@ -231,7 +231,7 @@ test_that("canonical construct registry validates cross-family variable semantic
   expect_identical(human_capital$role, "control")
 })
 
-test_that("compiled construct inventory projects source registries without duplicate variables", {
+test_that("compiled construct inventory projects every implemented mechanism authority", {
   root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
   opportunity <- read_english_opportunity_measure_registry(
     file.path(root, "data", "metadata", "english_opportunity_measures.csv")
@@ -240,12 +240,43 @@ test_that("compiled construct inventory projects source registries without dupli
     english_opportunity_registry = opportunity
   )
 
-  expect_equal(anyDuplicated(registry$variable), 0L)
+  expect_equal(anyDuplicated(registry$construct_id), 0L)
   expect_true(all(c(
     "emi_exposure_all_children_0708",
     "english_share_multilingual",
-    "dise_emi_enrollment_share_total_0708"
+    "dise_emi_enrollment_share_total_0708",
+    census_migration_mechanism_registry()$variable,
+    census_housing_mechanism_registry()$variable,
+    economic_census_mechanism_registry()$variable,
+    census_1991_st_language_outcomes(),
+    paste0(
+      "gap__",
+      nss64_schooling_social_group_margin_registry()$outcome[
+        nss64_schooling_social_group_margin_registry()$model_distance_heterogeneity
+      ]
+    )
   ) %in% registry$variable))
+
+  labor_ids <- c(
+    labor_mechanism_registry("nss66")$construct_id,
+    labor_mechanism_registry("plfs_2017_18")$construct_id
+  )
+  expect_true(all(labor_ids %in% registry$construct_id))
+  expect_equal(
+    sum(registry$variable == "labor_force_participation_age15plus"),
+    2L
+  )
+  expect_error(
+    analysis_construct_rows(registry, "labor_force_participation_age15plus"),
+    "ambiguous across vintages/sources"
+  )
+  expect_identical(
+    analysis_construct_rows_by_id(
+      registry, "nss66__labor_force_participation_age15plus"
+    )$vintage,
+    "2009-10"
+  )
+
   expect_identical(
     registry$authority[registry$variable == "emi_exposure_all_children_0708"],
     "variable_dictionary"
@@ -254,4 +285,8 @@ test_that("compiled construct inventory projects source registries without dupli
     registry$authority[registry$variable == "english_share_multilingual"],
     "english_opportunity_measures"
   )
+  expect_true(all(nzchar(registry$label)))
+  expect_true(all(nzchar(registry$stage)))
+  expect_true(all(nzchar(registry$role)))
+  expect_true(all(nzchar(registry$causal_status)))
 })
