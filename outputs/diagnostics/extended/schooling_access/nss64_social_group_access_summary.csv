@@ -1,0 +1,28 @@
+"social_group","reference_group","outcome","n_common_districts","mean_district_gap_percentage_points","median_district_gap_percentage_points","share_districts_group_below_other"
+"Other Backward Class","Other","emi_share_enrolled_0708",540,-13.2090194339908,-7.88762695485408,0.755555555555556
+"Other Backward Class","Other","emi_share_enrolled_private_0708",482,-14.3920700785766,-9.79657847998253,0.645228215767635
+"Other Backward Class","Other","emi_share_enrolled_public_0708",525,-3.91570152275038,0,0.371428571428571
+"Other Backward Class","Other","enrollment_rate_0708",547,-6.39171574284668,-5.9313969340145,0.683729433272395
+"Other Backward Class","Other","private_emi_exposure_all_children_0708",547,-10.5504745094149,-5.35971781821927,0.745886654478976
+"Other Backward Class","Other","private_nonemi_exposure_all_children_0708",547,-2.89965197510586,-0.9137688511461,0.526508226691042
+"Other Backward Class","Other","private_share_enrolled_0708",540,-14.5039862388536,-11.9777141715466,0.775925925925926
+"Other Backward Class","Other","public_emi_exposure_all_children_0708",547,-1.67066537451786,0,0.356489945155393
+"Other Backward Class","Other","public_nonemi_exposure_all_children_0708",547,8.92209277542839,8.4718386225319,0.292504570383912
+"Scheduled Caste","Other","emi_share_enrolled_0708",532,-17.2374611373262,-10.5290984018536,0.81015037593985
+"Scheduled Caste","Other","emi_share_enrolled_private_0708",413,-18.6797727401438,-13.3447275271797,0.682808716707022
+"Scheduled Caste","Other","emi_share_enrolled_public_0708",520,-4.2258371190541,0,0.382692307692308
+"Scheduled Caste","Other","enrollment_rate_0708",537,-9.75769751352075,-8.8244671137178,0.7243947858473
+"Scheduled Caste","Other","private_emi_exposure_all_children_0708",537,-14.3371250520255,-7.81864806600819,0.815642458100559
+"Scheduled Caste","Other","private_nonemi_exposure_all_children_0708",537,-6.76690054572651,-2.79782264085985,0.605214152700186
+"Scheduled Caste","Other","private_share_enrolled_0708",532,-23.5291347129251,-19.9048198213892,0.860902255639098
+"Scheduled Caste","Other","public_emi_exposure_all_children_0708",537,-1.08197709691372,0,0.355679702048417
+"Scheduled Caste","Other","public_nonemi_exposure_all_children_0708",537,12.6468019976268,11.4323699697627,0.273743016759777
+"Scheduled Tribe","Other","emi_share_enrolled_0708",363,-13.3263954261137,-9.1098643903234,0.776859504132231
+"Scheduled Tribe","Other","emi_share_enrolled_private_0708",206,-15.4723602188991,-8.54416119259466,0.601941747572815
+"Scheduled Tribe","Other","emi_share_enrolled_public_0708",330,-3.2252820583043,0,0.424242424242424
+"Scheduled Tribe","Other","enrollment_rate_0708",385,-13.5824826785856,-13.2748592940792,0.698701298701299
+"Scheduled Tribe","Other","private_emi_exposure_all_children_0708",385,-10.8058332291144,-6.80148208869963,0.792207792207792
+"Scheduled Tribe","Other","private_nonemi_exposure_all_children_0708",385,-5.74612752935989,-2.40590268510712,0.571428571428571
+"Scheduled Tribe","Other","private_share_enrolled_0708",363,-18.0892872873165,-14.5884231080802,0.74931129476584
+"Scheduled Tribe","Other","public_emi_exposure_all_children_0708",385,-1.34133229391112,0,0.412987012987013
+"Scheduled Tribe","Other","public_nonemi_exposure_all_children_0708",385,4.59764114472881,1.8431008404159,0.412987012987013
