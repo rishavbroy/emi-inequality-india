@@ -196,6 +196,8 @@ test_that("consumption welfare registry validates the retained outcome contract"
       "real_mean_mpce", "mean_log_real_mpce",
       "weighted_median_real_mpce", "bottom40_mean_real_mpce"
     ),
+    label = c("Real mean MPCE", "Mean log real MPCE", "Weighted median real MPCE", "Bottom-40 mean real MPCE"),
+    unit = c("rupees per person", "log rupees per person", "rupees per person", "rupees per person"),
     estimand = c(
       "survey_mean", "survey_mean", "survey_quantile", "survey_bottom_mean"
     ),
@@ -228,6 +230,11 @@ test_that("consumption welfare registry validates the retained outcome contract"
   expect_equal(out$estimand[[4L]], "survey_bottom_mean")
   expect_equal(out$quantile[[4L]], 0.4)
   expect_equal(out$iv_analysis_transform, c("log", "identity", "log", "log"))
+
+  missing_label <- out
+  missing_label$label[[1L]] <- ""
+  write.csv(missing_label, path, row.names = FALSE, na = "")
+  expect_error(read_consumption_welfare_outcomes(path), "nonempty labels and units")
 
   bad_quantile <- out
   bad_quantile$quantile[[3L]] <- 1

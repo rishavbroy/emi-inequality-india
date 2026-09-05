@@ -229,6 +229,14 @@ test_that("canonical construct registry validates cross-family variable semantic
   human_capital <- analysis_construct_rows(registry, "adult_secondary_plus_share_2001")
   expect_identical(human_capital$stage, "pre_treatment_context")
   expect_identical(human_capital$role, "control")
+
+  real_change <- analysis_construct_rows(registry, "real_log_consumption_change")
+  expect_identical(real_change$domain, "welfare")
+  expect_identical(real_change$role, "outcome")
+  baseline <- analysis_construct_rows(registry, "real_consumption_0708")
+  expect_identical(baseline$domain, "welfare")
+  expect_identical(baseline$role, "baseline_outcome")
+  expect_false("log_consumption_diff" %in% registry$variable)
 })
 
 test_that("compiled construct inventory projects every implemented mechanism authority", {
@@ -236,8 +244,20 @@ test_that("compiled construct inventory projects every implemented mechanism aut
   opportunity <- read_english_opportunity_measure_registry(
     file.path(root, "data", "metadata", "english_opportunity_measures.csv")
   )
+  consumption_iv <- read_consumption_iv_outcome_registry(
+    file.path(root, "data", "metadata", "consumption_iv_outcomes.csv")
+  )
+  consumption_welfare <- read_consumption_welfare_outcomes(
+    file.path(root, "data", "metadata", "consumption_welfare_outcomes.csv")
+  )
+  consumption_surveys <- read_consumption_survey_registry_file(
+    file.path(root, "data", "metadata", "consumption_survey_registry.csv")
+  )
   registry <- compile_analysis_construct_registry(
-    english_opportunity_registry = opportunity
+    english_opportunity_registry = opportunity,
+    consumption_iv_registry = consumption_iv,
+    consumption_welfare_registry = consumption_welfare,
+    consumption_survey_registry = consumption_surveys
   )
 
   expect_equal(anyDuplicated(registry$construct_id), 0L)
@@ -256,6 +276,18 @@ test_that("compiled construct inventory projects every implemented mechanism aut
       ]
     )
   ) %in% registry$variable))
+
+  expect_true(all(c(
+    "consumption__nss_2004_05__real_mean_mpce",
+    "consumption__hces_2022_23__real_mean_mpce",
+    "consumption__hces_2023_24__weighted_median_real_mpce"
+  ) %in% registry$construct_id))
+  hces_mean <- analysis_construct_rows_by_id(
+    registry, "consumption__hces_2022_23__real_mean_mpce"
+  )
+  expect_identical(hces_mean$variable, "real_mean_mpce")
+  expect_identical(hces_mean$stage, "long_run_welfare")
+  expect_identical(hces_mean$unit, "2011-12-price rupees per person")
 
   labor_ids <- c(
     labor_mechanism_registry("nss66")$construct_id,

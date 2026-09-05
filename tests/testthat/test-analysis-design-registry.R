@@ -795,3 +795,84 @@ test_that("analysis-design semantic normalizers fail closed on unknown vocabular
     "Unregistered analysis sample-rule semantics"
   )
 })
+
+
+test_that("analysis-design ontology links scientific constructs by stable IDs", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
+  controls <- read_census_2001_control_registry(
+    file.path(root, "data", "metadata", "census_2001_control_registry.csv")
+  )
+  consumption_registry <- read_consumption_iv_outcome_registry(
+    file.path(root, "data", "metadata", "consumption_iv_outcomes.csv")
+  )
+  welfare <- read_consumption_welfare_outcomes(
+    file.path(root, "data", "metadata", "consumption_welfare_outcomes.csv")
+  )
+  surveys <- read_consumption_survey_registry_file(
+    file.path(root, "data", "metadata", "consumption_survey_registry.csv")
+  )
+  opportunity <- read_english_opportunity_measure_registry(
+    file.path(root, "data", "metadata", "english_opportunity_measures.csv")
+  )
+  constructs <- compile_analysis_construct_registry(
+    english_opportunity_registry = opportunity,
+    consumption_iv_registry = consumption_registry,
+    consumption_welfare_registry = welfare,
+    consumption_survey_registry = surveys
+  )
+  consumption_specs <- compile_consumption_iv_specifications(consumption_registry, controls)
+  fas_specs <- iv_falsification_adaptive_specifications(
+    iv_diagnostic_specification_registry(control_registry = controls)
+  )
+  registry <- compile_analysis_design_registry(
+    consumption_specs, opportunity, controls,
+    falsification_adaptive_specifications = fas_specs,
+    consumption_registry = consumption_registry,
+    construct_registry = constructs
+  )
+
+  public <- registry[
+    registry$analysis_id == "public_iv__consumption", , drop = FALSE
+  ]
+  expect_identical(public$outcome_construct_id, "real_log_consumption_change")
+  expect_identical(public$treatment_construct_id, "emi_exposure_all_children_0708")
+  expect_identical(public$instrument_construct_ids, "ling_distance_nonzero_mean")
+
+  long_2022 <- registry[
+    registry$analysis_id == "consumption_iv__consumption__long_2022__change", , drop = FALSE
+  ]
+  expect_identical(
+    long_2022$outcome_construct_id,
+    "consumption__hces_2022_23__real_mean_mpce"
+  )
+  expect_identical(
+    long_2022$baseline_construct_id,
+    "consumption__nss_2004_05__real_mean_mpce"
+  )
+
+  nss_labor <- registry[
+    grepl("^labor__nss66__primary__labor_force_participation", registry$analysis_id), , drop = FALSE
+  ]
+  plfs_labor <- registry[
+    grepl("^labor__plfs_2017_18__primary__labor_force_participation", registry$analysis_id), , drop = FALSE
+  ]
+  expect_true(nrow(nss_labor) > 0L && nrow(plfs_labor) > 0L)
+  expect_true(all(nss_labor$outcome_construct_id == "nss66__labor_force_participation_age15plus"))
+  expect_true(all(plfs_labor$outcome_construct_id == "plfs_2017_18__labor_force_participation_age15plus"))
+
+  fas <- registry[registry$family == "iv_falsification_adaptive_set", , drop = FALSE]
+  multi <- fas[grepl(";", fas$instrument, fixed = TRUE), , drop = FALSE]
+  expect_true(nrow(multi) > 0L)
+  expect_true(all(vapply(
+    strsplit(multi$instrument_construct_ids, ";", fixed = TRUE),
+    function(ids) length(ids) == 5L && all(ids %in% constructs$construct_id),
+    logical(1)
+  )))
+
+  ambiguous <- analysis_design_labor_mechanisms(controls)
+  ambiguous$outcome_construct_id <- ""
+  expect_error(
+    link_analysis_design_constructs(ambiguous, constructs),
+    "ambiguous construct variable"
+  )
+})
