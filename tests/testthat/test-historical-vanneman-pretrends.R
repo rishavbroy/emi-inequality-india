@@ -507,7 +507,7 @@ test_that("strict and historical-parent support comparison reports sample gain",
     historical_parent = parent
   ))
   parent_full <- out[
-    out$analysis_id == "historical_parent" &
+    out$geography_variant_id == "historical_parent" &
       out$sample_id == "full_pretrend",
     , drop = FALSE
   ]
@@ -788,7 +788,7 @@ test_that("Vanneman support comparison accepts non-monotone amalgamated region c
     deterministic_amalgamation = make_validation(8L)
   ))
   expect_setequal(
-    out$analysis_id,
+    out$geography_variant_id,
     c(
       "strict_one_to_one",
       "historical_parent",
@@ -796,7 +796,7 @@ test_that("Vanneman support comparison accepts non-monotone amalgamated region c
     )
   )
   amalgamated <- out[
-    out$analysis_id == "deterministic_amalgamation",
+    out$geography_variant_id == "deterministic_amalgamation",
     ,
     drop = FALSE
   ]
@@ -1037,7 +1037,7 @@ test_that("Vanneman support comparison keeps exact amalgamation as a separate ge
   ))
 
   expect_setequal(
-    out$analysis_id,
+    out$geography_variant_id,
     c(
       "strict_one_to_one",
       "historical_parent",
@@ -1045,7 +1045,7 @@ test_that("Vanneman support comparison keeps exact amalgamation as a separate ge
     )
   )
   exact <- out[
-    out$analysis_id == "kumar_somanathan_exact_amalgamation",
+    out$geography_variant_id == "kumar_somanathan_exact_amalgamation",
     ,
     drop = FALSE
   ]
@@ -1164,7 +1164,7 @@ test_that("Vanneman geography comparison aligns coefficients and joint tests by 
   ))
 
   expect_setequal(
-    out$estimates$analysis_id,
+    out$estimates$geography_variant_id,
     c(
       "strict_one_to_one",
       "historical_parent",
@@ -1172,14 +1172,14 @@ test_that("Vanneman geography comparison aligns coefficients and joint tests by 
     )
   )
   expect_setequal(
-    out$joint_balance$analysis_id,
-    out$estimates$analysis_id
+    out$joint_balance$geography_variant_id,
+    out$estimates$geography_variant_id
   )
   expect_equal(nrow(out$estimates), 3L)
   expect_equal(nrow(out$joint_balance), 3L)
 
   exact_support <- out$support[
-    out$support$analysis_id == "kumar_somanathan_exact_amalgamation",
+    out$support$geography_variant_id == "kumar_somanathan_exact_amalgamation",
     ,
     drop = FALSE
   ]
@@ -1245,9 +1245,9 @@ test_that("Vanneman geography comparison rejects duplicate specification rows", 
 
 test_that("Vanneman geography comparison saver emits aligned robustness artifacts", {
   x <- list(
-    support = data.frame(analysis_id = "strict_one_to_one"),
-    estimates = data.frame(analysis_id = "strict_one_to_one"),
-    joint_balance = data.frame(analysis_id = "strict_one_to_one")
+    support = data.frame(geography_variant_id = "strict_one_to_one"),
+    estimates = data.frame(geography_variant_id = "strict_one_to_one"),
+    joint_balance = data.frame(geography_variant_id = "strict_one_to_one")
   )
   dir <- tempfile()
   paths <- save_vanneman_pretrend_geography_comparison(

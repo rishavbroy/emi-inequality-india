@@ -1164,8 +1164,8 @@ build_vanneman_pretrend_support_comparison <- function(validations) {
       call. = FALSE
     )
   }
-  out <- safe_bind_rows(lapply(names(inputs), function(analysis_id) {
-    validation <- inputs[[analysis_id]]
+  out <- safe_bind_rows(lapply(names(inputs), function(geography_variant_id) {
+    validation <- inputs[[geography_variant_id]]
     if (!is.list(validation) ||
         !"sample_coverage" %in% names(validation)) {
       stop(
@@ -1186,12 +1186,12 @@ build_vanneman_pretrend_support_comparison <- function(validations) {
         call. = FALSE
       )
     }
-    x$analysis_id <- analysis_id
+    x$geography_variant_id <- geography_variant_id
     x
   }))
 
   strict_full <- out$n_units[
-    out$analysis_id == "strict_one_to_one" &
+    out$geography_variant_id == "strict_one_to_one" &
       out$sample_id == "full_pretrend"
   ]
   if (length(strict_full) != 1L) {
@@ -1202,7 +1202,7 @@ build_vanneman_pretrend_support_comparison <- function(validations) {
   }
   if ("historical_parent" %in% names(inputs)) {
     parent_full <- out$n_units[
-      out$analysis_id == "historical_parent" &
+      out$geography_variant_id == "historical_parent" &
         out$sample_id == "full_pretrend"
     ]
     if (length(parent_full) != 1L || parent_full < strict_full) {
@@ -1214,7 +1214,7 @@ build_vanneman_pretrend_support_comparison <- function(validations) {
   }
 
   strict_population <- out$population_1961[
-    out$analysis_id == "strict_one_to_one" &
+    out$geography_variant_id == "strict_one_to_one" &
       out$sample_id == "full_pretrend"
   ]
   if (length(strict_population) != 1L ||
@@ -1235,7 +1235,7 @@ build_vanneman_pretrend_support_comparison <- function(validations) {
   out$population_share_vs_strict_full <-
     out$population_1961 / strict_population
   out[c(
-    "analysis_id", "sample_id", "n_units", "n_states",
+    "geography_variant_id", "sample_id", "n_units", "n_states",
     "population_1961", "share_of_full_units",
     "gain_vs_strict_full_n", "gain_vs_strict_full_share",
     "population_share_vs_strict_full"
@@ -1259,11 +1259,11 @@ validate_vanneman_pretrend_comparison_inputs <- function(validations) {
     )
   }
   required <- c("sample_coverage", "estimates", "joint_balance")
-  for (analysis_id in names(validations)) {
-    validation <- validations[[analysis_id]]
+  for (geography_variant_id in names(validations)) {
+    validation <- validations[[geography_variant_id]]
     if (!is.list(validation)) {
       stop(
-        "Vanneman geography comparison input ", analysis_id,
+        "Vanneman geography comparison input ", geography_variant_id,
         " is not a validation object.",
         call. = FALSE
       )
@@ -1271,7 +1271,7 @@ validate_vanneman_pretrend_comparison_inputs <- function(validations) {
     missing <- setdiff(required, names(validation))
     if (length(missing)) {
       stop(
-        "Vanneman geography comparison input ", analysis_id,
+        "Vanneman geography comparison input ", geography_variant_id,
         " lacks: ", paste(missing, collapse = ", "),
         call. = FALSE
       )
@@ -1283,24 +1283,24 @@ validate_vanneman_pretrend_comparison_inputs <- function(validations) {
 build_vanneman_pretrend_geography_comparison <- function(validations) {
   validate_vanneman_pretrend_comparison_inputs(validations)
 
-  append_analysis_id <- function(field) {
-    safe_bind_rows(lapply(names(validations), function(analysis_id) {
-      x <- safe_df(validations[[analysis_id]][[field]])
-      x$analysis_id <- analysis_id
+  append_geography_variant_id <- function(field) {
+    safe_bind_rows(lapply(names(validations), function(geography_variant_id) {
+      x <- safe_df(validations[[geography_variant_id]][[field]])
+      x$geography_variant_id <- geography_variant_id
       x
     }))
   }
 
-  estimates <- append_analysis_id("estimates")
-  joint <- append_analysis_id("joint_balance")
+  estimates <- append_geography_variant_id("estimates")
+  joint <- append_geography_variant_id("joint_balance")
   support <- build_vanneman_pretrend_support_comparison(validations)
 
   estimate_key <- c(
-    "analysis_id", "predictor_id", "sample_id",
+    "geography_variant_id", "predictor_id", "sample_id",
     "period_id", "measure_id", "fixed_effect"
   )
   joint_key <- c(
-    "analysis_id", "predictor_id", "sample_id",
+    "geography_variant_id", "predictor_id", "sample_id",
     "period_id", "domain"
   )
   missing_estimate_key <- setdiff(estimate_key, names(estimates))

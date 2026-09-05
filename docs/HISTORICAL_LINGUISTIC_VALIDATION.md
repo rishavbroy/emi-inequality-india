@@ -1228,7 +1228,9 @@ are not used to overwrite either source-specific graph.
 
 The three implemented historical geography variants are now reported through a
 single aligned robustness object rather than requiring readers to compare
-source-specific CSVs manually:
+source-specific CSVs manually. The aligned tables use `geography_variant_id`
+for this local robustness dimension; `analysis_id` is reserved for canonical
+analysis-design registry keys:
 
 - `strict_one_to_one`;
 - `historical_parent`;
