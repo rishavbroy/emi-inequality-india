@@ -538,6 +538,102 @@ test_that("target warning metadata normalizes list columns and consolidates runs
   expect_equal(recorded$run_label, "optional")
 })
 
+audit_script_fixture <- function(manifest_exit = 0L) {
+  root <- tempfile("public-audit-fixture-")
+  dir.create(root, recursive = TRUE)
+  for (dir in c("paper", "docs", "scripts", "R", "tests", "posters", "config")) {
+    dir.create(file.path(root, dir), recursive = TRUE, showWarnings = FALSE)
+  }
+  file.copy(
+    repo_file("scripts", "run_public_build_audit.sh"),
+    file.path(root, "scripts", "run_public_build_audit.sh")
+  )
+  for (script in c("clean_audit_workspace.sh", "check_source_syntax.sh")) {
+    writeLines(c("#!/usr/bin/env bash", "set -euo pipefail", "exit 0"), file.path(root, "scripts", script))
+  }
+  writeLines(
+    c(
+      "#!/usr/bin/env bash",
+      "set -euo pipefail",
+      "out=review.zip",
+      "incomplete=false",
+      "while (($#)); do",
+      "  case \"$1\" in",
+      "    --allow-incomplete) incomplete=true; shift ;;",
+      "    --output) out=\"$2\"; shift 2 ;;",
+      "    *) shift ;;",
+      "  esac",
+      "done",
+      "if [[ \"$incomplete\" == true ]]; then printf incomplete > \"$out\"; else printf verified > \"$out\"; fi"
+    ),
+    file.path(root, "scripts", "make_review_archive.sh")
+  )
+  bin <- file.path(root, "bin")
+  dir.create(bin)
+  writeLines(c("#!/usr/bin/env bash", "exit 0"), file.path(bin, "make"))
+  writeLines(
+    c(
+      "#!/usr/bin/env bash",
+      "if [[ \"${1:-}\" == scripts/write_output_manifest.R ]]; then exit \"${FAKE_MANIFEST_EXIT:-0}\"; fi",
+      "exit 0"
+    ),
+    file.path(bin, "Rscript")
+  )
+  Sys.chmod(c(
+    file.path(root, "scripts", "run_public_build_audit.sh"),
+    file.path(root, "scripts", "clean_audit_workspace.sh"),
+    file.path(root, "scripts", "check_source_syntax.sh"),
+    file.path(root, "scripts", "make_review_archive.sh"),
+    file.path(bin, "make"), file.path(bin, "Rscript")
+  ), mode = "0755")
+  system2("git", c("-C", shQuote(root), "init", "-q"))
+  writeLines("stale", file.path(root, "review.zip"))
+  list(root = root, bin = bin, manifest_exit = as.integer(manifest_exit))
+}
+
+run_audit_script_fixture <- function(fixture) {
+  old <- setwd(fixture$root)
+  on.exit(setwd(old), add = TRUE)
+  system2(
+    "bash",
+    c(
+      "scripts/run_public_build_audit.sh", "--incremental", "--archive-always",
+      "--with-extended-diagnostics", "--with-benchmarks"
+    ),
+    stdout = TRUE,
+    stderr = TRUE,
+    env = c(
+      paste0("PATH=", fixture$bin, .Platform$path.sep, Sys.getenv("PATH")),
+      paste0("FAKE_MANIFEST_EXIT=", fixture$manifest_exit)
+    )
+  )
+}
+
+test_that("public audit replaces stale archives and records manifest failures", {
+  skip_if(Sys.which("bash") == "")
+  skip_if(Sys.which("git") == "")
+  skip_if(Sys.which("python3") == "")
+
+  success <- audit_script_fixture(0L)
+  on.exit(unlink(success$root, recursive = TRUE, force = TRUE), add = TRUE)
+  output <- run_audit_script_fixture(success)
+  expect_null(attr(output, "status"))
+  expect_identical(readChar(file.path(success$root, "review.zip"), 8L), "verified")
+  status <- jsonlite::read_json(file.path(success$root, "outputs", "diagnostics", "build", "audit_status.json"))
+  expect_identical(status$status, "passed")
+  expect_equal(status$exit_code, 0L)
+
+  failed <- audit_script_fixture(7L)
+  on.exit(unlink(failed$root, recursive = TRUE, force = TRUE), add = TRUE)
+  output <- suppressWarnings(run_audit_script_fixture(failed))
+  expect_identical(attr(output, "status"), 7L)
+  expect_identical(readChar(file.path(failed$root, "review.zip"), 10L), "incomplete")
+  status <- jsonlite::read_json(file.path(failed$root, "outputs", "diagnostics", "build", "audit_status.json"))
+  expect_identical(status$status, "failed")
+  expect_identical(status$stage, "output-manifest")
+  expect_equal(status$exit_code, 7L)
+})
+
 test_that("audit and archive scripts carry machine-readable run status", {
   audit <- repo_text("scripts", "run_public_build_audit.sh")
   archive <- repo_text("scripts", "make_review_archive.sh")
@@ -628,8 +724,10 @@ test_that("public build audit owns mandatory syntax and full-test gates", {
   expect_length(pipeline_line, 1L)
   expect_lt(syntax_line, test_line)
   expect_lt(test_line, pipeline_line)
-  expect_true(any(grepl('trap dump_diagnostics EXIT', audit, fixed = TRUE)))
+  expect_true(any(grepl('dump_diagnostics "$audit_exit_code"', audit, fixed = TRUE)))
   expect_true(any(grepl('make_debug_archive "error-${current_stage}"', audit, fixed = TRUE)))
+  expect_true(any(grepl('rm -f -- "$archive_out"', audit, fixed = TRUE)))
+  expect_false(any(grepl('manifest_args=()', audit, fixed = TRUE)))
   expect_true(any(grepl(
     "Rscript scripts/check_required_outputs.R --extended-diagnostics-only",
     audit, fixed = TRUE
