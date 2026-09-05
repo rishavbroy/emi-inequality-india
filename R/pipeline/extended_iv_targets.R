@@ -452,6 +452,20 @@ extended_iv_target_definitions <- function() {
       format = "file"
     ),
     tar_target(
+      analysis_construct_registry,
+      compile_analysis_construct_registry(
+        english_opportunity_registry = english_opportunity_measure_registry
+      )
+    ),
+    tar_target(
+      diag_ext_analysis_construct_registry,
+      write_diagnostic_csv(
+        analysis_construct_registry,
+        "outputs/diagnostics/extended/iv/construct_registry.csv"
+      ),
+      format = "file"
+    ),
+    tar_target(
       analysis_design_registry,
       compile_analysis_design_registry(
         consumption_iv_specifications,

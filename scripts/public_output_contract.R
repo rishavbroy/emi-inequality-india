@@ -62,6 +62,7 @@ required_final_documents <- function(require_application_samples = TRUE) {
 
 required_extended_diagnostic_outputs <- function() {
   c(
+    "outputs/diagnostics/extended/iv/construct_registry.csv",
     "outputs/diagnostics/extended/instrument_relevance/census_1991_st_language_coverage.csv",
     "outputs/diagnostics/extended/instrument_relevance/census_1991_st_language_estimates.csv",
     "outputs/diagnostics/extended/schooling_access/nss64_social_group_access_summary.csv",

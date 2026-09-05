@@ -1174,3 +1174,14 @@ test_that("extended IV artifacts are reachable from the diag_ext audit selector"
   expect_match(iv_targets, "tar_target(\n      analysis_design_registry,", fixed = TRUE)
   expect_false(grepl("tar_target(\n      analysis_design_registry,", census_targets, fixed = TRUE))
 })
+
+test_that("extended audit requires the canonical construct inventory", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
+  source(file.path(root, "scripts", "public_output_contract.R"), local = TRUE)
+  expect_true(
+    "outputs/diagnostics/extended/iv/construct_registry.csv" %in%
+      required_extended_diagnostic_outputs()
+  )
+  iv_targets <- paste(readLines(file.path(root, "R", "pipeline", "extended_iv_targets.R"), warn = FALSE), collapse = "\n")
+  expect_match(iv_targets, "diag_ext_analysis_construct_registry", fixed = TRUE)
+})
