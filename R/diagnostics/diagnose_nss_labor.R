@@ -599,7 +599,8 @@ build_labor_mechanism_inference <- function(
     registry = registry,
     specifications = specifications,
     cfg = cfg,
-    label = label
+    label = label,
+    analysis_namespace = paste("labor", wave_id, sample_suffix, sep = "__")
   )
 }
 

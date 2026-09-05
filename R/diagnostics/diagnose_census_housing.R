@@ -95,7 +95,8 @@ estimate_census_housing_mechanism_models <- function(
     ),
     cfg = cfg,
     ar_points = ar_points,
-    label = "Census housing"
+    label = "Census housing",
+    analysis_namespace = "census__housing"
   )
 }
 

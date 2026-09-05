@@ -90,7 +90,8 @@ estimate_economic_census_mechanism_models <- function(
     ),
     cfg = cfg,
     ar_points = ar_points,
-    label = "Economic Census"
+    label = "Economic Census",
+    analysis_namespace = "economic_census"
   )
 }
 

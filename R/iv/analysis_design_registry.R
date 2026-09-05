@@ -503,9 +503,10 @@ analysis_design_census_mechanisms <- function(control_registry = NULL) {
         analysis_role = plain_chr(registry$mechanism_family[[i]])
       )
       rows$family <- paste0("census_", source, "_mechanism")
-      rows$analysis_id <- paste(
-        "census", source, registry$outcome_id[[i]], rows$specification_id,
-        sep = "__"
+      rows$analysis_id <- posttreatment_mechanism_analysis_id(
+        paste("census", source, sep = "__"),
+        registry$outcome_id[[i]],
+        rows$specification_id
       )
       rows
     }))
@@ -529,9 +530,8 @@ analysis_design_economic_census_mechanisms <- function(control_registry = NULL) 
       analysis_role = plain_chr(registry$mechanism_family[[i]])
     )
     rows$family <- "economic_census_mechanism"
-    rows$analysis_id <- paste(
-      "economic_census", registry$outcome_id[[i]], rows$specification_id,
-      sep = "__"
+    rows$analysis_id <- posttreatment_mechanism_analysis_id(
+      "economic_census", registry$outcome_id[[i]], rows$specification_id
     )
     rows
   }))
@@ -567,9 +567,10 @@ analysis_design_labor_mechanisms <- function(control_registry = NULL) {
       )
       rows$family <- "labor_mechanism"
       rows$outcome_construct_id <- registry$construct_id[[i]]
-      rows$analysis_id <- paste(
-        "labor", design$wave_id[[1L]], design$sample_suffix[[1L]],
-        registry$outcome_id[[i]], rows$specification_id, sep = "__"
+      rows$analysis_id <- posttreatment_mechanism_analysis_id(
+        paste("labor", design$wave_id[[1L]], design$sample_suffix[[1L]], sep = "__"),
+        registry$outcome_id[[i]],
+        rows$specification_id
       )
       rows
     }))

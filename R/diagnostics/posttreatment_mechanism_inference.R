@@ -1,5 +1,18 @@
 # Shared post-treatment mechanism inference on Census-2001 geography.
 
+posttreatment_mechanism_analysis_id <- function(namespace, outcome_id, specification_id) {
+  values <- lapply(list(namespace, outcome_id, specification_id), plain_chr)
+  n <- max(lengths(values))
+  if (!n || any(!(lengths(values) %in% c(1L, n)))) {
+    stop("Post-treatment mechanism analysis ID fields must have compatible lengths.", call. = FALSE)
+  }
+  values <- lapply(values, rep, length.out = n)
+  if (any(!nzchar(unlist(values, use.names = FALSE)))) {
+    stop("Post-treatment mechanism analysis IDs require nonempty namespace, outcome, and specification IDs.", call. = FALSE)
+  }
+  paste(values[[1L]], values[[2L]], values[[3L]], sep = "__")
+}
+
 posttreatment_mechanism_specifications <- function(
     outcome,
     treatment = preferred_iv_variables()$treatment,
@@ -194,7 +207,8 @@ estimate_posttreatment_mechanism_models <- function(
     specifications,
     cfg = list(),
     ar_points = 401L,
-    label = "District") {
+    label = "District",
+    analysis_namespace) {
   panel <- safe_df(mechanism_panel)
   registry <- safe_df(registry)
   base_specs <- as_iv_specifications(specifications)
@@ -230,6 +244,9 @@ estimate_posttreatment_mechanism_models <- function(
       estimate$adjustment_id <- spec$adjustment_id[[1L]]
       estimate$construction_id <- spec$construction_id[[1L]]
       estimate$fixed_effect <- spec$fixed_effect[[1L]]
+      estimate$analysis_id <- posttreatment_mechanism_analysis_id(
+        analysis_namespace, outcome$outcome_id[[1L]], spec$specification_id[[1L]]
+      )
       estimate
     }))
   }))
@@ -240,7 +257,7 @@ estimate_posttreatment_mechanism_models <- function(
     reduced_form, "p.value", "p_holm_within_spec", label
   )
   reduced_form <- reduced_form[c(
-    "outcome_id", "outcome_variable", "mechanism_family", "tier", "denominator",
+    "analysis_id", "outcome_id", "outcome_variable", "mechanism_family", "tier", "denominator",
     "specification_id", "adjustment_id", "construction_id", "fixed_effect",
     "term", "estimate", "std.error", "statistic", "p.value",
     "p_holm_within_spec", "n", "status", "reason"
@@ -266,6 +283,9 @@ estimate_posttreatment_mechanism_models <- function(
       summary$tier <- outcome$tier[[1L]]
       summary$denominator <- outcome$denominator[[1L]]
       summary$fixed_effect <- spec$fixed_effect[[1L]]
+      summary$analysis_id <- posttreatment_mechanism_analysis_id(
+        analysis_namespace, outcome$outcome_id[[1L]], spec$specification_id[[1L]]
+      )
       weak_estimates[[k]] <- summary
 
       grid <- result$grid
@@ -275,6 +295,9 @@ estimate_posttreatment_mechanism_models <- function(
         grid$adjustment_id <- spec$adjustment_id[[1L]]
         grid$construction_id <- spec$construction_id[[1L]]
         grid$fixed_effect <- spec$fixed_effect[[1L]]
+        grid$analysis_id <- posttreatment_mechanism_analysis_id(
+          analysis_namespace, outcome$outcome_id[[1L]], spec$specification_id[[1L]]
+        )
         weak_grids[[k]] <- grid
       }
     }
@@ -291,7 +314,7 @@ estimate_posttreatment_mechanism_models <- function(
     weak_iv, "anderson_rubin_p_beta0", "anderson_rubin_p_beta0_holm_within_spec", label
   )
   weak_iv <- weak_iv[c(
-    "outcome_id", "outcome_variable", "mechanism_family", "tier", "denominator",
+    "analysis_id", "outcome_id", "outcome_variable", "mechanism_family", "tier", "denominator",
     "specification_id", "adjustment_id", "construction_id", "fixed_effect",
     "estimate_2sls", "std_error_clustered", "p_value_clustered",
     "p_value_clustered_holm_within_spec",
@@ -370,21 +393,21 @@ summarize_posttreatment_mechanism_result <- function(
   result <- extract_posttreatment_mechanism_result(x)
   weak <- safe_df(result$weak_iv)
   reduced <- safe_df(result$reduced_form)
-  keys <- c("outcome_id", "specification_id")
-  if (!nrow(weak) || anyDuplicated(weak[keys])) {
-    stop(family, " weak-IV mechanism rows must be unique by outcome and specification.", call. = FALSE)
+  key <- "analysis_id"
+  if (!key %in% names(weak) || !key %in% names(reduced)) {
+    stop(family, " mechanism outputs must carry canonical analysis_id values.", call. = FALSE)
   }
-  if (!nrow(reduced) || anyDuplicated(reduced[keys])) {
-    stop(family, " reduced-form mechanism rows must be unique by outcome and specification.", call. = FALSE)
+  if (!nrow(weak) || anyDuplicated(weak[[key]])) {
+    stop(family, " weak-IV mechanism rows must be unique by analysis_id.", call. = FALSE)
   }
-  rf <- reduced[c(keys, "p.value", "p_holm_within_spec")]
+  if (!nrow(reduced) || anyDuplicated(reduced[[key]])) {
+    stop(family, " reduced-form mechanism rows must be unique by analysis_id.", call. = FALSE)
+  }
+  rf <- reduced[c(key, "p.value", "p_holm_within_spec")]
   names(rf)[names(rf) == "p.value"] <- "reduced_form_p_value"
   names(rf)[names(rf) == "p_holm_within_spec"] <- "reduced_form_p_holm"
-  out <- merge(weak, rf, by = keys, all.x = TRUE, sort = FALSE)
-  out <- out[match(
-    paste(weak$outcome_id, weak$specification_id),
-    paste(out$outcome_id, out$specification_id)
-  ), , drop = FALSE]
+  out <- merge(weak, rf, by = key, all.x = TRUE, sort = FALSE)
+  out <- out[match(weak$analysis_id, out$analysis_id), , drop = FALSE]
 
   estimated <- plain_chr(out$status) == "estimated"
   out$first_stage_strong <- estimated &
@@ -417,7 +440,7 @@ summarize_posttreatment_mechanism_result <- function(
   out$temporal_role <- temporal_role
   out$analysis_role <- analysis_role
   keep <- c(
-    "family", "temporal_role", "analysis_role", "outcome_id", "outcome_variable",
+    "analysis_id", "family", "temporal_role", "analysis_role", "outcome_id", "outcome_variable",
     "mechanism_family", "tier", "denominator", "specification_id", "adjustment_id",
     "construction_id", "fixed_effect", "n", "effective_f", "effective_f_critical_value",
     "first_stage_strong", "reduced_form_p_value", "reduced_form_p_holm",

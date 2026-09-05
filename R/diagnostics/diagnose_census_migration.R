@@ -238,7 +238,8 @@ estimate_census_migration_mechanism_models <- function(
     ),
     cfg = cfg,
     ar_points = ar_points,
-    label = "Census migration"
+    label = "Census migration",
+    analysis_namespace = "census__migration"
   )
 }
 
