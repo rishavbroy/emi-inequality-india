@@ -122,6 +122,10 @@ Legacy geography is appended once when either extended diagnostics or benchmarks
 Update this document when target groups, panel roles, public-output contracts, directory ownership, or strict validation rules change.
 
 
+## Canonical construct semantics
+
+`data/metadata/variable_dictionary.csv` is the tracked authority for cross-family variable semantics. `read_analysis_construct_registry()` validates that authority, and `compile_analysis_construct_registry()` projects source-only C-17/DISE constructs onto the same schema without moving formulas or estimators out of their specialized modules. The common schema separates domain, vintage, denominator/universe, analysis stage, analytical role, preference status, and causal-status caveats. Family registries may select subsets or add source-specific dimensions, but should derive shared labels/roles from this authority rather than copying them. The extended audit persists `outputs/diagnostics/extended/iv/construct_registry.csv` as the reviewer-facing inventory.
+
 ## Public map regions
 
 The public region map uses the Reserve Bank of India six-region classification,
