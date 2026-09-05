@@ -165,7 +165,8 @@ estimate_iv_monotonicity_shape <- function(data, specification, bins = 10L) {
 run_iv_monotonicity_diagnostics <- function(
   panel,
   specifications = iv_diagnostic_specification_registry(),
-  bins = 10L
+  bins = 10L,
+  analysis_family = NULL
 ) {
   data <- if (inherits(panel, "sf")) sf::st_drop_geometry(panel) else as.data.frame(panel, stringsAsFactors = FALSE)
   applicable <- iv_diagnostic_applicability(specifications)
@@ -178,13 +179,13 @@ run_iv_monotonicity_diagnostics <- function(
   })
   list(
     summary = attach_iv_analysis_id(
-      safe_bind_rows(lapply(results, `[[`, "summary")), specs
+      safe_bind_rows(lapply(results, `[[`, "summary")), specs, analysis_family
     ),
     bins = attach_iv_analysis_id(
-      safe_bind_rows(lapply(results, `[[`, "bins")), specs
+      safe_bind_rows(lapply(results, `[[`, "bins")), specs, analysis_family
     ),
     state_slopes = attach_iv_analysis_id(
-      safe_bind_rows(lapply(results, `[[`, "state_slopes")), specs
+      safe_bind_rows(lapply(results, `[[`, "state_slopes")), specs, analysis_family
     )
   )
 }

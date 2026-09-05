@@ -87,7 +87,8 @@ estimate_overidentification_spec <- function(data, specification) {
 
 run_iv_overidentification_diagnostics <- function(
   panel,
-  specifications = iv_diagnostic_specification_registry()
+  specifications = iv_diagnostic_specification_registry(),
+  analysis_family = NULL
 ) {
   data <- if (inherits(panel, "sf")) sf::st_drop_geometry(panel) else as.data.frame(panel, stringsAsFactors = FALSE)
   applicable <- iv_diagnostic_applicability(specifications)
@@ -98,7 +99,7 @@ run_iv_overidentification_diagnostics <- function(
   out <- safe_bind_rows(lapply(seq_len(nrow(specs)), function(i) {
     estimate_overidentification_spec(data, specs[i, , drop = FALSE])
   }))
-  attach_iv_analysis_id(out, specs)
+  attach_iv_analysis_id(out, specs, analysis_family)
 }
 
 #' Diagnose whether active IV specifications are overidentified

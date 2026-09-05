@@ -209,16 +209,15 @@ assemble_alternative_distance_first_stages <- function(
   treatment = "emi_exposure_all_children_0708"
 ) {
   branches <- unname(branches)
-  identity_registry <- register_iv_analysis_family(registry, "district_iv_diagnostic")
   structure(
     list(
       summary = attach_iv_analysis_id(
-        safe_bind_rows(lapply(branches, `[[`, "summary")), identity_registry
+        safe_bind_rows(lapply(branches, `[[`, "summary")), registry, "district_iv_diagnostic"
       ),
       coefficients = attach_iv_analysis_id(
-        safe_bind_rows(lapply(branches, `[[`, "coefficients")), identity_registry
+        safe_bind_rows(lapply(branches, `[[`, "coefficients")), registry, "district_iv_diagnostic"
       ),
-      registry = identity_registry,
+      registry = registry,
       common_support = data.frame(
         treatment = treatment, n = nrow(data),
         n_states = length(unique(data$state_code_2001)),
@@ -471,16 +470,18 @@ estimate_weak_iv_outcomes <- function(
   estimated <- Filter(Negate(is.null), estimated)
   list(
     summary = attach_iv_analysis_id(
-      safe_bind_rows(lapply(estimated, `[[`, "summary")), registry
+      safe_bind_rows(lapply(estimated, `[[`, "summary")), registry, "district_iv_diagnostic"
     ),
     ar_grid = attach_iv_analysis_id(
-      safe_bind_rows(lapply(estimated, `[[`, "grid")), registry
+      safe_bind_rows(lapply(estimated, `[[`, "grid")), registry, "district_iv_diagnostic"
     ),
     overidentification = attach_iv_analysis_id(
-      safe_bind_rows(lapply(estimated, `[[`, "overidentification")), registry
+      safe_bind_rows(lapply(estimated, `[[`, "overidentification")), registry, "district_iv_diagnostic"
     ),
     registry = registry,
-    applicability = attach_iv_analysis_id(iv_diagnostic_applicability(registry), registry)
+    applicability = iv_diagnostic_applicability(
+      registry, analysis_family = "district_iv_diagnostic"
+    )
   )
 }
 
@@ -769,7 +770,7 @@ augment_alternative_distance_diagnostics <- function(
   diagnostics$diagnostic_registry <- iv_diagnostic_registry()
   diagnostics$diagnostic_specifications <- weak_iv$registry
   monotonicity <- run_iv_monotonicity_diagnostics(
-    panel, specifications = weak_iv$registry
+    panel, specifications = weak_iv$registry, analysis_family = "district_iv_diagnostic"
   )
   diagnostics$monotonicity_summary <- monotonicity$summary
   diagnostics$monotonicity_bins <- monotonicity$bins
@@ -777,7 +778,7 @@ augment_alternative_distance_diagnostics <- function(
   diagnostics$basis_comparison <- compare_linguistic_distance_bases(panel)
   design <- summarize_alternative_distance_design_evidence(diagnostics)
   diagnostics$design_evidence <- attach_iv_analysis_id(
-    design$evidence, weak_iv$registry
+    design$evidence, weak_iv$registry, "district_iv_diagnostic"
   )
   diagnostics$design_comparison <- design$comparison
   diagnostics

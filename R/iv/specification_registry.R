@@ -542,16 +542,10 @@ iv_analysis_id <- function(family, specification_id) {
   paste(family, specification_id, sep = "__")
 }
 
-register_iv_analysis_family <- function(specifications, family) {
-  out <- as_iv_specifications(specifications)
-  out$analysis_id <- iv_analysis_id(family, out$specification_id)
-  out
-}
-
-attach_iv_analysis_id <- function(data, specifications) {
+attach_iv_analysis_id <- function(data, specifications, family = NULL) {
   out <- safe_df(data)
+  if (!nrow(out) || is.null(family)) return(out)
   specs <- as_iv_specifications(specifications)
-  if (!nrow(out) || !"analysis_id" %in% names(specs)) return(out)
   if (!"specification_id" %in% names(out)) {
     stop("IV result rows must carry specification_id before analysis_id is attached.", call. = FALSE)
   }
@@ -559,7 +553,7 @@ attach_iv_analysis_id <- function(data, specifications) {
   if (anyNA(idx)) {
     stop("IV result rows contain specification_id values outside the supplied registry.", call. = FALSE)
   }
-  out$analysis_id <- plain_chr(specs$analysis_id[idx])
+  out$analysis_id <- iv_analysis_id(family, plain_chr(specs$specification_id[idx]))
   out
 }
 
@@ -1050,10 +1044,7 @@ iv_diagnostic_specification_registry <- function(
   absorption <- iv_absorption_specification_registry(
     outcome, treatment, panel_variant, sample_rule, control_registry
   )
-  register_iv_analysis_family(
-    deduplicate_iv_specifications(rbind(base, absorption)),
-    "district_iv_diagnostic"
-  )
+  deduplicate_iv_specifications(rbind(base, absorption))
 }
 
 iv_specification_formula <- function(specification) {
@@ -1130,7 +1121,8 @@ iv_diagnostic_registry <- function() {
 }
 
 iv_diagnostic_applicability <- function(
-  specifications = iv_diagnostic_specification_registry()
+  specifications = iv_diagnostic_specification_registry(),
+  analysis_family = NULL
 ) {
   diagnostics <- iv_diagnostic_registry()
   rows <- lapply(seq_len(nrow(specifications)), function(i) {
@@ -1167,5 +1159,5 @@ iv_diagnostic_applicability <- function(
       )
     }))
   })
-  attach_iv_analysis_id(safe_bind_rows(rows), specifications)
+  attach_iv_analysis_id(safe_bind_rows(rows), specifications, analysis_family)
 }

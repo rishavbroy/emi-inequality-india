@@ -135,7 +135,8 @@ estimate_iv_balance_spec <- function(data, specification, tested_variable) {
 run_iv_balance_diagnostics <- function(
   panel,
   specifications = iv_diagnostic_specification_registry(),
-  variables = census_2001_diagnostic_controls()
+  variables = census_2001_diagnostic_controls(),
+  analysis_family = NULL
 ) {
   data <- if (inherits(panel, "sf")) sf::st_drop_geometry(panel) else as.data.frame(panel, stringsAsFactors = FALSE)
   needed <- unique(c(
@@ -155,7 +156,7 @@ run_iv_balance_diagnostics <- function(
       estimate_iv_balance_spec(data, spec, variable)
     }))
   }))
-  attach_iv_analysis_id(out, specifications)
+  attach_iv_analysis_id(out, specifications, analysis_family)
 }
 
 
@@ -243,7 +244,8 @@ estimate_iv_joint_balance_spec <- function(
 run_iv_joint_balance_diagnostics <- function(
   panel,
   specifications = iv_diagnostic_specification_registry(),
-  variables = census_2001_diagnostic_controls()
+  variables = census_2001_diagnostic_controls(),
+  analysis_family = NULL
 ) {
   data <- if (inherits(panel, "sf")) sf::st_drop_geometry(panel) else as.data.frame(panel, stringsAsFactors = FALSE)
   needed <- unique(c(
@@ -265,5 +267,5 @@ run_iv_joint_balance_diagnostics <- function(
   out <- safe_bind_rows(lapply(seq_len(nrow(specs)), function(i) {
     estimate_iv_joint_balance_spec(data, specs[i, , drop = FALSE], variables)
   }))
-  attach_iv_analysis_id(out, specs)
+  attach_iv_analysis_id(out, specs, analysis_family)
 }
