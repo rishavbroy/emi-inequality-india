@@ -1,0 +1,5 @@
+"outcome_id","preferred_cells","sensitivity_cells","common_cells","preferred_only_cells","preferred_eligible_cells","sensitivity_eligible_cells","changed_common_cells","changed_common_share","estimate_correlation","median_abs_difference","p90_abs_difference","max_abs_difference"
+"employment_rate_age15plus",565,420,420,145,469,341,15,0.0357142857142857,0.997115206619307,0,0,0.08063127201617
+"labor_force_participation_age15plus",565,420,420,145,469,341,15,0.0357142857142857,0.997307549120172,0,0,0.0890982880051849
+"regular_salaried_share_employed_age15plus",565,420,420,145,239,171,15,0.0357142857142857,0.997205623165305,0,0,0.118960907560799
+"unemployment_rate_age15plus",565,420,420,145,257,183,15,0.0357142857142857,0.987432749822818,0,0,0.115607727220534

@@ -1,0 +1,2 @@
+"source_id","materialization_status","manifest_schema","block_id","relative_path","exists","rows","bytes","modified_at","sha256"
+"plfs_2017_18","ready","v2","F1","data/interim/plfs_2017_18/F1.csv",TRUE,433339,115821448,1788310479.71798,"5862bc39f75a4cfd8b22b0a9ecc1245b220dc581dc65f51382160b9733b366f9"

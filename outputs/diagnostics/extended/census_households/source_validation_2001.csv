@@ -1,0 +1,8 @@
+"n_districts","max_abs_difference","check"
+593,0,"household_total_hh09_vs_hh15"
+593,0,"household_total_hh15_vs_hh15a"
+593,0,"worker_category_hh15_vs_hh15a__households_no_workers"
+593,0,"worker_category_hh15_vs_hh15a__households_1_worker"
+593,0,"worker_category_hh15_vs_hh15a__households_2_workers"
+593,0,"worker_category_hh15_vs_hh15a__households_3_workers"
+593,0,"worker_category_hh15_vs_hh15a__households_4_plus_workers"

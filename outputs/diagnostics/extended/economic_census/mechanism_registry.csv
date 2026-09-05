@@ -1,0 +1,7 @@
+"outcome_id","source_id","variable","construct_id","label","unit","mechanism_family","tier","denominator"
+"nonfarm_employment_growth","change","log_nonfarm_employment_change_2013_2005","log_nonfarm_employment_change_2013_2005","Log change in nonfarm employment","log_change","local_labor_demand","core","log_nonfarm_employment"
+"firm_growth","change","log_firms_total_change_2013_2005","log_firms_total_change_2013_2005","Log change in establishments","log_change","establishment_growth","core","log_establishments"
+"hired_employment_share_change","change","hired_employment_share_change_2013_2005","hired_employment_share_change_2013_2005","Change in hired-worker employment share","share_change","employment_formality","core","nonfarm_employment"
+"private_employment_share_change","change","private_employment_share_change_2013_2005","private_employment_share_change_2013_2005","Change in private-sector employment share","share_change","ownership_structure","core","nonfarm_employment"
+"services_employment_share_change","change","services_employment_share_change_2013_2005","services_employment_share_change_2013_2005","Change in services employment share","share_change","sectoral_shift","core","nonfarm_employment"
+"manufacturing_employment_share_change","change","manufacturing_employment_share_change_2013_2005","manufacturing_employment_share_change_2013_2005","Change in manufacturing employment share","share_change","sectoral_shift","secondary","nonfarm_employment"

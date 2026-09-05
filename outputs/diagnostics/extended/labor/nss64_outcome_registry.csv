@@ -1,0 +1,6 @@
+"outcome_id","source","denominator","role","temporal_role"
+"labor_force_participation_age15plus","usual_activity","age15plus","core","near_treatment_reference"
+"employment_rate_age15plus","usual_activity","age15plus","core","near_treatment_reference"
+"unemployment_rate_age15plus","usual_activity","labor_force_age15plus","core","near_treatment_reference"
+"regular_salaried_share_employed_age15plus","usual_activity","employed_age15plus","core","near_treatment_reference"
+"migrant_from_last_upr_share_age15plus","migration","age15plus","core","near_treatment_reference"

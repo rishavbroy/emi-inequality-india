@@ -1,0 +1,7 @@
+"family","temporal_role","analysis_role","availability_status","n_outcomes","n_models","n_strong_first_stage","n_reduced_form_holm_signals","n_ar_holm_signals","n_bounded_ar_sets","n_underidentified","min_n","max_n"
+"census_migration","long_run_post","causal_mechanism","available",8,48,0,1,1,0,47,355,355
+"census_housing","long_run_post","causal_mechanism","available",8,48,0,8,8,0,40,355,355
+"economic_census","post_treatment_change_2005_2013","causal_mechanism","available",6,36,0,2,2,0,34,354,354
+"nss66_labor","early_post","causal_mechanism","available",2,12,0,0,0,0,12,458,458
+"plfs_2017_18_labor","long_run_post","causal_mechanism","available",2,12,0,0,0,2,12,467,467
+"plfs_2017_18_conservative_labor","long_run_post","geography_robustness","available",2,12,0,0,0,0,12,339,339

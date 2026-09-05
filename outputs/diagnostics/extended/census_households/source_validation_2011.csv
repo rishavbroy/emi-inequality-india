@@ -1,0 +1,4 @@
+"n_districts","max_abs_difference","check"
+640,0,"household_total_hh08_vs_hh11"
+640,0,"household_total_vs_hh10_matriculation_partition"
+640,0,"literate_households_hh08_vs_hh10"

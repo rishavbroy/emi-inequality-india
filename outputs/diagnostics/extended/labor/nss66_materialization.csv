@@ -1,0 +1,4 @@
+"source_id","materialization_status","manifest_schema","block_id","relative_path","exists","rows","bytes","modified_at","sha256"
+"nss66_eus","ready","legacy_v1","F4","data/interim/nss66_eus/F4.csv",TRUE,459784,75306268,1788297550.21596,"59276e2cd7e1f2f2a51f4c3d53ef3ba433df523cfb53e0487ff745378366e9e2"
+"nss66_eus","ready","legacy_v1","F5","data/interim/nss66_eus/F5.csv",TRUE,459784,83566894,1788297550.26247,"810eca276401692e038d6dce3ee73a70622c464d9fa79e23957e07a21be0ed80"
+"nss66_eus","ready","legacy_v1","F6","data/interim/nss66_eus/F6.csv",TRUE,34689,6067038,1788297550.29689,"a6a6599fef111aff954634b88626835d5ddbee03009d8ea56c4517458b14f279"

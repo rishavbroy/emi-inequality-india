@@ -1,0 +1,5 @@
+"outcome_id","source","denominator","role","temporal_role"
+"labor_force_participation_age15plus","usual_activity","age15plus","core","long_run_post"
+"employment_rate_age15plus","usual_activity","age15plus","core","long_run_post"
+"unemployment_rate_age15plus","usual_activity","labor_force_age15plus","core","long_run_post"
+"regular_salaried_share_employed_age15plus","usual_activity","employed_age15plus","core","long_run_post"

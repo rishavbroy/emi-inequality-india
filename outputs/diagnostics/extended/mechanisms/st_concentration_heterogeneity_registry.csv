@@ -1,0 +1,4 @@
+"outcome_id","outcome","label","source"
+"emi_all_children","emi_exposure_all_children_0708","All-child English-medium exposure","nss_64_education"
+"private_emi_all_children","private_emi_exposure_all_children_0708","Private English-medium exposure among all children","nss_64_education"
+"girls_toilet_share","dise_girls_toilet_school_share_0708","Schools reporting girls' toilet facilities","dise"
