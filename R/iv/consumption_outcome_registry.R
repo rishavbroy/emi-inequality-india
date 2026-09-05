@@ -310,6 +310,9 @@ compile_consumption_iv_design_row <- function(
   row$baseline_round <- x$baseline_round[[1L]]
   row$estimand <- x$estimand[[1L]]
   row$analysis_transform <- x$analysis_transform[[1L]]
+  # Canonical design key: consumption specifications are the authoritative
+  # source for both estimation outputs and the cross-family design registry.
+  row$analysis_id <- paste("consumption_iv", specification_id, sep = "__")
   row
 }
 
@@ -886,12 +889,17 @@ estimate_consumption_iv_dynamic_spec <- function(
     ar <- estimate_anderson_rubin_spec(
       analysis_panel, spec, level = ar_level, points = ar_points
     )
+    if ("analysis_id" %in% names(spec)) {
+      ar$grid$analysis_id <- spec$analysis_id[[1L]]
+    }
 
-    summary <- spec[c(
+    summary_fields <- c(
+      if ("analysis_id" %in% names(spec)) "analysis_id",
       "specification_id", "welfare_specification_id",
       "welfare_outcome_id", "outcome_round", "baseline_round",
       "estimand", "analysis_transform", "tier"
-    )]
+    )
+    summary <- spec[summary_fields]
     summary <- merge(
       summary, first_stage_row,
       by = "specification_id", all.x = TRUE, sort = FALSE
@@ -993,6 +1001,12 @@ validate_consumption_iv_dynamics <- function(dynamics, specifications) {
     )
   }
   summary <- summary[match(expected, observed), , drop = FALSE]
+  if ("analysis_id" %in% names(specs)) {
+    if (!"analysis_id" %in% names(summary) ||
+        !identical(plain_chr(summary$analysis_id), plain_chr(specs$analysis_id))) {
+      stop("Consumption IV dynamics lost canonical analysis_id values.", call. = FALSE)
+    }
+  }
 
   sample_ok <- with(
     summary,

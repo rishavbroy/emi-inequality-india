@@ -17,7 +17,7 @@ summarize_consumption_robustness_family <- function(
   summary <- safe_df(dynamics$summary)
   specs <- as_iv_specifications(specifications)
   required_summary <- c(
-    "specification_id", "welfare_specification_id", "welfare_outcome_id",
+    "analysis_id", "specification_id", "welfare_specification_id", "welfare_outcome_id",
     "outcome_round", "estimand", "effective_f", "effective_f_critical_value",
     "reduced_form_p_holm_family", "anderson_rubin_p_beta0_holm_family",
     "ar_95_empty", "ar_95_disconnected", "ar_95_left_truncated",
@@ -76,7 +76,7 @@ summarize_consumption_robustness_family <- function(
     !(out$ar_95_right_truncated %in% TRUE)
 
   keep <- c(
-    "family", "analysis_role", "multiplicity_family", "specification_id",
+    "analysis_id", "family", "analysis_role", "multiplicity_family", "specification_id",
     "welfare_specification_id", "welfare_outcome_id", "outcome_round", "estimand",
     "treatment", "adjustment_id", "construction_id", "excluded_instruments",
     "effective_f", "effective_f_critical_value", "first_stage_strong",

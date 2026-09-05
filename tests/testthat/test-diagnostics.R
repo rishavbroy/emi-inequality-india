@@ -2495,11 +2495,13 @@ test_that("registered consumption IV dynamics share one specification sample acr
   spec$baseline_round <- "nss_2004_05"
   spec$estimand <- "ancova"
   spec$analysis_transform <- "log"
+  spec$analysis_id <- "consumption_iv__consumption__toy"
 
   out <- estimate_consumption_iv_dynamics(panel, spec, list(), ar_points = 31L)
   row <- out$summary
 
   expect_equal(nrow(row), 1L)
+  expect_identical(row$analysis_id, spec$analysis_id)
   expect_equal(row$first_stage_n, row$reduced_form_n)
   expect_equal(row$first_stage_n, row$second_stage_n)
   expect_equal(row$first_stage_n, row$n)
@@ -2508,6 +2510,7 @@ test_that("registered consumption IV dynamics share one specification sample acr
   expect_true(is.finite(row$partial_f))
   expect_true(is.finite(row$anderson_rubin_p_beta0))
   expect_true(nrow(out$anderson_rubin_grid) > 0L)
+  expect_true(all(out$anderson_rubin_grid$analysis_id == spec$analysis_id))
 })
 
 test_that("consumption reduced forms preserve canonical controls and fixed effects", {
@@ -2961,6 +2964,7 @@ test_that("consumption scalar-IV robustness compiles exactly the registered six-
     file.path(root, "data/metadata/consumption_iv_outcomes.csv")
   )
   specs <- compile_consumption_scalar_iv_robustness_specifications(registry)
+  expect_identical(specs$analysis_id, paste("consumption_iv", specs$specification_id, sep = "__"))
 
   expect_equal(nrow(specs), nrow(registry) * 6L)
   expect_equal(anyDuplicated(specs$specification_id), 0L)
@@ -3471,6 +3475,7 @@ test_that("consumption robustness evidence summarizes realized families without 
   specs <- iv_specification_registry(outcome = "y", treatment = "t")[1:2, , drop = FALSE]
   specs$specification_id <- c("a", "b")
   dynamics <- list(summary = data.frame(
+    analysis_id = c("consumption_iv__a", "consumption_iv__b"),
     specification_id = c("a", "b"),
     welfare_specification_id = c("w1", "w1"),
     welfare_outcome_id = "real_mean_mpce",
@@ -3498,6 +3503,7 @@ test_that("consumption robustness evidence summarizes realized families without 
   ))
 
   expect_equal(nrow(out$grid), 2L)
+  expect_identical(out$grid$analysis_id, dynamics$summary$analysis_id)
   expect_identical(out$grid$first_stage_strong, c(TRUE, FALSE))
   expect_identical(out$grid$reduced_form_family_signal, c(TRUE, FALSE))
   expect_identical(out$grid$ar_family_signal, c(TRUE, FALSE))
