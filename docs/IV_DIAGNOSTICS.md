@@ -182,3 +182,16 @@ The realized 573-district comparison is essentially null as an explanation for f
 ### Genuine EMI school supply
 
 The archived DISE district-report-card files do **not** identify the number of schools offering English-medium instruction. Their medium block reports enrollment by medium, and the DISE documentation warns that medium enrollment is incomplete and applies only to schools that reported the item. Consequently `dise_emi_enrollment_share` remains an administrative-equilibrium measure rather than a school-supply measure. A genuine school-supply share is retained in the candidate ledger as data-dependent future work and must not be approximated by enrollment shares.
+
+### Normalized inference metadata
+
+`analysis_design_registry.csv` preserves the legacy `inference` labels used by
+existing outputs, but also separates their methodological components. State
+clustering is recorded in `covariance_id`; Anderson--Rubin or the broader weak-IV
+diagnostic suite is recorded in `weak_id_inference_id`; Holm adjustment is
+recorded independently in `multiplicity_id`. `support_policy_id` similarly
+separates the common support/complete-case principle from the family-specific
+`sample_rule` identifier. These fields are ontology metadata only: they do not
+change estimation. Their purpose is to make later exclusion-sensitivity methods
+explicit additions to the inference axis rather than new parallel diagnostic
+families.

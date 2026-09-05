@@ -155,3 +155,18 @@ Post-treatment district mechanism regressions use the shared post-treatment mech
 
 
 Census 2001 H-04 Appendix (`PC01_H04a`) and Census 2011 HL-13 structural-durability counts reuse the shared count/geography path. H04A was activated only after all 35 raw workbooks passed structural accounting and their 593 district household totals matched H-09 exactly. Longitudinal durability changes are now available descriptively and are not imputed from H-03 materials or added to the fixed weak-IV housing registry.
+
+### Cross-family inference and support semantics
+
+The cross-family analysis-design ontology retains the historical `estimator`,
+`inference`, and `sample_rule` strings for reviewer/output compatibility, but they
+are no longer the only semantic representation. `analysis_design_frame()`
+projects them onto orthogonal fields before a row enters the compiled registry:
+`estimation_scope_id`, `covariance_id`, `weak_id_inference_id`,
+`multiplicity_id`, and `support_policy_id`. Blank functional-form metadata are
+also completed from the registered estimand when the form is unambiguous. This
+keeps family-specific sample identities intact while making common-support,
+complete-case, clustered-covariance, Anderson--Rubin, and Holm choices queryable
+without parsing compound strings downstream. Unknown estimator, inference, or
+sample-rule vocabulary fails closed at this boundary; new methodological choices
+must therefore be registered rather than silently introduced as another string.
