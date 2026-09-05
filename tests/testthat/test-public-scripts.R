@@ -574,38 +574,50 @@ audit_script_fixture <- function(manifest_exit = 0L) {
   writeLines(
     c(
       "#!/usr/bin/env bash",
-      "if [[ \"${1:-}\" == scripts/write_output_manifest.R ]]; then exit \"${FAKE_MANIFEST_EXIT:-0}\"; fi",
+      "set -euo pipefail",
+      "if [[ \"${1:-}\" == scripts/write_output_manifest.R ]]; then",
+      "  exit_code=\"${FAKE_MANIFEST_EXIT:-0}\"",
+      "  if [[ \"$exit_code\" -eq 0 ]]; then",
+      "    mkdir -p outputs/diagnostics/build",
+      "    printf 'artifact_id,path\\nfixture,outputs/fixture.csv\\n' > outputs/diagnostics/build/output_manifest.csv",
+      "  fi",
+      "  exit \"$exit_code\"",
+      "fi",
       "exit 0"
     ),
     file.path(bin, "Rscript")
+  )
+  runner <- file.path(root, "run-audit-fixture.sh")
+  writeLines(
+    c(
+      "#!/usr/bin/env bash",
+      "set -euo pipefail",
+      "export PATH=\"$PWD/bin:$PATH\"",
+      "export FAKE_MANIFEST_EXIT=\"${1:-0}\"",
+      "exec bash scripts/run_public_build_audit.sh --incremental --archive-always --with-extended-diagnostics --with-benchmarks"
+    ),
+    runner
   )
   Sys.chmod(c(
     file.path(root, "scripts", "run_public_build_audit.sh"),
     file.path(root, "scripts", "clean_audit_workspace.sh"),
     file.path(root, "scripts", "check_source_syntax.sh"),
     file.path(root, "scripts", "make_review_archive.sh"),
-    file.path(bin, "make"), file.path(bin, "Rscript")
+    file.path(bin, "make"), file.path(bin, "Rscript"), runner
   ), mode = "0755")
   system2("git", c("-C", shQuote(root), "init", "-q"))
   writeLines("stale", file.path(root, "review.zip"))
-  list(root = root, bin = bin, manifest_exit = as.integer(manifest_exit))
+  list(root = root, runner = runner, manifest_exit = as.integer(manifest_exit))
 }
 
 run_audit_script_fixture <- function(fixture) {
   old <- setwd(fixture$root)
   on.exit(setwd(old), add = TRUE)
   system2(
-    "bash",
-    c(
-      "scripts/run_public_build_audit.sh", "--incremental", "--archive-always",
-      "--with-extended-diagnostics", "--with-benchmarks"
-    ),
+    unname(Sys.which("bash")),
+    c(shQuote(fixture$runner), as.character(fixture$manifest_exit)),
     stdout = TRUE,
-    stderr = TRUE,
-    env = c(
-      paste0("PATH=", fixture$bin, .Platform$path.sep, Sys.getenv("PATH")),
-      paste0("FAKE_MANIFEST_EXIT=", fixture$manifest_exit)
-    )
+    stderr = TRUE
   )
 }
 
@@ -619,6 +631,7 @@ test_that("public audit replaces stale archives and records manifest failures", 
   output <- run_audit_script_fixture(success)
   expect_null(attr(output, "status"))
   expect_identical(readChar(file.path(success$root, "review.zip"), 8L), "verified")
+  expect_true(file.exists(file.path(success$root, "outputs", "diagnostics", "build", "output_manifest.csv")))
   status <- jsonlite::read_json(file.path(success$root, "outputs", "diagnostics", "build", "audit_status.json"))
   expect_identical(status$status, "passed")
   expect_equal(status$exit_code, 0L)
