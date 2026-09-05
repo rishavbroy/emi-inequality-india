@@ -61,6 +61,7 @@ build_output_artifact_manifest <- function(target_meta, design_registry, roots, 
     )
   }))
   if (is.null(target_paths)) target_paths <- data.frame(target_name = character(), path = character())
+  target_paths <- target_paths[target_paths$path %in% paths, , drop = FALSE]
   if (anyDuplicated(target_paths$path)) stop("Multiple file targets claim one output path.", call. = FALSE)
 
   idx <- match(paths, target_paths$path)
