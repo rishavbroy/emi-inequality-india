@@ -554,6 +554,14 @@ test_that("Anderson-Rubin summaries do not collapse noninterval sets to min-max 
     expect_true(is.na(summary$ar_95_upper[[1]]))
   }
   expect_true("acceptance_component" %in% names(out$grid))
+  expect_true(summary$ar_95_information[[1]] %in% c(
+    "empty_acceptance_set", "zero_included", "positive_sign_only",
+    "negative_sign_only", "zero_excluded_both_signs", "zero_excluded_unclassified"
+  ))
+  expect_identical(
+    summary$ar_95_sign_identified[[1]],
+    summary$ar_95_information[[1]] %in% c("positive_sign_only", "negative_sign_only")
+  )
 })
 
 test_that("public Anderson-Rubin diagnostics cover both candidate main designs", {
@@ -3354,4 +3362,27 @@ test_that("Shastry child-population diagnostic registers two paired comparison c
     specs$controls, function(x) shastry_child_population_variable() %in% x, logical(1)
   )))
   expect_true(all(specs$sample_rule == "child_population_first_stage_common_support"))
+})
+
+
+test_that("Anderson-Rubin topology classifies the information that survives weak identification", {
+  component <- function(lower, upper, zero = FALSE) data.frame(
+    component = seq_along(lower), lower = lower, upper = upper,
+    touches_left_grid_edge = FALSE, touches_right_grid_edge = FALSE,
+    contains_zero = zero, stringsAsFactors = FALSE
+  )
+  expect_identical(classify_anderson_rubin_information(data.frame()), "empty_acceptance_set")
+  expect_identical(
+    classify_anderson_rubin_information(component(-1, 1, TRUE)), "zero_included"
+  )
+  expect_identical(
+    classify_anderson_rubin_information(component(.1, 2)), "positive_sign_only"
+  )
+  expect_identical(
+    classify_anderson_rubin_information(component(-2, -.1)), "negative_sign_only"
+  )
+  expect_identical(
+    classify_anderson_rubin_information(component(c(-2, .1), c(-.1, 2))),
+    "zero_excluded_both_signs"
+  )
 })

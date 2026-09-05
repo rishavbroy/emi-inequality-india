@@ -182,6 +182,31 @@ anderson_rubin_acceptance_components <- function(grid) {
   do.call(rbind, rows)
 }
 
+classify_anderson_rubin_information <- function(components) {
+  x <- safe_df(components)
+  if (!nrow(x)) return("empty_acceptance_set")
+  required <- c("lower", "upper", "contains_zero")
+  missing <- setdiff(required, names(x))
+  if (length(missing)) {
+    stop(
+      "Anderson-Rubin components are missing columns for information classification: ",
+      paste(missing, collapse = ", "),
+      call. = FALSE
+    )
+  }
+  lower <- num(x$lower)
+  upper <- num(x$upper)
+  if (any(!is.finite(lower)) || any(!is.finite(upper)) || any(lower > upper)) {
+    stop("Anderson-Rubin component bounds are invalid.", call. = FALSE)
+  }
+  contains_zero <- as.logical(plain_chr(x$contains_zero))
+  if (any(contains_zero %in% TRUE)) return("zero_included")
+  if (all(lower > 0)) return("positive_sign_only")
+  if (all(upper < 0)) return("negative_sign_only")
+  if (any(upper < 0) && any(lower > 0)) return("zero_excluded_both_signs")
+  "zero_excluded_unclassified"
+}
+
 format_anderson_rubin_components <- function(components) {
   if (!nrow(components)) return(NA_character_)
   paste(
@@ -288,6 +313,7 @@ estimate_anderson_rubin_spec <- function(data, specification, level = 0.95, poin
     !components$touches_left_grid_edge[[1]] &&
     !components$touches_right_grid_edge[[1]]
   contains_zero <- if (nrow(components)) any(components$contains_zero) else FALSE
+  information <- classify_anderson_rubin_information(components)
 
   list(
     summary = data.frame(
@@ -305,6 +331,8 @@ estimate_anderson_rubin_spec <- function(data, specification, level = 0.95, poin
       ar_95_left_truncated = nrow(components) && any(components$touches_left_grid_edge),
       ar_95_right_truncated = nrow(components) && any(components$touches_right_grid_edge),
       ar_95_components = format_anderson_rubin_components(components),
+      ar_95_information = information,
+      ar_95_sign_identified = information %in% c("positive_sign_only", "negative_sign_only"),
       n = nrow(x), status = "estimated", reason = NA_character_,
       stringsAsFactors = FALSE
     ),
