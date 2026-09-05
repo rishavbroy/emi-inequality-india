@@ -651,7 +651,7 @@ test_that("public audit preserves the last verified archive across failures", {
   output <- suppressWarnings(run_audit_script_fixture(failed))
   expect_identical(attr(output, "status"), 7L)
   expect_identical(readChar(file.path(failed$root, "review.zip"), 5L), "stale")
-  expect_identical(readChar(file.path(failed$root, "review.failed.zip"), 10L), "incomplete")
+  expect_false(file.exists(file.path(failed$root, "review.failed.zip")))
   status <- jsonlite::read_json(file.path(failed$root, "outputs", "diagnostics", "build", "audit_status.json"))
   expect_identical(status$status, "failed")
   expect_identical(status$stage, "output-manifest")
@@ -749,8 +749,12 @@ test_that("public build audit owns mandatory syntax and full-test gates", {
   expect_lt(syntax_line, test_line)
   expect_lt(test_line, pipeline_line)
   expect_true(any(grepl('dump_diagnostics "$audit_exit_code"', audit, fixed = TRUE)))
-  expect_true(any(grepl('make_debug_archive "error-${current_stage}"', audit, fixed = TRUE)))
-  expect_true(any(grepl('rm -f -- "$archive_out"', audit, fixed = TRUE)))
+  expect_false(any(grepl("failed.zip", audit, fixed = TRUE)))
+  expect_false(any(grepl('rm -f -- "$archive_out"', audit, fixed = TRUE)))
+  expect_true(any(grepl(
+    'bash scripts/make_review_archive.sh "$archive_sample_flag" --output "$archive_out"',
+    audit, fixed = TRUE
+  )))
   expect_false(any(grepl('manifest_args=()', audit, fixed = TRUE)))
   expect_true(any(grepl(
     "Rscript scripts/check_required_outputs.R --extended-diagnostics-only",

@@ -3,8 +3,6 @@ set -euxo pipefail
 
 render_samples="false"
 archive_out="review.zip"
-archive_on_error="false"
-archive_each_step="false"
 skip_clean="false"
 skip_tests="false"
 incremental="false"
@@ -17,7 +15,7 @@ audit_started_at_utc="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
 usage() {
   cat <<'USAGE'
-Usage: bash scripts/run_public_build_audit.sh [--with-samples|--without-samples] [--with-extended-diagnostics] [--with-benchmarks] [--with-analysis-notes] [--archive-on-error|--archive-always] [--archive-each-step] [--incremental|--skip-clean] [--skip-tests] [-o OUT.zip]
+Usage: bash scripts/run_public_build_audit.sh [--with-samples|--without-samples] [--with-extended-diagnostics] [--with-benchmarks] [--with-analysis-notes] [--archive-on-error|--archive-always] [--incremental|--skip-clean] [--skip-tests] [-o OUT.zip]
 
 Runs the final public build audit. The default is --without-samples for a faster
 report/data/output audit that omits application-sample rendering and excludes
@@ -27,10 +25,9 @@ the active current pipeline.
 
 The audit restores the project R library from the tracked renv.lock before
 checking synchronization, then checks source whitespace without editing source
-files. Every review archive contains outputs/diagnostics/build/audit_status.json. Failed runs can
-still produce an explicitly failed/incomplete `*.failed.zip` archive with
---archive-on-error (or its synonym --archive-always), while preserving the last
-verified archive. Successful runs replace the verified archive only after all
+files. Every successful review archive contains
+outputs/diagnostics/build/audit_status.json. Failed runs preserve the last
+verified review archive unchanged. Successful runs replace it only after all
 warning, integrity, and manifest gates pass.
 
 Use --incremental to preserve generated renders and the {targets} store while
@@ -46,8 +43,9 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --with-samples) render_samples="true"; shift ;;
     --without-samples|--no-samples) render_samples="false"; shift ;;
-    --archive-on-error|--archive-always) archive_on_error="true"; shift ;;
-    --archive-each-step) archive_each_step="true"; archive_on_error="true"; shift ;;
+    # Backward-compatible aliases. Review archives are last-known-good artifacts:
+    # failures preserve the existing archive and successes replace it atomically.
+    --archive-on-error|--archive-always) shift ;;
     --incremental) incremental="true"; skip_clean="true"; shift ;;
     --skip-clean) skip_clean="true"; shift ;;
     --with-extended-diagnostics) with_extended_diagnostics="true"; shift ;;
@@ -145,32 +143,6 @@ path.write_text(json.dumps(status, indent=2, sort_keys=True) + "\n", encoding="u
 PY
 }
 
-debug_archive_out() {
-  if [[ "$archive_out" == *.zip ]]; then
-    printf '%s.failed.zip\n' "${archive_out%.zip}"
-  else
-    printf '%s.failed.zip\n' "$archive_out"
-  fi
-}
-
-make_debug_archive() {
-  local label="$1"
-  local debug_out
-  if [[ "$archive_on_error" != "true" && "$archive_each_step" != "true" ]]; then return 0; fi
-  debug_out="$(debug_archive_out)"
-  echo "=== DEBUG REVIEW ARCHIVE (${label}): ${debug_out} ==="
-  bash scripts/make_review_archive.sh "$archive_sample_flag" --allow-incomplete --output "$debug_out" || \
-    echo "Could not create debug review archive ${debug_out}" >&2
-}
-
-checkpoint_archive() {
-  local label="$1"
-  if [[ "$archive_each_step" == "true" ]]; then
-    write_audit_status "running" "$label" 0 "checkpoint"
-    make_debug_archive "$label"
-  fi
-}
-
 check_source_whitespace() {
   local tmp
   tmp="$(mktemp)"
@@ -219,9 +191,6 @@ dump_diagnostics() {
   echo "=== END: git state ==="
   git status --short
 
-  if [[ "$exit_code" -ne 0 && "$archive_on_error" == "true" ]]; then
-    make_debug_archive "error-${current_stage}"
-  fi
   exit "$exit_code"
 }
 trap 'audit_exit_code=$?; dump_diagnostics "$audit_exit_code"' EXIT
@@ -230,7 +199,7 @@ current_stage="initialize-diagnostics"
 echo "=== START: git state ==="
 git status --short
 # Preserve the last verified archive until this run has successfully built and
-# validated its replacement. Failed runs write a separate *.failed.zip archive.
+# validated its replacement. Failed runs leave it untouched.
 bash scripts/clean_audit_workspace.sh
 write_audit_status "running" "$current_stage" 0 "pending"
 
@@ -252,7 +221,6 @@ fi
 current_stage="restore-project-library"
 echo "=== RESTORE PROJECT LIBRARY FROM RENV.LOCK ==="
 make restore
-checkpoint_archive "after-restore"
 
 current_stage="targets-process-preflight"
 echo "=== TARGETS PROCESS PREFLIGHT ==="
@@ -265,13 +233,11 @@ else
   echo "=== CLEAN GENERATED RENDERS ==="
   make "$clean_target"
 fi
-checkpoint_archive "after-clean"
 
 current_stage="static-parse-checks"
 echo "=== STATIC/PARSE CHECKS ==="
 check_source_whitespace
 bash scripts/check_source_syntax.sh
-checkpoint_archive "after-static-parse"
 
 current_stage="unit-tests"
 if [[ "$skip_tests" == "true" ]]; then
@@ -280,19 +246,16 @@ else
   echo "=== UNIT TESTS ==="
   make test
 fi
-checkpoint_archive "after-unit-tests"
 
 current_stage="lineage-geometry"
 echo "=== LINEAGE GEOMETRY ==="
 make lineage-geometry-build
-checkpoint_archive "after-lineage-geometry"
 
 if [[ "$with_extended_diagnostics" == "true" ]]; then
   current_stage="extended-diagnostics"
   echo "=== EXTENDED DIAGNOSTICS ==="
   make extended-diagnostics
   Rscript scripts/check_required_outputs.R --extended-diagnostics-only
-  checkpoint_archive "after-extended-diagnostics"
 fi
 
 current_stage="public-final-check"
@@ -300,20 +263,17 @@ export EMI_CONSUMPTION_DOMAIN_CORES="${EMI_CONSUMPTION_DOMAIN_CORES:-4}"
 echo "=== CONSUMPTION DOMAIN WORKERS: ${EMI_CONSUMPTION_DOMAIN_CORES} requested (clamped to physical cores in R) ==="
 echo "=== PUBLIC FINAL CHECK (${sample_mode}) ==="
 make "$check_target"
-checkpoint_archive "after-public-final-check"
 
 if [[ "$with_benchmarks" == "true" ]]; then
   current_stage="benchmarks"
   echo "=== BENCHMARKS ==="
   make benchmarking
-  checkpoint_archive "after-benchmarks"
 fi
 
 if [[ "$with_analysis_notes" == "true" ]]; then
   current_stage="analysis-notes"
   echo "=== ANALYSIS NOTES ==="
   make render-analysis
-  checkpoint_archive "after-analysis-notes"
 fi
 
 current_stage="strict-target-warning-check"
@@ -339,5 +299,4 @@ current_stage="review-archive"
 write_audit_status "passed" "complete" 0 "verified"
 echo "=== VERIFIED REVIEW ARCHIVE ==="
 bash scripts/make_review_archive.sh "$archive_sample_flag" --output "$archive_out"
-rm -f -- "$(debug_archive_out)"
 audit_completed="true"

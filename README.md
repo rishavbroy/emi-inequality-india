@@ -103,7 +103,7 @@ Use a small number of commands repeatedly rather than trying to remember every [
 | Unit-test smoke check | `make test` | Fast contract tests; should pass without local raw data. |
 | Fast public audit, no samples | `make public-build-audit` | Runs the canonical audit without application samples and writes a no-samples `review.zip` on success. |
 | Full reviewer-facing audit | `make public-build-audit-full` | Runs cached `{targets}` public render targets for the report, docs, and application samples, audits outputs, and writes a full `review.zip`. |
-| Cache-preserving debug audit | `make public-build-audit-full-incremental-review` | Preserves generated renders and the `{targets}` cache, and writes a debug archive if the run fails. |
+| Cache-preserving debug audit | `make public-build-audit-full-incremental-review` | Preserves generated renders and the `{targets}` cache; a failed run leaves the previous `review.zip` untouched. |
 | Extended diagnostics only | `make extended-diagnostics` | Runs opt-in `diag_ext_*` targets, respecting the targets cache. |
 | Benchmarks only | `make benchmarking` | Runs opt-in `bench_*` targets, respecting the targets cache. |
 | Full audit plus diagnostics/benchmarks | `make public-build-audit-full-with-benchmarks` | Runs the full public audit, then opt-in extended diagnostics and benchmarks. Use when reviewing methodological/debug outputs, not for every edit. |
@@ -144,12 +144,12 @@ If you want help changing the code but do not want to spend hundreds of dollars 
 1. `review.zip`
 2. the corresponding log file, usually `full_output.txt` or `full_output_with_diagnostics_benchmarks.txt`
 
-`--archive-on-error` is important: successful runs atomically replace the final `review.zip`, while failed runs preserve the last verified `review.zip` and write the incomplete diagnostic bundle to `review.failed.zip`. That failed-run archive still contains the source tree, generated diagnostics, target metadata, and enough context for an LLM to propose a patch. The no-samples/incremental variants are cheaper for iteration; the full `--with-samples` run is the better reviewer-facing proof build.
+`review.zip` is a last-known-good artifact: successful runs atomically replace it, while failed runs leave the previous archive untouched. The legacy `--archive-on-error` and `--archive-always` flags remain accepted for command-line compatibility but do not create a second failure archive. Use `full_output.txt` and `outputs/diagnostics/build/` to diagnose failed runs. The no-samples/incremental variants are cheaper for iteration; the full `--with-samples` run is the better reviewer-facing proof build.
 
 
 ### Review archive contract
 
-Build `review.zip` through [`scripts/run_public_build_audit.sh`](scripts/run_public_build_audit.sh) or after a final public check succeeds. The packaging script stages the current working tree, omits raw data and local caches, and normally refuses to run without the `.public-final-ok` stamp produced by a final public check. When called by the audit script with `--archive-on-error`, it creates an `--allow-incomplete` `review.failed.zip` after a failed run without replacing the last verified `review.zip`; the failed archive is for diagnosis, not for reviewer submission.
+Build `review.zip` through [`scripts/run_public_build_audit.sh`](scripts/run_public_build_audit.sh) or after a final public check succeeds. The packaging script stages the current working tree, omits raw data and local caches, and normally refuses to run without the `.public-final-ok` stamp produced by a final public check. It builds and validates a temporary sibling archive before replacing `review.zip`, so a packaging failure leaves the previous archive intact.
 
 For fast iteration, run `bash scripts/run_public_build_audit.sh --without-samples --archive-on-error`. This mode omits [`application-samples/output/`](application-samples/output/) from `review.zip`, so it cannot accidentally package stale sample PDFs. Before a full submission or application bundle, run `bash scripts/run_public_build_audit.sh --with-samples --archive-on-error`; that mode renders application samples and requires them in `review.zip`. Because public PDFs and sample PDFs are tracked deliverables, commit intentional regenerated outputs before treating the run as a final proof.
 
