@@ -22,6 +22,6 @@ manifest <- build_output_artifact_manifest(
 )
 dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
 utils::write.csv(manifest, path, row.names = FALSE, na = "")
-cat(sprintf("Wrote %s (%d artifacts; %d target-backed; %d with analysis IDs).\n", path, nrow(manifest), sum(nzchar(manifest$target_name)), sum(manifest$analysis_id_count > 0L)))
+cat(sprintf("Wrote %s (%d artifacts; %d target-referenced; %d with analysis IDs).\n", path, nrow(manifest), sum(nzchar(manifest$target_references)), sum(manifest$analysis_id_count > 0L)))
 cat(manifest$path, sep = "\n")
 cat("\n")

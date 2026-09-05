@@ -63,22 +63,12 @@ build_output_artifact_manifest <- function(target_meta, design_registry, roots, 
   if (is.null(target_paths)) target_paths <- data.frame(target_name = character(), path = character())
   target_paths <- target_paths[target_paths$path %in% paths, , drop = FALSE]
   target_paths <- unique(target_paths[c("target_name", "path")])
-  owner_count <- table(target_paths$path)
-  collisions <- names(owner_count)[owner_count > 1L]
-  if (length(collisions)) {
-    details <- vapply(collisions, function(path) {
-      owners <- sort(unique(target_paths$target_name[target_paths$path == path]))
-      paste0(path, " <- ", paste(owners, collapse = ";"))
-    }, character(1))
-    stop(
-      "Multiple file targets claim one output path: ",
-      paste(details, collapse = " | "),
-      call. = FALSE
-    )
-  }
+  refs <- split(target_paths$target_name, target_paths$path)
+  target_references <- vapply(paths, function(path) {
+    names <- sort(unique(as.character(if (is.null(refs[[path]])) character() else refs[[path]])))
+    paste(names[nzchar(names)], collapse = ";")
+  }, character(1))
 
-  idx <- match(paths, target_paths$path)
-  target_name <- ifelse(is.na(idx), "", target_paths$target_name[idx])
   registry <- as.data.frame(design_registry, stringsAsFactors = FALSE)
   if (!all(c("analysis_id", "family") %in% names(registry))) {
     stop("Design registry must contain analysis_id and family.", call. = FALSE)
@@ -96,9 +86,9 @@ build_output_artifact_manifest <- function(target_meta, design_registry, roots, 
   })
 
   out <- data.frame(
-    artifact_id = ifelse(nzchar(target_name), paste(target_name, basename(paths), sep = "::"), paste("filesystem", paths, sep = "::")),
+    artifact_id = paths,
     path = paths,
-    target_name = target_name,
+    target_references = target_references,
     output_scope = output_artifact_scope(paths),
     artifact_type = tolower(tools::file_ext(paths)),
     bytes = as.numeric(file.info(file.path(root, paths))$size),
