@@ -112,6 +112,10 @@ test_that("analysis-design ontology inventories registered families without Cart
   exclusion_rows <- registry[
     registry$family == "consumption_exclusion_sensitivity", , drop = FALSE
   ]
+  expect_identical(
+    exclusion_rows$analysis_id,
+    paste("consumption_exclusion_sensitivity", exclusion_rows$specification_id, sep = "__")
+  )
   expect_true(all(exclusion_rows$estimation_scope_id == "structural_iv_sensitivity"))
   expect_true(all(exclusion_rows$weak_id_inference_id == "bounded_exclusion_ar"))
   expect_true(all(exclusion_rows$covariance_id == "state_clustered"))
