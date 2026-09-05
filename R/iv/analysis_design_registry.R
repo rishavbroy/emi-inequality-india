@@ -280,13 +280,13 @@ analysis_design_from_iv <- function(
   }
   analysis_id_value <- if ("analysis_id" %in% names(specs)) {
     ids <- plain_chr(specs$analysis_id)
-    expected_ids <- paste(family, plain_chr(specs$specification_id), sep = "__")
+    expected_ids <- iv_analysis_id(family, specs$specification_id)
     if (!identical(ids, expected_ids)) {
       stop("Canonical IV specification analysis_id values disagree with the design family.", call. = FALSE)
     }
     ids
   } else {
-    paste(family, plain_chr(specs$specification_id), sep = "__")
+    iv_analysis_id(family, specs$specification_id)
   }
 
   analysis_design_frame(

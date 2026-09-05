@@ -95,9 +95,10 @@ run_iv_overidentification_diagnostics <- function(
     applicable$diagnostic_id == "overidentification" & applicable$will_run
   ]
   specs <- specifications[specifications$specification_id %in% ids, , drop = FALSE]
-  safe_bind_rows(lapply(seq_len(nrow(specs)), function(i) {
+  out <- safe_bind_rows(lapply(seq_len(nrow(specs)), function(i) {
     estimate_overidentification_spec(data, specs[i, , drop = FALSE])
   }))
+  attach_iv_analysis_id(out, specs)
 }
 
 #' Diagnose whether active IV specifications are overidentified

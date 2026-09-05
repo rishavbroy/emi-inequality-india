@@ -149,12 +149,13 @@ run_iv_balance_diagnostics <- function(
   if (length(missing)) {
     stop("IV balance diagnostics are missing columns: ", paste(missing, collapse = ", "), call. = FALSE)
   }
-  safe_bind_rows(lapply(seq_len(nrow(specifications)), function(i) {
+  out <- safe_bind_rows(lapply(seq_len(nrow(specifications)), function(i) {
     spec <- specifications[i, , drop = FALSE]
     safe_bind_rows(lapply(variables, function(variable) {
       estimate_iv_balance_spec(data, spec, variable)
     }))
   }))
+  attach_iv_analysis_id(out, specifications)
 }
 
 
@@ -261,7 +262,8 @@ run_iv_joint_balance_diagnostics <- function(
     applicability$diagnostic_id == "balance_joint" & applicability$will_run
   ]
   specs <- specifications[specifications$specification_id %in% ids, , drop = FALSE]
-  safe_bind_rows(lapply(seq_len(nrow(specs)), function(i) {
+  out <- safe_bind_rows(lapply(seq_len(nrow(specs)), function(i) {
     estimate_iv_joint_balance_spec(data, specs[i, , drop = FALSE], variables)
   }))
+  attach_iv_analysis_id(out, specs)
 }

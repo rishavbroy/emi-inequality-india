@@ -177,8 +177,14 @@ run_iv_monotonicity_diagnostics <- function(
     estimate_iv_monotonicity_shape(data, specs[i, , drop = FALSE], bins = bins)
   })
   list(
-    summary = safe_bind_rows(lapply(results, `[[`, "summary")),
-    bins = safe_bind_rows(lapply(results, `[[`, "bins")),
-    state_slopes = safe_bind_rows(lapply(results, `[[`, "state_slopes"))
+    summary = attach_iv_analysis_id(
+      safe_bind_rows(lapply(results, `[[`, "summary")), specs
+    ),
+    bins = attach_iv_analysis_id(
+      safe_bind_rows(lapply(results, `[[`, "bins")), specs
+    ),
+    state_slopes = attach_iv_analysis_id(
+      safe_bind_rows(lapply(results, `[[`, "state_slopes")), specs
+    )
   )
 }
