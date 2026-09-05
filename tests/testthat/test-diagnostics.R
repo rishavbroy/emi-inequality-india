@@ -3095,6 +3095,17 @@ test_that("causal control strategies distinguish adjustment philosophies", {
   expect_true(all(vapply(
     strategies, function(x) nzchar(x$caution), logical(1)
   )))
+  expect_setequal(
+    vapply(strategies, `[[`, character(1), "control_strategy_id"),
+    c(
+      "geography_only", "observed_exclusion_threat_adjustment",
+      "potential_pathway_robustness"
+    )
+  )
+  expect_setequal(
+    vapply(strategies, `[[`, character(1), "control_parameterization_id"),
+    c("none", "secondary_compact_economic")
+  )
 })
 
 test_that("consumption control-strategy robustness isolates six theory-based adjustments", {
@@ -3113,6 +3124,17 @@ test_that("consumption control-strategy robustness isolates six theory-based adj
   expect_true(all(specs$construction_id == "nonzero_mean"))
   expect_true(all(specs$sample_rule == "consumption_control_strategy_common_support"))
   expect_true(all(specs$tier == "C"))
+  expect_setequal(
+    unique(specs$control_strategy_id),
+    c(
+      "geography_only", "observed_exclusion_threat_adjustment",
+      "potential_pathway_robustness"
+    )
+  )
+  expect_setequal(
+    unique(specs$control_parameterization_id),
+    c("none", "secondary_compact_economic")
+  )
   expect_true(all(vapply(specs$excluded_instruments, function(x) {
     identical(plain_chr(x), preferred_iv_variables()$instrument)
   }, logical(1))))
@@ -3144,7 +3166,10 @@ test_that("IV adjustment registries share one named execution contract", {
   for (registry in registries) {
     expect_true(length(registry) > 0L)
     expect_true(all(vapply(registry, function(adjustment) {
-      all(c("label", "fixed_effect", "controls") %in% names(adjustment))
+      all(c(
+        "label", "fixed_effect", "controls",
+        "control_strategy_id", "control_parameterization_id"
+      ) %in% names(adjustment))
     }, logical(1))))
     expect_true(all(vapply(registry, function(adjustment) {
       adjustment$fixed_effect %in% c("none", "region", "state") && is.character(adjustment$controls)

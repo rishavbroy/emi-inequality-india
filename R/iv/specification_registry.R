@@ -67,11 +67,27 @@ iv_replace_main_controls <- function(
   )
 }
 
-iv_adjustment <- function(label, fixed_effect, controls, ...) {
+iv_adjustment <- function(
+    label,
+    fixed_effect,
+    controls,
+    control_strategy_id = "",
+    control_parameterization_id = "",
+    ...) {
   list(
     label = label,
     fixed_effect = fixed_effect,
     controls = plain_chr(controls),
+    control_strategy_id = if (length(control_strategy_id)) {
+      plain_chr(control_strategy_id)[[1L]]
+    } else {
+      ""
+    },
+    control_parameterization_id = if (length(control_parameterization_id)) {
+      plain_chr(control_parameterization_id)[[1L]]
+    } else {
+      ""
+    },
     ...
   )
 }
@@ -111,6 +127,8 @@ iv_causal_control_strategy_adjustments <- function(control_registry = NULL) {
       label = fe_label,
       fixed_effect = fixed_effect,
       controls = character(),
+      control_strategy_id = "geography_only",
+      control_parameterization_id = "none",
       strategy = "geography_only",
       theoretical_role = paste(
         "Avoid conditioning on measured socioeconomic variables that may themselves",
@@ -122,6 +140,8 @@ iv_causal_control_strategy_adjustments <- function(control_registry = NULL) {
       label = paste0(fe_label, " + compact 2001 adjustment"),
       fixed_effect = fixed_effect,
       controls = main,
+      control_strategy_id = "observed_exclusion_threat_adjustment",
+      control_parameterization_id = "secondary_compact_economic",
       strategy = "observed_exclusion_threat_adjustment",
       theoretical_role = paste(
         "Condition on a compact set of observed 2001 scale, composition, human-capital,",
@@ -136,6 +156,8 @@ iv_causal_control_strategy_adjustments <- function(control_registry = NULL) {
       label = paste0(fe_label, " + compact 2001 adjustment without human capital"),
       fixed_effect = fixed_effect,
       controls = no_human_capital,
+      control_strategy_id = "potential_pathway_robustness",
+      control_parameterization_id = "secondary_compact_economic",
       strategy = "potential_pathway_robustness",
       theoretical_role = paste(
         "Retain observed baseline adjustment while avoiding direct conditioning on",
@@ -176,7 +198,9 @@ iv_main_parameterization_adjustments <- function(control_registry = NULL) {
       rows[[paste(fixed_effect, "main", variant_id, sep = "_")]] <- iv_adjustment(
         paste0(fixed_label, " + main-control ", gsub("_", " ", variant_id), " parameterization"),
         fixed_effect,
-        variants[[variant_id]]
+        variants[[variant_id]],
+        control_strategy_id = "observed_exclusion_threat_adjustment",
+        control_parameterization_id = variant_id
       )
     }
   }
@@ -388,6 +412,8 @@ iv_shastry_added_control_first_stage_specifications <- function(
       mapping_coverage_variable = construction$coverage,
       panel_variant = "primary",
       sample_rule = sample_rule,
+      control_strategy_id = adjustment$control_strategy_id %||% "",
+      control_parameterization_id = adjustment$control_parameterization_id %||% "",
       tier = "B",
       sequence = i,
       control_registry = control_registry
@@ -426,23 +452,38 @@ iv_adjustment_sets <- function(control_registry = NULL) {
   control_registry <- resolve_census_2001_control_registry(control_registry)
   list(
     unadjusted = iv_adjustment(
-      "Unadjusted", "none", character(), tier = "B"
+      "Unadjusted", "none", character(),
+      control_strategy_id = "unadjusted",
+      control_parameterization_id = "none",
+      tier = "B"
     ),
     region_main = iv_adjustment(
       "Six-region FE + main controls", "region",
-      census_2001_main_controls(control_registry), tier = "A"
+      census_2001_main_controls(control_registry),
+      control_strategy_id = "observed_exclusion_threat_adjustment",
+      control_parameterization_id = "secondary_compact_economic",
+      tier = "A"
     ),
     region_expanded = iv_adjustment(
       "Six-region FE + expanded controls", "region",
-      census_2001_absorption_controls(control_registry), tier = "B"
+      census_2001_absorption_controls(control_registry),
+      control_strategy_id = "expanded_absorption_diagnostic",
+      control_parameterization_id = "expanded_registry",
+      tier = "B"
     ),
     state_main = iv_adjustment(
       "State FE + main controls", "state",
-      census_2001_main_controls(control_registry), tier = "A"
+      census_2001_main_controls(control_registry),
+      control_strategy_id = "observed_exclusion_threat_adjustment",
+      control_parameterization_id = "secondary_compact_economic",
+      tier = "A"
     ),
     state_expanded = iv_adjustment(
       "State FE + expanded controls", "state",
-      census_2001_absorption_controls(control_registry), tier = "B"
+      census_2001_absorption_controls(control_registry),
+      control_strategy_id = "expanded_absorption_diagnostic",
+      control_parameterization_id = "expanded_registry",
+      tier = "B"
     )
   )
 }
@@ -551,6 +592,8 @@ iv_specification_row <- function(
   sample_rule,
   distance_measure_id = NULL,
   language_adjustment_id = NULL,
+  control_strategy_id = "",
+  control_parameterization_id = "",
   cluster = "state_code_2001",
   tier = "B",
   sequence = NA_integer_,
@@ -570,6 +613,16 @@ iv_specification_row <- function(
     construction = construction,
     distance_measure_id = axes$distance_measure_id,
     language_adjustment_id = axes$language_adjustment_id,
+    control_strategy_id = if (length(control_strategy_id)) {
+      plain_chr(control_strategy_id)[[1L]]
+    } else {
+      ""
+    },
+    control_parameterization_id = if (length(control_parameterization_id)) {
+      plain_chr(control_parameterization_id)[[1L]]
+    } else {
+      ""
+    },
     outcome = outcome,
     treatment = treatment,
     fixed_effect = fixed_effect,
@@ -705,6 +758,8 @@ iv_specification_registry <- function(
         mapping_coverage_variable = construction$coverage,
         panel_variant = panel_variant,
         sample_rule = sample_rule,
+        control_strategy_id = adjustment$control_strategy_id %||% "",
+        control_parameterization_id = adjustment$control_parameterization_id %||% "",
         tier = adjustment$tier,
         sequence = sequence,
         control_registry = control_registry
@@ -878,6 +933,8 @@ iv_absorption_specification_candidates <- function(
       mapping_coverage_variable = construction$coverage,
       panel_variant = panel_variant,
       sample_rule = sample_rule,
+      control_strategy_id = adjustment$control_strategy_id %||% "",
+      control_parameterization_id = adjustment$control_parameterization_id %||% "",
       tier = "B",
       sequence = i,
       control_registry = control_registry

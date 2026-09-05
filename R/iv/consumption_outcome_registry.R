@@ -298,6 +298,8 @@ compile_consumption_iv_design_row <- function(
     mapping_coverage_variable = construction$coverage,
     panel_variant = x$panel_variant[[1L]],
     sample_rule = sample_rule %||% x$sample_rule[[1L]],
+    control_strategy_id = adjustment$control_strategy_id %||% "",
+    control_parameterization_id = adjustment$control_parameterization_id %||% "",
     tier = tier %||% x$tier[[1L]],
     sequence = sequence,
     control_registry = control_registry
