@@ -120,11 +120,11 @@ test_that("ST language panel admits only exact ST16 validation with frozen dista
 test_that("ST16 parser carries hierarchical workbook keys without carrying measures", {
   raw <- as.data.frame(matrix(NA_character_, nrow = 5, ncol = 12), stringsAsFactors = FALSE)
   raw[1, c(1, 3, 4, 5, 6, 7, 10)] <- c(
-    "13", "01", "DISTRICT A", "All Scheduled Tribes", "GONDI", "80", "20"
+    "13", "01", "DISTRICT A", "  ALL  SCHEDULED  TRIBES  ", "GONDI", "80", "20"
   )
   raw[2, c(6, 7, 10)] <- c("HINDI", "10", "5")
   raw[3, c(3, 4, 5, 6, 7, 10)] <- c(
-    "02", "DISTRICT B", "All Scheduled Tribes", "GONDI", "40", "10"
+    "02", "DISTRICT B", "All Sheduled Tribes", "GONDI", "40", "10"
   )
   raw[4, c(5, 6, 7, 10)] <- c("Gond", "GONDI", "30", "5")
 

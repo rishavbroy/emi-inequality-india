@@ -309,17 +309,20 @@ parse_census_1991_st16_sheet <- function(raw) {
     raw[[column]] <- fill_down_missing(census_1991_st_language_text(raw[[column]]))
   }
 
+  # Scheduled-Tribe is a structural table dimension, not a language label.
+  # Match it canonically so capitalization/spacing and the published historical
+  # "Sheduled" typo do not determine whether aggregate rows are admitted.
+  all_st <- canon(raw[[5L]]) %in% c("all scheduled tribes", "all sheduled tribes")
+
   out <- data.frame(
     state_code_1991 = normalize_census_code(raw[[1L]], 2L),
     district_code_1991 = normalize_census_code(raw[[3L]], 2L),
     district_name = clean_census_district_label(raw[[4L]]),
-    scheduled_tribe = normalize_language_label(raw[[5L]]),
     mother_tongue = normalize_language_label(raw[[6L]]),
     rural_speakers = census_1991_st_language_count(raw[[7L]]),
     urban_speakers = census_1991_st_language_count(raw[[10L]]),
     stringsAsFactors = FALSE
   )
-  all_st <- out$scheduled_tribe %in% c("All Scheduled Tribes", "All Sheduled Tribes")
   keep <- all_st & !is.na(out$state_code_1991) & !is.na(out$district_code_1991) &
     out$district_code_1991 != "00" & nzchar(out$mother_tongue)
   out <- out[keep %in% TRUE, , drop = FALSE]
