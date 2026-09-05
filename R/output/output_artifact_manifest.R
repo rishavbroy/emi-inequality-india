@@ -75,14 +75,21 @@ build_output_artifact_manifest <- function(target_meta, design_registry, roots, 
   }
   link <- lapply(paths, function(path) {
     full <- file.path(root, path)
-    if (tolower(tools::file_ext(path)) != "csv") return(c(0L, 0L, ""))
+    if (tolower(tools::file_ext(path)) != "csv") return(c(0L, ""))
     header <- tryCatch(names(utils::read.csv(full, nrows = 0L, check.names = FALSE)), error = function(e) character())
-    if (!"analysis_id" %in% header) return(c(0L, 0L, ""))
+    if (!"analysis_id" %in% header) return(c(0L, ""))
     ids <- unique(trimws(as.character(utils::read.csv(full, stringsAsFactors = FALSE, check.names = FALSE)$analysis_id)))
     ids <- ids[nzchar(ids) & !is.na(ids)]
     matched <- match(ids, registry$analysis_id)
-    families <- sort(unique(registry$family[matched[!is.na(matched)]]))
-    c(length(ids), sum(!is.na(matched)), paste(families, collapse = ";"))
+    if (anyNA(matched)) {
+      stop(
+        "Artifact analysis_id values must reference the canonical design registry: ",
+        path, " -> ", paste(ids[is.na(matched)], collapse = ";"),
+        call. = FALSE
+      )
+    }
+    families <- sort(unique(registry$family[matched]))
+    c(length(ids), paste(families, collapse = ";"))
   })
 
   out <- data.frame(
@@ -93,8 +100,7 @@ build_output_artifact_manifest <- function(target_meta, design_registry, roots, 
     artifact_type = tolower(tools::file_ext(paths)),
     bytes = as.numeric(file.info(file.path(root, paths))$size),
     analysis_id_count = as.integer(vapply(link, `[[`, character(1), 1L)),
-    linked_analysis_id_count = as.integer(vapply(link, `[[`, character(1), 2L)),
-    analysis_families = vapply(link, `[[`, character(1), 3L),
+    analysis_families = vapply(link, `[[`, character(1), 2L),
     stringsAsFactors = FALSE
   )
   if (anyDuplicated(out$artifact_id) || anyDuplicated(out$path)) stop("Output manifest identifiers must be unique.", call. = FALSE)

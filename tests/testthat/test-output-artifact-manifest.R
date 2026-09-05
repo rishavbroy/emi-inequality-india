@@ -9,7 +9,7 @@ test_that("output artifact manifest preserves target identity and analysis links
     stringsAsFactors = FALSE
   )
   diagnostic <- data.frame(
-    analysis_id = c("a1", "a2", "missing"),
+    analysis_id = c("a1", "a2"),
     estimate = 1:3,
     stringsAsFactors = FALSE
   )
@@ -38,11 +38,36 @@ test_that("output artifact manifest preserves target identity and analysis links
   expect_equal(nrow(row), 1L)
   expect_identical(row$target_references, "diag_ext_estimates")
   expect_identical(row$output_scope, "extended_diagnostic")
-  expect_equal(row$analysis_id_count, 3L)
-  expect_equal(row$linked_analysis_id_count, 2L)
+  expect_equal(row$analysis_id_count, 2L)
   expect_identical(row$analysis_families, "family_a;family_b")
   expect_true("paper/report.pdf" %in% out$path)
   expect_false("outputs/diagnostics/build/output_manifest.csv" %in% out$path)
+})
+
+
+test_that("output artifact manifest rejects dangling canonical analysis IDs", {
+  root <- tempfile("output-manifest-analysis-id-")
+  dir.create(file.path(root, "outputs"), recursive = TRUE)
+  path <- file.path(root, "outputs", "x.csv")
+  utils::write.csv(
+    data.frame(analysis_id = c("registered", "missing"), estimate = 1:2),
+    path, row.names = FALSE
+  )
+
+  meta <- data.frame(name = "artifact", format = "file", stringsAsFactors = FALSE)
+  meta$path <- I(list(path))
+
+  expect_error(
+    build_output_artifact_manifest(
+      target_meta = meta,
+      design_registry = data.frame(
+        analysis_id = "registered", family = "family", stringsAsFactors = FALSE
+      ),
+      roots = "outputs",
+      root = root
+    ),
+    "must reference the canonical design registry.*missing"
+  )
 })
 
 test_that("output artifact manifest records every target that tracks an artifact", {
