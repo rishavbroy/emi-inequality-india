@@ -464,7 +464,8 @@ extended_iv_target_definitions <- function() {
         consumption_control_strategy_specifications,
         consumption_control_parameterization_specifications,
         consumption_historical_adjustment_specifications,
-        consumption_historical_concept_matched_specifications
+        consumption_historical_concept_matched_specifications,
+        consumption_registry = consumption_iv_outcome_registry
       )
     ),
     tar_target(

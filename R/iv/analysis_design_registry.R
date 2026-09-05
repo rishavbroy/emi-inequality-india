@@ -391,6 +391,113 @@ analysis_design_historical_first_stages <- function(control_registry = NULL) {
   safe_bind_rows(list(regular, predetermined_rows))
 }
 
+analysis_design_schooling_consumption_bridge <- function(
+    consumption_registry, control_registry = NULL) {
+  specs <- schooling_consumption_bridge_specifications(
+    consumption_registry, control_registry
+  )
+  outcome <- vapply(
+    plain_chr(specs$welfare_specification_id),
+    consumption_iv_variable_name,
+    character(1),
+    role = "outcome"
+  )
+  analysis_design_frame(
+    analysis_id = paste("schooling_consumption_bridge", specs$specification_id, sep = "__"),
+    family = rep("schooling_consumption_bridge", nrow(specs)),
+    specification_id = plain_chr(specs$specification_id),
+    outcome = outcome,
+    treatment = plain_chr(specs$treatment),
+    instrument = rep("", nrow(specs)),
+    instrument_vintage = rep("not_applicable", nrow(specs)),
+    adjustment_set = plain_chr(specs$adjustment_id),
+    fixed_effect = plain_chr(specs$fixed_effect),
+    estimand = paste0("descriptive_", plain_chr(specs$estimand)),
+    estimator = rep("ols", nrow(specs)),
+    inference = rep("state_clustered+holm", nrow(specs)),
+    sample_rule = rep("treatment_welfare_fixed_complete_case", nrow(specs)),
+    analysis_role = rep("descriptive_schooling_welfare_bridge", nrow(specs)),
+    admissible = rep(TRUE, nrow(specs)),
+    reason = rep("registered_descriptive_schooling_welfare_design", nrow(specs)),
+    implemented = rep(TRUE, nrow(specs))
+  )
+}
+
+analysis_design_nss64_social_group <- function(control_registry = NULL) {
+  specs <- nss64_schooling_social_group_specifications()
+  analysis_design_frame(
+    analysis_id = paste("nss64_social_group", specs$specification_id, sep = "__"),
+    family = rep("nss64_social_group", nrow(specs)),
+    specification_id = plain_chr(specs$specification_id),
+    outcome = paste0("gap__", plain_chr(specs$outcome)),
+    treatment = rep("", nrow(specs)),
+    instrument = rep(preferred_iv_variables()$instrument, nrow(specs)),
+    instrument_vintage = rep("2001", nrow(specs)),
+    adjustment_set = rep("state_main", nrow(specs)),
+    fixed_effect = rep("state", nrow(specs)),
+    estimand = rep("social_group_gap_distance_association", nrow(specs)),
+    estimator = rep("ols", nrow(specs)),
+    inference = rep("state_clustered+holm", nrow(specs)),
+    sample_rule = paste0("social_group_gap__", plain_chr(specs$sample)),
+    analysis_role = rep("descriptive_schooling_inequality", nrow(specs)),
+    admissible = rep(TRUE, nrow(specs)),
+    reason = rep("registered_social_group_gap_design", nrow(specs)),
+    implemented = rep(TRUE, nrow(specs))
+  )
+}
+
+analysis_design_st_concentration_heterogeneity <- function(control_registry = NULL) {
+  specs <- english_opportunity_st_heterogeneity_specifications()
+  analysis_design_frame(
+    analysis_id = paste("st_concentration_heterogeneity", specs$specification_id, sep = "__"),
+    family = rep("st_concentration_heterogeneity", nrow(specs)),
+    specification_id = plain_chr(specs$specification_id),
+    outcome = plain_chr(specs$outcome),
+    treatment = rep("", nrow(specs)),
+    instrument = rep(preferred_iv_variables()$instrument, nrow(specs)),
+    instrument_vintage = rep("2001", nrow(specs)),
+    adjustment_set = paste0(
+      "state_main_without_st_share__", plain_chr(specs$heterogeneity)
+    ),
+    fixed_effect = rep("state", nrow(specs)),
+    estimand = ifelse(
+      specs$heterogeneity == "continuous_interaction",
+      "distance_by_st_share_interaction",
+      "distance_slope_high_st_subset"
+    ),
+    estimator = rep("ols", nrow(specs)),
+    inference = rep("state_clustered+holm", nrow(specs)),
+    sample_rule = paste0("st_concentration__", plain_chr(specs$sample)),
+    analysis_role = rep("descriptive_effect_modification", nrow(specs)),
+    admissible = rep(TRUE, nrow(specs)),
+    reason = rep("registered_st_concentration_heterogeneity_design", nrow(specs)),
+    implemented = rep(TRUE, nrow(specs))
+  )
+}
+
+analysis_design_census_1991_st_language <- function() {
+  specs <- census_1991_st_language_specifications()
+  analysis_design_frame(
+    analysis_id = paste("census_1991_st_language", specs$specification_id, sep = "__"),
+    family = rep("census_1991_st_language", nrow(specs)),
+    specification_id = plain_chr(specs$specification_id),
+    outcome = plain_chr(specs$outcome),
+    treatment = rep("", nrow(specs)),
+    instrument = rep("shastry_distance_1991", nrow(specs)),
+    instrument_vintage = rep("1991", nrow(specs)),
+    adjustment_set = rep("state_1991", nrow(specs)),
+    fixed_effect = rep("state_1991", nrow(specs)),
+    estimand = rep("st_language_acquisition_association", nrow(specs)),
+    estimator = rep("mother_tongue_speaker_weighted_ols", nrow(specs)),
+    inference = rep("state_1991_clustered", nrow(specs)),
+    sample_rule = plain_chr(specs$sample),
+    analysis_role = rep("predetermined_language_behavior", nrow(specs)),
+    admissible = rep(TRUE, nrow(specs)),
+    reason = rep("registered_validated_1991_st_language_design", nrow(specs)),
+    implemented = rep(TRUE, nrow(specs))
+  )
+}
+
 compile_analysis_design_registry <- function(
     consumption_iv_specifications,
     english_opportunity_measure_registry,
@@ -402,7 +509,8 @@ compile_analysis_design_registry <- function(
     consumption_control_strategy_specifications = NULL,
     consumption_control_parameterization_specifications = NULL,
     consumption_historical_adjustment_specifications = NULL,
-    consumption_historical_concept_matched_specifications = NULL) {
+    consumption_historical_concept_matched_specifications = NULL,
+    consumption_registry = NULL) {
   core_iv <- analysis_design_from_iv(
     iv_diagnostic_specification_registry(control_registry = control_registry),
     family = "district_iv_diagnostic",
@@ -519,7 +627,12 @@ compile_analysis_design_registry <- function(
     analysis_design_census_mechanisms(control_registry),
     analysis_design_economic_census_mechanisms(control_registry),
     analysis_design_labor_mechanisms(control_registry),
-    analysis_design_historical_first_stages(control_registry)
+    analysis_design_historical_first_stages(control_registry),
+    if (is.null(consumption_registry)) data.frame() else
+      analysis_design_schooling_consumption_bridge(consumption_registry, control_registry),
+    analysis_design_nss64_social_group(control_registry),
+    analysis_design_st_concentration_heterogeneity(control_registry),
+    analysis_design_census_1991_st_language()
   ))
   out <- out[analysis_design_columns()]
   if (anyDuplicated(out$analysis_id)) {

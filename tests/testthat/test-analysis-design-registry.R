@@ -42,7 +42,8 @@ test_that("analysis-design ontology inventories registered families without Cart
     consumption_alternative_welfare_specifications = consumption_welfare_specs,
     consumption_control_strategy_specifications = consumption_control_specs,
     consumption_control_parameterization_specifications = consumption_parameterization_specs,
-    consumption_historical_adjustment_specifications = consumption_historical_specs
+    consumption_historical_adjustment_specifications = consumption_historical_specs,
+    consumption_registry = consumption
   )
 
   expect_identical(names(registry), analysis_design_columns())
@@ -58,7 +59,9 @@ test_that("analysis-design ontology inventories registered families without Cart
       "c17_mechanism", "dise_first_stage", "dise_weak_iv",
       "census_migration_mechanism", "census_housing_mechanism",
       "economic_census_mechanism", "labor_mechanism",
-      "historical_first_stage", "historical_predetermined_first_stage"
+      "historical_first_stage", "historical_predetermined_first_stage",
+      "schooling_consumption_bridge", "nss64_social_group",
+      "st_concentration_heterogeneity", "census_1991_st_language"
     )
   )
 
@@ -106,6 +109,23 @@ test_that("analysis-design ontology inventories registered families without Cart
     sum(registry$family == "labor_mechanism"),
     3L * nrow(labor_mechanism_registry("nss66")) *
       nrow(labor_mechanism_specifications("nss66", control_registry = controls))
+  )
+
+  expect_equal(
+    sum(registry$family == "schooling_consumption_bridge"),
+    nrow(schooling_consumption_bridge_specifications(consumption, controls))
+  )
+  expect_equal(
+    sum(registry$family == "nss64_social_group"),
+    nrow(nss64_schooling_social_group_specifications())
+  )
+  expect_equal(
+    sum(registry$family == "st_concentration_heterogeneity"),
+    nrow(english_opportunity_st_heterogeneity_specifications())
+  )
+  expect_equal(
+    sum(registry$family == "census_1991_st_language"),
+    nrow(census_1991_st_language_specifications())
   )
 
   constructs <- dise_construct_registry()
@@ -165,7 +185,8 @@ test_that("analysis-design ontology preserves estimator and sample distinctions"
     consumption_control_strategy_specifications = consumption_control,
     consumption_control_parameterization_specifications = consumption_parameterization,
     consumption_historical_adjustment_specifications = consumption_historical,
-    consumption_historical_concept_matched_specifications = consumption_historical_matched
+    consumption_historical_concept_matched_specifications = consumption_historical_matched,
+    consumption_registry = consumption_registry
   )
 
   consumption_rows <- registry[registry$family == "consumption_iv", , drop = FALSE]
