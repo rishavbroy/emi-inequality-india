@@ -278,9 +278,19 @@ analysis_design_from_iv <- function(
   } else {
     rep("", nrow(specs))
   }
+  analysis_id_value <- if ("analysis_id" %in% names(specs)) {
+    ids <- plain_chr(specs$analysis_id)
+    expected_ids <- paste(family, plain_chr(specs$specification_id), sep = "__")
+    if (!identical(ids, expected_ids)) {
+      stop("Canonical IV specification analysis_id values disagree with the design family.", call. = FALSE)
+    }
+    ids
+  } else {
+    paste(family, plain_chr(specs$specification_id), sep = "__")
+  }
 
   analysis_design_frame(
-    analysis_id = paste(family, plain_chr(specs$specification_id), sep = "__"),
+    analysis_id = analysis_id_value,
     family = rep(family, nrow(specs)),
     specification_id = plain_chr(specs$specification_id),
     outcome = plain_chr(specs$outcome),
@@ -631,7 +641,7 @@ analysis_design_schooling_consumption_bridge <- function(
     role = "outcome"
   )
   analysis_design_frame(
-    analysis_id = paste("schooling_consumption_bridge", specs$specification_id, sep = "__"),
+    analysis_id = plain_chr(specs$analysis_id),
     family = rep("schooling_consumption_bridge", nrow(specs)),
     specification_id = plain_chr(specs$specification_id),
     outcome = outcome,

@@ -148,6 +148,10 @@ test_that("schooling-consumption specification family stays bounded at 60 cells"
   )
   specs <- schooling_consumption_bridge_specifications(registry)
   expect_equal(nrow(specs), 60L)
+  expect_identical(
+    specs$analysis_id,
+    paste("schooling_consumption_bridge", specs$specification_id, sep = "__")
+  )
   expect_equal(length(unique(specs$treatment_id)), 5L)
   expect_equal(length(unique(specs$welfare_specification_id)), 4L)
   expect_identical(

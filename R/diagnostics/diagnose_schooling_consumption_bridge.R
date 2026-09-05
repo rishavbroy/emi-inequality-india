@@ -87,14 +87,16 @@ schooling_consumption_bridge_specifications <- function(
     for (j in seq_len(nrow(treatments))) {
       for (a in seq_len(nrow(adjustments))) {
         k <- k + 1L
+        specification_id <- paste(
+          "schooling_consumption",
+          welfare$welfare_specification_id[[i]],
+          treatments$treatment_id[[j]],
+          adjustments$specification_id[[a]],
+          sep = "__"
+        )
         rows[[k]] <- data.frame(
-          specification_id = paste(
-            "schooling_consumption",
-            welfare$welfare_specification_id[[i]],
-            treatments$treatment_id[[j]],
-            adjustments$specification_id[[a]],
-            sep = "__"
-          ),
+          analysis_id = paste("schooling_consumption_bridge", specification_id, sep = "__"),
+          specification_id = specification_id,
           welfare_specification_id = welfare$welfare_specification_id[[i]],
           outcome_round = welfare$outcome_round[[i]],
           estimand = welfare$estimand[[i]],
@@ -260,6 +262,7 @@ diagnose_schooling_consumption_bridge <- function(
     match(specifications$specification_id, estimates$specification_id),
     , drop = FALSE
   ]
+  estimates$analysis_id <- specifications$analysis_id
   rownames(estimates) <- NULL
   if (nrow(estimates) != nrow(specifications) || any(is.na(estimates$specification_id))) {
     stop("Schooling-consumption bridge estimates do not match the registered family.", call. = FALSE)

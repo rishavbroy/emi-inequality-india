@@ -237,6 +237,7 @@ test_that("analysis-design ontology separates conditioning philosophy from contr
   expect_identical(expanded$control_parameterization_id, "expanded_registry")
 
   consumption_rows <- registry[registry$family == "consumption_iv", , drop = FALSE]
+  expect_true(all(consumption_rows$analysis_id == paste("consumption_iv", consumption_rows$specification_id, sep = "__")))
   expect_setequal(
     unique(consumption_rows$functional_form_id),
     unique(consumption$estimand)
