@@ -2063,6 +2063,68 @@ test_that("consumption IV panel augmentation preserves canonical panel rows", {
   )
 })
 
+test_that("IV specification rows derive registered instrument axes centrally", {
+  row <- iv_specification_row(
+    specification_id = "derived_axes",
+    adjustment_id = "state_main",
+    adjustment = "State FE + main controls",
+    construction_id = "nonzero_mean_shastry",
+    construction = "Nonzero mean with Shastry composition controls",
+    outcome = "y",
+    treatment = "d",
+    fixed_effect = "state",
+    controls = character(),
+    included_language_controls = c("hindi_urdu_share", "native_english_share"),
+    excluded_instruments = "ling_distance_nonzero_mean",
+    mapping_coverage_variable = "ling_map_coverage",
+    panel_variant = "primary",
+    sample_rule = "support"
+  )
+
+  expect_identical(row$distance_measure_id, "shastry_nonzero_mean")
+  expect_identical(row$language_adjustment_id, "shastry_composition")
+
+  synthetic <- iv_specification_row(
+    specification_id = "synthetic_axes",
+    adjustment_id = "state_main",
+    adjustment = "State FE",
+    construction_id = "toy_instrument",
+    construction = "Toy",
+    outcome = "y",
+    treatment = "d",
+    fixed_effect = "state",
+    controls = character(),
+    included_language_controls = character(),
+    excluded_instruments = "z",
+    mapping_coverage_variable = NA_character_,
+    panel_variant = "primary",
+    sample_rule = "support"
+  )
+  expect_true(is.na(synthetic$distance_measure_id))
+  expect_true(is.na(synthetic$language_adjustment_id))
+
+  expect_error(
+    iv_specification_row(
+      specification_id = "conflicting_axes",
+      adjustment_id = "state_main",
+      adjustment = "State FE",
+      construction_id = "nonzero_mean",
+      construction = "Preferred distance",
+      outcome = "y",
+      treatment = "d",
+      fixed_effect = "state",
+      controls = character(),
+      included_language_controls = character(),
+      excluded_instruments = "ling_distance_nonzero_mean",
+      mapping_coverage_variable = "ling_map_coverage",
+      panel_variant = "primary",
+      sample_rule = "support",
+      distance_measure_id = "glottolog_nonhindi_mean"
+    ),
+    "declares distance_measure_id='shastry_nonzero_mean'"
+  )
+})
+
 test_that("IV specification row binding preserves list-column contracts", {
   row_a <- iv_specification_row(
     specification_id = "a",
