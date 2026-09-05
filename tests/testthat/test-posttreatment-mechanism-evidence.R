@@ -5,6 +5,7 @@ mechanism_result_fixture <- function() {
     stringsAsFactors = FALSE
   )
   reduced_form <- data.frame(
+    analysis_id = c("example__a__state_main__nonzero_mean", "example__b__state_main__nonzero_mean"),
     outcome_id = c("a", "b"), outcome_variable = c("a", "b"),
     mechanism_family = c("family_a", "family_b"), tier = "core", denominator = "people",
     specification_id = "state_main__nonzero_mean", adjustment_id = "state_main",
@@ -14,6 +15,7 @@ mechanism_result_fixture <- function() {
     n = 100L, status = "estimated", reason = NA_character_, stringsAsFactors = FALSE
   )
   weak_iv <- data.frame(
+    analysis_id = c("example__a__state_main__nonzero_mean", "example__b__state_main__nonzero_mean"),
     outcome_id = c("a", "b"), outcome_variable = c("a", "b"),
     mechanism_family = c("family_a", "family_b"), tier = "core", denominator = "people",
     specification_id = "state_main__nonzero_mean", adjustment_id = "state_main",
@@ -74,6 +76,7 @@ test_that("cross-family mechanism evidence distinguishes identification from rob
   ))
 
   expect_equal(nrow(evidence$grid), 2L)
+  expect_identical(evidence$grid$analysis_id, result$weak_iv$analysis_id)
   expect_identical(
     evidence$grid$evidence_status,
     c("weak_iv_underidentified", "weak_iv_robust_signal")

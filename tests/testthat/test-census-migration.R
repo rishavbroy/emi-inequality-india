@@ -719,7 +719,19 @@ test_that("migration mechanism diagnostics use one common support sample", {
   expect_true(all(is.finite(
     diagnostics$weak_iv$anderson_rubin_p_beta0_holm_within_spec
   )))
+  expected_analysis_ids <- as.vector(outer(
+    registry$outcome_id,
+    census_migration_mechanism_specifications()$specification_id,
+    function(outcome_id, specification_id) {
+      posttreatment_mechanism_analysis_id(
+        "census__migration", outcome_id, specification_id
+      )
+    }
+  ))
+  expect_setequal(diagnostics$reduced_form$analysis_id, expected_analysis_ids)
+  expect_setequal(diagnostics$weak_iv$analysis_id, expected_analysis_ids)
   expect_true(nrow(diagnostics$anderson_rubin_grid) > 0L)
+  expect_setequal(diagnostics$anderson_rubin_grid$analysis_id, expected_analysis_ids)
   expect_setequal(
     unique(diagnostics$anderson_rubin_grid$outcome_id),
     registry$outcome_id

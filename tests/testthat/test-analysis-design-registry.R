@@ -881,3 +881,30 @@ test_that("analysis-design ontology links scientific constructs by stable IDs", 
     "ambiguous construct variable"
   )
 })
+test_that("post-treatment mechanism registry IDs use the shared canonical key builder", {
+  registry <- compile_analysis_design_registry()
+
+  migration_registry <- census_migration_mechanism_registry()
+  migration <- registry[registry$family == "census_migration_mechanism", , drop = FALSE]
+  migration_outcome_id <- unname(stats::setNames(
+    migration_registry$outcome_id, migration_registry$variable
+  )[migration$outcome])
+  expect_identical(
+    migration$analysis_id,
+    posttreatment_mechanism_analysis_id(
+      "census__migration", migration_outcome_id, migration$specification_id
+    )
+  )
+
+  economic_registry <- economic_census_mechanism_registry()
+  economic <- registry[registry$family == "economic_census_mechanism", , drop = FALSE]
+  economic_outcome_id <- unname(stats::setNames(
+    economic_registry$outcome_id, economic_registry$variable
+  )[economic$outcome])
+  expect_identical(
+    economic$analysis_id,
+    posttreatment_mechanism_analysis_id(
+      "economic_census", economic_outcome_id, economic$specification_id
+    )
+  )
+})
