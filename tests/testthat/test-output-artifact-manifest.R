@@ -1,16 +1,17 @@
-test_that("output artifact manifest preserves target identity and analysis links", {
+test_that("output artifact manifest records target references and canonical analysis links", {
   root <- tempfile("output-manifest-")
   dir.create(file.path(root, "outputs", "diagnostics", "extended", "iv"), recursive = TRUE)
   dir.create(file.path(root, "paper"), recursive = TRUE)
 
+  analysis_ids <- c("a1", "a2")
   registry <- data.frame(
-    analysis_id = c("a1", "a2"),
+    analysis_id = analysis_ids,
     family = c("family_a", "family_b"),
     stringsAsFactors = FALSE
   )
   diagnostic <- data.frame(
-    analysis_id = c("a1", "a2"),
-    estimate = 1:3,
+    analysis_id = analysis_ids,
+    estimate = seq_along(analysis_ids),
     stringsAsFactors = FALSE
   )
   csv_path <- file.path(root, "outputs", "diagnostics", "extended", "iv", "estimates.csv")
