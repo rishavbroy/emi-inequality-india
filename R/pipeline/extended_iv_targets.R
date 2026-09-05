@@ -394,6 +394,19 @@ extended_iv_target_definitions <- function() {
       format = "file"
     ),
     tar_target(
+      schooling_consumption_bridge,
+      diagnose_schooling_consumption_bridge(
+        consumption_iv_panel,
+        consumption_iv_outcome_registry,
+        census_2001_control_registry
+      )
+    ),
+    tar_target(
+      diag_ext_schooling_consumption_bridge_files,
+      save_schooling_consumption_bridge(schooling_consumption_bridge),
+      format = "file"
+    ),
+    tar_target(
       consumption_robustness_evidence,
       build_consumption_robustness_evidence(list(
         scalar_iv = list(
