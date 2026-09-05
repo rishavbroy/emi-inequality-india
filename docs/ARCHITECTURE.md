@@ -197,3 +197,9 @@ constituent clustered estimates and conditional first-stage diagnostics rather
 than silently dropping weak instruments, and the cross-family ontology records
 the family as `iv_falsification_adaptive_set`. This keeps exclusion sensitivity
 inside the existing specification, clustering, output, and governance layers.
+
+### Output artifact discovery
+
+The public audit writes `outputs/diagnostics/build/output_manifest.csv` after all requested target families and renders finish. This catalog is intentionally built **outside** the `{targets}` graph from `targets::tar_meta(fields = c("format", "path"))`: `{targets}` documents `tar_meta()` as an external inspection interface and cautions against reading pipeline metadata from inside a running target. The manifest preserves each file target's target name, classifies output scope/type, records byte size, and links CSVs carrying `analysis_id` back to the canonical analysis-design registry. Filesystem outputs that are not file targets (for example rendered paper/docs files) remain cataloged with a blank target name rather than being assigned a fabricated target identity.
+
+This artifact replaces the audit's former depth-limited `find` listing. It is a discoverability index, not another estimation registry: scientific design semantics remain authoritative in `analysis_design_registry.csv`, while target/file provenance remains authoritative in `{targets}` metadata.
