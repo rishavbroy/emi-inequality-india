@@ -87,7 +87,7 @@ Comprehensiveness still does **not** imply universality. The ledger rejects the 
 
 ### 3. Descriptive schooling-to-welfare bridge
 
-The last planned empirical addition before paper architecture is a compact, explicitly descriptive OLS bridge from observed schooling margins to later consumption. Estimate enrollment, EMI conditional on enrollment, all-child EMIE, public EMI, and private EMI one at a time under the same finite control/geography ladder already used elsewhere; do not interpret these associations as causal and do not combine multiple endogenous schooling margins into a pseudo-structural regression.
+The final planned empirical addition before paper architecture is now implemented as a compact, explicitly descriptive OLS bridge from observed schooling margins to later consumption. Enrollment, EMI conditional on enrollment, all-child EMIE, public EMI, and private EMI enter one at a time against the four registered 2022--24 long-run real-mean-MPCE ANCOVA/change specifications under the existing unadjusted / region-main / state-main ladder. Each treatment/outcome pair uses common support across the three columns, ANCOVA retains its registered 2004--05 baseline, and inference is state-clustered with Holm summaries. These associations remain explicitly non-causal and no multiple-schooling-margin pseudo-structural regression is estimated. With this bridge complete, the predeclared empirical roadmap is closed; the next work is paper architecture and result selection rather than another diagnostic family.
 
 ### 4. Paper and reviewer-facing outputs
 

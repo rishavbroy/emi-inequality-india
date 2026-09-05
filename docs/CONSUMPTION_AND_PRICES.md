@@ -735,3 +735,26 @@ The realized intensive-margin family does not repair relevance: none of its 48 c
 ### Cross-family robustness evidence
 
 The extended audit now normalizes the seven realized consumption-IV robustness families into `consumption_robustness_evidence_grid.csv` and `consumption_robustness_family_summary.csv`. This is a reviewer-facing synthesis layer only: it does not re-estimate models, change common-support rules, or recompute multiplicity. The family summary records model counts, maximum effective F, family-wide reduced-form and Anderson--Rubin signals, bounded/disconnected/grid-truncated AR sets, and realized sample-size ranges so evidence can be compared without treating every family CSV as an independent headline result.
+
+## Descriptive schooling-to-consumption bridge
+
+The extended diagnostics include one deliberately non-causal bridge from observed
+2007--08 schooling margins to later district consumption. This fills the descriptive
+`D -> Y` gap without treating weak linguistic-distance IV estimates as evidence about
+schooling effects. Five predeclared NSS-64 schooling margins are entered one at a time:
+enrollment, English medium among enrolled children, all-child English-medium exposure,
+public English-medium exposure, and private English-medium exposure. They are crossed
+only with the four already-registered long-run real-mean-MPCE specifications for
+2022--23 and 2023--24 (ANCOVA and change) and the existing unadjusted / six-region-FE
+plus compact-2001 / state-FE plus compact-2001 ladder.
+
+For each schooling-margin/welfare pair, all three adjustment columns use one
+complete-case district sample. ANCOVA cells retain the registered 2004--05 baseline
+log-MPCE control; change cells do not add that baseline again. Standard errors are
+clustered by Census-2001 state. The resulting 60-cell family reports both raw and
+Holm-adjusted p-values, but those adjustments do not turn the estimates into causal
+parameters. The diagnostic is designed to answer whether observed schooling exposure
+and later local welfare covary, and whether that association attenuates when broad
+geography and predetermined district characteristics are absorbed. It is not a
+substitute for a valid schooling instrument, and the compositional schooling margins
+are never entered jointly as a pseudo-structural system.
