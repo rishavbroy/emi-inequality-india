@@ -8,7 +8,8 @@
 analysis_design_columns <- function() {
   c(
     "analysis_id", "family", "specification_id", "outcome", "treatment",
-    "instrument", "instrument_vintage", "adjustment_set", "fixed_effect",
+    "instrument", "instrument_vintage", "distance_measure_id",
+    "language_adjustment_id", "adjustment_set", "fixed_effect",
     "estimand", "estimator", "inference", "sample_rule", "analysis_role",
     "admissible", "reason", "implemented"
   )
@@ -16,6 +17,9 @@ analysis_design_columns <- function() {
 
 analysis_design_frame <- function(...) {
   out <- data.frame(..., stringsAsFactors = FALSE, check.names = FALSE)
+  for (nm in c("distance_measure_id", "language_adjustment_id")) {
+    if (!nm %in% names(out)) out[[nm]] <- rep("", nrow(out))
+  }
   missing <- setdiff(analysis_design_columns(), names(out))
   if (length(missing)) {
     stop(
@@ -59,6 +63,16 @@ analysis_design_from_iv <- function(
   vintage_value <- if (length(instrument_vintage) == 1L) {
     rep(instrument_vintage, nrow(specs))
   } else instrument_vintage
+  distance_measure_value <- if ("distance_measure_id" %in% names(specs)) {
+    plain_chr(specs$distance_measure_id)
+  } else {
+    rep("", nrow(specs))
+  }
+  language_adjustment_value <- if ("language_adjustment_id" %in% names(specs)) {
+    plain_chr(specs$language_adjustment_id)
+  } else {
+    rep("", nrow(specs))
+  }
 
   analysis_design_frame(
     analysis_id = paste(family, plain_chr(specs$specification_id), sep = "__"),
@@ -72,6 +86,8 @@ analysis_design_from_iv <- function(
       character(1)
     ),
     instrument_vintage = vintage_value,
+    distance_measure_id = distance_measure_value,
+    language_adjustment_id = language_adjustment_value,
     adjustment_set = plain_chr(specs$adjustment_id),
     fixed_effect = plain_chr(specs$fixed_effect),
     estimand = estimand_value,

@@ -195,95 +195,134 @@ iv_causal_control_parameterization_adjustments <- function(control_registry = NU
   )
 }
 
-iv_instrument_constructions <- function() {
+iv_distance_measure_registry <- function() {
   list(
-    nonzero_mean = list(
-      label = "Mean distance among speakers above zero",
+    shastry_nonzero_mean = list(
       excluded = "ling_distance_nonzero_mean",
-      included = character(),
       coverage = "ling_mapped_speaker_share"
     ),
-    distant_share = list(
-      label = "Share speaking languages at distance three or higher",
+    shastry_distant_share = list(
       excluded = "ling_share_distance_ge3",
-      included = character()
+      coverage = "ling_mapped_speaker_share"
     ),
-    top3_legacy = list(
-      label = "Legacy top-three weighted mean",
+    legacy_top3 = list(
       excluded = "ling_distance_top3_legacy",
-      included = character()
+      coverage = "ling_mapped_speaker_share"
     ),
-    nonzero_mean_hindi_urdu = list(
-      label = "Nonzero mean with combined Hindi-Urdu share",
-      excluded = "ling_distance_nonzero_mean",
-      included = "hindi_urdu_share"
-    ),
-    nonzero_mean_shastry = list(
-      label = "Nonzero mean with Shastry composition controls",
-      excluded = "ling_distance_nonzero_mean",
-      included = c("hindi_urdu_share", "native_english_share")
-    ),
-    nonzero_mean_sensitivity_low = list(
-      label = "Shastry nonzero mean under joint lower-degree adjudication sensitivity",
+    shastry_nonzero_mean_sensitivity_low = list(
       excluded = "ling_distance_nonzero_mean_sensitivity_low",
-      included = c("hindi_urdu_share", "native_english_share"),
       coverage = "ling_sensitivity_mapped_speaker_share"
     ),
-    nonzero_mean_sensitivity_high = list(
-      label = "Shastry nonzero mean under joint upper-degree adjudication sensitivity",
+    shastry_nonzero_mean_sensitivity_high = list(
       excluded = "ling_distance_nonzero_mean_sensitivity_high",
-      included = c("hindi_urdu_share", "native_english_share"),
       coverage = "ling_sensitivity_mapped_speaker_share"
-    ),
-    nonzero_mean_hindi_urdu_separate = list(
-      label = "Nonzero mean with separate Hindi and Urdu shares",
-      excluded = "ling_distance_nonzero_mean",
-      included = c("hindi_share", "urdu_share")
     ),
     distance_shares_all = list(
-      label = "Five distance shares; all-speaker denominator",
       excluded = linguistic_distance_excluded_instruments("all"),
-      included = character()
-    ),
-    distance_shares_all_unmapped = list(
-      label = "Five distance shares with unresolved and English shares controlled",
-      excluded = linguistic_distance_excluded_instruments("all"),
-      included = c("ling_unmapped_speaker_share", "native_english_share")
+      coverage = "ling_mapped_speaker_share"
     ),
     distance_shares_mapped = list(
-      label = "Five distance shares; mapped-speaker denominator",
       excluded = linguistic_distance_excluded_instruments("mapped"),
-      included = character()
+      coverage = "ling_mapped_speaker_share"
     ),
-    glottolog_mean = list(
-      label = "Glottolog edge-distance mean among non-Hindi/Urdu speakers",
+    glottolog_nonhindi_mean = list(
       excluded = "ling_distance_glottolog_nonhindi_mean",
-      included = character(),
-      coverage = "ling_glottolog_mapped_speaker_share"
-    ),
-    glottolog_mean_shastry = list(
-      label = "Glottolog edge-distance mean with Shastry composition controls",
-      excluded = "ling_distance_glottolog_nonhindi_mean",
-      included = c("hindi_urdu_share", "native_english_share"),
       coverage = "ling_glottolog_mapped_speaker_share"
     ),
     dyen_noncognate = list(
-      label = "Dyen/Shastry noncognate percentage among non-Hindi/Urdu speakers",
       excluded = "ling_distance_dyen_noncognate_pct",
-      included = character(),
-      coverage = "ling_dyen_mapped_speaker_share"
-    ),
-    dyen_noncognate_shastry = list(
-      label = "Dyen/Shastry noncognate percentage with composition controls",
-      excluded = "ling_distance_dyen_noncognate_pct",
-      included = c("hindi_urdu_share", "native_english_share"),
       coverage = "ling_dyen_mapped_speaker_share"
     )
-  ) |>
-    lapply(function(x) {
-      if (is.null(x$coverage)) x$coverage <- "ling_mapped_speaker_share"
-      x
-    })
+  )
+}
+
+iv_language_adjustment_registry <- function() {
+  list(
+    none = character(),
+    hindi_urdu = "hindi_urdu_share",
+    shastry_composition = c("hindi_urdu_share", "native_english_share"),
+    hindi_urdu_separate = c("hindi_share", "urdu_share"),
+    unresolved_english = c("ling_unmapped_speaker_share", "native_english_share")
+  )
+}
+
+iv_instrument_construction_registry <- function() {
+  data.frame(
+    construction_id = c(
+      "nonzero_mean", "distant_share", "top3_legacy",
+      "nonzero_mean_hindi_urdu", "nonzero_mean_shastry",
+      "nonzero_mean_sensitivity_low", "nonzero_mean_sensitivity_high",
+      "nonzero_mean_hindi_urdu_separate",
+      "distance_shares_all", "distance_shares_all_unmapped",
+      "distance_shares_mapped", "glottolog_mean", "glottolog_mean_shastry",
+      "dyen_noncognate", "dyen_noncognate_shastry"
+    ),
+    distance_measure_id = c(
+      "shastry_nonzero_mean", "shastry_distant_share", "legacy_top3",
+      "shastry_nonzero_mean", "shastry_nonzero_mean",
+      "shastry_nonzero_mean_sensitivity_low",
+      "shastry_nonzero_mean_sensitivity_high",
+      "shastry_nonzero_mean",
+      "distance_shares_all", "distance_shares_all",
+      "distance_shares_mapped", "glottolog_nonhindi_mean",
+      "glottolog_nonhindi_mean", "dyen_noncognate", "dyen_noncognate"
+    ),
+    language_adjustment_id = c(
+      "none", "none", "none",
+      "hindi_urdu", "shastry_composition",
+      "shastry_composition", "shastry_composition",
+      "hindi_urdu_separate",
+      "none", "unresolved_english",
+      "none", "none", "shastry_composition",
+      "none", "shastry_composition"
+    ),
+    label = c(
+      "Mean distance among speakers above zero",
+      "Share speaking languages at distance three or higher",
+      "Legacy top-three weighted mean",
+      "Nonzero mean with combined Hindi-Urdu share",
+      "Nonzero mean with Shastry composition controls",
+      "Shastry nonzero mean under joint lower-degree adjudication sensitivity",
+      "Shastry nonzero mean under joint upper-degree adjudication sensitivity",
+      "Nonzero mean with separate Hindi and Urdu shares",
+      "Five distance shares; all-speaker denominator",
+      "Five distance shares with unresolved and English shares controlled",
+      "Five distance shares; mapped-speaker denominator",
+      "Glottolog edge-distance mean among non-Hindi/Urdu speakers",
+      "Glottolog edge-distance mean with Shastry composition controls",
+      "Dyen/Shastry noncognate percentage among non-Hindi/Urdu speakers",
+      "Dyen/Shastry noncognate percentage with composition controls"
+    ),
+    stringsAsFactors = FALSE
+  )
+}
+
+iv_instrument_constructions <- function() {
+  measures <- iv_distance_measure_registry()
+  adjustments <- iv_language_adjustment_registry()
+  registry <- iv_instrument_construction_registry()
+
+  out <- lapply(seq_len(nrow(registry)), function(i) {
+    row <- registry[i, , drop = FALSE]
+    measure_id <- row$distance_measure_id[[1L]]
+    adjustment_id <- row$language_adjustment_id[[1L]]
+    if (!measure_id %in% names(measures)) {
+      stop("Unknown linguistic-distance measure in IV construction registry: ", measure_id, call. = FALSE)
+    }
+    if (!adjustment_id %in% names(adjustments)) {
+      stop("Unknown language adjustment in IV construction registry: ", adjustment_id, call. = FALSE)
+    }
+    measure <- measures[[measure_id]]
+    list(
+      label = row$label[[1L]],
+      excluded = measure$excluded,
+      included = adjustments[[adjustment_id]],
+      coverage = measure$coverage,
+      distance_measure_id = measure_id,
+      language_adjustment_id = adjustment_id
+    )
+  })
+  stats::setNames(out, registry$construction_id)
 }
 
 iv_candidate_design_adjustments <- function() {
@@ -340,6 +379,8 @@ iv_shastry_added_control_first_stage_specifications <- function(
       adjustment = adjustment$label,
       construction_id = "nonzero_mean",
       construction = construction$label,
+      distance_measure_id = construction$distance_measure_id,
+      language_adjustment_id = construction$language_adjustment_id,
       outcome = treatment,
       treatment = treatment,
       fixed_effect = adjustment$fixed_effect,
@@ -459,6 +500,8 @@ iv_specification_row <- function(
   adjustment,
   construction_id,
   construction,
+  distance_measure_id,
+  language_adjustment_id,
   outcome,
   treatment,
   fixed_effect,
@@ -479,6 +522,8 @@ iv_specification_row <- function(
     adjustment = adjustment,
     construction_id = construction_id,
     construction = construction,
+    distance_measure_id = distance_measure_id,
+    language_adjustment_id = language_adjustment_id,
     outcome = outcome,
     treatment = treatment,
     fixed_effect = fixed_effect,
@@ -552,6 +597,8 @@ public_iv_specification_registry <- function(control_registry = NULL) {
       adjustment = x$adjustment,
       construction_id = "nonzero_mean",
       construction = construction$label,
+      distance_measure_id = construction$distance_measure_id,
+      language_adjustment_id = construction$language_adjustment_id,
       outcome = x$outcome,
       treatment = variables$treatment,
       fixed_effect = "state",
@@ -605,6 +652,8 @@ iv_specification_registry <- function(
         adjustment = adjustment$label,
         construction_id = construction_id,
         construction = construction$label,
+        distance_measure_id = construction$distance_measure_id,
+        language_adjustment_id = construction$language_adjustment_id,
         outcome = outcome,
         treatment = treatment,
         fixed_effect = adjustment$fixed_effect,
@@ -778,6 +827,8 @@ iv_absorption_specification_candidates <- function(
       adjustment = adjustment$label,
       construction_id = "nonzero_mean",
       construction = construction$label,
+      distance_measure_id = construction$distance_measure_id,
+      language_adjustment_id = construction$language_adjustment_id,
       outcome = outcome,
       treatment = treatment,
       fixed_effect = adjustment$fixed_effect,

@@ -51,6 +51,7 @@ test_that("analysis-design ontology inventories registered families without Cart
   expect_true(all(registry$implemented))
   expect_true(all(registry$admissible))
   expect_true(all(nzchar(registry$reason)))
+  expect_true(all(c("distance_measure_id", "language_adjustment_id") %in% names(registry)))
   expect_setequal(
     unique(registry$family),
     c(
@@ -139,6 +140,43 @@ test_that("analysis-design ontology inventories registered families without Cart
     sum(constructs$analysis_scope == "structural_iv") * n_iv_designs
   )
 })
+
+
+test_that("analysis-design ontology exposes linguistic measurement and adjustment as separate axes", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
+  controls <- read_census_2001_control_registry(
+    file.path(root, "data", "metadata", "census_2001_control_registry.csv")
+  )
+  opportunity <- read_english_opportunity_measure_registry(
+    file.path(root, "data", "metadata", "english_opportunity_measures.csv")
+  )
+  registry <- compile_analysis_design_registry(
+    compile_consumption_iv_specifications(
+      read_consumption_iv_outcome_registry(
+        file.path(root, "data", "metadata", "consumption_iv_outcomes.csv")
+      ),
+      controls
+    ),
+    opportunity,
+    controls
+  )
+  rows <- registry[registry$family == "district_iv_diagnostic", , drop = FALSE]
+
+  base <- rows[rows$specification_id == "state_main__nonzero_mean", , drop = FALSE]
+  adjusted <- rows[
+    rows$specification_id == "state_main__nonzero_mean_shastry",
+    ,
+    drop = FALSE
+  ]
+  expect_equal(nrow(base), 1L)
+  expect_equal(nrow(adjusted), 1L)
+  expect_identical(base$instrument, adjusted$instrument)
+  expect_identical(base$distance_measure_id, "shastry_nonzero_mean")
+  expect_identical(adjusted$distance_measure_id, "shastry_nonzero_mean")
+  expect_identical(base$language_adjustment_id, "none")
+  expect_identical(adjusted$language_adjustment_id, "shastry_composition")
+})
+
 
 test_that("analysis-design ontology preserves estimator and sample distinctions", {
   root <- Sys.getenv("EMI_PROJECT_ROOT", ".")

@@ -1303,6 +1303,42 @@ test_that("candidate IV adjustments do not encode an FE winner", {
   expect_identical(adjustments$state_main$fixed_effect, "state")
 })
 
+
+test_that("instrument constructions separate distance measures from language adjustment", {
+  registry <- iv_instrument_construction_registry()
+  measures <- iv_distance_measure_registry()
+  adjustments <- iv_language_adjustment_registry()
+  constructions <- iv_instrument_constructions()
+
+  expect_equal(nrow(registry), 15L)
+  expect_equal(anyDuplicated(registry$construction_id), 0L)
+  expect_true(all(registry$distance_measure_id %in% names(measures)))
+  expect_true(all(registry$language_adjustment_id %in% names(adjustments)))
+  expect_identical(names(constructions), registry$construction_id)
+
+  base <- constructions$nonzero_mean
+  hindi_urdu <- constructions$nonzero_mean_hindi_urdu
+  shastry <- constructions$nonzero_mean_shastry
+  expect_identical(base$excluded, hindi_urdu$excluded)
+  expect_identical(base$excluded, shastry$excluded)
+  expect_identical(base$distance_measure_id, hindi_urdu$distance_measure_id)
+  expect_identical(base$distance_measure_id, shastry$distance_measure_id)
+  expect_identical(base$language_adjustment_id, "none")
+  expect_identical(hindi_urdu$language_adjustment_id, "hindi_urdu")
+  expect_identical(shastry$language_adjustment_id, "shastry_composition")
+  expect_identical(hindi_urdu$included, "hindi_urdu_share")
+  expect_setequal(shastry$included, c("hindi_urdu_share", "native_english_share"))
+
+  glottolog <- constructions$glottolog_mean
+  glottolog_adjusted <- constructions$glottolog_mean_shastry
+  expect_identical(glottolog$excluded, glottolog_adjusted$excluded)
+  expect_identical(glottolog$distance_measure_id, glottolog_adjusted$distance_measure_id)
+  expect_false(identical(
+    glottolog$language_adjustment_id,
+    glottolog_adjusted$language_adjustment_id
+  ))
+})
+
 test_that("canonical IV registry drives alternative-distance specifications", {
   registry <- iv_specification_registry()
 
@@ -1311,7 +1347,8 @@ test_that("canonical IV registry drives alternative-distance specifications", {
   expect_true(all(c(
     "outcome", "treatment", "fixed_effect", "controls", "excluded_instruments",
     "n_endogenous", "n_excluded_instruments", "panel_variant", "sample_rule",
-    "cluster", "tier", "mapping_coverage_variable"
+    "cluster", "tier", "mapping_coverage_variable",
+    "distance_measure_id", "language_adjustment_id"
   ) %in% names(registry)))
   expect_true(all(registry$n_endogenous == 1L))
   expect_true(all(registry$cluster == "state_code_2001"))
