@@ -36,7 +36,7 @@ test_that("output artifact manifest preserves target identity and analysis links
 
   row <- out[out$path == "outputs/diagnostics/extended/iv/estimates.csv", , drop = FALSE]
   expect_equal(nrow(row), 1L)
-  expect_identical(row$target_name, "diag_ext_estimates")
+  expect_identical(row$target_references, "diag_ext_estimates")
   expect_identical(row$output_scope, "extended_diagnostic")
   expect_equal(row$analysis_id_count, 3L)
   expect_equal(row$linked_analysis_id_count, 2L)
@@ -45,29 +45,28 @@ test_that("output artifact manifest preserves target identity and analysis links
   expect_false("outputs/diagnostics/build/output_manifest.csv" %in% out$path)
 })
 
-test_that("output artifact manifest rejects multiple file targets claiming one path", {
-  root <- tempfile("output-manifest-duplicate-")
+test_that("output artifact manifest records every target that tracks an artifact", {
+  root <- tempfile("output-manifest-references-")
   dir.create(file.path(root, "outputs"), recursive = TRUE)
   path <- file.path(root, "outputs", "x.csv")
   utils::write.csv(data.frame(x = 1), path, row.names = FALSE)
 
   meta <- data.frame(
-    name = c("first", "second"),
+    name = c("producer", "runtime_inputs"),
     format = c("file", "file"),
     stringsAsFactors = FALSE
   )
   meta$path <- I(list(path, path))
 
-  expect_error(
-    build_output_artifact_manifest(
-      target_meta = meta,
-      design_registry = data.frame(analysis_id = character(), family = character()),
-      roots = "outputs",
-      root = root
-    ),
-    "Multiple file targets claim one output path: outputs/x.csv <- first;second",
-    fixed = TRUE
+  out <- build_output_artifact_manifest(
+    target_meta = meta,
+    design_registry = data.frame(analysis_id = character(), family = character()),
+    roots = "outputs",
+    root = root
   )
+
+  expect_identical(out$artifact_id, "outputs/x.csv")
+  expect_identical(out$target_references, "producer;runtime_inputs")
 })
 
 
@@ -92,7 +91,7 @@ test_that("output artifact manifest canonicalizes repeated paths from one target
   )
 
   expect_identical(out$path, "outputs/x.csv")
-  expect_identical(out$target_name, "bundle")
+  expect_identical(out$target_references, "bundle")
 })
 
 test_that("output artifact manifest ignores duplicate source targets outside catalog roots", {
@@ -120,7 +119,7 @@ test_that("output artifact manifest ignores duplicate source targets outside cat
   )
 
   expect_identical(out$path, "outputs/x.csv")
-  expect_identical(out$target_name, "artifact")
+  expect_identical(out$target_references, "artifact")
 })
 
 test_that("output artifact manifest scopes are semantic rather than filename-specific", {
