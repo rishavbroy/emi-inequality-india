@@ -27,6 +27,7 @@ analysis_estimation_scope_registry <- function() {
     `2sls_with_anderson_rubin` = "structural_iv",
     `first_stage+reduced_form+2sls+anderson_rubin` = "structural_iv",
     `reduced_form+2sls+anderson_rubin` = "structural_iv",
+    bounded_exclusion_ar = "structural_iv_sensitivity",
     ols = "ols",
     native_speaker_weighted_ols = "weighted_ols",
     mother_tongue_speaker_weighted_ols = "weighted_ols"
@@ -40,19 +41,21 @@ analysis_inference_registry <- function() {
       "state_clustered+holm",
       "state_clustered+anderson_rubin",
       "state_clustered+anderson_rubin+holm",
-      "state_clustered+weak_iv_diagnostics"
+      "state_clustered+weak_iv_diagnostics",
+      "state_clustered+bounded_exclusion_ar"
     ),
     covariance_id = c(
       "HC1", "state_clustered", "state_1991_clustered",
       "state_clustered", "state_clustered", "state_clustered",
-      "state_clustered"
+      "state_clustered", "state_clustered"
     ),
     weak_id_inference_id = c(
       "none", "none", "none", "none",
-      "anderson_rubin", "anderson_rubin", "weak_iv_diagnostic_suite"
+      "anderson_rubin", "anderson_rubin", "weak_iv_diagnostic_suite",
+      "bounded_exclusion_ar"
     ),
     multiplicity_id = c(
-      "none", "none", "none", "holm", "none", "holm", "none"
+      "none", "none", "none", "holm", "none", "holm", "none", "none"
     ),
     stringsAsFactors = FALSE
   )
@@ -650,6 +653,16 @@ analysis_design_census_1991_st_language <- function() {
   )
 }
 
+analysis_design_consumption_exclusion_sensitivity <- function(specifications) {
+  analysis_design_from_iv(
+    specifications,
+    family = "consumption_exclusion_sensitivity",
+    estimator = "bounded_exclusion_ar",
+    inference = "state_clustered+bounded_exclusion_ar",
+    analysis_role = "exclusion_restriction_sensitivity"
+  )
+}
+
 compile_analysis_design_registry <- function(
     consumption_iv_specifications,
     english_opportunity_measure_registry,
@@ -662,6 +675,7 @@ compile_analysis_design_registry <- function(
     consumption_control_parameterization_specifications = NULL,
     consumption_historical_adjustment_specifications = NULL,
     consumption_historical_concept_matched_specifications = NULL,
+    consumption_exclusion_sensitivity_specifications = NULL,
     consumption_registry = NULL) {
   core_iv <- analysis_design_from_iv(
     iv_diagnostic_specification_registry(control_registry = control_registry),
@@ -758,6 +772,13 @@ compile_analysis_design_registry <- function(
       analysis_role = "historical_concept_matched_robustness"
     )
   }
+  consumption_exclusion_sensitivity <- if (is.null(consumption_exclusion_sensitivity_specifications)) {
+    data.frame()
+  } else {
+    analysis_design_consumption_exclusion_sensitivity(
+      consumption_exclusion_sensitivity_specifications
+    )
+  }
   out <- safe_bind_rows(list(
     analysis_design_public_iv(public_iv_specifications),
     core_iv,
@@ -771,6 +792,7 @@ compile_analysis_design_registry <- function(
     consumption_control_parameterization,
     consumption_historical_adjustment,
     consumption_historical_concept_matched,
+    consumption_exclusion_sensitivity,
     analysis_design_district_mechanisms(
       english_opportunity_measure_registry, control_registry
     ),
@@ -930,7 +952,8 @@ build_iv_candidate_design_ledger <- function(
     consumption_control_strategy_specifications = NULL,
     consumption_control_parameterization_specifications = NULL,
     consumption_historical_adjustment_specifications = NULL,
-    consumption_historical_concept_matched_specifications = NULL) {
+    consumption_historical_concept_matched_specifications = NULL,
+    consumption_exclusion_sensitivity_specifications = NULL) {
   public_specs <- as_iv_specifications(public_specifications)
   consumption_specs <- as_iv_specifications(consumption_specifications)
   control_registry <- resolve_census_2001_control_registry(control_registry)
@@ -976,6 +999,11 @@ build_iv_candidate_design_ledger <- function(
     0L
   } else {
     nrow(as_iv_specifications(consumption_historical_concept_matched_specifications))
+  }
+  n_consumption_exclusion_sensitivity <- if (is.null(consumption_exclusion_sensitivity_specifications)) {
+    0L
+  } else {
+    nrow(as_iv_specifications(consumption_exclusion_sensitivity_specifications))
   }
   n_diagnostic_iv <- nrow(diagnostic_specs)
   n_scalar <- sum(canonical_specs$n_excluded_instruments == 1L)
@@ -1212,6 +1240,31 @@ build_iv_candidate_design_ledger <- function(
       candidate_cells = n_consumption,
       implemented_cells = n_consumption,
       rationale = "Endpoint and estimand variation are substantively meaningful and were registered before estimation."
+    ),
+    candidate_design_row(
+      "consumption_exclusion_sensitivity",
+      "Weak-IV information plan: Conley-style bounded exclusion sensitivity",
+      "consumption_iv",
+      "partial_identification_sensitivity",
+      "How much direct effect of linguistic distance on welfare can be allowed before the headline structural conclusions change?",
+      "exclusion_restriction",
+      "registered 2022-24 real-mean-MPCE ANCOVA/change designs",
+      preferred_iv_variables()$treatment,
+      "preferred Shastry nonzero-mean distance",
+      "state_main; bounded direct-effect support",
+      "bounded_exclusion_ar",
+      "estimate",
+      multiplicity_family = "none_sensitivity_calibration",
+      implementation_status = if (n_consumption_exclusion_sensitivity == 4L) "implemented" else "partial",
+      candidate_cells = 4L,
+      implemented_cells = n_consumption_exclusion_sensitivity,
+      execution_cells = n_consumption_exclusion_sensitivity,
+      rationale = paste(
+        "The sensitivity analysis relaxes exact exclusion while retaining state-clustered weak-IV-robust",
+        "Anderson--Rubin inversion. Headline scope is deliberately limited to the two modern HCES",
+        "endpoints under ANCOVA and change; reduced-form-scaled bounds are fragility calibrations,",
+        "not post-hoc claims about a substantively known prior for the direct effect."
+      )
     ),
     candidate_design_row(
       "consumption_candidate_scalar_iv_grid",

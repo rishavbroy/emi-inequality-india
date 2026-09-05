@@ -31,6 +31,9 @@ test_that("analysis-design ontology inventories registered families without Cart
   consumption_historical_specs <- compile_consumption_historical_adjustment_specifications(
     consumption, controls
   )
+  consumption_exclusion_specs <- consumption_exclusion_sensitivity_specifications(
+    consumption_specs
+  )
   mechanism_measures <- read_english_opportunity_measure_registry(
     file.path(root, "data", "metadata", "english_opportunity_measures.csv")
   )
@@ -43,6 +46,7 @@ test_that("analysis-design ontology inventories registered families without Cart
     consumption_control_strategy_specifications = consumption_control_specs,
     consumption_control_parameterization_specifications = consumption_parameterization_specs,
     consumption_historical_adjustment_specifications = consumption_historical_specs,
+    consumption_exclusion_sensitivity_specifications = consumption_exclusion_specs,
     consumption_registry = consumption
   )
 
@@ -62,7 +66,8 @@ test_that("analysis-design ontology inventories registered families without Cart
       "economic_census_mechanism", "labor_mechanism",
       "historical_first_stage", "historical_predetermined_first_stage",
       "schooling_consumption_bridge", "nss64_social_group",
-      "st_concentration_heterogeneity", "census_1991_st_language"
+      "st_concentration_heterogeneity", "census_1991_st_language",
+      "consumption_exclusion_sensitivity"
     )
   )
 
@@ -96,6 +101,17 @@ test_that("analysis-design ontology inventories registered families without Cart
       nrow(consumption_control_specs) + nrow(consumption_parameterization_specs) +
       nrow(consumption_historical_specs)
   )
+  expect_equal(
+    sum(registry$family == "consumption_exclusion_sensitivity"),
+    nrow(consumption_exclusion_specs)
+  )
+  exclusion_rows <- registry[
+    registry$family == "consumption_exclusion_sensitivity", , drop = FALSE
+  ]
+  expect_true(all(exclusion_rows$estimation_scope_id == "structural_iv_sensitivity"))
+  expect_true(all(exclusion_rows$weak_id_inference_id == "bounded_exclusion_ar"))
+  expect_true(all(exclusion_rows$covariance_id == "state_clustered"))
+
   expect_equal(
     sum(registry$family == "district_mechanism"),
     nrow(preferred_district_mechanism_registry(mechanism_measures)) * 3L
@@ -249,6 +265,7 @@ test_that("analysis-design ontology preserves estimator and sample distinctions"
   consumption_historical_matched <- compile_consumption_historical_concept_matched_specifications(
     consumption_registry, controls
   )
+  consumption_exclusion <- consumption_exclusion_sensitivity_specifications(consumption)
   mechanisms <- read_english_opportunity_measure_registry(
     file.path(root, "data", "metadata", "english_opportunity_measures.csv")
   )
@@ -448,10 +465,11 @@ test_that("candidate-design ledger records bounded robustness choices without Ca
   consumption_historical_matched <- compile_consumption_historical_concept_matched_specifications(
     consumption_registry, controls
   )
+  consumption_exclusion <- consumption_exclusion_sensitivity_specifications(consumption)
   ledger <- build_iv_candidate_design_ledger(
     public, consumption, controls, welfare, opportunity, consumption_scalar,
     consumption_treatment, consumption_welfare, consumption_control, consumption_parameterization,
-    consumption_historical, consumption_historical_matched
+    consumption_historical, consumption_historical_matched, consumption_exclusion
   )
 
   expect_identical(names(ledger), candidate_design_columns())
@@ -496,6 +514,15 @@ test_that("candidate-design ledger records bounded robustness choices without Ca
   expect_equal(bounded$candidate_cells, nrow(consumption) * 6L)
   expect_equal(bounded$implemented_cells, nrow(consumption_scalar))
   expect_equal(bounded$execution_cells, nrow(consumption_scalar))
+
+  exclusion <- ledger[
+    ledger$candidate_id == "consumption_exclusion_sensitivity", , drop = FALSE
+  ]
+  expect_true(exclusion$admissible)
+  expect_equal(exclusion$implementation_status, "implemented")
+  expect_equal(exclusion$execution_policy, "estimate")
+  expect_equal(exclusion$candidate_cells, 4L)
+  expect_equal(exclusion$implemented_cells, 4L)
 
   welfare_row <- ledger[
     ledger$candidate_id == "consumption_alternative_welfare_outcomes",

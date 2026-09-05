@@ -1128,6 +1128,193 @@ save_consumption_iv_robustness_family <- function(
   write_diagnostic_bundle(objects, directory = directory)
 }
 
+consumption_exclusion_sensitivity_specifications <- function(specifications) {
+  specs <- as_iv_specifications(specifications)
+  headline_rounds <- c("hces_2022_23", "hces_2023_24")
+  keep <- plain_chr(specs$outcome_round) %in% headline_rounds &
+    plain_chr(specs$adjustment_id) == "state_main" &
+    plain_chr(specs$construction_id) == "nonzero_mean" &
+    plain_chr(specs$treatment) == preferred_iv_variables()$treatment
+  out <- specs[keep, , drop = FALSE]
+  expected <- c(
+    "long_2022__ancova", "long_2022__change",
+    "long_2023__ancova", "long_2023__change"
+  )
+  if (!setequal(plain_chr(out$welfare_specification_id), expected)) {
+    stop(
+      "Headline exclusion sensitivity must resolve the four registered 2022-24 ANCOVA/change designs.",
+      call. = FALSE
+    )
+  }
+  out[match(expected, plain_chr(out$welfare_specification_id)), , drop = FALSE]
+}
+
+consumption_exclusion_sensitivity_calibrations <- function(
+    reduced_form_estimate, fractions = c(0.25, 0.50, 1.00)) {
+  rf <- num(reduced_form_estimate)[[1L]]
+  fractions <- sort(unique(num(fractions)))
+  if (!is.finite(rf)) {
+    stop("Exclusion-sensitivity calibration requires a finite reduced-form estimate.", call. = FALSE)
+  }
+  if (any(!is.finite(fractions)) || any(fractions <= 0) || any(fractions > 1)) {
+    stop("Exclusion-sensitivity fractions must lie in (0, 1].", call. = FALSE)
+  }
+  magnitude <- abs(rf)
+  rows <- list(data.frame(
+    calibration_id = "exact_exclusion",
+    support_type = "exact_exclusion",
+    bound_fraction_of_reduced_form = 0,
+    gamma_lower = 0, gamma_upper = 0,
+    calibration_role = "maintained_model_benchmark",
+    stringsAsFactors = FALSE
+  ))
+  for (fraction in fractions) {
+    radius <- fraction * magnitude
+    rows[[length(rows) + 1L]] <- data.frame(
+      calibration_id = sprintf("symmetric_rf_%03d", round(100 * fraction)),
+      support_type = "symmetric_around_zero",
+      bound_fraction_of_reduced_form = fraction,
+      gamma_lower = -radius, gamma_upper = radius,
+      calibration_role = "observed_reduced_form_scale_fragility",
+      stringsAsFactors = FALSE
+    )
+    signed_bounds <- if (rf >= 0) c(0, radius) else c(-radius, 0)
+    rows[[length(rows) + 1L]] <- data.frame(
+      calibration_id = sprintf("same_sign_rf_%03d", round(100 * fraction)),
+      support_type = "same_sign_as_reduced_form",
+      bound_fraction_of_reduced_form = fraction,
+      gamma_lower = signed_bounds[[1L]], gamma_upper = signed_bounds[[2L]],
+      calibration_role = "observed_reduced_form_scale_fragility",
+      stringsAsFactors = FALSE
+    )
+  }
+  safe_bind_rows(rows)
+}
+
+estimate_consumption_exclusion_sensitivity <- function(
+    panel, specifications, dynamics, level = 0.95, points = 401L,
+    fractions = c(0.25, 0.50, 1.00)) {
+  specs <- consumption_exclusion_sensitivity_specifications(specifications)
+  dynamic_summary <- safe_df(dynamics$summary)
+  required_dynamic <- c("specification_id", "reduced_form_estimate")
+  missing <- setdiff(required_dynamic, names(dynamic_summary))
+  if (length(missing)) {
+    stop(
+      "Consumption exclusion sensitivity requires dynamic summary columns: ",
+      paste(missing, collapse = ", "), call. = FALSE
+    )
+  }
+
+  estimated <- lapply(seq_len(nrow(specs)), function(i) {
+    spec <- specs[i, , drop = FALSE]
+    id <- plain_chr(spec$specification_id[[1L]])
+    profile <- estimate_bounded_exclusion_ar_profile_spec(
+      panel, spec, points = points
+    )
+    zero <- profile[abs(num(profile$beta)) == min(abs(num(profile$beta))), , drop = FALSE]
+    if (nrow(zero) != 1L) zero <- zero[1L, , drop = FALSE]
+    rf_profile <- num(zero$direct_effect_estimate[[1L]])
+    rf_row <- dynamic_summary[plain_chr(dynamic_summary$specification_id) == id, , drop = FALSE]
+    if (nrow(rf_row) != 1L || !is.finite(num(rf_row$reduced_form_estimate[[1L]]))) {
+      stop("Consumption exclusion sensitivity lacks one reduced-form estimate for ", id, ".", call. = FALSE)
+    }
+    rf_registered <- num(rf_row$reduced_form_estimate[[1L]])
+    if (!isTRUE(all.equal(rf_profile, rf_registered, tolerance = 1e-8))) {
+      stop(
+        "Bounded-exclusion beta-zero profile does not reproduce the registered reduced form for ",
+        id, ".", call. = FALSE
+      )
+    }
+
+    calibrations <- consumption_exclusion_sensitivity_calibrations(
+      rf_registered, fractions = fractions
+    )
+    minimum_gamma <- bounded_exclusion_ar_minimum_gamma_for_zero(profile, level = level)
+    minimum_share <- if (is.finite(minimum_gamma) && abs(rf_registered) > 0) {
+      abs(minimum_gamma) / abs(rf_registered)
+    } else if (is.finite(minimum_gamma) && abs(rf_registered) == 0) {
+      0
+    } else {
+      NA_real_
+    }
+
+    evaluated <- lapply(seq_len(nrow(calibrations)), function(j) {
+      calibration <- calibrations[j, , drop = FALSE]
+      grid <- bounded_exclusion_ar_grid(
+        profile, calibration$gamma_lower[[1L]], calibration$gamma_upper[[1L]],
+        level = level
+      )
+      summary <- bounded_exclusion_ar_summary(grid, level = level)
+      metadata <- data.frame(
+        specification_id = id,
+        welfare_specification_id = plain_chr(spec$welfare_specification_id[[1L]]),
+        outcome_round = plain_chr(spec$outcome_round[[1L]]),
+        estimand = plain_chr(spec$estimand[[1L]]),
+        calibration_id = calibration$calibration_id[[1L]],
+        support_type = calibration$support_type[[1L]],
+        bound_fraction_of_reduced_form = calibration$bound_fraction_of_reduced_form[[1L]],
+        calibration_role = calibration$calibration_role[[1L]],
+        reduced_form_estimate = rf_registered,
+        reduced_form_std.error = num(zero$direct_effect_std.error[[1L]]),
+        minimum_gamma_for_zero_95 = minimum_gamma,
+        minimum_gamma_share_of_reduced_form_for_zero_95 = minimum_share,
+        stringsAsFactors = FALSE
+      )
+      grid$specification_id <- id
+      grid$calibration_id <- calibration$calibration_id[[1L]]
+      list(summary = cbind(metadata, summary), grid = grid)
+    })
+    list(
+      summary = safe_bind_rows(lapply(evaluated, `[[`, "summary")),
+      grid = safe_bind_rows(lapply(evaluated, `[[`, "grid"))
+    )
+  })
+
+  list(
+    summary = safe_bind_rows(lapply(estimated, `[[`, "summary")),
+    grid = safe_bind_rows(lapply(estimated, `[[`, "grid"))
+  )
+}
+
+validate_consumption_exclusion_sensitivity <- function(
+    sensitivity, specifications, fractions = c(0.25, 0.50, 1.00)) {
+  specs <- consumption_exclusion_sensitivity_specifications(specifications)
+  summary <- safe_df(sensitivity$summary)
+  grid <- safe_df(sensitivity$grid)
+  expected_calibrations <- 1L + 2L * length(unique(fractions))
+  if (nrow(summary) != nrow(specs) * expected_calibrations) {
+    stop("Consumption exclusion sensitivity has an unexpected summary row count.", call. = FALSE)
+  }
+  if (!setequal(unique(plain_chr(summary$specification_id)), plain_chr(specs$specification_id))) {
+    stop("Consumption exclusion sensitivity does not cover the registered headline specifications.", call. = FALSE)
+  }
+  if (!nrow(grid) || any(!is.finite(num(summary$reduced_form_estimate))) ||
+      any(!is.finite(num(summary$reduced_form_std.error)))) {
+    stop("Consumption exclusion sensitivity contains incomplete inferential outputs.", call. = FALSE)
+  }
+  exact <- summary$calibration_id == "exact_exclusion"
+  if (any(summary$exclusion_ar_95_contains_zero[exact] !=
+          (summary$exclusion_ar_p_beta0[exact] >= 0.05))) {
+    stop("Exact-exclusion AR zero membership is internally inconsistent.", call. = FALSE)
+  }
+  sensitivity
+}
+
+save_consumption_exclusion_sensitivity <- function(
+    sensitivity, directory = "outputs/diagnostics/extended/consumption") {
+  dir.create(directory, recursive = TRUE, showWarnings = FALSE)
+  c(
+    write_diagnostic_csv(
+      safe_df(sensitivity$summary),
+      file.path(directory, "consumption_exclusion_sensitivity_summary.csv")
+    ),
+    write_diagnostic_csv(
+      safe_df(sensitivity$grid),
+      file.path(directory, "consumption_exclusion_sensitivity_grid.csv")
+    )
+  )
+}
+
 validate_consumption_scalar_iv_robustness <- function(dynamics, support) {
   validate_consumption_iv_robustness_family(
     dynamics, support, 6L, "Consumption scalar-IV robustness"

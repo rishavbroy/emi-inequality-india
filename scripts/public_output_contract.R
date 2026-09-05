@@ -71,6 +71,8 @@ required_extended_diagnostic_outputs <- function() {
     "outputs/diagnostics/extended/mechanisms/st_concentration_heterogeneity_estimates.csv",
     "outputs/diagnostics/extended/consumption/schooling_consumption_bridge_specifications.csv",
     "outputs/diagnostics/extended/consumption/schooling_consumption_bridge_estimates.csv",
+    "outputs/diagnostics/extended/consumption/consumption_exclusion_sensitivity_summary.csv",
+    "outputs/diagnostics/extended/consumption/consumption_exclusion_sensitivity_grid.csv",
     "outputs/diagnostics/extended/mechanisms/evidence_grid.csv",
     "outputs/diagnostics/extended/mechanisms/family_summary.csv"
   )

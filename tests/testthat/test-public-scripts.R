@@ -1185,3 +1185,22 @@ test_that("extended audit requires the canonical construct inventory", {
   iv_targets <- paste(readLines(file.path(root, "R", "pipeline", "extended_iv_targets.R"), warn = FALSE), collapse = "\n")
   expect_match(iv_targets, "diag_ext_analysis_construct_registry", fixed = TRUE)
 })
+
+test_that("extended audit requires bounded exclusion-sensitivity outputs", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
+  source(file.path(root, "scripts", "public_output_contract.R"), local = TRUE)
+  required <- required_extended_diagnostic_outputs()
+  expect_true(
+    "outputs/diagnostics/extended/consumption/consumption_exclusion_sensitivity_summary.csv" %in%
+      required
+  )
+  expect_true(
+    "outputs/diagnostics/extended/consumption/consumption_exclusion_sensitivity_grid.csv" %in%
+      required
+  )
+  iv_targets <- paste(
+    readLines(file.path(root, "R", "pipeline", "extended_iv_targets.R"), warn = FALSE),
+    collapse = "\n"
+  )
+  expect_match(iv_targets, "diag_ext_consumption_exclusion_sensitivity_files", fixed = TRUE)
+})

@@ -452,6 +452,26 @@ extended_iv_target_definitions <- function() {
       format = "file"
     ),
     tar_target(
+      consumption_exclusion_sensitivity_specs,
+      consumption_exclusion_sensitivity_specifications(consumption_iv_specifications)
+    ),
+    tar_target(
+      consumption_exclusion_sensitivity,
+      validate_consumption_exclusion_sensitivity(
+        estimate_consumption_exclusion_sensitivity(
+          consumption_iv_panel,
+          consumption_exclusion_sensitivity_specs,
+          consumption_iv_dynamics
+        ),
+        consumption_exclusion_sensitivity_specs
+      )
+    ),
+    tar_target(
+      diag_ext_consumption_exclusion_sensitivity_files,
+      save_consumption_exclusion_sensitivity(consumption_exclusion_sensitivity),
+      format = "file"
+    ),
+    tar_target(
       analysis_construct_registry,
       compile_analysis_construct_registry(
         english_opportunity_registry = english_opportunity_measure_registry
@@ -479,6 +499,7 @@ extended_iv_target_definitions <- function() {
         consumption_control_parameterization_specifications,
         consumption_historical_adjustment_specifications,
         consumption_historical_concept_matched_specifications,
+        consumption_exclusion_sensitivity_specs,
         consumption_registry = consumption_iv_outcome_registry
       )
     ),
@@ -504,7 +525,8 @@ extended_iv_target_definitions <- function() {
         consumption_control_strategy_specifications,
         consumption_control_parameterization_specifications,
         consumption_historical_adjustment_specifications,
-        consumption_historical_concept_matched_specifications
+        consumption_historical_concept_matched_specifications,
+        consumption_exclusion_sensitivity_specs
       )
     ),
     tar_target(
