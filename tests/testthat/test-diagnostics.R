@@ -1835,6 +1835,12 @@ test_that("headline consumption exclusion sensitivity is bounded and transparent
   )
 
   expect_equal(nrow(out$summary), 4L * 7L)
+  expect_identical(
+    specs$analysis_id,
+    paste("consumption_exclusion_sensitivity", specs$specification_id, sep = "__")
+  )
+  expect_setequal(unique(out$summary$analysis_id), specs$analysis_id)
+  expect_setequal(unique(out$grid$analysis_id), specs$analysis_id)
   expect_setequal(
     unique(out$summary$welfare_specification_id),
     c("long_2022__ancova", "long_2022__change", "long_2023__ancova", "long_2023__change")

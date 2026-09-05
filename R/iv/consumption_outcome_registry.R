@@ -1160,7 +1160,14 @@ consumption_exclusion_sensitivity_specifications <- function(specifications) {
       call. = FALSE
     )
   }
-  out[match(expected, plain_chr(out$welfare_specification_id)), , drop = FALSE]
+  out <- out[match(expected, plain_chr(out$welfare_specification_id)), , drop = FALSE]
+  # This is a derived analysis family: the exact-exclusion consumption model is
+  # an input, but the bounded-exclusion sensitivity is a distinct registered
+  # design and therefore gets its own canonical key at this family boundary.
+  out$analysis_id <- paste(
+    "consumption_exclusion_sensitivity", plain_chr(out$specification_id), sep = "__"
+  )
+  out
 }
 
 consumption_exclusion_sensitivity_calibrations <- function(
@@ -1260,6 +1267,7 @@ estimate_consumption_exclusion_sensitivity <- function(
       )
       summary <- bounded_exclusion_ar_summary(grid, level = level)
       metadata <- data.frame(
+        analysis_id = plain_chr(spec$analysis_id[[1L]]),
         specification_id = id,
         welfare_specification_id = plain_chr(spec$welfare_specification_id[[1L]]),
         outcome_round = plain_chr(spec$outcome_round[[1L]]),
@@ -1274,6 +1282,7 @@ estimate_consumption_exclusion_sensitivity <- function(
         minimum_gamma_share_of_reduced_form_for_zero_95 = minimum_share,
         stringsAsFactors = FALSE
       )
+      grid$analysis_id <- plain_chr(spec$analysis_id[[1L]])
       grid$specification_id <- id
       grid$calibration_id <- calibration$calibration_id[[1L]]
       list(summary = cbind(metadata, summary), grid = grid)
@@ -1301,6 +1310,12 @@ validate_consumption_exclusion_sensitivity <- function(
   }
   if (!setequal(unique(plain_chr(summary$specification_id)), plain_chr(specs$specification_id))) {
     stop("Consumption exclusion sensitivity does not cover the registered headline specifications.", call. = FALSE)
+  }
+  expected_ids <- plain_chr(specs$analysis_id)
+  if (!"analysis_id" %in% names(summary) || !"analysis_id" %in% names(grid) ||
+      !setequal(unique(plain_chr(summary$analysis_id)), expected_ids) ||
+      !setequal(unique(plain_chr(grid$analysis_id)), expected_ids)) {
+    stop("Consumption exclusion sensitivity lost canonical analysis_id values.", call. = FALSE)
   }
   if (!nrow(grid) || any(!is.finite(num(summary$reduced_form_estimate))) ||
       any(!is.finite(num(summary$reduced_form_std.error)))) {
