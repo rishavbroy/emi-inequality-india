@@ -170,3 +170,15 @@ complete-case, clustered-covariance, Anderson--Rubin, and Holm choices queryable
 without parsing compound strings downstream. Unknown estimator, inference, or
 sample-rule vocabulary fails closed at this boundary; new methodological choices
 must therefore be registered rather than silently introduced as another string.
+
+### Imperfect-IV inference stays inside the shared weak-identification layer
+
+Exclusion-restriction sensitivity is implemented in `R/iv/weak_identification.R`,
+not as a parallel estimator stack. A scalar-instrument bounded direct-effect
+profile reuses the canonical IV specification, fixed effects, controls, state
+cluster, and Anderson--Rubin beta grid. Consumption-specific code only selects
+the four registered modern headline designs and supplies transparent calibration
+bounds. The cross-family design registry records this as a distinct inference
+scope (`bounded_exclusion_ar`) while retaining the underlying treatment,
+instrument, control, FE, functional-form, and sample identifiers. This keeps
+partial-identification sensitivity orthogonal to specification generation.

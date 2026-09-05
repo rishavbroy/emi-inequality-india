@@ -195,3 +195,61 @@ separates the common support/complete-case principle from the family-specific
 change estimation. Their purpose is to make later exclusion-sensitivity methods
 explicit additions to the inference axis rather than new parallel diagnostic
 families.
+
+### Bounded exclusion-restriction sensitivity
+
+The preferred consumption IV is now accompanied by a deliberately narrow
+Conley--Hansen--Rossi-style exclusion-sensitivity diagnostic. The maintained
+linear model is written as
+
+`Y = beta D + gamma Z + W delta + error`,
+
+where `gamma` is the direct/non-EMI effect of the scalar linguistic-distance
+instrument on the welfare outcome. The generic implementation does not assume
+`gamma = 0`: for each candidate `beta`, it estimates the coefficient on `Z` in
+`Y - beta D` using the registered nuisance terms and state-clustered covariance,
+and then asks whether that coefficient is compatible with a user-supplied
+interval `[gamma_lower, gamma_upper]`. Because subtracting a fixed `gamma Z`
+changes the tested coefficient but not the regression residuals, the union over
+all `gamma` in the interval is available analytically from one clustered
+Anderson--Rubin profile rather than a second numerical gamma grid. At the point
+interval `[0, 0]`, this procedure is exactly the existing Anderson--Rubin test.
+
+This is a weak-identification-robust implementation of the bounded direct-effect
+idea in Conley, Hansen, and Rossi (2012), *Plausibly Exogenous*, Review of
+Economics and Statistics 94(1):260--272. It is intentionally not a conventional
+2SLS delta-method sensitivity calculation: the project's preferred first stage
+is too weak for conventional structural standard errors to be the inferential
+foundation.
+
+A standard implementation was checked before adding project code. CRAN's
+`ivmodel::ARsens.test()` implements invalid-IV Anderson--Rubin sensitivity for
+one instrument, but its current sensitivity routine operates on residualized
+`Yadj`, `Dadj`, and `Zadj` and does not accept or propagate the package's
+`clusterID` argument; `clusterID` is passed to k-class/LIML routines instead.
+Because state-clustered inference is a primary project contract, replacing the
+shared clustered AR layer with that routine would silently change the inferential
+problem. The local implementation is therefore a thin clustered extension of the
+already-tested AR machinery, not a duplicate general IV package.
+
+The first registered application is restricted to the four modern HCES
+real-mean-MPCE designs: 2022--23 and 2023--24, each under ANCOVA and long change,
+with the preferred state-main adjustment and preferred scalar Shastry distance.
+For reviewer-facing fragility calibration, the diagnostic reports exact
+exclusion plus symmetric and same-sign direct-effect intervals whose radii are
+25, 50, and 100 percent of the *observed reduced-form estimate*. Those
+reduced-form-scaled intervals are explicitly diagnostic scale anchors, not a
+precommitted substantive prior and therefore not advertised as having a nominal
+coverage interpretation for a data-selected gamma support. The generic bounded
+AR functions accept externally justified fixed gamma bounds when such a support
+can be defended independently.
+
+The summary also reports the smallest same-direction direct-effect magnitude
+that would make `beta = 0` enter the 95-percent bounded-AR set, both in outcome
+units and as a fraction of the observed reduced form. This turns exclusion
+concerns into a transparent fragility quantity without interpreting an unstable
+2SLS point estimate as an upper or lower bound. Durable outputs are
+`consumption_exclusion_sensitivity_summary.csv` and
+`consumption_exclusion_sensitivity_grid.csv`; both are required by the extended
+audit. The next imperfect-IV step remains falsification-adaptive analysis for
+the genuinely overidentified language-share designs.
