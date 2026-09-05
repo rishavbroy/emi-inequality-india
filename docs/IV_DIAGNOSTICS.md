@@ -251,5 +251,19 @@ concerns into a transparent fragility quantity without interpreting an unstable
 2SLS point estimate as an upper or lower bound. Durable outputs are
 `consumption_exclusion_sensitivity_summary.csv` and
 `consumption_exclusion_sensitivity_grid.csv`; both are required by the extended
-audit. The next imperfect-IV step remains falsification-adaptive analysis for
-the genuinely overidentified language-share designs.
+audit. The second imperfect-IV step is now implemented for the genuinely overidentified
+five-share language-distance systems. Following Masten and Poirier (2021), with
+one endogenous regressor each share is used as the sole excluded instrument in
+turn while the remaining four shares enter as controls; the falsification-adaptive
+set is the interval between the smallest and largest of those five just-identified
+IV estimands. The implementation is restricted to region-main and state-main
+adjustments for the all-speaker, all-speaker-plus-unresolved-controls, and
+mapped-speaker five-share systems (six designs total). It reports every
+constituent estimate, state-clustered standard error, and conditional first-stage
+F statistic. Weak constituents are not screened out: population relevance is an
+assumption of the FAS theorem, whereas a sample F threshold would redefine the
+set in a data-dependent way. The estimated FAS is therefore an identified-set
+diagnostic, not a weak-IV-robust confidence interval. Durable outputs are
+`iv_falsification_adaptive_set_summary.csv` and
+`iv_falsification_adaptive_set_components.csv`, and both are required by the
+extended audit.

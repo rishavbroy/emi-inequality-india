@@ -182,3 +182,16 @@ bounds. The cross-family design registry records this as a distinct inference
 scope (`bounded_exclusion_ar`) while retaining the underlying treatment,
 instrument, control, FE, functional-form, and sample identifiers. This keeps
 partial-identification sensitivity orthogonal to specification generation.
+### Overidentified exclusion sensitivity uses the canonical IV specification
+
+The five-share falsification-adaptive-set diagnostic is implemented in
+`R/iv/falsification_adaptive_set.R` and consumes the same canonical IV rows used
+by first-stage, weak-IV, overidentification, and monotonicity diagnostics. For one
+endogenous regressor, each registered excluded instrument is used alone while the
+other excluded instruments become included controls; the FAS is the convex hull
+(the min--max interval) of those just-identified estimates. Only the six
+region-main/state-main five-share designs are admitted. The diagnostic persists
+constituent clustered estimates and conditional first-stage diagnostics rather
+than silently dropping weak instruments, and the cross-family ontology records
+the family as `iv_falsification_adaptive_set`. This keeps exclusion sensitivity
+inside the existing specification, clustering, output, and governance layers.
