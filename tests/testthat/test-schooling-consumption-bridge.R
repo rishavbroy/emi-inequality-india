@@ -82,12 +82,15 @@ test_that("schooling-consumption bridge keeps one sample across its adjustment l
 })
 
 test_that("schooling-consumption ANCOVA retains baseline while change does not", {
-  set.seed(202)
   n <- 90L
   state <- rep(sprintf("%02d", 1:9), each = 10)
-  treatment <- rep(seq(-2, 2, length.out = 10), times = 9)
-  baseline <- stats::rnorm(n)
-  noise <- rep(c(-1, 0, 1, 0, -1, 1, 0, 1, -1, 0), times = 9) / 20
+  within_state <- seq(-2, 2, length.out = 10)
+  treatment <- rep(within_state, times = 9)
+  # Correlate baseline with schooling so omitting it changes the schooling slope,
+  # while using an orthogonal polynomial residual keeps the ANCOVA coefficient
+  # exactly identified at the constructed value.
+  baseline <- rep(within_state + within_state^2, times = 9)
+  noise <- rep(stats::poly(within_state, degree = 3)[, 3], times = 9) / 20
   endpoint <- 0.04 * treatment + 0.8 * baseline + noise
   change <- endpoint - baseline
   panel <- data.frame(
