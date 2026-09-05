@@ -660,3 +660,85 @@ test_that("candidate-design ledger records bounded robustness choices without Ca
   expect_false(post$admissible)
   expect_equal(post$implementation_status, "not_applicable")
 })
+
+
+test_that("analysis-design semantic axes normalize estimator, inference, support, and form", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
+  controls <- read_census_2001_control_registry(
+    file.path(root, "data", "metadata", "census_2001_control_registry.csv")
+  )
+  consumption_registry <- read_consumption_iv_outcome_registry(
+    file.path(root, "data", "metadata", "consumption_iv_outcomes.csv")
+  )
+  consumption <- compile_consumption_iv_specifications(consumption_registry, controls)
+  mechanisms <- read_english_opportunity_measure_registry(
+    file.path(root, "data", "metadata", "english_opportunity_measures.csv")
+  )
+  registry <- compile_analysis_design_registry(
+    consumption, mechanisms, controls, consumption_registry = consumption_registry
+  )
+
+  expect_false(any(!nzchar(registry$functional_form_id)))
+  expect_false(any(!nzchar(registry$estimation_scope_id)))
+  expect_false(any(!nzchar(registry$covariance_id)))
+  expect_false(any(!nzchar(registry$weak_id_inference_id)))
+  expect_false(any(!nzchar(registry$multiplicity_id)))
+  expect_false(any(!nzchar(registry$support_policy_id)))
+
+  consumption_rows <- registry[registry$family == "consumption_iv", , drop = FALSE]
+  expect_true(all(consumption_rows$estimation_scope_id == "structural_iv"))
+  expect_true(all(consumption_rows$covariance_id == "state_clustered"))
+  expect_true(all(consumption_rows$weak_id_inference_id == "anderson_rubin"))
+
+  robustness <- consumption_rows[
+    consumption_rows$analysis_role == "scalar_iv_robustness", , drop = FALSE
+  ]
+  expect_true(all(robustness$multiplicity_id == "holm"))
+  expect_true(all(robustness$support_policy_id == "common_support"))
+
+  bridge <- registry[registry$family == "schooling_consumption_bridge", , drop = FALSE]
+  expect_setequal(unique(bridge$functional_form_id), c("ancova", "change"))
+  expect_true(all(bridge$estimation_scope_id == "ols"))
+  expect_true(all(bridge$multiplicity_id == "holm"))
+  expect_true(all(bridge$support_policy_id == "fixed_complete_case"))
+
+  st <- registry[registry$family == "st_concentration_heterogeneity", , drop = FALSE]
+  expect_setequal(unique(st$functional_form_id), c("linear", "linear_interaction"))
+})
+
+
+test_that("analysis-design semantic normalizers fail closed on unknown vocabulary", {
+  expect_error(
+    analysis_design_frame(
+      analysis_id = "toy", family = "toy", specification_id = "toy",
+      outcome = "y", treatment = "", instrument = "z", instrument_vintage = "2001",
+      adjustment_set = "none", fixed_effect = "none", estimand = "association",
+      estimator = "invented_estimator", inference = "state_clustered",
+      sample_rule = "outcome_fixed_complete_case", analysis_role = "diagnostic",
+      admissible = TRUE, reason = "test", implemented = TRUE
+    ),
+    "Unregistered analysis estimator semantics"
+  )
+  expect_error(
+    analysis_design_frame(
+      analysis_id = "toy", family = "toy", specification_id = "toy",
+      outcome = "y", treatment = "", instrument = "z", instrument_vintage = "2001",
+      adjustment_set = "none", fixed_effect = "none", estimand = "association",
+      estimator = "ols", inference = "invented_inference",
+      sample_rule = "outcome_fixed_complete_case", analysis_role = "diagnostic",
+      admissible = TRUE, reason = "test", implemented = TRUE
+    ),
+    "Unregistered analysis inference semantics"
+  )
+  expect_error(
+    analysis_design_frame(
+      analysis_id = "toy", family = "toy", specification_id = "toy",
+      outcome = "y", treatment = "", instrument = "z", instrument_vintage = "2001",
+      adjustment_set = "none", fixed_effect = "none", estimand = "association",
+      estimator = "ols", inference = "state_clustered",
+      sample_rule = "invented_sample_rule", analysis_role = "diagnostic",
+      admissible = TRUE, reason = "test", implemented = TRUE
+    ),
+    "Unregistered analysis sample-rule semantics"
+  )
+})

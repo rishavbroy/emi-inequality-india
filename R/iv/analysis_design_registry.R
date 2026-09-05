@@ -11,9 +11,81 @@ analysis_design_columns <- function() {
     "instrument", "instrument_vintage", "distance_measure_id",
     "language_adjustment_id", "adjustment_set", "control_strategy_id",
     "control_parameterization_id", "fixed_effect", "functional_form_id",
-    "estimand", "estimator", "inference", "sample_rule", "analysis_role",
+    "estimand", "estimator", "estimation_scope_id", "inference",
+    "covariance_id", "weak_id_inference_id", "multiplicity_id",
+    "sample_rule", "support_policy_id", "analysis_role",
     "admissible", "reason", "implemented"
   )
+}
+
+analysis_estimation_scope_registry <- function() {
+  c(
+    first_stage_diagnostic_suite = "first_stage_only",
+    first_stage_comparison = "first_stage_only",
+    iv_diagnostic_suite = "iv_diagnostic_suite",
+    `2sls` = "structural_iv",
+    `2sls_with_anderson_rubin` = "structural_iv",
+    `first_stage+reduced_form+2sls+anderson_rubin` = "structural_iv",
+    `reduced_form+2sls+anderson_rubin` = "structural_iv",
+    ols = "ols",
+    native_speaker_weighted_ols = "weighted_ols",
+    mother_tongue_speaker_weighted_ols = "weighted_ols"
+  )
+}
+
+analysis_inference_registry <- function() {
+  data.frame(
+    inference = c(
+      "HC1", "state_clustered", "state_1991_clustered",
+      "state_clustered+holm",
+      "state_clustered+anderson_rubin",
+      "state_clustered+anderson_rubin+holm",
+      "state_clustered+weak_iv_diagnostics"
+    ),
+    covariance_id = c(
+      "HC1", "state_clustered", "state_1991_clustered",
+      "state_clustered", "state_clustered", "state_clustered",
+      "state_clustered"
+    ),
+    weak_id_inference_id = c(
+      "none", "none", "none", "none",
+      "anderson_rubin", "anderson_rubin", "weak_iv_diagnostic_suite"
+    ),
+    multiplicity_id = c(
+      "none", "none", "none", "holm", "none", "holm", "none"
+    ),
+    stringsAsFactors = FALSE
+  )
+}
+
+analysis_functional_form_from_estimand <- function(estimand) {
+  x <- plain_chr(estimand)
+  out <- rep("linear", length(x))
+  out[x %in% c("ancova", "descriptive_ancova")] <- "ancova"
+  out[x %in% c("change", "descriptive_change")] <- "change"
+  out[grepl("interaction", x, fixed = TRUE)] <- "linear_interaction"
+  out
+}
+
+analysis_support_policy <- function(sample_rule) {
+  x <- plain_chr(sample_rule)
+  out <- rep(NA_character_, length(x))
+  out[grepl("common_support$", x)] <- "common_support"
+  out[grepl("fixed_complete_case$", x)] <- "fixed_complete_case"
+  out[x == "public_model_specific_complete_case"] <- "model_specific_complete_case"
+  out[grepl("^c17_", x)] <- "predefined_demographic_subgroup"
+  out[grepl("^(social_group_gap|st_concentration)__", x)] <- "predefined_geographic_subgroup"
+  out[grepl("^validated_", x)] <- "validated_source_sample"
+  out[x == "historical_preferred_geography"] <- "historical_preferred_geography"
+  out[x == "analysis_welfare_support"] <- "analysis_welfare_support"
+  if (anyNA(out)) {
+    stop(
+      "Unregistered analysis sample-rule semantics: ",
+      paste(unique(x[is.na(out)]), collapse = ", "),
+      call. = FALSE
+    )
+  }
+  out
 }
 
 analysis_design_frame <- function(...) {
@@ -23,6 +95,45 @@ analysis_design_frame <- function(...) {
       "control_strategy_id", "control_parameterization_id", "functional_form_id"
   )) {
     if (!nm %in% names(out)) out[[nm]] <- rep("", nrow(out))
+  }
+  for (nm in c(
+      "estimation_scope_id", "covariance_id", "weak_id_inference_id",
+      "multiplicity_id", "support_policy_id"
+  )) {
+    if (!nm %in% names(out)) out[[nm]] <- rep("", nrow(out))
+  }
+  semantic_inputs <- c("estimand", "estimator", "inference", "sample_rule")
+  if (nrow(out) && all(semantic_inputs %in% names(out))) {
+    blank_form <- !nzchar(plain_chr(out$functional_form_id))
+    out$functional_form_id[blank_form] <- analysis_functional_form_from_estimand(
+      out$estimand[blank_form]
+    )
+
+    scopes <- analysis_estimation_scope_registry()
+    estimator <- plain_chr(out$estimator)
+    unknown_estimator <- setdiff(unique(estimator), names(scopes))
+    if (length(unknown_estimator)) {
+      stop(
+        "Unregistered analysis estimator semantics: ",
+        paste(unknown_estimator, collapse = ", "), call. = FALSE
+      )
+    }
+    out$estimation_scope_id <- unname(scopes[estimator])
+
+    inference_registry <- analysis_inference_registry()
+    inference <- plain_chr(out$inference)
+    match_idx <- match(inference, inference_registry$inference)
+    if (anyNA(match_idx)) {
+      stop(
+        "Unregistered analysis inference semantics: ",
+        paste(unique(inference[is.na(match_idx)]), collapse = ", "),
+        call. = FALSE
+      )
+    }
+    out$covariance_id <- inference_registry$covariance_id[match_idx]
+    out$weak_id_inference_id <- inference_registry$weak_id_inference_id[match_idx]
+    out$multiplicity_id <- inference_registry$multiplicity_id[match_idx]
+    out$support_policy_id <- analysis_support_policy(out$sample_rule)
   }
   missing <- setdiff(analysis_design_columns(), names(out))
   if (length(missing)) {
