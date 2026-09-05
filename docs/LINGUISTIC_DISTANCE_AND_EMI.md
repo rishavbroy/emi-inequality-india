@@ -310,3 +310,33 @@ families. The within-district group-gap construction is intended to answer
 whether children living in the same district occupy different schooling
 sectors/media, while the distance coefficient asks whether those local access
 gaps systematically vary with linguistic geography.
+
+## Scheduled-Tribe concentration heterogeneity
+
+The inequality diagnostic also contains one deliberately small district-level
+heterogeneity family using the predetermined Census-2001 Scheduled-Tribe share.
+The official Primary Census Abstract reports both total population and Scheduled-
+Tribe population at district level; `st_share_2001` is therefore a pre-treatment
+composition measure, not a post-treatment school-system characteristic.
+
+The preferred heterogeneity estimand is the interaction between linguistic
+distance and `st_share_2001`, scaled so its coefficient is the change in the
+distance slope associated with a ten-percentage-point increase in ST population
+share. Each model includes the ST-share main effect, the compact Census-2001
+control vector with its duplicate ST-share term removed, state fixed effects,
+and state-clustered inference. The family is intentionally limited to three
+outcomes motivated before estimation: all-child EMI exposure, private-EMI
+exposure among all children, and DISE girls'-toilet availability. Each is
+estimated for all states and inside the frozen Shastry Hindi-belt definition.
+
+A high-ST district restriction is retained only as a threshold sensitivity, not
+as the preferred specification. `High ST` means at or above the 75th percentile
+of `st_share_2001` computed once from the full finite Census-2001 district panel.
+That national cutoff is then held fixed across outcomes and the Hindi-belt
+subsample so outcome missingness cannot redefine the subgroup. Within the high-
+ST subset, continuous ST share remains in the regression as a nuisance control.
+Holm adjustment is applied across the full 12-cell descriptive family. These
+models test whether the observed geography of English-oriented schooling and one
+predeclared institutional-quality measure varies with pre-existing tribal
+concentration; they are not IV specifications, do not identify ST-student-specific
+DISE exposure, and do not enter any causal outcome registry.

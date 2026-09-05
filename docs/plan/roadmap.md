@@ -32,6 +32,7 @@ This file records the active research plan. Historical brainstorming and refacto
 - Census-2001 HH-09/HH-13/HH-15(/Appendix) have now been structurally inspected and activated for exact 2001-to-2011 household-capacity changes. The longitudinal set is intentionally limited to matched literacy-depth, matriculate/graduate-access, and worker-count household shares; HH-15 top coding and the absence of a 2001 marginal-worker decomposition rule out exact workers-per-household or marginal-worker changes.
 - Census-1991 ST-16/ST-17 is now activated as a bounded pre-treatment language-mechanism diagnostic. District ST-17 workbooks provide Scheduled Tribe mother-tongue bilingual/trilingual counts; ST-16 district rows are an independent denominator gate. The preferred sample requires exact ST-16 reconciliation and a frozen historical Shastry mapping, preserves 1991 state geography, and reports all-state and Hindi-belt state-FE/state-clustered relationships for English versus Hindi acquisition. The 2011 ST-15/ST-16 sources remain acquisition-only follow-up material.
 - NSS-64 schooling access is now decomposed by Scheduled Tribe, Scheduled Caste, OBC, and Other children using the same weighted age-5--19 treatment builder as the aggregate 2007 exposure. The extended diagnostic reports within-district group gaps for the full schooling-margin hierarchy and a bounded five-outcome distance-heterogeneity family under the compact Census-2001 controls, state FE/state clustering, and a Hindi-belt subsample. It remains descriptive mechanism/access evidence and does not enlarge the consumption-IV treatment or outcome registries.
+- The planned ST-concentration check is now bounded to three descriptive district outcomes: all-child EMI exposure, private-EMI all-child exposure, and DISE girls'-toilet availability. The preferred specification interacts distance with predetermined Census-2001 ST share under compact controls (with duplicate ST share removed), state FE, and state clustering; a national top-quartile ST-share restriction is a fixed threshold sensitivity, and both are repeated inside the frozen Hindi-belt sample. This is a 12-cell Holm-adjusted descriptive family outside the IV registries.
 
 - 2001 controls, migration, worker structure, household mechanisms, and C-17 diagnostics are implemented in dedicated modules.
 - 2011 migration D02-D07, worker B-series, HH08/HH10/HH11, and housing/living-standard tables are harmonized through the shared Census count/geography architecture.
@@ -84,7 +85,11 @@ The realized 64-cell parameterization family closes that axis without producing 
 
 Comprehensiveness still does **not** imply universality. The ledger rejects the endpoint-by-full-diagnostic Cartesian product and the automatic crossing of every individually defensible robustness axis because representability is not a scientific rationale for an interaction. Post-treatment mechanisms remain inadmissible baseline controls. Expand an executable family only after its estimand, sample rule, and multiplicity family are registered—never because a coefficient in an adjacent design is attractive.
 
-### 3. Paper and reviewer-facing outputs
+### 3. Descriptive schooling-to-welfare bridge
+
+The last planned empirical addition before paper architecture is a compact, explicitly descriptive OLS bridge from observed schooling margins to later consumption. Estimate enrollment, EMI conditional on enrollment, all-child EMIE, public EMI, and private EMI one at a time under the same finite control/geography ladder already used elsewhere; do not interpret these associations as causal and do not combine multiple endogenous schooling margins into a pseudo-structural regression.
+
+### 4. Paper and reviewer-facing outputs
 
 With the firm and labor source/mechanism phases now fixed, once the final causal outcome/robustness registry is frozen:
 
