@@ -1,0 +1,5 @@
+"welfare_specification_id","outcome_id","outcome_round","baseline_round","estimand","analysis_transform","sample_rule"
+"long_2022__ancova","real_mean_mpce","hces_2022_23","nss_2004_05","ancova","log","analysis_welfare_support"
+"long_2022__change","real_mean_mpce","hces_2022_23","nss_2004_05","change","log","analysis_welfare_support"
+"long_2023__ancova","real_mean_mpce","hces_2023_24","nss_2004_05","ancova","log","analysis_welfare_support"
+"long_2023__change","real_mean_mpce","hces_2023_24","nss_2004_05","change","log","analysis_welfare_support"

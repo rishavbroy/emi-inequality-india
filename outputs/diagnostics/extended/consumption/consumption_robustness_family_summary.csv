@@ -1,0 +1,8 @@
+"family","analysis_role","multiplicity_family","n_welfare_templates","n_models","n_strong_first_stage","max_effective_f","n_reduced_form_family_signals","n_ar_family_signals","n_bounded_ar_sets","n_disconnected_ar_sets","n_grid_truncated_ar_sets","min_n","max_n"
+"scalar_iv","scalar_iv_robustness","consumption_scalar_iv_robustness",8,48,0,5.90295383645191,1,1,4,10,44,521,525
+"intensive_margin","treatment_definition_robustness","consumption_treatment_robustness",8,48,0,5.25859614128735,1,1,2,10,46,521,525
+"welfare_definition","welfare_definition_robustness","consumption_welfare_robustness",20,120,0,6.58052157990913,0,0,13,21,107,442,525
+"control_strategy","control_strategy_robustness","consumption_control_strategy",8,48,0,10.2333807829526,2,2,24,10,24,521,525
+"control_parameterization","control_parameterization_robustness","consumption_control_parameterization",8,64,0,15.2757274838605,0,0,28,12,36,521,525
+"historical_adjustment","historical_adjustment_robustness","consumption_historical_adjustment",8,32,0,4.92037649703148,3,3,0,11,32,477,481
+"historical_concept_matched","historical_concept_matched_robustness","consumption_historical_concept_matched",8,48,0,2.82367164238298,5,5,0,15,48,436,446

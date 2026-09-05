@@ -1,0 +1,9 @@
+"group_id","group_column","n_panel","n_common","common_share","status","missing_columns"
+"early_2009__ancova","welfare_specification_id",573,436,0.760907504363002,"ready",
+"early_2009__change","welfare_specification_id",573,436,0.760907504363002,"ready",
+"long_2022__ancova","welfare_specification_id",573,446,0.778359511343805,"ready",
+"long_2022__change","welfare_specification_id",573,446,0.778359511343805,"ready",
+"long_2023__ancova","welfare_specification_id",573,445,0.776614310645724,"ready",
+"long_2023__change","welfare_specification_id",573,445,0.776614310645724,"ready",
+"medium_2011__ancova","welfare_specification_id",573,440,0.767888307155323,"ready",
+"medium_2011__change","welfare_specification_id",573,440,0.767888307155323,"ready",

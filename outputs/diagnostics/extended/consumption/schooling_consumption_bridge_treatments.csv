@@ -1,0 +1,6 @@
+"treatment_id","treatment","label"
+"enrollment","enrollment_rate_0708","Enrollment rate in 2007-08"
+"emi_among_enrolled","emi_share_enrolled_0708","EMI share among enrolled children in 2007-08"
+"emi_all_children","emi_exposure_all_children_0708","EMI exposure among all children in 2007-08"
+"public_emi_all_children","public_emi_exposure_all_children_0708","Public EMI exposure among all children in 2007-08"
+"private_emi_all_children","private_emi_exposure_all_children_0708","Private EMI exposure among all children in 2007-08"
