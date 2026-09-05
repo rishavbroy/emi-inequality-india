@@ -33,6 +33,29 @@ nss64_schooling_disadvantaged_groups <- function() {
   setdiff(nss_2007_schooling_social_groups(), "Other")
 }
 
+nss64_schooling_social_group_specifications <- function() {
+  outcomes <- nss64_schooling_social_group_margin_registry()
+  outcomes <- outcomes$outcome[outcomes$model_distance_heterogeneity %in% TRUE]
+  grid <- expand.grid(
+    social_group = nss64_schooling_disadvantaged_groups(),
+    outcome = outcomes,
+    sample = c("all_states", "hindi_belt"),
+    KEEP.OUT.ATTRS = FALSE,
+    stringsAsFactors = FALSE
+  )
+  grid$hindi_belt_only <- grid$sample == "hindi_belt"
+  grid$specification_id <- paste(
+    "nss64_social_group", grid$social_group, grid$outcome, grid$sample, sep = "__"
+  )
+  grid <- grid[c(
+    "specification_id", "social_group", "outcome", "sample", "hindi_belt_only"
+  )]
+  if (nrow(grid) != 30L || anyDuplicated(grid$specification_id)) {
+    stop("NSS-64 social-group schooling specification family must contain 30 unique cells.", call. = FALSE)
+  }
+  grid
+}
+
 prepare_nss64_schooling_social_group_panel <- function(
     margins, district_panel, control_registry = NULL) {
   x <- safe_df(margins)
@@ -192,20 +215,24 @@ build_nss64_schooling_social_group_diagnostic <- function(
   )
   controls <- census_2001_main_controls(control_registry)
   gaps <- build_nss64_schooling_social_group_gaps(panel, covariates = controls)
-  registry <- nss64_schooling_social_group_margin_registry()
-  model_outcomes <- registry$outcome[registry$model_distance_heterogeneity]
-  estimates <- safe_bind_rows(lapply(nss64_schooling_disadvantaged_groups(), function(group) {
-    safe_bind_rows(lapply(model_outcomes, function(outcome) {
-      safe_bind_rows(list(
-        fit_nss64_schooling_social_group_gap(
-          gaps, group, outcome, "all_states", FALSE, controls
-        ),
-        fit_nss64_schooling_social_group_gap(
-          gaps, group, outcome, "hindi_belt", TRUE, controls
-        )
-      ))
-    }))
+  specifications <- nss64_schooling_social_group_specifications()
+  estimates <- safe_bind_rows(lapply(seq_len(nrow(specifications)), function(i) {
+    specification <- specifications[i, , drop = FALSE]
+    result <- fit_nss64_schooling_social_group_gap(
+      gaps,
+      specification$social_group[[1L]],
+      specification$outcome[[1L]],
+      specification$sample[[1L]],
+      specification$hindi_belt_only[[1L]],
+      controls
+    )
+    result$specification_id <- specification$specification_id[[1L]]
+    result
   }))
+  if (nrow(estimates) != nrow(specifications) ||
+      !setequal(estimates$specification_id, specifications$specification_id)) {
+    stop("NSS-64 social-group estimates do not match the canonical specification grid.", call. = FALSE)
+  }
   estimates$p_value_holm_family <- holm_adjust_finite(estimates$p_value_state_clustered)
 
   structure(
@@ -213,6 +240,7 @@ build_nss64_schooling_social_group_diagnostic <- function(
       margins = panel,
       access_summary = nss64_schooling_social_group_access_summary(gaps),
       gaps = gaps,
+      specifications = specifications,
       estimates = estimates
     ),
     class = "emi_nss64_schooling_social_group"
@@ -225,7 +253,7 @@ save_nss64_schooling_social_group_diagnostic <- function(
     stop("Expected an emi_nss64_schooling_social_group diagnostic.", call. = FALSE)
   }
   write_diagnostic_bundle(
-    diagnostic,
+    diagnostic[c("margins", "access_summary", "gaps", "estimates")],
     directory,
     filenames = c(
       margins = "nss64_social_group_schooling_margins.csv",

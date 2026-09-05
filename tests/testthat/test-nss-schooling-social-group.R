@@ -92,3 +92,13 @@ test_that("distance heterogeneity estimates how within-district group gaps vary 
   expect_equal(fit$n_states, 3L)
   expect_true(is.finite(fit$std_error_state_clustered))
 })
+
+
+test_that("NSS-64 social-group model grid is canonical and complete", {
+  specs <- nss64_schooling_social_group_specifications()
+  expect_equal(nrow(specs), 30L)
+  expect_equal(anyDuplicated(specs$specification_id), 0L)
+  expect_setequal(specs$social_group, nss64_schooling_disadvantaged_groups())
+  expect_setequal(specs$sample, c("all_states", "hindi_belt"))
+  expect_true(all(specs$hindi_belt_only == (specs$sample == "hindi_belt")))
+})

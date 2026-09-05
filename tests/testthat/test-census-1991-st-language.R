@@ -212,3 +212,13 @@ test_that("ST language diagnostic estimates a state-FE distance slope on validat
   expect_equal(fit$n_states, 3L)
   expect_true(is.finite(fit$std_error_state_clustered))
 })
+
+
+test_that("Census-1991 ST language diagnostic uses one canonical 8-cell grid", {
+  specs <- census_1991_st_language_specifications()
+  expect_equal(nrow(specs), 8L)
+  expect_equal(anyDuplicated(specs$specification_id), 0L)
+  expect_setequal(specs$outcome, census_1991_st_language_outcomes())
+  expect_setequal(specs$sample, c("validated_all_states", "validated_hindi_belt"))
+  expect_true(all(specs$hindi_belt_only == (specs$sample == "validated_hindi_belt")))
+})

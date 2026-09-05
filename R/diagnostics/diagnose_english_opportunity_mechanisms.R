@@ -182,6 +182,30 @@ english_opportunity_st_heterogeneity_registry <- function() {
   )
 }
 
+english_opportunity_st_heterogeneity_specifications <- function() {
+  registry <- english_opportunity_st_heterogeneity_registry()
+  grid <- merge(
+    registry,
+    expand.grid(
+      sample = c("all_states", "hindi_belt"),
+      heterogeneity = c("continuous_interaction", "high_st_subset"),
+      KEEP.OUT.ATTRS = FALSE,
+      stringsAsFactors = FALSE
+    ),
+    by = NULL
+  )
+  grid$specification_id <- paste(
+    "st_concentration", grid$outcome_id, grid$sample, grid$heterogeneity, sep = "__"
+  )
+  grid <- grid[c(
+    "specification_id", "outcome_id", "outcome", "sample", "heterogeneity"
+  )]
+  if (nrow(grid) != 12L || anyDuplicated(grid$specification_id)) {
+    stop("ST-concentration heterogeneity specification family must contain 12 unique cells.", call. = FALSE)
+  }
+  grid
+}
+
 english_opportunity_st_heterogeneity_controls <- function(control_registry = NULL) {
   setdiff(census_2001_main_controls(control_registry), "st_share_2001")
 }
@@ -301,30 +325,37 @@ diagnose_english_opportunity_st_heterogeneity <- function(
     control_registry = NULL,
     high_st_probability = 0.75) {
   registry <- english_opportunity_st_heterogeneity_registry()
+  specifications <- english_opportunity_st_heterogeneity_specifications()
   controls <- english_opportunity_st_heterogeneity_controls(control_registry)
   cutoff <- english_opportunity_high_st_cutoff(panel, high_st_probability)
-  estimates <- safe_bind_rows(lapply(seq_len(nrow(registry)), function(i) {
-    row <- registry[i, , drop = FALSE]
-    sample <- prepare_english_opportunity_st_heterogeneity_sample(
-      panel, row$outcome[[1L]], controls = controls
+  samples <- lapply(seq_len(nrow(registry)), function(i) {
+    prepare_english_opportunity_st_heterogeneity_sample(
+      panel, registry$outcome[[i]], controls = controls
     )
-    safe_bind_rows(lapply(c("all_states", "hindi_belt"), function(sample_id) {
-      safe_bind_rows(lapply(c("continuous_interaction", "high_st_subset"), function(kind) {
-        fit_english_opportunity_st_heterogeneity(
-          sample,
-          row$outcome_id[[1L]],
-          row$outcome[[1L]],
-          sample_id = sample_id,
-          heterogeneity = kind,
-          high_st_cutoff = cutoff,
-          controls = controls
-        )
-      }))
-    }))
+  })
+  names(samples) <- registry$outcome_id
+  estimates <- safe_bind_rows(lapply(seq_len(nrow(specifications)), function(i) {
+    specification <- specifications[i, , drop = FALSE]
+    result <- fit_english_opportunity_st_heterogeneity(
+      samples[[specification$outcome_id[[1L]]]],
+      specification$outcome_id[[1L]],
+      specification$outcome[[1L]],
+      sample_id = specification$sample[[1L]],
+      heterogeneity = specification$heterogeneity[[1L]],
+      high_st_cutoff = cutoff,
+      controls = controls
+    )
+    result$specification_id <- specification$specification_id[[1L]]
+    result
   }))
+  if (nrow(estimates) != nrow(specifications) ||
+      !setequal(estimates$specification_id, specifications$specification_id)) {
+    stop("ST-concentration estimates do not match the canonical specification grid.", call. = FALSE)
+  }
   estimates$p_value_holm_family <- holm_adjust_finite(estimates$p_value_state_clustered)
   list(
     registry = registry,
+    specifications = specifications,
     controls = controls,
     high_st_probability = high_st_probability,
     high_st_cutoff_percent = cutoff,

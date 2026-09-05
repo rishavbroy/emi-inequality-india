@@ -295,4 +295,15 @@ test_that("ST heterogeneity diagnostic uses one cutoff across outcomes and sampl
     out$estimates$heterogeneity,
     c("continuous_interaction", "high_st_subset")
   )
+  expect_setequal(out$estimates$specification_id, out$specifications$specification_id)
+})
+
+
+test_that("ST-concentration heterogeneity uses one canonical 12-cell grid", {
+  specs <- english_opportunity_st_heterogeneity_specifications()
+  expect_equal(nrow(specs), 12L)
+  expect_equal(anyDuplicated(specs$specification_id), 0L)
+  expect_setequal(specs$outcome_id, english_opportunity_st_heterogeneity_registry()$outcome_id)
+  expect_setequal(specs$sample, c("all_states", "hindi_belt"))
+  expect_setequal(specs$heterogeneity, c("continuous_interaction", "high_st_subset"))
 })

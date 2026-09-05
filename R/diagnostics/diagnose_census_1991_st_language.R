@@ -9,6 +9,24 @@ census_1991_st_language_outcomes <- function() {
   )
 }
 
+census_1991_st_language_specifications <- function() {
+  grid <- expand.grid(
+    outcome = census_1991_st_language_outcomes(),
+    sample = c("validated_all_states", "validated_hindi_belt"),
+    KEEP.OUT.ATTRS = FALSE,
+    stringsAsFactors = FALSE
+  )
+  grid$hindi_belt_only <- grid$sample == "validated_hindi_belt"
+  grid$specification_id <- paste(
+    "census_1991_st_language", grid$outcome, grid$sample, sep = "__"
+  )
+  grid <- grid[c("specification_id", "outcome", "sample", "hindi_belt_only")]
+  if (nrow(grid) != 8L || anyDuplicated(grid$specification_id)) {
+    stop("Census-1991 ST language specification family must contain 8 unique cells.", call. = FALSE)
+  }
+  grid
+}
+
 validate_census_1991_st_language_coverage <- function(coverage) {
   x <- safe_df(coverage)
   required <- c(
@@ -82,13 +100,22 @@ census_1991_st_language_fit <- function(panel, outcome, sample_id, hindi_belt_on
 
 build_census_1991_st_language_diagnostic <- function(st17, st16) {
   panel <- build_census_1991_st_language_panel(st17, st16)
-  outcomes <- census_1991_st_language_outcomes()
-  estimates <- safe_bind_rows(lapply(outcomes, function(outcome) {
-    safe_bind_rows(list(
-      census_1991_st_language_fit(panel, outcome, "validated_all_states", FALSE),
-      census_1991_st_language_fit(panel, outcome, "validated_hindi_belt", TRUE)
-    ))
+  specifications <- census_1991_st_language_specifications()
+  estimates <- safe_bind_rows(lapply(seq_len(nrow(specifications)), function(i) {
+    specification <- specifications[i, , drop = FALSE]
+    result <- census_1991_st_language_fit(
+      panel,
+      specification$outcome[[1L]],
+      specification$sample[[1L]],
+      specification$hindi_belt_only[[1L]]
+    )
+    result$specification_id <- specification$specification_id[[1L]]
+    result
   }))
+  if (nrow(estimates) != nrow(specifications) ||
+      !setequal(estimates$specification_id, specifications$specification_id)) {
+    stop("Census-1991 ST language estimates do not match the canonical specification grid.", call. = FALSE)
+  }
   validation <- unique(panel[c(
     "state_code_1991", "district_code_1991", "validation_status",
     "n_language_cells", "n_mismatched_cells", "absolute_speaker_difference"
@@ -105,7 +132,10 @@ build_census_1991_st_language_diagnostic <- function(st17, st16) {
   )
   validate_census_1991_st_language_coverage(coverage)
   structure(
-    list(panel = panel, validation = validation, coverage = coverage, estimates = estimates),
+    list(
+      panel = panel, validation = validation, coverage = coverage,
+      specifications = specifications, estimates = estimates
+    ),
     class = "emi_census_1991_st_language"
   )
 }
