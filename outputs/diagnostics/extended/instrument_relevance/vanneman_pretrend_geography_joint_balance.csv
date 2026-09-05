@@ -1,4 +1,4 @@
-"analysis_id","predictor_id","sample_id","period_id","domain","predictor","tested_measures","joint_f","joint_p","n","n_states","population_1961","status","reason"
+"geography_variant_id","predictor_id","sample_id","period_id","domain","predictor","tested_measures","joint_f","joint_p","n","n_states","population_1961","status","reason"
 "strict_one_to_one","eventual_emie","full_pretrend","1961_1971","demography","emie_exposure","log_population;urban_share",1.60461788088006,0.204588599931241,161,17,181849982,"estimated",NA
 "strict_one_to_one","eventual_emie","full_pretrend","1961_1971","labor","emie_exposure","main_worker_share;nonfarm_worker_share_main_workers",5.74820173076904,0.00397649061264036,161,17,181849982,"estimated",NA
 "strict_one_to_one","eventual_emie","full_pretrend","1961_1971","education","emie_exposure","literate_share_population;primary_plus_share_population;matriculate_plus_share_population",5.94944278299587,0.00075352922204335,161,17,181849982,"estimated",NA

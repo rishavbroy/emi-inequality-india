@@ -1,0 +1,10 @@
+"measure_id","source_id","scientific_role","exact_required","reference_districts","compared_districts","exact_matches","exact_match_share","correlation","median_abs_difference","max_abs_difference"
+"population_c02t","C02T","population anchor",TRUE,397,397,397,1,1,0,0
+"urban_population_c02u","C02U","urbanization",TRUE,397,397,397,1,1,0,0
+"secondary_plus_c02t","C02T","human capital",TRUE,397,397,397,1,1,0,0
+"main_workers_b01s","B01S","worker status",TRUE,397,397,397,1,1,0,0
+"dependent_population_c06t","C06T","dependency numerator",TRUE,397,397,397,1,1,0,0
+"working_age_population_c06t","C06T","dependency denominator",TRUE,397,397,397,1,1,0,0
+"muslim_population_c09t","C09T","religion",TRUE,397,397,397,1,1,0,0
+"religion_sum_c09t","C09T","religion-category population accounting",TRUE,397,397,397,1,1,0,0
+"population_c09t","C09T","published C-09 population diagnostic",FALSE,397,397,396,0.997481108312343,0.999999786777842,0,16052

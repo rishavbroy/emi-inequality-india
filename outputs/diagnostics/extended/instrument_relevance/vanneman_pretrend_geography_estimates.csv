@@ -1,4 +1,4 @@
-"analysis_id","predictor_id","sample_id","period_id","measure_id","fixed_effect","predictor","estimate","std.error","p.value","standardized_effect","contains_estimated_source","n","n_states","population_1961","status"
+"geography_variant_id","predictor_id","sample_id","period_id","measure_id","fixed_effect","predictor","estimate","std.error","p.value","standardized_effect","contains_estimated_source","n","n_states","population_1961","status"
 "strict_one_to_one","eventual_emie","full_pretrend","1961_1971","log_population","none","emie_exposure",5.41949211187096e-05,0.000708820230136148,0.939150911953846,0.0125503006432175,FALSE,161,17,181849982,"estimated"
 "strict_one_to_one","eventual_emie","full_pretrend","1961_1971","log_population","state","emie_exposure",0.000253254918324932,0.00113098731141839,0.823136236289451,0.0586480300873452,FALSE,161,17,181849982,"estimated"
 "strict_one_to_one","eventual_emie","full_pretrend","1961_1971","urban_share","none","emie_exposure",0.000408948562929596,0.000176932582219562,0.022098887380291,0.218596422819212,FALSE,161,17,181849982,"estimated"
