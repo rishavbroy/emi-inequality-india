@@ -177,8 +177,12 @@ check_source_whitespace() {
 }
 
 dump_diagnostics() {
-  local exit_code=$?
+  local exit_code="$1"
   trap - EXIT
+  if [[ "$audit_completed" != "true" && "$exit_code" -eq 0 ]]; then
+    echo "Audit exited before completion without a nonzero status; normalizing to exit code 1." >&2
+    exit_code=1
+  fi
   echo "=== EXIT CODE: ${exit_code} ==="
 
   if [[ "$audit_completed" == "true" && "$exit_code" -eq 0 ]]; then
@@ -209,11 +213,14 @@ dump_diagnostics() {
   fi
   exit "$exit_code"
 }
-trap dump_diagnostics EXIT
+trap 'audit_exit_code=$?; dump_diagnostics "$audit_exit_code"' EXIT
 
 current_stage="initialize-diagnostics"
 echo "=== START: git state ==="
 git status --short
+# The requested archive belongs to this audit run. Remove any prior file now so
+# an early failure cannot leave a stale review.zip that looks current.
+rm -f -- "$archive_out"
 bash scripts/clean_audit_workspace.sh
 write_audit_status "running" "$current_stage" 0 "pending"
 
@@ -309,10 +316,14 @@ fi
 
 current_stage="output-manifest"
 echo "=== OUTPUT MANIFEST ==="
-manifest_args=()
-if [[ "$render_samples" == "true" ]]; then manifest_args+=(--with-samples); fi
-if [[ "$with_analysis_notes" == "true" ]]; then manifest_args+=(--with-analysis-notes); fi
-Rscript scripts/write_output_manifest.R "${manifest_args[@]}"
+set --
+if [[ "$render_samples" == "true" ]]; then set -- "$@" --with-samples; fi
+if [[ "$with_analysis_notes" == "true" ]]; then set -- "$@" --with-analysis-notes; fi
+Rscript scripts/write_output_manifest.R "$@"
+if [[ ! -s outputs/diagnostics/build/output_manifest.csv ]]; then
+  echo "Output manifest was not created or is empty." >&2
+  exit 1
+fi
 
 current_stage="review-archive"
 write_audit_status "passed" "complete" 0 "verified"
