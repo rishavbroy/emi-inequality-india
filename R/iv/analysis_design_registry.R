@@ -417,9 +417,8 @@ analysis_design_dise <- function(
       analysis_role = plain_chr(construct$paper_role[[1L]])
     )
     rows$family <- "dise_first_stage"
-    rows$analysis_id <- paste(
-      "dise_first_stage", construct$construct_id[[1L]], rows$specification_id,
-      sep = "__"
+    rows$analysis_id <- dise_analysis_id(
+      "dise_first_stage", construct$construct_id[[1L]], rows$specification_id
     )
     rows
   }))
@@ -441,9 +440,8 @@ analysis_design_dise <- function(
       analysis_role = plain_chr(construct$paper_role[[1L]])
     )
     rows$family <- "dise_weak_iv"
-    rows$analysis_id <- paste(
-      "dise_weak_iv", construct$construct_id[[1L]], rows$specification_id,
-      sep = "__"
+    rows$analysis_id <- dise_analysis_id(
+      "dise_weak_iv", construct$construct_id[[1L]], rows$specification_id
     )
     rows
   }))

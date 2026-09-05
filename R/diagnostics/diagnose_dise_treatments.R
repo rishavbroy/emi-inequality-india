@@ -1,10 +1,25 @@
 # DISE treatment validation and IV-permutation diagnostics.
 
-add_dise_construct_id <- function(data, construct) {
+dise_analysis_id <- function(family, construct_id, specification_id) {
+  family <- match.arg(family, c("dise_first_stage", "dise_weak_iv"))
+  paste(family, construct_id, specification_id, sep = "__")
+}
+
+add_dise_construct_id <- function(data, construct, analysis_family = NULL) {
   data <- safe_df(data)
   if (!nrow(data)) return(data)
   data$construct_id <- construct$construct_id[[1]]
   data$treatment <- construct$variable[[1]]
+  if (!is.null(analysis_family)) {
+    if (!"specification_id" %in% names(data)) {
+      stop("DISE analysis outputs must carry specification_id before analysis_id is assigned.", call. = FALSE)
+    }
+    data$analysis_id <- dise_analysis_id(
+      analysis_family,
+      construct$construct_id[[1]],
+      data$specification_id
+    )
+  }
   for (field in intersect(
     c("analysis_scope", "domain", "margin", "source_side", "paper_role", "label"),
     names(construct)
@@ -243,19 +258,29 @@ diagnose_dise_iv_construct <- function(
   )
   if (!identical(construct$analysis_scope[[1]], "structural_iv")) return(out)
   weak <- estimate_weak_iv_outcomes(panel, outcome = outcome, treatment = variable)
-  out$weak_iv_outcomes <- add_dise_construct_id(weak$summary, construct)
-  out$anderson_rubin_grid <- add_dise_construct_id(weak$ar_grid, construct)
-  out$overidentification <- add_dise_construct_id(weak$overidentification, construct)
+  out$weak_iv_outcomes <- add_dise_construct_id(weak$summary, construct, "dise_weak_iv")
+  out$anderson_rubin_grid <- add_dise_construct_id(weak$ar_grid, construct, "dise_weak_iv")
+  out$overidentification <- add_dise_construct_id(
+    weak$overidentification, construct, "dise_weak_iv"
+  )
   mono <- run_iv_monotonicity_diagnostics(panel, specifications = weak$registry)
-  out$monotonicity_summary <- add_dise_construct_id(mono$summary, construct)
-  out$monotonicity_bins <- add_dise_construct_id(mono$bins, construct)
-  out$monotonicity_state_slopes <- add_dise_construct_id(mono$state_slopes, construct)
+  out$monotonicity_summary <- add_dise_construct_id(
+    mono$summary, construct, "dise_weak_iv"
+  )
+  out$monotonicity_bins <- add_dise_construct_id(mono$bins, construct, "dise_weak_iv")
+  out$monotonicity_state_slopes <- add_dise_construct_id(
+    mono$state_slopes, construct, "dise_weak_iv"
+  )
   balance_panel <- panel[is.finite(num(panel[[variable]])), , drop = FALSE]
   out$balance <- add_dise_construct_id(
-    run_iv_balance_diagnostics(balance_panel, specifications = weak$registry), construct
+    run_iv_balance_diagnostics(balance_panel, specifications = weak$registry),
+    construct,
+    "dise_weak_iv"
   )
   out$joint_balance <- add_dise_construct_id(
-    run_iv_joint_balance_diagnostics(balance_panel, specifications = weak$registry), construct
+    run_iv_joint_balance_diagnostics(balance_panel, specifications = weak$registry),
+    construct,
+    "dise_weak_iv"
   )
   out
 }
@@ -287,8 +312,16 @@ estimate_dise_first_stage_suite <- function(panel, construct) {
     estimate_alternative_distance_spec(data, registry[i, , drop = FALSE], treatment)
   })
   list(
-    summary = add_dise_construct_id(safe_bind_rows(lapply(estimated, `[[`, "summary")), construct),
-    coefficients = add_dise_construct_id(safe_bind_rows(lapply(estimated, `[[`, "coefficients")), construct),
+    summary = add_dise_construct_id(
+      safe_bind_rows(lapply(estimated, `[[`, "summary")),
+      construct,
+      "dise_first_stage"
+    ),
+    coefficients = add_dise_construct_id(
+      safe_bind_rows(lapply(estimated, `[[`, "coefficients")),
+      construct,
+      "dise_first_stage"
+    ),
     registry = registry
   )
 }
