@@ -91,7 +91,13 @@ The final planned empirical addition before paper architecture is implemented as
 
 ### 4. Post-roadmap architecture and imperfect-IV consolidation
 
-The empirical acquisition roadmap is closed, but two consolidation tasks precede the paper rewrite. First, the cross-family analysis-design ontology must become authoritative for every estimating family rather than lagging newer diagnostics. Schooling-to-welfare OLS, NSS-64 social-group gap regressions, ST-concentration heterogeneity, and the validated 1991 ST-language regressions now declare canonical family specification grids and project those same rows into `analysis_design_registry`; no parallel per-family specification CSVs are added solely for bookkeeping. The next ontology step is a canonical construct registry and an admissibility ledger that separates measurement, language adjustment, controls, fixed effects, functional form, estimator, inference, and sample rules without generating a Cartesian search.
+The empirical acquisition roadmap is closed, but two consolidation tasks precede the paper rewrite. First, the cross-family analysis-design ontology must become authoritative for every estimating family rather than lagging newer diagnostics. Schooling-to-welfare OLS, NSS-64 social-group gap regressions, ST-concentration heterogeneity, and the validated 1991 ST-language regressions now declare canonical family specification grids and project those same rows into `analysis_design_registry`; no parallel per-family specification CSVs are added solely for bookkeeping. The linguistic-instrument part of that separation is now implemented: distance
+measurement and language-composition adjustment are orthogonal registries, while
+the 15 historical construction IDs are retained only as the admissible pairings
+used by existing analyses. The next ontology step is the canonical construct
+registry itself, followed by a broader admissibility ledger that similarly
+separates controls, fixed effects, functional form, estimator, inference, and
+sample rules without generating a Cartesian search.
 
 Second, weak-IV results should report all justified information before adding another point estimator. Anderson--Rubin confidence-set topology is now classified explicitly so zero rejection, sign identification, disconnection, and grid truncation cannot be conflated. The next bounded inferential additions are: (1) Conley--Hansen--Rossi exclusion-restriction sensitivity for a small headline consumption family, calibrated transparently rather than by post-hoc coefficient choice; and (2) Masten--Poirier falsification-adaptive sets for the genuinely overidentified language-share designs. Nevo--Rosen bounds remain secondary and assumption-indexed. Balke--Pearl discretization, informal OLS-versus-IV bias ranking, mechanical LIML duplication in just-identified designs, and an estimated unobservable bias ratio remain non-goals.
 

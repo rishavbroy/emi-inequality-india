@@ -37,15 +37,22 @@ execution registries. It normalizes currently implemented public headline IV,
 consumption, DISE, Census mechanism, C-17, district mechanism, labor, firm,
 historical first-stage, schooling-to-welfare, social-group schooling, ST-concentration,
 and 1991 ST-language designs onto explicit outcome, treatment, instrument, vintage,
-adjustment, estimand, estimator, inference, sample-rule, role, and admissibility
-fields. Family-specific diagnostics must expose one canonical specification grid and
+distance-measure, language-adjustment, adjustment, estimand, estimator,
+inference, sample-rule, role, and admissibility fields. Family-specific diagnostics must expose one canonical specification grid and
 use that same grid for estimation; the cross-family ontology projects those rows
 rather than reconstructing neighboring specifications independently. Public headline models are themselves declared by
 `public_iv_specification_registry()` and converted to formulas only at the final
 legacy model-interface boundary, so there is no second headline formula authority.
 The separate candidate-design ledger records bounded robustness families,
 unimplemented but theoretically admissible extensions, and explicit non-goals
-without manufacturing or estimating an indiscriminate Cartesian product. New
+without manufacturing or estimating an indiscriminate Cartesian product.
+ Linguistic IV metadata now also separates the distance measure itself from
+included language-composition adjustment. Compatibility construction IDs remain
+stable for existing targets and outputs, but `iv_distance_measure_registry()` and
+`iv_language_adjustment_registry()` are the orthogonal semantic axes and
+`iv_instrument_construction_registry()` records their admissible pairings. This
+prevents, for example, Shastry nonzero mean with and without Hindi/Urdu controls
+from being misrepresented as two different distance measures. New
 design families should first declare why a combination is scientifically
 admissible before adding another estimator branch. The implemented analysis-design
 registry remains a cached R target; the compact candidate ledger is persisted as

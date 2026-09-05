@@ -7,10 +7,23 @@ The extended IV diagnostics use one canonical specification layer rather than re
 - admissible fixed-effect terms;
 - Census-2001 control blocks, the historical absorption ladder, symmetric block interventions, and finite alternative-control parameterizations;
 - the main and expanded adjustment sets;
-- alternative linguistic-distance constructions;
+- orthogonal linguistic-distance-measure and language-adjustment registries,
+  with the historical construction IDs retained as admissible compatibility
+  pairings rather than treated as primitive measures;
 - structural specification metadata with treatment, outcome, excluded instruments, included language controls, clustering variable, sample rule, panel variant, and diagnostic tier;
 - a de-duplicated diagnostic specification registry combining the alternative-instrument grid with the additional absorption/control-block specifications;
 - a diagnostic registry and saved applicability relation.
+
+`iv_distance_measure_registry()` owns the excluded linguistic variables and
+construction-specific coverage fields. `iv_language_adjustment_registry()` owns
+included Hindi/Urdu, native-English, and unresolved-share adjustments.
+`iv_instrument_construction_registry()` then names only the 15 pairings actually
+used by the project. Consequently `nonzero_mean`, `nonzero_mean_hindi_urdu`, and
+`nonzero_mean_shastry` share one `distance_measure_id` and differ only in
+`language_adjustment_id`; the same separation holds for Glottolog and
+Dyen/noncognate variants. Existing `construction_id` values remain stable so
+cached targets, reviewer-facing output IDs, and historical comparisons do not
+change.
 
 The registry is intentionally not the Cartesian product of every imaginable project option. Comprehensiveness is defined by scientific rationale, not by a target number of specifications: theoretically distinct relevance questions are made visible even when that enlarges the diagnostic universe, while mechanically crossable dimensions are excluded unless the interaction itself has a substantive interpretation. Specifications that are algebraically identical are de-duplicated before the general diagnostic suite runs.
 
