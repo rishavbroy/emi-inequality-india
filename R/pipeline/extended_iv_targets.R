@@ -486,6 +486,14 @@ extended_iv_target_definitions <- function() {
       format = "file"
     ),
     tar_target(
+      iv_falsification_adaptive_specs,
+      iv_falsification_adaptive_specifications(
+        iv_diagnostic_specification_registry(
+          control_registry = census_2001_control_registry
+        )
+      )
+    ),
+    tar_target(
       analysis_design_registry,
       compile_analysis_design_registry(
         consumption_iv_specifications,
@@ -500,6 +508,7 @@ extended_iv_target_definitions <- function() {
         consumption_historical_adjustment_specifications,
         consumption_historical_concept_matched_specifications,
         consumption_exclusion_sensitivity_specs,
+        iv_falsification_adaptive_specs,
         consumption_registry = consumption_iv_outcome_registry
       )
     ),
@@ -526,7 +535,8 @@ extended_iv_target_definitions <- function() {
         consumption_control_parameterization_specifications,
         consumption_historical_adjustment_specifications,
         consumption_historical_concept_matched_specifications,
-        consumption_exclusion_sensitivity_specs
+        consumption_exclusion_sensitivity_specs,
+        iv_falsification_adaptive_specs
       )
     ),
     tar_target(

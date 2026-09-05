@@ -34,6 +34,9 @@ test_that("analysis-design ontology inventories registered families without Cart
   consumption_exclusion_specs <- consumption_exclusion_sensitivity_specifications(
     consumption_specs
   )
+  fas_specs <- iv_falsification_adaptive_specifications(
+    iv_diagnostic_specification_registry(control_registry = controls)
+  )
   mechanism_measures <- read_english_opportunity_measure_registry(
     file.path(root, "data", "metadata", "english_opportunity_measures.csv")
   )
@@ -47,6 +50,7 @@ test_that("analysis-design ontology inventories registered families without Cart
     consumption_control_parameterization_specifications = consumption_parameterization_specs,
     consumption_historical_adjustment_specifications = consumption_historical_specs,
     consumption_exclusion_sensitivity_specifications = consumption_exclusion_specs,
+    falsification_adaptive_specifications = fas_specs,
     consumption_registry = consumption
   )
 
@@ -67,7 +71,7 @@ test_that("analysis-design ontology inventories registered families without Cart
       "historical_first_stage", "historical_predetermined_first_stage",
       "schooling_consumption_bridge", "nss64_social_group",
       "st_concentration_heterogeneity", "census_1991_st_language",
-      "consumption_exclusion_sensitivity"
+      "consumption_exclusion_sensitivity", "iv_falsification_adaptive_set"
     )
   )
 
@@ -111,6 +115,15 @@ test_that("analysis-design ontology inventories registered families without Cart
   expect_true(all(exclusion_rows$estimation_scope_id == "structural_iv_sensitivity"))
   expect_true(all(exclusion_rows$weak_id_inference_id == "bounded_exclusion_ar"))
   expect_true(all(exclusion_rows$covariance_id == "state_clustered"))
+
+  fas_rows <- registry[
+    registry$family == "iv_falsification_adaptive_set", , drop = FALSE
+  ]
+  expect_equal(nrow(fas_rows), nrow(fas_specs))
+  expect_true(all(fas_rows$estimation_scope_id == "structural_iv_sensitivity"))
+  expect_true(all(fas_rows$covariance_id == "state_clustered"))
+  expect_true(all(fas_rows$weak_id_inference_id == "none"))
+  expect_true(all(fas_rows$analysis_role == "overidentification_exclusion_sensitivity"))
 
   expect_equal(
     sum(registry$family == "district_mechanism"),
@@ -466,10 +479,13 @@ test_that("candidate-design ledger records bounded robustness choices without Ca
     consumption_registry, controls
   )
   consumption_exclusion <- consumption_exclusion_sensitivity_specifications(consumption)
+  fas_specs <- iv_falsification_adaptive_specifications(
+    iv_diagnostic_specification_registry(control_registry = controls)
+  )
   ledger <- build_iv_candidate_design_ledger(
     public, consumption, controls, welfare, opportunity, consumption_scalar,
     consumption_treatment, consumption_welfare, consumption_control, consumption_parameterization,
-    consumption_historical, consumption_historical_matched, consumption_exclusion
+    consumption_historical, consumption_historical_matched, consumption_exclusion, fas_specs
   )
 
   expect_identical(names(ledger), candidate_design_columns())
@@ -523,6 +539,16 @@ test_that("candidate-design ledger records bounded robustness choices without Ca
   expect_equal(exclusion$execution_policy, "estimate")
   expect_equal(exclusion$candidate_cells, 4L)
   expect_equal(exclusion$implemented_cells, 4L)
+
+  fas <- ledger[
+    ledger$candidate_id == "five_share_falsification_adaptive_set", , drop = FALSE
+  ]
+  expect_true(fas$admissible)
+  expect_equal(fas$implementation_status, "implemented")
+  expect_equal(fas$execution_policy, "estimate")
+  expect_equal(fas$candidate_cells, 6L)
+  expect_equal(fas$implemented_cells, 6L)
+  expect_match(fas$rationale, "weak constituent first stages", fixed = TRUE)
 
   welfare_row <- ledger[
     ledger$candidate_id == "consumption_alternative_welfare_outcomes",

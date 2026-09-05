@@ -28,6 +28,7 @@ analysis_estimation_scope_registry <- function() {
     `first_stage+reduced_form+2sls+anderson_rubin` = "structural_iv",
     `reduced_form+2sls+anderson_rubin` = "structural_iv",
     bounded_exclusion_ar = "structural_iv_sensitivity",
+    falsification_adaptive_set = "structural_iv_sensitivity",
     ols = "ols",
     native_speaker_weighted_ols = "weighted_ols",
     mother_tongue_speaker_weighted_ols = "weighted_ols"
@@ -663,6 +664,18 @@ analysis_design_consumption_exclusion_sensitivity <- function(specifications) {
   )
 }
 
+analysis_design_falsification_adaptive_set <- function(specifications) {
+  analysis_design_from_iv(
+    specifications,
+    family = "iv_falsification_adaptive_set",
+    estimator = "falsification_adaptive_set",
+    estimand = "falsification_adaptive_set",
+    inference = "state_clustered",
+    analysis_role = "overidentification_exclusion_sensitivity",
+    reason = "registered_five_share_falsification_adaptive_set"
+  )
+}
+
 compile_analysis_design_registry <- function(
     consumption_iv_specifications,
     english_opportunity_measure_registry,
@@ -676,6 +689,7 @@ compile_analysis_design_registry <- function(
     consumption_historical_adjustment_specifications = NULL,
     consumption_historical_concept_matched_specifications = NULL,
     consumption_exclusion_sensitivity_specifications = NULL,
+    falsification_adaptive_specifications = NULL,
     consumption_registry = NULL) {
   core_iv <- analysis_design_from_iv(
     iv_diagnostic_specification_registry(control_registry = control_registry),
@@ -779,6 +793,13 @@ compile_analysis_design_registry <- function(
       consumption_exclusion_sensitivity_specifications
     )
   }
+  falsification_adaptive <- if (is.null(falsification_adaptive_specifications)) {
+    data.frame()
+  } else {
+    analysis_design_falsification_adaptive_set(
+      falsification_adaptive_specifications
+    )
+  }
   out <- safe_bind_rows(list(
     analysis_design_public_iv(public_iv_specifications),
     core_iv,
@@ -793,6 +814,7 @@ compile_analysis_design_registry <- function(
     consumption_historical_adjustment,
     consumption_historical_concept_matched,
     consumption_exclusion_sensitivity,
+    falsification_adaptive,
     analysis_design_district_mechanisms(
       english_opportunity_measure_registry, control_registry
     ),
@@ -953,7 +975,8 @@ build_iv_candidate_design_ledger <- function(
     consumption_control_parameterization_specifications = NULL,
     consumption_historical_adjustment_specifications = NULL,
     consumption_historical_concept_matched_specifications = NULL,
-    consumption_exclusion_sensitivity_specifications = NULL) {
+    consumption_exclusion_sensitivity_specifications = NULL,
+    falsification_adaptive_specifications = NULL) {
   public_specs <- as_iv_specifications(public_specifications)
   consumption_specs <- as_iv_specifications(consumption_specifications)
   control_registry <- resolve_census_2001_control_registry(control_registry)
@@ -1004,6 +1027,11 @@ build_iv_candidate_design_ledger <- function(
     0L
   } else {
     nrow(as_iv_specifications(consumption_exclusion_sensitivity_specifications))
+  }
+  n_falsification_adaptive <- if (is.null(falsification_adaptive_specifications)) {
+    0L
+  } else {
+    nrow(iv_falsification_adaptive_specifications(falsification_adaptive_specifications))
   }
   n_diagnostic_iv <- nrow(diagnostic_specs)
   n_scalar <- sum(canonical_specs$n_excluded_instruments == 1L)
@@ -1128,6 +1156,24 @@ build_iv_candidate_design_ledger <- function(
       candidate_cells = n_multishare,
       implemented_cells = n_multishare,
       rationale = "The reference explicitly treats strong five-share first stages as diagnostic rather than a preferred rescue because richer language-composition variation weakens the exclusion argument."
+    ),
+    candidate_design_row(
+      "five_share_falsification_adaptive_set",
+      "Weak-IV follow-up; Masten--Poirier",
+      "imperfect_iv_sensitivity",
+      "falsification_adaptive_identified_set",
+      "When five-share instruments disagree, what structural-effect interval is consistent with minimally nonfalsified exclusion relaxations?",
+      "exclusion_restriction",
+      "real log consumption change",
+      preferred_iv_variables()$treatment,
+      "three registered five-share language-distance systems",
+      "region-main and state-main only",
+      "just-identified IV constituents; other shares enter as controls",
+      "estimate",
+      implementation_status = if (n_falsification_adaptive > 0L) "implemented" else "unimplemented",
+      candidate_cells = 6L,
+      implemented_cells = n_falsification_adaptive,
+      rationale = "For one endogenous regressor, the exclusion-based FAS is the interval between the just-identified IV estimands obtained by using each relevant instrument in turn while controlling for the remaining instruments. The six-cell scope is deliberately limited to region/state main-control versions of the three registered five-share systems; weak constituent first stages are reported rather than screened away."
     ),
     candidate_design_row(
       "relevance_dise_treatment_definitions",

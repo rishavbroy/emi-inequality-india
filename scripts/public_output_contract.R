@@ -73,6 +73,8 @@ required_extended_diagnostic_outputs <- function() {
     "outputs/diagnostics/extended/consumption/schooling_consumption_bridge_estimates.csv",
     "outputs/diagnostics/extended/consumption/consumption_exclusion_sensitivity_summary.csv",
     "outputs/diagnostics/extended/consumption/consumption_exclusion_sensitivity_grid.csv",
+    "outputs/diagnostics/extended/instrument_relevance/iv_falsification_adaptive_set_summary.csv",
+    "outputs/diagnostics/extended/instrument_relevance/iv_falsification_adaptive_set_components.csv",
     "outputs/diagnostics/extended/mechanisms/evidence_grid.csv",
     "outputs/diagnostics/extended/mechanisms/family_summary.csv"
   )

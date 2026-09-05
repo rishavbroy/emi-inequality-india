@@ -1198,6 +1198,14 @@ test_that("extended audit requires bounded exclusion-sensitivity outputs", {
     "outputs/diagnostics/extended/consumption/consumption_exclusion_sensitivity_grid.csv" %in%
       required
   )
+  expect_true(
+    "outputs/diagnostics/extended/instrument_relevance/iv_falsification_adaptive_set_summary.csv" %in%
+      required
+  )
+  expect_true(
+    "outputs/diagnostics/extended/instrument_relevance/iv_falsification_adaptive_set_components.csv" %in%
+      required
+  )
   iv_targets <- paste(
     readLines(file.path(root, "R", "pipeline", "extended_iv_targets.R"), warn = FALSE),
     collapse = "\n"

@@ -228,6 +228,8 @@ assemble_alternative_distance_first_stages <- function(
       weak_iv_outcomes = data.frame(status = character()),
       anderson_rubin_grid = data.frame(status = character()),
       overidentification = data.frame(status = character()),
+      falsification_adaptive_summary = data.frame(status = character()),
+      falsification_adaptive_components = data.frame(status = character()),
       monotonicity_summary = data.frame(status = character()),
       monotonicity_bins = data.frame(status = character()),
       monotonicity_state_slopes = data.frame(status = character()),
@@ -311,6 +313,14 @@ save_alternative_distance_first_stages <- function(
     overidentification = write_diagnostic_csv(
       diagnostics$overidentification,
       file.path(dir, "iv_overidentification.csv")
+    ),
+    falsification_adaptive_summary = write_diagnostic_csv(
+      diagnostics$falsification_adaptive_summary,
+      file.path(dir, "iv_falsification_adaptive_set_summary.csv")
+    ),
+    falsification_adaptive_components = write_diagnostic_csv(
+      diagnostics$falsification_adaptive_components,
+      file.path(dir, "iv_falsification_adaptive_set_components.csv")
     ),
     monotonicity_summary = write_diagnostic_csv(
       diagnostics$monotonicity_summary,
@@ -735,6 +745,15 @@ augment_alternative_distance_diagnostics <- function(
   diagnostics$weak_iv_outcomes <- weak_iv$summary
   diagnostics$anderson_rubin_grid <- weak_iv$ar_grid
   diagnostics$overidentification <- weak_iv$overidentification
+  fas <- validate_iv_falsification_adaptive_sets(
+    estimate_iv_falsification_adaptive_sets(panel, weak_iv$registry),
+    weak_iv$registry
+  )
+  overid_idx <- match(fas$summary$specification_id, weak_iv$overidentification$specification_id)
+  fas$summary$sargan_status <- weak_iv$overidentification$status[overid_idx]
+  fas$summary$sargan_p.value <- weak_iv$overidentification$p.value[overid_idx]
+  diagnostics$falsification_adaptive_summary <- fas$summary
+  diagnostics$falsification_adaptive_components <- fas$components
   diagnostics$diagnostic_applicability <- weak_iv$applicability
   diagnostics$diagnostic_registry <- iv_diagnostic_registry()
   diagnostics$diagnostic_specifications <- weak_iv$registry
