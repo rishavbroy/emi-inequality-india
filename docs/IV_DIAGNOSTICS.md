@@ -72,7 +72,7 @@ This semantic layer is deliberately added before new imperfect-IV estimators. Th
 
 ### Candidate-design governance
 
-`candidate_design_ledger.csv` is an explicit map from the project's methodological reference plan to the executable design space. Each row records the motivating reference section, scientific question, design axis, execution policy, multiplicity family, prerequisites, admissibility, and implementation status. It separates:
+`candidate_design_ledger.csv` is an explicit map from the project's methodological reference plan to the executable design space. Each row records the motivating reference section, scientific question, design axis, execution policy, multiplicity family, prerequisites, admissibility, an explicit admissibility reason, and implementation status. It separates:
 
 - **relevance diagnostics**, where broad variation across geography, control blocks, treatment definitions, linguistic-distance bases, and historical vintages is itself scientifically informative;
 - **causal robustness families**, where response definitions, treatment margins, instrument bases, control parameterizations, and horizons are admitted only when the estimand remains interpretable;
@@ -80,7 +80,9 @@ This semantic layer is deliberately added before new imperfect-IV estimators. Th
 - **data-dependent candidates**, such as Shastry-style major-city/coast controls, which remain visible without fabricating inputs;
 - **non-goals**, including post-treatment mechanisms as baseline controls and mechanical Cartesian products of individually defensible robustness axes.
 
-This ledger is deliberately broader than the paper-facing model family. Visibility is not execution: `diagnostic_only`, `estimate_if_registered`, `requires_data`, and `do_not_estimate` are distinct policies. A design may therefore be scientifically justified and visible without being automatically dispatched.
+This ledger is deliberately broader than the paper-facing model family. Visibility is not execution: `diagnostic_only`, `estimate_if_registered`, `requires_data`, and `do_not_estimate` are distinct policies. A design may therefore be scientifically justified and visible without being automatically dispatched. The schema fails closed if admissibility and execution policy disagree, so a row cannot be simultaneously labeled scientifically admissible and governed as `do_not_estimate`.
+
+Control adjustment is also split into two machine-readable axes in canonical IV rows. `control_strategy_id` records the conditioning philosophy (for example geography-only, observed exclusion-threat adjustment, or potential-pathway robustness), while `control_parameterization_id` records how a concept is measured (for example secondary-plus with compact agricultural structure versus literacy/decomposed alternatives). This prevents the old `main`/`expanded` shorthand from standing in for two distinct methodological decisions.
 
 ### Alternative-distance candidate-design comparison
 

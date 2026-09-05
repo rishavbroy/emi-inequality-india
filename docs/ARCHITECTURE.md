@@ -37,7 +37,8 @@ execution registries. It normalizes currently implemented public headline IV,
 consumption, DISE, Census mechanism, C-17, district mechanism, labor, firm,
 historical first-stage, schooling-to-welfare, social-group schooling, ST-concentration,
 and 1991 ST-language designs onto explicit outcome, treatment, instrument, vintage,
-distance-measure, language-adjustment, adjustment, estimand, estimator,
+distance-measure, language-adjustment, adjustment, control-strategy,
+control-parameterization, fixed-effect, functional-form, estimand, estimator,
 inference, sample-rule, role, and admissibility fields. Family-specific diagnostics must expose one canonical specification grid and
 use that same grid for estimation; the cross-family ontology projects those rows
 rather than reconstructing neighboring specifications independently. Public headline models are themselves declared by
@@ -45,7 +46,10 @@ rather than reconstructing neighboring specifications independently. Public head
 legacy model-interface boundary, so there is no second headline formula authority.
 The separate candidate-design ledger records bounded robustness families,
 unimplemented but theoretically admissible extensions, and explicit non-goals
-without manufacturing or estimating an indiscriminate Cartesian product.
+without manufacturing or estimating an indiscriminate Cartesian product. Its
+`admissibility_reason` and `execution_policy` fields are a decision contract:
+inadmissible rows must be `do_not_estimate`, while admissible rows cannot use
+that policy.
  Linguistic IV metadata now also separates the distance measure itself from
 included language-composition adjustment. Compatibility construction IDs remain
 stable for existing targets and outputs, but `iv_distance_measure_registry()` and
