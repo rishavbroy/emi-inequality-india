@@ -203,3 +203,55 @@ test_that("cross-source NSS measures are defined in the public variable dictiona
     registry$variable[registry$source == "nss_64_education"] %in% dictionary$variable
   ))
 })
+
+test_that("canonical construct registry validates cross-family variable semantics", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
+  registry <- read_analysis_construct_registry(
+    file.path(root, "data", "metadata", "variable_dictionary.csv")
+  )
+
+  expect_equal(anyDuplicated(registry$construct_id), 0L)
+  expect_equal(anyDuplicated(registry$variable), 0L)
+  expect_true(all(nzchar(registry$domain)))
+  expect_true(all(nzchar(registry$stage)))
+  expect_true(all(nzchar(registry$role)))
+  expect_true(all(nzchar(registry$causal_status)))
+
+  preferred_treatment <- analysis_construct_rows(registry, "emi_exposure_all_children_0708")
+  expect_identical(preferred_treatment$stage, "schooling_treatment")
+  expect_identical(preferred_treatment$role, "endogenous_treatment")
+  expect_true(preferred_treatment$preferred)
+
+  preferred_instrument <- analysis_construct_rows(registry, "ling_distance_nonzero_mean")
+  expect_identical(preferred_instrument$role, "instrument")
+  expect_identical(preferred_instrument$causal_status, "candidate_instrument_exclusion_sensitive")
+
+  human_capital <- analysis_construct_rows(registry, "adult_secondary_plus_share_2001")
+  expect_identical(human_capital$stage, "pre_treatment_context")
+  expect_identical(human_capital$role, "control")
+})
+
+test_that("compiled construct inventory projects source registries without duplicate variables", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
+  opportunity <- read_english_opportunity_measure_registry(
+    file.path(root, "data", "metadata", "english_opportunity_measures.csv")
+  )
+  registry <- compile_analysis_construct_registry(
+    english_opportunity_registry = opportunity
+  )
+
+  expect_equal(anyDuplicated(registry$variable), 0L)
+  expect_true(all(c(
+    "emi_exposure_all_children_0708",
+    "english_share_multilingual",
+    "dise_emi_enrollment_share_total_0708"
+  ) %in% registry$variable))
+  expect_identical(
+    registry$authority[registry$variable == "emi_exposure_all_children_0708"],
+    "variable_dictionary"
+  )
+  expect_identical(
+    registry$authority[registry$variable == "english_share_multilingual"],
+    "english_opportunity_measures"
+  )
+})
