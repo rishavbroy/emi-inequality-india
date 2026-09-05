@@ -1620,23 +1620,23 @@ test_that("absorption registry separates scientific aliases from unique executio
   expect_equal(sum(aliases$is_execution_alias), length(expected_aliases))
 })
 
-test_that("IV diagnostic specifications own canonical analysis IDs", {
+test_that("IV diagnostic results receive family identity at the projection boundary", {
   specs <- iv_diagnostic_specification_registry()
-  expect_identical(
-    specs$analysis_id,
-    iv_analysis_id("district_iv_diagnostic", specs$specification_id)
-  )
+  expect_false("analysis_id" %in% names(specs))
 
   result <- data.frame(
     specification_id = specs$specification_id[1:2],
     estimate = c(1, 2),
     stringsAsFactors = FALSE
   )
-  linked <- attach_iv_analysis_id(result, specs)
-  expect_identical(linked$analysis_id, specs$analysis_id[1:2])
+  linked <- attach_iv_analysis_id(result, specs, "district_iv_diagnostic")
+  expect_identical(
+    linked$analysis_id,
+    iv_analysis_id("district_iv_diagnostic", specs$specification_id[1:2])
+  )
   expect_error(
     attach_iv_analysis_id(
-      data.frame(specification_id = "not_registered"), specs
+      data.frame(specification_id = "not_registered"), specs, "district_iv_diagnostic"
     ),
     "outside the supplied registry",
     fixed = TRUE
