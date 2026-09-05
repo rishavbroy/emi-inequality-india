@@ -309,14 +309,10 @@ fi
 
 current_stage="output-manifest"
 echo "=== OUTPUT MANIFEST ==="
-manifest_roots=(paper outputs docs posters)
-if [[ "$render_samples" == "true" ]]; then manifest_roots+=(application-samples/output); fi
-if [[ "$with_analysis_notes" == "true" ]]; then manifest_roots+=(analysis); fi
-find "${manifest_roots[@]}" \
-  -maxdepth 3 \
-  -type f \
-  \( -name '*.pdf' -o -name '*.html' -o -name '*.md' -o -name '*.csv' -o -name '*.tex' -o -name '*.png' -o -name 'audit_status.json' \) \
-  -print | sort
+manifest_args=()
+if [[ "$render_samples" == "true" ]]; then manifest_args+=(--with-samples); fi
+if [[ "$with_analysis_notes" == "true" ]]; then manifest_args+=(--with-analysis-notes); fi
+Rscript scripts/write_output_manifest.R "${manifest_args[@]}"
 
 current_stage="review-archive"
 write_audit_status "passed" "complete" 0 "verified"
