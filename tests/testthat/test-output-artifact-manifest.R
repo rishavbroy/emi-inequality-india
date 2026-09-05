@@ -65,9 +65,34 @@ test_that("output artifact manifest rejects multiple file targets claiming one p
       roots = "outputs",
       root = root
     ),
-    "Multiple file targets claim one output path",
+    "Multiple file targets claim one output path: outputs/x.csv <- first;second",
     fixed = TRUE
   )
+})
+
+
+test_that("output artifact manifest canonicalizes repeated paths from one target", {
+  root <- tempfile("output-manifest-repeated-owner-")
+  dir.create(file.path(root, "outputs"), recursive = TRUE)
+  path <- file.path(root, "outputs", "x.csv")
+  utils::write.csv(data.frame(x = 1), path, row.names = FALSE)
+
+  meta <- data.frame(
+    name = "bundle",
+    format = "file",
+    stringsAsFactors = FALSE
+  )
+  meta$path <- I(list(c(path, path)))
+
+  out <- build_output_artifact_manifest(
+    target_meta = meta,
+    design_registry = data.frame(analysis_id = character(), family = character()),
+    roots = "outputs",
+    root = root
+  )
+
+  expect_identical(out$path, "outputs/x.csv")
+  expect_identical(out$target_name, "bundle")
 })
 
 test_that("output artifact manifest ignores duplicate source targets outside catalog roots", {
