@@ -142,6 +142,20 @@ extended_dise_target_definitions <- function() {
       attach_dise_treatments_to_panel_2001(district_panel, dise_baseline_treatments)
     ),
     tar_target(
+      english_opportunity_st_heterogeneity,
+      diagnose_english_opportunity_st_heterogeneity(
+        district_panel_with_dise,
+        control_registry = census_2001_control_registry
+      )
+    ),
+    tar_target(
+      diag_ext_english_opportunity_st_heterogeneity_files,
+      save_english_opportunity_st_heterogeneity(
+        english_opportunity_st_heterogeneity
+      ),
+      format = "file"
+    ),
+    tar_target(
       english_opportunity_district_mechanisms,
       diagnose_english_opportunity_district_mechanisms(
         district_panel_with_dise, english_opportunity_measure_registry,

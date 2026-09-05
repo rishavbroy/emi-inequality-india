@@ -178,3 +178,104 @@ test_that("mechanism table is a compact wide view of the validated signal data",
   )
   expect_true(all(is.finite(district_signals)))
 })
+
+test_that("ST-concentration heterogeneity family stays small and predetermined", {
+  registry <- english_opportunity_st_heterogeneity_registry()
+  expect_identical(
+    registry$outcome,
+    c(
+      "emi_exposure_all_children_0708",
+      "private_emi_exposure_all_children_0708",
+      "dise_girls_toilet_school_share_0708"
+    )
+  )
+  controls <- english_opportunity_st_heterogeneity_controls()
+  expect_false("st_share_2001" %in% controls)
+  expect_setequal(c(controls, "st_share_2001"), census_2001_main_controls())
+})
+
+test_that("high-ST sensitivity cutoff is fixed from the full district panel", {
+  panel <- data.frame(st_share_2001 = c(0, 10, 20, 30, 40), stringsAsFactors = FALSE)
+  expect_equal(
+    english_opportunity_high_st_cutoff(panel),
+    unname(stats::quantile(panel$st_share_2001, 0.75, names = FALSE, type = 7))
+  )
+  expect_error(
+    english_opportunity_high_st_cutoff(data.frame(x = 1)),
+    "requires st_share_2001"
+  )
+})
+
+test_that("continuous ST-share interaction recovers within-state heterogeneity", {
+  set.seed(2409)
+  n_states <- 8L
+  per_state <- 20L
+  n <- n_states * per_state
+  state <- rep(sprintf("%02d", seq_len(n_states)), each = per_state)
+  distance <- rep(seq(0.2, 1.8, length.out = per_state), n_states) + stats::rnorm(n, sd = 0.02)
+  st_share <- rep(seq(2, 42, length.out = per_state), n_states) + stats::rnorm(n, sd = 1)
+  st_10 <- st_share / 10
+  state_effect <- rep(seq(-3, 4, length.out = n_states), each = per_state)
+  outcome <- 20 + 1.1 * distance + 0.4 * st_10 + 1.25 * distance * st_10 +
+    state_effect + stats::rnorm(n, sd = 0.15)
+  sample <- data.frame(
+    target_unit_2001 = paste0("d", seq_len(n)),
+    state_code_2001 = state,
+    ling_distance_nonzero_mean = distance,
+    st_share_2001 = st_share,
+    st_share_10pp = st_10,
+    hindi_belt_2001 = TRUE,
+    outcome = outcome,
+    stringsAsFactors = FALSE
+  )
+  names(sample)[names(sample) == "outcome"] <- "emi_exposure_all_children_0708"
+
+  fit <- fit_english_opportunity_st_heterogeneity(
+    sample,
+    outcome_id = "emi_all_children",
+    outcome = "emi_exposure_all_children_0708",
+    sample_id = "all_states",
+    heterogeneity = "continuous_interaction",
+    high_st_cutoff = 30,
+    controls = character()
+  )
+
+  expect_identical(fit$status, "estimated")
+  expect_equal(fit$estimate, 1.25, tolerance = 0.08)
+  expect_equal(fit$n_states, n_states)
+  expect_true(is.finite(fit$std_error_state_clustered))
+})
+
+test_that("ST heterogeneity diagnostic uses one cutoff across outcomes and samples", {
+  set.seed(2410)
+  n_states <- 8L
+  per_state <- 12L
+  n <- n_states * per_state
+  state <- rep(sprintf("%02d", seq_len(n_states)), each = per_state)
+  panel <- data.frame(
+    target_unit_2001 = paste0("d", seq_len(n)),
+    state_code_2001 = state,
+    ling_distance_nonzero_mean = stats::runif(n, 0.2, 2),
+    st_share_2001 = stats::runif(n, 0, 60),
+    emi_exposure_all_children_0708 = stats::runif(n, 0, 40),
+    private_emi_exposure_all_children_0708 = stats::runif(n, 0, 20),
+    dise_girls_toilet_school_share_0708 = stats::runif(n, 10, 100),
+    stringsAsFactors = FALSE
+  )
+  for (control in english_opportunity_st_heterogeneity_controls()) {
+    panel[[control]] <- stats::rnorm(n)
+  }
+  out <- diagnose_english_opportunity_st_heterogeneity(panel)
+
+  expect_equal(nrow(out$estimates), 12L)
+  expect_length(unique(out$estimates$high_st_cutoff_percent), 1L)
+  expect_equal(
+    unique(out$estimates$high_st_cutoff_percent),
+    english_opportunity_high_st_cutoff(panel)
+  )
+  expect_setequal(out$estimates$sample, c("all_states", "hindi_belt"))
+  expect_setequal(
+    out$estimates$heterogeneity,
+    c("continuous_interaction", "high_st_subset")
+  )
+})

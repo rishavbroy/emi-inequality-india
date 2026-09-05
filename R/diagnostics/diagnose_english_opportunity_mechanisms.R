@@ -152,6 +152,197 @@ save_english_opportunity_district_mechanisms <- function(
   )
 }
 
+# Small descriptive heterogeneity family for the inequality narrative.
+#
+# The preferred estimand is the interaction between linguistic distance and
+# predetermined Census-2001 Scheduled-Tribe population share. A high-ST sample
+# is retained only as a threshold sensitivity. The high-ST cutoff is computed
+# once from the full finite district panel so outcome missingness and the
+# Hindi-belt restriction cannot redefine the subgroup after results are seen.
+
+english_opportunity_st_heterogeneity_registry <- function() {
+  data.frame(
+    outcome_id = c("emi_all_children", "private_emi_all_children", "girls_toilet_share"),
+    outcome = c(
+      "emi_exposure_all_children_0708",
+      "private_emi_exposure_all_children_0708",
+      "dise_girls_toilet_school_share_0708"
+    ),
+    label = c(
+      "All-child English-medium exposure",
+      "Private English-medium exposure among all children",
+      "Schools reporting girls' toilet facilities"
+    ),
+    source = c("nss_64_education", "nss_64_education", "dise"),
+    stringsAsFactors = FALSE
+  )
+}
+
+english_opportunity_st_heterogeneity_controls <- function(control_registry = NULL) {
+  setdiff(census_2001_main_controls(control_registry), "st_share_2001")
+}
+
+english_opportunity_high_st_cutoff <- function(panel, probability = 0.75) {
+  x <- if (inherits(panel, "sf")) sf::st_drop_geometry(panel) else safe_df(panel)
+  if (!"st_share_2001" %in% names(x)) {
+    stop("English-opportunity ST heterogeneity requires st_share_2001.", call. = FALSE)
+  }
+  share <- num(x$st_share_2001)
+  share <- share[is.finite(share)]
+  if (!length(share)) {
+    stop("English-opportunity ST heterogeneity has no finite ST-share observations.", call. = FALSE)
+  }
+  probability <- num(probability)[[1L]]
+  if (!is.finite(probability) || probability <= 0 || probability >= 1) {
+    stop("High-ST quantile probability must lie strictly between zero and one.", call. = FALSE)
+  }
+  unname(stats::quantile(share, probability, names = FALSE, type = 7))
+}
+
+prepare_english_opportunity_st_heterogeneity_sample <- function(
+    panel,
+    outcome,
+    controls = english_opportunity_st_heterogeneity_controls(),
+    instrument = preferred_iv_variables()$instrument) {
+  x <- prepare_district_mechanism_sample(
+    panel, outcome, instrument, unique(c(controls, "st_share_2001"))
+  )
+  x$hindi_belt_2001 <- x$state_code_2001 %in% shastry_hindi_belt_state_codes()
+  x$st_share_10pp <- num(x$st_share_2001) / 10
+  x
+}
+
+empty_english_opportunity_st_heterogeneity_result <- function(
+    outcome_id, outcome, sample_id, heterogeneity, cutoff, n, n_states) {
+  data.frame(
+    outcome_id = outcome_id,
+    outcome = outcome,
+    sample = sample_id,
+    heterogeneity = heterogeneity,
+    high_st_cutoff_percent = cutoff,
+    n_districts = n,
+    n_states = n_states,
+    term = if (heterogeneity == "continuous_interaction") {
+      paste0(preferred_iv_variables()$instrument, ":st_share_10pp")
+    } else {
+      preferred_iv_variables()$instrument
+    },
+    estimate = NA_real_,
+    std_error_state_clustered = NA_real_,
+    p_value_state_clustered = NA_real_,
+    status = "insufficient_support",
+    stringsAsFactors = FALSE
+  )
+}
+
+fit_english_opportunity_st_heterogeneity <- function(
+    sample,
+    outcome_id,
+    outcome,
+    sample_id = c("all_states", "hindi_belt"),
+    heterogeneity = c("continuous_interaction", "high_st_subset"),
+    high_st_cutoff,
+    controls = english_opportunity_st_heterogeneity_controls(),
+    instrument = preferred_iv_variables()$instrument) {
+  sample_id <- match.arg(sample_id)
+  heterogeneity <- match.arg(heterogeneity)
+  x <- safe_df(sample)
+  if (sample_id == "hindi_belt") x <- x[x$hindi_belt_2001 %in% TRUE, , drop = FALSE]
+  if (heterogeneity == "high_st_subset") {
+    x <- x[is.finite(x$st_share_2001) & x$st_share_2001 >= high_st_cutoff, , drop = FALSE]
+  }
+  n_states <- length(unique(x$state_code_2001))
+  if (nrow(x) < 3L || n_states < 2L || !first_stage_positive_variation(x[[instrument]])) {
+    return(empty_english_opportunity_st_heterogeneity_result(
+      outcome_id, outcome, sample_id, heterogeneity, high_st_cutoff, nrow(x), n_states
+    ))
+  }
+
+  if (heterogeneity == "continuous_interaction") {
+    term <- paste0(instrument, ":st_share_10pp")
+    rhs <- c(
+      instrument, "st_share_10pp", term, controls,
+      "factor(state_code_2001)"
+    )
+  } else {
+    term <- instrument
+    rhs <- c(
+      instrument, "st_share_10pp", controls,
+      "factor(state_code_2001)"
+    )
+  }
+  fit <- stats::lm(stats::reformulate(rhs, response = outcome), data = x)
+  inference <- clustered_lm_term_inference(fit, term, x$state_code_2001)
+  coefficient <- stats::coef(fit)[[term]]
+  data.frame(
+    outcome_id = outcome_id,
+    outcome = outcome,
+    sample = sample_id,
+    heterogeneity = heterogeneity,
+    high_st_cutoff_percent = high_st_cutoff,
+    n_districts = stats::nobs(fit),
+    n_states = n_states,
+    term = term,
+    estimate = unname(coefficient),
+    std_error_state_clustered = unname(inference[["std.error"]]),
+    p_value_state_clustered = unname(inference[["p.value"]]),
+    status = "estimated",
+    stringsAsFactors = FALSE
+  )
+}
+
+diagnose_english_opportunity_st_heterogeneity <- function(
+    panel,
+    control_registry = NULL,
+    high_st_probability = 0.75) {
+  registry <- english_opportunity_st_heterogeneity_registry()
+  controls <- english_opportunity_st_heterogeneity_controls(control_registry)
+  cutoff <- english_opportunity_high_st_cutoff(panel, high_st_probability)
+  estimates <- safe_bind_rows(lapply(seq_len(nrow(registry)), function(i) {
+    row <- registry[i, , drop = FALSE]
+    sample <- prepare_english_opportunity_st_heterogeneity_sample(
+      panel, row$outcome[[1L]], controls = controls
+    )
+    safe_bind_rows(lapply(c("all_states", "hindi_belt"), function(sample_id) {
+      safe_bind_rows(lapply(c("continuous_interaction", "high_st_subset"), function(kind) {
+        fit_english_opportunity_st_heterogeneity(
+          sample,
+          row$outcome_id[[1L]],
+          row$outcome[[1L]],
+          sample_id = sample_id,
+          heterogeneity = kind,
+          high_st_cutoff = cutoff,
+          controls = controls
+        )
+      }))
+    }))
+  }))
+  estimates$p_value_holm_family <- holm_adjust_finite(estimates$p_value_state_clustered)
+  list(
+    registry = registry,
+    controls = controls,
+    high_st_probability = high_st_probability,
+    high_st_cutoff_percent = cutoff,
+    estimates = estimates
+  )
+}
+
+save_english_opportunity_st_heterogeneity <- function(
+    diagnostics,
+    dir = "outputs/diagnostics/extended/mechanisms") {
+  dir.create(dir, recursive = TRUE, showWarnings = FALSE)
+  c(
+    registry = write_diagnostic_csv(
+      diagnostics$registry,
+      file.path(dir, "st_concentration_heterogeneity_registry.csv")
+    ),
+    estimates = write_diagnostic_csv(
+      diagnostics$estimates,
+      file.path(dir, "st_concentration_heterogeneity_estimates.csv")
+    )
+  )
+}
+
 english_opportunity_mechanism_geography_labels <- function() {
   c(
     unadjusted = "Unadjusted",
