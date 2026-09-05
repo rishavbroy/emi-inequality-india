@@ -1142,8 +1142,12 @@ test_that("alternative linguistic-distance first stages use fixed support and jo
   expect_true(is.na(augmentation_panel$real_log_consumption_change[[1]]))
   expect_equal(branched$summary, out$summary)
   expect_equal(branched$coefficients, out$coefficients)
-  expect_setequal(unique(out$summary$analysis_id), out$registry$analysis_id)
-  expect_true(all(out$coefficients$analysis_id %in% out$registry$analysis_id))
+  expected_analysis_ids <- iv_analysis_id(
+    "district_iv_diagnostic",
+    out$registry$specification_id
+  )
+  expect_setequal(unique(out$summary$analysis_id), expected_analysis_ids)
+  expect_true(all(out$coefficients$analysis_id %in% expected_analysis_ids))
   expect_equal(branched$coverage_sensitivity, out$coverage_sensitivity)
   expect_s3_class(out, "emi_alternative_distance_first_stages")
   expect_equal(nrow(out$summary), nrow(alternative_distance_registry()))
