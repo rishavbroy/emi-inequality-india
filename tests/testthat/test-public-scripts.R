@@ -305,6 +305,7 @@ test_that("public-output checks share one file contract", {
   expect_match(contract, "nss64_social_group_distance_heterogeneity.csv", fixed = TRUE)
   expect_match(contract, "nss64_social_group_access_crosscuts.csv", fixed = TRUE)
   expect_match(contract, "household_capacity_trajectory_estimates.csv", fixed = TRUE)
+  expect_match(contract, "ec05_it_opportunity_estimates.csv", fixed = TRUE)
   expect_match(contract, "st_concentration_heterogeneity_estimates.csv", fixed = TRUE)
   expect_match(contract, "required_final_documents", fixed = TRUE)
   expect_match(contract, "required_final_artifacts", fixed = TRUE)

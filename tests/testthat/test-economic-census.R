@@ -399,3 +399,70 @@ test_that("EC05 IT baseline does not fabricate a split for merged district codes
 test_that("EC05 IT opportunity baseline stays outside the weak-IV outcome registry", {
   expect_false(any(grepl("it_|computer", economic_census_mechanism_registry()$variable)))
 })
+
+test_that("EC05 IT opportunity family is bounded to one exact Division-72 environment", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
+  consumption <- read_consumption_iv_outcome_registry(
+    file.path(root, "data", "metadata", "consumption_iv_outcomes.csv")
+  )
+  specs <- economic_census_it_opportunity_specifications(consumption)
+  construct <- economic_census_it_opportunity_construct_registry()
+
+  expect_equal(nrow(specs), 2L)
+  expect_setequal(
+    specs$predictor,
+    c(preferred_iv_variables()$instrument, preferred_iv_variables()$treatment)
+  )
+  expect_true(all(specs$welfare_specification_id == "long_2022__change"))
+  expect_true(all(specs$modifier == "it_employment_share_nonfarm"))
+  expect_true(all(specs$modifier_construct_id == construct$construct_id))
+  expect_identical(construct$denominator, "nonfarm_employment")
+  expect_false(any(grepl("growth|2013", specs$modifier, ignore.case = TRUE)))
+})
+
+test_that("EC05 IT opportunity heterogeneity uses one reviewed common district sample", {
+  set.seed(405)
+  root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
+  controls <- read_census_2001_control_registry(
+    file.path(root, "data", "metadata", "census_2001_control_registry.csv")
+  )
+  consumption <- read_consumption_iv_outcome_registry(
+    file.path(root, "data", "metadata", "consumption_iv_outcomes.csv")
+  )
+  adjustment <- schooling_consumption_bridge_adjustment_registry(controls)
+  adjustment <- adjustment[adjustment$specification_id == "state_main", , drop = FALSE]
+  n <- 72L
+  state <- rep(sprintf("%02d", 1:8), each = 9)
+  panel <- data.frame(
+    target_unit_2001 = sprintf("d%03d", seq_len(n)),
+    state_code_2001 = state,
+    region = rep(paste0("r", 1:8), each = 9),
+    ling_distance_nonzero_mean = stats::rnorm(n),
+    emi_exposure_all_children_0708 = stats::runif(n, 0, .4),
+    stringsAsFactors = FALSE
+  )
+  for (variable in adjustment$controls[[1L]]) {
+    panel[[variable]] <- stats::rnorm(n)
+  }
+  outcome <- consumption_iv_variable_name("long_2022__change", "outcome")
+  panel[[outcome]] <- 0.02 * panel$ling_distance_nonzero_mean +
+    0.4 * panel$emi_exposure_all_children_0708 + stats::rnorm(n, sd = .1)
+
+  it <- data.frame(
+    target_unit_2001 = panel$target_unit_2001,
+    source_available = TRUE,
+    it_employment_share_nonfarm = stats::runif(n, 0, .02),
+    stringsAsFactors = FALSE
+  )
+  it$source_available[[1L]] <- FALSE
+  it$it_employment_share_nonfarm[[1L]] <- NA_real_
+
+  diagnostic <- diagnose_economic_census_it_opportunity(
+    panel, it, consumption, controls
+  )
+  expect_equal(nrow(diagnostic$estimates), 2L)
+  expect_identical(unique(diagnostic$estimates$n), n - 1L)
+  expect_true(all(diagnostic$estimates$n_clusters == 8L))
+  expect_true(all(is.finite(diagnostic$estimates$modifier_sd)))
+  expect_true(all(is.finite(diagnostic$estimates$interaction_p_value_holm_family)))
+})

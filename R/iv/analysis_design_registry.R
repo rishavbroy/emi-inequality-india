@@ -757,6 +757,42 @@ analysis_design_schooling_consumption_conversion <- function(
   )
 }
 
+analysis_design_economic_census_it_opportunity <- function(
+    consumption_registry, control_registry = NULL) {
+  specs <- economic_census_it_opportunity_specifications(consumption_registry)
+  outcome <- vapply(
+    plain_chr(specs$welfare_specification_id),
+    consumption_iv_variable_name,
+    character(1),
+    role = "outcome"
+  )
+  is_distance <- specs$predictor_role == "instrument"
+  analysis_design_frame(
+    analysis_id = plain_chr(specs$analysis_id),
+    family = rep("economic_census_it_opportunity", nrow(specs)),
+    specification_id = plain_chr(specs$specification_id),
+    outcome = outcome,
+    outcome_construct_id = plain_chr(specs$outcome_construct_id),
+    baseline_construct_id = plain_chr(specs$baseline_construct_id),
+    treatment = ifelse(is_distance, "", plain_chr(specs$predictor)),
+    effect_modifier = plain_chr(specs$modifier),
+    effect_modifier_construct_id = plain_chr(specs$modifier_construct_id),
+    instrument = ifelse(is_distance, plain_chr(specs$predictor), ""),
+    instrument_vintage = ifelse(is_distance, "2001", "not_applicable"),
+    adjustment_set = rep("state_main", nrow(specs)),
+    fixed_effect = rep("state", nrow(specs)),
+    functional_form_id = rep("linear_interaction", nrow(specs)),
+    estimand = plain_chr(specs$estimand),
+    estimator = rep("ols", nrow(specs)),
+    inference = rep("state_clustered+holm", nrow(specs)),
+    sample_rule = rep("ec05_it_opportunity_common_support", nrow(specs)),
+    analysis_role = rep("descriptive_effect_modification", nrow(specs)),
+    admissible = rep(TRUE, nrow(specs)),
+    reason = rep("bounded_ec05_it_opportunity_heterogeneity", nrow(specs)),
+    implemented = rep(TRUE, nrow(specs))
+  )
+}
+
 analysis_design_census_household_capacity <- function() {
   specs <- census_household_capacity_specifications()
   is_distance <- specs$predictor_role == "instrument"
@@ -1005,6 +1041,8 @@ compile_analysis_design_registry <- function(
     analysis_design_dise(control_registry = control_registry),
     analysis_design_census_mechanisms(control_registry),
     analysis_design_economic_census_mechanisms(control_registry),
+    if (is.null(consumption_registry)) data.frame() else
+      analysis_design_economic_census_it_opportunity(consumption_registry, control_registry),
     analysis_design_labor_mechanisms(control_registry),
     analysis_design_historical_first_stages(control_registry),
     if (is.null(consumption_registry)) data.frame() else
@@ -1500,6 +1538,31 @@ build_iv_candidate_design_ledger <- function(
         "co-evolving development evidence rather than post-treatment mediation. Four predeclared human-capital",
         "capacity changes are estimated on one common district sample against linguistic distance and preferred",
         "all-child EMI separately, conditioning on the exact 2001 outcome level and applying Holm within predictor."
+      )
+    ),
+    candidate_design_row(
+      "ec05_it_opportunity_heterogeneity",
+      "Paper priority P1/P2: EC05 IT-opportunity environment heterogeneity",
+      "economic_census_it_opportunity",
+      "descriptive_heterogeneity",
+      "Does the 2022 welfare association with linguistic opportunity or observed EMI differ with the pre-existing local computer-services employment environment?",
+      "predictor_by_predetermined_it_environment",
+      "2004-05 to 2022-23 real mean-MPCE change",
+      "preferred linguistic distance or all-child EMI, one predictor at a time",
+      "EC05 NIC-2004 Division-72 employment share of nonfarm employment",
+      "state FE + compact Census-2001 controls; one common district sample",
+      "ols_state_clustered",
+      "estimate",
+      multiplicity_family = "two_interaction_holm",
+      implementation_status = "implemented",
+      candidate_cells = 2L,
+      implemented_cells = 2L,
+      rationale = paste(
+        "The Fifth Economic Census records four-digit NIC-2004 activity, allowing an exact Division-72",
+        "computer-related employment baseline. The family uses that single 2005 opportunity measure only as",
+        "a standardized effect modifier for the preferred 2022 long-difference outcome, separately for",
+        "linguistic distance and observed all-child EMI. It is descriptive heterogeneity, not an exclusion",
+        "control, IT-growth proxy, or new IV family."
       )
     ),
     candidate_design_row(

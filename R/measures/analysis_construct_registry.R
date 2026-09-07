@@ -309,6 +309,7 @@ compile_analysis_construct_registry <- function(
     migration_registry = census_migration_mechanism_registry(),
     housing_registry = census_housing_mechanism_registry(),
     economic_census_registry = economic_census_mechanism_registry(),
+    economic_census_it_registry = economic_census_it_opportunity_construct_registry(),
     labor_registries = list(
       nss66 = labor_mechanism_registry("nss66"),
       plfs_2017_18 = labor_mechanism_registry("plfs_2017_18")
@@ -378,6 +379,21 @@ compile_analysis_construct_registry <- function(
     rows[[length(rows) + 1L]] <- part
     existing_ids <- union(existing_ids, part$construct_id)
   }
+
+  economic_census_it <- analysis_constructs_from_mechanism_registry(
+    economic_census_it_registry,
+    domain = "local_economic_structure",
+    source = "Fifth Economic Census 2005",
+    vintage = "2005",
+    universe = "reviewed Census-2001 districts with exact EC05 nonfarm employment support",
+    authority = "economic_census_it_opportunity_construct_registry",
+    stage = "pre_treatment_context",
+    role = "effect_modifier",
+    causal_status = "predetermined_local_opportunity_environment",
+    existing_construct_ids = existing_ids
+  )
+  rows[[length(rows) + 1L]] <- economic_census_it
+  existing_ids <- union(existing_ids, economic_census_it$construct_id)
 
   household_capacity <- analysis_constructs_from_mechanism_registry(
     household_capacity_registry,

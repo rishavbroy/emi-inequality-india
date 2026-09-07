@@ -67,7 +67,7 @@ test_that("analysis-design ontology inventories registered families without Cart
       "consumption_iv", "district_mechanism",
       "c17_mechanism", "dise_first_stage", "dise_weak_iv",
       "census_migration_mechanism", "census_housing_mechanism",
-      "economic_census_mechanism", "labor_mechanism",
+      "economic_census_mechanism", "economic_census_it_opportunity", "labor_mechanism",
       "historical_first_stage", "historical_predetermined_first_stage",
       "schooling_consumption_bridge", "schooling_consumption_conversion",
       "nss64_social_group", "nss64_social_group_crosscut",
@@ -146,6 +146,18 @@ test_that("analysis-design ontology inventories registered families without Cart
     3L * nrow(labor_mechanism_registry("nss66")) *
       nrow(labor_mechanism_specifications("nss66", control_registry = controls))
   )
+
+  expect_equal(
+    sum(registry$family == "economic_census_it_opportunity"),
+    nrow(economic_census_it_opportunity_specifications(consumption))
+  )
+  ec_it <- registry[
+    registry$family == "economic_census_it_opportunity", , drop = FALSE
+  ]
+  expect_equal(nrow(ec_it), 2L)
+  expect_true(all(ec_it$functional_form_id == "linear_interaction"))
+  expect_true(all(ec_it$effect_modifier == "it_employment_share_nonfarm"))
+  expect_true(all(ec_it$support_policy_id == "common_support"))
 
   expect_equal(
     sum(registry$family == "schooling_consumption_bridge"),
@@ -678,6 +690,14 @@ test_that("candidate-design ledger records bounded robustness choices without Ca
   expect_equal(household_capacity$execution_policy, "estimate")
   expect_match(household_capacity$rationale, "co-evolving", fixed = TRUE)
 
+  ec_it <- ledger[
+    ledger$candidate_id == "ec05_it_opportunity_heterogeneity", , drop = FALSE
+  ]
+  expect_equal(ec_it$candidate_cells, 2L)
+  expect_equal(ec_it$implemented_cells, 2L)
+  expect_equal(ec_it$execution_policy, "estimate")
+  expect_match(ec_it$rationale, "not an exclusion", fixed = TRUE)
+
   conversion <- ledger[
     ledger$candidate_id == "schooling_consumption_conversion_gradient", , drop = FALSE
   ]
@@ -974,6 +994,15 @@ test_that("analysis-design ontology links scientific constructs by stable IDs", 
     function(ids) length(ids) == 5L && all(ids %in% constructs$construct_id),
     logical(1)
   )))
+
+  ec_it <- registry[
+    registry$family == "economic_census_it_opportunity", , drop = FALSE
+  ]
+  expect_true(all(
+    ec_it$effect_modifier_construct_id == "ec05_it_employment_share_nonfarm"
+  ))
+  expect_true(all(ec_it$effect_modifier_construct_id %in% constructs$construct_id))
+  expect_true(all(nzchar(ec_it$outcome_construct_id)))
 
   household_capacity <- registry[
     registry$family == "census_household_capacity", , drop = FALSE

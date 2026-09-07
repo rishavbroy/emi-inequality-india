@@ -245,3 +245,14 @@ with state fixed effects, compact Census-2001 adjustment, and each outcome's exa
 family. Because the change interval begins before 2007-08 schooling is measured,
 these rows are explicitly co-evolving development evidence, not a post-treatment
 mediation design or causal schooling effect.
+
+The bounded `economic_census_it_opportunity` family reuses the exact EC05
+NIC-2004 Division-72 employment baseline as a predetermined local opportunity
+environment rather than introducing another Economic Census outcome system. It
+estimates only two 2022 long-difference interactions on common district support:
+preferred linguistic distance and preferred all-child EMI, each interacted with
+the standardized 2005 computer-related employment share of nonfarm employment.
+Both models use state fixed effects and compact Census-2001 controls, and the two
+interaction p-values receive Holm adjustment. This family is descriptive effect
+modification: EC05 IT is neither an exclusion control nor a proxy for unavailable
+2005-to-2013 IT growth.

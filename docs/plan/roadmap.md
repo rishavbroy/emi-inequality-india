@@ -154,6 +154,18 @@ all-child EMI. The interval straddles 2007-08, so results are classified as
 co-evolving reduced-form/descriptive evidence and never as EMI mediation. Exact
 2001 outcome baselines, compact Census-2001 controls, state fixed effects, common
 support, state-clustered covariance, and within-predictor Holm correction are
-part of the registered design contract. Remaining bounded paper-priority items
-are EC05 IT-opportunity heterogeneity and the Hindi-belt skilled-migration
-restriction; neither warrants reopening broad IV or control-grid searches.
+part of the registered design contract.
+
+## Paper-priority phase 3: EC05 IT opportunity environment
+
+The exact Fifth Economic Census NIC-2004 Division-72 baseline is now consumed by
+a two-cell `economic_census_it_opportunity` family. The preferred 2022 real-MPCE
+long difference is related separately to linguistic distance and all-child EMI,
+with each predictor interacted with the standardized EC05 computer-related share
+of nonfarm employment on one common district sample. State fixed effects, compact
+Census-2001 controls, state-clustered covariance, and Holm correction across the
+two interaction tests are fixed by the design contract. This is descriptive
+opportunity-environment heterogeneity, not an exclusion-control exercise and not
+a longitudinal IT-growth measure. The remaining bounded paper-priority empirical
+item is the Hindi-belt skilled-migration restriction; neither this family nor that
+restriction warrants reopening broad IV or control-grid searches.
