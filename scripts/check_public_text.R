@@ -13,7 +13,7 @@ files <- files[!dir.exists(files)]
 files <- files[!grepl("(^|/)archive(/|$)", files)]
 files <- files[!grepl("(^|/)application-samples/output(/|$)", files)]
 files <- files[!grepl("(^|/)application-samples/\\.work(/|$)", files)]
-files <- files[!grepl("^paper/paper-new\.(qmd|md|tex)$", files)]
+files <- files[!startsWith(files, "paper/paper-new.")]
 files <- files[grepl("\\.(qmd|md|R|yml|yaml|tex)$", files, ignore.case = TRUE)]
 
 patterns <- c(
