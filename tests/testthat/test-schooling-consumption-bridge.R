@@ -215,8 +215,17 @@ test_that("conversion-gradient fit reports the change in schooling slope per mod
   modifier <- rep(modifier_pattern, n_states) +
     rep(seq(-0.4, 0.4, length.out = n_states), each = per_state)
   modifier_z <- as.numeric(scale(modifier))
+  # Add deterministic residual variation so clustered inference is exercised on
+  # a regular, non-perfect linear-model fixture. The behavioral check below
+  # compares the reported scaling with the equivalent base-R model rather than
+  # depending on a zero-residual data-generating process.
+  residual_pattern <- c(
+    -1.0, 0.4, 0.7, -0.3, 0.9, -0.8,
+    0.2, 0.5, -0.6, 0.1, 0.8, -0.9
+  )
   outcome <- 0.02 * treatment + 0.03 * treatment * modifier_z +
-    rep(seq(-0.1, 0.1, length.out = n_states), each = per_state)
+    rep(seq(-0.1, 0.1, length.out = n_states), each = per_state) +
+    0.002 * rep(residual_pattern, n_states)
   panel <- data.frame(
     target_unit_2001 = sprintf("d%03d", seq_len(n)),
     state_code_2001 = state,
@@ -242,10 +251,19 @@ test_that("conversion-gradient fit reports the change in schooling slope per mod
   out <- fit_schooling_consumption_conversion_specification(
     panel, "schooling", welfare, adjustment, "moderator"
   )
-  expect_equal(out$schooling_slope_at_mean_modifier_per_10pp, 0.2, tolerance = 1e-10)
+  reference <- stats::lm(
+    outcome ~ schooling * modifier_z + factor(state),
+    data = data.frame(outcome, schooling = treatment, modifier_z, state)
+  )
+  reference_coef <- stats::coef(reference)
+  expect_equal(
+    out$schooling_slope_at_mean_modifier_per_10pp,
+    10 * unname(reference_coef[["schooling"]]),
+    tolerance = 1e-10
+  )
   expect_equal(
     out$interaction_per_10pp_schooling_per_modifier_sd,
-    0.3,
+    10 * unname(reference_coef[["schooling:modifier_z"]]),
     tolerance = 1e-10
   )
   expect_true(is.finite(out$interaction_std_error_state_clustered))
