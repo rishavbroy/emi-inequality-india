@@ -314,6 +314,7 @@ compile_analysis_construct_registry <- function(
       plfs_2017_18 = labor_mechanism_registry("plfs_2017_18")
     ),
     st_language_registry = census_1991_st_language_outcome_registry(),
+    household_capacity_registry = census_household_capacity_construct_registry(),
     social_group_margin_registry = nss64_schooling_social_group_margin_registry()) {
   base <- analysis_construct_frame(safe_df(variable_registry))
   rows <- list(base)
@@ -377,6 +378,19 @@ compile_analysis_construct_registry <- function(
     rows[[length(rows) + 1L]] <- part
     existing_ids <- union(existing_ids, part$construct_id)
   }
+
+  household_capacity <- analysis_constructs_from_mechanism_registry(
+    household_capacity_registry,
+    domain = "household_human_capital",
+    source = "Census 2001/2011 household tables",
+    vintage = "2001_to_2011",
+    universe = "Exact concept-matched household-capacity changes harmonized to Census-2001 districts",
+    authority = "census_household_capacity_trajectory_registry",
+    causal_status = "coevolving_capacity_trajectory",
+    existing_construct_ids = existing_ids
+  )
+  rows[[length(rows) + 1L]] <- household_capacity
+  existing_ids <- union(existing_ids, household_capacity$construct_id)
 
   for (wave_id in names(labor_registries)) {
     temporal <- if (identical(wave_id, "nss66")) "2009-10" else "2017-18"

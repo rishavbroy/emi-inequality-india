@@ -142,3 +142,18 @@ The final current-data Shastry comparison controls are now implemented and revie
 - **Future goals, not current-plan omissions:** IHDS longitudinal EMI-to-capability/mobility, the low-cost-private-school/RTE project, and mother-tongue-versus-EMI learning are explicitly deferred in the candidate ledger until their required microdata/measurement contracts are opened.
 
 - The official EC05 establishment archive is now activated for a predeclared 2005 NIC-2004 Division-72 computer/IT opportunity baseline (firms, workers, and raw-nonfarm shares). It remains descriptive. EC13 granularity validation is complete: the Sixth EC DDI exposes only three-digit NIC-2008, while the official NIC-2008↔NIC-2004 concordance requires partial four-digit mappings to reconstruct old Division 72. Exact 2005--2013 IT growth is therefore not admitted from the current EC13 source.
+
+
+## Paper-priority phase 2: household-capacity trajectories
+
+The first paper-priority tranche is implemented and audited. The next bounded
+consumer of the existing Census household architecture is now the eight-cell
+`census_household_capacity` family: four exact 2001-to-2011 human-capital-capacity
+changes crossed separately with preferred linguistic distance and preferred
+all-child EMI. The interval straddles 2007-08, so results are classified as
+co-evolving reduced-form/descriptive evidence and never as EMI mediation. Exact
+2001 outcome baselines, compact Census-2001 controls, state fixed effects, common
+support, state-clustered covariance, and within-predictor Holm correction are
+part of the registered design contract. Remaining bounded paper-priority items
+are EC05 IT-opportunity heterogeneity and the Hindi-belt skilled-migration
+restriction; neither warrants reopening broad IV or control-grid searches.

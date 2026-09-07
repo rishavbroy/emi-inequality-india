@@ -101,6 +101,8 @@ test_that("NSS-64 social-group model grid is canonical and complete", {
   expect_setequal(specs$social_group, nss64_schooling_disadvantaged_groups())
   expect_setequal(specs$sample, c("all_states", "hindi_belt"))
   expect_true(all(specs$hindi_belt_only == (specs$sample == "hindi_belt")))
+  expect_false(any(startsWith(specs$specification_id, "nss64_social_group__")))
+  expect_identical(specs$analysis_id, paste("nss64_social_group", specs$specification_id, sep = "__"))
 })
 
 test_that("NSS schooling inequality margins derive labels from canonical constructs", {

@@ -605,6 +605,19 @@ extended_census_target_definitions <- function() {
       build_census_household_change_measures(census_household_2001, census_household_2011)
     ),
     tar_target(
+      census_household_capacity,
+      diagnose_census_household_capacity(
+        census_household_change_2011_2001,
+        district_panel,
+        control_registry = census_2001_control_registry
+      )
+    ),
+    tar_target(
+      diag_ext_census_household_capacity,
+      save_census_household_capacity(census_household_capacity),
+      format = "file"
+    ),
+    tar_target(
       census_household_diagnostics,
       build_census_household_diagnostics(
         census_household_hh09_2001_source,

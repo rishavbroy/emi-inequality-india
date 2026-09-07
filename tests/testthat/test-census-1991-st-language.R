@@ -221,4 +221,6 @@ test_that("Census-1991 ST language diagnostic uses one canonical 8-cell grid", {
   expect_setequal(specs$outcome, census_1991_st_language_outcomes())
   expect_setequal(specs$sample, c("validated_all_states", "validated_hindi_belt"))
   expect_true(all(specs$hindi_belt_only == (specs$sample == "validated_hindi_belt")))
+  expect_false(any(startsWith(specs$specification_id, "census_1991_st_language__")))
+  expect_identical(specs$analysis_id, paste("census_1991_st_language", specs$specification_id, sep = "__"))
 })

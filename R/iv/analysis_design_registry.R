@@ -672,7 +672,7 @@ analysis_design_schooling_consumption_bridge <- function(
 analysis_design_nss64_social_group <- function(control_registry = NULL) {
   specs <- nss64_schooling_social_group_specifications()
   analysis_design_frame(
-    analysis_id = paste("nss64_social_group", specs$specification_id, sep = "__"),
+    analysis_id = plain_chr(specs$analysis_id),
     family = rep("nss64_social_group", nrow(specs)),
     specification_id = plain_chr(specs$specification_id),
     outcome = paste0("gap__", plain_chr(specs$outcome)),
@@ -757,6 +757,33 @@ analysis_design_schooling_consumption_conversion <- function(
   )
 }
 
+analysis_design_census_household_capacity <- function() {
+  specs <- census_household_capacity_specifications()
+  is_distance <- specs$predictor_role == "instrument"
+  analysis_design_frame(
+    analysis_id = plain_chr(specs$analysis_id),
+    family = rep("census_household_capacity", nrow(specs)),
+    specification_id = plain_chr(specs$specification_id),
+    outcome = plain_chr(specs$variable),
+    outcome_construct_id = plain_chr(specs$construct_id),
+    baseline_construct_id = plain_chr(specs$baseline_construct_id),
+    treatment = ifelse(is_distance, "", plain_chr(specs$predictor)),
+    instrument = ifelse(is_distance, plain_chr(specs$predictor), ""),
+    instrument_vintage = ifelse(is_distance, "2001", "not_applicable"),
+    adjustment_set = rep("state_main+outcome_baseline", nrow(specs)),
+    fixed_effect = rep("state", nrow(specs)),
+    functional_form_id = rep("change", nrow(specs)),
+    estimand = plain_chr(specs$estimand),
+    estimator = rep("ols", nrow(specs)),
+    inference = rep("state_clustered+holm", nrow(specs)),
+    sample_rule = rep("census_household_capacity_common_support", nrow(specs)),
+    analysis_role = plain_chr(specs$analysis_role),
+    admissible = rep(TRUE, nrow(specs)),
+    reason = rep("bounded_coevolving_household_capacity_synthesis", nrow(specs)),
+    implemented = rep(TRUE, nrow(specs))
+  )
+}
+
 analysis_design_st_concentration_heterogeneity <- function(control_registry = NULL) {
   specs <- english_opportunity_st_heterogeneity_specifications()
   analysis_design_frame(
@@ -789,7 +816,7 @@ analysis_design_st_concentration_heterogeneity <- function(control_registry = NU
 analysis_design_census_1991_st_language <- function() {
   specs <- census_1991_st_language_specifications()
   analysis_design_frame(
-    analysis_id = paste("census_1991_st_language", specs$specification_id, sep = "__"),
+    analysis_id = plain_chr(specs$analysis_id),
     family = rep("census_1991_st_language", nrow(specs)),
     specification_id = plain_chr(specs$specification_id),
     outcome = plain_chr(specs$outcome),
@@ -986,10 +1013,21 @@ compile_analysis_design_registry <- function(
       analysis_design_schooling_consumption_conversion(consumption_registry, control_registry),
     analysis_design_nss64_social_group(control_registry),
     analysis_design_nss64_social_group_crosscut(),
+    analysis_design_census_household_capacity(),
     analysis_design_st_concentration_heterogeneity(control_registry),
     analysis_design_census_1991_st_language()
   ))
   out <- out[analysis_design_columns()]
+  redundant_namespace <- startsWith(
+    plain_chr(out$specification_id), paste0(plain_chr(out$family), "__")
+  )
+  if (any(redundant_namespace)) {
+    stop(
+      "Canonical specification_id values must not repeat the analysis-family namespace: ",
+      paste(unique(out$analysis_id[redundant_namespace]), collapse = ", "),
+      call. = FALSE
+    )
+  }
   if (!is.null(construct_registry)) {
     out <- link_analysis_design_constructs(out, construct_registry)
   }
@@ -1438,6 +1476,30 @@ build_iv_candidate_design_ledger <- function(
         "from coefficient attenuation. It crosses two predeclared EMI margins with baseline secondary-plus",
         "human capital, urbanization, and ST concentration on one common district sample; interaction",
         "coefficients are descriptive and Holm-adjusted, not causal treatment-effect heterogeneity."
+      )
+    ),
+    candidate_design_row(
+      "census_household_capacity_trajectory",
+      "Paper priority P1/P2: 2001-2011 household-capacity trajectory synthesis",
+      "census_household_capacity",
+      "coevolving_development_context",
+      "Do linguistic opportunity and observed EMI covary with changes in household human-capital capacity over 2001-2011?",
+      "bounded_capacity_trajectory",
+      "literacy depth, matriculate access, graduate access, female graduate access",
+      "preferred linguistic distance or all-child EMI, one predictor at a time",
+      "not_applicable",
+      "state FE + compact Census-2001 controls + exact 2001 outcome baseline",
+      "ols_state_clustered",
+      "estimate",
+      multiplicity_family = "within_predictor_holm",
+      implementation_status = "implemented",
+      candidate_cells = 8L,
+      implemented_cells = 8L,
+      rationale = paste(
+        "The 2001-2011 interval straddles the 2007-08 schooling measurement, so these rows are explicitly",
+        "co-evolving development evidence rather than post-treatment mediation. Four predeclared human-capital",
+        "capacity changes are estimated on one common district sample against linguistic distance and preferred",
+        "all-child EMI separately, conditioning on the exact 2001 outcome level and applying Holm within predictor."
       )
     ),
     candidate_design_row(

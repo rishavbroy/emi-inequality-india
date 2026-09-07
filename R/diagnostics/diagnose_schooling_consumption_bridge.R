@@ -346,10 +346,7 @@ schooling_consumption_conversion_specifications <- function(
   grid$estimand <- welfare$estimand[[1L]]
   grid$adjustment_id <- "state_main"
   grid$specification_id <- paste(
-    "schooling_consumption_conversion",
-    grid$treatment_id,
-    grid$modifier_id,
-    sep = "__"
+    grid$treatment_id, grid$modifier_id, sep = "__"
   )
   grid$analysis_id <- paste(
     "schooling_consumption_conversion", grid$specification_id, sep = "__"

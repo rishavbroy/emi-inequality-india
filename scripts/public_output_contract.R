@@ -68,6 +68,8 @@ required_extended_diagnostic_outputs <- function() {
     "outputs/diagnostics/extended/schooling_access/nss64_social_group_access_summary.csv",
     "outputs/diagnostics/extended/schooling_access/nss64_social_group_access_crosscuts.csv",
     "outputs/diagnostics/extended/schooling_access/nss64_social_group_distance_heterogeneity.csv",
+    "outputs/diagnostics/extended/census_households/household_capacity_trajectory_specifications.csv",
+    "outputs/diagnostics/extended/census_households/household_capacity_trajectory_estimates.csv",
     "outputs/diagnostics/extended/mechanisms/st_concentration_heterogeneity_registry.csv",
     "outputs/diagnostics/extended/mechanisms/st_concentration_heterogeneity_estimates.csv",
     "outputs/diagnostics/extended/consumption/schooling_consumption_bridge_specifications.csv",

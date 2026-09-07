@@ -71,6 +71,7 @@ test_that("analysis-design ontology inventories registered families without Cart
       "historical_first_stage", "historical_predetermined_first_stage",
       "schooling_consumption_bridge", "schooling_consumption_conversion",
       "nss64_social_group", "nss64_social_group_crosscut",
+      "census_household_capacity",
       "st_concentration_heterogeneity", "census_1991_st_language",
       "consumption_exclusion_sensitivity", "iv_falsification_adaptive_set"
     )
@@ -182,6 +183,13 @@ test_that("analysis-design ontology inventories registered families without Cart
     sum(registry$family == "census_1991_st_language"),
     nrow(census_1991_st_language_specifications())
   )
+  expect_equal(
+    sum(registry$family == "census_household_capacity"),
+    nrow(census_household_capacity_specifications())
+  )
+  expect_false(any(startsWith(
+    registry$specification_id, paste0(registry$family, "__")
+  )))
 
   constructs <- dise_construct_registry()
   n_iv_designs <- nrow(iv_diagnostic_specification_registry(control_registry = controls))
@@ -662,6 +670,14 @@ test_that("candidate-design ledger records bounded robustness choices without Ca
   expect_setequal(unique(crosscut_specs$crosscut), c("sex", "sector"))
   expect_false(any(grepl("sex.*sector|sector.*sex", crosscut_specs$specification_id)))
 
+  household_capacity <- ledger[
+    ledger$candidate_id == "census_household_capacity_trajectory", , drop = FALSE
+  ]
+  expect_equal(household_capacity$candidate_cells, 8L)
+  expect_equal(household_capacity$implemented_cells, 8L)
+  expect_equal(household_capacity$execution_policy, "estimate")
+  expect_match(household_capacity$rationale, "co-evolving", fixed = TRUE)
+
   conversion <- ledger[
     ledger$candidate_id == "schooling_consumption_conversion_gradient", , drop = FALSE
   ]
@@ -958,6 +974,12 @@ test_that("analysis-design ontology links scientific constructs by stable IDs", 
     function(ids) length(ids) == 5L && all(ids %in% constructs$construct_id),
     logical(1)
   )))
+
+  household_capacity <- registry[
+    registry$family == "census_household_capacity", , drop = FALSE
+  ]
+  expect_true(all(household_capacity$outcome_construct_id %in% constructs$construct_id))
+  expect_true(all(household_capacity$baseline_construct_id %in% constructs$construct_id))
 
   conversion <- registry[
     registry$family == "schooling_consumption_conversion", , drop = FALSE

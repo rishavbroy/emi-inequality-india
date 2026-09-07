@@ -319,3 +319,53 @@ test_that("household diagnostics retain both vintages, exact changes, and source
     "change_coverage", "source_validation_2001", "source_validation_2011"
   ))
 })
+
+
+test_that("household-capacity synthesis is bounded and distinguishes opportunity from schooling", {
+  specs <- census_household_capacity_specifications()
+  expect_equal(nrow(specs), 8L)
+  expect_setequal(specs$outcome_id, c(
+    "literacy_depth", "matriculate_access", "graduate_access", "female_graduate_access"
+  ))
+  expect_setequal(specs$predictor_id, c("linguistic_opportunity", "schooling_exposure"))
+  expect_false(any(startsWith(specs$specification_id, "census_household_capacity__")))
+  expect_true(all(startsWith(specs$analysis_id, "census_household_capacity__")))
+  constructs <- census_household_capacity_construct_registry()
+  expect_equal(nrow(constructs), 8L)
+  expect_true(all(c(specs$construct_id, specs$baseline_construct_id) %in% constructs$construct_id))
+})
+
+test_that("household-capacity fit matches base R coefficient scaling with state fixed effects", {
+  n <- 72L
+  state <- rep(sprintf("%02d", 1:6), each = 12)
+  predictor <- rep(seq(0.02, 0.68, length.out = 12), 6)
+  baseline <- rep(c(.10, .22, .18, .35, .28, .14, .40, .31, .26, .19, .44, .24), 6)
+  noise <- rep(c(-.02, .01, -.01, .015, 0, .005, -.005, .012, -.014, .008, -.003, .002), 6)
+  panel <- data.frame(
+    state_code_2001 = state,
+    emi_exposure_all_children_0708 = predictor,
+    two_plus_literate_share_households_2001 = baseline,
+    two_plus_literate_share_households_change_2011_2001 =
+      .04 * predictor + .20 * baseline + as.integer(factor(state)) / 100 + noise,
+    stringsAsFactors = FALSE
+  )
+  attr(panel, "controls") <- character()
+  spec <- census_household_capacity_specifications()
+  spec <- spec[
+    spec$predictor_id == "schooling_exposure" & spec$outcome_id == "literacy_depth",
+    , drop = FALSE
+  ]
+  out <- fit_census_household_capacity_specification(panel, spec)
+  reference <- stats::lm(
+    two_plus_literate_share_households_change_2011_2001 ~
+      emi_exposure_all_children_0708 + two_plus_literate_share_households_2001 +
+      factor(state_code_2001),
+    data = panel
+  )
+  expect_equal(
+    out$estimate,
+    10 * unname(stats::coef(reference)[["emi_exposure_all_children_0708"]]),
+    tolerance = 1e-10
+  )
+  expect_equal(out$n, n)
+})

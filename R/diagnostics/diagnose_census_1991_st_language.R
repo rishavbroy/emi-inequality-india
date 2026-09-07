@@ -37,10 +37,9 @@ census_1991_st_language_specifications <- function() {
     stringsAsFactors = FALSE
   )
   grid$hindi_belt_only <- grid$sample == "validated_hindi_belt"
-  grid$specification_id <- paste(
-    "census_1991_st_language", grid$outcome, grid$sample, sep = "__"
-  )
-  grid <- grid[c("specification_id", "outcome", "sample", "hindi_belt_only")]
+  grid$specification_id <- paste(grid$outcome, grid$sample, sep = "__")
+  grid$analysis_id <- paste("census_1991_st_language", grid$specification_id, sep = "__")
+  grid <- grid[c("analysis_id", "specification_id", "outcome", "sample", "hindi_belt_only")]
   if (nrow(grid) != 8L || anyDuplicated(grid$specification_id)) {
     stop("Census-1991 ST language specification family must contain 8 unique cells.", call. = FALSE)
   }
@@ -129,6 +128,7 @@ build_census_1991_st_language_diagnostic <- function(st17, st16) {
       specification$sample[[1L]],
       specification$hindi_belt_only[[1L]]
     )
+    result$analysis_id <- specification$analysis_id[[1L]]
     result$specification_id <- specification$specification_id[[1L]]
     result
   }))

@@ -60,8 +60,7 @@ nss64_schooling_social_group_crosscut_specifications <- function() {
     by = NULL, sort = FALSE
   )
   grid$specification_id <- paste(
-    "nss64_social_group_crosscut", grid$crosscut, grid$stratum,
-    grid$social_group, grid$outcome, sep = "__"
+    grid$crosscut, grid$stratum, grid$social_group, grid$outcome, sep = "__"
   )
   grid$analysis_id <- paste("nss64_social_group_crosscut", grid$specification_id, sep = "__")
   grid <- grid[c(
@@ -86,10 +85,11 @@ nss64_schooling_social_group_specifications <- function() {
   )
   grid$hindi_belt_only <- grid$sample == "hindi_belt"
   grid$specification_id <- paste(
-    "nss64_social_group", grid$social_group, grid$outcome, grid$sample, sep = "__"
+    grid$social_group, grid$outcome, grid$sample, sep = "__"
   )
+  grid$analysis_id <- paste("nss64_social_group", grid$specification_id, sep = "__")
   grid <- grid[c(
-    "specification_id", "social_group", "outcome", "sample", "hindi_belt_only"
+    "analysis_id", "specification_id", "social_group", "outcome", "sample", "hindi_belt_only"
   )]
   if (nrow(grid) != 30L || anyDuplicated(grid$specification_id)) {
     stop("NSS-64 social-group schooling specification family must contain 30 unique cells.", call. = FALSE)
@@ -324,6 +324,7 @@ build_nss64_schooling_social_group_diagnostic <- function(
       specification$hindi_belt_only[[1L]],
       controls
     )
+    result$analysis_id <- specification$analysis_id[[1L]]
     result$specification_id <- specification$specification_id[[1L]]
     result
   }))

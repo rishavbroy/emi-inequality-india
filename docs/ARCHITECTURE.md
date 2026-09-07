@@ -234,3 +234,14 @@ cross-family analysis-design schema records `effect_modifier` and
 heterogeneity searchable through canonical construct IDs and prevents a moderator
 from being hidden in an opaque specification name or misclassified as a baseline
 control choice.
+
+The bounded `census_household_capacity` synthesis reuses the exact concept-matched
+2001-to-2011 household changes rather than creating another outcome pipeline. It
+keeps four predeclared human-capital-capacity changes (literacy depth, matriculate
+access, graduate access, and female graduate access), uses one common district
+sample, and estimates linguistic distance and preferred all-child EMI separately
+with state fixed effects, compact Census-2001 adjustment, and each outcome's exact
+2001 baseline. Holm adjustment is applied within each four-outcome predictor
+family. Because the change interval begins before 2007-08 schooling is measured,
+these rows are explicitly co-evolving development evidence, not a post-treatment
+mediation design or causal schooling effect.
