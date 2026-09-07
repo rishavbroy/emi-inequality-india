@@ -101,9 +101,9 @@ Use a small number of commands repeatedly rather than trying to remember every [
 | Use case | Command | Explanation |
 |---|---|---|
 | Unit-test smoke check | `make test` | Fast contract tests; should pass without local raw data. |
-| Fast public audit, no samples | `make public-build-audit` | Runs the canonical audit without application samples and writes a no-samples `review.zip` on success. |
-| Full reviewer-facing audit | `make public-build-audit-full` | Runs cached `{targets}` public render targets for the report, docs, and application samples, audits outputs, and writes a full `review.zip`. |
-| Cache-preserving debug audit | `make public-build-audit-full-incremental-review` | Preserves generated renders and the `{targets}` cache; a failed run leaves the previous `review.zip` untouched. |
+| Fast public audit, no samples | `make public-build-audit` | Runs the canonical audit without application samples and always replaces `review.zip`: verified on success, explicitly incomplete on failure. |
+| Full reviewer-facing audit | `make public-build-audit-full` | Runs cached `{targets}` public render targets for the report, docs, and application samples, audits outputs, and always replaces `review.zip` with the current run. |
+| Cache-preserving debug audit | `make public-build-audit-full-incremental` | Preserves generated renders and the `{targets}` cache while still replacing `review.zip` with the current complete-or-incomplete run. |
 | Extended diagnostics only | `make extended-diagnostics` | Runs opt-in `diag_ext_*` targets, respecting the targets cache. |
 | Benchmarks only | `make benchmarking` | Runs opt-in `bench_*` targets, respecting the targets cache. |
 | Full audit plus diagnostics/benchmarks | `make public-build-audit-full-with-benchmarks` | Runs the full public audit, then opt-in extended diagnostics and benchmarks. Use when reviewing methodological/debug outputs, not for every edit. |
