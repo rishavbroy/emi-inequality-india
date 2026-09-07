@@ -144,7 +144,7 @@ If you want help changing the code but do not want to spend hundreds of dollars 
 1. `review.zip`
 2. the corresponding log file, usually `full_output.txt` or `full_output_with_diagnostics_benchmarks.txt`
 
-`review.zip` is a last-known-good artifact: successful runs atomically replace it, while failed runs leave the previous archive untouched. The legacy `--archive-on-error` and `--archive-always` flags remain accepted for command-line compatibility but do not create a second failure archive. Use `full_output.txt` and `outputs/diagnostics/build/` to diagnose failed runs. The no-samples/incremental variants are cheaper for iteration; the full `--with-samples` run is the better reviewer-facing proof build.
+`review.zip` is replaced atomically. By default, failed runs preserve the previous verified archive. Passing `--archive-always` (or the backward-compatible `--archive-on-error` alias) changes that failure policy: the audit replaces `review.zip` with a current **incomplete** snapshot containing the failed run's `audit_status.json`, diagnostics, and current tracked source tree. If failure-archive packaging itself fails, the script removes the stale destination rather than leave an older archive that could be mistaken for the current run. Successful audits always replace `review.zip` with a verified archive. The no-samples/incremental variants are cheaper for iteration; the full `--with-samples` run is the better reviewer-facing proof build.
 
 
 ### Review archive contract

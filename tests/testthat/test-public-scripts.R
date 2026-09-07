@@ -550,7 +550,8 @@ test_that("target warning metadata normalizes list columns and consolidates runs
   expect_equal(recorded$run_label, "optional")
 })
 
-audit_script_fixture <- function(manifest_exit = 0L) {
+audit_script_fixture <- function(
+    manifest_exit = 0L, archive_flag = "--archive-always", archive_exit = 0L) {
   root <- tempfile("public-audit-fixture-")
   dir.create(root, recursive = TRUE)
   for (dir in c("paper", "docs", "scripts", "R", "tests", "posters", "config")) {
@@ -576,6 +577,7 @@ audit_script_fixture <- function(manifest_exit = 0L) {
       "    *) shift ;;",
       "  esac",
       "done",
+      "if [[ \"${FAKE_ARCHIVE_EXIT:-0}\" -ne 0 ]]; then exit \"$FAKE_ARCHIVE_EXIT\"; fi",
       "if [[ \"$incomplete\" == true ]]; then printf incomplete > \"$out\"; else printf verified > \"$out\"; fi"
     ),
     file.path(root, "scripts", "make_review_archive.sh")
@@ -606,7 +608,11 @@ audit_script_fixture <- function(manifest_exit = 0L) {
       "set -euo pipefail",
       "export PATH=\"$PWD/bin:$PATH\"",
       "export FAKE_MANIFEST_EXIT=\"${1:-0}\"",
-      "exec bash scripts/run_public_build_audit.sh --incremental --archive-always --with-extended-diagnostics --with-benchmarks"
+      "export FAKE_ARCHIVE_EXIT=\"${2:-0}\"",
+      "archive_flag=\"${3:-}\"",
+      "args=(--incremental --with-extended-diagnostics --with-benchmarks)",
+      "if [[ -n \"$archive_flag\" ]]; then args+=(\"$archive_flag\"); fi",
+      "exec bash scripts/run_public_build_audit.sh \"${args[@]}\""
     ),
     runner
   )
@@ -619,7 +625,10 @@ audit_script_fixture <- function(manifest_exit = 0L) {
   ), mode = "0755")
   system2("git", c("-C", shQuote(root), "init", "-q"))
   writeLines("stale", file.path(root, "review.zip"))
-  list(root = root, runner = runner, manifest_exit = as.integer(manifest_exit))
+  list(
+    root = root, runner = runner, manifest_exit = as.integer(manifest_exit),
+    archive_exit = as.integer(archive_exit), archive_flag = archive_flag
+  )
 }
 
 run_audit_script_fixture <- function(fixture) {
@@ -627,13 +636,16 @@ run_audit_script_fixture <- function(fixture) {
   on.exit(setwd(old), add = TRUE)
   system2(
     unname(Sys.which("bash")),
-    c(shQuote(fixture$runner), as.character(fixture$manifest_exit)),
+    c(
+      shQuote(fixture$runner), as.character(fixture$manifest_exit),
+      as.character(fixture$archive_exit), shQuote(fixture$archive_flag)
+    ),
     stdout = TRUE,
     stderr = TRUE
   )
 }
 
-test_that("public audit preserves the last verified archive across failures", {
+test_that("public audit gives failure-archive flags real single-file semantics", {
   skip_if(Sys.which("bash") == "")
   skip_if(Sys.which("git") == "")
   skip_if(Sys.which("python3") == "")
@@ -648,16 +660,50 @@ test_that("public audit preserves the last verified archive across failures", {
   expect_identical(status$status, "passed")
   expect_equal(status$exit_code, 0L)
 
-  failed <- audit_script_fixture(7L)
-  on.exit(unlink(failed$root, recursive = TRUE, force = TRUE), add = TRUE)
-  output <- suppressWarnings(run_audit_script_fixture(failed))
+  for (flag in c("--archive-always", "--archive-on-error")) {
+    failed <- audit_script_fixture(7L, archive_flag = flag)
+    on.exit(unlink(failed$root, recursive = TRUE, force = TRUE), add = TRUE)
+    output <- suppressWarnings(run_audit_script_fixture(failed))
+    expect_identical(attr(output, "status"), 7L)
+    expect_identical(
+      readChar(file.path(failed$root, "review.zip"), 10L),
+      "incomplete",
+      info = flag
+    )
+    expect_false(file.exists(file.path(failed$root, "review.failed.zip")))
+    status <- jsonlite::read_json(
+      file.path(failed$root, "outputs", "diagnostics", "build", "audit_status.json")
+    )
+    expect_identical(status$status, "failed")
+    expect_identical(status$stage, "output-manifest")
+    expect_equal(status$exit_code, 7L)
+    expect_true(status$options$archive_on_failure)
+  }
+
+  default_failure <- audit_script_fixture(7L, archive_flag = "")
+  on.exit(unlink(default_failure$root, recursive = TRUE, force = TRUE), add = TRUE)
+  output <- suppressWarnings(run_audit_script_fixture(default_failure))
   expect_identical(attr(output, "status"), 7L)
-  expect_identical(readChar(file.path(failed$root, "review.zip"), 5L), "stale")
-  expect_false(file.exists(file.path(failed$root, "review.failed.zip")))
-  status <- jsonlite::read_json(file.path(failed$root, "outputs", "diagnostics", "build", "audit_status.json"))
-  expect_identical(status$status, "failed")
-  expect_identical(status$stage, "output-manifest")
-  expect_equal(status$exit_code, 7L)
+  expect_identical(
+    readChar(file.path(default_failure$root, "review.zip"), 5L),
+    "stale"
+  )
+  status <- jsonlite::read_json(
+    file.path(default_failure$root, "outputs", "diagnostics", "build", "audit_status.json")
+  )
+  expect_false(status$options$archive_on_failure)
+
+  packaging_failure <- audit_script_fixture(
+    7L, archive_flag = "--archive-always", archive_exit = 9L
+  )
+  on.exit(unlink(packaging_failure$root, recursive = TRUE, force = TRUE), add = TRUE)
+  output <- suppressWarnings(run_audit_script_fixture(packaging_failure))
+  expect_identical(attr(output, "status"), 7L)
+  expect_false(file.exists(file.path(packaging_failure$root, "review.zip")))
+  status <- jsonlite::read_json(
+    file.path(packaging_failure$root, "outputs", "diagnostics", "build", "audit_status.json")
+  )
+  expect_identical(status$archive_mode, "archive_failed")
 })
 
 test_that("audit and archive scripts carry machine-readable run status", {
@@ -752,9 +798,12 @@ test_that("public build audit owns mandatory syntax and full-test gates", {
   expect_lt(test_line, pipeline_line)
   expect_true(any(grepl('dump_diagnostics "$audit_exit_code"', audit, fixed = TRUE)))
   expect_false(any(grepl("failed.zip", audit, fixed = TRUE)))
-  expect_false(any(grepl('rm -f -- "$archive_out"', audit, fixed = TRUE)))
   expect_true(any(grepl(
     'bash scripts/make_review_archive.sh "$archive_sample_flag" --output "$archive_out"',
+    audit, fixed = TRUE
+  )))
+  expect_true(any(grepl(
+    '"$archive_sample_flag" --allow-incomplete --output "$archive_out"',
     audit, fixed = TRUE
   )))
   expect_false(any(grepl('manifest_args=()', audit, fixed = TRUE)))
