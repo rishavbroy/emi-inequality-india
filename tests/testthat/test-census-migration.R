@@ -755,11 +755,12 @@ test_that("Hindi-belt skilled-migration restriction filters to the frozen state 
   variables <- iv_specification_variables(spec)
   n <- 48L
   index <- seq_len(n)
-  panel <- data.frame(stringsAsFactors = FALSE)
+  panel <- data.frame(.row_id = index)
   for (j in seq_along(variables)) {
     variable <- variables[[j]]
     panel[[variable]] <- sin(index * (j + 1) / 9) + cos(index * (j + 2) / 13)
   }
+  panel$.row_id <- NULL
   hindi_states <- shastry_hindi_belt_state_codes()[1:4]
   panel$state_code_2001 <- rep(hindi_states, each = n / length(hindi_states))
   if ("district_code_2001" %in% names(panel)) {
