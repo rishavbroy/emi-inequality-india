@@ -375,45 +375,32 @@ fit_schooling_consumption_conversion_specification <- function(
   if (!all(needed %in% names(x))) {
     stop("Conversion-gradient sample lacks treatment, modifier, or state identifier.", call. = FALSE)
   }
-  modifier_values <- num(x[[modifier]])
-  modifier_mean <- mean(modifier_values)
-  modifier_sd <- stats::sd(modifier_values)
-  if (!is.finite(modifier_sd) || modifier_sd <= 0) {
-    stop("Conversion-gradient modifier must vary on the common sample.", call. = FALSE)
-  }
-  x$.modifier_z <- (modifier_values - modifier_mean) / modifier_sd
-
   outcome <- consumption_iv_variable_name(
     welfare$welfare_specification_id[[1L]], "outcome"
   )
-  controls <- setdiff(adjustment$controls[[1L]], modifier)
-  interaction_term <- paste0(treatment, ":.modifier_z")
-  rhs <- c(
-    paste0(treatment, " * .modifier_z"), controls,
-    iv_fixed_effect_terms(adjustment$fixed_effect[[1L]])
+  fitted <- fit_standardized_modifier_interaction(
+    sample = x,
+    outcome = outcome,
+    predictor = treatment,
+    modifier = modifier,
+    controls = adjustment$controls[[1L]],
+    fixed_effect = adjustment$fixed_effect[[1L]],
+    cluster = x$state_code_2001,
+    predictor_scale = 10
   )
-  fit <- stats::lm(stats::reformulate(rhs, response = outcome), data = x)
-  treatment_inference <- clustered_lm_term_inference(
-    fit, treatment, x$state_code_2001
-  )
-  interaction_inference <- clustered_lm_term_inference(
-    fit, interaction_term, x$state_code_2001
-  )
-  coefficients <- stats::coef(fit)
   data.frame(
-    n = stats::nobs(fit),
-    n_states = length(unique(x$state_code_2001)),
-    modifier_mean = modifier_mean,
-    modifier_sd = modifier_sd,
-    schooling_slope_at_mean_modifier_per_10pp = 10 * unname(coefficients[[treatment]]),
-    schooling_slope_std_error_state_clustered = 10 * unname(treatment_inference[["std.error"]]),
-    schooling_slope_p_value_state_clustered = unname(treatment_inference[["p.value"]]),
+    n = fitted$n,
+    n_states = fitted$n_clusters,
+    modifier_mean = fitted$modifier_mean,
+    modifier_sd = fitted$modifier_sd,
+    schooling_slope_at_mean_modifier_per_10pp = fitted$predictor_slope_at_mean_modifier,
+    schooling_slope_std_error_state_clustered = fitted$predictor_slope_std_error_clustered,
+    schooling_slope_p_value_state_clustered = fitted$predictor_slope_p_value_clustered,
     interaction_per_10pp_schooling_per_modifier_sd =
-      10 * unname(coefficients[[interaction_term]]),
-    interaction_std_error_state_clustered =
-      10 * unname(interaction_inference[["std.error"]]),
-    interaction_p_value_state_clustered = unname(interaction_inference[["p.value"]]),
-    status = "estimated",
+      fitted$interaction_per_predictor_scale_per_modifier_sd,
+    interaction_std_error_state_clustered = fitted$interaction_std_error_clustered,
+    interaction_p_value_state_clustered = fitted$interaction_p_value_clustered,
+    status = fitted$status,
     stringsAsFactors = FALSE
   )
 }

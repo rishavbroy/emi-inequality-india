@@ -85,6 +85,68 @@ holm_adjust_finite <- function(p) {
   out
 }
 
+fit_standardized_modifier_interaction <- function(
+    sample, outcome, predictor, modifier, controls = character(),
+    fixed_effect = "none", cluster, predictor_scale = 1) {
+  x <- safe_df(sample)
+  needed <- unique(c(outcome, predictor, modifier))
+  missing <- setdiff(needed, names(x))
+  if (length(missing)) {
+    stop(
+      "Interaction sample is missing fields: ",
+      paste(missing, collapse = ", "), call. = FALSE
+    )
+  }
+  cluster <- plain_chr(cluster)
+  if (length(cluster) != nrow(x) || any(is.na(cluster) | !nzchar(cluster))) {
+    stop("Interaction fit requires one nonempty cluster identifier per row.", call. = FALSE)
+  }
+  predictor_scale <- num(predictor_scale)[[1L]]
+  if (!is.finite(predictor_scale) || predictor_scale <= 0) {
+    stop("Interaction predictor scale must be positive and finite.", call. = FALSE)
+  }
+
+  modifier_values <- num(x[[modifier]])
+  modifier_mean <- mean(modifier_values)
+  modifier_sd <- stats::sd(modifier_values)
+  if (!is.finite(modifier_sd) || modifier_sd <= 0) {
+    stop("Interaction modifier must vary on the analysis sample.", call. = FALSE)
+  }
+  x$.modifier_z <- (modifier_values - modifier_mean) / modifier_sd
+
+  controls <- setdiff(unique(plain_chr(controls)), modifier)
+  interaction_term <- paste0(predictor, ":.modifier_z")
+  rhs <- c(
+    paste0(predictor, " * .modifier_z"), controls,
+    iv_fixed_effect_terms(fixed_effect)
+  )
+  fit <- stats::lm(stats::reformulate(rhs, response = outcome), data = x)
+  predictor_inference <- clustered_lm_term_inference(fit, predictor, cluster)
+  interaction_inference <- clustered_lm_term_inference(fit, interaction_term, cluster)
+  coefficients <- stats::coef(fit)
+
+  data.frame(
+    n = stats::nobs(fit),
+    n_clusters = length(unique(cluster)),
+    modifier_mean = modifier_mean,
+    modifier_sd = modifier_sd,
+    predictor_slope_at_mean_modifier =
+      predictor_scale * unname(coefficients[[predictor]]),
+    predictor_slope_std_error_clustered =
+      predictor_scale * unname(predictor_inference[["std.error"]]),
+    predictor_slope_p_value_clustered =
+      unname(predictor_inference[["p.value"]]),
+    interaction_per_predictor_scale_per_modifier_sd =
+      predictor_scale * unname(coefficients[[interaction_term]]),
+    interaction_std_error_clustered =
+      predictor_scale * unname(interaction_inference[["std.error"]]),
+    interaction_p_value_clustered =
+      unname(interaction_inference[["p.value"]]),
+    status = "estimated",
+    stringsAsFactors = FALSE
+  )
+}
+
 safe_pairwise_cor <- function(df) {
   df <- as.data.frame(df, stringsAsFactors = FALSE)
   if (!nrow(df) || ncol(df) < 2L) return(matrix(numeric(), nrow = 0L, ncol = 0L))
