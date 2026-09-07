@@ -420,6 +420,48 @@ test_that("EC05 IT opportunity family is bounded to one exact Division-72 enviro
   expect_false(any(grepl("growth|2013", specs$modifier, ignore.case = TRUE)))
 })
 
+test_that("EC05 IT opportunity preparation requires the welfare-enriched panel", {
+  root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
+  controls <- read_census_2001_control_registry(
+    file.path(root, "data", "metadata", "census_2001_control_registry.csv")
+  )
+  consumption <- read_consumption_iv_outcome_registry(
+    file.path(root, "data", "metadata", "consumption_iv_outcomes.csv")
+  )
+  adjustment <- schooling_consumption_bridge_adjustment_registry(controls)
+  adjustment <- adjustment[adjustment$specification_id == "state_main", , drop = FALSE]
+  n <- 16L
+  panel <- data.frame(
+    target_unit_2001 = sprintf("d%02d", seq_len(n)),
+    state_code_2001 = rep(c("01", "02"), each = n / 2),
+    region = rep(c("r1", "r2"), each = n / 2),
+    ling_distance_nonzero_mean = seq_len(n) / n,
+    emi_exposure_all_children_0708 = seq_len(n) / (2 * n),
+    stringsAsFactors = FALSE
+  )
+  for (variable in adjustment$controls[[1L]]) panel[[variable]] <- seq_len(n) / n
+  it <- data.frame(
+    target_unit_2001 = panel$target_unit_2001,
+    source_available = TRUE,
+    it_employment_share_nonfarm = seq_len(n) / 1000,
+    stringsAsFactors = FALSE
+  )
+  outcome <- consumption_iv_variable_name("long_2022__change", "outcome")
+
+  expect_error(
+    prepare_economic_census_it_opportunity_sample(panel, it, consumption, controls),
+    outcome,
+    fixed = TRUE
+  )
+
+  panel[[outcome]] <- seq_len(n) / 100
+  sample <- prepare_economic_census_it_opportunity_sample(
+    panel, it, consumption, controls
+  )
+  expect_equal(nrow(sample), n)
+  expect_true(outcome %in% names(sample))
+})
+
 test_that("EC05 IT opportunity heterogeneity uses one reviewed common district sample", {
   set.seed(405)
   root <- Sys.getenv("EMI_PROJECT_ROOT", ".")

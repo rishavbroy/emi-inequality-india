@@ -77,8 +77,9 @@ extended_economic_census_target_definitions <- function() {
         economic_census_2005_it_baseline,
         economic_census_2013_district_measures,
         economic_census_2005_2013_changes,
-        district_panel,
-        consumption_iv_outcome_registry,
+        mechanism_panel = district_panel,
+        welfare_panel = consumption_iv_panel,
+        consumption_registry = consumption_iv_outcome_registry,
         cfg,
         control_registry = census_2001_control_registry
       )

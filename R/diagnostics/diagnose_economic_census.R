@@ -270,25 +270,26 @@ build_economic_census_diagnostics <- function(
     ec05_it_baseline,
     ec13,
     changes,
-    district_panel,
+    mechanism_panel,
+    welfare_panel,
     consumption_registry,
     cfg = list(),
     control_registry = NULL) {
   registry <- economic_census_mechanism_registry()
-  mechanism_panel <- prepare_economic_census_mechanism_panel(
-    district_panel,
+  mechanism_analysis_panel <- prepare_economic_census_mechanism_panel(
+    mechanism_panel,
     changes,
     registry = registry,
     control_registry = control_registry
   )
   mechanism <- estimate_economic_census_mechanism_models(
-    mechanism_panel,
+    mechanism_analysis_panel,
     registry = registry,
     cfg = cfg,
     control_registry = control_registry
   )
   it_opportunity <- diagnose_economic_census_it_opportunity(
-    district_panel, ec05_it_baseline, consumption_registry, control_registry
+    welfare_panel, ec05_it_baseline, consumption_registry, control_registry
   )
   list(
     ec05_district_measures = safe_df(ec05),
