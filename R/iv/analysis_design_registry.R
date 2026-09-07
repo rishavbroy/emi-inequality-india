@@ -9,6 +9,7 @@ analysis_design_columns <- function() {
   c(
     "analysis_id", "family", "specification_id", "outcome", "outcome_construct_id",
     "baseline_construct_id", "treatment", "treatment_construct_id",
+    "effect_modifier", "effect_modifier_construct_id",
     "instrument", "instrument_construct_ids", "instrument_vintage", "distance_measure_id",
     "language_adjustment_id", "adjustment_set", "control_strategy_id",
     "control_parameterization_id", "fixed_effect", "functional_form_id",
@@ -32,14 +33,15 @@ analysis_estimation_scope_registry <- function() {
     falsification_adaptive_set = "structural_iv_sensitivity",
     ols = "ols",
     native_speaker_weighted_ols = "weighted_ols",
-    mother_tongue_speaker_weighted_ols = "weighted_ols"
+    mother_tongue_speaker_weighted_ols = "weighted_ols",
+    descriptive_mean = "descriptive_summary"
   )
 }
 
 analysis_inference_registry <- function() {
   data.frame(
     inference = c(
-      "HC1", "state_clustered", "state_1991_clustered",
+      "none", "HC1", "state_clustered", "state_1991_clustered",
       "state_clustered+holm",
       "state_clustered+anderson_rubin",
       "state_clustered+anderson_rubin+holm",
@@ -47,17 +49,17 @@ analysis_inference_registry <- function() {
       "state_clustered+bounded_exclusion_ar"
     ),
     covariance_id = c(
-      "HC1", "state_clustered", "state_1991_clustered",
+      "none", "HC1", "state_clustered", "state_1991_clustered",
       "state_clustered", "state_clustered", "state_clustered",
       "state_clustered", "state_clustered"
     ),
     weak_id_inference_id = c(
-      "none", "none", "none", "none",
+      "none", "none", "none", "none", "none",
       "anderson_rubin", "anderson_rubin", "weak_iv_diagnostic_suite",
       "bounded_exclusion_ar"
     ),
     multiplicity_id = c(
-      "none", "none", "none", "holm", "none", "holm", "none", "none"
+      "none", "none", "none", "none", "holm", "none", "holm", "none", "none"
     ),
     stringsAsFactors = FALSE
   )
@@ -80,6 +82,7 @@ analysis_support_policy <- function(sample_rule) {
   out[x == "public_model_specific_complete_case"] <- "model_specific_complete_case"
   out[grepl("^c17_", x)] <- "predefined_demographic_subgroup"
   out[grepl("^(social_group_gap|st_concentration)__", x)] <- "predefined_geographic_subgroup"
+  out[grepl("^social_group_crosscut__", x)] <- "predefined_demographic_subgroup"
   out[grepl("^validated_", x)] <- "validated_source_sample"
   out[x == "historical_preferred_geography"] <- "historical_preferred_geography"
   out[x == "analysis_welfare_support"] <- "analysis_welfare_support"
@@ -95,9 +98,10 @@ analysis_support_policy <- function(sample_rule) {
 
 analysis_design_frame <- function(...) {
   out <- data.frame(..., stringsAsFactors = FALSE, check.names = FALSE)
+  if (!"effect_modifier" %in% names(out)) out$effect_modifier <- rep("", nrow(out))
   for (nm in c(
       "outcome_construct_id", "baseline_construct_id",
-      "treatment_construct_id", "instrument_construct_ids",
+      "treatment_construct_id", "effect_modifier_construct_id", "instrument_construct_ids",
       "distance_measure_id", "language_adjustment_id",
       "control_strategy_id", "control_parameterization_id", "functional_form_id"
   )) {
@@ -208,6 +212,9 @@ link_analysis_design_constructs <- function(designs, construct_registry) {
   )
   out$treatment_construct_id <- analysis_design_resolve_construct_ids(
     out$treatment, construct_registry, out$treatment_construct_id
+  )
+  out$effect_modifier_construct_id <- analysis_design_resolve_construct_ids(
+    out$effect_modifier, construct_registry, out$effect_modifier_construct_id
   )
   out$instrument_construct_ids <- analysis_design_resolve_construct_ids(
     out$instrument, construct_registry, out$instrument_construct_ids
@@ -376,7 +383,7 @@ analysis_design_district_mechanisms <- function(
 analysis_design_c17 <- function(registry = census_c17_mechanism_registry()) {
   x <- safe_df(registry)
   analysis_design_frame(
-    analysis_id = paste("c17_mechanism", plain_chr(x$specification_id), sep = "__"),
+    analysis_id = plain_chr(x$analysis_id),
     family = rep("c17_mechanism", nrow(x)),
     specification_id = plain_chr(x$specification_id),
     outcome = plain_chr(x$outcome),
@@ -389,7 +396,9 @@ analysis_design_c17 <- function(registry = census_c17_mechanism_registry()) {
     estimand = rep("language_behavior_association", nrow(x)),
     estimator = rep("native_speaker_weighted_ols", nrow(x)),
     inference = rep("HC1", nrow(x)),
-    sample_rule = paste0("c17_", tolower(plain_chr(x$sex))),
+    sample_rule = paste0(
+      "c17_", plain_chr(x$sample), "_", tolower(plain_chr(x$sex))
+    ),
     analysis_role = ifelse(x$preferred %in% TRUE, "preferred_mechanism", "robustness"),
     admissible = rep(TRUE, nrow(x)),
     reason = rep("registered_c17_mechanism_design", nrow(x)),
@@ -652,7 +661,7 @@ analysis_design_schooling_consumption_bridge <- function(
     estimand = paste0("descriptive_", plain_chr(specs$estimand)),
     estimator = rep("ols", nrow(specs)),
     inference = rep("state_clustered+holm", nrow(specs)),
-    sample_rule = rep("treatment_welfare_fixed_complete_case", nrow(specs)),
+    sample_rule = rep("schooling_welfare_common_support", nrow(specs)),
     analysis_role = rep("descriptive_schooling_welfare_bridge", nrow(specs)),
     admissible = rep(TRUE, nrow(specs)),
     reason = rep("registered_descriptive_schooling_welfare_design", nrow(specs)),
@@ -679,6 +688,67 @@ analysis_design_nss64_social_group <- function(control_registry = NULL) {
     analysis_role = rep("descriptive_schooling_inequality", nrow(specs)),
     admissible = rep(TRUE, nrow(specs)),
     reason = rep("registered_social_group_gap_design", nrow(specs)),
+    implemented = rep(TRUE, nrow(specs))
+  )
+}
+
+analysis_design_nss64_social_group_crosscut <- function() {
+  specs <- nss64_schooling_social_group_crosscut_specifications()
+  analysis_design_frame(
+    analysis_id = plain_chr(specs$analysis_id),
+    family = rep("nss64_social_group_crosscut", nrow(specs)),
+    specification_id = plain_chr(specs$specification_id),
+    outcome = paste0("gap__", plain_chr(specs$outcome)),
+    treatment = rep("", nrow(specs)),
+    instrument = rep("", nrow(specs)),
+    instrument_vintage = rep("not_applicable", nrow(specs)),
+    adjustment_set = paste(plain_chr(specs$crosscut), plain_chr(specs$stratum), sep = "__"),
+    fixed_effect = rep("none", nrow(specs)),
+    functional_form_id = rep("descriptive_mean", nrow(specs)),
+    estimand = rep("mean_district_social_group_gap", nrow(specs)),
+    estimator = rep("descriptive_mean", nrow(specs)),
+    inference = rep("none", nrow(specs)),
+    sample_rule = paste0(
+      "social_group_crosscut__", plain_chr(specs$crosscut), "__",
+      tolower(plain_chr(specs$stratum))
+    ),
+    analysis_role = rep("descriptive_schooling_inequality", nrow(specs)),
+    admissible = rep(TRUE, nrow(specs)),
+    reason = rep("registered_social_group_access_crosscut", nrow(specs)),
+    implemented = rep(TRUE, nrow(specs))
+  )
+}
+
+analysis_design_schooling_consumption_conversion <- function(
+    consumption_registry, control_registry = NULL) {
+  specs <- schooling_consumption_conversion_specifications(
+    consumption_registry, control_registry
+  )
+  outcome <- vapply(
+    plain_chr(specs$welfare_specification_id),
+    consumption_iv_variable_name,
+    character(1),
+    role = "outcome"
+  )
+  analysis_design_frame(
+    analysis_id = plain_chr(specs$analysis_id),
+    family = rep("schooling_consumption_conversion", nrow(specs)),
+    specification_id = plain_chr(specs$specification_id),
+    outcome = outcome,
+    treatment = plain_chr(specs$treatment),
+    effect_modifier = plain_chr(specs$modifier),
+    instrument = rep("", nrow(specs)),
+    instrument_vintage = rep("not_applicable", nrow(specs)),
+    adjustment_set = rep("state_main", nrow(specs)),
+    fixed_effect = rep("state", nrow(specs)),
+    functional_form_id = rep("linear_interaction", nrow(specs)),
+    estimand = rep("descriptive_schooling_by_baseline_capacity_interaction", nrow(specs)),
+    estimator = rep("ols", nrow(specs)),
+    inference = rep("state_clustered+holm", nrow(specs)),
+    sample_rule = rep("schooling_conversion_common_support", nrow(specs)),
+    analysis_role = rep("descriptive_effect_modification", nrow(specs)),
+    admissible = rep(TRUE, nrow(specs)),
+    reason = rep("predeclared_conversion_gradient_design", nrow(specs)),
     implemented = rep(TRUE, nrow(specs))
   )
 }
@@ -908,7 +978,10 @@ compile_analysis_design_registry <- function(
     analysis_design_historical_first_stages(control_registry),
     if (is.null(consumption_registry)) data.frame() else
       analysis_design_schooling_consumption_bridge(consumption_registry, control_registry),
+    if (is.null(consumption_registry)) data.frame() else
+      analysis_design_schooling_consumption_conversion(consumption_registry, control_registry),
     analysis_design_nss64_social_group(control_registry),
+    analysis_design_nss64_social_group_crosscut(),
     analysis_design_st_concentration_heterogeneity(control_registry),
     analysis_design_census_1991_st_language()
   ))
@@ -1301,9 +1374,9 @@ build_iv_candidate_design_ledger <- function(
       "Response 2 C-17; Response 3 Phase 3",
       "c17_mechanism",
       "mechanism_and_falsification",
-      "Within a state, do speakers of languages farther from Hindi acquire English more often conditional on multilingualism?",
+      "Within a state, do speakers of languages farther from Hindi acquire English more often conditional on multilingualism, including inside the frozen Hindi-belt sample?",
       "language_group_mechanism",
-      "English acquisition, Hindi substitution, multilingualism, sex heterogeneity",
+      "English acquisition, Hindi substitution, multilingualism, sex and Hindi-belt sample heterogeneity",
       "language-group linguistic distance",
       "Shastry/Glottolog/Dyen and registered nonlinear forms",
       "state FE + native-language share + modal-language indicator",
@@ -1314,6 +1387,54 @@ build_iv_candidate_design_ledger <- function(
       candidate_cells = n_c17,
       implemented_cells = n_c17,
       rationale = "C-17 is a distinct state-by-language estimand and should not be forced into the district IV grid."
+    ),
+    candidate_design_row(
+      "nss64_social_group_access_crosscuts",
+      "Paper priority P1: gender and rural/urban access cross-cuts",
+      "nss64_social_group_crosscut",
+      "descriptive_heterogeneity",
+      "Do within-district social-group gaps in schooling access differ by child sex or rural/urban sector?",
+      "predeclared_demographic_crosscut",
+      "enrollment, EMI among enrolled, private enrollment, private-EMI all-child exposure",
+      "not_applicable",
+      "not_applicable",
+      "sex and rural/urban sector estimated separately; no gender-by-sector cube",
+      "descriptive_mean",
+      "estimate",
+      multiplicity_family = "not_applicable",
+      implementation_status = "implemented",
+      candidate_cells = 48L,
+      implemented_cells = 48L,
+      rationale = paste(
+        "Munshi-Rosenzweig motivates gender-specific schooling responses and Kumar et al. motivates",
+        "rural/urban exclusion. The family therefore reports only the four predeclared schooling margins",
+        "within sex and sector separately, reusing the canonical NSS child-universe denominators and",
+        "avoiding an unmotivated gender x sector x social-group Cartesian expansion."
+      )
+    ),
+    candidate_design_row(
+      "schooling_consumption_conversion_gradient",
+      "Paper priority P1: conversion gradient",
+      "schooling_consumption_conversion",
+      "descriptive_heterogeneity",
+      "Is the schooling-to-2022 welfare association systematically different across predetermined local capacity environments?",
+      "schooling_by_predetermined_capacity_interaction",
+      "2004-05 to 2022-23 real mean-MPCE change",
+      "all-child EMI and private-EMI all-child exposure",
+      "not_applicable",
+      "state FE + compact Census-2001 controls; modifiers entered one at a time",
+      "ols_state_clustered",
+      "estimate",
+      multiplicity_family = "schooling_consumption_conversion",
+      implementation_status = "implemented",
+      candidate_cells = 6L,
+      implemented_cells = 6L,
+      rationale = paste(
+        "The six-cell family tests the paper's contingency claim directly rather than inferring heterogeneity",
+        "from coefficient attenuation. It crosses two predeclared EMI margins with baseline secondary-plus",
+        "human capital, urbanization, and ST concentration on one common district sample; interaction",
+        "coefficients are descriptive and Holm-adjusted, not causal treatment-effect heterogeneity."
+      )
     ),
     candidate_design_row(
       "district_schooling_three_geography_grid",

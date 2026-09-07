@@ -168,3 +168,106 @@ test_that("schooling-consumption treatments derive shared semantics from canonic
   expect_identical(treatments$label, canonical$label)
   expect_true(all(canonical$role %in% c("endogenous_treatment", "descriptive_treatment")))
 })
+
+test_that("schooling-consumption bridge can enforce common support across treatments", {
+  n <- 24L
+  panel <- data.frame(
+    target_unit_2001 = sprintf("d%02d", seq_len(n)),
+    state_code_2001 = rep(sprintf("%02d", 1:4), each = 6),
+    region = rep(paste0("r", 1:4), each = 6),
+    treatment_a = seq_len(n),
+    treatment_b = seq_len(n) / 2,
+    control_a = seq_len(n) / 3,
+    stringsAsFactors = FALSE
+  )
+  panel$treatment_b[[2L]] <- NA_real_
+  panel[[consumption_iv_variable_name("long_2022__change", "outcome")]] <- seq_len(n) / 10
+  welfare <- data.frame(
+    welfare_specification_id = "long_2022__change",
+    estimand = "change",
+    stringsAsFactors = FALSE
+  )
+  adjustments <- data.frame(
+    specification_id = c("unadjusted", "state_main"),
+    label = c("Unadjusted", "State"),
+    fixed_effect = c("none", "state"),
+    controls = I(list(character(), "control_a")),
+    stringsAsFactors = FALSE
+  )
+
+  sample <- prepare_schooling_consumption_bridge_sample(
+    panel, c("treatment_a", "treatment_b"), welfare, adjustments
+  )
+  expect_equal(nrow(sample), n - 1L)
+  expect_false(any(sample$target_unit_2001 == "d02"))
+})
+
+test_that("conversion-gradient fit reports the change in schooling slope per modifier SD", {
+  n_states <- 8L
+  per_state <- 12L
+  n <- n_states * per_state
+  state <- rep(sprintf("%02d", seq_len(n_states)), each = per_state)
+  treatment <- rep(seq(0, 20, length.out = per_state), n_states)
+  modifier <- rep(seq(-2, 2, length.out = per_state), n_states) +
+    rep(seq(-0.4, 0.4, length.out = n_states), each = per_state)
+  modifier_z <- as.numeric(scale(modifier))
+  outcome <- 0.02 * treatment + 0.03 * treatment * modifier_z +
+    rep(seq(-0.1, 0.1, length.out = n_states), each = per_state)
+  panel <- data.frame(
+    target_unit_2001 = sprintf("d%03d", seq_len(n)),
+    state_code_2001 = state,
+    region = state,
+    schooling = treatment,
+    moderator = modifier,
+    stringsAsFactors = FALSE
+  )
+  panel[[consumption_iv_variable_name("long_2022__change", "outcome")]] <- outcome
+  welfare <- data.frame(
+    welfare_specification_id = "long_2022__change",
+    estimand = "change",
+    stringsAsFactors = FALSE
+  )
+  adjustment <- data.frame(
+    specification_id = "state_main",
+    label = "State",
+    fixed_effect = "state",
+    controls = I(list("moderator")),
+    stringsAsFactors = FALSE
+  )
+
+  out <- fit_schooling_consumption_conversion_specification(
+    panel, "schooling", welfare, adjustment, "moderator"
+  )
+  expect_equal(out$schooling_slope_at_mean_modifier_per_10pp, 0.2, tolerance = 1e-10)
+  expect_equal(
+    out$interaction_per_10pp_schooling_per_modifier_sd,
+    0.3,
+    tolerance = 1e-10
+  )
+  expect_true(is.finite(out$interaction_std_error_state_clustered))
+})
+
+test_that("conversion-gradient family is a six-cell common-support design", {
+  registry <- data.frame(
+    welfare_specification_id = c(
+      "long_2022__ancova", "long_2022__change",
+      "long_2023__ancova", "long_2023__change"
+    ),
+    outcome_id = "real_mean_mpce",
+    outcome_round = c("hces_2022_23", "hces_2022_23", "hces_2023_24", "hces_2023_24"),
+    baseline_round = "nss_2004_05",
+    estimand = c("ancova", "change", "ancova", "change"),
+    analysis_transform = "log",
+    sample_rule = "analysis_welfare_support",
+    stringsAsFactors = FALSE
+  )
+  specs <- schooling_consumption_conversion_specifications(registry)
+  expect_equal(nrow(specs), 6L)
+  expect_equal(anyDuplicated(specs$analysis_id), 0L)
+  expect_setequal(specs$treatment_id, c("emi_all_children", "private_emi_all_children"))
+  expect_setequal(
+    specs$modifier_id,
+    c("baseline_human_capital", "urbanization", "st_concentration")
+  )
+  expect_true(all(specs$welfare_specification_id == "long_2022__change"))
+})

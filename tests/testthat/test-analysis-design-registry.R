@@ -69,7 +69,8 @@ test_that("analysis-design ontology inventories registered families without Cart
       "census_migration_mechanism", "census_housing_mechanism",
       "economic_census_mechanism", "labor_mechanism",
       "historical_first_stage", "historical_predetermined_first_stage",
-      "schooling_consumption_bridge", "nss64_social_group",
+      "schooling_consumption_bridge", "schooling_consumption_conversion",
+      "nss64_social_group", "nss64_social_group_crosscut",
       "st_concentration_heterogeneity", "census_1991_st_language",
       "consumption_exclusion_sensitivity", "iv_falsification_adaptive_set"
     )
@@ -150,9 +151,29 @@ test_that("analysis-design ontology inventories registered families without Cart
     nrow(schooling_consumption_bridge_specifications(consumption, controls))
   )
   expect_equal(
+    sum(registry$family == "schooling_consumption_conversion"),
+    nrow(schooling_consumption_conversion_specifications(consumption, controls))
+  )
+  conversion <- registry[
+    registry$family == "schooling_consumption_conversion", , drop = FALSE
+  ]
+  expect_true(all(nzchar(conversion$effect_modifier)))
+  expect_true(all(nzchar(conversion$effect_modifier_construct_id)))
+  expect_true(all(conversion$functional_form_id == "linear_interaction"))
+  expect_true(all(conversion$support_policy_id == "common_support"))
+
+  expect_equal(
     sum(registry$family == "nss64_social_group"),
     nrow(nss64_schooling_social_group_specifications())
   )
+  expect_equal(
+    sum(registry$family == "nss64_social_group_crosscut"),
+    nrow(nss64_schooling_social_group_crosscut_specifications())
+  )
+  crosscuts <- registry[registry$family == "nss64_social_group_crosscut", , drop = FALSE]
+  expect_true(all(crosscuts$estimation_scope_id == "descriptive_summary"))
+  expect_true(all(crosscuts$covariance_id == "none"))
+  expect_true(all(crosscuts$support_policy_id == "predefined_demographic_subgroup"))
   expect_equal(
     sum(registry$family == "st_concentration_heterogeneity"),
     nrow(english_opportunity_st_heterogeneity_specifications())
@@ -630,6 +651,22 @@ test_that("candidate-design ledger records bounded robustness choices without Ca
   expect_equal(child_population$implementation_status, "implemented")
   expect_equal(child_population$execution_policy, "estimate")
 
+  access_crosscuts <- ledger[
+    ledger$candidate_id == "nss64_social_group_access_crosscuts", , drop = FALSE
+  ]
+  expect_equal(access_crosscuts$candidate_cells, 48L)
+  expect_equal(access_crosscuts$implemented_cells, 48L)
+  expect_equal(access_crosscuts$execution_policy, "estimate")
+  expect_match(access_crosscuts$rationale, "no gender x sector", fixed = TRUE)
+
+  conversion <- ledger[
+    ledger$candidate_id == "schooling_consumption_conversion_gradient", , drop = FALSE
+  ]
+  expect_equal(conversion$candidate_cells, 6L)
+  expect_equal(conversion$implemented_cells, 6L)
+  expect_equal(conversion$multiplicity_family, "schooling_consumption_conversion")
+  expect_match(conversion$rationale, "descriptive", fixed = TRUE)
+
   future_goals <- ledger[ledger$candidate_id %in% c(
     "ihds_emi_capability_mobility_followup",
     "low_cost_private_school_followup",
@@ -803,7 +840,7 @@ test_that("analysis-design semantic axes normalize estimator, inference, support
   expect_setequal(unique(bridge$functional_form_id), c("ancova", "change"))
   expect_true(all(bridge$estimation_scope_id == "ols"))
   expect_true(all(bridge$multiplicity_id == "holm"))
-  expect_true(all(bridge$support_policy_id == "fixed_complete_case"))
+  expect_true(all(bridge$support_policy_id == "common_support"))
 
   st <- registry[registry$family == "st_concentration_heterogeneity", , drop = FALSE]
   expect_setequal(unique(st$functional_form_id), c("linear", "linear_interaction"))
@@ -918,6 +955,23 @@ test_that("analysis-design ontology links scientific constructs by stable IDs", 
     function(ids) length(ids) == 5L && all(ids %in% constructs$construct_id),
     logical(1)
   )))
+
+  conversion <- registry[
+    registry$family == "schooling_consumption_conversion", , drop = FALSE
+  ]
+  expect_setequal(
+    conversion$effect_modifier_construct_id,
+    c("adult_secondary_plus_share_2001", "urban_share_2001", "st_share_2001")
+  )
+  expect_true(all(conversion$treatment_construct_id %in% constructs$construct_id))
+
+  crosscut <- registry[
+    registry$family == "nss64_social_group_crosscut", , drop = FALSE
+  ]
+  expect_true(all(nzchar(crosscut$outcome_construct_id)))
+  expect_true(any(
+    crosscut$outcome_construct_id == "gap__private_emi_exposure_all_children_0708"
+  ))
 
   ambiguous <- analysis_design_labor_mechanisms(controls)
   ambiguous$outcome_construct_id <- ""

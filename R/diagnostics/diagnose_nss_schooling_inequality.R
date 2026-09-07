@@ -29,6 +29,51 @@ nss64_schooling_disadvantaged_groups <- function() {
   setdiff(nss_2007_schooling_social_groups(), "Other")
 }
 
+nss64_schooling_social_group_crosscut_registry <- function() {
+  data.frame(
+    crosscut = c("sex", "sex", "sector", "sector"),
+    stratum = c("Male", "Female", "Rural", "Urban"),
+    variable = c("SEX", "SEX", "SECTOR", "SECTOR"),
+    label = c("Male children", "Female children", "Rural children", "Urban children"),
+    stringsAsFactors = FALSE
+  )
+}
+
+nss64_schooling_social_group_crosscut_outcomes <- function() {
+  c(
+    "enrollment_rate_0708",
+    "emi_share_enrolled_0708",
+    "private_share_enrolled_0708",
+    "private_emi_exposure_all_children_0708"
+  )
+}
+
+nss64_schooling_social_group_crosscut_specifications <- function() {
+  crosscuts <- nss64_schooling_social_group_crosscut_registry()
+  grid <- merge(
+    expand.grid(
+      social_group = nss64_schooling_disadvantaged_groups(),
+      outcome = nss64_schooling_social_group_crosscut_outcomes(),
+      KEEP.OUT.ATTRS = FALSE, stringsAsFactors = FALSE
+    ),
+    crosscuts[c("crosscut", "stratum")],
+    by = NULL, sort = FALSE
+  )
+  grid$specification_id <- paste(
+    "nss64_social_group_crosscut", grid$crosscut, grid$stratum,
+    grid$social_group, grid$outcome, sep = "__"
+  )
+  grid$analysis_id <- paste("nss64_social_group_crosscut", grid$specification_id, sep = "__")
+  grid <- grid[c(
+    "analysis_id", "specification_id", "crosscut", "stratum",
+    "social_group", "outcome"
+  )]
+  if (nrow(grid) != 48L || anyDuplicated(grid$specification_id)) {
+    stop("NSS-64 social-group access cross-cut family must contain 48 unique cells.", call. = FALSE)
+  }
+  grid
+}
+
 nss64_schooling_social_group_specifications <- function() {
   outcomes <- nss64_schooling_social_group_margin_registry()
   outcomes <- outcomes$outcome[outcomes$model_distance_heterogeneity %in% TRUE]
@@ -92,7 +137,8 @@ prepare_nss64_schooling_social_group_panel <- function(
   out
 }
 
-build_nss64_schooling_social_group_gaps <- function(panel, covariates = character()) {
+build_nss64_schooling_social_group_gaps <- function(
+    panel, covariates = character(), strata = character()) {
   x <- safe_df(panel)
   registry <- nss64_schooling_social_group_margin_registry()
   missing_covariates <- setdiff(covariates, names(x))
@@ -102,9 +148,19 @@ build_nss64_schooling_social_group_gaps <- function(panel, covariates = characte
       paste(missing_covariates, collapse = ", "), call. = FALSE
     )
   }
+  strata <- plain_chr(strata)
+  missing_strata <- setdiff(strata, names(x))
+  if (length(missing_strata)) {
+    stop(
+      "NSS-64 schooling-gap strata are missing from the prepared panel: ",
+      paste(missing_strata, collapse = ", "), call. = FALSE
+    )
+  }
   reference <- x[x$social_group == "Other", , drop = FALSE]
-  if (anyDuplicated(reference$district_code_0708)) {
-    stop("NSS-64 reference social group must be unique by district.", call. = FALSE)
+  key_columns <- c("district_code_0708", strata)
+  reference_key <- interaction(reference[key_columns], drop = TRUE, lex.order = TRUE)
+  if (anyDuplicated(reference_key)) {
+    stop("NSS-64 reference social group must be unique by district and registered stratum.", call. = FALSE)
   }
 
   groups <- intersect(
@@ -113,7 +169,8 @@ build_nss64_schooling_social_group_gaps <- function(panel, covariates = characte
   )
   safe_bind_rows(lapply(groups, function(group) {
     group_rows <- x[x$social_group == group, , drop = FALSE]
-    ref_i <- match(group_rows$district_code_0708, reference$district_code_0708)
+    group_key <- interaction(group_rows[key_columns], drop = TRUE, lex.order = TRUE)
+    ref_i <- match(group_key, reference_key)
     metadata <- data.frame(
       district_code_0708 = group_rows$district_code_0708,
       state_code_2001 = plain_chr(group_rows$state_code_2001),
@@ -125,6 +182,7 @@ build_nss64_schooling_social_group_gaps <- function(panel, covariates = characte
       stringsAsFactors = FALSE
     )
     for (column in covariates) metadata[[column]] <- group_rows[[column]]
+    for (column in strata) metadata[[column]] <- plain_chr(group_rows[[column]])
 
     safe_bind_rows(lapply(seq_len(nrow(registry)), function(j) {
       outcome <- registry$outcome[[j]]
@@ -138,18 +196,22 @@ build_nss64_schooling_social_group_gaps <- function(panel, covariates = characte
   }))
 }
 
-nss64_schooling_social_group_access_summary <- function(gaps) {
+nss64_schooling_social_group_access_summary <- function(gaps, strata = character()) {
   x <- safe_df(gaps)
   if (!nrow(x)) return(data.frame())
+  strata <- plain_chr(strata)
+  missing <- setdiff(strata, names(x))
+  if (length(missing)) stop("NSS-64 access-summary strata are unavailable.", call. = FALSE)
+  grouping <- c("social_group", "outcome", strata)
   split_i <- split(
     seq_len(nrow(x)),
-    interaction(x$social_group, x$outcome, drop = TRUE, lex.order = TRUE)
+    interaction(x[grouping], drop = TRUE, lex.order = TRUE)
   )
   safe_bind_rows(lapply(split_i, function(i) {
     z <- x[i, , drop = FALSE]
     gap <- num(z$gap_percentage_points)
     gap <- gap[is.finite(gap)]
-    data.frame(
+    out <- data.frame(
       social_group = z$social_group[[1L]],
       reference_group = "Other",
       outcome = z$outcome[[1L]],
@@ -159,7 +221,47 @@ nss64_schooling_social_group_access_summary <- function(gaps) {
       share_districts_group_below_other = if (length(gap)) mean(gap < 0) else NA_real_,
       stringsAsFactors = FALSE
     )
+    for (column in strata) out[[column]] <- plain_chr(z[[column]][[1L]])
+    out
   }))
+}
+
+build_nss64_schooling_social_group_crosscut_summary <- function(
+    margins, district_panel, control_registry = NULL) {
+  x <- safe_df(margins)
+  required <- c("district_code_0708", "social_group", "crosscut", "stratum")
+  missing <- setdiff(required, names(x))
+  if (length(missing)) {
+    stop(
+      "NSS-64 schooling cross-cut margins are missing columns: ",
+      paste(missing, collapse = ", "), call. = FALSE
+    )
+  }
+  x <- prepare_nss64_schooling_social_group_panel(
+    x, district_panel, control_registry = control_registry
+  )
+  gaps <- build_nss64_schooling_social_group_gaps(
+    x, strata = c("crosscut", "stratum")
+  )
+  gaps <- gaps[gaps$outcome %in% nss64_schooling_social_group_crosscut_outcomes(), , drop = FALSE]
+  summary <- nss64_schooling_social_group_access_summary(
+    gaps, strata = c("crosscut", "stratum")
+  )
+  specs <- nss64_schooling_social_group_crosscut_specifications()
+  key <- paste(summary$crosscut, summary$stratum, summary$social_group, summary$outcome, sep = "|")
+  spec_key <- paste(specs$crosscut, specs$stratum, specs$social_group, specs$outcome, sep = "|")
+  idx <- match(key, spec_key)
+  if (anyNA(idx) || anyDuplicated(key)) {
+    stop("NSS-64 access cross-cut summaries do not match the registered family.", call. = FALSE)
+  }
+  summary$specification_id <- specs$specification_id[idx]
+  summary$analysis_id <- specs$analysis_id[idx]
+  summary <- summary[match(spec_key, key), , drop = FALSE]
+  if (nrow(summary) != nrow(specs) || anyNA(summary$analysis_id)) {
+    stop("NSS-64 access cross-cut family is incomplete on observed district support.", call. = FALSE)
+  }
+  rownames(summary) <- NULL
+  summary
 }
 
 fit_nss64_schooling_social_group_gap <- function(
@@ -205,7 +307,7 @@ fit_nss64_schooling_social_group_gap <- function(
 }
 
 build_nss64_schooling_social_group_diagnostic <- function(
-    margins, district_panel, control_registry = NULL) {
+    margins, district_panel, control_registry = NULL, crosscut_margins = NULL) {
   panel <- prepare_nss64_schooling_social_group_panel(
     margins, district_panel, control_registry = control_registry
   )
@@ -235,6 +337,10 @@ build_nss64_schooling_social_group_diagnostic <- function(
     list(
       margins = panel,
       access_summary = nss64_schooling_social_group_access_summary(gaps),
+      access_crosscuts = if (is.null(crosscut_margins)) data.frame() else
+        build_nss64_schooling_social_group_crosscut_summary(
+          crosscut_margins, district_panel, control_registry
+        ),
       gaps = gaps,
       specifications = specifications,
       estimates = estimates
@@ -249,11 +355,12 @@ save_nss64_schooling_social_group_diagnostic <- function(
     stop("Expected an emi_nss64_schooling_social_group diagnostic.", call. = FALSE)
   }
   write_diagnostic_bundle(
-    diagnostic[c("margins", "access_summary", "gaps", "estimates")],
+    diagnostic[c("margins", "access_summary", "access_crosscuts", "gaps", "estimates")],
     directory,
     filenames = c(
       margins = "nss64_social_group_schooling_margins.csv",
       access_summary = "nss64_social_group_access_summary.csv",
+      access_crosscuts = "nss64_social_group_access_crosscuts.csv",
       gaps = "nss64_social_group_district_gaps.csv",
       estimates = "nss64_social_group_distance_heterogeneity.csv"
     )

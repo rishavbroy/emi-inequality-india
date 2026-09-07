@@ -269,7 +269,9 @@ analysis_constructs_from_nss64_social_group_gaps <- function(
     margin_registry = nss64_schooling_social_group_margin_registry(),
     existing_construct_ids = character()) {
   x <- safe_df(margin_registry)
-  x <- x[x$model_distance_heterogeneity %in% TRUE, , drop = FALSE]
+  # Gap constructs describe access inequalities, not only the smaller subset
+  # used for distance-heterogeneity regressions. Keep every registered schooling
+  # margin so bounded descriptive cross-cuts can link to canonical constructs.
   if (!nrow(x)) return(empty_analysis_construct_registry())
   construct_id <- paste0("gap__", plain_chr(x$outcome))
   keep <- !construct_id %in% plain_chr(existing_construct_ids)

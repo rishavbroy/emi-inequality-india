@@ -130,7 +130,7 @@ Update this document when target groups, panel roles, public-output contracts, d
 
 `data/metadata/variable_dictionary.csv` is the tracked authority for variables already in the common district/panel architecture. `read_analysis_construct_registry()` validates that authority, and `compile_analysis_construct_registry()` projects source-only C-17, DISE, modern consumption-welfare, migration, housing, Economic Census, labor, 1991 ST-language, and social-group-gap constructs onto the same schema without moving formulas or estimators out of their specialized modules. Consumption semantics remain normalized across `consumption_welfare_outcomes.csv` (outcome concept and unit), `consumption_survey_registry.csv` (source/vintage), and `consumption_iv_outcomes.csv` (registered endpoint/baseline use); the construct compiler joins those authorities instead of inventing labels from generated regression-column names. Source registries remain authoritative for source-only constructs and must expose stable construct IDs and human-readable labels rather than forcing the ontology layer to reverse-engineer semantics from variable names. The common schema separates construct identity from storage-variable identity, because the same storage column can represent distinct vintages (for example NSS66 versus PLFS labor outcomes); ambiguous variable lookup therefore fails closed and callers must select such rows by `construct_id`. The schema also separates domain, vintage, denominator/universe, analysis stage, analytical role, preference status, and causal-status caveats. The obsolete `used_in_main_model` flag has been removed from the variable dictionary: paper/model prominence is a design-level property represented by `analysis_role`, not a second variable-level truth that can drift from the specification registry. The extended audit persists `outputs/diagnostics/extended/iv/construct_registry.csv` as the reviewer-facing inventory.
 
-`analysis_design_registry.csv` is a relational projection over that construct inventory. Raw `outcome`, `treatment`, and `instrument` fields remain the executable model-column/formula vocabulary for backward compatibility, while `outcome_construct_id`, `baseline_construct_id`, `treatment_construct_id`, and `instrument_construct_ids` are semantic foreign-key references where the design uses registered constructs. Generated welfare columns therefore point to the underlying round-specific welfare construct rather than masquerading as new scientific variables, and multi-instrument specifications carry a semicolon-delimited list of component construct IDs. An ambiguous storage variable may not be auto-linked: the originating family must provide its construct ID explicitly.
+`analysis_design_registry.csv` is a relational projection over that construct inventory. Raw `outcome`, `treatment`, `effect_modifier`, and `instrument` fields remain the executable model-column/formula vocabulary for backward compatibility, while `outcome_construct_id`, `baseline_construct_id`, `treatment_construct_id`, `effect_modifier_construct_id`, and `instrument_construct_ids` are semantic foreign-key references where the design uses registered constructs. Generated welfare columns therefore point to the underlying round-specific welfare construct rather than masquerading as new scientific variables, and multi-instrument specifications carry a semicolon-delimited list of component construct IDs. An ambiguous storage variable may not be auto-linked: the originating family must provide its construct ID explicitly.
 
 ## Public map regions
 
@@ -202,3 +202,35 @@ inside the existing specification, clustering, output, and governance layers.
 
 The public audit writes `outputs/diagnostics/build/output_manifest.csv` after all requested target families and renders finish. This catalog is intentionally built **outside** the `{targets}` graph from `targets::tar_meta(fields = c("format", "path"))`: `{targets}` documents `tar_meta()` as an external inspection interface and cautions against reading pipeline metadata from inside a running target. The manifest keeps one row per filesystem artifact, uses the artifact path as its stable identity, classifies output scope/type, records byte size, and links CSVs carrying `analysis_id` back to the canonical analysis-design registry. `analysis_id` is therefore reserved for canonical design-registry keys: local diagnostic dimensions must use domain-specific names, and the manifest fails if a nonblank `analysis_id` does not resolve. Analytical families should attach that key at their canonical specification boundary and carry it into estimate outputs; derived families must replace an upstream family's key rather than inherit it when they register a distinct design row. Shared post-treatment mechanism inference uses one namespace/outcome/specification key builder for both registry rows and reduced-form/weak-IV outputs, so migration, housing, Economic Census, and labor cannot drift between ontology and persisted results. DISE first-stage and weak-IV diagnostics likewise use one construct/specification key builder for registry rows and diagnostic outputs. The district-IV diagnostic registry similarly owns `district_iv_diagnostic__<specification_id>` keys, and shared IV diagnostic runners preserve them in first-stage, weak-IV, balance, monotonicity, applicability, overidentification, and design-evidence outputs. The manifest deliberately does not infer design identity from filenames or non-unique `specification_id` values. Multi-file diagnostic writers return their emitted paths to `{targets}` as `format = "file"` targets, so incremental runs validate the reviewer-facing files themselves instead of caching only a writer-side R manifest object. Because `{targets}` file targets can track inputs, outputs, or both, `target_references` records every file target that tracks an artifact without inventing producer/owner semantics. Filesystem outputs that no file target tracks remain cataloged with blank target references.
 This artifact replaces the audit's former depth-limited `find` listing. It is a discoverability index, not another estimation registry: scientific design semantics remain authoritative in `analysis_design_registry.csv`, while target/file provenance remains authoritative in `{targets}` metadata.
+
+### Bounded paper-priority heterogeneity families
+
+Paper-facing heterogeneity is represented through the same registries and
+construct ontology as the rest of the empirical system rather than through
+standalone regression scripts. The C-17 Hindi-belt check is a sample restriction
+inside `census_c17_mechanism_registry()`: it reuses the reviewed Shastry distance
+basis and the project's frozen Hindi-belt state definition instead of creating a
+new instrument. NSS schooling-access cross-cuts partition the child microdata by
+social group and either sex **or** rural/urban sector before calling the canonical
+`build_education_exposure_2007()` margin builder. This preserves age windows,
+survey weights, unknown-category handling, and denominators, and deliberately
+avoids a gender-by-sector Cartesian cube.
+
+The schooling-to-welfare bridge now fixes one complete-case district sample per
+welfare estimand across all five registered schooling margins and the complete
+adjustment ladder. This makes comparisons among enrollment, public EMI, private
+EMI, and aggregate EMI support-comparable by construction. A separate six-cell
+`schooling_consumption_conversion` family tests only the predeclared 2022
+long-difference contingency question: all-child EMI and private-EMI exposure are
+each interacted, one modifier at a time, with predetermined Census-2001 secondary
+human capital, urbanization, and Scheduled-Tribe concentration. Modifiers are
+standardized on the common sample and interactions receive state-clustered
+inference with one family-wide Holm adjustment. These are descriptive
+heterogeneous associations, not causal heterogeneous treatment effects.
+
+Because effect modification is scientifically distinct from adjustment, the
+cross-family analysis-design schema records `effect_modifier` and
+`effect_modifier_construct_id` separately from the control strategy. This keeps
+heterogeneity searchable through canonical construct IDs and prevents a moderator
+from being hidden in an opaque specification name or misclassified as a baseline
+control choice.

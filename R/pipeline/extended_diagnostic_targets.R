@@ -15,11 +15,16 @@ extended_diagnostic_target_definitions <- function() {
         build_education_exposure_2007_by_social_group(selection_data)
       ),
       tar_target(
+        nss64_schooling_social_group_crosscut_margins,
+        build_education_exposure_2007_by_social_group_crosscut(selection_data)
+      ),
+      tar_target(
         nss64_schooling_social_group_diagnostic,
         build_nss64_schooling_social_group_diagnostic(
           nss64_schooling_social_group_margins,
           district_panel,
-          census_2001_control_registry
+          census_2001_control_registry,
+          nss64_schooling_social_group_crosscut_margins
         )
       ),
       tar_target(

@@ -111,3 +111,85 @@ test_that("NSS schooling inequality margins derive labels from canonical constru
   expect_identical(margins$label, canonical$label)
   expect_true(all(canonical$domain == "education"))
 })
+
+test_that("NSS social-group access cross-cuts reuse the canonical exposure builder", {
+  children <- data.frame(
+    district_code_0708 = rep("01001", 8),
+    AGE = rep(10, 8),
+    SOCIAL_GROUP = factor(
+      c(rep("Scheduled Tribe", 4), rep("Other", 4)),
+      levels = nss_2007_schooling_social_groups()
+    ),
+    SEX = factor(c("Male", "Male", "Female", "Female", "Male", "Male", "Female", "Female")),
+    SECTOR = factor(c("Rural", "Urban", "Rural", "Urban", "Rural", "Urban", "Rural", "Urban")),
+    enrolled = factor(c("Yes", "No", "Yes", "Yes", "Yes", "Yes", "Yes", "Yes"),
+                      levels = c("No", "Yes")),
+    MEDIUM_INSTRUCTION = c("02", NA, "01", "02", "02", "01", "01", "01"),
+    TYPE_OF_INSTT = c(4, NA, 1, 4, 4, 3, 1, 2),
+    weight = rep(1, 8),
+    stringsAsFactors = FALSE
+  )
+
+  out <- build_education_exposure_2007_by_social_group_crosscut(children)
+  expect_setequal(unique(out$crosscut), c("sex", "sector"))
+  expect_setequal(unique(out$stratum), c("Male", "Female", "Rural", "Urban"))
+  male_st <- out[
+    out$crosscut == "sex" & out$stratum == "Male" &
+      out$social_group == "Scheduled Tribe", , drop = FALSE
+  ]
+  expect_equal(male_st$enrollment_rate_0708, 50)
+  expect_equal(male_st$emi_share_enrolled_0708, 100)
+  expect_silent(validate_education_exposure_identity(male_st))
+})
+
+test_that("NSS social-group gaps pair each subgroup with Other inside the same cross-cut", {
+  margins <- expand.grid(
+    district_code_0708 = c("a", "b"),
+    social_group = c("Scheduled Tribe", "Other"),
+    stratum = c("Male", "Female"),
+    KEEP.OUT.ATTRS = FALSE,
+    stringsAsFactors = FALSE
+  )
+  margins$crosscut <- "sex"
+  margins$state_code_2001 <- ifelse(margins$district_code_0708 == "a", "09", "10")
+  margins$district_code_2001 <- margins$district_code_0708
+  margins$ling_distance_nonzero_mean <- ifelse(margins$district_code_0708 == "a", 1, 2)
+  margins$hindi_belt_2001 <- TRUE
+  registry <- nss64_schooling_social_group_margin_registry()
+  for (outcome in registry$outcome) margins[[outcome]] <- 50
+  margins$enrollment_rate_0708[
+    margins$social_group == "Scheduled Tribe" & margins$stratum == "Male"
+  ] <- 30
+  margins$enrollment_rate_0708[
+    margins$social_group == "Scheduled Tribe" & margins$stratum == "Female"
+  ] <- 45
+
+  gaps <- build_nss64_schooling_social_group_gaps(
+    margins, strata = c("crosscut", "stratum")
+  )
+  summary <- nss64_schooling_social_group_access_summary(
+    gaps, strata = c("crosscut", "stratum")
+  )
+  male <- summary[
+    summary$social_group == "Scheduled Tribe" &
+      summary$outcome == "enrollment_rate_0708" & summary$stratum == "Male",
+    , drop = FALSE
+  ]
+  female <- summary[
+    summary$social_group == "Scheduled Tribe" &
+      summary$outcome == "enrollment_rate_0708" & summary$stratum == "Female",
+    , drop = FALSE
+  ]
+  expect_equal(male$mean_district_gap_percentage_points, -20)
+  expect_equal(female$mean_district_gap_percentage_points, -5)
+})
+
+test_that("NSS social-group access cross-cut registry is bounded and non-Cartesian", {
+  specs <- nss64_schooling_social_group_crosscut_specifications()
+  expect_equal(nrow(specs), 48L)
+  expect_equal(anyDuplicated(specs$analysis_id), 0L)
+  expect_setequal(specs$crosscut, c("sex", "sector"))
+  expect_setequal(specs$stratum, c("Male", "Female", "Rural", "Urban"))
+  expect_setequal(specs$outcome, nss64_schooling_social_group_crosscut_outcomes())
+  expect_false(any(grepl("Male.*Rural|Female.*Urban", specs$specification_id)))
+})

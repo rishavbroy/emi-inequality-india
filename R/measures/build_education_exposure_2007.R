@@ -177,25 +177,68 @@ nss_2007_schooling_social_groups <- function() {
   c("Scheduled Tribe", "Scheduled Caste", "Other Backward Class", "Other")
 }
 
-#' Reuse the canonical schooling-margin builder within each NSS social group
+#' Reuse the canonical schooling-margin builder within arbitrary child strata
 #'
-#' Social group is observed on the same child record as enrollment and, after
-#' the Block-4/Block-5 child join, school medium/management. Splitting the child
-#' universe before calling `build_education_exposure_2007()` guarantees that
-#' group-specific margins retain exactly the same age windows, unknown-category
-#' handling, weights, and denominator contracts as the aggregate treatment.
-build_education_exposure_2007_by_social_group <- function(selection_data) {
+#' Stratifiers such as social group, sex, and rural/urban sector are observed on
+#' the same NSS child record as enrollment and, after the Block-4/Block-5 join,
+#' school medium/management. Partitioning the child universe *before* calling
+#' `build_education_exposure_2007()` preserves the exact age windows, weights,
+#' unknown-category handling, and denominator contracts of the aggregate
+#' treatment instead of reimplementing each schooling margin for every subgroup.
+build_education_exposure_2007_by_strata <- function(selection_data, strata) {
   df <- safe_df(selection_data)
-  if (!nrow(df) || !"SOCIAL_GROUP" %in% names(df)) return(data.frame())
+  strata <- plain_chr(strata)
+  if (!nrow(df) || !length(strata)) return(data.frame())
+  missing <- setdiff(strata, names(df))
+  if (length(missing)) {
+    stop(
+      "NSS schooling stratification columns are unavailable: ",
+      paste(missing, collapse = ", "), call. = FALSE
+    )
+  }
 
-  group <- plain_chr(df$SOCIAL_GROUP)
-  levels <- nss_2007_schooling_social_groups()
-  safe_bind_rows(lapply(levels, function(label) {
-    keep <- !is.na(group) & group == label
-    if (!any(keep)) return(data.frame())
-    out <- build_education_exposure_2007(df[keep, , drop = FALSE])
+  values <- lapply(df[strata], plain_chr)
+  complete <- Reduce(`&`, lapply(values, function(x) !is.na(x) & nzchar(x)))
+  if (!any(complete)) return(data.frame())
+  df <- df[complete, , drop = FALSE]
+  values <- lapply(df[strata], plain_chr)
+  split_i <- split(seq_len(nrow(df)), interaction(values, drop = TRUE, lex.order = TRUE))
+
+  safe_bind_rows(lapply(split_i, function(i) {
+    out <- build_education_exposure_2007(df[i, , drop = FALSE])
     if (!nrow(out)) return(data.frame())
-    out$social_group <- label
+    for (column in strata) out[[column]] <- plain_chr(df[[column]][i[[1L]]])
     out
   }))
+}
+
+#' Build canonical NSS schooling margins within each social group
+build_education_exposure_2007_by_social_group <- function(selection_data) {
+  out <- build_education_exposure_2007_by_strata(selection_data, "SOCIAL_GROUP")
+  if (!nrow(out)) return(out)
+  out$social_group <- plain_chr(out$SOCIAL_GROUP)
+  out$SOCIAL_GROUP <- NULL
+  out
+}
+
+#' Build the predeclared sex and rural/urban social-group access cross-cuts
+build_education_exposure_2007_by_social_group_crosscut <- function(selection_data) {
+  df <- safe_df(selection_data)
+  if (!nrow(df)) return(data.frame())
+
+  bind_crosscut <- function(variable, crosscut) {
+    out <- build_education_exposure_2007_by_strata(df, c("SOCIAL_GROUP", variable))
+    if (!nrow(out)) return(out)
+    out$social_group <- plain_chr(out$SOCIAL_GROUP)
+    out$stratum <- plain_chr(out[[variable]])
+    out$crosscut <- crosscut
+    out$SOCIAL_GROUP <- NULL
+    out[[variable]] <- NULL
+    out
+  }
+
+  safe_bind_rows(list(
+    bind_crosscut("SEX", "sex"),
+    bind_crosscut("SECTOR", "sector")
+  ))
 }

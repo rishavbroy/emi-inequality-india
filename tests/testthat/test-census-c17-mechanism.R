@@ -5,7 +5,7 @@ make_census_c17_mechanism_fixture <- function() {
     degree = c(0, 1, 2, 3, 5),
     stringsAsFactors = FALSE
   )
-  states <- c("09", "19", "24")
+  states <- c("09", "10", "19", "24")
   safe_bind_rows(lapply(seq_along(states), function(s) {
     speakers <- c(70, 55, 40, 30, 20) + c(0, 3, 7, 11, 14) * (s - 1L)
     multilingual <- pmax(5, round(speakers * c(.30, .35, .40, .45, .50)))
@@ -37,10 +37,10 @@ test_that("C-17 mechanism data uses the shared Shastry language identity", {
   expect_true(all(is.finite(out$shastry_degree)))
   expect_equal(unique(out$hindi_urdu_reference[out$native_language == "Hindi"]), 1L)
   expect_equal(unique(out$hindi_urdu_reference[out$native_language == "Gujarati"]), 0L)
-  expect_equal(sum(out$state_modal_language), 3L)
+  expect_equal(sum(out$state_modal_language), 4L)
 
   state_share <- tapply(out$native_share_state, out$state_code, sum)
-  expect_equal(as.numeric(state_share), rep(1, 3), tolerance = 1e-12)
+  expect_equal(as.numeric(state_share), rep(1, 4), tolerance = 1e-12)
 })
 
 test_that("C-17 mechanism honors an injected Shastry concordance", {
@@ -62,7 +62,7 @@ test_that("C-17 preferred mechanism model identifies within-state language varia
   out <- fit_census_c17_mechanism(data, specification)
 
   expect_equal(out$summary$status, "estimated")
-  expect_equal(out$summary$n_states, 3L)
+  expect_equal(out$summary$n_states, 4L)
   expect_true("shastry_degree" %in% out$coefficients$term)
   expect_true(all(out$coefficients$status == "estimated"))
   preferred <- out$coefficients[out$coefficients$term == "shastry_degree", , drop = FALSE]
@@ -181,11 +181,30 @@ test_that("C-17 alternative distance specifications remain separate robustness m
   expect_false(any(registry$preferred[registry$distance_basis != "shastry"]))
 })
 
+test_that("C-17 Hindi-belt designs restrict the existing mechanism instead of adding a new basis", {
+  data <- prepare_census_c17_mechanism_data(make_census_c17_mechanism_fixture())
+  registry <- census_c17_mechanism_registry()
+  specification <- registry[
+    registry$specification_id == "english_linear_hindi_belt", , drop = FALSE
+  ]
+  out <- fit_census_c17_mechanism(data, specification)
+
+  expect_equal(out$summary$status, "estimated")
+  expect_equal(out$summary$sample, "hindi_belt")
+  expect_equal(out$summary$n_states, 2L)
+  expect_true(all(out$coefficients$sample == "hindi_belt"))
+  expect_true(all(out$coefficients$analysis_id == specification$analysis_id))
+  expect_identical(specification$distance_basis, "shastry")
+})
+
 test_that("C-17 mechanism registry stays deliberately small", {
   registry <- census_c17_mechanism_registry()
 
-  expect_equal(nrow(registry), 9L)
+  expect_equal(nrow(registry), 12L)
   expect_equal(sum(registry$preferred), 1L)
+  expect_equal(sum(registry$hindi_belt_only), 3L)
+  expect_setequal(unique(registry$sample), c("all_states", "hindi_belt"))
+  expect_identical(registry$analysis_id, c17_analysis_id(registry$specification_id))
   expect_setequal(unique(registry$distance_basis), c("shastry", "glottolog", "dyen"))
   expect_setequal(unique(registry$distance_form), c("linear", "bins", "distant"))
   expect_setequal(

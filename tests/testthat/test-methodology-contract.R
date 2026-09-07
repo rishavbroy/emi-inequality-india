@@ -271,9 +271,7 @@ test_that("compiled construct inventory projects every implemented mechanism aut
     census_1991_st_language_outcomes(),
     paste0(
       "gap__",
-      nss64_schooling_social_group_margin_registry()$outcome[
-        nss64_schooling_social_group_margin_registry()$model_distance_heterogeneity
-      ]
+      nss64_schooling_social_group_margin_registry()$outcome
     )
   ) %in% registry$variable))
 

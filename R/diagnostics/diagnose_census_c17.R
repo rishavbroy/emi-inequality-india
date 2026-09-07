@@ -7,8 +7,12 @@
 # state-language clustering in Shastry is not available; HC1 inference is used for
 # this mechanism diagnostic.
 
+c17_analysis_id <- function(specification_id) {
+  paste("c17_mechanism", plain_chr(specification_id), sep = "__")
+}
+
 census_c17_mechanism_registry <- function() {
-  data.frame(
+  base <- data.frame(
     specification_id = c(
       "english_linear", "english_bins", "english_distant",
       "english_glottolog", "english_dyen",
@@ -21,6 +25,8 @@ census_c17_mechanism_registry <- function() {
       rep("english_share_multilingual", 2L)
     ),
     sex = c(rep("Persons", 7L), "Males", "Females"),
+    sample = "all_states",
+    hindi_belt_only = FALSE,
     distance_basis = c(
       rep("shastry", 3L), "glottolog", "dyen",
       rep("shastry", 4L)
@@ -45,6 +51,33 @@ census_c17_mechanism_registry <- function() {
     ),
     stringsAsFactors = FALSE
   )
+
+  # The Hindi-belt restriction is a sample test, not another distance basis.
+  # Keep it deliberately small: the preferred English slope, the nonlinear
+  # distant-language contrast, and the corresponding Hindi-acquisition slope.
+  selected <- match(
+    c("english_linear", "english_distant", "hindi_linear"),
+    base$specification_id
+  )
+  hindi_belt <- base[selected, , drop = FALSE]
+  hindi_belt$specification_id <- paste0(hindi_belt$specification_id, "_hindi_belt")
+  hindi_belt$sample <- "hindi_belt"
+  hindi_belt$hindi_belt_only <- TRUE
+  hindi_belt$preferred <- FALSE
+  hindi_belt$label <- paste0(hindi_belt$label, " (Hindi-belt states)")
+
+  out <- rbind(base, hindi_belt)
+  out$analysis_id <- c17_analysis_id(out$specification_id)
+  out <- out[c(
+    "analysis_id", "specification_id", "outcome", "sex", "sample",
+    "hindi_belt_only", "distance_basis", "distance_variable",
+    "distance_form", "preferred", "label"
+  )]
+  rownames(out) <- NULL
+  if (nrow(out) != 12L || anyDuplicated(out$analysis_id)) {
+    stop("Census C-17 mechanism registry must contain 12 unique registered designs.", call. = FALSE)
+  }
+  out
 }
 
 prepare_census_c17_mechanism_data <- function(
@@ -162,6 +195,10 @@ fit_census_c17_mechanism <- function(data, specification) {
     stop("Census C-17 mechanism distance variable is unavailable: ", distance_variable, call. = FALSE)
   }
   sample <- data[data$sex == sex & is.finite(num(data[[distance_variable]])), , drop = FALSE]
+  sample_id <- as.character(specification$sample[[1L]])
+  if (isTRUE(specification$hindi_belt_only[[1L]])) {
+    sample <- sample[plain_chr(sample$state_code) %in% shastry_hindi_belt_state_codes(), , drop = FALSE]
+  }
   needed <- c(
     outcome, "native_speakers", "native_share_state", "state_modal_language",
     "state_code", distance_variable, "hindi_urdu_reference"
@@ -174,7 +211,9 @@ fit_census_c17_mechanism <- function(data, specification) {
       length(unique(num(sample[[distance_variable]]))) < 2L) {
     return(list(
       coefficients = data.frame(
+        analysis_id = specification$analysis_id[[1L]],
         specification_id = specification$specification_id[[1L]],
+        sample = sample_id,
         distance_basis = specification$distance_basis[[1L]], term = NA_character_,
         estimate = NA_real_, std.error = NA_real_, statistic = NA_real_, p.value = NA_real_,
         partial_r_squared = NA_real_, signed_partial_correlation = NA_real_,
@@ -182,8 +221,9 @@ fit_census_c17_mechanism <- function(data, specification) {
         stringsAsFactors = FALSE
       ),
       summary = data.frame(
+        analysis_id = specification$analysis_id[[1L]],
         specification_id = specification$specification_id[[1L]],
-        outcome = outcome, sex = sex,
+        outcome = outcome, sex = sex, sample = sample_id,
         distance_basis = specification$distance_basis[[1L]],
         distance_form = specification$distance_form[[1L]],
         n = nrow(sample), n_states = length(unique(sample$state_code)),
@@ -223,21 +263,25 @@ fit_census_c17_mechanism <- function(data, specification) {
     sign(test$estimate) * sqrt(test$partial_r_squared),
     NA_real_
   )
+  test$analysis_id <- specification$analysis_id[[1L]]
   test$specification_id <- specification$specification_id[[1L]]
+  test$sample <- sample_id
   test$distance_basis <- specification$distance_basis[[1L]]
   test$status <- "estimated"
   test$reason <- NA_character_
   test <- test[c(
-    "specification_id", "distance_basis", "term", "estimate", "std.error", "statistic",
+    "analysis_id", "specification_id", "sample", "distance_basis", "term", "estimate", "std.error", "statistic",
     "p.value", "partial_r_squared", "signed_partial_correlation",
     "status", "reason"
   )]
 
   summary <- summary(model)
   model_summary <- data.frame(
+    analysis_id = specification$analysis_id[[1L]],
     specification_id = specification$specification_id[[1L]],
     outcome = outcome,
     sex = sex,
+    sample = sample_id,
     distance_basis = specification$distance_basis[[1L]],
     distance_form = specification$distance_form[[1L]],
     n = stats::nobs(model),
