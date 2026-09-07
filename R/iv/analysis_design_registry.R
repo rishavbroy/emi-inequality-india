@@ -521,6 +521,38 @@ analysis_design_census_mechanisms <- function(control_registry = NULL) {
 }
 
 
+analysis_design_census_migration_hindi_belt <- function(control_registry = NULL) {
+  spec <- census_migration_hindi_belt_skilled_specification(control_registry)
+  outcome <- census_migration_mechanism_registry()
+  outcome <- outcome[outcome$outcome_id == "skilled_recent_work_migration", , drop = FALSE]
+  analysis_design_frame(
+    analysis_id = posttreatment_mechanism_analysis_id(
+      "census__migration_hindi_belt", outcome$outcome_id[[1L]], spec$specification_id[[1L]]
+    ),
+    family = "census_migration_hindi_belt",
+    specification_id = plain_chr(spec$specification_id),
+    outcome = plain_chr(outcome$variable),
+    treatment = "",
+    instrument = preferred_iv_variables()$instrument,
+    instrument_vintage = "2001",
+    distance_measure_id = plain_chr(spec$distance_measure_id),
+    language_adjustment_id = plain_chr(spec$language_adjustment_id),
+    adjustment_set = plain_chr(spec$adjustment_id),
+    control_strategy_id = plain_chr(spec$control_strategy_id),
+    control_parameterization_id = plain_chr(spec$control_parameterization_id),
+    fixed_effect = plain_chr(spec$fixed_effect),
+    functional_form_id = "linear",
+    estimand = "hindi_belt_skilled_migration_reduced_form",
+    estimator = "ols",
+    inference = "state_clustered",
+    sample_rule = plain_chr(spec$sample_rule),
+    analysis_role = "geographic_robustness",
+    admissible = TRUE,
+    reason = "predeclared_hindi_belt_skilled_migration_restriction",
+    implemented = TRUE
+  )
+}
+
 analysis_design_economic_census_mechanisms <- function(control_registry = NULL) {
   registry <- economic_census_mechanism_registry()
   safe_bind_rows(lapply(seq_len(nrow(registry)), function(i) {
@@ -1040,6 +1072,7 @@ compile_analysis_design_registry <- function(
     analysis_design_c17(),
     analysis_design_dise(control_registry = control_registry),
     analysis_design_census_mechanisms(control_registry),
+    analysis_design_census_migration_hindi_belt(control_registry),
     analysis_design_economic_census_mechanisms(control_registry),
     if (is.null(consumption_registry)) data.frame() else
       analysis_design_economic_census_it_opportunity(consumption_registry, control_registry),
@@ -1563,6 +1596,30 @@ build_iv_candidate_design_ledger <- function(
         "a standardized effect modifier for the preferred 2022 long-difference outcome, separately for",
         "linguistic distance and observed all-child EMI. It is descriptive heterogeneity, not an exclusion",
         "control, IT-growth proxy, or new IV family."
+      )
+    ),
+    candidate_design_row(
+      "census_migration_hindi_belt_skilled_restriction",
+      "Paper priority P2: Hindi-belt skilled-migration restriction",
+      "census_migration_hindi_belt",
+      "descriptive_heterogeneity",
+      "Does the preferred skilled recent-work-migrant composition result persist within the frozen Hindi-belt states?",
+      "predeclared_geographic_restriction",
+      "graduate-or-technical-degree share among recent work migrants",
+      "not_applicable",
+      "preferred Shastry nonzero-mean distance",
+      "Hindi-belt districts; state FE + compact Census-2001 controls",
+      "ols_state_clustered",
+      "estimate",
+      multiplicity_family = "not_applicable",
+      implementation_status = "implemented",
+      candidate_cells = 1L,
+      implemented_cells = 1L,
+      rationale = paste(
+        "This is the single predeclared P2 restriction of the existing core migration reduced form.",
+        "It reuses the same common migration panel, outcome definition, preferred Shastry distance, compact",
+        "Census-2001 controls, and state-clustered inference, changing only the geographic sample. It is not",
+        "a new migration slice grid or a causal-mediation claim."
       )
     ),
     candidate_design_row(

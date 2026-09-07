@@ -70,6 +70,7 @@ required_extended_diagnostic_outputs <- function() {
     "outputs/diagnostics/extended/schooling_access/nss64_social_group_distance_heterogeneity.csv",
     "outputs/diagnostics/extended/census_households/household_capacity_trajectory_specifications.csv",
     "outputs/diagnostics/extended/census_households/household_capacity_trajectory_estimates.csv",
+    "outputs/diagnostics/extended/census_migration/hindi_belt_skilled_migration.csv",
     "outputs/diagnostics/extended/economic_census/ec05_it_opportunity_specifications.csv",
     "outputs/diagnostics/extended/economic_census/ec05_it_opportunity_estimates.csv",
     "outputs/diagnostics/extended/mechanisms/st_concentration_heterogeneity_registry.csv",

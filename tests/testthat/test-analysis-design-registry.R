@@ -66,7 +66,7 @@ test_that("analysis-design ontology inventories registered families without Cart
       "public_iv", "district_iv_diagnostic", "hindi_belt_first_stage", "child_population_first_stage",
       "consumption_iv", "district_mechanism",
       "c17_mechanism", "dise_first_stage", "dise_weak_iv",
-      "census_migration_mechanism", "census_housing_mechanism",
+      "census_migration_mechanism", "census_migration_hindi_belt", "census_housing_mechanism",
       "economic_census_mechanism", "economic_census_it_opportunity", "labor_mechanism",
       "historical_first_stage", "historical_predetermined_first_stage",
       "schooling_consumption_bridge", "schooling_consumption_conversion",
@@ -682,6 +682,14 @@ test_that("candidate-design ledger records bounded robustness choices without Ca
   expect_setequal(unique(crosscut_specs$crosscut), c("sex", "sector"))
   expect_false(any(grepl("sex.*sector|sector.*sex", crosscut_specs$specification_id)))
 
+  migration_hindi <- ledger[
+    ledger$candidate_id == "census_migration_hindi_belt_skilled_restriction", , drop = FALSE
+  ]
+  expect_equal(migration_hindi$candidate_cells, 1L)
+  expect_equal(migration_hindi$implemented_cells, 1L)
+  expect_equal(migration_hindi$execution_cells, 1L)
+  expect_equal(migration_hindi$execution_policy, "estimate")
+
   household_capacity <- ledger[
     ledger$candidate_id == "census_household_capacity_trajectory", , drop = FALSE
   ]
@@ -1047,6 +1055,17 @@ test_that("post-treatment mechanism registry IDs use the shared canonical key bu
       "census__migration", migration_outcome_id, migration$specification_id
     )
   )
+
+  hindi <- analysis_design_census_migration_hindi_belt()
+  expect_identical(
+    hindi$analysis_id,
+    posttreatment_mechanism_analysis_id(
+      "census__migration_hindi_belt",
+      "skilled_recent_work_migration",
+      "state_main__nonzero_mean__hindi_belt"
+    )
+  )
+  expect_identical(hindi$sample_rule, "migration_hindi_belt_skilled_common_support")
 
   economic_registry <- economic_census_mechanism_registry()
   economic <- analysis_design_economic_census_mechanisms()

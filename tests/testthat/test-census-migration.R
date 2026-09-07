@@ -738,6 +738,49 @@ test_that("migration mechanism diagnostics use one common support sample", {
   )
 })
 
+test_that("Hindi-belt skilled-migration restriction is one predeclared state-FE reduced form", {
+  specs <- census_migration_hindi_belt_skilled_specification()
+  expect_equal(nrow(specs), 1L)
+  expect_identical(specs$specification_id, "state_main__nonzero_mean__hindi_belt")
+  expect_identical(specs$fixed_effect, "state")
+  expect_identical(specs$construction_id, "nonzero_mean")
+  expect_identical(specs$sample_rule, "migration_hindi_belt_skilled_common_support")
+
+  registry <- census_migration_mechanism_registry()
+  expect_equal(sum(registry$outcome_id == "skilled_recent_work_migration"), 1L)
+})
+
+test_that("Hindi-belt skilled-migration restriction filters to the frozen state sample", {
+  spec <- census_migration_hindi_belt_skilled_specification()
+  variables <- iv_specification_variables(spec)
+  n <- 48L
+  index <- seq_len(n)
+  panel <- data.frame(stringsAsFactors = FALSE)
+  for (j in seq_along(variables)) {
+    variable <- variables[[j]]
+    panel[[variable]] <- sin(index * (j + 1) / 9) + cos(index * (j + 2) / 13)
+  }
+  hindi_states <- shastry_hindi_belt_state_codes()[1:4]
+  panel$state_code_2001 <- rep(hindi_states, each = n / length(hindi_states))
+  if ("district_code_2001" %in% names(panel)) {
+    panel$district_code_2001 <- sprintf("%02d", index)
+  }
+  if ("region" %in% names(panel)) {
+    panel$region <- rep(panel_region_levels()[1:4], each = n / 4L)
+  }
+  instrument <- unlist(spec$excluded_instruments[[1L]], use.names = FALSE)[[1L]]
+  outcome <- spec$outcome[[1L]]
+  panel[[outcome]] <- 0.2 * panel[[instrument]] + sin(index / 5)
+
+  estimate <- estimate_census_migration_hindi_belt_skilled(panel)
+
+  expect_identical(estimate$sample, "hindi_belt")
+  expect_identical(estimate$n_states, 4L)
+  expect_identical(estimate$n, n)
+  expect_identical(estimate$status, "estimated")
+  expect_match(estimate$analysis_id, "census__migration_hindi_belt", fixed = TRUE)
+})
+
 test_that("migration mechanism preparation rejects source support drift", {
   registry <- census_migration_mechanism_registry()
   target <- c("pc2001__09__01", "pc2001__09__02")

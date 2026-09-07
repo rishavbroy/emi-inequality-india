@@ -165,3 +165,13 @@ These targets are extended diagnostics, not automatic controls or causal outcome
 - D-03 does not recover migrant occupation or industry. The project will not synthesize missing 2011 D-08/D-09 cells by multiplying migration totals by destination-district B-series shares.
 
 The validated 2011 all-age population denominator and longitudinal D-02 population-rate changes are now active descriptive diagnostics. D-05/D-06 and the new D-02 changes are intentionally not added to the weak-IV outcome registry because the existing mechanism first stages are already weak; their first role is to audit age selectivity, labor-force attachment, and migration-rate change without multiplying inferential tests. The deterministic complete-parent bridge yields a substantially smaller 2011 mechanism sample than the 593-district 2001 baseline, so reduced-form and weak-IV mechanism results explicitly report common support and should not be generalized to excluded non-nested parents.
+### Predeclared Hindi-belt skilled-migration restriction
+
+`hindi_belt_skilled_migration.csv` is the single paper-priority geographic
+restriction of the core `skilled_recent_work_migration` reduced form. It keeps
+the preferred Shastry nonzero-mean distance, compact Census-2001 controls, state
+fixed effects, state-clustered covariance, and the existing common migration
+panel, then restricts districts to the frozen Shastry Hindi-belt state definition.
+The exercise tests geographic robustness of the skilled-migrant composition
+association; it does not create a new mechanism grid or turn the 2001--2011
+migration evidence into an EMI mediation estimate.

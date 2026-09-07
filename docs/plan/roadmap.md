@@ -166,6 +166,9 @@ of nonfarm employment on one common district sample. State fixed effects, compac
 Census-2001 controls, state-clustered covariance, and Holm correction across the
 two interaction tests are fixed by the design contract. This is descriptive
 opportunity-environment heterogeneity, not an exclusion-control exercise and not
-a longitudinal IT-growth measure. The remaining bounded paper-priority empirical
-item is the Hindi-belt skilled-migration restriction; neither this family nor that
-restriction warrants reopening broad IV or control-grid searches.
+a longitudinal IT-growth measure. The final bounded current-data P2 item is now implemented: the preferred
+`skilled_recent_work_migration` reduced form is re-estimated on the frozen
+Hindi-belt sample with the same state FE, compact Census-2001 controls, preferred
+Shastry distance, common migration panel, and state-clustered covariance. This
+single geographic restriction closes the predeclared P0--P2 empirical tranche;
+it does not warrant reopening broad IV, control, or mechanism-grid searches.

@@ -186,6 +186,55 @@ census_migration_mechanism_specifications <- function(
   )
 }
 
+census_migration_hindi_belt_skilled_specification <- function(control_registry = NULL) {
+  outcome <- "graduate_or_technical_degree_share_among_recent_work_migrants"
+  specs <- census_migration_mechanism_specifications(
+    outcome = outcome, control_registry = control_registry
+  )
+  keep <- specs$specification_id == "state_main__nonzero_mean"
+  if (sum(keep) != 1L) {
+    stop("Hindi-belt skilled-migration restriction requires the preferred state-main Shastry design.", call. = FALSE)
+  }
+  out <- specs[keep, , drop = FALSE]
+  out$specification_id <- paste0(out$specification_id, "__hindi_belt")
+  out$sample_rule <- "migration_hindi_belt_skilled_common_support"
+  rownames(out) <- NULL
+  out
+}
+
+estimate_census_migration_hindi_belt_skilled <- function(
+    mechanism_panel, cfg = list(), control_registry = NULL) {
+  x <- safe_df(mechanism_panel)
+  x <- x[plain_chr(x$state_code_2001) %in% shastry_hindi_belt_state_codes(), , drop = FALSE]
+  if (!nrow(x) || length(unique(plain_chr(x$state_code_2001))) < 2L) {
+    stop("Hindi-belt skilled-migration restriction has insufficient state support.", call. = FALSE)
+  }
+  registry <- census_migration_mechanism_registry()
+  outcome <- registry[registry$outcome_id == "skilled_recent_work_migration", , drop = FALSE]
+  if (nrow(outcome) != 1L) {
+    stop("Skilled recent-work migration outcome is not uniquely registered.", call. = FALSE)
+  }
+  spec <- census_migration_hindi_belt_skilled_specification(control_registry)
+  estimate <- estimate_iv_reduced_form_spec(x, spec, cfg)
+  estimate$analysis_id <- posttreatment_mechanism_analysis_id(
+    "census__migration_hindi_belt", outcome$outcome_id[[1L]], spec$specification_id[[1L]]
+  )
+  estimate$outcome_id <- outcome$outcome_id[[1L]]
+  estimate$outcome_variable <- outcome$variable[[1L]]
+  estimate$sample <- "hindi_belt"
+  estimate$sample_rule <- spec$sample_rule[[1L]]
+  estimate$fixed_effect <- spec$fixed_effect[[1L]]
+  estimate$adjustment_id <- spec$adjustment_id[[1L]]
+  estimate$construction_id <- spec$construction_id[[1L]]
+  estimate$n_states <- length(unique(plain_chr(x$state_code_2001)))
+  estimate[c(
+    "analysis_id", "outcome_id", "outcome_variable", "sample", "sample_rule",
+    "specification_id", "adjustment_id", "construction_id", "fixed_effect",
+    "term", "estimate", "std.error", "statistic", "p.value", "n", "n_states",
+    "status", "reason"
+  )]
+}
+
 census_migration_mechanism_sources <- function(d02_2011, d03_2011, d04_2011, d07_2011) {
   list(
     d02 = safe_df(d02_2011),
@@ -337,7 +386,10 @@ build_census_migration_diagnostics <- function(
     mechanism_first_stage = mechanism$first_stage,
     mechanism_reduced_form = mechanism$reduced_form,
     mechanism_weak_iv = mechanism$weak_iv,
-    mechanism_anderson_rubin_grid = mechanism$anderson_rubin_grid
+    mechanism_anderson_rubin_grid = mechanism$anderson_rubin_grid,
+    hindi_belt_skilled_migration = estimate_census_migration_hindi_belt_skilled(
+      mechanism_panel, cfg = cfg, control_registry = control_registry
+    )
   )
 }
 
@@ -375,6 +427,11 @@ save_census_migration_diagnostics <- function(
   )
   c(
     write_diagnostic_bundle(diagnostics[measurement_names], dir, filenames),
-    save_posttreatment_mechanism_outputs(diagnostics, dir)
+    save_posttreatment_mechanism_outputs(diagnostics, dir),
+    write_diagnostic_bundle(
+      list(hindi_belt_skilled_migration = diagnostics$hindi_belt_skilled_migration),
+      dir,
+      c(hindi_belt_skilled_migration = "hindi_belt_skilled_migration.csv")
+    )
   )
 }
