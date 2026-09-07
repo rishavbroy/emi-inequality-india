@@ -657,7 +657,10 @@ test_that("candidate-design ledger records bounded robustness choices without Ca
   expect_equal(access_crosscuts$candidate_cells, 48L)
   expect_equal(access_crosscuts$implemented_cells, 48L)
   expect_equal(access_crosscuts$execution_policy, "estimate")
-  expect_match(access_crosscuts$rationale, "no gender x sector", fixed = TRUE)
+  crosscut_specs <- nss64_schooling_social_group_crosscut_specifications()
+  expect_equal(unname(table(crosscut_specs$crosscut)), c(24L, 24L))
+  expect_setequal(unique(crosscut_specs$crosscut), c("sex", "sector"))
+  expect_false(any(grepl("sex.*sector|sector.*sex", crosscut_specs$specification_id)))
 
   conversion <- ledger[
     ledger$candidate_id == "schooling_consumption_conversion_gradient", , drop = FALSE

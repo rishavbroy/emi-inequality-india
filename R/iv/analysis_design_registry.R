@@ -737,6 +737,10 @@ analysis_design_schooling_consumption_conversion <- function(
     outcome = outcome,
     treatment = plain_chr(specs$treatment),
     effect_modifier = plain_chr(specs$modifier),
+    # Census-2001 moderator variables are canonical variable-dictionary construct
+    # IDs. Declare them explicitly so effect modification is a first-class
+    # semantic axis rather than relying on downstream name inference.
+    effect_modifier_construct_id = plain_chr(specs$modifier),
     instrument = rep("", nrow(specs)),
     instrument_vintage = rep("not_applicable", nrow(specs)),
     adjustment_set = rep("state_main", nrow(specs)),

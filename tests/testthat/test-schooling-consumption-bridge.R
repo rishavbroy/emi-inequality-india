@@ -208,7 +208,11 @@ test_that("conversion-gradient fit reports the change in schooling slope per mod
   n <- n_states * per_state
   state <- rep(sprintf("%02d", seq_len(n_states)), each = per_state)
   treatment <- rep(seq(0, 20, length.out = per_state), n_states)
-  modifier <- rep(seq(-2, 2, length.out = per_state), n_states) +
+  # Keep the moderator non-affine in treatment within states. An earlier fixture
+  # used two linear sequences, so treatment and the standardized moderator were
+  # collinear after state FE and the main schooling slope was not identified.
+  modifier_pattern <- c(-2, 0.5, -1.5, 1.5, -0.5, 2, 0, -1, 1, -1.8, 1.8, 0.2)
+  modifier <- rep(modifier_pattern, n_states) +
     rep(seq(-0.4, 0.4, length.out = n_states), each = per_state)
   modifier_z <- as.numeric(scale(modifier))
   outcome <- 0.02 * treatment + 0.03 * treatment * modifier_z +
