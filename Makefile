@@ -165,11 +165,9 @@ public-build-audit-incremental:
 public-build-audit-full-incremental:
 	bash scripts/run_public_build_audit.sh --with-samples --incremental
 
-public-build-audit-incremental-review:
-	bash scripts/run_public_build_audit.sh --without-samples --incremental --archive-always
+public-build-audit-incremental-review: public-build-audit-incremental
 
-public-build-audit-full-incremental-review:
-	bash scripts/run_public_build_audit.sh --with-samples --incremental --archive-always
+public-build-audit-full-incremental-review: public-build-audit-full-incremental
 
 public-build-audit-with-diagnostics:
 	bash scripts/run_public_build_audit.sh --without-samples --with-extended-diagnostics

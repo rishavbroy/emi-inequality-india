@@ -9,14 +9,13 @@ incremental="false"
 with_extended_diagnostics="false"
 with_benchmarks="false"
 with_analysis_notes="false"
-archive_on_failure="false"
 current_stage="argument-parsing"
 audit_completed="false"
 audit_started_at_utc="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
 usage() {
   cat <<'USAGE'
-Usage: bash scripts/run_public_build_audit.sh [--with-samples|--without-samples] [--with-extended-diagnostics] [--with-benchmarks] [--with-analysis-notes] [--archive-on-error|--archive-always] [--incremental|--skip-clean] [--skip-tests] [-o OUT.zip]
+Usage: bash scripts/run_public_build_audit.sh [--with-samples|--without-samples] [--with-extended-diagnostics] [--with-benchmarks] [--with-analysis-notes] [--incremental|--skip-clean] [--skip-tests] [-o OUT.zip]
 
 Runs the final public build audit. The default is --without-samples for a faster
 report/data/output audit that omits application-sample rendering and excludes
@@ -26,11 +25,11 @@ the active current pipeline.
 
 The audit restores the project R library from the tracked renv.lock before
 checking synchronization, then checks source whitespace without editing source
-files. Every successful review archive contains
-outputs/diagnostics/build/audit_status.json. By default, failed runs preserve the
-last verified review archive unchanged. --archive-always and --archive-on-error
-request a current incomplete review.zip on failure; successful runs always
-replace the archive only after all warning, integrity, and manifest gates pass.
+files. Every audit run replaces the requested review archive with the newest auditable
+state. Successful runs package a verified archive; failed runs package an
+explicitly incomplete archive containing the failed audit status and diagnostics.
+If failure packaging itself cannot complete, the stale destination is removed so
+an older archive cannot be mistaken for the current run.
 
 Use --incremental to preserve generated renders and the {targets} store while
 debugging; use a non-incremental run for the final reviewer-facing proof build.
@@ -45,9 +44,6 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --with-samples) render_samples="true"; shift ;;
     --without-samples|--no-samples) render_samples="false"; shift ;;
-    # Failed audits preserve the last verified archive unless the caller requests
-    # a current incomplete snapshot with one of these failure-archive flags.
-    --archive-on-error|--archive-always) archive_on_failure="true"; shift ;;
     --incremental) incremental="true"; skip_clean="true"; shift ;;
     --skip-clean) skip_clean="true"; shift ;;
     --with-extended-diagnostics) with_extended_diagnostics="true"; shift ;;
@@ -100,7 +96,6 @@ write_audit_status() {
   AUDIT_EXTENDED="$with_extended_diagnostics" \
   AUDIT_BENCHMARKS="$with_benchmarks" \
   AUDIT_ANALYSIS_NOTES="$with_analysis_notes" \
-  AUDIT_ARCHIVE_ON_FAILURE="$archive_on_failure" \
   python3 - <<'PY'
 import json
 import os
@@ -134,7 +129,6 @@ status = {
         "with_extended_diagnostics": flag("AUDIT_EXTENDED"),
         "with_benchmarks": flag("AUDIT_BENCHMARKS"),
         "with_analysis_notes": flag("AUDIT_ANALYSIS_NOTES"),
-        "archive_on_failure": flag("AUDIT_ARCHIVE_ON_FAILURE"),
     },
     "git": {
         "branch": git_value("branch", "--show-current"),
@@ -176,20 +170,18 @@ dump_diagnostics() {
     write_audit_status "passed" "complete" 0 "verified"
   else
     write_audit_status "failed" "$current_stage" "$exit_code" "incomplete"
-    if [[ "$archive_on_failure" == "true" ]]; then
-      echo "=== FAILURE REVIEW ARCHIVE (${archive_out}) ==="
-      if bash scripts/make_review_archive.sh \
-          "$archive_sample_flag" --allow-incomplete --output "$archive_out"; then
-        echo "Wrote current failed-run review archive: $archive_out"
-      else
-        archive_exit_code=$?
-        # A requested current archive must never be confused with an older run.
-        # If packaging itself fails, remove the stale destination and record that
-        # the archive contract failed while preserving the audit's original exit.
-        rm -f -- "$archive_out"
-        write_audit_status "failed" "$current_stage" "$exit_code" "archive_failed"
-        echo "Failed to build requested review archive (archive exit ${archive_exit_code}); removed stale $archive_out." >&2
-      fi
+    echo "=== FAILURE REVIEW ARCHIVE (${archive_out}) ==="
+    if bash scripts/make_review_archive.sh \
+        "$archive_sample_flag" --allow-incomplete --output "$archive_out"; then
+      echo "Wrote current failed-run review archive: $archive_out"
+    else
+      archive_exit_code=$?
+      # The archive is defined as the current audit snapshot. If even incomplete
+      # packaging fails, remove any older destination rather than mislabel stale
+      # bytes as the latest run while preserving the audit's original exit code.
+      rm -f -- "$archive_out"
+      write_audit_status "failed" "$current_stage" "$exit_code" "archive_failed"
+      echo "Failed to build current review archive (archive exit ${archive_exit_code}); removed stale $archive_out." >&2
     fi
   fi
 
@@ -217,9 +209,9 @@ trap 'audit_exit_code=$?; dump_diagnostics "$audit_exit_code"' EXIT
 current_stage="initialize-diagnostics"
 echo "=== START: git state ==="
 git status --short
-# Preserve the existing archive until a replacement has been fully built and
-# validated. Failed runs replace it only when --archive-always/--archive-on-error
-# explicitly requests a current incomplete snapshot.
+# Keep the prior archive in place while this run executes. The EXIT handler
+# atomically replaces it with either the verified result or the latest incomplete
+# failure snapshot; if packaging itself fails, the stale destination is removed.
 bash scripts/clean_audit_workspace.sh
 write_audit_status "running" "$current_stage" 0 "pending"
 

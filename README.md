@@ -115,26 +115,26 @@ Cleaning commands are intentionally separate. `make clean` removes rendered/publ
 The shell script is the canonical configurable audit. It is more flexible than the [`Makefile`](Makefile) aliases:
 
 ```bash
-# macOS/Linux/Git Bash: full reviewer bundle, archive on failure, save the log.
-bash scripts/run_public_build_audit.sh --with-samples --archive-on-error 2>&1 | tee full_output.txt
+# macOS/Linux/Git Bash: full reviewer bundle; always refresh review.zip and save the log.
+bash scripts/run_public_build_audit.sh --with-samples 2>&1 | tee full_output.txt
 
-# Faster iterative debug run: keep caches/renders, omit application samples, archive on failure.
-bash scripts/run_public_build_audit.sh --without-samples --incremental --archive-on-error 2>&1 | tee full_output.txt
+# Faster iterative debug run: keep caches/renders, omit application samples, refresh review.zip.
+bash scripts/run_public_build_audit.sh --without-samples --incremental 2>&1 | tee full_output.txt
 
 # Full diagnostic/benchmarking run: expensive, but useful before methodological review.
-bash scripts/run_public_build_audit.sh --with-samples --incremental --archive-on-error --with-extended-diagnostics --with-benchmarks 2>&1 | tee full_output_with_diagnostics_benchmarks.txt
+bash scripts/run_public_build_audit.sh --with-samples --incremental --with-extended-diagnostics --with-benchmarks 2>&1 | tee full_output_with_diagnostics_benchmarks.txt
 ```
 
 On Windows, use WSL or Git Bash for the same commands. From PowerShell, the equivalent logging pattern is:
 
 ```powershell
-bash scripts/run_public_build_audit.sh --with-samples --archive-on-error 2>&1 | Tee-Object -FilePath full_output.txt
+bash scripts/run_public_build_audit.sh --with-samples 2>&1 | Tee-Object -FilePath full_output.txt
 ```
 
 From `cmd.exe`, use:
 
 ```bat
-bash scripts\run_public_build_audit.sh --with-samples --archive-on-error > full_output.txt 2>&1
+bash scripts\run_public_build_audit.sh --with-samples > full_output.txt 2>&1
 ```
 
 ### Cheaper workflow for LLMs
@@ -144,14 +144,14 @@ If you want help changing the code but do not want to spend hundreds of dollars 
 1. `review.zip`
 2. the corresponding log file, usually `full_output.txt` or `full_output_with_diagnostics_benchmarks.txt`
 
-`review.zip` is replaced atomically. By default, failed runs preserve the previous verified archive. Passing `--archive-always` (or the backward-compatible `--archive-on-error` alias) changes that failure policy: the audit replaces `review.zip` with a current **incomplete** snapshot containing the failed run's `audit_status.json`, diagnostics, and current tracked source tree. If failure-archive packaging itself fails, the script removes the stale destination rather than leave an older archive that could be mistaken for the current run. Successful audits always replace `review.zip` with a verified archive. The no-samples/incremental variants are cheaper for iteration; the full `--with-samples` run is the better reviewer-facing proof build.
+Every audit run refreshes `review.zip`. A successful run atomically replaces it with a verified archive; a failed run atomically replaces it with a current **incomplete** snapshot containing the failed run's `audit_status.json`, diagnostics, and current tracked source tree. If incomplete packaging itself fails, the script removes the stale destination rather than leave an older archive that could be mistaken for the current run. The no-samples/incremental variants are cheaper for iteration; the full `--with-samples` run is the better reviewer-facing proof build.
 
 
 ### Review archive contract
 
-Build `review.zip` through [`scripts/run_public_build_audit.sh`](scripts/run_public_build_audit.sh) or after a final public check succeeds. The packaging script stages the current working tree, omits raw data and local caches, and normally refuses to run without the `.public-final-ok` stamp produced by a final public check. It builds and validates a temporary sibling archive before replacing `review.zip`, so a packaging failure leaves the previous archive intact.
+Build `review.zip` through [`scripts/run_public_build_audit.sh`](scripts/run_public_build_audit.sh) or after a final public check succeeds. The packaging script stages the current working tree and omits raw data and local caches. Successful audit packaging requires the `.public-final-ok` stamp; the audit uses the archive script's explicit incomplete mode after failures. Each archive is built and validated in a temporary sibling path before replacement. If even incomplete failure packaging cannot complete, the audit removes the old destination so `review.zip` can never silently describe an earlier run.
 
-For fast iteration, run `bash scripts/run_public_build_audit.sh --without-samples --archive-on-error`. This mode omits [`application-samples/output/`](application-samples/output/) from `review.zip`, so it cannot accidentally package stale sample PDFs. Before a full submission or application bundle, run `bash scripts/run_public_build_audit.sh --with-samples --archive-on-error`; that mode renders application samples and requires them in `review.zip`. Because public PDFs and sample PDFs are tracked deliverables, commit intentional regenerated outputs before treating the run as a final proof.
+For fast iteration, run `bash scripts/run_public_build_audit.sh --without-samples`. This mode omits [`application-samples/output/`](application-samples/output/) from `review.zip`, so it cannot accidentally package stale sample PDFs. Before a full submission or application bundle, run `bash scripts/run_public_build_audit.sh --with-samples`; that mode renders application samples and requires them in `review.zip`. Because public PDFs and sample PDFs are tracked deliverables, commit intentional regenerated outputs before treating the run as a final proof.
 
 ## Behavior without raw data
 

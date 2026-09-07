@@ -93,14 +93,14 @@ The recommended replication entry point is the [scripted public-build audit](scr
 # Fast contract tests; should pass without local raw data.
 make test
 
-# Full reviewer-facing archive with a log; failures preserve the prior review.zip.
-bash scripts/run_public_build_audit.sh --with-samples --archive-on-error 2>&1 | tee full_output.txt
+# Full reviewer-facing archive with a log; every run refreshes review.zip.
+bash scripts/run_public_build_audit.sh --with-samples 2>&1 | tee full_output.txt
 
 # Faster cache-preserving iteration without application samples.
-bash scripts/run_public_build_audit.sh --without-samples --incremental --archive-on-error 2>&1 | tee full_output.txt
+bash scripts/run_public_build_audit.sh --without-samples --incremental 2>&1 | tee full_output.txt
 
 # Full optional diagnostics/benchmarking run for methodological review.
-bash scripts/run_public_build_audit.sh --with-samples --incremental --archive-on-error --with-extended-diagnostics --with-benchmarks 2>&1 | tee full_output_with_diagnostics_benchmarks.txt
+bash scripts/run_public_build_audit.sh --with-samples --incremental --with-extended-diagnostics --with-benchmarks 2>&1 | tee full_output_with_diagnostics_benchmarks.txt
 ```
 
 `make test` should pass without local raw data. The full pipeline requires the local-only raw files listed in the manifest. [`bash scripts/run_public_build_audit.sh`](scripts/run_public_build_audit.sh) defaults to the faster no-samples mode and writes `review.zip` without [`application-samples/output/`](application-samples/output/); pass `--with-samples` before a full submission/review bundle so the application samples are rendered and required in the archive. Commit intentional regenerated outputs after a proof run; the audit does not require a clean working tree because public PDFs and sample PDFs are tracked deliverables that may be regenerated.
@@ -126,7 +126,7 @@ On Windows, run the same audit commands through WSL or Git Bash. From PowerShell
 
 ## Review archive contract
 
-[`scripts/make_review_archive.sh`](scripts/make_review_archive.sh) is intentionally not a substitute for the final public checks. It writes `review.zip` by default and refuses to package the repository unless `.public-final-ok` exists, which is written only after a final public check completes successfully. The audit preserves the last verified `review.zip` on failure by default. When `--archive-always` (or `--archive-on-error`) is requested, a failed run instead builds an `--allow-incomplete` snapshot and atomically replaces `review.zip`; its embedded `audit_status.json` records the failed stage and nonzero exit code. If that requested failure snapshot cannot be packaged, the stale destination is removed rather than left looking current. Successful replacements are always built and validated in a temporary sibling path before they are renamed over the previous archive. By default the archive script includes application-sample PDFs; pass `--without-samples` only when the audit intentionally skipped rendering them and the archive should omit [`application-samples/output/`](application-samples/output/) rather than risk packaging stale sample PDFs. This prevents a review archive from mixing regenerated source files with stale PDFs or outputs from an earlier run.
+[`scripts/make_review_archive.sh`](scripts/make_review_archive.sh) is intentionally not a substitute for the final public checks. It writes `review.zip` by default and normally refuses to package the repository unless `.public-final-ok` exists, which is written only after a final public check completes successfully. The audit has a stronger recency contract: every run refreshes `review.zip`. Successful runs write a verified archive; failed runs invoke the archive script's explicit `--allow-incomplete` mode so the ZIP captures the current broken state and failed `audit_status.json`. Each replacement is built and validated in a temporary sibling path before rename. If incomplete packaging itself fails, the audit removes the old destination rather than leave stale bytes that could be mistaken for the latest run. By default the archive script includes application-sample PDFs; pass `--without-samples` only when the audit intentionally skipped rendering them and the archive should omit [`application-samples/output/`](application-samples/output/) rather than risk packaging stale sample PDFs.
 
 ### Lineage-source execution
 
