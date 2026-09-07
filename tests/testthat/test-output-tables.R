@@ -577,7 +577,7 @@ test_that("probit TeX stacks standard errors below AME estimates", {
 })
 
 test_that("report source loads caption setup for wrapping long table captions", {
-  src <- paste(readLines(repo_file("paper", "report.qmd"), warn = FALSE), collapse = "\n")
+  src <- paste(readLines(repo_file("paper", "paper.qmd"), warn = FALSE), collapse = "\n")
 
   expect_match(src, "\\usepackage{caption}", fixed = TRUE)
   expect_match(src, "captionsetup", fixed = TRUE)

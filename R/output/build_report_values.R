@@ -1,8 +1,8 @@
-# Build named values for paper/report.qmd from targets outputs.
+# Build named values for paper/paper.qmd from targets outputs.
 
 #' Build report values from current targets
 #'
-#' @return Named list of values used by paper/report.qmd.
+#' @return Named list of values used by paper/paper.qmd.
 build_report_values <- function(ame_results, first_stage_tests, iv_models, selection_data, district_panel, diag_spatial_autocorrelation = NULL, cfg = list()) {
   values <- list()
 

@@ -40,10 +40,10 @@ if (!extended_only) {
   for (qmd in public_qmd_sources()) check_bibliography_paths(qmd)
 }
 
-if (!extended_only && file.exists("paper/report.qmd")) {
-  report <- paste(readLines("paper/report.qmd", warn = FALSE), collapse = "\n")
+if (!extended_only && file.exists("paper/paper.qmd")) {
+  report <- paste(readLines("paper/paper.qmd", warn = FALSE), collapse = "\n")
   if (grepl("render_public_table\\(", report) && !grepl("source_public_qmd_helpers", report, fixed = TRUE)) {
-    add_failure("paper/report.qmd calls render_public_table() but does not source public QMD helpers.")
+    add_failure("paper/paper.qmd calls render_public_table() but does not source public QMD helpers.")
   }
 }
 

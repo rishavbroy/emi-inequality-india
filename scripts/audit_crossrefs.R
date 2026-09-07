@@ -2,13 +2,15 @@
 
 args <- commandArgs(trailingOnly = TRUE)
 strict_report <- "--strict-report" %in% args
+explicit_qmd_files <- args[!startsWith(args, "--")]
 
 qmd_files <- c(
-  "paper/report.qmd",
+  "paper/paper.qmd",
   "paper/appendix.qmd",
   "docs/district-matching.qmd",
   "docs/long-paths-and-8-3-filenames.qmd"
 )
+if (length(explicit_qmd_files)) qmd_files <- explicit_qmd_files
 
 work_files <- character()
 if (dir.exists("application-samples/.work")) {
@@ -20,7 +22,11 @@ if (dir.exists("application-samples/.work")) {
   )
 }
 
-qmd_files <- unique(c(qmd_files[file.exists(qmd_files)], work_files))
+if (length(explicit_qmd_files)) {
+  qmd_files <- qmd_files[file.exists(qmd_files)]
+} else {
+  qmd_files <- unique(c(qmd_files[file.exists(qmd_files)], work_files))
+}
 
 extract_matches <- function(text, pattern) {
   hits <- regmatches(text, gregexpr(pattern, text, perl = TRUE))[[1]]

@@ -1,4 +1,4 @@
-# Render writing samples from excerpt markers in paper/report.qmd.
+# Render writing samples from excerpt markers in paper/paper.qmd.
 
 #' Render all writing samples described by YAML specs
 #'
@@ -21,14 +21,15 @@ render_one_writing_sample <- function(spec_path) {
   dir.create(work_dir, recursive = TRUE, showWarnings = FALSE)
   output_qmd <- file.path(work_dir, paste0(tools::file_path_sans_ext(basename(output)), ".qmd"))
 
-  raw_source_lines <- readLines(spec$source, warn = FALSE)
+  source_path <- resolve_writing_sample_source(spec$source)
+  raw_source_lines <- readLines(source_path, warn = FALSE)
   if (identical(spec$mode, "full")) {
     source_lines <- c(report_abstract_block(raw_source_lines), strip_qmd_yaml(raw_source_lines))
     assemble_writing_sample_qmd(spec$cover_note, source_lines, output_qmd)
   } else {
     excerpts <- c(
       report_setup_chunks(raw_source_lines),
-      extract_qmd_excerpts(spec$source, unlist(spec$excerpts, use.names = FALSE))
+      extract_qmd_excerpts(source_path, unlist(spec$excerpts, use.names = FALSE))
     )
     assemble_writing_sample_qmd(spec$cover_note, excerpts, output_qmd)
   }
@@ -142,7 +143,7 @@ application_sample_spec_files <- function(spec_path) {
   spec <- yaml::read_yaml(spec_path)
   files <- character()
   if (!is.null(spec$cover_note)) files <- c(files, spec$cover_note)
-  if (!is.null(spec$source)) files <- c(files, spec$source)
+  if (!is.null(spec$source)) files <- c(files, resolve_writing_sample_source(spec$source))
   if (!is.null(spec$excerpts) && length(spec$excerpts)) {
     excerpt_files <- vapply(spec$excerpts, function(x) {
       if (is.list(x) && !is.null(x$file)) x$file else NA_character_

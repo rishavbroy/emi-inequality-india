@@ -25,7 +25,7 @@ test_that("AME benchmark diagnostic is skipped unless enabled", {
 })
 
 test_that("rendered PDF text checks use the system extractor contract", {
-  skipped <- c("paper/report.pdf", "docs/district-matching.pdf")
+  skipped <- c("paper/paper.pdf", "docs/district-matching.pdf")
 
   expect_false(pdf_text_extractor_available(""))
   expect_true(is.na(extract_pdf_text(tempfile(fileext = ".pdf"), command = "")))

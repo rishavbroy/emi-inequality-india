@@ -19,7 +19,7 @@ test_that("output artifact manifest records target references and canonical anal
   manifest_path <- file.path(root, "outputs", "diagnostics", "build", "output_manifest.csv")
   dir.create(dirname(manifest_path), recursive = TRUE)
   utils::write.csv(data.frame(stale = TRUE), manifest_path, row.names = FALSE)
-  writeLines("paper", file.path(root, "paper", "report.pdf"))
+  writeLines("paper", file.path(root, "paper", "paper.pdf"))
 
   meta <- data.frame(
     name = "diag_ext_estimates",
@@ -41,7 +41,7 @@ test_that("output artifact manifest records target references and canonical anal
   expect_identical(row$output_scope, "extended_diagnostic")
   expect_equal(row$analysis_id_count, 2L)
   expect_identical(row$analysis_families, "family_a;family_b")
-  expect_true("paper/report.pdf" %in% out$path)
+  expect_true("paper/paper.pdf" %in% out$path)
   expect_false("outputs/diagnostics/build/output_manifest.csv" %in% out$path)
 })
 
@@ -156,7 +156,7 @@ test_that("output artifact manifest scopes are semantic rather than filename-spe
     "outputs/benchmarking/a.csv",
     "outputs/tables/main/a.csv",
     "outputs/figures/main/a.png",
-    "paper/report.pdf",
+    "paper/paper.pdf",
     "docs/a.md",
     "posters/p/poster.pdf",
     "analysis/a.md",

@@ -112,13 +112,16 @@ Useful lower-level Makefile targets are:
 ```bash
 make restore
 make pipeline-draft
-make report
+make paper
+make paper-new
 make samples
 Rscript scripts/run_targets_checked.R poster
 make check-public-draft
 make check-public-final
 make check-public-final-no-samples
 ```
+
+`make paper-new` is an opt-in render of `paper/paper-new.qmd`. It refreshes the shared report-value/table/figure dependencies but does not add the working draft to the strict public target graph; public checks and application samples continue to use `paper/paper.qmd`.
 
 `make check-public-draft` is the public-render smoke check. It tolerates explicitly deferred geometry/map work but still fails on scaffold prose, broken application-sample specs, render failures, and rendered placeholder phrases. `make check-public-final` uses [`config/final.yml`](config/final.yml), checks all current report quantities, audits final output artifacts, relies on cached `{targets}` render targets for the report, conference poster, docs, and application samples, checks PDF text when the Poppler `pdftotext` executable is available, and fails on visible public-document cross-reference artifacts or incomplete report values/cross-references. `make check-public-final-no-samples` runs the same final checks but omits application-sample targets, text checks, and output requirements.
 

@@ -15,8 +15,8 @@ if (length(missing_required)) {
 }
 
 report_has_geometry_blocker <- FALSE
-if (file.exists("paper/report.qmd")) {
-  report_text <- paste(readLines("paper/report.qmd", warn = FALSE), collapse = "\n")
+if (file.exists("paper/paper.qmd")) {
+  report_text <- paste(readLines("paper/paper.qmd", warn = FALSE), collapse = "\n")
   report_has_geometry_blocker <- grepl("Final district map figures are withheld", report_text, fixed = TRUE)
 }
 

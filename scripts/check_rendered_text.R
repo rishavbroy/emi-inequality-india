@@ -23,6 +23,7 @@ if (check_application_samples) {
   )
 }
 text_paths <- text_paths[file.exists(text_paths)]
+text_paths <- text_paths[!grepl("^paper/paper-new\\.(html|md|tex)$", text_paths)]
 
 source_paths <- c(
   list.files("paper", pattern = "\\.(qmd|md|tex)$", full.names = TRUE),
@@ -35,9 +36,10 @@ if (check_application_samples) {
   )
 }
 source_paths <- source_paths[file.exists(source_paths)]
+source_paths <- source_paths[source_paths != "paper/paper-new.qmd"]
 
 pdf_paths <- c(
-  "paper/report.pdf",
+  "paper/paper.pdf",
   "paper/appendix.pdf",
   "docs/district-matching.pdf",
   "docs/long-paths-and-8-3-filenames.pdf"

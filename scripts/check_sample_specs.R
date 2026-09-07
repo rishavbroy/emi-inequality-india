@@ -16,7 +16,7 @@ if (!length(writing_specs)) stop("No writing-sample specs found in application-s
 
 for (spec_path in writing_specs) {
   spec <- yaml::read_yaml(spec_path)
-  source <- spec$source %||% "paper/report.qmd"
+  source <- resolve_writing_sample_source(spec$source %||% "paper/paper.qmd")
   excerpts <- unlist(spec$excerpts, use.names = FALSE)
   blocks <- extract_marked_divs(readLines(source, warn = FALSE))
 

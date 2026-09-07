@@ -2,7 +2,7 @@
 
 public_qmd_sources <- function() {
   c(
-    "paper/report.qmd",
+    "paper/paper.qmd",
     "paper/appendix.qmd",
     "docs/district-matching.qmd",
     "docs/long-paths-and-8-3-filenames.qmd",
@@ -11,7 +11,7 @@ public_qmd_sources <- function() {
 }
 
 public_report_value_sources <- function() {
-  c("paper/report.qmd", "paper/appendix.qmd", "docs/district-matching.qmd")
+  c("paper/paper.qmd", "paper/appendix.qmd", "docs/district-matching.qmd")
 }
 
 required_public_render_inputs <- function() {
@@ -50,7 +50,7 @@ application_sample_outputs <- function() {
 
 required_final_documents <- function(require_application_samples = TRUE) {
   files <- c(
-    "paper/report.pdf",
+    "paper/paper.pdf",
     "docs/district-matching.html",
     "docs/long-paths-and-8-3-filenames.html",
     "posters/2026_predoc_conference/poster.pdf",

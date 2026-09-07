@@ -15,13 +15,15 @@ Finally, go to ["Commands for running and auditing"](#commands-for-running-and-a
 
 ## Key files
 
-- **[`paper/report.pdf`](paper/report.pdf): Current rendered paper**. All of its results, tables, and figures are generated in this codebase.
-- [`paper/report.qmd`](paper/report.qmd): Source of paper. This is now an ordinary active Quarto source file edited directly.
+- **[`paper/paper.pdf`](paper/paper.pdf): Reviewed/current paper**. All of its results, tables, and figures are generated in this codebase.
+- [`paper/paper.qmd`](paper/paper.qmd): Reviewed paper source. Manual edits and approved sections belong here.
+- [`paper/paper-new.qmd`](paper/paper-new.qmd): ChatGPT working paper source. Render with `make paper-new`; after manual review, copy approved sections into `paper.qmd`. The working draft is intentionally outside strict public/application-sample checks.
+- [`paper/paper-new.pdf`](paper/paper-new.pdf): Latest explicitly rendered working-paper PDF, when available.
 - [`REPLICATION.md`](REPLICATION.md): Replication guide.
 - [`DATA_AVAILABILITY.md`](DATA_AVAILABILITY.md): Source-by-source data availability and redistribution notes.
 
 - [`docs/plan/roadmap.md`](docs/plan/roadmap.md): Current empirical roadmap and source-first priorities.
-- [`application-samples/output/RishavRoy_WritingSample.pdf`](application-samples/output/RishavRoy_WritingSample.pdf): Reviewer-facing writing sample generated from [marked excerpts](application-samples/specs/writing-10pg.yml) in the [paper](paper/report.qmd). Cover note updates are still pending.
+- [`application-samples/output/RishavRoy_WritingSample.pdf`](application-samples/output/RishavRoy_WritingSample.pdf): Reviewer-facing writing sample generated from [marked excerpts](application-samples/specs/writing-10pg.yml) in the [paper](paper/paper.qmd). Cover note updates are still pending.
 - [`application-samples/output/RishavRoy_CodingSample.pdf`](application-samples/output/RishavRoy_CodingSample.pdf):  Reviewer-facing coding sample generated from [marked excerpts](application-samples/specs/coding-full.yml) in the [code](R). Cover note updates are still pending.
 
 ## Research question
@@ -43,7 +45,7 @@ Current build status:
 
 ## For faculty reviewers and hiring/admissions committees
 
-I believe the [current draft](paper/report.pdf) displays multiple traits that are essential to high-quality economics research: a commitment to institutional knowledge and literature reviews, a deep understanding of econometrics, and meticulous empirical judgement.
+I believe the [current draft](paper/paper.pdf) displays multiple traits that are essential to high-quality economics research: a commitment to institutional knowledge and literature reviews, a deep understanding of econometrics, and meticulous empirical judgement.
 
 This repository, on the other hand, is intended to signal more than just one PDF. Its current state contains the following:
 
@@ -82,7 +84,8 @@ This repository, on the other hand, is intended to signal more than just one PDF
 make restore     # first local setup on a new machine; restores renv.lock
 make test        # unit tests and input/output contracts; should pass without raw data
 make pipeline-draft
-make report
+make paper
+make paper-new
 make samples
 make check-public-draft
 ```

@@ -70,6 +70,7 @@ test_that("current public build helper scripts parse", {
   }
   expect_silent(parse(repo_file("scripts", "check_required_outputs.R")))
   expect_silent(parse(repo_file("scripts", "check_targets_process.R")))
+  expect_silent(parse(repo_file("scripts", "render_paper_new.R")))
   expect_silent(parse(repo_file("scripts", "run_targets_checked.R")))
   expect_silent(parse(repo_file("scripts", "run_targets_strict.R")))
   expect_silent(parse(repo_file("scripts", "target_metadata_helpers.R")))
@@ -91,15 +92,15 @@ test_that("public render targets own final report, notes, and sample rendering",
   renderer <- repo_text("R", "output", "render_public_artifacts.R")
   samples <- repo_text("R", "application_samples", "render_writing_sample.R")
 
-  expect_match(targets, 'tar_target(report_qmd, "paper/report.qmd", format = "file")', fixed = TRUE)
+  expect_match(targets, 'tar_target(paper_qmd, "paper/paper.qmd", format = "file")', fixed = TRUE)
   expect_match(targets, 'tar_target(district_matching_qmd, "docs/district-matching.qmd", format = "file")', fixed = TRUE)
   expect_match(targets, 'render_public_html(district_matching_qmd, dependencies = list(report_values))', fixed = TRUE)
-  expect_match(targets, 'tar_target(report, render_report_pdf(report_qmd, report_values, figure_files, table_files), format = "file")', fixed = TRUE)
+  expect_match(targets, 'tar_target(paper, render_paper_pdf(paper_qmd, report_values, figure_files, table_files), format = "file")', fixed = TRUE)
   expect_match(targets, 'tar_target(application_sample_inputs, application_sample_input_files(), format = "file")', fixed = TRUE)
-  expect_match(renderer, 'system2("quarto", c("render", report_qmd, "--to", "pdf"))', fixed = TRUE)
+  expect_match(renderer, 'system2("quarto", c("render", paper_qmd, "--to", "pdf"))', fixed = TRUE)
   expect_match(renderer, 'render_public_html <- function', fixed = TRUE)
   expect_match(samples, "application_sample_input_files", fixed = TRUE)
-  expect_false(grepl("tar_render\\(report|tar_quarto\\(report", targets, perl = TRUE))
+  expect_false(grepl("tar_render\\(paper|tar_quarto\\(paper", targets, perl = TRUE))
 })
 
 test_that("audit workspace cleanup removes transient state and preserves optional outputs", {
@@ -257,31 +258,31 @@ test_that("writing sample YAML includes LaTeX table packages for raw table excer
 })
 
 test_that("current QMD sources load shared public rendering helpers", {
-  report <- repo_text("paper", "report.qmd")
+  paper <- repo_text("paper", "paper.qmd")
   appendix <- repo_text("paper", "appendix.qmd")
   docs_note <- repo_text("docs", "district-matching.qmd")
   helper <- repo_text("R", "output", "public_qmd_helpers.R")
 
-  expect_match(report, "public-output-table-helper", fixed = TRUE)
-  expect_match(report, "source_public_qmd_helpers", fixed = TRUE)
+  expect_match(paper, "public-output-table-helper", fixed = TRUE)
+  expect_match(paper, "source_public_qmd_helpers", fixed = TRUE)
   expect_match(appendix, "source_public_qmd_helpers", fixed = TRUE)
   expect_match(docs_note, "source_public_qmd_helpers", fixed = TRUE)
   expect_match(helper, "render_public_tex", fixed = TRUE)
   expect_match(helper, "knitr::asis_output(paste0", fixed = TRUE)
-  expect_match(report, "\\usepackage{xcolor}", fixed = TRUE)
-  expect_match(report, "\\definecolor{gray35}{gray}{0.35}", fixed = TRUE)
-  expect_match(report, "\\usepackage{pdflscape}", fixed = TRUE)
+  expect_match(paper, "\\usepackage{xcolor}", fixed = TRUE)
+  expect_match(paper, "\\definecolor{gray35}{gray}{0.35}", fixed = TRUE)
+  expect_match(paper, "\\usepackage{pdflscape}", fixed = TRUE)
 })
 
 test_that("report values use current named keys", {
-  report <- repo_text("paper", "report.qmd")
+  paper <- repo_text("paper", "paper.qmd")
   docs_note <- repo_text("docs", "district-matching.qmd")
   appendix <- repo_text("paper", "appendix.qmd")
   builder <- repo_text("R", "output", "build_report_values.R")
   spatial_values <- repo_text("R", "output", "report_value_spatial.R")
   checker <- repo_text("scripts", "check_report_values.R")
 
-  expect_match(report, "report_value(\"ame_edu_free_pct\")", fixed = TRUE)
+  expect_match(paper, "report_value(\"ame_edu_free_pct\")", fixed = TRUE)
   expect_match(docs_note, "report_value(\"moran_iv_residual_p\")", fixed = TRUE)
   expect_match(builder, "moran_iv_residual_p", fixed = TRUE)
   expect_match(builder, "moran_consumption_growth_p", fixed = TRUE)
@@ -1387,4 +1388,20 @@ test_that("extended audit requires bounded exclusion-sensitivity outputs", {
     collapse = "\n"
   )
   expect_match(iv_targets, "diag_ext_consumption_exclusion_sensitivity_files", fixed = TRUE)
+})
+
+
+test_that("working paper is opt-in and excluded from strict public contracts", {
+  source(repo_file("scripts", "public_output_contract.R"), local = TRUE)
+  makefile <- repo_text("Makefile")
+  archive <- repo_text("scripts", "make_review_archive.sh")
+
+  expect_true("paper/paper.qmd" %in% public_qmd_sources())
+  expect_false("paper/paper-new.qmd" %in% public_qmd_sources())
+  expect_true("paper/paper.pdf" %in% required_final_documents(FALSE))
+  expect_false("paper/paper-new.pdf" %in% required_final_documents(FALSE))
+  expect_match(makefile, "paper-new:", fixed = TRUE)
+  expect_match(makefile, "scripts/render_paper_new.R", fixed = TRUE)
+  expect_match(archive, "paper/paper-new.qmd", fixed = TRUE)
+  expect_match(archive, "paper/paper-new.pdf", fixed = TRUE)
 })

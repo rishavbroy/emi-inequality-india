@@ -1,4 +1,4 @@
-.PHONY: init-renv restore snapshot download-census-tables pipeline-draft pipeline-final pipeline-final-no-samples diagnostics public-diagnostics extended-diagnostics lineage-geometry-build lineage-geometry benchmarking rerun-extended-diagnostics rerun-benchmarks rerun-analysis analysis-notes render-analysis clean clean-all clean-analysis clean-public-diagnostics clean-extended-diagnostics clean-benchmarking report samples check-report-values check-report-values-final audit-crossrefs audit-crossrefs-final audit-outputs-final public-build-audit public-build-audit-full public-build-audit-incremental public-build-audit-full-incremental public-build-audit-with-diagnostics public-build-audit-full-with-diagnostics public-build-audit-full-with-benchmarks output-manifest check-public check-public-draft check-public-final check-public-final-no-samples check-public-text check-rendered-text check-sample-specs test tests test-affected test-inventory clean-targets clean-renders clean-renders-core clean-renders-no-samples
+.PHONY: init-renv restore snapshot download-census-tables pipeline-draft pipeline-final pipeline-final-no-samples diagnostics public-diagnostics extended-diagnostics lineage-geometry-build lineage-geometry benchmarking rerun-extended-diagnostics rerun-benchmarks rerun-analysis analysis-notes render-analysis clean clean-all clean-analysis clean-public-diagnostics clean-extended-diagnostics clean-benchmarking paper paper-new samples check-report-values check-report-values-final audit-crossrefs audit-crossrefs-final audit-outputs-final public-build-audit public-build-audit-full public-build-audit-incremental public-build-audit-full-incremental public-build-audit-with-diagnostics public-build-audit-full-with-diagnostics public-build-audit-full-with-benchmarks output-manifest check-public check-public-draft check-public-final check-public-final-no-samples check-public-text check-rendered-text check-sample-specs test tests test-affected test-inventory clean-targets clean-renders clean-renders-core clean-renders-no-samples
 
 TEXCACHE_ROOT ?= /private/tmp/emi-inequality-india-texcache
 QUARTO_CACHE_ROOT ?= /private/tmp/emi-inequality-india-quarto-cache
@@ -131,8 +131,13 @@ clean-benchmarking:
 poster: $(QUARTO_CACHE_DIRS)
 	EMI_CONFIG=config/final.yml Rscript scripts/run_targets_checked.R --targets poster
 
-report: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
-	EMI_CONFIG=config/final.yml Rscript scripts/run_targets_checked.R --targets report
+paper: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
+	EMI_CONFIG=config/final.yml Rscript scripts/run_targets_checked.R --targets paper
+
+paper-new: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
+	EMI_CONFIG=config/final.yml Rscript scripts/run_targets_checked.R --targets report_values,figure_files,table_files
+	EMI_CONFIG=config/final.yml Rscript scripts/render_paper_new.R
+	Rscript scripts/audit_crossrefs.R --strict-report paper/paper-new.qmd
 
 samples: $(TEXCACHE_DIRS) $(QUARTO_CACHE_DIRS)
 	EMI_CONFIG=config/final.yml EMI_RENDER_APPLICATION_SAMPLES=true Rscript scripts/run_targets_checked.R --targets writing_sample_pdfs,coding_sample_pdfs
@@ -243,7 +248,7 @@ clean-renders-core:
 	rm -rf outputs/figures/* outputs/tables/* outputs/diagnostics/build outputs/diagnostics/public paper/output/*
 	rm -f outputs/diagnostics/*.csv
 	mkdir -p outputs/diagnostics/build outputs/diagnostics/public
-	rm -f paper/report.pdf paper/report.html paper/report.tex paper/appendix.pdf paper/appendix.html paper/appendix.tex
+	rm -f paper/paper.pdf paper/paper.html paper/paper.tex paper/appendix.pdf paper/appendix.html paper/appendix.tex
 	rm -f posters/2026_predoc_conference/poster.pdf posters/2026_predoc_conference/poster.png posters/2026_predoc_conference/RishavRoy-Education.png posters/2026_predoc_conference/poster.typ
 	rm -f docs/district-matching.html docs/district-matching.pdf docs/district-matching.tex
 	rm -f docs/long-paths-and-8-3-filenames.html docs/long-paths-and-8-3-filenames.pdf docs/long-paths-and-8-3-filenames.tex

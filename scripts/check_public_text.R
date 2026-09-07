@@ -13,6 +13,7 @@ files <- files[!dir.exists(files)]
 files <- files[!grepl("(^|/)archive(/|$)", files)]
 files <- files[!grepl("(^|/)application-samples/output(/|$)", files)]
 files <- files[!grepl("(^|/)application-samples/\\.work(/|$)", files)]
+files <- files[!grepl("^paper/paper-new\.(qmd|md|tex)$", files)]
 files <- files[grepl("\\.(qmd|md|R|yml|yaml|tex)$", files, ignore.case = TRUE)]
 
 patterns <- c(
@@ -22,8 +23,8 @@ patterns <- c(
 )
 
 required_figure_captions <- c(
-  "paper/report.qmd" = "Trends in earnings, labor‐force participation, and unemployment (ILO, 2024).",
-  "paper/report.qmd" = "Number of 2001 districts which absorbed a percentage of a 1991 district's population via name change, clean merger, carve-out, or border shift. Data from Kumar \\& Somanathan (2016).",
+  "paper/paper.qmd" = "Trends in earnings, labor‐force participation, and unemployment (ILO, 2024).",
+  "paper/paper.qmd" = "Number of 2001 districts which absorbed a percentage of a 1991 district's population via name change, clean merger, carve-out, or border shift. Data from Kumar \\& Somanathan (2016).",
   "docs/district-matching.qmd" = "Number of 2001 districts which absorbed a percentage of a 1991 district's population via name change, clean merger, carve-out, or border shift. Data from Kumar \\& Somanathan (2016)."
 )
 
@@ -71,7 +72,7 @@ for (file in unique(names(required_figure_captions))) {
   }
 }
 
-for (file in c("paper/report.qmd", "docs/district-matching.qmd")) {
+for (file in c("paper/paper.qmd", "docs/district-matching.qmd")) {
   if (!file.exists(file)) next
   text <- paste(readLines(file, warn = FALSE), collapse = "\n")
   stale <- blocked_map_paths[vapply(blocked_map_paths, grepl, logical(1), x = text, fixed = TRUE)]
