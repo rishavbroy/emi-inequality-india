@@ -957,9 +957,9 @@ test_that("registered source citation keys resolve to the bibliography", {
   bib_keys <- sub("^@[[:alnum:]_]+\\{([^,]+),.*$", "\\1", entry_lines)
 
   missing_keys <- setdiff(citation_keys, bib_keys)
-  expect_length(
+  expect_identical(
     missing_keys,
-    0L,
+    character(),
     info = paste("Unresolved data_sources.csv citation_key values:", paste(missing_keys, collapse = ", "))
   )
 })
