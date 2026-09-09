@@ -112,7 +112,8 @@ test_that("audit workspace cleanup removes transient state and preserves optiona
     "outputs/diagnostics/public/public.csv",
     "outputs/diagnostics/root.csv",
     "outputs/diagnostics/extended/district_lineage_v2/stale.csv",
-    "outputs/derived/district_lineage_v2/stale.gpkg"
+    "outputs/derived/district_lineage_v2/stale.gpkg",
+    "paper/references_bibertool.bib"
   )
   preserved <- c(
     "outputs/diagnostics/extended/current.csv",

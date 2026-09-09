@@ -4,6 +4,9 @@ set -euo pipefail
 root="${1:-.}"
 diagnostics_root="${root%/}/outputs/diagnostics"
 derived_root="${root%/}/outputs/derived"
+paper_root="${root%/}/paper"
+
+rm -f "$paper_root"/*_bibertool.bib 2>/dev/null || true
 
 rm -rf \
   "$diagnostics_root/build" \

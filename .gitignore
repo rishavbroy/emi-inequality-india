@@ -57,6 +57,7 @@ Rplots.pdf
 *.fdb_latexmk
 *.bbl
 *.blg
+*_bibertool.bib
 *.tex
 .texcache/
 
