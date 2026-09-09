@@ -255,7 +255,7 @@ test_that("data source catalogs are documented and uniquely identified", {
   expect_equal(anyDuplicated(sources$source_id), 0L)
   expect_equal(anyDuplicated(lineage$source_id), 0L)
   expect_true(all(c(
-    "source_url", "access_date", "license_or_terms_notes", "notes"
+    "source_url", "access_date", "license_or_terms_notes", "citation_key", "notes"
   ) %in% names(sources)))
   expect_true(all(nzchar(sources$source_name)))
   expect_true(file.exists(file.path(root, "data", "metadata", "README.md")))
@@ -940,9 +940,8 @@ test_that("official Census 1991 validation source is active in extended diagnost
 })
 
 test_that("registered source citation keys resolve to the bibliography", {
-  root <- repo_root()
   sources <- utils::read.csv(
-    file.path(root, "data", "metadata", "data_sources.csv"),
+    repo_file("data", "metadata", "data_sources.csv"),
     stringsAsFactors = FALSE,
     check.names = FALSE
   )
@@ -950,7 +949,7 @@ test_that("registered source citation keys resolve to the bibliography", {
   citation_keys <- unique(citation_keys[nzchar(citation_keys)])
 
   bib_lines <- readLines(
-    file.path(root, "paper", "references.bib"),
+    repo_file("paper", "references.bib"),
     warn = FALSE,
     encoding = "UTF-8"
   )
