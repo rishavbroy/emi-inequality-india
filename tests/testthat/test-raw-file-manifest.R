@@ -938,3 +938,28 @@ test_that("official Census 1991 validation source is active in extended diagnost
   expect_identical(source$local_raw_path, "data/raw/census_1991")
   expect_match(source$notes, "before any G2 allocation", fixed = TRUE)
 })
+
+test_that("registered source citation keys resolve to the bibliography", {
+  root <- repo_root()
+  sources <- utils::read.csv(
+    file.path(root, "data", "metadata", "data_sources.csv"),
+    stringsAsFactors = FALSE,
+    check.names = FALSE
+  )
+  citation_keys <- trimws(as.character(sources$citation_key))
+  citation_keys <- unique(citation_keys[nzchar(citation_keys)])
+
+  bib_lines <- readLines(
+    file.path(root, "paper", "references.bib"),
+    warn = FALSE,
+    encoding = "UTF-8"
+  )
+  entry_lines <- grep("^@[[:alnum:]_]+\\{[^,]+,", bib_lines, value = TRUE)
+  bib_keys <- sub("^@[[:alnum:]_]+\\{([^,]+),.*$", "\\1", entry_lines)
+
+  missing_keys <- setdiff(citation_keys, bib_keys)
+  expect_empty(
+    missing_keys,
+    info = paste("Unresolved data_sources.csv citation_key values:", paste(missing_keys, collapse = ", "))
+  )
+})
