@@ -45,6 +45,56 @@ appendix_b1_lineage_readiness <- function(district_lineage) {
   out
 }
 
+appendix_b2_lineage_sensitivity <- function(review) {
+  if (!is.list(review)) stop("Appendix B2 requires canonical lineage panel-variant review output.", call. = FALSE)
+  panels <- safe_df(review$panel_summary)
+  first_stage <- safe_df(review$first_stage)
+  variants <- c("conservative", "primary", "full_reviewed")
+  required_panels <- c("panel_variant", "unique_districts", "complete_iv_rows")
+  required_first_stage <- c("panel_variant", "model", "term", "partial_f", "effective_f", "nobs", "status")
+  if (length(setdiff(required_panels, names(panels))) || length(setdiff(required_first_stage, names(first_stage)))) {
+    stop("Appendix B2 requires panel membership and first-stage summaries for all lineage variants.", call. = FALSE)
+  }
+  panels <- panels[match(variants, panels$panel_variant), required_panels, drop = FALSE]
+  fs <- first_stage[
+    first_stage$model == "consumption" &
+      first_stage$term == "ling_distance_nonzero_mean" &
+      first_stage$panel_variant %in% variants,
+    required_first_stage, drop = FALSE
+  ]
+  fs <- fs[match(variants, fs$panel_variant), , drop = FALSE]
+  if (nrow(panels) != 3L || nrow(fs) != 3L || any(is.na(panels$panel_variant)) || any(is.na(fs$panel_variant)) ||
+      any(!fs$status %in% "estimated") || any(!is.finite(num(fs$partial_f))) || any(!is.finite(num(fs$effective_f)))) {
+    stop("Appendix B2 requires all three registered lineage variants with estimated first stages.", call. = FALSE)
+  }
+  if (any(as.integer(panels$unique_districts) != as.integer(fs$nobs))) {
+    stop("Appendix B2 panel membership and first-stage support must agree by lineage variant.", call. = FALSE)
+  }
+  labels <- c(
+    conservative = "Conservative",
+    primary = "Primary",
+    full_reviewed = "Full reviewed"
+  )
+  csv <- data.frame(
+    panel_variant = variants,
+    n_districts = as.integer(panels$unique_districts),
+    complete_iv_rows = as.integer(panels$complete_iv_rows),
+    excluded_instrument_f = num(fs$partial_f),
+    effective_f = num(fs$effective_f),
+    stringsAsFactors = FALSE
+  )
+  out <- data.frame(
+    Variant = unname(labels[csv$panel_variant]),
+    Districts = formatC(csv$n_districts, format = "d", big.mark = ","),
+    `Complete IV rows` = formatC(csv$complete_iv_rows, format = "d", big.mark = ","),
+    `Excluded-instrument F` = sprintf("%.3f", csv$excluded_instrument_f),
+    `MOP effective F` = sprintf("%.3f", csv$effective_f),
+    check.names = FALSE, stringsAsFactors = FALSE
+  )
+  attr(out, "csv_data") <- csv
+  out
+}
+
 appendix_b3_consumption_reconstruction <- function(validation) {
   x <- safe_df(validation)
   required <- c("survey_id", "sector", "mpce_definition", "expected_mpce", "estimate_mpce", "abs_difference", "passed")
@@ -237,6 +287,118 @@ appendix_b7_nss_dise_plot <- function(panel, validation) {
     ggplot2::theme_minimal(base_size = 10)
 }
 
+appendix_b8_exact_reconciliation_row <- function(x, domain, period, reconciliation) {
+  x <- safe_df(x)
+  diff_column <- intersect(c("max_abs_total_difference", "max_abs_difference"), names(x))
+  if (length(diff_column) != 1L || !nrow(x)) {
+    stop("Appendix B8 exact reconciliation lacks a registered discrepancy field.", call. = FALSE)
+  }
+  discrepancy <- num(x[[diff_column]])
+  if (any(!is.finite(discrepancy)) || max(abs(discrepancy)) > 1e-8) {
+    stop("Appendix B8 may only publish exact Census universe reconciliations.", call. = FALSE)
+  }
+  if ("n_reference_districts" %in% names(x)) {
+    refs <- unique(as.integer(x$n_reference_districts))
+    overlaps <- as.integer(x$n_overlap_districts)
+    if (length(refs) != 1L || any(!is.finite(overlaps))) {
+      stop("Appendix B8 housing reconciliation has inconsistent support metadata.", call. = FALSE)
+    }
+    support <- if (min(overlaps) == max(overlaps)) {
+      sprintf("%d / %d districts", min(overlaps), refs[[1L]])
+    } else {
+      sprintf("%d-%d / %d districts", min(overlaps), max(overlaps), refs[[1L]])
+    }
+    n_reference <- refs[[1L]]
+    n_overlap_min <- min(overlaps)
+    n_overlap_max <- max(overlaps)
+  } else if ("n_districts" %in% names(x)) {
+    ns <- unique(as.integer(x$n_districts))
+    if (length(ns) != 1L || !is.finite(ns[[1L]])) stop("Appendix B8 reconciliation has inconsistent district counts.", call. = FALSE)
+    support <- sprintf("%d districts", ns[[1L]])
+    n_reference <- ns[[1L]]
+    n_overlap_min <- ns[[1L]]
+    n_overlap_max <- ns[[1L]]
+  } else {
+    stop("Appendix B8 reconciliation lacks district-support metadata.", call. = FALSE)
+  }
+  data.frame(
+    domain = domain, period = period, reconciliation = reconciliation,
+    support = support, diagnostic = "Max absolute count difference",
+    value = max(abs(discrepancy)), n_reference = n_reference,
+    n_overlap_min = n_overlap_min, n_overlap_max = n_overlap_max,
+    stringsAsFactors = FALSE
+  )
+}
+
+appendix_b8_census_universe_reconciliation <- function(
+    migration, housing, households, workers) {
+  if (!is.list(migration) || !is.list(housing) || !is.list(households) || !is.list(workers)) {
+    stop("Appendix B8 requires canonical Census migration, housing, household, and worker diagnostics.", call. = FALSE)
+  }
+  required <- list(
+    migration = c("d02_d03_2011_total_validation", "d03_d07_2011_recent_work_validation", "d02_population_2011_validation"),
+    housing = c("source_validation_2001", "source_validation_2011"),
+    households = c("source_validation_2001", "source_validation_2011"),
+    workers = c("b25_b26_2001_main_occupation_validation", "b04_b25a_universe_validation", "b06_b25b_universe_validation")
+  )
+  objects <- list(migration = migration, housing = housing, households = households, workers = workers)
+  for (name in names(required)) {
+    if (!all(required[[name]] %in% names(objects[[name]]))) {
+      stop("Appendix B8 is missing registered Census universe checks for ", name, ".", call. = FALSE)
+    }
+  }
+
+  rows <- list(
+    appendix_b8_exact_reconciliation_row(migration$d02_d03_2011_total_validation, "Migration", "2011", "D-02 vs D-03 migrant totals"),
+    appendix_b8_exact_reconciliation_row(migration$d03_d07_2011_recent_work_validation, "Migration", "2011", "D-03 vs D-07 recent-work totals"),
+    appendix_b8_exact_reconciliation_row(housing$source_validation_2001, "Housing", "2001", "Household/source universes"),
+    appendix_b8_exact_reconciliation_row(housing$source_validation_2011, "Housing", "2011", "Household/source universes"),
+    appendix_b8_exact_reconciliation_row(households$source_validation_2001, "Households", "2001", "Published household totals"),
+    appendix_b8_exact_reconciliation_row(households$source_validation_2011, "Households", "2011", "Published household totals"),
+    appendix_b8_exact_reconciliation_row(workers$b25_b26_2001_main_occupation_validation, "Workers", "2001", "B-25 vs B-26 occupation universe"),
+    appendix_b8_exact_reconciliation_row(workers$b04_b25a_universe_validation, "Workers", "2011", "B-04 vs B-25A main-worker universe"),
+    appendix_b8_exact_reconciliation_row(workers$b06_b25b_universe_validation, "Workers", "2011", "B-06 vs B-25B marginal-worker universe")
+  )
+  population <- safe_df(migration$d02_population_2011_validation)
+  if (!all(c("n_districts", "max_migrant_stock_share_population") %in% names(population)) || nrow(population) != 1L ||
+      !is.finite(num(population$max_migrant_stock_share_population)[[1L]]) || num(population$max_migrant_stock_share_population)[[1L]] > 1 + 1e-8) {
+    stop("Appendix B8 migration-population universe validation is incomplete or invalid.", call. = FALSE)
+  }
+  rows <- append(rows, list(data.frame(
+    domain = "Migration", period = "2011", reconciliation = "D-02 migrant stock vs Census population",
+    support = sprintf("%d districts", as.integer(population$n_districts[[1L]])),
+    diagnostic = "Max migrant stock / population",
+    value = num(population$max_migrant_stock_share_population)[[1L]],
+    n_reference = as.integer(population$n_districts[[1L]]),
+    n_overlap_min = as.integer(population$n_districts[[1L]]),
+    n_overlap_max = as.integer(population$n_districts[[1L]]),
+    stringsAsFactors = FALSE
+  )))
+  csv <- safe_bind_rows(rows)
+  order_key <- c(
+    "Migration__2011__D-02 vs D-03 migrant totals",
+    "Migration__2011__D-03 vs D-07 recent-work totals",
+    "Migration__2011__D-02 migrant stock vs Census population",
+    "Housing__2001__Household/source universes",
+    "Housing__2011__Household/source universes",
+    "Households__2001__Published household totals",
+    "Households__2011__Published household totals",
+    "Workers__2001__B-25 vs B-26 occupation universe",
+    "Workers__2011__B-04 vs B-25A main-worker universe",
+    "Workers__2011__B-06 vs B-25B marginal-worker universe"
+  )
+  csv <- csv[match(order_key, paste(csv$domain, csv$period, csv$reconciliation, sep = "__")), , drop = FALSE]
+  if (nrow(csv) != 10L || any(is.na(csv$domain))) stop("Appendix B8 reconciliation registry is incomplete.", call. = FALSE)
+  out <- data.frame(
+    Domain = csv$domain, Period = csv$period, Reconciliation = csv$reconciliation,
+    Support = csv$support, Diagnostic = csv$diagnostic,
+    Value = ifelse(csv$diagnostic == "Max absolute count difference", sprintf("%.0f", csv$value), sprintf("%.3f", csv$value)),
+    check.names = FALSE, stringsAsFactors = FALSE
+  )
+  attr(out, "csv_data") <- csv
+  out
+}
+
 appendix_b9_dise_publication_validation <- function(validation) {
   x <- safe_df(validation)
   required <- c("academic_year", "state", "district", "metric", "expected_value", "actual_value", "difference", "matches", "source_pdf", "source_page")
@@ -294,16 +456,21 @@ make_appendix_validation_identification_exhibits <- function(
     district_lineage, consumption_mpce_validation, consumption_district_welfare,
     census_1991_primary_validation, historical_linguistic_persistence_validation,
     helms_lim_linguistic_distance_benchmark, district_panel, district_panel_with_dise,
-    dise_iv_nss_validation, dise_publication_validation,
-    historical_baseline_balance_1991, historical_linguistic_first_stage_robustness) {
+    dise_iv_nss_validation, dise_publication_validation, lineage_panel_variant_review,
+    census_migration_diagnostics, census_housing_diagnostics, census_household_diagnostics,
+    census_worker_diagnostics, historical_baseline_balance_1991, historical_linguistic_first_stage_robustness) {
   list(
     appendix_b1_lineage_readiness = appendix_b1_lineage_readiness(district_lineage),
+    appendix_b2_lineage_sensitivity = appendix_b2_lineage_sensitivity(lineage_panel_variant_review),
     appendix_b3_consumption_reconstruction = appendix_b3_consumption_reconstruction(consumption_mpce_validation),
     appendix_b4_hces_consistency_summary = appendix_b4_hces_consistency_summary(consumption_district_welfare),
     appendix_b4_hces_consistency = appendix_b4_hces_consistency_plot(consumption_district_welfare),
     appendix_b5_historical_language_persistence = appendix_b5_historical_persistence_plot(historical_linguistic_persistence_validation),
     appendix_b6_language_source_validation = appendix_b6_language_source_validation(census_1991_primary_validation, helms_lim_linguistic_distance_benchmark, historical_linguistic_persistence_validation, district_panel),
     appendix_b7_nss_dise_agreement = appendix_b7_nss_dise_plot(district_panel_with_dise, dise_iv_nss_validation),
+    appendix_b8_census_universe_reconciliation = appendix_b8_census_universe_reconciliation(
+      census_migration_diagnostics, census_housing_diagnostics, census_household_diagnostics, census_worker_diagnostics
+    ),
     appendix_b9_dise_publication_validation = appendix_b9_dise_publication_validation(dise_publication_validation),
     appendix_c7_historical_balance = appendix_c7_historical_balance(historical_baseline_balance_1991),
     appendix_c9_historical_first_stage = appendix_c9_historical_first_stage(historical_linguistic_first_stage_robustness)
@@ -311,7 +478,7 @@ make_appendix_validation_identification_exhibits <- function(
 }
 
 save_appendix_validation_identification_exhibits <- function(exhibits, cfg) {
-  table_names <- c("appendix_b1_lineage_readiness", "appendix_b3_consumption_reconstruction", "appendix_b4_hces_consistency_summary", "appendix_b6_language_source_validation", "appendix_b9_dise_publication_validation", "appendix_c7_historical_balance", "appendix_c9_historical_first_stage")
+  table_names <- c("appendix_b1_lineage_readiness", "appendix_b2_lineage_sensitivity", "appendix_b3_consumption_reconstruction", "appendix_b4_hces_consistency_summary", "appendix_b6_language_source_validation", "appendix_b8_census_universe_reconciliation", "appendix_b9_dise_publication_validation", "appendix_c7_historical_balance", "appendix_c9_historical_first_stage")
   figure_names <- c("appendix_b4_hces_consistency", "appendix_b5_historical_language_persistence", "appendix_b7_nss_dise_agreement")
   if (!is.list(exhibits) || !all(c(table_names, figure_names) %in% names(exhibits))) stop("Appendix B/C validation exhibit bundle is incomplete.", call. = FALSE)
   written <- save_appendix_tables(exhibits, table_names, cfg)

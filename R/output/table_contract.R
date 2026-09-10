@@ -24,9 +24,11 @@ public_table_caption_text <- function(name) {
     appendix_a7_consumption_construction = "Appendix A7. Consumption Survey Construction",
     appendix_a8_other_outcome_panels = "Appendix A8. Other Outcome Panels",
     appendix_b1_lineage_readiness = "Appendix B1. District-Lineage Readiness and Coverage",
+    appendix_b2_lineage_sensitivity = "Appendix B2. District-Lineage Sensitivity",
     appendix_b3_consumption_reconstruction = "Appendix B3. Consumption Reconstruction Benchmarks",
     appendix_b4_hces_consistency_summary = "Appendix B4. HCES Cross-Round Consistency Summary",
     appendix_b6_language_source_validation = "Appendix B6. Historical Language-Source Validation",
+    appendix_b8_census_universe_reconciliation = "Appendix B8. Census Universe Reconciliation",
     appendix_b9_dise_publication_validation = "Appendix B9. DISE Publication Validation",
     appendix_c7_historical_balance = "Appendix C7. Historical Balance Across Baseline Domains",
     appendix_c9_historical_first_stage = "Appendix C9. Historical First-Stage Comparison",
@@ -114,6 +116,11 @@ public_table_note <- function(name) {
       "All lineage readiness gates must pass before this table is produced.",
       "Panel-variant counts show common two-wave Census-2001 districts under increasingly permissive but still reviewed mapping rules."
     ),
+    appendix_b2_lineage_sensitivity = paste(
+      "The three registered lineage variants are evaluated with the same preferred consumption first-stage specification.",
+      "District counts and complete-IV rows are reported alongside the state-clustered excluded-instrument F and Montiel Olea-Pflueger effective F.",
+      "This is a geography-sensitivity check: the full-reviewed allocation rule is not substituted for the primary analysis panel."
+    ),
     appendix_b3_consumption_reconstruction = paste(
       "Reconstructed national MPCE is compared with the registered official benchmark for every supported survey-sector cell.",
       "Only benchmarks that satisfy the survey-specific absolute-rupee tolerance enter this final validation exhibit."
@@ -123,8 +130,13 @@ public_table_note <- function(name) {
       "The companion scatterplots show the same district pairs and a 45-degree reference line."
     ),
     appendix_b6_language_source_validation = paste(
-      "The table combines three independent validation layers: exact official-Census source reconciliation, Helms-Lim agreement with the project 1991 construction, and persistence from 1991 to 2001.",
+      "The table combines source coverage, exact official-Census reconciliation, Helms-Lim agreement with the project 1991 construction, and persistence from 1991 to 2001.",
       "The rows use their native validation metric rather than forcing unlike checks onto one statistical scale."
+    ),
+    appendix_b8_census_universe_reconciliation = paste(
+      "Rows summarize the registered migration, housing, household, and worker denominator reconciliations before longitudinal pooling or rate construction.",
+      "Exact cross-table count checks must have zero discrepancy; the migration-stock check separately verifies that migrant stock never exceeds the Census population denominator.",
+      "Support reports the native published district universe or the overlap range when source tables have structurally different coverage."
     ),
     appendix_b9_dise_publication_validation = paste(
       "Published DISE report cells are compared with values reconstructed from the archived machine-readable source.",

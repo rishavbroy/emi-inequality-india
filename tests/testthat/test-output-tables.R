@@ -1678,6 +1678,64 @@ test_that("Appendix B/C historical validation tables preserve registered scienti
   expect_identical(attr(c9, "csv_data")$specification_id, ids)
 })
 
+test_that("Appendix B2 lineage sensitivity uses the same first-stage contract across variants", {
+  variants <- c("conservative", "primary", "full_reviewed")
+  review <- list(
+    panel_summary = data.frame(
+      panel_variant = variants,
+      unique_districts = c(427L, 573L, 587L),
+      complete_iv_rows = c(427L, 573L, 587L),
+      stringsAsFactors = FALSE
+    ),
+    first_stage = data.frame(
+      panel_variant = variants, model = "consumption",
+      term = "ling_distance_nonzero_mean",
+      partial_f = c(.22, .75, .76), effective_f = c(.25, .82, .82),
+      nobs = c(427L, 573L, 587L), status = "estimated",
+      stringsAsFactors = FALSE
+    )
+  )
+  out <- appendix_b2_lineage_sensitivity(review)
+  csv <- attr(out, "csv_data")
+  expect_identical(csv$panel_variant, variants)
+  expect_identical(csv$n_districts, c(427L, 573L, 587L))
+  expect_error(
+    appendix_b2_lineage_sensitivity(within(review, first_stage <- first_stage[-1L, ])),
+    "all three registered lineage variants",
+    fixed = TRUE
+  )
+})
+
+test_that("Appendix B8 summarizes exact Census universe reconciliations and fails closed", {
+  exact <- function(n = 640L, value = 0) data.frame(n_districts = n, max_abs_difference = value)
+  migration <- list(
+    d02_d03_2011_total_validation = data.frame(n_districts = 640L, max_abs_total_difference = 0),
+    d03_d07_2011_recent_work_validation = exact(),
+    d02_population_2011_validation = data.frame(n_districts = 640L, max_migrant_stock_share_population = .8)
+  )
+  housing <- list(
+    source_validation_2001 = data.frame(n_reference_districts = 593L, n_overlap_districts = c(587L, 593L), max_abs_difference = 0),
+    source_validation_2011 = data.frame(n_reference_districts = 640L, n_overlap_districts = 640L, max_abs_difference = 0)
+  )
+  households <- list(source_validation_2001 = exact(593L), source_validation_2011 = exact())
+  workers <- list(
+    b25_b26_2001_main_occupation_validation = exact(593L),
+    b04_b25a_universe_validation = exact(),
+    b06_b25b_universe_validation = exact()
+  )
+  out <- appendix_b8_census_universe_reconciliation(migration, housing, households, workers)
+  csv <- attr(out, "csv_data")
+  expect_equal(nrow(csv), 10L)
+  expect_setequal(unique(csv$domain), c("Migration", "Housing", "Households", "Workers"))
+  expect_true(all(csv$value[csv$diagnostic == "Max absolute count difference"] == 0))
+  workers$b04_b25a_universe_validation$max_abs_difference <- 1
+  expect_error(
+    appendix_b8_census_universe_reconciliation(migration, housing, households, workers),
+    "exact Census universe reconciliations",
+    fixed = TRUE
+  )
+})
+
 test_that("Appendix B validation plots enforce common registered support", {
   welfare <- expand.grid(
     district_2001 = c("d1", "d2", "d3"),
@@ -1687,7 +1745,7 @@ test_that("Appendix B validation plots enforce common registered support", {
   )
   welfare$estimate <- seq_len(nrow(welfare)); welfare$preferred_eligible <- TRUE
   b4 <- appendix_b4_hces_consistency_data(welfare)
-  expect_equal(table(b4$outcome_id), setNames(rep(3L, 3L), c("mean_log_real_mpce", "real_mean_mpce", "weighted_median_real_mpce")))
+  expect_equal(as.integer(table(b4$outcome_id)), rep(3L, 3L))
   b4_summary <- appendix_b4_hces_consistency_summary(welfare)
   expect_equal(nrow(attr(b4_summary, "csv_data")), 3L)
   expect_true(all(attr(b4_summary, "csv_data")$n == 3L))

@@ -1701,11 +1701,21 @@ test_that("Appendix B/C validation exhibits are strict outputs with single analy
   expect_match(core_dise, "dise_publication_validation", fixed = TRUE)
   expect_false(grepl("tar_target(\n      dise_publication_checks,", extended_dise, fixed = TRUE))
   expect_match(core_public, "appendix_validation_identification_files", fixed = TRUE)
+  core_lineage <- repo_text("R", "pipeline", "core_lineage_targets.R")
+  extended_lineage <- repo_text("R", "pipeline", "extended_lineage_targets.R")
+  core_census <- repo_text("R", "pipeline", "core_census_development_targets.R")
+  extended_census <- repo_text("R", "pipeline", "extended_census_targets.R")
+  expect_match(core_lineage, "lineage_panel_variant_review", fixed = TRUE)
+  expect_false(grepl("tar_target(\n      lineage_panel_variant_review,", extended_lineage, fixed = TRUE))
+  for (target in c("census_worker_diagnostics", "census_household_diagnostics")) {
+    expect_match(core_census, target, fixed = TRUE)
+    expect_false(grepl(paste0("tar_target(\n      ", target, ","), extended_census, fixed = TRUE))
+  }
   for (path in c(
-    "appendix_b1_lineage_readiness.tex", "appendix_b3_consumption_reconstruction.tex", "appendix_b4_hces_consistency_summary.tex",
+    "appendix_b1_lineage_readiness.tex", "appendix_b2_lineage_sensitivity.tex", "appendix_b3_consumption_reconstruction.tex", "appendix_b4_hces_consistency_summary.tex",
     "appendix_b4_hces_consistency.pdf",
     "appendix_b5_historical_language_persistence.pdf", "appendix_b6_language_source_validation.tex",
-    "appendix_b7_nss_dise_agreement.pdf", "appendix_b9_dise_publication_validation.tex",
+    "appendix_b7_nss_dise_agreement.pdf", "appendix_b8_census_universe_reconciliation.tex", "appendix_b9_dise_publication_validation.tex",
     "appendix_c7_historical_balance.tex", "appendix_c9_historical_first_stage.tex"
   )) expect_match(contract, path, fixed = TRUE)
 

@@ -136,6 +136,8 @@ def path_tests(path):
         },
         "R/pipeline/core_lineage_targets.R": {
             "test-consumption-lineage.R",
+            "test-output-tables.R",
+            "test-public-scripts.R",
             "test-district-lineage-bridge.R",
             "test-district-lineage-completion.R",
             "test-district-lineage-matching.R",
@@ -171,6 +173,7 @@ def path_tests(path):
             "test-census-households.R",
             "test-census-housing.R",
             "test-census-migration.R",
+            "test-census-workers.R",
             "test-output-tables.R",
             "test-public-scripts.R",
             "test-raw-file-manifest.R",
