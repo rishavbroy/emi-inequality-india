@@ -142,6 +142,23 @@ core_public_target_definitions <- function() {
       format = "file"
     ),
     tar_target(
+      appendix_identification_exhibits,
+      make_appendix_identification_exhibits(
+        first_stage_absorption_diagnostics,
+        district_panel,
+        hindi_belt_first_stage_diagnostics,
+        child_population_first_stage_diagnostics,
+        alternative_distance_first_stage_base,
+        alternative_distance_measurement_diagnostics,
+        census_2001_control_registry
+      )
+    ),
+    tar_target(
+      appendix_identification_files,
+      save_appendix_identification_exhibits(appendix_identification_exhibits, cfg),
+      format = "file"
+    ),
+    tar_target(
       appendix_selection_exhibits,
       make_appendix_selection_exhibits(
         selection_data, selection_missingness_diagnostics

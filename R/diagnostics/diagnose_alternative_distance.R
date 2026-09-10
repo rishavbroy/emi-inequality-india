@@ -729,15 +729,16 @@ summarize_alternative_distance_design_evidence <- function(
   )
 }
 
-augment_alternative_distance_diagnostics <- function(
+augment_alternative_distance_measurement_diagnostics <- function(
   diagnostics,
   panel,
   census_2001_languages,
-  outcome = "real_log_consumption_change",
   glottolog = NULL,
   glottolog_crosswalk = NULL
 ) {
-  if (!inherits(diagnostics, "emi_alternative_distance_first_stages")) stop("Expected alternative-distance diagnostics.", call. = FALSE)
+  if (!inherits(diagnostics, "emi_alternative_distance_first_stages")) {
+    stop("Expected alternative-distance diagnostics.", call. = FALSE)
+  }
   diagnostics$distance4_languages <- distance_four_language_decomposition(
     census_2001_languages, panel, glottolog, glottolog_crosswalk
   )
@@ -751,6 +752,18 @@ augment_alternative_distance_diagnostics <- function(
     glottolog,
     glottolog_crosswalk
   )
+  diagnostics$basis_comparison <- compare_linguistic_distance_bases(panel)
+  diagnostics
+}
+
+augment_alternative_distance_inference_diagnostics <- function(
+  diagnostics,
+  panel,
+  outcome = "real_log_consumption_change"
+) {
+  if (!inherits(diagnostics, "emi_alternative_distance_first_stages")) {
+    stop("Expected alternative-distance diagnostics.", call. = FALSE)
+  }
   weak_iv <- estimate_weak_iv_outcomes(
     panel, outcome = outcome, treatment = diagnostics$common_support$treatment[[1]]
   )
@@ -775,11 +788,24 @@ augment_alternative_distance_diagnostics <- function(
   diagnostics$monotonicity_summary <- monotonicity$summary
   diagnostics$monotonicity_bins <- monotonicity$bins
   diagnostics$monotonicity_state_slopes <- monotonicity$state_slopes
-  diagnostics$basis_comparison <- compare_linguistic_distance_bases(panel)
   design <- summarize_alternative_distance_design_evidence(diagnostics)
   diagnostics$design_evidence <- attach_iv_analysis_id(
     design$evidence, weak_iv$registry, "district_iv_diagnostic"
   )
   diagnostics$design_comparison <- design$comparison
   diagnostics
+}
+
+augment_alternative_distance_diagnostics <- function(
+  diagnostics,
+  panel,
+  census_2001_languages,
+  outcome = "real_log_consumption_change",
+  glottolog = NULL,
+  glottolog_crosswalk = NULL
+) {
+  diagnostics <- augment_alternative_distance_measurement_diagnostics(
+    diagnostics, panel, census_2001_languages, glottolog, glottolog_crosswalk
+  )
+  augment_alternative_distance_inference_diagnostics(diagnostics, panel, outcome)
 }

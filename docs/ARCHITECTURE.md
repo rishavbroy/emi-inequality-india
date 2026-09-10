@@ -286,13 +286,24 @@ turning every forensic diagnostic into a publication dependency.
 
 ### Paper-facing identification versus forensic IV diagnostics
 
-The main-paper identification boundary uses a small, comparable first-stage grid
-across linguistic-distance constructions. Those common-support first stages now
-live in `core_identification_target_definitions()` because Table 7 consumes them
-in the strict publication graph. The extended IV factory does not re-estimate the
-same grid: it starts from `alternative_distance_first_stage_base` and augments it
-with outcome-specific weak-IV diagnostics, language-basis decompositions,
-monotonicity checks, and other reviewer-facing forensic evidence.
+The main-paper identification boundary and final Appendix C share a bounded
+publication layer. Common-support alternative-distance first stages, Hindi-belt
+and child-population added-control comparisons, and the linguistic measurement /
+composition diagnostics used by Appendix C1--C6 live in
+`core_identification_target_definitions()`. The extended IV factory does not
+re-estimate those objects: it starts from `alternative_distance_measurement_diagnostics`
+and adds outcome-specific weak-IV inference, monotonicity, overidentification, FAS,
+and other reviewer-facing forensic evidence.
+
+This split is intentionally scientific rather than "cheap versus expensive".
+Mapping coverage, distance-4 composition, leave-language-out checks, and the
+richer language vectors are measurement/relevance evidence consumed directly by
+the final appendix, so they are strict. Weak-IV outcome grids and partial-
+identification exercises remain extended until their own appendix exhibits are
+wired into the publication contract. Appendix C2 is rebuilt from within-state
+demeaned linguistic distance and all-child EMI rather than reusing the legacy
+poster residual maps, which partialled six-region fixed effects and expanded
+controls and therefore answered a different geographic question.
 
 This boundary is semantic rather than computational. A diagnostic becomes core
 when a publication artifact requires its scientific result; larger robustness

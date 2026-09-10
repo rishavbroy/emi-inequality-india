@@ -30,6 +30,11 @@ public_table_caption_text <- function(name) {
     appendix_b6_language_source_validation = "Appendix B6. Historical Language-Source Validation",
     appendix_b8_census_universe_reconciliation = "Appendix B8. Census Universe Reconciliation",
     appendix_b9_dise_publication_validation = "Appendix B9. DISE Publication Validation",
+    appendix_c1_full_absorption_ladder = "Appendix C1. Full First-Stage Absorption Ladder",
+    appendix_c3_control_block_absorption = "Appendix C3. Control-Block Absorption",
+    appendix_c4_geographic_scale_sensitivity = "Appendix C4. Geographic and Scale Sensitivity",
+    appendix_c5_alternative_scalar_distances = "Appendix C5. Alternative Linguistic-Distance First Stages",
+    appendix_c6_mapping_composition_sensitivity = "Appendix C6. Mapping and Language-Composition Sensitivity",
     appendix_c7_historical_balance = "Appendix C7. Historical Balance Across Baseline Domains",
     appendix_c9_historical_first_stage = "Appendix C9. Historical First-Stage Comparison",
     appendix_e1_selection_sample = "Appendix E1. Enrollment Selection Sample and Covariates",
@@ -141,6 +146,26 @@ public_table_note <- function(name) {
     appendix_b9_dise_publication_validation = paste(
       "Published DISE report cells are compared with values reconstructed from the archived machine-readable source.",
       "All registered publication checks must match exactly before this exhibit can be produced."
+    ),
+    appendix_c1_full_absorption_ladder = paste(
+      "Every declared semantic first-stage absorption specification is shown on the same complete-case district support.",
+      "Excluded-instrument F and partial R-squared are conventional first-stage diagnostics; this table does not substitute them for the separately reported MOP effective-F diagnostic."
+    ),
+    appendix_c3_control_block_absorption = paste(
+      "Each row compares one registered Census-2001 control block entered alone with the main-control specification omitting that block, separately under six-region and state fixed effects.",
+      "The table asks whether one control family mechanically explains the within-state first-stage collapse."
+    ),
+    appendix_c4_geographic_scale_sensitivity = paste(
+      "The added-control rows compare the same common-support first stage before and after the Shastry Hindi-belt indicator or 2001 child-population control.",
+      "Leave-one-state-out and district-influence rows summarize the registered state-deletion and influence diagnostics from the state-FE expanded-control first stage."
+    ),
+    appendix_c5_alternative_scalar_distances = paste(
+      "All scalar linguistic-distance constructions are estimated on the common alternative-distance support under unadjusted, six-region-plus-controls, and state-plus-controls specifications.",
+      "The table is a relevance comparison, not evidence that the alternative measures satisfy exclusion."
+    ),
+    appendix_c6_mapping_composition_sensitivity = paste(
+      "Mapping-coverage thresholds, distance-4 leave-one-language-out checks, Shastry composition adjustments, adjudication bounds, and richer distance-share vectors are summarized without printing the full diagnostic grid.",
+      "The Kashmiri row reports its share of distance-4 speakers; the remaining rows report first-stage strength under the registered sensitivity specification."
     ),
     appendix_c7_historical_balance = paste(
       "Joint tests use the preferred historical geography and compare eventual EMI with Census-2001 linguistic distance and the independent Helms-Lim 1991 distance across five predetermined baseline domains.",

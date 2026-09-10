@@ -1820,3 +1820,170 @@ test_that("Appendix B benchmark and DISE publication tables fail closed on valid
   dise$matches[[1]] <- FALSE
   expect_error(appendix_b9_dise_publication_validation(dise), "requires passing DISE publication checks", fixed = TRUE)
 })
+
+
+test_that("Appendix C1-C3 summarize the complete registered absorption design", {
+  controls <- read_census_2001_control_registry(
+    repo_file("data", "metadata", "census_2001_control_registry.csv")
+  )
+  blocks <- names(iv_main_control_blocks(controls))
+  ids <- names(iv_absorption_adjustments(controls))
+  semantic <- data.frame(
+    semantic_specification_id = ids,
+    semantic_label = gsub("_", " ", ids),
+    semantic_fixed_effect = ifelse(grepl("^region", ids), "region", "state"),
+    semantic_control_blocks = "",
+    estimate = seq_along(ids) / 100,
+    std.error = 0.01,
+    excluded_instrument_f = seq_along(ids) + 0.5,
+    partial_r_squared = seq_along(ids) / 1000,
+    n = 500L,
+    status = "estimated",
+    stringsAsFactors = FALSE
+  )
+  diagnostics <- structure(
+    list(semantic_summary = semantic),
+    class = "emi_first_stage_absorption"
+  )
+
+  c1 <- appendix_c1_full_absorption_ladder(diagnostics, controls)
+  expect_equal(nrow(attr(c1, "csv_data")), nrow(semantic))
+  expect_identical(
+    attr(c1, "csv_data")$semantic_specification_id,
+    semantic$semantic_specification_id
+  )
+
+  c3 <- appendix_c3_control_block_absorption(diagnostics, controls)
+  c3_csv <- attr(c3, "csv_data")
+  expect_equal(nrow(c3_csv), 2L * length(blocks))
+  expect_setequal(c3_csv$fixed_effect, c("region", "state"))
+  expect_setequal(c3_csv$block_id, blocks)
+
+  diagnostics$semantic_summary$status[[1L]] <- "not_estimated"
+  expect_error(
+    appendix_c1_full_absorption_ladder(diagnostics, controls),
+    "estimable first stages for every declared semantic specification",
+    fixed = TRUE
+  )
+})
+
+
+test_that("Appendix C2 maps the actual within-state identifying variation", {
+  panel <- data.frame(
+    district_panel_id = paste0("d", 1:6),
+    state_code_2001 = rep(c("01", "02"), each = 3L),
+    ling_distance_nonzero_mean = c(1, 2, 4, 10, 13, 15),
+    emi_exposure_all_children_0708 = c(2, 8, 11, 20, 24, 35),
+    stringsAsFactors = FALSE
+  )
+  residuals <- appendix_c2_within_state_residual_data(panel)
+  expect_equal(nrow(residuals), 2L * nrow(panel))
+  for (measure in unique(residuals$measure_id)) {
+    x <- residuals[residuals$measure_id == measure, , drop = FALSE]
+    state_means <- tapply(x$residual, x$state_code_2001, mean)
+    expect_true(all(abs(state_means) < 1e-12))
+    expect_equal(stats::sd(x$residual_sd), 1, tolerance = 1e-12)
+  }
+})
+
+
+test_that("Appendix C4 summarizes registered geography, scale, and influence checks", {
+  added <- function(kind) {
+    data.frame(
+      adjustment_id = c("main", "region_main"),
+      baseline_excluded_instrument_f = c(14, 3),
+      n = c(500L, 500L), status = "estimated",
+      stringsAsFactors = FALSE
+    )
+  }
+  h <- added("hindi")
+  h$hindi_belt_excluded_instrument_f <- c(9, 3.1)
+  cp <- added("child")
+  cp$augmented_excluded_instrument_f <- c(13.5, 3.2)
+  hindi <- structure(list(summary = h), class = "emi_hindi_belt_first_stage")
+  child <- structure(list(summary = cp), class = "emi_child_population_first_stage")
+  absorption <- structure(
+    list(
+      state_deletion = data.frame(
+        omitted_state = c("01", "02", "03"),
+        excluded_instrument_f = c(0.4, 1.2, 0.8), stringsAsFactors = FALSE
+      ),
+      district_influence = data.frame(
+        state_code_2001 = c("01", "02"), district_code_2001 = c("001", "002"),
+        cooks_distance = c(0.1, 0.3), instrument_dfbeta = c(-0.4, 0.2),
+        stringsAsFactors = FALSE
+      )
+    ),
+    class = "emi_first_stage_absorption"
+  )
+  out <- appendix_c4_geographic_scale_sensitivity(absorption, hindi, child)
+  csv <- attr(out, "csv_data")
+  expect_equal(nrow(csv), 8L)
+  expect_setequal(csv$section, c("Added controls", "Leave-one-state-out", "District influence"))
+  expect_equal(sum(csv$diagnostic == "Hindi-belt indicator"), 2L)
+  expect_equal(sum(csv$diagnostic == "Child population"), 2L)
+})
+
+
+test_that("Appendix C5-C6 summarize registered linguistic alternatives without model dumping", {
+  constructions <- c("nonzero_mean", "top3_legacy", "distant_share", "glottolog_mean", "dyen_noncognate")
+  adjustments <- c("unadjusted", "region_main", "state_main")
+  grid <- expand.grid(adjustment_id = adjustments, construction_id = constructions, stringsAsFactors = FALSE)
+  grid$specification_id <- paste(grid$adjustment_id, grid$construction_id, sep = "__")
+  grid$adjustment <- grid$adjustment_id
+  grid$construction <- grid$construction_id
+  grid$joint_excluded_f <- seq_len(nrow(grid))
+  grid$joint_excluded_p <- 0.5
+  grid$partial_r_squared <- 0.01
+  grid$n <- 500L
+
+  c5_input <- structure(list(summary = grid), class = "emi_alternative_distance_first_stages")
+  c5 <- appendix_c5_alternative_scalar_distances(c5_input)
+  expect_equal(nrow(attr(c5, "csv_data")), 15L)
+  expect_setequal(attr(c5, "csv_data")$construction_id, constructions)
+
+  thresholds <- linguistic_mapping_coverage_thresholds()
+  coverage <- data.frame(
+    specification_id = "state_main__nonzero_mean",
+    minimum_mapped_share = thresholds,
+    joint_excluded_f = seq_along(thresholds), partial_r_squared = 0.01,
+    n = 450L, stringsAsFactors = FALSE
+  )
+  composition_ids <- c(
+    "nonzero_mean_hindi_urdu", "nonzero_mean_hindi_urdu_separate",
+    "nonzero_mean_sensitivity_low", "nonzero_mean_sensitivity_high",
+    "distance_shares_all", "distance_shares_all_unmapped", "distance_shares_mapped"
+  )
+  composition <- data.frame(
+    specification_id = paste("state_main", composition_ids, sep = "__"),
+    construction = composition_ids,
+    joint_excluded_f = seq_along(composition_ids) + 10,
+    partial_r_squared = 0.02, n = 450L, stringsAsFactors = FALSE
+  )
+  leave_one <- data.frame(
+    omitted_distance4_language = c("Kashmiri", "Sindhi"),
+    joint_excluded_f = c(0.5, 0.7), partial_r_squared = c(0.001, 0.002),
+    n = c(450L, 450L), stringsAsFactors = FALSE
+  )
+  distance4 <- data.frame(
+    mother_tongue = c("Kashmiri", "Sindhi"),
+    speaker_share_of_distance4 = c(55, 45), stringsAsFactors = FALSE
+  )
+  c6_input <- structure(
+    list(
+      summary = composition,
+      coverage_sensitivity = coverage,
+      distance4_leave_one_out = leave_one,
+      distance4_languages = distance4
+    ),
+    class = "emi_alternative_distance_first_stages"
+  )
+  c6 <- appendix_c6_mapping_composition_sensitivity(c6_input)
+  csv <- attr(c6, "csv_data")
+  expect_equal(nrow(csv), length(thresholds) + 1L + nrow(leave_one) + length(composition_ids))
+  expect_setequal(
+    csv$section,
+    c("Mapping coverage", "Distance-4 composition", "Distance-4 leave-one-out", "Language composition / richer vectors")
+  )
+  expect_lt(nrow(csv), 25L)
+})

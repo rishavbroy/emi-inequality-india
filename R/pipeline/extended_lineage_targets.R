@@ -119,20 +119,8 @@ extended_lineage_target_definitions <- function() {
     # Extended mode only persists the full forensic bundle.
     tar_target(diag_ext_first_stage_absorption, save_first_stage_absorption_diagnostics(first_stage_absorption_diagnostics)),
     tar_target(
-      hindi_belt_first_stage_diagnostics,
-      diagnose_hindi_belt_first_stage(
-        district_panel, control_registry = census_2001_control_registry
-      )
-    ),
-    tar_target(
       diag_ext_hindi_belt_first_stage,
       save_hindi_belt_first_stage_diagnostics(hindi_belt_first_stage_diagnostics)
-    ),
-    tar_target(
-      child_population_first_stage_diagnostics,
-      diagnose_child_population_first_stage(
-        district_panel, control_registry = census_2001_control_registry
-      )
     ),
     tar_target(
       diag_ext_child_population_first_stage,

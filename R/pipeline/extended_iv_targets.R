@@ -558,12 +558,9 @@ extended_iv_target_definitions <- function() {
     ),
     tar_target(
       alternative_distance_first_stages,
-      augment_alternative_distance_diagnostics(
-        alternative_distance_first_stage_base,
-        alternative_distance_augmentation_panel,
-        census_2001_languages,
-        glottolog = glottolog_5_3,
-        glottolog_crosswalk = census_glottolog_crosswalk
+      augment_alternative_distance_inference_diagnostics(
+        alternative_distance_measurement_diagnostics,
+        alternative_distance_augmentation_panel
       )
     ),
     tar_target(

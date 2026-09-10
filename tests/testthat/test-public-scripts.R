@@ -939,7 +939,7 @@ test_that("public audit caches requested diagnostics before rendering public out
   expect_lt(diagnostics_line, public_line)
 })
 
-test_that("reviewed primary lineage is public and alternatives remain diagnostic", {
+test_that("reviewed lineage variants have one analytical owner and extended mode is forensic", {
   core <- repo_core_target_text()
   extended <- repo_extended_target_text()
 
@@ -949,16 +949,27 @@ test_that("reviewed primary lineage is public and alternatives remain diagnostic
     fixed = TRUE
   )
   expect_match(core, "save_processed_district_panel(district_panel)", fixed = TRUE)
-  expect_false(grepl("tar_target(iv_formulas", core, fixed = TRUE))
-  expect_false(grepl("tar_target(iv_models", core, fixed = TRUE))
-  expect_false(grepl("tar_target(first_stage_tests", core, fixed = TRUE))
   expect_match(core, "public_iv_specification_registry(census_2001_control_registry)", fixed = TRUE)
   expect_match(core, "iv_specification_formulas(public_iv_specifications)", fixed = TRUE)
   expect_match(core, "estimate_2sls(district_panel, revised_iv_formulas, cfg)", fixed = TRUE)
-  expect_match(extended, "estimate_2sls(district_panel_conservative, revised_iv_formulas, cfg)", fixed = TRUE)
-  expect_match(extended, "estimate_2sls(district_panel_legacy, legacy_iv_formulas, cfg)", fixed = TRUE)
+
+  expect_match(
+    repo_target_command("iv_models_conservative"),
+    "estimate_2sls(district_panel_conservative, revised_iv_formulas, cfg)",
+    fixed = TRUE
+  )
+  expect_match(
+    repo_target_command("iv_models_conservative_legacy_spec"),
+    "estimate_2sls(district_panel_conservative, legacy_iv_formulas, cfg)",
+    fixed = TRUE
+  )
+  expect_match(core, "lineage_panel_variant_review", fixed = TRUE)
+  expect_false(grepl(
+    "estimate_2sls(district_panel_conservative, revised_iv_formulas, cfg)",
+    extended, fixed = TRUE
+  ))
   expect_match(extended, "iv_models_conservative_legacy_spec", fixed = TRUE)
-  expect_match(extended, "attach_census_2001_controls", fixed = TRUE)
+  expect_match(extended, "diag_ext_lineage_panel_variants", fixed = TRUE)
   expect_match(extended, "diag_ext_lineage_downstream", fixed = TRUE)
 })
 
@@ -1565,7 +1576,7 @@ test_that("paper conversion-complements evidence promotes only the required EC05
   expect_false(grepl("paper_schooling_welfare =", repo_text("R", "output", "make_tables.R"), fixed = TRUE))
 })
 
-test_that("paper identification boundary promotes only the bounded alternative-distance first stage", {
+test_that("paper identification boundary and Appendix C share bounded core diagnostics", {
   targets <- repo_text("_targets.R")
   core_identification <- repo_text("R", "pipeline", "core_identification_targets.R")
   extended_iv <- repo_text("R", "pipeline", "extended_iv_targets.R")
@@ -1579,8 +1590,8 @@ test_that("paper identification boundary promotes only the bounded alternative-d
     "tar_target(\\n      alternative_distance_first_stage_base,",
     extended_iv, fixed = TRUE
   ))
-  expect_match(extended_iv, "augment_alternative_distance_diagnostics(", fixed = TRUE)
-  expect_match(extended_iv, "alternative_distance_first_stage_base", fixed = TRUE)
+  expect_match(extended_iv, "augment_alternative_distance_inference_diagnostics(", fixed = TRUE)
+  expect_match(extended_iv, "alternative_distance_measurement_diagnostics", fixed = TRUE)
   expect_match(core_public, "paper_identification_boundary", fixed = TRUE)
   expect_match(core_public, "out$paper_identification_boundary", fixed = TRUE)
   expect_match(paper_new, "paper_identification_boundary.tex", fixed = TRUE)
@@ -1721,4 +1732,49 @@ test_that("Appendix B/C validation exhibits are strict outputs with single analy
 
   module <- repo_text("R", "output", "appendix_validation_identification_exhibits.R")
   expect_false(grepl("lm\\(|fixest::|feols\\(|ivreg\\(", module))
+})
+
+
+test_that("Appendix C1-C6 are strict summaries with measurement diagnostics core-owned", {
+  core_id <- repo_text("R", "pipeline", "core_identification_targets.R")
+  extended_id <- repo_text("R", "pipeline", "extended_iv_targets.R")
+  core_lineage <- repo_text("R", "pipeline", "core_lineage_targets.R")
+  extended_lineage <- repo_text("R", "pipeline", "extended_lineage_targets.R")
+  core_public <- repo_text("R", "pipeline", "core_public_targets.R")
+  contract <- repo_text("scripts", "public_output_contract.R")
+  module <- repo_text("R", "output", "appendix_identification_exhibits.R")
+
+  expect_match(core_id, "alternative_distance_measurement_diagnostics", fixed = TRUE)
+  expect_match(core_id, "hindi_belt_first_stage_diagnostics", fixed = TRUE)
+  expect_match(core_id, "child_population_first_stage_diagnostics", fixed = TRUE)
+  expect_false(grepl(
+    "tar_target(\n      hindi_belt_first_stage_diagnostics,", extended_lineage, fixed = TRUE
+  ))
+  expect_false(grepl(
+    "tar_target(\n      child_population_first_stage_diagnostics,", extended_lineage, fixed = TRUE
+  ))
+  expect_match(extended_lineage, "save_hindi_belt_first_stage_diagnostics", fixed = TRUE)
+  expect_match(extended_lineage, "save_child_population_first_stage_diagnostics", fixed = TRUE)
+  expect_match(
+    extended_id,
+    "augment_alternative_distance_inference_diagnostics(\n        alternative_distance_measurement_diagnostics",
+    fixed = TRUE
+  )
+  expect_false(grepl(
+    "augment_alternative_distance_measurement_diagnostics(", extended_id, fixed = TRUE
+  ))
+  expect_match(core_public, "appendix_identification_files", fixed = TRUE)
+
+  for (path in c(
+    "appendix_c1_full_absorption_ladder.tex",
+    "appendix_c2_residual_geography.pdf",
+    "appendix_c3_control_block_absorption.tex",
+    "appendix_c4_geographic_scale_sensitivity.tex",
+    "appendix_c5_alternative_scalar_distances.tex",
+    "appendix_c6_mapping_composition_sensitivity.tex"
+  )) expect_match(contract, path, fixed = TRUE)
+
+  expect_false(grepl("lm\\(|fixest::|feols\\(|ivreg\\(", module))
+  expect_match(module, "values - ave(values", fixed = TRUE)
+  expect_match(core_lineage, "lineage_panel_variant_review", fixed = TRUE)
 })

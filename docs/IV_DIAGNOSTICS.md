@@ -121,6 +121,34 @@ the remaining variation.
 
 The expanded control-intervention family distinguishes **semantic specifications** from **execution specifications**. Fifty-five named absorption questions are retained for scientific governance, but exact formula/sample aliases are fitted only once through the canonical IV-signature de-duplicator. The current registry therefore maps 55 scientific questions to 49 unique executions. `first_stage_absorption_aliases.csv` records the mapping, while `first_stage_absorption_semantic_summary.csv` joins every named question back to the corresponding fitted estimate, partial R-squared, excluded-instrument F statistic, and other execution diagnostics. This keeps the specification audit comprehensive without duplicating regressions or forcing reviewers to join artifacts manually.
 
+
+## Final Appendix C identification summaries
+
+The final appendix does not expose the diagnostic directory one CSV at a time.
+C1--C6 summarize the existing registered identification evidence into six
+reader-facing questions: the full semantic absorption ladder; within-state
+residual geography; symmetric control-block interventions; Hindi-belt, child-
+population, state-deletion, and influence sensitivity; scalar alternative
+distances; and mapping/language-composition sensitivity. The output builders
+reshape canonical diagnostics only and contain no regression estimator.
+
+`augment_alternative_distance_measurement_diagnostics()` owns the linguistic
+measurement/composition augmentation needed by C6.
+`augment_alternative_distance_inference_diagnostics()` owns weak-IV outcomes,
+Anderson--Rubin, overidentification/FAS, and monotonicity. The compatibility
+wrapper composes the two for callers that genuinely need the complete forensic
+bundle. This separation prevents the strict publication graph from pulling in
+outcome-side weak-IV inference merely to draw a language-measurement table, while
+ensuring extended mode reuses rather than recomputes the final-paper measurement
+objects.
+
+C2 deliberately uses direct within-state demeaning for both linguistic distance
+and all-child EMI, then reports residuals in standard-deviation units. This is an
+exact descriptive transformation, not a new fitted model, and it matches the
+identification question posed by state absorption. The older poster residual maps
+use a six-region-plus-expanded-controls residualization and are therefore not
+substitutes for C2.
+
 ## Symmetric control evidence and bounded consumption robustness
 
 The expanded first-stage control audit is diagnostic rather than a model-selection exercise. In the realized 2007-08 EMI first stage, theory-motivated substitutions can materially improve the six-region specification (for example, literacy plus decomposed economic structure produces an excluded-instrument F near 10, and omitting the human-capital block produces an F near 6.4), but the corresponding state-FE designs remain weak (roughly 1.8 and 1.6). The registered scalar linguistic alternatives are weaker still by the effective-F criterion: the six region/state × Shastry/Glottolog/Dyen candidate designs have effective F statistics of roughly 0.07--3.33 against a critical value near 23.1. These results are evidence about where relevance is absorbed; they do not justify promoting the strongest region/control specification.

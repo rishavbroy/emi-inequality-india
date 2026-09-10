@@ -623,10 +623,14 @@ save_table_tex <- function(table, path, name, public = TRUE) {
     "appendix_a6_linguistic_measures", "appendix_a7_consumption_construction",
     "appendix_a8_other_outcome_panels",
     "appendix_b1_lineage_readiness", "appendix_b2_lineage_sensitivity", "appendix_b3_consumption_reconstruction", "appendix_b4_hces_consistency_summary", "appendix_b6_language_source_validation",
-    "appendix_b8_census_universe_reconciliation", "appendix_b9_dise_publication_validation", "appendix_c7_historical_balance",
+    "appendix_b8_census_universe_reconciliation", "appendix_b9_dise_publication_validation",
+    "appendix_c1_full_absorption_ladder", "appendix_c3_control_block_absorption",
+    "appendix_c4_geographic_scale_sensitivity", "appendix_c5_alternative_scalar_distances",
+    "appendix_c6_mapping_composition_sensitivity", "appendix_c7_historical_balance",
     "appendix_c9_historical_first_stage",
     "appendix_e1_selection_sample", "appendix_e4_missingness"
   )
+  appendix_long_table <- identical(name, "appendix_c1_full_absorption_ladder")
   if (!regression_table) {
     names(df_render) <- table_header_labels(df_render, name)
   }
@@ -645,7 +649,7 @@ save_table_tex <- function(table, path, name, public = TRUE) {
     df_render,
     format = "latex",
     booktabs = TRUE,
-    longtable = wide_summary_table || regression_table,
+    longtable = wide_summary_table || regression_table || appendix_long_table,
     label = table_label(name),
     caption = caption_for_latex(name),
     escape = FALSE,
@@ -731,6 +735,11 @@ save_table_tex <- function(table, path, name, public = TRUE) {
       appendix_b6_language_source_validation = c("4.0cm", "1.2cm", "2.7cm", "1.4cm", "3.3cm", "1.6cm"),
       appendix_b8_census_universe_reconciliation = c("1.8cm", "1.2cm", "4.4cm", "2.6cm", "3.6cm", "1.2cm"),
       appendix_b9_dise_publication_validation = c("1.2cm", "2.8cm", "3.0cm", "1.5cm", "1.5cm", "1.3cm", "3.5cm"),
+      appendix_c1_full_absorption_ladder = c("3.7cm", "1.0cm", "3.8cm", "1.1cm", "1.1cm", "1.0cm", "1.4cm", "0.9cm"),
+      appendix_c3_control_block_absorption = c("1.7cm", "3.7cm", "2.1cm", "2.6cm", "2.2cm"),
+      appendix_c4_geographic_scale_sensitivity = c("2.2cm", "3.0cm", "2.8cm", "1.6cm", "2.1cm", "2.2cm"),
+      appendix_c5_alternative_scalar_distances = c("5.0cm", "3.0cm", "1.5cm", "1.7cm", "1.2cm"),
+      appendix_c6_mapping_composition_sensitivity = c("3.0cm", "5.4cm", "2.2cm", "1.4cm", "1.7cm", "1.1cm"),
       appendix_c7_historical_balance = c("2.8cm", "2.5cm", "1.5cm", "1.4cm", "1.4cm", "1.2cm"),
       appendix_c9_historical_first_stage = c("5.0cm", "1.5cm", "1.9cm", "1.5cm", "1.9cm", "1.2cm"),
       appendix_e1_selection_sample = c("3.8cm", "1.7cm", "1.2cm", "8.0cm"),
