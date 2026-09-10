@@ -165,8 +165,22 @@ def path_tests(path):
             "test-output-tables.R",
             "test-public-scripts.R",
         },
+        "R/pipeline/core_census_development_targets.R": {
+            "test-census-households.R",
+            "test-census-housing.R",
+            "test-census-migration.R",
+            "test-output-tables.R",
+            "test-public-scripts.R",
+            "test-raw-file-manifest.R",
+        },
         "R/pipeline/core_economic_census_targets.R": {
             "test-economic-census.R",
+            "test-output-tables.R",
+            "test-public-scripts.R",
+            "test-raw-file-manifest.R",
+        },
+        "R/pipeline/core_labor_targets.R": {
+            "test-nss-labor.R",
             "test-output-tables.R",
             "test-public-scripts.R",
             "test-raw-file-manifest.R",

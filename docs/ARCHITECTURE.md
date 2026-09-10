@@ -294,3 +294,9 @@ when a publication artifact requires its scientific result; larger robustness
 families remain extended unless the paper consumes them. Keeping the base object
 shared avoids two independently maintained versions of the same first-stage
 exercise while preserving an inexpensive strict graph.
+
+### Paper-facing local development versus extended outcome diagnostics
+
+The main-paper local-development synthesis is built from existing domain estimators rather than a new cross-domain regression engine. `core_census_development_target_definitions()` owns only the Census migration, housing, and household-capacity analytical objects consumed by the synthesis; `core_economic_census_target_definitions()` owns the registered 2005-13 Economic Census analytical object; and `core_labor_target_definitions()` owns the primary NSS66 and PLFS 2017-18 labor objects. Their full measurement bundles, conservative geography variants, weak-IV grids, and persisted reviewer diagnostics remain in the extended factories.
+
+This boundary follows the publication-dependency rule rather than the age of a module or whether raw inputs are redistributed. The table intentionally combines heterogeneous native-unit reduced forms and retains null rows; it therefore reshapes already-registered results and never standardizes them onto a synthetic common scale. Census 2001-11 and Economic Census 2005-13 changes are documented as co-evolving local-development margins because their windows overlap the 2007 schooling measurement.

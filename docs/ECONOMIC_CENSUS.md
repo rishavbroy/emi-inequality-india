@@ -1,6 +1,6 @@
 # Economic Census source contract
 
-The official Fifth Economic Census archive is a strict publication input for Table 5's predetermined 2005 IT-employment-environment check. Only this baseline chain is core; EC05-EC13 longitudinal measurement and broader mechanism diagnostics remain extended until a main-paper exhibit consumes them.
+The official Fifth Economic Census archive is a strict publication input for Table 5's predetermined 2005 IT-employment-environment check. The exact EC05 IT baseline and the registered EC05-EC13 longitudinal analytical object are core because main-paper exhibits consume them; full longitudinal diagnostic persistence remains extended.
 
 ## Production sources
 
@@ -12,7 +12,7 @@ The raw Fifth Economic Census archive under `data/raw/ec/` is used only for the 
 
 ## Canonical measure semantics
 
-The active EC05 adapter retains only a predeclared core needed for later firm-location and labor-demand mechanisms:
+The active EC05 adapter retains only a predeclared core needed for the registered local-development outcomes:
 
 - total non-farm employment;
 - total establishments;
@@ -54,7 +54,7 @@ The local source inventory now also contains SHRUG EC90 and EC98 archives. EC90 
 
 ## Inference boundary
 
-The longitudinal firm-mechanism family is predeclared at six outcomes: log non-farm employment growth, log establishment growth, hired- and private-employment share changes, services-employment share change, and manufacturing-employment share change (secondary). Female employment share, mean employment per firm, and EC05-only informal employment remain descriptive. Models reuse the shared post-treatment mechanism inference layer, including common-sample enforcement, the registered IV design grid, state-clustered inference, Holm correction, effective-F diagnostics, and Anderson-Rubin confidence sets.
+The longitudinal local-development family is predeclared at six outcomes: log non-farm employment growth, log establishment growth, hired- and private-employment share changes, services-employment share change, and manufacturing-employment share change (secondary). Female employment share, mean employment per firm, and EC05-only informal employment remain descriptive. Models reuse the shared post-treatment mechanism inference layer, including common-sample enforcement, the registered IV design grid, state-clustered inference, Holm correction, effective-F diagnostics, and Anderson-Rubin confidence sets.
 
 ## Fifth-EC computer/IT opportunity baseline
 

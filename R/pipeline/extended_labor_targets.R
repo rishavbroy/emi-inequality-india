@@ -3,197 +3,80 @@
 extended_labor_target_definitions <- function() {
   list(
     tar_target(
-      plfs_labor_contract_file,
-      path_project(paths, "data/metadata/plfs_labor_contracts.csv"),
-      format = "file"
-    ),
-    tar_target(plfs_labor_contracts, read_plfs_labor_contracts(plfs_labor_contract_file)),
-    tar_target(
-      plfs_2017_18_source_package,
-      inspect_plfs_2017_18_source_package(paths),
-      cue = tar_cue(mode = "always")
-    ),
-    tar_target(
-      plfs_2017_18_conversion_contract,
-      read_nesstar_conversion_contract("plfs_2017_18")
-    ),
-    tar_target(
-      plfs_2017_18_materialization,
-      inspect_nesstar_materialization(plfs_2017_18_conversion_contract),
-      cue = tar_cue(mode = "always")
-    ),
-    tar_target(
-      plfs_2017_18_materialization_diagnostics,
-      build_nesstar_materialization_diagnostics(plfs_2017_18_materialization)
-    ),
-    tar_target(
-      plfs_2017_18_usual_activity_source,
-      if (isTRUE(plfs_2017_18_materialization$ready)) {
-        read_plfs_2017_18_materialized_persons(
-          plfs_2017_18_materialization,
-          plfs_labor_contracts[plfs_labor_contracts$wave_id == "plfs_2017_18", , drop = FALSE]
-        )
-      } else {
-        NULL
-      }
-    ),
-    tar_target(
-      plfs_2017_18_lineaged_primary,
-      if (is.null(plfs_2017_18_usual_activity_source)) {
-        NULL
-      } else {
-        attach_plfs_2017_18_reviewed_lineage(
-          plfs_2017_18_usual_activity_source,
-          district_lineage$primary_source_crosswalk,
-          variant = "primary"
-        )
-      }
-    ),
-    tar_target(
       plfs_2017_18_lineaged_conservative,
-      if (is.null(plfs_2017_18_usual_activity_source)) {
-        NULL
-      } else {
-        attach_plfs_2017_18_reviewed_lineage(
-          plfs_2017_18_usual_activity_source,
-          district_lineage$conservative_source_crosswalk,
-          variant = "deterministic"
-        )
-      }
-    ),
-    tar_target(
-      plfs_2017_18_diagnostics,
-      if (is.null(plfs_2017_18_usual_activity_source)) {
-        NULL
-      } else {
-        build_plfs_2017_18_diagnostics(
-          plfs_2017_18_usual_activity_source,
-          plfs_2017_18_lineaged_primary,
-          "primary"
-        )
-      }
+      attach_plfs_2017_18_reviewed_lineage(
+        plfs_2017_18_usual_activity_source,
+        district_lineage$conservative_source_crosswalk,
+        variant = "deterministic"
+      )
     ),
     tar_target(
       plfs_2017_18_conservative_diagnostics,
-      if (is.null(plfs_2017_18_usual_activity_source)) {
-        NULL
-      } else {
-        build_plfs_2017_18_diagnostics(
-          plfs_2017_18_usual_activity_source,
-          plfs_2017_18_lineaged_conservative,
-          "conservative"
-        )
-      }
-    ),
-    tar_target(
-      plfs_2017_18_district_outcomes,
-      if (is.null(plfs_2017_18_diagnostics)) {
-        NULL
-      } else {
-        estimate_nss_labor_district_outcomes(
-          plfs_2017_18_lineaged_primary,
-          plfs_2017_18_diagnostics$target_support,
-          plfs_2017_18_outcome_registry(),
-          label = "PLFS 2017-18 labor"
-        )
-      }
+      build_plfs_2017_18_diagnostics(
+        plfs_2017_18_usual_activity_source,
+        plfs_2017_18_lineaged_conservative,
+        "conservative"
+      )
     ),
     tar_target(
       plfs_2017_18_conservative_district_outcomes,
-      if (is.null(plfs_2017_18_conservative_diagnostics)) {
-        NULL
-      } else {
-        estimate_nss_labor_district_outcomes(
-          plfs_2017_18_lineaged_conservative,
-          plfs_2017_18_conservative_diagnostics$target_support,
-          plfs_2017_18_outcome_registry(),
-          label = "PLFS 2017-18 conservative labor"
-        )
-      }
-    ),
-    tar_target(
-      plfs_2017_18_labor_mechanism,
-      if (is.null(plfs_2017_18_district_outcomes)) {
-        NULL
-      } else {
-        build_labor_mechanism_inference(
-          district_panel,
-          plfs_2017_18_district_outcomes$estimates,
-          wave_id = "plfs_2017_18",
-          cfg = cfg,
-          control_registry = census_2001_control_registry
-        )
-      }
+      estimate_nss_labor_district_outcomes(
+        plfs_2017_18_lineaged_conservative,
+        plfs_2017_18_conservative_diagnostics$target_support,
+        plfs_2017_18_outcome_registry(),
+        label = "PLFS 2017-18 conservative labor"
+      )
     ),
     tar_target(
       plfs_2017_18_conservative_labor_mechanism,
-      if (is.null(plfs_2017_18_conservative_district_outcomes)) {
-        NULL
-      } else {
-        build_labor_mechanism_inference(
-          district_panel,
-          plfs_2017_18_conservative_district_outcomes$estimates,
-          wave_id = "plfs_2017_18",
-          cfg = cfg,
-          control_registry = census_2001_control_registry,
-          sample_suffix = "conservative"
-        )
-      }
+      build_labor_mechanism_inference(
+        district_panel,
+        plfs_2017_18_conservative_district_outcomes$estimates,
+        wave_id = "plfs_2017_18",
+        cfg = cfg,
+        control_registry = census_2001_control_registry,
+        sample_suffix = "conservative"
+      )
     ),
     tar_target(
       diag_ext_plfs_2017_18_labor_mechanism_files,
-      if (is.null(plfs_2017_18_labor_mechanism)) character() else
-        save_labor_mechanism_inference(plfs_2017_18_labor_mechanism, "plfs_2017_18"),
+      save_labor_mechanism_inference(plfs_2017_18_labor_mechanism, "plfs_2017_18"),
       format = "file"
     ),
     tar_target(
       diag_ext_plfs_2017_18_conservative_labor_mechanism_files,
-      if (is.null(plfs_2017_18_conservative_labor_mechanism)) character() else
-        save_labor_mechanism_inference(
-          plfs_2017_18_conservative_labor_mechanism, "plfs_2017_18_conservative"
-        ),
+      save_labor_mechanism_inference(
+        plfs_2017_18_conservative_labor_mechanism, "plfs_2017_18_conservative"
+      ),
       format = "file"
     ),
     tar_target(
       plfs_2017_18_variant_comparison,
-      if (is.null(plfs_2017_18_district_outcomes) ||
-          is.null(plfs_2017_18_conservative_district_outcomes)) {
-        NULL
-      } else {
-        build_labor_variant_comparison(
-          plfs_2017_18_district_outcomes$estimates,
-          plfs_2017_18_conservative_district_outcomes$estimates
-        )
-      }
+      build_labor_variant_comparison(
+        plfs_2017_18_district_outcomes$estimates,
+        plfs_2017_18_conservative_district_outcomes$estimates
+      )
     ),
     tar_target(
       diag_ext_plfs_2017_18_source_validation_files,
-      if (is.null(plfs_2017_18_diagnostics)) {
-        diag_ext_plfs_2017_18_materialization_file
-      } else {
-        c(
-          save_plfs_2017_18_diagnostics(
-            plfs_2017_18_diagnostics, plfs_2017_18_district_outcomes
-          ),
-          save_nss_labor_diagnostics(
-            plfs_2017_18_conservative_diagnostics,
-            "plfs_2017_18_conservative",
-            plfs_2017_18_conservative_district_outcomes
-          )
+      c(
+        save_plfs_2017_18_diagnostics(
+          plfs_2017_18_diagnostics, plfs_2017_18_district_outcomes
+        ),
+        save_nss_labor_diagnostics(
+          plfs_2017_18_conservative_diagnostics,
+          "plfs_2017_18_conservative",
+          plfs_2017_18_conservative_district_outcomes
         )
-      },
+      ),
       format = "file"
     ),
     tar_target(
       diag_ext_plfs_2017_18_variant_comparison_file,
-      if (is.null(plfs_2017_18_variant_comparison)) {
-        character()
-      } else {
-        save_labor_variant_comparison(
-          plfs_2017_18_variant_comparison,
-          "plfs_2017_18_variant_comparison.csv"
-        )
-      }
+      save_labor_variant_comparison(
+        plfs_2017_18_variant_comparison,
+        "plfs_2017_18_variant_comparison.csv"
+      )
     ),
     tar_target(
       diag_ext_plfs_2017_18_source_package_file,
@@ -208,48 +91,6 @@ extended_labor_target_definitions <- function() {
       format = "file"
     ),
     tar_target(
-      nss66_eus_ddi_file,
-      manifest_file_by_id(paths, "nss_2009_10_employment", "nss66_eus_ddi", "NSS66 EUS DDI"),
-      format = "file"
-    ),
-    tar_target(
-      nss66_eus_ddi_contract,
-      read_nss66_eus_ddi_contract(nss66_eus_ddi_file)
-    ),
-    tar_target(
-      nss66_conversion_contract,
-      read_nss66_conversion_contract()
-    ),
-    tar_target(
-      nss66_materialization,
-      inspect_nesstar_materialization(nss66_conversion_contract),
-      cue = tar_cue(mode = "always")
-    ),
-    tar_target(
-      nss66_usual_activity_source,
-      if (isTRUE(nss66_materialization$ready)) {
-        read_nss66_materialized_usual_activity(
-          nss66_materialization, nss66_eus_ddi_contract, nss66_conversion_contract
-        )
-      } else {
-        NULL
-      }
-    ),
-    tar_target(
-      nss66_lineaged_usual_activity,
-      if (is.null(nss66_usual_activity_source)) {
-        NULL
-      } else {
-        attach_nss66_reviewed_lineage(
-          nss66_usual_activity_source, consumption_lineage_bridge_2009_10_type2
-        )
-      }
-    ),
-    tar_target(
-      nss66_materialization_diagnostics,
-      build_nesstar_materialization_diagnostics(nss66_materialization)
-    ),
-    tar_target(
       diag_ext_nss66_materialization_files,
       save_nesstar_materialization_diagnostics(
         nss66_materialization_diagnostics, "nss66_materialization.csv"
@@ -257,44 +98,8 @@ extended_labor_target_definitions <- function() {
       format = "file"
     ),
     tar_target(
-      nss66_diagnostics,
-      if (is.null(nss66_usual_activity_source)) {
-        NULL
-      } else {
-        build_nss66_diagnostics(nss66_usual_activity_source, nss66_lineaged_usual_activity)
-      }
-    ),
-    tar_target(
-      nss66_district_outcomes,
-      if (is.null(nss66_diagnostics)) {
-        NULL
-      } else {
-        estimate_nss_labor_district_outcomes(
-          nss66_lineaged_usual_activity,
-          nss66_diagnostics$target_support,
-          nss66_outcome_registry(),
-          label = "NSS66 labor"
-        )
-      }
-    ),
-    tar_target(
-      nss66_labor_mechanism,
-      if (is.null(nss66_district_outcomes)) {
-        NULL
-      } else {
-        build_labor_mechanism_inference(
-          district_panel,
-          nss66_district_outcomes$estimates,
-          wave_id = "nss66",
-          cfg = cfg,
-          control_registry = census_2001_control_registry
-        )
-      }
-    ),
-    tar_target(
       diag_ext_nss66_labor_mechanism_files,
-      if (is.null(nss66_labor_mechanism)) character() else
-        save_labor_mechanism_inference(nss66_labor_mechanism, "nss66"),
+      save_labor_mechanism_inference(nss66_labor_mechanism, "nss66"),
       format = "file"
     ),
     tar_target(

@@ -150,7 +150,7 @@ NSS64 labor diagnostics now include a predeclared design-based district outcome 
 
 ### NSS66 proprietary microdata
 
-The NSS66 employment/unemployment source is distributed as a `.Nesstar` container with companion DDI XML. Extended diagnostics validate the DDI directly. Before activating NSS66 person-level estimation, convert the container with the maintained `nesstar-converter` package rather than adding a repository-specific binary parser, then inspect the generated F4/F5/F6 tables against the DDI case counts and schema.
+The NSS66 employment/unemployment source is distributed as a `.Nesstar` container with companion DDI XML. The final-paper local-development synthesis now consumes the primary NSS66 labor object, so its contracted materialization is a strict publication prerequisite rather than an optional extended diagnostic. Convert the container with the maintained `nesstar-converter` package rather than adding a repository-specific binary parser, then inspect the generated F4/F5/F6 tables against the DDI case counts and schema.
 
 The canonical adapter uses the original schedule geography fields (`State_Region` and `District`) rather than catalog-generated `STATE`/`DISTRICT_CODE` helper columns. `State_Region` encodes the two-digit state followed by the one-digit NSS region; the adapter derives state from that field and keeps `District` as the survey district code. This avoids treating redundant catalog foreign-key fields as an undocumented equality constraint.
 
@@ -222,21 +222,20 @@ revisits into the annual usual-status sample.
 
 The full audit discovers this gitignored PLFS materialization on every run and
 writes `outputs/diagnostics/extended/labor/plfs_2017_18_materialization.csv`.
-Before conversion it records the expected non-error `not_materialized` state. A
-partial F1 materialization or a missing/mismatched conversion manifest is a hard
-error. Once F1 and its sidecar validate, inspect the realized table's multiplier,
-geography, design, person-identity, and status distributions before adding the
-canonical PLFS adapter. The audit records provenance without packaging the large
-local interim CSV in `review.zip`.
+Because the final-paper synthesis consumes the primary PLFS labor object, a missing
+or partial F1 materialization, or a missing/mismatched conversion manifest, is now a
+strict build error. Once F1 and its sidecar validate, inspect the realized table's
+multiplier, geography, design, person-identity, and status distributions. The audit
+records provenance without packaging the large local interim CSV in `review.zip`.
 
 
-After `plfs_2017_18` materialization is `ready`, the extended labor audit reads only the contracted F1 columns, applies the official annual multiplier rule from the bundled PLFS 2017-18 README, and constructs the documented first-visit person identity. Preferred geography uses the reviewed 2017-18 `primary_source_crosswalk`; the stricter deterministic `conservative_source_crosswalk` is run separately as a sensitivity. Unrestricted population-allocation rows are not treated as resolved PLFS geography. Deterministic rows inside the primary bridge retain deterministic lineage status, while accepted single-target upgrades are labeled separately. The audit writes the preferred `plfs_2017_18_*` diagnostics/outcomes, parallel `plfs_2017_18_conservative_*` files, and `plfs_2017_18_variant_comparison.csv`, which summarizes coverage and overlapping-estimate sensitivity by outcome.
+After `plfs_2017_18` materialization is `ready`, the core publication analysis reads only the contracted F1 columns, applies the official annual multiplier rule from the bundled PLFS 2017-18 README, and constructs the documented first-visit person identity. Preferred geography uses the reviewed 2017-18 `primary_source_crosswalk`; the stricter deterministic `conservative_source_crosswalk` remains an extended sensitivity. Unrestricted population-allocation rows are not treated as resolved PLFS geography. Deterministic rows inside the primary bridge retain deterministic lineage status, while accepted single-target upgrades are labeled separately. The extended audit persists the preferred `plfs_2017_18_*` diagnostics/outcomes, parallel `plfs_2017_18_conservative_*` files, and `plfs_2017_18_variant_comparison.csv`, which summarizes coverage and overlapping-estimate sensitivity by outcome.
 
-### Labor mechanism inference
+### Labor local-development inference
 
-The design-based labor district outputs are broader than the causal labor family. The registered IV mechanism family is fixed to labor-force participation and employment for NSS66 (`early_post`) and PLFS 2017-18 (`long_run_post`). Both outcomes use the same age-15+ denominator and therefore avoid letting the much thinner unemployment/employed-composition domains determine the common causal sample. NSS64 remains a near-treatment reference only.
+The paper-facing labor family is fixed to labor-force participation and employment for NSS66 (`early_post`) and PLFS 2017-18 (`long_run_post`). Both outcomes use the same age-15+ denominator, avoiding sample selection through the much thinner unemployment/employed-composition domains. The primary NSS66 and PLFS reduced-form objects are strict publication dependencies because their null results are deliberately retained in the broader local-development synthesis; NSS64 remains a near-treatment reference only.
 
-The extended audit routes those registered outcomes through the shared post-treatment mechanism inference layer used elsewhere in the repository. It writes `nss66_mechanism_*` and `plfs_2017_18_mechanism_*` files containing the registry, common-sample coverage, first stage, reduced form, weak-IV/2SLS summaries, and Anderson-Rubin grids. The PLFS deterministic geography sensitivity is written separately under the `plfs_2017_18_conservative_mechanism_*` prefix. These files are diagnostics/reviewer evidence; they do not alter the preferred control set or treat post-treatment labor outcomes as controls.
+The shared post-treatment inference layer still computes the accompanying first-stage, weak-IV/2SLS, and Anderson-Rubin objects, but the paper uses these labor results as descriptive reduced-form evidence rather than as identified EMI mechanisms. Extended diagnostics persist `nss66_mechanism_*` and `plfs_2017_18_mechanism_*` bundles and write the deterministic PLFS geography sensitivity separately under the `plfs_2017_18_conservative_mechanism_*` prefix. These files are diagnostics/reviewer evidence; they do not alter the preferred control set or treat later labor outcomes as controls.
 ### Cross-family post-treatment mechanism evidence
 
 Extended diagnostics write compact cross-family mechanism summaries to `outputs/diagnostics/extended/mechanisms/evidence_grid.csv` and `family_summary.csv`. These combine only families already routed through the shared post-treatment mechanism engine; they do not reinterpret descriptive household/worker outputs as causal mediation. Pointwise Anderson--Rubin inversion grids remain cached in the corresponding target objects and are not serialized, because the persisted weak-IV tables already contain the beta-zero test, confidence-set bounds/components, grid truncation, disconnection, and zero-containment fields needed for review.

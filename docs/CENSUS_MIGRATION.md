@@ -4,7 +4,7 @@ This module starts the migration/sorting branch of the project with Census D-ser
 
 ## Current production scope
 
-Extended diagnostics currently use:
+The publication analysis and extended diagnostics use:
 
 - Census 2001 **D-02**: migrants classified by place of last residence, sex, and duration of residence in the place of enumeration;
 - Census 2011 **D-02**: the corresponding origin/duration table;
@@ -134,7 +134,7 @@ Balance is reported for the live candidate IV designs (region and state fixed ef
 
 A separate first-stage sensitivity compares the primary scalar linguistic-distance first stage under region and state fixed effects with and without the three population-denominated migration controls. Baseline and migration-adjusted specifications are estimated on one common complete-case sample, so changes in the excluded-instrument F statistic or partial R-squared cannot be attributed to sample composition. The migration controls remain a registered sensitivity block; they are not added to the preferred specification automatically.
 
-## Registered 2011 mechanism reduced forms
+## Registered 2011 local-development reduced forms
 
 The first regression layer for post-treatment migration mechanisms is intentionally a reduced-form layer rather than a table of weak-IV 2SLS coefficients. `census_migration_mechanism_registry()` declares eight observed outcomes spanning geographic sorting, migration reasons, migrant skill composition, and recent work-migrant skill/origin composition. The registry labels core versus secondary outcomes and records whether the denominator is all migrants or recent work migrants.
 

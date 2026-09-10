@@ -594,7 +594,7 @@ test_that("SHRUG Census-2011 PCA population denominator is manifest-backed", {
 
   row <- manifest[manifest$file_id == "shrug_pca11_population", , drop = FALSE]
   expect_equal(nrow(row), 1L)
-  expect_identical(tolower(as.character(row$required_for_current_pipeline)), "false")
+  expect_identical(tolower(as.character(row$required_for_current_pipeline)), "true")
   expect_identical(row$relative_path, "data/raw/shrug/census_2011/shrug-pca11-csv.zip")
   expect_equal(as.numeric(row$expected_size_bytes), 66532473)
   expect_identical(row$reader_function, "read_census_2011_district_population")
@@ -816,7 +816,7 @@ test_that("district carve-out rounding tolerance is one shared source contract",
   expect_invisible(validate_district_carveout_shares(x))
 })
 
-test_that("SHRUG EC05 is registered as an extended-only source on the organized raw path", {
+test_that("SHRUG EC05 is a required publication source on the organized raw path", {
   root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
   manifest <- readr::read_csv(
     file.path(root, "data", "metadata", "file_manifest.csv"),
@@ -826,7 +826,7 @@ test_that("SHRUG EC05 is registered as an extended-only source on the organized 
 
   expect_equal(nrow(row), 1L)
   expect_identical(row$source_id[[1L]], "shrug_economic_census")
-  expect_false(as.logical(row$required_for_current_pipeline[[1L]]))
+  expect_true(as.logical(row$required_for_current_pipeline[[1L]]))
   expect_identical(row$relative_path[[1L]], "data/raw/shrug/shrug-ec05-csv.zip")
   expect_identical(as.numeric(row$expected_size_bytes[[1L]]), 35220358)
   expect_identical(row$reader_function[[1L]], "read_shrug_ec05_district")
@@ -852,7 +852,7 @@ test_that("Sixth Economic Census DDI is registered as extended source validation
 })
 
 
-test_that("SHRUG EC13 is registered as an extended-only Census-2011 district source", {
+test_that("SHRUG EC13 is a required publication Census-2011 district source", {
   root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
   manifest <- read.csv(
     file.path(root, "data", "metadata", "file_manifest.csv"),
@@ -862,7 +862,7 @@ test_that("SHRUG EC13 is registered as an extended-only Census-2011 district sou
   row <- manifest[manifest$file_id == "shrug_ec13_csv_archive", , drop = FALSE]
   expect_equal(nrow(row), 1L)
   expect_identical(row$source_id[[1L]], "shrug_economic_census")
-  expect_false(as.logical(row$required_for_current_pipeline[[1L]]))
+  expect_true(as.logical(row$required_for_current_pipeline[[1L]]))
   expect_identical(row$relative_path[[1L]], "data/raw/shrug/shrug-ec13-csv.zip")
   expect_identical(row$reader_function[[1L]], "read_shrug_ec13_district")
   expect_equal(row$expected_size_bytes[[1L]], 43127568)
@@ -889,7 +889,7 @@ test_that("NSS64 employment and migration source files use the organized NSS nam
 })
 
 
-test_that("NSS66 proprietary source contract is registered without activating an ad-hoc parser", {
+test_that("NSS66 publication source remains converter-backed without an ad-hoc parser", {
   root <- Sys.getenv("EMI_PROJECT_ROOT", ".")
   manifest <- utils::read.csv(file.path(root, "data", "metadata", "file_manifest.csv"), stringsAsFactors = FALSE)
   rows <- manifest[manifest$file_id %in% c("nss66_eus_ddi", "nss66_eus_nesstar"), , drop = FALSE]
@@ -898,7 +898,7 @@ test_that("NSS66 proprietary source contract is registered without activating an
   expected_sizes <- c(nss66_eus_ddi = 3750760, nss66_eus_nesstar = 533824972)
   expect_equal(stats::setNames(rows$expected_size_bytes, rows$file_id)[names(expected_sizes)], expected_sizes)
   expect_true(all(grepl("^data/raw/nss/NSS 2009-10 Employment and Unemployment 66th Round", rows$relative_path)))
-  expect_false(any(as.logical(rows$required_for_current_pipeline)))
+  expect_true(all(as.logical(rows$required_for_current_pipeline)))
   expect_identical(rows$reader_function[rows$file_id == "nss66_eus_ddi"], "read_nss66_eus_ddi_contract")
   expect_identical(rows$reader_function[rows$file_id == "nss66_eus_nesstar"], "nesstar-converter")
 })
@@ -921,7 +921,7 @@ test_that("PLFS 2017-18 registers the reviewed binary, layout, DDI, and weightin
     stats::setNames(rows$expected_size_bytes, rows$file_id)[names(expected_sizes)],
     expected_sizes
   )
-  expect_false(any(as.logical(rows$required_for_current_pipeline)))
+  expect_true(all(as.logical(rows$required_for_current_pipeline)))
   expect_identical(rows$reader_function[rows$file_id == "plfs1718_ddi"], "read_plfs_2017_18_ddi_contract")
 })
 
