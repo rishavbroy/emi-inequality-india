@@ -1652,3 +1652,25 @@ test_that("final-paper selection missingness is core-owned and extended mode onl
   expect_match(public_contract, "appendix_e4_missingness.tex", fixed = TRUE)
   expect_match(public_contract, "appendix_e5_missingness_predictability.png", fixed = TRUE)
 })
+
+test_that("Appendix A construction exhibits are strict publication artifacts without new estimation", {
+  core_public <- repo_text("R", "pipeline", "core_public_targets.R")
+  appendix_module <- repo_text("R", "output", "appendix_data_construction_exhibits.R")
+  public_contract <- repo_text("scripts", "public_output_contract.R")
+
+  expect_match(core_public, "appendix_data_construction_files", fixed = TRUE)
+  expect_match(core_public, "publication_data_sources_file", fixed = TRUE)
+  expect_match(appendix_module, "district_lineage$mapping_rule_sensitivity", fixed = TRUE)
+  expect_match(appendix_module, "dise_construct_registry()", fixed = TRUE)
+  expect_match(appendix_module, "validate_consumption_survey_registry", fixed = TRUE)
+  expect_false(grepl("lm\\(|fixest::|feols\\(|ivreg\\(", appendix_module))
+
+  for (path in c(
+    "appendix_a1_data_source_timing.tex", "appendix_a2_lineage_logic.pdf",
+    "appendix_a3_lineage_source_hierarchy.tex", "appendix_a4_nss_schooling_constructs.tex",
+    "appendix_a5_dise_construction.tex", "appendix_a6_linguistic_measures.tex",
+    "appendix_a7_consumption_construction.tex", "appendix_a8_other_outcome_panels.tex"
+  )) {
+    expect_match(public_contract, path, fixed = TRUE)
+  }
+})

@@ -618,6 +618,10 @@ save_table_tex <- function(table, path, name, public = TRUE) {
   )
   schooling_market_table <- identical(name, "paper_schooling_market_geography")
   appendix_compact_table <- name %in% c(
+    "appendix_a1_data_source_timing", "appendix_a3_lineage_source_hierarchy",
+    "appendix_a4_nss_schooling_constructs", "appendix_a5_dise_construction",
+    "appendix_a6_linguistic_measures", "appendix_a7_consumption_construction",
+    "appendix_a8_other_outcome_panels",
     "appendix_e1_selection_sample", "appendix_e4_missingness"
   )
   if (!regression_table) {
@@ -710,6 +714,13 @@ save_table_tex <- function(table, path, name, public = TRUE) {
   if (appendix_compact_table) {
     widths <- switch(
       name,
+      appendix_a1_data_source_timing = c("3.8cm", "1.7cm", "3.7cm", "4.5cm"),
+      appendix_a3_lineage_source_hierarchy = c("3.2cm", "5.5cm", "3.2cm", "3.1cm"),
+      appendix_a4_nss_schooling_constructs = c("3.2cm", "3.6cm", "3.7cm", "3.8cm"),
+      appendix_a5_dise_construction = c("5.2cm", "2.8cm", "2.8cm", "3.2cm"),
+      appendix_a6_linguistic_measures = c("3.2cm", "3.6cm", "4.6cm", "2.5cm"),
+      appendix_a7_consumption_construction = c("3.4cm", "1.9cm", "2.2cm", "2.2cm", "3.0cm", "2.0cm"),
+      appendix_a8_other_outcome_panels = c("3.0cm", "2.4cm", "3.8cm", "4.6cm"),
       appendix_e1_selection_sample = c("3.8cm", "1.7cm", "1.2cm", "8.0cm"),
       appendix_e4_missingness = c("4.5cm", "1.6cm", "1.6cm", "1.7cm", "2.6cm")
     )

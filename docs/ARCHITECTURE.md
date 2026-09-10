@@ -317,3 +317,21 @@ compact sample/missingness summaries plus missingness-predictability figure unde
 `outputs/tables/appendix/` and `outputs/figures/appendix/`. Extended mode persists the full
 missingness matrices, regional screens, and case-study diagnostics from that same object;
 it does not rerun the analysis.
+
+Appendix A applies the same rule to construction/provenance exhibits without
+promoting new estimators. `appendix_data_construction_exhibits` reshapes the
+canonical data-source registry, district-lineage metadata, NSS schooling
+constructs, DISE construct registry, linguistic-measure taxonomy, consumption
+survey registry, and already-declared outcome-panel definitions. The only new
+visual is the lineage process diagram because the previous carveout-overlap
+histogram did not show the actual mapping decision sequence required by the
+appendix plan. Shared `appendix_*` output helpers own appendix paths and writing,
+so later Appendix B--D bundles reuse one artifact contract rather than duplicating
+save loops.
+
+Appendix artifacts are listed in `required_final_artifacts()` as soon as their
+builders exist. They are added to `required_public_render_inputs()` only when an
+active final-paper QMD actually consumes them. This keeps the final exhibit
+inventory distinct from the document-render dependency list and prevents the
+public contract from claiming dependencies that the current manuscript has not
+yet wired in.

@@ -1538,3 +1538,89 @@ test_that("Appendix E missingness exhibit requires canonical diagnostics", {
     fixed = TRUE
   )
 })
+
+test_that("Appendix A construction bundle is registry-driven and methodologically bounded", {
+  source_registry <- appendix_a1_source_registry()
+  data_sources <- data.frame(
+    source_id = source_registry$source_id,
+    source_name = paste("Source", seq_len(nrow(source_registry))),
+    used_in_current_pipeline = TRUE,
+    stringsAsFactors = FALSE
+  )
+  lineage <- list(
+    mapping_rule_sensitivity = data.frame(
+      rule = c("conservative", "primary", "full_reviewed"),
+      source_rows_2007_08 = c(580L, 588L, 588L),
+      source_rows_2017_18 = c(476L, 645L, 691L),
+      two_wave_target_districts = c(427L, 573L, 587L),
+      stringsAsFactors = FALSE
+    ),
+    source_registry = data.frame(
+      source_id = c("census2001_c16", "shrug_pc_keys", "manual_review"),
+      citation = c("Census 2001", "SHRUG keys", "Manual adjudication"),
+      stringsAsFactors = FALSE
+    ),
+    source_inventory = data.frame(
+      source_id = c("census2001_c16", "shrug_pc_keys", "manual_review"),
+      role = c("current_registry", "published_concordance", "adjudication"),
+      stringsAsFactors = FALSE
+    )
+  )
+
+  exhibits <- make_appendix_data_construction_exhibits(
+    data_sources, lineage, read_consumption_survey_registry()
+  )
+  expect_setequal(names(exhibits), c(
+    "appendix_a1_data_source_timing", "appendix_a2_lineage_logic",
+    "appendix_a3_lineage_source_hierarchy", "appendix_a4_nss_schooling_constructs",
+    "appendix_a5_dise_construction", "appendix_a6_linguistic_measures",
+    "appendix_a7_consumption_construction", "appendix_a8_other_outcome_panels"
+  ))
+  expect_s3_class(exhibits$appendix_a2_lineage_logic, "ggplot")
+  a3 <- attr(exhibits$appendix_a3_lineage_source_hierarchy, "csv_data")
+  expect_setequal(a3$tier, c(
+    "Official administrative source", "Independent concordance / geometry", "QA / adjudication evidence"
+  ))
+
+  a1 <- attr(exhibits$appendix_a1_data_source_timing, "csv_data")
+  expect_identical(a1$source_id, source_registry$source_id)
+  expect_equal(nrow(a1), 19L)
+
+  a4 <- attr(exhibits$appendix_a4_nss_schooling_constructs, "csv_data")
+  expect_identical(a4$construct_id, c(
+    "enrollment", "emi_enrolled", "emi_all_children", "public_emi", "private_emi"
+  ))
+  expect_identical(
+    a4$denominator[a4$construct_id == "emi_enrolled"],
+    "Enrolled children with known medium"
+  )
+  expect_true(all(grepl("Eligible children age 5-19", a4$denominator[c(1, 3, 4, 5)], fixed = TRUE)))
+
+  a5 <- attr(exhibits$appendix_a5_dise_construction, "csv_data")
+  expect_equal(nrow(a5), 8L)
+  expect_true("emi_total_0708" %in% a5$construct_id)
+
+  a7 <- attr(exhibits$appendix_a7_consumption_construction, "csv_data")
+  expect_true(all(c("nss_2004_05", "hces_2022_23", "hces_2023_24") %in% a7$survey_id))
+  expect_false(any(c("status", "reason") %in% names(a7)))
+})
+
+test_that("Appendix A fails closed when publication source metadata drifts", {
+  sources <- appendix_a1_source_registry()
+  data_sources <- data.frame(
+    source_id = sources$source_id[-1L],
+    source_name = sources$source_id[-1L],
+    used_in_current_pipeline = TRUE,
+    stringsAsFactors = FALSE
+  )
+  expect_error(
+    appendix_a1_data_source_timing(data_sources),
+    "source IDs absent from data_sources.csv",
+    fixed = TRUE
+  )
+  expect_error(
+    appendix_a2_lineage_logic_data(list(mapping_rule_sensitivity = data.frame())),
+    "mapping-rule sensitivity metadata",
+    fixed = TRUE
+  )
+})

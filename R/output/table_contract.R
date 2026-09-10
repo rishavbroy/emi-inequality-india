@@ -16,6 +16,13 @@ public_table_caption_text <- function(name) {
     paper_economic_conversion = "Economic Conversion: Schooling, Welfare, and Predetermined Complements",
     paper_local_development = "Broader Local-Development Constellation",
     paper_identification_boundary = "Identification Boundary: Linguistic Distance Does Not Isolate EMI",
+    appendix_a1_data_source_timing = "Appendix A1. Data Sources, Timing, and Analytical Roles",
+    appendix_a3_lineage_source_hierarchy = "Appendix A3. District-Lineage Evidence Hierarchy",
+    appendix_a4_nss_schooling_constructs = "Appendix A4. NSS Schooling Construct Definitions",
+    appendix_a5_dise_construction = "Appendix A5. DISE Schooling Constructs",
+    appendix_a6_linguistic_measures = "Appendix A6. Linguistic-Measure Construction",
+    appendix_a7_consumption_construction = "Appendix A7. Consumption Survey Construction",
+    appendix_a8_other_outcome_panels = "Appendix A8. Other Outcome Panels",
     appendix_e1_selection_sample = "Appendix E1. Enrollment Selection Sample and Covariates",
     appendix_e4_missingness = "Appendix E4. Missingness in the Enrollment Selection Sample",
     fs_cons = "First-Stage Regression: EMI Exposure on Linguistic Distance",
@@ -67,6 +74,34 @@ public_table_note <- function(name) {
       "The 2001-11 Census and 2005-13 Economic Census windows overlap the 2007 schooling measurement, so these rows are co-evolving development margins rather than post-treatment EMI mechanisms.",
       "PLFS 2017-18 supplies the displayed labor endpoint; the semantic CSV also retains matched NSS66 Holm p-values so the broad-labor null is auditable across survey waves.",
       "Heterogeneous units are intentionally not standardized onto a common axis. Null rows are retained by design because the table asks whether the pattern reflects selective transformation or broad local expansion."
+    ),
+    appendix_a1_data_source_timing = paste(
+      "Final-paper source families are shown once at their primary analytical role.",
+      "All raw microdata and administrative files remain local unless redistribution terms explicitly permit otherwise."
+    ),
+    appendix_a3_lineage_source_hierarchy = paste(
+      "The lineage registry separates official administrative evidence from independent concordances/geometry and QA/adjudication evidence.",
+      "Accepted mappings must cite registered evidence and satisfy the lineage-readiness gates."
+    ),
+    appendix_a4_nss_schooling_constructs = paste(
+      "All NSS-64 schooling measures use children age 5-19.",
+      "Conditional EMI uses enrolled children with known medium as its denominator; all-child exposure uses all eligible children, so participation and medium choice remain distinct margins."
+    ),
+    appendix_a5_dise_construction = paste(
+      "DISE constructs are derived from the canonical construct registry.",
+      "The main paper uses total-enrollment EMI as independent administrative validation; age-scaled and pooled alternatives remain diagnostic robustness constructs."
+    ),
+    appendix_a6_linguistic_measures = paste(
+      "The preferred measure is the speaker-weighted Shastry distance from Hindi on Census-2001 geography.",
+      "Historical, genealogical, lexicostatistical, and nonlinear measures are validation or sensitivity constructions rather than interchangeable instruments."
+    ),
+    appendix_a7_consumption_construction = paste(
+      "Rows come directly from the registered household-consumption survey contract.",
+      "Historical NSS and modern HCES rounds retain their actual schedule/recall and district-identity rules before harmonization to Census-2001 districts."
+    ),
+    appendix_a8_other_outcome_panels = paste(
+      "These panels provide the broader local-development outcomes used in the paper.",
+      "Their observation windows differ, so they are interpreted as co-evolving development margins rather than mechanically post-treatment mediators of 2007-08 schooling."
     ),
     appendix_e1_selection_sample = paste(
       "NSS 64th-round child-level enrollment sample used by the descriptive selection model.",
