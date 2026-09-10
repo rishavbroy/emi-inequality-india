@@ -458,6 +458,9 @@ paper_schooling_welfare_csv_data <- function(estimates) {
     paste(x$outcome_round, x$estimand) %in% paste(columns$outcome_round, columns$estimand)
   x <- x[keep, required, drop = FALSE]
   if (!nrow(x)) return(data.frame())
+  if (any(is.na(x$status) | x$status != "estimated")) {
+    stop("Paper schooling-welfare table requires estimated state-main bridge results.", call. = FALSE)
+  }
 
   x$schooling_margin <- unname(treatments[x$treatment_id])
   x$estimate_percent_per_10pp <- 100 * x$estimate_per_10_percentage_points
@@ -465,7 +468,7 @@ paper_schooling_welfare_csv_data <- function(estimates) {
   out <- x[, c(
     "outcome_round", "estimand", "treatment_id", "schooling_margin",
     "estimate_percent_per_10pp", "std_error_percent_per_10pp",
-    "p_value_state_clustered", "p_value_holm_welfare", "n", "status"
+    "p_value_state_clustered", "p_value_holm_welfare", "n"
   ), drop = FALSE]
 
   key <- paste(out$outcome_round, out$estimand, out$treatment_id)

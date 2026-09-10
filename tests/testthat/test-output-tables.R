@@ -959,7 +959,7 @@ test_that("paper schooling-welfare table is the registered 5-by-4 common-support
   expect_equal(nrow(csv), 20L)
   expect_setequal(csv$treatment_id, names(treatments))
   expect_setequal(paste(csv$outcome_round, csv$estimand), paste(columns$outcome_round, columns$estimand))
-  expect_true(all(csv$status == "estimated"))
+  expect_false("status" %in% names(csv))
   expect_equal(unique(csv$n[csv$outcome_round == "hces_2022_23"]), 524)
   expect_equal(unique(csv$n[csv$outcome_round == "hces_2023_24"]), 522)
   expect_equal(nrow(table), 11L)
@@ -992,7 +992,34 @@ test_that("paper schooling-welfare CSV remains semantic while TeX uses paired es
     "estimate_percent_per_10pp", "std_error_percent_per_10pp",
     "p_value_state_clustered", "p_value_holm_welfare"
   ) %in% names(csv)))
-  expect_false(any(c("Schooling margin", "2022 ANCOVA") %in% names(csv)))
+  expect_false(any(c("Schooling margin", "2022 ANCOVA", "status") %in% names(csv)))
   expect_equal(unique(csv$estimate_percent_per_10pp), 5)
   expect_equal(unique(csv$std_error_percent_per_10pp), 1)
+})
+
+test_that("paper schooling-welfare table rejects incomplete model status instead of publishing diagnostics", {
+  columns <- paper_schooling_welfare_column_registry()
+  treatments <- paper_schooling_welfare_treatment_labels()
+  estimates <- do.call(rbind, lapply(seq_len(nrow(columns)), function(i) {
+    data.frame(
+      outcome_round = columns$outcome_round[[i]],
+      estimand = columns$estimand[[i]],
+      treatment_id = names(treatments),
+      adjustment_id = "state_main",
+      estimate_per_10_percentage_points = 0.05,
+      std_error_state_clustered = 0.001,
+      p_value_state_clustered = 0.001,
+      p_value_holm_welfare = 0.01,
+      n = 500,
+      status = "estimated",
+      stringsAsFactors = FALSE
+    )
+  }))
+  estimates$status[[1L]] <- "not_estimable"
+
+  expect_error(
+    make_paper_schooling_welfare_table(list(estimates = estimates)),
+    "requires estimated state-main bridge results",
+    fixed = TRUE
+  )
 })
