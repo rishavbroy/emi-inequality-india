@@ -184,12 +184,8 @@ extended_lineage_target_definitions <- function() {
     tar_target(diag_ext_fuzzy_matching, save_fuzzy_matching_diagnostics(diagnose_fuzzy_matching(district_tracker, district_join_map, cfg))),
     tar_target(diag_ext_spatial_weights, save_spatial_weight_diagnostics(diagnose_spatial_weights(district_panel, spatial_weights, cfg))),
     tar_target(diag_ext_instrument_exploration, save_instrument_exploration_diagnostics(diagnose_instrument_exploration(district_panel, cfg))),
-    tar_target(
-      first_stage_absorption_diagnostics,
-      diagnose_first_stage_absorption(
-        district_panel, control_registry = census_2001_control_registry
-      )
-    ),
+    # The paper-facing absorption ladder is computed once in the core graph.
+    # Extended mode only persists the full forensic bundle.
     tar_target(diag_ext_first_stage_absorption, save_first_stage_absorption_diagnostics(first_stage_absorption_diagnostics)),
     tar_target(
       hindi_belt_first_stage_diagnostics,

@@ -628,3 +628,49 @@ test_that("paper schooling-access figure activates only with both required evide
   expect_identical(available$paper_unequal_schooling_access$kind, "schooling_access")
   expect_identical(attr(available, "schooling_access")$access_summary$reference_group[[1]], "Other")
 })
+
+test_that("paper first-stage absorption ladder uses exactly the nine planned semantic specifications", {
+  registry <- paper_first_stage_absorption_registry()
+  summary <- data.frame(
+    semantic_specification_id = registry$specification_id,
+    excluded_instrument_f = seq_len(nrow(registry)),
+    partial_r_squared = seq_len(nrow(registry)) / 100,
+    status = "estimated",
+    stringsAsFactors = FALSE
+  )
+  summary <- rbind(
+    summary,
+    data.frame(
+      semantic_specification_id = "state_block_only_human_capital",
+      excluded_instrument_f = 99, partial_r_squared = 0.5,
+      status = "estimated", stringsAsFactors = FALSE
+    )
+  )
+
+  out <- paper_first_stage_absorption_plot_data(list(semantic_summary = summary))
+
+  expect_equal(nrow(out), 9L)
+  expect_identical(as.character(out$semantic_specification_id), registry$specification_id)
+  expect_false("state_block_only_human_capital" %in% out$semantic_specification_id)
+  expect_true(all(is.finite(out$excluded_instrument_f)))
+  expect_true(all(is.finite(out$partial_r_squared)))
+  expect_match(out$partial_r2_label[[1L]], "partial R2 = ", fixed = TRUE)
+})
+
+test_that("shared figure registry carries the paper first-stage absorption diagnostic", {
+  cfg <- list(mode = "final", output_formats = list(figures = "png"))
+  panel <- poster_map_fixture(1L)
+  registry <- paper_first_stage_absorption_registry()
+  diagnostic <- list(semantic_summary = data.frame(
+    semantic_specification_id = registry$specification_id,
+    excluded_instrument_f = seq_len(nrow(registry)),
+    partial_r_squared = seq_len(nrow(registry)) / 100,
+    status = "estimated", stringsAsFactors = FALSE
+  ))
+
+  figures <- make_figures(
+    panel, character(), cfg, first_stage_absorption = diagnostic
+  )
+  expect_identical(figures$paper_first_stage_absorption$kind, "first_stage_absorption")
+  expect_identical(attr(figures, "first_stage_absorption"), diagnostic)
+})

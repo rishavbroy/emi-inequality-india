@@ -94,7 +94,8 @@ add_poster_residual_variables <- function(district_panel) {
 #' @return A named list of figure specifications consumed by save_figures().
 make_figures <- function(
     district_panel, raw_ilo_figures, cfg, iv_models = NULL,
-    map_geometry = NULL, consumption_iv_dynamics = NULL, schooling_access = NULL) {
+    map_geometry = NULL, consumption_iv_dynamics = NULL, schooling_access = NULL,
+    first_stage_absorption = NULL) {
   district_panel <- add_poster_residual_variables(district_panel)
 
   spec <- preferred_iv_variables()
@@ -168,6 +169,18 @@ make_figures <- function(
         nrow(safe_df(schooling_access$access_summary %||% data.frame())) &&
         nrow(safe_df(schooling_access$access_crosscuts %||% data.frame()))) {
         "schooling_access"
+      } else {
+        "status"
+      }
+    ),
+    paper_first_stage_absorption = figure_spec(
+      "paper_first_stage_absorption",
+      "paper_first_stage_absorption.png",
+      "Where does the linguistic-distance first stage disappear?",
+      "Excluded-instrument strength across a fixed-support specification ladder.",
+      kind = if (!is.null(first_stage_absorption) &&
+        nrow(safe_df(first_stage_absorption$semantic_summary %||% data.frame()))) {
+        "first_stage_absorption"
       } else {
         "status"
       }
@@ -259,6 +272,7 @@ make_figures <- function(
   attr(out, "iv_models") <- iv_models
   attr(out, "consumption_iv_dynamics") <- consumption_iv_dynamics
   attr(out, "schooling_access") <- schooling_access
+  attr(out, "first_stage_absorption") <- first_stage_absorption
   out
 }
 

@@ -267,3 +267,17 @@ diagnostic, not a weak-IV-robust confidence interval. Durable outputs are
 `iv_falsification_adaptive_set_summary.csv` and
 `iv_falsification_adaptive_set_components.csv`, and both are required by the
 extended audit.
+
+### Paper-facing first-stage absorption ladder
+
+The main-paper first-stage figure is generated from the same
+`first_stage_absorption_diagnostics` object that feeds the extended forensic
+CSVs. The paper view is deliberately restricted to nine predeclared semantic
+specifications: instrument only; Census and expanded controls; region fixed
+effects alone and with each control set; and state fixed effects alone and with
+each control set. It plots the state-clustered excluded-instrument Wald F and
+reports partial $R^2$ as an annotation. Effective-F diagnostics remain separate
+because they are not the same statistic and are not available as a comparable
+ladder across every displayed adjustment. Extended mode continues to persist the
+full semantic registry, common-support audit, deletion diagnostics, influence
+measures, and VIF outputs.

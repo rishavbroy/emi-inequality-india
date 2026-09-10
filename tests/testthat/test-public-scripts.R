@@ -1439,10 +1439,29 @@ test_that("main-paper schooling-access analysis is core while forensic persisten
   expect_match(working_paper, "fig-consumption-reduced-form-dynamics", fixed = TRUE)
   expect_match(working_paper, "paper_schooling_welfare.tex", fixed = TRUE)
   expect_match(working_paper, "tbl-paper-schooling-welfare", fixed = TRUE)
+  expect_match(working_paper, "paper_first_stage_absorption.pdf", fixed = TRUE)
+  expect_match(working_paper, "fig-first-stage-absorption", fixed = TRUE)
 
   core_consumption <- repo_text("R", "pipeline", "core_consumption_iv_targets.R")
   extended_iv <- repo_text("R", "pipeline", "extended_iv_targets.R")
   expect_match(core_consumption, "schooling_consumption_bridge", fixed = TRUE)
   expect_false(grepl("tar_target(\n      schooling_consumption_bridge,", extended_iv, fixed = TRUE))
   expect_match(extended_iv, "save_schooling_consumption_bridge(schooling_consumption_bridge)", fixed = TRUE)
+})
+
+test_that("paper first-stage absorption analysis is core while forensic persistence stays extended", {
+  core <- repo_text("R", "pipeline", "core_public_targets.R")
+  extended <- repo_text("R", "pipeline", "extended_lineage_targets.R")
+
+  expect_match(core, "first_stage_absorption_diagnostics", fixed = TRUE)
+  expect_match(core, "first_stage_absorption = first_stage_absorption_diagnostics", fixed = TRUE)
+  expect_false(grepl(
+    "tar_target(\n      first_stage_absorption_diagnostics,",
+    extended, fixed = TRUE
+  ))
+  expect_match(
+    extended,
+    "save_first_stage_absorption_diagnostics(first_stage_absorption_diagnostics)",
+    fixed = TRUE
+  )
 })
