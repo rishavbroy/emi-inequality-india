@@ -814,118 +814,111 @@ consumption_iv_dynamic_figure_data <- function(dynamics) {
   }
   x <- safe_df(dynamics$summary)
   required <- c(
-    "outcome_round", "estimand", "partial_f", "effective_f",
-    "reduced_form_estimate", "reduced_form_std.error",
-    "second_stage_estimate", "second_stage_std.error"
+    "outcome_round", "estimand",
+    "reduced_form_estimate", "reduced_form_std.error"
   )
   missing <- setdiff(required, names(x))
   if (length(missing)) {
     stop(
-      "Dynamic consumption IV figure input is missing columns: ",
+      "Dynamic consumption reduced-form figure input is missing columns: ",
       paste(missing, collapse = ", "),
       call. = FALSE
     )
   }
 
-  x <- x[plain_chr(x$estimand) == "ancova", , drop = FALSE]
+  estimand_order <- c("ancova", "change")
+  x <- x[plain_chr(x$estimand) %in% estimand_order, , drop = FALSE]
   if (!nrow(x)) {
-    stop("Dynamic consumption IV figure has no registered ANCOVA rows.", call. = FALSE)
+    stop("Dynamic consumption reduced-form figure has no registered ANCOVA/change rows.", call. = FALSE)
   }
   round_order <- c(
     "nss_2009_10_type2", "nss_2011_12_type2",
     "hces_2022_23", "hces_2023_24"
   )
-  pos <- match(round_order, plain_chr(x$outcome_round))
-  if (anyNA(pos)) {
+  key <- paste(plain_chr(x$outcome_round), plain_chr(x$estimand), sep = "__")
+  expected <- as.vector(outer(round_order, estimand_order, paste, sep = "__"))
+  if (anyDuplicated(key) || !setequal(key, expected)) {
     stop(
-      "Dynamic consumption IV figure lacks one or more planned outcome horizons.",
+      "Dynamic consumption reduced-form figure requires exactly one ANCOVA and one change row at each planned horizon.",
       call. = FALSE
     )
   }
-  x <- x[pos, , drop = FALSE]
+  x <- x[match(expected, key), , drop = FALSE]
 
-  label <- paste0(
-    consumption_dynamic_round_label(x$outcome_round),
-    "\nMOP F=", formatC(num(x$effective_f), digits = 2L, format = "f")
-  )
-  build_rows <- function(kind, estimate, std_error) {
-    estimate <- num(estimate)
-    std_error <- num(std_error)
-    if (any(!is.finite(estimate)) || any(!is.finite(std_error))) {
-      stop(
-        "Dynamic consumption IV figure requires finite estimates and standard errors.",
-        call. = FALSE
-      )
-    }
-    data.frame(
-      outcome_round = plain_chr(x$outcome_round),
-      horizon = factor(label, levels = label),
-      estimator = kind,
-      estimate = estimate,
-      std.error = std_error,
-      conf.low = estimate - stats::qnorm(0.975) * std_error,
-      conf.high = estimate + stats::qnorm(0.975) * std_error,
-      partial_f = num(x$partial_f),
-      effective_f = num(x$effective_f),
-      stringsAsFactors = FALSE
+  estimate <- num(x$reduced_form_estimate)
+  std_error <- num(x$reduced_form_std.error)
+  if (any(!is.finite(estimate)) || any(!is.finite(std_error))) {
+    stop(
+      "Dynamic consumption reduced-form figure requires finite estimates and standard errors.",
+      call. = FALSE
     )
   }
-
-  rbind(
-    build_rows(
-      "Reduced form",
-      x$reduced_form_estimate,
-      x$reduced_form_std.error
+  estimand_labels <- c(ancova = "ANCOVA", change = "Long change")
+  horizon_labels <- consumption_dynamic_round_label(round_order)
+  data.frame(
+    outcome_round = plain_chr(x$outcome_round),
+    horizon = factor(
+      consumption_dynamic_round_label(x$outcome_round),
+      levels = horizon_labels
     ),
-    build_rows(
-      "Conventional 2SLS",
-      x$second_stage_estimate,
-      x$second_stage_std.error
-    )
+    estimand = factor(
+      unname(estimand_labels[plain_chr(x$estimand)]),
+      levels = unname(estimand_labels[estimand_order])
+    ),
+    estimate = estimate,
+    std.error = std_error,
+    conf.low = estimate - stats::qnorm(0.975) * std_error,
+    conf.high = estimate + stats::qnorm(0.975) * std_error,
+    stringsAsFactors = FALSE
   )
 }
 
 save_consumption_iv_dynamic_figure <- function(
     spec, path_base, formats, dynamics) {
-  need_pkg("ggplot2", "dynamic consumption IV figure")
+  need_pkg("ggplot2", "dynamic consumption reduced-form figure")
   plot_data <- consumption_iv_dynamic_figure_data(dynamics)
+  dodge <- ggplot2::position_dodge(width = 0.35)
 
   p <- ggplot2::ggplot(
     plot_data,
-    ggplot2::aes(x = horizon, y = estimate)
+    ggplot2::aes(
+      x = horizon, y = estimate,
+      group = estimand, shape = estimand, linetype = estimand
+    )
   ) +
     ggplot2::geom_hline(yintercept = 0, linewidth = 0.4, linetype = 2) +
     ggplot2::geom_errorbar(
       ggplot2::aes(ymin = conf.low, ymax = conf.high),
-      width = 0.12,
-      linewidth = 0.55
+      width = 0.10, linewidth = 0.55, position = dodge
     ) +
-    ggplot2::geom_point(size = 2.2) +
-    ggplot2::facet_wrap(~ estimator, scales = "free_y", ncol = 1) +
+    ggplot2::geom_line(linewidth = 0.55, position = dodge) +
+    ggplot2::geom_point(size = 2.4, position = dodge) +
     ggplot2::labs(
       title = spec$title,
       subtitle = spec$subtitle,
-      x = "Outcome horizon (state-FE first-stage F shown below)",
-      y = "Coefficient",
+      x = "Outcome horizon",
+      y = "Reduced-form coefficient",
+      shape = NULL,
+      linetype = NULL,
       caption = paste(
-        "95% clustered Wald intervals.",
-        "Reduced form: linguistic-distance coefficient.",
-        "2SLS: EMI-exposure coefficient.",
-        "All panels use endpoint ANCOVA with log real 2004-05 mean MPCE",
-        "and the predetermined Census-2001 controls."
+        "95% state-clustered Wald intervals.",
+        "Each point is the coefficient on preferred linguistic distance.",
+        "ANCOVA conditions on log real 2004-05 mean MPCE; long change uses",
+        "endpoint minus 2004-05 log real mean MPCE. Both specifications include",
+        "state fixed effects and the predetermined Census-2001 controls."
       )
     ) +
     ggplot2::theme_minimal(base_size = 12) +
     ggplot2::theme(
       panel.grid.minor = ggplot2::element_blank(),
-      strip.text = ggplot2::element_text(face = "bold"),
       axis.title = ggplot2::element_text(face = "bold"),
+      legend.position = "top",
       plot.caption = ggplot2::element_text(size = 9, hjust = 0)
     )
 
   save_plot_formats(
     p, path_base, formats,
-    width = 7.2, height = 6.4, dpi = 300
+    width = 7.2, height = 4.8, dpi = 300
   )
 }
 

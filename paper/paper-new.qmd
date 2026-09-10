@@ -339,6 +339,11 @@ render_public_table("../outputs/tables/main/fs_cons.tex", "fs_cons")
 render_public_table("../outputs/tables/main/cons_iv.tex", "cons_iv")
 ```
 
+The reduced form is more informative about the long-run timing pattern than the conventional 2SLS coefficient path because the first stage is weak at every horizon. @fig-consumption-reduced-form-dynamics therefore follows the coefficient on linguistic distance itself across the four registered post-treatment endpoints. It shows both endpoint ANCOVA and the corresponding long change from the common 2004-05 baseline rather than selecting one estimand after seeing the results. The early 2009-10 and 2011-12 estimates are small and imprecise, while the long-change association becomes positive by 2022-23 and remains positive but less precise in 2023-24. These are reduced-form associations, not estimates of an EMI effect.
+
+![Reduced-form relationship between preferred linguistic distance and real mean household consumption across the registered post-treatment horizons. Points show the ANCOVA and long-change estimands with 95% state-clustered Wald confidence intervals.](../outputs/figures/main/consumption_iv_dynamics.pdf){#fig-consumption-reduced-form-dynamics fig-pos="H" width="90%"}
+
+
 
 
 

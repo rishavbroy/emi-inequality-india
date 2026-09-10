@@ -519,23 +519,25 @@ test_that("dynamic welfare figure uses only the prespecified ANCOVA horizons", {
   )
 })
 
-test_that("dynamic welfare figure exposes uncertainty and weak first-stage context", {
-  summary <- data.frame(
-    outcome_round = c(
-      "nss_2009_10_type2", "nss_2011_12_type2",
-      "hces_2022_23", "hces_2023_24"
-    ),
-    estimand = "ancova",
-    partial_f = c(1.7, 1.6, 1.4, 1.0),
-    effective_f = c(1.5, 1.4, 1.2, 0.9),
-    reduced_form_estimate = c(-0.02, -0.01, 0.02, 0.01),
-    reduced_form_std.error = rep(0.02, 4),
-    second_stage_estimate = c(-0.03, -0.02, 0.02, 0.01),
-    second_stage_std.error = rep(0.04, 4),
-    stringsAsFactors = FALSE
+test_that("dynamic welfare figure compares registered reduced-form estimands only", {
+  rounds <- c(
+    "nss_2009_10_type2", "nss_2011_12_type2",
+    "hces_2022_23", "hces_2023_24"
   )
+  summary <- expand.grid(
+    outcome_round = rounds,
+    estimand = c("ancova", "change"),
+    KEEP.OUT.ATTRS = FALSE, stringsAsFactors = FALSE
+  )
+  summary$reduced_form_estimate <- seq(-0.02, 0.05, length.out = nrow(summary))
+  summary$reduced_form_std.error <- rep(0.02, nrow(summary))
 
   out <- consumption_iv_dynamic_figure_data(list(summary = summary))
+
+  expect_equal(nrow(out), 8L)
+  expect_setequal(as.character(out$estimand), c("ANCOVA", "Long change"))
+  expect_identical(levels(out$horizon), c("2009-10", "2011-12", "2022-23", "2023-24"))
+  expect_false(any(c("second_stage_estimate", "partial_f", "effective_f") %in% names(out)))
   expect_true(all(out$conf.low < out$estimate))
   expect_true(all(out$conf.high > out$estimate))
   expect_equal(
@@ -549,16 +551,13 @@ test_that("shared figure registry carries validated dynamic welfare diagnostics"
   cfg <- list(mode = "final", output_formats = list(figures = "png"))
   panel <- poster_map_fixture(1L)
   dynamics <- list(summary = data.frame(
-    outcome_round = c(
+    outcome_round = rep(c(
       "nss_2009_10_type2", "nss_2011_12_type2",
       "hces_2022_23", "hces_2023_24"
-    ),
-    estimand = "ancova",
-    partial_f = 1,
+    ), each = 2L),
+    estimand = rep(c("ancova", "change"), 4L),
     reduced_form_estimate = 0,
     reduced_form_std.error = 1,
-    second_stage_estimate = 0,
-    second_stage_std.error = 1,
     stringsAsFactors = FALSE
   ))
 

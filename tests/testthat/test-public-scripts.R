@@ -1435,4 +1435,6 @@ test_that("main-paper schooling-access analysis is core while forensic persisten
   expect_match(extended, "save_nss64_schooling_social_group_diagnostic", fixed = TRUE)
   expect_match(working_paper, "paper_unequal_schooling_access.pdf", fixed = TRUE)
   expect_match(working_paper, "fig-unequal-schooling-access", fixed = TRUE)
+  expect_match(working_paper, "consumption_iv_dynamics.pdf", fixed = TRUE)
+  expect_match(working_paper, "fig-consumption-reduced-form-dynamics", fixed = TRUE)
 })

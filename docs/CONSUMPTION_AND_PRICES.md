@@ -171,13 +171,14 @@ first stage, clustered reduced form, conventional clustered 2SLS, and
 Anderson-Rubin inference. The corresponding AR grids are retained separately.
 This is intentionally an identification diagnostic rather than an automatic
 headline-model switch: weak first-stage evidence can therefore be read alongside
-the reduced form and identification-robust AR results. The shared figure pipeline
-also writes `consumption_iv_dynamics` using only the prespecified endpoint-ANCOVA
-rows. It shows the clustered reduced-form and conventional 2SLS coefficient paths
-in separate panels, with 95% Wald intervals and each horizon's state-FE first-stage
-F statistic in the axis label. Long-difference rows remain robustness diagnostics
-and are not substituted into the preferred dynamic figure based on their
-statistical significance. Before these files are
+the reduced form and identification-robust AR results. The shared figure pipeline also writes `consumption_iv_dynamics` as the
+paper-facing time-path figure. It uses the two prespecified real-mean-MPCE
+estimands at every horizon—endpoint ANCOVA and the corresponding long change—and
+plots only the clustered reduced-form coefficient on preferred linguistic
+distance with 95% Wald intervals. Conventional 2SLS and first-stage strength stay
+in the diagnostic outputs rather than sharing the main visual axis. The figure
+therefore compares the registered estimands symmetrically instead of selecting a
+long-difference row because it is more statistically favorable. Before these files are
 persisted, a blocking validation requires one row and one AR grid per registered
 specification, finite inference outputs, and identical estimation-sample counts
 for the first stage, reduced form, 2SLS, and Anderson-Rubin test. This prevents
