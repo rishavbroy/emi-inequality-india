@@ -338,6 +338,14 @@ The reduced form is more informative about the long-run timing pattern than the 
 
 ![Reduced-form relationship between preferred linguistic distance and real mean household consumption across the registered post-treatment horizons. Points show the ANCOVA and long-change estimands with 95% state-clustered Wald confidence intervals.](../outputs/figures/main/consumption_iv_dynamics.pdf){#fig-consumption-reduced-form-dynamics fig-pos="H" width="90%"}
 
+```{r}
+#| label: tbl-local-development
+#| echo: false
+#| results: asis
+
+render_public_table("../outputs/tables/main/paper_local_development.tex", "paper_local_development")
+```
+
 
 
 
@@ -352,7 +360,7 @@ The reduced form is more informative about the long-run timing pattern than the 
 ::: {.sample-excerpt #ws-iv-relevance-exclusion-problem sets="writing-5pg writing-10pg" order="3"}
 ## Identification Boundary: Why Linguistic Distance Does Not Isolate EMI {#sec-iv-iv}
 
-Our preferred linguistic measure is the speaker-weighted mean Shastry distance from Hindi among mapped mother tongues with positive distance in district $d$ in 2001. The economic intuition follows @shastry2012a: as the linguistic cost of acquiring Hindi rises, English can become relatively more attractive as a bridge language. The C-17 evidence in @tbl-language-behavior supports a language-behavior response, but it also shows that the response is nonlinear and institutionally contingent. Relevance for formal EMI therefore has to be demonstrated rather than assumed.
+Our preferred linguistic measure is the speaker-weighted mean Shastry distance from Hindi among mapped mother tongues with positive distance in district $d$ in 2001. Following @shastry2012a, as the linguistic cost of acquiring Hindi rises, English can become relatively more attractive as a bridge language. The C-17 evidence in @tbl-language-behavior supports a language-behavior response, but it also shows that the response is nonlinear and institutionally contingent. Relevance for formal EMI therefore has to be demonstrated rather than assumed.
 
 Nationally, the relationship is visible. Within states, it nearly disappears. @fig-first-stage-absorption holds district support fixed while progressively adding geographic absorption and predetermined controls. The excluded-instrument F statistic is in the low-to-mid teens without fixed effects and falls to approximately one or below under state absorption. This is not a sample-composition artifact, and richer predetermined controls do not restore the signal.
 

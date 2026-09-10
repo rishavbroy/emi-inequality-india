@@ -1368,3 +1368,106 @@ test_that("paper identification boundary fails closed when a registered design d
     fixed = TRUE
   )
 })
+
+paper_local_development_fixture_result <- function(outcomes, adjustment, estimates, p_values, p_holm, n = 355L) {
+  reduced <- data.frame(
+    outcome_id = outcomes,
+    adjustment_id = adjustment,
+    construction_id = "nonzero_mean",
+    estimate = estimates,
+    std.error = rep(0.01, length(outcomes)),
+    p.value = p_values,
+    p_holm_within_spec = p_holm,
+    n = as.integer(n),
+    status = "estimated",
+    stringsAsFactors = FALSE
+  )
+  list(
+    registry = data.frame(), sample_coverage = data.frame(), sample_support = data.frame(),
+    first_stage = data.frame(), reduced_form = reduced, weak_iv = data.frame()
+  )
+}
+
+paper_local_development_fixture <- function() {
+  household <- list(estimates = data.frame(
+    predictor_id = "linguistic_opportunity",
+    outcome_id = c("literacy_depth", "graduate_access"),
+    estimate = c(0.009, 0.004),
+    std_error_state_clustered = c(0.003, 0.001),
+    p_value_state_clustered = c(0.01, 0.006),
+    p_value_holm_predictor_family = c(0.03, 0.02),
+    n = 355L, status = "estimated", stringsAsFactors = FALSE
+  ))
+  migration <- paper_local_development_fixture_result(
+    c("skilled_recent_work_migration", "interstate_migrant_composition"),
+    "state_main", c(0.013, 0.001), c(0.003, 0.8), c(0.03, 1)
+  )
+  housing <- paper_local_development_fixture_result(
+    c("banking_access_change", "television_access_change"),
+    "state_main", c(0.048, 0.014), c(0.0001, 0.005), c(0.001, 0.03)
+  )
+  economic_census <- paper_local_development_fixture_result(
+    c("services_employment_share_change", "manufacturing_employment_share_change", "nonfarm_employment_growth"),
+    "region_main", c(0.021, -0.018, -0.023), c(0.002, 0.004, 0.31), c(0.012, 0.021, 0.92), n = 354L
+  )
+  plfs <- paper_local_development_fixture_result(
+    c("labor_force_participation_age15plus", "employment_rate_age15plus"),
+    "state_main", c(-0.007, -0.009), c(0.20, 0.13), c(0.27, 0.27), n = 467L
+  )
+  nss66 <- paper_local_development_fixture_result(
+    c("labor_force_participation_age15plus", "employment_rate_age15plus"),
+    "state_main", c(0.005, 0.004), c(0.75, 0.80), c(1, 1), n = 458L
+  )
+  list(
+    household = household, migration = migration, housing = housing,
+    economic_census = economic_census, nss66 = nss66, plfs = plfs
+  )
+}
+
+test_that("paper local-development table keeps a bounded signal-and-null constellation", {
+  fixture <- paper_local_development_fixture()
+  csv <- paper_local_development_csv_data(
+    fixture$household, fixture$migration, fixture$housing,
+    fixture$economic_census, fixture$nss66, fixture$plfs
+  )
+
+  expect_equal(nrow(csv), 11L)
+  expect_identical(csv$row_id, paper_local_development_registry()$row_id)
+  expect_setequal(
+    csv$domain,
+    c("Household capacity", "Migration", "Finance", "Assets", "Economic structure", "Scale", "Labor")
+  )
+  expect_true(all(vapply(
+    csv[c("estimate", "std.error", "p.value", "p.value_holm", "n")],
+    is.numeric, logical(1)
+  )))
+  expect_true(all(is.finite(csv$nss66_p_value_holm[csv$source_id == "plfs_2017_18"])))
+  expect_true(all(is.na(csv$nss66_p_value_holm[csv$source_id != "plfs_2017_18"])))
+  expect_true(any(csv$p.value_holm < 0.05))
+  expect_true(any(csv$p.value_holm >= 0.05))
+  expect_false(any(c("status", "reason") %in% names(csv)))
+
+  table <- make_paper_local_development_table(
+    fixture$household, fixture$migration, fixture$housing,
+    fixture$economic_census, fixture$nss66, fixture$plfs
+  )
+  expect_identical(attr(table, "csv_data"), csv)
+  expect_identical(
+    names(table),
+    c("Domain", "Representative outcome", "Estimate", "Raw p", "Holm p", "Interpretation")
+  )
+})
+
+test_that("paper local-development table fails closed when registered evidence disappears", {
+  fixture <- paper_local_development_fixture()
+  fixture$migration$reduced_form <- fixture$migration$reduced_form[-1L, , drop = FALSE]
+
+  expect_error(
+    paper_local_development_csv_data(
+      fixture$household, fixture$migration, fixture$housing,
+      fixture$economic_census, fixture$nss66, fixture$plfs
+    ),
+    "requires one estimated state_main / nonzero_mean row",
+    fixed = TRUE
+  )
+})

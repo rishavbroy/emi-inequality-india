@@ -15,6 +15,7 @@ public_table_caption_text <- function(name) {
     paper_schooling_market_geography = "How the Schooling Market Is Geographically Organized",
     paper_language_behavior = "Linguistic Distance and Language Behavior",
     paper_conversion_complements = "Predetermined Complements to Economic Conversion",
+    paper_local_development = "Broader Local-Development Constellation",
     paper_identification_boundary = "Identification Boundary: Linguistic Distance Does Not Isolate EMI",
     fs_cons = "First-Stage Regression: EMI Exposure on Linguistic Distance",
     cons_iv = "Second-Stage Regression: Real Log Consumption Growth on EMI Exposure (Fitted)",
@@ -57,6 +58,13 @@ public_table_note <- function(name) {
       "Panel B reports the corresponding 2005 IT-employment-environment interaction for all-child EMI per 10 percentage points and for linguistic distance per one Shastry degree.",
       regression_star_note(),
       "These are descriptive heterogeneity estimates and do not make the schooling exposure or linguistic-distance interaction causal."
+    ),
+    paper_local_development = paste(
+      "Entries are reduced-form associations of one Shastry linguistic-distance degree with the representative outcome in its native unit; raw and Holm-adjusted p-values use state-clustered inference within the registered outcome/specification family.",
+      "Household-capacity, migration, finance, asset, and labor rows use state fixed effects plus predetermined controls; Economic Census rows use the registered region-plus-controls specification, which is the predeclared comparison carrying the sector-composition signal.",
+      "The 2001-11 Census and 2005-13 Economic Census windows overlap the 2007 schooling measurement, so these rows are co-evolving development margins rather than post-treatment EMI mechanisms.",
+      "PLFS 2017-18 supplies the displayed labor endpoint; the semantic CSV also retains matched NSS66 Holm p-values so the broad-labor null is auditable across survey waves.",
+      "Heterogeneous units are intentionally not standardized onto a common axis. Null rows are retained by design because the table asks whether the pattern reflects selective transformation or broad local expansion."
     ),
     paper_identification_boundary = paste(
       "Panel A compares excluded-instrument F statistics on one common district support for the unadjusted and state-fixed-effects plus predetermined-controls specifications; partial R-squared refers to the within-state specification.",

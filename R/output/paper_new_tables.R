@@ -402,6 +402,196 @@ make_paper_conversion_complements_table <- function(conversion, it_opportunity) 
   out
 }
 
+paper_local_development_registry <- function() {
+  # Keep one conventional durable (television) rather than selecting the strongest
+  # asset coefficient ex post; banking is represented separately as finance.
+  data.frame(
+    row_id = c(
+      "household_literacy_depth", "household_graduate_access",
+      "migration_skilled_recent_work", "migration_interstate_composition",
+      "finance_banking_access", "asset_television_ownership",
+      "economic_services_share", "economic_manufacturing_share",
+      "economic_nonfarm_employment", "labor_lfpr", "labor_employment_rate"
+    ),
+    source_id = c(
+      rep("household_capacity", 2L), rep("migration", 2L), rep("housing", 2L),
+      rep("economic_census", 3L), rep("plfs_2017_18", 2L)
+    ),
+    outcome_id = c(
+      "literacy_depth", "graduate_access",
+      "skilled_recent_work_migration", "interstate_migrant_composition",
+      "banking_access_change", "television_access_change",
+      "services_employment_share_change", "manufacturing_employment_share_change",
+      "nonfarm_employment_growth",
+      "labor_force_participation_age15plus", "employment_rate_age15plus"
+    ),
+    adjustment_id = c(
+      rep("state_main", 6L), rep("region_main", 3L), rep("state_main", 2L)
+    ),
+    domain = c(
+      "Household capacity", "Household capacity", "Migration", "Migration",
+      "Finance", "Assets", "Economic structure", "Economic structure",
+      "Scale", "Labor", "Labor"
+    ),
+    label = c(
+      "Households with 2+ literates (2001-11)",
+      "Households with graduate access (2001-11)",
+      "Skilled share of recent work migrants (2011)",
+      "Interstate share among migrants (2011)",
+      "Household banking access (2001-11)",
+      "Household television ownership (2001-11)",
+      "Services employment share (2005-13)",
+      "Manufacturing employment share (2005-13)",
+      "Log nonfarm employment (2005-13)",
+      "Labor-force participation, age 15+ (2017-18)",
+      "Employment rate, age 15+ (2017-18)"
+    ),
+    signal_interpretation = c(
+      "Human-capital capacity higher", "Graduate access higher", "Skill sorting",
+      "Interstate composition shifts", "Financial inclusion higher",
+      "Durable ownership higher", "Services share higher", "Manufacturing share lower",
+      "Broad employment changes", "Labor-force participation shifts", "Employment shifts"
+    ),
+    null_interpretation = c(
+      "No adjusted capacity signal", "No adjusted graduate-access signal",
+      "No adjusted skill-sorting signal", "No interstate-composition signal",
+      "No adjusted banking signal", "No adjusted durable signal",
+      "No adjusted services signal", "No adjusted manufacturing signal",
+      "No broad employment boom", "No broad labor signal", "No broad labor signal"
+    ),
+    stringsAsFactors = FALSE
+  )
+}
+
+paper_local_development_shared_row <- function(x, outcome_id, adjustment_id) {
+  reduced <- safe_df(extract_posttreatment_mechanism_result(x)$reduced_form)
+  row <- reduced[
+    plain_chr(reduced$outcome_id) == outcome_id &
+      plain_chr(reduced$adjustment_id) == adjustment_id &
+      plain_chr(reduced$construction_id) == "nonzero_mean",
+    , drop = FALSE
+  ]
+  if (nrow(row) != 1L || !identical(plain_chr(row$status), "estimated")) {
+    stop(
+      "Paper local-development table requires one estimated ", adjustment_id,
+      " / nonzero_mean row for ", outcome_id, ".", call. = FALSE
+    )
+  }
+  row
+}
+
+paper_local_development_csv_data <- function(
+    household_capacity, migration, housing, economic_census,
+    nss66_labor, plfs_2017_18_labor) {
+  registry <- paper_local_development_registry()
+  source_objects <- list(
+    migration = migration,
+    housing = housing,
+    economic_census = economic_census,
+    plfs_2017_18 = plfs_2017_18_labor
+  )
+
+  household <- safe_df(household_capacity$estimates)
+  rows <- lapply(seq_len(nrow(registry)), function(i) {
+    spec <- registry[i, , drop = FALSE]
+    if (spec$source_id[[1L]] == "household_capacity") {
+      row <- household[
+        plain_chr(household$predictor_id) == "linguistic_opportunity" &
+          plain_chr(household$outcome_id) == spec$outcome_id[[1L]],
+        , drop = FALSE
+      ]
+      if (nrow(row) != 1L || !identical(plain_chr(row$status), "estimated")) {
+        stop(
+          "Paper local-development table requires one estimated household-capacity row for ",
+          spec$outcome_id[[1L]], ".", call. = FALSE
+        )
+      }
+      estimate <- num(row$estimate)[[1L]]
+      std_error <- num(row$std_error_state_clustered)[[1L]]
+      p_value <- num(row$p_value_state_clustered)[[1L]]
+      p_holm <- num(row$p_value_holm_predictor_family)[[1L]]
+      n <- as.integer(row$n[[1L]])
+    } else {
+      row <- paper_local_development_shared_row(
+        source_objects[[spec$source_id[[1L]]]],
+        spec$outcome_id[[1L]], spec$adjustment_id[[1L]]
+      )
+      estimate <- num(row$estimate)[[1L]]
+      std_error <- num(row$std.error)[[1L]]
+      p_value <- num(row$p.value)[[1L]]
+      p_holm <- num(row$p_holm_within_spec)[[1L]]
+      n <- as.integer(row$n[[1L]])
+    }
+    if (!all(is.finite(c(estimate, std_error, p_value, p_holm, n)))) {
+      stop("Paper local-development table contains non-finite registered evidence.", call. = FALSE)
+    }
+    data.frame(
+      row_id = spec$row_id[[1L]], domain = spec$domain[[1L]],
+      outcome = spec$label[[1L]], source_id = spec$source_id[[1L]],
+      outcome_id = spec$outcome_id[[1L]], adjustment_id = spec$adjustment_id[[1L]],
+      construction_id = "nonzero_mean",
+      estimate = estimate, std.error = std_error,
+      p.value = p_value, p.value_holm = p_holm, n = n,
+      interpretation = if (p_holm < 0.05) {
+        spec$signal_interpretation[[1L]]
+      } else {
+        spec$null_interpretation[[1L]]
+      },
+      stringsAsFactors = FALSE
+    )
+  })
+  out <- safe_bind_rows(rows)
+
+  # Labor rows display the later PLFS endpoint. NSS66 remains a required
+  # publication dependency so the paper's broad-labor null is not inferred
+  # from one survey wave only. Persist its matched adjusted p-values in the
+  # semantic CSV without crowding the printed synthesis table.
+  nss66 <- lapply(
+    c("labor_force_participation_age15plus", "employment_rate_age15plus"),
+    function(outcome) paper_local_development_shared_row(
+      nss66_labor, outcome, "state_main"
+    )
+  )
+  nss66 <- safe_bind_rows(nss66)
+  nss66_p <- stats::setNames(
+    num(nss66$p_holm_within_spec), plain_chr(nss66$outcome_id)
+  )
+  out$nss66_p_value_holm <- NA_real_
+  labor <- out$source_id == "plfs_2017_18"
+  out$nss66_p_value_holm[labor] <- unname(nss66_p[out$outcome_id[labor]])
+  out
+}
+
+paper_local_development_value <- function(x) {
+  if (!is.finite(x)) return("")
+  sprintf("%+.4f", x)
+}
+
+paper_local_development_p_value <- function(x) {
+  if (!is.finite(x)) return("")
+  if (x < 0.001) "<0.001" else sprintf("%.3f", x)
+}
+
+make_paper_local_development_table <- function(
+    household_capacity, migration, housing, economic_census,
+    nss66_labor, plfs_2017_18_labor) {
+  csv <- paper_local_development_csv_data(
+    household_capacity, migration, housing, economic_census,
+    nss66_labor, plfs_2017_18_labor
+  )
+  out <- data.frame(
+    Domain = csv$domain,
+    `Representative outcome` = csv$outcome,
+    Estimate = vapply(csv$estimate, paper_local_development_value, character(1)),
+    `Raw p` = vapply(csv$p.value, paper_local_development_p_value, character(1)),
+    `Holm p` = vapply(csv$p.value_holm, paper_local_development_p_value, character(1)),
+    Interpretation = csv$interpretation,
+    check.names = FALSE, stringsAsFactors = FALSE
+  )
+  attr(out, "csv_data") <- csv
+  out
+}
+
 paper_identification_distance_registry <- function() {
   data.frame(
     construction_id = c(
